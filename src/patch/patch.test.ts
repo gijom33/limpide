@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { defaultPatch, formatParam, PARAMS, setFilter, setParam, setWaveform } from './patch';
+import { defaultPatch, formatParam, PARAMS, setFilter, setLfo, setParam, setWaveform } from './patch';
 
 describe('defaultPatch', () => {
   it('starts every Parameter at its declared default', () => {
@@ -15,6 +15,7 @@ describe('defaultPatch', () => {
         'ampAttack', 'ampDecay', 'ampRelease', 'ampSustain', 'cutoff', 'pulseWidth', 'resonance',
         'filterEnvAmount', 'filterAttack', 'filterDecay', 'filterSustain', 'filterRelease',
         'osc2Octave', 'osc2Semitone', 'osc2Detune', 'osc2PulseWidth', 'mixOsc1', 'mixOsc2', 'mixNoise',
+        'lfoRate', 'lfoAmount', 'glide',
       ].sort(),
     );
   });
@@ -79,6 +80,25 @@ describe('Osc 2 and the Mixer', () => {
   it('sets either Oscillator’s Waveform independently', () => {
     const p = setWaveform(setWaveform(defaultPatch(), 'square', 'osc2'), 'sine');
     expect([p.waveform, p.osc2Waveform]).toEqual(['sine', 'square']);
+  });
+});
+
+describe('LFO and Glide', () => {
+  it('start with the LFO aimed at the Cutoff but turned down, and Glide off', () => {
+    const p = defaultPatch();
+    expect([p.lfoWaveform, p.lfoDestination, p.lfoAmount]).toEqual(['sine', 'cutoff', 0]);
+    expect(formatParam('glide', p.glide)).toBe('Off');
+  });
+
+  it('show slow Rates with decimals and Glide in time', () => {
+    expect(formatParam('lfoRate', 0.25)).toBe('0.25 Hz');
+    expect(formatParam('lfoRate', 6)).toBe('6.00 Hz');
+    expect(formatParam('glide', 0.2)).toBe('200 ms');
+  });
+
+  it('change Waveform and Destination independently', () => {
+    const p = setLfo(setLfo(defaultPatch(), { waveform: 'square' }), { destination: 'pulseWidth' });
+    expect([p.lfoWaveform, p.lfoDestination]).toEqual(['square', 'pulseWidth']);
   });
 });
 

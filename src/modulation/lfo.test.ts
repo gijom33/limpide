@@ -1,0 +1,71 @@
+import { describe, expect, it } from 'vitest';
+import { glideFrequency, lfoPhase, lfoShape } from './lfo';
+
+describe('lfoShape: one cycle of each LFO Waveform (phase 0–1), like Web Audio’s own oscillators', () => {
+  it('sine starts at 0 and peaks a quarter of the way through', () => {
+    expect(lfoShape('sine', 0)).toBeCloseTo(0);
+    expect(lfoShape('sine', 0.25)).toBeCloseTo(1);
+    expect(lfoShape('sine', 0.75)).toBeCloseTo(-1);
+  });
+
+  it('triangle rises from 0 to +1 at a quarter, down to −1 at three quarters', () => {
+    expect(lfoShape('triangle', 0)).toBeCloseTo(0);
+    expect(lfoShape('triangle', 0.125)).toBeCloseTo(0.5);
+    expect(lfoShape('triangle', 0.25)).toBeCloseTo(1);
+    expect(lfoShape('triangle', 0.75)).toBeCloseTo(-1);
+  });
+
+  it('square is +1 for the first half and −1 for the second', () => {
+    expect(lfoShape('square', 0.1)).toBe(1);
+    expect(lfoShape('square', 0.6)).toBe(-1);
+  });
+
+  it('saw rises from 0 to +1 by half way, jumps to −1 and rises back to 0', () => {
+    expect(lfoShape('saw', 0)).toBeCloseTo(0);
+    expect(lfoShape('saw', 0.25)).toBeCloseTo(0.5);
+    expect(lfoShape('saw', 0.75)).toBeCloseTo(-0.5);
+  });
+});
+
+describe('lfoPhase: where in its cycle the LFO is, given its Rate over time', () => {
+  it('advances at the Rate', () => {
+    expect(lfoPhase([{ time: 0, rate: 2 }], 0.3)).toBeCloseTo(0.6);
+    expect(lfoPhase([{ time: 0, rate: 2 }], 1.3)).toBeCloseTo(0.6); // whole cycles wrap
+  });
+
+  it('stays continuous when the Rate changes (no jump), as a running oscillator does', () => {
+    const history = [
+      { time: 0, rate: 2 },
+      { time: 1, rate: 4 },
+    ];
+    expect(lfoPhase(history, 1)).toBeCloseTo(0); // 2 whole cycles
+    expect(lfoPhase(history, 1.1)).toBeCloseTo(0.4);
+  });
+
+  it('is at the start before the LFO runs', () => {
+    expect(lfoPhase([{ time: 5, rate: 2 }], 1)).toBe(0);
+  });
+});
+
+describe('glideFrequency: the pitch sliding between Notes', () => {
+  const slide = [
+    { time: 0, frequency: 220, glide: 0 },
+    { time: 1, frequency: 440, glide: 0.4 },
+  ];
+
+  it('jumps straight to a Note when Glide is off', () => {
+    expect(glideFrequency(slide, 0.5)).toBe(220);
+  });
+
+  it('slides from the previous pitch, nearly arriving (98%) by the Glide time', () => {
+    expect(glideFrequency(slide, 1)).toBeCloseTo(220);
+    const arrived = (glideFrequency(slide, 1.4) - 220) / (440 - 220);
+    expect(arrived).toBeCloseTo(1 - Math.exp(-4), 3);
+    expect(glideFrequency(slide, 3)).toBeCloseTo(440, 3);
+  });
+
+  it('starts a new slide from wherever the pitch has got to', () => {
+    const interrupted = [...slide, { time: 1.1, frequency: 110, glide: 0.4 }];
+    expect(glideFrequency(interrupted, 1.1)).toBeCloseTo(glideFrequency(slide, 1.1));
+  });
+});

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { harmonicSeries, type Waveform } from '../music/harmonics';
 import { defaultPatch, type Patch } from '../patch/patch';
 import { amplitudeToSpectrumDb } from '../viewers/spectrumScale';
-import { dB, rms, toneAmplitude, toneAmplitudeHann } from '../test/measure';
+import { dB, frequencyAround, rms, toneAmplitude, toneAmplitudeHann } from '../test/measure';
 import { createSynthEngine, OSCILLATOR_LEVEL } from './synthEngine';
 
 const SR = 48000;
@@ -139,7 +139,7 @@ describe('fundamental', () => {
     expect(engine.fundamental()).toBeCloseTo(440);
     engine.noteOn(57, 1, 0);
     expect(engine.fundamental()).toBeCloseTo(220);
-    engine.pitchChange(69, 0.1);
+    engine.pitchChange(69); // now, as live playing does: fundamental() reports what is sounding at this moment
     expect(engine.fundamental()).toBeCloseTo(440);
   });
 });
@@ -472,5 +472,79 @@ describe('Filter Modes and Slopes', () => {
       return dB(Math.max(...engine.filterResponse(scan)));
     };
     for (const r of [0.5, 0.8]) expect(Math.abs(peak(24, r) - peak(12, r)), `Resonance ${r}`).toBeLessThan(2);
+  });
+});
+
+describe('LFO (model-driven, ADR-0003)', () => {
+  const clean = { resonance: 0, ampSustain: 1, ampAttack: 0.001 } as const;
+  const window = (s: Float32Array, t: number, n = 2048) => s.subarray(Math.round(t * SR) - n / 2, Math.round(t * SR) + n / 2);
+
+  it('swings the Cutoff an octave each way at half Amount, at its Rate and in step with the model', async () => {
+    const lfo = { ...clean, cutoff: 1000, lfoAmount: 0.5, lfoRate: 1, lfoDestination: 'cutoff', lfoWaveform: 'sine' } as const;
+    let engine!: ReturnType<typeof createSynthEngine>;
+    const swung = await render(2.2, lfo, (e) => {
+      engine = e;
+      e.noteOn(45, 1, 0);
+    });
+    const open = await render(2.2, { ...clean, cutoff: 20000 }, (e) => e.noteOn(45, 1, 0));
+    const expected = (cutoff: number) => {
+      const twin = new OfflineAudioContext(1, 128, SR).createBiquadFilter();
+      twin.frequency.value = cutoff;
+      twin.Q.value = -3.01;
+      const mag = new Float32Array(1);
+      twin.getFrequencyResponse(Float32Array.of(1320), mag, new Float32Array(1));
+      return dB(mag[0]);
+    };
+    for (const [t, cutoff] of [[1.25, 2000], [1.75, 500]] as const) {
+      expect(engine.modulationAt(t).cutoff, `model at ${t} s`).toBeCloseTo(cutoff, -1);
+      const measured = dB(toneAmplitudeHann(window(swung, t), SR, 1320) / toneAmplitudeHann(window(open, t), SR, 1320));
+      expect(Math.abs(measured - expected(cutoff)), `sound at ${t} s`).toBeLessThan(0.7);
+    }
+  });
+
+  it('makes a vibrato of up to a semitone each way when aimed at the pitch', async () => {
+    const s = await render(1.6, { ...clean, cutoff: 20000, waveform: 'sine', lfoAmount: 1, lfoRate: 2, lfoDestination: 'pitch' }, (e) => e.noteOn(69, 1, 0));
+    expect(frequencyAround(s, SR, 1.125, 0.02) / 440).toBeCloseTo(2 ** (1 / 12), 2);
+    expect(frequencyAround(s, SR, 1.375, 0.02) / 440).toBeCloseTo(2 ** (-1 / 12), 2);
+  });
+
+  it('modulates Pulse Width, changing the Harmonic pattern (PWM)', async () => {
+    const s = await render(1.7, { ...clean, cutoff: 20000, waveform: 'pulse', pulseWidth: 0.5, lfoAmount: 1, lfoRate: 0.5, lfoDestination: 'pulseWidth' }, (e) =>
+      e.noteOn(57, 1, 0),
+    );
+    const h = (t: number, n: number) => toneAmplitudeHann(window(s, t, 4096), SR, 220 * n);
+    // Width 90% at t = 0.5 s: |sin(2π·0.9)|/2 ÷ |sin(π·0.9)| ≈ 0.95 → about −0.4 dB
+    expect(dB(h(0.5, 2) / h(0.5, 1))).toBeCloseTo(dB(Math.abs(Math.sin(2 * Math.PI * 0.9)) / 2 / Math.sin(Math.PI * 0.9)), 0);
+    // Width 50% at t = 1 s (a square): no even Harmonics
+    expect(dB(h(1, 2) / h(1, 1))).toBeLessThan(-15);
+  });
+});
+
+describe('Glide', () => {
+  it('slides the pitch to the new Note over the Glide time, as the model says, and Cycle Lock follows it', async () => {
+    const ctx = new OfflineAudioContext(1, SR, SR);
+    const engine = createSynthEngine(ctx);
+    engine.applyPatch({ ...defaultPatch(), cutoff: 20000, waveform: 'sine', glide: 0.4, ampSustain: 1, ampAttack: 0.001 });
+    engine.noteOn(57, 1, 0); // 220 Hz
+    engine.noteOn(69, 1, 0.5); // to 440 Hz
+    let followed = 0;
+    const midSlide = ctx.suspend(0.6).then(() => {
+      followed = engine.fundamental();
+      void ctx.resume();
+    });
+    const s = (await ctx.startRendering()).getChannelData(0);
+    await midSlide;
+    const model = 440 + (220 - 440) * Math.exp(-1); // 0.1 s into a 0.4 s Glide
+    expect(frequencyAround(s, SR, 0.6, 0.012) / model).toBeCloseTo(1, 1);
+    expect(followed / model).toBeCloseTo(1, 2);
+    expect(frequencyAround(s, SR, 0.25, 0.02)).toBeCloseTo(220, 0); // the first Note does not glide in
+  });
+
+  it('jumps straight to the new Note when Glide is off', async () => {
+    const s = await render(1, { cutoff: 20000, waveform: 'sine', ampSustain: 1, ampAttack: 0.001 }, (e) => {
+      e.noteOn(57, 1, 0);
+      e.noteOn(69, 1, 0.5);
+    });
+    expect(frequencyAround(s, SR, 0.53, 0.02)).toBeCloseTo(440, 0);
   });
 });

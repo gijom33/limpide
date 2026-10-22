@@ -33,3 +33,20 @@ describe('Effective Cutoff with the Filter Envelope', () => {
     expect(effectiveCutoff({ ...patch, cutoff: 8000, filterEnvAmount: 5 }, 1)).toBe(20000);
   });
 });
+
+describe('Effective Cutoff with the LFO', () => {
+  const patch = { ...defaultPatch(), cutoff: 1000, lfoAmount: 0.5, lfoDestination: 'cutoff' as const };
+
+  it('swings up to two octaves either way at full Amount (one octave at half)', () => {
+    expect(effectiveCutoff(patch, 0, 1)).toBeCloseTo(2000);
+    expect(effectiveCutoff(patch, 0, -1)).toBeCloseTo(500);
+  });
+
+  it('adds to the Filter Envelope, in octaves', () => {
+    expect(effectiveCutoff({ ...patch, filterEnvAmount: 1 }, 1, 1)).toBeCloseTo(4000);
+  });
+
+  it('leaves the Cutoff alone when the LFO is aimed elsewhere', () => {
+    expect(effectiveCutoff({ ...patch, lfoDestination: 'pitch' }, 0, 1)).toBe(1000);
+  });
+});

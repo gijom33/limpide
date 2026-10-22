@@ -42,3 +42,14 @@ export function toneAmplitudeHann(samples: Float32Array, sampleRate: number, fre
   }
   return (2 * Math.hypot(re, im)) / gain;
 }
+
+/** Frequency from the rising zero crossings (interpolated) in a window centred on `time`; for clean tones. */
+export function frequencyAround(samples: Float32Array, sampleRate: number, time: number, windowSeconds: number): number {
+  const from = Math.round((time - windowSeconds / 2) * sampleRate);
+  const to = Math.round((time + windowSeconds / 2) * sampleRate);
+  const crossings: number[] = [];
+  for (let i = from + 1; i < to; i++) {
+    if (samples[i - 1] <= 0 && samples[i] > 0) crossings.push(i - 1 + samples[i - 1] / (samples[i - 1] - samples[i]));
+  }
+  return ((crossings.length - 1) * sampleRate) / (crossings[crossings.length - 1] - crossings[0]);
+}

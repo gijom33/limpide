@@ -1,3 +1,4 @@
+import type { LfoWaveform } from '../modulation/lfo';
 import type { Waveform } from '../music/harmonics';
 import type { Range } from './taper';
 
@@ -21,6 +22,9 @@ export type ParamId =
   | 'mixOsc1'
   | 'mixOsc2'
   | 'mixNoise'
+  | 'lfoRate'
+  | 'lfoAmount'
+  | 'glide'
   | 'cutoff'
   | 'resonance'
   | 'filterEnvAmount'
@@ -35,13 +39,19 @@ export type ParamId =
 
 export type FilterMode = 'lowpass' | 'highpass' | 'bandpass' | 'notch';
 export type FilterSlope = 12 | 24;
+export type LfoDestination = 'cutoff' | 'pitch' | 'pulseWidth';
 
 export type Patch = Record<ParamId, number> & {
   waveform: Waveform;
   osc2Waveform: Waveform;
   filterMode: FilterMode;
   filterSlope: FilterSlope;
+  lfoWaveform: LfoWaveform;
+  lfoDestination: LfoDestination;
 };
+
+/** Glide at its minimum is off: Notes change pitch at once. */
+export const GLIDE_OFF = 0.001;
 
 const level = (id: ParamId, label: string, dflt: number): ParamDef => ({
   id, label, unit: '%', min: 0, max: 1, taper: 'linear', default: dflt,
@@ -60,6 +70,9 @@ export const PARAMS: Record<ParamId, ParamDef> = {
   mixOsc1: level('mixOsc1', 'Osc 1', 1),
   mixOsc2: level('mixOsc2', 'Osc 2', 0),
   mixNoise: level('mixNoise', 'Noise', 0),
+  lfoRate: { id: 'lfoRate', label: 'Rate', unit: 'Hz', min: 0.05, max: 20, taper: 'log', default: 2 },
+  lfoAmount: level('lfoAmount', 'Amount', 0),
+  glide: time('glide', 'Glide', GLIDE_OFF),
   cutoff: { id: 'cutoff', label: 'Cutoff', unit: 'Hz', min: 20, max: 20000, taper: 'log', default: 2000 },
   resonance: { id: 'resonance', label: 'Resonance', unit: '%', min: 0, max: 1, taper: 'linear', default: 0.2 },
   filterEnvAmount: { id: 'filterEnvAmount', label: 'Amount', unit: 'oct', min: -5, max: 5, taper: 'linear', default: 0 },
@@ -75,11 +88,23 @@ export const PARAMS: Record<ParamId, ParamDef> = {
 
 export function defaultPatch(): Patch {
   const params = Object.fromEntries(Object.values(PARAMS).map((d) => [d.id, d.default])) as Record<ParamId, number>;
-  return { ...params, waveform: 'saw', osc2Waveform: 'saw', filterMode: 'lowpass', filterSlope: 12 };
+  return {
+    ...params,
+    waveform: 'saw',
+    osc2Waveform: 'saw',
+    filterMode: 'lowpass',
+    filterSlope: 12,
+    lfoWaveform: 'sine',
+    lfoDestination: 'cutoff',
+  };
 }
 
 export function setFilter(patch: Patch, { mode, slope }: { mode?: FilterMode; slope?: FilterSlope }): Patch {
   return { ...patch, filterMode: mode ?? patch.filterMode, filterSlope: slope ?? patch.filterSlope };
+}
+
+export function setLfo(patch: Patch, { waveform, destination }: { waveform?: LfoWaveform; destination?: LfoDestination }): Patch {
+  return { ...patch, lfoWaveform: waveform ?? patch.lfoWaveform, lfoDestination: destination ?? patch.lfoDestination };
 }
 
 export function setWaveform(patch: Patch, waveform: Waveform, oscillator: 'osc1' | 'osc2' = 'osc1'): Patch {
@@ -96,8 +121,10 @@ export function setParam(patch: Patch, id: ParamId, value: number): Patch {
 export function formatParam(id: ParamId, value: number): string {
   switch (PARAMS[id].unit) {
     case 'Hz':
-      return value >= 1000 ? `${(value / 1000).toFixed(2)} kHz` : `${Math.round(value)} Hz`;
+      if (value >= 1000) return `${(value / 1000).toFixed(2)} kHz`;
+      return value < 10 ? `${value.toFixed(2)} Hz` : `${Math.round(value)} Hz`;
     case 's':
+      if (id === 'glide' && value <= GLIDE_OFF * 1.001) return 'Off';
       return value >= 1 ? `${value.toFixed(2)} s` : `${(value * 1000).toPrecision(3)} ms`;
     case '%':
       return `${Math.round(value * 100)} %`;
