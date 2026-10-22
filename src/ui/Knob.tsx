@@ -1,10 +1,20 @@
-import { useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import { formatParam, PARAMS, type ParamId } from '../patch/patch';
 import { positionToValue, valueToPosition } from '../patch/taper';
 import { useLearnable } from './learn';
 
 const DRAG_PIXELS_FOR_FULL_TRAVEL = 200;
 const SWEEP_DEGREES = 270;
+/** Readouts sampled across a knob's travel to find the widest it can show. */
+const WIDTH_SAMPLES = 128;
+
+/** The longest readouts a Parameter can show, so its knob can reserve their width and never change size. */
+function widestReadouts(id: ParamId): string[] {
+  const def = PARAMS[id];
+  const values = [def.default, ...Array.from({ length: WIDTH_SAMPLES + 1 }, (_, i) => positionToValue(def, i / WIDTH_SAMPLES))];
+  const all = new Set(values.map((v) => formatParam(id, v)));
+  return [...all].sort((a, b) => b.length - a.length).slice(0, 4);
+}
 
 interface Props {
   id: ParamId;
@@ -21,6 +31,7 @@ export function Knob({ id, value, onChange, inactive }: Props) {
   const drag = useRef<{ y: number; position: number } | null>(null);
   const setPosition = (p: number) => onChange(positionToValue(def, p));
   const learnable = useLearnable({ kind: 'param', id });
+  const widest = useMemo(() => widestReadouts(id), [id]);
 
   return (
     <div className="knob" data-inactive={inactive || undefined} {...learnable}>
@@ -59,7 +70,14 @@ export function Knob({ id, value, onChange, inactive }: Props) {
         }}
       />
       <div className="knob-label">{def.label}</div>
-      <div className="knob-value">{formatParam(id, value)}</div>
+      <div className="knob-value">
+        <span>{formatParam(id, value)}</span>
+        {widest.map((text) => (
+          <span key={text} className="knob-value-sizer" aria-hidden="true">
+            {text}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
