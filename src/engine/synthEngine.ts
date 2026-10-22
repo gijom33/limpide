@@ -1,6 +1,6 @@
 import { envelopeLevel, envelopeSchedule, type Adsr, type AutomationStep, type GateEvent } from '../modulation/envelope';
 import { glideFrequency, glideTimeConstant, lfoPhase, lfoShape, type LfoWaveform } from '../modulation/lfo';
-import { effectiveCutoff, LFO_CUTOFF_OCTAVES, LFO_PITCH_CENTS, LFO_PULSE_WIDTH } from '../modulation/modulationModel';
+import { effectiveCutoff, LFO_CUTOFF_OCTAVES, LFO_PITCH_CENTS, LFO_PULSE_WIDTH, VELOCITY_CUTOFF_OCTAVES } from '../modulation/modulationModel';
 import { filterStages, type Stage } from './filterDesign';
 import { harmonicSeries } from '../music/harmonics';
 import { noteToFrequency } from '../music/pitch';
@@ -189,6 +189,16 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   envelopeAmount.connect(filter2.detune);
   filterEnvelope.start();
 
+  // Velocity → Cutoff, the same way: the Note's Velocity (held until the next Note) times the amount, in cents.
+  const noteVelocity = ctx.createConstantSource();
+  noteVelocity.offset.value = 0;
+  const velocityAmount = ctx.createGain();
+  velocityAmount.gain.value = 0;
+  noteVelocity.connect(velocityAmount);
+  velocityAmount.connect(filter.detune);
+  velocityAmount.connect(filter2.detune);
+  noteVelocity.start();
+
   mixer.connect(filter).connect(filter2).connect(amp).connect(master).connect(safetyIn);
   safetyOut.connect(ctx.destination);
   // Taps are side branches, so observing never alters the sound.
@@ -302,11 +312,14 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     const filterLevel = envelopeLevel(filterEvents, t);
     const then = patchAt(t);
     const lfoValue = then ? lfoShape(then.lfoWaveform, lfoPhase(lfoRates(), t)) : 0;
+    // The latest Note's Velocity (the Amp Envelope's peak), which stays in force until the next Note.
+    let velocity = 0;
+    for (const e of ampEvents) if (e.on && e.time <= t) velocity = e.peak;
     return {
       amp: envelopeLevel(ampEvents, t),
       filter: filterLevel,
       lfo: lfoValue,
-      cutoff: then ? effectiveCutoff(then, filterLevel, lfoValue) : 0,
+      cutoff: then ? effectiveCutoff(then, filterLevel, lfoValue, velocity) : 0,
       mode: then?.filterMode ?? 'lowpass',
       bandwidth: then ? bandwidthOctaves(filterStages(then.filterMode, then.filterSlope, then.resonance)[0].Q) : 1,
     };
@@ -359,10 +372,12 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       [filter, filter2].forEach((node, i) => setStage(node, stages[i], cutoff, t));
       twins.forEach((node, i) => setStage(node, stages[i], cutoff));
       envelopeAmount.gain.setValueAtTime(next.filterEnvAmount * 1200, t);
+      velocityAmount.gain.setValueAtTime(next.velocityCutoff * VELOCITY_CUTOFF_OCTAVES * 1200, t);
     },
 
     noteOn(note, velocity, time) {
       const t = at(time);
+      noteVelocity.offset.setValueAtTime(velocity, t);
       setPitch(note, t);
       gate(true, t, velocity);
     },

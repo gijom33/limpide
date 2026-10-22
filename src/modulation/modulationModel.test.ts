@@ -50,3 +50,20 @@ describe('Effective Cutoff with the LFO', () => {
     expect(effectiveCutoff({ ...patch, lfoDestination: 'pitch' }, 0, 1)).toBe(1000);
   });
 });
+
+describe('Effective Cutoff with Velocity', () => {
+  const patch = { ...defaultPatch(), cutoff: 500, velocityCutoff: 0.5 };
+
+  it('opens the Filter by up to two octaves for the hardest hit (one octave at half amount)', () => {
+    expect(effectiveCutoff(patch, 0, 0, 1)).toBeCloseTo(1000);
+    expect(effectiveCutoff({ ...patch, velocityCutoff: 1 }, 0, 0, 1)).toBeCloseTo(2000);
+  });
+
+  it('opens it less for softer hits', () => {
+    expect(effectiveCutoff({ ...patch, velocityCutoff: 1 }, 0, 0, 0.5)).toBeCloseTo(1000);
+  });
+
+  it('changes nothing while the amount is zero (the default)', () => {
+    expect(effectiveCutoff(defaultPatch(), 0, 0, 1)).toBe(defaultPatch().cutoff);
+  });
+});

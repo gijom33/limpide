@@ -117,7 +117,7 @@ A mode that keeps the Gate on indefinitely so the sound sustains while you adjus
 _Avoid_: Drone, latch, sustain (Sustain is an Envelope stage)
 
 **Velocity**:
-How hard a Note was struck (0–1). It scales the Amp level and, optionally, the Effective Cutoff.
+How hard a Note was struck (0–1): from MIDI, from how low you press an on-screen piano key, or full for the computer keyboard. It scales the Amp level and, by the **Velocity → Cutoff** amount, the Effective Cutoff.
 _Avoid_: Intensity, force
 
 ### Seeing

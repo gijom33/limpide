@@ -362,3 +362,31 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 @media (max-width: 860px) {
   .timeline-body { flex-direction: column; }
 }
+
+/* The on-screen piano: the computer keyboard's 17 keys, lit while sounding. */
+.keyboard { display: flex; align-items: center; gap: 4px; }
+.piano { position: relative; display: flex; height: 40px; touch-action: none; user-select: none; -webkit-user-select: none; }
+.piano button {
+  position: relative; width: 20px; height: 40px; margin: 0; padding: 0 0 3px; display: flex; align-items: flex-end; justify-content: center;
+  font: inherit; font-size: 9px; color: var(--muted); cursor: pointer;
+  background: var(--dial-hi); border: 1px solid var(--border); border-radius: 0 0 4px 4px;
+}
+.piano button[data-black] {
+  z-index: 1; width: 14px; height: 25px; margin: 0 -7px; color: var(--muted);
+  background: var(--bg); border-color: var(--border);
+}
+.piano button[aria-pressed='true'] { background: var(--stage-osc); color: var(--bg); border-color: var(--stage-osc); }
+.piano button span { pointer-events: none; }
+
+.midi-status {
+  display: inline-flex; align-items: center; gap: 6px; height: var(--control-h); padding: 0 10px; font-size: 12px; color: var(--muted);
+  border: 1px solid var(--border); border-radius: var(--control-radius); cursor: default;
+}
+.midi-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); }
+.midi-status[data-connected] { color: var(--text); }
+.midi-status[data-connected] .midi-dot { background: var(--stage-osc); }
+.midi-count { font-variant-numeric: tabular-nums; }
+
+/* Playing controls at the bottom, where a synth keeps its keyboard: the piano, then Hold and MIDI beneath. */
+.play-controls { display: grid; grid-template-columns: auto auto; gap: 6px 8px; align-content: center; flex: none; }
+.play-controls > .keyboard { grid-column: 1 / -1; }

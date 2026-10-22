@@ -6,6 +6,8 @@ export interface AudioSession {
   ctx: AudioContext;
   engine: SynthEngine;
   input: NoteInput;
+  /** Be told which Notes are held (from any source), e.g. to light the on-screen piano. */
+  onHeld(listener: (notes: number[]) => void): () => void;
 }
 
 let session: AudioSession | undefined;
@@ -20,11 +22,23 @@ export function getAudioSession(patch: Patch): AudioSession {
   const ctx = new AudioContext({ latencyHint: 'interactive' });
   const engine = createSynthEngine(ctx);
   engine.applyPatch(patch);
-  const input = createNoteInput((event) => {
-    if (event.type === 'noteOn') engine.noteOn(event.note, event.velocity);
-    else if (event.type === 'pitchChange') engine.pitchChange(event.note);
-    else engine.noteOff();
-  });
-  session = { ctx, engine, input };
+  const listeners = new Set<(notes: number[]) => void>();
+  const input = createNoteInput(
+    (event) => {
+      if (event.type === 'noteOn') engine.noteOn(event.note, event.velocity);
+      else if (event.type === 'pitchChange') engine.pitchChange(event.note);
+      else engine.noteOff();
+    },
+    (notes) => listeners.forEach((l) => l(notes)),
+  );
+  session = {
+    ctx,
+    engine,
+    input,
+    onHeld(listener) {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+  };
   return session;
 }

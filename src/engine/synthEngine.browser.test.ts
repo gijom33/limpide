@@ -548,3 +548,33 @@ describe('Glide', () => {
     expect(frequencyAround(s, SR, 0.53, 0.02)).toBeCloseTo(440, 0);
   });
 });
+
+describe('Velocity → Cutoff', () => {
+  it('opens the Filter for harder hits, and the sound follows the model', async () => {
+    const harmonics = Float32Array.from({ length: 20 }, (_, i) => 110 * (i + 1));
+    for (const velocity of [0.5, 1]) {
+      const ctx = new OfflineAudioContext(1, SR, SR);
+      const engine = createSynthEngine(ctx);
+      engine.applyPatch({ ...defaultPatch(), cutoff: 300, resonance: 0, velocityCutoff: 1, ampSustain: 1, ampAttack: 0.001 });
+      engine.noteOn(45, velocity, 0);
+      const frame = ctx.suspend(0.5).then(() => {
+        const read = (a: AnalyserNode) => {
+          const s = new Float32Array(a.fftSize);
+          a.getFloatTimeDomainData(s);
+          return s;
+        };
+        const out = { osc: read(engine.taps.oscillator), filter: read(engine.taps.filter), curve: engine.filterResponse(harmonics), cutoff: engine.modulationAt(0.5).cutoff };
+        void ctx.resume();
+        return out;
+      });
+      await ctx.startRendering();
+      const { osc, filter, curve, cutoff } = await frame;
+      expect(cutoff, `velocity ${velocity}`).toBeCloseTo(300 * 2 ** (2 * velocity), -1);
+      for (let i = 0; i < harmonics.length; i++) {
+        if (dB(curve[i]) < -40) continue;
+        const measured = dB(toneAmplitudeHann(filter, SR, harmonics[i]) / toneAmplitudeHann(osc, SR, harmonics[i]));
+        expect(Math.abs(measured - dB(curve[i])), `${harmonics[i]} Hz at velocity ${velocity}`).toBeLessThan(0.5);
+      }
+    }
+  });
+});

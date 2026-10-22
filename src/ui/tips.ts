@@ -28,8 +28,13 @@ export const TIPS = {
   },
   keyboard: {
     title: 'Playing',
-    body: 'Your computer keyboard is a piano: A S D F G H J K are the white keys from C, W E T Y U the black keys.',
-    how: 'Sound starts with your first key press. Hold a key to hear the Envelope sustain.',
+    body: 'Your computer keyboard is a piano: the letters on these keys. Z and X shift the octave. Or click the keys: lower on a key plays harder.',
+    how: 'Sound starts with your first key press. Drag across the keys to slide from Note to Note.',
+  },
+  midi: { title: 'MIDI', body: '' },
+  velocityCutoff: {
+    title: 'Velocity → Cutoff',
+    body: 'How much harder hits open the Filter: up to two octaves for the hardest. Velocity comes from MIDI pads and keys, or from where you click on a piano key.',
   },
   hold: {
     title: 'Hold',

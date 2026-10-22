@@ -25,6 +25,7 @@ export type ParamId =
   | 'lfoRate'
   | 'lfoAmount'
   | 'glide'
+  | 'velocityCutoff'
   | 'cutoff'
   | 'resonance'
   | 'filterEnvAmount'
@@ -73,6 +74,7 @@ export const PARAMS: Record<ParamId, ParamDef> = {
   lfoRate: { id: 'lfoRate', label: 'Rate', unit: 'Hz', min: 0.05, max: 20, taper: 'log', default: 2 },
   lfoAmount: level('lfoAmount', 'Depth', 0),
   glide: time('glide', 'Glide', GLIDE_OFF),
+  velocityCutoff: level('velocityCutoff', 'Velocity', 0),
   cutoff: { id: 'cutoff', label: 'Cutoff', unit: 'Hz', min: 20, max: 20000, taper: 'log', default: 2000 },
   resonance: { id: 'resonance', label: 'Resonance', unit: '%', min: 0, max: 1, taper: 'linear', default: 0.2 },
   filterEnvAmount: { id: 'filterEnvAmount', label: 'Amount', unit: 'oct', min: -5, max: 5, taper: 'linear', default: 0 },

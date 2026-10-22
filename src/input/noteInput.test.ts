@@ -110,3 +110,24 @@ describe('Hold', () => {
     expect(events.at(-1)).toEqual({ type: 'pitchChange', note: 60 });
   });
 });
+
+describe('several Note sources at once (computer keyboard, piano, MIDI)', () => {
+  it('keeps a Note sounding until every source holding it lets go', () => {
+    const { input, events } = setup();
+    input.press(60, 1); // computer keyboard
+    input.press(60, 0.7); // the same Note on a MIDI pad
+    input.release(60); // the pad lets go
+    expect(events.at(-1)).toEqual({ type: 'noteOn', note: 60, velocity: 1 });
+    input.release(60); // the key lets go
+    expect(events.at(-1)).toEqual({ type: 'noteOff' });
+  });
+
+  it('reports which Notes are held, for the on-screen piano to light up', () => {
+    const held: number[][] = [];
+    const input = createNoteInput(() => {}, (notes) => held.push(notes));
+    input.press(60, 1);
+    input.press(64, 1);
+    input.release(60);
+    expect(held).toEqual([[60], [60, 64], [64]]);
+  });
+});

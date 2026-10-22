@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { getAudioSession, type AudioSession } from '../app/session';
 import { unlockAudio, type AudioStatus } from '../app/unlockAudio';
-import { keyToNote } from '../input/keyboardLayout';
+import { keyToNote, octaveKey, shiftOctave } from '../input/keyboardLayout';
+import { connectMidi, midiSupport, type MidiAccessLike } from '../midi/inputs';
 import { OSCILLATOR_LEVEL } from '../engine/synthEngine';
 import { harmonicSeries } from '../music/harmonics';
 import { defaultPatch, setFilter, setParam, setWaveform, type ParamId, type Patch } from '../patch/patch';
@@ -18,6 +19,8 @@ import { ToolGroup } from './ToolGroup';
 import { FilterShape } from './FilterShape';
 import { SubBlock } from './SubBlock';
 import { LfoControls } from './LfoControls';
+import { MidiStatus, type MidiState } from './MidiStatus';
+import { Piano } from './Piano';
 import { Tabs } from './Tabs';
 import { Tooltip, type TipContent } from './Tooltip';
 import { AxesControls, ViewActions } from './ViewerControls';
@@ -25,7 +28,6 @@ import { EnvelopeTimeline } from './EnvelopeTimeline';
 import { applyTheme, loadTheme } from './theme';
 import { WaveformPicker } from './WaveformPicker';
 
-const KEYBOARD_OCTAVE = 4;
 const IDEAL_HARMONICS = 256;
 
 interface BlockProps {
@@ -39,11 +41,13 @@ interface BlockProps {
   more?: React.ReactNode;
   /** Controls on the heading line (e.g. the Filter Mode and Slope). */
   heading?: React.ReactNode;
+  /** Controls after the main knobs, on the same row. */
+  extra?: React.ReactNode;
   viewers?: React.ReactNode;
 }
 
 /** One stage of the signal-flow diagram: its controls on top, its Tap's Viewers below. */
-function Block({ title, stage, ids, patch, onChange, children, more, heading, viewers }: BlockProps) {
+function Block({ title, stage, ids, patch, onChange, children, more, heading, extra, viewers }: BlockProps) {
   return (
     <section className="block" data-stage={stage} aria-label={title}>
       <div className="block-controls">
@@ -54,6 +58,7 @@ function Block({ title, stage, ids, patch, onChange, children, more, heading, vi
           {ids.map((id) => (
             <Knob key={id} id={id} value={patch[id]} onChange={(v) => onChange(id, v)} />
           ))}
+          {extra}
         </div>
         {more}
       </div>
@@ -73,7 +78,37 @@ export function App() {
 
   // Sound starts on the first key press, click or drag; there is no button to press first.
   useEffect(() => unlockAudio(session.ctx, window, setAudioStatus), [session]);
-  const held = useRef(new Set<number>());
+  const [octave, setOctave] = useState(4);
+  const octaveRef = useRef(octave);
+  octaveRef.current = octave;
+  const [heldNotes, setHeldNotes] = useState<number[]>([]);
+  const [midi, setMidi] = useState<MidiState>({ kind: 'pending' });
+
+  useEffect(() => session.onHeld(setHeldNotes), [session]);
+
+  // MIDI Controllers: their Notes join the same Note input as the keyboard and piano.
+  useEffect(() => {
+    if (midiSupport(navigator) === 'unsupported') return setMidi({ kind: 'unsupported' });
+    let dispose = () => {};
+    let cancelled = false;
+    navigator.requestMIDIAccess().then(
+      (access) => {
+        if (cancelled) return;
+        dispose = connectMidi(access as unknown as MidiAccessLike, {
+          onMessage: (m) => {
+            if (m.type === 'noteOn') session.input.press(m.note, m.velocity);
+            else if (m.type === 'noteOff') session.input.release(m.note);
+          },
+          onDevices: (devices) => setMidi({ kind: 'ready', devices }),
+        });
+      },
+      () => setMidi({ kind: 'denied' }),
+    );
+    return () => {
+      cancelled = true;
+      dispose();
+    };
+  }, [session]);
   const [theme, setTheme] = useState(loadTheme);
   const [cycles, setCycles] = useState<ViewSettings['cycles']>(2);
   const [overlays, setOverlays] = useState(() => loadOverlays(localStorage));
@@ -120,22 +155,27 @@ export function App() {
   useEffect(() => {
     const { input } = session;
     const isTyping = (e: KeyboardEvent) => e.target instanceof HTMLInputElement || e.metaKey || e.ctrlKey || e.altKey;
+    // The Note each key started, so a key released after an octave shift still releases its own Note.
+    const keyNotes = new Map<string, number>();
 
     const down = (e: KeyboardEvent) => {
-      const note = keyToNote(e.code, KEYBOARD_OCTAVE);
-      if (note === undefined || e.repeat || isTyping(e)) return;
-      held.current.add(note);
+      if (e.repeat || isTyping(e)) return;
+      const shift = octaveKey(e.code);
+      if (shift) return setOctave((o) => shiftOctave(o, shift));
+      const note = keyToNote(e.code, octaveRef.current);
+      if (note === undefined) return;
+      keyNotes.set(e.code, note);
       input.press(note, 1);
     };
     const up = (e: KeyboardEvent) => {
-      const note = keyToNote(e.code, KEYBOARD_OCTAVE);
+      const note = keyNotes.get(e.code);
       if (note === undefined) return;
-      held.current.delete(note);
+      keyNotes.delete(e.code);
       input.release(note);
     };
     const releaseAll = () => {
-      for (const note of held.current) input.release(note);
-      held.current.clear();
+      for (const note of keyNotes.values()) input.release(note);
+      keyNotes.clear();
     };
 
     window.addEventListener('keydown', down);
@@ -149,6 +189,29 @@ export function App() {
   }, [session]);
 
   const change = (id: ParamId, value: number) => setPatch((p) => setParam(p, id, value));
+
+  const playControls = (
+    <div className="play-controls" role="group" aria-label="Play">
+      <div className="keyboard">
+        <button type="button" className="tool tool-icon" aria-label="Octave down" onClick={() => setOctave((o) => shiftOctave(o, -1))}>
+          −
+        </button>
+        <Tooltip content={TIPS.keyboard}>
+          <Piano octave={octave} held={heldNotes} input={session.input} />
+        </Tooltip>
+        <button type="button" className="tool tool-icon" aria-label="Octave up" onClick={() => setOctave((o) => shiftOctave(o, 1))}>
+          +
+        </button>
+      </div>
+      <Tooltip content={TIPS.hold}>
+        <button type="button" className="tool" aria-pressed={hold} onClick={() => setHold((h) => !h)}>
+          Hold
+        </button>
+      </Tooltip>
+      <MidiStatus state={midi} />
+    </div>
+  );
+
 
   const viewers = (
     tap: keyof AudioSession['engine']['taps'],
@@ -179,16 +242,7 @@ export function App() {
             Synth<span className="wordmark-view">View</span>
           </span>
         </h1>
-        <Tooltip content={TIPS.keyboard}>
-          <p className="hint has-tip">
-            Play <kbd>A</kbd>–<kbd>K</kbd>
-          </p>
-        </Tooltip>
-        <Tooltip content={TIPS.hold}>
-          <button type="button" className="tool" aria-pressed={hold} onClick={() => setHold((h) => !h)}>
-            Hold
-          </button>
-        </Tooltip>
+
         <section className="toolbar" aria-label="Viewer controls">
           <div className="toolbar-groups">
             <ToolGroup title="View">
@@ -298,6 +352,11 @@ export function App() {
           title="Filter"
           stage="filter"
           ids={['cutoff', 'resonance']}
+          extra={
+            <Tooltip content={TIPS.velocityCutoff}>
+              <Knob id="velocityCutoff" value={patch.velocityCutoff} onChange={(v) => change('velocityCutoff', v)} />
+            </Tooltip>
+          }
           patch={patch}
           onChange={change}
           heading={<FilterShape mode={patch.filterMode} slope={patch.filterSlope} onChange={(c) => setPatch((p) => setFilter(p, c))} />}
@@ -332,7 +391,12 @@ export function App() {
       <EnvelopeTimeline
         engine={session.engine}
         view={view}
-        controls={<LfoControls patch={patch} onParam={change} onPatch={setPatch} />}
+        controls={
+          <>
+            {playControls}
+            <LfoControls patch={patch} onParam={change} onPatch={setPatch} />
+          </>
+        }
       />
     </main>
   );
