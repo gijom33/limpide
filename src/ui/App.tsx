@@ -10,6 +10,7 @@ const KEYBOARD_OCTAVE = 4;
 
 interface BlockProps {
   title: string;
+  stage: 'osc' | 'filter' | 'amp';
   ids: ParamId[];
   patch: Patch;
   onChange(id: ParamId, v: number): void;
@@ -18,9 +19,9 @@ interface BlockProps {
 }
 
 /** One stage of the signal-flow diagram: its controls on top, its Tap's Viewers below. */
-function Block({ title, ids, patch, onChange, children, viewers }: BlockProps) {
+function Block({ title, stage, ids, patch, onChange, children, viewers }: BlockProps) {
   return (
-    <section className="block" aria-label={title}>
+    <section className="block" data-stage={stage} aria-label={title}>
       <h2>{title}</h2>
       <div className="knobs">
         {children}
@@ -101,6 +102,7 @@ export function App() {
       <div className="chain">
         <Block
           title="Oscillator"
+          stage="osc"
           ids={[]}
           patch={patch}
           onChange={change}
@@ -110,9 +112,10 @@ export function App() {
         >
           <p className="fixed">Saw</p>
         </Block>
-        <Block title="Filter" ids={['cutoff', 'resonance']} patch={patch} onChange={change} viewers={viewers('filter', 'Filter')} />
+        <Block title="Filter" stage="filter" ids={['cutoff', 'resonance']} patch={patch} onChange={change} viewers={viewers('filter', 'Filter')} />
         <Block
           title="Amp"
+          stage="amp"
           ids={['ampAttack', 'ampDecay', 'ampSustain', 'ampRelease']}
           patch={patch}
           onChange={change}
