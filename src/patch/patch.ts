@@ -33,7 +33,15 @@ export type ParamId =
   | 'ampSustain'
   | 'ampRelease';
 
-export type Patch = Record<ParamId, number> & { waveform: Waveform; osc2Waveform: Waveform };
+export type FilterMode = 'lowpass' | 'highpass' | 'bandpass' | 'notch';
+export type FilterSlope = 12 | 24;
+
+export type Patch = Record<ParamId, number> & {
+  waveform: Waveform;
+  osc2Waveform: Waveform;
+  filterMode: FilterMode;
+  filterSlope: FilterSlope;
+};
 
 const level = (id: ParamId, label: string, dflt: number): ParamDef => ({
   id, label, unit: '%', min: 0, max: 1, taper: 'linear', default: dflt,
@@ -67,7 +75,11 @@ export const PARAMS: Record<ParamId, ParamDef> = {
 
 export function defaultPatch(): Patch {
   const params = Object.fromEntries(Object.values(PARAMS).map((d) => [d.id, d.default])) as Record<ParamId, number>;
-  return { ...params, waveform: 'saw', osc2Waveform: 'saw' };
+  return { ...params, waveform: 'saw', osc2Waveform: 'saw', filterMode: 'lowpass', filterSlope: 12 };
+}
+
+export function setFilter(patch: Patch, { mode, slope }: { mode?: FilterMode; slope?: FilterSlope }): Patch {
+  return { ...patch, filterMode: mode ?? patch.filterMode, filterSlope: slope ?? patch.filterSlope };
 }
 
 export function setWaveform(patch: Patch, waveform: Waveform, oscillator: 'osc1' | 'osc2' = 'osc1'): Patch {

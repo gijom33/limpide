@@ -1,5 +1,6 @@
 import { envelopeLevel, envelopeSchedule, type Adsr, type AutomationStep, type GateEvent } from '../modulation/envelope';
 import { effectiveCutoff } from '../modulation/modulationModel';
+import { filterStages, type Stage } from './filterDesign';
 import { harmonicSeries } from '../music/harmonics';
 import { noteToFrequency } from '../music/pitch';
 import type { Patch } from '../patch/patch';
@@ -48,9 +49,6 @@ export const OSCILLATOR_LEVEL = 0.5;
 // and Cutoffs at full Resonance); 0.45 keeps that under full scale at the output (about 0.83).
 const MASTER_LEVEL = 0.45;
 
-// Web Audio interprets a low-pass biquad's Q in dB: −3 dB is a flat Butterworth response.
-const resonanceToQdB = (resonance: number) => -3.01 + resonance * 27;
-
 const SAFETY_RANGE = 4;
 const SAFETY_KNEE = 0.8;
 
@@ -91,6 +89,15 @@ function createAnalyser(ctx: BaseAudioContext): AnalyserNode {
   return analyser;
 }
 
+/** Set a biquad to a stage: scheduled at `t` for the playing filter, immediately (no `t`) for a twin. */
+function setStage(node: BiquadFilterNode, stage: Stage, cutoff: number, t?: number) {
+  node.type = stage.type;
+  for (const [param, value] of [[node.frequency, cutoff], [node.Q, stage.Q], [node.gain, stage.gain]] as const) {
+    if (t === undefined) param.value = value;
+    else param.setValueAtTime(value, t);
+  }
+}
+
 function play(param: AudioParam, steps: AutomationStep[], scale = 1) {
   for (const s of steps) {
     if (s.kind === 'cancelAndHold') param.cancelAndHoldAtTime(s.time);
@@ -118,12 +125,12 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   osc.connect(mix1).connect(mixer);
   osc2.connect(mix2).connect(mixer);
   noise.connect(mixNoise).connect(mixer);
+  // Two stages: the second is transparent at 12 dB and doubles the Slope at 24 dB (filterStages).
   const filter = ctx.createBiquadFilter();
-  filter.type = 'lowpass';
+  const filter2 = ctx.createBiquadFilter();
   // Never connected: a twin of the Filter set from the Modulation model, so the Response Curve shows the
   // Effective Cutoff even while the real Filter is being automated (ADR-0003).
-  const responseTwin = ctx.createBiquadFilter();
-  responseTwin.type = 'lowpass';
+  const twins = [ctx.createBiquadFilter(), ctx.createBiquadFilter()];
   const amp = ctx.createGain();
   amp.gain.value = 0;
   const master = ctx.createGain();
@@ -145,14 +152,16 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   filterEnvelope.offset.value = 0;
   const envelopeAmount = ctx.createGain();
   envelopeAmount.gain.value = 0;
-  filterEnvelope.connect(envelopeAmount).connect(filter.detune);
+  filterEnvelope.connect(envelopeAmount);
+  envelopeAmount.connect(filter.detune);
+  envelopeAmount.connect(filter2.detune);
   filterEnvelope.start();
 
-  mixer.connect(filter).connect(amp).connect(master).connect(safetyIn);
+  mixer.connect(filter).connect(filter2).connect(amp).connect(master).connect(safetyIn);
   safetyOut.connect(ctx.destination);
   // Taps are side branches, so observing never alters the sound.
   mixer.connect(taps.oscillator);
-  filter.connect(taps.filter);
+  filter2.connect(taps.filter);
   amp.connect(taps.amp);
   osc.start();
   osc2.start();
@@ -224,10 +233,16 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     now: () => ctx.currentTime,
 
     filterResponse(frequencies) {
-      responseTwin.frequency.value = modulationAt().cutoff;
-      const magnitude = new Float32Array(frequencies.length);
-      responseTwin.getFrequencyResponse(frequencies, magnitude, new Float32Array(frequencies.length));
-      return magnitude;
+      const cutoff = modulationAt().cutoff;
+      const total = new Float32Array(frequencies.length).fill(1);
+      const stage = new Float32Array(frequencies.length);
+      const phase = new Float32Array(frequencies.length);
+      for (const twin of twins) {
+        twin.frequency.value = cutoff;
+        twin.getFrequencyResponse(frequencies, stage, phase);
+        for (let i = 0; i < total.length; i++) total[i] *= stage[i];
+      }
+      return total;
     },
 
     applyPatch(next) {
@@ -242,12 +257,12 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       mix1.gain.setValueAtTime(next.mixOsc1 * OSCILLATOR_LEVEL, t);
       mix2.gain.setValueAtTime(next.mixOsc2 * OSCILLATOR_LEVEL, t);
       mixNoise.gain.setValueAtTime(next.mixNoise * OSCILLATOR_LEVEL, t);
-      const qDb = resonanceToQdB(next.resonance);
-      // The base Cutoff; the Filter Envelope adds to it through detune.
-      filter.frequency.setValueAtTime(effectiveCutoff(next), t);
-      filter.Q.setValueAtTime(qDb, t);
+      // The base Cutoff; the Filter Envelope adds to it through detune. The twins copy each stage for the curve.
+      const stages = filterStages(next.filterMode, next.filterSlope, next.resonance);
+      const cutoff = effectiveCutoff(next);
+      [filter, filter2].forEach((node, i) => setStage(node, stages[i], cutoff, t));
+      twins.forEach((node, i) => setStage(node, stages[i], cutoff));
       envelopeAmount.gain.setValueAtTime(next.filterEnvAmount * 1200, t);
-      responseTwin.Q.value = qDb;
     },
 
     noteOn(note, velocity, time) {

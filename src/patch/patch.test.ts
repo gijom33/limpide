@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { defaultPatch, formatParam, PARAMS, setParam, setWaveform } from './patch';
+import { defaultPatch, formatParam, PARAMS, setFilter, setParam, setWaveform } from './patch';
 
 describe('defaultPatch', () => {
   it('starts every Parameter at its declared default', () => {
@@ -79,6 +79,20 @@ describe('Osc 2 and the Mixer', () => {
   it('sets either Oscillator’s Waveform independently', () => {
     const p = setWaveform(setWaveform(defaultPatch(), 'square', 'osc2'), 'sine');
     expect([p.waveform, p.osc2Waveform]).toEqual(['sine', 'square']);
+  });
+});
+
+describe('Filter Mode and Slope', () => {
+  it('start as a 12 dB low-pass, the classic subtractive Filter', () => {
+    expect(defaultPatch().filterMode).toBe('lowpass');
+    expect(defaultPatch().filterSlope).toBe(12);
+  });
+
+  it('change independently, keeping every Parameter', () => {
+    const before = setParam(defaultPatch(), 'cutoff', 700);
+    const after = setFilter(setFilter(before, { mode: 'bandpass' }), { slope: 24 });
+    expect([after.filterMode, after.filterSlope, after.cutoff]).toEqual(['bandpass', 24, 700]);
+    expect(before.filterMode).toBe('lowpass');
   });
 });
 

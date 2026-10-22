@@ -399,3 +399,78 @@ describe('Osc 2 Pulse Width', () => {
     expect(dB(h(2) / h(1)), '25%: even Harmonics present (a 50% pulse would have none)').toBeGreaterThan(-6);
   });
 });
+
+describe('Filter Modes and Slopes', () => {
+  const MODES = ['lowpass', 'highpass', 'bandpass', 'notch'] as const;
+  const harmonics = Float32Array.from({ length: 40 }, (_, i) => 110 * (i + 1));
+
+  async function measure(mode: (typeof MODES)[number], slope: 12 | 24, resonance = 0.4) {
+    const ctx = new OfflineAudioContext(1, SR, SR);
+    const engine = createSynthEngine(ctx);
+    engine.applyPatch({ ...defaultPatch(), cutoff: 1000, resonance, filterMode: mode, filterSlope: slope, ampSustain: 1, ampAttack: 0.001 });
+    engine.noteOn(45, 1, 0);
+    const taps = ctx.suspend(0.5).then(() => {
+      const read = (a: AnalyserNode) => {
+        const s = new Float32Array(a.fftSize);
+        a.getFloatTimeDomainData(s);
+        return s;
+      };
+      const out = { osc: read(engine.taps.oscillator), filter: read(engine.taps.filter), curve: engine.filterResponse(harmonics) };
+      void ctx.resume();
+      return out;
+    });
+    await ctx.startRendering();
+    return taps;
+  }
+
+  for (const mode of MODES) {
+    for (const slope of [12, 24] as const) {
+      it(`plays exactly the Response Curve it draws: ${mode}, ${slope} dB`, async () => {
+        const { osc, filter, curve } = await measure(mode, slope);
+        for (let i = 0; i < harmonics.length; i++) {
+          if (dB(curve[i]) < -40) continue; // too deep to measure against the analyser's floor
+          const measured = dB(toneAmplitudeHann(filter, SR, harmonics[i]) / toneAmplitudeHann(osc, SR, harmonics[i]));
+          expect(Math.abs(measured - dB(curve[i])), `${harmonics[i]} Hz`).toBeLessThan(0.5);
+        }
+      });
+    }
+  }
+
+  it('passes and stops the right regions in each mode (Cutoff 1 kHz)', async () => {
+    const at = (curve: Float32Array, n: number) => dB(curve[n - 1]);
+    const lp = (await measure('lowpass', 12)).curve;
+    expect(at(lp, 2)).toBeGreaterThan(-1);
+    expect(at(lp, 40)).toBeLessThan(-20);
+    const hp = (await measure('highpass', 12)).curve;
+    expect(at(hp, 2)).toBeLessThan(-20);
+    expect(at(hp, 40)).toBeGreaterThan(-1);
+    const bp = (await measure('bandpass', 12)).curve;
+    expect(at(bp, 9)).toBeGreaterThan(-3); // 990 Hz, at the centre
+    expect(at(bp, 2)).toBeLessThan(-10);
+    expect(at(bp, 40)).toBeLessThan(-10);
+    const notch = (await measure('notch', 12)).curve;
+    expect(at(notch, 9)).toBeLessThan(-20);
+    expect(at(notch, 2)).toBeGreaterThan(-1);
+    expect(at(notch, 40)).toBeGreaterThan(-1);
+  });
+
+  it('falls about twice as steeply at 24 dB as at 12 dB, an octave past the Cutoff', () => {
+    const engine = createSynthEngine(new OfflineAudioContext(1, SR, SR));
+    const octaveAbove = (slope: 12 | 24) => {
+      engine.applyPatch({ ...defaultPatch(), cutoff: 1000, resonance: 0, filterSlope: slope });
+      return dB(engine.filterResponse(Float32Array.of(2000))[0]);
+    };
+    expect(octaveAbove(24) / octaveAbove(12)).toBeGreaterThan(1.7);
+    expect(octaveAbove(24) / octaveAbove(12)).toBeLessThan(2.3);
+  });
+
+  it('peaks as high at 24 dB as at 12 dB for the same Resonance', () => {
+    const engine = createSynthEngine(new OfflineAudioContext(1, SR, SR));
+    const scan = Float32Array.from({ length: 400 }, (_, i) => 500 * 2 ** (i / 200)); // 500 Hz – 2 kHz
+    const peak = (slope: 12 | 24, resonance: number) => {
+      engine.applyPatch({ ...defaultPatch(), cutoff: 1000, resonance, filterSlope: slope });
+      return dB(Math.max(...engine.filterResponse(scan)));
+    };
+    for (const r of [0.5, 0.8]) expect(Math.abs(peak(24, r) - peak(12, r)), `Resonance ${r}`).toBeLessThan(2);
+  });
+});
