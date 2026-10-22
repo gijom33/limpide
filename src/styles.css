@@ -129,3 +129,13 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
   color: var(--muted); font-size: 13px; pointer-events: none;
 }
 .idle-hint[hidden] { display: none; }
+
+/* Legends below a Spectrum: text in text colours, each mark drawn as its own little swatch. */
+.legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 6px 0 0; padding: 0; list-style: none; font-size: 11px; color: var(--muted); }
+.legend li { display: flex; align-items: center; gap: 5px; }
+.legend li::before { content: ''; display: inline-block; flex: none; }
+.legend [data-mark='ideal']::before,
+.legend [data-mark='idealFiltered']::before { width: 5px; height: 5px; border: 1px solid var(--text); border-radius: 50%; }
+.legend [data-mark='response']::before { width: 14px; border-top: 1.5px dashed var(--text); }
+.legend [data-mark='ghost']::before { width: 10px; height: 10px; background: var(--stage-osc); opacity: 0.45; }
+.legend [data-mark='boost']::before { width: 10px; height: 10px; background: var(--stage-filter); opacity: 0.6; }

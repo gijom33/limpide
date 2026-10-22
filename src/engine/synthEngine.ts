@@ -1,3 +1,4 @@
+import { effectiveCutoff } from '../modulation/modulationModel';
 import { harmonicSeries } from '../music/harmonics';
 import { noteToFrequency } from '../music/pitch';
 import type { Patch } from '../patch/patch';
@@ -14,8 +15,13 @@ export interface SynthEngine {
   noteOn(note: number, velocity: number, at?: number): void;
   pitchChange(note: number, at?: number): void;
   noteOff(at?: number): void;
-  /** Frequency of the most recent Note (0 before any), for Cycle Lock. */
+  /** Frequency of the most recent Note (A4 before any), for Cycle Lock. */
   fundamental(): number;
+  /**
+   * The Response Curve: gain (linear) at each frequency from the Oscillator Tap to the Filter Tap, at the
+   * Effective Cutoff. Includes the Resonance compensation, so it matches what the Filter Tap receives.
+   */
+  filterResponse(frequencies: Float32Array<ArrayBuffer>): Float32Array;
   readonly taps: Taps;
 }
 
@@ -52,6 +58,10 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   const filter = ctx.createBiquadFilter();
   filter.type = 'lowpass';
   const compensation = ctx.createGain();
+  // Never connected: a twin of the Filter set from the Modulation model, so the Response Curve shows the
+  // Effective Cutoff even while the real Filter is being automated (ADR-0003).
+  const responseTwin = ctx.createBiquadFilter();
+  responseTwin.type = 'lowpass';
   const amp = ctx.createGain();
   amp.gain.value = 0;
   const master = ctx.createGain();
@@ -79,6 +89,14 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     taps,
     fundamental: () => fundamental,
 
+    filterResponse(frequencies) {
+      const magnitude = new Float32Array(frequencies.length);
+      responseTwin.getFrequencyResponse(frequencies, magnitude, new Float32Array(frequencies.length));
+      const gain = resonanceCompensation(responseTwin.Q.value);
+      for (let i = 0; i < magnitude.length; i++) magnitude[i] *= gain;
+      return magnitude;
+    },
+
     applyPatch(next) {
       patch = next;
       const t = ctx.currentTime;
@@ -89,10 +107,13 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
         const { real, imag } = harmonicSeries(next.waveform, next.pulseWidth, WAVE_HARMONICS);
         osc.setPeriodicWave(ctx.createPeriodicWave(real, imag, { disableNormalization: true }));
       }
-      filter.frequency.setValueAtTime(next.cutoff, t);
+      const cutoff = effectiveCutoff(next);
       const qDb = resonanceToQdB(next.resonance);
+      filter.frequency.setValueAtTime(cutoff, t);
       filter.Q.setValueAtTime(qDb, t);
       compensation.gain.setValueAtTime(resonanceCompensation(qDb), t);
+      responseTwin.frequency.value = cutoff;
+      responseTwin.Q.value = qDb;
     },
 
     noteOn(note, velocity, at) {

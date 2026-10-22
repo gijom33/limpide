@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { harmonicSeries, type Waveform } from '../music/harmonics';
 import { defaultPatch, type Patch } from '../patch/patch';
 import { amplitudeToSpectrumDb } from '../viewers/spectrumScale';
-import { dB, rms, toneAmplitude } from '../test/measure';
+import { dB, rms, toneAmplitude, toneAmplitudeHann } from '../test/measure';
 import { createSynthEngine, OSCILLATOR_LEVEL } from './synthEngine';
 
 const SR = 48000;
@@ -202,5 +202,42 @@ describe('Spectrum calibration', () => {
     const peak = Math.max(...bins);
     // ±1.2 dB: the Blackman window's scalloping when the tone falls between FFT bins.
     expect(Math.abs(peak - amplitudeToSpectrumDb(OSCILLATOR_LEVEL))).toBeLessThan(1.2);
+  });
+});
+
+describe('filterResponse (the Response Curve)', () => {
+  it('matches the attenuation actually measured between the Oscillator and Filter Taps, Harmonic by Harmonic', async () => {
+    const patch = { cutoff: 1000, resonance: 0.6, ampSustain: 1, ampAttack: 0.001 };
+    const ctx = new OfflineAudioContext(1, SR, SR);
+    const engine = createSynthEngine(ctx);
+    engine.applyPatch({ ...defaultPatch(), ...patch });
+    engine.noteOn(45, 1, 0); // 110 Hz saw
+    const taps = ctx.suspend(0.5).then(() => {
+      const read = (a: AnalyserNode) => {
+        const s = new Float32Array(a.fftSize);
+        a.getFloatTimeDomainData(s);
+        return s;
+      };
+      const out = { osc: read(engine.taps.oscillator), filter: read(engine.taps.filter) };
+      void ctx.resume();
+      return out;
+    });
+    await ctx.startRendering();
+    const { osc, filter } = await taps;
+
+    const harmonics = Float32Array.from({ length: 30 }, (_, i) => 110 * (i + 1));
+    const curve = engine.filterResponse(harmonics);
+    for (let i = 0; i < harmonics.length; i++) {
+      const measured = dB(toneAmplitudeHann(filter, SR, harmonics[i]) / toneAmplitudeHann(osc, SR, harmonics[i]));
+      expect(Math.abs(measured - dB(curve[i])), `${harmonics[i]} Hz: measured ${measured.toFixed(2)} dB`).toBeLessThan(0.5);
+    }
+  });
+
+  it('shows the Resonance peak at the Cutoff, above the pass band', () => {
+    const engine = createSynthEngine(new OfflineAudioContext(1, SR, SR));
+    engine.applyPatch({ ...defaultPatch(), cutoff: 1000, resonance: 0.8 });
+    const [passBand, atCutoff, octaveAbove] = engine.filterResponse(Float32Array.of(100, 1000, 2000));
+    expect(dB(atCutoff / passBand)).toBeGreaterThan(15);
+    expect(dB(octaveAbove / passBand)).toBeLessThan(-6);
   });
 });

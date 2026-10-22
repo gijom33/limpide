@@ -7,14 +7,30 @@ import type { ViewSettings } from '../viewers/viewSettings';
 
 const SILENT_DB = -90;
 
+export type LegendItem = 'ideal' | 'idealFiltered' | 'response' | 'ghost' | 'boost';
+
+const LEGEND: Record<LegendItem, string> = {
+  ideal: 'Ideal (Fourier series)',
+  idealFiltered: 'Ideal × Response Curve',
+  response: 'Response Curve (gain on the right)',
+  ghost: 'Ghost: removed by the Filter',
+  boost: 'Added by Resonance',
+};
+
 interface Props {
   name: string;
   analyser: AnalyserNode;
   sampleRate: number;
   fundamental(): number;
   view(): ViewSettings;
-  /** Draw the Ideal Reference on this Tap's Spectrum (only where it is the Oscillator's own output). */
+  /** Draw the Ideal Reference rings on this Tap's Spectrum. */
   showIdeal?: boolean;
+  /** The Filter's gain: drawn as the Response Curve and applied to the Ideal rings. */
+  response?(frequencies: Float32Array<ArrayBuffer>): Float32Array;
+  /** The Tap before the Filter, for the Ghost. */
+  ghostOf?: AnalyserNode;
+  /** What the marks on this Spectrum mean. */
+  legend?: LegendItem[];
   /** Shown over the Viewers while this Tap is silent. */
   idleHint?: string;
   /** A one-line explanation under the caption. */
@@ -22,7 +38,7 @@ interface Props {
 }
 
 /** Scope + Spectrum + level readout for one Tap. Canvases are mounted once and drawn by the render loop. */
-export function TapViewers({ name, analyser, sampleRate, fundamental, view, showIdeal, idleHint, note }: Props) {
+export function TapViewers({ name, analyser, sampleRate, fundamental, view, showIdeal, response, ghostOf, legend, idleHint, note }: Props) {
   const scopeRef = useRef<HTMLCanvasElement>(null);
   const spectrumRef = useRef<HTMLCanvasElement>(null);
   const levelRef = useRef<HTMLSpanElement>(null);
@@ -33,6 +49,8 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, view, show
     const drawSpectrum = createSpectrum(spectrumRef.current!, analyser, sampleRate, {
       fundamental,
       ideal: showIdeal ? () => view().ideal : undefined,
+      response,
+      ghostOf,
     });
     const level = createLevelMeter(analyser);
     return addToRenderLoop(() => {
@@ -43,7 +61,7 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, view, show
       levelRef.current!.dataset.db = String(db);
       if (hintRef.current) hintRef.current.hidden = db > SILENT_DB;
     });
-  }, [analyser, sampleRate, fundamental, view, showIdeal]);
+  }, [analyser, sampleRate, fundamental, view, showIdeal, response, ghostOf]);
 
   return (
     <figure className="tap" data-tap={name}>
@@ -60,6 +78,15 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, view, show
           </div>
         )}
       </div>
+      {legend && (
+        <ul className="legend">
+          {legend.map((item) => (
+            <li key={item} data-mark={item}>
+              {LEGEND[item]}
+            </li>
+          ))}
+        </ul>
+      )}
     </figure>
   );
 }

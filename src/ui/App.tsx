@@ -6,7 +6,7 @@ import { harmonicSeries } from '../music/harmonics';
 import { defaultPatch, setParam, setWaveform, type ParamId, type Patch } from '../patch/patch';
 import type { ViewSettings } from '../viewers/viewSettings';
 import { Knob } from './Knob';
-import { TapViewers } from './TapViewers';
+import { TapViewers, type LegendItem } from './TapViewers';
 import { applyTheme, loadTheme } from './theme';
 import { WaveformPicker } from './WaveformPicker';
 
@@ -101,7 +101,14 @@ export function App() {
   const viewers = (
     tap: keyof AudioSession['engine']['taps'],
     name: string,
-    extra: { idleHint?: string; note?: string; showIdeal?: boolean } = {},
+    extra: {
+      idleHint?: string;
+      note?: string;
+      showIdeal?: boolean;
+      response?(f: Float32Array<ArrayBuffer>): Float32Array;
+      ghostOf?: AnalyserNode;
+      legend?: LegendItem[];
+    } = {},
   ) =>
     session && (
       <TapViewers
@@ -148,6 +155,7 @@ export function App() {
           viewers={viewers('oscillator', 'Oscillator', {
             note: 'The Oscillator runs all the time, even between Notes. The Amp decides when you hear it.',
             showIdeal: true,
+            legend: ['ideal'],
           })}
         >
           <WaveformPicker value={patch.waveform} onChange={(w) => setPatch((p) => setWaveform(p, w))} />
@@ -159,7 +167,22 @@ export function App() {
             inactiveHint="Only shapes the Pulse Waveform"
           />
         </Block>
-        <Block title="Filter" stage="filter" ids={['cutoff', 'resonance']} patch={patch} onChange={change} viewers={viewers('filter', 'Filter')} />
+        <Block
+          title="Filter"
+          stage="filter"
+          ids={['cutoff', 'resonance']}
+          patch={patch}
+          onChange={change}
+          viewers={
+            session &&
+            viewers('filter', 'Filter', {
+              showIdeal: true,
+              response: session.engine.filterResponse,
+              ghostOf: session.engine.taps.oscillator,
+              legend: ['response', 'idealFiltered', 'ghost', 'boost'],
+            })
+          }
+        />
         <Block
           title="Amp"
           stage="amp"
