@@ -58,3 +58,46 @@ describe('Cycle Lock', () => {
     expect(cycleLockOffset(ringingWave(440, 0, 4096), SR, 0)).toBe(0);
   });
 });
+
+describe('Cycle Lock with Osc 2 and Noise in the mix', () => {
+  // A deterministic stand-in for Noise, so the test is repeatable.
+  function noise(length: number, amplitude: number, seed = 7) {
+    let s = seed;
+    return Float32Array.from({ length }, () => {
+      s = (s * 1664525 + 1013904223) >>> 0;
+      return ((s / 2 ** 32) * 2 - 1) * amplitude;
+    });
+  }
+  const sine = (freq: number, length: number, start = 0, phase = 0) =>
+    Float32Array.from({ length }, (_, i) => Math.sin((2 * Math.PI * freq * (i + start)) / SR + phase));
+  const add = (a: Float32Array, b: Float32Array) => a.map((v, i) => v + b[i]);
+  const lockedPhaseError = (offset: number, freq: number, phase: number) => {
+    const angle = (2 * Math.PI * freq * offset) / SR + phase;
+    return Math.abs(Math.atan2(Math.sin(angle), Math.cos(angle)));
+  };
+
+  it('follows a detuned mix smoothly from frame to frame, so beating shows as a slow drift, not a jump', () => {
+    // 12 cents is 1.5 Hz apart: far finer than an analyser window can resolve, so the lock follows the sum of
+    // both Oscillators, whose phase drifts at the beat rate. What must not happen is a jump between frames.
+    const f = 220;
+    const period = SR / f;
+    const detuned = f * 2 ** (12 / 1200);
+    const frame = (start: number) => add(sine(f, 8192, start, 0.4), sine(detuned, 8192, start, 2.0).map((v) => v * 0.8));
+    const FRAME = Math.round(SR / 60);
+    // The sum's phase moves fastest at the quietest point of the beat: Δf · a2 / (a1 − a2) cycles per second.
+    const fastestDrift = ((detuned - f) * 0.8) / (1 - 0.8) / 60; // cycles per frame ≈ 0.10
+    let previous = cycleLockOffset(frame(0), SR, f);
+    for (let n = 1; n <= 30; n++) {
+      const offset = cycleLockOffset(frame(n * FRAME), SR, f);
+      const moved = (((offset + FRAME - previous) % period) + period) % period; // same point of the signal?
+      expect(Math.min(moved, period - moved) / period, `frame ${n}`).toBeLessThan(fastestDrift * 1.15);
+      previous = offset;
+    }
+  });
+
+  it('still finds the cycle with Noise mixed in at the same level', () => {
+    const f = 220;
+    const mix = add(sine(f, 8192, 0, 1.1), noise(8192, 1));
+    expect(lockedPhaseError(cycleLockOffset(mix, SR, f), f, 1.1)).toBeLessThan(0.1);
+  });
+});

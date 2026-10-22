@@ -51,6 +51,34 @@ const MASTER_LEVEL = 0.45;
 // Web Audio interprets a low-pass biquad's Q in dB: −3 dB is a flat Butterworth response.
 const resonanceToQdB = (resonance: number) => -3.01 + resonance * 27;
 
+const SAFETY_RANGE = 4;
+const SAFETY_KNEE = 0.8;
+
+/** Linear up to the knee, then a tanh bend towards (never past) full scale. */
+function safetyCurve(): Float32Array<ArrayBuffer> {
+  const curve = new Float32Array(4097);
+  for (let i = 0; i < curve.length; i++) {
+    const x = ((i / (curve.length - 1)) * 2 - 1) * SAFETY_RANGE;
+    const over = Math.abs(x) - SAFETY_KNEE;
+    const y = over <= 0 ? Math.abs(x) : SAFETY_KNEE + (1 - SAFETY_KNEE) * Math.tanh(over / (1 - SAFETY_KNEE));
+    curve[i] = Math.sign(x) * y;
+  }
+  return curve;
+}
+
+// Noise: a seamless loop of white noise, generated from a fixed seed so every render is repeatable.
+const NOISE_SECONDS = 2;
+function noiseBuffer(ctx: BaseAudioContext): AudioBuffer {
+  const buffer = ctx.createBuffer(1, Math.round(NOISE_SECONDS * ctx.sampleRate), ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  let seed = 0x9e3779b9;
+  for (let i = 0; i < data.length; i++) {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    data[i] = (seed / 2 ** 32) * 2 - 1;
+  }
+  return buffer;
+}
+
 // Enough Harmonics to reach Nyquist from the lowest Notes; the browser band-limits per pitch.
 const WAVE_HARMONICS = 1024;
 // Gate events kept for the Modulation model: plenty for the Envelope Timeline's few seconds.
@@ -75,9 +103,21 @@ const filterAdsr = (p: Patch): Adsr => ({ attack: p.filterAttack, decay: p.filte
 
 /** The single Voice (Oscillator → Filter → Amp) built from native Web Audio nodes (ADR-0001). */
 export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
+  // Sources → Mixer. Each source's Mixer level is scaled by the Nominal Level; the Mixer's output is the
+  // Oscillator Tap.
   const osc = ctx.createOscillator();
-  const oscLevel = ctx.createGain();
-  oscLevel.gain.value = OSCILLATOR_LEVEL;
+  const osc2 = ctx.createOscillator();
+  const noise = ctx.createBufferSource();
+  noise.buffer = noiseBuffer(ctx);
+  noise.loop = true;
+  const [mix1, mix2, mixNoise] = [ctx.createGain(), ctx.createGain(), ctx.createGain()];
+  mix1.gain.value = OSCILLATOR_LEVEL;
+  mix2.gain.value = 0;
+  mixNoise.gain.value = 0;
+  const mixer = ctx.createGain();
+  osc.connect(mix1).connect(mixer);
+  osc2.connect(mix2).connect(mixer);
+  noise.connect(mixNoise).connect(mixer);
   const filter = ctx.createBiquadFilter();
   filter.type = 'lowpass';
   // Never connected: a twin of the Filter set from the Modulation model, so the Response Curve shows the
@@ -88,6 +128,15 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   amp.gain.value = 0;
   const master = ctx.createGain();
   master.gain.value = MASTER_LEVEL;
+  // Protects the listener when several full-level sources and Resonance stack up. It sits after the Amp Tap,
+  // so it never changes what the Viewers show (ADR-0006). Exactly linear below 0.8 of full scale; above, a
+  // smooth bend that never passes 1. (A DynamicsCompressorNode was rejected: it adds make-up gain to every
+  // sound and a few milliseconds of lookahead delay.)
+  const [safetyIn, safety, safetyOut] = [ctx.createGain(), ctx.createWaveShaper(), ctx.createGain()];
+  safetyIn.gain.value = 1 / SAFETY_RANGE; // the shaper's curve covers ±1; this lets it see inputs up to ±SAFETY_RANGE
+  safety.curve = safetyCurve();
+  safety.oversample = '4x';
+  safetyIn.connect(safety).connect(safetyOut);
   const taps: Taps = { oscillator: createAnalyser(ctx), filter: createAnalyser(ctx), amp: createAnalyser(ctx) };
 
   // The Filter Envelope (0–1) moves the Cutoff through `detune`, in cents: Cutoff × 2^(Amount × level),
@@ -99,17 +148,21 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   filterEnvelope.connect(envelopeAmount).connect(filter.detune);
   filterEnvelope.start();
 
-  osc.connect(oscLevel).connect(filter).connect(amp).connect(master).connect(ctx.destination);
+  mixer.connect(filter).connect(amp).connect(master).connect(safetyIn);
+  safetyOut.connect(ctx.destination);
   // Taps are side branches, so observing never alters the sound.
-  oscLevel.connect(taps.oscillator);
+  mixer.connect(taps.oscillator);
   filter.connect(taps.filter);
   amp.connect(taps.amp);
   osc.start();
+  osc2.start();
+  noise.start();
 
   let patch: Patch | undefined;
-  let waveKey = '';
+  const waveKeys = new Map<OscillatorNode, string>();
   let fundamental = noteToFrequency(69);
   osc.frequency.value = fundamental;
+  osc2.frequency.value = fundamental;
   // Patches in force over time, so past moments use the Cutoff and Amount of their time.
   const patches: { time: number; patch: Patch }[] = [];
   const ampEvents: GateEvent[] = [];
@@ -118,6 +171,16 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   const setPitch = (note: number, t: number) => {
     fundamental = noteToFrequency(note);
     osc.frequency.setValueAtTime(fundamental, t);
+    osc2.frequency.setValueAtTime(fundamental, t); // Osc 2's offsets ride on top, through its detune
+  };
+
+  // Play exactly the Fourier series the Ideal Reference draws (normalisation is already in it).
+  const setWave = (node: OscillatorNode, waveform: Patch['waveform'], pulseWidth: number) => {
+    const key = waveform === 'pulse' ? `pulse:${pulseWidth}` : waveform;
+    if (waveKeys.get(node) === key) return;
+    waveKeys.set(node, key);
+    const { real, imag } = harmonicSeries(waveform, pulseWidth, WAVE_HARMONICS);
+    node.setPeriodicWave(ctx.createPeriodicWave(real, imag, { disableNormalization: true }));
   };
   const at = (time?: number) => time ?? ctx.currentTime;
 
@@ -173,13 +236,12 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       if (patches.at(-1)?.time === t) patches.pop();
       patches.push({ time: t, patch: next });
       if (patches.length > HISTORY * 4) patches.shift();
-      // Play exactly the Fourier series the Ideal Reference draws (normalisation is already in it).
-      const key = next.waveform === 'pulse' ? `pulse:${next.pulseWidth}` : next.waveform;
-      if (key !== waveKey) {
-        waveKey = key;
-        const { real, imag } = harmonicSeries(next.waveform, next.pulseWidth, WAVE_HARMONICS);
-        osc.setPeriodicWave(ctx.createPeriodicWave(real, imag, { disableNormalization: true }));
-      }
+      setWave(osc, next.waveform, next.pulseWidth);
+      setWave(osc2, next.osc2Waveform, next.pulseWidth);
+      osc2.detune.setValueAtTime(next.osc2Octave * 1200 + next.osc2Semitone * 100 + next.osc2Detune, t);
+      mix1.gain.setValueAtTime(next.mixOsc1 * OSCILLATOR_LEVEL, t);
+      mix2.gain.setValueAtTime(next.mixOsc2 * OSCILLATOR_LEVEL, t);
+      mixNoise.gain.setValueAtTime(next.mixNoise * OSCILLATOR_LEVEL, t);
       const qDb = resonanceToQdB(next.resonance);
       // The base Cutoff; the Filter Envelope adds to it through detune.
       filter.frequency.setValueAtTime(effectiveCutoff(next), t);

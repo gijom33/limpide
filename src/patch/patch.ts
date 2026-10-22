@@ -1,17 +1,25 @@
 import type { Waveform } from '../music/harmonics';
 import type { Range } from './taper';
 
-export type Unit = 'Hz' | 's' | '%' | 'oct';
+export type Unit = 'Hz' | 's' | '%' | 'oct' | 'st' | 'cents';
 
 export interface ParamDef extends Range {
   id: ParamId;
   label: string;
   unit: Unit;
   default: number;
+  /** Values snap to multiples of this (e.g. whole octaves). */
+  step?: number;
 }
 
 export type ParamId =
   | 'pulseWidth'
+  | 'osc2Octave'
+  | 'osc2Semitone'
+  | 'osc2Detune'
+  | 'mixOsc1'
+  | 'mixOsc2'
+  | 'mixNoise'
   | 'cutoff'
   | 'resonance'
   | 'filterEnvAmount'
@@ -24,7 +32,11 @@ export type ParamId =
   | 'ampSustain'
   | 'ampRelease';
 
-export type Patch = Record<ParamId, number> & { waveform: Waveform };
+export type Patch = Record<ParamId, number> & { waveform: Waveform; osc2Waveform: Waveform };
+
+const level = (id: ParamId, label: string, dflt: number): ParamDef => ({
+  id, label, unit: '%', min: 0, max: 1, taper: 'linear', default: dflt,
+});
 
 const time = (id: ParamId, label: string, dflt: number): ParamDef => ({
   id, label, unit: 's', min: 0.001, max: 10, taper: 'log', default: dflt,
@@ -32,6 +44,12 @@ const time = (id: ParamId, label: string, dflt: number): ParamDef => ({
 
 export const PARAMS: Record<ParamId, ParamDef> = {
   pulseWidth: { id: 'pulseWidth', label: 'Pulse Width', unit: '%', min: 0.05, max: 0.95, taper: 'linear', default: 0.25 },
+  osc2Octave: { id: 'osc2Octave', label: 'Octave', unit: 'oct', min: -2, max: 2, taper: 'linear', default: 0, step: 1 },
+  osc2Semitone: { id: 'osc2Semitone', label: 'Semi', unit: 'st', min: -12, max: 12, taper: 'linear', default: 0, step: 1 },
+  osc2Detune: { id: 'osc2Detune', label: 'Detune', unit: 'cents', min: -50, max: 50, taper: 'linear', default: 0 },
+  mixOsc1: level('mixOsc1', 'Osc 1', 1),
+  mixOsc2: level('mixOsc2', 'Osc 2', 0),
+  mixNoise: level('mixNoise', 'Noise', 0),
   cutoff: { id: 'cutoff', label: 'Cutoff', unit: 'Hz', min: 20, max: 20000, taper: 'log', default: 2000 },
   resonance: { id: 'resonance', label: 'Resonance', unit: '%', min: 0, max: 1, taper: 'linear', default: 0.2 },
   filterEnvAmount: { id: 'filterEnvAmount', label: 'Amount', unit: 'oct', min: -5, max: 5, taper: 'linear', default: 0 },
@@ -47,16 +65,17 @@ export const PARAMS: Record<ParamId, ParamDef> = {
 
 export function defaultPatch(): Patch {
   const params = Object.fromEntries(Object.values(PARAMS).map((d) => [d.id, d.default])) as Record<ParamId, number>;
-  return { ...params, waveform: 'saw' };
+  return { ...params, waveform: 'saw', osc2Waveform: 'saw' };
 }
 
-export function setWaveform(patch: Patch, waveform: Waveform): Patch {
-  return { ...patch, waveform };
+export function setWaveform(patch: Patch, waveform: Waveform, oscillator: 'osc1' | 'osc2' = 'osc1'): Patch {
+  return oscillator === 'osc1' ? { ...patch, waveform } : { ...patch, osc2Waveform: waveform };
 }
 
 export function setParam(patch: Patch, id: ParamId, value: number): Patch {
-  const { min, max } = PARAMS[id];
-  return { ...patch, [id]: Math.min(max, Math.max(min, value)) };
+  const { min, max, step } = PARAMS[id];
+  const snapped = step ? Math.round(value / step) * step : value;
+  return { ...patch, [id]: Math.min(max, Math.max(min, snapped)) };
 }
 
 /** A Parameter value in real units, e.g. "2.50 kHz", "12.3 ms", "70 %". */
@@ -69,6 +88,17 @@ export function formatParam(id: ParamId, value: number): string {
     case '%':
       return `${Math.round(value * 100)} %`;
     case 'oct':
-      return value === 0 ? '0 oct' : `${value > 0 ? '+' : '−'}${Math.abs(value).toFixed(1)} oct`;
+      return signed(value, PARAMS[id].step ? 0 : 1, 'oct');
+    case 'st':
+      return signed(value, 0, 'st');
+    case 'cents':
+      return signed(value, 0, '¢');
   }
+}
+
+/** "+2 oct", "−1.3 oct", "0 ¢": signed with a true minus, no sign on zero. */
+function signed(value: number, decimals: number, unit: string): string {
+  const shown = Number(Math.abs(value).toFixed(decimals));
+  if (shown === 0) return `0 ${unit}`;
+  return `${value > 0 ? '+' : '−'}${shown.toFixed(decimals)} ${unit}`;
 }

@@ -327,3 +327,64 @@ describe('modulationAt for past moments (the Envelope Timeline)', () => {
     expect(engine.modulationAt(0.75).cutoff).toBe(3000);
   });
 });
+
+describe('Osc 2, Noise and the Mixer', () => {
+  const A2 = 45; // 110 Hz
+  const clean = { cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001, waveform: 'sine', osc2Waveform: 'sine' } as const;
+  const steady = (s: Float32Array) => s.subarray(SR / 2, SR / 2 + Math.round((40 * SR) / 110)); // 40 whole periods
+
+  it('adds energy at twice the fundamental when Osc 2 is an octave up', async () => {
+    const off = steady(await render(1, { ...clean, mixOsc2: 0, osc2Octave: 1 }, (e) => e.noteOn(A2, 1, 0)));
+    const on = steady(await render(1, { ...clean, mixOsc2: 1, osc2Octave: 1 }, (e) => e.noteOn(A2, 1, 0)));
+    expect(dB(toneAmplitude(off, SR, 220) / toneAmplitude(off, SR, 110))).toBeLessThan(-60);
+    expect(dB(toneAmplitude(on, SR, 220) / toneAmplitude(on, SR, 110))).toBeCloseTo(0, 0);
+  });
+
+  it('moves Osc 2 by its Semitone offset (a fifth: 7 semitones)', async () => {
+    const s = await render(1, { ...clean, mixOsc2: 1, osc2Semitone: 7 }, (e) => e.noteOn(A2, 1, 0));
+    const window = s.subarray(SR / 2, SR / 2 + 8192);
+    const fifth = 110 * 2 ** (7 / 12);
+    expect(dB(toneAmplitudeHann(window, SR, fifth) / toneAmplitudeHann(window, SR, 110))).toBeCloseTo(0, 0);
+  });
+
+  it('makes the sound beat at the Detune difference', async () => {
+    const s = await render(2.2, { ...clean, mixOsc2: 1, osc2Detune: 20 }, (e) => e.noteOn(A2, 1, 0));
+    const beat = 110 * (2 ** (20 / 1200) - 1); // ≈ 1.28 Hz: one swell every ~0.8 s
+    const levels: number[] = [];
+    for (let t = 0.2; t < 2.2 - 0.02; t += 0.02) levels.push(rms(s, Math.round(t * SR), Math.round((t + 0.02) * SR)));
+    expect(Math.max(...levels) / Math.min(...levels)).toBeGreaterThan(5);
+    expect(beat).toBeGreaterThan(1);
+  });
+
+  it('fills the gaps between Harmonics with Noise', async () => {
+    const between = 165; // halfway between the 1st and 2nd Harmonic of 110 Hz
+    const quiet = steady(await render(1, { cutoff: 20000, mixNoise: 0, ampSustain: 1 }, (e) => e.noteOn(A2, 1, 0)));
+    const noisy = steady(await render(1, { cutoff: 20000, mixNoise: 0.5, ampSustain: 1 }, (e) => e.noteOn(A2, 1, 0)));
+    expect(dB(toneAmplitude(noisy, SR, between) / toneAmplitude(quiet, SR, between))).toBeGreaterThan(30);
+  });
+
+  it('keeps the Harmonic Markers on Osc 1, whatever Osc 2 is tuned to', () => {
+    const engine = createSynthEngine(new OfflineAudioContext(1, SR, SR));
+    engine.applyPatch({ ...defaultPatch(), mixOsc2: 1, osc2Octave: 2, osc2Semitone: 5 });
+    engine.noteOn(57, 1, 0);
+    expect(engine.fundamental()).toBeCloseTo(220);
+  });
+
+  it('shows the Mixer’s output at the Oscillator Tap', async () => {
+    const full = await tapsAt(0.5, { ...clean, mixOsc1: 1 });
+    const half = await tapsAt(0.5, { ...clean, mixOsc1: 0.5 });
+    expect(rms(half.oscillator) / rms(full.oscillator)).toBeCloseTo(0.5, 2);
+  });
+
+  it('never exceeds full scale at the output with every source at full level and maximum Resonance', async () => {
+    let worst = 0;
+    const loud = { resonance: 1, ampSustain: 1, ampAttack: 0.001, mixOsc1: 1, mixOsc2: 1, mixNoise: 1, osc2Octave: 1 };
+    for (const note of [24, 48, 72]) {
+      for (const cutoff of [100, 300, 873, 3000]) {
+        const s = await render(0.6, { ...loud, cutoff }, (e) => e.noteOn(note, 1, 0));
+        for (const v of s) worst = Math.max(worst, Math.abs(v));
+      }
+    }
+    expect(worst).toBeLessThan(1);
+  });
+});

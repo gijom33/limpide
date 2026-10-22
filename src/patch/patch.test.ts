@@ -14,6 +14,7 @@ describe('defaultPatch', () => {
       [
         'ampAttack', 'ampDecay', 'ampRelease', 'ampSustain', 'cutoff', 'pulseWidth', 'resonance',
         'filterEnvAmount', 'filterAttack', 'filterDecay', 'filterSustain', 'filterRelease',
+        'osc2Octave', 'osc2Semitone', 'osc2Detune', 'mixOsc1', 'mixOsc2', 'mixNoise',
       ].sort(),
     );
   });
@@ -44,6 +45,33 @@ describe('setWaveform', () => {
     expect(after.waveform).toBe('pulse');
     expect(after.cutoff).toBe(500);
     expect(before.waveform).toBe('saw');
+  });
+});
+
+describe('Osc 2 and the Mixer', () => {
+  it('start so that only Osc 1 is heard, exactly as before Osc 2 existed', () => {
+    const p = defaultPatch();
+    expect([p.mixOsc1, p.mixOsc2, p.mixNoise]).toEqual([1, 0, 0]);
+    expect([p.osc2Octave, p.osc2Semitone, p.osc2Detune]).toEqual([0, 0, 0]);
+    expect(p.osc2Waveform).toBe('saw');
+  });
+
+  it('moves Octave and Semitone in whole steps', () => {
+    expect(setParam(defaultPatch(), 'osc2Octave', 1.4).osc2Octave).toBe(1);
+    expect(setParam(defaultPatch(), 'osc2Octave', -7).osc2Octave).toBe(-2);
+    expect(setParam(defaultPatch(), 'osc2Semitone', 6.6).osc2Semitone).toBe(7);
+  });
+
+  it('shows the offsets in their own units', () => {
+    expect(formatParam('osc2Octave', 1)).toBe('+1 oct');
+    expect(formatParam('osc2Semitone', -5)).toBe('−5 st');
+    expect(formatParam('osc2Detune', 7.4)).toBe('+7 ¢');
+    expect(formatParam('osc2Detune', 0)).toBe('0 ¢');
+  });
+
+  it('sets either Oscillator’s Waveform independently', () => {
+    const p = setWaveform(setWaveform(defaultPatch(), 'square', 'osc2'), 'sine');
+    expect([p.waveform, p.osc2Waveform]).toEqual(['sine', 'square']);
   });
 });
 
