@@ -31,6 +31,10 @@ export function Knob({ id, value, onChange }: Props) {
         aria-valuetext={formatParam(id, value)}
         style={{ '--angle': `${(position - 0.5) * SWEEP_DEGREES}deg` } as React.CSSProperties}
         onPointerDown={(e) => {
+          // Stops the drag from starting a text selection (Safari does, even with pointer capture);
+          // focus is lost with the default action, so restore it for keyboard control.
+          e.preventDefault();
+          e.currentTarget.focus();
           e.currentTarget.setPointerCapture(e.pointerId);
           drag.current = { y: e.clientY, position };
         }}

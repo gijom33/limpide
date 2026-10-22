@@ -61,7 +61,10 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 .fixed { margin: 0; font-size: 18px; }
 .knobs { display: flex; gap: 16px; }
 
-.knob { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 64px; }
+.knob {
+  display: flex; flex-direction: column; align-items: center; gap: 4px; width: 64px;
+  -webkit-user-select: none; user-select: none;
+}
 .knob-dial {
   width: 44px; height: 44px; border-radius: 50%; cursor: ns-resize; touch-action: none;
   background: radial-gradient(circle at 50% 40%, #2c313d, #1b1f27);
