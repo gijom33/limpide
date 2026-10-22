@@ -30,7 +30,7 @@ export interface SynthEngine {
   now(): number;
   /**
    * The Response Curve: gain (linear) at each frequency from the Oscillator Tap to the Filter Tap, at the
-   * Effective Cutoff right now. Includes the Resonance compensation, so it matches what the Filter Tap receives.
+   * Effective Cutoff right now.
    */
   filterResponse(frequencies: Float32Array<ArrayBuffer>): Float32Array;
   readonly taps: Taps;
@@ -42,14 +42,12 @@ export interface SynthEngine {
  */
 export const OSCILLATOR_LEVEL = 0.5;
 // Listening volume only, after the Amp Tap, so it is not part of what the Viewers show.
-const MASTER_LEVEL = 0.8;
+// Without Resonance compensation the worst resonant peak reaches ±1.8 at the Filter Tap (measured over Notes
+// and Cutoffs at full Resonance); 0.45 keeps that under full scale at the output (about 0.83).
+const MASTER_LEVEL = 0.45;
 
 // Web Audio interprets a low-pass biquad's Q in dB: −3 dB is a flat Butterworth response.
 const resonanceToQdB = (resonance: number) => -3.01 + resonance * 27;
-
-// The resonant peak boosts by 10^(Q/20). Pulling the Filter's output down by the cube root of that
-// keeps the loudest case under full scale, much as analogue ladder filters lose level with resonance.
-const resonanceCompensation = (qDb: number) => 10 ** (-Math.max(0, qDb) / 60);
 
 // Enough Harmonics to reach Nyquist from the lowest Notes; the browser band-limits per pitch.
 const WAVE_HARMONICS = 1024;
@@ -80,7 +78,6 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   oscLevel.gain.value = OSCILLATOR_LEVEL;
   const filter = ctx.createBiquadFilter();
   filter.type = 'lowpass';
-  const compensation = ctx.createGain();
   // Never connected: a twin of the Filter set from the Modulation model, so the Response Curve shows the
   // Effective Cutoff even while the real Filter is being automated (ADR-0003).
   const responseTwin = ctx.createBiquadFilter();
@@ -100,10 +97,10 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   filterEnvelope.connect(envelopeAmount).connect(filter.detune);
   filterEnvelope.start();
 
-  osc.connect(oscLevel).connect(filter).connect(compensation).connect(amp).connect(master).connect(ctx.destination);
+  osc.connect(oscLevel).connect(filter).connect(amp).connect(master).connect(ctx.destination);
   // Taps are side branches, so observing never alters the sound.
   oscLevel.connect(taps.oscillator);
-  compensation.connect(taps.filter);
+  filter.connect(taps.filter);
   amp.connect(taps.amp);
   osc.start();
 
@@ -153,8 +150,6 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       responseTwin.frequency.value = modulationAt().cutoff;
       const magnitude = new Float32Array(frequencies.length);
       responseTwin.getFrequencyResponse(frequencies, magnitude, new Float32Array(frequencies.length));
-      const gain = resonanceCompensation(responseTwin.Q.value);
-      for (let i = 0; i < magnitude.length; i++) magnitude[i] *= gain;
       return magnitude;
     },
 
@@ -173,7 +168,6 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       filter.frequency.setValueAtTime(effectiveCutoff(next), t);
       filter.Q.setValueAtTime(qDb, t);
       envelopeAmount.gain.setValueAtTime(next.filterEnvAmount * 1200, t);
-      compensation.gain.setValueAtTime(resonanceCompensation(qDb), t);
       responseTwin.Q.value = qDb;
     },
 

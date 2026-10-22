@@ -9,6 +9,6 @@ The Envelope Timeline, Response Curve and Ghost all need the Effective Cutoff *r
 
 ## Consequences
 
-The Response Curve comes from an unconnected twin `BiquadFilterNode`, set to the model's Effective Cutoff, through its exact `getFrequencyResponse()`, times the Resonance compensation. An engine test checks it against the attenuation measured between the Oscillator and Filter Taps, Harmonic by Harmonic.
+The Response Curve comes from an unconnected twin `BiquadFilterNode`, set to the model's Effective Cutoff, through its exact `getFrequencyResponse()`. An engine test checks it against the attenuation measured between the Oscillator and Filter Taps, Harmonic by Harmonic.
 
 The LFO is applied in both places: as an audio-rate connection in the graph and as the same formula in the model. Engine tests have to check that the two stay in agreement.

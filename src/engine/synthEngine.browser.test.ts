@@ -115,21 +115,20 @@ describe('shared scale across Taps', () => {
     expect(rms(taps.amp) / rms(taps.filter)).toBeCloseTo(1, 2);
   });
 
-  it('keeps every Tap within ±1 at maximum Resonance', async () => {
+  it('keeps every Tap within ±1 while Resonance is off; only Resonance can push the Filter Tap past it (OVER)', async () => {
     let worst = 0;
     for (const note of [24, 36, 48, 60, 72, 84]) {
       for (const cutoff of [100, 300, 873, 2000, 6000]) {
-        const taps = await tapsAt(0.4, { cutoff, resonance: 1, ampSustain: 1, ampAttack: 0.001 }, note);
+        const taps = await tapsAt(0.4, { cutoff, resonance: 0, ampSustain: 1, ampAttack: 0.001 }, note);
         worst = Math.max(worst, peak(taps.oscillator), peak(taps.filter), peak(taps.amp));
       }
     }
     expect(worst).toBeLessThan(0.8);
   });
 
-  it('keeps the output exactly as loud as before the gain restaging', async () => {
-    // Before: a full-scale saw through master 0.4 peaked at 0.4 with the Filter wide open.
+  it('plays an open saw at the Nominal Level times the master volume (0.5 × 0.45)', async () => {
     const s = await render(0.5, { cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001 }, (e) => e.noteOn(45, 1, 0));
-    expect(peak(s.subarray(SR * 0.25))).toBeCloseTo(0.4, 1);
+    expect(peak(s.subarray(SR * 0.25))).toBeCloseTo(0.225, 1);
   });
 });
 
@@ -149,7 +148,7 @@ describe('headroom', () => {
   it('never exceeds full scale at the output, even at maximum Resonance, Velocity and Sustain', async () => {
     let worst = 0;
     for (const note of [24, 36, 48, 60, 72, 84]) {
-      for (const cutoff of [100, 300, 873, 2000, 6000]) {
+      for (const cutoff of [60, 100, 150, 220, 300, 450, 600, 873, 1300, 2000, 3000, 6000]) {
         const s = await render(0.6, { cutoff, resonance: 1, ampSustain: 1, ampAttack: 0.001 }, (e) => e.noteOn(note, 1, 0));
         for (const v of s) worst = Math.max(worst, Math.abs(v));
       }
@@ -299,5 +298,16 @@ describe('Filter Envelope (model-driven automation, ADR-0003)', () => {
     const [frame] = await captureAt([0.6], { cutoff: 20000, ampAttack: 0.001, ampDecay: 0.05, ampSustain: 0.5 }, (e) => e.noteOn(45, 0.6, 0));
     expect(frame.modulation.amp).toBeCloseTo(0.3, 3);
     expect(rms(frame.amp) / rms(frame.filter)).toBeCloseTo(0.3, 2);
+  });
+});
+
+describe('Resonance and level', () => {
+  it('leaves the pass band at full level: Resonance only adds the peak at the Cutoff', () => {
+    const engine = createSynthEngine(new OfflineAudioContext(1, SR, SR));
+    for (const resonance of [0, 0.5, 1]) {
+      engine.applyPatch({ ...defaultPatch(), cutoff: 2000, resonance });
+      const [passBand] = engine.filterResponse(Float32Array.of(40));
+      expect(dB(passBand), `Resonance ${resonance}`).toBeCloseTo(0, 1);
+    }
   });
 });
