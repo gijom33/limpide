@@ -15,8 +15,8 @@ interface Source {
 }
 
 /**
- * The Envelope Timeline: the last few seconds of the Amp Envelope (filled) and the Effective Cutoff (line,
- * log Hz on the right), computed from the Modulation model for past moments. "Now" is the right edge.
+ * The Envelope Timeline: the last few seconds of the Amp Envelope and the Effective Cutoff (log Hz on the
+ * right; its area is the pass band), computed from the Modulation model for past moments. "Now" is the right edge.
  */
 export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: () => ViewSettings) {
   const frozenNow = createFreezeLatch<number>();
@@ -53,21 +53,17 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
     const columns = Math.ceil(width);
     const samples = Array.from({ length: columns }, (_, x) => source.modulationAt(timeAt(x + 0.5)));
 
-    // Amp Envelope: a filled area, read as "how loud".
-    g.fillStyle = cssVar(canvas, '--stage-amp');
-    g.globalAlpha = 0.25;
+    // Effective Cutoff as an area: for a low-pass Filter everything below the line gets through, so the
+    // shading is the pass band over time. Fainter than the Amp area, and underneath it.
+    g.fillStyle = cssVar(canvas, '--stage-filter');
+    g.globalAlpha = 0.14;
     g.beginPath();
-    g.moveTo(0, yLevel(0));
-    samples.forEach((m, x) => g.lineTo(x, yLevel(m.amp)));
-    g.lineTo(columns, yLevel(0));
+    g.moveTo(0, yHz(F_MIN));
+    samples.forEach((m, x) => g.lineTo(x, yHz(m.cutoff)));
+    g.lineTo(columns, yHz(F_MIN));
     g.closePath();
     g.fill();
     g.globalAlpha = 1;
-    g.strokeStyle = cssVar(canvas, '--stage-amp');
-    g.lineWidth = 1.5;
-    g.beginPath();
-    samples.forEach((m, x) => (x ? g.lineTo(x, yLevel(m.amp)) : g.moveTo(x, yLevel(m.amp))));
-    g.stroke();
 
     // The Cutoff knob's setting (dashed), then the Effective Cutoff the Filter Envelope makes of it.
     g.strokeStyle = cssVar(canvas, '--stage-filter');
@@ -86,6 +82,22 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
     g.lineWidth = 1.75;
     g.beginPath();
     samples.forEach((m, x) => (x ? g.lineTo(x, yHz(m.cutoff)) : g.moveTo(x, yHz(m.cutoff))));
+    g.stroke();
+
+    // Amp Envelope: a filled area, read as "how loud".
+    g.fillStyle = cssVar(canvas, '--stage-amp');
+    g.globalAlpha = 0.25;
+    g.beginPath();
+    g.moveTo(0, yLevel(0));
+    samples.forEach((m, x) => g.lineTo(x, yLevel(m.amp)));
+    g.lineTo(columns, yLevel(0));
+    g.closePath();
+    g.fill();
+    g.globalAlpha = 1;
+    g.strokeStyle = cssVar(canvas, '--stage-amp');
+    g.lineWidth = 1.5;
+    g.beginPath();
+    samples.forEach((m, x) => (x ? g.lineTo(x, yLevel(m.amp)) : g.moveTo(x, yLevel(m.amp))));
     g.stroke();
   };
 }

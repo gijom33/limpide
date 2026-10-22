@@ -42,3 +42,19 @@ for (const width of [1400, 1100, 900, 872, 800, 420]) {
     expect(escapes).toEqual([]);
   });
 }
+
+test('wide screens get a wider page and taller Viewers, not empty margins or thin strips', async ({ page }) => {
+  const measure = async (width: number) => {
+    await page.setViewportSize({ width, height: 1200 });
+    await page.goto('/');
+    return page.evaluate(() => ({
+      main: document.querySelector('main')!.getBoundingClientRect().width,
+      scope: document.querySelector<HTMLCanvasElement>('canvas.scope')!.getBoundingClientRect(),
+    }));
+  };
+  const laptop = await measure(1400);
+  const wide = await measure(2400);
+  expect(wide.main).toBeGreaterThanOrEqual(1900);
+  expect(wide.scope.height).toBeGreaterThan(laptop.scope.height);
+  expect(wide.scope.width / wide.scope.height).toBeLessThan(3.2); // keeps its shape instead of flattening
+});

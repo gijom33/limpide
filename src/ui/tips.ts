@@ -47,7 +47,7 @@ export const TIPS = {
   },
   timeline: {
     title: 'Envelope Timeline',
-    body: 'The last four seconds: the violet area is the Amp Envelope (loudness), the orange line the Effective Cutoff, the faint dashed line the Cutoff knob itself.',
+    body: 'The last four seconds. Violet: the Amp Envelope (loudness). Orange: the Effective Cutoff, with the frequencies the Filter lets through shaded below it. The faint dashed line is the Cutoff knob itself.',
     how: 'Play a Note and let go: the Release is drawn after the key comes up.',
   },
   theme: { title: 'Theme', body: 'Switches between the dark and light look. Your choice is remembered.' },
