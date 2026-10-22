@@ -10,5 +10,6 @@ The Voice is built from native Web Audio nodes: `OscillatorNode` with built-in o
 ## Consequences
 
 - The Filter has biquad character, not ladder character. High Resonance peaks sharply but doesn't "sing" like analogue hardware.
+- A resonant biquad boosts its peak by 10^(Q/20), up to 16× at maximum Resonance, which clipped the output. A gain stage after the Filter cuts the level by the cube root of that boost (at most −8 dB), with the master level at 0.4, so the worst case peaks at about 0.57, much as analogue ladder filters lose level as resonance rises. The Filter Tap sits after this gain stage, so the Response Curve must include it.
 - Two cascaded biquads at the same Q stack their resonance peaks. The 24 dB Slope must use a reduced per-stage Q so that Resonance feels the same in both Slopes.
 - Waveforms other than the built-ins, such as pulse with arbitrary Pulse Width, are built as `PeriodicWave`s from their Fourier series. The same series also feeds the Ideal Reference.

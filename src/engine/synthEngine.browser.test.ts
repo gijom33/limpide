@@ -110,3 +110,16 @@ describe('fundamental', () => {
     expect(engine.fundamental()).toBeCloseTo(440);
   });
 });
+
+describe('headroom', () => {
+  it('never exceeds full scale at the output, even at maximum Resonance, Velocity and Sustain', async () => {
+    let worst = 0;
+    for (const note of [24, 36, 48, 60, 72, 84]) {
+      for (const cutoff of [100, 300, 873, 2000, 6000]) {
+        const s = await render(0.6, { cutoff, resonance: 1, ampSustain: 1, ampAttack: 0.001 }, (e) => e.noteOn(note, 1, 0));
+        for (const v of s) worst = Math.max(worst, Math.abs(v));
+      }
+    }
+    expect(worst).toBeLessThan(1);
+  });
+});

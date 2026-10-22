@@ -18,10 +18,14 @@ export interface SynthEngine {
   readonly taps: Taps;
 }
 
-const MASTER_LEVEL = 0.5;
+const MASTER_LEVEL = 0.4;
 
 // Web Audio interprets a low-pass biquad's Q in dB: −3 dB is a flat Butterworth response.
 const resonanceToQdB = (resonance: number) => -3.01 + resonance * 27;
+
+// The resonant peak boosts by 10^(Q/20). Pulling the Filter's output down by the cube root of that
+// keeps the loudest case under full scale, much as analogue ladder filters lose level with resonance.
+const resonanceCompensation = (qDb: number) => 10 ** (-Math.max(0, qDb) / 60);
 
 function createAnalyser(ctx: BaseAudioContext): AnalyserNode {
   const analyser = ctx.createAnalyser();
@@ -36,16 +40,17 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   osc.type = 'sawtooth';
   const filter = ctx.createBiquadFilter();
   filter.type = 'lowpass';
+  const compensation = ctx.createGain();
   const amp = ctx.createGain();
   amp.gain.value = 0;
   const master = ctx.createGain();
   master.gain.value = MASTER_LEVEL;
   const taps: Taps = { oscillator: createAnalyser(ctx), filter: createAnalyser(ctx), amp: createAnalyser(ctx) };
 
-  osc.connect(filter).connect(amp).connect(master).connect(ctx.destination);
+  osc.connect(filter).connect(compensation).connect(amp).connect(master).connect(ctx.destination);
   // Taps are side branches, so observing never alters the sound.
   osc.connect(taps.oscillator);
-  filter.connect(taps.filter);
+  compensation.connect(taps.filter);
   master.connect(taps.amp);
   osc.start();
 
@@ -65,7 +70,9 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       patch = next;
       const t = ctx.currentTime;
       filter.frequency.setValueAtTime(next.cutoff, t);
-      filter.Q.setValueAtTime(resonanceToQdB(next.resonance), t);
+      const qDb = resonanceToQdB(next.resonance);
+      filter.Q.setValueAtTime(qDb, t);
+      compensation.gain.setValueAtTime(resonanceCompensation(qDb), t);
     },
 
     noteOn(note, velocity, at) {
