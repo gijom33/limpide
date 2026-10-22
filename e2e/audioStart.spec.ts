@@ -28,7 +28,7 @@ test('the first key press both unlocks audio and plays its Note', async ({ page 
 test('a first click anywhere unlocks audio too', async ({ page }) => {
   await page.goto('/');
   await ready(page);
-  await page.getByRole('radio', { name: 'Square' }).click();
+  await page.getByRole('radiogroup', { name: 'Osc 1 Waveform' }).getByRole('radio', { name: 'Square' }).click();
   await page.keyboard.down('KeyA');
   await expect.poll(() => db(page), { timeout: 10000 }).toBeGreaterThan(-40);
   await page.keyboard.up('KeyA');

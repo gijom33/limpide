@@ -54,11 +54,28 @@ export const TIPS = {
   pulseWidth: {
     title: 'Pulse Width',
     body: 'How much of each cycle the pulse spends high. 50% is a square. Narrower pulses sound thinner and add Harmonics that a square lacks.',
-    how: 'Only shapes the Pulse Waveform: choose Pulse to hear it.',
+    how: 'Only shapes the Pulse Waveform, on either Oscillator: choose Pulse to hear it.',
+  },
+  osc2: {
+    title: 'Osc 2',
+    body: 'A second Oscillator that follows the Note, shifted by whole Octaves and Semitones and fine-tuned by Detune.',
+    how: 'Raise Osc 2 in the Mixer to hear it. A few cents of Detune makes the sound beat: watch the Scope swell and fade.',
+  },
+  detune: {
+    title: 'Detune',
+    body: 'Fine-tunes Osc 2 in cents (hundredths of a semitone). Two Oscillators a few cents apart drift in and out of step, so the sound swells and fades: the classic thick, chorused sound.',
+  },
+  mixer: {
+    title: 'Mixer',
+    body: 'Sets how much of each source goes into the Filter. The Oscillator Tap below shows the mix. Three sources at full level can exceed the Scope’s range (OVER).',
+  },
+  noise: {
+    title: 'Noise',
+    body: 'An unpitched hiss with energy at every frequency: in the Spectrum it fills the gaps between Harmonics. Filter it for wind, breath or percussion.',
   },
   oscillatorTap: {
     title: 'Oscillator Tap',
-    body: 'The raw Oscillator, before anything shapes it. It runs all the time, even between Notes: the Amp decides when you hear it.',
+    body: 'The Mixer’s output: the raw sources, before the Filter shapes them. The Oscillators run all the time, even between Notes: the Amp decides when you hear them.',
   },
 } satisfies Record<string, TipContent>;
 
@@ -69,7 +86,7 @@ export const OVERLAY_TIPS: Record<Overlay, TipContent> = {
   },
   ideal: {
     title: 'Ideal Reference',
-    body: 'Rings where theory puts each Harmonic for this Waveform. On the Filter Tap they show where each Harmonic should land after the Filter.',
+    body: 'Rings where theory puts each Harmonic of Osc 1’s Waveform, at its Mixer level. On the Filter Tap they show where each Harmonic should land after the Filter.',
   },
   curve: {
     title: 'Response Curve',

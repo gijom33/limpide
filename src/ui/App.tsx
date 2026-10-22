@@ -52,6 +52,20 @@ function Block({ title, stage, ids, patch, onChange, children, more, viewers }: 
   );
 }
 
+/** Pulse Width matters while either audible Oscillator plays a pulse. */
+const usesPulse = (p: Patch) => p.waveform === 'pulse' || (p.osc2Waveform === 'pulse' && p.mixOsc2 > 0);
+
+/** A labelled cluster of controls inside a stage (Osc 1, Osc 2, Mixer, Filter Envelope). */
+function SubBlock({ title, tip, group, children }: { title: string; tip?: TipContent; group?: boolean; children: React.ReactNode }) {
+  const heading = <h3 className={tip ? 'has-tip' : undefined}>{title}</h3>;
+  return (
+    <div className="sub-block" role={group ? 'group' : undefined} aria-label={group ? title : undefined}>
+      {tip ? <Tooltip content={tip}>{heading}</Tooltip> : heading}
+      {children}
+    </div>
+  );
+}
+
 export function App() {
   const [patch, setPatch] = useState(defaultPatch);
   const [session] = useState(() => getAudioSession(patch));
@@ -73,8 +87,8 @@ export function App() {
   // The Ideal Reference at the Oscillator Tap's level: the same series the engine plays, scaled by the Nominal Level.
   const ideal = useMemo(() => {
     const { magnitudes } = harmonicSeries(patch.waveform, patch.pulseWidth, IDEAL_HARMONICS);
-    return magnitudes.map((m) => m * OSCILLATOR_LEVEL);
-  }, [patch.waveform, patch.pulseWidth]);
+    return magnitudes.map((m) => m * OSCILLATOR_LEVEL * patch.mixOsc1);
+  }, [patch.waveform, patch.pulseWidth, patch.mixOsc1]);
 
   // Read by the render loop every frame; a stable getter keeps the Viewers mounted while settings change.
   const viewSettings = useRef<ViewSettings>({ cycles, ideal, overlays, viewer });
@@ -210,7 +224,7 @@ export function App() {
 
       <div className="chain">
         <Block
-          title="Oscillator"
+          title="Oscillators"
           stage="osc"
           ids={[]}
           patch={patch}
@@ -220,10 +234,36 @@ export function App() {
             showIdeal: true,
           })}
         >
-          <WaveformPicker value={patch.waveform} onChange={(w) => setPatch((p) => setWaveform(p, w))} />
-          <Tooltip content={TIPS.pulseWidth}>
-            <Knob id="pulseWidth" value={patch.pulseWidth} onChange={(v) => change('pulseWidth', v)} inactive={patch.waveform !== 'pulse'} />
-          </Tooltip>
+          <div className="source-rows">
+            <SubBlock title="Osc 1">
+              <WaveformPicker label="Osc 1 Waveform" compact value={patch.waveform} onChange={(w) => setPatch((p) => setWaveform(p, w))} />
+              <div className="knobs">
+                <Tooltip content={TIPS.pulseWidth}>
+                  <Knob id="pulseWidth" value={patch.pulseWidth} onChange={(v) => change('pulseWidth', v)} inactive={!usesPulse(patch)} />
+                </Tooltip>
+              </div>
+            </SubBlock>
+            <SubBlock title="Osc 2" tip={TIPS.osc2}>
+              <WaveformPicker label="Osc 2 Waveform" compact value={patch.osc2Waveform} onChange={(w) => setPatch((p) => setWaveform(p, w, 'osc2'))} />
+              <div className="knobs">
+                {(['osc2Octave', 'osc2Semitone'] as const).map((id) => (
+                  <Knob key={id} id={id} value={patch[id]} onChange={(v) => change(id, v)} inactive={patch.mixOsc2 === 0} />
+                ))}
+                <Tooltip content={TIPS.detune}>
+                  <Knob id="osc2Detune" value={patch.osc2Detune} onChange={(v) => change('osc2Detune', v)} inactive={patch.mixOsc2 === 0} />
+                </Tooltip>
+              </div>
+            </SubBlock>
+            <SubBlock title="Mixer" tip={TIPS.mixer} group>
+              <div className="knobs">
+                <Knob id="mixOsc1" value={patch.mixOsc1} onChange={(v) => change('mixOsc1', v)} />
+                <Knob id="mixOsc2" value={patch.mixOsc2} onChange={(v) => change('mixOsc2', v)} />
+                <Tooltip content={TIPS.noise}>
+                  <Knob id="mixNoise" value={patch.mixNoise} onChange={(v) => change('mixNoise', v)} />
+                </Tooltip>
+              </div>
+            </SubBlock>
+          </div>
         </Block>
         <Block
           title="Filter"
@@ -232,11 +272,8 @@ export function App() {
           patch={patch}
           onChange={change}
           more={
-            <div className="sub-block">
-              <Tooltip content={TIPS.filterEnvelope}>
-                <h3 className="has-tip">Filter Envelope</h3>
-              </Tooltip>
-              <div className="knobs">
+            <SubBlock title="Filter Envelope" tip={TIPS.filterEnvelope}>
+              <div className="knobs knobs-envelope">
                 <Tooltip content={TIPS.envAmount}>
                   <Knob id="filterEnvAmount" value={patch.filterEnvAmount} onChange={(v) => change('filterEnvAmount', v)} />
                 </Tooltip>
@@ -244,7 +281,7 @@ export function App() {
                   <Knob key={id} id={id} value={patch[id]} onChange={(v) => change(id, v)} inactive={patch.filterEnvAmount === 0} />
                 ))}
               </div>
-            </div>
+            </SubBlock>
           }
           viewers={viewers('filter', 'Filter', {
             showIdeal: true,

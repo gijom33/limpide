@@ -38,8 +38,12 @@ _Avoid_: Wave type, shape
 The fraction of a pulse Waveform's cycle spent high; 50% is a square.
 _Avoid_: Duty cycle, PWM (PWM is pulse width being modulated)
 
+**Transpose**:
+Osc 2's offset from Osc 1 in whole Octaves and Semitones, before Detune.
+_Avoid_: Interval, coarse tune
+
 **Detune**:
-Osc 2's pitch offset relative to Osc 1, in cents.
+Osc 2's fine pitch offset relative to Osc 1, in cents, on top of its Transpose.
 _Avoid_: Fine tune, spread
 
 **Noise**:
@@ -119,7 +123,7 @@ _Avoid_: Intensity, force
 ### Seeing
 
 **Tap**:
-A listening point in the Voice where the signal is observed: the **Oscillator Tap** (after the Mixer), the **Filter Tap**, and the **Amp Tap**.
+A listening point in the Voice where the signal is observed: the **Oscillator Tap** (the Mixer's output), the **Filter Tap**, and the **Amp Tap** (before the master volume and the output's safety clipper).
 _Avoid_: Probe, monitor, stage output
 
 **Nominal Level**:

@@ -58,3 +58,28 @@ test('wide screens get a wider page and taller Viewers, not empty margins or thi
   expect(wide.scope.height).toBeGreaterThan(laptop.scope.height);
   expect(wide.scope.width / wide.scope.height).toBeLessThan(3.2); // keeps its shape instead of flattening
 });
+
+for (const width of [1400, 872]) {
+  test(`controls inside a stage never overlap each other (${width}px)`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.goto('/');
+    const overlaps = await page.evaluate(() => {
+      const found: string[] = [];
+      for (const block of document.querySelectorAll<HTMLElement>('.block')) {
+        const parts = [...block.querySelectorAll<HTMLElement>('h2, h3, .waveforms, .knob, .tap')].map((el) => ({
+          el,
+          r: el.getBoundingClientRect(),
+        }));
+        for (let i = 0; i < parts.length; i++)
+          for (let j = i + 1; j < parts.length; j++) {
+            const [a, b] = [parts[i], parts[j]];
+            if (a.el.contains(b.el) || b.el.contains(a.el)) continue;
+            const overlap = a.r.left < b.r.right - 1 && b.r.left < a.r.right - 1 && a.r.top < b.r.bottom - 1 && b.r.top < a.r.bottom - 1;
+            if (overlap) found.push(`${block.getAttribute('aria-label')}: ${a.el.className || a.el.tagName} × ${b.el.className || b.el.tagName}`);
+          }
+      }
+      return found;
+    });
+    expect(overlaps).toEqual([]);
+  });
+}

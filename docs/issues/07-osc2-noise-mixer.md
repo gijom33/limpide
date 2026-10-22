@@ -4,9 +4,10 @@
 
 **Blocked by:** 03
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Patch Parameters added, with migration defaults for older Patches
-- [ ] Engine test: Osc 2 at +1 octave adds energy at 2× the fundamental; Noise raises the broadband floor
-- [ ] Harmonic Markers stay anchored to Osc 1's fundamental
-- [ ] Mixer block in the signal-flow layout
+- [x] Patch Parameters added with defaults that keep the old sound (Osc 2 and Noise at 0%). Migration of saved Patches belongs to ticket 12, since nothing is saved yet
+- [x] Engine test: Osc 2 at +1 octave adds energy at 2× the fundamental; Noise raises the broadband floor
+- [x] Harmonic Markers stay anchored to Osc 1's fundamental
+- [x] Mixer in the signal-flow layout, as the last section of the Oscillators stage, because its output is the Oscillator Tap
+- [x] Output safety soft-clipper (ADR-0006); Cycle Lock holds with Noise and follows a detuned mix smoothly

@@ -225,10 +225,21 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 /* Amount then A-D-S-R on one line when the block is wide enough; when it is not, Amount stands to the left
    and the envelope keeps its shape as a 2×2 (A D / S R), like the Amp block. Decided by the block's own width. */
 .sub-block { container-type: inline-size; }
-.sub-block .knobs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px 4px; }
+.sub-block .knobs { display: flex; flex-wrap: wrap; gap: 8px 6px; min-height: 0; }
+.sub-block .knobs-envelope { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px 4px; }
 @container (max-width: 300px) {
-  .sub-block .knobs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .sub-block .knobs > :first-child { grid-row: span 2; align-self: center; }
+  .sub-block .knobs-envelope { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .sub-block .knobs-envelope > :first-child { grid-row: span 2; align-self: center; }
 }
 .sub-block .knob { width: auto; min-width: 0; }
 .sub-block .knob-label, .sub-block .knob-value { white-space: nowrap; }
+
+/* The Oscillators stage: Osc 1, Osc 2 and the Mixer stacked; the first needs no divider above it. */
+.source-rows { display: flex; flex-direction: column; gap: 10px; flex: 1 1 100%; }
+.source-rows > .sub-block:first-child { border-top: 0; padding-top: 0; }
+.waveforms[data-compact] { grid-template-columns: repeat(5, minmax(0, 40px)); }
+.waveforms[data-compact] .waveform { padding: 5px 2px; }
+/* In the stage columns nothing may shrink below its content (an explicit min-height on .knobs would otherwise
+   let flexbox squeeze rows until labels overlap), and the Waveform picker must not grow to fill height. */
+.block > *, .source-rows > *, .sub-block > * { flex-shrink: 0; }
+.sub-block > .waveforms { flex: none; }

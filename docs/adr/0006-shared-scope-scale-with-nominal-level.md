@@ -9,5 +9,5 @@ Every Scope uses the same fixed ±1 scale, so heights compare directly from Tap 
 
 ## Consequences
 
-- Anything that adds sources (Osc 2, Noise) must respect the headroom. A Scope shows "OVER ±1" if a Tap exceeds it, and the trace is clamped.
+- Several sources at full level (Osc 1 + Osc 2 + Noise), plus Resonance, can exceed any fixed headroom. A Scope shows "OVER ±1" when a Tap exceeds the scale, and the trace is clamped: the Viewers never hide it. What you *hear* is protected by a safety soft-clipper after the Amp Tap. It is exactly linear below 0.8 of full scale and bends smoothly so the output never passes 1. A `DynamicsCompressorNode` was rejected because it adds make-up gain to every sound and a few milliseconds of lookahead delay.
 - The Amp Tap shows the Voice before the master volume, so at full Sustain the Amp Tap equals the Filter Tap.

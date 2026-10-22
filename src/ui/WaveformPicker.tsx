@@ -12,13 +12,17 @@ const ICONS: Record<Waveform, string> = {
 const LABELS: Record<Waveform, string> = { sine: 'Sine', triangle: 'Triangle', saw: 'Saw', square: 'Square', pulse: 'Pulse' };
 
 interface Props {
+  /** Accessible name, e.g. "Osc 1 Waveform". */
+  label: string;
   value: Waveform;
   onChange(waveform: Waveform): void;
+  /** Icons only (names stay available to tooltips and screen readers). */
+  compact?: boolean;
 }
 
-export function WaveformPicker({ value, onChange }: Props) {
+export function WaveformPicker({ label, value, onChange, compact }: Props) {
   return (
-    <div className="waveforms" role="radiogroup" aria-label="Waveform">
+    <div className="waveforms" data-compact={compact || undefined} role="radiogroup" aria-label={label}>
       {(Object.keys(ICONS) as Waveform[]).map((w) => (
         <button
           key={w}
@@ -32,7 +36,7 @@ export function WaveformPicker({ value, onChange }: Props) {
           <svg viewBox="0 0 28 16" width="28" height="16" aria-hidden="true">
             <path d={ICONS[w]} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
           </svg>
-          <span>{LABELS[w]}</span>
+          {!compact && <span>{LABELS[w]}</span>}
         </button>
       ))}
     </div>
