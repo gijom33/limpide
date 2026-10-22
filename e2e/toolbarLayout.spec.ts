@@ -26,18 +26,18 @@ for (const width of [1400, 1000, 800]) {
 }
 
 for (const width of [1400, 1100, 900, 872, 800, 420]) {
-  test(`every knob stays inside its stage block (${width}px)`, async ({ page }) => {
+  test(`every control stays inside its stage block (${width}px)`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/');
     const escapes = await page.evaluate(() =>
       [...document.querySelectorAll<HTMLElement>('.block')].flatMap((block) => {
         const b = block.getBoundingClientRect();
         const inner = { left: b.left + 8, right: b.right - 8 }; // inside the padding, not touching the border
-        return [...block.querySelectorAll<HTMLElement>('.knob')]
+        return [...block.querySelectorAll<HTMLElement>('.knob, button, [role="radio"], [role="tab"]')]
           .map((k) => ({ k, r: k.getBoundingClientRect() }))
           .filter(({ k, r }) => r.width > 0 && k.checkVisibility({ visibilityProperty: true })) // hidden tab: not on screen
           .filter(({ r }) => r.left < inner.left || r.right > inner.right)
-          .map(({ k }) => `${block.getAttribute('aria-label')}: ${k.querySelector('.knob-label')?.textContent}`);
+          .map(({ k }) => `${block.getAttribute('aria-label')}: ${k.querySelector('.knob-label')?.textContent ?? k.getAttribute('aria-label') ?? k.textContent}`);
       }),
     );
     expect(escapes).toEqual([]);

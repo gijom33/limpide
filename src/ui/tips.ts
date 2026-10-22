@@ -53,7 +53,7 @@ export const TIPS = {
   },
   slope: {
     title: 'Slope',
-    body: 'How steeply the Filter removes frequencies past the Cutoff: 12 dB or 24 dB per octave. 24 dB is two Filters in a row, darker and more “synth”.',
+    body: 'How steeply the Filter removes frequencies past the Cutoff: 12 or 24 dB per octave. 24 dB is two Filters in a row, darker and more “synth”.',
     how: 'Compare the Response Curve at each Slope: the 24 dB one falls twice as fast.',
   },
   filterEnvelope: {

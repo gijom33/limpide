@@ -390,3 +390,31 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 /* Playing controls at the bottom, where a synth keeps its keyboard: the piano, then Hold and MIDI beneath. */
 .play-controls { display: grid; grid-template-columns: auto auto; gap: 6px 8px; align-content: center; flex: none; }
 .play-controls > .keyboard { grid-column: 1 / -1; }
+
+/* Compact knobs: one size for every knob on the page, chosen by the window. When the window is too narrow (the
+   stages would wrap their rows) or too short, every knob shrinks together, so rows stay single, the whole
+   instrument fits, and no knob is bigger than another. */
+@media (max-width: 1150px), (max-height: 760px) {
+  .knob { width: auto; min-width: 42px; gap: 2px; }
+  .knob-dial { width: 32px; height: 32px; }
+  .knob-dial::after { top: 3px; height: 10px; transform-origin: 50% 13px; }
+  .knob-label { font-size: 11px; white-space: nowrap; }
+  .knob-value { font-size: 10px; white-space: nowrap; }
+  .knobs { gap: 6px 8px; min-height: 0; }
+  .block .knobs { min-height: 0; }
+  /* The Filter Envelope's five knobs in one row. */
+  .sub-block .knobs-envelope { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px 2px; }
+  .sub-block .knobs-envelope > :first-child { grid-row: auto; }
+  /* Filter Mode and Slope on one line, with slimmer segments. */
+  .filter-shape { flex-wrap: nowrap; gap: 4px; }
+  .filter-shape .segmented { flex-wrap: nowrap; }
+  .filter-modes button { min-width: 26px; padding: 0 2px; }
+  .filter-modes svg { width: 20px; }
+  .filter-shape .segmented button { padding: 0 6px; }
+}
+.block-controls { gap: 8px; }
+
+/* A segmented control on the Filter heading line is one row of segments, never wrapped inside. */
+.filter-shape .segmented { flex-wrap: nowrap; }
+/* A segment's label never wraps onto two lines. */
+.segmented button, .tool { white-space: nowrap; }

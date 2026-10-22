@@ -4,7 +4,8 @@ interface Props<T extends string | number> {
   /** Short visible caption, e.g. "Freq". */
   caption?: string;
   value: T;
-  options: readonly { value: T; label: string }[];
+  /** `name` is the accessible name when the visible label is abbreviated (e.g. "12" for "12 dB"). */
+  options: readonly { value: T; label: string; name?: string }[];
   onChange(value: T): void;
 }
 
@@ -15,7 +16,14 @@ export function Segmented<T extends string | number>({ label, caption, value, op
       {caption && <span className="field-caption" aria-hidden="true">{caption}</span>}
       <div className="segmented" role="radiogroup" aria-label={label}>
         {options.map((o) => (
-          <button key={String(o.value)} type="button" role="radio" aria-checked={o.value === value} onClick={() => onChange(o.value)}>
+          <button
+            key={String(o.value)}
+            type="button"
+            role="radio"
+            aria-checked={o.value === value}
+            aria-label={o.name}
+            onClick={() => onChange(o.value)}
+          >
             {o.label}
           </button>
         ))}

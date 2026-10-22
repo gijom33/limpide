@@ -37,8 +37,8 @@ export function FilterShape({ mode, slope, onChange }: Props) {
           label="Slope"
           value={slope}
           options={[
-            { value: 12, label: '12 dB' },
-            { value: 24, label: '24 dB' },
+            { value: 12, label: '12', name: '12 dB' },
+            { value: 24, label: '24', name: '24 dB' },
           ]}
           onChange={(s) => onChange({ slope: s })}
         />

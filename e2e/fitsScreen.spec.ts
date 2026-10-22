@@ -92,3 +92,55 @@ for (const [width, height] of [
     expect(problems).toEqual([]);
   });
 }
+
+for (const [width, height, maxControls, minViewer] of [
+  [872, 920, 280, 78],
+  [1100, 900, 240, 100],
+]) {
+  test(`narrow stages use compact controls, leaving room for the Viewers (${width}×${height})`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await page.goto('/');
+    await expect(page.getByTestId('amp-level')).toHaveAttribute('data-db', /.+/);
+    const m = await page.evaluate(() => ({
+      controls: Math.max(...[...document.querySelectorAll('.block-controls')].map((c) => c.getBoundingClientRect().height)),
+      viewer: Math.min(...[...document.querySelectorAll('canvas.scope, canvas.spectrum')].map((c) => c.getBoundingClientRect().height)),
+      scroll: document.documentElement.scrollHeight,
+    }));
+    expect(m.controls).toBeLessThanOrEqual(maxControls);
+    expect(m.viewer).toBeGreaterThanOrEqual(minViewer);
+    expect(m.scroll).toBeLessThanOrEqual(height);
+  });
+}
+
+for (const [width, height, size] of [
+  [1710, 1060, 44],
+  [1440, 900, 44],
+  [1100, 900, 32],
+  [872, 920, 32],
+]) {
+  test(`every knob on the page is the same size: ${size} pt at ${width}×${height}`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await page.goto('/');
+    const sizes = await page.evaluate(() =>
+      [...document.querySelectorAll<HTMLElement>('.knob-dial')]
+        .filter((d) => d.checkVisibility({ visibilityProperty: true }))
+        .map((d) => Math.round(d.getBoundingClientRect().width)),
+    );
+    expect(new Set(sizes)).toEqual(new Set([size]));
+  });
+}
+
+test('the Filter Mode and Slope stay on one line each, never wrapping inside', async ({ page }) => {
+  await page.setViewportSize({ width: 872, height: 920 });
+  await page.goto('/');
+  const rows = await page.evaluate(() =>
+    ['[aria-label="Filter Mode"]', '[aria-label="Slope"]'].map((sel) => {
+      const buttons = [...document.querySelectorAll<HTMLElement>(`${sel} [role="radio"]`)];
+      const tops = buttons.map((b) => Math.round(b.getBoundingClientRect().top));
+      // …and each label on one line: a button no taller than one line of its text plus padding.
+      const wrapped = buttons.some((b) => b.scrollHeight > 30 || /\n/.test(b.innerText));
+      return new Set(tops).size + (wrapped ? 1 : 0);
+    }),
+  );
+  expect(rows).toEqual([1, 1]);
+});
