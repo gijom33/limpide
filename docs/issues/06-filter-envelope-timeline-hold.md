@@ -4,10 +4,10 @@
 
 **Blocked by:** 04
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Modulation model: envelope levels over time for any Gate history (including retrigger mid-release) and the Effective Cutoff with Envelope Amount, tested
-- [ ] The model produces the automation schedule applied by the engine
-- [ ] Engine test: the rendered brightness over time tracks the model's Effective Cutoff
-- [ ] Hold in Note input, tested
-- [ ] Envelope Timeline drawn with a playhead
+- [x] Modulation model: envelope levels over time for any Gate history (including retrigger mid-release) and the Effective Cutoff with Envelope Amount, tested
+- [x] The model produces the automation schedule applied by the engine
+- [x] Engine test: the rendered filtering matches the model's Effective Cutoff while the Envelope is held (1.6 kHz) and after Release (200 Hz); the Amp Tap matches the model's Amp Envelope; past moments use the Patch in force then
+- [x] Hold in Note input, tested
+- [x] Envelope Timeline: a scrolling 4-second strip ('now' at the right edge) of the Amp Envelope, the Effective Cutoff and the Cutoff knob, computed from the model; it freezes with the Viewers

@@ -27,6 +27,8 @@ export interface SynthEngine {
   fundamental(): number;
   /** The Modulation model at `time` (default: now), from the Gate history — past times too, for the Timeline. */
   modulationAt(time?: number): Modulation;
+  /** The Cutoff knob's own setting at `time` (before modulation). */
+  baseCutoffAt(time: number): number;
   now(): number;
   /**
    * The Response Curve: gain (linear) at each frequency from the Oscillator Tap to the Filter Tap, at the
@@ -108,6 +110,8 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   let waveKey = '';
   let fundamental = noteToFrequency(69);
   osc.frequency.value = fundamental;
+  // Patches in force over time, so past moments use the Cutoff and Amount of their time.
+  const patches: { time: number; patch: Patch }[] = [];
   const ampEvents: GateEvent[] = [];
   const filterEvents: GateEvent[] = [];
 
@@ -130,13 +134,19 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     play(filterEnvelope.offset, envelopeSchedule(filterEvent));
   };
 
+  const patchAt = (t: number) => {
+    for (let i = patches.length - 1; i >= 0; i--) if (patches[i].time <= t) return patches[i].patch;
+    return patches[0]?.patch;
+  };
+
   const modulationAt = (time?: number): Modulation => {
     const t = at(time);
     const filterLevel = envelopeLevel(filterEvents, t);
+    const then = patchAt(t);
     return {
       amp: envelopeLevel(ampEvents, t),
       filter: filterLevel,
-      cutoff: patch ? effectiveCutoff(patch, filterLevel) : 0,
+      cutoff: then ? effectiveCutoff(then, filterLevel) : 0,
     };
   };
 
@@ -144,6 +154,10 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     taps,
     fundamental: () => fundamental,
     modulationAt,
+    baseCutoffAt: (time) => {
+      const then = patchAt(time);
+      return then ? effectiveCutoff(then) : 0;
+    },
     now: () => ctx.currentTime,
 
     filterResponse(frequencies) {
@@ -156,6 +170,9 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     applyPatch(next) {
       patch = next;
       const t = ctx.currentTime;
+      if (patches.at(-1)?.time === t) patches.pop();
+      patches.push({ time: t, patch: next });
+      if (patches.length > HISTORY * 4) patches.shift();
       // Play exactly the Fourier series the Ideal Reference draws (normalisation is already in it).
       const key = next.waveform === 'pulse' ? `pulse:${next.pulseWidth}` : next.waveform;
       if (key !== waveKey) {

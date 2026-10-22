@@ -56,6 +56,7 @@ test('the Spectrum axes switch between log/linear and dB/linear', async ({ page 
 test('hovering a Spectrum reads out frequency, note and level', async ({ page }) => {
   await page.goto('/');
   const spectrum = page.getByLabel('Filter Spectrum');
+  await spectrum.scrollIntoViewIfNeeded();
   const box = (await spectrum.boundingBox())!;
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   // Halfway along the log axis is the geometric middle of 20 Hz–20 kHz: about 632 Hz.

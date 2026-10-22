@@ -16,6 +16,7 @@ import { TIPS } from './tips';
 import { ToolGroup } from './ToolGroup';
 import { Tooltip, type TipContent } from './Tooltip';
 import { AxesControls, ViewActions } from './ViewerControls';
+import { EnvelopeTimeline } from './EnvelopeTimeline';
 import { applyTheme, loadTheme } from './theme';
 import { WaveformPicker } from './WaveformPicker';
 
@@ -29,11 +30,13 @@ interface BlockProps {
   patch: Patch;
   onChange(id: ParamId, v: number): void;
   children?: React.ReactNode;
+  /** Extra controls under the main knobs (e.g. the Filter Envelope). */
+  more?: React.ReactNode;
   viewers?: React.ReactNode;
 }
 
 /** One stage of the signal-flow diagram: its controls on top, its Tap's Viewers below. */
-function Block({ title, stage, ids, patch, onChange, children, viewers }: BlockProps) {
+function Block({ title, stage, ids, patch, onChange, children, more, viewers }: BlockProps) {
   return (
     <section className="block" data-stage={stage} aria-label={title}>
       <h2>{title}</h2>
@@ -43,6 +46,7 @@ function Block({ title, stage, ids, patch, onChange, children, viewers }: BlockP
           <Knob key={id} id={id} value={patch[id]} onChange={(v) => onChange(id, v)} />
         ))}
       </div>
+      {more}
       {viewers}
     </section>
   );
@@ -52,6 +56,9 @@ export function App() {
   const [patch, setPatch] = useState(defaultPatch);
   const [session] = useState(() => getAudioSession(patch));
   const [audioStatus, setAudioStatus] = useState<AudioStatus>('waiting');
+  const [hold, setHold] = useState(false);
+
+  useEffect(() => session.input.setHold(hold), [session, hold]);
 
   // Sound starts on the first key press, click or drag; there is no button to press first.
   useEffect(() => unlockAudio(session.ctx, window, setAudioStatus), [session]);
@@ -162,6 +169,11 @@ export function App() {
             Play <kbd>A</kbd>–<kbd>K</kbd>
           </p>
         </Tooltip>
+        <Tooltip content={TIPS.hold}>
+          <button type="button" className="tool" aria-pressed={hold} onClick={() => setHold((h) => !h)}>
+            Hold
+          </button>
+        </Tooltip>
         <span className="theme-toggle">
           <Tooltip content={TIPS.theme}>
             <button
@@ -219,6 +231,21 @@ export function App() {
           ids={['cutoff', 'resonance']}
           patch={patch}
           onChange={change}
+          more={
+            <div className="sub-block">
+              <Tooltip content={TIPS.filterEnvelope}>
+                <h3 className="has-tip">Filter Envelope</h3>
+              </Tooltip>
+              <div className="knobs">
+                <Tooltip content={TIPS.envAmount}>
+                  <Knob id="filterEnvAmount" value={patch.filterEnvAmount} onChange={(v) => change('filterEnvAmount', v)} />
+                </Tooltip>
+                {(['filterAttack', 'filterDecay', 'filterSustain', 'filterRelease'] as const).map((id) => (
+                  <Knob key={id} id={id} value={patch[id]} onChange={(v) => change(id, v)} inactive={patch.filterEnvAmount === 0} />
+                ))}
+              </div>
+            </div>
+          }
           viewers={viewers('filter', 'Filter', {
             showIdeal: true,
             response: session.engine.filterResponse,
@@ -234,6 +261,8 @@ export function App() {
           viewers={viewers('amp', 'Amp', { idleHint: 'Press a key' })}
         />
       </div>
+
+      <EnvelopeTimeline engine={session.engine} view={view} />
     </main>
   );
 }

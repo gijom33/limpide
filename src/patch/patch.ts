@@ -34,7 +34,7 @@ export const PARAMS: Record<ParamId, ParamDef> = {
   pulseWidth: { id: 'pulseWidth', label: 'Pulse Width', unit: '%', min: 0.05, max: 0.95, taper: 'linear', default: 0.25 },
   cutoff: { id: 'cutoff', label: 'Cutoff', unit: 'Hz', min: 20, max: 20000, taper: 'log', default: 2000 },
   resonance: { id: 'resonance', label: 'Resonance', unit: '%', min: 0, max: 1, taper: 'linear', default: 0.2 },
-  filterEnvAmount: { id: 'filterEnvAmount', label: 'Env Amount', unit: 'oct', min: -5, max: 5, taper: 'linear', default: 0 },
+  filterEnvAmount: { id: 'filterEnvAmount', label: 'Amount', unit: 'oct', min: -5, max: 5, taper: 'linear', default: 0 },
   filterAttack: time('filterAttack', 'Attack', 0.005),
   filterDecay: time('filterDecay', 'Decay', 0.25),
   filterSustain: { id: 'filterSustain', label: 'Sustain', unit: '%', min: 0, max: 1, taper: 'linear', default: 0.3 },

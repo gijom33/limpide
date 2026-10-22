@@ -311,3 +311,19 @@ describe('Resonance and level', () => {
     }
   });
 });
+
+describe('modulationAt for past moments (the Envelope Timeline)', () => {
+  it('uses the Cutoff that was in force at that moment, so a hand sweep is drawn as a sweep', async () => {
+    const ctx = new OfflineAudioContext(1, SR, SR);
+    const engine = createSynthEngine(ctx);
+    engine.applyPatch({ ...defaultPatch(), cutoff: 300 });
+    const changed = ctx.suspend(0.5).then(() => {
+      engine.applyPatch({ ...defaultPatch(), cutoff: 3000 });
+      void ctx.resume();
+    });
+    await ctx.startRendering();
+    await changed;
+    expect(engine.modulationAt(0.25).cutoff).toBe(300);
+    expect(engine.modulationAt(0.75).cutoff).toBe(3000);
+  });
+});

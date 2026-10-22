@@ -31,6 +31,25 @@ export const TIPS = {
     body: 'Your computer keyboard is a piano: A S D F G H J K are the white keys from C, W E T Y U the black keys.',
     how: 'Sound starts with your first key press. Hold a key to hear the Envelope sustain.',
   },
+  hold: {
+    title: 'Hold',
+    body: 'Keeps the Note sounding after you let go of the key, so both hands are free to turn knobs while you watch.',
+    how: 'Press a new key to change the Note. Switch Hold off to release it.',
+  },
+  envAmount: {
+    title: 'Envelope Amount',
+    body: 'How far the Filter Envelope moves the Cutoff, in octaves: +2 lifts it two octaves at the Envelope’s peak; negative values sweep it down instead.',
+    how: 'Turn it up with a short Decay for a pluck. Watch the orange line on the Envelope Timeline.',
+  },
+  filterEnvelope: {
+    title: 'Filter Envelope',
+    body: 'An Attack–Decay–Sustain–Release shape, like the Amp’s, that moves the Cutoff instead of the loudness. Envelope Amount sets how far.',
+  },
+  timeline: {
+    title: 'Envelope Timeline',
+    body: 'The last four seconds: the violet area is the Amp Envelope (loudness), the orange line the Effective Cutoff, the faint dashed line the Cutoff knob itself.',
+    how: 'Play a Note and let go: the Release is drawn after the key comes up.',
+  },
   theme: { title: 'Theme', body: 'Switches between the dark and light look. Your choice is remembered.' },
   pulseWidth: {
     title: 'Pulse Width',
