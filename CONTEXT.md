@@ -19,7 +19,7 @@ One named, bounded, user-adjustable value of a Patch (e.g. Cutoff), with a unit 
 _Avoid_: Knob, control, setting
 
 **Taper**:
-The curve mapping a control's 0–1 position to a Parameter's real value (linear, logarithmic, exponential).
+The curve mapping a control's 0–1 position to a Parameter's real value: linear, or logarithmic (equal travel per ratio, used for frequencies and times).
 _Avoid_: Scaling, curve, response
 
 **Voice**:
