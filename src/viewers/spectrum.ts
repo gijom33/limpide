@@ -4,6 +4,7 @@ import { cssVar, prepareCanvas } from './canvas';
 import { createFreezeLatch } from './freezeLatch';
 import { ghostRegions } from './ghost';
 import { harmonicMarkers } from './harmonicMarkers';
+import { closeGaps } from './outline';
 import { hoverReadout, interpolatedPeak, snapToPeak } from './readout';
 import { amplitudeToSpectrumDb } from './spectrumScale';
 import type { ViewSettings } from './viewSettings';
@@ -16,6 +17,9 @@ const GAIN_ZERO_DB = -20;
 const GAIN_TICKS = [0, -24, -48];
 // The hover readout snaps to the strongest peak this many pixels either side of the cursor.
 const HOVER_SNAP = 12;
+// Valleys narrower than twice this many pixels are filled, so crowded Harmonics read as one smooth outline
+// instead of a comb with black slivers; Harmonics further apart than that stay separate spikes.
+const OUTLINE_RADIUS = 3;
 const GHOST_OPTIONS = { floorDb: -90, thresholdDb: 1 };
 // On the linear level axis a sine at the Oscillator's level fills the height.
 const LINEAR_TOP_DB = amplitudeToSpectrumDb(OSCILLATOR_LEVEL);
@@ -135,13 +139,25 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
       g.globalAlpha = 0.4;
       g.strokeStyle = text;
       g.lineWidth = 1;
-      strokeColumns(g, columnPeaks(snapshotBins, binHz, columns, fAxis), yOf);
+      strokeColumns(g, closeGaps(columnPeaks(snapshotBins, binHz, columns, fAxis), OUTLINE_RADIUS), yOf);
       g.globalAlpha = 1;
     }
 
-    g.strokeStyle = cssVar(canvas, '--trace');
+    // The live trace: an outline of the Harmonics, lightly filled underneath.
+    const outline = closeGaps(peak, OUTLINE_RADIUS);
+    const trace = cssVar(canvas, '--trace');
+    g.fillStyle = trace;
+    g.globalAlpha = 0.16;
+    g.beginPath();
+    g.moveTo(0, height);
+    outline.forEach((v, col) => g.lineTo(col, yOf(v)));
+    g.lineTo(columns, height);
+    g.closePath();
+    g.fill();
+    g.globalAlpha = 1;
+    g.strokeStyle = trace;
     g.lineWidth = 1.5;
-    strokeColumns(g, peak, yOf);
+    strokeColumns(g, outline, yOf);
 
     if (overlays.curve && response) {
       // Recomputed if the axis or size changes while frozen; otherwise the Curve from the moment of freezing.
