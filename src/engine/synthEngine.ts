@@ -1,3 +1,4 @@
+import { harmonicSeries } from '../music/harmonics';
 import { noteToFrequency } from '../music/pitch';
 import type { Patch } from '../patch/patch';
 
@@ -31,6 +32,9 @@ const resonanceToQdB = (resonance: number) => -3.01 + resonance * 27;
 
 // The resonant peak boosts by 10^(Q/20). Pulling the Filter's output down by the cube root of that
 // keeps the loudest case under full scale, much as analogue ladder filters lose level with resonance.
+// Enough Harmonics to reach Nyquist from the lowest Notes; the browser band-limits per pitch.
+const WAVE_HARMONICS = 1024;
+
 const resonanceCompensation = (qDb: number) => 10 ** (-Math.max(0, qDb) / 60);
 
 function createAnalyser(ctx: BaseAudioContext): AnalyserNode {
@@ -43,7 +47,6 @@ function createAnalyser(ctx: BaseAudioContext): AnalyserNode {
 /** The single Voice (Oscillator → Filter → Amp) built from native Web Audio nodes (ADR-0001). */
 export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   const osc = ctx.createOscillator();
-  osc.type = 'sawtooth';
   const oscLevel = ctx.createGain();
   oscLevel.gain.value = OSCILLATOR_LEVEL;
   const filter = ctx.createBiquadFilter();
@@ -63,7 +66,9 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   osc.start();
 
   let patch: Patch | undefined;
-  let fundamental = 0;
+  let waveKey = '';
+  let fundamental = noteToFrequency(69);
+  osc.frequency.value = fundamental;
   const setPitch = (note: number, t: number) => {
     fundamental = noteToFrequency(note);
     osc.frequency.setValueAtTime(fundamental, t);
@@ -77,6 +82,13 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     applyPatch(next) {
       patch = next;
       const t = ctx.currentTime;
+      // Play exactly the Fourier series the Ideal Reference draws (normalisation is already in it).
+      const key = next.waveform === 'pulse' ? `pulse:${next.pulseWidth}` : next.waveform;
+      if (key !== waveKey) {
+        waveKey = key;
+        const { real, imag } = harmonicSeries(next.waveform, next.pulseWidth, WAVE_HARMONICS);
+        osc.setPeriodicWave(ctx.createPeriodicWave(real, imag, { disableNormalization: true }));
+      }
       filter.frequency.setValueAtTime(next.cutoff, t);
       const qDb = resonanceToQdB(next.resonance);
       filter.Q.setValueAtTime(qDb, t);

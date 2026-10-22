@@ -1,3 +1,4 @@
+import type { Waveform } from '../music/harmonics';
 import type { Range } from './taper';
 
 export type Unit = 'Hz' | 's' | '%';
@@ -9,15 +10,16 @@ export interface ParamDef extends Range {
   default: number;
 }
 
-export type ParamId = 'cutoff' | 'resonance' | 'ampAttack' | 'ampDecay' | 'ampSustain' | 'ampRelease';
+export type ParamId = 'pulseWidth' | 'cutoff' | 'resonance' | 'ampAttack' | 'ampDecay' | 'ampSustain' | 'ampRelease';
 
-export type Patch = Record<ParamId, number>;
+export type Patch = Record<ParamId, number> & { waveform: Waveform };
 
 const time = (id: ParamId, label: string, dflt: number): ParamDef => ({
   id, label, unit: 's', min: 0.001, max: 10, taper: 'log', default: dflt,
 });
 
 export const PARAMS: Record<ParamId, ParamDef> = {
+  pulseWidth: { id: 'pulseWidth', label: 'Pulse Width', unit: '%', min: 0.05, max: 0.95, taper: 'linear', default: 0.25 },
   cutoff: { id: 'cutoff', label: 'Cutoff', unit: 'Hz', min: 20, max: 20000, taper: 'log', default: 2000 },
   resonance: { id: 'resonance', label: 'Resonance', unit: '%', min: 0, max: 1, taper: 'linear', default: 0.2 },
   ampAttack: time('ampAttack', 'Attack', 0.01),
@@ -27,7 +29,12 @@ export const PARAMS: Record<ParamId, ParamDef> = {
 };
 
 export function defaultPatch(): Patch {
-  return Object.fromEntries(Object.values(PARAMS).map((d) => [d.id, d.default])) as Patch;
+  const params = Object.fromEntries(Object.values(PARAMS).map((d) => [d.id, d.default])) as Record<ParamId, number>;
+  return { ...params, waveform: 'saw' };
+}
+
+export function setWaveform(patch: Patch, waveform: Waveform): Patch {
+  return { ...patch, waveform };
 }
 
 export function setParam(patch: Patch, id: ParamId, value: number): Patch {

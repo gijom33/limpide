@@ -1,12 +1,18 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { startAudioSession, type AudioSession } from '../app/session';
 import { keyToNote } from '../input/keyboardLayout';
-import { defaultPatch, setParam, type ParamId, type Patch } from '../patch/patch';
+import { OSCILLATOR_LEVEL } from '../engine/synthEngine';
+import { harmonicSeries } from '../music/harmonics';
+import { defaultPatch, setParam, setWaveform, type ParamId, type Patch } from '../patch/patch';
+import type { ViewSettings } from '../viewers/viewSettings';
 import { Knob } from './Knob';
 import { TapViewers } from './TapViewers';
 import { applyTheme, loadTheme } from './theme';
+import { WaveformPicker } from './WaveformPicker';
 
 const KEYBOARD_OCTAVE = 4;
+const IDEAL_HARMONICS = 256;
+const CYCLE_CHOICES = [1, 2, 4] as const;
 
 interface BlockProps {
   title: string;
@@ -39,6 +45,18 @@ export function App() {
   const [session, setSession] = useState<AudioSession | null>(null);
   const held = useRef(new Set<number>());
   const [theme, setTheme] = useState(loadTheme);
+  const [cycles, setCycles] = useState<ViewSettings['cycles']>(2);
+
+  // The Ideal Reference at the Oscillator Tap's level: the same series the engine plays, scaled by the Nominal Level.
+  const ideal = useMemo(() => {
+    const { magnitudes } = harmonicSeries(patch.waveform, patch.pulseWidth, IDEAL_HARMONICS);
+    return magnitudes.map((m) => m * OSCILLATOR_LEVEL);
+  }, [patch.waveform, patch.pulseWidth]);
+
+  // Read by the render loop every frame; a stable getter keeps the Viewers mounted while settings change.
+  const viewSettings = useRef<ViewSettings>({ cycles, ideal });
+  viewSettings.current = { cycles, ideal };
+  const view = useRef(() => viewSettings.current).current;
 
   useEffect(() => applyTheme(theme), [theme]);
 
@@ -80,14 +98,35 @@ export function App() {
 
   const change = (id: ParamId, value: number) => setPatch((p) => setParam(p, id, value));
 
-  const viewers = (tap: keyof AudioSession['engine']['taps'], name: string, extra: { idleHint?: string; note?: string } = {}) =>
-    session && <TapViewers name={name} analyser={session.engine.taps[tap]} sampleRate={session.ctx.sampleRate} fundamental={session.engine.fundamental} {...extra} />;
+  const viewers = (
+    tap: keyof AudioSession['engine']['taps'],
+    name: string,
+    extra: { idleHint?: string; note?: string; showIdeal?: boolean } = {},
+  ) =>
+    session && (
+      <TapViewers
+        name={name}
+        analyser={session.engine.taps[tap]}
+        sampleRate={session.ctx.sampleRate}
+        fundamental={session.engine.fundamental}
+        view={view}
+        {...extra}
+      />
+    );
 
   return (
     <main>
       <header>
         <h1>SynthView</h1>
         <p className="hint">Play with the keys <kbd>A</kbd>–<kbd>K</kbd> (black keys on <kbd>W E T Y U</kbd>).</p>
+        <div className="cycles" role="radiogroup" aria-label="Scope cycles">
+          <span>Scope cycles</span>
+          {CYCLE_CHOICES.map((c) => (
+            <button key={c} type="button" role="radio" aria-checked={c === cycles} onClick={() => setCycles(c)}>
+              {c}
+            </button>
+          ))}
+        </div>
         <button className="theme-toggle" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
           {theme === 'dark' ? 'Light' : 'Dark'} theme
         </button>
@@ -108,9 +147,17 @@ export function App() {
           onChange={change}
           viewers={viewers('oscillator', 'Oscillator', {
             note: 'The Oscillator runs all the time, even between Notes. The Amp decides when you hear it.',
+            showIdeal: true,
           })}
         >
-          <p className="fixed">Saw</p>
+          <WaveformPicker value={patch.waveform} onChange={(w) => setPatch((p) => setWaveform(p, w))} />
+          <Knob
+            id="pulseWidth"
+            value={patch.pulseWidth}
+            onChange={(v) => change('pulseWidth', v)}
+            inactive={patch.waveform !== 'pulse'}
+            inactiveHint="Only shapes the Pulse Waveform"
+          />
         </Block>
         <Block title="Filter" stage="filter" ids={['cutoff', 'resonance']} patch={patch} onChange={change} viewers={viewers('filter', 'Filter')} />
         <Block

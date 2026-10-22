@@ -40,8 +40,14 @@
 body { margin: 0; background: var(--bg); color: var(--text); }
 main { max-width: 1200px; margin: 0 auto; padding: 16px; }
 header { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
-.theme-toggle {
-  margin-left: auto; background: none; color: var(--muted); border: 1px solid var(--border);
+.cycles { margin-left: auto; display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); }
+.cycles span { margin-right: 4px; }
+.cycles button {
+  min-width: 26px; padding: 3px 6px; border-radius: 6px; cursor: pointer;
+  background: none; color: var(--muted); border: 1px solid var(--border);
+}
+.cycles button[aria-checked='true'] { color: var(--text); border-color: var(--muted); }
+.theme-toggle { background: none; color: var(--muted); border: 1px solid var(--border);
   border-radius: 6px; padding: 4px 10px; cursor: pointer;
 }
 h1 { margin: 0 0 8px; font-size: 22px; letter-spacing: 0.02em; }
@@ -80,7 +86,6 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
   .chain { grid-template-columns: 1fr; gap: 24px; }
   .block + .block::before { content: '↓'; left: 50%; top: -22px; }
 }
-.fixed { margin: 0; font-size: 18px; }
 .knobs { display: flex; gap: 16px; }
 
 .knob {
@@ -99,6 +104,17 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 }
 .knob-dial:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .knob-label { font-size: 12px; }
+.knob[data-inactive] { opacity: 0.4; }
+
+.waveforms { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; flex: 1 1 100%; }
+.waveform {
+  display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px; cursor: pointer;
+  background: none; color: var(--muted); border: 1px solid var(--border); border-radius: 6px; font-size: 11px;
+}
+.waveform svg { color: var(--muted); }
+.waveform[aria-checked='true'] { color: var(--text); border-color: var(--stage, var(--muted)); }
+.waveform[aria-checked='true'] svg { color: var(--stage, var(--text)); }
+.waveform:focus-visible { outline: 2px solid var(--stage, var(--accent)); outline-offset: 1px; }
 .knob-value { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
 
 .tap { margin: 0; margin-top: auto; }

@@ -4,11 +4,11 @@
 
 **Blocked by:** 02
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Fourier-series Harmonic amplitudes per Waveform and Pulse Width, tested (saw 1/n; square odd 1/n; triangle odd 1/n²; pulse with |sin(nπd)|/n)
-- [ ] A pulse `PeriodicWave` built from the same series
-- [ ] Engine test: measured Harmonic levels match the Ideal Reference within tolerance for saw and square
-- [x] Cycle Lock alignment (phase of the fundamental from a time buffer), tested with synthetic ringing buffers. Pulled forward to fix an unstable Filter Scope. Still to do: the 1/2/4-cycle choice, plus a detuned or noisy test case once Osc 2 and Noise exist
-- [ ] Nearest-note naming with cents offset, tested
-- [ ] Harmonic Markers and the Ideal Reference drawn
+- [x] Fourier-series Harmonic amplitudes per Waveform and Pulse Width, tested (saw 1/n; square odd 1/n; triangle odd 1/n²; pulse with |sin(nπd)|/n)
+- [x] Every Waveform (not only pulse) plays a `PeriodicWave` built from the same series, so the Ideal Reference is exactly what was synthesised
+- [x] Engine test: measured Harmonic levels match the Ideal Reference for saw, square, triangle, and pulse at 25% and 10%. A calibration test pins where the Spectrum draws a given amplitude
+- [x] Cycle Lock alignment (phase of the fundamental from a time buffer), tested with synthetic ringing buffers. Pulled forward to fix an unstable Filter Scope. The 1/2/4-cycle choice is done (scopeWindow, tested). Still to do, in ticket 07: a detuned or noisy Cycle Lock test case once Osc 2 and Noise exist
+- [x] Nearest-note naming with cents offset, tested
+- [x] Harmonic Markers on every Spectrum, labelled where there is room (tested); the Ideal Reference is drawn as hollow rings on the Oscillator Tap

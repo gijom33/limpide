@@ -3,6 +3,7 @@ import { createLevelMeter } from '../viewers/level';
 import { addToRenderLoop } from '../viewers/renderLoop';
 import { createScope } from '../viewers/scope';
 import { createSpectrum } from '../viewers/spectrum';
+import type { ViewSettings } from '../viewers/viewSettings';
 
 const SILENT_DB = -90;
 
@@ -11,6 +12,9 @@ interface Props {
   analyser: AnalyserNode;
   sampleRate: number;
   fundamental(): number;
+  view(): ViewSettings;
+  /** Draw the Ideal Reference on this Tap's Spectrum (only where it is the Oscillator's own output). */
+  showIdeal?: boolean;
   /** Shown over the Viewers while this Tap is silent. */
   idleHint?: string;
   /** A one-line explanation under the caption. */
@@ -18,15 +22,18 @@ interface Props {
 }
 
 /** Scope + Spectrum + level readout for one Tap. Canvases are mounted once and drawn by the render loop. */
-export function TapViewers({ name, analyser, sampleRate, fundamental, idleHint, note }: Props) {
+export function TapViewers({ name, analyser, sampleRate, fundamental, view, showIdeal, idleHint, note }: Props) {
   const scopeRef = useRef<HTMLCanvasElement>(null);
   const spectrumRef = useRef<HTMLCanvasElement>(null);
   const levelRef = useRef<HTMLSpanElement>(null);
   const hintRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const drawScope = createScope(scopeRef.current!, analyser, fundamental);
-    const drawSpectrum = createSpectrum(spectrumRef.current!, analyser, sampleRate);
+    const drawScope = createScope(scopeRef.current!, analyser, fundamental, view);
+    const drawSpectrum = createSpectrum(spectrumRef.current!, analyser, sampleRate, {
+      fundamental,
+      ideal: showIdeal ? () => view().ideal : undefined,
+    });
     const level = createLevelMeter(analyser);
     return addToRenderLoop(() => {
       drawScope();
@@ -36,7 +43,7 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, idleHint, 
       levelRef.current!.dataset.db = String(db);
       if (hintRef.current) hintRef.current.hidden = db > SILENT_DB;
     });
-  }, [analyser, sampleRate, fundamental]);
+  }, [analyser, sampleRate, fundamental, view, showIdeal]);
 
   return (
     <figure className="tap" data-tap={name}>

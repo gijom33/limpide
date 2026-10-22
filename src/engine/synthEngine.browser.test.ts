@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { harmonicSeries, type Waveform } from '../music/harmonics';
 import { defaultPatch, type Patch } from '../patch/patch';
+import { amplitudeToSpectrumDb } from '../viewers/spectrumScale';
 import { dB, rms, toneAmplitude } from '../test/measure';
 import { createSynthEngine, OSCILLATOR_LEVEL } from './synthEngine';
 
@@ -132,10 +134,10 @@ describe('shared scale across Taps', () => {
 });
 
 describe('fundamental', () => {
-  it('reports the sounding Note’s frequency for Cycle Lock, and 0 before any Note', () => {
+  it('reports the sounding Note’s frequency for Cycle Lock, starting at A4 because the Oscillator runs from the start', () => {
     const engine = createSynthEngine(new OfflineAudioContext(1, SR, SR));
     engine.applyPatch(defaultPatch());
-    expect(engine.fundamental()).toBe(0);
+    expect(engine.fundamental()).toBeCloseTo(440);
     engine.noteOn(57, 1, 0);
     expect(engine.fundamental()).toBeCloseTo(220);
     engine.pitchChange(69, 0.1);
@@ -153,5 +155,52 @@ describe('headroom', () => {
       }
     }
     expect(worst).toBeLessThan(1);
+  });
+});
+
+describe('Waveforms match their Ideal Reference', () => {
+  const A2 = 45;
+  const F = 110;
+  const open = { cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001 };
+
+  async function measuredHarmonics(waveform: Waveform, pulseWidth: number) {
+    const s = await render(1, { ...open, waveform, pulseWidth }, (e) => e.noteOn(A2, 1, 0));
+    // A whole number of periods, so each Harmonic falls exactly on the Goertzel frequency.
+    const from = SR / 2;
+    const to = from + Math.round((40 * SR) / F);
+    return (n: number) => toneAmplitude(s, SR, F * n, from, to);
+  }
+
+  for (const [waveform, pulseWidth] of [['saw', 0.5], ['square', 0.5], ['triangle', 0.5], ['pulse', 0.25], ['pulse', 0.1]] as const) {
+    it(`plays a ${waveform}${waveform === 'pulse' ? ` at ${pulseWidth * 100}%` : ''} with the Harmonic levels of its Fourier series`, async () => {
+      const ideal = harmonicSeries(waveform, pulseWidth, 64).magnitudes;
+      const measured = await measuredHarmonics(waveform, pulseWidth);
+      const fundamental = measured(1);
+      for (let n = 2; n <= 12; n++) {
+        if (ideal[n] / ideal[1] < 1e-3) {
+          expect(dB(measured(n) / fundamental), `harmonic ${n} should be absent`).toBeLessThan(-40);
+        } else {
+          expect(dB(measured(n) / fundamental), `harmonic ${n}`).toBeCloseTo(dB(ideal[n] / ideal[1]), 0);
+        }
+      }
+    });
+  }
+});
+
+describe('Spectrum calibration', () => {
+  it('reads a sine at the Nominal Level where the Ideal Reference will draw it', async () => {
+    const ctx = new OfflineAudioContext(1, SR, SR);
+    const engine = createSynthEngine(ctx);
+    engine.applyPatch({ ...defaultPatch(), waveform: 'sine' });
+    const bins = new Float32Array(engine.taps.oscillator.frequencyBinCount);
+    const read = ctx.suspend(0.5).then(() => {
+      engine.taps.oscillator.getFloatFrequencyData(bins);
+      void ctx.resume();
+    });
+    await ctx.startRendering();
+    await read;
+    const peak = Math.max(...bins);
+    // ±1.2 dB: the Blackman window's scalloping when the tone falls between FFT bins.
+    expect(Math.abs(peak - amplitudeToSpectrumDb(OSCILLATOR_LEVEL))).toBeLessThan(1.2);
   });
 });
