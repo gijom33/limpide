@@ -3,7 +3,8 @@ import { effectiveCutoff } from '../modulation/modulationModel';
 import { filterStages, type Stage } from './filterDesign';
 import { harmonicSeries } from '../music/harmonics';
 import { noteToFrequency } from '../music/pitch';
-import type { Patch } from '../patch/patch';
+import type { FilterMode, Patch } from '../patch/patch';
+import { bandwidthOctaves } from '../modulation/passBand';
 
 /** Listening points in the Voice, one analyser each. */
 export interface Taps {
@@ -12,11 +13,14 @@ export interface Taps {
   amp: AnalyserNode;
 }
 
-/** What the Modulation model says at a moment: both Envelope levels and the resulting Effective Cutoff. */
+/** What the Modulation model says at a moment: both Envelope levels, the Effective Cutoff and the Filter's shape. */
 export interface Modulation {
   amp: number;
   filter: number;
   cutoff: number;
+  mode: FilterMode;
+  /** Band-pass and notch width in octaves. */
+  bandwidth: number;
 }
 
 export interface SynthEngine {
@@ -219,6 +223,8 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       amp: envelopeLevel(ampEvents, t),
       filter: filterLevel,
       cutoff: then ? effectiveCutoff(then, filterLevel) : 0,
+      mode: then?.filterMode ?? 'lowpass',
+      bandwidth: then ? bandwidthOctaves(filterStages(then.filterMode, then.filterSlope, then.resonance)[0].Q) : 1,
     };
   };
 

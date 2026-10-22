@@ -41,6 +41,16 @@ export const TIPS = {
     body: 'How far the Filter Envelope moves the Cutoff, in octaves: +2 lifts it two octaves at the Envelope’s peak; negative values sweep it down instead.',
     how: 'Turn it up with a short Decay for a pluck. Watch the orange line on the Envelope Timeline.',
   },
+  filterMode: {
+    title: 'Filter Mode',
+    body: 'Which frequencies the Filter keeps. Low-pass keeps those below the Cutoff (darker), high-pass those above (thinner), band-pass a band around it (nasal), notch all but a band (phasey).',
+    how: 'Resonance sharpens the peak for low/high-pass, and narrows the band for band-pass and notch.',
+  },
+  slope: {
+    title: 'Slope',
+    body: 'How steeply the Filter removes frequencies past the Cutoff: 12 dB or 24 dB per octave. 24 dB is two Filters in a row, darker and more “synth”.',
+    how: 'Compare the Response Curve at each Slope: the 24 dB one falls twice as fast.',
+  },
   filterEnvelope: {
     title: 'Filter Envelope',
     body: 'An Attack–Decay–Sustain–Release shape, like the Amp’s, that moves the Cutoff instead of the loudness. Envelope Amount sets how far.',

@@ -152,4 +152,4 @@ SynthView is a browser-based, monophonic subtractive synthesizer laid out as its
 ## Further Notes
 
 - **Unverified Controller facts:** the C16's default CC assignments and its encoder output format aren't publicly documented, and its USB class compliance is very likely but unconfirmed. The Activity Monitor doubles as the tool for checking these on the real device.
-- **Cascaded-biquad Q compensation:** the right per-stage Q for the 24 dB Slope should be settled with an engine test that measures the resonance peak height in both Slopes.
+- **Cascaded-biquad Q (settled):** each 24 dB low/high-pass stage gets half the resonant peak in dB. An engine test keeps the peak heights of the two Slopes within 2 dB (ADR-0001).

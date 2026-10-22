@@ -340,3 +340,10 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   .block[data-stage='osc'] .tab-list { position: absolute; top: 0; right: 0; border-bottom: 0; }
   .block[data-stage='osc'] .tabs { gap: 0; }
 }
+
+/* Filter Mode and Slope share the Filter heading's line when there is room. */
+.filter-shape { display: flex; flex-wrap: wrap; gap: 6px; }
+.filter-modes button { min-width: 34px; justify-content: center; padding: 0 5px; }
+@container (min-width: 330px) {
+  .block[data-stage='filter'] .filter-shape { position: absolute; top: -4px; right: 0; }
+}

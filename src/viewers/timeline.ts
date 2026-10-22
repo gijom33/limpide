@@ -1,5 +1,6 @@
 import type { Modulation } from '../engine/synthEngine';
 import { cssVar, prepareCanvas } from './canvas';
+import { passBand } from '../modulation/passBand';
 import { createFreezeLatch } from './freezeLatch';
 import type { ViewSettings } from './viewSettings';
 
@@ -53,16 +54,15 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
     const columns = Math.ceil(width);
     const samples = Array.from({ length: columns }, (_, x) => source.modulationAt(timeAt(x + 0.5)));
 
-    // Effective Cutoff as an area: for a low-pass Filter everything below the line gets through, so the
-    // shading is the pass band over time. Fainter than the Amp area, and underneath it.
+    // The pass band as an area: the frequencies the Filter lets through at each moment (below the Cutoff for
+    // low-pass, above for high-pass, a band for band-pass, all but a band for notch). Fainter than the Amp area.
     g.fillStyle = cssVar(canvas, '--stage-filter');
     g.globalAlpha = 0.14;
-    g.beginPath();
-    g.moveTo(0, yHz(F_MIN));
-    samples.forEach((m, x) => g.lineTo(x, yHz(m.cutoff)));
-    g.lineTo(columns, yHz(F_MIN));
-    g.closePath();
-    g.fill();
+    samples.forEach((m, x) => {
+      for (const [lo, hi] of passBand(m.mode, m.cutoff, m.bandwidth, { min: F_MIN, max: F_MAX })) {
+        g.fillRect(x, yHz(hi), 1, yHz(lo) - yHz(hi));
+      }
+    });
     g.globalAlpha = 1;
 
     // The Cutoff knob's setting (dashed), then the Effective Cutoff the Filter Envelope makes of it.

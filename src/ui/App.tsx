@@ -4,7 +4,7 @@ import { unlockAudio, type AudioStatus } from '../app/unlockAudio';
 import { keyToNote } from '../input/keyboardLayout';
 import { OSCILLATOR_LEVEL } from '../engine/synthEngine';
 import { harmonicSeries } from '../music/harmonics';
-import { defaultPatch, setParam, setWaveform, type ParamId, type Patch } from '../patch/patch';
+import { defaultPatch, setFilter, setParam, setWaveform, type ParamId, type Patch } from '../patch/patch';
 import { loadOverlays, saveOverlays, toggleOverlay } from '../viewers/overlays';
 import { INITIAL_VIEWER_STATE, viewerReducer } from '../viewers/viewerState';
 import type { ViewSettings } from '../viewers/viewSettings';
@@ -15,6 +15,7 @@ import { MoonIcon, SunIcon } from './icons';
 import { Logo } from './Logo';
 import { TIPS } from './tips';
 import { ToolGroup } from './ToolGroup';
+import { FilterShape } from './FilterShape';
 import { Tabs } from './Tabs';
 import { Tooltip, type TipContent } from './Tooltip';
 import { AxesControls, ViewActions } from './ViewerControls';
@@ -34,15 +35,18 @@ interface BlockProps {
   children?: React.ReactNode;
   /** Extra controls under the main knobs (e.g. the Filter Envelope). */
   more?: React.ReactNode;
+  /** Controls on the heading line (e.g. the Filter Mode and Slope). */
+  heading?: React.ReactNode;
   viewers?: React.ReactNode;
 }
 
 /** One stage of the signal-flow diagram: its controls on top, its Tap's Viewers below. */
-function Block({ title, stage, ids, patch, onChange, children, more, viewers }: BlockProps) {
+function Block({ title, stage, ids, patch, onChange, children, more, heading, viewers }: BlockProps) {
   return (
     <section className="block" data-stage={stage} aria-label={title}>
       <div className="block-controls">
         <h2>{title}</h2>
+        {heading}
         <div className="knobs">
           {children}
           {ids.map((id) => (
@@ -312,6 +316,7 @@ export function App() {
           ids={['cutoff', 'resonance']}
           patch={patch}
           onChange={change}
+          heading={<FilterShape mode={patch.filterMode} slope={patch.filterSlope} onChange={(c) => setPatch((p) => setFilter(p, c))} />}
           more={
             <SubBlock title="Filter Envelope" tip={TIPS.filterEnvelope}>
               <div className="knobs knobs-envelope">
