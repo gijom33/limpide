@@ -39,14 +39,16 @@ interface BlockProps {
 function Block({ title, stage, ids, patch, onChange, children, more, viewers }: BlockProps) {
   return (
     <section className="block" data-stage={stage} aria-label={title}>
-      <h2>{title}</h2>
-      <div className="knobs">
-        {children}
-        {ids.map((id) => (
-          <Knob key={id} id={id} value={patch[id]} onChange={(v) => onChange(id, v)} />
-        ))}
+      <div className="block-controls">
+        <h2>{title}</h2>
+        <div className="knobs">
+          {children}
+          {ids.map((id) => (
+            <Knob key={id} id={id} value={patch[id]} onChange={(v) => onChange(id, v)} />
+          ))}
+        </div>
+        {more}
       </div>
-      {more}
       {viewers}
     </section>
   );

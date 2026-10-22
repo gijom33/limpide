@@ -31,3 +31,32 @@ for (const [width, height, minViewer] of [
     expect(Math.min(...heights)).toBeGreaterThanOrEqual(minViewer);
   });
 }
+
+for (const [width, height] of [
+  [1710, 1060],
+  [1440, 900],
+  [1100, 800],
+  [872, 920],
+]) {
+  test(`the three stages' Viewers are the same size and line up (${width}×${height})`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await page.goto('/');
+    await expect(page.getByTestId('amp-level')).toHaveAttribute('data-db', /.+/);
+    const boxes = await page.evaluate(() =>
+      ['scope', 'spectrum'].map((kind) =>
+        [...document.querySelectorAll<HTMLCanvasElement>(`canvas.${kind}`)].map((c) => {
+          const r = c.getBoundingClientRect();
+          return { kind, top: Math.round(r.top), width: Math.round(r.width), height: Math.round(r.height) };
+        }),
+      ),
+    );
+    for (const row of boxes) {
+      const [first, ...rest] = row;
+      for (const other of rest) {
+        expect(Math.abs(other.height - first.height), `${first.kind} height`).toBeLessThanOrEqual(1);
+        expect(Math.abs(other.width - first.width), `${first.kind} width`).toBeLessThanOrEqual(1);
+        expect(Math.abs(other.top - first.top), `${first.kind} top`).toBeLessThanOrEqual(1);
+      }
+    }
+  });
+}

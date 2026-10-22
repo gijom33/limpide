@@ -269,3 +269,17 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 @container (min-width: 380px) {
   .source-rows .sub-block > h3, .source-rows .sub-block > .tip-anchor:first-child { flex: 0 0 44px; }
 }
+
+/* Every stage spans the same two rows of the chain: controls on top (as tall as the tallest stage's), then
+   the Viewers. With subgrid, all three stages' Viewers are the same size and line up, wherever the window. */
+.chain { grid-auto-rows: auto; row-gap: 12px; }
+.block { display: grid; grid-row: span 2; grid-template-rows: subgrid; row-gap: 12px; align-content: start; }
+.block-controls { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.block-controls > * { flex-shrink: 0; }
+.block > .tap { margin-top: 0; min-width: 0; }
+@media (max-width: 860px) {
+  .chain { row-gap: 24px; }
+}
+@media (min-width: 861px) and (min-height: 700px) {
+  main > .chain { grid-template-rows: auto minmax(0, 1fr); }
+}
