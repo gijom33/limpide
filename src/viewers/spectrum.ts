@@ -32,16 +32,20 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
 
     g.strokeStyle = cssVar(canvas, '--trace');
     g.lineWidth = 1.5;
-    g.beginPath();
-    let started = false;
+    // At the top of a log axis many bins share one pixel; keep each column's peak so dense Harmonics stay distinct.
+    const columns = Math.ceil(width);
+    const peak = new Float32Array(columns).fill(DB_MIN);
     for (let i = 1; i < bins.length; i++) {
       const f = i * binHz;
       if (f < F_MIN || f > F_MAX) continue;
-      const x = xOf(f, width);
-      const y = yOf(Math.max(DB_MIN, bins[i]), height);
-      if (!started) g.moveTo(x, y);
-      else g.lineTo(x, y);
-      started = true;
+      const col = Math.min(columns - 1, Math.floor(xOf(f, width)));
+      peak[col] = Math.max(peak[col], bins[i]);
+    }
+    g.beginPath();
+    for (let col = 0; col < columns; col++) {
+      const y = yOf(peak[col], height);
+      if (col === 0) g.moveTo(col, y);
+      else g.lineTo(col, y);
     }
     g.stroke();
   };

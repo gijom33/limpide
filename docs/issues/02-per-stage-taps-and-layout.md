@@ -4,10 +4,10 @@
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] The engine exposes one analyser per Tap
-- [ ] Engine test: with a low Cutoff, high Harmonics are present at the Oscillator Tap and attenuated at the Filter Tap
-- [ ] Signal-flow layout with a Scope and Spectrum per block
-- [ ] Idle state hint
-- [ ] Theme toggle, remembered
+- [x] The engine exposes one analyser per Tap
+- [x] Engine test: with a low Cutoff, high Harmonics are present at the Oscillator Tap and attenuated at the Filter Tap
+- [x] Signal-flow layout with a Scope and Spectrum per block
+- [x] Idle state hint (on the Amp Tap only: the Oscillator and Filter Taps stay live between Notes, because the Oscillator really does run all the time; a caption explains that the Amp decides when you hear it)
+- [x] Theme toggle, remembered

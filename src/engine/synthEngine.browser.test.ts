@@ -62,8 +62,39 @@ describe('Amp Envelope', () => {
 });
 
 describe('Taps', () => {
-  it('exposes an analyser on the Amp Tap', () => {
-    const engine = createSynthEngine(new OfflineAudioContext(1, SR, SR));
-    expect(engine.taps.amp).toBeInstanceOf(AnalyserNode);
+  /** Renders until `at` seconds, then returns what each Tap's analyser holds at that moment. */
+  async function tapsAt(at: number, patch: Partial<Patch>) {
+    const ctx = new OfflineAudioContext(1, SR * (at + 0.1), SR);
+    const engine = createSynthEngine(ctx);
+    engine.applyPatch({ ...defaultPatch(), ...patch });
+    engine.noteOn(45, 1, 0);
+    const read = (a: AnalyserNode) => {
+      const s = new Float32Array(a.fftSize);
+      a.getFloatTimeDomainData(s);
+      return s;
+    };
+    const captured = ctx.suspend(at).then(() => {
+      const taps = { oscillator: read(engine.taps.oscillator), filter: read(engine.taps.filter), amp: read(engine.taps.amp) };
+      void ctx.resume();
+      return taps;
+    });
+    await ctx.startRendering();
+    return captured;
+  }
+
+  const level20th = (s: Float32Array) => toneAmplitude(s, SR, 110 * 20);
+  const fundamental = (s: Float32Array) => toneAmplitude(s, SR, 110);
+
+  it('shows high Harmonics at the Oscillator Tap that the Filter Tap has lost when the Cutoff is low', async () => {
+    const taps = await tapsAt(0.5, { cutoff: 300, resonance: 0, ampSustain: 1, ampAttack: 0.001 });
+    expect(dB(level20th(taps.oscillator) / fundamental(taps.oscillator))).toBeCloseTo(dB(1 / 20), 0);
+    expect(dB(level20th(taps.filter) / level20th(taps.oscillator))).toBeLessThan(-30);
+  });
+
+  it('shows the Amp Envelope only at the Amp Tap', async () => {
+    const taps = await tapsAt(0.5, { cutoff: 20000, ampSustain: 0.25, ampAttack: 0.001, ampDecay: 0.01 });
+    const ratio = rms(taps.amp) / rms(taps.filter);
+    const fullSustainTaps = await tapsAt(0.5, { cutoff: 20000, ampSustain: 1, ampAttack: 0.001 });
+    expect(ratio / (rms(fullSustainTaps.amp) / rms(fullSustainTaps.filter))).toBeCloseTo(0.25, 1);
   });
 });

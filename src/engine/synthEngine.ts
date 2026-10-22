@@ -1,7 +1,10 @@
 import { noteToFrequency } from '../music/pitch';
 import type { Patch } from '../patch/patch';
 
+/** Listening points in the Voice, one analyser each. */
 export interface Taps {
+  oscillator: AnalyserNode;
+  filter: AnalyserNode;
   amp: AnalyserNode;
 }
 
@@ -35,16 +38,20 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   amp.gain.value = 0;
   const master = ctx.createGain();
   master.gain.value = MASTER_LEVEL;
-  const ampTap = createAnalyser(ctx);
+  const taps: Taps = { oscillator: createAnalyser(ctx), filter: createAnalyser(ctx), amp: createAnalyser(ctx) };
 
-  osc.connect(filter).connect(amp).connect(master).connect(ampTap).connect(ctx.destination);
+  osc.connect(filter).connect(amp).connect(master).connect(ctx.destination);
+  // Taps are side branches, so observing never alters the sound.
+  osc.connect(taps.oscillator);
+  filter.connect(taps.filter);
+  master.connect(taps.amp);
   osc.start();
 
   let patch: Patch | undefined;
   const now = (at?: number) => at ?? ctx.currentTime;
 
   return {
-    taps: { amp: ampTap },
+    taps,
 
     applyPatch(next) {
       patch = next;

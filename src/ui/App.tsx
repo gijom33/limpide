@@ -4,18 +4,31 @@ import { keyToNote } from '../input/keyboardLayout';
 import { defaultPatch, setParam, type ParamId, type Patch } from '../patch/patch';
 import { Knob } from './Knob';
 import { TapViewers } from './TapViewers';
+import { applyTheme, loadTheme } from './theme';
 
 const KEYBOARD_OCTAVE = 4;
 
-function Block({ title, ids, patch, onChange }: { title: string; ids: ParamId[]; patch: Patch; onChange(id: ParamId, v: number): void }) {
+interface BlockProps {
+  title: string;
+  ids: ParamId[];
+  patch: Patch;
+  onChange(id: ParamId, v: number): void;
+  children?: React.ReactNode;
+  viewers?: React.ReactNode;
+}
+
+/** One stage of the signal-flow diagram: its controls on top, its Tap's Viewers below. */
+function Block({ title, ids, patch, onChange, children, viewers }: BlockProps) {
   return (
-    <section className="block">
+    <section className="block" aria-label={title}>
       <h2>{title}</h2>
       <div className="knobs">
+        {children}
         {ids.map((id) => (
           <Knob key={id} id={id} value={patch[id]} onChange={(v) => onChange(id, v)} />
         ))}
       </div>
+      {viewers}
     </section>
   );
 }
@@ -24,6 +37,9 @@ export function App() {
   const [patch, setPatch] = useState(defaultPatch);
   const [session, setSession] = useState<AudioSession | null>(null);
   const held = useRef(new Set<number>());
+  const [theme, setTheme] = useState(loadTheme);
+
+  useEffect(() => applyTheme(theme), [theme]);
 
   useEffect(() => {
     session?.engine.applyPatch(patch);
@@ -63,11 +79,17 @@ export function App() {
 
   const change = (id: ParamId, value: number) => setPatch((p) => setParam(p, id, value));
 
+  const viewers = (tap: keyof AudioSession['engine']['taps'], name: string, extra: { idleHint?: string; note?: string } = {}) =>
+    session && <TapViewers name={name} analyser={session.engine.taps[tap]} sampleRate={session.ctx.sampleRate} {...extra} />;
+
   return (
     <main>
       <header>
         <h1>SynthView</h1>
         <p className="hint">Play with the keys <kbd>A</kbd>–<kbd>K</kbd> (black keys on <kbd>W E T Y U</kbd>).</p>
+        <button className="theme-toggle" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+          {theme === 'dark' ? 'Light' : 'Dark'} theme
+        </button>
       </header>
 
       {!session && (
@@ -77,17 +99,26 @@ export function App() {
       )}
 
       <div className="chain">
-        <section className="block">
-          <h2>Oscillator</h2>
+        <Block
+          title="Oscillator"
+          ids={[]}
+          patch={patch}
+          onChange={change}
+          viewers={viewers('oscillator', 'Oscillator', {
+            note: 'The Oscillator runs all the time, even between Notes. The Amp decides when you hear it.',
+          })}
+        >
           <p className="fixed">Saw</p>
-        </section>
-        <span className="arrow" aria-hidden>→</span>
-        <Block title="Filter" ids={['cutoff', 'resonance']} patch={patch} onChange={change} />
-        <span className="arrow" aria-hidden>→</span>
-        <Block title="Amp Envelope" ids={['ampAttack', 'ampDecay', 'ampSustain', 'ampRelease']} patch={patch} onChange={change} />
+        </Block>
+        <Block title="Filter" ids={['cutoff', 'resonance']} patch={patch} onChange={change} viewers={viewers('filter', 'Filter')} />
+        <Block
+          title="Amp"
+          ids={['ampAttack', 'ampDecay', 'ampSustain', 'ampRelease']}
+          patch={patch}
+          onChange={change}
+          viewers={viewers('amp', 'Amp', { idleHint: 'Silent: press a key (A–K) to open the Amp.' })}
+        />
       </div>
-
-      {session && <TapViewers name="Amp" analyser={session.engine.taps.amp} sampleRate={session.ctx.sampleRate} />}
     </main>
   );
 }

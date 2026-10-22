@@ -4,17 +4,24 @@ import { addToRenderLoop } from '../viewers/renderLoop';
 import { createScope } from '../viewers/scope';
 import { createSpectrum } from '../viewers/spectrum';
 
+const SILENT_DB = -90;
+
 interface Props {
   name: string;
   analyser: AnalyserNode;
   sampleRate: number;
+  /** Shown over the Viewers while this Tap is silent. */
+  idleHint?: string;
+  /** A one-line explanation under the caption. */
+  note?: string;
 }
 
 /** Scope + Spectrum + level readout for one Tap. Canvases are mounted once and drawn by the render loop. */
-export function TapViewers({ name, analyser, sampleRate }: Props) {
+export function TapViewers({ name, analyser, sampleRate, idleHint, note }: Props) {
   const scopeRef = useRef<HTMLCanvasElement>(null);
   const spectrumRef = useRef<HTMLCanvasElement>(null);
   const levelRef = useRef<HTMLSpanElement>(null);
+  const hintRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const drawScope = createScope(scopeRef.current!, analyser);
@@ -24,8 +31,9 @@ export function TapViewers({ name, analyser, sampleRate }: Props) {
       drawScope();
       drawSpectrum();
       const db = level();
-      levelRef.current!.textContent = Number.isFinite(db) ? `${db.toFixed(1)} dB` : '−∞ dB';
+      levelRef.current!.textContent = db > SILENT_DB ? `${db.toFixed(1)} dB` : 'silent';
       levelRef.current!.dataset.db = String(db);
+      if (hintRef.current) hintRef.current.hidden = db > SILENT_DB;
     });
   }, [analyser, sampleRate]);
 
@@ -34,8 +42,16 @@ export function TapViewers({ name, analyser, sampleRate }: Props) {
       <figcaption>
         {name} Tap <span className="level" data-testid={`${name.toLowerCase()}-level`} ref={levelRef} />
       </figcaption>
-      <canvas className="scope" ref={scopeRef} aria-label={`${name} Scope`} />
-      <canvas className="spectrum" ref={spectrumRef} aria-label={`${name} Spectrum`} />
+      {note && <p className="tap-note">{note}</p>}
+      <div className="tap-canvases">
+        <canvas className="scope" ref={scopeRef} aria-label={`${name} Scope`} />
+        <canvas className="spectrum" ref={spectrumRef} aria-label={`${name} Spectrum`} />
+        {idleHint && (
+          <div className="idle-hint" ref={hintRef}>
+            {idleHint}
+          </div>
+        )}
+      </div>
     </figure>
   );
 }
