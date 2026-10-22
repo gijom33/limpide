@@ -174,15 +174,17 @@ export function App() {
       </header>
 
       <section className="toolbar" aria-label="Viewer controls">
-        <ToolGroup title="View">
-          <ViewActions state={viewer} dispatch={dispatchViewer} />
-        </ToolGroup>
-        <ToolGroup title="Axes">
-          <AxesControls state={viewer} dispatch={dispatchViewer} cycles={cycles} onCycles={setCycles} />
-        </ToolGroup>
-        <ToolGroup title="Show">
-          <OverlayToggles value={overlays} onToggle={(o) => setOverlays((v) => toggleOverlay(v, o))} />
-        </ToolGroup>
+        <div className="toolbar-groups">
+          <ToolGroup title="View">
+            <ViewActions state={viewer} dispatch={dispatchViewer} />
+          </ToolGroup>
+          <ToolGroup title="Axes">
+            <AxesControls state={viewer} dispatch={dispatchViewer} cycles={cycles} onCycles={setCycles} />
+          </ToolGroup>
+          <ToolGroup title="Show">
+            <OverlayToggles value={overlays} onToggle={(o) => setOverlays((v) => toggleOverlay(v, o))} />
+          </ToolGroup>
+        </div>
       </section>
 
       {!session && (

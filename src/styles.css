@@ -136,12 +136,14 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 [data-overlay='guides'] .swatch { width: 14px; border-top: 1px dashed var(--muted); }
 
 /* Toolbar: one panel, three captioned groups (View, Axes, Show), separated by hairlines. */
-.toolbar {
-  display: flex; flex-wrap: wrap; align-items: stretch; margin: 12px 0 0; padding: 8px 4px;
-  background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+.toolbar { margin: 12px 0 0; padding: 8px 4px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; }
+/* Each group draws its divider just outside its left edge, and this row clips anything outside it, so a
+   group that wraps to the start of a new row loses its divider: dividers only ever sit between groups. */
+.toolbar-groups { display: flex; flex-wrap: wrap; align-items: stretch; row-gap: 10px; padding: 3px 0; overflow: hidden; }
+.tool-group {
+  display: flex; flex-direction: column; gap: 6px; padding: 0 12px;
+  margin-left: -1px; border-left: 1px solid var(--border);
 }
-.tool-group { display: flex; flex-direction: column; gap: 6px; padding: 0 12px; }
-.tool-group + .tool-group { border-left: 1px solid var(--border); }
 .tool-group-title { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
 .tool-group-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
 
@@ -184,8 +186,8 @@ main[data-frozen] .tap-canvases::before {
 }
 
 @media (max-width: 860px) {
-  .tool-group { padding: 6px 12px; flex: 1 1 100%; }
-  .tool-group + .tool-group { border-left: 0; border-top: 1px solid var(--border); }
+  .tool-group { padding: 6px 12px; flex: 1 1 100%; margin-left: 0; border-left: 0; }
+  .tool-group + .tool-group { border-top: 1px solid var(--border); }
 }
 
 /* Tooltips: a title, what the control does, and how to use it. */
