@@ -106,3 +106,17 @@ test('frozen Viewers do not change when a new Note is played or a knob is turned
   expect(await pixels()).toEqual(frozen);
   await page.keyboard.up('KeyG');
 });
+
+test('a Snapshot keeps the waveform on every Scope as well as every Spectrum', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: /start audio/i }).click();
+  await expect(page.getByTestId('amp-level')).toBeVisible();
+  const scopes = page.locator('canvas.scope');
+  await expect(scopes).toHaveCount(3);
+
+  await page.getByRole('button', { name: 'Snapshot', exact: true }).click();
+  for (const scope of await scopes.all()) await expect(scope).toHaveAttribute('data-snapshot', 'true');
+
+  await page.getByRole('button', { name: 'Clear Snapshot' }).click();
+  for (const scope of await scopes.all()) await expect(scope).not.toHaveAttribute('data-snapshot', 'true');
+});

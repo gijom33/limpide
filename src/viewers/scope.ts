@@ -2,11 +2,14 @@ import { OSCILLATOR_LEVEL } from '../engine/synthEngine';
 import { cssVar, prepareCanvas } from './canvas';
 import { cycleLockOffset } from './cycleLock';
 import { createFreezeLatch } from './freezeLatch';
+import { scopeTrace } from './scopeTrace';
 import { scopeWindow } from './scopeWindow';
 import type { ViewSettings } from './viewSettings';
 
 const FULL_SCALE = 1;
 const OVER_HOLD_MS = 1000;
+// Two drawn points per pixel keeps sharp corners (a saw's drop, a pulse's edges) crisp.
+const POINTS_PER_PIXEL = 2;
 
 /**
  * A Scope of one Tap, Cycle Locked to the Note's fundamental so a steady Note stands still.
@@ -18,6 +21,8 @@ export function createScope(canvas: HTMLCanvasElement, analyser: AnalyserNode, f
   // While frozen, lock to the Note the frozen samples belong to, not to a Note played since.
   const frozenFundamental = createFreezeLatch<number>();
   let overAt = -Infinity;
+  let snapshotToken: number | null = null;
+  let snapshotTrace: Float32Array | null = null;
 
   return function draw() {
     if (!view().viewer.frozen) analyser.getFloatTimeDomainData(samples);
@@ -29,13 +34,19 @@ export function createScope(canvas: HTMLCanvasElement, analyser: AnalyserNode, f
     const shown = Math.max(2, Math.floor(windowLength));
     // Lock within the part of the buffer that leaves room for the whole trace after it.
     const start = cycleLockOffset(samples.subarray(0, samples.length - shown - 1), sampleRate, f);
-    const at = (t: number) => {
-      const i = Math.floor(t);
-      return samples[i] + (samples[i + 1] - samples[i]) * (t - i);
-    };
+    const trace = scopeTrace(samples, start, shown, Math.max(2, Math.min(shown, Math.ceil(width * POINTS_PER_PIXEL))));
+
+    // Snapshot: keep the Cycle Locked trace from the moment it was taken. Drawn across the same width, it
+    // compares the shape per cycle even if a different Note is playing now.
+    const { snapshot } = view().viewer;
+    if (snapshot !== snapshotToken) {
+      snapshotToken = snapshot;
+      snapshotTrace = snapshot === null ? null : trace;
+    }
+    canvas.dataset.snapshot = String(snapshotTrace !== null);
 
     let peak = 0;
-    for (let i = 0; i < shown; i++) peak = Math.max(peak, Math.abs(at(start + i)));
+    for (const v of trace) peak = Math.max(peak, Math.abs(v));
     const now = performance.now();
     if (peak > FULL_SCALE) overAt = now;
     const over = now - overAt < OVER_HOLD_MS;
@@ -71,15 +82,26 @@ export function createScope(canvas: HTMLCanvasElement, analyser: AnalyserNode, f
     }
     canvas.dataset.over = String(over);
 
+    const stroke = (values: Float32Array) => {
+      g.beginPath();
+      values.forEach((v, i) => {
+        const x = (i / (values.length - 1)) * width;
+        if (i === 0) g.moveTo(x, yOf(v));
+        else g.lineTo(x, yOf(v));
+      });
+      g.stroke();
+    };
+
+    if (snapshotTrace) {
+      g.globalAlpha = 0.4;
+      g.strokeStyle = cssVar(canvas, '--text');
+      g.lineWidth = 1;
+      stroke(snapshotTrace);
+      g.globalAlpha = 1;
+    }
+
     g.strokeStyle = cssVar(canvas, '--trace');
     g.lineWidth = 1.5;
-    g.beginPath();
-    for (let i = 0; i < shown; i++) {
-      const x = (i / (shown - 1)) * width;
-      const y = yOf(at(start + i));
-      if (i === 0) g.moveTo(x, y);
-      else g.lineTo(x, y);
-    }
-    g.stroke();
+    stroke(trace);
   };
 }

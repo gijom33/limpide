@@ -10,10 +10,10 @@ export const TIPS = {
   },
   snapshot: {
     title: 'Snapshot',
-    body: 'Saves what every Spectrum shows right now as a faint grey trace, which stays put while the live trace keeps moving.',
+    body: 'Saves what every Scope and Spectrum shows right now as a faint grey trace, which stays put while the live trace keeps moving.',
     how: 'Take one, then turn a knob: the coloured trace is now, the grey trace is before. × removes it.',
   },
-  clearSnapshot: { title: 'Clear Snapshot', body: 'Removes the grey comparison trace from every Spectrum.' },
+  clearSnapshot: { title: 'Clear Snapshot', body: 'Removes the grey comparison traces from every Scope and Spectrum.' },
   frequencyAxis: {
     title: 'Frequency axis',
     body: 'Log gives every octave the same width, as a piano keyboard does. Lin (0–5 kHz) gives every Harmonic the same spacing, so they line up like a ladder.',
