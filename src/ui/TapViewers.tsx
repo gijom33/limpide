@@ -20,18 +20,15 @@ interface Props {
   response?(frequencies: Float32Array<ArrayBuffer>): Float32Array;
   /** The Tap before the Filter, for the Ghost. */
   ghostOf?: AnalyserNode;
-  /** Shown over the Viewers while this Tap is silent. */
-  idleHint?: string;
   /** What this Tap is, shown as the caption's tooltip rather than as text on screen. */
   tip?: TipContent;
 }
 
 /** Scope + Spectrum + level readout for one Tap. Canvases are mounted once and drawn by the render loop. */
-export function TapViewers({ name, analyser, sampleRate, fundamental, view, showIdeal, response, ghostOf, idleHint, tip }: Props) {
+export function TapViewers({ name, analyser, sampleRate, fundamental, view, showIdeal, response, ghostOf, tip }: Props) {
   const scopeRef = useRef<HTMLCanvasElement>(null);
   const spectrumRef = useRef<HTMLCanvasElement>(null);
   const levelRef = useRef<HTMLSpanElement>(null);
-  const hintRef = useRef<HTMLDivElement>(null);
   const hoverRef = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
@@ -51,7 +48,6 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, view, show
       const db = level();
       levelRef.current!.textContent = db > SILENT_DB ? `${db.toFixed(1)} dB` : 'silent';
       levelRef.current!.dataset.db = String(db);
-      if (hintRef.current) hintRef.current.hidden = db > SILENT_DB;
     });
   }, [analyser, sampleRate, fundamental, view, showIdeal, response, ghostOf]);
 
@@ -79,11 +75,6 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, view, show
           }}
           onPointerLeave={() => (hoverRef.current = null)}
         />
-        {idleHint && (
-          <div className="idle-hint" ref={hintRef}>
-            {idleHint}
-          </div>
-        )}
       </div>
     </figure>
   );

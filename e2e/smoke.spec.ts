@@ -7,12 +7,10 @@ test('a key press after starting audio makes the Amp Tap sound and the Viewers d
   await page.goto('/');
 
   const level = page.getByTestId('amp-level');
-  const hint = page.getByText(/press a key/i);
-  await expect(hint).toBeVisible();
+  await expect(level).toHaveAttribute('data-db', /.+/); // the app is listening for keys once the Viewers draw
 
   await page.keyboard.down('KeyA');
   await expect.poll(() => db(level)).toBeGreaterThan(-40);
-  await expect(hint).toBeHidden();
 
   for (const tap of ['Oscillator', 'Filter', 'Amp']) {
     const drawn = await page.getByLabel(`${tap} Spectrum`).evaluate((c: HTMLCanvasElement) => {
@@ -24,7 +22,6 @@ test('a key press after starting audio makes the Amp Tap sound and the Viewers d
 
   await page.keyboard.up('KeyA');
   await expect.poll(() => db(level)).toBeLessThan(-80);
-  await expect(hint).toBeVisible();
 });
 
 test('the theme toggle switches to light and is remembered', async ({ page }) => {

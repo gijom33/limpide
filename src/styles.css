@@ -57,7 +57,7 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
   background: var(--panel); border: 1px solid var(--muted); border-radius: 8px;
 }
 
-/* The layout is the signal-flow diagram: stages left to right, joined by arrows. */
+/* The layout is the signal-flow diagram: stages left to right, joined by connectors. */
 .chain { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; margin: 16px 0; }
 .block {
   position: relative; display: flex; flex-direction: column; gap: 12px;
@@ -75,13 +75,27 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 }
 .block[data-stage] .knob-dial::after { background: var(--stage); }
 .block[data-stage] .knob-dial:focus-visible { outline-color: var(--stage); }
+/* Signal-flow connectors: a line across the gap that blends from the previous stage's colour into the next,
+   ending in a chevron, centred on the panels. The colour change itself says where the signal goes. */
+.block[data-stage='filter'] { --prev-stage: var(--stage-osc); }
+.block[data-stage='amp'] { --prev-stage: var(--stage-filter); }
+.block + .block::before, .block + .block::after { content: ''; position: absolute; pointer-events: none; }
 .block + .block::before {
-  content: '→'; position: absolute; left: -22px; top: 40px; color: var(--muted); font-size: 18px;
+  left: -28px; top: 50%; width: 24px; height: 2px; margin-top: -1px; border-radius: 1px;
+  background: linear-gradient(90deg, var(--prev-stage), var(--stage));
+}
+.block + .block::after {
+  left: -10px; top: 50%; width: 7px; height: 7px; margin-top: -4px;
+  border-top: 2px solid var(--stage); border-right: 2px solid var(--stage); transform: rotate(45deg);
 }
 .block .knobs { min-height: 82px; flex-wrap: wrap; }
 @media (max-width: 860px) {
   .chain { grid-template-columns: 1fr; gap: 24px; }
-  .block + .block::before { content: '↓'; left: 50%; top: -22px; }
+  .block + .block::before {
+    left: 50%; top: -24px; width: 2px; height: 20px; margin: 0 0 0 -1px;
+    background: linear-gradient(180deg, var(--prev-stage), var(--stage));
+  }
+  .block + .block::after { left: 50%; top: -9px; margin: 0 0 0 -4px; transform: rotate(135deg); }
 }
 .knobs { display: flex; gap: 16px; }
 
@@ -124,11 +138,6 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
   background: var(--bg); border-radius: 6px;
 }
 .tap canvas + canvas { margin-top: 8px; }
-.idle-hint {
-  position: absolute; inset: 0; display: grid; place-items: center; padding: 16px; text-align: center;
-  color: var(--muted); font-size: 13px; pointer-events: none;
-}
-.idle-hint[hidden] { display: none; }
 
 .swatch { display: inline-block; flex: none; }
 [data-overlay='harmonics'] .swatch { width: 9px; height: 6px; border-left: 1px solid var(--text); border-right: 1px solid var(--text); }
@@ -294,4 +303,40 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   .tap canvas { min-height: 78px; }
   main > .chain { grid-template-rows: auto minmax(186px, 1fr); }
   .timeline canvas { height: clamp(60px, 8vh, 150px); }
+}
+
+/* Oscillator tabs: one Oscillator at a time; the Mixer stays visible below. */
+.tabs { display: flex; flex-direction: column; gap: 10px; }
+.tab-list { display: flex; gap: 2px; border-bottom: 1px solid var(--border); }
+.tab-list .tip-anchor { display: flex; }
+.tab-list [role='tab'] {
+  position: relative; display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px 7px; margin-bottom: -1px;
+  font: inherit; font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
+  background: none; border: 0; border-bottom: 2px solid transparent; cursor: pointer;
+}
+.tab-list [role='tab']:hover { color: var(--text); }
+.tab-list [role='tab'][aria-selected='true'] { color: var(--text); border-bottom-color: var(--stage, var(--text)); }
+.tab-list [role='tab']:focus-visible { outline: 2px solid var(--stage, var(--text)); outline-offset: -2px; border-radius: 4px; }
+/* A dot on a tab whose Oscillator is mixed in, so you know it is sounding while you edit the other. */
+.tab-badge { width: 6px; height: 6px; border-radius: 50%; background: var(--stage, var(--text)); }
+.tab-panels { display: grid; }
+.tab-panel { grid-area: 1 / 1; min-width: 0; }
+.tab-panel:not([data-active]) { visibility: hidden; }
+.tab-panel > .sub-block { border-top: 0; padding-top: 0; }
+
+/* Wordmark: the logo, then "Synth" in full weight and "View" lighter, so the name reads as two ideas. */
+.wordmark { display: inline-flex; align-items: center; gap: 10px; font-size: 21px; font-weight: 700; letter-spacing: -0.01em; }
+.wordmark .logo { flex: none; }
+.wordmark-view { font-weight: 400; color: var(--muted); }
+/* Both Oscillator tabs make the same choice, sized for Osc 2's four knobs: knobs beside the Waveform picker
+   only when all of them fit there, otherwise beneath it, so Pulse Width stays put when switching tabs. */
+.tab-panel .sub-block > .knobs { flex: 1 1 100%; }
+@container (min-width: 490px) {
+  .tab-panel .sub-block > .knobs { flex: 1 1 auto; }
+}
+/* The Oscillator tabs share the stage heading's line when there is room (it is otherwise empty), saving a line. */
+.block-controls { container-type: inline-size; position: relative; }
+@container (min-width: 300px) {
+  .block[data-stage='osc'] .tab-list { position: absolute; top: 0; right: 0; border-bottom: 0; }
+  .block[data-stage='osc'] .tabs { gap: 0; }
 }

@@ -35,6 +35,7 @@ for (const width of [1400, 1100, 900, 872, 800, 420]) {
         const inner = { left: b.left + 8, right: b.right - 8 }; // inside the padding, not touching the border
         return [...block.querySelectorAll<HTMLElement>('.knob')]
           .map((k) => ({ k, r: k.getBoundingClientRect() }))
+          .filter(({ k, r }) => r.width > 0 && k.checkVisibility({ visibilityProperty: true })) // hidden tab: not on screen
           .filter(({ r }) => r.left < inner.left || r.right > inner.right)
           .map(({ k }) => `${block.getAttribute('aria-label')}: ${k.querySelector('.knob-label')?.textContent}`);
       }),
@@ -69,10 +70,9 @@ for (const width of [1400, 872]) {
     const overlaps = await page.evaluate(() => {
       const found: string[] = [];
       for (const block of document.querySelectorAll<HTMLElement>('.block')) {
-        const parts = [...block.querySelectorAll<HTMLElement>('h2, h3, .waveforms, .knob, .tap')].map((el) => ({
-          el,
-          r: el.getBoundingClientRect(),
-        }));
+        const parts = [...block.querySelectorAll<HTMLElement>('h2, h3, .waveforms, .knob, .tap')]
+          .map((el) => ({ el, r: el.getBoundingClientRect() }))
+          .filter(({ el, r }) => r.width > 0 && el.checkVisibility({ visibilityProperty: true })); // hidden tab: not on screen
         for (let i = 0; i < parts.length; i++)
           for (let j = i + 1; j < parts.length; j++) {
             const [a, b] = [parts[i], parts[j]];
