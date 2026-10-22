@@ -141,7 +141,8 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 [data-overlay='guides'] .swatch { width: 14px; border-top: 1px dashed var(--muted); }
 
 /* Toolbar: one panel, three captioned groups (View, Axes, Show), separated by hairlines. */
-.toolbar { margin: 12px 0 0; padding: 8px 4px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; }
+/* The toolbar sits in the header line when there is room, and wraps below the title when not. */
+.toolbar { flex: 1 1 auto; margin: 0; padding: 6px 4px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; }
 /* Each group draws its divider just outside its left edge, and this row clips anything outside it, so a
    group that wraps to the start of a new row loses its divider: dividers only ever sit between groups. */
 .toolbar-groups { display: flex; flex-wrap: wrap; align-items: stretch; row-gap: 10px; padding: 3px 0; overflow: hidden; }
@@ -237,9 +238,34 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 /* The Oscillators stage: Osc 1, Osc 2 and the Mixer stacked; the first needs no divider above it. */
 .source-rows { display: flex; flex-direction: column; gap: 10px; flex: 1 1 100%; }
 .source-rows > .sub-block:first-child { border-top: 0; padding-top: 0; }
-.waveforms[data-compact] { grid-template-columns: repeat(5, minmax(0, 40px)); }
+.waveforms[data-compact] { grid-template-columns: repeat(5, minmax(0, 36px)); }
 .waveforms[data-compact] .waveform { padding: 5px 2px; }
 /* In the stage columns nothing may shrink below its content (an explicit min-height on .knobs would otherwise
    let flexbox squeeze rows until labels overlap), and the Waveform picker must not grow to fill height. */
 .block > *, .source-rows > *, .sub-block > * { flex-shrink: 0; }
 .sub-block > .waveforms { flex: none; }
+
+/* Inside a stage section, the Waveform picker and its knobs share a row when there is room. */
+.sub-block { flex-direction: row; flex-wrap: wrap; align-items: center; column-gap: 12px; }
+.sub-block > h3, .sub-block > .tip-anchor:first-child { flex: 1 1 100%; }
+.sub-block > .knobs { flex: 1 1 auto; }
+.sub-block > .knobs-envelope { flex: 1 1 100%; }
+
+/* Large screens: the app fills exactly the window height, and the Viewers share whatever the controls leave,
+   so the whole instrument is on screen without scrolling. Smaller screens keep natural heights and scroll. */
+@media (min-width: 861px) and (min-height: 700px) {
+  main { height: 100vh; height: 100dvh; display: flex; flex-direction: column; gap: 12px; }
+  main > * { flex: none; margin-top: 0; margin-bottom: 0; }
+  main > .chain { flex: 1 1 0; min-height: 0; grid-template-rows: minmax(0, 1fr); }
+  .block { min-height: 0; }
+  .block > .tap { flex: 1 1 0; min-height: 0; margin-top: 0; display: flex; flex-direction: column; }
+  .tap-canvases { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+  .tap canvas { flex: 1 1 0; height: auto; min-height: 90px; max-height: none; aspect-ratio: auto; }
+  .tap canvas + canvas { margin-top: 0; }
+  .timeline canvas { height: clamp(80px, 11vh, 150px); }
+}
+
+/* Wide sections put their heading in a narrow label column instead of a line of its own. */
+@container (min-width: 380px) {
+  .source-rows .sub-block > h3, .source-rows .sub-block > .tip-anchor:first-child { flex: 0 0 44px; }
+}

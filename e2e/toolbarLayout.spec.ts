@@ -43,7 +43,7 @@ for (const width of [1400, 1100, 900, 872, 800, 420]) {
   });
 }
 
-test('wide screens get a wider page and taller Viewers, not empty margins or thin strips', async ({ page }) => {
+test('wide screens get a wider page and wider Viewers, not empty margins', async ({ page }) => {
   const measure = async (width: number) => {
     await page.setViewportSize({ width, height: 1200 });
     await page.goto('/');
@@ -57,8 +57,9 @@ test('wide screens get a wider page and taller Viewers, not empty margins or thi
   const laptop = await measure(1400);
   const wide = await measure(2400);
   expect(wide.main).toBeGreaterThanOrEqual(1900);
-  expect(wide.scope.height).toBeGreaterThan(laptop.scope.height);
-  expect(wide.scope.width / wide.scope.height).toBeLessThan(3.2); // keeps its shape instead of flattening
+  expect(wide.scope.width).toBeGreaterThan(laptop.scope.width);
+  // On a large screen the Viewers share the window's height (fits without scrolling); they never collapse.
+  expect(wide.scope.height).toBeGreaterThanOrEqual(90);
 });
 
 for (const width of [1400, 872]) {
