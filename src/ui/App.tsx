@@ -1,14 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { startAudioSession, type AudioSession } from '../app/session';
 import { keyToNote } from '../input/keyboardLayout';
 import { OSCILLATOR_LEVEL } from '../engine/synthEngine';
 import { harmonicSeries } from '../music/harmonics';
 import { defaultPatch, setParam, setWaveform, type ParamId, type Patch } from '../patch/patch';
 import { loadOverlays, saveOverlays, toggleOverlay } from '../viewers/overlays';
+import { INITIAL_VIEWER_STATE, viewerReducer } from '../viewers/viewerState';
 import type { ViewSettings } from '../viewers/viewSettings';
 import { Knob } from './Knob';
 import { OverlayToggles } from './OverlayToggles';
 import { TapViewers } from './TapViewers';
+import { ViewerControls } from './ViewerControls';
 import { applyTheme, loadTheme } from './theme';
 import { WaveformPicker } from './WaveformPicker';
 
@@ -49,6 +51,7 @@ export function App() {
   const [theme, setTheme] = useState(loadTheme);
   const [cycles, setCycles] = useState<ViewSettings['cycles']>(2);
   const [overlays, setOverlays] = useState(() => loadOverlays(localStorage));
+  const [viewer, dispatchViewer] = useReducer(viewerReducer, INITIAL_VIEWER_STATE);
 
   useEffect(() => saveOverlays(localStorage, overlays), [overlays]);
 
@@ -59,11 +62,30 @@ export function App() {
   }, [patch.waveform, patch.pulseWidth]);
 
   // Read by the render loop every frame; a stable getter keeps the Viewers mounted while settings change.
-  const viewSettings = useRef<ViewSettings>({ cycles, ideal, overlays });
-  viewSettings.current = { cycles, ideal, overlays };
+  const viewSettings = useRef<ViewSettings>({ cycles, ideal, overlays, viewer });
+  viewSettings.current = { cycles, ideal, overlays, viewer };
   const view = useRef(() => viewSettings.current).current;
 
   useEffect(() => applyTheme(theme), [theme]);
+
+  // Space Freezes the Viewers. It never plays a Note, and must not also press a focused button or scroll.
+  useEffect(() => {
+    const isSpace = (e: KeyboardEvent) => e.code === 'Space' && !(e.target instanceof HTMLInputElement);
+    const down = (e: KeyboardEvent) => {
+      if (!isSpace(e)) return;
+      e.preventDefault();
+      if (!e.repeat) dispatchViewer({ type: 'toggleFreeze' });
+    };
+    const up = (e: KeyboardEvent) => {
+      if (isSpace(e)) e.preventDefault();
+    };
+    window.addEventListener('keydown', down);
+    window.addEventListener('keyup', up);
+    return () => {
+      window.removeEventListener('keydown', down);
+      window.removeEventListener('keyup', up);
+    };
+  }, []);
 
   useEffect(() => {
     session?.engine.applyPatch(patch);
@@ -132,6 +154,13 @@ export function App() {
         <p className="hint" title="White keys on A S D F G H J K, black keys on W E T Y U">
           Play <kbd>A</kbd>–<kbd>K</kbd>
         </p>
+        <button className="theme-toggle" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+          {theme === 'dark' ? 'Light' : 'Dark'} theme
+        </button>
+      </header>
+
+      <div className="toolbar" aria-label="Viewer controls">
+        <ViewerControls state={viewer} dispatch={dispatchViewer} />
         <OverlayToggles value={overlays} onToggle={(o) => setOverlays((v) => toggleOverlay(v, o))} />
         <div className="cycles" role="radiogroup" aria-label="Scope cycles">
           <span>Scope cycles</span>
@@ -141,10 +170,7 @@ export function App() {
             </button>
           ))}
         </div>
-        <button className="theme-toggle" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
-          {theme === 'dark' ? 'Light' : 'Dark'} theme
-        </button>
-      </header>
+      </div>
 
       {!session && (
         <button className="start" onClick={async () => setSession(await startAudioSession(patch))}>

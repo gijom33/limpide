@@ -1,4 +1,5 @@
 import type { Overlays } from './overlays';
+import type { ViewerState } from './viewerState';
 
 /** Settings the Viewers read every frame (React writes them; the render loop never re-mounts for them). */
 export interface ViewSettings {
@@ -8,4 +9,6 @@ export interface ViewSettings {
   ideal?: Float32Array;
   /** Which marks are switched on. */
   overlays: Overlays;
+  /** Freeze, axes and Snapshot. */
+  viewer: ViewerState;
 }

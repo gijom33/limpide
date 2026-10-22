@@ -1,4 +1,7 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Locator } from '@playwright/test';
+
+// A missing reading (the Tap hasn't drawn yet) must not count as loud: Number(null) would be 0 dB.
+const db = (level: Locator) => level.getAttribute('data-db').then((v) => (v === null ? NaN : Number(v)));
 
 test('a key press after starting audio makes the Amp Tap sound and the Viewers draw', async ({ page }) => {
   await page.goto('/');
@@ -9,7 +12,7 @@ test('a key press after starting audio makes the Amp Tap sound and the Viewers d
   await expect(hint).toBeVisible();
 
   await page.keyboard.down('KeyA');
-  await expect.poll(async () => Number(await level.getAttribute('data-db'))).toBeGreaterThan(-40);
+  await expect.poll(() => db(level)).toBeGreaterThan(-40);
   await expect(hint).toBeHidden();
 
   for (const tap of ['Oscillator', 'Filter', 'Amp']) {
@@ -21,7 +24,7 @@ test('a key press after starting audio makes the Amp Tap sound and the Viewers d
   }
 
   await page.keyboard.up('KeyA');
-  await expect.poll(async () => Number(await level.getAttribute('data-db'))).toBeLessThan(-80);
+  await expect.poll(() => db(level)).toBeLessThan(-80);
   await expect(hint).toBeVisible();
 });
 

@@ -40,14 +40,25 @@
 body { margin: 0; background: var(--bg); color: var(--text); }
 main { max-width: 1200px; margin: 0 auto; padding: 16px; }
 header { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
-.cycles { margin-left: auto; display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); }
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: 10px 0 0; }
+.tool, .segmented button {
+  padding: 3px 9px; font-size: 12px; cursor: pointer; border-radius: 6px;
+  background: none; color: var(--muted); border: 1px solid var(--border);
+}
+.tool[aria-pressed='true'] { color: var(--text); border-color: var(--text); }
+.tool-pair { display: flex; gap: 2px; }
+.segmented { display: flex; align-items: center; gap: 2px; font-size: 12px; color: var(--muted); }
+.segmented span { margin-right: 4px; }
+.segmented button[aria-checked='true'] { color: var(--text); border-color: var(--muted); }
+.cycles { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); }
 .cycles span { margin-right: 4px; }
 .cycles button {
   min-width: 26px; padding: 3px 6px; border-radius: 6px; cursor: pointer;
   background: none; color: var(--muted); border: 1px solid var(--border);
 }
 .cycles button[aria-checked='true'] { color: var(--text); border-color: var(--muted); }
-.theme-toggle { background: none; color: var(--muted); border: 1px solid var(--border);
+.theme-toggle {
+  margin-left: auto; background: none; color: var(--muted); border: 1px solid var(--border);
   border-radius: 6px; padding: 4px 10px; cursor: pointer;
 }
 h1 { margin: 0 0 8px; font-size: 22px; letter-spacing: 0.02em; }

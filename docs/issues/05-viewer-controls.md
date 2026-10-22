@@ -4,9 +4,10 @@
 
 **Blocked by:** 02
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Axis mappings (frequency ↔ x for log and linear, level ↔ y for dB and linear), both directions, tested
-- [ ] Viewer state (Freeze, axes, Snapshot) as a pure reducer, tested
-- [ ] Spacebar Freeze doesn't conflict with the computer-keyboard Notes
-- [ ] Hover readout and Snapshot trace drawn
+- [x] Axis mappings (frequency ↔ x for log and linear, level ↔ y for dB and linear), both directions, tested
+- [x] Viewer state (Freeze, axes, Snapshot) as a pure reducer, tested
+- [x] Spacebar Freeze doesn't conflict with the computer-keyboard Notes
+- [x] Hover readout (snaps to the nearest peak; frequency and level interpolated between FFT bins, tested) and the Snapshot trace drawn
+- Linear frequency axis spans 0–5 kHz, where the Harmonic ladder is readable. The linear level axis tops out at the Oscillator's level

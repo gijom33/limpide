@@ -17,7 +17,7 @@ export function createScope(canvas: HTMLCanvasElement, analyser: AnalyserNode, f
   let overAt = -Infinity;
 
   return function draw() {
-    analyser.getFloatTimeDomainData(samples);
+    if (!view().viewer.frozen) analyser.getFloatTimeDomainData(samples);
     const { g, width, height } = prepareCanvas(canvas);
     g.clearRect(0, 0, width, height);
 

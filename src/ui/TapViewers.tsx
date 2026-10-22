@@ -31,6 +31,7 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, view, show
   const spectrumRef = useRef<HTMLCanvasElement>(null);
   const levelRef = useRef<HTMLSpanElement>(null);
   const hintRef = useRef<HTMLDivElement>(null);
+  const hoverRef = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     const drawScope = createScope(scopeRef.current!, analyser, fundamental, view);
@@ -40,8 +41,9 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, view, show
       showIdeal,
       response,
       ghostOf,
+      hover: () => hoverRef.current,
     });
-    const level = createLevelMeter(analyser);
+    const level = createLevelMeter(analyser, () => view().viewer.frozen);
     return addToRenderLoop(() => {
       drawScope();
       drawSpectrum();
@@ -59,7 +61,16 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, view, show
       </figcaption>
       <div className="tap-canvases">
         <canvas className="scope" ref={scopeRef} aria-label={`${name} Scope`} />
-        <canvas className="spectrum" ref={spectrumRef} aria-label={`${name} Spectrum`} />
+        <canvas
+          className="spectrum"
+          ref={spectrumRef}
+          aria-label={`${name} Spectrum`}
+          onPointerMove={(e) => {
+            const r = e.currentTarget.getBoundingClientRect();
+            hoverRef.current = { x: e.clientX - r.left, y: e.clientY - r.top };
+          }}
+          onPointerLeave={() => (hoverRef.current = null)}
+        />
         {idleHint && (
           <div className="idle-hint" ref={hintRef}>
             {idleHint}
