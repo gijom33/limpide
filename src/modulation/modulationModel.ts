@@ -5,8 +5,10 @@ const MAX_HZ = 20000;
 
 /**
  * The Cutoff after all modulation, computed here rather than read from the audio graph (ADR-0003).
- * Nothing modulates the Filter yet; the Filter Envelope (ticket 06), LFO (09) and Velocity (10) add to this.
+ * The Filter Envelope moves it by Envelope Amount octaves at full level; the LFO (ticket 09) and
+ * Velocity (10) will add to this.
  */
-export function effectiveCutoff(patch: Patch): number {
-  return Math.min(MAX_HZ, Math.max(MIN_HZ, patch.cutoff));
+export function effectiveCutoff(patch: Patch, filterEnvelope = 0): number {
+  const hz = patch.cutoff * 2 ** (patch.filterEnvAmount * filterEnvelope);
+  return Math.min(MAX_HZ, Math.max(MIN_HZ, hz));
 }

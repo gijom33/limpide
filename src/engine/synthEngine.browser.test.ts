@@ -241,3 +241,63 @@ describe('filterResponse (the Response Curve)', () => {
     expect(dB(octaveAbove / passBand)).toBeLessThan(-6);
   });
 });
+
+describe('Filter Envelope (model-driven automation, ADR-0003)', () => {
+  /** Renders, and at each of `times` captures both Taps plus what the engine reports at that moment. */
+  async function captureAt(times: number[], patch: Partial<Patch>, play: (e: ReturnType<typeof createSynthEngine>) => void) {
+    const ctx = new OfflineAudioContext(1, SR * (Math.max(...times) + 0.2), SR);
+    const engine = createSynthEngine(ctx);
+    engine.applyPatch({ ...defaultPatch(), ...patch });
+    play(engine);
+    const read = (a: AnalyserNode) => {
+      const s = new Float32Array(a.fftSize);
+      a.getFloatTimeDomainData(s);
+      return s;
+    };
+    const frames = times.map((t) =>
+      ctx.suspend(t).then(() => {
+        const frame = {
+          osc: read(engine.taps.oscillator),
+          filter: read(engine.taps.filter),
+          amp: read(engine.taps.amp),
+          modulation: engine.modulationAt(t),
+          response: engine.filterResponse(Float32Array.from({ length: 30 }, (_, i) => 110 * (i + 1))),
+        };
+        void ctx.resume();
+        return frame;
+      }),
+    );
+    await ctx.startRendering();
+    return Promise.all(frames);
+  }
+
+  const envelope = { cutoff: 200, resonance: 0, filterEnvAmount: 3, filterAttack: 0.001, filterDecay: 0.05, filterSustain: 1, filterRelease: 0.05 };
+
+  it('raises the Effective Cutoff by the Envelope Amount, and the sound follows the model', async () => {
+    const [held, released] = await captureAt([0.6, 1.6], { ...envelope, ampSustain: 1, ampAttack: 0.001, ampRelease: 5 }, (e) => {
+      e.noteOn(45, 1, 0);
+      e.noteOff(1);
+    });
+    expect(held.modulation.cutoff).toBeCloseTo(1600, -1); // 200 Hz × 2³ while the Envelope is held open
+    expect(released.modulation.cutoff).toBeCloseTo(200, 0); // back to the Cutoff after Release
+
+    for (const frame of [held, released]) {
+      for (let i = 0; i < 30; i++) {
+        const f = 110 * (i + 1);
+        const measured = dB(toneAmplitudeHann(frame.filter, SR, f) / toneAmplitudeHann(frame.osc, SR, f));
+        expect(Math.abs(measured - dB(frame.response[i])), `${f} Hz at ${frame.modulation.cutoff.toFixed(0)} Hz`).toBeLessThan(0.5);
+      }
+    }
+  });
+
+  it('changes nothing while the Envelope Amount is zero', async () => {
+    const [frame] = await captureAt([0.5], { ...envelope, filterEnvAmount: 0 }, (e) => e.noteOn(45, 1, 0));
+    expect(frame.modulation.cutoff).toBe(200);
+  });
+
+  it('reports the Amp Envelope level the Amp Tap actually has', async () => {
+    const [frame] = await captureAt([0.6], { cutoff: 20000, ampAttack: 0.001, ampDecay: 0.05, ampSustain: 0.5 }, (e) => e.noteOn(45, 0.6, 0));
+    expect(frame.modulation.amp).toBeCloseTo(0.3, 3);
+    expect(rms(frame.amp) / rms(frame.filter)).toBeCloseTo(0.3, 2);
+  });
+});

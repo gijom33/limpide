@@ -11,7 +11,10 @@ describe('defaultPatch', () => {
 
   it('gives the Voice an Oscillator, a Filter and an Amp Envelope', () => {
     expect(Object.keys(PARAMS).sort()).toEqual(
-      ['ampAttack', 'ampDecay', 'ampRelease', 'ampSustain', 'cutoff', 'pulseWidth', 'resonance'].sort(),
+      [
+        'ampAttack', 'ampDecay', 'ampRelease', 'ampSustain', 'cutoff', 'pulseWidth', 'resonance',
+        'filterEnvAmount', 'filterAttack', 'filterDecay', 'filterSustain', 'filterRelease',
+      ].sort(),
     );
   });
 
@@ -41,6 +44,20 @@ describe('setWaveform', () => {
     expect(after.waveform).toBe('pulse');
     expect(after.cutoff).toBe(500);
     expect(before.waveform).toBe('saw');
+  });
+});
+
+describe('Envelope Amount', () => {
+  it('starts at zero, so the Filter Envelope changes nothing until you turn it up', () => {
+    expect(defaultPatch().filterEnvAmount).toBe(0);
+  });
+
+  it('spans five octaves either way, shown signed in octaves', () => {
+    expect(setParam(defaultPatch(), 'filterEnvAmount', 9).filterEnvAmount).toBe(5);
+    expect(setParam(defaultPatch(), 'filterEnvAmount', -9).filterEnvAmount).toBe(-5);
+    expect(formatParam('filterEnvAmount', 2)).toBe('+2.0 oct');
+    expect(formatParam('filterEnvAmount', -1.25)).toBe('−1.3 oct');
+    expect(formatParam('filterEnvAmount', 0)).toBe('0 oct');
   });
 });
 

@@ -1,7 +1,7 @@
 import type { Waveform } from '../music/harmonics';
 import type { Range } from './taper';
 
-export type Unit = 'Hz' | 's' | '%';
+export type Unit = 'Hz' | 's' | '%' | 'oct';
 
 export interface ParamDef extends Range {
   id: ParamId;
@@ -10,7 +10,19 @@ export interface ParamDef extends Range {
   default: number;
 }
 
-export type ParamId = 'pulseWidth' | 'cutoff' | 'resonance' | 'ampAttack' | 'ampDecay' | 'ampSustain' | 'ampRelease';
+export type ParamId =
+  | 'pulseWidth'
+  | 'cutoff'
+  | 'resonance'
+  | 'filterEnvAmount'
+  | 'filterAttack'
+  | 'filterDecay'
+  | 'filterSustain'
+  | 'filterRelease'
+  | 'ampAttack'
+  | 'ampDecay'
+  | 'ampSustain'
+  | 'ampRelease';
 
 export type Patch = Record<ParamId, number> & { waveform: Waveform };
 
@@ -22,6 +34,11 @@ export const PARAMS: Record<ParamId, ParamDef> = {
   pulseWidth: { id: 'pulseWidth', label: 'Pulse Width', unit: '%', min: 0.05, max: 0.95, taper: 'linear', default: 0.25 },
   cutoff: { id: 'cutoff', label: 'Cutoff', unit: 'Hz', min: 20, max: 20000, taper: 'log', default: 2000 },
   resonance: { id: 'resonance', label: 'Resonance', unit: '%', min: 0, max: 1, taper: 'linear', default: 0.2 },
+  filterEnvAmount: { id: 'filterEnvAmount', label: 'Env Amount', unit: 'oct', min: -5, max: 5, taper: 'linear', default: 0 },
+  filterAttack: time('filterAttack', 'Attack', 0.005),
+  filterDecay: time('filterDecay', 'Decay', 0.25),
+  filterSustain: { id: 'filterSustain', label: 'Sustain', unit: '%', min: 0, max: 1, taper: 'linear', default: 0.3 },
+  filterRelease: time('filterRelease', 'Release', 0.4),
   ampAttack: time('ampAttack', 'Attack', 0.01),
   ampDecay: time('ampDecay', 'Decay', 0.3),
   ampSustain: { id: 'ampSustain', label: 'Sustain', unit: '%', min: 0, max: 1, taper: 'linear', default: 0.7 },
@@ -51,5 +68,7 @@ export function formatParam(id: ParamId, value: number): string {
       return value >= 1 ? `${value.toFixed(2)} s` : `${(value * 1000).toPrecision(3)} ms`;
     case '%':
       return `${Math.round(value * 100)} %`;
+    case 'oct':
+      return value === 0 ? '0 oct' : `${value > 0 ? '+' : '−'}${Math.abs(value).toFixed(1)} oct`;
   }
 }

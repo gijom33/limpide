@@ -53,3 +53,60 @@ describe('Note input with last-note priority', () => {
     expect(events).toHaveLength(1);
   });
 });
+
+describe('Hold', () => {
+  it('keeps the Note sounding after the key is released', () => {
+    const { input, events } = setup();
+    input.setHold(true);
+    input.press(60, 1);
+    input.release(60);
+    expect(events).toEqual([{ type: 'noteOn', note: 60, velocity: 1 }]);
+  });
+
+  it('lets a new key replace the held Note', () => {
+    const { input, events } = setup();
+    input.setHold(true);
+    input.press(60, 1);
+    input.release(60);
+    input.press(64, 0.7);
+    input.release(64);
+    expect(events.at(-1)).toEqual({ type: 'noteOn', note: 64, velocity: 0.7 });
+  });
+
+  it('closes the Gate when switched off with no key down', () => {
+    const { input, events } = setup();
+    input.setHold(true);
+    input.press(60, 1);
+    input.release(60);
+    input.setHold(false);
+    expect(events.at(-1)).toEqual({ type: 'noteOff' });
+  });
+
+  it('leaves a key that is still down sounding when switched off', () => {
+    const { input, events } = setup();
+    input.setHold(true);
+    input.press(60, 1);
+    input.setHold(false);
+    expect(events).toHaveLength(1);
+    input.release(60);
+    expect(events.at(-1)).toEqual({ type: 'noteOff' });
+  });
+
+  it('does nothing when switched on or off with nothing playing', () => {
+    const { input, events } = setup();
+    input.setHold(true);
+    input.setHold(false);
+    expect(events).toEqual([]);
+  });
+
+  it('keeps last-note priority among keys held down', () => {
+    const { input, events } = setup();
+    input.setHold(true);
+    input.press(60, 1);
+    input.press(64, 1);
+    input.release(64);
+    expect(events.at(-1)).toEqual({ type: 'pitchChange', note: 60 });
+    input.release(60);
+    expect(events.at(-1)).toEqual({ type: 'pitchChange', note: 60 });
+  });
+});
