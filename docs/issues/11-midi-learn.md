@@ -4,10 +4,10 @@
 
 **Blocked by:** 10
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Learn state machine, tested (select → receive → mapped; cancel; re-learn replaces)
-- [ ] Encoder Mode detection, tested with sample streams for Absolute, two's-complement and 64-centred input
-- [ ] Pickup, tested (ignore until crossing, then follow)
-- [ ] Mapping store persisted through the Persistence interface, tested
-- [ ] Activity Monitor and knob flash
+- [x] Learn state machine, tested (select → receive → mapped; cancel; re-learn replaces)
+- [x] Encoder Mode detection, tested with sample streams for Absolute, two's-complement and 64-centred input
+- [x] Pickup, tested (ignore until crossing, then follow)
+- [x] Mapping store persisted through the Persistence interface, tested
+- [x] Activity Monitor and knob flash

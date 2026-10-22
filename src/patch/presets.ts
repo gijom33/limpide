@@ -47,6 +47,12 @@ export const PRESETS: Preset[] = [
 /** The next (+1) or previous (−1) Preset, wrapping around at the ends. */
 export const stepPreset = (index: number, delta: number) => (index + delta + PRESETS.length) % PRESETS.length;
 
+/** The Preset an arrow leads to from the sound named: the next or previous one, or the first or last from a Patch. */
+export function presetAfter(name: string, delta: number): Preset {
+  const index = PRESETS.findIndex((p) => p.name === name);
+  return PRESETS[index === -1 ? (delta > 0 ? 0 : PRESETS.length - 1) : stepPreset(index, delta)];
+}
+
 /** What plays when the page opens: a share link, else last session's Patch, else Init. */
 export function initialPatch(hash: string, library: Library): { patch: Patch; name: string } {
   const shared = hash.startsWith('#p=') ? patchFromShare(hash.slice(3)) : undefined;

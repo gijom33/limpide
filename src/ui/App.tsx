@@ -1,13 +1,17 @@
-import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { useEffect, useMemo, useReducer, useRef, useState, useSyncExternalStore } from 'react';
 import { getAudioSession, type AudioSession } from '../app/session';
 import { unlockAudio, type AudioStatus } from '../app/unlockAudio';
 import { keyToNote, octaveKey, shiftOctave } from '../input/keyboardLayout';
+import { createControlSurface, type LearnState } from '../midi/controlSurface';
+import { describeMessage, targetKey } from '../midi/describe';
 import { connectMidi, midiSupport, type MidiAccessLike } from '../midi/inputs';
+import { createMappingStore, type Target } from '../midi/mappings';
 import { OSCILLATOR_LEVEL } from '../engine/synthEngine';
 import { harmonicSeries } from '../music/harmonics';
-import { setFilter, setParam, setWaveform, type ParamId, type Patch } from '../patch/patch';
+import { PARAMS, setFilter, setParam, setWaveform, type ParamId, type Patch } from '../patch/patch';
 import { createLibrary } from '../patch/library';
-import { initialPatch } from '../patch/presets';
+import { initialPatch, presetAfter } from '../patch/presets';
+import { positionToValue, valueToPosition } from '../patch/taper';
 import { loadOverlays, saveOverlays, toggleOverlay } from '../viewers/overlays';
 import { INITIAL_VIEWER_STATE, viewerReducer } from '../viewers/viewerState';
 import type { ViewSettings } from '../viewers/viewSettings';
@@ -21,7 +25,9 @@ import { FilterShape } from './FilterShape';
 import { Segmented } from './Segmented';
 import { SubBlock } from './SubBlock';
 import { LfoControls } from './LfoControls';
-import { MidiStatus, type MidiState } from './MidiStatus';
+import { LearnBar } from './LearnBar';
+import { LearnContext } from './learn';
+import { MidiPanel, type MidiState } from './MidiPanel';
 import { Piano } from './Piano';
 import { DisplayMenu } from './DisplayMenu';
 import { PatchBar } from './PatchBar';
@@ -116,8 +122,93 @@ export function App() {
   octaveRef.current = octave;
   const [heldNotes, setHeldNotes] = useState<number[]>([]);
   const [midi, setMidi] = useState<MidiState>({ kind: 'pending' });
+  const [activity, setActivity] = useState<string | null>(null);
+  const [learn, setLearn] = useState<LearnState>({ phase: 'off' });
+  const [viewer, dispatchViewer] = useReducer(viewerReducer, INITIAL_VIEWER_STATE);
 
   useEffect(() => session.onHeld(setHeldNotes), [session]);
+
+  // The Controller's Mappings, and where its messages meet the synth. Messages arrive between renders, so the
+  // surface reads and writes the Patch through a ref that is always current.
+  const mappingStore = useMemo(() => createMappingStore(safeStorage()), []);
+  const mappings = useSyncExternalStore(mappingStore.subscribe, mappingStore.list);
+  const patchRef = useRef(patch);
+  patchRef.current = patch;
+  const patchNameRef = useRef(patchName);
+  patchNameRef.current = patchName;
+  const surface = useMemo(() => {
+    const flashes = new Map<string, ReturnType<typeof setTimeout>>();
+    // The knob a Controller moved shows it for a moment ('waiting' while Pickup has not caught it yet).
+    const flash = (target: Target, state: 'moved' | 'waiting') => {
+      const key = targetKey(target);
+      const element = document.querySelector<HTMLElement>(`[data-learn="${key}"]`);
+      if (!element) return;
+      element.dataset.midi = state;
+      clearTimeout(flashes.get(key));
+      flashes.set(key, setTimeout(() => delete element.dataset.midi, 400));
+    };
+    const stepPreset = (delta: number) => {
+      const preset = presetAfter(patchNameRef.current, delta);
+      patchNameRef.current = preset.name;
+      patchRef.current = preset.patch;
+      setPatch(preset.patch);
+      setPatchName(preset.name);
+      setBaseline(preset.patch);
+    };
+    return createControlSurface({
+      store: mappingStore,
+      position: (id) => valueToPosition(PARAMS[id], patchRef.current[id]),
+      setPosition: (id, position) => {
+        const next = setParam(patchRef.current, id, positionToValue(PARAMS[id], position));
+        patchRef.current = next;
+        setPatch((p) => setParam(p, id, next[id]));
+      },
+      action: (id) => {
+        if (id === 'hold') setHold((h) => !h);
+        else if (id === 'freeze') dispatchViewer({ type: 'toggleFreeze' });
+        else if (id === 'snapshot') dispatchViewer({ type: 'takeSnapshot' });
+        else stepPreset(id === 'nextPreset' ? 1 : -1);
+      },
+      press: (note, velocity) => session.input.press(note, velocity),
+      release: (note) => session.input.release(note),
+      touched: flash,
+      learnChanged: setLearn,
+    });
+  }, [mappingStore, session]);
+
+  // In MIDI Learn, clicking a learnable control selects it instead of using it; Escape ends Learn.
+  const learning = learn.phase !== 'off';
+  useEffect(() => {
+    if (!learning) return;
+    const types = ['pointerdown', 'mousedown', 'click', 'dblclick'];
+    const select = (e: Event) => {
+      const element = (e.target as Element).closest?.('[data-learn]');
+      if (!element) return;
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.type !== 'click') return;
+      const [kind, id] = element.getAttribute('data-learn')!.split(':');
+      surface.select({ kind, id } as Target);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      e.stopPropagation();
+      surface.stopLearn();
+    };
+    for (const type of types) document.addEventListener(type, select, { capture: true });
+    document.addEventListener('keydown', onKey, { capture: true });
+    return () => {
+      for (const type of types) document.removeEventListener(type, select, { capture: true });
+      document.removeEventListener('keydown', onKey, { capture: true });
+    };
+  }, [learning, surface]);
+  const learnContext = useMemo(
+    () => ({
+      mapped: new Set(mappings.map((m) => targetKey(m.target))),
+      selected: learn.phase !== 'off' && learn.target ? targetKey(learn.target) : null,
+    }),
+    [mappings, learn],
+  );
 
   // MIDI Controllers: their Notes join the same Note input as the keyboard and piano.
   useEffect(() => {
@@ -129,8 +220,8 @@ export function App() {
         if (cancelled) return;
         dispose = connectMidi(access as unknown as MidiAccessLike, {
           onMessage: (m) => {
-            if (m.type === 'noteOn') session.input.press(m.note, m.velocity);
-            else if (m.type === 'noteOff') session.input.release(m.note);
+            surface.handle(m);
+            setActivity(describeMessage(m));
           },
           onDevices: (devices) => setMidi({ kind: 'ready', devices }),
         });
@@ -141,11 +232,10 @@ export function App() {
       cancelled = true;
       dispose();
     };
-  }, [session]);
+  }, [surface]);
   const [theme, setTheme] = useState(loadTheme);
   const [cycles, setCycles] = useState<ViewSettings['cycles']>(2);
   const [overlays, setOverlays] = useState(() => loadOverlays(localStorage));
-  const [viewer, dispatchViewer] = useReducer(viewerReducer, INITIAL_VIEWER_STATE);
 
   useEffect(() => saveOverlays(localStorage, overlays), [overlays]);
 
@@ -237,11 +327,26 @@ export function App() {
         </button>
       </div>
       <Tooltip content={TIPS.hold}>
-        <button type="button" className="tool" aria-pressed={hold} onClick={() => setHold((h) => !h)}>
+        <button
+          type="button"
+          className="tool"
+          aria-pressed={hold}
+          data-learn="action:hold"
+          data-mapped={learnContext.mapped.has('action:hold') || undefined}
+          data-learn-selected={learnContext.selected === 'action:hold' || undefined}
+          onClick={() => setHold((h) => !h)}
+        >
           Hold
         </button>
       </Tooltip>
-      <MidiStatus state={midi} />
+      <MidiPanel
+        state={midi}
+        activity={activity}
+        mappings={mappings}
+        onLearn={() => surface.startLearn()}
+        onRemove={(target) => mappingStore.remove(target)}
+        onClear={() => mappingStore.clear()}
+      />
     </div>
   );
 
@@ -267,173 +372,176 @@ export function App() {
     );
 
   return (
-    <main data-frozen={viewer.frozen || undefined}>
-      <header>
-        <div className="header-left">
-          <h1 className="wordmark">
-            <Logo />
-            <span className="wordmark-text">
-              Synth<span className="wordmark-view">View</span>
-            </span>
-          </h1>
-          <PatchBar name={patchName} changed={patchChanged} patch={patch} library={library} onLoad={loadPatch} />
-        </div>
-        <div className="header-center">{playControls}</div>
-        <div className="header-right">
-          <DisplayMenu active={viewer.frozen || viewer.snapshot !== null}>
-            <section className="toolbar" aria-label="Viewer controls">
-              <div className="toolbar-groups">
-                <ToolGroup title="View">
-                  <ViewActions state={viewer} dispatch={dispatchViewer} />
-                </ToolGroup>
-                <ToolGroup title="Axes">
-                  <AxesControls state={viewer} dispatch={dispatchViewer} cycles={cycles} onCycles={setCycles} />
-                </ToolGroup>
-                <ToolGroup title="Show">
-                  <OverlayToggles value={overlays} onToggle={(o) => setOverlays((v) => toggleOverlay(v, o))} />
-                </ToolGroup>
-                <ToolGroup title="Theme">
-                  <Tooltip content={TIPS.theme}>
-                    <Segmented
-                      label="Theme"
-                      value={theme}
-                      options={[
-                        { value: 'dark', label: 'Dark' },
-                        { value: 'light', label: 'Light' },
-                      ]}
-                      onChange={(v) => setTheme(v as Theme)}
-                    />
-                  </Tooltip>
-                </ToolGroup>
-              </div>
-            </section>
-          </DisplayMenu>
-        </div>
-      </header>
-
-      {audioStatus === 'blocked' && (
-        <p className="audio-blocked" role="status">
-          This browser is holding back sound: click anywhere on the page to enable it.
-        </p>
-      )}
-
-      <div className="chain">
-        <Block
-          title="Oscillators"
-          stage="osc"
-          ids={[]}
-          patch={patch}
-          onChange={change}
-          viewers={viewers('oscillator', 'Oscillator', {
-            tip: TIPS.oscillatorTap,
-            showIdeal: true,
-          })}
-        >
-          <div className="source-rows">
-            <Tabs
-              label="Oscillator"
-              tabs={[
-                {
-                  id: 'osc1',
-                  label: 'Osc 1',
-                  content: (
-                  <SubBlock title="Osc 1" group showTitle={false}>
-                    <WaveformPicker label="Osc 1 Waveform" compact value={patch.waveform} onChange={(w) => setPatch((p) => setWaveform(p, w))} />
-                    <div className="knobs">
-                      <Tooltip content={TIPS.pulseWidth}>
-                        <Knob id="pulseWidth" value={patch.pulseWidth} onChange={(v) => change('pulseWidth', v)} inactive={patch.waveform !== 'pulse'} />
-                      </Tooltip>
-                    </div>
-                  </SubBlock>
-                  ),
-                },
-                {
-                  id: 'osc2',
-                  label: 'Osc 2',
-                  tip: TIPS.osc2,
-                  badge: patch.mixOsc2 > 0,
-                  badgeLabel: 'sounding',
-                  content: (
-                  <SubBlock title="Osc 2" group showTitle={false}>
-                    <WaveformPicker label="Osc 2 Waveform" compact value={patch.osc2Waveform} onChange={(w) => setPatch((p) => setWaveform(p, w, 'osc2'))} />
-                    <div className="knobs">
-                      {/* Pulse Width first, where Osc 1 has it, so it stays put when switching tabs. */}
-                      <Tooltip content={TIPS.pulseWidth}>
-                        <Knob
-                          id="osc2PulseWidth"
-                          value={patch.osc2PulseWidth}
-                          onChange={(v) => change('osc2PulseWidth', v)}
-                          inactive={patch.mixOsc2 === 0 || patch.osc2Waveform !== 'pulse'}
-                        />
-                      </Tooltip>
-                      {(['osc2Octave', 'osc2Semitone'] as const).map((id) => (
-                        <Knob key={id} id={id} value={patch[id]} onChange={(v) => change(id, v)} inactive={patch.mixOsc2 === 0} />
-                      ))}
-                      <Tooltip content={TIPS.detune}>
-                        <Knob id="osc2Detune" value={patch.osc2Detune} onChange={(v) => change('osc2Detune', v)} inactive={patch.mixOsc2 === 0} />
-                      </Tooltip>
-                    </div>
-                  </SubBlock>
-                  ),
-                },
-              ]}
-            />
-            <SubBlock title="Mixer" tip={TIPS.mixer} group>
-              <div className="knobs">
-                <Knob id="mixOsc1" value={patch.mixOsc1} onChange={(v) => change('mixOsc1', v)} />
-                <Knob id="mixOsc2" value={patch.mixOsc2} onChange={(v) => change('mixOsc2', v)} />
-                <Tooltip content={TIPS.noise}>
-                  <Knob id="mixNoise" value={patch.mixNoise} onChange={(v) => change('mixNoise', v)} />
-                </Tooltip>
-              </div>
-            </SubBlock>
+    <LearnContext.Provider value={learnContext}>
+      <main data-frozen={viewer.frozen || undefined} data-learning={learning || undefined}>
+        <LearnBar state={learn} onDone={() => surface.stopLearn()} />
+        <header>
+          <div className="header-left">
+            <h1 className="wordmark">
+              <Logo />
+              <span className="wordmark-text">
+                Synth<span className="wordmark-view">View</span>
+              </span>
+            </h1>
+            <PatchBar name={patchName} changed={patchChanged} patch={patch} library={library} onLoad={loadPatch} />
           </div>
-        </Block>
-        <Block
-          title="Filter"
-          stage="filter"
-          ids={['cutoff', 'resonance']}
-          extra={
-            <Tooltip content={TIPS.velocityCutoff}>
-              <Knob id="velocityCutoff" value={patch.velocityCutoff} onChange={(v) => change('velocityCutoff', v)} />
-            </Tooltip>
-          }
-          patch={patch}
-          onChange={change}
-          heading={<FilterShape mode={patch.filterMode} slope={patch.filterSlope} onChange={(c) => setPatch((p) => setFilter(p, c))} />}
-          more={
-            <SubBlock title="Filter Envelope" tip={TIPS.filterEnvelope}>
-              <div className="knobs knobs-envelope">
-                <Tooltip content={TIPS.envAmount}>
-                  <Knob id="filterEnvAmount" value={patch.filterEnvAmount} onChange={(v) => change('filterEnvAmount', v)} />
-                </Tooltip>
-                {(['filterAttack', 'filterDecay', 'filterSustain', 'filterRelease'] as const).map((id) => (
-                  <Knob key={id} id={id} value={patch[id]} onChange={(v) => change(id, v)} inactive={patch.filterEnvAmount === 0} />
-                ))}
-              </div>
-            </SubBlock>
-          }
-          viewers={viewers('filter', 'Filter', {
-            showIdeal: true,
-            response: session.engine.filterResponse,
-            ghostOf: session.engine.taps.oscillator,
-          })}
-        />
-        <Block
-          title="Amp"
-          stage="amp"
-          ids={['ampAttack', 'ampDecay', 'ampSustain', 'ampRelease']}
-          patch={patch}
-          onChange={change}
-          viewers={viewers('amp', 'Amp')}
-        />
-      </div>
+          <div className="header-center">{playControls}</div>
+          <div className="header-right">
+            <DisplayMenu active={viewer.frozen || viewer.snapshot !== null}>
+              <section className="toolbar" aria-label="Viewer controls">
+                <div className="toolbar-groups">
+                  <ToolGroup title="View">
+                    <ViewActions state={viewer} dispatch={dispatchViewer} />
+                  </ToolGroup>
+                  <ToolGroup title="Axes">
+                    <AxesControls state={viewer} dispatch={dispatchViewer} cycles={cycles} onCycles={setCycles} />
+                  </ToolGroup>
+                  <ToolGroup title="Show">
+                    <OverlayToggles value={overlays} onToggle={(o) => setOverlays((v) => toggleOverlay(v, o))} />
+                  </ToolGroup>
+                  <ToolGroup title="Theme">
+                    <Tooltip content={TIPS.theme}>
+                      <Segmented
+                        label="Theme"
+                        value={theme}
+                        options={[
+                          { value: 'dark', label: 'Dark' },
+                          { value: 'light', label: 'Light' },
+                        ]}
+                        onChange={(v) => setTheme(v as Theme)}
+                      />
+                    </Tooltip>
+                  </ToolGroup>
+                </div>
+              </section>
+            </DisplayMenu>
+          </div>
+        </header>
 
-      <EnvelopeTimeline
-        engine={session.engine}
-        view={view}
-        controls={<LfoControls patch={patch} onParam={change} onPatch={setPatch} />}
-      />
-    </main>
+        {audioStatus === 'blocked' && (
+          <p className="audio-blocked" role="status">
+            This browser is holding back sound: click anywhere on the page to enable it.
+          </p>
+        )}
+
+        <div className="chain">
+          <Block
+            title="Oscillators"
+            stage="osc"
+            ids={[]}
+            patch={patch}
+            onChange={change}
+            viewers={viewers('oscillator', 'Oscillator', {
+              tip: TIPS.oscillatorTap,
+              showIdeal: true,
+            })}
+          >
+            <div className="source-rows">
+              <Tabs
+                label="Oscillator"
+                tabs={[
+                  {
+                    id: 'osc1',
+                    label: 'Osc 1',
+                    content: (
+                    <SubBlock title="Osc 1" group showTitle={false}>
+                      <WaveformPicker label="Osc 1 Waveform" compact value={patch.waveform} onChange={(w) => setPatch((p) => setWaveform(p, w))} />
+                      <div className="knobs">
+                        <Tooltip content={TIPS.pulseWidth}>
+                          <Knob id="pulseWidth" value={patch.pulseWidth} onChange={(v) => change('pulseWidth', v)} inactive={patch.waveform !== 'pulse'} />
+                        </Tooltip>
+                      </div>
+                    </SubBlock>
+                    ),
+                  },
+                  {
+                    id: 'osc2',
+                    label: 'Osc 2',
+                    tip: TIPS.osc2,
+                    badge: patch.mixOsc2 > 0,
+                    badgeLabel: 'sounding',
+                    content: (
+                    <SubBlock title="Osc 2" group showTitle={false}>
+                      <WaveformPicker label="Osc 2 Waveform" compact value={patch.osc2Waveform} onChange={(w) => setPatch((p) => setWaveform(p, w, 'osc2'))} />
+                      <div className="knobs">
+                        {/* Pulse Width first, where Osc 1 has it, so it stays put when switching tabs. */}
+                        <Tooltip content={TIPS.pulseWidth}>
+                          <Knob
+                            id="osc2PulseWidth"
+                            value={patch.osc2PulseWidth}
+                            onChange={(v) => change('osc2PulseWidth', v)}
+                            inactive={patch.mixOsc2 === 0 || patch.osc2Waveform !== 'pulse'}
+                          />
+                        </Tooltip>
+                        {(['osc2Octave', 'osc2Semitone'] as const).map((id) => (
+                          <Knob key={id} id={id} value={patch[id]} onChange={(v) => change(id, v)} inactive={patch.mixOsc2 === 0} />
+                        ))}
+                        <Tooltip content={TIPS.detune}>
+                          <Knob id="osc2Detune" value={patch.osc2Detune} onChange={(v) => change('osc2Detune', v)} inactive={patch.mixOsc2 === 0} />
+                        </Tooltip>
+                      </div>
+                    </SubBlock>
+                    ),
+                  },
+                ]}
+              />
+              <SubBlock title="Mixer" tip={TIPS.mixer} group>
+                <div className="knobs">
+                  <Knob id="mixOsc1" value={patch.mixOsc1} onChange={(v) => change('mixOsc1', v)} />
+                  <Knob id="mixOsc2" value={patch.mixOsc2} onChange={(v) => change('mixOsc2', v)} />
+                  <Tooltip content={TIPS.noise}>
+                    <Knob id="mixNoise" value={patch.mixNoise} onChange={(v) => change('mixNoise', v)} />
+                  </Tooltip>
+                </div>
+              </SubBlock>
+            </div>
+          </Block>
+          <Block
+            title="Filter"
+            stage="filter"
+            ids={['cutoff', 'resonance']}
+            extra={
+              <Tooltip content={TIPS.velocityCutoff}>
+                <Knob id="velocityCutoff" value={patch.velocityCutoff} onChange={(v) => change('velocityCutoff', v)} />
+              </Tooltip>
+            }
+            patch={patch}
+            onChange={change}
+            heading={<FilterShape mode={patch.filterMode} slope={patch.filterSlope} onChange={(c) => setPatch((p) => setFilter(p, c))} />}
+            more={
+              <SubBlock title="Filter Envelope" tip={TIPS.filterEnvelope}>
+                <div className="knobs knobs-envelope">
+                  <Tooltip content={TIPS.envAmount}>
+                    <Knob id="filterEnvAmount" value={patch.filterEnvAmount} onChange={(v) => change('filterEnvAmount', v)} />
+                  </Tooltip>
+                  {(['filterAttack', 'filterDecay', 'filterSustain', 'filterRelease'] as const).map((id) => (
+                    <Knob key={id} id={id} value={patch[id]} onChange={(v) => change(id, v)} inactive={patch.filterEnvAmount === 0} />
+                  ))}
+                </div>
+              </SubBlock>
+            }
+            viewers={viewers('filter', 'Filter', {
+              showIdeal: true,
+              response: session.engine.filterResponse,
+              ghostOf: session.engine.taps.oscillator,
+            })}
+          />
+          <Block
+            title="Amp"
+            stage="amp"
+            ids={['ampAttack', 'ampDecay', 'ampSustain', 'ampRelease']}
+            patch={patch}
+            onChange={change}
+            viewers={viewers('amp', 'Amp')}
+          />
+        </div>
+
+        <EnvelopeTimeline
+          engine={session.engine}
+          view={view}
+          controls={<LfoControls patch={patch} onParam={change} onPatch={setPatch} />}
+        />
+      </main>
+    </LearnContext.Provider>
   );
 }

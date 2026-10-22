@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { formatParam, PARAMS, type ParamId } from '../patch/patch';
 import { positionToValue, valueToPosition } from '../patch/taper';
+import { useLearnable } from './learn';
 
 const DRAG_PIXELS_FOR_FULL_TRAVEL = 200;
 const SWEEP_DEGREES = 270;
@@ -19,9 +20,10 @@ export function Knob({ id, value, onChange, inactive }: Props) {
   const position = valueToPosition(def, value);
   const drag = useRef<{ y: number; position: number } | null>(null);
   const setPosition = (p: number) => onChange(positionToValue(def, p));
+  const learnable = useLearnable({ kind: 'param', id });
 
   return (
-    <div className="knob" data-inactive={inactive || undefined}>
+    <div className="knob" data-inactive={inactive || undefined} {...learnable}>
       <div
         className="knob-dial"
         role="slider"

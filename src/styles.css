@@ -388,7 +388,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 
 .midi-status {
   display: inline-flex; align-items: center; gap: 6px; height: var(--control-h); padding: 0 10px; font-size: 12px; color: var(--muted);
-  border: 1px solid var(--border); border-radius: var(--control-radius); cursor: default;
+  border: 1px solid var(--border); border-radius: var(--control-radius); cursor: pointer; background: none;
 }
 .midi-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); }
 .midi-status[data-connected] { color: var(--text); }
@@ -473,3 +473,41 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   box-shadow: 0 10px 32px rgba(0, 0, 0, 0.35); border-radius: 10px;
 }
 .display-panel .toolbar { border-color: var(--muted); }
+
+/* The MIDI panel: what is connected, the Activity Monitor, MIDI Learn and the Mappings. Anchored to the header's
+   centre (like the Display panel to its right edge), so it always fits the window. */
+.midi-menu { position: static; }
+.midi-panel {
+  position: absolute; z-index: 60; top: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+  width: min(380px, 100%); display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 14px;
+  background: var(--panel); border: 1px solid var(--muted); border-radius: 10px; box-shadow: 0 10px 32px rgba(0, 0, 0, 0.35);
+  font-size: 12px;
+}
+.midi-connection { margin: 0; color: var(--muted); line-height: 1.4; }
+.midi-heading { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.midi-activity { display: flex; flex-direction: column; gap: 3px; }
+.midi-activity [role='status'] { font-variant-numeric: tabular-nums; font-family: ui-monospace, monospace; }
+.midi-mappings { list-style: none; margin: 0; padding: 0; width: 100%; display: flex; flex-direction: column; gap: 4px; }
+.midi-mappings li { display: grid; grid-template-columns: 1fr auto; align-items: center; column-gap: 8px; }
+.mapping-target { font-weight: 600; }
+.mapping-control { grid-column: 1; color: var(--muted); }
+.midi-mappings li > button { grid-column: 2; grid-row: 1 / span 2; }
+
+/* MIDI Learn: a bar floating at the bottom centre says what to do (over the page, so nothing moves, and clear of
+   the header's and the Timeline's learnable controls); learnable controls are outlined, the selected one strongly. */
+.learn-bar {
+  position: fixed; z-index: 70; bottom: 16px; left: 50%; transform: translateX(-50%); width: max-content;
+  max-width: calc(100vw - 32px); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 8px 10px 8px 14px;
+  border: 1px solid var(--accent); border-radius: 10px; background: var(--panel); font-size: 12px;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45);
+}
+.learn-bar strong { color: var(--accent); letter-spacing: 0.06em; text-transform: uppercase; font-size: 11px; }
+.learn-bar .learn-done { color: var(--muted); }
+.learn-bar button { margin-left: auto; }
+main[data-learning] [data-learn] { outline: 1px dashed var(--muted); outline-offset: 2px; border-radius: 6px; cursor: crosshair; }
+main[data-learning] [data-learn][data-mapped] { outline-style: solid; }
+main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(--accent); }
+/* A mapped knob carries a small dot; a knob moved from hardware glows for a moment (dimmer while Pickup waits). */
+.knob[data-mapped] .knob-label::after { content: ''; display: inline-block; width: 4px; height: 4px; margin-left: 4px; vertical-align: middle; border-radius: 50%; background: var(--stage, var(--accent)); }
+.knob[data-midi='moved'] .knob-dial { box-shadow: 0 0 0 2px var(--stage, var(--accent)); }
+.knob[data-midi='waiting'] .knob-dial { box-shadow: 0 0 0 2px var(--muted); }

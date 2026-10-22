@@ -1,33 +1,24 @@
-import type { Dispatch, SetStateAction } from "react";
-import type { LfoWaveform } from "../modulation/lfo";
-import {
-  setLfo,
-  type LfoDestination,
-  type ParamId,
-  type Patch,
-} from "../patch/patch";
-import { Knob } from "./Knob";
-import { Segmented } from "./Segmented";
-import { SubBlock } from "./SubBlock";
-import { TIPS } from "./tips";
-import { Tooltip } from "./Tooltip";
+import type { Dispatch, SetStateAction } from 'react';
+import type { LfoWaveform } from '../modulation/lfo';
+import { setLfo, type LfoDestination, type ParamId, type Patch } from '../patch/patch';
+import { Knob } from './Knob';
+import { Segmented } from './Segmented';
+import { SubBlock } from './SubBlock';
+import { TIPS } from './tips';
+import { Tooltip } from './Tooltip';
 
 // One cycle of each LFO Waveform, in a 24×14 box.
 const SHAPES: { waveform: LfoWaveform; label: string; path: string }[] = [
-  {
-    waveform: "sine",
-    label: "Sine",
-    path: "M2 7 C5 0, 9 0, 12 7 S19 14, 22 7",
-  },
-  { waveform: "triangle", label: "Triangle", path: "M2 7 L7 2 L17 12 L22 7" },
-  { waveform: "square", label: "Square", path: "M2 12 V2 H12 V12 H22 V2" },
-  { waveform: "saw", label: "Saw", path: "M2 12 L12 2 V12 L22 2" },
+  { waveform: 'sine', label: 'Sine', path: 'M2 7 C5 0, 9 0, 12 7 S19 14, 22 7' },
+  { waveform: 'triangle', label: 'Triangle', path: 'M2 7 L7 2 L17 12 L22 7' },
+  { waveform: 'square', label: 'Square', path: 'M2 12 V2 H12 V12 H22 V2' },
+  { waveform: 'saw', label: 'Saw', path: 'M2 12 L12 2 V12 L22 2' },
 ];
 
 const DESTINATIONS: { value: LfoDestination; label: string }[] = [
-  { value: "cutoff", label: "Cutoff" },
-  { value: "pitch", label: "Pitch" },
-  { value: "pulseWidth", label: "Width" },
+  { value: 'cutoff', label: 'Cutoff' },
+  { value: 'pitch', label: 'Pitch' },
+  { value: 'pulseWidth', label: 'Width' },
 ];
 
 interface Props {
@@ -44,11 +35,7 @@ export function LfoControls({ patch, onParam, onPatch }: Props) {
       <SubBlock title="LFO" tip={TIPS.lfo} group>
         <div className="lfo-rows">
           <div className="lfo-pickers">
-            <div
-              className="segmented lfo-shapes"
-              role="radiogroup"
-              aria-label="LFO Waveform"
-            >
+            <div className="segmented lfo-shapes" role="radiogroup" aria-label="LFO Waveform">
               {SHAPES.map((s) => (
                 <button
                   key={s.waveform}
@@ -56,23 +43,10 @@ export function LfoControls({ patch, onParam, onPatch }: Props) {
                   role="radio"
                   aria-checked={s.waveform === patch.lfoWaveform}
                   aria-label={s.label}
-                  onClick={() =>
-                    onPatch((p) => setLfo(p, { waveform: s.waveform }))
-                  }
+                  onClick={() => onPatch((p) => setLfo(p, { waveform: s.waveform }))}
                 >
-                  <svg
-                    viewBox="0 0 24 14"
-                    width="22"
-                    height="13"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d={s.path}
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.6"
-                      strokeLinejoin="round"
-                    />
+                  <svg viewBox="0 0 24 14" width="22" height="13" aria-hidden="true">
+                    <path d={s.path} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
                   </svg>
                 </button>
               ))}
@@ -82,35 +56,20 @@ export function LfoControls({ patch, onParam, onPatch }: Props) {
                 label="LFO Destination"
                 value={patch.lfoDestination}
                 options={DESTINATIONS}
-                onChange={(destination) =>
-                  onPatch((p) => setLfo(p, { destination }))
-                }
+                onChange={(destination) => onPatch((p) => setLfo(p, { destination }))}
               />
             </Tooltip>
           </div>
           <div className="knobs">
-            <Knob
-              id="lfoRate"
-              value={patch.lfoRate}
-              onChange={(v) => onParam("lfoRate", v)}
-              inactive={off}
-            />
-            <Knob
-              id="lfoAmount"
-              value={patch.lfoAmount}
-              onChange={(v) => onParam("lfoAmount", v)}
-            />
+            <Knob id="lfoRate" value={patch.lfoRate} onChange={(v) => onParam('lfoRate', v)} inactive={off} />
+            <Knob id="lfoAmount" value={patch.lfoAmount} onChange={(v) => onParam('lfoAmount', v)} />
           </div>
         </div>
       </SubBlock>
       <SubBlock title="Glide" tip={TIPS.glide} showTitle={false} group>
         <div className="knobs">
           <Tooltip content={TIPS.glide}>
-            <Knob
-              id="glide"
-              value={patch.glide}
-              onChange={(v) => onParam("glide", v)}
-            />
+            <Knob id="glide" value={patch.glide} onChange={(v) => onParam('glide', v)} />
           </Tooltip>
         </div>
       </SubBlock>

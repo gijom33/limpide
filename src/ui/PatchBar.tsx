@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Library } from '../patch/library';
 import type { Patch } from '../patch/patch';
-import { PRESETS, stepPreset } from '../patch/presets';
+import { PRESETS, presetAfter } from '../patch/presets';
+import { useLearnable } from './learn';
 import { patchFromJSON, patchToJSON, patchToShare } from '../patch/serialize';
 import { Tooltip } from './Tooltip';
 
@@ -22,6 +23,8 @@ export function PatchBar({ name, changed, patch, library, onLoad }: Props) {
   const [saveName, setSaveName] = useState(name);
   const [confirming, setConfirming] = useState<string | null>(null);
   const [, refresh] = useState(0);
+  const learnPrevious = useLearnable({ kind: 'action', id: 'previousPreset' });
+  const learnNext = useLearnable({ kind: 'action', id: 'nextPreset' });
   const wrapper = useRef<HTMLDivElement>(null);
   // The arrows step from the sound just chosen, even when clicked again before React has re-rendered.
   const stepping = useRef({ name, from: name });
@@ -43,8 +46,7 @@ export function PatchBar({ name, changed, patch, library, onLoad }: Props) {
   // The arrows step through sounds and close the panel; picking in the open panel keeps it open, to audition.
   const step = (delta: number) => {
     setOpen(false);
-    const index = PRESETS.findIndex((p) => p.name === stepping.current.name);
-    const preset = PRESETS[index === -1 ? (delta > 0 ? 0 : PRESETS.length - 1) : stepPreset(index, delta)];
+    const preset = presetAfter(stepping.current.name, delta);
     stepping.current.name = preset.name;
     onLoad(preset.name, preset.patch);
   };
@@ -92,7 +94,7 @@ export function PatchBar({ name, changed, patch, library, onLoad }: Props) {
 
   return (
     <div className="patch-bar" ref={wrapper}>
-      <button type="button" className="tool tool-icon" aria-label="Previous Preset" onClick={() => step(-1)}>
+      <button type="button" className="tool tool-icon" aria-label="Previous Preset" {...learnPrevious} onClick={() => step(-1)}>
         ‹
       </button>
       <Tooltip content={{ title: 'Patch', body: 'The sound you are playing. Open to save, load, export or share it. A dot means it has changed since it was loaded or saved; it is kept automatically either way.' }}>
@@ -101,7 +103,7 @@ export function PatchBar({ name, changed, patch, library, onLoad }: Props) {
           {changed && <span className="patch-changed" aria-hidden="true" />}
         </button>
       </Tooltip>
-      <button type="button" className="tool tool-icon" aria-label="Next Preset" onClick={() => step(1)}>
+      <button type="button" className="tool tool-icon" aria-label="Next Preset" {...learnNext} onClick={() => step(1)}>
         ›
       </button>
 

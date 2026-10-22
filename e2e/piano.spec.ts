@@ -53,8 +53,8 @@ test('a MIDI controller plays the synth, its pads lighting the piano', async ({ 
   });
   await page.goto('/');
   await ready(page);
-  await expect(page.getByRole('status', { name: 'MIDI' })).toContainText('1');
-  await page.getByRole('status', { name: 'MIDI' }).click(); // a user gesture, so audio may start
+  await expect(page.getByRole('button', { name: 'MIDI', exact: true })).toContainText('1');
+  await page.getByRole('button', { name: 'MIDI', exact: true }).click(); // a user gesture, so audio may start
   await page.evaluate(() => (window as unknown as { playMidi(b: number[]): void }).playMidi([0x90, 64, 120]));
   await expect.poll(() => db(page), { timeout: 10000 }).toBeGreaterThan(-40);
   await expect(page.getByRole('group', { name: 'Piano' }).getByRole('button', { name: 'E4' })).toHaveAttribute('aria-pressed', 'true');
@@ -65,7 +65,7 @@ test('a MIDI controller plays the synth, its pads lighting the piano', async ({ 
 test('without Web MIDI (Safari) the MIDI indicator says so, and everything else works', async ({ page }) => {
   await page.addInitScript(() => Object.defineProperty(navigator, 'requestMIDIAccess', { value: undefined, configurable: true }));
   await page.goto('/');
-  await page.getByRole('status', { name: 'MIDI' }).hover();
+  await page.getByRole('button', { name: 'MIDI', exact: true }).hover();
   await expect(page.getByRole('tooltip')).toContainText(/not support/i);
 });
 
@@ -77,7 +77,7 @@ test('when the browser blocks MIDI, the indicator shows it is unavailable (not j
     }),
   );
   await page.goto('/');
-  const status = page.getByRole('status', { name: 'MIDI' });
+  const status = page.getByRole('button', { name: 'MIDI', exact: true });
   await expect(status).toHaveAttribute('data-unavailable', 'true');
   await status.hover();
   await expect(page.getByRole('tooltip')).toContainText(/not allowed/i);
@@ -89,7 +89,7 @@ test('with Web MIDI working but nothing plugged in, the indicator is not marked 
     Object.defineProperty(navigator, 'requestMIDIAccess', { value: () => Promise.resolve(access), configurable: true });
   });
   await page.goto('/');
-  await page.getByRole('status', { name: 'MIDI' }).hover();
+  await page.getByRole('button', { name: 'MIDI', exact: true }).hover();
   await expect(page.getByRole('tooltip')).toContainText(/no midi controller/i);
-  await expect(page.getByRole('status', { name: 'MIDI' })).not.toHaveAttribute('data-unavailable');
+  await expect(page.getByRole('button', { name: 'MIDI', exact: true })).not.toHaveAttribute('data-unavailable');
 });

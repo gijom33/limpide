@@ -2,6 +2,7 @@ import type { Dispatch } from 'react';
 import type { ViewerAction, ViewerState } from '../viewers/viewerState';
 import type { ViewSettings } from '../viewers/viewSettings';
 import { CameraIcon, CloseIcon, PauseIcon } from './icons';
+import { useLearnable } from './learn';
 import { Segmented } from './Segmented';
 import { TIPS } from './tips';
 import { Tooltip } from './Tooltip';
@@ -13,6 +14,8 @@ interface Props {
 
 /** Freeze and Snapshot: actions on what the Viewers show. */
 export function ViewActions({ state, dispatch }: Props) {
+  const learnFreeze = useLearnable({ kind: 'action', id: 'freeze' });
+  const learnSnapshot = useLearnable({ kind: 'action', id: 'snapshot' });
   return (
     <>
       <Tooltip content={TIPS.freeze}>
@@ -21,6 +24,7 @@ export function ViewActions({ state, dispatch }: Props) {
           className="tool tool-mode"
           aria-pressed={state.frozen}
           aria-keyshortcuts="Space"
+          {...learnFreeze}
           onClick={() => dispatch({ type: 'toggleFreeze' })}
         >
           <PauseIcon />
@@ -34,6 +38,7 @@ export function ViewActions({ state, dispatch }: Props) {
             type="button"
             className="tool"
             aria-pressed={state.snapshot !== null}
+            {...learnSnapshot}
             onClick={() => dispatch({ type: 'takeSnapshot' })}
           >
             <CameraIcon />

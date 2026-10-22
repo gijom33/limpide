@@ -32,6 +32,11 @@ export const TIPS = {
     how: 'Sound starts with your first key press. Drag across the keys to slide from Note to Note.',
   },
   midi: { title: 'MIDI', body: '' },
+  midiLearn: {
+    title: 'MIDI Learn',
+    body: 'Map your Controller: click a knob or button here, then move a knob, fader or pad there. Endless encoders and normal knobs are told apart by what they send.',
+    how: 'Normal knobs use Pickup: the Parameter waits until the knob passes its value, so nothing jumps. Escape or Done ends Learn.',
+  },
   velocityCutoff: {
     title: 'Velocity → Cutoff',
     body: 'How much harder hits open the Filter: up to two octaves for the hardest. Velocity comes from MIDI pads and keys, or from where you click on a piano key.',
