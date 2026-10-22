@@ -16,7 +16,7 @@ interface Props {
 
 export function OverlayToggles({ value, onToggle }: Props) {
   return (
-    <div className="overlays" role="group" aria-label="Show on Viewers">
+    <div className="segmented overlays" role="group" aria-label="Show on Viewers">
       {OVERLAYS.map((o) => (
         <button key={o} type="button" aria-pressed={value[o]} title={LABELS[o].hint} data-overlay={o} onClick={() => onToggle(o)}>
           <span className="swatch" aria-hidden="true" />

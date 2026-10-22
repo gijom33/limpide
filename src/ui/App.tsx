@@ -10,13 +10,14 @@ import type { ViewSettings } from '../viewers/viewSettings';
 import { Knob } from './Knob';
 import { OverlayToggles } from './OverlayToggles';
 import { TapViewers } from './TapViewers';
-import { ViewerControls } from './ViewerControls';
+import { MoonIcon, SunIcon } from './icons';
+import { ToolGroup } from './ToolGroup';
+import { AxesControls, ViewActions } from './ViewerControls';
 import { applyTheme, loadTheme } from './theme';
 import { WaveformPicker } from './WaveformPicker';
 
 const KEYBOARD_OCTAVE = 4;
 const IDEAL_HARMONICS = 256;
-const CYCLE_CHOICES = [1, 2, 4] as const;
 
 interface BlockProps {
   title: string;
@@ -148,29 +149,34 @@ export function App() {
     );
 
   return (
-    <main>
+    <main data-frozen={viewer.frozen || undefined}>
       <header>
         <h1>SynthView</h1>
         <p className="hint" title="White keys on A S D F G H J K, black keys on W E T Y U">
           Play <kbd>A</kbd>–<kbd>K</kbd>
         </p>
-        <button className="theme-toggle" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
-          {theme === 'dark' ? 'Light' : 'Dark'} theme
+        <button
+          type="button"
+          className="tool tool-icon theme-toggle"
+          aria-label={theme === 'dark' ? 'Light theme' : 'Dark theme'}
+          title={theme === 'dark' ? 'Switch to the light theme' : 'Switch to the dark theme'}
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+        >
+          {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
         </button>
       </header>
 
-      <div className="toolbar" aria-label="Viewer controls">
-        <ViewerControls state={viewer} dispatch={dispatchViewer} />
-        <OverlayToggles value={overlays} onToggle={(o) => setOverlays((v) => toggleOverlay(v, o))} />
-        <div className="cycles" role="radiogroup" aria-label="Scope cycles">
-          <span>Scope cycles</span>
-          {CYCLE_CHOICES.map((c) => (
-            <button key={c} type="button" role="radio" aria-checked={c === cycles} onClick={() => setCycles(c)}>
-              {c}
-            </button>
-          ))}
-        </div>
-      </div>
+      <section className="toolbar" aria-label="Viewer controls">
+        <ToolGroup title="View">
+          <ViewActions state={viewer} dispatch={dispatchViewer} />
+        </ToolGroup>
+        <ToolGroup title="Axes">
+          <AxesControls state={viewer} dispatch={dispatchViewer} cycles={cycles} onCycles={setCycles} />
+        </ToolGroup>
+        <ToolGroup title="Show">
+          <OverlayToggles value={overlays} onToggle={(o) => setOverlays((v) => toggleOverlay(v, o))} />
+        </ToolGroup>
+      </section>
 
       {!session && (
         <button className="start" onClick={async () => setSession(await startAudioSession(patch))}>

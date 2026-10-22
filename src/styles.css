@@ -1,4 +1,9 @@
 :root {
+  /* Controls: one height, one radius, one type size; "on" is a filled background, not just a border. */
+  --control-h: 28px;
+  --control-radius: 7px;
+  --control-on: color-mix(in srgb, var(--text) 14%, var(--panel));
+  --control-hover: color-mix(in srgb, var(--text) 7%, var(--panel));
   --bg: #0f1115;
   --panel: #181b22;
   --border: #2a2f3a;
@@ -39,28 +44,8 @@
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--text); }
 main { max-width: 1200px; margin: 0 auto; padding: 16px; }
-header { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
-.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: 10px 0 0; }
-.tool, .segmented button {
-  padding: 3px 9px; font-size: 12px; cursor: pointer; border-radius: 6px;
-  background: none; color: var(--muted); border: 1px solid var(--border);
-}
-.tool[aria-pressed='true'] { color: var(--text); border-color: var(--text); }
-.tool-pair { display: flex; gap: 2px; }
-.segmented { display: flex; align-items: center; gap: 2px; font-size: 12px; color: var(--muted); }
-.segmented span { margin-right: 4px; }
-.segmented button[aria-checked='true'] { color: var(--text); border-color: var(--muted); }
-.cycles { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); }
-.cycles span { margin-right: 4px; }
-.cycles button {
-  min-width: 26px; padding: 3px 6px; border-radius: 6px; cursor: pointer;
-  background: none; color: var(--muted); border: 1px solid var(--border);
-}
-.cycles button[aria-checked='true'] { color: var(--text); border-color: var(--muted); }
-.theme-toggle {
-  margin-left: auto; background: none; color: var(--muted); border: 1px solid var(--border);
-  border-radius: 6px; padding: 4px 10px; cursor: pointer;
-}
+header { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+header h1 { margin: 0; }
 h1 { margin: 0 0 8px; font-size: 22px; letter-spacing: 0.02em; }
 h2 { margin: 0 0 12px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
 .hint { color: var(--muted); margin: 0; font-size: 14px; }
@@ -140,14 +125,6 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 }
 .idle-hint[hidden] { display: none; }
 
-/* Overlay toggles: each carries a swatch of its mark, so the row is also the legend. */
-.overlays { display: flex; flex-wrap: wrap; gap: 4px; }
-.overlays button {
-  display: flex; align-items: center; gap: 6px; padding: 3px 8px; font-size: 12px; cursor: pointer;
-  background: none; color: var(--muted); border: 1px solid var(--border); border-radius: 999px;
-}
-.overlays button[aria-pressed='true'] { color: var(--text); border-color: var(--muted); }
-.overlays button[aria-pressed='false'] .swatch { opacity: 0.35; }
 .swatch { display: inline-block; flex: none; }
 [data-overlay='harmonics'] .swatch { width: 9px; height: 6px; border-left: 1px solid var(--text); border-right: 1px solid var(--text); }
 [data-overlay='ideal'] .swatch { width: 6px; height: 6px; border: 1px solid var(--text); border-radius: 50%; }
@@ -157,3 +134,56 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
   background: linear-gradient(90deg, color-mix(in srgb, var(--stage-osc) 50%, transparent) 50%, color-mix(in srgb, var(--stage-filter) 65%, transparent) 50%);
 }
 [data-overlay='guides'] .swatch { width: 14px; border-top: 1px dashed var(--muted); }
+
+/* Toolbar: one panel, three captioned groups (View, Axes, Show), separated by hairlines. */
+.toolbar {
+  display: flex; flex-wrap: wrap; align-items: stretch; margin: 12px 0 0; padding: 8px 4px;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+}
+.tool-group { display: flex; flex-direction: column; gap: 6px; padding: 0 12px; }
+.tool-group + .tool-group { border-left: 1px solid var(--border); }
+.tool-group-title { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.tool-group-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+
+.tool, .segmented button {
+  display: inline-flex; align-items: center; gap: 6px; height: var(--control-h); padding: 0 10px;
+  font: inherit; font-size: 12px; color: var(--muted); cursor: pointer;
+  background: none; border: 1px solid transparent; border-radius: var(--control-radius);
+}
+.tool { border-color: var(--border); }
+.tool:hover, .segmented button:hover { color: var(--text); background: var(--control-hover); }
+.tool[aria-pressed='true'], .segmented [aria-checked='true'], .segmented [aria-pressed='true'] {
+  color: var(--text); background: var(--control-on);
+}
+.tool:focus-visible, .segmented button:focus-visible { outline: 2px solid var(--text); outline-offset: 1px; }
+/* Freeze is a mode the whole page is in, so its "on" state is the strongest on screen. */
+.tool-mode[aria-pressed='true'] { color: var(--bg); background: var(--text); border-color: var(--text); }
+.tool kbd { font-size: 10px; padding: 0 4px; line-height: 14px; color: inherit; border-color: currentColor; opacity: 0.6; }
+.tool-icon { width: var(--control-h); padding: 0; justify-content: center; }
+.tool-split { display: inline-flex; gap: 2px; }
+
+/* A segmented control is one shape; the selected segment is filled. */
+.segmented-field { display: inline-flex; align-items: center; gap: 6px; }
+.field-caption { font-size: 12px; color: var(--muted); }
+.segmented {
+  display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 2px;
+  background: var(--bg); border: 1px solid var(--border); border-radius: calc(var(--control-radius) + 2px);
+}
+.segmented button { height: calc(var(--control-h) - 6px); padding: 0 9px; border-radius: calc(var(--control-radius) - 2px); }
+.segmented button[role='radio'] { min-width: 30px; justify-content: center; }
+.overlays button[aria-pressed='false'] .swatch { opacity: 0.35; }
+
+.theme-toggle { margin-left: auto; }
+
+/* While frozen, the Viewers themselves say so (visibility of system status), not only the button. */
+main[data-frozen] .tap-canvases canvas { outline: 1px dashed var(--muted); outline-offset: -1px; }
+main[data-frozen] .tap-canvases::before {
+  content: 'Frozen'; position: absolute; z-index: 1; top: 6px; left: 50%; transform: translateX(-50%);
+  padding: 1px 8px; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--bg); background: var(--text); border-radius: 999px; pointer-events: none;
+}
+
+@media (max-width: 860px) {
+  .tool-group { padding: 6px 12px; flex: 1 1 100%; }
+  .tool-group + .tool-group { border-left: 0; border-top: 1px solid var(--border); }
+}

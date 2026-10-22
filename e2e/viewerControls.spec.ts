@@ -14,6 +14,7 @@ test('Space freezes the Viewers on a frame while the sound carries on', async ({
   await expect.poll(() => level(page)).toBeGreaterThan(-40);
   await page.keyboard.press('Space');
   await expect(freeze).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('main')).toHaveAttribute('data-frozen', 'true'); // the Viewers show it too
 
   await page.keyboard.up('KeyA'); // the Note ends, but the frozen Viewers still show it
   await page.waitForTimeout(800);
@@ -21,6 +22,7 @@ test('Space freezes the Viewers on a frame while the sound carries on', async ({
 
   await page.keyboard.press('Space');
   await expect(freeze).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.locator('main')).not.toHaveAttribute('data-frozen', 'true');
   await expect.poll(() => level(page)).toBeLessThan(-80);
 });
 
@@ -44,10 +46,10 @@ test('a Snapshot can be taken and cleared', async ({ page }) => {
 
 test('the Spectrum axes switch between log/linear and dB/linear', async ({ page }) => {
   await page.goto('/');
-  const hz = page.getByRole('radiogroup', { name: 'Hz' });
+  const hz = page.getByRole('radiogroup', { name: 'Frequency axis' });
   await hz.getByRole('radio', { name: 'Lin' }).click();
   await expect(hz.getByRole('radio', { name: 'Lin' })).toHaveAttribute('aria-checked', 'true');
-  const levelAxis = page.getByRole('radiogroup', { name: 'Level' });
+  const levelAxis = page.getByRole('radiogroup', { name: 'Level axis' });
   await levelAxis.getByRole('radio', { name: 'Lin' }).click();
   await expect(levelAxis.getByRole('radio', { name: 'dB' })).toHaveAttribute('aria-checked', 'false');
 });
@@ -62,4 +64,13 @@ test('hovering a Spectrum reads out frequency, note and level', async ({ page })
   await expect(spectrum).toHaveAttribute('data-readout', /^6\d\d Hz · [A-G]#?\d.* · (−\d+ dB|silent)$/);
   await page.mouse.move(0, 0);
   await expect(spectrum).not.toHaveAttribute('data-readout');
+});
+
+test('controls are grouped under View, Axes and Show', async ({ page }) => {
+  await page.goto('/');
+  const toolbar = page.getByRole('region', { name: 'Viewer controls' });
+  await expect(toolbar.getByRole('group', { name: 'View' }).getByRole('button', { name: 'Freeze' })).toBeVisible();
+  await expect(toolbar.getByRole('group', { name: 'Axes' }).getByRole('radiogroup', { name: 'Scope cycles' })).toBeVisible();
+  await expect(toolbar.getByRole('group', { name: 'Show' }).getByRole('button', { name: 'Ghost' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Freeze' })).toHaveAttribute('aria-keyshortcuts', 'Space');
 });
