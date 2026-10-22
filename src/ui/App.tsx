@@ -80,7 +80,7 @@ export function App() {
   const change = (id: ParamId, value: number) => setPatch((p) => setParam(p, id, value));
 
   const viewers = (tap: keyof AudioSession['engine']['taps'], name: string, extra: { idleHint?: string; note?: string } = {}) =>
-    session && <TapViewers name={name} analyser={session.engine.taps[tap]} sampleRate={session.ctx.sampleRate} {...extra} />;
+    session && <TapViewers name={name} analyser={session.engine.taps[tap]} sampleRate={session.ctx.sampleRate} fundamental={session.engine.fundamental} {...extra} />;
 
   return (
     <main>

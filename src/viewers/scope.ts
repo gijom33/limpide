@@ -1,9 +1,11 @@
 import { cssVar, prepareCanvas } from './canvas';
+import { cycleLockOffset } from './cycleLock';
 
-/** A Scope of one Tap. Starts the trace at a rising zero crossing so a steady Note mostly holds still. */
-export function createScope(canvas: HTMLCanvasElement, analyser: AnalyserNode) {
+/** A Scope of one Tap, Cycle Locked to the Note's fundamental so a steady Note stands still. */
+export function createScope(canvas: HTMLCanvasElement, analyser: AnalyserNode, fundamental: () => number) {
   const samples = new Float32Array(analyser.fftSize);
   const shown = Math.floor(samples.length / 4);
+  const sampleRate = analyser.context.sampleRate;
 
   return function draw() {
     analyser.getFloatTimeDomainData(samples);
@@ -17,20 +19,19 @@ export function createScope(canvas: HTMLCanvasElement, analyser: AnalyserNode) {
     g.lineTo(width, height / 2);
     g.stroke();
 
-    let start = 0;
-    for (let i = 1; i < samples.length - shown; i++) {
-      if (samples[i - 1] <= 0 && samples[i] > 0) {
-        start = i;
-        break;
-      }
-    }
+    // Lock within the part of the buffer that leaves room for the whole trace after it.
+    const start = cycleLockOffset(samples.subarray(0, samples.length - shown), sampleRate, fundamental());
+    const at = (t: number) => {
+      const i = Math.floor(t);
+      return samples[i] + (samples[i + 1] - samples[i]) * (t - i);
+    };
 
     g.strokeStyle = cssVar(canvas, '--trace');
     g.lineWidth = 1.5;
     g.beginPath();
     for (let i = 0; i < shown; i++) {
       const x = (i / (shown - 1)) * width;
-      const y = height / 2 - samples[start + i] * (height / 2) * 0.9;
+      const y = height / 2 - at(start + i) * (height / 2) * 0.9;
       if (i === 0) g.moveTo(x, y);
       else g.lineTo(x, y);
     }

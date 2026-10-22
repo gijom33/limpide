@@ -10,6 +10,7 @@ interface Props {
   name: string;
   analyser: AnalyserNode;
   sampleRate: number;
+  fundamental(): number;
   /** Shown over the Viewers while this Tap is silent. */
   idleHint?: string;
   /** A one-line explanation under the caption. */
@@ -17,14 +18,14 @@ interface Props {
 }
 
 /** Scope + Spectrum + level readout for one Tap. Canvases are mounted once and drawn by the render loop. */
-export function TapViewers({ name, analyser, sampleRate, idleHint, note }: Props) {
+export function TapViewers({ name, analyser, sampleRate, fundamental, idleHint, note }: Props) {
   const scopeRef = useRef<HTMLCanvasElement>(null);
   const spectrumRef = useRef<HTMLCanvasElement>(null);
   const levelRef = useRef<HTMLSpanElement>(null);
   const hintRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const drawScope = createScope(scopeRef.current!, analyser);
+    const drawScope = createScope(scopeRef.current!, analyser, fundamental);
     const drawSpectrum = createSpectrum(spectrumRef.current!, analyser, sampleRate);
     const level = createLevelMeter(analyser);
     return addToRenderLoop(() => {
@@ -35,7 +36,7 @@ export function TapViewers({ name, analyser, sampleRate, idleHint, note }: Props
       levelRef.current!.dataset.db = String(db);
       if (hintRef.current) hintRef.current.hidden = db > SILENT_DB;
     });
-  }, [analyser, sampleRate]);
+  }, [analyser, sampleRate, fundamental]);
 
   return (
     <figure className="tap" data-tap={name}>

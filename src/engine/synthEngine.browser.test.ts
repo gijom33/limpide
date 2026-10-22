@@ -98,3 +98,15 @@ describe('Taps', () => {
     expect(ratio / (rms(fullSustainTaps.amp) / rms(fullSustainTaps.filter))).toBeCloseTo(0.25, 1);
   });
 });
+
+describe('fundamental', () => {
+  it('reports the sounding Note’s frequency for Cycle Lock, and 0 before any Note', () => {
+    const engine = createSynthEngine(new OfflineAudioContext(1, SR, SR));
+    engine.applyPatch(defaultPatch());
+    expect(engine.fundamental()).toBe(0);
+    engine.noteOn(57, 1, 0);
+    expect(engine.fundamental()).toBeCloseTo(220);
+    engine.pitchChange(69, 0.1);
+    expect(engine.fundamental()).toBeCloseTo(440);
+  });
+});

@@ -9,6 +9,6 @@
 - [ ] Fourier-series Harmonic amplitudes per Waveform and Pulse Width, tested (saw 1/n; square odd 1/n; triangle odd 1/n²; pulse with |sin(nπd)|/n)
 - [ ] A pulse `PeriodicWave` built from the same series
 - [ ] Engine test: measured Harmonic levels match the Ideal Reference within tolerance for saw and square
-- [ ] Cycle Lock alignment (period and phase from a time buffer), tested with synthetic buffers including a detuned or noisy case
+- [x] Cycle Lock alignment (phase of the fundamental from a time buffer), tested with synthetic ringing buffers. Pulled forward to fix an unstable Filter Scope. Still to do: the 1/2/4-cycle choice, plus a detuned or noisy test case once Osc 2 and Noise exist
 - [ ] Nearest-note naming with cents offset, tested
 - [ ] Harmonic Markers and the Ideal Reference drawn

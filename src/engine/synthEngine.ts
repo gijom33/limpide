@@ -13,6 +13,8 @@ export interface SynthEngine {
   noteOn(note: number, velocity: number, at?: number): void;
   pitchChange(note: number, at?: number): void;
   noteOff(at?: number): void;
+  /** Frequency of the most recent Note (0 before any), for Cycle Lock. */
+  fundamental(): number;
   readonly taps: Taps;
 }
 
@@ -48,10 +50,16 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   osc.start();
 
   let patch: Patch | undefined;
+  let fundamental = 0;
+  const setPitch = (note: number, t: number) => {
+    fundamental = noteToFrequency(note);
+    osc.frequency.setValueAtTime(fundamental, t);
+  };
   const now = (at?: number) => at ?? ctx.currentTime;
 
   return {
     taps,
+    fundamental: () => fundamental,
 
     applyPatch(next) {
       patch = next;
@@ -63,7 +71,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     noteOn(note, velocity, at) {
       if (!patch) return;
       const t = now(at);
-      osc.frequency.setValueAtTime(noteToFrequency(note), t);
+      setPitch(note, t);
       const g = amp.gain;
       g.cancelAndHoldAtTime(t);
       // An RC-style approach (95% at Attack) is anchored at `t`; a linear ramp would start
@@ -73,7 +81,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     },
 
     pitchChange(note, at) {
-      osc.frequency.setValueAtTime(noteToFrequency(note), now(at));
+      setPitch(note, now(at));
     },
 
     noteOff(at) {
