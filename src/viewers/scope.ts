@@ -1,6 +1,7 @@
 import { OSCILLATOR_LEVEL } from '../engine/synthEngine';
 import { cssVar, prepareCanvas } from './canvas';
 import { cycleLockOffset } from './cycleLock';
+import { createFreezeLatch } from './freezeLatch';
 import { scopeWindow } from './scopeWindow';
 import type { ViewSettings } from './viewSettings';
 
@@ -14,6 +15,8 @@ const OVER_HOLD_MS = 1000;
 export function createScope(canvas: HTMLCanvasElement, analyser: AnalyserNode, fundamental: () => number, view: () => ViewSettings) {
   const samples = new Float32Array(analyser.fftSize);
   const sampleRate = analyser.context.sampleRate;
+  // While frozen, lock to the Note the frozen samples belong to, not to a Note played since.
+  const frozenFundamental = createFreezeLatch<number>();
   let overAt = -Infinity;
 
   return function draw() {
@@ -21,7 +24,7 @@ export function createScope(canvas: HTMLCanvasElement, analyser: AnalyserNode, f
     const { g, width, height } = prepareCanvas(canvas);
     g.clearRect(0, 0, width, height);
 
-    const f = fundamental();
+    const f = frozenFundamental(view().viewer.frozen, fundamental);
     const { length: windowLength } = scopeWindow(samples.length, sampleRate, f, view().cycles);
     const shown = Math.max(2, Math.floor(windowLength));
     // Lock within the part of the buffer that leaves room for the whole trace after it.

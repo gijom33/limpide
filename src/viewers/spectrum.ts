@@ -1,6 +1,7 @@
 import { OSCILLATOR_LEVEL } from '../engine/synthEngine';
 import { frequencyAxis, levelAxis } from './axes';
 import { cssVar, prepareCanvas } from './canvas';
+import { createFreezeLatch } from './freezeLatch';
 import { ghostRegions } from './ghost';
 import { harmonicMarkers } from './harmonicMarkers';
 import { hoverReadout, interpolatedPeak, snapToPeak } from './readout';
@@ -61,11 +62,18 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
   const ghostBins = ghostOf && new Float32Array(ghostOf.frequencyBinCount).fill(-Infinity);
   const binHz = sampleRate / analyser.fftSize;
   const nyquist = sampleRate / 2;
+  // While frozen, everything drawn over the frame (Markers, rings, Curve) stays with that frame's Note and
+  // Patch, even if a new Note is played or a knob is turned.
+  const frozenFundamental = createFreezeLatch<number>();
+  const frozenIdeal = createFreezeLatch<Float32Array | undefined>();
+  const frozenCurve = createFreezeLatch<{ key: string; gains: Float32Array }>();
+  const frozenRings = createFreezeLatch<{ key: string; gains: Float32Array }>();
   let snapshotToken: number | null = null;
   let snapshotBins: Float32Array | null = null;
 
   return function draw() {
-    const { overlays, ideal, viewer } = view();
+    const { overlays, viewer } = view();
+    const ideal = frozenIdeal(viewer.frozen, () => view().ideal);
     if (!viewer.frozen) {
       analyser.getFloatFrequencyData(bins);
       if (ghostOf && ghostBins) ghostOf.getFloatFrequencyData(ghostBins);
@@ -101,7 +109,7 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
 
     const peak = columnPeaks(bins, binHz, columns, fAxis);
     const maxFrequency = Math.min(nyquist, fAxis.frequencyAt(width));
-    const markers = harmonicMarkers(fundamental(), { maxFrequency, xOf, minLabelGap: MIN_LABEL_GAP });
+    const markers = harmonicMarkers(frozenFundamental(viewer.frozen, fundamental), { maxFrequency, xOf, minLabelGap: MIN_LABEL_GAP });
 
     // Ghost: the energy the Oscillator Tap had in each Harmonic that this Tap no longer has.
     if (overlays.ghost && ghostBins) {
@@ -136,8 +144,14 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
     strokeColumns(g, peak, yOf);
 
     if (overlays.curve && response) {
-      const frequencies = Float32Array.from({ length: columns }, (_, c) => Math.max(1, fAxis.frequencyAt(c + 0.5)));
-      const gains = response(frequencies);
+      // Recomputed if the axis or size changes while frozen; otherwise the Curve from the moment of freezing.
+      const key = `${viewer.frequencyScale}:${columns}`;
+      const live = () => ({
+        key,
+        gains: response(Float32Array.from({ length: columns }, (_, c) => Math.max(1, fAxis.frequencyAt(c + 0.5)))),
+      });
+      const held = frozenCurve(viewer.frozen, live);
+      const { gains } = held.key === key ? held : frozenCurve(false, live);
       const zero = viewer.levelScale === 'db' ? GAIN_ZERO_DB : LINEAR_TOP_DB - 12;
       g.strokeStyle = text;
       g.lineWidth = 1.25;
@@ -173,7 +187,10 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
     const amplitudes = showIdeal && overlays.ideal ? ideal : undefined;
     if (amplitudes && markers.length) {
       const shown = markers.filter((m) => amplitudes[m.n] > 1e-5);
-      const gains = response ? response(Float32Array.from(shown, (m) => m.frequency)) : undefined;
+      const key = shown.map((m) => m.n).join(',');
+      const live = () => ({ key, gains: response ? response(Float32Array.from(shown, (m) => m.frequency)) : new Float32Array(shown.length).fill(1) });
+      const held = frozenRings(viewer.frozen, live);
+      const { gains } = held.key === key ? held : frozenRings(false, live);
       g.strokeStyle = text;
       g.lineWidth = 1;
       let lastX = -Infinity;
@@ -183,7 +200,7 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
         if (x - lastX < RING_GAP) return;
         lastX = x;
         g.beginPath();
-        g.arc(x, yOf(amplitudeToSpectrumDb(amplitudes[m.n] * (gains ? gains[i] : 1))), 2.5, 0, 2 * Math.PI);
+        g.arc(x, yOf(amplitudeToSpectrumDb(amplitudes[m.n] * gains[i])), 2.5, 0, 2 * Math.PI);
         g.stroke();
       });
     }

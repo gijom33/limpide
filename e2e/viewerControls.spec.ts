@@ -74,3 +74,35 @@ test('controls are grouped under View, Axes and Show', async ({ page }) => {
   await expect(toolbar.getByRole('group', { name: 'Show' }).getByRole('button', { name: 'Ghost' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Freeze' })).toHaveAttribute('aria-keyshortcuts', 'Space');
 });
+
+test('frozen Viewers do not change when a new Note is played or a knob is turned', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: /start audio/i }).click();
+  await expect(page.getByTestId('amp-level')).toBeVisible();
+  await page.keyboard.down('KeyA');
+  await expect.poll(() => level(page)).toBeGreaterThan(-40);
+  await page.keyboard.press('Space');
+
+  const pixels = () =>
+    page.evaluate(() =>
+      [...document.querySelectorAll('canvas')].map((c) => {
+        const data = c.getContext('2d')!.getImageData(0, 0, c.width, c.height).data;
+        let hash = 0;
+        for (let i = 0; i < data.length; i += 7) hash = (hash * 31 + data[i]) | 0;
+        return hash;
+      }),
+    );
+  await page.waitForTimeout(200);
+  const frozen = await pixels();
+
+  await page.keyboard.up('KeyA');
+  await page.keyboard.down('KeyG'); // a different Note: G4
+  const cutoff = page.getByRole('slider', { name: 'Cutoff' });
+  await cutoff.focus();
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('ArrowDown');
+  await page.waitForTimeout(400);
+
+  expect(await pixels()).toEqual(frozen);
+  await page.keyboard.up('KeyG');
+});
