@@ -5,7 +5,9 @@ import { keyToNote, octaveKey, shiftOctave } from '../input/keyboardLayout';
 import { connectMidi, midiSupport, type MidiAccessLike } from '../midi/inputs';
 import { OSCILLATOR_LEVEL } from '../engine/synthEngine';
 import { harmonicSeries } from '../music/harmonics';
-import { defaultPatch, setFilter, setParam, setWaveform, type ParamId, type Patch } from '../patch/patch';
+import { setFilter, setParam, setWaveform, type ParamId, type Patch } from '../patch/patch';
+import { createLibrary } from '../patch/library';
+import { initialPatch } from '../patch/presets';
 import { loadOverlays, saveOverlays, toggleOverlay } from '../viewers/overlays';
 import { INITIAL_VIEWER_STATE, viewerReducer } from '../viewers/viewerState';
 import type { ViewSettings } from '../viewers/viewSettings';
@@ -21,6 +23,7 @@ import { SubBlock } from './SubBlock';
 import { LfoControls } from './LfoControls';
 import { MidiStatus, type MidiState } from './MidiStatus';
 import { Piano } from './Piano';
+import { PatchBar } from './PatchBar';
 import { Tabs } from './Tabs';
 import { Tooltip, type TipContent } from './Tooltip';
 import { AxesControls, ViewActions } from './ViewerControls';
@@ -68,8 +71,37 @@ function Block({ title, stage, ids, patch, onChange, children, more, heading, ex
 }
 
 
+/** localStorage, or a stand-in that keeps nothing when the browser refuses it (some private modes). */
+function safeStorage(): Pick<Storage, 'getItem' | 'setItem'> {
+  try {
+    return window.localStorage;
+  } catch {
+    return { getItem: () => null, setItem: () => {} };
+  }
+}
+
 export function App() {
-  const [patch, setPatch] = useState(defaultPatch);
+  // Patches: a share link, else last session's, else Init; autosaved as you play.
+  const library = useMemo(() => createLibrary(safeStorage()), []);
+  const [start] = useState(() => initialPatch(location.hash, library));
+  const [patch, setPatch] = useState(start.patch);
+  const [patchName, setPatchName] = useState(start.name);
+  const [baseline, setBaseline] = useState(start.patch);
+  const loadPatch = (name: string, next: Patch) => {
+    setPatch(next);
+    setPatchName(name);
+    setBaseline(next);
+  };
+  const patchChanged = JSON.stringify(patch) !== JSON.stringify(baseline);
+
+  useEffect(() => {
+    // A share link has done its job once loaded; drop it so a reload keeps later edits (autosaved).
+    if (location.hash.startsWith('#p=')) history.replaceState(null, '', location.pathname + location.search);
+  }, []);
+  useEffect(() => {
+    const timer = setTimeout(() => library.saveCurrent(patch), 300);
+    return () => clearTimeout(timer);
+  }, [library, patch]);
   const [session] = useState(() => getAudioSession(patch));
   const [audioStatus, setAudioStatus] = useState<AudioStatus>('waiting');
   const [hold, setHold] = useState(false);
@@ -242,6 +274,7 @@ export function App() {
             Synth<span className="wordmark-view">View</span>
           </span>
         </h1>
+        <PatchBar name={patchName} changed={patchChanged} patch={patch} library={library} onLoad={loadPatch} />
 
         <section className="toolbar" aria-label="Viewer controls">
           <div className="toolbar-groups">

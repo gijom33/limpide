@@ -11,7 +11,11 @@ The complete set of parameter values that defines one sound.
 _Avoid_: Preset (when you mean the user's sound), program, settings
 
 **Preset**:
-A read-only Patch shipped with the app.
+A read-only Patch shipped with the app, built to show off one idea (Init, Bass, Lead, Pluck, Pad, Wobble).
+
+**Share link**:
+A URL whose `#p=` part carries a Patch (only what differs from Init), so opening it plays that sound.
+_Avoid_: Permalink, patch URL
 _Avoid_: Factory patch, template
 
 **Parameter**:

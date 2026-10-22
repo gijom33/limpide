@@ -105,6 +105,16 @@ export function setFilter(patch: Patch, { mode, slope }: { mode?: FilterMode; sl
   return { ...patch, filterMode: mode ?? patch.filterMode, filterSlope: slope ?? patch.filterSlope };
 }
 
+/** The allowed values of every choice in a Patch (the first is the default). */
+export const CHOICES = {
+  waveform: ['saw', 'sine', 'triangle', 'square', 'pulse'],
+  osc2Waveform: ['saw', 'sine', 'triangle', 'square', 'pulse'],
+  filterMode: ['lowpass', 'highpass', 'bandpass', 'notch'],
+  filterSlope: [12, 24],
+  lfoWaveform: ['sine', 'triangle', 'square', 'saw'],
+  lfoDestination: ['cutoff', 'pitch', 'pulseWidth'],
+} as const satisfies { [K in Exclude<keyof Patch, ParamId>]: readonly Patch[K][] };
+
 export function setLfo(patch: Patch, { waveform, destination }: { waveform?: LfoWaveform; destination?: LfoDestination }): Patch {
   return { ...patch, lfoWaveform: waveform ?? patch.lfoWaveform, lfoDestination: destination ?? patch.lfoDestination };
 }

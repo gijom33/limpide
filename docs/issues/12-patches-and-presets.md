@@ -4,10 +4,11 @@
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] JSON and URL round-trips, tested
-- [ ] Migration and validation (unknown fields dropped, missing fields defaulted, out-of-range values clamped), tested
-- [ ] Patch library over the Persistence interface (in-memory in tests), tested
-- [ ] Presets defined as data; next and previous wrap around
-- [ ] Patch browser UI, import and export, and a copy-share-link control
+- [x] JSON and URL round-trips, tested
+- [x] Migration and validation (unknown fields dropped, missing fields defaulted, out-of-range values clamped), tested
+- [x] Patch library over the Persistence interface (in-memory in tests), tested
+- [x] Presets defined as data; next and previous wrap around
+- [x] Patch bar on the header line (‹ name ›, changed dot) with a panel: Presets (lessons in tooltips), My Patches (load, two-step delete), Save as, Export file, Import file, Copy share link (#p=…, cleared from the address once loaded)
+- [x] Start-up: share link, else last session's autosave, else Init (tested)
