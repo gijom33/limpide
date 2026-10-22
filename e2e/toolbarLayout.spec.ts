@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { openDisplay } from './helpers';
 
 /** For each toolbar group: does it start a row, and is its divider (left border) visible? */
 const dividers = (page: import('@playwright/test').Page) =>
@@ -19,6 +20,7 @@ for (const width of [1400, 1000, 800]) {
   test(`dividers only appear between groups on the same row (${width}px)`, async ({ page }) => {
     await page.setViewportSize({ width, height: 800 });
     await page.goto('/');
+    await openDisplay(page);
     for (const d of await dividers(page)) {
       expect(d.visible, `${d.name} ${d.startsRow ? 'starts a row' : 'follows a group'}`).toBe(!d.startsRow);
     }

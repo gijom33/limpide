@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { openDisplay } from './helpers';
 
 // A missing reading (the Tap hasn't drawn yet) must not count as loud: Number(null) would be 0 dB.
 const level = (page: import('@playwright/test').Page) =>
@@ -6,6 +7,7 @@ const level = (page: import('@playwright/test').Page) =>
 
 test('Space freezes the Viewers on a frame while the sound carries on', async ({ page }) => {
   await page.goto('/');
+  await openDisplay(page);
   const freeze = page.getByRole('button', { name: 'Freeze' });
   await expect(page.getByTestId('amp-level')).toBeVisible(); // audio is up and listening for keys
 
@@ -27,6 +29,7 @@ test('Space freezes the Viewers on a frame while the sound carries on', async ({
 
 test('Space never presses the focused button instead', async ({ page }) => {
   await page.goto('/');
+  await openDisplay(page);
   const snapshot = page.getByRole('button', { name: 'Snapshot', exact: true });
   await snapshot.focus();
   await page.keyboard.press('Space');
@@ -36,6 +39,7 @@ test('Space never presses the focused button instead', async ({ page }) => {
 
 test('a Snapshot can be taken and cleared', async ({ page }) => {
   await page.goto('/');
+  await openDisplay(page);
   await page.getByRole('button', { name: 'Snapshot', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Snapshot', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await page.getByRole('button', { name: 'Clear Snapshot' }).click();
@@ -45,6 +49,7 @@ test('a Snapshot can be taken and cleared', async ({ page }) => {
 
 test('the Spectrum axes switch between log/linear and dB/linear', async ({ page }) => {
   await page.goto('/');
+  await openDisplay(page);
   const hz = page.getByRole('radiogroup', { name: 'Frequency axis' });
   await hz.getByRole('radio', { name: 'Lin' }).click();
   await expect(hz.getByRole('radio', { name: 'Lin' })).toHaveAttribute('aria-checked', 'true');
@@ -67,6 +72,7 @@ test('hovering a Spectrum reads out frequency, note and level', async ({ page })
 
 test('controls are grouped under View, Axes and Show', async ({ page }) => {
   await page.goto('/');
+  await openDisplay(page);
   const toolbar = page.getByRole('region', { name: 'Viewer controls' });
   await expect(toolbar.getByRole('group', { name: 'View' }).getByRole('button', { name: 'Freeze' })).toBeVisible();
   await expect(toolbar.getByRole('group', { name: 'Axes' }).getByRole('radiogroup', { name: 'Scope cycles' })).toBeVisible();
@@ -107,6 +113,7 @@ test('frozen Viewers do not change when a new Note is played or a knob is turned
 
 test('a Snapshot keeps the waveform on every Scope as well as every Spectrum', async ({ page }) => {
   await page.goto('/');
+  await openDisplay(page);
   await expect(page.getByTestId('amp-level')).toBeVisible();
   const scopes = page.locator('canvas.scope');
   await expect(scopes).toHaveCount(3);

@@ -32,3 +32,12 @@ export const MoonIcon = () => (
     <path d="M13 9.5A5.5 5.5 0 0 1 6.5 3a5.5 5.5 0 1 0 6.5 6.5z" strokeLinejoin="round" />
   </svg>
 );
+
+export const SlidersIcon = () => (
+  <svg {...base}>
+    <path d="M3 4.5h10M3 8h10M3 11.5h10" strokeLinecap="round" />
+    <circle cx="6" cy="4.5" r="1.6" fill="var(--panel)" />
+    <circle cx="10.5" cy="8" r="1.6" fill="var(--panel)" />
+    <circle cx="5" cy="11.5" r="1.6" fill="var(--panel)" />
+  </svg>
+);

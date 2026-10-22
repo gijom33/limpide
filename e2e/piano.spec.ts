@@ -68,3 +68,28 @@ test('without Web MIDI (Safari) the MIDI indicator says so, and everything else 
   await page.getByRole('status', { name: 'MIDI' }).hover();
   await expect(page.getByRole('tooltip')).toContainText(/not support/i);
 });
+
+test('when the browser blocks MIDI, the indicator shows it is unavailable (not just empty) and says why', async ({ page }) => {
+  await page.addInitScript(() =>
+    Object.defineProperty(navigator, 'requestMIDIAccess', {
+      value: () => Promise.reject(new DOMException('Permission to use Web MIDI API was not granted.', 'NotAllowedError')),
+      configurable: true,
+    }),
+  );
+  await page.goto('/');
+  const status = page.getByRole('status', { name: 'MIDI' });
+  await expect(status).toHaveAttribute('data-unavailable', 'true');
+  await status.hover();
+  await expect(page.getByRole('tooltip')).toContainText(/not allowed/i);
+});
+
+test('with Web MIDI working but nothing plugged in, the indicator is not marked unavailable', async ({ page }) => {
+  await page.addInitScript(() => {
+    const access = Object.assign(new EventTarget(), { inputs: new Map() });
+    Object.defineProperty(navigator, 'requestMIDIAccess', { value: () => Promise.resolve(access), configurable: true });
+  });
+  await page.goto('/');
+  await page.getByRole('status', { name: 'MIDI' }).hover();
+  await expect(page.getByRole('tooltip')).toContainText(/no midi controller/i);
+  await expect(page.getByRole('status', { name: 'MIDI' })).not.toHaveAttribute('data-unavailable');
+});

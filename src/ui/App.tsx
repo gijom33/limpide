@@ -14,21 +14,22 @@ import type { ViewSettings } from '../viewers/viewSettings';
 import { Knob } from './Knob';
 import { OverlayToggles } from './OverlayToggles';
 import { TapViewers } from './TapViewers';
-import { MoonIcon, SunIcon } from './icons';
 import { Logo } from './Logo';
 import { TIPS } from './tips';
 import { ToolGroup } from './ToolGroup';
 import { FilterShape } from './FilterShape';
+import { Segmented } from './Segmented';
 import { SubBlock } from './SubBlock';
 import { LfoControls } from './LfoControls';
 import { MidiStatus, type MidiState } from './MidiStatus';
 import { Piano } from './Piano';
+import { DisplayMenu } from './DisplayMenu';
 import { PatchBar } from './PatchBar';
 import { Tabs } from './Tabs';
 import { Tooltip, type TipContent } from './Tooltip';
 import { AxesControls, ViewActions } from './ViewerControls';
 import { EnvelopeTimeline } from './EnvelopeTimeline';
-import { applyTheme, loadTheme } from './theme';
+import { applyTheme, loadTheme, type Theme } from './theme';
 import { WaveformPicker } from './WaveformPicker';
 
 const IDEAL_HARMONICS = 256;
@@ -268,39 +269,46 @@ export function App() {
   return (
     <main data-frozen={viewer.frozen || undefined}>
       <header>
-        <h1 className="wordmark">
-          <Logo />
-          <span>
-            Synth<span className="wordmark-view">View</span>
-          </span>
-        </h1>
-        <PatchBar name={patchName} changed={patchChanged} patch={patch} library={library} onLoad={loadPatch} />
-
-        <section className="toolbar" aria-label="Viewer controls">
-          <div className="toolbar-groups">
-            <ToolGroup title="View">
-              <ViewActions state={viewer} dispatch={dispatchViewer} />
-            </ToolGroup>
-            <ToolGroup title="Axes">
-              <AxesControls state={viewer} dispatch={dispatchViewer} cycles={cycles} onCycles={setCycles} />
-            </ToolGroup>
-            <ToolGroup title="Show">
-              <OverlayToggles value={overlays} onToggle={(o) => setOverlays((v) => toggleOverlay(v, o))} />
-            </ToolGroup>
-          </div>
-        </section>
-        <span className="theme-toggle">
-          <Tooltip content={TIPS.theme}>
-            <button
-              type="button"
-              className="tool tool-icon"
-              aria-label={theme === 'dark' ? 'Light theme' : 'Dark theme'}
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            >
-              {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
-            </button>
-          </Tooltip>
-        </span>
+        <div className="header-left">
+          <h1 className="wordmark">
+            <Logo />
+            <span className="wordmark-text">
+              Synth<span className="wordmark-view">View</span>
+            </span>
+          </h1>
+          <PatchBar name={patchName} changed={patchChanged} patch={patch} library={library} onLoad={loadPatch} />
+        </div>
+        <div className="header-center">{playControls}</div>
+        <div className="header-right">
+          <DisplayMenu active={viewer.frozen || viewer.snapshot !== null}>
+            <section className="toolbar" aria-label="Viewer controls">
+              <div className="toolbar-groups">
+                <ToolGroup title="View">
+                  <ViewActions state={viewer} dispatch={dispatchViewer} />
+                </ToolGroup>
+                <ToolGroup title="Axes">
+                  <AxesControls state={viewer} dispatch={dispatchViewer} cycles={cycles} onCycles={setCycles} />
+                </ToolGroup>
+                <ToolGroup title="Show">
+                  <OverlayToggles value={overlays} onToggle={(o) => setOverlays((v) => toggleOverlay(v, o))} />
+                </ToolGroup>
+                <ToolGroup title="Theme">
+                  <Tooltip content={TIPS.theme}>
+                    <Segmented
+                      label="Theme"
+                      value={theme}
+                      options={[
+                        { value: 'dark', label: 'Dark' },
+                        { value: 'light', label: 'Light' },
+                      ]}
+                      onChange={(v) => setTheme(v as Theme)}
+                    />
+                  </Tooltip>
+                </ToolGroup>
+              </div>
+            </section>
+          </DisplayMenu>
+        </div>
       </header>
 
       {audioStatus === 'blocked' && (
@@ -424,12 +432,7 @@ export function App() {
       <EnvelopeTimeline
         engine={session.engine}
         view={view}
-        controls={
-          <>
-            {playControls}
-            <LfoControls patch={patch} onParam={change} onPatch={setPatch} />
-          </>
-        }
+        controls={<LfoControls patch={patch} onParam={change} onPatch={setPatch} />}
       />
     </main>
   );

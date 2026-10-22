@@ -8,9 +8,13 @@ const nudge = async (page: Page) => {
   await page.keyboard.press('ArrowDown');
 };
 
+// Start from an empty Library: cleared once, before the app runs, so no autosave can write back in between.
 test.beforeEach(async ({ page }) => {
-  await page.goto('/');
-  await page.evaluate(() => localStorage.clear());
+  await page.addInitScript(() => {
+    if (sessionStorage.getItem('cleared')) return;
+    localStorage.clear();
+    sessionStorage.setItem('cleared', 'true');
+  });
   await page.goto('/');
 });
 

@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { openDisplay } from './helpers';
 
 test('picking a Waveform selects it, and Pulse Width only comes alive for the pulse', async ({ page }) => {
   await page.goto('/');
@@ -16,6 +17,7 @@ test('picking a Waveform selects it, and Pulse Width only comes alive for the pu
 
 test('the Scope cycles choice switches between 1, 2 and 4', async ({ page }) => {
   await page.goto('/');
+  await openDisplay(page);
   const cycles = page.getByRole('radiogroup', { name: 'Scope cycles' });
   await expect(cycles.getByRole('radio', { name: '2' })).toHaveAttribute('aria-checked', 'true');
   await cycles.getByRole('radio', { name: '4' }).click();

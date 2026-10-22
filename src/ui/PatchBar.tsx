@@ -23,7 +23,9 @@ export function PatchBar({ name, changed, patch, library, onLoad }: Props) {
   const [confirming, setConfirming] = useState<string | null>(null);
   const [, refresh] = useState(0);
   const wrapper = useRef<HTMLDivElement>(null);
-  const presetIndex = PRESETS.findIndex((p) => p.name === name);
+  // The arrows step from the sound just chosen, even when clicked again before React has re-rendered.
+  const stepping = useRef({ name, from: name });
+  if (stepping.current.from !== name) stepping.current = { name, from: name };
 
   useEffect(() => {
     if (!open) return;
@@ -41,7 +43,9 @@ export function PatchBar({ name, changed, patch, library, onLoad }: Props) {
   // The arrows step through sounds and close the panel; picking in the open panel keeps it open, to audition.
   const step = (delta: number) => {
     setOpen(false);
-    const preset = PRESETS[presetIndex === -1 ? (delta > 0 ? 0 : PRESETS.length - 1) : stepPreset(presetIndex, delta)];
+    const index = PRESETS.findIndex((p) => p.name === stepping.current.name);
+    const preset = PRESETS[index === -1 ? (delta > 0 ? 0 : PRESETS.length - 1) : stepPreset(index, delta)];
+    stepping.current.name = preset.name;
     onLoad(preset.name, preset.patch);
   };
   const toggle = () => {

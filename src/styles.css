@@ -45,7 +45,12 @@
 body { margin: 0; background: var(--bg); color: var(--text); }
 /* Grows with the screen up to where lines of controls stop being comfortable to scan. */
 main { max-width: 1920px; margin: 0 auto; padding: 16px; }
-header { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+/* Three zones: logo and Patch on the left, playing in the centre, Display on the right. The Display panel is
+   anchored to the header (not its button), so it can always use, and never exceed, the window's width. */
+header { position: relative; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; }
+.header-left { display: flex; align-items: center; gap: 16px; min-width: 0; }
+.header-center { justify-self: center; }
+.header-right { justify-self: end; }
 header h1 { margin: 0; }
 h1 { margin: 0 0 8px; font-size: 22px; letter-spacing: 0.02em; }
 h2 { margin: 0 0 12px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
@@ -190,9 +195,7 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 .segmented button[role='radio'] { min-width: 30px; justify-content: center; }
 .overlays button[aria-pressed='false'] .swatch { opacity: 0.35; }
 
-/* Pinned to the header's top-right corner, so a wrapping toolbar never strands it on a line of its own. */
-header { position: relative; padding-right: 48px; }
-.theme-toggle { position: absolute; top: 0; right: 0; }
+
 
 /* While frozen, the Viewers themselves say so (visibility of system status), not only the button. */
 main[data-frozen] .tap-canvases canvas { outline: 1px dashed var(--muted); outline-offset: -1px; }
@@ -275,7 +278,6 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   .tap-canvases { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
   .tap canvas { flex: 1 1 0; height: auto; min-height: 90px; max-height: none; aspect-ratio: auto; }
   .tap canvas + canvas { margin-top: 0; }
-  .timeline canvas { height: clamp(70px, 9vh, 150px); }
 }
 
 /* Wide sections put their heading in a narrow label column instead of a line of its own. */
@@ -302,7 +304,6 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 @media (min-width: 861px) and (min-height: 700px) and (max-height: 960px) {
   .tap canvas { min-height: 78px; }
   main > .chain { grid-template-rows: auto minmax(186px, 1fr); }
-  .timeline canvas { height: clamp(60px, 8vh, 150px); }
 }
 
 /* Oscillator tabs: one Oscillator at a time; the Mixer stays visible below. */
@@ -351,13 +352,20 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 /* The Timeline panel: the controls that act over time (LFO, Glide) to the left of the plot. */
 .timeline-body { display: flex; gap: 16px; align-items: stretch; }
 .timeline-body canvas { flex: 1 1 auto; min-width: 0; }
-.timeline-controls { display: flex; gap: 14px; align-items: flex-start; flex: none; }
+.timeline-controls { display: flex; gap: 14px; align-items: flex-end; flex: none; }
 /* Not size containers: a container has no intrinsic width, and in this content-sized column it would collapse. */
-/* Laid out sideways (label, pickers stacked, then knobs), so the panel is only about one knob tall. */
+/* Three rows (LFO shape, Destination, then the knobs with Glide beside them), so the column stays narrow
+   and the plot beside it gets the width, and the height, of the controls. */
 .timeline-controls .sub-block { border-top: 0; padding-top: 0; container-type: normal; flex-wrap: nowrap; flex-direction: row; align-items: center; gap: 10px; }
 .timeline-controls .sub-block > h3, .timeline-controls .sub-block > .tip-anchor:first-child { flex: none; }
 .timeline-controls .sub-block > .knobs { flex: none; flex-wrap: nowrap; }
+.lfo-rows { display: flex; flex-direction: column; gap: 8px; flex: none; }
+.lfo-rows > .knobs { justify-content: flex-start; }
 .lfo-pickers { display: flex; flex-direction: column; gap: 6px; flex: none; }
+@media (min-width: 861px) {
+  /* The plot fills the panel's height; size containment stops its backing store feeding back into it. */
+  .timeline-body canvas { contain: size; height: auto; min-height: 120px; }
+}
 .lfo-shapes button { min-width: 30px; justify-content: center; padding: 0 4px; }
 @media (max-width: 860px) {
   .timeline-body { flex-direction: column; }
@@ -385,11 +393,21 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .midi-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); }
 .midi-status[data-connected] { color: var(--text); }
 .midi-status[data-connected] .midi-dot { background: var(--stage-osc); }
+/* Unavailable (blocked or unsupported): a hollow, struck-through dot, so it never passes for "nothing plugged in". */
+.midi-status[data-unavailable] { color: var(--muted); text-decoration: line-through; }
+.midi-status[data-unavailable] .midi-dot { background: transparent; box-shadow: inset 0 0 0 1.5px var(--danger); }
 .midi-count { font-variant-numeric: tabular-nums; }
 
-/* Playing controls at the bottom, where a synth keeps its keyboard: the piano, then Hold and MIDI beneath. */
-.play-controls { display: grid; grid-template-columns: auto auto; gap: 6px 8px; align-content: center; flex: none; }
-.play-controls > .keyboard { grid-column: 1 / -1; }
+/* Playing controls at the top centre: octave −, the piano, octave +, Hold and MIDI, in one row. */
+.play-controls { display: flex; align-items: center; gap: 8px; }
+/* On narrower windows only the logo mark stays; the name remains for assistive technology. */
+@media (max-width: 1100px) {
+  .wordmark-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
+@media (max-width: 860px) {
+  header { grid-template-columns: 1fr auto; }
+  .header-center { grid-column: 1 / -1; grid-row: 2; }
+}
 
 /* Compact knobs: one size for every knob on the page, chosen by the window. When the window is too narrow (the
    stages would wrap their rows) or too short, every knob shrinks together, so rows stay single, the whole
@@ -445,3 +463,13 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .patch-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .patch-actions label { cursor: pointer; }
 .patch-status { margin: 0; min-height: 16px; font-size: 12px; color: var(--muted); }
+
+/* The Display button and its panel: the display settings, out of the way until wanted. */
+.display-menu { position: static; }
+.display-menu .tool { position: relative; }
+.display-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text); }
+.display-panel {
+  position: absolute; z-index: 60; top: calc(100% + 6px); right: 0; width: max-content; max-width: 100%;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.35); border-radius: 10px;
+}
+.display-panel .toolbar { border-color: var(--muted); }

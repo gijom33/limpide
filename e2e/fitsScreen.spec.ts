@@ -85,8 +85,8 @@ for (const [width, height] of [
       }
       if (box(document.querySelector('.chain')!).bottom > box(document.querySelector('.timeline')!).top + 1) found.push('stages overlap the Timeline');
       const title = box(document.querySelector('h1')!);
-      const theme = box(document.querySelector('.theme-toggle')!);
-      if (theme.top > title.bottom) found.push('theme button is not on the title line');
+      const display = box(document.querySelector('.display-menu')!);
+      if (display.top > title.bottom) found.push('Display button is not on the title line');
       return found;
     });
     expect(problems).toEqual([]);

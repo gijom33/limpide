@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { openDisplay } from './helpers';
 
 // The Hardware palette, validated for colour-blind separation and contrast against each theme's canvas.
 const PALETTE = {
@@ -9,7 +10,11 @@ const PALETTE = {
 for (const theme of ['dark', 'light'] as const) {
   test(`each stage wears its own validated colour on traces, knobs and outline (${theme})`, async ({ page }) => {
     await page.goto('/');
-    if (theme === 'light') await page.getByRole('button', { name: /light theme/i }).click();
+    if (theme === 'light') {
+      await openDisplay(page);
+      await page.getByRole('radiogroup', { name: 'Theme' }).getByRole('radio', { name: 'Light' }).click();
+      await page.keyboard.press('Escape');
+    }
 
     for (const [stage, colour] of Object.entries(PALETTE[theme])) {
       const block = page.getByRole('region', { name: stage });

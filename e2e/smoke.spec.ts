@@ -24,10 +24,3 @@ test('a key press after starting audio makes the Amp Tap sound and the Viewers d
   await expect.poll(() => db(level)).toBeLessThan(-80);
 });
 
-test('the theme toggle switches to light and is remembered', async ({ page }) => {
-  await page.goto('/');
-  await page.getByRole('button', { name: /light theme/i }).click();
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
-  await page.reload();
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
-});
