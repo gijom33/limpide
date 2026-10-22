@@ -7,16 +7,6 @@ import type { ViewSettings } from '../viewers/viewSettings';
 
 const SILENT_DB = -90;
 
-export type LegendItem = 'ideal' | 'idealFiltered' | 'response' | 'ghost' | 'boost';
-
-const LEGEND: Record<LegendItem, string> = {
-  ideal: 'Ideal (Fourier series)',
-  idealFiltered: 'Ideal × Response Curve',
-  response: 'Response Curve (gain on the right)',
-  ghost: 'Ghost: removed by the Filter',
-  boost: 'Added by Resonance',
-};
-
 interface Props {
   name: string;
   analyser: AnalyserNode;
@@ -29,16 +19,14 @@ interface Props {
   response?(frequencies: Float32Array<ArrayBuffer>): Float32Array;
   /** The Tap before the Filter, for the Ghost. */
   ghostOf?: AnalyserNode;
-  /** What the marks on this Spectrum mean. */
-  legend?: LegendItem[];
   /** Shown over the Viewers while this Tap is silent. */
   idleHint?: string;
-  /** A one-line explanation under the caption. */
+  /** An explanation, shown as the caption's tooltip rather than as text on screen. */
   note?: string;
 }
 
 /** Scope + Spectrum + level readout for one Tap. Canvases are mounted once and drawn by the render loop. */
-export function TapViewers({ name, analyser, sampleRate, fundamental, view, showIdeal, response, ghostOf, legend, idleHint, note }: Props) {
+export function TapViewers({ name, analyser, sampleRate, fundamental, view, showIdeal, response, ghostOf, idleHint, note }: Props) {
   const scopeRef = useRef<HTMLCanvasElement>(null);
   const spectrumRef = useRef<HTMLCanvasElement>(null);
   const levelRef = useRef<HTMLSpanElement>(null);
@@ -48,7 +36,8 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, view, show
     const drawScope = createScope(scopeRef.current!, analyser, fundamental, view);
     const drawSpectrum = createSpectrum(spectrumRef.current!, analyser, sampleRate, {
       fundamental,
-      ideal: showIdeal ? () => view().ideal : undefined,
+      view,
+      showIdeal,
       response,
       ghostOf,
     });
@@ -65,10 +54,9 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, view, show
 
   return (
     <figure className="tap" data-tap={name}>
-      <figcaption>
+      <figcaption title={note}>
         {name} Tap <span className="level" data-testid={`${name.toLowerCase()}-level`} ref={levelRef} />
       </figcaption>
-      {note && <p className="tap-note">{note}</p>}
       <div className="tap-canvases">
         <canvas className="scope" ref={scopeRef} aria-label={`${name} Scope`} />
         <canvas className="spectrum" ref={spectrumRef} aria-label={`${name} Spectrum`} />
@@ -78,15 +66,6 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, view, show
           </div>
         )}
       </div>
-      {legend && (
-        <ul className="legend">
-          {legend.map((item) => (
-            <li key={item} data-mark={item}>
-              {LEGEND[item]}
-            </li>
-          ))}
-        </ul>
-      )}
     </figure>
   );
 }

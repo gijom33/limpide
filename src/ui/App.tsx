@@ -4,9 +4,11 @@ import { keyToNote } from '../input/keyboardLayout';
 import { OSCILLATOR_LEVEL } from '../engine/synthEngine';
 import { harmonicSeries } from '../music/harmonics';
 import { defaultPatch, setParam, setWaveform, type ParamId, type Patch } from '../patch/patch';
+import { loadOverlays, saveOverlays, toggleOverlay } from '../viewers/overlays';
 import type { ViewSettings } from '../viewers/viewSettings';
 import { Knob } from './Knob';
-import { TapViewers, type LegendItem } from './TapViewers';
+import { OverlayToggles } from './OverlayToggles';
+import { TapViewers } from './TapViewers';
 import { applyTheme, loadTheme } from './theme';
 import { WaveformPicker } from './WaveformPicker';
 
@@ -46,6 +48,9 @@ export function App() {
   const held = useRef(new Set<number>());
   const [theme, setTheme] = useState(loadTheme);
   const [cycles, setCycles] = useState<ViewSettings['cycles']>(2);
+  const [overlays, setOverlays] = useState(() => loadOverlays(localStorage));
+
+  useEffect(() => saveOverlays(localStorage, overlays), [overlays]);
 
   // The Ideal Reference at the Oscillator Tap's level: the same series the engine plays, scaled by the Nominal Level.
   const ideal = useMemo(() => {
@@ -54,8 +59,8 @@ export function App() {
   }, [patch.waveform, patch.pulseWidth]);
 
   // Read by the render loop every frame; a stable getter keeps the Viewers mounted while settings change.
-  const viewSettings = useRef<ViewSettings>({ cycles, ideal });
-  viewSettings.current = { cycles, ideal };
+  const viewSettings = useRef<ViewSettings>({ cycles, ideal, overlays });
+  viewSettings.current = { cycles, ideal, overlays };
   const view = useRef(() => viewSettings.current).current;
 
   useEffect(() => applyTheme(theme), [theme]);
@@ -107,7 +112,6 @@ export function App() {
       showIdeal?: boolean;
       response?(f: Float32Array<ArrayBuffer>): Float32Array;
       ghostOf?: AnalyserNode;
-      legend?: LegendItem[];
     } = {},
   ) =>
     session && (
@@ -125,7 +129,10 @@ export function App() {
     <main>
       <header>
         <h1>SynthView</h1>
-        <p className="hint">Play with the keys <kbd>A</kbd>–<kbd>K</kbd> (black keys on <kbd>W E T Y U</kbd>).</p>
+        <p className="hint" title="White keys on A S D F G H J K, black keys on W E T Y U">
+          Play <kbd>A</kbd>–<kbd>K</kbd>
+        </p>
+        <OverlayToggles value={overlays} onToggle={(o) => setOverlays((v) => toggleOverlay(v, o))} />
         <div className="cycles" role="radiogroup" aria-label="Scope cycles">
           <span>Scope cycles</span>
           {CYCLE_CHOICES.map((c) => (
@@ -155,7 +162,6 @@ export function App() {
           viewers={viewers('oscillator', 'Oscillator', {
             note: 'The Oscillator runs all the time, even between Notes. The Amp decides when you hear it.',
             showIdeal: true,
-            legend: ['ideal'],
           })}
         >
           <WaveformPicker value={patch.waveform} onChange={(w) => setPatch((p) => setWaveform(p, w))} />
@@ -179,7 +185,6 @@ export function App() {
               showIdeal: true,
               response: session.engine.filterResponse,
               ghostOf: session.engine.taps.oscillator,
-              legend: ['response', 'idealFiltered', 'ghost', 'boost'],
             })
           }
         />
@@ -189,7 +194,7 @@ export function App() {
           ids={['ampAttack', 'ampDecay', 'ampSustain', 'ampRelease']}
           patch={patch}
           onChange={change}
-          viewers={viewers('amp', 'Amp', { idleHint: 'Silent: press a key (A–K) to open the Amp.' })}
+          viewers={viewers('amp', 'Amp', { idleHint: 'Press a key' })}
         />
       </div>
     </main>

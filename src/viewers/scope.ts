@@ -45,19 +45,20 @@ export function createScope(canvas: HTMLCanvasElement, analyser: AnalyserNode, f
     g.lineTo(width, height / 2);
     g.stroke();
 
-    // The Oscillator's level, on every Scope: inside it the Filter only removed energy; beyond it Resonance added a peak.
-    g.setLineDash([4, 4]);
-    g.strokeStyle = cssVar(canvas, '--muted');
-    g.beginPath();
-    for (const v of [OSCILLATOR_LEVEL, -OSCILLATOR_LEVEL]) {
-      g.moveTo(0, yOf(v));
-      g.lineTo(width, yOf(v));
+    // Guides at the Oscillator's level, on every Scope: inside them the Filter only removed energy;
+    // beyond them Resonance added a peak.
+    if (view().overlays.guides) {
+      g.setLineDash([4, 4]);
+      g.strokeStyle = cssVar(canvas, '--muted');
+      g.beginPath();
+      for (const v of [OSCILLATOR_LEVEL, -OSCILLATOR_LEVEL]) {
+        g.moveTo(0, yOf(v));
+        g.lineTo(width, yOf(v));
+      }
+      g.stroke();
+      g.setLineDash([]);
     }
-    g.stroke();
-    g.setLineDash([]);
-    g.fillStyle = cssVar(canvas, '--muted');
     g.font = '10px system-ui, sans-serif';
-    g.fillText('Osc level', 4, yOf(OSCILLATOR_LEVEL) - 3);
 
     if (over) {
       g.fillStyle = cssVar(canvas, '--danger');

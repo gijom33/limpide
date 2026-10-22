@@ -2,6 +2,7 @@ import { cssVar, prepareCanvas } from './canvas';
 import { ghostRegions } from './ghost';
 import { harmonicMarkers } from './harmonicMarkers';
 import { amplitudeToSpectrumDb } from './spectrumScale';
+import type { ViewSettings } from './viewSettings';
 
 const F_MIN = 20;
 const F_MAX = 20000;
@@ -17,8 +18,9 @@ const GHOST_OPTIONS = { floorDb: -90, thresholdDb: 1 };
 
 interface Options {
   fundamental(): number;
-  /** Ideal Reference amplitudes per Harmonic, drawn as hollow rings. */
-  ideal?(): Float32Array | undefined;
+  view(): ViewSettings;
+  /** Draw the Ideal Reference (from the view settings) as hollow rings. */
+  showIdeal?: boolean;
   /** The Filter's gain per frequency: drawn as the Response Curve, and applied to the Ideal rings. */
   response?(frequencies: Float32Array<ArrayBuffer>): Float32Array;
   /** The Tap before the Filter: what it had and this Tap lacks is shaded as the Ghost. */
@@ -39,7 +41,7 @@ function columnPeaks(bins: Float32Array, binHz: number, columns: number, xOf: (f
 
 /** A Spectrum of one Tap on a log frequency axis and a dB level axis, with Harmonic Markers. */
 export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode, sampleRate: number, options: Options) {
-  const { fundamental, ideal, response, ghostOf } = options;
+  const { fundamental, view, showIdeal, response, ghostOf } = options;
   const bins = new Float32Array(analyser.frequencyBinCount);
   const ghostBins = ghostOf && new Float32Array(ghostOf.frequencyBinCount);
   const binHz = sampleRate / analyser.fftSize;
@@ -56,6 +58,7 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
       columnFrequencies = Float32Array.from({ length: columns }, (_, c) => F_MIN * (F_MAX / F_MIN) ** ((c + 0.5) / width));
     }
     g.clearRect(0, 0, width, height);
+    const { overlays, ideal } = view();
 
     const muted = cssVar(canvas, '--muted');
     g.font = '10px system-ui, sans-serif';
@@ -75,7 +78,7 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
     const markers = harmonicMarkers(fundamental(), { maxFrequency: Math.min(F_MAX, nyquist), xOf, minLabelGap: MIN_LABEL_GAP });
 
     // Ghost: the energy the Oscillator Tap had in each column that this Tap no longer has.
-    if (ghostOf && ghostBins) {
+    if (overlays.ghost && ghostOf && ghostBins) {
       ghostOf.getFloatFrequencyData(ghostBins);
       const before = columnPeaks(ghostBins, binHz, columns, xOf);
       // Compare only where Harmonics are (±1 column, for a visible bar), never the valleys between them.
@@ -105,7 +108,7 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
     g.stroke();
 
     const text = cssVar(canvas, '--text');
-    if (response) {
+    if (overlays.curve && response) {
       const gains = response(columnFrequencies);
       g.strokeStyle = text;
       g.lineWidth = 1.25;
@@ -129,7 +132,7 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
     g.fillStyle = muted;
     g.strokeStyle = muted;
     g.lineWidth = 1;
-    for (const m of markers) {
+    for (const m of overlays.harmonics ? markers : []) {
       const x = xOf(m.frequency);
       g.beginPath();
       g.moveTo(x, 0);
@@ -140,9 +143,10 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
     g.textAlign = 'left';
 
     // Ideal Reference rings: theory's level for each Harmonic (after the Filter, when there is one).
-    const amplitudes = ideal?.();
+    const amplitudes = showIdeal && overlays.ideal ? ideal : undefined;
     if (amplitudes && markers.length) {
       const shown = markers.filter((m) => amplitudes[m.n] > 1e-5);
+      // On the Filter Tap the rings are where theory puts each Harmonic after the Filter.
       const gains = response ? response(Float32Array.from(shown, (m) => m.frequency)) : undefined;
       g.strokeStyle = text;
       g.lineWidth = 1;
