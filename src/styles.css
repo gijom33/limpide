@@ -187,3 +187,17 @@ main[data-frozen] .tap-canvases::before {
   .tool-group { padding: 6px 12px; flex: 1 1 100%; }
   .tool-group + .tool-group { border-left: 0; border-top: 1px solid var(--border); }
 }
+
+/* Tooltips: a title, what the control does, and how to use it. */
+.tip-anchor { display: inline-flex; }
+.tooltip {
+  position: fixed; z-index: 100; width: max-content; max-width: 280px; padding: 10px 12px;
+  display: flex; flex-direction: column; gap: 4px;
+  font-size: 12px; line-height: 1.45; color: var(--text); text-align: left;
+  background: var(--panel); border: 1px solid var(--muted); border-radius: 8px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.28); pointer-events: none;
+}
+.tooltip[hidden] { display: none; }
+.tooltip strong { font-size: 12px; font-weight: 600; }
+.tooltip-how { color: var(--muted); }
+.has-tip { text-decoration: underline dotted var(--muted); text-underline-offset: 3px; cursor: help; }

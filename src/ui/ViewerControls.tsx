@@ -3,6 +3,8 @@ import type { ViewerAction, ViewerState } from '../viewers/viewerState';
 import type { ViewSettings } from '../viewers/viewSettings';
 import { CameraIcon, CloseIcon, PauseIcon } from './icons';
 import { Segmented } from './Segmented';
+import { TIPS } from './tips';
+import { Tooltip } from './Tooltip';
 
 interface Props {
   state: ViewerState;
@@ -13,33 +15,37 @@ interface Props {
 export function ViewActions({ state, dispatch }: Props) {
   return (
     <>
-      <button
-        type="button"
-        className="tool tool-mode"
-        aria-pressed={state.frozen}
-        aria-keyshortcuts="Space"
-        title="Freeze every Viewer on this frame while the sound keeps playing"
-        onClick={() => dispatch({ type: 'toggleFreeze' })}
-      >
-        <PauseIcon />
-        Freeze
-        <kbd aria-hidden="true">Space</kbd>
-      </button>
-      <div className="tool-split">
+      <Tooltip content={TIPS.freeze}>
         <button
           type="button"
-          className="tool"
-          aria-pressed={state.snapshot !== null}
-          title="Keep this frame of every Spectrum as a faint trace, to compare after you turn a knob"
-          onClick={() => dispatch({ type: 'takeSnapshot' })}
+          className="tool tool-mode"
+          aria-pressed={state.frozen}
+          aria-keyshortcuts="Space"
+          onClick={() => dispatch({ type: 'toggleFreeze' })}
         >
-          <CameraIcon />
-          Snapshot
+          <PauseIcon />
+          Freeze
+          <kbd aria-hidden="true">Space</kbd>
         </button>
-        {state.snapshot !== null && (
-          <button type="button" className="tool tool-icon" aria-label="Clear Snapshot" title="Clear Snapshot" onClick={() => dispatch({ type: 'clearSnapshot' })}>
-            <CloseIcon />
+      </Tooltip>
+      <div className="tool-split">
+        <Tooltip content={TIPS.snapshot}>
+          <button
+            type="button"
+            className="tool"
+            aria-pressed={state.snapshot !== null}
+            onClick={() => dispatch({ type: 'takeSnapshot' })}
+          >
+            <CameraIcon />
+            Snapshot
           </button>
+        </Tooltip>
+        {state.snapshot !== null && (
+          <Tooltip content={TIPS.clearSnapshot}>
+            <button type="button" className="tool tool-icon" aria-label="Clear Snapshot" onClick={() => dispatch({ type: 'clearSnapshot' })}>
+              <CloseIcon />
+            </button>
+          </Tooltip>
         )}
       </div>
     </>
@@ -56,30 +62,27 @@ const CYCLES = [
 export function AxesControls({ state, dispatch, cycles, onCycles }: Props & { cycles: ViewSettings['cycles']; onCycles(c: ViewSettings['cycles']): void }) {
   return (
     <>
-      <Segmented
-        label="Frequency axis"
-        caption="Freq"
-        hint="Frequency axis: log matches how we hear; linear (0–5 kHz) spaces Harmonics evenly, like a ladder"
-        value={state.frequencyScale}
-        options={[{ value: 'log', label: 'Log' }, { value: 'linear', label: 'Lin' }]}
-        onChange={(scale) => dispatch({ type: 'setFrequencyScale', scale })}
-      />
-      <Segmented
-        label="Level axis"
-        caption="Level"
-        hint="Level axis: dB shows quiet Harmonics too; linear shows amplitude as it really scales"
-        value={state.levelScale}
-        options={[{ value: 'db', label: 'dB' }, { value: 'linear', label: 'Lin' }]}
-        onChange={(scale) => dispatch({ type: 'setLevelScale', scale })}
-      />
-      <Segmented
-        label="Scope cycles"
-        caption="Cycles"
-        hint="How many cycles of the Note each Scope shows"
-        value={cycles}
-        options={CYCLES}
-        onChange={onCycles}
-      />
+      <Tooltip content={TIPS.frequencyAxis}>
+        <Segmented
+          label="Frequency axis"
+          caption="Freq"
+          value={state.frequencyScale}
+          options={[{ value: 'log', label: 'Log' }, { value: 'linear', label: 'Lin' }]}
+          onChange={(scale) => dispatch({ type: 'setFrequencyScale', scale })}
+        />
+      </Tooltip>
+      <Tooltip content={TIPS.levelAxis}>
+        <Segmented
+          label="Level axis"
+          caption="Level"
+          value={state.levelScale}
+          options={[{ value: 'db', label: 'dB' }, { value: 'linear', label: 'Lin' }]}
+          onChange={(scale) => dispatch({ type: 'setLevelScale', scale })}
+        />
+      </Tooltip>
+      <Tooltip content={TIPS.cycles}>
+        <Segmented label="Scope cycles" caption="Cycles" value={cycles} options={CYCLES} onChange={onCycles} />
+      </Tooltip>
     </>
   );
 }

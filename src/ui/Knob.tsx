@@ -11,19 +11,17 @@ interface Props {
   onChange(value: number): void;
   /** Dimmed when the Parameter has no audible effect right now (still adjustable). */
   inactive?: boolean;
-  /** Why it is inactive, shown as a tooltip. */
-  inactiveHint?: string;
 }
 
 /** A Parameter control: drag vertically (Shift for fine), arrow keys, double-click to reset. */
-export function Knob({ id, value, onChange, inactive, inactiveHint }: Props) {
+export function Knob({ id, value, onChange, inactive }: Props) {
   const def = PARAMS[id];
   const position = valueToPosition(def, value);
   const drag = useRef<{ y: number; position: number } | null>(null);
   const setPosition = (p: number) => onChange(positionToValue(def, p));
 
   return (
-    <div className="knob" data-inactive={inactive || undefined} title={inactive ? inactiveHint : undefined}>
+    <div className="knob" data-inactive={inactive || undefined}>
       <div
         className="knob-dial"
         role="slider"

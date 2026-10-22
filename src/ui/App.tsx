@@ -11,7 +11,9 @@ import { Knob } from './Knob';
 import { OverlayToggles } from './OverlayToggles';
 import { TapViewers } from './TapViewers';
 import { MoonIcon, SunIcon } from './icons';
+import { TIPS } from './tips';
 import { ToolGroup } from './ToolGroup';
+import { Tooltip, type TipContent } from './Tooltip';
 import { AxesControls, ViewActions } from './ViewerControls';
 import { applyTheme, loadTheme } from './theme';
 import { WaveformPicker } from './WaveformPicker';
@@ -131,7 +133,7 @@ export function App() {
     name: string,
     extra: {
       idleHint?: string;
-      note?: string;
+      tip?: TipContent;
       showIdeal?: boolean;
       response?(f: Float32Array<ArrayBuffer>): Float32Array;
       ghostOf?: AnalyserNode;
@@ -152,18 +154,23 @@ export function App() {
     <main data-frozen={viewer.frozen || undefined}>
       <header>
         <h1>SynthView</h1>
-        <p className="hint" title="White keys on A S D F G H J K, black keys on W E T Y U">
-          Play <kbd>A</kbd>–<kbd>K</kbd>
-        </p>
-        <button
-          type="button"
-          className="tool tool-icon theme-toggle"
-          aria-label={theme === 'dark' ? 'Light theme' : 'Dark theme'}
-          title={theme === 'dark' ? 'Switch to the light theme' : 'Switch to the dark theme'}
-          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-        >
-          {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
-        </button>
+        <Tooltip content={TIPS.keyboard}>
+          <p className="hint has-tip">
+            Play <kbd>A</kbd>–<kbd>K</kbd>
+          </p>
+        </Tooltip>
+        <span className="theme-toggle">
+          <Tooltip content={TIPS.theme}>
+            <button
+              type="button"
+              className="tool tool-icon"
+              aria-label={theme === 'dark' ? 'Light theme' : 'Dark theme'}
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            >
+              {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
+            </button>
+          </Tooltip>
+        </span>
       </header>
 
       <section className="toolbar" aria-label="Viewer controls">
@@ -192,18 +199,14 @@ export function App() {
           patch={patch}
           onChange={change}
           viewers={viewers('oscillator', 'Oscillator', {
-            note: 'The Oscillator runs all the time, even between Notes. The Amp decides when you hear it.',
+            tip: TIPS.oscillatorTap,
             showIdeal: true,
           })}
         >
           <WaveformPicker value={patch.waveform} onChange={(w) => setPatch((p) => setWaveform(p, w))} />
-          <Knob
-            id="pulseWidth"
-            value={patch.pulseWidth}
-            onChange={(v) => change('pulseWidth', v)}
-            inactive={patch.waveform !== 'pulse'}
-            inactiveHint="Only shapes the Pulse Waveform"
-          />
+          <Tooltip content={TIPS.pulseWidth}>
+            <Knob id="pulseWidth" value={patch.pulseWidth} onChange={(v) => change('pulseWidth', v)} inactive={patch.waveform !== 'pulse'} />
+          </Tooltip>
         </Block>
         <Block
           title="Filter"

@@ -19,5 +19,6 @@ test('overlays can be switched off to declutter the Viewers, and stay off after 
 test('explanations live in tooltips, not as text on screen', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByText(/runs all the time/)).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Ghost' })).toHaveAttribute('title', /removed/);
+  await page.getByRole('button', { name: 'Ghost' }).hover();
+  await expect(page.getByRole('tooltip')).toContainText('removed');
 });

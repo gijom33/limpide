@@ -4,6 +4,7 @@ import { addToRenderLoop } from '../viewers/renderLoop';
 import { createScope } from '../viewers/scope';
 import { createSpectrum } from '../viewers/spectrum';
 import type { ViewSettings } from '../viewers/viewSettings';
+import { Tooltip, type TipContent } from './Tooltip';
 
 const SILENT_DB = -90;
 
@@ -21,12 +22,12 @@ interface Props {
   ghostOf?: AnalyserNode;
   /** Shown over the Viewers while this Tap is silent. */
   idleHint?: string;
-  /** An explanation, shown as the caption's tooltip rather than as text on screen. */
-  note?: string;
+  /** What this Tap is, shown as the caption's tooltip rather than as text on screen. */
+  tip?: TipContent;
 }
 
 /** Scope + Spectrum + level readout for one Tap. Canvases are mounted once and drawn by the render loop. */
-export function TapViewers({ name, analyser, sampleRate, fundamental, view, showIdeal, response, ghostOf, idleHint, note }: Props) {
+export function TapViewers({ name, analyser, sampleRate, fundamental, view, showIdeal, response, ghostOf, idleHint, tip }: Props) {
   const scopeRef = useRef<HTMLCanvasElement>(null);
   const spectrumRef = useRef<HTMLCanvasElement>(null);
   const levelRef = useRef<HTMLSpanElement>(null);
@@ -56,8 +57,15 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, view, show
 
   return (
     <figure className="tap" data-tap={name}>
-      <figcaption title={note}>
-        {name} Tap <span className="level" data-testid={`${name.toLowerCase()}-level`} ref={levelRef} />
+      <figcaption>
+        {tip ? (
+          <Tooltip content={tip}>
+            <span className="has-tip">{name} Tap</span>
+          </Tooltip>
+        ) : (
+          `${name} Tap`
+        )}{' '}
+        <span className="level" data-testid={`${name.toLowerCase()}-level`} ref={levelRef} />
       </figcaption>
       <div className="tap-canvases">
         <canvas className="scope" ref={scopeRef} aria-label={`${name} Scope`} />

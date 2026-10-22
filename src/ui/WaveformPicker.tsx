@@ -26,7 +26,6 @@ export function WaveformPicker({ value, onChange }: Props) {
           role="radio"
           aria-checked={w === value}
           aria-label={LABELS[w]}
-          title={LABELS[w]}
           className="waveform"
           onClick={() => onChange(w)}
         >
