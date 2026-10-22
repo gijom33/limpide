@@ -153,11 +153,14 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
       const held = frozenCurve(viewer.frozen, live);
       const { gains } = held.key === key ? held : frozenCurve(false, live);
       const zero = viewer.levelScale === 'db' ? GAIN_ZERO_DB : LINEAR_TOP_DB - 12;
-      g.strokeStyle = text;
+      // The Filter's own colour, faded, so it reads as the Filter's shape rather than as a measurement.
+      g.strokeStyle = cssVar(canvas, '--stage-filter');
+      g.globalAlpha = 0.6;
       g.lineWidth = 1.25;
       g.setLineDash([6, 3]);
       strokeColumns(g, gains.map((v) => zero + 20 * Math.log10(Math.max(1e-6, v))), yOf);
       g.setLineDash([]);
+      g.globalAlpha = 1;
       g.fillStyle = muted;
       g.textAlign = 'right';
       for (const t of viewer.levelScale === 'db' ? GAIN_TICKS : [0]) {
