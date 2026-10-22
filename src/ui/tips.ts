@@ -54,7 +54,7 @@ export const TIPS = {
   pulseWidth: {
     title: 'Pulse Width',
     body: 'How much of each cycle the pulse spends high. 50% is a square. Narrower pulses sound thinner and add Harmonics that a square lacks.',
-    how: 'Only shapes the Pulse Waveform, on either Oscillator: choose Pulse to hear it.',
+    how: 'Each Oscillator has its own, and it only shapes the Pulse Waveform: choose Pulse to hear it.',
   },
   osc2: {
     title: 'Osc 2',

@@ -52,8 +52,6 @@ function Block({ title, stage, ids, patch, onChange, children, more, viewers }: 
   );
 }
 
-/** Pulse Width matters while either audible Oscillator plays a pulse. */
-const usesPulse = (p: Patch) => p.waveform === 'pulse' || (p.osc2Waveform === 'pulse' && p.mixOsc2 > 0);
 
 /** A labelled cluster of controls inside a stage (Osc 1, Osc 2, Mixer, Filter Envelope). */
 function SubBlock({ title, tip, group, children }: { title: string; tip?: TipContent; group?: boolean; children: React.ReactNode }) {
@@ -234,15 +232,15 @@ export function App() {
           })}
         >
           <div className="source-rows">
-            <SubBlock title="Osc 1">
+            <SubBlock title="Osc 1" group>
               <WaveformPicker label="Osc 1 Waveform" compact value={patch.waveform} onChange={(w) => setPatch((p) => setWaveform(p, w))} />
               <div className="knobs">
                 <Tooltip content={TIPS.pulseWidth}>
-                  <Knob id="pulseWidth" value={patch.pulseWidth} onChange={(v) => change('pulseWidth', v)} inactive={!usesPulse(patch)} />
+                  <Knob id="pulseWidth" value={patch.pulseWidth} onChange={(v) => change('pulseWidth', v)} inactive={patch.waveform !== 'pulse'} />
                 </Tooltip>
               </div>
             </SubBlock>
-            <SubBlock title="Osc 2" tip={TIPS.osc2}>
+            <SubBlock title="Osc 2" tip={TIPS.osc2} group>
               <WaveformPicker label="Osc 2 Waveform" compact value={patch.osc2Waveform} onChange={(w) => setPatch((p) => setWaveform(p, w, 'osc2'))} />
               <div className="knobs">
                 {(['osc2Octave', 'osc2Semitone'] as const).map((id) => (
@@ -250,6 +248,14 @@ export function App() {
                 ))}
                 <Tooltip content={TIPS.detune}>
                   <Knob id="osc2Detune" value={patch.osc2Detune} onChange={(v) => change('osc2Detune', v)} inactive={patch.mixOsc2 === 0} />
+                </Tooltip>
+                <Tooltip content={TIPS.pulseWidth}>
+                  <Knob
+                    id="osc2PulseWidth"
+                    value={patch.osc2PulseWidth}
+                    onChange={(v) => change('osc2PulseWidth', v)}
+                    inactive={patch.mixOsc2 === 0 || patch.osc2Waveform !== 'pulse'}
+                  />
                 </Tooltip>
               </div>
             </SubBlock>

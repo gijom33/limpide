@@ -237,7 +237,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       patches.push({ time: t, patch: next });
       if (patches.length > HISTORY * 4) patches.shift();
       setWave(osc, next.waveform, next.pulseWidth);
-      setWave(osc2, next.osc2Waveform, next.pulseWidth);
+      setWave(osc2, next.osc2Waveform, next.osc2PulseWidth);
       osc2.detune.setValueAtTime(next.osc2Octave * 1200 + next.osc2Semitone * 100 + next.osc2Detune, t);
       mix1.gain.setValueAtTime(next.mixOsc1 * OSCILLATOR_LEVEL, t);
       mix2.gain.setValueAtTime(next.mixOsc2 * OSCILLATOR_LEVEL, t);

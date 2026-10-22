@@ -388,3 +388,14 @@ describe('Osc 2, Noise and the Mixer', () => {
     expect(worst).toBeLessThan(1);
   });
 });
+
+describe('Osc 2 Pulse Width', () => {
+  it('shapes Osc 2 by its own width, whatever Osc 1’s is', async () => {
+    const solo2 = { cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001, mixOsc1: 0, mixOsc2: 1, osc2Waveform: 'pulse', waveform: 'pulse' } as const;
+    const s = await render(1, { ...solo2, pulseWidth: 0.5, osc2PulseWidth: 0.25 }, (e) => e.noteOn(45, 1, 0));
+    const window = s.subarray(SR / 2, SR / 2 + Math.round((40 * SR) / 110));
+    const h = (n: number) => toneAmplitude(window, SR, 110 * n);
+    expect(dB(h(4) / h(1)), '25%: every 4th Harmonic missing').toBeLessThan(-40);
+    expect(dB(h(2) / h(1)), '25%: even Harmonics present (a 50% pulse would have none)').toBeGreaterThan(-6);
+  });
+});

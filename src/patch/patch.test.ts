@@ -14,7 +14,7 @@ describe('defaultPatch', () => {
       [
         'ampAttack', 'ampDecay', 'ampRelease', 'ampSustain', 'cutoff', 'pulseWidth', 'resonance',
         'filterEnvAmount', 'filterAttack', 'filterDecay', 'filterSustain', 'filterRelease',
-        'osc2Octave', 'osc2Semitone', 'osc2Detune', 'mixOsc1', 'mixOsc2', 'mixNoise',
+        'osc2Octave', 'osc2Semitone', 'osc2Detune', 'osc2PulseWidth', 'mixOsc1', 'mixOsc2', 'mixNoise',
       ].sort(),
     );
   });
@@ -67,6 +67,13 @@ describe('Osc 2 and the Mixer', () => {
     expect(formatParam('osc2Semitone', -5)).toBe('−5 st');
     expect(formatParam('osc2Detune', 7.4)).toBe('+7 ¢');
     expect(formatParam('osc2Detune', 0)).toBe('0 ¢');
+  });
+
+  it('gives Osc 2 its own Pulse Width, starting where Osc 1’s does', () => {
+    const p = setParam(defaultPatch(), 'osc2PulseWidth', 0.1);
+    expect(p.osc2PulseWidth).toBe(0.1);
+    expect(p.pulseWidth).toBe(0.25);
+    expect(defaultPatch().osc2PulseWidth).toBe(defaultPatch().pulseWidth);
   });
 
   it('sets either Oscillator’s Waveform independently', () => {
