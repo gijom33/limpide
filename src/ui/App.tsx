@@ -16,6 +16,8 @@ import { Logo } from './Logo';
 import { TIPS } from './tips';
 import { ToolGroup } from './ToolGroup';
 import { FilterShape } from './FilterShape';
+import { SubBlock } from './SubBlock';
+import { LfoControls } from './LfoControls';
 import { Tabs } from './Tabs';
 import { Tooltip, type TipContent } from './Tooltip';
 import { AxesControls, ViewActions } from './ViewerControls';
@@ -60,24 +62,6 @@ function Block({ title, stage, ids, patch, onChange, children, more, heading, vi
   );
 }
 
-
-/** A labelled cluster of controls inside a stage (Osc 1, Osc 2, Mixer, Filter Envelope). */
-function SubBlock({ title, tip, group, showTitle = true, children }: {
-  title: string;
-  tip?: TipContent;
-  group?: boolean;
-  /** Off when something else already names it on screen (e.g. its tab). */
-  showTitle?: boolean;
-  children: React.ReactNode;
-}) {
-  const heading = <h3 className={tip ? 'has-tip' : undefined}>{title}</h3>;
-  return (
-    <div className="sub-block" role={group ? 'group' : undefined} aria-label={group ? title : undefined}>
-      {showTitle && (tip ? <Tooltip content={tip}>{heading}</Tooltip> : heading)}
-      {children}
-    </div>
-  );
-}
 
 export function App() {
   const [patch, setPatch] = useState(defaultPatch);
@@ -345,7 +329,11 @@ export function App() {
         />
       </div>
 
-      <EnvelopeTimeline engine={session.engine} view={view} />
+      <EnvelopeTimeline
+        engine={session.engine}
+        view={view}
+        controls={<LfoControls patch={patch} onParam={change} onPatch={setPatch} />}
+      />
     </main>
   );
 }

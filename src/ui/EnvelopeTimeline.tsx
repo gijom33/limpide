@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import type { SynthEngine } from '../engine/synthEngine';
 import { addToRenderLoop } from '../viewers/renderLoop';
 import { createTimeline } from '../viewers/timeline';
@@ -6,8 +6,8 @@ import type { ViewSettings } from '../viewers/viewSettings';
 import { TIPS } from './tips';
 import { Tooltip } from './Tooltip';
 
-/** The Envelope Timeline panel, under the signal chain. */
-export function EnvelopeTimeline({ engine, view }: { engine: SynthEngine; view(): ViewSettings }) {
+/** The Envelope Timeline panel, under the signal chain, with the controls that act over time beside it. */
+export function EnvelopeTimeline({ engine, view, controls }: { engine: SynthEngine; view(): ViewSettings; controls?: ReactNode }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   useEffect(() => addToRenderLoop(createTimeline(canvasRef.current!, engine, view)), [engine, view]);
 
@@ -22,7 +22,10 @@ export function EnvelopeTimeline({ engine, view }: { engine: SynthEngine; view()
           <span data-mark="cutoff">Effective Cutoff</span>
         </span>
       </h2>
-      <canvas ref={canvasRef} aria-label="Envelope Timeline" />
+      <div className="timeline-body">
+        {controls}
+        <canvas ref={canvasRef} aria-label="Envelope Timeline" />
+      </div>
     </section>
   );
 }

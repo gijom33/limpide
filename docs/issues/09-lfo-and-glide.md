@@ -4,9 +4,10 @@
 
 **Blocked by:** 06
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Modulation model includes the LFO for the Cutoff destination, tested
-- [ ] Engine test: the model and the rendered Cutoff modulation agree in rate and depth
-- [ ] Glide: pitch over time between two Notes, tested
-- [ ] Pulse Width modulation shows in the Harmonic pattern
+- [x] Modulation model includes the LFO for the Cutoff destination, tested
+- [x] Engine test: the model and the rendered Cutoff modulation agree in rate and depth
+- [x] Glide: pitch over time between two Notes, tested
+- [x] Pulse Width modulation shows in the Harmonic pattern (pulses are now a saw minus a delayed copy, ADR-0001)
+- [x] LFO and Glide controls beside the Envelope Timeline, which shows the LFO moving the Effective Cutoff

@@ -11,4 +11,4 @@ The Envelope Timeline, Response Curve and Ghost all need the Effective Cutoff *r
 
 The Response Curve comes from an unconnected twin `BiquadFilterNode`, set to the model's Effective Cutoff, through its exact `getFrequencyResponse()`. An engine test checks it against the attenuation measured between the Oscillator and Filter Taps, Harmonic by Harmonic.
 
-The LFO is applied in both places: as an audio-rate connection in the graph and as the same formula in the model. Engine tests have to check that the two stay in agreement.
+The LFO is applied in both places: as a real oscillator connected in the graph, and as the same shape in the model, with its phase integrated across every Rate change since it started. An engine test checks that they agree at the LFO's peak and trough, which covers rate, phase and depth together. Glide follows the same rule: the model's slide uses `setTargetAtTime`'s own curve.

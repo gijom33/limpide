@@ -347,3 +347,18 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 @container (min-width: 330px) {
   .block[data-stage='filter'] .filter-shape { position: absolute; top: -4px; right: 0; }
 }
+
+/* The Timeline panel: the controls that act over time (LFO, Glide) to the left of the plot. */
+.timeline-body { display: flex; gap: 16px; align-items: stretch; }
+.timeline-body canvas { flex: 1 1 auto; min-width: 0; }
+.timeline-controls { display: flex; gap: 14px; align-items: flex-start; flex: none; }
+/* Not size containers: a container has no intrinsic width, and in this content-sized column it would collapse. */
+/* Laid out sideways (label, pickers stacked, then knobs), so the panel is only about one knob tall. */
+.timeline-controls .sub-block { border-top: 0; padding-top: 0; container-type: normal; flex-wrap: nowrap; flex-direction: row; align-items: center; gap: 10px; }
+.timeline-controls .sub-block > h3, .timeline-controls .sub-block > .tip-anchor:first-child { flex: none; }
+.timeline-controls .sub-block > .knobs { flex: none; flex-wrap: nowrap; }
+.lfo-pickers { display: flex; flex-direction: column; gap: 6px; flex: none; }
+.lfo-shapes button { min-width: 30px; justify-content: center; padding: 0 4px; }
+@media (max-width: 860px) {
+  .timeline-body { flex-direction: column; }
+}

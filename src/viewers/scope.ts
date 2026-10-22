@@ -100,7 +100,19 @@ export function createScope(canvas: HTMLCanvasElement, analyser: AnalyserNode, f
       g.globalAlpha = 1;
     }
 
-    g.strokeStyle = cssVar(canvas, '--trace');
+    // Shade between the trace and zero, like the Spectrums' fill: the waveform's positive and negative halves.
+    const colour = cssVar(canvas, '--trace');
+    g.fillStyle = colour;
+    g.globalAlpha = 0.16;
+    g.beginPath();
+    g.moveTo(0, yOf(0));
+    trace.forEach((v, i) => g.lineTo((i / (trace.length - 1)) * width, yOf(v)));
+    g.lineTo(width, yOf(0));
+    g.closePath();
+    g.fill();
+    g.globalAlpha = 1;
+
+    g.strokeStyle = colour;
     g.lineWidth = 1.5;
     stroke(trace);
   };

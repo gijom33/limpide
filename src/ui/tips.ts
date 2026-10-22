@@ -60,6 +60,20 @@ export const TIPS = {
     body: 'The last four seconds. Violet: the Amp Envelope (loudness). Orange: the Effective Cutoff, with the frequencies the Filter lets through shaded below it. The faint dashed line is the Cutoff knob itself.',
     how: 'Play a Note and let go: the Release is drawn after the key comes up.',
   },
+  lfo: {
+    title: 'LFO',
+    body: 'A slow, repeating wave that moves something for you: the Cutoff (wah, wobble), the pitch (vibrato) or the Pulse Width (a shimmering PWM chorus). Rate is how fast, Depth how far.',
+    how: 'Turn Depth up and watch the Envelope Timeline and the Response Curve move with it.',
+  },
+  lfoDestination: {
+    title: 'LFO Destination',
+    body: 'What the LFO moves. Cutoff: up to two octaves each way (wah). Pitch: up to a semitone each way (vibrato). Width: each Oscillator’s Pulse Width (PWM; only heard on a Pulse).',
+  },
+  glide: {
+    title: 'Glide',
+    body: 'Slides the pitch from one Note to the next instead of jumping, over this long. Off plays Notes at once.',
+    how: 'Play two keys one after the other and watch the Scope stretch or squeeze as the pitch slides.',
+  },
   theme: { title: 'Theme', body: 'Switches between the dark and light look. Your choice is remembered.' },
   pulseWidth: {
     title: 'Pulse Width',

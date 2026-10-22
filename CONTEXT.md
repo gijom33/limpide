@@ -91,8 +91,8 @@ How far, in octaves, the Filter Envelope pushes the Effective Cutoff away from t
 _Avoid_: Env depth, intensity
 
 **LFO**:
-A slow, repeating modulation source that can move pitch, Cutoff, or Pulse Width.
-_Avoid_: Modulator, wobble
+A slow, repeating modulation source that moves one Destination: pitch (vibrato), Cutoff, or Pulse Width (PWM). **Rate** is how fast it repeats, **Depth** how far it moves things.
+_Avoid_: Modulator, wobble, LFO amount (say Depth)
 
 **Glide**:
 The time taken to slide from one note's pitch to the next.

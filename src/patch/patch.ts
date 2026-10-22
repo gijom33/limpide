@@ -71,7 +71,7 @@ export const PARAMS: Record<ParamId, ParamDef> = {
   mixOsc2: level('mixOsc2', 'Osc 2', 0),
   mixNoise: level('mixNoise', 'Noise', 0),
   lfoRate: { id: 'lfoRate', label: 'Rate', unit: 'Hz', min: 0.05, max: 20, taper: 'log', default: 2 },
-  lfoAmount: level('lfoAmount', 'Amount', 0),
+  lfoAmount: level('lfoAmount', 'Depth', 0),
   glide: time('glide', 'Glide', GLIDE_OFF),
   cutoff: { id: 'cutoff', label: 'Cutoff', unit: 'Hz', min: 20, max: 20000, taper: 'log', default: 2000 },
   resonance: { id: 'resonance', label: 'Resonance', unit: '%', min: 0, max: 1, taper: 'linear', default: 0.2 },
