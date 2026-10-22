@@ -7,6 +7,7 @@
   --accent: #ff9a3c;
   --trace: #5fd4ff;
   --grid: #262b35;
+  --danger: #ff5c5c;
   color-scheme: dark;
   font-family: system-ui, -apple-system, sans-serif;
 }
@@ -20,6 +21,7 @@
   --accent: #d96a0b;
   --trace: #0a7bbd;
   --grid: #e3e6ec;
+  --danger: #d12d2d;
   color-scheme: light;
 }
 

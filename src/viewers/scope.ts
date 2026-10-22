@@ -1,13 +1,19 @@
-import { createAutoRange } from './autoRange';
+import { OSCILLATOR_LEVEL } from '../engine/synthEngine';
 import { cssVar, prepareCanvas } from './canvas';
 import { cycleLockOffset } from './cycleLock';
 
-/** A Scope of one Tap, Cycle Locked to the Note's fundamental so a steady Note stands still. */
+const FULL_SCALE = 1;
+const OVER_HOLD_MS = 1000;
+
+/**
+ * A Scope of one Tap, Cycle Locked to the Note's fundamental so a steady Note stands still.
+ * Every Scope shares the same fixed ±1 scale, so heights compare directly from stage to stage.
+ */
 export function createScope(canvas: HTMLCanvasElement, analyser: AnalyserNode, fundamental: () => number) {
   const samples = new Float32Array(analyser.fftSize);
   const shown = Math.floor(samples.length / 4);
   const sampleRate = analyser.context.sampleRate;
-  const range = createAutoRange({ ranges: [1, 2, 4, 8], holdMs: 1000 });
+  let overAt = -Infinity;
 
   return function draw() {
     analyser.getFloatTimeDomainData(samples);
@@ -23,8 +29,10 @@ export function createScope(canvas: HTMLCanvasElement, analyser: AnalyserNode, f
 
     let peak = 0;
     for (let i = 0; i < shown; i++) peak = Math.max(peak, Math.abs(at(start + i)));
-    const fullScale = range.update(peak, performance.now());
-    const yOf = (v: number) => height / 2 - (Math.max(-fullScale, Math.min(fullScale, v)) / fullScale) * (height / 2) * 0.92;
+    const now = performance.now();
+    if (peak > FULL_SCALE) overAt = now;
+    const over = now - overAt < OVER_HOLD_MS;
+    const yOf = (v: number) => height / 2 - Math.max(-FULL_SCALE, Math.min(FULL_SCALE, v)) * (height / 2) * 0.92;
 
     g.strokeStyle = cssVar(canvas, '--grid');
     g.lineWidth = 1;
@@ -33,22 +41,27 @@ export function createScope(canvas: HTMLCanvasElement, analyser: AnalyserNode, f
     g.lineTo(width, height / 2);
     g.stroke();
 
-    // ±1 is the Oscillator's full level: when the range is wider, show where that sits.
-    if (fullScale > 1) {
-      g.setLineDash([4, 4]);
-      g.strokeStyle = cssVar(canvas, '--muted');
-      g.beginPath();
-      for (const v of [1, -1]) {
-        g.moveTo(0, yOf(v));
-        g.lineTo(width, yOf(v));
-      }
-      g.stroke();
-      g.setLineDash([]);
+    // The Oscillator's level, on every Scope: inside it the Filter only removed energy; beyond it Resonance added a peak.
+    g.setLineDash([4, 4]);
+    g.strokeStyle = cssVar(canvas, '--muted');
+    g.beginPath();
+    for (const v of [OSCILLATOR_LEVEL, -OSCILLATOR_LEVEL]) {
+      g.moveTo(0, yOf(v));
+      g.lineTo(width, yOf(v));
     }
+    g.stroke();
+    g.setLineDash([]);
     g.fillStyle = cssVar(canvas, '--muted');
     g.font = '10px system-ui, sans-serif';
-    g.fillText(`±${fullScale}`, 4, 12);
-    canvas.dataset.range = String(fullScale);
+    g.fillText('Osc level', 4, yOf(OSCILLATOR_LEVEL) - 3);
+
+    if (over) {
+      g.fillStyle = cssVar(canvas, '--danger');
+      g.textAlign = 'right';
+      g.fillText('OVER ±1', width - 4, 12);
+      g.textAlign = 'left';
+    }
+    canvas.dataset.over = String(over);
 
     g.strokeStyle = cssVar(canvas, '--trace');
     g.lineWidth = 1.5;

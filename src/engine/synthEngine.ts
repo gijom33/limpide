@@ -18,7 +18,13 @@ export interface SynthEngine {
   readonly taps: Taps;
 }
 
-const MASTER_LEVEL = 0.4;
+/**
+ * Nominal Oscillator level: −6 dB below full scale, so resonant peaks have headroom and every Tap
+ * can share one ±1 Scope scale. Floating-point audio never clips inside the graph, only at the output.
+ */
+export const OSCILLATOR_LEVEL = 0.5;
+// Listening volume only, after the Amp Tap, so it is not part of what the Viewers show.
+const MASTER_LEVEL = 0.8;
 
 // Web Audio interprets a low-pass biquad's Q in dB: −3 dB is a flat Butterworth response.
 const resonanceToQdB = (resonance: number) => -3.01 + resonance * 27;
@@ -38,6 +44,8 @@ function createAnalyser(ctx: BaseAudioContext): AnalyserNode {
 export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   const osc = ctx.createOscillator();
   osc.type = 'sawtooth';
+  const oscLevel = ctx.createGain();
+  oscLevel.gain.value = OSCILLATOR_LEVEL;
   const filter = ctx.createBiquadFilter();
   filter.type = 'lowpass';
   const compensation = ctx.createGain();
@@ -47,11 +55,11 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   master.gain.value = MASTER_LEVEL;
   const taps: Taps = { oscillator: createAnalyser(ctx), filter: createAnalyser(ctx), amp: createAnalyser(ctx) };
 
-  osc.connect(filter).connect(compensation).connect(amp).connect(master).connect(ctx.destination);
+  osc.connect(oscLevel).connect(filter).connect(compensation).connect(amp).connect(master).connect(ctx.destination);
   // Taps are side branches, so observing never alters the sound.
-  osc.connect(taps.oscillator);
+  oscLevel.connect(taps.oscillator);
   compensation.connect(taps.filter);
-  master.connect(taps.amp);
+  amp.connect(taps.amp);
   osc.start();
 
   let patch: Patch | undefined;

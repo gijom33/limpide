@@ -122,6 +122,10 @@ _Avoid_: Intensity, force
 A listening point in the Voice where the signal is observed: the **Oscillator Tap** (after the Mixer), the **Filter Tap**, and the **Amp Tap**.
 _Avoid_: Probe, monitor, stage output
 
+**Nominal Level**:
+The Oscillator's peak level (0.5, i.e. −6 dB below full scale), drawn on every Scope as "Osc level". It leaves headroom for Resonance.
+_Avoid_: Unity, reference level, 0 dB
+
 **Viewer**:
 A visual display attached to a Tap. Kinds: Scope, Spectrum, Envelope Timeline.
 _Avoid_: Visualiser, graph, panel

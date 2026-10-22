@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { defaultPatch, type Patch } from '../patch/patch';
 import { dB, rms, toneAmplitude } from '../test/measure';
-import { createSynthEngine } from './synthEngine';
+import { createSynthEngine, OSCILLATOR_LEVEL } from './synthEngine';
 
 const SR = 48000;
 
@@ -61,27 +61,27 @@ describe('Amp Envelope', () => {
   });
 });
 
-describe('Taps', () => {
-  /** Renders until `at` seconds, then returns what each Tap's analyser holds at that moment. */
-  async function tapsAt(at: number, patch: Partial<Patch>) {
-    const ctx = new OfflineAudioContext(1, SR * (at + 0.1), SR);
-    const engine = createSynthEngine(ctx);
-    engine.applyPatch({ ...defaultPatch(), ...patch });
-    engine.noteOn(45, 1, 0);
-    const read = (a: AnalyserNode) => {
-      const s = new Float32Array(a.fftSize);
-      a.getFloatTimeDomainData(s);
-      return s;
-    };
-    const captured = ctx.suspend(at).then(() => {
-      const taps = { oscillator: read(engine.taps.oscillator), filter: read(engine.taps.filter), amp: read(engine.taps.amp) };
-      void ctx.resume();
-      return taps;
-    });
-    await ctx.startRendering();
-    return captured;
-  }
+/** Renders until `at` seconds, then returns what each Tap's analyser holds at that moment. */
+async function tapsAt(at: number, patch: Partial<Patch>, note = 45) {
+  const ctx = new OfflineAudioContext(1, SR * (at + 0.1), SR);
+  const engine = createSynthEngine(ctx);
+  engine.applyPatch({ ...defaultPatch(), ...patch });
+  engine.noteOn(note, 1, 0);
+  const read = (a: AnalyserNode) => {
+    const s = new Float32Array(a.fftSize);
+    a.getFloatTimeDomainData(s);
+    return s;
+  };
+  const captured = ctx.suspend(at).then(() => {
+    const taps = { oscillator: read(engine.taps.oscillator), filter: read(engine.taps.filter), amp: read(engine.taps.amp) };
+    void ctx.resume();
+    return taps;
+  });
+  await ctx.startRendering();
+  return captured;
+}
 
+describe('Taps', () => {
   const level20th = (s: Float32Array) => toneAmplitude(s, SR, 110 * 20);
   const fundamental = (s: Float32Array) => toneAmplitude(s, SR, 110);
 
@@ -96,6 +96,38 @@ describe('Taps', () => {
     const ratio = rms(taps.amp) / rms(taps.filter);
     const fullSustainTaps = await tapsAt(0.5, { cutoff: 20000, ampSustain: 1, ampAttack: 0.001 });
     expect(ratio / (rms(fullSustainTaps.amp) / rms(fullSustainTaps.filter))).toBeCloseTo(0.25, 1);
+  });
+});
+
+describe('shared scale across Taps', () => {
+  const peak = (s: Float32Array) => s.reduce((m, v) => Math.max(m, Math.abs(v)), 0);
+
+  it('runs the Oscillator at the nominal level of 0.5 (−6 dB), leaving headroom for Resonance', async () => {
+    const taps = await tapsAt(0.5, { cutoff: 20000 });
+    expect(peak(taps.oscillator)).toBeCloseTo(OSCILLATOR_LEVEL, 1);
+    expect(OSCILLATOR_LEVEL).toBe(0.5);
+  });
+
+  it('shows the Amp Tap at the same scale as the Filter Tap when the Amp Envelope is fully open', async () => {
+    const taps = await tapsAt(0.5, { cutoff: 1000, ampSustain: 1, ampAttack: 0.001 });
+    expect(rms(taps.amp) / rms(taps.filter)).toBeCloseTo(1, 2);
+  });
+
+  it('keeps every Tap within ±1 at maximum Resonance', async () => {
+    let worst = 0;
+    for (const note of [24, 36, 48, 60, 72, 84]) {
+      for (const cutoff of [100, 300, 873, 2000, 6000]) {
+        const taps = await tapsAt(0.4, { cutoff, resonance: 1, ampSustain: 1, ampAttack: 0.001 }, note);
+        worst = Math.max(worst, peak(taps.oscillator), peak(taps.filter), peak(taps.amp));
+      }
+    }
+    expect(worst).toBeLessThan(0.8);
+  });
+
+  it('keeps the output exactly as loud as before the gain restaging', async () => {
+    // Before: a full-scale saw through master 0.4 peaked at 0.4 with the Filter wide open.
+    const s = await render(0.5, { cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001 }, (e) => e.noteOn(45, 1, 0));
+    expect(peak(s.subarray(SR * 0.25))).toBeCloseTo(0.4, 1);
   });
 });
 
