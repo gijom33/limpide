@@ -8,10 +8,16 @@ export interface AudioSession {
   input: NoteInput;
 }
 
-/** Creates the live AudioContext. Must be called from a user gesture (autoplay policy). */
-export async function startAudioSession(patch: Patch): Promise<AudioSession> {
+let session: AudioSession | undefined;
+
+/**
+ * The page's one audio session, built at load. Its AudioContext starts suspended until the first interaction
+ * (see unlockAudio), but the graph and the Taps exist from the start, so the Viewers can be shown at once.
+ * A singleton because React may run initialisers twice, and browsers cap the number of AudioContexts.
+ */
+export function getAudioSession(patch: Patch): AudioSession {
+  if (session) return session;
   const ctx = new AudioContext({ latencyHint: 'interactive' });
-  await ctx.resume();
   const engine = createSynthEngine(ctx);
   engine.applyPatch(patch);
   const input = createNoteInput((event) => {
@@ -19,5 +25,6 @@ export async function startAudioSession(patch: Patch): Promise<AudioSession> {
     else if (event.type === 'pitchChange') engine.pitchChange(event.note);
     else engine.noteOff();
   });
-  return { ctx, engine, input };
+  session = { ctx, engine, input };
+  return session;
 }

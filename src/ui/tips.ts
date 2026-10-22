@@ -29,7 +29,7 @@ export const TIPS = {
   keyboard: {
     title: 'Playing',
     body: 'Your computer keyboard is a piano: A S D F G H J K are the white keys from C, W E T Y U the black keys.',
-    how: 'Click “Start audio” first. Hold a key to hear the Envelope sustain.',
+    how: 'Sound starts with your first key press. Hold a key to hear the Envelope sustain.',
   },
   theme: { title: 'Theme', body: 'Switches between the dark and light look. Your choice is remembered.' },
   pulseWidth: {

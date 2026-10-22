@@ -5,7 +5,6 @@ const db = (level: Locator) => level.getAttribute('data-db').then((v) => (v === 
 
 test('a key press after starting audio makes the Amp Tap sound and the Viewers draw', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: /start audio/i }).click();
 
   const level = page.getByTestId('amp-level');
   const hint = page.getByText(/press a key/i);

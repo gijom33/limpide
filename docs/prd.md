@@ -32,7 +32,7 @@ SynthView is a browser-based, monophonic subtractive synthesizer laid out as its
 8. As a player, I want Glide between notes, so that I can hear and see pitch slide.
 9. As a player, I want pad Velocity to change loudness, so that the C16 pads feel expressive.
 10. As a player, I want an optional Velocity amount on the Effective Cutoff, so that harder hits sound brighter.
-11. As a learner, I want audio to start only after my first interaction, with a clear "click to start audio" prompt, so that the browser's autoplay policy never leaves me confused by silence.
+11. As a learner, I want sound to start with my first key press, click or drag, with no button to press first, and a quiet notice only if the browser still holds sound back, so that the browser's autoplay policy never gets in my way or leaves me confused by silence.
 
 ### Sound shaping
 12. As a learner, I want to choose the Waveform of each Oscillator (sine, triangle, saw, square, pulse), so that I can hear and see how the source's Harmonic content differs.

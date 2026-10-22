@@ -6,7 +6,6 @@ const level = (page: import('@playwright/test').Page) =>
 
 test('Space freezes the Viewers on a frame while the sound carries on', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: /start audio/i }).click();
   const freeze = page.getByRole('button', { name: 'Freeze' });
   await expect(page.getByTestId('amp-level')).toBeVisible(); // audio is up and listening for keys
 
@@ -56,7 +55,6 @@ test('the Spectrum axes switch between log/linear and dB/linear', async ({ page 
 
 test('hovering a Spectrum reads out frequency, note and level', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: /start audio/i }).click();
   const spectrum = page.getByLabel('Filter Spectrum');
   const box = (await spectrum.boundingBox())!;
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
@@ -77,7 +75,6 @@ test('controls are grouped under View, Axes and Show', async ({ page }) => {
 
 test('frozen Viewers do not change when a new Note is played or a knob is turned', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: /start audio/i }).click();
   await expect(page.getByTestId('amp-level')).toBeVisible();
   await page.keyboard.down('KeyA');
   await expect.poll(() => level(page)).toBeGreaterThan(-40);
@@ -109,7 +106,6 @@ test('frozen Viewers do not change when a new Note is played or a knob is turned
 
 test('a Snapshot keeps the waveform on every Scope as well as every Spectrum', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: /start audio/i }).click();
   await expect(page.getByTestId('amp-level')).toBeVisible();
   const scopes = page.locator('canvas.scope');
   await expect(scopes).toHaveCount(3);

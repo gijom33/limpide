@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
-import { startAudioSession, type AudioSession } from '../app/session';
+import { getAudioSession, type AudioSession } from '../app/session';
+import { unlockAudio, type AudioStatus } from '../app/unlockAudio';
 import { keyToNote } from '../input/keyboardLayout';
 import { OSCILLATOR_LEVEL } from '../engine/synthEngine';
 import { harmonicSeries } from '../music/harmonics';
@@ -49,7 +50,11 @@ function Block({ title, stage, ids, patch, onChange, children, viewers }: BlockP
 
 export function App() {
   const [patch, setPatch] = useState(defaultPatch);
-  const [session, setSession] = useState<AudioSession | null>(null);
+  const [session] = useState(() => getAudioSession(patch));
+  const [audioStatus, setAudioStatus] = useState<AudioStatus>('waiting');
+
+  // Sound starts on the first key press, click or drag; there is no button to press first.
+  useEffect(() => unlockAudio(session.ctx, window, setAudioStatus), [session]);
   const held = useRef(new Set<number>());
   const [theme, setTheme] = useState(loadTheme);
   const [cycles, setCycles] = useState<ViewSettings['cycles']>(2);
@@ -91,11 +96,10 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    session?.engine.applyPatch(patch);
+    session.engine.applyPatch(patch);
   }, [session, patch]);
 
   useEffect(() => {
-    if (!session) return;
     const { input } = session;
     const isTyping = (e: KeyboardEvent) => e.target instanceof HTMLInputElement || e.metaKey || e.ctrlKey || e.altKey;
 
@@ -138,8 +142,7 @@ export function App() {
       response?(f: Float32Array<ArrayBuffer>): Float32Array;
       ghostOf?: AnalyserNode;
     } = {},
-  ) =>
-    session && (
+  ) => (
       <TapViewers
         name={name}
         analyser={session.engine.taps[tap]}
@@ -187,10 +190,10 @@ export function App() {
         </div>
       </section>
 
-      {!session && (
-        <button className="start" onClick={async () => setSession(await startAudioSession(patch))}>
-          Click to start audio
-        </button>
+      {audioStatus === 'blocked' && (
+        <p className="audio-blocked" role="status">
+          This browser is holding back sound: click anywhere on the page to enable it.
+        </p>
       )}
 
       <div className="chain">
@@ -216,14 +219,11 @@ export function App() {
           ids={['cutoff', 'resonance']}
           patch={patch}
           onChange={change}
-          viewers={
-            session &&
-            viewers('filter', 'Filter', {
-              showIdeal: true,
-              response: session.engine.filterResponse,
-              ghostOf: session.engine.taps.oscillator,
-            })
-          }
+          viewers={viewers('filter', 'Filter', {
+            showIdeal: true,
+            response: session.engine.filterResponse,
+            ghostOf: session.engine.taps.oscillator,
+          })}
         />
         <Block
           title="Amp"
