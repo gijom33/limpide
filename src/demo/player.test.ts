@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { defaultPatch } from '../patch/patch';
-import { startDemo, type DemoHost } from './player';
+import { octaveShowing, startDemo, type DemoHost } from './player';
 import type { TourStop } from './tour';
 
 const tour: TourStop[] = [
@@ -28,6 +28,14 @@ function fakeHost(voicesOf: Record<string, number>) {
   };
   return { host, calls, advance: (s: number) => (clock += s) };
 }
+
+describe('octaveShowing', () => {
+  it('picks the octave whose 17 keys show the most of the phrase, the highest when tied', () => {
+    expect(octaveShowing([48, 52, 55])).toBe(3); // C3 E3 G3: all on the C3 keyboard
+    expect(octaveShowing([43, 48, 52, 55, 62])).toBe(3); // G2 C3 E3 G3 D4: four of five from C3; from C2 only three
+    expect(octaveShowing([60])).toBe(4); // C4 alone: on the C4 keyboard, not at the top of the C3 one
+  });
+});
 
 describe('the Demo player', () => {
   it('loads each Preset in turn, schedules its Notes ahead of the clock, and goes round', () => {

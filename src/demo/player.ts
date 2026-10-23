@@ -31,6 +31,21 @@ const TICK_MS = 40;
 const LEAD_IN = 0.3;
 const GAP = 0.4;
 
+/** The piano shows 17 keys from its C: the octave whose keys show the most of these Notes (the highest, if tied). */
+export function octaveShowing(notes: number[]): number {
+  let best = 0;
+  let most = -1;
+  for (let octave = 0; octave <= 7; octave++) {
+    const low = 12 * (octave + 1);
+    const shown = notes.filter((n) => n >= low && n <= low + 16).length;
+    if (shown >= most) {
+      most = shown;
+      best = octave;
+    }
+  }
+  return best;
+}
+
 /**
  * Plays the tour once: for each stop, load its Preset, play its phrase on the audio clock, move on; after the
  * last, it ends by itself. Returns the stop function, which silences everything at once.
@@ -57,8 +72,7 @@ export function startDemo(host: DemoHost, tour: readonly TourStop[] = TOUR): () 
     const patch = host.load(stop);
     voices = patch.voices;
     host.onStep(index);
-    const lowest = Math.min(...parsePhrase(stop.phrase, stop.bpm).map((e) => e.note));
-    host.showOctave(Math.floor(lowest / 12) - 1); // the piano's C is the lowest Note's octave
+    host.showOctave(octaveShowing(parsePhrase(stop.phrase, stop.bpm).map((e) => e.note)));
     const start = host.now() + LEAD_IN;
     const beat = 60 / stop.bpm;
     const length = phraseLength(stop.phrase, stop.bpm);

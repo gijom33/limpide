@@ -28,7 +28,7 @@ export const TIPS = {
   },
   keyboard: {
     title: 'Playing',
-    body: 'Your computer keyboard is a piano: the letters on these keys. Z and X shift the octave. Or click the keys: lower on a key plays harder.',
+    body: 'Your computer keyboard is a piano: A to ; are the white keys from the C shown, W E T Y U O P the black ones. Z and X shift the octave. Or click the keys: lower on a key plays harder.',
     how: 'Sound starts with your first key press. Drag across the keys to slide from Note to Note.',
   },
   midi: { title: 'MIDI', body: '' },

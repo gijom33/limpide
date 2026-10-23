@@ -3,9 +3,8 @@ import { nearestNote, noteToFrequency } from '../music/pitch';
 import { keyToNote } from '../input/keyboardLayout';
 import type { NoteInput } from '../input/noteInput';
 
-// The computer-keyboard range: C to the E above (17 keys), with each key's letter.
+// The computer-keyboard range: C to the E above (17 keys).
 const KEYS = ['KeyA', 'KeyW', 'KeyS', 'KeyE', 'KeyD', 'KeyF', 'KeyT', 'KeyG', 'KeyY', 'KeyH', 'KeyU', 'KeyJ', 'KeyK', 'KeyO', 'KeyL', 'KeyP', 'Semicolon'];
-const letter = (code: string) => (code === 'Semicolon' ? ';' : code.slice(3));
 const isBlack = (semitone: number) => [1, 3, 6, 8, 10].includes(semitone % 12);
 const noteName = (note: number) => nearestNote(noteToFrequency(note)).name;
 
@@ -16,8 +15,9 @@ interface Props {
 }
 
 /**
- * The on-screen piano: the computer keyboard's range, letters on the keys, lit while a Note sounds from any
- * source. Press lower on a key to play harder (Velocity); drag across keys to slide from Note to Note.
+ * The on-screen piano: the computer keyboard's range, each C named with its octave (C3, C4…), lit while a Note
+ * sounds from any source. Press lower on a key to play harder (Velocity); drag across keys to slide from Note
+ * to Note.
  */
 export function Piano({ octave, held, input }: Props) {
   const playing = useRef<number | null>(null);
@@ -61,7 +61,7 @@ export function Piano({ octave, held, input }: Props) {
             aria-label={noteName(note)}
             aria-pressed={held.includes(note)}
           >
-            <span aria-hidden="true">{letter(code)}</span>
+            {note % 12 === 0 && <span aria-hidden="true">{noteName(note)}</span>}
           </button>
         );
       })}
