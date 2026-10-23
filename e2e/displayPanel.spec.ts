@@ -13,7 +13,7 @@ test('the panel stays open while several settings are changed, and Escape closes
   await page.goto('/');
   await openDisplay(page);
   await page.getByRole('radiogroup', { name: 'Frequency axis' }).getByRole('radio', { name: 'Lin' }).click();
-  await page.getByRole('button', { name: 'Ghost' }).click();
+  await page.getByRole('button', { name: 'Guides' }).click();
   await expect(page.getByRole('region', { name: 'Viewer controls' })).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(page.getByRole('region', { name: 'Viewer controls' })).toBeHidden();

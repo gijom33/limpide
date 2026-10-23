@@ -2,7 +2,6 @@ import { OSCILLATOR_LEVEL } from '../engine/synthEngine';
 import { frequencyAxis, levelAxis } from './axes';
 import { cssVar, prepareCanvas } from './canvas';
 import { createFreezeLatch } from './freezeLatch';
-import { ghostRegions } from './ghost';
 import { harmonicMarkers } from './harmonicMarkers';
 import { spectrumOutline } from './outline';
 import { hoverReadout, interpolatedPeak, snapToPeak } from './readout';
@@ -17,7 +16,6 @@ const GAIN_ZERO_DB = -20;
 const GAIN_TICKS = [0, -24, -48];
 // The hover readout snaps to the strongest peak this many pixels either side of the cursor.
 const HOVER_SNAP = 12;
-const GHOST_OPTIONS = { floorDb: -90, thresholdDb: 1 };
 // On the linear level axis a sine at the Oscillator's level fills the height.
 const LINEAR_TOP_DB = amplitudeToSpectrumDb(OSCILLATOR_LEVEL);
 
@@ -28,8 +26,6 @@ interface Options {
   showIdeal?: boolean;
   /** The Filter's gain per frequency: drawn as the Response Curve, and applied to the Ideal rings. */
   response?(frequencies: Float32Array<ArrayBuffer>): Float32Array;
-  /** The Tap before the Filter: what it had and this Tap lacks is shaded as the Ghost. */
-  ghostOf?: AnalyserNode;
   /** Cursor position over the canvas (CSS pixels), for the hover readout. */
   hover?(): { x: number; y: number } | null;
 }
@@ -59,9 +55,8 @@ function strokeColumns(g: CanvasRenderingContext2D, values: Float32Array, yOf: (
 
 /** A Spectrum of one Tap, with Harmonic Markers and the overlays the learner has switched on. */
 export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode, sampleRate: number, options: Options) {
-  const { fundamental, view, showIdeal, response, ghostOf, hover } = options;
+  const { fundamental, view, showIdeal, response, hover } = options;
   const bins = new Float32Array(analyser.frequencyBinCount).fill(-Infinity);
-  const ghostBins = ghostOf && new Float32Array(ghostOf.frequencyBinCount).fill(-Infinity);
   const binHz = sampleRate / analyser.fftSize;
   const nyquist = sampleRate / 2;
   // While frozen, everything drawn over the frame (Markers, rings, Curve) stays with that frame's Note and
@@ -78,7 +73,6 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
     const ideal = frozenIdeal(viewer.frozen, () => view().ideal);
     if (!viewer.frozen) {
       analyser.getFloatFrequencyData(bins);
-      if (ghostOf && ghostBins) ghostOf.getFloatFrequencyData(ghostBins);
     }
     // Snapshot: keep a copy of this Spectrum's frame (live or frozen) whenever a new one is taken.
     if (viewer.snapshot !== snapshotToken) {
@@ -114,25 +108,6 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
     const peak = columnPeaks(bins, binHz, columns, fAxis);
     const maxFrequency = Math.min(nyquist, fAxis.frequencyAt(width));
     const markers = harmonicMarkers(frozenFundamental(viewer.frozen, fundamental), { maxFrequency, xOf, minLabelGap: MIN_LABEL_GAP });
-
-    // Ghost: the energy the Oscillator Tap had in each Harmonic that this Tap no longer has.
-    if (overlays.ghost && ghostBins) {
-      const before = columnPeaks(ghostBins, binHz, columns, fAxis);
-      // Compare only where Harmonics are (±1 column, for a visible bar), never the valleys between them.
-      const harmonicColumns = new Set<number>();
-      for (const m of markers) {
-        const c = Math.floor(xOf(m.frequency));
-        for (const d of [-1, 0, 1]) if (c + d >= 0 && c + d < columns) harmonicColumns.add(c + d);
-      }
-      const { removed, boosted } = ghostRegions(before, peak, { ...GHOST_OPTIONS, columns: harmonicColumns });
-      g.globalAlpha = 0.3;
-      g.fillStyle = cssVar(canvas, '--stage-osc');
-      for (const r of removed) g.fillRect(r.column, yOf(r.from), 1, yOf(r.to) - yOf(r.from));
-      g.globalAlpha = 0.45;
-      g.fillStyle = cssVar(canvas, '--trace');
-      for (const b of boosted) g.fillRect(b.column, yOf(b.to), 1, yOf(b.from) - yOf(b.to));
-      g.globalAlpha = 1;
-    }
 
     // Snapshot (A/B): the frame captured earlier, faint behind the live trace.
     if (snapshotBins) {

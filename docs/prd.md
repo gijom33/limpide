@@ -10,7 +10,7 @@ I've twisted knobs on synthesizers for years, but I don't really understand *why
 
 SynthView is a browser-based, monophonic subtractive synthesizer laid out as its own signal-flow diagram: Oscillators → Mixer → Filter → Amp, left to right, with Viewers under each stage.
 
-- **Seeing the subtraction:** each Tap has a cycle-locked Scope and a Spectrum. The Filter's real Response Curve is drawn over the Spectrum, and a Ghost shades exactly what the Filter took away.
+- **Seeing the subtraction:** each Tap has a cycle-locked Scope and a Spectrum. The Filter's real Response Curve is drawn over the Spectrum, so the Harmonics it cuts can be read against it.
 - **Harmonics against theory:** Harmonic Markers name each Harmonic, and the Waveform's Ideal Reference shows what theory predicts.
 - **Modulation over time:** an Envelope Timeline shows both Envelopes and the Effective Cutoff moving in time.
 - **Studying a frame:** Freeze, Snapshot (A/B), axis toggles and a hover readout.
@@ -60,8 +60,8 @@ SynthView is a browser-based, monophonic subtractive synthesizer laid out as its
 32. As a learner, I want the Waveform's Ideal Reference drawn on the Oscillator Tap's Spectrum, so that I can see that a saw's Harmonics really fall as 1/n.
 33. As a learner, I want the Filter's Response Curve drawn over the Spectrum, so that I can see which Harmonics fall in the pass band and which are cut.
 34. As a learner, I want the Response Curve to show the Resonance peak, so that I understand what Resonance physically does.
-35. As a learner, I want a Ghost shading the energy the Filter removed, so that "subtractive" becomes literal.
-36. As a learner, I want the Response Curve and Ghost to follow the Effective Cutoff live (envelope, LFO, velocity), so that I can see modulation as well as hear it.
+35. ~~As a learner, I want a Ghost shading the energy the Filter removed, so that "subtractive" becomes literal.~~ Dropped on 2026-10-22: in use it was not helpful; the Response Curve and the two Taps side by side already show what the Filter removes.
+36. As a learner, I want the Response Curve to follow the Effective Cutoff live (envelope, LFO, velocity), so that I can see modulation as well as hear it.
 37. As a learner, I want an Envelope Timeline showing both Envelopes and the Effective Cutoff with a moving playhead, so that I understand ADSR as time.
 38. As a learner, I want the Envelope Timeline to show the Release stage after I lift a key, so that I understand why notes ring on.
 39. As a learner, I want to Freeze all Viewers with the spacebar, so that I can study a fleeting moment such as the start of a pluck.
@@ -118,7 +118,7 @@ SynthView is a browser-based, monophonic subtractive synthesizer laid out as its
 - **Note input.** Merges keyboard, on-screen piano and MIDI note events into one Note stream and applies last-note priority. It emits the Gate and the current Note. Hold is part of this module.
 - **Modulation model.** Pure: given a Patch, the Gate history, Velocity and time, it returns envelope levels and the Effective Cutoff, and produces the automation schedule.
 - **Synth engine.** Owns the `AudioContext` graph. Interface: `start()`, `noteOn(note, velocity)`, `noteOff()`, `applyPatch(patch)`, `taps` (an analyser per Tap), `filterResponse(frequencies)` (delegating to the real biquads at the Effective Cutoff), `now()`.
-- **Spectrum analysis.** Pure: turns raw analyser data into display data: Harmonic positions and labels for a fundamental, the Ideal Reference per Waveform and Pulse Width, the Ghost region (Oscillator Tap minus Filter Tap), nearest-note naming, and Cycle Lock alignment (finding the period and phase offset in a time-domain buffer).
+- **Spectrum analysis.** Pure: turns raw analyser data into display data: Harmonic positions and labels for a fundamental, the Ideal Reference per Waveform and Pulse Width, nearest-note naming, and Cycle Lock alignment (finding the period and phase offset in a time-domain buffer).
 - **Viewer renderers.** Draw Scope, Spectrum and Envelope Timeline onto canvases from display data. They hold the viewer state: Freeze, axes, Snapshot, hover.
 - **MIDI.** Parses raw MIDI bytes into typed messages. It also holds the Mapping store, the MIDI Learn state machine, Encoder Mode detection, Pickup, and the Quick Setup sequence. Its input is a `MIDIAccess`-like interface, so a fake can be injected.
 - **Persistence.** A key–value storage interface (localStorage in the app, in-memory in tests) used for autosave, the named Patch library and Mappings.

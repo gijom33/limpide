@@ -174,10 +174,6 @@ _Avoid_: Expected spectrum, model curve
 The Filter's gain per frequency at the Effective Cutoff, drawn over the Spectrum.
 _Avoid_: Filter curve, transfer function (maths layer only), EQ curve
 
-**Ghost**:
-The shaded area on the Filter Tap's Spectrum showing the energy present at the Oscillator Tap but removed by the Filter.
-_Avoid_: Removed area, difference, delta
-
 **Envelope Timeline**:
 A Viewer plotting both Envelopes and the Effective Cutoff over time, with a playhead at "now".
 _Avoid_: ADSR display

@@ -413,7 +413,6 @@ export function App() {
       tip?: TipContent;
       showIdeal?: boolean;
       response?(f: Float32Array<ArrayBuffer>): Float32Array;
-      ghostOf?: AnalyserNode;
     } = {},
   ) => (
       <TapViewers
@@ -601,7 +600,6 @@ export function App() {
             viewers={viewers('filter', 'Filter', {
               showIdeal: true,
               response: session.engine.filterResponse,
-              ghostOf: session.engine.taps.oscillator,
             })}
           />
           <Block

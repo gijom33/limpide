@@ -76,7 +76,7 @@ test('controls are grouped under View, Axes and Show', async ({ page }) => {
   const toolbar = page.getByRole('region', { name: 'Viewer controls' });
   await expect(toolbar.getByRole('group', { name: 'View' }).getByRole('button', { name: 'Freeze' })).toBeVisible();
   await expect(toolbar.getByRole('group', { name: 'Axes' }).getByRole('radiogroup', { name: 'Scope cycles' })).toBeVisible();
-  await expect(toolbar.getByRole('group', { name: 'Show' }).getByRole('button', { name: 'Ghost' })).toBeVisible();
+  await expect(toolbar.getByRole('group', { name: 'Show' }).getByRole('button', { name: 'Curve' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Freeze' })).toHaveAttribute('aria-keyshortcuts', 'Space');
 });
 

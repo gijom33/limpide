@@ -141,10 +141,6 @@ export const OVERLAY_TIPS: Record<Overlay, TipContent> = {
     title: 'Response Curve',
     body: 'The Filter’s gain at every frequency (scale on the right). Harmonics under the slope get quieter; a bump at the Cutoff is Resonance.',
   },
-  ghost: {
-    title: 'Ghost',
-    body: 'Teal shading shows the energy the Filter removed: the "subtractive" in subtractive synthesis. Orange shows energy Resonance added.',
-  },
   guides: {
     title: 'Scope guides',
     body: 'Dashed lines at the Oscillator’s level. A trace inside them has only lost energy; one beyond them has been boosted by Resonance.',

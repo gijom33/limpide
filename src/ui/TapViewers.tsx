@@ -18,14 +18,12 @@ interface Props {
   showIdeal?: boolean;
   /** The Filter's gain: drawn as the Response Curve and applied to the Ideal rings. */
   response?(frequencies: Float32Array<ArrayBuffer>): Float32Array;
-  /** The Tap before the Filter, for the Ghost. */
-  ghostOf?: AnalyserNode;
   /** What this Tap is, shown as the caption's tooltip rather than as text on screen. */
   tip?: TipContent;
 }
 
 /** Scope + Spectrum + level readout for one Tap. Canvases are mounted once and drawn by the render loop. */
-export function TapViewers({ name, analyser, sampleRate, fundamental, view, showIdeal, response, ghostOf, tip }: Props) {
+export function TapViewers({ name, analyser, sampleRate, fundamental, view, showIdeal, response, tip }: Props) {
   const scopeRef = useRef<HTMLCanvasElement>(null);
   const spectrumRef = useRef<HTMLCanvasElement>(null);
   const levelRef = useRef<HTMLSpanElement>(null);
@@ -38,7 +36,6 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, view, show
       view,
       showIdeal,
       response,
-      ghostOf,
       hover: () => hoverRef.current,
     });
     const level = createLevelMeter(analyser, () => view().viewer.frozen);
@@ -49,7 +46,7 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, view, show
       levelRef.current!.textContent = db > SILENT_DB ? `${db.toFixed(1)} dB` : 'silent';
       levelRef.current!.dataset.db = String(db);
     });
-  }, [analyser, sampleRate, fundamental, view, showIdeal, response, ghostOf]);
+  }, [analyser, sampleRate, fundamental, view, showIdeal, response]);
 
   return (
     <figure className="tap" data-tap={name}>

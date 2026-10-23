@@ -101,7 +101,7 @@ test('the Preset arrows stay put whatever the name between them, and a long name
   const home = await at();
   for (let i = 0; i < 22; i++) {
     await next.click();
-    const label = await patchName(page).getAttribute('aria-label');
+    const label = (await patchName(page).getAttribute('aria-label')) ?? '';
     expect(await at(), label).toBe(home);
     // Every factory name shows in full.
     const cut = await patchName(page).locator('span').first().evaluate((el) => el.scrollWidth > el.clientWidth);

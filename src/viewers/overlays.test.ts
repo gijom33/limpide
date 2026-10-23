@@ -11,8 +11,8 @@ function memoryStorage(initial: Record<string, string> = {}) {
 }
 
 describe('Viewer overlays', () => {
-  it('offers Harmonic Markers, the Ideal Reference, the Response Curve, the Ghost and the Scope guides', () => {
-    expect(OVERLAYS).toEqual(['harmonics', 'ideal', 'curve', 'ghost', 'guides']);
+  it('offers Harmonic Markers, the Ideal Reference, the Response Curve and the Scope guides', () => {
+    expect(OVERLAYS).toEqual(['harmonics', 'ideal', 'curve', 'guides']);
   });
 
   it('starts with everything on', () => {
@@ -20,10 +20,10 @@ describe('Viewer overlays', () => {
   });
 
   it('toggles one overlay without touching the others', () => {
-    const next = toggleOverlay(DEFAULT_OVERLAYS, 'ghost');
-    expect(next.ghost).toBe(false);
+    const next = toggleOverlay(DEFAULT_OVERLAYS, 'guides');
+    expect(next.guides).toBe(false);
     expect(next.curve).toBe(true);
-    expect(DEFAULT_OVERLAYS.ghost).toBe(true);
+    expect(DEFAULT_OVERLAYS.guides).toBe(true);
   });
 
   it('remembers the choice across visits', () => {
@@ -35,9 +35,10 @@ describe('Viewer overlays', () => {
   it('falls back to defaults for anything missing or garbled in storage', () => {
     expect(loadOverlays(memoryStorage())).toEqual(DEFAULT_OVERLAYS);
     expect(loadOverlays(memoryStorage({ 'synthview.overlays': '{not json' }))).toEqual(DEFAULT_OVERLAYS);
-    expect(loadOverlays(memoryStorage({ 'synthview.overlays': '{"ghost":false,"bogus":1,"curve":"yes"}' }))).toEqual({
+    // "ghost" was an overlay once: a choice saved for it is simply ignored now.
+    expect(loadOverlays(memoryStorage({ 'synthview.overlays': '{"guides":false,"ghost":false,"bogus":1,"curve":"yes"}' }))).toEqual({
       ...DEFAULT_OVERLAYS,
-      ghost: false,
+      guides: false,
     });
   });
 

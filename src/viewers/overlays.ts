@@ -1,9 +1,9 @@
 /** Marks a learner can switch off when the Viewers get busy. */
-export const OVERLAYS = ['harmonics', 'ideal', 'curve', 'ghost', 'guides'] as const;
+export const OVERLAYS = ['harmonics', 'ideal', 'curve', 'guides'] as const;
 export type Overlay = (typeof OVERLAYS)[number];
 export type Overlays = Record<Overlay, boolean>;
 
-export const DEFAULT_OVERLAYS: Overlays = { harmonics: true, ideal: true, curve: true, ghost: true, guides: true };
+export const DEFAULT_OVERLAYS: Overlays = { harmonics: true, ideal: true, curve: true, guides: true };
 
 const KEY = 'synthview.overlays';
 

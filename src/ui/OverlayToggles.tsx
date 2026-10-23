@@ -3,7 +3,7 @@ import { OVERLAY_TIPS } from './tips';
 import { Tooltip } from './Tooltip';
 
 // Each toggle shows a swatch of the mark it controls, so the row doubles as the legend.
-const LABELS: Record<Overlay, string> = { harmonics: 'Harmonics', ideal: 'Ideal', curve: 'Curve', ghost: 'Ghost', guides: 'Guides' };
+const LABELS: Record<Overlay, string> = { harmonics: 'Harmonics', ideal: 'Ideal', curve: 'Curve', guides: 'Guides' };
 
 interface Props {
   value: Overlays;
