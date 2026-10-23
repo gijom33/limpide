@@ -7,8 +7,23 @@ import { patchToShare, sanitizePatch } from './serialize';
 
 describe('Presets', () => {
   it('include a clean starting point and one sound per lesson', () => {
-    expect(PRESETS.map((p) => p.name)).toEqual(['Init', 'Bass', 'Lead', 'Pluck', 'Pad', 'Wobble']);
+    expect(PRESETS.map((p) => p.name)).toEqual([
+      'Init', 'Bass', 'Lead', 'Pluck', 'Pad', 'Wobble',
+      // Shapes to look at in the Scope
+      'Pure Sine', 'Soft Triangle', 'Hollow Square', 'Thin Pulse', 'PWM Morph',
+      // Two Oscillators drawing patterns together
+      'Octave Stack', 'Perfect Fifth', 'Tritone Knot', 'Slow Beats',
+      // The Filter shaping the wave
+      'Resonant Ring', 'Vowel', 'High-pass Buzz', 'Notch Sweep', 'Brass Swell', 'Wind',
+      // Movement
+      'Glide Slide',
+    ]);
     expect(PRESETS[0].patch).toEqual(defaultPatch());
+  });
+
+  it('have different names, and no two sound the same', () => {
+    expect(new Set(PRESETS.map((p) => p.name)).size).toBe(PRESETS.length);
+    expect(new Set(PRESETS.map((p) => JSON.stringify(p.patch))).size).toBe(PRESETS.length);
   });
 
   it('are all valid Patches, with nothing clamped or replaced', () => {
