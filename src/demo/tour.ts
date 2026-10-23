@@ -2,8 +2,9 @@ import { type ParamId } from '../patch/patch';
 import { PRESET_GROUPS, type PresetGroup } from '../patch/presets';
 
 /**
- * The Demo: one Preset from every group, in the groups' order, each with a phrase that suits it. The same every
- * time (ADR-0002 keeps the Viewers out of React; the Demo keeps the Display out of its hands: it only plays).
+ * The Demo: a Preset from every group, in the groups' order, each with a phrase that suits it; the two groups of
+ * polyphonic sounds, Pianos and Chords, send several. The same every time (ADR-0002 keeps the Viewers out of
+ * React; the Demo keeps the Display out of its hands: it only plays).
  */
 /** A knob turned while the phrase plays: from one value (the Preset's own, if none is given) to another. */
 export interface KnobMove {
@@ -51,10 +52,18 @@ export const TOUR: readonly TourStop[] = [
   { group: 'Keys & Plucks', preset: 'Electric Piano', bpm: 112, phrase: 'D4:0.25 D#4:0.25 E4:0.25 C5:0.5 E4:0.25 C5:0.5 E4:0.25 C5:1.25 C5:0.25 D5:0.25 D#5:0.25 E5:0.25 C5:0.25 D5:0.25 E5:0.5 B4:0.25 D5:0.5 C5:1.5' },
   // Happy Birthday, with a bass under it, on eight Voices.
   { group: 'Pianos', preset: 'Piano', bpm: 126, phrase: 'G3:0.5@0.7 G3:0.5@0.7 A3+C3:1 G3:1 C4+E3:1 B3+G2:2 G3:0.5@0.7 G3:0.5@0.7 A3+C3:1 G3:1 D4+G2:1 C4+C3:2' },
+  // Twinkle, Twinkle, with a bass, on the toy piano.
+  { group: 'Pianos', preset: 'Toy Piano', bpm: 120, phrase: 'C4+C3:1 C4:1 G4+E3:1 G4:1 A4+F3:1 A4:1 G4+C3:2' },
   // The four chords of half of all pop songs (I, V, vi, IV), one Voice at a time, while the Filter opens.
   { group: 'Pads', preset: 'Pad', bpm: 112, phrase: 'C3:2 G2:2 A2:2 F2:2', moves: [{ id: 'cutoff', from: 300, to: 4000 }] },
   // The same four chords, held, with the LFO's sway deepening.
   { group: 'Chords', preset: 'Chord Pad', bpm: 112, phrase: 'C3+E3+G3+C4:2 G2+B2+D3+G3:2 A2+C3+E3+A3:2 F2+A2+C3+F3:2', moves: [{ id: 'lfoAmount', from: 0.1, to: 0.6 }] },
+  // When the Saints Go Marching In, chords under the tune, on eight Voices.
+  { group: 'Chords', preset: 'Poly Keys', bpm: 124, phrase: 'C4:0.5 E4:0.5 F4:0.5 G4+C3+E3:2.5 C4:0.5 E4:0.5 F4:0.5 G4+C3+E3:2.5' },
+  // Pachelbel's Canon, the chords held by a string section, the Pulse Width shimmer quickening.
+  { group: 'Chords', preset: 'Strings', bpm: 112, phrase: 'D3+F#3+A3+D4:2 A2+C#3+E3+A3:2 B2+D3+F#3+B3:2 F#2+A2+C#3+F#3:2', moves: [{ id: 'lfoRate', from: 0.5, to: 3 }] },
+  // The Westminster chimes, on bells that ring on together.
+  { group: 'Chords', preset: 'Bell Chords', bpm: 112, phrase: 'E4+C4:1 C4:1 D4:1 G3:2 G3:1 D4:1 E4:1 C4+G3:2' },
   // Stomp, stomp, rest: the beat everyone claps to, with the pitch drop deepening.
   { group: 'Drums', preset: 'Kick', bpm: 120, phrase: 'C2:0.5 C2:0.5@0.8 -:1 C2:0.5 C2:0.5@0.8 -:1 C2:0.5 C2:0.5@0.8 -:1 C2:0.5 C2:0.5@0.8 -:1',
     moves: [{ id: 'filterEnvAmount', from: 2, to: 4 }] },

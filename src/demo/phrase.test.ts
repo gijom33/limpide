@@ -38,8 +38,11 @@ describe('parsePhrase', () => {
 });
 
 describe('the Demo tour', () => {
-  it('visits every group once, in order, with a Preset from that group', () => {
-    expect(TOUR.map((s) => s.group)).toEqual([...PRESET_GROUPS]);
+  it('visits every group in order, with Presets from that group, and several of the polyphonic ones', () => {
+    const groups = TOUR.map((s) => s.group);
+    expect([...new Set(groups)]).toEqual([...PRESET_GROUPS]); // every group, in order, contiguous
+    expect(groups).toEqual([...groups].sort((a, b) => PRESET_GROUPS.indexOf(a) - PRESET_GROUPS.indexOf(b)));
+    expect(TOUR.filter((s) => PRESETS.find((p) => p.name === s.preset)!.patch.voices > 1).length).toBeGreaterThanOrEqual(6);
     for (const stop of TOUR) {
       const preset = PRESETS.find((p) => p.name === stop.preset);
       expect(preset, stop.preset).toBeDefined();
