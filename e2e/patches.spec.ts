@@ -21,11 +21,11 @@ test.beforeEach(async ({ page }) => {
 test('the Preset arrows step through the factory sounds', async ({ page }) => {
   await expect(patchName(page)).toContainText('Init');
   await page.getByRole('button', { name: 'Next Preset' }).click();
-  await expect(patchName(page)).toContainText('Bass');
-  await expect(cutoff(page)).toHaveAttribute('aria-valuetext', '280 Hz');
+  await expect(patchName(page)).toContainText('Pure Sine');
+  await expect(cutoff(page)).toHaveAttribute('aria-valuetext', '20.00 kHz'); // its Patch is loaded
   await page.getByRole('button', { name: 'Previous Preset' }).click();
   await page.getByRole('button', { name: 'Previous Preset' }).click();
-  await expect(patchName(page)).toContainText('Glide Slide'); // wraps around to the last
+  await expect(patchName(page)).toContainText('Out of Tune'); // wraps around to the last
 });
 
 test('an edit marks the Patch as changed, and the sound comes back after a reload (autosave)', async ({ page }) => {
@@ -59,7 +59,7 @@ test('a Patch can be saved under a name, loaded back, and deleted', async ({ pag
 });
 
 test('a share link opens the same sound in a fresh page', async ({ page, browser }) => {
-  await page.getByRole('button', { name: 'Next Preset' }).click(); // Bass
+  await page.getByRole('button', { name: 'Next Preset' }).click(); // Pure Sine, wide open
   await nudge(page);
   const value = await cutoff(page).getAttribute('aria-valuetext');
   await patchName(page).click();
@@ -85,7 +85,7 @@ test('a Patch exports as a file and imports back', async ({ page }) => {
   await page.getByRole('button', { name: 'Previous Preset' }).click(); // back to Init
   await patchName(page).click();
   await page.getByLabel('Import file').setInputFiles(file);
-  await expect(cutoff(page)).toHaveAttribute('aria-valuetext', '280 Hz');
+  await expect(cutoff(page)).toHaveAttribute('aria-valuetext', '20.00 kHz');
 });
 
 test('importing something that is not a Patch says why, and changes nothing', async ({ page }) => {
@@ -118,3 +118,23 @@ test('the Preset arrows stay put whatever the name between them, and a long name
   expect(await at()).toBe(home);
   await expect(patchName(page)).toHaveAttribute('aria-label', 'Patch: A rather long name for my favourite bass'); // full name kept for screen readers
 });
+
+for (const [width, height] of [[1710, 1060], [1100, 800], [872, 700]]) {
+  test(`the Presets are grouped under headings, and the menu fits the window at ${width}×${height}`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await page.goto('/');
+    await patchName(page).click();
+    const menu = page.getByRole('dialog', { name: 'Patches' });
+    for (const group of ['Shapes', 'Intervals', 'Filter lessons', 'Bass', 'Leads', 'Keys & Plucks', 'Pads', 'Movement & Effects']) {
+      await expect(menu.getByRole('group', { name: group }).getByRole('button').first(), group).toBeAttached();
+    }
+    await expect(menu.getByRole('group', { name: 'Bass' }).getByRole('button', { name: 'Sub Bass' })).toBeAttached();
+    const box = (await menu.boundingBox())!;
+    expect(box.y + box.height).toBeLessThanOrEqual(height); // never off the bottom of the window
+    // The last Preset can be reached (the list scrolls when the window is short) and loaded.
+    const last = menu.getByRole('button', { name: 'Out of Tune' });
+    await last.scrollIntoViewIfNeeded();
+    await last.click();
+    await expect(patchName(page)).toContainText('Out of Tune');
+  });
+}

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Library } from '../patch/library';
 import type { Patch } from '../patch/patch';
-import { PRESETS, presetAfter } from '../patch/presets';
+import { PRESET_GROUPS, PRESETS, presetAfter } from '../patch/presets';
 import { useLearnable } from './learn';
 import { patchFromJSON, patchToJSON, patchToShare } from '../patch/serialize';
 import { Tooltip } from './Tooltip';
@@ -109,17 +109,22 @@ export function PatchBar({ name, changed, patch, library, onLoad }: Props) {
 
       {open && (
         <div className="patch-panel" role="dialog" aria-label="Patches">
-          <section>
+          <section className="patch-presets">
             <h3>Presets</h3>
-            <div className="patch-list">
-              {PRESETS.map((p) => (
-                <Tooltip key={p.name} content={{ title: p.name, body: p.about }}>
-                  <button type="button" className="patch-item" aria-current={p.name === name || undefined} onClick={() => onLoad(p.name, p.patch)}>
-                    {p.name}
-                  </button>
-                </Tooltip>
-              ))}
-            </div>
+            {PRESET_GROUPS.map((group) => (
+              <div key={group} className="patch-group" role="group" aria-label={group}>
+                {group !== 'Start' && <h4 aria-hidden="true">{group}</h4>}
+                <div className="patch-list">
+                  {PRESETS.filter((p) => p.group === group).map((p) => (
+                    <Tooltip key={p.name} content={{ title: p.name, body: p.about }}>
+                      <button type="button" className="patch-item" aria-current={p.name === name || undefined} onClick={() => onLoad(p.name, p.patch)}>
+                        {p.name}
+                      </button>
+                    </Tooltip>
+                  ))}
+                </div>
+              </div>
+            ))}
           </section>
           <section>
             <h3>My Patches</h3>

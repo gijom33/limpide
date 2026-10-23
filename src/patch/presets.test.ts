@@ -2,23 +2,28 @@ import { describe, expect, it } from 'vitest';
 import { memoryStorage } from '../test/memoryStorage';
 import { createLibrary } from './library';
 import { defaultPatch, setParam } from './patch';
-import { initialPatch, PRESETS, stepPreset } from './presets';
+import { initialPatch, PRESET_GROUPS, PRESETS, stepPreset } from './presets';
 import { patchToShare, sanitizePatch } from './serialize';
 
 describe('Presets', () => {
-  it('include a clean starting point and one sound per lesson', () => {
-    expect(PRESETS.map((p) => p.name)).toEqual([
-      'Init', 'Bass', 'Lead', 'Pluck', 'Pad', 'Wobble',
-      // Shapes to look at in the Scope
-      'Pure Sine', 'Soft Triangle', 'Hollow Square', 'Thin Pulse', 'PWM Morph',
-      // Two Oscillators drawing patterns together
-      'Octave Stack', 'Perfect Fifth', 'Tritone Knot', 'Slow Beats',
-      // The Filter shaping the wave
-      'Resonant Ring', 'Vowel', 'High-pass Buzz', 'Notch Sweep', 'Brass Swell', 'Wind',
-      // Movement
-      'Glide Slide',
-    ]);
+  it('start from a clean Init, then offer plenty of sounds, grouped so they can be found', () => {
+    expect(PRESETS[0].name).toBe('Init');
     expect(PRESETS[0].patch).toEqual(defaultPatch());
+    expect(PRESETS.length).toBeGreaterThanOrEqual(50);
+    // Grouped in a fixed order, each group's Presets next to each other (the arrows step through them in order).
+    const order = PRESETS.map((p) => p.group).filter((g, i, all) => g !== all[i - 1]);
+    expect(order).toEqual(PRESET_GROUPS);
+    for (const group of PRESET_GROUPS.slice(1)) expect(PRESETS.filter((p) => p.group === group).length, group).toBeGreaterThanOrEqual(3);
+  });
+
+  it('make use of every part of the synth, the newest included', () => {
+    const using = (test: (p: (typeof PRESETS)[number]['patch']) => boolean) => PRESETS.filter((p) => test(p.patch)).length;
+    expect(using((p) => p.mixSub > 0)).toBeGreaterThanOrEqual(8);
+    expect(using((p) => p.keyTrack > 0)).toBeGreaterThanOrEqual(8);
+    expect(using((p) => p.velocityCutoff > 0)).toBeGreaterThanOrEqual(5);
+    expect(using((p) => p.glide > 0.01)).toBeGreaterThanOrEqual(4);
+    for (const mode of ['lowpass', 'highpass', 'bandpass', 'notch'] as const) expect(using((p) => p.filterMode === mode), mode).toBeGreaterThan(0);
+    for (const d of ['cutoff', 'pitch', 'pulseWidth'] as const) expect(using((p) => p.lfoAmount > 0 && p.lfoDestination === d), d).toBeGreaterThan(0);
   });
 
   it('have different names, and no two sound the same', () => {
