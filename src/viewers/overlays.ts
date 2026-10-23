@@ -3,7 +3,9 @@ export const OVERLAYS = ['harmonics', 'ideal', 'curve', 'guides'] as const;
 export type Overlay = (typeof OVERLAYS)[number];
 export type Overlays = Record<Overlay, boolean>;
 
-export const DEFAULT_OVERLAYS: Overlays = { harmonics: true, ideal: true, curve: true, guides: true };
+/** What a first visit shows: the Harmonic Markers and the Response Curve. The Ideal Reference and the Scope guides
+ *  are there to be asked for, so the Viewers start uncluttered. */
+export const DEFAULT_OVERLAYS: Overlays = { harmonics: true, ideal: false, curve: true, guides: false };
 
 const KEY = 'synthview.overlays';
 
