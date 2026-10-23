@@ -59,8 +59,8 @@ export function ViewActions({ state, dispatch }: Props) {
           caption="Voices"
           value={state.tapSource}
           options={[
-            { value: 'newest', label: 'Newest' },
             { value: 'all', label: 'All' },
+            { value: 'newest', label: 'Newest' },
           ]}
           onChange={(source) => dispatch({ type: 'setTapSource', source })}
         />

@@ -48,13 +48,13 @@ export const TIPS = {
   },
   tapSource: {
     title: 'Viewers follow',
-    body: 'Newest: every Viewer shows the Note you played last, alone, so Cycle Lock, the Harmonic Markers and the Timeline stay exact. All: the Amp Tap carries every Voice at once, so a chord is seen there as it is heard; the Oscillator and Filter Taps still show the newest Note.',
+    body: 'All: the Amp Tap carries every Voice at once, so a chord is seen there as it is heard. Newest: the Amp Tap shows only the Note you played last. The Oscillator and Filter Taps, the Harmonic Markers and the Timeline always follow the newest Note, so Cycle Lock stays exact there.',
     how: 'With All, the Amp Scope cannot lock to a chord. One Voice shows the same either way.',
   },
   voices: {
     title: 'Voices',
-    body: 'How many Notes can sound at once. 1 is the classic monophonic synth: the newest key wins, and Glide slides between Notes. 2 to 4 play chords, each Note on its own Voice.',
-    how: 'The Viewers always show the newest Note on its own, as if it were played alone: chords are for playing, one Voice is for seeing.',
+    body: 'How many Notes can sound at once. 1 is the classic monophonic synth: the newest key wins, and Glide slides between Notes. 2 to 8 play chords, each Note on its own Voice.',
+    how: 'The Oscillator and Filter Viewers show the newest Note on its own, as if it were played alone; the Amp Viewers show every Voice unless Display says otherwise.',
   },
   velocityCutoff: {
     title: 'Velocity → Cutoff',

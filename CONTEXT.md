@@ -27,11 +27,11 @@ The curve mapping a control's 0–1 position to a Parameter's real value: linear
 _Avoid_: Scaling, curve, response
 
 **Voice**:
-One sound-producing chain: Oscillators → Mixer → Filter → Amp. A Patch has one to four; the Viewers always show the one playing the newest Note.
+One sound-producing chain: Oscillators → Mixer → Filter → Amp. A Patch has one to eight; the Viewers show the one playing the newest Note (the Amp Tap, all of them, unless asked otherwise).
 _Avoid_: Channel, synth
 
 **Voices**:
-How many Notes a Patch lets sound at once (1 to 4). At 1 the instrument is monophonic (Note Priority, Glide); at 2 to 4 each Note takes its own Voice and chords sound.
+How many Notes a Patch lets sound at once (1 to 8). At 1 the instrument is monophonic (Note Priority, Glide); at 2 to 8 each Note takes its own Voice and chords sound.
 _Avoid_: Polyphony (the setting), voice count
 
 **Oscillator**:

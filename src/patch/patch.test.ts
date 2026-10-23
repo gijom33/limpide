@@ -105,7 +105,7 @@ describe('LFO and Glide', () => {
 describe('Voices', () => {
   it('start at 1, monophonic, so every Patch from before polyphony sounds as it did', () => {
     expect(defaultPatch().voices).toBe(1);
-    expect(CHOICES.voices).toEqual([1, 2, 3, 4]);
+    expect(CHOICES.voices).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
   });
 });
 

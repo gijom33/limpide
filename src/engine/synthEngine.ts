@@ -68,7 +68,7 @@ export interface SynthEngine {
  */
 export const OSCILLATOR_LEVEL = 0.5;
 /** How many Voices the engine builds; a Patch uses the first `voices` of them. */
-export const MAX_VOICES = 4;
+export const MAX_VOICES = 8;
 // Listening volume only, after the Amp Tap, so it is not part of what the Viewers show.
 // Without Resonance compensation the worst resonant peak reaches ±1.8 at the Filter Tap (measured over Notes
 // and Cutoffs at full Resonance); 0.45 keeps that under full scale at the output (about 0.83).

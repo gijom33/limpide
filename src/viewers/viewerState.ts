@@ -5,7 +5,7 @@ export type TapSource = 'newest' | 'all';
 export interface ViewerState {
   /** Viewers hold their last frame while the sound keeps playing. */
   frozen: boolean;
-  /** The Taps show the newest Note's Voice alone (the default), or every Voice summed (ADR-0007). */
+  /** The Amp Tap shows every Voice summed (the default), or the newest Note's Voice alone (ADR-0007). */
   tapSource: TapSource;
   frequencyScale: FrequencyScale;
   levelScale: LevelScale;
@@ -24,7 +24,7 @@ export type ViewerAction =
   | { type: 'clearSnapshot' }
   | { type: 'setTapSource'; source: TapSource };
 
-export const INITIAL_VIEWER_STATE: ViewerState = { frozen: false, tapSource: 'newest', frequencyScale: 'log', levelScale: 'db', snapshot: null };
+export const INITIAL_VIEWER_STATE: ViewerState = { frozen: false, tapSource: 'all', frequencyScale: 'log', levelScale: 'db', snapshot: null };
 
 export function viewerReducer(state: ViewerState, action: ViewerAction): ViewerState {
   switch (action.type) {

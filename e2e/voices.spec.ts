@@ -7,6 +7,7 @@ test('Voices is chosen on the Amp heading line, starts at 1, and is kept with th
   await page.goto('/');
   const amp = page.getByRole('region', { name: 'Amp' });
   await expect(amp.getByRole('radiogroup', { name: 'Voices' }).getByRole('radio', { name: '1' })).toHaveAttribute('aria-checked', 'true');
+  await expect(voices(page).getByRole('radio')).toHaveCount(8);
   await voices(page).getByRole('radio', { name: '4' }).click();
   await expect(voices(page).getByRole('radio', { name: '4' })).toHaveAttribute('aria-checked', 'true');
   await expect(page.getByRole('button', { name: /^Patch:/ })).toContainText('Init'); // the Patch is edited, not swapped
@@ -38,13 +39,13 @@ test('the Voices control sits on the Amp heading line on a laptop screen', async
   expect(Math.abs(h!.y + h!.height / 2 - (v!.y + v!.height / 2))).toBeLessThanOrEqual(6);
 });
 
-test('the Display panel chooses what the Viewers follow: the newest Note by default, or all Voices', async ({ page }) => {
+test('the Display panel chooses what the Amp Viewers follow: all Voices by default, or the newest Note', async ({ page }) => {
   await page.goto('/');
   await openDisplay(page);
   const follow = page.getByRole('radiogroup', { name: 'Viewers follow' });
-  await expect(follow.getByRole('radio', { name: 'Newest' })).toHaveAttribute('aria-checked', 'true');
-  await follow.getByRole('radio', { name: 'All' }).click();
   await expect(follow.getByRole('radio', { name: 'All' })).toHaveAttribute('aria-checked', 'true');
+  await follow.getByRole('radio', { name: 'Newest' }).click();
+  await expect(follow.getByRole('radio', { name: 'Newest' })).toHaveAttribute('aria-checked', 'true');
   await page.keyboard.press('Escape');
   await page.keyboard.down('a');
   await expect(page.getByLabel('Oscillator Scope', { exact: true })).toHaveAttribute('data-db', /^-?\d/);

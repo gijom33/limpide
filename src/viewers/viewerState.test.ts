@@ -2,14 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { INITIAL_VIEWER_STATE, viewerReducer } from './viewerState';
 
 describe('Viewer state', () => {
-  it('starts live, following the newest Note, on log frequency and dB level axes, with no Snapshot', () => {
-    expect(INITIAL_VIEWER_STATE).toEqual({ frozen: false, tapSource: 'newest', frequencyScale: 'log', levelScale: 'db', snapshot: null });
+  it('starts live, with every Voice at the Amp Tap, on log frequency and dB level axes, with no Snapshot', () => {
+    expect(INITIAL_VIEWER_STATE).toEqual({ frozen: false, tapSource: 'all', frequencyScale: 'log', levelScale: 'db', snapshot: null });
   });
 
-  it('can follow every Voice instead of the newest Note, and back', () => {
-    const all = viewerReducer(INITIAL_VIEWER_STATE, { type: 'setTapSource', source: 'all' });
-    expect(all.tapSource).toBe('all');
-    expect(viewerReducer(all, { type: 'setTapSource', source: 'newest' }).tapSource).toBe('newest');
+  it('can follow the newest Note alone instead of every Voice, and back', () => {
+    const newest = viewerReducer(INITIAL_VIEWER_STATE, { type: 'setTapSource', source: 'newest' });
+    expect(newest.tapSource).toBe('newest');
+    expect(viewerReducer(newest, { type: 'setTapSource', source: 'all' }).tapSource).toBe('all');
   });
 
   it('Freeze toggles on and off', () => {

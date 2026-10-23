@@ -346,8 +346,9 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 @container (min-width: 330px) {
   .block[data-stage='filter'] .filter-shape { position: absolute; top: -4px; right: 0; }
 }
-/* Voices shares the Amp heading's line the same way. */
-@container (min-width: 300px) {
+/* Voices shares the Amp heading's line the same way: eight slim segments, digits only. */
+.voices-field .segmented button[role='radio'] { min-width: 24px; padding: 0 6px; }
+@container (min-width: 320px) {
   .block[data-stage='amp'] .voices-field { position: absolute; top: -4px; right: 0; }
 }
 
@@ -427,6 +428,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   .filter-shape .segmented { flex-wrap: nowrap; }
   .segmented.icon-picker button[role='radio'] { min-width: 26px; padding: 0 2px; }
   .icon-picker svg { width: 20px; height: 14px; }
+  .voices-field .segmented button[role='radio'] { min-width: 20px; padding: 0 4px; }
   .filter-shape .segmented button { padding: 0 6px; }
 }
 .block-controls { gap: var(--space-2); }
