@@ -2,25 +2,34 @@ import { OSCILLATOR_LEVEL } from '../engine/synthEngine';
 import { cssVar, prepareCanvas } from './canvas';
 import { cycleLockOffset } from './cycleLock';
 import { createFreezeLatch } from './freezeLatch';
+import { scopeScale } from './scopeScale';
 import { scopeTrace } from './scopeTrace';
 import { scopeWindow } from './scopeWindow';
 import type { ViewSettings } from './viewSettings';
 
-const FULL_SCALE = 1;
-const OVER_HOLD_MS = 1000;
+// LIMITING stays up this long after the last sample past the limiter's knee, so a brief one can be read.
+const LIMITING_HOLD_MS = 800;
 // Two drawn points per pixel keeps sharp corners (a saw's drop, a pulse's edges) crisp.
 const POINTS_PER_PIXEL = 2;
 
 /**
  * A Scope of one Tap, Cycle Locked to the Note's fundamental so a steady Note stands still.
- * Every Scope shares the same fixed ±1 scale, so heights compare directly from stage to stage.
+ * Every Scope shares the same scale (scopeScale), so heights compare directly from stage to stage; peaks beyond
+ * ±1 are drawn compressed into the margin, never cut flat.
  */
-export function createScope(canvas: HTMLCanvasElement, analyser: AnalyserNode, fundamental: () => number, view: () => ViewSettings) {
+export function createScope(
+  canvas: HTMLCanvasElement,
+  analyser: AnalyserNode,
+  fundamental: () => number,
+  view: () => ViewSettings,
+  /** On the Amp Scope: the level above which the safety limiter bends the sound, shown as LIMITING. */
+  { limitAbove }: { limitAbove?: number } = {},
+) {
   const samples = new Float32Array(analyser.fftSize);
+  let limitedAt = -Infinity;
   const sampleRate = analyser.context.sampleRate;
   // While frozen, lock to the Note the frozen samples belong to, not to a Note played since.
   const frozenFundamental = createFreezeLatch<number>();
-  let overAt = -Infinity;
   let snapshotToken: number | null = null;
   let snapshotTrace: Float32Array | null = null;
 
@@ -45,12 +54,7 @@ export function createScope(canvas: HTMLCanvasElement, analyser: AnalyserNode, f
     }
     canvas.dataset.snapshot = String(snapshotTrace !== null);
 
-    let peak = 0;
-    for (const v of trace) peak = Math.max(peak, Math.abs(v));
-    const now = performance.now();
-    if (peak > FULL_SCALE) overAt = now;
-    const over = now - overAt < OVER_HOLD_MS;
-    const yOf = (v: number) => height / 2 - Math.max(-FULL_SCALE, Math.min(FULL_SCALE, v)) * (height / 2) * 0.92;
+    const { yOf } = scopeScale(height);
 
     g.strokeStyle = cssVar(canvas, '--grid');
     g.lineWidth = 1;
@@ -59,9 +63,14 @@ export function createScope(canvas: HTMLCanvasElement, analyser: AnalyserNode, f
     g.lineTo(width, height / 2);
     g.stroke();
 
-    // Guides at the Oscillator's level, on every Scope: inside them the Filter only removed energy;
-    // beyond them Resonance added a peak.
+    // Guides at the Oscillator's level, on every Scope: inside them the Filter only removed energy; beyond them
+    // (faintly shaded) Resonance added a peak.
     if (view().overlays.guides) {
+      g.fillStyle = cssVar(canvas, '--muted');
+      g.globalAlpha = 0.08;
+      g.fillRect(0, 0, width, yOf(OSCILLATOR_LEVEL));
+      g.fillRect(0, yOf(-OSCILLATOR_LEVEL), width, height - yOf(-OSCILLATOR_LEVEL));
+      g.globalAlpha = 1;
       g.setLineDash([4, 4]);
       g.strokeStyle = cssVar(canvas, '--muted');
       g.beginPath();
@@ -72,15 +81,20 @@ export function createScope(canvas: HTMLCanvasElement, analyser: AnalyserNode, f
       g.stroke();
       g.setLineDash([]);
     }
-    g.font = '10px system-ui, sans-serif';
 
-    if (over) {
-      g.fillStyle = cssVar(canvas, '--danger');
-      g.textAlign = 'right';
-      g.fillText('OVER ±1', width - 4, 12);
-      g.textAlign = 'left';
+    // LIMITING: only where the limiter sits (after the Amp), only while it is actually bending the sound.
+    if (limitAbove !== undefined) {
+      if (!view().viewer.frozen && samples.some((v) => Math.abs(v) > limitAbove)) limitedAt = performance.now();
+      const limiting = performance.now() - limitedAt < LIMITING_HOLD_MS;
+      canvas.dataset.limiting = String(limiting);
+      if (limiting) {
+        g.font = '600 10px system-ui, sans-serif';
+        g.fillStyle = cssVar(canvas, '--danger');
+        g.textAlign = 'right';
+        g.fillText('LIMITING', width - 6, 13);
+        g.textAlign = 'left';
+      }
     }
-    canvas.dataset.over = String(over);
 
     const stroke = (values: Float32Array) => {
       g.beginPath();

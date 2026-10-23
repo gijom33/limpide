@@ -7,7 +7,7 @@ import { describeMessage, targetKey } from '../midi/describe';
 import { connectMidi, midiSupport, type MidiAccessLike } from '../midi/inputs';
 import { createMappingStore, type Mapping, type Target } from '../midi/mappings';
 import { C16_SETUP, quickSetupReducer, startQuickSetup, type QuickSetupEvent, type QuickSetupState } from '../midi/quickSetup';
-import { OSCILLATOR_LEVEL } from '../engine/synthEngine';
+import { LIMITING_ABOVE, OSCILLATOR_LEVEL } from '../engine/synthEngine';
 import { idealReference } from '../music/idealReference';
 import { CHOICES, PARAMS, setFilter, setParam, setWaveform, type ChoiceId, type ParamId, type Patch } from '../patch/patch';
 import { createLibrary } from '../patch/library';
@@ -412,6 +412,7 @@ export function App() {
     extra: {
       showIdeal?: boolean;
       response?(f: Float32Array<ArrayBuffer>): Float32Array;
+      limitAbove?: number;
     } = {},
   ) => (
       <TapViewers
@@ -604,7 +605,7 @@ export function App() {
             ids={['ampAttack', 'ampDecay', 'ampSustain', 'ampRelease']}
             patch={patch}
             onChange={change}
-            viewers={viewers('amp', 'Amp')}
+            viewers={viewers('amp', 'Amp', { limitAbove: LIMITING_ABOVE })}
           />
         </div>
 
