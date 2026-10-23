@@ -1,48 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { closeGaps, spectrumOutline } from './outline';
+import { spectrumOutline } from './outline';
 
 const FLOOR = -100;
-/** A spectrum with spikes (dB) at the given columns, floor elsewhere. */
-const spikes = (length: number, at: Record<number, number>) => Float32Array.from({ length }, (_, i) => at[i] ?? FLOOR);
-
-describe('closeGaps: a smooth outline over crowded Harmonics', () => {
-  it('fills the narrow valleys between crowded Harmonics, at the lower neighbour’s level', () => {
-    const outline = closeGaps(spikes(12, { 3: -40, 6: -44, 9: -48 }), 3);
-    expect(outline[4]).toBeCloseTo(-44); // between −40 and −44
-    expect(outline[5]).toBeCloseTo(-44);
-    expect(outline[7]).toBeCloseTo(-48);
-  });
-
-  it('keeps Harmonics that sit far apart as separate spikes, with the floor between them', () => {
-    const outline = closeGaps(spikes(30, { 5: -30, 20: -36 }), 3);
-    expect(outline[12]).toBe(FLOOR);
-    expect(outline[5]).toBe(-30);
-    expect(outline[20]).toBe(-36);
-  });
-
-  it('never rises above the strongest real value nearby, so it can’t invent energy', () => {
-    const input = spikes(40, { 2: -50, 4: -42, 7: -47, 9: -41, 25: -60 });
-    const outline = closeGaps(input, 3);
-    for (let i = 0; i < input.length; i++) {
-      const nearby = Math.max(...input.slice(Math.max(0, i - 6), i + 7)); // within twice the radius
-      expect(outline[i]).toBeGreaterThanOrEqual(input[i]);
-      expect(outline[i]).toBeLessThanOrEqual(nearby);
-    }
-  });
-
-  it('keeps each locally strongest Harmonic at exactly its height (a weaker one squeezed between is a dip, and is covered)', () => {
-    const input = spikes(20, { 4: -40, 6: -52, 8: -45 });
-    const outline = closeGaps(input, 3);
-    expect(outline[4]).toBe(-40);
-    expect(outline[8]).toBe(-45);
-    expect(outline[6]).toBe(-45);
-  });
-
-  it('handles the edges without inventing a wall', () => {
-    const outline = closeGaps(spikes(6, { 0: -30 }), 3);
-    expect(outline[5]).toBe(FLOOR);
-  });
-});
 
 describe('spectrumOutline: the Spectrum trace at the screen’s own resolution', () => {
   // 1 Hz bins; a linear axis of 10 Hz per CSS pixel, 100 pixels wide.
@@ -67,9 +26,11 @@ describe('spectrumOutline: the Spectrum trace at the screen’s own resolution',
     expect(outline[66]).toBe(FLOOR);
   });
 
-  it('merges Harmonics closer than that (1 px) into one outline across their tops', () => {
+  it('keeps Harmonics separate down to a single device pixel apart: as far as the screen can show', () => {
     const outline = spectrumOutline(bins({ 500: -30, 510: -32, 520: -34 }), 1, axis, 100, 2);
-    expect(outline[101]).toBeCloseTo(-32); // between 500 and 510 Hz
-    expect(outline[103]).toBeCloseTo(-34);
+    expect(outline[100]).toBe(-30); // 500 Hz → column 100
+    expect(outline[101]).toBe(FLOOR); // the one device pixel between 500 and 510 Hz
+    expect(outline[102]).toBe(-32);
+    expect(outline[103]).toBe(FLOOR);
   });
 });

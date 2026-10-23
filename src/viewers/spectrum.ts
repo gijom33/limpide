@@ -156,8 +156,8 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
     g.fill();
     g.globalAlpha = 1;
     g.strokeStyle = trace;
-    // Thin enough that spikes two pixels apart keep a dark gap between them.
-    g.lineWidth = 1;
+    // 1.5 device pixels: thin enough that spikes three device pixels apart keep a dark gap between them.
+    g.lineWidth = 1.5 / ratio;
     strokeColumns(g, outline, yOf, ratio);
 
     if (overlays.curve && response) {
