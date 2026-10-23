@@ -25,7 +25,7 @@ test('the Preset arrows step through the factory sounds', async ({ page }) => {
   await expect(cutoff(page)).toHaveAttribute('aria-valuetext', '280 Hz');
   await page.getByRole('button', { name: 'Previous Preset' }).click();
   await page.getByRole('button', { name: 'Previous Preset' }).click();
-  await expect(patchName(page)).toContainText('Wobble'); // wraps around
+  await expect(patchName(page)).toContainText('Glide Slide'); // wraps around to the last
 });
 
 test('an edit marks the Patch as changed, and the sound comes back after a reload (autosave)', async ({ page }) => {
