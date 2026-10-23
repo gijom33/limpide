@@ -712,6 +712,24 @@ describe('several Voices (ADR-0007)', () => {
     expect(engine.fundamental()).toBeCloseTo(164.8, 0);
   });
 
+  it('carries the whole chord at the Taps when asked to show all Voices', async () => {
+    const ctx = new OfflineAudioContext(1, SR * 0.6, SR);
+    const engine = createSynthEngine(ctx);
+    engine.applyPatch({ ...defaultPatch(), ...steady, voices: 4 });
+    engine.setTapSource('all');
+    chord(engine);
+    const captured = ctx.suspend(0.5).then(() => {
+      const s = new Float32Array(engine.taps.oscillator.fftSize);
+      engine.taps.oscillator.getFloatTimeDomainData(s);
+      void ctx.resume();
+      return s;
+    });
+    await ctx.startRendering();
+    const osc = await captured;
+    expect(dB(toneAmplitude(osc, SR, 110) / toneAmplitude(osc, SR, 164.8))).toBeGreaterThan(-3);
+    engine.setTapSource('newest'); // and back: only the newest Note again
+  });
+
   it('releases one Note of a chord and keeps the other sounding', async () => {
     const s = await render(1, { ...steady, voices: 4 }, (e) => {
       chord(e);

@@ -24,6 +24,23 @@ interface Props {
   inactive?: boolean;
 }
 
+/**
+ * The place a Parameter would be, where a stage has none (Osc 1 has no Octave, Semitone or Detune: it sets the
+ * pitch the others offset). Dimmed, inert, and silent to assistive technology, so the row reads the same on
+ * every tab and nothing moves when switching.
+ */
+export function KnobPlaceholder({ label }: { label: string }) {
+  return (
+    <div className="knob" data-placeholder aria-hidden="true">
+      <div className="knob-dial" />
+      <div className="knob-label">{label}</div>
+      <div className="knob-value">
+        <span>—</span>
+      </div>
+    </div>
+  );
+}
+
 /** A Parameter control: drag vertically (Shift for fine), arrow keys, double-click to reset. */
 export function Knob({ id, value, onChange, inactive }: Props) {
   const def = PARAMS[id];

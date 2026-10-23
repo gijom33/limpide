@@ -7,7 +7,10 @@ import { noteToFrequency } from '../music/pitch';
 import { GLIDE_OFF, PARAMS, type FilterMode, type Patch, type Voices } from '../patch/patch';
 import { bandwidthOctaves } from '../modulation/passBand';
 
-/** Listening points in the Voice of the newest Note, one analyser each (ADR-0007). */
+/** Which Voices the Taps listen to: the newest Note's alone (the default, ADR-0007) or all of them summed. */
+export type TapSource = 'newest' | 'all';
+
+/** Listening points, one analyser each: in the Voice of the newest Note, or in every Voice (ADR-0007). */
 export interface Taps {
   oscillator: AnalyserNode;
   filter: AnalyserNode;
@@ -50,6 +53,8 @@ export interface SynthEngine {
   filterResponse(frequencies: Float32Array<ArrayBuffer>): Float32Array;
   /** Whether the output's safety limiter bent the sound in its last frame (the summed Voices, after the master). */
   limiting(): boolean;
+  /** What the Taps listen to: the Voice of the newest Note (the default), or every Voice summed. */
+  setTapSource(source: TapSource): void;
   readonly taps: Taps;
 }
 
@@ -404,8 +409,16 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   const patches: { time: number; patch: Patch }[] = [];
   const ampEvents: GateEvent[] = [];
   const filterEvents: GateEvent[] = [];
-  /** The Voice of the newest Note: the Taps listen to it. */
+  /** The Voice of the newest Note: the Taps listen to it (or to every Voice, when asked). */
   let lead: Voice | null = null;
+  let tapSource: TapSource = 'newest';
+  const listening = new Set<Voice>();
+  /** Connect the Taps to the Voices they should hear now, and to nothing else. */
+  const listen = () => {
+    const wanted = new Set(tapSource === 'all' ? voices : lead ? [lead] : []);
+    for (const v of listening) if (!wanted.has(v)) { v.detach(taps); listening.delete(v); }
+    for (const v of wanted) if (!listening.has(v)) { v.attach(taps); listening.add(v); }
+  };
 
   const at = (time?: number) => time ?? ctx.currentTime;
   const voiceCount = (): Voices => patch?.voices ?? 1;
@@ -449,9 +462,8 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
 
   const follow = (voice: Voice) => {
     if (voice === lead) return;
-    lead?.detach(taps);
-    voice.attach(taps);
     lead = voice;
+    listen();
   };
   follow(voices[0]);
 
@@ -509,6 +521,11 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       return then ? effectiveCutoff(then) : 0;
     },
     now: () => ctx.currentTime,
+    setTapSource(source) {
+      if (source === tapSource) return;
+      tapSource = source;
+      listen();
+    },
     limiting() {
       limiterInput.getFloatTimeDomainData(limiterFrame);
       for (let i = 0; i < limiterFrame.length; i++) if (Math.abs(limiterFrame[i]) > SAFETY_KNEE) return true;

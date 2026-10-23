@@ -1,8 +1,12 @@
 import type { FrequencyScale, LevelScale } from './axes';
 
+export type TapSource = 'newest' | 'all';
+
 export interface ViewerState {
   /** Viewers hold their last frame while the sound keeps playing. */
   frozen: boolean;
+  /** The Taps show the newest Note's Voice alone (the default), or every Voice summed (ADR-0007). */
+  tapSource: TapSource;
   frequencyScale: FrequencyScale;
   levelScale: LevelScale;
   /**
@@ -17,9 +21,10 @@ export type ViewerAction =
   | { type: 'setFrequencyScale'; scale: FrequencyScale }
   | { type: 'setLevelScale'; scale: LevelScale }
   | { type: 'takeSnapshot' }
-  | { type: 'clearSnapshot' };
+  | { type: 'clearSnapshot' }
+  | { type: 'setTapSource'; source: TapSource };
 
-export const INITIAL_VIEWER_STATE: ViewerState = { frozen: false, frequencyScale: 'log', levelScale: 'db', snapshot: null };
+export const INITIAL_VIEWER_STATE: ViewerState = { frozen: false, tapSource: 'newest', frequencyScale: 'log', levelScale: 'db', snapshot: null };
 
 export function viewerReducer(state: ViewerState, action: ViewerAction): ViewerState {
   switch (action.type) {
@@ -27,6 +32,8 @@ export function viewerReducer(state: ViewerState, action: ViewerAction): ViewerS
       return { ...state, frozen: !state.frozen };
     case 'setFrequencyScale':
       return { ...state, frequencyScale: action.scale };
+    case 'setTapSource':
+      return { ...state, tapSource: action.source };
     case 'setLevelScale':
       return { ...state, levelScale: action.scale };
     case 'takeSnapshot':

@@ -42,6 +42,15 @@ export const TIPS = {
     body: 'Map your Controller: click a knob or button here, then move a knob, fader or pad there. Endless encoders and normal knobs are told apart by what they send.',
     how: 'Normal knobs use Pickup: the Parameter waits until the knob passes its value, so nothing jumps. Finish with Escape, or Done in the MIDI panel.',
   },
+  osc1Tuning: {
+    title: 'Osc 1 sets the pitch',
+    body: 'Octave, Semitone and Detune are Osc 2’s offsets from Osc 1, so they live on the Osc 2 tab. Osc 1 is the pitch you play.',
+  },
+  tapSource: {
+    title: 'Viewers follow',
+    body: 'Newest: every Viewer shows the Note you played last, alone, so Cycle Lock, the Harmonic Markers and the Timeline stay exact. All: the Taps carry every Voice at once, so a chord is seen as it is heard.',
+    how: 'With All, the Scope cannot lock to a chord and the Markers still follow the newest Note. One Voice shows the same either way.',
+  },
   voices: {
     title: 'Voices',
     body: 'How many Notes can sound at once. 1 is the classic monophonic synth: the newest key wins, and Glide slides between Notes. 2 to 4 play chords, each Note on its own Voice.',

@@ -124,6 +124,9 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 /* Label and value are centred under the dial and may be wider than the column (their neighbours' are short). */
 .knob-label { font-size: var(--text-md); line-height: var(--knob-label-h); height: var(--knob-label-h); white-space: nowrap; }
 .knob[data-inactive] .knob-dial, .knob[data-inactive] .knob-value { opacity: 0.55; }
+/* A placeholder is a Parameter the stage does not have: dimmed whole, and no pointer. */
+.knob[data-placeholder] { opacity: 0.3; pointer-events: none; }
+.knob[data-placeholder] .knob-dial { cursor: default; }
 
 /* Icon pickers (Waveforms, Filter Mode, LFO Waveform): one segmented track, as wide as its icons. */
 .icon-picker { width: fit-content; flex: none; }
@@ -335,7 +338,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 /* On both Oscillator tabs the Pulse Width knob sits to the right of the Waveform picker, so it stays put when
    switching tabs; Osc 2's tuning knobs take the row below. */
 .tab-panel .sub-block > .knobs { flex: 0 0 auto; }
-.tab-panel .sub-block > .knobs-tuning { flex: 1 1 100%; }
+.tab-panel .sub-block > .knobs-tuning, .tab-panel .sub-block > .tip-anchor:has(> .knobs-tuning) { flex: 1 1 100%; }
 .block-controls { container-type: inline-size; position: relative; }
 
 /* Filter Mode and Slope share the Filter heading's line when there is room. */

@@ -16,7 +16,7 @@ import { positionToValue, valueToPosition } from '../patch/taper';
 import { loadOverlays, saveOverlays, toggleOverlay } from '../viewers/overlays';
 import { INITIAL_VIEWER_STATE, viewerReducer } from '../viewers/viewerState';
 import type { ViewSettings } from '../viewers/viewSettings';
-import { Knob } from './Knob';
+import { Knob, KnobPlaceholder } from './Knob';
 import { OverlayToggles } from './OverlayToggles';
 import { TapViewers } from './TapViewers';
 import { Logo } from './Logo';
@@ -327,6 +327,7 @@ export function App() {
     session.engine.applyPatch(patch);
     session.input.setVoices(patch.voices);
   }, [session, patch]);
+  useEffect(() => session.engine.setTapSource(viewer.tapSource), [session, viewer.tapSource]);
 
   useEffect(() => {
     const { input } = session;
@@ -518,6 +519,14 @@ export function App() {
                           <Knob id="pulseWidth" value={patch.pulseWidth} onChange={(v) => change('pulseWidth', v)} inactive={patch.waveform !== 'pulse'} />
                         </Tooltip>
                       </div>
+                      {/* Osc 1 has no tuning of its own; the same row as Osc 2's, so the tabs match. */}
+                      <Tooltip content={TIPS.osc1Tuning}>
+                        <div className="knobs knobs-tuning">
+                          <KnobPlaceholder label="Octave" />
+                          <KnobPlaceholder label="Semitone" />
+                          <KnobPlaceholder label="Detune" />
+                        </div>
+                      </Tooltip>
                     </SubBlock>
                     ),
                   },

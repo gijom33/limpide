@@ -53,6 +53,18 @@ export function ViewActions({ state, dispatch }: Props) {
           </Tooltip>
         )}
       </div>
+      <Tooltip content={TIPS.tapSource}>
+        <Segmented
+          label="Viewers follow"
+          caption="Voices"
+          value={state.tapSource}
+          options={[
+            { value: 'newest', label: 'Newest' },
+            { value: 'all', label: 'All' },
+          ]}
+          onChange={(source) => dispatch({ type: 'setTapSource', source })}
+        />
+      </Tooltip>
     </>
   );
 }
