@@ -22,6 +22,8 @@ function fakeHost(voicesOf: Record<string, number>) {
     noteOff: (at) => calls.push(`off @${at.toFixed(3)}`),
     release: (note, at) => calls.push(`release ${note} @${at.toFixed(3)}`),
     onStep: (i) => calls.push(`step ${i}`),
+    onNotes: (notes) => calls.push(`keys ${notes.join('+') || '-'}`),
+    showOctave: (o) => calls.push(`octave ${o}`),
     onEnd: () => calls.push('end'),
   };
   return { host, calls, advance: (s: number) => (clock += s) };
@@ -41,11 +43,11 @@ describe('the Demo player', () => {
     advance(1.8); // past the lead-in, the phrase (1 s) and the gap
     vi.advanceTimersByTime(40);
     expect(calls).toContain('on 52 @0.800');
-    expect(calls.slice(-2)).toEqual(['load Poly', 'step 1']);
+    expect(calls.slice(-3)).toEqual(['load Poly', 'step 1', 'octave 3']);
     // A chord on a several-Voice Preset: both Notes start before either is released, by note.
     advance(0.4);
     vi.advanceTimersByTime(40);
-    const chord = calls.slice(calls.indexOf('step 1') + 1);
+    const chord = calls.slice(calls.indexOf('step 1') + 1).filter((c) => /^(on|release) /.test(c));
     expect(chord.map((c) => c.split(' ')[0])).toEqual(['on', 'on', 'release', 'release']);
     stop();
     expect(calls.at(-2)).toMatch(/^off @/);
@@ -87,6 +89,23 @@ describe('the Demo player', () => {
     advance(0.1);
     vi.advanceTimersByTime(40);
     expect(cutoffs().length).toBe(after); // done: no more moves
+    vi.useRealTimers();
+  });
+
+  it('lights the keys of the Notes sounding now, and shows the octave the phrase lives in', () => {
+    vi.useFakeTimers();
+    const { host, calls, advance } = fakeHost({ Mono: 1, Poly: 4 });
+    const stop = startDemo(host, tour);
+    expect(calls).toContain('octave 3'); // C3 is MIDI 48: the piano's C is C3
+    const keys = () => calls.filter((c) => c.startsWith('keys')).at(-1);
+    advance(0.35); // C3 has started (at 0.3 s)
+    vi.advanceTimersByTime(40);
+    expect(keys()).toBe('keys 48');
+    advance(0.4); // C3 has ended (0.725 s), E3 not yet (0.8 s)
+    vi.advanceTimersByTime(40);
+    expect(keys()).toBe('keys -');
+    stop();
+    expect(calls.at(-1)).toBe('keys -');
     vi.useRealTimers();
   });
 

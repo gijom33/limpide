@@ -117,6 +117,7 @@ export function App() {
 
   // The Demo: a tour of one Preset per group, each played with a phrase that suits it, until anything is touched.
   const [demo, setDemo] = useState<number | null>(null);
+  const [demoNotes, setDemoNotes] = useState<number[]>([]);
   const demoStop = useRef<(() => void) | null>(null);
   const stopDemo = () => {
     demoStop.current?.();
@@ -140,6 +141,8 @@ export function App() {
       noteOff: (at) => engine.noteOff(at),
       release: (note, at) => engine.release(note, at),
       onStep: setDemo,
+      onNotes: setDemoNotes,
+      showOctave: (o) => setOctave(shiftOctave(o, 0)),
       onEnd: () => {
         // The tour is over: back to the starting point, silent, as if nothing had been touched.
         demoStop.current = null;
@@ -434,7 +437,7 @@ export function App() {
           −
         </button>
         <Tooltip content={TIPS.keyboard}>
-          <Piano octave={octave} held={heldNotes} input={session.input} />
+          <Piano octave={octave} held={demoNotes.length ? [...heldNotes, ...demoNotes] : heldNotes} input={session.input} />
         </Tooltip>
         <button type="button" className="tool tool-icon" aria-label="Octave up" onClick={() => setOctave((o) => shiftOctave(o, 1))}>
           +

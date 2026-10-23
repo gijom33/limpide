@@ -18,6 +18,10 @@ export interface DemoHost {
   /** The Voice playing `note` releases (several Voices). */
   release(note: number, at: number): void;
   onStep(index: number): void;
+  /** The Notes sounding right now, whenever that changes: for the on-screen piano. */
+  onNotes(notes: number[]): void;
+  /** The octave the on-screen piano should show, so the stop's phrase is in view. */
+  showOctave(octave: number): void;
 }
 
 // Notes are handed to the engine this far ahead of the clock: enough to be on time, little enough to stop quickly.
@@ -39,11 +43,13 @@ export function startDemo(host: DemoHost, tour: readonly TourStop[] = TOUR): () 
   let end = 0;
   let voices = 1;
   let moves: { id: ParamId; from: number; to: number; start: number; end: number; done: boolean }[] = [];
+  let shown = '';
 
   const step = () => {
     index += 1;
     if (index >= tour.length) {
       clearTimeout(timer);
+      host.onNotes([]);
       host.onEnd();
       return false;
     }
@@ -51,6 +57,8 @@ export function startDemo(host: DemoHost, tour: readonly TourStop[] = TOUR): () 
     const patch = host.load(stop);
     voices = patch.voices;
     host.onStep(index);
+    const lowest = Math.min(...parsePhrase(stop.phrase, stop.bpm).map((e) => e.note));
+    host.showOctave(Math.floor(lowest / 12) - 1); // the piano's C is the lowest Note's octave
     const start = host.now() + LEAD_IN;
     const beat = 60 / stop.bpm;
     const length = phraseLength(stop.phrase, stop.bpm);
@@ -78,8 +86,19 @@ export function startDemo(host: DemoHost, tour: readonly TourStop[] = TOUR): () 
     }
   };
 
+  const lightKeys = () => {
+    const now = host.now();
+    const notes = events.filter((e) => e.time <= now && now < e.off).map((e) => e.note);
+    const key = notes.join(',');
+    if (key !== shown) {
+      shown = key;
+      host.onNotes(notes);
+    }
+  };
+
   const tick = () => {
     turnKnobs();
+    lightKeys();
     const horizon = host.now() + LOOKAHEAD;
     while (queued < events.length && events[queued].time < horizon) {
       // A chord's Notes all start before any of them stops, so the model's history stays in time order.
@@ -101,5 +120,6 @@ export function startDemo(host: DemoHost, tour: readonly TourStop[] = TOUR): () 
     const now = host.now();
     host.noteOff(now);
     host.noteOff(now + LOOKAHEAD + 0.05); // and whatever was already handed to the engine
+    host.onNotes([]);
   };
 }

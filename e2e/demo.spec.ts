@@ -12,6 +12,7 @@ test('the Demo tours one Preset per group, in order, making sound, and stops whe
   await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
   await expect(patchName(page)).toContainText('Init'); // the Start group's Preset, first
   await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /^-?[0-5]?\d(\.\d+)?$/, { timeout: 8000 }); // sound
+  await expect(page.getByRole('group', { name: 'Piano' }).locator('[aria-pressed="true"]').first()).toBeVisible({ timeout: 8000 }); // the Notes show on the piano
   await expect(patchName(page)).toContainText('PWM Morph', { timeout: 15000 }); // Shapes, next
   await page.keyboard.press('a');
   await expect(demo(page)).toHaveAttribute('aria-pressed', 'false');

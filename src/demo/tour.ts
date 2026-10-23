@@ -30,7 +30,7 @@ export const TOUR: readonly TourStop[] = [
   { group: 'Start', preset: 'Init', bpm: 120, phrase: 'E3:1 E3:1 F3:1 G3:1 G3:1 F3:1 E3:1 D3:1',
     moves: [{ id: 'cutoff', from: 250, to: 9000 }, { id: 'resonance', from: 0.4, to: 0.2 }] },
   // Pachelbel's Canon, the bass, while the Pulse Width sweep quickens: the Scope breathes, then pants.
-  { group: 'Shapes', preset: 'PWM Morph', bpm: 112, phrase: 'D2:1 A1:1 B1:1 F#1:1 G1:1 D1:1 G1:1 A1:1', moves: [{ id: 'lfoRate', from: 0.3, to: 5 }] },
+  { group: 'Shapes', preset: 'PWM Morph', bpm: 112, phrase: 'D3:1 A2:1 B2:1 F#2:1 G2:1 D2:1 G2:1 A2:1', moves: [{ id: 'lfoRate', from: 0.3, to: 5 }] },
   // Strauss, Also sprach Zarathustra: three Notes in fifths, with the fifth above fading in.
   { group: 'Intervals', preset: 'Perfect Fifth', bpm: 112, phrase: 'C2:3 G2:3 C3:2', moves: [{ id: 'mixOsc2', from: 0, to: 1, end: 5 }] },
   // Grieg, In the Hall of the Mountain King, with the Resonance climbing until the Filter rings on its own.
