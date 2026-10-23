@@ -70,6 +70,11 @@ export const TIPS = {
     body: 'How far the Cutoff follows the Note you play, from C4: at 100 % it moves an octave per octave, so high Notes keep as many Harmonics as low ones. At 0 % the Cutoff stays put, and high Notes sound duller.',
     how: 'Play C3 then C5 with a low Cutoff: watch the Response Curve move with the Harmonic Markers.',
   },
+  demo: {
+    title: 'Demo',
+    body: 'A tour of the sounds: one Preset from every group, each played with a few bars that suit it, then it stops. Watch the Viewers while it plays.',
+    how: 'Press any key, play a Note, or touch a control to take over; the Demo stops at once. It never changes the Display settings.',
+  },
   hold: {
     title: 'Hold',
     body: 'Keeps the Note sounding after you let go of the key, so both hands are free to turn knobs while you watch.',

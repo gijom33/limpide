@@ -16,6 +16,9 @@ import { positionToValue, valueToPosition } from '../patch/taper';
 import { loadOverlays, saveOverlays, toggleOverlay } from '../viewers/overlays';
 import { INITIAL_VIEWER_STATE, viewerReducer } from '../viewers/viewerState';
 import type { ViewSettings } from '../viewers/viewSettings';
+import { startDemo } from '../demo/player';
+import { PRESETS } from '../patch/presets';
+import { PlayIcon } from './icons';
 import { Knob } from './Knob';
 import { OverlayToggles } from './OverlayToggles';
 import { TapViewers } from './TapViewers';
@@ -107,6 +110,54 @@ export function App() {
     setBaseline(next);
   };
   const patchChanged = JSON.stringify(patch) !== JSON.stringify(baseline);
+
+  // The Demo: a tour of one Preset per group, each played with a phrase that suits it, until anything is touched.
+  const [demo, setDemo] = useState<number | null>(null);
+  const demoStop = useRef<(() => void) | null>(null);
+  const stopDemo = () => {
+    demoStop.current?.();
+    demoStop.current = null;
+    setDemo(null);
+  };
+  const stopDemoRef = useRef(stopDemo);
+  stopDemoRef.current = stopDemo;
+  const toggleDemo = () => {
+    if (demoStop.current) return stopDemo();
+    const { engine } = session;
+    demoStop.current = startDemo({
+      now: () => engine.now(),
+      load: (stop) => {
+        const preset = PRESETS.find((p) => p.name === stop.preset)!;
+        loadPatch(preset.name, preset.patch);
+        return preset.patch.voices;
+      },
+      noteOn: (note, velocity, at) => engine.noteOn(note, velocity, at),
+      noteOff: (at) => engine.noteOff(at),
+      release: (note, at) => engine.release(note, at),
+      onStep: setDemo,
+      onEnd: () => {
+        demoStop.current = null;
+        setDemo(null);
+      },
+    });
+  };
+  // Playing anything, or touching a control, ends the Demo: the person has taken over.
+  useEffect(() => {
+    if (demo === null) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (!e.metaKey && !e.ctrlKey && !e.altKey && !['Shift', 'Tab'].includes(e.key)) stopDemo();
+    };
+    const onPointer = (e: PointerEvent) => {
+      const target = e.target as Element;
+      if (target.closest('main') && !target.closest('[data-demo]')) stopDemo();
+    };
+    window.addEventListener('keydown', onKey);
+    document.addEventListener('pointerdown', onPointer);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.removeEventListener('pointerdown', onPointer);
+    };
+  }, [demo]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     // A share link has done its job once loaded; drop it so a reload keeps later edits (autosaved).
@@ -271,6 +322,7 @@ export function App() {
         if (cancelled) return;
         dispose = connectMidi(access as unknown as MidiAccessLike, {
           onMessage: (m) => {
+            if (m.type === 'noteOn' && demoStop.current) stopDemoRef.current();
             surface.handle(m);
             setActivity(describeMessage(m));
           },
@@ -456,6 +508,12 @@ export function App() {
           </div>
           <div className="header-center">{playControls}</div>
           <div className="header-right">
+            <Tooltip content={TIPS.demo}>
+              <button type="button" className="tool tool-mode demo-button" aria-label="Demo" aria-pressed={demo !== null} data-demo onClick={toggleDemo}>
+                <PlayIcon />
+                <span className="demo-word">Demo</span>
+              </button>
+            </Tooltip>
             <DisplayMenu active={viewer.frozen || viewer.snapshot !== null}>
               <section className="toolbar" aria-label="Viewer controls">
                 <div className="toolbar-groups">

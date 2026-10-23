@@ -41,3 +41,12 @@ export const SlidersIcon = () => (
     <circle cx="5" cy="11.5" r="1.6" fill="var(--panel)" />
   </svg>
 );
+
+/** A play triangle: the Demo. */
+export function PlayIcon() {
+  return (
+    <svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true">
+      <path d="M2.5 1.5 L10.5 6 L2.5 10.5 Z" fill="currentColor" />
+    </svg>
+  );
+}

@@ -70,7 +70,7 @@ header {
 }
 .header-left { display: flex; align-items: center; gap: var(--space-4); min-width: 0; }
 .header-center { justify-self: center; }
-.header-right { justify-self: end; }
+.header-right { justify-self: end; display: flex; align-items: center; gap: var(--space-2); }
 header h1 { margin: 0; }
 h1 { margin: 0 0 var(--space-2); font-size: 22px; letter-spacing: 0.02em; }
 h2 { margin: 0 0 var(--space-3); font-size: var(--text-lg); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
@@ -441,7 +441,8 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .patch-name { width: 150px; justify-content: center; gap: 6px; }
 /* Narrow windows (one-row header, down to 861 px): a shorter fixed width, so the Display button keeps its place on
    the right; long Preset names show an ellipsis. */
-@media (max-width: 919px) { .patch-name { width: 104px; } }
+@media (max-width: 959px) { .patch-name { width: 104px; } }
+@media (max-width: 879px) { .patch-name { width: 86px; } }
 .patch-name span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .patch-changed { width: 6px; height: 6px; border-radius: 50%; background: var(--text); flex: none; }
 /* Never taller than the window below the header: the Presets scroll, the rest of the panel stays in view. */
@@ -468,6 +469,8 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .patch-delete { height: var(--control-h); min-width: var(--control-h); padding: 0 6px; font: inherit; font-size: var(--text-md); color: var(--muted); cursor: pointer; background: none; border: 1px solid var(--border); border-radius: var(--radius-control); }
 .patch-delete-confirm { color: var(--danger); border-color: var(--danger); }
 .patch-empty { margin: 0; font-size: var(--text-md); color: var(--muted); }
+/* Below 1000 px the header is tight: the Demo button keeps its play icon and drops its word. */
+@media (max-width: 999px) { .demo-word { display: none; } }
 .patch-save { display: flex; gap: 6px; margin-top: 8px; max-width: 440px; }
 .patch-panel > .patch-link { max-width: 440px; }
 .patch-save input, .patch-link {
