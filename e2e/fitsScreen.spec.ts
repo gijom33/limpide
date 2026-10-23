@@ -94,7 +94,7 @@ for (const [width, height] of [
 }
 
 for (const [width, height, maxControls, minViewer] of [
-  [872, 920, 300, 78],
+  [872, 920, 350, 78],
   [1100, 900, 300, 100],
 ]) {
   test(`narrow stages use compact controls, leaving room for the Viewers (${width}×${height})`, async ({ page }) => {

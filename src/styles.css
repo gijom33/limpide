@@ -90,7 +90,7 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 }
 .block h2 { margin: 0; }
 
-/* Each stage wears its colour on its traces, knob pointers and outline; text keeps the text colours. */
+/* Each stage wears its colour on its name, traces, knob pointers and outline; other text keeps the text colours. */
 .block[data-stage='osc'] { --stage: var(--stage-osc); }
 .block[data-stage='filter'] { --stage: var(--stage-filter); }
 .block[data-stage='amp'] { --stage: var(--stage-amp); }
@@ -99,6 +99,7 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
   border-color: color-mix(in srgb, var(--stage) 55%, var(--border));
 }
 .block[data-stage] .knob-dial::after { background: var(--stage); }
+.block[data-stage] h2 { color: var(--stage); }
 .block[data-stage] .knob-dial:focus-visible { outline-color: var(--stage); }
 .block .knobs { min-height: var(--knob-h); }
 @media (max-width: 860px) {
@@ -336,15 +337,39 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 /* The Tuning and Mixer rows: name in a 44 px column, knobs beside it, so both rows' knobs line up. In a stage too
    narrow for the Mixer's four knobs beside a label, the Mixer's name goes above its row (the Tuning row's three
    knobs still fit beside theirs). */
-.source-rows > .sub-block > h3, .source-rows > .sub-block > .tip-anchor:first-child { flex: 0 0 44px; }
-/* The Filter Envelope's name too, on two lines ("Filter" over "Envelope") in a column a little wider. */
-.block[data-stage='filter'] .sub-block > h3, .block[data-stage='filter'] .sub-block > .tip-anchor:first-child { flex: 0 0 60px; }
-.block[data-stage='filter'] .sub-block h3 { white-space: normal; line-height: 1.25; width: min-content; }
-/* The Filter's and the Amp's rows spread out to fill the height the Oscillators give the controls. */
-.block[data-stage='filter'] .block-controls, .block[data-stage='amp'] .block-controls { justify-content: space-between; }
-@container (max-width: 299px) {
-  .source-rows > .sub-block[aria-label='Mixer'] > h3, .source-rows > .sub-block[aria-label='Mixer'] > .tip-anchor:first-child { flex: 1 1 100%; }
+/* Every stage is a grid of rows: a label column on the left (TUNING, MIXER, FILTER ENVELOPE, AMP ENVELOPE,
+   VOICES; two lines when the name needs them), and the controls starting on one vertical line to its right.
+   A row without a name leaves the column empty. The rows share the height the tallest stage gives the controls,
+   with the same space above and below each. */
+:root { --label-col: 62px; --label-gap: 10px; }
+.rows { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; justify-content: space-evenly; gap: var(--space-3); }
+.rows > * { flex: none; }
+.block .sub-block { column-gap: var(--label-gap); }
+.block .sub-block > h3, .block .sub-block > .tip-anchor:first-child { flex: 0 0 var(--label-col); }
+.block .sub-block h3 { letter-spacing: 0.04em; white-space: nowrap; min-width: 0; }
+/* A row of knobs: its name level with the dials, not with the whole knob. */
+.block .sub-block:has(.knob) > h3, .block .sub-block:has(.knob) > .tip-anchor:first-child { align-self: flex-start; }
+.block .sub-block:has(.knob) h3 { display: flex; align-items: center; min-height: var(--knob-dial); }
+/* A dial sits centred in its column; the row starts that much to the left, so dial edges line up with the
+   segmented controls' edges. */
+.block .sub-block > h3 + .knobs, .block .sub-block > .tip-anchor + .knobs, .block .envelope-knobs { margin-left: calc((var(--knob-dial) - var(--knob-col)) / 2); }
+/* Knobs that follow a picker on their row keep clear of it. */
+.block .sub-block > .segmented + .knobs { margin-left: var(--space-3); }
+/* The Oscillator tabs start where the controls do. */
+.tab-list { padding-left: calc(var(--label-col) + var(--label-gap)); }
+.voices-field .segmented-field { gap: var(--label-gap); }
+.voices-field .field-caption {
+  flex: 0 0 var(--label-col); font-size: var(--text-sm); font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em;
 }
+/* In a stage too narrow for the column, names go above their rows and nothing is indented. */
+@container (max-width: 299px) {
+  .block .sub-block > h3, .block .sub-block > .tip-anchor:first-child { flex: 1 1 100%; align-self: auto; }
+  .block .sub-block:has(.knob) h3 { min-height: 0; }
+  .tab-list { padding-left: 0; }
+  .voices-field .segmented-field { flex-wrap: wrap; }
+  .voices-field .field-caption { flex: 1 1 100%; }
+}
+
 .block-controls { container-type: inline-size; position: relative; }
 
 /* Filter Mode and Slope on a row of their own under the Filter heading; Voices under the Amp heading the same

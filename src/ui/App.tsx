@@ -68,15 +68,19 @@ function Block({ title, stage, ids, patch, onChange, children, more, heading, ex
     <section className="block" data-stage={stage} aria-label={title}>
       <div className="block-controls">
         <h2>{title}</h2>
-        {heading}
-        <div className="knobs">
-          {children}
-          {ids.map((id) => (
-            <Knob key={id} id={id} value={patch[id]} onChange={(v) => onChange(id, v)} />
-          ))}
-          {extra}
+        <div className="rows">
+          {heading}
+          {(children || ids.length > 0 || extra) && (
+            <div className="knobs">
+              {children}
+              {ids.map((id) => (
+                <Knob key={id} id={id} value={patch[id]} onChange={(v) => onChange(id, v)} />
+              ))}
+              {extra}
+            </div>
+          )}
+          {more}
         </div>
-        {more}
       </div>
       {viewers}
     </section>
@@ -563,7 +567,7 @@ export function App() {
             patch={patch}
             onChange={change}
             viewers={viewers('oscillator', 'Oscillator', { showIdeal: true })}
-          >
+            more={
             <div className="source-rows">
               <Tabs
                 label="Oscillator"
@@ -572,7 +576,7 @@ export function App() {
                     id: 'osc1',
                     label: 'Osc 1',
                     content: (
-                    <SubBlock title="Osc 1" group showTitle={false}>
+                    <SubBlock title="Osc 1" label="Waveform" group>
                       <WaveformPicker label="Osc 1 Waveform" choice="waveform" value={patch.waveform} onChange={(w) => setPatch((p) => setWaveform(p, w))} />
                       <div className="knobs">
                         <Tooltip content={TIPS.pulseWidth}>
@@ -589,7 +593,7 @@ export function App() {
                     badge: patch.mixOsc2 > 0,
                     badgeLabel: 'sounding',
                     content: (
-                    <SubBlock title="Osc 2" group showTitle={false}>
+                    <SubBlock title="Osc 2" label="Waveform" group>
                       <WaveformPicker label="Osc 2 Waveform" choice="osc2Waveform" value={patch.osc2Waveform} onChange={(w) => setPatch((p) => setWaveform(p, w, 'osc2'))} />
                       <div className="knobs">
                         {/* Pulse Width first, where Osc 1 has it, so it stays put when switching tabs. */}
@@ -631,26 +635,34 @@ export function App() {
                 </div>
               </SubBlock>
             </div>
-          </Block>
+            }
+          />
           <Block
             title="Filter"
             stage="filter"
-            ids={['cutoff', 'resonance']}
-            extra={
-              <>
-                <Tooltip content={TIPS.velocityCutoff}>
-                  <Knob id="velocityCutoff" value={patch.velocityCutoff} onChange={(v) => change('velocityCutoff', v)} />
-                </Tooltip>
-                <Tooltip content={TIPS.keyTrack}>
-                  <Knob id="keyTrack" value={patch.keyTrack} onChange={(v) => change('keyTrack', v)} />
-                </Tooltip>
-              </>
-            }
+            ids={[]}
             patch={patch}
             onChange={change}
-            heading={<FilterShape mode={patch.filterMode} slope={patch.filterSlope} onChange={(c) => setPatch((p) => setFilter(p, c))} />}
+            heading={
+              <SubBlock title="Mode">
+                <FilterShape mode={patch.filterMode} slope={patch.filterSlope} onChange={(c) => setPatch((p) => setFilter(p, c))} />
+              </SubBlock>
+            }
             more={
-              <SubBlock title="Filter Envelope" tip={TIPS.filterEnvelope}>
+              <>
+              <SubBlock title="Cutoff">
+                <div className="knobs">
+                  <Knob id="cutoff" value={patch.cutoff} onChange={(v) => change('cutoff', v)} />
+                  <Knob id="resonance" value={patch.resonance} onChange={(v) => change('resonance', v)} />
+                  <Tooltip content={TIPS.velocityCutoff}>
+                    <Knob id="velocityCutoff" value={patch.velocityCutoff} onChange={(v) => change('velocityCutoff', v)} />
+                  </Tooltip>
+                  <Tooltip content={TIPS.keyTrack}>
+                    <Knob id="keyTrack" value={patch.keyTrack} onChange={(v) => change('keyTrack', v)} />
+                  </Tooltip>
+                </div>
+              </SubBlock>
+              <SubBlock title="Filter Envelope" label="Envelope" tip={TIPS.filterEnvelope}>
                 {/* Its own container: the row chooses five columns or 3+2 by the room beside the label. */}
                 <div className="envelope-knobs">
                   <div className="knobs knobs-envelope">
@@ -663,6 +675,7 @@ export function App() {
                   </div>
                 </div>
               </SubBlock>
+              </>
             }
             viewers={viewers('filter', 'Filter', {
               showIdeal: true,
@@ -672,7 +685,16 @@ export function App() {
           <Block
             title="Amp"
             stage="amp"
-            ids={['ampAttack', 'ampDecay', 'ampSustain', 'ampRelease']}
+            ids={[]}
+            more={
+              <SubBlock title="Amp Envelope" label="Envelope" tip={TIPS.ampEnvelope}>
+                <div className="knobs">
+                  {(['ampAttack', 'ampDecay', 'ampSustain', 'ampRelease'] as const).map((id) => (
+                    <Knob key={id} id={id} value={patch[id]} onChange={(v) => change(id, v)} />
+                  ))}
+                </div>
+              </SubBlock>
+            }
             heading={
               <div className="voices-field">
                 <Tooltip content={TIPS.voices}>

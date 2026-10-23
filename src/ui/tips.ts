@@ -95,6 +95,10 @@ export const TIPS = {
     body: 'How steeply the Filter removes frequencies past the Cutoff: 12 or 24 dB per octave. 24 dB is two Filters in a row, darker and more “synth”.',
     how: 'Compare the Response Curve at each Slope: the 24 dB one falls twice as fast.',
   },
+  ampEnvelope: {
+    title: 'Amp Envelope',
+    body: 'The loudness of every Note over time: Attack to full, Decay to the Sustain level while the key is held, Release once it is let go. The Timeline draws it.',
+  },
   filterEnvelope: {
     title: 'Filter Envelope',
     body: 'An Attack–Decay–Sustain–Release shape, like the Amp’s, that moves the Cutoff instead of the loudness. Envelope Amount sets how far.',
