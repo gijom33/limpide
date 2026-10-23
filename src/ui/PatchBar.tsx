@@ -50,6 +50,11 @@ export function PatchBar({ name, changed, patch, library, onLoad }: Props) {
     stepping.current.name = preset.name;
     onLoad(preset.name, preset.patch);
   };
+  /** Loading a sound is the end of the visit: the panel closes so the sound can be played at once. */
+  const load = (next: string, patch: Patch) => {
+    onLoad(next, patch);
+    setOpen(false);
+  };
   const toggle = () => {
     setOpen((o) => !o);
     setSaveName(PRESETS.some((p) => p.name === name) || name === 'Last session' || name === 'Shared Patch' ? '' : name);
@@ -113,11 +118,11 @@ export function PatchBar({ name, changed, patch, library, onLoad }: Props) {
             <h3>Presets</h3>
             {PRESET_GROUPS.map((group) => (
               <div key={group} className="patch-group" role="group" aria-label={group}>
-                {group !== 'Start' && <h4 aria-hidden="true">{group}</h4>}
+                <h4 aria-hidden="true">{group}</h4>
                 <div className="patch-list">
                   {PRESETS.filter((p) => p.group === group).map((p) => (
                     <Tooltip key={p.name} content={{ title: p.name, body: p.about }}>
-                      <button type="button" className="patch-item" aria-current={p.name === name || undefined} onClick={() => onLoad(p.name, p.patch)}>
+                      <button type="button" className="patch-item" aria-current={p.name === name || undefined} onClick={() => load(p.name, p.patch)}>
                         {p.name}
                       </button>
                     </Tooltip>
@@ -132,7 +137,7 @@ export function PatchBar({ name, changed, patch, library, onLoad }: Props) {
               {library.list().length === 0 && <p className="patch-empty">None saved yet.</p>}
               {library.list().map((p) => (
                 <span key={p.name} className="patch-mine">
-                  <button type="button" className="patch-item" aria-label={`Load ${p.name}`} aria-current={p.name === name || undefined} onClick={() => onLoad(p.name, p.patch)}>
+                  <button type="button" className="patch-item" aria-label={`Load ${p.name}`} aria-current={p.name === name || undefined} onClick={() => load(p.name, p.patch)}>
                     {p.name}
                   </button>
                   {confirming === p.name ? (

@@ -51,8 +51,9 @@ test('a Patch can be saved under a name, loaded back, and deleted', async ({ pag
   await patchName(page).click();
   await menu.getByRole('button', { name: 'Load My sound' }).click();
   await expect(cutoff(page)).toHaveAttribute('aria-valuetext', value!);
-  await expect(menu).toBeVisible(); // picking in the panel keeps it open, to audition sounds
+  await expect(menu).toBeHidden(); // picking a sound closes the panel, so it can be played at once
 
+  await patchName(page).click();
   await menu.getByRole('button', { name: 'Delete My sound' }).click();
   await menu.getByRole('button', { name: 'Confirm delete My sound' }).click();
   await expect(menu.getByRole('button', { name: 'Load My sound' })).toHaveCount(0);
