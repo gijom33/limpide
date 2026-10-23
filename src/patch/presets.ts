@@ -314,7 +314,7 @@ group('Chords', [
   ['Chord Organ', 'Drawbar sines on eight Voices: every held key sounds at once with no Envelope shape at all, so a chord is simply on and off.', {
     voices: 8, waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, mixOsc2: 0.5, mixSub: 0.5, ...OPEN, ampAttack: 0.005, ampRelease: 0.03,
   }],
-  ['Poly Pluck', 'A snapping Filter Envelope on eight Voices: strum a chord and each Note gets its own flash of Harmonics; Key Track keeps the high strings bright.', {
+  ['Poly Pluck', 'A snapping Filter Envelope on six Voices: strum a chord and each Note gets its own flash of Harmonics; Key Track keeps the high strings bright.', {
     voices: 6, waveform: 'pulse', pulseWidth: 0.3, cutoff: 500, resonance: 0.4, filterSlope: 24, filterEnvAmount: 3, filterDecay: 0.18, filterSustain: 0, keyTrack: 0.8,
     ampAttack: 0.001, ampDecay: 0.5, ampSustain: 0, ampRelease: 0.3,
   }],
@@ -322,7 +322,7 @@ group('Chords', [
     voices: 8, waveform: 'pulse', pulseWidth: 0.5, osc2Waveform: 'pulse', osc2PulseWidth: 0.45, osc2Detune: 8, mixOsc2: 0.8, cutoff: 3500, resonance: 0.05,
     lfoDestination: 'pulseWidth', lfoRate: 0.7, lfoAmount: 0.5, ampAttack: 0.4, ampDecay: 0.5, ampSustain: 0.9, ampRelease: 1.2,
   }],
-  ['Brass Section', 'Horns on eight Voices: each Note blooms from dark to bright as its Filter Envelope opens, and further for a harder hit.', {
+  ['Brass Section', 'Horns on six Voices: each Note blooms from dark to bright as its Filter Envelope opens, and further for a harder hit.', {
     voices: 6, osc2Detune: 6, mixOsc2: 0.7, cutoff: 700, resonance: 0.1, filterSlope: 24,
     filterEnvAmount: 2.5, filterAttack: 0.12, filterDecay: 0.5, filterSustain: 0.6, filterRelease: 0.3, velocityCutoff: 0.5,
     ampAttack: 0.06, ampDecay: 0.3, ampSustain: 0.85, ampRelease: 0.35,
