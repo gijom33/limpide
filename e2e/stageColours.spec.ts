@@ -3,8 +3,8 @@ import { openDisplay } from './helpers';
 
 // The Hardware palette, validated for colour-blind separation and contrast against each theme's canvas.
 const PALETTE = {
-  dark: { Oscillator: 'rgb(8, 173, 114)', Filter: 'rgb(227, 107, 2)', Amp: 'rgb(117, 132, 254)' },
-  light: { Oscillator: 'rgb(6, 145, 95)', Filter: 'rgb(151, 50, 1)', Amp: 'rgb(63, 64, 196)' },
+  dark: { Oscillator: 'rgb(8, 173, 114)', Filter: 'rgb(227, 107, 2)', Amp: 'rgb(160, 82, 254)' },
+  light: { Oscillator: 'rgb(6, 145, 95)', Filter: 'rgb(151, 50, 1)', Amp: 'rgb(122, 31, 208)' },
 } as const;
 
 for (const theme of ['dark', 'light'] as const) {
