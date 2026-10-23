@@ -15,21 +15,21 @@ interface Props {
   showIdeal?: boolean;
   /** The Filter's gain: drawn as the Response Curve and applied to the Ideal rings. */
   response?(frequencies: Float32Array<ArrayBuffer>): Float32Array;
-  /** The level above which the safety limiter bends the sound: given for the Amp Tap, shown as LIMITING. */
-  limitAbove?: number;
+  /** Whether the safety limiter is bending the sound: given for the Amp Tap, shown as LIMITING. */
+  limiting?(): boolean;
 }
 
 /**
  * Scope + Spectrum for one Tap, with no caption: the stage's panel says which it is. Canvases are mounted once and
  * drawn by the render loop. The level is measured but not shown; the Scope carries it as `data-db` (for tests).
  */
-export function TapViewers({ name, analyser, sampleRate, fundamental, view, showIdeal, response, limitAbove }: Props) {
+export function TapViewers({ name, analyser, sampleRate, fundamental, view, showIdeal, response, limiting }: Props) {
   const scopeRef = useRef<HTMLCanvasElement>(null);
   const spectrumRef = useRef<HTMLCanvasElement>(null);
   const hoverRef = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
-    const drawScope = createScope(scopeRef.current!, analyser, fundamental, view, { limitAbove });
+    const drawScope = createScope(scopeRef.current!, analyser, fundamental, view, { limiting });
     const drawSpectrum = createSpectrum(spectrumRef.current!, analyser, sampleRate, {
       fundamental,
       view,
@@ -43,7 +43,7 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, view, show
       drawSpectrum();
       scopeRef.current!.dataset.db = String(level());
     });
-  }, [analyser, sampleRate, fundamental, view, showIdeal, response, limitAbove]);
+  }, [analyser, sampleRate, fundamental, view, showIdeal, response, limiting]);
 
   return (
     <figure className="tap" data-tap={name} aria-label={`${name} Tap`}>

@@ -22,8 +22,8 @@ export function createScope(
   analyser: AnalyserNode,
   fundamental: () => number,
   view: () => ViewSettings,
-  /** On the Amp Scope: the level above which the safety limiter bends the sound, shown as LIMITING. */
-  { limitAbove }: { limitAbove?: number } = {},
+  /** On the Amp Scope: whether the safety limiter is bending the sound right now (all Voices), shown as LIMITING. */
+  { limiting }: { limiting?: () => boolean } = {},
 ) {
   const samples = new Float32Array(analyser.fftSize);
   let limitedAt = -Infinity;
@@ -83,11 +83,11 @@ export function createScope(
     }
 
     // LIMITING: only where the limiter sits (after the Amp), only while it is actually bending the sound.
-    if (limitAbove !== undefined) {
-      if (!view().viewer.frozen && samples.some((v) => Math.abs(v) > limitAbove)) limitedAt = performance.now();
-      const limiting = performance.now() - limitedAt < LIMITING_HOLD_MS;
-      canvas.dataset.limiting = String(limiting);
-      if (limiting) {
+    if (limiting) {
+      if (!view().viewer.frozen && limiting()) limitedAt = performance.now();
+      const shown = performance.now() - limitedAt < LIMITING_HOLD_MS;
+      canvas.dataset.limiting = String(shown);
+      if (shown) {
         g.font = '600 10px system-ui, sans-serif';
         g.fillStyle = cssVar(canvas, '--danger');
         g.textAlign = 'right';
