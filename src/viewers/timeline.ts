@@ -77,11 +77,11 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
     area('--stage-amp', 0.25, (m) => m.amp);
 
     // Filter Envelope: an area on the same 0–1 scale, the shape that (times Amount) pushes the Effective Cutoff.
-    area('--filter-envelope', 0.2, (m) => m.filter);
+    area('--stage-filter', 0.2, (m) => m.filter);
     canvas.dataset.filterEnvelope = (samples.at(-1)?.filter ?? 0).toFixed(3);
 
     // The Cutoff knob's setting (dashed), then the Effective Cutoff the Filter Envelope makes of it.
-    g.strokeStyle = cssVar(canvas, '--stage-filter');
+    g.strokeStyle = cssVar(canvas, '--cutoff-line');
     g.globalAlpha = 0.5;
     g.lineWidth = 1;
     g.setLineDash([4, 4]);
