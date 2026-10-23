@@ -28,4 +28,18 @@
 
 ## Audit
 
-_Filled in after the four items land._
+Taken after the four items landed (commit 8642393), at 1440×900 in both themes and at 1000×800 (compact):
+[dark](./15-ui-polish/dark-1440x900.png) · [light](./15-ui-polish/light-1440x900.png) · [compact](./15-ui-polish/dark-1000x800.png).
+Each finding names where it is, the rule it breaks, and the fix. Tick to approve; an unticked item is left as it is.
+
+- [ ] **A1 Mixer knobs do not line up with the Oscillator knobs.** Oscillators block. Rule: columns line up across the rows of a block. The MIXER heading sits beside its row in a 44 px column, so its knobs start 64 px to the right of Pulse Width above. Fix: the heading goes above its row, as FILTER ENVELOPE does; costs one 20 px line in the controls row at 1440×900 (Viewers 123 → ~105 px, floor 78).
+- [ ] **A2 Four uppercase label styles.** Stage headings 13 px, sub-block headings and tabs 11 px, toolbar group titles, MIDI panel and Patch panel headings 10 px, Learn bar 11 px at a different tracking. Rule: one type scale, two label levels. Fix: section headings stay 13 px; every other small-caps label is 11 px with 0.08 em tracking.
+- [ ] **A3 Sizes off the type scale.** Piano key letters 9 px, the audio-blocked hint 14 px, the Quick Setup prompt 15 px. Fix: 10 px, 13 px and 15 px → 13 px bold.
+- [ ] **A4 Three panel shadows.** Tooltip 0 6 24 at 28 %, Display/Patch/MIDI panels 0 10 32 at 35 %, Learn bar and Quick Setup 0 10 32 at 45 %. Rule: one elevation. Fix: one `--shadow-panel` token for all floating panels.
+- [ ] **A5 Radii.** Panels 10, tooltip and audio-blocked hint 8, controls 7, Waveform buttons and canvases 6, kbd 4. Fix: tokens `--radius-panel` 10, `--radius-control` 7, `--radius-inner` 6; the tooltip and the hint become panels (10), Waveform buttons become controls (7).
+- [ ] **A6 Patch panel buttons are 26 px tall** where every other control is 28 px (`--control-h`). Fix: use the token.
+- [ ] **A7 Inactive knobs are unreadable in the light theme.** Osc 1 Pulse Width, Filter Envelope stages, LFO Rate at 40 % opacity: the value is near-invisible on white. Rule: dimmed still means legible. Fix: 55 % opacity, and only the dial and value dim; the label keeps full colour.
+- [ ] **A8 Wording against the glossary.** Osc 2 knob "Semi" → "Semitone"; LFO destination "Width" → "Pulse Width". Both fit their column.
+- [ ] **A9 Amp block is mostly empty** at 1440 and above: four knobs, then the height of the Filter's two rows. Rule: no decision needed; it is the price of the three stages sharing one controls row so the Viewers line up. Recommended: leave.
+- [ ] **A10 Spectrum axis labels collide** in the Filter Viewer: "0 dB / −24 dB" overprint the harmonic numbers 26 and 36 at the top right. Viewer code (src/viewers), which another session is active in; fix there, coordinated.
+- [ ] **A11 Dividers in the Timeline.** The LFO and Glide groups have no divider between them while every other sibling group has one; the Glide knob also has no heading. Recommended: leave (the knob label names it; a divider would split a 3-knob row).
