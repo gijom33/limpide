@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { cc, midiPanel, openMidi, play, times, withFakeController } from './fakeMidi';
+import { cc, midiButton, midiPanel, openMidi, play, times, withFakeController } from './fakeMidi';
 
 const cutoff = (page: Page) => page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name: 'Cutoff' });
 const learnBar = (page: Page) => page.getByRole('status', { name: 'MIDI Learn' });
@@ -22,8 +22,18 @@ test('MIDI Learn: pick a knob on screen, turn one on the Controller, and it driv
   await play(page, ...times(4, cc(74, 1))); // an endless encoder, two's-complement steps
   await expect(learnBar(page)).toContainText(/Cutoff.*CC 74/);
   await expect(cutoff(page)).toHaveAttribute('aria-valuenow', String(before)); // learning does not move it
-  await learnBar(page).getByRole('button', { name: 'Done' }).click();
+  // Learn ends where it began: the MIDI button says Learning, and its panel offers Done in place of MIDI Learn.
+  await expect(midiButton(page)).toHaveAttribute('data-learning', 'true');
+  await expect(midiButton(page)).toContainText('Learning');
+  await expect(learnBar(page)).toContainText(/Esc.*MIDI.*Done/);
+  await expect(learnBar(page).getByRole('button')).toHaveCount(0);
+  await openMidi(page);
+  await expect(midiPanel(page).getByRole('button', { name: 'MIDI Learn' })).toHaveCount(0);
+  await expect(midiPanel(page).getByRole('button', { name: /Quick Setup/ })).toHaveCount(0);
+  await midiPanel(page).getByRole('button', { name: 'Done' }).click();
   await expect(learnBar(page)).toBeHidden();
+  await expect(midiButton(page)).not.toHaveAttribute('data-learning', /./);
+  await expect(midiButton(page)).toContainText('1'); // the Controller count is back
 
   await play(page, ...times(10, cc(74, 1)));
   await expect(cutoff(page)).toHaveAttribute('aria-valuenow', String(before + 10));

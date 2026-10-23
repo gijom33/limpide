@@ -94,7 +94,7 @@ for (const [width, height] of [
 }
 
 for (const [width, height, maxControls, minViewer] of [
-  [872, 920, 280, 78],
+  [872, 920, 300, 78],
   [1100, 900, 240, 100],
 ]) {
   test(`narrow stages use compact controls, leaving room for the Viewers (${width}×${height})`, async ({ page }) => {
@@ -127,6 +127,34 @@ for (const [width, height, size] of [
         .map((d) => Math.round(d.getBoundingClientRect().width)),
     );
     expect(new Set(sizes)).toEqual(new Set([size]));
+  });
+}
+
+for (const [width, height, pitch] of [
+  [1710, 1060, 72],
+  [1440, 900, 72],
+  [1300, 900, 72],
+  [1100, 900, 58],
+  [1000, 800, 58],
+  [872, 920, 58],
+]) {
+  test(`every knob row has the same dial pitch: ${pitch} pt at ${width}×${height}`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await page.goto('/');
+    await expect(page.getByTestId('amp-level')).toHaveAttribute('data-db', /.+/);
+    const pitches = await page.evaluate(() =>
+      [...document.querySelectorAll<HTMLElement>('.knobs')].flatMap((row) => {
+        const dials = [...row.querySelectorAll<HTMLElement>(':scope > .knob > .knob-dial, :scope > .tip-anchor > .knob > .knob-dial')]
+          .filter((d) => d.checkVisibility({ visibilityProperty: true }))
+          .map((d) => d.getBoundingClientRect());
+        // Neighbours on the same line: centre to centre.
+        return dials.slice(1).flatMap((d, i) =>
+          Math.abs(d.top - dials[i].top) < 1 ? [Math.round(d.left + d.width / 2 - (dials[i].left + dials[i].width / 2))] : [],
+        );
+      }),
+    );
+    expect(pitches.length).toBeGreaterThan(5);
+    expect(new Set(pitches)).toEqual(new Set([pitch]));
   });
 }
 

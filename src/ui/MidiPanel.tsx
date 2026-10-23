@@ -13,7 +13,10 @@ interface Props {
   /** The Activity Monitor: the last message received, described. */
   activity: string | null;
   mappings: readonly Mapping[];
+  /** MIDI Learn (or Quick Setup) is on: the button says so, and the panel offers Done where Learn was started. */
+  learning: boolean;
   onLearn(): void;
+  onDone(): void;
   onQuickSetup(): void;
   onRemove(target: Target): void;
   onClear(): void;
@@ -31,10 +34,10 @@ const statusText = (state: MidiState) => {
 };
 
 /**
- * The MIDI button: a dot and the number of Controllers. It opens the MIDI panel: what is connected, the
- * Activity Monitor, MIDI Learn, and the Mappings.
+ * The MIDI button: a dot and the number of Controllers, or "Learning" while MIDI Learn is on. It opens the MIDI
+ * panel: what is connected, the Activity Monitor, MIDI Learn (and Done, once learning), and the Mappings.
  */
-export function MidiPanel({ state, activity, mappings, onLearn, onQuickSetup, onRemove, onClear }: Props) {
+export function MidiPanel({ state, activity, mappings, learning, onLearn, onDone, onQuickSetup, onRemove, onClear }: Props) {
   const [open, setOpen] = useState(false);
   const wrapper = useRef<HTMLDivElement>(null);
   const devices = state.kind === 'ready' ? state.devices : [];
@@ -62,11 +65,16 @@ export function MidiPanel({ state, activity, mappings, onLearn, onQuickSetup, on
           aria-expanded={open}
           data-connected={devices.length > 0 || undefined}
           data-unavailable={!available || undefined}
+          data-learning={learning || undefined}
           onClick={() => setOpen((o) => !o)}
         >
           <span className="midi-dot" aria-hidden="true" />
           MIDI
-          {devices.length > 0 && <span className="midi-count">{devices.length}</span>}
+          {learning ? (
+            <span className="midi-learning">Learning</span>
+          ) : (
+            devices.length > 0 && <span className="midi-count">{devices.length}</span>
+          )}
         </button>
       </Tooltip>
       {open && (
@@ -78,32 +86,47 @@ export function MidiPanel({ state, activity, mappings, onLearn, onQuickSetup, on
               {activity ?? 'Nothing received yet'}
             </span>
           </div>
-          <Tooltip content={TIPS.midiLearn}>
+          {learning ? (
             <button
               type="button"
-              className="tool"
-              disabled={!available}
+              className="tool tool-primary"
               onClick={() => {
                 setOpen(false);
-                onLearn();
+                onDone();
               }}
             >
-              MIDI Learn
+              Done
             </button>
-          </Tooltip>
-          <Tooltip content={TIPS.quickSetup}>
-            <button
-              type="button"
-              className="tool"
-              disabled={!available}
-              onClick={() => {
-                setOpen(false);
-                onQuickSetup();
-              }}
-            >
-              Quick Setup (TempoPAD C16)
-            </button>
-          </Tooltip>
+          ) : (
+            <>
+              <Tooltip content={TIPS.midiLearn}>
+                <button
+                  type="button"
+                  className="tool"
+                  disabled={!available}
+                  onClick={() => {
+                    setOpen(false);
+                    onLearn();
+                  }}
+                >
+                  MIDI Learn
+                </button>
+              </Tooltip>
+              <Tooltip content={TIPS.quickSetup}>
+                <button
+                  type="button"
+                  className="tool"
+                  disabled={!available}
+                  onClick={() => {
+                    setOpen(false);
+                    onQuickSetup();
+                  }}
+                >
+                  Quick Setup (TempoPAD C16)
+                </button>
+              </Tooltip>
+            </>
+          )}
           {mappings.length > 0 && (
             <>
               <span className="midi-heading">Mappings</span>

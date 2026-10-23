@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { cc, midiPanel, openMidi, play, times, withFakeController } from './fakeMidi';
+import { cc, midiButton, midiPanel, openMidi, play, times, withFakeController } from './fakeMidi';
 
 const setup = (page: Page) => page.getByRole('region', { name: 'Quick Setup' });
 const prompt = (page: Page) => setup(page).getByRole('status');
@@ -59,6 +59,16 @@ test('steps can be skipped and gone back to', async ({ page }) => {
   await expect(prompt(page)).toContainText('Turn encoder 2');
   await play(page, ...encoder(2));
   await expect(prompt(page)).toContainText('Turn encoder 3');
+});
+
+test('the MIDI button shows Learning during Quick Setup, and Done in its panel finishes the Setup', async ({ page }) => {
+  await startSetup(page);
+  await expect(midiButton(page)).toHaveAttribute('data-learning', 'true');
+  await play(page, ...encoder(1));
+  await openMidi(page);
+  await midiPanel(page).getByRole('button', { name: 'Done' }).click();
+  await expect(prompt(page)).toContainText('1 of 17 mapped');
+  await expect(midiButton(page)).not.toHaveAttribute('data-learning', /./);
 });
 
 test('finishing early keeps what was mapped; Escape finishes too', async ({ page }) => {

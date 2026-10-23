@@ -1,8 +1,11 @@
 import type { LearnState } from '../midi/controlSurface';
 import { describeControl, describeTarget } from '../midi/describe';
 
-/** Across the top while MIDI Learn is on: what to do next, and what was just mapped. */
-export function LearnBar({ state, onDone }: { state: LearnState; onDone(): void }) {
+/**
+ * Along the bottom while MIDI Learn is on: what to do next, what was just mapped, and where to finish. Learn is
+ * ended where it was started (the MIDI button's panel) or with Escape; the bar only points there.
+ */
+export function LearnBar({ state }: { state: LearnState }) {
   if (state.phase === 'off') return null;
   const message =
     state.phase === 'listening'
@@ -19,9 +22,9 @@ export function LearnBar({ state, onDone }: { state: LearnState; onDone(): void 
           Mapped {describeTarget(state.learned.target)} ← {describeControl(state.learned.control)}
         </span>
       )}
-      <button type="button" className="tool" onClick={onDone}>
-        Done
-      </button>
+      <span className="learn-exit">
+        <kbd>Esc</kbd> or MIDI › Done to finish
+      </span>
     </div>
   );
 }

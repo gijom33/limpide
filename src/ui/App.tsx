@@ -394,7 +394,9 @@ export function App() {
         state={midi}
         activity={activity}
         mappings={mappings}
+        learning={learning}
         onLearn={() => surface.startLearn()}
+        onDone={() => (setupRef.current ? updateSetup({ type: 'finish' }) : surface.stopLearn())}
         onQuickSetup={() => updateSetup({ type: 'start' })}
         onRemove={(target) => mappingStore.remove(target)}
         onClear={() => mappingStore.clear()}
@@ -440,7 +442,7 @@ export function App() {
             }}
           />
         ) : (
-          <LearnBar state={learn} onDone={() => surface.stopLearn()} />
+          <LearnBar state={learn} />
         )}
         <header>
           <div className="header-left">

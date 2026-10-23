@@ -4,6 +4,14 @@
   --control-radius: 7px;
   --control-on: color-mix(in srgb, var(--text) 14%, var(--panel));
   --control-hover: color-mix(in srgb, var(--text) 7%, var(--panel));
+  /* Spacing and type scales. */
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --text-xs: 10px; --text-sm: 11px; --text-md: 12px; --text-lg: 13px;
+  /* The knob: one dial size and one column width for every knob on the page, so dials sit the same distance
+     apart in every row (the pitch is column + gap), and fixed text lines, so a dial never moves as text changes. */
+  --knob-dial: 44px; --knob-col: 60px; --knob-gap: 12px; --knob-row-gap: 12px; --knob-text-gap: 4px;
+  --knob-label-h: 16px; --knob-value-h: 14px;
+  --knob-h: calc(var(--knob-dial) + 2 * var(--knob-text-gap) + var(--knob-label-h) + var(--knob-value-h));
   --bg: #0f1115;
   --panel: #181b22;
   --border: #2a2f3a;
@@ -44,29 +52,34 @@
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--text); }
 /* Grows with the screen up to where lines of controls stop being comfortable to scan. */
-main { max-width: 1920px; margin: 0 auto; padding: 16px; }
-/* Three zones: logo and Patch on the left, playing in the centre, Display on the right. The Display panel is
-   anchored to the header (not its button), so it can always use, and never exceed, the window's width. */
-header { position: relative; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; }
-.header-left { display: flex; align-items: center; gap: 16px; min-width: 0; }
+main { max-width: 1920px; margin: 0 auto; padding: var(--space-4); }
+/* Three zones: logo and Patch on the left, playing in the centre, Display on the right. The side columns are
+   never narrower than what they hold, and share the rest equally, so the playing controls sit centred when there
+   is room and give way to the name and Patch when there is not. The Display panel is anchored to the header (not
+   its button), so it can always use, and never exceed, the window's width. */
+header {
+  position: relative; display: grid; grid-template-columns: minmax(max-content, 1fr) auto minmax(max-content, 1fr);
+  align-items: center; gap: var(--space-4);
+}
+.header-left { display: flex; align-items: center; gap: var(--space-4); min-width: 0; }
 .header-center { justify-self: center; }
 .header-right { justify-self: end; }
 header h1 { margin: 0; }
-h1 { margin: 0 0 8px; font-size: 22px; letter-spacing: 0.02em; }
-h2 { margin: 0 0 12px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+h1 { margin: 0 0 var(--space-2); font-size: 22px; letter-spacing: 0.02em; }
+h2 { margin: 0 0 var(--space-3); font-size: var(--text-lg); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
 .hint { color: var(--muted); margin: 0; font-size: 14px; }
-kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-size: 12px; }
+kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-size: var(--text-md); }
 
 .audio-blocked {
-  margin: 12px 0 0; padding: 8px 12px; font-size: 13px; color: var(--text);
+  margin: 12px 0 0; padding: 8px 12px; font-size: var(--text-lg); color: var(--text);
   background: var(--panel); border: 1px solid var(--muted); border-radius: 8px;
 }
 
 /* The layout is the signal-flow diagram: stages left to right, joined by connectors. */
-.chain { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; margin: 16px 0; }
+.chain { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; margin: var(--space-4) 0; }
 .block {
-  position: relative; display: flex; flex-direction: column; gap: 12px;
-  background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px;
+  position: relative; display: flex; flex-direction: column; gap: var(--space-3);
+  background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: var(--space-3) var(--space-4);
 }
 .block h2 { margin: 0; }
 
@@ -93,7 +106,7 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
   left: -10px; top: 50%; width: 7px; height: 7px; margin-top: -4px;
   border-top: 2px solid var(--stage); border-right: 2px solid var(--stage); transform: rotate(45deg);
 }
-.block .knobs { min-height: 82px; flex-wrap: wrap; }
+.block .knobs { min-height: var(--knob-h); }
 @media (max-width: 860px) {
   .chain { grid-template-columns: 1fr; gap: 24px; }
   .block + .block::before {
@@ -102,14 +115,14 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
   }
   .block + .block::after { left: 50%; top: -9px; margin: 0 0 0 -4px; transform: rotate(135deg); }
 }
-.knobs { display: flex; gap: 16px; }
+.knobs { display: flex; flex-wrap: wrap; gap: var(--knob-row-gap) var(--knob-gap); }
 
 .knob {
-  display: flex; flex-direction: column; align-items: center; gap: 4px; width: 64px;
+  display: flex; flex-direction: column; align-items: center; gap: var(--knob-text-gap); width: var(--knob-col); flex: none;
   -webkit-user-select: none; user-select: none;
 }
 .knob-dial {
-  width: 44px; height: 44px; border-radius: 50%; cursor: ns-resize; touch-action: none;
+  width: var(--knob-dial); height: var(--knob-dial); border-radius: 50%; cursor: ns-resize; touch-action: none;
   background: radial-gradient(circle at 50% 40%, var(--dial-hi), var(--dial-lo));
   border: 1px solid var(--border); position: relative;
 }
@@ -119,26 +132,27 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
   transform-origin: 50% 18px; transform: rotate(var(--angle));
 }
 .knob-dial:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.knob-label { font-size: 12px; }
+/* Label and value are centred under the dial and may be wider than the column (their neighbours' are short). */
+.knob-label { font-size: var(--text-md); line-height: var(--knob-label-h); height: var(--knob-label-h); white-space: nowrap; }
 .knob[data-inactive] { opacity: 0.4; }
 
 .waveforms { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; flex: 1 1 100%; }
 .waveform {
   display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px; cursor: pointer;
-  background: none; color: var(--muted); border: 1px solid var(--border); border-radius: 6px; font-size: 11px;
+  background: none; color: var(--muted); border: 1px solid var(--border); border-radius: 6px; font-size: var(--text-sm);
 }
 .waveform svg { color: var(--muted); }
 .waveform[aria-checked='true'] { color: var(--text); border-color: var(--stage, var(--muted)); }
 .waveform[aria-checked='true'] svg { color: var(--stage, var(--text)); }
 .waveform:focus-visible { outline: 2px solid var(--stage, var(--accent)); outline-offset: 1px; }
-.knob-value { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.knob-value { font-size: var(--text-sm); line-height: var(--knob-value-h); height: var(--knob-value-h); white-space: nowrap; color: var(--muted); font-variant-numeric: tabular-nums; }
 /* The readout sits on hidden copies of the widest it can show, so a knob keeps its width as its value changes. */
 .knob-value { display: grid; justify-items: center; }
 .knob-value > * { grid-area: 1 / 1; }
 .knob-value-sizer { visibility: hidden; }
 
 .tap { margin: 0; margin-top: auto; }
-.tap figcaption { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+.tap figcaption { font-size: var(--text-md); color: var(--muted); margin-bottom: 6px; }
 .level { float: right; font-variant-numeric: tabular-nums; }
 .tap-canvases { position: relative; }
 /* Viewers keep their shape as blocks widen (a wide screen gives taller Viewers, not thin strips). */
@@ -168,12 +182,12 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
   display: flex; flex-direction: column; gap: 6px; padding: 0 12px;
   margin-left: -1px; border-left: 1px solid var(--border);
 }
-.tool-group-title { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.tool-group-title { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
 .tool-group-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
 
 .tool, .segmented button {
   display: inline-flex; align-items: center; gap: 6px; height: var(--control-h); padding: 0 10px;
-  font: inherit; font-size: 12px; color: var(--muted); cursor: pointer;
+  font: inherit; font-size: var(--text-md); color: var(--muted); cursor: pointer;
   background: none; border: 1px solid transparent; border-radius: var(--control-radius);
 }
 .tool { border-color: var(--border); }
@@ -184,13 +198,13 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 .tool:focus-visible, .segmented button:focus-visible { outline: 2px solid var(--text); outline-offset: 1px; }
 /* Freeze is a mode the whole page is in, so its "on" state is the strongest on screen. */
 .tool-mode[aria-pressed='true'] { color: var(--bg); background: var(--text); border-color: var(--text); }
-.tool kbd { font-size: 10px; padding: 0 4px; line-height: 14px; color: inherit; border-color: currentColor; opacity: 0.6; }
+.tool kbd { font-size: var(--text-xs); padding: 0 4px; line-height: 14px; color: inherit; border-color: currentColor; opacity: 0.6; }
 .tool-icon { width: var(--control-h); padding: 0; justify-content: center; }
 .tool-split { display: inline-flex; gap: 2px; }
 
 /* A segmented control is one shape; the selected segment is filled. */
 .segmented-field { display: inline-flex; align-items: center; gap: 6px; }
-.field-caption { font-size: 12px; color: var(--muted); }
+.field-caption { font-size: var(--text-md); color: var(--muted); }
 .segmented {
   display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 2px;
   background: var(--bg); border: 1px solid var(--border); border-radius: calc(var(--control-radius) + 2px);
@@ -205,7 +219,7 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 main[data-frozen] .tap-canvases canvas { outline: 1px dashed var(--muted); outline-offset: -1px; }
 main[data-frozen] .tap-canvases::before {
   content: 'Frozen'; position: absolute; z-index: 1; top: 6px; left: 50%; transform: translateX(-50%);
-  padding: 1px 8px; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 1px 8px; font-size: var(--text-xs); letter-spacing: 0.06em; text-transform: uppercase;
   color: var(--bg); background: var(--text); border-radius: 999px; pointer-events: none;
 }
 
@@ -219,42 +233,40 @@ main[data-frozen] .tap-canvases::before {
 .tooltip {
   position: fixed; z-index: 100; width: max-content; max-width: 280px; padding: 10px 12px;
   display: flex; flex-direction: column; gap: 4px;
-  font-size: 12px; line-height: 1.45; color: var(--text); text-align: left;
+  font-size: var(--text-md); line-height: 1.45; color: var(--text); text-align: left;
   background: var(--panel); border: 1px solid var(--muted); border-radius: 8px;
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.28); pointer-events: none;
 }
 .tooltip[hidden] { display: none; }
-.tooltip strong { font-size: 12px; font-weight: 600; }
+.tooltip strong { font-size: var(--text-md); font-weight: 600; }
 .tooltip-how { color: var(--muted); }
 .has-tip { text-decoration: underline dotted var(--muted); text-underline-offset: 3px; cursor: help; }
 
 /* A labelled cluster of knobs inside a stage, e.g. the Filter Envelope. */
-.sub-block { display: flex; flex-direction: column; gap: 8px; padding-top: 10px; border-top: 1px solid var(--border); }
-.sub-block h3 { margin: 0; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); align-self: flex-start; }
+.sub-block { display: flex; flex-direction: column; gap: var(--space-2); padding-top: var(--space-2); border-top: 1px solid var(--border); }
+.sub-block h3 { margin: 0; font-size: var(--text-sm); font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); align-self: flex-start; }
 
-.timeline { margin: 0 0 16px; padding: 12px 16px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; }
+.timeline { margin: 0 0 var(--space-4); padding: var(--space-3) var(--space-4); background: var(--panel); border: 1px solid var(--border); border-radius: 10px; }
 .timeline h2 { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
 .timeline canvas { display: block; width: 100%; height: clamp(120px, 9vw, 200px); background: var(--bg); border-radius: 6px; }
-.timeline-key { display: flex; gap: 14px; font-size: 11px; text-transform: none; letter-spacing: 0; }
+.timeline-key { display: flex; gap: 14px; font-size: var(--text-sm); text-transform: none; letter-spacing: 0; }
 .timeline-key span { display: inline-flex; align-items: center; gap: 5px; }
 .timeline-key span::before { content: ''; width: 12px; height: 8px; border-radius: 2px; }
 .timeline-key [data-mark='amp']::before { background: color-mix(in srgb, var(--stage-amp) 45%, transparent); border-top: 1.5px solid var(--stage-amp); }
 .timeline-key [data-mark='cutoff']::before { background: color-mix(in srgb, var(--stage-filter) 30%, transparent); border-top: 2px solid var(--stage-filter); }
 main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-offset: -1px; }
-/* Amount then A-D-S-R on one line when the block is wide enough; when it is not, Amount stands to the left
-   and the envelope keeps its shape as a 2×2 (A D / S R), like the Amp block. Decided by the block's own width. */
+/* Amount then A-D-S-R on one line when five knob columns fit the block (5 × 60 + 4 × 12 = 348 px); when they do
+   not, Amount stands to the left and the envelope keeps its shape as a 2×2 (A D / S R), like the Amp block. */
 .sub-block { container-type: inline-size; }
-.sub-block .knobs { display: flex; flex-wrap: wrap; gap: 8px 6px; min-height: 0; }
-.sub-block .knobs-envelope { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px 4px; }
-@container (max-width: 300px) {
-  .sub-block .knobs-envelope { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.sub-block .knobs { min-height: 0; }
+.sub-block .knobs-envelope { display: grid; grid-template-columns: repeat(5, var(--knob-col)); gap: var(--knob-row-gap) var(--knob-gap); justify-content: start; }
+@container (max-width: 347px) {
+  .sub-block .knobs-envelope { grid-template-columns: repeat(3, var(--knob-col)); }
   .sub-block .knobs-envelope > :first-child { grid-row: span 2; align-self: center; }
 }
-.sub-block .knob { width: auto; min-width: 0; }
-.sub-block .knob-label, .sub-block .knob-value { white-space: nowrap; }
 
 /* The Oscillators stage: Osc 1, Osc 2 and the Mixer stacked; the first needs no divider above it. */
-.source-rows { display: flex; flex-direction: column; gap: 10px; flex: 1 1 100%; }
+.source-rows { display: flex; flex-direction: column; gap: var(--space-2); flex: 1 1 100%; }
 .source-rows > .sub-block:first-child { border-top: 0; padding-top: 0; }
 .waveforms[data-compact] { grid-template-columns: repeat(5, minmax(0, 36px)); }
 .waveforms[data-compact] .waveform { padding: 5px 2px; }
@@ -264,7 +276,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .sub-block > .waveforms { flex: none; }
 
 /* Inside a stage section, the Waveform picker and its knobs share a row when there is room. */
-.sub-block { flex-direction: row; flex-wrap: wrap; align-items: center; column-gap: 12px; }
+.sub-block { flex-direction: row; flex-wrap: wrap; align-items: center; column-gap: var(--space-3); }
 .sub-block > h3, .sub-block > .tip-anchor:first-child { flex: 1 1 100%; }
 .sub-block > .knobs { flex: 1 1 auto; }
 .sub-block > .knobs-envelope { flex: 1 1 100%; }
@@ -291,9 +303,9 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 
 /* Every stage spans the same two rows of the chain: controls on top (as tall as the tallest stage's), then
    the Viewers. With subgrid, all three stages' Viewers are the same size and line up, wherever the window. */
-.chain { grid-auto-rows: auto; row-gap: 12px; }
-.block { display: grid; grid-row: span 2; grid-template-rows: subgrid; row-gap: 12px; align-content: start; }
-.block-controls { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.chain { grid-auto-rows: auto; row-gap: var(--space-3); }
+.block { display: grid; grid-row: span 2; grid-template-rows: subgrid; row-gap: var(--space-3); align-content: start; }
+.block-controls { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
 .block-controls > * { flex-shrink: 0; }
 .block > .tap { margin-top: 0; min-width: 0; }
 @media (max-width: 860px) {
@@ -316,7 +328,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .tab-list .tip-anchor { display: flex; }
 .tab-list [role='tab'] {
   position: relative; display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px 7px; margin-bottom: -1px;
-  font: inherit; font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
+  font: inherit; font-size: var(--text-sm); font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
   background: none; border: 0; border-bottom: 2px solid transparent; cursor: pointer;
 }
 .tab-list [role='tab']:hover { color: var(--text); }
@@ -331,6 +343,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 
 /* Wordmark: the logo, then "Synth" in full weight and "View" lighter, so the name reads as two ideas. */
 .wordmark { display: inline-flex; align-items: center; gap: 10px; font-size: 21px; font-weight: 700; letter-spacing: -0.01em; }
+.wordmark { flex: none; }
 .wordmark .logo { flex: none; }
 .wordmark-view { font-weight: 400; color: var(--muted); }
 /* Both Oscillator tabs make the same choice, sized for Osc 2's four knobs: knobs beside the Waveform picker
@@ -354,16 +367,16 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 }
 
 /* The Timeline panel: the controls that act over time (LFO, Glide) to the left of the plot. */
-.timeline-body { display: flex; gap: 16px; align-items: stretch; }
+.timeline-body { display: flex; gap: var(--space-4); align-items: stretch; }
 .timeline-body canvas { flex: 1 1 auto; min-width: 0; }
-.timeline-controls { display: flex; gap: 14px; align-items: flex-end; flex: none; }
+.timeline-controls { display: flex; gap: var(--space-3); align-items: flex-end; flex: none; }
 /* Not size containers: a container has no intrinsic width, and in this content-sized column it would collapse. */
 /* Three rows (LFO shape, Destination, then the knobs with Glide beside them), so the column stays narrow
    and the plot beside it gets the width, and the height, of the controls. */
 .timeline-controls .sub-block { border-top: 0; padding-top: 0; container-type: normal; flex-wrap: nowrap; flex-direction: row; align-items: center; gap: 10px; }
 .timeline-controls .sub-block > h3, .timeline-controls .sub-block > .tip-anchor:first-child { flex: none; }
 .timeline-controls .sub-block > .knobs { flex: none; flex-wrap: nowrap; }
-.lfo-rows { display: flex; flex-direction: column; gap: 8px; flex: none; }
+.lfo-rows { display: flex; flex-direction: column; gap: var(--space-2); flex: none; }
 .lfo-rows > .knobs { justify-content: flex-start; }
 .lfo-pickers { display: flex; flex-direction: column; gap: 6px; flex: none; }
 @media (min-width: 861px) {
@@ -391,7 +404,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .piano button span { pointer-events: none; }
 
 .midi-status {
-  display: inline-flex; align-items: center; gap: 6px; height: var(--control-h); padding: 0 10px; font-size: 12px; color: var(--muted);
+  display: inline-flex; align-items: center; gap: 6px; height: var(--control-h); padding: 0 10px; font-size: var(--text-md); color: var(--muted);
   border: 1px solid var(--border); border-radius: var(--control-radius); cursor: pointer; background: none;
 }
 .midi-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); }
@@ -403,11 +416,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .midi-count { font-variant-numeric: tabular-nums; }
 
 /* Playing controls at the top centre: octave −, the piano, octave +, Hold and MIDI, in one row. */
-.play-controls { display: flex; align-items: center; gap: 8px; }
-/* On narrower windows only the logo mark stays; the name remains for assistive technology. */
-@media (max-width: 1100px) {
-  .wordmark-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-}
+.play-controls { display: flex; align-items: center; gap: var(--space-2); }
 @media (max-width: 860px) {
   header { grid-template-columns: 1fr auto; }
   .header-center { grid-column: 1 / -1; grid-row: 2; }
@@ -417,16 +426,18 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
    stages would wrap their rows) or too short, every knob shrinks together, so rows stay single, the whole
    instrument fits, and no knob is bigger than another. */
 @media (max-width: 1150px), (max-height: 760px) {
-  .knob { width: auto; min-width: 42px; gap: 2px; }
-  .knob-dial { width: 32px; height: 32px; }
+  :root {
+    --knob-dial: 32px; --knob-col: 50px; --knob-gap: 8px; --knob-row-gap: 8px; --knob-text-gap: 2px;
+    --knob-label-h: 14px; --knob-value-h: 12px;
+  }
   .knob-dial::after { top: 3px; height: 10px; transform-origin: 50% 13px; }
-  .knob-label { font-size: 11px; white-space: nowrap; }
-  .knob-value { font-size: 10px; white-space: nowrap; }
-  .knobs { gap: 6px 8px; min-height: 0; }
-  .block .knobs { min-height: 0; }
-  /* The Filter Envelope's five knobs in one row. */
-  .sub-block .knobs-envelope { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px 2px; }
-  .sub-block .knobs-envelope > :first-child { grid-row: auto; }
+  .knob-label { font-size: var(--text-sm); }
+  .knob-value { font-size: var(--text-xs); }
+  /* The Filter Envelope's five compact knobs in one row when they fit (5 × 50 + 4 × 8 = 282 px). */
+  @container (min-width: 282px) {
+    .sub-block .knobs-envelope { grid-template-columns: repeat(5, var(--knob-col)); }
+    .sub-block .knobs-envelope > :first-child { grid-row: auto; }
+  }
   /* Filter Mode and Slope on one line, with slimmer segments. */
   .filter-shape { flex-wrap: nowrap; gap: 4px; }
   .filter-shape .segmented { flex-wrap: nowrap; }
@@ -434,39 +445,41 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   .filter-modes svg { width: 20px; }
   .filter-shape .segmented button { padding: 0 6px; }
 }
-.block-controls { gap: 8px; }
+.block-controls { gap: var(--space-2); }
 
 /* A segmented control on the Filter heading line is one row of segments, never wrapped inside. */
 .filter-shape .segmented { flex-wrap: nowrap; }
 /* A segment's label never wraps onto two lines. */
 .segmented button, .tool { white-space: nowrap; }
 
-/* Patch bar: ‹ name › on the header line, opening a panel to save, load, export, import and share. */
-.patch-bar { position: relative; display: flex; align-items: center; gap: 2px; }
-.patch-name { max-width: 180px; justify-content: center; gap: 6px; }
-.patch-name span:first-child { overflow: hidden; text-overflow: ellipsis; }
+/* Patch bar: ‹ name › on the header line, opening a panel to save, load, export, import and share. When the
+   header is short of room, it is the Patch name that gives way (an ellipsis), never the name of the app. */
+.patch-bar { position: relative; display: flex; align-items: center; gap: 2px; min-width: 0; }
+.patch-bar > .tip-anchor { min-width: 0; }
+.patch-name { max-width: 180px; min-width: 0; justify-content: center; gap: 6px; }
+.patch-name span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .patch-changed { width: 6px; height: 6px; border-radius: 50%; background: var(--text); flex: none; }
 .patch-panel {
   position: absolute; z-index: 50; top: calc(100% + 6px); left: 0; width: 320px; padding: 12px; display: flex; flex-direction: column; gap: 12px;
   background: var(--panel); border: 1px solid var(--muted); border-radius: 10px; box-shadow: 0 10px 32px rgba(0, 0, 0, 0.35);
 }
-.patch-panel h3 { margin: 0 0 6px; font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.patch-panel h3 { margin: 0 0 6px; font-size: var(--text-xs); font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
 .patch-list { display: flex; flex-wrap: wrap; gap: 4px; }
-.patch-item { height: 26px; padding: 0 10px; font: inherit; font-size: 12px; color: var(--text); cursor: pointer; background: none; border: 1px solid var(--border); border-radius: var(--control-radius); }
+.patch-item { height: 26px; padding: 0 10px; font: inherit; font-size: var(--text-md); color: var(--text); cursor: pointer; background: none; border: 1px solid var(--border); border-radius: var(--control-radius); }
 .patch-item:hover { background: var(--control-hover); }
 .patch-item[aria-current='true'] { background: var(--control-on); }
 .patch-mine { display: inline-flex; gap: 1px; }
-.patch-delete { height: 26px; min-width: 26px; padding: 0 6px; font: inherit; font-size: 12px; color: var(--muted); cursor: pointer; background: none; border: 1px solid var(--border); border-radius: var(--control-radius); }
+.patch-delete { height: 26px; min-width: 26px; padding: 0 6px; font: inherit; font-size: var(--text-md); color: var(--muted); cursor: pointer; background: none; border: 1px solid var(--border); border-radius: var(--control-radius); }
 .patch-delete-confirm { color: var(--danger); border-color: var(--danger); }
-.patch-empty { margin: 0; font-size: 12px; color: var(--muted); }
+.patch-empty { margin: 0; font-size: var(--text-md); color: var(--muted); }
 .patch-save { display: flex; gap: 6px; margin-top: 8px; }
 .patch-save input, .patch-link {
-  flex: 1; min-width: 0; height: var(--control-h); padding: 0 8px; font: inherit; font-size: 12px; color: var(--text);
+  flex: 1; min-width: 0; height: var(--control-h); padding: 0 8px; font: inherit; font-size: var(--text-md); color: var(--text);
   background: var(--bg); border: 1px solid var(--border); border-radius: var(--control-radius);
 }
 .patch-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .patch-actions label { cursor: pointer; }
-.patch-status { margin: 0; min-height: 16px; font-size: 12px; color: var(--muted); }
+.patch-status { margin: 0; min-height: 16px; font-size: var(--text-md); color: var(--muted); }
 
 /* The Display button and its panel: the display settings, out of the way until wanted. */
 .display-menu { position: static; }
@@ -485,10 +498,10 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   position: absolute; z-index: 60; top: calc(100% + 6px); left: 50%; transform: translateX(-50%);
   width: min(380px, 100%); display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 14px;
   background: var(--panel); border: 1px solid var(--muted); border-radius: 10px; box-shadow: 0 10px 32px rgba(0, 0, 0, 0.35);
-  font-size: 12px;
+  font-size: var(--text-md);
 }
 .midi-connection { margin: 0; color: var(--muted); line-height: 1.4; }
-.midi-heading { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.midi-heading { font-size: var(--text-xs); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 .midi-activity { display: flex; flex-direction: column; gap: 3px; }
 .midi-activity [role='status'] { font-variant-numeric: tabular-nums; font-family: ui-monospace, monospace; }
 .midi-mappings { list-style: none; margin: 0; padding: 0; width: 100%; display: flex; flex-direction: column; gap: 4px; }
@@ -502,12 +515,13 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .learn-bar {
   position: fixed; z-index: 70; bottom: 16px; left: 50%; transform: translateX(-50%); width: max-content;
   max-width: calc(100vw - 32px); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 8px 10px 8px 14px;
-  border: 1px solid var(--accent); border-radius: 10px; background: var(--panel); font-size: 12px;
+  border: 1px solid var(--accent); border-radius: 10px; background: var(--panel); font-size: var(--text-md);
   box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45);
 }
-.learn-bar strong { color: var(--accent); letter-spacing: 0.06em; text-transform: uppercase; font-size: 11px; }
+.learn-bar strong { color: var(--accent); letter-spacing: 0.06em; text-transform: uppercase; font-size: var(--text-sm); }
 .learn-bar .learn-done { color: var(--muted); }
-.learn-bar button { margin-left: auto; }
+.learn-bar .learn-exit { color: var(--muted); }
+.learn-bar kbd { color: inherit; border-color: currentColor; opacity: 0.7; }
 main[data-learning] [data-learn] { outline: 1px dashed var(--muted); outline-offset: 2px; border-radius: 6px; cursor: crosshair; }
 main[data-learning] [data-learn][data-mapped] { outline-style: solid; }
 main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(--accent); }
@@ -530,13 +544,24 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 /* Quick Setup floats where the Learn bar does, a little larger: one step at a time. */
 .quick-setup {
   position: fixed; z-index: 70; bottom: 16px; left: 50%; transform: translateX(-50%); width: min(460px, calc(100vw - 32px));
-  display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; font-size: 12px;
+  display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; font-size: var(--text-md);
   border: 1px solid var(--accent); border-radius: 10px; background: var(--panel); box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45);
 }
 .quick-setup header { display: flex; justify-content: space-between; align-items: baseline; }
-.quick-setup header strong { color: var(--accent); letter-spacing: 0.06em; text-transform: uppercase; font-size: 11px; }
+.quick-setup header strong { color: var(--accent); letter-spacing: 0.06em; text-transform: uppercase; font-size: var(--text-sm); }
 .quick-setup-progress { color: var(--muted); font-variant-numeric: tabular-nums; }
 .quick-setup-prompt { margin: 0; font-size: 15px; }
 .quick-setup-last { margin: 0; color: var(--muted); }
 .quick-setup-differs { color: var(--text); }
 .quick-setup-actions { display: flex; gap: 6px; justify-content: flex-end; }
+
+/* While MIDI Learn (or Quick Setup) is on, the MIDI button says so in the accent, its dot pulsing: the panel behind
+   it is where Learn was started, and where Done now is. */
+.midi-status[data-learning] { color: var(--accent); border-color: var(--accent); }
+.midi-status[data-learning] .midi-dot { background: var(--accent); animation: midi-pulse 1.2s ease-in-out infinite; }
+.midi-learning { font-weight: 600; }
+@keyframes midi-pulse { 50% { opacity: 0.2; } }
+@media (prefers-reduced-motion: reduce) { .midi-status[data-learning] .midi-dot { animation: none; } }
+/* The one primary action in a panel: filled in the accent. */
+.tool-primary { color: var(--bg); background: var(--accent); border-color: var(--accent); font-weight: 600; }
+.tool-primary:hover { color: var(--bg); background: color-mix(in srgb, var(--accent) 85%, var(--text)); }

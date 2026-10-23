@@ -40,7 +40,7 @@ export const TIPS = {
   midiLearn: {
     title: 'MIDI Learn',
     body: 'Map your Controller: click a knob or button here, then move a knob, fader or pad there. Endless encoders and normal knobs are told apart by what they send.',
-    how: 'Normal knobs use Pickup: the Parameter waits until the knob passes its value, so nothing jumps. Escape or Done ends Learn.',
+    how: 'Normal knobs use Pickup: the Parameter waits until the knob passes its value, so nothing jumps. Finish with Escape, or Done in the MIDI panel.',
   },
   velocityCutoff: {
     title: 'Velocity → Cutoff',
