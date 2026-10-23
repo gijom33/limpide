@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { defaultPatch, formatParam, PARAMS, setFilter, setLfo, setParam, setWaveform } from './patch';
+import { CHOICES, defaultPatch, formatParam, PARAMS, setFilter, setLfo, setParam, setWaveform } from './patch';
 
 describe('defaultPatch', () => {
   it('starts every Parameter at its declared default', () => {
@@ -99,6 +99,13 @@ describe('LFO and Glide', () => {
   it('change Waveform and Destination independently', () => {
     const p = setLfo(setLfo(defaultPatch(), { waveform: 'square' }), { destination: 'pulseWidth' });
     expect([p.lfoWaveform, p.lfoDestination]).toEqual(['square', 'pulseWidth']);
+  });
+});
+
+describe('Voices', () => {
+  it('start at 1, monophonic, so every Patch from before polyphony sounds as it did', () => {
+    expect(defaultPatch().voices).toBe(1);
+    expect(CHOICES.voices).toEqual([1, 2, 3, 4]);
   });
 });
 

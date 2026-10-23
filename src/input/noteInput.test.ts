@@ -131,3 +131,84 @@ describe('several Note sources at once (computer keyboard, piano, MIDI)', () => 
     expect(held).toEqual([[60], [60, 64], [64]]);
   });
 });
+
+describe('several Voices (polyphony, ADR-0007)', () => {
+  const poly = (count: 2 | 3 | 4 = 4) => {
+    const s = setup();
+    s.input.setVoices(count);
+    return s;
+  };
+
+  it('starts a Note On for every key pressed, so a chord sounds', () => {
+    const { input, events } = poly();
+    input.press(60, 1);
+    input.press(64, 0.5);
+    expect(events).toEqual([
+      { type: 'noteOn', note: 60, velocity: 1 },
+      { type: 'noteOn', note: 64, velocity: 0.5 },
+    ]);
+  });
+
+  it('releases only the Note whose key went up; the others keep sounding', () => {
+    const { input, events } = poly();
+    input.press(60, 1);
+    input.press(64, 1);
+    input.release(60);
+    expect(events.at(-1)).toEqual({ type: 'release', note: 60 });
+    input.release(64);
+    expect(events.at(-1)).toEqual({ type: 'release', note: 64 });
+  });
+
+  it('with Hold, keeps released Notes sounding until Hold is switched off', () => {
+    const { input, events } = poly();
+    input.setHold(true);
+    input.press(60, 1);
+    input.release(60);
+    expect(events.filter((e) => e.type === 'release')).toHaveLength(0);
+    input.setHold(false);
+    expect(events.at(-1)).toEqual({ type: 'release', note: 60 });
+  });
+
+  it('with Hold, pressing a held Note again retriggers it rather than releasing it', () => {
+    const { input, events } = poly();
+    input.setHold(true);
+    input.press(60, 1);
+    input.release(60);
+    input.press(60, 0.8);
+    expect(events.at(-1)).toEqual({ type: 'noteOn', note: 60, velocity: 0.8 });
+    input.setHold(false); // the key is down again, so Hold off releases nothing
+    expect(events.filter((e) => e.type === 'release')).toHaveLength(0);
+  });
+
+  it('keeps a Note sounding until every source holding it lets go', () => {
+    const { input, events } = poly();
+    input.press(60, 1);
+    input.press(60, 1);
+    input.release(60);
+    expect(events.filter((e) => e.type === 'release')).toHaveLength(0);
+    input.release(60);
+    expect(events.at(-1)).toEqual({ type: 'release', note: 60 });
+  });
+
+  it('changing the number of Voices releases everything sounding, once', () => {
+    const { input, events } = setup();
+    input.press(60, 1);
+    input.setVoices(4);
+    expect(events.at(-1)).toEqual({ type: 'noteOff' });
+    input.press(64, 1);
+    input.press(67, 1);
+    input.setVoices(1);
+    expect(events.at(-1)).toEqual({ type: 'noteOff' });
+    input.setVoices(1); // the same again: nothing happens
+    expect(events.filter((e) => e.type === 'noteOff')).toHaveLength(2);
+  });
+
+  it('is last-note priority again back at one Voice', () => {
+    const { input, events } = poly();
+    input.setVoices(1);
+    input.press(60, 1);
+    input.press(64, 1);
+    input.release(64);
+    expect(events.at(-1)).toEqual({ type: 'pitchChange', note: 60 });
+  });
+});

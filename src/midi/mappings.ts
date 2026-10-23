@@ -25,6 +25,7 @@ export const CHOICE_LABELS: Record<ChoiceId, string> = {
   filterSlope: 'Slope',
   lfoWaveform: 'LFO Waveform',
   lfoDestination: 'LFO Destination',
+  voices: 'Voices',
 };
 
 export type Target = { kind: 'param'; id: ParamId } | { kind: 'choice'; id: ChoiceId } | { kind: 'action'; id: ActionId };

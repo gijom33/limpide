@@ -4,10 +4,10 @@ import { effectiveCutoff, KEY_TRACK_CENTRE, LFO_CUTOFF_OCTAVES, LFO_PITCH_CENTS,
 import { filterStages, type Stage } from './filterDesign';
 import { harmonicSeries } from '../music/harmonics';
 import { noteToFrequency } from '../music/pitch';
-import { GLIDE_OFF, PARAMS, type FilterMode, type Patch } from '../patch/patch';
+import { GLIDE_OFF, PARAMS, type FilterMode, type Patch, type Voices } from '../patch/patch';
 import { bandwidthOctaves } from '../modulation/passBand';
 
-/** Listening points in the Voice, one analyser each. */
+/** Listening points in the Voice of the newest Note, one analyser each (ADR-0007). */
 export interface Taps {
   oscillator: AnalyserNode;
   filter: AnalyserNode;
@@ -28,9 +28,14 @@ export interface Modulation {
 
 export interface SynthEngine {
   applyPatch(patch: Patch): void;
+  /** A Note starts: on the one Voice (1 Voice), or on a free Voice (more). The Viewers follow it. */
   noteOn(note: number, velocity: number, at?: number): void;
+  /** One Voice: the sounding Note changes pitch (last-note priority, Glide) without a new Gate. */
   pitchChange(note: number, at?: number): void;
+  /** The Gate closes: every Voice releases. */
   noteOff(at?: number): void;
+  /** Several Voices: the Voice playing `note` releases; the others keep sounding. */
+  release(note: number, at?: number): void;
   /** Frequency of the most recent Note (A4 before any), for Cycle Lock. */
   fundamental(): number;
   /** The Modulation model at `time` (default: now), from the Gate history — past times too, for the Timeline. */
@@ -51,6 +56,8 @@ export interface SynthEngine {
  * can share one ±1 Scope scale. Floating-point audio never clips inside the graph, only at the output.
  */
 export const OSCILLATOR_LEVEL = 0.5;
+/** How many Voices the engine builds; a Patch uses the first `voices` of them. */
+export const MAX_VOICES = 4;
 // Listening volume only, after the Amp Tap, so it is not part of what the Viewers show.
 // Without Resonance compensation the worst resonant peak reaches ±1.8 at the Filter Tap (measured over Notes
 // and Cutoffs at full Resonance); 0.45 keeps that under full scale at the output (about 0.83).
@@ -58,6 +65,13 @@ const MASTER_LEVEL = 0.45;
 
 const SAFETY_RANGE = 4;
 const SAFETY_KNEE = 0.8;
+/** The Amp Tap level above which the safety limiter starts to bend the sound (its knee, before the master level). */
+export const LIMITING_ABOVE = SAFETY_KNEE / MASTER_LEVEL;
+/**
+ * The same for a Patch with several Voices, whose master level makes room for them (1/√Voices): the Amp Tap
+ * shows one Voice, so this is where that Voice alone would reach the knee; a chord reaches it sooner.
+ */
+export const limitingAbove = (voices: Voices) => (SAFETY_KNEE * Math.sqrt(voices)) / MASTER_LEVEL;
 // The bend levels off a little below full scale: driven hard, the shaper's oversampling filter rings slightly
 // past the curve, and this keeps even that under 1.
 const SAFETY_CEILING = 0.97;
@@ -144,28 +158,45 @@ function play(param: AudioParam, steps: AutomationStep[], scale = 1) {
 const ampAdsr = (p: Patch): Adsr => ({ attack: p.ampAttack, decay: p.ampDecay, sustain: p.ampSustain, release: p.ampRelease });
 const filterAdsr = (p: Patch): Adsr => ({ attack: p.filterAttack, decay: p.filterDecay, sustain: p.filterSustain, release: p.filterRelease });
 
-/** The single Voice (Oscillator → Filter → Amp) built from native Web Audio nodes (ADR-0001). */
-export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
+// A released Voice counts as free again once its Release has run this many time constants.
+const RELEASE_TAIL = 6;
+const A4 = noteToFrequency(69);
+
+/** What every Voice shares: the LFO's outputs, the noise loop, and where the Voices' outputs go. */
+interface Shared {
+  lfo: OscillatorNode;
+  lfoToCutoff: GainNode;
+  lfoToPitch: GainNode;
+  noise: AudioBuffer;
+  master: GainNode;
+}
+
+/**
+ * One Voice: Oscillators → Mixer → Filter → Amp, built from native Web Audio nodes (ADR-0001), with its own
+ * Envelopes, Velocity and Key Track sources. The engine builds MAX_VOICES of these; a Patch with 1 Voice only
+ * ever plays the first, exactly as the monophonic instrument did.
+ */
+function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   // Sources → Mixer. Each source's Mixer level is scaled by the Nominal Level; the Mixer's output is the
   // Oscillator Tap.
-  const voices = [createVoiceOscillator(ctx), createVoiceOscillator(ctx)];
-  const [osc, osc2] = voices.map((v) => v.node);
+  const oscillators = [createVoiceOscillator(ctx), createVoiceOscillator(ctx)];
+  const [osc, osc2] = oscillators.map((v) => v.node);
   const noise = ctx.createBufferSource();
-  noise.buffer = noiseBuffer(ctx);
+  noise.buffer = shared.noise;
   noise.loop = true;
   const [mix1, mix2, mixNoise] = [ctx.createGain(), ctx.createGain(), ctx.createGain()];
   mix1.gain.value = OSCILLATOR_LEVEL;
   mix2.gain.value = 0;
   mixNoise.gain.value = 0;
   const mixer = ctx.createGain();
-  voices[0].out.connect(mix1).connect(mixer);
-  voices[1].out.connect(mix2).connect(mixer);
+  oscillators[0].out.connect(mix1).connect(mixer);
+  oscillators[1].out.connect(mix2).connect(mixer);
   noise.connect(mixNoise).connect(mixer);
   // The Sub-oscillator: a square an octave below Osc 1, following its pitch, Glide and vibrato.
   const sub = ctx.createOscillator();
   const square = harmonicSeries('square', 0.5, WAVE_HARMONICS);
   sub.setPeriodicWave(ctx.createPeriodicWave(square.real, square.imag, { disableNormalization: true }));
-  sub.frequency.value = noteToFrequency(69) / 2;
+  sub.frequency.value = A4 / 2;
   const mixSub = ctx.createGain();
   mixSub.gain.value = 0;
   sub.connect(mixSub).connect(mixer);
@@ -173,23 +204,8 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   // Two stages: the second is transparent at 12 dB and doubles the Slope at 24 dB (filterStages).
   const filter = ctx.createBiquadFilter();
   const filter2 = ctx.createBiquadFilter();
-  // Never connected: a twin of the Filter set from the Modulation model, so the Response Curve shows the
-  // Effective Cutoff even while the real Filter is being automated (ADR-0003).
-  const twins = [ctx.createBiquadFilter(), ctx.createBiquadFilter()];
   const amp = ctx.createGain();
   amp.gain.value = 0;
-  const master = ctx.createGain();
-  master.gain.value = MASTER_LEVEL;
-  // Protects the listener when several full-level sources and Resonance stack up. It sits after the Amp Tap,
-  // so it never changes what the Viewers show (ADR-0006). Exactly linear below 0.8 of full scale; above, a
-  // smooth bend that never passes 1. (A DynamicsCompressorNode was rejected: it adds make-up gain to every
-  // sound and a few milliseconds of lookahead delay.)
-  const [safetyIn, safety, safetyOut] = [ctx.createGain(), ctx.createWaveShaper(), ctx.createGain()];
-  safetyIn.gain.value = 1 / SAFETY_RANGE; // the shaper's curve covers ±1; this lets it see inputs up to ±SAFETY_RANGE
-  safety.curve = safetyCurve();
-  safety.oversample = '4x';
-  safetyIn.connect(safety).connect(safetyOut);
-  const taps: Taps = { oscillator: createAnalyser(ctx), filter: createAnalyser(ctx), amp: createAnalyser(ctx) };
 
   // The Filter Envelope (0–1) moves the Cutoff through `detune`, in cents: Cutoff × 2^(Amount × level),
   // exactly the model's law. Amount is a gain after the Envelope, so changing it mid-Note acts at once.
@@ -222,13 +238,148 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   keyTrackAmount.connect(filter2.detune);
   trackedNote.start();
 
-  mixer.connect(filter).connect(filter2).connect(amp).connect(master).connect(safetyIn);
-  safetyOut.connect(ctx.destination);
-  // Taps are side branches, so observing never alters the sound.
-  mixer.connect(taps.oscillator);
-  filter2.connect(taps.filter);
-  amp.connect(taps.amp);
-  noise.start();
+  mixer.connect(filter).connect(filter2).connect(amp).connect(shared.master);
+  // Every Voice's noise starts at a different point of the loop, so a chord's noise is not one noise, louder.
+  noise.start(0, (index * NOISE_SECONDS) / MAX_VOICES);
+
+  // The shared LFO, wired to this Voice's destinations through the shared gains set from the Amount.
+  shared.lfoToCutoff.connect(filter.detune);
+  shared.lfoToCutoff.connect(filter2.detune);
+  shared.lfoToPitch.connect(sub.detune);
+  for (const o of oscillators) {
+    shared.lfoToPitch.connect(o.node.detune);
+    shared.lfo.connect(o.pwm);
+  }
+
+  const waveKeys = new Map<OscillatorNode, string>();
+  const pulseWidths = [0.5, 0.5];
+  const pitches: { time: number; frequency: number; note: number; glide: number }[] = [];
+  osc.frequency.value = A4;
+  osc2.frequency.value = A4;
+  let patch: Patch | undefined;
+
+  /** Point each pulse's delay at (width / frequency), and scale its LFO swing for that frequency. */
+  const tunePulses = (frequency: number, t: number, timeConstant?: number) => {
+    oscillators.forEach((o, i) => {
+      const delay = pulseWidths[i] / frequency;
+      if (timeConstant) o.delay.delayTime.setTargetAtTime(delay, t, timeConstant);
+      else o.delay.delayTime.setValueAtTime(delay, t);
+      const width = pulseWidths[i];
+      const swing = patch?.lfoDestination === 'pulseWidth' ? Math.min(LFO_PULSE_WIDTH * patch.lfoAmount, width - MIN_PULSE, MAX_PULSE - width) : 0;
+      o.pwm.gain.setValueAtTime(swing / frequency, t);
+    });
+  };
+
+  // Play exactly the Fourier series the Ideal Reference draws (normalisation is already in it). A pulse plays a
+  // saw here, and becomes a pulse through the delayed, inverted copy.
+  const sawPeak = harmonicSeries('saw', 0.5, WAVE_HARMONICS).magnitudes[1];
+  const setWave = (i: number, waveform: Patch['waveform'], width: number, t: number) => {
+    const o = oscillators[i];
+    const pulse = waveform === 'pulse';
+    const key = pulse ? 'saw' : waveform;
+    if (waveKeys.get(o.node) !== key) {
+      waveKeys.set(o.node, key);
+      const { real, imag } = harmonicSeries(pulse ? 'saw' : waveform, 0.5, WAVE_HARMONICS);
+      o.node.setPeriodicWave(ctx.createPeriodicWave(real, imag, { disableNormalization: true }));
+    }
+    pulseWidths[i] = width;
+    // saw(t) − saw(t − d·T) has |Harmonic n| = 2·|sin(πnd)| × the saw's: scale it to the pulse series' level.
+    const scale = pulse ? harmonicSeries('pulse', width, 256).magnitudes[1] / (2 * Math.sin(Math.PI * width) * sawPeak) : 1;
+    o.direct.gain.setValueAtTime(scale, t);
+    o.inverted.gain.setValueAtTime(pulse ? -scale : 0, t);
+  };
+
+  const frequencyAt = (t: number) => glideFrequency(pitches, t) || A4;
+
+  const voice = {
+    /** The Note this Voice is playing or releasing; null once it has faded. */
+    note: null as number | null,
+    startedAt: -Infinity,
+    /** When its key went up, and when its Release will have faded, or null while the key is down. */
+    releasedAt: null as number | null,
+    freeAt: -Infinity,
+    pitches,
+
+    /** Move to a Note: at once, or sliding there over the Glide. */
+    setPitch(note: number, t: number, glide: number) {
+      const frequency = noteToFrequency(note);
+      pitches.push({ time: t, frequency, note, glide });
+      if (pitches.length > HISTORY) pitches.shift();
+      for (const [node, f] of [[osc, frequency], [osc2, frequency], [sub, frequency / 2]] as const) {
+        // Every Oscillator follows the Note: Osc 2's offsets ride on top, through its detune; the Sub an octave down.
+        node.frequency.cancelAndHoldAtTime(t);
+        if (glide) node.frequency.setTargetAtTime(f, t, glideTimeConstant(glide));
+        else node.frequency.setValueAtTime(f, t);
+      }
+      tunePulses(frequency, t, glide ? glideTimeConstant(glide) : undefined);
+      trackedNote.offset.cancelAndHoldAtTime(t);
+      if (glide) trackedNote.offset.setTargetAtTime(note - KEY_TRACK_CENTRE, t, glideTimeConstant(glide));
+      else trackedNote.offset.setValueAtTime(note - KEY_TRACK_CENTRE, t);
+    },
+
+    /** Play the model's Envelope schedules for a Gate change. */
+    gate(ampEvent: GateEvent, filterEvent: GateEvent, velocity: number) {
+      if (ampEvent.on) noteVelocity.offset.setValueAtTime(velocity, ampEvent.time);
+      play(amp.gain, envelopeSchedule(ampEvent));
+      play(filterEnvelope.offset, envelopeSchedule(filterEvent));
+    },
+
+    apply(next: Patch, t: number) {
+      patch = next;
+      setWave(0, next.waveform, next.pulseWidth, t);
+      setWave(1, next.osc2Waveform, next.osc2PulseWidth, t);
+      tunePulses(frequencyAt(t), t);
+      osc2.detune.setValueAtTime(next.osc2Octave * 1200 + next.osc2Semitone * 100 + next.osc2Detune, t);
+      mix1.gain.setValueAtTime(next.mixOsc1 * OSCILLATOR_LEVEL, t);
+      mix2.gain.setValueAtTime(next.mixOsc2 * OSCILLATOR_LEVEL, t);
+      mixNoise.gain.setValueAtTime(next.mixNoise * OSCILLATOR_LEVEL, t);
+      mixSub.gain.setValueAtTime(next.mixSub * OSCILLATOR_LEVEL, t);
+      // The base Cutoff; the Filter Envelope adds to it through detune.
+      const stages = filterStages(next.filterMode, next.filterSlope, next.resonance);
+      const cutoff = effectiveCutoff(next);
+      [filter, filter2].forEach((node, i) => setStage(node, stages[i], cutoff, t));
+      envelopeAmount.gain.setValueAtTime(next.filterEnvAmount * 1200, t);
+      velocityAmount.gain.setValueAtTime(next.velocityCutoff * VELOCITY_CUTOFF_OCTAVES * 1200, t);
+      keyTrackAmount.gain.setValueAtTime(next.keyTrack * 100, t); // cents per semitone
+    },
+
+    /** The Taps listen to this Voice: side branches, so observing never alters the sound. */
+    attach(taps: Taps) {
+      mixer.connect(taps.oscillator);
+      filter2.connect(taps.filter);
+      amp.connect(taps.amp);
+    },
+    detach(taps: Taps) {
+      mixer.disconnect(taps.oscillator);
+      filter2.disconnect(taps.filter);
+      amp.disconnect(taps.amp);
+    },
+  };
+  return voice;
+}
+type Voice = ReturnType<typeof createVoice>;
+
+/**
+ * The instrument: up to MAX_VOICES Voices (Oscillator → Filter → Amp each) summed into one master and safety
+ * stage, with one LFO shared. The Taps, the Modulation model and Cycle Lock follow the Voice of the newest Note,
+ * so the Viewers always show one Note as if it were played alone (ADR-0007).
+ */
+export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
+  const master = ctx.createGain();
+  master.gain.value = MASTER_LEVEL;
+  // Protects the listener when several full-level sources and Resonance stack up. It sits after the Amp Tap,
+  // so it never changes what the Viewers show (ADR-0006). Exactly linear below 0.8 of full scale; above, a
+  // smooth bend that never passes 1. (A DynamicsCompressorNode was rejected: it adds make-up gain to every
+  // sound and a few milliseconds of lookahead delay.)
+  const [safetyIn, safety, safetyOut] = [ctx.createGain(), ctx.createWaveShaper(), ctx.createGain()];
+  safetyIn.gain.value = 1 / SAFETY_RANGE; // the shaper's curve covers ±1; this lets it see inputs up to ±SAFETY_RANGE
+  safety.curve = safetyCurve();
+  safety.oversample = '4x';
+  master.connect(safetyIn).connect(safety).connect(safetyOut).connect(ctx.destination);
+  const taps: Taps = { oscillator: createAnalyser(ctx), filter: createAnalyser(ctx), amp: createAnalyser(ctx) };
+  // Never connected: a twin of the Filter set from the Modulation model, so the Response Curve shows the
+  // Effective Cutoff even while the real Filter is being automated (ADR-0003).
+  const twins = [ctx.createBiquadFilter(), ctx.createBiquadFilter()];
 
   // The LFO: a real oscillator, wired to each destination through a gain set from the Amount; the Modulation
   // model computes the same shape from its phase, so the Viewers move exactly as the sound does (ADR-0003).
@@ -238,93 +389,80 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   lfoToCutoff.gain.value = 0;
   lfoToPitch.gain.value = 0;
   lfo.connect(lfoToCutoff);
-  lfoToCutoff.connect(filter.detune);
-  lfoToCutoff.connect(filter2.detune);
   lfo.connect(lfoToPitch);
-  lfoToPitch.connect(sub.detune);
-  for (const v of voices) {
-    lfoToPitch.connect(v.node.detune);
-    lfo.connect(v.pwm);
-  }
+  const shared: Shared = { lfo, lfoToCutoff, lfoToPitch, noise: noiseBuffer(ctx), master };
+  const voices = Array.from({ length: MAX_VOICES }, (_, i) => createVoice(ctx, shared, i));
   const lfoStart = ctx.currentTime;
   lfo.start(lfoStart);
 
   let patch: Patch | undefined;
-  const waveKeys = new Map<OscillatorNode, string>();
+  // The Modulation model's history: the newest Note's pitches and Gate events, which is what the Viewers show.
   const pitches: { time: number; frequency: number; note: number; glide: number }[] = [];
-  osc.frequency.value = noteToFrequency(69);
-  osc2.frequency.value = noteToFrequency(69);
   // Patches in force over time, so past moments use the Cutoff and Amount of their time.
   const patches: { time: number; patch: Patch }[] = [];
   const ampEvents: GateEvent[] = [];
   const filterEvents: GateEvent[] = [];
-  const pulseWidths = [0.5, 0.5];
+  /** The Voice of the newest Note: the Taps listen to it. */
+  let lead: Voice | null = null;
 
-  /** Point each pulse's delay at (width / frequency), and scale its LFO swing for that frequency. */
-  const tunePulses = (frequency: number, t: number, timeConstant?: number) => {
-    voices.forEach((v, i) => {
-      const delay = pulseWidths[i] / frequency;
-      if (timeConstant) v.delay.delayTime.setTargetAtTime(delay, t, timeConstant);
-      else v.delay.delayTime.setValueAtTime(delay, t);
-      const width = pulseWidths[i];
-      const swing = patch?.lfoDestination === 'pulseWidth' ? Math.min(LFO_PULSE_WIDTH * patch.lfoAmount, width - MIN_PULSE, MAX_PULSE - width) : 0;
-      v.pwm.gain.setValueAtTime(swing / frequency, t);
-    });
+  const at = (time?: number) => time ?? ctx.currentTime;
+  const voiceCount = (): Voices => patch?.voices ?? 1;
+
+  const record = (events: GateEvent[], e: GateEvent) => {
+    events.push(e);
+    if (events.length > HISTORY) events.shift();
+  };
+  /** A Gate change on a Voice; recorded in the model's history when it is the newest Note's. */
+  const gate = (voice: Voice, on: boolean, t: number, velocity: number) => {
+    if (!patch) return;
+    const ampEvent: GateEvent = { time: t, on, adsr: ampAdsr(patch), peak: velocity };
+    const filterEvent: GateEvent = { time: t, on, adsr: filterAdsr(patch), peak: 1 };
+    if (voice === lead) {
+      record(ampEvents, ampEvent);
+      record(filterEvents, filterEvent);
+    }
+    voice.gate(ampEvent, filterEvent, velocity);
+    if (on) {
+      voice.startedAt = t;
+      voice.releasedAt = null;
+      voice.freeAt = Infinity;
+    } else {
+      voice.releasedAt = t;
+      voice.freeAt = t + patch.ampRelease * RELEASE_TAIL;
+    }
   };
 
-  const setPitch = (note: number, t: number) => {
-    const frequency = noteToFrequency(note);
-    const glide = patch && pitches.length && patch.glide > GLIDE_OFF * 1.001 ? patch.glide : 0;
-    pitches.push({ time: t, frequency, note, glide });
+  /** Which Voice plays a new Note: one Voice always the first; otherwise a free one, else the oldest. */
+  const allocate = (note: number, t: number): Voice => {
+    const available = voices.slice(0, voiceCount());
+    if (available.length === 1) return available[0];
+    for (const v of available) if (v.freeAt <= t) v.note = null;
+    return (
+      available.find((v) => v.note === note) ?? // a Note already sounding retriggers its own Voice
+      available.find((v) => v.note === null) ??
+      available.filter((v) => v.releasedAt !== null).sort((a, b) => a.releasedAt! - b.releasedAt!)[0] ??
+      available.reduce((oldest, v) => (v.startedAt < oldest.startedAt ? v : oldest))
+    );
+  };
+
+  const follow = (voice: Voice) => {
+    if (voice === lead) return;
+    lead?.detach(taps);
+    voice.attach(taps);
+    lead = voice;
+  };
+  follow(voices[0]);
+
+  const setLeadPitch = (voice: Voice, note: number, t: number) => {
+    // Glide is a one-Voice behaviour: a Note slides from the previous one; with more Voices, Notes start at pitch.
+    const glide = patch && pitches.length && voiceCount() === 1 && patch.glide > GLIDE_OFF * 1.001 ? patch.glide : 0;
+    voice.setPitch(note, t, glide);
+    pitches.push({ time: t, frequency: noteToFrequency(note), note, glide });
     if (pitches.length > HISTORY) pitches.shift();
-    for (const [node, f] of [[osc, frequency], [osc2, frequency], [sub, frequency / 2]] as const) {
-      // Every Oscillator follows the Note: Osc 2's offsets ride on top, through its detune; the Sub an octave down.
-      node.frequency.cancelAndHoldAtTime(t);
-      if (glide) node.frequency.setTargetAtTime(f, t, glideTimeConstant(glide));
-      else node.frequency.setValueAtTime(f, t);
-    }
-    tunePulses(frequency, t, glide ? glideTimeConstant(glide) : undefined);
-    trackedNote.offset.cancelAndHoldAtTime(t);
-    if (glide) trackedNote.offset.setTargetAtTime(note - KEY_TRACK_CENTRE, t, glideTimeConstant(glide));
-    else trackedNote.offset.setValueAtTime(note - KEY_TRACK_CENTRE, t);
   };
   // The Note Key Track follows at `t`: the same slide as the Oscillators, in semitones.
   const trackedNoteAt = (t: number) =>
     pitches.length ? glideFrequency(pitches.map((p) => ({ time: p.time, frequency: p.note, glide: p.glide })), t) : 69;
-
-  // Play exactly the Fourier series the Ideal Reference draws (normalisation is already in it). A pulse plays a
-  // saw here, and becomes a pulse through the delayed, inverted copy.
-  const sawPeak = harmonicSeries('saw', 0.5, WAVE_HARMONICS).magnitudes[1];
-  const setWave = (index: number, waveform: Patch['waveform'], width: number) => {
-    const v = voices[index];
-    const t = ctx.currentTime;
-    const pulse = waveform === 'pulse';
-    const key = pulse ? 'saw' : waveform;
-    if (waveKeys.get(v.node) !== key) {
-      waveKeys.set(v.node, key);
-      const { real, imag } = harmonicSeries(pulse ? 'saw' : waveform, 0.5, WAVE_HARMONICS);
-      v.node.setPeriodicWave(ctx.createPeriodicWave(real, imag, { disableNormalization: true }));
-    }
-    pulseWidths[index] = width;
-    // saw(t) − saw(t − d·T) has |Harmonic n| = 2·|sin(πnd)| × the saw's: scale it to the pulse series' level.
-    const scale = pulse ? harmonicSeries('pulse', width, 256).magnitudes[1] / (2 * Math.sin(Math.PI * width) * sawPeak) : 1;
-    v.direct.gain.setValueAtTime(scale, t);
-    v.inverted.gain.setValueAtTime(pulse ? -scale : 0, t);
-  };
-  const at = (time?: number) => time ?? ctx.currentTime;
-
-  /** Record a Gate change in the model's history, then play the model's schedule for it. */
-  const gate = (on: boolean, t: number, velocity: number) => {
-    if (!patch) return;
-    const ampEvent: GateEvent = { time: t, on, adsr: ampAdsr(patch), peak: velocity };
-    const filterEvent: GateEvent = { time: t, on, adsr: filterAdsr(patch), peak: 1 };
-    for (const [events, e] of [[ampEvents, ampEvent], [filterEvents, filterEvent]] as const) {
-      events.push(e);
-      if (events.length > HISTORY) events.shift();
-    }
-    play(amp.gain, envelopeSchedule(ampEvent));
-    play(filterEnvelope.offset, envelopeSchedule(filterEvent));
-  };
 
   const patchAt = (t: number) => {
     for (let i = patches.length - 1; i >= 0; i--) if (patches[i].time <= t) return patches[i].patch;
@@ -360,7 +498,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     // During a Glide, the frequency the Oscillators have reached: Cycle Lock follows the slide.
     // With the Sub sounding, the sound repeats at the Sub's pitch, an octave lower: that is the fundamental.
     fundamental: () => {
-      const frequency = glideFrequency(pitches, ctx.currentTime) || noteToFrequency(69);
+      const frequency = glideFrequency(pitches, ctx.currentTime) || A4;
       return patchAt(ctx.currentTime)?.mixSub ? frequency / 2 : frequency;
     },
     modulationAt,
@@ -389,41 +527,45 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       if (patches.at(-1)?.time === t) patches.pop();
       patches.push({ time: t, patch: next });
       if (patches.length > HISTORY * 4) patches.shift();
-      setWave(0, next.waveform, next.pulseWidth);
-      setWave(1, next.osc2Waveform, next.osc2PulseWidth);
-      tunePulses(glideFrequency(pitches, t) || noteToFrequency(69), t);
+      for (const v of voices) v.apply(next, t);
       lfo.type = LFO_TYPES[next.lfoWaveform];
       lfo.frequency.setValueAtTime(next.lfoRate, t);
       lfoToCutoff.gain.setValueAtTime(next.lfoDestination === 'cutoff' ? LFO_CUTOFF_OCTAVES * 1200 * next.lfoAmount : 0, t);
       lfoToPitch.gain.setValueAtTime(next.lfoDestination === 'pitch' ? LFO_PITCH_CENTS * next.lfoAmount : 0, t);
-      osc2.detune.setValueAtTime(next.osc2Octave * 1200 + next.osc2Semitone * 100 + next.osc2Detune, t);
-      mix1.gain.setValueAtTime(next.mixOsc1 * OSCILLATOR_LEVEL, t);
-      mix2.gain.setValueAtTime(next.mixOsc2 * OSCILLATOR_LEVEL, t);
-      mixNoise.gain.setValueAtTime(next.mixNoise * OSCILLATOR_LEVEL, t);
-      mixSub.gain.setValueAtTime(next.mixSub * OSCILLATOR_LEVEL, t);
-      // The base Cutoff; the Filter Envelope adds to it through detune. The twins copy each stage for the curve.
+      // The twins copy each stage for the Response Curve.
       const stages = filterStages(next.filterMode, next.filterSlope, next.resonance);
-      const cutoff = effectiveCutoff(next);
-      [filter, filter2].forEach((node, i) => setStage(node, stages[i], cutoff, t));
-      twins.forEach((node, i) => setStage(node, stages[i], cutoff));
-      envelopeAmount.gain.setValueAtTime(next.filterEnvAmount * 1200, t);
-      velocityAmount.gain.setValueAtTime(next.velocityCutoff * VELOCITY_CUTOFF_OCTAVES * 1200, t);
-      keyTrackAmount.gain.setValueAtTime(next.keyTrack * 100, t); // cents per semitone
+      twins.forEach((node, i) => setStage(node, stages[i], effectiveCutoff(next)));
+      // Several Voices sum before the master: the listening level makes room for them (after the Amp Tap, so
+      // the Viewers' scale is unchanged, ADR-0006); one Voice plays exactly as loud as before.
+      master.gain.setValueAtTime(MASTER_LEVEL / Math.sqrt(next.voices), t);
     },
 
     noteOn(note, velocity, time) {
       const t = at(time);
-      noteVelocity.offset.setValueAtTime(velocity, t);
-      setPitch(note, t);
-      gate(true, t, velocity);
+      const voice = allocate(note, t);
+      voice.note = note;
+      follow(voice);
+      setLeadPitch(voice, note, t);
+      gate(voice, true, t, velocity);
     },
 
     pitchChange(note, time) {
-      setPitch(note, at(time));
+      if (lead) setLeadPitch(lead, note, at(time));
     },
 
     noteOff(time) {
-      gate(false, at(time), 0);
+      const t = at(time);
+      // The newest Note first, so the model records its Gate off; the others just release.
+      for (const v of [...voices].sort((a, b) => (a === lead ? -1 : b === lead ? 1 : 0))) {
+        if (v.note !== null && v.releasedAt === null) gate(v, false, t, 0);
+      }
+      // One Voice never allocates, so its Gate off must count whether or not a Note was recorded for it.
+      if (voiceCount() === 1 && (voices[0].note === null || voices[0].releasedAt !== t)) gate(voices[0], false, t, 0);
+    },
+
+    release(note, time) {
+      const t = at(time);
+      for (const v of voices) if (v.note === note && v.releasedAt === null) gate(v, false, t, 0);
     },
   };
 }

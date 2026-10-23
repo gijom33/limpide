@@ -43,6 +43,8 @@ export type ParamId =
 export type FilterMode = 'lowpass' | 'highpass' | 'bandpass' | 'notch';
 export type FilterSlope = 12 | 24;
 export type LfoDestination = 'cutoff' | 'pitch' | 'pulseWidth';
+/** How many Notes can sound at once. 1 is monophonic (last-note priority, Glide); more play chords (ADR-0007). */
+export type Voices = 1 | 2 | 3 | 4;
 
 export type Patch = Record<ParamId, number> & {
   waveform: Waveform;
@@ -51,6 +53,7 @@ export type Patch = Record<ParamId, number> & {
   filterSlope: FilterSlope;
   lfoWaveform: LfoWaveform;
   lfoDestination: LfoDestination;
+  voices: Voices;
 };
 
 /** Glide at its minimum is off: Notes change pitch at once. */
@@ -102,6 +105,7 @@ export function defaultPatch(): Patch {
     filterSlope: 12,
     lfoWaveform: 'sine',
     lfoDestination: 'cutoff',
+    voices: 1,
   };
 }
 
@@ -117,6 +121,7 @@ export const CHOICES = {
   filterSlope: [12, 24],
   lfoWaveform: ['sine', 'triangle', 'square', 'saw'],
   lfoDestination: ['cutoff', 'pitch', 'pulseWidth'],
+  voices: [1, 2, 3, 4],
 } as const satisfies { [K in Exclude<keyof Patch, ParamId>]: readonly Patch[K][] };
 
 /** A Patch setting picked from a list (a Waveform, the Filter Mode…), rather than turned like a Parameter. */

@@ -107,7 +107,7 @@ SynthView is a browser-based, monophonic subtractive synthesizer laid out as its
 - **Audio:** native Web Audio nodes only ([ADR-0001](./adr/0001-native-web-audio-nodes-over-custom-dsp.md)). The 24 dB Slope is two cascaded biquads with a compensated per-stage Q. Pulse waves with arbitrary Pulse Width are `PeriodicWave`s built from their Fourier series.
 - **Rendering:** the engine and Viewer renderers live outside React. A single animation loop draws every Viewer ([ADR-0002](./adr/0002-viewers-and-engine-live-outside-react.md)).
 - **Effective Cutoff:** computed by a pure modulation model that also produces the automation schedule ([ADR-0003](./adr/0003-modulation-model-mirrors-the-audio-graph.md)).
-- **Voice:** monophonic with last-note priority ([ADR-0005](./adr/0005-monophonic-by-design.md)).
+- **Voices:** 1 to 4 per Patch; 1 Voice is monophonic with last-note priority and Glide. The Viewers always follow the newest Note ([ADR-0007](./adr/0007-optional-polyphony-viewers-follow-the-newest-note.md)).
 - **MIDI:** MIDI Learn first, no hard-coded map, Encoder Mode auto-detected, and Pickup for Absolute Mappings ([ADR-0004](./adr/0004-midi-learn-first-no-hardcoded-controller-map.md)).
 - **Tuning:** A4 = 440 Hz, equal temperament.
 
@@ -140,7 +140,7 @@ SynthView is a browser-based, monophonic subtractive synthesizer laid out as its
 
 ## Out of Scope
 
-- Polyphony, unison and chords ([ADR-0005](./adr/0005-monophonic-by-design.md)).
+- Unison, and Viewers that show more than one Note at once ([ADR-0007](./adr/0007-optional-polyphony-viewers-follow-the-newest-note.md)).
 - Effects (delay, reverb, chorus, distortion).
 - A modulation matrix beyond one LFO with a single destination.
 - Custom DSP or analogue-modelled filters ([ADR-0001](./adr/0001-native-web-audio-nodes-over-custom-dsp.md)).
