@@ -540,6 +540,8 @@ export function App() {
                             inactive={patch.mixOsc2 === 0 || patch.osc2Waveform !== 'pulse'}
                           />
                         </Tooltip>
+                      </div>
+                      <div className="knobs knobs-tuning">
                         {(['osc2Octave', 'osc2Semitone'] as const).map((id) => (
                           <Knob key={id} id={id} value={patch[id]} onChange={(v) => change(id, v)} inactive={patch.mixOsc2 === 0} />
                         ))}

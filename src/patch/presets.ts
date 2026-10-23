@@ -242,17 +242,12 @@ group('Keys & Plucks', [
   }],
 ]);
 
-// Pianos: a bright strike that darkens as it decays, harder for a harder hit, on four Voices.
+// Pianos: a strike that darkens as it decays, harder for a harder hit, on four Voices.
 group('Pianos', [
   ['Piano', 'A pulse and a saw a few cents apart, a Filter Envelope that opens on the strike and closes as the Note decays, and four Voices.', {
     voices: 4, waveform: 'pulse', pulseWidth: 0.35, osc2Waveform: 'saw', osc2Detune: 4, mixOsc2: 0.5,
     cutoff: 1500, resonance: 0.1, filterEnvAmount: 2, filterDecay: 0.6, filterSustain: 0.1, filterRelease: 0.3, keyTrack: 0.7, velocityCutoff: 0.6,
     ampAttack: 0.002, ampDecay: 2.5, ampSustain: 0.1, ampRelease: 0.4,
-  }],
-  ['Bright Piano', 'The same piano with the Filter open wider and Velocity opening it further: a hard, percussive strike.', {
-    voices: 4, waveform: 'pulse', pulseWidth: 0.35, osc2Waveform: 'saw', osc2Detune: 4, mixOsc2: 0.5,
-    cutoff: 3000, resonance: 0.1, filterEnvAmount: 2.5, filterDecay: 0.4, filterSustain: 0.1, filterRelease: 0.3, keyTrack: 0.8, velocityCutoff: 0.8,
-    ampAttack: 0.002, ampDecay: 1.8, ampSustain: 0.1, ampRelease: 0.4,
   }],
   ['Felt Piano', 'Soft and dark, as if a felt strip lay over the strings: a triangle through a low Cutoff with a slow, long decay.', {
     voices: 4, waveform: 'triangle', osc2Waveform: 'triangle', osc2Detune: 3, mixOsc2: 0.4,

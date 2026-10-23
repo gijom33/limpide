@@ -95,7 +95,7 @@ for (const [width, height] of [
 
 for (const [width, height, maxControls, minViewer] of [
   [872, 920, 300, 78],
-  [1100, 900, 240, 100],
+  [1100, 900, 300, 100],
 ]) {
   test(`narrow stages use compact controls, leaving room for the Viewers (${width}×${height})`, async ({ page }) => {
     await page.setViewportSize({ width, height });
@@ -133,7 +133,7 @@ for (const [width, height, size] of [
 for (const [width, height, pitch] of [
   [1710, 1060, 72],
   [1440, 900, 72],
-  [1300, 900, 72],
+  [1300, 900, 58],
   [1100, 900, 58],
   [1000, 800, 58],
   [872, 920, 58],

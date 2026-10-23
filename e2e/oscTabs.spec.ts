@@ -61,3 +61,35 @@ for (const width of [1710, 1100, 872]) {
     expect(await where('Osc 2')).toEqual(await where('Osc 1'));
   });
 }
+
+for (const [width, height] of [
+  [1710, 1060],
+  [1440, 900],
+  [1300, 900],
+  [1100, 900],
+  [872, 920],
+]) {
+  test(`the tabs sit under the heading, Pulse Width beside the Waveform picker, pickers all one size (${width}×${height})`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await page.goto('/');
+    await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);
+    const m = await page.evaluate(() => {
+      const r = (s: string) => document.querySelector(s)!.getBoundingClientRect();
+      const heading = r('[aria-label="Oscillators"] h2');
+      const tabs = r('[role="tablist"]');
+      const picker = r('[aria-label="Osc 1 Waveform"]');
+      const dial = r('[aria-label="Osc 1"] .knob-dial');
+      const button = (s: string) => Math.round(document.querySelector(`${s} [role="radio"]`)!.getBoundingClientRect().width);
+      return {
+        tabsUnderHeading: tabs.top >= heading.bottom - 1,
+        pulseWidthBeside: dial.left > picker.right && Math.abs(dial.top + dial.height / 2 - (picker.top + picker.height / 2)) < 30,
+        pickers: [button('[aria-label="Osc 1 Waveform"]'), button('[aria-label="Filter Mode"]'), button('[aria-label="LFO Waveform"]')],
+        scrolls: document.documentElement.scrollHeight > innerHeight,
+      };
+    });
+    expect(m.tabsUnderHeading).toBe(true);
+    expect(m.pulseWidthBeside).toBe(true);
+    expect(new Set(m.pickers).size).toBe(1);
+    expect(m.scrolls).toBe(false);
+  });
+}

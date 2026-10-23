@@ -127,7 +127,9 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 
 /* Icon pickers (Waveforms, Filter Mode, LFO Waveform): one segmented track, as wide as its icons. */
 .icon-picker { width: fit-content; flex: none; }
-.icon-picker button { min-width: 34px; justify-content: center; padding: 0 5px; }
+/* Every icon picker (Waveform, LFO shape, Filter Mode) is the same size: the icon plus a little room. */
+.segmented.icon-picker button[role='radio'] { min-width: 34px; justify-content: center; padding: 0 5px; }
+.icon-picker svg { width: 24px; height: 16px; }
 .knob-value { font-size: var(--text-sm); line-height: var(--knob-value-h); height: var(--knob-value-h); white-space: nowrap; color: var(--muted); font-variant-numeric: tabular-nums; }
 /* The readout sits on hidden copies of the widest it can show, so a knob keeps its width as its value changes. */
 .knob-value { display: grid; justify-items: center; }
@@ -299,11 +301,19 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 }
 
 /* Oscillator tabs: one Oscillator at a time; the Mixer stays visible below. */
-.tabs { display: flex; flex-direction: column; gap: 10px; }
-.tab-list { display: flex; gap: 2px; border-bottom: 1px solid var(--border); }
+/* The Oscillator tabs lead the Waveform row (OSC 1 · OSC 2 | picker | Pulse Width), under the stage heading and
+   level with the row's knob, so the stage stays as short as the Filter's and the Viewers keep their room. */
+.tabs { display: flex; align-items: flex-start; gap: var(--space-3); }
+.tab-list { display: flex; flex: none; gap: 2px; margin-top: calc((var(--knob-h) - 30px) / 2); }
+.tab-panels { flex: 1 1 auto; min-width: 0; }
+/* A stage too narrow for that row puts the tabs above it. */
+@container (max-width: 329px) {
+  .tabs { flex-direction: column; align-items: stretch; gap: var(--space-2); }
+  .tab-list { margin-top: 0; }
+}
 .tab-list .tip-anchor { display: flex; }
 .tab-list [role='tab'] {
-  position: relative; display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px 7px; margin-bottom: -1px;
+  position: relative; display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px 7px; height: 30px;
   font: inherit; font-size: var(--text-sm); font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
   background: none; border: 0; border-bottom: 2px solid transparent; cursor: pointer;
 }
@@ -322,19 +332,11 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .wordmark { flex: none; }
 .wordmark .logo { flex: none; }
 .wordmark-view { font-weight: 400; color: var(--muted); }
-/* Both Oscillator tabs make the same choice, sized for Osc 2's four knobs: knobs beside the Waveform picker
-   only when all of them fit there (picker 234 + gap 8 + four knob columns 276 = 518 px), otherwise beneath it,
-   so Pulse Width stays put when switching tabs. */
-.tab-panel .sub-block > .knobs { flex: 1 1 100%; }
-@container (min-width: 520px) {
-  .tab-panel .sub-block > .knobs { flex: 1 1 auto; }
-}
-/* The Oscillator tabs share the stage heading's line when there is room (it is otherwise empty), saving a line. */
+/* On both Oscillator tabs the Pulse Width knob sits to the right of the Waveform picker, so it stays put when
+   switching tabs; Osc 2's tuning knobs take the row below. */
+.tab-panel .sub-block > .knobs { flex: 0 0 auto; }
+.tab-panel .sub-block > .knobs-tuning { flex: 1 1 100%; }
 .block-controls { container-type: inline-size; position: relative; }
-@container (min-width: 300px) {
-  .block[data-stage='osc'] .tab-list { position: absolute; top: 0; right: 0; border-bottom: 0; }
-  .block[data-stage='osc'] .tabs { gap: 0; }
-}
 
 /* Filter Mode and Slope share the Filter heading's line when there is room. */
 .filter-shape { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -400,10 +402,11 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   .header-center { grid-column: 1 / -1; grid-row: 2; }
 }
 
-/* Compact knobs: one size for every knob on the page, chosen by the window. When the window is too narrow (the
-   stages would wrap their rows) or too short, every knob shrinks together, so rows stay single, the whole
-   instrument fits, and no knob is bigger than another. */
-@media (max-width: 1150px), (max-height: 760px) {
+/* Compact knobs: one size for every knob on the page, chosen by the window. When the window is too narrow (below
+   1330 px a stage cannot hold the Oscillator tabs, the Waveform picker and a full-size knob on one row) or too
+   short, every knob shrinks together, so rows stay single, the whole instrument fits, and no knob is bigger than
+   another. */
+@media (max-width: 1330px), (max-height: 760px) {
   :root {
     --knob-dial: 32px; --knob-col: 50px; --knob-gap: 8px; --knob-row-gap: 8px; --knob-text-gap: 2px;
     --knob-label-h: 14px; --knob-value-h: 12px;
@@ -419,8 +422,8 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   /* Filter Mode and Slope on one line, with slimmer segments. */
   .filter-shape { flex-wrap: nowrap; gap: 4px; }
   .filter-shape .segmented { flex-wrap: nowrap; }
-  .filter-shape .icon-picker button { min-width: 26px; padding: 0 2px; }
-  .filter-shape .icon-picker svg { width: 20px; }
+  .segmented.icon-picker button[role='radio'] { min-width: 26px; padding: 0 2px; }
+  .icon-picker svg { width: 20px; height: 14px; }
   .filter-shape .segmented button { padding: 0 6px; }
 }
 .block-controls { gap: var(--space-2); }
