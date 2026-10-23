@@ -240,9 +240,10 @@ main[data-frozen] .tap-canvases::before {
 .timeline-key [data-mark='filterEnvelope']::before { background: color-mix(in srgb, var(--stage-filter) 35%, transparent); border-top: 1.5px solid var(--stage-filter); }
 .timeline-key [data-mark='cutoff']::before { height: 0; border-top: 2px solid var(--cutoff-line); }
 main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-offset: -1px; }
-/* Amount then A-D-S-R on one line when five knob columns fit the block (5 × 60 + 4 × 12 = 348 px); when they do
-   not, Amount stands to the left and the envelope keeps its shape as a 2×2 (A D / S R), like the Amp block. */
+/* Amount then A-D-S-R on one line when five knob columns fit beside the label (5 × 60 + 4 × 12 = 348 px); when
+   they do not, Amount stands to the left and the envelope keeps its shape as a 2×2 (A D / S R), like the Amp. */
 .sub-block { container-type: inline-size; }
+.envelope-knobs { container-type: inline-size; flex: 1 1 0; min-width: 0; }
 .sub-block .knobs { min-height: 0; }
 .sub-block .knobs-envelope { display: grid; grid-template-columns: repeat(5, var(--knob-col)); gap: var(--knob-row-gap) var(--knob-gap); justify-content: start; }
 @container (max-width: 347px) {
@@ -336,6 +337,11 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
    narrow for the Mixer's four knobs beside a label, the Mixer's name goes above its row (the Tuning row's three
    knobs still fit beside theirs). */
 .source-rows > .sub-block > h3, .source-rows > .sub-block > .tip-anchor:first-child { flex: 0 0 44px; }
+/* The Filter Envelope's name too, on two lines ("Filter" over "Envelope") in a column a little wider. */
+.block[data-stage='filter'] .sub-block > h3, .block[data-stage='filter'] .sub-block > .tip-anchor:first-child { flex: 0 0 60px; }
+.block[data-stage='filter'] .sub-block h3 { white-space: normal; line-height: 1.25; width: min-content; }
+/* The Filter's and the Amp's rows spread out to fill the height the Oscillators give the controls. */
+.block[data-stage='filter'] .block-controls, .block[data-stage='amp'] .block-controls { justify-content: space-between; }
 @container (max-width: 299px) {
   .source-rows > .sub-block[aria-label='Mixer'] > h3, .source-rows > .sub-block[aria-label='Mixer'] > .tip-anchor:first-child { flex: 1 1 100%; }
 }

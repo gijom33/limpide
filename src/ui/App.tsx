@@ -137,8 +137,11 @@ export function App() {
       release: (note, at) => engine.release(note, at),
       onStep: setDemo,
       onEnd: () => {
+        // The tour is over: back to the starting point, silent, as if nothing had been touched.
         demoStop.current = null;
         setDemo(null);
+        const init = PRESETS[0];
+        loadPatch(init.name, init.patch);
       },
     });
   };
@@ -648,13 +651,16 @@ export function App() {
             heading={<FilterShape mode={patch.filterMode} slope={patch.filterSlope} onChange={(c) => setPatch((p) => setFilter(p, c))} />}
             more={
               <SubBlock title="Filter Envelope" tip={TIPS.filterEnvelope}>
-                <div className="knobs knobs-envelope">
-                  <Tooltip content={TIPS.envAmount}>
-                    <Knob id="filterEnvAmount" value={patch.filterEnvAmount} onChange={(v) => change('filterEnvAmount', v)} />
-                  </Tooltip>
-                  {(['filterAttack', 'filterDecay', 'filterSustain', 'filterRelease'] as const).map((id) => (
-                    <Knob key={id} id={id} value={patch[id]} onChange={(v) => change(id, v)} inactive={patch.filterEnvAmount === 0} />
-                  ))}
+                {/* Its own container: the row chooses five columns or 3+2 by the room beside the label. */}
+                <div className="envelope-knobs">
+                  <div className="knobs knobs-envelope">
+                    <Tooltip content={TIPS.envAmount}>
+                      <Knob id="filterEnvAmount" value={patch.filterEnvAmount} onChange={(v) => change('filterEnvAmount', v)} />
+                    </Tooltip>
+                    {(['filterAttack', 'filterDecay', 'filterSustain', 'filterRelease'] as const).map((id) => (
+                      <Knob key={id} id={id} value={patch[id]} onChange={(v) => change(id, v)} inactive={patch.filterEnvAmount === 0} />
+                    ))}
+                  </div>
                 </div>
               </SubBlock>
             }
