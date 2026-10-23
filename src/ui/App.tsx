@@ -5,10 +5,11 @@ import { keyToNote, octaveKey, shiftOctave } from '../input/keyboardLayout';
 import { createControlSurface, type LearnState } from '../midi/controlSurface';
 import { describeMessage, targetKey } from '../midi/describe';
 import { connectMidi, midiSupport, type MidiAccessLike } from '../midi/inputs';
-import { createMappingStore, type Target } from '../midi/mappings';
+import { createMappingStore, type Mapping, type Target } from '../midi/mappings';
+import { C16_SETUP, quickSetupReducer, startQuickSetup, type QuickSetupEvent, type QuickSetupState } from '../midi/quickSetup';
 import { OSCILLATOR_LEVEL } from '../engine/synthEngine';
 import { harmonicSeries } from '../music/harmonics';
-import { PARAMS, setFilter, setParam, setWaveform, type ParamId, type Patch } from '../patch/patch';
+import { CHOICES, PARAMS, setFilter, setParam, setWaveform, type ChoiceId, type ParamId, type Patch } from '../patch/patch';
 import { createLibrary } from '../patch/library';
 import { initialPatch, presetAfter } from '../patch/presets';
 import { positionToValue, valueToPosition } from '../patch/taper';
@@ -28,6 +29,8 @@ import { LfoControls } from './LfoControls';
 import { LearnBar } from './LearnBar';
 import { LearnContext } from './learn';
 import { MidiPanel, type MidiState } from './MidiPanel';
+import { QuickSetupPanel } from './QuickSetupPanel';
+import { reveal } from './reveal';
 import { Piano } from './Piano';
 import { DisplayMenu } from './DisplayMenu';
 import { PatchBar } from './PatchBar';
@@ -36,7 +39,7 @@ import { Tooltip, type TipContent } from './Tooltip';
 import { AxesControls, ViewActions } from './ViewerControls';
 import { EnvelopeTimeline } from './EnvelopeTimeline';
 import { applyTheme, loadTheme, type Theme } from './theme';
-import { WaveformPicker } from './WaveformPicker';
+import { WAVEFORM_ORDER, WaveformPicker } from './WaveformPicker';
 
 const IDEAL_HARMONICS = 256;
 
@@ -77,6 +80,10 @@ function Block({ title, stage, ids, patch, onChange, children, more, heading, ex
   );
 }
 
+
+/** A choice's options in on-screen order (the Waveform pickers show them differently from the stored list). */
+const choiceOptions = (id: ChoiceId): readonly unknown[] =>
+  id === 'waveform' || id === 'osc2Waveform' ? WAVEFORM_ORDER : CHOICES[id];
 
 /** localStorage, or a stand-in that keeps nothing when the browser refuses it (some private modes). */
 function safeStorage(): Pick<Storage, 'getItem' | 'setItem'> {
@@ -143,6 +150,7 @@ export function App() {
       const key = targetKey(target);
       const element = document.querySelector<HTMLElement>(`[data-learn="${key}"]`);
       if (!element) return;
+      reveal(element);
       element.dataset.midi = state;
       clearTimeout(flashes.get(key));
       flashes.set(key, setTimeout(() => delete element.dataset.midi, 400));
@@ -163,6 +171,15 @@ export function App() {
         patchRef.current = next;
         setPatch((p) => setParam(p, id, next[id]));
       },
+      choice: (id) => {
+        const options = choiceOptions(id);
+        return { index: options.indexOf(patchRef.current[id] as never), count: options.length };
+      },
+      setChoice: (id, index) => {
+        const value = choiceOptions(id)[index];
+        patchRef.current = { ...patchRef.current, [id]: value };
+        setPatch((p) => ({ ...p, [id]: value }));
+      },
       action: (id) => {
         if (id === 'hold') setHold((h) => !h);
         else if (id === 'freeze') dispatchViewer({ type: 'toggleFreeze' });
@@ -172,9 +189,36 @@ export function App() {
       press: (note, velocity) => session.input.press(note, velocity),
       release: (note) => session.input.release(note),
       touched: flash,
-      learnChanged: setLearn,
+      learnChanged: (state) => {
+        setLearn(state);
+        if (state.phase === 'armed' && state.learned) onLearned.current(state.learned);
+      },
     });
   }, [mappingStore, session]);
+
+  // Quick Setup: a sequence of Learn steps. Each Mapping learned moves it on to the next step's target.
+  const [setup, setSetup] = useState<QuickSetupState | null>(null);
+  const [setupLast, setSetupLast] = useState<{ step: number; mapping: Mapping } | null>(null);
+  const setupRef = useRef(setup);
+  const updateSetup = (event: QuickSetupEvent | { type: 'start' }) => {
+    const current = setupRef.current;
+    const next =
+      event.type === 'start' ? startQuickSetup(C16_SETUP, mappingStore.list()) : current && quickSetupReducer(current, event);
+    if (!next || next === current) return;
+    if (event.type === 'learned' && current) setSetupLast({ step: current.index, mapping: event.mapping });
+    if (event.type === 'start') setSetupLast(null);
+    setupRef.current = next.phase === 'cancelled' ? null : next;
+    setSetup(setupRef.current);
+    if (next.phase === 'running') {
+      surface.startLearn();
+      surface.select(next.steps[next.index].target);
+    } else {
+      surface.stopLearn();
+      if (next.phase === 'cancelled') mappingStore.restore(next.before);
+    }
+  };
+  const onLearned = useRef((mapping: Mapping): void => void mapping);
+  onLearned.current = (mapping) => updateSetup({ type: 'learned', mapping });
 
   // In MIDI Learn, clicking a learnable control selects it instead of using it; Escape ends Learn.
   const learning = learn.phase !== 'off';
@@ -186,14 +230,16 @@ export function App() {
       if (!element) return;
       e.preventDefault();
       e.stopPropagation();
-      if (e.type !== 'click') return;
+      // Quick Setup chooses the targets itself; a click only must not act on the control.
+      if (e.type !== 'click' || setupRef.current) return;
       const [kind, id] = element.getAttribute('data-learn')!.split(':');
       surface.select({ kind, id } as Target);
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
       e.stopPropagation();
-      surface.stopLearn();
+      if (setupRef.current?.phase === 'running') updateSetup({ type: 'finish' });
+      else surface.stopLearn();
     };
     for (const type of types) document.addEventListener(type, select, { capture: true });
     document.addEventListener('keydown', onKey, { capture: true });
@@ -209,6 +255,11 @@ export function App() {
     }),
     [mappings, learn],
   );
+  // The control MIDI Learn is waiting for is shown, even on a hidden tab.
+  useEffect(() => {
+    const element = learnContext.selected && document.querySelector(`[data-learn="${learnContext.selected}"]`);
+    if (element) reveal(element);
+  }, [learnContext.selected]);
 
   // MIDI Controllers: their Notes join the same Note input as the keyboard and piano.
   useEffect(() => {
@@ -344,6 +395,7 @@ export function App() {
         activity={activity}
         mappings={mappings}
         onLearn={() => surface.startLearn()}
+        onQuickSetup={() => updateSetup({ type: 'start' })}
         onRemove={(target) => mappingStore.remove(target)}
         onClear={() => mappingStore.clear()}
       />
@@ -374,7 +426,22 @@ export function App() {
   return (
     <LearnContext.Provider value={learnContext}>
       <main data-frozen={viewer.frozen || undefined} data-learning={learning || undefined}>
-        <LearnBar state={learn} onDone={() => surface.stopLearn()} />
+        {setup ? (
+          <QuickSetupPanel
+            state={setup}
+            last={setupLast}
+            onBack={() => updateSetup({ type: 'back' })}
+            onSkip={() => updateSetup({ type: 'skip' })}
+            onFinish={() => updateSetup({ type: 'finish' })}
+            onCancel={() => updateSetup({ type: 'cancel' })}
+            onClose={() => {
+              setupRef.current = null;
+              setSetup(null);
+            }}
+          />
+        ) : (
+          <LearnBar state={learn} onDone={() => surface.stopLearn()} />
+        )}
         <header>
           <div className="header-left">
             <h1 className="wordmark">
@@ -445,7 +512,7 @@ export function App() {
                     label: 'Osc 1',
                     content: (
                     <SubBlock title="Osc 1" group showTitle={false}>
-                      <WaveformPicker label="Osc 1 Waveform" compact value={patch.waveform} onChange={(w) => setPatch((p) => setWaveform(p, w))} />
+                      <WaveformPicker label="Osc 1 Waveform" choice="waveform" compact value={patch.waveform} onChange={(w) => setPatch((p) => setWaveform(p, w))} />
                       <div className="knobs">
                         <Tooltip content={TIPS.pulseWidth}>
                           <Knob id="pulseWidth" value={patch.pulseWidth} onChange={(v) => change('pulseWidth', v)} inactive={patch.waveform !== 'pulse'} />
@@ -462,7 +529,7 @@ export function App() {
                     badgeLabel: 'sounding',
                     content: (
                     <SubBlock title="Osc 2" group showTitle={false}>
-                      <WaveformPicker label="Osc 2 Waveform" compact value={patch.osc2Waveform} onChange={(w) => setPatch((p) => setWaveform(p, w, 'osc2'))} />
+                      <WaveformPicker label="Osc 2 Waveform" choice="osc2Waveform" compact value={patch.osc2Waveform} onChange={(w) => setPatch((p) => setWaveform(p, w, 'osc2'))} />
                       <div className="knobs">
                         {/* Pulse Width first, where Osc 1 has it, so it stays put when switching tabs. */}
                         <Tooltip content={TIPS.pulseWidth}>

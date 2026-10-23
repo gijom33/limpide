@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ParamId } from '../patch/patch';
+import type { ChoiceId, ParamId } from '../patch/patch';
 import { memoryStorage } from '../test/memoryStorage';
 import { createControlSurface } from './controlSurface';
 import { createMappingStore } from './mappings';
@@ -28,10 +28,8 @@ const hold = { kind: 'action', id: 'hold' } as const;
 
 /** A synth stand-in: Parameter positions (0–1), plus a record of Actions, played Notes and knob touches. */
 function rig(round = (p: number) => p) {
-  const positions: Partial<Record<ParamId, number>> = {
-    cutoff: 0.5,
-    resonance: 0.2,
-  };
+  const positions: Partial<Record<ParamId, number>> = { cutoff: 0.5, resonance: 0.2 };
+  const choices: Partial<Record<ChoiceId, number>> = { waveform: 2 }; // the third of five
   const actions: string[] = [];
   const notes: string[] = [];
   const touched: string[] = [];
@@ -41,12 +39,14 @@ function rig(round = (p: number) => p) {
     position: (id) => positions[id] ?? 0,
     setPosition: (id, p) => void (positions[id] = round(p)),
     action: (id) => void actions.push(id),
+    choice: (id) => ({ index: choices[id] ?? 0, count: id === 'waveform' ? 5 : 2 }),
+    setChoice: (id, index) => void (choices[id] = index),
     press: (note) => void notes.push(`on ${note}`),
     release: (note) => void notes.push(`off ${note}`),
     touched: (target, state) => void touched.push(`${target.id} ${state}`),
   });
   const send = (...messages: MidiMessage[]) => messages.forEach((m) => surface.handle(m));
-  return { positions, actions, notes, touched, store, surface, send };
+  return { positions, choices, actions, notes, touched, store, surface, send };
 }
 
 beforeEach(() => vi.useFakeTimers());
@@ -144,8 +144,47 @@ describe('MIDI Learn', () => {
       },
     ]);
     surface.select(resonance);
+    vi.advanceTimersByTime(600); // a moment's pause before reusing the knob
     send(cc(71, 1), cc(71, 1), cc(71, 1), cc(71, 1)); // the knob now drives Resonance instead
     expect(store.list().map((m) => m.target)).toEqual([resonance]);
+  });
+});
+
+describe('MIDI Learn, one control after another', () => {
+  it('the rest of a turn on the knob just learned is not learned for the next target', () => {
+    const { surface, store, positions, send } = rig();
+    surface.startLearn();
+    surface.select(cutoff);
+    send(cc(74, 1), cc(74, 1), cc(74, 1), cc(74, 1)); // learned…
+    surface.select(resonance);
+    send(cc(74, 1), cc(74, 1)); // …and still turning
+    expect(store.list().map((m) => m.target)).toEqual([cutoff]);
+    expect(positions.cutoff).toBeCloseTo(0.52); // it already drives Cutoff
+    send(cc(71, 1), cc(71, 1), cc(71, 1), cc(71, 1));
+    expect(store.find({ kind: 'cc', channel: 1, number: 71 })?.target).toEqual(resonance);
+  });
+
+  it('once that knob has been still for a moment, it can be learned again (moved to another target)', () => {
+    const { surface, store, send } = rig();
+    surface.startLearn();
+    surface.select(cutoff);
+    send(cc(74, 1), cc(74, 1), cc(74, 1), cc(74, 1));
+    surface.select(resonance);
+    vi.advanceTimersByTime(600);
+    send(cc(74, 1), cc(74, 1), cc(74, 1), cc(74, 1));
+    expect(store.list().map((m) => m.target)).toEqual([resonance]);
+  });
+
+  it('a button’s release is not learned for the next Action', () => {
+    const { surface, store, send } = rig();
+    surface.startLearn();
+    surface.select(hold);
+    send(cc(49, 127));
+    surface.select({ kind: 'action', id: 'freeze' });
+    send(cc(49, 0)); // letting go of the same button
+    expect(store.list().map((m) => m.target)).toEqual([hold]);
+    send(cc(50, 127));
+    expect(store.find({ kind: 'cc', channel: 1, number: 50 })?.target).toEqual({ kind: 'action', id: 'freeze' });
   });
 });
 
@@ -238,5 +277,48 @@ describe('Mapped controls', () => {
     expect(positions).toEqual({ cutoff: 0.5, resonance: 0.2 });
     expect(actions).toEqual([]);
     expect(notes).toEqual(['on 40', 'off 40']);
+  });
+});
+
+describe('Choices from a Controller', () => {
+  const waveform = { kind: 'choice', id: 'waveform' } as const;
+
+  it('MIDI Learn maps a choice (a Waveform) like a Parameter, detecting the Encoder Mode', () => {
+    const { surface, store, send } = rig();
+    surface.startLearn();
+    surface.select(waveform);
+    send(cc(7, 1), cc(7, 1), cc(7, 1), cc(7, 1));
+    expect(store.find({ kind: 'cc', channel: 1, number: 7 })).toEqual({
+      control: { kind: 'cc', channel: 1, number: 7 },
+      target: waveform,
+      mode: 'relative-twos',
+    });
+  });
+
+  it('an endless encoder steps through the choices, two clicks each, stopping at either end', () => {
+    const { store, choices, touched, send } = rig();
+    store.set({ control: { kind: 'cc', channel: 1, number: 7 }, target: waveform, mode: 'relative-twos' });
+    send(cc(7, 1));
+    expect(choices.waveform).toBe(2); // half way to the next
+    send(cc(7, 1));
+    expect(choices.waveform).toBe(3);
+    send(cc(7, 1), cc(7, 1), cc(7, 1), cc(7, 1), cc(7, 1), cc(7, 1));
+    expect(choices.waveform).toBe(4); // the last
+    send(cc(7, 127), cc(7, 127));
+    expect(choices.waveform).toBe(3); // and straight back, without unwinding the turns past the end
+    for (let i = 0; i < 20; i++) send(cc(7, 125));
+    expect(choices.waveform).toBe(0);
+    expect(touched.at(-1)).toBe('waveform moved');
+  });
+
+  it('a knob or fader picks the choice by zone: its travel split evenly between them', () => {
+    const { store, choices, send } = rig();
+    store.set({ control: { kind: 'cc', channel: 1, number: 33 }, target: waveform, mode: 'absolute' });
+    send(cc(33, 0));
+    expect(choices.waveform).toBe(0);
+    send(cc(33, 60));
+    expect(choices.waveform).toBe(2);
+    send(cc(33, 127));
+    expect(choices.waveform).toBe(4);
   });
 });

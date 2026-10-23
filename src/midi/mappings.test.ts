@@ -51,6 +51,28 @@ describe('Mapping store', () => {
     expect(store.list()).toEqual([]);
   });
 
+  it('keeps choice targets (a Waveform) and drops unknown ones', () => {
+    const storage = memoryStorage({
+      'synthview.mappings': JSON.stringify([
+        { control: { kind: 'cc', channel: 1, number: 7 }, target: { kind: 'choice', id: 'waveform' }, mode: 'relative-twos' },
+        { control: { kind: 'cc', channel: 1, number: 8 }, target: { kind: 'choice', id: 'colour' }, mode: 'relative-twos' },
+      ]),
+    });
+    expect(createMappingStore(storage).list().map((m) => m.target)).toEqual([{ kind: 'choice', id: 'waveform' }]);
+  });
+
+  it('can put back a whole earlier set of Mappings (a cancelled Quick Setup)', () => {
+    const storage = memoryStorage();
+    const store = createMappingStore(storage);
+    store.set(cutoffOnKnob);
+    const before = store.list();
+    store.set(holdOnPad);
+    store.set({ ...cutoffOnKnob, control: { kind: 'cc', channel: 1, number: 1 } });
+    store.restore(before);
+    expect(store.list()).toEqual([cutoffOnKnob]);
+    expect(createMappingStore(storage).list()).toEqual([cutoffOnKnob]); // and saved
+  });
+
   it('keeps Mappings across visits', () => {
     const storage = memoryStorage();
     createMappingStore(storage).set(cutoffOnKnob);

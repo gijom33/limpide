@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { closeGaps } from './outline';
+import { closeGaps, spectrumOutline } from './outline';
 
 const FLOOR = -100;
 /** A spectrum with spikes (dB) at the given columns, floor elsewhere. */
@@ -41,5 +41,29 @@ describe('closeGaps: a smooth outline over crowded Harmonics', () => {
   it('handles the edges without inventing a wall', () => {
     const outline = closeGaps(spikes(6, { 0: -30 }), 3);
     expect(outline[5]).toBe(FLOOR);
+  });
+});
+
+describe('spectrumOutline: the Spectrum trace at the screen’s own resolution', () => {
+  // 1 Hz bins; a linear axis of 10 Hz per CSS pixel, 100 pixels wide.
+  const axis = { xOf: (f: number) => f / 10, contains: (f: number) => f > 0 && f < 1000 };
+  const bins = (at: Record<number, number>) => Float32Array.from({ length: 1000 }, (_, f) => at[f] ?? FLOOR);
+
+  it('has a column per device pixel, so a Retina screen gets twice the detail', () => {
+    expect(spectrumOutline(bins({}), 1, axis, 100, 2)).toHaveLength(200);
+    expect(spectrumOutline(bins({}), 1, axis, 100, 1)).toHaveLength(100);
+  });
+
+  it('keeps Harmonics 4 px apart as separate spikes, with the floor showing between them', () => {
+    const outline = spectrumOutline(bins({ 100: -30, 140: -32, 180: -34 }), 1, axis, 100, 2);
+    expect(outline[20]).toBe(-30); // 100 Hz → 10 px → column 20
+    expect(outline[24]).toBe(FLOOR); // half way to the next
+    expect(outline[28]).toBe(-32);
+  });
+
+  it('merges Harmonics closer than 3 px into one outline across their tops', () => {
+    const outline = spectrumOutline(bins({ 300: -30, 320: -32, 340: -34 }), 1, axis, 100, 2);
+    expect(outline[62]).toBeCloseTo(-32); // between 300 and 320 Hz
+    expect(outline[66]).toBeCloseTo(-34);
   });
 });

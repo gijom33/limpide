@@ -1,20 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
-
-type MidiWindow = { playMidi(bytes: number[]): void };
-const play = (page: Page, ...messages: number[][]) =>
-  page.evaluate((all) => all.forEach((bytes) => (window as unknown as MidiWindow).playMidi(bytes)), messages);
-const cc = (controller: number, value: number, channel = 1) => [0xb0 + channel - 1, controller, value];
-const times = (n: number, message: number[]) => Array.from({ length: n }, () => message);
+import { cc, midiPanel, openMidi, play, times, withFakeController } from './fakeMidi';
 
 const cutoff = (page: Page) => page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name: 'Cutoff' });
-const midiButton = (page: Page) => page.getByRole('button', { name: 'MIDI', exact: true });
-const midiPanel = (page: Page) => page.getByRole('dialog', { name: 'MIDI' });
 const learnBar = (page: Page) => page.getByRole('status', { name: 'MIDI Learn' });
-
-async function openMidi(page: Page) {
-  if ((await midiButton(page).getAttribute('aria-expanded')) !== 'true') await midiButton(page).click();
-  await expect(midiPanel(page)).toBeVisible();
-}
 
 async function startLearn(page: Page) {
   await openMidi(page);
@@ -22,22 +10,7 @@ async function startLearn(page: Page) {
   await expect(learnBar(page)).toBeVisible();
 }
 
-test.beforeEach(async ({ page }) => {
-  // A stand-in Controller: Web MIDI with one input the test can play. Storage starts empty, once.
-  await page.addInitScript(() => {
-    if (!sessionStorage.getItem('cleared')) {
-      localStorage.clear();
-      sessionStorage.setItem('cleared', 'true');
-    }
-    const input = Object.assign(new EventTarget(), { id: 'fake', name: 'Synido TempoPAD C16', state: 'connected' });
-    const access = Object.assign(new EventTarget(), { inputs: new Map([['fake', input]]) });
-    Object.defineProperty(navigator, 'requestMIDIAccess', { value: () => Promise.resolve(access), configurable: true });
-    (window as unknown as MidiWindow).playMidi = (bytes) =>
-      input.dispatchEvent(Object.assign(new Event('midimessage'), { data: Uint8Array.from(bytes) }));
-  });
-  await page.goto('/');
-  await expect(midiButton(page)).toContainText('1');
-});
+test.beforeEach(({ page }) => withFakeController(page));
 
 test('MIDI Learn: pick a knob on screen, turn one on the Controller, and it drives that Parameter', async ({ page }) => {
   await startLearn(page);
@@ -116,4 +89,38 @@ test('a knob shows when hardware moves it, and when Pickup is still waiting for 
   await expect(knob).toHaveAttribute('data-midi', 'moved');
   await expect(cutoff(page)).toHaveAttribute('aria-valuenow', '100');
   await expect(knob).not.toHaveAttribute('data-midi', /./, { timeout: 2000 }); // the flash fades
+});
+
+test('a Waveform learns from an encoder: two clicks step to the next shape, as they appear on screen', async ({ page }) => {
+  const picker = page.getByRole('radiogroup', { name: 'Osc 1 Waveform' });
+  await expect(picker.getByRole('radio', { name: 'Saw' })).toHaveAttribute('aria-checked', 'true');
+  await startLearn(page);
+  await picker.getByRole('radio', { name: 'Sine' }).click(); // selects the picker, without changing it
+  await expect(learnBar(page)).toContainText(/Osc 1 Waveform/);
+  await expect(picker.getByRole('radio', { name: 'Saw' })).toHaveAttribute('aria-checked', 'true');
+  await play(page, ...times(4, cc(2, 1)));
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(600); // the encoder at rest, then turned again
+  await play(page, ...times(2, cc(2, 1)));
+  await expect(picker.getByRole('radio', { name: 'Square' })).toHaveAttribute('aria-checked', 'true');
+  await play(page, ...times(4, cc(2, 127)));
+  await expect(picker.getByRole('radio', { name: 'Triangle' })).toHaveAttribute('aria-checked', 'true');
+  await expect(picker).toHaveAttribute('data-mapped', 'true');
+});
+
+test('a Controller moving a knob on a hidden tab brings that tab into view', async ({ page }) => {
+  const mapping = (id: string, number: number) => ({
+    control: { kind: 'cc', channel: 1, number },
+    target: { kind: 'param', id },
+    mode: 'relative-twos',
+  });
+  await page.evaluate((m) => localStorage.setItem('synthview.mappings', JSON.stringify(m)), [mapping('osc2Detune', 4), mapping('pulseWidth', 9)]);
+  await page.reload();
+  const tabs = page.getByRole('tablist', { name: 'Oscillator' });
+  await expect(tabs.getByRole('tab', { name: 'Osc 1' })).toHaveAttribute('aria-selected', 'true');
+  await play(page, cc(4, 1));
+  await expect(tabs.getByRole('tab', { name: /Osc 2/ })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('slider', { name: 'Detune' })).toBeVisible();
+  await play(page, cc(9, 1)); // and back, for an Osc 1 knob
+  await expect(tabs.getByRole('tab', { name: 'Osc 1' })).toHaveAttribute('aria-selected', 'true');
 });

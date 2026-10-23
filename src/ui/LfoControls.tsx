@@ -5,6 +5,7 @@ import { Knob } from './Knob';
 import { Segmented } from './Segmented';
 import { SubBlock } from './SubBlock';
 import { TIPS } from './tips';
+import { useLearnable } from './learn';
 import { Tooltip } from './Tooltip';
 
 // One cycle of each LFO Waveform, in a 24×14 box.
@@ -30,12 +31,13 @@ interface Props {
 /** The LFO (shape, Destination, Rate, Depth) and Glide: the controls that change things over time. */
 export function LfoControls({ patch, onParam, onPatch }: Props) {
   const off = patch.lfoAmount === 0;
+  const learnShape = useLearnable({ kind: 'choice', id: 'lfoWaveform' });
   return (
     <div className="timeline-controls">
       <SubBlock title="LFO" tip={TIPS.lfo} group>
         <div className="lfo-rows">
           <div className="lfo-pickers">
-            <div className="segmented lfo-shapes" role="radiogroup" aria-label="LFO Waveform">
+            <div className="segmented lfo-shapes" role="radiogroup" aria-label="LFO Waveform" {...learnShape}>
               {SHAPES.map((s) => (
                 <button
                   key={s.waveform}
@@ -57,6 +59,7 @@ export function LfoControls({ patch, onParam, onPatch }: Props) {
                 value={patch.lfoDestination}
                 options={DESTINATIONS}
                 onChange={(destination) => onPatch((p) => setLfo(p, { destination }))}
+                learn={{ kind: 'choice', id: 'lfoDestination' }}
               />
             </Tooltip>
           </div>

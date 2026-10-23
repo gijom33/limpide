@@ -1,4 +1,5 @@
-import { useId, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { REVEAL_EVENT } from './reveal';
 import { Tooltip, type TipContent } from './Tooltip';
 
 export interface Tab {
@@ -19,6 +20,18 @@ export function Tabs({ label, tabs }: { label: string; tabs: Tab[] }) {
   const base = useId();
   const [selected, setSelected] = useState(tabs[0].id);
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
+  const root = useRef<HTMLDivElement>(null);
+
+  // Something inside a hidden panel asked to be seen (a Controller moved it): show its panel, leaving focus alone.
+  useEffect(() => {
+    const element = root.current!;
+    const onReveal = (e: Event) => {
+      const panel = (e.target as Element).closest<HTMLElement>('[role="tabpanel"]');
+      if (panel?.closest('.tabs') === element && panel.dataset.tab) setSelected(panel.dataset.tab);
+    };
+    element.addEventListener(REVEAL_EVENT, onReveal);
+    return () => element.removeEventListener(REVEAL_EVENT, onReveal);
+  }, []);
 
   const select = (index: number) => {
     const i = (index + tabs.length) % tabs.length;
@@ -27,7 +40,7 @@ export function Tabs({ label, tabs }: { label: string; tabs: Tab[] }) {
   };
 
   return (
-    <div className="tabs">
+    <div className="tabs" ref={root}>
       <div className="tab-list" role="tablist" aria-label={label}>
         {tabs.map((t, i) => {
           const button = (
@@ -76,6 +89,7 @@ export function Tabs({ label, tabs }: { label: string; tabs: Tab[] }) {
             aria-hidden={t.id !== selected}
             inert={t.id !== selected}
             data-active={t.id === selected || undefined}
+            data-tab={t.id}
             className="tab-panel"
           >
             {t.content}

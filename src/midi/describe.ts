@@ -1,6 +1,6 @@
 import { nearestNote, noteToFrequency } from '../music/pitch';
 import { PARAMS } from '../patch/patch';
-import { ACTIONS, type Control, type Mapping, type Target } from './mappings';
+import { ACTIONS, CHOICE_LABELS, type Control, type Mapping, type Target } from './mappings';
 import type { MidiMessage } from './parser';
 
 const noteName = (note: number) => nearestNote(noteToFrequency(note)).name;
@@ -10,7 +10,7 @@ export const describeControl = ({ kind, channel, number }: Control) =>
   `${kind === 'cc' ? `CC ${number}` : `Note ${noteName(number)}`} · ch ${channel}`;
 
 export const describeTarget = (target: Target) =>
-  target.kind === 'param' ? PARAMS[target.id].label : ACTIONS[target.id];
+  target.kind === 'param' ? PARAMS[target.id].label : target.kind === 'choice' ? CHOICE_LABELS[target.id] : ACTIONS[target.id];
 
 export const describeMode = (mode: Mapping['mode']) =>
   mode === 'absolute' ? 'Absolute, with Pickup' : mode === 'trigger' ? 'Press' : 'Relative';

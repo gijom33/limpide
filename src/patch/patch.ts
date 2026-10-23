@@ -115,6 +115,9 @@ export const CHOICES = {
   lfoDestination: ['cutoff', 'pitch', 'pulseWidth'],
 } as const satisfies { [K in Exclude<keyof Patch, ParamId>]: readonly Patch[K][] };
 
+/** A Patch setting picked from a list (a Waveform, the Filter Mode…), rather than turned like a Parameter. */
+export type ChoiceId = keyof typeof CHOICES;
+
 export function setLfo(patch: Patch, { waveform, destination }: { waveform?: LfoWaveform; destination?: LfoDestination }): Patch {
   return { ...patch, lfoWaveform: waveform ?? patch.lfoWaveform, lfoDestination: destination ?? patch.lfoDestination };
 }

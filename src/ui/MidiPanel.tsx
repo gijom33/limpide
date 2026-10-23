@@ -14,6 +14,7 @@ interface Props {
   activity: string | null;
   mappings: readonly Mapping[];
   onLearn(): void;
+  onQuickSetup(): void;
   onRemove(target: Target): void;
   onClear(): void;
 }
@@ -33,7 +34,7 @@ const statusText = (state: MidiState) => {
  * The MIDI button: a dot and the number of Controllers. It opens the MIDI panel: what is connected, the
  * Activity Monitor, MIDI Learn, and the Mappings.
  */
-export function MidiPanel({ state, activity, mappings, onLearn, onRemove, onClear }: Props) {
+export function MidiPanel({ state, activity, mappings, onLearn, onQuickSetup, onRemove, onClear }: Props) {
   const [open, setOpen] = useState(false);
   const wrapper = useRef<HTMLDivElement>(null);
   const devices = state.kind === 'ready' ? state.devices : [];
@@ -88,6 +89,19 @@ export function MidiPanel({ state, activity, mappings, onLearn, onRemove, onClea
               }}
             >
               MIDI Learn
+            </button>
+          </Tooltip>
+          <Tooltip content={TIPS.quickSetup}>
+            <button
+              type="button"
+              className="tool"
+              disabled={!available}
+              onClick={() => {
+                setOpen(false);
+                onQuickSetup();
+              }}
+            >
+              Quick Setup (TempoPAD C16)
             </button>
           </Tooltip>
           {mappings.length > 0 && (

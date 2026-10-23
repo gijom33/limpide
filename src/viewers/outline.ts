@@ -21,3 +21,28 @@ export function closeGaps(values: Float32Array, radius: number): Float32Array {
   const dilated = sweep(values, Math.max, -Infinity);
   return sweep(dilated, Math.min, Infinity);
 }
+
+/** Valleys narrower than this (CSS pixels) are filled: Harmonics that close can't be told apart anyway. */
+const MERGE_BELOW_PX = 3;
+
+/**
+ * The Spectrum trace: the peak level (dB) in each device-pixel column (so a Retina screen gets twice the detail),
+ * with valleys too narrow to see closed into one outline. Column c sits at x = c / pixelRatio CSS pixels.
+ */
+export function spectrumOutline(
+  bins: Float32Array,
+  binHz: number,
+  axis: { xOf(f: number): number; contains(f: number): boolean },
+  width: number,
+  pixelRatio: number,
+): Float32Array {
+  const columns = Math.ceil(width * pixelRatio);
+  const peak = new Float32Array(columns).fill(-Infinity);
+  for (let i = 1; i < bins.length; i++) {
+    const f = i * binHz;
+    if (!axis.contains(f)) continue;
+    const col = Math.min(columns - 1, Math.floor(axis.xOf(f) * pixelRatio));
+    peak[col] = Math.max(peak[col], bins[i]);
+  }
+  return closeGaps(peak, Math.round((MERGE_BELOW_PX / 2) * pixelRatio));
+}

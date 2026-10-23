@@ -1,4 +1,4 @@
-import { PARAMS, type ParamId } from '../patch/patch';
+import { CHOICES, PARAMS, type ChoiceId, type ParamId } from '../patch/patch';
 import type { EncoderMode } from './encoderMode';
 
 /** A momentary command that is not a Parameter. */
@@ -18,7 +18,16 @@ export interface Control {
   number: number;
 }
 
-export type Target = { kind: 'param'; id: ParamId } | { kind: 'action'; id: ActionId };
+export const CHOICE_LABELS: Record<ChoiceId, string> = {
+  waveform: 'Osc 1 Waveform',
+  osc2Waveform: 'Osc 2 Waveform',
+  filterMode: 'Filter Mode',
+  filterSlope: 'Slope',
+  lfoWaveform: 'LFO Waveform',
+  lfoDestination: 'LFO Destination',
+};
+
+export type Target = { kind: 'param'; id: ParamId } | { kind: 'choice'; id: ChoiceId } | { kind: 'action'; id: ActionId };
 
 /** A link from a Controller control to a Parameter (by Encoder Mode) or an Action (triggered). */
 export interface Mapping {
@@ -49,7 +58,9 @@ const isMapping = (m: unknown): m is Mapping => {
     byte(c.channel, 1, 16) &&
     byte(c.number, 0, 127) &&
     !!t &&
-    ((t.kind === 'param' && Object.hasOwn(PARAMS, t.id)) || (t.kind === 'action' && Object.hasOwn(ACTIONS, t.id))) &&
+    ((t.kind === 'param' && Object.hasOwn(PARAMS, t.id)) ||
+      (t.kind === 'choice' && Object.hasOwn(CHOICES, t.id)) ||
+      (t.kind === 'action' && Object.hasOwn(ACTIONS, t.id))) &&
     MODES.includes(mode as string)
   );
 };
@@ -90,6 +101,10 @@ export function createMappingStore(storage: KeyValueStorage) {
     },
     remove(target: Target) {
       mappings = mappings.filter((m) => !sameTarget(m.target, target));
+      changed();
+    },
+    restore(earlier: readonly Mapping[]) {
+      mappings = [...earlier];
       changed();
     },
     clear() {

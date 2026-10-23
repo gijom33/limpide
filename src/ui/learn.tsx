@@ -12,8 +12,9 @@ export const LearnContext = createContext<{
  * The attributes that make an element learnable: in MIDI Learn, clicking it selects it (instead of acting),
  * and it shows whether it is mapped or selected.
  */
-export function useLearnable(target: Target) {
+export function useLearnable(target: Target | undefined) {
   const { mapped, selected } = useContext(LearnContext);
+  if (!target) return {};
   const key = targetKey(target);
   return {
     'data-learn': key,

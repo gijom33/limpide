@@ -1,4 +1,4 @@
-import type { ParamId } from '../patch/patch';
+import type { ChoiceId, ParamId } from '../patch/patch';
 import { detectEncoderMode, relativeDelta } from './encoderMode';
 import { sameControl, type ActionId, type Control, type Mapping, type MappingStore, type Target } from './mappings';
 import type { MidiMessage } from './parser';
@@ -11,6 +11,8 @@ const LEARN_SETTLE_MS = 500;
 const RELATIVE_STEP = 0.01;
 /** An Absolute knob landing this close to a Parameter's position picks it up: half a MIDI step either side. */
 const PICKUP_TOLERANCE = 0.5 / 127 + 1e-9;
+/** Encoder clicks per choice, so stepping through Waveforms is deliberate rather than jumpy. */
+const CLICKS_PER_CHOICE = 2;
 
 export type LearnState =
   | { phase: 'off' }
@@ -23,6 +25,9 @@ interface Synth {
   position(id: ParamId): number;
   setPosition(id: ParamId, position: number): void;
   action(id: ActionId): void;
+  /** A choice's current index among its options, in on-screen order, and setting it. */
+  choice(id: ChoiceId): { index: number; count: number };
+  setChoice(id: ChoiceId, index: number): void;
   press(note: number, velocity: number): void;
   release(note: number): void;
   /** A Controller moved a Parameter ('moved'), or turned its knob without reaching it yet ('waiting', Pickup). */
@@ -48,14 +53,26 @@ export function createControlSurface(synth: Synth) {
     learn = next;
     synth.learnChanged?.(next);
   };
+  // The control just learned keeps sending for a moment (the rest of a turn, a button's release): until it has
+  // been still that long, it is not learned again for the next target.
+  let justLearned: { control: Control; quiet?: ReturnType<typeof setTimeout> } | null = null;
+  const settleJustLearned = () => {
+    if (!justLearned) return;
+    clearTimeout(justLearned.quiet);
+    justLearned.quiet = setTimeout(() => (justLearned = null), LEARN_SETTLE_MS);
+  };
   const learned = (mapping: Mapping) => {
     store.set(mapping);
+    clearTimeout(justLearned?.quiet);
+    justLearned = { control: mapping.control };
+    settleJustLearned();
     setLearn({ phase: 'armed', target: null, learned: mapping });
   };
   let values: number[] = [];
   let settle: ReturnType<typeof setTimeout> | undefined;
   const pickups = new Map<string, PickupState>();
   const pressed = new Map<string, boolean>();
+  const clicks = new Map<string, number>(); // encoder clicks towards the next choice, per control
   const key = (c: Control) => `${c.kind}:${c.channel}:${c.number}`;
 
   const moveParam = (mapping: Mapping, id: ParamId, value: number) => {
@@ -83,10 +100,29 @@ export function createControlSurface(synth: Synth) {
     synth.touched?.(target, state.following !== undefined ? 'moved' : 'waiting');
   };
 
+  const moveChoice = (mapping: Mapping, id: ChoiceId, value: number) => {
+    if (mapping.mode === 'trigger') return;
+    const { index, count } = synth.choice(id);
+    let next: number;
+    if (mapping.mode === 'absolute') {
+      next = Math.min(count - 1, Math.floor((value / 128) * count));
+    } else {
+      const total = (clicks.get(key(mapping.control)) ?? 0) + relativeDelta(mapping.mode, value);
+      const steps = Math.trunc(total / CLICKS_PER_CHOICE);
+      next = Math.min(count - 1, Math.max(0, index + steps));
+      // Turns past either end are dropped, so turning back responds at once.
+      clicks.set(key(mapping.control), next === index + steps ? total - steps * CLICKS_PER_CHOICE : 0);
+    }
+    if (next !== index) synth.setChoice(id, next);
+    synth.touched?.(mapping.target, 'moved');
+  };
+
   const apply = (mapping: Mapping, message: MidiMessage) => {
     const { target } = mapping;
-    if (target.kind === 'param') {
-      if (message.type === 'cc') moveParam(mapping, target.id, message.value);
+    if (target.kind === 'param' || target.kind === 'choice') {
+      if (message.type !== 'cc') return;
+      if (target.kind === 'param') moveParam(mapping, target.id, message.value);
+      else moveChoice(mapping, target.id, message.value);
       return;
     }
     // An Action fires on each press: a note-on, or a button's CC rising past the middle.
@@ -126,6 +162,14 @@ export function createControlSurface(synth: Synth) {
     }
     if (learn.phase !== 'armed' || !learn.target) return false;
     const { target } = learn;
+    const from: Control =
+      message.type === 'cc'
+        ? { kind: 'cc', channel: message.channel, number: message.controller }
+        : { kind: 'note', channel: message.channel, number: message.note };
+    if (justLearned && sameControl(justLearned.control, from)) {
+      settleJustLearned();
+      return false;
+    }
     if (message.type === 'cc') {
       const control: Control = {
         kind: 'cc',

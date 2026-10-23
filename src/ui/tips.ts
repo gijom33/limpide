@@ -32,6 +32,11 @@ export const TIPS = {
     how: 'Sound starts with your first key press. Drag across the keys to slide from Note to Note.',
   },
   midi: { title: 'MIDI', body: '' },
+  quickSetup: {
+    title: 'Quick Setup',
+    body: 'Maps a whole TempoPAD C16 in about 20 seconds: it asks for each encoder, fader and button in turn. Encoders get Cutoff, Resonance, Envelope Amount, Detune, LFO Rate and Depth, Waveform and Glide; faders the Amp Envelope; buttons Hold, Freeze, Snapshot and the Preset arrows.',
+    how: 'Skip any step. Finish (or Escape) keeps what is mapped; Cancel puts back your Mappings from before.',
+  },
   midiLearn: {
     title: 'MIDI Learn',
     body: 'Map your Controller: click a knob or button here, then move a knob, fader or pad there. Endless encoders and normal knobs are told apart by what they send.',

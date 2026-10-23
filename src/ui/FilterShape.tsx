@@ -1,4 +1,5 @@
 import type { FilterMode, FilterSlope } from '../patch/patch';
+import { useLearnable } from './learn';
 import { Segmented } from './Segmented';
 import { TIPS } from './tips';
 import { Tooltip } from './Tooltip';
@@ -19,10 +20,11 @@ interface Props {
 
 /** Filter Mode (icon picker) and Slope, on the Filter heading line. */
 export function FilterShape({ mode, slope, onChange }: Props) {
+  const learnMode = useLearnable({ kind: 'choice', id: 'filterMode' });
   return (
     <div className="filter-shape">
       <Tooltip content={TIPS.filterMode}>
-        <div className="segmented filter-modes" role="radiogroup" aria-label="Filter Mode">
+        <div className="segmented filter-modes" role="radiogroup" aria-label="Filter Mode" {...learnMode}>
           {MODES.map((m) => (
             <button key={m.mode} type="button" role="radio" aria-checked={m.mode === mode} aria-label={m.label} onClick={() => onChange({ mode: m.mode })}>
               <svg viewBox="0 0 24 16" width="24" height="16" aria-hidden="true">
@@ -41,6 +43,7 @@ export function FilterShape({ mode, slope, onChange }: Props) {
             { value: 24, label: '24', name: '24 dB' },
           ]}
           onChange={(s) => onChange({ slope: s })}
+          learn={{ kind: 'choice', id: 'filterSlope' }}
         />
       </Tooltip>
     </div>

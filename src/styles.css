@@ -519,3 +519,24 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 }
 .knob[data-midi='moved'] .knob-dial { box-shadow: 0 0 0 2px var(--stage, var(--accent)); }
 .knob[data-midi='waiting'] .knob-dial { box-shadow: 0 0 0 2px var(--muted); }
+/* Choices (Waveform, Filter Mode…) show the same: a corner dot when mapped, a glow when the Controller steps them. */
+[role='radiogroup'][data-learn] { position: relative; }
+[role='radiogroup'][data-mapped]::after {
+  content: ''; position: absolute; top: -2px; right: -2px; width: 5px; height: 5px; border-radius: 50%;
+  background: var(--stage, var(--accent)); pointer-events: none;
+}
+[role='radiogroup'][data-midi='moved'] { box-shadow: 0 0 0 2px var(--stage, var(--accent)); }
+
+/* Quick Setup floats where the Learn bar does, a little larger: one step at a time. */
+.quick-setup {
+  position: fixed; z-index: 70; bottom: 16px; left: 50%; transform: translateX(-50%); width: min(460px, calc(100vw - 32px));
+  display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; font-size: 12px;
+  border: 1px solid var(--accent); border-radius: 10px; background: var(--panel); box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45);
+}
+.quick-setup header { display: flex; justify-content: space-between; align-items: baseline; }
+.quick-setup header strong { color: var(--accent); letter-spacing: 0.06em; text-transform: uppercase; font-size: 11px; }
+.quick-setup-progress { color: var(--muted); font-variant-numeric: tabular-nums; }
+.quick-setup-prompt { margin: 0; font-size: 15px; }
+.quick-setup-last { margin: 0; color: var(--muted); }
+.quick-setup-differs { color: var(--text); }
+.quick-setup-actions { display: flex; gap: 6px; justify-content: flex-end; }

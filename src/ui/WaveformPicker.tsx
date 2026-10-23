@@ -1,4 +1,5 @@
 import type { Waveform } from '../music/harmonics';
+import { useLearnable } from './learn';
 
 // One cycle of each Waveform, drawn in a 28×16 box.
 const ICONS: Record<Waveform, string> = {
@@ -9,6 +10,9 @@ const ICONS: Record<Waveform, string> = {
   pulse: 'M2 14 L2 2 L7 2 L7 14 L26 14 L26 2',
 };
 
+/** The Waveforms in on-screen order, so a Controller steps through them as they appear. */
+export const WAVEFORM_ORDER = Object.keys(ICONS) as Waveform[];
+
 const LABELS: Record<Waveform, string> = { sine: 'Sine', triangle: 'Triangle', saw: 'Saw', square: 'Square', pulse: 'Pulse' };
 
 interface Props {
@@ -18,12 +22,15 @@ interface Props {
   onChange(waveform: Waveform): void;
   /** Icons only (names stay available to tooltips and screen readers). */
   compact?: boolean;
+  /** Which Oscillator's Waveform this is, for MIDI Learn. */
+  choice: 'waveform' | 'osc2Waveform';
 }
 
-export function WaveformPicker({ label, value, onChange, compact }: Props) {
+export function WaveformPicker({ label, value, onChange, compact, choice }: Props) {
+  const learnable = useLearnable({ kind: 'choice', id: choice });
   return (
-    <div className="waveforms" data-compact={compact || undefined} role="radiogroup" aria-label={label}>
-      {(Object.keys(ICONS) as Waveform[]).map((w) => (
+    <div className="waveforms" data-compact={compact || undefined} role="radiogroup" aria-label={label} {...learnable}>
+      {WAVEFORM_ORDER.map((w) => (
         <button
           key={w}
           type="button"
