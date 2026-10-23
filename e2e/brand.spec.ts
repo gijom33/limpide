@@ -13,7 +13,7 @@ test('the header shows the SynthView logo and wordmark, and the tab has its icon
   expect(response.headers()['content-type']).toContain('svg');
 });
 
-for (const width of [872, 1000, 1100, 1440, 1710]) {
+for (const width of [861, 872, 884, 900, 920, 1000, 1100, 1440, 1710]) {
   test(`the SynthView name is on screen, on the header line, at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/');
@@ -26,6 +26,8 @@ for (const width of [872, 1000, 1100, 1440, 1710]) {
     }));
     expect(text.width).toBeGreaterThan(60); // drawn at full size, not clipped away
     expect(text.right).toBeLessThanOrEqual(header.right);
+    expect(display.right).toBeLessThanOrEqual(header.right + 1); // the Display button stays inside the window
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     expect(Math.abs(text.top + text.height / 2 - (display.top + display.height / 2))).toBeLessThanOrEqual(8); // one line
   });
 }

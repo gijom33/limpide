@@ -124,15 +124,9 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 .knob-label { font-size: var(--text-md); line-height: var(--knob-label-h); height: var(--knob-label-h); white-space: nowrap; }
 .knob[data-inactive] .knob-dial, .knob[data-inactive] .knob-value { opacity: 0.55; }
 
-.waveforms { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; flex: 1 1 100%; }
-.waveform {
-  display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px; cursor: pointer;
-  background: none; color: var(--muted); border: 1px solid var(--border); border-radius: var(--radius-control); font-size: var(--text-sm);
-}
-.waveform svg { color: var(--muted); }
-.waveform[aria-checked='true'] { color: var(--text); border-color: var(--stage, var(--muted)); }
-.waveform[aria-checked='true'] svg { color: var(--stage, var(--text)); }
-.waveform:focus-visible { outline: 2px solid var(--stage, var(--accent)); outline-offset: 1px; }
+/* Icon pickers (Waveforms, Filter Mode, LFO Waveform): one segmented track, as wide as its icons. */
+.icon-picker { width: fit-content; flex: none; }
+.icon-picker button { min-width: 34px; justify-content: center; padding: 0 5px; }
 .knob-value { font-size: var(--text-sm); line-height: var(--knob-value-h); height: var(--knob-value-h); white-space: nowrap; color: var(--muted); font-variant-numeric: tabular-nums; }
 /* The readout sits on hidden copies of the widest it can show, so a knob keeps its width as its value changes. */
 .knob-value { display: grid; justify-items: center; }
@@ -257,12 +251,9 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 /* The Oscillators stage: Osc 1, Osc 2 and the Mixer stacked; the first needs no divider above it. */
 .source-rows { display: flex; flex-direction: column; gap: var(--space-2); flex: 1 1 100%; }
 .source-rows > .sub-block:first-child { border-top: 0; padding-top: 0; }
-.waveforms[data-compact] { grid-template-columns: repeat(5, minmax(0, 36px)); }
-.waveforms[data-compact] .waveform { padding: 5px 2px; }
 /* In the stage columns nothing may shrink below its content (an explicit min-height on .knobs would otherwise
    let flexbox squeeze rows until labels overlap), and the Waveform picker must not grow to fill height. */
 .block > *, .source-rows > *, .sub-block > * { flex-shrink: 0; }
-.sub-block > .waveforms { flex: none; }
 
 /* Inside a stage section, the Waveform picker and its knobs share a row when there is room. */
 .sub-block { flex-direction: row; flex-wrap: wrap; align-items: center; column-gap: var(--space-3); }
@@ -346,7 +337,6 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 
 /* Filter Mode and Slope share the Filter heading's line when there is room. */
 .filter-shape { display: flex; flex-wrap: wrap; gap: 6px; }
-.filter-modes button { min-width: 34px; justify-content: center; padding: 0 5px; }
 @container (min-width: 330px) {
   .block[data-stage='filter'] .filter-shape { position: absolute; top: -4px; right: 0; }
 }
@@ -367,7 +357,6 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   /* The plot is exactly as tall as the LFO and Glide controls: the Viewers above get the rest of the window. */
   .timeline-plot { height: auto; min-height: 120px; }
 }
-.lfo-shapes button { min-width: 30px; justify-content: center; padding: 0 4px; }
 @media (max-width: 860px) {
   .timeline-body { flex-direction: column; }
 }
@@ -425,8 +414,8 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   /* Filter Mode and Slope on one line, with slimmer segments. */
   .filter-shape { flex-wrap: nowrap; gap: 4px; }
   .filter-shape .segmented { flex-wrap: nowrap; }
-  .filter-modes button { min-width: 26px; padding: 0 2px; }
-  .filter-modes svg { width: 20px; }
+  .filter-shape .icon-picker button { min-width: 26px; padding: 0 2px; }
+  .filter-shape .icon-picker svg { width: 20px; }
   .filter-shape .segmented button { padding: 0 6px; }
 }
 .block-controls { gap: var(--space-2); }
@@ -443,6 +432,9 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
    names of your own are shortened with an ellipsis (the full name stays in the button's label). */
 .patch-bar > .tip-anchor { flex: none; }
 .patch-name { width: 150px; justify-content: center; gap: 6px; }
+/* Narrow windows (one-row header, down to 861 px): a shorter fixed width, so the Display button keeps its place on
+   the right; long Preset names show an ellipsis. */
+@media (max-width: 919px) { .patch-name { width: 104px; } }
 .patch-name span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .patch-changed { width: 6px; height: 6px; border-radius: 50%; background: var(--text); flex: none; }
 /* Never taller than the window below the header: the Presets scroll, the rest of the panel stays in view. */
