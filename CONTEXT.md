@@ -124,6 +124,10 @@ _Avoid_: Drone, latch, sustain (Sustain is an Envelope stage)
 How hard a Note was struck (0–1): from MIDI, from how low you press an on-screen piano key, or full for the computer keyboard. It scales the Amp level and, by the **Velocity → Cutoff** amount, the Effective Cutoff.
 _Avoid_: Intensity, force
 
+**Key Track**:
+How far the Effective Cutoff follows the Note played, measured from C4: at 100 % an octave per octave, so the Filter keeps the same Harmonics on every Note. It follows a Glide.
+_Avoid_: Keyboard follow, key scaling
+
 ### Seeing
 
 **Tap**:

@@ -46,6 +46,11 @@ export const TIPS = {
     title: 'Velocity → Cutoff',
     body: 'How much harder hits open the Filter: up to two octaves for the hardest. Velocity comes from MIDI pads and keys, or from where you click on a piano key.',
   },
+  keyTrack: {
+    title: 'Key Track',
+    body: 'How far the Cutoff follows the Note you play, from C4: at 100 % it moves an octave per octave, so high Notes keep as many Harmonics as low ones. At 0 % the Cutoff stays put, and high Notes sound duller.',
+    how: 'Play C3 then C5 with a low Cutoff: watch the Response Curve move with the Harmonic Markers.',
+  },
   hold: {
     title: 'Hold',
     body: 'Keeps the Note sounding after you let go of the key, so both hands are free to turn knobs while you watch.',

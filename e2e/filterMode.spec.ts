@@ -19,3 +19,11 @@ test('each Filter Mode explains itself', async ({ page }) => {
   await page.getByRole('radiogroup', { name: 'Filter Mode' }).hover();
   await expect(page.getByRole('tooltip')).toContainText(/high-pass/i);
 });
+
+test('Key Track sits with the Filter’s knobs, starts off, and its tooltip says what it does', async ({ page }) => {
+  await page.goto('/');
+  const knob = page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name: 'Key Track' });
+  await expect(knob).toHaveAttribute('aria-valuetext', '0 %');
+  await knob.hover();
+  await expect(page.getByRole('tooltip')).toContainText(/octave per octave/i);
+});

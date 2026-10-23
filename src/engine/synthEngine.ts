@@ -1,6 +1,6 @@
 import { envelopeLevel, envelopeSchedule, type Adsr, type AutomationStep, type GateEvent } from '../modulation/envelope';
 import { glideFrequency, glideTimeConstant, lfoPhase, lfoShape, type LfoWaveform } from '../modulation/lfo';
-import { effectiveCutoff, LFO_CUTOFF_OCTAVES, LFO_PITCH_CENTS, LFO_PULSE_WIDTH, VELOCITY_CUTOFF_OCTAVES } from '../modulation/modulationModel';
+import { effectiveCutoff, KEY_TRACK_CENTRE, LFO_CUTOFF_OCTAVES, LFO_PITCH_CENTS, LFO_PULSE_WIDTH, VELOCITY_CUTOFF_OCTAVES } from '../modulation/modulationModel';
 import { filterStages, type Stage } from './filterDesign';
 import { harmonicSeries } from '../music/harmonics';
 import { noteToFrequency } from '../music/pitch';
@@ -199,6 +199,16 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   velocityAmount.connect(filter2.detune);
   noteVelocity.start();
 
+  // Key Track, the same way: the Note (in semitones from C4, gliding as the Oscillators do) times the amount.
+  const trackedNote = ctx.createConstantSource();
+  trackedNote.offset.value = 69 - KEY_TRACK_CENTRE; // the Oscillators start on A4
+  const keyTrackAmount = ctx.createGain();
+  keyTrackAmount.gain.value = 0;
+  trackedNote.connect(keyTrackAmount);
+  keyTrackAmount.connect(filter.detune);
+  keyTrackAmount.connect(filter2.detune);
+  trackedNote.start();
+
   mixer.connect(filter).connect(filter2).connect(amp).connect(master).connect(safetyIn);
   safetyOut.connect(ctx.destination);
   // Taps are side branches, so observing never alters the sound.
@@ -227,7 +237,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
 
   let patch: Patch | undefined;
   const waveKeys = new Map<OscillatorNode, string>();
-  const pitches: { time: number; frequency: number; glide: number }[] = [];
+  const pitches: { time: number; frequency: number; note: number; glide: number }[] = [];
   osc.frequency.value = noteToFrequency(69);
   osc2.frequency.value = noteToFrequency(69);
   // Patches in force over time, so past moments use the Cutoff and Amount of their time.
@@ -251,7 +261,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   const setPitch = (note: number, t: number) => {
     const frequency = noteToFrequency(note);
     const glide = patch && pitches.length && patch.glide > GLIDE_OFF * 1.001 ? patch.glide : 0;
-    pitches.push({ time: t, frequency, glide });
+    pitches.push({ time: t, frequency, note, glide });
     if (pitches.length > HISTORY) pitches.shift();
     for (const node of [osc, osc2]) {
       // Both Oscillators follow the Note; Osc 2's offsets ride on top, through its detune.
@@ -260,7 +270,13 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       else node.frequency.setValueAtTime(frequency, t);
     }
     tunePulses(frequency, t, glide ? glideTimeConstant(glide) : undefined);
+    trackedNote.offset.cancelAndHoldAtTime(t);
+    if (glide) trackedNote.offset.setTargetAtTime(note - KEY_TRACK_CENTRE, t, glideTimeConstant(glide));
+    else trackedNote.offset.setValueAtTime(note - KEY_TRACK_CENTRE, t);
   };
+  // The Note Key Track follows at `t`: the same slide as the Oscillators, in semitones.
+  const trackedNoteAt = (t: number) =>
+    pitches.length ? glideFrequency(pitches.map((p) => ({ time: p.time, frequency: p.note, glide: p.glide })), t) : 69;
 
   // Play exactly the Fourier series the Ideal Reference draws (normalisation is already in it). A pulse plays a
   // saw here, and becomes a pulse through the delayed, inverted copy.
@@ -319,7 +335,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       amp: envelopeLevel(ampEvents, t),
       filter: filterLevel,
       lfo: lfoValue,
-      cutoff: then ? effectiveCutoff(then, filterLevel, lfoValue, velocity) : 0,
+      cutoff: then ? effectiveCutoff(then, filterLevel, lfoValue, velocity, trackedNoteAt(t)) : 0,
       mode: then?.filterMode ?? 'lowpass',
       bandwidth: then ? bandwidthOctaves(filterStages(then.filterMode, then.filterSlope, then.resonance)[0].Q) : 1,
     };
@@ -373,6 +389,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       twins.forEach((node, i) => setStage(node, stages[i], cutoff));
       envelopeAmount.gain.setValueAtTime(next.filterEnvAmount * 1200, t);
       velocityAmount.gain.setValueAtTime(next.velocityCutoff * VELOCITY_CUTOFF_OCTAVES * 1200, t);
+      keyTrackAmount.gain.setValueAtTime(next.keyTrack * 100, t); // cents per semitone
     },
 
     noteOn(note, velocity, time) {

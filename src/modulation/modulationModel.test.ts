@@ -67,3 +67,26 @@ describe('Effective Cutoff with Velocity', () => {
     expect(effectiveCutoff(defaultPatch(), 0, 0, 1)).toBe(defaultPatch().cutoff);
   });
 });
+
+describe('Effective Cutoff with Key Track', () => {
+  const patch = { ...defaultPatch(), cutoff: 1000, keyTrack: 1 };
+
+  it('follows the Note an octave per octave at full Key Track, from C4', () => {
+    expect(effectiveCutoff(patch, 0, 0, 0, 60)).toBeCloseTo(1000); // C4: no change
+    expect(effectiveCutoff(patch, 0, 0, 0, 72)).toBeCloseTo(2000); // C5
+    expect(effectiveCutoff(patch, 0, 0, 0, 48)).toBeCloseTo(500); // C3
+  });
+
+  it('follows half as far at 50 %, and through fractions of a semitone during a Glide', () => {
+    expect(effectiveCutoff({ ...patch, keyTrack: 0.5 }, 0, 0, 0, 84)).toBeCloseTo(2000);
+    expect(effectiveCutoff(patch, 0, 0, 0, 66)).toBeCloseTo(1000 * 2 ** 0.5); // half an octave up
+  });
+
+  it('changes nothing at 0 %, whatever the Note', () => {
+    expect(effectiveCutoff({ ...patch, keyTrack: 0 }, 0, 0, 0, 96)).toBe(1000);
+  });
+
+  it('adds to the Envelope, in octaves', () => {
+    expect(effectiveCutoff({ ...patch, filterEnvAmount: 1 }, 1, 0, 0, 72)).toBeCloseTo(4000);
+  });
+});

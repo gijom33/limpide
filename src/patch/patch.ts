@@ -26,6 +26,7 @@ export type ParamId =
   | 'lfoAmount'
   | 'glide'
   | 'velocityCutoff'
+  | 'keyTrack'
   | 'cutoff'
   | 'resonance'
   | 'filterEnvAmount'
@@ -65,7 +66,7 @@ const time = (id: ParamId, label: string, dflt: number): ParamDef => ({
 export const PARAMS: Record<ParamId, ParamDef> = {
   pulseWidth: { id: 'pulseWidth', label: 'Pulse Width', unit: '%', min: 0.05, max: 0.95, taper: 'linear', default: 0.25 },
   osc2Octave: { id: 'osc2Octave', label: 'Octave', unit: 'oct', min: -2, max: 2, taper: 'linear', default: 0, step: 1 },
-  osc2Semitone: { id: 'osc2Semitone', label: 'Semi', unit: 'st', min: -12, max: 12, taper: 'linear', default: 0, step: 1 },
+  osc2Semitone: { id: 'osc2Semitone', label: 'Semitone', unit: 'st', min: -12, max: 12, taper: 'linear', default: 0, step: 1 },
   osc2Detune: { id: 'osc2Detune', label: 'Detune', unit: 'cents', min: -50, max: 50, taper: 'linear', default: 0 },
   osc2PulseWidth: { id: 'osc2PulseWidth', label: 'Pulse Width', unit: '%', min: 0.05, max: 0.95, taper: 'linear', default: 0.25 },
   mixOsc1: level('mixOsc1', 'Osc 1', 1),
@@ -75,6 +76,7 @@ export const PARAMS: Record<ParamId, ParamDef> = {
   lfoAmount: level('lfoAmount', 'Depth', 0),
   glide: time('glide', 'Glide', GLIDE_OFF),
   velocityCutoff: level('velocityCutoff', 'Velocity', 0),
+  keyTrack: level('keyTrack', 'Key Track', 0),
   cutoff: { id: 'cutoff', label: 'Cutoff', unit: 'Hz', min: 20, max: 20000, taper: 'log', default: 2000 },
   resonance: { id: 'resonance', label: 'Resonance', unit: '%', min: 0, max: 1, taper: 'linear', default: 0.2 },
   filterEnvAmount: { id: 'filterEnvAmount', label: 'Amount', unit: 'oct', min: -5, max: 5, taper: 'linear', default: 0 },

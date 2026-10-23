@@ -15,7 +15,7 @@ describe('defaultPatch', () => {
         'ampAttack', 'ampDecay', 'ampRelease', 'ampSustain', 'cutoff', 'pulseWidth', 'resonance',
         'filterEnvAmount', 'filterAttack', 'filterDecay', 'filterSustain', 'filterRelease',
         'osc2Octave', 'osc2Semitone', 'osc2Detune', 'osc2PulseWidth', 'mixOsc1', 'mixOsc2', 'mixNoise',
-        'lfoRate', 'lfoAmount', 'glide', 'velocityCutoff',
+        'lfoRate', 'lfoAmount', 'glide', 'velocityCutoff', 'keyTrack',
       ].sort(),
     );
   });

@@ -570,9 +570,14 @@ export function App() {
             stage="filter"
             ids={['cutoff', 'resonance']}
             extra={
-              <Tooltip content={TIPS.velocityCutoff}>
-                <Knob id="velocityCutoff" value={patch.velocityCutoff} onChange={(v) => change('velocityCutoff', v)} />
-              </Tooltip>
+              <>
+                <Tooltip content={TIPS.velocityCutoff}>
+                  <Knob id="velocityCutoff" value={patch.velocityCutoff} onChange={(v) => change('velocityCutoff', v)} />
+                </Tooltip>
+                <Tooltip content={TIPS.keyTrack}>
+                  <Knob id="keyTrack" value={patch.keyTrack} onChange={(v) => change('keyTrack', v)} />
+                </Tooltip>
+              </>
             }
             patch={patch}
             onChange={change}

@@ -578,3 +578,60 @@ describe('Velocity → Cutoff', () => {
     }
   });
 });
+
+describe('Key Track', () => {
+  /** Renders a Note and reads both Taps, the Response Curve and the model at `when`. */
+  async function measureAt(patch: Partial<Patch>, play: (e: ReturnType<typeof createSynthEngine>) => void, when: number, harmonics: Float32Array<ArrayBuffer>) {
+    const ctx = new OfflineAudioContext(1, SR, SR);
+    const engine = createSynthEngine(ctx);
+    engine.applyPatch({ ...defaultPatch(), resonance: 0, ampSustain: 1, ampAttack: 0.001, ...patch });
+    play(engine);
+    const frame = ctx.suspend(when).then(() => {
+      const read = (a: AnalyserNode) => {
+        const s = new Float32Array(a.fftSize);
+        a.getFloatTimeDomainData(s);
+        return s;
+      };
+      const out = { osc: read(engine.taps.oscillator), filter: read(engine.taps.filter), curve: engine.filterResponse(harmonics), cutoff: engine.modulationAt(when).cutoff };
+      void ctx.resume();
+      return out;
+    });
+    await ctx.startRendering();
+    return frame;
+  }
+
+  it('moves the Cutoff an octave per octave from C4 at 100 %, and the sound follows the model', async () => {
+    for (const [note, expected] of [[60, 600], [72, 1200], [48, 300]] as const) {
+      const f0 = 440 * 2 ** ((note - 69) / 12);
+      const harmonics = Float32Array.from({ length: 12 }, (_, i) => f0 * (i + 1));
+      const { osc, filter, curve, cutoff } = await measureAt({ cutoff: 600, keyTrack: 1 }, (e) => e.noteOn(note, 1, 0), 0.5, harmonics);
+      expect(cutoff, `note ${note}`).toBeCloseTo(expected, -1);
+      for (let i = 0; i < harmonics.length; i++) {
+        if (dB(curve[i]) < -40) continue;
+        const measured = dB(toneAmplitudeHann(filter, SR, harmonics[i]) / toneAmplitudeHann(osc, SR, harmonics[i]));
+        expect(Math.abs(measured - dB(curve[i])), `${harmonics[i].toFixed(0)} Hz, note ${note}`).toBeLessThan(0.5);
+      }
+    }
+  });
+
+  it('slides with the Glide, the same way as the model', async () => {
+    const harmonics = Float32Array.from({ length: 4 }, (_, i) => 1000 * (i + 1));
+    const { cutoff } = await measureAt(
+      { cutoff: 600, keyTrack: 1, glide: 0.4 },
+      (e) => {
+        e.noteOn(60, 1, 0);
+        e.noteOn(72, 1, 0.5);
+      },
+      0.6,
+      harmonics,
+    );
+    // 0.1 s into a 0.4 s Glide (time constant 0.1 s): the tracked Note is 1 − e⁻¹ of the way from C4 to C5.
+    const note = 72 + (60 - 72) * Math.exp(-1);
+    expect(cutoff / (600 * 2 ** ((note - 60) / 12))).toBeCloseTo(1, 2);
+  });
+
+  it('changes nothing at 0 %, whatever the Note', async () => {
+    const { cutoff } = await measureAt({ cutoff: 600 }, (e) => e.noteOn(84, 1, 0), 0.3, Float32Array.of(1000));
+    expect(cutoff).toBeCloseTo(600, 0);
+  });
+});
