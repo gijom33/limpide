@@ -67,13 +67,6 @@ const MASTER_LEVEL = 0.45;
 
 const SAFETY_RANGE = 4;
 const SAFETY_KNEE = 0.8;
-/** The Amp Tap level above which the safety limiter starts to bend the sound (its knee, before the master level). */
-export const LIMITING_ABOVE = SAFETY_KNEE / MASTER_LEVEL;
-/**
- * The same for a Patch with several Voices, whose master level makes room for them (1/√Voices): the Amp Tap
- * shows one Voice, so this is where that Voice alone would reach the knee; a chord reaches it sooner.
- */
-export const limitingAbove = (voices: Voices) => (SAFETY_KNEE * Math.sqrt(voices)) / MASTER_LEVEL;
 // The bend levels off a little below full scale: driven hard, the shaper's oversampling filter rings slightly
 // past the curve, and this keeps even that under 1.
 const SAFETY_CEILING = 0.97;

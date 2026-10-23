@@ -4,7 +4,7 @@ import { idealReference } from '../music/idealReference';
 import { defaultPatch, type Patch } from '../patch/patch';
 import { amplitudeToSpectrumDb } from '../viewers/spectrumScale';
 import { dB, frequencyAround, rms, toneAmplitude, toneAmplitudeHann } from '../test/measure';
-import { createSynthEngine, limitingAbove, LIMITING_ABOVE, OSCILLATOR_LEVEL } from './synthEngine';
+import { createSynthEngine, OSCILLATOR_LEVEL } from './synthEngine';
 
 const SR = 48000;
 
@@ -744,7 +744,6 @@ describe('several Voices (ADR-0007)', () => {
     expect(peak(four) / peak(one)).toBeCloseTo(0.5, 1);
     const taps = await tapsAt(0.4, { ...steady, voices: 4 });
     expect(taps.amp.reduce((m, v) => Math.max(m, Math.abs(v)), 0)).toBeCloseTo(OSCILLATOR_LEVEL, 1);
-    expect(limitingAbove(4)).toBeCloseTo(LIMITING_ABOVE * 2, 5);
   });
 
   it('reports when the limiter is bending the summed output, which the one shown Voice cannot tell', async () => {
