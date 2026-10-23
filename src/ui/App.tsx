@@ -35,7 +35,7 @@ import { Piano } from './Piano';
 import { DisplayMenu } from './DisplayMenu';
 import { PatchBar } from './PatchBar';
 import { Tabs } from './Tabs';
-import { Tooltip, type TipContent } from './Tooltip';
+import { Tooltip } from './Tooltip';
 import { AxesControls, ViewActions } from './ViewerControls';
 import { EnvelopeTimeline } from './EnvelopeTimeline';
 import { applyTheme, loadTheme, type Theme } from './theme';
@@ -410,7 +410,6 @@ export function App() {
     tap: keyof AudioSession['engine']['taps'],
     name: string,
     extra: {
-      tip?: TipContent;
       showIdeal?: boolean;
       response?(f: Float32Array<ArrayBuffer>): Float32Array;
     } = {},
@@ -500,10 +499,7 @@ export function App() {
             ids={[]}
             patch={patch}
             onChange={change}
-            viewers={viewers('oscillator', 'Oscillator', {
-              tip: TIPS.oscillatorTap,
-              showIdeal: true,
-            })}
+            viewers={viewers('oscillator', 'Oscillator', { showIdeal: true })}
           >
             <div className="source-rows">
               <Tabs

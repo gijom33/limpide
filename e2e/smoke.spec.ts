@@ -6,7 +6,7 @@ const db = (level: Locator) => level.getAttribute('data-db').then((v) => (v === 
 test('a key press after starting audio makes the Amp Tap sound and the Viewers draw', async ({ page }) => {
   await page.goto('/');
 
-  const level = page.getByTestId('amp-level');
+  const level = page.getByLabel('Amp Scope', { exact: true });
   await expect(level).toHaveAttribute('data-db', /.+/); // the app is listening for keys once the Viewers draw
 
   await page.keyboard.down('KeyA');
@@ -24,3 +24,13 @@ test('a key press after starting audio makes the Amp Tap sound and the Viewers d
   await expect.poll(() => db(level)).toBeLessThan(-80);
 });
 
+
+test('the Viewers stand on their own: no Tap captions and no dB readouts over them', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByLabel('Amp Scope')).toHaveAttribute('data-db', /.+/); // the level is still measured, for tests
+  for (const stage of ['Oscillators', 'Filter', 'Amp']) {
+    const block = page.getByRole('region', { name: stage });
+    await expect(block.getByText(/\bTap\b/), stage).toHaveCount(0);
+    await expect(block.getByText(/-?\d+(\.\d)? dB$|^silent$/), stage).toHaveCount(0);
+  }
+});

@@ -122,10 +122,6 @@ export const TIPS = {
     title: 'Noise',
     body: 'An unpitched hiss with energy at every frequency: in the Spectrum it fills the gaps between Harmonics. Filter it for wind, breath or percussion.',
   },
-  oscillatorTap: {
-    title: 'Oscillator Tap',
-    body: 'The Mixer’s output: the raw sources, before the Filter shapes them. The Oscillators run all the time, even between Notes: the Amp decides when you hear them.',
-  },
 } satisfies Record<string, TipContent>;
 
 export const OVERLAY_TIPS: Record<Overlay, TipContent> = {

@@ -51,7 +51,7 @@ test('wide screens get a wider page and wider Viewers, not empty margins', async
     await page.setViewportSize({ width, height: 1200 });
     await page.goto('/');
     // Measure only once the Viewers are drawing: under load, layout may not have settled straight after load.
-    await expect(page.getByTestId('amp-level')).toHaveAttribute('data-db', /.+/);
+    await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);
     return page.evaluate(() => ({
       main: document.querySelector('main')!.getBoundingClientRect().width,
       scope: document.querySelector<HTMLCanvasElement>('canvas.scope')!.getBoundingClientRect(),

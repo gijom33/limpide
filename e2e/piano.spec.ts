@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
-const db = (page: Page) => page.getByTestId('amp-level').getAttribute('data-db').then((v) => (v === null ? NaN : Number(v)));
-const ready = (page: Page) => expect(page.getByTestId('amp-level')).toHaveAttribute('data-db', /.+/);
+const db = (page: Page) => page.getByLabel('Amp Scope', { exact: true }).getAttribute('data-db').then((v) => (v === null ? NaN : Number(v)));
+const ready = (page: Page) => expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);
 
 test('the on-screen piano plays, and lights the key while it sounds', async ({ page }) => {
   await page.goto('/');

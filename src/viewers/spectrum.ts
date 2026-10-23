@@ -152,9 +152,9 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
       });
       const held = frozenCurve(viewer.frozen, live);
       const { gains } = held.key === key ? held : frozenCurve(false, live);
-      // Faded text colour (white on dark, ink on light), so it reads as the Filter's shape, not a measurement.
-      g.strokeStyle = text;
-      g.globalAlpha = 0.6;
+      // The Effective Cutoff's colour, as on the Timeline: this is the Filter's shape at that Cutoff.
+      g.strokeStyle = cssVar(canvas, '--cutoff-line');
+      g.globalAlpha = 0.85;
       g.lineWidth = 1.25;
       g.setLineDash([6, 3]);
       strokeColumns(g, gains.map((v) => zero + 20 * Math.log10(Math.max(1e-6, v))), yOf);

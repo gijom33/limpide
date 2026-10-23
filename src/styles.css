@@ -135,7 +135,6 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 .knob-value-sizer { visibility: hidden; }
 
 .tap { margin: 0; margin-top: auto; }
-.tap figcaption { font-size: var(--text-md); color: var(--muted); margin-bottom: 6px; }
 .level { float: right; font-variant-numeric: tabular-nums; }
 .tap-canvases { position: relative; }
 /* Viewers keep their shape as blocks widen (a wide screen gives taller Viewers, not thin strips). */
@@ -148,7 +147,7 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 .swatch { display: inline-block; flex: none; }
 [data-overlay='harmonics'] .swatch { width: 9px; height: 6px; border-left: 1px solid var(--text); border-right: 1px solid var(--text); }
 [data-overlay='ideal'] .swatch { width: 6px; height: 6px; border: 1px solid var(--text); border-radius: 50%; }
-[data-overlay='curve'] .swatch { width: 14px; border-top: 1.5px dashed color-mix(in srgb, var(--text) 60%, transparent); }
+[data-overlay='curve'] .swatch { width: 14px; border-top: 1.5px dashed var(--cutoff-line); }
 [data-overlay='guides'] .swatch { width: 14px; border-top: 1px dashed var(--muted); }
 
 /* Toolbar: one panel, three captioned groups (View, Axes, Show), separated by hairlines. */

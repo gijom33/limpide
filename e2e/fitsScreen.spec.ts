@@ -11,7 +11,7 @@ for (const [width, height, minViewer] of [
   test(`the whole app fits a ${width}×${height} screen without scrolling`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await page.goto('/');
-    await expect(page.getByTestId('amp-level')).toHaveAttribute('data-db', /.+/);
+    await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);
     const { scrollHeight, timelineBottom, viewport } = await page.evaluate(() => ({
       scrollHeight: document.documentElement.scrollHeight,
       timelineBottom: document.querySelector('.timeline')!.getBoundingClientRect().bottom,
@@ -24,7 +24,7 @@ for (const [width, height, minViewer] of [
   test(`the Viewers stay usefully large at ${width}×${height}`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await page.goto('/');
-    await expect(page.getByTestId('amp-level')).toHaveAttribute('data-db', /.+/);
+    await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);
     const heights = await page.evaluate(() =>
       [...document.querySelectorAll<HTMLCanvasElement>('canvas.scope, canvas.spectrum')].map((c) => c.getBoundingClientRect().height),
     );
@@ -41,7 +41,7 @@ for (const [width, height] of [
   test(`the three stages' Viewers are the same size and line up (${width}×${height})`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await page.goto('/');
-    await expect(page.getByTestId('amp-level')).toHaveAttribute('data-db', /.+/);
+    await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);
     const boxes = await page.evaluate(() =>
       ['scope', 'spectrum'].map((kind) =>
         [...document.querySelectorAll<HTMLCanvasElement>(`canvas.${kind}`)].map((c) => {
@@ -71,7 +71,7 @@ for (const [width, height] of [
   test(`nothing spills out of place at ${width}×${height}`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await page.goto('/');
-    await expect(page.getByTestId('amp-level')).toHaveAttribute('data-db', /.+/);
+    await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);
     const problems = await page.evaluate(() => {
       const found: string[] = [];
       const box = (el: Element) => el.getBoundingClientRect();
@@ -100,7 +100,7 @@ for (const [width, height, maxControls, minViewer] of [
   test(`narrow stages use compact controls, leaving room for the Viewers (${width}×${height})`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await page.goto('/');
-    await expect(page.getByTestId('amp-level')).toHaveAttribute('data-db', /.+/);
+    await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);
     const m = await page.evaluate(() => ({
       controls: Math.max(...[...document.querySelectorAll('.block-controls')].map((c) => c.getBoundingClientRect().height)),
       viewer: Math.min(...[...document.querySelectorAll('canvas.scope, canvas.spectrum')].map((c) => c.getBoundingClientRect().height)),
@@ -141,7 +141,7 @@ for (const [width, height, pitch] of [
   test(`every knob row has the same dial pitch: ${pitch} pt at ${width}×${height}`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await page.goto('/');
-    await expect(page.getByTestId('amp-level')).toHaveAttribute('data-db', /.+/);
+    await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);
     const pitches = await page.evaluate(() =>
       [...document.querySelectorAll<HTMLElement>('.knobs')].flatMap((row) => {
         const dials = [...row.querySelectorAll<HTMLElement>(':scope > .knob > .knob-dial, :scope > .tip-anchor > .knob > .knob-dial')]
@@ -161,7 +161,7 @@ for (const [width, height, pitch] of [
 test('the Timeline plot is as tall as its controls, whatever size the window was before', async ({ page }) => {
   await page.setViewportSize({ width: 2000, height: 1140 });
   await page.goto('/');
-  await expect(page.getByTestId('amp-level')).toHaveAttribute('data-db', /.+/);
+  await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);
   const measure = () =>
     page.evaluate(() => ({
       plot: Math.round(document.querySelector('.timeline-body canvas')!.getBoundingClientRect().height),

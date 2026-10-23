@@ -44,7 +44,7 @@ for (const [width, height] of [
   test(`intermediate windows fit without scrolling too (${width}×${height})`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await page.goto('/');
-    await expect(page.getByTestId('amp-level')).toHaveAttribute('data-db', /.+/);
+    await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);
     expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThanOrEqual(height);
   });
 }

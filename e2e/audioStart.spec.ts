@@ -2,10 +2,10 @@ import { expect, test } from '@playwright/test';
 
 // The app is listening once the Viewers are drawing (a key pressed in the first few milliseconds after
 // the load event, before React attaches its listeners, is not something a person can do).
-const ready = (page: import('@playwright/test').Page) => expect(page.getByTestId('amp-level')).toHaveAttribute('data-db', /.+/);
+const ready = (page: import('@playwright/test').Page) => expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);
 
 const db = (page: import('@playwright/test').Page) =>
-  page.getByTestId('amp-level').getAttribute('data-db').then((v) => (v === null ? NaN : Number(v)));
+  page.getByLabel('Amp Scope', { exact: true }).getAttribute('data-db').then((v) => (v === null ? NaN : Number(v)));
 
 test('the Viewers are on screen from the start, with no button to click first', async ({ page }) => {
   await page.goto('/');

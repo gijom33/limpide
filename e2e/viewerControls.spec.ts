@@ -3,13 +3,13 @@ import { openDisplay } from './helpers';
 
 // A missing reading (the Tap hasn't drawn yet) must not count as loud: Number(null) would be 0 dB.
 const level = (page: import('@playwright/test').Page) =>
-  page.getByTestId('amp-level').getAttribute('data-db').then((v) => (v === null ? NaN : Number(v)));
+  page.getByLabel('Amp Scope', { exact: true }).getAttribute('data-db').then((v) => (v === null ? NaN : Number(v)));
 
 test('Space freezes the Viewers on a frame while the sound carries on', async ({ page }) => {
   await page.goto('/');
   await openDisplay(page);
   const freeze = page.getByRole('button', { name: 'Freeze' });
-  await expect(page.getByTestId('amp-level')).toBeVisible(); // audio is up and listening for keys
+  await expect(page.getByLabel('Amp Scope', { exact: true })).toBeVisible(); // audio is up and listening for keys
 
   await page.keyboard.down('KeyA');
   await expect.poll(() => level(page)).toBeGreaterThan(-40);
@@ -82,7 +82,7 @@ test('controls are grouped under View, Axes and Show', async ({ page }) => {
 
 test('frozen Viewers do not change when a new Note is played or a knob is turned', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByTestId('amp-level')).toBeVisible();
+  await expect(page.getByLabel('Amp Scope', { exact: true })).toBeVisible();
   await page.keyboard.down('KeyA');
   await expect.poll(() => level(page)).toBeGreaterThan(-40);
   await page.keyboard.press('Space');
@@ -114,7 +114,7 @@ test('frozen Viewers do not change when a new Note is played or a knob is turned
 test('a Snapshot keeps the waveform on every Scope as well as every Spectrum', async ({ page }) => {
   await page.goto('/');
   await openDisplay(page);
-  await expect(page.getByTestId('amp-level')).toBeVisible();
+  await expect(page.getByLabel('Amp Scope', { exact: true })).toBeVisible();
   const scopes = page.locator('canvas.scope');
   await expect(scopes).toHaveCount(3);
 

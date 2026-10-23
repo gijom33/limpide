@@ -28,7 +28,6 @@ const knobLayout = (page: import('@playwright/test').Page) =>
   );
 
 test('turning knobs never moves or resizes any knob, whatever width their values take', async ({ page }) => {
-  test.slow(); // sweeps five knobs end to end, checking every knob along the way
   await page.goto('/');
   const before = await knobLayout(page);
   // Parameters whose readouts change width the most across their range (Hz → kHz, ms → s, Off → seconds, signs).
@@ -40,17 +39,21 @@ test('turning knobs never moves or resizes any knob, whatever width their values
     ['Envelope Timeline', 'Glide'],
   ]) {
     const knob = page.getByRole('region', { name: region }).getByRole('slider', { name, exact: true });
-    await knob.focus();
+    const seen = new Set<string | null>();
     for (const key of ['ArrowDown', 'ArrowUp']) {
       for (let i = 0; i < 10; i++) {
-        await knob.press(key, { delay: 0 });
-        await knob.press(key, { delay: 0 });
-        await knob.press(key, { delay: 0 });
-        await knob.press(key, { delay: 0 });
-        await knob.press(key, { delay: 0 });
-        expect(await knobLayout(page), `${name} at ${await knob.getAttribute('aria-valuetext')}`).toEqual(before);
+        // Five key presses in one go (one round trip instead of five), then a tick for React to render them. Not
+        // requestAnimationFrame: background tabs (parallel runs) pause it.
+        await knob.evaluate(async (el, k) => {
+          for (let n = 0; n < 5; n++) el.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true }));
+          await new Promise((resolve) => setTimeout(resolve, 0));
+        }, key);
+        const value = await knob.getAttribute('aria-valuetext');
+        seen.add(value);
+        expect(await knobLayout(page), `${name} at ${value}`).toEqual(before);
       }
     }
+    expect(seen.size, `${name} really turned`).toBeGreaterThan(5);
   }
 });
 

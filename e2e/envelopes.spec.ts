@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test';
 
 const db = (page: import('@playwright/test').Page) =>
-  page.getByTestId('amp-level').getAttribute('data-db').then((v) => (v === null ? NaN : Number(v)));
-const ready = (page: import('@playwright/test').Page) => expect(page.getByTestId('amp-level')).toHaveAttribute('data-db', /.+/);
+  page.getByLabel('Amp Scope', { exact: true }).getAttribute('data-db').then((v) => (v === null ? NaN : Number(v)));
+const ready = (page: import('@playwright/test').Page) => expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);
 
 test('Hold keeps the Note sounding after the key is released, until Hold is switched off', async ({ page }) => {
   await page.goto('/');

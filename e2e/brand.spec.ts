@@ -34,6 +34,6 @@ for (const width of [861, 872, 884, 900, 920, 1000, 1100, 1440, 1710]) {
 
 test('no "Press a key" message over the Viewers', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByTestId('amp-level')).toHaveAttribute('data-db', /.+/);
+  await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);
   await expect(page.getByText(/press a key/i)).toHaveCount(0);
 });
