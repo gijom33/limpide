@@ -35,7 +35,7 @@ test('Osc 2 has its own Waveform, and its tuning knobs wake up once it is mixed 
   await page.getByRole('tab', { name: 'Osc 1' }).click();
   await expect(osc1.getByRole('radio', { name: 'Saw' })).toHaveAttribute('aria-checked', 'true');
 
-  await page.getByRole('tab', { name: /Osc 2/ }).click(); // Detune lives on the Osc 2 tab
+  // Osc 2's tuning knobs sit below both tabs, so Detune is at hand on either.
   const detune = page.locator('.knob', { has: page.getByRole('slider', { name: 'Detune' }) });
   await expect(detune).toHaveAttribute('data-inactive', 'true');
   const mixOsc2 = page.getByRole('group', { name: 'Mixer' }).getByRole('slider', { name: 'Osc 2' });

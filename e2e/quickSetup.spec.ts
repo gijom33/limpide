@@ -26,9 +26,7 @@ test('Quick Setup walks through the C16 one control at a time and maps it all', 
   await expect(page.getByRole('region', { name: 'Filter' }).locator('.knob[data-learn-selected]')).toContainText('Cutoff');
 
   for (let n = 1; n <= 3; n++) await play(page, ...encoder(n));
-  // Detune lives on the Osc 2 tab: the step shows it.
   await expect(prompt(page)).toContainText('Detune');
-  await expect(page.getByRole('tablist', { name: 'Oscillator' }).getByRole('tab', { name: /Osc 2/ })).toHaveAttribute('aria-selected', 'true');
   for (let n = 4; n <= 8; n++) await play(page, ...encoder(n));
   await expect(prompt(page)).toContainText('Move fader 1');
   await expect(prompt(page)).toContainText('Attack');

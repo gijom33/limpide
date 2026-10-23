@@ -52,14 +52,25 @@ test('the Display panel chooses what the Amp Viewers follow: all Voices by defau
   await page.keyboard.up('a');
 });
 
-test('the Osc 1 tab shows Octave, Semitone and Detune as placeholders, so both tabs lay out alike', async ({ page }) => {
+test('Osc 2’s tuning knobs are one shared row below the tabs: same place and state whichever tab shows', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
-  const osc1 = page.getByRole('group', { name: 'Osc 1' });
-  await expect(osc1.locator('.knob[data-placeholder]')).toHaveCount(3);
-  await expect(osc1.getByRole('slider')).toHaveCount(1); // only Pulse Width is a control
-  const rows = async () => page.evaluate(() => [...document.querySelectorAll('[aria-label="Osc 1"] .knob-dial, [aria-label="Osc 2"] .knob-dial')].filter((d) => d.checkVisibility({ visibilityProperty: true })).map((d) => { const r = d.getBoundingClientRect(); return `${Math.round(r.left)},${Math.round(r.top)}`; }).sort());
-  const before = await rows();
+  const tuning = page.getByRole('group', { name: 'Osc 2 tuning' });
+  await expect(tuning.getByRole('slider')).toHaveCount(3);
+  const state = async () =>
+    page.evaluate(() =>
+      [...document.querySelectorAll('[aria-label="Osc 2 tuning"] .knob')].map((k) => {
+        const r = k.querySelector('.knob-dial')!.getBoundingClientRect();
+        return `${k.querySelector('.knob-label')!.textContent} ${Math.round(r.left)},${Math.round(r.top)} inactive=${k.hasAttribute('data-inactive')}`;
+      }),
+    );
+  const onOsc1 = await state();
+  expect(onOsc1.every((s) => s.endsWith('inactive=true'))).toBe(true); // Osc 2 is mixed out in Init
   await page.getByRole('tab', { name: /Osc 2/ }).click();
-  expect(await rows()).toEqual(before); // the four dials are in the same four places on either tab
+  expect(await state()).toEqual(onOsc1);
+  await page.getByRole('group', { name: 'Mixer' }).getByRole('slider', { name: 'Osc 2' }).focus();
+  await page.keyboard.press('ArrowUp');
+  await expect(tuning.locator('.knob[data-inactive]')).toHaveCount(0);
+  await page.getByRole('tab', { name: 'Osc 1' }).click();
+  await expect(tuning.locator('.knob[data-inactive]')).toHaveCount(0); // still awake on the other tab
 });

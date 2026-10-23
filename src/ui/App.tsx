@@ -16,7 +16,7 @@ import { positionToValue, valueToPosition } from '../patch/taper';
 import { loadOverlays, saveOverlays, toggleOverlay } from '../viewers/overlays';
 import { INITIAL_VIEWER_STATE, viewerReducer } from '../viewers/viewerState';
 import type { ViewSettings } from '../viewers/viewSettings';
-import { Knob, KnobPlaceholder } from './Knob';
+import { Knob } from './Knob';
 import { OverlayToggles } from './OverlayToggles';
 import { TapViewers } from './TapViewers';
 import { Logo } from './Logo';
@@ -519,14 +519,6 @@ export function App() {
                           <Knob id="pulseWidth" value={patch.pulseWidth} onChange={(v) => change('pulseWidth', v)} inactive={patch.waveform !== 'pulse'} />
                         </Tooltip>
                       </div>
-                      {/* Osc 1 has no tuning of its own; the same row as Osc 2's, so the tabs match. */}
-                      <Tooltip content={TIPS.osc1Tuning}>
-                        <div className="knobs knobs-tuning">
-                          <KnobPlaceholder label="Octave" />
-                          <KnobPlaceholder label="Semitone" />
-                          <KnobPlaceholder label="Detune" />
-                        </div>
-                      </Tooltip>
                     </SubBlock>
                     ),
                   },
@@ -550,19 +542,22 @@ export function App() {
                           />
                         </Tooltip>
                       </div>
-                      <div className="knobs knobs-tuning">
-                        {(['osc2Octave', 'osc2Semitone'] as const).map((id) => (
-                          <Knob key={id} id={id} value={patch[id]} onChange={(v) => change(id, v)} inactive={patch.mixOsc2 === 0} />
-                        ))}
-                        <Tooltip content={TIPS.detune}>
-                          <Knob id="osc2Detune" value={patch.osc2Detune} onChange={(v) => change('osc2Detune', v)} inactive={patch.mixOsc2 === 0} />
-                        </Tooltip>
-                      </div>
                     </SubBlock>
                     ),
                   },
                 ]}
               />
+              {/* Osc 2's offsets from Osc 1, below both tabs: one set of knobs in one state, whichever tab shows. */}
+              <div className="knobs knobs-tuning" role="group" aria-label="Osc 2 tuning">
+                {(['osc2Octave', 'osc2Semitone'] as const).map((id) => (
+                  <Tooltip key={id} content={TIPS.tuning}>
+                    <Knob id={id} value={patch[id]} onChange={(v) => change(id, v)} inactive={patch.mixOsc2 === 0} />
+                  </Tooltip>
+                ))}
+                <Tooltip content={TIPS.detune}>
+                  <Knob id="osc2Detune" value={patch.osc2Detune} onChange={(v) => change('osc2Detune', v)} inactive={patch.mixOsc2 === 0} />
+                </Tooltip>
+              </div>
               <SubBlock title="Mixer" tip={TIPS.mixer} group>
                 <div className="knobs">
                   <Knob id="mixOsc1" value={patch.mixOsc1} onChange={(v) => change('mixOsc1', v)} />
