@@ -7,7 +7,7 @@ export type Overlays = Record<Overlay, boolean>;
  *  are there to be asked for, so the Viewers start uncluttered. */
 export const DEFAULT_OVERLAYS: Overlays = { harmonics: true, ideal: false, curve: true, guides: false };
 
-const KEY = 'synthview.overlays';
+const KEY = 'limpide.overlays';
 
 interface KeyValueStorage {
   getItem(key: string): string | null;

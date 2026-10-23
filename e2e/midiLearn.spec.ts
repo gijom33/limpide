@@ -124,7 +124,7 @@ test('a Controller moving a knob on a hidden tab brings that tab into view', asy
     target: { kind: 'param', id },
     mode: 'relative-twos',
   });
-  await page.evaluate((m) => localStorage.setItem('synthview.mappings', JSON.stringify(m)), [mapping('osc2PulseWidth', 4), mapping('pulseWidth', 9)]);
+  await page.evaluate((m) => localStorage.setItem('limpide.mappings', JSON.stringify(m)), [mapping('osc2PulseWidth', 4), mapping('pulseWidth', 9)]);
   await page.reload();
   const tabs = page.getByRole('tablist', { name: 'Oscillator' });
   await expect(tabs.getByRole('tab', { name: 'Osc 1' })).toHaveAttribute('aria-selected', 'true');

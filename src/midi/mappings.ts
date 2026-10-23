@@ -42,7 +42,7 @@ interface KeyValueStorage {
   setItem(key: string, value: string): void;
 }
 
-const KEY = 'synthview.mappings';
+const KEY = 'limpide.mappings';
 const MODES = ['absolute', 'relative-twos', 'relative-centred', 'trigger'];
 
 export const sameControl = (a: Control, b: Control) =>

@@ -34,9 +34,9 @@ describe('Viewer overlays', () => {
 
   it('falls back to defaults for anything missing or garbled in storage', () => {
     expect(loadOverlays(memoryStorage())).toEqual(DEFAULT_OVERLAYS);
-    expect(loadOverlays(memoryStorage({ 'synthview.overlays': '{not json' }))).toEqual(DEFAULT_OVERLAYS);
+    expect(loadOverlays(memoryStorage({ 'limpide.overlays': '{not json' }))).toEqual(DEFAULT_OVERLAYS);
     // "ghost" was an overlay once: a choice saved for it is simply ignored now.
-    expect(loadOverlays(memoryStorage({ 'synthview.overlays': '{"guides":true,"ghost":false,"bogus":1,"curve":"yes"}' }))).toEqual({
+    expect(loadOverlays(memoryStorage({ 'limpide.overlays': '{"guides":true,"ghost":false,"bogus":1,"curve":"yes"}' }))).toEqual({
       ...DEFAULT_OVERLAYS,
       guides: true,
     });

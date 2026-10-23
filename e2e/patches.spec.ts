@@ -81,7 +81,7 @@ test('a Patch exports as a file and imports back', async ({ page }) => {
   const download = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Export file' }).click();
   const file = await (await download).path();
-  expect(JSON.parse(readFileSync(file, 'utf8'))).toMatchObject({ app: 'synthview', version: 1 });
+  expect(JSON.parse(readFileSync(file, 'utf8'))).toMatchObject({ app: 'limpide', version: 1 });
 
   await page.getByRole('button', { name: 'Previous Preset' }).click(); // back to Init
   await patchName(page).click();

@@ -36,8 +36,13 @@ describe('JSON files', () => {
     expect(patchFromJSON(patchToJSON(custom()))).toEqual(custom());
   });
 
-  it('marks the file with the format id (the former name, so older files still load) and a version', () => {
-    expect(JSON.parse(patchToJSON(custom()))).toMatchObject({ app: 'synthview', version: 1 });
+  it('marks the file as Limpide’s, with a format version', () => {
+    expect(JSON.parse(patchToJSON(custom()))).toMatchObject({ app: 'limpide', version: 1 });
+  });
+
+  it('still reads files exported under the app’s former name', () => {
+    const text = JSON.stringify({ app: 'synthview', version: 1, patch: { cutoff: 500 } });
+    expect(patchFromJSON(text).cutoff).toBe(500);
   });
 
   it('rejects files that are not Limpide Patches, with a clear reason', () => {
@@ -46,7 +51,7 @@ describe('JSON files', () => {
   });
 
   it('sanitises what it reads', () => {
-    const text = JSON.stringify({ app: 'synthview', version: 1, patch: { cutoff: 1e9, extra: 1 } });
+    const text = JSON.stringify({ app: 'limpide', version: 1, patch: { cutoff: 1e9, extra: 1 } });
     expect(patchFromJSON(text)).toEqual({ ...defaultPatch(), cutoff: 20000 });
   });
 });

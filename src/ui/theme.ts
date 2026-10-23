@@ -1,6 +1,6 @@
 export type Theme = 'dark' | 'light';
 
-const KEY = 'synthview.theme';
+const KEY = 'limpide.theme';
 
 export function loadTheme(): Theme {
   try {

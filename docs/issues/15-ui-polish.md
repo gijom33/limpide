@@ -19,7 +19,7 @@
 ## Checklist
 
 - [x] Ticket written; rules agreed
-- [x] The SynthView name is visible at every width (test at 872, 1000, 1100 and 1440 px)
+- [x] The Limpide name is visible at every width (test at 872, 1000, 1100 and 1440 px)
 - [x] Done lives in the MIDI panel; the header shows Learning; the bar has no button (tests updated)
 - [x] One knob pitch per knob size, rows left-aligned, envelope wraps 3+2 in compact mode (test: every row's dial pitch is equal)
 - [x] Label and value lines have fixed heights

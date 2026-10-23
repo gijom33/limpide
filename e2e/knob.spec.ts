@@ -62,7 +62,7 @@ test('a mapped knob’s marker takes no room', async ({ page }) => {
   const before = await knobLayout(page);
   await page.evaluate(() =>
     localStorage.setItem(
-      'synthview.mappings',
+      'limpide.mappings',
       JSON.stringify(
         ['cutoff', 'resonance', 'velocityCutoff'].map((id, i) => ({
           control: { kind: 'cc', channel: 1, number: 70 + i },
@@ -75,5 +75,5 @@ test('a mapped knob’s marker takes no room', async ({ page }) => {
   await page.reload();
   await expect(page.getByRole('region', { name: 'Filter' }).locator('.knob[data-mapped]')).toHaveCount(3);
   expect(await knobLayout(page)).toEqual(before);
-  await page.evaluate(() => localStorage.removeItem('synthview.mappings'));
+  await page.evaluate(() => localStorage.removeItem('limpide.mappings'));
 });

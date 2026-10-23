@@ -80,7 +80,7 @@ export function PatchBar({ name, changed, patch, library, onLoad }: Props) {
     if (!file) return;
     try {
       const imported = patchFromJSON(await file.text());
-      onLoad(file.name.replace(/\.limpide\.json$|\.synthview\.json$|\.json$/i, ''), imported);
+      onLoad(file.name.replace(/\.limpide\.json$|\.json$/i, ''), imported);
       setStatus(`Imported “${file.name}”.`);
     } catch (error) {
       setStatus((error as Error).message);

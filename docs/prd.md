@@ -8,7 +8,7 @@ I've twisted knobs on synthesizers for years, but I don't really understand *why
 
 ## Solution
 
-Limpide (formerly SynthView) is a browser-based subtractive synthesizer laid out as its own signal-flow diagram: Oscillators → Mixer → Filter → Amp, left to right, with Viewers under each stage.
+Limpide (formerly Limpide) is a browser-based subtractive synthesizer laid out as its own signal-flow diagram: Oscillators → Mixer → Filter → Amp, left to right, with Viewers under each stage.
 
 - **Seeing the subtraction:** each Tap has a cycle-locked Scope and a Spectrum. The Filter's real Response Curve is drawn over the Spectrum, so the Harmonics it cuts can be read against it.
 - **Harmonics against theory:** Harmonic Markers name each Harmonic, and the Waveform's Ideal Reference shows what theory predicts.

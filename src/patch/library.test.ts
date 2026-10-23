@@ -51,12 +51,12 @@ describe('Patch library', () => {
   });
 
   it('sanitises stored Patches, so ones saved by older versions still load', () => {
-    const storage = memoryStorage({ 'synthview.patches': JSON.stringify({ Old: { cutoff: 800 } }) });
+    const storage = memoryStorage({ 'limpide.patches': JSON.stringify({ Old: { cutoff: 800 } }) });
     expect(createLibrary(storage).get('Old')).toEqual({ ...defaultPatch(), cutoff: 800 });
   });
 
   it('treats garbled or unavailable storage as empty, without failing', () => {
-    expect(createLibrary(memoryStorage({ 'synthview.patches': '{nope' })).list()).toEqual([]);
+    expect(createLibrary(memoryStorage({ 'limpide.patches': '{nope' })).list()).toEqual([]);
     const library = createLibrary(brokenStorage);
     expect(library.list()).toEqual([]);
     expect(library.loadCurrent()).toBeUndefined();

@@ -7,7 +7,7 @@ async function play(page: Page, patch: Record<string, unknown>) {
   await page.addInitScript((p) => {
     if (sessionStorage.getItem('seeded')) return;
     localStorage.clear();
-    localStorage.setItem('synthview.current', JSON.stringify(p));
+    localStorage.setItem('limpide.current', JSON.stringify(p));
     sessionStorage.setItem('seeded', 'true');
   }, patch);
   await page.goto('/');

@@ -53,7 +53,7 @@ describe('Mapping store', () => {
 
   it('keeps choice targets (a Waveform) and drops unknown ones', () => {
     const storage = memoryStorage({
-      'synthview.mappings': JSON.stringify([
+      'limpide.mappings': JSON.stringify([
         { control: { kind: 'cc', channel: 1, number: 7 }, target: { kind: 'choice', id: 'waveform' }, mode: 'relative-twos' },
         { control: { kind: 'cc', channel: 1, number: 8 }, target: { kind: 'choice', id: 'colour' }, mode: 'relative-twos' },
       ]),
@@ -81,14 +81,14 @@ describe('Mapping store', () => {
 
   it('drops stored Mappings it cannot use (unknown targets, garbled entries) and survives broken storage', () => {
     const storage = memoryStorage({
-      'synthview.mappings': JSON.stringify([
+      'limpide.mappings': JSON.stringify([
         cutoffOnKnob,
         { ...cutoffOnKnob, target: { kind: 'param', id: 'wobble' } },
         42,
       ]),
     });
     expect(createMappingStore(storage).list()).toEqual([cutoffOnKnob]);
-    expect(createMappingStore(memoryStorage({ 'synthview.mappings': '{nope' })).list()).toEqual([]);
+    expect(createMappingStore(memoryStorage({ 'limpide.mappings': '{nope' })).list()).toEqual([]);
     const broken = createMappingStore(brokenStorage);
     expect(() => broken.set(cutoffOnKnob)).not.toThrow();
     expect(broken.list()).toEqual([cutoffOnKnob]); // still works for this visit
