@@ -7,11 +7,15 @@ export const PRESET_GROUPS = [
   'Shapes',
   'Intervals',
   'Filter',
+  'Envelope',
+  'LFO',
   'Bass',
   'Leads',
   'Keys & Plucks',
+  'Pianos',
   'Pads',
   'Chords',
+  'Drums',
   'Movement & Effects',
 ] as const;
 export type PresetGroup = (typeof PRESET_GROUPS)[number];
@@ -91,6 +95,53 @@ group('Filter', [
   }],
   ['Velocity Bite', 'Velocity opens the Filter: tap a MIDI pad softly then hard (or click low on a piano key) and watch the Effective Cutoff jump.', {
     cutoff: 300, resonance: 0.4, filterSlope: 24, velocityCutoff: 1, filterEnvAmount: 2, filterDecay: 0.3, filterSustain: 0.2, ampSustain: 0.8,
+  }],
+]);
+
+// The same open saw under different Envelopes: the Timeline draws each contour.
+const SAW = { cutoff: 20000, resonance: 0 } as const;
+group('Envelope', [
+  ['Gate', 'No shape at all: on with the key and off with it, a rectangle on the Timeline.', {
+    ...SAW, ampAttack: 0.001, ampDecay: 0.001, ampSustain: 1, ampRelease: 0.01,
+  }],
+  ['Pluck Shape', 'Attack at once, then Decay to nothing: a spike on the Timeline that fades whether or not the key stays down.', {
+    ...SAW, ampAttack: 0.001, ampDecay: 0.25, ampSustain: 0, ampRelease: 0.2,
+  }],
+  ['Swell', 'A slow Attack: the sound takes a second and a half to arrive, and the Timeline shows the ramp.', {
+    ...SAW, ampAttack: 1.5, ampDecay: 0.5, ampSustain: 0.9, ampRelease: 1.5,
+  }],
+  ['Long Tail', 'A Release that outlasts the key by four seconds: let go and watch the tail cross the Timeline.', {
+    ...SAW, ampAttack: 0.005, ampDecay: 0.1, ampSustain: 0.8, ampRelease: 4,
+  }],
+  ['Two Speeds', 'The Filter Envelope snaps while the Amp Envelope rises slowly: two curves on the Timeline, two speeds.', {
+    cutoff: 400, resonance: 0.2, filterEnvAmount: 3, filterAttack: 0.001, filterDecay: 0.15, filterSustain: 0,
+    ampAttack: 0.3, ampDecay: 0.3, ampSustain: 0.9, ampRelease: 0.4,
+  }],
+  ['Reverse Filter', 'A negative Envelope Amount: the Cutoff starts three octaves down and rises to its knob as the Envelope falls.', {
+    cutoff: 4000, resonance: 0.2, filterEnvAmount: -3, filterAttack: 0.001, filterDecay: 0.5, filterSustain: 0,
+    ampAttack: 0.002, ampSustain: 0.8, ampRelease: 0.3,
+  }],
+]);
+
+// The LFO aimed at each destination, at each speed; the Timeline and the Response Curve show it move.
+group('LFO', [
+  ['Slow Vibrato', 'A sine LFO on the pitch at 2 Hz: every Harmonic in the Spectrum sways together, and the Scope stays locked through it.', {
+    cutoff: 6000, resonance: 0, ampSustain: 1, lfoDestination: 'pitch', lfoRate: 2, lfoAmount: 0.3,
+  }],
+  ['Fast Vibrato', 'The same depth at 8 Hz: a nervous shimmer rather than a sway. Compare with Slow Vibrato.', {
+    cutoff: 6000, resonance: 0, ampSustain: 1, lfoDestination: 'pitch', lfoRate: 8, lfoAmount: 0.3,
+  }],
+  ['Deep Sweep', 'A full-depth sine LFO on a resonant Cutoff, once every five seconds: the Response Curve crosses the whole Spectrum.', {
+    cutoff: 800, resonance: 0.5, ampSustain: 1, lfoDestination: 'cutoff', lfoRate: 0.2, lfoAmount: 1,
+  }],
+  ['Stepped', 'A square LFO on the Cutoff: no sweep, just two places, and the Response Curve hops between them.', {
+    cutoff: 600, resonance: 0.4, ampSustain: 1, lfoWaveform: 'square', lfoDestination: 'cutoff', lfoRate: 1, lfoAmount: 0.6,
+  }],
+  ['Ramp', 'A saw LFO on the Cutoff: it climbs for a second, then drops at once. Watch the Timeline’s Effective Cutoff draw the teeth.', {
+    cutoff: 600, resonance: 0.4, ampSustain: 1, lfoWaveform: 'saw', lfoDestination: 'cutoff', lfoRate: 1, lfoAmount: 0.6,
+  }],
+  ['Sidebands', 'Vibrato at 20 Hz is too fast to hear as vibrato: each Harmonic grows sidebands either side of it in the Spectrum.', {
+    cutoff: 8000, resonance: 0, ampSustain: 1, lfoDestination: 'pitch', lfoRate: 20, lfoAmount: 1,
   }],
 ]);
 
@@ -191,6 +242,34 @@ group('Keys & Plucks', [
   }],
 ]);
 
+// Pianos: a bright strike that darkens as it decays, harder for a harder hit, on four Voices.
+group('Pianos', [
+  ['Piano', 'A pulse and a saw a few cents apart, a Filter Envelope that opens on the strike and closes as the Note decays, and four Voices.', {
+    voices: 4, waveform: 'pulse', pulseWidth: 0.35, osc2Waveform: 'saw', osc2Detune: 4, mixOsc2: 0.5,
+    cutoff: 1500, resonance: 0.1, filterEnvAmount: 2, filterDecay: 0.6, filterSustain: 0.1, filterRelease: 0.3, keyTrack: 0.7, velocityCutoff: 0.6,
+    ampAttack: 0.002, ampDecay: 2.5, ampSustain: 0.1, ampRelease: 0.4,
+  }],
+  ['Bright Piano', 'The same piano with the Filter open wider and Velocity opening it further: a hard, percussive strike.', {
+    voices: 4, waveform: 'pulse', pulseWidth: 0.35, osc2Waveform: 'saw', osc2Detune: 4, mixOsc2: 0.5,
+    cutoff: 3000, resonance: 0.1, filterEnvAmount: 2.5, filterDecay: 0.4, filterSustain: 0.1, filterRelease: 0.3, keyTrack: 0.8, velocityCutoff: 0.8,
+    ampAttack: 0.002, ampDecay: 1.8, ampSustain: 0.1, ampRelease: 0.4,
+  }],
+  ['Felt Piano', 'Soft and dark, as if a felt strip lay over the strings: a triangle through a low Cutoff with a slow, long decay.', {
+    voices: 4, waveform: 'triangle', osc2Waveform: 'triangle', osc2Detune: 3, mixOsc2: 0.4,
+    cutoff: 900, resonance: 0, filterEnvAmount: 1, filterDecay: 0.8, filterSustain: 0.2, keyTrack: 0.5, velocityCutoff: 0.4,
+    ampAttack: 0.01, ampDecay: 3, ampSustain: 0.2, ampRelease: 0.8,
+  }],
+  ['Honky-Tonk', 'A second saw 14 cents off: the two strings of a neglected upright beat against each other, and the Scope never settles.', {
+    voices: 4, waveform: 'pulse', pulseWidth: 0.35, osc2Waveform: 'saw', osc2Detune: 14, mixOsc2: 0.9,
+    cutoff: 1800, resonance: 0.1, filterEnvAmount: 2, filterDecay: 0.6, filterSustain: 0.1, filterRelease: 0.3, keyTrack: 0.7, velocityCutoff: 0.6,
+    ampAttack: 0.002, ampDecay: 2.2, ampSustain: 0.1, ampRelease: 0.4,
+  }],
+  ['Toy Piano', 'A sine with a square two octaves up, short and tinny: the metal tines of a toy, on four Voices.', {
+    voices: 4, waveform: 'sine', osc2Waveform: 'square', osc2Octave: 2, mixOsc2: 0.3, cutoff: 5000, resonance: 0, keyTrack: 0.8,
+    ampAttack: 0.001, ampDecay: 0.8, ampSustain: 0, ampRelease: 0.3,
+  }],
+]);
+
 group('Pads', [
   ['Pad', 'Slow Envelopes swell the sound in and out, detuned saws and a breath of Noise thicken it, and the LFO keeps the Filter moving.', {
     osc2Detune: -14, mixOsc2: 0.8, mixNoise: 0.05,
@@ -264,6 +343,32 @@ group('Chords', [
   ['Bell Chords', 'Twelfth-stacked sines on four Voices with a long decay: a chord of bells, each Note fading at its own pace while the Timeline shows the newest.', {
     voices: 4, waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, osc2Semitone: 7, osc2Detune: 4, mixOsc2: 0.6, ...OPEN,
     ampAttack: 0.002, ampDecay: 3, ampSustain: 0, ampRelease: 2,
+  }],
+]);
+
+// Drums: short Envelopes on Noise and a self-oscillating Filter; each hit is one Preset.
+group('Drums', [
+  ['Kick', 'No Oscillator: a Filter at full Resonance sings on a little Noise, and the Filter Envelope drops its pitch three octaves in a flash.', {
+    mixOsc1: 0, mixNoise: 0.4, cutoff: 55, resonance: 1, filterSlope: 24, filterEnvAmount: 3, filterAttack: 0.001, filterDecay: 0.08, filterSustain: 0,
+    ampAttack: 0.001, ampDecay: 0.45, ampSustain: 0, ampRelease: 0.2,
+  }],
+  ['Snare', 'Noise and a short triangle through a low-pass whose Envelope snaps shut: the crack, then the rattle.', {
+    waveform: 'triangle', mixOsc1: 0.5, mixNoise: 1, cutoff: 1500, resonance: 0.3, filterEnvAmount: 2.5, filterDecay: 0.12, filterSustain: 0, velocityCutoff: 0.5,
+    ampAttack: 0.001, ampDecay: 0.22, ampSustain: 0, ampRelease: 0.15,
+  }],
+  ['Hi-hat', 'Noise alone through a high-pass, gone in a tenth of a second: nothing but the top of the Spectrum.', {
+    mixOsc1: 0, mixNoise: 1, filterMode: 'highpass', cutoff: 7000, resonance: 0.3, ampAttack: 0.001, ampDecay: 0.08, ampSustain: 0, ampRelease: 0.05,
+  }],
+  ['Open Hat', 'The same Noise, let ring for half a second: compare the Amp Envelope with Hi-hat on the Timeline.', {
+    mixOsc1: 0, mixNoise: 1, filterMode: 'highpass', cutoff: 6000, resonance: 0.3, ampAttack: 0.001, ampDecay: 0.5, ampSustain: 0, ampRelease: 0.3,
+  }],
+  ['Tom', 'A singing Filter an octave above the Kick with a gentler drop, and a touch of Noise for the skin.', {
+    mixOsc1: 0, mixNoise: 0.3, cutoff: 120, resonance: 1, filterSlope: 24, filterEnvAmount: 1.5, filterAttack: 0.001, filterDecay: 0.15, filterSustain: 0,
+    ampAttack: 0.001, ampDecay: 0.4, ampSustain: 0, ampRelease: 0.2,
+  }],
+  ['Cowbell', 'Two squares a fifth apart through a band-pass: the clank of two tones that do not quite agree, cut short.', {
+    waveform: 'square', osc2Waveform: 'square', osc2Semitone: 7, mixOsc2: 0.8, filterMode: 'bandpass', cutoff: 800, resonance: 0.6,
+    ampAttack: 0.001, ampDecay: 0.3, ampSustain: 0, ampRelease: 0.15,
   }],
 ]);
 
