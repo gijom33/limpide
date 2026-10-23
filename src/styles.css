@@ -323,9 +323,10 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .wordmark .logo { flex: none; }
 .wordmark-view { font-weight: 400; color: var(--muted); }
 /* Both Oscillator tabs make the same choice, sized for Osc 2's four knobs: knobs beside the Waveform picker
-   only when all of them fit there, otherwise beneath it, so Pulse Width stays put when switching tabs. */
+   only when all of them fit there (picker 234 + gap 8 + four knob columns 276 = 518 px), otherwise beneath it,
+   so Pulse Width stays put when switching tabs. */
 .tab-panel .sub-block > .knobs { flex: 1 1 100%; }
-@container (min-width: 490px) {
+@container (min-width: 520px) {
   .tab-panel .sub-block > .knobs { flex: 1 1 auto; }
 }
 /* The Oscillator tabs share the stage heading's line when there is room (it is otherwise empty), saving a line. */

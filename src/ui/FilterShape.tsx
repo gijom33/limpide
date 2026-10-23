@@ -24,7 +24,7 @@ export function FilterShape({ mode, slope, onChange }: Props) {
   return (
     <div className="filter-shape">
       <Tooltip content={TIPS.filterMode}>
-        <div className="segmented filter-modes" role="radiogroup" aria-label="Filter Mode" {...learnMode}>
+        <div className="segmented icon-picker filter-modes" role="radiogroup" aria-label="Filter Mode" {...learnMode}>
           {MODES.map((m) => (
             <button key={m.mode} type="button" role="radio" aria-checked={m.mode === mode} aria-label={m.label} onClick={() => onChange({ mode: m.mode })}>
               <svg viewBox="0 0 24 16" width="24" height="16" aria-hidden="true">

@@ -20,16 +20,15 @@ interface Props {
   label: string;
   value: Waveform;
   onChange(waveform: Waveform): void;
-  /** Icons only (names stay available to tooltips and screen readers). */
-  compact?: boolean;
   /** Which Oscillator's Waveform this is, for MIDI Learn. */
   choice: 'waveform' | 'osc2Waveform';
 }
 
-export function WaveformPicker({ label, value, onChange, compact, choice }: Props) {
+/** The Waveforms as icons in one segmented track (their names are the radios' accessible labels). */
+export function WaveformPicker({ label, value, onChange, choice }: Props) {
   const learnable = useLearnable({ kind: 'choice', id: choice });
   return (
-    <div className="waveforms" data-compact={compact || undefined} role="radiogroup" aria-label={label} {...learnable}>
+    <div className="segmented icon-picker waveforms" role="radiogroup" aria-label={label} {...learnable}>
       {WAVEFORM_ORDER.map((w) => (
         <button
           key={w}
@@ -37,13 +36,11 @@ export function WaveformPicker({ label, value, onChange, compact, choice }: Prop
           role="radio"
           aria-checked={w === value}
           aria-label={LABELS[w]}
-          className="waveform"
           onClick={() => onChange(w)}
         >
-          <svg viewBox="0 0 28 16" width="28" height="16" aria-hidden="true">
+          <svg viewBox="0 0 28 16" width="24" height="14" aria-hidden="true">
             <path d={ICONS[w]} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
           </svg>
-          {!compact && <span>{LABELS[w]}</span>}
         </button>
       ))}
     </div>

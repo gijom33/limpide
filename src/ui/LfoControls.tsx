@@ -37,7 +37,7 @@ export function LfoControls({ patch, onParam, onPatch }: Props) {
       <SubBlock title="LFO" tip={TIPS.lfo} group>
         <div className="lfo-rows">
           <div className="lfo-pickers">
-            <div className="segmented lfo-shapes" role="radiogroup" aria-label="LFO Waveform" {...learnShape}>
+            <div className="segmented icon-picker lfo-shapes" role="radiogroup" aria-label="LFO Waveform" {...learnShape}>
               {SHAPES.map((s) => (
                 <button
                   key={s.waveform}

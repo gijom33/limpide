@@ -514,7 +514,7 @@ export function App() {
                     label: 'Osc 1',
                     content: (
                     <SubBlock title="Osc 1" group showTitle={false}>
-                      <WaveformPicker label="Osc 1 Waveform" choice="waveform" compact value={patch.waveform} onChange={(w) => setPatch((p) => setWaveform(p, w))} />
+                      <WaveformPicker label="Osc 1 Waveform" choice="waveform" value={patch.waveform} onChange={(w) => setPatch((p) => setWaveform(p, w))} />
                       <div className="knobs">
                         <Tooltip content={TIPS.pulseWidth}>
                           <Knob id="pulseWidth" value={patch.pulseWidth} onChange={(v) => change('pulseWidth', v)} inactive={patch.waveform !== 'pulse'} />
@@ -531,7 +531,7 @@ export function App() {
                     badgeLabel: 'sounding',
                     content: (
                     <SubBlock title="Osc 2" group showTitle={false}>
-                      <WaveformPicker label="Osc 2 Waveform" choice="osc2Waveform" compact value={patch.osc2Waveform} onChange={(w) => setPatch((p) => setWaveform(p, w, 'osc2'))} />
+                      <WaveformPicker label="Osc 2 Waveform" choice="osc2Waveform" value={patch.osc2Waveform} onChange={(w) => setPatch((p) => setWaveform(p, w, 'osc2'))} />
                       <div className="knobs">
                         {/* Pulse Width first, where Osc 1 has it, so it stays put when switching tabs. */}
                         <Tooltip content={TIPS.pulseWidth}>
