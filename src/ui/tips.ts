@@ -48,8 +48,8 @@ export const TIPS = {
   },
   tapSource: {
     title: 'Viewers follow',
-    body: 'Newest: every Viewer shows the Note you played last, alone, so Cycle Lock, the Harmonic Markers and the Timeline stay exact. All: the Taps carry every Voice at once, so a chord is seen as it is heard.',
-    how: 'With All, the Scope cannot lock to a chord and the Markers still follow the newest Note. One Voice shows the same either way.',
+    body: 'Newest: every Viewer shows the Note you played last, alone, so Cycle Lock, the Harmonic Markers and the Timeline stay exact. All: the Amp Tap carries every Voice at once, so a chord is seen there as it is heard; the Oscillator and Filter Taps still show the newest Note.',
+    how: 'With All, the Amp Scope cannot lock to a chord. One Voice shows the same either way.',
   },
   voices: {
     title: 'Voices',

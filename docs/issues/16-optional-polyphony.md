@@ -15,5 +15,5 @@
 - [x] Engine tests: a chord sounds both Notes; the Oscillator Tap shows only the newest Note; stealing when all Voices are taken; back to 1 Voice releases the rest
 - [x] UI: "Voices 1 2 3 4" on the Amp heading line, with a tooltip; piano and MIDI play chords
 - [x] e2e: the control sets the Patch; a two-key chord lights both keys and the Viewers keep showing the newest Note
-- [x] Display: "Viewers follow: Newest | All" (default Newest); with All the Taps carry every Voice summed
+- [x] Display: "Viewers follow: Newest | All" (default Newest); with All the Amp Tap carries every Voice summed, the other Taps the newest Note
 - [x] Osc 1 tab shows placeholder Octave, Semitone and Detune knobs, so both tabs lay out alike

@@ -712,22 +712,28 @@ describe('several Voices (ADR-0007)', () => {
     expect(engine.fundamental()).toBeCloseTo(164.8, 0);
   });
 
-  it('carries the whole chord at the Taps when asked to show all Voices', async () => {
+  it('carries the whole chord at the Amp Tap only, when asked to show all Voices', async () => {
     const ctx = new OfflineAudioContext(1, SR * 0.6, SR);
     const engine = createSynthEngine(ctx);
     engine.applyPatch({ ...defaultPatch(), ...steady, voices: 4 });
     engine.setTapSource('all');
     chord(engine);
-    const captured = ctx.suspend(0.5).then(() => {
-      const s = new Float32Array(engine.taps.oscillator.fftSize);
-      engine.taps.oscillator.getFloatTimeDomainData(s);
-      void ctx.resume();
+    const read = (a: AnalyserNode) => {
+      const s = new Float32Array(a.fftSize);
+      a.getFloatTimeDomainData(s);
       return s;
+    };
+    const captured = ctx.suspend(0.5).then(() => {
+      const taps = { oscillator: read(engine.taps.oscillator), filter: read(engine.taps.filter), amp: read(engine.taps.amp) };
+      void ctx.resume();
+      return taps;
     });
     await ctx.startRendering();
-    const osc = await captured;
-    expect(dB(toneAmplitude(osc, SR, 110) / toneAmplitude(osc, SR, 164.8))).toBeGreaterThan(-3);
-    engine.setTapSource('newest'); // and back: only the newest Note again
+    const taps = await captured;
+    const older = (s: Float32Array) => dB(toneAmplitude(s, SR, 110) / toneAmplitude(s, SR, 164.8));
+    expect(older(taps.amp)).toBeGreaterThan(-3); // both Notes at the Amp Tap
+    expect(older(taps.oscillator)).toBeLessThan(-30); // the newest alone before it, so Cycle Lock and the Markers stay exact
+    expect(older(taps.filter)).toBeLessThan(-30);
   });
 
   it('releases one Note of a chord and keeps the other sounding', async () => {

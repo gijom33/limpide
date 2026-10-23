@@ -7,10 +7,14 @@ import { noteToFrequency } from '../music/pitch';
 import { GLIDE_OFF, PARAMS, type FilterMode, type Patch, type Voices } from '../patch/patch';
 import { bandwidthOctaves } from '../modulation/passBand';
 
-/** Which Voices the Taps listen to: the newest Note's alone (the default, ADR-0007) or all of them summed. */
+/**
+ * Which Voices the Amp Tap listens to: the newest Note's alone (the default, ADR-0007), or all of them summed, so
+ * a chord is seen as it is heard. The Oscillator and Filter Taps always follow the newest Note.
+ */
 export type TapSource = 'newest' | 'all';
+type TapName = keyof Taps;
 
-/** Listening points, one analyser each: in the Voice of the newest Note, or in every Voice (ADR-0007). */
+/** Listening points, one analyser each, in the Voice of the newest Note (the Amp's, in every Voice when asked). */
 export interface Taps {
   oscillator: AnalyserNode;
   filter: AnalyserNode;
@@ -53,7 +57,7 @@ export interface SynthEngine {
   filterResponse(frequencies: Float32Array<ArrayBuffer>): Float32Array;
   /** Whether the output's safety limiter bent the sound in its last frame (the summed Voices, after the master). */
   limiting(): boolean;
-  /** What the Taps listen to: the Voice of the newest Note (the default), or every Voice summed. */
+  /** What the Amp Tap listens to: the Voice of the newest Note (the default), or every Voice summed. */
   setTapSource(source: TapSource): void;
   readonly taps: Taps;
 }
@@ -343,16 +347,12 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
       keyTrackAmount.gain.setValueAtTime(next.keyTrack * 100, t); // cents per semitone
     },
 
-    /** The Taps listen to this Voice: side branches, so observing never alters the sound. */
-    attach(taps: Taps) {
-      mixer.connect(taps.oscillator);
-      filter2.connect(taps.filter);
-      amp.connect(taps.amp);
+    /** A Tap listens to this Voice's stage: a side branch, so observing never alters the sound. */
+    attach(taps: Taps, tap: TapName) {
+      ({ oscillator: mixer, filter: filter2, amp } as const)[tap].connect(taps[tap]);
     },
-    detach(taps: Taps) {
-      mixer.disconnect(taps.oscillator);
-      filter2.disconnect(taps.filter);
-      amp.disconnect(taps.amp);
+    detach(taps: Taps, tap: TapName) {
+      ({ oscillator: mixer, filter: filter2, amp } as const)[tap].disconnect(taps[tap]);
     },
   };
   return voice;
@@ -412,12 +412,17 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   /** The Voice of the newest Note: the Taps listen to it (or to every Voice, when asked). */
   let lead: Voice | null = null;
   let tapSource: TapSource = 'newest';
-  const listening = new Set<Voice>();
-  /** Connect the Taps to the Voices they should hear now, and to nothing else. */
+  const listening = new Map<Voice, Set<TapName>>(voices.map((v) => [v, new Set<TapName>()]));
+  /** Connect each Tap to the Voices it should hear now, and to nothing else. */
   const listen = () => {
-    const wanted = new Set(tapSource === 'all' ? voices : lead ? [lead] : []);
-    for (const v of listening) if (!wanted.has(v)) { v.detach(taps); listening.delete(v); }
-    for (const v of wanted) if (!listening.has(v)) { v.attach(taps); listening.add(v); }
+    for (const v of voices) {
+      const wanted = new Set<TapName>();
+      if (v === lead) wanted.add('oscillator').add('filter').add('amp');
+      if (tapSource === 'all') wanted.add('amp');
+      const current = listening.get(v)!;
+      for (const tap of current) if (!wanted.has(tap)) { v.detach(taps, tap); current.delete(tap); }
+      for (const tap of wanted) if (!current.has(tap)) { v.attach(taps, tap); current.add(tap); }
+    }
   };
 
   const at = (time?: number) => time ?? ctx.currentTime;
