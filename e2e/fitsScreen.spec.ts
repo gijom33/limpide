@@ -164,12 +164,19 @@ test('the Timeline plot is as tall as its controls, whatever size the window was
   await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);
   const measure = () =>
     page.evaluate(() => ({
-      plot: Math.round(document.querySelector('.timeline-body canvas')!.getBoundingClientRect().height),
+      plot: Math.round(document.querySelector('.timeline-plot canvas')!.getBoundingClientRect().height),
       controls: Math.round(document.querySelector('.timeline-controls')!.getBoundingClientRect().height),
       viewer: Math.round(document.querySelector('canvas.scope')!.getBoundingClientRect().height),
+      keyOnTitleLine: (() => {
+        const key = document.querySelector('.timeline-key')!.getBoundingClientRect();
+        const title = document.querySelector('.timeline h2')!.getBoundingClientRect();
+        const plot = document.querySelector('.timeline-plot canvas')!.getBoundingClientRect();
+        return Math.abs(key.top + key.height / 2 - (title.top + title.height / 2)) < 4 && Math.abs(key.left - plot.left) < 2;
+      })(),
     }));
   const fresh = await measure();
   expect(fresh.plot).toBe(fresh.controls);
+  expect(fresh.keyOnTitleLine).toBe(true);
   // A narrower window, then back: the plot's own pixel size must not have grown the row.
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.waitForTimeout(300);

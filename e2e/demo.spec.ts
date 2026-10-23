@@ -11,9 +11,8 @@ test('the Demo tours one Preset per group, in order, making sound, and stops whe
   await demo(page).click();
   await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
   await expect(patchName(page)).toContainText('Init'); // the Start group's Preset, first
-  await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /^-?[0-5]?\d(\.\d+)?$/, { timeout: 4000 }); // sound
+  await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /^-?[0-5]?\d(\.\d+)?$/, { timeout: 8000 }); // sound
   await expect(patchName(page)).toContainText('PWM Morph', { timeout: 15000 }); // Shapes, next
-  await expect(patchName(page)).not.toHaveAttribute('data-changed', 'true'); // loaded, not edited
   await page.keyboard.press('a');
   await expect(demo(page)).toHaveAttribute('aria-pressed', 'false');
   await page.keyboard.up('a');

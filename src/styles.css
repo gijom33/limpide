@@ -228,13 +228,21 @@ main[data-frozen] .tap-canvases::before {
 .sub-block { display: flex; flex-direction: column; gap: var(--space-2); }
 .sub-block h3 { margin: 0; font-size: var(--text-sm); font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); align-self: flex-start; }
 
-.timeline { margin: 0 0 var(--space-4); padding: var(--space-3) var(--space-4); background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-panel); }
-.timeline h2 { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+/* The Timeline panel is a grid: the title and the key on the top row (the key over the plot it explains), the
+   controls and the plot below, the plot as tall as the controls. */
+.timeline {
+  margin: 0 0 var(--space-4); padding: var(--space-3) var(--space-4); background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-panel);
+  display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto 1fr; column-gap: var(--space-4); row-gap: var(--space-3);
+}
+.timeline h2 { grid-area: 1 / 1; margin: 0; align-self: center; }
+.timeline-key { grid-area: 1 / 2; align-self: center; }
+.timeline-controls { grid-area: 2 / 1; }
+.timeline-plot { grid-area: 2 / 2; }
 /* The plot box: as wide as the panel leaves it; its height is the controls' beside it on wide windows (below,
    where the controls sit above it, a height of its own). The canvas fills the box and never sizes it. */
-.timeline-plot { position: relative; flex: 1 1 auto; min-width: 0; height: clamp(120px, 9vw, 200px); }
+.timeline-plot { position: relative; min-width: 0; height: clamp(120px, 9vw, 200px); }
 .timeline canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; background: var(--bg); border-radius: var(--radius-inner); }
-.timeline-key { display: flex; gap: 14px; font-size: var(--text-sm); text-transform: none; letter-spacing: 0; }
+.timeline-key { display: flex; gap: 14px; font-size: var(--text-sm); color: var(--muted); font-weight: 500; text-transform: none; letter-spacing: 0; }
 .timeline-key span { display: inline-flex; align-items: center; gap: 5px; }
 .timeline-key span::before { content: ''; width: 12px; height: 8px; border-radius: 2px; }
 .timeline-key [data-mark='amp']::before { background: color-mix(in srgb, var(--stage-amp) 45%, transparent); border-top: 1.5px solid var(--stage-amp); }
@@ -345,11 +353,13 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .rows { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; justify-content: space-evenly; gap: var(--space-3); }
 .rows > * { flex: none; }
 .block .sub-block { column-gap: var(--label-gap); }
-.block .sub-block > h3, .block .sub-block > .tip-anchor:first-child { flex: 0 0 var(--label-col); }
+.block .sub-block > h3, .block .sub-block > .tip-anchor:first-child { flex: 0 0 var(--label-col); align-self: center; }
 .block .sub-block h3 { letter-spacing: 0.04em; white-space: nowrap; min-width: 0; }
-/* A row of knobs: its name level with the dials, not with the whole knob. */
+/* A row of knobs: its name, and any picker on it, level with the dials, not with the whole knob. */
+.block .sub-block:has(.knob) { align-items: flex-start; }
 .block .sub-block:has(.knob) > h3, .block .sub-block:has(.knob) > .tip-anchor:first-child { align-self: flex-start; }
 .block .sub-block:has(.knob) h3 { display: flex; align-items: center; min-height: var(--knob-dial); }
+.block .sub-block:has(.knob) > .segmented { margin-top: calc((var(--knob-dial) - var(--control-h)) / 2); }
 /* A dial sits centred in its column; the row starts that much to the left, so dial edges line up with the
    segmented controls' edges. */
 .block .sub-block > h3 + .knobs, .block .sub-block > .tip-anchor + .knobs, .block .envelope-knobs { margin-left: calc((var(--knob-dial) - var(--knob-col)) / 2); }
@@ -378,7 +388,6 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .voices-field .segmented button[role='radio'] { min-width: 24px; padding: 0 6px; }
 
 /* The Timeline panel: the controls that act over time (LFO, Glide) to the left of the plot. */
-.timeline-body { display: flex; gap: var(--space-4); align-items: stretch; }
 .timeline-controls { display: flex; gap: var(--space-3); align-items: flex-end; flex: none; }
 /* Not size containers: a container has no intrinsic width, and in this content-sized column it would collapse. */
 /* Three rows (LFO shape, Destination, then the knobs with Glide beside them), so the column stays narrow
@@ -391,10 +400,11 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .lfo-pickers { display: flex; flex-direction: column; gap: 6px; flex: none; }
 @media (min-width: 861px) {
   /* The plot is exactly as tall as the LFO and Glide controls: the Viewers above get the rest of the window. */
-  .timeline-plot { height: auto; min-height: 120px; }
+  .timeline-plot { height: auto; min-height: 100px; }
 }
 @media (max-width: 860px) {
-  .timeline-body { flex-direction: column; }
+  .timeline { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto auto; }
+  .timeline h2, .timeline-key, .timeline-controls, .timeline-plot { grid-area: auto; }
 }
 
 /* The on-screen piano: the computer keyboard's 17 keys, lit while sounding. */

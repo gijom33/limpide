@@ -17,19 +17,18 @@ export function EnvelopeTimeline({ engine, view, controls }: { engine: SynthEngi
         <Tooltip content={TIPS.timeline}>
           <span className="has-tip">Envelope Timeline</span>
         </Tooltip>
-        <span className="timeline-key">
-          <span data-mark="amp">Amp Envelope</span>
-          <span data-mark="filterEnvelope">Filter Envelope</span>
-          <span data-mark="cutoff">Effective Cutoff</span>
-        </span>
       </h2>
-      <div className="timeline-body">
-        {controls}
-        {/* The plot fills a box that takes its height from the controls beside it: the canvas itself never
-            sets the row's height (its pixel size would otherwise feed back into it as the window resizes). */}
-        <div className="timeline-plot">
-          <canvas ref={canvasRef} aria-label="Envelope Timeline" />
-        </div>
+      {/* The key sits on the title line, over the plot it explains. */}
+      <span className="timeline-key">
+        <span data-mark="amp">Amp Envelope</span>
+        <span data-mark="filterEnvelope">Filter Envelope</span>
+        <span data-mark="cutoff">Effective Cutoff</span>
+      </span>
+      {controls}
+      {/* The plot fills a box that takes its height from the controls beside it: the canvas itself never
+          sets the row's height (its pixel size would otherwise feed back into it as the window resizes). */}
+      <div className="timeline-plot">
+        <canvas ref={canvasRef} aria-label="Envelope Timeline" />
       </div>
     </section>
   );

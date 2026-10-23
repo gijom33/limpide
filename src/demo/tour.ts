@@ -23,7 +23,8 @@ export interface TourStop {
   moves?: KnobMove[];
 }
 
-// The phrases are two bars from pieces everyone knows, all long out of copyright, each picked for its sound.
+// The phrases are a couple of bars from pieces everyone knows, all long out of copyright (classical, ragtime, folk),
+// or a pop idiom that is no one's song, each picked for its sound.
 export const TOUR: readonly TourStop[] = [
   // Beethoven, Ode to Joy, on the plain saw, with the Filter opening: the Harmonics appear rung by rung.
   { group: 'Start', preset: 'Init', bpm: 120, phrase: 'E3:1 E3:1 F3:1 G3:1 G3:1 F3:1 E3:1 D3:1',
@@ -35,25 +36,25 @@ export const TOUR: readonly TourStop[] = [
   // Grieg, In the Hall of the Mountain King, with the Resonance climbing until the Filter rings on its own.
   { group: 'Filter', preset: 'Resonant Ring', bpm: 124, phrase: 'B2:0.5 C#3:0.5 D3:0.5 E3:0.5 F#3:0.5 D3:0.5 F#3:1 F3:0.5 C#3:0.5 F3:1 E3:0.5 C3:0.5 E3:1',
     moves: [{ id: 'resonance', from: 0.2, to: 1 }] },
-  // Bach, Prelude in C: sixteenth-note arpeggios whose plucks grow longer on the Timeline.
-  { group: 'Envelope', preset: 'Pluck Shape', bpm: 120, phrase: 'C3:0.25 E3:0.25 G3:0.25 C4:0.25 E4:0.25 G3:0.25 C4:0.25 E4:0.25 C3:0.25 E3:0.25 G3:0.25 C4:0.25 E4:0.25 G3:0.25 C4:0.25 E4:0.25 C3:0.25 D3:0.25 A3:0.25 D4:0.25 F4:0.25 A3:0.25 D4:0.25 F4:0.25 C3:0.25 D3:0.25 A3:0.25 D4:0.25 F4:0.25 A3:0.25 D4:0.25 F4:0.25',
+  // Greensleeves, plucked, the plucks growing longer on the Timeline.
+  { group: 'Envelope', preset: 'Pluck Shape', bpm: 132, phrase: 'A3:1 C4:2 D4:1 E4:1.5 F4:0.5 E4:1 D4:2 B3:1',
     moves: [{ id: 'ampDecay', from: 0.08, to: 0.6 }] },
   // Bach, Toccata in D minor, under a sweep that speeds up.
   { group: 'LFO', preset: 'Deep Sweep', bpm: 112, phrase: 'A3:0.25 G3:0.25 A3:1.5 G3:0.25 F3:0.25 E3:0.25 D3:0.25 C#3:1 D3:2 -:2', moves: [{ id: 'lfoRate', from: 0.25, to: 3 }] },
-  // Beethoven's Fifth as an acid riff, Cutoff and Resonance opening across the bars.
-  { group: 'Bass', preset: 'Acid', bpm: 124, phrase: 'G2:0.5 G2:0.5 G2:0.5 Eb2:2 -:0.5 F2:0.5 F2:0.5 F2:0.5 D2:2 -:0.5',
+  // Oh! Susanna as an acid riff, Cutoff and Resonance opening across the bars.
+  { group: 'Bass', preset: 'Acid', bpm: 124, phrase: 'C2:0.5 D2:0.5 E2:1 G2:1 G2:1 A2:1 G2:1 E2:1 C2:1',
     moves: [{ id: 'cutoff', from: 200, to: 2500 }, { id: 'resonance', from: 0.5, to: 0.9 }] },
   // Beethoven, Für Elise, with the vibrato deepening.
   { group: 'Leads', preset: 'Lead', bpm: 124, phrase: 'E4:0.5 D#4:0.5 E4:0.5 D#4:0.5 E4:0.5 B3:0.5 D4:0.5 C4:0.5 A3:2 C3:0.5 E3:0.5 A3:0.5 B3:0.5',
     moves: [{ id: 'lfoAmount', from: 0, to: 0.5, start: 3 }] },
-  // Beethoven, Moonlight Sonata: the broken chords, the way an electric piano is played.
-  { group: 'Keys & Plucks', preset: 'Electric Piano', bpm: 112, phrase: 'C#3:0.5 E3:0.5@0.7 G#3:0.5@0.8 C#3:0.5 E3:0.5@0.7 G#3:0.5@0.8 C#3:0.5 E3:0.5@0.7 G#3:0.5@0.8 B2:0.5 E3:0.5@0.7 G#3:0.5@0.8 B2:0.5 E3:0.5@0.7 G#3:0.5@0.8 B2:0.5' },
-  // Pachelbel's Canon, the chords, on eight Voices.
-  { group: 'Pianos', preset: 'Piano', bpm: 112, phrase: 'D3+F#3+A3:1@0.7 A2+C#3+E3:1@0.7 B2+D3+F#3:1@0.8 F#2+A2+C#3:1@0.8 G2+B2+D3:1@0.9 D3+F#3+A3:1@0.9 G2+B2+D3:1 A2+C#3+E3:1' },
-  // Amazing Grace, slow, while the Filter opens: dark, then wide.
-  { group: 'Pads', preset: 'Pad', bpm: 100, phrase: 'D3:1 G3:1.5 B3:0.25 G3:0.25 B3:2 A3:1 G3:2', moves: [{ id: 'cutoff', from: 300, to: 4000 }] },
-  // Pachelbel's Canon, the chords held, with the LFO's sway deepening.
-  { group: 'Chords', preset: 'Chord Pad', bpm: 112, phrase: 'D3+F#3+A3:2 A2+C#3+E3:2 B2+D3+F#3:2 F#2+A2+C#3:2', moves: [{ id: 'lfoAmount', from: 0.1, to: 0.6 }] },
+  // Joplin, The Entertainer, on the electric piano.
+  { group: 'Keys & Plucks', preset: 'Electric Piano', bpm: 112, phrase: 'D4:0.25 D#4:0.25 E4:0.25 C5:0.5 E4:0.25 C5:0.5 E4:0.25 C5:1.25 C5:0.25 D5:0.25 D#5:0.25 E5:0.25 C5:0.25 D5:0.25 E5:0.5 B4:0.25 D5:0.5 C5:1.5' },
+  // Happy Birthday, with a bass under it, on eight Voices.
+  { group: 'Pianos', preset: 'Piano', bpm: 126, phrase: 'G3:0.5@0.7 G3:0.5@0.7 A3+C3:1 G3:1 C4+E3:1 B3+G2:2 G3:0.5@0.7 G3:0.5@0.7 A3+C3:1 G3:1 D4+G2:1 C4+C3:2' },
+  // The four chords of half of all pop songs (I, V, vi, IV), one Voice at a time, while the Filter opens.
+  { group: 'Pads', preset: 'Pad', bpm: 112, phrase: 'C3:2 G2:2 A2:2 F2:2', moves: [{ id: 'cutoff', from: 300, to: 4000 }] },
+  // The same four chords, held, with the LFO's sway deepening.
+  { group: 'Chords', preset: 'Chord Pad', bpm: 112, phrase: 'C3+E3+G3+C4:2 G2+B2+D3+G3:2 A2+C3+E3+A3:2 F2+A2+C3+F3:2', moves: [{ id: 'lfoAmount', from: 0.1, to: 0.6 }] },
   // Stomp, stomp, rest: the beat everyone claps to, with the pitch drop deepening.
   { group: 'Drums', preset: 'Kick', bpm: 120, phrase: 'C2:0.5 C2:0.5@0.8 -:1 C2:0.5 C2:0.5@0.8 -:1 C2:0.5 C2:0.5@0.8 -:1 C2:0.5 C2:0.5@0.8 -:1',
     moves: [{ id: 'filterEnvAmount', from: 2, to: 4 }] },
