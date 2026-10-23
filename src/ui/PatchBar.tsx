@@ -66,7 +66,7 @@ export function PatchBar({ name, changed, patch, library, onLoad }: Props) {
   };
   const exportFile = () => {
     const url = URL.createObjectURL(new Blob([patchToJSON(patch)], { type: 'application/json' }));
-    const a = Object.assign(document.createElement('a'), { href: url, download: `${name.replace(/[^\w -]+/g, '') || 'patch'}.synthview.json` });
+    const a = Object.assign(document.createElement('a'), { href: url, download: `${name.replace(/[^\w -]+/g, '') || 'patch'}.limpide.json` });
     a.click();
     URL.revokeObjectURL(url);
     setStatus('Exported as a file.');
@@ -75,7 +75,7 @@ export function PatchBar({ name, changed, patch, library, onLoad }: Props) {
     if (!file) return;
     try {
       const imported = patchFromJSON(await file.text());
-      onLoad(file.name.replace(/\.synthview\.json$|\.json$/i, ''), imported);
+      onLoad(file.name.replace(/\.limpide\.json$|\.synthview\.json$|\.json$/i, ''), imported);
       setStatus(`Imported “${file.name}”.`);
     } catch (error) {
       setStatus((error as Error).message);

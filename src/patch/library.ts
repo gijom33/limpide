@@ -6,6 +6,7 @@ interface KeyValueStorage {
   setItem(key: string, value: string): void;
 }
 
+// Storage keys keep the app's former name, SynthView, so what was saved before the rename to Limpide is still here.
 const PATCHES = 'synthview.patches';
 const CURRENT = 'synthview.current';
 

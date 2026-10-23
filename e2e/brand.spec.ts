@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test';
 
-test('the header shows the SynthView logo and wordmark, and the tab has its icon', async ({ page }) => {
+test('the header shows the Limpide logo and wordmark, and the tab has its icon', async ({ page }) => {
   await page.goto('/');
-  const title = page.getByRole('heading', { level: 1, name: 'SynthView' });
+  const title = page.getByRole('heading', { level: 1, name: 'Limpide' });
   await expect(title).toBeVisible();
   await expect(title.locator('svg.logo')).toBeVisible();
 
@@ -14,10 +14,10 @@ test('the header shows the SynthView logo and wordmark, and the tab has its icon
 });
 
 for (const width of [861, 872, 884, 900, 920, 1000, 1100, 1440, 1710]) {
-  test(`the SynthView name is on screen, on the header line, at ${width}px`, async ({ page }) => {
+  test(`the Limpide name is on screen, on the header line, at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/');
-    const title = page.getByRole('heading', { level: 1, name: 'SynthView' });
+    const title = page.getByRole('heading', { level: 1, name: 'Limpide' });
     await expect(title).toBeVisible();
     const { text, header, display } = await page.evaluate(() => ({
       text: document.querySelector('.wordmark-text')!.getBoundingClientRect(),

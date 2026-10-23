@@ -450,9 +450,7 @@ export function App() {
           <div className="header-left">
             <h1 className="wordmark">
               <Logo />
-              <span className="wordmark-text">
-                Synth<span className="wordmark-view">View</span>
-              </span>
+              <span className="wordmark-text">Limpide</span>
             </h1>
             <PatchBar name={patchName} changed={patchChanged} patch={patch} library={library} onLoad={loadPatch} />
           </div>

@@ -1,5 +1,6 @@
 import { CHOICES, defaultPatch, PARAMS, setParam, type ParamId, type Patch } from './patch';
 
+// The format keeps the app's former name, SynthView, so files exported before the rename to Limpide still load.
 const FORMAT = { app: 'synthview', version: 1 } as const;
 
 /**
@@ -32,7 +33,7 @@ export function patchFromJSON(text: string): Patch {
     throw new Error('This is not a valid file (it is not JSON).');
   }
   const file = data as { app?: unknown; patch?: unknown };
-  if (!file || typeof file !== 'object' || file.app !== FORMAT.app) throw new Error('This file is not a SynthView Patch.');
+  if (!file || typeof file !== 'object' || file.app !== FORMAT.app) throw new Error('This file is not a Limpide Patch.');
   return sanitizePatch(file.patch);
 }
 

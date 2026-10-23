@@ -17,7 +17,7 @@ export async function openMidi(page: Page) {
 }
 
 /**
- * Opens SynthView with a stand-in Controller: Web MIDI with one input the test can play. Storage starts empty,
+ * Opens Limpide with a stand-in Controller: Web MIDI with one input the test can play. Storage starts empty,
  * once, so reloads keep what the test saved.
  */
 export async function withFakeController(page: Page) {

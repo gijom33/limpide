@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 const scope = (page: Page, tap: string) => page.getByLabel(`${tap} Scope`, { exact: true });
 
-/** Opens SynthView with a Patch already in place (as if autosaved), then holds a Note. */
+/** Opens Limpide with a Patch already in place (as if autosaved), then holds a Note. */
 async function play(page: Page, patch: Record<string, unknown>) {
   await page.addInitScript((p) => {
     if (sessionStorage.getItem('seeded')) return;

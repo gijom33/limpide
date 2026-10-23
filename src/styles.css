@@ -322,8 +322,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .tab-panel:not([data-active]) { visibility: hidden; }
 .tab-panel > .sub-block { border-top: 0; padding-top: 0; }
 
-/* Wordmark: the logo, then the name in the three stage colours, Oscillators to Amp, like the mark's stroke;
-   "Synth" in full weight and "View" lighter, so the name still reads as two ideas. */
+/* Wordmark: the logo, then the name in the three stage colours, Oscillators to Amp, like the mark's stroke. */
 .wordmark { display: inline-flex; align-items: center; gap: 10px; font-size: 21px; font-weight: 700; letter-spacing: -0.01em; }
 .wordmark { flex: none; }
 .wordmark .logo { flex: none; }
@@ -331,7 +330,6 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   background: linear-gradient(90deg, var(--stage-osc) 0%, var(--stage-filter) 55%, var(--stage-amp) 100%);
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
-.wordmark-view { font-weight: 400; }
 /* On both Oscillator tabs the Pulse Width knob sits to the right of the Waveform picker, so it stays put when
    switching tabs; Osc 2's tuning knobs are one row below the tabs, shared by both. */
 .tab-panel .sub-block > .knobs { flex: 0 0 auto; }

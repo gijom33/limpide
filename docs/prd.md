@@ -1,4 +1,4 @@
-# SynthView: PRD
+# Limpide: PRD
 
 Vocabulary follows [CONTEXT.md](../CONTEXT.md). Architectural decisions are in [docs/adr](./adr).
 
@@ -8,7 +8,7 @@ I've twisted knobs on synthesizers for years, but I don't really understand *why
 
 ## Solution
 
-SynthView is a browser-based, monophonic subtractive synthesizer laid out as its own signal-flow diagram: Oscillators → Mixer → Filter → Amp, left to right, with Viewers under each stage.
+Limpide (formerly SynthView) is a browser-based subtractive synthesizer laid out as its own signal-flow diagram: Oscillators → Mixer → Filter → Amp, left to right, with Viewers under each stage.
 
 - **Seeing the subtraction:** each Tap has a cycle-locked Scope and a Spectrum. The Filter's real Response Curve is drawn over the Spectrum, so the Harmonics it cuts can be read against it.
 - **Harmonics against theory:** Harmonic Markers name each Harmonic, and the Waveform's Ideal Reference shows what theory predicts.
@@ -79,7 +79,7 @@ SynthView is a browser-based, monophonic subtractive synthesizer laid out as its
 49. As a user, I want the app to stay usable on a laptop-sized screen, so that I don't need a big monitor.
 
 ### MIDI and the TempoPAD C16
-50. As a C16 owner, I want SynthView to detect my Controller when plugged in, so that I know it's connected.
+50. As a C16 owner, I want Limpide to detect my Controller when plugged in, so that I know it's connected.
 51. As a C16 owner, I want MIDI notes from the pads (KEYBOARD mode) to play the synth with Velocity, so that I can play it like an instrument.
 52. As a C16 owner, I want a Quick Setup that asks me to turn each encoder and fader in turn, so that the whole C16 is mapped in about 20 seconds.
 53. As a C16 owner, I want the default Quick Setup layout to be: encoders = Cutoff, Resonance, Envelope Amount, Detune, LFO rate, LFO amount, Waveform, Glide; faders = Amp Envelope ADSR; buttons = Hold, Freeze, Snapshot, next Preset. That way the most educational Parameters are under my hands.

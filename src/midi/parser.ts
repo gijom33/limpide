@@ -9,7 +9,7 @@ const DATA_BYTES: Record<number, number> = { 0x80: 2, 0x90: 2, 0xa0: 2, 0xb0: 2,
 /**
  * A streaming MIDI parser: feed it the bytes of each incoming packet. It follows running status (data bytes
  * reuse the last status), ignores real-time bytes (clock, keep-alive) wherever they fall, skips system-exclusive
- * dumps, and reports only what SynthView uses: notes and control changes.
+ * dumps, and reports only what Limpide uses: notes and control changes.
  */
 export function createMidiParser() {
   let status = 0;

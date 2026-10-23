@@ -36,13 +36,13 @@ describe('JSON files', () => {
     expect(patchFromJSON(patchToJSON(custom()))).toEqual(custom());
   });
 
-  it('marks the file as SynthView’s, with a format version', () => {
+  it('marks the file with the format id (the former name, so older files still load) and a version', () => {
     expect(JSON.parse(patchToJSON(custom()))).toMatchObject({ app: 'synthview', version: 1 });
   });
 
-  it('rejects files that are not SynthView Patches, with a clear reason', () => {
+  it('rejects files that are not Limpide Patches, with a clear reason', () => {
     expect(() => patchFromJSON('{not json')).toThrow(/not a valid file/i);
-    expect(() => patchFromJSON('{"tempo":120}')).toThrow(/not a SynthView Patch/i);
+    expect(() => patchFromJSON('{"tempo":120}')).toThrow(/not a Limpide Patch/i);
   });
 
   it('sanitises what it reads', () => {

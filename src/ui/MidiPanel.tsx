@@ -27,7 +27,7 @@ const statusText = (state: MidiState) => {
   return state.kind === 'unsupported'
     ? 'This browser does not support Web MIDI (Safari does not). Use Chrome or Edge to play from a MIDI Controller; everything else works here.'
     : state.kind === 'denied'
-      ? 'MIDI access was not allowed, so Controllers cannot be heard. Allow MIDI in the browser’s site settings, or open SynthView in Chrome or Edge (some built-in browsers never allow it).'
+      ? 'MIDI access was not allowed, so Controllers cannot be heard. Allow MIDI in the browser’s site settings, or open Limpide in Chrome or Edge (some built-in browsers never allow it).'
       : devices.length
         ? `Connected: ${devices.join(', ')}. Its keys and pads play the synth, with Velocity.`
         : 'No MIDI Controller connected. Plug one in (USB) and it is picked up straight away.';

@@ -1,7 +1,7 @@
 import { useId } from 'react';
 
 /**
- * The SynthView mark: a sharp saw tooth that softens into a smooth sine, which is subtractive synthesis in one
+ * The Limpide mark: a sharp saw tooth that softens into a smooth sine, which is subtractive synthesis in one
  * stroke, drawn through the three stage colours (Oscillators → Filter → Amp) so it follows the theme.
  */
 export function Logo() {
