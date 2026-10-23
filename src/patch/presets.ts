@@ -242,25 +242,25 @@ group('Keys & Plucks', [
   }],
 ]);
 
-// Pianos: a strike that darkens as it decays, harder for a harder hit, on four Voices.
+// Pianos: a strike that darkens as it decays, harder for a harder hit, on eight Voices so held Notes ring on.
 group('Pianos', [
-  ['Piano', 'A pulse and a saw a few cents apart, a Filter Envelope that opens on the strike and closes as the Note decays, and four Voices.', {
-    voices: 4, waveform: 'pulse', pulseWidth: 0.35, osc2Waveform: 'saw', osc2Detune: 4, mixOsc2: 0.5,
+  ['Piano', 'A pulse and a saw a few cents apart, a Filter Envelope that opens on the strike and closes as the Note decays, and eight Voices.', {
+    voices: 8, waveform: 'pulse', pulseWidth: 0.35, osc2Waveform: 'saw', osc2Detune: 4, mixOsc2: 0.5,
     cutoff: 1500, resonance: 0.1, filterEnvAmount: 2, filterDecay: 0.6, filterSustain: 0.1, filterRelease: 0.3, keyTrack: 0.7, velocityCutoff: 0.6,
     ampAttack: 0.002, ampDecay: 2.5, ampSustain: 0.1, ampRelease: 0.4,
   }],
   ['Felt Piano', 'Soft and dark, as if a felt strip lay over the strings: a triangle through a low Cutoff with a slow, long decay.', {
-    voices: 4, waveform: 'triangle', osc2Waveform: 'triangle', osc2Detune: 3, mixOsc2: 0.4,
+    voices: 8, waveform: 'triangle', osc2Waveform: 'triangle', osc2Detune: 3, mixOsc2: 0.4,
     cutoff: 900, resonance: 0, filterEnvAmount: 1, filterDecay: 0.8, filterSustain: 0.2, keyTrack: 0.5, velocityCutoff: 0.4,
     ampAttack: 0.01, ampDecay: 3, ampSustain: 0.2, ampRelease: 0.8,
   }],
   ['Honky-Tonk', 'A second saw 14 cents off: the two strings of a neglected upright beat against each other, and the Scope never settles.', {
-    voices: 4, waveform: 'pulse', pulseWidth: 0.35, osc2Waveform: 'saw', osc2Detune: 14, mixOsc2: 0.9,
+    voices: 8, waveform: 'pulse', pulseWidth: 0.35, osc2Waveform: 'saw', osc2Detune: 14, mixOsc2: 0.9,
     cutoff: 1800, resonance: 0.1, filterEnvAmount: 2, filterDecay: 0.6, filterSustain: 0.1, filterRelease: 0.3, keyTrack: 0.7, velocityCutoff: 0.6,
     ampAttack: 0.002, ampDecay: 2.2, ampSustain: 0.1, ampRelease: 0.4,
   }],
-  ['Toy Piano', 'A sine with a square two octaves up, short and tinny: the metal tines of a toy, on four Voices.', {
-    voices: 4, waveform: 'sine', osc2Waveform: 'square', osc2Octave: 2, mixOsc2: 0.3, cutoff: 5000, resonance: 0, keyTrack: 0.8,
+  ['Toy Piano', 'A sine with a square two octaves up, short and tinny: the metal tines of a toy, on eight Voices.', {
+    voices: 8, waveform: 'sine', osc2Waveform: 'square', osc2Octave: 2, mixOsc2: 0.3, cutoff: 5000, resonance: 0, keyTrack: 0.8,
     ampAttack: 0.001, ampDecay: 0.8, ampSustain: 0, ampRelease: 0.3,
   }],
 ]);
@@ -299,44 +299,44 @@ group('Pads', [
   }],
 ]);
 
-// Several Voices: chords for playing. The Viewers follow the newest Note (ADR-0007), so every one of these also
-// shows one Note cleanly while the others sound.
+// Several Voices: chords for playing. Eight where Notes ring on or chords are held, six for shorter sounds.
+// The Oscillator and Filter Viewers follow the newest Note (ADR-0007), so each also shows one Note cleanly.
 group('Chords', [
-  ['Chord Pad', 'Four Voices of detuned saws under a slow Filter: hold a chord, and the Viewers show only the Note you played last.', {
-    voices: 4, osc2Detune: -12, mixOsc2: 0.8,
+  ['Chord Pad', 'Eight Voices of detuned saws under a slow Filter: hold a chord, and the Viewers show only the Note you played last.', {
+    voices: 8, osc2Detune: -12, mixOsc2: 0.8,
     cutoff: 1200, resonance: 0.15, filterEnvAmount: 1, filterAttack: 1.5, filterDecay: 2, filterSustain: 0.5, filterRelease: 2,
     ampAttack: 0.8, ampDecay: 1, ampSustain: 0.85, ampRelease: 2, lfoRate: 0.25, lfoAmount: 0.12,
   }],
-  ['Poly Keys', 'An electric piano on four Voices: Velocity brightens each strike, and the Timeline draws the newest Note’s Envelope while the others ring on.', {
-    voices: 4, waveform: 'triangle', osc2Waveform: 'sine', osc2Octave: 1, mixOsc2: 0.3, cutoff: 2200, velocityCutoff: 0.7, keyTrack: 0.6,
+  ['Poly Keys', 'An electric piano on eight Voices: Velocity brightens each strike, and the Timeline draws the newest Note’s Envelope while the others ring on.', {
+    voices: 8, waveform: 'triangle', osc2Waveform: 'sine', osc2Octave: 1, mixOsc2: 0.3, cutoff: 2200, velocityCutoff: 0.7, keyTrack: 0.6,
     ampAttack: 0.003, ampDecay: 1.8, ampSustain: 0.2, ampRelease: 0.6,
   }],
-  ['Chord Organ', 'Drawbar sines on four Voices: every held key sounds at once with no Envelope shape at all, so a chord is simply on and off.', {
-    voices: 4, waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, mixOsc2: 0.5, mixSub: 0.5, ...OPEN, ampAttack: 0.005, ampRelease: 0.03,
+  ['Chord Organ', 'Drawbar sines on eight Voices: every held key sounds at once with no Envelope shape at all, so a chord is simply on and off.', {
+    voices: 8, waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, mixOsc2: 0.5, mixSub: 0.5, ...OPEN, ampAttack: 0.005, ampRelease: 0.03,
   }],
-  ['Poly Pluck', 'A snapping Filter Envelope on four Voices: strum a chord and each Note gets its own flash of Harmonics; Key Track keeps the high strings bright.', {
-    voices: 4, waveform: 'pulse', pulseWidth: 0.3, cutoff: 500, resonance: 0.4, filterSlope: 24, filterEnvAmount: 3, filterDecay: 0.18, filterSustain: 0, keyTrack: 0.8,
+  ['Poly Pluck', 'A snapping Filter Envelope on eight Voices: strum a chord and each Note gets its own flash of Harmonics; Key Track keeps the high strings bright.', {
+    voices: 6, waveform: 'pulse', pulseWidth: 0.3, cutoff: 500, resonance: 0.4, filterSlope: 24, filterEnvAmount: 3, filterDecay: 0.18, filterSustain: 0, keyTrack: 0.8,
     ampAttack: 0.001, ampDecay: 0.5, ampSustain: 0, ampRelease: 0.3,
   }],
-  ['Strings', 'A string section: four Voices of slowly modulated pulses with a soft attack. Hold a chord and watch the Pulse Width shimmer on the newest Note.', {
-    voices: 4, waveform: 'pulse', pulseWidth: 0.5, osc2Waveform: 'pulse', osc2PulseWidth: 0.45, osc2Detune: 8, mixOsc2: 0.8, cutoff: 3500, resonance: 0.05,
+  ['Strings', 'A string section: eight Voices of slowly modulated pulses with a soft attack. Hold a chord and watch the Pulse Width shimmer on the newest Note.', {
+    voices: 8, waveform: 'pulse', pulseWidth: 0.5, osc2Waveform: 'pulse', osc2PulseWidth: 0.45, osc2Detune: 8, mixOsc2: 0.8, cutoff: 3500, resonance: 0.05,
     lfoDestination: 'pulseWidth', lfoRate: 0.7, lfoAmount: 0.5, ampAttack: 0.4, ampDecay: 0.5, ampSustain: 0.9, ampRelease: 1.2,
   }],
-  ['Brass Section', 'Horns on four Voices: each Note blooms from dark to bright as its Filter Envelope opens, and further for a harder hit.', {
-    voices: 4, osc2Detune: 6, mixOsc2: 0.7, cutoff: 700, resonance: 0.1, filterSlope: 24,
+  ['Brass Section', 'Horns on eight Voices: each Note blooms from dark to bright as its Filter Envelope opens, and further for a harder hit.', {
+    voices: 6, osc2Detune: 6, mixOsc2: 0.7, cutoff: 700, resonance: 0.1, filterSlope: 24,
     filterEnvAmount: 2.5, filterAttack: 0.12, filterDecay: 0.5, filterSustain: 0.6, filterRelease: 0.3, velocityCutoff: 0.5,
     ampAttack: 0.06, ampDecay: 0.3, ampSustain: 0.85, ampRelease: 0.35,
   }],
-  ['Vibes', 'A vibraphone: sine bars with a little vibrato and a long decay, on four Voices so chords ring together.', {
-    voices: 4, waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 2, mixOsc2: 0.2, cutoff: 6000, keyTrack: 0.5,
+  ['Vibes', 'A vibraphone: sine bars with a little vibrato and a long decay, on eight Voices so chords ring together.', {
+    voices: 8, waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 2, mixOsc2: 0.2, cutoff: 6000, keyTrack: 0.5,
     ampAttack: 0.001, ampDecay: 1.6, ampSustain: 0, ampRelease: 1, lfoDestination: 'pitch', lfoRate: 5, lfoAmount: 0.06,
   }],
   ['Duo Lead', 'Two Voices only: fifths and octaves under one hand, and a third Note takes the oldest Voice. The Viewers follow the newest.', {
     voices: 2, osc2Detune: 7, mixOsc2: 0.9, cutoff: 2500, resonance: 0.2, keyTrack: 0.4, velocityCutoff: 0.3,
     ampAttack: 0.01, ampDecay: 0.2, ampSustain: 0.8, ampRelease: 0.3, lfoDestination: 'pitch', lfoRate: 5.5, lfoAmount: 0.08,
   }],
-  ['Bell Chords', 'Twelfth-stacked sines on four Voices with a long decay: a chord of bells, each Note fading at its own pace while the Timeline shows the newest.', {
-    voices: 4, waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, osc2Semitone: 7, osc2Detune: 4, mixOsc2: 0.6, ...OPEN,
+  ['Bell Chords', 'Twelfth-stacked sines on eight Voices with a long decay: a chord of bells, each Note fading at its own pace while the Timeline shows the newest.', {
+    voices: 8, waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, osc2Semitone: 7, osc2Detune: 4, mixOsc2: 0.6, ...OPEN,
     ampAttack: 0.002, ampDecay: 3, ampSustain: 0, ampRelease: 2,
   }],
 ]);
