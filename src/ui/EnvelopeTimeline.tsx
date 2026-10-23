@@ -24,7 +24,11 @@ export function EnvelopeTimeline({ engine, view, controls }: { engine: SynthEngi
       </h2>
       <div className="timeline-body">
         {controls}
-        <canvas ref={canvasRef} aria-label="Envelope Timeline" />
+        {/* The plot fills a box that takes its height from the controls beside it: the canvas itself never
+            sets the row's height (its pixel size would otherwise feed back into it as the window resizes). */}
+        <div className="timeline-plot">
+          <canvas ref={canvasRef} aria-label="Envelope Timeline" />
+        </div>
       </div>
     </section>
   );

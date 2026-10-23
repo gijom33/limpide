@@ -158,6 +158,28 @@ for (const [width, height, pitch] of [
   });
 }
 
+test('the Timeline plot is as tall as its controls, whatever size the window was before', async ({ page }) => {
+  await page.setViewportSize({ width: 2000, height: 1140 });
+  await page.goto('/');
+  await expect(page.getByTestId('amp-level')).toHaveAttribute('data-db', /.+/);
+  const measure = () =>
+    page.evaluate(() => ({
+      plot: Math.round(document.querySelector('.timeline-body canvas')!.getBoundingClientRect().height),
+      controls: Math.round(document.querySelector('.timeline-controls')!.getBoundingClientRect().height),
+      viewer: Math.round(document.querySelector('canvas.scope')!.getBoundingClientRect().height),
+    }));
+  const fresh = await measure();
+  expect(fresh.plot).toBe(fresh.controls);
+  // A narrower window, then back: the plot's own pixel size must not have grown the row.
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.waitForTimeout(300);
+  await page.setViewportSize({ width: 2000, height: 1140 });
+  await page.waitForTimeout(300);
+  const again = await measure();
+  expect(again.plot).toBe(fresh.plot);
+  expect(again.viewer).toBe(fresh.viewer);
+});
+
 test('the Filter Mode and Slope stay on one line each, never wrapping inside', async ({ page }) => {
   await page.setViewportSize({ width: 872, height: 920 });
   await page.goto('/');

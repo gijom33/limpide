@@ -19,7 +19,7 @@ const SHAPES: { waveform: LfoWaveform; label: string; path: string }[] = [
 const DESTINATIONS: { value: LfoDestination; label: string }[] = [
   { value: 'cutoff', label: 'Cutoff' },
   { value: 'pitch', label: 'Pitch' },
-  { value: 'pulseWidth', label: 'Width' },
+  { value: 'pulseWidth', label: 'Pulse Width' },
 ];
 
 interface Props {

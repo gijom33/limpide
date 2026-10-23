@@ -1,7 +1,9 @@
 :root {
   /* Controls: one height, one radius, one type size; "on" is a filled background, not just a border. */
   --control-h: 28px;
-  --control-radius: 7px;
+  /* Radii: panels, controls, and the surfaces inside them (Viewers). Floating panels share one elevation. */
+  --radius-panel: 10px; --radius-control: 7px; --radius-inner: 6px;
+  --shadow-panel: 0 10px 32px rgba(0, 0, 0, 0.35);
   --control-on: color-mix(in srgb, var(--text) 14%, var(--panel));
   --control-hover: color-mix(in srgb, var(--text) 7%, var(--panel));
   /* Spacing and type scales. */
@@ -46,6 +48,7 @@
   --stage-osc: #06915f;
   --stage-filter: #973201;
   --stage-amp: #3f40c4;
+  --shadow-panel: 0 10px 32px rgba(0, 0, 0, 0.18);
   color-scheme: light;
 }
 
@@ -67,19 +70,19 @@ header {
 header h1 { margin: 0; }
 h1 { margin: 0 0 var(--space-2); font-size: 22px; letter-spacing: 0.02em; }
 h2 { margin: 0 0 var(--space-3); font-size: var(--text-lg); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
-.hint { color: var(--muted); margin: 0; font-size: 14px; }
+.hint { color: var(--muted); margin: 0; font-size: var(--text-lg); }
 kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-size: var(--text-md); }
 
 .audio-blocked {
   margin: 12px 0 0; padding: 8px 12px; font-size: var(--text-lg); color: var(--text);
-  background: var(--panel); border: 1px solid var(--muted); border-radius: 8px;
+  background: var(--panel); border: 1px solid var(--muted); border-radius: var(--radius-panel);
 }
 
 /* The layout is the signal-flow diagram: stages left to right, joined by connectors. */
 .chain { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; margin: var(--space-4) 0; }
 .block {
   position: relative; display: flex; flex-direction: column; gap: var(--space-3);
-  background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: var(--space-3) var(--space-4);
+  background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-panel); padding: var(--space-3) var(--space-4);
 }
 .block h2 { margin: 0; }
 
@@ -134,12 +137,12 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 .knob-dial:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 /* Label and value are centred under the dial and may be wider than the column (their neighbours' are short). */
 .knob-label { font-size: var(--text-md); line-height: var(--knob-label-h); height: var(--knob-label-h); white-space: nowrap; }
-.knob[data-inactive] { opacity: 0.4; }
+.knob[data-inactive] .knob-dial, .knob[data-inactive] .knob-value { opacity: 0.55; }
 
 .waveforms { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; flex: 1 1 100%; }
 .waveform {
   display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px; cursor: pointer;
-  background: none; color: var(--muted); border: 1px solid var(--border); border-radius: 6px; font-size: var(--text-sm);
+  background: none; color: var(--muted); border: 1px solid var(--border); border-radius: var(--radius-control); font-size: var(--text-sm);
 }
 .waveform svg { color: var(--muted); }
 .waveform[aria-checked='true'] { color: var(--text); border-color: var(--stage, var(--muted)); }
@@ -158,7 +161,7 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 /* Viewers keep their shape as blocks widen (a wide screen gives taller Viewers, not thin strips). */
 .tap canvas {
   display: block; width: 100%; height: auto; aspect-ratio: 5 / 2; min-height: 120px; max-height: 260px;
-  background: var(--bg); border-radius: 6px;
+  background: var(--bg); border-radius: var(--radius-inner);
 }
 .tap canvas + canvas { margin-top: 8px; }
 
@@ -174,7 +177,7 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 
 /* Toolbar: one panel, three captioned groups (View, Axes, Show), separated by hairlines. */
 /* The toolbar sits in the header line when there is room, and wraps below the title when not. */
-.toolbar { flex: 1 1 auto; margin: 0; padding: 6px 4px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; }
+.toolbar { flex: 1 1 auto; margin: 0; padding: 6px 4px; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-panel); }
 /* Each group draws its divider just outside its left edge, and this row clips anything outside it, so a
    group that wraps to the start of a new row loses its divider: dividers only ever sit between groups. */
 .toolbar-groups { display: flex; flex-wrap: wrap; align-items: stretch; row-gap: 10px; padding: 3px 0; overflow: hidden; }
@@ -182,13 +185,13 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
   display: flex; flex-direction: column; gap: 6px; padding: 0 12px;
   margin-left: -1px; border-left: 1px solid var(--border);
 }
-.tool-group-title { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.tool-group-title { font-size: var(--text-sm); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
 .tool-group-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
 
 .tool, .segmented button {
   display: inline-flex; align-items: center; gap: 6px; height: var(--control-h); padding: 0 10px;
   font: inherit; font-size: var(--text-md); color: var(--muted); cursor: pointer;
-  background: none; border: 1px solid transparent; border-radius: var(--control-radius);
+  background: none; border: 1px solid transparent; border-radius: var(--radius-control);
 }
 .tool { border-color: var(--border); }
 .tool:hover, .segmented button:hover { color: var(--text); background: var(--control-hover); }
@@ -207,9 +210,9 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 .field-caption { font-size: var(--text-md); color: var(--muted); }
 .segmented {
   display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 2px;
-  background: var(--bg); border: 1px solid var(--border); border-radius: calc(var(--control-radius) + 2px);
+  background: var(--bg); border: 1px solid var(--border); border-radius: calc(var(--radius-control) + 2px);
 }
-.segmented button { height: calc(var(--control-h) - 6px); padding: 0 9px; border-radius: calc(var(--control-radius) - 2px); }
+.segmented button { height: calc(var(--control-h) - 6px); padding: 0 9px; border-radius: calc(var(--radius-control) - 2px); }
 .segmented button[role='radio'] { min-width: 30px; justify-content: center; }
 .overlays button[aria-pressed='false'] .swatch { opacity: 0.35; }
 
@@ -219,7 +222,7 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 main[data-frozen] .tap-canvases canvas { outline: 1px dashed var(--muted); outline-offset: -1px; }
 main[data-frozen] .tap-canvases::before {
   content: 'Frozen'; position: absolute; z-index: 1; top: 6px; left: 50%; transform: translateX(-50%);
-  padding: 1px 8px; font-size: var(--text-xs); letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 1px 8px; font-size: var(--text-sm); letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--bg); background: var(--text); border-radius: 999px; pointer-events: none;
 }
 
@@ -234,8 +237,8 @@ main[data-frozen] .tap-canvases::before {
   position: fixed; z-index: 100; width: max-content; max-width: 280px; padding: 10px 12px;
   display: flex; flex-direction: column; gap: 4px;
   font-size: var(--text-md); line-height: 1.45; color: var(--text); text-align: left;
-  background: var(--panel); border: 1px solid var(--muted); border-radius: 8px;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.28); pointer-events: none;
+  background: var(--panel); border: 1px solid var(--muted); border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-panel); pointer-events: none;
 }
 .tooltip[hidden] { display: none; }
 .tooltip strong { font-size: var(--text-md); font-weight: 600; }
@@ -246,9 +249,12 @@ main[data-frozen] .tap-canvases::before {
 .sub-block { display: flex; flex-direction: column; gap: var(--space-2); padding-top: var(--space-2); border-top: 1px solid var(--border); }
 .sub-block h3 { margin: 0; font-size: var(--text-sm); font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); align-self: flex-start; }
 
-.timeline { margin: 0 0 var(--space-4); padding: var(--space-3) var(--space-4); background: var(--panel); border: 1px solid var(--border); border-radius: 10px; }
+.timeline { margin: 0 0 var(--space-4); padding: var(--space-3) var(--space-4); background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-panel); }
 .timeline h2 { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
-.timeline canvas { display: block; width: 100%; height: clamp(120px, 9vw, 200px); background: var(--bg); border-radius: 6px; }
+/* The plot box: as wide as the panel leaves it; its height is the controls' beside it on wide windows (below,
+   where the controls sit above it, a height of its own). The canvas fills the box and never sizes it. */
+.timeline-plot { position: relative; flex: 1 1 auto; min-width: 0; height: clamp(120px, 9vw, 200px); }
+.timeline canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; background: var(--bg); border-radius: var(--radius-inner); }
 .timeline-key { display: flex; gap: 14px; font-size: var(--text-sm); text-transform: none; letter-spacing: 0; }
 .timeline-key span { display: inline-flex; align-items: center; gap: 5px; }
 .timeline-key span::before { content: ''; width: 12px; height: 8px; border-radius: 2px; }
@@ -296,10 +302,6 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   .tap canvas + canvas { margin-top: 0; }
 }
 
-/* Wide sections put their heading in a narrow label column instead of a line of its own. */
-@container (min-width: 380px) {
-  .source-rows .sub-block > h3, .source-rows .sub-block > .tip-anchor:first-child { flex: 0 0 44px; }
-}
 
 /* Every stage spans the same two rows of the chain: controls on top (as tall as the tallest stage's), then
    the Viewers. With subgrid, all three stages' Viewers are the same size and line up, wherever the window. */
@@ -368,7 +370,6 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 
 /* The Timeline panel: the controls that act over time (LFO, Glide) to the left of the plot. */
 .timeline-body { display: flex; gap: var(--space-4); align-items: stretch; }
-.timeline-body canvas { flex: 1 1 auto; min-width: 0; }
 .timeline-controls { display: flex; gap: var(--space-3); align-items: flex-end; flex: none; }
 /* Not size containers: a container has no intrinsic width, and in this content-sized column it would collapse. */
 /* Three rows (LFO shape, Destination, then the knobs with Glide beside them), so the column stays narrow
@@ -380,8 +381,8 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .lfo-rows > .knobs { justify-content: flex-start; }
 .lfo-pickers { display: flex; flex-direction: column; gap: 6px; flex: none; }
 @media (min-width: 861px) {
-  /* The plot fills the panel's height; size containment stops its backing store feeding back into it. */
-  .timeline-body canvas { contain: size; height: auto; min-height: 120px; }
+  /* The plot is exactly as tall as the LFO and Glide controls: the Viewers above get the rest of the window. */
+  .timeline-plot { height: auto; min-height: 120px; }
 }
 .lfo-shapes button { min-width: 30px; justify-content: center; padding: 0 4px; }
 @media (max-width: 860px) {
@@ -393,7 +394,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .piano { position: relative; display: flex; height: 40px; touch-action: none; user-select: none; -webkit-user-select: none; }
 .piano button {
   position: relative; width: 20px; height: 40px; margin: 0; padding: 0 0 3px; display: flex; align-items: flex-end; justify-content: center;
-  font: inherit; font-size: 9px; color: var(--muted); cursor: pointer;
+  font: inherit; font-size: var(--text-xs); color: var(--muted); cursor: pointer;
   background: var(--dial-hi); border: 1px solid var(--border); border-radius: 0 0 4px 4px;
 }
 .piano button[data-black] {
@@ -405,7 +406,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 
 .midi-status {
   display: inline-flex; align-items: center; gap: 6px; height: var(--control-h); padding: 0 10px; font-size: var(--text-md); color: var(--muted);
-  border: 1px solid var(--border); border-radius: var(--control-radius); cursor: pointer; background: none;
+  border: 1px solid var(--border); border-radius: var(--radius-control); cursor: pointer; background: none;
 }
 .midi-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); }
 .midi-status[data-connected] { color: var(--text); }
@@ -461,21 +462,21 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .patch-changed { width: 6px; height: 6px; border-radius: 50%; background: var(--text); flex: none; }
 .patch-panel {
   position: absolute; z-index: 50; top: calc(100% + 6px); left: 0; width: 320px; padding: 12px; display: flex; flex-direction: column; gap: 12px;
-  background: var(--panel); border: 1px solid var(--muted); border-radius: 10px; box-shadow: 0 10px 32px rgba(0, 0, 0, 0.35);
+  background: var(--panel); border: 1px solid var(--muted); border-radius: var(--radius-panel); box-shadow: var(--shadow-panel);
 }
-.patch-panel h3 { margin: 0 0 6px; font-size: var(--text-xs); font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.patch-panel h3 { margin: 0 0 6px; font-size: var(--text-sm); font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
 .patch-list { display: flex; flex-wrap: wrap; gap: 4px; }
-.patch-item { height: 26px; padding: 0 10px; font: inherit; font-size: var(--text-md); color: var(--text); cursor: pointer; background: none; border: 1px solid var(--border); border-radius: var(--control-radius); }
+.patch-item { height: var(--control-h); padding: 0 10px; font: inherit; font-size: var(--text-md); color: var(--text); cursor: pointer; background: none; border: 1px solid var(--border); border-radius: var(--radius-control); }
 .patch-item:hover { background: var(--control-hover); }
 .patch-item[aria-current='true'] { background: var(--control-on); }
 .patch-mine { display: inline-flex; gap: 1px; }
-.patch-delete { height: 26px; min-width: 26px; padding: 0 6px; font: inherit; font-size: var(--text-md); color: var(--muted); cursor: pointer; background: none; border: 1px solid var(--border); border-radius: var(--control-radius); }
+.patch-delete { height: var(--control-h); min-width: var(--control-h); padding: 0 6px; font: inherit; font-size: var(--text-md); color: var(--muted); cursor: pointer; background: none; border: 1px solid var(--border); border-radius: var(--radius-control); }
 .patch-delete-confirm { color: var(--danger); border-color: var(--danger); }
 .patch-empty { margin: 0; font-size: var(--text-md); color: var(--muted); }
 .patch-save { display: flex; gap: 6px; margin-top: 8px; }
 .patch-save input, .patch-link {
   flex: 1; min-width: 0; height: var(--control-h); padding: 0 8px; font: inherit; font-size: var(--text-md); color: var(--text);
-  background: var(--bg); border: 1px solid var(--border); border-radius: var(--control-radius);
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-control);
 }
 .patch-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .patch-actions label { cursor: pointer; }
@@ -487,7 +488,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .display-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text); }
 .display-panel {
   position: absolute; z-index: 60; top: calc(100% + 6px); right: 0; width: max-content; max-width: 100%;
-  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.35); border-radius: 10px;
+  box-shadow: var(--shadow-panel); border-radius: var(--radius-panel);
 }
 .display-panel .toolbar { border-color: var(--muted); }
 
@@ -497,11 +498,11 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .midi-panel {
   position: absolute; z-index: 60; top: calc(100% + 6px); left: 50%; transform: translateX(-50%);
   width: min(380px, 100%); display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 14px;
-  background: var(--panel); border: 1px solid var(--muted); border-radius: 10px; box-shadow: 0 10px 32px rgba(0, 0, 0, 0.35);
+  background: var(--panel); border: 1px solid var(--muted); border-radius: var(--radius-panel); box-shadow: var(--shadow-panel);
   font-size: var(--text-md);
 }
 .midi-connection { margin: 0; color: var(--muted); line-height: 1.4; }
-.midi-heading { font-size: var(--text-xs); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.midi-heading { font-size: var(--text-sm); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 .midi-activity { display: flex; flex-direction: column; gap: 3px; }
 .midi-activity [role='status'] { font-variant-numeric: tabular-nums; font-family: ui-monospace, monospace; }
 .midi-mappings { list-style: none; margin: 0; padding: 0; width: 100%; display: flex; flex-direction: column; gap: 4px; }
@@ -515,14 +516,14 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .learn-bar {
   position: fixed; z-index: 70; bottom: 16px; left: 50%; transform: translateX(-50%); width: max-content;
   max-width: calc(100vw - 32px); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 8px 10px 8px 14px;
-  border: 1px solid var(--accent); border-radius: 10px; background: var(--panel); font-size: var(--text-md);
-  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45);
+  border: 1px solid var(--accent); border-radius: var(--radius-panel); background: var(--panel); font-size: var(--text-md);
+  box-shadow: var(--shadow-panel);
 }
-.learn-bar strong { color: var(--accent); letter-spacing: 0.06em; text-transform: uppercase; font-size: var(--text-sm); }
+.learn-bar strong { color: var(--accent); letter-spacing: 0.08em; text-transform: uppercase; font-size: var(--text-sm); }
 .learn-bar .learn-done { color: var(--muted); }
 .learn-bar .learn-exit { color: var(--muted); }
 .learn-bar kbd { color: inherit; border-color: currentColor; opacity: 0.7; }
-main[data-learning] [data-learn] { outline: 1px dashed var(--muted); outline-offset: 2px; border-radius: 6px; cursor: crosshair; }
+main[data-learning] [data-learn] { outline: 1px dashed var(--muted); outline-offset: 2px; border-radius: var(--radius-inner); cursor: crosshair; }
 main[data-learning] [data-learn][data-mapped] { outline-style: solid; }
 main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(--accent); }
 /* A mapped knob carries a small dot; a knob moved from hardware glows for a moment (dimmer while Pickup waits). */
@@ -545,12 +546,12 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 .quick-setup {
   position: fixed; z-index: 70; bottom: 16px; left: 50%; transform: translateX(-50%); width: min(460px, calc(100vw - 32px));
   display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; font-size: var(--text-md);
-  border: 1px solid var(--accent); border-radius: 10px; background: var(--panel); box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45);
+  border: 1px solid var(--accent); border-radius: var(--radius-panel); background: var(--panel); box-shadow: var(--shadow-panel);
 }
 .quick-setup header { display: flex; justify-content: space-between; align-items: baseline; }
-.quick-setup header strong { color: var(--accent); letter-spacing: 0.06em; text-transform: uppercase; font-size: var(--text-sm); }
+.quick-setup header strong { color: var(--accent); letter-spacing: 0.08em; text-transform: uppercase; font-size: var(--text-sm); }
 .quick-setup-progress { color: var(--muted); font-variant-numeric: tabular-nums; }
-.quick-setup-prompt { margin: 0; font-size: 15px; }
+.quick-setup-prompt { margin: 0; font-size: var(--text-lg); font-weight: 600; }
 .quick-setup-last { margin: 0; color: var(--muted); }
 .quick-setup-differs { color: var(--text); }
 .quick-setup-actions { display: flex; gap: 6px; justify-content: flex-end; }
