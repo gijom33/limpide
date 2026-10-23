@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { defaultPatch } from '../patch/patch';
 import { startDemo, type DemoHost } from './player';
 import type { TourStop } from './tour';
 
@@ -14,8 +15,9 @@ function fakeHost(voicesOf: Record<string, number>) {
     now: () => clock,
     load: (stop) => {
       calls.push(`load ${stop.preset}`);
-      return voicesOf[stop.preset];
+      return { ...defaultPatch(), voices: voicesOf[stop.preset] as 1 | 4 };
     },
+    setParam: (id, value) => calls.push(`${id}=${value.toFixed(0)}`),
     noteOn: (note, _v, at) => calls.push(`on ${note} @${at.toFixed(3)}`),
     noteOff: (at) => calls.push(`off @${at.toFixed(3)}`),
     release: (note, at) => calls.push(`release ${note} @${at.toFixed(3)}`),
@@ -31,14 +33,14 @@ describe('the Demo player', () => {
     const { host, calls, advance } = fakeHost({ Mono: 1, Poly: 4 });
     const stop = startDemo(host, tour);
     expect(calls.slice(0, 2)).toEqual(['load Mono', 'step 0']);
-    // Phrase at 120 BPM: C3 at 0.4 s for 0.425 s, E3 at 0.9 s. Nothing is handed over until it is near.
+    // Phrase at 120 BPM after a 0.3 s lead-in: C3 at 0.3 s for 0.425 s, E3 at 0.8 s. Nothing is handed over until it is near.
     expect(calls.filter((c) => c.startsWith('on'))).toEqual([]);
-    advance(0.3);
+    advance(0.2);
     vi.advanceTimersByTime(40);
-    expect(calls.filter((c) => c.startsWith('on') || c.startsWith('off'))).toEqual(['on 48 @0.400', 'off @0.825']);
+    expect(calls.filter((c) => c.startsWith('on') || c.startsWith('off'))).toEqual(['on 48 @0.300', 'off @0.725']);
     advance(1.8); // past the lead-in, the phrase (1 s) and the gap
     vi.advanceTimersByTime(40);
-    expect(calls).toContain('on 52 @0.900');
+    expect(calls).toContain('on 52 @0.800');
     expect(calls.slice(-2)).toEqual(['load Poly', 'step 1']);
     // A chord on a several-Voice Preset: both Notes start before either is released, by note.
     advance(0.4);
@@ -64,6 +66,27 @@ describe('the Demo player', () => {
     vi.advanceTimersByTime(500);
     expect(calls.length).toBe(before);
     expect(calls.filter((c) => c.startsWith('load'))).toEqual(['load Mono', 'load Poly']);
+    vi.useRealTimers();
+  });
+
+  it('turns a knob through its move while the phrase plays, then leaves it at the end value', () => {
+    vi.useFakeTimers();
+    const { host, calls, advance } = fakeHost({ Sweep: 1 });
+    startDemo(host, [{ group: 'Filter', preset: 'Sweep', bpm: 120, phrase: 'C3:2', moves: [{ id: 'cutoff', from: 200, to: 3200 }] }]);
+    const cutoffs = () => calls.filter((c) => c.startsWith('cutoff=')).map((c) => Number(c.slice(7)));
+    advance(0.3); // the phrase starts: the Cutoff starts where the move says
+    vi.advanceTimersByTime(40);
+    expect(cutoffs().at(-1)).toBe(200);
+    advance(0.5); // halfway through the one-second phrase: halfway up in knob travel, two octaves of four
+    vi.advanceTimersByTime(40);
+    expect(cutoffs().at(-1)).toBe(800);
+    advance(1);
+    vi.advanceTimersByTime(40);
+    expect(cutoffs().at(-1)).toBe(3200);
+    const after = cutoffs().length;
+    advance(0.1);
+    vi.advanceTimersByTime(40);
+    expect(cutoffs().length).toBe(after); // done: no more moves
     vi.useRealTimers();
   });
 

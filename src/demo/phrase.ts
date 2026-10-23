@@ -3,6 +3,7 @@
  *   `C3:1`        a Note for one beat
  *   `C3+E3+G3:2`  a chord for two beats
  *   `-:1`         a rest for one beat
+ *   `C3:1@0.5`    a Note played at half Velocity (the default is 0.9)
  * Note names are letter, optional # or b, octave (C4 = MIDI 60; A4 = 440 Hz, as everywhere in Limpide).
  */
 export interface PhraseEvent {
@@ -32,10 +33,13 @@ export function parsePhrase(text: string, bpm: number, velocity = 0.9): PhraseEv
   const events: PhraseEvent[] = [];
   let at = 0;
   for (const token of text.trim().split(/\s+/)) {
-    const [notes, beats] = token.split(':');
+    const [notes, rest] = token.split(':');
+    const [beats, accent] = (rest ?? '').split('@');
     const length = Number(beats);
     if (!(length > 0)) throw new Error(`Each step needs a length in beats: ${token}`);
-    if (notes !== '-') for (const name of notes.split('+')) events.push({ time: at * beat, duration: length * beat * GATE, note: noteNumber(name), velocity });
+    const v = accent === undefined ? velocity : Number(accent);
+    if (!(v > 0 && v <= 1)) throw new Error(`A Velocity is between 0 and 1: ${token}`);
+    if (notes !== '-') for (const name of notes.split('+')) events.push({ time: at * beat, duration: length * beat * GATE, note: noteNumber(name), velocity: v });
     at += length;
   }
   return events;
@@ -46,5 +50,5 @@ export function phraseLength(text: string, bpm: number): number {
   return text
     .trim()
     .split(/\s+/)
-    .reduce((beats, token) => beats + Number(token.split(':')[1]), 0) * (60 / bpm);
+    .reduce((beats, token) => beats + Number(token.split(':')[1].split('@')[0]), 0) * (60 / bpm);
 }

@@ -1,11 +1,15 @@
+import { PARAMS, type ParamId, type Patch } from '../patch/patch';
+import { positionToValue, valueToPosition } from '../patch/taper';
 import { parsePhrase, phraseLength, type PhraseEvent } from './phrase';
 import { TOUR, type TourStop } from './tour';
 
 /** What the Demo needs from the app: the audio clock, a way to load a Preset, and the engine's Note calls. */
 export interface DemoHost {
   now(): number;
-  /** Load the stop's Preset; returns how many Voices it has (one means the Notes must not overlap). */
-  load(stop: TourStop): number;
+  /** Load the stop's Preset; returns it (its Voices decide how Notes are released; its values start the moves). */
+  load(stop: TourStop): Patch;
+  /** Turn a knob: the Patch's Parameter takes this value now. */
+  setParam(id: ParamId, value: number): void;
   noteOn(note: number, velocity: number, at: number): void;
   /** The tour is over: every stop has played once. */
   onEnd(): void;
@@ -20,8 +24,8 @@ export interface DemoHost {
 const LOOKAHEAD = 0.15;
 const TICK_MS = 40;
 // A breath after loading a Preset before its phrase, and after the phrase before the next Preset.
-const LEAD_IN = 0.4;
-const GAP = 0.6;
+const LEAD_IN = 0.3;
+const GAP = 0.4;
 
 /**
  * Plays the tour once: for each stop, load its Preset, play its phrase on the audio clock, move on; after the
@@ -34,6 +38,7 @@ export function startDemo(host: DemoHost, tour: readonly TourStop[] = TOUR): () 
   let queued = 0;
   let end = 0;
   let voices = 1;
+  let moves: { id: ParamId; from: number; to: number; start: number; end: number; done: boolean }[] = [];
 
   const step = () => {
     index += 1;
@@ -43,16 +48,38 @@ export function startDemo(host: DemoHost, tour: readonly TourStop[] = TOUR): () 
       return false;
     }
     const stop = tour[index];
-    voices = host.load(stop);
+    const patch = host.load(stop);
+    voices = patch.voices;
     host.onStep(index);
     const start = host.now() + LEAD_IN;
+    const beat = 60 / stop.bpm;
+    const length = phraseLength(stop.phrase, stop.bpm);
     events = parsePhrase(stop.phrase, stop.bpm).map((e) => ({ ...e, time: start + e.time, off: start + e.time + e.duration }));
+    moves = (stop.moves ?? []).map((m) => ({
+      id: m.id,
+      from: valueToPosition(PARAMS[m.id], m.from ?? patch[m.id]),
+      to: valueToPosition(PARAMS[m.id], m.to),
+      start: start + (m.start ?? 0) * beat,
+      end: start + (m.end === undefined ? length : m.end * beat),
+      done: false,
+    }));
     queued = 0;
-    end = start + phraseLength(stop.phrase, stop.bpm) + GAP;
+    end = start + length + GAP;
     return true;
   };
 
+  const turnKnobs = () => {
+    const now = host.now();
+    for (const m of moves) {
+      if (m.done || now < m.start) continue;
+      const progress = Math.min(1, (now - m.start) / Math.max(1e-6, m.end - m.start));
+      host.setParam(m.id, positionToValue(PARAMS[m.id], m.from + (m.to - m.from) * progress));
+      if (progress >= 1) m.done = true;
+    }
+  };
+
   const tick = () => {
+    turnKnobs();
     const horizon = host.now() + LOOKAHEAD;
     while (queued < events.length && events[queued].time < horizon) {
       // A chord's Notes all start before any of them stops, so the model's history stays in time order.

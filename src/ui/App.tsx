@@ -129,8 +129,9 @@ export function App() {
       load: (stop) => {
         const preset = PRESETS.find((p) => p.name === stop.preset)!;
         loadPatch(preset.name, preset.patch);
-        return preset.patch.voices;
+        return preset.patch;
       },
+      setParam: (id, value) => setPatch((p) => setParam(p, id, value)),
       noteOn: (note, velocity, at) => engine.noteOn(note, velocity, at),
       noteOff: (at) => engine.noteOff(at),
       release: (note, at) => engine.release(note, at),
