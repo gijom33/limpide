@@ -47,3 +47,13 @@ test('every toolbar control explains itself, without doubling up on native brows
     await expect(page.getByRole('tooltip'), name).toBeVisible();
   }
 });
+
+test('headings with an explanation are plain text, with no dotted underline, and still explain themselves on hover', async ({ page }) => {
+  await page.goto('/');
+  const dotted = await page.evaluate(() =>
+    [...document.querySelectorAll('body *')].filter((el) => getComputedStyle(el).textDecorationStyle === 'dotted' && getComputedStyle(el).textDecorationLine.includes('underline')).length,
+  );
+  expect(dotted).toBe(0);
+  await page.getByRole('region', { name: 'Envelope Timeline' }).getByText('Envelope Timeline', { exact: true }).hover();
+  await expect(page.getByRole('tooltip')).toBeVisible();
+});
