@@ -1,6 +1,5 @@
 import type { Modulation } from '../engine/synthEngine';
 import { cssVar, prepareCanvas } from './canvas';
-import { passBand } from '../modulation/passBand';
 import { createFreezeLatch } from './freezeLatch';
 import type { ViewSettings } from './viewSettings';
 
@@ -16,8 +15,9 @@ interface Source {
 }
 
 /**
- * The Envelope Timeline: the last few seconds of the Amp Envelope and the Effective Cutoff (log Hz on the
- * right; its area is the pass band), computed from the Modulation model for past moments. "Now" is the right edge.
+ * The Envelope Timeline: the last few seconds of the Amp and Filter Envelopes (areas, 0–1 on a shared scale) and
+ * the Effective Cutoff (a line, log Hz on the right), computed from the Modulation model for past moments. "Now" is
+ * the right edge.
  */
 export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: () => ViewSettings) {
   const frozenNow = createFreezeLatch<number>();
@@ -54,16 +54,31 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
     const columns = Math.ceil(width);
     const samples = Array.from({ length: columns }, (_, x) => source.modulationAt(timeAt(x + 0.5)));
 
-    // The pass band as an area: the frequencies the Filter lets through at each moment (below the Cutoff for
-    // low-pass, above for high-pass, a band for band-pass, all but a band for notch). Fainter than the Amp area.
-    g.fillStyle = cssVar(canvas, '--stage-filter');
-    g.globalAlpha = 0.14;
-    samples.forEach((m, x) => {
-      for (const [lo, hi] of passBand(m.mode, m.cutoff, m.bandwidth, { min: F_MIN, max: F_MAX })) {
-        g.fillRect(x, yHz(hi), 1, yHz(lo) - yHz(hi));
-      }
-    });
-    g.globalAlpha = 1;
+    // An Envelope as a filled area with its outline, on the 0–1 level scale.
+    const area = (colourVar: string, alpha: number, level: (m: Modulation) => number) => {
+      const colour = cssVar(canvas, colourVar);
+      g.fillStyle = colour;
+      g.globalAlpha = alpha;
+      g.beginPath();
+      g.moveTo(0, yLevel(0));
+      samples.forEach((m, x) => g.lineTo(x, yLevel(level(m))));
+      g.lineTo(columns, yLevel(0));
+      g.closePath();
+      g.fill();
+      g.globalAlpha = 1;
+      g.strokeStyle = colour;
+      g.lineWidth = 1.5;
+      g.beginPath();
+      samples.forEach((m, x) => (x ? g.lineTo(x, yLevel(level(m))) : g.moveTo(x, yLevel(level(m)))));
+      g.stroke();
+    };
+
+    // Amp Envelope: read as "how loud".
+    area('--stage-amp', 0.25, (m) => m.amp);
+
+    // Filter Envelope: an area on the same 0–1 scale, the shape that (times Amount) pushes the Effective Cutoff.
+    area('--filter-envelope', 0.2, (m) => m.filter);
+    canvas.dataset.filterEnvelope = (samples.at(-1)?.filter ?? 0).toFixed(3);
 
     // The Cutoff knob's setting (dashed), then the Effective Cutoff the Filter Envelope makes of it.
     g.strokeStyle = cssVar(canvas, '--stage-filter');
@@ -82,22 +97,6 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
     g.lineWidth = 1.75;
     g.beginPath();
     samples.forEach((m, x) => (x ? g.lineTo(x, yHz(m.cutoff)) : g.moveTo(x, yHz(m.cutoff))));
-    g.stroke();
-
-    // Amp Envelope: a filled area, read as "how loud".
-    g.fillStyle = cssVar(canvas, '--stage-amp');
-    g.globalAlpha = 0.25;
-    g.beginPath();
-    g.moveTo(0, yLevel(0));
-    samples.forEach((m, x) => g.lineTo(x, yLevel(m.amp)));
-    g.lineTo(columns, yLevel(0));
-    g.closePath();
-    g.fill();
-    g.globalAlpha = 1;
-    g.strokeStyle = cssVar(canvas, '--stage-amp');
-    g.lineWidth = 1.5;
-    g.beginPath();
-    samples.forEach((m, x) => (x ? g.lineTo(x, yLevel(m.amp)) : g.moveTo(x, yLevel(m.amp))));
     g.stroke();
   };
 }

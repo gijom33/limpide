@@ -45,3 +45,18 @@ test('the Filter Envelope knobs wake up once Envelope Amount is turned away from
   await expect(amount).toHaveAttribute('aria-valuetext', '+0.2 oct');
   await expect(decay).not.toHaveAttribute('data-inactive');
 });
+
+test('the Envelope Timeline shows the Filter Envelope too, with its own key, rising and settling as the Note plays', async ({ page }) => {
+  await page.goto('/');
+  await ready(page);
+  const panel = page.getByRole('region', { name: 'Envelope Timeline' });
+  await expect(panel.locator('[data-mark="filterEnvelope"]')).toHaveText('Filter Envelope');
+  const canvas = panel.locator('canvas');
+  const level = () => canvas.getAttribute('data-filter-envelope').then(Number);
+  await expect.poll(level).toBe(0); // no Note yet
+  await page.getByRole('button', { name: 'Hold' }).click();
+  await page.keyboard.down('KeyA');
+  // Init's Filter Envelope settles at its Sustain, 30 %.
+  await expect.poll(level, { timeout: 5000 }).toBeCloseTo(0.3, 1);
+  await page.keyboard.up('KeyA');
+});

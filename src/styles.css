@@ -29,6 +29,8 @@
   --stage-osc: #08ad72;
   --stage-filter: #e36b02;
   --stage-amp: #7584fe;
+  /* The Filter Envelope on the Timeline: the Filter's colour lightened towards the text (either theme). */
+  --filter-envelope: color-mix(in srgb, var(--stage-filter) 55%, var(--text));
   color-scheme: dark;
   font-family: system-ui, -apple-system, sans-serif;
 }
@@ -259,7 +261,8 @@ main[data-frozen] .tap-canvases::before {
 .timeline-key span { display: inline-flex; align-items: center; gap: 5px; }
 .timeline-key span::before { content: ''; width: 12px; height: 8px; border-radius: 2px; }
 .timeline-key [data-mark='amp']::before { background: color-mix(in srgb, var(--stage-amp) 45%, transparent); border-top: 1.5px solid var(--stage-amp); }
-.timeline-key [data-mark='cutoff']::before { background: color-mix(in srgb, var(--stage-filter) 30%, transparent); border-top: 2px solid var(--stage-filter); }
+.timeline-key [data-mark='filterEnvelope']::before { background: color-mix(in srgb, var(--filter-envelope) 35%, transparent); border-top: 1.5px solid var(--filter-envelope); }
+.timeline-key [data-mark='cutoff']::before { height: 0; border-top: 2px solid var(--stage-filter); }
 main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-offset: -1px; }
 /* Amount then A-D-S-R on one line when five knob columns fit the block (5 × 60 + 4 × 12 = 348 px); when they do
    not, Amount stands to the left and the envelope keeps its shape as a 2×2 (A D / S R), like the Amp block. */
@@ -456,8 +459,10 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 /* Patch bar: ‹ name › on the header line, opening a panel to save, load, export, import and share. When the
    header is short of room, it is the Patch name that gives way (an ellipsis), never the name of the app. */
 .patch-bar { position: relative; display: flex; align-items: center; gap: 2px; min-width: 0; }
-.patch-bar > .tip-anchor { min-width: 0; }
-.patch-name { max-width: 180px; min-width: 0; justify-content: center; gap: 6px; }
+/* A fixed width (the longest Preset name and the changed dot), so the arrows never move as names change; longer
+   names of your own are shortened with an ellipsis (the full name stays in the button's label). */
+.patch-bar > .tip-anchor { flex: none; }
+.patch-name { width: 150px; justify-content: center; gap: 6px; }
 .patch-name span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .patch-changed { width: 6px; height: 6px; border-radius: 50%; background: var(--text); flex: none; }
 .patch-panel {

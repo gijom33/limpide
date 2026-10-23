@@ -19,6 +19,7 @@ export function EnvelopeTimeline({ engine, view, controls }: { engine: SynthEngi
         </Tooltip>
         <span className="timeline-key">
           <span data-mark="amp">Amp Envelope</span>
+          <span data-mark="filterEnvelope">Filter Envelope</span>
           <span data-mark="cutoff">Effective Cutoff</span>
         </span>
       </h2>

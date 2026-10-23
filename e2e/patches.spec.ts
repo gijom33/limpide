@@ -94,3 +94,27 @@ test('importing something that is not a Patch says why, and changes nothing', as
   await expect(page.getByRole('dialog', { name: 'Patches' }).getByRole('status')).toContainText(/not a SynthView Patch/i);
   await expect(cutoff(page)).toHaveAttribute('aria-valuetext', '2.00 kHz');
 });
+
+test('the Preset arrows stay put whatever the name between them, and a long name is shortened, not spilled', async ({ page }) => {
+  const next = page.getByRole('button', { name: 'Next Preset' });
+  const at = async () => Math.round((await next.boundingBox())!.x);
+  const home = await at();
+  for (let i = 0; i < 22; i++) {
+    await next.click();
+    const label = await patchName(page).getAttribute('aria-label');
+    expect(await at(), label).toBe(home);
+    // Every factory name shows in full.
+    const cut = await patchName(page).locator('span').first().evaluate((el) => el.scrollWidth > el.clientWidth);
+    expect(cut, label).toBe(false);
+  }
+  await nudge(page);
+  await expect(patchName(page)).toHaveAttribute('data-changed', 'true'); // the changed dot appears…
+  expect(await at()).toBe(home); // …and nothing moves
+  await patchName(page).click();
+  const menu = page.getByRole('dialog', { name: 'Patches' });
+  await menu.getByRole('textbox', { name: 'Patch name' }).fill('A rather long name for my favourite bass');
+  await menu.getByRole('button', { name: 'Save', exact: true }).click();
+  await page.keyboard.press('Escape');
+  expect(await at()).toBe(home);
+  await expect(patchName(page)).toHaveAttribute('aria-label', 'Patch: A rather long name for my favourite bass'); // full name kept for screen readers
+});
