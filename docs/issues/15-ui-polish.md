@@ -4,7 +4,7 @@
 
 **Blocked by:** 13
 
-**Status:** done, except A8's Semitone label and A10, which land with the other session's Spectrum and Key Track work
+**Status:** done, except A10, which lands with the other session's Spectrum work
 
 ## Rules
 
@@ -39,7 +39,7 @@ Each finding names where it is, the rule it breaks, and the fix. Tick to approve
 - [x] **A5 Radii.** Panels 10, tooltip and audio-blocked hint 8, controls 7, Waveform buttons and canvases 6, kbd 4. Fix: tokens `--radius-panel` 10, `--radius-control` 7, `--radius-inner` 6; the tooltip and the hint become panels (10), Waveform buttons become controls (7).
 - [x] **A6 Patch panel buttons are 26 px tall** where every other control is 28 px (`--control-h`). Fix: use the token.
 - [x] **A7 Inactive knobs are unreadable in the light theme.** Osc 1 Pulse Width, Filter Envelope stages, LFO Rate at 40 % opacity: the value is near-invisible on white. Rule: dimmed still means legible. Fix: 55 % opacity, and only the dial and value dim; the label keeps full colour.
-- [x] **A8 Wording against the glossary.** LFO destination "Width" → "Pulse Width" (done). Osc 2 knob "Semi" → "Semitone": handed to the session working in patch.ts, to land with its Key Track commit.
+- [x] **A8 Wording against the glossary.** LFO destination "Width" → "Pulse Width" (done). Osc 2 knob "Semi" → "Semitone" (done in fa6b9c4, with Key Track).
 - [x] **A9 Amp block is mostly empty** at 1440 and above: four knobs, then the height of the Filter's two rows. Rule: no decision needed; it is the price of the three stages sharing one controls row so the Viewers line up. Decided: left as it is.
 - [ ] **A10 Spectrum axis labels collide** in the Filter Viewer: "0 dB / −24 dB" overprint the harmonic numbers 26 and 36 at the top right. Viewer code (src/viewers), which another session is active in; Handed to the session working in the Spectrum viewer.
 - [x] **A12 The Timeline plot outgrew its controls.** After the window was narrowed and widened again, the plot's canvas drove the row's height from its own pixel aspect ratio, and the stage Viewers paid for it. Rule: the plot is exactly as tall as the LFO and Glide controls beside it. Fix: the canvas fills a box sized by the controls and never sizes the row (tested across a resize).
