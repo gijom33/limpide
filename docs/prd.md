@@ -151,5 +151,5 @@ SynthView is a browser-based, monophonic subtractive synthesizer laid out as its
 
 ## Further Notes
 
-- **Unverified Controller facts:** the C16's default CC assignments and its encoder output format aren't publicly documented, and its USB class compliance is very likely but unconfirmed. The Activity Monitor doubles as the tool for checking these on the real device.
+- **Controller facts, observed on the owner's C16 (MIDI Learn and the Activity Monitor):** it works as a class-compliant USB device in Chrome. Its 8 encoders are endless (Relative) and send CC 1–8; its 4 faders send CC 33–36; its 12 buttons send CC 49–60. These are defaults the owner can reassign on the device, so Quick Setup still learns each control rather than assuming them. Still to check: the exact Relative format (two's-complement or 64-centred; detected either way), the channel, and whether the buttons are momentary or toggle.
 - **Cascaded-biquad Q (settled):** each 24 dB low/high-pass stage gets half the resonant peak in dB. An engine test keeps the peak heights of the two Slopes within 2 dB (ADR-0001).
