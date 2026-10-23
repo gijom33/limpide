@@ -31,12 +31,16 @@ test('with four Voices a chord sounds: both held keys light, and the Viewers fol
   await expect(piano.locator('[aria-pressed="true"]')).toHaveCount(0);
 });
 
-test('the Voices control sits on the Amp heading line on a laptop screen', async ({ page }) => {
+test('the Voices control is a row of its own under the Amp heading, as Filter Mode is under the Filter’s', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
   const heading = page.getByRole('region', { name: 'Amp' }).getByRole('heading', { level: 2 });
-  const [h, v] = await Promise.all([heading.boundingBox(), voices(page).boundingBox()]);
-  expect(Math.abs(h!.y + h!.height / 2 - (v!.y + v!.height / 2))).toBeLessThanOrEqual(6);
+  const [h, v] = await Promise.all([heading.boundingBox(), page.locator('.voices-field').boundingBox()]);
+  expect(v!.y).toBeGreaterThanOrEqual(h!.y + h!.height - 1);
+  expect(Math.abs(v!.x - h!.x)).toBeLessThanOrEqual(1); // the field (caption first) starts where the heading starts
+  const filterHeading = page.getByRole('region', { name: 'Filter' }).getByRole('heading', { level: 2 });
+  const [fh, fm] = await Promise.all([filterHeading.boundingBox(), page.getByRole('radiogroup', { name: 'Filter Mode' }).boundingBox()]);
+  expect(fm!.y).toBeGreaterThanOrEqual(fh!.y + fh!.height - 1);
 });
 
 test('the Display panel chooses what the Amp Viewers follow: all Voices by default, or the newest Note', async ({ page }) => {
