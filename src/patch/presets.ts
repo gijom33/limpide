@@ -6,7 +6,7 @@ export const PRESET_GROUPS = [
   'Start',
   'Shapes',
   'Intervals',
-  'Filter lessons',
+  'Filter',
   'Bass',
   'Leads',
   'Keys & Plucks',
@@ -19,7 +19,7 @@ export type PresetGroup = (typeof PRESET_GROUPS)[number];
 export interface Preset {
   name: string;
   group: PresetGroup;
-  /** What this sound shows off: the lesson in it. */
+  /** What this sound shows off, and what to look at. */
   about: string;
   patch: Patch;
 }
@@ -67,7 +67,7 @@ group('Intervals', [
   }],
 ]);
 
-group('Filter lessons', [
+group('Filter', [
   ['Resonant Ring', 'High Resonance makes the Filter ring after every edge of the saw: see the ripples in the Scope, at the Cutoff’s frequency.', {
     cutoff: 1400, resonance: 0.9, filterSlope: 24, ampSustain: 1,
   }],

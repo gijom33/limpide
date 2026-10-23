@@ -125,7 +125,7 @@ for (const [width, height] of [[1710, 1060], [1100, 800], [872, 700]]) {
     await page.goto('/');
     await patchName(page).click();
     const menu = page.getByRole('dialog', { name: 'Patches' });
-    for (const group of ['Shapes', 'Intervals', 'Filter lessons', 'Bass', 'Leads', 'Keys & Plucks', 'Pads', 'Chords', 'Movement & Effects']) {
+    for (const group of ['Shapes', 'Intervals', 'Filter', 'Bass', 'Leads', 'Keys & Plucks', 'Pads', 'Chords', 'Movement & Effects']) {
       await expect(menu.getByRole('group', { name: group }).getByRole('button').first(), group).toBeAttached();
     }
     await expect(menu.getByRole('group', { name: 'Bass' }).getByRole('button', { name: 'Sub Bass' })).toBeAttached();
