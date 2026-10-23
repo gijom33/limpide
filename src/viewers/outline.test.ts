@@ -61,9 +61,15 @@ describe('spectrumOutline: the Spectrum trace at the screen’s own resolution',
     expect(outline[28]).toBe(-32);
   });
 
-  it('merges Harmonics closer than 3 px into one outline across their tops', () => {
+  it('keeps Harmonics only 2 px apart separate too, as a Retina screen can show them', () => {
     const outline = spectrumOutline(bins({ 300: -30, 320: -32, 340: -34 }), 1, axis, 100, 2);
-    expect(outline[62]).toBeCloseTo(-32); // between 300 and 320 Hz
-    expect(outline[66]).toBeCloseTo(-34);
+    expect(outline[62]).toBe(FLOOR); // between 300 and 320 Hz
+    expect(outline[66]).toBe(FLOOR);
+  });
+
+  it('merges Harmonics closer than that (1 px) into one outline across their tops', () => {
+    const outline = spectrumOutline(bins({ 500: -30, 510: -32, 520: -34 }), 1, axis, 100, 2);
+    expect(outline[101]).toBeCloseTo(-32); // between 500 and 510 Hz
+    expect(outline[103]).toBeCloseTo(-34);
   });
 });

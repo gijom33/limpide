@@ -22,8 +22,11 @@ export function closeGaps(values: Float32Array, radius: number): Float32Array {
   return sweep(dilated, Math.min, Infinity);
 }
 
-/** Valleys narrower than this (CSS pixels) are filled: Harmonics that close can't be told apart anyway. */
-const MERGE_BELOW_PX = 3;
+/**
+ * The merging window (CSS pixels): only valleys a device pixel or so wide are filled, where neighbouring
+ * Harmonics would touch anyway. Everything the screen can separate stays a separate spike.
+ */
+const MERGE_BELOW_PX = 1;
 
 /**
  * The Spectrum trace: the peak level (dB) in each device-pixel column (so a Retina screen gets twice the detail),
