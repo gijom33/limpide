@@ -432,7 +432,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 
 /* Patch bar: ‹ name › on the header line, opening a panel to save, load, export, import and share. When the
    header is short of room, it is the Patch name that gives way (an ellipsis), never the name of the app. */
-.patch-bar { position: relative; display: flex; align-items: center; gap: 2px; min-width: 0; }
+.patch-bar { position: static; display: flex; align-items: center; gap: 2px; min-width: 0; }
 /* A fixed width (the longest Preset name and the changed dot), so the arrows never move as names change; longer
    names of your own are shortened with an ellipsis (the full name stays in the button's label). */
 .patch-bar > .tip-anchor { flex: none; }
@@ -443,13 +443,17 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .patch-name span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .patch-changed { width: 6px; height: 6px; border-radius: 50%; background: var(--text); flex: none; }
 /* Never taller than the window below the header: the Presets scroll, the rest of the panel stays in view. */
+/* The Patch panel is anchored to the header (like the Display and MIDI panels), spanning its full width, so the
+   Presets lay out in wide rows and the whole list is on screen at once; it scrolls only on short windows. */
 .patch-panel {
-  position: absolute; z-index: 50; top: calc(100% + 6px); left: 0; width: min(440px, calc(100vw - 32px)); max-height: calc(100dvh - 80px);
+  position: absolute; z-index: 50; top: calc(100% + 6px); left: 0; right: 0; max-height: calc(100dvh - 80px);
   padding: 12px; display: flex; flex-direction: column; gap: 12px;
   background: var(--panel); border: 1px solid var(--muted); border-radius: var(--radius-panel); box-shadow: var(--shadow-panel);
 }
 .patch-panel h3 { margin: 0 0 6px; font-size: var(--text-sm); font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
-.patch-presets { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+/* The Preset groups fill the panel's width in columns, so the whole library is a short block, not a long list. */
+.patch-presets { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 10px 24px; align-content: start; }
+.patch-presets > h3 { grid-column: 1 / -1; margin: 0; }
 .patch-panel > section:not(.patch-presets) { flex: none; }
 .patch-group h4 { margin: 0 0 4px; font-size: var(--text-xs); font-weight: 500; color: var(--muted); }
 .patch-list { display: flex; flex-wrap: wrap; gap: 4px; }
@@ -460,7 +464,8 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .patch-delete { height: var(--control-h); min-width: var(--control-h); padding: 0 6px; font: inherit; font-size: var(--text-md); color: var(--muted); cursor: pointer; background: none; border: 1px solid var(--border); border-radius: var(--radius-control); }
 .patch-delete-confirm { color: var(--danger); border-color: var(--danger); }
 .patch-empty { margin: 0; font-size: var(--text-md); color: var(--muted); }
-.patch-save { display: flex; gap: 6px; margin-top: 8px; }
+.patch-save { display: flex; gap: 6px; margin-top: 8px; max-width: 440px; }
+.patch-panel > .patch-link { max-width: 440px; }
 .patch-save input, .patch-link {
   flex: 1; min-width: 0; height: var(--control-h); padding: 0 8px; font: inherit; font-size: var(--text-md); color: var(--text);
   background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-control);
