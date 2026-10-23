@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { harmonicSeries, type Waveform } from '../music/harmonics';
 import { idealReference } from '../music/idealReference';
 import { defaultPatch, type Patch } from '../patch/patch';
+import { PRESETS } from '../patch/presets';
 import { amplitudeToSpectrumDb } from '../viewers/spectrumScale';
 import { dB, frequencyAround, rms, toneAmplitude, toneAmplitudeHann } from '../test/measure';
 import { createSynthEngine, OSCILLATOR_LEVEL } from './synthEngine';
@@ -769,5 +770,25 @@ describe('several Voices (ADR-0007)', () => {
     });
     await quiet.startRendering();
     expect(await captured2).toBe(false);
+  });
+});
+
+describe('every Preset', () => {
+  it('makes a sound when a chord is played, and stays within full scale at the output', async () => {
+    const quiet: string[] = [];
+    const loud: string[] = [];
+    for (const preset of PRESETS) {
+      const ctx = new OfflineAudioContext(1, SR * 0.8, SR);
+      const engine = createSynthEngine(ctx);
+      engine.applyPatch(preset.patch);
+      engine.noteOn(57, 1, 0); // A3, C#4, E4: a chord with 4 Voices, the newest Note alone with 1
+      engine.noteOn(61, 1, 0.02);
+      engine.noteOn(64, 1, 0.04);
+      const s = (await ctx.startRendering()).getChannelData(0);
+      if (rms(s) < 1e-4) quiet.push(preset.name);
+      if (s.some((v) => Math.abs(v) > 1)) loud.push(preset.name);
+    }
+    expect(quiet).toEqual([]);
+    expect(loud).toEqual([]);
   });
 });
