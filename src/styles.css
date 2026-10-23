@@ -341,6 +341,10 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 @container (min-width: 330px) {
   .block[data-stage='filter'] .filter-shape { position: absolute; top: -4px; right: 0; }
 }
+/* Voices shares the Amp heading's line the same way. */
+@container (min-width: 300px) {
+  .block[data-stage='amp'] .voices-field { position: absolute; top: -4px; right: 0; }
+}
 
 /* The Timeline panel: the controls that act over time (LFO, Glide) to the left of the plot. */
 .timeline-body { display: flex; gap: var(--space-4); align-items: stretch; }

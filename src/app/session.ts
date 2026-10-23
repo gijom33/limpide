@@ -27,6 +27,7 @@ export function getAudioSession(patch: Patch): AudioSession {
     (event) => {
       if (event.type === 'noteOn') engine.noteOn(event.note, event.velocity);
       else if (event.type === 'pitchChange') engine.pitchChange(event.note);
+      else if (event.type === 'release') engine.release(event.note);
       else engine.noteOff();
     },
     (notes) => listeners.forEach((l) => l(notes)),

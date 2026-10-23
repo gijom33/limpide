@@ -325,6 +325,7 @@ export function App() {
 
   useEffect(() => {
     session.engine.applyPatch(patch);
+    session.input.setVoices(patch.voices);
   }, [session, patch]);
 
   useEffect(() => {
@@ -603,9 +604,23 @@ export function App() {
             title="Amp"
             stage="amp"
             ids={['ampAttack', 'ampDecay', 'ampSustain', 'ampRelease']}
+            heading={
+              <div className="voices-field">
+                <Tooltip content={TIPS.voices}>
+                  <Segmented
+                    label="Voices"
+                    caption="Voices"
+                    value={patch.voices}
+                    options={CHOICES.voices.map((v) => ({ value: v, label: String(v) }))}
+                    onChange={(voices) => setPatch((p) => ({ ...p, voices }))}
+                    learn={{ kind: 'choice', id: 'voices' }}
+                  />
+                </Tooltip>
+              </div>
+            }
             patch={patch}
             onChange={change}
-            viewers={viewers('amp', 'Amp', { limitAbove: LIMITING_ABOVE })}
+            viewers={viewers('amp', 'Amp', { limiting: session.engine.limiting })}
           />
         </div>
 

@@ -4,7 +4,7 @@ import { idealReference } from '../music/idealReference';
 import { defaultPatch, type Patch } from '../patch/patch';
 import { amplitudeToSpectrumDb } from '../viewers/spectrumScale';
 import { dB, frequencyAround, rms, toneAmplitude, toneAmplitudeHann } from '../test/measure';
-import { createSynthEngine, OSCILLATOR_LEVEL } from './synthEngine';
+import { createSynthEngine, limitingAbove, LIMITING_ABOVE, OSCILLATOR_LEVEL } from './synthEngine';
 
 const SR = 48000;
 
@@ -674,5 +674,101 @@ describe('Sub-oscillator', () => {
   it('moves Cycle Lock and the Harmonic Markers to its own pitch, where the sound now repeats', async () => {
     const { fundamental } = await oscillatorTap({ mixSub: 0.5 }, 57);
     expect(fundamental).toBeCloseTo(110);
+  });
+});
+
+describe('several Voices (ADR-0007)', () => {
+  const A2 = 45; // 110 Hz
+  const E3 = 52; // 164.8 Hz
+  const steady = { cutoff: 20000, resonance: 0, ampAttack: 0.001, ampSustain: 1, ampRelease: 0.02 };
+  const tone = (s: Float32Array, hz: number) => toneAmplitude(s, SR, hz, s.length - SR / 2, s.length);
+  const chord = (e: ReturnType<typeof createSynthEngine>) => {
+    e.noteOn(A2, 1, 0);
+    e.noteOn(E3, 1, 0.1);
+  };
+
+  it('plays both Notes of a chord, where one Voice plays only the newest', async () => {
+    const poly = await render(1, { ...steady, voices: 4 }, chord);
+    expect(dB(tone(poly, 110) / tone(poly, 164.8))).toBeGreaterThan(-3);
+    const mono = await render(1, { ...steady, voices: 1 }, chord);
+    expect(dB(tone(mono, 110) / tone(mono, 164.8))).toBeLessThan(-30);
+  });
+
+  it('shows only the newest Note at the Taps, as if it were played alone', async () => {
+    const ctx = new OfflineAudioContext(1, SR * 0.6, SR);
+    const engine = createSynthEngine(ctx);
+    engine.applyPatch({ ...defaultPatch(), ...steady, voices: 4 });
+    chord(engine);
+    const captured = ctx.suspend(0.5).then(() => {
+      const s = new Float32Array(engine.taps.oscillator.fftSize);
+      engine.taps.oscillator.getFloatTimeDomainData(s);
+      void ctx.resume();
+      return s;
+    });
+    await ctx.startRendering();
+    const osc = await captured;
+    expect(dB(toneAmplitude(osc, SR, 110) / toneAmplitude(osc, SR, 164.8))).toBeLessThan(-30);
+    expect(engine.fundamental()).toBeCloseTo(164.8, 0);
+  });
+
+  it('releases one Note of a chord and keeps the other sounding', async () => {
+    const s = await render(1, { ...steady, voices: 4 }, (e) => {
+      chord(e);
+      e.release(E3, 0.3);
+    });
+    expect(dB(tone(s, 164.8) / tone(s, 110))).toBeLessThan(-30);
+  });
+
+  it('takes the oldest Voice when every Voice is sounding', async () => {
+    const s = await render(1, { ...steady, voices: 2 }, (e) => {
+      e.noteOn(A2, 1, 0);
+      e.noteOn(E3, 1, 0.1);
+      e.noteOn(57, 1, 0.2); // A3: takes A2's Voice, so A2 stops and E3 stays
+    });
+    expect(dB(tone(s, 110) / tone(s, 220))).toBeLessThan(-30);
+    expect(dB(tone(s, 164.8) / tone(s, 220))).toBeGreaterThan(-3);
+  });
+
+  it('closes the Gate on every Voice at once', async () => {
+    const s = await render(1, { ...steady, voices: 4 }, (e) => {
+      chord(e);
+      e.noteOff(0.3);
+    });
+    expect(rms(s, Math.round(SR * 0.6), s.length)).toBeLessThan(rms(s, Math.round(SR * 0.15), Math.round(SR * 0.3)) * 0.001);
+  });
+
+  it('turns the listening level down by √Voices, after the Amp Tap, so one Voice of four never reaches the limiter', async () => {
+    const one = await render(0.5, { ...steady, voices: 1 }, (e) => e.noteOn(A2, 1, 0));
+    const four = await render(0.5, { ...steady, voices: 4 }, (e) => e.noteOn(A2, 1, 0));
+    const peak = (x: Float32Array) => x.subarray(SR * 0.25).reduce((m, v) => Math.max(m, Math.abs(v)), 0);
+    expect(peak(four) / peak(one)).toBeCloseTo(0.5, 1);
+    const taps = await tapsAt(0.4, { ...steady, voices: 4 });
+    expect(taps.amp.reduce((m, v) => Math.max(m, Math.abs(v)), 0)).toBeCloseTo(OSCILLATOR_LEVEL, 1);
+    expect(limitingAbove(4)).toBeCloseTo(LIMITING_ABOVE * 2, 5);
+  });
+
+  it('reports when the limiter is bending the summed output, which the one shown Voice cannot tell', async () => {
+    const ctx = new OfflineAudioContext(1, SR * 0.6, SR);
+    const engine = createSynthEngine(ctx);
+    engine.applyPatch({ ...defaultPatch(), ...steady, resonance: 1, cutoff: 110, voices: 4 });
+    for (const [note, t] of [[A2, 0], [A2 + 7, 0.05], [A2 + 12, 0.1], [A2 + 19, 0.15]] as const) engine.noteOn(note, 1, t);
+    const captured = ctx.suspend(0.5).then(() => {
+      const limiting = engine.limiting();
+      void ctx.resume();
+      return limiting;
+    });
+    await ctx.startRendering();
+    expect(await captured).toBe(true);
+    const quiet = new OfflineAudioContext(1, SR * 0.6, SR);
+    const soft = createSynthEngine(quiet);
+    soft.applyPatch({ ...defaultPatch(), ...steady, voices: 4 });
+    soft.noteOn(A2, 0.5, 0);
+    const captured2 = quiet.suspend(0.5).then(() => {
+      const limiting = soft.limiting();
+      void quiet.resume();
+      return limiting;
+    });
+    await quiet.startRendering();
+    expect(await captured2).toBe(false);
   });
 });

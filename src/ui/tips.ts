@@ -42,6 +42,11 @@ export const TIPS = {
     body: 'Map your Controller: click a knob or button here, then move a knob, fader or pad there. Endless encoders and normal knobs are told apart by what they send.',
     how: 'Normal knobs use Pickup: the Parameter waits until the knob passes its value, so nothing jumps. Finish with Escape, or Done in the MIDI panel.',
   },
+  voices: {
+    title: 'Voices',
+    body: 'How many Notes can sound at once. 1 is the classic monophonic synth: the newest key wins, and Glide slides between Notes. 2 to 4 play chords, each Note on its own Voice.',
+    how: 'The Viewers always show the newest Note on its own, as if it were played alone: chords are for playing, one Voice is for seeing.',
+  },
   velocityCutoff: {
     title: 'Velocity → Cutoff',
     body: 'How much harder hits open the Filter: up to two octaves for the hardest. Velocity comes from MIDI pads and keys, or from where you click on a piano key.',

@@ -48,6 +48,8 @@ export interface SynthEngine {
    * Effective Cutoff right now.
    */
   filterResponse(frequencies: Float32Array<ArrayBuffer>): Float32Array;
+  /** Whether the output's safety limiter bent the sound in its last frame (the summed Voices, after the master). */
+  limiting(): boolean;
   readonly taps: Taps;
 }
 
@@ -376,6 +378,13 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   safety.curve = safetyCurve();
   safety.oversample = '4x';
   master.connect(safetyIn).connect(safety).connect(safetyOut).connect(ctx.destination);
+  // Listens to what reaches the limiter, so the Viewers can say when it is bending the sound (a chord can reach
+  // the knee while the one Voice the Amp Tap shows stays well under it).
+  const limiterInput = ctx.createAnalyser();
+  limiterInput.fftSize = 2048;
+  limiterInput.smoothingTimeConstant = 0;
+  master.connect(limiterInput);
+  const limiterFrame = new Float32Array(limiterInput.fftSize);
   const taps: Taps = { oscillator: createAnalyser(ctx), filter: createAnalyser(ctx), amp: createAnalyser(ctx) };
   // Never connected: a twin of the Filter set from the Modulation model, so the Response Curve shows the
   // Effective Cutoff even while the real Filter is being automated (ADR-0003).
@@ -507,6 +516,11 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       return then ? effectiveCutoff(then) : 0;
     },
     now: () => ctx.currentTime,
+    limiting() {
+      limiterInput.getFloatTimeDomainData(limiterFrame);
+      for (let i = 0; i < limiterFrame.length; i++) if (Math.abs(limiterFrame[i]) > SAFETY_KNEE) return true;
+      return false;
+    },
 
     filterResponse(frequencies) {
       const cutoff = modulationAt().cutoff;

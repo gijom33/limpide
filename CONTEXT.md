@@ -27,8 +27,12 @@ The curve mapping a control's 0–1 position to a Parameter's real value: linear
 _Avoid_: Scaling, curve, response
 
 **Voice**:
-The single sound-producing chain: Oscillators → Mixer → Filter → Amp. SynthView has exactly one.
+One sound-producing chain: Oscillators → Mixer → Filter → Amp. A Patch has one to four; the Viewers always show the one playing the newest Note.
 _Avoid_: Channel, synth
+
+**Voices**:
+How many Notes a Patch lets sound at once (1 to 4). At 1 the instrument is monophonic (Note Priority, Glide); at 2 to 4 each Note takes its own Voice and chords sound.
+_Avoid_: Polyphony (the setting), voice count
 
 **Oscillator**:
 A source producing a periodic Waveform at a pitch. There are two, Osc 1 and Osc 2.
@@ -109,15 +113,15 @@ A pitch request with a Velocity, from any input (computer keyboard, on-screen pi
 _Avoid_: Key, trigger
 
 **Gate**:
-The on/off state of the Voice. On while any Note is held (or Hold is on), off otherwise.
+The on/off state of a Voice. On while its Note is held (or Hold is on), off otherwise.
 _Avoid_: Trigger, key down
 
 **Note Priority**:
-The rule picking which held Note sounds. SynthView uses last-note priority: the newest held Note wins, and releasing it returns to the previous one.
+With one Voice, the rule picking which held Note sounds: last-note priority, so the newest held Note wins, and releasing it returns to the previous one. With more Voices, every held Note sounds, and a Note beyond the last free Voice takes the oldest one.
 _Avoid_: Voice stealing
 
 **Hold**:
-A mode that keeps the Gate on indefinitely so the sound sustains while you adjust Parameters.
+A mode that keeps Notes sounding after their keys are released, so the sound sustains while you adjust Parameters: with one Voice until a new key or Hold off, with more until Hold off.
 _Avoid_: Drone, latch, sustain (Sustain is an Envelope stage)
 
 **Velocity**:
