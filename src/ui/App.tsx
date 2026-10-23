@@ -548,16 +548,16 @@ export function App() {
                 ]}
               />
               {/* Osc 2's offsets from Osc 1, below both tabs: one set of knobs in one state, whichever tab shows. */}
-              <div className="knobs knobs-tuning" role="group" aria-label="Osc 2 tuning">
-                {(['osc2Octave', 'osc2Semitone'] as const).map((id) => (
-                  <Tooltip key={id} content={TIPS.tuning}>
-                    <Knob id={id} value={patch[id]} onChange={(v) => change(id, v)} inactive={patch.mixOsc2 === 0} />
+              <SubBlock title="Tuning" tip={TIPS.tuning} group>
+                <div className="knobs">
+                  {(['osc2Octave', 'osc2Semitone'] as const).map((id) => (
+                    <Knob key={id} id={id} value={patch[id]} onChange={(v) => change(id, v)} inactive={patch.mixOsc2 === 0} />
+                  ))}
+                  <Tooltip content={TIPS.detune}>
+                    <Knob id="osc2Detune" value={patch.osc2Detune} onChange={(v) => change('osc2Detune', v)} inactive={patch.mixOsc2 === 0} />
                   </Tooltip>
-                ))}
-                <Tooltip content={TIPS.detune}>
-                  <Knob id="osc2Detune" value={patch.osc2Detune} onChange={(v) => change('osc2Detune', v)} inactive={patch.mixOsc2 === 0} />
-                </Tooltip>
-              </div>
+                </div>
+              </SubBlock>
               <SubBlock title="Mixer" tip={TIPS.mixer} group>
                 <div className="knobs">
                   <Knob id="mixOsc1" value={patch.mixOsc1} onChange={(v) => change('mixOsc1', v)} />

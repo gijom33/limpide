@@ -43,7 +43,7 @@ export const TIPS = {
     how: 'Normal knobs use Pickup: the Parameter waits until the knob passes its value, so nothing jumps. Finish with Escape, or Done in the MIDI panel.',
   },
   tuning: {
-    title: 'Osc 2 tuning',
+    title: 'Tuning',
     body: 'Octave, Semitone and Detune are Osc 2’s offsets from Osc 1, whichever tab is showing. Osc 1 is the pitch you play; they wake up once Osc 2 is mixed in.',
   },
   tapSource: {

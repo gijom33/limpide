@@ -301,19 +301,14 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 }
 
 /* Oscillator tabs: one Oscillator at a time; the Mixer stays visible below. */
-/* The Oscillator tabs lead the Waveform row (OSC 1 · OSC 2 | picker | Pulse Width), under the stage heading and
-   level with the row's knob, so the stage stays as short as the Filter's and the Viewers keep their room. */
-.tabs { display: flex; align-items: flex-start; gap: var(--space-3); }
-.tab-list { display: flex; flex: none; gap: 2px; margin-top: calc((var(--knob-h) - 30px) / 2); }
-.tab-panels { flex: 1 1 auto; min-width: 0; }
-/* A stage too narrow for that row puts the tabs above it. */
-@container (max-width: 329px) {
-  .tabs { flex-direction: column; align-items: stretch; gap: var(--space-2); }
-  .tab-list { margin-top: 0; }
-}
+/* The Oscillators stage is rows: the tabs, then the Waveform picker with Pulse Width, then Osc 2's tuning, then
+   the Mixer. The tuning and Mixer rows carry their name in a side column, so a row costs no heading line. */
+.tabs { display: flex; flex-direction: column; gap: var(--space-1); }
+.tab-list { display: flex; gap: 2px; }
+.tab-panels { min-width: 0; }
 .tab-list .tip-anchor { display: flex; }
 .tab-list [role='tab'] {
-  position: relative; display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px 7px; height: 30px;
+  position: relative; display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px 6px; height: 28px;
   font: inherit; font-size: var(--text-sm); font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
   background: none; border: 0; border-bottom: 2px solid transparent; cursor: pointer;
 }
@@ -327,14 +322,26 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .tab-panel:not([data-active]) { visibility: hidden; }
 .tab-panel > .sub-block { border-top: 0; padding-top: 0; }
 
-/* Wordmark: the logo, then "Synth" in full weight and "View" lighter, so the name reads as two ideas. */
+/* Wordmark: the logo, then the name in the three stage colours, Oscillators to Amp, like the mark's stroke;
+   "Synth" in full weight and "View" lighter, so the name still reads as two ideas. */
 .wordmark { display: inline-flex; align-items: center; gap: 10px; font-size: 21px; font-weight: 700; letter-spacing: -0.01em; }
 .wordmark { flex: none; }
 .wordmark .logo { flex: none; }
-.wordmark-view { font-weight: 400; color: var(--muted); }
+.wordmark-text {
+  background: linear-gradient(90deg, var(--stage-osc) 0%, var(--stage-filter) 55%, var(--stage-amp) 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.wordmark-view { font-weight: 400; }
 /* On both Oscillator tabs the Pulse Width knob sits to the right of the Waveform picker, so it stays put when
    switching tabs; Osc 2's tuning knobs are one row below the tabs, shared by both. */
 .tab-panel .sub-block > .knobs { flex: 0 0 auto; }
+/* The Tuning and Mixer rows: name in a 44 px column, knobs beside it, so both rows' knobs line up. In a stage too
+   narrow for the Mixer's four knobs beside a label, the Mixer's name goes above its row (the Tuning row's three
+   knobs still fit beside theirs). */
+.source-rows > .sub-block > h3, .source-rows > .sub-block > .tip-anchor:first-child { flex: 0 0 44px; }
+@container (max-width: 299px) {
+  .source-rows > .sub-block[aria-label='Mixer'] > h3, .source-rows > .sub-block[aria-label='Mixer'] > .tip-anchor:first-child { flex: 1 1 100%; }
+}
 .block-controls { container-type: inline-size; position: relative; }
 
 /* Filter Mode and Slope share the Filter heading's line when there is room. */
@@ -403,7 +410,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 }
 
 /* Compact knobs: one size for every knob on the page, chosen by the window. When the window is too narrow (below
-   1330 px a stage cannot hold the Oscillator tabs, the Waveform picker and a full-size knob on one row) or too
+   1330 px the Oscillators stage's rows of full-size knobs would leave the Viewers less than their floor) or too
    short, every knob shrinks together, so rows stay single, the whole instrument fits, and no knob is bigger than
    another. */
 @media (max-width: 1330px), (max-height: 760px) {

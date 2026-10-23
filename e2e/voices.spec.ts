@@ -55,11 +55,11 @@ test('the Display panel chooses what the Amp Viewers follow: all Voices by defau
 test('Osc 2’s tuning knobs are one shared row below the tabs: same place and state whichever tab shows', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
-  const tuning = page.getByRole('group', { name: 'Osc 2 tuning' });
+  const tuning = page.getByRole('group', { name: 'Tuning' });
   await expect(tuning.getByRole('slider')).toHaveCount(3);
   const state = async () =>
     page.evaluate(() =>
-      [...document.querySelectorAll('[aria-label="Osc 2 tuning"] .knob')].map((k) => {
+      [...document.querySelectorAll('[aria-label="Tuning"] .knob')].map((k) => {
         const r = k.querySelector('.knob-dial')!.getBoundingClientRect();
         return `${k.querySelector('.knob-label')!.textContent} ${Math.round(r.left)},${Math.round(r.top)} inactive=${k.hasAttribute('data-inactive')}`;
       }),
