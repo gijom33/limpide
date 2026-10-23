@@ -59,3 +59,11 @@ test('each Oscillator has its own Pulse Width, awake only while that Oscillator 
   const width1 = page.getByRole('group', { name: 'Osc 1' }).locator('.knob', { has: page.getByRole('slider', { name: 'Pulse Width' }) });
   await expect(width1).toHaveAttribute('data-inactive', 'true'); // Osc 1 is still a saw
 });
+
+test('the Mixer has a Sub level, off to start, whose tooltip says what it adds', async ({ page }) => {
+  await page.goto('/');
+  const sub = page.getByRole('group', { name: 'Mixer' }).getByRole('slider', { name: 'Sub' });
+  await expect(sub).toHaveAttribute('aria-valuetext', '0 %');
+  await sub.hover();
+  await expect(page.getByRole('tooltip')).toContainText(/octave below/i);
+});

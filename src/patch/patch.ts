@@ -22,6 +22,7 @@ export type ParamId =
   | 'mixOsc1'
   | 'mixOsc2'
   | 'mixNoise'
+  | 'mixSub'
   | 'lfoRate'
   | 'lfoAmount'
   | 'glide'
@@ -72,6 +73,7 @@ export const PARAMS: Record<ParamId, ParamDef> = {
   mixOsc1: level('mixOsc1', 'Osc 1', 1),
   mixOsc2: level('mixOsc2', 'Osc 2', 0),
   mixNoise: level('mixNoise', 'Noise', 0),
+  mixSub: level('mixSub', 'Sub', 0),
   lfoRate: { id: 'lfoRate', label: 'Rate', unit: 'Hz', min: 0.05, max: 20, taper: 'log', default: 2 },
   lfoAmount: level('lfoAmount', 'Depth', 0),
   glide: time('glide', 'Glide', GLIDE_OFF),

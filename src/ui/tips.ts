@@ -46,6 +46,11 @@ export const TIPS = {
     title: 'Velocity → Cutoff',
     body: 'How much harder hits open the Filter: up to two octaves for the hardest. Velocity comes from MIDI pads and keys, or from where you click on a piano key.',
   },
+  sub: {
+    title: 'Sub-oscillator',
+    body: 'A square wave an octave below Osc 1, for weight. The sound now repeats an octave lower, so the Harmonics are counted from the Sub: it fills the odd ones, and Osc 1 the even ones.',
+    how: 'Turn it up on Hollow Square or Init and watch every other rung of the Harmonic ladder fill in.',
+  },
   keyTrack: {
     title: 'Key Track',
     body: 'How far the Cutoff follows the Note you play, from C4: at 100 % it moves an octave per octave, so high Notes keep as many Harmonics as low ones. At 0 % the Cutoff stays put, and high Notes sound duller.',

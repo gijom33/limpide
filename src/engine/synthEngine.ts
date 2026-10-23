@@ -58,14 +58,18 @@ const MASTER_LEVEL = 0.45;
 
 const SAFETY_RANGE = 4;
 const SAFETY_KNEE = 0.8;
+// The bend levels off a little below full scale: driven hard, the shaper's oversampling filter rings slightly
+// past the curve, and this keeps even that under 1.
+const SAFETY_CEILING = 0.97;
 
-/** Linear up to the knee, then a tanh bend towards (never past) full scale. */
+/** Linear up to the knee, then a tanh bend towards (never past) the ceiling. */
 function safetyCurve(): Float32Array<ArrayBuffer> {
   const curve = new Float32Array(4097);
+  const bend = SAFETY_CEILING - SAFETY_KNEE;
   for (let i = 0; i < curve.length; i++) {
     const x = ((i / (curve.length - 1)) * 2 - 1) * SAFETY_RANGE;
     const over = Math.abs(x) - SAFETY_KNEE;
-    const y = over <= 0 ? Math.abs(x) : SAFETY_KNEE + (1 - SAFETY_KNEE) * Math.tanh(over / (1 - SAFETY_KNEE));
+    const y = over <= 0 ? Math.abs(x) : SAFETY_KNEE + bend * Math.tanh(over / bend);
     curve[i] = Math.sign(x) * y;
   }
   return curve;
@@ -157,6 +161,15 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   voices[0].out.connect(mix1).connect(mixer);
   voices[1].out.connect(mix2).connect(mixer);
   noise.connect(mixNoise).connect(mixer);
+  // The Sub-oscillator: a square an octave below Osc 1, following its pitch, Glide and vibrato.
+  const sub = ctx.createOscillator();
+  const square = harmonicSeries('square', 0.5, WAVE_HARMONICS);
+  sub.setPeriodicWave(ctx.createPeriodicWave(square.real, square.imag, { disableNormalization: true }));
+  sub.frequency.value = noteToFrequency(69) / 2;
+  const mixSub = ctx.createGain();
+  mixSub.gain.value = 0;
+  sub.connect(mixSub).connect(mixer);
+  sub.start();
   // Two stages: the second is transparent at 12 dB and doubles the Slope at 24 dB (filterStages).
   const filter = ctx.createBiquadFilter();
   const filter2 = ctx.createBiquadFilter();
@@ -228,6 +241,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   lfoToCutoff.connect(filter.detune);
   lfoToCutoff.connect(filter2.detune);
   lfo.connect(lfoToPitch);
+  lfoToPitch.connect(sub.detune);
   for (const v of voices) {
     lfoToPitch.connect(v.node.detune);
     lfo.connect(v.pwm);
@@ -263,11 +277,11 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     const glide = patch && pitches.length && patch.glide > GLIDE_OFF * 1.001 ? patch.glide : 0;
     pitches.push({ time: t, frequency, note, glide });
     if (pitches.length > HISTORY) pitches.shift();
-    for (const node of [osc, osc2]) {
-      // Both Oscillators follow the Note; Osc 2's offsets ride on top, through its detune.
+    for (const [node, f] of [[osc, frequency], [osc2, frequency], [sub, frequency / 2]] as const) {
+      // Every Oscillator follows the Note: Osc 2's offsets ride on top, through its detune; the Sub an octave down.
       node.frequency.cancelAndHoldAtTime(t);
-      if (glide) node.frequency.setTargetAtTime(frequency, t, glideTimeConstant(glide));
-      else node.frequency.setValueAtTime(frequency, t);
+      if (glide) node.frequency.setTargetAtTime(f, t, glideTimeConstant(glide));
+      else node.frequency.setValueAtTime(f, t);
     }
     tunePulses(frequency, t, glide ? glideTimeConstant(glide) : undefined);
     trackedNote.offset.cancelAndHoldAtTime(t);
@@ -344,7 +358,11 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   return {
     taps,
     // During a Glide, the frequency the Oscillators have reached: Cycle Lock follows the slide.
-    fundamental: () => glideFrequency(pitches, ctx.currentTime) || noteToFrequency(69),
+    // With the Sub sounding, the sound repeats at the Sub's pitch, an octave lower: that is the fundamental.
+    fundamental: () => {
+      const frequency = glideFrequency(pitches, ctx.currentTime) || noteToFrequency(69);
+      return patchAt(ctx.currentTime)?.mixSub ? frequency / 2 : frequency;
+    },
     modulationAt,
     baseCutoffAt: (time) => {
       const then = patchAt(time);
@@ -382,6 +400,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       mix1.gain.setValueAtTime(next.mixOsc1 * OSCILLATOR_LEVEL, t);
       mix2.gain.setValueAtTime(next.mixOsc2 * OSCILLATOR_LEVEL, t);
       mixNoise.gain.setValueAtTime(next.mixNoise * OSCILLATOR_LEVEL, t);
+      mixSub.gain.setValueAtTime(next.mixSub * OSCILLATOR_LEVEL, t);
       // The base Cutoff; the Filter Envelope adds to it through detune. The twins copy each stage for the curve.
       const stages = filterStages(next.filterMode, next.filterSlope, next.resonance);
       const cutoff = effectiveCutoff(next);

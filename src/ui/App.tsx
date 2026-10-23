@@ -8,7 +8,7 @@ import { connectMidi, midiSupport, type MidiAccessLike } from '../midi/inputs';
 import { createMappingStore, type Mapping, type Target } from '../midi/mappings';
 import { C16_SETUP, quickSetupReducer, startQuickSetup, type QuickSetupEvent, type QuickSetupState } from '../midi/quickSetup';
 import { OSCILLATOR_LEVEL } from '../engine/synthEngine';
-import { harmonicSeries } from '../music/harmonics';
+import { idealReference } from '../music/idealReference';
 import { CHOICES, PARAMS, setFilter, setParam, setWaveform, type ChoiceId, type ParamId, type Patch } from '../patch/patch';
 import { createLibrary } from '../patch/library';
 import { initialPatch, presetAfter } from '../patch/presets';
@@ -291,10 +291,11 @@ export function App() {
   useEffect(() => saveOverlays(localStorage, overlays), [overlays]);
 
   // The Ideal Reference at the Oscillator Tap's level: the same series the engine plays, scaled by the Nominal Level.
-  const ideal = useMemo(() => {
-    const { magnitudes } = harmonicSeries(patch.waveform, patch.pulseWidth, IDEAL_HARMONICS);
-    return magnitudes.map((m) => m * OSCILLATOR_LEVEL * patch.mixOsc1);
-  }, [patch.waveform, patch.pulseWidth, patch.mixOsc1]);
+  const ideal = useMemo(
+    () => idealReference(patch, IDEAL_HARMONICS).map((m) => m * OSCILLATOR_LEVEL),
+    // Only what the Ideal Reference depends on, not the whole Patch.
+    [patch.waveform, patch.pulseWidth, patch.mixOsc1, patch.mixSub],
+  );
 
   // Read by the render loop every frame; a stable getter keeps the Viewers mounted while settings change.
   const viewSettings = useRef<ViewSettings>({ cycles, ideal, overlays, viewer });
@@ -560,6 +561,9 @@ export function App() {
                   <Knob id="mixOsc2" value={patch.mixOsc2} onChange={(v) => change('mixOsc2', v)} />
                   <Tooltip content={TIPS.noise}>
                     <Knob id="mixNoise" value={patch.mixNoise} onChange={(v) => change('mixNoise', v)} />
+                  </Tooltip>
+                  <Tooltip content={TIPS.sub}>
+                    <Knob id="mixSub" value={patch.mixSub} onChange={(v) => change('mixSub', v)} />
                   </Tooltip>
                 </div>
               </SubBlock>

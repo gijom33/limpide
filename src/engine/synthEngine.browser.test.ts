@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { harmonicSeries, type Waveform } from '../music/harmonics';
+import { idealReference } from '../music/idealReference';
 import { defaultPatch, type Patch } from '../patch/patch';
 import { amplitudeToSpectrumDb } from '../viewers/spectrumScale';
 import { dB, frequencyAround, rms, toneAmplitude, toneAmplitudeHann } from '../test/measure';
@@ -378,7 +379,7 @@ describe('Osc 2, Noise and the Mixer', () => {
 
   it('never exceeds full scale at the output with every source at full level and maximum Resonance', async () => {
     let worst = 0;
-    const loud = { resonance: 1, ampSustain: 1, ampAttack: 0.001, mixOsc1: 1, mixOsc2: 1, mixNoise: 1, osc2Octave: 1 };
+    const loud = { resonance: 1, ampSustain: 1, ampAttack: 0.001, mixOsc1: 1, mixOsc2: 1, mixNoise: 1, mixSub: 1, osc2Octave: 1 };
     for (const note of [24, 48, 72]) {
       for (const cutoff of [100, 300, 873, 3000]) {
         const s = await render(0.6, { ...loud, cutoff }, (e) => e.noteOn(note, 1, 0));
@@ -633,5 +634,45 @@ describe('Key Track', () => {
   it('changes nothing at 0 %, whatever the Note', async () => {
     const { cutoff } = await measureAt({ cutoff: 600 }, (e) => e.noteOn(84, 1, 0), 0.3, Float32Array.of(1000));
     expect(cutoff).toBeCloseTo(600, 0);
+  });
+});
+
+describe('Sub-oscillator', () => {
+  /** The Oscillator Tap's samples half a second into a Note. */
+  async function oscillatorTap(patch: Partial<Patch>, note: number) {
+    const ctx = new OfflineAudioContext(1, SR, SR);
+    const engine = createSynthEngine(ctx);
+    engine.applyPatch({ ...defaultPatch(), ...patch });
+    engine.noteOn(note, 1, 0);
+    const frame = ctx.suspend(0.5).then(() => {
+      const s = new Float32Array(engine.taps.oscillator.fftSize);
+      engine.taps.oscillator.getFloatTimeDomainData(s);
+      void ctx.resume();
+      return { samples: s, fundamental: engine.fundamental() };
+    });
+    await ctx.startRendering();
+    return frame;
+  }
+
+  it('plays a square an octave below Osc 1, at the levels the Ideal Reference draws', async () => {
+    const patch = { ...defaultPatch(), mixOsc1: 1, mixSub: 0.6 };
+    const { samples } = await oscillatorTap(patch, 57); // Osc 1 at 220 Hz, the Sub at 110 Hz
+    const ideal = idealReference(patch, 16);
+    for (const n of [1, 2, 3, 4, 5, 6]) {
+      const measured = toneAmplitudeHann(samples, SR, 110 * n);
+      expect(dB(measured / (ideal[n] * OSCILLATOR_LEVEL)), `Harmonic ${n} of 110 Hz`).toBeLessThan(0.5);
+      expect(dB(measured / (ideal[n] * OSCILLATOR_LEVEL)), `Harmonic ${n} of 110 Hz`).toBeGreaterThan(-0.5);
+    }
+  });
+
+  it('is silent at 0, so Harmonics count from Osc 1 as before', async () => {
+    const { samples, fundamental } = await oscillatorTap({ mixSub: 0 }, 57);
+    expect(toneAmplitudeHann(samples, SR, 110)).toBeLessThan(1e-3);
+    expect(fundamental).toBeCloseTo(220);
+  });
+
+  it('moves Cycle Lock and the Harmonic Markers to its own pitch, where the sound now repeats', async () => {
+    const { fundamental } = await oscillatorTap({ mixSub: 0.5 }, 57);
+    expect(fundamental).toBeCloseTo(110);
   });
 });
