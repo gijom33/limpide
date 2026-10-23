@@ -13,10 +13,12 @@ interface Options {
   maxFrequency: number;
   xOf(frequency: number): number;
   minLabelGap: number;
+  /** No labels past this x (something else is printed there); every Harmonic still gets its tick. */
+  labelsEndAt?: number;
 }
 
 /** Harmonic Markers for a fundamental: one per Harmonic, labelled only where the axis has room. */
-export function harmonicMarkers(fundamental: number, { maxFrequency, xOf, minLabelGap }: Options): HarmonicMarker[] {
+export function harmonicMarkers(fundamental: number, { maxFrequency, xOf, minLabelGap, labelsEndAt = Infinity }: Options): HarmonicMarker[] {
   if (!(fundamental > 0)) return [];
   const markers: HarmonicMarker[] = [];
   let lastLabelX = -Infinity;
@@ -24,7 +26,7 @@ export function harmonicMarkers(fundamental: number, { maxFrequency, xOf, minLab
     const frequency = n * fundamental;
     const { name, cents } = nearestNote(frequency);
     const x = xOf(frequency);
-    const labelled = x - lastLabelX >= minLabelGap;
+    const labelled = x - lastLabelX >= minLabelGap && x <= labelsEndAt;
     if (labelled) lastLabelX = x;
     markers.push({ n, frequency, note: cents ? `${name} ${cents > 0 ? '+' : '−'}${Math.abs(cents)}¢` : name, labelled });
   }

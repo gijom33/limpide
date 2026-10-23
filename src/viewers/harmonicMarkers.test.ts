@@ -21,6 +21,14 @@ describe('harmonicMarkers', () => {
     }
   });
 
+  it('leaves room on the right for the dB scale: no labels past it, though every Harmonic keeps its tick', () => {
+    const all = harmonicMarkers(110, { maxFrequency: 20000, xOf: logX, minLabelGap: 30 });
+    const kept = harmonicMarkers(110, { maxFrequency: 20000, xOf: logX, minLabelGap: 30, labelsEndAt: WIDTH - 50 });
+    expect(kept.map((m) => m.n)).toEqual(all.map((m) => m.n));
+    expect(kept.filter((m) => m.labelled && logX(m.frequency) > WIDTH - 50)).toEqual([]);
+    expect(kept.filter((m) => m.labelled).length).toBeGreaterThan(3);
+  });
+
   it('names an in-tune Harmonic without a cents offset', () => {
     const [first] = harmonicMarkers(440, { maxFrequency: 20000, xOf: logX, minLabelGap: 30 });
     expect(first.note).toBe('A4');

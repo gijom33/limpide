@@ -14,6 +14,9 @@ const RING_GAP = 6;
 // scale, so its slopes (12 dB/octave…) read true against the Harmonics.
 const GAIN_ZERO_DB = -20;
 const GAIN_TICKS = [0, -24, -48];
+// The marker labels' baseline, and the height of a 10 px label above its baseline.
+const MARKER_LABEL_ROW = 15;
+const DB_LABEL_HEIGHT = 10;
 // The hover readout snaps to the strongest peak this many pixels either side of the cursor.
 const HOVER_SNAP = 12;
 // On the linear level axis a sine at the Oscillator's level fills the height.
@@ -107,7 +110,12 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
 
     const peak = columnPeaks(bins, binHz, columns, fAxis);
     const maxFrequency = Math.min(nyquist, fAxis.frequencyAt(width));
-    const markers = harmonicMarkers(frozenFundamental(viewer.frozen, fundamental), { maxFrequency, xOf, minLabelGap: MIN_LABEL_GAP });
+    // The Response Curve's dB scale sits at the right edge; where its top label reaches the marker labels' row
+    // (short Viewers), the marker labels stop short of it.
+    const zero = viewer.levelScale === 'db' ? GAIN_ZERO_DB : LINEAR_TOP_DB - 12;
+    const scaleOverlapsLabels = overlays.curve && response && yOf(zero) - 2 - DB_LABEL_HEIGHT < MARKER_LABEL_ROW;
+    const labelsEndAt = scaleOverlapsLabels ? width - g.measureText('−48 dB').width - 3 - MIN_LABEL_GAP / 2 : Infinity;
+    const markers = harmonicMarkers(frozenFundamental(viewer.frozen, fundamental), { maxFrequency, xOf, minLabelGap: MIN_LABEL_GAP, labelsEndAt });
 
     // Snapshot (A/B): the frame captured earlier, faint behind the live trace.
     if (snapshotBins) {
@@ -144,7 +152,6 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
       });
       const held = frozenCurve(viewer.frozen, live);
       const { gains } = held.key === key ? held : frozenCurve(false, live);
-      const zero = viewer.levelScale === 'db' ? GAIN_ZERO_DB : LINEAR_TOP_DB - 12;
       // Faded text colour (white on dark, ink on light), so it reads as the Filter's shape, not a measurement.
       g.strokeStyle = text;
       g.globalAlpha = 0.6;
@@ -173,7 +180,7 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
         g.moveTo(x, 0);
         g.lineTo(x, m.labelled ? 5 : 3);
         g.stroke();
-        if (m.labelled) g.fillText(m.n === 1 ? m.note.split(' ')[0] : String(m.n), Math.max(10, x), 15);
+        if (m.labelled) g.fillText(m.n === 1 ? m.note.split(' ')[0] : String(m.n), Math.max(10, x), MARKER_LABEL_ROW);
       }
       g.textAlign = 'left';
     }
