@@ -201,3 +201,17 @@ test('the Filter Mode and Slope stay on one line each, never wrapping inside', a
   );
   expect(rows).toEqual([1, 1]);
 });
+
+// Phones held upright (the smallest current iPhone, the common size, the largest), and a laptop.
+for (const width of [375, 393, 430, 1440]) {
+  test(`the Voices choice stays on one row at ${width} wide`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 860 });
+    await page.goto('/');
+    const tops = await page
+      .getByRole('radiogroup', { name: 'Voices' })
+      .getByRole('radio')
+      .evaluateAll((radios) => radios.map((r) => Math.round(r.getBoundingClientRect().top)));
+    expect(tops).toHaveLength(8);
+    expect(new Set(tops).size, `tops: ${tops}`).toBe(1);
+  });
+}

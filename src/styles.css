@@ -385,6 +385,8 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 /* Filter Mode and Slope on a row of their own under the Filter heading; Voices under the Amp heading the same
    way, as eight slim segments, digits only. (Like the Oscillator tabs: a stage's choices sit below its name.) */
 .filter-shape { display: flex; flex-wrap: wrap; gap: 6px; }
+/* One row always: Safari sizes a wrapping row without its gaps, so it would push the 8 onto a line of its own. */
+.voices-field .segmented { flex-wrap: nowrap; }
 .voices-field .segmented button[role='radio'] { min-width: 24px; padding: 0 6px; }
 
 /* The Timeline panel: the controls that act over time (LFO, Glide) to the left of the plot. */
