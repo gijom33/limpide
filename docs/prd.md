@@ -107,7 +107,7 @@ Limpide (formerly Limpide) is a browser-based subtractive synthesizer laid out a
 - **Audio:** native Web Audio nodes only ([ADR-0001](./adr/0001-native-web-audio-nodes-over-custom-dsp.md)). The 24 dB Slope is two cascaded biquads with a compensated per-stage Q. Pulse waves with arbitrary Pulse Width are `PeriodicWave`s built from their Fourier series.
 - **Rendering:** the engine and Viewer renderers live outside React. A single animation loop draws every Viewer ([ADR-0002](./adr/0002-viewers-and-engine-live-outside-react.md)).
 - **Effective Cutoff:** computed by a pure modulation model that also produces the automation schedule ([ADR-0003](./adr/0003-modulation-model-mirrors-the-audio-graph.md)).
-- **Voices:** 1 to 8 per Patch; 1 Voice is monophonic with last-note priority and Glide. The Viewers always follow the newest Note ([ADR-0007](./adr/0007-optional-polyphony-viewers-follow-the-newest-note.md)).
+- **Voices:** 1 to 8 per Patch; 1 Voice is monophonic with last-note priority and Glide. The Oscillator and Filter Viewers and the Timeline follow the newest Note; the Amp Viewers show every Voice by default ([ADR-0007](./adr/0007-optional-polyphony-viewers-follow-the-newest-note.md)).
 - **MIDI:** MIDI Learn first, no hard-coded map, Encoder Mode auto-detected, and Pickup for Absolute Mappings ([ADR-0004](./adr/0004-midi-learn-first-no-hardcoded-controller-map.md)).
 - **Tuning:** A4 = 440 Hz, equal temperament.
 

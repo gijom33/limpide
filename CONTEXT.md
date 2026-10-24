@@ -1,6 +1,6 @@
 # Limpide
 
-A monophonic subtractive synthesizer whose purpose is to make visible what each stage of the sound does. Every term below is about either the sound (the instrument) or the act of seeing it (the viewers).
+A subtractive synthesizer, from one to eight Voices, whose purpose is to make visible what each stage of the sound does. Every term below is about either the sound (the instrument) or the act of seeing it (the viewers).
 
 ## Language
 
