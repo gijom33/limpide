@@ -3,8 +3,11 @@ import { createNoteInput, type VoiceEvent } from './noteInput';
 
 function setup() {
   const events: VoiceEvent[] = [];
-  const input = createNoteInput((e) => events.push(e));
-  return { input, events };
+  const reports: number[][] = [];
+  const input = createNoteInput((e) => events.push(e), (notes) => reports.push(notes));
+  /** The Notes the on-screen piano lights now. */
+  const lit = () => reports.at(-1) ?? [];
+  return { input, events, lit };
 }
 
 describe('Note input with last-note priority', () => {
@@ -55,6 +58,29 @@ describe('Note input with last-note priority', () => {
 });
 
 describe('Hold', () => {
+  it('keeps the held Note lit on the piano after its key is released, until Hold is switched off', () => {
+    const { input, lit } = setup();
+    input.setHold(true);
+    input.press(60, 1);
+    input.release(60);
+    expect(lit()).toEqual([60]);
+    input.setHold(false);
+    expect(lit()).toEqual([]);
+  });
+
+  it('lights the Note that Hold keeps sounding, and moves the light to a new key that replaces it', () => {
+    const { input, lit } = setup();
+    input.setHold(true);
+    input.press(60, 1);
+    input.press(64, 1);
+    input.release(64); // back to C4
+    input.release(60);
+    expect(lit()).toEqual([60]);
+    input.press(67, 1);
+    input.release(67);
+    expect(lit()).toEqual([67]);
+  });
+
   it('keeps the Note sounding after the key is released', () => {
     const { input, events } = setup();
     input.setHold(true);
@@ -167,6 +193,26 @@ describe('several Voices (polyphony, ADR-0007)', () => {
     expect(events.filter((e) => e.type === 'release')).toHaveLength(0);
     input.setHold(false);
     expect(events.at(-1)).toEqual({ type: 'release', note: 60 });
+  });
+
+  it('with Hold, released Notes stay lit until Hold is switched off or the Voices change', () => {
+    const { input, lit } = poly();
+    input.setHold(true);
+    input.press(60, 1);
+    input.press(64, 1);
+    input.release(60);
+    input.release(64);
+    expect(lit()).toEqual([60, 64]);
+    input.press(67, 1);
+    expect(lit()).toEqual([67, 60, 64]);
+    input.setHold(false);
+    expect(lit()).toEqual([67]);
+    input.release(67);
+    input.setHold(true);
+    input.press(60, 1);
+    input.release(60);
+    input.setVoices(2);
+    expect(lit()).toEqual([]);
   });
 
   it('with Hold, pressing a held Note again retriggers it rather than releasing it', () => {
