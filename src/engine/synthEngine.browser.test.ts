@@ -816,3 +816,33 @@ describe('every Preset', () => {
     expect(loud).toEqual([]);
   });
 });
+
+describe('the Timeline’s past stays put while knobs turn (the model’s history)', () => {
+  it('draws the same LFO and Cutoff for a past moment however many changes follow', async () => {
+    // Hundreds of Patch changes, as a knob drag or the Demo makes: every 10 ms for 4 s, the LFO Rate moving.
+    const ctx = new OfflineAudioContext(1, SR * 4.2, SR);
+    const engine = createSynthEngine(ctx);
+    const base = { ...defaultPatch(), lfoAmount: 0.5, lfoDestination: 'cutoff', cutoff: 1000 } as const;
+    engine.applyPatch(base);
+    engine.noteOn(45, 1, 0);
+    const seen: { lfo: number; cutoff: number }[] = [];
+    const steps = 400;
+    const done = Promise.all(
+      Array.from({ length: steps }, (_, i) =>
+        ctx.suspend((i + 1) * 0.01).then(() => {
+          engine.applyPatch({ ...base, lfoRate: 1 + (i % 7) });
+          if (i + 1 === 200 || i + 1 === steps) {
+            const m = engine.modulationAt(1.0);
+            seen.push({ lfo: m.lfo, cutoff: m.cutoff });
+          }
+          void ctx.resume();
+        }),
+      ),
+    );
+    await ctx.startRendering();
+    await done;
+    expect(seen).toHaveLength(2);
+    expect(seen[1].lfo).toBeCloseTo(seen[0].lfo, 9); // the moment at 1.0 s looks the same after 200 more changes
+    expect(seen[1].cutoff).toBeCloseTo(seen[0].cutoff, 6);
+  });
+});

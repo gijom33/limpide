@@ -1,5 +1,5 @@
 import { envelopeLevel, envelopeSchedule, type Adsr, type AutomationStep, type GateEvent } from '../modulation/envelope';
-import { glideFrequency, glideTimeConstant, lfoPhase, lfoShape, type LfoWaveform } from '../modulation/lfo';
+import { createLfoClock, glideFrequency, glideTimeConstant, lfoShape, type LfoWaveform } from '../modulation/lfo';
 import { effectiveCutoff, KEY_TRACK_CENTRE, LFO_CUTOFF_OCTAVES, LFO_PITCH_CENTS, LFO_PULSE_WIDTH, VELOCITY_CUTOFF_OCTAVES } from '../modulation/modulationModel';
 import { filterStages, type Stage } from './filterDesign';
 import { harmonicSeries } from '../music/harmonics';
@@ -108,8 +108,21 @@ function noiseBuffer(ctx: BaseAudioContext): AudioBuffer {
 
 // Enough Harmonics to reach Nyquist from the lowest Notes; the browser band-limits per pitch.
 const WAVE_HARMONICS = 1024;
-// Gate events kept for the Modulation model: plenty for the Envelope Timeline's few seconds.
+// A Voice's own pitches, kept to tune its pulses through a Glide.
 const HISTORY = 64;
+// The Modulation model's history (Gate events, the newest Note's pitches, Patches in force) is kept by age, not
+// count, so the Timeline's past never changes however busily knobs turn: well beyond its few seconds, so a
+// Freeze can be held a while. A count cap still bounds memory.
+const MODEL_SECONDS = 30;
+const MODEL_LIMIT = 4096;
+/** Drop entries older than the model keeps, always keeping the one in force at the oldest kept time. */
+function trim<T extends { time: number }>(entries: T[], now: number) {
+  const oldest = now - MODEL_SECONDS;
+  let drop = 0;
+  while (drop + 1 < entries.length && entries[drop + 1].time <= oldest) drop++;
+  if (entries.length - drop > MODEL_LIMIT) drop = entries.length - MODEL_LIMIT;
+  if (drop) entries.splice(0, drop);
+}
 
 function createAnalyser(ctx: BaseAudioContext): AnalyserNode {
   const analyser = ctx.createAnalyser();
@@ -401,6 +414,8 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   const voices = Array.from({ length: MAX_VOICES }, (_, i) => createVoice(ctx, shared, i));
   const lfoStart = ctx.currentTime;
   lfo.start(lfoStart);
+  // The model's copy of the LFO's phase, advanced with every Rate change exactly as the oscillator is (ADR-0003).
+  const lfoClock = createLfoClock(lfoStart, PARAMS.lfoRate.default);
 
   let patch: Patch | undefined;
   // The Modulation model's history: the newest Note's pitches and Gate events, which is what the Viewers show.
@@ -430,7 +445,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
 
   const record = (events: GateEvent[], e: GateEvent) => {
     events.push(e);
-    if (events.length > HISTORY) events.shift();
+    trim(events, e.time);
   };
   /** A Gate change on a Voice; recorded in the model's history when it is the newest Note's. */
   const gate = (voice: Voice, on: boolean, t: number, velocity: number) => {
@@ -477,28 +492,32 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     const glide = patch && pitches.length && voiceCount() === 1 && patch.glide > GLIDE_OFF * 1.001 ? patch.glide : 0;
     voice.setPitch(note, t, glide);
     pitches.push({ time: t, frequency: noteToFrequency(note), note, glide });
-    if (pitches.length > HISTORY) pitches.shift();
+    trim(pitches, t);
   };
   // The Note Key Track follows at `t`: the same slide as the Oscillators, in semitones.
   const trackedNoteAt = (t: number) =>
     pitches.length ? glideFrequency(pitches.map((p) => ({ time: p.time, frequency: p.note, glide: p.glide })), t) : 69;
 
+  /** The Patch in force at `t` (binary search: the Timeline asks for every column, every frame). */
   const patchAt = (t: number) => {
-    for (let i = patches.length - 1; i >= 0; i--) if (patches[i].time <= t) return patches[i].patch;
-    return patches[0]?.patch;
+    if (!patches.length) return undefined;
+    let lo = 0;
+    let hi = patches.length - 1;
+    while (lo < hi) {
+      const mid = (lo + hi + 1) >> 1;
+      if (patches[mid].time <= t) lo = mid;
+      else hi = mid - 1;
+    }
+    return patches[lo].patch;
   };
 
   // The LFO's Rate over time, from when it started: its phase is integrated across Rate changes.
-  const lfoRates = () => [
-    { time: lfoStart, rate: PARAMS.lfoRate.default },
-    ...patches.map((p) => ({ time: p.time, rate: p.patch.lfoRate })),
-  ];
 
   const modulationAt = (time?: number): Modulation => {
     const t = at(time);
     const filterLevel = envelopeLevel(filterEvents, t);
     const then = patchAt(t);
-    const lfoValue = then ? lfoShape(then.lfoWaveform, lfoPhase(lfoRates(), t)) : 0;
+    const lfoValue = then ? lfoShape(then.lfoWaveform, lfoClock.phaseAt(t)) : 0;
     // The latest Note's Velocity (the Amp Envelope's peak), which stays in force until the next Note.
     let velocity = 0;
     for (const e of ampEvents) if (e.on && e.time <= t) velocity = e.peak;
@@ -555,7 +574,9 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       const t = ctx.currentTime;
       if (patches.at(-1)?.time === t) patches.pop();
       patches.push({ time: t, patch: next });
-      if (patches.length > HISTORY * 4) patches.shift();
+      trim(patches, t);
+      lfoClock.setRate(t, next.lfoRate);
+      lfoClock.forgetBefore(t - MODEL_SECONDS);
       for (const v of voices) v.apply(next, t);
       lfo.type = LFO_TYPES[next.lfoWaveform];
       lfo.frequency.setValueAtTime(next.lfoRate, t);

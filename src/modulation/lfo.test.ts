@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { glideFrequency, lfoPhase, lfoShape } from './lfo';
+import { createLfoClock, glideFrequency, lfoPhase, lfoShape } from './lfo';
 
 describe('lfoShape: one cycle of each LFO Waveform (phase 0–1), like Web Audio’s own oscillators', () => {
   it('sine starts at 0 and peaks a quarter of the way through', () => {
@@ -67,5 +67,32 @@ describe('glideFrequency: the pitch sliding between Notes', () => {
   it('starts a new slide from wherever the pitch has got to', () => {
     const interrupted = [...slide, { time: 1.1, frequency: 110, glide: 0.4 }];
     expect(glideFrequency(interrupted, 1.1)).toBeCloseTo(glideFrequency(slide, 1.1));
+  });
+});
+
+describe('createLfoClock', () => {
+  const changes = Array.from({ length: 300 }, (_, i) => ({ time: 1 + i * 0.01, rate: 1 + (i % 7) }));
+
+  it('gives the same phase as integrating the whole Rate history', () => {
+    const clock = createLfoClock(0, 2);
+    for (const c of changes) clock.setRate(c.time, c.rate);
+    const history = [{ time: 0, rate: 2 }, ...changes];
+    for (const t of [0.5, 1, 1.234, 2.5, 3.99, 5]) expect(clock.phaseAt(t)).toBeCloseTo(lfoPhase(history, t), 9);
+  });
+
+  it('forgets old Rate changes without moving the phase of anything after them', () => {
+    const clock = createLfoClock(0, 2);
+    for (const c of changes) clock.setRate(c.time, c.rate);
+    const before = [2.5, 3, 3.5, 3.99].map((t) => clock.phaseAt(t));
+    clock.forgetBefore(2.4);
+    expect(clock.size).toBeLessThan(changes.length);
+    expect([2.5, 3, 3.5, 3.99].map((t) => clock.phaseAt(t))).toEqual(before);
+  });
+
+  it('takes a second change at the same moment as a correction, not a zero-length segment', () => {
+    const clock = createLfoClock(0, 1);
+    clock.setRate(1, 3);
+    clock.setRate(1, 5);
+    expect(clock.phaseAt(1.1)).toBeCloseTo(0.5, 9); // 1 cycle at 1 Hz, then 0.1 s at 5 Hz
   });
 });
