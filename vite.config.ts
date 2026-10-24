@@ -19,8 +19,22 @@ const build = {
   date: new Date().toISOString().slice(0, 10),
 };
 
+// Visits to the published site are counted by GoatCounter (no cookies, no personal data); only in the build, so
+// development and the tests never count.
+const goatCounter = {
+  name: 'goatcounter',
+  apply: 'build' as const,
+  transformIndexHtml: () => [
+    {
+      tag: 'script',
+      attrs: { 'data-goatcounter': 'https://gijom33.goatcounter.com/count', async: true, src: 'https://gc.zgo.at/count.js' },
+      injectTo: 'body' as const,
+    },
+  ],
+};
+
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), goatCounter],
   define: { __BUILD__: JSON.stringify(build) },
   // Relative asset URLs, so the build works under GitHub Pages' /limpide/ as well as at a root.
   base: './',

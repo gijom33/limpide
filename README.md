@@ -17,6 +17,8 @@ Ordinary synths give you a sound and a row of knobs, and the cause and effect st
 
 Works best in **Chrome or Edge**. Safari has no Web MIDI, so MIDI controllers don't work there; everything else does.
 
+Visits to the site are counted with [GoatCounter](https://www.goatcounter.com): no cookies and no personal data.
+
 ## Run it locally
 
 You need [Node.js](https://nodejs.org) 22.12 or newer.
