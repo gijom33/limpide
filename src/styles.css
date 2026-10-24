@@ -608,3 +608,17 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 /* The one primary action in a panel: filled in the accent. */
 .tool-primary { color: var(--bg); background: var(--accent); border-color: var(--accent); font-weight: 600; }
 .tool-primary:hover { color: var(--bg); background: color-mix(in srgb, var(--accent) 85%, var(--text)); }
+
+/* Phones: every line counts. A knob keeps only its name under the dial; while it changes (by hand, keys, MIDI,
+   the Demo, a Patch) its value shows in the name's place for a moment, so nothing moves. Spacing tightens too. */
+@media (max-width: 600px) {
+  :root { --knob-value-h: 0px; }
+  main { padding: var(--space-3) var(--space-2); }
+  .chain { margin: var(--space-3) 0; row-gap: var(--space-3); }
+  .block { padding: var(--space-2) var(--space-3); gap: var(--space-2); }
+  .rows { gap: var(--space-2); }
+  .knob { position: relative; }
+  .knob-value { position: absolute; left: 0; right: 0; bottom: 0; height: var(--knob-label-h); line-height: var(--knob-label-h); font-size: var(--text-sm); color: var(--text); }
+  .knob:not([data-changing]) .knob-value > :first-child { visibility: hidden; }
+  .knob[data-changing] .knob-label { visibility: hidden; }
+}

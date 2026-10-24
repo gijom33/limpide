@@ -77,3 +77,38 @@ test('a mapped knob’s marker takes no room', async ({ page }) => {
   expect(await knobLayout(page)).toEqual(before);
   await page.evaluate(() => localStorage.removeItem('limpide.mappings'));
 });
+
+test.describe('on a phone', () => {
+  test.use({ viewport: { width: 393, height: 852 } });
+
+  test('a knob shows its name, and its value only while it changes, in the same line', async ({ page }) => {
+    await page.goto('/');
+    const dial = page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name: 'Cutoff' });
+    const knob = dial.locator('xpath=ancestor::div[contains(@class, "knob")][1]');
+    const name = knob.locator('.knob-label');
+    const value = knob.locator('.knob-value > span').first();
+    await expect(name).toBeVisible();
+    await expect(value).toBeHidden();
+    const at = async () => [(await dial.boundingBox())!.y, (await name.boundingBox())!.y];
+    const before = await at();
+
+    await dial.press('ArrowUp');
+    await expect(value).toBeVisible();
+    await expect(value).toHaveText((await dial.getAttribute('aria-valuetext'))!);
+    await expect(name).toBeHidden();
+    expect((await value.boundingBox())!.y).toBeCloseTo(before[1], 0); // the value takes the name's place
+    expect(await at()).toEqual(before); // nothing moved
+
+    await expect(value).toBeHidden({ timeout: 3000 }); // and the name comes back
+    await expect(name).toBeVisible();
+  });
+
+  test('knob rows have no line for values', async ({ page }) => {
+    await page.goto('/');
+    const dial = page.getByRole('slider', { name: 'Cutoff' });
+    const knob = dial.locator('xpath=ancestor::div[contains(@class, "knob")][1]');
+    const [k, d, n] = await Promise.all([knob, dial, knob.locator('.knob-label')].map(async (l) => (await l.boundingBox())!));
+    expect(k.y + k.height).toBeCloseTo(n.y + n.height, 0); // the name is the knob's last line
+    expect(n.y).toBeGreaterThan(d.y + d.height - 1);
+  });
+});

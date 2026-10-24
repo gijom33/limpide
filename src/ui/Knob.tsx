@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatParam, PARAMS, type ParamId } from '../patch/patch';
 import { positionToValue, valueToPosition } from '../patch/taper';
 import { useLearnable } from './learn';
@@ -7,6 +7,8 @@ const DRAG_PIXELS_FOR_FULL_TRAVEL = 200;
 const SWEEP_DEGREES = 270;
 /** Readouts sampled across a knob's travel to find the widest it can show. */
 const WIDTH_SAMPLES = 128;
+/** How long a knob keeps showing its value after it last changed (where values only show while changing). */
+const SHOW_VALUE_MS = 1200;
 
 /** The longest readouts a Parameter can show, so its knob can reserve their width and never change size. */
 function widestReadouts(id: ParamId): string[] {
@@ -32,9 +34,10 @@ export function Knob({ id, value, onChange, inactive }: Props) {
   const setPosition = (p: number) => onChange(positionToValue(def, p));
   const learnable = useLearnable({ kind: 'param', id });
   const widest = useMemo(() => widestReadouts(id), [id]);
+  const changing = useChanging(value);
 
   return (
-    <div className="knob" data-inactive={inactive || undefined} {...learnable}>
+    <div className="knob" data-inactive={inactive || undefined} data-changing={changing || undefined} {...learnable}>
       <div
         className="knob-dial"
         role="slider"
@@ -80,4 +83,18 @@ export function Knob({ id, value, onChange, inactive }: Props) {
       </div>
     </div>
   );
+}
+
+/** True for a moment after `value` changes, however it was changed (hand, keys, MIDI, the Demo, a Patch). */
+function useChanging(value: number): boolean {
+  const [changing, setChanging] = useState(false);
+  const shown = useRef(value);
+  useEffect(() => {
+    if (value === shown.current) return; // not on mount (which StrictMode repeats)
+    shown.current = value;
+    setChanging(true);
+    const timer = setTimeout(() => setChanging(false), SHOW_VALUE_MS);
+    return () => clearTimeout(timer);
+  }, [value]);
+  return changing;
 }
