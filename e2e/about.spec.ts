@@ -26,3 +26,17 @@ test('the logo opens the About splash: version, build and credits; Close, Escape
   await page.getByRole('button', { name: 'Limpide' }).click(); // and it opens again
   await expect(about).toBeVisible();
 });
+
+test('wide screens have an About button beside Display that opens the splash; narrower ones keep it behind the logo', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  const about = page.getByRole('dialog', { name: 'Limpide' });
+  await page.getByRole('button', { name: 'About' }).click();
+  await expect(about).toBeVisible();
+  await expect(about).toContainText(`Version ${version}`);
+  await about.getByRole('button', { name: 'Close' }).click();
+  await expect(about).toBeHidden();
+
+  await page.setViewportSize({ width: 1100, height: 900 });
+  await expect(page.getByRole('button', { name: 'About' })).toBeHidden();
+});

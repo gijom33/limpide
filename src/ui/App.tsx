@@ -20,7 +20,7 @@ import { startDemo } from '../demo/player';
 import { startSong } from '../demo/song';
 import { createHoldTaps, startRhythm, type Rhythm } from '../input/holdRhythm';
 import { PRESETS } from '../patch/presets';
-import { HoldIcon, NoteIcon, PlayIcon } from './icons';
+import { HoldIcon, InfoIcon, NoteIcon, PlayIcon } from './icons';
 import { Knob } from './Knob';
 import { OverlayToggles } from './OverlayToggles';
 import { TapViewers } from './TapViewers';
@@ -45,6 +45,7 @@ import { EnvelopeTimeline } from './EnvelopeTimeline';
 import { applyTheme, loadTheme, type Theme } from './theme';
 import { WAVEFORM_ORDER, WaveformPicker } from './WaveformPicker';
 import { Wordmark } from './Wordmark';
+import { About } from './About';
 
 const IDEAL_HARMONICS = 256;
 
@@ -165,6 +166,7 @@ export function App() {
   // The Song: a loop that plays on the loaded Patch, never changing it, while the person turns knobs, flips switches
   // and loads Presets. It moves with the piano's octave. Playing a Note, the Demo or the Song button stops it.
   const [song, setSong] = useState(false);
+  const [about, setAbout] = useState(false);
   const songStop = useRef<(() => void) | null>(null);
   const stopSong = () => {
     songStop.current?.();
@@ -610,7 +612,7 @@ export function App() {
         )}
         <header>
           <div className="header-left">
-            <Wordmark />
+            <Wordmark onOpen={() => setAbout(true)} />
             <PatchBar name={patchName} changed={patchChanged} patch={patch} library={library} onLoad={loadPatch} />
           </div>
           <div className="header-center">{playControls}</div>
@@ -655,8 +657,17 @@ export function App() {
                 </div>
               </section>
             </DisplayMenu>
+            <div className="about-menu">
+              <Tooltip content={TIPS.about}>
+                <button type="button" className="tool" aria-haspopup="dialog" onClick={() => setAbout(true)}>
+                  <InfoIcon />
+                  <span className="tool-word">About</span>
+                </button>
+              </Tooltip>
+            </div>
           </div>
         </header>
+        <About open={about} onClose={() => setAbout(false)} />
 
         {audioStatus === 'blocked' && (
           <p className="audio-blocked" role="status">

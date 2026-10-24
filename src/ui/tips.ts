@@ -127,6 +127,7 @@ export const TIPS = {
     body: 'Slides the pitch from one Note to the next instead of jumping, over this long. Off plays Notes at once.',
     how: 'Play two keys one after the other and watch the Scope stretch or squeeze as the pitch slides.',
   },
+  about: { title: 'About', body: 'The version of Limpide you are playing, who made it, and where its source lives. The logo opens it too.' },
   theme: { title: 'Theme', body: 'Switches between the dark and light look. Your choice is remembered.' },
   pulseWidth: {
     title: 'Pulse Width',

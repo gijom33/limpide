@@ -50,6 +50,15 @@ export const HoldIcon = () => (
   </svg>
 );
 
+/** A circled "i": About. */
+export const InfoIcon = () => (
+  <svg {...base}>
+    <circle cx="8" cy="8" r="6.25" />
+    <path d="M8 7.2v4" strokeLinecap="round" />
+    <circle cx="8" cy="4.9" r="0.9" fill="currentColor" stroke="none" />
+  </svg>
+);
+
 /** A MIDI socket: five pins in a ring. */
 export const MidiIcon = () => (
   <svg {...base}>

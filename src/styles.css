@@ -548,6 +548,8 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
    below 1000 px the MIDI and Display buttons do too. */
 @media (max-width: 1099px) { .demo-word { display: none; } }
 @media (max-width: 999px) { .midi-status .tool-word, .display-menu .tool-word { display: none; } }
+/* Wide screens have room for an About button beside Display; narrower ones reach About from the logo alone. */
+@media (max-width: 1199px) { .about-menu { display: none; } }
 .patch-save { display: flex; gap: 6px; margin-top: 8px; max-width: 440px; }
 .patch-panel > .patch-link { max-width: 440px; }
 .patch-save input, .patch-link {
