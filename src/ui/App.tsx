@@ -158,15 +158,28 @@ export function App() {
     const onKey = (e: KeyboardEvent) => {
       if (!e.metaKey && !e.ctrlKey && !e.altKey && !['Shift', 'Tab'].includes(e.key)) stopDemo();
     };
+    // A finger on the page may only be scrolling it: unless it lands on a control that takes touches itself
+    // (knobs, piano), wait for it to lift. If the browser took it over to scroll, it is cancelled instead.
+    let tap: number | null = null;
     const onPointer = (e: PointerEvent) => {
       const target = e.target as Element;
-      if (target.closest('main') && !target.closest('[data-demo]')) stopDemo();
+      if (!target.closest('main') || target.closest('[data-demo]')) return;
+      if (e.pointerType === 'mouse' || getComputedStyle(target).touchAction === 'none') stopDemo();
+      else tap = e.pointerId;
     };
+    const onLift = (e: PointerEvent) => {
+      if (e.pointerId === tap) stopDemo();
+    };
+    const onCancel = () => (tap = null);
     window.addEventListener('keydown', onKey);
     document.addEventListener('pointerdown', onPointer);
+    document.addEventListener('pointerup', onLift);
+    document.addEventListener('pointercancel', onCancel);
     return () => {
       window.removeEventListener('keydown', onKey);
       document.removeEventListener('pointerdown', onPointer);
+      document.removeEventListener('pointerup', onLift);
+      document.removeEventListener('pointercancel', onCancel);
     };
   }, [demo]); // eslint-disable-line react-hooks/exhaustive-deps
 
