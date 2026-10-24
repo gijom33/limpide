@@ -18,6 +18,7 @@ import { INITIAL_VIEWER_STATE, viewerReducer } from '../viewers/viewerState';
 import type { ViewSettings } from '../viewers/viewSettings';
 import { startDemo } from '../demo/player';
 import { startSong } from '../demo/song';
+import { createHoldTaps, startRhythm, type Rhythm } from '../input/holdRhythm';
 import { PRESETS } from '../patch/presets';
 import { HoldIcon, NoteIcon, PlayIcon } from './icons';
 import { Knob } from './Knob';
@@ -248,6 +249,42 @@ export function App() {
   const [viewer, dispatchViewer] = useReducer(viewerReducer, INITIAL_VIEWER_STATE);
 
   useEffect(() => session.onHeld(setHeldNotes), [session]);
+  const heldRef = useRef(heldNotes);
+  heldRef.current = heldNotes;
+
+  // Hold's clicks: the first switches it on; quick clicks after it, before a Note is held, tap a rhythm, and the
+  // held Notes then repeat on it (single Notes and chords in turn on several Voices) until Hold goes off.
+  const [holdTaps] = useState(createHoldTaps);
+  const [rhythm, setRhythm] = useState<Rhythm | null>(null);
+  const pressHold = () => {
+    setHold(holdTaps.press(performance.now() / 1000, heldRef.current.length > 0));
+    setRhythm(holdTaps.rhythm());
+  };
+  const pressHoldRef = useRef(pressHold);
+  pressHoldRef.current = pressHold;
+  useEffect(() => {
+    if (heldNotes.length) holdTaps.noteArrived();
+  }, [holdTaps, heldNotes]);
+  useEffect(() => {
+    if (!hold || !rhythm) return;
+    const { engine } = session;
+    session.muteInput(true);
+    const stop = startRhythm(
+      {
+        now: () => engine.now(),
+        notes: () => heldRef.current,
+        voices: () => patchRef.current.voices,
+        noteOn: (note, velocity, at) => engine.noteOn(note, velocity, at),
+        release: (note, at) => engine.release(note, at),
+        noteOff: (at) => engine.noteOff(at),
+      },
+      rhythm,
+    );
+    return () => {
+      stop();
+      session.muteInput(false);
+    };
+  }, [session, hold, rhythm]);
   // A Note played by hand (keyboard, piano or MIDI) ends the Song: the person has taken over.
   useEffect(() => {
     if (heldNotes.length && songStop.current) stopSong();
@@ -300,7 +337,7 @@ export function App() {
         setPatch((p) => ({ ...p, [id]: value }));
       },
       action: (id) => {
-        if (id === 'hold') setHold((h) => !h);
+        if (id === 'hold') pressHoldRef.current();
         else if (id === 'freeze') dispatchViewer({ type: 'toggleFreeze' });
         else if (id === 'snapshot') dispatchViewer({ type: 'takeSnapshot' });
         else stepPreset(id === 'nextPreset' ? 1 : -1);
@@ -512,7 +549,7 @@ export function App() {
           data-mapped={learnContext.mapped.has('action:hold') || undefined}
           data-learn-selected={learnContext.selected === 'action:hold' || undefined}
           aria-label="Hold"
-          onClick={() => setHold((h) => !h)}
+          onClick={pressHold}
         >
           <HoldIcon />
           <span className="tool-word">Hold</span>

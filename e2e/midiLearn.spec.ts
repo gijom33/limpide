@@ -73,6 +73,7 @@ test('an Action learns from a pad: the pad then toggles Hold and no longer plays
   await play(page, [0x99, 36, 100], [0x89, 36, 0]);
   await expect(hold).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByRole('group', { name: 'Piano' }).locator('[aria-pressed="true"]')).toHaveCount(0);
+  await page.waitForTimeout(2100); // past the time for tapping a Hold rhythm: the next press switches it off
   await play(page, [0x99, 36, 100], [0x89, 36, 0]);
   await expect(hold).toHaveAttribute('aria-pressed', 'false');
 });

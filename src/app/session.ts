@@ -9,6 +9,8 @@ export interface AudioSession {
   input: NoteInput;
   /** Be told which Notes are held (from any source), e.g. to light the on-screen piano. */
   onHeld(listener: (notes: number[]) => void): () => void;
+  /** While on, held Notes do not sound by themselves: a Hold rhythm plays them instead. Gate offs still pass. */
+  muteInput(on: boolean): void;
 }
 
 let session: AudioSession | undefined;
@@ -25,8 +27,10 @@ export function getAudioSession(patch: Patch): AudioSession {
   const engine = createSynthEngine(ctx);
   engine.applyPatch(patch);
   const listeners = new Set<(notes: number[]) => void>();
+  let muted = false;
   const input = createNoteInput(
     (event) => {
+      if (muted && event.type !== 'noteOff') return;
       if (event.type === 'noteOn') engine.noteOn(event.note, event.velocity);
       else if (event.type === 'pitchChange') engine.pitchChange(event.note);
       else if (event.type === 'release') engine.release(event.note);
@@ -41,6 +45,9 @@ export function getAudioSession(patch: Patch): AudioSession {
     onHeld(listener) {
       listeners.add(listener);
       return () => listeners.delete(listener);
+    },
+    muteInput(on) {
+      muted = on;
     },
   };
   return session;

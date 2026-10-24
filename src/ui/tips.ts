@@ -83,7 +83,7 @@ export const TIPS = {
   hold: {
     title: 'Hold',
     body: 'Keeps the Note sounding after you let go of the key, so both hands are free to turn knobs while you watch.',
-    how: 'Press a new key to change the Note. Switch Hold off to release it.',
+    how: 'Press a new key to change the Note. Switch Hold off to release it. Tap Hold a few more times quickly before playing, and the held Notes repeat on that rhythm, the last tap starting it over; with several Voices, single Notes and chords take turns.',
   },
   envAmount: {
     title: 'Envelope Amount',
