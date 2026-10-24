@@ -797,23 +797,19 @@ describe('several Voices (ADR-0007)', () => {
   });
 });
 
-describe('every Preset', () => {
-  it('makes a sound when a chord is played, and stays within full scale at the output', async () => {
-    const quiet: string[] = [];
-    const loud: string[] = [];
-    for (const preset of PRESETS) {
-      const ctx = new OfflineAudioContext(1, SR * 0.8, SR);
-      const engine = createSynthEngine(ctx);
-      engine.applyPatch(preset.patch);
-      engine.noteOn(57, 1, 0); // A3, C#4, E4: a chord with 4 Voices, the newest Note alone with 1
-      engine.noteOn(61, 1, 0.02);
-      engine.noteOn(64, 1, 0.04);
-      const s = (await ctx.startRendering()).getChannelData(0);
-      if (rms(s) < 1e-4) quiet.push(preset.name);
-      if (s.some((v) => Math.abs(v) > 1)) loud.push(preset.name);
-    }
-    expect(quiet).toEqual([]);
-    expect(loud).toEqual([]);
+// One test per Preset: rendering all of them in one test took most of the browser's 15 s per test, and ran
+// past it when the whole suite shared the machine.
+describe('every Preset makes a sound when a chord is played, and stays within full scale at the output', () => {
+  it.each(PRESETS.map((p) => [p.name, p] as const))('%s', async (_, preset) => {
+    const ctx = new OfflineAudioContext(1, SR * 0.8, SR);
+    const engine = createSynthEngine(ctx);
+    engine.applyPatch(preset.patch);
+    engine.noteOn(57, 1, 0); // A3, C#4, E4: a chord with 4 Voices, the newest Note alone with 1
+    engine.noteOn(61, 1, 0.02);
+    engine.noteOn(64, 1, 0.04);
+    const s = (await ctx.startRendering()).getChannelData(0);
+    expect(rms(s)).toBeGreaterThanOrEqual(1e-4);
+    expect(s.reduce((m, v) => Math.max(m, Math.abs(v)), 0)).toBeLessThanOrEqual(1);
   });
 });
 
