@@ -139,6 +139,7 @@ export function App() {
         loadPatch(preset.name, preset.patch);
         return preset.patch;
       },
+      voices: () => patchRef.current.voices,
       setParam: (id, value) => {
         if (!turnedByHand.current.has(id)) setPatch((p) => setParam(p, id, value));
       },
@@ -157,11 +158,15 @@ export function App() {
       },
     });
   };
-  // Playing anything, or touching a control other than a knob, ends the Demo: the person has taken over.
-  // Knobs can be turned while it plays, and the sound follows.
+  // Playing anything, or touching a control that does not shape the sound, ends the Demo: the person has taken over.
+  // Knobs and the stages' switches (Waveforms, Filter Mode and Slope, Voices, LFO) can be changed while it plays,
+  // and the sound follows.
   useEffect(() => {
     if (demo === null) return;
+    const shapesSound = (target: EventTarget | null) =>
+      target instanceof Element && !!target.closest('.knob, .block-controls [role="radio"], .timeline-controls [role="radio"]');
     const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && shapesSound(e.target)) return;
       if (!e.metaKey && !e.ctrlKey && !e.altKey && !['Shift', 'Tab'].includes(e.key)) stopDemo();
     };
     // A finger on the page may only be scrolling it: unless it lands on a control that takes touches itself
@@ -169,7 +174,7 @@ export function App() {
     let tap: number | null = null;
     const onPointer = (e: PointerEvent) => {
       const target = e.target as Element;
-      if (!target.closest('main') || target.closest('[data-demo], .knob')) return;
+      if (!target.closest('main') || target.closest('[data-demo]') || shapesSound(target)) return;
       if (e.pointerType === 'mouse' || getComputedStyle(target).touchAction === 'none') stopDemo();
       else tap = e.pointerId;
     };

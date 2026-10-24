@@ -10,13 +10,16 @@ const tour: TourStop[] = [
 
 function fakeHost(voicesOf: Record<string, number>) {
   let clock = 0;
+  let voices = 1;
   const calls: string[] = [];
   const host: DemoHost = {
     now: () => clock,
     load: (stop) => {
       calls.push(`load ${stop.preset}`);
-      return { ...defaultPatch(), voices: voicesOf[stop.preset] as 1 | 4 };
+      voices = voicesOf[stop.preset];
+      return { ...defaultPatch(), voices: voices as 1 | 4 };
     },
+    voices: () => voices,
     setParam: (id, value) => calls.push(`${id}=${value.toFixed(0)}`),
     noteOn: (note, _v, at) => calls.push(`on ${note} @${at.toFixed(3)}`),
     noteOff: (at) => calls.push(`off @${at.toFixed(3)}`),
@@ -26,7 +29,7 @@ function fakeHost(voicesOf: Record<string, number>) {
     showOctave: (o) => calls.push(`octave ${o}`),
     onEnd: () => calls.push('end'),
   };
-  return { host, calls, advance: (s: number) => (clock += s) };
+  return { host, calls, advance: (s: number) => (clock += s), setVoices: (n: number) => (voices = n) };
 }
 
 describe('octaveShowing', () => {
@@ -59,6 +62,20 @@ describe('the Demo player', () => {
     expect(chord.map((c) => c.split(' ')[0])).toEqual(['on', 'on', 'release', 'release']);
     stop();
     expect(calls.at(-2)).toMatch(/^off @/);
+    vi.useRealTimers();
+  });
+
+  it('releases each Note the way the Voices set now call for, even when they change while the phrase plays', () => {
+    vi.useFakeTimers();
+    const { host, calls, advance, setVoices } = fakeHost({ Mono: 1, Poly: 4 });
+    startDemo(host, tour);
+    advance(0.2);
+    vi.advanceTimersByTime(40);
+    expect(calls).toContain('off @0.725'); // C3, on one Voice
+    setVoices(4); // the person picks 4 Voices
+    advance(0.5);
+    vi.advanceTimersByTime(40);
+    expect(calls).toContain('release 52 @1.225'); // E3, by note
     vi.useRealTimers();
   });
 

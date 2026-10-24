@@ -6,8 +6,10 @@ import { TOUR, type TourStop } from './tour';
 /** What the Demo needs from the app: the audio clock, a way to load a Preset, and the engine's Note calls. */
 export interface DemoHost {
   now(): number;
-  /** Load the stop's Preset; returns it (its Voices decide how Notes are released; its values start the moves). */
+  /** Load the stop's Preset; returns it (its values start the moves). */
   load(stop: TourStop): Patch;
+  /** How many Voices the Patch has now, which decides how Notes are released: the person may change it mid-phrase. */
+  voices(): number;
   /** Turn a knob: the Patch's Parameter takes this value now. */
   setParam(id: ParamId, value: number): void;
   noteOn(note: number, velocity: number, at: number): void;
@@ -56,7 +58,6 @@ export function startDemo(host: DemoHost, tour: readonly TourStop[] = TOUR): () 
   let events: (PhraseEvent & { off: number })[] = [];
   let queued = 0;
   let end = 0;
-  let voices = 1;
   let moves: { id: ParamId; from: number; to: number; start: number; end: number; done: boolean }[] = [];
   let shown = '';
 
@@ -70,7 +71,6 @@ export function startDemo(host: DemoHost, tour: readonly TourStop[] = TOUR): () 
     }
     const stop = tour[index];
     const patch = host.load(stop);
-    voices = patch.voices;
     host.onStep(index);
     host.showOctave(octaveShowing(parsePhrase(stop.phrase, stop.bpm).map((e) => e.note)));
     const start = host.now() + LEAD_IN;
@@ -120,6 +120,7 @@ export function startDemo(host: DemoHost, tour: readonly TourStop[] = TOUR): () 
       let last = queued;
       while (last < events.length && events[last].time === at) last++;
       for (let i = queued; i < last; i++) host.noteOn(events[i].note, events[i].velocity, events[i].time);
+      const voices = host.voices();
       for (let i = queued; i < last; i++) if (voices === 1) host.noteOff(events[i].off); else host.release(events[i].note, events[i].off);
       queued = last;
     }

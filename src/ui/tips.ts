@@ -73,7 +73,7 @@ export const TIPS = {
   demo: {
     title: 'Demo',
     body: 'A tour of the sounds: a Preset from every group, more from the chord groups, each played with two bars that suit it, knobs turning as it goes; then it returns to Init and stops. The piano shows the Notes; watch the Viewers while it plays.',
-    how: 'Turn any knob while it plays and hear the change; the Demo leaves that knob alone until its next Preset. Press a key, play a Note, or touch any other control to take over; the Demo stops at once. It never changes the Display settings.',
+    how: 'Turn a knob or flip a switch while it plays and hear the change; the Demo leaves a knob you turned alone until its next Preset. Press a key, play a Note, or touch any other control to take over; the Demo stops at once. It never changes the Display settings.',
   },
   hold: {
     title: 'Hold',
