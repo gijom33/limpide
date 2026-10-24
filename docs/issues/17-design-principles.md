@@ -1,6 +1,6 @@
 # 17: Design principles
 
-**What to build:** The rules the 2.0 look is judged against ([design-principles.md](../design-principles.md)), and the checks that keep them true: contrast and target sizes measured in both themes, so later issues cannot quietly break them.
+**What to build:** The rules the new look is judged against ([design-principles.md](../design-principles.md)), and the checks that keep them true: contrast and target sizes measured in both themes, so later issues cannot quietly break them.
 
 **Blocked by:** none
 

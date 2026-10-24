@@ -78,7 +78,7 @@ Limpide (formerly Limpide) is a browser-based subtractive synthesizer laid out a
 48. As a user, I want a dark theme by default with a light toggle, so that I can work comfortably.
 49. As a user, I want the app to stay usable on a laptop-sized screen, so that I don't need a big monitor.
 
-### Look and feel (2.0)
+### Look and feel
 Judged against [the design principles](./design-principles.md).
 
 69. As a first-time visitor, I want the app to look like a real, beautiful instrument within seconds, so that I want to stay and play.
@@ -165,7 +165,7 @@ Judged against [the design principles](./design-principles.md).
 - Guided lessons. The data model should allow them, but the content comes later.
 - Spectrogram and explanatory tooltips, which are next after v1.
 - An arpeggiator or sequencer, MIDI output, and audio recording or export.
-- Accounts and cloud sync. (Phones were out of scope until 1.1.0; since 2.0 they are a first-class layout.)
+- Accounts and cloud sync. (Phones were out of scope until 1.1.0; they are now a first-class layout.)
 - Drawing your own LFO shapes, and graphical envelope editors.
 
 ## Further Notes

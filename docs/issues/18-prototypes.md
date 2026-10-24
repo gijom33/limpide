@@ -1,4 +1,4 @@
-# 18: Prototypes for the 2.0 look
+# 18: Prototypes for the new look
 
 **What to build:** A throwaway page (`proto.html`, on a branch, deleted after) built from the real tokens, showing two or three variants side by side of each new control, playable with a mouse and on a phone over the local network. The owner picks one variant per row; the picks are written below and become the spec for issues 19–23.
 
