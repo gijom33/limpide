@@ -78,6 +78,23 @@ Limpide (formerly Limpide) is a browser-based subtractive synthesizer laid out a
 48. As a user, I want a dark theme by default with a light toggle, so that I can work comfortably.
 49. As a user, I want the app to stay usable on a laptop-sized screen, so that I don't need a big monitor.
 
+### Look and feel (2.0)
+Judged against [the design principles](./design-principles.md).
+
+69. As a first-time visitor, I want the app to look like a real, beautiful instrument within seconds, so that I want to stay and play.
+70. As a player, I want the knobs worth turning while I play to be big and the set-and-forget ones small, so that my hand finds the right control at once.
+71. As a learner, I want levels and envelope stages on faders, as on a mixing desk or a classic synth, so that the controls look like what they do.
+72. As a learner, I want each control's value drawn as a filled arc in its stage's colour, so that I read settings at a glance.
+73. As a learner, I want a modulated control to show the range its modulation reaches and a live dot where it is right now, as Serum does, so that I see the LFO and the Filter Envelope move the Cutoff.
+74. As a learner, I want the piano to show the sounding pitch wobble with vibrato and slide with Glide, so that I see pitch modulation even though no knob sets pitch.
+75. As a learner, I want the LFO in a Modulation block with a live plot of its shape, so that I see what it does before I hear it.
+76. As a player, I want Glide beside Voices, so that I see it only acts with one Voice.
+77. As a phone visitor, I want a strip naming the stages that shows where I am and jumps to each one, so that I know there is more below the Oscillators.
+78. As a phone user, I want to see every value, with a bubble above my finger while I drag, so that my finger never hides what I'm changing.
+79. As a phone user, I want scrolling over a control to scroll the page, so that I never change a sound by accident.
+80. As a first-time visitor, I want a welcome that offers to play the Demo (or the sound shared with me), so that I hear what Limpide can do without knowing where to click.
+81. As a user, I want About centred on screen and an ⓘ button at every screen size, so that I can always find out what this is.
+
 ### MIDI and the TempoPAD C16
 50. As a C16 owner, I want Limpide to detect my Controller when plugged in, so that I know it's connected.
 51. As a C16 owner, I want MIDI notes from the pads (KEYBOARD mode) to play the synth with Velocity, so that I can play it like an instrument.
@@ -108,6 +125,7 @@ Limpide (formerly Limpide) is a browser-based subtractive synthesizer laid out a
 - **Rendering:** the engine and Viewer renderers live outside React. A single animation loop draws every Viewer ([ADR-0002](./adr/0002-viewers-and-engine-live-outside-react.md)).
 - **Effective Cutoff:** computed by a pure modulation model that also produces the automation schedule ([ADR-0003](./adr/0003-modulation-model-mirrors-the-audio-graph.md)).
 - **Voices:** 1 to 8 per Patch; 1 Voice is monophonic with last-note priority and Glide. The Oscillator and Filter Viewers and the Timeline follow the newest Note; the Amp Viewers show every Voice by default ([ADR-0007](./adr/0007-optional-polyphony-viewers-follow-the-newest-note.md)).
+- **Controls:** knob size follows the Parameter's role, play or set-and-forget ([ADR-0008](./adr/0008-knob-size-follows-the-parameter-s-role.md)); levels and envelope stages are faders. Modulation rings and the piano's pitch marker are drawn by the render loop from the Modulation model, outside React (ADR-0002, ADR-0003).
 - **MIDI:** MIDI Learn first, no hard-coded map, Encoder Mode auto-detected, and Pickup for Absolute Mappings ([ADR-0004](./adr/0004-midi-learn-first-no-hardcoded-controller-map.md)).
 - **Tuning:** A4 = 440 Hz, equal temperament.
 
@@ -147,7 +165,8 @@ Limpide (formerly Limpide) is a browser-based subtractive synthesizer laid out a
 - Guided lessons. The data model should allow them, but the content comes later.
 - Spectrogram and explanatory tooltips, which are next after v1.
 - An arpeggiator or sequencer, MIDI output, and audio recording or export.
-- Accounts, cloud sync, mobile and touch-first layouts.
+- Accounts and cloud sync. (Phones were out of scope until 1.1.0; since 2.0 they are a first-class layout.)
+- Drawing your own LFO shapes, and graphical envelope editors.
 
 ## Further Notes
 
