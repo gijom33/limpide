@@ -12,11 +12,18 @@ export interface Tab {
   content: ReactNode;
 }
 
+/** A row shown under some tabs' panels (e.g. Osc 2's tuning under both Oscillators); the other tabs' panels
+ *  take its place. */
+export interface SharedRow {
+  under: string[];
+  content: ReactNode;
+}
+
 /**
  * Tabs in the WAI-ARIA pattern: one tab stop for the whole list, ←/→/Home/End move and select, each panel is
  * labelled by its tab. Hidden panels stay mounted, so switching is instant and keeps their state.
  */
-export function Tabs({ label, tabs }: { label: string; tabs: Tab[] }) {
+export function Tabs({ label, tabs, shared }: { label: string; tabs: Tab[]; shared?: SharedRow }) {
   const base = useId();
   const [selected, setSelected] = useState(tabs[0].id);
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -26,12 +33,14 @@ export function Tabs({ label, tabs }: { label: string; tabs: Tab[] }) {
   useEffect(() => {
     const element = root.current!;
     const onReveal = (e: Event) => {
-      const panel = (e.target as Element).closest<HTMLElement>('[role="tabpanel"]');
-      if (panel?.closest('.tabs') === element && panel.dataset.tab) setSelected(panel.dataset.tab);
+      const panel = (e.target as Element).closest<HTMLElement>('[role="tabpanel"], .tab-shared');
+      if (panel?.closest('.tabs') !== element) return;
+      if (panel.dataset.tab) setSelected(panel.dataset.tab);
+      else if (shared) setSelected((s) => (shared.under.includes(s) ? s : shared.under[0]));
     };
     element.addEventListener(REVEAL_EVENT, onReveal);
     return () => element.removeEventListener(REVEAL_EVENT, onReveal);
-  }, []);
+  }, [shared]);
 
   const select = (index: number) => {
     const i = (index + tabs.length) % tabs.length;
@@ -90,11 +99,22 @@ export function Tabs({ label, tabs }: { label: string; tabs: Tab[] }) {
             inert={t.id !== selected}
             data-active={t.id === selected || undefined}
             data-tab={t.id}
+            data-covers-shared={(shared && !shared.under.includes(t.id)) || undefined}
             className="tab-panel"
           >
             {t.content}
           </div>
         ))}
+        {shared && (
+          <div
+            className="tab-shared"
+            aria-hidden={!shared.under.includes(selected)}
+            inert={!shared.under.includes(selected)}
+            data-active={shared.under.includes(selected) || undefined}
+          >
+            {shared.content}
+          </div>
+        )}
       </div>
     </div>
   );

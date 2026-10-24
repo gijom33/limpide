@@ -25,6 +25,20 @@ describe('defaultPatch', () => {
   });
 });
 
+describe('control', () => {
+  // ADR-0008: the knobs worth turning while playing are big, the set-and-forget ones small; levels and envelope
+  // stages are faders.
+  it('gives each Parameter the control its role calls for', () => {
+    const of = (control: string) => Object.values(PARAMS).filter((d) => d.control === control).map((d) => d.id).sort();
+    expect(of('play')).toEqual(['cutoff', 'filterEnvAmount', 'lfoAmount', 'lfoRate', 'osc2Detune', 'resonance']);
+    expect(of('set')).toEqual(['glide', 'keyTrack', 'osc2Octave', 'osc2PulseWidth', 'osc2Semitone', 'pulseWidth', 'velocityCutoff']);
+    expect(of('fader')).toEqual([
+      'ampAttack', 'ampDecay', 'ampRelease', 'ampSustain', 'filterAttack', 'filterDecay', 'filterRelease', 'filterSustain',
+      'mixNoise', 'mixOsc1', 'mixOsc2', 'mixSub',
+    ]);
+  });
+});
+
 describe('setParam', () => {
   it('returns a new Patch with the value changed, leaving the original untouched', () => {
     const before = defaultPatch();

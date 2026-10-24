@@ -27,7 +27,7 @@ The prototype is kept, never merged, on branch `prototype/2.0-look` (latest `30c
 - **Sizes:** big knobs 68 px (60 px on phones), small knobs 52 px, with a 24 px cap. Pulse Width is a small knob (not a play control after all).
 - **Fader:** an 8 px track with a fill in the stage colour from the bottom, and a 24 × 14 px handle that is a small cap of the knobs' material with the same marker line across it.
 - **No glow**, not while dragging, not when selected. Keyboard focus alone shows a plain 2 px ring in the stage colour; a click or drag shows nothing.
-- **Inactive** controls dim their value (arc, track, fill) to 55 %, never their marker, which always shows where the control is set.
+- **Inactive** controls dim their value (arc, track, fill) to 55 %, never their marker, which always shows where the control is set. *Changed in issue 19 at the owner's request: an inactive control greys out as a whole, marker included, to 30 %.*
 - **Modulation colour:** blue, `#5b8cff` in dark, `#2f5fe0` in light. The Modulation row (LFO) wears it as its stage colour: border, heading and knob arcs.
 - **Modulation ring:** a 2.5 px arc outside the value arc over the reachable range, and a live dot at the Effective value while a Note sounds.
 - **Single-pointer alternative:** a click on a knob's arc (without dragging) jumps the value there; a tap on a fader's track (without dragging) jumps there too, while a drag on the track still scrolls the page on touch screens. This replaces "a tap on the track does nothing".

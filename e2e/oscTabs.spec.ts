@@ -1,19 +1,30 @@
 import { expect, test } from '@playwright/test';
 
-test('Osc 1 and Osc 2 are tabs, one shown at a time, with the Mixer always visible', async ({ page }) => {
+test('Osc 1, Osc 2 and the Mixer are tabs, one shown at a time; Osc 2’s tuning shows under both Oscillators', async ({ page }) => {
   await page.goto('/');
   const tabs = page.getByRole('tablist', { name: 'Oscillator' });
   const osc1 = tabs.getByRole('tab', { name: 'Osc 1' });
   const osc2 = tabs.getByRole('tab', { name: /Osc 2/ });
+  const mixer = tabs.getByRole('tab', { name: 'Mixer' });
+  const shows = async (visible: string[]) => {
+    for (const [name, locator] of [
+      ['Osc 1', page.getByRole('radiogroup', { name: 'Osc 1 Waveform' })],
+      ['Osc 2', page.getByRole('radiogroup', { name: 'Osc 2 Waveform' })],
+      ['Tuning', page.getByRole('group', { name: 'Tuning' })],
+      ['Mixer', page.getByRole('group', { name: 'Mixer' })],
+    ] as const) {
+      if (visible.includes(name)) await expect(locator, name).toBeVisible();
+      else await expect(locator, name).toBeHidden();
+    }
+  };
   await expect(osc1).toHaveAttribute('aria-selected', 'true');
-  await expect(page.getByRole('radiogroup', { name: 'Osc 1 Waveform' })).toBeVisible();
-  await expect(page.getByRole('radiogroup', { name: 'Osc 2 Waveform' })).toBeHidden();
-
+  await shows(['Osc 1', 'Tuning']);
   await osc2.click();
   await expect(osc2).toHaveAttribute('aria-selected', 'true');
-  await expect(page.getByRole('radiogroup', { name: 'Osc 2 Waveform' })).toBeVisible();
-  await expect(page.getByRole('radiogroup', { name: 'Osc 1 Waveform' })).toBeHidden();
-  await expect(page.getByRole('group', { name: 'Mixer' })).toBeVisible();
+  await shows(['Osc 2', 'Tuning']);
+  await mixer.click();
+  await expect(mixer).toHaveAttribute('aria-selected', 'true');
+  await shows(['Mixer']);
 });
 
 test('the tabs work from the keyboard (arrow keys)', async ({ page }) => {
@@ -31,6 +42,7 @@ test('the Osc 2 tab shows when Osc 2 is sounding, even while Osc 1 is selected',
   await page.goto('/');
   const osc2 = page.getByRole('tablist', { name: 'Oscillator' }).getByRole('tab', { name: /Osc 2/ });
   await expect(osc2).not.toHaveAttribute('data-sounding', 'true');
+  await page.getByRole('tab', { name: 'Mixer' }).click();
   const mix2 = page.getByRole('group', { name: 'Mixer' }).getByRole('slider', { name: 'Osc 2' });
   await mix2.focus();
   await page.keyboard.press('ArrowUp');

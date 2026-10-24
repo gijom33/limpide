@@ -8,7 +8,7 @@ const PALETTE = {
 } as const;
 
 for (const theme of ['dark', 'light'] as const) {
-  test(`each stage wears its own validated colour on traces, knobs and outline (${theme})`, async ({ page }) => {
+  test(`each stage wears its own validated colour on traces, control values and outline (${theme})`, async ({ page }) => {
     await page.goto('/');
     if (theme === 'light') {
       await openDisplay(page);
@@ -32,10 +32,11 @@ for (const theme of ['dark', 'light'] as const) {
         await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--border')),
       );
 
-      const knob = block.getByRole('slider').first();
-      if (await knob.count()) {
-        const pointer = await knob.evaluate((el) => getComputedStyle(el, '::after').backgroundColor);
-        expect(pointer, `${stage} knob pointer`).toBe(colour);
+      // A knob's value arc, or a fader's fill, is drawn in the stage colour.
+      const value = block.locator('.knob-arc, .fader-fill').first();
+      if (await value.count()) {
+        const drawn = await value.evaluate((el) => (el.matches('.knob-arc') ? getComputedStyle(el).stroke : getComputedStyle(el).backgroundColor));
+        expect(drawn, `${stage} value`).toBe(colour);
       }
     }
   });

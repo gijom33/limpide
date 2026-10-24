@@ -56,7 +56,7 @@ test('the Display panel chooses what the Amp Viewers follow: all Voices by defau
   await page.keyboard.up('a');
 });
 
-test('Osc 2’s tuning knobs are one shared row below the tabs: same place and state whichever tab shows', async ({ page }) => {
+test('Osc 2’s tuning knobs are one shared row below both Oscillator tabs: same place and state whichever shows', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
   const tuning = page.getByRole('group', { name: 'Tuning' });
@@ -72,8 +72,10 @@ test('Osc 2’s tuning knobs are one shared row below the tabs: same place and s
   expect(onOsc1.every((s) => s.endsWith('inactive=true'))).toBe(true); // Osc 2 is mixed out in Init
   await page.getByRole('tab', { name: /Osc 2/ }).click();
   expect(await state()).toEqual(onOsc1);
+  await page.getByRole('tab', { name: 'Mixer' }).click();
   await page.getByRole('group', { name: 'Mixer' }).getByRole('slider', { name: 'Osc 2' }).focus();
   await page.keyboard.press('ArrowUp');
+  await page.getByRole('tab', { name: /Osc 2/ }).click();
   await expect(tuning.locator('.knob[data-inactive]')).toHaveCount(0);
   await page.getByRole('tab', { name: 'Osc 1' }).click();
   await expect(tuning.locator('.knob[data-inactive]')).toHaveCount(0); // still awake on the other tab

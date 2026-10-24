@@ -35,12 +35,14 @@ test('Osc 2 has its own Waveform, and its tuning knobs wake up once it is mixed 
   await page.getByRole('tab', { name: 'Osc 1' }).click();
   await expect(osc1.getByRole('radio', { name: 'Saw' })).toHaveAttribute('aria-checked', 'true');
 
-  // Osc 2's tuning knobs sit below both tabs, so Detune is at hand on either.
+  // Osc 2's tuning knobs sit below both Oscillator tabs, so Detune is at hand on either.
   const detune = page.locator('.knob', { has: page.getByRole('slider', { name: 'Detune' }) });
   await expect(detune).toHaveAttribute('data-inactive', 'true');
+  await page.getByRole('tab', { name: 'Mixer' }).click();
   const mixOsc2 = page.getByRole('group', { name: 'Mixer' }).getByRole('slider', { name: 'Osc 2' });
   await mixOsc2.focus();
   await page.keyboard.press('ArrowUp');
+  await page.getByRole('tab', { name: 'Osc 1' }).click();
   await expect(detune).not.toHaveAttribute('data-inactive');
 });
 
@@ -49,9 +51,11 @@ test('each Oscillator has its own Pulse Width, awake only while that Oscillator 
   await page.getByRole('tab', { name: /Osc 2/ }).click();
   const osc2 = page.getByRole('group', { name: 'Osc 2' });
   const width2 = osc2.locator('.knob', { has: page.getByRole('slider', { name: 'Pulse Width' }) });
+  await page.getByRole('tab', { name: 'Mixer' }).click();
   const mix2 = page.getByRole('group', { name: 'Mixer' }).getByRole('slider', { name: 'Osc 2' });
   await mix2.focus();
   await page.keyboard.press('ArrowUp');
+  await page.getByRole('tab', { name: /Osc 2/ }).click();
   await expect(width2).toHaveAttribute('data-inactive', 'true'); // Osc 2 is still a saw
   await osc2.getByRole('radio', { name: 'Pulse' }).click();
   await expect(width2).not.toHaveAttribute('data-inactive');
@@ -62,6 +66,7 @@ test('each Oscillator has its own Pulse Width, awake only while that Oscillator 
 
 test('the Mixer has a Sub level, off to start, whose tooltip says what it adds', async ({ page }) => {
   await page.goto('/');
+  await page.getByRole('tab', { name: 'Mixer' }).click();
   const sub = page.getByRole('group', { name: 'Mixer' }).getByRole('slider', { name: 'Sub' });
   await expect(sub).toHaveAttribute('aria-valuetext', '0 %');
   await sub.hover();

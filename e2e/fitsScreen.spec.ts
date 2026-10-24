@@ -112,49 +112,85 @@ for (const [width, height, maxControls, minViewer] of [
   });
 }
 
-for (const [width, height, size] of [
-  [1710, 1060, 44],
-  [1440, 900, 44],
-  [1100, 900, 32],
-  [872, 920, 32],
+// ADR-0008: knobs worth turning while playing are big, set-and-forget ones small; smaller together on compact
+// windows, and on phones the big ones less big, so a row of two of each fits.
+for (const [width, height, big, small] of [
+  [1710, 1060, 68, 52],
+  [1440, 900, 68, 52],
+  [1100, 900, 52, 40],
+  [872, 920, 52, 40],
+  [393, 852, 60, 52],
 ]) {
-  test(`every knob on the page is the same size: ${size} pt at ${width}×${height}`, async ({ page }) => {
+  test(`play knobs are ${big} pt and set-and-forget knobs ${small} pt at ${width}×${height}`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await page.goto('/');
-    const sizes = await page.evaluate(() =>
-      [...document.querySelectorAll<HTMLElement>('.knob-dial')]
-        .filter((d) => d.checkVisibility({ visibilityProperty: true }))
-        .map((d) => Math.round(d.getBoundingClientRect().width)),
+    // Not getByRole: it skips the hidden Oscillator tabs (aria-hidden), whose knobs keep their layout.
+    const sizes = await page.locator('[role=slider]').evaluateAll((sliders) =>
+      sliders
+        // Every laid-out knob, on the shown Oscillator tab or not (hidden tabs keep their layout).
+        .filter((s) => s.getClientRects().length > 0 && s.getAttribute('aria-orientation') !== 'vertical')
+        .map((s) => `${s.getAttribute('aria-label')} ${Math.round(s.getBoundingClientRect().width)}`),
     );
-    expect(new Set(sizes)).toEqual(new Set([size]));
+    const play = ['Cutoff', 'Resonance', 'Amount', 'Rate', 'Depth', 'Detune'];
+    expect(sizes.sort()).toEqual(
+      ['Cutoff', 'Resonance', 'Velocity', 'Key Track', 'Amount', 'Pulse Width', 'Pulse Width', 'Octave', 'Semitone', 'Detune', 'Rate', 'Depth', 'Glide']
+        .map((name) => `${name} ${play.includes(name) ? big : small}`)
+        .sort(),
+    );
   });
 }
 
-for (const [width, height, pitch] of [
-  [1710, 1060, 72],
-  [1440, 900, 72],
-  [1300, 900, 58],
-  [1100, 900, 58],
-  [1000, 800, 58],
-  [872, 920, 58],
+// Each control's column is as wide as its dial or its text, whichever is wider (ADR-0008): no knob, fader, row name
+// or picker ever comes closer than 8 pt to another in its stage, whatever the window.
+for (const [width, height] of [
+  [375, 812],
+  [1000, 800],
+  [1440, 900],
+  [1710, 1060],
 ]) {
-  test(`every knob row has the same dial pitch: ${pitch} pt at ${width}×${height}`, async ({ page }) => {
+  test(`no two controls come closer than 8 pt at ${width}×${height}`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await page.goto('/');
     await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);
-    const pitches = await page.evaluate(() =>
-      [...document.querySelectorAll<HTMLElement>('.knobs')].flatMap((row) => {
-        const dials = [...row.querySelectorAll<HTMLElement>(':scope > .knob > .knob-dial, :scope > .tip-anchor > .knob > .knob-dial')]
-          .filter((d) => d.checkVisibility({ visibilityProperty: true }))
-          .map((d) => d.getBoundingClientRect());
-        // Neighbours on the same line: centre to centre.
-        return dials.slice(1).flatMap((d, i) =>
-          Math.abs(d.top - dials[i].top) < 1 ? [Math.round(d.left + d.width / 2 - (dials[i].left + dials[i].width / 2))] : [],
+    const tooClose = await page.evaluate(() => {
+      const shown = (e: Element | null): e is Element => !!e && e.checkVisibility({ visibilityProperty: true });
+      // Text by its glyphs, not its box (a label's box may be wider than its words).
+      const rect = (e: Element) => {
+        if (e.matches('h3, .knob-label, .knob-value > span')) {
+          const range = document.createRange();
+          range.selectNodeContents(e);
+          return range.getBoundingClientRect();
+        }
+        return e.getBoundingClientRect();
+      };
+      const found: string[] = [];
+      for (const stage of document.querySelectorAll('.block, .timeline')) {
+        const boxes: { name: string; l: number; r: number; t: number; b: number }[] = [];
+        for (const control of stage.querySelectorAll('.knob')) {
+          const parts = [...control.querySelectorAll('.knob-dial, .fader, .knob-label, .knob-value > span:first-child')].filter(shown).map(rect);
+          if (!parts.length) continue;
+          boxes.push({
+            name: control.querySelector('.knob-label')!.textContent!,
+            l: Math.min(...parts.map((p) => p.left)), r: Math.max(...parts.map((p) => p.right)),
+            t: Math.min(...parts.map((p) => p.top)), b: Math.max(...parts.map((p) => p.bottom)),
+          });
+        }
+        for (const other of stage.querySelectorAll('.sub-block > h3, .sub-block > .segmented, .lfo-pickers > *')) {
+          if (!shown(other)) continue;
+          const r = rect(other);
+          boxes.push({ name: other.textContent!.slice(0, 16), l: r.left, r: r.right, t: r.top, b: r.bottom });
+        }
+        boxes.forEach((a, i) =>
+          boxes.slice(i + 1).forEach((b) => {
+            const sideBySide = Math.min(a.b, b.b) - Math.max(a.t, b.t) > 0;
+            const gap = Math.max(b.l - a.r, a.l - b.r);
+            if (sideBySide && gap < 8) found.push(`${a.name} | ${b.name}: ${Math.round(gap)} pt`);
+          }),
         );
-      }),
-    );
-    expect(pitches.length).toBeGreaterThan(5);
-    expect(new Set(pitches)).toEqual(new Set([pitch]));
+      }
+      return found;
+    });
+    expect(tooClose).toEqual([]);
   });
 }
 

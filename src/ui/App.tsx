@@ -21,6 +21,7 @@ import { startSong } from '../demo/song';
 import { createHoldTaps, startRhythm, type Rhythm } from '../input/holdRhythm';
 import { PRESETS } from '../patch/presets';
 import { HoldIcon, InfoIcon, NoteIcon, PlayIcon } from './icons';
+import { Fader } from './Fader';
 import { Knob } from './Knob';
 import { OverlayToggles } from './OverlayToggles';
 import { TapViewers } from './TapViewers';
@@ -709,47 +710,62 @@ export function App() {
                     badge: patch.mixOsc2 > 0,
                     badgeLabel: 'sounding',
                     content: (
-                    <SubBlock title="Osc 2" label="Waveform" group>
-                      <WaveformPicker label="Osc 2 Waveform" choice="osc2Waveform" value={patch.osc2Waveform} onChange={(w) => setPatch((p) => setWaveform(p, w, 'osc2'))} />
+                      <SubBlock title="Osc 2" label="Waveform" group>
+                        <WaveformPicker label="Osc 2 Waveform" choice="osc2Waveform" value={patch.osc2Waveform} onChange={(w) => setPatch((p) => setWaveform(p, w, 'osc2'))} />
+                        <div className="knobs">
+                          {/* Pulse Width first, where Osc 1 has it, so it stays put when switching tabs. */}
+                          <Tooltip content={TIPS.pulseWidth}>
+                            <Knob
+                              id="osc2PulseWidth"
+                              value={patch.osc2PulseWidth}
+                              onChange={(v) => change('osc2PulseWidth', v)}
+                              inactive={patch.mixOsc2 === 0 || patch.osc2Waveform !== 'pulse'}
+                            />
+                          </Tooltip>
+                        </div>
+                      </SubBlock>
+                    ),
+                  },
+                  {
+                    // The third tab, so the Mixer's faders and the Oscillators' rows take turns and the stage is no
+                    // taller than the others (all of them at once made it the tallest).
+                    id: 'mixer',
+                    label: 'Mixer',
+                    tip: TIPS.mixer,
+                    content: (
+                    <SubBlock title="Mixer" tip={TIPS.mixer} group>
                       <div className="knobs">
-                        {/* Pulse Width first, where Osc 1 has it, so it stays put when switching tabs. */}
-                        <Tooltip content={TIPS.pulseWidth}>
-                          <Knob
-                            id="osc2PulseWidth"
-                            value={patch.osc2PulseWidth}
-                            onChange={(v) => change('osc2PulseWidth', v)}
-                            inactive={patch.mixOsc2 === 0 || patch.osc2Waveform !== 'pulse'}
-                          />
+                        <Fader id="mixOsc1" value={patch.mixOsc1} onChange={(v) => change('mixOsc1', v)} />
+                        <Fader id="mixOsc2" value={patch.mixOsc2} onChange={(v) => change('mixOsc2', v)} />
+                        <Tooltip content={TIPS.noise}>
+                          <Fader id="mixNoise" value={patch.mixNoise} onChange={(v) => change('mixNoise', v)} />
+                        </Tooltip>
+                        <Tooltip content={TIPS.sub}>
+                          <Fader id="mixSub" value={patch.mixSub} onChange={(v) => change('mixSub', v)} />
                         </Tooltip>
                       </div>
                     </SubBlock>
                     ),
                   },
                 ]}
+                // Osc 2's offsets from Osc 1, under both Oscillators: one set of knobs in one state, whichever
+                // Oscillator shows (greyed out while Osc 2 is not mixed in). The Mixer takes its place.
+                shared={{
+                  under: ['osc1', 'osc2'],
+                  content: (
+                    <SubBlock title="Tuning" tip={TIPS.tuning} group>
+                      <div className="knobs">
+                        {(['osc2Octave', 'osc2Semitone'] as const).map((id) => (
+                          <Knob key={id} id={id} value={patch[id]} onChange={(v) => change(id, v)} inactive={patch.mixOsc2 === 0} />
+                        ))}
+                        <Tooltip content={TIPS.detune}>
+                          <Knob id="osc2Detune" value={patch.osc2Detune} onChange={(v) => change('osc2Detune', v)} inactive={patch.mixOsc2 === 0} />
+                        </Tooltip>
+                      </div>
+                    </SubBlock>
+                  ),
+                }}
               />
-              {/* Osc 2's offsets from Osc 1, below both tabs: one set of knobs in one state, whichever tab shows. */}
-              <SubBlock title="Tuning" tip={TIPS.tuning} group>
-                <div className="knobs">
-                  {(['osc2Octave', 'osc2Semitone'] as const).map((id) => (
-                    <Knob key={id} id={id} value={patch[id]} onChange={(v) => change(id, v)} inactive={patch.mixOsc2 === 0} />
-                  ))}
-                  <Tooltip content={TIPS.detune}>
-                    <Knob id="osc2Detune" value={patch.osc2Detune} onChange={(v) => change('osc2Detune', v)} inactive={patch.mixOsc2 === 0} />
-                  </Tooltip>
-                </div>
-              </SubBlock>
-              <SubBlock title="Mixer" tip={TIPS.mixer} group>
-                <div className="knobs">
-                  <Knob id="mixOsc1" value={patch.mixOsc1} onChange={(v) => change('mixOsc1', v)} />
-                  <Knob id="mixOsc2" value={patch.mixOsc2} onChange={(v) => change('mixOsc2', v)} />
-                  <Tooltip content={TIPS.noise}>
-                    <Knob id="mixNoise" value={patch.mixNoise} onChange={(v) => change('mixNoise', v)} />
-                  </Tooltip>
-                  <Tooltip content={TIPS.sub}>
-                    <Knob id="mixSub" value={patch.mixSub} onChange={(v) => change('mixSub', v)} />
-                  </Tooltip>
-                </div>
-              </SubBlock>
             </div>
             }
           />
@@ -779,14 +795,13 @@ export function App() {
                 </div>
               </SubBlock>
               <SubBlock title="Filter Envelope" label="Envelope" tip={TIPS.filterEnvelope}>
-                {/* Its own container: the row chooses five columns or 3+2 by the room beside the label. */}
                 <div className="envelope-knobs">
                   <div className="knobs knobs-envelope">
                     <Tooltip content={TIPS.envAmount}>
                       <Knob id="filterEnvAmount" value={patch.filterEnvAmount} onChange={(v) => change('filterEnvAmount', v)} />
                     </Tooltip>
                     {(['filterAttack', 'filterDecay', 'filterSustain', 'filterRelease'] as const).map((id) => (
-                      <Knob key={id} id={id} value={patch[id]} onChange={(v) => change(id, v)} inactive={patch.filterEnvAmount === 0} />
+                      <Fader key={id} id={id} value={patch[id]} onChange={(v) => change(id, v)} inactive={patch.filterEnvAmount === 0} />
                     ))}
                   </div>
                 </div>
@@ -806,7 +821,7 @@ export function App() {
               <SubBlock title="Amp Envelope" label="Envelope" tip={TIPS.ampEnvelope}>
                 <div className="knobs">
                   {(['ampAttack', 'ampDecay', 'ampSustain', 'ampRelease'] as const).map((id) => (
-                    <Knob key={id} id={id} value={patch[id]} onChange={(v) => change(id, v)} />
+                    <Fader key={id} id={id} value={patch[id]} onChange={(v) => change(id, v)} />
                   ))}
                 </div>
               </SubBlock>

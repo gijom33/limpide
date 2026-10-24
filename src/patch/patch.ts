@@ -4,11 +4,16 @@ import type { Range } from './taper';
 
 export type Unit = 'Hz' | 's' | '%' | 'oct' | 'st' | 'cents';
 
+/** How a Parameter is turned (ADR-0008): a big knob if worth turning while playing, a small one if set and
+ *  forgotten, a fader for levels and envelope stages. */
+export type Control = 'play' | 'set' | 'fader';
+
 export interface ParamDef extends Range {
   id: ParamId;
   label: string;
   unit: Unit;
   default: number;
+  control: Control;
   /** Values snap to multiples of this (e.g. whole octaves). */
   step?: number;
 }
@@ -59,40 +64,40 @@ export type Patch = Record<ParamId, number> & {
 /** Glide at its minimum is off: Notes change pitch at once. */
 export const GLIDE_OFF = 0.001;
 
-const level = (id: ParamId, label: string, dflt: number): ParamDef => ({
-  id, label, unit: '%', min: 0, max: 1, taper: 'linear', default: dflt,
+const level = (id: ParamId, label: string, dflt: number, control: Control): ParamDef => ({
+  id, label, unit: '%', min: 0, max: 1, taper: 'linear', default: dflt, control,
 });
 
-const time = (id: ParamId, label: string, dflt: number): ParamDef => ({
-  id, label, unit: 's', min: 0.001, max: 10, taper: 'log', default: dflt,
+const time = (id: ParamId, label: string, dflt: number, control: Control): ParamDef => ({
+  id, label, unit: 's', min: 0.001, max: 10, taper: 'log', default: dflt, control,
 });
 
 export const PARAMS: Record<ParamId, ParamDef> = {
-  pulseWidth: { id: 'pulseWidth', label: 'Pulse Width', unit: '%', min: 0.05, max: 0.95, taper: 'linear', default: 0.25 },
-  osc2Octave: { id: 'osc2Octave', label: 'Octave', unit: 'oct', min: -2, max: 2, taper: 'linear', default: 0, step: 1 },
-  osc2Semitone: { id: 'osc2Semitone', label: 'Semitone', unit: 'st', min: -12, max: 12, taper: 'linear', default: 0, step: 1 },
-  osc2Detune: { id: 'osc2Detune', label: 'Detune', unit: 'cents', min: -50, max: 50, taper: 'linear', default: 0 },
-  osc2PulseWidth: { id: 'osc2PulseWidth', label: 'Pulse Width', unit: '%', min: 0.05, max: 0.95, taper: 'linear', default: 0.25 },
-  mixOsc1: level('mixOsc1', 'Osc 1', 1),
-  mixOsc2: level('mixOsc2', 'Osc 2', 0),
-  mixNoise: level('mixNoise', 'Noise', 0),
-  mixSub: level('mixSub', 'Sub', 0),
-  lfoRate: { id: 'lfoRate', label: 'Rate', unit: 'Hz', min: 0.05, max: 20, taper: 'log', default: 2 },
-  lfoAmount: level('lfoAmount', 'Depth', 0),
-  glide: time('glide', 'Glide', GLIDE_OFF),
-  velocityCutoff: level('velocityCutoff', 'Velocity', 0),
-  keyTrack: level('keyTrack', 'Key Track', 0),
-  cutoff: { id: 'cutoff', label: 'Cutoff', unit: 'Hz', min: 20, max: 20000, taper: 'log', default: 2000 },
-  resonance: { id: 'resonance', label: 'Resonance', unit: '%', min: 0, max: 1, taper: 'linear', default: 0.2 },
-  filterEnvAmount: { id: 'filterEnvAmount', label: 'Amount', unit: 'oct', min: -5, max: 5, taper: 'linear', default: 0 },
-  filterAttack: time('filterAttack', 'Attack', 0.005),
-  filterDecay: time('filterDecay', 'Decay', 0.25),
-  filterSustain: { id: 'filterSustain', label: 'Sustain', unit: '%', min: 0, max: 1, taper: 'linear', default: 0.3 },
-  filterRelease: time('filterRelease', 'Release', 0.4),
-  ampAttack: time('ampAttack', 'Attack', 0.01),
-  ampDecay: time('ampDecay', 'Decay', 0.3),
-  ampSustain: { id: 'ampSustain', label: 'Sustain', unit: '%', min: 0, max: 1, taper: 'linear', default: 0.7 },
-  ampRelease: time('ampRelease', 'Release', 0.4),
+  pulseWidth: { id: 'pulseWidth', label: 'Pulse Width', unit: '%', min: 0.05, max: 0.95, taper: 'linear', default: 0.25, control: 'set' },
+  osc2Octave: { id: 'osc2Octave', label: 'Octave', unit: 'oct', min: -2, max: 2, taper: 'linear', default: 0, step: 1, control: 'set' },
+  osc2Semitone: { id: 'osc2Semitone', label: 'Semitone', unit: 'st', min: -12, max: 12, taper: 'linear', default: 0, step: 1, control: 'set' },
+  osc2Detune: { id: 'osc2Detune', label: 'Detune', unit: 'cents', min: -50, max: 50, taper: 'linear', default: 0, control: 'play' },
+  osc2PulseWidth: { id: 'osc2PulseWidth', label: 'Pulse Width', unit: '%', min: 0.05, max: 0.95, taper: 'linear', default: 0.25, control: 'set' },
+  mixOsc1: level('mixOsc1', 'Osc 1', 1, 'fader'),
+  mixOsc2: level('mixOsc2', 'Osc 2', 0, 'fader'),
+  mixNoise: level('mixNoise', 'Noise', 0, 'fader'),
+  mixSub: level('mixSub', 'Sub', 0, 'fader'),
+  lfoRate: { id: 'lfoRate', label: 'Rate', unit: 'Hz', min: 0.05, max: 20, taper: 'log', default: 2, control: 'play' },
+  lfoAmount: level('lfoAmount', 'Depth', 0, 'play'),
+  glide: time('glide', 'Glide', GLIDE_OFF, 'set'),
+  velocityCutoff: level('velocityCutoff', 'Velocity', 0, 'set'),
+  keyTrack: level('keyTrack', 'Key Track', 0, 'set'),
+  cutoff: { id: 'cutoff', label: 'Cutoff', unit: 'Hz', min: 20, max: 20000, taper: 'log', default: 2000, control: 'play' },
+  resonance: { id: 'resonance', label: 'Resonance', unit: '%', min: 0, max: 1, taper: 'linear', default: 0.2, control: 'play' },
+  filterEnvAmount: { id: 'filterEnvAmount', label: 'Amount', unit: 'oct', min: -5, max: 5, taper: 'linear', default: 0, control: 'play' },
+  filterAttack: time('filterAttack', 'Attack', 0.005, 'fader'),
+  filterDecay: time('filterDecay', 'Decay', 0.25, 'fader'),
+  filterSustain: { id: 'filterSustain', label: 'Sustain', unit: '%', min: 0, max: 1, taper: 'linear', default: 0.3, control: 'fader' },
+  filterRelease: time('filterRelease', 'Release', 0.4, 'fader'),
+  ampAttack: time('ampAttack', 'Attack', 0.01, 'fader'),
+  ampDecay: time('ampDecay', 'Decay', 0.3, 'fader'),
+  ampSustain: { id: 'ampSustain', label: 'Sustain', unit: '%', min: 0, max: 1, taper: 'linear', default: 0.7, control: 'fader' },
+  ampRelease: time('ampRelease', 'Release', 0.4, 'fader'),
 };
 
 export function defaultPatch(): Patch {

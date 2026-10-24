@@ -9,24 +9,32 @@
   /* Spacing and type scales. */
   --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
   --text-xs: 10px; --text-sm: 11px; --text-md: 12px; --text-lg: 13px;
-  /* The knob: one dial size and one column width for every knob on the page, so dials sit the same distance
-     apart in every row (the pitch is column + gap), and fixed text lines, so a dial never moves as text changes. */
-  --knob-dial: 44px; --knob-col: 60px; --knob-gap: 12px; --knob-row-gap: 12px; --knob-text-gap: 4px;
+  /* Controls (knobs and faders): each column as wide as its dial or its text, the gap between columns, and fixed
+     text lines, so a dial never moves as its text changes. */
+  --knob-gap: 12px; --knob-row-gap: 12px; --knob-text-gap: 4px;
   --knob-label-h: 16px; --knob-value-h: 14px;
-  --knob-h: calc(var(--knob-dial) + 2 * var(--knob-text-gap) + var(--knob-label-h) + var(--knob-value-h));
-  --bg: #0f1115;
-  --panel: #181b22;
-  --border: #2a2f3a;
+  /* Dial sizes by role (ADR-0008), and a fader's height, cap included. */
+  --dial-big: 68px; --dial-small: 52px; --fader-h: 92px;
+  /* Controls are raised caps on dark panels (look B, issue 18): the page and panels darker than the caps. */
+  --bg: #08090c;
+  --panel: #0f1115;
+  --border: #22262e;
   --text: #e6e8ee;
   --muted: #8a91a2;
   --accent: #ff9a3c;
   --trace: #5fd4ff;
-  --grid: #262b35;
+  --grid: #1c2028;
   --danger: #ff5c5c;
   /* Stage colours (Hardware palette), validated for colour-blind separation and contrast on --bg. The Amp purple
      sits at hue 300: at the shared lightness, blue-violet cannot be as vivid as the green and orange. */
-  --dial-hi: #2c313d;
-  --dial-lo: #1b1f27;
+  /* A control's cap (knob and fader alike): a light gradient, a fine edge, a soft shadow; one marker line on it. */
+  --cap-hi: #555c6b;
+  --cap-lo: #2c313b;
+  --cap-edge: rgba(255, 255, 255, 0.14);
+  --cap-shadow: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.45));
+  --marker-w: 3px;
+  /* The groove a value arc or a fader's fill runs in. */
+  --groove: color-mix(in srgb, var(--text) 12%, var(--panel));
   --stage-osc: #08ad72;
   --stage-filter: #e36b02;
   --stage-amp: #a052fe;
@@ -38,8 +46,8 @@
 }
 
 :root[data-theme='light'] {
-  --bg: #f4f5f8;
-  --panel: #ffffff;
+  --bg: #e6e8ed;
+  --panel: #eef0f3;
   --border: #d9dce3;
   --text: #1b1e25;
   --muted: #646b7a;
@@ -47,8 +55,9 @@
   --trace: #0a7bbd;
   --grid: #e3e6ec;
   --danger: #d12d2d;
-  --dial-hi: #ffffff;
-  --dial-lo: #e4e7ed;
+  --cap-hi: #ffffff;
+  --cap-lo: #e9ebef;
+  --cap-edge: rgba(0, 0, 0, 0.12);
   --stage-osc: #06915f;
   --stage-filter: #973201;
   --stage-amp: #7a1fd0;
@@ -98,33 +107,37 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
   --trace: var(--stage);
   border-color: color-mix(in srgb, var(--stage) 55%, var(--border));
 }
-.block[data-stage] .knob-dial::after { background: var(--stage); }
 .block[data-stage] h2 { color: var(--stage); }
-.block[data-stage] .knob-dial:focus-visible { outline-color: var(--stage); }
-.block .knobs { min-height: var(--knob-h); }
 @media (max-width: 860px) {
   .chain { grid-template-columns: 1fr; gap: var(--space-4); }
 }
-.knobs { display: flex; flex-wrap: wrap; gap: var(--knob-row-gap) var(--knob-gap); }
+/* A row of controls lines them up by their bottoms, so mixed sizes share one label line (ADR-0008). */
+.knobs { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--knob-row-gap) var(--knob-gap); }
 
 .knob {
-  display: flex; flex-direction: column; align-items: center; gap: var(--knob-text-gap); width: var(--knob-col); flex: none;
+  display: flex; flex-direction: column; align-items: center; gap: var(--knob-text-gap); width: max-content; min-width: var(--dial, 0); flex: none;
   -webkit-user-select: none; user-select: none;
 }
-.knob-dial {
-  width: var(--knob-dial); height: var(--knob-dial); border-radius: 50%; cursor: ns-resize; touch-action: none;
-  background: radial-gradient(circle at 50% 40%, var(--dial-hi), var(--dial-lo));
-  border: 1px solid var(--border); position: relative;
-}
-.knob-dial::after {
-  content: ''; position: absolute; left: 50%; top: 4px; width: 2px; height: 14px; margin-left: -1px;
-  background: var(--accent); border-radius: 1px;
-  transform-origin: 50% 18px; transform: rotate(var(--angle));
-}
-.knob-dial:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* The dial (look B): a groove, the value as an arc in the stage colour, a raised cap with one marker line. Big for
+   Parameters worth turning while playing, small for the others (ADR-0008). */
+.knob[data-size='big'] { --dial: var(--dial-big); }
+.knob[data-size='small'] { --dial: var(--dial-small); }
+.knob-dial { display: block; width: var(--dial); height: var(--dial); cursor: ns-resize; touch-action: none; overflow: visible; outline: none; }
+.knob-groove, .knob-arc { fill: none; stroke-linecap: butt; }
+.knob-groove { stroke: var(--groove); }
+.knob-arc { stroke: var(--stage, var(--accent)); }
+.knob-cap { stroke: var(--cap-edge); stroke-width: 1; filter: var(--cap-shadow); }
+.knob-cap-hi { stop-color: var(--cap-hi); }
+.knob-cap-lo { stop-color: var(--cap-lo); }
+.knob-marker { stroke: var(--text); stroke-width: var(--marker-w); stroke-linecap: round; }
+/* Keyboard focus only (never after a click or a drag): a plain ring, no glow. */
+.knob-dial:focus-visible:not([data-pointer]) { outline: 2px solid var(--stage, var(--accent)); outline-offset: 2px; border-radius: 50%; }
 /* Label and value are centred under the dial and may be wider than the column (their neighbours' are short). */
 .knob-label { font-size: var(--text-md); line-height: var(--knob-label-h); height: var(--knob-label-h); white-space: nowrap; }
-.knob[data-inactive] .knob-dial, .knob[data-inactive] .knob-value { opacity: 0.55; }
+/* Inactive (adjustable, but silent for now): the whole dial or fader greys out, marker included, and its readout
+   with it; the name stays readable. WCAG 1.4.11 leaves inactive controls out of its contrast minimum. */
+.knob[data-inactive] :is(.knob-dial, .fader) { opacity: 0.3; }
+.knob[data-inactive] .knob-value { opacity: 0.45; }
 
 /* Icon pickers (Waveforms, Filter Mode, LFO Waveform): one segmented track, as wide as its icons. */
 .icon-picker { width: fit-content; flex: none; }
@@ -136,6 +149,40 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 .knob-value { display: grid; justify-items: center; }
 .knob-value > * { grid-area: 1 / 1; }
 .knob-value-sizer { visibility: hidden; }
+
+/* A fader (levels, envelope stages): a groove with the value filled in the stage colour from the bottom, and a cap
+   of the knobs' material carrying the same marker line. The track lets the page scroll (a tap sets it); only the
+   cap takes a drag. */
+.fader {
+  --cap-w: 24px; --cap-h: 14px;
+  position: relative; width: var(--cap-w); height: var(--fader-h); touch-action: pan-y; cursor: pointer;
+}
+.fader::before, .fader-fill {
+  content: ''; position: absolute; left: 50%; width: 8px; margin-left: -4px; bottom: calc(var(--cap-h) / 2); border-radius: 2px;
+}
+.fader::before { top: calc(var(--cap-h) / 2); background: var(--groove); }
+.fader-fill { height: calc(var(--position) * (100% - var(--cap-h))); background: var(--stage, var(--accent)); }
+.fader-cap {
+  position: absolute; left: 0; width: var(--cap-w); height: var(--cap-h); top: calc((1 - var(--position)) * (100% - var(--cap-h)));
+  border-radius: 4px; background: linear-gradient(var(--cap-hi), var(--cap-lo)); border: 1px solid var(--cap-edge);
+  filter: var(--cap-shadow); touch-action: none; cursor: ns-resize; outline: none;
+}
+.fader-cap::after {
+  content: ''; position: absolute; left: 5px; right: 5px; top: 50%; height: var(--marker-w); margin-top: calc(var(--marker-w) / -2);
+  border-radius: calc(var(--marker-w) / 2); background: var(--text);
+}
+.fader-cap::before { content: ''; position: absolute; inset: -16px -11px; } /* a 44 × 44 target for a finger */
+.fader-cap:focus-visible:not([data-pointer]) { outline: 2px solid var(--stage, var(--accent)); outline-offset: 2px; }
+.knob[data-midi='moved'] .fader-cap { box-shadow: 0 0 0 2px var(--stage, var(--accent)); }
+.knob[data-midi='waiting'] .fader-cap { box-shadow: 0 0 0 2px var(--muted); }
+
+/* The value above a finger that drags a control (the finger hides the control and its readout). */
+.knob { position: relative; }
+.value-bubble {
+  position: absolute; bottom: calc(100% + 18px); left: 50%; transform: translateX(-50%); z-index: 20; pointer-events: none;
+  padding: 4px 8px; border-radius: var(--radius-control); white-space: nowrap;
+  background: var(--stage, var(--accent)); color: #fff; font-size: var(--text-lg); font-weight: 600; box-shadow: var(--shadow-panel);
+}
 
 .tap { margin: 0; margin-top: auto; }
 .level { float: right; font-variant-numeric: tabular-nums; }
@@ -251,16 +298,10 @@ main[data-frozen] .tap-canvases::before {
 .timeline-key [data-mark='filterEnvelope']::before { background: color-mix(in srgb, var(--stage-filter) 35%, transparent); border-top: 1.5px solid var(--stage-filter); }
 .timeline-key [data-mark='cutoff']::before { height: 0; border-top: 2px solid var(--cutoff-line); }
 main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-offset: -1px; }
-/* Amount then A-D-S-R on one line when five knob columns fit beside the label (5 × 60 + 4 × 12 = 348 px); when
-   they do not, Amount stands to the left and the envelope keeps its shape as a 2×2 (A D / S R), like the Amp. */
+/* The Filter Envelope: Amount, then the four faders, in one row that wraps like any other. */
 .sub-block { container-type: inline-size; }
-.envelope-knobs { container-type: inline-size; flex: 1 1 0; min-width: 0; }
+.envelope-knobs { flex: 1 1 0; min-width: 0; }
 .sub-block .knobs { min-height: 0; }
-.sub-block .knobs-envelope { display: grid; grid-template-columns: repeat(5, var(--knob-col)); gap: var(--knob-row-gap) var(--knob-gap); justify-content: start; }
-@container (max-width: 347px) {
-  .sub-block .knobs-envelope { grid-template-columns: repeat(3, var(--knob-col)); }
-  .sub-block .knobs-envelope > :first-child { grid-row: span 2; align-self: center; }
-}
 
 /* The Oscillators stage: Osc 1, Osc 2 and the Mixer stacked; the first needs no divider above it. */
 /* The rows of a stage are evenly spaced: one gap, the stage's, between every row, with no dividers. */
@@ -308,8 +349,10 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 
 /* Short large screens (e.g. 1440×900): slightly smaller floors so the whole instrument still fits. */
 @media (min-width: 861px) and (min-height: 700px) and (max-height: 960px) {
+  :root { --fader-h: 72px; }
   .tap canvas { min-height: 78px; }
-  main > .chain { grid-template-rows: auto minmax(186px, 1fr); }
+  /* Two 78 pt Viewers, their caption and gaps. */
+  main > .chain { grid-template-rows: auto minmax(176px, 1fr); }
 }
 
 /* Oscillator tabs: one Oscillator at a time; the Mixer stays visible below. */
@@ -329,9 +372,13 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .tab-list [role='tab']:focus-visible { outline: 2px solid var(--stage, var(--text)); outline-offset: -2px; border-radius: 4px; }
 /* A dot on a tab whose Oscillator is mixed in, so you know it is sounding while you edit the other. */
 .tab-badge { width: 6px; height: 6px; border-radius: 50%; background: var(--stage, var(--text)); }
-.tab-panels { display: grid; }
+.tab-panels { display: grid; row-gap: var(--space-3); }
 .tab-panel { grid-area: 1 / 1; min-width: 0; }
 .tab-panel:not([data-active]) { visibility: hidden; }
+/* A row shared by some tabs sits under their panels; the other tabs' panels cover both rows. */
+.tab-shared { grid-area: 2 / 1; min-width: 0; }
+.tab-panel[data-covers-shared] { grid-row: 1 / span 2; }
+.tab-shared:not([data-active]) { visibility: hidden; }
 
 /* Wordmark: the logo, then the name in the three stage colours, Oscillators to Amp, like the mark's stroke. It is a
    button that opens the About splash. */
@@ -376,7 +423,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
    VOICES; two lines when the name needs them), and the controls starting on one vertical line to its right.
    A row without a name leaves the column empty. The rows share the height the tallest stage gives the controls,
    with the same space above and below each. */
-:root { --label-col: 62px; --label-gap: 10px; }
+:root { --label-col: 68px; --label-gap: 12px; } /* the column fits the widest name, WAVEFORM */
 .rows { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; justify-content: space-evenly; gap: var(--space-3); }
 .rows > * { flex: none; }
 .block .sub-block { column-gap: var(--label-gap); }
@@ -385,13 +432,14 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 /* A row of knobs: its name, and any picker on it, level with the dials, not with the whole knob. */
 .block .sub-block:has(.knob) { align-items: flex-start; }
 .block .sub-block:has(.knob) > h3, .block .sub-block:has(.knob) > .tip-anchor:first-child { align-self: flex-start; }
-.block .sub-block:has(.knob) h3 { display: flex; align-items: center; min-height: var(--knob-dial); }
-.block .sub-block:has(.knob) > .segmented { margin-top: calc((var(--knob-dial) - var(--control-h)) / 2); }
-/* A dial sits centred in its column; the row starts that much to the left, so dial edges line up with the
-   segmented controls' edges. */
-.block .sub-block > h3 + .knobs, .block .sub-block > .tip-anchor + .knobs, .block .envelope-knobs { margin-left: calc((var(--knob-dial) - var(--knob-col)) / 2); }
-/* Knobs that follow a picker on their row keep clear of it. */
-.block .sub-block > .segmented + .knobs { margin-left: var(--space-3); }
+/* The row's name is centred on its first dial height (the big one's, when the row has one). A picker on the row,
+   and its name, line up with the dial's visible bottom, as mixed-size dials line up by their bottoms. */
+.block .sub-block:has(.knob) { --row-dial: var(--dial-small); }
+.block .sub-block:has(.knob[data-size='big']) { --row-dial: var(--dial-big); }
+.block .sub-block:has(.knob) h3 { display: flex; align-items: center; min-height: var(--row-dial); }
+.block .sub-block:has(.knob):has(> .segmented) h3, .block .sub-block:has(.knob) > .segmented {
+  margin-top: calc(var(--row-dial) * 0.8 - var(--control-h)); min-height: var(--control-h);
+}
 /* The Oscillator tabs start where the controls do. */
 .tab-list { padding-left: calc(var(--label-col) + var(--label-gap)); }
 .voices-field .segmented-field { gap: var(--label-gap); }
@@ -481,16 +529,24 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
    another. */
 @media (max-width: 1330px), (max-height: 760px) {
   :root {
-    --knob-dial: 32px; --knob-col: 50px; --knob-gap: 8px; --knob-row-gap: 8px; --knob-text-gap: 2px;
+    --knob-gap: 8px; --knob-row-gap: 8px; --knob-text-gap: 2px;
     --knob-label-h: 14px; --knob-value-h: 12px;
+    --dial-big: 52px; --dial-small: 40px; --fader-h: 64px;
   }
-  .knob-dial::after { top: 3px; height: 10px; transform-origin: 50% 13px; }
   .knob-label { font-size: var(--text-sm); }
   .knob-value { font-size: var(--text-xs); }
-  /* The Filter Envelope's five compact knobs in one row when they fit (5 × 50 + 4 × 8 = 282 px). */
-  @container (min-width: 282px) {
-    .sub-block .knobs-envelope { grid-template-columns: repeat(5, var(--knob-col)); }
-    .sub-block .knobs-envelope > :first-child { grid-row: auto; }
+  /* On laptop windows, where three stages share the width, a row of knobs or faders has its name above it, as in
+     a narrow stage: the controls get the stage's whole width, so a row of content-wide columns stays on one line.
+     A row of choices (Mode, Voices) still fits beside. (On phones a stage has the whole screen: names stay beside.) */
+  @media (min-width: 601px) {
+    .block .sub-block:has(.knob) > h3, .block .sub-block:has(.knob) > .tip-anchor:first-child { flex: 1 1 100%; align-self: auto; }
+    .block .sub-block:has(.knob) h3, .block .sub-block:has(.knob):has(> .segmented) h3 { min-height: 0; margin-top: 0; }
+    .tab-list { padding-left: 0; }
+  }
+  /* The narrowest laptop windows: less side padding in the stages, so Amount and the four Filter Envelope faders
+     stay on one line. */
+  @media (max-width: 960px) {
+    .block { padding-left: var(--space-2); padding-right: var(--space-2); }
   }
   /* Filter Mode and Slope on one line, with slimmer segments. */
   .filter-shape { flex-wrap: nowrap; gap: 4px; }
@@ -610,8 +666,8 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   content: ''; position: absolute; top: 50%; left: calc(100% + 3px); width: 4px; height: 4px; margin-top: -2px;
   border-radius: 50%; background: var(--stage, var(--accent));
 }
-.knob[data-midi='moved'] .knob-dial { box-shadow: 0 0 0 2px var(--stage, var(--accent)); }
-.knob[data-midi='waiting'] .knob-dial { box-shadow: 0 0 0 2px var(--muted); }
+.knob[data-midi='moved'] .knob-dial { outline: 2px solid var(--stage, var(--accent)); outline-offset: 1px; border-radius: 50%; }
+.knob[data-midi='waiting'] .knob-dial { outline: 2px solid var(--muted); outline-offset: 1px; border-radius: 50%; }
 /* Choices (Waveform, Filter Mode…) show the same: a corner dot when mapped, a glow when the Controller steps them. */
 [role='radiogroup'][data-learn] { position: relative; }
 [role='radiogroup'][data-mapped]::after {
@@ -648,7 +704,8 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 /* Phones: every line counts. A knob keeps only its name under the dial; while it changes (by hand, keys, MIDI,
    the Demo, a Patch) its value shows in the name's place for a moment, so nothing moves. Spacing tightens too. */
 @media (max-width: 600px) {
-  :root { --knob-value-h: 0px; }
+  /* Big knobs less big than on a laptop, so a row of two big and two small fits a 375 pt phone. */
+  :root { --knob-value-h: 0px; --dial-big: 60px; --dial-small: 52px; --fader-h: 88px; --label-gap: 8px; }
   main { padding: var(--space-3) var(--space-2); }
   .chain { margin: var(--space-3) 0; row-gap: var(--space-3); }
   .block { padding: var(--space-2) var(--space-3); gap: var(--space-2); }
