@@ -1,6 +1,7 @@
 import { createSynthEngine, type SynthEngine } from '../engine/synthEngine';
 import { createNoteInput, type NoteInput } from '../input/noteInput';
 import type { Patch } from '../patch/patch';
+import { playThroughSilentMode } from './unlockAudio';
 
 export interface AudioSession {
   ctx: AudioContext;
@@ -19,6 +20,7 @@ let session: AudioSession | undefined;
  */
 export function getAudioSession(patch: Patch): AudioSession {
   if (session) return session;
+  playThroughSilentMode(navigator);
   const ctx = new AudioContext({ latencyHint: 'interactive' });
   const engine = createSynthEngine(ctx);
   engine.applyPatch(patch);

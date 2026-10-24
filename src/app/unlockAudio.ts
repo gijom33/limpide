@@ -42,3 +42,14 @@ export function unlockAudio(ctx: UnlockableContext, page: EventTarget, onChange:
   ctx.addEventListener('statechange', onState);
   return stop;
 }
+
+/**
+ * Safari on iPhone treats web audio like a ringtone by default: the silent switch mutes it without a word.
+ * Declaring the page a 'playback' session makes it sound like a music app instead (iOS 17+, ignored elsewhere).
+ * Called before the AudioContext is made.
+ */
+export function playThroughSilentMode(nav: object): void {
+  // Not yet in TypeScript's DOM types.
+  const { audioSession } = nav as { audioSession?: { type: string } };
+  if (audioSession) audioSession.type = 'playback';
+}

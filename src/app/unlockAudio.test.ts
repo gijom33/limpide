@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { unlockAudio, type UnlockableContext } from './unlockAudio';
+import { playThroughSilentMode, unlockAudio, type UnlockableContext } from './unlockAudio';
 
 /** A stand-in AudioContext: starts suspended; resume() either succeeds or is refused (autoplay policy). */
 function fakeContext({ allowed }: { allowed: boolean }) {
@@ -71,5 +71,17 @@ describe('unlockAudio', () => {
     unlockAudio(ctx, page, () => {})();
     page.dispatchEvent(new Event('keydown'));
     expect(ctx.resume).not.toHaveBeenCalled();
+  });
+});
+
+describe('playThroughSilentMode', () => {
+  it('asks for a playback audio session, so an iPhone on silent still sounds like a music app', () => {
+    const nav = { audioSession: { type: 'auto' } };
+    playThroughSilentMode(nav);
+    expect(nav.audioSession.type).toBe('playback');
+  });
+
+  it('does nothing in browsers without an audio session (all but Safari)', () => {
+    expect(() => playThroughSilentMode({})).not.toThrow();
   });
 });
