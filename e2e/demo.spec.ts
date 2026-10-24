@@ -22,14 +22,32 @@ test('the Demo tours one Preset per group, in order, making sound, and stops whe
   expect(await patchName(page).textContent()).toBe(name); // the tour has stopped moving
 });
 
-test('the Demo never touches the Display settings, and a knob touch stops it', async ({ page }) => {
+test('turning a knob keeps the Demo playing, and the Demo leaves that knob where it was put', async ({ page }) => {
+  await page.goto('/');
+  await demo(page).click();
+  await expect(patchName(page)).toContainText('Init'); // its Cutoff sweeps open while the phrase plays
+  const cutoff = page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name: 'Cutoff' });
+  const box = (await cutoff.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2 + 60, { steps: 5 });
+  await page.mouse.up();
+  await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
+  const turned = await cutoff.getAttribute('aria-valuetext');
+  await page.waitForTimeout(1000);
+  await expect(cutoff).toHaveAttribute('aria-valuetext', turned!);
+  await expect(patchName(page)).toContainText('Init');
+  await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /^-?[0-5]?\d(\.\d+)?$/); // still sounding
+});
+
+test('the Demo never touches the Display settings', async ({ page }) => {
   await page.goto('/');
   await openDisplay(page);
   await page.getByRole('button', { name: 'Guides' }).click(); // a setting that is not the default
   await page.keyboard.press('Escape');
   await demo(page).click();
   await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
-  await page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name: 'Cutoff' }).click();
+  await demo(page).click();
   await expect(demo(page)).toHaveAttribute('aria-pressed', 'false');
   await openDisplay(page);
   await expect(page.getByRole('button', { name: 'Guides' })).toHaveAttribute('aria-pressed', 'true'); // untouched
@@ -50,7 +68,7 @@ test.describe('on a touch screen', () => {
     await touch('touchEnd', toY);
   }
 
-  test('scrolling the page keeps the Demo playing; a tap stops it', async ({ page }) => {
+  test('scrolling the page or touching a knob keeps the Demo playing; a tap elsewhere stops it', async ({ page }) => {
     await page.goto('/');
     await demo(page).tap();
     await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
@@ -60,8 +78,7 @@ test.describe('on a touch screen', () => {
     await page.waitForTimeout(300);
     await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
     await page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name: 'Cutoff' }).tap(); // a knob takes the touch at once
-    await expect(demo(page)).toHaveAttribute('aria-pressed', 'false');
-    await demo(page).tap();
+    await page.waitForTimeout(300);
     await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
     await page.getByRole('region', { name: 'Oscillators' }).getByRole('heading').first().tap(); // a tap anywhere else, once lifted
     await expect(demo(page)).toHaveAttribute('aria-pressed', 'false');

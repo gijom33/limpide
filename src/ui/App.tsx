@@ -126,6 +126,8 @@ export function App() {
   };
   const stopDemoRef = useRef(stopDemo);
   stopDemoRef.current = stopDemo;
+  // Knobs turned by hand while the Demo plays stay where they were put until its next Preset: its own moves skip them.
+  const turnedByHand = useRef(new Set<ParamId>());
   const toggleDemo = () => {
     if (demoStop.current) return stopDemo();
     const { engine } = session;
@@ -133,10 +135,13 @@ export function App() {
       now: () => engine.now(),
       load: (stop) => {
         const preset = PRESETS.find((p) => p.name === stop.preset)!;
+        turnedByHand.current.clear();
         loadPatch(preset.name, preset.patch);
         return preset.patch;
       },
-      setParam: (id, value) => setPatch((p) => setParam(p, id, value)),
+      setParam: (id, value) => {
+        if (!turnedByHand.current.has(id)) setPatch((p) => setParam(p, id, value));
+      },
       noteOn: (note, velocity, at) => engine.noteOn(note, velocity, at),
       noteOff: (at) => engine.noteOff(at),
       release: (note, at) => engine.release(note, at),
@@ -152,7 +157,8 @@ export function App() {
       },
     });
   };
-  // Playing anything, or touching a control, ends the Demo: the person has taken over.
+  // Playing anything, or touching a control other than a knob, ends the Demo: the person has taken over.
+  // Knobs can be turned while it plays, and the sound follows.
   useEffect(() => {
     if (demo === null) return;
     const onKey = (e: KeyboardEvent) => {
@@ -163,7 +169,7 @@ export function App() {
     let tap: number | null = null;
     const onPointer = (e: PointerEvent) => {
       const target = e.target as Element;
-      if (!target.closest('main') || target.closest('[data-demo]')) return;
+      if (!target.closest('main') || target.closest('[data-demo], .knob')) return;
       if (e.pointerType === 'mouse' || getComputedStyle(target).touchAction === 'none') stopDemo();
       else tap = e.pointerId;
     };
@@ -244,6 +250,7 @@ export function App() {
       setPosition: (id, position) => {
         const next = setParam(patchRef.current, id, positionToValue(PARAMS[id], position));
         patchRef.current = next;
+        turnedByHand.current.add(id);
         setPatch((p) => setParam(p, id, next[id]));
       },
       choice: (id) => {
@@ -441,7 +448,10 @@ export function App() {
     };
   }, [session]);
 
-  const change = (id: ParamId, value: number) => setPatch((p) => setParam(p, id, value));
+  const change = (id: ParamId, value: number) => {
+    turnedByHand.current.add(id);
+    setPatch((p) => setParam(p, id, value));
+  };
 
   const playControls = (
     <div className="play-controls" role="group" aria-label="Play">
