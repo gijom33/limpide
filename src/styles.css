@@ -333,9 +333,34 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .tab-panel { grid-area: 1 / 1; min-width: 0; }
 .tab-panel:not([data-active]) { visibility: hidden; }
 
-/* Wordmark: the logo, then the name in the three stage colours, Oscillators to Amp, like the mark's stroke. */
-.wordmark { display: inline-flex; align-items: center; gap: 10px; font-size: 21px; font-weight: 700; letter-spacing: -0.01em; }
+/* Wordmark: the logo, then the name in the three stage colours, Oscillators to Amp, like the mark's stroke. It is a
+   button that opens the About splash. */
+.wordmark { display: inline-flex; align-items: center; font-size: 21px; font-weight: 700; letter-spacing: -0.01em; }
 .wordmark { flex: none; }
+.wordmark-button {
+  display: inline-flex; align-items: center; gap: 10px; padding: 0; margin: 0;
+  font: inherit; letter-spacing: inherit; color: inherit; background: none; border: 0; border-radius: var(--radius-control); cursor: pointer;
+}
+.wordmark-button:focus-visible { outline: 2px solid var(--stage-osc); outline-offset: 3px; }
+
+/* About: a splash over the page, centred, the mark large over the version and the credits. */
+.about {
+  width: min(440px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); padding: 0; overflow: auto;
+  color: var(--text); background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-panel);
+}
+.about::backdrop { background: rgba(0, 0, 0, 0.55); }
+.about-body { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); padding: 28px var(--space-4) var(--space-4); text-align: center; }
+.about-title { margin: 0; font-size: 30px; font-weight: 700; letter-spacing: -0.01em; text-transform: none; }
+.about-tagline { margin: 0; max-width: 32ch; font-size: 14px; line-height: 1.4; }
+.about-version { margin: 0; font-size: var(--text-md); color: var(--muted); font-variant-numeric: tabular-nums; }
+.about-credits {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px var(--space-3); width: 100%; margin: var(--space-1) 0;
+  padding-top: var(--space-3); border-top: 1px solid var(--border); font-size: var(--text-lg); line-height: 1.4; text-align: left;
+}
+.about-credits dt { color: var(--muted); }
+.about-credits dd { margin: 0; }
+.about a { color: inherit; text-underline-offset: 2px; }
 .wordmark .logo { flex: none; }
 .wordmark-text {
   background: linear-gradient(90deg, var(--stage-osc) 0%, var(--stage-filter) 55%, var(--stage-amp) 100%);

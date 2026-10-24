@@ -23,7 +23,6 @@ import { HoldIcon, NoteIcon, PlayIcon } from './icons';
 import { Knob } from './Knob';
 import { OverlayToggles } from './OverlayToggles';
 import { TapViewers } from './TapViewers';
-import { Logo } from './Logo';
 import { TIPS } from './tips';
 import { ToolGroup } from './ToolGroup';
 import { FilterShape } from './FilterShape';
@@ -44,6 +43,7 @@ import { AxesControls, ViewActions } from './ViewerControls';
 import { EnvelopeTimeline } from './EnvelopeTimeline';
 import { applyTheme, loadTheme, type Theme } from './theme';
 import { WAVEFORM_ORDER, WaveformPicker } from './WaveformPicker';
+import { Wordmark } from './Wordmark';
 
 const IDEAL_HARMONICS = 256;
 
@@ -573,10 +573,7 @@ export function App() {
         )}
         <header>
           <div className="header-left">
-            <h1 className="wordmark">
-              <Logo />
-              <span className="wordmark-text">Limpide</span>
-            </h1>
+            <Wordmark />
             <PatchBar name={patchName} changed={patchChanged} patch={patch} library={library} onLoad={loadPatch} />
           </div>
           <div className="header-center">{playControls}</div>

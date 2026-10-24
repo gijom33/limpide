@@ -4,10 +4,10 @@ import { useId } from 'react';
  * The Limpide mark: a sharp saw tooth that softens into a smooth sine, which is subtractive synthesis in one
  * stroke, drawn through the three stage colours (Oscillators → Filter → Amp) so it follows the theme.
  */
-export function Logo() {
+export function Logo({ size = 30 }: { size?: number }) {
   const gradient = useId();
   return (
-    <svg className="logo" viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
+    <svg className="logo" viewBox="0 0 32 32" width={size} height={size} aria-hidden="true">
       <defs>
         <linearGradient id={gradient} x1="4" y1="0" x2="28" y2="0" gradientUnits="userSpaceOnUse">
           <stop offset="0" style={{ stopColor: 'var(--stage-osc)' }} />
