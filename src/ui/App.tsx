@@ -18,7 +18,7 @@ import { INITIAL_VIEWER_STATE, viewerReducer } from '../viewers/viewerState';
 import type { ViewSettings } from '../viewers/viewSettings';
 import { startDemo } from '../demo/player';
 import { PRESETS } from '../patch/presets';
-import { PlayIcon } from './icons';
+import { HoldIcon, PlayIcon } from './icons';
 import { Knob } from './Knob';
 import { OverlayToggles } from './OverlayToggles';
 import { TapViewers } from './TapViewers';
@@ -464,9 +464,11 @@ export function App() {
           data-learn="action:hold"
           data-mapped={learnContext.mapped.has('action:hold') || undefined}
           data-learn-selected={learnContext.selected === 'action:hold' || undefined}
+          aria-label="Hold"
           onClick={() => setHold((h) => !h)}
         >
-          Hold
+          <HoldIcon />
+          <span className="tool-word">Hold</span>
         </button>
       </Tooltip>
       <MidiPanel

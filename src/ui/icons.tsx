@@ -42,6 +42,24 @@ export const SlidersIcon = () => (
   </svg>
 );
 
+/** A fermata, music's sign for "hold this note": Hold. */
+export const HoldIcon = () => (
+  <svg {...base} className="tool-glyph">
+    <path d="M2.5 10.5a5.5 5.5 0 0 1 11 0" strokeLinecap="round" />
+    <circle cx="8" cy="10" r="1.3" fill="currentColor" stroke="none" />
+  </svg>
+);
+
+/** A MIDI socket: five pins in a ring. */
+export const MidiIcon = () => (
+  <svg {...base}>
+    <circle cx="8" cy="8" r="6.25" />
+    {[[4.6, 8.4], [5.6, 5.6], [8, 4.6], [10.4, 5.6], [11.4, 8.4]].map(([x, y]) => (
+      <circle key={x} cx={x} cy={y} r="0.9" fill="currentColor" stroke="none" />
+    ))}
+  </svg>
+);
+
 /** A play triangle: the Demo. */
 export function PlayIcon() {
   return (

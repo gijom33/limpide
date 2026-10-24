@@ -73,12 +73,12 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
       g.stroke();
     };
 
-    // Amp Envelope: read as "how loud".
-    area('--stage-amp', 0.25, (m) => m.amp);
-
-    // Filter Envelope: an area on the same 0–1 scale, the shape that (times Amount) pushes the Effective Cutoff.
+    // Filter Envelope: an area on the 0–1 level scale, the shape that (times Amount) pushes the Effective Cutoff.
     area('--stage-filter', 0.2, (m) => m.filter);
     canvas.dataset.filterEnvelope = (samples.at(-1)?.filter ?? 0).toFixed(3);
+
+    // Amp Envelope, drawn over it: read as "how loud", the one the ear follows first.
+    area('--stage-amp', 0.25, (m) => m.amp);
 
     // The Cutoff knob's setting (dashed), then the Effective Cutoff the Filter Envelope makes of it.
     g.strokeStyle = cssVar(canvas, '--cutoff-line');

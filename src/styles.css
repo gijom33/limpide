@@ -181,6 +181,8 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 .tool-mode[aria-pressed='true'] { color: var(--bg); background: var(--text); border-color: var(--text); }
 .tool kbd { font-size: var(--text-xs); padding: 0 4px; line-height: 14px; color: inherit; border-color: currentColor; opacity: 0.6; }
 .tool-icon { width: var(--control-h); padding: 0; justify-content: center; }
+/* Icons that stand in for a button's word where room is short (phones); the word shows everywhere else. */
+.tool-glyph { display: none; flex: none; }
 .tool-split { display: inline-flex; gap: 2px; }
 
 /* A segmented control is one shape; the selected segment is filled. */
@@ -407,6 +409,9 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 @media (max-width: 860px) {
   .timeline { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto auto; }
   .timeline h2, .timeline-key, .timeline-controls, .timeline-plot { grid-area: auto; }
+  /* The key goes right above the plot it explains, below the controls. */
+  .timeline-key { order: 1; flex-wrap: wrap; row-gap: 4px; }
+  .timeline-plot { order: 2; }
 }
 
 /* The on-screen piano: the computer keyboard's 17 keys, lit while sounding. */
@@ -513,7 +518,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .patch-delete-confirm { color: var(--danger); border-color: var(--danger); }
 .patch-empty { margin: 0; font-size: var(--text-md); color: var(--muted); }
 /* Below 1000 px the header is tight: the Demo button keeps its play icon and drops its word. */
-@media (max-width: 999px) { .demo-word { display: none; } }
+@media (max-width: 999px) { .demo-word, .midi-status .tool-word { display: none; } }
 .patch-save { display: flex; gap: 6px; margin-top: 8px; max-width: 440px; }
 .patch-panel > .patch-link { max-width: 440px; }
 .patch-save input, .patch-link {
@@ -621,4 +626,32 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   .knob-value { position: absolute; left: 0; right: 0; bottom: 0; height: var(--knob-label-h); line-height: var(--knob-label-h); font-size: var(--text-sm); color: var(--text); }
   .knob:not([data-changing]) .knob-value > :first-child { visibility: hidden; }
   .knob[data-changing] .knob-label { visibility: hidden; }
+  /* Viewers: wider than tall, a little lower than elsewhere. */
+  .tap canvas { aspect-ratio: 3 / 1; min-height: 96px; }
+
+  /* The header in three rows: logo, Patch, Demo and Display; then octave, Hold and MIDI; then the piano alone,
+     edge to edge, its keys as wide as the screen allows. Hold, MIDI and Display show icons, not words. */
+  header {
+    grid-template-columns: auto auto minmax(0, 1fr) auto auto;
+    grid-template-areas: 'left left left demo display' 'down up . hold midi' 'piano piano piano piano piano';
+    gap: var(--space-2);
+  }
+  .header-center, .play-controls, .keyboard, .header-right { display: contents; }
+  .header-left { grid-area: left; gap: var(--space-3); }
+  .header-right > .tip-anchor { grid-area: demo; }
+  .display-menu { grid-area: display; }
+  .header-right > *, .play-controls > .tip-anchor, .midi-menu { justify-self: end; }
+  .keyboard > :first-child { grid-area: down; }
+  .keyboard > :last-child { grid-area: up; }
+  .keyboard > .tip-anchor { grid-area: piano; display: flex; }
+  .play-controls > .tip-anchor { grid-area: hold; }
+  .midi-menu { grid-area: midi; }
+  .piano { flex: 1 1 auto; height: 64px; }
+  .piano button { height: 64px; }
+  .piano button:not([data-black]) { flex: 1 1 0; width: auto; min-width: 0; }
+  .piano button[data-black] { width: 22px; height: 40px; margin: 0 -11px; }
+  .tool-glyph { display: block; }
+  .tool-word { display: none; }
+  .midi-count { display: none; } /* the dot already says a device is connected */
+  header .tool:has(> .tool-glyph), .display-menu > .tip-anchor > .tool, .display-menu .tool { padding: 0 8px; }
 }

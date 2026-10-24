@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { describeControl, describeMode, describeTarget, targetKey } from '../midi/describe';
 import type { Mapping, Target } from '../midi/mappings';
-import { CloseIcon } from './icons';
+import { CloseIcon, MidiIcon } from './icons';
 import { TIPS } from './tips';
 import { Tooltip } from './Tooltip';
 
@@ -69,7 +69,8 @@ export function MidiPanel({ state, activity, mappings, learning, onLearn, onDone
           onClick={() => setOpen((o) => !o)}
         >
           <span className="midi-dot" aria-hidden="true" />
-          MIDI
+          <MidiIcon />
+          <span className="tool-word">MIDI</span>
           {learning ? (
             <span className="midi-learning">Learning</span>
           ) : (

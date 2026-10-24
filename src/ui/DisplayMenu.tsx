@@ -41,7 +41,7 @@ export function DisplayMenu({ active, children }: { active: boolean; children: R
           onClick={() => setOpen((o) => !o)}
         >
           <SlidersIcon />
-          Display
+          <span className="tool-word">Display</span>
           {active && <span className="display-dot" aria-hidden="true" />}
         </button>
       </Tooltip>
