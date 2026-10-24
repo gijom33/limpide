@@ -100,13 +100,23 @@ test('the Preset arrows stay put whatever the name between them, and a long name
   const next = page.getByRole('button', { name: 'Next Preset' });
   const at = async () => Math.round((await next.boundingBox())!.x);
   const home = await at();
-  for (let i = 0; i < 22; i++) {
-    await next.click();
-    const label = (await patchName(page).getAttribute('aria-label')) ?? '';
-    expect(await at(), label).toBe(home);
-    // Every factory name shows in full.
-    const cut = await patchName(page).locator('span').first().evaluate((el) => el.scrollWidth > el.clientWidth);
-    expect(cut, label).toBe(false);
+  // Step through the Presets inside the page, in one round trip, so the test stays quick on a busy machine.
+  const steps = await page.evaluate(async (count) => {
+    const next = document.querySelector<HTMLElement>('button[aria-label="Next Preset"]')!;
+    const name = () => document.querySelector<HTMLElement>('button[aria-label^="Patch:"]')!;
+    const out: { label: string; x: number; cut: boolean }[] = [];
+    for (let i = 0; i < count; i++) {
+      next.click();
+      await new Promise((r) => requestAnimationFrame(r));
+      const text = name().querySelector('span')!;
+      out.push({ label: name().getAttribute('aria-label')!, x: Math.round(next.getBoundingClientRect().x), cut: text.scrollWidth > text.clientWidth });
+    }
+    return out;
+  }, 22);
+  expect(new Set(steps.map((s) => s.label)).size).toBe(22); // a different Preset each time
+  for (const { label, x, cut } of steps) {
+    expect(x, label).toBe(home);
+    expect(cut, label).toBe(false); // every factory name shows in full
   }
   await nudge(page);
   await expect(patchName(page)).toHaveAttribute('data-changed', 'true'); // the changed dot appears…

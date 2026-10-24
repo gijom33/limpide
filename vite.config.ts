@@ -19,11 +19,11 @@ const build = {
   date: new Date().toISOString().slice(0, 10),
 };
 
-// Visits to the published site are counted by GoatCounter (no cookies, no personal data); only in the build, so
-// development and the tests never count.
+// Visits to the published site are counted by GoatCounter (no cookies, no personal data); only in the production
+// build, so development and the tests (built in 'e2e' mode) never count.
 const goatCounter = {
   name: 'goatcounter',
-  apply: 'build' as const,
+  apply: (_: unknown, { command, mode }: { command: string; mode: string }) => command === 'build' && mode === 'production',
   transformIndexHtml: () => [
     {
       tag: 'script',
