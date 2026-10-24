@@ -1,16 +1,24 @@
 import { expect, test } from '@playwright/test';
 
-test('the header shows the Limpide logo and wordmark, and the tab has its icon', async ({ page }) => {
+test('the header shows the Limpide logo and wordmark, and the tab and home screen have its icon', async ({ page }) => {
   await page.goto('/');
   const title = page.getByRole('heading', { level: 1, name: 'Limpide' });
   await expect(title).toBeVisible();
   await expect(title.locator('svg.logo')).toBeVisible();
 
-  const icon = await page.locator('link[rel="icon"]').getAttribute('href');
-  expect(icon).toBeTruthy();
-  const response = await page.request.get(icon!);
-  expect(response.ok()).toBe(true);
-  expect(response.headers()['content-type']).toContain('svg');
+  // An SVG for the browsers that take one, a PNG for those that do not, and a larger PNG for a phone's home screen.
+  const icons = await page.locator('link[rel="icon"], link[rel="apple-touch-icon"]').evaluateAll((links) =>
+    links.map((l) => ({ rel: l.getAttribute('rel'), href: (l as HTMLLinkElement).href })),
+  );
+  const types: string[] = [];
+  for (const { href } of icons) {
+    const response = await page.request.get(href);
+    expect(response.ok(), href).toBe(true);
+    types.push(response.headers()['content-type']);
+  }
+  expect(types.some((t) => t.includes('svg'))).toBe(true);
+  expect(types.some((t) => t.includes('png'))).toBe(true);
+  expect(icons.some((i) => i.rel === 'apple-touch-icon')).toBe(true);
 });
 
 for (const width of [861, 872, 884, 900, 920, 1000, 1100, 1440, 1710]) {
