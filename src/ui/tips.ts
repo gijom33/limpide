@@ -83,7 +83,7 @@ export const TIPS = {
   hold: {
     title: 'Hold',
     body: 'Keeps the Note sounding after you let go of the key, so both hands are free to turn knobs while you watch.',
-    how: 'Press a new key to change the Note. Switch Hold off to release it. Tap Hold a few more times quickly before playing, and the held Notes repeat on that rhythm, the last tap starting it over; with several Voices, single Notes and chords take turns.',
+    how: 'Press a new key to change the Note. Switch Hold off to release it. Tap Hold a few more times quickly before playing, and the held Notes repeat on that rhythm, the last tap starting it over; with several Voices, the rhythm plays once as single Notes in turn, then once as the chord.',
   },
   envAmount: {
     title: 'Envelope Amount',
@@ -109,8 +109,8 @@ export const TIPS = {
     body: 'An Attack–Decay–Sustain–Release shape, like the Amp’s, that moves the Cutoff instead of the loudness. Envelope Amount sets how far.',
   },
   timeline: {
-    title: 'Envelope Timeline',
-    body: 'The last four seconds. Violet: the Amp Envelope (loudness). Orange: the Effective Cutoff, with the frequencies the Filter lets through shaded below it. The faint dashed line is the Cutoff knob itself.',
+    title: 'LFO & Envelopes',
+    body: 'What changes the sound over time: the LFO, and the Envelope Timeline beside it. The Timeline shows the last four seconds. Violet: the Amp Envelope (loudness). Orange: the Effective Cutoff, with the frequencies the Filter lets through shaded below it. The faint dashed line is the Cutoff knob itself.',
     how: 'Play a Note and let go: the Release is drawn after the key comes up.',
   },
   lfo: {
@@ -118,13 +118,18 @@ export const TIPS = {
     body: 'A slow, repeating wave that moves something for you: the Cutoff (wah, wobble), the pitch (vibrato) or the Pulse Width (a shimmering PWM chorus). Rate is how fast, Depth how far.',
     how: 'Turn Depth up and watch the Envelope Timeline and the Response Curve move with it.',
   },
+  lfoWaveform: {
+    title: 'LFO Waveform',
+    body: 'The LFO as it moves: its last two cycles, the newest at the right. Sine and Triangle sweep smoothly, Square jumps between two values, Saw ramps and drops.',
+    how: 'Click it (or press Enter) for the next shape.',
+  },
   lfoDestination: {
     title: 'LFO Destination',
     body: 'What the LFO moves. Cutoff: up to two octaves each way (wah). Pitch: up to a semitone each way (vibrato). Width: each Oscillator’s Pulse Width (PWM; only heard on a Pulse).',
   },
   glide: {
     title: 'Glide',
-    body: 'Slides the pitch from one Note to the next instead of jumping, over this long. Off plays Notes at once.',
+    body: 'Slides the pitch from one Note to the next instead of jumping, over this long. Off plays Notes at once. It works with one Voice only: with more, each Note starts at its own pitch.',
     how: 'Play two keys one after the other and watch the Scope stretch or squeeze as the pitch slides.',
   },
   about: { title: 'About', body: 'The version of Limpide you are playing, who made it, and where its source lives. The logo opens it too.' },

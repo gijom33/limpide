@@ -41,3 +41,24 @@ for (const theme of ['dark', 'light'] as const) {
     }
   });
 }
+
+// The row of what changes the sound over time wears the modulation colour, as each stage wears its own.
+const MODULATION = { dark: 'rgb(91, 140, 255)', light: 'rgb(47, 95, 224)' } as const;
+
+for (const theme of ['dark', 'light'] as const) {
+  test(`the LFO & Envelopes section wears the modulation blue on its heading, outline and knob arcs (${theme})`, async ({ page }) => {
+    await page.goto('/');
+    if (theme === 'light') {
+      await openDisplay(page);
+      await page.getByRole('radiogroup', { name: 'Theme' }).getByRole('radio', { name: 'Light' }).click();
+      await page.keyboard.press('Escape');
+    }
+    const section = page.getByRole('region', { name: 'LFO & Envelopes' });
+    const blue = MODULATION[theme];
+    expect(await section.getByRole('heading', { name: 'LFO & Envelopes' }).evaluate((el) => getComputedStyle(el).color)).toBe(blue);
+    expect(await section.locator('.knob-arc').first().evaluate((el) => getComputedStyle(el).stroke)).toBe(blue);
+    const outline = await section.evaluate((el) => getComputedStyle(el).borderTopColor);
+    expect(outline).not.toBe(await page.evaluate(() => getComputedStyle(document.body).borderTopColor));
+    expect(outline).not.toBe(await page.getByRole('region', { name: 'Amp' }).evaluate((el) => getComputedStyle(el).borderTopColor));
+  });
+}

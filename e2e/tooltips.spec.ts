@@ -54,6 +54,6 @@ test('headings with an explanation are plain text, with no dotted underline, and
     [...document.querySelectorAll('body *')].filter((el) => getComputedStyle(el).textDecorationStyle === 'dotted' && getComputedStyle(el).textDecorationLine.includes('underline')).length,
   );
   expect(dotted).toBe(0);
-  await page.getByRole('region', { name: 'Envelope Timeline' }).getByText('Envelope Timeline', { exact: true }).hover();
+  await page.getByRole('region', { name: 'LFO & Envelopes' }).getByText('LFO & Envelopes', { exact: true }).hover();
   await expect(page.getByRole('tooltip')).toBeVisible();
 });

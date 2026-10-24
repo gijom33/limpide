@@ -53,6 +53,7 @@ const knobLayout = (page: import('@playwright/test').Page) =>
   );
 
 test('turning knobs never moves or resizes any knob, whatever width their values take', async ({ page }) => {
+  test.setTimeout(60000); // a hundred turns and as many layout reads over every knob and fader (WebKit is slow at it)
   await page.goto('/');
   const before = await knobLayout(page);
   // Parameters whose readouts change width the most across their range (Hz → kHz, ms → s, Off → seconds, signs).
@@ -60,8 +61,8 @@ test('turning knobs never moves or resizes any knob, whatever width their values
     ['Filter', 'Cutoff'],
     ['Filter', 'Amount'],
     ['Amp', 'Attack'],
-    ['Envelope Timeline', 'Rate'],
-    ['Envelope Timeline', 'Glide'],
+    ['LFO & Envelopes', 'Rate'],
+    ['Amp', 'Glide'],
   ]) {
     const knob = page.getByRole('region', { name: region }).getByRole('slider', { name, exact: true });
     const seen = new Set<string | null>();

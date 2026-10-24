@@ -24,7 +24,7 @@ test('Hold keeps the Note sounding after the key is released, until Hold is swit
 test('the Envelope Timeline draws the Envelopes as they happen', async ({ page }) => {
   await page.goto('/');
   await ready(page);
-  const timeline = page.getByLabel('Envelope Timeline').locator('canvas');
+  const timeline = page.getByLabel('Envelope Timeline', { exact: true }); // the plot's canvas
   await page.keyboard.down('KeyA');
   await page.waitForTimeout(400);
   const inked = await timeline.evaluate((c: HTMLCanvasElement) => {
@@ -49,7 +49,7 @@ test('the Filter Envelope knobs wake up once Envelope Amount is turned away from
 test('the Envelope Timeline shows the Filter Envelope too, with its own key, rising and settling as the Note plays', async ({ page }) => {
   await page.goto('/');
   await ready(page);
-  const panel = page.getByRole('region', { name: 'Envelope Timeline' });
+  const panel = page.getByRole('region', { name: 'LFO & Envelopes' });
   await expect(panel.locator('[data-mark="filterEnvelope"]')).toHaveText('Filter Envelope');
   const canvas = panel.locator('canvas');
   const level = () => canvas.getAttribute('data-filter-envelope').then(Number);

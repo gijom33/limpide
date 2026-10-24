@@ -2,7 +2,8 @@ import { useId } from 'react';
 
 /**
  * The Limpide mark: a sharp saw tooth that softens into a smooth sine, which is subtractive synthesis in one
- * stroke, drawn through the three stage colours (Oscillators → Filter → Amp) so it follows the theme. It stands
+ * stroke, drawn through the signal chain's colours (Oscillators → Filter → Amp, then the modulation blue that moves
+ * them) so it follows the theme. It stands
  * on the page with no tile behind it, in a box no taller than the stroke, so text sits close to it.
  */
 export function Logo({ size = 30 }: { size?: number }) {
@@ -12,8 +13,9 @@ export function Logo({ size = 30 }: { size?: number }) {
       <defs>
         <linearGradient id={gradient} x1="4" y1="0" x2="28" y2="0" gradientUnits="userSpaceOnUse">
           <stop offset="0" style={{ stopColor: 'var(--stage-osc)' }} />
-          <stop offset="0.55" style={{ stopColor: 'var(--stage-filter)' }} />
-          <stop offset="1" style={{ stopColor: 'var(--stage-amp)' }} />
+          <stop offset="0.4" style={{ stopColor: 'var(--stage-filter)' }} />
+          <stop offset="0.72" style={{ stopColor: 'var(--stage-amp)' }} />
+          <stop offset="1" style={{ stopColor: 'var(--stage-mod)' }} />
         </linearGradient>
       </defs>
       <path

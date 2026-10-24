@@ -6,16 +6,16 @@ import type { ViewSettings } from '../viewers/viewSettings';
 import { TIPS } from './tips';
 import { Tooltip } from './Tooltip';
 
-/** The Envelope Timeline panel, under the signal chain, with the controls that act over time beside it. */
+/** The LFO & Envelopes section, under the signal chain: the LFO beside the Envelope Timeline, in the modulation colour. */
 export function EnvelopeTimeline({ engine, view, controls }: { engine: SynthEngine; view(): ViewSettings; controls?: ReactNode }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   useEffect(() => addToRenderLoop(createTimeline(canvasRef.current!, engine, view)), [engine, view]);
 
   return (
-    <section className="timeline" aria-label="Envelope Timeline">
+    <section className="timeline" aria-label="LFO & Envelopes">
       <h2>
         <Tooltip content={TIPS.timeline}>
-          <span className="has-tip">Envelope Timeline</span>
+          <span className="has-tip">LFO &amp; Envelopes</span>
         </Tooltip>
       </h2>
       {/* The key sits on the title line, over the plot it explains. */}

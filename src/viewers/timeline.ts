@@ -22,6 +22,7 @@ interface Source {
 export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: () => ViewSettings) {
   const frozenNow = createFreezeLatch<number>();
 
+  const DOT_RADIUS = 3.5;
   return function draw() {
     const now = frozenNow(view().viewer.frozen, source.now);
     const { g, width, height } = prepareCanvas(canvas);
@@ -74,11 +75,12 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
     };
 
     // Filter Envelope: an area on the 0–1 level scale, the shape that (times Amount) pushes the Effective Cutoff.
-    area('--stage-filter', 0.2, (m) => m.filter);
+    // Light fills, so where the two overlap they read no heavier than one Viewer's shading (16 %).
+    area('--stage-filter', 0.1, (m) => m.filter);
     canvas.dataset.filterEnvelope = (samples.at(-1)?.filter ?? 0).toFixed(3);
 
     // Amp Envelope, drawn over it: read as "how loud", the one the ear follows first.
-    area('--stage-amp', 0.25, (m) => m.amp);
+    area('--stage-amp', 0.1, (m) => m.amp);
 
     // The Cutoff knob's setting (dashed), then the Effective Cutoff the Filter Envelope makes of it.
     g.strokeStyle = cssVar(canvas, '--cutoff-line');
@@ -98,5 +100,23 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
     g.beginPath();
     samples.forEach((m, x) => (x ? g.lineTo(x, yHz(m.cutoff)) : g.moveTo(x, yHz(m.cutoff))));
     g.stroke();
+
+    // "Now" on each line, as on the LFO's plot: a dot in its colour, ringed in the background so lines crossing
+    // there stay apart.
+    const last = samples.at(-1);
+    if (!last) return;
+    const background = cssVar(canvas, '--bg');
+    const dot = (colourVar: string, y: number) => {
+      g.beginPath();
+      g.arc(columns - DOT_RADIUS - 1, y, DOT_RADIUS, 0, 2 * Math.PI);
+      g.fillStyle = cssVar(canvas, colourVar);
+      g.fill();
+      g.lineWidth = 1.5;
+      g.strokeStyle = background;
+      g.stroke();
+    };
+    dot('--stage-filter', yLevel(last.filter));
+    dot('--stage-amp', yLevel(last.amp));
+    dot('--cutoff-line', yHz(last.cutoff));
   };
 }

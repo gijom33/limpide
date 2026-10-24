@@ -80,3 +80,20 @@ test('Osc 2’s tuning knobs are one shared row below both Oscillator tabs: same
   await page.getByRole('tab', { name: 'Osc 1' }).click();
   await expect(tuning.locator('.knob[data-inactive]')).toHaveCount(0); // still awake on the other tab
 });
+
+test('Glide sits beside Voices in the Amp, greyed out with more than one Voice (it only slides a single Voice)', async ({ page }) => {
+  await page.goto('/');
+  const amp = page.getByRole('region', { name: 'Amp' });
+  const glide = amp.locator('.knob', { has: page.getByRole('slider', { name: 'Glide' }) });
+  await expect(glide).toBeVisible();
+  await expect(page.getByRole('region', { name: 'LFO & Envelopes' }).getByRole('slider', { name: 'Glide' })).toHaveCount(0);
+  const voices = amp.getByRole('radiogroup', { name: 'Voices' });
+  const [v, g] = [(await voices.boundingBox())!, (await glide.locator('.knob-dial').boundingBox())!];
+  expect(g.x).toBeGreaterThan(v.x + v.width); // to the right of Voices…
+  expect(g.y).toBeLessThan(v.y + v.height); // …on its line
+  await expect(glide).not.toHaveAttribute('data-inactive');
+  await voices.getByRole('radio', { name: '2', exact: true }).click();
+  await expect(glide).toHaveAttribute('data-inactive', 'true');
+  await voices.getByRole('radio', { name: '1', exact: true }).click();
+  await expect(glide).not.toHaveAttribute('data-inactive');
+});

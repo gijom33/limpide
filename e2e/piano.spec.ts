@@ -100,7 +100,7 @@ test.describe('on a phone', () => {
 
   test('the header stays on screen while scrolling, so the piano can be played under any stage', async ({ page }) => {
     await page.goto('/');
-    await page.getByRole('region', { name: 'Envelope Timeline' }).scrollIntoViewIfNeeded();
+    await page.getByRole('region', { name: 'LFO & Envelopes' }).scrollIntoViewIfNeeded();
     expect(await page.evaluate(() => scrollY)).toBeGreaterThan(500);
     const piano = page.getByRole('group', { name: 'Piano' });
     const box = (await piano.boundingBox())!;

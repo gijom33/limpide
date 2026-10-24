@@ -95,7 +95,7 @@ for (const [width, height] of [
       return {
         tabsUnderHeading: tabs.top >= heading.bottom - 1,
         pulseWidthBeside: dial.left > picker.right && Math.abs(dial.top + dial.height / 2 - (picker.top + picker.height / 2)) < 30,
-        pickers: [button('[aria-label="Osc 1 Waveform"]'), button('[aria-label="Filter Mode"]'), button('[aria-label="LFO Waveform"]')],
+        pickers: [button('[aria-label="Osc 1 Waveform"]'), button('[aria-label="Filter Mode"]')],
         scrolls: document.documentElement.scrollHeight > innerHeight,
       };
     });

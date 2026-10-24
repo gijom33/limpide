@@ -191,12 +191,13 @@ export function App() {
   };
 
   // Playing anything, or touching a control that does not shape the sound, ends the Demo: the person has taken over.
-  // Knobs and the stages' switches (Waveforms, Filter Mode and Slope, Voices, LFO) can be changed while it plays,
+  // Knobs, faders and the stages' switches (Waveforms, Filter Mode and Slope, Voices, the LFO's Destination and its
+  // plot, which steps its shape) can be changed while it plays,
   // and the sound follows.
   useEffect(() => {
     if (demo === null) return;
     const shapesSound = (target: EventTarget | null) =>
-      target instanceof Element && !!target.closest('.knob, .block-controls [role="radio"], .timeline-controls [role="radio"]');
+      target instanceof Element && !!target.closest('.knob, .block-controls [role="radio"], .timeline-controls [role="radio"], .lfo-plot');
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Enter' && shapesSound(e.target)) return;
       if (!e.metaKey && !e.ctrlKey && !e.altKey && !['Shift', 'Tab'].includes(e.key)) stopDemo();
@@ -733,7 +734,7 @@ export function App() {
                     label: 'Mixer',
                     tip: TIPS.mixer,
                     content: (
-                    <SubBlock title="Mixer" tip={TIPS.mixer} group>
+                    <SubBlock title="Mixer" label="Levels" tip={TIPS.mixer} group>
                       <div className="knobs">
                         <Fader id="mixOsc1" value={patch.mixOsc1} onChange={(v) => change('mixOsc1', v)} />
                         <Fader id="mixOsc2" value={patch.mixOsc2} onChange={(v) => change('mixOsc2', v)} />
@@ -838,6 +839,10 @@ export function App() {
                     learn={{ kind: 'choice', id: 'voices' }}
                   />
                 </Tooltip>
+                {/* Beside Voices, because it only slides a single Voice: with more, each Note starts at its pitch. */}
+                <Tooltip content={TIPS.glide}>
+                  <Knob id="glide" value={patch.glide} onChange={(v) => change('glide', v)} inactive={patch.voices > 1} />
+                </Tooltip>
               </div>
             }
             patch={patch}
@@ -849,7 +854,7 @@ export function App() {
         <EnvelopeTimeline
           engine={session.engine}
           view={view}
-          controls={<LfoControls patch={patch} onParam={change} onPatch={setPatch} />}
+          controls={<LfoControls engine={session.engine} patch={patch} onParam={change} onPatch={setPatch} />}
         />
       </main>
     </LearnContext.Provider>

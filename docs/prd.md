@@ -87,7 +87,7 @@ Judged against [the design principles](./design-principles.md).
 72. As a learner, I want each control's value drawn as a filled arc in its stage's colour, so that I read settings at a glance.
 73. As a learner, I want a modulated control to show the range its modulation reaches and a live dot where it is right now, as Serum does, so that I see the LFO and the Filter Envelope move the Cutoff.
 74. As a learner, I want the piano to show the sounding pitch wobble with vibrato and slide with Glide, so that I see pitch modulation even though no knob sets pitch.
-75. As a learner, I want the LFO in a Modulation block with a live plot of its shape, so that I see what it does before I hear it.
+75. As a learner, I want the LFO in an LFO & Envelopes section with a live plot of it moving, so that I see what it does before I hear it.
 76. As a player, I want Glide beside Voices, so that I see it only acts with one Voice.
 77. As a phone visitor, I want a strip naming the stages that shows where I am and jumps to each one, so that I know there is more below the Oscillators.
 78. As a phone user, I want a control's value to show only while it moves, in a bubble above my finger while I drag it, so that the screen stays uncluttered and my finger never hides what I'm changing.

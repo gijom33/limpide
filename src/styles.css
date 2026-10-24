@@ -38,6 +38,8 @@
   --stage-osc: #08ad72;
   --stage-filter: #e36b02;
   --stage-amp: #a052fe;
+  /* Modulation: what moves the stages over time (the LFO & Envelopes section, the rings to come). No stage uses it. */
+  --stage-mod: #5b8cff;
   /* The Effective Cutoff on the Timeline: the Filter's colour lightened towards the text (either theme), so it
      reads apart from the Filter Envelope's orange area under it. */
   --cutoff-line: color-mix(in srgb, var(--stage-filter) 55%, var(--text));
@@ -61,6 +63,7 @@
   --stage-osc: #06915f;
   --stage-filter: #973201;
   --stage-amp: #7a1fd0;
+  --stage-mod: #2f5fe0;
   --shadow-panel: 0 10px 32px rgba(0, 0, 0, 0.18);
   color-scheme: light;
 }
@@ -284,6 +287,9 @@ main[data-frozen] .tap-canvases::before {
   display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto 1fr; column-gap: var(--space-4); row-gap: var(--space-3);
 }
 .timeline h2 { grid-area: 1 / 1; margin: 0; align-self: center; }
+/* The section wears the modulation colour, as each stage wears its own: heading, outline, knob arcs. */
+.timeline { --stage: var(--stage-mod); border-color: color-mix(in srgb, var(--stage) 55%, var(--border)); }
+.timeline h2 { color: var(--stage); }
 .timeline-key { grid-area: 1 / 2; align-self: center; }
 .timeline-controls { grid-area: 2 / 1; }
 .timeline-plot { grid-area: 2 / 2; }
@@ -379,13 +385,18 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .tab-shared { grid-area: 2 / 1; min-width: 0; }
 .tab-panel[data-covers-shared] { grid-row: 1 / span 2; }
 .tab-shared:not([data-active]) { visibility: hidden; }
+/* The Mixer's tab takes the place of both Oscillator rows: its Levels faders stretch to that height. */
+.tab-panel[data-covers-shared] { display: flex; flex-direction: column; }
+.tab-panel[data-covers-shared] > .sub-block { flex: 1 1 auto; align-content: stretch; }
+.tab-panel[data-covers-shared] .knobs { align-self: stretch; align-items: stretch; }
+.tab-panel[data-covers-shared] .fader { flex: 1 1 auto; height: auto; min-height: var(--fader-h); }
 
-/* Wordmark: the logo, then the name in the three stage colours, Oscillators to Amp, like the mark's stroke. It is a
-   button that opens the About splash. */
+/* Wordmark: the logo, then the name in plain text; the mark alone carries the signal chain's colours. It is a button
+   that opens the About splash. */
 .wordmark { display: inline-flex; align-items: center; font-size: 21px; font-weight: 700; letter-spacing: -0.01em; }
 .wordmark { flex: none; }
 .wordmark-button {
-  display: inline-flex; align-items: center; gap: 10px; padding: 0; margin: 0;
+  display: inline-flex; align-items: center; gap: 6px; padding: 0; margin: 0;
   font: inherit; letter-spacing: inherit; color: inherit; background: none; border: 0; border-radius: var(--radius-control); cursor: pointer;
 }
 .wordmark-button:focus-visible { outline: 2px solid var(--stage-osc); outline-offset: 3px; }
@@ -409,10 +420,9 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .about-credits dd { margin: 0; }
 .about a { color: inherit; text-underline-offset: 2px; }
 .wordmark .logo { flex: none; }
-.wordmark-text {
-  background: linear-gradient(90deg, var(--stage-osc) 0%, var(--stage-filter) 55%, var(--stage-amp) 100%);
-  -webkit-background-clip: text; background-clip: text; color: transparent;
-}
+.wordmark-text { color: var(--text); } /* plain, so the colours are the mark's alone */
+/* In About the name sits close under the mark, as in the header it sits close beside it. */
+.about-body > .logo + .about-title { margin-top: calc(-1 * var(--space-2)); }
 /* On both Oscillator tabs the Pulse Width knob sits to the right of the Waveform picker, so it stays put when
    switching tabs; Osc 2's tuning knobs are one row below the tabs, shared by both. */
 .tab-panel .sub-block > .knobs { flex: 0 0 auto; }
@@ -451,7 +461,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   .block .sub-block > h3, .block .sub-block > .tip-anchor:first-child { flex: 1 1 100%; align-self: auto; }
   .block .sub-block:has(.knob) h3 { min-height: 0; }
   .tab-list { padding-left: 0; }
-  .voices-field .segmented-field { flex-wrap: wrap; }
+  .block .voices-field .segmented-field { flex-wrap: wrap; grid-template-columns: max-content; }
   .voices-field .field-caption { flex: 1 1 100%; }
 }
 
@@ -462,6 +472,13 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .filter-shape { display: flex; flex-wrap: wrap; gap: 6px; }
 /* One row always: Safari sizes a wrapping row without its gaps, so it would push the 8 onto a line of its own. */
 .voices-field .segmented { flex-wrap: nowrap; }
+/* Voices, then Glide beside it: the choice lines up with the dial's visible bottom, as pickers do beside knobs. */
+.voices-field { display: flex; flex-wrap: wrap; align-items: flex-start; column-gap: var(--knob-gap); row-gap: var(--knob-row-gap); }
+.voices-field > .tip-anchor:first-child { margin-top: calc(var(--dial-small) * 0.8 - var(--control-h)); }
+/* Safari leaves the segments' gaps out of the caption-and-segments line's width, so they would spill under Glide:
+   that line is a grid (caption column, then the segments at their own width), which Safari sizes in full. */
+.voices-field > .tip-anchor:first-child { flex: none; }
+.voices-field .segmented-field { display: grid; grid-template-columns: var(--label-col) max-content; }
 .voices-field .segmented button[role='radio'] { min-width: 24px; padding: 0 6px; }
 
 /* The Timeline panel: the controls that act over time (LFO, Glide) to the left of the plot. */
@@ -474,7 +491,18 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .timeline-controls .sub-block > .knobs { flex: none; flex-wrap: nowrap; }
 .lfo-rows { display: flex; flex-direction: column; gap: var(--space-2); flex: none; }
 .lfo-rows > .knobs { justify-content: flex-start; }
-.lfo-pickers { display: flex; flex-direction: column; gap: 6px; flex: none; }
+.lfo-pickers { display: flex; align-items: center; gap: var(--space-3); flex: none; }
+/* The LFO's plot, to the right of its Destination: the LFO moving, and a button that steps its shape. */
+.lfo-plot {
+  flex: none; display: block; width: 132px; height: 48px; padding: 0; cursor: pointer;
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-inner);
+}
+.lfo-plot:hover { border-color: color-mix(in srgb, var(--stage) 55%, var(--border)); }
+.lfo-plot:focus-visible { outline: 2px solid var(--stage); outline-offset: 2px; }
+.lfo-plot svg { display: block; width: 100%; height: 100%; }
+.lfo-plot-axis { stroke: var(--grid); }
+.lfo-plot-line { fill: none; stroke: var(--stage); stroke-width: 2; stroke-linejoin: round; }
+.lfo-plot-dot { fill: var(--stage); stroke: var(--bg); stroke-width: 1.5; }
 @media (min-width: 861px) {
   /* The plot is exactly as tall as the LFO and Glide controls: the Viewers above get the rest of the window. */
   .timeline-plot { height: auto; min-height: 100px; }
@@ -714,6 +742,11 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   .knob-value { position: absolute; left: 0; right: 0; bottom: 0; height: var(--knob-label-h); line-height: var(--knob-label-h); font-size: var(--text-sm); color: var(--text); }
   .knob:not([data-changing]) .knob-value > :first-child { visibility: hidden; }
   .knob[data-changing] .knob-label { visibility: hidden; }
+  /* The LFO's plot takes what the line leaves beside its Destination, so it never runs past the section. */
+  .timeline-controls > .sub-block:first-child, .lfo-rows, .lfo-pickers { flex: 1 1 auto; min-width: 0; }
+  .lfo-pickers > .tip-anchor:first-child { flex: none; }
+  .lfo-pickers > .tip-anchor:last-child { flex: 1 1 0; min-width: 56px; max-width: 132px; }
+  .lfo-plot { width: 100%; height: 44px; }
   /* Viewers: wider than tall, a little lower than elsewhere. */
   .tap canvas { aspect-ratio: 3 / 1; min-height: 96px; }
 

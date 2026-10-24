@@ -40,6 +40,21 @@ for (const width of [861, 872, 884, 900, 920, 1000, 1100, 1440, 1710]) {
   });
 }
 
+// The mark and the name run through the signal chain: the three stages, then the modulation blue that moves them.
+test('the logo and the favicon run green, orange, purple, then the modulation blue; the name is plain text', async ({ page }) => {
+  await page.goto('/');
+  const order = ['rgb(8, 173, 114)', 'rgb(227, 107, 2)', 'rgb(160, 82, 254)', 'rgb(91, 140, 255)'];
+  const stops = await page.locator('h1 svg.logo stop').evaluateAll((all) => all.map((s) => getComputedStyle(s).stopColor));
+  expect(stops).toEqual(order);
+  // The name in the text colour, header and About alike: the mark alone carries the colours.
+  const text = await page.evaluate(() => getComputedStyle(document.body).color);
+  for (const name of await page.locator('.wordmark-text').all()) {
+    expect(await name.evaluate((el) => [getComputedStyle(el).color, getComputedStyle(el).backgroundImage])).toEqual([text, 'none']);
+  }
+  const favicon = await (await page.request.get('/favicon.svg')).text();
+  expect(favicon.match(/stop-color="(#[0-9a-f]{6})"/g)!.map((m) => m.slice(12, 19))).toEqual(['#08ad72', '#e36b02', '#a052fe', '#5b8cff']);
+});
+
 test('no "Press a key" message over the Viewers', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);

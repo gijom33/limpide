@@ -830,6 +830,8 @@ describe('the Timeline’s past stays put while knobs turn (the model’s histor
           if (i + 1 === 200 || i + 1 === steps) {
             const m = engine.modulationAt(1.0);
             seen.push({ lfo: m.lfo, cutoff: m.cutoff });
+            // The LFO plot's cheap reading is the model's LFO, through every Rate change.
+            for (const t of [0.5, 1.0, (i + 1) * 0.01]) expect(engine.lfoAt(t)).toBe(engine.modulationAt(t).lfo);
           }
           void ctx.resume();
         }),

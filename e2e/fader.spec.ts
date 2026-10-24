@@ -70,3 +70,23 @@ test('a fader takes the arrow keys and resets on double-click', async ({ page })
   await cap.dblclick();
   await expect(cap).toHaveAttribute('aria-valuetext', start!);
 });
+
+// The Mixer's tab takes the place of both Oscillator rows (Waveform and Tuning): its Levels faders use that height.
+for (const [width, height] of [
+  [1440, 900],
+  [1100, 900],
+  [393, 852],
+]) {
+  test(`the Levels faders fill the Mixer tab, taller than the envelopes’, without growing the stage (${width}×${height})`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await page.goto('/');
+    const stage = page.getByRole('region', { name: 'Oscillators' });
+    const stageHeight = async () => (await stage.boundingBox())!.height;
+    const before = await stageHeight();
+    await page.getByRole('tab', { name: 'Mixer' }).click();
+    const tall = (await track(fader(page, 'Oscillators', 'Noise')).boundingBox())!.height;
+    const envelope = (await track(fader(page, 'Amp', 'Sustain')).boundingBox())!.height;
+    expect(tall).toBeGreaterThan(envelope * 1.4);
+    expect(await stageHeight()).toBe(before);
+  });
+}
