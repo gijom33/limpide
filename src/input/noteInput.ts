@@ -31,6 +31,9 @@ export function createNoteInput(emit: (event: VoiceEvent) => void, onHeld: (note
   let hold = false;
   let gateOpen = false; // one Voice: whether anything sounds
   const sustained = new Set<number>(); // several Voices: Notes kept sounding by Hold after their key went up
+  // Several Voices: the Notes sounding by hand, oldest first (keys down and Notes Hold keeps). Never more than the
+  // Voices: a Note beyond them takes the oldest one's Voice, as the engine does.
+  let sounding: number[] = [];
   let kept: number | null = null; // one Voice: the Note Hold keeps sounding once every key is up
   let voices: Voices = 1;
 
@@ -38,7 +41,7 @@ export function createNoteInput(emit: (event: VoiceEvent) => void, onHeld: (note
     onHeld(
       voices === 1
         ? held.length || kept === null ? [...held] : [kept]
-        : [...held, ...[...sustained].filter((note) => !held.includes(note))],
+        : [...sounding],
     );
 
   const mono = {
@@ -71,16 +74,24 @@ export function createNoteInput(emit: (event: VoiceEvent) => void, onHeld: (note
   const poly = {
     press(note: number, velocity: number) {
       sustained.delete(note); // a key pressed again retriggers its own Voice
+      sounding = [...sounding.filter((n) => n !== note), note];
       emit({ type: 'noteOn', note, velocity });
+      while (sounding.length > voices) {
+        // The oldest Note's Voice went to the new one: a Note Hold kept is let go; a key still down falls silent.
+        const oldest = sounding.shift()!;
+        if (sustained.delete(oldest)) emit({ type: 'release', note: oldest });
+      }
     },
     release(index: number) {
       const [note] = held.splice(index, 1);
-      if (hold) sustained.add(note);
+      if (hold && sounding.includes(note)) sustained.add(note);
+      else sounding = sounding.filter((n) => n !== note);
       report();
       if (!hold) emit({ type: 'release', note });
     },
     holdOff() {
       for (const note of sustained) emit({ type: 'release', note });
+      sounding = sounding.filter((n) => !sustained.has(n));
       sustained.clear();
     },
   };
@@ -115,10 +126,11 @@ export function createNoteInput(emit: (event: VoiceEvent) => void, onHeld: (note
       const wasSounding = gateOpen || sustained.size > 0 || (voices > 1 && held.length > 0);
       voices = count;
       sustained.clear();
+      // Keys still down keep their place in `held` (the piano stays lit); they sound again when pressed anew.
+      sounding = count > 1 ? held.slice(-count) : [];
       kept = null;
       gateOpen = false;
       report();
-      // Keys still down keep their place in `held` (the piano stays lit); they sound again when pressed anew.
       if (wasSounding) emit({ type: 'noteOff' });
     },
   };

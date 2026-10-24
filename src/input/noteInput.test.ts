@@ -204,7 +204,7 @@ describe('several Voices (polyphony, ADR-0007)', () => {
     input.release(64);
     expect(lit()).toEqual([60, 64]);
     input.press(67, 1);
-    expect(lit()).toEqual([67, 60, 64]);
+    expect(lit()).toEqual([60, 64, 67]);
     input.setHold(false);
     expect(lit()).toEqual([67]);
     input.release(67);
@@ -213,6 +213,33 @@ describe('several Voices (polyphony, ADR-0007)', () => {
     input.release(60);
     input.setVoices(2);
     expect(lit()).toEqual([]);
+  });
+
+  it('with Hold, keeps at most as many Notes as Voices: a Note beyond them lets the oldest go', () => {
+    const { input, events, lit } = poly(2);
+    input.setHold(true);
+    for (const note of [60, 64]) {
+      input.press(note, 1);
+      input.release(note);
+    }
+    input.press(67, 1);
+    expect(lit()).toEqual([64, 67]);
+    expect(events.slice(-2)).toEqual([{ type: 'noteOn', note: 67, velocity: 1 }, { type: 'release', note: 60 }]);
+    input.release(67);
+    input.press(72, 1);
+    expect(lit()).toEqual([67, 72]);
+    input.setHold(false);
+    expect(events.filter((e) => e.type === 'release').map((e) => (e as { note: number }).note).sort()).toEqual([60, 64, 67]);
+  });
+
+  it('lights at most as many keys as Voices: the newest, which are the ones sounding', () => {
+    const { input, lit } = poly(2);
+    input.press(60, 1);
+    input.press(64, 1);
+    input.press(67, 1);
+    expect(lit()).toEqual([64, 67]);
+    input.release(67);
+    expect(lit()).toEqual([64]);
   });
 
   it('with Hold, pressing a held Note again retriggers it rather than releasing it', () => {
