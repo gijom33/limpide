@@ -90,7 +90,7 @@ Judged against [the design principles](./design-principles.md).
 75. As a learner, I want the LFO in a Modulation block with a live plot of its shape, so that I see what it does before I hear it.
 76. As a player, I want Glide beside Voices, so that I see it only acts with one Voice.
 77. As a phone visitor, I want a strip naming the stages that shows where I am and jumps to each one, so that I know there is more below the Oscillators.
-78. As a phone user, I want to see every value, with a bubble above my finger while I drag, so that my finger never hides what I'm changing.
+78. As a phone user, I want a control's value to show only while it moves, in a bubble above my finger while I drag it, so that the screen stays uncluttered and my finger never hides what I'm changing.
 79. As a phone user, I want scrolling over a control to scroll the page, so that I never change a sound by accident.
 80. As a first-time visitor, I want a welcome that offers to play the Demo (or the sound shared with me), so that I hear what Limpide can do without knowing where to click.
 81. As a user, I want About centred on screen and an ⓘ button at every screen size, so that I can always find out what this is.

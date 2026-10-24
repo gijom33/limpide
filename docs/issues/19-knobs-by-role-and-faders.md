@@ -15,6 +15,6 @@
 - [ ] Touch targets ≥ 44 × 44 px: the 24 × 14 fader cap gets an invisible hit area that size (the prototype's was 36 × 30)
 - [ ] The Filter Envelope as one wrapping row (Amount, then four faders); in rows with a picker, picker and heading aligned with the dial's visible bottom
 - [ ] Touch: a drag starts only on the dial or the handle, so a drag on a track scrolls the page; double-tap resets
-- [ ] Value bubble above the finger while dragging on touch
+- [ ] Value bubble above the finger while dragging on touch; on phones values stay hidden at rest and show in the name's place when keys, MIDI or the Demo move a control (as today)
 - [ ] Single-pointer alternative: a click on a knob's arc or a tap on a fader's track (without dragging) jumps the value there
 - [ ] e2e: fits 1440×900 and 1710×1060 (the prototype was 87 px too tall at 1440×900); no two controls closer than 8 px at 375×812, 1000×800 and 1440×900; every fader sets its Parameter; touch scroll over a fader's track scrolls the page

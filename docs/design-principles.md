@@ -15,7 +15,7 @@ The rules every screen change is judged against, the way issue 15's audit judged
 
 - **Size follows use** (Fitts's law: time to hit a target grows with distance and shrinks with size). Parameters worth turning while playing get the big knob; set-and-forget Parameters get the small one ([ADR-0008](./adr/0008-knob-size-follows-the-parameter-s-role.md)).
 - **Follow hardware conventions** (Nielsen 2: match between the system and the real world). Levels and envelope stages are faders, as on mixing desks and classic synths; everything else is a knob.
-- **Every control shows its value in real units** (Nielsen 1: visibility of system status), on every screen size. While a finger covers a control, the value shows above the finger.
+- **Every control shows its value in real units** (Nielsen 1: visibility of system status). On phones, where room is short, a value shows only while it changes: above the finger while a finger drags it, in the name's place when something else moves it (keys, MIDI, the Demo).
 - **One material for every control** (Gestalt similarity). Knob caps and fader handles are the same raised cap with the same marker line; only the movement differs.
 - **The marker never fades.** An inactive control dims its value (arc, fill), never its marker, which always shows where it is set.
 - **Every change can be undone in one gesture** (Nielsen 3: user control and freedom). Double-click or double-tap resets a control to its default.
