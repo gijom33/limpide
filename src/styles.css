@@ -414,7 +414,8 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   .timeline-plot { order: 2; }
 }
 
-/* The on-screen piano: the computer keyboard's 17 keys, lit while sounding. */
+/* The on-screen piano: the computer keyboard's 17 keys, lit while sounding. Black keys are 0.6 of a white key's
+   width, as on a real piano. */
 .keyboard { display: flex; align-items: center; gap: 4px; }
 .piano { position: relative; display: flex; height: 40px; touch-action: none; user-select: none; -webkit-user-select: none; }
 .piano button {
@@ -423,7 +424,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   background: var(--dial-hi); border: 1px solid var(--border); border-radius: 0 0 4px 4px;
 }
 .piano button[data-black] {
-  z-index: 1; width: 14px; height: 25px; margin: 0 -7px; color: var(--muted);
+  z-index: 1; width: 12px; height: 25px; margin: 0 -6px; color: var(--muted);
   background: var(--bg); border-color: var(--border);
 }
 .piano button[aria-pressed='true'] { background: var(--stage-osc); color: var(--bg); border-color: var(--stage-osc); }
@@ -631,7 +632,13 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 
   /* The header in three rows: logo, Patch, Demo and Display; then octave, Hold and MIDI; then the piano alone,
      edge to edge, its keys as wide as the screen allows. Hold, MIDI and Display show icons, not words. */
+  /* It stays at the top while the page scrolls, so the piano plays under whichever stage is in view. It runs
+     edge to edge over the page's padding, on the page's background, so nothing shows through it. */
   header {
+    position: sticky; top: 0; z-index: 10;
+    margin: calc(-1 * var(--space-3)) calc(-1 * var(--space-2)) 0;
+    padding: var(--space-3) var(--space-2) var(--space-2);
+    background: var(--bg); border-bottom: 1px solid var(--border);
     grid-template-columns: auto auto minmax(0, 1fr) auto auto;
     grid-template-areas: 'left left left demo display' 'down up . hold midi' 'piano piano piano piano piano';
     gap: var(--space-2);
@@ -646,10 +653,11 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   .keyboard > .tip-anchor { grid-area: piano; display: flex; }
   .play-controls > .tip-anchor { grid-area: hold; }
   .midi-menu { grid-area: midi; }
-  .piano { flex: 1 1 auto; height: 64px; }
-  .piano button { height: 64px; }
-  .piano button:not([data-black]) { flex: 1 1 0; width: auto; min-width: 0; }
-  .piano button[data-black] { width: 22px; height: 40px; margin: 0 -11px; }
+  /* The keys share the row's width: ten white keys, black ones 0.6 of a white key as on a real piano. */
+  .keyboard > .tip-anchor { container-type: inline-size; }
+  .piano { --white-key: calc(100cqw / 10); flex: 1 1 auto; height: 64px; }
+  .piano button { width: var(--white-key); height: 64px; }
+  .piano button[data-black] { width: calc(0.6 * var(--white-key)); height: 40px; margin: 0 calc(-0.3 * var(--white-key)); }
   .tool-glyph { display: block; }
   .tool-word { display: none; }
   .midi-count { display: none; } /* the dot already says a device is connected */

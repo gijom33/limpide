@@ -93,3 +93,41 @@ test('with Web MIDI working but nothing plugged in, the indicator is not marked 
   await expect(page.getByRole('tooltip')).toContainText(/no midi controller/i);
   await expect(page.getByRole('button', { name: 'MIDI', exact: true })).not.toHaveAttribute('data-unavailable');
 });
+
+test.describe('on a phone', () => {
+  test.use({ viewport: { width: 393, height: 852 } });
+
+  test('the header stays on screen while scrolling, so the piano can be played under any stage', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('region', { name: 'Envelope Timeline' }).scrollIntoViewIfNeeded();
+    expect(await page.evaluate(() => scrollY)).toBeGreaterThan(500);
+    const piano = page.getByRole('group', { name: 'Piano' });
+    const box = (await piano.boundingBox())!;
+    expect(box.y).toBeGreaterThanOrEqual(0);
+    expect(box.y + box.height).toBeLessThan(852);
+    const key = piano.getByRole('button', { name: 'C4' });
+    const k = (await key.boundingBox())!;
+    await page.mouse.move(k.x + k.width / 2, k.y + k.height - 5);
+    await page.mouse.down();
+    await expect(key).toHaveAttribute('aria-pressed', 'true'); // the key under the finger is the one that plays
+    await page.mouse.up();
+    // Nothing scrolls under it unseen: the header has a solid background.
+    expect(await page.evaluate(() => getComputedStyle(document.querySelector('header')!).backgroundColor)).not.toMatch(/rgba\(0, 0, 0, 0\)|transparent/);
+  });
+});
+
+// A real piano's black keys are about 0.58 as wide as its white ones; the on-screen piano keeps that at any width.
+for (const width of [375, 465, 1440]) {
+  test(`black keys are a real piano's share of a white key's width at ${width} wide`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/');
+    const widths = await page.getByRole('group', { name: 'Piano' }).getByRole('button')
+      .evaluateAll((keys) => keys.map((k) => ({ black: k.hasAttribute('data-black'), width: k.getBoundingClientRect().width })));
+    const white = widths.filter((k) => !k.black).map((k) => k.width);
+    const black = widths.filter((k) => k.black).map((k) => k.width);
+    for (const b of black) {
+      expect(b / white[0]).toBeGreaterThanOrEqual(0.55);
+      expect(b / white[0]).toBeLessThanOrEqual(0.62);
+    }
+  });
+}
