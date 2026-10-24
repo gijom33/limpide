@@ -60,6 +60,16 @@ export const MidiIcon = () => (
   </svg>
 );
 
+/** A quaver: the Song. */
+export function NoteIcon() {
+  return (
+    <svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true">
+      <ellipse cx="4" cy="9.3" rx="2.4" ry="1.8" fill="currentColor" />
+      <path d="M5.7 9 V1.2 C7 2.8 9.6 3.4 9.6 6" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 /** A play triangle: the Demo. */
 export function PlayIcon() {
   return (

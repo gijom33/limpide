@@ -519,8 +519,10 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .patch-delete { height: var(--control-h); min-width: var(--control-h); padding: 0 6px; font: inherit; font-size: var(--text-md); color: var(--muted); cursor: pointer; background: none; border: 1px solid var(--border); border-radius: var(--radius-control); }
 .patch-delete-confirm { color: var(--danger); border-color: var(--danger); }
 .patch-empty { margin: 0; font-size: var(--text-md); color: var(--muted); }
-/* Below 1000 px the header is tight: the Demo button keeps its play icon and drops its word. */
-@media (max-width: 999px) { .demo-word, .midi-status .tool-word { display: none; } }
+/* The one-row header is tight: below 1100 px the Demo and Song buttons keep their icons and drop their words, and
+   below 1000 px the MIDI and Display buttons do too. */
+@media (max-width: 1099px) { .demo-word { display: none; } }
+@media (max-width: 999px) { .midi-status .tool-word, .display-menu .tool-word { display: none; } }
 .patch-save { display: flex; gap: 6px; margin-top: 8px; max-width: 440px; }
 .patch-panel > .patch-link { max-width: 440px; }
 .patch-save input, .patch-link {
@@ -631,7 +633,7 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   /* Viewers: wider than tall, a little lower than elsewhere. */
   .tap canvas { aspect-ratio: 3 / 1; min-height: 96px; }
 
-  /* The header in three rows: logo, Patch, Demo and Display; then octave, Hold and MIDI; then the piano alone,
+  /* The header in three rows: logo, Patch and Display; then octave, Demo and Song, Hold and MIDI; then the piano alone,
      edge to edge, its keys as wide as the screen allows. Hold, MIDI and Display show icons, not words. */
   /* It stays at the top while the page scrolls, so the piano plays under whichever stage is in view. It runs
      edge to edge over the page's padding, on the page's background, so nothing shows through it. */
@@ -640,13 +642,18 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
     margin: calc(-1 * var(--space-3)) calc(-1 * var(--space-2)) 0;
     padding: var(--space-3) var(--space-2) var(--space-2);
     background: var(--bg); border-bottom: 1px solid var(--border);
-    grid-template-columns: auto auto minmax(0, 1fr) auto auto;
-    grid-template-areas: 'left left left demo display' 'down up . hold midi' 'piano piano piano piano piano';
+    grid-template-columns: auto auto minmax(0, 1fr) auto auto auto auto;
+    grid-template-areas: 'left left left left left left display' 'down up . demo song hold midi' 'piano piano piano piano piano piano piano';
     gap: var(--space-2);
   }
   .header-center, .play-controls, .keyboard, .header-right { display: contents; }
   .header-left { grid-area: left; gap: var(--space-3); }
-  .header-right > .tip-anchor { grid-area: demo; }
+  /* The first row holds only the logo, the Patch and Display: the Patch name takes the room between them. */
+  .patch-bar { flex: 1 1 auto; }
+  .patch-bar > .tip-anchor { flex: 0 1 240px; min-width: 0; }
+  .patch-name { width: 100%; }
+  .header-right > .tip-anchor:first-child { grid-area: demo; }
+  .header-right > .tip-anchor:nth-child(2) { grid-area: song; }
   .display-menu { grid-area: display; }
   .header-right > *, .play-controls > .tip-anchor, .midi-menu { justify-self: end; }
   .keyboard > :first-child { grid-area: down; }

@@ -75,6 +75,11 @@ export const TIPS = {
     body: 'A tour of the sounds: a Preset from every group, more from the chord groups, each played with two bars that suit it, knobs turning as it goes; then it returns to Init and stops. The piano shows the Notes; watch the Viewers while it plays.',
     how: 'Turn a knob or flip a switch while it plays and hear the change; the Demo leaves a knob you turned alone until its next Preset. Press any key, play a Note, or touch any other control to take over; the Demo stops at once. It never changes the Display settings.',
   },
+  song: {
+    title: 'Song',
+    body: 'A house loop in C minor that plays on the sound you have loaded and never changes it. It only uses the keys the piano shows, and moves when you change the octave. One Voice plays it as a single line; give the Patch more Voices and its chords sound in full.',
+    how: 'Start it, then turn knobs, flip switches, change Voices or load Presets, and hear the sound change under the tune. Play a Note, or press Song again, to stop it.',
+  },
   hold: {
     title: 'Hold',
     body: 'Keeps the Note sounding after you let go of the key, so both hands are free to turn knobs while you watch.',

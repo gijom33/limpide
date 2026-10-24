@@ -17,8 +17,9 @@ import { loadOverlays, saveOverlays, toggleOverlay } from '../viewers/overlays';
 import { INITIAL_VIEWER_STATE, viewerReducer } from '../viewers/viewerState';
 import type { ViewSettings } from '../viewers/viewSettings';
 import { startDemo } from '../demo/player';
+import { startSong } from '../demo/song';
 import { PRESETS } from '../patch/presets';
-import { HoldIcon, PlayIcon } from './icons';
+import { HoldIcon, NoteIcon, PlayIcon } from './icons';
 import { Knob } from './Knob';
 import { OverlayToggles } from './OverlayToggles';
 import { TapViewers } from './TapViewers';
@@ -117,6 +118,7 @@ export function App() {
 
   // The Demo: a tour of one Preset per group, each played with a phrase that suits it, until anything is touched.
   const [demo, setDemo] = useState<number | null>(null);
+  // The Notes the Demo or the Song is playing, lit on the piano.
   const [demoNotes, setDemoNotes] = useState<number[]>([]);
   const demoStop = useRef<(() => void) | null>(null);
   const stopDemo = () => {
@@ -130,6 +132,7 @@ export function App() {
   const turnedByHand = useRef(new Set<ParamId>());
   const toggleDemo = () => {
     if (demoStop.current) return stopDemo();
+    stopSong();
     const { engine } = session;
     demoStop.current = startDemo({
       now: () => engine.now(),
@@ -158,6 +161,31 @@ export function App() {
       },
     });
   };
+  // The Song: a loop that plays on the loaded Patch, never changing it, while the person turns knobs, flips switches
+  // and loads Presets. It moves with the piano's octave. Playing a Note, the Demo or the Song button stops it.
+  const [song, setSong] = useState(false);
+  const songStop = useRef<(() => void) | null>(null);
+  const stopSong = () => {
+    songStop.current?.();
+    songStop.current = null;
+    setSong(false);
+  };
+  const toggleSong = () => {
+    if (songStop.current) return stopSong();
+    stopDemo();
+    const { engine } = session;
+    songStop.current = startSong({
+      now: () => engine.now(),
+      octave: () => octaveRef.current,
+      voices: () => patchRef.current.voices,
+      noteOn: (note, velocity, at) => engine.noteOn(note, velocity, at),
+      noteOff: (at) => engine.noteOff(at),
+      release: (note, at) => engine.release(note, at),
+      onNotes: setDemoNotes,
+    });
+    setSong(true);
+  };
+
   // Playing anything, or touching a control that does not shape the sound, ends the Demo: the person has taken over.
   // Knobs and the stages' switches (Waveforms, Filter Mode and Slope, Voices, LFO) can be changed while it plays,
   // and the sound follows.
@@ -220,6 +248,10 @@ export function App() {
   const [viewer, dispatchViewer] = useReducer(viewerReducer, INITIAL_VIEWER_STATE);
 
   useEffect(() => session.onHeld(setHeldNotes), [session]);
+  // A Note played by hand (keyboard, piano or MIDI) ends the Song: the person has taken over.
+  useEffect(() => {
+    if (heldNotes.length && songStop.current) stopSong();
+  }, [heldNotes]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // The Controller's Mappings, and where its messages meet the synth. Messages arrive between renders, so the
   // surface reads and writes the Patch through a ref that is always current.
@@ -553,6 +585,12 @@ export function App() {
               <button type="button" className="tool tool-mode demo-button" aria-label="Demo" aria-pressed={demo !== null} data-demo onClick={toggleDemo}>
                 <PlayIcon />
                 <span className="demo-word">Demo</span>
+              </button>
+            </Tooltip>
+            <Tooltip content={TIPS.song}>
+              <button type="button" className="tool tool-mode demo-button" aria-label="Song" aria-pressed={song} data-demo onClick={toggleSong}>
+                <NoteIcon />
+                <span className="demo-word">Song</span>
               </button>
             </Tooltip>
             <DisplayMenu active={viewer.frozen || viewer.snapshot !== null}>

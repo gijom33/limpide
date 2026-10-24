@@ -124,6 +124,14 @@ _Avoid_: Voice stealing
 A mode that keeps Notes sounding after their keys are released, so the sound sustains while you adjust Parameters: with one Voice until a new key or Hold off, with more until Hold off.
 _Avoid_: Drone, latch, sustain (Sustain is an Envelope stage)
 
+**Demo**:
+A guided tour of the sounds: it loads a Preset from every group in turn and plays a short phrase on each, turning knobs as it goes. Knobs and the stages' switches can be changed while it plays; a Note or any other control stops it.
+_Avoid_: Autoplay, showcase
+
+**Song**:
+A house loop in C minor that plays on whatever Patch is loaded and never changes it, so the sound can be shaped under a tune. It only uses the 13 keys from the piano's C to the C above, and moves with the piano's octave. One Voice plays its chords as a single line. A Note, the Demo or the Song button stops it.
+_Avoid_: Loop, backing track, sequence
+
 **Velocity**:
 How hard a Note was struck (0–1): from MIDI, from how low you press an on-screen piano key, or full for the computer keyboard. It scales the Amp level and, by the **Velocity → Cutoff** amount, the Effective Cutoff.
 _Avoid_: Intensity, force
