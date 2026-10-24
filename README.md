@@ -2,7 +2,7 @@
 
 **A subtractive synthesizer that shows you what each stage does to the sound.**
 
-▶ **[Play it in your browser](https://GITHUB_USER.github.io/limpide/)**. Nothing to install.
+▶ **[Play it in your browser](https://gijom33.github.io/limpide/)**. Nothing to install.
 
 Ordinary synths give you a sound and a row of knobs, and the cause and effect stays hidden in the signal. Limpide is laid out as its own signal-flow diagram: Oscillators → Mixer → Filter → Amp, left to right, with live Viewers under every stage. Turn the Cutoff and you can see which Harmonics the Filter takes away.
 
@@ -22,7 +22,7 @@ Works best in **Chrome or Edge**. Safari has no Web MIDI, so MIDI controllers do
 You need [Node.js](https://nodejs.org) 22.12 or newer.
 
 ```bash
-git clone https://github.com/GITHUB_USER/limpide.git
+git clone https://github.com/gijom33/limpide.git
 cd limpide
 npm install
 npm run dev

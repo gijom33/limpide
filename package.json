@@ -10,6 +10,11 @@
     "education"
   ],
   "author": "Guillaume Boillet",
+  "homepage": "https://gijom33.github.io/limpide/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gijom33/limpide.git"
+  },
   "license": "MIT",
   "private": true,
   "type": "module",
