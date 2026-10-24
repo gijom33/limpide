@@ -1,6 +1,6 @@
 # 20: Modulation rings
 
-**What to build:** Serum-style modulation display on every modulated control. A ring in the modulation colour shows the total range the active sources reach right now; a live dot shows the Effective value while a Note sounds (Hold included). Hovering or touching a source (the LFO block, Envelope Amount, Velocity, Key Track) brightens only its share. Rings and dots are drawn by the render loop from the Modulation model (ADR-0002, ADR-0003), following the newest Note (ADR-0007).
+**What to build:** Serum-style modulation display on every modulated control, as prototyped in issue 18. A 2.5 px ring in the modulation colour (blue: `#5b8cff` dark, `#2f5fe0` light), outside the value arc, shows the total range the active sources reach right now; a live dot shows the Effective value while a Note sounds (Hold included). Hovering or touching a source (the LFO block, Envelope Amount, Velocity, Key Track) brightens only its share. Rings and dots are drawn by the render loop from the Modulation model (ADR-0002, ADR-0003), following the newest Note (ADR-0007).
 
 **Blocked by:** 19
 
