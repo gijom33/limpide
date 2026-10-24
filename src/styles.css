@@ -420,12 +420,13 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .piano { position: relative; display: flex; height: 40px; touch-action: none; user-select: none; -webkit-user-select: none; }
 .piano button {
   position: relative; width: 20px; height: 40px; margin: 0; padding: 0 0 3px; display: flex; align-items: flex-end; justify-content: center;
-  font: inherit; font-size: var(--text-xs); color: var(--muted); cursor: pointer;
-  background: var(--dial-hi); border: 1px solid var(--border); border-radius: 0 0 4px 4px;
+  font: inherit; font-size: var(--text-xs); color: #6a6f7b; cursor: pointer;
+  background: #f4f4f1; border: 1px solid #b4b8c1; border-radius: 0 0 4px 4px;
 }
+/* A piano's colours in either theme: ivory white keys, black ones black. */
 .piano button[data-black] {
-  z-index: 1; width: 12px; height: 25px; margin: 0 -6px; color: var(--muted);
-  background: var(--bg); border-color: var(--border);
+  z-index: 1; width: 12px; height: 25px; margin: 0 -6px;
+  background: #121317; border-color: #000;
 }
 .piano button[aria-pressed='true'] { background: var(--stage-osc); color: var(--bg); border-color: var(--stage-osc); }
 .piano button span { pointer-events: none; }
@@ -653,13 +654,23 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   .keyboard > .tip-anchor { grid-area: piano; display: flex; }
   .play-controls > .tip-anchor { grid-area: hold; }
   .midi-menu { grid-area: midi; }
-  /* The keys share the row's width: ten white keys, black ones 0.6 of a white key as on a real piano. */
+  /* One octave, C to C, so each white key is wider than a fingertip (Apple's 44 pt); the octave buttons reach
+     the rest. The keys share the row's width: eight white keys, black ones 0.6 of a white key as on a piano. */
   .keyboard > .tip-anchor { container-type: inline-size; }
-  .piano { --white-key: calc(100cqw / 10); flex: 1 1 auto; height: 64px; }
+  .piano { --white-key: calc(100cqw / 8); flex: 1 1 auto; height: 64px; }
+  .piano button:nth-child(n + 14) { display: none; }
   .piano button { width: var(--white-key); height: 64px; }
   .piano button[data-black] { width: calc(0.6 * var(--white-key)); height: 40px; margin: 0 calc(-0.3 * var(--white-key)); }
   .tool-glyph { display: block; }
   .tool-word { display: none; }
   .midi-count { display: none; } /* the dot already says a device is connected */
   header .tool:has(> .tool-glyph), .display-menu > .tip-anchor > .tool, .display-menu .tool { padding: 0 8px; }
+}
+
+/* Touch screens: a long press or a double tap on the instrument plays or turns it; it never selects text or opens
+   the copy menu. Text fields stay editable, and buttons answer at once (no wait for a double-tap zoom). */
+@media (pointer: coarse) {
+  body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  input, textarea { -webkit-user-select: text; user-select: text; }
+  button { touch-action: manipulation; }
 }

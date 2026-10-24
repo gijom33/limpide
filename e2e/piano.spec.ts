@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { openDisplay } from './helpers';
 
 const db = (page: Page) => page.getByLabel('Amp Scope', { exact: true }).getAttribute('data-db').then((v) => (v === null ? NaN : Number(v)));
 const ready = (page: Page) => expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);
@@ -128,6 +129,53 @@ for (const width of [375, 465, 1440]) {
     for (const b of black) {
       expect(b / white[0]).toBeGreaterThanOrEqual(0.55);
       expect(b / white[0]).toBeLessThanOrEqual(0.62);
+    }
+  });
+}
+
+for (const width of [375, 430]) {
+  test(`a ${width}-wide phone shows one octave, C to C, with keys a finger can hit`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 852 });
+    await page.goto('/');
+    const keys = page.getByRole('group', { name: 'Piano' }).getByRole('button');
+    const shown = await keys.evaluateAll((ks) =>
+      ks.filter((k) => k.getBoundingClientRect().width > 0).map((k) => ({ name: k.getAttribute('aria-label'), black: k.hasAttribute('data-black'), width: k.getBoundingClientRect().width })),
+    );
+    expect(shown.map((k) => k.name)).toEqual(['C4', 'C#4', 'D4', 'D#4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'A#4', 'B4', 'C5']);
+    for (const k of shown.filter((k) => !k.black)) expect(k.width).toBeGreaterThanOrEqual(44); // Apple's minimum touch target
+  });
+}
+
+test.describe('on a touch screen', () => {
+  test.use({ viewport: { width: 393, height: 852 }, hasTouch: true, isMobile: true });
+  test.skip(({ browserName }) => browserName !== 'chromium', 'isMobile is Chromium-only');
+
+  test('pressing the controls never selects their text', async ({ page }) => {
+    await page.goto('/');
+    for (const name of ['Octave up', 'Octave down', 'Hold']) {
+      await page.getByRole('button', { name }).dblclick();
+      expect(await page.evaluate(() => window.getSelection()?.toString() ?? ''), name).toBe('');
+    }
+    await page.getByRole('region', { name: 'Oscillators' }).getByRole('heading').first().dblclick();
+    expect(await page.evaluate(() => window.getSelection()?.toString() ?? '')).toBe('');
+  });
+});
+
+for (const theme of ['Dark', 'Light'] as const) {
+  test(`in the ${theme} theme the white keys are white and the black keys black`, async ({ page }) => {
+    await page.goto('/');
+    await openDisplay(page);
+    await page.getByRole('radiogroup', { name: 'Theme' }).getByRole('radio', { name: theme }).click();
+    await page.keyboard.press('Escape');
+    const lightness = await page.getByRole('group', { name: 'Piano' }).getByRole('button').evaluateAll((keys) =>
+      keys.map((k) => {
+        const [r, g, b] = getComputedStyle(k).backgroundColor.match(/\d+(\.\d+)?/g)!.map(Number);
+        return { black: k.hasAttribute('data-black'), l: (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255 };
+      }),
+    );
+    for (const k of lightness) {
+      if (k.black) expect(k.l).toBeLessThan(0.12);
+      else expect(k.l).toBeGreaterThan(0.85);
     }
   });
 }
