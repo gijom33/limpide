@@ -4,3 +4,7 @@ dist/
 coverage/
 test-results/
 playwright-report/
+
+# Vitest browser-mode captures of failed tests
+.vitest-attachments/
+__screenshots__/

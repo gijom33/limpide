@@ -4,6 +4,8 @@ import { playwright } from '@vitest/browser-playwright';
 
 export default defineConfig({
   plugins: [react()],
+  // Relative asset URLs, so the build works under GitHub Pages' /limpide/ as well as at a root.
+  base: './',
   test: {
     projects: [
       {
