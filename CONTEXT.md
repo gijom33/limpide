@@ -121,7 +121,7 @@ With one Voice, the rule picking which held Note sounds: last-note priority, so 
 _Avoid_: Voice stealing
 
 **Hold**:
-A mode that keeps Notes sounding after their keys are released, so the sound sustains while you adjust Parameters: with one Voice until a new key or Hold off, with more until Hold off, one Note per Voice at most (a Note beyond them lets the oldest go). The piano keeps their keys lit. Quick clicks on Hold after switching it on, before a Note is held, tap a rhythm: the held Notes then repeat on it, looping (on several Voices, a single Note and the chord in turn).
+A mode that keeps Notes sounding after their keys are released, so the sound sustains while you adjust Parameters: with one Voice until a new key or Hold off, with more until Hold off, one Note per Voice at most (a Note beyond them lets the oldest go). The piano keeps their keys lit. Quick clicks on Hold after switching it on, before a Note is held, tap a rhythm: the held Notes then repeat on it, looping (on several Voices, the whole rhythm once as single Notes in turn, then once as the chord).
 _Avoid_: Drone, latch, sustain (Sustain is an Envelope stage)
 
 **Demo**:

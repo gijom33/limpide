@@ -73,7 +73,8 @@ const VELOCITY = 0.9;
 
 /**
  * Plays the held Notes on a tapped rhythm, looping, from the moment a Note is held. On one Voice, every tap plays
- * the newest held Note; on several, taps alternate one Note at a time, each held Note in turn, and the whole chord.
+ * the newest held Note; on several, the pattern plays once as single Notes, each held Note in turn (an arpeggio),
+ * then once as the whole chord, and so on.
  * A Note sounds for at most a beat, so longer gaps, like the rest at the end, are heard as rests. While no Note is
  * held it waits, and starts the rhythm over when one is. Returns the stop function.
  */
@@ -94,7 +95,8 @@ export function startRhythm(host: RhythmHost, { gaps, beat }: Rhythm): () => voi
       while (next < now + LOOKAHEAD) {
         const notes = host.notes();
         const oneVoice = host.voices() === 1;
-        const play = oneVoice ? [notes[notes.length - 1]] : step % 2 === 0 ? [notes[single++ % notes.length]] : notes;
+        const chordPass = Math.floor(step / gaps.length) % 2 === 1;
+        const play = oneVoice ? [notes[notes.length - 1]] : chordPass ? notes : [notes[single++ % notes.length]];
         const gap = gaps[step % gaps.length];
         const end = next + Math.min(gap, beat) * GATE;
         for (const note of play) host.noteOn(note, VELOCITY, next);

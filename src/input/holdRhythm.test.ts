@@ -110,12 +110,13 @@ describe('the rhythm player', () => {
     vi.useRealTimers();
   });
 
-  it('on several Voices alternates one Note, in turn, and the whole chord', () => {
+  it('on several Voices plays the pattern once as single Notes in turn, then once as the chord, and so on', () => {
     vi.useFakeTimers();
     const { host, calls, run, hold } = fakeHost(4);
     hold([60, 64, 67]);
-    const stop = startRhythm(host, { gaps: [0.5], beat: 0.5 });
-    run(2.6);
+    // A pattern of three taps (two steps and the rest back to the start).
+    const stop = startRhythm(host, { gaps: [0.5, 0.5, 1], beat: 0.5 });
+    run(6.1);
     const steps: string[] = [];
     let current = '';
     let at = '';
@@ -126,7 +127,8 @@ describe('the rhythm player', () => {
       at = time;
     }
     steps.push(current);
-    expect(steps.slice(0, 6)).toEqual(['60', '60+64+67', '64', '60+64+67', '67', '60+64+67']);
+    const chord = '60+64+67';
+    expect(steps.slice(0, 9)).toEqual(['60', '64', '67', chord, chord, chord, '60', '64', '67']);
     expect(calls.some((c) => c.startsWith('release'))).toBe(true);
     stop();
     vi.useRealTimers();
