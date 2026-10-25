@@ -5,10 +5,10 @@ test('the Viewers start with Harmonics and the Curve; overlays switched on or of
   await page.goto('/');
   await openDisplay(page);
   const overlays = page.getByRole('group', { name: 'Show on Viewers' });
-  for (const [name, on] of [['Harmonics', 'true'], ['Ideal', 'false'], ['Curve', 'true'], ['Guides', 'false']] as const) {
+  for (const [name, on] of [['Harmonics', 'true'], ['Ideal', 'false'], ['Curve', 'true'], ['Guides', 'false'], ['Maths', 'false']] as const) {
     await expect(overlays.getByRole('button', { name })).toHaveAttribute('aria-pressed', on);
   }
-  await expect(overlays.getByRole('button')).toHaveCount(4); // no Ghost: it was dropped
+  await expect(overlays.getByRole('button')).toHaveCount(5); // no Ghost: it was dropped; the Maths Layer joined
 
   await overlays.getByRole('button', { name: 'Guides' }).click();
   await overlays.getByRole('button', { name: 'Curve' }).click();
