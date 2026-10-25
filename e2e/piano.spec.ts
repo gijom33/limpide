@@ -112,6 +112,18 @@ test('without Web MIDI (Safari) the MIDI indicator says so, and everything else 
   await expect(page.getByRole('tooltip')).toContainText(/not support/i);
 });
 
+test('on an iPhone, even in Chrome, the MIDI indicator says no browser there has Web MIDI', async ({ browser }) => {
+  const page = await browser.newPage({
+    userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/130.0 Mobile/15E148 Safari/604.1',
+  });
+  await page.addInitScript(() => Object.defineProperty(navigator, 'requestMIDIAccess', { value: undefined, configurable: true }));
+  await page.goto('/');
+  await page.getByRole('button', { name: 'MIDI', exact: true }).hover();
+  await expect(page.getByRole('tooltip')).toContainText(/no browser on iPhone or iPad/i);
+  await expect(page.getByRole('tooltip')).not.toContainText(/use chrome/i);
+  await page.close();
+});
+
 test('when the browser blocks MIDI, the indicator shows it is unavailable (not just empty) and says why', async ({ page }) => {
   await page.addInitScript(() =>
     Object.defineProperty(navigator, 'requestMIDIAccess', {

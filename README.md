@@ -15,7 +15,7 @@ Ordinary synths give you a sound and a row of knobs, and the cause and effect st
 - **Play however you like.** Use the computer keyboard (`A W S E D F T G…`, with `Z`/`X` to change octave), the on-screen piano, or any MIDI controller via MIDI Learn. Patches can have one to eight Voices.
 - **Keep and share sounds.** Presets to start from, autosave, a named Patch library, JSON export, and share links that carry the whole Patch in the URL.
 
-Works best in **Chrome or Edge**. Safari has no Web MIDI, so MIDI controllers don't work there; everything else does.
+Works best in **Chrome or Edge**. Safari has no Web MIDI, so MIDI controllers don't work there; everything else does. The same goes for every browser on iPhone and iPad, Chrome included, since Apple makes them all run on Safari's engine.
 
 Visits to the site are counted with [GoatCounter](https://www.goatcounter.com): no cookies and no personal data.
 

@@ -452,7 +452,8 @@ export function App() {
 
   // MIDI Controllers: their Notes join the same Note input as the keyboard and piano.
   useEffect(() => {
-    if (midiSupport(navigator) === 'unsupported') return setMidi({ kind: 'unsupported' });
+    const support = midiSupport(navigator);
+    if (support !== 'supported') return setMidi({ kind: 'unsupported', ios: support === 'ios' });
     let dispose = () => {};
     let cancelled = false;
     navigator.requestMIDIAccess().then(

@@ -6,7 +6,7 @@ import { TIPS } from './tips';
 import { Tooltip } from './Tooltip';
 
 export type MidiState =
-  { kind: 'unsupported' } | { kind: 'denied' } | { kind: 'pending' } | { kind: 'ready'; devices: string[] };
+  { kind: 'unsupported'; ios: boolean } | { kind: 'denied' } | { kind: 'pending' } | { kind: 'ready'; devices: string[] };
 
 interface Props {
   state: MidiState;
@@ -24,13 +24,15 @@ interface Props {
 
 const statusText = (state: MidiState) => {
   const devices = state.kind === 'ready' ? state.devices : [];
-  return state.kind === 'unsupported'
-    ? 'This browser does not support Web MIDI (Safari does not). Use Chrome or Edge to play from a MIDI Controller; everything else works here.'
-    : state.kind === 'denied'
-      ? 'MIDI access was not allowed, so Controllers cannot be heard. Allow MIDI in the browser’s site settings, or open Limpide in Chrome or Edge (some built-in browsers never allow it).'
-      : devices.length
-        ? `Connected: ${devices.join(', ')}. Its keys and pads play the synth, with Velocity.`
-        : 'No MIDI Controller connected. Plug one in (USB) and it is picked up straight away.';
+  return state.kind === 'unsupported' && state.ios
+    ? 'No browser on iPhone or iPad supports Web MIDI, Chrome included: Apple makes them all run on Safari’s engine. Play from a MIDI Controller on a computer or an Android device; everything else works here.'
+    : state.kind === 'unsupported'
+      ? 'This browser does not support Web MIDI (Safari does not). Use Chrome or Edge to play from a MIDI Controller; everything else works here.'
+      : state.kind === 'denied'
+        ? 'MIDI access was not allowed, so Controllers cannot be heard. Allow MIDI in the browser’s site settings, or open Limpide in Chrome or Edge (some built-in browsers never allow it).'
+        : devices.length
+          ? `Connected: ${devices.join(', ')}. Its keys and pads play the synth, with Velocity.`
+          : 'No MIDI Controller connected. Plug one in (USB) and it is picked up straight away.';
 };
 
 /**

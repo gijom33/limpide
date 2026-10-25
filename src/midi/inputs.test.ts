@@ -81,4 +81,12 @@ describe('midiSupport', () => {
     expect(midiSupport({})).toBe('unsupported');
     expect(midiSupport({ requestMIDIAccess: () => Promise.resolve() })).toBe('supported');
   });
+
+  it('knows an iPhone or iPad has no Web MIDI in any browser, Chrome included', () => {
+    const chromeOnIPhone = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/130.0 Mobile/15E148 Safari/604.1';
+    const macSafari = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15';
+    expect(midiSupport({ userAgent: chromeOnIPhone })).toBe('ios');
+    expect(midiSupport({ userAgent: macSafari, platform: 'MacIntel', maxTouchPoints: 5 })).toBe('ios'); // an iPad asking for the desktop site
+    expect(midiSupport({ userAgent: macSafari, platform: 'MacIntel', maxTouchPoints: 0 })).toBe('unsupported');
+  });
 });

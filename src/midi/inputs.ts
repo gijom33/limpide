@@ -68,7 +68,18 @@ export function connectMidi(access: MidiAccessLike, { onMessage, onDevices }: Ha
   };
 }
 
-/** Whether this browser offers Web MIDI at all (Safari does not). */
-export function midiSupport(nav: { requestMIDIAccess?: unknown }): 'supported' | 'unsupported' {
-  return typeof nav.requestMIDIAccess === 'function' ? 'supported' : 'unsupported';
+/**
+ * Whether this browser offers Web MIDI at all (Safari does not). On an iPhone or iPad no browser does, Chrome
+ * included, as Apple makes them all run on Safari's engine: an iPad asking for the desktop site passes for a Mac,
+ * and only its touch points give it away.
+ */
+export function midiSupport(nav: {
+  requestMIDIAccess?: unknown;
+  userAgent?: string;
+  platform?: string;
+  maxTouchPoints?: number;
+}): 'supported' | 'unsupported' | 'ios' {
+  if (typeof nav.requestMIDIAccess === 'function') return 'supported';
+  const ios = /iPhone|iPad|iPod/.test(nav.userAgent ?? '') || (nav.platform === 'MacIntel' && (nav.maxTouchPoints ?? 0) > 1);
+  return ios ? 'ios' : 'unsupported';
 }
