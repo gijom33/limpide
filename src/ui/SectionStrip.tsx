@@ -104,9 +104,12 @@ export function SectionStrip() {
   const jump = (name: string) => {
     const target = section(name);
     if (!target) return;
-    // Going down slides the header's rows away and going up brings them back: settle that first, so the landing
-    // allows for the header as it will be when the page stops.
-    const collapsed = target.getBoundingClientRect().top > 0 && scrollY + target.getBoundingClientRect().top > TOP;
+    // Going down slides the header's rows away; a jump never brings them back (only a scroll of the person's own
+    // does), so the piano and the strip stay where the finger expects them. Settle that first, so the landing allows
+    // for the header as it will be when the page stops.
+    const collapsed =
+      document.documentElement.hasAttribute('data-header-collapsed') ||
+      (target.getBoundingClientRect().top > 0 && scrollY + target.getBoundingClientRect().top > TOP);
     collapseHeader(collapsed);
     const hide = collapsed ? parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-hide')) || 0 : 0;
     // Where the strip's bottom will be once stuck under the header (overlapping its border by a pixel), not where it

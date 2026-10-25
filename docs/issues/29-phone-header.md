@@ -11,3 +11,4 @@
 - [x] Display moves from the first row to the playing row, left of About, so the Patch name gets the first row's room
 - [x] The MIDI button's icon carries its status in place of the dot above it (saves a line): green with a device connected, yellow with none; struck through when the browser has no MIDI
 - [x] Tapping a lower section in the strip keeps the header slid away once the page arrives (the jump now ends on arrival or `scrollend`, not after a 150 ms pause, which iOS's smooth scroll can outlast); not yet checked on a real iPhone
+- [x] A jump up through the strip (Amp, then Filter) keeps the header slid away too: only a scroll of the person's own brings its rows back

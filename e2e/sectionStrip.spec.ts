@@ -78,13 +78,22 @@ test.describe('on a phone', () => {
     await expect.poll(stripUnderHeader).toBe(-1);
   });
 
-  test('tapping a lower section keeps the header slid away: it does not come back when the page arrives', async ({ page }) => {
+  test('tapping a section keeps the header slid away, going down or up; only scrolling up brings it back', async ({ page }) => {
     await page.goto('/');
     const logo = page.getByRole('heading', { level: 1, name: 'Limpide' });
     await page.getByRole('navigation', { name: 'Sections' }).getByRole('button', { name: 'Amp' }).click();
     await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(500);
     await page.waitForTimeout(1000); // well after the page has stopped
     await expect(logo).not.toBeInViewport();
+    // Nor does a jump back up: only a scroll of one's own brings the rows back.
+    await page.getByRole('navigation', { name: 'Sections' }).getByRole('button', { name: 'Filter' }).click();
+    await page.waitForTimeout(1000);
+    await expect(logo).not.toBeInViewport();
+    const filter = (await page.getByRole('region', { name: 'Filter' }).boundingBox())!;
+    const strip = (await page.getByRole('navigation', { name: 'Sections' }).boundingBox())!;
+    expect(Math.abs(filter.y - (strip.y + strip.height) - 8)).toBeLessThanOrEqual(2); // landed just under the strip
+    await page.mouse.wheel(0, -60);
+    await expect(logo).toBeInViewport();
   });
 
   test('Display sits in the playing row, left of About, icon over word; the first row is the logo and the Patch', async ({ page }) => {
