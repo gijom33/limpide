@@ -8,4 +8,5 @@
 
 - [x] 1.2.0 (2026-10-24): look B controls and faders (issue 19), the LFO & Envelopes section and the Mixer tab (issue 22), the Hold rhythm by pattern
 - [x] 1.3.0 (2026-10-25): the phone section strip (issue 23), modulation rings (issue 20), the piano's pitch dots (issue 21), two LFOs with six destinations and a falling saw (issue 26), evenly spaced faders, shaded octave buttons
+- [x] 1.3.1 (2026-10-25): About centred at every size, an ⓘ button at every width, and a welcome for a first visit (issue 24)
 - [ ] Each later release: full suite green, README screenshots refreshed when the look changed, minor version bumped, pushed on the owner's word
