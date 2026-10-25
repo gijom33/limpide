@@ -834,7 +834,6 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 .quick-setup-progress { color: var(--muted); font-variant-numeric: tabular-nums; }
 .quick-setup-prompt { margin: 0; font-size: var(--text-lg); font-weight: 600; }
 .quick-setup-last { margin: 0; color: var(--muted); }
-.quick-setup-differs { color: var(--text); }
 .quick-setup-actions { display: flex; gap: 6px; justify-content: flex-end; }
 
 /* While MIDI Learn (or Quick Setup) is on, the MIDI button says so in the accent, its dot pulsing: the panel behind

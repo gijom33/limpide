@@ -10,70 +10,90 @@ async function startSetup(page: Page) {
   await expect(setup(page)).toBeVisible();
 }
 
-/** Plays what a factory C16 sends for each step: a turn of encoders 1–8, a move of faders 1–4, presses of buttons. */
-const encoder = (n: number) => times(4, cc(n, 1));
+/** A Controller's moves: a turn of knob n (Relative), a move of fader n (Absolute), a press of button n. */
+const knob = (n: number) => times(4, cc(n, 1));
 const fader = (n: number) => [cc(32 + n, 10), cc(32 + n, 11), cc(32 + n, 12), cc(32 + n, 13)];
 const button = (n: number) => [cc(48 + n, 127), cc(48 + n, 0)];
+const STEPS = 25;
 
 test.beforeEach(({ page }) => withFakeController(page));
 
-test('Quick Setup walks through the C16 one control at a time and maps it all', async ({ page }) => {
+test('Quick Setup walks through every control played live, in the page’s order, and maps it all', async ({ page }) => {
   await startSetup(page);
-  await expect(prompt(page)).toContainText('Turn encoder 1');
-  await expect(prompt(page)).toContainText('Cutoff');
-  await expect(setup(page)).toContainText('1 of 17');
-  // The control being mapped is highlighted where it sits on screen.
-  await expect(page.getByRole('region', { name: 'Filter' }).locator('.knob[data-learn-selected]')).toContainText('Cutoff');
+  await expect(prompt(page)).toContainText('Move a control → Osc 2 · Detune');
+  await expect(setup(page)).toContainText(`1 of ${STEPS}`);
+  // The control being mapped is shown and highlighted where it sits, even on a hidden tab.
+  await expect(page.getByRole('region', { name: 'Oscillators' }).locator('.knob[data-learn-selected]')).toContainText('Detune');
 
-  for (let n = 1; n <= 3; n++) await play(page, ...encoder(n));
-  await expect(prompt(page)).toContainText('Detune');
-  for (let n = 4; n <= 8; n++) await play(page, ...encoder(n));
-  await expect(prompt(page)).toContainText('Move fader 1');
-  await expect(prompt(page)).toContainText('Attack');
-  for (let n = 1; n <= 4; n++) await play(page, ...fader(n));
-  await expect(prompt(page)).toContainText('Press button 1');
+  await play(page, ...knob(1));
+  await expect(prompt(page)).toContainText('Mixer · Osc 1');
+  await expect(page.getByRole('tab', { name: 'Mixer' })).toHaveAttribute('aria-selected', 'true');
+  for (let n = 1; n <= 4; n++) await play(page, ...fader(n)); // the Mixer
+  await expect(prompt(page)).toContainText('Filter · Cutoff');
+  for (let n = 2; n <= 4; n++) await play(page, ...knob(n)); // Cutoff, Resonance, Amount
+  await expect(prompt(page)).toContainText('Filter Envelope · Attack');
+  for (let n = 5; n <= 12; n++) await play(page, ...fader(n)); // the two Envelopes
+  await expect(prompt(page)).toContainText('LFO 1 · Rate');
+  for (let n = 5; n <= 8; n++) await play(page, ...knob(n)); // the LFOs
+  await expect(prompt(page)).toContainText('Press a button → Hold');
   for (let n = 1; n <= 5; n++) await play(page, ...button(n));
 
-  await expect(setup(page)).toContainText('17 of 17 mapped');
+  await expect(setup(page)).toContainText(`${STEPS} of ${STEPS} mapped`);
   await setup(page).getByRole('button', { name: 'Close' }).click();
   await expect(setup(page)).toBeHidden();
 
-  // It all works straight away: encoder 7 steps the Waveform, button 1 toggles Hold, fader 3 sets Sustain.
+  // It all works straight away: button 1 toggles Hold, knob 2 opens the Cutoff.
   await page.waitForTimeout(600);
-  await play(page, ...times(2, cc(7, 1)));
-  await expect(page.getByRole('radiogroup', { name: 'Osc 1 Waveform' }).getByRole('radio', { name: 'Square' })).toHaveAttribute('aria-checked', 'true');
   await play(page, ...button(1));
   await expect(page.getByRole('button', { name: 'Hold' })).toHaveAttribute('aria-pressed', 'true');
+  const cutoff = page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name: 'Cutoff' });
+  const before = Number(await cutoff.getAttribute('aria-valuenow'));
+  await play(page, ...times(10, cc(2, 1)));
+  await expect.poll(async () => Number(await cutoff.getAttribute('aria-valuenow'))).toBeGreaterThan(before);
   await openMidi(page);
-  await expect(midiPanel(page).getByRole('list', { name: 'Mappings' }).getByRole('listitem')).toHaveCount(17);
+  await expect(midiPanel(page).getByRole('list', { name: 'Mappings' }).getByRole('listitem')).toHaveCount(STEPS);
+});
+
+test('a fader that pauses mid-move and moves on never fills the next step', async ({ page }) => {
+  await startSetup(page);
+  await play(page, ...knob(1));
+  await play(page, ...fader(1)); // Mixer · Osc 1
+  await expect(prompt(page)).toContainText('Mixer · Osc 2');
+  await page.waitForTimeout(700); // longer than Learn waits for a control to settle
+  await play(page, cc(33, 20), cc(33, 30), cc(33, 40), cc(33, 50));
+  await page.waitForTimeout(700);
+  await expect(prompt(page)).toContainText('Mixer · Osc 2');
+  await expect(setup(page)).toContainText(`3 of ${STEPS}`);
+  await play(page, ...fader(2));
+  await expect(prompt(page)).toContainText('Mixer · Noise');
 });
 
 test('steps can be skipped and gone back to', async ({ page }) => {
   await startSetup(page);
-  await play(page, ...encoder(1));
-  await setup(page).getByRole('button', { name: 'Skip' }).click(); // no Resonance
-  await expect(prompt(page)).toContainText('Turn encoder 3');
+  await play(page, ...knob(1));
+  await setup(page).getByRole('button', { name: 'Skip' }).click(); // no Mixer Osc 1
+  await expect(prompt(page)).toContainText('Mixer · Osc 2');
   await setup(page).getByRole('button', { name: 'Back' }).click();
-  await expect(prompt(page)).toContainText('Turn encoder 2');
-  await play(page, ...encoder(2));
-  await expect(prompt(page)).toContainText('Turn encoder 3');
+  await expect(prompt(page)).toContainText('Mixer · Osc 1');
+  await play(page, ...fader(1));
+  await expect(prompt(page)).toContainText('Mixer · Osc 2');
 });
 
 test('the MIDI button shows Learning during Quick Setup, and Done in its panel finishes the Setup', async ({ page }) => {
   await startSetup(page);
   await expect(midiButton(page)).toHaveAttribute('data-learning', 'true');
-  await play(page, ...encoder(1));
+  await play(page, ...knob(1));
   await openMidi(page);
   await midiPanel(page).getByRole('button', { name: 'Done' }).click();
-  await expect(prompt(page)).toContainText('1 of 17 mapped');
+  await expect(prompt(page)).toContainText(`1 of ${STEPS} mapped`);
   await expect(midiButton(page)).not.toHaveAttribute('data-learning', /./);
 });
 
 test('finishing early keeps what was mapped; Escape finishes too', async ({ page }) => {
   await startSetup(page);
-  await play(page, ...encoder(1), ...encoder(2));
+  await play(page, ...knob(1), ...fader(1));
   await page.keyboard.press('Escape');
-  await expect(setup(page)).toContainText('2 of 17 mapped');
+  await expect(setup(page)).toContainText(`2 of ${STEPS} mapped`);
   await setup(page).getByRole('button', { name: 'Close' }).click();
   await openMidi(page);
   await expect(midiPanel(page).getByRole('list', { name: 'Mappings' }).getByRole('listitem')).toHaveCount(2);
@@ -81,16 +101,9 @@ test('finishing early keeps what was mapped; Escape finishes too', async ({ page
 
 test('cancelling puts back the Mappings from before', async ({ page }) => {
   await startSetup(page);
-  await play(page, ...encoder(1), ...encoder(2));
+  await play(page, ...knob(1), ...fader(1));
   await setup(page).getByRole('button', { name: 'Cancel' }).click();
   await expect(setup(page)).toBeHidden();
   await openMidi(page);
   await expect(midiPanel(page).getByRole('list', { name: 'Mappings' })).toHaveCount(0);
-});
-
-test('a control that is not the C16’s factory one is pointed out, and still mapped', async ({ page }) => {
-  await startSetup(page);
-  await play(page, ...times(4, cc(74, 1)));
-  await expect(setup(page)).toContainText(/Cutoff ← CC 74.*usually CC 1/);
-  await expect(prompt(page)).toContainText('Turn encoder 2');
 });

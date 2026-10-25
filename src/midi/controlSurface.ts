@@ -68,6 +68,8 @@ export function createControlSurface(synth: Synth) {
     settleJustLearned();
     setLearn({ phase: 'armed', target: null, learned: mapping });
   };
+  // Controls the selected target must not be learned from (Quick Setup's other steps').
+  let avoiding: readonly Control[] = [];
   let values: number[] = [];
   let settle: ReturnType<typeof setTimeout> | undefined;
   const pickups = new Map<string, PickupState>();
@@ -170,6 +172,7 @@ export function createControlSurface(synth: Synth) {
       settleJustLearned();
       return false;
     }
+    if (avoiding.some((c) => sameControl(c, from))) return false;
     if (message.type === 'cc') {
       const control: Control = {
         kind: 'cc',
@@ -215,8 +218,10 @@ export function createControlSurface(synth: Synth) {
     startLearn() {
       if (learn.phase === 'off') setLearn({ phase: 'armed', target: null });
     },
-    select(target: Target) {
+    /** Selects what the next control moved is learned for, other than any control in `avoid`. */
+    select(target: Target, avoid: readonly Control[] = []) {
       finishListening();
+      avoiding = avoid;
       setLearn({ phase: 'armed', target });
     },
     stopLearn() {

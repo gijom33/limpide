@@ -109,6 +109,17 @@ describe('MIDI Learn', () => {
     expect(notes).toEqual([]);
   });
 
+  it('never learns a control it was told to avoid; that control keeps driving its own target', () => {
+    const { surface, store, positions, send } = rig();
+    store.set({ control: { kind: 'cc', channel: 1, number: 74 }, target: cutoff, mode: 'absolute' });
+    surface.startLearn();
+    surface.select(resonance, [{ kind: 'cc', channel: 1, number: 74 }]);
+    send(cc(74, 60), cc(74, 70), cc(74, 80), cc(74, 90)); // crosses the Cutoff's 0.5: Pickup follows
+    expect(store.list()).toHaveLength(1);
+    expect(surface.learnState()).toMatchObject({ phase: 'armed', target: { id: 'resonance' } });
+    expect(positions.cutoff).toBeCloseTo(90 / 127);
+  });
+
   it('lets pads keep playing while a Parameter waits for a knob', () => {
     const { surface, store, notes, send } = rig();
     surface.startLearn();

@@ -6,7 +6,7 @@ import { createControlSurface, type LearnState } from '../midi/controlSurface';
 import { describeMessage, targetKey } from '../midi/describe';
 import { connectMidi, midiSupport, type MidiAccessLike } from '../midi/inputs';
 import { createMappingStore, type Mapping, type Target } from '../midi/mappings';
-import { C16_SETUP, quickSetupReducer, startQuickSetup, type QuickSetupEvent, type QuickSetupState } from '../midi/quickSetup';
+import { QUICK_SETUP, quickSetupReducer, startQuickSetup, takenControls, type QuickSetupEvent, type QuickSetupState } from '../midi/quickSetup';
 import { OSCILLATOR_LEVEL } from '../engine/synthEngine';
 import { idealReference } from '../music/idealReference';
 import { CHOICES, PARAMS, setFilter, setParam, setWaveform, type ChoiceId, type ParamId, type Patch } from '../patch/patch';
@@ -392,7 +392,7 @@ export function App() {
   const updateSetup = (event: QuickSetupEvent | { type: 'start' }) => {
     const current = setupRef.current;
     const next =
-      event.type === 'start' ? startQuickSetup(C16_SETUP, mappingStore.list()) : current && quickSetupReducer(current, event);
+      event.type === 'start' ? startQuickSetup(QUICK_SETUP, mappingStore.list()) : current && quickSetupReducer(current, event);
     if (!next || next === current) return;
     if (event.type === 'learned' && current) setSetupLast({ step: current.index, mapping: event.mapping });
     if (event.type === 'start') setSetupLast(null);
@@ -400,7 +400,7 @@ export function App() {
     setSetup(setupRef.current);
     if (next.phase === 'running') {
       surface.startLearn();
-      surface.select(next.steps[next.index].target);
+      surface.select(next.steps[next.index].target, takenControls(next));
     } else {
       surface.stopLearn();
       if (next.phase === 'cancelled') mappingStore.restore(next.before);

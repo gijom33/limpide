@@ -100,8 +100,8 @@ Judged against [the design principles](./design-principles.md).
 ### MIDI and the TempoPAD C16
 50. As a C16 owner, I want Limpide to detect my Controller when plugged in, so that I know it's connected.
 51. As a C16 owner, I want MIDI notes from the pads (KEYBOARD mode) to play the synth with Velocity, so that I can play it like an instrument.
-52. As a C16 owner, I want a Quick Setup that asks me to turn each encoder and fader in turn, so that the whole C16 is mapped in about 20 seconds.
-53. As a C16 owner, I want the default Quick Setup layout to be: encoders = Cutoff, Resonance, Envelope Amount, Detune, LFO rate, LFO amount, Waveform, Glide; faders = Amp Envelope ADSR; buttons = Hold, Freeze, Snapshot, next Preset. That way the most educational Parameters are under my hands.
+52. As a Controller owner, I want a Quick Setup that asks me for a control for each Parameter played live, in the page's order, then a button for each Action, so that my Controller is mapped in one pass, whichever it is.
+53. As a C16 owner, I want my C16 to work the moment it is plugged in, its four banks driving the four sections (Oscillators, Filter, Amp, LFO & Envelopes) and its buttons the Actions, and switching bank to bring that section into view, so that I never have to map it (issue 34).
 54. As a user, I want MIDI Learn on any Parameter or Action, so that I can map any control to anything, including on other Controllers.
 55. As a user, I want the Encoder Mode detected automatically during Learn, so that endless encoders work whatever my C16's firmware sends.
 56. As a user, I want Pickup on Absolute Mappings, so that Parameters don't jump when the knob position and the Patch disagree.

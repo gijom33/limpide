@@ -123,7 +123,7 @@ export function MidiPanel({ state, activity, mappings, learning, onLearn, onDone
                     onQuickSetup();
                   }}
                 >
-                  Quick Setup (TempoPAD C16)
+                  Quick Setup
                 </button>
               </Tooltip>
             </>

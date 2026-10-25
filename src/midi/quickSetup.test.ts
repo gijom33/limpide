@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import type { Mapping } from './mappings';
-import { C16_SETUP, differsFromExpected, quickSetupReducer, startQuickSetup, type QuickSetupState } from './quickSetup';
+import { PARAMS } from '../patch/patch';
+import { ACTIONS, type Mapping } from './mappings';
+import { QUICK_SETUP, quickSetupReducer, startQuickSetup, takenControls, type QuickSetupState } from './quickSetup';
 
 const mapped = (state: QuickSetupState, number: number): Mapping => ({
   control: { kind: 'cc', channel: 1, number },
@@ -9,35 +10,27 @@ const mapped = (state: QuickSetupState, number: number): Mapping => ({
 });
 const learn = (state: QuickSetupState, number: number) => quickSetupReducer(state, { type: 'learned', mapping: mapped(state, number) });
 
-describe('C16 Quick Setup layout', () => {
-  it('maps the eight encoders, four faders and the first five buttons to the most educational controls', () => {
-    expect(C16_SETUP.map((s) => `${s.prompt} → ${s.target.id}`)).toEqual([
-      'Turn encoder 1 → cutoff',
-      'Turn encoder 2 → resonance',
-      'Turn encoder 3 → filterEnvAmount',
-      'Turn encoder 4 → osc2Detune',
-      'Turn encoder 5 → lfoRate',
-      'Turn encoder 6 → lfoAmount',
-      'Turn encoder 7 → waveform',
-      'Turn encoder 8 → glide',
-      'Move fader 1 → ampAttack',
-      'Move fader 2 → ampDecay',
-      'Move fader 3 → ampSustain',
-      'Move fader 4 → ampRelease',
-      'Press button 1 → hold',
-      'Press button 2 → freeze',
-      'Press button 3 → snapshot',
-      'Press button 4 → nextPreset',
-      'Press button 5 → previousPreset',
+describe('Quick Setup steps', () => {
+  it('asks for every Parameter played live, in the page’s order, then the Actions', () => {
+    expect(QUICK_SETUP.map((s) => [s.group, s.target.id].filter(Boolean).join(' · '))).toEqual([
+      'Osc 2 · osc2Detune',
+      'Mixer · mixOsc1', 'Mixer · mixOsc2', 'Mixer · mixNoise', 'Mixer · mixSub',
+      'Filter · cutoff', 'Filter · resonance', 'Filter · filterEnvAmount',
+      'Filter Envelope · filterAttack', 'Filter Envelope · filterDecay', 'Filter Envelope · filterSustain', 'Filter Envelope · filterRelease',
+      'Amp Envelope · ampAttack', 'Amp Envelope · ampDecay', 'Amp Envelope · ampSustain', 'Amp Envelope · ampRelease',
+      'LFO 1 · lfoRate', 'LFO 1 · lfoAmount', 'LFO 2 · lfo2Rate', 'LFO 2 · lfo2Amount',
+      'hold', 'freeze', 'snapshot', 'previousPreset', 'nextPreset',
     ]);
-    // The C16's factory CCs, as seen on a real one: encoders 1–8, faders 33–36, buttons from 49.
-    expect(C16_SETUP.map((s) => s.expected.number)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 33, 34, 35, 36, 49, 50, 51, 52, 53]);
+    // Exactly the Parameters whose role is played live (ADR-0008): none set once for a sound, none forgotten.
+    const live = Object.values(PARAMS).filter((p) => p.control !== 'set').map((p) => p.id);
+    expect(QUICK_SETUP.filter((s) => s.target.kind === 'param').map((s) => s.target.id).sort()).toEqual([...live].sort());
+    expect(QUICK_SETUP.filter((s) => s.target.kind === 'action').map((s) => s.target.id).sort()).toEqual(Object.keys(ACTIONS).sort());
   });
 });
 
 describe('Quick Setup', () => {
   it('advances a step each time the current target is learned, and finishes after the last', () => {
-    let state = startQuickSetup(C16_SETUP.slice(0, 2), []);
+    let state = startQuickSetup(QUICK_SETUP.slice(0, 2), []);
     expect(state).toMatchObject({ phase: 'running', index: 0 });
     state = learn(state, 1);
     expect(state).toMatchObject({ phase: 'running', index: 1 });
@@ -47,19 +40,19 @@ describe('Quick Setup', () => {
   });
 
   it('ignores a Mapping for anything other than the current step', () => {
-    const state = startQuickSetup(C16_SETUP, []);
+    const state = startQuickSetup(QUICK_SETUP, []);
     const other: Mapping = { control: { kind: 'cc', channel: 1, number: 9 }, target: { kind: 'param', id: 'mixNoise' }, mode: 'absolute' };
     expect(quickSetupReducer(state, { type: 'learned', mapping: other })).toBe(state);
   });
 
   it('skips a step, leaving it unmapped', () => {
-    let state = startQuickSetup(C16_SETUP.slice(0, 2), []);
+    let state = startQuickSetup(QUICK_SETUP.slice(0, 2), []);
     state = quickSetupReducer(state, { type: 'skip' });
     expect(state).toMatchObject({ index: 1, outcomes: ['skipped'] });
   });
 
   it('goes back a step to learn it again, never before the first', () => {
-    let state = startQuickSetup(C16_SETUP, []);
+    let state = startQuickSetup(QUICK_SETUP, []);
     state = quickSetupReducer(state, { type: 'back' });
     expect(state.index).toBe(0);
     state = learn(state, 1);
@@ -70,17 +63,22 @@ describe('Quick Setup', () => {
 
   it('can finish early, keeping what was mapped, or be cancelled, giving back the Mappings from before', () => {
     const before: Mapping[] = [{ control: { kind: 'cc', channel: 1, number: 74 }, target: { kind: 'param', id: 'cutoff' }, mode: 'absolute' }];
-    const state = learn(startQuickSetup(C16_SETUP, before), 1);
+    const state = learn(startQuickSetup(QUICK_SETUP, before), 1);
     expect(quickSetupReducer(state, { type: 'finish' })).toMatchObject({ phase: 'done', outcomes: ['mapped'] });
     const cancelled = quickSetupReducer(state, { type: 'cancel' });
     expect(cancelled.phase).toBe('cancelled');
     expect(cancelled.before).toEqual(before);
   });
 
-  it('notices a control that is not the C16’s factory one (reassigned on the device, or another Controller)', () => {
-    const [first] = C16_SETUP;
-    expect(differsFromExpected(first, { control: { kind: 'cc', channel: 1, number: 1 }, target: first.target, mode: 'relative-twos' })).toBe(false);
-    expect(differsFromExpected(first, { control: { kind: 'cc', channel: 3, number: 1 }, target: first.target, mode: 'relative-twos' })).toBe(false); // any channel
-    expect(differsFromExpected(first, { control: { kind: 'cc', channel: 1, number: 74 }, target: first.target, mode: 'absolute' })).toBe(true);
+  it('never takes a control already learned for another step, however long after', () => {
+    let state = learn(startQuickSetup(QUICK_SETUP, []), 33);
+    expect(takenControls(state)).toEqual([{ kind: 'cc', channel: 1, number: 33 }]);
+    expect(learn(state, 33)).toBe(state); // the first fader, still moving after a pause
+    state = learn(state, 34);
+    expect(state).toMatchObject({ index: 2, outcomes: ['mapped', 'mapped'] });
+    // Going back to a step, its own control may be learned again; the others' may not.
+    state = quickSetupReducer(state, { type: 'back' });
+    expect(takenControls(state)).toEqual([{ kind: 'cc', channel: 1, number: 33 }]);
+    expect(learn(state, 34).index).toBe(2);
   });
 });

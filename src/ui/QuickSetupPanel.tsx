@@ -1,10 +1,10 @@
 import { describeControl, describeTarget } from '../midi/describe';
 import type { Mapping } from '../midi/mappings';
-import { differsFromExpected, type QuickSetupState } from '../midi/quickSetup';
+import type { QuickSetupState } from '../midi/quickSetup';
 
 interface Props {
   state: QuickSetupState;
-  /** The step learned last, to confirm it (and point out a control that is not the factory one). */
+  /** The step learned last, to confirm it. */
   last: { step: number; mapping: Mapping } | null;
   onBack(): void;
   onSkip(): void;
@@ -18,12 +18,11 @@ export function QuickSetupPanel({ state, last, onBack, onSkip, onFinish, onCance
   const { steps, index, outcomes, phase } = state;
   const mappedCount = outcomes.filter((o) => o === 'mapped').length;
   const step = steps[index];
-  const lastStep = last && steps[last.step];
 
   return (
     <section className="quick-setup" aria-label="Quick Setup">
       <header>
-        <strong>Quick Setup · TempoPAD C16</strong>
+        <strong>Quick Setup</strong>
         {phase === 'running' && (
           <span className="quick-setup-progress">
             {index + 1} of {steps.length}
@@ -33,14 +32,11 @@ export function QuickSetupPanel({ state, last, onBack, onSkip, onFinish, onCance
       {phase === 'running' ? (
         <>
           <p className="quick-setup-prompt" role="status">
-            <span>{step.prompt}</span> → <b>{describeTarget(step.target)}</b>
+            <span>{step.prompt}</span> → <b>{[step.group, describeTarget(step.target)].filter(Boolean).join(' · ')}</b>
           </p>
-          {last && lastStep && (
+          {last && (
             <p className="quick-setup-last">
-              {describeTarget(last.mapping.target)} ← {describeControl(last.mapping.control)}
-              {differsFromExpected(lastStep, last.mapping) && (
-                <span className="quick-setup-differs"> (usually CC {lastStep.expected.number} on a C16)</span>
-              )}
+              {[steps[last.step].group, describeTarget(last.mapping.target)].filter(Boolean).join(' · ')} ← {describeControl(last.mapping.control)}
             </p>
           )}
           <div className="quick-setup-actions">

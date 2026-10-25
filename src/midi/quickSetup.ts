@@ -1,43 +1,40 @@
-import { sameTarget, type Control, type Mapping, type Target } from './mappings';
+import { sameControl, sameTarget, type Control, type Mapping, type Target } from './mappings';
 
-/** One Learn step of a Quick Setup: what to map, what to ask for, and the control a factory C16 sends for it. */
+/** One Learn step of a Quick Setup: what to map, where it sits ("Filter Envelope"), and what to ask for. */
 export interface SetupStep {
   target: Target;
+  group?: string;
   prompt: string;
-  expected: Omit<Control, 'channel'>;
 }
 
-const param = (id: Extract<Target, { kind: 'param' }>['id']): Target => ({ kind: 'param', id });
-const action = (id: Extract<Target, { kind: 'action' }>['id']): Target => ({ kind: 'action', id });
-
-const ENCODERS: Target[] = [
-  param('cutoff'),
-  param('resonance'),
-  param('filterEnvAmount'),
-  param('osc2Detune'),
-  param('lfoRate'),
-  param('lfoAmount'),
-  { kind: 'choice', id: 'waveform' },
-  param('glide'),
-];
-const FADERS: Target[] = [param('ampAttack'), param('ampDecay'), param('ampSustain'), param('ampRelease')];
-const BUTTONS: Target[] = [action('hold'), action('freeze'), action('snapshot'), action('nextPreset'), action('previousPreset')];
+type ParamTarget = Extract<Target, { kind: 'param' }>['id'];
+const params = (group: string, ...ids: ParamTarget[]): SetupStep[] =>
+  ids.map((id) => ({ target: { kind: 'param', id }, group, prompt: 'Move a control' }));
+const actions = (...ids: Extract<Target, { kind: 'action' }>['id'][]): SetupStep[] =>
+  ids.map((id) => ({ target: { kind: 'action', id }, prompt: 'Press a button' }));
 
 /**
- * The TempoPAD C16 layout: the most educational controls under your hands. The factory CCs (encoders 1–8,
- * faders 33–36, buttons from 49) were seen on a real C16; they only guide the prompts, since each control can
- * be reassigned on the device and every step is learned.
+ * Every Parameter played live (the knobs worth turning while playing and the faders, ADR-0008), in the page's
+ * order: the Oscillators, the Filter, the Amp, the LFOs; then the Actions. Settings made once for a sound (Octave,
+ * the Waveforms, Pulse Width, Filter Mode, Velocity, Glide, Voices…) are left to MIDI Learn.
  */
-export const C16_SETUP: SetupStep[] = [
-  ...ENCODERS.map((target, i) => ({ target, prompt: `Turn encoder ${i + 1}`, expected: { kind: 'cc' as const, number: 1 + i } })),
-  ...FADERS.map((target, i) => ({ target, prompt: `Move fader ${i + 1}`, expected: { kind: 'cc' as const, number: 33 + i } })),
-  ...BUTTONS.map((target, i) => ({ target, prompt: `Press button ${i + 1}`, expected: { kind: 'cc' as const, number: 49 + i } })),
+export const QUICK_SETUP: SetupStep[] = [
+  ...params('Osc 2', 'osc2Detune'),
+  ...params('Mixer', 'mixOsc1', 'mixOsc2', 'mixNoise', 'mixSub'),
+  ...params('Filter', 'cutoff', 'resonance', 'filterEnvAmount'),
+  ...params('Filter Envelope', 'filterAttack', 'filterDecay', 'filterSustain', 'filterRelease'),
+  ...params('Amp Envelope', 'ampAttack', 'ampDecay', 'ampSustain', 'ampRelease'),
+  ...params('LFO 1', 'lfoRate', 'lfoAmount'),
+  ...params('LFO 2', 'lfo2Rate', 'lfo2Amount'),
+  ...actions('hold', 'freeze', 'snapshot', 'previousPreset', 'nextPreset'),
 ];
 
 export interface QuickSetupState {
   steps: readonly SetupStep[];
   index: number;
   outcomes: ('mapped' | 'skipped' | undefined)[];
+  /** The control each step was learned from, so no other step takes it. */
+  controls: (Control | undefined)[];
   phase: 'running' | 'done' | 'cancelled';
   /** The Mappings before the Setup began, given back if it is cancelled. */
   before: readonly Mapping[];
@@ -51,21 +48,34 @@ export type QuickSetupEvent =
   | { type: 'cancel' };
 
 export function startQuickSetup(steps: readonly SetupStep[], before: readonly Mapping[]): QuickSetupState {
-  return { steps, index: 0, outcomes: [], phase: 'running', before };
+  return { steps, index: 0, outcomes: [], controls: [], phase: 'running', before };
 }
+
+/**
+ * The controls the current step must not be learned from: those learned for the Setup's other steps. A fader still
+ * moving after its own step, however long it pauses, never fills the next one.
+ */
+export const takenControls = (state: QuickSetupState): Control[] =>
+  state.controls.filter((c, i): c is Control => c !== undefined && i !== state.index);
 
 /** Moves the Setup on: a step learned or skipped, back a step, finished early (keeping what is mapped) or cancelled. */
 export function quickSetupReducer(state: QuickSetupState, event: QuickSetupEvent): QuickSetupState {
   if (state.phase !== 'running') return state;
-  const advance = (outcome: 'mapped' | 'skipped'): QuickSetupState => {
+  const advance = (outcome: 'mapped' | 'skipped', control?: Control): QuickSetupState => {
     const outcomes = [...state.outcomes];
     outcomes[state.index] = outcome;
+    const controls = [...state.controls];
+    if (control) controls[state.index] = control;
     const index = state.index + 1;
-    return { ...state, outcomes, index, phase: index >= state.steps.length ? 'done' : 'running' };
+    return { ...state, outcomes, controls, index, phase: index >= state.steps.length ? 'done' : 'running' };
   };
   switch (event.type) {
-    case 'learned':
-      return sameTarget(event.mapping.target, state.steps[state.index].target) ? advance('mapped') : state;
+    case 'learned': {
+      const { control, target } = event.mapping;
+      if (!sameTarget(target, state.steps[state.index].target)) return state;
+      if (takenControls(state).some((c) => sameControl(c, control))) return state;
+      return advance('mapped', control);
+    }
     case 'skip':
       return advance(state.outcomes[state.index] ?? 'skipped');
     case 'back':
@@ -76,7 +86,3 @@ export function quickSetupReducer(state: QuickSetupState, event: QuickSetupEvent
       return { ...state, phase: 'cancelled' };
   }
 }
-
-/** Whether a step was learned from a control other than the factory C16's (on any channel). */
-export const differsFromExpected = (step: SetupStep, mapping: Mapping) =>
-  mapping.control.kind !== step.expected.kind || mapping.control.number !== step.expected.number;
