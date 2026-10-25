@@ -40,6 +40,7 @@
   --stage-amp: #a052fe;
   /* Modulation: what moves the stages over time (the LFO & Envelopes section, the rings to come). No stage uses it. */
   --stage-mod: #5b8cff;
+  --mod-dot: #a9c2ff;
   /* The Effective Cutoff on the Timeline: the Filter's colour lightened towards the text (either theme), so it
      reads apart from the Filter Envelope's orange area under it. */
   --cutoff-line: color-mix(in srgb, var(--stage-filter) 55%, var(--text));
@@ -64,6 +65,7 @@
   --stage-filter: #973201;
   --stage-amp: #7a1fd0;
   --stage-mod: #2f5fe0;
+  --mod-dot: #2f5fe0;
   --shadow-panel: 0 10px 32px rgba(0, 0, 0, 0.18);
   color-scheme: light;
 }
@@ -139,7 +141,8 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 /* Pointing at a source: its share bright and a little thicker, the rest of the ring dimmed. */
 .knob-ring[data-dim] { opacity: 0.35; }
 .knob-share { stroke-width: 3; }
-.knob-live { fill: var(--stage-mod); stroke: var(--panel); stroke-width: 1.5; }
+/* The live dot: bigger than the ring is thick, brighter than it, and cut out of it by a panel-coloured edge. */
+.knob-live { fill: var(--mod-dot); stroke: var(--panel); stroke-width: 2; }
 @media (prefers-reduced-motion: reduce) { .knob-live { display: none !important; } }
 /* Keyboard focus only (never after a click or a drag): a plain ring, no glow. */
 .knob-dial:focus-visible:not([data-pointer]) { outline: 2px solid var(--stage, var(--accent)); outline-offset: 2px; border-radius: 50%; }
