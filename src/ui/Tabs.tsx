@@ -74,7 +74,8 @@ export function Tabs({ label, tabs, shared }: { label: string; tabs: Tab[]; shar
             }}
           >
             {t.label}
-            {t.badge && <span className="tab-badge" aria-label={t.badgeLabel} />}
+            {/* The dot's room is kept while it is hidden, so it never pushes the tabs after it. */}
+            {t.badgeLabel && <span className="tab-badge" data-on={t.badge || undefined} aria-label={t.badge ? t.badgeLabel : undefined} />}
           </button>
           );
           return t.tip ? (

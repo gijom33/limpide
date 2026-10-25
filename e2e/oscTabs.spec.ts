@@ -49,6 +49,17 @@ test('the Osc 2 tab shows when Osc 2 is sounding, even while Osc 1 is selected',
   await expect(osc2).toHaveAttribute('data-sounding', 'true');
 });
 
+test('Osc 2’s dot never pushes the Mixer tab aside: its room is kept while it is hidden', async ({ page }) => {
+  await page.goto('/');
+  const mixer = page.getByRole('tab', { name: 'Mixer' });
+  const before = (await mixer.boundingBox())!.x;
+  await mixer.click();
+  await page.getByRole('group', { name: 'Mixer' }).getByRole('slider', { name: 'Osc 2' }).focus();
+  await page.keyboard.press('ArrowUp');
+  await expect(page.getByRole('tab', { name: /Osc 2/ })).toHaveAttribute('data-sounding', 'true');
+  expect((await mixer.boundingBox())!.x).toBe(before);
+});
+
 for (const [width, height] of [
   [1300, 900],
   [1100, 900],

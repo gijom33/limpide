@@ -55,7 +55,8 @@ import { About } from './About';
 const IDEAL_HARMONICS = 256;
 /** The piano starts on C4, the octave the octave buttons count from. */
 const DEFAULT_OCTAVE = 4;
-/** An octave button's shade: the octaves the piano is shifted its way (none at C4, or shifted the other way). */
+/** An octave button's shade, and its count (+2, −1): the octaves the piano is shifted its way (none at C4, or
+    shifted the other way). */
 const shifted = (octaves: number) =>
   octaves > 0 ? { 'data-shift': octaves, style: { '--shift': octaves } as React.CSSProperties } : {};
 
@@ -560,14 +561,14 @@ export function App() {
   const playControls = (
     <div className="play-controls" role="group" aria-label="Play">
       <div className="keyboard">
-        <button type="button" className="tool tool-icon" aria-label="Octave down" {...shifted(DEFAULT_OCTAVE - octave)} onClick={() => setOctave((o) => shiftOctave(o, -1))}>
-          −
+        <button type="button" className="tool tool-icon octave" aria-label="Octave down" {...shifted(DEFAULT_OCTAVE - octave)} onClick={() => setOctave((o) => shiftOctave(o, -1))}>
+          {octave < DEFAULT_OCTAVE ? `−${DEFAULT_OCTAVE - octave}` : '−'}
         </button>
         <Tooltip content={TIPS.keyboard}>
           <Piano octave={octave} held={demoNotes.length ? [...heldNotes, ...demoNotes] : heldNotes} input={session.input} />
         </Tooltip>
-        <button type="button" className="tool tool-icon" aria-label="Octave up" {...shifted(octave - DEFAULT_OCTAVE)} onClick={() => setOctave((o) => shiftOctave(o, 1))}>
-          +
+        <button type="button" className="tool tool-icon octave" aria-label="Octave up" {...shifted(octave - DEFAULT_OCTAVE)} onClick={() => setOctave((o) => shiftOctave(o, 1))}>
+          {octave > DEFAULT_OCTAVE ? `+${octave - DEFAULT_OCTAVE}` : '+'}
         </button>
       </div>
       <Tooltip content={TIPS.hold}>

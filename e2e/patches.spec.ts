@@ -156,3 +156,23 @@ for (const [width, height] of [[1710, 1060], [1100, 800], [872, 700]]) {
     await expect(patchName(page)).toContainText('Out of Tune');
   });
 }
+
+test('the group names take a narrow column, the long ones on two lines', async ({ page }) => {
+  await page.goto('/');
+  await patchName(page).click();
+  const menu = page.getByRole('dialog', { name: 'Patches' });
+  // Each line of a group's name, as drawn.
+  const lines = (group: string) =>
+    menu.getByRole('group', { name: group }).locator('h4').evaluate((h) => {
+      const range = document.createRange();
+      range.selectNodeContents(h);
+      return [...range.getClientRects()].map((r) => ({ y: r.y + r.height / 2, right: r.right - h.getBoundingClientRect().left }));
+    });
+  const long = await lines('Movement & Effects');
+  expect(new Set(long.map((l) => Math.round(l.y))).size).toBe(2); // two lines
+  expect(Math.max(...long.map((l) => l.right))).toBeLessThanOrEqual(80);
+  // The first line sits level with the row's first Preset.
+  const [bass] = await lines('Bass');
+  const first = (await menu.getByRole('group', { name: 'Bass' }).getByRole('button').first().boundingBox())!;
+  expect(Math.abs(bass.y - (first.y + first.height / 2))).toBeLessThan(2);
+});

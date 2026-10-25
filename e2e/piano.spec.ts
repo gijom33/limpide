@@ -69,6 +69,22 @@ test('a shifted octave shades the button it was shifted with, darker the further
   expect(await shade(down)).toBe(plain);
 });
 
+test('a shifted octave button shows how far, signed; the other keeps its sign; neither greys under the pointer', async ({ page }) => {
+  await page.goto('/');
+  const down = page.getByRole('button', { name: 'Octave down' });
+  const up = page.getByRole('button', { name: 'Octave up' });
+  await expect(up).toHaveText('+');
+  await up.hover();
+  expect(await up.evaluate((b) => getComputedStyle(b).backgroundColor)).toMatch(/rgba\(0, 0, 0, 0\)|transparent/);
+  await up.click();
+  await up.click();
+  await expect(up).toHaveText('+2');
+  await expect(down).toHaveText('−');
+  for (let i = 0; i < 3; i++) await down.click();
+  await expect(down).toHaveText('−1');
+  await expect(up).toHaveText('+');
+});
+
 test('a MIDI controller plays the synth, its pads lighting the piano', async ({ page }) => {
   // A stand-in Controller: Web MIDI with one input the test can play.
   await page.addInitScript(() => {

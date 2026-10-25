@@ -28,7 +28,7 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
     const { g, width, height } = prepareCanvas(canvas);
     g.clearRect(0, 0, width, height);
     const pad = 4;
-    const plot = height - 2 * pad - 12; // room for the time labels underneath
+    const plot = height - 2 * pad; // a grid line every second, unlabelled: "now" is the right edge
     const timeAt = (x: number) => now - WINDOW_SECONDS + (x / width) * WINDOW_SECONDS;
     const yLevel = (level: number) => pad + (1 - level) * plot;
     const yHz = (hz: number) => pad + (1 - Math.log(hz / F_MIN) / Math.log(F_MAX / F_MIN)) * plot;
@@ -44,9 +44,6 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
       g.moveTo(x, pad);
       g.lineTo(x, pad + plot);
       g.stroke();
-      const label = s === WINDOW_SECONDS ? 'now' : `−${WINDOW_SECONDS - s} s`;
-      g.textAlign = s === 0 ? 'left' : s === WINDOW_SECONDS ? 'right' : 'center';
-      g.fillText(label, x, height - 3);
     }
     g.textAlign = 'right';
     for (const hz of [100, 1000, 10000]) g.fillText(hz >= 1000 ? `${hz / 1000}k` : `${hz}`, width - 3, yHz(hz) - 2);

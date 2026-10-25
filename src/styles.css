@@ -46,7 +46,8 @@
   /* Modulation: what moves the stages over time (the LFO & Envelopes section, the rings to come). No stage uses it. */
   --stage-mod: #5b8cff;
   --mod-dot: #a9c2ff;
-  --mod-2: var(--text);
+  /* LFO 2: a very light blue, its own beside LFO 1's and never the text colour. */
+  --mod-2: #c9d7ff;
   /* The Effective Cutoff on the Timeline: the Filter's colour lightened towards the text (either theme), so it
      reads apart from the Filter Envelope's orange area under it. */
   --cutoff-line: color-mix(in srgb, var(--stage-filter) 55%, var(--text));
@@ -72,7 +73,7 @@
   --stage-amp: #7a1fd0;
   --stage-mod: #2f5fe0;
   --mod-dot: #2f5fe0;
-  --mod-2: var(--text);
+  --mod-2: #1c3170;
   --shadow-panel: 0 10px 32px rgba(0, 0, 0, 0.18);
   color-scheme: light;
 }
@@ -149,7 +150,8 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 /* Pointing at a source: its share bright and a little thicker, the rest of the ring dimmed. */
 .knob-ring[data-dim] { opacity: 0.35; }
 .knob-share { stroke-width: 3; }
-/* LFO 2 in white (the text colour), here as on its plot, so a ring shows which LFO moves which part. */
+/* LFO 2 in its very light blue (very dark in the light theme), here as on its plot, so a ring shows which LFO moves
+   which part. */
 .knob-share[data-source='lfo2'] { stroke: var(--mod-2); }
 /* The live dot: bigger than the ring is thick, brighter than it, and cut out of it by a panel-coloured edge. */
 .knob-live { fill: var(--mod-dot); stroke: var(--panel); stroke-width: 2; }
@@ -255,6 +257,9 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 .tool-icon { width: var(--control-h); padding: 0; justify-content: center; }
 /* An octave button shaded once the piano is shifted that way: a grey that deepens with each octave from C4. */
 .tool[data-shift] { color: var(--text); background: color-mix(in srgb, var(--text) calc(var(--shift) * 11%), transparent); }
+/* The octave buttons' only grey is that shade: no hover fill (it sticks after a touch) to be read as a shift. */
+.octave:hover:not([data-shift]) { background: none; }
+.octave { font-variant-numeric: tabular-nums; }
 /* Icons that stand in for a button's word where room is short (phones); the word shows everywhere else. */
 .tool-glyph { display: none; flex: none; }
 .tool-split { display: inline-flex; gap: 2px; }
@@ -403,6 +408,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .tab-list [role='tab']:focus-visible { outline: 2px solid var(--stage, var(--text)); outline-offset: -2px; border-radius: 4px; }
 /* A dot on a tab whose Oscillator is mixed in, so you know it is sounding while you edit the other. */
 .tab-badge { width: 6px; height: 6px; border-radius: 50%; background: var(--stage, var(--text)); }
+.tab-badge:not([data-on]) { visibility: hidden; }
 .tab-panels { display: grid; row-gap: var(--space-3); }
 .tab-panel { grid-area: 1 / 1; min-width: 0; }
 .tab-panel:not([data-active]) { visibility: hidden; }
@@ -524,7 +530,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .lfo-play { display: flex; align-items: stretch; gap: var(--space-3); }
 .lfo-play .knobs { flex: none; flex-wrap: nowrap; }
 .lfo-play > .tip-anchor { display: flex; flex: 1 1 auto; min-width: 0; }
-/* LFO 2 in white (the text colour): its knob arcs, its plot, its share of a ring. */
+/* LFO 2 in its very light blue (very dark in the light theme): its knob arcs, its plot, its share of a ring. */
 .lfo-rows[data-lfo='2'] { --stage: var(--mod-2); }
 .lfo-plot {
   display: block; width: 132px; min-width: 72px; height: auto; min-height: 48px; align-self: stretch;
@@ -686,9 +692,14 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
    panel's width to the right, so the whole library is on screen without scrolling on a laptop. */
 .patch-presets { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
 .patch-presets > h3 { margin: 0 0 2px; }
-.patch-group { display: grid; grid-template-columns: 120px minmax(0, 1fr); column-gap: 12px; align-items: start; }
+.patch-group { display: grid; grid-template-columns: 76px minmax(0, 1fr); column-gap: 10px; align-items: start; }
 .patch-panel > section:not(.patch-presets) { flex: none; }
-.patch-group h4 { margin: 0; line-height: var(--control-h); font-size: var(--text-sm); font-weight: 500; color: var(--muted); }
+/* A narrow label column: the long names (Keys & Plucks, Movement & Effects) take two lines, the first level with the
+   row's first Preset. */
+.patch-group h4 {
+  margin: 0; padding-top: calc((var(--control-h) - 1.25em) / 2); line-height: 1.25;
+  font-size: var(--text-sm); font-weight: 500; color: var(--muted);
+}
 .patch-list { display: flex; flex-wrap: wrap; gap: 4px; }
 .patch-item { height: var(--control-h); padding: 0 10px; font: inherit; font-size: var(--text-md); color: var(--text); cursor: pointer; background: none; border: 1px solid var(--border); border-radius: var(--radius-control); }
 .patch-item:hover { background: var(--control-hover); }
@@ -828,6 +839,8 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   .timeline-controls { flex-direction: column; align-items: stretch; }
   .timeline-controls > .sub-block, .lfo-rows { flex: 1 1 auto; min-width: 0; }
   .lfo-plot { width: 100%; }
+  /* The Timeline has no time labels: on a phone their 12 px go back to the page, the plot as tall as before. */
+  .timeline-plot { height: 108px; }
   /* No names beside the LFOs, so their rows have the section's whole width: the first is LFO 1, the second, in its
      lighter blue, LFO 2 (each group keeps its name for screen readers). */
   .timeline-controls .sub-block > h3, .timeline-controls .sub-block > .tip-anchor:first-child { display: none; }
@@ -919,4 +932,6 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
   input, textarea { -webkit-user-select: text; user-select: text; }
   button { touch-action: manipulation; }
+  /* No grey flash on a tapped button: what a control shows is its own state. */
+  button, [role='slider'] { -webkit-tap-highlight-color: transparent; }
 }

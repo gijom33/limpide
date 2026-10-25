@@ -118,7 +118,7 @@ test('LFO 2 rings the knobs of its new destinations: Resonance, Osc 2’s Semito
   }
 });
 
-test('pointing at LFO 2 brightens its own share, in its own colour (white)', async ({ page }) => {
+test('pointing at LFO 2 brightens its own share, in its own colour (a very light blue, not the text colour)', async ({ page }) => {
   await page.goto('/');
   await turnUp(page, 'LFO 1', 'Depth', 10);
   await aim(page, 2, 'Cutoff');
@@ -131,4 +131,5 @@ test('pointing at LFO 2 brightens its own share, in its own colour (white)', asy
   await page.getByRole('group', { name: 'LFO 1', exact: true }).getByRole('slider', { name: 'Depth' }).hover();
   await expect(share).toHaveAttribute('data-source', 'lfo1');
   expect(await stroke()).not.toBe(lfo2);
+  expect(lfo2).not.toBe(await page.locator('body').evaluate((b) => getComputedStyle(b).color));
 });
