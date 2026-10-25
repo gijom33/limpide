@@ -4,11 +4,11 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent
+**Status:** done. About was pinned to the top on laptop windows by a page rule for main's children; it now centres itself. The one-row header's word breakpoints moved up to make room for ⓘ, and from 861 to 919 px Hold shows its icon.
 
-- [ ] About centred vertically and horizontally at 375×812, 1000×800 and 1440×900
-- [ ] ⓘ button at every width; label from 1200 px up
-- [ ] Welcome shown once, only for a brand-new browser; remembered after it closes, however it closes
-- [ ] Share link variant plays the Demo phrase with the shared Patch
-- [ ] Play the Demo unlocks audio (story 11 still holds: no button is required to start sound)
-- [ ] e2e: first visit shows the welcome; a second visit doesn't; a Share link shows the shared variant; About is centred
+- [x] About centred vertically and horizontally at 375×812, 1000×800 and 1440×900
+- [x] ⓘ button at every width; label from 1200 px up
+- [x] Welcome shown once, only for a brand-new browser; remembered after it closes, however it closes
+- [x] Share link variant plays the Demo phrase with the shared Patch
+- [x] Play the Demo unlocks audio (story 11 still holds: no button is required to start sound)
+- [x] e2e: first visit shows the welcome; a second visit doesn't; a Share link shows the shared variant; About is centred

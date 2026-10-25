@@ -24,6 +24,7 @@ export async function withFakeController(page: Page) {
   await page.addInitScript(() => {
     if (!sessionStorage.getItem('cleared')) {
       localStorage.clear();
+      localStorage.setItem('limpide.welcomed', '1'); // an empty Library, but not a first visit
       sessionStorage.setItem('cleared', 'true');
     }
     const input = Object.assign(new EventTarget(), { id: 'fake', name: 'Synido TempoPAD C16', state: 'connected' });

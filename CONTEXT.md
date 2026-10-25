@@ -128,6 +128,10 @@ _Avoid_: Drone, latch, sustain (Sustain is an Envelope stage)
 A guided tour of the sounds: it loads a Preset from every group in turn and plays a short phrase on each, turning knobs as it goes. Knobs and the stages' switches can be changed while it plays; a Note or any other control stops it.
 _Avoid_: Autoplay, showcase
 
+**Welcome**:
+About as a brand-new browser (no Last session, no saved Patches) sees it, once: it offers to play the Demo, or, opened from a Share link, the Demo's first phrase on the shared Patch, or to explore alone.
+_Avoid_: Onboarding, splash, intro
+
 **Song**:
 A house loop in C minor that plays on whatever Patch is loaded and never changes it, so the sound can be shaped under a tune. It only uses the 13 keys from the piano's C to the C above, and moves with the piano's octave. One Voice plays its chords as a single line. A Note, the Demo or the Song button stops it.
 _Avoid_: Loop, backing track, sequence

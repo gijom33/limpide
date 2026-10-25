@@ -17,6 +17,8 @@ import { loadOverlays, saveOverlays, toggleOverlay } from '../viewers/overlays';
 import { INITIAL_VIEWER_STATE, viewerReducer } from '../viewers/viewerState';
 import type { ViewSettings } from '../viewers/viewSettings';
 import { startDemo } from '../demo/player';
+import { TOUR } from '../demo/tour';
+import { rememberWelcome, welcomeFor } from '../app/welcome';
 import { startSong } from '../demo/song';
 import { createHoldTaps, startRhythm, type Rhythm } from '../input/holdRhythm';
 import { PRESETS } from '../patch/presets';
@@ -114,8 +116,11 @@ function safeStorage(): Pick<Storage, 'getItem' | 'setItem'> {
 
 export function App() {
   // Patches: a share link, else last session's, else Init; autosaved as you play.
-  const library = useMemo(() => createLibrary(safeStorage()), []);
+  const storage = useMemo(safeStorage, []);
+  const library = useMemo(() => createLibrary(storage), [storage]);
   const [start] = useState(() => initialPatch(location.hash, library));
+  // A brand-new browser opens on About as a welcome, once; read before the first autosave makes it a Last session.
+  const [welcome, setWelcome] = useState(() => welcomeFor(start.name === 'Shared Patch', storage, library));
   const [patch, setPatch] = useState(start.patch);
   const [patchName, setPatchName] = useState(start.name);
   const [baseline, setBaseline] = useState(start.patch);
@@ -140,15 +145,18 @@ export function App() {
   stopDemoRef.current = stopDemo;
   // Knobs turned by hand while the Demo plays stay where they were put until its next Preset: its own moves skip them.
   const turnedByHand = useRef(new Set<ParamId>());
-  const toggleDemo = () => {
-    if (demoStop.current) return stopDemo();
+  const toggleDemo = () => (demoStop.current ? stopDemo() : playDemo());
+  /** The tour; or, with `shared`, only its first phrase, played on the Patch loaded now (a Share link's). */
+  const playDemo = ({ shared = false } = {}) => {
+    stopDemo();
     stopSong();
     const { engine } = session;
     demoStop.current = startDemo({
       now: () => engine.now(),
       load: (stop) => {
-        const preset = PRESETS.find((p) => p.name === stop.preset)!;
         turnedByHand.current.clear();
+        if (shared) return patchRef.current;
+        const preset = PRESETS.find((p) => p.name === stop.preset)!;
         loadPatch(preset.name, preset.patch);
         return preset.patch;
       },
@@ -163,18 +171,27 @@ export function App() {
       onNotes: setDemoNotes,
       showOctave: (o) => setOctave(shiftOctave(o, 0)),
       onEnd: () => {
-        // The tour is over: back to the starting point, silent, as if nothing had been touched.
+        // The tour is over: back to the starting point, silent, as if nothing had been touched. The shared sound
+        // stays loaded.
         demoStop.current = null;
         setDemo(null);
+        if (shared) return;
         const init = PRESETS[0];
         loadPatch(init.name, init.patch);
       },
-    });
+    }, shared ? [{ ...TOUR[0], preset: patchName, moves: undefined }] : TOUR);
   };
   // The Song: a loop that plays on the loaded Patch, never changing it, while the person turns knobs, flips switches
   // and loads Presets. It moves with the piano's octave. Playing a Note, the Demo or the Song button stops it.
   const [song, setSong] = useState(false);
-  const [about, setAbout] = useState(false);
+  const [about, setAbout] = useState(welcome !== null);
+  const closeAbout = () => {
+    setAbout(false);
+    if (welcome) {
+      rememberWelcome(storage);
+      setWelcome(null);
+    }
+  };
   const songStop = useRef<(() => void) | null>(null);
   const stopSong = () => {
     songStop.current?.();
@@ -671,7 +688,7 @@ export function App() {
             </DisplayMenu>
             <div className="about-menu">
               <Tooltip content={TIPS.about}>
-                <button type="button" className="tool" aria-haspopup="dialog" onClick={() => setAbout(true)}>
+                <button type="button" className="tool" aria-label="About" aria-haspopup="dialog" onClick={() => setAbout(true)}>
                   <InfoIcon />
                   <span className="tool-word">About</span>
                 </button>
@@ -680,7 +697,7 @@ export function App() {
           </div>
         </header>
         <SectionStrip />
-        <About open={about} onClose={() => setAbout(false)} />
+        <About open={about} welcome={welcome} onClose={closeAbout} onPlay={() => playDemo({ shared: welcome === 'shared' })} />
 
         {audioStatus === 'blocked' && (
           <p className="audio-blocked" role="status">

@@ -422,9 +422,10 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 }
 .wordmark-button:focus-visible { outline: 2px solid var(--stage-osc); outline-offset: 3px; }
 
-/* About: a splash over the page, centred, the mark large over the version and the credits. */
+/* About: a splash over the page, centred, the mark large over the version and the credits. Its own auto margins
+   centre it: the page's rules for main's children would otherwise pin it to the top on laptop windows. */
 .about {
-  width: min(440px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); padding: 0; overflow: auto;
+  width: min(440px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); margin: auto; padding: 0; overflow: auto;
   color: var(--text); background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-panel);
   box-shadow: var(--shadow-panel);
 }
@@ -440,6 +441,11 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .about-credits dt { color: var(--muted); }
 .about-credits dd { margin: 0; }
 .about a { color: inherit; text-underline-offset: 2px; }
+/* The welcome (a first visit): what to do first, over the two ways in, before the version and the credits. */
+.about-welcome { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); }
+.about-welcome p { margin: 0; max-width: 34ch; font-size: var(--text-lg); line-height: 1.4; color: var(--muted); }
+.about-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-2); }
+.about-actions .tool { min-height: 44px; padding: 0 var(--space-4); font-size: var(--text-lg); }
 .wordmark .logo { flex: none; }
 .wordmark-text { color: var(--text); } /* plain, so the colours are the mark's alone */
 /* In About the name sits close under the mark, as in the header it sits close beside it. */
@@ -687,12 +693,20 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .patch-delete { height: var(--control-h); min-width: var(--control-h); padding: 0 6px; font: inherit; font-size: var(--text-md); color: var(--muted); cursor: pointer; background: none; border: 1px solid var(--border); border-radius: var(--radius-control); }
 .patch-delete-confirm { color: var(--danger); border-color: var(--danger); }
 .patch-empty { margin: 0; font-size: var(--text-md); color: var(--muted); }
-/* The one-row header is tight: below 1100 px the Demo and Song buttons keep their icons and drop their words, and
-   below 1000 px the MIDI and Display buttons do too. */
-@media (max-width: 1099px) { .demo-word { display: none; } }
-@media (max-width: 999px) { .midi-status .tool-word, .display-menu .tool-word { display: none; } }
-/* Wide screens have room for an About button beside Display; narrower ones reach About from the logo alone. */
-@media (max-width: 1199px) { .about-menu { display: none; } }
+/* The one-row header is tight: below 1120 px the Demo and Song buttons keep their icons and drop their words, and
+   below 1045 px the MIDI and Display buttons do too. Below 920 px Hold shows its icon, and the header's zones
+   sit closer together. */
+@media (max-width: 1119px) { .demo-word { display: none; } }
+@media (max-width: 1044px) { .midi-status .tool-word, .display-menu .tool-word { display: none; } }
+@media (min-width: 861px) and (max-width: 919px) {
+  header, .header-left { column-gap: var(--space-2); }
+  header [aria-label='Hold'] .tool-glyph { display: block; }
+  header [aria-label='Hold'] .tool-word { display: none; }
+  header [aria-label='Hold'] { padding: 0 8px; }
+}
+/* The ⓘ button opens About at every width; below 1200 px it drops its word, as Display and MIDI do lower down. */
+.about-menu { display: flex; }
+@media (max-width: 1199px) { .about-menu .tool-word { display: none; } }
 .patch-save { display: flex; gap: 6px; margin-top: 8px; max-width: 440px; }
 .patch-panel > .patch-link { max-width: 440px; }
 .patch-save input, .patch-link {

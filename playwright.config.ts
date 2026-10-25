@@ -2,7 +2,15 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: 'e2e',
-  use: { baseURL: 'http://localhost:5199' },
+  use: {
+    baseURL: 'http://localhost:5199',
+    // Every test but the welcome's own starts in a browser that has been welcomed already, so About's welcome
+    // never stands over the page (e2e/welcome.spec.ts starts from an empty one).
+    storageState: {
+      cookies: [],
+      origins: [{ origin: 'http://localhost:5199', localStorage: [{ name: 'limpide.welcomed', value: '1' }] }],
+    },
+  },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
     // Safari has no Web MIDI but must still play and behave well (WebKit is Safari's engine).

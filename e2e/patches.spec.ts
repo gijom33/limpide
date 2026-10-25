@@ -13,6 +13,7 @@ test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     if (sessionStorage.getItem('cleared')) return;
     localStorage.clear();
+    localStorage.setItem('limpide.welcomed', '1'); // an empty Library, but not a first visit
     sessionStorage.setItem('cleared', 'true');
   });
   await page.goto('/');

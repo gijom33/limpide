@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef } from 'react';
+import type { Welcome } from '../app/welcome';
 import { Logo } from './Logo';
 
 const SOURCE = 'https://github.com/gijom33/limpide';
@@ -9,9 +10,23 @@ const day = (iso: string) =>
 
 /**
  * The About splash: the mark large, the version and the build it came from, and the credits. The logo opens it,
- * and so does the About button on wide screens. It closes with its button, Escape, or a click outside it.
+ * and so does the ⓘ button. It closes with its button, Escape, or a click outside it.
+ *
+ * A brand-new browser sees it once as a welcome, offering to play the Demo (or, from a Share link, the shared
+ * sound) or to explore on its own.
  */
-export function About({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function About({
+  open,
+  welcome = null,
+  onClose,
+  onPlay,
+}: {
+  open: boolean;
+  welcome?: Welcome | null;
+  onClose: () => void;
+  /** The welcome's play button: the Demo, or the Demo's phrase on the shared Patch. */
+  onPlay?: () => void;
+}) {
   const dialog = useRef<HTMLDialogElement>(null);
   const title = useId();
 
@@ -37,6 +52,30 @@ export function About({ open, onClose }: { open: boolean; onClose: () => void })
           Limpide
         </h2>
         <p className="about-tagline">A subtractive synthesizer that shows you what each stage does to the sound.</p>
+        {welcome && (
+          <div className="about-welcome">
+            <p>
+              {welcome === 'shared'
+                ? 'Someone shared a sound with you. Hear it, then turn any knob and see what changes.'
+                : 'Hear what it can do, or start playing: your keyboard, the piano or any knob.'}
+            </p>
+            <div className="about-actions">
+              <button
+                type="button"
+                className="tool tool-primary"
+                onClick={() => {
+                  onClose();
+                  onPlay?.();
+                }}
+              >
+                {welcome === 'shared' ? 'Play the shared sound' : 'Play the Demo'}
+              </button>
+              <button type="button" className="tool" onClick={onClose}>
+                Explore
+              </button>
+            </div>
+          </div>
+        )}
         <p className="about-version">
           Version {version}
           {commit && (
@@ -65,9 +104,11 @@ export function About({ open, onClose }: { open: boolean; onClose: () => void })
             </a>
           </dd>
         </dl>
-        <button type="button" className="tool" onClick={onClose}>
-          Close
-        </button>
+        {!welcome && (
+          <button type="button" className="tool" onClick={onClose}>
+            Close
+          </button>
+        )}
       </div>
     </dialog>
   );

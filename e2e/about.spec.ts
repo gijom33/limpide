@@ -27,16 +27,31 @@ test('the logo opens the About splash: version, build and credits; Close, Escape
   await expect(about).toBeVisible();
 });
 
-test('wide screens have an About button beside Display that opens the splash; narrower ones keep it behind the logo', async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto('/');
+test('an ⓘ button opens About at every width, with the word About from 1200 px up', async ({ page }) => {
   const about = page.getByRole('dialog', { name: 'Limpide' });
-  await page.getByRole('button', { name: 'About' }).click();
-  await expect(about).toBeVisible();
-  await expect(about).toContainText(`Version ${version}`);
-  await about.getByRole('button', { name: 'Close' }).click();
-  await expect(about).toBeHidden();
+  const button = page.getByRole('button', { name: 'About' });
+  for (const [width, height, word] of [[1440, 900, true], [1200, 900, true], [1199, 900, false], [1000, 800, false], [861, 800, false], [700, 800, false]] as const) {
+    await page.setViewportSize({ width, height });
+    await page.goto('/');
+    await expect(button, `${width}px`).toBeVisible();
+    await expect(button.getByText('About'), `${width}px`).toBeVisible({ visible: word });
+    await button.click();
+    await expect(about, `${width}px`).toContainText(`Version ${version}`);
+    await about.getByRole('button', { name: 'Close' }).click();
+    await expect(about).toBeHidden();
+  }
+});
 
-  await page.setViewportSize({ width: 1100, height: 900 });
-  await expect(page.getByRole('button', { name: 'About' })).toBeHidden();
+test('About is centred over a dimmed page, on a phone, a laptop and a large screen', async ({ page }) => {
+  for (const [width, height] of [[375, 812], [1000, 800], [1440, 900]]) {
+    await page.setViewportSize({ width, height });
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Limpide' }).click();
+    const box = (await page.getByRole('dialog', { name: 'Limpide' }).boundingBox())!;
+    const view = await page.evaluate(() => ({ w: document.documentElement.clientWidth, h: document.documentElement.clientHeight }));
+    expect(Math.abs(box.x - (view.w - box.x - box.width)), `${width}×${height} horizontally`).toBeLessThanOrEqual(1);
+    expect(Math.abs(box.y - (view.h - box.y - box.height)), `${width}×${height} vertically`).toBeLessThanOrEqual(1);
+    const backdrop = await page.locator('dialog.about').evaluate((d) => getComputedStyle(d, '::backdrop').backgroundColor);
+    expect(backdrop, 'dimmed').toMatch(/rgba\(0, 0, 0, 0\.\d+\)/);
+  }
 });
