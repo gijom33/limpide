@@ -759,9 +759,9 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
     margin: calc(-1 * var(--space-3)) calc(-1 * var(--space-2)) 0;
     padding: var(--space-3) var(--space-2) var(--space-2);
     background: var(--bg); border-bottom: 1px solid var(--border);
-    grid-template-columns: auto auto minmax(0, 1fr) auto auto auto auto;
-    grid-template-areas: 'left left left left left left display' 'down up . demo song hold midi' 'piano piano piano piano piano piano piano';
-    gap: var(--space-2);
+    grid-template-columns: auto auto minmax(0, 1fr) auto auto auto auto auto;
+    grid-template-areas: 'left left left left left left left display' 'down up . demo song hold midi about' 'piano piano piano piano piano piano piano piano';
+    gap: var(--space-2) var(--space-1);
   }
   .header-center, .play-controls, .keyboard, .header-right { display: contents; }
   .header-left { grid-area: left; gap: var(--space-3); }
@@ -777,7 +777,9 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   .keyboard > :last-child { grid-area: up; }
   .keyboard > .tip-anchor { grid-area: piano; display: flex; }
   .play-controls > .tip-anchor { grid-area: hold; }
-  .midi-menu { grid-area: midi; }
+  /* Flex wrappers, so their buttons sit on the row's top like the others (an inline button rides the text line). */
+  .midi-menu { grid-area: midi; display: flex; }
+  .about-menu { grid-area: about; display: flex; }
   /* One octave, C to C, so each white key is wider than a fingertip (Apple's 44 pt); the octave buttons reach
      the rest. The keys share the row's width: eight white keys, black ones 0.6 of a white key as on a piano. */
   .keyboard > .tip-anchor { container-type: inline-size; }
@@ -789,6 +791,42 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   .tool-word { display: none; }
   .midi-count { display: none; } /* the dot already says a device is connected */
   header .tool:has(> .tool-glyph), .display-menu > .tip-anchor > .tool, .display-menu .tool { padding: 0 8px; }
+  /* The playing row: each icon over its word (a tooltip needs a pointer, so on a touch screen the word says what the
+     icon does), 44 pt tall for a finger. The octave buttons match their height. */
+  header :is(.demo-button, [aria-label='Hold'], .midi-status, .about-menu .tool) {
+    flex-direction: column; justify-content: center; gap: 2px; height: auto; min-height: 44px; padding: 3px 6px 2px;
+  }
+  header :is(.demo-button, [aria-label='Hold'], .midi-status, .about-menu .tool) :is(.demo-word, .tool-word) {
+    display: block; font-size: 9px; line-height: 10px;
+  }
+  .keyboard > .tool-icon { height: 44px; }
+}
+
+/* The sections strip (phones): equal tabs under the header, each underlined in its section's colour when it is the
+   one in view. Hidden where every section is on screen at once. */
+.section-strip { display: none; }
+@media (max-width: 600px) {
+  .section-strip {
+    display: flex; position: sticky; top: calc(var(--header-h, 0px) - 1px); z-index: 9;
+    margin: 0 calc(-1 * var(--space-2)); padding: 0 var(--space-2); background: var(--bg); border-bottom: 1px solid var(--border);
+  }
+  .section-strip button {
+    flex: 1; min-height: 44px; padding: 0 4px; border: 0; border-bottom: 3px solid transparent; background: none; cursor: pointer;
+    font: inherit; font-size: var(--text-sm); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
+    white-space: nowrap;
+  }
+  .section-strip [data-section='Oscillators'] { --c: var(--stage-osc); }
+  .section-strip [data-section='Filter'] { --c: var(--stage-filter); }
+  .section-strip [data-section='Amp'] { --c: var(--stage-amp); }
+  .section-strip [data-section='LFO & Envelopes'] { --c: var(--stage-mod); }
+  .section-strip [aria-current] { color: var(--c); border-bottom-color: var(--c); }
+  .section-strip button:focus-visible { outline: 2px solid var(--c); outline-offset: -2px; }
+  /* While the page scrolls down, the header keeps its playing row and the piano; its first row (logo, Patch,
+     Display) comes back on any scroll up. */
+  :root[data-header-collapsed] header {
+    grid-template-areas: 'down up . demo song hold midi about' 'piano piano piano piano piano piano piano piano';
+  }
+  :root[data-header-collapsed] header .header-left, :root[data-header-collapsed] header .display-menu { display: none; }
 }
 
 /* Touch screens: a long press or a double tap on the instrument plays or turns it; it never selects text or opens

@@ -29,6 +29,7 @@ import { TIPS } from './tips';
 import { ToolGroup } from './ToolGroup';
 import { FilterShape } from './FilterShape';
 import { Segmented } from './Segmented';
+import { SectionStrip } from './SectionStrip';
 import { SubBlock } from './SubBlock';
 import { LfoControls } from './LfoControls';
 import { LearnBar } from './LearnBar';
@@ -669,6 +670,7 @@ export function App() {
             </div>
           </div>
         </header>
+        <SectionStrip />
         <About open={about} onClose={() => setAbout(false)} />
 
         {audioStatus === 'blocked' && (
