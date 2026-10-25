@@ -120,7 +120,7 @@ export const TIPS = {
   },
   lfoWaveform: {
     title: 'LFO',
-    body: 'The LFO as it moves: its last second, the newest at the right, so 1 Hz is one period. Sine and Triangle sweep smoothly, Square jumps between two values, Saw ramps and drops.',
+    body: 'The LFO as it moves: its last second, the newest at the right, so 1 Hz is one period. Sine and Triangle sweep smoothly, Square jumps between two values, Saw ramps up and drops, Saw Down drops and ramps down. Its height is the Depth.',
   },
   lfoDestination: {
     title: 'LFO Destination',

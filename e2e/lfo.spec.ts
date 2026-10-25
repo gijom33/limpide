@@ -21,6 +21,7 @@ test('the LFO sits in the LFO & Envelopes section: shape buttons, Destination, a
   const shapes = lfo.getByRole('radiogroup', { name: 'LFO Waveform' });
   const destination = lfo.getByRole('radiogroup', { name: 'LFO Destination' });
   await expect(shapes.getByRole('radio', { name: 'Sine' })).toHaveAttribute('aria-checked', 'true');
+  expect(await shapes.getByRole('radio').evaluateAll((radios) => radios.map((r) => r.getAttribute('aria-label')))).toEqual(['Sine', 'Triangle', 'Square', 'Saw', 'Saw Down']);
   await expect(destination.getByRole('radio', { name: 'Cutoff' })).toHaveAttribute('aria-checked', 'true');
   await expect(lfo.getByRole('img', { name: 'LFO' })).toBeVisible(); // the plot shows; it picks nothing
 

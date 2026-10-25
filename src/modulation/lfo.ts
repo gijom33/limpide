@@ -1,4 +1,4 @@
-export type LfoWaveform = 'sine' | 'triangle' | 'square' | 'saw';
+export type LfoWaveform = 'sine' | 'triangle' | 'square' | 'saw' | 'sawDown';
 
 /** One cycle of an LFO Waveform at `phase` (0–1), matching Web Audio's own oscillator shapes and start phase. */
 export function lfoShape(waveform: LfoWaveform, phase: number): number {
@@ -12,6 +12,8 @@ export function lfoShape(waveform: LfoWaveform, phase: number): number {
       return p < 0.5 ? 1 : -1;
     case 'saw':
       return p < 0.5 ? 2 * p : 2 * p - 2;
+    case 'sawDown':
+      return -lfoShape('saw', p);
   }
 }
 

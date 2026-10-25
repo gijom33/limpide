@@ -124,7 +124,7 @@ export const CHOICES = {
   osc2Waveform: ['saw', 'sine', 'triangle', 'square', 'pulse'],
   filterMode: ['lowpass', 'highpass', 'bandpass', 'notch'],
   filterSlope: [12, 24],
-  lfoWaveform: ['sine', 'triangle', 'square', 'saw'],
+  lfoWaveform: ['sine', 'triangle', 'square', 'saw', 'sawDown'],
   lfoDestination: ['cutoff', 'pitch', 'pulseWidth'],
   voices: [1, 2, 3, 4, 5, 6, 7, 8],
 } as const satisfies { [K in Exclude<keyof Patch, ParamId>]: readonly Patch[K][] };

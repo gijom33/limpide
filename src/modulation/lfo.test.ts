@@ -25,6 +25,12 @@ describe('lfoShape: one cycle of each LFO Waveform (phase 0–1), like Web Audio
     expect(lfoShape('saw', 0.25)).toBeCloseTo(0.5);
     expect(lfoShape('saw', 0.75)).toBeCloseTo(-0.5);
   });
+
+  it('a falling saw is the saw upside down: from 0 to −1 by half way, a jump to +1, and down back to 0', () => {
+    expect(lfoShape('sawDown', 0)).toBeCloseTo(0);
+    expect(lfoShape('sawDown', 0.25)).toBeCloseTo(-0.5);
+    expect(lfoShape('sawDown', 0.75)).toBeCloseTo(0.5);
+  });
 });
 
 describe('lfoPhase: where in its cycle the LFO is, given its Rate over time', () => {

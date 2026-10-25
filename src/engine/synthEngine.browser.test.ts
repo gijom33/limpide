@@ -351,6 +351,18 @@ describe('modulationAt for past moments (the Envelope Timeline)', () => {
     expect(sliding).toBeLessThan(71);
     expect(engine.modulationAt(0.9).pitch).toBeCloseTo(72, 0); // there by the Glide time (98 % of the way)
   });
+  it('a falling saw LFO bends the pitch down then up, in the sound as in the model', async () => {
+    const patch = { cutoff: 20000, waveform: 'sine', ampSustain: 1, ampAttack: 0.001, lfoDestination: 'pitch', lfoAmount: 1, lfoRate: 1, lfoWaveform: 'sawDown' } as const;
+    let engine: ReturnType<typeof createSynthEngine> | undefined;
+    const s = await render(1, patch, (e) => {
+      engine = e;
+      e.noteOn(69, 1, 0);
+    });
+    // A quarter of the way into its cycle the falling saw is at −½: half a semitone flat; three quarters, half sharp.
+    expect(frequencyAround(s, SR, 0.25, 0.02)).toBeCloseTo(440 * 2 ** (-0.5 / 12), 0);
+    expect(frequencyAround(s, SR, 0.75, 0.02)).toBeCloseTo(440 * 2 ** (0.5 / 12), 0);
+    expect(engine!.modulationAt(0.25).vibrato).toBeCloseTo(-0.5);
+  });
   it('an LFO on Pitch wobbles the sounding pitch a semitone each way at full Depth; aimed elsewhere, not at all', () => {
     const swing = (destination: 'pitch' | 'cutoff') => {
       const ctx = new OfflineAudioContext(1, SR, SR);

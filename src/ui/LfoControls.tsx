@@ -16,6 +16,7 @@ const SHAPES: { waveform: LfoWaveform; label: string; path: string }[] = [
   { waveform: 'triangle', label: 'Triangle', path: 'M2 7 L7 2 L17 12 L22 7' },
   { waveform: 'square', label: 'Square', path: 'M2 12 V2 H12 V12 H22 V2' },
   { waveform: 'saw', label: 'Saw', path: 'M2 12 L12 2 V12 L22 2' },
+  { waveform: 'sawDown', label: 'Saw Down', path: 'M2 2 L12 12 V2 L22 12' },
 ];
 
 const DESTINATIONS: { value: LfoDestination; label: string }[] = [

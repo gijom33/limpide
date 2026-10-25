@@ -154,7 +154,20 @@ function createAnalyser(ctx: BaseAudioContext): AnalyserNode {
   return analyser;
 }
 
-const LFO_TYPES: Record<LfoWaveform, OscillatorType> = { sine: 'sine', triangle: 'triangle', square: 'square', saw: 'sawtooth' };
+const LFO_TYPES: Record<Exclude<LfoWaveform, 'sawDown'>, OscillatorType> = { sine: 'sine', triangle: 'triangle', square: 'square', saw: 'sawtooth' };
+
+/** A falling saw: Web Audio's own saw series upside down, unnormalised, so its ramp runs exactly from +1 to −1. */
+function fallingSaw(ctx: BaseAudioContext): PeriodicWave {
+  const real = new Float32Array(2048);
+  const imag = real.map((_, n) => (n ? (-2 / (n * Math.PI)) * (n % 2 ? 1 : -1) : 0));
+  return ctx.createPeriodicWave(real, imag, { disableNormalization: true });
+}
+
+/** Set an LFO oscillator's Waveform. */
+function setLfoWaveform(lfo: OscillatorNode, waveform: LfoWaveform, sawDown: () => PeriodicWave) {
+  if (waveform === 'sawDown') lfo.setPeriodicWave(sawDown());
+  else lfo.type = LFO_TYPES[waveform];
+}
 
 /**
  * One Oscillator. Most Waveforms play their Fourier series directly (a PeriodicWave). A pulse is built the
@@ -433,6 +446,8 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   lfo.connect(lfoToPitch);
   const shared: Shared = { lfo, lfoToCutoff, lfoToPitch, noise: noiseBuffer(ctx), master };
   const voices = Array.from({ length: MAX_VOICES }, (_, i) => createVoice(ctx, shared, i));
+  let falling: PeriodicWave | undefined;
+  const sawDown = () => (falling ??= fallingSaw(ctx));
   const lfoStart = ctx.currentTime;
   lfo.start(lfoStart);
   // The model's copy of the LFO's phase, advanced with every Rate change exactly as the oscillator is (ADR-0003).
@@ -613,7 +628,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       lfoClock.setRate(t, next.lfoRate);
       lfoClock.forgetBefore(t - MODEL_SECONDS);
       for (const v of voices) v.apply(next, t);
-      lfo.type = LFO_TYPES[next.lfoWaveform];
+      setLfoWaveform(lfo, next.lfoWaveform, sawDown);
       lfo.frequency.setValueAtTime(next.lfoRate, t);
       lfoToCutoff.gain.setValueAtTime(next.lfoDestination === 'cutoff' ? LFO_CUTOFF_OCTAVES * 1200 * next.lfoAmount : 0, t);
       lfoToPitch.gain.setValueAtTime(next.lfoDestination === 'pitch' ? LFO_PITCH_CENTS * next.lfoAmount : 0, t);
