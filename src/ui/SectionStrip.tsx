@@ -14,8 +14,8 @@ const LANDING_GAP = 8;
 const TOP = 80;
 /** Scrolls smaller than this (a resting thumb, a bounce) do not change the header. */
 const JITTER = 4;
-/** A jump has ended once the page has not scrolled for this long. */
-const STILL_MS = 150;
+/** A jump that cannot reach its target (the end of the page) has ended once the page has not scrolled for this long. */
+const STILL_MS = 400;
 
 /** The header's rows above the piano slid out of view or back (CSS acts on it on phones only). */
 const collapseHeader = (collapsed: boolean) => document.documentElement.toggleAttribute('data-header-collapsed', collapsed);
@@ -29,9 +29,9 @@ const section = (name: string) => document.querySelector<HTMLElement>(`section[a
  */
 export function SectionStrip() {
   const [current, setCurrent] = useState<string>(SECTIONS[0].name);
-  // While a tapped jump scrolls, the header keeps the state the jump gave it: showing or hiding its first row changes
-  // the page's height, which moves the scroll in Safari, which would read as the other direction and interrupt it.
-  const jumping = useRef(false);
+  // While a tapped jump scrolls, the header keeps the state the jump gave it, until the page arrives where the jump
+  // was going (or stops short of it): a pause or a pixel's settle mid-way must not read as a scroll back up.
+  const jumping = useRef<number | null>(null);
 
   // The header's height, so the strip sits right under it (the header is sticky too), and how much of it slides away
   // while the page scrolls down: everything above the piano, but for a sliver of the header's padding.
@@ -54,22 +54,28 @@ export function SectionStrip() {
   useEffect(() => {
     let last = scrollY;
     let still: ReturnType<typeof setTimeout> | undefined;
+    const arrive = () => {
+      clearTimeout(still);
+      jumping.current = null;
+      last = scrollY;
+    };
     const onScroll = () => {
-      if (jumping.current) {
+      if (jumping.current !== null) {
         clearTimeout(still);
-        still = setTimeout(() => {
-          jumping.current = false;
-          last = scrollY;
-        }, STILL_MS);
+        if (Math.abs(scrollY - jumping.current) <= 2) arrive();
+        else still = setTimeout(arrive, STILL_MS);
         return;
       }
       if (Math.abs(scrollY - last) < JITTER) return;
       collapseHeader(scrollY > last && scrollY > TOP);
       last = scrollY;
     };
+    const onScrollEnd = () => jumping.current !== null && arrive();
     addEventListener('scroll', onScroll, { passive: true });
+    addEventListener('scrollend', onScrollEnd);
     return () => {
       removeEventListener('scroll', onScroll);
+      removeEventListener('scrollend', onScrollEnd);
       clearTimeout(still);
       collapseHeader(false);
     };
@@ -109,7 +115,7 @@ export function SectionStrip() {
     const strip = document.querySelector('.section-strip')!.getBoundingClientRect().height;
     const top = target.getBoundingClientRect().top + scrollY - (header - 1 + strip) - LANDING_GAP;
     const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    jumping.current = true;
+    jumping.current = Math.round(Math.min(Math.max(0, top), document.documentElement.scrollHeight - innerHeight));
     scrollTo({ top: Math.max(0, top), behavior: still ? 'auto' : 'smooth' });
     setCurrent(name);
   };
