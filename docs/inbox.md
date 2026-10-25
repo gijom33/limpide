@@ -5,6 +5,7 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 ## Bugs
 
 - The Hold rhythm test (e2e/holdRhythm.spec.ts) fails in one browser of two when both run at once: no strikes counted. It passes alone. Seen 2026-10-25.
+- The contrast test (e2e/designPrinciples.spec.ts) can catch the "Play to start the sound" label mid fade-in: 3.32:1 in the light theme on a laptop, once in two runs. Seen 2026-10-25.
 
 ## Ideas
 

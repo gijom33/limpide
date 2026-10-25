@@ -4,6 +4,8 @@
   /* Radii: panels, controls, and the surfaces inside them (Viewers). Floating panels share one elevation. */
   --radius-panel: 10px; --radius-control: 7px; --radius-inner: 6px;
   --shadow-panel: 0 10px 32px rgba(0, 0, 0, 0.35);
+  /* Every Viewer's main curve, so the plots read as one set (issue 37); reference lines stay at 1 px. */
+  --curve-w: 1.75px;
   --control-on: color-mix(in srgb, var(--text) 14%, var(--panel));
   /* A selector's chosen option (Waveform, Filter Mode, Voices, LFO shape…): a little brighter than a pressed button,
      so the choice reads at a glance on the selector's darker track. */
@@ -563,7 +565,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 }
 .lfo-plot svg { display: block; width: 100%; height: 100%; }
 .lfo-plot-axis { stroke: var(--grid); }
-.lfo-plot-line { fill: none; stroke: var(--stage); stroke-width: 2; stroke-linejoin: round; }
+.lfo-plot-line { fill: none; stroke: var(--stage); stroke-width: var(--curve-w); stroke-linejoin: round; vector-effect: non-scaling-stroke; }
 .lfo-plot-dot { fill: var(--stage); stroke: var(--bg); stroke-width: 1.5; }
 
 /* An LFO's destination, picked like a Patch: ‹ name ›, the name opening a menu grouped by stage. */

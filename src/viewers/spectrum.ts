@@ -1,6 +1,6 @@
 import { OSCILLATOR_LEVEL } from '../engine/synthEngine';
 import { frequencyAxis, levelAxis } from './axes';
-import { cssVar, prepareCanvas } from './canvas';
+import { cssVar, curveWidth, prepareCanvas } from './canvas';
 import { createFreezeLatch } from './freezeLatch';
 import { harmonicMarkers } from './harmonicMarkers';
 import { spectrumOutline } from './outline';
@@ -139,7 +139,8 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
     g.fill();
     g.globalAlpha = 1;
     g.strokeStyle = trace;
-    // 1.5 device pixels: thin enough that spikes three device pixels apart keep a dark gap between them.
+    // 1.5 device pixels, not the curve width the other Viewers share: thin enough that spikes three device pixels
+    // apart keep a dark gap between them.
     g.lineWidth = 1.5 / ratio;
     strokeColumns(g, outline, yOf, ratio);
 
@@ -155,7 +156,7 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
       // The Effective Cutoff's colour, as on the Timeline: this is the Filter's shape at that Cutoff.
       g.strokeStyle = cssVar(canvas, '--cutoff-line');
       g.globalAlpha = 0.85;
-      g.lineWidth = 1.25;
+      g.lineWidth = curveWidth(canvas);
       g.setLineDash([6, 3]);
       strokeColumns(g, gains.map((v) => zero + 20 * Math.log10(Math.max(1e-6, v))), yOf);
       g.setLineDash([]);

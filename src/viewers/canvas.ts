@@ -14,3 +14,6 @@ export function prepareCanvas(canvas: HTMLCanvasElement): { g: CanvasRenderingCo
 
 /** Reads a CSS custom property from the canvas, so Viewers follow the theme. */
 export const cssVar = (el: Element, name: string) => getComputedStyle(el).getPropertyValue(name).trim();
+
+/** The width of every Viewer's main curve, in CSS pixels, from the theme (`--curve-w`). */
+export const curveWidth = (el: Element) => parseFloat(cssVar(el, '--curve-w')) || 1.75;

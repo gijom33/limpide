@@ -1,5 +1,5 @@
 import { OSCILLATOR_LEVEL } from '../engine/synthEngine';
-import { cssVar, prepareCanvas } from './canvas';
+import { cssVar, curveWidth, prepareCanvas } from './canvas';
 import { cycleLockOffset } from './cycleLock';
 import { createFreezeLatch } from './freezeLatch';
 import { scopeScale } from './scopeScale';
@@ -127,7 +127,7 @@ export function createScope(
     g.globalAlpha = 1;
 
     g.strokeStyle = colour;
-    g.lineWidth = 1.5;
+    g.lineWidth = curveWidth(canvas);
     stroke(trace);
   };
 }

@@ -4,8 +4,8 @@
 
 **Blocked by:** none
 
-**Status:** not started.
+**Status:** done. 1.75 px, the `--curve-w` token in styles.css, which the canvases read as they read the theme's colours; the LFO plot's line no longer scales with the plot. One exception, kept on purpose: the Spectrum's outline stays 1.5 device pixels, so Harmonic spikes three device pixels apart keep a dark gap between them.
 
-- [ ] One width for the main curves, kept in one place: the LFO plot thinner than now, the Scope's trace a little thicker
-- [ ] Every Viewer uses it: Scope, Spectrum (outline and Response Curve), Timeline, LFO plots
-- [ ] Still at least 3:1 against the background in both themes (design principles, WCAG 1.4.11)
+- [x] One width for the main curves, kept in one place: the LFO plot thinner than now, the Scope's trace a little thicker
+- [x] Every Viewer uses it: Scope, the Spectrum's Response Curve (its outline excepted, above), Timeline, LFO plots
+- [x] Still at least 3:1 against the background in both themes (design principles, WCAG 1.4.11)

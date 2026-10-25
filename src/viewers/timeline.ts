@@ -1,6 +1,6 @@
 import type { Modulation } from '../engine/synthEngine';
 import { formatParam } from '../patch/patch';
-import { cssVar, prepareCanvas } from './canvas';
+import { cssVar, curveWidth, prepareCanvas } from './canvas';
 import { createFreezeLatch } from './freezeLatch';
 import type { ViewSettings } from './viewSettings';
 
@@ -66,7 +66,7 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
       g.fill();
       g.globalAlpha = 1;
       g.strokeStyle = colour;
-      g.lineWidth = 1.5;
+      g.lineWidth = curveWidth(canvas);
       g.beginPath();
       samples.forEach((m, x) => (x ? g.lineTo(x, yLevel(level(m))) : g.moveTo(x, yLevel(level(m)))));
       g.stroke();
@@ -94,7 +94,7 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
     g.stroke();
     g.setLineDash([]);
     g.globalAlpha = 1;
-    g.lineWidth = 1.75;
+    g.lineWidth = curveWidth(canvas);
     g.beginPath();
     samples.forEach((m, x) => (x ? g.lineTo(x, yHz(m.cutoff)) : g.moveTo(x, yHz(m.cutoff))));
     g.stroke();
