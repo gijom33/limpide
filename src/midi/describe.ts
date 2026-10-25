@@ -12,8 +12,15 @@ export const describeControl = ({ kind, channel, number }: Control) =>
 export const describeTarget = (target: Target) =>
   target.kind === 'param' ? PARAMS[target.id].label : target.kind === 'choice' ? CHOICE_LABELS[target.id] : ACTIONS[target.id];
 
-export const describeMode = (mode: Mapping['mode']) =>
-  mode === 'absolute' ? 'Absolute, with Pickup' : mode === 'trigger' ? 'Press' : 'Relative';
+const MODE_LABELS: Record<Mapping['mode'], string> = {
+  absolute: 'Absolute, with Pickup',
+  'relative-twos': 'Relative',
+  'relative-centred': 'Relative',
+  detect: 'Turn it once to set it up',
+  trigger: 'Press',
+  toggle: 'Press',
+};
+export const describeMode = (mode: Mapping['mode']) => MODE_LABELS[mode];
 
 /** The Activity Monitor's line, channel first: "ch 2 · CC 7 · 100", "ch 1 · Note E4 · 120". */
 export function describeMessage(message: MidiMessage): string {

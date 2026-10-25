@@ -37,6 +37,11 @@ export const TIPS = {
     body: 'Maps your Controller in one pass: it asks for a control for each knob and fader played live (the big knobs and the faders), in the page’s order from the Oscillators to the LFOs, then a button for Hold, Freeze, Snapshot and the Preset arrows. Settings made once for a sound (Octave, the Waveforms, Filter Mode, Glide, Voices…) are left to MIDI Learn.',
     how: 'Skip any step. Finish (or Escape) keeps what is mapped; Cancel puts back your Mappings from before.',
   },
+  c16Layout: {
+    title: 'C16 layout',
+    body: 'Maps the whole TempoPAD C16, a section per bank: A the Oscillators, B the Filter, C the Amp, D the LFOs. On every bank, buttons 1 to 5 are Hold, Freeze, Snapshot and the Preset arrows; on D, 6 and 7 Retrigger the LFOs. Each knob sets itself up on its first turn.',
+    how: 'Applied by itself the first time a C16 is plugged in. This puts it back, replacing your Mappings; MIDI Learn changes any single control.',
+  },
   midiLearn: {
     title: 'MIDI Learn',
     body: 'Map your Controller: click a knob or button here, then move a knob, fader or pad there. Endless encoders and normal knobs are told apart by what they send.',

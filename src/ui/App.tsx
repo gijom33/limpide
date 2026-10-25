@@ -5,6 +5,7 @@ import { keyToNote, octaveKey, shiftOctave } from '../input/keyboardLayout';
 import { createControlSurface, type LearnState } from '../midi/controlSurface';
 import { describeMessage, targetKey } from '../midi/describe';
 import { connectMidi, midiSupport, type MidiAccessLike } from '../midi/inputs';
+import { c16Bank, c16Layout, isC16 } from '../midi/c16';
 import { createMappingStore, type Mapping, type Target } from '../midi/mappings';
 import { QUICK_SETUP, quickSetupReducer, startQuickSetup, takenControls, type QuickSetupEvent, type QuickSetupState } from '../midi/quickSetup';
 import { OSCILLATOR_LEVEL } from '../engine/synthEngine';
@@ -35,7 +36,7 @@ import { ModulationContext } from './modulationRing';
 import { MathsContext } from './mathsContext';
 import { harmonicFormula, responseFormula, type Formula } from '../music/maths';
 import { SectionStrip } from './SectionStrip';
-import { SECTION_OF, type SectionName } from './sections';
+import { SECTION_OF, SECTIONS, type SectionName } from './sections';
 import { SubBlock } from './SubBlock';
 import { LfoControls } from './LfoControls';
 import { LearnBar } from './LearnBar';
@@ -109,6 +110,9 @@ function Block({ title, stage, ids, patch, onChange, children, more, heading, ex
 const choiceOptions = (id: ChoiceId): readonly unknown[] =>
   id === 'waveform' || id === 'osc2Waveform' ? WAVEFORM_ORDER : CHOICES[id];
 
+/** Set once the C16 layout has been applied by itself, so it is never applied again unasked. */
+const C16_APPLIED = 'limpide.c16Layout';
+
 /** localStorage, or a stand-in that keeps nothing when the browser refuses it (some private modes). */
 function safeStorage(): Pick<Storage, 'getItem' | 'setItem'> {
   try {
@@ -158,6 +162,7 @@ export function App() {
   const playDemo = ({ shared = false } = {}) => {
     stopDemo();
     stopSong();
+    setBankFollow(null); // when the Demo ends, the page stays where the Demo left it
     const { engine } = session;
     demoStop.current = startDemo({
       now: () => engine.now(),
@@ -350,6 +355,17 @@ export function App() {
   // The Controller's Mappings, and where its messages meet the synth. Messages arrive between renders, so the
   // surface reads and writes the Patch through a ref that is always current.
   const mappingStore = useMemo(() => createMappingStore(safeStorage()), []);
+  // The C16 layout: applied once by itself, the first time a C16 is plugged in with nothing mapped (after that, a
+  // person who removed it meant to); the MIDI panel puts it back at any time.
+  const applyC16Layout = () => {
+    mappingStore.restore(c16Layout());
+    storage.setItem(C16_APPLIED, '1');
+  };
+  // A C16 control moved on another bank than the last: its section is brought into view (on a phone, where one
+  // section shows at a time).
+  const c16Connected = useRef(false);
+  const lastBank = useRef<number | undefined>(undefined);
+  const [bankFollow, setBankFollow] = useState<{ name: SectionName; key: number } | null>(null);
   const mappings = useSyncExternalStore(mappingStore.subscribe, mappingStore.list);
   const patchRef = useRef(patch);
   patchRef.current = patch;
@@ -487,10 +503,23 @@ export function App() {
         dispose = connectMidi(access as unknown as MidiAccessLike, {
           onMessage: (m) => {
             if (m.type === 'noteOn' && demoStop.current) stopDemoRef.current();
+            if (c16Connected.current && m.type === 'cc' && surface.learnState().phase === 'off') {
+              const control = { kind: 'cc' as const, channel: m.channel, number: m.controller };
+              const bank = c16Bank(control);
+              if (bank !== undefined && bank !== lastBank.current && mappingStore.find(control)) {
+                lastBank.current = bank;
+                setBankFollow((f) => ({ name: SECTIONS[bank].name, key: (f?.key ?? 0) + 1 }));
+              }
+            }
             surface.handle(m);
             setActivity(describeMessage(m));
           },
-          onDevices: (devices) => setMidi({ kind: 'ready', devices }),
+          onDevices: (devices) => {
+            setMidi({ kind: 'ready', devices });
+            c16Connected.current = devices.some(isC16);
+            const fresh = mappingStore.list().length === 0 && storage.getItem(C16_APPLIED) === null;
+            if (c16Connected.current && fresh) applyC16Layout();
+          },
         });
       },
       () => setMidi({ kind: 'denied' }),
@@ -622,7 +651,8 @@ export function App() {
         onLearn={() => surface.startLearn()}
         onDone={() => (setupRef.current ? updateSetup({ type: 'finish' }) : surface.stopLearn())}
         onQuickSetup={() => updateSetup({ type: 'start' })}
-        onRemove={(target) => mappingStore.remove(target)}
+        onC16Layout={applyC16Layout}
+        onRemove={(control) => mappingStore.remove(control)}
         onClear={() => mappingStore.clear()}
       />
     </div>
@@ -727,7 +757,7 @@ export function App() {
             </div>
           </div>
         </header>
-        <SectionStrip follow={demo === null ? null : follow} />
+        <SectionStrip follow={demo === null ? bankFollow : follow} />
         <About open={about} welcome={welcome} onClose={closeAbout} onPlay={() => playDemo({ shared: welcome === 'shared' })} />
 
         {audioStatus === 'blocked' && (

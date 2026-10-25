@@ -1,6 +1,6 @@
 import type { ChoiceId, ParamId } from '../patch/patch';
-import { detectEncoderMode, relativeDelta } from './encoderMode';
-import { sameControl, type ActionId, type Control, type Mapping, type MappingStore, type Target } from './mappings';
+import { detectEncoderMode, detectKnobMode, relativeDelta } from './encoderMode';
+import { controlKey, sameControl, type ActionId, type Control, type Mapping, type MappingStore, type Target } from './mappings';
 import type { MidiMessage } from './parser';
 
 /** Values gathered from a knob while learning it, enough to tell its Encoder Mode. */
@@ -13,6 +13,8 @@ const RELATIVE_STEP = 0.01;
 const PICKUP_TOLERANCE = 0.5 / 127 + 1e-9;
 /** Encoder clicks per choice, so stepping through Waveforms is deliberate rather than jumpy. */
 const CLICKS_PER_CHOICE = 2;
+/** Values a knob of unknown Encoder Mode sends before it moves anything: enough to tell its mode. */
+const DETECT_VALUES = 3;
 
 export type LearnState =
   | { phase: 'off' }
@@ -75,11 +77,11 @@ export function createControlSurface(synth: Synth) {
   const pickups = new Map<string, PickupState>();
   const pressed = new Map<string, boolean>();
   const clicks = new Map<string, number>(); // encoder clicks towards the next choice, per control
-  const key = (c: Control) => `${c.kind}:${c.channel}:${c.number}`;
+  const detecting = new Map<string, number[]>(); // the first values of knobs finding their Encoder Mode
 
   const moveParam = (mapping: Mapping, id: ParamId, value: number) => {
     const target = mapping.target;
-    if (mapping.mode === 'trigger') return;
+    if (mapping.mode === 'trigger' || mapping.mode === 'toggle' || mapping.mode === 'detect') return;
     const current = synth.position(id);
     if (mapping.mode !== 'absolute') {
       synth.setPosition(id, Math.min(1, Math.max(0, current + relativeDelta(mapping.mode, value) * RELATIVE_STEP)));
@@ -87,7 +89,7 @@ export function createControlSurface(synth: Synth) {
       return;
     }
     const knob = value / 127;
-    const state = pickups.get(key(mapping.control)) ?? {};
+    const state = pickups.get(controlKey(mapping.control)) ?? {};
     // Changed elsewhere since this knob last set it: the knob has to catch the new value.
     if (state.following !== undefined && Math.abs(state.following - current) > 1e-9) state.following = undefined;
     const crossed = state.knob !== undefined && (state.knob - current) * (knob - current) <= 0;
@@ -98,22 +100,24 @@ export function createControlSurface(synth: Synth) {
       synth.setPosition(id, knob);
       state.following = synth.position(id); // what it took: a stepped Parameter rounds
     }
-    pickups.set(key(mapping.control), state);
+    pickups.set(controlKey(mapping.control), state);
     synth.touched?.(target, state.following !== undefined ? 'moved' : 'waiting');
   };
 
   const moveChoice = (mapping: Mapping, id: ChoiceId, value: number) => {
-    if (mapping.mode === 'trigger') return;
+    if (mapping.mode === 'trigger' || mapping.mode === 'detect') return;
     const { index, count } = synth.choice(id);
     let next: number;
-    if (mapping.mode === 'absolute') {
+    if (mapping.mode === 'toggle') {
+      next = (index + 1) % count; // a button steps on, round to the first
+    } else if (mapping.mode === 'absolute') {
       next = Math.min(count - 1, Math.floor((value / 128) * count));
     } else {
-      const total = (clicks.get(key(mapping.control)) ?? 0) + relativeDelta(mapping.mode, value);
+      const total = (clicks.get(controlKey(mapping.control)) ?? 0) + relativeDelta(mapping.mode, value);
       const steps = Math.trunc(total / CLICKS_PER_CHOICE);
       next = Math.min(count - 1, Math.max(0, index + steps));
       // Turns past either end are dropped, so turning back responds at once.
-      clicks.set(key(mapping.control), next === index + steps ? total - steps * CLICKS_PER_CHOICE : 0);
+      clicks.set(controlKey(mapping.control), next === index + steps ? total - steps * CLICKS_PER_CHOICE : 0);
     }
     if (next !== index) synth.setChoice(id, next);
     synth.touched?.(mapping.target, 'moved');
@@ -121,16 +125,31 @@ export function createControlSurface(synth: Synth) {
 
   const apply = (mapping: Mapping, message: MidiMessage) => {
     const { target } = mapping;
+    if (mapping.mode === 'detect') {
+      if (message.type !== 'cc') return;
+      const values = [...(detecting.get(controlKey(mapping.control)) ?? []), message.value];
+      detecting.set(controlKey(mapping.control), values);
+      if (values.length < DETECT_VALUES) return synth.touched?.(target, 'waiting');
+      detecting.delete(controlKey(mapping.control));
+      const found: Mapping = { ...mapping, mode: detectKnobMode(values) };
+      store.replace(found);
+      return apply(found, message);
+    }
     if (target.kind === 'param' || target.kind === 'choice') {
       if (message.type !== 'cc') return;
       if (target.kind === 'param') moveParam(mapping, target.id, message.value);
       else moveChoice(mapping, target.id, message.value);
       return;
     }
-    // An Action fires on each press: a note-on, or a button's CC rising past the middle.
+    // An Action fires on each press: a note-on, a toggle button's every message, or a button's CC rising past the
+    // middle.
+    if (mapping.mode === 'toggle') {
+      if (message.type === 'cc') synth.action(target.id);
+      return;
+    }
     const down = message.type === 'noteOn' || (message.type === 'cc' && message.value >= 64);
-    const wasDown = pressed.get(key(mapping.control)) ?? false;
-    pressed.set(key(mapping.control), down);
+    const wasDown = pressed.get(controlKey(mapping.control)) ?? false;
+    pressed.set(controlKey(mapping.control), down);
     if (down && (message.type === 'noteOn' || !wasDown)) synth.action(target.id);
   };
 

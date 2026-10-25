@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { describeControl, describeMode, describeTarget, targetKey } from '../midi/describe';
-import type { Mapping, Target } from '../midi/mappings';
+import { isC16 } from '../midi/c16';
+import { describeControl, describeMode, describeTarget } from '../midi/describe';
+import { controlKey, type Control, type Mapping } from '../midi/mappings';
 import { CloseIcon, MidiIcon } from './icons';
 import { TIPS } from './tips';
 import { Tooltip } from './Tooltip';
@@ -18,7 +19,9 @@ interface Props {
   onLearn(): void;
   onDone(): void;
   onQuickSetup(): void;
-  onRemove(target: Target): void;
+  /** Puts back the C16 layout (offered while a C16 is connected). */
+  onC16Layout(): void;
+  onRemove(control: Control): void;
   onClear(): void;
 }
 
@@ -39,7 +42,9 @@ const statusText = (state: MidiState) => {
  * The MIDI button: a dot and the number of Controllers, or "Learning" while MIDI Learn is on. It opens the MIDI
  * panel: what is connected, the Activity Monitor, MIDI Learn (and Done, once learning), and the Mappings.
  */
-export function MidiPanel({ state, activity, mappings, learning, onLearn, onDone, onQuickSetup, onRemove, onClear }: Props) {
+export function MidiPanel({
+  state, activity, mappings, learning, onLearn, onDone, onQuickSetup, onC16Layout, onRemove, onClear,
+}: Props) {
   const [open, setOpen] = useState(false);
   const wrapper = useRef<HTMLDivElement>(null);
   const devices = state.kind === 'ready' ? state.devices : [];
@@ -128,6 +133,20 @@ export function MidiPanel({ state, activity, mappings, learning, onLearn, onDone
                   Quick Setup
                 </button>
               </Tooltip>
+              {devices.some(isC16) && (
+                <Tooltip content={TIPS.c16Layout}>
+                  <button
+                    type="button"
+                    className="tool"
+                    onClick={() => {
+                      setOpen(false);
+                      onC16Layout();
+                    }}
+                  >
+                    C16 layout
+                  </button>
+                </Tooltip>
+              )}
             </>
           )}
           {mappings.length > 0 && (
@@ -135,7 +154,7 @@ export function MidiPanel({ state, activity, mappings, learning, onLearn, onDone
               <span className="midi-heading">Mappings</span>
               <ul className="midi-mappings" aria-label="Mappings">
                 {mappings.map((m) => (
-                  <li key={targetKey(m.target)}>
+                  <li key={controlKey(m.control)}>
                     <span className="mapping-target">{describeTarget(m.target)}</span>
                     <span className="mapping-control">
                       {describeControl(m.control)} · {describeMode(m.mode)}
@@ -144,7 +163,7 @@ export function MidiPanel({ state, activity, mappings, learning, onLearn, onDone
                       type="button"
                       className="tool tool-icon"
                       aria-label={`Remove ${describeTarget(m.target)} Mapping`}
-                      onClick={() => onRemove(m.target)}
+                      onClick={() => onRemove(m.control)}
                     >
                       <CloseIcon />
                     </button>

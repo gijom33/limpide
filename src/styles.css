@@ -804,7 +804,11 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .midi-heading { font-size: var(--text-sm); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 .midi-activity { display: flex; flex-direction: column; gap: 3px; }
 .midi-activity [role='status'] { font-variant-numeric: tabular-nums; font-family: ui-monospace, monospace; }
-.midi-mappings { list-style: none; margin: 0; padding: 0; width: 100%; display: flex; flex-direction: column; gap: 4px; }
+/* A whole layout (the C16's is 58 Mappings) scrolls inside the panel rather than running down the page. */
+.midi-mappings {
+  list-style: none; margin: 0; padding: 0; width: 100%; display: flex; flex-direction: column; gap: 4px;
+  max-height: min(320px, 50vh); overflow-y: auto;
+}
 .midi-mappings li { display: grid; grid-template-columns: 1fr auto; align-items: center; column-gap: 8px; }
 .mapping-target { font-weight: 600; }
 .mapping-control { grid-column: 1; color: var(--muted); }

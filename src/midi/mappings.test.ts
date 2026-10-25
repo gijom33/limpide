@@ -41,11 +41,11 @@ describe('Mapping store', () => {
     expect(store.list().map((m) => m.target)).toEqual([{ kind: 'param', id: 'resonance' }]);
   });
 
-  it('removes a Mapping by its target, and can clear them all', () => {
+  it('removes the Mapping on one control, and can clear them all', () => {
     const store = createMappingStore(memoryStorage());
     store.set(cutoffOnKnob);
     store.set(holdOnPad);
-    store.remove({ kind: 'param', id: 'cutoff' });
+    store.remove(cutoffOnKnob.control);
     expect(store.list()).toEqual([holdOnPad]);
     store.clear();
     expect(store.list()).toEqual([]);

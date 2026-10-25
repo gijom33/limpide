@@ -128,7 +128,7 @@ Judged against [the design principles](./design-principles.md).
 - **Effective Cutoff:** computed by a pure modulation model that also produces the automation schedule ([ADR-0003](./adr/0003-modulation-model-mirrors-the-audio-graph.md)).
 - **Voices:** 1 to 8 per Patch; 1 Voice is monophonic with last-note priority and Glide. The Oscillator and Filter Viewers and the Timeline follow the newest Note; the Amp Viewers show every Voice by default ([ADR-0007](./adr/0007-optional-polyphony-viewers-follow-the-newest-note.md)).
 - **Controls:** knob size follows the Parameter's role, play or set-and-forget ([ADR-0008](./adr/0008-knob-size-follows-the-parameter-s-role.md)); levels and envelope stages are faders. Modulation rings and the piano's pitch marker are drawn by the render loop from the Modulation model, outside React (ADR-0002, ADR-0003).
-- **MIDI:** MIDI Learn first, no hard-coded map, Encoder Mode auto-detected, and Pickup for Absolute Mappings ([ADR-0004](./adr/0004-midi-learn-first-no-hardcoded-controller-map.md)).
+- **MIDI:** MIDI Learn first, Encoder Mode auto-detected, and Pickup for Absolute Mappings ([ADR-0004](./adr/0004-midi-learn-first-no-hardcoded-controller-map.md)); one built-in layout, the C16's, a section per bank ([ADR-0009](./adr/0009-a-built-in-layout-for-the-c16.md)).
 - **Tuning:** A4 = 440 Hz, equal temperament.
 
 ### Modules (deep modules, small interfaces)
@@ -172,5 +172,5 @@ Judged against [the design principles](./design-principles.md).
 
 ## Further Notes
 
-- **Controller facts, observed on the owner's C16 (MIDI Learn and the Activity Monitor):** it works as a class-compliant USB device in Chrome. Its 8 encoders are endless (Relative) and send CC 1–8; its 4 faders send CC 33–36; its 12 buttons send CC 49–60. These are defaults the owner can reassign on the device, so Quick Setup still learns each control rather than assuming them. Still to check: the exact Relative format (two's-complement or 64-centred; detected either way), the channel, and whether the buttons are momentary or toggle.
+- **Controller facts, observed on the owner's C16 (MIDI Learn and the Activity Monitor):** it works as a class-compliant USB device in Chrome. Limpide knows it by a MIDI name containing "TempoPAD C16" (the name the device gives is still to confirm). It sends on channel 1. Its 8 encoders are endless (Relative), its 4 faders absolute, its 12 buttons toggles (each press sends the other of 127 and 0). Each of its 4 banks has its own CCs: bank b's encoders send CC 1 + 8b to 8 + 8b (A 1–8, B 9–16, C 17–24, D 25–32), its faders CC 33 + 4b to 36 + 4b (A 33–36 … D 45–48), its buttons CC 49 + 12b to 60 + 12b (A 49–60 … D 85–96). These are factory settings the owner can change on the device: the C16 layout (issue 34) assumes them, MIDI Learn and Quick Setup learn whatever it sends. The Relative format (two's-complement or 64-centred) is not recorded: each knob finds it on its first turn.
 - **Cascaded-biquad Q (settled):** each 24 dB low/high-pass stage gets half the resonant peak in dB. An engine test keeps the peak heights of the two Slopes within 2 dB (ADR-0001).

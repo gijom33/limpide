@@ -34,11 +34,15 @@ export const CHOICE_LABELS: Record<ChoiceId, string> = {
 
 export type Target = { kind: 'param'; id: ParamId } | { kind: 'choice'; id: ChoiceId } | { kind: 'action'; id: ActionId };
 
-/** A link from a Controller control to a Parameter (by Encoder Mode) or an Action (triggered). */
+/**
+ * A link from a Controller control to a Parameter (by Encoder Mode) or an Action. A knob whose Encoder Mode is not
+ * known yet ('detect') finds it on its first turn. A button either sends a press and a release ('trigger': it acts
+ * on the press) or, as a toggle, one value per press, each the other ('toggle': it acts on every message).
+ */
 export interface Mapping {
   control: Control;
   target: Target;
-  mode: EncoderMode | 'trigger';
+  mode: EncoderMode | 'detect' | 'trigger' | 'toggle';
 }
 
 interface KeyValueStorage {
@@ -47,8 +51,10 @@ interface KeyValueStorage {
 }
 
 const KEY = 'limpide.mappings';
-const MODES = ['absolute', 'relative-twos', 'relative-centred', 'trigger'];
+const MODES = ['absolute', 'relative-twos', 'relative-centred', 'detect', 'trigger', 'toggle'];
 
+/** A control as one string, for maps and React keys: "cc:1:74". */
+export const controlKey = (c: Control) => `${c.kind}:${c.channel}:${c.number}`;
 export const sameControl = (a: Control, b: Control) =>
   a.kind === b.kind && a.channel === b.channel && a.number === b.number;
 export const sameTarget = (a: Target, b: Target) => a.kind === b.kind && a.id === b.id;
@@ -104,8 +110,14 @@ export function createMappingStore(storage: KeyValueStorage) {
       ];
       changed();
     },
-    remove(target: Target) {
-      mappings = mappings.filter((m) => !sameTarget(m.target, target));
+    /** The Mapping on the same control, replaced (its mode found, say), leaving every other Mapping as it is. */
+    replace(mapping: Mapping) {
+      mappings = mappings.map((m) => (sameControl(m.control, mapping.control) ? mapping : m));
+      changed();
+    },
+    /** The Mapping on one control removed (an Action on several buttons keeps the others). */
+    remove(control: Control) {
+      mappings = mappings.filter((m) => !sameControl(m.control, control));
       changed();
     },
     restore(earlier: readonly Mapping[]) {

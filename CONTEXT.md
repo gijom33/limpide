@@ -217,8 +217,12 @@ A connected MIDI hardware device, such as the Synido TempoPAD C16.
 _Avoid_: Device, MIDI keyboard
 
 **Mapping**:
-A link from one Controller control (a channel plus CC or note) to a Parameter or Action.
+A link from one Controller control (a channel plus CC or note) to a Parameter or Action. A button acts on its press, or, if it is a **toggle button** (one value per press, each the other), on every message.
 _Avoid_: Binding, assignment
+
+**C16 layout**:
+The one built-in set of Mappings, for the TempoPAD C16: each of its 4 banks plays one section, and its first buttons are the Actions on every bank. Applied by itself once, when a C16 is first plugged in with nothing mapped (ADR-0009).
+_Avoid_: Preset (a Preset is a sound), default mapping
 
 **Action**:
 A momentary command that is not a Parameter: toggle Hold, Freeze, take a Snapshot, next Preset.
@@ -233,7 +237,7 @@ A guided sequence of MIDI Learn steps that maps a whole Controller layout in one
 _Avoid_: Wizard (fine in UI copy), onboarding
 
 **Encoder Mode**:
-How a Controller knob reports movement. **Absolute** sends a position (0–127). **Relative** sends increments.
+How a Controller knob reports movement. **Absolute** sends a position (0–127). **Relative** sends increments. Detected during MIDI Learn; a knob of the C16 layout finds it on its first turn.
 _Avoid_: Knob type
 
 **Pickup**:

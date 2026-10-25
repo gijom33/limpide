@@ -18,21 +18,21 @@ export async function openMidi(page: Page) {
 
 /**
  * Opens Limpide with a stand-in Controller: Web MIDI with one input the test can play. Storage starts empty,
- * once, so reloads keep what the test saved.
+ * once, so reloads keep what the test saved. It is not a C16 (which would get its own layout) unless named one.
  */
-export async function withFakeController(page: Page) {
-  await page.addInitScript(() => {
+export async function withFakeController(page: Page, name = 'Stand-in Controller') {
+  await page.addInitScript((name) => {
     if (!sessionStorage.getItem('cleared')) {
       localStorage.clear();
       localStorage.setItem('limpide.welcomed', '1'); // an empty Library, but not a first visit
       sessionStorage.setItem('cleared', 'true');
     }
-    const input = Object.assign(new EventTarget(), { id: 'fake', name: 'Synido TempoPAD C16', state: 'connected' });
+    const input = Object.assign(new EventTarget(), { id: 'fake', name, state: 'connected' });
     const access = Object.assign(new EventTarget(), { inputs: new Map([['fake', input]]) });
     Object.defineProperty(navigator, 'requestMIDIAccess', { value: () => Promise.resolve(access), configurable: true });
     (window as unknown as MidiWindow).playMidi = (bytes) =>
       input.dispatchEvent(Object.assign(new Event('midimessage'), { data: Uint8Array.from(bytes) }));
-  });
+  }, name);
   await page.goto('/');
   await expect(midiButton(page)).toContainText('1');
 }

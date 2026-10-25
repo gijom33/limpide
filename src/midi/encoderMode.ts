@@ -22,6 +22,16 @@ export function detectEncoderMode(values: number[]): EncoderMode {
   return 'absolute';
 }
 
+/**
+ * The Encoder Mode of a knob known to be an endless encoder unless it shows otherwise (the C16 layout's): values all
+ * near 0 or all near 64 are Relative, even without a repeat or a ±1 step, as a quick turn sends 3, 2, 4; anything
+ * else is Absolute (the device set to send positions).
+ */
+export function detectKnobMode(values: number[]): EncoderMode {
+  const near = (centre: number) => values.every((v) => v !== centre && Math.abs(((v - centre + 192) % 128) - 64) <= 15);
+  return near(0) ? 'relative-twos' : near(64) ? 'relative-centred' : 'absolute';
+}
+
 /** A Relative value as a signed number of steps. */
 export function relativeDelta(mode: Exclude<EncoderMode, 'absolute'>, value: number): number {
   return mode === 'relative-twos' ? (value < 64 ? value : value - 128) : value - 64;
