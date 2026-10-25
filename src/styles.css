@@ -622,6 +622,22 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   border-radius: 50%; pointer-events: none; background: var(--stage-mod); border: 1.5px solid #121317;
 }
 .pitch-marker[data-on-black] { border-color: #fff; }
+/* Until sound starts (the browser waits for the page to be used), a label over the keys invites a first Note: a key
+   on the computer keyboard or the piano ("tap" on touch screens). It lets presses through to the keys, and takes
+   no room, so nothing moves when it goes. It fades in after a moment: a browser that allows sound switches it on
+   just after the page opens, and the label must not flash there. */
+.play-invite {
+  position: absolute; z-index: 3; left: 50%; bottom: 4px; transform: translateX(-50%); margin: 0;
+  padding: 1px 8px; border-radius: 999px; white-space: nowrap; pointer-events: none;
+  font-size: var(--text-xs); line-height: 14px; color: #fff; background: rgba(18, 19, 23, 0.88);
+  animation: play-invite-in 0.2s ease-out 0.4s both;
+}
+@keyframes play-invite-in { from { opacity: 0; } }
+.play-invite-touch { display: none; }
+@media (hover: none) {
+  .play-invite-pointer { display: none; }
+  .play-invite-touch { display: inline; }
+}
 
 .midi-status {
   display: inline-flex; align-items: center; gap: 6px; height: var(--control-h); padding: 0 10px; font-size: var(--text-md); color: var(--muted);

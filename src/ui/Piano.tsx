@@ -13,6 +13,8 @@ interface Props {
   octave: number;
   held: number[];
   input: NoteInput;
+  /** Sound has not started yet (the browser waits for the page to be used): the piano invites a first Note. */
+  invite?: boolean;
 }
 
 /**
@@ -20,7 +22,7 @@ interface Props {
  * sounds from any source. Press lower on a key to play harder (Velocity); drag across keys to slide from Note
  * to Note.
  */
-export function Piano({ octave, held, input }: Props) {
+export function Piano({ octave, held, input, invite }: Props) {
   const playing = useRef<number | null>(null);
 
   const noteAt = (x: number, y: number) => {
@@ -67,6 +69,12 @@ export function Piano({ octave, held, input }: Props) {
         );
       })}
       <PitchMarker />
+      {invite && (
+        <p className="play-invite" role="status">
+          <span className="play-invite-pointer">Play to start the sound</span>
+          <span className="play-invite-touch">Tap a key to start the sound</span>
+        </p>
+      )}
     </div>
   );
 }
