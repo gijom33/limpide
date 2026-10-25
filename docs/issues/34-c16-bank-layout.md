@@ -4,7 +4,7 @@
 
 **Blocked by:** what the C16 sends (below)
 
-**Status:** waiting for the C16's messages
+**Status:** waiting for the C16's messages. The owner expects it (inbox, 2026-10-25): a sensible default mapping the moment the C16 is plugged in.
 
 | Bank | Encoders 1–8 | Faders 1–4 |
 |---|---|---|
