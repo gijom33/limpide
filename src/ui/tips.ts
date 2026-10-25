@@ -72,8 +72,8 @@ export const TIPS = {
   },
   demo: {
     title: 'Demo',
-    body: 'A tour of the sounds: a Preset from every group, more from the chord groups, each played with two bars that suit it, knobs turning as it goes; then it returns to Init and stops. The piano shows the Notes; watch the Viewers while it plays.',
-    how: 'Turn a knob or flip a switch while it plays and hear the change; the Demo leaves a knob you turned alone until its next Preset. Press any key, play a Note, or touch any other control to take over; the Demo stops at once. It never changes the Display settings.',
+    body: 'A track of a minute and a quarter, played by Limpide alone: a kick, an acid line, an arpeggio, strings, a riser, a wobble bass and brass stabs, one Preset each, knobs turning as it builds and drops; then it returns to Init and stops. The page follows the knob being turned; the piano shows the Notes.',
+    how: 'Turn a knob or flip a switch while it plays and hear the change; the Demo leaves a knob you turned alone until its next Preset. Scroll yourself and the page stops following until then. Press any key, play a Note, or touch any other control to take over; the Demo stops at once. It never changes the Display settings.',
   },
   song: {
     title: 'Song',

@@ -17,7 +17,7 @@ import { loadOverlays, saveOverlays, toggleOverlay } from '../viewers/overlays';
 import { INITIAL_VIEWER_STATE, viewerReducer } from '../viewers/viewerState';
 import type { ViewSettings } from '../viewers/viewSettings';
 import { startDemo } from '../demo/player';
-import { TOUR } from '../demo/tour';
+import { SHARED_RIFF, TRACK } from '../demo/track';
 import { rememberWelcome, welcomeFor } from '../app/welcome';
 import { startSong } from '../demo/song';
 import { createHoldTaps, startRhythm, type Rhythm } from '../input/holdRhythm';
@@ -35,6 +35,7 @@ import { ModulationContext } from './modulationRing';
 import { MathsContext } from './mathsContext';
 import { harmonicFormula, responseFormula, type Formula } from '../music/maths';
 import { SectionStrip } from './SectionStrip';
+import { SECTION_OF, type SectionName } from './sections';
 import { SubBlock } from './SubBlock';
 import { LfoControls } from './LfoControls';
 import { LearnBar } from './LearnBar';
@@ -134,7 +135,7 @@ export function App() {
   };
   const patchChanged = JSON.stringify(patch) !== JSON.stringify(baseline);
 
-  // The Demo: a tour of one Preset per group, each played with a phrase that suits it, until anything is touched.
+  // The Demo: a track played on one Preset after another, knobs turning as it goes, until anything is touched.
   const [demo, setDemo] = useState<number | null>(null);
   // The Notes the Demo or the Song is playing, lit on the piano.
   const [demoNotes, setDemoNotes] = useState<number[]>([]);
@@ -148,24 +149,38 @@ export function App() {
   stopDemoRef.current = stopDemo;
   // Knobs turned by hand while the Demo plays stay where they were put until its next Preset: its own moves skip them.
   const turnedByHand = useRef(new Set<ParamId>());
+  // The section of the knob the Demo is turning, for the page to follow; a scroll of the person's own stops the
+  // following until the Demo's next part.
+  const [follow, setFollow] = useState<{ name: SectionName; key: number } | null>(null);
+  const followPaused = useRef(false);
   const toggleDemo = () => (demoStop.current ? stopDemo() : playDemo());
-  /** The tour; or, with `shared`, only its first phrase, played on the Patch loaded now (a Share link's). */
+  /** The track; or, with `shared`, only a riff, played on the Patch loaded now (a Share link's). */
   const playDemo = ({ shared = false } = {}) => {
     stopDemo();
     stopSong();
     const { engine } = session;
     demoStop.current = startDemo({
       now: () => engine.now(),
-      load: (stop) => {
+      // The Patch goes to the engine at once, not on the next render: the part's first Notes follow straight away.
+      load: (part) => {
         turnedByHand.current.clear();
+        followPaused.current = false;
         if (shared) return patchRef.current;
-        const preset = PRESETS.find((p) => p.name === stop.preset)!;
+        const preset = PRESETS.find((p) => p.name === part.preset)!;
         loadPatch(preset.name, preset.patch);
+        patchRef.current = preset.patch;
+        engine.applyPatch(preset.patch);
         return preset.patch;
       },
       voices: () => patchRef.current.voices,
       setParam: (id, value) => {
-        if (!turnedByHand.current.has(id)) setPatch((p) => setParam(p, id, value));
+        if (turnedByHand.current.has(id)) return;
+        patchRef.current = setParam(patchRef.current, id, value);
+        engine.applyPatch(patchRef.current);
+        setPatch((p) => setParam(p, id, value));
+      },
+      onMove: (id) => {
+        if (!followPaused.current) setFollow((f) => ({ name: SECTION_OF[id], key: (f?.key ?? 0) + 1 }));
       },
       noteOn: (note, velocity, at) => engine.noteOn(note, velocity, at),
       noteOff: (at) => engine.noteOff(at),
@@ -174,7 +189,7 @@ export function App() {
       onNotes: setDemoNotes,
       showOctave: (o) => setOctave(shiftOctave(o, 0)),
       onEnd: () => {
-        // The tour is over: back to the starting point, silent, as if nothing had been touched. The shared sound
+        // The track is over: back to the starting point, silent, as if nothing had been touched. The shared sound
         // stays loaded.
         demoStop.current = null;
         setDemo(null);
@@ -182,7 +197,7 @@ export function App() {
         const init = PRESETS[0];
         loadPatch(init.name, init.patch);
       },
-    }, shared ? [{ ...TOUR[0], preset: patchName, moves: undefined }] : TOUR);
+    }, shared ? { bpm: TRACK.bpm, parts: [{ preset: patchName, phrase: SHARED_RIFF }] } : TRACK);
   };
   // The Song: a loop that plays on the loaded Patch, never changing it, while the person turns knobs, flips switches
   // and loads Presets. It moves with the piano's octave. Playing a Note, the Demo or the Song button stops it.
@@ -243,12 +258,22 @@ export function App() {
       if (e.pointerId === tap) stopDemo();
     };
     const onCancel = () => (tap = null);
+    // The person scrolling: the page stops following the Demo's knobs until its next part. A finger on a knob or the
+    // piano (which take touches themselves) is not scrolling.
+    const onWheel = () => (followPaused.current = true);
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.target instanceof Element && getComputedStyle(e.target).touchAction !== 'none') followPaused.current = true;
+    };
     window.addEventListener('keydown', onKey);
+    window.addEventListener('wheel', onWheel, { passive: true });
+    window.addEventListener('touchmove', onTouchMove, { passive: true });
     document.addEventListener('pointerdown', onPointer);
     document.addEventListener('pointerup', onLift);
     document.addEventListener('pointercancel', onCancel);
     return () => {
       window.removeEventListener('keydown', onKey);
+      window.removeEventListener('wheel', onWheel);
+      window.removeEventListener('touchmove', onTouchMove);
       document.removeEventListener('pointerdown', onPointer);
       document.removeEventListener('pointerup', onLift);
       document.removeEventListener('pointercancel', onCancel);
@@ -702,7 +727,7 @@ export function App() {
             </div>
           </div>
         </header>
-        <SectionStrip />
+        <SectionStrip follow={demo === null ? null : follow} />
         <About open={about} welcome={welcome} onClose={closeAbout} onPlay={() => playDemo({ shared: welcome === 'shared' })} />
 
         {audioStatus === 'blocked' && (

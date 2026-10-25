@@ -24,7 +24,7 @@ export function About({
   open: boolean;
   welcome?: Welcome | null;
   onClose: () => void;
-  /** The welcome's play button: the Demo, or the Demo's phrase on the shared Patch. */
+  /** The welcome's play button: the Demo, or the Demo's riff on the shared Patch. */
   onPlay?: () => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
@@ -95,7 +95,7 @@ export function About({
           <dt>Sound</dt>
           <dd>The Web Audio API, in your browser</dd>
           <dt>Music</dt>
-          <dd>The Demo plays passages of classical, ragtime and folk pieces long out of copyright; the Song is an original.</dd>
+          <dd>The Demo and the Song are originals.</dd>
           <dt>License</dt>
           <dd>
             Free and open source under the MIT License.{' '}

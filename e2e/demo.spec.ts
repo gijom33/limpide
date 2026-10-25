@@ -4,28 +4,29 @@ import { openDisplay } from './helpers';
 const demo = (page: import('@playwright/test').Page) => page.getByRole('button', { name: 'Demo' });
 const patchName = (page: import('@playwright/test').Page) => page.getByRole('button', { name: /^Patch:/ });
 
-test('the Demo tours one Preset per group, in order, making sound, and stops when a key is pressed', async ({ page }) => {
+test('the Demo plays its track, one Preset after another, making sound, and stops when a key is pressed', async ({ page }) => {
   test.setTimeout(60000);
-  test.slow(); // waits for a phrase to end and the next Preset to load
+  test.slow(); // waits for the intro to end and the next Preset to load
   await page.goto('/');
   await demo(page).click();
   await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
-  await expect(patchName(page)).toContainText('Init'); // the Start group's Preset, first
+  await expect(patchName(page)).toContainText('Kick'); // the intro, first
   await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /^-?[0-5]?\d(\.\d+)?$/, { timeout: 8000 }); // sound
   await expect(page.getByRole('group', { name: 'Piano' }).locator('[aria-pressed="true"]').first()).toBeVisible({ timeout: 8000 }); // the Notes show on the piano
-  await expect(patchName(page)).toContainText('PWM Morph', { timeout: 15000 }); // Shapes, next
+  await expect(patchName(page)).toContainText('Acid', { timeout: 15000 }); // the build, next, four bars later
   await page.keyboard.press('a');
   await expect(demo(page)).toHaveAttribute('aria-pressed', 'false');
   await page.keyboard.up('a');
   const name = await patchName(page).textContent();
   await page.waitForTimeout(1500);
-  expect(await patchName(page).textContent()).toBe(name); // the tour has stopped moving
+  expect(await patchName(page).textContent()).toBe(name); // the track has stopped moving
 });
 
 test('turning a knob keeps the Demo playing, and the Demo leaves that knob where it was put', async ({ page }) => {
+  test.slow(); // waits for the intro to end
   await page.goto('/');
   await demo(page).click();
-  await expect(patchName(page)).toContainText('Init'); // its Cutoff sweeps open while the phrase plays
+  await expect(patchName(page)).toContainText('Acid', { timeout: 15000 }); // its Cutoff sweeps open while it plays
   const cutoff = page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name: 'Cutoff' });
   const box = (await cutoff.boundingBox())!;
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
@@ -36,14 +37,14 @@ test('turning a knob keeps the Demo playing, and the Demo leaves that knob where
   const turned = await cutoff.getAttribute('aria-valuetext');
   await page.waitForTimeout(1000);
   await expect(cutoff).toHaveAttribute('aria-valuetext', turned!);
-  await expect(patchName(page)).toContainText('Init');
+  await expect(patchName(page)).toContainText('Acid');
   await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /^-?[0-5]?\d(\.\d+)?$/); // still sounding
 });
 
 test('the Waveform, Filter and Voices switches keep the Demo playing, and it plays on with the choice', async ({ page }) => {
   await page.goto('/');
   await demo(page).click();
-  await expect(patchName(page)).toContainText('Init');
+  await expect(patchName(page)).toContainText('Kick');
   const choose = async (group: string, option: string) => {
     const radio = page.getByRole('radiogroup', { name: group }).getByRole('radio', { name: option, exact: true });
     await radio.click();
@@ -76,6 +77,35 @@ test('moving around (the section strip, the Oscillator tabs) and an LFO’s dest
   await lfo.getByRole('button', { name: /Destination:/ }).click();
   await lfo.getByRole('menuitemradio', { name: 'Cutoff' }).click();
   await expect(demo(page), 'LFO destination').toHaveAttribute('aria-pressed', 'true');
+});
+
+test.describe('on a phone', () => {
+  test.use({ viewport: { width: 393, height: 852 } });
+
+  test('the page follows the knob the Demo turns', async ({ page }) => {
+    await page.goto('/');
+    await demo(page).click();
+    // The intro turns the Filter Envelope's Amount: the Filter's top lands just under the section strip.
+    const gap = () =>
+      page.evaluate(() => document.querySelector('section[aria-label="Filter"]')!.getBoundingClientRect().top - document.querySelector('.section-strip')!.getBoundingClientRect().bottom);
+    await expect.poll(gap, { timeout: 5000 }).toBeLessThan(20);
+    expect(await gap()).toBeGreaterThanOrEqual(0);
+    await expect(page.getByRole('navigation', { name: 'Sections' }).getByRole('button', { name: 'Filter' })).toHaveAttribute('aria-current', 'true');
+    await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  test('a scroll of the person’s own stops the following until the next part', async ({ page }) => {
+    await page.goto('/');
+    await demo(page).click();
+    await page.waitForTimeout(1500); // the Filter's jump has landed
+    await page.evaluate(() => {
+      document.body.dispatchEvent(new WheelEvent('wheel', { deltaY: -2000, bubbles: true }));
+      scrollTo({ top: 0, behavior: 'instant' });
+    });
+    await page.waitForTimeout(4500); // past the Amp's Decay starting to move, still in the intro
+    expect(await page.evaluate(() => scrollY)).toBe(0);
+    await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
+  });
 });
 
 test('the Demo never touches the Display settings', async ({ page }) => {

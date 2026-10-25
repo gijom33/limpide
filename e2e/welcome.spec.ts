@@ -41,7 +41,7 @@ test('the welcome is remembered however it closes: Explore, Escape or a click ou
   }
 });
 
-test('opened from a Share link, the welcome says a sound was shared and plays the Demo’s phrase on it', async ({ page }) => {
+test('opened from a Share link, the welcome says a sound was shared and plays the Demo’s riff on it', async ({ page }) => {
   const cutoff = page.getByRole('slider', { name: 'Cutoff', exact: true });
   await page.goto(`/#p=${Buffer.from(JSON.stringify({ cutoff: 600, waveform: 'square' })).toString('base64url')}`);
   await expect(about(page)).toContainText('Someone shared a sound with you');
@@ -53,6 +53,6 @@ test('opened from a Share link, the welcome says a sound was shared and plays th
   // The shared sound, untouched: no Preset loaded, no knob turned.
   await expect(page.getByRole('button', { name: /^Patch/ })).toContainText('Shared Patch');
   await expect(cutoff).toHaveAttribute('aria-valuetext', shared!);
-  await expect(demo(page)).toHaveAttribute('aria-pressed', 'false', { timeout: 15000 }); // one phrase, then it stops
+  await expect(demo(page)).toHaveAttribute('aria-pressed', 'false', { timeout: 15000 }); // one riff, then it stops
   await expect(page.getByRole('button', { name: /^Patch/ })).toContainText('Shared Patch');
 });

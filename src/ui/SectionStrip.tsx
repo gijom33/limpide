@@ -1,12 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-
-/** The four sections, top to bottom on a phone: the strip's short word, and the section's own name. */
-const SECTIONS = [
-  { short: 'Osc', name: 'Oscillators' },
-  { short: 'Filter', name: 'Filter' },
-  { short: 'Amp', name: 'Amp' },
-  { short: 'LFO & Env', name: 'LFO & Envelopes' },
-] as const;
+import { SECTIONS, type SectionName } from './sections';
 
 /** The gap left between the strip and a section it jumps to. */
 const LANDING_GAP = 8;
@@ -26,8 +19,11 @@ const section = (name: string) => document.querySelector<HTMLElement>(`section[a
  * Phones only (CSS hides it elsewhere, where every section is on screen at once): a strip of the sections, sticky
  * under the header. It shows which section is in view (the one a third of the way down what the header and strip
  * leave visible) and jumps to a section when tapped, landing its top just under the strip.
+ *
+ * `follow` (the Demo's moving knob) brings its section into view when it is out of sight: on a phone with the same
+ * jump as a tap, elsewhere with the least scroll that shows the whole section.
  */
-export function SectionStrip() {
+export function SectionStrip({ follow }: { follow?: { name: SectionName; key: number } | null }) {
   const [current, setCurrent] = useState<string>(SECTIONS[0].name);
   // While a tapped jump scrolls, the header keeps the state the jump gave it, until the page arrives where the jump
   // was going (or stops short of it): a pause or a pixel's settle mid-way must not read as a scroll back up.
@@ -122,6 +118,21 @@ export function SectionStrip() {
     scrollTo({ top: Math.max(0, top), behavior: still ? 'auto' : 'smooth' });
     setCurrent(name);
   };
+
+  useEffect(() => {
+    const target = follow && section(follow.name);
+    if (!target) return;
+    const box = target.getBoundingClientRect();
+    const strip = document.querySelector('.section-strip')!.getBoundingClientRect();
+    if (!strip.height) {
+      if (box.top < 0 || box.bottom > innerHeight) target.scrollIntoView({ block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+      return;
+    }
+    // In view: all of it below the strip, or, for a section taller than what is left, its top where a jump lands it.
+    const room = innerHeight - strip.bottom;
+    const shown = box.height <= room ? box.top >= strip.bottom - 1 && box.bottom <= innerHeight + 1 : Math.abs(box.top - strip.bottom - LANDING_GAP) < 24;
+    if (!shown) jump(follow.name);
+  }, [follow]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <nav className="section-strip" aria-label="Sections">

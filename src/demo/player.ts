@@ -1,19 +1,21 @@
 import { PARAMS, type ParamId, type Patch } from '../patch/patch';
 import { positionToValue, valueToPosition } from '../patch/taper';
 import { parsePhrase, phraseLength, type PhraseEvent } from './phrase';
-import { TOUR, type TourStop } from './tour';
+import { TRACK, type Part, type Track } from './track';
 
 /** What the Demo needs from the app: the audio clock, a way to load a Preset, and the engine's Note calls. */
 export interface DemoHost {
   now(): number;
-  /** Load the stop's Preset; returns it (its values start the moves). */
-  load(stop: TourStop): Patch;
-  /** How many Voices the Patch has now, which decides how Notes are released: the person may change it mid-phrase. */
+  /** Load the part's Preset, into the engine at once; returns it (its values start the moves). */
+  load(part: Part): Patch;
+  /** How many Voices the Patch has now, which decides how Notes are released: the person may change it mid-part. */
   voices(): number;
-  /** Turn a knob: the Patch's Parameter takes this value now. */
+  /** Turn a knob: the Patch's Parameter takes this value now, in the engine too. */
   setParam(id: ParamId, value: number): void;
+  /** A knob starts to move: the page may bring it into view. */
+  onMove(id: ParamId): void;
   noteOn(note: number, velocity: number, at: number): void;
-  /** The tour is over: every stop has played once. */
+  /** The track is over: every part has played once. */
   onEnd(): void;
   /** Every Voice releases (one-Voice Presets). */
   noteOff(at: number): void;
@@ -22,16 +24,15 @@ export interface DemoHost {
   onStep(index: number): void;
   /** The Notes sounding right now, whenever that changes: for the on-screen piano. */
   onNotes(notes: number[]): void;
-  /** The octave the on-screen piano should show, so the stop's phrase is in view. */
+  /** The octave the on-screen piano should show, so the part's Notes are in view. */
   showOctave(octave: number): void;
 }
 
 // Notes are handed to the engine this far ahead of the clock: enough to be on time, little enough to stop quickly.
 const LOOKAHEAD = 0.15;
 const TICK_MS = 40;
-// A breath after loading a Preset before its phrase, and after the phrase before the next Preset.
+// A breath after pressing Demo before the first Note.
 const LEAD_IN = 0.3;
-const GAP = 0.4;
 
 /** The piano shows 17 keys from its C: the octave whose keys show the most of these Notes (the highest, if tied). */
 export function octaveShowing(notes: number[]): number {
@@ -49,59 +50,82 @@ export function octaveShowing(notes: number[]): number {
 }
 
 /**
- * Plays the tour once: for each stop, load its Preset, play its phrase on the audio clock, move on; after the
- * last, it ends by itself. Returns the stop function, which silences everything at once.
+ * Plays the track once, without a break: each part's Preset is loaded just before its first Note is handed to the
+ * engine, so it lands on the bar line. Knobs are turned on the same look-ahead as the Notes, so a jump on a bar line
+ * is in force when that bar's first Note starts. After the last part it ends by itself. Returns the stop function,
+ * which silences everything at once.
  */
-export function startDemo(host: DemoHost, tour: readonly TourStop[] = TOUR): () => void {
+export function startDemo(host: DemoHost, track: Track = TRACK): () => void {
+  const beat = 60 / track.bpm;
+  const first = host.now() + LEAD_IN;
+  const starts: number[] = [];
+  let at = first;
+  for (const part of track.parts) {
+    starts.push(at);
+    at += phraseLength(part.phrase, track.bpm);
+  }
+  const end = at;
+
   let timer: ReturnType<typeof setTimeout> | undefined;
   let index = -1;
   let events: (PhraseEvent & { off: number })[] = [];
   let queued = 0;
-  let end = 0;
-  let moves: { id: ParamId; from: number; to: number; start: number; end: number; done: boolean }[] = [];
+  let moves: { id: ParamId; from: number; to: number; start: number; end: number; started: boolean; done: boolean }[] = [];
   let shown = '';
 
-  const step = () => {
-    index += 1;
-    if (index >= tour.length) {
-      clearTimeout(timer);
-      host.onNotes([]);
-      host.onEnd();
-      return false;
-    }
-    const stop = tour[index];
-    const patch = host.load(stop);
-    host.onStep(index);
-    host.showOctave(octaveShowing(parsePhrase(stop.phrase, stop.bpm).map((e) => e.note)));
-    const start = host.now() + LEAD_IN;
-    const beat = 60 / stop.bpm;
-    const length = phraseLength(stop.phrase, stop.bpm);
-    events = parsePhrase(stop.phrase, stop.bpm).map((e) => ({ ...e, time: start + e.time, off: start + e.time + e.duration }));
-    moves = (stop.moves ?? []).map((m) => ({
+  const enter = (i: number) => {
+    index = i;
+    const part = track.parts[i];
+    const start = starts[i];
+    const length = phraseLength(part.phrase, track.bpm);
+    const patch = host.load(part);
+    host.onStep(i);
+    const parsed = parsePhrase(part.phrase, track.bpm);
+    host.showOctave(octaveShowing(parsed.map((e) => e.note)));
+    events = parsed.map((e) => ({ ...e, time: start + e.time, off: start + e.time + e.duration }));
+    queued = 0;
+    moves = (part.moves ?? []).map((m) => ({
       id: m.id,
       from: valueToPosition(PARAMS[m.id], m.from ?? patch[m.id]),
       to: valueToPosition(PARAMS[m.id], m.to),
       start: start + (m.start ?? 0) * beat,
       end: start + (m.end === undefined ? length : m.end * beat),
+      started: false,
       done: false,
     }));
-    queued = 0;
-    end = start + length + GAP;
-    return true;
   };
 
-  const turnKnobs = () => {
-    const now = host.now();
+  /** Every move where it should be at `time`; the first to start is shown. */
+  const turnKnobs = (time: number) => {
+    let moving: ParamId | null = null;
     for (const m of moves) {
-      if (m.done || now < m.start) continue;
-      const progress = Math.min(1, (now - m.start) / Math.max(1e-6, m.end - m.start));
+      if (m.done || time < m.start) continue;
+      if (!m.started) {
+        m.started = true;
+        moving ??= m.id;
+      }
+      const progress = Math.min(1, (time - m.start) / Math.max(1e-6, m.end - m.start));
       host.setParam(m.id, positionToValue(PARAMS[m.id], m.from + (m.to - m.from) * progress));
       if (progress >= 1) m.done = true;
     }
+    if (moving) host.onMove(moving);
   };
 
-  const lightKeys = () => {
-    const now = host.now();
+  /** Hands the engine the current part's Notes that start before `until`. */
+  const handOver = (until: number) => {
+    while (queued < events.length && events[queued].time < until) {
+      // A chord's Notes all start before any of them stops, so the model's history stays in time order.
+      const time = events[queued].time;
+      let last = queued;
+      while (last < events.length && events[last].time === time) last++;
+      for (let i = queued; i < last; i++) host.noteOn(events[i].note, events[i].velocity, events[i].time);
+      const voices = host.voices();
+      for (let i = queued; i < last; i++) if (voices === 1) host.noteOff(events[i].off); else host.release(events[i].note, events[i].off);
+      queued = last;
+    }
+  };
+
+  const lightKeys = (now: number) => {
     const notes = events.filter((e) => e.time <= now && now < e.off).map((e) => e.note);
     const key = notes.join(',');
     if (key !== shown) {
@@ -111,24 +135,26 @@ export function startDemo(host: DemoHost, tour: readonly TourStop[] = TOUR): () 
   };
 
   const tick = () => {
-    turnKnobs();
-    lightKeys();
-    const horizon = host.now() + LOOKAHEAD;
-    while (queued < events.length && events[queued].time < horizon) {
-      // A chord's Notes all start before any of them stops, so the model's history stays in time order.
-      const at = events[queued].time;
-      let last = queued;
-      while (last < events.length && events[last].time === at) last++;
-      for (let i = queued; i < last; i++) host.noteOn(events[i].note, events[i].velocity, events[i].time);
-      const voices = host.voices();
-      for (let i = queued; i < last; i++) if (voices === 1) host.noteOff(events[i].off); else host.release(events[i].note, events[i].off);
-      queued = last;
+    const now = host.now();
+    if (now >= end) {
+      turnKnobs(end);
+      host.onNotes([]);
+      host.onEnd();
+      return;
     }
-    if (host.now() >= end && !step()) return;
+    const horizon = now + LOOKAHEAD;
+    for (;;) {
+      turnKnobs(horizon);
+      const boundary = index + 1 < track.parts.length ? starts[index + 1] : Infinity;
+      handOver(Math.min(horizon, boundary));
+      if (boundary >= horizon) break;
+      enter(index + 1);
+    }
+    lightKeys(now);
     timer = setTimeout(tick, TICK_MS);
   };
 
-  step();
+  enter(0);
   tick();
   return () => {
     clearTimeout(timer);

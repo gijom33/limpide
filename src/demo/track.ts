@@ -1,75 +1,92 @@
 import { type ParamId } from '../patch/patch';
-import { PRESET_GROUPS, type PresetGroup } from '../patch/presets';
 
 /**
- * The Demo: a Preset from every group, in the groups' order, each with a phrase that suits it; the two groups of
- * polyphonic sounds, Pianos and Chords, send several. The same every time (ADR-0002 keeps the Viewers out of
- * React; the Demo keeps the Display out of its hands: it only plays).
+ * The Demo: one original track, played by the synth alone, so the Viewers show everything heard. Each part is a
+ * Preset, loaded on the bar line so the music never stops; the builds and drops are knobs turning. The same every
+ * time (ADR-0002 keeps the Viewers out of React; the Demo keeps the Display out of its hands: it only plays).
  */
-/** A knob turned while the phrase plays: from one value (the Preset's own, if none is given) to another. */
+/** A knob turned while the part plays: from one value (the Preset's own, if none is given) to another. */
 export interface KnobMove {
   id: ParamId;
   from?: number;
   to: number;
-  /** In beats from the phrase's start; the whole phrase when left out. */
+  /** In beats from the part's start; the whole part when left out. A move that starts and ends together is a jump. */
   start?: number;
   end?: number;
 }
 
-export interface TourStop {
-  group: PresetGroup;
+export interface Part {
   preset: string;
-  bpm: number;
   phrase: string;
   moves?: KnobMove[];
 }
 
-// The phrases are a couple of bars from pieces everyone knows, all long out of copyright (classical, ragtime, folk),
-// or a pop idiom that is no one's song, each picked for its sound.
-export const TOUR: readonly TourStop[] = [
-  // Beethoven, Ode to Joy, on the plain saw, with the Filter opening: the Harmonics appear rung by rung.
-  { group: 'Start', preset: 'Init', bpm: 120, phrase: 'E3:1 E3:1 F3:1 G3:1 G3:1 F3:1 E3:1 D3:1',
-    moves: [{ id: 'cutoff', from: 250, to: 9000 }, { id: 'resonance', from: 0.4, to: 0.2 }] },
-  // Pachelbel's Canon, the bass, while the Pulse Width sweep quickens: the Scope breathes, then pants.
-  { group: 'Shapes', preset: 'PWM Morph', bpm: 112, phrase: 'D3:1 A2:1 B2:1 F#2:1 G2:1 D2:1 G2:1 A2:1', moves: [{ id: 'lfoRate', from: 0.3, to: 5 }] },
-  // Strauss, Also sprach Zarathustra: three Notes in fifths, with the fifth above fading in.
-  { group: 'Intervals', preset: 'Perfect Fifth', bpm: 112, phrase: 'C2:3 G2:3 C3:2', moves: [{ id: 'mixOsc2', from: 0, to: 1, end: 5 }] },
-  // Grieg, In the Hall of the Mountain King, with the Resonance climbing until the Filter rings on its own.
-  { group: 'Filter', preset: 'Resonant Ring', bpm: 124, phrase: 'B2:0.5 C#3:0.5 D3:0.5 E3:0.5 F#3:0.5 D3:0.5 F#3:1 F3:0.5 C#3:0.5 F3:1 E3:0.5 C3:0.5 E3:1',
-    moves: [{ id: 'resonance', from: 0.2, to: 1 }] },
-  // Greensleeves, plucked, the plucks growing longer on the Timeline.
-  { group: 'Envelope', preset: 'Pluck Shape', bpm: 132, phrase: 'A3:1 C4:2 D4:1 E4:1.5 F4:0.5 E4:1 D4:2 B3:1',
-    moves: [{ id: 'ampDecay', from: 0.08, to: 0.6 }] },
-  // Bach, Toccata in D minor, under a sweep that speeds up.
-  { group: 'LFO', preset: 'Deep Sweep', bpm: 112, phrase: 'A3:0.25 G3:0.25 A3:1.5 G3:0.25 F3:0.25 E3:0.25 D3:0.25 C#3:1 D3:2 -:2', moves: [{ id: 'lfoRate', from: 0.25, to: 3 }] },
-  // Oh! Susanna as an acid riff, Cutoff and Resonance opening across the bars.
-  { group: 'Bass', preset: 'Acid', bpm: 124, phrase: 'C2:0.5 D2:0.5 E2:1 G2:1 G2:1 A2:1 G2:1 E2:1 C2:1',
-    moves: [{ id: 'cutoff', from: 200, to: 2500 }, { id: 'resonance', from: 0.5, to: 0.9 }] },
-  // Beethoven, Für Elise, with the vibrato deepening.
-  { group: 'Leads', preset: 'Lead', bpm: 124, phrase: 'E4:0.5 D#4:0.5 E4:0.5 D#4:0.5 E4:0.5 B3:0.5 D4:0.5 C4:0.5 A3:2 C3:0.5 E3:0.5 A3:0.5 B3:0.5',
-    moves: [{ id: 'lfoAmount', from: 0, to: 0.5, start: 3 }] },
-  // Joplin, The Entertainer, on the electric piano.
-  { group: 'Keys & Plucks', preset: 'Electric Piano', bpm: 112, phrase: 'D4:0.25 D#4:0.25 E4:0.25 C5:0.5 E4:0.25 C5:0.5 E4:0.25 C5:1.25 C5:0.25 D5:0.25 D#5:0.25 E5:0.25 C5:0.25 D5:0.25 E5:0.5 B4:0.25 D5:0.5 C5:1.5' },
-  // Happy Birthday, with a bass under it, on eight Voices.
-  { group: 'Pianos', preset: 'Piano', bpm: 126, phrase: 'G3:0.5@0.7 G3:0.5@0.7 A3+C3:1 G3:1 C4+E3:1 B3+G2:2 G3:0.5@0.7 G3:0.5@0.7 A3+C3:1 G3:1 D4+G2:1 C4+C3:2' },
-  // Twinkle, Twinkle, with a bass, on the toy piano.
-  { group: 'Pianos', preset: 'Toy Piano', bpm: 120, phrase: 'C4+C3:1 C4:1 G4+E3:1 G4:1 A4+F3:1 A4:1 G4+C3:2' },
-  // The four chords of half of all pop songs (I, V, vi, IV), one Voice at a time, while the Filter opens.
-  { group: 'Pads', preset: 'Pad', bpm: 112, phrase: 'C3:2 G2:2 A2:2 F2:2', moves: [{ id: 'cutoff', from: 300, to: 4000 }] },
-  // The same four chords, held, with the LFO's sway deepening.
-  { group: 'Chords', preset: 'Chord Pad', bpm: 112, phrase: 'C3+E3+G3+C4:2 G2+B2+D3+G3:2 A2+C3+E3+A3:2 F2+A2+C3+F3:2', moves: [{ id: 'lfoAmount', from: 0.1, to: 0.6 }] },
-  // When the Saints Go Marching In, chords under the tune, on eight Voices.
-  { group: 'Chords', preset: 'Poly Keys', bpm: 124, phrase: 'C4:0.5 E4:0.5 F4:0.5 G4+C3+E3:2.5 C4:0.5 E4:0.5 F4:0.5 G4+C3+E3:2.5' },
-  // Pachelbel's Canon, the chords held by a string section, the Pulse Width shimmer quickening.
-  { group: 'Chords', preset: 'Strings', bpm: 112, phrase: 'D3+F#3+A3+D4:2 A2+C#3+E3+A3:2 B2+D3+F#3+B3:2 F#2+A2+C#3+F#3:2', moves: [{ id: 'lfoRate', from: 0.5, to: 3 }] },
-  // The Westminster chimes, on bells that ring on together.
-  { group: 'Chords', preset: 'Bell Chords', bpm: 112, phrase: 'E4+C4:1 C4:1 D4:1 G3:2 G3:1 D4:1 E4:1 C4+G3:2' },
-  // Stomp, stomp, rest: the beat everyone claps to, with the pitch drop deepening.
-  { group: 'Drums', preset: 'Kick', bpm: 120, phrase: 'C2:0.5 C2:0.5@0.8 -:1 C2:0.5 C2:0.5@0.8 -:1 C2:0.5 C2:0.5@0.8 -:1 C2:0.5 C2:0.5@0.8 -:1',
-    moves: [{ id: 'filterEnvAmount', from: 2, to: 4 }] },
-  // Mozart, Eine kleine Nachtmusik, under a wah that rocks faster and faster.
-  { group: 'Movement & Effects', preset: 'Wah', bpm: 124, phrase: 'G2:1 -:0.5 D2:0.5 G2:1 -:0.5 D2:0.5 G2:0.5 D2:0.5 G2:0.5 B2:0.5 D3:2', moves: [{ id: 'lfoRate', from: 1.5, to: 7 }] },
-];
+export interface Track {
+  bpm: number;
+  parts: readonly Part[];
+}
 
-/** The groups the Demo visits, in order: every group, once. */
-export const TOUR_GROUPS: readonly PresetGroup[] = PRESET_GROUPS;
+const BPM = 128;
+/** LFO Rates that land on the beat at the track's tempo, in Hz: a quarter Note, an eighth, an eighth triplet... */
+const SYNC = { quarter: BPM / 60, eighth: (BPM / 60) * 2, triplet: (BPM / 60) * 3, sixteenth: (BPM / 60) * 4, thirtySecond: (BPM / 60) * 8 };
+
+const times = (text: string, n: number) => Array(n).fill(text).join(' ');
+/** One bar of sixteenths: a Note name is a soft step, `!` after it an accent, `-` a rest. */
+const sixteenths = (steps: string) =>
+  steps.split(' ').map((s) => (s === '-' ? '-:.25' : s.endsWith('!') ? `${s.slice(0, -1)}:.25@1` : `${s}:.25@.6`)).join(' ');
+/** One bar of an arpeggio over a chord's four Notes, low to high: up, down and up again in sixteenths. */
+const arpeggio = (chord: string) => {
+  const [a, b, c, d] = chord.split(' ');
+  const cell = [`${a}:.25@1`, `${c}:.25@.6`, `${d}:.25@.8`, `${c}:.25@.6`, `${b}:.25@.9`, `${c}:.25@.6`, `${d}:.25@.8`, `${c}:.25@.6`];
+  return times(cell.join(' '), 2);
+};
+/** One bar of the wobble bass: the root held, struck again, then the octave to close the bar. */
+const wobbleBar = (root: string, octave: string) => `${root}:1.5@1 ${root}:.5 ${root}:.75 ${root}:.75 ${octave}:.5@1`;
+/** Five stabs across the bar, pushed off the beat. */
+const pushedStabs = (chord: string) => `${chord}:.5@1 -:.25 ${chord}:.5 -:.25 ${chord}:.5@1 -:.5 ${chord}:.5 -:.25 ${chord}:.5@1 -:.25`;
+/** An LFO Rate that changes on bar lines: [bar, Hz] pairs, each a jump. */
+const rateByBar = (steps: [number, number][]): KnobMove[] => steps.map(([bar, hz]) => ({ id: 'lfoRate', to: hz, start: bar * 4, end: bar * 4 }));
+
+const acidA = sixteenths('A1! A1 A2! A1 - A1 G2! A1 C2 A1 E2! A1 D2 - G1 A2!');
+const acidB = sixteenths('A1! A2! A1 C3! A1 - G2! A1 C2 E2! A1 G2 A1 D3! - E2');
+const acidEnd = sixteenths('A1! A2! A1 C3! A1 - G2! A1 C2 E2! A1 G2 A1 D3! - -');
+
+// Every part after the first plays over Am–F–C–G, a bar each: the four chords of a great deal of modern dance music.
+export const TRACK: Track = {
+  bpm: BPM,
+  parts: [
+    // The intro: four on the floor, a fill into the bass. The Filter Envelope's drop deepens, then the Decay lengthens.
+    { preset: 'Kick', phrase: `${times('C2:1@1 C2:1@1 C2:1@1 C2:1@1', 3)} C2:1@1 C2:1@1 C2:.5@1 C2:.5@.7 C2:.25@.6 C2:.25@.7 C2:.25@.8 C2:.25@1`,
+      moves: [{ id: 'filterEnvAmount', from: 1.5, to: 4 }, { id: 'ampDecay', from: 0.25, to: 0.6, start: 8 }] },
+    // The build: an acid line, its accents biting. The Cutoff opens and the Resonance climbs, so the Response Curve's
+    // peak walks up through the Harmonics; then the Filter Envelope's Decay lengthens and the squelch grows.
+    { preset: 'Acid', phrase: [times(acidA, 4), times(acidB, 3), acidEnd].join(' '),
+      moves: [{ id: 'cutoff', from: 150, to: 2600 }, { id: 'resonance', from: 0.6, to: 0.95 }, { id: 'filterDecay', from: 0.15, to: 0.4, start: 16 }] },
+    // The hook: an arpeggio on six Voices. The Pulse Width narrows and the Spectrum's gaps slide along the ladder; then
+    // the plucks bloom as the Filter Envelope's Decay lengthens.
+    { preset: 'Poly Pluck', phrase: times(['A3 C4 E4 A4', 'A3 C4 F4 A4', 'G3 C4 E4 G4', 'G3 B3 D4 G4'].map(arpeggio).join(' '), 2),
+      moves: [{ id: 'pulseWidth', from: 0.5, to: 0.1, end: 16 }, { id: 'filterDecay', from: 0.18, to: 0.5, start: 16 }, { id: 'cutoff', from: 500, to: 1400, start: 16 }] },
+    // The break: the chords held by a string section, the Pulse Width shimmer quickening until it buzzes.
+    { preset: 'Strings', phrase: 'A2+E3+A3+C4+E4:4 F2+C3+A3+C4+F4:4 C3+G3+C4+E4+G4:4 G2+D3+G3+B3+D4:4',
+      moves: [{ id: 'lfoRate', from: 0.7, to: SYNC.sixteenth }, { id: 'lfoAmount', from: 0.5, to: 0.8 }] },
+    // The riser: a Filter singing on its own, its Cutoff swept across the whole Spectrum while the LFO trembles
+    // faster and faster; then a beat of silence.
+    { preset: 'Self-Oscillation', phrase: 'A2:7@1 -:1',
+      moves: [{ id: 'cutoff', from: 300, to: 12000, end: 7 }, { id: 'lfoAmount', from: 0, to: 0.3, end: 7 }, { id: 'lfoRate', from: SYNC.quarter, to: SYNC.thirtySecond, end: 7 }] },
+    // The drop: a wobble bass, its LFO restarted by every Note and set to the beat, changing speed on the bar lines.
+    { preset: 'Wobble', phrase: times([wobbleBar('A1', 'A2'), wobbleBar('F1', 'F2'), wobbleBar('C2', 'C3'), wobbleBar('G1', 'G2')].join(' '), 2),
+      moves: [
+        ...rateByBar([[0, SYNC.eighth], [2, SYNC.sixteenth], [3, SYNC.triplet], [4, SYNC.eighth], [5, SYNC.quarter], [6, SYNC.sixteenth]]),
+        { id: 'lfoRate', from: SYNC.sixteenth, to: SYNC.thirtySecond, start: 28, end: 32 },
+        { id: 'resonance', from: 0.65, to: 0.85 },
+      ] },
+    // The end: brass stabs pushed off the beat, brightening, then the first chord again, left to ring.
+    { preset: 'Brass Section', phrase: `${['A2+E3+A3+C4+E4', 'F2+C3+F3+A3+C4', 'C3+E3+G3+C4+E4', 'G2+D3+G3+B3+D4'].map(pushedStabs).join(' ')} A2+E3+A3+C4+E4:4@1 -:4`,
+      moves: [{ id: 'cutoff', from: 500, to: 2500, end: 16 }, { id: 'filterEnvAmount', from: 2, to: 3.5, end: 16 }] },
+  ],
+};
+
+/** What the welcome plays on a shared sound, untouched: four bars of a riff over the same chords, one Note at a time. */
+export const SHARED_RIFF =
+  'A3:.5 C4:.5 E4:.5 A4:.5 G4:.75 E4:.75 C4:.5 F4:.5 C4:.5 A3:.5 C4:.5 F4:.75 E4:.75 C4:.5 ' +
+  'E4:.5 C4:.5 G3:.5 C4:.5 E4:.75 G4:.75 E4:.5 D4:.5 B3:.5 G3:.5 B3:.5 D4:1 -:1';

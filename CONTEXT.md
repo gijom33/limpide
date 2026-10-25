@@ -129,11 +129,11 @@ A mode that keeps Notes sounding after their keys are released, so the sound sus
 _Avoid_: Drone, latch, sustain (Sustain is an Envelope stage)
 
 **Demo**:
-A guided tour of the sounds: it loads a Preset from every group in turn and plays a short phrase on each, turning knobs as it goes. Knobs and the stages' switches can be changed while it plays; a Note or any other control stops it.
-_Avoid_: Autoplay, showcase
+An original track of about 75 seconds, played by the synth alone: each part is a Preset, loaded on the bar line, and the builds and drops are knobs turning. The page follows the knob being turned, until the person scrolls. Knobs and the stages' switches can be changed while it plays; a Note or any other control stops it.
+_Avoid_: Autoplay, showcase, tour
 
 **Welcome**:
-About as a brand-new browser (no Last session, no saved Patches) sees it, once: it offers to play the Demo, or, opened from a Share link, the Demo's first phrase on the shared Patch, or to explore alone.
+About as a brand-new browser (no Last session, no saved Patches) sees it, once: it offers to play the Demo, or, opened from a Share link, a short riff on the shared Patch, or to explore alone.
 _Avoid_: Onboarding, splash, intro
 
 **Song**:
