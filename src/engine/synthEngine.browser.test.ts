@@ -357,7 +357,10 @@ describe('modulationAt for past moments (the Envelope Timeline)', () => {
       const engine = createSynthEngine(ctx);
       engine.applyPatch({ ...defaultPatch(), lfoDestination: destination, lfoAmount: 1, lfoRate: 5, lfoWaveform: 'triangle' });
       engine.noteOn(60, 1, 0);
-      const pitches = Array.from({ length: 200 }, (_, i) => engine.modulationAt(0.1 + i / 1000).pitch);
+      const moments = Array.from({ length: 200 }, (_, i) => engine.modulationAt(0.1 + i / 1000));
+      // The vibrato on its own, so the piano can draw it apart from the Note: the pitch less the vibrato is the Note.
+      for (const m of moments) expect(m.pitch - m.vibrato).toBeCloseTo(60);
+      const pitches = moments.map((m) => m.pitch);
       return [Math.min(...pitches), Math.max(...pitches)];
     };
     const [lo, hi] = swing('pitch');

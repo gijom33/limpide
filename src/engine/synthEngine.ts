@@ -38,6 +38,8 @@ export interface Modulation {
   sounding: Sounding | null;
   /** The pitch the newest Note sounds at, in semitones (fractional through a Glide or vibrato); A4 before any. */
   pitch: number;
+  /** How far an LFO on Pitch moves it right now, in semitones: `pitch` less the Note where the Glide has taken it. */
+  vibrato: number;
 }
 
 export interface SynthEngine {
@@ -542,6 +544,8 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     for (const e of ampEvents) if (e.time <= t && (!gate || e.time >= gate.time)) gate = e;
     let note = 69;
     for (const p of pitches) if (p.time <= t) note = p.note;
+    const gliding = frequencyToNote(glideFrequency(pitches, t) || A4);
+    const vibrato = then ? soundingPitch(then, gliding, lfoValue) - gliding : 0;
     return {
       amp: envelopeLevel(ampEvents, t),
       filter: filterLevel,
@@ -550,7 +554,8 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       mode: then?.filterMode ?? 'lowpass',
       bandwidth: then ? bandwidthOctaves(filterStages(then.filterMode, then.filterSlope, then.resonance)[0].Q) : 1,
       sounding: gate?.on ? { note, velocity } : null,
-      pitch: then ? soundingPitch(then, frequencyToNote(glideFrequency(pitches, t) || A4), lfoValue) : 69,
+      pitch: gliding + vibrato,
+      vibrato,
     };
   };
 

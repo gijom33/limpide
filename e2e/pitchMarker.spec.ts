@@ -60,12 +60,37 @@ test('an LFO on Pitch wobbles the marker around the key', async ({ page }) => {
   await turnUp(page, 'LFO & Envelopes', 'Depth', 100);
   await page.keyboard.down('KeyD');
   await expect(marker(page)).toBeVisible();
-  const xs = new Set<number>();
-  for (let i = 0; i < 10; i++) {
-    xs.add(Math.round(await markerX(page)));
-    await page.waitForTimeout(60);
+  const xs: number[] = [];
+  for (let i = 0; i < 20; i++) {
+    xs.push(await markerX(page));
+    await page.waitForTimeout(40);
   }
-  expect(xs.size).toBeGreaterThan(2);
+  expect(new Set(xs.map(Math.round)).size).toBeGreaterThan(2);
+  // At full Depth (a semitone each way) it swings across a black key's width, centred on the key.
+  const black = (await piano(page).getByRole('button', { name: 'D#4', exact: true }).boundingBox())!.width;
+  expect(Math.max(...xs) - Math.min(...xs)).toBeLessThanOrEqual(black + 1);
+  expect(Math.max(...xs) - Math.min(...xs)).toBeGreaterThan(black / 2);
+  const e4 = await centre(page, 'E4');
+  for (const x of xs) expect(Math.abs(x - e4)).toBeLessThanOrEqual(black / 2 + 1);
+});
+
+test('the marker sits low on the key, where a finger presses it: higher on a black key than on a white one', async ({ page }) => {
+  await page.goto('/');
+  await listening(page);
+  const markerY = async () => {
+    const box = (await marker(page).boundingBox())!;
+    return box.y + box.height / 2;
+  };
+  for (const [code, key] of [['KeyD', 'E4'], ['KeyE', 'D#4']] as const) {
+    await page.keyboard.down(code);
+    await expect(marker(page)).toBeVisible();
+    const box = (await piano(page).getByRole('button', { name: key, exact: true }).boundingBox())!;
+    const y = await markerY();
+    expect(y, key).toBeGreaterThan(box.y + box.height / 2); // the lower half of the key
+    expect(y, key).toBeLessThan(box.y + box.height);
+    await page.keyboard.up(code);
+    await expect(marker(page)).toBeHidden({ timeout: 3000 });
+  }
 });
 
 test('with reduced motion asked for, the marker sits on the Note: no wobble', async ({ page }) => {
