@@ -1,4 +1,5 @@
 import type { Modulation } from '../engine/synthEngine';
+import { formatParam } from '../patch/patch';
 import { cssVar, prepareCanvas } from './canvas';
 import { createFreezeLatch } from './freezeLatch';
 import type { ViewSettings } from './viewSettings';
@@ -115,5 +116,25 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
     dot('--stage-filter', yLevel(last.filter));
     dot('--stage-amp', yLevel(last.amp));
     dot('--cutoff-line', yHz(last.cutoff));
+
+    // The Maths Layer: the Effective Cutoff's value now, beside its dot, on a chip of the background.
+    const maths = view().overlays.maths;
+    canvas.dataset.cutoffReadout = maths ? formatParam('cutoff', last.cutoff) : '';
+    if (maths) {
+      const text = formatParam('cutoff', last.cutoff);
+      g.font = '11px system-ui, sans-serif';
+      const w = g.measureText(text).width + 8;
+      const y = Math.min(Math.max(yHz(last.cutoff), pad + 9), pad + plot - 9);
+      const x = columns - 2 * DOT_RADIUS - 6 - w;
+      g.fillStyle = background;
+      g.globalAlpha = 0.85;
+      g.fillRect(x, y - 8, w, 16);
+      g.globalAlpha = 1;
+      g.fillStyle = cssVar(canvas, '--cutoff-line');
+      g.textAlign = 'left';
+      g.textBaseline = 'middle';
+      g.fillText(text, x + 4, y);
+      g.textBaseline = 'alphabetic';
+    }
   };
 }

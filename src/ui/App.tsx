@@ -32,6 +32,8 @@ import { ToolGroup } from './ToolGroup';
 import { FilterShape } from './FilterShape';
 import { Segmented } from './Segmented';
 import { ModulationContext } from './modulationRing';
+import { MathsContext } from './mathsContext';
+import { harmonicFormula, responseFormula, type Formula } from '../music/maths';
 import { SectionStrip } from './SectionStrip';
 import { SubBlock } from './SubBlock';
 import { LfoControls } from './LfoControls';
@@ -608,6 +610,7 @@ export function App() {
       showIdeal?: boolean;
       response?(f: Float32Array<ArrayBuffer>): Float32Array;
       limiting?(): boolean;
+      formula?: Formula;
     } = {},
   ) => (
       <TapViewers
@@ -623,6 +626,7 @@ export function App() {
   return (
     <LearnContext.Provider value={learnContext}>
     <ModulationContext.Provider value={modulationContext}>
+    <MathsContext.Provider value={overlays.maths ? patch : null}>
       <main data-frozen={viewer.frozen || undefined} data-learning={learning || undefined}>
         {setup ? (
           <QuickSetupPanel
@@ -713,7 +717,10 @@ export function App() {
             ids={[]}
             patch={patch}
             onChange={change}
-            viewers={viewers('oscillator', 'Oscillator', { showIdeal: true })}
+            viewers={viewers('oscillator', 'Oscillator', {
+              showIdeal: true,
+              formula: overlays.maths ? harmonicFormula(patch.waveform, patch.pulseWidth) : undefined,
+            })}
             more={
             <div className="source-rows">
               <Tabs
@@ -841,6 +848,7 @@ export function App() {
             viewers={viewers('filter', 'Filter', {
               showIdeal: true,
               response: session.engine.filterResponse,
+              formula: overlays.maths ? responseFormula(patch.filterMode, patch.filterSlope) : undefined,
             })}
           />
           <Block
@@ -892,6 +900,7 @@ export function App() {
           }
         />
       </main>
+    </MathsContext.Provider>
     </ModulationContext.Provider>
     </LearnContext.Provider>
   );

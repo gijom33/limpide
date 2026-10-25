@@ -12,11 +12,11 @@ function memoryStorage(initial: Record<string, string> = {}) {
 
 describe('Viewer overlays', () => {
   it('offers Harmonic Markers, the Ideal Reference, the Response Curve and the Scope guides', () => {
-    expect(OVERLAYS).toEqual(['harmonics', 'ideal', 'curve', 'guides']);
+    expect(OVERLAYS).toEqual(['harmonics', 'ideal', 'curve', 'guides', 'maths']);
   });
 
   it('starts with the Harmonic Markers and the Response Curve on, the Ideal Reference and the guides off', () => {
-    expect(DEFAULT_OVERLAYS).toEqual({ harmonics: true, ideal: false, curve: true, guides: false });
+    expect(DEFAULT_OVERLAYS).toEqual({ harmonics: true, ideal: false, curve: true, guides: false, maths: false });
   });
 
   it('toggles one overlay without touching the others', () => {

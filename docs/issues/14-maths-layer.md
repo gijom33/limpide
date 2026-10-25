@@ -4,8 +4,8 @@
 
 **Blocked by:** 04, 05
 
-**Status:** ready-for-agent
+**Status:** done. "Maths" is a fifth toggle in the Display panel's Show group, off by default and remembered with the others. On, Resonance reads as the Filter's Q ("Q 0.71", "Q 0.84 ×2" with two stages at 24 dB) and the Mixer's levels and the Amp's Sustain read in dB, in the control's own value line (sized for it while the layer is on, so nothing moves); the Oscillator Spectrum shows the Harmonic formula of Osc 1's Waveform and the Filter Spectrum the Response Curve's formula for the Mode and Slope, in a corner chip; the Timeline prints the Effective Cutoff beside its dot. The content is data in `src/music/maths.ts`, tested against the series the Viewers draw.
 
-- [ ] Resonance → Q mapping exposed and tested
-- [ ] Formula content defined as data per Waveform and Filter Mode
-- [ ] Toggle remembered across sessions
+- [x] Resonance → Q mapping exposed and tested
+- [x] Formula content defined as data per Waveform and Filter Mode
+- [x] Toggle remembered across sessions

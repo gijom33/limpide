@@ -207,7 +207,7 @@ A captured Spectrum kept as a faint trace for A/B comparison against the live on
 _Avoid_: Reference trace, pin, compare
 
 **Maths Layer**:
-An optional overlay revealing the underlying quantities (Q, dB, formulas, frequencies) behind Parameters and Viewers.
+An optional overlay revealing the underlying quantities behind Parameters and Viewers: Resonance as Q, levels in dB, the Harmonic formula of Osc 1's Waveform, the Response Curve's formula, and the Effective Cutoff's value. Switched on in the Display panel; off by default.
 _Avoid_: Advanced mode, expert mode
 
 ### Control surface

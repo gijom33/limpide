@@ -179,4 +179,8 @@ export const OVERLAY_TIPS: Record<Overlay, TipContent> = {
     title: 'Scope guides',
     body: 'Dashed lines at the Oscillator’s level. A trace inside them has only lost energy; one beyond them has been boosted by Resonance.',
   },
+  maths: {
+    title: 'Maths Layer',
+    body: 'The quantities behind the sound: Resonance as the Filter’s Q, the Mixer’s levels and the Amp’s Sustain in dB, the Harmonic formula of Osc 1’s Waveform on the Oscillator Spectrum, the Response Curve’s formula on the Filter Spectrum, and the Effective Cutoff’s value on the Timeline.',
+  },
 };

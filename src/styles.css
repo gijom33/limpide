@@ -227,6 +227,16 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 [data-overlay='ideal'] .swatch { width: 6px; height: 6px; border: 1px solid var(--text); border-radius: 50%; }
 [data-overlay='curve'] .swatch { width: 14px; border-top: 1.5px dashed var(--cutoff-line); }
 [data-overlay='guides'] .swatch { width: 14px; border-top: 1px dashed var(--muted); }
+[data-overlay='maths'] .swatch::before { content: 'Σ'; font-size: 11px; line-height: 1; }
+[data-overlay='maths'] .swatch { display: inline-flex; align-items: center; }
+/* The Maths Layer's formula, in the Spectrum's bottom-left corner over the plot (above its frequency labels), on a
+   chip of the page's background so it reads over the trace. */
+.maths-formula {
+  position: absolute; left: 6px; bottom: 18px; margin: 0; max-width: calc(100% - 12px); padding: 3px 6px; pointer-events: none;
+  display: flex; flex-direction: column; gap: 1px; font-size: var(--text-sm); line-height: 1.3; color: var(--text);
+  background: color-mix(in srgb, var(--bg) 85%, transparent); border-radius: 4px; font-variant-numeric: tabular-nums;
+}
+.maths-where { color: var(--muted); font-size: var(--text-xs); }
 
 /* Toolbar: one panel, three captioned groups (View, Axes, Show), separated by hairlines. */
 /* The toolbar sits in the header line when there is room, and wraps below the title when not. */

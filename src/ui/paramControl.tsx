@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { mathsReadout, widestMathsReadout } from '../music/maths';
 import { formatParam, PARAMS, type ParamId } from '../patch/patch';
 import { positionToValue, valueToPosition } from '../patch/taper';
 import { useLearnable } from './learn';
+import { MathsContext } from './mathsContext';
 
 /** Readouts sampled across a control's travel to find the widest it can show. */
 const WIDTH_SAMPLES = 128;
@@ -25,7 +27,12 @@ export function useParamControl(id: ParamId, value: number, onChange: (value: nu
   const position = valueToPosition(def, value);
   const setPosition = (p: number) => onChange(positionToValue(def, Math.min(1, Math.max(0, p))));
   const learnable = useLearnable({ kind: 'param', id });
-  const widest = useMemo(() => widestReadouts(id), [id]);
+  // In the Maths Layer some controls read the quantity behind their value instead (Q, dB): sized for it while on.
+  const mathsPatch = useContext(MathsContext);
+  const maths = mathsPatch ? mathsReadout(id, value, mathsPatch) : undefined;
+  const readout = maths ?? formatParam(id, value);
+  const widestMaths = mathsPatch ? widestMathsReadout(id) : undefined;
+  const widest = useMemo(() => [...widestReadouts(id), ...(widestMaths ? [widestMaths] : [])], [id, widestMaths]);
   const changing = useChanging(value);
   const [touching, setTouching] = useState(false);
 
@@ -73,10 +80,10 @@ export function useParamControl(id: ParamId, value: number, onChange: (value: nu
   };
   const text = (
     <>
-      {touching && <div className="value-bubble">{formatParam(id, value)}</div>}
+      {touching && <div className="value-bubble">{readout}</div>}
       <div className="knob-label">{def.label}</div>
       <div className="knob-value">
-        <span>{formatParam(id, value)}</span>
+        <span data-maths={maths !== undefined || undefined}>{readout}</span>
         {widest.map((t) => (
           <span key={t} className="knob-value-sizer" aria-hidden="true">
             {t}
