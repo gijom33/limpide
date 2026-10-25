@@ -56,8 +56,11 @@ export interface SynthEngine {
   fundamental(): number;
   /** The Modulation model at `time` (default: now), from the Gate history — past times too, for the Timeline. */
   modulationAt(time?: number): Modulation;
-  /** The LFO's value (−1 to 1) at `time`: `modulationAt(time).lfo` alone, cheap enough to draw it point by point. */
-  lfoAt(time: number): number;
+  /**
+   * The LFO's value times the Depth in force at `time` (−1 to 1): how far it moves its destination, as the plot draws
+   * it. `modulationAt(time).lfo` alone (scaled), cheap enough to draw point by point.
+   */
+  lfoSwingAt(time: number): number;
   /** The Cutoff knob's own setting at `time` (before modulation). */
   baseCutoffAt(time: number): number;
   now(): number;
@@ -568,9 +571,9 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       return patchAt(ctx.currentTime)?.mixSub ? frequency / 2 : frequency;
     },
     modulationAt,
-    lfoAt: (time) => {
+    lfoSwingAt: (time) => {
       const then = patchAt(time);
-      return then ? lfoShape(then.lfoWaveform, lfoClock.phaseAt(time)) : 0;
+      return then ? then.lfoAmount * lfoShape(then.lfoWaveform, lfoClock.phaseAt(time)) : 0;
     },
     baseCutoffAt: (time) => {
       const then = patchAt(time);

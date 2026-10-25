@@ -21,7 +21,7 @@ const y = (value: number) => (H / 2 - value * (H / 2 - PAD)).toFixed(1);
 
 /**
  * The LFO as it moves: its recent history from the Modulation model, scrolling, the newest at the right with a dot
- * (ADR-0003: the same LFO the sound has). Drawn by the render loop, outside React (ADR-0002).
+ * (ADR-0003: the same LFO the sound has). Its height is the Depth: flat at 0, the plot's full height at 100 %. Drawn by the render loop, outside React (ADR-0002).
  */
 export function LfoPlot({ engine }: { engine: SynthEngine }) {
   const line = useRef<SVGPathElement>(null);
@@ -34,10 +34,10 @@ export function LfoPlot({ engine }: { engine: SynthEngine }) {
         const points: string[] = [];
         for (let i = 0; i <= SAMPLES; i++) {
           const t = now - SPAN + (i / SAMPLES) * SPAN;
-          points.push(`${(PAD + (i / SAMPLES) * (W - 2 * PAD)).toFixed(1)} ${y(engine.lfoAt(t))}`);
+          points.push(`${(PAD + (i / SAMPLES) * (W - 2 * PAD)).toFixed(1)} ${y(engine.lfoSwingAt(t))}`);
         }
         line.current?.setAttribute('d', `M${points.join(' L')}`);
-        dot.current?.setAttribute('cy', y(engine.lfoAt(now)));
+        dot.current?.setAttribute('cy', y(engine.lfoSwingAt(now)));
       }),
     [engine],
   );
