@@ -532,6 +532,9 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .lfo-play { display: flex; align-items: stretch; gap: var(--space-3); }
 .lfo-play .knobs { flex: none; flex-wrap: nowrap; }
 .lfo-play > .tip-anchor { display: flex; flex: 1 1 auto; min-width: 0; }
+/* Retrigger: an icon over its word, between the knobs and the plot, its own height rather than a toolbar's. */
+.lfo-play > .tip-anchor:has(> .lfo-retrigger) { flex: none; align-items: center; }
+.lfo-retrigger { flex-direction: column; justify-content: center; gap: 3px; height: auto; min-height: 44px; padding: 4px 6px; font-size: var(--text-sm); }
 /* LFO 2 in its very light blue (very dark in the light theme): its knob arcs, its plot, its share of a ring. */
 .lfo-rows[data-lfo='2'] { --stage: var(--mod-2); }
 .lfo-plot {
@@ -649,6 +652,8 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
     .timeline-controls .sub-block > h3, .timeline-controls .sub-block > .tip-anchor:first-child { margin-top: 0; }
     .destination-name { width: 74px; padding: 0 4px; gap: 4px; font-size: var(--text-sm); }
     .destination-picker .tool-icon { width: 24px; }
+    /* Each LFO's plot narrower, giving Retrigger its room, so the two LFOs still sit side by side. */
+    .lfo-plot { width: 84px; }
     /* Fader columns as wide as the Filter Envelope's row leaves them (Amount and four faders on one line). */
     .knob[data-kind='fader'] { --fader-col: clamp(40px, (100cqw - var(--dial-big) - 4 * var(--knob-gap)) / 4, 44px); }
   }

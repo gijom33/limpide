@@ -102,6 +102,10 @@ _Avoid_: Env depth, intensity
 A slow, repeating modulation source that moves one Destination: pitch (vibrato), Cutoff, or Pulse Width (PWM). **Rate** is how fast it repeats, **Depth** how far it moves things.
 _Avoid_: Modulator, wobble, LFO amount (say Depth)
 
+**Retrigger**:
+An LFO setting: on, the LFO starts its cycle again at every Note (each Note gets the same wobble from its start); off, it runs freely and each Note catches it wherever it is. Off by default.
+_Avoid_: Key sync (fine in a tooltip), reset, phase reset
+
 **Glide**:
 The time taken to slide from one note's pitch to the next.
 _Avoid_: Portamento, slide

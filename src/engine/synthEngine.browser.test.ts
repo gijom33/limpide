@@ -422,6 +422,22 @@ describe('two LFOs and their destinations', () => {
     expect(up(osc1)).toBeCloseTo(440, 0);
   });
 
+  it('a retriggering LFO starts its cycle at each Note, in the sound and the model; a free one runs on', async () => {
+    // A Note at 0.3 s: 0.25 s later a free LFO is past half its cycle (down), a retriggered one a quarter in (up).
+    const play = { ...square, lfoDestination: 'pitch', lfoAmount: 1 } as const;
+    const at = (s: Float32Array, t: number) => frequencyAround(s, SR, t, 0.02);
+    let model = 0;
+    const free = await render(1.2, play, (e) => e.noteOn(69, 1, 0.3));
+    expect(at(free, 0.55)).toBeCloseTo(440 * 2 ** (-1 / 12), 0);
+    const retriggered = await render(1.2, { ...play, lfoRetrigger: 'note' }, (e) => {
+      e.noteOn(69, 1, 0.3);
+      model = e.lfoSwingAt(0.55);
+    });
+    expect(at(retriggered, 0.55)).toBeCloseTo(440 * 2 ** (1 / 12), 0);
+    expect(at(retriggered, 1.05)).toBeCloseTo(440 * 2 ** (-1 / 12), 0); // three quarters in: down
+    expect(model).toBe(1);
+  });
+
   it('Detune moves Osc 2 by 50 cents each way at full Depth', async () => {
     const s = await render(1, { ...square, mixOsc1: 0, mixOsc2: 1, lfo2Destination: 'detune', lfo2Amount: 1 }, (e) => e.noteOn(69, 1, 0));
     expect(up(s)).toBeCloseTo(440 * 2 ** (50 / 1200), 0);

@@ -101,4 +101,31 @@ describe('createLfoClock', () => {
     clock.setRate(1, 5);
     expect(clock.phaseAt(1.1)).toBeCloseTo(0.5, 9); // 1 cycle at 1 Hz, then 0.1 s at 5 Hz
   });
+
+  it('restarts its cycle at a Note (retrigger): phase 0 there, then on at the Rate', () => {
+    const clock = createLfoClock(0, 2);
+    clock.restart(1.3);
+    expect(clock.phaseAt(1.2)).toBeCloseTo(0.4); // untouched before the restart
+    expect(clock.phaseAt(1.3)).toBeCloseTo(0);
+    expect(clock.phaseAt(1.55)).toBeCloseTo(0.5);
+  });
+
+  it('takes a restart scheduled ahead of a later Rate change made before it (a Note handed over early)', () => {
+    const clock = createLfoClock(0, 1);
+    clock.restart(2); // a Note scheduled for t = 2
+    clock.setRate(1.5, 4); // the Rate turned at 1.5, before the Note sounds
+    expect(clock.phaseAt(1.75)).toBeCloseTo(0.5 + 4 * 0.25 - 1); // 1.5 cycles + 1 cycle
+    expect(clock.phaseAt(2)).toBeCloseTo(0);
+    expect(clock.phaseAt(2.1)).toBeCloseTo(0.4); // at the new Rate after the restart
+  });
+
+  it('forgets old restarts without moving the phase after them', () => {
+    const clock = createLfoClock(0, 3);
+    clock.restart(1);
+    clock.setRate(2, 1);
+    clock.restart(3);
+    const before = [3.2, 3.7].map((t) => clock.phaseAt(t));
+    clock.forgetBefore(3.1);
+    expect([3.2, 3.7].map((t) => clock.phaseAt(t))).toEqual(before);
+  });
 });

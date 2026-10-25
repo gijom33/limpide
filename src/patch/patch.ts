@@ -51,6 +51,8 @@ export type FilterMode = 'lowpass' | 'highpass' | 'bandpass' | 'notch';
 export type FilterSlope = 12 | 24;
 /** Where an LFO goes: the Oscillators' pitch, Osc 2's alone (an octave, or its Detune), the Pulse Width, the Filter. */
 export type LfoDestination = 'pitch' | 'osc2Pitch' | 'detune' | 'pulseWidth' | 'cutoff' | 'resonance';
+/** Whether an LFO runs freely or starts its cycle again at every Note (retrigger, or key sync). */
+export type LfoRetrigger = 'free' | 'note';
 /** How many Notes can sound at once. 1 is monophonic (last-note priority, Glide); more play chords (ADR-0007). */
 export type Voices = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
@@ -63,6 +65,8 @@ export type Patch = Record<ParamId, number> & {
   lfoDestination: LfoDestination;
   lfo2Waveform: LfoWaveform;
   lfo2Destination: LfoDestination;
+  lfoRetrigger: LfoRetrigger;
+  lfo2Retrigger: LfoRetrigger;
   voices: Voices;
 };
 
@@ -120,6 +124,9 @@ export function defaultPatch(): Patch {
     // LFO 2 starts silent, so a Patch from before it sounds as it did; on Pitch, for vibrato beside LFO 1's sweep.
     lfo2Waveform: 'sine',
     lfo2Destination: 'pitch',
+    // Both run freely, so a Patch from before retrigger sounds as it did.
+    lfoRetrigger: 'free',
+    lfo2Retrigger: 'free',
     voices: 1,
   };
 }
@@ -138,6 +145,8 @@ export const CHOICES = {
   lfoDestination: ['pitch', 'osc2Pitch', 'detune', 'pulseWidth', 'cutoff', 'resonance'],
   lfo2Waveform: ['sine', 'triangle', 'square', 'saw', 'sawDown'],
   lfo2Destination: ['pitch', 'osc2Pitch', 'detune', 'pulseWidth', 'cutoff', 'resonance'],
+  lfoRetrigger: ['free', 'note'],
+  lfo2Retrigger: ['free', 'note'],
   voices: [1, 2, 3, 4, 5, 6, 7, 8],
 } as const satisfies { [K in Exclude<keyof Patch, ParamId>]: readonly Patch[K][] };
 
@@ -149,8 +158,8 @@ export type LfoNumber = 1 | 2;
 
 /** The Patch's names for one LFO's settings. */
 export const LFO_KEYS = {
-  1: { rate: 'lfoRate', amount: 'lfoAmount', waveform: 'lfoWaveform', destination: 'lfoDestination' },
-  2: { rate: 'lfo2Rate', amount: 'lfo2Amount', waveform: 'lfo2Waveform', destination: 'lfo2Destination' },
+  1: { rate: 'lfoRate', amount: 'lfoAmount', waveform: 'lfoWaveform', destination: 'lfoDestination', retrigger: 'lfoRetrigger' },
+  2: { rate: 'lfo2Rate', amount: 'lfo2Amount', waveform: 'lfo2Waveform', destination: 'lfo2Destination', retrigger: 'lfo2Retrigger' },
 } as const;
 
 /** One LFO's settings. */
@@ -159,18 +168,28 @@ export interface Lfo {
   amount: number;
   waveform: LfoWaveform;
   destination: LfoDestination;
+  retrigger: LfoRetrigger;
 }
 
 /** Both LFOs' settings, LFO 1 first. */
 export const lfos = (patch: Patch): [Lfo, Lfo] =>
   ([1, 2] as const).map((n) => {
     const k = LFO_KEYS[n];
-    return { rate: patch[k.rate], amount: patch[k.amount], waveform: patch[k.waveform], destination: patch[k.destination] };
+    return { rate: patch[k.rate], amount: patch[k.amount], waveform: patch[k.waveform], destination: patch[k.destination], retrigger: patch[k.retrigger] };
   }) as [Lfo, Lfo];
 
-export function setLfo(patch: Patch, { waveform, destination }: { waveform?: LfoWaveform; destination?: LfoDestination }, lfo: LfoNumber = 1): Patch {
+export function setLfo(
+  patch: Patch,
+  { waveform, destination, retrigger }: { waveform?: LfoWaveform; destination?: LfoDestination; retrigger?: LfoRetrigger },
+  lfo: LfoNumber = 1,
+): Patch {
   const k = LFO_KEYS[lfo];
-  return { ...patch, [k.waveform]: waveform ?? patch[k.waveform], [k.destination]: destination ?? patch[k.destination] };
+  return {
+    ...patch,
+    [k.waveform]: waveform ?? patch[k.waveform],
+    [k.destination]: destination ?? patch[k.destination],
+    [k.retrigger]: retrigger ?? patch[k.retrigger],
+  };
 }
 
 export function setWaveform(patch: Patch, waveform: Waveform, oscillator: 'osc1' | 'osc2' = 'osc1'): Patch {

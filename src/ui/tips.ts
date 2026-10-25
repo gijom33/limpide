@@ -115,8 +115,13 @@ export const TIPS = {
   },
   lfo: {
     title: 'LFO',
-    body: 'A slow, repeating wave that moves something for you: the Cutoff (wah, wobble), the pitch (vibrato), the Pulse Width (a shimmering PWM chorus) and more. Rate is how fast, Depth how far. There are two: aim them at different things, or both at one for two speeds of movement (LFO 2 draws in white).',
+    body: 'A slow, repeating wave that moves something for you: the Cutoff (wah, wobble), the pitch (vibrato), the Pulse Width (a shimmering PWM chorus) and more. Rate is how fast, Depth how far. There are two: aim them at different things, or both at one for two speeds of movement (LFO 2 draws in a lighter blue).',
     how: 'Turn Depth up and watch the knob it moves: a ring shows how far, a dot where it is now.',
+  },
+  lfoRetrigger: {
+    title: 'Retrigger',
+    body: 'On: the LFO starts its cycle again at every Note, so each Note gets the same wobble from its start (key sync). Off: it runs on freely, and each Note catches it wherever it is.',
+    how: 'Turn it on with a slow LFO on Cutoff and play a few Notes: each one opens the same way. The plot shows the cycle restart.',
   },
   lfoWaveform: {
     title: 'LFO',

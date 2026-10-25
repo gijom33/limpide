@@ -7,7 +7,7 @@ import {
 import { filterStages, type Stage } from './filterDesign';
 import { harmonicSeries } from '../music/harmonics';
 import { frequencyToNote, noteToFrequency } from '../music/pitch';
-import { GLIDE_OFF, lfos, PARAMS, type FilterMode, type LfoDestination, type LfoNumber, type Patch, type Voices } from '../patch/patch';
+import { GLIDE_OFF, lfos, PARAMS, type FilterMode, type Lfo, type LfoDestination, type LfoNumber, type Patch, type Voices } from '../patch/patch';
 import { bandwidthOctaves } from '../modulation/passBand';
 import type { Sounding } from '../modulation/reach';
 
@@ -229,10 +229,15 @@ const A4 = noteToFrequency(69);
 /**
  * One LFO: a real oscillator, wired to each destination through a gain set from its Depth (zero unless it is aimed
  * there): the Cutoff and the pitch in cents (through `detune`), Osc 2's tuning in cents, each Filter stage's Q.
- * Pulse Width goes through each Voice's own gains, since its swing depends on the Note.
+ * Pulse Width goes through each Voice's own gains, since its swing depends on the Note. The oscillator feeds a bus
+ * the rest is wired to, so a retriggering Note can swap in a new oscillator that starts its cycle at that Note.
  */
 interface LfoNodes {
   osc: OscillatorNode;
+  bus: GainNode;
+  /** The oscillator a restart is replacing, until it stops; and when the newest restart starts. */
+  previous: OscillatorNode | null;
+  restartAt: number;
   toCutoff: GainNode;
   toPitch: GainNode;
   toOsc2: GainNode;
@@ -327,7 +332,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
     l.toOsc2.connect(osc2.detune);
     for (const o of oscillators) {
       l.toPitch.connect(o.node.detune);
-      l.osc.connect(o.pwm[i]);
+      l.bus.connect(o.pwm[i]);
     }
   });
 
@@ -469,13 +474,15 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   const lfoNodes = (): LfoNodes => {
     const osc = ctx.createOscillator();
     osc.frequency.value = PARAMS.lfoRate.default;
+    const bus = ctx.createGain();
+    osc.connect(bus);
     const [toCutoff, toPitch, toOsc2, q1, q2] = Array.from({ length: 5 }, () => {
       const g = ctx.createGain();
       g.gain.value = 0;
-      osc.connect(g);
+      bus.connect(g);
       return g;
     });
-    return { osc, toCutoff, toPitch, toOsc2, toQ: [q1, q2] };
+    return { osc, bus, previous: null, restartAt: -1, toCutoff, toPitch, toOsc2, toQ: [q1, q2] };
   };
   const shared: Shared = { lfos: [lfoNodes(), lfoNodes()], noise: noiseBuffer(ctx), master };
   const voices = Array.from({ length: MAX_VOICES }, (_, i) => createVoice(ctx, shared, i));
@@ -485,6 +492,29 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   for (const l of shared.lfos) l.osc.start(lfoStart);
   // The model's copy of each LFO's phase, advanced with every Rate change exactly as its oscillator is (ADR-0003).
   const lfoClocks = [createLfoClock(lfoStart, PARAMS.lfoRate.default), createLfoClock(lfoStart, PARAMS.lfo2Rate.default)];
+  /**
+   * A retriggering LFO starts its cycle again at `t`: a new oscillator takes over from the running one there (an
+   * oscillator cannot be reset), and the model's clock restarts with it. A chord's Notes restart it once.
+   */
+  const restartLfo = (i: number, l: Lfo, t: number) => {
+    const nodes = shared.lfos[i];
+    if (nodes.restartAt === t) return;
+    const next = ctx.createOscillator();
+    setLfoWaveform(next, l.waveform, wave);
+    next.frequency.value = l.rate;
+    next.connect(nodes.bus);
+    next.start(t);
+    const old = nodes.osc;
+    old.stop(t);
+    old.onended = () => {
+      old.disconnect();
+      if (nodes.previous === old) nodes.previous = null;
+    };
+    nodes.previous = old;
+    nodes.osc = next;
+    nodes.restartAt = t;
+    lfoClocks[i].restart(t);
+  };
   /** Both LFOs' values at `t`, under the Patch then in force. */
   const lfoValues = (then: Patch, t: number): [number, number] => {
     const [one, two] = lfos(then);
@@ -682,8 +712,11 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       const resonances = lfoSwings(next, 'resonance', LFO_RESONANCE, Math.min(next.resonance, 1 - next.resonance));
       lfos(next).forEach((l, i) => {
         const nodes = shared.lfos[i];
-        setLfoWaveform(nodes.osc, l.waveform, wave);
-        nodes.osc.frequency.setValueAtTime(l.rate, t);
+        // A restart scheduled ahead of now leaves the old oscillator running until then: it follows too.
+        for (const osc of nodes.previous ? [nodes.osc, nodes.previous] : [nodes.osc]) {
+          setLfoWaveform(osc, l.waveform, wave);
+          osc.frequency.setValueAtTime(l.rate, t);
+        }
         nodes.toCutoff.gain.setValueAtTime(cutoffCents[i], t);
         nodes.toPitch.gain.setValueAtTime(pitchCents[i], t);
         nodes.toOsc2.gain.setValueAtTime(osc2[i], t);
@@ -701,6 +734,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
 
     noteOn(note, velocity, time) {
       const t = at(time);
+      if (patch) lfos(patch).forEach((l, i) => l.retrigger === 'note' && restartLfo(i, l, t));
       const voice = allocate(note, t);
       voice.note = note;
       follow(voice);

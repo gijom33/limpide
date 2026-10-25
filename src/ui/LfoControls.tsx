@@ -3,6 +3,7 @@ import type { SynthEngine } from '../engine/synthEngine';
 import type { LfoWaveform } from '../modulation/lfo';
 import { LFO_KEYS, setLfo, type LfoNumber, type ParamId, type Patch } from '../patch/patch';
 import { DestinationPicker } from './DestinationPicker';
+import { RetriggerIcon } from './icons';
 import { Knob } from './Knob';
 import { LfoPlot } from './LfoPlot';
 import { SubBlock } from './SubBlock';
@@ -27,11 +28,16 @@ interface Props {
   onPatch: Dispatch<SetStateAction<Patch>>;
 }
 
-/** One LFO, in two rows: its shape and destination, then its Rate and Depth beside a plot of it moving. */
+/**
+ * One LFO, in two rows: its shape and destination, then its Rate and Depth, its Retrigger switch, and a plot of it
+ * moving.
+ */
 export function LfoControls({ lfo, engine, patch, onParam, onPatch }: Props) {
   const keys = LFO_KEYS[lfo];
   const off = patch[keys.amount] === 0;
   const learnShape = useLearnable({ kind: 'choice', id: keys.waveform });
+  const learnRetrigger = useLearnable({ kind: 'choice', id: keys.retrigger });
+  const retrigger = patch[keys.retrigger] === 'note';
   return (
     <SubBlock title={`LFO ${lfo}`} tip={TIPS.lfo} group>
       <div className="lfo-rows" data-lfo={lfo}>
@@ -61,6 +67,19 @@ export function LfoControls({ lfo, engine, patch, onParam, onPatch }: Props) {
             <Knob id={keys.rate} value={patch[keys.rate]} onChange={(v) => onParam(keys.rate, v)} inactive={off} />
             <Knob id={keys.amount} value={patch[keys.amount]} onChange={(v) => onParam(keys.amount, v)} />
           </div>
+          <Tooltip content={TIPS.lfoRetrigger}>
+            <button
+              type="button"
+              className="tool lfo-retrigger"
+              aria-label={`LFO ${lfo} Retrigger`}
+              aria-pressed={retrigger}
+              onClick={() => onPatch((p) => setLfo(p, { retrigger: retrigger ? 'free' : 'note' }, lfo))}
+              {...learnRetrigger}
+            >
+              <RetriggerIcon />
+              <span>Retrig</span>
+            </button>
+          </Tooltip>
           <Tooltip content={TIPS.lfoWaveform}>
             <LfoPlot engine={engine} lfo={lfo} />
           </Tooltip>

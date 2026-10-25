@@ -88,3 +88,11 @@ export function PlayIcon() {
     </svg>
   );
 }
+
+/** A circular arrow: an LFO's Retrigger, its cycle starting again. */
+export const RetriggerIcon = () => (
+  <svg {...base}>
+    <path d="M12.6 5.2A5.5 5.5 0 1 0 13.5 9" strokeLinecap="round" />
+    <path d="M13.2 1.8v3.6H9.6" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);

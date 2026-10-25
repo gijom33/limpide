@@ -133,3 +133,17 @@ test('on a phone the LFOs carry no name beside them, so shape and destination sh
     expect(Math.abs(destination.y + destination.height / 2 - (shapes.y + shapes.height / 2)), `LFO ${n}`).toBeLessThan(2);
   }
 });
+
+test('each LFO has a Retrigger switch, off by default, kept in the Patch across a reload', async ({ page }) => {
+  await page.goto('/');
+  const one = page.getByRole('button', { name: 'LFO 1 Retrigger' });
+  const two = page.getByRole('button', { name: 'LFO 2 Retrigger' });
+  await expect(one).toHaveAttribute('aria-pressed', 'false');
+  await expect(two).toHaveAttribute('aria-pressed', 'false');
+  await two.click();
+  await expect(two).toHaveAttribute('aria-pressed', 'true');
+  await expect(one).toHaveAttribute('aria-pressed', 'false');
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('limpide.current') ?? '')).toContain('"lfo2Retrigger":"note"');
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'LFO 2 Retrigger' })).toHaveAttribute('aria-pressed', 'true');
+});

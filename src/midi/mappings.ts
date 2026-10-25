@@ -27,6 +27,8 @@ export const CHOICE_LABELS: Record<ChoiceId, string> = {
   lfoDestination: 'LFO 1 Destination',
   lfo2Waveform: 'LFO 2 Waveform',
   lfo2Destination: 'LFO 2 Destination',
+  lfoRetrigger: 'LFO 1 Retrigger',
+  lfo2Retrigger: 'LFO 2 Retrigger',
   voices: 'Voices',
 };
 
