@@ -35,6 +35,8 @@ The rules every screen change is judged against, the way issue 15's audit judged
 - **Every control works from the keyboard** (2.1.1), with a visible focus ring (2.4.7): a plain ring, shown for keyboard focus only, never after a click or a drag.
 - **Colour is never the only signal** (1.4.1): the modulation ring also differs from the value arc by its position, outside the dial.
 
+Contrast, target sizes and the keyboard are checked on every screen state by `e2e/designPrinciples.spec.ts`; known failures are listed there with the issue that fixes them.
+
 ## Sources
 
 - Jakob Nielsen, *10 Usability Heuristics for User Interface Design*, Nielsen Norman Group (1994, updated 2020).

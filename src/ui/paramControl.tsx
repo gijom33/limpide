@@ -40,7 +40,9 @@ export function useParamControl(id: ParamId, value: number, onChange: (value: nu
     onDoubleClick: () => onChange(def.default),
     onKeyDown: (e: React.KeyboardEvent<HTMLElement | SVGElement>) => {
       delete (e.currentTarget as HTMLElement).dataset.pointer; // keyboard focus from now on: show the ring
-      const step = e.shiftKey ? 0.002 : 0.02;
+      // A stepped Parameter (Octave, Semitone) moves a whole step per key: less would round back to where it was.
+      const unit = def.step ? def.step / (def.max - def.min) : 0;
+      const step = Math.max(unit, e.shiftKey ? 0.002 : 0.02);
       if (e.key === 'ArrowUp' || e.key === 'ArrowRight') setPosition(position + step);
       else if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') setPosition(position - step);
       else return;
