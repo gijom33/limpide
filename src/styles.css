@@ -878,19 +878,25 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   /* Viewers: wider than tall, a little lower than elsewhere. */
   .tap canvas { aspect-ratio: 3 / 1; min-height: 96px; }
 
-  /* The header in three rows: logo, Patch and Display; then octave, Demo and Song, Hold and MIDI; then the piano alone,
-     edge to edge, its keys as wide as the screen allows. Hold, MIDI and Display show icons, not words. */
+  /* The header in three rows: logo and Patch; then the playing buttons (Demo, Song, Hold) on the left and the
+     settings (MIDI, Display, About) on the right; then the octave buttons stacked (up over down) and the piano
+     beside them, its keys as wide as the rest of the screen allows.
+     Hold, MIDI and Display show icons, not words. */
   /* It stays at the top while the page scrolls, so the piano plays under whichever stage is in view. It runs
      edge to edge over the page's padding, on the page's background, so nothing shows through it. */
   /* Scrolling down slides it up under the screen's top edge until only the piano shows (--header-hide, measured),
-     and any scroll up slides it back: nothing below moves, as its height never changes. */
+     and any scroll up slides it back: nothing below moves, as its height never changes. The octave buttons sit
+     beside the piano, so they stay with it. */
   header {
     position: sticky; top: calc(-1 * var(--header-hidden, 0px)); z-index: 10; transition: top 0.2s ease;
     margin: calc(-1 * var(--space-3)) calc(-1 * var(--space-2)) 0;
     padding: var(--space-3) var(--space-2) var(--space-2);
     background: var(--bg); border-bottom: 1px solid var(--border);
-    grid-template-columns: auto auto minmax(0, 1fr) auto auto auto auto auto auto;
-    grid-template-areas: 'left left left left left left left left left' 'down up . demo song hold midi display about' 'piano piano piano piano piano piano piano piano piano';
+    /* The first column is the octave buttons' width: Demo, above them, runs on into the next. */
+    grid-template-columns: 36px auto auto auto minmax(0, 1fr) auto auto auto;
+    grid-template-areas:
+      'left left left left left left left left' 'demo demo song hold . midi display about'
+      'up piano piano piano piano piano piano piano' 'down piano piano piano piano piano piano piano';
     gap: var(--space-2) var(--space-1);
   }
   .header-center, .play-controls, .keyboard, .header-right { display: contents; }
@@ -903,6 +909,7 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   .header-right > .tip-anchor:nth-child(2) { grid-area: song; }
   .display-menu { grid-area: display; display: flex; }
   .header-right > *, .play-controls > .tip-anchor, .midi-menu { justify-self: end; }
+  .header-right > .tip-anchor:first-child { justify-self: start; } /* Demo: on the octave buttons' left edge */
   .keyboard > :first-child { grid-area: down; }
   .keyboard > :last-child { grid-area: up; }
   .keyboard > .tip-anchor { grid-area: piano; display: flex; }
@@ -910,8 +917,8 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   /* Flex wrappers, so their buttons sit on the row's top like the others (an inline button rides the text line). */
   .midi-menu { grid-area: midi; display: flex; }
   .about-menu { grid-area: about; display: flex; }
-  /* One octave, C to C, so each white key is wider than a fingertip (Apple's 44 pt); the octave buttons reach
-     the rest. The keys share the row's width: eight white keys, black ones 0.6 of a white key as on a piano. */
+  /* One octave, C to C; the octave buttons reach the rest. The keys share what the octave buttons leave of the
+     row: eight white keys, black ones 0.6 of a white key as on a piano. */
   .keyboard > .tip-anchor { container-type: inline-size; }
   .piano { --white-key: calc(100cqw / 8); flex: 1 1 auto; height: 64px; }
   .piano button:nth-child(n + 14) { display: none; }
@@ -923,14 +930,15 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   .display-menu .display-dot { position: absolute; top: 5px; right: 5px; } /* not a third line under icon and word */
   header .tool:has(> .tool-glyph), .display-menu > .tip-anchor > .tool, .display-menu .tool { padding: 0 8px; }
   /* The playing row: each icon over its word (a tooltip needs a pointer, so on a touch screen the word says what the
-     icon does), 44 pt tall for a finger. The octave buttons match their height. */
+     icon does), 44 pt tall for a finger. */
   header :is(.demo-button, [aria-label='Hold'], .midi-status, .display-menu .tool, .about-menu .tool) {
     flex-direction: column; justify-content: center; gap: 2px; height: auto; min-height: 44px; padding: 3px 6px 2px;
   }
   header :is(.demo-button, [aria-label='Hold'], .midi-status, .display-menu .tool, .about-menu .tool) :is(.demo-word, .tool-word) {
     display: block; font-size: 9px; line-height: 10px;
   }
-  .keyboard > .tool-icon { height: 44px; }
+  /* The octave buttons: two halves of the piano's height, one over the other. */
+  .keyboard > .tool-icon { width: auto; height: auto; align-self: stretch; }
 }
 
 /* The sections strip (phones): equal tabs under the header, each underlined in its section's colour when it is the

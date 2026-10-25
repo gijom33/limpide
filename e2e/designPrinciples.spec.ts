@@ -40,12 +40,12 @@ const WAIVERS: Waiver[] = [
   { rule: 'target', selector: '.segmented button', floor: 20, size: 'laptop' },
   { rule: 'target', selector: '.piano button', floor: 12, size: 'laptop' },
   // Phone targets: controls at the toolbar height (28 px), selector options (20 to 22 px), the logo (24 px tall),
-  // the Preset arrows (18 px wide), the piano's black keys (27 px wide).
+  // the Preset arrows (18 px wide), the piano's black keys (24 px wide, beside the octave buttons).
   { rule: 'target', selector: '.tool, .tab-list [role=tab], .patch-item, .patch-save input', floor: 28, size: 'phone' },
   { rule: 'target', selector: '.segmented button', floor: 20, size: 'phone' },
   { rule: 'target', selector: '.wordmark-button', floor: 24, size: 'phone' },
   { rule: 'target', selector: '.patch-bar > .tool', floor: 18, size: 'phone' },
-  { rule: 'target', selector: '.piano button', floor: 26, size: 'phone' },
+  { rule: 'target', selector: '.piano button', floor: 23.5, size: 'phone' },
 ];
 
 const SIZES = {

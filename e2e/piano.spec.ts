@@ -214,7 +214,9 @@ for (const width of [375, 430]) {
       ks.filter((k) => k.getBoundingClientRect().width > 0).map((k) => ({ name: k.getAttribute('aria-label'), black: k.hasAttribute('data-black'), width: k.getBoundingClientRect().width })),
     );
     expect(shown.map((k) => k.name)).toEqual(['C4', 'C#4', 'D4', 'D#4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'A#4', 'B4', 'C5']);
-    for (const k of shown.filter((k) => !k.black)) expect(k.width).toBeGreaterThanOrEqual(44); // Apple's minimum touch target
+    // Apple's minimum touch target is 44 pt. Beside the octave buttons a 375-wide phone's white keys are 40 px: the
+    // owner kept the octave from C to C over that minimum (2026-10-25).
+    for (const k of shown.filter((k) => !k.black)) expect(k.width).toBeGreaterThanOrEqual(width < 400 ? 39 : 44);
   });
 }
 
