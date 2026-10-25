@@ -1,4 +1,4 @@
-import { type ParamId } from '../patch/patch';
+import { GLIDE_OFF, type ParamId } from '../patch/patch';
 
 /**
  * The Demo: one original track, played by the synth alone, so the Viewers show everything heard. Each part is a
@@ -27,8 +27,8 @@ export interface Track {
 }
 
 const BPM = 128;
-/** LFO Rates that land on the beat at the track's tempo, in Hz: a quarter Note, an eighth, an eighth triplet... */
-const SYNC = { quarter: BPM / 60, eighth: (BPM / 60) * 2, triplet: (BPM / 60) * 3, sixteenth: (BPM / 60) * 4, thirtySecond: (BPM / 60) * 8 };
+/** LFO Rates that land on the beat at the track's tempo, in Hz: a quarter Note, an eighth, a sixteenth, a thirty-second. */
+const SYNC = { quarter: BPM / 60, eighth: (BPM / 60) * 2, sixteenth: (BPM / 60) * 4, thirtySecond: (BPM / 60) * 8 };
 
 const times = (text: string, n: number) => Array(n).fill(text).join(' ');
 /** One bar of sixteenths: a Note name is a soft step, `!` after it an accent, `-` a rest. */
@@ -47,9 +47,10 @@ const pushedStabs = (chord: string) => `${chord}:.5@1 -:.25 ${chord}:.5 -:.25 ${
 /** An LFO Rate that changes on bar lines: [bar, Hz] pairs, each a jump. */
 const rateByBar = (steps: [number, number][]): KnobMove[] => steps.map(([bar, hz]) => ({ id: 'lfoRate', to: hz, start: bar * 4, end: bar * 4 }));
 
-const acidA = sixteenths('A1! A1 A2! A1 - A1 G2! A1 C2 A1 E2! A1 D2 - G1 A2!');
-const acidB = sixteenths('A1! A2! A1 C3! A1 - G2! A1 C2 E2! A1 G2 A1 D3! - E2');
-const acidEnd = sixteenths('A1! A2! A1 C3! A1 - G2! A1 C2 E2! A1 G2 A1 D3! - -');
+// Mostly the root and its octave, the same bar over and over with one Note changed: hypnotic rather than busy.
+const acidA = sixteenths('A1! - A1 A2 A1 - A2! A1 - A1 C2! A1 A2 - G1 A1');
+const acidB = sixteenths('A1! - A1 A2 A1 - A2! A1 - A1 E2! A1 A2 - G2! A1');
+const acidEnd = sixteenths('A1! - A1 A2 A1 - A2! A1 - A1 E2! A1 A2 - - -');
 
 // Every part after the first plays over Am–F–C–G, a bar each: the four chords of a great deal of modern dance music.
 export const TRACK: Track = {
@@ -58,10 +59,16 @@ export const TRACK: Track = {
     // The intro: four on the floor, a fill into the bass. The Filter Envelope's drop deepens, then the Decay lengthens.
     { preset: 'Kick', phrase: `${times('C2:1@1 C2:1@1 C2:1@1 C2:1@1', 3)} C2:1@1 C2:1@1 C2:.5@1 C2:.5@.7 C2:.25@.6 C2:.25@.7 C2:.25@.8 C2:.25@1`,
       moves: [{ id: 'filterEnvAmount', from: 1.5, to: 4 }, { id: 'ampDecay', from: 0.25, to: 0.6, start: 8 }] },
-    // The build: an acid line, its accents biting. The Cutoff opens and the Resonance climbs, so the Response Curve's
-    // peak walks up through the Harmonics; then the Filter Envelope's Decay lengthens and the squelch grows.
+    // The build: an acid line, its accents biting, without Glide (here it would slide into every Note). The Cutoff
+    // opens and the Resonance climbs, so the Response Curve's peak walks up through the Harmonics; then the Filter
+    // Envelope's Decay lengthens and the squelch grows.
     { preset: 'Acid', phrase: [times(acidA, 4), times(acidB, 3), acidEnd].join(' '),
-      moves: [{ id: 'cutoff', from: 150, to: 2600 }, { id: 'resonance', from: 0.6, to: 0.95 }, { id: 'filterDecay', from: 0.15, to: 0.4, start: 16 }] },
+      moves: [
+        { id: 'cutoff', from: 180, to: 1500 },
+        { id: 'glide', to: GLIDE_OFF, start: 0, end: 0 },
+        { id: 'resonance', from: 0.55, to: 0.8 },
+        { id: 'filterDecay', from: 0.12, to: 0.3, start: 16 },
+      ] },
     // The hook: an arpeggio on six Voices. The Pulse Width narrows and the Spectrum's gaps slide along the ladder; then
     // the plucks bloom as the Filter Envelope's Decay lengthens.
     { preset: 'Poly Pluck', phrase: times(['A3 C4 E4 A4', 'A3 C4 F4 A4', 'G3 C4 E4 G4', 'G3 B3 D4 G4'].map(arpeggio).join(' '), 2),
@@ -73,12 +80,13 @@ export const TRACK: Track = {
     // faster and faster; then a beat of silence.
     { preset: 'Self-Oscillation', phrase: 'A2:7@1 -:1',
       moves: [{ id: 'cutoff', from: 300, to: 12000, end: 7 }, { id: 'lfoAmount', from: 0, to: 0.3, end: 7 }, { id: 'lfoRate', from: SYNC.quarter, to: SYNC.thirtySecond, end: 7 }] },
-    // The drop: a wobble bass, its LFO restarted by every Note and set to the beat, changing speed on the bar lines.
+    // The drop: a wobble bass, its LFO restarted by every Note and set to the beat: eighths, quickening to sixteenths
+    // at the end of each four bars. Its Depth grows from a gentle sway, on a milder Resonance than the Preset's.
     { preset: 'Wobble', phrase: times([wobbleBar('A1', 'A2'), wobbleBar('F1', 'F2'), wobbleBar('C2', 'C3'), wobbleBar('G1', 'G2')].join(' '), 2),
       moves: [
-        ...rateByBar([[0, SYNC.eighth], [2, SYNC.sixteenth], [3, SYNC.triplet], [4, SYNC.eighth], [5, SYNC.quarter], [6, SYNC.sixteenth]]),
-        { id: 'lfoRate', from: SYNC.sixteenth, to: SYNC.thirtySecond, start: 28, end: 32 },
-        { id: 'resonance', from: 0.65, to: 0.85 },
+        ...rateByBar([[0, SYNC.eighth], [3, SYNC.sixteenth], [4, SYNC.eighth], [7, SYNC.sixteenth]]),
+        { id: 'lfoAmount', from: 0.3, to: 0.5 },
+        { id: 'resonance', to: 0.45, start: 0, end: 0 },
       ] },
     // The end: brass stabs pushed off the beat, brightening, then the first chord again, left to ring.
     { preset: 'Brass Section', phrase: `${['A2+E3+A3+C4+E4', 'F2+C3+F3+A3+C4', 'C3+E3+G3+C4+E4', 'G2+D3+G3+B3+D4'].map(pushedStabs).join(' ')} A2+E3+A3+C4+E4:4@1 -:4`,
