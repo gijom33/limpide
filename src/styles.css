@@ -343,7 +343,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 
 /* The Oscillators stage: Osc 1, Osc 2 and the Mixer stacked; the first needs no divider above it. */
 /* The rows of a stage are evenly spaced: one gap, the stage's, between every row, with no dividers. */
-.source-rows { display: flex; flex-direction: column; gap: var(--space-3); flex: 1 1 100%; }
+.source-rows { display: flex; flex-direction: column; gap: var(--space-2); flex: 1 1 100%; }
 /* In the stage columns nothing may shrink below its content (an explicit min-height on .knobs would otherwise
    let flexbox squeeze rows until labels overlap), and the Waveform picker must not grow to fill height. */
 .block > *, .source-rows > *, .sub-block > * { flex-shrink: 0; }
@@ -396,7 +396,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 /* Oscillator tabs: one Oscillator at a time; the Mixer stays visible below. */
 /* The Oscillators stage is rows: the tabs, then the Waveform picker with Pulse Width, then Osc 2's tuning, then
    the Mixer. The tuning and Mixer rows carry their name in a side column, so a row costs no heading line. */
-.tabs { display: flex; flex-direction: column; gap: var(--space-3); }
+.tabs { display: flex; flex-direction: column; gap: var(--space-2); }
 .tab-list { display: flex; gap: 2px; }
 .tab-panels { min-width: 0; }
 .tab-list .tip-anchor { display: flex; }
@@ -411,7 +411,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 /* A dot on a tab whose Oscillator is mixed in, so you know it is sounding while you edit the other. */
 .tab-badge { width: 6px; height: 6px; border-radius: 50%; background: var(--stage, var(--text)); }
 .tab-badge:not([data-on]) { visibility: hidden; }
-.tab-panels { display: grid; row-gap: var(--space-3); }
+.tab-panels { display: grid; row-gap: var(--space-2); }
 .tab-panel { grid-area: 1 / 1; min-width: 0; }
 .tab-panel:not([data-active]) { visibility: hidden; }
 /* A row shared by some tabs sits under their panels; the other tabs' panels cover both rows. */
@@ -473,7 +473,8 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
    A row without a name leaves the column empty. The rows share the height the tallest stage gives the controls,
    with the same space above and below each. */
 :root { --label-col: 68px; --label-gap: 12px; } /* the column fits the widest name, WAVEFORM */
-.rows { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; justify-content: space-evenly; gap: var(--space-3); }
+/* Rows of controls 8 px apart, as the LFOs' are: the tightest that still reads as separate rows (issue 33). */
+.rows { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; justify-content: space-evenly; gap: var(--space-2); }
 .rows > * { flex: none; }
 .block .sub-block { column-gap: var(--label-gap); }
 .block .sub-block > h3, .block .sub-block > .tip-anchor:first-child { flex: 0 0 var(--label-col); align-self: center; }
@@ -841,7 +842,6 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   main { padding: var(--space-3) var(--space-2); }
   .chain { margin: var(--space-3) 0; row-gap: var(--space-3); }
   .block { padding: var(--space-2) var(--space-3); gap: var(--space-2); }
-  .rows { gap: var(--space-2); }
   .knob { position: relative; }
   .knob-value { position: absolute; left: 0; right: 0; bottom: 0; height: var(--knob-label-h); line-height: var(--knob-label-h); font-size: var(--text-sm); color: var(--text); }
   .knob:not([data-changing]) .knob-value > :first-child { visibility: hidden; }
