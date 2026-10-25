@@ -105,6 +105,7 @@ for (const size of ['laptop', 'phone'] as const) {
 }
 
 test('every knob and fader works from the keyboard, with a focus ring for the keyboard only', async ({ page }) => {
+  test.setTimeout(120_000); // it tabs through the whole page three times, one key press at a time
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
   await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);
