@@ -83,9 +83,9 @@ test('the Activity Monitor shows the last message received', async ({ page }) =>
   const monitor = midiPanel(page).getByRole('status', { name: 'MIDI activity' });
   await expect(monitor).toContainText(/nothing received/i);
   await play(page, cc(7, 100, 2));
-  await expect(monitor).toContainText('CC 7 · 100 · ch 2');
+  await expect(monitor).toContainText('ch 2 · CC 7 · 100');
   await play(page, [0x90, 64, 120]);
-  await expect(monitor).toContainText('Note E4 · 120 · ch 1');
+  await expect(monitor).toContainText('ch 1 · Note E4 · 120');
 });
 
 test('a knob shows when hardware moves it, and when Pickup is still waiting for the knob to reach it', async ({ page }) => {
