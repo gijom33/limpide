@@ -59,9 +59,10 @@ export const InfoIcon = () => (
   </svg>
 );
 
-/** A MIDI socket: five pins in a ring. */
+/** A MIDI socket: five pins in a ring; its colour is the MIDI status, and a slash shows when MIDI is unavailable. */
 export const MidiIcon = () => (
-  <svg {...base}>
+  <svg {...base} className="midi-icon">
+    <path className="midi-slash" d="M2.5 13.5 13.5 2.5" strokeLinecap="round" />
     <circle cx="8" cy="8" r="6.25" />
     {[[4.6, 8.4], [5.6, 5.6], [8, 4.6], [10.4, 5.6], [11.4, 8.4]].map(([x, y]) => (
       <circle key={x} cx={x} cy={y} r="0.9" fill="currentColor" stroke="none" />

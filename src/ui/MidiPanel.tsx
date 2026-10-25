@@ -64,11 +64,11 @@ export function MidiPanel({ state, activity, mappings, learning, onLearn, onDone
           aria-label="MIDI"
           aria-expanded={open}
           data-connected={devices.length > 0 || undefined}
+          data-waiting={(state.kind === 'ready' && !devices.length) || undefined}
           data-unavailable={!available || undefined}
           data-learning={learning || undefined}
           onClick={() => setOpen((o) => !o)}
         >
-          <span className="midi-dot" aria-hidden="true" />
           <MidiIcon />
           <span className="tool-word">MIDI</span>
           {learning ? (

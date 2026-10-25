@@ -137,6 +137,35 @@ test('with Web MIDI working but nothing plugged in, the indicator is not marked 
   await expect(page.getByRole('button', { name: 'MIDI', exact: true })).not.toHaveAttribute('data-unavailable');
 });
 
+test('the MIDI icon carries the status: yellow with nothing plugged in, green with a device, struck through when unavailable', async ({ browser }) => {
+  const icon = (p: Page) => p.getByRole('button', { name: 'MIDI', exact: true }).locator('.midi-icon');
+  const colour = (p: Page, token: string) => p.evaluate((t) => {
+    const probe = Object.assign(document.createElement('i'), { style: `color: var(${t})` });
+    document.body.append(probe);
+    const c = getComputedStyle(probe).color;
+    probe.remove();
+    return c;
+  }, token);
+  const open = async (inputs: string[] | null) => {
+    const p = await browser.newPage();
+    await p.addInitScript((names) => {
+      const access = Object.assign(new EventTarget(), { inputs: new Map((names ?? []).map((n) => [n, Object.assign(new EventTarget(), { id: n, name: n, state: 'connected' })])) });
+      Object.defineProperty(navigator, 'requestMIDIAccess', { value: names ? () => Promise.resolve(access) : undefined, configurable: true });
+    }, inputs);
+    await p.goto('/');
+    return p;
+  };
+  const none = await open([]);
+  await expect.poll(async () => (await icon(none).evaluate((el) => getComputedStyle(el).color)) === (await colour(none, '--warn'))).toBe(true);
+  await expect(icon(none).locator('.midi-slash')).toBeHidden();
+  const one = await open(['Synido TempoPAD C16']);
+  await expect.poll(async () => (await icon(one).evaluate((el) => getComputedStyle(el).color)) === (await colour(one, '--stage-osc'))).toBe(true);
+  const unsupported = await open(null);
+  await expect(icon(unsupported).locator('.midi-slash')).toBeVisible();
+  await expect(none.locator('.midi-dot')).toHaveCount(0); // no dot above or beside it any more
+  for (const p of [none, one, unsupported]) await p.close();
+});
+
 test.describe('on a phone', () => {
   test.use({ viewport: { width: 393, height: 852 } });
 
@@ -145,6 +174,7 @@ test.describe('on a phone', () => {
     await page.getByRole('region', { name: 'LFO & Envelopes' }).scrollIntoViewIfNeeded();
     expect(await page.evaluate(() => scrollY)).toBeGreaterThan(500);
     const piano = page.getByRole('group', { name: 'Piano' });
+    await expect.poll(() => piano.boundingBox().then((b) => Math.round(b!.y))).toBeLessThanOrEqual(8); // the header has slid up
     const box = (await piano.boundingBox())!;
     expect(box.y).toBeGreaterThanOrEqual(0);
     expect(box.y + box.height).toBeLessThan(852);

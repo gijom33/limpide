@@ -10,14 +10,14 @@ const SECTIONS = [
 
 /** The gap left between the strip and a section it jumps to. */
 const LANDING_GAP = 8;
-/** Near the top of the page the header keeps its first row whichever way the page scrolls. */
+/** Near the top of the page the header keeps its rows whichever way the page scrolls. */
 const TOP = 80;
 /** Scrolls smaller than this (a resting thumb, a bounce) do not change the header. */
 const JITTER = 4;
 /** A jump has ended once the page has not scrolled for this long. */
 const STILL_MS = 150;
 
-/** The header's first row (logo, Patch, Display) hidden or shown (CSS acts on it on phones only). */
+/** The header's rows above the piano slid out of view or back (CSS acts on it on phones only). */
 const collapseHeader = (collapsed: boolean) => document.documentElement.toggleAttribute('data-header-collapsed', collapsed);
 
 const section = (name: string) => document.querySelector<HTMLElement>(`section[aria-label="${name}"]`);
@@ -33,18 +33,24 @@ export function SectionStrip() {
   // the page's height, which moves the scroll in Safari, which would read as the other direction and interrupt it.
   const jumping = useRef(false);
 
-  // The header's height, so the strip sits right under it (the header is sticky too, and changes height).
+  // The header's height, so the strip sits right under it (the header is sticky too), and how much of it slides away
+  // while the page scrolls down: everything above the piano, but for a sliver of the header's padding.
   useEffect(() => {
     const header = document.querySelector('header')!;
-    const set = () => document.documentElement.style.setProperty('--header-h', `${header.getBoundingClientRect().height}px`);
+    const set = () => {
+      const box = header.getBoundingClientRect();
+      const piano = header.querySelector('.piano')!.getBoundingClientRect();
+      document.documentElement.style.setProperty('--header-h', `${box.height}px`);
+      document.documentElement.style.setProperty('--header-hide', `${Math.max(0, piano.top - box.top - 4)}px`);
+    };
     const observer = new ResizeObserver(set);
     observer.observe(header);
     set();
     return () => observer.disconnect();
   }, []);
 
-  // Scrolling down the page hides the header's first row, so the piano and the strip take less of a small screen;
-  // any scroll back up brings it back.
+  // Scrolling down the page slides the header's rows above the piano away, so the piano and the strip take less of a
+  // small screen; any scroll back up brings them back.
   useEffect(() => {
     let last = scrollY;
     let still: ReturnType<typeof setTimeout> | undefined;
@@ -92,12 +98,14 @@ export function SectionStrip() {
   const jump = (name: string) => {
     const target = section(name);
     if (!target) return;
-    // Going down hides the header's first row and going up brings it back: settle that first, so the header is
-    // measured at the height it will have when the page stops.
-    collapseHeader(target.getBoundingClientRect().top > 0 && scrollY + target.getBoundingClientRect().top > TOP);
+    // Going down slides the header's rows away and going up brings them back: settle that first, so the landing
+    // allows for the header as it will be when the page stops.
+    const collapsed = target.getBoundingClientRect().top > 0 && scrollY + target.getBoundingClientRect().top > TOP;
+    collapseHeader(collapsed);
+    const hide = collapsed ? parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-hide')) || 0 : 0;
     // Where the strip's bottom will be once stuck under the header (overlapping its border by a pixel), not where it
     // is now (at the top of the page it is not stuck yet).
-    const header = document.querySelector('header')!.getBoundingClientRect().height;
+    const header = document.querySelector('header')!.getBoundingClientRect().height - hide;
     const strip = document.querySelector('.section-strip')!.getBoundingClientRect().height;
     const top = target.getBoundingClientRect().top + scrollY - (header - 1 + strip) - LANDING_GAP;
     const still = matchMedia('(prefers-reduced-motion: reduce)').matches;

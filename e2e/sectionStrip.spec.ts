@@ -56,22 +56,38 @@ test.describe('on a phone', () => {
     }
   });
 
-  test('scrolling down hides the header’s first row (logo, Patch, Display); scrolling up brings it back', async ({ page }) => {
+  test('scrolling down slides the header up until only the piano shows; scrolling up brings it back; nothing below moves', async ({ page }) => {
     await page.goto('/');
     const logo = page.getByRole('heading', { level: 1, name: 'Limpide' });
-    const display = page.getByRole('button', { name: 'Display' });
+    const demo = page.getByRole('button', { name: 'Demo' });
+    const piano = page.getByRole('group', { name: 'Piano' });
     const stripUnderHeader = () =>
       page.evaluate(() => Math.round(document.querySelector('.section-strip')!.getBoundingClientRect().top - document.querySelector('header')!.getBoundingClientRect().bottom));
-    await expect(logo).toBeVisible();
+    const headerHeight = () => page.locator('header').evaluate((h) => h.getBoundingClientRect().height);
+    const tall = await headerHeight();
+    await expect(logo).toBeInViewport();
     for (let i = 0; i < 6; i++) await page.mouse.wheel(0, 120);
-    await expect(logo).toBeHidden();
-    await expect(display).toBeHidden();
-    await expect(page.getByRole('group', { name: 'Piano' })).toBeVisible(); // the piano stays at hand
+    await expect(logo).not.toBeInViewport();
+    await expect(demo).not.toBeInViewport(); // the playing row goes too
+    await expect.poll(() => piano.boundingBox().then((b) => Math.round(b!.y))).toBeLessThanOrEqual(8); // the piano stays at hand, at the top
     await expect.poll(stripUnderHeader).toBe(-1);
+    expect(await headerHeight()).toBe(tall); // it slides; it never changes height, so the page never jumps
     await page.mouse.wheel(0, -60);
-    await expect(logo).toBeVisible();
-    await expect(display).toBeVisible();
+    await expect(logo).toBeInViewport();
+    await expect(demo).toBeInViewport();
     await expect.poll(stripUnderHeader).toBe(-1);
+  });
+
+  test('Display sits in the playing row, left of About, icon over word; the first row is the logo and the Patch', async ({ page }) => {
+    await page.goto('/');
+    const box = (name: string) => page.getByRole('button', { name, exact: true }).boundingBox().then((b) => b!);
+    const [display, about, demo, patch] = [await box('Display'), await box('About'), await box('Demo'), await page.getByRole('button', { name: /^Patch:/ }).boundingBox()];
+    expect(Math.abs(display.y - about.y)).toBeLessThan(2);
+    expect(Math.abs(display.y - demo.y)).toBeLessThan(2);
+    expect(display.x + display.width).toBeLessThanOrEqual(about.x);
+    expect(display.height).toBeGreaterThanOrEqual(44);
+    await expect(page.getByRole('button', { name: 'Display', exact: true }).getByText('Display')).toBeVisible();
+    expect(patch!.y + patch!.height).toBeLessThan(display.y);
   });
 
   test('the playing row’s icons carry their word, and About is one of them (tooltips need a pointer)', async ({ page }) => {

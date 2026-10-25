@@ -30,6 +30,7 @@
   --trace: #5fd4ff;
   --grid: #1c2028;
   --danger: #ff5c5c;
+  --warn: #f2c230; /* MIDI with nothing plugged in */
   /* Stage colours (Hardware palette), validated for colour-blind separation and contrast on --bg. The Amp purple
      sits at hue 300: at the shared lightness, blue-violet cannot be as vivid as the green and orange. */
   /* A control's cap (knob and fader alike): a light gradient, a fine edge, a soft shadow; one marker line on it. */
@@ -65,6 +66,7 @@
   --trace: #0a7bbd;
   --grid: #e3e6ec;
   --danger: #d12d2d;
+  --warn: #9a6b00;
   --cap-hi: #ffffff;
   --cap-lo: #e9ebef;
   --cap-edge: rgba(0, 0, 0, 0.12);
@@ -602,12 +604,16 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   display: inline-flex; align-items: center; gap: 6px; height: var(--control-h); padding: 0 10px; font-size: var(--text-md); color: var(--muted);
   border: 1px solid var(--border); border-radius: var(--radius-control); cursor: pointer; background: none;
 }
-.midi-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); }
+/* The socket icon is the status: green with a device connected, yellow with none, struck through when the browser
+   has no MIDI (muted while it is being asked). */
+.midi-slash { display: none; }
 .midi-status[data-connected] { color: var(--text); }
-.midi-status[data-connected] .midi-dot { background: var(--stage-osc); }
+.midi-status[data-connected] .midi-icon { color: var(--stage-osc); }
+.midi-status[data-waiting] .midi-icon { color: var(--warn); }
 /* Unavailable (blocked or unsupported): a hollow, struck-through dot, so it never passes for "nothing plugged in". */
 .midi-status[data-unavailable] { color: var(--muted); text-decoration: line-through; }
-.midi-status[data-unavailable] .midi-dot { background: transparent; box-shadow: inset 0 0 0 1.5px var(--danger); }
+.midi-status[data-unavailable] .midi-icon { color: var(--danger); }
+.midi-status[data-unavailable] .midi-slash { display: inline; }
 .midi-count { font-variant-numeric: tabular-nums; }
 
 /* Playing controls at the top centre: octave −, the piano, octave +, Hold and MIDI, in one row. */
@@ -809,10 +815,10 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 /* While MIDI Learn (or Quick Setup) is on, the MIDI button says so in the accent, its dot pulsing: the panel behind
    it is where Learn was started, and where Done now is. */
 .midi-status[data-learning] { color: var(--accent); border-color: var(--accent); }
-.midi-status[data-learning] .midi-dot { background: var(--accent); animation: midi-pulse 1.2s ease-in-out infinite; }
+.midi-status[data-learning] .midi-icon { color: var(--accent); animation: midi-pulse 1.2s ease-in-out infinite; }
 .midi-learning { font-weight: 600; }
 @keyframes midi-pulse { 50% { opacity: 0.2; } }
-@media (prefers-reduced-motion: reduce) { .midi-status[data-learning] .midi-dot { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .midi-status[data-learning] .midi-icon { animation: none; } }
 /* The one primary action in a panel: filled in the accent. */
 .tool-primary { color: var(--bg); background: var(--accent); border-color: var(--accent); font-weight: 600; }
 .tool-primary:hover { color: var(--bg); background: color-mix(in srgb, var(--accent) 85%, var(--text)); }
@@ -851,24 +857,26 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
      edge to edge, its keys as wide as the screen allows. Hold, MIDI and Display show icons, not words. */
   /* It stays at the top while the page scrolls, so the piano plays under whichever stage is in view. It runs
      edge to edge over the page's padding, on the page's background, so nothing shows through it. */
+  /* Scrolling down slides it up under the screen's top edge until only the piano shows (--header-hide, measured),
+     and any scroll up slides it back: nothing below moves, as its height never changes. */
   header {
-    position: sticky; top: 0; z-index: 10;
+    position: sticky; top: calc(-1 * var(--header-hidden, 0px)); z-index: 10; transition: top 0.2s ease;
     margin: calc(-1 * var(--space-3)) calc(-1 * var(--space-2)) 0;
     padding: var(--space-3) var(--space-2) var(--space-2);
     background: var(--bg); border-bottom: 1px solid var(--border);
-    grid-template-columns: auto auto minmax(0, 1fr) auto auto auto auto auto;
-    grid-template-areas: 'left left left left left left left display' 'down up . demo song hold midi about' 'piano piano piano piano piano piano piano piano';
+    grid-template-columns: auto auto minmax(0, 1fr) auto auto auto auto auto auto;
+    grid-template-areas: 'left left left left left left left left left' 'down up . demo song hold midi display about' 'piano piano piano piano piano piano piano piano piano';
     gap: var(--space-2) var(--space-1);
   }
   .header-center, .play-controls, .keyboard, .header-right { display: contents; }
   .header-left { grid-area: left; gap: var(--space-3); }
-  /* The first row holds only the logo, the Patch and Display: the Patch name takes the room between them. */
+  /* The first row holds only the logo and the Patch: the Patch name takes the room beside the logo. */
   .patch-bar { flex: 1 1 auto; }
   .patch-bar > .tip-anchor { flex: 0 1 240px; min-width: 0; }
   .patch-name { width: 100%; }
   .header-right > .tip-anchor:first-child { grid-area: demo; }
   .header-right > .tip-anchor:nth-child(2) { grid-area: song; }
-  .display-menu { grid-area: display; }
+  .display-menu { grid-area: display; display: flex; }
   .header-right > *, .play-controls > .tip-anchor, .midi-menu { justify-self: end; }
   .keyboard > :first-child { grid-area: down; }
   .keyboard > :last-child { grid-area: up; }
@@ -886,14 +894,15 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   .piano button[data-black] { width: calc(0.6 * var(--white-key)); height: 40px; margin: 0 calc(-0.3 * var(--white-key)); }
   .tool-glyph { display: block; }
   .tool-word { display: none; }
-  .midi-count { display: none; } /* the dot already says a device is connected */
+  .midi-count { display: none; } /* the icon's colour already says a device is connected */
+  .display-menu .display-dot { position: absolute; top: 5px; right: 5px; } /* not a third line under icon and word */
   header .tool:has(> .tool-glyph), .display-menu > .tip-anchor > .tool, .display-menu .tool { padding: 0 8px; }
   /* The playing row: each icon over its word (a tooltip needs a pointer, so on a touch screen the word says what the
      icon does), 44 pt tall for a finger. The octave buttons match their height. */
-  header :is(.demo-button, [aria-label='Hold'], .midi-status, .about-menu .tool) {
+  header :is(.demo-button, [aria-label='Hold'], .midi-status, .display-menu .tool, .about-menu .tool) {
     flex-direction: column; justify-content: center; gap: 2px; height: auto; min-height: 44px; padding: 3px 6px 2px;
   }
-  header :is(.demo-button, [aria-label='Hold'], .midi-status, .about-menu .tool) :is(.demo-word, .tool-word) {
+  header :is(.demo-button, [aria-label='Hold'], .midi-status, .display-menu .tool, .about-menu .tool) :is(.demo-word, .tool-word) {
     display: block; font-size: 9px; line-height: 10px;
   }
   .keyboard > .tool-icon { height: 44px; }
@@ -904,7 +913,7 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 .section-strip { display: none; }
 @media (max-width: 600px) {
   .section-strip {
-    display: flex; position: sticky; top: calc(var(--header-h, 0px) - 1px); z-index: 9;
+    display: flex; position: sticky; top: calc(var(--header-h, 0px) - var(--header-hidden, 0px) - 1px); z-index: 9; transition: top 0.2s ease;
     margin: 0 calc(-1 * var(--space-2)); padding: 0 var(--space-2); background: var(--bg); border-bottom: 1px solid var(--border);
   }
   .section-strip button {
@@ -918,13 +927,10 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   .section-strip [data-section='LFO & Envelopes'] { --c: var(--stage-mod); }
   .section-strip [aria-current] { color: var(--c); border-bottom-color: var(--c); }
   .section-strip button:focus-visible { outline: 2px solid var(--c); outline-offset: -2px; }
-  /* While the page scrolls down, the header keeps its playing row and the piano; its first row (logo, Patch,
-     Display) comes back on any scroll up. */
-  :root[data-header-collapsed] header {
-    grid-template-areas: 'down up . demo song hold midi about' 'piano piano piano piano piano piano piano piano';
-  }
-  :root[data-header-collapsed] header .header-left, :root[data-header-collapsed] header .display-menu { display: none; }
+  /* While the page scrolls down, the header keeps only the piano; its rows above come back on any scroll up. */
+  :root[data-header-collapsed] { --header-hidden: var(--header-hide, 0px); }
 }
+@media (max-width: 600px) and (prefers-reduced-motion: reduce) { header, .section-strip { transition: none; } }
 
 /* Touch screens: a long press or a double tap on the instrument plays or turns it; it never selects text or opens
    the copy menu. Text fields stay editable, and buttons answer at once (no wait for a double-tap zoom). */
