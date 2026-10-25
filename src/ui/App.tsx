@@ -198,13 +198,14 @@ export function App() {
   };
 
   // Playing anything, or touching a control that does not shape the sound, ends the Demo: the person has taken over.
-  // Knobs, faders and the stages' switches (Waveforms, Filter Mode and Slope, Voices, the LFO's shape and Destination)
-  // can be changed while it plays,
-  // and the sound follows.
+  // Knobs, faders and the stages' switches (Waveforms, Filter Mode and Slope, Voices, the LFOs' shapes and
+  // destinations) can be changed while it plays, and the sound follows; moving around the page (the section strip,
+  // the Oscillator tabs) leaves it playing too.
   useEffect(() => {
     if (demo === null) return;
     const shapesSound = (target: EventTarget | null) =>
-      target instanceof Element && !!target.closest('.knob, .block-controls [role="radio"], .timeline-controls [role="radio"]');
+      target instanceof Element &&
+      !!target.closest('.knob, .block-controls [role="radio"], .timeline-controls [role="radio"], .destination-picker, .section-strip, [role="tab"]');
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Enter' && shapesSound(e.target)) return;
       if (!e.metaKey && !e.ctrlKey && !e.altKey && !['Shift', 'Tab'].includes(e.key)) stopDemo();
@@ -214,7 +215,7 @@ export function App() {
     let tap: number | null = null;
     const onPointer = (e: PointerEvent) => {
       const target = e.target as Element;
-      if (!target.closest('main') || target.closest('[data-demo]') || shapesSound(target)) return;
+      if ((!target.closest('main') && !target.closest('.section-strip')) || target.closest('[data-demo]') || shapesSound(target)) return;
       if (e.pointerType === 'mouse' || getComputedStyle(target).touchAction === 'none') stopDemo();
       else tap = e.pointerId;
     };

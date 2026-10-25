@@ -59,6 +59,25 @@ test('the Waveform, Filter and Voices switches keep the Demo playing, and it pla
   await expect(demo(page)).toHaveAttribute('aria-pressed', 'false');
 });
 
+test('moving around (the section strip, the Oscillator tabs) and an LFO’s destination keep the Demo playing', async ({ page }) => {
+  await page.setViewportSize({ width: 393, height: 852 });
+  await page.goto('/');
+  await demo(page).click();
+  await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
+  const strip = page.getByRole('navigation', { name: 'Sections' });
+  for (const name of ['Filter', 'Amp', 'LFO & Envelopes', 'Oscillators']) {
+    await strip.getByRole('button', { name, exact: true }).click();
+    await expect(demo(page), name).toHaveAttribute('aria-pressed', 'true');
+  }
+  await page.getByRole('tab', { name: /Osc 2/ }).click();
+  await expect(demo(page), 'Osc 2 tab').toHaveAttribute('aria-pressed', 'true');
+  const lfo = page.getByRole('group', { name: 'LFO 1', exact: true });
+  await lfo.getByRole('button', { name: 'Next destination' }).click();
+  await lfo.getByRole('button', { name: /Destination:/ }).click();
+  await lfo.getByRole('menuitemradio', { name: 'Cutoff' }).click();
+  await expect(demo(page), 'LFO destination').toHaveAttribute('aria-pressed', 'true');
+});
+
 test('the Demo never touches the Display settings', async ({ page }) => {
   await page.goto('/');
   await openDisplay(page);
