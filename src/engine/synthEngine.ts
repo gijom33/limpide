@@ -1,12 +1,13 @@
 import { envelopeLevel, envelopeSchedule, type Adsr, type AutomationStep, type GateEvent } from '../modulation/envelope';
 import { createLfoClock, glideFrequency, glideTimeConstant, lfoShape, type LfoWaveform } from '../modulation/lfo';
 import {
-  effectiveCutoff, soundingPitch, KEY_TRACK_CENTRE, LFO_CUTOFF_OCTAVES, LFO_PITCH_CENTS, LFO_PULSE_WIDTH, MAX_PULSE, MIN_PULSE, VELOCITY_CUTOFF_OCTAVES,
+  effectiveCutoff, effectiveResonance, lfoSwings, soundingPitch, KEY_TRACK_CENTRE, LFO_CUTOFF_OCTAVES, LFO_DETUNE_CENTS, LFO_OSC2_CENTS,
+  LFO_PITCH_CENTS, LFO_PULSE_WIDTH, LFO_RESONANCE, MAX_PULSE, MIN_PULSE, VELOCITY_CUTOFF_OCTAVES,
 } from '../modulation/modulationModel';
 import { filterStages, type Stage } from './filterDesign';
 import { harmonicSeries } from '../music/harmonics';
 import { frequencyToNote, noteToFrequency } from '../music/pitch';
-import { GLIDE_OFF, PARAMS, type FilterMode, type Patch, type Voices } from '../patch/patch';
+import { GLIDE_OFF, lfos, PARAMS, type FilterMode, type LfoDestination, type LfoNumber, type Patch, type Voices } from '../patch/patch';
 import { bandwidthOctaves } from '../modulation/passBand';
 import type { Sounding } from '../modulation/reach';
 
@@ -29,9 +30,11 @@ export interface Modulation {
   amp: number;
   filter: number;
   cutoff: number;
-  /** The LFO's value (−1 to 1). */
-  lfo: number;
+  /** Each LFO's value (−1 to 1), LFO 1 first. */
+  lfo: [number, number];
   mode: FilterMode;
+  /** The Resonance after the LFOs (0–1). */
+  resonance: number;
   /** Band-pass and notch width in octaves. */
   bandwidth: number;
   /** The newest Note while its key is held (or Hold keeps it), with its Velocity; null once released. */
@@ -60,7 +63,7 @@ export interface SynthEngine {
    * The LFO's value times the Depth in force at `time` (−1 to 1): how far it moves its destination, as the plot draws
    * it. `modulationAt(time).lfo` alone (scaled), cheap enough to draw point by point.
    */
-  lfoSwingAt(time: number): number;
+  lfoSwingAt(time: number, lfo?: LfoNumber): number;
   /** The Cutoff knob's own setting at `time` (before modulation). */
   baseCutoffAt(time: number): number;
   now(): number;
@@ -154,19 +157,27 @@ function createAnalyser(ctx: BaseAudioContext): AnalyserNode {
   return analyser;
 }
 
-const LFO_TYPES: Record<Exclude<LfoWaveform, 'sawDown'>, OscillatorType> = { sine: 'sine', triangle: 'triangle', square: 'square', saw: 'sawtooth' };
+/**
+ * The LFO Waveforms with corners, from their series as Web Audio defines its own oscillators, but not normalised:
+ * normalising scales the series to its overshoot at the corners, so a square's plateaus would sit near ±0.85 and a
+ * saw's ramp would fall short, while the Modulation model (and every Viewer) has them at exactly ±1 (ADR-0003).
+ */
+const LFO_SERIES: Record<'square' | 'saw' | 'sawDown', (n: number) => number> = {
+  square: (n) => (n % 2 ? 4 / (n * Math.PI) : 0),
+  saw: (n) => (n % 2 ? 2 : -2) / (n * Math.PI),
+  sawDown: (n) => (n % 2 ? -2 : 2) / (n * Math.PI),
+};
 
-/** A falling saw: Web Audio's own saw series upside down, unnormalised, so its ramp runs exactly from +1 to −1. */
-function fallingSaw(ctx: BaseAudioContext): PeriodicWave {
+function lfoWave(ctx: BaseAudioContext, waveform: keyof typeof LFO_SERIES): PeriodicWave {
   const real = new Float32Array(2048);
-  const imag = real.map((_, n) => (n ? (-2 / (n * Math.PI)) * (n % 2 ? 1 : -1) : 0));
+  const imag = real.map((_, n) => (n ? LFO_SERIES[waveform](n) : 0));
   return ctx.createPeriodicWave(real, imag, { disableNormalization: true });
 }
 
-/** Set an LFO oscillator's Waveform. */
-function setLfoWaveform(lfo: OscillatorNode, waveform: LfoWaveform, sawDown: () => PeriodicWave) {
-  if (waveform === 'sawDown') lfo.setPeriodicWave(sawDown());
-  else lfo.type = LFO_TYPES[waveform];
+/** Set an LFO oscillator's Waveform: a sine or a triangle (whose series never overshoots) as Web Audio's own. */
+function setLfoWaveform(lfo: OscillatorNode, waveform: LfoWaveform, wave: (w: keyof typeof LFO_SERIES) => PeriodicWave) {
+  if (waveform === 'sine' || waveform === 'triangle') lfo.type = waveform;
+  else lfo.setPeriodicWave(wave(waveform));
 }
 
 /**
@@ -180,11 +191,13 @@ function createVoiceOscillator(ctx: BaseAudioContext) {
   const delay = ctx.createDelay(1);
   const inverted = ctx.createGain();
   const out = ctx.createGain();
-  const pwm = ctx.createGain(); // LFO → delay time
+  const pwm = [ctx.createGain(), ctx.createGain()]; // each LFO → delay time
   node.connect(direct).connect(out);
   node.connect(delay).connect(inverted).connect(out);
-  pwm.connect(delay.delayTime);
-  pwm.gain.value = 0;
+  for (const g of pwm) {
+    g.connect(delay.delayTime);
+    g.gain.value = 0;
+  }
   inverted.gain.value = 0;
   node.start();
   return { node, out, direct, delay, inverted, pwm };
@@ -213,11 +226,22 @@ const filterAdsr = (p: Patch): Adsr => ({ attack: p.filterAttack, decay: p.filte
 const RELEASE_TAIL = 6;
 const A4 = noteToFrequency(69);
 
-/** What every Voice shares: the LFO's outputs, the noise loop, and where the Voices' outputs go. */
+/**
+ * One LFO: a real oscillator, wired to each destination through a gain set from its Depth (zero unless it is aimed
+ * there): the Cutoff and the pitch in cents (through `detune`), Osc 2's tuning in cents, each Filter stage's Q.
+ * Pulse Width goes through each Voice's own gains, since its swing depends on the Note.
+ */
+interface LfoNodes {
+  osc: OscillatorNode;
+  toCutoff: GainNode;
+  toPitch: GainNode;
+  toOsc2: GainNode;
+  toQ: [GainNode, GainNode];
+}
+
+/** What every Voice shares: the LFOs, the noise loop, and where the Voices' outputs go. */
 interface Shared {
-  lfo: OscillatorNode;
-  lfoToCutoff: GainNode;
-  lfoToPitch: GainNode;
+  lfos: [LfoNodes, LfoNodes];
   noise: AudioBuffer;
   master: GainNode;
 }
@@ -293,14 +317,19 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   // Every Voice's noise starts at a different point of the loop, so a chord's noise is not one noise, louder.
   noise.start(0, (index * NOISE_SECONDS) / MAX_VOICES);
 
-  // The shared LFO, wired to this Voice's destinations through the shared gains set from the Amount.
-  shared.lfoToCutoff.connect(filter.detune);
-  shared.lfoToCutoff.connect(filter2.detune);
-  shared.lfoToPitch.connect(sub.detune);
-  for (const o of oscillators) {
-    shared.lfoToPitch.connect(o.node.detune);
-    shared.lfo.connect(o.pwm);
-  }
+  // The shared LFOs, wired to this Voice's destinations through the shared gains set from their Depths.
+  shared.lfos.forEach((l, i) => {
+    l.toCutoff.connect(filter.detune);
+    l.toCutoff.connect(filter2.detune);
+    l.toQ[0].connect(filter.Q);
+    l.toQ[1].connect(filter2.Q);
+    l.toPitch.connect(sub.detune);
+    l.toOsc2.connect(osc2.detune);
+    for (const o of oscillators) {
+      l.toPitch.connect(o.node.detune);
+      l.osc.connect(o.pwm[i]);
+    }
+  });
 
   const waveKeys = new Map<OscillatorNode, string>();
   const pulseWidths = [0.5, 0.5];
@@ -316,8 +345,8 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
       if (timeConstant) o.delay.delayTime.setTargetAtTime(delay, t, timeConstant);
       else o.delay.delayTime.setValueAtTime(delay, t);
       const width = pulseWidths[i];
-      const swing = patch?.lfoDestination === 'pulseWidth' ? Math.min(LFO_PULSE_WIDTH * patch.lfoAmount, width - MIN_PULSE, MAX_PULSE - width) : 0;
-      o.pwm.gain.setValueAtTime(swing / frequency, t);
+      const swings = patch ? lfoSwings(patch, 'pulseWidth', LFO_PULSE_WIDTH, Math.min(width - MIN_PULSE, MAX_PULSE - width)) : [0, 0];
+      swings.forEach((swing, n) => o.pwm[n].gain.setValueAtTime(swing / frequency, t));
     });
   };
 
@@ -435,23 +464,32 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   // Effective Cutoff even while the real Filter is being automated (ADR-0003).
   const twins = [ctx.createBiquadFilter(), ctx.createBiquadFilter()];
 
-  // The LFO: a real oscillator, wired to each destination through a gain set from the Amount; the Modulation
-  // model computes the same shape from its phase, so the Viewers move exactly as the sound does (ADR-0003).
-  const lfo = ctx.createOscillator();
-  lfo.frequency.value = PARAMS.lfoRate.default;
-  const [lfoToCutoff, lfoToPitch] = [ctx.createGain(), ctx.createGain()];
-  lfoToCutoff.gain.value = 0;
-  lfoToPitch.gain.value = 0;
-  lfo.connect(lfoToCutoff);
-  lfo.connect(lfoToPitch);
-  const shared: Shared = { lfo, lfoToCutoff, lfoToPitch, noise: noiseBuffer(ctx), master };
+  // The LFOs: real oscillators, wired to each destination through gains set from their Depths; the Modulation
+  // model computes the same shapes from their phases, so the Viewers move exactly as the sound does (ADR-0003).
+  const lfoNodes = (): LfoNodes => {
+    const osc = ctx.createOscillator();
+    osc.frequency.value = PARAMS.lfoRate.default;
+    const [toCutoff, toPitch, toOsc2, q1, q2] = Array.from({ length: 5 }, () => {
+      const g = ctx.createGain();
+      g.gain.value = 0;
+      osc.connect(g);
+      return g;
+    });
+    return { osc, toCutoff, toPitch, toOsc2, toQ: [q1, q2] };
+  };
+  const shared: Shared = { lfos: [lfoNodes(), lfoNodes()], noise: noiseBuffer(ctx), master };
   const voices = Array.from({ length: MAX_VOICES }, (_, i) => createVoice(ctx, shared, i));
-  let falling: PeriodicWave | undefined;
-  const sawDown = () => (falling ??= fallingSaw(ctx));
+  const waves = new Map<keyof typeof LFO_SERIES, PeriodicWave>();
+  const wave = (w: keyof typeof LFO_SERIES) => waves.get(w) ?? waves.set(w, lfoWave(ctx, w)).get(w)!;
   const lfoStart = ctx.currentTime;
-  lfo.start(lfoStart);
-  // The model's copy of the LFO's phase, advanced with every Rate change exactly as the oscillator is (ADR-0003).
-  const lfoClock = createLfoClock(lfoStart, PARAMS.lfoRate.default);
+  for (const l of shared.lfos) l.osc.start(lfoStart);
+  // The model's copy of each LFO's phase, advanced with every Rate change exactly as its oscillator is (ADR-0003).
+  const lfoClocks = [createLfoClock(lfoStart, PARAMS.lfoRate.default), createLfoClock(lfoStart, PARAMS.lfo2Rate.default)];
+  /** Both LFOs' values at `t`, under the Patch then in force. */
+  const lfoValues = (then: Patch, t: number): [number, number] => {
+    const [one, two] = lfos(then);
+    return [lfoShape(one.waveform, lfoClocks[0].phaseAt(t)), lfoShape(two.waveform, lfoClocks[1].phaseAt(t))];
+  };
 
   let patch: Patch | undefined;
   // The Modulation model's history: the newest Note's pitches and Gate events, which is what the Viewers show.
@@ -553,7 +591,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     const t = at(time);
     const filterLevel = envelopeLevel(filterEvents, t);
     const then = patchAt(t);
-    const lfoValue = then ? lfoShape(then.lfoWaveform, lfoClock.phaseAt(t)) : 0;
+    const lfo: [number, number] = then ? lfoValues(then, t) : [0, 0];
     // The latest Note's Velocity (the Amp Envelope's peak), which stays in force until the next Note.
     let velocity = 0;
     for (const e of ampEvents) if (e.on && e.time <= t) velocity = e.peak;
@@ -563,14 +601,16 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     let note = 69;
     for (const p of pitches) if (p.time <= t) note = p.note;
     const gliding = frequencyToNote(glideFrequency(pitches, t) || A4);
-    const vibrato = then ? soundingPitch(then, gliding, lfoValue) - gliding : 0;
+    const vibrato = then ? soundingPitch(then, gliding, lfo) - gliding : 0;
+    const resonance = then ? effectiveResonance(then, lfo) : 0;
     return {
       amp: envelopeLevel(ampEvents, t),
       filter: filterLevel,
-      lfo: lfoValue,
-      cutoff: then ? effectiveCutoff(then, filterLevel, lfoValue, velocity, trackedNoteAt(t)) : 0,
+      lfo,
+      cutoff: then ? effectiveCutoff(then, filterLevel, lfo, velocity, trackedNoteAt(t)) : 0,
+      resonance,
       mode: then?.filterMode ?? 'lowpass',
-      bandwidth: then ? bandwidthOctaves(filterStages(then.filterMode, then.filterSlope, then.resonance)[0].Q) : 1,
+      bandwidth: then ? bandwidthOctaves(filterStages(then.filterMode, then.filterSlope, resonance)[0].Q) : 1,
       sounding: gate?.on ? { note, velocity } : null,
       pitch: gliding + vibrato,
       vibrato,
@@ -586,9 +626,11 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       return patchAt(ctx.currentTime)?.mixSub ? frequency / 2 : frequency;
     },
     modulationAt,
-    lfoSwingAt: (time) => {
+    lfoSwingAt: (time, n = 1) => {
       const then = patchAt(time);
-      return then ? then.lfoAmount * lfoShape(then.lfoWaveform, lfoClock.phaseAt(time)) : 0;
+      if (!then) return 0;
+      const l = lfos(then)[n - 1];
+      return l.amount * lfoShape(l.waveform, lfoClocks[n - 1].phaseAt(time));
     },
     baseCutoffAt: (time) => {
       const then = patchAt(time);
@@ -607,7 +649,9 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     },
 
     filterResponse(frequencies) {
-      const cutoff = modulationAt().cutoff;
+      const { cutoff, resonance } = modulationAt();
+      // An LFO on Resonance moves the twins' Q with it.
+      if (patch) filterStages(patch.filterMode, patch.filterSlope, resonance).forEach((stage, i) => (twins[i].Q.value = stage.Q));
       const total = new Float32Array(frequencies.length).fill(1);
       const stage = new Float32Array(frequencies.length);
       const phase = new Float32Array(frequencies.length);
@@ -625,13 +669,28 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       if (patches.at(-1)?.time === t) patches.pop();
       patches.push({ time: t, patch: next });
       trim(patches, t);
-      lfoClock.setRate(t, next.lfoRate);
-      lfoClock.forgetBefore(t - MODEL_SECONDS);
+      lfos(next).forEach((l, i) => {
+        lfoClocks[i].setRate(t, l.rate);
+        lfoClocks[i].forgetBefore(t - MODEL_SECONDS);
+      });
       for (const v of voices) v.apply(next, t);
-      setLfoWaveform(lfo, next.lfoWaveform, sawDown);
-      lfo.frequency.setValueAtTime(next.lfoRate, t);
-      lfoToCutoff.gain.setValueAtTime(next.lfoDestination === 'cutoff' ? LFO_CUTOFF_OCTAVES * 1200 * next.lfoAmount : 0, t);
-      lfoToPitch.gain.setValueAtTime(next.lfoDestination === 'pitch' ? LFO_PITCH_CENTS * next.lfoAmount : 0, t);
+      const each = (destination: LfoDestination, perDepth: number) => lfoSwings(next, destination, perDepth);
+      const cutoffCents = each('cutoff', LFO_CUTOFF_OCTAVES * 1200);
+      const pitchCents = each('pitch', LFO_PITCH_CENTS);
+      const osc2 = each('osc2Pitch', LFO_OSC2_CENTS).map((c, i) => c + each('detune', LFO_DETUNE_CENTS)[i]);
+      // Resonance: each stage's Q moves from where the swing's low end puts it to where its high end does.
+      const resonances = lfoSwings(next, 'resonance', LFO_RESONANCE, Math.min(next.resonance, 1 - next.resonance));
+      lfos(next).forEach((l, i) => {
+        const nodes = shared.lfos[i];
+        setLfoWaveform(nodes.osc, l.waveform, wave);
+        nodes.osc.frequency.setValueAtTime(l.rate, t);
+        nodes.toCutoff.gain.setValueAtTime(cutoffCents[i], t);
+        nodes.toPitch.gain.setValueAtTime(pitchCents[i], t);
+        nodes.toOsc2.gain.setValueAtTime(osc2[i], t);
+        const high = filterStages(next.filterMode, next.filterSlope, next.resonance + resonances[i]);
+        const low = filterStages(next.filterMode, next.filterSlope, next.resonance - resonances[i]);
+        nodes.toQ.forEach((g, k) => g.gain.setValueAtTime((high[k].Q - low[k].Q) / 2, t));
+      });
       // The twins copy each stage for the Response Curve.
       const stages = filterStages(next.filterMode, next.filterSlope, next.resonance);
       twins.forEach((node, i) => setStage(node, stages[i], effectiveCutoff(next)));

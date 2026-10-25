@@ -30,6 +30,8 @@ export type ParamId =
   | 'mixSub'
   | 'lfoRate'
   | 'lfoAmount'
+  | 'lfo2Rate'
+  | 'lfo2Amount'
   | 'glide'
   | 'velocityCutoff'
   | 'keyTrack'
@@ -47,7 +49,8 @@ export type ParamId =
 
 export type FilterMode = 'lowpass' | 'highpass' | 'bandpass' | 'notch';
 export type FilterSlope = 12 | 24;
-export type LfoDestination = 'cutoff' | 'pitch' | 'pulseWidth';
+/** Where an LFO goes: the Oscillators' pitch, Osc 2's alone (an octave, or its Detune), the Pulse Width, the Filter. */
+export type LfoDestination = 'pitch' | 'osc2Pitch' | 'detune' | 'pulseWidth' | 'cutoff' | 'resonance';
 /** How many Notes can sound at once. 1 is monophonic (last-note priority, Glide); more play chords (ADR-0007). */
 export type Voices = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
@@ -58,6 +61,8 @@ export type Patch = Record<ParamId, number> & {
   filterSlope: FilterSlope;
   lfoWaveform: LfoWaveform;
   lfoDestination: LfoDestination;
+  lfo2Waveform: LfoWaveform;
+  lfo2Destination: LfoDestination;
   voices: Voices;
 };
 
@@ -84,6 +89,8 @@ export const PARAMS: Record<ParamId, ParamDef> = {
   mixSub: level('mixSub', 'Sub', 0, 'fader'),
   lfoRate: { id: 'lfoRate', label: 'Rate', unit: 'Hz', min: 0.05, max: 20, taper: 'log', default: 2, control: 'play' },
   lfoAmount: level('lfoAmount', 'Depth', 0, 'play'),
+  lfo2Rate: { id: 'lfo2Rate', label: 'Rate', unit: 'Hz', min: 0.05, max: 20, taper: 'log', default: 2, control: 'play' },
+  lfo2Amount: level('lfo2Amount', 'Depth', 0, 'play'),
   glide: time('glide', 'Glide', GLIDE_OFF, 'set'),
   velocityCutoff: level('velocityCutoff', 'Velocity', 0, 'set'),
   keyTrack: level('keyTrack', 'Key Track', 0, 'set'),
@@ -110,6 +117,9 @@ export function defaultPatch(): Patch {
     filterSlope: 12,
     lfoWaveform: 'sine',
     lfoDestination: 'cutoff',
+    // LFO 2 starts silent, so a Patch from before it sounds as it did; on Pitch, for vibrato beside LFO 1's sweep.
+    lfo2Waveform: 'sine',
+    lfo2Destination: 'pitch',
     voices: 1,
   };
 }
@@ -118,22 +128,49 @@ export function setFilter(patch: Patch, { mode, slope }: { mode?: FilterMode; sl
   return { ...patch, filterMode: mode ?? patch.filterMode, filterSlope: slope ?? patch.filterSlope };
 }
 
-/** The allowed values of every choice in a Patch (the first is the default). */
+/** The allowed values of every choice in a Patch, in the order they are offered (defaultPatch gives the defaults). */
 export const CHOICES = {
   waveform: ['saw', 'sine', 'triangle', 'square', 'pulse'],
   osc2Waveform: ['saw', 'sine', 'triangle', 'square', 'pulse'],
   filterMode: ['lowpass', 'highpass', 'bandpass', 'notch'],
   filterSlope: [12, 24],
   lfoWaveform: ['sine', 'triangle', 'square', 'saw', 'sawDown'],
-  lfoDestination: ['cutoff', 'pitch', 'pulseWidth'],
+  lfoDestination: ['pitch', 'osc2Pitch', 'detune', 'pulseWidth', 'cutoff', 'resonance'],
+  lfo2Waveform: ['sine', 'triangle', 'square', 'saw', 'sawDown'],
+  lfo2Destination: ['pitch', 'osc2Pitch', 'detune', 'pulseWidth', 'cutoff', 'resonance'],
   voices: [1, 2, 3, 4, 5, 6, 7, 8],
 } as const satisfies { [K in Exclude<keyof Patch, ParamId>]: readonly Patch[K][] };
 
 /** A Patch setting picked from a list (a Waveform, the Filter Mode…), rather than turned like a Parameter. */
 export type ChoiceId = keyof typeof CHOICES;
 
-export function setLfo(patch: Patch, { waveform, destination }: { waveform?: LfoWaveform; destination?: LfoDestination }): Patch {
-  return { ...patch, lfoWaveform: waveform ?? patch.lfoWaveform, lfoDestination: destination ?? patch.lfoDestination };
+/** Which LFO: 1 or 2. */
+export type LfoNumber = 1 | 2;
+
+/** The Patch's names for one LFO's settings. */
+export const LFO_KEYS = {
+  1: { rate: 'lfoRate', amount: 'lfoAmount', waveform: 'lfoWaveform', destination: 'lfoDestination' },
+  2: { rate: 'lfo2Rate', amount: 'lfo2Amount', waveform: 'lfo2Waveform', destination: 'lfo2Destination' },
+} as const;
+
+/** One LFO's settings. */
+export interface Lfo {
+  rate: number;
+  amount: number;
+  waveform: LfoWaveform;
+  destination: LfoDestination;
+}
+
+/** Both LFOs' settings, LFO 1 first. */
+export const lfos = (patch: Patch): [Lfo, Lfo] =>
+  ([1, 2] as const).map((n) => {
+    const k = LFO_KEYS[n];
+    return { rate: patch[k.rate], amount: patch[k.amount], waveform: patch[k.waveform], destination: patch[k.destination] };
+  }) as [Lfo, Lfo];
+
+export function setLfo(patch: Patch, { waveform, destination }: { waveform?: LfoWaveform; destination?: LfoDestination }, lfo: LfoNumber = 1): Patch {
+  const k = LFO_KEYS[lfo];
+  return { ...patch, [k.waveform]: waveform ?? patch[k.waveform], [k.destination]: destination ?? patch[k.destination] };
 }
 
 export function setWaveform(patch: Patch, waveform: Waveform, oscillator: 'osc1' | 'osc2' = 'osc1'): Patch {

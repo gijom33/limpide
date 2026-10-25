@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { defaultPatch, setParam } from '../patch/patch';
-import { effectiveCutoff } from './modulationModel';
+import { effectiveCutoff, effectiveResonance, lfoSwings, osc2Cents, soundingPitch } from './modulationModel';
 
 describe('Modulation model: Effective Cutoff', () => {
   it('is the Cutoff itself while nothing modulates the Filter', () => {
@@ -38,16 +38,16 @@ describe('Effective Cutoff with the LFO', () => {
   const patch = { ...defaultPatch(), cutoff: 1000, lfoAmount: 0.5, lfoDestination: 'cutoff' as const };
 
   it('swings up to two octaves either way at full Amount (one octave at half)', () => {
-    expect(effectiveCutoff(patch, 0, 1)).toBeCloseTo(2000);
-    expect(effectiveCutoff(patch, 0, -1)).toBeCloseTo(500);
+    expect(effectiveCutoff(patch, 0, [1])).toBeCloseTo(2000);
+    expect(effectiveCutoff(patch, 0, [-1])).toBeCloseTo(500);
   });
 
   it('adds to the Filter Envelope, in octaves', () => {
-    expect(effectiveCutoff({ ...patch, filterEnvAmount: 1 }, 1, 1)).toBeCloseTo(4000);
+    expect(effectiveCutoff({ ...patch, filterEnvAmount: 1 }, 1, [1])).toBeCloseTo(4000);
   });
 
   it('leaves the Cutoff alone when the LFO is aimed elsewhere', () => {
-    expect(effectiveCutoff({ ...patch, lfoDestination: 'pitch' }, 0, 1)).toBe(1000);
+    expect(effectiveCutoff({ ...patch, lfoDestination: 'pitch' }, 0, [1])).toBe(1000);
   });
 });
 
@@ -55,16 +55,16 @@ describe('Effective Cutoff with Velocity', () => {
   const patch = { ...defaultPatch(), cutoff: 500, velocityCutoff: 0.5 };
 
   it('opens the Filter by up to two octaves for the hardest hit (one octave at half amount)', () => {
-    expect(effectiveCutoff(patch, 0, 0, 1)).toBeCloseTo(1000);
-    expect(effectiveCutoff({ ...patch, velocityCutoff: 1 }, 0, 0, 1)).toBeCloseTo(2000);
+    expect(effectiveCutoff(patch, 0, [], 1)).toBeCloseTo(1000);
+    expect(effectiveCutoff({ ...patch, velocityCutoff: 1 }, 0, [], 1)).toBeCloseTo(2000);
   });
 
   it('opens it less for softer hits', () => {
-    expect(effectiveCutoff({ ...patch, velocityCutoff: 1 }, 0, 0, 0.5)).toBeCloseTo(1000);
+    expect(effectiveCutoff({ ...patch, velocityCutoff: 1 }, 0, [], 0.5)).toBeCloseTo(1000);
   });
 
   it('changes nothing while the amount is zero (the default)', () => {
-    expect(effectiveCutoff(defaultPatch(), 0, 0, 1)).toBe(defaultPatch().cutoff);
+    expect(effectiveCutoff(defaultPatch(), 0, [], 1)).toBe(defaultPatch().cutoff);
   });
 });
 
@@ -72,21 +72,61 @@ describe('Effective Cutoff with Key Track', () => {
   const patch = { ...defaultPatch(), cutoff: 1000, keyTrack: 1 };
 
   it('follows the Note an octave per octave at full Key Track, from C4', () => {
-    expect(effectiveCutoff(patch, 0, 0, 0, 60)).toBeCloseTo(1000); // C4: no change
-    expect(effectiveCutoff(patch, 0, 0, 0, 72)).toBeCloseTo(2000); // C5
-    expect(effectiveCutoff(patch, 0, 0, 0, 48)).toBeCloseTo(500); // C3
+    expect(effectiveCutoff(patch, 0, [], 0, 60)).toBeCloseTo(1000); // C4: no change
+    expect(effectiveCutoff(patch, 0, [], 0, 72)).toBeCloseTo(2000); // C5
+    expect(effectiveCutoff(patch, 0, [], 0, 48)).toBeCloseTo(500); // C3
   });
 
   it('follows half as far at 50 %, and through fractions of a semitone during a Glide', () => {
-    expect(effectiveCutoff({ ...patch, keyTrack: 0.5 }, 0, 0, 0, 84)).toBeCloseTo(2000);
-    expect(effectiveCutoff(patch, 0, 0, 0, 66)).toBeCloseTo(1000 * 2 ** 0.5); // half an octave up
+    expect(effectiveCutoff({ ...patch, keyTrack: 0.5 }, 0, [], 0, 84)).toBeCloseTo(2000);
+    expect(effectiveCutoff(patch, 0, [], 0, 66)).toBeCloseTo(1000 * 2 ** 0.5); // half an octave up
   });
 
   it('changes nothing at 0 %, whatever the Note', () => {
-    expect(effectiveCutoff({ ...patch, keyTrack: 0 }, 0, 0, 0, 96)).toBe(1000);
+    expect(effectiveCutoff({ ...patch, keyTrack: 0 }, 0, [], 0, 96)).toBe(1000);
   });
 
   it('adds to the Envelope, in octaves', () => {
-    expect(effectiveCutoff({ ...patch, filterEnvAmount: 1 }, 1, 0, 0, 72)).toBeCloseTo(4000);
+    expect(effectiveCutoff({ ...patch, filterEnvAmount: 1 }, 1, [], 0, 72)).toBeCloseTo(4000);
+  });
+});
+
+describe('two LFOs', () => {
+  const both = { ...defaultPatch(), cutoff: 1000, lfoDestination: 'cutoff', lfoAmount: 0.5, lfo2Destination: 'cutoff', lfo2Amount: 0.5 } as const;
+
+  it('aimed at the same destination, add their swings: one octave each', () => {
+    expect(effectiveCutoff(both, 0, [1, 1])).toBeCloseTo(4000);
+    expect(effectiveCutoff(both, 0, [1, -1])).toBeCloseTo(1000);
+    expect(effectiveCutoff({ ...both, lfo2Destination: 'pitch' }, 0, [1, 1])).toBeCloseTo(2000);
+  });
+
+  it('together swing no further than the destination allows, sharing what room there is by their Depths', () => {
+    const pulse = { ...defaultPatch(), lfoDestination: 'pulseWidth', lfoAmount: 1, lfo2Destination: 'pulseWidth', lfo2Amount: 0.5 } as const;
+    // 40 + 20 points wanted around 50 %, 45 allowed each way: three quarters of each.
+    const [one, two] = lfoSwings(pulse, 'pulseWidth', 0.4, 0.45);
+    expect(one).toBeCloseTo(0.3);
+    expect(two).toBeCloseTo(0.15);
+    expect(lfoSwings(pulse, 'cutoff', 2)).toEqual([0, 0]);
+  });
+
+  it('LFO 2 on Pitch makes vibrato as LFO 1 does', () => {
+    expect(soundingPitch({ ...defaultPatch(), lfo2Destination: 'pitch', lfo2Amount: 1 }, 60, [0, -1])).toBeCloseTo(59);
+  });
+});
+
+describe('the new LFO destinations', () => {
+  it('Resonance: swings around the knob, at full Depth across the whole range, as far as it can go each way alike', () => {
+    const patch = { ...defaultPatch(), resonance: 0.5, lfoDestination: 'resonance', lfoAmount: 0.5 } as const;
+    expect(effectiveResonance(patch, [1])).toBeCloseTo(1);
+    expect(effectiveResonance(patch, [-1])).toBeCloseTo(0);
+    expect(effectiveResonance({ ...patch, resonance: 0.2, lfoAmount: 1 }, [1])).toBeCloseTo(0.4);
+    expect(effectiveResonance({ ...patch, lfoDestination: 'cutoff' }, [1])).toBe(0.5);
+  });
+
+  it('Osc 2 Pitch: an octave each way at full Depth, on top of Octave, Semitone and Detune; Detune: 50 cents', () => {
+    const patch = { ...defaultPatch(), osc2Semitone: 7, osc2Detune: 10, lfoDestination: 'osc2Pitch', lfoAmount: 1 } as const;
+    expect(osc2Cents(patch, [0])).toBe(710);
+    expect(osc2Cents(patch, [1])).toBeCloseTo(1910);
+    expect(osc2Cents({ ...patch, lfoDestination: 'detune', lfoAmount: 0.5 }, [-1])).toBeCloseTo(685);
   });
 });

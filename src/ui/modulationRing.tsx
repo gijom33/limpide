@@ -22,7 +22,7 @@ function modulated(id: ParamId, patch: Patch, engine: SynthEngine): { reach: Rea
   if (id === 'pulseWidth' || id === 'osc2PulseWidth') {
     const reach = pulseWidthReach(patch, patch[id]);
     // The LFO swings the width evenly each way around the knob's own value.
-    return reach && { reach, now: sounding ? patch[id] + ((reach.hi - reach.lo) / 2) * m.lfo : null };
+    return reach && { reach, now: sounding ? patch[id] + ((reach.hi - reach.lo) / 2) * m.lfo[0] : null };
   }
   return null;
 }

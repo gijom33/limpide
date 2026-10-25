@@ -10,6 +10,11 @@ describe('sanitizePatch: anything from outside becomes a valid Patch', () => {
     expect(patch).toEqual({ ...defaultPatch(), cutoff: 500 });
   });
 
+  it('a Patch from before LFO 2 keeps its LFO and gets a silent LFO 2', () => {
+    const patch = sanitizePatch({ lfoDestination: 'pulseWidth', lfoAmount: 0.6, lfoRate: 3 });
+    expect([patch.lfoDestination, patch.lfoAmount, patch.lfoRate, patch.lfo2Amount]).toEqual(['pulseWidth', 0.6, 3, 0]);
+  });
+
   it('drops fields it does not know (Patches from newer versions)', () => {
     expect(sanitizePatch({ ...defaultPatch(), reverb: 0.5 })).toEqual(defaultPatch());
   });

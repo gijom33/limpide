@@ -23,8 +23,10 @@ export const CHOICE_LABELS: Record<ChoiceId, string> = {
   osc2Waveform: 'Osc 2 Waveform',
   filterMode: 'Filter Mode',
   filterSlope: 'Slope',
-  lfoWaveform: 'LFO Waveform',
-  lfoDestination: 'LFO Destination',
+  lfoWaveform: 'LFO 1 Waveform',
+  lfoDestination: 'LFO 1 Destination',
+  lfo2Waveform: 'LFO 2 Waveform',
+  lfo2Destination: 'LFO 2 Destination',
   voices: 'Voices',
 };
 

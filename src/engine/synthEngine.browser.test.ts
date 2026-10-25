@@ -401,6 +401,47 @@ describe('modulationAt for past moments (the Envelope Timeline)', () => {
   });
 });
 
+describe('two LFOs and their destinations', () => {
+  // A square LFO at 1 Hz sits at +1 for the first half second and −1 for the second: measure in the middle of each.
+  const square = { cutoff: 20000, waveform: 'sine', osc2Waveform: 'sine', ampSustain: 1, ampAttack: 0.001, lfoRate: 1, lfoWaveform: 'square', lfo2Rate: 1, lfo2Waveform: 'square' } as const;
+  const up = (s: Float32Array) => frequencyAround(s, SR, 0.25, 0.02);
+  const down = (s: Float32Array) => frequencyAround(s, SR, 0.75, 0.02);
+
+  it('LFO 2 makes vibrato on its own, LFO 1 silent', async () => {
+    const s = await render(1, { ...square, lfo2Destination: 'pitch', lfo2Amount: 1 }, (e) => e.noteOn(69, 1, 0));
+    expect(up(s)).toBeCloseTo(440 * 2 ** (1 / 12), 0);
+    expect(down(s)).toBeCloseTo(440 * 2 ** (-1 / 12), 0);
+  });
+
+  it('Osc 2 Pitch moves Osc 2 alone, an octave each way at full Depth', async () => {
+    const osc2 = { ...square, mixOsc1: 0, mixOsc2: 1, lfoDestination: 'osc2Pitch', lfoAmount: 1 } as const;
+    const s = await render(1, osc2, (e) => e.noteOn(69, 1, 0));
+    expect(up(s)).toBeCloseTo(880, 0);
+    expect(down(s)).toBeCloseTo(220, 0);
+    const osc1 = await render(1, { ...osc2, mixOsc1: 1, mixOsc2: 0 }, (e) => e.noteOn(69, 1, 0));
+    expect(up(osc1)).toBeCloseTo(440, 0);
+  });
+
+  it('Detune moves Osc 2 by 50 cents each way at full Depth', async () => {
+    const s = await render(1, { ...square, mixOsc1: 0, mixOsc2: 1, lfo2Destination: 'detune', lfo2Amount: 1 }, (e) => e.noteOn(69, 1, 0));
+    expect(up(s)).toBeCloseTo(440 * 2 ** (50 / 1200), 0);
+    expect(down(s)).toBeCloseTo(440 * 2 ** (-50 / 1200), 0);
+  });
+
+  it('Resonance swings the Filter’s peak: full while the LFO is up, none while it is down, in the sound and the model', async () => {
+    const patch = { ...square, waveform: 'saw', cutoff: 990, resonance: 0.5, lfoDestination: 'resonance', lfoAmount: 0.5 } as const;
+    let engine: ReturnType<typeof createSynthEngine> | undefined;
+    const s = await render(1, patch, (e) => {
+      engine = e;
+      e.noteOn(45, 1, 0); // 110 Hz: Harmonic 9 sits on the Cutoff
+    });
+    const peak = (from: number, to: number) => toneAmplitude(s, SR, 990, Math.round(from * SR), Math.round(to * SR));
+    expect(dB(peak(0.1, 0.4) / peak(0.6, 0.9))).toBeGreaterThan(15);
+    expect(engine!.modulationAt(0.25).resonance).toBeCloseTo(1);
+    expect(engine!.modulationAt(0.75).resonance).toBeCloseTo(0);
+  });
+});
+
 describe('Osc 2, Noise and the Mixer', () => {
   const A2 = 45; // 110 Hz
   const clean = { cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001, waveform: 'sine', osc2Waveform: 'sine' } as const;
@@ -900,9 +941,9 @@ describe('the Timeline’s past stays put while knobs turn (the model’s histor
           engine.applyPatch({ ...base, lfoRate: 1 + (i % 7) });
           if (i + 1 === 200 || i + 1 === steps) {
             const m = engine.modulationAt(1.0);
-            seen.push({ lfo: m.lfo, cutoff: m.cutoff });
+            seen.push({ lfo: m.lfo[0], cutoff: m.cutoff });
             // The LFO plot's cheap reading is the model's LFO times its Depth, through every Rate change.
-            for (const t of [0.5, 1.0, (i + 1) * 0.01]) expect(engine.lfoSwingAt(t)).toBe(0.5 * engine.modulationAt(t).lfo);
+            for (const t of [0.5, 1.0, (i + 1) * 0.01]) expect(engine.lfoSwingAt(t)).toBe(0.5 * engine.modulationAt(t).lfo[0]);
           }
           void ctx.resume();
         }),
