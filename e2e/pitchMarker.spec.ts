@@ -4,7 +4,8 @@ import { expect, test, type Page } from '@playwright/test';
 // sounds at, between keys when it is between them. It slides with Glide and wobbles with an LFO on Pitch.
 
 const piano = (page: Page) => page.getByRole('group', { name: 'Piano' });
-const marker = (page: Page) => piano(page).locator('.pitch-marker');
+/** The newest Note's dot (a chord has one per key; with one Note there is one). */
+const marker = (page: Page) => piano(page).locator('.pitch-marker:visible').first();
 const centre = async (page: Page, key: string) => {
   const box = (await piano(page).getByRole('button', { name: key, exact: true }).boundingBox())!;
   return box.x + box.width / 2;
@@ -64,6 +65,8 @@ test('with Glide, the marker slides between the keys from the old Note to the ne
   expect(sliding).toBeGreaterThan(c4 + 4);
   expect(sliding).toBeLessThan(c5 - 4);
   await expect.poll(() => markerX(page), { timeout: 5000 }).toBeCloseTo(c5, 0);
+  // Both keys are lit, but one Voice sounds only the newest Note: one dot.
+  await expect(piano(page).locator('.pitch-marker:visible')).toHaveCount(1);
 });
 
 test('an LFO on Pitch wobbles the marker around the key', async ({ page }) => {
@@ -136,4 +139,21 @@ test('with reduced motion asked for, the marker sits on the Note: no wobble', as
     expect(await markerX(page)).toBeCloseTo(e4, 0);
     await page.waitForTimeout(60);
   }
+});
+
+test('a chord gets a dot on every key it plays, each wobbling with the vibrato', async ({ page }) => {
+  await page.goto('/');
+  await listening(page);
+  await page.getByRole('radiogroup', { name: 'Voices' }).getByRole('radio', { name: '4' }).click();
+  await aimAtPitch(page);
+  await turnUp(page, 'LFO 1', 'Depth', 50);
+  for (const code of ['KeyA', 'KeyD', 'KeyG']) await page.keyboard.down(code); // C4, E4, G4
+  const dots = piano(page).locator('.pitch-marker:visible');
+  await expect(dots).toHaveCount(3);
+  const xs = await dots.evaluateAll((all) => all.map((d) => d.getBoundingClientRect()).map((r) => r.left + r.width / 2).sort((a, b) => a - b));
+  const black = (await piano(page).getByRole('button', { name: 'C#4', exact: true }).boundingBox())!.width;
+  for (const [i, key] of ['C4', 'E4', 'G4'].entries()) expect(Math.abs(xs[i] - (await centre(page, key))), key).toBeLessThanOrEqual(black / 2 + 1);
+  await page.keyboard.up('KeyD');
+  await expect(dots).toHaveCount(2);
+  for (const code of ['KeyA', 'KeyG']) await page.keyboard.up(code);
 });
