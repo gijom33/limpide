@@ -1,11 +1,11 @@
 import { envelopeLevel, envelopeSchedule, type Adsr, type AutomationStep, type GateEvent } from '../modulation/envelope';
 import { createLfoClock, glideFrequency, glideTimeConstant, lfoShape, type LfoWaveform } from '../modulation/lfo';
 import {
-  effectiveCutoff, KEY_TRACK_CENTRE, LFO_CUTOFF_OCTAVES, LFO_PITCH_CENTS, LFO_PULSE_WIDTH, MAX_PULSE, MIN_PULSE, VELOCITY_CUTOFF_OCTAVES,
+  effectiveCutoff, soundingPitch, KEY_TRACK_CENTRE, LFO_CUTOFF_OCTAVES, LFO_PITCH_CENTS, LFO_PULSE_WIDTH, MAX_PULSE, MIN_PULSE, VELOCITY_CUTOFF_OCTAVES,
 } from '../modulation/modulationModel';
 import { filterStages, type Stage } from './filterDesign';
 import { harmonicSeries } from '../music/harmonics';
-import { noteToFrequency } from '../music/pitch';
+import { frequencyToNote, noteToFrequency } from '../music/pitch';
 import { GLIDE_OFF, PARAMS, type FilterMode, type Patch, type Voices } from '../patch/patch';
 import { bandwidthOctaves } from '../modulation/passBand';
 import type { Sounding } from '../modulation/reach';
@@ -36,6 +36,8 @@ export interface Modulation {
   bandwidth: number;
   /** The newest Note while its key is held (or Hold keeps it), with its Velocity; null once released. */
   sounding: Sounding | null;
+  /** The pitch the newest Note sounds at, in semitones (fractional through a Glide or vibrato); A4 before any. */
+  pitch: number;
 }
 
 export interface SynthEngine {
@@ -548,6 +550,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       mode: then?.filterMode ?? 'lowpass',
       bandwidth: then ? bandwidthOctaves(filterStages(then.filterMode, then.filterSlope, then.resonance)[0].Q) : 1,
       sounding: gate?.on ? { note, velocity } : null,
+      pitch: then ? soundingPitch(then, frequencyToNote(glideFrequency(pitches, t) || A4), lfoValue) : 69,
     };
   };
 

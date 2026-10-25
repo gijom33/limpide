@@ -29,3 +29,11 @@ export function effectiveCutoff(patch: Patch, filterEnvelope = 0, lfo = 0, veloc
   const hz = patch.cutoff * 2 ** (patch.filterEnvAmount * filterEnvelope + lfoOctaves + velocityOctaves + keyOctaves);
   return Math.min(MAX_HZ, Math.max(MIN_HZ, hz));
 }
+
+/**
+ * The pitch sounding, in semitones (MIDI numbering, fractional): the Note as far as the Glide has taken it, moved
+ * by up to a semitone each way by the LFO aimed at Pitch.
+ */
+export function soundingPitch(patch: Patch, gliding: number, lfo = 0): number {
+  return gliding + (patch.lfoDestination === 'pitch' ? (LFO_PITCH_CENTS / 100) * patch.lfoAmount * lfo : 0);
+}

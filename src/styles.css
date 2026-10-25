@@ -550,6 +550,12 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 }
 .piano button[aria-pressed='true'] { background: var(--stage-osc); color: var(--bg); border-color: var(--stage-osc); }
 .piano button span { pointer-events: none; }
+/* The pitch sounding (issue 21): the modulation rings' live dot on the piano's top edge, above every key (black
+   ones included) and clear of the names, its centre at the pitch. */
+.pitch-marker {
+  position: absolute; z-index: 2; left: -5px; top: -5px; width: 10px; height: 10px; border-radius: 50%; pointer-events: none;
+  background: var(--mod-dot); border: 2px solid var(--panel); box-sizing: border-box;
+}
 
 .midi-status {
   display: inline-flex; align-items: center; gap: 6px; height: var(--control-h); padding: 0 10px; font-size: var(--text-md); color: var(--muted);

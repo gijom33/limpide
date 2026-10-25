@@ -338,6 +338,33 @@ describe('modulationAt for past moments (the Envelope Timeline)', () => {
     engine.noteOff(0.3);
     expect(engine.modulationAt(0.4).sounding).toBeNull(); // released: no Note is held any more
   });
+  it('reports the sounding pitch in semitones: the Note, sliding over the Glide to the next', () => {
+    const ctx = new OfflineAudioContext(1, SR, SR);
+    const engine = createSynthEngine(ctx);
+    engine.applyPatch({ ...defaultPatch(), glide: 0.4, lfoAmount: 0 });
+    engine.noteOn(60, 1, 0);
+    expect(engine.modulationAt(0.2).pitch).toBeCloseTo(60);
+    engine.pitchChange(72, 0.5);
+    expect(engine.modulationAt(0.5).pitch).toBeCloseTo(60);
+    const sliding = engine.modulationAt(0.6).pitch;
+    expect(sliding).toBeGreaterThan(61);
+    expect(sliding).toBeLessThan(71);
+    expect(engine.modulationAt(0.9).pitch).toBeCloseTo(72, 0); // there by the Glide time (98 % of the way)
+  });
+  it('an LFO on Pitch wobbles the sounding pitch a semitone each way at full Depth; aimed elsewhere, not at all', () => {
+    const swing = (destination: 'pitch' | 'cutoff') => {
+      const ctx = new OfflineAudioContext(1, SR, SR);
+      const engine = createSynthEngine(ctx);
+      engine.applyPatch({ ...defaultPatch(), lfoDestination: destination, lfoAmount: 1, lfoRate: 5, lfoWaveform: 'triangle' });
+      engine.noteOn(60, 1, 0);
+      const pitches = Array.from({ length: 200 }, (_, i) => engine.modulationAt(0.1 + i / 1000).pitch);
+      return [Math.min(...pitches), Math.max(...pitches)];
+    };
+    const [lo, hi] = swing('pitch');
+    expect(lo).toBeCloseTo(59, 1);
+    expect(hi).toBeCloseTo(61, 1);
+    expect(swing('cutoff')).toEqual([60, 60]);
+  });
   it('a Gate earlier than Notes already handed over (Hold switched off mid-rhythm) cancels them, as in the sound', () => {
     const ctx = new OfflineAudioContext(1, SR, SR);
     const engine = createSynthEngine(ctx);

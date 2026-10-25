@@ -4,9 +4,9 @@
 
 **Blocked by:** 20
 
-**Status:** blocked
+**Status:** done. The marker is the rings' live dot, on the piano's top edge (low on the keys it hid behind the black keys and the C names).
 
-- [ ] Modulation model: the sounding pitch (Note, Glide, LFO on Pitch) at a given time, in fractional semitones (unit tests, including Glide's `setTargetAtTime` curve)
-- [ ] Marker drawn by the render loop over the piano, outside React; hidden when no Note sounds or the pitch is off the visible keys
-- [ ] `prefers-reduced-motion`: the marker sits on the Note, no wobble
-- [ ] e2e: with Glide on, the marker moves between two keys after the second key is pressed
+- [x] Modulation model: the sounding pitch (Note, Glide, LFO on Pitch) at a given time, in fractional semitones (engine tests: `modulationAt(t).pitch`; Glide's curve was already unit-tested in `glideFrequency`)
+- [x] Marker drawn by the render loop over the piano, outside React; hidden when no Note sounds or the pitch is off the visible keys
+- [x] `prefers-reduced-motion`: the marker sits on the Note, no wobble
+- [x] e2e: with Glide on, the marker moves between two keys after the second key is pressed

@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { nearestNote, noteToFrequency } from '../music/pitch';
 import { keyToNote } from '../input/keyboardLayout';
 import type { NoteInput } from '../input/noteInput';
+import { PitchMarker } from './PitchMarker';
 
 // The computer-keyboard range: C to the E above (17 keys).
 const KEYS = ['KeyA', 'KeyW', 'KeyS', 'KeyE', 'KeyD', 'KeyF', 'KeyT', 'KeyG', 'KeyY', 'KeyH', 'KeyU', 'KeyJ', 'KeyK', 'KeyO', 'KeyL', 'KeyP', 'Semicolon'];
@@ -65,6 +66,7 @@ export function Piano({ octave, held, input }: Props) {
           </button>
         );
       })}
+      <PitchMarker />
     </div>
   );
 }
