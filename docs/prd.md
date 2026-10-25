@@ -94,6 +94,7 @@ Judged against [the design principles](./design-principles.md).
 79. As a phone user, I want scrolling over a control to scroll the page, so that I never change a sound by accident.
 80. As a first-time visitor, I want a welcome that offers to play the Demo (or the sound shared with me), so that I hear what Limpide can do without knowing where to click.
 81. As a user, I want About centred on screen and an ⓘ button at every screen size, so that I can always find out what this is.
+82. As a sound designer, I want the LFO to reach more destinations (Resonance, Osc 2's pitch and its Detune as well as Cutoff, Pitch and Pulse Width), picked with arrows or from a menu like the Patch bar's, so that one LFO makes more kinds of movement.
 
 ### MIDI and the TempoPAD C16
 50. As a C16 owner, I want Limpide to detect my Controller when plugged in, so that I know it's connected.
