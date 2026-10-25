@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useRef, type RefObject } from 'react';
 import type { SynthEngine } from '../engine/synthEngine';
-import { cutoffReach, pulseWidthReach, type Reach, type Source } from '../modulation/reach';
+import { LFO_DETUNE_CENTS, LFO_OSC2_CENTS, LFO_PULSE_WIDTH, lfoOffset, MAX_PULSE, MIN_PULSE } from '../modulation/modulationModel';
+import { cutoffReach, detuneReach, pulseWidthReach, resonanceReach, semitoneReach, type Reach, type Source } from '../modulation/reach';
 import { PARAMS, type ParamId, type Patch } from '../patch/patch';
 import { valueToPosition } from '../patch/taper';
 import { addToRenderLoop } from '../viewers/renderLoop';
@@ -19,17 +20,22 @@ function modulated(id: ParamId, patch: Patch, engine: SynthEngine): { reach: Rea
     const reach = cutoffReach(patch, m.sounding);
     return reach && { reach, now: sounding ? m.cutoff : null };
   }
+  // The LFOs swing these evenly around the knob's own value.
+  const at = (reach: Reach | null, now: () => number) => reach && { reach, now: sounding ? now() : null };
   if (id === 'pulseWidth' || id === 'osc2PulseWidth') {
-    const reach = pulseWidthReach(patch, patch[id]);
-    // The LFO swings the width evenly each way around the knob's own value.
-    return reach && { reach, now: sounding ? patch[id] + ((reach.hi - reach.lo) / 2) * m.lfo[0] : null };
+    const room = Math.min(patch[id] - MIN_PULSE, MAX_PULSE - patch[id]);
+    return at(pulseWidthReach(patch, patch[id]), () => patch[id] + lfoOffset(patch, 'pulseWidth', LFO_PULSE_WIDTH, m.lfo, room));
   }
+  if (id === 'resonance') return at(resonanceReach(patch), () => m.resonance);
+  if (id === 'osc2Semitone') return at(semitoneReach(patch), () => patch.osc2Semitone + lfoOffset(patch, 'osc2Pitch', LFO_OSC2_CENTS / 100, m.lfo));
+  if (id === 'osc2Detune') return at(detuneReach(patch), () => patch.osc2Detune + lfoOffset(patch, 'detune', LFO_DETUNE_CENTS, m.lfo));
   return null;
 }
 
 // The source a pointer is over, or that has the keyboard focus: its share of every ring is drawn bright.
 const SOURCES: Record<string, Source> = {
-  'param:lfoAmount': 'lfo', 'param:lfoRate': 'lfo', 'choice:lfoWaveform': 'lfo', 'choice:lfoDestination': 'lfo',
+  'param:lfoAmount': 'lfo1', 'param:lfoRate': 'lfo1', 'choice:lfoWaveform': 'lfo1', 'choice:lfoDestination': 'lfo1',
+  'param:lfo2Amount': 'lfo2', 'param:lfo2Rate': 'lfo2', 'choice:lfo2Waveform': 'lfo2', 'choice:lfo2Destination': 'lfo2',
   'param:filterEnvAmount': 'filterEnvelope', 'param:filterAttack': 'filterEnvelope', 'param:filterDecay': 'filterEnvelope',
   'param:filterSustain': 'filterEnvelope', 'param:filterRelease': 'filterEnvelope',
   'param:velocityCutoff': 'velocity', 'param:keyTrack': 'keyTrack',
@@ -48,7 +54,7 @@ function listen() {
 }
 
 /** The Parameters modulation can move, and so the knobs that carry a ring. */
-export const MODULATED: ReadonlySet<ParamId> = new Set(['cutoff', 'pulseWidth', 'osc2PulseWidth']);
+export const MODULATED: ReadonlySet<ParamId> = new Set(['cutoff', 'resonance', 'pulseWidth', 'osc2PulseWidth', 'osc2Semitone', 'osc2Detune']);
 
 interface Props {
   id: ParamId;
@@ -63,7 +69,7 @@ interface Props {
 
 /**
  * Serum-style modulation on a knob (issue 20): a ring outside the value arc over the range modulation can take the
- * Parameter, and a dot at its Effective value while a Note sounds. Pointing at a source (the LFO, the Filter
+ * Parameter, and a dot at its Effective value while a Note sounds. Pointing at a source (either LFO, the Filter
  * Envelope, Velocity, Key Track) or focusing it draws its own share bright over a dimmed ring. Drawn by the render
  * loop, outside React (ADR-0002), from the Modulation model (ADR-0003). Reduced motion keeps the ring and drops the
  * moving dot.

@@ -42,6 +42,23 @@ test('the live dot rides the Effective Cutoff while a Note sounds, and only then
   await expect(dot(cutoff)).toBeHidden({ timeout: 3000 }); // once the Release has faded
 });
 
+test('the live dot moves with the Filter Envelope alone, no LFO, as with the LFO or both', async ({ page }) => {
+  await page.goto('/');
+  await listening(page);
+  await turnUp(page, 'Filter', 'Amount', 15);
+  const cutoff = knob(page, 'Filter', 'Cutoff');
+  await expect(ring(cutoff)).toBeVisible();
+  await page.keyboard.down('KeyA');
+  await expect(dot(cutoff)).toBeVisible();
+  const seen = new Set<string | null>();
+  for (let i = 0; i < 10; i++) {
+    seen.add(await dot(cutoff).getAttribute('cx'));
+    await page.waitForTimeout(40);
+  }
+  expect(seen.size, 'the Envelope moves it').toBeGreaterThan(2);
+  await page.keyboard.up('KeyA');
+});
+
 test('an LFO on Pulse Width rings both Oscillators’ Pulse Width knobs, and not the Cutoff', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('radiogroup', { name: 'LFO Destination' }).getByRole('radio', { name: 'Pulse Width' }).click();
@@ -61,7 +78,7 @@ test('hovering or focusing a source brightens its own share of the ring', async 
   await expect(share).toBeHidden();
   await page.getByRole('region', { name: 'LFO & Envelopes' }).getByRole('slider', { name: 'Depth' }).hover();
   await expect(share).toBeVisible();
-  await expect(share).toHaveAttribute('data-source', 'lfo');
+  await expect(share).toHaveAttribute('data-source', 'lfo1');
   await page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name: 'Amount' }).focus();
   await page.mouse.move(0, 0);
   await expect(share).toHaveAttribute('data-source', 'filterEnvelope');

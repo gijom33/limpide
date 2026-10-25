@@ -1,8 +1,12 @@
-import type { Patch } from '../patch/patch';
-import { KEY_TRACK_CENTRE, LFO_CUTOFF_OCTAVES, LFO_PULSE_WIDTH, MAX_PULSE, MIN_PULSE, VELOCITY_CUTOFF_OCTAVES } from './modulationModel';
+import type { LfoDestination, Patch } from '../patch/patch';
+import {
+  KEY_TRACK_CENTRE, LFO_CUTOFF_OCTAVES, LFO_DETUNE_CENTS, LFO_OSC2_CENTS, LFO_PULSE_WIDTH, LFO_RESONANCE, lfoSwings, MAX_PULSE, MIN_PULSE,
+  VELOCITY_CUTOFF_OCTAVES,
+} from './modulationModel';
 
 /** What moves a Parameter away from its knob's own value. */
-export type Source = 'filterEnvelope' | 'lfo' | 'velocity' | 'keyTrack';
+export type Source = 'filterEnvelope' | 'lfo1' | 'lfo2' | 'velocity' | 'keyTrack';
+const LFO_SOURCES = ['lfo1', 'lfo2'] as const;
 
 /**
  * How far modulation can take a Parameter with the Patch as it is (the modulation ring): the lowest and highest
@@ -27,17 +31,16 @@ const NO_SPREAD = 1.001;
 
 /**
  * The Effective Cutoff's reach (ADR-0003's model, at its extremes). The Filter Envelope sweeps from the Cutoff to
- * Envelope Amount octaves away; the LFO aimed at the Cutoff swings it up to two octaves each way. Velocity and Key
+ * Envelope Amount octaves away; each LFO aimed at the Cutoff swings it up to two octaves each way. Velocity and Key
  * Track are fixed for a Note: while one sounds they move the whole range; with none, Velocity reaches as far as the
  * hardest strike would open it, and Key Track stays at C4, where it is the knob's own value.
  */
 export function cutoffReach(patch: Patch, sounding: Sounding | null): Reach | null {
   const octaves: Partial<Record<Source, [number, number]>> = {};
   if (patch.filterEnvAmount) octaves.filterEnvelope = [Math.min(0, patch.filterEnvAmount), Math.max(0, patch.filterEnvAmount)];
-  if (patch.lfoDestination === 'cutoff' && patch.lfoAmount) {
-    const swing = LFO_CUTOFF_OCTAVES * patch.lfoAmount;
-    octaves.lfo = [-swing, swing];
-  }
+  lfoSwings(patch, 'cutoff', LFO_CUTOFF_OCTAVES).forEach((swing, i) => {
+    if (swing) octaves[LFO_SOURCES[i]] = [-swing, swing];
+  });
   if (patch.velocityCutoff) {
     const full = VELOCITY_CUTOFF_OCTAVES * patch.velocityCutoff;
     octaves.velocity = sounding ? [0, full * sounding.velocity] : [0, full];
@@ -61,11 +64,31 @@ export function cutoffReach(patch: Patch, sounding: Sounding | null): Reach | nu
   return { lo: hz(lo), hi: hz(hi), shares };
 }
 
-/** A Pulse Width's reach: the LFO aimed at Pulse Width swings it 40 points each way at full Depth, as the sound does. */
-export function pulseWidthReach(patch: Patch, pulseWidth: number): Reach | null {
-  if (patch.lfoDestination !== 'pulseWidth' || !patch.lfoAmount) return null;
-  const swing = Math.min(LFO_PULSE_WIDTH * patch.lfoAmount, pulseWidth - MIN_PULSE, MAX_PULSE - pulseWidth);
-  if (swing <= 0) return null;
-  const range: [number, number] = [pulseWidth - swing, pulseWidth + swing];
-  return { lo: range[0], hi: range[1], shares: { lfo: range } };
+/**
+ * The LFOs' reach on a Parameter they swing evenly around its knob's value: `perDepth` each way at full Depth, both
+ * together kept within `room` (as the sound is), each LFO's share its own swing.
+ */
+function lfoReach(patch: Patch, destination: LfoDestination, value: number, perDepth: number, room = Infinity): Reach | null {
+  const swings = lfoSwings(patch, destination, perDepth, room);
+  const total = swings[0] + swings[1];
+  if (total <= 0) return null;
+  const shares: Reach['shares'] = {};
+  swings.forEach((swing, i) => {
+    if (swing) shares[LFO_SOURCES[i]] = [value - swing, value + swing];
+  });
+  return { lo: value - total, hi: value + total, shares };
 }
+
+/** A Pulse Width's reach: each LFO aimed at Pulse Width swings it 40 points each way at full Depth, as the sound does. */
+export const pulseWidthReach = (patch: Patch, pulseWidth: number) =>
+  lfoReach(patch, 'pulseWidth', pulseWidth, LFO_PULSE_WIDTH, Math.min(pulseWidth - MIN_PULSE, MAX_PULSE - pulseWidth));
+
+/** The Resonance's reach: across its whole range at full Depth, as far as the knob's value leaves room each way. */
+export const resonanceReach = (patch: Patch) =>
+  lfoReach(patch, 'resonance', patch.resonance, LFO_RESONANCE, Math.min(patch.resonance, 1 - patch.resonance));
+
+/** Osc 2 Pitch's reach, on the Semitone knob: an octave (twelve semitones) each way at full Depth. */
+export const semitoneReach = (patch: Patch) => lfoReach(patch, 'osc2Pitch', patch.osc2Semitone, LFO_OSC2_CENTS / 100);
+
+/** The Detune's reach: 50 cents each way at full Depth. */
+export const detuneReach = (patch: Patch) => lfoReach(patch, 'detune', patch.osc2Detune, LFO_DETUNE_CENTS);

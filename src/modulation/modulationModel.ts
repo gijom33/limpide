@@ -55,7 +55,7 @@ export function lfoSwings(patch: Patch, destination: LfoDestination, perDepth: n
 }
 
 /** Where both LFOs take a destination right now: each one's swing times its value (`lfo`, −1 to 1 each). */
-function lfoOffset(patch: Patch, destination: LfoDestination, perDepth: number, lfo: readonly number[], room = Infinity) {
+export function lfoOffset(patch: Patch, destination: LfoDestination, perDepth: number, lfo: readonly number[], room = Infinity) {
   const [one, two] = lfoSwings(patch, destination, perDepth, room);
   return one * (lfo[0] ?? 0) + two * (lfo[1] ?? 0);
 }
