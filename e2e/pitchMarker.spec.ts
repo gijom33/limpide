@@ -91,19 +91,28 @@ test('the marker sits low on the key, where a finger presses it: higher on a bla
     const box = (await marker(page).boundingBox())!;
     return box.y + box.height / 2;
   };
-  for (const [code, key] of [['KeyD', 'E4'], ['KeyE', 'D#4']] as const) {
+  const heights: Record<string, number> = {};
+  for (const [code, key] of [['KeyA', 'C4'], ['KeyE', 'D#4']] as const) {
     await page.keyboard.down(code);
     await expect(marker(page)).toBeVisible();
     const box = (await piano(page).getByRole('button', { name: key, exact: true }).boundingBox())!;
     await expect.poll(() => markerX(page), { message: key }).toBeCloseTo(await centre(page, key), 0); // the Glide over
     const y = await markerY();
+    heights[key] = y;
     expect(y, key).toBeGreaterThan(box.y + box.height / 2); // the lower half of the key
     expect(y, key).toBeLessThan(box.y + box.height);
-    if (key === 'E4') expect(await ring(), 'a dark ring on a white key').toBeLessThan(80);
+    if (key === 'C4') {
+      expect(await ring(), 'a dark ring on a white key').toBeLessThan(80);
+      // Clear of the key's name: the dot ends above the name's letters.
+      const name = (await piano(page).getByRole('button', { name: key, exact: true }).locator('span').boundingBox())!;
+      const dot = (await marker(page).boundingBox())!;
+      expect(dot.y + dot.height, 'clear of the name').toBeLessThanOrEqual(name.y + 2);
+    }
     else expect(await ring(), 'a light ring on a black key').toBeGreaterThan(180);
     await page.keyboard.up(code);
     await expect(marker(page)).toBeHidden({ timeout: 3000 });
   }
+  expect(heights['D#4'], 'higher on a black key').toBeLessThan(heights.C4 - 2);
 });
 
 test('with reduced motion asked for, the marker sits on the Note: no wobble', async ({ page }) => {

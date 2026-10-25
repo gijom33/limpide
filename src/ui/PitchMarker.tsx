@@ -15,8 +15,16 @@ function keyBox(piano: HTMLElement, note: number, origin: DOMRect): { centre: nu
 /** Whether anything moves the pitch away from the Note: an LFO aimed at Pitch with some Depth, or Glide (one Voice). */
 const pitchMoves = (p: Patch) => (p.lfoDestination === 'pitch' && p.lfoAmount > 0) || (p.voices === 1 && p.glide > GLIDE_OFF * 1.001);
 
-/** Where a finger presses a key, as a share of its height from the top: low on it, on a black key and a white one. */
+/** Where a finger presses a key, as a share of its height from the top: low on it (a white key's name permitting). */
 const PRESS = 0.75;
+/** The dot's radius, ring included (CSS sizes it). */
+const RADIUS = 5;
+
+/** How far down a white key its name (C4…) starts, so the dot can stay above it; null when no C is on screen. */
+function nameTop(piano: HTMLElement): number | null {
+  const name = [...piano.querySelectorAll<HTMLElement>('button span')].find((s) => s.getClientRects().length);
+  return name ? name.getBoundingClientRect().top - name.parentElement!.getBoundingClientRect().top : null;
+}
 
 /**
  * Pitch has no knob, so its modulation shows on the piano (issue 21), while there is some: a dot in the modulation
@@ -52,7 +60,10 @@ export function PitchMarker() {
         const black = piano.querySelector<HTMLElement>('[data-black]')?.getClientRects()[0]?.width ?? 0;
         if (from && to && pressed) {
           const vibrato = still.matches ? 0 : (m.vibrato * black) / 2;
-          at = { x: from.centre + (gliding - below) * (to.centre - from.centre) + vibrato, y: pressed.top + PRESS * pressed.height };
+          // On a white key, above its name if the press point would touch it.
+          const label = onBlack ? null : nameTop(piano);
+          const y = Math.min(PRESS * pressed.height, label === null ? Infinity : label - RADIUS);
+          at = { x: from.centre + (gliding - below) * (to.centre - from.centre) + vibrato, y: pressed.top + y };
         }
       }
       el.style.display = at ? '' : 'none';

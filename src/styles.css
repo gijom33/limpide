@@ -549,7 +549,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   background: #121317; border-color: #000;
 }
 .piano button[aria-pressed='true'] { background: var(--stage-osc); color: var(--bg); border-color: var(--stage-osc); }
-.piano button span { pointer-events: none; }
+.piano button span { pointer-events: none; line-height: 1; } /* a box as tall as the letters: the pitch dot stays above it */
 /* The pitch sounding (issue 21): a blue dot where a finger presses the key, drawn over every key, ringed in the
    other key colour so it stands out on both; its centre is at the point PitchMarker gives. */
 .pitch-marker {
