@@ -262,6 +262,11 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
   color: var(--text); background: var(--control-on);
 }
 .segmented :is([aria-checked='true'], [aria-pressed='true']) { background: var(--segment-on); }
+/* Inside a section, the chosen option is filled with the section's colour, as bright as its knobs' arcs (resolved on
+   the option, so LFO 2 gets its own); its icon or word in the page colour, as on a held piano key. */
+:is(.block[data-stage], .timeline) .segmented :is([aria-checked='true'], [aria-pressed='true']) {
+  color: var(--bg); background: var(--stage);
+}
 .tool:focus-visible, .segmented button:focus-visible { outline: 2px solid var(--text); outline-offset: 1px; }
 /* Freeze is a mode the whole page is in, so its "on" state is the strongest on screen. */
 .tool-mode[aria-pressed='true'] { color: var(--bg); background: var(--text); border-color: var(--text); }
@@ -543,9 +548,13 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .lfo-play { display: flex; align-items: stretch; gap: var(--space-3); }
 .lfo-play .knobs { flex: none; flex-wrap: nowrap; }
 .lfo-play > .tip-anchor { display: flex; flex: 1 1 auto; min-width: 0; }
-/* Retrigger: an icon over its word, between the knobs and the plot, its own height rather than a toolbar's. */
-.lfo-play > .tip-anchor:has(> .lfo-retrigger) { flex: none; align-items: center; }
-.lfo-retrigger { flex-direction: column; justify-content: center; gap: 3px; height: auto; min-height: 44px; padding: 4px 6px; font-size: var(--text-sm); }
+/* Retrigger: an icon button beside Rate and Depth, centred where their dials are, its name under it as theirs are
+   (and, where theirs have one, an empty value line), so the three share one label line. On, it is filled with the
+   LFO's colour, as a selector's chosen option is. */
+.lfo-retrigger-field { display: flex; flex-direction: column; align-items: center; gap: var(--knob-text-gap); }
+.lfo-retrigger-field::after { content: ''; height: var(--knob-value-h); }
+.lfo-retrigger { margin: calc((var(--dial-big) - var(--control-h)) / 2) 0; }
+.lfo-retrigger[aria-pressed='true'] { color: var(--bg); background: var(--stage); border-color: var(--stage); }
 /* LFO 2 in its very light blue (very dark in the light theme): its knob arcs, its plot, its share of a ring. */
 .lfo-rows[data-lfo='2'] { --stage: var(--mod-2); }
 .lfo-plot {
@@ -856,6 +865,7 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   .knob-value { position: absolute; left: 0; right: 0; bottom: 0; height: var(--knob-label-h); line-height: var(--knob-label-h); font-size: var(--text-sm); color: var(--text); }
   .knob:not([data-changing]) .knob-value > :first-child { visibility: hidden; }
   .knob[data-changing] .knob-label { visibility: hidden; }
+  .lfo-retrigger-field::after { display: none; }
   /* The LFOs one under the other, each plot taking what its knobs leave, so it never runs past the section. */
   .timeline-controls { flex-direction: column; align-items: stretch; }
   .timeline-controls > .sub-block, .lfo-rows { flex: 1 1 auto; min-width: 0; }

@@ -66,20 +66,24 @@ export function LfoControls({ lfo, engine, patch, onParam, onPatch }: Props) {
           <div className="knobs">
             <Knob id={keys.rate} value={patch[keys.rate]} onChange={(v) => onParam(keys.rate, v)} inactive={off} />
             <Knob id={keys.amount} value={patch[keys.amount]} onChange={(v) => onParam(keys.amount, v)} />
+            <Tooltip content={TIPS.lfoRetrigger}>
+              <div className="lfo-retrigger-field">
+                <button
+                  type="button"
+                  className="tool tool-icon lfo-retrigger"
+                  aria-label={`LFO ${lfo} Retrigger`}
+                  aria-pressed={retrigger}
+                  onClick={() => onPatch((p) => setLfo(p, { retrigger: retrigger ? 'free' : 'note' }, lfo))}
+                  {...learnRetrigger}
+                >
+                  <RetriggerIcon />
+                </button>
+                <div className="knob-label" aria-hidden="true">
+                  Retrig
+                </div>
+              </div>
+            </Tooltip>
           </div>
-          <Tooltip content={TIPS.lfoRetrigger}>
-            <button
-              type="button"
-              className="tool lfo-retrigger"
-              aria-label={`LFO ${lfo} Retrigger`}
-              aria-pressed={retrigger}
-              onClick={() => onPatch((p) => setLfo(p, { retrigger: retrigger ? 'free' : 'note' }, lfo))}
-              {...learnRetrigger}
-            >
-              <RetriggerIcon />
-              <span>Retrig</span>
-            </button>
-          </Tooltip>
           <Tooltip content={TIPS.lfoWaveform}>
             <LfoPlot engine={engine} lfo={lfo} />
           </Tooltip>
