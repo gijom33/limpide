@@ -16,8 +16,16 @@ const markerX = async (page: Page) => {
 };
 const listening = (page: Page) => expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);
 
+/** Aim LFO 1 at Pitch, from its destination menu. */
+async function aimAtPitch(page: Page) {
+  const lfo = page.getByRole('group', { name: 'LFO 1', exact: true });
+  await lfo.getByRole('button', { name: /Destination:/ }).click();
+  await lfo.getByRole('menuitemradio', { name: 'Pitch', exact: true }).click();
+}
+
 async function turnUp(page: Page, region: string, name: string, steps: number) {
-  const slider = page.getByRole('region', { name: region }).getByRole('slider', { name, exact: true });
+  // A stage is a region; an LFO is a group within its section.
+  const slider = page.getByRole(region.startsWith('LFO ') ? 'group' : 'region', { name: region, exact: true }).getByRole('slider', { name, exact: true });
   await slider.evaluate(async (el, n) => {
     for (let i = 0; i < n; i++) {
       el.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
@@ -61,11 +69,11 @@ test('with Glide, the marker slides between the keys from the old Note to the ne
 test('an LFO on Pitch wobbles the marker around the key', async ({ page }) => {
   await page.goto('/');
   await listening(page);
-  await page.getByRole('radiogroup', { name: 'LFO Destination' }).getByRole('radio', { name: 'Pitch' }).click();
+  await aimAtPitch(page);
   await page.keyboard.down('KeyD');
   await page.waitForTimeout(300);
   await expect(marker(page)).toBeHidden(); // aimed at Pitch, but at Depth 0
-  await turnUp(page, 'LFO & Envelopes', 'Depth', 100);
+  await turnUp(page, 'LFO 1', 'Depth', 100);
   await expect(marker(page)).toBeVisible();
   const xs: number[] = [];
   for (let i = 0; i < 20; i++) {
@@ -119,8 +127,8 @@ test('with reduced motion asked for, the marker sits on the Note: no wobble', as
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   await listening(page);
-  await page.getByRole('radiogroup', { name: 'LFO Destination' }).getByRole('radio', { name: 'Pitch' }).click();
-  await turnUp(page, 'LFO & Envelopes', 'Depth', 100);
+  await aimAtPitch(page);
+  await turnUp(page, 'LFO 1', 'Depth', 100);
   await page.keyboard.down('KeyD');
   await expect(marker(page)).toBeVisible();
   const e4 = await centre(page, 'E4');

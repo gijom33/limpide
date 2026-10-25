@@ -43,7 +43,7 @@
   /* Modulation: what moves the stages over time (the LFO & Envelopes section, the rings to come). No stage uses it. */
   --stage-mod: #5b8cff;
   --mod-dot: #a9c2ff;
-  --mod-2: #9ab8ff;
+  --mod-2: var(--text);
   /* The Effective Cutoff on the Timeline: the Filter's colour lightened towards the text (either theme), so it
      reads apart from the Filter Envelope's orange area under it. */
   --cutoff-line: color-mix(in srgb, var(--stage-filter) 55%, var(--text));
@@ -69,7 +69,7 @@
   --stage-amp: #7a1fd0;
   --stage-mod: #2f5fe0;
   --mod-dot: #2f5fe0;
-  --mod-2: #6f93ef;
+  --mod-2: var(--text);
   --shadow-panel: 0 10px 32px rgba(0, 0, 0, 0.18);
   color-scheme: light;
 }
@@ -146,7 +146,7 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 /* Pointing at a source: its share bright and a little thicker, the rest of the ring dimmed. */
 .knob-ring[data-dim] { opacity: 0.35; }
 .knob-share { stroke-width: 3; }
-/* LFO 2 in a lighter blue, here as on its plot, so a ring shows which LFO moves which part. */
+/* LFO 2 in white (the text colour), here as on its plot, so a ring shows which LFO moves which part. */
 .knob-share[data-source='lfo2'] { stroke: var(--mod-2); }
 /* The live dot: bigger than the ring is thick, brighter than it, and cut out of it by a panel-coloured edge. */
 .knob-live { fill: var(--mod-dot); stroke: var(--panel); stroke-width: 2; }
@@ -304,7 +304,8 @@ main[data-frozen] .tap-canvases::before {
    controls and the plot below, the plot as tall as the controls. */
 .timeline {
   margin: 0 0 var(--space-4); padding: var(--space-3) var(--space-4); background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-panel);
-  display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto 1fr; column-gap: var(--space-4); row-gap: var(--space-3);
+  /* The controls as wide as they need, up to what leaves the plot room: narrower, LFO 2 wraps under LFO 1. */
+  display: grid; grid-template-columns: minmax(0, max-content) minmax(240px, 1fr); grid-template-rows: auto 1fr; column-gap: var(--space-4); row-gap: var(--space-3);
 }
 .timeline h2 { grid-area: 1 / 1; margin: 0; align-self: center; }
 /* The section wears the modulation colour, as each stage wears its own: heading, outline, knob arcs. */
@@ -501,31 +502,50 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .voices-field .segmented-field { display: grid; grid-template-columns: var(--label-col) max-content; }
 .voices-field .segmented button[role='radio'] { min-width: 24px; padding: 0 6px; }
 
-/* The Timeline panel: the controls that act over time (LFO, Glide) to the left of the plot. */
-.timeline-controls { display: flex; gap: var(--space-3); align-items: flex-end; flex: none; }
+/* The Timeline panel: the two LFOs to the left of the plot, side by side where there is room. */
+.timeline-controls { display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-4); align-items: flex-start; flex: none; }
 /* Not size containers: a container has no intrinsic width, and in this content-sized column it would collapse. */
-/* Three rows (LFO shape, Destination, then the knobs with Glide beside them), so the column stays narrow
-   and the plot beside it gets the width, and the height, of the controls. */
-.timeline-controls .sub-block { container-type: normal; flex-wrap: nowrap; flex-direction: row; align-items: center; gap: 10px; }
-.timeline-controls .sub-block > h3, .timeline-controls .sub-block > .tip-anchor:first-child { flex: none; }
-.timeline-controls .sub-block > .knobs { flex: none; flex-wrap: nowrap; }
+.timeline-controls .sub-block { container-type: normal; flex-wrap: nowrap; flex-direction: row; align-items: flex-start; gap: 10px; }
+.timeline-controls .sub-block > h3, .timeline-controls .sub-block > .tip-anchor:first-child { flex: none; margin-top: 8px; }
+/* One LFO in two rows: its shape and destination, then Rate and Depth with its plot beside them, as tall as they. */
 .lfo-rows { display: flex; flex-direction: column; gap: var(--space-2); flex: none; }
-.lfo-rows > .knobs { justify-content: flex-start; }
-.lfo-pickers {
-  display: grid; grid-template-columns: auto auto; grid-template-rows: auto auto; gap: 6px var(--space-3);
-  justify-content: start; align-items: center; flex: none;
-}
-.lfo-pickers .segmented { flex-wrap: nowrap; } /* each picker on one line; the plot takes what is left */
-/* The LFO's plot, to the right of its shape and Destination, as tall as both: the LFO moving. */
-.lfo-pickers > .tip-anchor:last-child { grid-area: 1 / 2 / 3 / 3; }
+.lfo-pickers { display: flex; flex-wrap: wrap; align-items: center; gap: 6px var(--space-2); }
+.lfo-pickers .segmented { flex-wrap: nowrap; }
+.lfo-play { display: flex; align-items: stretch; gap: var(--space-3); }
+.lfo-play .knobs { flex: none; flex-wrap: nowrap; }
+.lfo-play > .tip-anchor { display: flex; flex: 1 1 auto; min-width: 0; }
+/* LFO 2 in white (the text colour): its knob arcs, its plot, its share of a ring. */
+.lfo-rows[data-lfo='2'] { --stage: var(--mod-2); }
 .lfo-plot {
-  display: block; width: 132px; height: 100%; min-height: 48px;
+  display: block; width: 132px; min-width: 72px; height: auto; min-height: 48px; align-self: stretch;
   background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-inner);
 }
 .lfo-plot svg { display: block; width: 100%; height: 100%; }
 .lfo-plot-axis { stroke: var(--grid); }
 .lfo-plot-line { fill: none; stroke: var(--stage); stroke-width: 2; stroke-linejoin: round; }
 .lfo-plot-dot { fill: var(--stage); stroke: var(--bg); stroke-width: 1.5; }
+
+/* An LFO's destination, picked like a Patch: ‹ name ›, the name opening a menu grouped by stage. */
+.destination-picker { position: relative; display: flex; align-items: center; gap: 2px; }
+.destination-name { width: 112px; justify-content: center; gap: 6px; color: var(--text); }
+.destination-name::before, .destination-menu [role='menuitemradio']::before {
+  content: ''; flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--dest);
+}
+[data-stage='osc'] { --dest: var(--stage-osc); }
+[data-stage='filter'] { --dest: var(--stage-filter); }
+.destination-menu {
+  position: absolute; top: calc(100% + 4px); left: 0; z-index: 30; min-width: 100%; display: flex; flex-direction: column; gap: 6px;
+  padding: 6px; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-control); box-shadow: var(--shadow-panel);
+}
+.destination-menu[data-up] { top: auto; bottom: calc(100% + 4px); }
+.destination-menu [role='group'] { display: flex; flex-direction: column; }
+.destination-stage { padding: 2px 8px; font-size: var(--text-xs); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dest); }
+.destination-menu [role='menuitemradio'] {
+  display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 8px; font: inherit; font-size: var(--text-md); text-align: left;
+  color: var(--muted); background: none; border: 0; border-radius: var(--radius-control); cursor: pointer; white-space: nowrap;
+}
+.destination-menu [role='menuitemradio']:hover, .destination-menu [role='menuitemradio']:focus-visible { color: var(--text); background: var(--control-hover); outline: none; }
+.destination-menu [role='menuitemradio'][aria-checked='true'] { color: var(--text); background: var(--control-on); }
 @media (min-width: 861px) {
   /* The plot is exactly as tall as the LFO and Glide controls: the Viewers above get the rest of the window. */
   .timeline-plot { height: auto; min-height: 100px; }
@@ -600,6 +620,13 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
     .block .sub-block:has(.knob) > h3, .block .sub-block:has(.knob) > .tip-anchor:first-child { flex: 1 1 100%; align-self: auto; }
     .block .sub-block:has(.knob) h3, .block .sub-block:has(.knob):has(> .segmented) h3 { min-height: 0; margin-top: 0; }
     .tab-list { padding-left: 0; }
+    /* The two LFOs stay side by side: each with its name above its rows, a narrower destination, and the
+       Timeline plot beside them a little narrower too. */
+    .timeline { grid-template-columns: minmax(0, max-content) minmax(200px, 1fr); }
+    .timeline-controls .sub-block { flex-direction: column; gap: 4px; }
+    .timeline-controls .sub-block > h3, .timeline-controls .sub-block > .tip-anchor:first-child { margin-top: 0; }
+    .destination-name { width: 74px; padding: 0 4px; gap: 4px; font-size: var(--text-sm); }
+    .destination-picker .tool-icon { width: 24px; }
     /* Fader columns as wide as the Filter Envelope's row leaves them (Amount and four faders on one line). */
     .knob[data-kind='fader'] { --fader-col: clamp(40px, (100cqw - var(--dial-big) - 4 * var(--knob-gap)) / 4, 44px); }
   }
@@ -779,10 +806,11 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   .knob-value { position: absolute; left: 0; right: 0; bottom: 0; height: var(--knob-label-h); line-height: var(--knob-label-h); font-size: var(--text-sm); color: var(--text); }
   .knob:not([data-changing]) .knob-value > :first-child { visibility: hidden; }
   .knob[data-changing] .knob-label { visibility: hidden; }
-  /* The LFO's plot takes what the line leaves beside its Destination, so it never runs past the section. */
-  .timeline-controls > .sub-block:first-child, .lfo-rows, .lfo-pickers { flex: 1 1 auto; min-width: 0; }
-  .lfo-pickers { grid-template-columns: auto minmax(56px, 132px); }
+  /* The LFOs one under the other, each plot taking what its knobs leave, so it never runs past the section. */
+  .timeline-controls { flex-direction: column; align-items: stretch; }
+  .timeline-controls > .sub-block, .lfo-rows { flex: 1 1 auto; min-width: 0; }
   .lfo-plot { width: 100%; }
+  .destination-menu { position: fixed; top: auto; left: 16px; right: 16px; }
   /* Viewers: wider than tall, a little lower than elsewhere. */
   .tap canvas { aspect-ratio: 3 / 1; min-height: 96px; }
 

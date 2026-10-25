@@ -9,8 +9,16 @@ const ring = (k: ReturnType<typeof knob>) => k.locator('.knob-ring');
 const dot = (k: ReturnType<typeof knob>) => k.locator('.knob-live');
 const listening = (page: Page) => expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);
 
+/** Aim an LFO at a destination, from its menu. */
+async function aim(page: Page, lfo: 1 | 2, destination: string) {
+  const group = page.getByRole('group', { name: `LFO ${lfo}`, exact: true });
+  await group.getByRole('button', { name: /Destination:/ }).click();
+  await group.getByRole('menuitemradio', { name: destination, exact: true }).click();
+}
+
 async function turnUp(page: Page, region: string, name: string, steps: number) {
-  const slider = page.getByRole('region', { name: region }).getByRole('slider', { name, exact: true });
+  // A stage is a region; an LFO is a group within its section.
+  const slider = page.getByRole(region.startsWith('LFO ') ? 'group' : 'region', { name: region, exact: true }).getByRole('slider', { name, exact: true });
   await slider.evaluate(async (el, n) => {
     for (let i = 0; i < n; i++) {
       el.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
@@ -23,7 +31,7 @@ test('no ring while nothing modulates the Cutoff; turning the LFO’s Depth up r
   await page.goto('/');
   const cutoff = knob(page, 'Filter', 'Cutoff');
   await expect(ring(cutoff)).toBeHidden();
-  await turnUp(page, 'LFO & Envelopes', 'Depth', 25);
+  await turnUp(page, 'LFO 1', 'Depth', 25);
   await expect(ring(cutoff)).toBeVisible();
   await expect(ring(cutoff)).toHaveAttribute('d', /A/); // an arc
 });
@@ -31,7 +39,7 @@ test('no ring while nothing modulates the Cutoff; turning the LFO’s Depth up r
 test('the live dot rides the Effective Cutoff while a Note sounds, and only then', async ({ page }) => {
   await page.goto('/');
   await listening(page);
-  await turnUp(page, 'LFO & Envelopes', 'Depth', 25);
+  await turnUp(page, 'LFO 1', 'Depth', 25);
   const cutoff = knob(page, 'Filter', 'Cutoff');
   await expect(dot(cutoff)).toBeHidden();
   await page.keyboard.down('KeyA');
@@ -61,8 +69,8 @@ test('the live dot moves with the Filter Envelope alone, no LFO, as with the LFO
 
 test('an LFO on Pulse Width rings both Oscillators’ Pulse Width knobs, and not the Cutoff', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('radiogroup', { name: 'LFO Destination' }).getByRole('radio', { name: 'Pulse Width' }).click();
-  await turnUp(page, 'LFO & Envelopes', 'Depth', 25);
+  await aim(page, 1, 'Pulse Width');
+  await turnUp(page, 'LFO 1', 'Depth', 25);
   await expect(ring(page.getByRole('group', { name: 'Osc 1' }).locator('.knob'))).toBeVisible();
   await page.getByRole('tab', { name: /Osc 2/ }).click();
   await expect(ring(page.getByRole('group', { name: 'Osc 2' }).locator('.knob'))).toBeVisible();
@@ -71,12 +79,12 @@ test('an LFO on Pulse Width rings both Oscillators’ Pulse Width knobs, and not
 
 test('hovering or focusing a source brightens its own share of the ring', async ({ page }) => {
   await page.goto('/');
-  await turnUp(page, 'LFO & Envelopes', 'Depth', 10);
+  await turnUp(page, 'LFO 1', 'Depth', 10);
   await turnUp(page, 'Filter', 'Amount', 10);
   const cutoff = knob(page, 'Filter', 'Cutoff');
   const share = cutoff.locator('.knob-share');
   await expect(share).toBeHidden();
-  await page.getByRole('region', { name: 'LFO & Envelopes' }).getByRole('slider', { name: 'Depth' }).hover();
+  await page.getByRole('group', { name: 'LFO 1', exact: true }).getByRole('slider', { name: 'Depth' }).hover();
   await expect(share).toBeVisible();
   await expect(share).toHaveAttribute('data-source', 'lfo1');
   await page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name: 'Amount' }).focus();
@@ -90,11 +98,37 @@ test('with reduced motion asked for, the ring stays and the moving dot does not 
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   await listening(page);
-  await turnUp(page, 'LFO & Envelopes', 'Depth', 25);
+  await turnUp(page, 'LFO 1', 'Depth', 25);
   const cutoff = knob(page, 'Filter', 'Cutoff');
   await page.keyboard.down('KeyA');
   await expect(ring(cutoff)).toBeVisible();
   await page.waitForTimeout(300);
   await expect(dot(cutoff)).toBeHidden();
   await page.keyboard.up('KeyA');
+});
+
+test('LFO 2 rings the knobs of its new destinations: Resonance, Osc 2’s Semitone (Osc 2 Pitch) and Detune', async ({ page }) => {
+  await page.goto('/');
+  await turnUp(page, 'LFO 2', 'Depth', 25);
+  for (const [destination, region, name] of [['Resonance', 'Filter', 'Resonance'], ['Osc 2 Pitch', 'Oscillators', 'Semitone'], ['Detune', 'Oscillators', 'Detune']]) {
+    const k = knob(page, region, name);
+    await expect(ring(k), destination).toBeHidden();
+    await aim(page, 2, destination);
+    await expect(ring(k), destination).toBeVisible();
+  }
+});
+
+test('pointing at LFO 2 brightens its own share, in its own colour (white)', async ({ page }) => {
+  await page.goto('/');
+  await turnUp(page, 'LFO 1', 'Depth', 10);
+  await aim(page, 2, 'Cutoff');
+  await turnUp(page, 'LFO 2', 'Depth', 10);
+  const share = knob(page, 'Filter', 'Cutoff').locator('.knob-share');
+  await page.getByRole('group', { name: 'LFO 2', exact: true }).getByRole('slider', { name: 'Depth' }).hover();
+  await expect(share).toHaveAttribute('data-source', 'lfo2');
+  const stroke = () => share.evaluate((el) => getComputedStyle(el).stroke);
+  const lfo2 = await stroke();
+  await page.getByRole('group', { name: 'LFO 1', exact: true }).getByRole('slider', { name: 'Depth' }).hover();
+  await expect(share).toHaveAttribute('data-source', 'lfo1');
+  expect(await stroke()).not.toBe(lfo2);
 });

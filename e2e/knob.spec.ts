@@ -61,10 +61,11 @@ test('turning knobs never moves or resizes any knob, whatever width their values
     ['Filter', 'Cutoff'],
     ['Filter', 'Amount'],
     ['Amp', 'Attack'],
-    ['LFO & Envelopes', 'Rate'],
+    ['LFO 1', 'Rate'],
     ['Amp', 'Glide'],
   ]) {
-    const knob = page.getByRole('region', { name: region }).getByRole('slider', { name, exact: true });
+    // A stage is a region; an LFO is a group within its section.
+    const knob = page.getByRole(region.startsWith('LFO ') ? 'group' : 'region', { name: region, exact: true }).getByRole('slider', { name, exact: true });
     const seen = new Set<string | null>();
     for (const key of ['ArrowDown', 'ArrowUp']) {
       for (let i = 0; i < 10; i++) {

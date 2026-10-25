@@ -1,5 +1,5 @@
 import { useContext, useEffect, useRef } from 'react';
-import { GLIDE_OFF, type Patch } from '../patch/patch';
+import { GLIDE_OFF, lfos, type Patch } from '../patch/patch';
 import { addToRenderLoop } from '../viewers/renderLoop';
 import { ModulationContext } from './modulationRing';
 
@@ -13,7 +13,7 @@ function keyBox(piano: HTMLElement, note: number, origin: DOMRect): { centre: nu
 }
 
 /** Whether anything moves the pitch away from the Note: an LFO aimed at Pitch with some Depth, or Glide (one Voice). */
-const pitchMoves = (p: Patch) => (p.lfoDestination === 'pitch' && p.lfoAmount > 0) || (p.voices === 1 && p.glide > GLIDE_OFF * 1.001);
+const pitchMoves = (p: Patch) => lfos(p).some((l) => l.destination === 'pitch' && l.amount > 0) || (p.voices === 1 && p.glide > GLIDE_OFF * 1.001);
 
 /** Where a finger presses a key, as a share of its height from the top: low on it (a white key's name permitting). */
 const PRESS = 0.75;

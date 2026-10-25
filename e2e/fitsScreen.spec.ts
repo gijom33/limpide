@@ -133,7 +133,7 @@ for (const [width, height, big, small] of [
     );
     const play = ['Cutoff', 'Resonance', 'Amount', 'Rate', 'Depth', 'Detune'];
     expect(sizes.sort()).toEqual(
-      ['Cutoff', 'Resonance', 'Velocity', 'Key Track', 'Amount', 'Pulse Width', 'Pulse Width', 'Octave', 'Semitone', 'Detune', 'Rate', 'Depth', 'Glide']
+      ['Cutoff', 'Resonance', 'Velocity', 'Key Track', 'Amount', 'Pulse Width', 'Pulse Width', 'Octave', 'Semitone', 'Detune', 'Rate', 'Depth', 'Rate', 'Depth', 'Glide']
         .map((name) => `${name} ${play.includes(name) ? big : small}`)
         .sort(),
     );

@@ -864,7 +864,13 @@ export function App() {
         <EnvelopeTimeline
           engine={session.engine}
           view={view}
-          controls={<LfoControls engine={session.engine} patch={patch} onParam={change} onPatch={setPatch} />}
+          controls={
+            <div className="timeline-controls">
+              {([1, 2] as const).map((n) => (
+                <LfoControls key={n} lfo={n} engine={session.engine} patch={patch} onParam={change} onPatch={setPatch} />
+              ))}
+            </div>
+          }
         />
       </main>
     </ModulationContext.Provider>

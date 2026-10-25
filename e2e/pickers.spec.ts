@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 // The icon pickers: one representation everywhere, the Filter Mode's segmented control.
-const PICKERS = ['Filter Mode', 'Osc 1 Waveform', 'LFO Waveform'];
+const PICKERS = ['Filter Mode', 'Osc 1 Waveform', 'LFO 1 Waveform', 'LFO 2 Waveform'];
 
 test('the Waveform, Filter Mode and LFO Waveform pickers look the same, and each hugs its icons', async ({ page }) => {
   await page.goto('/');

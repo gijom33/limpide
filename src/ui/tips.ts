@@ -115,8 +115,8 @@ export const TIPS = {
   },
   lfo: {
     title: 'LFO',
-    body: 'A slow, repeating wave that moves something for you: the Cutoff (wah, wobble), the pitch (vibrato) or the Pulse Width (a shimmering PWM chorus). Rate is how fast, Depth how far.',
-    how: 'Turn Depth up and watch the Envelope Timeline and the Response Curve move with it.',
+    body: 'A slow, repeating wave that moves something for you: the Cutoff (wah, wobble), the pitch (vibrato), the Pulse Width (a shimmering PWM chorus) and more. Rate is how fast, Depth how far. There are two: aim them at different things, or both at one for two speeds of movement (LFO 2 draws in white).',
+    how: 'Turn Depth up and watch the knob it moves: a ring shows how far, a dot where it is now.',
   },
   lfoWaveform: {
     title: 'LFO',
@@ -124,7 +124,7 @@ export const TIPS = {
   },
   lfoDestination: {
     title: 'LFO Destination',
-    body: 'What the LFO moves. Cutoff: up to two octaves each way (wah). Pitch: up to a semitone each way (vibrato). Width: each Oscillator’s Pulse Width (PWM; only heard on a Pulse).',
+    body: 'What the LFO moves, at full Depth. Pitch: a semitone each way (vibrato). Osc 2 Pitch: Osc 2 alone, an octave each way (sweeps against Osc 1). Detune: Osc 2 alone, 50 cents each way (a beating chorus). Pulse Width: each Oscillator’s (PWM; only heard on a Pulse). Cutoff: two octaves each way (wah). Resonance: across its range (a vocal, whistling sweep).',
   },
   glide: {
     title: 'Glide',

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { SynthEngine } from '../engine/synthEngine';
+import type { LfoNumber } from '../patch/patch';
 import { addToRenderLoop } from '../viewers/renderLoop';
 
 // The plot's drawing box, in its own units (CSS sizes it); the line keeps clear of the edges.
@@ -23,7 +24,7 @@ const y = (value: number) => (H / 2 - value * (H / 2 - PAD)).toFixed(1);
  * The LFO as it moves: its recent history from the Modulation model, scrolling, the newest at the right with a dot
  * (ADR-0003: the same LFO the sound has). Its height is the Depth: flat at 0, the plot's full height at 100 %. Drawn by the render loop, outside React (ADR-0002).
  */
-export function LfoPlot({ engine }: { engine: SynthEngine }) {
+export function LfoPlot({ engine, lfo }: { engine: SynthEngine; lfo: LfoNumber }) {
   const line = useRef<SVGPathElement>(null);
   const dot = useRef<SVGCircleElement>(null);
 
@@ -34,16 +35,16 @@ export function LfoPlot({ engine }: { engine: SynthEngine }) {
         const points: string[] = [];
         for (let i = 0; i <= SAMPLES; i++) {
           const t = now - SPAN + (i / SAMPLES) * SPAN;
-          points.push(`${(PAD + (i / SAMPLES) * (W - 2 * PAD)).toFixed(1)} ${y(engine.lfoSwingAt(t))}`);
+          points.push(`${(PAD + (i / SAMPLES) * (W - 2 * PAD)).toFixed(1)} ${y(engine.lfoSwingAt(t, lfo))}`);
         }
         line.current?.setAttribute('d', `M${points.join(' L')}`);
-        dot.current?.setAttribute('cy', y(engine.lfoSwingAt(now)));
+        dot.current?.setAttribute('cy', y(engine.lfoSwingAt(now, lfo)));
       }),
-    [engine],
+    [engine, lfo],
   );
 
   return (
-    <div className="lfo-plot" role="img" aria-label="LFO">
+    <div className="lfo-plot" role="img" aria-label={`LFO ${lfo}`} data-lfo={lfo}>
       <svg viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
         <line className="lfo-plot-axis" x1={PAD} x2={W - PAD} y1={H / 2} y2={H / 2} />
         <path ref={line} className="lfo-plot-line" d="" />

@@ -52,7 +52,7 @@ test('the Waveform, Filter and Voices switches keep the Demo playing, and it pla
   await choose('Osc 1 Waveform', 'Square');
   await choose('Filter Mode', 'Band-pass');
   await choose('Voices', '4');
-  await choose('LFO Waveform', 'Square');
+  await choose('LFO 1 Waveform', 'Square');
   await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /^-?[0-5]?\d(\.\d+)?$/); // still sounding
   await page.getByRole('button', { name: 'Next Preset' }).click(); // a control that is not part of the sound: it takes over
