@@ -192,13 +192,13 @@ export function App() {
   };
 
   // Playing anything, or touching a control that does not shape the sound, ends the Demo: the person has taken over.
-  // Knobs, faders and the stages' switches (Waveforms, Filter Mode and Slope, Voices, the LFO's Destination and its
-  // plot, which steps its shape) can be changed while it plays,
+  // Knobs, faders and the stages' switches (Waveforms, Filter Mode and Slope, Voices, the LFO's shape and Destination)
+  // can be changed while it plays,
   // and the sound follows.
   useEffect(() => {
     if (demo === null) return;
     const shapesSound = (target: EventTarget | null) =>
-      target instanceof Element && !!target.closest('.knob, .block-controls [role="radio"], .timeline-controls [role="radio"], .lfo-plot');
+      target instanceof Element && !!target.closest('.knob, .block-controls [role="radio"], .timeline-controls [role="radio"]');
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Enter' && shapesSound(e.target)) return;
       if (!e.metaKey && !e.ctrlKey && !e.altKey && !['Shift', 'Tab'].includes(e.key)) stopDemo();

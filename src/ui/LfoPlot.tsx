@@ -1,15 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { SynthEngine } from '../engine/synthEngine';
-import type { LfoWaveform } from '../modulation/lfo';
 import { addToRenderLoop } from '../viewers/renderLoop';
-import { useLearnable } from './learn';
-
-export const LFO_SHAPES: { waveform: LfoWaveform; label: string }[] = [
-  { waveform: 'sine', label: 'Sine' },
-  { waveform: 'triangle', label: 'Triangle' },
-  { waveform: 'square', label: 'Square' },
-  { waveform: 'saw', label: 'Saw' },
-];
 
 // The plot's drawing box, in its own units (CSS sizes it); the line keeps clear of the edges.
 const W = 132;
@@ -27,21 +18,14 @@ const SPAN = 1;
 
 const y = (value: number) => (H / 2 - value * (H / 2 - PAD)).toFixed(1);
 
-interface Props {
-  engine: SynthEngine;
-  waveform: LfoWaveform;
-  onChange(waveform: LfoWaveform): void;
-}
 
 /**
  * The LFO as it moves: its recent history from the Modulation model, scrolling, the newest at the right with a dot
- * (ADR-0003: the same LFO the sound has). It is also the shape picker: a click or Enter steps to the next shape.
- * Drawn by the render loop, outside React (ADR-0002).
+ * (ADR-0003: the same LFO the sound has). Drawn by the render loop, outside React (ADR-0002).
  */
-export function LfoPlot({ engine, waveform, onChange }: Props) {
+export function LfoPlot({ engine }: { engine: SynthEngine }) {
   const line = useRef<SVGPathElement>(null);
   const dot = useRef<SVGCircleElement>(null);
-  const learnable = useLearnable({ kind: 'choice', id: 'lfoWaveform' });
 
   useEffect(
     () =>
@@ -58,20 +42,13 @@ export function LfoPlot({ engine, waveform, onChange }: Props) {
     [engine],
   );
 
-  const index = LFO_SHAPES.findIndex((s) => s.waveform === waveform);
   return (
-    <button
-      type="button"
-      className="lfo-plot"
-      aria-label={`LFO Waveform: ${LFO_SHAPES[index].label}`}
-      onClick={() => onChange(LFO_SHAPES[(index + 1) % LFO_SHAPES.length].waveform)}
-      {...learnable}
-    >
+    <div className="lfo-plot" role="img" aria-label="LFO">
       <svg viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
         <line className="lfo-plot-axis" x1={PAD} x2={W - PAD} y1={H / 2} y2={H / 2} />
         <path ref={line} className="lfo-plot-line" d="" />
         <circle ref={dot} className="lfo-plot-dot" cx={W - PAD} cy={H / 2} r="3.5" />
       </svg>
-    </button>
+    </div>
   );
 }

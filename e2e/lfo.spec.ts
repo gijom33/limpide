@@ -1,30 +1,41 @@
 import { expect, test } from '@playwright/test';
 
-test('the LFO sits in the LFO & Envelopes section; its plot is the shape picker, a click or Enter steps the shape', async ({ page }) => {
+test('the LFO sits in the LFO & Envelopes section: shape buttons, Destination, and a plot of it moving', async ({ page }) => {
   await page.goto('/');
   const lfo = page.getByRole('region', { name: 'LFO & Envelopes' }).getByRole('group', { name: 'LFO' });
-  const plot = lfo.getByRole('button', { name: /^LFO Waveform/ });
-  await expect(plot).toHaveAccessibleName('LFO Waveform: Sine');
-  await expect(page.getByRole('radiogroup', { name: 'LFO Waveform' })).toHaveCount(0); // the plot replaced the shape buttons
-  await expect(lfo.getByRole('radiogroup', { name: 'LFO Destination' }).getByRole('radio', { name: 'Cutoff' })).toHaveAttribute('aria-checked', 'true');
+  const shapes = lfo.getByRole('radiogroup', { name: 'LFO Waveform' });
+  const destination = lfo.getByRole('radiogroup', { name: 'LFO Destination' });
+  await expect(shapes.getByRole('radio', { name: 'Sine' })).toHaveAttribute('aria-checked', 'true');
+  await expect(destination.getByRole('radio', { name: 'Cutoff' })).toHaveAttribute('aria-checked', 'true');
+  await expect(lfo.getByRole('img', { name: 'LFO' })).toBeVisible(); // the plot shows; it picks nothing
 
-  await plot.click();
-  await expect(plot).toHaveAccessibleName('LFO Waveform: Triangle');
-  await plot.press('Enter');
-  await expect(plot).toHaveAccessibleName('LFO Waveform: Square');
-  await plot.click();
-  await plot.click();
-  await expect(plot).toHaveAccessibleName('LFO Waveform: Sine'); // round again, past Saw
+  await shapes.getByRole('radio', { name: 'Square' }).click();
+  await destination.getByRole('radio', { name: 'Pitch' }).click();
+  await expect(shapes.getByRole('radio', { name: 'Square' })).toHaveAttribute('aria-checked', 'true');
+  await expect(destination.getByRole('radio', { name: 'Pitch' })).toHaveAttribute('aria-checked', 'true');
+});
 
-  await lfo.getByRole('radiogroup', { name: 'LFO Destination' }).getByRole('radio', { name: 'Pitch' }).click();
-  await expect(lfo.getByRole('radiogroup', { name: 'LFO Destination' }).getByRole('radio', { name: 'Pitch' })).toHaveAttribute('aria-checked', 'true');
+test('the LFO Rate wakes up once Depth is turned up', async ({ page }) => {
+  await page.goto('/');
+  const lfo = page.getByRole('group', { name: 'LFO' });
+  const rate = lfo.locator('.knob', { has: page.getByRole('slider', { name: 'Rate' }) });
+  await expect(rate).toHaveAttribute('data-inactive', 'true');
+  await lfo.getByRole('slider', { name: 'Depth' }).focus();
+  await page.keyboard.press('ArrowUp');
+  await expect(rate).not.toHaveAttribute('data-inactive');
+});
+
+test('the LFO explains itself', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('radiogroup', { name: 'LFO Destination' }).hover();
+  await expect(page.getByRole('tooltip')).toContainText(/vibrato/i);
 });
 
 test('the LFO plot draws the LFO moving, from the Modulation model', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/); // listening
   await page.keyboard.down('KeyA'); // sound starts with the first key, and with it the clock the LFO runs on
-  const line = page.getByRole('button', { name: /^LFO Waveform/ }).locator('.lfo-plot-line');
+  const line = page.getByRole('img', { name: 'LFO' }).locator('.lfo-plot-line');
   await expect(line).toHaveAttribute('d', /\d/);
   const before = await line.getAttribute('d');
   await expect.poll(() => line.getAttribute('d')).not.toBe(before);
@@ -37,7 +48,7 @@ test('the LFO plot shows one second: as many periods as the Rate in Hz', async (
   await page.goto('/');
   await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);
   await page.keyboard.down('KeyA');
-  const plot = page.getByRole('button', { name: /^LFO Waveform/ });
+  const plot = page.getByRole('img', { name: 'LFO' });
   // Peaks of the drawn line: points higher than both neighbours (y grows downwards).
   const peaks = () =>
     plot.locator('.lfo-plot-line').evaluate((el) => {

@@ -119,9 +119,8 @@ export const TIPS = {
     how: 'Turn Depth up and watch the Envelope Timeline and the Response Curve move with it.',
   },
   lfoWaveform: {
-    title: 'LFO Waveform',
-    body: 'The LFO as it moves: its last two cycles, the newest at the right. Sine and Triangle sweep smoothly, Square jumps between two values, Saw ramps and drops.',
-    how: 'Click it (or press Enter) for the next shape.',
+    title: 'LFO',
+    body: 'The LFO as it moves: its last second, the newest at the right, so 1 Hz is one period. Sine and Triangle sweep smoothly, Square jumps between two values, Saw ramps and drops.',
   },
   lfoDestination: {
     title: 'LFO Destination',

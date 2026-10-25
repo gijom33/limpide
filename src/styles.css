@@ -491,14 +491,17 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .timeline-controls .sub-block > .knobs { flex: none; flex-wrap: nowrap; }
 .lfo-rows { display: flex; flex-direction: column; gap: var(--space-2); flex: none; }
 .lfo-rows > .knobs { justify-content: flex-start; }
-.lfo-pickers { display: flex; align-items: center; gap: var(--space-3); flex: none; }
-/* The LFO's plot, to the right of its Destination: the LFO moving, and a button that steps its shape. */
+.lfo-pickers {
+  display: grid; grid-template-columns: auto auto; grid-template-rows: auto auto; gap: 6px var(--space-3);
+  justify-content: start; align-items: center; flex: none;
+}
+.lfo-pickers .segmented { flex-wrap: nowrap; } /* each picker on one line; the plot takes what is left */
+/* The LFO's plot, to the right of its shape and Destination, as tall as both: the LFO moving. */
+.lfo-pickers > .tip-anchor:last-child { grid-area: 1 / 2 / 3 / 3; }
 .lfo-plot {
-  flex: none; display: block; width: 132px; height: 48px; padding: 0; cursor: pointer;
+  display: block; width: 132px; height: 100%; min-height: 48px;
   background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-inner);
 }
-.lfo-plot:hover { border-color: color-mix(in srgb, var(--stage) 55%, var(--border)); }
-.lfo-plot:focus-visible { outline: 2px solid var(--stage); outline-offset: 2px; }
 .lfo-plot svg { display: block; width: 100%; height: 100%; }
 .lfo-plot-axis { stroke: var(--grid); }
 .lfo-plot-line { fill: none; stroke: var(--stage); stroke-width: 2; stroke-linejoin: round; }
@@ -744,9 +747,8 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   .knob[data-changing] .knob-label { visibility: hidden; }
   /* The LFO's plot takes what the line leaves beside its Destination, so it never runs past the section. */
   .timeline-controls > .sub-block:first-child, .lfo-rows, .lfo-pickers { flex: 1 1 auto; min-width: 0; }
-  .lfo-pickers > .tip-anchor:first-child { flex: none; }
-  .lfo-pickers > .tip-anchor:last-child { flex: 1 1 0; min-width: 56px; max-width: 132px; }
-  .lfo-plot { width: 100%; height: 44px; }
+  .lfo-pickers { grid-template-columns: auto minmax(56px, 132px); }
+  .lfo-plot { width: 100%; }
   /* Viewers: wider than tall, a little lower than elsewhere. */
   .tap canvas { aspect-ratio: 3 / 1; min-height: 96px; }
 
