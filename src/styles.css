@@ -15,6 +15,8 @@
   --knob-label-h: 16px; --knob-value-h: 14px;
   /* Dial sizes by role (ADR-0008), and a fader's height, cap included. */
   --dial-big: 68px; --dial-small: 52px; --fader-h: 92px;
+  /* A fader's column: one width for all, whatever its name, so faders sit evenly spaced. */
+  --fader-col: 56px;
   /* Controls are raised caps on dark panels (look B, issue 18): the page and panels darker than the caps. */
   --bg: #08090c;
   --panel: #0f1115;
@@ -127,6 +129,7 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
    Parameters worth turning while playing, small for the others (ADR-0008). */
 .knob[data-size='big'] { --dial: var(--dial-big); }
 .knob[data-size='small'] { --dial: var(--dial-small); }
+.knob[data-kind='fader'] { width: var(--fader-col); }
 .knob-dial { display: block; width: var(--dial); height: var(--dial); cursor: ns-resize; touch-action: none; overflow: visible; outline: none; }
 .knob-groove, .knob-arc { fill: none; stroke-linecap: butt; }
 .knob-groove { stroke: var(--groove); }
@@ -575,7 +578,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   :root {
     --knob-gap: 8px; --knob-row-gap: 8px; --knob-text-gap: 2px;
     --knob-label-h: 14px; --knob-value-h: 12px;
-    --dial-big: 52px; --dial-small: 40px; --fader-h: 64px;
+    --dial-big: 52px; --dial-small: 40px; --fader-h: 64px; --fader-col: 44px;
   }
   .knob-label { font-size: var(--text-sm); }
   .knob-value { font-size: var(--text-xs); }
@@ -586,6 +589,8 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
     .block .sub-block:has(.knob) > h3, .block .sub-block:has(.knob) > .tip-anchor:first-child { flex: 1 1 100%; align-self: auto; }
     .block .sub-block:has(.knob) h3, .block .sub-block:has(.knob):has(> .segmented) h3 { min-height: 0; margin-top: 0; }
     .tab-list { padding-left: 0; }
+    /* Fader columns as wide as the Filter Envelope's row leaves them (Amount and four faders on one line). */
+    .knob[data-kind='fader'] { --fader-col: clamp(40px, (100cqw - var(--dial-big) - 4 * var(--knob-gap)) / 4, 44px); }
   }
   /* The narrowest laptop windows: less side padding in the stages, so Amount and the four Filter Envelope faders
      stay on one line. */
@@ -750,6 +755,11 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 @media (max-width: 600px) {
   /* Big knobs less big than on a laptop, so a row of two big and two small fits a 375 pt phone. */
   :root { --knob-value-h: 0px; --dial-big: 60px; --dial-small: 52px; --fader-h: 88px; --label-gap: 8px; }
+  /* Fader columns as wide as the Filter Envelope's row leaves them (its name, Amount and four faders on one line),
+     up to a laptop's: the stage's width is the sub-block's, a container. */
+  .knob[data-kind='fader'] {
+    --fader-col: clamp(40px, (100cqw - var(--label-col) - var(--label-gap) - var(--dial-big) - 4 * var(--knob-gap)) / 4, 56px);
+  }
   main { padding: var(--space-3) var(--space-2); }
   .chain { margin: var(--space-3) 0; row-gap: var(--space-3); }
   .block { padding: var(--space-2) var(--space-3); gap: var(--space-2); }

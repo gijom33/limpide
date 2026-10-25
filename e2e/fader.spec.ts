@@ -90,3 +90,34 @@ for (const [width, height] of [
     expect(await stageHeight()).toBe(before);
   });
 }
+
+/** The distances between neighbouring faders' centres, row by row (the Mixer's on its tab, shown). */
+const faderSteps = async (page: Page) => {
+  await page.getByRole('tab', { name: /Mixer/ }).click();
+  return page.evaluate(() =>
+    [...document.querySelectorAll('.knobs')]
+      .filter((row) => row.getClientRects().length && row.querySelector('[data-kind=fader]'))
+      .map((row) => {
+        const centres = [...row.querySelectorAll('[data-kind=fader] .fader')].map((f) => f.getBoundingClientRect()).map((r) => r.left + r.width / 2);
+        return centres.slice(1).map((c, i) => Math.round(c - centres[i]));
+      }),
+  );
+};
+
+for (const [width, height] of [[375, 812], [430, 932], [872, 920], [961, 800], [1280, 800], [1440, 900], [1710, 1060]]) {
+  test(`at ${width}×${height} faders are evenly and roomily spaced, whatever their names’ lengths`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await page.goto('/');
+    const rows = await faderSteps(page);
+    expect(rows, JSON.stringify(rows)).toHaveLength(3);
+    for (const steps of rows) {
+      expect(Math.max(...steps) - Math.min(...steps), JSON.stringify(rows)).toBeLessThanOrEqual(1);
+      expect(Math.min(...steps), JSON.stringify(rows)).toBeGreaterThanOrEqual(48);
+    }
+    // Where there is room, every row of faders is spaced alike.
+    if (![375, 872, 961].includes(width)) {
+      const all = rows.flat();
+      expect(Math.max(...all) - Math.min(...all), JSON.stringify(rows)).toBeLessThanOrEqual(1);
+    }
+  });
+}
