@@ -43,6 +43,32 @@ test('octave shift moves the piano and the computer keys (buttons, or Z / X)', a
   await expect(piano.getByRole('button', { name: 'C3' })).toHaveAttribute('aria-pressed', 'false');
 });
 
+test('a shifted octave shades the button it was shifted with, darker the further it is from C4; none at C4', async ({ page }) => {
+  await page.goto('/');
+  const down = page.getByRole('button', { name: 'Octave down' });
+  const up = page.getByRole('button', { name: 'Octave up' });
+  // Measured with the pointer away, so hovering does not shade it.
+  const shade = async (button: typeof down) => {
+    await page.mouse.move(0, 0);
+    return button.evaluate((b) => getComputedStyle(b).backgroundColor);
+  };
+  const plain = await shade(up);
+  expect(await shade(down)).toBe(plain);
+  await down.click();
+  const oneDown = await shade(down);
+  expect(oneDown).not.toBe(plain);
+  expect(await shade(up)).toBe(plain);
+  await down.click();
+  const twoDown = await shade(down);
+  expect(twoDown).not.toBe(oneDown);
+  await up.click();
+  await up.click();
+  expect(await shade(down)).toBe(plain); // back at C4
+  await up.click();
+  expect(await shade(up)).not.toBe(plain);
+  expect(await shade(down)).toBe(plain);
+});
+
 test('a MIDI controller plays the synth, its pads lighting the piano', async ({ page }) => {
   // A stand-in Controller: Web MIDI with one input the test can play.
   await page.addInitScript(() => {

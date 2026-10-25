@@ -242,6 +242,8 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 .tool-mode[aria-pressed='true'] { color: var(--bg); background: var(--text); border-color: var(--text); }
 .tool kbd { font-size: var(--text-xs); padding: 0 4px; line-height: 14px; color: inherit; border-color: currentColor; opacity: 0.6; }
 .tool-icon { width: var(--control-h); padding: 0; justify-content: center; }
+/* An octave button shaded once the piano is shifted that way: a grey that deepens with each octave from C4. */
+.tool[data-shift] { color: var(--text); background: color-mix(in srgb, var(--text) calc(var(--shift) * 11%), transparent); }
 /* Icons that stand in for a button's word where room is short (phones); the word shows everywhere else. */
 .tool-glyph { display: none; flex: none; }
 .tool-split { display: inline-flex; gap: 2px; }

@@ -51,6 +51,11 @@ import { Wordmark } from './Wordmark';
 import { About } from './About';
 
 const IDEAL_HARMONICS = 256;
+/** The piano starts on C4, the octave the octave buttons count from. */
+const DEFAULT_OCTAVE = 4;
+/** An octave button's shade: the octaves the piano is shifted its way (none at C4, or shifted the other way). */
+const shifted = (octaves: number) =>
+  octaves > 0 ? { 'data-shift': octaves, style: { '--shift': octaves } as React.CSSProperties } : {};
 
 interface BlockProps {
   title: string;
@@ -245,7 +250,7 @@ export function App() {
 
   // Sound starts on the first key press, click or drag; there is no button to press first.
   useEffect(() => unlockAudio(session.ctx, window, setAudioStatus), [session]);
-  const [octave, setOctave] = useState(4);
+  const [octave, setOctave] = useState(DEFAULT_OCTAVE);
   const octaveRef = useRef(octave);
   octaveRef.current = octave;
   const [heldNotes, setHeldNotes] = useState<number[]>([]);
@@ -537,13 +542,13 @@ export function App() {
   const playControls = (
     <div className="play-controls" role="group" aria-label="Play">
       <div className="keyboard">
-        <button type="button" className="tool tool-icon" aria-label="Octave down" onClick={() => setOctave((o) => shiftOctave(o, -1))}>
+        <button type="button" className="tool tool-icon" aria-label="Octave down" {...shifted(DEFAULT_OCTAVE - octave)} onClick={() => setOctave((o) => shiftOctave(o, -1))}>
           −
         </button>
         <Tooltip content={TIPS.keyboard}>
           <Piano octave={octave} held={demoNotes.length ? [...heldNotes, ...demoNotes] : heldNotes} input={session.input} />
         </Tooltip>
-        <button type="button" className="tool tool-icon" aria-label="Octave up" onClick={() => setOctave((o) => shiftOctave(o, 1))}>
+        <button type="button" className="tool tool-icon" aria-label="Octave up" {...shifted(octave - DEFAULT_OCTAVE)} onClick={() => setOctave((o) => shiftOctave(o, 1))}>
           +
         </button>
       </div>
