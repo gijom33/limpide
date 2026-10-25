@@ -121,3 +121,15 @@ test('each LFO’s plot draws that LFO: LFO 2 turned up swings, LFO 1 left at 0 
   expect(await swing(page, 1)).toBe(0);
   await page.keyboard.up('KeyA');
 });
+
+test('on a phone the LFOs carry no name beside them, so shape and destination share one row', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto('/');
+  for (const n of [1, 2]) {
+    const lfo = page.getByRole('group', { name: `LFO ${n}`, exact: true });
+    await expect(lfo.getByRole('heading', { name: `LFO ${n}` })).toBeHidden();
+    const shapes = (await lfo.getByRole('radiogroup', { name: `LFO ${n} Waveform` }).boundingBox())!;
+    const destination = (await lfo.locator('.destination-picker').boundingBox())!;
+    expect(Math.abs(destination.y + destination.height / 2 - (shapes.y + shapes.height / 2)), `LFO ${n}`).toBeLessThan(2);
+  }
+});

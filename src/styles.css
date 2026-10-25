@@ -824,6 +824,9 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   .timeline-controls { flex-direction: column; align-items: stretch; }
   .timeline-controls > .sub-block, .lfo-rows { flex: 1 1 auto; min-width: 0; }
   .lfo-plot { width: 100%; }
+  /* No names beside the LFOs, so their rows have the section's whole width: the first is LFO 1, the second, in its
+     lighter blue, LFO 2 (each group keeps its name for screen readers). */
+  .timeline-controls .sub-block > h3, .timeline-controls .sub-block > .tip-anchor:first-child { display: none; }
   /* Viewers: wider than tall, a little lower than elsewhere. */
   .tap canvas { aspect-ratio: 3 / 1; min-height: 96px; }
 
