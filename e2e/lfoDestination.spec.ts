@@ -65,3 +65,18 @@ test('near the bottom of the window the menu opens upwards, every destination on
   await name(page, 2).click();
   for (const item of await lfo(page, 2).getByRole('menuitemradio').all()) await expect(item).toBeInViewport({ ratio: 1 });
 });
+
+test.describe('on a phone', () => {
+  test.use({ viewport: { width: 393, height: 852 } });
+
+  test('the menu opens by its button and its destinations can be picked', async ({ page }) => {
+    await page.goto('/');
+    await name(page, 1).click();
+    const item = lfo(page, 1).getByRole('menuitemradio', { name: 'Resonance' });
+    const button = (await name(page, 1).boundingBox())!;
+    const box = (await item.boundingBox())!;
+    expect(Math.abs(box.y - button.y)).toBeLessThan(320); // right by the button
+    await item.click();
+    await expect(name(page, 1)).toHaveAccessibleName('LFO 1 Destination: Resonance');
+  });
+});

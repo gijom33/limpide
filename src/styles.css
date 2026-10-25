@@ -810,7 +810,6 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   .timeline-controls { flex-direction: column; align-items: stretch; }
   .timeline-controls > .sub-block, .lfo-rows { flex: 1 1 auto; min-width: 0; }
   .lfo-plot { width: 100%; }
-  .destination-menu { position: fixed; top: auto; left: 16px; right: 16px; }
   /* Viewers: wider than tall, a little lower than elsewhere. */
   .tap canvas { aspect-ratio: 3 / 1; min-height: 96px; }
 
