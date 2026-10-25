@@ -1,11 +1,14 @@
 import { envelopeLevel, envelopeSchedule, type Adsr, type AutomationStep, type GateEvent } from '../modulation/envelope';
 import { createLfoClock, glideFrequency, glideTimeConstant, lfoShape, type LfoWaveform } from '../modulation/lfo';
-import { effectiveCutoff, KEY_TRACK_CENTRE, LFO_CUTOFF_OCTAVES, LFO_PITCH_CENTS, LFO_PULSE_WIDTH, VELOCITY_CUTOFF_OCTAVES } from '../modulation/modulationModel';
+import {
+  effectiveCutoff, KEY_TRACK_CENTRE, LFO_CUTOFF_OCTAVES, LFO_PITCH_CENTS, LFO_PULSE_WIDTH, MAX_PULSE, MIN_PULSE, VELOCITY_CUTOFF_OCTAVES,
+} from '../modulation/modulationModel';
 import { filterStages, type Stage } from './filterDesign';
 import { harmonicSeries } from '../music/harmonics';
 import { noteToFrequency } from '../music/pitch';
 import { GLIDE_OFF, PARAMS, type FilterMode, type Patch, type Voices } from '../patch/patch';
 import { bandwidthOctaves } from '../modulation/passBand';
+import type { Sounding } from '../modulation/reach';
 
 /**
  * Which Voices the Amp Tap listens to: the newest Note's alone (the default, ADR-0007), or all of them summed, so
@@ -31,6 +34,8 @@ export interface Modulation {
   mode: FilterMode;
   /** Band-pass and notch width in octaves. */
   bandwidth: number;
+  /** The newest Note while its key is held (or Hold keeps it), with its Velocity; null once released. */
+  sounding: Sounding | null;
 }
 
 export interface SynthEngine {
@@ -134,8 +139,6 @@ function createAnalyser(ctx: BaseAudioContext): AnalyserNode {
 }
 
 const LFO_TYPES: Record<LfoWaveform, OscillatorType> = { sine: 'sine', triangle: 'triangle', square: 'square', saw: 'sawtooth' };
-const MIN_PULSE = 0.05;
-const MAX_PULSE = 0.95;
 
 /**
  * One Oscillator. Most Waveforms play their Fourier series directly (a PeriodicWave). A pulse is built the
@@ -523,6 +526,11 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     // The latest Note's Velocity (the Amp Envelope's peak), which stays in force until the next Note.
     let velocity = 0;
     for (const e of ampEvents) if (e.on && e.time <= t) velocity = e.peak;
+    // The newest Note, while its Gate is open (the latest Gate event at or before `t`), at its own key.
+    let gate: GateEvent | undefined;
+    for (const e of ampEvents) if (e.time <= t && (!gate || e.time >= gate.time)) gate = e;
+    let note = 69;
+    for (const p of pitches) if (p.time <= t) note = p.note;
     return {
       amp: envelopeLevel(ampEvents, t),
       filter: filterLevel,
@@ -530,6 +538,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       cutoff: then ? effectiveCutoff(then, filterLevel, lfoValue, velocity, trackedNoteAt(t)) : 0,
       mode: then?.filterMode ?? 'lowpass',
       bandwidth: then ? bandwidthOctaves(filterStages(then.filterMode, then.filterSlope, then.resonance)[0].Q) : 1,
+      sounding: gate?.on ? { note, velocity } : null,
     };
   };
 

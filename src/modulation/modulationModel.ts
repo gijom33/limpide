@@ -4,6 +4,9 @@ import type { Patch } from '../patch/patch';
 export const LFO_CUTOFF_OCTAVES = 2;
 export const LFO_PITCH_CENTS = 100;
 export const LFO_PULSE_WIDTH = 0.4;
+/** The narrowest and widest pulse the Oscillators make, however far the LFO swings them. */
+export const MIN_PULSE = 0.05;
+export const MAX_PULSE = 0.95;
 /** How far the hardest hit opens the Filter at full Velocity amount. */
 export const VELOCITY_CUTOFF_OCTAVES = 2;
 

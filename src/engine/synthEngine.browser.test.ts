@@ -328,6 +328,16 @@ describe('modulationAt for past moments (the Envelope Timeline)', () => {
     expect(engine.modulationAt(0.25).cutoff).toBe(300);
     expect(engine.modulationAt(0.75).cutoff).toBe(3000);
   });
+  it('reports the newest Note and its Velocity, for the modulation ring (they are fixed while it sounds)', () => {
+    const ctx = new OfflineAudioContext(1, SR, SR);
+    const engine = createSynthEngine(ctx);
+    engine.applyPatch(defaultPatch());
+    expect(engine.modulationAt(0).sounding).toBeNull();
+    engine.noteOn(72, 0.5, 0.1);
+    expect(engine.modulationAt(0.2).sounding).toEqual({ note: 72, velocity: 0.5 });
+    engine.noteOff(0.3);
+    expect(engine.modulationAt(0.4).sounding).toBeNull(); // released: no Note is held any more
+  });
 });
 
 describe('Osc 2, Noise and the Mixer', () => {

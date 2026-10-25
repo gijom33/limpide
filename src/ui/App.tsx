@@ -29,6 +29,7 @@ import { TIPS } from './tips';
 import { ToolGroup } from './ToolGroup';
 import { FilterShape } from './FilterShape';
 import { Segmented } from './Segmented';
+import { ModulationContext } from './modulationRing';
 import { SectionStrip } from './SectionStrip';
 import { SubBlock } from './SubBlock';
 import { LfoControls } from './LfoControls';
@@ -301,6 +302,7 @@ export function App() {
   const mappings = useSyncExternalStore(mappingStore.subscribe, mappingStore.list);
   const patchRef = useRef(patch);
   patchRef.current = patch;
+  const modulationContext = useMemo(() => ({ engine: session.engine, patch: patchRef }), [session]);
   const patchNameRef = useRef(patchName);
   patchNameRef.current = patchName;
   const surface = useMemo(() => {
@@ -596,6 +598,7 @@ export function App() {
 
   return (
     <LearnContext.Provider value={learnContext}>
+    <ModulationContext.Provider value={modulationContext}>
       <main data-frozen={viewer.frozen || undefined} data-learning={learning || undefined}>
         {setup ? (
           <QuickSetupPanel
@@ -859,6 +862,7 @@ export function App() {
           controls={<LfoControls engine={session.engine} patch={patch} onParam={change} onPatch={setPatch} />}
         />
       </main>
+    </ModulationContext.Provider>
     </LearnContext.Provider>
   );
 }

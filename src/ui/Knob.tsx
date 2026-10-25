@@ -1,6 +1,7 @@
 import { useId, useRef } from 'react';
 import { PARAMS, type ParamId } from '../patch/patch';
 import { valueToPosition } from '../patch/taper';
+import { MODULATED, ModulationRing } from './modulationRing';
 import { useParamControl } from './paramControl';
 
 const DRAG_PIXELS_FOR_FULL_TRAVEL = 200;
@@ -101,6 +102,16 @@ export function Knob({ id, value, onChange, inactive }: Props) {
         <path className="knob-arc" d={arc(centre, groove, origin, c.position)} strokeWidth={g.arcWidth} />
         <circle className="knob-cap" cx={centre} cy={centre} r={g.cap} fill={`url(#${gradient})`} />
         <line className="knob-marker" x1={markerX0} y1={markerY0} x2={markerX1} y2={markerY1} />
+        {MODULATED.has(id) && (
+          <ModulationRing
+            id={id}
+            centre={centre}
+            radius={centre - 2}
+            dotRadius={g === GEOMETRY.play ? 3.5 : 3}
+            arc={(from, to, r) => arc(centre, r, from, to)}
+            point={(p, r) => point(centre, r, angleOf(p))}
+          />
+        )}
       </svg>
       {c.text}
     </div>
