@@ -6,40 +6,46 @@ import { auditPage, type Rule } from './audit';
  * The design principles' measurable rules (docs/design-principles.md, issue 17), on every screen state a visitor
  * can reach without playing: the page with each Oscillator tab, and each panel open.
  *
- * Today's failures are listed below, each with the issue that fixes it. A failure not on the list fails the test,
- * and so does an entry that no longer fails anything: fixing a failure means taking it off the list.
+ * Where look B departs from a rule on purpose, a waiver below says where and why, and sets a floor just under what
+ * is measured today: anything new that breaks a rule fails the test, and so does a waived element that gets worse.
+ * A waiver nothing needs any more fails the test too, so the list stays true.
  */
-interface Known {
+interface Waiver {
   rule: Rule;
   /** The elements it covers. */
   selector: string;
+  /** The lowest accepted: a contrast ratio, or a target's shorter side in px. */
+  floor: number;
   /** Only in this theme or at this size; both when left out. */
   theme?: 'dark' | 'light';
   size?: 'laptop' | 'phone';
-  issue: number;
 }
-const KNOWN: Known[] = [
-  // Issue 27: the edges of buttons, pickers, fields and Patch items (--border, --control-on), a knob's groove and
-  // a fader's track (--groove) barely stand out from the panel in either theme (1.1 to 1.5:1).
-  { rule: 'boundary', selector: '.tool, .segmented button, .patch-item, .patch-save input', issue: 27 },
-  { rule: 'boundary', selector: '.knob-groove, .fader', issue: 27 },
-  // Issue 27: in the light theme, muted text on buttons and pickers is just short (4.1 to 4.4:1), and the
-  // Oscillators green is too light for text (3.3 to 3.5:1).
-  { rule: 'text', selector: '.tool, .tool *, .segmented button, .section-strip button', theme: 'light', issue: 27 },
-  { rule: 'text', selector: ".block[data-stage='osc'] h2", theme: 'light', issue: 27 },
-  // Issue 27: the key hint on Freeze is drawn at 60 % opacity (2.3 to 2.9:1).
-  { rule: 'text', selector: '.tool kbd', issue: 27 },
-  // Issue 28: on laptops, the segmented pickers are 22 px tall and the piano's keys 20 px (white) and 12 px
-  // (black) wide.
-  { rule: 'target', selector: '.segmented button, .piano button', size: 'laptop', issue: 28 },
-  // Issue 28: on phones, most controls are 28 px tall (the toolbar height), the header's icon buttons 34 to 40 px
-  // wide, the Preset arrows 18 px wide, the logo 24 px tall, and the piano's black keys 27 px wide.
-  {
-    rule: 'target',
-    selector: '.tool, .segmented button, .tab-list [role=tab], .patch-item, .patch-save input, .wordmark-button, .piano button',
-    size: 'phone',
-    issue: 28,
-  },
+// Decided by the owner on 2026-10-25 (issue 27, issue 28): look B's quiet edges and compact controls stay; only the
+// selectors' chosen option became brighter. Each waiver's comment gives what it measured that day.
+const WAIVERS: Waiver[] = [
+  // Edges: buttons, Patch items and fields are drawn by a faint border (--border), 1.1 to 1.3:1; a selector's chosen
+  // option by its fill (--segment-on), 1.5:1 (light) to 2.1:1 (dark); a knob's groove and a fader's track
+  // (--groove), 1.3:1. The text and the value arcs carry the control.
+  { rule: 'boundary', selector: '.tool, .patch-item, .patch-save input', floor: 1.1 },
+  { rule: 'boundary', selector: '.segmented button', floor: 1.45 },
+  { rule: 'boundary', selector: '.knob-groove, .fader', floor: 1.2 },
+  // Light theme: muted text on buttons and selectors (--muted), 4.1 to 4.4:1.
+  { rule: 'text', selector: '.tool, .tool *, .segmented button, .section-strip button', floor: 4, theme: 'light' },
+  // Light theme: the Oscillators green as text (its heading, its strip tab), 3.3 to 3.5:1.
+  { rule: 'text', selector: ".block[data-stage='osc'] h2, .section-strip [data-section='Oscillators']", floor: 3.25, theme: 'light' },
+  // The Space hint on Freeze, at 60 % opacity: 2.3 to 2.9:1.
+  { rule: 'text', selector: '.tool kbd', floor: 2.25 },
+  // Laptop targets: selector options 20 to 22 px on their short side; the piano's keys 20 px (white) and 12 px
+  // (black) wide, as on a piano drawn this size (the computer keyboard and MIDI play the same Notes).
+  { rule: 'target', selector: '.segmented button', floor: 20, size: 'laptop' },
+  { rule: 'target', selector: '.piano button', floor: 12, size: 'laptop' },
+  // Phone targets: controls at the toolbar height (28 px), selector options (20 to 22 px), the logo (24 px tall),
+  // the Preset arrows (18 px wide), the piano's black keys (27 px wide).
+  { rule: 'target', selector: '.tool, .tab-list [role=tab], .patch-item, .patch-save input', floor: 28, size: 'phone' },
+  { rule: 'target', selector: '.segmented button', floor: 20, size: 'phone' },
+  { rule: 'target', selector: '.wordmark-button', floor: 24, size: 'phone' },
+  { rule: 'target', selector: '.patch-bar > .tool', floor: 18, size: 'phone' },
+  { rule: 'target', selector: '.piano button', floor: 26, size: 'phone' },
 ];
 
 const SIZES = {
@@ -64,19 +70,19 @@ async function audit(page: Page, size: keyof typeof SIZES, theme: 'dark' | 'ligh
   await page.addInitScript((t) => localStorage.setItem('limpide.theme', t), theme);
   await page.goto('/');
   await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);
-  const known = KNOWN.filter((k) => rules.includes(k.rule) && (k.theme ?? theme) === theme && (k.size ?? size) === size);
+  const waivers = WAIVERS.filter((w) => rules.includes(w.rule) && (w.theme ?? theme) === theme && (w.size ?? size) === size);
   const unexpected: string[] = [];
   const matched = new Set<string>();
   for (const state of STATES) {
     await state.open?.(page);
-    const result = await page.evaluate(auditPage, { rules, minTarget, known: known.map(({ rule, selector }) => ({ rule, selector })) });
+    const result = await page.evaluate(auditPage, { rules, minTarget, waivers: waivers.map(({ rule, selector, floor }) => ({ rule, selector, floor })) });
     for (const f of result.unexpected) unexpected.push(`${state.name}: ${f.rule} ${f.what} ${f.measured}`);
-    // AUDIT_REPORT=<file> writes every finding the list does not cover, one JSON line each: handy while fixing.
+    // AUDIT_REPORT=<file> writes every finding no waiver covers, one JSON line each: handy while fixing.
     if (process.env.AUDIT_REPORT) appendFileSync(process.env.AUDIT_REPORT, result.unexpected.map((f) => JSON.stringify({ theme, size, state: state.name, ...f }) + '\n').join(''));
     for (const m of result.matched) matched.add(m);
     await state.close?.(page);
   }
-  const unused = known.map((k) => `${k.rule} ${k.selector}`).filter((k) => !matched.has(k));
+  const unused = waivers.map((w) => `${w.rule} ${w.selector}`).filter((w) => !matched.has(w));
   return { unexpected: [...new Set(unexpected)], unused };
 }
 
@@ -84,8 +90,8 @@ for (const theme of ['dark', 'light'] as const) {
   for (const size of ['laptop', 'phone'] as const) {
     test(`contrast, ${theme} theme, ${size}: text 4.5:1, what draws a control 3:1`, async ({ page }) => {
       const { unexpected, unused } = await audit(page, size, theme, ['text', 'boundary']);
-      expect(unexpected, 'failures not on the known list').toEqual([]);
-      expect(unused, 'known failures that pass now: take them off the list').toEqual([]);
+      expect(unexpected, 'failures no waiver covers (or below its floor)').toEqual([]);
+      expect(unused, 'waivers nothing needs any more: take them off the list').toEqual([]);
     });
   }
 }
@@ -93,8 +99,8 @@ for (const theme of ['dark', 'light'] as const) {
 for (const size of ['laptop', 'phone'] as const) {
   test(`targets, ${size}: at least ${SIZES[size].minTarget} × ${SIZES[size].minTarget} px`, async ({ page }) => {
     const { unexpected, unused } = await audit(page, size, 'dark', ['target']);
-    expect(unexpected, 'failures not on the known list').toEqual([]);
-    expect(unused, 'known failures that pass now: take them off the list').toEqual([]);
+    expect(unexpected, 'failures no waiver covers (or below its floor)').toEqual([]);
+    expect(unused, 'waivers nothing needs any more: take them off the list').toEqual([]);
   });
 }
 

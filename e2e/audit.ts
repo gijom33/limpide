@@ -18,17 +18,20 @@ export interface AuditOptions {
   rules: Rule[];
   /** The smallest target a pointer may have to hit, in CSS px. */
   minTarget: number;
-  /** Today's known failures: a finding on an element matching one of these is expected, not reported. */
-  known: { rule: Rule; selector: string }[];
+  /**
+   * Deliberate exceptions: a finding on an element matching one is accepted as long as it measures at least the
+   * waiver's floor (a contrast ratio, or a target's shorter side in px), so it can never get worse unseen.
+   */
+  waivers: { rule: Rule; selector: string; floor: number }[];
 }
 
-/** The findings no known failure accounts for, and the known failures that matched something. */
+/** The findings no waiver accounts for, and the waivers that matched something. */
 export interface AuditResult {
   unexpected: Finding[];
   matched: string[];
 }
 
-export function auditPage({ rules, minTarget, known }: AuditOptions): AuditResult {
+export function auditPage({ rules, minTarget, waivers }: AuditOptions): AuditResult {
   // Any CSS colour, as sRGB 0–255 and alpha 0–1, by painting it.
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = 1;
@@ -93,8 +96,8 @@ export function auditPage({ rules, minTarget, known }: AuditOptions): AuditResul
     (el.getAttribute('aria-label') ?? el.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 30);
   const unexpected: Finding[] = [];
   const matched = new Set<string>();
-  const fail = (rule: Rule, el: Element, measured: string) => {
-    const excused = known.filter((k) => k.rule === rule && el.matches(k.selector));
+  const fail = (rule: Rule, el: Element, value: number, measured: string) => {
+    const excused = waivers.filter((k) => k.rule === rule && el.matches(k.selector) && value >= k.floor);
     for (const k of excused) matched.add(`${k.rule} ${k.selector}`);
     const what = `${where(el)} "${name(el)}"`;
     if (!excused.length && !unexpected.some((f) => f.rule === rule && f.what === what)) unexpected.push({ rule, what, measured });
@@ -113,7 +116,7 @@ export function auditPage({ rules, minTarget, known }: AuditOptions): AuditResul
     const behind = parse(style.backgroundColor)[3] > 0 ? over(parse(style.backgroundColor), backdrop(el)) : backdrop(el);
     const ink = parse(style.color);
     const ratio = contrast(over(ink, behind, ink[3] * opacity(el)), behind);
-    if (ratio < (large ? 3 : 4.5)) fail('text', el, `${ratio.toFixed(2)}:1`);
+    if (ratio < (large ? 3 : 4.5)) fail('text', el, ratio, `${ratio.toFixed(2)}:1`);
   }
 
   // What draws a control: 3:1 against what is behind it.
@@ -125,7 +128,7 @@ export function auditPage({ rules, minTarget, known }: AuditOptions): AuditResul
       const c = parse(css);
       if (c[3] === 0) continue;
       const ratio = contrast(over(c, behind, c[3] * o), behind);
-      if (ratio < 3) fail('boundary', el, `${ratio.toFixed(2)}:1`);
+      if (ratio < 3) fail('boundary', el, ratio, `${ratio.toFixed(2)}:1`);
     }
   };
   const boundaries = rules.includes('boundary') ? all : [];
@@ -141,7 +144,7 @@ export function auditPage({ rules, minTarget, known }: AuditOptions): AuditResul
       const [b, f] = [parse(border), parse(style.backgroundColor)];
       if (b[3] === 0 && f[3] === 0) continue; // drawn by its text alone
       const ratio = Math.max(contrast(over(b, behind, b[3] * o), behind), contrast(over(f, behind, f[3] * o), behind));
-      if (ratio < 3) fail('boundary', el, `${ratio.toFixed(2)}:1`);
+      if (ratio < 3) fail('boundary', el, ratio, `${ratio.toFixed(2)}:1`);
     }
   }
   for (const el of boundaries.filter((e) => e.matches('.knob-groove, .knob-arc, .knob-ring'))) drawn(el, [getComputedStyle(el).stroke]);
@@ -161,7 +164,7 @@ export function auditPage({ rules, minTarget, known }: AuditOptions): AuditResul
       w = Math.max(w, r.width + inset('left') + inset('right'));
       h = Math.max(h, r.height + inset('top') + inset('bottom'));
     }
-    if (w < minTarget - 0.5 || h < minTarget - 0.5) fail('target', el, `${Math.round(w)}×${Math.round(h)}`);
+    if (w < minTarget - 0.5 || h < minTarget - 0.5) fail('target', el, Math.min(w, h), `${Math.round(w)}×${Math.round(h)}`);
   }
   return { unexpected, matched: [...matched] };
 }

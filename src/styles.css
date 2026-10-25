@@ -5,6 +5,9 @@
   --radius-panel: 10px; --radius-control: 7px; --radius-inner: 6px;
   --shadow-panel: 0 10px 32px rgba(0, 0, 0, 0.35);
   --control-on: color-mix(in srgb, var(--text) 14%, var(--panel));
+  /* A selector's chosen option (Waveform, Filter Mode, Voices, LFO shape…): a little brighter than a pressed button,
+     so the choice reads at a glance on the selector's darker track. */
+  --segment-on: color-mix(in srgb, var(--text) 24%, var(--panel));
   --control-hover: color-mix(in srgb, var(--text) 7%, var(--panel));
   /* Spacing and type scales. */
   --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
@@ -244,6 +247,7 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 .tool[aria-pressed='true'], .segmented [aria-checked='true'], .segmented [aria-pressed='true'] {
   color: var(--text); background: var(--control-on);
 }
+.segmented :is([aria-checked='true'], [aria-pressed='true']) { background: var(--segment-on); }
 .tool:focus-visible, .segmented button:focus-visible { outline: 2px solid var(--text); outline-offset: 1px; }
 /* Freeze is a mode the whole page is in, so its "on" state is the strongest on screen. */
 .tool-mode[aria-pressed='true'] { color: var(--bg); background: var(--text); border-color: var(--text); }
