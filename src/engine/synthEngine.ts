@@ -123,6 +123,15 @@ const HISTORY = 64;
 const MODEL_SECONDS = 30;
 const MODEL_LIMIT = 4096;
 /** Drop entries older than the model keeps, always keeping the one in force at the oldest kept time. */
+/**
+ * Add an entry to a history, first dropping any later than it: a Gate or a Note handed over ahead of the clock (the
+ * Hold rhythm) is cancelled by one that comes earlier, as `cancelAndHoldAtTime` cancels it in the sound.
+ */
+function append<T extends { time: number }>(entries: T[], entry: T) {
+  while (entries.length && entries[entries.length - 1].time > entry.time) entries.pop();
+  entries.push(entry);
+}
+
 function trim<T extends { time: number }>(entries: T[], now: number) {
   const oldest = now - MODEL_SECONDS;
   let drop = 0;
@@ -325,7 +334,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
     /** Move to a Note: at once, or sliding there over the Glide. */
     setPitch(note: number, t: number, glide: number) {
       const frequency = noteToFrequency(note);
-      pitches.push({ time: t, frequency, note, glide });
+      append(pitches, { time: t, frequency, note, glide });
       if (pitches.length > HISTORY) pitches.shift();
       for (const [node, f] of [[osc, frequency], [osc2, frequency], [sub, frequency / 2]] as const) {
         // Every Oscillator follows the Note: Osc 2's offsets ride on top, through its detune; the Sub an octave down.
@@ -449,7 +458,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   const voiceCount = (): Voices => patch?.voices ?? 1;
 
   const record = (events: GateEvent[], e: GateEvent) => {
-    events.push(e);
+    append(events, e);
     trim(events, e.time);
   };
   /** A Gate change on a Voice; recorded in the model's history when it is the newest Note's. */
@@ -496,7 +505,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     // Glide is a one-Voice behaviour: a Note slides from the previous one; with more Voices, Notes start at pitch.
     const glide = patch && pitches.length && voiceCount() === 1 && patch.glide > GLIDE_OFF * 1.001 ? patch.glide : 0;
     voice.setPitch(note, t, glide);
-    pitches.push({ time: t, frequency: noteToFrequency(note), note, glide });
+    append(pitches, { time: t, frequency: noteToFrequency(note), note, glide });
     trim(pitches, t);
   };
   // The Note Key Track follows at `t`: the same slide as the Oscillators, in semitones.

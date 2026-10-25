@@ -338,6 +338,25 @@ describe('modulationAt for past moments (the Envelope Timeline)', () => {
     engine.noteOff(0.3);
     expect(engine.modulationAt(0.4).sounding).toBeNull(); // released: no Note is held any more
   });
+  it('a Gate earlier than Notes already handed over (Hold switched off mid-rhythm) cancels them, as in the sound', () => {
+    const ctx = new OfflineAudioContext(1, SR, SR);
+    const engine = createSynthEngine(ctx);
+    engine.applyPatch({ ...defaultPatch(), ampAttack: 0.005, ampSustain: 1, ampRelease: 0.3, filterAttack: 0.005 });
+    engine.noteOn(60, 0.9, 0);
+    // The rhythm hands the next tap over ahead of the clock…
+    engine.noteOn(60, 0.9, 0.5);
+    engine.noteOff(0.8);
+    // …then Hold goes off at 0.45, before it.
+    engine.noteOff(0.45);
+    const at = engine.modulationAt(0.45);
+    for (const t of [0.5, 0.6, 0.8, 0.9]) {
+      const m = engine.modulationAt(t);
+      expect(m.amp, `amp at ${t}`).toBeGreaterThanOrEqual(0);
+      expect(m.amp, `amp at ${t}`).toBeLessThan(at.amp); // releasing: no new Attack at 0.5
+      expect(m.filter, `filter at ${t}`).toBeGreaterThanOrEqual(0);
+      expect(m.sounding, `at ${t}`).toBeNull();
+    }
+  });
 });
 
 describe('Osc 2, Noise and the Mixer', () => {
