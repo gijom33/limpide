@@ -26,11 +26,16 @@ async function turnUp(page: Page, region: string, name: string, steps: number) {
   }, steps);
 }
 
-test('no marker while nothing sounds; a played Note puts it on its key, and it goes once the Release fades', async ({ page }) => {
+test('no marker unless something moves the pitch; with Glide on, a Note puts it on its key until its Release fades', async ({ page }) => {
   await page.goto('/');
   await listening(page);
   await expect(marker(page)).toBeHidden();
-  await page.keyboard.down('KeyD'); // E4
+  await page.keyboard.down('KeyD'); // E4, with nothing moving its pitch
+  await page.waitForTimeout(300);
+  await expect(marker(page)).toBeHidden();
+  await page.keyboard.up('KeyD');
+  await turnUp(page, 'Amp', 'Glide', 38);
+  await page.keyboard.down('KeyD');
   await expect(marker(page)).toBeVisible();
   await expect.poll(() => markerX(page)).toBeCloseTo(await centre(page, 'E4'), 0);
   await page.keyboard.up('KeyD');
@@ -57,8 +62,10 @@ test('an LFO on Pitch wobbles the marker around the key', async ({ page }) => {
   await page.goto('/');
   await listening(page);
   await page.getByRole('radiogroup', { name: 'LFO Destination' }).getByRole('radio', { name: 'Pitch' }).click();
-  await turnUp(page, 'LFO & Envelopes', 'Depth', 100);
   await page.keyboard.down('KeyD');
+  await page.waitForTimeout(300);
+  await expect(marker(page)).toBeHidden(); // aimed at Pitch, but at Depth 0
+  await turnUp(page, 'LFO & Envelopes', 'Depth', 100);
   await expect(marker(page)).toBeVisible();
   const xs: number[] = [];
   for (let i = 0; i < 20; i++) {
@@ -74,9 +81,12 @@ test('an LFO on Pitch wobbles the marker around the key', async ({ page }) => {
   for (const x of xs) expect(Math.abs(x - e4)).toBeLessThanOrEqual(black / 2 + 1);
 });
 
-test('the marker sits low on the key, where a finger presses it: higher on a black key than on a white one', async ({ page }) => {
+test('the marker sits low on the key, where a finger presses it: higher on a black key, ringed to stand out on each', async ({ page }) => {
   await page.goto('/');
   await listening(page);
+  await turnUp(page, 'Amp', 'Glide', 38);
+  /** The ring's lightness, 0 (black) to 255 (white). */
+  const ring = () => marker(page).evaluate((el) => Number(getComputedStyle(el).borderTopColor.match(/\d+/)![0]));
   const markerY = async () => {
     const box = (await marker(page).boundingBox())!;
     return box.y + box.height / 2;
@@ -85,9 +95,12 @@ test('the marker sits low on the key, where a finger presses it: higher on a bla
     await page.keyboard.down(code);
     await expect(marker(page)).toBeVisible();
     const box = (await piano(page).getByRole('button', { name: key, exact: true }).boundingBox())!;
+    await expect.poll(() => markerX(page), { message: key }).toBeCloseTo(await centre(page, key), 0); // the Glide over
     const y = await markerY();
     expect(y, key).toBeGreaterThan(box.y + box.height / 2); // the lower half of the key
     expect(y, key).toBeLessThan(box.y + box.height);
+    if (key === 'E4') expect(await ring(), 'a dark ring on a white key').toBeLessThan(80);
+    else expect(await ring(), 'a light ring on a black key').toBeGreaterThan(180);
     await page.keyboard.up(code);
     await expect(marker(page)).toBeHidden({ timeout: 3000 });
   }

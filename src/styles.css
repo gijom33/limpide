@@ -550,12 +550,13 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 }
 .piano button[aria-pressed='true'] { background: var(--stage-osc); color: var(--bg); border-color: var(--stage-osc); }
 .piano button span { pointer-events: none; }
-/* The pitch sounding (issue 21): a blue dot where a finger presses the key, drawn over every key; its centre is at
-   the point PitchMarker gives. */
+/* The pitch sounding (issue 21): a blue dot where a finger presses the key, drawn over every key, ringed in the
+   other key colour so it stands out on both; its centre is at the point PitchMarker gives. */
 .pitch-marker {
-  position: absolute; z-index: 2; left: -4px; top: -4px; width: 8px; height: 8px; border-radius: 50%; pointer-events: none;
-  background: var(--stage-mod);
+  position: absolute; z-index: 2; left: -5px; top: -5px; width: 10px; height: 10px; box-sizing: border-box;
+  border-radius: 50%; pointer-events: none; background: var(--stage-mod); border: 1.5px solid #121317;
 }
+.pitch-marker[data-on-black] { border-color: #fff; }
 
 .midi-status {
   display: inline-flex; align-items: center; gap: 6px; height: var(--control-h); padding: 0 10px; font-size: var(--text-md); color: var(--muted);
