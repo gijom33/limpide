@@ -48,7 +48,7 @@ Limpide (formerly Limpide) is a browser-based subtractive synthesizer laid out a
 22. As a learner, I want an Amp Envelope (ADSR), so that I can shape loudness over time.
 23. As a learner, I want a Filter Envelope with a signed Envelope Amount in octaves, so that I can make plucks and swells.
 24. As a player, I want envelope times on an exponential Taper from 1 ms to 10 s, so that both snappy and slow settings are reachable.
-25. As a player, I want an LFO with rate, amount, waveform and a destination (pitch, Cutoff or Pulse Width), so that I can make vibrato, wah and PWM.
+25. As a player, I want an LFO with rate, amount, waveform and a destination (pitch, Cutoff or Pulse Width), so that I can make vibrato, wah and PWM. (Stories 82 and 83 widen this.)
 26. As a learner, I want every Parameter to show its value in real units (Hz, ms, dB, cents, %), so that I connect knob positions to quantities.
 27. As a learner, I want to double-click a knob to reset it to its default, so that I can recover from experiments.
 
@@ -95,6 +95,7 @@ Judged against [the design principles](./design-principles.md).
 80. As a first-time visitor, I want a welcome that offers to play the Demo (or the sound shared with me), so that I hear what Limpide can do without knowing where to click.
 81. As a user, I want About centred on screen and an ⓘ button at every screen size, so that I can always find out what this is.
 82. As a sound designer, I want the LFO to reach more destinations (Resonance, Osc 2's pitch and its Detune as well as Cutoff, Pitch and Pulse Width), picked with arrows or from a menu like the Patch bar's, so that one LFO makes more kinds of movement.
+83. As a sound designer, I want two LFOs, each with its own Waveform, Rate, Depth and destination, so that I can make vibrato and a filter sweep at once, or two speeds of movement on one control.
 
 ### MIDI and the TempoPAD C16
 50. As a C16 owner, I want Limpide to detect my Controller when plugged in, so that I know it's connected.
@@ -161,7 +162,7 @@ Judged against [the design principles](./design-principles.md).
 
 - Unison, and Viewers that show more than one Note at once ([ADR-0007](./adr/0007-optional-polyphony-viewers-follow-the-newest-note.md)).
 - Effects (delay, reverb, chorus, distortion).
-- A modulation matrix beyond one LFO with a single destination.
+- A modulation matrix beyond two LFOs with a single destination each.
 - Custom DSP or analogue-modelled filters ([ADR-0001](./adr/0001-native-web-audio-nodes-over-custom-dsp.md)).
 - Guided lessons. The data model should allow them, but the content comes later.
 - Spectrogram and explanatory tooltips, which are next after v1.
