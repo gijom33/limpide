@@ -4,7 +4,7 @@
 
 **Blocked by:** 18
 
-**Status:** done, except double-tap to reset on touch screens, which is untested (no real phone run yet)
+**Status:** done. Double-tap to reset tried by the owner on a real phone (2026-10-26).
 
 - [x] `control: 'play' | 'set' | 'fader'` on every Parameter definition; unit test of the agreed lists
 - [x] Play: Cutoff, Resonance, Envelope Amount, LFO Rate, LFO Depth, Detune. Set: Pulse Width, Octave, Semitone, Velocity, Key Track, Glide
@@ -15,7 +15,7 @@
 - [x] Touch targets ≥ 44 × 44 px: the 24 × 14 fader cap gets an invisible hit area that size (the prototype's was 36 × 30)
 - [x] The Filter Envelope as one wrapping row (Amount, then four faders); in rows with a picker, picker and heading aligned with the dial's visible bottom
 - [x] Touch: a drag starts only on the dial or the handle, so a drag on a track scrolls the page
-- [ ] Double-tap resets on touch screens (double-click does; untested on a real phone)
+- [x] Double-tap resets on touch screens (double-click does; tried by the owner on a real phone, 2026-10-26)
 - [x] Value bubble above the finger while dragging on touch; on phones values stay hidden at rest and show in the name's place when keys, MIDI or the Demo move a control (as today)
 - [x] Single-pointer alternative: a click on a knob's arc or a tap on a fader's track (without dragging) jumps the value there
 - [x] e2e: fits 1440×900 and 1710×1060 (the prototype was 87 px too tall at 1440×900); no two controls closer than 8 px at 375×812, 1000×800 and 1440×900; every fader sets its Parameter; touch scroll over a fader's track scrolls the page
