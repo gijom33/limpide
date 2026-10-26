@@ -4,9 +4,9 @@
 
 **Blocked by:** none
 
-**Status:** to do. **Before the LinkedIn post:** the Voices of the Pads and keys (a chord on a Pad playing one Note is the first thing a synth player tries)
+**Status:** the first item done (2026-10-26); the rest to do. **Before the LinkedIn post:** the Voices of the Pads and keys (a chord on a Pad playing one Note is the first thing a synth player tries)
 
-- [ ] Pads and keys Presets with Voices to play chords: 7 of the 9 Pads (Pad, PWM Strings, Warm Pad, Brass Swell, Choir, Sweep Pad, Dark Drone), Organ, Electric Piano, Marimba, Glass Keys, Harp and Clav are at 1 Voice. A Presets test that a chordal Preset has more than one
+- [x] Pads and keys Presets with Voices to play chords: 7 of the 9 Pads (Pad, PWM Strings, Warm Pad, Brass Swell, Choir, Sweep Pad, Dark Drone), Organ, Electric Piano, Marimba, Glass Keys, Harp and Clav are at 1 Voice. A Presets test that a chordal Preset has more than one. Done: all twelve at 8 Voices; Dark Drone stays on one, a drone being one Note. `presets.test.ts` holds every Pad but the drone, every Piano and the six keys above one Voice
 - [ ] A share link keeps the Patch name (it opens as "Shared Patch")
 - [ ] The mouse wheel turns a knob under the pointer
 - [ ] A gentler Glide taper (Off to 6 ms in its first 40 px)

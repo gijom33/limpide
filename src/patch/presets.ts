@@ -238,26 +238,26 @@ group('Keys & Plucks', [
     ampAttack: 0.001, ampDecay: 0.45, ampSustain: 0, ampRelease: 0.3,
   }],
   ['Harp', 'A triangle plucked through a short Filter Envelope, with Key Track so high strings ring as bright as low ones.', {
-    waveform: 'triangle', cutoff: 800, resonance: 0.2, keyTrack: 1, filterEnvAmount: 2, filterDecay: 0.3, filterSustain: 0,
+    voices: 8, waveform: 'triangle', cutoff: 800, resonance: 0.2, keyTrack: 1, filterEnvAmount: 2, filterDecay: 0.3, filterSustain: 0,
     ampAttack: 0.001, ampDecay: 1.2, ampSustain: 0, ampRelease: 1,
   }],
   ['Clav', 'A thin pulse through a high-pass, short and velocity-sensitive: a funky, percussive key.', {
-    waveform: 'pulse', pulseWidth: 0.15, filterMode: 'highpass', cutoff: 300, resonance: 0.3, velocityCutoff: 0.6,
+    voices: 8, waveform: 'pulse', pulseWidth: 0.15, filterMode: 'highpass', cutoff: 300, resonance: 0.3, velocityCutoff: 0.6,
     ampAttack: 0.001, ampDecay: 0.25, ampSustain: 0.2, ampRelease: 0.08,
   }],
   ['Organ', 'Sine, octave and Sub, like drawbars: no Envelope shape at all, just on and off, and three clean rungs in the Spectrum.', {
-    waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, mixOsc2: 0.6, mixSub: 0.5, ...OPEN, ampAttack: 0.005, ampRelease: 0.03,
+    voices: 8, waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, mixOsc2: 0.6, mixSub: 0.5, ...OPEN, ampAttack: 0.005, ampRelease: 0.03,
   }],
   ['Electric Piano', 'A triangle with a little octave sine: soft attack, long decay, and Velocity for a brighter strike.', {
-    waveform: 'triangle', osc2Waveform: 'sine', osc2Octave: 1, mixOsc2: 0.35, cutoff: 1800, velocityCutoff: 0.7, keyTrack: 0.5,
+    voices: 8, waveform: 'triangle', osc2Waveform: 'sine', osc2Octave: 1, mixOsc2: 0.35, cutoff: 1800, velocityCutoff: 0.7, keyTrack: 0.5,
     ampAttack: 0.003, ampDecay: 2, ampSustain: 0.15, ampRelease: 0.5,
   }],
   ['Marimba', 'A sine and a square two octaves up, gone almost at once: the bright tick of the mallet, then the round tone.', {
-    waveform: 'sine', osc2Waveform: 'square', osc2Octave: 2, mixOsc2: 0.25, cutoff: 3000, filterEnvAmount: -2, filterDecay: 0.05, filterSustain: 0,
+    voices: 8, waveform: 'sine', osc2Waveform: 'square', osc2Octave: 2, mixOsc2: 0.25, cutoff: 3000, filterEnvAmount: -2, filterDecay: 0.05, filterSustain: 0,
     ampAttack: 0.001, ampDecay: 0.6, ampSustain: 0, ampRelease: 0.4,
   }],
   ['Glass Keys', 'Two sines a twelfth apart with a slow decay: bell-like, and the Scope shows the 3:1 pattern fading together.', {
-    waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, osc2Semitone: 7, osc2Detune: 3, mixOsc2: 0.7, ...OPEN,
+    voices: 8, waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, osc2Semitone: 7, osc2Detune: 3, mixOsc2: 0.7, ...OPEN,
     ampAttack: 0.002, ampDecay: 2.5, ampSustain: 0, ampRelease: 1.5,
   }],
   ['Chorus Pluck', 'A pluck with LFO 2 slowly detuning Osc 2: a wide, gently moving shimmer on every Note.', {
@@ -291,31 +291,31 @@ group('Pianos', [
 
 group('Pads', [
   ['Pad', 'Slow Envelopes swell the sound in and out, detuned saws and a breath of Noise thicken it, and the LFO keeps the Filter moving.', {
-    osc2Detune: -14, mixOsc2: 0.8, mixNoise: 0.05,
+    voices: 8, osc2Detune: -14, mixOsc2: 0.8, mixNoise: 0.05,
     cutoff: 900, resonance: 0.2, filterEnvAmount: 1.2, filterAttack: 1.2, filterDecay: 1.5, filterSustain: 0.6, filterRelease: 1.5,
     ampAttack: 0.9, ampDecay: 1, ampSustain: 0.8, ampRelease: 1.8,
     lfoRate: 0.3, lfoAmount: 0.15,
   }],
   ['PWM Strings', 'Two slowly modulated pulses: the Pulse Width sweep gives the chorus-like shimmer of a string machine.', {
-    waveform: 'pulse', pulseWidth: 0.4, osc2Waveform: 'pulse', osc2PulseWidth: 0.6, osc2Detune: 7, mixOsc2: 0.8, cutoff: 3000, resonance: 0.1,
+    voices: 8, waveform: 'pulse', pulseWidth: 0.4, osc2Waveform: 'pulse', osc2PulseWidth: 0.6, osc2Detune: 7, mixOsc2: 0.8, cutoff: 3000, resonance: 0.1,
     lfoDestination: 'pulseWidth', lfoRate: 0.6, lfoAmount: 0.6, keyTrack: 0.5, ampAttack: 0.4, ampSustain: 0.9, ampRelease: 1.2,
   }],
   ['Warm Pad', 'Detuned saws over a Sub, a low Cutoff that opens slowly: dark and wide.', {
-    osc2Detune: 12, mixOsc2: 0.9, mixSub: 0.4, cutoff: 600, resonance: 0.15, filterEnvAmount: 1.5, filterAttack: 2, filterDecay: 2, filterSustain: 0.5,
+    voices: 8, osc2Detune: 12, mixOsc2: 0.9, mixSub: 0.4, cutoff: 600, resonance: 0.15, filterEnvAmount: 1.5, filterAttack: 2, filterDecay: 2, filterSustain: 0.5,
     filterRelease: 2, ampAttack: 1.2, ampSustain: 0.9, ampRelease: 2.5, keyTrack: 0.4,
   }],
   ['Brass Swell', 'The Filter Envelope opens a little slower than the Amp: each Note starts dark and blooms bright, like a horn.', {
-    osc2Detune: 6, mixOsc2: 0.6,
+    voices: 8, osc2Detune: 6, mixOsc2: 0.6,
     cutoff: 500, resonance: 0.25, filterEnvAmount: 2.5, filterAttack: 0.12, filterDecay: 0.6, filterSustain: 0.55, filterRelease: 0.3,
     ampAttack: 0.04, ampDecay: 0.3, ampSustain: 0.85, ampRelease: 0.25, keyTrack: 0.5,
   }],
   ['Choir', 'Detuned saws through a band-pass, with a touch of Noise for breath: a vowel-like “aah”, and LFO 2 adding a singer’s slow vibrato.', {
-    osc2Detune: 10, mixOsc2: 1, mixNoise: 0.08, filterMode: 'bandpass', cutoff: 900, resonance: 0.55, keyTrack: 0.3,
+    voices: 8, osc2Detune: 10, mixOsc2: 1, mixNoise: 0.08, filterMode: 'bandpass', cutoff: 900, resonance: 0.55, keyTrack: 0.3,
     lfoRate: 0.2, lfoAmount: 0.1, lfo2Destination: 'pitch', lfo2Rate: 5, lfo2Amount: 0.15,
     ampAttack: 0.6, ampSustain: 0.9, ampRelease: 1.5,
   }],
   ['Sweep Pad', 'A Filter Envelope seconds long: hold a Note and watch the Effective Cutoff climb across the whole Timeline.', {
-    osc2Detune: -9, mixOsc2: 0.8, filterSlope: 24, cutoff: 150, resonance: 0.5, filterEnvAmount: 5, filterAttack: 4, filterDecay: 4,
+    voices: 8, osc2Detune: -9, mixOsc2: 0.8, filterSlope: 24, cutoff: 150, resonance: 0.5, filterEnvAmount: 5, filterAttack: 4, filterDecay: 4,
     filterSustain: 0.4, filterRelease: 3, ampAttack: 0.5, ampSustain: 1, ampRelease: 3,
   }],
   ['Dark Drone', 'Sub and a low saw under a slowly breathing Filter: a drone to watch the LFO draw on the Timeline.', {

@@ -46,6 +46,14 @@ describe('Presets', () => {
     for (const preset of PRESETS) expect(preset.about.length, preset.name).toBeGreaterThan(20);
   });
 
+  // Issue 53: a chord on a Pad played one Note. Sounds made to be played as chords have Voices for them; a drone,
+  // a pluck and the teaching Presets stay on one Voice.
+  it('give chords their Voices: every Pad (but the drone), Piano and key', () => {
+    const keys = ['Harp', 'Clav', 'Organ', 'Electric Piano', 'Marimba', 'Glass Keys'];
+    const chordal = PRESETS.filter((p) => (p.group === 'Pads' && p.name !== 'Dark Drone') || p.group === 'Pianos' || keys.includes(p.name));
+    expect(chordal.length).toBeGreaterThan(15);
+    for (const p of chordal) expect(p.patch.voices, p.name).toBeGreaterThan(1);
+  });
   it('step forward and back, wrapping at the ends', () => {
     expect(stepPreset(0, 1)).toBe(1);
     expect(stepPreset(PRESETS.length - 1, 1)).toBe(0);
