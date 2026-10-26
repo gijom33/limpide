@@ -4,11 +4,11 @@
 
 **Blocked by:** none (the Learner's second run waits for the tutorials, [40](./40-preset-tutorials.md))
 
-**Status:** profiles chosen (2026-10-26), reviews to run
+**Status:** the ten persona reviews ran on 2026-10-26 (version 1.8.1); their findings are in the inbox. Still to do: the LinkedIn tap-through on a real phone, the Learner's second run, the code review
 
 ## Why these profiles
 
-The owner will post Limpide on LinkedIn: the link is the site, [gijom33.github.io/limpide](https://gijom33.github.io/limpide/), and the post may link the repository too. So the personas are the people a LinkedIn post reaches, not only the PRD's learners. Most open the link on a phone, in LinkedIn's in-app browser (no MIDI, sound held back until the page is touched), with little patience: what the first ten seconds show matters. Four profiles are the owner's (1 to 4), three complete them (5 to 7). Issue 42's first ideas went into them: the beginner into 1, the sound designer into 2, the teacher into 5, the screen reader into 6, the phone visitor into 1.
+The owner will post Limpide on LinkedIn: the link is the site, [gijom33.github.io/limpide](https://gijom33.github.io/limpide/), and the post may link the repository too. So the personas are the people a LinkedIn post reaches, not only the PRD's learners. Most open the link on a phone, in LinkedIn's in-app browser (no MIDI, sound held back until the page is touched), with little patience: what the first ten seconds show matters. Four profiles are the owner's (1 to 4), three complete them (5 to 7), and the owner added three who judge the repository (8 to 10). Issue 42's first ideas went into them: the beginner into 1, the sound designer into 2, the teacher into 5, the screen reader into 6, the phone visitor into 1.
 
 ## How a review runs
 
@@ -90,10 +90,52 @@ On LinkedIn many readers are really asking "what does this say about the author?
 - **Asks:** Is it impressive at a glance? Clear without music knowledge? Is the author's part (and the AI's) stated honestly? Does it look finished?
 - **Success:** they can say in one sentence what the author built and what it shows about them
 
+### 8. The open-source expert, sceptical of AI
+
+Maintains open-source projects and distrusts AI-written code: looks for what would make the project hard to maintain or contribute to, and for the marks of unreviewed AI output.
+
+- **Where:** the repository on GitHub and its files. **Time:** 30 minutes
+- **Goals:** decide whether they would contribute, depend on it, or recommend it as an example of AI-assisted open source
+- **Asks:** Licence, contribution guide, issue templates, code of conduct? Could a stranger build, test and change it? Is the code readable and maintainable by humans, or verbose and repetitive? Do the tests test something? Dependencies few and current? Is the AI's part disclosed? What would they say in a Hacker News comment?
+- **Success:** a fair verdict, sceptical but backed by files and lines
+
+### 9. The TypeScript, React and Web Audio expert
+
+A senior front-end engineer who knows the stack Limpide is written in (TypeScript, React, Vite, the Web Audio API, Canvas).
+
+- **Where:** the code (`src/`), its configuration and tests; the site for behaviour and performance. **Time:** 30 minutes
+- **Goals:** judge the code as they would a colleague's pull request
+- **Asks:** How strict are the types (any, casts, non-null assertions)? Are React effects and state idiomatic, and is keeping the engine and Viewers outside React (ADR-0002) done well? Is the Web Audio graph correct (scheduling, node lifecycle, leaks, clicks)? Is the render loop efficient? Bundle size, accessibility of the markup, error handling?
+- **Success:** a review with specific file:line findings, the good with the bad
+
+### 10. The software development methodology expert
+
+Knows XP, Scrum and Kanban, Shape Up, DDD and TDD, and how teams use them. Judges the process, not the product.
+
+- **Where:** `docs/` (PRD, issues, ADRs, inbox, the glossary), the commit history, the tests and CI. **Time:** 30 minutes
+- **Goals:** say how the method used here (Matt Pocock's AI Hero: PRD, vertical-slice issues, ADRs, grilling, TDD, an inbox) compares with established ones, and whether it is practised as described
+- **Asks:** Can a user story be traced to an issue, a commit and a test? Is TDD visible in the history (tests with or before the code)? Are issues vertical slices with a definition of done? Are ADRs real decisions with alternatives? Is release and versioning discipline sound? What would they teach from it, and what would they warn against?
+- **Success:** a verdict on the method, with evidence from the repository
+
+## Verdicts (2026-10-26, version 1.8.1)
+
+Reviewed by agents in headless browsers: none could hear, so sound was judged from the Viewers and the audio graph.
+
+1. **Curious contact:** would like the post, not share it: "a synth app with dancing lines". The Demo impresses but explains nothing on a phone, and tooltips never open on touch.
+2. **Synth enthusiast:** would send it to a synth friend as "a visual synth for seeing what each stage does", not a performance instrument. The Filter rings without hiss (issue 41 holds); missing: pitch bend, the sustain pedal, Pads with one Voice.
+3. **UI maniac:** would like and recommend, not share yet: the Release fader wraps alone at 1331–1434 px, inner margins differ on phones and at 861–960 px; 26 nitpicks in all, none of them sideways scroll or clipping.
+4. **AI expert:** believes the "built with AI" claim from the commit trailers and the docs trail, but nothing a visitor reaches says it, and docs drift is what a sceptic would quote.
+5. **Learner and teacher:** the learner could explain the signal chain afterwards; the teacher planned a lesson. The core controls and the Viewers have no tooltip, and there is no "start here".
+6. **Accessibility:** a sound can be made and changed without the mouse. Space freezes instead of pressing buttons; focus is lost when panels close; the Viewers say nothing to a screen reader.
+7. **Recruiter and hiring manager:** impressed, but no line says what the author did and what Claude did, and no link to reach the author.
+8. **Open-source sceptic:** "went in expecting slop and came out mostly impressed": the tests catch real mutations in the logic, but `App.tsx` is the weak, untested glue, and nothing invites contributors.
+9. **TypeScript, React and Web Audio expert:** strong, honest types (no `any`), no node leaks; two fixes before approving: the Timeline's cost per frame and the blank page without storage.
+10. **Methodology expert:** a well-chosen solo method whose documents keep 206 commits coherent; it lacks a second pair of eyes (the code review never ran), frozen ADRs, and commit-to-issue traceability.
+
 ## To do
 
 - [x] Choose the personas (owner, 2026-10-26: profiles 1 to 4 the owner's, 5 to 7 completing them)
-- [ ] Each persona's review: what they tried, what worked, what stopped them; the findings to the inbox
+- [x] Each persona's review: what they tried, what worked, what stopped them; the findings to the inbox (2026-10-26, 33 lines). The reports: [`docs/reviews/2026-10-26/`](../reviews/2026-10-26/). Their screenshots stayed in the session's scratch folder and are not kept
 - [ ] The owner taps through the real LinkedIn link once on a phone (the in-app browser)
 - [ ] The Learner's second run, once the tutorials are built (issue 40)
 - [ ] The code review, since the first commit; the findings to the inbox
