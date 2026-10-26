@@ -1,5 +1,5 @@
-import { envelopeLevel, envelopeSchedule, type Adsr, type AutomationStep, type GateEvent } from '../modulation/envelope';
-import { createLfoClock, glideFrequency, glideTimeConstant, lfoShape, type LfoWaveform } from '../modulation/lfo';
+import { envelopeSchedule, levelAfter, type Adsr, type AutomationStep, type GateEvent } from '../modulation/envelope';
+import { createLfoClock, glideFrequency, glideFrom, glideTimeConstant, lfoShape, type LfoWaveform } from '../modulation/lfo';
 import {
   effectiveCutoff, effectiveResonance, lfoSwings, soundingPitch, KEY_TRACK_CENTRE, LFO_CUTOFF_OCTAVES, LFO_DETUNE_CENTS, LFO_OSC2_CENTS,
   LFO_PITCH_CENTS, LFO_PULSE_WIDTH, LFO_RESONANCE, MAX_PULSE, MIN_PULSE, VELOCITY_CUTOFF_OCTAVES,
@@ -140,6 +140,21 @@ const MODEL_LIMIT = 4096;
 function append<T extends { time: number }>(entries: T[], entry: T) {
   while (entries.length && entries[entries.length - 1].time > entry.time) entries.pop();
   entries.push(entry);
+}
+
+/** A Gate event in the model's history, with the Envelope's level when it came. */
+type GateRecord = GateEvent & { start: number };
+
+/** The index of the last entry at or before `t`, −1 if none: a binary search (the entries are in time order). */
+function lastAt(entries: readonly { time: number }[], t: number): number {
+  let lo = -1;
+  let hi = entries.length - 1;
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >> 1;
+    if (entries[mid].time <= t) lo = mid;
+    else hi = mid - 1;
+  }
+  return lo;
 }
 
 function trim<T extends { time: number }>(entries: T[], now: number) {
@@ -522,12 +537,14 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   };
 
   let patch: Patch | undefined;
-  // The Modulation model's history: the newest Note's pitches and Gate events, which is what the Viewers show.
-  const pitches: { time: number; frequency: number; note: number; glide: number }[] = [];
+  // The Modulation model's history: the newest Note's pitches and Gate events, which is what the Viewers show. Each
+  // entry keeps where it starts from (the slide's frequency and Note, the Envelope's level), so a past moment is one
+  // search away rather than a replay of the history: the Timeline asks for every column, every frame (issue 45).
+  const pitches: { time: number; frequency: number; note: number; glide: number; from: number; fromNote: number }[] = [];
   // Patches in force over time, so past moments use the Cutoff and Amount of their time.
   const patches: { time: number; patch: Patch }[] = [];
-  const ampEvents: GateEvent[] = [];
-  const filterEvents: GateEvent[] = [];
+  const ampEvents: GateRecord[] = [];
+  const filterEvents: GateRecord[] = [];
   /** The Voice of the newest Note: the Taps listen to it (or to every Voice, when asked). */
   let lead: Voice | null = null;
   let tapSource: TapSource = 'newest';
@@ -547,9 +564,16 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   const at = (time?: number) => time ?? ctx.currentTime;
   const voiceCount = (): Voices => patch?.voices ?? 1;
 
-  const record = (events: GateEvent[], e: GateEvent) => {
-    append(events, e);
+  const record = (events: GateRecord[], e: GateEvent) => {
+    const entry = { ...e, start: 0 };
+    append(events, entry);
+    const previous = events[events.length - 2];
+    if (previous) entry.start = levelAfter(previous, previous.start, entry.time);
     trim(events, e.time);
+  };
+  const levelAt = (events: readonly GateRecord[], t: number) => {
+    const i = lastAt(events, t);
+    return i < 0 ? 0 : levelAfter(events[i], events[i].start, t);
   };
   /** A Gate change on a Voice; recorded in the model's history when it is the newest Note's. */
   const gate = (voice: Voice, on: boolean, t: number, velocity: number) => {
@@ -595,46 +619,54 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     // Glide is a one-Voice behaviour: a Note slides from the previous one; with more Voices, Notes start at pitch.
     const glide = patch && pitches.length && voiceCount() === 1 && patch.glide > GLIDE_OFF * 1.001 ? patch.glide : 0;
     voice.setPitch(note, t, glide);
-    append(pitches, { time: t, frequency: noteToFrequency(note), note, glide });
+    const entry = { time: t, frequency: noteToFrequency(note), note, glide, from: noteToFrequency(note), fromNote: note };
+    append(pitches, entry);
+    const previous = pitches[pitches.length - 2];
+    if (previous) {
+      entry.from = glideFrom(previous.from, previous.frequency, previous.glide, t - previous.time);
+      entry.fromNote = glideFrom(previous.fromNote, previous.note, previous.glide, t - previous.time);
+    }
     trim(pitches, t);
   };
-  // The Note Key Track follows at `t`: the same slide as the Oscillators, in semitones.
-  const trackedNoteAt = (t: number) =>
-    pitches.length ? glideFrequency(pitches.map((p) => ({ time: p.time, frequency: p.note, glide: p.glide })), t) : 69;
-
-  /** The Patch in force at `t` (binary search: the Timeline asks for every column, every frame). */
-  const patchAt = (t: number) => {
-    if (!patches.length) return undefined;
-    let lo = 0;
-    let hi = patches.length - 1;
-    while (lo < hi) {
-      const mid = (lo + hi + 1) >> 1;
-      if (patches[mid].time <= t) lo = mid;
-      else hi = mid - 1;
-    }
-    return patches[lo].patch;
+  // The newest Note's frequency at `t`, through its Glide (before the first Note, the first Note's; none: 0).
+  const glidingAt = (t: number) => {
+    const i = lastAt(pitches, t);
+    if (i < 0) return pitches[0]?.frequency ?? 0;
+    const p = pitches[i];
+    return glideFrom(p.from, p.frequency, p.glide, t - p.time);
   };
+  // The Note Key Track follows at `t`: the same slide as the Oscillators, in semitones.
+  const trackedNoteAt = (t: number) => {
+    const i = lastAt(pitches, t);
+    if (i < 0) return pitches[0]?.note ?? 69;
+    const p = pitches[i];
+    return glideFrom(p.fromNote, p.note, p.glide, t - p.time);
+  };
+
+  /** The Patch in force at `t` (before the first, the first). */
+  const patchAt = (t: number) => (patches.length ? patches[Math.max(0, lastAt(patches, t))].patch : undefined);
 
   // The LFO's Rate over time, from when it started: its phase is integrated across Rate changes.
 
   const modulationAt = (time?: number): Modulation => {
     const t = at(time);
-    const filterLevel = envelopeLevel(filterEvents, t);
+    const filterLevel = levelAt(filterEvents, t);
     const then = patchAt(t);
     const lfo: [number, number] = then ? lfoValues(then, t) : [0, 0];
-    // The latest Note's Velocity (the Amp Envelope's peak), which stays in force until the next Note.
-    let velocity = 0;
-    for (const e of ampEvents) if (e.on && e.time <= t) velocity = e.peak;
     // The newest Note, while its Gate is open (the latest Gate event at or before `t`), at its own key.
-    let gate: GateEvent | undefined;
-    for (const e of ampEvents) if (e.time <= t && (!gate || e.time >= gate.time)) gate = e;
-    let note = 69;
-    for (const p of pitches) if (p.time <= t) note = p.note;
-    const gliding = frequencyToNote(glideFrequency(pitches, t) || A4);
+    const latest = lastAt(ampEvents, t);
+    const gate = ampEvents[latest];
+    // The latest Note's Velocity (the Amp Envelope's peak), which stays in force until the next Note.
+    let opened = latest;
+    while (opened >= 0 && !ampEvents[opened].on) opened--;
+    const velocity = opened >= 0 ? ampEvents[opened].peak : 0;
+    const latestPitch = lastAt(pitches, t);
+    const note = latestPitch >= 0 ? pitches[latestPitch].note : 69;
+    const gliding = frequencyToNote(glidingAt(t) || A4);
     const vibrato = then ? soundingPitch(then, gliding, lfo) - gliding : 0;
     const resonance = then ? effectiveResonance(then, lfo) : 0;
     return {
-      amp: envelopeLevel(ampEvents, t),
+      amp: levelAt(ampEvents, t),
       filter: filterLevel,
       lfo,
       cutoff: then ? effectiveCutoff(then, filterLevel, lfo, velocity, trackedNoteAt(t)) : 0,
@@ -652,7 +684,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     // During a Glide, the frequency the Oscillators have reached: Cycle Lock follows the slide.
     // With the Sub sounding, the sound repeats at the Sub's pitch, an octave lower: that is the fundamental.
     fundamental: () => {
-      const frequency = glideFrequency(pitches, ctx.currentTime) || A4;
+      const frequency = glidingAt(ctx.currentTime) || A4;
       return patchAt(ctx.currentTime)?.mixSub ? frequency / 2 : frequency;
     },
     modulationAt,

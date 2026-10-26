@@ -5,6 +5,7 @@ import { defaultPatch, type Patch } from '../patch/patch';
 import { PRESETS } from '../patch/presets';
 import { amplitudeToSpectrumDb } from '../viewers/spectrumScale';
 import { betweenHarmonicsDb, dB, frequencyAround, rms, toneAmplitude, toneAmplitudeHann } from '../test/measure';
+import { envelopeLevel, type GateEvent } from '../modulation/envelope';
 import { createSynthEngine, OSCILLATOR_LEVEL } from './synthEngine';
 
 const SR = 48000;
@@ -335,6 +336,64 @@ describe('Resonance and level', () => {
 });
 
 describe('modulationAt for past moments (the Envelope Timeline)', () => {
+  // Issue 45: the Timeline asks for every pixel column, every frame. Each moment must cost the same however many Notes
+  // the history holds (it replayed the whole history per column: 3.7 ms a frame grew to 31 ms after 600 Notes).
+  it('costs no more per moment after 600 Notes than after 10', () => {
+    const timeFor = (notes: number) => {
+      const ctx = new OfflineAudioContext(1, SR * 30, SR);
+      const engine = createSynthEngine(ctx);
+      engine.applyPatch({ ...defaultPatch(), glide: 0.05 });
+      for (let i = 0; i < notes; i++) {
+        engine.noteOn(48 + (i % 24), 0.8, (i * 24) / notes);
+        engine.noteOff((i * 24) / notes + 12 / notes);
+      }
+      const frame = () => { for (let x = 0; x < 500; x++) engine.modulationAt(24 + x / 500); };
+      frame(); // warm up
+      const start = performance.now();
+      for (let i = 0; i < 20; i++) frame();
+      return (performance.now() - start) / 20;
+    };
+    const few = Math.min(timeFor(10), timeFor(10));
+    const many = Math.min(timeFor(600), timeFor(600));
+    expect(many).toBeLessThan(few * 3 + 1);
+  });
+  // The Demo turns knobs every frame: a Patch change must not rebuild a pulse's Fourier series for every Voice.
+  it('applies a Patch change with pulse Waveforms on 8 Voices about as fast as with saws', () => {
+    const timeFor = (waveform: 'pulse' | 'saw') => {
+      const ctx = new OfflineAudioContext(1, SR, SR);
+      const engine = createSynthEngine(ctx);
+      const patch = { ...defaultPatch(), voices: 8 as const, waveform, osc2Waveform: waveform };
+      engine.applyPatch(patch);
+      const start = performance.now();
+      for (let i = 0; i < 50; i++) engine.applyPatch({ ...patch, cutoff: 1000 + i });
+      return (performance.now() - start) / 50;
+    };
+    const saw = Math.min(timeFor('saw'), timeFor('saw'));
+    const pulse = Math.min(timeFor('pulse'), timeFor('pulse'));
+    expect(pulse).toBeLessThan(saw * 3 + 0.5);
+  });
+  it('gives the Envelope levels that replaying every Gate event from the start would', () => {
+    const ctx = new OfflineAudioContext(1, SR * 4, SR);
+    const engine = createSynthEngine(ctx);
+    const patch = { ...defaultPatch(), ampAttack: 0.05, ampDecay: 0.2, ampSustain: 0.6, ampRelease: 0.3, filterAttack: 0.01, filterDecay: 0.1, filterSustain: 0.3, filterRelease: 0.5 };
+    engine.applyPatch(patch);
+    const amp: GateEvent[] = [];
+    const filter: GateEvent[] = [];
+    const ampAdsr = { attack: patch.ampAttack, decay: patch.ampDecay, sustain: patch.ampSustain, release: patch.ampRelease };
+    const filterAdsr = { attack: patch.filterAttack, decay: patch.filterDecay, sustain: patch.filterSustain, release: patch.filterRelease };
+    // Notes that retrigger before the Release ends, and releases before the Decay ends: every segment starts mid-way.
+    for (const [on, off, velocity] of [[0.1, 0.3, 1], [0.4, 0.45, 0.5], [0.5, 1.2, 0.8], [1.3, 1.31, 1]]) {
+      engine.noteOn(60, velocity, on);
+      engine.noteOff(off);
+      amp.push({ time: on, on: true, adsr: ampAdsr, peak: velocity }, { time: off, on: false, adsr: ampAdsr, peak: velocity });
+      filter.push({ time: on, on: true, adsr: filterAdsr, peak: 1 }, { time: off, on: false, adsr: filterAdsr, peak: 1 });
+    }
+    for (let t = 0; t < 2; t += 0.01) {
+      const m = engine.modulationAt(t);
+      expect(m.amp).toBeCloseTo(envelopeLevel(amp, t), 9);
+      expect(m.filter).toBeCloseTo(envelopeLevel(filter, t), 9);
+    }
+  });
   it('uses the Cutoff that was in force at that moment, so a hand sweep is drawn as a sweep', async () => {
     const ctx = new OfflineAudioContext(1, SR, SR);
     const engine = createSynthEngine(ctx);

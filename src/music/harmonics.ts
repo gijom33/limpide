@@ -9,11 +9,27 @@ export interface HarmonicSeries {
   magnitudes: Float32Array;
 }
 
+// Series already computed, by their arguments: every Voice's two Oscillators ask for the same pulse at each Patch
+// change, which the Demo makes every frame (issue 45). Bounded, as a dragged Pulse Width asks for a new one each time.
+const computed = new Map<string, HarmonicSeries>();
+const COMPUTED_LIMIT = 64;
+
 /**
  * The Fourier series of a Waveform, scaled so one cycle peaks at ±1. The engine plays exactly these
- * coefficients (as a PeriodicWave), so the Ideal Reference drawn from them is what was synthesised.
+ * coefficients (as a PeriodicWave), so the Ideal Reference drawn from them is what was synthesised. The arrays are
+ * shared between callers: read them, never write to them.
  */
 export function harmonicSeries(waveform: Waveform, pulseWidth: number, count: number): HarmonicSeries {
+  const key = `${waveform} ${waveform === 'pulse' ? pulseWidth : ''} ${count}`;
+  const known = computed.get(key);
+  if (known) return known;
+  if (computed.size >= COMPUTED_LIMIT) computed.clear();
+  const series = computeSeries(waveform, pulseWidth, count);
+  computed.set(key, series);
+  return series;
+}
+
+function computeSeries(waveform: Waveform, pulseWidth: number, count: number): HarmonicSeries {
   const real = new Float32Array(count);
   const imag = new Float32Array(count);
   for (let n = 1; n < count; n++) {

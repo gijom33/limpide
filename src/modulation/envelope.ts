@@ -33,12 +33,15 @@ function levelWithin(e: GateEvent, start: number, elapsed: number): number {
   return approach(afterAttack, sustain * e.peak, elapsed - attack, decay / DECAY_SHARPNESS);
 }
 
+/** The level at `time`, a Gate event having started from `start`, while it is the latest event. */
+export const levelAfter = (e: GateEvent, start: number, time: number) => levelWithin(e, start, time - e.time);
+
 /** The Envelope's level at `time`, given every Gate event so far (in time order). */
 export function envelopeLevel(events: readonly GateEvent[], time: number): number {
   let level = 0;
   for (let i = 0; i < events.length && events[i].time <= time; i++) {
     const end = i + 1 < events.length && events[i + 1].time <= time ? events[i + 1].time : time;
-    level = levelWithin(events[i], level, end - events[i].time);
+    level = levelAfter(events[i], level, end);
   }
   return level;
 }

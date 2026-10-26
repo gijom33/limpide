@@ -103,13 +103,17 @@ export function createLfoClock(start: number, rate: number) {
 // The slide approaches its target like setTargetAtTime: 98% of the way there (e^−4) at the Glide time.
 const GLIDE_SHARPNESS = 4;
 
+/** Where a slide from `from` towards `target` has reached `elapsed` after it began (no Glide: there at once). */
+export const glideFrom = (from: number, target: number, glide: number, elapsed: number) =>
+  glide > 0 ? target + (from - target) * Math.exp((-elapsed * GLIDE_SHARPNESS) / glide) : target;
+
 /** The Oscillator's frequency at `time`, given each Note's arrival (with the Glide in force then). */
 export function glideFrequency(history: readonly { time: number; frequency: number; glide: number }[], time: number): number {
   let frequency = history[0]?.frequency ?? 0;
   for (let i = 0; i < history.length && history[i].time <= time; i++) {
     const { frequency: target, glide } = history[i];
     const end = i + 1 < history.length && history[i + 1].time <= time ? history[i + 1].time : time;
-    frequency = glide > 0 ? target + (frequency - target) * Math.exp((-(end - history[i].time) * GLIDE_SHARPNESS) / glide) : target;
+    frequency = glideFrom(frequency, target, glide, end - history[i].time);
   }
   return frequency;
 }
