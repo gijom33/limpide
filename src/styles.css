@@ -331,7 +331,7 @@ main[data-frozen] .tap-canvases::before {
 /* The Timeline panel is a grid: the title and the key on the top row (the key over the plot it explains), the
    controls and the plot below, the plot as tall as the controls. */
 .timeline {
-  margin: 0 0 var(--space-4); padding: var(--space-3) var(--space-4); background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-panel);
+  margin: 0; padding: var(--space-3) var(--space-4); background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-panel);
   /* The controls as wide as they need, up to what leaves the plot room: narrower, LFO 2 wraps under LFO 1. */
   display: grid; grid-template-columns: minmax(0, max-content) minmax(240px, 1fr); grid-template-rows: auto 1fr; column-gap: var(--space-4); row-gap: var(--space-3);
 }
@@ -397,16 +397,25 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 @media (max-width: 860px) {
   .chain { row-gap: var(--space-4); }
 }
+/* The chain holds the fourth section too, LFO & Envelopes: on a laptop a row under the three stages. */
+.chain > .timeline { grid-column: 1 / -1; }
 /* Between a phone and a laptop (a foldable opened flat, a small tablet), the four sections 2 × 2: Oscillators and
-   Filter on top, Amp and LFO & Envelopes under them (issue 38). The chain lets its stages into main's grid, so
-   LFO & Envelopes can share the Amp's row; each stage still spans two rows, its Viewers lined up with its
-   neighbour's. */
+   Filter on top, Amp and LFO & Envelopes under them (issue 38). Each stage spans two rows, its Viewers lined up
+   with its neighbour's. */
 @media (min-width: 601px) and (max-width: 860px) {
-  main { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
-  main > * { grid-column: 1 / -1; }
-  main > .chain { display: contents; }
+  .chain { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   /* One column, as on a phone: the compact windows' rule further down would give the LFOs a 200 px column. */
-  main > .timeline { grid-column: auto; grid-row: span 2; margin: 0; grid-template-columns: minmax(0, 1fr); }
+  .chain > .timeline { grid-column: auto; grid-row: span 2; grid-template-columns: minmax(0, 1fr); }
+}
+/* Wide screens, from 1920 px: the four sections side by side, LFO & Envelopes a column beside the stages, so the
+   height its row took goes to the Viewers (issue 43). A quarter of 1920 px is what three across gives a stage on a
+   1440 px laptop; the page grows to 2560 px, where a stage is as wide as three across made it at 1920, and no
+   wider. */
+@media (min-width: 1920px) {
+  main { max-width: 2560px; }
+  .chain { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  /* In one column, as on a phone; its plot takes the height the LFOs leave, down to the Viewers' bottom. */
+  .chain > .timeline { grid-column: auto; grid-row: span 2; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto minmax(100px, 1fr); }
 }
 @media (min-width: 861px) and (min-height: 700px) {
   /* The Viewers' row never collapses below a caption and two 90 pt Viewers. */
@@ -604,7 +613,8 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   /* The plot is exactly as tall as the LFO and Glide controls: the Viewers above get the rest of the window. */
   .timeline-plot { height: auto; min-height: 100px; }
 }
-@media (max-width: 860px) {
+/* One column: on phones, in the 2 × 2 layout, and as the fourth column of a wide screen. */
+@media (max-width: 860px), (min-width: 1920px) {
   .timeline { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto auto; }
   .timeline h2, .timeline-key, .timeline-controls, .timeline-plot { grid-area: auto; }
   /* The key goes right above the plot it explains, below the controls. */

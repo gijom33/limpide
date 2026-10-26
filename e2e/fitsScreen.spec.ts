@@ -83,7 +83,8 @@ for (const [width, height] of [
           if (r.bottom > b.bottom + 1 || r.top < b.top - 1) found.push(`${block.getAttribute('aria-label')}: ${part.className} outside its block`);
         }
       }
-      if (box(document.querySelector('.chain')!).bottom > box(document.querySelector('.timeline')!).top + 1) found.push('stages overlap the Timeline');
+      const stagesBottom = Math.max(...[...document.querySelectorAll('.chain > .block')].map((b) => box(b).bottom));
+      if (stagesBottom > box(document.querySelector('.timeline')!).top + 1) found.push('stages overlap the Timeline');
       const title = box(document.querySelector('h1')!);
       const display = box(document.querySelector('.display-menu')!);
       if (display.top > title.bottom) found.push('Display button is not on the title line');
@@ -195,7 +196,8 @@ for (const [width, height] of [
 }
 
 test('the Timeline plot is as tall as its controls, whatever size the window was before', async ({ page }) => {
-  await page.setViewportSize({ width: 2000, height: 1140 });
+  // Wide, but under the 1920 px where LFO & Envelopes becomes a column beside the stages (issue 43).
+  await page.setViewportSize({ width: 1900, height: 1140 });
   await page.goto('/');
   await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);
   const measure = () =>
@@ -216,7 +218,7 @@ test('the Timeline plot is as tall as its controls, whatever size the window was
   // A narrower window, then back: the plot's own pixel size must not have grown the row.
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.waitForTimeout(300);
-  await page.setViewportSize({ width: 2000, height: 1140 });
+  await page.setViewportSize({ width: 1900, height: 1140 });
   await page.waitForTimeout(300);
   const again = await measure();
   expect(again.plot).toBe(fresh.plot);

@@ -942,19 +942,20 @@ export function App() {
             onChange={change}
             viewers={viewers('amp', 'Amp', { limiting: session.engine.limiting })}
           />
-        </div>
 
-        <EnvelopeTimeline
-          engine={session.engine}
-          view={view}
-          controls={
-            <div className="timeline-controls">
-              {([1, 2] as const).map((n) => (
-                <LfoControls key={n} lfo={n} engine={session.engine} patch={patch} onParam={change} onPatch={setPatch} />
-              ))}
-            </div>
-          }
-        />
+          {/* The fourth section, after the three stages: under them, beside them, or 2 × 2 with them, by the width. */}
+          <EnvelopeTimeline
+            engine={session.engine}
+            view={view}
+            controls={
+              <div className="timeline-controls">
+                {([1, 2] as const).map((n) => (
+                  <LfoControls key={n} lfo={n} engine={session.engine} patch={patch} onParam={change} onPatch={setPatch} />
+                ))}
+              </div>
+            }
+          />
+        </div>
       </main>
     </MathsContext.Provider>
     </ModulationContext.Provider>
