@@ -409,6 +409,10 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   .chain { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   /* One column, as on a phone: the compact windows' rule further down would give the LFOs a 200 px column. */
   .chain > .timeline { grid-column: auto; grid-row: span 2; grid-template-columns: minmax(0, 1fr); }
+  /* Its plot takes the height the Amp beside it leaves, as in four across: the heading stays at the top, level with
+     the other sections'. */
+  .chain > .timeline { grid-template-rows: auto auto auto minmax(120px, 1fr); }
+  .chain > .timeline .timeline-plot { height: auto; min-height: 120px; }
 }
 /* Wide screens, from 1920 px: the four sections side by side, LFO & Envelopes a column beside the stages, so the
    height its row took goes to the Viewers (issue 43). A quarter of 1920 px is what three across gives a stage on a
@@ -726,9 +730,10 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
     /* Fader columns as wide as the Filter Envelope's row leaves them (Amount and four faders on one line). */
     .knob[data-kind='fader'] { --fader-col: clamp(40px, (100cqw - var(--dial-big) - 4 * var(--knob-gap)) / 4, 44px); }
   }
-  /* The narrowest laptop windows: less side padding in the stages, so Amount and the four Filter Envelope faders
-     stay on one line. */
-  @media (max-width: 960px) {
+  /* The narrowest laptop windows, three stages across: less side padding in the stages, so Amount and the four Filter
+     Envelope faders stay on one line. (The sections 2 × 2 keep the LFO & Envelopes' padding: each stage there is
+     wider.) */
+  @media (min-width: 861px) and (max-width: 960px) {
     .block { padding-left: var(--space-2); padding-right: var(--space-2); }
   }
   /* Filter Mode and Slope on one line, with slimmer segments. */

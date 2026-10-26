@@ -67,3 +67,18 @@ test('a phone keeps one section under another, with the strip; a laptop window k
   expect(filter.top).toBe(osc.top);
   expect(amp.top).toBe(osc.top);
 });
+
+test('the four sections have the same inner margins: each heading as far from its section’s corner', async ({ page }) => {
+  for (const width of [601, 690, 860]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/');
+    const insets = await page.evaluate((names) =>
+      names.map((name) => {
+        const section = document.querySelector(`section[aria-label="${name}"]`)!.getBoundingClientRect();
+        const heading = document.querySelector(`section[aria-label="${name}"] h2`)!.getBoundingClientRect();
+        return `${Math.round(heading.left - section.left)},${Math.round(heading.top - section.top)}`;
+      }),
+    sections);
+    expect(new Set(insets).size, `${width}px: ${insets.join(' ')}`).toBe(1);
+  }
+});
