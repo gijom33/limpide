@@ -15,3 +15,5 @@ Questions for the grilling:
 
 - [ ] Grilled; the PRD's Out of Scope and user stories updated
 - [ ] Issues for the tutorial player and for the content, from the grilling
+
+From the persona reviews (2026-10-26, [review 5](../reviews/2026-10-26/5-learner-teacher.md)): after the welcome nothing shows the signal chain (Oscillators → Filter → Amp) or says where to start, and the best teaching aids (the Curve's tooltip on Resonance, Maths, Ideal, Snapshot) are hidden in the Display panel. A first tutorial, or a "start here", answers both. The Learner's review runs again once tutorials exist ([42](./42-reviews.md)).
