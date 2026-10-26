@@ -397,6 +397,17 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 @media (max-width: 860px) {
   .chain { row-gap: var(--space-4); }
 }
+/* Between a phone and a laptop (a foldable opened flat, a small tablet), the four sections 2 × 2: Oscillators and
+   Filter on top, Amp and LFO & Envelopes under them (issue 38). The chain lets its stages into main's grid, so
+   LFO & Envelopes can share the Amp's row; each stage still spans two rows, its Viewers lined up with its
+   neighbour's. */
+@media (min-width: 601px) and (max-width: 860px) {
+  main { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
+  main > * { grid-column: 1 / -1; }
+  main > .chain { display: contents; }
+  /* One column, as on a phone: the compact windows' rule further down would give the LFOs a 200 px column. */
+  main > .timeline { grid-column: auto; grid-row: span 2; margin: 0; grid-template-columns: minmax(0, 1fr); }
+}
 @media (min-width: 861px) and (min-height: 700px) {
   /* The Viewers' row never collapses below a caption and two 90 pt Viewers. */
   main > .chain { grid-template-rows: auto minmax(210px, 1fr); }

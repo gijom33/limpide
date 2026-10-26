@@ -41,7 +41,7 @@ Contrast, target sizes and the keyboard are checked on every screen state by `e2
 
 - Control edges below 3:1: buttons, Patch items and fields (1.1:1 and up), a selector's chosen option (1.45:1 and up), a knob's groove and a fader's track (1.2:1 and up). The text and the value arcs carry the control.
 - Light theme text below 4.5:1: muted text on buttons and selectors (4:1 and up), the Oscillators green as text (3.25:1 and up). The Space hint on Freeze (2.25:1 and up).
-- Targets below 24 px on a laptop: selector options (20 px), the piano's keys (12 px black, 20 px white). Below 44 px on a phone: controls at the toolbar height (28 px), selector options (20 px), the logo (24 px), the Preset arrows (18 px), the black keys (26 px).
+- Targets below 24 px on a laptop: selector options (20 px), the piano's keys (12 px black, 20 px white). Below 44 px on a phone: controls at the toolbar height (28 px), selector options (20 px), the logo (24 px), the Preset arrows (18 px), the black keys (26 px). On a foldable opened flat (690 × 830, the sections 2 × 2 of issue 38), the laptop's controls and so the laptop's two.
 
 ## Sources
 

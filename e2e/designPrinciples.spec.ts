@@ -18,7 +18,7 @@ interface Waiver {
   floor: number;
   /** Only in this theme or at this size; both when left out. */
   theme?: 'dark' | 'light';
-  size?: 'laptop' | 'phone';
+  size?: keyof typeof SIZES;
 }
 // Decided by the owner on 2026-10-25 (issue 27, issue 28): look B's quiet edges and compact controls stay; only the
 // selectors' chosen option became brighter. Each waiver's comment gives what it measured that day.
@@ -39,6 +39,9 @@ const WAIVERS: Waiver[] = [
   // (black) wide, as on a piano drawn this size (the computer keyboard and MIDI play the same Notes).
   { rule: 'target', selector: '.segmented button', floor: 20, size: 'laptop' },
   { rule: 'target', selector: '.piano button', floor: 12, size: 'laptop' },
+  // Foldable targets (issue 38): the laptop's controls in the sections 2 × 2, so the laptop's two waivers.
+  { rule: 'target', selector: '.segmented button', floor: 20, size: 'foldable' },
+  { rule: 'target', selector: '.piano button', floor: 12, size: 'foldable' },
   // Phone targets: controls at the toolbar height (28 px), selector options (20 to 22 px), the logo (24 px tall),
   // the Preset arrows (18 px wide), the piano's black keys (24 px wide, beside the octave buttons).
   { rule: 'target', selector: '.tool, .tab-list [role=tab], .patch-item, .patch-save input', floor: 28, size: 'phone' },
@@ -51,6 +54,8 @@ const WAIVERS: Waiver[] = [
 const SIZES = {
   laptop: { width: 1440, height: 900, minTarget: 24 }, // WCAG 2.5.8
   phone: { width: 375, height: 812, minTarget: 44 }, // Apple's 44 pt, WCAG 2.5.5
+  // A foldable opened flat (issue 38): the sections 2 × 2, with the laptop's controls, so the laptop's minimum.
+  foldable: { width: 690, height: 830, minTarget: 24 },
 } as const;
 
 /** The states to audit, each opened from the page as loaded and closed again. */
@@ -90,7 +95,7 @@ async function audit(page: Page, size: keyof typeof SIZES, theme: 'dark' | 'ligh
 }
 
 for (const theme of ['dark', 'light'] as const) {
-  for (const size of ['laptop', 'phone'] as const) {
+  for (const size of ['laptop', 'phone', 'foldable'] as const) {
     test(`contrast, ${theme} theme, ${size}: text 4.5:1, what draws a control 3:1`, async ({ page }) => {
       const { unexpected, unused } = await audit(page, size, theme, ['text', 'boundary']);
       expect(unexpected, 'failures no waiver covers (or below its floor)').toEqual([]);
@@ -99,7 +104,7 @@ for (const theme of ['dark', 'light'] as const) {
   }
 }
 
-for (const size of ['laptop', 'phone'] as const) {
+for (const size of ['laptop', 'phone', 'foldable'] as const) {
   test(`targets, ${size}: at least ${SIZES[size].minTarget} × ${SIZES[size].minTarget} px`, async ({ page }) => {
     const { unexpected, unused } = await audit(page, size, 'dark', ['target']);
     expect(unexpected, 'failures no waiver covers (or below its floor)').toEqual([]);
