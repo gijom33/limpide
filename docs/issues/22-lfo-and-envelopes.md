@@ -4,14 +4,14 @@
 
 **Blocked by:** 19
 
-**Status:** done, except MIDI Learn on the plot, which is wired (it carries the LFO Waveform's Learn target) but has no test of its own
+**Status:** done. MIDI Learn on the plot became MIDI Learn on the LFO Waveform picker: issue 26 brought the shape buttons back and the plot is display only now. That picker's Learn has its own test in `e2e/midiLearn.spec.ts`.
 
 - [x] LFO block with the history plot from the Modulation model; clicking or pressing Enter on the plot cycles the shape; the four shape buttons go; on phones the plot shrinks to the room beside the selector
 - [x] The row's heading becomes LFO & Envelopes (the owner's name for it, rather than Modulation); the plot's canvas keeps its Envelope Timeline label
 - [x] The row wears the modulation colour as its stage colour: border, heading, knob arcs (`--stage-mod`: `#5b8cff` dark, `#2f5fe0` light)
 - [x] Glide beside Voices, dimmed (still adjustable) when Voices > 1, with a tooltip saying why
 - [x] Tooltips updated (LFO Waveform, LFO & Envelopes, Glide)
-- [ ] MIDI Learn on the plot learns the shape: wired, untested
+- [x] MIDI Learn learns the shape: on the LFO Waveform picker since issue 26, which took over from the plot (e2e)
 - [x] e2e: clicking the plot steps through the shapes; Glide dims at 2 Voices; still fits 1440×900
 
 ## Decided while building

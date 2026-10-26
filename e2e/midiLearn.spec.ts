@@ -119,6 +119,49 @@ test('a Waveform learns from an encoder: two clicks step to the next shape, as t
   await expect(picker).toHaveAttribute('data-mapped', 'true');
 });
 
+test('an LFO Waveform learns from an encoder, as the Oscillator’s does', async ({ page }) => {
+  const picker = page.getByRole('radiogroup', { name: 'LFO 1 Waveform' });
+  await expect(picker.getByRole('radio', { name: 'Sine' })).toHaveAttribute('aria-checked', 'true');
+  await startLearn(page);
+  await picker.getByRole('radio', { name: 'Square' }).click(); // selects the picker, without changing it
+  await expect(learnBar(page)).toContainText(/LFO 1 Waveform/);
+  await expect(picker.getByRole('radio', { name: 'Sine' })).toHaveAttribute('aria-checked', 'true');
+  await play(page, ...times(4, cc(3, 1)));
+  await expect(learnBar(page)).toContainText(/LFO 1 Waveform.*CC 3/);
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(600); // the encoder at rest, then turned again
+  await play(page, ...times(2, cc(3, 1)));
+  await expect(picker.getByRole('radio', { name: 'Triangle' })).toHaveAttribute('aria-checked', 'true');
+  await play(page, ...times(4, cc(3, 1)));
+  await expect(picker.getByRole('radio', { name: 'Saw', exact: true })).toHaveAttribute('aria-checked', 'true');
+  await play(page, ...times(2, cc(3, 127)));
+  await expect(picker.getByRole('radio', { name: 'Square' })).toHaveAttribute('aria-checked', 'true');
+  await expect(picker).toHaveAttribute('data-mapped', 'true');
+});
+
+test('an LFO’s Destination learns from an encoder: it steps through the list as the arrows do', async ({ page }) => {
+  const lfo2 = page.getByRole('group', { name: 'LFO 2', exact: true });
+  const destination = lfo2.getByRole('button', { name: /Destination:/ });
+  await expect(destination).toHaveAccessibleName('LFO 2 Destination: Pitch');
+  await startLearn(page);
+  await destination.click(); // selects the selector, without opening its menu
+  await expect(learnBar(page)).toContainText(/LFO 2 Destination/);
+  await expect(lfo2.getByRole('menu')).toHaveCount(0);
+  await play(page, ...times(4, cc(5, 1)));
+  await expect(learnBar(page)).toContainText(/LFO 2 Destination.*CC 5/);
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(600); // the encoder at rest, then turned again
+  await play(page, ...times(2, cc(5, 1)));
+  await expect(destination).toHaveAccessibleName('LFO 2 Destination: Osc 2 Pitch');
+  await play(page, ...times(4, cc(5, 1)));
+  await expect(destination).toHaveAccessibleName('LFO 2 Destination: Pulse Width');
+  await play(page, ...times(2, cc(5, 127)));
+  await expect(destination).toHaveAccessibleName('LFO 2 Destination: Detune');
+  await expect(lfo2.locator('.destination-picker')).toHaveAttribute('data-mapped', 'true');
+  // LFO 1's own selector is not moved by it.
+  await expect(page.getByRole('group', { name: 'LFO 1', exact: true }).getByRole('button', { name: /Destination:/ })).toHaveAccessibleName('LFO 1 Destination: Cutoff');
+});
+
 test('a Controller moving a knob on a hidden tab brings that tab into view', async ({ page }) => {
   const mapping = (id: string, number: number) => ({
     control: { kind: 'cc', channel: 1, number },

@@ -15,7 +15,7 @@ Not a destination: Volume (tremolo), which has no clean picture; nor Noise or Os
 
 **Blocked by:** 21 (done)
 
-**Status:** done, but for MIDI Learn on the new selector (it carries the learn target; not tested by hand). The LFO Waveforms gained a falling saw along the way, and square and saw LFOs are now built unnormalised so they swing exactly ±1, as drawn.
+**Status:** done. MIDI Learn on the new selector is tested in `e2e/midiLearn.spec.ts`: an encoder steps LFO 2's Destination through the list as the arrows do, and leaves LFO 1's alone. The LFO Waveforms gained a falling saw along the way, and square and saw LFOs are now built unnormalised so they swing exactly ±1, as drawn.
 
 - [x] Destination selector first, on LFO 1; then LFO 2 with the same rows
 - [x] Patch: LFO 2 (Rate, Depth, Waveform, destination); the new destinations; Patches and share links with the old three still load unchanged
