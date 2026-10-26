@@ -20,10 +20,11 @@ interface Props {
 /**
  * The on-screen piano: the computer keyboard's range, each C named with its octave (C3, C4…), lit while a Note
  * sounds from any source. Press lower on a key to play harder (Velocity); drag across keys to slide from Note
- * to Note.
+ * to Note. Each finger on a touch screen plays its own Note, as each key of the computer keyboard does (issue 39).
  */
 export function Piano({ octave, held, input, invite }: Props) {
-  const playing = useRef<number | null>(null);
+  // The Note each pointer plays. Two fingers on one key both hold it: the Note input counts its holders.
+  const playing = useRef(new Map<number, number>());
 
   const noteAt = (x: number, y: number) => {
     const key = document.elementFromPoint(x, y)?.closest<HTMLElement>('[data-note]');
@@ -31,11 +32,14 @@ export function Piano({ octave, held, input, invite }: Props) {
     const r = key.getBoundingClientRect();
     return { note: Number(key.dataset.note), velocity: 0.35 + 0.65 * Math.min(1, Math.max(0, (y - r.top) / r.height)) };
   };
-  const play = (hit: { note: number; velocity: number } | null) => {
-    if (hit?.note === playing.current) return;
-    if (playing.current !== null) input.release(playing.current);
-    playing.current = hit?.note ?? null;
-    if (hit) input.press(hit.note, hit.velocity);
+  const play = (pointer: number, hit: { note: number; velocity: number } | null) => {
+    const current = playing.current.get(pointer);
+    if (hit?.note === current) return;
+    if (current !== undefined) input.release(current);
+    if (hit) {
+      playing.current.set(pointer, hit.note);
+      input.press(hit.note, hit.velocity);
+    } else playing.current.delete(pointer);
   };
 
   return (
@@ -46,11 +50,11 @@ export function Piano({ octave, held, input, invite }: Props) {
       onPointerDown={(e) => {
         e.preventDefault();
         e.currentTarget.setPointerCapture(e.pointerId);
-        play(noteAt(e.clientX, e.clientY));
+        play(e.pointerId, noteAt(e.clientX, e.clientY));
       }}
-      onPointerMove={(e) => e.buttons && play(noteAt(e.clientX, e.clientY))}
-      onPointerUp={() => play(null)}
-      onPointerCancel={() => play(null)}
+      onPointerMove={(e) => e.buttons && play(e.pointerId, noteAt(e.clientX, e.clientY))}
+      onPointerUp={(e) => play(e.pointerId, null)}
+      onPointerCancel={(e) => play(e.pointerId, null)}
     >
       {KEYS.map((code) => {
         const note = keyToNote(code, octave)!;

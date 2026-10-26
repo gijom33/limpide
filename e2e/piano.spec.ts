@@ -245,6 +245,64 @@ test.describe('on a touch screen', () => {
     await page.getByRole('region', { name: 'Oscillators' }).getByRole('heading').first().dblclick();
     expect(await page.evaluate(() => window.getSelection()?.toString() ?? '')).toBe('');
   });
+
+  // Issue 39: each finger on the piano plays its own Note, as each key of the computer keyboard does.
+  const piano = (page: Page) => page.getByRole('group', { name: 'Piano' });
+  /**
+   * The fingers on the screen, each by its id, through Chromium's touch input: one session per test, each call the
+   * fingers down now. A finger added starts a touch, one lifted ends it (the event lists the fingers lifted), the
+   * rest move.
+   */
+  async function touchScreen(page: Page) {
+    const cdp = await page.context().newCDPSession(page);
+    let before: { id: number; x: number; y: number }[] = [];
+    return async (down: Record<number, string>) => {
+      const points: typeof before = [];
+      for (const [id, key] of Object.entries(down)) {
+        const box = (await piano(page).getByRole('button', { name: key.replace(/'$/, ''), exact: true }).boundingBox())!;
+        // Low on a white key, clear of the black keys; a second finger on the same key (a ' after its name) beside the first.
+        points.push({ id: Number(id), x: box.x + box.width * (key.endsWith("'") ? 0.75 : 0.4), y: box.y + box.height * 0.85 });
+      }
+      const lifted = before.filter((b) => !points.some((p) => p.id === b.id));
+      const added = points.some((p) => !before.some((b) => b.id === p.id));
+      before = points;
+      if (lifted.length) await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: lifted });
+      else await cdp.send('Input.dispatchTouchEvent', { type: added ? 'touchStart' : 'touchMove', touchPoints: points });
+    };
+  }
+  const lit = (page: Page) => piano(page).locator('[aria-pressed="true"]').evaluateAll((keys) => keys.map((k) => k.getAttribute('aria-label')));
+
+  test('with several Voices, every finger plays its own Note: a chord, a finger sliding alone, fingers lifted in any order', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('radiogroup', { name: 'Voices' }).getByRole('radio', { name: '3' }).click();
+    // Back to the top: on a phone the header, piano and all, slides away as the page scrolls down to the Amp.
+    await page.evaluate(() => scrollTo(0, 0));
+    await expect.poll(async () => (await piano(page).boundingBox())!.y).toBeGreaterThan(0);
+    const fingers = await touchScreen(page);
+    await fingers({ 1: 'C4' });
+    await fingers({ 1: 'C4', 2: 'E4' });
+    await fingers({ 1: 'C4', 2: 'E4', 3: 'G4' });
+    await expect.poll(() => lit(page)).toEqual(['C4', 'E4', 'G4']);
+    await fingers({ 1: 'C4', 2: 'F4', 3: 'G4' }); // the second finger slides on, alone
+    await expect.poll(() => lit(page)).toEqual(['C4', 'F4', 'G4']);
+    await fingers({ 2: 'F4', 3: 'G4' }); // the first finger lifts
+    await expect.poll(() => lit(page)).toEqual(['F4', 'G4']);
+    await fingers({});
+    await expect.poll(() => lit(page)).toEqual([]);
+  });
+
+  test('two fingers on one key are one Note, until the last of them lifts', async ({ page }) => {
+    await page.goto('/');
+    const fingers = await touchScreen(page);
+    await fingers({ 1: 'C4' });
+    await fingers({ 1: 'C4', 2: "C4'" });
+    await expect.poll(() => lit(page)).toEqual(['C4']);
+    await fingers({ 2: "C4'" });
+    await page.waitForTimeout(100);
+    expect(await lit(page)).toEqual(['C4']);
+    await fingers({});
+    await expect.poll(() => lit(page)).toEqual([]);
+  });
 });
 
 for (const theme of ['Dark', 'Light'] as const) {
