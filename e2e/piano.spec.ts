@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { openDisplay } from './helpers';
+import { midiPermission } from './fakeMidi';
 
 const db = (page: Page) => page.getByLabel('Amp Scope', { exact: true }).getAttribute('data-db').then((v) => (v === null ? NaN : Number(v)));
 const ready = (page: Page) => expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);
@@ -86,7 +87,8 @@ test('a shifted octave button shows how far, signed; the other keeps its sign; n
 });
 
 test('a MIDI controller plays the synth, its pads lighting the piano', async ({ page }) => {
-  // A stand-in Controller: Web MIDI with one input the test can play.
+  // A stand-in Controller: Web MIDI with one input the test can play, allowed on an earlier visit.
+  await midiPermission(page, 'granted');
   await page.addInitScript(() => {
     const input = Object.assign(new EventTarget(), { id: 'fake', name: 'Synido TempoPAD C16', state: 'connected' });
     const access = Object.assign(new EventTarget(), { inputs: new Map([['fake', input]]) });
@@ -125,6 +127,7 @@ test('on an iPhone, even in Chrome, the MIDI indicator says no browser there has
 });
 
 test('when the browser blocks MIDI, the indicator shows it is unavailable (not just empty) and says why', async ({ page }) => {
+  await midiPermission(page, 'denied');
   await page.addInitScript(() =>
     Object.defineProperty(navigator, 'requestMIDIAccess', {
       value: () => Promise.reject(new DOMException('Permission to use Web MIDI API was not granted.', 'NotAllowedError')),
@@ -139,6 +142,7 @@ test('when the browser blocks MIDI, the indicator shows it is unavailable (not j
 });
 
 test('with Web MIDI working but nothing plugged in, the indicator is not marked unavailable', async ({ page }) => {
+  await midiPermission(page, 'granted');
   await page.addInitScript(() => {
     const access = Object.assign(new EventTarget(), { inputs: new Map() });
     Object.defineProperty(navigator, 'requestMIDIAccess', { value: () => Promise.resolve(access), configurable: true });
@@ -160,6 +164,7 @@ test('the MIDI icon carries the status: yellow with nothing plugged in, green wi
   }, token);
   const open = async (inputs: string[] | null) => {
     const p = await browser.newPage();
+    await midiPermission(p, 'granted');
     await p.addInitScript((names) => {
       const access = Object.assign(new EventTarget(), { inputs: new Map((names ?? []).map((n) => [n, Object.assign(new EventTarget(), { id: n, name: n, state: 'connected' })])) });
       Object.defineProperty(navigator, 'requestMIDIAccess', { value: names ? () => Promise.resolve(access) : undefined, configurable: true });

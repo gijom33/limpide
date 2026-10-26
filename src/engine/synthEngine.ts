@@ -227,9 +227,22 @@ function setStage(node: BiquadFilterNode, stage: Stage, cutoff: number, t?: numb
   }
 }
 
+/**
+ * Drops what is scheduled on `param` after `t`, holding the value it has then. Firefox has no `cancelAndHoldAtTime`
+ * (issue 46): there the value held is the current one, which differs only while a ramp is under way at `t`.
+ */
+function holdAt(param: AudioParam, t: number) {
+  if (typeof param.cancelAndHoldAtTime === 'function') {
+    param.cancelAndHoldAtTime(t);
+  } else {
+    param.cancelScheduledValues(t);
+    param.setValueAtTime(param.value, t);
+  }
+}
+
 function play(param: AudioParam, steps: AutomationStep[], scale = 1) {
   for (const s of steps) {
-    if (s.kind === 'cancelAndHold') param.cancelAndHoldAtTime(s.time);
+    if (s.kind === 'cancelAndHold') holdAt(param, s.time);
     else param.setTargetAtTime(s.target * scale, s.time, s.timeConstant);
   }
 }
@@ -407,12 +420,12 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
       if (pitches.length > HISTORY) pitches.shift();
       for (const [node, f] of [[osc, frequency], [osc2, frequency], [sub, frequency / 2]] as const) {
         // Every Oscillator follows the Note: Osc 2's offsets ride on top, through its detune; the Sub an octave down.
-        node.frequency.cancelAndHoldAtTime(t);
+        holdAt(node.frequency, t);
         if (glide) node.frequency.setTargetAtTime(f, t, glideTimeConstant(glide));
         else node.frequency.setValueAtTime(f, t);
       }
       tunePulses(frequency, t, glide ? glideTimeConstant(glide) : undefined);
-      trackedNote.offset.cancelAndHoldAtTime(t);
+      holdAt(trackedNote.offset, t);
       if (glide) trackedNote.offset.setTargetAtTime(note - KEY_TRACK_CENTRE, t, glideTimeConstant(glide));
       else trackedNote.offset.setValueAtTime(note - KEY_TRACK_CENTRE, t);
     },

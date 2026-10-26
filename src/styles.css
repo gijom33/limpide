@@ -1028,3 +1028,9 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   /* No grey flash on a tapped button: what a control shows is its own state. */
   button, [role='slider'] { -webkit-tap-highlight-color: transparent; }
 }
+
+/* When the app fails while it renders (issue 46): a message and a reload, not a blank page. */
+.start-failure { max-width: 480px; display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-3); padding-top: 15vh; }
+.start-failure h1 { margin: 0; }
+.start-failure p { margin: 0; font-size: var(--text-lg); line-height: 1.5; }
+.start-failure .start-failure-detail { color: var(--muted); font-family: ui-monospace, monospace; font-size: var(--text-md); }

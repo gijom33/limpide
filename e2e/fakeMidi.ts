@@ -17,10 +17,22 @@ export async function openMidi(page: Page) {
 }
 
 /**
+ * What the browser answers when asked whether MIDI is allowed. Limpide asks for MIDI only when its panel opens,
+ * unless the browser already allowed it (issue 46): a stand-in Controller is one the visitor allowed before.
+ */
+export const midiPermission = (page: Page, state: PermissionState) =>
+  page.addInitScript((state) => {
+    const query = navigator.permissions.query.bind(navigator.permissions);
+    navigator.permissions.query = (descriptor) =>
+      descriptor.name === ('midi' as PermissionName) ? Promise.resolve({ state } as PermissionStatus) : query(descriptor);
+  }, state);
+
+/**
  * Opens Limpide with a stand-in Controller: Web MIDI with one input the test can play. Storage starts empty,
  * once, so reloads keep what the test saved. It is not a C16 (which would get its own layout) unless named one.
  */
 export async function withFakeController(page: Page, name = 'Stand-in Controller') {
+  await midiPermission(page, 'granted');
   await page.addInitScript((name) => {
     if (!sessionStorage.getItem('cleared')) {
       localStorage.clear();

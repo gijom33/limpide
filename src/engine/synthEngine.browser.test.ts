@@ -57,6 +57,28 @@ describe('no hiss at high Resonance and Cutoff', () => {
   });
 });
 
+// Issue 46: Firefox has no cancelAndHoldAtTime. Without it, a Note must still sound, start to finish.
+describe('without cancelAndHoldAtTime (Firefox)', () => {
+  it('plays a Note, releases it, and plays the next', async () => {
+    const original = AudioParam.prototype.cancelAndHoldAtTime;
+    // @ts-expect-error: removed for this test, as in Firefox
+    delete AudioParam.prototype.cancelAndHoldAtTime;
+    try {
+      const s = await render(1, { cutoff: 20000, ampAttack: 0.001, ampSustain: 1, ampRelease: 0.05, glide: 0.1 }, (e) => {
+        e.noteOn(57, 1, 0);
+        e.noteOff(0.3);
+        e.noteOn(69, 1, 0.5);
+      });
+      expect(rms(s, SR * 0.1, SR * 0.25)).toBeGreaterThan(0.05);
+      expect(rms(s, SR * 0.42, SR * 0.48)).toBeLessThan(0.01); // released
+      expect(rms(s, SR * 0.7, SR * 0.95)).toBeGreaterThan(0.05);
+      expect(frequencyAround(s, SR, 0.85, 0.05)).toBeCloseTo(440, -1);
+    } finally {
+      AudioParam.prototype.cancelAndHoldAtTime = original;
+    }
+  });
+});
+
 describe('Amp Envelope', () => {
   const patch = { cutoff: 20000, ampAttack: 0.001, ampDecay: 0.01, ampRelease: 0.05 };
   const at = (t: number) => Math.round(t * SR);

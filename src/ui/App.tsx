@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useReducer, useRef, useState, useSyncExternalStore } from 'react';
 import { getAudioSession, type AudioSession } from '../app/session';
+import { safeStorage } from '../app/storage';
 import { unlockAudio, type AudioStatus } from '../app/unlockAudio';
 import { keyToNote, octaveKey, shiftOctave } from '../input/keyboardLayout';
 import { createControlSurface, type LearnState } from '../midi/controlSurface';
@@ -113,12 +114,12 @@ const choiceOptions = (id: ChoiceId): readonly unknown[] =>
 /** Set once the C16 layout has been applied by itself, so it is never applied again unasked. */
 const C16_APPLIED = 'limpide.c16Layout';
 
-/** localStorage, or a stand-in that keeps nothing when the browser refuses it (some private modes). */
-function safeStorage(): Pick<Storage, 'getItem' | 'setItem'> {
+/** Whether the browser has already allowed or refused MIDI, so connecting asks nothing (unknown: 'prompt'). */
+async function midiPermission(): Promise<PermissionState> {
   try {
-    return window.localStorage;
+    return (await navigator.permissions.query({ name: 'midi' as PermissionName })).state;
   } catch {
-    return { getItem: () => null, setItem: () => {} };
+    return 'prompt';
   }
 }
 
@@ -354,7 +355,7 @@ export function App() {
 
   // The Controller's Mappings, and where its messages meet the synth. Messages arrive between renders, so the
   // surface reads and writes the Patch through a ref that is always current.
-  const mappingStore = useMemo(() => createMappingStore(safeStorage()), []);
+  const mappingStore = useMemo(() => createMappingStore(storage), [storage]);
   // The C16 layout: applied once by itself, the first time a C16 is plugged in with nothing mapped (after that, a
   // person who removed it meant to); the MIDI panel puts it back at any time.
   const applyC16Layout = () => {
@@ -491,10 +492,27 @@ export function App() {
     if (element) reveal(element);
   }, [learnContext.selected]);
 
+  // MIDI is asked for when the visitor opens the MIDI panel, never at load, where the browser's prompt would come
+  // before anything is touched (issue 46); a browser that already allowed it connects at once.
+  const [midiWanted, setMidiWanted] = useState(false);
+  useEffect(() => {
+    if (midiSupport(navigator) !== 'supported') return;
+    let cancelled = false;
+    midiPermission().then((state) => {
+      if (cancelled) return;
+      if (state === 'granted') setMidiWanted(true);
+      if (state === 'denied') setMidi({ kind: 'denied' });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // MIDI Controllers: their Notes join the same Note input as the keyboard and piano.
   useEffect(() => {
     const support = midiSupport(navigator);
     if (support !== 'supported') return setMidi({ kind: 'unsupported', ios: support === 'ios' });
+    if (!midiWanted) return;
     let dispose = () => {};
     let cancelled = false;
     navigator.requestMIDIAccess().then(
@@ -528,12 +546,12 @@ export function App() {
       cancelled = true;
       dispose();
     };
-  }, [surface]);
+  }, [surface, midiWanted]);
   const [theme, setTheme] = useState(loadTheme);
   const [cycles, setCycles] = useState<ViewSettings['cycles']>(2);
-  const [overlays, setOverlays] = useState(() => loadOverlays(localStorage));
+  const [overlays, setOverlays] = useState(() => loadOverlays(storage));
 
-  useEffect(() => saveOverlays(localStorage, overlays), [overlays]);
+  useEffect(() => saveOverlays(storage, overlays), [storage, overlays]);
 
   // The Ideal Reference at the Oscillator Tap's level: the same series the engine plays, scaled by the Nominal Level.
   const ideal = useMemo(
@@ -708,6 +726,7 @@ export function App() {
           <div className="header-right">
             <MidiPanel
               state={midi}
+              onOpen={() => setMidiWanted(true)}
               activity={activity}
               mappings={mappings}
               learning={learning}

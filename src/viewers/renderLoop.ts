@@ -5,8 +5,18 @@ export type Draw = () => void;
 const draws = new Set<Draw>();
 let frame = 0;
 
+// A Viewer that throws is reported once and keeps its place: the others go on drawing, and the loop never stops.
+const failed = new WeakSet<Draw>();
+
 function tick() {
-  for (const draw of draws) draw();
+  for (const draw of draws) {
+    try {
+      draw();
+    } catch (error) {
+      if (!failed.has(draw)) console.error(error);
+      failed.add(draw);
+    }
+  }
   frame = draws.size ? requestAnimationFrame(tick) : 0;
 }
 

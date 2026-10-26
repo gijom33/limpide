@@ -11,6 +11,8 @@ export type MidiState =
 
 interface Props {
   state: MidiState;
+  /** The panel opens: the moment to ask the browser for MIDI. */
+  onOpen(): void;
   /** The Activity Monitor: the last message received, described. */
   activity: string | null;
   mappings: readonly Mapping[];
@@ -43,7 +45,7 @@ const statusText = (state: MidiState) => {
  * panel: what is connected, the Activity Monitor, MIDI Learn (and Done, once learning), and the Mappings.
  */
 export function MidiPanel({
-  state, activity, mappings, learning, onLearn, onDone, onQuickSetup, onC16Layout, onRemove, onClear,
+  state, onOpen, activity, mappings, learning, onLearn, onDone, onQuickSetup, onC16Layout, onRemove, onClear,
 }: Props) {
   const [open, setOpen] = useState(false);
   const wrapper = useRef<HTMLDivElement>(null);
@@ -74,7 +76,10 @@ export function MidiPanel({
           data-waiting={(state.kind === 'ready' && !devices.length) || undefined}
           data-unavailable={!available || undefined}
           data-learning={learning || undefined}
-          onClick={() => setOpen((o) => !o)}
+          onClick={() => {
+            if (!open) onOpen();
+            setOpen(!open);
+          }}
         >
           <MidiIcon />
           <span className="tool-word">MIDI</span>
