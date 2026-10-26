@@ -53,3 +53,55 @@ export function frequencyAround(samples: Float32Array, sampleRate: number, time:
   }
   return ((crossings.length - 1) * sampleRate) / (crossings[crossings.length - 1] - crossings[0]);
 }
+
+/** In-place radix-2 FFT; `re` and `im` are a power of two long. */
+function fft(re: Float64Array, im: Float64Array) {
+  const n = re.length;
+  for (let i = 1, j = 0; i < n; i++) {
+    let bit = n >> 1;
+    for (; j & bit; bit >>= 1) j ^= bit;
+    j ^= bit;
+    if (i < j) {
+      [re[i], re[j]] = [re[j], re[i]];
+      [im[i], im[j]] = [im[j], im[i]];
+    }
+  }
+  for (let len = 2; len <= n; len <<= 1) {
+    const angle = (-2 * Math.PI) / len;
+    for (let i = 0; i < n; i += len)
+      for (let k = 0; k < len / 2; k++) {
+        const [wr, wi] = [Math.cos(angle * k), Math.sin(angle * k)];
+        const [a, b] = [i + k, i + k + len / 2];
+        const xr = re[b] * wr - im[b] * wi;
+        const xi = re[b] * wi + im[b] * wr;
+        [re[b], im[b]] = [re[a] - xr, im[a] - xi];
+        re[a] += xr;
+        im[a] += xi;
+      }
+  }
+}
+
+/**
+ * How loud everything between the Harmonics of `fundamental` is (noise, aliasing, anything inharmonic), in dB
+ * against the Harmonics themselves, over the last `size` samples. Blackman–Harris windowed (sidelobes about −92 dB),
+ * each Harmonic taken as the 8 bins either side of it, so the Harmonics' own skirts do not count as noise.
+ */
+export function betweenHarmonicsDb(samples: Float32Array, sampleRate: number, fundamental: number, size = 16384): number {
+  const re = new Float64Array(size);
+  const im = new Float64Array(size);
+  for (let i = 0; i < size; i++) {
+    const x = (2 * Math.PI * i) / (size - 1);
+    re[i] = samples[samples.length - size + i] * (0.35875 - 0.48829 * Math.cos(x) + 0.14128 * Math.cos(2 * x) - 0.01168 * Math.cos(3 * x));
+  }
+  fft(re, im);
+  const binHz = sampleRate / size;
+  let harmonic = 0;
+  let between = 0;
+  for (let k = Math.ceil(20 / binHz); k < size / 2; k++) {
+    const n = Math.round((k * binHz) / fundamental);
+    const power = re[k] ** 2 + im[k] ** 2;
+    if (n >= 1 && Math.abs(k * binHz - n * fundamental) <= 8 * binHz) harmonic += power;
+    else between += power;
+  }
+  return 10 * Math.log10(between / harmonic);
+}

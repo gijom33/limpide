@@ -4,7 +4,7 @@ import { idealReference } from '../music/idealReference';
 import { defaultPatch, type Patch } from '../patch/patch';
 import { PRESETS } from '../patch/presets';
 import { amplitudeToSpectrumDb } from '../viewers/spectrumScale';
-import { dB, frequencyAround, rms, toneAmplitude, toneAmplitudeHann } from '../test/measure';
+import { betweenHarmonicsDb, dB, frequencyAround, rms, toneAmplitude, toneAmplitudeHann } from '../test/measure';
 import { createSynthEngine, OSCILLATOR_LEVEL } from './synthEngine';
 
 const SR = 48000;
@@ -33,6 +33,26 @@ describe('saw through the low-pass Filter', () => {
     const s = await render(1, { ...steady, cutoff: 1000 }, (e) => e.noteOn(A2, 1, 0));
     const relative = dB(harmonic(s, 20) / harmonic(s, 2)); // 2.2 kHz vs 220 Hz
     expect(relative).toBeLessThan(dB(2 / 20) - 10);
+  });
+});
+
+// Issue 41: a claim that the Filter hisses at high Resonance with the Cutoff near the top. Measured on 2026-10-26, it
+// does not: what sounds there is the resonant peak lifting the saw's top Harmonics, nothing between them.
+describe('no hiss at high Resonance and Cutoff', () => {
+  const A2 = 45; // 110 Hz: Harmonics close together, so anything between them has little room to hide
+  const between = (s: Float32Array) => betweenHarmonicsDb(s, SR, 110);
+  const steady = { ampAttack: 0.001, ampSustain: 1, resonance: 1 };
+
+  for (const filterSlope of [12, 24] as const)
+    for (const cutoff of [16000, 20000])
+      it(`keeps everything between the Harmonics 60 dB under them (Slope ${filterSlope}, Cutoff ${cutoff / 1000} kHz, full Resonance)`, async () => {
+        const s = await render(1, { ...steady, filterSlope, cutoff }, (e) => e.noteOn(A2, 1, 0));
+        expect(between(s)).toBeLessThan(-60);
+      });
+
+  it('hears hiss when there is some: a little Noise in the Mixer is caught (control case)', async () => {
+    const s = await render(1, { ...steady, cutoff: 16000, mixNoise: 0.05 }, (e) => e.noteOn(A2, 1, 0));
+    expect(between(s)).toBeGreaterThan(-60);
   });
 });
 
