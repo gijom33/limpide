@@ -4,6 +4,7 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- The knob test that turns every knob (e2e/knob.spec.ts:55) timed out at 60 s in WebKit during a full run, waiting for the Glide slider; alone it passed five times in five. Seen 2026-10-26.
 
 ## Ideas
 
