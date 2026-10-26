@@ -53,7 +53,6 @@ const knobLayout = (page: import('@playwright/test').Page) =>
   );
 
 test('turning knobs never moves or resizes any knob, whatever width their values take', async ({ page }) => {
-  test.setTimeout(60000); // a hundred turns and as many layout reads over every knob and fader (WebKit is slow at it)
   await page.goto('/');
   const before = await knobLayout(page);
   // Parameters whose readouts change width the most across their range (Hz → kHz, ms → s, Off → seconds, signs).
@@ -66,21 +65,32 @@ test('turning knobs never moves or resizes any knob, whatever width their values
   ]) {
     // A stage is a region; an LFO is a group within its section.
     const knob = page.getByRole(region.startsWith('LFO ') ? 'group' : 'region', { name: region, exact: true }).getByRole('slider', { name, exact: true });
-    const seen = new Set<string | null>();
-    for (const key of ['ArrowDown', 'ArrowUp']) {
-      for (let i = 0; i < 10; i++) {
-        // Five key presses in one go (one round trip instead of five), then a tick for React to render them. Not
-        // requestAnimationFrame: background tabs (parallel runs) pause it.
-        await knob.evaluate(async (el, k) => {
-          for (let n = 0; n < 5; n++) el.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true }));
+    // Twenty steps of five key presses, down then up, each followed by a tick for React to render and a look at
+    // every knob, all in the page: as a hundred round trips the test outran its time on a busy machine.
+    const { seen, moved } = await knob.evaluate(async (el, before) => {
+      const layout = () =>
+        [...document.querySelectorAll<HTMLElement>('.knob')]
+          .filter((k) => k.checkVisibility())
+          .map((k) => {
+            const r = k.getBoundingClientRect();
+            return `${k.querySelector('[role=slider]')?.getAttribute('aria-label')} ${Math.round(r.x)},${Math.round(r.y)} ${Math.round(r.width)}`;
+          });
+      const seen = new Set<string | null>();
+      const moved: string[] = [];
+      for (const key of ['ArrowDown', 'ArrowUp'])
+        for (let i = 0; i < 10; i++) {
+          for (let n = 0; n < 5; n++) el.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+          // Not requestAnimationFrame: background tabs (parallel runs) pause it.
           await new Promise((resolve) => setTimeout(resolve, 0));
-        }, key);
-        const value = await knob.getAttribute('aria-valuetext');
-        seen.add(value);
-        expect(await knobLayout(page), `${name} at ${value}`).toEqual(before);
-      }
-    }
-    expect(seen.size, `${name} really turned`).toBeGreaterThan(5);
+          const value = el.getAttribute('aria-valuetext');
+          seen.add(value);
+          const now = layout();
+          if (now.join() !== before.join()) moved.push(`at ${value}: ${now.filter((k, j) => k !== before[j]).join('; ')}`);
+        }
+      return { seen: seen.size, moved };
+    }, before);
+    expect(moved, `${name}: knobs moved or resized`).toEqual([]);
+    expect(seen, `${name} really turned`).toBeGreaterThan(5);
   }
 });
 

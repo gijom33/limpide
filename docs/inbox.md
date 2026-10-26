@@ -4,7 +4,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
-- The knob test that turns every knob (e2e/knob.spec.ts:55) timed out at 60 s in WebKit during a full run, waiting for the Glide slider; alone it passed five times in five. Seen 2026-10-26.
 
 ## Ideas
 
@@ -20,3 +19,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-25, near midnight: the three flaky timing tests and the contrast test caught mid fade-in, fixed at once. Under load the test's own calls arrive up to seconds late, after the Filter Decay (0.25 s) or the Glide (1.1 s) is over, and they stretch the Hold taps (a gap over 2 s switches Hold off), so the timed part now runs in the page. The test browsers hold the sound back, so the invitation is always there: the audit waits for its fade-in to end.
 2026-10-25, before midnight: the in-between layout for foldables went to [38](./issues/38-in-between-layout.md); multi-touch on the piano to [39](./issues/39-multi-touch-piano.md); a tutorial per Preset to [40](./issues/40-preset-tutorials.md), to grill first since the PRD leaves guided lessons out; the hiss at high Resonance and Cutoff to [41](./issues/41-resonance-hiss.md), a diagnosis first; the persona reviews and the AI Hero code review to [42](./issues/42-reviews.md).
 2026-10-26: a four-across layout for wide screens went to [43](./issues/43-four-across.md).
+2026-10-26: the knob test that timed out in WebKit, fixed at once. A hundred round trips (a turn, a read, a look at every knob, twenty times for five knobs) took 33 to 43 s under 8 workers and passed 60 s under a full run; the turning and looking now run in the page, one round trip a knob, 7 to 9 s under the same load, and the test still fails when a value can resize its knob.
