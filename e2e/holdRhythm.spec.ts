@@ -5,10 +5,14 @@ test('quick clicks on Hold tap a rhythm: the held Note repeats on it, until Hold
   await page.getByRole('button', { name: /^Patch:/ }).click();
   await page.getByRole('button', { name: 'Pluck Shape', exact: true }).click(); // fades between strikes
   const hold = page.getByRole('button', { name: 'Hold' });
-  for (let tap = 0; tap < 3; tap++) {
-    if (tap) await page.waitForTimeout(450);
-    await hold.click();
-  }
+  // The taps' timing is the rhythm, so they are clicked in the page: under load each of the test's own clicks can
+  // take a second or more to arrive, and a gap over two seconds switches Hold off.
+  await hold.evaluate(async (button: HTMLElement) => {
+    for (let tap = 0; tap < 3; tap++) {
+      if (tap) await new Promise((resolve) => setTimeout(resolve, 450));
+      button.click();
+    }
+  });
   await expect(hold).toHaveAttribute('aria-pressed', 'true'); // taps, not switching off
   await page.keyboard.down('a');
   await page.keyboard.up('a');

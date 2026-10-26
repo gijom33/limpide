@@ -70,6 +70,9 @@ async function audit(page: Page, size: keyof typeof SIZES, theme: 'dark' | 'ligh
   await page.addInitScript((t) => localStorage.setItem('limpide.theme', t), theme);
   await page.goto('/');
   await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);
+  // The test browsers hold the sound back until the page is used, so the piano invites a first Note (issue 35): it
+  // fades in 0.4 s after the page opens, and caught halfway (a busy machine) it fails. The audit is of the page at rest.
+  await page.evaluate(() => Promise.all(document.querySelector('.play-invite')?.getAnimations().map((a) => a.finished) ?? []));
   const waivers = WAIVERS.filter((w) => rules.includes(w.rule) && (w.theme ?? theme) === theme && (w.size ?? size) === size);
   const unexpected: string[] = [];
   const matched = new Set<string>();

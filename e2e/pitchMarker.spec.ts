@@ -59,11 +59,20 @@ test('with Glide, the marker slides between the keys from the old Note to the ne
   const c5 = await centre(page, 'C5');
   await page.keyboard.down('KeyA');
   await expect.poll(() => markerX(page)).toBeCloseTo(c4, 0);
-  await page.keyboard.down('KeyK'); // C5, while C4 is still held: one Voice slides
-  await page.waitForTimeout(150);
-  const sliding = await markerX(page);
-  expect(sliding).toBeGreaterThan(c4 + 4);
-  expect(sliding).toBeLessThan(c5 - 4);
+  // C5, while C4 is still held: one Voice slides. The slide is over in about a second, sooner than the test's own
+  // calls can come back under load, so C5 is pressed and the marker followed in the page, frame by frame.
+  const xs = await piano(page).evaluate(async (el) => {
+    dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyK' }));
+    const xs: number[] = [];
+    const end = performance.now() + 600;
+    while (performance.now() < end) {
+      await new Promise(requestAnimationFrame);
+      const dot = [...el.querySelectorAll<HTMLElement>('.pitch-marker')].find((m) => m.checkVisibility());
+      if (dot) xs.push(dot.getBoundingClientRect().x + dot.getBoundingClientRect().width / 2);
+    }
+    return xs;
+  });
+  expect(xs.some((x) => x > c4 + 4 && x < c5 - 4), `between the keys at some frame: ${xs.map(Math.round)}`).toBe(true);
   await expect.poll(() => markerX(page), { timeout: 5000 }).toBeCloseTo(c5, 0);
   // Both keys are lit, but one Voice sounds only the newest Note: one dot.
   await expect(piano(page).locator('.pitch-marker:visible')).toHaveCount(1);

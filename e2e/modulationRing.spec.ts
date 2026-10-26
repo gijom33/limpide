@@ -56,15 +56,21 @@ test('the live dot moves with the Filter Envelope alone, no LFO, as with the LFO
   await turnUp(page, 'Filter', 'Amount', 15);
   const cutoff = knob(page, 'Filter', 'Cutoff');
   await expect(ring(cutoff)).toBeVisible();
-  await page.keyboard.down('KeyA');
-  await expect(dot(cutoff)).toBeVisible();
-  const seen = new Set<string | null>();
-  for (let i = 0; i < 10; i++) {
-    seen.add(await dot(cutoff).getAttribute('cx'));
-    await page.waitForTimeout(40);
-  }
-  expect(seen.size, 'the Envelope moves it').toBeGreaterThan(2);
-  await page.keyboard.up('KeyA');
+  // The Envelope moves the dot only through its Decay, a quarter of a second, sooner than the test's own calls can
+  // come back under load: the Note is played and the dot followed in the page, frame by frame.
+  const seen = await cutoff.evaluate(async (knob) => {
+    dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyA' }));
+    const seen = new Set<string>();
+    const end = performance.now() + 600;
+    while (performance.now() < end) {
+      await new Promise(requestAnimationFrame);
+      const cx = knob.querySelector('.knob-live')?.getAttribute('cx');
+      if (cx) seen.add(cx);
+    }
+    dispatchEvent(new KeyboardEvent('keyup', { code: 'KeyA' }));
+    return [...seen];
+  });
+  expect(seen.length, `the Envelope moves it: ${seen}`).toBeGreaterThan(2);
 });
 
 test('an LFO on Pulse Width rings both Oscillators’ Pulse Width knobs, and not the Cutoff', async ({ page }) => {

@@ -4,8 +4,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
-- Timing tests fail now and then when both browsers run at once, and pass alone: the Hold rhythm (e2e/holdRhythm.spec.ts, no strikes counted), the Glide marker sliding (e2e/pitchMarker.spec.ts:54) and the live dot with the Filter Envelope alone (e2e/modulationRing.spec.ts:53). One or two of them in most full runs; seen 2026-10-25.
-- The contrast test (e2e/designPrinciples.spec.ts) can catch the "Play to start the sound" label mid fade-in: 3.32:1 in the light theme on a laptop, once in two runs. Seen 2026-10-25.
 
 ## Ideas
 
@@ -19,3 +17,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-25, evening: the call to play a Note to start the sound went to [35](./issues/35-play-to-start.md).
 2026-10-25, night: the MIDI messages channel first ("ch 2 · CC 7 · 100", and the Mappings "ch 1 · CC 74"), done at once; the Hold rhythm test found flaky when both browsers run at once, logged under Bugs.
 2026-10-25, late night: a default C16 mapping when plugged in went to [34](./issues/34-c16-bank-layout.md), already planned and waiting for the C16's messages; one width for every curve to [37](./issues/37-curve-widths.md).
+2026-10-25, near midnight: the three flaky timing tests and the contrast test caught mid fade-in, fixed at once. Under load the test's own calls arrive up to seconds late, after the Filter Decay (0.25 s) or the Glide (1.1 s) is over, and they stretch the Hold taps (a gap over 2 s switches Hold off), so the timed part now runs in the page. The test browsers hold the sound back, so the invitation is always there: the audit waits for its fade-in to end.
