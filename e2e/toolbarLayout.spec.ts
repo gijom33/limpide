@@ -88,3 +88,32 @@ for (const width of [1400, 872]) {
     expect(overlaps).toEqual([]);
   });
 }
+
+// Issue 47: every section has the same inner margin on every layout (the stages and LFO & Envelopes differed by 4 to
+// 8 px on phones and at 861–960 px).
+for (const [width, height] of [[375, 812], [430, 900], [690, 830], [900, 900], [1440, 900], [1920, 1080]]) {
+  test(`every section's heading sits as far from its left edge (${width}px)`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await page.goto('/');
+    const insets = await page.evaluate(() =>
+      [...document.querySelectorAll('.chain > section')].map((section) => {
+        const heading = section.querySelector('h2')!.getBoundingClientRect();
+        return `${section.getAttribute('aria-label')} ${Math.round(heading.left - section.getBoundingClientRect().left)}`;
+      }),
+    );
+    expect(new Set(insets.map((i) => i.split(' ').pop())).size, insets.join(', ')).toBe(1);
+  });
+}
+
+// Issue 47: the Filter Envelope's Amount and four faders stay on one line at every width (Release wrapped alone at
+// 1331–1434 px, 601–603 px and 345–369 px).
+for (const [width, height] of [[345, 800], [360, 800], [601, 900], [861, 800], [1100, 800], [1331, 800], [1366, 768], [1400, 900], [1920, 1080]]) {
+  test(`the Filter Envelope stays on one line (${width}px)`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await page.goto('/');
+    const tops = await page.locator('section[aria-label="Filter"] .knobs-envelope .knob').evaluateAll((knobs) =>
+      knobs.map((k) => k.getBoundingClientRect()).map((r) => ({ top: r.top, bottom: r.bottom })),
+    );
+    for (const k of tops) expect(k.top).toBeLessThan(tops[0].bottom);
+  });
+}

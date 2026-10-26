@@ -143,6 +143,12 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 .knob[data-size='big'] { --dial: var(--dial-big); }
 .knob[data-size='small'] { --dial: var(--dial-small); }
 .knob[data-kind='fader'] { width: var(--fader-col); }
+/* Full-size knobs (laptop windows from 1331 px, wide screens): fader columns as wide as the Filter Envelope's row leaves
+   them (its name, Amount and four faders on one line), 44 to 56 px; a 1366 px laptop wrapped Release alone (issue 47).
+   The stage's width is the sub-block's, a container. */
+.knob[data-kind='fader'] {
+  --fader-col: clamp(44px, (100cqw - var(--label-col) - var(--label-gap) - var(--dial-big) - 4 * var(--knob-gap)) / 4, 56px);
+}
 .knob-dial { display: block; width: var(--dial); height: var(--dial); cursor: ns-resize; touch-action: none; overflow: visible; outline: none; }
 .knob-groove, .knob-arc { fill: none; stroke-linecap: butt; }
 .knob-groove { stroke: var(--groove); }
@@ -540,13 +546,23 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .voices-field .field-caption {
   flex: 0 0 var(--label-col); font-size: var(--text-sm); font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em;
 }
-/* In a stage too narrow for the column, names go above their rows and nothing is indented. */
+/* In a stage too narrow for the column, names go above their rows and nothing is indented. On phones that is from
+   under 375 px, where beside them the Filter Envelope's Release wrapped alone (issue 47). */
 @container (max-width: 299px) {
   .block .sub-block > h3, .block .sub-block > .tip-anchor:first-child { flex: 1 1 100%; align-self: auto; }
   .block .sub-block:has(.knob) h3 { min-height: 0; }
   .tab-list { padding-left: 0; }
   .block .voices-field .segmented-field { flex-wrap: wrap; grid-template-columns: max-content; }
   .voices-field .field-caption { flex: 1 1 100%; }
+}
+@media (max-width: 600px) {
+  @container (max-width: 334px) {
+    .block .sub-block > h3, .block .sub-block > .tip-anchor:first-child { flex: 1 1 100%; align-self: auto; }
+    .block .sub-block:has(.knob) h3 { min-height: 0; }
+    .tab-list { padding-left: 0; }
+    .block .voices-field .segmented-field { flex-wrap: wrap; grid-template-columns: max-content; }
+    .voices-field .field-caption { flex: 1 1 100%; }
+  }
 }
 
 .block-controls { container-type: inline-size; position: relative; }
@@ -728,13 +744,13 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
     /* Each LFO's plot narrower, giving Retrigger its room, so the two LFOs still sit side by side. */
     .lfo-plot { width: 84px; }
     /* Fader columns as wide as the Filter Envelope's row leaves them (Amount and four faders on one line). */
-    .knob[data-kind='fader'] { --fader-col: clamp(40px, (100cqw - var(--dial-big) - 4 * var(--knob-gap)) / 4, 44px); }
+    .knob[data-kind='fader'] { --fader-col: clamp(37px, (100cqw - var(--dial-big) - 4 * var(--knob-gap)) / 4, 44px); }
   }
   /* The narrowest laptop windows, three stages across: less side padding in the stages, so Amount and the four Filter
-     Envelope faders stay on one line. (The sections 2 × 2 keep the LFO & Envelopes' padding: each stage there is
-     wider.) */
+     Envelope faders stay on one line, and in LFO & Envelopes with them, so every section has one margin (issue 47).
+     (The sections 2 × 2 keep 16 px: each stage there is wider.) */
   @media (min-width: 861px) and (max-width: 960px) {
-    .block { padding-left: var(--space-2); padding-right: var(--space-2); }
+    .block, .chain > .timeline { padding-left: var(--space-2); padding-right: var(--space-2); }
   }
   /* Filter Mode and Slope on one line, with slimmer segments. */
   .filter-shape { flex-wrap: nowrap; gap: 4px; }
@@ -915,6 +931,8 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   main { padding: var(--space-3) var(--space-2); }
   .chain { margin: var(--space-3) 0; row-gap: var(--space-3); }
   .block { padding: var(--space-2) var(--space-3); gap: var(--space-2); }
+  /* LFO & Envelopes with the stages' margins (issue 47). */
+  .chain > .timeline { padding: var(--space-2) var(--space-3); }
   .knob { position: relative; }
   .knob-value { position: absolute; left: 0; right: 0; bottom: 0; height: var(--knob-label-h); line-height: var(--knob-label-h); font-size: var(--text-sm); color: var(--text); }
   .knob:not([data-changing]) .knob-value > :first-child { visibility: hidden; }
