@@ -86,17 +86,20 @@
 body { margin: 0; background: var(--bg); color: var(--text); }
 /* Grows with the screen up to where lines of controls stop being comfortable to scan. */
 main { max-width: 1920px; margin: 0 auto; padding: var(--space-4); }
-/* Three zones: logo and Patch on the left, playing in the centre, Display on the right. The side columns are
-   never narrower than what they hold, and share the rest equally, so the playing controls sit centred when there
-   is room and give way to the name and Patch when there is not. The Display panel is anchored to the header (not
-   its button), so it can always use, and never exceed, the window's width. */
+/* Laptop and wide windows: one row in the header's one order (issue 44). The Wordmark, the Patch and the playing
+   buttons (Demo, Song, Hold) on the left, the keyboard in the centre, set-up (MIDI, Display, About) on the right. The
+   side columns are never narrower than what they hold and share the rest equally, so the keyboard sits centred when
+   there is room; its column takes what they leave, up to the piano at full size. The Display panel is anchored to the
+   header (not its button), so it can always use, and never exceed, the window's width. */
 header {
-  position: relative; display: grid; grid-template-columns: minmax(max-content, 1fr) auto minmax(max-content, 1fr);
+  position: relative; display: grid; grid-template-columns: minmax(max-content, 1fr) minmax(0, var(--keyboard-w)) minmax(max-content, 1fr);
   align-items: center; gap: var(--space-4);
 }
-.header-left { display: flex; align-items: center; gap: var(--space-4); min-width: 0; }
-.header-center { justify-self: center; }
+.header-left, .header-identity { display: flex; align-items: center; gap: var(--space-4); min-width: 0; }
+.header-play { margin-left: auto; display: flex; align-items: center; gap: var(--space-2); }
 .header-right { justify-self: end; display: flex; align-items: center; gap: var(--space-2); }
+/* Hold wears its icon like the buttons around it; the words give way first where room is short. */
+header .tool-glyph { display: block; }
 header h1 { margin: 0; }
 h1 { margin: 0 0 var(--space-2); font-size: 22px; letter-spacing: 0.02em; }
 h2 { margin: 0 0 var(--space-3); font-size: var(--text-lg); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
@@ -622,18 +625,32 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   .timeline-plot { order: 2; }
 }
 
-/* The on-screen piano: the computer keyboard's 17 keys, lit while sounding. Black keys are 0.6 of a white key's
-   width, as on a real piano. */
-.keyboard { display: flex; align-items: center; gap: 4px; }
-.piano { position: relative; display: flex; height: 40px; touch-action: none; user-select: none; -webkit-user-select: none; }
+/* The keyboard, the same at every width: the octave buttons stacked (up over down) beside the piano. The piano is the
+   computer keyboard's 17 keys (10 white), lit while sounding; its white keys share what the layout gives it, up to
+   44 px (a finger's target), and grow taller as they widen. Black keys are 0.6 of a white key's width, as on a real
+   piano. */
+:root { --white-key-max: 44px; --keyboard-w: calc(var(--control-h) + 4px + 10 * var(--white-key-max)); }
+.keyboard {
+  display: grid; grid-template-columns: var(--control-h) minmax(0, calc(10 * var(--white-key-max)));
+  grid-template-areas: 'up piano' 'down piano'; gap: 4px; justify-content: center;
+}
+.keyboard > :first-child { grid-area: down; }
+.keyboard > :last-child { grid-area: up; }
+.keyboard > .tip-anchor { grid-area: piano; display: flex; container-type: inline-size; }
+/* Each octave button half the piano's height. */
+.keyboard > .tool-icon { width: auto; height: auto; align-self: stretch; }
+.piano {
+  --white-key: calc(100cqw / 10);
+  position: relative; display: flex; height: clamp(52px, 1.5 * var(--white-key), 64px); touch-action: none; user-select: none; -webkit-user-select: none;
+}
 .piano button {
-  position: relative; width: 20px; height: 40px; margin: 0; padding: 0 0 3px; display: flex; align-items: flex-end; justify-content: center;
+  position: relative; width: var(--white-key); height: 100%; margin: 0; padding: 0 0 3px; display: flex; align-items: flex-end; justify-content: center;
   font: inherit; font-size: var(--text-xs); color: #6a6f7b; cursor: pointer;
   background: #f4f4f1; border: 1px solid #b4b8c1; border-radius: 0 0 4px 4px;
 }
 /* A piano's colours in either theme: ivory white keys, black ones black. */
 .piano button[data-black] {
-  z-index: 1; width: 12px; height: 25px; margin: 0 -6px;
+  z-index: 1; width: calc(0.6 * var(--white-key)); height: 62.5%; margin: 0 calc(-0.3 * var(--white-key));
   background: #121317; border-color: #000;
 }
 .piano button[aria-pressed='true'] { background: var(--stage-osc); color: var(--bg); border-color: var(--stage-osc); }
@@ -677,13 +694,6 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .midi-status[data-unavailable] .midi-icon { color: var(--danger); }
 .midi-status[data-unavailable] .midi-slash { display: inline; }
 .midi-count { font-variant-numeric: tabular-nums; }
-
-/* Playing controls at the top centre: octave −, the piano, octave +, Hold and MIDI, in one row. */
-.play-controls { display: flex; align-items: center; gap: var(--space-2); }
-@media (max-width: 860px) {
-  header { grid-template-columns: 1fr auto; }
-  .header-center { grid-column: 1 / -1; grid-row: 2; }
-}
 
 /* Compact knobs: one size for every knob on the page, chosen by the window. When the window is too narrow (below
    1330 px the Oscillators stage's rows of full-size knobs would leave the Viewers less than their floor) or too
@@ -778,20 +788,17 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .patch-delete { height: var(--control-h); min-width: var(--control-h); padding: 0 6px; font: inherit; font-size: var(--text-md); color: var(--muted); cursor: pointer; background: none; border: 1px solid var(--border); border-radius: var(--radius-control); }
 .patch-delete-confirm { color: var(--danger); border-color: var(--danger); }
 .patch-empty { margin: 0; font-size: var(--text-md); color: var(--muted); }
-/* The one-row header is tight: below 1120 px the Demo and Song buttons keep their icons and drop their words, and
-   below 1045 px the MIDI and Display buttons do too. Below 920 px Hold shows its icon, and the header's zones
-   sit closer together. */
-@media (max-width: 1119px) { .demo-word { display: none; } }
-@media (max-width: 1044px) { .midi-status .tool-word, .display-menu .tool-word { display: none; } }
-@media (min-width: 861px) and (max-width: 919px) {
-  header, .header-left { column-gap: var(--space-2); }
-  header [aria-label='Hold'] .tool-glyph { display: block; }
-  header [aria-label='Hold'] .tool-word { display: none; }
-  header [aria-label='Hold'] { padding: 0 8px; }
+/* The one-row header gives the keyboard what its sides leave: below 1300 px its buttons show their icons and drop
+   their words (the tooltips name them), so the piano keeps keys of 30 px or more down to 1000 px. Below 920 px the
+   header's zones sit closer together. */
+@media (min-width: 861px) and (max-width: 1299px) {
+  header :is(.demo-word, .tool-word) { display: none; }
+  header :is(.demo-button, [aria-label='Hold'], .midi-status, .display-menu > .tip-anchor > .tool, .about-menu .tool) { padding: 0 8px; }
 }
-/* The ⓘ button opens About at every width; below 1200 px it drops its word, as Display and MIDI do lower down. */
+@media (min-width: 861px) and (max-width: 919px) {
+  header, .header-left, .header-identity { column-gap: var(--space-2); }
+}
 .about-menu { display: flex; }
-@media (max-width: 1199px) { .about-menu .tool-word { display: none; } }
 .patch-save { display: flex; gap: 6px; margin-top: 8px; max-width: 440px; }
 .patch-panel > .patch-link { max-width: 440px; }
 .patch-save input, .patch-link {
@@ -920,67 +927,69 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   /* Viewers: wider than tall, a little lower than elsewhere. */
   .tap canvas { aspect-ratio: 3 / 1; min-height: 96px; }
 
-  /* The header in three rows: logo and Patch; then the playing buttons (Demo, Song, Hold) on the left and the
-     settings (MIDI, Display, About) on the right; then the octave buttons stacked (up over down) and the piano
-     beside them, its keys as wide as the rest of the screen allows.
-     Hold, MIDI and Display show icons, not words. */
-  /* It stays at the top while the page scrolls, so the piano plays under whichever stage is in view. It runs
-     edge to edge over the page's padding, on the page's background, so nothing shows through it. */
-  /* Scrolling down slides it up under the screen's top edge until only the piano shows (--header-hide, measured),
-     and any scroll up slides it back: nothing below moves, as its height never changes. The octave buttons sit
-     beside the piano, so they stay with it. */
+  /* The header in three rows: logo and Patch; then the playing buttons (Demo, Song, Hold) on the left and set-up
+     (MIDI, Display, About) on the right; then the keyboard, its eight white keys as wide as the rest of the screen
+     allows. It edges the page's padding (see the header up to 860 px, below). */
   header {
-    position: sticky; top: calc(-1 * var(--header-hidden, 0px)); z-index: 10; transition: top 0.2s ease;
     margin: calc(-1 * var(--space-3)) calc(-1 * var(--space-2)) 0;
     padding: var(--space-3) var(--space-2) var(--space-2);
-    background: var(--bg); border-bottom: 1px solid var(--border);
-    /* The first column is the octave buttons' width: Demo, above them, runs on into the next. */
-    grid-template-columns: 36px auto auto auto minmax(0, 1fr) auto auto auto;
-    grid-template-areas:
-      'left left left left left left left left' 'demo demo song hold . midi display about'
-      'up piano piano piano piano piano piano piano' 'down piano piano piano piano piano piano piano';
-    gap: var(--space-2) var(--space-1);
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: 'identity identity' 'play set' 'keys keys';
   }
-  .header-center, .play-controls, .keyboard, .header-right { display: contents; }
-  .header-left { grid-area: left; gap: var(--space-3); }
-  /* The first row holds only the logo and the Patch: the Patch name takes the room beside the logo. */
+  /* One octave, C to C; the octave buttons reach the rest. The keys share what the octave buttons leave of the row. */
+  .keyboard { grid-template-columns: 36px minmax(0, 1fr); }
+  .piano { --white-key: calc(100cqw / 8); flex: 1 1 auto; height: 64px; }
+  .piano button:nth-child(n + 14) { display: none; }
+  .tool-glyph { display: block; }
+  .tool-word { display: none; }
+  header .tool:has(> .tool-glyph), .display-menu > .tip-anchor > .tool, .display-menu .tool { padding: 0 8px; }
+}
+
+/* Up to 860 px (phones, and the sections 2 × 2) the page scrolls, so the header stays at the top, the piano playing
+   under whichever section is in view (issues 29 and 44). It runs edge to edge over the page's padding, on the page's
+   background, so nothing shows through it. Scrolling down slides it up under the screen's top edge until only the
+   keyboard shows (--header-hide, measured), and any scroll up slides it back: nothing below moves, as its height never
+   changes. Each layout places the header's groups in rows of its own. */
+@media (max-width: 860px) {
+  header {
+    position: sticky; top: calc(-1 * var(--header-hidden, 0px)); z-index: 10; transition: top 0.2s ease;
+    background: var(--bg); border-bottom: 1px solid var(--border); gap: var(--space-2) var(--space-1);
+  }
+  :root[data-header-collapsed] { --header-hidden: var(--header-hide, 0px); }
+  .header-left { display: contents; }
+  .header-identity { grid-area: identity; gap: var(--space-3); }
+  .header-play { grid-area: play; margin-left: 0; gap: var(--space-1); }
+  .header-right { grid-area: set; gap: var(--space-1); }
+  .keyboard { grid-area: keys; }
+  /* The Patch name takes the room beside the logo. */
   .patch-bar { flex: 1 1 auto; }
   .patch-bar > .tip-anchor { flex: 0 1 240px; min-width: 0; }
   .patch-name { width: 100%; }
-  .header-right > .tip-anchor:first-child { grid-area: demo; }
-  .header-right > .tip-anchor:nth-child(2) { grid-area: song; }
-  .display-menu { grid-area: display; display: flex; }
-  .header-right > *, .play-controls > .tip-anchor, .midi-menu { justify-self: end; }
-  .header-right > .tip-anchor:first-child { justify-self: start; } /* Demo: on the octave buttons' left edge */
-  .keyboard > :first-child { grid-area: down; }
-  .keyboard > :last-child { grid-area: up; }
-  .keyboard > .tip-anchor { grid-area: piano; display: flex; }
-  .play-controls > .tip-anchor { grid-area: hold; }
   /* Flex wrappers, so their buttons sit on the row's top like the others (an inline button rides the text line). */
-  .midi-menu { grid-area: midi; display: flex; }
-  .about-menu { grid-area: about; display: flex; }
-  /* One octave, C to C; the octave buttons reach the rest. The keys share what the octave buttons leave of the
-     row: eight white keys, black ones 0.6 of a white key as on a piano. */
-  .keyboard > .tip-anchor { container-type: inline-size; }
-  .piano { --white-key: calc(100cqw / 8); flex: 1 1 auto; height: 64px; }
-  .piano button:nth-child(n + 14) { display: none; }
-  .piano button { width: var(--white-key); height: 64px; }
-  .piano button[data-black] { width: calc(0.6 * var(--white-key)); height: 40px; margin: 0 calc(-0.3 * var(--white-key)); }
-  .tool-glyph { display: block; }
-  .tool-word { display: none; }
+  .display-menu, .midi-menu, .about-menu { display: flex; }
   .midi-count { display: none; } /* the icon's colour already says a device is connected */
   .display-menu .display-dot { position: absolute; top: 5px; right: 5px; } /* not a third line under icon and word */
-  header .tool:has(> .tool-glyph), .display-menu > .tip-anchor > .tool, .display-menu .tool { padding: 0 8px; }
-  /* The playing row: each icon over its word (a tooltip needs a pointer, so on a touch screen the word says what the
-     icon does), 44 pt tall for a finger. */
+  /* The playing and set-up buttons: each icon over its word (a tooltip needs a pointer, so on a touch screen the word
+     says what the icon does), 44 pt tall for a finger. */
   header :is(.demo-button, [aria-label='Hold'], .midi-status, .display-menu .tool, .about-menu .tool) {
     flex-direction: column; justify-content: center; gap: 2px; height: auto; min-height: 44px; padding: 3px 6px 2px;
   }
   header :is(.demo-button, [aria-label='Hold'], .midi-status, .display-menu .tool, .about-menu .tool) :is(.demo-word, .tool-word) {
     display: block; font-size: 9px; line-height: 10px;
   }
-  /* The octave buttons: two halves of the piano's height, one over the other. */
-  .keyboard > .tool-icon { width: auto; height: auto; align-self: stretch; }
+}
+@media (max-width: 860px) and (prefers-reduced-motion: reduce) { header { transition: none; } }
+/* The sections 2 × 2: two rows, the Patch and the buttons beside each other (there is room), then the keyboard,
+   its 17 keys at a finger's width. The header edges the page's padding. A section the Demo brings into view lands
+   below the header. */
+@media (min-width: 601px) and (max-width: 860px) {
+  header {
+    margin: calc(-1 * var(--space-4)) calc(-1 * var(--space-4)) 0;
+    padding: var(--space-3) var(--space-4) var(--space-2);
+    grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: 'identity play set' 'keys keys keys';
+    column-gap: var(--space-3);
+  }
+  .chain > * { scroll-margin-top: calc(var(--header-h, 0px) + var(--space-2)); }
 }
 
 /* The sections strip (phones): equal tabs under the header, each underlined in its section's colour when it is the
@@ -1002,10 +1011,8 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   .section-strip [data-section='LFO & Envelopes'] { --c: var(--stage-mod); }
   .section-strip [aria-current] { color: var(--c); border-bottom-color: var(--c); }
   .section-strip button:focus-visible { outline: 2px solid var(--c); outline-offset: -2px; }
-  /* While the page scrolls down, the header keeps only the piano; its rows above come back on any scroll up. */
-  :root[data-header-collapsed] { --header-hidden: var(--header-hide, 0px); }
 }
-@media (max-width: 600px) and (prefers-reduced-motion: reduce) { header, .section-strip { transition: none; } }
+@media (max-width: 600px) and (prefers-reduced-motion: reduce) { .section-strip { transition: none; } }
 
 /* Touch screens: a long press or a double tap on the instrument plays or turns it; it never selects text or opens
    the copy menu. Text fields stay editable, and buttons answer at once (no wait for a double-tap zoom). */

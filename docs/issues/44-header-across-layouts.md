@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** proposed, decisions open (below).
+**Status:** built (2026-10-26), to try on a real foldable and a laptop. The four decisions went with the proposal.
 
 ## What there is (measured 2026-10-26)
 
@@ -20,14 +20,19 @@
 
 ## Decisions open
 
-- [ ] 2 × 2: two rows (buttons beside the Patch) or the phone's three (buttons on their own row, icon over word)?
-- [ ] Three and four across: the piano inside the one row (taller row), or a second row of its own under it (more height gone from the Viewers)?
-- [ ] Does the piano grow past the 2 × 2 size on the widest screens, or stay at it everywhere above 600 px?
-- [ ] Touch targets in 2 × 2: issue 38 left open whether a foldable gets the phone's targets; this issue settles it for the header at least
+Decided by the owner on 2026-10-26, all four as proposed:
 
-## To build, once decided
+- [x] 2 × 2: two rows, the buttons beside the Patch
+- [x] Three and four across: the piano inside the one row, which grows taller
+- [x] The piano stays at the 2 × 2 size (white keys 44 px) everywhere above 600 px, never larger
+- [x] Touch targets in 2 × 2: the header's buttons get the phone's (44 pt tall, icon over word); the sections keep the laptop's controls
 
-- [ ] The header's order the same at every width, in the DOM as on screen (focus order follows)
-- [ ] 2 × 2: the phone's piano size with 17 keys, the octave buttons beside it, the rows above sliding away on scroll (reduced motion: no slide)
-- [ ] Three and four across: the larger piano, the whole instrument still on screen at 1440 × 900, 861 × 700 and 1920 × 1080 (`e2e/inBetweenLayout.spec.ts`, `e2e/fourAcross.spec.ts`), the Viewers at or above their floor
-- [ ] The design principles' audit (contrast, targets) at a phone, a foldable and a laptop size
+## Built
+
+- [x] The header's order the same at every width, in the DOM as on screen (focus order follows): the header holds four groups (`.header-identity`, `.header-play`, `.keyboard`, `.header-right`) and each layout only places them. `e2e/header.spec.ts` checks the order at a phone, a foldable, a laptop and a wide size
+- [x] The keyboard the same everywhere: the octave buttons stacked (up over down) left of the piano, as on a phone. The piano's white keys share what the layout gives it, up to 44 px, and grow taller with it (52 to 64 px)
+- [x] 2 × 2: the 17 keys at 44 × 64 px; the header sticky, its first row sliding away on scroll as on a phone (reduced motion: no slide); a section the Demo brings into view lands below it
+- [x] Three and four across: the piano in the one row. Its column takes what the sides leave, so below 1300 px the header's buttons drop their words (icons and tooltips), in one step where it was three (1045, 1120, 1200 px). White keys: 29 px at 861, 33 at 1000, 43 at 1100, 44 from about 1300
+- [x] The whole instrument still on screen where it was: at 1440 × 900 the Viewers go from 122 to 110 px. Short windows that already scrolled (861 × 700: 838 px of page, 1000 × 800: 827) scroll 12 to 24 px more
+- [x] The design principles' audit: the piano's keys meet the 24 px target on laptop, foldable and wide screens (44 and 26 px), so their three waivers are gone; the phone's stays
+- [ ] Tried on a real foldable and a laptop

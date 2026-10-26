@@ -615,50 +615,6 @@ export function App() {
     setPatch((p) => setParam(p, id, value));
   };
 
-  const playControls = (
-    <div className="play-controls" role="group" aria-label="Play">
-      <div className="keyboard">
-        <button type="button" className="tool tool-icon octave" aria-label="Octave down" {...shifted(DEFAULT_OCTAVE - octave)} onClick={() => setOctave((o) => shiftOctave(o, -1))}>
-          {octave < DEFAULT_OCTAVE ? `−${DEFAULT_OCTAVE - octave}` : '−'}
-        </button>
-        <Tooltip content={TIPS.keyboard}>
-          <Piano octave={octave} held={demoNotes.length ? [...heldNotes, ...demoNotes] : heldNotes} input={session.input} invite={audioStatus === 'waiting'} />
-        </Tooltip>
-        <button type="button" className="tool tool-icon octave" aria-label="Octave up" {...shifted(octave - DEFAULT_OCTAVE)} onClick={() => setOctave((o) => shiftOctave(o, 1))}>
-          {octave > DEFAULT_OCTAVE ? `+${octave - DEFAULT_OCTAVE}` : '+'}
-        </button>
-      </div>
-      <Tooltip content={TIPS.hold}>
-        <button
-          type="button"
-          className="tool"
-          aria-pressed={hold}
-          data-learn="action:hold"
-          data-mapped={learnContext.mapped.has('action:hold') || undefined}
-          data-learn-selected={learnContext.selected === 'action:hold' || undefined}
-          aria-label="Hold"
-          onClick={pressHold}
-        >
-          <HoldIcon />
-          <span className="tool-word">Hold</span>
-        </button>
-      </Tooltip>
-      <MidiPanel
-        state={midi}
-        activity={activity}
-        mappings={mappings}
-        learning={learning}
-        onLearn={() => surface.startLearn()}
-        onDone={() => (setupRef.current ? updateSetup({ type: 'finish' }) : surface.stopLearn())}
-        onQuickSetup={() => updateSetup({ type: 'start' })}
-        onC16Layout={applyC16Layout}
-        onRemove={(control) => mappingStore.remove(control)}
-        onClear={() => mappingStore.clear()}
-      />
-    </div>
-  );
-
-
   const viewers = (
     tap: keyof AudioSession['engine']['taps'],
     name: string,
@@ -700,25 +656,68 @@ export function App() {
         ) : (
           <LearnBar state={learn} />
         )}
+        {/* One order at every width (issue 44): the Wordmark and the Patch, playing (Demo, Song, Hold), the
+            keyboard, then set-up (MIDI, Display, About). Each layout places these groups; none reorders them. */}
         <header>
           <div className="header-left">
-            <Wordmark onOpen={() => setAbout(true)} />
-            <PatchBar name={patchName} changed={patchChanged} patch={patch} library={library} onLoad={loadPatch} />
+            <div className="header-identity">
+              <Wordmark onOpen={() => setAbout(true)} />
+              <PatchBar name={patchName} changed={patchChanged} patch={patch} library={library} onLoad={loadPatch} />
+            </div>
+            <div className="header-play" role="group" aria-label="Play">
+              <Tooltip content={TIPS.demo}>
+                <button type="button" className="tool tool-mode demo-button" aria-label="Demo" aria-pressed={demo !== null} data-demo onClick={toggleDemo}>
+                  <PlayIcon />
+                  <span className="demo-word">Demo</span>
+                </button>
+              </Tooltip>
+              <Tooltip content={TIPS.song}>
+                <button type="button" className="tool tool-mode demo-button" aria-label="Song" aria-pressed={song} data-demo onClick={toggleSong}>
+                  <NoteIcon />
+                  <span className="demo-word">Song</span>
+                </button>
+              </Tooltip>
+              <Tooltip content={TIPS.hold}>
+                <button
+                  type="button"
+                  className="tool"
+                  aria-pressed={hold}
+                  data-learn="action:hold"
+                  data-mapped={learnContext.mapped.has('action:hold') || undefined}
+                  data-learn-selected={learnContext.selected === 'action:hold' || undefined}
+                  aria-label="Hold"
+                  onClick={pressHold}
+                >
+                  <HoldIcon />
+                  <span className="tool-word">Hold</span>
+                </button>
+              </Tooltip>
+            </div>
           </div>
-          <div className="header-center">{playControls}</div>
+          <div className="keyboard">
+            <button type="button" className="tool tool-icon octave" aria-label="Octave down" {...shifted(DEFAULT_OCTAVE - octave)} onClick={() => setOctave((o) => shiftOctave(o, -1))}>
+              {octave < DEFAULT_OCTAVE ? `−${DEFAULT_OCTAVE - octave}` : '−'}
+            </button>
+            <Tooltip content={TIPS.keyboard}>
+              <Piano octave={octave} held={demoNotes.length ? [...heldNotes, ...demoNotes] : heldNotes} input={session.input} invite={audioStatus === 'waiting'} />
+            </Tooltip>
+            <button type="button" className="tool tool-icon octave" aria-label="Octave up" {...shifted(octave - DEFAULT_OCTAVE)} onClick={() => setOctave((o) => shiftOctave(o, 1))}>
+              {octave > DEFAULT_OCTAVE ? `+${octave - DEFAULT_OCTAVE}` : '+'}
+            </button>
+          </div>
           <div className="header-right">
-            <Tooltip content={TIPS.demo}>
-              <button type="button" className="tool tool-mode demo-button" aria-label="Demo" aria-pressed={demo !== null} data-demo onClick={toggleDemo}>
-                <PlayIcon />
-                <span className="demo-word">Demo</span>
-              </button>
-            </Tooltip>
-            <Tooltip content={TIPS.song}>
-              <button type="button" className="tool tool-mode demo-button" aria-label="Song" aria-pressed={song} data-demo onClick={toggleSong}>
-                <NoteIcon />
-                <span className="demo-word">Song</span>
-              </button>
-            </Tooltip>
+            <MidiPanel
+              state={midi}
+              activity={activity}
+              mappings={mappings}
+              learning={learning}
+              onLearn={() => surface.startLearn()}
+              onDone={() => (setupRef.current ? updateSetup({ type: 'finish' }) : surface.stopLearn())}
+              onQuickSetup={() => updateSetup({ type: 'start' })}
+              onC16Layout={applyC16Layout}
+              onRemove={(control) => mappingStore.remove(control)}
+              onClear={() => mappingStore.clear()}
+            />
             <DisplayMenu active={viewer.frozen || viewer.snapshot !== null}>
               <section className="toolbar" aria-label="Viewer controls">
                 <div className="toolbar-groups">

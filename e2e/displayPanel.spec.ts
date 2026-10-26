@@ -38,11 +38,13 @@ test('Space still freezes with the panel closed, and the Display button shows th
   await expect(display).not.toHaveAttribute('data-active', 'true');
 });
 
-test('the header is a single slim line at every width', async ({ page }) => {
+test('the header is a single line at every laptop width, no taller than the piano', async ({ page }) => {
   for (const width of [1710, 1100, 872]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/');
-    expect(await page.locator('header').evaluate((h) => h.getBoundingClientRect().height), `${width}px`).toBeLessThanOrEqual(48);
+    const [header, piano] = await page.evaluate(() => ['header', '.piano'].map((s) => document.querySelector(s)!.getBoundingClientRect().height));
+    expect(header, `${width}px`).toBeLessThanOrEqual(64);
+    expect(header, `${width}px`).toBe(piano);
   }
 });
 
@@ -57,13 +59,13 @@ for (const width of [1710, 1300, 960, 872, 420]) {
   });
 }
 
-test('the keyboard, Hold and MIDI sit at the top centre', async ({ page }) => {
+test('the keyboard sits at the top centre', async ({ page }) => {
   await page.setViewportSize({ width: 1710, height: 1060 });
   await page.goto('/');
-  const play = (await page.getByRole('group', { name: 'Play' }).boundingBox())!;
+  const piano = (await page.getByRole('group', { name: 'Piano' }).boundingBox())!;
   const header = (await page.locator('header').boundingBox())!;
-  expect(play.y + play.height).toBeLessThanOrEqual(header.y + header.height + 1);
-  expect(Math.abs(play.x + play.width / 2 - 1710 / 2)).toBeLessThan(60);
+  expect(piano.y + piano.height).toBeLessThanOrEqual(header.y + header.height + 1);
+  expect(Math.abs(piano.x + piano.width / 2 - 1710 / 2)).toBeLessThan(60);
 });
 
 test('the theme is chosen in the Display panel, and remembered', async ({ page }) => {

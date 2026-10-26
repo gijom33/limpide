@@ -35,16 +35,13 @@ const WAIVERS: Waiver[] = [
   { rule: 'text', selector: ".block[data-stage='osc'] h2, .section-strip [data-section='Oscillators']", floor: 3.25, theme: 'light' },
   // The Space hint on Freeze, at 60 % opacity: 2.3 to 2.9:1.
   { rule: 'text', selector: '.tool kbd', floor: 2.25 },
-  // Laptop targets: selector options 20 to 22 px on their short side; the piano's keys 20 px (white) and 12 px
-  // (black) wide, as on a piano drawn this size (the computer keyboard and MIDI play the same Notes).
+  // Laptop targets: selector options 20 to 22 px on their short side. (The piano's keys were 20 and 12 px wide until
+  // issue 44 gave them a finger's width: 44 and 26 px.)
   { rule: 'target', selector: '.segmented button', floor: 20, size: 'laptop' },
-  { rule: 'target', selector: '.piano button', floor: 12, size: 'laptop' },
   // Foldable and wide targets (issues 38 and 43): the laptop's controls in the sections 2 × 2 or four across, so the
-  // laptop's two waivers.
+  // laptop's waiver.
   { rule: 'target', selector: '.segmented button', floor: 20, size: 'foldable' },
-  { rule: 'target', selector: '.piano button', floor: 12, size: 'foldable' },
   { rule: 'target', selector: '.segmented button', floor: 20, size: 'wide' },
-  { rule: 'target', selector: '.piano button', floor: 12, size: 'wide' },
   // Phone targets: controls at the toolbar height (28 px), selector options (20 to 22 px), the logo (24 px tall),
   // the Preset arrows (18 px wide), the piano's black keys (24 px wide, beside the octave buttons).
   { rule: 'target', selector: '.tool, .tab-list [role=tab], .patch-item, .patch-save input', floor: 28, size: 'phone' },

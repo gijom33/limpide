@@ -27,10 +27,10 @@ test('the logo opens the About splash: version, build and credits; Close, Escape
   await expect(about).toBeVisible();
 });
 
-test('an ⓘ button opens About at every width, with the word About from 1200 px up', async ({ page }) => {
+test('an ⓘ button opens About at every width, with the word About from 1300 px up and under its icon in the 2 × 2 layout', async ({ page }) => {
   const about = page.getByRole('dialog', { name: 'Limpide' });
   const button = page.getByRole('button', { name: 'About' });
-  for (const [width, height, word] of [[1440, 900, true], [1200, 900, true], [1199, 900, false], [1000, 800, false], [861, 800, false], [700, 800, false]] as const) {
+  for (const [width, height, word] of [[1440, 900, true], [1300, 900, true], [1299, 900, false], [1000, 800, false], [861, 800, false], [700, 800, true]] as const) {
     await page.setViewportSize({ width, height });
     await page.goto('/');
     await expect(button, `${width}px`).toBeVisible();
