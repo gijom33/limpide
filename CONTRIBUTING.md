@@ -34,6 +34,7 @@ Every push to `main` runs all of these before it deploys.
 - The decisions that shape the code are in [docs/adr](docs/adr); the product is described in [docs/prd.md](docs/prd.md). A change that goes against either is a conversation first: open an Issue.
 - New behaviour comes with a test: a unit test where the logic is plain, the engine tests where it is sound, Playwright where it is the page.
 - Keep a pull request to one thing, and say in it what you tested and in which browsers.
+- Commit subjects start with the issue they serve (`Issue 53:`) or `No issue:`, in 72 characters or fewer ([ADR-0010](docs/adr/0010-how-the-work-is-recorded.md)). [CLAUDE.md](CLAUDE.md) holds the rest of the house rules, which Claude Code follows.
 
 ## What help is welcome
 

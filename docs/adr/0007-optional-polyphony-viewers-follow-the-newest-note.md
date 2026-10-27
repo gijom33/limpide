@@ -1,5 +1,7 @@
 # Optional polyphony; the Viewers follow the newest Note
 
+**Status:** accepted · **Date:** 2026-10-22 · **Decided by:** the owner
+
 Supersedes [ADR-0005](./0005-monophonic-by-design.md).
 
 A Patch chooses its number of Voices, 1 to 8. At 1 the instrument is exactly what ADR-0005 described: one Voice, last-note Note Priority, Glide between Notes. At 2 to 8, each new Note takes a free Voice (or the oldest one when none is free) and sounds alongside the others, so chords can be played and held.

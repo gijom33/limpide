@@ -1,5 +1,7 @@
 # Knob size follows the Parameter's role
 
+**Status:** accepted · **Date:** 2026-10-24 · **Decided by:** the owner
+
 Supersedes issue 15's rule "every knob on the page is one size".
 
 Each Parameter has a role. **Play** Parameters are worth turning while music is playing and get the big knob (68 px; 60 px on phones, 52 px on compact laptop windows): Cutoff, Resonance, Envelope Amount, LFO Rate, LFO Depth and Detune. **Set-and-forget** Parameters are chosen once and left alone and get the small knob (52 px; 40 px on compact laptop windows): Pulse Width, Octave, Semitone, Velocity, Key Track and Glide. Pulse Width was first a play Parameter; in the prototype (issue 18) the owner moved it, as it is not that commonly used. Levels (the Mixer) and envelope stages (both ADSRs) are not knobs at all but vertical faders, one size.

@@ -57,7 +57,7 @@ TypeScript, React and Vite, on the browser's native Web Audio nodes; no audio li
 
 ## How this was built
 
-Limpide was designed and directed by Guillaume Boillet, and its code written with [Claude Code](https://claude.com/claude-code), Anthropic's AI coding agent (every commit says so in its `Co-Authored-By` line). The work follows Matt Pocock's AI Hero method, and everything it produced is in this repository:
+Limpide was designed and directed by Guillaume Boillet, and its code written with [Claude Code](https://claude.com/claude-code), Anthropic's AI coding agent (every commit says so in its `Co-Authored-By` line). The work follows Matt Pocock's [AI Hero](https://www.aihero.dev) method, and everything it produced is in this repository:
 
 1. **A PRD** ([docs/prd.md](docs/prd.md)): who it is for, the user stories, what is out of scope, how it is tested.
 2. **Issues** ([docs/issues](docs/issues)): vertical slices, each with what to build, its checklist and what was measured. Plans are "grilled" (questioned until the decisions are explicit) before they are built.
@@ -65,6 +65,7 @@ Limpide was designed and directed by Guillaume Boillet, and its code written wit
 4. **Tests first** where behaviour can be measured: the engine renders real audio and checks Harmonics against theory; Playwright plays the built site in two browsers.
 5. **An inbox** ([docs/inbox.md](docs/inbox.md)): bugs and ideas as they come, triaged into issues.
 6. **Reviews** ([docs/reviews](docs/reviews)): agents playing a dozen kinds of visitor (a curious contact, a synth player, a designer, a teacher, a screen-reader user, a sceptic of AI code…), their findings back in the inbox.
+7. **The agent's working rules** ([CLAUDE.md](CLAUDE.md)): how commits, decisions and releases are recorded ([ADR-0010](docs/adr/0010-how-the-work-is-recorded.md)).
 
 The owner decides what Limpide is, what it looks like, and what ships; those decisions are dated in the issues. The agent proposes, writes the code, the tests and the docs, and checks its work in a real browser before it is committed.
 

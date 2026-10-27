@@ -1,5 +1,7 @@
 # Native Web Audio nodes, not custom DSP in an AudioWorklet
 
+**Status:** accepted · **Date:** 2026-10-21 · **Decided by:** Claude, accepted by the owner
+
 The Voice is built from native Web Audio nodes: `OscillatorNode` with built-in or `PeriodicWave` waveforms, `AudioBufferSourceNode` for Noise, `BiquadFilterNode` for the Filter (two in series for the 24 dB Slope), and `GainNode` for the Mixer and Amp. The main reason is honesty of the viewers. `BiquadFilterNode.getFrequencyResponse()` gives the *exact* gain curve of the filter we actually hear, so the Response Curve can never disagree with the sound. Native oscillators are also band-limited, so the Spectrum shows clean Harmonics instead of aliasing that we would have to explain away.
 
 ## Considered Options

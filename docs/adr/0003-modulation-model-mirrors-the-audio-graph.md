@@ -1,5 +1,7 @@
 # The Effective Cutoff is computed by a pure model, not read from the audio graph
 
+**Status:** accepted · **Date:** 2026-10-21 · **Decided by:** Claude, accepted by the owner
+
 The Envelope Timeline and the Response Curve need the Effective Cutoff *right now*. Web Audio can't report the value of an `AudioParam` driven by automation or by audio-rate connections (such as the LFO). So a pure modulation model, built from the Patch, the Gate history, the Velocity and the time, computes the Effective Cutoff. The same model produces the automation schedule that the engine applies to the real `AudioParam`s, so the picture and the sound come from a single source of truth.
 
 ## Considered Options

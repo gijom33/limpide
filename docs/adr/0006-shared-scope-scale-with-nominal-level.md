@@ -1,5 +1,7 @@
 # One shared Scope scale, with the Oscillator at a −6 dB Nominal Level
 
+**Status:** accepted · **Date:** 2026-10-21 · **Decided by:** Claude, accepted by the owner
+
 Every Scope uses the same scale, linear to ±1, so heights compare directly from Tap to Tap. To make that possible, the Oscillator runs at a Nominal Level of 0.5 (−6 dB) instead of full scale, leaving headroom for resonant peaks. Without Resonance it never exceeds ±0.8. At extreme Resonance a harmonic sitting on the Cutoff can reach about ±1.8, which the Scope draws compressed into a margin beyond ±1 (see ADR-0001). The master volume sits *after* the Amp Tap and is set at 0.45 (divided by √Voices when several play), so even that worst case stays under full scale at the output. Web Audio is floating-point, so the lower internal level costs nothing in sound quality; only the final output can clip.
 
 ## Considered Options
