@@ -696,11 +696,13 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 /* Until sound starts (the browser waits for the page to be used), a label over the keys invites a first Note: a key
    on the computer keyboard or the piano ("tap" on touch screens). It lets presses through to the keys, and takes
    no room, so nothing moves when it goes. It fades in after a moment: a browser that allows sound switches it on
-   just after the page opens, and the label must not flash there. */
+   just after the page opens, and the label must not flash there. It is the first thing to read, so it is large, in
+   the middle of the keys (asked by the owner). */
 .play-invite {
-  position: absolute; z-index: 3; left: 50%; bottom: 4px; transform: translateX(-50%); margin: 0;
-  padding: 1px 8px; border-radius: 999px; white-space: nowrap; pointer-events: none;
-  font-size: var(--text-xs); line-height: 14px; color: #fff; background: rgba(18, 19, 23, 0.88);
+  position: absolute; z-index: 3; left: 50%; top: 50%; transform: translate(-50%, -50%); margin: 0;
+  padding: 4px 14px; border-radius: 999px; white-space: nowrap; pointer-events: none;
+  font-size: 16px; font-weight: 600; line-height: 22px; color: #fff; background: rgba(18, 19, 23, 0.9);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
   animation: play-invite-in 0.2s ease-out 0.4s both;
 }
 @keyframes play-invite-in { from { opacity: 0; } }
