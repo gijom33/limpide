@@ -30,7 +30,21 @@ jobs:
       - run: npm run lint
       - run: npm run test:unit
       # The engine renders real audio in Chromium; the end-to-end tests play the built site in Chromium and WebKit.
-      - run: npx playwright install --with-deps chromium webkit
+      # The browsers are cached by Playwright's version: on a hit only the system libraries they need are installed.
+      # Both installs are time-limited: on 2026-10-27 the install hung twice for over half an hour on GitHub's side.
+      - id: playwright
+        run: echo "version=$(npx playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+      - id: browsers
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+      - if: steps.browsers.outputs.cache-hit != 'true'
+        timeout-minutes: 10
+        run: npx playwright install --with-deps chromium webkit
+      - if: steps.browsers.outputs.cache-hit == 'true'
+        timeout-minutes: 10
+        run: npx playwright install-deps chromium webkit
       - run: npm run test:engine
       # The published site counts visits on the owner's GoatCounter; a fork's workflow sets its own address, or none.
       - run: npm run build
