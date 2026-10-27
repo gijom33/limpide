@@ -49,8 +49,8 @@ export type ParamId =
 
 export type FilterMode = 'lowpass' | 'highpass' | 'bandpass' | 'notch';
 export type FilterSlope = 12 | 24;
-/** Where an LFO goes: the Oscillators' pitch, Osc 2's alone (an octave, or its Detune), the Pulse Width, the Filter. */
-export type LfoDestination = 'pitch' | 'osc2Pitch' | 'detune' | 'pulseWidth' | 'cutoff' | 'resonance';
+/** Where an LFO goes: the Oscillators' pitch, Osc 2's alone (an octave, or its Detune), the Pulse Width, the Filter, the Volume. */
+export type LfoDestination = 'pitch' | 'osc2Pitch' | 'detune' | 'pulseWidth' | 'cutoff' | 'resonance' | 'volume';
 /** Whether an LFO runs freely or starts its cycle again at every Note (retrigger, or key sync). */
 export type LfoRetrigger = 'free' | 'note';
 /** How many Notes can sound at once. 1 is monophonic (last-note priority, Glide); more play chords (ADR-0007). */
@@ -144,9 +144,9 @@ export const CHOICES = {
   filterMode: ['lowpass', 'highpass', 'bandpass', 'notch'],
   filterSlope: [12, 24],
   lfoWaveform: ['sine', 'triangle', 'square', 'saw', 'sawDown'],
-  lfoDestination: ['pitch', 'osc2Pitch', 'detune', 'pulseWidth', 'cutoff', 'resonance'],
+  lfoDestination: ['pitch', 'osc2Pitch', 'detune', 'pulseWidth', 'cutoff', 'resonance', 'volume'],
   lfo2Waveform: ['sine', 'triangle', 'square', 'saw', 'sawDown'],
-  lfo2Destination: ['pitch', 'osc2Pitch', 'detune', 'pulseWidth', 'cutoff', 'resonance'],
+  lfo2Destination: ['pitch', 'osc2Pitch', 'detune', 'pulseWidth', 'cutoff', 'resonance', 'volume'],
   lfoRetrigger: ['free', 'note'],
   lfo2Retrigger: ['free', 'note'],
   voices: [1, 2, 3, 4, 5, 6, 7, 8],

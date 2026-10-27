@@ -6,6 +6,11 @@ export const LFO_PITCH_CENTS = 100;
 export const LFO_PULSE_WIDTH = 0.4;
 /** Resonance swings by its whole range (0–1) at full Depth, as far as the knob's value leaves room each way. */
 export const LFO_RESONANCE = 1;
+/**
+ * Volume (tremolo) dips at most to silence: each LFO's swing is half its Depth, around a level that falls by the
+ * total swing, so the wave's top is the Envelope's own level and its foot full Depth below it (issue 53).
+ */
+export const LFO_VOLUME = 0.5;
 /** Osc 2 Pitch swings an octave each way, its Detune 50 cents (the Detune knob's range). */
 export const LFO_OSC2_CENTS = 1200;
 export const LFO_DETUNE_CENTS = 50;
@@ -64,6 +69,15 @@ export function lfoOffset(patch: Patch, destination: LfoDestination, perDepth: n
 export function effectiveResonance(patch: Patch, lfo: readonly number[] = []): number {
   const room = Math.min(patch.resonance, 1 - patch.resonance);
   return patch.resonance + lfoOffset(patch, 'resonance', LFO_RESONANCE, lfo, room);
+}
+
+/**
+ * The tremolo: what the LFOs aimed at Volume multiply the Amp by right now, 0 to 1. Never above 1, so the Amp
+ * Envelope sets the loudest the Note gets and the LFOs pull it down from there.
+ */
+export function tremolo(patch: Patch, lfo: readonly number[] = []): number {
+  const [one, two] = lfoSwings(patch, 'volume', LFO_VOLUME, LFO_VOLUME);
+  return 1 - one - two + one * (lfo[0] ?? 0) + two * (lfo[1] ?? 0);
 }
 
 /** Osc 2's tuning against Osc 1, in cents: Octave, Semitone and Detune, then the LFOs on Osc 2 Pitch and on Detune. */

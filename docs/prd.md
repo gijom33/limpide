@@ -94,7 +94,7 @@ Judged against [the design principles](./design-principles.md).
 79. As a phone user, I want scrolling over a control to scroll the page, so that I never change a sound by accident.
 80. As a first-time visitor, I want a welcome that offers to play the Demo (or the sound shared with me), so that I hear what Limpide can do without knowing where to click.
 81. As a user, I want About centred on screen and an ⓘ button at every screen size, so that I can always find out what this is.
-82. As a sound designer, I want the LFO to reach more destinations (Resonance, Osc 2's pitch and its Detune as well as Cutoff, Pitch and Pulse Width), picked with arrows or from a menu like the Patch bar's, so that one LFO makes more kinds of movement.
+82. As a sound designer, I want the LFO to reach more destinations (Resonance, Osc 2's pitch and its Detune as well as Cutoff, Pitch and Pulse Width; the Volume, for tremolo, since issue 53), picked with arrows or from a menu like the Patch bar's, so that one LFO makes more kinds of movement.
 83. As a sound designer, I want two LFOs, each with its own Waveform, Rate, Depth and destination, so that I can make vibrato and a filter sweep at once, or two speeds of movement on one control.
 
 ### MIDI and the TempoPAD C16
@@ -174,6 +174,7 @@ Brought into scope by the grilling of [issue 40](./issues/40-preset-tutorials.md
 - Unison, and Viewers that show more than one Note at once ([ADR-0007](./adr/0007-optional-polyphony-viewers-follow-the-newest-note.md)).
 - Effects (delay, reverb, chorus, distortion).
 - A modulation matrix beyond two LFOs with a single destination each.
+- LFO tempo sync: Limpide keeps no tempo to sync to, with no sequencer or arpeggiator (decided by the owner, issue 53, 2026-10-27). Retrigger locks an LFO to each Note instead.
 - Custom DSP or analogue-modelled filters ([ADR-0001](./adr/0001-native-web-audio-nodes-over-custom-dsp.md)).
 - A spectrogram.
 - An arpeggiator or sequencer, MIDI output, and audio recording or export.

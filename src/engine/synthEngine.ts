@@ -2,7 +2,8 @@ import { type Adsr, type AutomationStep, envelopeSchedule, type GateEvent, level
 import { createLfoClock, glideFrequency, glideFrom, glideTimeConstant, type LfoWaveform, lfoShape } from '../modulation/lfo';
 import {
   effectiveCutoff, effectiveResonance, KEY_TRACK_CENTRE, LFO_CUTOFF_OCTAVES, LFO_DETUNE_CENTS, LFO_OSC2_CENTS,
-  LFO_PITCH_CENTS, LFO_PULSE_WIDTH, LFO_RESONANCE, lfoSwings, MAX_PULSE, MIN_PULSE, soundingPitch, VELOCITY_CUTOFF_OCTAVES,
+  LFO_PITCH_CENTS, LFO_PULSE_WIDTH, LFO_RESONANCE, LFO_VOLUME, lfoSwings, MAX_PULSE, MIN_PULSE, soundingPitch, tremolo,
+  VELOCITY_CUTOFF_OCTAVES,
 } from '../modulation/modulationModel';
 import { bandwidthOctaves } from '../modulation/passBand';
 import type { Sounding } from '../modulation/reach';
@@ -37,6 +38,8 @@ export interface Modulation {
   resonance: number;
   /** Band-pass and notch width in octaves. */
   bandwidth: number;
+  /** What the LFOs on Volume multiply the Amp by (0–1): 1 without tremolo. */
+  volume: number;
   /** The newest Note while its key is held (or Hold keeps it), with its Velocity; null once released. */
   sounding: Sounding | null;
   /** The pitch the newest Note sounds at, in semitones (fractional through a Glide or vibrato); A4 before any. */
@@ -261,7 +264,8 @@ const A4 = noteToFrequency(69);
 
 /**
  * One LFO: a real oscillator, wired to each destination through a gain set from its Depth (zero unless it is aimed
- * there): the Cutoff and the pitch in cents (through `detune`), Osc 2's tuning in cents, each Filter stage's Q.
+ * there): the Cutoff and the pitch in cents (through `detune`), Osc 2's tuning in cents, each Filter stage's Q, the
+ * tremolo's gain.
  * Pulse Width goes through each Voice's own gains, since its swing depends on the Note. The oscillator feeds a bus
  * the rest is wired to, so a retriggering Note can swap in a new oscillator that starts its cycle at that Note.
  */
@@ -275,6 +279,7 @@ interface LfoNodes {
   toPitch: GainNode;
   toOsc2: GainNode;
   toQ: [GainNode, GainNode];
+  toVolume: GainNode;
 }
 
 /** What every Voice shares: the LFOs, the pitch bend, the noise loop, and where the Voices' outputs go. */
@@ -282,6 +287,8 @@ interface Shared {
   lfos: [LfoNodes, LfoNodes];
   /** The pitch bend in cents, into every Oscillator's detune (the LFO on Pitch goes there too). */
   bend: ConstantSourceNode;
+  /** The tremolo's resting gain, into every Voice's: 1 less the LFOs' total swing on Volume. */
+  volume: ConstantSourceNode;
   noise: AudioBuffer;
   master: GainNode;
 }
@@ -321,6 +328,10 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   const filter2 = ctx.createBiquadFilter();
   const amp = ctx.createGain();
   amp.gain.value = 0;
+  // After the Amp, the LFOs on Volume (tremolo): its gain is the shared resting level plus each LFO's swing.
+  const volume = ctx.createGain();
+  volume.gain.value = 0;
+  shared.volume.connect(volume.gain);
 
   // The Filter Envelope (0–1) moves the Cutoff through `detune`, in cents: Cutoff × 2^(Amount × level),
   // exactly the model's law. Amount is a gain after the Envelope, so changing it mid-Note acts at once.
@@ -353,7 +364,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   keyTrackAmount.connect(filter2.detune);
   trackedNote.start();
 
-  mixer.connect(filter).connect(filter2).connect(amp).connect(shared.master);
+  mixer.connect(filter).connect(filter2).connect(amp).connect(volume).connect(shared.master);
   // Every Voice's noise starts at a different point of the loop, so a chord's noise is not one noise, louder.
   noise.start(0, (index * NOISE_SECONDS) / MAX_VOICES);
 
@@ -365,6 +376,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
     l.toQ[1].connect(filter2.Q);
     l.toPitch.connect(sub.detune);
     l.toOsc2.connect(osc2.detune);
+    l.toVolume.connect(volume.gain);
     for (const o of oscillators) {
       l.toPitch.connect(o.node.detune);
       l.bus.connect(o.pwm[i]);
@@ -467,10 +479,10 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
 
     /** A Tap listens to this Voice's stage: a side branch, so observing never alters the sound. */
     attach(taps: Taps, tap: TapName) {
-      ({ oscillator: mixer, filter: filter2, amp } as const)[tap].connect(taps[tap]);
+      ({ oscillator: mixer, filter: filter2, amp: volume } as const)[tap].connect(taps[tap]);
     },
     detach(taps: Taps, tap: TapName) {
-      ({ oscillator: mixer, filter: filter2, amp } as const)[tap].disconnect(taps[tap]);
+      ({ oscillator: mixer, filter: filter2, amp: volume } as const)[tap].disconnect(taps[tap]);
     },
   };
   return voice;
@@ -513,18 +525,21 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     osc.frequency.value = PARAMS.lfoRate.default;
     const bus = ctx.createGain();
     osc.connect(bus);
-    const [toCutoff, toPitch, toOsc2, q1, q2] = Array.from({ length: 5 }, () => {
+    const [toCutoff, toPitch, toOsc2, q1, q2, toVolume] = Array.from({ length: 6 }, () => {
       const g = ctx.createGain();
       g.gain.value = 0;
       bus.connect(g);
       return g;
     });
-    return { osc, bus, previous: null, restartAt: -1, toCutoff, toPitch, toOsc2, toQ: [q1, q2] };
+    return { osc, bus, previous: null, restartAt: -1, toCutoff, toPitch, toOsc2, toQ: [q1, q2], toVolume };
   };
   const bend = ctx.createConstantSource();
   bend.offset.value = 0;
   bend.start();
-  const shared: Shared = { lfos: [lfoNodes(), lfoNodes()], bend, noise: noiseBuffer(ctx), master };
+  const volume = ctx.createConstantSource();
+  volume.offset.value = 1;
+  volume.start();
+  const shared: Shared = { lfos: [lfoNodes(), lfoNodes()], bend, volume, noise: noiseBuffer(ctx), master };
   const voices = Array.from({ length: MAX_VOICES }, (_, i) => createVoice(ctx, shared, i));
   const waves = new Map<keyof typeof LFO_SERIES, PeriodicWave>();
   const wave = (w: keyof typeof LFO_SERIES) => waves.get(w) ?? waves.set(w, lfoWave(ctx, w)).get(w)!;
@@ -704,6 +719,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       resonance,
       mode: then?.filterMode ?? 'lowpass',
       bandwidth: then ? bandwidthOctaves(filterStages(then.filterMode, then.filterSlope, resonance)[0].Q) : 1,
+      volume: then ? tremolo(then, lfo) : 1,
       sounding: gate?.on ? { note, velocity } : null,
       pitch: gliding + vibrato + bendAt(t) / 100,
       vibrato,
@@ -773,6 +789,9 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       const osc2 = each('osc2Pitch', LFO_OSC2_CENTS).map((c, i) => c + each('detune', LFO_DETUNE_CENTS)[i]);
       // Resonance: each stage's Q moves from where the swing's low end puts it to where its high end does.
       const resonances = lfoSwings(next, 'resonance', LFO_RESONANCE, Math.min(next.resonance, 1 - next.resonance));
+      // Volume: the tremolo rests its total swing below 1, so the wave's top is the Envelope's own level.
+      const volumes = lfoSwings(next, 'volume', LFO_VOLUME, LFO_VOLUME);
+      volume.offset.setValueAtTime(1 - volumes[0] - volumes[1], t);
       lfos(next).forEach((l, i) => {
         const nodes = shared.lfos[i];
         // A restart scheduled ahead of now leaves the old oscillator running until then: it follows too.
@@ -783,6 +802,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
         nodes.toCutoff.gain.setValueAtTime(cutoffCents[i], t);
         nodes.toPitch.gain.setValueAtTime(pitchCents[i], t);
         nodes.toOsc2.gain.setValueAtTime(osc2[i], t);
+        nodes.toVolume.gain.setValueAtTime(volumes[i], t);
         const high = filterStages(next.filterMode, next.filterSlope, next.resonance + resonances[i]);
         const low = filterStages(next.filterMode, next.filterSlope, next.resonance - resonances[i]);
         nodes.toQ.forEach((g, k) => g.gain.setValueAtTime((high[k].Q - low[k].Q) / 2, t));

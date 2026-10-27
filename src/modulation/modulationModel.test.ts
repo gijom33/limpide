@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { defaultPatch, setParam } from '../patch/patch';
-import { effectiveCutoff, effectiveResonance, lfoSwings, osc2Cents, soundingPitch } from './modulationModel';
+import { effectiveCutoff, effectiveResonance, lfoSwings, osc2Cents, soundingPitch, tremolo } from './modulationModel';
 
 describe('Modulation model: Effective Cutoff', () => {
   it('is the Cutoff itself while nothing modulates the Filter', () => {
@@ -128,5 +128,24 @@ describe('the new LFO destinations', () => {
     expect(osc2Cents(patch, [0])).toBe(710);
     expect(osc2Cents(patch, [1])).toBeCloseTo(1910);
     expect(osc2Cents({ ...patch, lfoDestination: 'detune', lfoAmount: 0.5 }, [-1])).toBeCloseTo(685);
+  });
+});
+
+describe('Volume: tremolo (issue 53)', () => {
+  const patch = { ...defaultPatch(), lfoDestination: 'volume', lfoAmount: 1 } as const;
+  it('is full volume while no LFO is aimed at it', () => {
+    expect(tremolo(defaultPatch(), [-1, -1])).toBe(1);
+  });
+  it('pulls the volume down from where the Envelope has it, never above: to silence at the wave’s foot at full Depth', () => {
+    expect(tremolo(patch, [1])).toBeCloseTo(1);
+    expect(tremolo(patch, [0])).toBeCloseTo(0.5);
+    expect(tremolo(patch, [-1])).toBeCloseTo(0);
+    expect(tremolo({ ...patch, lfoAmount: 0.5 }, [-1])).toBeCloseTo(0.5);
+  });
+  it('two LFOs on Volume share the dip, never below silence', () => {
+    const both = { ...patch, lfo2Destination: 'volume', lfo2Amount: 1 } as const;
+    expect(tremolo(both, [-1, -1])).toBeCloseTo(0);
+    expect(tremolo(both, [1, 1])).toBeCloseTo(1);
+    expect(tremolo({ ...both, lfoAmount: 0.4, lfo2Amount: 0.2 }, [-1, -1])).toBeCloseTo(0.4);
   });
 });

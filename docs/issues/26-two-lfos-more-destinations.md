@@ -11,7 +11,7 @@
 | Detune | Osc | ±50 cents, Osc 2 only (the Detune knob's range) | Detune |
 | Pulse Width | Osc | ±40 points (unchanged) | both Pulse Widths |
 
-Not a destination: Volume (tremolo), which has no clean picture; nor Noise or Osc 2 levels, for now.
+Not a destination: Volume (tremolo), which has no clean picture; nor Noise or Osc 2 levels, for now. (Volume became one in issue 53, 2026-10-27, the owner's decision: its picture is the Amp Tap and the Timeline's Amp Envelope, without a ring.)
 
 **Blocked by:** 21 (done)
 

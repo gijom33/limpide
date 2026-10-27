@@ -119,8 +119,8 @@ describe('LFO and Glide', () => {
     expect(CHOICES.lfoWaveform).toEqual(['sine', 'triangle', 'square', 'saw', 'sawDown']);
   });
 
-  it('reach six destinations, the Oscillators’ first, then the Filter’s', () => {
-    expect(CHOICES.lfoDestination).toEqual(['pitch', 'osc2Pitch', 'detune', 'pulseWidth', 'cutoff', 'resonance']);
+  it('reach seven destinations in the order of the stages: the Oscillators’, the Filter’s, then the Amp’s Volume', () => {
+    expect(CHOICES.lfoDestination).toEqual(['pitch', 'osc2Pitch', 'detune', 'pulseWidth', 'cutoff', 'resonance', 'volume']);
     expect(CHOICES.lfo2Destination).toEqual(CHOICES.lfoDestination);
   });
 

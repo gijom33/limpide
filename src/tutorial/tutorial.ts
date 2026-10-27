@@ -71,7 +71,7 @@ export function differences(patch: Patch, preset: Patch): (keyof Patch)[] {
 const CHOICE_NAMES: Record<string, string> = {
   saw: 'Saw', sine: 'Sine', triangle: 'Triangle', square: 'Square', pulse: 'Pulse', sawDown: 'Saw Down',
   lowpass: 'Low-pass', highpass: 'High-pass', bandpass: 'Band-pass', notch: 'Notch',
-  pitch: 'Pitch', osc2Pitch: 'Osc 2 Pitch', detune: 'Detune', pulseWidth: 'Pulse Width', cutoff: 'Cutoff', resonance: 'Resonance',
+  pitch: 'Pitch', osc2Pitch: 'Osc 2 Pitch', detune: 'Detune', pulseWidth: 'Pulse Width', cutoff: 'Cutoff', resonance: 'Resonance', volume: 'Volume',
   note: 'On', free: 'Off',
 };
 

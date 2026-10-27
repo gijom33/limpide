@@ -3,17 +3,19 @@ import { CHOICES, type LfoDestination, type LfoNumber } from '../patch/patch';
 import { useLearnable } from './learn';
 
 /** Each destination's name, and the stage it belongs to (the menu groups and colours them by it). */
-export const DESTINATIONS: Record<LfoDestination, { label: string; stage: 'osc' | 'filter' }> = {
+export const DESTINATIONS: Record<LfoDestination, { label: string; stage: 'osc' | 'filter' | 'amp' }> = {
   pitch: { label: 'Pitch', stage: 'osc' },
   osc2Pitch: { label: 'Osc 2 Pitch', stage: 'osc' },
   detune: { label: 'Detune', stage: 'osc' },
   pulseWidth: { label: 'Pulse Width', stage: 'osc' },
   cutoff: { label: 'Cutoff', stage: 'filter' },
   resonance: { label: 'Resonance', stage: 'filter' },
+  volume: { label: 'Volume', stage: 'amp' },
 };
 const STAGES = [
   { stage: 'osc', name: 'Oscillators' },
   { stage: 'filter', name: 'Filter' },
+  { stage: 'amp', name: 'Amp' },
 ] as const;
 const ORDER = CHOICES.lfoDestination;
 

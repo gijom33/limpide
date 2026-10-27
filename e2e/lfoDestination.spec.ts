@@ -1,21 +1,21 @@
 import { expect, type Page, test } from '@playwright/test';
 
-// Each LFO's destination is picked like a Patch (issue 26): ‹ and › step through the six, and the name in the
-// middle opens a menu of them all, grouped by stage.
+// Each LFO's destination is picked like a Patch (issue 26): ‹ and › step through the seven (Volume since issue 53),
+// and the name in the middle opens a menu of them all, grouped by stage.
 
 const lfo = (page: Page, n: 1 | 2) => page.getByRole('group', { name: `LFO ${n}`, exact: true });
 const name = (page: Page, n: 1 | 2) => lfo(page, n).getByRole('button', { name: /Destination:/ });
 
-test('‹ and › step through the six destinations, wrapping round', async ({ page }) => {
+test('‹ and › step through the seven destinations, wrapping round', async ({ page }) => {
   await page.goto('/');
   await expect(name(page, 1)).toHaveAccessibleName('LFO 1 Destination: Cutoff');
   const next = lfo(page, 1).getByRole('button', { name: 'Next destination' });
   const seen: string[] = [];
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < 7; i++) {
     await next.click();
     seen.push(((await name(page, 1).getAttribute('aria-label')) ?? '').replace('LFO 1 Destination: ', ''));
   }
-  expect(seen).toEqual(['Resonance', 'Pitch', 'Osc 2 Pitch', 'Detune', 'Pulse Width', 'Cutoff']);
+  expect(seen).toEqual(['Resonance', 'Volume', 'Pitch', 'Osc 2 Pitch', 'Detune', 'Pulse Width', 'Cutoff']);
   await lfo(page, 1).getByRole('button', { name: 'Previous destination' }).click();
   await expect(name(page, 1)).toHaveAccessibleName('LFO 1 Destination: Pulse Width');
 });
@@ -27,6 +27,7 @@ test('the name opens a menu of every destination, grouped by stage; picking one 
   await expect(menu).toBeVisible();
   await expect(menu.getByRole('group', { name: 'Oscillators' }).getByRole('menuitemradio')).toHaveText(['Pitch', 'Osc 2 Pitch', 'Detune', 'Pulse Width']);
   await expect(menu.getByRole('group', { name: 'Filter' }).getByRole('menuitemradio')).toHaveText(['Cutoff', 'Resonance']);
+  await expect(menu.getByRole('group', { name: 'Amp' }).getByRole('menuitemradio')).toHaveText(['Volume']);
   await expect(menu.getByRole('menuitemradio', { name: 'Pitch', exact: true })).toHaveAttribute('aria-checked', 'true'); // LFO 2 starts on Pitch
   await menu.getByRole('menuitemradio', { name: 'Detune' }).click();
   await expect(menu).toBeHidden();

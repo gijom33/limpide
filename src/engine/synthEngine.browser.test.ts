@@ -604,6 +604,26 @@ describe('two LFOs and their destinations', () => {
     expect(engine!.modulationAt(0.25).resonance).toBeCloseTo(1);
     expect(engine!.modulationAt(0.75).resonance).toBeCloseTo(0);
   });
+
+  it('Volume makes tremolo: the Envelope’s level while the LFO is up, half Depth down while it is down, in the sound, the Amp Tap and the model', async () => {
+    const patch = { ...square, lfoDestination: 'volume', lfoAmount: 0.5 } as const;
+    let engine: ReturnType<typeof createSynthEngine> | undefined;
+    const s = await render(1, patch, (e) => {
+      engine = e;
+      e.noteOn(69, 1, 0);
+    });
+    const still = await render(1, { ...patch, lfoAmount: 0 }, (e) => e.noteOn(69, 1, 0));
+    const level = (x: Float32Array, t: number) => rms(x, Math.round((t - 0.1) * SR), Math.round((t + 0.1) * SR));
+    expect(level(s, 0.25) / level(still, 0.25)).toBeCloseTo(1, 2);
+    expect(level(s, 0.75) / level(still, 0.75)).toBeCloseTo(0.5, 2);
+    expect(engine!.modulationAt(0.25).volume).toBeCloseTo(1);
+    expect(engine!.modulationAt(0.75).volume).toBeCloseTo(0.5);
+    // The Amp Tap shows it: the Viewers see the tremolo as the ear hears it.
+    const up = await tapsAt(0.25, patch, 69);
+    const down = await tapsAt(0.75, patch, 69);
+    expect(rms(down.amp) / rms(up.amp)).toBeCloseTo(0.5, 1);
+    expect(rms(down.filter) / rms(up.filter)).toBeCloseTo(1, 1);
+  });
 });
 
 describe('Osc 2, Noise and the Mixer', () => {
