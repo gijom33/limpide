@@ -116,3 +116,23 @@ for (const [width, height] of [
     expect(m.scrolls).toBe(false);
   });
 }
+
+// The owner, 2026-10-27: on a phone the Waveform picker sat at the top of its row, above its name and the Pulse
+// Width dial. Its tooltip's anchor kept it from the rule that lines a picker up with the row's dial.
+for (const [width, height] of [[375, 812], [430, 932], [690, 830], [1100, 900], [1440, 900]] as const) {
+  test(`the Waveform picker lines up with its name and the Pulse Width dial (${width}×${height})`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await page.goto('/');
+    const m = await page.evaluate(() => {
+      const r = (e: Element) => e.getBoundingClientRect();
+      const picker = r(document.querySelector('[aria-label="Osc 1 Waveform"]')!);
+      const row = document.querySelector('[aria-label="Osc 1 Waveform"]')!.closest('.sub-block')!;
+      const name = r(row.querySelector('h3')!);
+      const dial = r(row.querySelector('.knob-dial')!);
+      const mid = (b: DOMRect) => b.top + b.height / 2;
+      return { beside: name.right <= picker.left, offName: Math.abs(mid(name) - mid(picker)), inDial: mid(picker) > dial.top && mid(picker) < dial.bottom };
+    });
+    if (m.beside) expect(m.offName, JSON.stringify(m)).toBeLessThanOrEqual(1);
+    expect(m.inDial, JSON.stringify(m)).toBe(true);
+  });
+}

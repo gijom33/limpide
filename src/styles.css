@@ -552,7 +552,9 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .block .sub-block:has(.knob) { --row-dial: var(--dial-small); }
 .block .sub-block:has(.knob[data-size='big']) { --row-dial: var(--dial-big); }
 .block .sub-block:has(.knob) h3 { display: flex; align-items: center; min-height: var(--row-dial); }
-.block .sub-block:has(.knob):has(> .segmented) h3, .block .sub-block:has(.knob) > .segmented {
+/* A picker may sit in its tooltip's anchor (the Waveforms): the same line, through it. */
+.block .sub-block:has(.knob):has(> .segmented, > .tip-anchor > .segmented) h3,
+.block .sub-block:has(.knob) > .segmented, .block .sub-block:has(.knob) > .tip-anchor:has(> .segmented) {
   margin-top: calc(var(--row-dial) * 0.8 - var(--control-h)); min-height: var(--control-h);
 }
 /* The Oscillator tabs start where the controls do. */
