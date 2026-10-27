@@ -88,7 +88,11 @@ _Avoid_: Current cutoff, modulated frequency
 
 **Amp**:
 The final stage controlling loudness over time.
-_Avoid_: VCA, volume, gain
+_Avoid_: VCA, gain
+
+**Volume**:
+An LFO Destination: what the LFO multiplies the Amp by, for tremolo. Depth pulls the loudness down from where the Amp Envelope has it, never above it; at full Depth the wave's foot is silence.
+_Avoid_: the Amp itself (say Amp), level (a Mixer level), master volume
 
 **Envelope**:
 A one-shot Attack–Decay–Sustain–Release contour started by a Gate. There are two: the **Amp Envelope** and the **Filter Envelope**.

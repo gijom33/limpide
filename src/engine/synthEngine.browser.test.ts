@@ -605,7 +605,7 @@ describe('two LFOs and their destinations', () => {
     expect(engine!.modulationAt(0.75).resonance).toBeCloseTo(0);
   });
 
-  it('Volume makes tremolo: the Envelope’s level while the LFO is up, half Depth down while it is down, in the sound, the Amp Tap and the model', async () => {
+  it('Volume makes tremolo: the Envelope’s level while the LFO is up, Depth below it while it is down, in the sound, the Amp Tap and the model', async () => {
     const patch = { ...square, lfoDestination: 'volume', lfoAmount: 0.5 } as const;
     let engine: ReturnType<typeof createSynthEngine> | undefined;
     const s = await render(1, patch, (e) => {

@@ -5,6 +5,8 @@ import { createFreezeLatch } from './freezeLatch';
 import type { ViewSettings } from './viewSettings';
 
 const WINDOW_SECONDS = 4;
+/** How loud the Note is: the Amp Envelope's level, times what an LFO on Volume (tremolo) leaves of it. */
+const loudness = (m: Modulation) => m.amp * m.volume;
 const F_MIN = 20;
 const F_MAX = 20000;
 
@@ -73,11 +75,12 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
     // Light fills, so where the two overlap they read no heavier than one Viewer's shading (16 %).
     area('--stage-filter', 0.1, (m) => m.filter);
     canvas.dataset.filterEnvelope = (samples.at(-1)?.filter ?? 0).toFixed(3);
-    canvas.dataset.ampLevel = (samples.at(-1) ? samples.at(-1)!.amp * samples.at(-1)!.volume : 0).toFixed(3);
+    const latest = samples.at(-1);
+    canvas.dataset.ampLevel = (latest ? loudness(latest) : 0).toFixed(3);
 
     // Amp Envelope, drawn over it: read as "how loud", the one the ear follows first. An LFO on Volume (tremolo)
     // ripples it, as it does the sound.
-    area('--stage-amp', 0.1, (m) => m.amp * m.volume);
+    area('--stage-amp', 0.1, loudness);
 
     // The Cutoff knob's setting (dashed), then the Effective Cutoff the Filter Envelope makes of it.
     g.strokeStyle = cssVar(canvas, '--cutoff-line');
@@ -113,7 +116,7 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
       g.stroke();
     };
     dot('--stage-filter', yLevel(last.filter));
-    dot('--stage-amp', yLevel(last.amp * last.volume));
+    dot('--stage-amp', yLevel(loudness(last)));
     dot('--cutoff-line', yHz(last.cutoff));
 
     // The Cutoff scale's labels over the traces, each on a halo of the background, so the Cutoff line never strikes

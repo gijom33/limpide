@@ -22,5 +22,5 @@ Commit as you go; push only when the owner says so. Each push is a release, in t
 1. **Minor releases** (new visible features) first get a code review: the code-review skill over everything since the last minor tag. Fix the bugs it finds; send the rest to the inbox.
 2. The full suite green.
 3. The version: patch by default, minor for new visible features, major only on the owner's word (`npm version X.Y.Z --no-git-tag-version`), and its line in `docs/issues/25-releases.md`.
-4. Commit, an annotated tag `vX.Y.Z`, `git push origin main --tags`, and `gh release create` with the version's release-log line as its notes.
+4. Commit it as `Issue 25: version X.Y.Z` (issue 25 is the release log), an annotated tag `vX.Y.Z`, `git push origin main --tags`, and `gh release create` with the version's release-log line as its notes.
 5. Done when the push's deploy run is green: a push to `main` deploys the site.

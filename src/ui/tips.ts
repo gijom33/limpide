@@ -115,12 +115,12 @@ export const TIPS = {
   },
   timeline: {
     title: 'LFO & Envelopes',
-    body: 'What changes the sound over time: the LFO, and the Envelope Timeline beside it. The Timeline shows the last four seconds. Violet: the Amp Envelope (loudness). Orange: the Effective Cutoff, with the frequencies the Filter lets through shaded below it. The faint dashed line is the Cutoff knob itself.',
+    body: 'What changes the sound over time: the LFO, and the Envelope Timeline beside it. The Timeline shows the last four seconds. Violet: the Amp Envelope (loudness; an LFO on Volume ripples it). Orange: the Effective Cutoff, with the frequencies the Filter lets through shaded below it. The faint dashed line is the Cutoff knob itself.',
     how: 'Play a Note and let go: the Release is drawn after the key comes up.',
   },
   lfo: {
     title: 'LFO',
-    body: 'A slow, repeating wave that moves something for you: the Cutoff (wah, wobble), the pitch (vibrato), the Pulse Width (a shimmering PWM chorus) and more. Rate is how fast, Depth how far. There are two: aim them at different things, or both at one for two speeds of movement (LFO 2 draws in a lighter blue).',
+    body: 'A slow, repeating wave that moves something for you: the Cutoff (wah, wobble), the pitch (vibrato), the Pulse Width (a shimmering PWM chorus), the Volume (tremolo) and more. Rate is how fast, Depth how far. There are two: aim them at different things, or both at one for two speeds of movement (LFO 2 draws in a lighter blue).',
     how: 'Turn Depth up and watch the knob it moves: a ring shows how far, a dot where it is now.',
   },
   lfoRetrigger: {
@@ -134,7 +134,7 @@ export const TIPS = {
   },
   lfoDestination: {
     title: 'LFO Destination',
-    body: 'What the LFO moves, at full Depth. Pitch: a semitone each way (vibrato). Osc 2 Pitch: Osc 2 alone, an octave each way (sweeps against Osc 1). Detune: Osc 2 alone, 50 cents each way (a beating chorus). Pulse Width: each Oscillator’s (PWM; only heard on a Pulse). Cutoff: two octaves each way (wah). Resonance: across its range (a vocal, whistling sweep).',
+    body: 'What the LFO moves, at full Depth. Pitch: a semitone each way (vibrato). Osc 2 Pitch: Osc 2 alone, an octave each way (sweeps against Osc 1). Detune: Osc 2 alone, 50 cents each way (a beating chorus). Pulse Width: each Oscillator’s (PWM; only heard on a Pulse). Cutoff: two octaves each way (wah). Resonance: across its range (a vocal, whistling sweep). Volume: down from the Amp Envelope’s level to silence (tremolo).',
   },
   glide: {
     title: 'Glide',
