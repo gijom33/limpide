@@ -1,66 +1,54 @@
-import { useEffect, useMemo, useReducer, useRef, useState, useSyncExternalStore } from 'react';
-import { getAudioSession, type AudioSession } from '../app/session';
+import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { type AudioSession, getAudioSession } from '../app/session';
 import { safeStorage } from '../app/storage';
-import { unlockAudio, type AudioStatus } from '../app/unlockAudio';
-import { keyToNote, octaveKey, shiftOctave } from '../input/keyboardLayout';
-import { createControlSurface, type LearnState } from '../midi/controlSurface';
-import { describeMessage, targetKey } from '../midi/describe';
-import { connectMidi, midiSupport, type MidiAccessLike } from '../midi/inputs';
-import { c16Bank, c16Layout, isC16 } from '../midi/c16';
-import { createMappingStore, type Mapping, type Target } from '../midi/mappings';
-import { QUICK_SETUP, quickSetupReducer, startQuickSetup, takenControls, type QuickSetupEvent, type QuickSetupState } from '../midi/quickSetup';
+import { type AudioStatus, unlockAudio } from '../app/unlockAudio';
+import { rememberWelcome, welcomeFor } from '../app/welcome';
 import { OSCILLATOR_LEVEL } from '../engine/synthEngine';
+import { shiftOctave } from '../input/keyboardLayout';
 import { idealReference } from '../music/idealReference';
-import { CHOICES, PARAMS, setFilter, setParam, setWaveform, type ChoiceId, type ParamId, type Patch } from '../patch/patch';
-import { createLibrary } from '../patch/library';
-import { initialPatch, presetAfter } from '../patch/presets';
-import { positionToValue, valueToPosition } from '../patch/taper';
+import { type Formula, harmonicFormula, responseFormula } from '../music/maths';
+import { CHOICES, type ParamId, type Patch, setFilter, setParam, setWaveform } from '../patch/patch';
+import { TUTORIALS } from '../tutorial/tutorials';
 import { loadOverlays, saveOverlays, toggleOverlay } from '../viewers/overlays';
 import { INITIAL_VIEWER_STATE, viewerReducer } from '../viewers/viewerState';
 import type { ViewSettings } from '../viewers/viewSettings';
-import { startDemo } from '../demo/player';
-import { SHARED_RIFF, TRACK, type Track } from '../demo/track';
-import { rememberWelcome, welcomeFor } from '../app/welcome';
-import { startSong } from '../demo/song';
-import { createHoldTaps, startRhythm, type Rhythm } from '../input/holdRhythm';
-import { PRESETS } from '../patch/presets';
-import { HoldIcon, InfoIcon, NoteIcon, PlayIcon } from './icons';
-import { Fader } from './Fader';
-import { Knob } from './Knob';
-import { OverlayToggles } from './OverlayToggles';
-import { TapViewers } from './TapViewers';
-import { TIPS } from './tips';
-import { ToolGroup } from './ToolGroup';
-import { FilterShape } from './FilterShape';
-import { Segmented } from './Segmented';
-import { ModulationContext } from './modulationRing';
-import { MathsContext } from './mathsContext';
-import { harmonicFormula, responseFormula, type Formula } from '../music/maths';
-import { SectionStrip } from './SectionStrip';
-import { SECTION_OF, SECTIONS, type SectionName } from './sections';
-import { SubBlock } from './SubBlock';
-import { LfoControls } from './LfoControls';
-import { LearnBar } from './LearnBar';
-import { LearnContext } from './learn';
-import { MidiPanel, type MidiState } from './MidiPanel';
-import { QuickSetupPanel } from './QuickSetupPanel';
-import { reveal } from './reveal';
-import { Piano } from './Piano';
-import { DisplayMenu } from './DisplayMenu';
-import { PatchBar } from './PatchBar';
-import { Tabs } from './Tabs';
-import { Tooltip, type TipContent } from './Tooltip';
-import { AxesControls, ViewActions } from './ViewerControls';
-import { EnvelopeTimeline } from './EnvelopeTimeline';
-import { applyTheme, loadTheme, type Theme } from './theme';
-import { WAVEFORM_ORDER, WaveformPicker } from './WaveformPicker';
-import { Wordmark } from './Wordmark';
 import { About } from './About';
-import { TutorialCard } from './TutorialCard';
 import { DemoBar } from './DemoBar';
-import { applyStep, controlName, differences, reached, type Tutorial } from '../tutorial/tutorial';
-import { TUTORIALS } from '../tutorial/tutorials';
-import { loadFinished, saveFinished } from '../tutorial/progress';
+import { DisplayMenu } from './DisplayMenu';
+import { EnvelopeTimeline } from './EnvelopeTimeline';
+import { Fader } from './Fader';
+import { FilterShape } from './FilterShape';
+import { useHold } from './hooks/useHold';
+import { useComputerKeyboard, useSpaceFreezes } from './hooks/useKeys';
+import { useMidi } from './hooks/useMidi';
+import { usePatchState } from './hooks/usePatchState';
+import { usePlayers } from './hooks/usePlayers';
+import { useTutorialState } from './hooks/useTutorialState';
+import { HoldIcon, InfoIcon, NoteIcon, PlayIcon } from './icons';
+import { Knob } from './Knob';
+import { LearnBar } from './LearnBar';
+import { LfoControls } from './LfoControls';
+import { LearnContext } from './learn';
+import { MidiPanel } from './MidiPanel';
+import { MathsContext } from './mathsContext';
+import { ModulationContext } from './modulationRing';
+import { OverlayToggles } from './OverlayToggles';
+import { PatchBar } from './PatchBar';
+import { Piano } from './Piano';
+import { QuickSetupPanel } from './QuickSetupPanel';
+import { SectionStrip } from './SectionStrip';
+import { Segmented } from './Segmented';
+import { SubBlock } from './SubBlock';
+import { Tabs } from './Tabs';
+import { TapViewers } from './TapViewers';
+import { ToolGroup } from './ToolGroup';
+import { type TipContent, Tooltip } from './Tooltip';
+import { TutorialCard } from './TutorialCard';
+import { applyTheme, loadTheme, type Theme } from './theme';
+import { TIPS } from './tips';
+import { AxesControls, ViewActions } from './ViewerControls';
+import { WaveformPicker } from './WaveformPicker';
+import { Wordmark } from './Wordmark';
 
 const IDEAL_HARMONICS = 256;
 /** The piano starts on C4, the octave the octave buttons count from. */
@@ -120,116 +108,12 @@ function Block({ title, stage, ids, patch, onChange, children, more, heading, ex
 }
 
 
-/** A choice's options in on-screen order (the Waveform pickers show them differently from the stored list). */
-const choiceOptions = (id: ChoiceId): readonly unknown[] =>
-  id === 'waveform' || id === 'osc2Waveform' ? WAVEFORM_ORDER : CHOICES[id];
-
-/** Set once the C16 layout has been applied by itself, so it is never applied again unasked. */
-const C16_APPLIED = 'limpide.c16Layout';
-
-/** Whether the browser has already allowed or refused MIDI, so connecting asks nothing (unknown: 'prompt'). */
-async function midiPermission(): Promise<PermissionState> {
-  try {
-    return (await navigator.permissions.query({ name: 'midi' as PermissionName })).state;
-  } catch {
-    return 'prompt';
-  }
-}
 
 export function App() {
-  // Patches: a share link, else last session's, else Init; autosaved as you play.
   const storage = useMemo(safeStorage, []);
-  const library = useMemo(() => createLibrary(storage), [storage]);
-  const [start] = useState(() => initialPatch(location.hash, library));
+  const { library, start, patch, setPatch, patchRef, patchName, loadPatch, stepPreset, changed } = usePatchState(storage);
   // A brand-new browser opens on About as a welcome, once; read before the first autosave makes it a Last session.
   const [welcome, setWelcome] = useState(() => welcomeFor(start.name === 'Shared Patch', storage, library));
-  const [patch, setPatch] = useState(start.patch);
-  const [patchName, setPatchName] = useState(start.name);
-  const [baseline, setBaseline] = useState(start.patch);
-  const loadPatch = (name: string, next: Patch) => {
-    setPatch(next);
-    setPatchName(name);
-    setBaseline(next);
-  };
-  const patchChanged = JSON.stringify(patch) !== JSON.stringify(baseline);
-
-  // The Demo: a track played on one Preset after another, knobs turning as it goes, until anything is touched.
-  const [demo, setDemo] = useState<number | null>(null);
-  // The Notes the Demo or the Song is playing, lit on the piano.
-  const [demoNotes, setDemoNotes] = useState<number[]>([]);
-  const demoStop = useRef<(() => void) | null>(null);
-  // The track playing (the Demo's, or a riff on a shared sound), and whether a Note or a control just stopped it.
-  const [demoTrack, setDemoTrack] = useState<Track>(TRACK);
-  const [tookOver, setTookOver] = useState(false);
-  /** `tookOver`: the person played or touched something, and the Demo's card says it stopped. */
-  const stopDemo = (tookOver = false) => {
-    if (tookOver && demoStop.current) setTookOver(true);
-    demoStop.current?.();
-    demoStop.current = null;
-    setDemo(null);
-  };
-  const stopDemoRef = useRef(stopDemo);
-  stopDemoRef.current = stopDemo;
-  // Knobs turned by hand while the Demo plays stay where they were put until its next Preset: its own moves skip them.
-  const turnedByHand = useRef(new Set<ParamId>());
-  // The section of the knob the Demo is turning, for the page to follow; a scroll of the person's own stops the
-  // following until the Demo's next part.
-  const [follow, setFollow] = useState<{ name: SectionName; key: number } | null>(null);
-  const followPaused = useRef(false);
-  const toggleDemo = () => (demoStop.current ? stopDemo() : playDemo());
-  /** The track; or, with `shared`, only a riff, played on the Patch loaded now (a Share link's). */
-  const playDemo = ({ shared = false } = {}) => {
-    stopDemo();
-    stopSong();
-    endTutorial(); // the Demo loads its own Presets
-    setBankFollow(null); // when the Demo ends, the page stays where the Demo left it
-    setTookOver(false);
-    const track = shared ? { bpm: TRACK.bpm, parts: [{ preset: patchName, phrase: SHARED_RIFF, caption: 'The sound someone shared with you: turn any knob and hear it change.' }] } : TRACK;
-    setDemoTrack(track);
-    const { engine } = session;
-    demoStop.current = startDemo({
-      now: () => engine.now(),
-      // The Patch goes to the engine at once, not on the next render: the part's first Notes follow straight away.
-      load: (part) => {
-        turnedByHand.current.clear();
-        followPaused.current = false;
-        if (shared) return patchRef.current;
-        const preset = PRESETS.find((p) => p.name === part.preset)!;
-        loadPatch(preset.name, preset.patch);
-        patchRef.current = preset.patch;
-        engine.applyPatch(preset.patch);
-        return preset.patch;
-      },
-      voices: () => patchRef.current.voices,
-      setParam: (id, value) => {
-        if (turnedByHand.current.has(id)) return;
-        patchRef.current = setParam(patchRef.current, id, value);
-        engine.applyPatch(patchRef.current);
-        setPatch((p) => setParam(p, id, value));
-      },
-      onMove: (id) => {
-        if (!followPaused.current) setFollow((f) => ({ name: SECTION_OF[id], key: (f?.key ?? 0) + 1 }));
-      },
-      noteOn: (note, velocity, at) => engine.noteOn(note, velocity, at),
-      noteOff: (at) => engine.noteOff(at),
-      release: (note, at) => engine.release(note, at),
-      onStep: setDemo,
-      onNotes: setDemoNotes,
-      showOctave: (o) => setOctave(shiftOctave(o, 0)),
-      onEnd: () => {
-        // The track is over: back to the starting point, silent, as if nothing had been touched. The shared sound
-        // stays loaded.
-        demoStop.current = null;
-        setDemo(null);
-        if (shared) return;
-        const init = PRESETS[0];
-        loadPatch(init.name, init.patch);
-      },
-    }, track);
-  };
-  // The Song: a loop that plays on the loaded Patch, never changing it, while the person turns knobs, flips switches
-  // and loads Presets. It moves with the piano's octave. Playing a Note, the Demo or the Song button stops it.
-  const [song, setSong] = useState(false);
   const [about, setAbout] = useState(welcome !== null);
   const closeAbout = () => {
     setAbout(false);
@@ -238,348 +122,61 @@ export function App() {
       setWelcome(null);
     }
   };
-  const songStop = useRef<(() => void) | null>(null);
-  const stopSong = () => {
-    songStop.current?.();
-    songStop.current = null;
-    setSong(false);
-  };
-  const toggleSong = () => {
-    if (songStop.current) return stopSong();
-    stopDemo();
-    stopListen();
-    const { engine } = session;
-    songStop.current = startSong({
-      now: () => engine.now(),
-      octave: () => octaveRef.current,
-      voices: () => patchRef.current.voices,
-      noteOn: (note, velocity, at) => engine.noteOn(note, velocity, at),
-      noteOff: (at) => engine.noteOff(at),
-      release: (note, at) => engine.release(note, at),
-      onNotes: setDemoNotes,
-    });
-    setSong(true);
-  };
 
-  // Playing anything, or touching a control that does not shape the sound, ends the Demo: the person has taken over.
-  // Knobs, faders and the stages' switches (Waveforms, Filter Mode and Slope, Voices, the LFOs' shapes and
-  // destinations) can be changed while it plays, and the sound follows; moving around the page (the section strip,
-  // the Oscillator tabs) leaves it playing too.
-  useEffect(() => {
-    if (demo === null) return;
-    const shapesSound = (target: EventTarget | null) =>
-      target instanceof Element &&
-      !!target.closest('.knob, .block-controls [role="radio"], .timeline-controls [role="radio"], .destination-picker, .section-strip, [role="tab"]');
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Enter' && shapesSound(e.target)) return;
-      if (!e.metaKey && !e.ctrlKey && !e.altKey && !['Shift', 'Tab'].includes(e.key)) stopDemo(true);
-    };
-    // A finger on the page may only be scrolling it: unless it lands on a control that takes touches itself
-    // (knobs, piano), wait for it to lift. If the browser took it over to scroll, it is cancelled instead.
-    let tap: number | null = null;
-    const onPointer = (e: PointerEvent) => {
-      const target = e.target as Element;
-      if ((!target.closest('main') && !target.closest('.section-strip')) || target.closest('[data-demo]') || shapesSound(target)) return;
-      if (e.pointerType === 'mouse' || getComputedStyle(target).touchAction === 'none') stopDemo(true);
-      else tap = e.pointerId;
-    };
-    const onLift = (e: PointerEvent) => {
-      if (e.pointerId === tap) stopDemo(true);
-    };
-    const onCancel = () => (tap = null);
-    // The person scrolling: the page stops following the Demo's knobs until its next part. A finger on a knob or the
-    // piano (which take touches themselves) is not scrolling.
-    const onWheel = () => (followPaused.current = true);
-    const onTouchMove = (e: TouchEvent) => {
-      if (e.target instanceof Element && getComputedStyle(e.target).touchAction !== 'none') followPaused.current = true;
-    };
-    window.addEventListener('keydown', onKey);
-    window.addEventListener('wheel', onWheel, { passive: true });
-    window.addEventListener('touchmove', onTouchMove, { passive: true });
-    document.addEventListener('pointerdown', onPointer);
-    document.addEventListener('pointerup', onLift);
-    document.addEventListener('pointercancel', onCancel);
-    return () => {
-      window.removeEventListener('keydown', onKey);
-      window.removeEventListener('wheel', onWheel);
-      window.removeEventListener('touchmove', onTouchMove);
-      document.removeEventListener('pointerdown', onPointer);
-      document.removeEventListener('pointerup', onLift);
-      document.removeEventListener('pointercancel', onCancel);
-    };
-  }, [demo]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    // A share link has done its job once loaded; drop it so a reload keeps later edits (autosaved).
-    if (location.hash.startsWith('#p=')) history.replaceState(null, '', location.pathname + location.search);
-  }, []);
-  useEffect(() => {
-    const timer = setTimeout(() => library.saveCurrent(patch), 300);
-    return () => clearTimeout(timer);
-  }, [library, patch]);
   const [session] = useState(() => getAudioSession(patch));
   const [audioStatus, setAudioStatus] = useState<AudioStatus>('waiting');
-  const [hold, setHold] = useState(false);
-
-  useEffect(() => session.input.setHold(hold), [session, hold]);
-
   // Sound starts on the first key press, click or drag; there is no button to press first.
   useEffect(() => unlockAudio(session.ctx, window, setAudioStatus), [session]);
+  useEffect(() => {
+    session.engine.applyPatch(patch);
+    session.input.setVoices(patch.voices);
+  }, [session, patch]);
+  const modulationContext = useMemo(() => ({ engine: session.engine, patch: patchRef }), [session, patchRef]);
+
   const [octave, setOctave] = useState(DEFAULT_OCTAVE);
   const octaveRef = useRef(octave);
   octaveRef.current = octave;
-  const [heldNotes, setHeldNotes] = useState<number[]>([]);
-  const [midi, setMidi] = useState<MidiState>({ kind: 'pending' });
-  const [activity, setActivity] = useState<string | null>(null);
-  const [learn, setLearn] = useState<LearnState>({ phase: 'off' });
+  useComputerKeyboard(session, octaveRef, setOctave);
+  const { hold, pressHold, pressHoldRef, heldNotes } = useHold(session, patchRef);
+
   const [viewer, dispatchViewer] = useReducer(viewerReducer, INITIAL_VIEWER_STATE);
-
-  useEffect(() => session.onHeld(setHeldNotes), [session]);
-  const heldRef = useRef(heldNotes);
-  heldRef.current = heldNotes;
-
-  // Hold's clicks: the first switches it on; quick clicks after it, before a Note is held, tap a rhythm, and the
-  // held Notes then repeat on it (single Notes and chords in turn on several Voices) until Hold goes off.
-  const [holdTaps] = useState(createHoldTaps);
-  const [rhythm, setRhythm] = useState<Rhythm | null>(null);
-  const pressHold = () => {
-    setHold(holdTaps.press(performance.now() / 1000, heldRef.current.length > 0));
-    setRhythm(holdTaps.rhythm());
-  };
-  const pressHoldRef = useRef(pressHold);
-  pressHoldRef.current = pressHold;
-  useEffect(() => {
-    if (heldNotes.length) holdTaps.noteArrived();
-  }, [holdTaps, heldNotes]);
-  useEffect(() => {
-    if (!hold || !rhythm) return;
-    const { engine } = session;
-    session.muteInput(true);
-    const stop = startRhythm(
-      {
-        now: () => engine.now(),
-        notes: () => heldRef.current,
-        voices: () => patchRef.current.voices,
-        noteOn: (note, velocity, at) => engine.noteOn(note, velocity, at),
-        release: (note, at) => engine.release(note, at),
-        noteOff: (at) => engine.noteOff(at),
-      },
-      rhythm,
-    );
-    return () => {
-      stop();
-      session.muteInput(false);
-    };
-  }, [session, hold, rhythm]);
-  // A Note played by hand (keyboard, piano or MIDI) ends the Song: the person has taken over.
-  useEffect(() => {
-    if (heldNotes.length && songStop.current) stopSong();
-  }, [heldNotes]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // The Controller's Mappings, and where its messages meet the synth. Messages arrive between renders, so the
-  // surface reads and writes the Patch through a ref that is always current.
-  const mappingStore = useMemo(() => createMappingStore(storage), [storage]);
-  // The C16 layout: applied once by itself, the first time a C16 is plugged in with nothing mapped (after that, a
-  // person who removed it meant to); the MIDI panel puts it back at any time.
-  const applyC16Layout = () => {
-    mappingStore.restore(c16Layout());
-    storage.setItem(C16_APPLIED, '1');
-  };
-  // A C16 control moved on another bank than the last: its section is brought into view (on a phone, where one
-  // section shows at a time).
-  const c16Connected = useRef(false);
-  const lastBank = useRef<number | undefined>(undefined);
-  const [bankFollow, setBankFollow] = useState<{ name: SectionName; key: number } | null>(null);
-  const mappings = useSyncExternalStore(mappingStore.subscribe, mappingStore.list);
-  const patchRef = useRef(patch);
-  patchRef.current = patch;
-  const modulationContext = useMemo(() => ({ engine: session.engine, patch: patchRef }), [session]);
-  const patchNameRef = useRef(patchName);
-  patchNameRef.current = patchName;
-  const surface = useMemo(() => {
-    const flashes = new Map<string, ReturnType<typeof setTimeout>>();
-    // The knob a Controller moved shows it for a moment ('waiting' while Pickup has not caught it yet).
-    const flash = (target: Target, state: 'moved' | 'waiting') => {
-      const key = targetKey(target);
-      const element = document.querySelector<HTMLElement>(`[data-learn="${key}"]`);
-      if (!element) return;
-      reveal(element);
-      element.dataset.midi = state;
-      clearTimeout(flashes.get(key));
-      flashes.set(key, setTimeout(() => delete element.dataset.midi, 400));
-    };
-    const stepPreset = (delta: number) => {
-      const preset = presetAfter(patchNameRef.current, delta);
-      patchNameRef.current = preset.name;
-      patchRef.current = preset.patch;
-      setPatch(preset.patch);
-      setPatchName(preset.name);
-      setBaseline(preset.patch);
-    };
-    return createControlSurface({
-      store: mappingStore,
-      position: (id) => valueToPosition(PARAMS[id], patchRef.current[id]),
-      setPosition: (id, position) => {
-        const next = setParam(patchRef.current, id, positionToValue(PARAMS[id], position));
-        patchRef.current = next;
-        turnedByHand.current.add(id);
-        setPatch((p) => setParam(p, id, next[id]));
-      },
-      choice: (id) => {
-        const options = choiceOptions(id);
-        return { index: options.indexOf(patchRef.current[id] as never), count: options.length };
-      },
-      setChoice: (id, index) => {
-        const value = choiceOptions(id)[index];
-        patchRef.current = { ...patchRef.current, [id]: value };
-        setPatch((p) => ({ ...p, [id]: value }));
-      },
-      action: (id) => {
-        if (id === 'hold') pressHoldRef.current();
-        else if (id === 'freeze') dispatchViewer({ type: 'toggleFreeze' });
-        else if (id === 'snapshot') dispatchViewer({ type: 'takeSnapshot' });
-        else stepPreset(id === 'nextPreset' ? 1 : -1);
-      },
-      press: (note, velocity) => session.input.press(note, velocity),
-      release: (note) => session.input.release(note),
-      touched: flash,
-      learnChanged: (state) => {
-        setLearn(state);
-        if (state.phase === 'armed' && state.learned) onLearned.current(state.learned);
-      },
-    });
-  }, [mappingStore, session]);
-
-  // Quick Setup: a sequence of Learn steps. Each Mapping learned moves it on to the next step's target.
-  const [setup, setSetup] = useState<QuickSetupState | null>(null);
-  const [setupLast, setSetupLast] = useState<{ step: number; mapping: Mapping } | null>(null);
-  const setupRef = useRef(setup);
-  const updateSetup = (event: QuickSetupEvent | { type: 'start' }) => {
-    const current = setupRef.current;
-    const next =
-      event.type === 'start' ? startQuickSetup(QUICK_SETUP, mappingStore.list()) : current && quickSetupReducer(current, event);
-    if (!next || next === current) return;
-    if (event.type === 'learned' && current) setSetupLast({ step: current.index, mapping: event.mapping });
-    if (event.type === 'start') setSetupLast(null);
-    setupRef.current = next.phase === 'cancelled' ? null : next;
-    setSetup(setupRef.current);
-    if (next.phase === 'running') {
-      surface.startLearn();
-      surface.select(next.steps[next.index].target, takenControls(next));
-    } else {
-      surface.stopLearn();
-      if (next.phase === 'cancelled') mappingStore.restore(next.before);
-    }
-  };
-  const onLearned = useRef((mapping: Mapping): void => void mapping);
-  onLearned.current = (mapping) => updateSetup({ type: 'learned', mapping });
-
-  // In MIDI Learn, clicking a learnable control selects it instead of using it; Escape ends Learn.
-  const learning = learn.phase !== 'off';
-  useEffect(() => {
-    if (!learning) return;
-    const types = ['pointerdown', 'mousedown', 'click', 'dblclick'];
-    const select = (e: Event) => {
-      const element = (e.target as Element).closest?.('[data-learn]');
-      if (!element) return;
-      e.preventDefault();
-      e.stopPropagation();
-      // Quick Setup chooses the targets itself; a click only must not act on the control.
-      if (e.type !== 'click' || setupRef.current) return;
-      const [kind, id] = element.getAttribute('data-learn')!.split(':');
-      surface.select({ kind, id } as Target);
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
-      e.stopPropagation();
-      if (setupRef.current?.phase === 'running') updateSetup({ type: 'finish' });
-      else surface.stopLearn();
-    };
-    for (const type of types) document.addEventListener(type, select, { capture: true });
-    document.addEventListener('keydown', onKey, { capture: true });
-    return () => {
-      for (const type of types) document.removeEventListener(type, select, { capture: true });
-      document.removeEventListener('keydown', onKey, { capture: true });
-    };
-  }, [learning, surface]);
-  const learnContext = useMemo(
-    () => ({
-      mapped: new Set(mappings.map((m) => targetKey(m.target))),
-      selected: learn.phase !== 'off' && learn.target ? targetKey(learn.target) : null,
-    }),
-    [mappings, learn],
-  );
-  // The control MIDI Learn is waiting for is shown, even on a hidden tab.
-  useEffect(() => {
-    const element = learnContext.selected && document.querySelector(`[data-learn="${learnContext.selected}"]`);
-    if (element) reveal(element);
-  }, [learnContext.selected]);
-
-  // MIDI is asked for when the visitor opens the MIDI panel, never at load, where the browser's prompt would come
-  // before anything is touched (issue 46); a browser that already allowed it connects at once.
-  const [midiWanted, setMidiWanted] = useState(false);
-  useEffect(() => {
-    if (midiSupport(navigator) !== 'supported') return;
-    let cancelled = false;
-    midiPermission().then((state) => {
-      if (cancelled) return;
-      if (state === 'granted') setMidiWanted(true);
-      if (state === 'denied') setMidi({ kind: 'denied' });
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  // MIDI Controllers: their Notes join the same Note input as the keyboard and piano.
-  useEffect(() => {
-    const support = midiSupport(navigator);
-    if (support !== 'supported') return setMidi({ kind: 'unsupported', ios: support === 'ios' });
-    if (!midiWanted) return;
-    let dispose = () => {};
-    let cancelled = false;
-    navigator.requestMIDIAccess().then(
-      (access) => {
-        if (cancelled) return;
-        dispose = connectMidi(access as unknown as MidiAccessLike, {
-          onMessage: (m) => {
-            if (m.type === 'noteOn' && demoStop.current) stopDemoRef.current(true);
-            if (c16Connected.current && m.type === 'cc' && surface.learnState().phase === 'off') {
-              const control = { kind: 'cc' as const, channel: m.channel, number: m.controller };
-              const bank = c16Bank(control);
-              if (bank !== undefined && bank !== lastBank.current && mappingStore.find(control)) {
-                lastBank.current = bank;
-                setBankFollow((f) => ({ name: SECTIONS[bank].name, key: (f?.key ?? 0) + 1 }));
-              }
-            }
-            surface.handle(m);
-            setActivity(describeMessage(m));
-          },
-          onDevices: (devices) => {
-            setMidi({ kind: 'ready', devices });
-            c16Connected.current = devices.some(isC16);
-            const fresh = mappingStore.list().length === 0 && storage.getItem(C16_APPLIED) === null;
-            if (c16Connected.current && fresh) applyC16Layout();
-          },
-        });
-      },
-      () => setMidi({ kind: 'denied' }),
-    );
-    return () => {
-      cancelled = true;
-      dispose();
-    };
-  }, [surface, midiWanted]);
+  useSpaceFreezes(dispatchViewer);
+  useEffect(() => session.engine.setTapSource(viewer.tapSource), [session, viewer.tapSource]);
   const [theme, setTheme] = useState(loadTheme);
+  useEffect(() => applyTheme(theme), [theme]);
   const [cycles, setCycles] = useState<ViewSettings['cycles']>(2);
   const [overlays, setOverlays] = useState(() => loadOverlays(storage));
-
   useEffect(() => saveOverlays(storage, overlays), [storage, overlays]);
 
+  const players = usePlayers({
+    session, patchRef, patchName, setPatch, loadPatch, octaveRef, setOctave, heldNotes,
+    // The Demo loads its own Presets, and the page stays where the Demo leaves it.
+    onDemoStart: () => {
+      tutorial.end();
+      midi.setBankFollow(null);
+    },
+  });
+  const tutorial = useTutorialState({
+    storage, patch, patchName, setPatch, loadPatch, overlays, setOverlays,
+    onStart: () => {
+      players.stopDemo();
+      players.setTookOver(false);
+      players.stopSong();
+      players.stopListen();
+    },
+    onEnd: players.stopListen,
+  });
+  const midi = useMidi({
+    storage, session, patchRef, setPatch, stepPreset, pressHoldRef, dispatchViewer,
+    turnedByHand: players.turnedByHand,
+    onNote: () => players.stopDemoRef.current(true),
+  });
+  const { learnContext, learning } = midi;
+
   // The Ideal Reference at the Oscillator Tap's level: the same series the engine plays, scaled by the Nominal Level.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: only what the Ideal Reference depends on, not the whole Patch
   const ideal = useMemo(
     () => idealReference(patch, IDEAL_HARMONICS).map((m) => m * OSCILLATOR_LEVEL),
-    // Only what the Ideal Reference depends on, not the whole Patch.
     [patch.waveform, patch.pulseWidth, patch.mixOsc1, patch.mixSub],
   );
 
@@ -588,158 +185,10 @@ export function App() {
   viewSettings.current = { cycles, ideal, overlays, viewer };
   const view = useRef(() => viewSettings.current).current;
 
-  useEffect(() => applyTheme(theme), [theme]);
-
-  // Space Freezes the Viewers. It never plays a Note, and must not also press a focused button or scroll.
-  useEffect(() => {
-    const isSpace = (e: KeyboardEvent) => e.code === 'Space' && !(e.target instanceof HTMLInputElement);
-    const down = (e: KeyboardEvent) => {
-      if (!isSpace(e)) return;
-      e.preventDefault();
-      if (!e.repeat) dispatchViewer({ type: 'toggleFreeze' });
-    };
-    const up = (e: KeyboardEvent) => {
-      if (isSpace(e)) e.preventDefault();
-    };
-    window.addEventListener('keydown', down);
-    window.addEventListener('keyup', up);
-    return () => {
-      window.removeEventListener('keydown', down);
-      window.removeEventListener('keyup', up);
-    };
-  }, []);
-
-  useEffect(() => {
-    session.engine.applyPatch(patch);
-    session.input.setVoices(patch.voices);
-  }, [session, patch]);
-  useEffect(() => session.engine.setTapSource(viewer.tapSource), [session, viewer.tapSource]);
-
-  useEffect(() => {
-    const { input } = session;
-    const isTyping = (e: KeyboardEvent) => e.target instanceof HTMLInputElement || e.metaKey || e.ctrlKey || e.altKey;
-    // The Note each key started, so a key released after an octave shift still releases its own Note.
-    const keyNotes = new Map<string, number>();
-
-    const down = (e: KeyboardEvent) => {
-      if (e.repeat || isTyping(e)) return;
-      const shift = octaveKey(e.code);
-      if (shift) return setOctave((o) => shiftOctave(o, shift));
-      const note = keyToNote(e.code, octaveRef.current);
-      if (note === undefined) return;
-      keyNotes.set(e.code, note);
-      input.press(note, 1);
-    };
-    const up = (e: KeyboardEvent) => {
-      const note = keyNotes.get(e.code);
-      if (note === undefined) return;
-      keyNotes.delete(e.code);
-      input.release(note);
-    };
-    const releaseAll = () => {
-      for (const note of keyNotes.values()) input.release(note);
-      keyNotes.clear();
-    };
-
-    window.addEventListener('keydown', down);
-    window.addEventListener('keyup', up);
-    window.addEventListener('blur', releaseAll);
-    return () => {
-      window.removeEventListener('keydown', down);
-      window.removeEventListener('keyup', up);
-      window.removeEventListener('blur', releaseAll);
-    };
-  }, [session]);
-
   const change = (id: ParamId, value: number) => {
-    turnedByHand.current.add(id);
+    players.turnedByHand.current.add(id);
     setPatch((p) => setParam(p, id, value));
   };
-
-  // A Tutorial (issue 57): a Preset rebuilt from Init, the person turning each control. `index` is −1 on the first
-  // card and `steps.length` on the last.
-  const [lesson, setLesson] = useState<{ tutorial: Tutorial; index: number; done: boolean[] } | null>(null);
-  const [finished, setFinished] = useState(() => loadFinished(storage));
-  const lessonPreset = lesson && PRESETS.find((p) => p.name === lesson.tutorial.preset)!;
-  const lessonStep = lesson?.tutorial.steps[lesson.index];
-  // Listen: the Tutorial's phrase, played over and over on the Patch as it is now, so both hands are free.
-  const [listening, setListening] = useState(false);
-  const listenStop = useRef<(() => void) | null>(null);
-  const stopListen = () => {
-    listenStop.current?.();
-    listenStop.current = null;
-    setListening(false);
-  };
-  const startListen = (tutorial: Tutorial) => {
-    stopDemo();
-    stopSong();
-    const { engine } = session;
-    const play = () => {
-      listenStop.current = startDemo(
-        {
-          now: () => engine.now(),
-          load: () => patchRef.current,
-          voices: () => patchRef.current.voices,
-          setParam: () => {},
-          onMove: () => {},
-          noteOn: (note, velocity, at) => engine.noteOn(note, velocity, at),
-          noteOff: (at) => engine.noteOff(at),
-          release: (note, at) => engine.release(note, at),
-          onStep: () => {},
-          onNotes: setDemoNotes,
-          showOctave: (o) => setOctave(shiftOctave(o, 0)),
-          onEnd: play,
-        },
-        // The phrase many times over, as one track: the player starts each part on the last one's end, so the loop
-        // keeps time (started again at each end, it fell off the beat by the player's lead-in).
-        { bpm: tutorial.bpm, parts: Array.from({ length: 64 }, () => ({ preset: tutorial.preset, phrase: tutorial.phrase })) },
-      );
-    };
-    play();
-    setListening(true);
-  };
-  const startTutorial = (tutorial: Tutorial) => {
-    stopDemo();
-    setTookOver(false);
-    stopSong();
-    stopListen();
-    const init = PRESETS[0];
-    loadPatch(init.name, init.patch);
-    setLesson({ tutorial, index: -1, done: tutorial.steps.map(() => false) });
-  };
-  function endTutorial() {
-    stopListen();
-    setLesson(null);
-  }
-  const moveTutorial = (delta: number) => setLesson((l) => l && { ...l, index: Math.min(l.tutorial.steps.length, Math.max(-1, l.index + delta)) });
-  const matchPreset = () => lessonPreset && loadPatch(lessonPreset.name, lessonPreset.patch);
-  // A Step is made when its control reaches the target, however it got there (hand, keys, MIDI, "Do it for me"); a
-  // knob or fader then snaps to the exact value, so the finished sound is the Preset's.
-  useEffect(() => {
-    if (!lesson || !lessonStep || lesson.done[lesson.index] || !reached(lessonStep, patch, overlays)) return;
-    if (lessonStep.kind !== 'display' && patch[lessonStep.id] !== lessonStep.to) setPatch((p) => applyStep(p, lessonStep));
-    setLesson((l) => l && { ...l, done: l.done.map((d, i) => d || i === l.index) });
-  }, [lesson, lessonStep, patch, overlays]);
-  // The last card: the Tutorial counts as finished, and a sound that matches is named after its Preset.
-  const lessonDiffers = lesson && lessonPreset && lesson.index >= lesson.tutorial.steps.length ? differences(patch, lessonPreset.patch) : [];
-  const atEnd = !!lesson && lesson.index >= lesson.tutorial.steps.length;
-  useEffect(() => {
-    if (!atEnd || !lessonPreset) return;
-    setFinished((f) => {
-      if (f.has(lessonPreset.name)) return f;
-      const next = new Set(f).add(lessonPreset.name);
-      saveFinished(storage, next);
-      return next;
-    });
-    if (lessonDiffers.length === 0 && patchName !== lessonPreset.name) loadPatch(lessonPreset.name, lessonPreset.patch);
-  }, [atEnd, lessonPreset, lessonDiffers.length, patchName, storage]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => () => listenStop.current?.(), []);
-  // The Demo's "you are playing now" stays a moment, then goes.
-  useEffect(() => {
-    if (!tookOver) return;
-    const timer = setTimeout(() => setTookOver(false), 6000);
-    return () => clearTimeout(timer);
-  }, [tookOver]);
 
   const viewers = (
     tap: keyof AudioSession['engine']['taps'],
@@ -766,21 +215,18 @@ export function App() {
     <ModulationContext.Provider value={modulationContext}>
     <MathsContext.Provider value={overlays.maths ? patch : null}>
       <main data-frozen={viewer.frozen || undefined} data-learning={learning || undefined}>
-        {setup ? (
+        {midi.setup ? (
           <QuickSetupPanel
-            state={setup}
-            last={setupLast}
-            onBack={() => updateSetup({ type: 'back' })}
-            onSkip={() => updateSetup({ type: 'skip' })}
-            onFinish={() => updateSetup({ type: 'finish' })}
-            onCancel={() => updateSetup({ type: 'cancel' })}
-            onClose={() => {
-              setupRef.current = null;
-              setSetup(null);
-            }}
+            state={midi.setup}
+            last={midi.setupLast}
+            onBack={() => midi.updateSetup({ type: 'back' })}
+            onSkip={() => midi.updateSetup({ type: 'skip' })}
+            onFinish={() => midi.updateSetup({ type: 'finish' })}
+            onCancel={() => midi.updateSetup({ type: 'cancel' })}
+            onClose={midi.closeSetup}
           />
         ) : (
-          <LearnBar state={learn} />
+          <LearnBar state={midi.learn} />
         )}
         {/* One order at every width (issue 44): the Wordmark and the Patch, playing (Demo, Song, Hold), the
             keyboard, then set-up (MIDI, Display, About). Each layout places these groups; none reorders them. */}
@@ -790,23 +236,23 @@ export function App() {
               <Wordmark onOpen={() => setAbout(true)} />
               <PatchBar
                 name={patchName}
-                changed={patchChanged}
+                changed={changed}
                 patch={patch}
                 library={library}
                 onLoad={loadPatch}
-                tutorials={TUTORIALS.map((t) => ({ preset: t.preset, finished: finished.has(t.preset) }))}
-                onTutorial={(preset) => startTutorial(TUTORIALS.find((t) => t.preset === preset)!)}
+                tutorials={TUTORIALS.map((t) => ({ preset: t.preset, finished: tutorial.finished.has(t.preset) }))}
+                onTutorial={(preset) => tutorial.start(TUTORIALS.find((t) => t.preset === preset)!)}
               />
             </div>
             <div className="header-play" role="group" aria-label="Play">
               <Tooltip content={TIPS.demo}>
-                <button type="button" className="tool tool-mode demo-button" aria-label="Demo" aria-pressed={demo !== null} data-demo onClick={toggleDemo}>
+                <button type="button" className="tool tool-mode demo-button" aria-label="Demo" aria-pressed={players.demo !== null} data-demo onClick={players.toggleDemo}>
                   <PlayIcon />
                   <span className="demo-word">Demo</span>
                 </button>
               </Tooltip>
               <Tooltip content={TIPS.song}>
-                <button type="button" className="tool tool-mode demo-button" aria-label="Song" aria-pressed={song} data-demo onClick={toggleSong}>
+                <button type="button" className="tool tool-mode demo-button" aria-label="Song" aria-pressed={players.song} data-demo onClick={players.toggleSong}>
                   <NoteIcon />
                   <span className="demo-word">Song</span>
                 </button>
@@ -833,7 +279,7 @@ export function App() {
               {octave < DEFAULT_OCTAVE ? `−${DEFAULT_OCTAVE - octave}` : '−'}
             </button>
             <Tooltip content={TIPS.keyboard} longPress={false}>
-              <Piano octave={octave} held={demoNotes.length ? [...heldNotes, ...demoNotes] : heldNotes} input={session.input} invite={audioStatus === 'waiting'} />
+              <Piano octave={octave} held={players.playedNotes.length ? [...heldNotes, ...players.playedNotes] : heldNotes} input={session.input} invite={audioStatus === 'waiting'} />
             </Tooltip>
             <button type="button" className="tool tool-icon octave" aria-label="Octave up" {...shifted(octave - DEFAULT_OCTAVE)} onClick={() => setOctave((o) => shiftOctave(o, 1))}>
               {octave > DEFAULT_OCTAVE ? `+${octave - DEFAULT_OCTAVE}` : '+'}
@@ -841,17 +287,17 @@ export function App() {
           </div>
           <div className="header-right">
             <MidiPanel
-              state={midi}
-              onOpen={() => setMidiWanted(true)}
-              activity={activity}
-              mappings={mappings}
+              state={midi.midi}
+              onOpen={midi.connect}
+              activity={midi.activity}
+              mappings={midi.mappings}
               learning={learning}
-              onLearn={() => surface.startLearn()}
-              onDone={() => (setupRef.current ? updateSetup({ type: 'finish' }) : surface.stopLearn())}
-              onQuickSetup={() => updateSetup({ type: 'start' })}
-              onC16Layout={applyC16Layout}
-              onRemove={(control) => mappingStore.remove(control)}
-              onClear={() => mappingStore.clear()}
+              onLearn={() => midi.surface.startLearn()}
+              onDone={() => (midi.setup ? midi.updateSetup({ type: 'finish' }) : midi.surface.stopLearn())}
+              onQuickSetup={() => midi.updateSetup({ type: 'start' })}
+              onC16Layout={midi.applyC16Layout}
+              onRemove={(control) => midi.mappingStore.remove(control)}
+              onClear={() => midi.mappingStore.clear()}
             />
             <DisplayMenu active={viewer.frozen || viewer.snapshot !== null}>
               <section className="toolbar" aria-label="Viewer controls">
@@ -891,13 +337,13 @@ export function App() {
             </div>
           </div>
         </header>
-        <SectionStrip follow={demo === null ? bankFollow : follow} />
+        <SectionStrip follow={players.demo === null ? midi.bankFollow : players.follow} />
         <About
           open={about}
           welcome={welcome}
           onClose={closeAbout}
-          onPlay={() => playDemo({ shared: welcome === 'shared' })}
-          onTutorial={() => startTutorial(TUTORIALS[0])}
+          onPlay={() => players.playDemo({ shared: welcome === 'shared' })}
+          onTutorial={() => tutorial.start(TUTORIALS[0])}
         />
 
         {audioStatus === 'blocked' && (
@@ -1109,33 +555,33 @@ export function App() {
             }
           />
         </div>
-        {(demo !== null || tookOver) && (
+        {(players.demo !== null || players.tookOver) && (
           <DemoBar
-            playing={demo !== null && demoTrack.parts[demo] ? { part: demoTrack.parts[demo], index: demo, count: demoTrack.parts.length } : null}
-            tookOver={tookOver}
-            onStop={() => stopDemo()}
-            onPlayAgain={() => playDemo()}
-            onDismiss={() => setTookOver(false)}
+            playing={
+              players.demo !== null && players.demoTrack.parts[players.demo]
+                ? { part: players.demoTrack.parts[players.demo], index: players.demo, count: players.demoTrack.parts.length }
+                : null
+            }
+            tookOver={players.tookOver}
+            onStop={() => players.stopDemo()}
+            onPlayAgain={() => players.playDemo()}
+            onDismiss={() => players.setTookOver(false)}
           />
         )}
-        {lesson && lessonPreset && (
+        {tutorial.lesson && tutorial.preset && (
           <TutorialCard
-            tutorial={lesson.tutorial}
-            about={lessonPreset.about}
-            index={lesson.index}
-            done={lesson.done}
-            differs={lessonDiffers.map(controlName)}
-            listening={listening}
-            onListen={() => (listening ? stopListen() : startListen(lesson.tutorial))}
-            onBack={() => moveTutorial(-1)}
-            onNext={() => moveTutorial(1)}
-            onDoIt={() => {
-              if (!lessonStep) return;
-              if (lessonStep.kind === 'display') setOverlays((v) => ({ ...v, [lessonStep.overlay]: true }));
-              else setPatch((p) => applyStep(p, lessonStep));
-            }}
-            onMatch={matchPreset}
-            onQuit={endTutorial}
+            tutorial={tutorial.lesson.tutorial}
+            about={tutorial.preset.about}
+            index={tutorial.lesson.index}
+            done={tutorial.lesson.done}
+            differs={tutorial.differs}
+            listening={players.listening}
+            onListen={() => (players.listening ? players.stopListen() : players.startListen(tutorial.lesson!.tutorial))}
+            onBack={() => tutorial.move(-1)}
+            onNext={() => tutorial.move(1)}
+            onDoIt={tutorial.doIt}
+            onMatch={tutorial.matchPreset}
+            onQuit={tutorial.end}
           />
         )}
       </main>
