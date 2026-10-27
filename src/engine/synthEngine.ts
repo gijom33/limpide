@@ -12,8 +12,8 @@ import { bandwidthOctaves } from '../modulation/passBand';
 import type { Sounding } from '../modulation/reach';
 
 /**
- * Which Voices the Amp Tap listens to: the newest Note's alone (the default, ADR-0007), or all of them summed, so
- * a chord is seen as it is heard. The Oscillator and Filter Taps always follow the newest Note.
+ * Which Voices the Amp Tap listens to: all of them summed (the app's default, so a chord is seen as it is heard), or
+ * the newest Note's alone (ADR-0007). The Oscillator and Filter Taps always follow the newest Note.
  */
 export type TapSource = 'newest' | 'all';
 type TapName = keyof Taps;

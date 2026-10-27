@@ -8,7 +8,7 @@ I've twisted knobs on synthesizers for years, but I don't really understand *why
 
 ## Solution
 
-Limpide (formerly Limpide) is a browser-based subtractive synthesizer laid out as its own signal-flow diagram: Oscillators → Mixer → Filter → Amp, left to right, with Viewers under each stage.
+Limpide (formerly SynthView) is a browser-based subtractive synthesizer laid out as its own signal-flow diagram: Oscillators → Mixer → Filter → Amp, left to right, with Viewers under each stage.
 
 - **Seeing the subtraction:** each Tap has a cycle-locked Scope and a Spectrum. The Filter's real Response Curve is drawn over the Spectrum, so the Harmonics it cuts can be read against it.
 - **Harmonics against theory:** Harmonic Markers name each Harmonic, and the Waveform's Ideal Reference shows what theory predicts.
@@ -154,9 +154,9 @@ Judged against [the design principles](./design-principles.md).
      - with Cutoff at 1 kHz on a 24 dB low-pass, the Harmonics above 2 kHz drop by at least the expected dB
      - `filterResponse` matches the measured attenuation
      - the Modulation model's Effective Cutoff matches the rendered result
-  3. **App**: one Playwright smoke test (the page loads, starting audio and pressing a key produces a non-silent Amp Tap, and the Viewers draw).
+  3. **App**: Playwright end-to-end tests in Chromium and WebKit, on the built site: playing (keys, piano, a stand-in MIDI Controller), the layouts at every width, panels, Presets and share links, and the design principles' audit (contrast and touch targets).
 - **Not tested:** pixel output of canvases, and React component internals.
-- **Prior art:** none yet (new repo). The first slice establishes the patterns.
+- **Prior art:** the first slice established the patterns; measurements shared by the engine tests live in `src/test/measure.ts`.
 
 ## Out of Scope
 
@@ -165,7 +165,7 @@ Judged against [the design principles](./design-principles.md).
 - A modulation matrix beyond two LFOs with a single destination each.
 - Custom DSP or analogue-modelled filters ([ADR-0001](./adr/0001-native-web-audio-nodes-over-custom-dsp.md)).
 - Guided lessons. The data model should allow them, but the content comes later.
-- Spectrogram and explanatory tooltips, which are next after v1.
+- A spectrogram.
 - An arpeggiator or sequencer, MIDI output, and audio recording or export.
 - Accounts and cloud sync. (Phones were out of scope until 1.1.0; they are now a first-class layout.)
 - Drawing your own LFO shapes, and graphical envelope editors.

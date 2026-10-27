@@ -2,6 +2,10 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: 'e2e',
+  // On CI a failure is retried once, so a browser that crashes under it (WebKit's "Cannot find parent object", seen
+  // locally) doesn't block a deploy; a real failure fails twice. Locally, never.
+  retries: process.env.CI ? 1 : 0,
+  forbidOnly: !!process.env.CI,
   use: {
     baseURL: 'http://localhost:5199',
     // Every test but the welcome's own starts in a browser that has been welcomed already, so About's welcome

@@ -11,12 +11,12 @@ The complete set of parameter values that defines one sound.
 _Avoid_: Preset (when you mean the user's sound), program, settings
 
 **Preset**:
-A read-only Patch shipped with the app, built to show off one idea (Init, Bass, Lead, Pluck, Pad, Wobble).
+A read-only Patch shipped with the app, built to show off one idea, in groups (Shapes, Filter, Bass, Pads…).
+_Avoid_: Factory patch, template
 
 **Share link**:
 A URL whose `#p=` part carries a Patch (only what differs from Init), so opening it plays that sound.
 _Avoid_: Permalink, patch URL
-_Avoid_: Factory patch, template
 
 **Parameter**:
 One named, bounded, user-adjustable value of a Patch (e.g. Cutoff), with a unit and a Taper.
@@ -59,7 +59,7 @@ An unpitched source of equal energy across frequencies, mixed alongside the Osci
 _Avoid_: White noise generator, hiss
 
 **Mixer**:
-The stage setting the level of each source (Osc 1, Osc 2, Noise) before the Filter.
+The stage setting the level of each source (Osc 1, Osc 2, Sub, Noise) before the Filter.
 _Avoid_: Levels, balance
 
 **Filter**:
@@ -83,7 +83,7 @@ Emphasis of the frequencies right around the Cutoff.
 _Avoid_: Q (that's the maths name; shown only in the maths layer), emphasis, peak
 
 **Effective Cutoff**:
-The Cutoff at a given instant after all modulation (Filter Envelope, LFO, Velocity) is applied.
+The Cutoff at a given instant after all modulation (Filter Envelope, LFOs, Velocity, Key Track) is applied.
 _Avoid_: Current cutoff, modulated frequency
 
 **Amp**:
@@ -99,7 +99,7 @@ How far, in octaves, the Filter Envelope pushes the Effective Cutoff away from t
 _Avoid_: Env depth, intensity
 
 **LFO**:
-A slow, repeating modulation source that moves one Destination: pitch (vibrato), Cutoff, or Pulse Width (PWM). **Rate** is how fast it repeats, **Depth** how far it moves things.
+A slow, repeating modulation source; there are two, each moving one Destination: Pitch (vibrato), Osc 2 Pitch, Detune, Pulse Width (PWM), Cutoff or Resonance. **Rate** is how fast it repeats, **Depth** how far it moves things.
 _Avoid_: Modulator, wobble, LFO amount (say Depth)
 
 **Retrigger**:
@@ -159,7 +159,7 @@ A listening point in the Voice where the signal is observed: the **Oscillator Ta
 _Avoid_: Probe, monitor, stage output
 
 **Nominal Level**:
-The Oscillator's peak level (0.5, i.e. −6 dB below full scale), drawn on every Scope as "Osc level". It leaves headroom for Resonance.
+The Oscillator's peak level (0.5, i.e. −6 dB below full scale), marked on every Scope by the Guides, when they are shown. It leaves headroom for Resonance.
 _Avoid_: Unity, reference level, 0 dB
 
 **Viewer**:
@@ -183,7 +183,7 @@ A frequency component at an integer multiple of the Note's fundamental. The fund
 _Avoid_: Partial, overtone (overtone numbering is off by one)
 
 **Harmonic Marker**:
-A label on the Spectrum identifying a Harmonic by number, frequency, and nearest note.
+A label on the Spectrum identifying a Harmonic by number (the fundamental by its note); the hover readout adds its frequency and nearest note.
 _Avoid_: Peak label
 
 **Ideal Reference**:
@@ -195,7 +195,7 @@ The Filter's gain per frequency at the Effective Cutoff, drawn over the Spectrum
 _Avoid_: Filter curve, transfer function (maths layer only), EQ curve
 
 **Envelope Timeline**:
-A Viewer plotting both Envelopes and the Effective Cutoff over time, with a playhead at "now".
+A Viewer plotting both Envelopes and the Effective Cutoff over time, the present at its right edge.
 _Avoid_: ADSR display
 
 **Freeze**:
@@ -203,7 +203,7 @@ Pausing all Viewers on their current frame while the sound keeps playing.
 _Avoid_: Pause, hold (Hold is a playing mode)
 
 **Snapshot**:
-A captured Spectrum kept as a faint trace for A/B comparison against the live one.
+A captured Scope and Spectrum trace, kept faint for A/B comparison against the live ones.
 _Avoid_: Reference trace, pin, compare
 
 **Maths Layer**:
@@ -217,7 +217,7 @@ A connected MIDI hardware device, such as the Synido TempoPAD C16.
 _Avoid_: Device, MIDI keyboard
 
 **Mapping**:
-A link from one Controller control (a channel plus CC or note) to a Parameter or Action. A button acts on its press, or, if it is a **toggle button** (one value per press, each the other), on every message.
+A link from one Controller control (a channel plus CC or note) to a Parameter, a choice (a Waveform, the Filter Mode, Voices…) or an Action. A button acts on its press, or, if it is a **toggle button** (one value per press, each the other), on every message.
 _Avoid_: Binding, assignment
 
 **C16 layout**:
@@ -225,15 +225,15 @@ The one built-in set of Mappings, for the TempoPAD C16: each of its 4 banks play
 _Avoid_: Preset (a Preset is a sound), default mapping
 
 **Action**:
-A momentary command that is not a Parameter: toggle Hold, Freeze, take a Snapshot, next Preset.
+A momentary command that is not a Parameter: toggle Hold, Freeze, take a Snapshot, previous or next Preset.
 _Avoid_: Command, shortcut
 
 **MIDI Learn**:
-The mode in which the next Controller message received becomes the Mapping for the selected Parameter or Action.
+The mode in which the next Controller message received becomes the Mapping for the selected Parameter, choice or Action.
 _Avoid_: Auto-map
 
 **Quick Setup**:
-A guided sequence of MIDI Learn steps that maps a whole Controller layout in one pass.
+A guided sequence of MIDI Learn steps for any Controller: the Parameters played live and the Actions, in the page's order; set-once settings are left to MIDI Learn.
 _Avoid_: Wizard (fine in UI copy), onboarding
 
 **Encoder Mode**:
