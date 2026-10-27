@@ -178,3 +178,43 @@ test('a Controller moving a knob on a hidden tab brings that tab into view', asy
   await play(page, cc(9, 1)); // and back, for an Osc 1 knob
   await expect(tabs.getByRole('tab', { name: 'Osc 1' })).toHaveAttribute('aria-selected', 'true');
 });
+
+test('each Action does its own job from its own pad: Next and Previous Preset, Freeze, Snapshot, Hold (none swapped)', async ({ page }) => {
+  const pad = (note: number) => [[0x99, note, 100], [0x89, note, 0]];
+  const learn = async (target: () => Promise<void>, note: number, name: RegExp) => {
+    await startLearn(page);
+    await target();
+    await play(page, ...pad(note));
+    await expect(learnBar(page)).toContainText(name);
+    await page.keyboard.press('Escape');
+    await expect(learnBar(page)).toBeHidden();
+  };
+  const display = page.getByRole('button', { name: 'Display' });
+  const inDisplay = (name: string) => async () => {
+    if ((await display.getAttribute('aria-expanded')) !== 'true') await display.click();
+    await page.getByRole('region', { name: 'Viewer controls' }).getByRole('button', { name, exact: true }).click();
+  };
+  await learn(() => page.getByRole('button', { name: 'Next Preset' }).click(), 36, /Next Preset/);
+  await learn(() => page.getByRole('button', { name: 'Previous Preset' }).click(), 37, /Previous Preset/);
+  await learn(inDisplay('Freeze'), 38, /Freeze/);
+  await learn(inDisplay('Snapshot'), 39, /Snapshot/);
+  await learn(() => page.getByRole('button', { name: 'Hold' }).click(), 40, /Hold/);
+  if ((await display.getAttribute('aria-expanded')) === 'true') await display.click();
+
+  const patchName = page.getByRole('button', { name: /^Patch: / });
+  await expect(patchName).toHaveAttribute('aria-label', 'Patch: Init');
+  await play(page, ...pad(36));
+  await expect(patchName).toHaveAttribute('aria-label', 'Patch: Pure Sine'); // the next one
+  await play(page, ...pad(37));
+  await expect(patchName).toHaveAttribute('aria-label', 'Patch: Init'); // back
+  await play(page, ...pad(38));
+  await expect(page.locator('main')).toHaveAttribute('data-frozen', 'true');
+  await play(page, ...pad(38));
+  await expect(page.locator('main')).not.toHaveAttribute('data-frozen');
+  await expect(display).not.toHaveAttribute('data-active');
+  await play(page, ...pad(39));
+  await expect(display).toHaveAttribute('data-active', 'true'); // a Snapshot is held
+  await expect(page.getByRole('button', { name: 'Hold' })).toHaveAttribute('aria-pressed', 'false');
+  await play(page, ...pad(40));
+  await expect(page.getByRole('button', { name: 'Hold' })).toHaveAttribute('aria-pressed', 'true');
+});
