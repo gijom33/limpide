@@ -566,7 +566,8 @@ export function App() {
             ids={[]}
             more={
               <SubBlock title="Amp Envelope" label="Envelope" tip={TIPS.ampEnvelope}>
-                <div className="knobs">
+                {/* Four faders and a big knob, as the Filter Envelope's row: the stage's whole width, under its name. */}
+                <div className="knobs knobs-envelope">
                   {(['ampAttack', 'ampDecay', 'ampSustain', 'ampRelease'] as const).map((id) => (
                     <Tooltip key={id} content={TIPS[STAGE_TIPS[id]]}>
                       <Fader id={id} value={patch[id]} onChange={(v) => change(id, v)} />
