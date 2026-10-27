@@ -815,6 +815,11 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
    button keeps room for it on both sides. */
 .patch-name { position: relative; padding-inline: 16px; }
 .patch-changed { position: absolute; right: 7px; top: calc(50% - 3px); width: 6px; height: 6px; border-radius: 50%; background: var(--text); }
+/* The sound you are playing, and a list to open (the owner's choice, 2026-10-27): the name bright and bold, the
+   border a step brighter than the buttons around it, and a ▾ after the name. Only the greys every control has: the
+   accent colour already means a Tutorial's control. */
+.patch-name { color: var(--text); font-weight: 600; border-color: var(--muted); }
+.patch-name::after { content: '▾'; flex: none; font-size: var(--text-sm); font-weight: 400; color: var(--muted); }
 /* Never taller than the window below the header: the Presets scroll, the rest of the panel stays in view. */
 /* The Patch panel is anchored to the header (like the Display and MIDI panels), spanning its full width, so the
    Presets lay out in wide rows and the whole list is on screen at once; it scrolls only on short windows. */

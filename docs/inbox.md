@@ -9,7 +9,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
-- Let’s make the patch selector more visible. Unclear to me what should be done to match the general UI/UX choices. (The owner, 2026-10-27)
 - The Harmonic Markers' ticks still draw over an empty Spectrum after a reload; only the Ideal rings hide. The owner wrote "ideal harmonic markers": to confirm whether the ticks should hide too. From the 1.12.1 review.
 - The Timeline key's tooltips are reached by hover and long press only: its entries are not focusable and have no description for screen readers. From the 1.12.1 review.
 - Folding the Demo card hides its caption, which is also what a screen reader hears change (aria-live). From the 1.12.1 review.
@@ -43,3 +42,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-27: the owner's selection bug (a mouse drag selected the page's text and Viewers) fixed at once: the whole page is unselectable with any pointer, as it already was on touch screens; text fields stay editable. Test in `e2e/layoutPolish.spec.ts`.
 2026-10-27: the owner's idea to move and fold the docked card went to [59](./issues/59-tutorials-after-review-5.md), grilled and built there (it answers 59's "the card covers the pictures").
 2026-10-27: the owner's Demo ideas (smoother changes, a longer track) and the tremolo Presets went to [60](./issues/60-demo-longer-smoother.md), grilled and built there.
+2026-10-27: the owner's Patch selector idea done at once, the owner choosing among three looks shown as screenshots: the name bright and bold, a brighter border and a ▾ (A); a "PATCH" caption (B) cost the piano its key widths, and the accent colour (C) already marks a Tutorial's control.
