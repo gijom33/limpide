@@ -133,11 +133,11 @@ for (const [width, height, big, small] of [
         .map((s) => `${s.getAttribute('aria-label')} ${Math.round(s.getBoundingClientRect().width)}`),
     );
     // Named in full where a label repeats (issue 51); the play knobs are those whose names end so.
-    const play = ['Cutoff', 'Resonance', 'Amount', 'Rate', 'Depth', 'Detune'];
+    const play = ['Cutoff', 'Resonance', 'Amount', 'Rate', 'Depth', 'Detune', 'Volume'];
     expect(sizes.sort()).toEqual(
       [
         'Cutoff', 'Resonance', 'Velocity', 'Key Track', 'Filter Envelope Amount', 'Pulse Width', 'Osc 2 Pulse Width', 'Osc 2 Octave',
-        'Osc 2 Semitone', 'Osc 2 Detune', 'LFO 1 Rate', 'LFO 1 Depth', 'LFO 2 Rate', 'LFO 2 Depth', 'Glide',
+        'Osc 2 Semitone', 'Osc 2 Detune', 'LFO 1 Rate', 'LFO 1 Depth', 'LFO 2 Rate', 'LFO 2 Depth', 'Glide', 'Volume',
       ]
         .map((name) => `${name} ${play.some((p) => name.endsWith(p)) ? big : small}`)
         .sort(),

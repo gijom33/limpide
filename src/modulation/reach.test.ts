@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { defaultPatch, type Patch } from '../patch/patch';
-import { cutoffReach, detuneReach, pulseWidthReach, resonanceReach, semitoneReach } from './reach';
+import { cutoffReach, detuneReach, pulseWidthReach, resonanceReach, semitoneReach, volumeReach } from './reach';
 
 const patch = (changes: Partial<Patch>): Patch => ({ ...defaultPatch(), cutoff: 1000, ...changes });
 
@@ -97,3 +97,13 @@ describe('how far the LFOs reach the new destinations', () => {
     expect(detuneReach(patch({ lfoDestination: 'osc2Pitch', lfoAmount: 1 }))).toBeNull();
   });
 });
+
+describe('how far the LFOs reach the Volume knob (issue 62)', () => {
+  it('dips from the knob’s value by twice the swing: to silence at full Depth, halfway down at half', () => {
+    const patch = { ...defaultPatch(), volume: 0.8, lfoDestination: 'volume', lfoAmount: 1 } as const;
+    expect(volumeReach(patch)).toMatchObject({ lo: expect.closeTo(0), hi: 0.8 });
+    expect(volumeReach({ ...patch, lfoAmount: 0.5 })).toMatchObject({ lo: expect.closeTo(0.4), hi: 0.8 });
+    expect(volumeReach({ ...patch, lfoDestination: 'cutoff' })).toBeNull();
+  });
+});
+

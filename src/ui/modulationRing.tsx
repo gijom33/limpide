@@ -1,7 +1,7 @@
 import { createContext, type RefObject, useContext, useEffect, useRef } from 'react';
 import type { SynthEngine } from '../engine/synthEngine';
 import { LFO_DETUNE_CENTS, LFO_OSC2_CENTS, LFO_PULSE_WIDTH, lfoOffset, MAX_PULSE, MIN_PULSE } from '../modulation/modulationModel';
-import { cutoffReach, detuneReach, pulseWidthReach, type Reach, resonanceReach, type Source, semitoneReach } from '../modulation/reach';
+import { cutoffReach, detuneReach, pulseWidthReach, type Reach, resonanceReach, type Source, semitoneReach, volumeReach } from '../modulation/reach';
 import { PARAMS, type ParamId, type Patch } from '../patch/patch';
 import { valueToPosition } from '../patch/taper';
 import { addToRenderLoop } from '../viewers/renderLoop';
@@ -27,6 +27,7 @@ function modulated(id: ParamId, patch: Patch, engine: SynthEngine): { reach: Rea
     return at(pulseWidthReach(patch, patch[id]), () => patch[id] + lfoOffset(patch, 'pulseWidth', LFO_PULSE_WIDTH, m.lfo, room));
   }
   if (id === 'resonance') return at(resonanceReach(patch), () => m.resonance);
+  if (id === 'volume') return at(volumeReach(patch), () => m.volume);
   if (id === 'osc2Semitone') return at(semitoneReach(patch), () => patch.osc2Semitone + lfoOffset(patch, 'osc2Pitch', LFO_OSC2_CENTS / 100, m.lfo));
   if (id === 'osc2Detune') return at(detuneReach(patch), () => patch.osc2Detune + lfoOffset(patch, 'detune', LFO_DETUNE_CENTS, m.lfo));
   return null;
@@ -54,7 +55,7 @@ function listen() {
 }
 
 /** The Parameters modulation can move, and so the knobs that carry a ring. */
-export const MODULATED: ReadonlySet<ParamId> = new Set(['cutoff', 'resonance', 'pulseWidth', 'osc2PulseWidth', 'osc2Semitone', 'osc2Detune']);
+export const MODULATED: ReadonlySet<ParamId> = new Set(['cutoff', 'resonance', 'pulseWidth', 'osc2PulseWidth', 'osc2Semitone', 'osc2Detune', 'volume']);
 
 interface Props {
   id: ParamId;

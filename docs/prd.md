@@ -130,6 +130,7 @@ Brought into scope by the grilling of [issue 40](./issues/40-preset-tutorials.md
 87. As a learner, I want a Listen button that repeats a short phrase, so that both hands are free to turn knobs, on a phone too.
 88. As a learner, I want to explore off the path without being locked, and at the end to see what differs from the Preset and match it in one tap, so that experimenting costs nothing.
 89. As a first-time visitor, I want a Tutorial button in the Welcome, and a Tutorials list in the Patches panel, so that I know where to start.
+90. As a player, I want a Volume knob in the Amp, which an LFO on Volume rings as it does the Cutoff, so that I set the level and see the tremolo's reach (issue 62).
 
 ## Implementation Decisions
 

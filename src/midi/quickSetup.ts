@@ -25,6 +25,7 @@ export const QUICK_SETUP: SetupStep[] = [
   ...params('Mixer', 'mixOsc1', 'mixOsc2', 'mixNoise', 'mixSub'),
   ...params('Filter Envelope', 'filterAttack', 'filterDecay', 'filterSustain', 'filterRelease'),
   ...params('Amp Envelope', 'ampAttack', 'ampDecay', 'ampSustain', 'ampRelease'),
+  ...params('Amp', 'volume'),
   ...params('LFO 1', 'lfoRate', 'lfoAmount'),
   ...params('LFO 2', 'lfo2Rate', 'lfo2Amount'),
   ...actions('hold', 'freeze', 'snapshot', 'previousPreset', 'nextPreset'),

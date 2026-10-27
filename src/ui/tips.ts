@@ -225,6 +225,10 @@ export const TIPS = {
     body: 'The level the Envelope holds for as long as the key stays down. A level, not a time: at 0 the sound dies away during the Decay even with the key held.',
   },
   release: { title: 'Release', body: 'How long the Envelope takes to fall back to nothing once the key comes up.' },
+  volume: {
+    title: 'Volume',
+    body: 'How loud the Amp lets the sound through, after its Envelope. An LFO aimed at Volume dips it from here, for tremolo: its ring shows how far.',
+  },
   lfoRate: { title: 'Rate', body: 'How fast the LFO repeats, in cycles a second (Hz): 0.05 Hz is one slow sweep every 20 seconds, 20 Hz a fast flutter.' },
   lfoDepth: {
     title: 'Depth',

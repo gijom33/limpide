@@ -1,6 +1,6 @@
 import type { LfoDestination, Patch } from '../patch/patch';
 import {
-  KEY_TRACK_CENTRE, LFO_CUTOFF_OCTAVES, LFO_DETUNE_CENTS, LFO_OSC2_CENTS, LFO_PULSE_WIDTH, LFO_RESONANCE, lfoSwings, MAX_PULSE, MIN_PULSE,
+  KEY_TRACK_CENTRE, LFO_CUTOFF_OCTAVES, LFO_DETUNE_CENTS, LFO_OSC2_CENTS, LFO_PULSE_WIDTH, LFO_RESONANCE, LFO_VOLUME, lfoSwings, MAX_PULSE, MIN_PULSE,
   VELOCITY_CUTOFF_OCTAVES,
 } from './modulationModel';
 
@@ -92,3 +92,19 @@ export const semitoneReach = (patch: Patch) => lfoReach(patch, 'osc2Pitch', patc
 
 /** The Detune's reach: 50 cents each way at full Depth. */
 export const detuneReach = (patch: Patch) => lfoReach(patch, 'detune', patch.osc2Detune, LFO_DETUNE_CENTS);
+
+/**
+ * The Volume's reach (issue 62): the LFOs on Volume dip it from the knob's value, by twice their swing at the wave's
+ * foot (to silence at full Depth), never above it.
+ */
+export function volumeReach(patch: Patch): Reach | null {
+  const swings = lfoSwings(patch, 'volume', LFO_VOLUME, LFO_VOLUME);
+  const total = swings[0] + swings[1];
+  if (total <= 0) return null;
+  const shares: Reach['shares'] = {};
+  swings.forEach((swing, i) => {
+    if (swing) shares[LFO_SOURCES[i]] = [patch.volume * (1 - 2 * swing), patch.volume];
+  });
+  return { lo: patch.volume * (1 - 2 * total), hi: patch.volume, shares };
+}
+

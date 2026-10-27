@@ -72,7 +72,7 @@ export function levelDb(level: number): string {
 }
 
 /** The Parameters whose value is a gain: the Mixer's levels and the Amp's Sustain. */
-const GAINS: ParamId[] = ['mixOsc1', 'mixOsc2', 'mixSub', 'mixNoise', 'ampSustain'];
+const GAINS: ParamId[] = ['mixOsc1', 'mixOsc2', 'mixSub', 'mixNoise', 'ampSustain', 'volume'];
 
 /** What a knob or fader reads in the Maths Layer instead of its everyday value, if anything. */
 export function mathsReadout(id: ParamId, value: number, patch: Patch): string | undefined {

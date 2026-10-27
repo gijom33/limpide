@@ -17,7 +17,7 @@ describe('Quick Setup steps', () => {
       'Osc 2 · osc2Detune',
       'Mixer · mixOsc1', 'Mixer · mixOsc2', 'Mixer · mixNoise', 'Mixer · mixSub',
       'Filter Envelope · filterAttack', 'Filter Envelope · filterDecay', 'Filter Envelope · filterSustain', 'Filter Envelope · filterRelease',
-      'Amp Envelope · ampAttack', 'Amp Envelope · ampDecay', 'Amp Envelope · ampSustain', 'Amp Envelope · ampRelease',
+      'Amp Envelope · ampAttack', 'Amp Envelope · ampDecay', 'Amp Envelope · ampSustain', 'Amp Envelope · ampRelease', 'Amp · volume',
       'LFO 1 · lfoRate', 'LFO 1 · lfoAmount', 'LFO 2 · lfo2Rate', 'LFO 2 · lfo2Amount',
       'hold', 'freeze', 'snapshot', 'previousPreset', 'nextPreset',
     ]);

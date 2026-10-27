@@ -572,6 +572,10 @@ export function App() {
                       <Fader id={id} value={patch[id]} onChange={(v) => change(id, v)} />
                     </Tooltip>
                   ))}
+                  {/* The Amp's level, right of its Envelope (the owner, issue 62): an LFO on Volume rings it. */}
+                  <Tooltip content={TIPS.volume}>
+                    <Knob id="volume" value={patch.volume} onChange={(v) => change('volume', v)} />
+                  </Tooltip>
                 </div>
               </SubBlock>
             }

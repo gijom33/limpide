@@ -605,6 +605,21 @@ describe('two LFOs and their destinations', () => {
     expect(engine!.modulationAt(0.75).resonance).toBeCloseTo(0);
   });
 
+  it('the Volume knob scales the sound and the Amp Tap, not the Filter Tap; the model has it too (issue 62)', async () => {
+    let engine: ReturnType<typeof createSynthEngine> | undefined;
+    const full = await render(1, square, (e) => e.noteOn(69, 1, 0));
+    const half = await render(1, { ...square, volume: 0.5 }, (e) => {
+      engine = e;
+      e.noteOn(69, 1, 0);
+    });
+    const level = (x: Float32Array) => rms(x, SR / 2, SR);
+    expect(level(half) / level(full)).toBeCloseTo(0.5, 2);
+    expect(engine!.modulationAt(0.5).volume).toBeCloseTo(0.5);
+    const [a, b] = [await tapsAt(0.5, square, 69), await tapsAt(0.5, { ...square, volume: 0.5 }, 69)];
+    expect(rms(b.amp) / rms(a.amp)).toBeCloseTo(0.5, 1);
+    expect(rms(b.filter) / rms(a.filter)).toBeCloseTo(1, 2);
+  });
+
   it('Volume makes tremolo: the Envelope’s level while the LFO is up, Depth below it while it is down, in the sound, the Amp Tap and the model', async () => {
     const patch = { ...square, lfoDestination: 'volume', lfoAmount: 0.5 } as const;
     let engine: ReturnType<typeof createSynthEngine> | undefined;

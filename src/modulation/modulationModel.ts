@@ -80,6 +80,11 @@ export function tremolo(patch: Patch, lfo: readonly number[] = []): number {
   return 1 - one - two + one * (lfo[0] ?? 0) + two * (lfo[1] ?? 0);
 }
 
+/** What the Amp's Envelope is multiplied by: the Volume knob, and the tremolo dipping from it (issue 62). */
+export function effectiveVolume(patch: Patch, lfo: readonly number[] = []): number {
+  return patch.volume * tremolo(patch, lfo);
+}
+
 /** Osc 2's tuning against Osc 1, in cents: Octave, Semitone and Detune, then the LFOs on Osc 2 Pitch and on Detune. */
 export function osc2Cents(patch: Patch, lfo: readonly number[] = []): number {
   const knobs = patch.osc2Octave * 1200 + patch.osc2Semitone * 100 + patch.osc2Detune;

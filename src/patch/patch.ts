@@ -45,7 +45,8 @@ export type ParamId =
   | 'ampAttack'
   | 'ampDecay'
   | 'ampSustain'
-  | 'ampRelease';
+  | 'ampRelease'
+  | 'volume';
 
 export type FilterMode = 'lowpass' | 'highpass' | 'bandpass' | 'notch';
 export type FilterSlope = 12 | 24;
@@ -111,6 +112,8 @@ export const PARAMS: Record<ParamId, ParamDef> = {
   ampDecay: time('ampDecay', 'Decay', 0.3, 'fader'),
   ampSustain: { id: 'ampSustain', label: 'Sustain', unit: '%', min: 0, max: 1, taper: 'linear', default: 0.7, control: 'fader' },
   ampRelease: time('ampRelease', 'Release', 0.4, 'fader'),
+  // The Amp's level, after its Envelope (issue 62): full by default, so no Preset changes; an LFO on Volume dips it.
+  volume: level('volume', 'Volume', 1, 'play'),
 };
 
 export function defaultPatch(): Patch {

@@ -1,8 +1,8 @@
 import { type Adsr, type AutomationStep, envelopeSchedule, type GateEvent, levelAfter } from '../modulation/envelope';
 import { createLfoClock, glideFrequency, glideFrom, glideTimeConstant, type LfoWaveform, lfoShape } from '../modulation/lfo';
 import {
-  effectiveCutoff, effectiveResonance, KEY_TRACK_CENTRE, LFO_CUTOFF_OCTAVES, LFO_DETUNE_CENTS, LFO_OSC2_CENTS,
-  LFO_PITCH_CENTS, LFO_PULSE_WIDTH, LFO_RESONANCE, LFO_VOLUME, lfoSwings, MAX_PULSE, MIN_PULSE, soundingPitch, tremolo,
+  effectiveCutoff, effectiveResonance, effectiveVolume,KEY_TRACK_CENTRE, LFO_CUTOFF_OCTAVES, LFO_DETUNE_CENTS, LFO_OSC2_CENTS,
+  LFO_PITCH_CENTS, LFO_PULSE_WIDTH, LFO_RESONANCE, LFO_VOLUME, lfoSwings, MAX_PULSE, MIN_PULSE, soundingPitch, 
   VELOCITY_CUTOFF_OCTAVES,
 } from '../modulation/modulationModel';
 import { bandwidthOctaves } from '../modulation/passBand';
@@ -38,7 +38,7 @@ export interface Modulation {
   resonance: number;
   /** Band-pass and notch width in octaves. */
   bandwidth: number;
-  /** What the LFOs on Volume multiply the Amp by (0–1): 1 without tremolo. */
+  /** What the Amp is multiplied by (0–1): the Volume knob, dipped by the LFOs on Volume (issue 62). */
   volume: number;
   /** The newest Note while its key is held (or Hold keeps it), with its Velocity; null once released. */
   sounding: Sounding | null;
@@ -719,7 +719,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       resonance,
       mode: then?.filterMode ?? 'lowpass',
       bandwidth: then ? bandwidthOctaves(filterStages(then.filterMode, then.filterSlope, resonance)[0].Q) : 1,
-      volume: then ? tremolo(then, lfo) : 1,
+      volume: then ? effectiveVolume(then, lfo) : 1,
       sounding: gate?.on ? { note, velocity } : null,
       pitch: gliding + vibrato + bendAt(t) / 100,
       vibrato,
@@ -789,9 +789,10 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       const osc2 = each('osc2Pitch', LFO_OSC2_CENTS).map((c, i) => c + each('detune', LFO_DETUNE_CENTS)[i]);
       // Resonance: each stage's Q moves from where the swing's low end puts it to where its high end does.
       const resonances = lfoSwings(next, 'resonance', LFO_RESONANCE, Math.min(next.resonance, 1 - next.resonance));
-      // Volume: the tremolo rests its total swing below 1, so the wave's top is the Envelope's own level.
-      const volumeSwings = lfoSwings(next, 'volume', LFO_VOLUME, LFO_VOLUME);
-      tremoloRest.offset.setValueAtTime(1 - volumeSwings[0] - volumeSwings[1], t);
+      // Volume: the knob's level (issue 62), the tremolo resting its total swing below it, so the wave's top is the
+      // knob's own level; each LFO's swing scaled with it.
+      const volumeSwings = lfoSwings(next, 'volume', LFO_VOLUME, LFO_VOLUME).map((s) => s * next.volume);
+      tremoloRest.offset.setValueAtTime(next.volume - volumeSwings[0] - volumeSwings[1], t);
       lfos(next).forEach((l, i) => {
         const nodes = shared.lfos[i];
         // A restart scheduled ahead of now leaves the old oscillator running until then: it follows too.

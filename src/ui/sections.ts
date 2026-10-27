@@ -35,6 +35,7 @@ export const SECTION_OF: Record<ParamId, SectionName> = {
   ampDecay: 'Amp',
   ampSustain: 'Amp',
   ampRelease: 'Amp',
+  volume: 'Amp',
   lfoRate: 'LFO & Envelopes',
   lfoAmount: 'LFO & Envelopes',
   lfo2Rate: 'LFO & Envelopes',

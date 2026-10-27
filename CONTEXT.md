@@ -91,7 +91,7 @@ The final stage controlling loudness over time.
 _Avoid_: VCA, gain
 
 **Volume**:
-An LFO Destination: what the LFO multiplies the Amp by, for tremolo. Depth pulls the loudness down from where the Amp Envelope has it, never above it; at full Depth the wave's foot is silence.
+The Amp's level, a knob right of its Envelope (100 % by default), and an LFO Destination: an LFO on Volume dips it from the knob's value, for tremolo, never above it; at full Depth the wave's foot is silence.
 _Avoid_: the Amp itself (say Amp), level (a Mixer level), master volume
 
 **Envelope**:

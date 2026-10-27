@@ -16,7 +16,7 @@ const knob = (n: number) => times(4, cc(n, 1));
 const firstKnobs = () => [1, 2, 3, 4].flatMap(knob);
 const fader = (n: number) => [cc(32 + n, 10), cc(32 + n, 11), cc(32 + n, 12), cc(32 + n, 13)];
 const button = (n: number) => [cc(48 + n, 127), cc(48 + n, 0)];
-const STEPS = 25;
+const STEPS = 26;
 
 test.beforeEach(({ page }) => withFakeController(page));
 
@@ -37,6 +37,8 @@ test('Quick Setup walks through every control played live, in the page’s order
   for (let n = 1; n <= 4; n++) await play(page, ...fader(n)); // the Mixer
   await expect(prompt(page)).toContainText('Filter Envelope · Attack');
   for (let n = 5; n <= 12; n++) await play(page, ...fader(n)); // the two Envelopes
+  await expect(prompt(page)).toContainText('Amp · Volume'); // issue 62
+  await play(page, ...knob(9));
   await expect(prompt(page)).toContainText('LFO 1 · Rate');
   for (let n = 5; n <= 8; n++) await play(page, ...knob(n)); // the LFOs
   await expect(prompt(page)).toContainText('Press a button → Hold');

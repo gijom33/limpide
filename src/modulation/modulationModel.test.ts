@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { defaultPatch, setParam } from '../patch/patch';
-import { effectiveCutoff, effectiveResonance, lfoSwings, osc2Cents, soundingPitch, tremolo } from './modulationModel';
+import { effectiveCutoff, effectiveResonance, effectiveVolume, lfoSwings, osc2Cents, soundingPitch, tremolo } from './modulationModel';
 
 describe('Modulation model: Effective Cutoff', () => {
   it('is the Cutoff itself while nothing modulates the Filter', () => {
@@ -149,3 +149,16 @@ describe('Volume: tremolo (issue 53)', () => {
     expect(tremolo({ ...both, lfoAmount: 0.4, lfo2Amount: 0.2 }, [-1, -1])).toBeCloseTo(0.4);
   });
 });
+
+describe('the Volume knob (issue 62)', () => {
+  it('scales the Amp, the tremolo dipping from its value', () => {
+    expect(effectiveVolume({ ...defaultPatch(), volume: 0.5 })).toBe(0.5);
+    const tremoloed = { ...defaultPatch(), volume: 0.5, lfoDestination: 'volume', lfoAmount: 1 } as const;
+    expect(effectiveVolume(tremoloed, [1])).toBeCloseTo(0.5);
+    expect(effectiveVolume(tremoloed, [-1])).toBeCloseTo(0);
+  });
+  it('is at full by default, so no Preset changes', () => {
+    expect(defaultPatch().volume).toBe(1);
+  });
+});
+

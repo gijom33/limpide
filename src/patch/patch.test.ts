@@ -15,7 +15,7 @@ describe('defaultPatch', () => {
         'ampAttack', 'ampDecay', 'ampRelease', 'ampSustain', 'cutoff', 'pulseWidth', 'resonance',
         'filterEnvAmount', 'filterAttack', 'filterDecay', 'filterSustain', 'filterRelease',
         'osc2Octave', 'osc2Semitone', 'osc2Detune', 'osc2PulseWidth', 'mixOsc1', 'mixOsc2', 'mixNoise', 'mixSub',
-        'lfoRate', 'lfoAmount', 'lfo2Rate', 'lfo2Amount', 'glide', 'velocityCutoff', 'keyTrack',
+        'lfoRate', 'lfoAmount', 'lfo2Rate', 'lfo2Amount', 'glide', 'velocityCutoff', 'keyTrack', 'volume',
       ].sort(),
     );
   });
@@ -30,7 +30,7 @@ describe('control', () => {
   // stages are faders.
   it('gives each Parameter the control its role calls for', () => {
     const of = (control: string) => Object.values(PARAMS).filter((d) => d.control === control).map((d) => d.id).sort();
-    expect(of('play')).toEqual(['cutoff', 'filterEnvAmount', 'lfo2Amount', 'lfo2Rate', 'lfoAmount', 'lfoRate', 'osc2Detune', 'resonance']);
+    expect(of('play')).toEqual(['cutoff', 'filterEnvAmount', 'lfo2Amount', 'lfo2Rate', 'lfoAmount', 'lfoRate', 'osc2Detune', 'resonance', 'volume']);
     expect(of('set')).toEqual(['glide', 'keyTrack', 'osc2Octave', 'osc2PulseWidth', 'osc2Semitone', 'pulseWidth', 'velocityCutoff']);
     expect(of('fader')).toEqual([
       'ampAttack', 'ampDecay', 'ampRelease', 'ampSustain', 'filterAttack', 'filterDecay', 'filterRelease', 'filterSustain',
