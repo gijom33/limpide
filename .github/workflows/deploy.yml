@@ -29,7 +29,10 @@ jobs:
       # The engine renders real audio in Chromium; the end-to-end tests play the built site in Chromium and WebKit.
       - run: npx playwright install --with-deps chromium webkit
       - run: npm run test:engine
+      # The published site counts visits on the owner's GoatCounter; a fork's workflow sets its own address, or none.
       - run: npm run build
+        env:
+          GOATCOUNTER_URL: ${{ github.repository == 'gijom33/limpide' && 'https://gijom33.goatcounter.com/count' || '' }}
       - run: npm run test:e2e
       - if: failure()
         uses: actions/upload-artifact@v7

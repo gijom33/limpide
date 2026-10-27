@@ -36,7 +36,7 @@ export function About({
     else if (!open && d.open) d.close();
   }, [open]);
 
-  const { version, commit, date } = __BUILD__;
+  const { version, commit, date, counted } = __BUILD__;
   return (
     <dialog
       ref={dialog}
@@ -98,11 +98,28 @@ export function About({
           <dd>The Demo and the Song are originals.</dd>
           <dt>License</dt>
           <dd>
-            Free and open source under the MIT License.{' '}
+            Free and open source under the MIT License: the code, the Presets, the music and the docs.{' '}
             <a href={SOURCE} target="_blank" rel="noreferrer">
               Source on GitHub
             </a>
+            {' · '}
+            <a href="./third-party-notices.txt" target="_blank" rel="noreferrer">
+              Third-party notices
+            </a>
           </dd>
+          {counted && (
+            <>
+              <dt>Privacy</dt>
+              <dd>
+                Visits are counted with{' '}
+                <a href="https://www.goatcounter.com" target="_blank" rel="noreferrer">
+                  GoatCounter
+                </a>
+                : no cookies, no personal data stored. Like any web page it receives your IP address and browser, to
+                count you once. Your sounds stay in your browser: a share link carries one after its #, which is never sent.
+              </dd>
+            </>
+          )}
         </dl>
         {!welcome && (
           <button type="button" className="tool" onClick={onClose}>

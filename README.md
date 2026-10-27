@@ -17,7 +17,7 @@ Ordinary synths give you a sound and a row of knobs, and the cause and effect st
 
 Works best in **Chrome or Edge**. Safari has no Web MIDI, so MIDI controllers don't work there; everything else does. The same goes for every browser on iPhone and iPad, Chrome included, since Apple makes them all run on Safari's engine.
 
-Visits to the site are counted with [GoatCounter](https://www.goatcounter.com): no cookies and no personal data.
+Visits to the site are counted with [GoatCounter](https://www.goatcounter.com): no cookies, and no personal data stored. Like any web page, it receives each visitor's IP address and browser to count them; the share link's sound (after `#`) is never sent. Only the published site counts: a fork's build doesn't, unless its deploy sets `GOATCOUNTER_URL`.
 
 ## Run it locally
 
@@ -54,4 +54,4 @@ Every push to `main` is tested and deployed to GitHub Pages by [a workflow](.git
 
 ## License
 
-[MIT](LICENSE) © Guillaume Boillet
+[MIT](LICENSE) © Guillaume Boillet: the code, the Presets, the Demo's music and the docs. The site also ships React (MIT); the build writes its notices to `third-party-notices.txt`, linked from About.

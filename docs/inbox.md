@@ -4,13 +4,10 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
-- The built site ships React without its MIT copyright notice: the production bundle has no `@license` or copyright line (checked: `grep -c` finds 0 in `dist/assets/*.js`). Have the build write a third-party notices file and link it from About ([review 11](./reviews/2026-10-26/11-oss-legal.md))
-- README line 20 says "no cookies and no personal data", but each visit sends GoatCounter the IP address, User-Agent, Referer, path and screen width; the site has no privacy note. Reword ("no cookies, no personal data stored") and add a Privacy line to About; a lawyer to confirm it is enough for EU visitors ([review 11](./reviews/2026-10-26/11-oss-legal.md))
-- A fork that builds and deploys counts its visitors on the owner's GoatCounter: `vite.config.ts` hard-codes `https://gijom33.goatcounter.com/count`. Read it from an environment variable set only in `.github/workflows/deploy.yml`; no counter without it ([review 11](./reviews/2026-10-26/11-oss-legal.md))
 
 ## Ideas
 
-- State what the MIT licence covers: the code, the docs, the Presets and the Demo's music (now only implied); and load the GoatCounter script with an integrity check ([review 11](./reviews/2026-10-26/11-oss-legal.md))
+- Load the GoatCounter script with an integrity check (the licence's scope is now stated in About and the README) ([review 11](./reviews/2026-10-26/11-oss-legal.md))
 
 ## Dropped
 
@@ -28,3 +25,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-26: the header on the wider layouts (the phone's structure and piano for 2 × 2, a bigger piano and one order of buttons everywhere) went to [44](./issues/44-header-across-layouts.md), decisions open.
 2026-10-26, the persona reviews ([42](./issues/42-reviews.md)): their 33 lines went to [45](./issues/45-timeline-draw-cost.md) (the Timeline's draw cost), [46](./issues/46-robust-start.md) (Firefox, storage refused, MIDI asked at load), [47](./issues/47-layout-polish.md) (layout polish), [48](./issues/48-credit-and-contact.md) (who built it and how, a way to reach the author), [49](./issues/49-explanations-everywhere.md) (tooltips for the core controls, on touch too), [50](./issues/50-demo-on-a-phone.md) (the Demo on a phone), [51](./issues/51-keyboard-and-screen-reader.md) (keyboard and screen reader), [52](./issues/52-midi-keyboards.md) (MIDI keyboards), [53](./issues/53-presets-and-synth-features.md) (Presets and synth features), [54](./issues/54-docs-and-ci-truth.md) (docs and CI), [55](./issues/55-app-into-hooks.md) (App.tsx by concern) and [56](./issues/56-ready-for-contributors.md) (contributors and process); the visible signal chain and a "start here" to [40](./issues/40-preset-tutorials.md).
 2026-10-26, evening: the Demo's first sound too quiet on a phone went to [50](./issues/50-demo-on-a-phone.md) (it is the Kick, mostly below what a phone speaker plays); a guided tutorial per Preset to [40](./issues/40-preset-tutorials.md), the same idea, still to grill; an open-source legal expert to [42](./issues/42-reviews.md) as profile 11, to run.
+2026-10-26, night: the legal review's three bugs fixed at once. The build writes `third-party-notices.txt` (React, react-dom with its Modernizr notice, scheduler), linked from About; the README and a Privacy line in About say what the counter receives; the counter loads only where the deploy sets `GOATCOUNTER_URL`, which the workflow does for this repository alone.

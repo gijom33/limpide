@@ -55,3 +55,26 @@ test('About is centred over a dimmed page, on a phone, a laptop and a large scre
     expect(backdrop, 'dimmed').toMatch(/rgba\(0, 0, 0, 0\.\d+\)/);
   }
 });
+
+// Issue 42's legal review: the site ships React, whose MIT notice the minified bundle drops, so the build writes the
+// notices beside the page; and only the published site's deploy counts visits, never a fork's or a test build.
+test('About links the third-party notices, which carry React’s licence', async ({ page, request }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'About', exact: true }).click();
+  const link = page.getByRole('link', { name: 'Third-party notices' });
+  await expect(link).toBeVisible();
+  const notices = await (await request.get(new URL((await link.getAttribute('href'))!, page.url()).href)).text();
+  for (const name of ['react', 'react-dom', 'scheduler']) expect(notices).toMatch(new RegExp(`^${name} \\d`, 'm'));
+  expect(notices).toContain('MIT License');
+  expect(notices).toContain('Modernizr');
+});
+
+test('a build without a counter address counts no visits, and About makes no claim about them', async ({ page }) => {
+  const counted: string[] = [];
+  page.on('request', (r) => r.url().includes('goatcounter') || r.url().includes('gc.zgo.at') ? counted.push(r.url()) : undefined);
+  await page.goto('/');
+  await page.getByRole('button', { name: 'About', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: 'Limpide' })).toContainText('MIT License');
+  await expect(page.getByRole('dialog', { name: 'Limpide' })).not.toContainText('Privacy');
+  expect(counted).toEqual([]);
+});
