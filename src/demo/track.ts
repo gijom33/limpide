@@ -19,6 +19,8 @@ export interface Part {
   preset: string;
   phrase: string;
   moves?: KnobMove[];
+  /** What to hear and see, in plain words, shown while the part plays (issue 50). */
+  caption?: string;
 }
 
 export interface Track {
@@ -57,12 +59,15 @@ export const TRACK: Track = {
   bpm: BPM,
   parts: [
     // The intro: four on the floor, a fill into the bass. The Filter Envelope's drop deepens, then the Decay lengthens.
+    // It starts at the Preset's own drop, from 440 Hz: from lower, the first hits were below what a phone plays.
     { preset: 'Kick', phrase: `${times('C2:1@1 C2:1@1 C2:1@1 C2:1@1', 3)} C2:1@1 C2:1@1 C2:.5@1 C2:.5@.7 C2:.25@.6 C2:.25@.7 C2:.25@.8 C2:.25@1`,
-      moves: [{ id: 'filterEnvAmount', from: 1.5, to: 4 }, { id: 'ampDecay', from: 0.25, to: 0.6, start: 8 }] },
+      caption: 'A kick drum, made by the synth: a tone that falls fast in pitch, each hit a little deeper.',
+      moves: [{ id: 'filterEnvAmount', from: 3, to: 4.5 }, { id: 'ampDecay', from: 0.25, to: 0.6, start: 8 }] },
     // The build: an acid line, its accents biting, without Glide (here it would slide into every Note). The Cutoff
     // opens and the Resonance climbs, so the Response Curve's peak walks up through the Harmonics; then the Filter
     // Envelope's Decay lengthens and the squelch grows.
     { preset: 'Acid', phrase: [times(acidA, 4), times(acidB, 3), acidEnd].join(' '),
+      caption: 'The Filter opens bit by bit and starts to ring: a squelchy, talking bass line.',
       moves: [
         { id: 'cutoff', from: 180, to: 1500 },
         { id: 'glide', to: GLIDE_OFF, start: 0, end: 0 },
@@ -71,25 +76,25 @@ export const TRACK: Track = {
       ] },
     // The hook: an arpeggio on six Voices. The Pulse Width narrows and the Spectrum's gaps slide along the ladder; then
     // the plucks bloom as the Filter Envelope's Decay lengthens.
-    { preset: 'Poly Pluck', phrase: times(['A3 C4 E4 A4', 'A3 C4 F4 A4', 'G3 C4 E4 G4', 'G3 B3 D4 G4'].map(arpeggio).join(' '), 2),
+    { preset: 'Poly Pluck', caption: 'Notes plucked like strings, several at once. The pulse narrows and the sound turns thin and glassy.', phrase: times(['A3 C4 E4 A4', 'A3 C4 F4 A4', 'G3 C4 E4 G4', 'G3 B3 D4 G4'].map(arpeggio).join(' '), 2),
       moves: [{ id: 'pulseWidth', from: 0.5, to: 0.1, end: 16 }, { id: 'filterDecay', from: 0.18, to: 0.5, start: 16 }, { id: 'cutoff', from: 500, to: 1400, start: 16 }] },
     // The break: the chords held by a string section, the Pulse Width shimmer quickening until it buzzes.
-    { preset: 'Strings', phrase: 'A2+E3+A3+C4+E4:4 F2+C3+A3+C4+F4:4 C3+G3+C4+E4+G4:4 G2+D3+G3+B3+D4:4',
+    { preset: 'Strings', caption: 'Held chords that shimmer, the shimmer speeding up until it buzzes.', phrase: 'A2+E3+A3+C4+E4:4 F2+C3+A3+C4+F4:4 C3+G3+C4+E4+G4:4 G2+D3+G3+B3+D4:4',
       moves: [{ id: 'lfoRate', from: 0.7, to: SYNC.sixteenth }, { id: 'lfoAmount', from: 0.5, to: 0.8 }] },
     // The riser: a Filter singing on its own, its Cutoff swept across the whole Spectrum while the LFO trembles
     // faster and faster; then a beat of silence.
-    { preset: 'Self-Oscillation', phrase: 'A2:7@1 -:1',
+    { preset: 'Self-Oscillation', caption: 'No Oscillator at all: the Filter sings on its own as it sweeps from low to high.', phrase: 'A2:7@1 -:1',
       moves: [{ id: 'cutoff', from: 300, to: 12000, end: 7 }, { id: 'lfoAmount', from: 0, to: 0.3, end: 7 }, { id: 'lfoRate', from: SYNC.quarter, to: SYNC.thirtySecond, end: 7 }] },
     // The drop: a wobble bass, its LFO restarted by every Note and set to the beat: eighths, quickening to sixteenths
     // at the end of each four bars. Its Depth grows from a gentle sway, on a milder Resonance than the Preset's.
-    { preset: 'Wobble', phrase: times([wobbleBar('A1', 'A2'), wobbleBar('F1', 'F2'), wobbleBar('C2', 'C3'), wobbleBar('G1', 'G2')].join(' '), 2),
+    { preset: 'Wobble', caption: 'A slow wave opens and closes the Filter in time with the beat: the wobble.', phrase: times([wobbleBar('A1', 'A2'), wobbleBar('F1', 'F2'), wobbleBar('C2', 'C3'), wobbleBar('G1', 'G2')].join(' '), 2),
       moves: [
         ...rateByBar([[0, SYNC.eighth], [3, SYNC.sixteenth], [4, SYNC.eighth], [7, SYNC.sixteenth]]),
         { id: 'lfoAmount', from: 0.3, to: 0.5 },
         { id: 'resonance', to: 0.45, start: 0, end: 0 },
       ] },
     // The end: brass stabs pushed off the beat, brightening, then the first chord again, left to ring.
-    { preset: 'Brass Section', phrase: `${['A2+E3+A3+C4+E4', 'F2+C3+F3+A3+C4', 'C3+E3+G3+C4+E4', 'G2+D3+G3+B3+D4'].map(pushedStabs).join(' ')} A2+E3+A3+C4+E4:4@1 -:4`,
+    { preset: 'Brass Section', caption: 'Brass chords that brighten as the Filter opens, then the first chord again, left to ring.', phrase: `${['A2+E3+A3+C4+E4', 'F2+C3+F3+A3+C4', 'C3+E3+G3+C4+E4', 'G2+D3+G3+B3+D4'].map(pushedStabs).join(' ')} A2+E3+A3+C4+E4:4@1 -:4`,
       moves: [{ id: 'cutoff', from: 500, to: 2500, end: 16 }, { id: 'filterEnvAmount', from: 2, to: 3.5, end: 16 }] },
   ],
 };

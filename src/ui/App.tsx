@@ -19,7 +19,7 @@ import { loadOverlays, saveOverlays, toggleOverlay } from '../viewers/overlays';
 import { INITIAL_VIEWER_STATE, viewerReducer } from '../viewers/viewerState';
 import type { ViewSettings } from '../viewers/viewSettings';
 import { startDemo } from '../demo/player';
-import { SHARED_RIFF, TRACK } from '../demo/track';
+import { SHARED_RIFF, TRACK, type Track } from '../demo/track';
 import { rememberWelcome, welcomeFor } from '../app/welcome';
 import { startSong } from '../demo/song';
 import { createHoldTaps, startRhythm, type Rhythm } from '../input/holdRhythm';
@@ -56,6 +56,11 @@ import { applyTheme, loadTheme, type Theme } from './theme';
 import { WAVEFORM_ORDER, WaveformPicker } from './WaveformPicker';
 import { Wordmark } from './Wordmark';
 import { About } from './About';
+import { TutorialCard } from './TutorialCard';
+import { DemoBar } from './DemoBar';
+import { applyStep, controlName, differences, reached, type Tutorial } from '../tutorial/tutorial';
+import { TUTORIALS } from '../tutorial/tutorials';
+import { loadFinished, saveFinished } from '../tutorial/progress';
 
 const IDEAL_HARMONICS = 256;
 /** The piano starts on C4, the octave the octave buttons count from. */
@@ -153,7 +158,12 @@ export function App() {
   // The Notes the Demo or the Song is playing, lit on the piano.
   const [demoNotes, setDemoNotes] = useState<number[]>([]);
   const demoStop = useRef<(() => void) | null>(null);
-  const stopDemo = () => {
+  // The track playing (the Demo's, or a riff on a shared sound), and whether a Note or a control just stopped it.
+  const [demoTrack, setDemoTrack] = useState<Track>(TRACK);
+  const [tookOver, setTookOver] = useState(false);
+  /** `tookOver`: the person played or touched something, and the Demo's card says it stopped. */
+  const stopDemo = (tookOver = false) => {
+    if (tookOver && demoStop.current) setTookOver(true);
     demoStop.current?.();
     demoStop.current = null;
     setDemo(null);
@@ -171,7 +181,11 @@ export function App() {
   const playDemo = ({ shared = false } = {}) => {
     stopDemo();
     stopSong();
+    endTutorial(); // the Demo loads its own Presets
     setBankFollow(null); // when the Demo ends, the page stays where the Demo left it
+    setTookOver(false);
+    const track = shared ? { bpm: TRACK.bpm, parts: [{ preset: patchName, phrase: SHARED_RIFF, caption: 'The sound someone shared with you: turn any knob and hear it change.' }] } : TRACK;
+    setDemoTrack(track);
     const { engine } = session;
     demoStop.current = startDemo({
       now: () => engine.now(),
@@ -211,7 +225,7 @@ export function App() {
         const init = PRESETS[0];
         loadPatch(init.name, init.patch);
       },
-    }, shared ? { bpm: TRACK.bpm, parts: [{ preset: patchName, phrase: SHARED_RIFF }] } : TRACK);
+    }, track);
   };
   // The Song: a loop that plays on the loaded Patch, never changing it, while the person turns knobs, flips switches
   // and loads Presets. It moves with the piano's octave. Playing a Note, the Demo or the Song button stops it.
@@ -233,6 +247,7 @@ export function App() {
   const toggleSong = () => {
     if (songStop.current) return stopSong();
     stopDemo();
+    stopListen();
     const { engine } = session;
     songStop.current = startSong({
       now: () => engine.now(),
@@ -257,7 +272,7 @@ export function App() {
       !!target.closest('.knob, .block-controls [role="radio"], .timeline-controls [role="radio"], .destination-picker, .section-strip, [role="tab"]');
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Enter' && shapesSound(e.target)) return;
-      if (!e.metaKey && !e.ctrlKey && !e.altKey && !['Shift', 'Tab'].includes(e.key)) stopDemo();
+      if (!e.metaKey && !e.ctrlKey && !e.altKey && !['Shift', 'Tab'].includes(e.key)) stopDemo(true);
     };
     // A finger on the page may only be scrolling it: unless it lands on a control that takes touches itself
     // (knobs, piano), wait for it to lift. If the browser took it over to scroll, it is cancelled instead.
@@ -265,11 +280,11 @@ export function App() {
     const onPointer = (e: PointerEvent) => {
       const target = e.target as Element;
       if ((!target.closest('main') && !target.closest('.section-strip')) || target.closest('[data-demo]') || shapesSound(target)) return;
-      if (e.pointerType === 'mouse' || getComputedStyle(target).touchAction === 'none') stopDemo();
+      if (e.pointerType === 'mouse' || getComputedStyle(target).touchAction === 'none') stopDemo(true);
       else tap = e.pointerId;
     };
     const onLift = (e: PointerEvent) => {
-      if (e.pointerId === tap) stopDemo();
+      if (e.pointerId === tap) stopDemo(true);
     };
     const onCancel = () => (tap = null);
     // The person scrolling: the page stops following the Demo's knobs until its next part. A finger on a knob or the
@@ -528,7 +543,7 @@ export function App() {
         if (cancelled) return;
         dispose = connectMidi(access as unknown as MidiAccessLike, {
           onMessage: (m) => {
-            if (m.type === 'noteOn' && demoStop.current) stopDemoRef.current();
+            if (m.type === 'noteOn' && demoStop.current) stopDemoRef.current(true);
             if (c16Connected.current && m.type === 'cc' && surface.learnState().phase === 'off') {
               const control = { kind: 'cc' as const, channel: m.channel, number: m.controller };
               const bank = c16Bank(control);
@@ -641,6 +656,91 @@ export function App() {
     setPatch((p) => setParam(p, id, value));
   };
 
+  // A Tutorial (issue 57): a Preset rebuilt from Init, the person turning each control. `index` is −1 on the first
+  // card and `steps.length` on the last.
+  const [lesson, setLesson] = useState<{ tutorial: Tutorial; index: number; done: boolean[] } | null>(null);
+  const [finished, setFinished] = useState(() => loadFinished(storage));
+  const lessonPreset = lesson && PRESETS.find((p) => p.name === lesson.tutorial.preset)!;
+  const lessonStep = lesson?.tutorial.steps[lesson.index];
+  // Listen: the Tutorial's phrase, played over and over on the Patch as it is now, so both hands are free.
+  const [listening, setListening] = useState(false);
+  const listenStop = useRef<(() => void) | null>(null);
+  const stopListen = () => {
+    listenStop.current?.();
+    listenStop.current = null;
+    setListening(false);
+  };
+  const startListen = (tutorial: Tutorial) => {
+    stopDemo();
+    stopSong();
+    const { engine } = session;
+    const play = () => {
+      listenStop.current = startDemo(
+        {
+          now: () => engine.now(),
+          load: () => patchRef.current,
+          voices: () => patchRef.current.voices,
+          setParam: () => {},
+          onMove: () => {},
+          noteOn: (note, velocity, at) => engine.noteOn(note, velocity, at),
+          noteOff: (at) => engine.noteOff(at),
+          release: (note, at) => engine.release(note, at),
+          onStep: () => {},
+          onNotes: setDemoNotes,
+          showOctave: (o) => setOctave(shiftOctave(o, 0)),
+          onEnd: play,
+        },
+        // The phrase many times over, as one track: the player starts each part on the last one's end, so the loop
+        // keeps time (started again at each end, it fell off the beat by the player's lead-in).
+        { bpm: tutorial.bpm, parts: Array.from({ length: 64 }, () => ({ preset: tutorial.preset, phrase: tutorial.phrase })) },
+      );
+    };
+    play();
+    setListening(true);
+  };
+  const startTutorial = (tutorial: Tutorial) => {
+    stopDemo();
+    setTookOver(false);
+    stopSong();
+    stopListen();
+    const init = PRESETS[0];
+    loadPatch(init.name, init.patch);
+    setLesson({ tutorial, index: -1, done: tutorial.steps.map(() => false) });
+  };
+  function endTutorial() {
+    stopListen();
+    setLesson(null);
+  }
+  const moveTutorial = (delta: number) => setLesson((l) => l && { ...l, index: Math.min(l.tutorial.steps.length, Math.max(-1, l.index + delta)) });
+  const matchPreset = () => lessonPreset && loadPatch(lessonPreset.name, lessonPreset.patch);
+  // A Step is made when its control reaches the target, however it got there (hand, keys, MIDI, "Do it for me"); a
+  // knob or fader then snaps to the exact value, so the finished sound is the Preset's.
+  useEffect(() => {
+    if (!lesson || !lessonStep || lesson.done[lesson.index] || !reached(lessonStep, patch, overlays)) return;
+    if (lessonStep.kind !== 'display' && patch[lessonStep.id] !== lessonStep.to) setPatch((p) => applyStep(p, lessonStep));
+    setLesson((l) => l && { ...l, done: l.done.map((d, i) => d || i === l.index) });
+  }, [lesson, lessonStep, patch, overlays]);
+  // The last card: the Tutorial counts as finished, and a sound that matches is named after its Preset.
+  const lessonDiffers = lesson && lessonPreset && lesson.index >= lesson.tutorial.steps.length ? differences(patch, lessonPreset.patch) : [];
+  const atEnd = !!lesson && lesson.index >= lesson.tutorial.steps.length;
+  useEffect(() => {
+    if (!atEnd || !lessonPreset) return;
+    setFinished((f) => {
+      if (f.has(lessonPreset.name)) return f;
+      const next = new Set(f).add(lessonPreset.name);
+      saveFinished(storage, next);
+      return next;
+    });
+    if (lessonDiffers.length === 0 && patchName !== lessonPreset.name) loadPatch(lessonPreset.name, lessonPreset.patch);
+  }, [atEnd, lessonPreset, lessonDiffers.length, patchName, storage]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => () => listenStop.current?.(), []);
+  // The Demo's "you are playing now" stays a moment, then goes.
+  useEffect(() => {
+    if (!tookOver) return;
+    const timer = setTimeout(() => setTookOver(false), 6000);
+    return () => clearTimeout(timer);
+  }, [tookOver]);
+
   const viewers = (
     tap: keyof AudioSession['engine']['taps'],
     name: string,
@@ -688,7 +788,15 @@ export function App() {
           <div className="header-left">
             <div className="header-identity">
               <Wordmark onOpen={() => setAbout(true)} />
-              <PatchBar name={patchName} changed={patchChanged} patch={patch} library={library} onLoad={loadPatch} />
+              <PatchBar
+                name={patchName}
+                changed={patchChanged}
+                patch={patch}
+                library={library}
+                onLoad={loadPatch}
+                tutorials={TUTORIALS.map((t) => ({ preset: t.preset, finished: finished.has(t.preset) }))}
+                onTutorial={(preset) => startTutorial(TUTORIALS.find((t) => t.preset === preset)!)}
+              />
             </div>
             <div className="header-play" role="group" aria-label="Play">
               <Tooltip content={TIPS.demo}>
@@ -784,7 +892,13 @@ export function App() {
           </div>
         </header>
         <SectionStrip follow={demo === null ? bankFollow : follow} />
-        <About open={about} welcome={welcome} onClose={closeAbout} onPlay={() => playDemo({ shared: welcome === 'shared' })} />
+        <About
+          open={about}
+          welcome={welcome}
+          onClose={closeAbout}
+          onPlay={() => playDemo({ shared: welcome === 'shared' })}
+          onTutorial={() => startTutorial(TUTORIALS[0])}
+        />
 
         {audioStatus === 'blocked' && (
           <p className="audio-blocked" role="status">
@@ -995,6 +1109,35 @@ export function App() {
             }
           />
         </div>
+        {(demo !== null || tookOver) && (
+          <DemoBar
+            playing={demo !== null && demoTrack.parts[demo] ? { part: demoTrack.parts[demo], index: demo, count: demoTrack.parts.length } : null}
+            tookOver={tookOver}
+            onStop={() => stopDemo()}
+            onPlayAgain={() => playDemo()}
+            onDismiss={() => setTookOver(false)}
+          />
+        )}
+        {lesson && lessonPreset && (
+          <TutorialCard
+            tutorial={lesson.tutorial}
+            about={lessonPreset.about}
+            index={lesson.index}
+            done={lesson.done}
+            differs={lessonDiffers.map(controlName)}
+            listening={listening}
+            onListen={() => (listening ? stopListen() : startListen(lesson.tutorial))}
+            onBack={() => moveTutorial(-1)}
+            onNext={() => moveTutorial(1)}
+            onDoIt={() => {
+              if (!lessonStep) return;
+              if (lessonStep.kind === 'display') setOverlays((v) => ({ ...v, [lessonStep.overlay]: true }));
+              else setPatch((p) => applyStep(p, lessonStep));
+            }}
+            onMatch={matchPreset}
+            onQuit={endTutorial}
+          />
+        )}
       </main>
     </MathsContext.Provider>
     </ModulationContext.Provider>

@@ -22,12 +22,15 @@ export function About({
   welcome = null,
   onClose,
   onPlay,
+  onTutorial,
 }: {
   open: boolean;
   welcome?: Welcome | null;
   onClose: () => void;
   /** The welcome's play button: the Demo, or the Demo's riff on the shared Patch. */
   onPlay?: () => void;
+  /** The welcome's Tutorial button: the first Tutorial, Bass. */
+  onTutorial?: () => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const title = useId();
@@ -73,6 +76,18 @@ export function About({
               >
                 {welcome === 'shared' ? 'Play the shared sound' : 'Play the Demo'}
               </button>
+              {welcome !== 'shared' && (
+                <button
+                  type="button"
+                  className="tool"
+                  onClick={() => {
+                    onClose();
+                    onTutorial?.();
+                  }}
+                >
+                  Tutorial
+                </button>
+              )}
               <button type="button" className="tool" onClick={onClose}>
                 Explore
               </button>

@@ -3,7 +3,7 @@ import { frequencyAxis, levelAxis } from './axes';
 import { cssVar, curveWidth, prepareCanvas } from './canvas';
 import { createFreezeLatch } from './freezeLatch';
 import { harmonicMarkers } from './harmonicMarkers';
-import { aboveFloor, spectrumOutline } from './outline';
+import { aboveFloor, ringsToDraw, spectrumOutline } from './outline';
 import { hoverReadout, interpolatedPeak, snapToPeak } from './readout';
 import { amplitudeToSpectrumDb } from './spectrumScale';
 import type { ViewSettings } from './viewSettings';
@@ -17,8 +17,8 @@ const GAIN_TICKS = [0, -24, -48];
 // The marker labels' baseline, and the height of a 10 px label above its baseline.
 const MARKER_LABEL_ROW = 15;
 const DB_LABEL_HEIGHT = 10;
-/** Harmonic labels stop at the 8th: enough to read a Waveform's pattern, few enough to label every one. */
-const LABELLED_HARMONICS = 8;
+/** Harmonic labels stop at the 7th (the owner, 2026-10-26): enough to read a Waveform's pattern, few enough to label every one. */
+const LABELLED_HARMONICS = 7;
 // The hover readout snaps to the strongest peak this many pixels either side of the cursor.
 const HOVER_SNAP = 12;
 // On the linear level axis a sine at the Oscillator's level fills the height.
@@ -118,7 +118,7 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
     const scaleOverlapsLabels = overlays.curve && response && yOf(zero) - 2 - DB_LABEL_HEIGHT < MARKER_LABEL_ROW;
     const labelsEndAt = scaleOverlapsLabels ? width - g.measureText('−48 dB').width - 3 - MIN_LABEL_GAP / 2 : Infinity;
     const markers = harmonicMarkers(frozenFundamental(viewer.frozen, fundamental), {
-      // A tick on every Harmonic; a label on each of the first eight, and no further (the owner, 2026-10-26).
+      // A tick on every Harmonic; a label on each of the first seven, and no further (the owner, 2026-10-26).
       maxFrequency, xOf, minLabelGap: g.measureText('8').width + 1, labelsEndAt,
       labelUpTo: LABELLED_HARMONICS, labelAll: true,
     });
@@ -209,16 +209,13 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
       const { gains } = held.key === key ? held : frozenRings(false, live);
       g.strokeStyle = text;
       g.lineWidth = 1;
-      let lastX = -Infinity;
-      shown.forEach((m, i) => {
-        const x = xOf(m.frequency);
-        // Skip rings where Harmonics crowd closer than a ring's width: they would merge into a band.
-        if (x - lastX < RING_GAP) return;
-        lastX = x;
+      // None below the floor (as the Curve), none where Harmonics crowd closer than a ring's width.
+      const rings = shown.map((m, i) => ({ x: xOf(m.frequency), y: yOf(amplitudeToSpectrumDb(amplitudes[m.n] * gains[i])) }));
+      for (const i of ringsToDraw(rings, height - 0.5, RING_GAP)) {
         g.beginPath();
-        g.arc(x, yOf(amplitudeToSpectrumDb(amplitudes[m.n] * gains[i])), 2.5, 0, 2 * Math.PI);
+        g.arc(rings[i].x, rings[i].y, 2.5, 0, 2 * Math.PI);
         g.stroke();
-      });
+      }
     }
 
     // Hover readout: frequency, nearest note and the level of the trace under the cursor.

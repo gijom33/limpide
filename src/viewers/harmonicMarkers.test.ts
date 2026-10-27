@@ -39,15 +39,15 @@ describe('harmonicMarkers', () => {
   });
 });
 
-describe('harmonicMarkers on the Spectrum: a tick on every Harmonic, a label on each of the first eight', () => {
+describe('harmonicMarkers on the Spectrum: a tick on every Harmonic, a label on each of the first seven', () => {
   // The owner, 2026-10-26: 5 and 7 went unlabelled while 15, 20, 27, 36 were; ticks stay on every Harmonic.
-  it('labels the first eight Harmonics, each, a crowded label nudged clear of the one before, and no other', () => {
+  it('labels the first seven Harmonics, each, a crowded label nudged clear of the one before, and no other', () => {
     const narrow = (f: number) => (Math.log10(f / 20) / 3) * 245; // the narrowest Spectrum, about 245 px
-    const all = harmonicMarkers(440, { maxFrequency: 20000, xOf: narrow, minLabelGap: 6.5, labelUpTo: 8, labelAll: true }); // a digit and 1 px
+    const all = harmonicMarkers(440, { maxFrequency: 20000, xOf: narrow, minLabelGap: 6.5, labelUpTo: 7, labelAll: true }); // a digit and 1 px
     expect(all).toHaveLength(45); // every Harmonic up to 20 kHz keeps its tick
-    expect(all.filter((m) => m.labelled).map((m) => m.n)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
-    const markers = all.slice(0, 8);
+    expect(all.filter((m) => m.labelled).map((m) => m.n)).toEqual([1, 2, 3, 4, 5, 6, 7]);
+    const markers = all.slice(0, 7);
     for (let i = 1; i < markers.length; i++) expect(markers[i].labelX - markers[i - 1].labelX).toBeGreaterThanOrEqual(6.5);
-    expect(markers[7].labelX - narrow(440 * 8)).toBeLessThan(4); // nudged by a few pixels at most
+    expect(markers[6].labelX - narrow(440 * 7)).toBeLessThan(4); // nudged by a few pixels at most
   });
 });

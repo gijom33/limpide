@@ -96,3 +96,11 @@ export const RetriggerIcon = () => (
     <path d="M13.2 1.8v3.6H9.6" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
+
+/** A Tutorial: a mortarboard. */
+export const TutorialIcon = () => (
+  <svg {...base}>
+    <path d="M1.5 6.5 8 3.5l6.5 3L8 9.5z" strokeLinejoin="round" />
+    <path d="M4.5 8v3c1 1 2.2 1.5 3.5 1.5s2.5-.5 3.5-1.5V8M14.5 6.5v3.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);

@@ -351,6 +351,9 @@ main[data-frozen] .tap-canvases::before {
 /* The section wears the modulation colour, as each stage wears its own: heading, outline, knob arcs. */
 .timeline { --stage: var(--stage-mod); border-color: color-mix(in srgb, var(--stage) 55%, var(--border)); }
 .timeline h2 { color: var(--stage); }
+/* Each section's panel tinted with its colour, faintly, so the four read apart at a glance (asked by the owner). */
+:root { --section-tint: 2%; }
+.block[data-stage], .timeline { background: color-mix(in srgb, var(--stage) var(--section-tint), var(--panel)); }
 .timeline-key { grid-area: 1 / 2; align-self: center; }
 .timeline-controls { grid-area: 2 / 1; }
 .timeline-plot { grid-area: 2 / 2; }
@@ -797,14 +800,16 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 /* The Patch panel is anchored to the header (like the Display and MIDI panels), spanning its full width, so the
    Presets lay out in wide rows and the whole list is on screen at once; it scrolls only on short windows. */
 .patch-panel {
-  position: absolute; z-index: 50; top: calc(100% + 6px); left: 0; right: 0; max-height: calc(100dvh - 80px);
+  position: absolute; z-index: 50; top: calc(100% + 6px); left: 0; right: 0;
+  /* Under the header (its height measured, --header-h) and the page's top padding, never past the window's bottom. */
+  max-height: calc(100dvh - var(--header-h, 64px) - var(--space-4) - 14px);
   padding: 12px; display: flex; flex-direction: column; gap: 12px;
   background: var(--panel); border: 1px solid var(--muted); border-radius: var(--radius-panel); box-shadow: var(--shadow-panel);
 }
 .patch-panel h3 { margin: 0 0 6px; font-size: var(--text-sm); font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
 /* One column of groups, each one row: its name in a label column on the left, its Presets flowing across the
    panel's width to the right, so the whole library is on screen without scrolling on a laptop. */
-.patch-presets { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+.patch-presets { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 3px; }
 .patch-presets > h3 { margin: 0 0 2px; }
 .patch-group { display: grid; grid-template-columns: 76px minmax(0, 1fr); column-gap: 10px; align-items: start; }
 .patch-panel > section:not(.patch-presets) { flex: none; }
@@ -814,7 +819,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   margin: 0; padding-top: calc((var(--control-h) - 1.25em) / 2); line-height: 1.25;
   font-size: var(--text-sm); font-weight: 500; color: var(--muted);
 }
-.patch-list { display: flex; flex-wrap: wrap; gap: 4px; }
+.patch-list { display: flex; flex-wrap: wrap; gap: 3px 4px; }
 .patch-item { height: var(--control-h); padding: 0 10px; font: inherit; font-size: var(--text-md); color: var(--text); cursor: pointer; background: none; border: 1px solid var(--border); border-radius: var(--radius-control); }
 .patch-item:hover { background: var(--control-hover); }
 .patch-item[aria-current='true'] { background: var(--control-on); }
@@ -1065,3 +1070,66 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 .start-failure h1 { margin: 0; }
 .start-failure p { margin: 0; font-size: var(--text-lg); line-height: 1.5; }
 .start-failure .start-failure-detail { color: var(--muted); font-family: ui-monospace, monospace; font-size: var(--text-md); }
+
+/* A card docked at the bottom of the page (a Tutorial's, issue 57; the Demo's, issue 50), under the panels and
+   tooltips, the page keeping room for it below its last section. */
+.docked {
+  position: fixed; z-index: 40; left: 50%; bottom: var(--space-3); transform: translateX(-50%);
+  width: min(640px, calc(100vw - 2 * var(--space-3))); box-sizing: border-box;
+  display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3) var(--space-4);
+  background: var(--panel); border: 1px solid var(--accent); border-radius: var(--radius-panel); box-shadow: var(--shadow-panel);
+}
+:root[data-docked] main { margin-bottom: calc(var(--docked-h, 0px) + var(--space-3)); }
+.tutorial-top { display: flex; align-items: center; gap: var(--space-2); }
+.tutorial-name { font-weight: 600; font-size: var(--text-lg); }
+.tutorial-progress { flex: 1 1 auto; color: var(--muted); font-size: var(--text-md); }
+.tutorial-top .tool-icon { flex: none; }
+.tutorial-more { display: none; }
+.tutorial-words { display: flex; flex-direction: column; gap: 4px; font-size: var(--text-lg); line-height: 1.45; }
+.tutorial-words p { margin: 0; }
+/* Once made, the instruction steps back and the note on what to hear and see leads. */
+.tutorial-say[data-done] { color: var(--muted); font-size: var(--text-md); }
+.tutorial-say[data-done]::before { content: '✓ '; color: var(--accent); }
+.tutorial-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.tutorial-actions .tool { min-height: 36px; padding: 0 var(--space-3); gap: 6px; }
+.tutorial-actions .tool:disabled { opacity: 0.45; cursor: default; }
+.tutorial-spacer { flex: 1 1 auto; }
+/* The Step's control: a steady ring in the accent colour, and its target beside it. */
+[data-tutorial] { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: var(--radius-control); scroll-margin: calc(var(--header-h, 0px) + 56px) 0 calc(var(--docked-h, 0px) + 24px); }
+[data-tutorial-target] { position: relative; }
+[data-tutorial-target]::after {
+  content: attr(data-tutorial-target); position: absolute; z-index: 5; left: 50%; bottom: calc(100% + 6px); transform: translateX(-50%);
+  padding: 1px 6px; white-space: nowrap; font-size: var(--text-sm); font-weight: 600; color: var(--bg); background: var(--accent); border-radius: 4px; pointer-events: none;
+}
+.section-strip button[data-tutorial] { outline-offset: -3px; }
+/* The Patches panel's Tutorials, and the cap beside a Preset that has one. */
+.patch-tutorial-item { display: inline-flex; align-items: center; gap: 6px; }
+.patch-finished { color: var(--accent); font-weight: 600; }
+.patch-split { display: inline-flex; border: 1px solid var(--border); border-radius: var(--radius-control); }
+.patch-split .patch-item { border: none; }
+.patch-split > :last-child .patch-item { padding-left: 6px; }
+.patch-tutorial { display: inline-flex; align-items: center; justify-content: flex-end; min-width: 28px; padding: 0 0 0 10px; }
+/* Phones: the card two lines high, More for the rest; once a Step is made, its note in the instruction's place. */
+@media (max-width: 600px) {
+  .docked { bottom: 0; width: 100vw; border-radius: var(--radius-panel) var(--radius-panel) 0 0; border-width: 1px 0 0; padding: var(--space-2) var(--space-3) calc(var(--space-2) + env(safe-area-inset-bottom)); gap: 6px; }
+  .tutorial-more { display: inline-flex; }
+  .tutorial-words { font-size: var(--text-md); }
+  .tutorial:not([data-expanded]) .tutorial-words { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+  .tutorial:not([data-expanded]) .tutorial-say[data-done], .tutorial:not([data-expanded]) .tutorial-words p + p:not(.tutorial-then) { display: none; }
+  .tutorial-actions .tool { min-height: 32px; padding: 0 var(--space-2); }
+}
+/* The Demo's card (issue 50): the sound's name, a dot per part, Stop; under them, what to hear and see. */
+.demo-bar-top { display: flex; align-items: center; gap: var(--space-3); }
+.demo-bar-name { font-weight: 600; font-size: var(--text-lg); }
+.demo-bar-parts { flex: 1 1 auto; display: flex; gap: 4px; }
+.demo-bar-parts > span { width: 8px; height: 8px; border-radius: 50%; border: 1px solid var(--muted); box-sizing: border-box; }
+.demo-bar-parts > span[data-done] { background: var(--muted); }
+.demo-bar-parts > span[data-current] { background: var(--accent); border-color: var(--accent); }
+.demo-bar-caption { margin: 0; font-size: var(--text-lg); line-height: 1.45; }
+.demo-bar-top > .demo-bar-caption { flex: 1 1 auto; }
+.demo-bar .tool { min-height: 36px; padding: 0 var(--space-3); flex: none; }
+.demo-bar .tool-icon { padding: 0; }
+@media (max-width: 600px) {
+  .demo-bar-caption { font-size: var(--text-md); }
+  .demo-bar .tool { min-height: 32px; }
+}

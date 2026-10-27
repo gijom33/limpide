@@ -42,3 +42,19 @@ export function aboveFloor(ys: ArrayLike<number>, floorY: number): [number, numb
   if (start >= 0) runs.push([start, ys.length - 1]);
   return runs;
 }
+
+/**
+ * The Ideal Reference rings to draw, from low to high: none on the floor (a Harmonic theory puts below the Spectrum's
+ * lowest dB, which would sit along the bottom edge), and none closer than `gap` to the last one drawn, where
+ * Harmonics crowd into a band.
+ */
+export function ringsToDraw(rings: readonly { x: number; y: number }[], floorY: number, gap: number): number[] {
+  const drawn: number[] = [];
+  let lastX = -Infinity;
+  rings.forEach(({ x, y }, i) => {
+    if (y >= floorY || x - lastX < gap) return;
+    lastX = x;
+    drawn.push(i);
+  });
+  return drawn;
+}

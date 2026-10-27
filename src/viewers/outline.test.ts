@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { aboveFloor, spectrumOutline } from './outline';
+import { aboveFloor, ringsToDraw, spectrumOutline } from './outline';
 
 const FLOOR = -100;
 
@@ -46,5 +46,15 @@ describe('aboveFloor: the Response Curve stops at the floor instead of lying alo
   });
   it('starts a curve that rises from the floor at its last floor point', () => {
     expect(aboveFloor([100, 100, 40, 20], 100)).toEqual([[1, 3]]);
+  });
+});
+
+describe('ringsToDraw: the Ideal Reference rings', () => {
+  it('leaves out the rings theory puts below the floor, rather than lining them up along it', () => {
+    expect(ringsToDraw([{ x: 10, y: 20 }, { x: 30, y: 60 }, { x: 50, y: 100 }, { x: 70, y: 100 }], 100, 6)).toEqual([0, 1]);
+  });
+  it('leaves out a ring closer than the gap to the last one drawn; one on the floor does not count', () => {
+    expect(ringsToDraw([{ x: 10, y: 20 }, { x: 13, y: 30 }, { x: 18, y: 40 }], 100, 6)).toEqual([0, 2]);
+    expect(ringsToDraw([{ x: 10, y: 100 }, { x: 13, y: 30 }], 100, 6)).toEqual([1]);
   });
 });

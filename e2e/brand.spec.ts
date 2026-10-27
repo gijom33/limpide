@@ -6,7 +6,7 @@ test('the header shows the Limpide logo and wordmark, and the tab and home scree
   await expect(title).toBeVisible();
   await expect(title.locator('svg.logo')).toBeVisible();
 
-  // An SVG for the browsers that take one, a PNG for those that do not, and a larger PNG for a phone's home screen.
+  // An ICO first, for Safari's tabs; an SVG for the browsers that take one; a larger PNG for a phone's home screen.
   const icons = await page.locator('link[rel="icon"], link[rel="apple-touch-icon"]').evaluateAll((links) =>
     links.map((l) => ({ rel: l.getAttribute('rel'), href: (l as HTMLLinkElement).href })),
   );
@@ -19,6 +19,7 @@ test('the header shows the Limpide logo and wordmark, and the tab and home scree
   expect(types.some((t) => t.includes('svg'))).toBe(true);
   expect(types.some((t) => t.includes('png'))).toBe(true);
   expect(icons.some((i) => i.rel === 'apple-touch-icon')).toBe(true);
+  expect(icons[0].href).toMatch(/favicon\.ico$/);
 });
 
 for (const width of [861, 872, 884, 900, 920, 1000, 1100, 1440, 1710]) {

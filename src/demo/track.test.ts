@@ -47,6 +47,17 @@ describe('the Demo track', () => {
     expect([...sections].sort()).toEqual(['Amp', 'Filter', 'LFO & Envelopes', 'Oscillators']);
   });
 
+  it('says what each part shows, in plain words', () => {
+    for (const part of TRACK.parts) expect(part.caption?.length, part.preset).toBeGreaterThan(30);
+  });
+
+  it('starts with a Kick a phone can play: its first hit’s Filter peaks well above a phone speaker’s lowest Note', () => {
+    const [intro] = TRACK.parts;
+    const kick = preset(intro.preset)!.patch;
+    const amount = intro.moves!.find((m) => m.id === 'filterEnvAmount')!.from!;
+    expect(kick.cutoff * 2 ** amount).toBeGreaterThanOrEqual(400);
+  });
+
   it('has a riff for a shared sound: whole bars, one Note at a time, so it plays on any Patch', () => {
     expect(Number.isInteger(bars(SHARED_RIFF))).toBe(true);
     expect(oneAtATime(SHARED_RIFF)).toBe(true);

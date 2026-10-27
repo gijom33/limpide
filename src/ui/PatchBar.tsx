@@ -4,6 +4,7 @@ import type { Patch } from '../patch/patch';
 import { PRESET_GROUPS, PRESETS, presetAfter } from '../patch/presets';
 import { useLearnable } from './learn';
 import { patchFromJSON, patchToJSON, patchToShare } from '../patch/serialize';
+import { TutorialIcon } from './icons';
 import { Tooltip } from './Tooltip';
 
 interface Props {
@@ -13,10 +14,15 @@ interface Props {
   library: Library;
   /** Load a Patch and make it the new baseline for "changed". */
   onLoad(name: string, patch: Patch): void;
+  /** The Presets that have a Tutorial, and whether it has been played to the end. */
+  tutorials: readonly { preset: string; finished: boolean }[];
+  onTutorial(preset: string): void;
 }
 
+const TUTORIAL_TIP = { title: 'Tutorial', body: 'Build this sound step by step, from Init: turn each control yourself, and hear and see what it does.' };
+
 /** The current Patch's name with Preset arrows, and a panel to save, load, delete, export, import and share. */
-export function PatchBar({ name, changed, patch, library, onLoad }: Props) {
+export function PatchBar({ name, changed, patch, library, onLoad, tutorials, onTutorial }: Props) {
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState('');
   const [link, setLink] = useState('');
@@ -54,6 +60,10 @@ export function PatchBar({ name, changed, patch, library, onLoad }: Props) {
   const load = (next: string, patch: Patch) => {
     onLoad(next, patch);
     setOpen(false);
+  };
+  const tutorial = (preset: string) => {
+    setOpen(false);
+    onTutorial(preset);
   };
   const toggle = () => {
     setOpen((o) => !o);
@@ -116,17 +126,46 @@ export function PatchBar({ name, changed, patch, library, onLoad }: Props) {
         <div className="patch-panel" role="dialog" aria-label="Patches">
           <section className="patch-presets">
             <h3>Presets</h3>
+            {/* The Tutorials first, a row like a group's, so the panel grows by one row only. */}
+            <div className="patch-group" role="group" aria-label="Tutorials">
+              <h4 aria-hidden="true">Tutorials</h4>
+              <div className="patch-list">
+                {tutorials.map((t) => (
+                  <Tooltip key={t.preset} content={TUTORIAL_TIP}>
+                    <button type="button" className="patch-item patch-tutorial-item" aria-label={`Tutorial: ${t.preset}${t.finished ? ', finished' : ''}`} onClick={() => tutorial(t.preset)}>
+                      <TutorialIcon />
+                      {t.preset}
+                      {t.finished && <span className="patch-finished" aria-hidden="true">✓</span>}
+                    </button>
+                  </Tooltip>
+                ))}
+              </div>
+            </div>
             {PRESET_GROUPS.map((group) => (
               <div key={group} className="patch-group" role="group" aria-label={group}>
                 <h4 aria-hidden="true">{group}</h4>
                 <div className="patch-list">
-                  {PRESETS.filter((p) => p.group === group).map((p) => (
-                    <Tooltip key={p.name} content={{ title: p.name, body: p.about }}>
-                      <button type="button" className="patch-item" aria-current={p.name === name || undefined} onClick={() => load(p.name, p.patch)}>
-                        {p.name}
-                      </button>
-                    </Tooltip>
-                  ))}
+                  {PRESETS.filter((p) => p.group === group).map((p) => {
+                    const item = (
+                      <Tooltip key={p.name} content={{ title: p.name, body: p.about }}>
+                        <button type="button" className="patch-item" aria-current={p.name === name || undefined} onClick={() => load(p.name, p.patch)}>
+                          {p.name}
+                        </button>
+                      </Tooltip>
+                    );
+                    if (!tutorials.some((t) => t.preset === p.name)) return item;
+                    // One pill, as in the Tutorials row: the cap opens its Tutorial, the name loads the Preset.
+                    return (
+                      <span key={p.name} className="patch-split">
+                        <Tooltip content={TUTORIAL_TIP}>
+                          <button type="button" className="patch-item patch-tutorial" aria-label={`Tutorial: ${p.name}`} onClick={() => tutorial(p.name)}>
+                            <TutorialIcon />
+                          </button>
+                        </Tooltip>
+                        {item}
+                      </span>
+                    );
+                  })}
                 </div>
               </div>
             ))}

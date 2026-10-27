@@ -152,3 +152,45 @@ test.describe('on a touch screen', () => {
     await expect(demo(page)).toHaveAttribute('aria-pressed', 'false');
   });
 });
+
+test('on a phone the Demo’s card keeps the sound’s name, what to listen for, how far it is, and Stop in view', async ({ page }) => {
+  await page.setViewportSize({ width: 393, height: 659 });
+  await page.goto('/');
+  await demo(page).click();
+  const card = page.getByRole('region', { name: 'Demo' });
+  await expect(card).toBeInViewport();
+  await expect(card).toContainText('Kick');
+  await expect(card).toContainText('A kick drum, made by the synth');
+  await expect(card.getByRole('img', { name: 'Part 1 of 7' })).toBeVisible();
+  // The page follows the Demo's knobs and the header slides away; the card stays.
+  await page.mouse.wheel(0, 600);
+  await expect(card).toBeInViewport();
+  await card.getByRole('button', { name: 'Stop' }).click();
+  await expect(demo(page)).toHaveAttribute('aria-pressed', 'false');
+  await expect(card).toBeHidden(); // stopped on purpose: nothing to explain
+});
+
+test('a key that stops the Demo says so, and offers to play it again', async ({ page }) => {
+  await page.setViewportSize({ width: 393, height: 659 });
+  await page.goto('/');
+  await demo(page).click();
+  await expect(page.getByRole('region', { name: 'Demo' })).toContainText('Kick');
+  await page.getByRole('group', { name: 'Piano' }).locator('[data-note]').first().click();
+  await expect(demo(page)).toHaveAttribute('aria-pressed', 'false');
+  const status = page.getByRole('status').filter({ hasText: 'The Demo stopped' });
+  await expect(status).toBeVisible();
+  await page.getByRole('region', { name: 'Demo' }).getByRole('button', { name: 'Play again' }).click();
+  await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
+  await expect(status).toBeHidden();
+});
+
+test('where the page fits its window, the Demo’s card adds no scroll bar: it sits over the bottom edge', async ({ page }) => {
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await page.goto('/');
+  const scrolls = () => page.evaluate(() => document.documentElement.scrollHeight > innerHeight);
+  expect(await scrolls()).toBe(false); // the page fits, before the Demo
+  await demo(page).click();
+  await expect(page.getByRole('region', { name: 'Demo' })).toBeVisible();
+  await page.waitForTimeout(300);
+  expect(await scrolls()).toBe(false);
+});
