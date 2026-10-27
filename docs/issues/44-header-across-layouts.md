@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** built (2026-10-26), to try on a real foldable and a laptop. The four decisions went with the proposal.
+**Status:** done (2026-10-26): the owner tried the new header and approved it. The four decisions went with the proposal.
 
 ## What there is (measured 2026-10-26)
 
@@ -35,4 +35,4 @@ Decided by the owner on 2026-10-26, all four as proposed:
 - [x] Three and four across: the piano in the one row. Its column takes what the sides leave, so below 1300 px the header's buttons drop their words (icons and tooltips), in one step where it was three (1045, 1120, 1200 px). White keys: 29 px at 861, 33 at 1000, 43 at 1100, 44 from about 1300
 - [x] The whole instrument still on screen where it was: at 1440 × 900 the Viewers go from 122 to 110 px. Short windows that already scrolled (861 × 700: 838 px of page, 1000 × 800: 827) scroll 12 to 24 px more
 - [x] The design principles' audit: the piano's keys meet the 24 px target on laptop, foldable and wide screens (44 and 26 px), so their three waivers are gone; the phone's stays
-- [ ] Tried on a real foldable and a laptop
+- [x] Tried by the owner (2026-10-26): "New header looks good"
