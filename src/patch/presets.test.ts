@@ -82,3 +82,16 @@ describe('initialPatch: what plays when the page opens', () => {
     expect(initialPatch('#p=%%%', createLibrary(memoryStorage()))).toEqual({ patch: defaultPatch(), name: 'Init', shared: false });
   });
 });
+
+describe('tremolo (issue 60)', () => {
+  it('Tremolo Keys and Trance Gate aim an LFO at Volume: a gentle sine, and a full-Depth Square that chops the pad', () => {
+    const keys = PRESETS.find((p) => p.name === 'Tremolo Keys')!;
+    const gate = PRESETS.find((p) => p.name === 'Trance Gate')!;
+    expect(keys.group).toBe('Keys & Plucks');
+    expect(keys.patch).toMatchObject({ lfoDestination: 'volume', lfoWaveform: 'sine' });
+    expect(keys.patch.voices).toBeGreaterThan(1);
+    expect(gate.group).toBe('Pads');
+    expect(gate.patch).toMatchObject({ lfoDestination: 'volume', lfoWaveform: 'square', lfoAmount: 1 });
+  });
+});
+

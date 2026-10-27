@@ -161,7 +161,7 @@ test('on a phone the Demo’s card keeps the sound’s name, what to listen for,
   await expect(card).toBeInViewport();
   await expect(card).toContainText('Kick');
   await expect(card).toContainText('A kick drum, made by the synth');
-  await expect(card.getByRole('img', { name: 'Part 1 of 7' })).toBeVisible();
+  await expect(card.getByRole('img', { name: 'Part 1 of 10' })).toBeVisible();
   // The page follows the Demo's knobs and the header slides away; the card stays.
   await page.mouse.wheel(0, 600);
   await expect(card).toBeInViewport();

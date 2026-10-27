@@ -33,6 +33,11 @@ const LOOKAHEAD = 0.15;
 const TICK_MS = 40;
 // A breath after pressing Demo before the first Note.
 const LEAD_IN = 0.3;
+// The next part's Preset loads this long before its bar line, not on the look-ahead: just enough for the engine to
+// have its first Notes, while this part's last Notes and their Release keep their own sound (issue 60).
+const SWITCH_AHEAD = 0.03;
+// Every part but the last lets go of its Notes this long before its end, in beats: a breath before the next sound.
+const BREATH = 1 / 8;
 
 /** The piano shows 17 keys from its C: the octave whose keys show the most of these Notes (the highest, if tied). */
 export function octaveShowing(notes: number[]): number {
@@ -50,8 +55,8 @@ export function octaveShowing(notes: number[]): number {
 }
 
 /**
- * Plays the track once, without a break: each part's Preset is loaded just before its first Note is handed to the
- * engine, so it lands on the bar line. Knobs are turned on the same look-ahead as the Notes, so a jump on a bar line
+ * Plays the track once, without a break: each part's Preset is loaded at its bar line, just before its first Note is
+ * handed to the engine, and each part but the last takes a short breath at its end. Knobs are turned on the same look-ahead as the Notes, so a jump on a bar line
  * is in force when that bar's first Note starts. After the last part it ends by itself. Returns the stop function,
  * which silences everything at once.
  */
@@ -82,7 +87,8 @@ export function startDemo(host: DemoHost, track: Track = TRACK): () => void {
     host.onStep(i);
     const parsed = parsePhrase(part.phrase, track.bpm);
     host.showOctave(octaveShowing(parsed.map((e) => e.note)));
-    events = parsed.map((e) => ({ ...e, time: start + e.time, off: start + e.time + e.duration }));
+    const letGo = i < track.parts.length - 1 ? start + length - BREATH * beat : Infinity;
+    events = parsed.map((e) => ({ ...e, time: start + e.time, off: Math.max(start + e.time, Math.min(letGo, start + e.time + e.duration)) }));
     queued = 0;
     moves = (part.moves ?? []).map((m) => ({
       id: m.id,
@@ -143,15 +149,21 @@ export function startDemo(host: DemoHost, track: Track = TRACK): () => void {
       return;
     }
     const horizon = now + LOOKAHEAD;
+    let wait = TICK_MS;
     for (;;) {
       turnKnobs(horizon);
       const boundary = index + 1 < track.parts.length ? starts[index + 1] : Infinity;
       handOver(Math.min(horizon, boundary));
       if (boundary >= horizon) break;
+      const switchAt = boundary - SWITCH_AHEAD;
+      if (now < switchAt) {
+        wait = Math.min(TICK_MS, (switchAt - now) * 1000); // back in time for the switch
+        break;
+      }
       enter(index + 1);
     }
     lightKeys(now);
-    timer = setTimeout(tick, TICK_MS);
+    timer = setTimeout(tick, wait);
   };
 
   enter(0);

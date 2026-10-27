@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** done. 75 seconds, 40 bars at 128 BPM over Am–F–C–G: Kick (4 bars), Acid (8), Poly Pluck (8), Strings (4), Self-Oscillation as the riser (2, the last beat silent), Wobble (8), Brass Section (4, then the first chord left to ring). Knobs turn on the same look-ahead as the Notes, so the Wobble's LFO Rate jumps are in force when each bar's first Note restarts it. On a laptop every section is usually on screen and the page stays put.
+**Status:** done; lengthened to about two minutes by [issue 60](./60-demo-longer-smoother.md). At first 75 seconds, 40 bars at 128 BPM over Am–F–C–G: Kick (4 bars), Acid (8), Poly Pluck (8), Strings (4), Self-Oscillation as the riser (2, the last beat silent), Wobble (8), Brass Section (4, then the first chord left to ring). Knobs turn on the same look-ahead as the Notes, so the Wobble's LFO Rate jumps are in force when each bar's first Note restarts it. On a laptop every section is usually on screen and the page stays put.
 
 The owner's calls (2026-10-25):
 

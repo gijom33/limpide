@@ -252,6 +252,10 @@ group('Keys & Plucks', [
     voices: 8, waveform: 'triangle', osc2Waveform: 'sine', osc2Octave: 1, mixOsc2: 0.35, cutoff: 1800, velocityCutoff: 0.7, keyTrack: 0.5,
     ampAttack: 0.003, ampDecay: 2, ampSustain: 0.15, ampRelease: 0.5,
   }],
+  ['Tremolo Keys', 'The Electric Piano with LFO 1 on Volume: its chords pulse gently, and the Amp Scope swells and shrinks with them.', {
+    voices: 6, waveform: 'triangle', osc2Waveform: 'sine', osc2Octave: 1, mixOsc2: 0.35, cutoff: 1800, velocityCutoff: 0.7, keyTrack: 0.5,
+    ampAttack: 0.003, ampDecay: 2, ampSustain: 0.35, ampRelease: 0.5, lfoDestination: 'volume', lfoRate: 5, lfoAmount: 0.5,
+  }],
   ['Marimba', 'A sine and a square two octaves up, gone almost at once: the bright tick of the mallet, then the round tone.', {
     voices: 8, waveform: 'sine', osc2Waveform: 'square', osc2Octave: 2, mixOsc2: 0.25, cutoff: 3000, filterEnvAmount: -2, filterDecay: 0.05, filterSustain: 0,
     ampAttack: 0.001, ampDecay: 0.6, ampSustain: 0, ampRelease: 0.4,
@@ -331,6 +335,10 @@ group('Pads', [
     voices: 4, osc2Detune: -7, mixOsc2: 0.8, filterSlope: 24, cutoff: 700, resonance: 0.45,
     lfoWaveform: 'triangle', lfoDestination: 'resonance', lfoRate: 0.17, lfoAmount: 0.7, lfo2Waveform: 'triangle', lfo2Destination: 'cutoff', lfo2Rate: 0.11, lfo2Amount: 0.5,
     ampAttack: 1.2, ampSustain: 1, ampRelease: 2.5,
+  }],
+  ['Trance Gate', 'A held chord chopped by a Square LFO on Volume at full Depth: on, off, on, off, sixteen times a bar, the gated pad of trance.', {
+    voices: 8, osc2Detune: 9, mixOsc2: 0.9, cutoff: 1800, resonance: 0.2, ampAttack: 0.01, ampSustain: 1, ampRelease: 0.3,
+    lfoWaveform: 'square', lfoDestination: 'volume', lfoRate: 8, lfoAmount: 1, lfoRetrigger: 'note',
   }],
 ]);
 

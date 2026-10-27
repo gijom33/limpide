@@ -17,15 +17,18 @@ function oneAtATime(phrase: string) {
 }
 
 describe('the Demo track', () => {
-  it('is a minute or so of music, every part whole bars, so each Preset lands on a bar line', () => {
+  it('is about two minutes of music (issue 60), every part whole bars, so each Preset lands on a bar line', () => {
     const seconds = TRACK.parts.reduce((s, part) => s + phraseLength(part.phrase, TRACK.bpm), 0);
-    expect(seconds).toBeGreaterThanOrEqual(60);
-    expect(seconds).toBeLessThanOrEqual(100);
+    expect(seconds).toBeGreaterThanOrEqual(110);
+    expect(seconds).toBeLessThanOrEqual(130);
     for (const part of TRACK.parts) expect(Number.isInteger(bars(part.phrase)), `${part.preset}: ${bars(part.phrase)} bars`).toBe(true);
   });
 
   it('plays a different Preset in every part, chords on several Voices and never on one', () => {
-    expect(new Set(TRACK.parts.map((p) => p.preset)).size).toBe(TRACK.parts.length);
+    // The hook, Poly Pluck, comes back once, brighter (issue 60); every other part has its own Preset.
+    const names = TRACK.parts.map((p) => p.preset);
+    expect(names.filter((n) => n === 'Poly Pluck')).toHaveLength(2);
+    expect(new Set(names).size).toBe(names.length - 1);
     for (const part of TRACK.parts) {
       expect(preset(part.preset), part.preset).toBeDefined();
       if (preset(part.preset)!.patch.voices === 1) expect(oneAtATime(part.phrase), `${part.preset}: chords need Voices`).toBe(true);
@@ -63,3 +66,13 @@ describe('the Demo track', () => {
     expect(oneAtATime(SHARED_RIFF)).toBe(true);
   });
 });
+
+describe('issue 60', () => {
+  it('plays Tremolo Keys, an LFO on Volume, between the Strings and the riser; a Sweep Pad break and the hook again before the end', () => {
+    expect(TRACK.parts.map((p) => p.preset)).toEqual([
+      'Kick', 'Acid', 'Poly Pluck', 'Strings', 'Tremolo Keys', 'Self-Oscillation', 'Wobble', 'Sweep Pad', 'Poly Pluck', 'Brass Section',
+    ]);
+    expect(preset('Tremolo Keys')!.patch.lfoDestination).toBe('volume');
+  });
+});
+

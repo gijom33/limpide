@@ -46,6 +46,8 @@ const arpeggio = (chord: string) => {
 const wobbleBar = (root: string, octave: string) => `${root}:1.5@1 ${root}:.5 ${root}:.75 ${root}:.75 ${octave}:.5@1`;
 /** Five stabs across the bar, pushed off the beat. */
 const pushedStabs = (chord: string) => `${chord}:.5@1 -:.25 ${chord}:.5 -:.25 ${chord}:.5@1 -:.5 ${chord}:.5 -:.25 ${chord}:.5@1 -:.25`;
+/** One bar of electric-piano comping: the chord struck three times, the second softer, across the bar. */
+const comp = (chord: string) => `${chord}:1.5@.8 ${chord}:1@.55 ${chord}:1.5@.7`;
 /** An LFO Rate that changes on bar lines: [bar, Hz] pairs, each a jump. */
 const rateByBar = (steps: [number, number][]): KnobMove[] => steps.map(([bar, hz]) => ({ id: 'lfoRate', to: hz, start: bar * 4, end: bar * 4 }));
 
@@ -81,6 +83,11 @@ export const TRACK: Track = {
     // The break: the chords held by a string section, the Pulse Width shimmer quickening until it buzzes.
     { preset: 'Strings', caption: 'Held chords that shimmer, the shimmer speeding up until it buzzes.', phrase: 'A2+E3+A3+C4+E4:4 F2+C3+A3+C4+F4:4 C3+G3+C4+E4+G4:4 G2+D3+G3+B3+D4:4',
       moves: [{ id: 'lfoRate', from: 0.7, to: SYNC.sixteenth }, { id: 'lfoAmount', from: 0.5, to: 0.8 }] },
+    // The lift (issue 60): an electric piano on the same chords, LFO 1 on Volume. The tremolo locks to the beat in
+    // eighths and deepens, then quickens to sixteenths for the last two bars, into the riser.
+    { preset: 'Tremolo Keys', caption: 'An electric piano with tremolo: an LFO on Volume makes the chords pulse in time, deeper and deeper. The Amp Scope swells and shrinks with it.',
+      phrase: times(['A3+C4+E4', 'F3+A3+C4', 'G3+C4+E4', 'G3+B3+D4'].map(comp).join(' '), 2),
+      moves: [...rateByBar([[0, SYNC.eighth], [6, SYNC.sixteenth]]), { id: 'lfoAmount', from: 0.2, to: 0.8, end: 24 }] },
     // The riser: a Filter singing on its own, its Cutoff swept across the whole Spectrum while the LFO trembles
     // faster and faster; then a beat of silence.
     { preset: 'Self-Oscillation', caption: 'No Oscillator at all: the Filter sings on its own as it sweeps from low to high.', phrase: 'A2:7@1 -:1',
@@ -93,6 +100,15 @@ export const TRACK: Track = {
         { id: 'lfoAmount', from: 0.3, to: 0.5 },
         { id: 'resonance', to: 0.45, start: 0, end: 0 },
       ] },
+    // The break (issue 60): held chords on a pad whose Filter Envelope takes seconds to open, so the Effective Cutoff
+    // climbs across the Timeline under each chord.
+    { preset: 'Sweep Pad', caption: 'A pad whose Filter opens over seconds: watch the Effective Cutoff climb across the Timeline under each chord.',
+      phrase: 'A2+E3+A3+C4:8 F2+C3+F3+A3:8',
+      moves: [{ id: 'resonance', from: 0.5, to: 0.65 }] },
+    // The hook again (issue 60), brighter: the Cutoff opens wide and the Pulse Width comes back to square, so the
+    // Filter Spectrum fills up to the top and the even Harmonics fall away again.
+    { preset: 'Poly Pluck', caption: 'The hook again, brighter: the Filter opens wide and the Spectrum fills to the top.', phrase: times(['A3 C4 E4 A4', 'A3 C4 F4 A4', 'G3 C4 E4 G4', 'G3 B3 D4 G4'].map(arpeggio).join(' '), 2),
+      moves: [{ id: 'cutoff', from: 1400, to: 5000, end: 24 }, { id: 'filterDecay', to: 0.45, start: 0, end: 0 }, { id: 'pulseWidth', from: 0.1, to: 0.5, start: 16 }] },
     // The end: brass stabs pushed off the beat, brightening, then the first chord again, left to ring.
     { preset: 'Brass Section', caption: 'Brass chords that brighten as the Filter opens, then the first chord again, left to ring.', phrase: `${['A2+E3+A3+C4+E4', 'F2+C3+F3+A3+C4', 'C3+E3+G3+C4+E4', 'G2+D3+G3+B3+D4'].map(pushedStabs).join(' ')} A2+E3+A3+C4+E4:4@1 -:4`,
       moves: [{ id: 'cutoff', from: 500, to: 2500, end: 16 }, { id: 'filterEnvAmount', from: 2, to: 3.5, end: 16 }] },

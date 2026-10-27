@@ -64,13 +64,26 @@ describe('the Demo player', () => {
     advance(0.9); // 1.1 s: the chord at 1.3 s is not near yet
     expect(calls).toContain('on 52 @0.800');
     expect(calls).not.toContain('load Poly');
-    advance(0.1); // 1.2 s: it is
+    // 1.2 s: the chord is within the look-ahead, but its Preset waits for the bar line, so E3's Release still plays
+    // on its own sound (issue 60): it loads 30 ms before, in time for the engine to have the chord.
+    advance(0.1);
+    expect(calls).not.toContain('load Poly');
+    advance(0.08); // 1.28 s
     const next = calls.slice(calls.indexOf('load Poly'));
     expect(next.slice(0, 2)).toEqual(['load Poly', 'step 1']);
     // No gap: the chord starts where the first part ends. Both Notes start before either is released, by note.
     expect(next.filter((c) => /^(on|release) /.test(c))).toEqual(['on 48 @1.300', 'on 52 @1.300', 'release 48 @2.150', 'release 52 @2.150']);
     stop();
     expect(calls.at(-2)).toMatch(/^off @/);
+  });
+
+  it('takes a breath at the end of each part but the last: Notes still sounding then are released an eighth of a beat early', () => {
+    const { host, calls, advance } = fakeHost({ A: 1, B: 1 });
+    // C3, a sixteenth at 0.3 s, would end at 0.406 s; its part ends at 0.425 s, so it is let go at 0.3625 s.
+    startDemo(host, { bpm: 120, parts: [{ preset: 'A', phrase: 'C3:.25' }, { preset: 'B', phrase: 'E3:.25' }] });
+    for (let i = 0; i < 10; i++) advance(0.1);
+    expect(calls).toContain('off @0.362'); // 0.3625, rounded down in binary
+    expect(calls).toContain('off @0.531'); // the last part's Note keeps its length: 0.425 + 0.106
   });
 
   it('releases each Note the way the Voices set now call for, even when they change while it plays', () => {
