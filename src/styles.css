@@ -556,7 +556,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   .voices-field .field-caption { flex: 1 1 100%; }
 }
 @media (max-width: 600px) {
-  @container (max-width: 334px) {
+  @container (max-width: 330px) {
     .block .sub-block > h3, .block .sub-block > .tip-anchor:first-child { flex: 1 1 100%; align-self: auto; }
     .block .sub-block:has(.knob) h3 { min-height: 0; }
     .tab-list { padding-left: 0; }
