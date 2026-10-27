@@ -810,6 +810,8 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 /* The arrows keep their size; when the header is short of room, the name gives way. */
 .patch-bar > .tool { flex: none; }
 .patch-name { width: 150px; justify-content: center; gap: 6px; }
+/* Bold, with its ▾ (the owner's option A), a factory name needs more room in wider fonts: 172 px from 1200 px up. */
+@media (min-width: 1200px) { .patch-name { width: 172px; } }
 /* Narrow windows (one-row header, down to 861 px): a shorter fixed width, so the Display button keeps its place on
    the right; long Preset names show an ellipsis. */
 @media (max-width: 959px) { .patch-name { width: 104px; } }
@@ -862,6 +864,13 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
    buttons pad 6 px, so the piano keeps 44 px keys at 1440 and 26 px or more at 861. */
 @media (min-width: 861px) {
   header, .header-left, .header-identity { column-gap: 12px; }
+}
+/* With their words (1300 px up), the header's buttons pad 6 px and sit 6 px apart, its zones 8 px: Linux's wider fonts
+   left the piano 2 px short of its 44 px keys at 1440 (the 1.12.2 deploy). Measured with Verdana, wider still. */
+@media (min-width: 1300px) {
+  header, .header-left, .header-identity { column-gap: 8px; }
+  .header-play, .header-right { gap: 6px; }
+  header :is(.demo-button, [aria-label='Hold'], .midi-status, .display-menu > .tip-anchor > .tool, .about-menu .tool) { padding: 0 6px; }
 }
 @media (min-width: 861px) and (max-width: 1299px) {
   header :is(.demo-word, .tool-word) { display: none; }
