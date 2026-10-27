@@ -136,6 +136,14 @@ _Avoid_: Autoplay, showcase, tour
 About as a brand-new browser (no Last session, no saved Patches) sees it, once: it offers to play the Demo, or, opened from a Share link, a short riff on the shared Patch, or to explore alone.
 _Avoid_: Onboarding, splash, intro
 
+**Tutorial**:
+A Preset rebuilt from Init in Steps, with the person turning each control. A card docked at the bottom of the page shows the current Step; nothing is locked, and the last card lists what differs from the Preset. Opened from the Preset's row or the Tutorials list in the Patches panel, or from the Welcome.
+_Avoid_: Lesson, course, walkthrough, onboarding
+
+**Step**:
+One change in a Tutorial: one Parameter to a target (reached within 5 % of the control's travel, a choice exactly), or one Display option to switch on. It has an instruction, and a note on what to hear and see, shown once the change is made.
+_Avoid_: Stage (an Envelope's), lesson
+
 **Song**:
 A house loop in C minor that plays on whatever Patch is loaded and never changes it, so the sound can be shaped under a tune. It only uses the 13 keys from the piano's C to the C above, and moves with the piano's octave. One Voice plays its chords as a single line. A Note, the Demo or the Song button stops it.
 _Avoid_: Loop, backing track, sequence

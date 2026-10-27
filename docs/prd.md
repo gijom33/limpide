@@ -120,6 +120,17 @@ Judged against [the design principles](./design-principles.md).
 67. As a user, I want a share URL encoding the Patch, so that I can send a sound to a friend in one link.
 68. As a user, I want Patches saved by an older version of the app to still load, with sensible defaults for missing Parameters, so that upgrades don't break my library.
 
+### Tutorials
+
+Brought into scope by the grilling of [issue 40](./issues/40-preset-tutorials.md), 2026-10-26.
+
+84. As a learner, I want a Tutorial that rebuilds a Preset from Init one Step at a time, each Step saying what to turn and then what to hear and see in the Viewers, so that I learn why the sound is built that way, not only how.
+85. As a learner, I want to turn each control myself, with the control ringed and its target shown, and the Step done once I get close, so that my hands learn the instrument; and a "Do it for me" when I am stuck.
+86. As a learner, I want a Tutorial to bring a control on a hidden tab or another phone section into view, and its card never to cover the control, so that I can follow it on any layout.
+87. As a learner, I want a Listen button that repeats a short phrase, so that both hands are free to turn knobs, on a phone too.
+88. As a learner, I want to explore off the path without being locked, and at the end to see what differs from the Preset and match it in one tap, so that experimenting costs nothing.
+89. As a first-time visitor, I want a Tutorial button in the Welcome, and a Tutorials list in the Patches panel, so that I know where to start.
+
 ## Implementation Decisions
 
 - **Platform:** browser app in TypeScript, built with Vite, with React for controls and layout. Chrome and Edge are primary, because Web MIDI doesn't exist in Safari, where MIDI features degrade gracefully.
@@ -164,7 +175,6 @@ Judged against [the design principles](./design-principles.md).
 - Effects (delay, reverb, chorus, distortion).
 - A modulation matrix beyond two LFOs with a single destination each.
 - Custom DSP or analogue-modelled filters ([ADR-0001](./adr/0001-native-web-audio-nodes-over-custom-dsp.md)).
-- Guided lessons. The data model should allow them, but the content comes later.
 - A spectrogram.
 - An arpeggiator or sequencer, MIDI output, and audio recording or export.
 - Accounts and cloud sync. (Phones were out of scope until 1.1.0; they are now a first-class layout.)
