@@ -9,6 +9,7 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- Let’s make the patch selector more visible. Unclear to me what should be done to match the general UI/UX choices. (The owner, 2026-10-27)
 - The Harmonic Markers' ticks still draw over an empty Spectrum after a reload; only the Ideal rings hide. The owner wrote "ideal harmonic markers": to confirm whether the ticks should hide too. From the 1.12.1 review.
 - The Timeline key's tooltips are reached by hover and long press only: its entries are not focusable and have no description for screen readers. From the 1.12.1 review.
 - Folding the Demo card hides its caption, which is also what a screen reader hears change (aria-live). From the 1.12.1 review.
