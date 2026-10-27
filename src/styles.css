@@ -1126,11 +1126,11 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 .patch-split .patch-item { border: none; }
 .patch-split > :last-child .patch-item { padding-left: 6px; }
 .patch-tutorial { display: inline-flex; align-items: center; justify-content: flex-end; min-width: 28px; padding: 0 0 0 10px; }
-/* Phones: the card two lines high, More for the rest; once a Step is made, its note in the instruction's place. */
+/* Phones: the card two lines high, a tap on them (or +) for the rest; once a Step is made, its note in the instruction's place. */
 @media (max-width: 600px) {
   .docked { bottom: 0; width: 100vw; border-radius: var(--radius-panel) var(--radius-panel) 0 0; border-width: 1px 0 0; padding: var(--space-2) var(--space-3) calc(var(--space-2) + env(safe-area-inset-bottom)); gap: 6px; }
   .tutorial-more { display: inline-flex; }
-  .tutorial-words { font-size: var(--text-md); }
+  .tutorial-words { font-size: var(--text-md); cursor: pointer; }
   .tutorial:not([data-expanded]) .tutorial-words { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
   .tutorial:not([data-expanded]) .tutorial-say[data-done], .tutorial:not([data-expanded]) .tutorial-words p + p:not(.tutorial-then) { display: none; }
   .tutorial-actions .tool { min-height: 32px; padding: 0 var(--space-2); }

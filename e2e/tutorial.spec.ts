@@ -165,6 +165,24 @@ for (const [layout, width, height] of [['phone', 375, 812], ['2 × 2', 690, 830]
   });
 }
 
+test('on a phone the card shows two lines; a tap on the text, or on +, shows it whole, and another folds it', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await open(page, 'Bass');
+  const words = card(page).locator('.tutorial-words');
+  const height = () => words.evaluate((w) => Math.round(w.getBoundingClientRect().height));
+  const folded = await height();
+  const lineHeight = await words.evaluate((w) => Number.parseFloat(getComputedStyle(w).lineHeight));
+  expect(folded).toBeLessThanOrEqual(Math.ceil(2 * lineHeight) + 1);
+  await words.click();
+  await expect.poll(height).toBeGreaterThan(folded);
+  const more = card(page).getByRole('button', { name: 'Show the whole text' });
+  await expect(more).toHaveAttribute('aria-expanded', 'true');
+  await words.click();
+  await expect.poll(height).toBe(folded);
+  await more.click();
+  await expect.poll(height).toBeGreaterThan(folded);
+});
+
 test.describe('a first visit', () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 

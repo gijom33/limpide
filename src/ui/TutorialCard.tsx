@@ -98,7 +98,7 @@ export function TutorialCard({ tutorial, about, index, done, differs, listening,
   const step = index >= 0 ? steps[index] : undefined;
   const made = step ? done[index] : false;
   const card = useRef<HTMLElement>(null);
-  // On a phone the card shows two lines; More shows the rest.
+  // On a phone the card shows two lines; a tap on them, or on +, shows the rest (issue 40, decision 7).
   const [expanded, setExpanded] = useState(false);
   useRing(step, made);
   useDocked(card);
@@ -116,7 +116,9 @@ export function TutorialCard({ tutorial, about, index, done, differs, listening,
           <CloseIcon />
         </button>
       </div>
-      <div className="tutorial-words" aria-live="polite">
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: a tap on the text is the touch shortcut; the + button is the keyboard's and the screen reader's */}
+      {/* biome-ignore lint/a11y/useKeyWithClickEvents: as above, + is the keyboard route */}
+      <div className="tutorial-words" aria-live="polite" onClick={() => setExpanded((e) => !e)}>
         {index < 0 && (
           <>
             <p>{about}</p>
