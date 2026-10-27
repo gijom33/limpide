@@ -10,6 +10,7 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- I love the demo song but the transition from presets to presets is sometimes a bit harsh. Would be nice if transitions were smoother. Could be done via tiny pauses of by moving knobs smoothly in between? (The owner, 2026-10-27)
 - Would be nice if we could move the popped up information window at the bottom to be able to see the things behind. Would be good if we could collapse it too, maybe. (The owner, 2026-10-27, on the Demo card at a laptop size)
 - One list per LFO Destination: a new one meant editing the type and both CHOICES lists (`patch.ts`), the Tutorials' names (`tutorial.ts`), the picker's labels and stages (`DestinationPicker.tsx`, its stage type repeating STAGES) and the CSS; the label "Volume" is written twice. From the 1.12.0 code review.
 - `tremolo()` writes out `lfoOffset`'s sum again rather than calling it (to compute the swings once). From the 1.12.0 code review.
