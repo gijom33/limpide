@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 
 // Serum-style modulation on a knob (issue 20): a ring outside its value arc, over the range modulation can take it,
 // and a dot at the value right now while a Note sounds.

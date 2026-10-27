@@ -89,6 +89,7 @@ export function PitchMarker() {
   }, [context]);
 
   return Array.from({ length: DOTS }, (_, i) => (
+    // biome-ignore lint/suspicious/noArrayIndexKey: a fixed set of dots, reused by position
     <span key={i} ref={(el) => void (dots.current[i] = el)} className="pitch-marker" aria-hidden="true" style={{ display: 'none' }} />
   ));
 }

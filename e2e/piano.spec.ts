@@ -1,6 +1,6 @@
-import { expect, test, type Page } from '@playwright/test';
-import { openDisplay } from './helpers';
+import { expect, type Page, test } from '@playwright/test';
 import { midiPermission } from './fakeMidi';
+import { openDisplay } from './helpers';
 
 const db = (page: Page) => page.getByLabel('Amp Scope', { exact: true }).getAttribute('data-db').then((v) => (v === null ? NaN : Number(v)));
 const ready = (page: Page) => expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);

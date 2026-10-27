@@ -1,5 +1,5 @@
 import { appendFileSync } from 'node:fs';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 import { auditPage, type Rule } from './audit';
 
 /**
@@ -88,7 +88,7 @@ async function audit(page: Page, size: keyof typeof SIZES, theme: 'dark' | 'ligh
     const result = await page.evaluate(auditPage, { rules, minTarget, waivers: waivers.map(({ rule, selector, floor }) => ({ rule, selector, floor })) });
     for (const f of result.unexpected) unexpected.push(`${state.name}: ${f.rule} ${f.what} ${f.measured}`);
     // AUDIT_REPORT=<file> writes every finding no waiver covers, one JSON line each: handy while fixing.
-    if (process.env.AUDIT_REPORT) appendFileSync(process.env.AUDIT_REPORT, result.unexpected.map((f) => JSON.stringify({ theme, size, state: state.name, ...f }) + '\n').join(''));
+    if (process.env.AUDIT_REPORT) appendFileSync(process.env.AUDIT_REPORT, result.unexpected.map((f) => `${JSON.stringify({ theme, size, state: state.name, ...f })}\n`).join(''));
     for (const m of result.matched) matched.add(m);
     await state.close?.(page);
   }
@@ -132,7 +132,7 @@ test('every knob and fader works from the keyboard, with a focus ring for the ke
       await page.keyboard.press('Tab');
       const focused = await page.evaluate(() => {
         const el = document.activeElement;
-        if (!el || el.getAttribute('role') !== 'slider') return el === document.body ? 'body' : null;
+        if (el?.getAttribute('role') !== 'slider') return el === document.body ? 'body' : null;
         const all = [...document.querySelectorAll('[role="slider"]')];
         const s = getComputedStyle(el);
         return { id: `${all.indexOf(el)} ${el.getAttribute('aria-label')}`, ring: s.outlineStyle !== 'none' && parseFloat(s.outlineWidth) >= 2 };

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createHoldTaps, startRhythm, TAP_GAP, type RhythmHost } from './holdRhythm';
+import { createHoldTaps, type RhythmHost, startRhythm, TAP_GAP } from './holdRhythm';
 
 describe('the Hold button’s taps', () => {
   it('one click switches Hold on with no rhythm, as before', () => {

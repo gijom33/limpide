@@ -1,15 +1,15 @@
 import type { Dispatch, SetStateAction } from 'react';
 import type { SynthEngine } from '../engine/synthEngine';
 import type { LfoWaveform } from '../modulation/lfo';
-import { LFO_KEYS, setLfo, type LfoNumber, type ParamId, type Patch } from '../patch/patch';
+import { LFO_KEYS, type LfoNumber, type ParamId, type Patch, setLfo } from '../patch/patch';
 import { DestinationPicker } from './DestinationPicker';
 import { RetriggerIcon } from './icons';
 import { Knob } from './Knob';
 import { LfoPlot } from './LfoPlot';
-import { SubBlock } from './SubBlock';
-import { TIPS } from './tips';
-import { Tooltip } from './Tooltip';
 import { useLearnable } from './learn';
+import { SubBlock } from './SubBlock';
+import { Tooltip } from './Tooltip';
+import { TIPS } from './tips';
 
 // One cycle of each LFO Waveform, in a 24×14 box.
 const SHAPES: { waveform: LfoWaveform; label: string; path: string }[] = [

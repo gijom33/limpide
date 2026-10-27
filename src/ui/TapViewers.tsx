@@ -1,10 +1,10 @@
 import { useEffect, useRef } from 'react';
+import type { Formula } from '../music/maths';
 import { createLevelMeter } from '../viewers/level';
 import { addToRenderLoop } from '../viewers/renderLoop';
 import { createScope } from '../viewers/scope';
 import { createSpectrum } from '../viewers/spectrum';
 import type { ViewSettings } from '../viewers/viewSettings';
-import type { Formula } from '../music/maths';
 
 interface Props {
   name: string;

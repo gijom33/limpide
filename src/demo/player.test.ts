@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { defaultPatch } from '../patch/patch';
-import { octaveShowing, startDemo, type DemoHost } from './player';
+import { type DemoHost, octaveShowing, startDemo } from './player';
 import type { Track } from './track';
 
 // At 120 BPM a beat is half a second. After the 0.3 s lead-in: C3 at 0.3 s for 0.425 s, E3 at 0.8 s; the chord at 1.3 s.

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { connectMidi, midiSupport, type MidiAccessLike, type MidiInputLike } from './inputs';
+import { connectMidi, type MidiAccessLike, type MidiInputLike, midiSupport } from './inputs';
 
 class FakeInput extends EventTarget implements MidiInputLike {
   constructor(public id: string, public name: string, public state: 'connected' | 'disconnected' = 'connected') {

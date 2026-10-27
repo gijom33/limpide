@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 
 // Issue 38: between a phone and a laptop, the four sections 2 × 2: Oscillators and Filter on top, Amp and
 // LFO & Envelopes under them. A foldable opened flat (about 690 × 830, either way round) and a small tablet sit here;

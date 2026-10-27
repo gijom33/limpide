@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_OVERLAYS } from '../viewers/overlays';
 import { defaultPatch, PARAMS, type Patch } from '../patch/patch';
 import { positionToValue, valueToPosition } from '../patch/taper';
-import { applyStep, controlName, differences, rebuild, reached, targetText, type Step, type Tutorial } from './tutorial';
+import { DEFAULT_OVERLAYS } from '../viewers/overlays';
+import { applyStep, controlName, differences, reached, rebuild, type Step, type Tutorial, targetText } from './tutorial';
 
-const cutoff: Step = { kind: 'param', id: 'cutoff', to: 800, say: 'Turn Cutoff down.', then: 'Darker.' };
-const slope: Step = { kind: 'choice', id: 'filterSlope', to: 24, say: 'Choose 24 dB.', then: 'Steeper.' };
-const ideal: Step = { kind: 'display', overlay: 'ideal', say: 'Turn on Ideal.', then: 'Rings.' };
+const cutoff: Step = { kind: 'param', id: 'cutoff', to: 800, say: 'Turn Cutoff down.', note: 'Darker.' };
+const slope: Step = { kind: 'choice', id: 'filterSlope', to: 24, say: 'Choose 24 dB.', note: 'Steeper.' };
+const ideal: Step = { kind: 'display', overlay: 'ideal', say: 'Turn on Ideal.', note: 'Rings.' };
 const sample: Tutorial = { preset: 'Sample', bpm: 120, phrase: 'C3:1', summary: 'A test.', steps: [cutoff, slope, ideal] };
 
 /** The value a control shows this far along its travel from the target. */
@@ -42,8 +42,8 @@ describe('a Step', () => {
   it('names its target as the control shows it', () => {
     expect(targetText(cutoff)).toBe('800 Hz');
     expect(targetText(slope)).toBe('24 dB');
-    expect(targetText({ kind: 'choice', id: 'osc2Waveform', to: 'square', say: '', then: '' })).toBe('Square');
-    expect(targetText({ kind: 'choice', id: 'lfoRetrigger', to: 'note', say: '', then: '' })).toBe('On');
+    expect(targetText({ kind: 'choice', id: 'osc2Waveform', to: 'square', say: '', note: '' })).toBe('Square');
+    expect(targetText({ kind: 'choice', id: 'lfoRetrigger', to: 'note', say: '', note: '' })).toBe('On');
     expect(targetText(ideal)).toBe('On');
   });
 });

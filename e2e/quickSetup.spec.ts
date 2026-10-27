@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 import { cc, midiButton, midiPanel, openMidi, play, times, withFakeController } from './fakeMidi';
 
 const setup = (page: Page) => page.getByRole('region', { name: 'Quick Setup' });

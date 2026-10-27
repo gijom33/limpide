@@ -1,10 +1,10 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import { type ReactNode, useEffect, useRef } from 'react';
 import type { SynthEngine } from '../engine/synthEngine';
 import { addToRenderLoop } from '../viewers/renderLoop';
 import { createTimeline } from '../viewers/timeline';
 import type { ViewSettings } from '../viewers/viewSettings';
-import { TIPS } from './tips';
 import { Tooltip } from './Tooltip';
+import { TIPS } from './tips';
 
 /** The LFO & Envelopes section, under the signal chain: the LFO beside the Envelope Timeline, in the modulation colour. */
 export function EnvelopeTimeline({ engine, view, controls }: { engine: SynthEngine; view(): ViewSettings; controls?: ReactNode }) {

@@ -1,6 +1,6 @@
 import { OVERLAYS, type Overlay, type Overlays } from '../viewers/overlays';
-import { OVERLAY_TIPS } from './tips';
 import { Tooltip } from './Tooltip';
+import { OVERLAY_TIPS } from './tips';
 
 // Each toggle shows a swatch of the mark it controls, so the row doubles as the legend.
 const LABELS: Record<Overlay, string> = { harmonics: 'Harmonics', ideal: 'Ideal', curve: 'Curve', guides: 'Guides', maths: 'Maths' };

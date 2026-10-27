@@ -1,12 +1,12 @@
-import { formatParam, PARAMS, setParam, type ChoiceId, type ParamId, type Patch } from '../patch/patch';
+import { type ChoiceId, formatParam, PARAMS, type ParamId, type Patch, setParam } from '../patch/patch';
 import { PRESETS } from '../patch/presets';
 import { valueToPosition } from '../patch/taper';
 import type { Overlay, Overlays } from '../viewers/overlays';
 
-/** What every Step says: what to do, then, once it is done, what to hear and see. */
+/** What every Step says: what to do, then, once it is done, a note on what to hear and see. */
 interface Words {
   say: string;
-  then: string;
+  note: string;
 }
 
 /**

@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 
 // Each LFO's destination is picked like a Patch (issue 26): ‹ and › step through the six, and the name in the
 // middle opens a menu of them all, grouped by stage.

@@ -4,9 +4,13 @@
 
 **Blocked by:** none
 
-**Status:** to do. **Before the LinkedIn post:** no
+**Status:** done (2026-10-27)
 
-- [ ] A test for each MIDI Action (Next and Previous Preset, Hold, octave) that fails when they are swapped
-- [ ] Hooks by concern (the session and audio start, MIDI and Learn, the Patch library, the Demo and Song, the keyboard), each with the state it owns; `App` composes them
-- [ ] No behaviour change: the full suite green before and after, commit by commit
-- [ ] A linter that catches what the review found (a duplicate import, three `eslint-disable` comments for an ESLint that isn't installed): ESLint with the React hooks rules, or Biome, in CI
+- [x] A test for each MIDI Action (Next and Previous Preset, Hold, octave) that fails when they are swapped
+- [x] Hooks by concern (the session and audio start, MIDI and Learn, the Patch library, the Demo and Song, the keyboard), each with the state it owns; `App` composes them
+- [x] No behaviour change: the full suite green before and after, commit by commit
+- [x] A linter that catches what the review found (a duplicate import, three `eslint-disable` comments for an ESLint that isn't installed): ESLint with the React hooks rules, or Biome, in CI
+
+How it was done: `App` (1146 lines with the Tutorials and the Demo card) is 590, most of it the page's markup. It composes six hooks in `src/ui/hooks/`, each owning its state: `usePatchState` (the Patch, its name and library, autosave), `useHold`, `useKeys` (the computer keyboard, Space to Freeze), `usePlayers` (the Demo, the Song and a Tutorial's Listen: one plays at a time), `useTutorialState` and `useMidi` (Mappings, Learn, Quick Setup, the C16). The hooks call each other only through what `App` hands them (the Demo ends a Tutorial through `onDemoStart`). The Actions test is in `e2e/midiLearn.spec.ts`; swapping Next and Previous fails it.
+
+The linter is Biome 2.5 (`npm run lint`, `biome.json`), not ESLint: typescript-eslint needs the TypeScript compiler's JavaScript API, which TypeScript 7 no longer ships. Its recommended rules plus the hooks rules as errors; off are the style rules this code disagrees with (non-null assertions, assignments in arrow bodies, callbacks returning values). Biome has no duplicate-import rule, but its import organising merges duplicates, and `biome check` fails on imports it would change. CI runs `tsc` and the lint before the tests. Each deliberate dependency list carries its reason in a `biome-ignore`. The Tutorial Step's `then` became `note`: an object with a `then` can be taken for a promise.

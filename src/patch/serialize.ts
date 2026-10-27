@@ -1,5 +1,5 @@
 import { FORMER_NAME } from '../app/legacy';
-import { CHOICES, defaultPatch, PARAMS, setParam, type ParamId, type Patch } from './patch';
+import { CHOICES, defaultPatch, PARAMS, type ParamId, type Patch, setParam } from './patch';
 
 const FORMAT = { app: 'limpide', version: 1 } as const;
 

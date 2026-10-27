@@ -1,15 +1,15 @@
-import { envelopeSchedule, levelAfter, type Adsr, type AutomationStep, type GateEvent } from '../modulation/envelope';
-import { createLfoClock, glideFrequency, glideFrom, glideTimeConstant, lfoShape, type LfoWaveform } from '../modulation/lfo';
+import { type Adsr, type AutomationStep, envelopeSchedule, type GateEvent, levelAfter } from '../modulation/envelope';
+import { createLfoClock, glideFrequency, glideFrom, glideTimeConstant, type LfoWaveform, lfoShape } from '../modulation/lfo';
 import {
-  effectiveCutoff, effectiveResonance, lfoSwings, soundingPitch, KEY_TRACK_CENTRE, LFO_CUTOFF_OCTAVES, LFO_DETUNE_CENTS, LFO_OSC2_CENTS,
-  LFO_PITCH_CENTS, LFO_PULSE_WIDTH, LFO_RESONANCE, MAX_PULSE, MIN_PULSE, VELOCITY_CUTOFF_OCTAVES,
+  effectiveCutoff, effectiveResonance, KEY_TRACK_CENTRE, LFO_CUTOFF_OCTAVES, LFO_DETUNE_CENTS, LFO_OSC2_CENTS,
+  LFO_PITCH_CENTS, LFO_PULSE_WIDTH, LFO_RESONANCE, lfoSwings, MAX_PULSE, MIN_PULSE, soundingPitch, VELOCITY_CUTOFF_OCTAVES,
 } from '../modulation/modulationModel';
-import { filterStages, type Stage } from './filterDesign';
-import { harmonicSeries } from '../music/harmonics';
-import { frequencyToNote, noteToFrequency } from '../music/pitch';
-import { GLIDE_OFF, lfos, PARAMS, type FilterMode, type Lfo, type LfoDestination, type LfoNumber, type Patch, type Voices } from '../patch/patch';
 import { bandwidthOctaves } from '../modulation/passBand';
 import type { Sounding } from '../modulation/reach';
+import { harmonicSeries } from '../music/harmonics';
+import { frequencyToNote, noteToFrequency } from '../music/pitch';
+import { type FilterMode, GLIDE_OFF, type Lfo, type LfoDestination, type LfoNumber, lfos, PARAMS, type Patch, type Voices } from '../patch/patch';
+import { filterStages, type Stage } from './filterDesign';
 
 /**
  * Which Voices the Amp Tap listens to: all of them summed (the app's default, so a chord is seen as it is heard), or

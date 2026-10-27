@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import type { Part } from '../demo/track';
-import { CloseIcon } from './icons';
 import { useDocked } from './docked';
+import { CloseIcon } from './icons';
 
 interface Props {
   /** The part playing and where it falls in the track; null once the Demo has stopped. */
@@ -30,6 +30,7 @@ export function DemoBar({ playing, tookOver, onStop, onPlayAgain, onDismiss }: P
             <span className="demo-bar-name">{playing.part.preset}</span>
             <span className="demo-bar-parts" role="img" aria-label={`Part ${playing.index + 1} of ${playing.count}`}>
               {Array.from({ length: playing.count }, (_, i) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: a dot per part, in order; the parts never change
                 <span key={i} data-done={i < playing.index || undefined} data-current={i === playing.index || undefined} />
               ))}
             </span>

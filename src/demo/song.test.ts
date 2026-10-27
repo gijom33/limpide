@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { parsePhrase, phraseLength } from './phrase';
-import { SONG, startSong, type SongHost } from './song';
+import { SONG, type SongHost, startSong } from './song';
 
 function fakeHost() {
   let clock = 0;

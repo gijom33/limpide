@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 
 // Pitch has no knob, so its modulation shows on the piano (issue 21): a marker at the pitch the newest Note
 // sounds at, between keys when it is between them. It slides with Glide and wobbles with an LFO on Pitch.

@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 
 const scope = (page: Page, tap: string) => page.getByLabel(`${tap} Scope`, { exact: true });
 

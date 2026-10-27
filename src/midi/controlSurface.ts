@@ -1,6 +1,6 @@
 import type { ChoiceId, ParamId } from '../patch/patch';
 import { detectEncoderMode, detectKnobMode, relativeDelta } from './encoderMode';
-import { controlKey, sameControl, type ActionId, type Control, type Mapping, type MappingStore, type Target } from './mappings';
+import { type ActionId, type Control, controlKey, type Mapping, type MappingStore, sameControl, type Target } from './mappings';
 import type { MidiMessage } from './parser';
 
 /** Values gathered from a knob while learning it, enough to tell its Encoder Mode. */

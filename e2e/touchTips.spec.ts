@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 
 // Issue 49: a phone has no hover, so holding a control still for half a second shows its explanation. It stays after
 // the finger lifts, the control doesn't act on that release, and the next touch puts it away.

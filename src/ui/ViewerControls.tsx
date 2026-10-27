@@ -4,8 +4,8 @@ import type { ViewSettings } from '../viewers/viewSettings';
 import { CameraIcon, CloseIcon, PauseIcon } from './icons';
 import { useLearnable } from './learn';
 import { Segmented } from './Segmented';
-import { TIPS } from './tips';
 import { Tooltip } from './Tooltip';
+import { TIPS } from './tips';
 
 interface Props {
   state: ViewerState;

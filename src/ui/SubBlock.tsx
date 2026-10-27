@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Tooltip, type TipContent } from './Tooltip';
+import { type TipContent, Tooltip } from './Tooltip';
 
 /** A labelled cluster of controls inside a stage (Osc 1, Osc 2, Mixer, Filter Envelope). */
 export function SubBlock({ title, label = title, tip, group, showTitle = true, children }: {

@@ -1,6 +1,6 @@
-import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { type ReactNode, useEffect, useId, useRef, useState } from 'react';
 import { REVEAL_EVENT } from './reveal';
-import { Tooltip, type TipContent } from './Tooltip';
+import { type TipContent, Tooltip } from './Tooltip';
 
 export interface Tab {
   id: string;

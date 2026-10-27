@@ -1,7 +1,7 @@
 import { PARAMS, type ParamId, type Patch } from '../patch/patch';
 import { positionToValue, valueToPosition } from '../patch/taper';
-import { parsePhrase, phraseLength, type PhraseEvent } from './phrase';
-import { TRACK, type Part, type Track } from './track';
+import { type PhraseEvent, parsePhrase, phraseLength } from './phrase';
+import { type Part, TRACK, type Track } from './track';
 
 /** What the Demo needs from the app: the audio clock, a way to load a Preset, and the engine's Note calls. */
 export interface DemoHost {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { PARAMS } from '../patch/patch';
 import { ACTIONS, type Mapping } from './mappings';
-import { QUICK_SETUP, quickSetupReducer, startQuickSetup, takenControls, type QuickSetupState } from './quickSetup';
+import { QUICK_SETUP, type QuickSetupState, quickSetupReducer, startQuickSetup, takenControls } from './quickSetup';
 
 const mapped = (state: QuickSetupState, number: number): Mapping => ({
   control: { kind: 'cc', channel: 1, number },

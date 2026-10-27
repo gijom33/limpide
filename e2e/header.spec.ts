@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 
 // Issue 44: one header across the layouts. The same order at every width (the Wordmark and the Patch; Demo, Song,
 // Hold; the keyboard; MIDI, Display, About), the octave buttons stacked beside the piano, and from 601 px up the

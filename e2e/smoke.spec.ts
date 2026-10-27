@@ -1,4 +1,4 @@
-import { expect, test, type Locator } from '@playwright/test';
+import { expect, type Locator, test } from '@playwright/test';
 
 // A missing reading (the Tap hasn't drawn yet) must not count as loud: Number(null) would be 0 dB.
 const db = (level: Locator) => level.getAttribute('data-db').then((v) => (v === null ? NaN : Number(v)));

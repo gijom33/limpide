@@ -45,6 +45,7 @@ export function DestinationPicker({ lfo, value, onChange }: Props) {
   };
 
   // Opened near the bottom of the window (the LFOs sit low on a laptop), the menu opens upwards instead.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: measured again each time the menu opens
   useLayoutEffect(() => {
     const menu = wrapper.current?.querySelector<HTMLElement>('[role="menu"]');
     if (!menu) return;
@@ -54,6 +55,7 @@ export function DestinationPicker({ lfo, value, onChange }: Props) {
   }, [open]);
 
   // Open: the destination in force takes the focus; a press outside closes the menu.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: close is rebuilt each render, the same each time
   useEffect(() => {
     if (!open) return;
     wrapper.current?.querySelector<HTMLElement>('[role="menuitemradio"][aria-checked="true"]')?.focus();

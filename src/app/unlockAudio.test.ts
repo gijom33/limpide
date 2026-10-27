@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { playThroughSilentMode, unlockAudio, type UnlockableContext } from './unlockAudio';
+import { playThroughSilentMode, type UnlockableContext, unlockAudio } from './unlockAudio';
 
 /** A stand-in AudioContext: starts suspended; resume() either succeeds or is refused (autoplay policy). */
 function fakeContext({ allowed }: { allowed: boolean }) {

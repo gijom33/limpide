@@ -1,5 +1,5 @@
-import { expect, test, type Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
+import { expect, type Page, test } from '@playwright/test';
 
 const cutoff = (page: Page) => page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name: 'Cutoff' });
 const patchName = (page: Page) => page.getByRole('button', { name: /^Patch:/ });

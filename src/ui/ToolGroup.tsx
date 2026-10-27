@@ -1,4 +1,4 @@
-import { useId, type ReactNode } from 'react';
+import { type ReactNode, useId } from 'react';
 
 /** A captioned cluster of related controls in the toolbar. */
 export function ToolGroup({ title, children }: { title: string; children: ReactNode }) {

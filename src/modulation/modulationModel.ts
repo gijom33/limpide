@@ -1,4 +1,4 @@
-import { lfos, type LfoDestination, type Patch } from '../patch/patch';
+import { type LfoDestination, lfos, type Patch } from '../patch/patch';
 
 /** How far the LFO moves things at full Amount. */
 export const LFO_CUTOFF_OCTAVES = 2;

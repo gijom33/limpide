@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 
 // A brand-new browser: nothing stored, not even the welcome the other tests start past.
 test.use({ storageState: { cookies: [], origins: [] } });

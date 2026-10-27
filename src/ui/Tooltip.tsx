@@ -1,4 +1,4 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { type ReactNode, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { placeTooltip } from './placeTooltip';
 
@@ -55,6 +55,7 @@ export function Tooltip({ content, children, longPress = true }: { content: TipC
 
   useEffect(() => () => window.clearTimeout(timer.current), []);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: hide is rebuilt each render, the same each time
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && hide();

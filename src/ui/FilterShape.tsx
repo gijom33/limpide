@@ -1,8 +1,8 @@
 import type { FilterMode, FilterSlope } from '../patch/patch';
 import { useLearnable } from './learn';
 import { Segmented } from './Segmented';
-import { TIPS } from './tips';
 import { Tooltip } from './Tooltip';
+import { TIPS } from './tips';
 
 // Each Mode's response shape, drawn in a 24×14 box: what it keeps, at a glance.
 const MODES: { mode: FilterMode; label: string; path: string }[] = [

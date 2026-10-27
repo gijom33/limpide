@@ -28,13 +28,15 @@
     "test:unit": "vitest run --project unit",
     "test:engine": "vitest run --project engine",
     "test:e2e": "playwright test",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "lint": "biome check"
   },
   "dependencies": {
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.5.15",
     "@playwright/test": "^1.64.1",
     "@types/node": "^26.6.5",
     "@types/react": "^19.3.0",

@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import type { Library } from '../patch/library';
 import type { Patch } from '../patch/patch';
 import { PRESET_GROUPS, PRESETS, presetAfter } from '../patch/presets';
-import { useLearnable } from './learn';
 import { patchFromJSON, patchToJSON, patchToShare } from '../patch/serialize';
 import { TutorialIcon } from './icons';
+import { useLearnable } from './learn';
 import { Tooltip } from './Tooltip';
 
 interface Props {

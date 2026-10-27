@@ -1,8 +1,8 @@
 import { execSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { playwright } from '@vitest/browser-playwright';
+import { defineConfig } from 'vitest/config';
 
 // Which build is running, for the About splash: the version, and the commit and day it was built from (the
 // version alone stays the same from one deploy to the next).
@@ -66,7 +66,7 @@ const thirdPartyNotices = {
       const text = file ? readFileSync(`node_modules/${name}/${file}`, 'utf8').trim() : `License: ${license}`;
       return `${name} ${version}\n\n${text}${bundledNotices(name)}`;
     });
-    const source = ['Limpide includes the following third-party software.', ...sections].join('\n\n' + '-'.repeat(72) + '\n\n') + '\n';
+    const source = `${['Limpide includes the following third-party software.', ...sections].join(`\n\n${'-'.repeat(72)}\n\n`)}\n`;
     this.emitFile({ type: 'asset', fileName: 'third-party-notices.txt', source });
   },
 };

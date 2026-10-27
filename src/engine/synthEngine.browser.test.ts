@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
+import { envelopeLevel, type GateEvent } from '../modulation/envelope';
 import { harmonicSeries, type Waveform } from '../music/harmonics';
 import { idealReference } from '../music/idealReference';
 import { defaultPatch, type Patch } from '../patch/patch';
 import { PRESETS } from '../patch/presets';
-import { amplitudeToSpectrumDb } from '../viewers/spectrumScale';
 import { betweenHarmonicsDb, dB, frequencyAround, rms, toneAmplitude, toneAmplitudeHann } from '../test/measure';
-import { envelopeLevel, type GateEvent } from '../modulation/envelope';
+import { amplitudeToSpectrumDb } from '../viewers/spectrumScale';
 import { createSynthEngine, OSCILLATOR_LEVEL } from './synthEngine';
 
 const SR = 48000;

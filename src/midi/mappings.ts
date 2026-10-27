@@ -1,4 +1,4 @@
-import { CHOICES, PARAMS, type ChoiceId, type ParamId } from '../patch/patch';
+import { CHOICES, type ChoiceId, PARAMS, type ParamId } from '../patch/patch';
 import type { EncoderMode } from './encoderMode';
 
 /** A momentary command that is not a Parameter. */

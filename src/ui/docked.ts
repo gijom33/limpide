@@ -1,4 +1,4 @@
-import { useEffect, type RefObject } from 'react';
+import { type RefObject, useEffect } from 'react';
 
 /**
  * A card docked at the bottom of the page (a Tutorial's, the Demo's). Its height is `--docked-h`, so a control

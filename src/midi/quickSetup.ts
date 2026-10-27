@@ -1,4 +1,4 @@
-import { sameControl, sameTarget, type Control, type Mapping, type Target } from './mappings';
+import { type Control, type Mapping, sameControl, sameTarget, type Target } from './mappings';
 
 /** One Learn step of a Quick Setup: what to map, where it sits ("Filter Envelope"), and what to ask for. */
 export interface SetupStep {

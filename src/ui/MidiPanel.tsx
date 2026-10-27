@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { isC16 } from '../midi/c16';
 import { describeControl, describeMode, describeTarget } from '../midi/describe';
-import { controlKey, type Control, type Mapping } from '../midi/mappings';
+import { type Control, controlKey, type Mapping } from '../midi/mappings';
 import { CloseIcon, MidiIcon } from './icons';
-import { TIPS } from './tips';
 import { Tooltip } from './Tooltip';
+import { TIPS } from './tips';
 
 export type MidiState =
   { kind: 'unsupported'; ios: boolean } | { kind: 'denied' } | { kind: 'pending' } | { kind: 'ready'; devices: string[] };

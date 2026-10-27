@@ -25,6 +25,9 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      # The types and the lint (Biome: React hooks rules, imports organised, so no duplicate import).
+      - run: npx tsc
+      - run: npm run lint
       - run: npm run test:unit
       # The engine renders real audio in Chromium; the end-to-end tests play the built site in Chromium and WebKit.
       - run: npx playwright install --with-deps chromium webkit

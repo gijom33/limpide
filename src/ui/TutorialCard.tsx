@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { targetText, type Step, type Tutorial } from '../tutorial/tutorial';
-import { CloseIcon, NoteIcon } from './icons';
+import { type Step, type Tutorial, targetText } from '../tutorial/tutorial';
 import { useDocked } from './docked';
+import { CloseIcon, NoteIcon } from './icons';
 import { reveal } from './reveal';
 
 interface Props {
@@ -127,7 +127,7 @@ export function TutorialCard({ tutorial, about, index, done, differs, listening,
             <p className="tutorial-say" data-done={made || undefined}>
               {step.say}
             </p>
-            {made && <p className="tutorial-then">{step.then}</p>}
+            {made && <p className="tutorial-then">{step.note}</p>}
           </>
         )}
         {index >= steps.length && (

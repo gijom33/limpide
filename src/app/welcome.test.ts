@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { brokenStorage, memoryStorage } from '../test/memoryStorage';
 import { createLibrary } from '../patch/library';
 import { defaultPatch } from '../patch/patch';
+import { brokenStorage, memoryStorage } from '../test/memoryStorage';
 import { rememberWelcome, welcomeFor } from './welcome';
 
 describe('The welcome', () => {

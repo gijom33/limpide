@@ -1,4 +1,4 @@
-import { expect, test, type Locator, type Page } from '@playwright/test';
+import { expect, type Locator, type Page, test } from '@playwright/test';
 
 // Levels and envelope stages are faders (ADR-0008): vertical sliders with a cap that drags, and a track that a
 // click (without a drag) sets.

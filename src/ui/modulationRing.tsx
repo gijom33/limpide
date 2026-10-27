@@ -1,7 +1,7 @@
-import { createContext, useContext, useEffect, useRef, type RefObject } from 'react';
+import { createContext, type RefObject, useContext, useEffect, useRef } from 'react';
 import type { SynthEngine } from '../engine/synthEngine';
 import { LFO_DETUNE_CENTS, LFO_OSC2_CENTS, LFO_PULSE_WIDTH, lfoOffset, MAX_PULSE, MIN_PULSE } from '../modulation/modulationModel';
-import { cutoffReach, detuneReach, pulseWidthReach, resonanceReach, semitoneReach, type Reach, type Source } from '../modulation/reach';
+import { cutoffReach, detuneReach, pulseWidthReach, type Reach, resonanceReach, type Source, semitoneReach } from '../modulation/reach';
 import { PARAMS, type ParamId, type Patch } from '../patch/patch';
 import { valueToPosition } from '../patch/taper';
 import { addToRenderLoop } from '../viewers/renderLoop';

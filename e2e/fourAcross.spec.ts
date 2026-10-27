@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 
 // Issue 43: from 1920 px wide, the four sections side by side, LFO & Envelopes a fourth column beside the stages;
 // the height its row took goes to the Viewers. A stage is never wider than three across gave it at 1920 px: the page

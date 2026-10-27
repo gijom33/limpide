@@ -31,7 +31,7 @@ describe('the Tutorials', () => {
           else expect(next, step.say).not.toEqual(patch);
           patch = next;
           expect(step.say.length, step.say).toBeGreaterThan(10);
-          expect(step.then.length, step.then).toBeGreaterThan(10);
+          expect(step.note.length, step.note).toBeGreaterThan(10);
         }
       });
 

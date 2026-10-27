@@ -177,7 +177,7 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
       g.fillStyle = muted;
       g.textAlign = 'right';
       for (const t of viewer.levelScale === 'db' ? GAIN_TICKS : [0]) {
-        g.fillText(`${t === 0 ? '0' : '−' + -t} dB`, width - 3, yOf(zero + t) - 2);
+        g.fillText(`${t === 0 ? '0' : `−${-t}`} dB`, width - 3, yOf(zero + t) - 2);
       }
       g.textAlign = 'left';
     }

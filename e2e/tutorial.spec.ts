@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 
 // Issue 57: a Tutorial rebuilds a Preset from Init, the person turning each control.
 
@@ -154,7 +154,7 @@ for (const [layout, width, height] of [['phone', 375, 812], ['2 × 2', 690, 830]
         const card = document.querySelector('.tutorial')!.getBoundingClientRect();
         const header = document.querySelector('header')!.getBoundingClientRect();
         const strip = document.querySelector('.section-strip')?.getBoundingClientRect();
-        const top = Math.max(header.bottom, strip && strip.height ? strip.bottom : 0);
+        const top = Math.max(header.bottom, strip?.height ? strip.bottom : 0);
         return { above: control.bottom <= card.top, below: control.top >= top, control: Math.round(control.top), card: Math.round(card.top), top: Math.round(top) };
       });
       const step = await progress(page).textContent();

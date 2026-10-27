@@ -119,6 +119,7 @@ export function SectionStrip({ follow }: { follow?: { name: SectionName; key: nu
     setCurrent(name);
   };
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: jump is rebuilt each render, the same each time; only a new follow moves the page
   useEffect(() => {
     const target = follow && section(follow.name);
     if (!target) return;
@@ -132,7 +133,7 @@ export function SectionStrip({ follow }: { follow?: { name: SectionName; key: nu
     const room = innerHeight - strip.bottom;
     const shown = box.height <= room ? box.top >= strip.bottom - 1 && box.bottom <= innerHeight + 1 : Math.abs(box.top - strip.bottom - LANDING_GAP) < 24;
     if (!shown) jump(follow.name);
-  }, [follow]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [follow]);
 
   return (
     <nav className="section-strip" aria-label="Sections">

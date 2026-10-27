@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { envelopeLevel, envelopeSchedule, type AutomationStep, type GateEvent } from './envelope';
+import { type AutomationStep, envelopeLevel, envelopeSchedule, type GateEvent } from './envelope';
 
 const adsr = { attack: 0.1, decay: 0.2, sustain: 0.5, release: 0.3 };
 const on = (time: number, peak = 1): GateEvent => ({ time, on: true, adsr, peak });

@@ -1,7 +1,7 @@
 import { useRef } from 'react';
-import { nearestNote, noteToFrequency } from '../music/pitch';
 import { keyToNote } from '../input/keyboardLayout';
 import type { NoteInput } from '../input/noteInput';
+import { nearestNote, noteToFrequency } from '../music/pitch';
 import { PitchMarker } from './PitchMarker';
 
 // The computer-keyboard range: C to the E above (17 keys).

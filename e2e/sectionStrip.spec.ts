@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 
 // On a phone the sections stack one under another; a strip under the header names them, shows where you are, and
 // jumps to each (issue 23).
@@ -115,7 +115,7 @@ test.describe('on a phone', () => {
         const button = [...document.querySelectorAll<HTMLElement>('header button')].find(
           (b) => b.getAttribute('aria-label') === name || b.textContent?.trim() === name,
         );
-        if (!button || !button.checkVisibility()) return `${name}: not shown`;
+        if (!button?.checkVisibility()) return `${name}: not shown`;
         const word = [...button.querySelectorAll<HTMLElement>('span')].find((s) => s.textContent?.trim() === name);
         const r = button.getBoundingClientRect();
         return `${name}: word ${word?.checkVisibility() ? 'shown' : 'hidden'} top ${Math.round(r.top)}`;
