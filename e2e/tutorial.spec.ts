@@ -209,7 +209,7 @@ test.describe('a first visit', () => {
   test('the welcome offers the Tutorial, which opens Bass', async ({ page }) => {
     await page.goto('/');
     const about = page.getByRole('dialog', { name: 'Limpide' });
-    await about.getByRole('button', { name: 'Tutorial' }).click();
+    await about.getByRole('button', { name: 'Follow the Tutorial' }).click();
     await expect(about).toBeHidden();
     await expect(card(page)).toHaveAccessibleName('Tutorial: Bass');
   });

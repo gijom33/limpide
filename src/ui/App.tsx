@@ -257,8 +257,8 @@ export function App() {
         ) : (
           <LearnBar state={midi.learn} />
         )}
-        {/* One order at every width (issue 44): the Wordmark and the Patch, playing (Demo, Tutorial, Song, Hold), the
-            keyboard, then set-up (MIDI, Display, About). Each layout places these groups; none reorders them. */}
+        {/* One order at every width (issue 44): the Wordmark and the Patch, playing and learning (Demo, Tutorial, Song), the
+            keyboard, then Hold and set-up (Hold, MIDI, Display, About). Each layout places these groups; none reorders them. */}
         <header>
           <div className="header-left">
             <div className="header-identity">
@@ -287,21 +287,6 @@ export function App() {
                   <span className="demo-word">Song</span>
                 </button>
               </Tooltip>
-              <Tooltip content={TIPS.hold}>
-                <button
-                  type="button"
-                  className="tool"
-                  aria-pressed={hold}
-                  data-learn="action:hold"
-                  data-mapped={learnContext.mapped.has('action:hold') || undefined}
-                  data-learn-selected={learnContext.selected === 'action:hold' || undefined}
-                  aria-label="Hold"
-                  onClick={pressHold}
-                >
-                  <HoldIcon />
-                  <span className="tool-word">Hold</span>
-                </button>
-              </Tooltip>
             </div>
           </div>
           {/* Up before down, as they stand on screen, so Tab meets them in that order (issue 47). */}
@@ -317,6 +302,23 @@ export function App() {
             </Tooltip>
           </div>
           <div className="header-right">
+            {/* Hold first on the right (the owner, 2026-10-27), the Tutorial taking its place on the left: the two sides
+                stay about as wide, so the piano keeps the header's centre. */}
+                <Tooltip content={TIPS.hold}>
+                  <button
+                    type="button"
+                    className="tool"
+                    aria-pressed={hold}
+                    data-learn="action:hold"
+                    data-mapped={learnContext.mapped.has('action:hold') || undefined}
+                    data-learn-selected={learnContext.selected === 'action:hold' || undefined}
+                    aria-label="Hold"
+                    onClick={pressHold}
+                  >
+                    <HoldIcon />
+                    <span className="tool-word">Hold</span>
+                  </button>
+                </Tooltip>
             <MidiPanel
               state={midi.midi}
               onOpen={midi.connect}

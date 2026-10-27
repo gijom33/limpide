@@ -4,15 +4,12 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
-- For some reason the demo deactivates the ideal rings display. (The owner, 2026-10-27)
 - Favicon still not showing in Safari.
 - A square or saw LFO on Volume overshoots its edges (the LFO's Fourier series, Gibbs, about ±1.18): at full Depth the gain passes the Envelope's level by about 9 % and dips below 0 (polarity flips) for well under a millisecond at each edge, where the model stays at exactly ±1. The same overshoot reaches every destination. From the 1.12.0 code review.
 
 ## Ideas
 
 - Why is there no ideal ring at harmonics 2 for the Tremolo Keys patch? (The owner, 2026-10-27.) Answered: the Ideal Reference is Osc 1's Waveform alone (a Triangle: odd Harmonics only); the 2 is Osc 2, a sine an octave up. To decide: should the Ideal include Osc 2 (and the Sub), at their Mixer levels?
-- The ticks is the smaller knobs deserve to be a bit smaller than in the big knobs, basically a scaled down version. (The owner, 2026-10-27)
-- Ok I see the 3 buttons now. Make the buttons a bit smaller, use color for the “Play the Demo and “Follow the Tutorial” ones. Remove “Explore”. Keep those buttons in the about menu at all times. (The owner, 2026-10-27, on the welcome card)
 - The Harmonic Markers' ticks still draw over an empty Spectrum after a reload; only the Ideal rings hide. The owner wrote "ideal harmonic markers": to confirm whether the ticks should hide too. From the 1.12.1 review.
 - The Timeline key's tooltips are reached by hover and long press only: its entries are not focusable and have no description for screen readers. From the 1.12.1 review.
 - Folding the Demo card hides its caption, which is also what a screen reader hears change (aria-live). From the 1.12.1 review.
@@ -47,3 +44,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-27: the owner's idea to move and fold the docked card went to [59](./issues/59-tutorials-after-review-5.md), grilled and built there (it answers 59's "the card covers the pictures").
 2026-10-27: the owner's Demo ideas (smoother changes, a longer track) and the tremolo Presets went to [60](./issues/60-demo-longer-smoother.md), grilled and built there.
 2026-10-27: the owner's Patch selector idea done at once, the owner choosing among three looks shown as screenshots: the name bright and bold, a brighter border and a ▾ (A); a "PATCH" caption (B) cost the piano its key widths, and the accent colour (C) already marks a Tutorial's control.
+2026-10-27: the owner's welcome changes done at once: smaller buttons, Play the Demo in green and Follow the Tutorial in orange (near-black words, for contrast in both themes), beside Close at the bottom of About every time; Explore gone. Then, the owner's call, Demo, Tutorial and Song on the header's left and Hold first on its right, which keeps the piano centred.
+2026-10-27: the small knobs' tick scaled down with their cap, done at once (shorter, starting off-centre, 2 px).
+2026-10-27: "the demo deactivates the ideal rings", explained, not a bug: Ideal stays on (it is stored), but the Kick and the riser have no Oscillator (Osc 1 at 0), so the Ideal Reference has nothing to draw; the rings are back from Acid on, and after the Demo ends on Init.

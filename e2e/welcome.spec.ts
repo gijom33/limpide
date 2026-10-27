@@ -11,7 +11,8 @@ const db = (page: Page) =>
 test('a first visit opens on the welcome; Play the Demo starts it, sound and all; a second visit opens on the synth', async ({ page }) => {
   await page.goto('/');
   await expect(about(page)).toBeVisible();
-  await expect(about(page).getByRole('button', { name: 'Explore' })).toBeVisible();
+  // The three ways out, at the bottom (the owner, 2026-10-27): the Demo, the Tutorial, Close.
+  await expect(about(page).locator('.about-actions').getByRole('button')).toHaveText(['Play the Demo', 'Follow the Tutorial', 'Close']);
   await about(page).getByRole('button', { name: 'Play the Demo' }).click();
   await expect(about(page)).toBeHidden();
   await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
@@ -23,13 +24,13 @@ test('a first visit opens on the welcome; Play the Demo starts it, sound and all
   await expect(about(page)).toBeHidden();
 });
 
-test('the welcome is remembered however it closes: Explore, Escape or a click outside', async ({ browser }) => {
-  for (const close of ['Explore', 'Escape', 'outside'] as const) {
+test('the welcome is remembered however it closes: Close, Escape or a click outside', async ({ browser }) => {
+  for (const close of ['Close', 'Escape', 'outside'] as const) {
     const context = await browser.newContext({ storageState: { cookies: [], origins: [] } });
     const page = await context.newPage();
     await page.goto('/');
     await expect(about(page), close).toBeVisible();
-    if (close === 'Explore') await about(page).getByRole('button', { name: 'Explore' }).click();
+    if (close === 'Close') await about(page).getByRole('button', { name: 'Close' }).click();
     else if (close === 'Escape') await page.keyboard.press('Escape');
     else await page.mouse.click(5, 5);
     await expect(about(page), close).toBeHidden();

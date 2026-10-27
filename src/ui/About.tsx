@@ -14,8 +14,8 @@ const day = (iso: string) =>
  * The About splash: the mark large, the version and the build it came from, and the credits. The logo opens it,
  * and so does the ⓘ button. It closes with its button, Escape, or a click outside it.
  *
- * A brand-new browser sees it once as a welcome, offering to play the Demo (or, from a Share link, the shared
- * sound) or to explore on its own.
+ * A brand-new browser sees it once as a welcome, with a word on what to do first. Every time, its last row plays the
+ * Demo (or, from a Share link, the shared sound), starts the first Tutorial, or closes it.
  */
 export function About({
   open,
@@ -66,33 +66,6 @@ export function About({
                 : 'Hear what it can do, or start playing: your keyboard, the piano or any knob.'}
             </p>
             <p className="about-touch-hint">Touch and hold any control to see what it does.</p>
-            <div className="about-actions">
-              <button
-                type="button"
-                className="tool tool-primary"
-                onClick={() => {
-                  onClose();
-                  onPlay?.();
-                }}
-              >
-                {welcome === 'shared' ? 'Play the shared sound' : 'Play the Demo'}
-              </button>
-              {welcome !== 'shared' && (
-                <button
-                  type="button"
-                  className="tool"
-                  onClick={() => {
-                    onClose();
-                    onTutorial?.();
-                  }}
-                >
-                  Tutorial
-                </button>
-              )}
-              <button type="button" className="tool" onClick={onClose}>
-                Explore
-              </button>
-            </div>
           </div>
         )}
         <p className="about-version">
@@ -150,11 +123,36 @@ export function About({
             </>
           )}
         </dl>
-        {!welcome && (
+        {/* At the bottom every time, beside Close (the owner, 2026-10-27): the Demo, in the green of a key that
+            plays, and the first Tutorial, in the accent a Tutorial's control wears. */}
+        <div className="about-actions">
+          <button
+            type="button"
+            className="tool about-demo"
+            // The way in: the dialog's first focus, not the build link above (biome: a dialog's opening focus).
+            // biome-ignore lint/a11y/noAutofocus: a modal dialog moves the focus into itself; this is where it lands
+            autoFocus
+            onClick={() => {
+              onClose();
+              onPlay?.();
+            }}
+          >
+            {welcome === 'shared' ? 'Play the shared sound' : 'Play the Demo'}
+          </button>
+          <button
+            type="button"
+            className="tool tool-primary"
+            onClick={() => {
+              onClose();
+              onTutorial?.();
+            }}
+          >
+            Follow the Tutorial
+          </button>
           <button type="button" className="tool" onClick={onClose}>
             Close
           </button>
-        )}
+        </div>
       </div>
     </dialog>
   );

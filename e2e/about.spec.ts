@@ -78,3 +78,13 @@ test('a build without a counter address counts no visits, and About makes no cla
   await expect(page.getByRole('dialog', { name: 'Limpide' })).not.toContainText('Privacy');
   expect(counted).toEqual([]);
 });
+
+test('About, opened any time, offers the Demo and the first Tutorial beside Close (the owner, 2026-10-27)', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'About' }).click();
+  const about = page.getByRole('dialog', { name: 'Limpide' });
+  await expect(about.locator('.about-actions').getByRole('button')).toHaveText(['Play the Demo', 'Follow the Tutorial', 'Close']);
+  await about.getByRole('button', { name: 'Play the Demo' }).click();
+  await expect(about).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Demo', exact: true })).toHaveAttribute('aria-pressed', 'true');
+});

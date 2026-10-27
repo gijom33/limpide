@@ -1,7 +1,7 @@
 import { expect, type Page, test } from '@playwright/test';
 
-// Issue 44: one header across the layouts. The same order at every width (the Wordmark and the Patch; Demo, Song,
-// Hold; the keyboard; MIDI, Display, About), the octave buttons stacked beside the piano, and from 601 px up the
+// Issue 44: one header across the layouts. The same order at every width (the Wordmark and the Patch; Demo, Tutorial, Song;
+// the keyboard; Hold, MIDI, Display, About), the octave buttons stacked beside the piano, and from 601 px up the
 // piano's 17 keys at a finger's width where there is room. In the sections 2 × 2 the header stays at the top and
 // slides its first row away, as on a phone.
 
@@ -34,7 +34,7 @@ async function header(page: Page) {
 }
 
 for (const [size, [width, height]] of Object.entries(SIZES)) {
-  test(`one order at ${width}×${height} (${size}): Demo, Tutorial, Song, Hold, then MIDI, Display, About; the octave buttons stacked left of the piano`, async ({ page }) => {
+  test(`one order at ${width}×${height} (${size}): Demo, Tutorial, Song, then Hold, MIDI, Display, About; the octave buttons stacked left of the piano`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await page.goto('/');
     const h = await header(page);
@@ -47,9 +47,9 @@ for (const [size, [width, height]] of Object.entries(SIZES)) {
     expect(h.up.bottom).toBeLessThanOrEqual(h.down.top + 1);
     expect(h.up.right).toBeLessThanOrEqual(h.piano.left);
     if (size === 'laptop' || size === 'wide') {
-      // One row: the keyboard between the playing and the set-up buttons.
-      expect(h.hold.right).toBeLessThanOrEqual(h.up.left);
-      expect(h.piano.right).toBeLessThanOrEqual(h.midi.left);
+      // One row: the keyboard between the playing and the set-up buttons, Hold first on the right (the owner, 2026-10-27).
+      expect(h.song.right).toBeLessThanOrEqual(h.up.left);
+      expect(h.piano.right).toBeLessThanOrEqual(h.hold.left);
       for (const b of [h.demo, h.about]) expect(b.top).toBeGreaterThanOrEqual(h.piano.top);
     } else {
       // The buttons on a row of their own, the keyboard under them.

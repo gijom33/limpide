@@ -159,7 +159,7 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 .knob-cap { stroke: var(--cap-edge); stroke-width: 1; filter: var(--cap-shadow); }
 .knob-cap-hi { stop-color: var(--cap-hi); }
 .knob-cap-lo { stop-color: var(--cap-lo); }
-.knob-marker { stroke: var(--text); stroke-width: var(--marker-w); stroke-linecap: round; }
+.knob-marker { stroke: var(--text); stroke-linecap: round; }
 /* Modulation (issue 20): a ring outside the value arc over the range modulation reaches, and a dot at the value now,
    in the modulation colour. */
 .knob-ring, .knob-share { fill: none; stroke: var(--stage-mod); stroke-width: 2.5; stroke-linecap: round; }
@@ -527,7 +527,11 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .about-welcome { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); }
 .about-welcome p { margin: 0; max-width: 34ch; font-size: var(--text-lg); line-height: 1.4; color: var(--muted); }
 .about-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-2); }
-.about-actions .tool { min-height: 44px; padding: 0 var(--space-4); font-size: var(--text-lg); }
+.about-actions .tool { min-height: 36px; padding: 0 var(--space-3); font-size: var(--text-md); }
+.about-demo { background: var(--stage-osc); border-color: var(--stage-osc); font-weight: 600; }
+.about-demo:hover { background: color-mix(in srgb, var(--stage-osc) 85%, var(--text)); }
+/* Near-black words on both colours, in either theme: light ones fell to 2.9:1 on the light theme's orange. */
+.about-actions :is(.about-demo, .tool-primary), .about-actions :is(.about-demo, .tool-primary):hover { color: #08090c; }
 .wordmark .logo { flex: none; }
 .wordmark-text { color: var(--text); } /* plain, so the colours are the mark's alone */
 /* In About the name sits close under the mark, as in the header it sits close beside it. */

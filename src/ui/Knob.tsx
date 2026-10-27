@@ -11,12 +11,12 @@ const SWEEP_DEGREES = 270;
 
 /**
  * The dial's drawing, in its own units: big knobs are drawn on 68, small ones on 52, then sized by CSS (smaller
- * together on compact windows). The cap sits inside the arc; the marker runs from partway in on a big cap, from
- * the centre on a small one, so it stays readable.
+ * together on compact windows). The cap sits inside the arc; the marker runs from partway in to near the cap's edge,
+ * on a small cap the big one's marker scaled down with it (the owner, 2026-10-27): shorter and thinner.
  */
 const GEOMETRY = {
-  play: { size: 68, arcWidth: 6, cap: 19, markerFrom: 7 },
-  set: { size: 52, arcWidth: 4, cap: 12, markerFrom: 0 },
+  play: { size: 68, arcWidth: 6, cap: 19, markerFrom: 7, markerTo: 16, markerWidth: 3 },
+  set: { size: 52, arcWidth: 4, cap: 12, markerFrom: 4.5, markerTo: 10, markerWidth: 2 },
 } as const;
 
 const angleOf = (position: number) => (position - 0.5) * SWEEP_DEGREES;
@@ -53,7 +53,7 @@ export function Knob({ id, value, onChange, inactive }: Props) {
   // A bipolar Parameter's arc starts at zero, so −1 oct and +1 oct fill away from the middle.
   const origin = c.def.min < 0 && c.def.max > 0 ? valueToPosition(c.def, 0) : 0;
   const [markerX0, markerY0] = point(centre, g.markerFrom, angleOf(c.position));
-  const [markerX1, markerY1] = point(centre, g.cap - 3, angleOf(c.position));
+  const [markerX1, markerY1] = point(centre, g.markerTo, angleOf(c.position));
   const gradient = `knob-cap-${useId().replace(/[^\w-]/g, '')}`; // a plain id, safe inside url(#…)
   const drag = useRef<{ x: number; y: number; position: number; moved: boolean } | null>(null);
   const wheel = useWheel(c.position, c.setPosition);
@@ -103,7 +103,7 @@ export function Knob({ id, value, onChange, inactive }: Props) {
         <path className="knob-groove" d={arc(centre, groove, 0, 1)} strokeWidth={g.arcWidth} />
         <path className="knob-arc" d={arc(centre, groove, origin, c.position)} strokeWidth={g.arcWidth} />
         <circle className="knob-cap" cx={centre} cy={centre} r={g.cap} fill={`url(#${gradient})`} />
-        <line className="knob-marker" x1={markerX0} y1={markerY0} x2={markerX1} y2={markerY1} />
+        <line className="knob-marker" x1={markerX0} y1={markerY0} x2={markerX1} y2={markerY1} strokeWidth={g.markerWidth} />
         {MODULATED.has(id) && (
           <ModulationRing
             id={id}
