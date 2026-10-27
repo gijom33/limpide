@@ -1001,6 +1001,11 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   .knob[data-kind='fader'] {
     --fader-col: clamp(40px, (100cqw - var(--label-col) - var(--label-gap) - var(--dial-big) - 4 * var(--knob-gap)) / 4, 56px);
   }
+  /* The Amp's Envelope row sits under its name (four faders and the Volume knob, issue 62): its faders take the whole
+     width, not what a name beside them would leave. In Linux's fonts 8 pt was not enough there (the 1.12.4 deploy). */
+  .block[data-stage='amp'] .knobs-envelope .knob[data-kind='fader'] {
+    --fader-col: clamp(40px, (100cqw - var(--dial-big) - 4 * var(--knob-gap)) / 4, 56px);
+  }
   main { padding: var(--space-3) var(--space-2); }
   .chain { margin: var(--space-3) 0; row-gap: var(--space-3); }
   .block { padding: var(--space-2) var(--space-3); gap: var(--space-2); }
