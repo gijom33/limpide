@@ -20,6 +20,6 @@ For the owner:
 - [ ] **The card covers the pictures the Step talks about** at 1920 × 1080 (the bottom of the Spectrums, the Maths formula) and at 150 % zoom (most of the Filter Spectrum). A smaller card, a card beside the sections on wide screens, or scrolling the Step's Viewer into view too?
 - [ ] **The Tutorials are hard to find after the welcome**: only the Patch name leads to them. A door in About, or in the header?
 - [ ] **The "→ target" label covers its neighbour** (the Osc 2 tab, the Filter Mode icons, the Cutoff readout): below the control instead, or inside the ring?
-- [ ] **No Tooltips on the Viewers, the faders, or the Timeline legend**, and the Timeline's two oranges look alike (review 5's first run said so too)
+- [ ] **No Tooltips on the Viewers, the faders, or the Timeline legend**. (The Timeline's two oranges, which review 5 found alike in both runs, are intentional: decided by the owner, 2026-10-27, not to change.)
 - [ ] **Small on a projector**: the card's and the Demo card's text 12 to 13 px at 1920 × 1080
 - [ ] **No Tutorial uses Snapshot, Maths or Guides**: a fifth Tutorial, or a Step in one of the four
