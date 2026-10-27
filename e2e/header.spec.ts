@@ -13,6 +13,8 @@ const SIZES = {
 } as const;
 
 async function header(page: Page) {
+  // WebKit can run this before React has drawn the header: wait for its keys.
+  await page.locator('.piano button').first().waitFor();
   return page.evaluate(() => {
     const box = (el: Element) => {
       const r = el.getBoundingClientRect();
