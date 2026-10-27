@@ -23,7 +23,7 @@ async function header(page: Page) {
     const button = (name: string) => box(document.querySelector(`header button[aria-label="${name}"]`)!);
     const white = [...document.querySelectorAll<HTMLElement>('.piano button:not([data-black])')].filter((k) => k.getBoundingClientRect().width > 0);
     return {
-      demo: button('Demo'), song: button('Song'), hold: button('Hold'),
+      demo: button('Demo'), tutorial: button('Tutorial'), song: button('Song'), hold: button('Hold'),
       midi: button('MIDI'), display: button('Display'), about: button('About'),
       up: button('Octave up'), down: button('Octave down'),
       piano: box(document.querySelector('.piano')!),
@@ -34,11 +34,12 @@ async function header(page: Page) {
 }
 
 for (const [size, [width, height]] of Object.entries(SIZES)) {
-  test(`one order at ${width}×${height} (${size}): Demo, Song, Hold, then MIDI, Display, About; the octave buttons stacked left of the piano`, async ({ page }) => {
+  test(`one order at ${width}×${height} (${size}): Demo, Tutorial, Song, Hold, then MIDI, Display, About; the octave buttons stacked left of the piano`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await page.goto('/');
     const h = await header(page);
-    expect(h.demo.right).toBeLessThanOrEqual(h.song.left);
+    expect(h.demo.right).toBeLessThanOrEqual(h.tutorial.left);
+    expect(h.tutorial.right).toBeLessThanOrEqual(h.song.left);
     expect(h.song.right).toBeLessThanOrEqual(h.hold.left);
     expect(h.hold.right).toBeLessThanOrEqual(h.midi.left);
     expect(h.midi.right).toBeLessThanOrEqual(h.display.left);
@@ -85,7 +86,7 @@ test.describe('the sections 2 × 2', () => {
 
   test('the playing and set-up buttons are a finger tall, icon over word', async ({ page }) => {
     await page.goto('/');
-    for (const name of ['Demo', 'Song', 'Hold', 'MIDI', 'Display', 'About']) {
+    for (const name of ['Demo', 'Tutorial', 'Song', 'Hold', 'MIDI', 'Display', 'About']) {
       const button = page.locator(`header button[aria-label="${name}"]`);
       expect((await button.boundingBox())!.height, name).toBeGreaterThanOrEqual(44);
       await expect(button.getByText(name, { exact: true }), name).toBeVisible();

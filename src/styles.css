@@ -849,9 +849,14 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 /* The one-row header gives the keyboard what its sides leave: below 1300 px its buttons show their icons and drop
    their words (the tooltips name them), so the piano keeps keys of 30 px or more down to 1000 px. Below 920 px the
    header's zones sit closer together. */
+/* With the Tutorial button (issue 59), one more in the row: the zones sit 12 px apart and, without their words, the
+   buttons pad 6 px, so the piano keeps 44 px keys at 1440 and 26 px or more at 861. */
+@media (min-width: 861px) {
+  header, .header-left, .header-identity { column-gap: 12px; }
+}
 @media (min-width: 861px) and (max-width: 1299px) {
   header :is(.demo-word, .tool-word) { display: none; }
-  header :is(.demo-button, [aria-label='Hold'], .midi-status, .display-menu > .tip-anchor > .tool, .about-menu .tool) { padding: 0 8px; }
+  header :is(.demo-button, [aria-label='Hold'], .midi-status, .display-menu > .tip-anchor > .tool, .about-menu .tool) { padding: 0 6px; }
 }
 @media (min-width: 861px) and (max-width: 919px) {
   header, .header-left, .header-identity { column-gap: var(--space-2); }
@@ -867,6 +872,14 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .patch-actions label { cursor: pointer; }
 .patch-status { margin: 0; min-height: 16px; font-size: var(--text-md); color: var(--muted); }
 
+/* The Tutorial button and its list (issue 59): under the button, one Tutorial a row. */
+.tutorial-menu { position: relative; display: flex; }
+.tutorial-menu-panel {
+  position: absolute; z-index: 60; top: calc(100% + 6px); left: 0; display: flex; flex-direction: column; gap: 4px; padding: var(--space-2);
+  background: var(--panel); border: 1px solid var(--muted); border-radius: var(--radius-panel); box-shadow: var(--shadow-panel);
+}
+.tutorial-menu-panel .tool { justify-content: flex-start; gap: 8px; white-space: nowrap; }
+.tutorial-menu-done { margin-left: auto; padding-left: 12px; color: var(--accent); }
 /* The Display button and its panel: the display settings, out of the way until wanted. */
 .display-menu { position: static; }
 .display-menu .tool { position: relative; }

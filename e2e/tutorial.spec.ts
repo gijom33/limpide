@@ -188,6 +188,21 @@ test('on a phone the card shows two lines; a tap on the text, or on +, shows it 
   await expect.poll(height).toBeGreaterThan(folded);
 });
 
+test('the header’s Tutorial button lists the Tutorials, ticks the finished, and starts the one picked (issue 59)', async ({ page }) => {
+  await page.goto('/');
+  const button = page.getByRole('button', { name: 'Tutorial', exact: true });
+  await button.click();
+  const list = page.getByRole('group', { name: 'Tutorials' }).filter({ has: page.getByRole('button', { name: /^Tutorial: Bass/ }) }).last();
+  await expect(list.getByRole('button')).toHaveText(['Bass', 'Acid', 'Pluck', 'Wobble']);
+  await page.keyboard.press('Escape');
+  await expect(list).toBeHidden();
+  await expect(button).toBeFocused();
+  await button.click();
+  await page.getByRole('button', { name: 'Tutorial: Acid', exact: true }).last().click();
+  await expect(card(page)).toHaveAccessibleName('Tutorial: Acid');
+  await expect(button).toHaveAttribute('aria-expanded', 'false');
+});
+
 test.describe('a first visit', () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 

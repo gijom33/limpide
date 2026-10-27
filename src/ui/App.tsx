@@ -45,6 +45,7 @@ import { TapViewers } from './TapViewers';
 import { ToolGroup } from './ToolGroup';
 import { type TipContent, Tooltip } from './Tooltip';
 import { TutorialCard } from './TutorialCard';
+import { TutorialMenu } from './TutorialMenu';
 import { applyTheme, loadTheme, type Theme } from './theme';
 import { TIPS, type VIEWER_TIPS } from './tips';
 
@@ -184,6 +185,9 @@ export function App() {
     },
     onEnd: players.stopListen,
   });
+  // The Tutorials, from the Patches panel and the header's Tutorial button alike.
+  const tutorialList = TUTORIALS.map((t) => ({ preset: t.preset, finished: tutorial.finished.has(t.preset) }));
+  const startTutorial = (preset: string) => tutorial.start(TUTORIALS.find((t) => t.preset === preset)!);
   const midi = useMidi({
     storage, session, patchRef, setPatch, stepPreset, pressHoldRef, dispatchViewer,
     turnedByHand: players.turnedByHand,
@@ -253,7 +257,7 @@ export function App() {
         ) : (
           <LearnBar state={midi.learn} />
         )}
-        {/* One order at every width (issue 44): the Wordmark and the Patch, playing (Demo, Song, Hold), the
+        {/* One order at every width (issue 44): the Wordmark and the Patch, playing (Demo, Tutorial, Song, Hold), the
             keyboard, then set-up (MIDI, Display, About). Each layout places these groups; none reorders them. */}
         <header>
           <div className="header-left">
@@ -265,8 +269,8 @@ export function App() {
                 patch={patch}
                 library={library}
                 onLoad={loadPatch}
-                tutorials={TUTORIALS.map((t) => ({ preset: t.preset, finished: tutorial.finished.has(t.preset) }))}
-                onTutorial={(preset) => tutorial.start(TUTORIALS.find((t) => t.preset === preset)!)}
+                tutorials={tutorialList}
+                onTutorial={startTutorial}
               />
             </div>
             <div className="header-play" role="group" aria-label="Play">
@@ -276,6 +280,7 @@ export function App() {
                   <span className="demo-word">Demo</span>
                 </button>
               </Tooltip>
+              <TutorialMenu tutorials={tutorialList} onStart={startTutorial} />
               <Tooltip content={TIPS.song}>
                 <button type="button" className="tool tool-mode demo-button" aria-label="Song" aria-pressed={players.song} data-demo onClick={players.toggleSong}>
                   <NoteIcon />
