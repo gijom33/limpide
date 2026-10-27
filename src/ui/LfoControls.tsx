@@ -66,8 +66,12 @@ export function LfoControls({ lfo, engine, patch, onParam, onPatch }: Props) {
         </div>
         <div className="lfo-play">
           <div className="knobs">
-            <Knob id={keys.rate} value={patch[keys.rate]} onChange={(v) => onParam(keys.rate, v)} inactive={off} />
-            <Knob id={keys.amount} value={patch[keys.amount]} onChange={(v) => onParam(keys.amount, v)} />
+            <Tooltip content={TIPS.lfoRate}>
+              <Knob id={keys.rate} value={patch[keys.rate]} onChange={(v) => onParam(keys.rate, v)} inactive={off} />
+            </Tooltip>
+            <Tooltip content={TIPS.lfoDepth}>
+              <Knob id={keys.amount} value={patch[keys.amount]} onChange={(v) => onParam(keys.amount, v)} />
+            </Tooltip>
             <Tooltip content={TIPS.lfoRetrigger}>
               <div className="lfo-retrigger-field">
                 <button

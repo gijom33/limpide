@@ -46,7 +46,14 @@ import { ToolGroup } from './ToolGroup';
 import { type TipContent, Tooltip } from './Tooltip';
 import { TutorialCard } from './TutorialCard';
 import { applyTheme, loadTheme, type Theme } from './theme';
-import { TIPS } from './tips';
+import { TIPS, VIEWER_TIPS } from './tips';
+
+/** Each Envelope fader's tip: the stage's, the same in both Envelopes. */
+const STAGE_TIPS = {
+  filterAttack: 'attack', filterDecay: 'decay', filterSustain: 'sustain', filterRelease: 'release',
+  ampAttack: 'attack', ampDecay: 'decay', ampSustain: 'sustain', ampRelease: 'release',
+} as const;
+
 import { AxesControls, ViewActions } from './ViewerControls';
 import { WaveformPicker } from './WaveformPicker';
 import { Wordmark } from './Wordmark';
@@ -210,7 +217,7 @@ export function App() {
 
   const viewers = (
     tap: keyof AudioSession['engine']['taps'],
-    name: string,
+    name: keyof typeof VIEWER_TIPS,
     extra: {
       showIdeal?: boolean;
       response?(f: Float32Array<ArrayBuffer>): Float32Array;
@@ -453,8 +460,12 @@ export function App() {
                     content: (
                     <SubBlock title="Mixer" label="Levels" tip={TIPS.mixer} group>
                       <div className="knobs">
-                        <Fader id="mixOsc1" value={patch.mixOsc1} onChange={(v) => change('mixOsc1', v)} />
-                        <Fader id="mixOsc2" value={patch.mixOsc2} onChange={(v) => change('mixOsc2', v)} />
+                        <Tooltip content={TIPS.osc1Level}>
+                          <Fader id="mixOsc1" value={patch.mixOsc1} onChange={(v) => change('mixOsc1', v)} />
+                        </Tooltip>
+                        <Tooltip content={TIPS.osc2Level}>
+                          <Fader id="mixOsc2" value={patch.mixOsc2} onChange={(v) => change('mixOsc2', v)} />
+                        </Tooltip>
                         <Tooltip content={TIPS.noise}>
                           <Fader id="mixNoise" value={patch.mixNoise} onChange={(v) => change('mixNoise', v)} />
                         </Tooltip>
@@ -526,7 +537,9 @@ export function App() {
                       <Knob id="filterEnvAmount" value={patch.filterEnvAmount} onChange={(v) => change('filterEnvAmount', v)} />
                     </Tooltip>
                     {(['filterAttack', 'filterDecay', 'filterSustain', 'filterRelease'] as const).map((id) => (
-                      <Fader key={id} id={id} value={patch[id]} onChange={(v) => change(id, v)} inactive={patch.filterEnvAmount === 0} />
+                      <Tooltip key={id} content={TIPS[STAGE_TIPS[id]]}>
+                        <Fader id={id} value={patch[id]} onChange={(v) => change(id, v)} inactive={patch.filterEnvAmount === 0} />
+                      </Tooltip>
                     ))}
                   </div>
                 </div>
@@ -548,7 +561,9 @@ export function App() {
               <SubBlock title="Amp Envelope" label="Envelope" tip={TIPS.ampEnvelope}>
                 <div className="knobs">
                   {(['ampAttack', 'ampDecay', 'ampSustain', 'ampRelease'] as const).map((id) => (
-                    <Fader key={id} id={id} value={patch[id]} onChange={(v) => change(id, v)} />
+                    <Tooltip key={id} content={TIPS[STAGE_TIPS[id]]}>
+                      <Fader id={id} value={patch[id]} onChange={(v) => change(id, v)} />
+                    </Tooltip>
                   ))}
                 </div>
               </SubBlock>

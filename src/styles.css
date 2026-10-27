@@ -175,7 +175,9 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 .knob-label { font-size: var(--text-md); line-height: var(--knob-label-h); height: var(--knob-label-h); white-space: nowrap; }
 /* A row's last name, when wider than its column (Release in a wider system font, as on Linux), runs past the row's end
    rather than towards its neighbour. */
-.knobs > .knob:last-child > .knob-label { align-self: stretch; text-align: center; }
+.knobs > .knob:last-child > .knob-label, .knobs > .tip-anchor:last-child > .knob > .knob-label { align-self: stretch; text-align: center; }
+/* A Viewer's tooltip anchor takes no box: the canvases keep the layout they had (issue 59). */
+.tap-canvases > .tip-anchor, .timeline-plot > .tip-anchor { display: contents; }
 /* Inactive (adjustable, but silent for now): the whole dial or fader greys out, marker included, and its readout
    with it; the name stays readable. WCAG 1.4.11 leaves inactive controls out of its contrast minimum. */
 .knob[data-inactive] :is(.knob-dial, .fader) { opacity: 0.3; }

@@ -212,7 +212,80 @@ export const TIPS = {
     title: 'Semitone',
     body: 'Shifts Osc 2 by semitones from the Note you play: +7 is a fifth above, +12 an octave. Two notes at once, from one key.',
   },
+  // Issue 59: the faders, the LFO knobs and the Timeline's key, which had none.
+  osc1Level: { title: 'Osc 1', body: 'How much of Osc 1 goes into the Filter: its level in the mix.' },
+  osc2Level: { title: 'Osc 2', body: 'How much of Osc 2 goes into the Filter. At 0 it is silent, and its tab and Tuning knobs grey out.' },
+  attack: {
+    title: 'Attack',
+    body: 'How long the Envelope takes to rise from nothing to full once a key goes down: short for a sharp start (a pluck), long for a slow swell (a pad).',
+  },
+  decay: { title: 'Decay', body: 'How long the Envelope then takes to fall from full to the Sustain level, while the key is held.' },
+  sustain: {
+    title: 'Sustain',
+    body: 'The level the Envelope holds for as long as the key stays down. A level, not a time: at 0 the sound dies away during the Decay even with the key held.',
+  },
+  release: { title: 'Release', body: 'How long the Envelope takes to fall back to nothing once the key comes up.' },
+  lfoRate: { title: 'Rate', body: 'How fast the LFO repeats, in cycles a second (Hz): 0.05 Hz is one slow sweep every 20 seconds, 20 Hz a fast flutter.' },
+  lfoDepth: {
+    title: 'Depth',
+    body: 'How far the LFO moves its Destination. At 0 it moves nothing.',
+    how: 'Turn it up and watch the control it moves: a ring shows how far, a dot where it is now.',
+  },
+  timelineAmp: {
+    title: 'Amp Envelope',
+    body: 'Violet: how loud the newest Note is over the last four seconds, from nothing to full. An LFO on Volume ripples it.',
+  },
+  timelineFilterEnvelope: {
+    title: 'Filter Envelope',
+    body: 'Orange fill: the Filter Envelope’s level, nothing to full. Times Envelope Amount, it is how far it pushes the Cutoff.',
+  },
+  timelineCutoff: {
+    title: 'Effective Cutoff',
+    body: 'Orange line: where the Filter’s Cutoff really is, after the Filter Envelope, the LFOs, Velocity and Key Track, on the frequency scale at the right. The faint dashed line is the Cutoff knob’s own setting.',
+  },
+  envelopeTimeline: {
+    title: 'Envelope Timeline',
+    body: 'The last four seconds, the newest at the right: the Amp Envelope (violet), the Filter Envelope (orange fill) and the Effective Cutoff (orange line).',
+    how: 'Play a Note and let go: the Release is drawn after the key comes up.',
+  },
 } satisfies Record<string, TipContent>;
+
+/** Each Tap's two Viewers (issue 59): what the Scope and the Spectrum there show. */
+export const VIEWER_TIPS: Record<'Oscillator' | 'Filter' | 'Amp', { scope: TipContent; spectrum: TipContent }> = {
+  Oscillator: {
+    scope: {
+      title: 'Oscillator Scope',
+      body: 'The waveform leaving the Oscillators and the Mixer, before the Filter: a few repeats of it, held still on the Note’s pitch. Height is level.',
+      how: 'Pick another Waveform and watch the shape change.',
+    },
+    spectrum: {
+      title: 'Oscillator Spectrum',
+      body: 'The same sound as its Harmonics: one spike each, low to high, the fundamental first. Their heights are the recipe of the timbre.',
+      how: 'Hover a spike to read its frequency and level.',
+    },
+  },
+  Filter: {
+    scope: {
+      title: 'Filter Scope',
+      body: 'The waveform after the Filter: with the high Harmonics taken away it rounds off; Resonance adds a ringing ripple.',
+    },
+    spectrum: {
+      title: 'Filter Spectrum',
+      body: 'The Harmonics after the Filter. The Curve over them is the Filter’s response: spikes under its slope have been turned down.',
+      how: 'Turn the Cutoff and watch the slope move across the Harmonics.',
+    },
+  },
+  Amp: {
+    scope: {
+      title: 'Amp Scope',
+      body: 'What you hear: the Filter’s output shaped by the Amp Envelope, growing and fading with it.',
+    },
+    spectrum: {
+      title: 'Amp Spectrum',
+      body: 'The Harmonics of what you hear: the Filter’s, all rising and falling together with the Amp Envelope.',
+    },
+  },
+};
 
 export const OVERLAY_TIPS: Record<Overlay, TipContent> = {
   harmonics: {

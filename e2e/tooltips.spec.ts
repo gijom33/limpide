@@ -59,3 +59,41 @@ test('headings with an explanation are plain text, with no dotted underline, and
   await page.getByRole('region', { name: 'LFO & Envelopes' }).getByText('LFO & Envelopes', { exact: true }).hover();
   await expect(page.getByRole('tooltip')).toBeVisible();
 });
+
+// Issue 59: the Viewers, every fader, the LFO knobs and the Timeline's key explain themselves too.
+test('every Viewer, fader and the Timeline key explain themselves, the tooltip beside what it explains', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  const tip = page.getByRole('tooltip').locator('visible=true');
+  const check = async (target: import('@playwright/test').Locator, title: string) => {
+    await page.mouse.move(0, 0);
+    await target.hover();
+    await expect(tip, title).toBeVisible();
+    await expect(tip.locator('strong'), title).toHaveText(title);
+    // Placed by what it explains, not at the page's corner (a Viewer's anchor has no box of its own).
+    const [t, b] = [(await tip.boundingBox())!, (await target.boundingBox())!];
+    expect(Math.abs(t.x + t.width / 2 - (b.x + b.width / 2)), title).toBeLessThan(Math.max(b.width, t.width));
+  };
+  for (const tap of ['Oscillator', 'Filter', 'Amp']) {
+    await check(page.getByRole('img', { name: `${tap} Scope` }), `${tap} Scope`);
+    await check(page.getByRole('img', { name: `${tap} Spectrum` }), `${tap} Spectrum`);
+  }
+  await check(page.getByRole('img', { name: 'Envelope Timeline' }), 'Envelope Timeline');
+  for (const stage of ['Attack', 'Decay', 'Sustain', 'Release']) {
+    await check(page.getByRole('slider', { name: `Amp ${stage}` }), stage);
+    await check(page.getByRole('slider', { name: `Filter ${stage}` }), stage);
+  }
+  await check(page.getByRole('slider', { name: 'LFO 1 Rate' }), 'Rate');
+  await check(page.getByRole('slider', { name: 'LFO 2 Depth' }), 'Depth');
+  for (const [mark, title] of [['amp', 'Amp Envelope'], ['filterEnvelope', 'Filter Envelope'], ['cutoff', 'Effective Cutoff']]) {
+    await check(page.locator(`.timeline-key [data-mark="${mark}"]`), title);
+  }
+  await page.getByRole('tab', { name: 'Mixer' }).click();
+  await check(page.getByRole('slider', { name: 'Osc 1', exact: true }), 'Osc 1');
+  await check(page.getByRole('slider', { name: 'Osc 2', exact: true }), 'Osc 2');
+  // Screen readers hear them too: every slider and picture is described.
+  const undescribed = await page.evaluate(() =>
+    [...document.querySelectorAll('[role=slider], [role=img]')].filter((e) => e.getClientRects().length && !e.hasAttribute('aria-describedby')).map((e) => e.getAttribute('aria-label')),
+  );
+  expect(undescribed).toEqual([]);
+});

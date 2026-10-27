@@ -36,7 +36,7 @@ export function Tooltip({ content, children, longPress = true }: { content: TipC
 
   // The control itself (not this wrapper) carries the description, so it is announced on focus.
   useEffect(() => {
-    const target = wrapperRef.current?.querySelector('[role="radiogroup"], [role="group"], button, [role="slider"]');
+    const target = wrapperRef.current?.querySelector('[role="radiogroup"], [role="group"], button, [role="slider"], [role="img"]');
     target?.setAttribute('aria-describedby', id);
   }, [id]);
 
@@ -74,7 +74,9 @@ export function Tooltip({ content, children, longPress = true }: { content: TipC
 
   useLayoutEffect(() => {
     if (!open || !wrapperRef.current || !tipRef.current) return;
-    const trigger = wrapperRef.current.getBoundingClientRect();
+    // A wrapper with no box of its own (display: contents, around a Viewer's canvas) is placed by what it wraps.
+    const own = wrapperRef.current.getBoundingClientRect();
+    const trigger = own.width || own.height ? own : (wrapperRef.current.firstElementChild?.getBoundingClientRect() ?? own);
     const tip = tipRef.current.getBoundingClientRect();
     setPosition(placeTooltip(trigger, tip, { width: window.innerWidth, height: window.innerHeight }));
   }, [open]);

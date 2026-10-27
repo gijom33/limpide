@@ -5,9 +5,11 @@ import { addToRenderLoop } from '../viewers/renderLoop';
 import { createScope } from '../viewers/scope';
 import { createSpectrum } from '../viewers/spectrum';
 import type { ViewSettings } from '../viewers/viewSettings';
+import { Tooltip } from './Tooltip';
+import { VIEWER_TIPS } from './tips';
 
 interface Props {
-  name: string;
+  name: keyof typeof VIEWER_TIPS;
   analyser: AnalyserNode;
   sampleRate: number;
   fundamental(): number;
@@ -51,7 +53,10 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, view, show
   return (
     <figure className="tap" data-tap={name} aria-label={`${name} Tap`}>
       <div className="tap-canvases">
-        <canvas className="scope" ref={scopeRef} role="img" aria-label={`${name} Scope`} />
+        <Tooltip content={VIEWER_TIPS[name].scope}>
+          <canvas className="scope" ref={scopeRef} role="img" aria-label={`${name} Scope`} />
+        </Tooltip>
+        <Tooltip content={VIEWER_TIPS[name].spectrum}>
         <canvas
           className="spectrum"
           ref={spectrumRef}
@@ -63,6 +68,7 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, view, show
           }}
           onPointerLeave={() => (hoverRef.current = null)}
         />
+        </Tooltip>
         {formula && (
           <p className="maths-formula" role="note" aria-label={`${name} formula`}>
             <span>{formula.formula}</span>
