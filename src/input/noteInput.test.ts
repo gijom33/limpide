@@ -113,6 +113,15 @@ describe('Hold', () => {
     expect(events.at(-1)).toEqual({ type: 'noteOn', note: 60, velocity: 0.5 });
   });
 
+  it('held by a sustain pedal, a key pressed again strikes the Note anew, as on a piano: only the Hold button lets it go', () => {
+    const { input, events } = setup();
+    input.setHold(true, { letGo: false });
+    input.press(60, 1);
+    input.release(60);
+    input.press(60, 0.7);
+    expect(events.at(-1)).toEqual({ type: 'noteOn', note: 60, velocity: 0.7 });
+  });
+
   it('closes the Gate when switched off with no key down', () => {
     const { input, events } = setup();
     input.setHold(true);

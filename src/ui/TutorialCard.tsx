@@ -103,7 +103,7 @@ export function TutorialCard({ tutorial, about, index, done, differs, listening,
   const [expanded, setExpanded] = useState(false);
   useRing(step, made);
   useDocked(card);
-  const place = useCardPlacement(card, 'tutorial');
+  const place = useCardPlacement(card, 'tutorial', tutorial.preset);
 
   const primary = index < steps.length && (
     <button type="button" className="tool tool-primary" disabled={!!step && !made} onClick={onNext}>

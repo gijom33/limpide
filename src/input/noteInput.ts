@@ -14,9 +14,9 @@ export interface NoteInput {
   release(note: number): void;
   /**
    * Hold keeps Notes sounding after their keys are released, until a new key (1 Voice), the same key pressed
-   * again, or Hold off.
+   * again, or Hold off. `letGo: false` is a sustain pedal's hold: a key pressed again strikes its Note anew.
    */
-  setHold(on: boolean): void;
+  setHold(on: boolean, options?: { letGo?: boolean }): void;
   /** How many Notes may sound at once (the Patch's Voices). Changing it releases everything sounding. */
   setVoices(count: Voices): void;
 }
@@ -33,6 +33,7 @@ export function createNoteInput(emit: (event: VoiceEvent) => void, onHeld: (note
   const held: number[] = []; // Notes down, oldest first; with one Voice the last one sounds
   const holders = new Map<number, number>(); // how many sources hold each Note
   let hold = false;
+  let letGoOnPress = true; // the Hold button's hold; a sustain pedal's strikes again
   let gateOpen = false; // one Voice: whether anything sounds
   const sustained = new Set<number>(); // several Voices: Notes kept sounding by Hold after their key went up
   // Several Voices: the Notes sounding by hand, oldest first (keys down and Notes Hold keeps). Never more than the
@@ -118,7 +119,7 @@ export function createNoteInput(emit: (event: VoiceEvent) => void, onHeld: (note
   return {
     press(note, velocity) {
       // Not counted as held: its key coming up finds nothing to release.
-      if (hold && !held.includes(note) && mode().letGo(note)) return report();
+      if (hold && letGoOnPress && !held.includes(note) && mode().letGo(note)) return report();
       holders.set(note, (holders.get(note) ?? 0) + 1);
       if (held.includes(note)) return;
       held.push(note);
@@ -136,8 +137,9 @@ export function createNoteInput(emit: (event: VoiceEvent) => void, onHeld: (note
       holders.delete(note);
       mode().release(index);
     },
-    setHold(on) {
+    setHold(on, { letGo = true } = {}) {
       hold = on;
+      letGoOnPress = letGo;
       if (!on) mode().holdOff();
       report();
     },

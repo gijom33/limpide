@@ -54,3 +54,19 @@ test('a mouse drag across the instrument selects nothing (the owner, 2026-10-27)
   await page.mouse.up();
   expect(await page.evaluate(() => window.getSelection()?.toString() ?? '')).toBe('');
 });
+
+// The 1.12.1 review: the tooltips' anchors (issue 59) took the Scope's gap and gave each key entry a blank swatch.
+test('the Scope and Spectrum keep their gap on a phone, and the Timeline key no blank before its entries', async ({ page }) => {
+  await page.setViewportSize({ width: 393, height: 852 });
+  await page.goto('/');
+  const gap = await page.evaluate(() => {
+    const scope = document.querySelector('[aria-label="Oscillator Scope"]')!.getBoundingClientRect();
+    const spectrum = document.querySelector('[aria-label="Oscillator Spectrum"]')!.getBoundingClientRect();
+    return Math.round(spectrum.top - scope.bottom);
+  });
+  expect(gap).toBe(8);
+  const offsets = await page.evaluate(() =>
+    [...document.querySelectorAll('.timeline-key [data-mark]')].map((mark) => Math.round(mark.getBoundingClientRect().left - mark.parentElement!.getBoundingClientRect().left)),
+  );
+  expect(offsets).toEqual([0, 0, 0]);
+});

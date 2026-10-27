@@ -65,7 +65,7 @@ describe('the Demo player', () => {
     expect(calls).toContain('on 52 @0.800');
     expect(calls).not.toContain('load Poly');
     // 1.2 s: the chord is within the look-ahead, but its Preset waits for the bar line, so E3's Release still plays
-    // on its own sound (issue 60): it loads 30 ms before, in time for the engine to have the chord.
+    // on its own sound (issue 60): it loads 50 ms before, in time for the engine to have the chord.
     advance(0.1);
     expect(calls).not.toContain('load Poly');
     advance(0.08); // 1.28 s

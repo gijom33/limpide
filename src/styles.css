@@ -239,7 +239,7 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
   display: block; width: 100%; height: auto; aspect-ratio: 5 / 2; min-height: 120px; max-height: 260px;
   background: var(--bg); border-radius: var(--radius-inner);
 }
-.tap canvas + canvas { margin-top: 8px; }
+.tap canvas + canvas, .tap-canvases > .tip-anchor + .tip-anchor > canvas { margin-top: 8px; }
 
 .swatch { display: inline-block; flex: none; }
 [data-overlay='harmonics'] .swatch { width: 9px; height: 6px; border-left: 1px solid var(--text); border-right: 1px solid var(--text); }
@@ -369,8 +369,8 @@ main[data-frozen] .tap-canvases::before {
 .timeline canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; background: var(--bg); border-radius: var(--radius-inner); }
 /* Wraps rather than running past the section's edge where the plot column is narrow (861–879 px, issue 47). */
 .timeline-key { display: flex; flex-wrap: wrap; justify-content: flex-end; min-width: 0; gap: 4px 14px; font-size: var(--text-sm); color: var(--muted); font-weight: 500; text-transform: none; letter-spacing: 0; }
-.timeline-key span { display: inline-flex; align-items: center; gap: 5px; }
-.timeline-key span::before { content: ''; width: 12px; height: 8px; border-radius: 2px; }
+.timeline-key [data-mark] { display: inline-flex; align-items: center; gap: 5px; }
+.timeline-key [data-mark]::before { content: ''; width: 12px; height: 8px; border-radius: 2px; }
 .timeline-key [data-mark='amp']::before { background: color-mix(in srgb, var(--stage-amp) 45%, transparent); border-top: 1.5px solid var(--stage-amp); }
 .timeline-key [data-mark='filterEnvelope']::before { background: color-mix(in srgb, var(--stage-filter) 35%, transparent); border-top: 1.5px solid var(--stage-filter); }
 .timeline-key [data-mark='cutoff']::before { height: 0; border-top: 2px solid var(--cutoff-line); }
@@ -405,7 +405,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   .block > .tap { flex: 1 1 0; min-height: 0; margin-top: 0; display: flex; flex-direction: column; }
   .tap-canvases { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
   .tap canvas { flex: 1 1 0; height: auto; min-height: 90px; max-height: none; aspect-ratio: auto; }
-  .tap canvas + canvas { margin-top: 0; }
+  .tap canvas + canvas, .tap-canvases > .tip-anchor + .tip-anchor > canvas { margin-top: 0; }
 }
 
 

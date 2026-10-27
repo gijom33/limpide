@@ -22,7 +22,7 @@ interface Props {
 export function DemoBar({ playing, tookOver, onStop, onPlayAgain, onDismiss }: Props) {
   const card = useRef<HTMLElement>(null);
   useDocked(card, 'when-scrolling');
-  const place = useCardPlacement(card, 'demo');
+  const place = useCardPlacement(card, 'demo', playing ? 'playing' : 'stopped');
   return (
     // data-demo: a tap on the card is not the person taking over.
     <section ref={card} className="docked demo-bar" aria-label="Demo" data-demo {...place.cardProps}>

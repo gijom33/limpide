@@ -35,7 +35,7 @@ const TICK_MS = 40;
 const LEAD_IN = 0.3;
 // The next part's Preset loads this long before its bar line, not on the look-ahead: just enough for the engine to
 // have its first Notes, while this part's last Notes and their Release keep their own sound (issue 60).
-const SWITCH_AHEAD = 0.03;
+const SWITCH_AHEAD = 0.05;
 // Every part but the last lets go of its Notes this long before its end, in beats: a breath before the next sound.
 const BREATH = 1 / 8;
 
@@ -157,7 +157,7 @@ export function startDemo(host: DemoHost, track: Track = TRACK): () => void {
       if (boundary >= horizon) break;
       const switchAt = boundary - SWITCH_AHEAD;
       if (now < switchAt) {
-        wait = Math.min(TICK_MS, (switchAt - now) * 1000); // back in time for the switch
+        wait = Math.max(5, Math.min(TICK_MS, (switchAt - now) * 1000)); // back in time for the switch, without spinning
         break;
       }
       enter(index + 1);

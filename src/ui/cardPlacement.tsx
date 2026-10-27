@@ -10,12 +10,15 @@ const PHONE = '(max-width: 600px)';
  * kind of card; the place is not: the card opens at the bottom each time. A double-click on the top row puts it back.
  * On a phone the card spans the bottom edge and only folds.
  */
-export function useCardPlacement(card: RefObject<HTMLElement | null>, kind: 'demo' | 'tutorial') {
+export function useCardPlacement(card: RefObject<HTMLElement | null>, kind: 'demo' | 'tutorial', opening: unknown) {
   const storage = useMemo(safeStorage, []);
   const key = `limpide.cardFolded.${kind}`;
   const [folded, setFolded] = useState(() => storage.getItem(key) === '1');
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const drag = useRef<{ x: number; y: number; from: { x: number; y: number } } | null>(null);
+  // A card opening anew (Play again, another Tutorial) starts at the bottom, wherever the last one was left.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: opening is the trigger, not a value read here
+  useEffect(() => setOffset({ x: 0, y: 0 }), [opening]);
 
   /** The offset moved as far as the window allows: the card stays whole on screen. */
   const within = (wanted: { x: number; y: number }, current: { x: number; y: number }) => {
@@ -71,16 +74,14 @@ export function useCardPlacement(card: RefObject<HTMLElement | null>, kind: 'dem
 
   return {
     folded,
-    toggleFold: () =>
-      setFolded((f) => {
-        storage.setItem(key, f ? '0' : '1');
-        return !f;
-      }),
+    toggleFold: () => {
+      storage.setItem(key, folded ? '0' : '1');
+      setFolded(!folded);
+    },
     /** On the card: where it has been moved to, and whether it is folded. */
     cardProps: {
       style: { '--card-dx': `${offset.x}px`, '--card-dy': `${offset.y}px` } as CSSProperties,
       'data-folded': folded || undefined,
-      'data-moved': offset.x || offset.y ? true : undefined,
     },
     /** On the card's top row: the handle it is dragged by. */
     handle,

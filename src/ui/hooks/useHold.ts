@@ -17,7 +17,7 @@ export function useHold(session: AudioSession, patchRef: MutableRefObject<Patch>
   const pedalRef = useRef(false);
   const setPedal = (down: boolean) => {
     pedalRef.current = down;
-    session.input.setHold(holdRef.current || down);
+    session.input.setHold(holdRef.current || down, { letGo: holdRef.current });
   };
   const [heldNotes, setHeldNotes] = useState<number[]>([]);
   const heldRef = useRef(heldNotes);
@@ -26,7 +26,7 @@ export function useHold(session: AudioSession, patchRef: MutableRefObject<Patch>
   const [rhythm, setRhythm] = useState<Rhythm | null>(null);
 
   useEffect(() => session.onHeld(setHeldNotes), [session]);
-  useEffect(() => session.input.setHold(hold || pedalRef.current), [session, hold]);
+  useEffect(() => session.input.setHold(hold || pedalRef.current, { letGo: hold }), [session, hold]);
 
   const pressHold = () => {
     setHold(holdTaps.press(performance.now() / 1000, heldRef.current.length > 0));
