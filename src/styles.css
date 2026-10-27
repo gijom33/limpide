@@ -173,6 +173,9 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 .knob-dial:focus-visible:not([data-pointer]) { outline: 2px solid var(--stage, var(--accent)); outline-offset: 2px; border-radius: 50%; }
 /* Label and value are centred under the dial and may be wider than the column (their neighbours' are short). */
 .knob-label { font-size: var(--text-md); line-height: var(--knob-label-h); height: var(--knob-label-h); white-space: nowrap; }
+/* A row's last name, when wider than its column (Release in a wider system font, as on Linux), runs past the row's end
+   rather than towards its neighbour. */
+.knobs > .knob:last-child > .knob-label { align-self: stretch; text-align: center; }
 /* Inactive (adjustable, but silent for now): the whole dial or fader greys out, marker included, and its readout
    with it; the name stays readable. WCAG 1.4.11 leaves inactive controls out of its contrast minimum. */
 .knob[data-inactive] :is(.knob-dial, .fader) { opacity: 0.3; }
@@ -781,6 +784,8 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 /* A fixed width (the longest Preset name and the changed dot), so the arrows never move as names change; longer
    names of your own are shortened with an ellipsis (the full name stays in the button's label). */
 .patch-bar > .tip-anchor { flex: none; }
+/* The arrows keep their size; when the header is short of room, the name gives way. */
+.patch-bar > .tool { flex: none; }
 .patch-name { width: 150px; justify-content: center; gap: 6px; }
 /* Narrow windows (one-row header, down to 861 px): a shorter fixed width, so the Display button keeps its place on
    the right; long Preset names show an ellipsis. */
