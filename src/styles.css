@@ -83,7 +83,10 @@
 }
 
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--text); }
+/* An instrument, not a page of text: a drag across it, with a mouse or a finger, never selects anything (the
+   owner, 2026-10-27). Text fields stay editable. */
+body { margin: 0; background: var(--bg); color: var(--text); -webkit-user-select: none; user-select: none; }
+input, textarea { -webkit-user-select: text; user-select: text; }
 /* Grows with the screen up to where lines of controls stop being comfortable to scan. */
 main { max-width: 1920px; margin: 0 auto; padding: var(--space-4); }
 /* Laptop and wide windows: one row in the header's one order (issue 44). The Wordmark, the Patch and the playing
@@ -1076,11 +1079,10 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 }
 @media (max-width: 600px) and (prefers-reduced-motion: reduce) { .section-strip { transition: none; } }
 
-/* Touch screens: a long press or a double tap on the instrument plays or turns it; it never selects text or opens
-   the copy menu. Text fields stay editable, and buttons answer at once (no wait for a double-tap zoom). */
+/* Touch screens: a long press on the instrument plays or turns it; it never opens the copy menu. Buttons answer at
+   once (no wait for a double-tap zoom). */
 @media (pointer: coarse) {
-  body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
-  input, textarea { -webkit-user-select: text; user-select: text; }
+  body { -webkit-touch-callout: none; }
   button { touch-action: manipulation; }
   /* No grey flash on a tapped button: what a control shows is its own state. */
   button, [role='slider'] { -webkit-tap-highlight-color: transparent; }

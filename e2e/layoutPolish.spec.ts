@@ -42,3 +42,15 @@ test('Tab meets the octave buttons as they stand: up, then down', async ({ page,
   await page.keyboard.press('Tab');
   await expect(page.getByRole('button', { name: 'Octave down' })).toBeFocused();
 });
+
+test('a mouse drag across the instrument selects nothing (the owner, 2026-10-27)', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  // From the Amp's heading, across the sections and the Viewers, down into LFO & Envelopes.
+  const from = (await page.getByRole('region', { name: 'Amp' }).getByRole('heading').first().boundingBox())!;
+  await page.mouse.move(from.x - 4, from.y + 4);
+  await page.mouse.down();
+  await page.mouse.move(200, 880, { steps: 12 });
+  await page.mouse.up();
+  expect(await page.evaluate(() => window.getSelection()?.toString() ?? '')).toBe('');
+});

@@ -4,7 +4,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
-- I can "select" elements in the interface while clicking and dragging. That should not be the case. (The owner, 2026-10-27, Safari on a laptop: dragging across the page highlights the headings, labels and Viewers)
 - Favicon still not showing in Safari.
 - A square or saw LFO on Volume overshoots its edges (the LFO's Fourier series, Gibbs, about ±1.18): at full Depth the gain passes the Envelope's level by about 9 % and dips below 0 (polarity flips) for well under a millisecond at each edge, where the model stays at exactly ±1. The same overshoot reaches every destination. From the 1.12.0 code review.
 
@@ -37,3 +36,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-26, night: the Demo's Kick hard to hear went to [50](./issues/50-demo-on-a-phone.md), done there: the Kick now starts from the Preset's own drop, from 440 Hz, which a phone speaker plays, rather than from 155 Hz.
 2026-10-27: done at once: the call to play in large letters, in the middle of the keys; the GoatCounter script pinned to its versioned file with an integrity hash (`vite.config.ts`).
 2026-10-27: the owner's Hold idea (a key pressed again lets its held Note go) done at once: `src/input/noteInput.ts`, with unit tests for one Voice and several and a piano test. It reverses the earlier rule that a re-pressed held Note retriggers.
+2026-10-27: the owner's selection bug (a mouse drag selected the page's text and Viewers) fixed at once: the whole page is unselectable with any pointer, as it already was on touch screens; text fields stay editable. Test in `e2e/layoutPolish.spec.ts`.
