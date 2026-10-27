@@ -4,8 +4,12 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- Make the noise level much higher in the first patch of demo song, it's hard to hear on a phone speaker for instance.
 
 ## Ideas
+
+- Want to introduce a tutorial where user picks a preset and the UI guides him on how to set it with explanations along the way.
+- Want to create a new persona for testing: open-source legal expert.
 
 ## Dropped
 
