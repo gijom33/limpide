@@ -21,7 +21,9 @@ async function doEverything(page: Page) {
     const next = card(page).getByRole('button', { name: /^(Next|Finish)$/ });
     if (!(await next.isVisible())) return;
     const doIt = action(page, 'Do it for me');
-    if (await doIt.isVisible()) await doIt.click();
+    // A Step already within reach ticks itself after a moment (Bass's Filter Decay), taking the button away: then
+    // there is nothing left to click.
+    if (await doIt.isVisible()) await doIt.click({ timeout: 3000 }).catch(() => {});
     await expect(next).toBeEnabled();
     await next.click();
   }
