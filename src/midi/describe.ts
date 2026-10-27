@@ -1,5 +1,5 @@
 import { nearestNote, noteToFrequency } from '../music/pitch';
-import { paramName } from '../patch/patch';
+import { PARAMS, paramName } from '../patch/patch';
 import { PITCH_BEND } from './controlSurface';
 import { ACTIONS, CHOICE_LABELS, type Control, type Mapping, type Target } from './mappings';
 import type { MidiMessage } from './parser';
@@ -9,6 +9,9 @@ const noteName = (note: number) => nearestNote(noteToFrequency(note)).name;
 /** "ch 1 · CC 74", "ch 10 · Note C2": from the most general to the most particular, as MIDI monitors do. */
 export const describeControl = ({ kind, channel, number }: Control) =>
   `ch ${channel} · ${kind === 'note' ? `Note ${noteName(number)}` : number === PITCH_BEND ? 'Pitch bend' : `CC ${number}`}`;
+
+/** A target by its short name, where a group beside it already says where it is (Quick Setup's "Osc 2 · Detune"). */
+export const describeTargetShort = (target: Target) => (target.kind === 'param' ? PARAMS[target.id].label : describeTarget(target));
 
 export const describeTarget = (target: Target) =>
   // A Parameter by its full name ("Filter Envelope Amount", "LFO 2 Depth"), so a Mapping never leaves it unclear (issue 52).

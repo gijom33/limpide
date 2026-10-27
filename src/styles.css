@@ -272,9 +272,12 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 }
 .tool { border-color: var(--border); }
 .tool:hover, .segmented button:hover { color: var(--text); background: var(--control-hover); }
-.tool[aria-pressed='true'], .segmented [aria-checked='true'], .segmented [aria-pressed='true'] {
+.segmented [aria-checked='true'], .segmented [aria-pressed='true'] {
   color: var(--text); background: var(--control-on);
 }
+/* Every toggle button that is on looks the same, the strongest fill on screen: Demo, Song, Hold, Freeze, Snapshot,
+   Listen (issue 47: Song and Hold, side by side, differed). Options in a group keep their own. */
+.tool[aria-pressed='true'] { color: var(--bg); background: var(--text); border-color: var(--text); }
 .segmented :is([aria-checked='true'], [aria-pressed='true']) { background: var(--segment-on); }
 /* Inside a section, the chosen option is filled with the section's colour, as bright as its knobs' arcs (resolved on
    the option, so LFO 2 gets its own); its icon or word in the page colour, as on a held piano key. */
@@ -282,8 +285,6 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
   color: var(--bg); background: var(--stage);
 }
 .tool:focus-visible, .segmented button:focus-visible { outline: 2px solid var(--text); outline-offset: 1px; }
-/* Freeze is a mode the whole page is in, so its "on" state is the strongest on screen. */
-.tool-mode[aria-pressed='true'] { color: var(--bg); background: var(--text); border-color: var(--text); }
 .tool kbd { font-size: var(--text-xs); padding: 0 4px; line-height: 14px; color: inherit; border-color: currentColor; opacity: 0.6; }
 .tool-icon { width: var(--control-h); padding: 0; justify-content: center; }
 /* An octave button shaded once the piano is shifted that way: a grey that deepens with each octave from C4. */
@@ -361,7 +362,8 @@ main[data-frozen] .tap-canvases::before {
    where the controls sit above it, a height of its own). The canvas fills the box and never sizes it. */
 .timeline-plot { position: relative; min-width: 0; height: clamp(120px, 9vw, 200px); }
 .timeline canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; background: var(--bg); border-radius: var(--radius-inner); }
-.timeline-key { display: flex; gap: 14px; font-size: var(--text-sm); color: var(--muted); font-weight: 500; text-transform: none; letter-spacing: 0; }
+/* Wraps rather than running past the section's edge where the plot column is narrow (861–879 px, issue 47). */
+.timeline-key { display: flex; flex-wrap: wrap; justify-content: flex-end; min-width: 0; gap: 4px 14px; font-size: var(--text-sm); color: var(--muted); font-weight: 500; text-transform: none; letter-spacing: 0; }
 .timeline-key span { display: inline-flex; align-items: center; gap: 5px; }
 .timeline-key span::before { content: ''; width: 12px; height: 8px; border-radius: 2px; }
 .timeline-key [data-mark='amp']::before { background: color-mix(in srgb, var(--stage-amp) 45%, transparent); border-top: 1.5px solid var(--stage-amp); }
@@ -489,6 +491,8 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   font: inherit; letter-spacing: inherit; color: inherit; background: none; border: 0; border-radius: var(--radius-control); cursor: pointer;
 }
 .wordmark-button:focus-visible { outline: 2px solid var(--stage-osc); outline-offset: 3px; }
+/* It opens About: it answers the pointer as the other buttons do (issue 47). */
+.wordmark-button:hover { opacity: 0.8; }
 
 /* About: a splash over the page, centred, the mark large over the version and the credits. Its own auto margins
    centre it: the page's rules for main's children would otherwise pin it to the top on laptop windows. */
@@ -511,6 +515,8 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 }
 .about-credits dt { color: var(--muted); }
 .about-credits dd { margin: 0; }
+/* A link's words stay together ("Source on GitHub" broke over two lines, issue 47). */
+.about-credits a { white-space: nowrap; }
 .about a { color: inherit; text-underline-offset: 2px; }
 /* The welcome (a first visit): what to do first, over the two ways in, before the version and the credits. */
 .about-welcome { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); }
@@ -665,8 +671,8 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   display: grid; grid-template-columns: var(--control-h) minmax(0, calc(10 * var(--white-key-max)));
   grid-template-areas: 'up piano' 'down piano'; gap: 4px; justify-content: center;
 }
-.keyboard > :first-child { grid-area: down; }
-.keyboard > :last-child { grid-area: up; }
+.keyboard > [aria-label='Octave up'] { grid-area: up; }
+.keyboard > [aria-label='Octave down'] { grid-area: down; }
 .keyboard > .tip-anchor { grid-area: piano; display: flex; container-type: inline-size; }
 /* Each octave button half the piano's height. */
 .keyboard > .tool-icon { width: auto; height: auto; align-self: stretch; }
@@ -797,7 +803,10 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 @media (max-width: 959px) { .patch-name { width: 104px; } }
 @media (max-width: 879px) { .patch-name { width: 86px; } }
 .patch-name span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-.patch-changed { width: 6px; height: 6px; border-radius: 50%; background: var(--text); flex: none; }
+/* The dot sits at the button's right, out of the flow, so the centred name never slides when it appears (issue 47); the
+   button keeps room for it on both sides. */
+.patch-name { position: relative; padding-inline: 16px; }
+.patch-changed { position: absolute; right: 7px; top: calc(50% - 3px); width: 6px; height: 6px; border-radius: 50%; background: var(--text); }
 /* Never taller than the window below the header: the Presets scroll, the rest of the panel stays in view. */
 /* The Patch panel is anchored to the header (like the Display and MIDI panels), spanning its full width, so the
    Presets lay out in wide rows and the whole list is on screen at once; it scrolls only on short windows. */
@@ -860,14 +869,19 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 }
 .display-panel .toolbar { border-color: var(--muted); }
 
-/* The MIDI panel: what is connected, the Activity Monitor, MIDI Learn and the Mappings. Anchored to the header's
-   centre (like the Display panel to its right edge), so it always fits the window. */
+/* The MIDI panel: what is connected, the Activity Monitor, MIDI Learn and the Mappings. On a phone it is anchored to
+   the header's centre, so it always fits the window; from 2 × 2 up, under its own button, its right edge on the
+   button's (issue 47: it opened 271 px away at 1440, 831 px at 2560). */
 .midi-menu { position: static; }
 .midi-panel {
   position: absolute; z-index: 60; top: calc(100% + 6px); left: 50%; transform: translateX(-50%);
   width: min(380px, 100%); display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 14px;
   background: var(--panel); border: 1px solid var(--muted); border-radius: var(--radius-panel); box-shadow: var(--shadow-panel);
   font-size: var(--text-md);
+}
+@media (min-width: 601px) {
+  .midi-menu { position: relative; }
+  .midi-panel { left: auto; right: 0; transform: none; }
 }
 .midi-connection { margin: 0; color: var(--muted); line-height: 1.4; }
 .midi-heading { font-size: var(--text-sm); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }

@@ -1,4 +1,4 @@
-import { describeControl, describeTarget } from '../midi/describe';
+import { describeControl, describeTargetShort } from '../midi/describe';
 import type { Mapping } from '../midi/mappings';
 import type { QuickSetupState } from '../midi/quickSetup';
 
@@ -32,11 +32,11 @@ export function QuickSetupPanel({ state, last, onBack, onSkip, onFinish, onCance
       {phase === 'running' ? (
         <>
           <p className="quick-setup-prompt" role="status">
-            <span>{step.prompt}</span> → <b>{[step.group, describeTarget(step.target)].filter(Boolean).join(' · ')}</b>
+            <span>{step.prompt}</span> → <b>{[step.group, describeTargetShort(step.target)].filter(Boolean).join(' · ')}</b>
           </p>
           {last && (
             <p className="quick-setup-last">
-              {[steps[last.step].group, describeTarget(last.mapping.target)].filter(Boolean).join(' · ')} ← {describeControl(last.mapping.control)}
+              {[steps[last.step].group, describeTargetShort(last.mapping.target)].filter(Boolean).join(' · ')} ← {describeControl(last.mapping.control)}
             </p>
           )}
           <div className="quick-setup-actions">

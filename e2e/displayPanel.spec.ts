@@ -42,6 +42,7 @@ test('the header is a single line at every laptop width, no taller than the pian
   for (const width of [1710, 1100, 872]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/');
+    await expect(page.locator('.piano')).toBeVisible(); // drawn: under load the page may still be starting
     const [header, piano] = await page.evaluate(() => ['header', '.piano'].map((s) => document.querySelector(s)!.getBoundingClientRect().height));
     expect(header, `${width}px`).toBeLessThanOrEqual(64);
     expect(header, `${width}px`).toBe(piano);

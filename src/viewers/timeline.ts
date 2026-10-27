@@ -1,6 +1,6 @@
 import type { Modulation } from '../engine/synthEngine';
 import { formatParam } from '../patch/patch';
-import { cssVar, curveWidth, prepareCanvas } from './canvas';
+import { cssVar, curveWidth, haloText, prepareCanvas } from './canvas';
 import { createFreezeLatch } from './freezeLatch';
 import type { ViewSettings } from './viewSettings';
 
@@ -46,9 +46,6 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
       g.lineTo(x, pad + plot);
       g.stroke();
     }
-    g.textAlign = 'right';
-    for (const hz of [100, 1000, 10000]) g.fillText(hz >= 1000 ? `${hz / 1000}k` : `${hz}`, width - 3, yHz(hz) - 2);
-    g.textAlign = 'left';
 
     const columns = Math.ceil(width);
     const samples = Array.from({ length: columns }, (_, x) => source.modulationAt(timeAt(x + 0.5)));
@@ -116,6 +113,14 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
     dot('--stage-filter', yLevel(last.filter));
     dot('--stage-amp', yLevel(last.amp));
     dot('--cutoff-line', yHz(last.cutoff));
+
+    // The Cutoff scale's labels over the traces, each on a halo of the background, so the Cutoff line never strikes
+    // through them (issue 47).
+    g.font = '10px system-ui, sans-serif';
+    g.fillStyle = cssVar(canvas, '--muted');
+    g.textAlign = 'right';
+    for (const hz of [100, 1000, 10000]) haloText(g, hz >= 1000 ? `${hz / 1000}k` : `${hz}`, width - 3, yHz(hz) - 2, background);
+    g.textAlign = 'left';
 
     // The Maths Layer: the Effective Cutoff's value now, beside its dot, on a chip of the background.
     const maths = view().overlays.maths;

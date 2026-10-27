@@ -8,8 +8,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
-- Load the GoatCounter script with an integrity check (the licence's scope is now stated in About and the README) ([review 11](./reviews/2026-10-26/11-oss-legal.md))
-- "Play to start the sound" should be written in much bigger letters.
 
 ## Dropped
 
@@ -30,3 +28,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-26, night: the legal review's three bugs fixed at once. The build writes `third-party-notices.txt` (React, react-dom with its Modernizr notice, scheduler), linked from About; the README and a Privacy line in About say what the counter receives; the counter loads only where the deploy sets `GOATCOUNTER_URL`, which the workflow does for this repository alone.
 2026-10-26, night: the favicon missing in Safari fixed at once, to confirm in Safari after the next deploy: the PNG is now the last icon listed (Safari takes the last, and doesn't draw the SVG that was there).
 2026-10-26, night: the Demo's Kick hard to hear went to [50](./issues/50-demo-on-a-phone.md), done there: the Kick now starts from the Preset's own drop, from 440 Hz, which a phone speaker plays, rather than from 155 Hz.
+2026-10-27: done at once: the call to play in large letters, in the middle of the keys; the GoatCounter script pinned to its versioned file with an integrity hash (`vite.config.ts`).

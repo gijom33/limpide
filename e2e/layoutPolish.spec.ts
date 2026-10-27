@@ -1,0 +1,44 @@
+import { expect, test } from '@playwright/test';
+
+// Issue 47: the layout's loose ends.
+
+for (const [width, height] of [[1440, 900], [2560, 1300], [690, 830]] as const) {
+  test(`the MIDI panel opens under its own button, inside the window, at ${width}×${height}`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await page.goto('/');
+    const button = page.getByRole('button', { name: 'MIDI', exact: true });
+    await button.click();
+    const panel = (await page.getByRole('dialog', { name: 'MIDI' }).boundingBox())!;
+    const own = (await button.boundingBox())!;
+    expect(Math.abs(panel.x + panel.width - (own.x + own.width))).toBeLessThanOrEqual(1);
+    expect(panel.x).toBeGreaterThanOrEqual(0);
+    expect(panel.y).toBeGreaterThan(own.y + own.height);
+  });
+}
+
+test('the Timeline’s legend stays inside its section at 870 px', async ({ page }) => {
+  await page.setViewportSize({ width: 870, height: 900 });
+  await page.goto('/');
+  const section = (await page.getByRole('region', { name: 'LFO & Envelopes' }).boundingBox())!;
+  const key = (await page.locator('.timeline-key').boundingBox())!;
+  expect(key.x + key.width).toBeLessThanOrEqual(section.x + section.width);
+});
+
+test('the Patch name stays put when its changed dot appears', async ({ page }) => {
+  await page.goto('/');
+  const name = page.locator('.patch-name > span').first();
+  const before = (await name.boundingBox())!.x;
+  const cutoff = page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name: 'Cutoff' });
+  await cutoff.focus();
+  await page.keyboard.press('ArrowUp');
+  await expect(page.locator('.patch-changed')).toBeVisible();
+  expect((await name.boundingBox())!.x).toBeCloseTo(before, 0);
+});
+
+test('Tab meets the octave buttons as they stand: up, then down', async ({ page, browserName }) => {
+  test.skip(browserName === 'webkit', 'Safari tabs to buttons only when its settings ask it to');
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Octave up' }).focus();
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('button', { name: 'Octave down' })).toBeFocused();
+});

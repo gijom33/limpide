@@ -209,6 +209,33 @@ describe('pitch bend (issue 52)', () => {
   });
 });
 
+describe('fast Cutoff modulation at full Resonance (issue 41)', () => {
+  it('stays finite and inside full scale: the biquads never blow up, however fast the Cutoff moves', async () => {
+    // The worst case the knobs allow: the LFO at 20 Hz and full Depth on the Cutoff, a snapping Filter Envelope at
+    // full Amount, full Resonance, both Slopes, a low and a high Note.
+    for (const filterSlope of [12, 24] as const) {
+      for (const note of [33, 81]) {
+        const s = await render(
+          1,
+          {
+            filterSlope, resonance: 1, cutoff: 2000, lfoDestination: 'cutoff', lfoRate: 20, lfoAmount: 1,
+            filterEnvAmount: 5, filterAttack: 0.001, filterDecay: 0.05, filterSustain: 0, ampAttack: 0.001, ampSustain: 1,
+          },
+          (e) => {
+            for (let t = 0; t < 1; t += 0.125) e.noteOn(note, 1, t);
+          },
+        );
+        let worst = 0;
+        for (const v of s) {
+          expect(Number.isFinite(v)).toBe(true);
+          worst = Math.max(worst, Math.abs(v));
+        }
+        expect(worst, `${filterSlope} dB, Note ${note}`).toBeLessThanOrEqual(1);
+      }
+    }
+  });
+});
+
 describe('headroom', () => {
   it('never exceeds full scale at the output, even at maximum Resonance, Velocity and Sustain', async () => {
     let worst = 0;

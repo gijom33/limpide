@@ -1,6 +1,6 @@
 import { OSCILLATOR_LEVEL } from '../engine/synthEngine';
 import { frequencyAxis, levelAxis } from './axes';
-import { cssVar, curveWidth, prepareCanvas } from './canvas';
+import { cssVar, curveWidth, haloText, prepareCanvas } from './canvas';
 import { createFreezeLatch } from './freezeLatch';
 import { harmonicMarkers } from './harmonicMarkers';
 import { aboveFloor, ringsToDraw, spectrumOutline } from './outline';
@@ -97,6 +97,7 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
 
     const muted = cssVar(canvas, '--muted');
     const text = cssVar(canvas, '--text');
+    const background = cssVar(canvas, '--bg');
     g.font = '10px system-ui, sans-serif';
     g.strokeStyle = cssVar(canvas, '--grid');
     g.fillStyle = muted;
@@ -107,7 +108,6 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
       g.moveTo(x, 0);
       g.lineTo(x, height);
       g.stroke();
-      g.fillText(f >= 1000 ? `${f / 1000}k` : `${f}`, x + 3, height - 4);
     }
 
     const peak = columnPeaks(bins, binHz, columns, fAxis);
@@ -177,7 +177,7 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
       g.fillStyle = muted;
       g.textAlign = 'right';
       for (const t of viewer.levelScale === 'db' ? GAIN_TICKS : [0]) {
-        g.fillText(`${t === 0 ? '0' : `−${-t}`} dB`, width - 3, yOf(zero + t) - 2);
+        haloText(g, `${t === 0 ? '0' : `−${-t}`} dB`, width - 3, yOf(zero + t) - 2, background);
       }
       g.textAlign = 'left';
     }
@@ -217,6 +217,12 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
         g.stroke();
       }
     }
+
+    // The frequency axis's labels last, over the Harmonic bars, each on a halo of the background (issue 47).
+    g.font = '10px system-ui, sans-serif';
+    g.fillStyle = muted;
+    g.textAlign = 'left';
+    for (const f of fAxis.gridlines) haloText(g, f >= 1000 ? `${f / 1000}k` : `${f}`, xOf(f) + 3, height - 4, background);
 
     // Hover readout: frequency, nearest note and the level of the trace under the cursor.
     const cursor = hover?.();

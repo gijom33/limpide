@@ -29,7 +29,15 @@ const goatCounter = {
   transformIndexHtml: () => [
     {
       tag: 'script',
-      attrs: { 'data-goatcounter': counterUrl, async: true, src: 'https://gc.zgo.at/count.js' },
+      // A versioned file, which GoatCounter never changes, with its hash: if what arrives is ever different, the
+      // browser refuses to run it (the inbox's integrity check). A new version is a deliberate change here.
+      attrs: {
+        'data-goatcounter': counterUrl,
+        async: true,
+        src: 'https://gc.zgo.at/count.v4.js',
+        integrity: 'sha384-nRw6qfbWyJha9LhsOtSb2YJDyZdKvvCFh0fJYlkquSFjUxp9FVNugbfy8q1jdxI+',
+        crossorigin: 'anonymous',
+      },
       injectTo: 'body' as const,
     },
   ],
