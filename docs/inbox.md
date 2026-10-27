@@ -4,6 +4,7 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- I can "select" elements in the interface while clicking and dragging. That should not be the case. (The owner, 2026-10-27, Safari on a laptop: dragging across the page highlights the headings, labels and Viewers)
 - Favicon still not showing in Safari.
 - A square or saw LFO on Volume overshoots its edges (the LFO's Fourier series, Gibbs, about ±1.18): at full Depth the gain passes the Envelope's level by about 9 % and dips below 0 (polarity flips) for well under a millisecond at each edge, where the model stays at exactly ±1. The same overshoot reaches every destination. From the 1.12.0 code review.
 
