@@ -54,7 +54,7 @@ describe('harmonicSeries (Fourier series of each Waveform)', () => {
       }
       expect(peak, w).toBeCloseTo(1, 2);
     }
-  });
+  }, 30_000); // five Waveforms × 4096 points × 256 Harmonics: past the default limit when the whole suite runs at once
 
   it('keeps magnitudes consistent with the real/imag coefficients the engine plays', () => {
     const { real, imag, magnitudes } = harmonicSeries('pulse', 0.3, 32);

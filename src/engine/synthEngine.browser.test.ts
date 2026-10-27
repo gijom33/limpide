@@ -199,7 +199,7 @@ describe('headroom', () => {
       }
     }
     expect(worst).toBeLessThan(1);
-  });
+  }, 60_000); // 72 renders: past the default limit when the whole suite runs at once
 });
 
 describe('Waveforms match their Ideal Reference', () => {
