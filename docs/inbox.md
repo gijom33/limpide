@@ -9,6 +9,7 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- Ok I see the 3 buttons now. Make the buttons a bit smaller, use color for the “Play the Demo and “Follow the Tutorial” ones. Remove “Explore”. Keep those buttons in the about menu at all times. (The owner, 2026-10-27, on the welcome card)
 - The Harmonic Markers' ticks still draw over an empty Spectrum after a reload; only the Ideal rings hide. The owner wrote "ideal harmonic markers": to confirm whether the ticks should hide too. From the 1.12.1 review.
 - The Timeline key's tooltips are reached by hover and long press only: its entries are not focusable and have no description for screen readers. From the 1.12.1 review.
 - Folding the Demo card hides its caption, which is also what a screen reader hears change (aria-live). From the 1.12.1 review.
