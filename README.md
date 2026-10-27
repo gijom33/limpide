@@ -4,6 +4,10 @@
 
 ▶ **[Play it in your browser](https://gijom33.github.io/limpide/)**. Nothing to install.
 
+[![Limpide playing its Demo: the Oscillators, Filter and Amp side by side, each with its Scope and Spectrum, and the LFOs and Envelope Timeline below](docs/screenshot.png)](https://gijom33.github.io/limpide/)
+
+Play a sound, turn a knob, and see what it does: every picture on the page moves with the sound you hear.
+
 Ordinary synths give you a sound and a row of knobs, and the cause and effect stays hidden in the signal. Limpide is laid out as its own signal-flow diagram: Oscillators → Mixer → Filter → Amp, left to right, with live Viewers under every stage. Turn the Cutoff and you can see which Harmonics the Filter takes away.
 
 ## What you can do
@@ -40,7 +44,7 @@ Then open the address it prints (usually http://localhost:5173).
 | `npm run test:engine` | Audio engine tests in headless Chromium |
 | `npm run test:e2e` | End-to-end tests with Playwright |
 
-The browser tests need Playwright's Chromium once: `npx playwright install chromium`.
+The browser tests need Playwright's browsers once: `npx playwright install chromium webkit`.
 
 ## How it's built
 
@@ -49,6 +53,19 @@ TypeScript, React and Vite, on the browser's native Web Audio nodes; no audio li
 - [CONTEXT.md](CONTEXT.md): the project's vocabulary (Patch, Voice, Tap, Effective Cutoff…). Code and docs use these words exactly.
 - [docs/adr](docs/adr): architecture decisions and why they were made.
 - [docs/issues](docs/issues): the vertical slices the app was built in, in order.
+
+## How this was built
+
+Limpide was designed and directed by Guillaume Boillet, and its code written with [Claude Code](https://claude.com/claude-code), Anthropic's AI coding agent (every commit says so in its `Co-Authored-By` line). The work follows Matt Pocock's AI Hero method, and everything it produced is in this repository:
+
+1. **A PRD** ([docs/prd.md](docs/prd.md)): who it is for, the user stories, what is out of scope, how it is tested.
+2. **Issues** ([docs/issues](docs/issues)): vertical slices, each with what to build, its checklist and what was measured. Plans are "grilled" (questioned until the decisions are explicit) before they are built.
+3. **Decisions** ([docs/adr](docs/adr)) and a **glossary** ([CONTEXT.md](CONTEXT.md)), kept true to the code.
+4. **Tests first** where behaviour can be measured: the engine renders real audio and checks Harmonics against theory; Playwright plays the built site in two browsers.
+5. **An inbox** ([docs/inbox.md](docs/inbox.md)): bugs and ideas as they come, triaged into issues.
+6. **Reviews** ([docs/reviews](docs/reviews)): agents playing a dozen kinds of visitor (a curious contact, a synth player, a designer, a teacher, a screen-reader user, a sceptic of AI code…), their findings back in the inbox.
+
+The owner decides what Limpide is, what it looks like, and what ships; those decisions are dated in the issues. The agent proposes, writes the code, the tests and the docs, and checks its work in a real browser before it is committed.
 
 Every push to `main` is tested and deployed to GitHub Pages by [a workflow](.github/workflows/deploy.yml).
 

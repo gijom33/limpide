@@ -724,7 +724,7 @@ export function App() {
             <button type="button" className="tool tool-icon octave" aria-label="Octave down" {...shifted(DEFAULT_OCTAVE - octave)} onClick={() => setOctave((o) => shiftOctave(o, -1))}>
               {octave < DEFAULT_OCTAVE ? `−${DEFAULT_OCTAVE - octave}` : '−'}
             </button>
-            <Tooltip content={TIPS.keyboard}>
+            <Tooltip content={TIPS.keyboard} longPress={false}>
               <Piano octave={octave} held={demoNotes.length ? [...heldNotes, ...demoNotes] : heldNotes} input={session.input} invite={audioStatus === 'waiting'} />
             </Tooltip>
             <button type="button" className="tool tool-icon octave" aria-label="Octave up" {...shifted(octave - DEFAULT_OCTAVE)} onClick={() => setOctave((o) => shiftOctave(o, 1))}>

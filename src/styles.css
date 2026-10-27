@@ -503,6 +503,9 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .about-body { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); padding: 28px var(--space-4) var(--space-4); text-align: center; }
 .about-title { margin: 0; font-size: 30px; font-weight: 700; letter-spacing: -0.01em; text-transform: none; }
 .about-tagline { margin: 0; max-width: 32ch; font-size: 15px; line-height: 1.4; }
+/* On a touch screen the welcome says how to reach the explanations: a long press (issue 49). */
+.about-touch-hint { display: none; }
+@media (hover: none) { .about-touch-hint { display: block; margin-top: calc(-1 * var(--space-2)); } }
 /* The plain-words line first, for someone who has never touched a synth; what it is, in synth words, under it. */
 .about-subtitle { margin: -6px 0 0; max-width: 36ch; font-size: var(--text-md); line-height: 1.4; color: var(--muted); }
 .about-version { margin: 0; font-size: var(--text-md); color: var(--muted); font-variant-numeric: tabular-nums; }
@@ -616,7 +619,9 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   display: block; width: 132px; min-width: 72px; height: auto; min-height: 48px; align-self: stretch;
   background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-inner);
 }
-.lfo-plot svg { display: block; width: 100%; height: 100%; }
+.lfo-plot { position: relative; }
+/* The drawing fills whatever box the layout gives the plot; it never sizes it (issue: full Depth, full height). */
+.lfo-plot svg { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
 .lfo-plot-axis { stroke: var(--grid); }
 .lfo-plot-line { fill: none; stroke: var(--stage); stroke-width: var(--curve-w); stroke-linejoin: round; vector-effect: non-scaling-stroke; }
 .lfo-plot-dot { fill: var(--stage); stroke: var(--bg); stroke-width: 1.5; }

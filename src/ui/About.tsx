@@ -3,6 +3,8 @@ import type { Welcome } from '../app/welcome';
 import { Logo } from './Logo';
 
 const SOURCE = 'https://github.com/gijom33/limpide';
+/** Where to reach the author (issue 48). */
+const AUTHOR = 'https://www.linkedin.com/in/guillaume-boillet-18208310';
 
 /** "24 Oct 2026" from "2026-10-24". */
 const day = (iso: string) =>
@@ -60,6 +62,7 @@ export function About({
                 ? 'Someone shared a sound with you. Hear it, then turn any knob and see what changes.'
                 : 'Hear what it can do, or start playing: your keyboard, the piano or any knob.'}
             </p>
+            <p className="about-touch-hint">Touch and hold any control to see what it does.</p>
             <div className="about-actions">
               <button
                 type="button"
@@ -92,7 +95,13 @@ export function About({
         </p>
         <dl className="about-credits">
           <dt>Made by</dt>
-          <dd>Guillaume Boillet</dd>
+          <dd>
+            Designed and directed by{' '}
+            <a href={AUTHOR} target="_blank" rel="noreferrer">
+              Guillaume Boillet
+            </a>
+            ; code written with Claude Code, Anthropic’s AI coding agent.
+          </dd>
           <dt>Sound</dt>
           <dd>The Web Audio API, in your browser</dd>
           <dt>Music</dt>
