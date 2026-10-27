@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** done (2026-10-27): diagnosed, not reproduced; the engine adds no hiss, and the one case the article raises that could apply, fast modulation at high Resonance, neither blows up nor leaves full scale. Kept as regression tests.
+**Status:** closed by the owner (2026-10-27): no issue. "Hiss" was the wrong word for what was heard. Before that: diagnosed, not reproduced; the engine adds no hiss, and the one case the article raises that could apply, fast modulation at high Resonance, neither blows up nor leaves full scale. Kept as regression tests.
 
 Remedies that stay within [ADR-0001](../adr/0001-native-web-audio-nodes-over-custom-dsp.md) (native Web Audio nodes) come first: keeping the Cutoff a margin below the Nyquist frequency, taming the Q as the Cutoff nears it, or running the AudioContext at a higher sample rate. A remedy that needs custom DSP (an oversampled filter in an AudioWorklet) would supersede ADR-0001 and needs a new ADR first. It would also move Limpide toward a native plugin (the roadmap).
 
