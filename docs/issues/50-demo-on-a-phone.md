@@ -10,3 +10,4 @@
 - [ ] The sound's name and a way to stop the Demo in view while it plays, the header slid away or not
 - [ ] Some sign of progress (which part of how many, or time left)
 - [ ] A tap on a key that stops the Demo says so
+- [ ] The Demo's first sound heard on a phone speaker: the Kick Preset (C2, about 65 Hz) is mostly below what a phone speaker plays, so the Demo seems to start in silence. Much more Noise in it (the click a phone can play), in the Demo's part or in the Preset itself. From the owner, 2026-10-26

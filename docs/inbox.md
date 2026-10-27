@@ -4,12 +4,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
-- Make the noise level much higher in the first patch of demo song, it's hard to hear on a phone speaker for instance.
 
 ## Ideas
-
-- Want to introduce a tutorial where user picks a preset and the UI guides him on how to set it with explanations along the way.
-- Want to create a new persona for testing: open-source legal expert.
 
 ## Dropped
 
@@ -26,3 +22,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-26: the knob test that timed out in WebKit, fixed at once. A hundred round trips (a turn, a read, a look at every knob, twenty times for five knobs) took 33 to 43 s under 8 workers and passed 60 s under a full run; the turning and looking now run in the page, one round trip a knob, 7 to 9 s under the same load, and the test still fails when a value can resize its knob.
 2026-10-26: the header on the wider layouts (the phone's structure and piano for 2 × 2, a bigger piano and one order of buttons everywhere) went to [44](./issues/44-header-across-layouts.md), decisions open.
 2026-10-26, the persona reviews ([42](./issues/42-reviews.md)): their 33 lines went to [45](./issues/45-timeline-draw-cost.md) (the Timeline's draw cost), [46](./issues/46-robust-start.md) (Firefox, storage refused, MIDI asked at load), [47](./issues/47-layout-polish.md) (layout polish), [48](./issues/48-credit-and-contact.md) (who built it and how, a way to reach the author), [49](./issues/49-explanations-everywhere.md) (tooltips for the core controls, on touch too), [50](./issues/50-demo-on-a-phone.md) (the Demo on a phone), [51](./issues/51-keyboard-and-screen-reader.md) (keyboard and screen reader), [52](./issues/52-midi-keyboards.md) (MIDI keyboards), [53](./issues/53-presets-and-synth-features.md) (Presets and synth features), [54](./issues/54-docs-and-ci-truth.md) (docs and CI), [55](./issues/55-app-into-hooks.md) (App.tsx by concern) and [56](./issues/56-ready-for-contributors.md) (contributors and process); the visible signal chain and a "start here" to [40](./issues/40-preset-tutorials.md).
+2026-10-26, evening: the Demo's first sound too quiet on a phone went to [50](./issues/50-demo-on-a-phone.md) (it is the Kick, mostly below what a phone speaker plays); a guided tutorial per Preset to [40](./issues/40-preset-tutorials.md), the same idea, still to grill; an open-source legal expert to [42](./issues/42-reviews.md) as profile 11, to run.

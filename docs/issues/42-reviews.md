@@ -132,6 +132,15 @@ Reviewed by agents in headless browsers: none could hear, so sound was judged fr
 9. **TypeScript, React and Web Audio expert:** strong, honest types (no `any`), no node leaks; two fixes before approving: the Timeline's cost per frame and the blank page without storage.
 10. **Methodology expert:** a well-chosen solo method whose documents keep 206 commits coherent; it lacks a second pair of eyes (the code review never ran), frozen ADRs, and commit-to-issue traceability.
 
+### 11. The open-source legal expert
+
+A lawyer or compliance lead who reviews open-source projects before a company uses or contributes to them. Added by the owner, 2026-10-26; to run.
+
+- **Where:** the repository (licence, `package.json` and the lockfile, README, About), the site (the visit counter, the share links). **Time:** 30 minutes
+- **Goals:** say whether a company could use, fork or contribute to it, and what the owner should fix first
+- **Asks:** Is the licence clear, and does it cover the code, the docs and the Presets? Are the dependencies' licences compatible (a licence scan of the lockfile)? Who owns code written with an AI agent, and is that stated? Are third-party names (the Synido TempoPAD C16, Chrome, Safari) used fairly? Does the visit counter (GoatCounter) need a privacy note, and is the one in the README enough? Is there a contributor agreement, or does it need one?
+- **Success:** a list of risks, ranked, each with the file and the fix
+
 ## To do
 
 - [x] Choose the personas (owner, 2026-10-26: profiles 1 to 4 the owner's, 5 to 7 completing them)
@@ -139,3 +148,4 @@ Reviewed by agents in headless browsers: none could hear, so sound was judged fr
 - [ ] The owner taps through the real LinkedIn link once on a phone (the in-app browser)
 - [ ] The Learner's second run, once the tutorials are built (issue 40)
 - [ ] The code review, since the first commit; the findings to the inbox
+- [ ] Profile 11's review (the open-source legal expert)
