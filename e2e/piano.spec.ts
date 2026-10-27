@@ -21,6 +21,20 @@ test('the on-screen piano plays, and lights the key while it sounds', async ({ p
   await expect(c4).toHaveAttribute('aria-pressed', 'false');
 });
 
+test('with Hold on, a key pressed again lets its Note go: the sound stops and the key goes dark (the owner, 2026-10-27)', async ({ page }) => {
+  await page.goto('/');
+  await ready(page);
+  await page.getByRole('button', { name: 'Hold' }).click();
+  const c4 = page.getByRole('group', { name: 'Piano' }).getByRole('button', { name: 'C4' });
+  await page.keyboard.press('KeyA');
+  await expect(c4).toHaveAttribute('aria-pressed', 'true');
+  await expect.poll(() => db(page), { timeout: 10000 }).toBeGreaterThan(-40);
+  await page.keyboard.press('KeyA');
+  await expect(c4).toHaveAttribute('aria-pressed', 'false');
+  await expect.poll(() => db(page), { timeout: 10000 }).toBeLessThan(-60);
+  await expect(page.getByRole('button', { name: 'Hold' })).toHaveAttribute('aria-pressed', 'true'); // Hold stays on
+});
+
 test('computer keys light the matching piano key', async ({ page }) => {
   await page.goto('/');
   await ready(page);

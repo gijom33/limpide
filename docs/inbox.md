@@ -9,7 +9,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
-- In “hold mode”, pressing a key again should deactivate it. (The owner, 2026-10-27)
 - One list per LFO Destination: a new one meant editing the type and both CHOICES lists (`patch.ts`), the Tutorials' names (`tutorial.ts`), the picker's labels and stages (`DestinationPicker.tsx`, its stage type repeating STAGES) and the CSS; the label "Volume" is written twice. From the 1.12.0 code review.
 - `tremolo()` writes out `lfoOffset`'s sum again rather than calling it (to compute the swings once). From the 1.12.0 code review.
 - ADR-0006's "at full Sustain the Amp Tap equals the Filter Tap" holds only without an LFO on Volume; the ADR is frozen (ADR-0010), so a note needs a new ADR or a line elsewhere. From the 1.12.0 code review.
@@ -34,3 +33,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-26, night: the favicon missing in Safari fixed at once, to confirm in Safari after the next deploy: the PNG is now the last icon listed (Safari takes the last, and doesn't draw the SVG that was there).
 2026-10-26, night: the Demo's Kick hard to hear went to [50](./issues/50-demo-on-a-phone.md), done there: the Kick now starts from the Preset's own drop, from 440 Hz, which a phone speaker plays, rather than from 155 Hz.
 2026-10-27: done at once: the call to play in large letters, in the middle of the keys; the GoatCounter script pinned to its versioned file with an integrity hash (`vite.config.ts`).
+2026-10-27: the owner's Hold idea (a key pressed again lets its held Note go) done at once: `src/input/noteInput.ts`, with unit tests for one Voice and several and a piano test. It reverses the earlier rule that a re-pressed held Note retriggers.

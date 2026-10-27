@@ -99,6 +99,20 @@ describe('Hold', () => {
     expect(events.at(-1)).toEqual({ type: 'noteOn', note: 64, velocity: 0.7 });
   });
 
+  it('lets the held Note go when its key is pressed again; another press plays it anew (the owner, 2026-10-27)', () => {
+    const { input, events, lit } = setup();
+    input.setHold(true);
+    input.press(60, 1);
+    input.release(60);
+    input.press(60, 1);
+    expect(events.at(-1)).toEqual({ type: 'noteOff' });
+    expect(lit()).toEqual([]);
+    input.release(60);
+    expect(events).toHaveLength(2);
+    input.press(60, 0.5);
+    expect(events.at(-1)).toEqual({ type: 'noteOn', note: 60, velocity: 0.5 });
+  });
+
   it('closes the Gate when switched off with no key down', () => {
     const { input, events } = setup();
     input.setHold(true);
@@ -242,15 +256,20 @@ describe('several Voices (polyphony, ADR-0007)', () => {
     expect(lit()).toEqual([64]);
   });
 
-  it('with Hold, pressing a held Note again retriggers it rather than releasing it', () => {
-    const { input, events } = poly();
+  it('with Hold, pressing a Note Hold keeps again lets it go, and the others keep sounding (the owner, 2026-10-27)', () => {
+    const { input, events, lit } = poly();
     input.setHold(true);
     input.press(60, 1);
     input.release(60);
+    input.press(64, 1);
+    input.release(64);
     input.press(60, 0.8);
+    expect(events.at(-1)).toEqual({ type: 'release', note: 60 });
+    expect(lit()).toEqual([64]);
+    input.release(60); // the key coming up does nothing more
+    expect(events.at(-1)).toEqual({ type: 'release', note: 60 });
+    input.press(60, 0.8); // pressed once more, it plays again
     expect(events.at(-1)).toEqual({ type: 'noteOn', note: 60, velocity: 0.8 });
-    input.setHold(false); // the key is down again, so Hold off releases nothing
-    expect(events.filter((e) => e.type === 'release')).toHaveLength(0);
   });
 
   it('keeps a Note sounding until every source holding it lets go', () => {

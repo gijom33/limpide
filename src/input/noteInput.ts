@@ -12,7 +12,10 @@ export type VoiceEvent =
 export interface NoteInput {
   press(note: number, velocity: number): void;
   release(note: number): void;
-  /** Hold keeps Notes sounding after their keys are released, until a new key (1 Voice) or Hold off. */
+  /**
+   * Hold keeps Notes sounding after their keys are released, until a new key (1 Voice), the same key pressed
+   * again, or Hold off.
+   */
   setHold(on: boolean): void;
   /** How many Notes may sound at once (the Patch's Voices). Changing it releases everything sounding. */
   setVoices(count: Voices): void;
@@ -22,7 +25,8 @@ export interface NoteInput {
  * Merges Note presses from every source (computer keyboard, on-screen piano, MIDI) into Voice events. With one
  * Voice, last-note Note Priority: the newest held Note sounds, and releasing it returns to the previous one. With
  * more, every press is a Note On and every release a release of that Note (ADR-0007). A Note held by two
- * sources sounds until both let go. Hold keeps sounding Notes going after their keys are released.
+ * sources sounds until both let go. Hold keeps sounding Notes going after their keys are released; pressing one of
+ * their keys again lets that Note go (the owner's call, 2026-10-27), and the key coming up does nothing more.
  * `onHeld` hears the Notes the on-screen piano lights: the keys down, and the Notes Hold keeps sounding.
  */
 export function createNoteInput(emit: (event: VoiceEvent) => void, onHeld: (notes: number[]) => void = () => {}): NoteInput {
@@ -62,6 +66,14 @@ export function createNoteInput(emit: (event: VoiceEvent) => void, onHeld: (note
         emit({ type: 'noteOff' });
       }
     },
+    /** The Note Hold keeps, pressed again: it stops. */
+    letGo(note: number) {
+      if (kept !== note) return false;
+      kept = null;
+      gateOpen = false;
+      emit({ type: 'noteOff' });
+      return true;
+    },
     holdOff() {
       kept = null;
       if (gateOpen && !held.length) {
@@ -89,6 +101,12 @@ export function createNoteInput(emit: (event: VoiceEvent) => void, onHeld: (note
       report();
       if (!hold) emit({ type: 'release', note });
     },
+    letGo(note: number) {
+      if (!sustained.delete(note)) return false;
+      sounding = sounding.filter((n) => n !== note);
+      emit({ type: 'release', note });
+      return true;
+    },
     holdOff() {
       for (const note of sustained) emit({ type: 'release', note });
       sounding = sounding.filter((n) => !sustained.has(n));
@@ -99,6 +117,8 @@ export function createNoteInput(emit: (event: VoiceEvent) => void, onHeld: (note
 
   return {
     press(note, velocity) {
+      // Not counted as held: its key coming up finds nothing to release.
+      if (hold && !held.includes(note) && mode().letGo(note)) return report();
       holders.set(note, (holders.get(note) ?? 0) + 1);
       if (held.includes(note)) return;
       held.push(note);
