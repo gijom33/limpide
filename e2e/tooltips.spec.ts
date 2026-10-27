@@ -62,17 +62,19 @@ test('headings with an explanation are plain text, with no dotted underline, and
 
 // Issue 59: the Viewers, every fader, the LFO knobs and the Timeline's key explain themselves too.
 test('every Viewer, fader and the Timeline key explain themselves, the tooltip beside what it explains', async ({ page }) => {
+  test.slow(); // twenty-odd hovers, each waiting out the hover delay
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
   const tip = page.getByRole('tooltip').locator('visible=true');
   const check = async (target: import('@playwright/test').Locator, title: string) => {
-    await page.mouse.move(0, 0);
-    await target.hover();
-    await expect(tip, title).toBeVisible();
-    await expect(tip.locator('strong'), title).toHaveText(title);
-    // Placed by what it explains, not at the page's corner (a Viewer's anchor has no box of its own).
-    const [t, b] = [(await tip.boundingBox())!, (await target.boundingBox())!];
-    expect(Math.abs(t.x + t.width / 2 - (b.x + b.width / 2)), title).toBeLessThan(Math.max(b.width, t.width));
+    await expect(async () => {
+      await page.mouse.move(0, 0);
+      await target.hover({ timeout: 2000 });
+      await expect(tip.locator('strong'), title).toHaveText(title, { timeout: 2000 });
+      // Placed by what it explains, not at the page's corner (a Viewer's anchor has no box of its own).
+      const [t, b] = [(await tip.boundingBox({ timeout: 1000 }))!, (await target.boundingBox())!];
+      expect(Math.abs(t.x + t.width / 2 - (b.x + b.width / 2)), title).toBeLessThan(Math.max(b.width, t.width));
+    }).toPass({ timeout: 15000 });
   };
   for (const tap of ['Oscillator', 'Filter', 'Amp']) {
     await check(page.getByRole('img', { name: `${tap} Scope` }), `${tap} Scope`);

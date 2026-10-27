@@ -21,10 +21,12 @@ async function doEverything(page: Page) {
     const next = card(page).getByRole('button', { name: /^(Next|Finish)$/ });
     if (!(await next.isVisible())) return;
     const doIt = action(page, 'Do it for me');
-    // A Step already within reach ticks itself after a moment (Bass's Filter Decay), taking the button away: then
-    // there is nothing left to click.
-    if (await doIt.isVisible()) await doIt.click({ timeout: 3000 }).catch(() => {});
-    await expect(next).toBeEnabled();
+    // A Step already within reach ticks itself after a moment (Bass's Filter Decay), taking the button away mid-click:
+    // so click until the Step is made, however slow the machine.
+    await expect(async () => {
+      if (await doIt.isVisible()) await doIt.click({ timeout: 2000 });
+      await expect(next).toBeEnabled({ timeout: 2000 });
+    }).toPass({ timeout: 30000 });
     await next.click();
   }
 }
@@ -64,6 +66,7 @@ test('a Tutorial from the Patches panel: Init loaded, the control ringed with it
 });
 
 test('"Do it for me" to the end: the sound is the Preset, named after it, and the Tutorial is ticked, even after a reload', async ({ page }) => {
+  test.slow(); // fifteen Steps
   await open(page, 'Bass');
   await action(page, 'Start').click();
   await doEverything(page);
