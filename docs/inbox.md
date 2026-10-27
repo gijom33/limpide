@@ -9,6 +9,11 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- The Harmonic Markers' ticks still draw over an empty Spectrum after a reload; only the Ideal rings hide. The owner wrote "ideal harmonic markers": to confirm whether the ticks should hide too. From the 1.12.1 review.
+- The Timeline key's tooltips are reached by hover and long press only: its entries are not focusable and have no description for screen readers. From the 1.12.1 review.
+- Folding the Demo card hides its caption, which is also what a screen reader hears change (aria-live). From the 1.12.1 review.
+- The cards' phone breakpoint (600 px) is written in `cardPlacement.tsx` as well as the CSS; the clamp uses innerWidth, so a card can slide under a scroll bar. From the 1.12.1 review.
+- Two inbox rules slipped on 2026-10-27: the Ideal-rings and Waveform-alignment reports were fixed without an inbox line first. From the 1.12.1 review.
 - One list per LFO Destination: a new one meant editing the type and both CHOICES lists (`patch.ts`), the Tutorials' names (`tutorial.ts`), the picker's labels and stages (`DestinationPicker.tsx`, its stage type repeating STAGES) and the CSS; the label "Volume" is written twice. From the 1.12.0 code review.
 - `tremolo()` writes out `lfoOffset`'s sum again rather than calling it (to compute the swings once). From the 1.12.0 code review.
 - ADR-0006's "at full Sustain the Amp Tap equals the Filter Tap" holds only without an LFO on Volume; the ADR is frozen (ADR-0010), so a note needs a new ADR or a line elsewhere. From the 1.12.0 code review.
