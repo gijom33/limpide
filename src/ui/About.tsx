@@ -115,7 +115,11 @@ export function About({
             <a href={AUTHOR} target="_blank" rel="noreferrer">
               Guillaume Boillet
             </a>
-            ; code written with Claude Code, Anthropic’s AI coding agent.
+            ; code written with Claude Code, Anthropic’s AI coding agent, following Matt Pocock’s{' '}
+            <a href="https://www.aihero.dev" target="_blank" rel="noreferrer">
+              AI Hero
+            </a>{' '}
+            methodology.
           </dd>
           <dt>Sound</dt>
           <dd>The Web Audio API, in your browser</dd>
