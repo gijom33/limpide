@@ -75,6 +75,7 @@ export function MidiPanel({
           data-connected={devices.length > 0 || undefined}
           data-waiting={(state.kind === 'ready' && !devices.length) || undefined}
           data-unavailable={!available || undefined}
+          data-unsupported={state.kind === 'unsupported' || undefined}
           data-learning={learning || undefined}
           onClick={() => {
             if (!open) onOpen();

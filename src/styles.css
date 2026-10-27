@@ -502,7 +502,9 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .about::backdrop { background: rgba(0, 0, 0, 0.55); }
 .about-body { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); padding: 28px var(--space-4) var(--space-4); text-align: center; }
 .about-title { margin: 0; font-size: 30px; font-weight: 700; letter-spacing: -0.01em; text-transform: none; }
-.about-tagline { margin: 0; max-width: 32ch; font-size: 14px; line-height: 1.4; }
+.about-tagline { margin: 0; max-width: 32ch; font-size: 15px; line-height: 1.4; }
+/* The plain-words line first, for someone who has never touched a synth; what it is, in synth words, under it. */
+.about-subtitle { margin: -6px 0 0; max-width: 36ch; font-size: var(--text-md); line-height: 1.4; color: var(--muted); }
 .about-version { margin: 0; font-size: var(--text-md); color: var(--muted); font-variant-numeric: tabular-nums; }
 .about-credits {
   display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px var(--space-3); width: 100%; margin: var(--space-1) 0;
@@ -721,6 +723,9 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .midi-status[data-unavailable] { color: var(--muted); text-decoration: line-through; }
 .midi-status[data-unavailable] .midi-icon { color: var(--danger); }
 .midi-status[data-unavailable] .midi-slash { display: inline; }
+/* A browser without Web MIDI (Safari, every browser on iPhone and iPad) is no error to fix: struck through, but muted,
+   not red (issue 49). Red stays for MIDI refused, which site settings can undo. */
+.midi-status[data-unsupported] .midi-icon { color: var(--muted); }
 .midi-count { font-variant-numeric: tabular-nums; }
 
 /* Compact knobs: one size for every knob on the page, chosen by the window. When the window is too narrow (below
