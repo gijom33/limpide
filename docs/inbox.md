@@ -4,8 +4,13 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- The built site ships React without its MIT copyright notice: the production bundle has no `@license` or copyright line (checked: `grep -c` finds 0 in `dist/assets/*.js`). Have the build write a third-party notices file and link it from About ([review 11](./reviews/2026-10-26/11-oss-legal.md))
+- README line 20 says "no cookies and no personal data", but each visit sends GoatCounter the IP address, User-Agent, Referer, path and screen width; the site has no privacy note. Reword ("no cookies, no personal data stored") and add a Privacy line to About; a lawyer to confirm it is enough for EU visitors ([review 11](./reviews/2026-10-26/11-oss-legal.md))
+- A fork that builds and deploys counts its visitors on the owner's GoatCounter: `vite.config.ts` hard-codes `https://gijom33.goatcounter.com/count`. Read it from an environment variable set only in `.github/workflows/deploy.yml`; no counter without it ([review 11](./reviews/2026-10-26/11-oss-legal.md))
 
 ## Ideas
+
+- State what the MIT licence covers: the code, the docs, the Presets and the Demo's music (now only implied); and load the GoatCounter script with an integrity check ([review 11](./reviews/2026-10-26/11-oss-legal.md))
 
 ## Dropped
 

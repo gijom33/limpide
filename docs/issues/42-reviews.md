@@ -134,7 +134,7 @@ Reviewed by agents in headless browsers: none could hear, so sound was judged fr
 
 ### 11. The open-source legal expert
 
-A lawyer or compliance lead who reviews open-source projects before a company uses or contributes to them. Added by the owner, 2026-10-26; to run.
+A lawyer or compliance lead who reviews open-source projects before a company uses or contributes to them. Added by the owner, 2026-10-26; ran the same day ([review 11](../reviews/2026-10-26/11-oss-legal.md)).
 
 - **Where:** the repository (licence, `package.json` and the lockfile, README, About), the site (the visit counter, the share links). **Time:** 30 minutes
 - **Goals:** say whether a company could use, fork or contribute to it, and what the owner should fix first
@@ -148,4 +148,4 @@ A lawyer or compliance lead who reviews open-source projects before a company us
 - [ ] The owner taps through the real LinkedIn link once on a phone (the in-app browser)
 - [ ] The Learner's second run, once the tutorials are built (issue 40)
 - [ ] The code review, since the first commit; the findings to the inbox
-- [ ] Profile 11's review (the open-source legal expert)
+- [x] Profile 11's review (the open-source legal expert), 2026-10-26: a company could use or fork it today (MIT, the 3 shipped dependencies MIT, no copyleft among 108 dev dependencies, no third-party assets), once a fork adds the third-party notices and drops the counter; contributions should wait for a CONTRIBUTING (issue 56). Its findings in the inbox; AI authorship stated is issue 48
