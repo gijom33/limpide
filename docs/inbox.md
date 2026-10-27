@@ -10,6 +10,7 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- Why is there no ideal ring at harmonics 2 for the Tremolo Keys patch? (The owner, 2026-10-27.) Answered: the Ideal Reference is Osc 1's Waveform alone (a Triangle: odd Harmonics only); the 2 is Osc 2, a sine an octave up. To decide: should the Ideal include Osc 2 (and the Sub), at their Mixer levels?
 - The ticks is the smaller knobs deserve to be a bit smaller than in the big knobs, basically a scaled down version. (The owner, 2026-10-27)
 - Ok I see the 3 buttons now. Make the buttons a bit smaller, use color for the “Play the Demo and “Follow the Tutorial” ones. Remove “Explore”. Keep those buttons in the about menu at all times. (The owner, 2026-10-27, on the welcome card)
 - The Harmonic Markers' ticks still draw over an empty Spectrum after a reload; only the Ideal rings hide. The owner wrote "ideal harmonic markers": to confirm whether the ticks should hide too. From the 1.12.1 review.
