@@ -5,7 +5,7 @@ import { type AudioStatus, unlockAudio } from '../app/unlockAudio';
 import { rememberWelcome, welcomeFor } from '../app/welcome';
 import { OSCILLATOR_LEVEL } from '../engine/synthEngine';
 import { shiftOctave } from '../input/keyboardLayout';
-import { idealReference } from '../music/idealReference';
+import { idealPartials } from '../music/idealReference';
 import { type Formula, harmonicFormula, responseFormula } from '../music/maths';
 import { CHOICES, type ParamId, type Patch, setFilter, setParam, setWaveform } from '../patch/patch';
 import { PRESETS } from '../patch/presets';
@@ -205,7 +205,7 @@ export function App() {
   // The Ideal Reference at the Oscillator Tap's level: the same series the engine plays, scaled by the Nominal Level.
   // biome-ignore lint/correctness/useExhaustiveDependencies: only what the Ideal Reference depends on, not the whole Patch
   const ideal = useMemo(
-    () => idealReference(patch, IDEAL_HARMONICS).map((m) => m * OSCILLATOR_LEVEL),
+    () => idealPartials(patch, IDEAL_HARMONICS).map((p) => ({ ...p, level: p.level * OSCILLATOR_LEVEL })),
     [patch.waveform, patch.pulseWidth, patch.mixOsc1, patch.mixSub],
   );
 

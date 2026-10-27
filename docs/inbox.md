@@ -9,7 +9,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
-- Why is there no ideal ring at harmonics 2 for the Tremolo Keys patch? (The owner, 2026-10-27.) Answered: the Ideal Reference is Osc 1's Waveform alone (a Triangle: odd Harmonics only); the 2 is Osc 2, a sine an octave up. To decide: should the Ideal include Osc 2 (and the Sub), at their Mixer levels?
 - The Harmonic Markers' ticks still draw over an empty Spectrum after a reload; only the Ideal rings hide. The owner wrote "ideal harmonic markers": to confirm whether the ticks should hide too. From the 1.12.1 review.
 - The Timeline key's tooltips are reached by hover and long press only: its entries are not focusable and have no description for screen readers. From the 1.12.1 review.
 - Folding the Demo card hides its caption, which is also what a screen reader hears change (aria-live). From the 1.12.1 review.
@@ -47,3 +46,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-27: the owner's welcome changes done at once: smaller buttons, Play the Demo in green and Follow the Tutorial in orange (near-black words, for contrast in both themes), beside Close at the bottom of About every time; Explore gone. Then, the owner's call, Demo, Tutorial and Song on the header's left and Hold first on its right, which keeps the piano centred.
 2026-10-27: the small knobs' tick scaled down with their cap, done at once (shorter, starting off-centre, 2 px).
 2026-10-27: "the demo deactivates the ideal rings", explained, not a bug: Ideal stays on (it is stored), but the Kick and the riser have no Oscillator (Osc 1 at 0), so the Ideal Reference has nothing to draw; the rings are back from Acid on, and after the Demo ends on Init.
+2026-10-27: the owner's Ideal question went to [61](./issues/61-ideal-every-oscillator.md), grilled and built there: the Ideal from every Oscillator, a shape each.

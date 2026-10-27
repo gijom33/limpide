@@ -84,6 +84,7 @@ test('"Do it for me" to the end: the sound is the Preset, named after it, and th
 });
 
 test('off the path: nothing is locked, and the last card names what differs and matches the Preset in one tap', async ({ page }) => {
+  test.slow(); // every Step of Acid: past 30 s in WebKit under load
   await page.goto('/');
   await patchName(page).click();
   // The door beside the Preset itself.

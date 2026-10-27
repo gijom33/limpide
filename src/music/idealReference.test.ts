@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { defaultPatch } from '../patch/patch';
 import { harmonicSeries } from './harmonics';
-import { idealReference } from './idealReference';
+import { idealPartials, idealReference } from './idealReference';
 
 const saw = harmonicSeries('saw', 0.5, 64).magnitudes;
 const square = harmonicSeries('square', 0.5, 64).magnitudes;
@@ -19,5 +19,43 @@ describe('Ideal Reference: the Harmonic levels the Oscillator Tap should show', 
     expect(ideal[3]).toBeCloseTo(square[3] * 0.5);
     expect(ideal[4]).toBeCloseTo(saw[2]);
     expect(ideal[10]).toBeCloseTo(saw[5]);
+  });
+});
+
+describe('the Ideal from every Oscillator (the owner, 2026-10-27): each source’s marks at its own Mixer level', () => {
+  const sine = { waveform: 'sine', osc2Waveform: 'sine' } as const;
+  const of = (partials: ReturnType<typeof idealPartials>, source: string, ratio: number) =>
+    partials.find((p) => p.source === source && Math.abs(p.ratio - ratio) < 1e-3);
+
+  it('is Osc 1’s series alone while the others are silent', () => {
+    const partials = idealPartials({ ...defaultPatch(), mixOsc1: 0.5 }, 64);
+    expect(new Set(partials.map((p) => p.source))).toEqual(new Set(['osc1']));
+    for (const n of [1, 2, 3, 10]) expect(of(partials, 'osc1', n)!.level).toBeCloseTo(saw[n] * 0.5);
+  });
+
+  it('puts Osc 2’s Harmonics where they fall: a fifth up, between Osc 1’s; with Detune, a few cents off', () => {
+    const fifth = idealPartials({ ...defaultPatch(), ...sine, mixOsc2: 0.5, osc2Semitone: 7 }, 64);
+    expect(of(fifth, 'osc2', 2 ** (7 / 12))!.level).toBeCloseTo(0.5 * harmonicSeries('sine', 0.5, 4).magnitudes[1]);
+    const detuned = idealPartials({ ...defaultPatch(), ...sine, mixOsc2: 1, osc2Detune: 10 }, 64);
+    expect(of(detuned, 'osc2', 2 ** (10 / 1200))).toBeDefined();
+  });
+
+  it('shows every source on a Harmonic they share, each at its own level', () => {
+    // Osc 2 a saw an octave up: its fundamental on Osc 1’s second Harmonic.
+    const partials = idealPartials({ ...defaultPatch(), mixOsc1: 1, mixOsc2: 0.8, osc2Octave: 1 }, 64);
+    expect(of(partials, 'osc1', 2)!.level).toBeCloseTo(saw[2]);
+    expect(of(partials, 'osc2', 2)!.level).toBeCloseTo(saw[1] * 0.8);
+  });
+
+  it('with the Sub on, counts from the Sub’s pitch: the Sub’s marks on every Harmonic it has, Osc 1’s on the even ones', () => {
+    const partials = idealPartials({ ...defaultPatch(), mixOsc1: 1, mixSub: 0.5 }, 64);
+    expect(of(partials, 'sub', 1)!.level).toBeCloseTo(square[1] * 0.5);
+    expect(of(partials, 'osc1', 2)!.level).toBeCloseTo(saw[1]);
+    expect(of(partials, 'osc1', 3)).toBeUndefined();
+  });
+
+  it('comes in order, low to high', () => {
+    const partials = idealPartials({ ...defaultPatch(), mixOsc2: 1, osc2Semitone: 7, mixSub: 1 }, 32);
+    expect(partials.map((p) => p.ratio)).toEqual([...partials.map((p) => p.ratio)].sort((a, b) => a - b));
   });
 });

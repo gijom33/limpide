@@ -294,7 +294,7 @@ export const OVERLAY_TIPS: Record<Overlay, TipContent> = {
   },
   ideal: {
     title: 'Ideal Reference',
-    body: 'Rings where theory puts each Harmonic of Osc 1’s Waveform, at its Mixer level. On the Filter Tap they show where each Harmonic should land after the Filter.',
+    body: 'Marks where theory puts each Harmonic of each Oscillator, at its Mixer level: a circle for Osc 1, a square for Osc 2, a triangle for the Sub. On the Filter Tap they show where each should land after the Filter.',
   },
   curve: {
     title: 'Response Curve',

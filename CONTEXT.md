@@ -199,7 +199,7 @@ A label on the Spectrum identifying a Harmonic by number (the fundamental by its
 _Avoid_: Peak label
 
 **Ideal Reference**:
-The theoretical Harmonic levels of the current Waveform (e.g. 1/n for saw), drawn for comparison with what's measured.
+The theoretical Harmonic levels of each Oscillator's Waveform (e.g. 1/n for saw) at its Mixer level, drawn for comparison with what's measured: a circle for Osc 1, a square for Osc 2, a triangle for the Sub, each where its Harmonics fall.
 _Avoid_: Expected spectrum, model curve
 
 **Response Curve**:
