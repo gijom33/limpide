@@ -21,7 +21,7 @@ const SPAN = 1;
  * The LFO as it moves: its recent history from the Modulation model, scrolling, the newest at the right with a dot
  * (ADR-0003: the same LFO the sound has). Its height is the Depth: flat at 0, the plot's full height at 100 %. Drawn by the render loop, outside React (ADR-0002).
  */
-export function LfoPlot({ engine, lfo }: { engine: SynthEngine; lfo: LfoNumber }) {
+export function LfoPlot({ engine, lfo, label }: { engine: SynthEngine; lfo: LfoNumber; label: string }) {
   const box = useRef<HTMLDivElement>(null);
   const svg = useRef<SVGSVGElement>(null);
   const axis = useRef<SVGLineElement>(null);
@@ -59,7 +59,7 @@ export function LfoPlot({ engine, lfo }: { engine: SynthEngine; lfo: LfoNumber }
   }, [engine, lfo]);
 
   return (
-    <div className="lfo-plot" ref={box} role="img" aria-label={`LFO ${lfo}`} data-lfo={lfo}>
+    <div className="lfo-plot" ref={box} role="img" aria-label={label} data-lfo={lfo}>
       <svg ref={svg} aria-hidden="true">
         <line ref={axis} className="lfo-plot-axis" x1={PAD} />
         <path ref={line} className="lfo-plot-line" d="" />

@@ -1,5 +1,6 @@
 import type { Waveform } from '../music/harmonics';
 import { useLearnable } from './learn';
+import { radioGroupKeys, radioTabIndex } from './radioGroup';
 
 // One cycle of each Waveform, drawn in a 28×16 box.
 const ICONS: Record<Waveform, string> = {
@@ -28,13 +29,14 @@ interface Props {
 export function WaveformPicker({ label, value, onChange, choice }: Props) {
   const learnable = useLearnable({ kind: 'choice', id: choice });
   return (
-    <div className="segmented icon-picker waveforms" role="radiogroup" aria-label={label} {...learnable}>
-      {WAVEFORM_ORDER.map((w) => (
+    <div className="segmented icon-picker waveforms" role="radiogroup" aria-label={label} onKeyDown={radioGroupKeys} {...learnable}>
+      {WAVEFORM_ORDER.map((w, i) => (
         <button
           key={w}
           type="button"
           role="radio"
           aria-checked={w === value}
+          tabIndex={radioTabIndex(w === value, i, true)}
           aria-label={LABELS[w]}
           onClick={() => onChange(w)}
         >

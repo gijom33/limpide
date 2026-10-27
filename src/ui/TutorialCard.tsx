@@ -31,7 +31,7 @@ const selectorOf = (step: Step) => (step.kind === 'display' ? `[data-overlay="${
  * Display option rings the Display button until its panel opens. A control on a hidden tab, or out of sight, is
  * brought into view above the card.
  */
-function useRing(step: Step | undefined) {
+function useRing(step: Step | undefined, made: boolean) {
   useEffect(() => {
     if (!step) return;
     let marked: Element[] = [];
@@ -48,7 +48,8 @@ function useRing(step: Step | undefined) {
       clear();
       if (!live) return null;
       let element = document.querySelector(selectorOf(step));
-      if (step.kind === 'display' && !element?.checkVisibility()) element = document.querySelector('button[aria-label="Display"]');
+      // Until the Display option is on, the Display button stands for it while its panel is shut; once on, nothing.
+      if (step.kind === 'display' && !element?.checkVisibility()) element = made ? null : document.querySelector('button[aria-label="Display"]');
       if (!element) return null;
       element.setAttribute('data-tutorial', '');
       if (step.kind !== 'display') element.setAttribute('data-tutorial-target', `→ ${targetText(step)}`);
@@ -85,7 +86,7 @@ function useRing(step: Step | undefined) {
       document.removeEventListener('click', follow);
       clear();
     };
-  }, [step]);
+  }, [step, made]);
 }
 
 /**
@@ -99,7 +100,7 @@ export function TutorialCard({ tutorial, about, index, done, differs, listening,
   const card = useRef<HTMLElement>(null);
   // On a phone the card shows two lines; More shows the rest.
   const [expanded, setExpanded] = useState(false);
-  useRing(step);
+  useRing(step, made);
   useDocked(card);
 
   const progress = step ? `Step ${index + 1} of ${steps.length}` : index < 0 ? `${steps.length} steps` : 'Done';
@@ -119,6 +120,7 @@ export function TutorialCard({ tutorial, about, index, done, differs, listening,
         {index < 0 && (
           <>
             <p>{about}</p>
+            {tutorial.intro && <p>{tutorial.intro}</p>}
             <p className="tutorial-then">Build it from Init, one control at a time. Play any Note, or press Listen, to hear each change.</p>
           </>
         )}

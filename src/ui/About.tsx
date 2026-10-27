@@ -43,6 +43,7 @@ export function About({
 
   const { version, commit, date, counted } = __BUILD__;
   return (
+    // biome-ignore lint/a11y/useKeyWithClickEvents: a click on the backdrop; the keyboard closes it with Escape
     <dialog
       ref={dialog}
       className="about"

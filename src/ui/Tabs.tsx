@@ -75,7 +75,12 @@ export function Tabs({ label, tabs, shared }: { label: string; tabs: Tab[]; shar
           >
             {t.label}
             {/* The dot's room is kept while it is hidden, so it never pushes the tabs after it. */}
-            {t.badgeLabel && <span className="tab-badge" data-on={t.badge || undefined} aria-label={t.badge ? t.badgeLabel : undefined} />}
+            {/* Its meaning in words for a screen reader, which reads no label on a plain span (issue 51). */}
+            {t.badgeLabel && (
+              <span className="tab-badge" data-on={t.badge || undefined}>
+                {t.badge && <span className="visually-hidden">{` (${t.badgeLabel})`}</span>}
+              </span>
+            )}
           </button>
           );
           return t.tip ? (

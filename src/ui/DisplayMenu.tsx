@@ -10,10 +10,16 @@ import { Tooltip } from './Tooltip';
 export function DisplayMenu({ active, children }: { active: boolean; children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const wrapper = useRef<HTMLDivElement>(null);
+  const button = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    // Escape closes it back to its button, not to the page (issue 51).
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      setOpen(false);
+      button.current?.focus();
+    };
     const onPointer = (e: PointerEvent) => !wrapper.current?.contains(e.target as Node) && setOpen(false);
     document.addEventListener('keydown', onKey);
     document.addEventListener('pointerdown', onPointer);
@@ -33,6 +39,7 @@ export function DisplayMenu({ active, children }: { active: boolean; children: R
         }}
       >
         <button
+          ref={button}
           type="button"
           className="tool"
           aria-label="Display"

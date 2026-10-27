@@ -4,9 +4,11 @@
 
 **Blocked by:** none
 
-**Status:** to do. **Before the LinkedIn post:** the short CONTRIBUTING and a bug-report template, if visitors are invited to report
+**Status:** in progress (2026-10-27): the files and the tags done; the GitHub Releases go out with the next push; the process habits wait for a grilling with the owner
 
-- [ ] A short CONTRIBUTING: how to run it, where bugs and ideas go (GitHub Issues for visitors, as `docs/inbox.md` says), what kind of help is welcome
-- [ ] A bug-report template; a code of conduct
-- [ ] Tags and GitHub Releases for versions, from the release log (`docs/issues/25-releases.md`)
+- [x] A short CONTRIBUTING: how to run it, where bugs and ideas go (GitHub Issues for visitors, as `docs/inbox.md` says), what kind of help is welcome
+- [x] A bug-report template; a code of conduct (and an idea template, a pull request template)
+- [ ] Tags and GitHub Releases for versions, from the release log (`docs/issues/25-releases.md`): tagged locally, v1.0.0 to v1.10.0 on their version commits; pushing the tags and creating the Releases (`gh release create`, notes from the release log) waits for the owner's next push, since it publishes
 - [ ] Grill with the owner, then record (an ADR or the release checklist): the code review at each minor version; ADRs with a status, a date and who decided, reversed by a new ADR rather than edited; commits naming their issue (or "no issue: why"); inbox lines committed before triage; shorter commit subjects
+
+The code of conduct adopts the Contributor Covenant 2.1 by reference (its text is not copied), with the owner's LinkedIn as the private contact: the owner's email is not published in the repository.

@@ -51,10 +51,11 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, view, show
   return (
     <figure className="tap" data-tap={name} aria-label={`${name} Tap`}>
       <div className="tap-canvases">
-        <canvas className="scope" ref={scopeRef} aria-label={`${name} Scope`} />
+        <canvas className="scope" ref={scopeRef} role="img" aria-label={`${name} Scope`} />
         <canvas
           className="spectrum"
           ref={spectrumRef}
+          role="img"
           aria-label={`${name} Spectrum`}
           onPointerMove={(e) => {
             const r = e.currentTarget.getBoundingClientRect();
@@ -63,7 +64,7 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, view, show
           onPointerLeave={() => (hoverRef.current = null)}
         />
         {formula && (
-          <p className="maths-formula" aria-label={`${name} formula`}>
+          <p className="maths-formula" role="note" aria-label={`${name} formula`}>
             <span>{formula.formula}</span>
             <span className="maths-where">{formula.where}</span>
           </p>

@@ -10,6 +10,7 @@ test('Space freezes the Viewers on a frame while the sound carries on', async ({
   await openDisplay(page);
   const freeze = page.getByRole('button', { name: 'Freeze' });
   await expect(page.getByLabel('Amp Scope', { exact: true })).toBeVisible(); // audio is up and listening for keys
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur()); // Space on a button presses it
 
   await page.keyboard.down('KeyA');
   await expect.poll(() => level(page)).toBeGreaterThan(-40);
@@ -27,14 +28,18 @@ test('Space freezes the Viewers on a frame while the sound carries on', async ({
   await expect.poll(() => level(page)).toBeLessThan(-80);
 });
 
-test('Space never presses the focused button instead', async ({ page }) => {
+test('Space presses the focused button, as buttons do, and Freezes only from elsewhere (issue 51)', async ({ page }) => {
   await page.goto('/');
   await openDisplay(page);
   const snapshot = page.getByRole('button', { name: 'Snapshot', exact: true });
   await snapshot.focus();
   await page.keyboard.press('Space');
+  await expect(snapshot).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('button', { name: 'Freeze' })).toHaveAttribute('aria-pressed', 'false');
+  // On a knob, Space still Freezes.
+  await page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name: 'Cutoff' }).focus();
+  await page.keyboard.press('Space');
   await expect(page.getByRole('button', { name: 'Freeze' })).toHaveAttribute('aria-pressed', 'true');
-  await expect(snapshot).toHaveAttribute('aria-pressed', 'false');
 });
 
 test('a Snapshot can be taken and cleared', async ({ page }) => {

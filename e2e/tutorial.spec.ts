@@ -36,7 +36,7 @@ test('a Tutorial from the Patches panel: Init loaded, the control ringed with it
   await expect(progress(page)).toHaveText('Step 1 of 15');
 
   // Osc 2's level, on the Mixer tab: the tab is brought into view, the fader ringed with its target.
-  const fader = page.getByRole('slider', { name: 'Osc 2' });
+  const fader = page.getByRole('slider', { name: 'Osc 2', exact: true });
   await expect(fader).toBeVisible();
   await expect(ringed(page)).toHaveAttribute('data-learn', 'param:mixOsc2');
   await expect(ringed(page)).toHaveAttribute('data-tutorial-target', '→ 50 %');
@@ -45,13 +45,11 @@ test('a Tutorial from the Patches panel: Init loaded, the control ringed with it
   // Turned by keys to near half: the Step is made, the fader snaps to the exact target, and the note shows.
   await fader.focus();
   const note = card(page).getByText('Louder, not different');
-  // A press at a time, at a person's pace: the Step snaps the fader when it is reached, on the next render.
-  for (let i = 0; i < 30 && !(await note.isVisible()); i++) {
-    await page.keyboard.press('ArrowUp');
-    await page.waitForTimeout(60);
-  }
+  // Up to 46 %, within reach: once it rests there a moment, the Step counts and the fader snaps to the target.
+  for (let i = 0; i < 23; i++) await page.keyboard.press('ArrowUp');
+  await expect(fader).toHaveAttribute('aria-valuetext', '46 %');
   await expect(note).toBeVisible();
-  await expect(fader).toHaveAttribute('aria-valuetext', '50 %'); // from 46 %, within reach
+  await expect(fader).toHaveAttribute('aria-valuetext', '50 %');
   await expect(fader).toBeFocused(); // the card never takes the focus
   await action(page, 'Next').click();
   await expect(ringed(page)).toHaveAttribute('data-learn', 'choice:osc2Waveform');
@@ -177,4 +175,17 @@ test.describe('a first visit', () => {
     await expect(about).toBeHidden();
     await expect(card(page)).toHaveAccessibleName('Tutorial: Bass');
   });
+});
+
+test('a drag that passes through the target on its way past does not count: the control must rest within reach', async ({ page }) => {
+  await open(page, 'Bass');
+  await action(page, 'Start').click();
+  const fader = page.getByRole('slider', { name: 'Osc 2', exact: true });
+  await expect(fader).toBeVisible();
+  await fader.focus();
+  // Through 50 % to 80 % in quick presses: never at rest within reach.
+  for (let i = 0; i < 40; i++) await page.keyboard.press('ArrowUp');
+  await page.waitForTimeout(800);
+  await expect(card(page).getByText('Louder, not different')).toBeHidden();
+  await expect(action(page, 'Next')).toBeDisabled();
 });

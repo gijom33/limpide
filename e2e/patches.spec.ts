@@ -67,12 +67,12 @@ test('a share link opens the same sound in a fresh page', async ({ page, browser
   await patchName(page).click();
   await page.getByRole('button', { name: 'Copy share link' }).click();
   const link = await page.getByRole('textbox', { name: 'Share link' }).inputValue();
-  expect(link).toMatch(/#p=[A-Za-z0-9_-]+$/);
+  expect(link).toMatch(/#p=[A-Za-z0-9_-]+&n=Pure%20Sine$/); // its name travels with it (issue 53)
 
   const fresh = await browser.newPage();
   await fresh.goto(link);
   await expect(cutoff(fresh)).toHaveAttribute('aria-valuetext', value!);
-  await expect(patchName(fresh)).toContainText('Shared Patch');
+  await expect(patchName(fresh)).toContainText('Pure Sine');
   await fresh.close();
 });
 
@@ -163,7 +163,7 @@ test('the group names take a narrow column, the long ones on two lines', async (
   const menu = page.getByRole('dialog', { name: 'Patches' });
   // Each line of a group's name, as drawn.
   const lines = (group: string) =>
-    menu.getByRole('group', { name: group }).locator('h4').evaluate((h) => {
+    menu.getByRole('group', { name: group }).locator('.patch-group-name').evaluate((h) => {
       const range = document.createRange();
       range.selectNodeContents(h);
       return [...range.getClientRects()].map((r) => ({ y: r.y + r.height / 2, right: r.right - h.getBoundingClientRect().left }));

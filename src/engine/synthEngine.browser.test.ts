@@ -189,6 +189,26 @@ describe('fundamental', () => {
   });
 });
 
+describe('pitch bend (issue 52)', () => {
+  it('moves the sound by its cents, and the model and Cycle Lock with it', async () => {
+    const A2 = 45; // 110 Hz
+    const steady = { resonance: 0, ampAttack: 0.001, ampSustain: 1, cutoff: 20000 };
+    let engine!: ReturnType<typeof createSynthEngine>;
+    const s = await render(1, steady, (e) => {
+      engine = e;
+      e.noteOn(A2, 1, 0);
+      e.setBend(200, 0.2); // two semitones up: 123.47 Hz
+    });
+    const last = [s.length - SR / 2, s.length] as const;
+    const bent = 110 * 2 ** (200 / 1200);
+    // The fundamental is at the bent pitch, not the played one.
+    expect(dB(toneAmplitude(s, SR, bent, ...last) / toneAmplitude(s, SR, 110, ...last))).toBeGreaterThan(20);
+    expect(engine.modulationAt(0.8).pitch).toBeCloseTo(A2 + 2, 6);
+    expect(engine.modulationAt(0.1).pitch).toBeCloseTo(A2, 6);
+    expect(engine.fundamental()).toBeCloseTo(bent, 1);
+  });
+});
+
 describe('headroom', () => {
   it('never exceeds full scale at the output, even at maximum Resonance, Velocity and Sustain', async () => {
     let worst = 0;

@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import type { ParamId } from '../patch/patch';
-import { useParamControl } from './paramControl';
+import { useParamControl, useWheel } from './paramControl';
 
 /** How far a pointer may wander before a press on the track counts as a drag (a scroll, on touch screens). */
 const TAP_SLOP = 4;
@@ -22,6 +22,7 @@ export function Fader({ id, value, onChange, inactive }: Props) {
   const c = useParamControl(id, value, onChange);
   const cap = useRef<HTMLDivElement>(null);
   const press = useRef<{ y: number; position: number; onCap: boolean; moved: boolean } | null>(null);
+  const wheel = useWheel(c.position, c.setPosition);
 
   // Where the cap's centre would be for a pointer at `clientY`: the cap travels the track less its own height.
   const positionAt = (track: HTMLElement, clientY: number) => {
@@ -33,6 +34,7 @@ export function Fader({ id, value, onChange, inactive }: Props) {
   return (
     <div className="knob" data-kind="fader" data-inactive={inactive || undefined} {...c.attributes}>
       <div
+        ref={wheel}
         className="fader"
         style={{ '--position': c.position } as React.CSSProperties}
         onPointerDown={(e) => {
@@ -66,6 +68,7 @@ export function Fader({ id, value, onChange, inactive }: Props) {
         }}
       >
         <div className="fader-fill" />
+        {/* biome-ignore lint/a11y/useAriaPropsSupportedByRole: the slider role comes from c.slider */}
         <div ref={cap} className="fader-cap" aria-orientation="vertical" {...c.slider} />
       </div>
       {c.text}

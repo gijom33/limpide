@@ -1,5 +1,6 @@
 import type { Target } from '../midi/mappings';
 import { useLearnable } from './learn';
+import { radioGroupKeys, radioTabIndex } from './radioGroup';
 
 interface Props<T extends string | number> {
   /** Accessible name of the choice, e.g. "Frequency axis". */
@@ -20,13 +21,14 @@ export function Segmented<T extends string | number>({ label, caption, value, op
   return (
     <div className="segmented-field">
       {caption && <span className="field-caption" aria-hidden="true">{caption}</span>}
-      <div className="segmented" role="radiogroup" aria-label={label} {...learnable}>
-        {options.map((o) => (
+      <div className="segmented" role="radiogroup" aria-label={label} onKeyDown={radioGroupKeys} {...learnable}>
+        {options.map((o, i) => (
           <button
             key={String(o.value)}
             type="button"
             role="radio"
             aria-checked={o.value === value}
+            tabIndex={radioTabIndex(o.value === value, i, options.some((x) => x.value === value))}
             aria-label={o.name}
             onClick={() => onChange(o.value)}
           >

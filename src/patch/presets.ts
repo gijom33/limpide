@@ -1,6 +1,6 @@
 import type { Library } from './library';
 import { defaultPatch, type Patch } from './patch';
-import { patchFromShare } from './serialize';
+import { readShareHash } from './serialize';
 
 export const PRESET_GROUPS = [
   'Start',
@@ -457,10 +457,13 @@ export function presetAfter(name: string, delta: number): Preset {
 }
 
 /** What plays when the page opens: a share link, else last session's Patch, else Init. */
-export function initialPatch(hash: string, library: Library): { patch: Patch; name: string } {
-  const shared = hash.startsWith('#p=') ? patchFromShare(hash.slice(3)) : undefined;
-  if (shared) return { patch: shared, name: 'Shared Patch' };
+/** What a shared sound is called when its link carries no name. */
+export const SHARED_NAME = 'Shared Patch';
+
+export function initialPatch(hash: string, library: Library): { patch: Patch; name: string; shared: boolean } {
+  const shared = hash.startsWith('#p=') ? readShareHash(hash) : undefined;
+  if (shared) return { patch: shared.patch, name: shared.name ?? SHARED_NAME, shared: true };
   const last = library.loadCurrent();
-  if (last) return { patch: last, name: 'Last session' };
-  return { patch: PRESETS[0].patch, name: PRESETS[0].name };
+  if (last) return { patch: last, name: 'Last session', shared: false };
+  return { patch: PRESETS[0].patch, name: PRESETS[0].name, shared: false };
 }

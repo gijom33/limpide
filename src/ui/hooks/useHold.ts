@@ -10,6 +10,15 @@ import type { Patch } from '../../patch/patch';
  */
 export function useHold(session: AudioSession, patchRef: MutableRefObject<Patch>) {
   const [hold, setHold] = useState(false);
+  // A keyboard's sustain pedal holds Notes as Hold does, while it is down (issue 52). It reaches the Note input at once,
+  // not on the next render: a Note released just after the pedal goes down must be held.
+  const holdRef = useRef(hold);
+  holdRef.current = hold;
+  const pedalRef = useRef(false);
+  const setPedal = (down: boolean) => {
+    pedalRef.current = down;
+    session.input.setHold(holdRef.current || down);
+  };
   const [heldNotes, setHeldNotes] = useState<number[]>([]);
   const heldRef = useRef(heldNotes);
   heldRef.current = heldNotes;
@@ -17,7 +26,7 @@ export function useHold(session: AudioSession, patchRef: MutableRefObject<Patch>
   const [rhythm, setRhythm] = useState<Rhythm | null>(null);
 
   useEffect(() => session.onHeld(setHeldNotes), [session]);
-  useEffect(() => session.input.setHold(hold), [session, hold]);
+  useEffect(() => session.input.setHold(hold || pedalRef.current), [session, hold]);
 
   const pressHold = () => {
     setHold(holdTaps.press(performance.now() / 1000, heldRef.current.length > 0));
@@ -50,5 +59,5 @@ export function useHold(session: AudioSession, patchRef: MutableRefObject<Patch>
     };
   }, [session, hold, rhythm, patchRef]);
 
-  return { hold, pressHold, pressHoldRef, heldNotes };
+  return { hold, pressHold, pressHoldRef, heldNotes, setPedal };
 }

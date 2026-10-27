@@ -46,6 +46,21 @@ export function patchToShare(patch: Patch): string {
   return btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
+/** The part of a share link after its #: the Patch, and its name when it has one worth keeping (issue 53). */
+export function shareHash(patch: Patch, name?: string): string {
+  return `p=${patchToShare(patch)}${name ? `&n=${encodeURIComponent(name)}` : ''}`;
+}
+
+/** A share link's Patch and name (a link from before 1.11 has no name), or undefined when the link is damaged. */
+export function readShareHash(hash: string): { patch: Patch; name?: string } | undefined {
+  const params = new URLSearchParams(hash.replace(/^#/, ''));
+  const encoded = params.get('p');
+  const patch = encoded === null ? undefined : patchFromShare(encoded);
+  if (!patch) return undefined;
+  const name = params.get('n')?.trim().slice(0, 60);
+  return { patch, name: name || undefined };
+}
+
 /** Reads a share link's Patch, or undefined when the link is damaged. */
 export function patchFromShare(text: string): Patch | undefined {
   try {

@@ -28,9 +28,11 @@ test('keyboard users get the same explanation on focus, and Escape dismisses it'
   await page.getByRole('button', { name: 'Display' }).focus(); // open the panel from the keyboard, as a keyboard user would
   await page.keyboard.press('Enter');
   await page.getByRole('button', { name: 'Snapshot', exact: true }).focus();
-  await expect(page.getByRole('tooltip')).toBeVisible();
+  const snapshotTip = page.getByRole('tooltip').filter({ hasText: 'faint grey trace' });
+  await expect(snapshotTip).toBeVisible();
   await page.keyboard.press('Escape');
-  await expect(page.getByRole('tooltip')).toBeHidden();
+  // Gone (Escape also closes the panel, back to the Display button, whose own explanation may show: issue 51).
+  await expect(snapshotTip).toBeHidden();
 });
 
 test('every toolbar control explains itself, without doubling up on native browser tooltips', async ({ page }) => {

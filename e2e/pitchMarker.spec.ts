@@ -1,4 +1,5 @@
 import { expect, type Page, test } from '@playwright/test';
+import { sliderName } from './helpers';
 
 // Pitch has no knob, so its modulation shows on the piano (issue 21): a marker at the pitch the newest Note
 // sounds at, between keys when it is between them. It slides with Glide and wobbles with an LFO on Pitch.
@@ -26,7 +27,7 @@ async function aimAtPitch(page: Page) {
 
 async function turnUp(page: Page, region: string, name: string, steps: number) {
   // A stage is a region; an LFO is a group within its section.
-  const slider = page.getByRole(region.startsWith('LFO ') ? 'group' : 'region', { name: region, exact: true }).getByRole('slider', { name, exact: true });
+  const slider = page.getByRole(region.startsWith('LFO ') ? 'group' : 'region', { name: region, exact: true }).getByRole('slider', { name: sliderName(name) });
   await slider.evaluate(async (el, n) => {
     for (let i = 0; i < n; i++) {
       el.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));

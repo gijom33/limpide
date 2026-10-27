@@ -1,6 +1,6 @@
-import { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { mathsReadout, widestMathsReadout } from '../music/maths';
-import { formatParam, PARAMS, type ParamId } from '../patch/patch';
+import { formatParam, PARAMS, type ParamId, paramName } from '../patch/patch';
 import { positionToValue, valueToPosition } from '../patch/taper';
 import { useLearnable } from './learn';
 import { MathsContext } from './mathsContext';
@@ -39,7 +39,7 @@ export function useParamControl(id: ParamId, value: number, onChange: (value: nu
   const slider = {
     role: 'slider',
     tabIndex: 0,
-    'aria-label': def.label,
+    'aria-label': paramName(id),
     'aria-valuemin': 0,
     'aria-valuemax': 100,
     'aria-valuenow': Math.round(position * 100),
@@ -50,8 +50,14 @@ export function useParamControl(id: ParamId, value: number, onChange: (value: nu
       // A stepped Parameter (Octave, Semitone) moves a whole step per key: less would round back to where it was.
       const unit = def.step ? def.step / (def.max - def.min) : 0;
       const step = Math.max(unit, e.shiftKey ? 0.002 : 0.02);
+      // Page Up and Down a tenth of the travel, Home and End to its ends (the WAI-ARIA slider pattern, issue 51).
+      const page = Math.max(unit, 0.1);
       if (e.key === 'ArrowUp' || e.key === 'ArrowRight') setPosition(position + step);
       else if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') setPosition(position - step);
+      else if (e.key === 'PageUp') setPosition(position + page);
+      else if (e.key === 'PageDown') setPosition(position - page);
+      else if (e.key === 'Home') setPosition(0);
+      else if (e.key === 'End') setPosition(1);
       else return;
       e.preventDefault();
       e.stopPropagation();
@@ -107,4 +113,32 @@ function useChanging(value: number): boolean {
     return () => clearTimeout(timer);
   }, [value]);
   return changing;
+}
+
+/** Travel per pixel of wheel or trackpad scroll: a mouse wheel's notch (about 100 px) turns a control 4 %. */
+const WHEEL_TRAVEL = 0.0004;
+
+/**
+ * The mouse wheel or a two-finger scroll over a control turns it (issue 53), Shift for fine, and the page does not
+ * scroll meanwhile. React's wheel listeners cannot stop the scroll (they are passive), so this is the element's own.
+ */
+export function useWheel(position: number, setPosition: (p: number) => void) {
+  const latest = useRef({ position, setPosition });
+  latest.current = { position, setPosition };
+  const listening = useRef<{ element: Element; listener: (e: WheelEvent) => void } | null>(null);
+  // A ref callback, so it follows the element however it is mounted.
+  return useCallback((element: Element | null) => {
+    if (listening.current) listening.current.element.removeEventListener('wheel', listening.current.listener as EventListener);
+    listening.current = null;
+    if (!element) return;
+    const listener = (e: WheelEvent) => {
+      const pixels = e.deltaMode === WheelEvent.DOM_DELTA_LINE ? e.deltaY * 33 : e.deltaY;
+      if (!pixels) return;
+      e.preventDefault();
+      const { position, setPosition } = latest.current;
+      setPosition(position - pixels * WHEEL_TRAVEL * (e.shiftKey ? 0.1 : 1));
+    };
+    element.addEventListener('wheel', listener as EventListener, { passive: false });
+    listening.current = { element, listener };
+  }, []);
 }

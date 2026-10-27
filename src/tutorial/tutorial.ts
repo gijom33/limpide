@@ -1,4 +1,4 @@
-import { type ChoiceId, formatParam, PARAMS, type ParamId, type Patch, setParam } from '../patch/patch';
+import { type ChoiceId, formatParam, PARAMS, type ParamId, type Patch, paramName, setParam } from '../patch/patch';
 import { PRESETS } from '../patch/presets';
 import { valueToPosition } from '../patch/taper';
 import type { Overlay, Overlays } from '../viewers/overlays';
@@ -24,6 +24,8 @@ export type Step = Words &
 export interface Tutorial {
   /** The Preset it rebuilds. */
   preset: string;
+  /** What the first card says before the Steps, after the Preset's about line. */
+  intro?: string;
   /** What Listen repeats, in the Demo's notation (src/demo/phrase.ts), at this tempo. */
   phrase: string;
   bpm: number;
@@ -90,12 +92,7 @@ const CHOICE_CONTROLS: Record<ChoiceId, string> = {
 /** A control's name where it could be mistaken on its own ("Attack" is the Filter's or the Amp's). */
 export function controlName(key: keyof Patch): string {
   if (key in CHOICE_CONTROLS) return CHOICE_CONTROLS[key as ChoiceId];
-  const { label } = PARAMS[key as ParamId];
-  if (key === 'filterEnvAmount') return 'Filter Envelope Amount';
-  if (/^(filter|amp)(Attack|Decay|Sustain|Release)$/.test(key)) return `${key.startsWith('amp') ? 'Amp' : 'Filter'} ${label}`;
-  if (key.startsWith('lfo2')) return `LFO 2 ${label}`;
-  if (key.startsWith('lfo')) return `LFO 1 ${label}`;
-  if (key.startsWith('osc2')) return `Osc 2 ${label}`;
-  if (key.startsWith('mix')) return `${label} level`;
-  return label;
+  // The Mixer's faders are named after their sources: "Osc 2" alone could be the tab.
+  if (key.startsWith('mix')) return `${PARAMS[key as ParamId].label} level`;
+  return paramName(key as ParamId);
 }

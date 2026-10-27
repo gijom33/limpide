@@ -15,6 +15,17 @@ const PICKUP_TOLERANCE = 0.5 / 127 + 1e-9;
 const CLICKS_PER_CHOICE = 2;
 /** Values a knob of unknown Encoder Mode sends before it moves anything: enough to tell its mode. */
 const DETECT_VALUES = 3;
+/**
+ * The pitch bend wheel as a control: the number after the 128 CCs, so MIDI Learn can map it like a knob (its value
+ * scaled to 0–127, Absolute) (issue 52).
+ */
+export const PITCH_BEND = 128;
+/** The sustain pedal and the mod wheel, by their standard CC numbers. */
+const SUSTAIN = 64;
+const MOD_WHEEL = 1;
+
+/** What MIDI Learn and the Mappings see: Notes and control changes, the bend wheel among them. */
+type ControlMessage = Exclude<MidiMessage, { type: 'pitchBend' } | { type: 'program' }>;
 
 export type LearnState =
   | { phase: 'off' }
@@ -36,6 +47,11 @@ interface Synth {
   touched?(target: Target, state: 'moved' | 'waiting'): void;
   /** MIDI Learn moved on: started, a target selected, a Mapping made, or stopped. */
   learnChanged?(state: LearnState): void;
+  /** What a keyboard's own controls do while nothing is mapped to them (issue 52): the bend wheel (−1 to 1), the
+   *  sustain pedal, a Program Change. The mod wheel turns LFO 1's Depth. */
+  bend?(amount: number): void;
+  pedal?(down: boolean): void;
+  program?(number: number): void;
 }
 
 /** Pickup per Absolute control: where its knob was, and the position it last gave the Parameter (if following). */
@@ -123,7 +139,7 @@ export function createControlSurface(synth: Synth) {
     synth.touched?.(mapping.target, 'moved');
   };
 
-  const apply = (mapping: Mapping, message: MidiMessage) => {
+  const apply = (mapping: Mapping, message: ControlMessage) => {
     const { target } = mapping;
     if (mapping.mode === 'detect') {
       if (message.type !== 'cc') return;
@@ -164,7 +180,7 @@ export function createControlSurface(synth: Synth) {
   };
 
   /** Feeds a message to MIDI Learn; true when Learn used it up. */
-  const learnFrom = (message: MidiMessage): boolean => {
+  const learnFrom = (message: ControlMessage): boolean => {
     if (learn.phase === 'listening') {
       if (
         message.type !== 'cc' ||
@@ -223,7 +239,12 @@ export function createControlSurface(synth: Synth) {
   };
 
   return {
-    handle(message: MidiMessage) {
+    handle(incoming: MidiMessage) {
+      if (incoming.type === 'program') return synth.program?.(incoming.program);
+      const message: ControlMessage =
+        incoming.type === 'pitchBend'
+          ? { type: 'cc', channel: incoming.channel, controller: PITCH_BEND, value: Math.round(((incoming.value + 1) / 2) * 127) }
+          : incoming;
       if (learnFrom(message)) return;
       const mapping = store.find(
         message.type === 'cc'
@@ -231,6 +252,14 @@ export function createControlSurface(synth: Synth) {
           : { kind: 'note', channel: message.channel, number: message.note },
       );
       if (mapping) return apply(mapping, message);
+      // Unmapped: a keyboard's own controls do what a synth player expects.
+      if (incoming.type === 'pitchBend') return synth.bend?.(incoming.value);
+      if (message.type === 'cc' && message.controller === SUSTAIN) return synth.pedal?.(message.value >= 64);
+      if (message.type === 'cc' && message.controller === MOD_WHEEL) {
+        synth.setPosition('lfoAmount', message.value / 127);
+        synth.touched?.({ kind: 'param', id: 'lfoAmount' }, 'moved');
+        return;
+      }
       if (message.type === 'noteOn') synth.press(message.note, message.velocity);
       else if (message.type === 'noteOff') synth.release(message.note);
     },

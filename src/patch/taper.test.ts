@@ -33,3 +33,16 @@ describe('out-of-range input', () => {
     expect(valueToPosition(cutoff, 5)).toBe(0);
   });
 });
+
+describe('the square taper (Glide)', () => {
+  const glide = { min: 0.001, max: 2, taper: 'square' as const };
+  it('starts slowly: a fifth of the travel is about 80 ms, half is about half a second', () => {
+    expect(positionToValue(glide, 0)).toBe(0.001);
+    expect(positionToValue(glide, 0.2)).toBeCloseTo(0.081, 3);
+    expect(positionToValue(glide, 0.5)).toBeCloseTo(0.501, 3);
+    expect(positionToValue(glide, 1)).toBe(2);
+  });
+  it('turns back into the same position', () => {
+    for (const p of [0, 0.1, 0.37, 0.8, 1]) expect(valueToPosition(glide, positionToValue(glide, p))).toBeCloseTo(p, 9);
+  });
+});

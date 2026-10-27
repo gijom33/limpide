@@ -6,6 +6,9 @@ import { loadFinished, saveFinished } from '../../tutorial/progress';
 import { applyStep, controlName, differences, reached, type Tutorial } from '../../tutorial/tutorial';
 import type { Overlays } from '../../viewers/overlays';
 
+/** How long a control must rest within reach of its target for the Step to count. */
+const SETTLE_MS = 400;
+
 interface Host {
   storage: KeyValueStorage;
   patch: Patch;
@@ -51,10 +54,15 @@ export function useTutorialState({ storage, patch, patchName, setPatch, loadPatc
     else setPatch((p) => applyStep(p, step));
   };
 
+  // It counts once the control rests within reach, not as a drag passes through on its way past (review 5, 2026-10-27):
+  // any change before then starts the wait again.
   useEffect(() => {
     if (!lesson || !step || lesson.done[lesson.index] || !reached(step, patch, overlays)) return;
-    if (step.kind !== 'display' && patch[step.id] !== step.to) setPatch((p) => applyStep(p, step));
-    setLesson((l) => l && { ...l, done: l.done.map((d, i) => d || i === l.index) });
+    const timer = setTimeout(() => {
+      if (step.kind !== 'display' && patch[step.id] !== step.to) setPatch((p) => applyStep(p, step));
+      setLesson((l) => l && { ...l, done: l.done.map((d, i) => d || i === l.index) });
+    }, SETTLE_MS);
+    return () => clearTimeout(timer);
   }, [lesson, step, patch, overlays, setPatch]);
 
   // The last card: the Tutorial counts as finished, and a sound that matches is named after its Preset.

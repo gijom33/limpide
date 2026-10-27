@@ -43,8 +43,25 @@ describe('MIDI parser', () => {
   });
 
   it('skips system-exclusive dumps and messages it does not use', () => {
-    expect(parse(0xf0, 0x7e, 0x01, 0xf7, 0xe0, 0, 64, 0xc0, 5, 0x90, 60, 1)).toEqual([
+    // Aftertouch, channel (0xd0) and per Note (0xa0), is not used.
+    expect(parse(0xf0, 0x7e, 0x01, 0xf7, 0xd0, 64, 0xa0, 60, 30, 0x90, 60, 1)).toEqual([
       { type: 'noteOn', channel: 1, note: 60, velocity: 1 / 127 },
+    ]);
+  });
+});
+
+describe('pitch bend and program changes (issue 52)', () => {
+  it('reads the bend wheel as −1 to 1, 0 at rest', () => {
+    const parser = createMidiParser();
+    expect(parser.feed(Uint8Array.from([0xe0, 0x00, 0x40]))).toEqual([{ type: 'pitchBend', channel: 1, value: 0 }]);
+    expect(parser.feed(Uint8Array.from([0xe1, 0x7f, 0x7f]))).toEqual([{ type: 'pitchBend', channel: 2, value: 1 }]);
+    expect(parser.feed(Uint8Array.from([0xe0, 0x00, 0x00]))).toEqual([{ type: 'pitchBend', channel: 1, value: -1 }]);
+  });
+  it('reads a Program Change, one data byte', () => {
+    const parser = createMidiParser();
+    expect(parser.feed(Uint8Array.from([0xc0, 5, 0xc0, 6]))).toEqual([
+      { type: 'program', channel: 1, program: 5 },
+      { type: 'program', channel: 1, program: 6 },
     ]);
   });
 });

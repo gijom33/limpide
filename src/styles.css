@@ -817,7 +817,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .patch-panel > section:not(.patch-presets) { flex: none; }
 /* A narrow label column: the long names (Keys & Plucks, Movement & Effects) take two lines, the first level with the
    row's first Preset. */
-.patch-group h4 {
+.patch-group-name {
   margin: 0; padding-top: calc((var(--control-h) - 1.25em) / 2); line-height: 1.25;
   font-size: var(--text-sm); font-weight: 500; color: var(--muted);
 }
@@ -1135,3 +1135,6 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   .demo-bar-caption { font-size: var(--text-md); }
   .demo-bar .tool { min-height: 32px; }
 }
+
+/* Read by screen readers, not shown (a status said aloud, issue 51). */
+.visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }

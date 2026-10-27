@@ -1,10 +1,11 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
+import { sliderName } from './helpers';
 
 // Levels and envelope stages are faders (ADR-0008): vertical sliders with a cap that drags, and a track that a
 // click (without a drag) sets.
 
 const fader = (page: Page, region: string, name: string) =>
-  page.getByRole('region', { name: region }).getByRole('slider', { name, exact: true });
+  page.getByRole('region', { name: region }).getByRole('slider', { name: sliderName(name) });
 const track = (cap: Locator) => cap.locator('xpath=ancestor::*[contains(@class, "fader")][1]');
 const percent = async (cap: Locator) => Number(await cap.getAttribute('aria-valuenow'));
 
@@ -16,11 +17,12 @@ test('the Mixer levels and both envelopes are vertical faders; the other Paramet
     .evaluateAll((sliders) =>
       sliders
         .filter((s) => s.getClientRects().length > 0 && s.getAttribute('aria-orientation') === 'vertical')
-        .map((s) => `${s.closest('[aria-label]:is(section)')?.getAttribute('aria-label')} ${s.getAttribute('aria-label')}`),
+        .map((s) => s.getAttribute('aria-label')),
     );
+  // The Envelopes' faders are named with their Envelope (issue 51).
   expect(vertical.sort()).toEqual(
     [
-      'Oscillators Osc 1', 'Oscillators Osc 2', 'Oscillators Noise', 'Oscillators Sub',
+      'Osc 1', 'Osc 2', 'Noise', 'Sub',
       'Filter Attack', 'Filter Decay', 'Filter Sustain', 'Filter Release',
       'Amp Attack', 'Amp Decay', 'Amp Sustain', 'Amp Release',
     ].sort(),

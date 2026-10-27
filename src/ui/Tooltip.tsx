@@ -80,6 +80,7 @@ export function Tooltip({ content, children, longPress = true }: { content: TipC
   }, [open]);
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: it listens to what bubbles up from the control it wraps
     <span
       className="tip-anchor"
       ref={wrapperRef}

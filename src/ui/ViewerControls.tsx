@@ -29,6 +29,7 @@ export function ViewActions({ state, dispatch }: Props) {
         >
           <PauseIcon />
           Freeze
+          {/* biome-ignore lint/a11y/noAriaHiddenOnFocusable: a kbd is not focusable; its Tooltip says the same */}
           <kbd aria-hidden="true">Space</kbd>
         </button>
       </Tooltip>

@@ -1,0 +1,34 @@
+name: Something doesn't work
+description: A bug, a broken layout, or a sound or picture that looks wrong
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What did you do?
+      description: The steps, from opening the page. Which Preset or knobs, if it matters.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and device
+      placeholder: Chrome 140 on a MacBook, Safari on an iPhone 15, Firefox on Windows…
+    validations:
+      required: true
+  - type: input
+    id: size
+    attributes:
+      label: Window size, if it is about the layout
+      placeholder: 1440 × 900, a phone held upright…
+  - type: textarea
+    id: more
+    attributes:
+      label: Anything else
+      description: A screenshot, the version in About, a MIDI Controller's name.

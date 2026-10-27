@@ -2,7 +2,7 @@ import { useId, useRef } from 'react';
 import { PARAMS, type ParamId } from '../patch/patch';
 import { valueToPosition } from '../patch/taper';
 import { MODULATED, ModulationRing } from './modulationRing';
-import { useParamControl } from './paramControl';
+import { useParamControl, useWheel } from './paramControl';
 
 const DRAG_PIXELS_FOR_FULL_TRAVEL = 200;
 /** How far a pointer may wander before a press counts as a drag rather than a click. */
@@ -56,10 +56,12 @@ export function Knob({ id, value, onChange, inactive }: Props) {
   const [markerX1, markerY1] = point(centre, g.cap - 3, angleOf(c.position));
   const gradient = `knob-cap-${useId().replace(/[^\w-]/g, '')}`; // a plain id, safe inside url(#…)
   const drag = useRef<{ x: number; y: number; position: number; moved: boolean } | null>(null);
+  const wheel = useWheel(c.position, c.setPosition);
 
   return (
     <div className="knob" data-size={g === GEOMETRY.play ? 'big' : 'small'} data-inactive={inactive || undefined} {...c.attributes}>
       <svg
+        ref={wheel}
         className="knob-dial"
         viewBox={`0 0 ${g.size} ${g.size}`}
         {...c.slider}

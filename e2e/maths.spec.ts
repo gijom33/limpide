@@ -1,8 +1,8 @@
 import { expect, type Page, test } from '@playwright/test';
-import { openDisplay } from './helpers';
+import { openDisplay, sliderName } from './helpers';
 
 const value = (page: Page, stage: string, name: string) =>
-  page.getByRole('region', { name: stage }).locator('.knob', { has: page.getByRole('slider', { name, exact: true }) }).locator('.knob-value > span').first();
+  page.getByRole('region', { name: stage }).locator('.knob', { has: page.getByRole('slider', { name: sliderName(name) }) }).locator('.knob-value > span').first();
 
 test('the Maths Layer is off at first; on, it shows Q, dB, the formulas and the Effective Cutoff, and is remembered', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });

@@ -14,6 +14,7 @@ export function SubBlock({ title, label = title, tip, group, showTitle = true, c
 }) {
   const heading = <h3 className={tip ? 'has-tip' : undefined}>{label}</h3>;
   return (
+    // biome-ignore lint/a11y/useAriaPropsSupportedByRole: named only when it is a group
     <div className="sub-block" role={group ? 'group' : undefined} aria-label={group ? title : undefined}>
       {showTitle && (tip ? <Tooltip content={tip}>{heading}</Tooltip> : heading)}
       {children}

@@ -1,10 +1,11 @@
 import { expect, type Page, test } from '@playwright/test';
+import { sliderName } from './helpers';
 
 // Serum-style modulation on a knob (issue 20): a ring outside its value arc, over the range modulation can take it,
 // and a dot at the value right now while a Note sounds.
 
 const knob = (page: Page, region: string, name: string) =>
-  page.getByRole('region', { name: region }).locator('.knob', { has: page.getByRole('slider', { name, exact: true }) });
+  page.getByRole('region', { name: region }).locator('.knob', { has: page.getByRole('slider', { name: sliderName(name) }) });
 const ring = (k: ReturnType<typeof knob>) => k.locator('.knob-ring');
 const dot = (k: ReturnType<typeof knob>) => k.locator('.knob-live');
 const listening = (page: Page) => expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);
@@ -18,7 +19,7 @@ async function aim(page: Page, lfo: 1 | 2, destination: string) {
 
 async function turnUp(page: Page, region: string, name: string, steps: number) {
   // A stage is a region; an LFO is a group within its section.
-  const slider = page.getByRole(region.startsWith('LFO ') ? 'group' : 'region', { name: region, exact: true }).getByRole('slider', { name, exact: true });
+  const slider = page.getByRole(region.startsWith('LFO ') ? 'group' : 'region', { name: region, exact: true }).getByRole('slider', { name: sliderName(name) });
   await slider.evaluate(async (el, n) => {
     for (let i = 0; i < n; i++) {
       el.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));

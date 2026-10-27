@@ -1,10 +1,11 @@
 import { expect, type Page, test } from '@playwright/test';
+import { sliderName } from './helpers';
 
 const lfo = (page: Page, n: 1 | 2 = 1) => page.getByRole('region', { name: 'LFO & Envelopes' }).getByRole('group', { name: `LFO ${n}`, exact: true });
-const plot = (page: Page, n: 1 | 2 = 1) => page.getByRole('img', { name: `LFO ${n}`, exact: true });
+const plot = (page: Page, n: 1 | 2 = 1) => page.getByRole('img', { name: new RegExp(`^LFO ${n}:`) });
 
 async function turnUp(page: Page, name: string, steps: number, n: 1 | 2 = 1) {
-  await lfo(page, n).getByRole('slider', { name, exact: true }).evaluate(async (el, count) => {
+  await lfo(page, n).getByRole('slider', { name: sliderName(name) }).evaluate(async (el, count) => {
     for (let i = 0; i < count; i++) {
       el.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
       await new Promise((resolve) => setTimeout(resolve, 0)); // a tick for React to render each step

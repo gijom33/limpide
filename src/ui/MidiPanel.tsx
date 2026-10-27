@@ -3,11 +3,15 @@ import { isC16 } from '../midi/c16';
 import { describeControl, describeMode, describeTarget } from '../midi/describe';
 import { type Control, controlKey, type Mapping } from '../midi/mappings';
 import { CloseIcon, MidiIcon } from './icons';
+import { Segmented } from './Segmented';
 import { Tooltip } from './Tooltip';
 import { TIPS } from './tips';
 
 export type MidiState =
   { kind: 'unsupported'; ios: boolean } | { kind: 'denied' } | { kind: 'pending' } | { kind: 'ready'; devices: string[] };
+
+/** The bend wheel's ranges offered, in semitones: a whole tone (the usual), a fifth, an octave. */
+const BEND_RANGES = [2, 7, 12];
 
 interface Props {
   state: MidiState;
@@ -25,6 +29,9 @@ interface Props {
   onC16Layout(): void;
   onRemove(control: Control): void;
   onClear(): void;
+  /** How far a keyboard's bend wheel takes the pitch, in semitones each way (issue 52). */
+  bendRange: number;
+  onBendRange(semitones: number): void;
 }
 
 const statusText = (state: MidiState) => {
@@ -45,7 +52,7 @@ const statusText = (state: MidiState) => {
  * panel: what is connected, the Activity Monitor, MIDI Learn (and Done, once learning), and the Mappings.
  */
 export function MidiPanel({
-  state, onOpen, activity, mappings, learning, onLearn, onDone, onQuickSetup, onC16Layout, onRemove, onClear,
+  state, onOpen, activity, mappings, learning, onLearn, onDone, onQuickSetup, onC16Layout, onRemove, onClear, bendRange, onBendRange,
 }: Props) {
   const [open, setOpen] = useState(false);
   const wrapper = useRef<HTMLDivElement>(null);
@@ -154,6 +161,17 @@ export function MidiPanel({
                 </Tooltip>
               )}
             </>
+          )}
+          {available && (
+            <Tooltip content={TIPS.bendRange}>
+              <Segmented
+                label="Pitch bend range"
+                caption="Bend"
+                value={bendRange}
+                options={BEND_RANGES.map((n) => ({ value: n, label: `${n}`, name: `${n} semitones` }))}
+                onChange={onBendRange}
+              />
+            </Tooltip>
           )}
           {mappings.length > 0 && (
             <>

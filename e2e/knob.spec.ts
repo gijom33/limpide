@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { sliderName } from './helpers';
 
 test('dragging a knob changes its value without selecting any text', async ({ page }) => {
   await page.goto('/');
@@ -64,7 +65,7 @@ test('turning knobs never moves or resizes any knob, whatever width their values
     ['Amp', 'Glide'],
   ]) {
     // A stage is a region; an LFO is a group within its section.
-    const knob = page.getByRole(region.startsWith('LFO ') ? 'group' : 'region', { name: region, exact: true }).getByRole('slider', { name, exact: true });
+    const knob = page.getByRole(region.startsWith('LFO ') ? 'group' : 'region', { name: region, exact: true }).getByRole('slider', { name: sliderName(name) });
     // Twenty steps of five key presses, down then up, each followed by a tick for React to render and a look at
     // every knob, all in the page: as a hundred round trips the test outran its time on a busy machine.
     const { seen, moved } = await knob.evaluate(async (el, before) => {

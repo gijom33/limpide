@@ -29,6 +29,7 @@ const steeper: Step = {
 export const TUTORIALS: Tutorial[] = [
   {
     preset: 'Bass',
+    intro: 'The sound flows left to right: the Oscillators make it, the Filter takes Harmonics away, the Amp shapes how loud it is over time. This Tutorial visits each in turn.',
     bpm: 112,
     phrase: 'A2:.5 A2:.5 -:.5 A2:.5 C3:.5 -:.5 A2:.5 G2:.5 F2:.5 F2:.5 -:.5 F2:.5 G2:.5 -:.5 G2:.5 E2:.5',
     summary: 'A bass from Init, through the whole signal chain: a square an octave down for weight, a dark 24 dB Filter that each Note’s Envelope opens into a thump, and a tight Amp.',
@@ -57,7 +58,7 @@ export const TUTORIALS: Tutorial[] = [
       },
       {
         kind: 'param', id: 'filterAttack', to: 0.002,
-        say: 'Pull the Filter Envelope’s Attack all the way down.',
+        say: 'Pull the Filter Envelope’s Attack almost to the bottom, about 2 ms.',
         note: 'The Filter opens at once: each Note starts bright.',
       },
       {
@@ -77,7 +78,7 @@ export const TUTORIALS: Tutorial[] = [
       },
       {
         kind: 'param', id: 'ampAttack', to: 0.002,
-        say: 'In the Amp Envelope, pull the Attack all the way down.',
+        say: 'In the Amp Envelope, pull the Attack almost to the bottom, about 2 ms.',
         note: 'Each Note starts at full level, in step with the Filter’s thump.',
       },
       {
@@ -170,12 +171,12 @@ export const TUTORIALS: Tutorial[] = [
       {
         kind: 'choice', id: 'waveform', to: 'pulse',
         say: 'Make Osc 1 a Pulse.',
-        note: 'In the Oscillator Spectrum, every fourth Harmonic is missing: the Pulse Width (25 %) decides which.',
+        note: 'In the Oscillator Spectrum, gaps open in the row of Harmonics: the Pulse Width (25 %) decides where.',
       },
       {
         kind: 'param', id: 'pulseWidth', to: 0.3,
         say: 'Set Pulse Width to 30 %.',
-        note: 'The gaps move: now every tenth Harmonic is missing, and the tone is a little fuller.',
+        note: 'The gaps in the Oscillator Spectrum move further apart, and the tone is a little fuller.',
       },
       {
         kind: 'param', id: 'ampSustain', to: 0,

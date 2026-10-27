@@ -12,6 +12,6 @@
 - [x] Wobble: an LFO moving the Cutoff
 - [x] A unit test per Tutorial: its Steps applied to Init give exactly its Preset's Patch
 - [ ] The owner's review of the words
-- [ ] Then the Learner's review again ([42](./42-reviews.md), profile 5)
+- [x] Then the Learner's review again ([42](./42-reviews.md), profile 5): run 2026-10-27, its findings in [59](./59-tutorials-after-review-5.md)
 
 The words are in `src/tutorial/tutorials.ts`: Bass 15 Steps (one of them Display's Ideal), Acid 13, Pluck 14, Wobble 11. Each Listen phrase is two bars around A2–C5, high enough for a phone's speaker.

@@ -3,7 +3,7 @@ import { memoryStorage } from '../test/memoryStorage';
 import { createLibrary } from './library';
 import { defaultPatch, setParam } from './patch';
 import { initialPatch, PRESET_GROUPS, PRESETS, stepPreset } from './presets';
-import { patchToShare, sanitizePatch } from './serialize';
+import { patchToShare, sanitizePatch, shareHash } from './serialize';
 
 describe('Presets', () => {
   it('start from a clean Init, then offer plenty of sounds, grouped so they can be found', () => {
@@ -67,16 +67,18 @@ describe('initialPatch: what plays when the page opens', () => {
   it('prefers a share link', () => {
     const library = createLibrary(memoryStorage());
     library.saveCurrent(defaultPatch());
-    expect(initialPatch(`#p=${patchToShare(mine)}`, library)).toEqual({ patch: mine, name: 'Shared Patch' });
+    expect(initialPatch(`#p=${patchToShare(mine)}`, library)).toEqual({ patch: mine, name: 'Shared Patch', shared: true });
+    // With its name, since 1.11 (issue 53).
+    expect(initialPatch(`#${shareHash(mine, 'Dark & low')}`, library)).toEqual({ patch: mine, name: 'Dark & low', shared: true });
   });
 
   it('then the autosaved Patch from last time', () => {
     const library = createLibrary(memoryStorage());
     library.saveCurrent(mine);
-    expect(initialPatch('', library)).toEqual({ patch: mine, name: 'Last session' });
+    expect(initialPatch('', library)).toEqual({ patch: mine, name: 'Last session', shared: false });
   });
 
   it('then the Init Preset', () => {
-    expect(initialPatch('#p=%%%', createLibrary(memoryStorage()))).toEqual({ patch: defaultPatch(), name: 'Init' });
+    expect(initialPatch('#p=%%%', createLibrary(memoryStorage()))).toEqual({ patch: defaultPatch(), name: 'Init', shared: false });
   });
 });

@@ -7,8 +7,15 @@ import type { ViewerAction } from '../../viewers/viewerState';
  * The computer keyboard as a piano (`A W S E D F T G…`), `Z` and `X` for the octave. A key released after an octave
  * shift still releases its own Note; leaving the window releases them all.
  */
-export function useComputerKeyboard(session: AudioSession, octaveRef: MutableRefObject<number>, setOctave: Dispatch<SetStateAction<number>>) {
+export function useComputerKeyboard(
+  session: AudioSession,
+  octaveRef: MutableRefObject<number>,
+  setOctave: Dispatch<SetStateAction<number>>,
+  /** Off: the letter keys are left alone (issue 51, WCAG 2.1.4: single-key shortcuts can be turned off). */
+  enabled = true,
+) {
   useEffect(() => {
+    if (!enabled) return;
     const { input } = session;
     const isTyping = (e: KeyboardEvent) => e.target instanceof HTMLInputElement || e.metaKey || e.ctrlKey || e.altKey;
     // The Note each key started, so a key released after an octave shift still releases its own Note.
@@ -42,13 +49,19 @@ export function useComputerKeyboard(session: AudioSession, octaveRef: MutableRef
       window.removeEventListener('keyup', up);
       window.removeEventListener('blur', releaseAll);
     };
-  }, [session, octaveRef, setOctave]);
+  }, [session, octaveRef, setOctave, enabled]);
 }
 
-/** Space Freezes the Viewers. It never plays a Note, and must not also press a focused button or scroll. */
+/** What Space already presses or types into when it has the focus: a button, an option, a tab, a link, a field. */
+const SPACE_USERS = 'button, a[href], input, select, textarea, [role="radio"], [role="tab"], [role="menuitemradio"], [role="checkbox"], [role="switch"], [contenteditable="true"]';
+
+/**
+ * Space Freezes the Viewers, unless what has the focus uses Space itself (a button, an option: issue 51, WCAG 2.1.1);
+ * on a knob, a Viewer or nothing in particular it Freezes. It never plays a Note, and must not scroll.
+ */
 export function useSpaceFreezes(dispatchViewer: Dispatch<ViewerAction>) {
   useEffect(() => {
-    const isSpace = (e: KeyboardEvent) => e.code === 'Space' && !(e.target instanceof HTMLInputElement);
+    const isSpace = (e: KeyboardEvent) => e.code === 'Space' && !(e.target instanceof Element && e.target.closest(SPACE_USERS));
     const down = (e: KeyboardEvent) => {
       if (!isSpace(e)) return;
       e.preventDefault();

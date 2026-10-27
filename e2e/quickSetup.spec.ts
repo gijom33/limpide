@@ -12,6 +12,8 @@ async function startSetup(page: Page) {
 
 /** A Controller's moves: a turn of knob n (Relative), a move of fader n (Absolute), a press of button n. */
 const knob = (n: number) => times(4, cc(n, 1));
+/** The four knobs before the Mixer: Cutoff, Resonance, Amount, then Osc 2's Detune. */
+const firstKnobs = () => [1, 2, 3, 4].flatMap(knob);
 const fader = (n: number) => [cc(32 + n, 10), cc(32 + n, 11), cc(32 + n, 12), cc(32 + n, 13)];
 const button = (n: number) => [cc(48 + n, 127), cc(48 + n, 0)];
 const STEPS = 25;
@@ -20,17 +22,19 @@ test.beforeEach(({ page }) => withFakeController(page));
 
 test('Quick Setup walks through every control played live, in the page’s order, and maps it all', async ({ page }) => {
   await startSetup(page);
-  await expect(prompt(page)).toContainText('Move a control → Osc 2 · Detune');
+  await expect(prompt(page)).toContainText('Move a control → Filter · Cutoff');
   await expect(setup(page)).toContainText(`1 of ${STEPS}`);
-  // The control being mapped is shown and highlighted where it sits, even on a hidden tab.
-  await expect(page.getByRole('region', { name: 'Oscillators' }).locator('.knob[data-learn-selected]')).toContainText('Detune');
+  // The control being mapped is shown and highlighted where it sits.
+  await expect(page.getByRole('region', { name: 'Filter' }).locator('.knob[data-learn-selected]')).toContainText('Cutoff');
 
-  await play(page, ...knob(1));
+  for (let n = 1; n <= 3; n++) await play(page, ...knob(n)); // Cutoff, Resonance, Amount
+  await expect(prompt(page)).toContainText('Osc 2 · Detune');
+  // Shown even on a hidden tab.
+  await expect(page.getByRole('region', { name: 'Oscillators' }).locator('.knob[data-learn-selected]')).toContainText('Detune');
+  await play(page, ...knob(4));
   await expect(prompt(page)).toContainText('Mixer · Osc 1');
   await expect(page.getByRole('tab', { name: 'Mixer' })).toHaveAttribute('aria-selected', 'true');
   for (let n = 1; n <= 4; n++) await play(page, ...fader(n)); // the Mixer
-  await expect(prompt(page)).toContainText('Filter · Cutoff');
-  for (let n = 2; n <= 4; n++) await play(page, ...knob(n)); // Cutoff, Resonance, Amount
   await expect(prompt(page)).toContainText('Filter Envelope · Attack');
   for (let n = 5; n <= 12; n++) await play(page, ...fader(n)); // the two Envelopes
   await expect(prompt(page)).toContainText('LFO 1 · Rate');
@@ -42,13 +46,13 @@ test('Quick Setup walks through every control played live, in the page’s order
   await setup(page).getByRole('button', { name: 'Close' }).click();
   await expect(setup(page)).toBeHidden();
 
-  // It all works straight away: button 1 toggles Hold, knob 2 opens the Cutoff.
+  // It all works straight away: button 1 toggles Hold, knob 1 opens the Cutoff.
   await page.waitForTimeout(600);
   await play(page, ...button(1));
   await expect(page.getByRole('button', { name: 'Hold' })).toHaveAttribute('aria-pressed', 'true');
   const cutoff = page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name: 'Cutoff' });
   const before = Number(await cutoff.getAttribute('aria-valuenow'));
-  await play(page, ...times(10, cc(2, 1)));
+  await play(page, ...times(10, cc(1, 1)));
   await expect.poll(async () => Number(await cutoff.getAttribute('aria-valuenow'))).toBeGreaterThan(before);
   await openMidi(page);
   await expect(midiPanel(page).getByRole('list', { name: 'Mappings' }).getByRole('listitem')).toHaveCount(STEPS);
@@ -56,21 +60,21 @@ test('Quick Setup walks through every control played live, in the page’s order
 
 test('a fader that pauses mid-move and moves on never fills the next step', async ({ page }) => {
   await startSetup(page);
-  await play(page, ...knob(1));
+  await play(page, ...firstKnobs());
   await play(page, ...fader(1)); // Mixer · Osc 1
   await expect(prompt(page)).toContainText('Mixer · Osc 2');
   await page.waitForTimeout(700); // longer than Learn waits for a control to settle
   await play(page, cc(33, 20), cc(33, 30), cc(33, 40), cc(33, 50));
   await page.waitForTimeout(700);
   await expect(prompt(page)).toContainText('Mixer · Osc 2');
-  await expect(setup(page)).toContainText(`3 of ${STEPS}`);
+  await expect(setup(page)).toContainText(`6 of ${STEPS}`);
   await play(page, ...fader(2));
   await expect(prompt(page)).toContainText('Mixer · Noise');
 });
 
 test('steps can be skipped and gone back to', async ({ page }) => {
   await startSetup(page);
-  await play(page, ...knob(1));
+  await play(page, ...firstKnobs());
   await setup(page).getByRole('button', { name: 'Skip' }).click(); // no Mixer Osc 1
   await expect(prompt(page)).toContainText('Mixer · Osc 2');
   await setup(page).getByRole('button', { name: 'Back' }).click();

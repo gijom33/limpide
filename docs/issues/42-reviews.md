@@ -146,6 +146,6 @@ A lawyer or compliance lead who reviews open-source projects before a company us
 - [x] Choose the personas (owner, 2026-10-26: profiles 1 to 4 the owner's, 5 to 7 completing them)
 - [x] Each persona's review: what they tried, what worked, what stopped them; the findings to the inbox (2026-10-26, 33 lines). The reports: [`docs/reviews/2026-10-26/`](../reviews/2026-10-26/). Their screenshots stayed in the session's scratch folder and are not kept
 - [ ] The owner taps through the real LinkedIn link once on a phone (the in-app browser)
-- [ ] The Learner's second run, once the tutorials are built (issue 40)
+- [x] The Learner's second run, once the tutorials are built (issue 40): 2026-10-27, [report](../reviews/2026-10-27/5-learner-teacher.md), findings in [59](./59-tutorials-after-review-5.md)
 - [ ] The code review, since the first commit; the findings to the inbox
 - [x] Profile 11's review (the open-source legal expert), 2026-10-26: a company could use or fork it today (MIT, the 3 shipped dependencies MIT, no copyleft among 108 dev dependencies, no third-party assets), once a fork adds the third-party notices and drops the counter; contributions should wait for a CONTRIBUTING (issue 56). Its findings in the inbox; AI authorship stated is issue 48

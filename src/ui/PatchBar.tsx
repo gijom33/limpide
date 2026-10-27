@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Library } from '../patch/library';
 import type { Patch } from '../patch/patch';
-import { PRESET_GROUPS, PRESETS, presetAfter } from '../patch/presets';
-import { patchFromJSON, patchToJSON, patchToShare } from '../patch/serialize';
+import { PRESET_GROUPS, PRESETS, presetAfter, SHARED_NAME } from '../patch/presets';
+import { patchFromJSON, patchToJSON, shareHash } from '../patch/serialize';
 import { TutorialIcon } from './icons';
 import { useLearnable } from './learn';
 import { Tooltip } from './Tooltip';
@@ -32,14 +32,25 @@ export function PatchBar({ name, changed, patch, library, onLoad, tutorials, onT
   const learnPrevious = useLearnable({ kind: 'action', id: 'previousPreset' });
   const learnNext = useLearnable({ kind: 'action', id: 'nextPreset' });
   const wrapper = useRef<HTMLDivElement>(null);
+  const opener = useRef<HTMLButtonElement>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
+  /** The panel closes, and the focus goes back to the button that opened it, not to the page (issue 51). */
+  const closeToOpener = () => {
+    setOpen(false);
+    opener.current?.focus();
+  };
   // The arrows step from the sound just chosen, even when clicked again before React has re-rendered.
   const stepping = useRef({ name, from: name });
   if (stepping.current.from !== name) stepping.current = { name, from: name };
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: closeToOpener is rebuilt each render, the same each time
   useEffect(() => {
     if (!open) return;
+    // Escape closes it back to its button; a press elsewhere closes it and leaves the focus where the press went.
     const close = (e: Event) => {
-      if (e instanceof KeyboardEvent ? e.key === 'Escape' : !wrapper.current?.contains(e.target as Node)) setOpen(false);
+      if (e instanceof KeyboardEvent) {
+        if (e.key === 'Escape') closeToOpener();
+      } else if (!wrapper.current?.contains(e.target as Node)) setOpen(false);
     };
     document.addEventListener('keydown', close);
     document.addEventListener('pointerdown', close);
@@ -59,7 +70,7 @@ export function PatchBar({ name, changed, patch, library, onLoad, tutorials, onT
   /** Loading a sound is the end of the visit: the panel closes so the sound can be played at once. */
   const load = (next: string, patch: Patch) => {
     onLoad(next, patch);
-    setOpen(false);
+    closeToOpener();
   };
   const tutorial = (preset: string) => {
     setOpen(false);
@@ -67,7 +78,7 @@ export function PatchBar({ name, changed, patch, library, onLoad, tutorials, onT
   };
   const toggle = () => {
     setOpen((o) => !o);
-    setSaveName(PRESETS.some((p) => p.name === name) || name === 'Last session' || name === 'Shared Patch' ? '' : name);
+    setSaveName(PRESETS.some((p) => p.name === name) || name === 'Last session' || name === SHARED_NAME ? '' : name);
     setStatus('');
     setLink('');
     setConfirming(null);
@@ -97,7 +108,9 @@ export function PatchBar({ name, changed, patch, library, onLoad, tutorials, onT
     }
   };
   const share = async () => {
-    const url = `${location.origin}${location.pathname}#p=${patchToShare(patch)}`;
+    // The name travels too, unless it says nothing of its own.
+    const keep = name !== 'Last session' && name !== SHARED_NAME;
+    const url = `${location.origin}${location.pathname}#${shareHash(patch, keep ? name : undefined)}`;
     setLink(url);
     try {
       await navigator.clipboard.writeText(url);
@@ -113,7 +126,7 @@ export function PatchBar({ name, changed, patch, library, onLoad, tutorials, onT
         ‹
       </button>
       <Tooltip content={{ title: 'Patch', body: 'The sound you are playing. Open to save, load, export or share it. A dot means it has changed since it was loaded or saved; it is kept automatically either way.' }}>
-        <button type="button" className="tool patch-name" aria-label={`Patch: ${name}`} aria-expanded={open} data-changed={changed || undefined} onClick={toggle}>
+        <button ref={opener} type="button" className="tool patch-name" aria-label={`Patch: ${name}`} aria-expanded={open} data-changed={changed || undefined} onClick={toggle}>
           <span>{name}</span>
           {changed && <span className="patch-changed" aria-hidden="true" />}
         </button>
@@ -121,6 +134,10 @@ export function PatchBar({ name, changed, patch, library, onLoad, tutorials, onT
       <button type="button" className="tool tool-icon" aria-label="Next Preset" {...learnNext} onClick={() => step(1)}>
         ›
       </button>
+      {/* The sound loaded, said to a screen reader, after the arrows, a Preset picked or a Controller's pad (issue 51). */}
+      <span className="visually-hidden" role="status">
+        {name}
+      </span>
 
       {open && (
         <div className="patch-panel" role="dialog" aria-label="Patches">
@@ -128,7 +145,7 @@ export function PatchBar({ name, changed, patch, library, onLoad, tutorials, onT
             <h3>Presets</h3>
             {/* The Tutorials first, a row like a group's, so the panel grows by one row only. */}
             <div className="patch-group" role="group" aria-label="Tutorials">
-              <h4 aria-hidden="true">Tutorials</h4>
+              <span className="patch-group-name" aria-hidden="true">Tutorials</span>
               <div className="patch-list">
                 {tutorials.map((t) => (
                   <Tooltip key={t.preset} content={TUTORIAL_TIP}>
@@ -143,7 +160,7 @@ export function PatchBar({ name, changed, patch, library, onLoad, tutorials, onT
             </div>
             {PRESET_GROUPS.map((group) => (
               <div key={group} className="patch-group" role="group" aria-label={group}>
-                <h4 aria-hidden="true">{group}</h4>
+                <span className="patch-group-name" aria-hidden="true">{group}</span>
                 <div className="patch-list">
                   {PRESETS.filter((p) => p.group === group).map((p) => {
                     const item = (
@@ -218,10 +235,11 @@ export function PatchBar({ name, changed, patch, library, onLoad, tutorials, onT
             <button type="button" className="tool" onClick={exportFile}>
               Export file
             </button>
-            <label className="tool">
+            {/* A real button, so the keyboard reaches it (issue 51); it opens the hidden file picker. */}
+            <button type="button" className="tool" onClick={() => fileInput.current?.click()}>
               Import file
-              <input type="file" accept=".json,application/json" aria-label="Import file" hidden onChange={(e) => void importFile(e.target.files?.[0])} />
-            </label>
+            </button>
+            <input ref={fileInput} type="file" accept=".json,application/json" aria-label="Import file" hidden onChange={(e) => void importFile(e.target.files?.[0])} />
             <button type="button" className="tool" onClick={() => void share()}>
               Copy share link
             </button>

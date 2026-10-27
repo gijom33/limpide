@@ -1,6 +1,7 @@
 import { appendFileSync } from 'node:fs';
 import { expect, type Page, test } from '@playwright/test';
 import { auditPage, type Rule } from './audit';
+import { sliderName } from './helpers';
 
 /**
  * The design principles' measurable rules (docs/design-principles.md, issue 17), on every screen state a visitor
@@ -158,7 +159,7 @@ test('every knob and fader works from the keyboard, with a focus ring for the ke
 
   // A click on a knob or a fader focuses it for the keys, without the ring.
   for (const name of ['Cutoff', 'Attack']) {
-    const slider = page.getByRole('slider', { name, exact: true }).first();
+    const slider = page.getByRole('slider', { name: sliderName(name) }).first();
     await slider.click();
     await expect(slider).toBeFocused();
     expect(await slider.evaluate((el) => getComputedStyle(el).outlineStyle), name).toBe('none');

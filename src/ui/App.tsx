@@ -8,6 +8,7 @@ import { shiftOctave } from '../input/keyboardLayout';
 import { idealReference } from '../music/idealReference';
 import { type Formula, harmonicFormula, responseFormula } from '../music/maths';
 import { CHOICES, type ParamId, type Patch, setFilter, setParam, setWaveform } from '../patch/patch';
+import { PRESETS } from '../patch/presets';
 import { TUTORIALS } from '../tutorial/tutorials';
 import { loadOverlays, saveOverlays, toggleOverlay } from '../viewers/overlays';
 import { INITIAL_VIEWER_STATE, viewerReducer } from '../viewers/viewerState';
@@ -51,6 +52,8 @@ import { WaveformPicker } from './WaveformPicker';
 import { Wordmark } from './Wordmark';
 
 const IDEAL_HARMONICS = 256;
+const LETTER_KEYS = 'limpide.letterKeys';
+const BEND_RANGE = 'limpide.bendRange';
 /** The piano starts on C4, the octave the octave buttons count from. */
 const DEFAULT_OCTAVE = 4;
 /** An octave button's shade, and its count (+2, −1): the octaves the piano is shifted its way (none at C4, or
@@ -113,13 +116,15 @@ export function App() {
   const storage = useMemo(safeStorage, []);
   const { library, start, patch, setPatch, patchRef, patchName, loadPatch, stepPreset, changed } = usePatchState(storage);
   // A brand-new browser opens on About as a welcome, once; read before the first autosave makes it a Last session.
-  const [welcome, setWelcome] = useState(() => welcomeFor(start.name === 'Shared Patch', storage, library));
+  const [welcome, setWelcome] = useState(() => welcomeFor(start.shared, storage, library));
   const [about, setAbout] = useState(welcome !== null);
   const closeAbout = () => {
     setAbout(false);
     if (welcome) {
       rememberWelcome(storage);
       setWelcome(null);
+      // The welcome opened before anything had the focus: it goes to the Demo button, not the page (issue 51).
+      requestAnimationFrame(() => document.querySelector<HTMLElement>('button[aria-label="Demo"]')?.focus());
     }
   };
 
@@ -136,8 +141,14 @@ export function App() {
   const [octave, setOctave] = useState(DEFAULT_OCTAVE);
   const octaveRef = useRef(octave);
   octaveRef.current = octave;
-  useComputerKeyboard(session, octaveRef, setOctave);
-  const { hold, pressHold, pressHoldRef, heldNotes } = useHold(session, patchRef);
+  // The letter keys play Notes unless turned off in Display (issue 51); remembered.
+  const [letterKeys, setLetterKeys] = useState(() => storage.getItem(LETTER_KEYS) !== 'off');
+  useEffect(() => storage.setItem(LETTER_KEYS, letterKeys ? 'on' : 'off'), [storage, letterKeys]);
+  useComputerKeyboard(session, octaveRef, setOctave, letterKeys);
+  const { hold, pressHold, pressHoldRef, heldNotes, setPedal } = useHold(session, patchRef);
+  // How far a keyboard's bend wheel takes the pitch, in semitones each way (issue 52); remembered.
+  const [bendRange, setBendRange] = useState(() => Number(storage.getItem(BEND_RANGE)) || 2);
+  useEffect(() => storage.setItem(BEND_RANGE, String(bendRange)), [storage, bendRange]);
 
   const [viewer, dispatchViewer] = useReducer(viewerReducer, INITIAL_VIEWER_STATE);
   useSpaceFreezes(dispatchViewer);
@@ -170,6 +181,13 @@ export function App() {
     storage, session, patchRef, setPatch, stepPreset, pressHoldRef, dispatchViewer,
     turnedByHand: players.turnedByHand,
     onNote: () => players.stopDemoRef.current(true),
+    onBend: (amount) => session.engine.setBend(amount * bendRange * 100),
+    onPedal: setPedal,
+    // Program n is the n-th Preset (0 is Init), so a keyboard's Program buttons step through them.
+    onProgram: (number) => {
+      const preset = PRESETS[number];
+      if (preset) loadPatch(preset.name, preset.patch);
+    },
   });
   const { learnContext, learning } = midi;
 
@@ -298,6 +316,8 @@ export function App() {
               onC16Layout={midi.applyC16Layout}
               onRemove={(control) => midi.mappingStore.remove(control)}
               onClear={() => midi.mappingStore.clear()}
+              bendRange={bendRange}
+              onBendRange={setBendRange}
             />
             <DisplayMenu active={viewer.frozen || viewer.snapshot !== null}>
               <section className="toolbar" aria-label="Viewer controls">
@@ -310,6 +330,19 @@ export function App() {
                   </ToolGroup>
                   <ToolGroup title="Show">
                     <OverlayToggles value={overlays} onToggle={(o) => setOverlays((v) => toggleOverlay(v, o))} />
+                  </ToolGroup>
+                  <ToolGroup title="Keys">
+                    <Tooltip content={TIPS.letterKeys}>
+                      <Segmented
+                        label="Letter keys"
+                        value={letterKeys ? 'on' : 'off'}
+                        options={[
+                          { value: 'on', label: 'Play', name: 'Letter keys play Notes' },
+                          { value: 'off', label: 'Off', name: 'Letter keys off' },
+                        ]}
+                        onChange={(v) => setLetterKeys(v === 'on')}
+                      />
+                    </Tooltip>
                   </ToolGroup>
                   <ToolGroup title="Theme">
                     <Tooltip content={TIPS.theme}>

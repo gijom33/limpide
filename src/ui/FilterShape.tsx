@@ -1,5 +1,6 @@
 import type { FilterMode, FilterSlope } from '../patch/patch';
 import { useLearnable } from './learn';
+import { radioGroupKeys } from './radioGroup';
 import { Segmented } from './Segmented';
 import { Tooltip } from './Tooltip';
 import { TIPS } from './tips';
@@ -24,9 +25,9 @@ export function FilterShape({ mode, slope, onChange }: Props) {
   return (
     <div className="filter-shape">
       <Tooltip content={TIPS.filterMode}>
-        <div className="segmented icon-picker filter-modes" role="radiogroup" aria-label="Filter Mode" {...learnMode}>
+        <div className="segmented icon-picker filter-modes" role="radiogroup" aria-label="Filter Mode" onKeyDown={radioGroupKeys} {...learnMode}>
           {MODES.map((m) => (
-            <button key={m.mode} type="button" role="radio" aria-checked={m.mode === mode} aria-label={m.label} onClick={() => onChange({ mode: m.mode })}>
+            <button key={m.mode} type="button" role="radio" aria-checked={m.mode === mode} tabIndex={m.mode === mode ? 0 : -1} aria-label={m.label} onClick={() => onChange({ mode: m.mode })}>
               <svg viewBox="0 0 24 16" width="24" height="16" aria-hidden="true">
                 <path d={m.path} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
               </svg>

@@ -18,10 +18,11 @@ const actions = (...ids: Extract<Target, { kind: 'action' }>['id'][]): SetupStep
  * order: the Oscillators, the Filter, the Amp, the LFOs; then the Actions. Settings made once for a sound (Octave,
  * the Waveforms, Pulse Width, Filter Mode, Velocity, Glide, Voices…) are left to MIDI Learn.
  */
+// The Filter first, the knobs a player reaches for first (review 2, issue 53); then the page's order.
 export const QUICK_SETUP: SetupStep[] = [
+  ...params('Filter', 'cutoff', 'resonance', 'filterEnvAmount'),
   ...params('Osc 2', 'osc2Detune'),
   ...params('Mixer', 'mixOsc1', 'mixOsc2', 'mixNoise', 'mixSub'),
-  ...params('Filter', 'cutoff', 'resonance', 'filterEnvAmount'),
   ...params('Filter Envelope', 'filterAttack', 'filterDecay', 'filterSustain', 'filterRelease'),
   ...params('Amp Envelope', 'ampAttack', 'ampDecay', 'ampSustain', 'ampRelease'),
   ...params('LFO 1', 'lfoRate', 'lfoAmount'),

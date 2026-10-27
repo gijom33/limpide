@@ -1,0 +1,10 @@
+name: An idea
+description: Something that would make the sound easier to see or to play
+labels: [idea]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like, and what would it help you understand or do?
+    validations:
+      required: true

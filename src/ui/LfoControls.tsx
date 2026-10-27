@@ -1,12 +1,13 @@
 import type { Dispatch, SetStateAction } from 'react';
 import type { SynthEngine } from '../engine/synthEngine';
 import type { LfoWaveform } from '../modulation/lfo';
-import { LFO_KEYS, type LfoNumber, type ParamId, type Patch, setLfo } from '../patch/patch';
-import { DestinationPicker } from './DestinationPicker';
+import { formatParam, LFO_KEYS, type LfoNumber, type ParamId, type Patch, setLfo } from '../patch/patch';
+import { DESTINATIONS, DestinationPicker } from './DestinationPicker';
 import { RetriggerIcon } from './icons';
 import { Knob } from './Knob';
 import { LfoPlot } from './LfoPlot';
 import { useLearnable } from './learn';
+import { radioGroupKeys, radioTabIndex } from './radioGroup';
 import { SubBlock } from './SubBlock';
 import { Tooltip } from './Tooltip';
 import { TIPS } from './tips';
@@ -42,13 +43,14 @@ export function LfoControls({ lfo, engine, patch, onParam, onPatch }: Props) {
     <SubBlock title={`LFO ${lfo}`} tip={TIPS.lfo} group>
       <div className="lfo-rows" data-lfo={lfo}>
         <div className="lfo-pickers">
-          <div className="segmented icon-picker lfo-shapes" role="radiogroup" aria-label={`LFO ${lfo} Waveform`} {...learnShape}>
-            {SHAPES.map((s) => (
+          <div className="segmented icon-picker lfo-shapes" role="radiogroup" aria-label={`LFO ${lfo} Waveform`} onKeyDown={radioGroupKeys} {...learnShape}>
+            {SHAPES.map((s, i) => (
               <button
                 key={s.waveform}
                 type="button"
                 role="radio"
                 aria-checked={s.waveform === patch[keys.waveform]}
+                tabIndex={radioTabIndex(s.waveform === patch[keys.waveform], i, true)}
                 aria-label={s.label}
                 onClick={() => onPatch((p) => setLfo(p, { waveform: s.waveform }, lfo))}
               >
@@ -85,7 +87,12 @@ export function LfoControls({ lfo, engine, patch, onParam, onPatch }: Props) {
             </Tooltip>
           </div>
           <Tooltip content={TIPS.lfoWaveform}>
-            <LfoPlot engine={engine} lfo={lfo} />
+            <LfoPlot
+              engine={engine}
+              lfo={lfo}
+              // What the plot shows, for a screen reader (issue 51).
+              label={`LFO ${lfo}: ${SHAPES.find((s) => s.waveform === patch[keys.waveform])!.label}, ${formatParam(keys.rate, patch[keys.rate])}, Depth ${formatParam(keys.amount, patch[keys.amount])}, on ${DESTINATIONS[patch[keys.destination]].label}`}
+            />
           </Tooltip>
         </div>
       </div>

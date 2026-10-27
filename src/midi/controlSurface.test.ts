@@ -333,3 +333,60 @@ describe('Choices from a Controller', () => {
     expect(choices.waveform).toBe(4);
   });
 });
+
+describe('a keyboard’s own controls, while nothing is mapped to them (issue 52)', () => {
+  function keyboardRig() {
+    const positions: Partial<Record<ParamId, number>> = { lfoAmount: 0 };
+    const heard: string[] = [];
+    const store = createMappingStore(memoryStorage());
+    const surface = createControlSurface({
+      store,
+      position: (id) => positions[id] ?? 0,
+      setPosition: (id, p) => void (positions[id] = p),
+      action: () => {},
+      choice: () => ({ index: 0, count: 2 }),
+      setChoice: () => {},
+      press: () => {},
+      release: () => {},
+      bend: (amount) => void heard.push(`bend ${amount}`),
+      pedal: (down) => void heard.push(`pedal ${down ? 'down' : 'up'}`),
+      program: (n) => void heard.push(`program ${n}`),
+    });
+    return { surface, positions, heard, store };
+  }
+
+  it('the bend wheel bends, the sustain pedal holds, a Program Change loads, the mod wheel turns LFO 1’s Depth', () => {
+    const { surface, positions, heard } = keyboardRig();
+    surface.handle({ type: 'pitchBend', channel: 1, value: 0.5 });
+    surface.handle(cc(64, 127));
+    surface.handle(cc(64, 0));
+    surface.handle({ type: 'program', channel: 1, program: 7 });
+    surface.handle(cc(1, 127));
+    expect(heard).toEqual(['bend 0.5', 'pedal down', 'pedal up', 'program 7']);
+    expect(positions.lfoAmount).toBe(1);
+  });
+
+  it('a Mapping takes over: the mod wheel learned for the Cutoff no longer turns the Depth', () => {
+    const { surface, positions, store } = keyboardRig();
+    store.set({ control: { kind: 'cc', channel: 1, number: 1 }, target: cutoff, mode: 'absolute' });
+    positions.cutoff = 0;
+    surface.handle(cc(1, 0));
+    surface.handle(cc(1, 64));
+    expect(positions.lfoAmount).toBe(0);
+    expect(positions.cutoff).toBeCloseTo(64 / 127, 5);
+  });
+
+  it('MIDI Learn takes the bend wheel, then the wheel drives what it learned instead of the pitch', () => {
+    const { surface, positions, heard } = keyboardRig();
+    positions.cutoff = 0.5;
+    surface.startLearn();
+    surface.select(cutoff);
+    for (const value of [0, 0.25, 0.5, 0.75, 1]) surface.handle({ type: 'pitchBend', channel: 1, value });
+    expect(surface.learnState()).toMatchObject({ phase: 'armed', learned: { control: { kind: 'cc', number: 128 }, target: cutoff } });
+    surface.stopLearn();
+    surface.handle({ type: 'pitchBend', channel: 1, value: 0 }); // the wheel's centre, where the Cutoff is (Pickup)
+    surface.handle({ type: 'pitchBend', channel: 1, value: 1 });
+    expect(positions.cutoff).toBe(1);
+    expect(heard.filter((h) => h.startsWith('bend'))).toEqual([]);
+  });
+});

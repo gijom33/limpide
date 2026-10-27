@@ -95,7 +95,9 @@ export const PARAMS: Record<ParamId, ParamDef> = {
   lfoAmount: level('lfoAmount', 'Depth', 0, 'play'),
   lfo2Rate: { id: 'lfo2Rate', label: 'Rate', unit: 'Hz', min: 0.05, max: 20, taper: 'log', default: 2, control: 'play' },
   lfo2Amount: level('lfo2Amount', 'Depth', 0, 'play'),
-  glide: time('glide', 'Glide', GLIDE_OFF, 'set'),
+  // Up to 2 s, slowly at first: a fifth of the travel is about 80 ms, a slide you hear (on a log taper to 10 s it was
+  // 6 ms, review 2).
+  glide: { id: 'glide', label: 'Glide', unit: 's', min: GLIDE_OFF, max: 2, taper: 'square', default: GLIDE_OFF, control: 'set' },
   velocityCutoff: level('velocityCutoff', 'Velocity', 0, 'set'),
   keyTrack: level('keyTrack', 'Key Track', 0, 'set'),
   cutoff: { id: 'cutoff', label: 'Cutoff', unit: 'Hz', min: 20, max: 20000, taper: 'log', default: 2000, control: 'play' },
@@ -200,6 +202,20 @@ export function setParam(patch: Patch, id: ParamId, value: number): Patch {
   const { min, max, step } = PARAMS[id];
   const snapped = step ? Math.round(value / step) * step : value;
   return { ...patch, [id]: Math.min(max, Math.max(min, snapped)) };
+}
+
+/**
+ * A Parameter's full name, where its label alone could be mistaken: "Attack" is the Filter Envelope's or the Amp's,
+ * "Rate" either LFO's. Screen readers read it (issue 51); the visible label stays short, and is part of it.
+ */
+export function paramName(id: ParamId): string {
+  const { label } = PARAMS[id];
+  if (id === 'filterEnvAmount') return 'Filter Envelope Amount';
+  if (/^(filter|amp)(Attack|Decay|Sustain|Release)$/.test(id)) return `${id.startsWith('amp') ? 'Amp' : 'Filter'} ${label}`;
+  if (id.startsWith('lfo2')) return `LFO 2 ${label}`;
+  if (id.startsWith('lfo')) return `LFO 1 ${label}`;
+  if (id.startsWith('osc2')) return `Osc 2 ${label}`;
+  return label;
 }
 
 /** A Parameter value in real units, e.g. "2.50 kHz", "12.3 ms", "70 %". */

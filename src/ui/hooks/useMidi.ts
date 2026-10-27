@@ -43,6 +43,11 @@ interface Host {
   dispatchViewer: Dispatch<ViewerAction>;
   /** A Note from a Controller: the Demo stops, the person has taken over. */
   onNote(): void;
+  /** A keyboard's own controls, while unmapped (issue 52): the bend wheel (−1 to 1), the sustain pedal, a Program
+   *  Change. */
+  onBend(amount: number): void;
+  onPedal(down: boolean): void;
+  onProgram(number: number): void;
 }
 
 /**
@@ -50,7 +55,10 @@ interface Host {
  * drive what they were mapped to (MIDI Learn first, ADR-0004), or the C16's own layout (ADR-0009). Messages arrive
  * between renders, so the surface reads and writes the Patch through `patchRef`.
  */
-export function useMidi({ storage, session, patchRef, setPatch, stepPreset, turnedByHand, pressHoldRef, dispatchViewer, onNote }: Host) {
+export function useMidi(host: Host) {
+  const { storage, session, patchRef, setPatch, stepPreset, turnedByHand, pressHoldRef, dispatchViewer, onNote } = host;
+  const keyboard = useRef(host);
+  keyboard.current = host;
   const [midi, setMidi] = useState<MidiState>({ kind: 'pending' });
   const [activity, setActivity] = useState<string | null>(null);
   const [learn, setLearn] = useState<LearnState>({ phase: 'off' });
@@ -113,6 +121,9 @@ export function useMidi({ storage, session, patchRef, setPatch, stepPreset, turn
       press: (note, velocity) => session.input.press(note, velocity),
       release: (note) => session.input.release(note),
       touched: flash,
+      bend: (amount) => keyboard.current.onBend(amount),
+      pedal: (down) => keyboard.current.onPedal(down),
+      program: (number) => keyboard.current.onProgram(number),
       learnChanged: (state) => {
         setLearn(state);
         if (state.phase === 'armed' && state.learned) onLearned.current(state.learned);

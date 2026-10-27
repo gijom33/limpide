@@ -170,6 +170,7 @@ test('a Controller moving a knob on a hidden tab brings that tab into view', asy
   });
   await page.evaluate((m) => localStorage.setItem('limpide.mappings', JSON.stringify(m)), [mapping('osc2PulseWidth', 4), mapping('pulseWidth', 9)]);
   await page.reload();
+  await expect(midiButton(page)).toContainText('1'); // connected again: a message sent before is lost
   const tabs = page.getByRole('tablist', { name: 'Oscillator' });
   await expect(tabs.getByRole('tab', { name: 'Osc 1' })).toHaveAttribute('aria-selected', 'true');
   await play(page, cc(4, 1));

@@ -51,6 +51,8 @@ export interface SynthEngine {
   noteOn(note: number, velocity: number, at?: number): void;
   /** One Voice: the sounding Note changes pitch (last-note priority, Glide) without a new Gate. */
   pitchChange(note: number, at?: number): void;
+  /** A keyboard's bend wheel: every Voice's pitch moves by `cents` from `at` on, until the next bend (issue 52). */
+  setBend(cents: number, at?: number): void;
   /** The Gate closes: every Voice releases. */
   noteOff(at?: number): void;
   /** Several Voices: the Voice playing `note` releases; the others keep sounding. */
@@ -90,6 +92,9 @@ export const MAX_VOICES = 8;
 // Without Resonance compensation the worst resonant peak reaches ±1.8 at the Filter Tap (measured over Notes
 // and Cutoffs at full Resonance); 0.45 keeps that under full scale at the output (about 0.83).
 const MASTER_LEVEL = 0.45;
+
+/** The bend wheel's steps are smoothed over this time constant, in seconds. */
+const BEND_SMOOTHING = 0.004;
 
 const SAFETY_RANGE = 4;
 const SAFETY_KNEE = 0.8;
@@ -272,9 +277,11 @@ interface LfoNodes {
   toQ: [GainNode, GainNode];
 }
 
-/** What every Voice shares: the LFOs, the noise loop, and where the Voices' outputs go. */
+/** What every Voice shares: the LFOs, the pitch bend, the noise loop, and where the Voices' outputs go. */
 interface Shared {
   lfos: [LfoNodes, LfoNodes];
+  /** The pitch bend in cents, into every Oscillator's detune (the LFO on Pitch goes there too). */
+  bend: ConstantSourceNode;
   noise: AudioBuffer;
   master: GainNode;
 }
@@ -363,6 +370,8 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
       l.bus.connect(o.pwm[i]);
     }
   });
+  shared.bend.connect(sub.detune);
+  for (const o of oscillators) shared.bend.connect(o.node.detune);
 
   const waveKeys = new Map<OscillatorNode, string>();
   const pulseWidths = [0.5, 0.5];
@@ -512,7 +521,10 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     });
     return { osc, bus, previous: null, restartAt: -1, toCutoff, toPitch, toOsc2, toQ: [q1, q2] };
   };
-  const shared: Shared = { lfos: [lfoNodes(), lfoNodes()], noise: noiseBuffer(ctx), master };
+  const bend = ctx.createConstantSource();
+  bend.offset.value = 0;
+  bend.start();
+  const shared: Shared = { lfos: [lfoNodes(), lfoNodes()], bend, noise: noiseBuffer(ctx), master };
   const voices = Array.from({ length: MAX_VOICES }, (_, i) => createVoice(ctx, shared, i));
   const waves = new Map<keyof typeof LFO_SERIES, PeriodicWave>();
   const wave = (w: keyof typeof LFO_SERIES) => waves.get(w) ?? waves.set(w, lfoWave(ctx, w)).get(w)!;
@@ -558,6 +570,12 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   const patches: { time: number; patch: Patch }[] = [];
   const ampEvents: GateRecord[] = [];
   const filterEvents: GateRecord[] = [];
+  // The pitch bend over time, in cents, for the model as for the sound.
+  const bends: { time: number; cents: number }[] = [];
+  const bendAt = (t: number) => {
+    const i = lastAt(bends, t);
+    return i >= 0 ? bends[i].cents : 0;
+  };
   /** The Voice of the newest Note: the Taps listen to it (or to every Voice, when asked). */
   let lead: Voice | null = null;
   let tapSource: TapSource = 'newest';
@@ -687,7 +705,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       mode: then?.filterMode ?? 'lowpass',
       bandwidth: then ? bandwidthOctaves(filterStages(then.filterMode, then.filterSlope, resonance)[0].Q) : 1,
       sounding: gate?.on ? { note, velocity } : null,
-      pitch: gliding + vibrato,
+      pitch: gliding + vibrato + bendAt(t) / 100,
       vibrato,
     };
   };
@@ -697,7 +715,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     // During a Glide, the frequency the Oscillators have reached: Cycle Lock follows the slide.
     // With the Sub sounding, the sound repeats at the Sub's pitch, an octave lower: that is the fundamental.
     fundamental: () => {
-      const frequency = glidingAt(ctx.currentTime) || A4;
+      const frequency = (glidingAt(ctx.currentTime) || A4) * 2 ** (bendAt(ctx.currentTime) / 1200);
       return patchAt(ctx.currentTime)?.mixSub ? frequency / 2 : frequency;
     },
     modulationAt,
@@ -789,6 +807,14 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
 
     pitchChange(note, time) {
       if (lead) setLeadPitch(lead, note, at(time));
+    },
+
+    setBend(cents, time) {
+      const t = at(time);
+      // A few milliseconds of smoothing, so a wheel's steps do not click.
+      bend.offset.setTargetAtTime(cents, t, BEND_SMOOTHING);
+      append(bends, { time: t, cents });
+      trim(bends, t);
     },
 
     noteOff(time) {
