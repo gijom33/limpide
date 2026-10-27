@@ -17,10 +17,8 @@ const GAIN_TICKS = [0, -24, -48];
 // The marker labels' baseline, and the height of a 10 px label above its baseline.
 const MARKER_LABEL_ROW = 15;
 const DB_LABEL_HEIGHT = 10;
-// The Viewer's name, SPECTRUM, in the top-left corner (TapViewers): Harmonic labels start past it (issue 49).
-const NAME_ROOM = 74;
-/** Harmonic Markers stop at the 8th: enough to read a Waveform's pattern, few enough to label every one. */
-const MARKED_HARMONICS = 8;
+/** Harmonic labels stop at the 8th: enough to read a Waveform's pattern, few enough to label every one. */
+const LABELLED_HARMONICS = 8;
 // The hover readout snaps to the strongest peak this many pixels either side of the cursor.
 const HOVER_SNAP = 12;
 // On the linear level axis a sine at the Oscillator's level fills the height.
@@ -120,9 +118,9 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
     const scaleOverlapsLabels = overlays.curve && response && yOf(zero) - 2 - DB_LABEL_HEIGHT < MARKER_LABEL_ROW;
     const labelsEndAt = scaleOverlapsLabels ? width - g.measureText('−48 dB').width - 3 - MIN_LABEL_GAP / 2 : Infinity;
     const markers = harmonicMarkers(frozenFundamental(viewer.frozen, fundamental), {
-      // The first eight Harmonics, each labelled (the owner, 2026-10-26): past them the ticks crowded into a comb.
-      maxFrequency, xOf, minLabelGap: g.measureText('8').width + 1, labelsEndAt, labelsStartAt: NAME_ROOM, halfLabel: g.measureText('A#4').width / 2,
-      count: MARKED_HARMONICS, labelAll: true,
+      // A tick on every Harmonic; a label on each of the first eight, and no further (the owner, 2026-10-26).
+      maxFrequency, xOf, minLabelGap: g.measureText('8').width + 1, labelsEndAt,
+      labelUpTo: LABELLED_HARMONICS, labelAll: true,
     });
 
     // Snapshot (A/B): the frame captured earlier, faint behind the live trace.
@@ -196,7 +194,7 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
         g.moveTo(x, 0);
         g.lineTo(x, m.labelled ? 5 : 3);
         g.stroke();
-        if (m.labelled) g.fillText(m.n === 1 ? m.note.split(' ')[0] : String(m.n), m.labelX, MARKER_LABEL_ROW);
+        if (m.labelled) g.fillText(m.n === 1 ? m.note.split(' ')[0] : String(m.n), Math.max(10, m.labelX), MARKER_LABEL_ROW);
       }
       g.textAlign = 'left';
     }
@@ -204,9 +202,7 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
     // Ideal Reference rings: theory's level for each Harmonic (after the Filter, when there is one).
     const amplitudes = showIdeal && overlays.ideal ? ideal : undefined;
     if (amplitudes && markers.length) {
-      // Every Harmonic theory puts on the axis, not only the eight marked.
-      const every = harmonicMarkers(frozenFundamental(viewer.frozen, fundamental), { maxFrequency, xOf, minLabelGap: Infinity });
-      const shown = every.filter((m) => amplitudes[m.n] > 1e-5);
+      const shown = markers.filter((m) => amplitudes[m.n] > 1e-5);
       const key = shown.map((m) => m.n).join(',');
       const live = () => ({ key, gains: response ? response(Float32Array.from(shown, (m) => m.frequency)) : new Float32Array(shown.length).fill(1) });
       const held = frozenRings(viewer.frozen, live);

@@ -53,8 +53,7 @@ export function About({
         <h2 className="about-title wordmark-text" id={title}>
           Limpide
         </h2>
-        <p className="about-tagline">Play a sound, turn a knob, and see what it does.</p>
-        <p className="about-subtitle">A subtractive synthesizer that shows you what each stage does to the sound.</p>
+        <p className="about-tagline">A subtractive synthesizer that shows you what each stage does to the sound.</p>
         {welcome && (
           <div className="about-welcome">
             <p>

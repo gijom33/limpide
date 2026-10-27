@@ -165,7 +165,7 @@ export const TIPS = {
     title: 'Noise',
     body: 'An unpitched hiss with energy at every frequency: in the Spectrum it fills the gaps between Harmonics. Filter it for wind, breath or percussion.',
   },
-  // Issue 49: the core controls, the stages and the Viewers, so a newcomer finds words where they look first.
+  // Issue 49: the core controls and the stages, so a newcomer finds words where they look first.
   oscillators: {
     title: 'Oscillators',
     body: 'Where the sound starts: a tone at the pitch you play, with a shape (the Waveform) that decides which Harmonics it has. Two Oscillators, a Sub an octave down and Noise are mixed here, then sent to the Filter.',
@@ -204,26 +204,7 @@ export const TIPS = {
     title: 'Semitone',
     body: 'Shifts Osc 2 by semitones from the Note you play: +7 is a fifth above, +12 an octave. Two notes at once, from one key.',
   },
-  scope: {
-    title: 'Scope',
-    body: 'The sound’s waveform: a few cycles of it, held still. Its height is the level, on one scale for every Scope, so you can compare stage to stage.',
-  },
-  spectrum: {
-    title: 'Spectrum',
-    body: 'The sound split into its Harmonics: low pitches on the left, high on the right. Each spike is one Harmonic, its height how loud it is.',
-    how: 'Hover it to read the frequency and note under the pointer.',
-  },
 } satisfies Record<string, TipContent>;
-
-/** Where each Tap listens, said first in its Viewers' tooltips. */
-export const TAP_PLACES: Record<string, string> = {
-  Oscillator: 'The Oscillator Tap: the mix, before the Filter.',
-  Filter: 'The Filter Tap: what the Filter lets through.',
-  Amp: 'The Amp Tap: what you hear, shaped by the Amp Envelope.',
-};
-
-/** Said on a Spectrum that draws the Response Curve (the Filter's). */
-export const CURVE_NOTE = 'The dashed line is the Response Curve: how much the Filter lets through at each pitch.';
 
 export const OVERLAY_TIPS: Record<Overlay, TipContent> = {
   harmonics: {

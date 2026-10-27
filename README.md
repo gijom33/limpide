@@ -6,7 +6,7 @@
 
 [![Limpide playing its Demo: the Oscillators, Filter and Amp side by side, each with its Scope and Spectrum, and the LFOs and Envelope Timeline below](docs/screenshot.png)](https://gijom33.github.io/limpide/)
 
-Play a sound, turn a knob, and see what it does: every picture on the page moves with the sound you hear.
+Every picture on the page moves with the sound you hear.
 
 Ordinary synths give you a sound and a row of knobs, and the cause and effect stays hidden in the signal. Limpide is laid out as its own signal-flow diagram: Oscillators → Mixer → Filter → Amp, left to right, with live Viewers under every stage. Turn the Cutoff and you can see which Harmonics the Filter takes away.
 

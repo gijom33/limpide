@@ -231,14 +231,7 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
   display: block; width: 100%; height: auto; aspect-ratio: 5 / 2; min-height: 120px; max-height: 260px;
   background: var(--bg); border-radius: var(--radius-inner);
 }
-.viewer + .viewer { margin-top: 8px; }
-/* Each Viewer is a canvas with its name in the top-left corner (issue 49): small, muted, a tooltip on hover. */
-.viewer { position: relative; display: flex; flex-direction: column; }
-.viewer > .tip-anchor { position: absolute; top: 3px; left: 5px; z-index: 1; }
-.viewer-name {
-  font-size: var(--text-xs); line-height: 14px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
-  cursor: help; user-select: none;
-}
+.tap canvas + canvas { margin-top: 8px; }
 
 .swatch { display: inline-block; flex: none; }
 [data-overlay='harmonics'] .swatch { width: 9px; height: 6px; border-left: 1px solid var(--text); border-right: 1px solid var(--text); }
@@ -399,8 +392,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   .block > .tap { flex: 1 1 0; min-height: 0; margin-top: 0; display: flex; flex-direction: column; }
   .tap-canvases { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
   .tap canvas { flex: 1 1 0; height: auto; min-height: 90px; max-height: none; aspect-ratio: auto; }
-  .viewer { flex: 1 1 0; min-height: 0; }
-  .viewer + .viewer { margin-top: 0; }
+  .tap canvas + canvas { margin-top: 0; }
 }
 
 
@@ -502,12 +494,10 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .about::backdrop { background: rgba(0, 0, 0, 0.55); }
 .about-body { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); padding: 28px var(--space-4) var(--space-4); text-align: center; }
 .about-title { margin: 0; font-size: 30px; font-weight: 700; letter-spacing: -0.01em; text-transform: none; }
-.about-tagline { margin: 0; max-width: 32ch; font-size: 15px; line-height: 1.4; }
+.about-tagline { margin: 0; max-width: 32ch; font-size: 14px; line-height: 1.4; }
 /* On a touch screen the welcome says how to reach the explanations: a long press (issue 49). */
 .about-touch-hint { display: none; }
 @media (hover: none) { .about-touch-hint { display: block; margin-top: calc(-1 * var(--space-2)); } }
-/* The plain-words line first, for someone who has never touched a synth; what it is, in synth words, under it. */
-.about-subtitle { margin: -6px 0 0; max-width: 36ch; font-size: var(--text-md); line-height: 1.4; color: var(--muted); }
 .about-version { margin: 0; font-size: var(--text-md); color: var(--muted); font-variant-numeric: tabular-nums; }
 .about-credits {
   display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px var(--space-3); width: 100%; margin: var(--space-1) 0;
