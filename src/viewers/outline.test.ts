@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { spectrumOutline } from './outline';
+import { aboveFloor, spectrumOutline } from './outline';
 
 const FLOOR = -100;
 
@@ -32,5 +32,19 @@ describe('spectrumOutline: the Spectrum trace at the screen’s own resolution',
     expect(outline[101]).toBe(FLOOR); // the one device pixel between 500 and 510 Hz
     expect(outline[102]).toBe(-32);
     expect(outline[103]).toBe(FLOOR);
+  });
+});
+
+describe('aboveFloor: the Response Curve stops at the floor instead of lying along it', () => {
+  it('draws down to the floor and lifts until the curve comes back', () => {
+    // 100 is the floor; columns 3 to 5 lie on it.
+    expect(aboveFloor([10, 20, 60, 100, 100, 100, 50, 30], 100)).toEqual([[0, 3], [5, 7]]);
+  });
+  it('draws a curve that never reaches the floor whole, and none of one that lies on it', () => {
+    expect(aboveFloor([10, 20, 30], 100)).toEqual([[0, 2]]);
+    expect(aboveFloor([100, 100, 100], 100)).toEqual([]);
+  });
+  it('starts a curve that rises from the floor at its last floor point', () => {
+    expect(aboveFloor([100, 100, 40, 20], 100)).toEqual([[1, 3]]);
   });
 });

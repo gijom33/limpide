@@ -3,7 +3,7 @@ import { frequencyAxis, levelAxis } from './axes';
 import { cssVar, curveWidth, prepareCanvas } from './canvas';
 import { createFreezeLatch } from './freezeLatch';
 import { harmonicMarkers } from './harmonicMarkers';
-import { spectrumOutline } from './outline';
+import { aboveFloor, spectrumOutline } from './outline';
 import { hoverReadout, interpolatedPeak, snapToPeak } from './readout';
 import { amplitudeToSpectrumDb } from './spectrumScale';
 import type { ViewSettings } from './viewSettings';
@@ -158,7 +158,14 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
       g.globalAlpha = 0.85;
       g.lineWidth = curveWidth(canvas);
       g.setLineDash([6, 3]);
-      strokeColumns(g, gains.map((v) => zero + 20 * Math.log10(Math.max(1e-6, v))), yOf);
+      // Where the gain is below the Spectrum's floor the curve stops at the bottom edge rather than lying along it.
+      const ys = Array.from(gains, (v) => yOf(zero + 20 * Math.log10(Math.max(1e-6, v))));
+      g.beginPath();
+      for (const [first, last] of aboveFloor(ys, height - 0.5)) {
+        g.moveTo(first, ys[first]);
+        for (let col = first + 1; col <= last; col++) g.lineTo(col, ys[col]);
+      }
+      g.stroke();
       g.setLineDash([]);
       g.globalAlpha = 1;
       g.fillStyle = muted;
