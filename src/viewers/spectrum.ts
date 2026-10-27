@@ -199,8 +199,11 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
       g.textAlign = 'left';
     }
 
-    // Ideal Reference rings: theory's level for each Harmonic (after the Filter, when there is one).
-    const amplitudes = showIdeal && overlays.ideal ? ideal : undefined;
+    // Ideal Reference rings: theory's level for each Harmonic (after the Filter, when there is one), while the trace
+    // shows a sound to compare them with: none while silent, as after a reload before a Note (the owner, 2026-10-27).
+    const sounding = outline.some((v) => yOf(v) < height - 0.5);
+    const amplitudes = showIdeal && overlays.ideal && sounding ? ideal : undefined;
+    let ringCount = 0;
     if (amplitudes && markers.length) {
       const shown = markers.filter((m) => amplitudes[m.n] > 1e-5);
       const key = shown.map((m) => m.n).join(',');
@@ -212,11 +215,14 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
       // None below the floor (as the Curve), none where Harmonics crowd closer than a ring's width.
       const rings = shown.map((m, i) => ({ x: xOf(m.frequency), y: yOf(amplitudeToSpectrumDb(amplitudes[m.n] * gains[i])) }));
       for (const i of ringsToDraw(rings, height - 0.5, RING_GAP)) {
+        ringCount++;
         g.beginPath();
         g.arc(rings[i].x, rings[i].y, 2.5, 0, 2 * Math.PI);
         g.stroke();
       }
     }
+
+    canvas.dataset.idealRings = String(ringCount);
 
     // The frequency axis's labels last, over the Harmonic bars, each on a halo of the background (issue 47).
     g.font = '10px system-ui, sans-serif';
