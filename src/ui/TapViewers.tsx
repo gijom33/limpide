@@ -5,6 +5,8 @@ import { createScope } from '../viewers/scope';
 import { createSpectrum } from '../viewers/spectrum';
 import type { ViewSettings } from '../viewers/viewSettings';
 import type { Formula } from '../music/maths';
+import { CURVE_NOTE, TAP_PLACES, TIPS } from './tips';
+import { Tooltip, type TipContent } from './Tooltip';
 
 interface Props {
   name: string;
@@ -22,8 +24,17 @@ interface Props {
   formula?: Formula;
 }
 
+/** A Viewer's name in its corner, so the words the tooltips use point at something (issue 49). */
+function ViewerName({ tip, place }: { tip: TipContent; place?: string }) {
+  return (
+    <Tooltip content={{ ...tip, body: place ? `${place} ${tip.body}` : tip.body }}>
+      <span className="viewer-name">{tip.title}</span>
+    </Tooltip>
+  );
+}
+
 /**
- * Scope + Spectrum for one Tap, with no caption: the stage's panel says which it is. Canvases are mounted once and
+ * Scope + Spectrum for one Tap, each named in its corner; the stage's panel says which Tap it is. Canvases are mounted once and
  * drawn by the render loop. The level is measured but not shown; the Scope carries it as `data-db` (for tests).
  */
 export function TapViewers({ name, analyser, sampleRate, fundamental, view, showIdeal, response, limiting, formula }: Props) {
@@ -51,17 +62,23 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, view, show
   return (
     <figure className="tap" data-tap={name} aria-label={`${name} Tap`}>
       <div className="tap-canvases">
-        <canvas className="scope" ref={scopeRef} aria-label={`${name} Scope`} />
-        <canvas
-          className="spectrum"
-          ref={spectrumRef}
-          aria-label={`${name} Spectrum`}
-          onPointerMove={(e) => {
-            const r = e.currentTarget.getBoundingClientRect();
-            hoverRef.current = { x: e.clientX - r.left, y: e.clientY - r.top };
-          }}
-          onPointerLeave={() => (hoverRef.current = null)}
-        />
+        <div className="viewer">
+          <canvas className="scope" ref={scopeRef} aria-label={`${name} Scope`} />
+          <ViewerName tip={TIPS.scope} place={TAP_PLACES[name]} />
+        </div>
+        <div className="viewer">
+          <canvas
+            className="spectrum"
+            ref={spectrumRef}
+            aria-label={`${name} Spectrum`}
+            onPointerMove={(e) => {
+              const r = e.currentTarget.getBoundingClientRect();
+              hoverRef.current = { x: e.clientX - r.left, y: e.clientY - r.top };
+            }}
+            onPointerLeave={() => (hoverRef.current = null)}
+          />
+          <ViewerName tip={TIPS.spectrum} place={response ? `${TAP_PLACES[name]} ${CURVE_NOTE}` : TAP_PLACES[name]} />
+        </div>
         {formula && (
           <p className="maths-formula" aria-label={`${name} formula`}>
             <span>{formula.formula}</span>

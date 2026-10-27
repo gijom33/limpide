@@ -231,7 +231,14 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
   display: block; width: 100%; height: auto; aspect-ratio: 5 / 2; min-height: 120px; max-height: 260px;
   background: var(--bg); border-radius: var(--radius-inner);
 }
-.tap canvas + canvas { margin-top: 8px; }
+.viewer + .viewer { margin-top: 8px; }
+/* Each Viewer is a canvas with its name in the top-left corner (issue 49): small, muted, a tooltip on hover. */
+.viewer { position: relative; display: flex; flex-direction: column; }
+.viewer > .tip-anchor { position: absolute; top: 3px; left: 5px; z-index: 1; }
+.viewer-name {
+  font-size: var(--text-xs); line-height: 14px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
+  cursor: help; user-select: none;
+}
 
 .swatch { display: inline-block; flex: none; }
 [data-overlay='harmonics'] .swatch { width: 9px; height: 6px; border-left: 1px solid var(--text); border-right: 1px solid var(--text); }
@@ -392,7 +399,8 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   .block > .tap { flex: 1 1 0; min-height: 0; margin-top: 0; display: flex; flex-direction: column; }
   .tap-canvases { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
   .tap canvas { flex: 1 1 0; height: auto; min-height: 90px; max-height: none; aspect-ratio: auto; }
-  .tap canvas + canvas { margin-top: 0; }
+  .viewer { flex: 1 1 0; min-height: 0; }
+  .viewer + .viewer { margin-top: 0; }
 }
 
 

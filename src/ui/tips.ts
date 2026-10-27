@@ -159,13 +159,71 @@ export const TIPS = {
   },
   mixer: {
     title: 'Mixer',
-    body: 'Sets how much of each source goes into the Filter. The Oscillator Tap below shows the mix. Three sources at full level can exceed the Scope’s range (OVER).',
+    body: 'Sets how much of each source goes into the Filter. The Oscillator Tap below shows the mix. Several sources at full level can exceed the Scope’s range: what goes past it is drawn squeezed into its edge.',
   },
   noise: {
     title: 'Noise',
     body: 'An unpitched hiss with energy at every frequency: in the Spectrum it fills the gaps between Harmonics. Filter it for wind, breath or percussion.',
   },
+  // Issue 49: the core controls, the stages and the Viewers, so a newcomer finds words where they look first.
+  oscillators: {
+    title: 'Oscillators',
+    body: 'Where the sound starts: a tone at the pitch you play, with a shape (the Waveform) that decides which Harmonics it has. Two Oscillators, a Sub an octave down and Noise are mixed here, then sent to the Filter.',
+    how: 'Pick a Waveform and watch both pictures below change: the Scope draws its shape, the Spectrum its Harmonics.',
+  },
+  filter: {
+    title: 'Filter',
+    body: 'Takes Harmonics away. Above the Cutoff (on the default low-pass) they get quieter and quieter, so the sound turns darker. This is the “subtractive” in subtractive synthesis.',
+    how: 'Hold a Note and turn the Cutoff down: watch the Harmonics on the right of the Spectrum disappear.',
+  },
+  amp: {
+    title: 'Amp',
+    body: 'Shapes the loudness of each Note over time with its Envelope: how fast it starts, how it settles while held, how it fades when let go. Voices sets how many Notes can sound at once.',
+    how: 'Play short and long Notes and watch the Amp Scope grow and fade.',
+  },
+  waveform: {
+    title: 'Waveform',
+    body: 'The Oscillator’s shape, which sets its Harmonics. Sine: the fundamental alone, pure. Triangle: soft, odd Harmonics fading fast. Saw: bright, every Harmonic. Square: hollow, odd ones only. Pulse: a square of any width, set by Pulse Width.',
+    how: 'Switch shapes and compare the Spectrum: the spikes are the Harmonics.',
+  },
+  cutoff: {
+    title: 'Cutoff',
+    body: 'Where the Filter starts to take Harmonics away. On low-pass, everything above it fades: turn it down for a darker, muffled sound, up for a brighter one.',
+    how: 'Watch the dashed Response Curve on the Filter’s Spectrum move, and the Harmonics past its slope shrink.',
+  },
+  resonance: {
+    title: 'Resonance',
+    body: 'Boosts the Harmonics right at the Cutoff, so the Filter sings or whistles there. A little adds bite; a lot rings.',
+    how: 'Turn it up and watch the bump on the Response Curve, then sweep the Cutoff: the bump lifts each Harmonic as it passes.',
+  },
+  octave: {
+    title: 'Octave',
+    body: 'Shifts Osc 2 up or down by whole octaves from the Note you play: 2× or ½× the pitch, the same note higher or lower.',
+  },
+  semitone: {
+    title: 'Semitone',
+    body: 'Shifts Osc 2 by semitones from the Note you play: +7 is a fifth above, +12 an octave. Two notes at once, from one key.',
+  },
+  scope: {
+    title: 'Scope',
+    body: 'The sound’s waveform: a few cycles of it, held still. Its height is the level, on one scale for every Scope, so you can compare stage to stage.',
+  },
+  spectrum: {
+    title: 'Spectrum',
+    body: 'The sound split into its Harmonics: low pitches on the left, high on the right. Each spike is one Harmonic, its height how loud it is.',
+    how: 'Hover it to read the frequency and note under the pointer.',
+  },
 } satisfies Record<string, TipContent>;
+
+/** Where each Tap listens, said first in its Viewers' tooltips. */
+export const TAP_PLACES: Record<string, string> = {
+  Oscillator: 'The Oscillator Tap: the mix, before the Filter.',
+  Filter: 'The Filter Tap: what the Filter lets through.',
+  Amp: 'The Amp Tap: what you hear, shaped by the Amp Envelope.',
+};
+
+/** Said on a Spectrum that draws the Response Curve (the Filter's). */
+export const CURVE_NOTE = 'The dashed line is the Response Curve: how much the Filter lets through at each pitch.';
 
 export const OVERLAY_TIPS: Record<Overlay, TipContent> = {
   harmonics: {

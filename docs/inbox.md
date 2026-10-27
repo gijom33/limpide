@@ -8,6 +8,7 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 ## Ideas
 
 - Load the GoatCounter script with an integrity check (the licence's scope is now stated in About and the README) ([review 11](./reviews/2026-10-26/11-oss-legal.md))
+- Start demo song with something before the kick as it is hard to hear.
 
 ## Dropped
 
