@@ -17,9 +17,21 @@ Fixed at once:
 For the owner:
 
 - [ ] **A Step within reach when it comes ticks itself** (Bass's Filter Decay, 250 → 180 ms; Pluck's Amp Decay). The grilling decided so (issue 40, decision 5); the learner found it confusing. Keep it, or ask for a touch first?
-- [ ] **The card covers the pictures the Step talks about** at 1920 × 1080 (the bottom of the Spectrums, the Maths formula) and at 150 % zoom (most of the Filter Spectrum). A smaller card, a card beside the sections on wide screens, or scrolling the Step's Viewer into view too?
+- [x] **The card covers the pictures the Step talks about** at 1920 × 1080 (the bottom of the Spectrums, the Maths formula) and at 150 % zoom (most of the Filter Spectrum). A smaller card, a card beside the sections on wide screens, or scrolling the Step's Viewer into view too? Done (2026-10-27): the card folds and moves, as the owner asked (Decisions below).
 - [ ] **The Tutorials are hard to find after the welcome**: only the Patch name leads to them. A door in About, or in the header?
 - [ ] **The "→ target" label covers its neighbour** (the Osc 2 tab, the Filter Mode icons, the Cutoff readout): below the control instead, or inside the ring?
 - [x] **No Tooltips on the Viewers, the faders, or the Timeline legend**. Done (2026-10-27, asked by the owner): each Scope and Spectrum says which Tap it is and what it shows, every fader (the Mixer's Osc 1 and Osc 2, both Envelopes' stages), LFO Rate and Depth, the Timeline and each entry of its key; `e2e/tooltips.spec.ts` hovers them all. (The Timeline's two oranges, which review 5 found alike in both runs, are intentional: decided by the owner, 2026-10-27, not to change.)
 - [ ] **Small on a projector**: the card's and the Demo card's text 12 to 13 px at 1920 × 1080
 - [ ] **No Tutorial uses Snapshot, Maths or Guides**: a fifth Tutorial, or a Step in one of the four
+
+## Decisions on the docked cards (grilling, 2026-10-27, decided by the owner)
+
+From the owner's inbox line: "Would be nice if we could move the popped up information window at the bottom to be able to see the things behind. Would be good if we could collapse it too, maybe."
+
+1. **Both cards**, the Demo's and a Tutorial's, fold and move.
+2. **Folding:** a ⌄ button in the top row folds the card to that row: the Demo keeps its name, part dots and Stop; a Tutorial its name, "Step n of m", and Start, Next or Finish. It stays folded until unfolded, whatever the Demo or the Tutorial does next. On a phone the Tutorial keeps its + beside it.
+3. **Moving:** dragged by the top row (not its buttons), with a mouse, pen or finger, from 601 px up; on a phone it spans the bottom edge and only folds. It stays inside the window; a double-click on the top row puts it back; it opens at the bottom each time. Keyboard users fold, not move.
+4. **Remembered:** the fold, in this browser, for each kind of card; not the position.
+
+Built in `src/ui/cardPlacement.tsx`; tested in `e2e/dockedCards.spec.ts`.
+

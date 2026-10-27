@@ -14,6 +14,13 @@ export const CameraIcon = () => (
   </svg>
 );
 
+/** A chevron: down folds a card away, up opens it again. */
+export const ChevronIcon = ({ up = false }: { up?: boolean }) => (
+  <svg {...base} width={12} height={12}>
+    <path d={up ? 'M4 10l4-4 4 4' : 'M4 6l4 4 4-4'} strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
 export const CloseIcon = () => (
   <svg {...base} width={12} height={12}>
     <path d="M4 4l8 8M12 4l-8 8" strokeLinecap="round" />

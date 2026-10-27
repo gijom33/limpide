@@ -1097,12 +1097,20 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 /* A card docked at the bottom of the page (a Tutorial's, issue 57; the Demo's, issue 50), under the panels and
    tooltips, the page keeping room for it below its last section. */
 .docked {
-  position: fixed; z-index: 40; left: 50%; bottom: var(--space-3); transform: translateX(-50%);
+  position: fixed; z-index: 40; left: 50%; bottom: var(--space-3); transform: translate(calc(-50% + var(--card-dx, 0px)), var(--card-dy, 0px));
   width: min(640px, calc(100vw - 2 * var(--space-3))); box-sizing: border-box;
   display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3) var(--space-4);
   background: var(--panel); border: 1px solid var(--accent); border-radius: var(--radius-panel); box-shadow: var(--shadow-panel);
 }
 :root[data-docked] main { margin-bottom: calc(var(--docked-h, 0px) + var(--space-3)); }
+/* Folded, a card keeps only its top row (issue 59). From the 2 × 2 layout up, that row is the handle it moves by. */
+.docked[data-folded] > :not(:first-child) { display: none; }
+.card-fold { flex: none; }
+@media (min-width: 601px) {
+  [data-card-handle] { cursor: grab; touch-action: none; }
+  [data-card-handle]:active { cursor: grabbing; }
+  [data-card-handle] button { cursor: pointer; }
+}
 .tutorial-top { display: flex; align-items: center; gap: var(--space-2); }
 .tutorial-name { font-weight: 600; font-size: var(--text-lg); }
 .tutorial-progress { flex: 1 1 auto; color: var(--muted); font-size: var(--text-md); }

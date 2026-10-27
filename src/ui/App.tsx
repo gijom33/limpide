@@ -46,7 +46,7 @@ import { ToolGroup } from './ToolGroup';
 import { type TipContent, Tooltip } from './Tooltip';
 import { TutorialCard } from './TutorialCard';
 import { applyTheme, loadTheme, type Theme } from './theme';
-import { TIPS, VIEWER_TIPS } from './tips';
+import { TIPS, type VIEWER_TIPS } from './tips';
 
 /** Each Envelope fader's tip: the stage's, the same in both Envelopes. */
 const STAGE_TIPS = {

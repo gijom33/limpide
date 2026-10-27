@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { type Step, type Tutorial, targetText } from '../tutorial/tutorial';
+import { FoldButton, useCardPlacement } from './cardPlacement';
 import { useDocked } from './docked';
 import { CloseIcon, NoteIcon } from './icons';
 import { reveal } from './reveal';
@@ -102,16 +103,25 @@ export function TutorialCard({ tutorial, about, index, done, differs, listening,
   const [expanded, setExpanded] = useState(false);
   useRing(step, made);
   useDocked(card);
+  const place = useCardPlacement(card, 'tutorial');
 
+  const primary = index < steps.length && (
+    <button type="button" className="tool tool-primary" disabled={!!step && !made} onClick={onNext}>
+      {index < 0 ? 'Start' : index === steps.length - 1 ? 'Finish' : 'Next'}
+    </button>
+  );
   const progress = step ? `Step ${index + 1} of ${steps.length}` : index < 0 ? `${steps.length} steps` : 'Done';
   return (
-    <section ref={card} className="docked tutorial" aria-label={`Tutorial: ${tutorial.preset}`} data-expanded={expanded || undefined}>
-      <div className="tutorial-top">
+    <section ref={card} className="docked tutorial" aria-label={`Tutorial: ${tutorial.preset}`} data-expanded={expanded || undefined} {...place.cardProps}>
+      <div className="tutorial-top" {...place.handle}>
         <span className="tutorial-name">{tutorial.preset}</span>
         <span className="tutorial-progress">{progress}</span>
         <button type="button" className="tool tool-icon tutorial-more" aria-expanded={expanded} aria-label="Show the whole text" onClick={() => setExpanded((e) => !e)}>
           {expanded ? '−' : '+'}
         </button>
+        {/* Folded, the card keeps its way forward in the top row. */}
+        {place.folded && primary}
+        <FoldButton folded={place.folded} onToggle={place.toggleFold} />
         <button type="button" className="tool tool-icon" aria-label="Quit the tutorial" onClick={onQuit}>
           <CloseIcon />
         </button>
@@ -159,11 +169,7 @@ export function TutorialCard({ tutorial, about, index, done, differs, listening,
             Do it for me
           </button>
         )}
-        {index < steps.length && (
-          <button type="button" className="tool tool-primary" disabled={!!step && !made} onClick={onNext}>
-            {index < 0 ? 'Start' : index === steps.length - 1 ? 'Finish' : 'Next'}
-          </button>
-        )}
+        {!place.folded && primary}
         {index >= steps.length && differs.length > 0 && (
           <button type="button" className="tool" onClick={onMatch}>
             Match the Preset

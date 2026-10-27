@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import type { Part } from '../demo/track';
+import { FoldButton, useCardPlacement } from './cardPlacement';
 import { useDocked } from './docked';
 import { CloseIcon } from './icons';
 
@@ -21,12 +22,13 @@ interface Props {
 export function DemoBar({ playing, tookOver, onStop, onPlayAgain, onDismiss }: Props) {
   const card = useRef<HTMLElement>(null);
   useDocked(card, 'when-scrolling');
+  const place = useCardPlacement(card, 'demo');
   return (
     // data-demo: a tap on the card is not the person taking over.
-    <section ref={card} className="docked demo-bar" aria-label="Demo" data-demo>
+    <section ref={card} className="docked demo-bar" aria-label="Demo" data-demo {...place.cardProps}>
       {playing ? (
         <>
-          <div className="demo-bar-top">
+          <div className="demo-bar-top" {...place.handle}>
             <span className="demo-bar-name">{playing.part.preset}</span>
             <span className="demo-bar-parts" role="img" aria-label={`Part ${playing.index + 1} of ${playing.count}`}>
               {Array.from({ length: playing.count }, (_, i) => (
@@ -34,6 +36,7 @@ export function DemoBar({ playing, tookOver, onStop, onPlayAgain, onDismiss }: P
                 <span key={i} data-done={i < playing.index || undefined} data-current={i === playing.index || undefined} />
               ))}
             </span>
+            <FoldButton folded={place.folded} onToggle={place.toggleFold} />
             <button type="button" className="tool" onClick={onStop}>
               Stop
             </button>
