@@ -6,6 +6,7 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- 2026-10-28, the owner: "I get it now, what about we use a thinner ring representing the effect of velocity which extends beyond the thicker ring representing the envelope? Also do not show a blue ring when setting velocity, this is confusing. Also make sure the envelope ring starts exactly at the knob position, the rounded edges make it look like it bleeds over a bit."
 - 2026-10-28, from the 1.13.0 review: the Maths Layer still writes the Cutoff's value inside the Timeline, where issue 63 decision 24 wants no text but the Cutoff's scale. Keep it (the Maths Layer is asked for), or move it?
 - 2026-10-28, from the 1.13.0 review: a knob's own setting on the Timeline (faint, thin, dashed 4-4) looks close to LFO 1's line (dashed 5-3); only width and fading tell them apart. A faint solid line instead?
 - 2026-10-28, from the 1.13.0 review: while Display is open, no press anywhere ends the Demo, a key on the on-screen piano included (`usePlayers.ts`); issue 64 only asked that the press closing Display leave it playing.
