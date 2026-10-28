@@ -144,11 +144,11 @@ export function App() {
     session.engine.applyPatch(patch);
     session.input.setVoices(patch.voices);
   }, [session, patch]);
-  const modulationContext = useMemo(() => ({ engine: session.engine, patch: patchRef }), [session, patchRef]);
 
   const [octave, setOctave] = useState(DEFAULT_OCTAVE);
   const octaveRef = useRef(octave);
   octaveRef.current = octave;
+  const modulationContext = useMemo(() => ({ engine: session.engine, patch: patchRef, octave: octaveRef }), [session, patchRef]);
   // The letter keys play Notes unless turned off in Display (issue 51); remembered.
   const [letterKeys, setLetterKeys] = useState(() => storage.getItem(LETTER_KEYS) !== 'off');
   useEffect(() => storage.setItem(LETTER_KEYS, letterKeys ? 'on' : 'off'), [storage, letterKeys]);

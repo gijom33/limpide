@@ -42,11 +42,6 @@ export interface Modulation {
   volume: number;
   /** The newest Note while its key is held (or Hold keeps it), with its Velocity; null once released. */
   sounding: Sounding | null;
-  /**
-   * The newest Note, held or released, with its Velocity: where Velocity and Key Track hold the Cutoff until the
-   * next Note, through its Release too. Null before any Note.
-   */
-  played: Sounding | null;
   /** The pitch the newest Note sounds at, in semitones (fractional through a Glide or vibrato); A4 before any. */
   pitch: number;
   /** How far an LFO on Pitch moves it right now, in semitones: `pitch` less the Note where the Glide has taken it. */
@@ -732,7 +727,6 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       bandwidth: then ? bandwidthOctaves(filterStages(then.filterMode, then.filterSlope, resonance)[0].Q) : 1,
       volume: then ? effectiveVolume(then, lfo) : 1,
       sounding: gate?.on ? { note, velocity } : null,
-      played: opened >= 0 ? { note, velocity } : null,
       pitch: gliding + vibrato + bendAt(t) / 100,
       vibrato,
     };
