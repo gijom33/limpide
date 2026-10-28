@@ -17,11 +17,10 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 - One list per LFO Destination: a new one meant editing the type and both CHOICES lists (`patch.ts`), the Tutorials' names (`tutorial.ts`), the picker's labels and stages (`DestinationPicker.tsx`, its stage type repeating STAGES) and the CSS; the label "Volume" is written twice. From the 1.12.0 code review.
 - `tremolo()` writes out `lfoOffset`'s sum again rather than calling it (to compute the swings once). From the 1.12.0 code review.
 - ADR-0006's "at full Sustain the Amp Tap equals the Filter Tap" holds only without an LFO on Volume; the ADR is frozen (ADR-0010), so a note needs a new ADR or a line elsewhere. From the 1.12.0 code review.
-- Need to find a better way to represent the effect of the two LFOs when set on set knob and the combined effect of filter envelop with LFO.
-- Would be nice to allow the user to tweak the synth parameters during the demo. Only a change of patch would override the parameters. That would be fun for the user to tweak the demo.
-- Should be okay to change display settings while demo, song and tutorials are running.
 
 ## Dropped
+
+- 2026-10-27, the owner's idea to tweak the synth during the Demo, a change of Patch alone overriding it: already so since [36](./issues/36-demo-track.md). Knobs, faders and the stages' switches can be changed while it plays, and the Demo's own moves skip a control turned by hand until its next Preset (`e2e/demo.spec.ts`). What did end it was opening Display, which went to [64](./issues/64-display-during-the-demo.md). Claude's call, open to the owner.
 
 ## Triaged
 
@@ -52,3 +51,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-27: the owner's Ideal question went to [61](./issues/61-ideal-every-oscillator.md), grilled and built there: the Ideal from every Oscillator, a shape each.
 2026-10-27: the owner's Tutorial changes done at once, in [59](./issues/59-tutorials-after-review-5.md): a made Step's tick a filled badge (on the instruction and beside "Step n of m"), the target back above its control, Acid's Maths Step taken out.
 2026-10-27: the owner's bug, "Step n of m" moving up when its tick showed, fixed at once in [59](./issues/59-tutorials-after-review-5.md): the badge sat on the words' baseline and pushed them 4 px off the name's line; each tick now sits in a flex row, and the test checks the words against the name.
+2026-10-27, the owner's ideas: showing two LFOs on one control, and the Filter Envelope with an LFO, went to [63](./issues/63-showing-combined-modulation.md), to grill; Display settings while the Demo, Song and Tutorials play went to [64](./issues/64-display-during-the-demo.md) (only the Demo stops today); tweaking during the Demo dropped, already so (see Dropped).
