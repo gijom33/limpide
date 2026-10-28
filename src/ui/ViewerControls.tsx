@@ -76,8 +76,21 @@ const CYCLES = [
   { value: 4, label: '4' },
 ] as const;
 
-/** How the Spectrum and Scope axes are scaled. */
-export function AxesControls({ state, dispatch, cycles, onCycles }: Props & { cycles: ViewSettings['cycles']; onCycles(c: ViewSettings['cycles']): void }) {
+const TIMELINE_SECONDS = [
+  { value: 1, label: '1s' },
+  { value: 2, label: '2s' },
+  { value: 3, label: '3s' },
+] as const;
+
+interface AxesProps extends Props {
+  cycles: ViewSettings['cycles'];
+  onCycles(c: ViewSettings['cycles']): void;
+  timelineSeconds: ViewSettings['timelineSeconds'];
+  onTimelineSeconds(s: ViewSettings['timelineSeconds']): void;
+}
+
+/** How the Spectrum, Scope and Envelope Timeline axes are scaled. */
+export function AxesControls({ state, dispatch, cycles, onCycles, timelineSeconds, onTimelineSeconds }: AxesProps) {
   return (
     <>
       <Tooltip content={TIPS.frequencyAxis}>
@@ -100,6 +113,9 @@ export function AxesControls({ state, dispatch, cycles, onCycles }: Props & { cy
       </Tooltip>
       <Tooltip content={TIPS.cycles}>
         <Segmented label="Scope cycles" caption="Cycles" value={cycles} options={CYCLES} onChange={onCycles} />
+      </Tooltip>
+      <Tooltip content={TIPS.timelineSeconds}>
+        <Segmented label="Env Timeline length" caption="Env Timeline" value={timelineSeconds} options={TIMELINE_SECONDS} onChange={onTimelineSeconds} />
       </Tooltip>
     </>
   );

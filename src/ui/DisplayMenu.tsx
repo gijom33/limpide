@@ -34,7 +34,7 @@ export function DisplayMenu({ active, children }: { active: boolean; children: R
       <Tooltip
         content={{
           title: 'Display',
-          body: 'How the Viewers show the sound: Freeze, Snapshot, the axes, Scope cycles, and which overlays are drawn.',
+          body: 'How the Viewers show the sound: Freeze, Snapshot, the axes, Scope cycles, the Env Timeline’s length, and which overlays are drawn.',
           how: 'Space freezes without opening it. A dot here means Freeze or a Snapshot is on.',
         }}
       >

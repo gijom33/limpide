@@ -5,7 +5,6 @@ import { cssVar, curveWidth, haloText, prepareCanvas } from './canvas';
 import { createFreezeLatch } from './freezeLatch';
 import type { ViewSettings } from './viewSettings';
 
-const WINDOW_SECONDS = 2;
 const F_MIN = 20;
 const F_MAX = 20000;
 
@@ -54,7 +53,9 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
     g.clearRect(0, 0, width, height);
     const pad = 4;
     const plot = height - 2 * pad; // a grid line every second, unlabelled: "now" is the right edge
-    const timeAt = (x: number) => now - WINDOW_SECONDS + (x / width) * WINDOW_SECONDS;
+    const seconds = view().timelineSeconds;
+    canvas.dataset.seconds = String(seconds);
+    const timeAt = (x: number) => now - seconds + (x / width) * seconds;
     const yLevel = (level: number) => pad + (1 - level) * plot;
     const yHz = (hz: number) => pad + (1 - Math.log(hz / F_MIN) / Math.log(F_MAX / F_MIN)) * plot;
 
@@ -63,8 +64,8 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
     g.strokeStyle = cssVar(canvas, '--grid');
     g.fillStyle = muted;
     g.lineWidth = 1;
-    for (let s = 0; s <= WINDOW_SECONDS; s++) {
-      const x = (s / WINDOW_SECONDS) * width;
+    for (let s = 0; s <= seconds; s++) {
+      const x = (s / seconds) * width;
       g.beginPath();
       g.moveTo(x, pad);
       g.lineTo(x, pad + plot);

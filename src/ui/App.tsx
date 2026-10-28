@@ -164,6 +164,7 @@ export function App() {
   const [theme, setTheme] = useState(loadTheme);
   useEffect(() => applyTheme(theme), [theme]);
   const [cycles, setCycles] = useState<ViewSettings['cycles']>(2);
+  const [timelineSeconds, setTimelineSeconds] = useState<ViewSettings['timelineSeconds']>(2);
   const [overlays, setOverlays] = useState(() => loadOverlays(storage));
   useEffect(() => saveOverlays(storage, overlays), [storage, overlays]);
 
@@ -212,8 +213,8 @@ export function App() {
   );
 
   // Read by the render loop every frame; a stable getter keeps the Viewers mounted while settings change.
-  const viewSettings = useRef<ViewSettings>({ cycles, ideal, overlays, viewer });
-  viewSettings.current = { cycles, ideal, overlays, viewer };
+  const viewSettings = useRef<ViewSettings>({ cycles, timelineSeconds, ideal, overlays, viewer });
+  viewSettings.current = { cycles, timelineSeconds, ideal, overlays, viewer };
   const view = useRef(() => viewSettings.current).current;
 
   const change = (id: ParamId, value: number) => {
@@ -343,7 +344,7 @@ export function App() {
                     <ViewActions state={viewer} dispatch={dispatchViewer} />
                   </ToolGroup>
                   <ToolGroup title="Axes">
-                    <AxesControls state={viewer} dispatch={dispatchViewer} cycles={cycles} onCycles={setCycles} />
+                    <AxesControls state={viewer} dispatch={dispatchViewer} cycles={cycles} onCycles={setCycles} timelineSeconds={timelineSeconds} onTimelineSeconds={setTimelineSeconds} />
                   </ToolGroup>
                   <ToolGroup title="Show">
                     <OverlayToggles value={overlays} onToggle={(o) => setOverlays((v) => toggleOverlay(v, o))} />

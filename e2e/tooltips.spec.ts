@@ -44,7 +44,7 @@ test('every toolbar control explains itself, without doubling up on native brows
     await toolbar.getByRole('button', { name }).hover();
     await expect(page.getByRole('tooltip'), name).toBeVisible();
   }
-  for (const name of ['Frequency axis', 'Level axis', 'Scope cycles']) {
+  for (const name of ['Frequency axis', 'Level axis', 'Scope cycles', 'Env Timeline length']) {
     await toolbar.getByRole('radiogroup', { name }).hover();
     await expect(page.getByRole('tooltip'), name).toBeVisible();
   }
