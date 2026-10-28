@@ -116,6 +116,8 @@ test('off the path: nothing is locked, and the last card names what differs and 
 });
 
 test('a Display option Step rings the Display button, then the option once the panel is open', async ({ page }) => {
+  // Ideal is on at first (the owner, 2026-10-28): a learner who turned it off is asked for it again.
+  await page.addInitScript(() => localStorage.setItem('limpide.overlays', JSON.stringify({ ideal: false })));
   await open(page, 'Bass');
   await action(page, 'Start').click();
   for (let i = 0; i < 3; i++) {

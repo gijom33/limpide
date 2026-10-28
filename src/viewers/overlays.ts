@@ -3,9 +3,9 @@ export const OVERLAYS = ['harmonics', 'ideal', 'curve', 'guides', 'maths'] as co
 export type Overlay = (typeof OVERLAYS)[number];
 export type Overlays = Record<Overlay, boolean>;
 
-/** What a first visit shows: the Harmonic Markers and the Response Curve. The Ideal Reference, the Scope guides and
- *  the Maths Layer are there to be asked for, so the Viewers start uncluttered. */
-export const DEFAULT_OVERLAYS: Overlays = { harmonics: true, ideal: false, curve: true, guides: false, maths: false };
+/** What a first visit shows: the Harmonic Markers, the Ideal Reference (the owner, 2026-10-28) and the Response
+ *  Curve. The Scope guides and the Maths Layer are there to be asked for, so the Viewers start uncluttered. */
+export const DEFAULT_OVERLAYS: Overlays = { harmonics: true, ideal: true, curve: true, guides: false, maths: false };
 
 const KEY = 'limpide.overlays';
 

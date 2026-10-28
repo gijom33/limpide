@@ -1,11 +1,11 @@
 import { expect, test } from '@playwright/test';
 import { openDisplay } from './helpers';
 
-test('the Viewers start with Harmonics and the Curve; overlays switched on or off stay so after a reload', async ({ page }) => {
+test('the Viewers start with Harmonics, Ideal and the Curve; overlays switched on or off stay so after a reload', async ({ page }) => {
   await page.goto('/');
   await openDisplay(page);
   const overlays = page.getByRole('group', { name: 'Show on Viewers' });
-  for (const [name, on] of [['Harmonics', 'true'], ['Ideal', 'false'], ['Curve', 'true'], ['Guides', 'false'], ['Maths', 'false']] as const) {
+  for (const [name, on] of [['Harmonics', 'true'], ['Ideal', 'true'], ['Curve', 'true'], ['Guides', 'false'], ['Maths', 'false']] as const) {
     await expect(overlays.getByRole('button', { name })).toHaveAttribute('aria-pressed', on);
   }
   await expect(overlays.getByRole('button')).toHaveCount(5); // no Ghost: it was dropped; the Maths Layer joined
@@ -31,7 +31,7 @@ test('explanations live in tooltips, not as text on screen', async ({ page }) =>
 test('the Ideal rings show only while a sound is there to compare them with: none after a reload, before a Note (the owner, 2026-10-27)', async ({ page }) => {
   await page.goto('/');
   await openDisplay(page);
-  await page.getByRole('group', { name: 'Show on Viewers' }).getByRole('button', { name: 'Ideal' }).click();
+  await expect(page.getByRole('group', { name: 'Show on Viewers' }).getByRole('button', { name: 'Ideal' })).toHaveAttribute('aria-pressed', 'true'); // on at first
   await page.keyboard.press('Escape');
   const rings = () => page.getByLabel('Oscillator Spectrum', { exact: true }).getAttribute('data-ideal-rings').then(Number);
   // A reload, with Ideal remembered: the browser holds the sound back until a tap, so the Spectrum is empty.

@@ -29,7 +29,7 @@ describe('a Step', () => {
   });
 
   it('is reached by a Display option once it is on, whatever the Patch', () => {
-    expect(reached(ideal, defaultPatch(), DEFAULT_OVERLAYS)).toBe(false);
+    expect(reached(ideal, defaultPatch(), { ...DEFAULT_OVERLAYS, ideal: false })).toBe(false);
     expect(reached(ideal, defaultPatch(), { ...DEFAULT_OVERLAYS, ideal: true })).toBe(true);
   });
 
