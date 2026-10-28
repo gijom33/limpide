@@ -6,6 +6,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- 2026-10-28, the owner: "In that case show Volume like we show Effective Cutoff and show it in light purple. Rename "Effective Cutoff" to simply "Cutoff"."
+
 ## Dropped
 
 - 2026-10-27, from the 1.12.1 review, two inbox rules slipped (fixes made without an inbox line first): nothing to build. The rule is in CLAUDE.md and has been followed since. Claude's call, open to the owner.
