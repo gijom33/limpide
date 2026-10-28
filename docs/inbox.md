@@ -6,6 +6,7 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- 2026-10-28, the owner: "Make sure some presets use two LFOs and that some use it on the same destination. Make sure one of those is included in the demo song even if it gets even longer. Also make sure the demo song includes a preset which uses glide and LFO-modulated pitch. This is going to look amazing and impressive!"
 - 2026-10-28, from the 1.14.0 review: pointing at Velocity (and now Key Track) dims the blue ring, as the Filter Envelope's controls do, which was not asked.
 - 2026-10-28, from the 1.14.0 review: on a window wider than 600 px, hovering a knob or fader changes nothing, since its value already shows under its name. The owner asked for the name to be replaced by the value: on wide windows too, or is the value line enough?
 - 2026-10-28, from the 1.14.0 review: Swell's description says the Timeline shows its 1.5 s ramp, which does not fit a 1 s Env Timeline; Long Tail's four-second tail is wider than the 2 s default. Point them at the Env Timeline choice?
