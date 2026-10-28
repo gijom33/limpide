@@ -17,10 +17,10 @@ function oneAtATime(phrase: string) {
 }
 
 describe('the Demo track', () => {
-  it('is about two minutes of music (issue 60), every part whole bars, so each Preset lands on a bar line', () => {
+  it('is about two and a half minutes of music (issue 60, then the owner, 2026-10-28), every part whole bars, so each Preset lands on a bar line', () => {
     const seconds = TRACK.parts.reduce((s, part) => s + phraseLength(part.phrase, TRACK.bpm), 0);
-    expect(seconds).toBeGreaterThanOrEqual(110);
-    expect(seconds).toBeLessThanOrEqual(130);
+    expect(seconds).toBeGreaterThanOrEqual(140);
+    expect(seconds).toBeLessThanOrEqual(160);
     for (const part of TRACK.parts) expect(Number.isInteger(bars(part.phrase)), `${part.preset}: ${bars(part.phrase)} bars`).toBe(true);
   });
 
@@ -69,10 +69,26 @@ describe('the Demo track', () => {
 
 describe('issue 60', () => {
   it('plays Tremolo Keys, an LFO on Volume, between the Strings and the riser; a Sweep Pad break and the hook again before the end', () => {
-    expect(TRACK.parts.map((p) => p.preset)).toEqual([
-      'Kick', 'Acid', 'Poly Pluck', 'Strings', 'Tremolo Keys', 'Self-Oscillation', 'Wobble', 'Sweep Pad', 'Poly Pluck', 'Brass Section',
-    ]);
+    const names = TRACK.parts.map((p) => p.preset);
+    expect(names.indexOf('Tremolo Keys')).toBe(names.indexOf('Strings') + 1);
+    expect(names.indexOf('Self-Oscillation')).toBe(names.indexOf('Tremolo Keys') + 1);
+    expect(names.lastIndexOf('Poly Pluck')).toBe(names.length - 2);
+    expect(names.indexOf('Sweep Pad')).toBeLessThan(names.lastIndexOf('Poly Pluck'));
     expect(preset('Tremolo Keys')!.patch.lfoDestination).toBe('volume');
+  });
+});
+
+describe('the owner, 2026-10-28', () => {
+  it('doubles the wobble with both LFOs on the Cutoff, and plays a lead with Glide and vibrato after the break', () => {
+    expect(TRACK.parts.map((p) => p.preset)).toEqual([
+      'Kick', 'Acid', 'Poly Pluck', 'Strings', 'Tremolo Keys', 'Self-Oscillation', 'Wobble', 'Double Wobble', 'Sweep Pad', 'Singing Lead', 'Poly Pluck', 'Brass Section',
+    ]);
+    const double = preset('Double Wobble')!.patch;
+    expect([double.lfoAmount > 0, double.lfo2Amount > 0, double.lfoDestination, double.lfo2Destination]).toEqual([true, true, 'cutoff', 'cutoff']);
+    const lead = preset('Singing Lead')!.patch;
+    expect(lead.glide).toBeGreaterThan(0.01);
+    expect(lead.voices).toBe(1); // Glide needs one Voice
+    expect([lead.lfo2Amount > 0, lead.lfo2Destination]).toEqual([true, 'pitch']);
   });
 });
 

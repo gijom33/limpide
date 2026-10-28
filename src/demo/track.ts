@@ -100,11 +100,28 @@ export const TRACK: Track = {
         { id: 'lfoAmount', from: 0.3, to: 0.5 },
         { id: 'resonance', to: 0.45, start: 0, end: 0 },
       ] },
+    // The drop's second half (the owner, 2026-10-28): LFO 2 joins LFO 1 on the Cutoff. LFO 1 wobbles on the quarter,
+    // LFO 2 flutters on the sixteenth, then the thirty-second at the end of each four bars, its Depth growing.
+    { preset: 'Double Wobble', caption: 'The wobble doubled: LFO 2 joins LFO 1 on the Cutoff, a fast flutter riding the slow sweep. One blue ring spans both.',
+      phrase: times([wobbleBar('A1', 'A2'), wobbleBar('F1', 'F2'), wobbleBar('C2', 'C3'), wobbleBar('G1', 'G2')].join(' '), 2),
+      moves: [
+        { id: 'lfoRate', to: SYNC.quarter, start: 0, end: 0 },
+        ...[[0, SYNC.sixteenth], [3, SYNC.thirtySecond], [4, SYNC.sixteenth], [7, SYNC.thirtySecond]].map(([bar, hz]): KnobMove => ({ id: 'lfo2Rate', to: hz, start: bar * 4, end: bar * 4 })),
+        { id: 'lfo2Amount', from: 0.1, to: 0.35 },
+      ] },
     // The break (issue 60): held chords on a pad whose Filter Envelope takes seconds to open, so the Effective Cutoff
     // climbs across the Timeline under each chord.
     { preset: 'Sweep Pad', caption: 'A pad whose Filter opens over seconds: watch the Cutoff climb across the Timeline under each chord.',
       phrase: 'A2+E3+A3+C4:8 F2+C3+F3+A3:8',
       moves: [{ id: 'resonance', from: 0.5, to: 0.65 }] },
+    // A melody over the chords (the owner, 2026-10-28): one Voice, so each Note glides from the last, with LFO 2's
+    // vibrato restarting on every Note and LFO 1 breathing the Cutoff. The Glide lengthens and the vibrato deepens.
+    { preset: 'Singing Lead', caption: 'A lead that slides from Note to Note (Glide) and sings with vibrato (LFO 2 on Pitch), while LFO 1 breathes the Filter. Watch the piano’s dot slide and shake.',
+      phrase: [
+        'E5:2 D5:.5 C5:.5 B4:.5 C5:.5', 'A4:3 C5:1', 'G4:1.5 C5:.5 E5:2', 'D5:3 B4:1',
+        'C5:.5 E5:.5 A5:3', 'G5:.5 F5:.5 E5:1 C5:2', 'E5:1.5 D5:.5 C5:1 G4:1', 'B4:3 -:1',
+      ].join(' '),
+      moves: [{ id: 'glide', from: 0.06, to: 0.18 }, { id: 'lfo2Amount', from: 0.2, to: 0.4 }] },
     // The hook again (issue 60), brighter: the Cutoff opens wide and the Pulse Width comes back to square, so the
     // Filter Spectrum fills up to the top and the even Harmonics fall away again.
     { preset: 'Poly Pluck', caption: 'The hook again, brighter: the Filter opens wide and the Spectrum fills to the top.', phrase: times(['A3 C4 E4 A4', 'A3 C4 F4 A4', 'G3 C4 E4 G4', 'G3 B3 D4 G4'].map(arpeggio).join(' '), 2),

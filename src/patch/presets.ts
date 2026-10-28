@@ -192,6 +192,13 @@ group('Bass', [
     filterSlope: 24, cutoff: 300, resonance: 0.65,
     lfoRate: 3, lfoAmount: 0.7, lfoRetrigger: 'note', ampSustain: 1, ampRelease: 0.2,
   }],
+  ['Double Wobble', 'Both LFOs on the Cutoff, both retriggered: LFO 1 a slow wobble, LFO 2 a quick square flutter riding it. The Cutoff’s blue ring spans the two together; the Timeline draws their sum.', {
+    osc2Waveform: 'square', osc2Octave: -1, mixOsc2: 0.6,
+    filterSlope: 24, cutoff: 300, resonance: 0.6,
+    lfoRate: 2, lfoAmount: 0.6, lfoRetrigger: 'note',
+    lfo2Waveform: 'square', lfo2Destination: 'cutoff', lfo2Rate: 8, lfo2Amount: 0.25, lfo2Retrigger: 'note',
+    ampSustain: 1, ampRelease: 0.2,
+  }],
   ['Growl', 'A square LFO jumping the Filter between two places over a Sub: a stepped, talking bass.', {
     mixOsc2: 0.6, osc2Detune: -8, mixSub: 0.7, filterSlope: 24, cutoff: 350, resonance: 0.6,
     lfoWaveform: 'square', lfoRate: 4, lfoAmount: 0.5, ampSustain: 1, ampRelease: 0.15,
