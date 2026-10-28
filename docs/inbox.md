@@ -6,6 +6,7 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- 2026-10-28, the owner: "When hovering a button, show value instead of name."
 - 2026-10-28, the owner: "Add a search feature for the patches. Also add a category filter like we have in Ableton Live or Apple LogicPro."
 - 2026-10-28, the owner: "In the display settings, for axes also add a choice for Env Timeline with 1s, 2s, 3s and 2s the default."
 - 2026-10-28, from the 1.13.0 review: the Maths Layer still writes the Cutoff's value inside the Timeline, where issue 63 decision 24 wants no text but the Cutoff's scale. Keep it (the Maths Layer is asked for), or move it?
