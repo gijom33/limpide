@@ -6,8 +6,18 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- 2026-10-28, from the issue 69 review: issue 69's decision 7 says the category pills sit under the search box, wrapping on a computer; on a computer they sit beside it, on the heading's line (as decision 13 assumes), and under it only on a phone. Amend decision 7, or move the pills?
+- 2026-10-28, from the issue 69 review: the search box is labelled "Search Presets" with the placeholder "Search names and descriptions", and the heading stays "Presets" under the My Patches and Tutorials categories, though the box narrows the Tutorials and My Patches too (My Patches by name only).
+- 2026-10-28, from the issue 69 review: between 601 and about 900 px wide the 17 categories wrap beside a 240 px search box, perhaps five rows (about 150 px) at 700 px, not measured; and the × appearing on the first letter typed reflows them.
+- 2026-10-28, from the issue 69 review, accessibility: the results and "Nothing matches" change silently as you type; no `role="status"` says how many were found.
+- 2026-10-28, from the issue 69 review: under the Tutorials category or a Preset group, My Patches shows its heading and Save field but no list and no word why, so someone with saved Patches may think they have none.
+- 2026-10-28, from the issue 69 review: the Env Timeline's tooltip says "3 or 4 s fit a slow Swell", Swell's new description "at 2 s or more"; not wrong, not alike.
+- 2026-10-28, from the issue 69 review, code: `matchesName` also matches descriptions; the search's × reuses `.patch-delete`; a local `byName` sits beside `found.byName` and `searchPresets` runs twice a render; the category checks (`'All' || 'Tutorials'` and the like) repeat across `PatchBar.tsx` and `presetSearch.ts`; the rows are `[string, Preset[]]` pairs whose "Name" and "Description" double as group labels; `.patch-search input` and `.patch-category` copy `.patch-save input` and `.patch-item`; `PatchBar.tsx` holds search, categories, saving, deleting, files and sharing in about 390 lines.
+
 ## Dropped
 
+- 2026-10-28, from the issue 69 review, typing in the search box ending the Demo: never reached, since opening the Patch panel (a click or Enter on its button, inside the page) already ends it, as any control that does not shape the sound does. Claude's call, open to the owner.
+- 2026-10-28, from the issue 69 review, commit `d9fa6ba` logged the owner's two answers with their change rather than alone, and dropped the hover line without saying so in its subject: already committed, nothing to build. Claude's call, open to the owner.
 - 2026-10-28, from the 1.13.0 review, the Maths Layer writing the Cutoff's value inside the Timeline, where issue 63 decision 24 wants no text but the Cutoff's scale: kept, decided by the owner. The Maths Layer is off unless turned on, and its numbers are why it is turned on.
 - 2026-10-28, from the 1.14.0 review, hovering a knob on a wide window: nothing to change, decided by the owner: "On large screen, we already see the values below the knobs. No need to duplicate the information!" See [`.out-of-scope/`](../.out-of-scope/value-on-hover-on-wide-screens.md).
 - 2026-10-28, from the 1.14.0 review's second pass, one more inbox slip: the Poly Pluck bug's triage came two commits later, with the width ask's, not next. Nothing to build. Claude's call, open to the owner.
