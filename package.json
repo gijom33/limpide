@@ -1,6 +1,6 @@
 {
   "name": "limpide",
-  "version": "1.12.4",
+  "version": "1.13.0",
   "description": "A subtractive synthesizer in the browser that shows what each stage does to the sound.",
   "keywords": [
     "synthesizer",
