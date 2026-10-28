@@ -79,6 +79,45 @@ test('moving around (the section strip, the Oscillator tabs) and an LFO’s dest
   await expect(demo(page), 'LFO destination').toHaveAttribute('aria-pressed', 'true');
 });
 
+test('Display leaves the Demo playing: opening it, its settings, Space’s Freeze, and closing it (issue 64)', async ({ page }) => {
+  await page.goto('/');
+  await demo(page).click();
+  await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
+  const playing = (what: string) => expect(demo(page), what).toHaveAttribute('aria-pressed', 'true');
+  await openDisplay(page);
+  await playing('opened');
+  await page.getByRole('button', { name: 'Ideal' }).click();
+  await playing('Ideal');
+  await page.getByRole('button', { name: 'Snapshot', exact: true }).click();
+  await page.getByRole('button', { name: 'Clear Snapshot' }).click();
+  await playing('Snapshot');
+  const freeze = page.getByRole('button', { name: 'Freeze', exact: true });
+  await freeze.click();
+  await freeze.click();
+  await playing('Freeze');
+  await page.getByRole('button', { name: 'Ideal' }).press('Enter');
+  await page.getByRole('button', { name: 'Ideal' }).press(' ');
+  await playing('by keys');
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('region', { name: 'Viewer controls' })).toBeHidden();
+  await playing('closed by Escape');
+  // Space with nothing focused: Freeze, and back.
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+  await page.keyboard.press('Space');
+  await expect(page.locator('main')).toHaveAttribute('data-frozen');
+  await page.keyboard.press('Space');
+  await playing('Space');
+  // A click elsewhere that closes it.
+  await openDisplay(page);
+  await page.mouse.click(8, 700); // the page's bottom-left corner, clear of the panel
+  await expect(page.getByRole('region', { name: 'Viewer controls' })).toBeHidden();
+  await playing('closed by a click elsewhere');
+  // Playing still takes over.
+  await page.keyboard.press('a');
+  await expect(demo(page)).toHaveAttribute('aria-pressed', 'false');
+  await page.keyboard.up('a');
+});
+
 test.describe('on a phone', () => {
   test.use({ viewport: { width: 393, height: 852 } });
 

@@ -55,20 +55,22 @@ export function useComputerKeyboard(
 /** What Space already presses or types into when it has the focus: a button, an option, a tab, a link, a field. */
 const SPACE_USERS = 'button, a[href], input, select, textarea, [role="radio"], [role="tab"], [role="menuitemradio"], [role="checkbox"], [role="switch"], [contenteditable="true"]';
 
+/** Whether this key is Space for Freeze, not for what has the focus. */
+export const freezesOnSpace = (e: KeyboardEvent) => e.code === 'Space' && !(e.target instanceof Element && e.target.closest(SPACE_USERS));
+
 /**
  * Space Freezes the Viewers, unless what has the focus uses Space itself (a button, an option: issue 51, WCAG 2.1.1);
  * on a knob, a Viewer or nothing in particular it Freezes. It never plays a Note, and must not scroll.
  */
 export function useSpaceFreezes(dispatchViewer: Dispatch<ViewerAction>) {
   useEffect(() => {
-    const isSpace = (e: KeyboardEvent) => e.code === 'Space' && !(e.target instanceof Element && e.target.closest(SPACE_USERS));
     const down = (e: KeyboardEvent) => {
-      if (!isSpace(e)) return;
+      if (!freezesOnSpace(e)) return;
       e.preventDefault();
       if (!e.repeat) dispatchViewer({ type: 'toggleFreeze' });
     };
     const up = (e: KeyboardEvent) => {
-      if (isSpace(e)) e.preventDefault();
+      if (freezesOnSpace(e)) e.preventDefault();
     };
     window.addEventListener('keydown', down);
     window.addEventListener('keyup', up);

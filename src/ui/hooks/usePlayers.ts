@@ -8,6 +8,7 @@ import { type ParamId, type Patch, setParam } from '../../patch/patch';
 import { PRESETS } from '../../patch/presets';
 import type { Tutorial } from '../../tutorial/tutorial';
 import { SECTION_OF, type SectionName } from '../sections';
+import { freezesOnSpace } from './useKeys';
 
 interface Host {
   session: AudioSession;
@@ -170,15 +171,20 @@ export function usePlayers({ session, patchRef, patchName, setPatch, loadPatch, 
   // Playing anything, or touching a control that does not shape the sound, ends the Demo: the person has taken over.
   // Knobs, faders and the stages' switches (Waveforms, Filter Mode and Slope, Voices, the LFOs' shapes and
   // destinations) can be changed while it plays, and the sound follows; moving around the page (the section strip,
-  // the Oscillator tabs) leaves it playing too.
+  // the Oscillator tabs) leaves it playing too. So does Display, which shows the sound without changing it (issue 64):
+  // opening it, its settings, Space's Freeze, and the click or Escape that closes it.
   useEffect(() => {
     if (demo === null) return;
     const stop = () => stopDemoRef.current(true);
     const shapesSound = (target: EventTarget | null) =>
       target instanceof Element &&
       !!target.closest('.knob, .block-controls [role="radio"], .timeline-controls [role="radio"], .destination-picker, .section-strip, [role="tab"]');
+    const inDisplay = (target: EventTarget | null) => target instanceof Element && !!target.closest('.display-menu');
+    const displayOpen = () => !!document.querySelector('.display-panel');
     const onKey = (e: KeyboardEvent) => {
+      if (freezesOnSpace(e) || (e.key === 'Escape' && displayOpen())) return;
       if (e.key === 'Enter' && shapesSound(e.target)) return;
+      if ((e.key === 'Enter' || e.key === ' ') && inDisplay(e.target)) return;
       if (!e.metaKey && !e.ctrlKey && !e.altKey && !['Shift', 'Tab'].includes(e.key)) stop();
     };
     // A finger on the page may only be scrolling it: unless it lands on a control that takes touches itself
@@ -187,6 +193,7 @@ export function usePlayers({ session, patchRef, patchName, setPatch, loadPatch, 
     const onPointer = (e: PointerEvent) => {
       const target = e.target as Element;
       if ((!target.closest('main') && !target.closest('.section-strip')) || target.closest('[data-demo]') || shapesSound(target)) return;
+      if (inDisplay(target) || displayOpen()) return;
       if (e.pointerType === 'mouse' || getComputedStyle(target).touchAction === 'none') stop();
       else tap = e.pointerId;
     };
@@ -200,17 +207,18 @@ export function usePlayers({ session, patchRef, patchName, setPatch, loadPatch, 
     const onTouchMove = (e: TouchEvent) => {
       if (e.target instanceof Element && getComputedStyle(e.target).touchAction !== 'none') followPaused.current = true;
     };
-    window.addEventListener('keydown', onKey);
+    // In the capture phase, before Display's own Escape or outside click closes it.
+    window.addEventListener('keydown', onKey, true);
     window.addEventListener('wheel', onWheel, { passive: true });
     window.addEventListener('touchmove', onTouchMove, { passive: true });
-    document.addEventListener('pointerdown', onPointer);
+    window.addEventListener('pointerdown', onPointer, true);
     document.addEventListener('pointerup', onLift);
     document.addEventListener('pointercancel', onCancel);
     return () => {
-      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('keydown', onKey, true);
       window.removeEventListener('wheel', onWheel);
       window.removeEventListener('touchmove', onTouchMove);
-      document.removeEventListener('pointerdown', onPointer);
+      window.removeEventListener('pointerdown', onPointer, true);
       document.removeEventListener('pointerup', onLift);
       document.removeEventListener('pointercancel', onCancel);
     };

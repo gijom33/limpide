@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** to build
+**Status:** done (2026-10-27). The Demo's stop rules (`src/ui/hooks/usePlayers.ts`) leave out the Display menu, Space when it freezes (`freezesOnSpace`, shared with `useKeys.ts`), and the Escape or outside click that closes the panel; they listen in the capture phase, before the panel's own handlers close it. Letter keys, in the same panel, keep it playing too.
 
-- [ ] Opening and closing Display, its options, Snapshot and its Clear, Freeze, the axes and Scope cycles leave the Demo playing; Space freezes without ending it
-- [ ] An e2e test beside the Demo's other "keeps playing" tests (`e2e/demo.spec.ts`)
+- [x] Opening and closing Display, its options, Snapshot and its Clear, Freeze, the axes and Scope cycles leave the Demo playing; Space freezes without ending it
+- [x] An e2e test beside the Demo's other "keeps playing" tests (`e2e/demo.spec.ts`)
