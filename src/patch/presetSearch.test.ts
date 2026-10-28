@@ -38,7 +38,9 @@ describe('searchPresets', () => {
   it('looks inside the category; the Presets keep the arrows’ order', () => {
     expect(names(searchPresets('', 'Pads', LIST).byName)).toEqual(['Warm Pad', 'Pad']);
     expect(names(searchPresets('high', 'Drums', LIST).byDescription)).toEqual(['Hi-hat']);
+    // The Tutorials and My Patches hold no Presets of their own: the panel lists them itself.
     expect(searchPresets('', 'My Patches', LIST)).toEqual({ byName: [], byDescription: [] });
+    expect(searchPresets('pad', 'Tutorials', LIST)).toEqual({ byName: [], byDescription: [] });
     expect(searchPresets('', 'All', PRESETS).byName).toEqual(PRESETS);
   });
 });
