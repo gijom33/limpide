@@ -6,6 +6,7 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- 2026-10-28, the owner: "Also add 4s to the choices for envelope timeline."
 - 2026-10-28, the owner: "On env timeline, while the legend shows the dotted lines very well, it's hardly visible in the timeline itself, is there a trick we can use so that it's not moving so fast that it looks like a blur for the user?"
 - 2026-10-28, the owner: "When hovering a button, show value instead of name."
 - 2026-10-28, from the 1.13.0 review: the Maths Layer still writes the Cutoff's value inside the Timeline, where issue 63 decision 24 wants no text but the Cutoff's scale. Keep it (the Maths Layer is asked for), or move it?
