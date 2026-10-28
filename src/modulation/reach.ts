@@ -64,6 +64,9 @@ export function cutoffReach(patch: Patch, sounding: Sounding | null): Reach | nu
   return { lo: hz(lo), hi: hz(hi), shares };
 }
 
+/** The LFOs' reach alone on the Cutoff (both together when both aim at it): the knob's blue ring (issue 63). */
+export const lfoCutoffReach = (patch: Patch) => cutoffReach({ ...patch, filterEnvAmount: 0, velocityCutoff: 0, keyTrack: 0 }, null);
+
 /**
  * The LFOs' reach on a Parameter they swing evenly around its knob's value: `perDepth` each way at full Depth, both
  * together kept within `room` (as the sound is), each LFO's share its own swing.
@@ -107,4 +110,3 @@ export function volumeReach(patch: Patch): Reach | null {
   });
   return { lo: patch.volume * (1 - 2 * total), hi: patch.volume, shares };
 }
-

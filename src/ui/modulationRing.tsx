@@ -1,7 +1,7 @@
 import { createContext, type RefObject, useContext, useEffect, useRef } from 'react';
 import type { SynthEngine } from '../engine/synthEngine';
-import { LFO_DETUNE_CENTS, LFO_OSC2_CENTS, LFO_PULSE_WIDTH, lfoOffset, MAX_PULSE, MIN_PULSE } from '../modulation/modulationModel';
-import { cutoffReach, detuneReach, pulseWidthReach, type Reach, resonanceReach, type Source, semitoneReach, volumeReach } from '../modulation/reach';
+import { effectiveValue } from '../modulation/destinations';
+import { cutoffReach, detuneReach, lfoCutoffReach, pulseWidthReach, type Reach, resonanceReach, type Source, semitoneReach, volumeReach } from '../modulation/reach';
 import { PARAMS, type ParamId, type Patch } from '../patch/patch';
 import { valueToPosition } from '../patch/taper';
 import { addToRenderLoop } from '../viewers/renderLoop';
@@ -19,25 +19,40 @@ const AUDIBLE = 0.002;
  */
 function modulated(id: ParamId, patch: Patch, engine: SynthEngine): { reach: Reach | null; envelope?: [number, number]; shares: Reach['shares']; now: number | null } | null {
   const m = engine.modulationAt();
-  const sounding = m.amp > AUDIBLE;
+  const now = m.amp > AUDIBLE ? effectiveValue(id, patch, m) : null;
   if (id === 'cutoff') {
     const all = cutoffReach(patch, m.sounding);
     if (!all) return null;
-    const reach = cutoffReach({ ...patch, filterEnvAmount: 0, velocityCutoff: 0, keyTrack: 0 }, null);
-    return { reach, envelope: all.shares.filterEnvelope, shares: all.shares, now: sounding ? m.cutoff : null };
+    // Velocity and Key Track, fixed for the Note sounding, shift both rings with it, as they shift the Cutoff (each
+    // share is the knob's value and that shift's end: their product over the value squared is the shift's ratio).
+    const shift = m.sounding
+      ? (['velocity', 'keyTrack'] as const).reduce((ratio, source) => {
+          const share = all.shares[source];
+          return share ? (ratio * share[0] * share[1]) / patch.cutoff ** 2 : ratio;
+        }, 1)
+      : 1;
+    const lfos = lfoCutoffReach(patch);
+    const env = all.shares.filterEnvelope;
+    return {
+      reach: lfos && { ...lfos, lo: lfos.lo * shift, hi: lfos.hi * shift },
+      envelope: env && [env[0] * shift, env[1] * shift],
+      shares: all.shares,
+      now,
+    };
   }
-  // The LFOs swing these evenly around the knob's own value.
-  const at = (reach: Reach | null, now: () => number) => reach && { reach, shares: reach.shares, now: sounding ? now() : null };
-  if (id === 'pulseWidth' || id === 'osc2PulseWidth') {
-    const room = Math.min(patch[id] - MIN_PULSE, MAX_PULSE - patch[id]);
-    return at(pulseWidthReach(patch, patch[id]), () => patch[id] + lfoOffset(patch, 'pulseWidth', LFO_PULSE_WIDTH, m.lfo, room));
-  }
-  if (id === 'resonance') return at(resonanceReach(patch), () => m.resonance);
-  if (id === 'volume') return at(volumeReach(patch), () => m.volume);
-  if (id === 'osc2Semitone') return at(semitoneReach(patch), () => patch.osc2Semitone + lfoOffset(patch, 'osc2Pitch', LFO_OSC2_CENTS / 100, m.lfo));
-  if (id === 'osc2Detune') return at(detuneReach(patch), () => patch.osc2Detune + lfoOffset(patch, 'detune', LFO_DETUNE_CENTS, m.lfo));
-  return null;
+  const reach = LFO_REACH[id]?.(patch);
+  return reach ? { reach, shares: reach.shares, now } : null;
 }
+
+/** The other ring-carrying knobs' reach: the LFOs swing them evenly around the knob's own value (Volume, down from it). */
+const LFO_REACH: Partial<Record<ParamId, (patch: Patch) => Reach | null>> = {
+  pulseWidth: (p) => pulseWidthReach(p, p.pulseWidth),
+  osc2PulseWidth: (p) => pulseWidthReach(p, p.osc2PulseWidth),
+  resonance: resonanceReach,
+  volume: volumeReach,
+  osc2Semitone: semitoneReach,
+  osc2Detune: detuneReach,
+};
 
 // The source a pointer is over, or that has the keyboard focus: its share of every ring is drawn bright. Not the
 // LFOs' controls (the owner, 2026-10-28): the blue ring is already theirs alone.
@@ -124,7 +139,8 @@ export function ModulationRing({ id, centre, radius, trackRadius, dotRadius, arc
       const live = reach || env ? (now?.now ?? null) : null;
       d.style.display = live === null || still.matches ? 'none' : '';
       if (live !== null) {
-        const [x, y] = draw.current.point(position(live), radius);
+        // On the blue ring, or on the white one when the Filter Envelope alone moves the Cutoff.
+        const [x, y] = draw.current.point(position(live), reach ? radius : trackRadius);
         d.setAttribute('cx', x.toFixed(2));
         d.setAttribute('cy', y.toFixed(2));
       }

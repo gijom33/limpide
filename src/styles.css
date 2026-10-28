@@ -158,15 +158,14 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 .knob-cap-hi { stop-color: var(--cap-hi); }
 .knob-cap-lo { stop-color: var(--cap-lo); }
 .knob-marker { stroke: var(--text); stroke-linecap: round; }
-/* Modulation (issue 20): a ring outside the value arc over the range modulation reaches, and a dot at the value now,
-   in the modulation colour. */
-/* Thicker than the Filter Envelope's white ring (the owner, 2026-10-28): blue on the panel reads lighter than white on
-   the track, so 3.5 looks as heavy as its 2.5. */
+/* Modulation (issue 20, then 63): a blue ring outside the value arc over the range the LFOs reach, and a dot at the
+   value now, in the modulation colour. Thicker than the Filter Envelope's white ring (the owner, 2026-10-28): blue on
+   the panel reads lighter than white on the track, so 3.5 looks as heavy as its 2.5. */
 .knob-ring, .knob-share { fill: none; stroke: var(--stage-mod); stroke-width: 3.5; stroke-linecap: round; }
 /* Pointing at a source: its share bright and a little thicker, the rest of the ring dimmed. */
 .knob-ring[data-dim] { opacity: 0.35; }
 .knob-share { stroke-width: 4; }
-/* The Filter Envelope's ring (issue 63, the owner): white, as thin as the LFOs' ring, drawn on the knob's thick track. */
+/* The Filter Envelope's ring (issue 63, the owner): white and thin, drawn on the knob's thick track. */
 .knob-envelope { fill: none; stroke: #fff; stroke-width: 2.5; stroke-linecap: round; }
 :root[data-theme='light'] .knob-envelope { stroke: var(--text); }
 .knob-envelope[data-dim] { opacity: 0.35; }

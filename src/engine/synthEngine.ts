@@ -1,8 +1,8 @@
 import { type Adsr, type AutomationStep, envelopeSchedule, type GateEvent, levelAfter } from '../modulation/envelope';
 import { createLfoClock, glideFrequency, glideFrom, glideTimeConstant, type LfoWaveform, lfoShape } from '../modulation/lfo';
 import {
-  effectiveCutoff, effectiveResonance, effectiveVolume,KEY_TRACK_CENTRE, LFO_CUTOFF_OCTAVES, LFO_DETUNE_CENTS, LFO_OSC2_CENTS,
-  LFO_PITCH_CENTS, LFO_PULSE_WIDTH, LFO_RESONANCE, LFO_VOLUME, lfoSwings, MAX_PULSE, MIN_PULSE, soundingPitch, 
+  effectiveCutoff, effectiveResonance, effectiveVolume, KEY_TRACK_CENTRE, LFO_CUTOFF_OCTAVES, LFO_DETUNE_CENTS, LFO_OSC2_CENTS,
+  LFO_PITCH_CENTS, LFO_PULSE_WIDTH, LFO_RESONANCE, LFO_VOLUME, lfoSwings, MAX_PULSE, MIN_PULSE, soundingPitch,
   VELOCITY_CUTOFF_OCTAVES,
 } from '../modulation/modulationModel';
 import { bandwidthOctaves } from '../modulation/passBand';

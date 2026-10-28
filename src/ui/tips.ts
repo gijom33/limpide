@@ -1,3 +1,5 @@
+import { DESTINATIONS } from '../modulation/destinations';
+import type { LfoDestination } from '../patch/patch';
 import type { Overlay } from '../viewers/overlays';
 import type { TipContent } from './Tooltip';
 
@@ -115,7 +117,7 @@ export const TIPS = {
   },
   timeline: {
     title: 'LFO & Envelopes',
-    body: 'What changes the sound over time: the LFO, and the Envelope Timeline beside it. The Timeline shows the last four seconds. The violet fill is the Amp Envelope, the orange one the Filter Envelope when its Amount is set. A broken line in its section’s colour is each knob the Filter Envelope or an LFO moves: the Cutoff dotted, what LFO 1 moves dashed, what LFO 2 moves dash-dotted, with the knob’s own setting faint behind it.',
+    body: 'What changes the sound over time: the LFO, and the Envelope Timeline beside it. The Timeline shows the last four seconds. The violet fill is the Amp Envelope, the orange one the Filter Envelope when its Amount is set. A broken line in its section’s colour is each knob the Filter Envelope or an LFO moves: the Cutoff dotted, what LFO 1 moves dashed, what LFO 2 alone moves dash-dotted, with the knob’s own setting faint behind it.',
     how: 'Play a Note and let go: the Release is drawn after the key comes up.',
   },
   lfo: {
@@ -249,10 +251,20 @@ export const TIPS = {
   },
   envelopeTimeline: {
     title: 'Envelope Timeline',
-    body: 'The last four seconds, the newest at the right: the Filter Envelope (orange fill, when its Amount is set), the Cutoff (orange dotted line) and the Amp Envelope (violet fill).',
+    body: 'The last four seconds, the newest at the right: the Amp Envelope (violet fill), and what moves: the Filter Envelope (orange fill, when its Amount is set), the Cutoff (orange dots) and each knob an LFO moves (dashed for LFO 1’s, dash-dotted for LFO 2’s, in its section’s colour).',
     how: 'Play a Note and let go: the Release is drawn after the key comes up.',
   },
 } satisfies Record<string, TipContent>;
+
+const LINE_COLOUR = { osc: 'Green', filter: 'Orange', amp: 'Violet' } as const;
+/** A Timeline key entry for a Destination an LFO moves (issue 63): its line, in its section's colour. */
+export function lfoLineTip(destination: LfoDestination): TipContent {
+  const { label, stage } = DESTINATIONS[destination];
+  const colour = LINE_COLOUR[stage];
+  return destination === 'pitch'
+    ? { title: label, body: `${colour} broken line: the pitch as the LFO moves it (vibrato), a semitone up at the top and down at the bottom. The faint dashed middle line is the Note’s own pitch.` }
+    : { title: label, body: `${colour} broken line: the ${label} as the LFO moves it (both LFOs added together when both aim at it), on its knob’s scale, bottom to top. The faint dashed line is the knob’s own setting.` };
+}
 
 /** Each Tap's two Viewers (issue 59): what the Scope and the Spectrum there show. */
 export const VIEWER_TIPS: Record<'Oscillator' | 'Filter' | 'Amp', { scope: TipContent; spectrum: TipContent }> = {

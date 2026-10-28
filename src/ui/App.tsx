@@ -49,15 +49,15 @@ import { TutorialMenu } from './TutorialMenu';
 import { applyTheme, loadTheme, type Theme } from './theme';
 import { TIPS, type VIEWER_TIPS } from './tips';
 
+import { AxesControls, ViewActions } from './ViewerControls';
+import { WaveformPicker } from './WaveformPicker';
+import { Wordmark } from './Wordmark';
+
 /** Each Envelope fader's tip: the stage's, the same in both Envelopes. */
 const STAGE_TIPS = {
   filterAttack: 'attack', filterDecay: 'decay', filterSustain: 'sustain', filterRelease: 'release',
   ampAttack: 'attack', ampDecay: 'decay', ampSustain: 'sustain', ampRelease: 'release',
 } as const;
-
-import { AxesControls, ViewActions } from './ViewerControls';
-import { WaveformPicker } from './WaveformPicker';
-import { Wordmark } from './Wordmark';
 
 const IDEAL_HARMONICS = 256;
 const LETTER_KEYS = 'limpide.letterKeys';
@@ -306,21 +306,21 @@ export function App() {
           <div className="header-right">
             {/* Hold first on the right (the owner, 2026-10-27), the Tutorial taking its place on the left: the two sides
                 stay about as wide, so the piano keeps the header's centre. */}
-                <Tooltip content={TIPS.hold}>
-                  <button
-                    type="button"
-                    className="tool"
-                    aria-pressed={hold}
-                    data-learn="action:hold"
-                    data-mapped={learnContext.mapped.has('action:hold') || undefined}
-                    data-learn-selected={learnContext.selected === 'action:hold' || undefined}
-                    aria-label="Hold"
-                    onClick={pressHold}
-                  >
-                    <HoldIcon />
-                    <span className="tool-word">Hold</span>
-                  </button>
-                </Tooltip>
+            <Tooltip content={TIPS.hold}>
+              <button
+                type="button"
+                className="tool"
+                aria-pressed={hold}
+                data-learn="action:hold"
+                data-mapped={learnContext.mapped.has('action:hold') || undefined}
+                data-learn-selected={learnContext.selected === 'action:hold' || undefined}
+                aria-label="Hold"
+                onClick={pressHold}
+              >
+                <HoldIcon />
+                <span className="tool-word">Hold</span>
+              </button>
+            </Tooltip>
             <MidiPanel
               state={midi.midi}
               onOpen={midi.connect}

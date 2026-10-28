@@ -6,8 +6,14 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- 2026-10-28, from the 1.13.0 review: the Maths Layer still writes the Cutoff's value inside the Timeline, where issue 63 decision 24 wants no text but the Cutoff's scale. Keep it (the Maths Layer is asked for), or move it?
+- 2026-10-28, from the 1.13.0 review: a knob's own setting on the Timeline (faint, thin, dashed 4-4) looks close to LFO 1's line (dashed 5-3); only width and fading tell them apart. A faint solid line instead?
+- 2026-10-28, from the 1.13.0 review: while Display is open, no press anywhere ends the Demo, a key on the on-screen piano included (`usePlayers.ts`); issue 64 only asked that the press closing Display leave it playing.
+- 2026-10-28, from the 1.13.0 review, code: `spectrum.ts` still names the Ideal's marks rings (`frozenRings`, `ringCount`, `data-ideal-rings`, `RING_GAP`) though they are circles, squares and triangles since issue 61; the Tutorial's `'action'` Step kind is checked in several files (`tutorial.ts`, `useTutorialState.ts`, `TutorialCard.tsx`) and its `since` is typed `unknown`; the rings no longer read the LFOs' shares in `reach.ts`; `src/modulation/destinations.ts` imports the `Modulation` type from the engine, which imports modulation (type only).
+
 ## Dropped
 
+- 2026-10-28, from the 1.13.0 review, commit `8a54d85`'s subject is 73 characters, one over the rule: already pushed, nothing to change. Claude's call, open to the owner.
 - 2026-10-27, from the 1.12.1 review, two inbox rules slipped (fixes made without an inbox line first): nothing to build. The rule is in CLAUDE.md and has been followed since. Claude's call, open to the owner.
 - 2026-10-27, from the 1.12.0 review, a note on ADR-0006's "at full Sustain the Amp Tap equals the Filter Tap": already made. [ADR-0011](./adr/0011-the-amp-tap-after-volume.md) amends that consequence (true only at 100 % Volume and with no LFO on Volume). Claude's call, open to the owner.
 - 2026-10-27, the owner's idea to tweak the synth during the Demo, a change of Patch alone overriding it: already so since [36](./issues/36-demo-track.md). Knobs, faders and the stages' switches can be changed while it plays, and the Demo's own moves skip a control turned by hand until its next Preset (`e2e/demo.spec.ts`). What did end it was opening Display, which went to [64](./issues/64-display-during-the-demo.md). Claude's call, open to the owner.

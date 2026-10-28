@@ -152,7 +152,7 @@ group('LFO', [
   ['Chorus Drift', 'The LFO on Detune: Osc 2 drifts in and out of tune with Osc 1, and the beating speeds up and slows down with it.', {
     osc2Detune: 0, mixOsc2: 1, cutoff: 5000, resonance: 0, ampSustain: 1, lfoDestination: 'detune', lfoRate: 0.3, lfoAmount: 0.4,
   }],
-  ['Double Motion', 'Two LFOs at once: LFO 1 sweeps the Cutoff slowly, LFO 2 adds a quick vibrato. Each draws in its own blue on the knobs it moves.', {
+  ['Double Motion', 'Two LFOs at once: LFO 1 sweeps the Cutoff slowly, LFO 2 adds a quick vibrato. The Cutoff’s blue ring is LFO 1’s; the Timeline draws the pitch as LFO 2 moves it.', {
     cutoff: 900, resonance: 0.4, ampSustain: 1, lfoDestination: 'cutoff', lfoRate: 0.25, lfoAmount: 0.7,
     lfo2Destination: 'pitch', lfo2Rate: 6, lfo2Amount: 0.25,
   }],

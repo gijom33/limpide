@@ -1,5 +1,5 @@
 import type { Modulation } from '../engine/synthEngine';
-import { lfoTargets, TARGETS, targetLevel } from '../modulation/lfoTargets';
+import { DESTINATIONS, destinationLevel, knobLevel, lfoDestinations } from '../modulation/destinations';
 import { formatParam, type LfoDestination, type Patch } from '../patch/patch';
 import { cssVar, curveWidth, haloText, prepareCanvas } from './canvas';
 import { createFreezeLatch } from './freezeLatch';
@@ -24,9 +24,9 @@ interface Source {
  * it; and every other Destination an active LFO moves, once however many LFOs aim at it. The key shows the same.
  */
 export function timelineShows(patch: Patch | undefined) {
-  const targets = patch ? lfoTargets(patch) : [];
+  const moved = patch ? lfoDestinations(patch) : [];
   const filterEnvelope = !!patch && patch.filterEnvAmount !== 0;
-  return { filterEnvelope, cutoff: filterEnvelope || targets.includes('cutoff'), targets: targets.filter((d): d is LfoDestination => d !== 'cutoff') };
+  return { filterEnvelope, cutoff: filterEnvelope || moved.includes('cutoff'), destinations: moved.filter((d): d is LfoDestination => d !== 'cutoff') };
 }
 
 /**
@@ -34,16 +34,15 @@ export function timelineShows(patch: Patch | undefined) {
  * fine dots, what LFO 1 moves short dashes, what LFO 2 alone moves dash-dots. The key draws the same.
  */
 export type LinePattern = 'dots' | 'dashes' | 'dashDot';
-export const linePattern = (patch: Patch, target: LfoDestination | 'cutoff'): LinePattern =>
-  target === 'cutoff' ? 'dots' : patch.lfoAmount > 0 && patch.lfoDestination === target ? 'dashes' : 'dashDot';
+export const linePattern = (patch: Patch, moved: LfoDestination | 'cutoff'): LinePattern =>
+  moved === 'cutoff' ? 'dots' : patch.lfoAmount > 0 && patch.lfoDestination === moved ? 'dashes' : 'dashDot';
 const DASHES: Record<LinePattern, number[]> = { dots: [0.5, 3.5], dashes: [5, 3], dashDot: [7, 3, 0.5, 3] };
 
 /**
  * The Envelope Timeline: the last few seconds of the Amp and Filter Envelopes (areas, 0–1 on a shared scale), the
  * Effective Cutoff (a line, log Hz on the right) and what the LFOs move (lines in their stage's colour, each on its
- * knob's own scale),
- * computed from the Modulation model for past moments, each only while something moves it (`timelineShows`). "Now"
- * is the right edge.
+ * knob's own scale), computed from the Modulation model for past moments, each only while something moves it
+ * (`timelineShows`). "Now" is the right edge.
  */
 export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: () => ViewSettings) {
   const frozenNow = createFreezeLatch<number>();
@@ -97,15 +96,16 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
     // Filter Envelope: an area on the 0–1 level scale, the shape that (times Amount) pushes the Effective Cutoff.
     // Light fills, so where the two overlap they read no heavier than one Viewer's shading (16 %). Only while its
     // Amount moves the Cutoff: at zero the Envelope runs but changes nothing.
-    const shows = timelineShows(source.patchAt(now));
-    canvas.dataset.shows = ['amp', ...(shows.filterEnvelope ? ['filterEnvelope'] : []), ...(shows.cutoff ? ['cutoff'] : []), ...shows.targets].join(' ');
+    const patchNow = source.patchAt(now);
+    const shows = timelineShows(patchNow);
+    canvas.dataset.shows = ['amp', ...(shows.filterEnvelope ? ['filterEnvelope'] : []), ...(shows.cutoff ? ['cutoff'] : []), ...shows.destinations].join(' ');
     if (shows.filterEnvelope) area('--stage-filter', 0.1, (m) => m.filter);
     canvas.dataset.filterEnvelope = (samples.at(-1)?.filter ?? 0).toFixed(3);
     const latest = samples.at(-1);
     canvas.dataset.ampLevel = (latest?.amp ?? 0).toFixed(3);
 
     // Amp Envelope, drawn over it: the one the ear follows first. The Envelope alone: an LFO on Volume (tremolo)
-    // leaves it still (the owner, 2026-10-28), its dip shown by the Volume knob's ring.
+    // leaves it still (the owner, 2026-10-28): its dip is the Volume's own line, below.
     area('--stage-amp', 0.1, (m) => m.amp);
 
     // A Parameter the Filter Envelope or an LFO moves (the owner, 2026-10-28): its knob's setting faint and dashed,
@@ -132,20 +132,19 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
       g.setLineDash([]);
       g.lineCap = 'butt';
     };
-    const patchNow = source.patchAt(now);
     if (shows.cutoff) line('--stage-filter', 'dots', (m) => yHz(m.cutoff), (time) => yHz(source.baseCutoffAt(time)));
 
     // What else the LFOs move, each the same way on its knob's own scale (bottom to top) in its stage's colour: the
     // knob's setting dashed, where it is now solid; the key names them.
-    const patches = shows.targets.length ? samples.map((_, x) => source.patchAt(timeAt(x + 0.5))) : [];
-    const levels = shows.targets.map((d) => samples.map((m, x) => (patches[x] ? targetLevel(d, patches[x], m) : 0)));
-    shows.targets.forEach((d, i) => {
-      line(`--stage-${TARGETS[d].stage}`, patchNow ? linePattern(patchNow, d) : 'dashes', (_, x) => yLevel(levels[i][x]), (time) => {
+    const patches = shows.destinations.length ? samples.map((_, x) => source.patchAt(timeAt(x + 0.5))) : [];
+    const levels = shows.destinations.map((d) => samples.map((m, x) => (patches[x] ? destinationLevel(d, patches[x], m) : 0)));
+    shows.destinations.forEach((d, i) => {
+      line(`--stage-${DESTINATIONS[d].stage}`, patchNow ? linePattern(patchNow, d) : 'dashes', (_, x) => yLevel(levels[i][x]), (time) => {
         const then = source.patchAt(time);
-        return yLevel(then ? targetLevel(d, then, samples[0], true) : 0);
+        return yLevel(then ? knobLevel(d, then) : 0);
       });
     });
-    canvas.dataset.targets = shows.targets.map((d, i) => `${d}:${(levels[i].at(-1) ?? 0).toFixed(3)}`).join(' ');
+    canvas.dataset.destinations = shows.destinations.map((d, i) => `${d}:${(levels[i].at(-1) ?? 0).toFixed(3)}`).join(' ');
 
     // "Now" on each line, as on the LFO's plot: a dot in its colour, ringed in the background so lines crossing
     // there stay apart.
@@ -163,7 +162,7 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
     };
     if (shows.filterEnvelope) dot('--stage-filter', yLevel(last.filter));
     dot('--stage-amp', yLevel(last.amp));
-    shows.targets.forEach((d, i) => dot(`--stage-${TARGETS[d].stage}`, yLevel(levels[i].at(-1) ?? 0)));
+    shows.destinations.forEach((d, i) => dot(`--stage-${DESTINATIONS[d].stage}`, yLevel(levels[i].at(-1) ?? 0)));
     if (shows.cutoff) dot('--stage-filter', yHz(last.cutoff));
 
     // The Cutoff's scale and value only with its line.

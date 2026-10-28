@@ -1,8 +1,9 @@
 import type { Dispatch, SetStateAction } from 'react';
 import type { SynthEngine } from '../engine/synthEngine';
+import { DESTINATIONS } from '../modulation/destinations';
 import type { LfoWaveform } from '../modulation/lfo';
 import { formatParam, LFO_KEYS, type LfoNumber, type ParamId, type Patch, setLfo } from '../patch/patch';
-import { DESTINATIONS, DestinationPicker } from './DestinationPicker';
+import { DestinationPicker } from './DestinationPicker';
 import { RetriggerIcon } from './icons';
 import { Knob } from './Knob';
 import { LfoPlot } from './LfoPlot';
