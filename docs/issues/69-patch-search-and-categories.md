@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** to build
+**Status:** done (2026-10-28)
 
 ## Decisions (grilling, 2026-10-28, decided by the owner)
 
@@ -20,7 +20,10 @@
 10. **Enter loads the first match** and closes the panel; Tab goes on to the categories, then the results.
 11. **Two rows while searching:** "Name" (a name or group matches), in the arrows' order, then "Description" (only the description matches). Each pill keeps its Tutorial cap and its tooltip, which shows the description. The Tutorials row shows a Tutorial whose Preset matches by name.
 12. **A word matches a word's start:** "res" finds Resonance, "lfo" finds LFO's, "one" not phone; case and accents don't count. Every word typed must be found: in the name and group for a Name match, in the name, group and description together for a Description match.
+13. **A short scroll on a small laptop** (asked while building): at 1100×800 the search and categories, on the heading's line, cost the Presets a scroll of about one row; from about 840 px tall (a 13-inch MacBook's window, 1470×830) the whole list fits. The Tutorials row stays.
 
-- [ ] `searchPresets` in `src/patch/presetSearch.ts`, with unit tests: word starts, every word, names before descriptions, a category
-- [ ] The Patch panel's search box and categories (`PatchBar.tsx`), with e2e tests on a computer and a phone
-- [ ] Escape, Enter and the focus on opening; the search and category kept until a reload
+Claude's calls, open to the owner: the design audit's waivers for the Patch items' faint edges and 28 px height cover the category pills and the search field, drawn the same way; Enter skips the Tutorials row (it loads a sound) unless the Tutorials are the category; under a Preset group, My Patches shows its Save field but not its list.
+
+- [x] `searchPresets` in `src/patch/presetSearch.ts`, with unit tests: word starts, every word, names before descriptions, a category. After the 1.14.0 review: `Category` read from `CATEGORIES`, `matchesName` the matcher itself (the panel uses it for My Patches), and the Tutorials and My Patches said to find no Presets
+- [x] The Patch panel's search box and categories (`PatchBar.tsx`), with e2e tests on a computer and a phone (`e2e/patchSearch.spec.ts`)
+- [x] Escape, Enter and the focus on opening; the search and category kept until a reload

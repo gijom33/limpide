@@ -27,11 +27,11 @@ const WAIVERS: Waiver[] = [
   // Edges: buttons, Patch items and fields are drawn by a faint border (--border), 1.1 to 1.3:1; a selector's chosen
   // option by its fill (--segment-on), 1.5:1 (light) to 2.1:1 (dark); a knob's groove and a fader's track
   // (--groove), 1.3:1. The text and the value arcs carry the control.
-  { rule: 'boundary', selector: '.tool, .patch-item, .patch-save input', floor: 1.1 },
+  { rule: 'boundary', selector: '.tool, .patch-item, .patch-save input, .patch-category, .patch-search input', floor: 1.1 },
   { rule: 'boundary', selector: '.segmented button', floor: 1.45 },
   { rule: 'boundary', selector: '.knob-groove, .fader', floor: 1.2 },
   // Light theme: muted text on buttons and selectors (--muted), 4.1 to 4.4:1.
-  { rule: 'text', selector: '.tool, .tool *, .segmented button, .section-strip button', floor: 4, theme: 'light' },
+  { rule: 'text', selector: '.tool, .tool *, .segmented button, .section-strip button, .patch-category', floor: 4, theme: 'light' },
   // Light theme: the Oscillators green as text (its heading, its strip tab), 3.3 to 3.5:1.
   { rule: 'text', selector: ".block[data-stage='osc'] h2, .section-strip [data-section='Oscillators']", floor: 3.25, theme: 'light' },
   // The Space hint on Freeze, at 60 % opacity: 2.3 to 2.9:1.
@@ -45,7 +45,7 @@ const WAIVERS: Waiver[] = [
   { rule: 'target', selector: '.segmented button', floor: 20, size: 'wide' },
   // Phone targets: controls at the toolbar height (28 px), selector options (20 to 22 px), the logo (24 px tall),
   // the Preset arrows (18 px wide), the piano's black keys (24 px wide, beside the octave buttons).
-  { rule: 'target', selector: '.tool, .tab-list [role=tab], .patch-item, .patch-save input', floor: 28, size: 'phone' },
+  { rule: 'target', selector: '.tool, .tab-list [role=tab], .patch-item, .patch-save input, .patch-category, .patch-search input', floor: 28, size: 'phone' },
   { rule: 'target', selector: '.segmented button', floor: 20, size: 'phone' },
   { rule: 'target', selector: '.wordmark-button', floor: 24, size: 'phone' },
   { rule: 'target', selector: '.patch-bar > .tool', floor: 18, size: 'phone' },

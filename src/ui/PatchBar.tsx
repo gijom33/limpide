@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Library } from '../patch/library';
 import type { Patch } from '../patch/patch';
-import { PRESET_GROUPS, PRESETS, presetAfter, SHARED_NAME } from '../patch/presets';
+import { CATEGORIES, type Category, matchesName, searchPresets } from '../patch/presetSearch';
+import { PRESET_GROUPS, PRESETS, type Preset, presetAfter, SHARED_NAME } from '../patch/presets';
 import { patchFromJSON, patchToJSON, shareHash } from '../patch/serialize';
 import { TutorialIcon } from './icons';
 import { useLearnable } from './learn';
+import { radioGroupKeys, radioTabIndex } from './radioGroup';
 import { Tooltip } from './Tooltip';
 
 interface Props {
@@ -21,7 +23,10 @@ interface Props {
 
 const TUTORIAL_TIP = { title: 'Tutorial', body: 'Build this sound step by step, from Init: turn each control yourself, and hear and see what it does.' };
 
-/** The current Patch's name with Preset arrows, and a panel to save, load, delete, export, import and share. */
+/**
+ * The current Patch's name with Preset arrows, and a panel to save, load, delete, export, import and share. The panel's
+ * search and category narrow what it lists, and stay until the page reloads (issue 69).
+ */
 export function PatchBar({ name, changed, patch, library, onLoad, tutorials, onTutorial }: Props) {
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState('');
@@ -29,11 +34,14 @@ export function PatchBar({ name, changed, patch, library, onLoad, tutorials, onT
   const [saveName, setSaveName] = useState(name);
   const [confirming, setConfirming] = useState<string | null>(null);
   const [, refresh] = useState(0);
+  const [query, setQuery] = useState('');
+  const [category, setCategory] = useState<Category>('All');
   const learnPrevious = useLearnable({ kind: 'action', id: 'previousPreset' });
   const learnNext = useLearnable({ kind: 'action', id: 'nextPreset' });
   const wrapper = useRef<HTMLDivElement>(null);
   const opener = useRef<HTMLButtonElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+  const searchBox = useRef<HTMLInputElement>(null);
   /** The panel closes, and the focus goes back to the button that opened it, not to the page (issue 51). */
   const closeToOpener = () => {
     setOpen(false);
@@ -58,6 +66,11 @@ export function PatchBar({ name, changed, patch, library, onLoad, tutorials, onT
       document.removeEventListener('keydown', close);
       document.removeEventListener('pointerdown', close);
     };
+  }, [open]);
+
+  // The search box takes the focus on a computer, to type at once; not on a touch screen, whose keyboard would cover the list.
+  useEffect(() => {
+    if (open && !matchMedia('(pointer: coarse)').matches) searchBox.current?.focus();
   }, [open]);
 
   // The arrows step through sounds and close the panel; picking in the open panel keeps it open, to audition.
@@ -120,6 +133,49 @@ export function PatchBar({ name, changed, patch, library, onLoad, tutorials, onT
     }
   };
 
+  // What the panel lists: while searching, the Presets that match by name, then by description, in place of the groups.
+  const searching = query.trim() !== '';
+  const found = searchPresets(query, category);
+  const byName = searchPresets(query, 'All').byName;
+  const shownTutorials = category === 'All' || category === 'Tutorials' ? tutorials.filter((t) => byName.some((p) => p.name === t.preset)) : [];
+  const presetRows: [string, Preset[]][] = searching
+    ? [
+        ['Name', found.byName],
+        ['Description', found.byDescription],
+      ]
+    : PRESET_GROUPS.map((group) => [group, found.byName.filter((p) => p.group === group)]);
+  const rows = presetRows.filter(([, presets]) => presets.length > 0);
+  const listsMine = category === 'All' || category === 'My Patches';
+  const mine = listsMine ? library.list().filter((p) => matchesName(query, p.name)) : [];
+  const nothing = searching && shownTutorials.length === 0 && rows.length === 0 && mine.length === 0;
+  /** Enter loads the first sound found, or plays the first Tutorial when they are what is listed. */
+  const loadFirst = () => {
+    const first = rows[0]?.[1][0] ?? mine[0];
+    if (first) load(first.name, first.patch);
+    else if (shownTutorials[0]) tutorial(shownTutorials[0].preset);
+  };
+  const presetItem = (p: Preset) => {
+    const item = (
+      <Tooltip key={p.name} content={{ title: p.name, body: p.about }}>
+        <button type="button" className="patch-item" aria-current={p.name === name || undefined} onClick={() => load(p.name, p.patch)}>
+          {p.name}
+        </button>
+      </Tooltip>
+    );
+    if (!tutorials.some((t) => t.preset === p.name)) return item;
+    // One pill, as in the Tutorials row: the cap opens its Tutorial, the name loads the Preset.
+    return (
+      <span key={p.name} className="patch-split">
+        <Tooltip content={TUTORIAL_TIP}>
+          <button type="button" className="patch-item patch-tutorial" aria-label={`Tutorial: ${p.name}`} onClick={() => tutorial(p.name)}>
+            <TutorialIcon />
+          </button>
+        </Tooltip>
+        {item}
+      </span>
+    );
+  };
+
   return (
     <div className="patch-bar" ref={wrapper}>
       <button type="button" className="tool tool-icon" aria-label="Previous Preset" {...learnPrevious} onClick={() => step(-1)}>
@@ -142,56 +198,92 @@ export function PatchBar({ name, changed, patch, library, onLoad, tutorials, onT
       {open && (
         <div className="patch-panel" role="dialog" aria-label="Patches">
           <section className="patch-presets">
-            <h3>Presets</h3>
-            {/* The Tutorials first, a row like a group's, so the panel grows by one row only. */}
-            <div className="patch-group" role="group" aria-label="Tutorials">
-              <span className="patch-group-name" aria-hidden="true">Tutorials</span>
-              <div className="patch-list">
-                {tutorials.map((t) => (
-                  <Tooltip key={t.preset} content={TUTORIAL_TIP}>
-                    <button type="button" className="patch-item patch-tutorial-item" aria-label={`Tutorial: ${t.preset}${t.finished ? ', finished' : ''}`} onClick={() => tutorial(t.preset)}>
-                      <TutorialIcon />
-                      {t.preset}
-                      {t.finished && <span className="patch-finished" aria-hidden="true">✓</span>}
-                    </button>
-                  </Tooltip>
-                ))}
-              </div>
+            {/* The search and the categories on the heading's line, so the Presets keep the panel's height. */}
+            <div className="patch-filters">
+            <div className="patch-search">
+              <h3>Presets</h3>
+              <input
+                ref={searchBox}
+                type="search"
+                aria-label="Search Presets"
+                placeholder="Search names and descriptions"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  // Escape clears the search first; with nothing typed, it closes the panel as anywhere else in it.
+                  if (e.key === 'Escape' && query) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setQuery('');
+                  } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    loadFirst();
+                  }
+                }}
+              />
+              {query && (
+                <button
+                  type="button"
+                  className="patch-delete"
+                  aria-label="Clear the search"
+                  onClick={() => {
+                    setQuery('');
+                    searchBox.current?.focus();
+                  }}
+                >
+                  ×
+                </button>
+              )}
             </div>
-            {PRESET_GROUPS.map((group) => (
-              <div key={group} className="patch-group" role="group" aria-label={group}>
-                <span className="patch-group-name" aria-hidden="true">{group}</span>
-                <div className="patch-list">
-                  {PRESETS.filter((p) => p.group === group).map((p) => {
-                    const item = (
-                      <Tooltip key={p.name} content={{ title: p.name, body: p.about }}>
-                        <button type="button" className="patch-item" aria-current={p.name === name || undefined} onClick={() => load(p.name, p.patch)}>
-                          {p.name}
+            <div className="patch-categories" role="radiogroup" aria-label="Category" onKeyDown={radioGroupKeys}>
+              {CATEGORIES.map((c, i) => (
+                <button key={c} type="button" role="radio" className="patch-category" aria-checked={c === category} tabIndex={radioTabIndex(c === category, i, true)} onClick={() => setCategory(c)}>
+                  {c}
+                </button>
+              ))}
+            </div>
+            </div>
+            <div className="patch-results">
+              {/* The Tutorials first, a row like a group's, so the panel grows by one row only. */}
+              {shownTutorials.length > 0 && (
+                <div className="patch-group" role="group" aria-label="Tutorials">
+                  <span className="patch-group-name" aria-hidden="true">Tutorials</span>
+                  <div className="patch-list">
+                    {shownTutorials.map((t) => (
+                      <Tooltip key={t.preset} content={TUTORIAL_TIP}>
+                        <button type="button" className="patch-item patch-tutorial-item" aria-label={`Tutorial: ${t.preset}${t.finished ? ', finished' : ''}`} onClick={() => tutorial(t.preset)}>
+                          <TutorialIcon />
+                          {t.preset}
+                          {t.finished && <span className="patch-finished" aria-hidden="true">✓</span>}
                         </button>
                       </Tooltip>
-                    );
-                    if (!tutorials.some((t) => t.preset === p.name)) return item;
-                    // One pill, as in the Tutorials row: the cap opens its Tutorial, the name loads the Preset.
-                    return (
-                      <span key={p.name} className="patch-split">
-                        <Tooltip content={TUTORIAL_TIP}>
-                          <button type="button" className="patch-item patch-tutorial" aria-label={`Tutorial: ${p.name}`} onClick={() => tutorial(p.name)}>
-                            <TutorialIcon />
-                          </button>
-                        </Tooltip>
-                        {item}
-                      </span>
-                    );
-                  })}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              )}
+              {rows.map(([label, presets]) => (
+                <div key={label} className="patch-group" role="group" aria-label={label}>
+                  <span className="patch-group-name" aria-hidden="true">{label}</span>
+                  <div className="patch-list">{presets.map(presetItem)}</div>
+                </div>
+              ))}
+              {nothing && (
+                <p className="patch-empty">
+                  {category === 'All' ? `Nothing matches “${query.trim()}”.` : `Nothing matches “${query.trim()}” in ${category}.`}
+                  {category !== 'All' && (
+                    <button type="button" className="patch-search-all" onClick={() => setCategory('All')}>
+                      Search All
+                    </button>
+                  )}
+                </p>
+              )}
+            </div>
           </section>
           <section>
             <h3>My Patches</h3>
             <div className="patch-list">
-              {library.list().length === 0 && <p className="patch-empty">None saved yet.</p>}
-              {library.list().map((p) => (
+              {listsMine && !searching && mine.length === 0 && <p className="patch-empty">None saved yet.</p>}
+              {mine.map((p) => (
                 <span key={p.name} className="patch-mine">
                   <button type="button" className="patch-item" aria-label={`Load ${p.name}`} aria-current={p.name === name || undefined} onClick={() => load(p.name, p.patch)}>
                     {p.name}

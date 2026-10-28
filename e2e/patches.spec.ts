@@ -143,12 +143,13 @@ for (const [width, height] of [[1710, 1060], [1100, 800], [872, 700]]) {
     await expect(menu.getByRole('group', { name: 'Bass' }).getByRole('button', { name: 'Sub Bass' })).toBeAttached();
     const box = (await menu.boundingBox())!;
     expect(box.y + box.height).toBeLessThanOrEqual(height); // never off the bottom of the window
-    // The panel spans the header's width, so on a laptop screen every Preset is on screen with no scrollbar.
+    // The panel spans the header's width, so on a laptop screen every Preset is on screen with no scrollbar; below
+    // 840 px tall the search and categories cost a short scroll (issue 69, decision 13).
     const header = (await page.locator('header').boundingBox())!;
     expect(Math.abs(box.x - header.x)).toBeLessThanOrEqual(1);
     expect(Math.abs(box.x + box.width - (header.x + header.width))).toBeLessThanOrEqual(1);
-    const scrolls = await menu.locator('.patch-presets').evaluate((el) => el.scrollHeight > el.clientHeight + 1);
-    expect(scrolls).toBe(height < 800);
+    const scrolls = await menu.locator('.patch-results').evaluate((el) => el.scrollHeight > el.clientHeight + 1);
+    expect(scrolls).toBe(height < 840);
     // The last Preset can be reached (the list scrolls when the window is short) and loaded.
     const last = menu.getByRole('button', { name: 'Out of Tune' });
     await last.scrollIntoViewIfNeeded();

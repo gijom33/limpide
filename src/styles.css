@@ -850,8 +850,33 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .patch-panel h3 { margin: 0 0 6px; font-size: var(--text-sm); font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
 /* One column of groups, each one row: its name in a label column on the left, its Presets flowing across the
    panel's width to the right, so the whole library is on screen without scrolling on a laptop. */
-.patch-presets { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 3px; }
-.patch-presets > h3 { margin: 0 0 2px; }
+.patch-presets { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 6px; }
+/* Issue 69: the search on the heading's line, the categories beside it, wrapping; they stay put, only the rows scroll. */
+.patch-filters { display: flex; align-items: flex-start; gap: 6px 12px; }
+.patch-search { flex: none; display: flex; align-items: center; gap: 4px; }
+.patch-search h3 { flex: none; margin: 0 6px 0 0; }
+.patch-search input {
+  width: 240px; min-width: 0; height: var(--control-h); padding: 0 8px; font: inherit; font-size: var(--text-md); color: var(--text);
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-control);
+}
+/* Its own ×, the same on every browser, rather than the browser's. */
+.patch-search input::-webkit-search-cancel-button { appearance: none; }
+.patch-categories { flex: 1 1 0; min-width: 0; display: flex; flex-wrap: wrap; gap: 3px 4px; }
+.patch-category {
+  flex: none; height: var(--control-h); padding: 0 10px; font: inherit; font-size: var(--text-sm); color: var(--muted); cursor: pointer;
+  background: none; border: 1px solid var(--border); border-radius: var(--radius-control);
+}
+.patch-category:hover { color: var(--text); background: var(--control-hover); }
+.patch-category[aria-checked='true'] { color: var(--text); background: var(--control-on); }
+/* A phone: one row of categories, scrolled sideways, so the Presets keep the height. */
+@media (max-width: 600px) {
+  .patch-filters { flex-direction: column; align-items: stretch; }
+  .patch-search input { flex: 1; width: auto; }
+  .patch-categories { flex: none; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .patch-categories::-webkit-scrollbar { display: none; }
+}
+.patch-results { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 3px; }
+.patch-search-all { margin-left: 8px; padding: 0; font: inherit; color: var(--text); text-decoration: underline; cursor: pointer; background: none; border: none; }
 .patch-group { display: grid; grid-template-columns: 76px minmax(0, 1fr); column-gap: 10px; align-items: start; }
 .patch-panel > section:not(.patch-presets) { flex: none; }
 /* A narrow label column: the long names (Keys & Plucks, Movement & Effects) take two lines, the first level with the
