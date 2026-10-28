@@ -107,10 +107,10 @@ group('Envelope', [
   ['Pluck Shape', 'Attack at once, then Decay to nothing: a spike on the Timeline that fades whether or not the key stays down.', {
     ...SAW, ampAttack: 0.001, ampDecay: 0.25, ampSustain: 0, ampRelease: 0.2,
   }],
-  ['Swell', 'A slow Attack: the sound takes a second and a half to arrive, and the Timeline shows the ramp.', {
+  ['Swell', 'A slow Attack: the sound takes a second and a half to arrive, and the Timeline shows the ramp (at 2 s or more: Display, Env Timeline).', {
     ...SAW, ampAttack: 1.5, ampDecay: 0.5, ampSustain: 0.9, ampRelease: 1.5,
   }],
-  ['Long Tail', 'A Release that outlasts the key by four seconds: let go and watch the tail cross the Timeline.', {
+  ['Long Tail', 'A Release that outlasts the key by four seconds: let go and watch the tail cross the Timeline (set it to 4 s in Display, Env Timeline, to see it whole).', {
     ...SAW, ampAttack: 0.005, ampDecay: 0.1, ampSustain: 0.8, ampRelease: 4,
   }],
   ['Two Speeds', 'The Filter Envelope snaps while the Amp Envelope rises slowly: two curves on the Timeline, two speeds.', {

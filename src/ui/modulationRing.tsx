@@ -66,14 +66,11 @@ const LFO_REACH: Partial<Record<ParamId, (patch: Patch) => Reach | null>> = {
   osc2Detune: detuneReach,
 };
 
-// A control of the Filter Envelope, Velocity or Key Track that a pointer is over, or that has the keyboard focus:
-// their rings are the white and grey ones, so the blue ring dims. The LFOs' own controls change nothing (the owner,
-// 2026-10-28): the blue ring is already theirs alone. No source draws a blue share any more (the owner, 2026-10-28:
-// a blue share for Velocity confused).
-const WHITE_SOURCES = new Set([
-  'param:filterEnvAmount', 'param:filterAttack', 'param:filterDecay', 'param:filterSustain', 'param:filterRelease',
-  'param:velocityCutoff', 'param:keyTrack',
-]);
+// A control of the Filter Envelope that a pointer is over, or that has the keyboard focus: its ring is the white one,
+// so the blue ring dims. The LFOs' own controls change nothing (the owner, 2026-10-28): the blue ring is already theirs
+// alone; nor do Velocity's and Key Track's (the owner, 2026-10-28). No source draws a blue share any more (the owner,
+// 2026-10-28: a blue share for Velocity confused).
+const WHITE_SOURCES = new Set(['param:filterEnvAmount', 'param:filterAttack', 'param:filterDecay', 'param:filterSustain', 'param:filterRelease']);
 const sourceOf = (target: EventTarget | null) =>
   target instanceof Element && WHITE_SOURCES.has(target.closest<HTMLElement>('[data-learn]')?.dataset.learn ?? '');
 const attention = { pointed: false, focused: false };
@@ -107,8 +104,8 @@ interface Props {
  * Serum-style modulation on a knob (issue 20, then issue 63): a blue ring outside the value arc over the range the
  * LFOs can take the Parameter (both together when both aim at it); on the knob's own track, a thin white ring over
  * the Filter Envelope's sweep and grey ones beyond it over what Velocity and Key Track can add; and a dot at
- * its Effective value while a Note sounds, on the knob's own track. Pointing at the Filter Envelope, Velocity or Key
- * Track dims the LFOs' ring; the LFOs' own controls change nothing on the rings. Drawn by the render loop, outside
+ * its Effective value while a Note sounds, on the knob's own track. Pointing at the Filter Envelope dims the LFOs'
+ * ring; the LFOs', Velocity's and Key Track's own controls change nothing on the rings. Drawn by the render loop, outside
  * React (ADR-0002), from the Modulation model (ADR-0003). Reduced motion keeps the rings and drops the moving dot.
  */
 export function ModulationRing({ id, centre, radius, trackRadius, dotRadius, arc, point }: Props) {

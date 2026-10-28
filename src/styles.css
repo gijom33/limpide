@@ -162,7 +162,7 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
    value now, in the modulation colour. Thicker than the Filter Envelope's white ring (the owner, 2026-10-28): blue on
    the panel reads lighter than white on the track, so 3.5 looks as heavy as its 2.5. */
 .knob-ring { fill: none; stroke: var(--stage-mod); stroke-width: 3.5; stroke-linecap: round; }
-/* Pointing at the Filter Envelope, Velocity or Key Track: the blue ring dimmed. */
+/* Pointing at the Filter Envelope: the blue ring dimmed. */
 .knob-ring[data-dim] { opacity: 0.35; }
 /* The Filter Envelope's ring (issue 63, the owner): white and thin, drawn on the knob's thick track. */
 .knob-envelope { fill: none; stroke: #fff; stroke-width: 2.5; }

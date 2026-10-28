@@ -90,7 +90,7 @@ test('an LFO on Pulse Width rings both Oscillators’ Pulse Width knobs, and not
   await expect(ring(knob(page, 'Filter', 'Cutoff'))).toBeHidden();
 });
 
-test('pointing at a source: the LFOs’ controls change nothing; the Filter Envelope, Velocity and Key Track dim the blue ring (issue 63)', async ({ page }) => {
+test('pointing at a source: the LFOs’, Velocity’s and Key Track’s controls change nothing; the Filter Envelope dims the blue ring (issue 63)', async ({ page }) => {
   await page.goto('/');
   await turnUp(page, 'LFO 1', 'Depth', 10);
   await turnUp(page, 'Filter', 'Amount', 10);
@@ -101,13 +101,17 @@ test('pointing at a source: the LFOs’ controls change nothing; the Filter Enve
   await expect(ring(cutoff)).not.toHaveAttribute('data-dim');
   await page.mouse.move(0, 0);
   // No source draws a blue share any more (the owner, 2026-10-28): their rings are the white and grey ones.
-  for (const name of ['Amount', 'Velocity', 'Key Track']) {
-    const control = page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name });
-    await control.focus();
-    await expect(ring(cutoff), name).toHaveAttribute('data-dim', '');
+  const amount = page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name: 'Amount' });
+  await amount.focus();
+  await expect(ring(cutoff)).toHaveAttribute('data-dim', '');
+  await amount.blur();
+  await expect(ring(cutoff)).not.toHaveAttribute('data-dim');
+  // Velocity and Key Track dim nothing (the owner, 2026-10-28), and nothing draws a blue share.
+  for (const name of ['Velocity', 'Key Track']) {
+    await page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name }).focus();
+    await page.waitForTimeout(100);
+    await expect(ring(cutoff), name).not.toHaveAttribute('data-dim');
     await expect(cutoff.locator('path[class*="share"]')).toHaveCount(0);
-    await control.blur();
-    await expect(ring(cutoff)).not.toHaveAttribute('data-dim');
   }
 });
 
