@@ -197,3 +197,24 @@ test('Velocity alone, no Envelope: its thin ring starts at the knob and stays wh
   expect(await velocityRing(cutoff).getAttribute('d')).toBe(reach);
   await page.keyboard.up('KeyA');
 });
+
+test('the dot rides the knob’s own track whatever moves it, an LFO as well as the Filter Envelope (the owner, 2026-10-28)', async ({ page }) => {
+  await page.goto('/');
+  await listening(page);
+  await turnUp(page, 'LFO 1', 'Depth', 25);
+  const cutoff = knob(page, 'Filter', 'Cutoff');
+  const fromCentre = () =>
+    cutoff.locator('svg.knob-dial').evaluate((svg) => {
+      const size = Number(svg.getAttribute('viewBox')!.split(' ')[2]);
+      const live = svg.querySelector('.knob-live')!;
+      const track = svg.querySelector('.knob-groove')!.getAttribute('d')!.match(/A([\d.]+)/)![1];
+      return Math.abs(Math.hypot(Number(live.getAttribute('cx')) - size / 2, Number(live.getAttribute('cy')) - size / 2) - Number(track));
+    });
+  await page.keyboard.down('KeyA');
+  await expect(dot(cutoff)).toBeVisible();
+  expect(await fromCentre()).toBeLessThan(0.1); // with the LFO alone: on the track, not the blue ring
+  await turnUp(page, 'Filter', 'Amount', 10);
+  await page.waitForTimeout(100);
+  expect(await fromCentre()).toBeLessThan(0.1); // with the Envelope too
+  await page.keyboard.up('KeyA');
+});

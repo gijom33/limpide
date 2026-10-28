@@ -107,7 +107,7 @@ interface Props {
  * Serum-style modulation on a knob (issue 20, then issue 63): a blue ring outside the value arc over the range the
  * LFOs can take the Parameter (both together when both aim at it), a thin white ring on the knob's own track over
  * the Filter Envelope's, a thinner one beyond it over what Velocity can add, and a dot at its Effective value while
- * a Note sounds. Pointing at Key Track, or focusing it, draws its share bright over the dimmed rings; pointing at the
+ * a Note sounds, on the knob's own track. Pointing at Key Track, or focusing it, draws its share bright over the dimmed rings; pointing at the
  * Filter Envelope or Velocity dims the LFOs' ring.
  * The LFOs' own controls change nothing on the rings. Drawn by the render loop, outside React (ADR-0002), from the
  * Modulation model (ADR-0003). Reduced motion keeps the rings and drops the moving dot.
@@ -160,8 +160,9 @@ export function ModulationRing({ id, centre, radius, trackRadius, dotRadius, arc
       const live = reach || env || vel ? (now?.now ?? null) : null;
       d.style.display = live === null || still.matches ? 'none' : '';
       if (live !== null) {
-        // On the blue ring, or on the white ones when no LFO moves the Cutoff.
-        const [x, y] = draw.current.point(position(live), reach ? radius : trackRadius);
+        // Always on the knob's own track, where its value arc and the white rings are, whatever moves it (the owner,
+        // 2026-10-28): the rings say how far each source reaches, the dot where the value is.
+        const [x, y] = draw.current.point(position(live), trackRadius);
         d.setAttribute('cx', x.toFixed(2));
         d.setAttribute('cy', y.toFixed(2));
       }
