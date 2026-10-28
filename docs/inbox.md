@@ -4,6 +4,7 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-10-28, the owner: "Stop. I noticed the white ball is not always on the main ring. It should, whether it moves via an LFO or an envelope."
 ## Ideas
 
 - 2026-10-28, from the 1.14.0 review: on a window wider than 600 px, hovering a knob or fader changes nothing, since its value already shows under its name. The owner asked for the name to be replaced by the value: on wide windows too, or is the value line enough?
