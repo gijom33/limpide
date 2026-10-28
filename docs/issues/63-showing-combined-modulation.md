@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** grilled (2026-10-28), the prototype next. The answer is something to see, so the grilling will likely want a prototype (stacked rings, split arcs, a trace over time) before a choice; Claude's call, open to the owner.
+**Status:** waiting for the owner's final design. The prototype was stopped on 2026-10-28 (decided by the owner): the owner will give the final decision, built straight on main without a prototype.
 
 ## Decisions (grilling, 2026-10-27 and 2026-10-28, decided by the owner)
 
@@ -23,14 +23,17 @@
 
 ## Decisions (the prototype, 2026-10-28, decided by the owner)
 
-The owner liked none of the first candidates: bands, ticks, the trail and the Timeline following a knob all went. What replaced them, on the prototype branch `prototype/combined-modulation`:
+The owner liked none of the first candidates: bands, ticks, the trail and the Timeline following a knob all went. What replaced them, on the prototype branch `prototype/combined-modulation` (kept as a primary source, never merged):
 
 13. **One ring for both LFOs together**, from the knob's value, in the LFOs' blue.
 14. **The Filter Envelope's own ring**, in orange, the outermost (first drawn inside the LFOs' ring in the Cutoff's light orange; the owner moved it out and to orange).
 15. **Both LFOs the same blue**, LFO 1's: a must.
 16. **The Timeline plots the LFOs added together** while both share a Destination, with an LFOs entry in blue in its key.
 17. **Both rings thicker** than today's ring, touching.
+18. **Last asked, not built:** the Filter Envelope's ring in white, on top of the knob's value arc, so the LFOs' ring is always the blue outer ring.
+
+What came out of the prototype onto main, at the owner's word: the Timeline's Amp Envelope is the Envelope alone (no tremolo ripple), its key says Cutoff (not Effective Cutoff) and runs Filter Envelope, Cutoff, Amp Envelope, and the Filter Envelope shows only while its Amount is set. A Volume line was added and taken away again.
 
 - [x] Grill: what the person should read off the control (each source's reach, their sum, their motion), where (the ring, the Timeline, the LFO plots), and on which controls
-- [ ] A prototype of the candidates, on its own branch
-- [ ] Build the one chosen
+- [x] A prototype of the candidates, on its own branch (stopped by the owner)
+- [ ] Build the owner's final design
