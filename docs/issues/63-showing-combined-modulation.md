@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** grilling. The answer is something to see, so the grilling will likely want a prototype (stacked rings, split arcs, a trace over time) before a choice; Claude's call, open to the owner.
+**Status:** grilled (2026-10-28), the prototype next. The answer is something to see, so the grilling will likely want a prototype (stacked rings, split arcs, a trace over time) before a choice; Claude's call, open to the owner.
 
 ## Decisions (grilling, 2026-10-27 and 2026-10-28, decided by the owner)
 
@@ -15,7 +15,12 @@
 5. **Over time, two candidates shown apart:** (a) a fading trail behind the dot on the ring, about the last second; (b) a trace in the Timeline for the knob pointed at or focused, beside the Effective Cutoff. Both together only if each earns its place.
 6. **No layout moves:** the rings fit in the room each knob takes now; on small knobs the bands get thinner (about 1.5 px) instead of wider.
 7. **Velocity and Key Track get no band:** fixed per Note, they stay folded into the combined ring, and hovering their knob still lights up their share.
+8. **Hover singles a source out:** pointing at or focusing a source's control brightens its band or tick and dims the others.
+9. **Reduced motion:** the trail goes, as the dot already does; the bands, ticks and Timeline trace stay.
+10. **The Timeline follows the knob:** pointing at or focusing another modulated knob turns the right-hand scale to its unit and draws its trace instead of the Effective Cutoff; leaving it goes back to the Cutoff. The prototype tries Cutoff and Pulse Width.
+11. **On touch:** the Timeline follows the last modulated knob touched or moved, until another.
+12. **The prototype is the real app:** on a `prototype/` branch, a small switch bar at the top for bands, ticks, trail and Timeline trace, applied to every knob at once, with a patch preloaded that has the Filter Envelope and both LFOs on the Cutoff.
 
-- [ ] Grill: what the person should read off the control (each source's reach, their sum, their motion), where (the ring, the Timeline, the LFO plots), and on which controls
+- [x] Grill: what the person should read off the control (each source's reach, their sum, their motion), where (the ring, the Timeline, the LFO plots), and on which controls
 - [ ] A prototype of the candidates, on its own branch
 - [ ] Build the one chosen
