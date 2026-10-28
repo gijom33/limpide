@@ -14,7 +14,7 @@
 4. **Search within the category:** a search looks inside the chosen category; when nothing matches, the message offers All.
 5. **The search box on the Presets heading's line:** focused when the panel opens on a computer, not on a phone (its keyboard would cover the list). Escape clears the text first; a second Escape closes the panel.
 6. **My Patches too:** the search narrows My Patches (by name: they have no description), and My Patches is the last category.
-7. **One row of categories everywhere:** pills under the search box, wrapping on a computer, scrolling sideways on a phone. Under All, each group's name stays at the start of its row.
+7. **One row of categories everywhere:** pills under the search box, wrapping on a computer, scrolling sideways on a phone. Under All, each group's name stays at the start of its row. Amended 2026-10-28, decided by the owner (triage of the review): on a computer the pills sit beside the search box, on the heading's line, as decision 13 assumes; under it in one sideways-scrolling row on a phone, and up to 860 px once [72](./72-patch-panel-after-its-review.md) is built.
 8. **Kept until the page reloads:** the search and the category stay when the panel closes and opens again, to audition the results one by one; a × clears the search. Neither is stored.
 9. **The ‹ › arrows ignore the filter:** they step through every Preset, as now; the filter is the panel's only.
 10. **Enter loads the first match** and closes the panel; Tab goes on to the categories, then the results.
