@@ -6,6 +6,7 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- 2026-10-28, the owner: "Also grey out a bit the velocity tiny ring extension"
 - 2026-10-28, from the 1.14.0 review: on a window wider than 600 px, hovering a knob or fader changes nothing, since its value already shows under its name. The owner asked for the name to be replaced by the value: on wide windows too, or is the value line enough?
 - 2026-10-28, from the 1.14.0 review: Key Track still moves the white rings with each key (Harp and the other Key Track Presets), where the owner asked that the white ring not move. And pointing at Velocity now dims the blue ring, which was not asked.
 - 2026-10-28, from the 1.14.0 review: Swell's description says the Timeline shows its 1.5 s ramp, which does not fit a 1 s Env Timeline; Long Tail's four-second tail is wider than the 2 s default. Point them at the Env Timeline choice?
