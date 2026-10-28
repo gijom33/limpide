@@ -1,6 +1,7 @@
 import { createContext, type RefObject, useContext, useEffect, useRef } from 'react';
 import type { SynthEngine } from '../engine/synthEngine';
 import { effectiveValue } from '../modulation/destinations';
+import { KEY_TRACK_CENTRE, VELOCITY_CUTOFF_OCTAVES } from '../modulation/modulationModel';
 import { cutoffReach, detuneReach, lfoCutoffReach, pulseWidthReach, type Reach, resonanceReach, type Source, semitoneReach, volumeReach } from '../modulation/reach';
 import { PARAMS, type ParamId, type Patch } from '../patch/patch';
 import { valueToPosition } from '../patch/taper';
@@ -28,32 +29,25 @@ function modulated(
     // The Note heard, held or in its Release: Velocity and Key Track hold the Cutoff where it put them until it has
     // faded.
     const heard = m.sounding ?? (now === null ? null : m.played);
-    const all = cutoffReach(patch, heard);
-    if (!all) return null;
-    // A source's shift for the Note heard, as a ratio (each share is the knob's value and that shift's end: their
-    // product over the value squared is the shift's ratio).
-    const shift = (sources: readonly Source[]) =>
-      heard
-        ? sources.reduce((ratio, source) => {
-            const share = all.shares[source];
-            return share ? (ratio * share[0] * share[1]) / patch.cutoff ** 2 : ratio;
-          }, 1)
-        : 1;
+    // How far Velocity and Key Track shift the Cutoff for the Note heard, as ratios, as `effectiveCutoff` reckons them.
+    const byVelocity = heard ? 2 ** (VELOCITY_CUTOFF_OCTAVES * patch.velocityCutoff * heard.velocity) : 1;
+    const byKey = heard ? 2 ** ((patch.keyTrack * (heard.note - KEY_TRACK_CENTRE)) / 12) : 1;
     // The white rings hold still (the owner, 2026-10-28): the Filter Envelope's sweep, then, thinner and beyond it,
     // all Velocity can add, soft to hard, so the dot (the Effective Cutoff) runs along them whatever the Note's
     // Velocity. Only Key Track, the key's own pitch, moves them. The blue ring, the LFOs' swing, goes where Velocity
-    // and Key Track take it.
+    // and Key Track take it. Worked out apart from the sources' shares: with Velocity alone, a Note heard has one
+    // Velocity, so no spread, and its ring must not vanish while it plays.
     const lfos = lfoCutoffReach(patch);
-    const env = all.shares.filterEnvelope;
-    const sweep = patch.velocityCutoff ? cutoffReach({ ...patch, lfoAmount: 0, lfo2Amount: 0, keyTrack: 0 }, null) : null;
+    const still = cutoffReach({ ...patch, lfoAmount: 0, lfo2Amount: 0, keyTrack: 0 }, null);
+    const env = still?.shares.filterEnvelope;
     const from = env ? Math.max(env[0], env[1]) : patch.cutoff; // Velocity only raises the Cutoff: past the sweep's top
-    const byKey = shift(['keyTrack']);
-    const byNote = shift(['velocity', 'keyTrack']);
+    const all = cutoffReach(patch, heard);
+    if (!all && !lfos && !still) return null;
     return {
-      reach: lfos && { ...lfos, lo: lfos.lo * byNote, hi: lfos.hi * byNote },
+      reach: lfos && { ...lfos, lo: lfos.lo * byVelocity * byKey, hi: lfos.hi * byVelocity * byKey },
       envelope: env && [env[0] * byKey, env[1] * byKey],
-      velocity: sweep && sweep.hi > from ? [from * byKey, sweep.hi * byKey] : undefined,
-      shares: all.shares,
+      velocity: patch.velocityCutoff > 0 && still && still.hi > from ? [from * byKey, still.hi * byKey] : undefined,
+      shares: all?.shares ?? {},
       now,
     };
   }

@@ -37,7 +37,7 @@ export const TUTORIALS: Tutorial[] = [
       ...osc2Square(0.5, 'half'),
       {
         kind: 'display', overlay: 'ideal',
-        say: 'Open Display and turn on Ideal.',
+        say: 'Open Display and see that Ideal is on (turn it on if not).',
         note: 'Circles mark where Osc 1’s saw puts its Harmonics, squares where Osc 2’s square puts its own: an octave down, they fall in between.',
       },
       {

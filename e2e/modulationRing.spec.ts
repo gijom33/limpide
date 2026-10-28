@@ -182,3 +182,18 @@ test('Velocity draws a thinner white ring beyond the Envelope’s, and neither m
   await expect(dot(cutoff)).toBeVisible(); // still heard
   for (const [ring, d] of [[envelopeRing(cutoff), sweep], [velocityRing(cutoff), reach]] as const) expect(await ring.getAttribute('d')).toBe(d); // released: still
 });
+
+test('Velocity alone, no Envelope: its thin ring starts at the knob and stays while a Note plays, the dot on it (the 1.14.0 review)', async ({ page }) => {
+  await page.goto('/');
+  await listening(page);
+  await turnUp(page, 'Filter', 'Velocity', 60);
+  const cutoff = knob(page, 'Filter', 'Cutoff');
+  await expect(envelopeRing(cutoff)).toBeHidden();
+  await expect(velocityRing(cutoff)).toBeVisible();
+  const reach = await velocityRing(cutoff).getAttribute('d');
+  await page.keyboard.down('KeyA');
+  await expect(dot(cutoff)).toBeVisible();
+  await expect(velocityRing(cutoff)).toBeVisible();
+  expect(await velocityRing(cutoff).getAttribute('d')).toBe(reach);
+  await page.keyboard.up('KeyA');
+});
