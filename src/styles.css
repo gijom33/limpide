@@ -1160,13 +1160,13 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 /* Once made, the instruction steps back and the note on what to hear and see leads. */
 .tutorial-say[data-done] { color: var(--muted); font-size: var(--card-small); }
 /* Its tick a filled badge, plain to see (the owner, 2026-10-27); near-black on the accent, in either theme. Folded, the
-   top row carries one too. */
+   top row carries one too. Each sits in a flex row, so its line keeps its height and its words stay where they were. */
+.tutorial-say[data-done], .tutorial-progress { display: flex; align-items: center; gap: 8px; }
 .tutorial-say[data-done]::before, .tutorial-progress[data-done]::after {
-  content: '✓'; display: inline-grid; place-items: center; width: 1.5em; height: 1.5em; border-radius: 50%;
-  background: var(--accent); color: #08090c; font-weight: 700; font-size: var(--card-text); line-height: 1;
+  content: '✓'; flex: none; display: grid; place-items: center; width: 1.4em; height: 1.4em; border-radius: 50%;
+  background: var(--accent); color: #08090c; font-weight: 700; line-height: 1;
 }
-.tutorial-say[data-done]::before { margin-right: 8px; vertical-align: -0.3em; }
-.tutorial-progress[data-done]::after { margin-left: 8px; vertical-align: -0.35em; }
+.tutorial-say[data-done] { align-items: flex-start; }
 .tutorial-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
 .tutorial-actions .tool { min-height: 36px; padding: 0 var(--space-3); gap: 6px; }
 .tutorial-actions .tool:disabled { opacity: 0.45; cursor: default; }

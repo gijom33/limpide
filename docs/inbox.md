@@ -5,7 +5,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 ## Bugs
 
 - Favicon still not showing in Safari.
-- "Step n of m" in the Tutorial card: this text moved up when showing the checkmark.
 - A square or saw LFO on Volume overshoots its edges (the LFO's Fourier series, Gibbs, about ±1.18): at full Depth the gain passes the Envelope's level by about 9 % and dips below 0 (polarity flips) for well under a millisecond at each edge, where the model stays at exactly ±1. The same overshoot reaches every destination. From the 1.12.0 code review.
 
 ## Ideas
@@ -52,3 +51,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-27: "the demo deactivates the ideal rings", explained, not a bug: Ideal stays on (it is stored), but the Kick and the riser have no Oscillator (Osc 1 at 0), so the Ideal Reference has nothing to draw; the rings are back from Acid on, and after the Demo ends on Init.
 2026-10-27: the owner's Ideal question went to [61](./issues/61-ideal-every-oscillator.md), grilled and built there: the Ideal from every Oscillator, a shape each.
 2026-10-27: the owner's Tutorial changes done at once, in [59](./issues/59-tutorials-after-review-5.md): a made Step's tick a filled badge (on the instruction and beside "Step n of m"), the target back above its control, Acid's Maths Step taken out.
+2026-10-27: the owner's bug, "Step n of m" moving up when its tick showed, fixed at once in [59](./issues/59-tutorials-after-review-5.md): the badge sat on the words' baseline and pushed them 4 px off the name's line; each tick now sits in a flex row, and the test checks the words against the name.

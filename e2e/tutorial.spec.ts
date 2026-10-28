@@ -47,13 +47,24 @@ test('a Tutorial from the Patches panel: Init loaded, the control ringed with it
   await expect(card(page).getByRole('button', { name: 'Next' })).toBeDisabled();
 
   // Turned by keys to near half: the Step is made, the fader snaps to the exact target, and the note shows.
+  // "Step n of m" against the name beside it: the card grows as the note shows, so only the offset tells.
+  const wordsTop = () => card(page).evaluate((e) => {
+    const top = (node: Element) => {
+      const range = document.createRange();
+      range.selectNodeContents(node);
+      return range.getClientRects()[0].top;
+    };
+    return top(e.querySelector('.tutorial-progress')!) - top(e.querySelector('.tutorial-name')!);
+  });
+  const before = await wordsTop();
   await fader.focus();
   const note = card(page).getByText('Louder, not different');
   // Up to 46 %, within reach: once it rests there a moment, the Step counts and the fader snaps to the target.
   for (let i = 0; i < 23; i++) await page.keyboard.press('ArrowUp');
   await expect(fader).toHaveAttribute('aria-valuetext', '46 %');
   await expect(note).toBeVisible();
-  await expect(progress(page)).toHaveAttribute('data-done'); // its tick, in the top row too
+  await expect(progress(page)).toHaveAttribute('data-done'); // its tick, in the top row too, which leaves the words put
+  expect(Math.abs((await wordsTop()) - before)).toBeLessThan(1);
   await expect(fader).toHaveAttribute('aria-valuetext', '50 %');
   await expect(fader).toBeFocused(); // the card never takes the focus
   await action(page, 'Next').click();
