@@ -120,7 +120,7 @@ async function tapsAt(at: number, patch: Partial<Patch>, note = 45) {
     return s;
   };
   const captured = ctx.suspend(at).then(() => {
-    const taps = { oscillator: read(engine.taps.oscillator), filter: read(engine.taps.filter), amp: read(engine.taps.amp) };
+    const taps = { oscillator: read(engine.taps.oscillator), filter: read(engine.taps.filter), amp: read(engine.taps.amp), engine };
     void ctx.resume();
     return taps;
   });
@@ -661,6 +661,45 @@ describe('two LFOs and their destinations', () => {
     expect(rms(down.amp) / rms(up.amp)).toBeCloseTo(0.5, 1);
     expect(rms(down.filter) / rms(up.filter)).toBeCloseTo(1, 1);
   });
+});
+
+// Issue 66: a square's or a saw's Fourier series rings past ±1 at its jump (Gibbs, about ±1.18), where the model
+// stays at exactly ±1. Measured on Volume at full Depth, where the tremolo's gain is the LFO itself (0.5 + 0.5 × its
+// value): the Amp Tap with the LFO, divided sample by sample by the same Note without it. Every Destination is fed
+// from the same LFO, so what holds here holds for all of them.
+describe('LFO edges (issue 66)', () => {
+  const tremolo = { cutoff: 20000, waveform: 'sine', ampSustain: 1, ampAttack: 0.001, lfoDestination: 'volume', lfoAmount: 1 } as const;
+  /** The tremolo's gain over the Amp Tap's window ending at `at` (a whole number of 128-frame quanta), and its times. */
+  const gainBefore = async (at: number, patch: Partial<Patch>) => {
+    const moved = await tapsAt(at, { ...tremolo, ...patch }, 69);
+    const { amp: still } = await tapsAt(at, { ...tremolo, ...patch, lfoAmount: 0 }, 69);
+    const peak = Math.max(...still.map(Math.abs));
+    const gains: { time: number; gain: number }[] = [];
+    still.forEach((s, i) => {
+      // Where the carrier is near zero the division says nothing.
+      if (Math.abs(s) > 0.3 * peak) gains.push({ time: at - (still.length - i) / SR, gain: moved.amp[i] / s });
+    });
+    return { gains, engine: moved.engine };
+  };
+
+  for (const lfoWaveform of ['square', 'saw', 'sawDown'] as const)
+    for (const lfoRate of [1, 20])
+      it(`keeps a ${lfoWaveform} LFO within ±1 at its edges: the gain never passes the Envelope's level nor flips polarity (${lfoRate} Hz)`, async () => {
+        // A window holding the jump at half a cycle (at 20 Hz, several cycles' jumps).
+        const { gains } = await gainBefore(lfoRate === 1 ? 0.56 : 1.12, { lfoWaveform, lfoRate });
+        const [highest, lowest] = [Math.max(...gains.map((g) => g.gain)), Math.min(...gains.map((g) => g.gain))];
+        const measured = `gain from ${lowest.toFixed(4)} to ${highest.toFixed(4)}`;
+        expect(highest, measured).toBeLessThan(1.001);
+        expect(lowest, measured).toBeGreaterThan(-0.001);
+      });
+
+  for (const lfoWaveform of ['square', 'saw', 'sawDown'] as const)
+    it(`agrees with the model across the ${lfoWaveform}'s cycle, away from its jumps (1 Hz)`, async () => {
+      const { gains, engine } = await gainBefore(0.56, { lfoWaveform, lfoRate: 1 });
+      const farFromJump = gains.filter((g) => Math.abs(g.time - 0.5) > 0.001); // over a millisecond from it
+      const gap = Math.max(...farFromJump.map((g) => Math.abs(g.gain - engine.modulationAt(g.time).volume)));
+      expect(gap).toBeLessThan(0.005); // the LFO within 1 %
+    });
 });
 
 describe('Osc 2, Noise and the Mixer', () => {

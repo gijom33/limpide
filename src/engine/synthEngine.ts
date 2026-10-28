@@ -196,11 +196,32 @@ const LFO_SERIES: Record<'square' | 'saw' | 'sawDown', (n: number) => number> = 
   saw: (n) => (n % 2 ? 2 : -2) / (n * Math.PI),
   sawDown: (n) => (n % 2 ? -2 : 2) / (n * Math.PI),
 };
+const LFO_TERMS = 2048;
+
+/**
+ * Each term softened by Lanczos's sigma factor (issue 66). As written, the series rings at its jumps (Gibbs): to about
+ * ±1.2 at 1 Hz, and still 5 % off the model a millisecond later. Softened, it is within 0.2 % of the model a
+ * millisecond from the jump, its corner a fraction of a millisecond rounder; what little it still passes ±1 by
+ * (about 5 %, for well under a millisecond) the LFO's clamp holds back.
+ */
+const sigma = (n: number) => Math.sin((Math.PI * n) / LFO_TERMS) / ((Math.PI * n) / LFO_TERMS);
 
 function lfoWave(ctx: BaseAudioContext, waveform: keyof typeof LFO_SERIES): PeriodicWave {
-  const real = new Float32Array(2048);
-  const imag = real.map((_, n) => (n ? LFO_SERIES[waveform](n) : 0));
+  const real = new Float32Array(LFO_TERMS);
+  const imag = real.map((_, n) => (n ? LFO_SERIES[waveform](n) * sigma(n) : 0));
   return ctx.createPeriodicWave(real, imag, { disableNormalization: true });
+}
+
+/**
+ * Where an LFO's oscillators meet, before its Destinations: a waveshaper passing −1 to 1 as they are and holding
+ * anything past them at ±1, so no Destination is moved further than the model says, at any Rate (the browser drops a
+ * series' top terms at fast ones, whatever softening they had), and the tremolo's gain never passes the Envelope's
+ * level nor flips polarity (issue 66).
+ */
+function lfoClamp(ctx: BaseAudioContext): WaveShaperNode {
+  const clamp = ctx.createWaveShaper();
+  clamp.curve = Float32Array.of(-1, 1);
+  return clamp;
 }
 
 /** Set an LFO oscillator's Waveform: a sine or a triangle (whose series never overshoots) as Web Audio's own. */
@@ -273,11 +294,12 @@ const A4 = noteToFrequency(69);
  * there): the Cutoff and the pitch in cents (through `detune`), Osc 2's tuning in cents, each Filter stage's Q, the
  * tremolo's gain.
  * Pulse Width goes through each Voice's own gains, since its swing depends on the Note. The oscillator feeds a bus
- * the rest is wired to, so a retriggering Note can swap in a new oscillator that starts its cycle at that Note.
+ * the rest is wired to, so a retriggering Note can swap in a new oscillator that starts its cycle at that Note; the
+ * bus is the LFO's clamp, holding it within ±1.
  */
 interface LfoNodes {
   osc: OscillatorNode;
-  bus: GainNode;
+  bus: WaveShaperNode;
   /** The oscillator a restart is replacing, until it stops; and when the newest restart starts. */
   previous: OscillatorNode | null;
   restartAt: number;
@@ -529,7 +551,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   const lfoNodes = (): LfoNodes => {
     const osc = ctx.createOscillator();
     osc.frequency.value = PARAMS.lfoRate.default;
-    const bus = ctx.createGain();
+    const bus = lfoClamp(ctx);
     osc.connect(bus);
     const [toCutoff, toPitch, toOsc2, q1, q2, toVolume] = Array.from({ length: 6 }, () => {
       const g = ctx.createGain();
