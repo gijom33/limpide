@@ -74,7 +74,8 @@ export interface SynthEngine {
   now(): number;
   /**
    * The Response Curve: gain (linear) at each frequency from the Oscillator Tap to the Filter Tap, at the
-   * Effective Cutoff right now.
+   * Effective Cutoff of the moment the Spectrum shows (the middle of its window, about 85 ms ago), so a sweeping
+   * Cutoff moves the Curve and the Harmonics together.
    */
   filterResponse(frequencies: Float32Array<ArrayBuffer>): Float32Array;
   /** Whether the output's safety limiter bent the sound in its last frame (the summed Voices, after the master). */
@@ -173,9 +174,12 @@ function trim<T extends { time: number }>(entries: T[], now: number) {
   if (drop) entries.splice(0, drop);
 }
 
+/** Samples each Tap's Viewers analyse: the Spectrum's frequency detail, and how far behind the sound it is. */
+const TAP_WINDOW = 8192;
+
 function createAnalyser(ctx: BaseAudioContext): AnalyserNode {
   const analyser = ctx.createAnalyser();
-  analyser.fftSize = 8192;
+  analyser.fftSize = TAP_WINDOW;
   analyser.smoothingTimeConstant = 0;
   return analyser;
 }
@@ -758,7 +762,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     },
 
     filterResponse(frequencies) {
-      const { cutoff, resonance } = modulationAt();
+      const { cutoff, resonance } = modulationAt(ctx.currentTime - TAP_WINDOW / 2 / ctx.sampleRate);
       // An LFO on Resonance moves the twins' Q with it.
       if (patch) filterStages(patch.filterMode, patch.filterSlope, resonance).forEach((stage, i) => (twins[i].Q.value = stage.Q));
       const total = new Float32Array(frequencies.length).fill(1);

@@ -324,6 +324,28 @@ describe('filterResponse (the Response Curve)', () => {
     }
   });
 
+  it('is drawn for the moment the Spectrum shows, the middle of its window, so the two move together', async () => {
+    // The Cutoff jumps from 300 Hz to 6 kHz at 1 s. 40 ms later the Spectrum's window (8192 samples, about 170 ms)
+    // is still mostly before the jump, so the Curve still cuts at 2 kHz; 200 ms later it no longer does.
+    const ctx = new OfflineAudioContext(1, SR * 1.4, SR);
+    const engine = createSynthEngine(ctx);
+    engine.applyPatch({ ...defaultPatch(), cutoff: 300, resonance: 0 });
+    const at2k = () => engine.filterResponse(Float32Array.of(2000))[0];
+    const read = (t: number, act: () => number | void) =>
+      ctx.suspend(t).then(() => {
+        const value = act();
+        void ctx.resume();
+        return value;
+      });
+    const jump = read(1, () => engine.applyPatch({ ...defaultPatch(), cutoff: 6000, resonance: 0 }));
+    const soon = read(1.04, at2k);
+    const later = read(1.2, at2k);
+    await ctx.startRendering();
+    await jump;
+    expect(dB((await soon) as number)).toBeLessThan(-20);
+    expect(dB((await later) as number)).toBeGreaterThan(-1);
+  });
+
   it('shows the Resonance peak at the Cutoff, above the pass band', () => {
     const engine = createSynthEngine(new OfflineAudioContext(1, SR, SR));
     engine.applyPatch({ ...defaultPatch(), cutoff: 1000, resonance: 0.8 });
