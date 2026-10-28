@@ -4,6 +4,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-10-28, the owner: "The AMP envelope in timeline should not be affected by the LFOs"
+
 ## Ideas
 
 ## Dropped
