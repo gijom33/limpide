@@ -68,5 +68,5 @@ test('the Scope and Spectrum keep their gap on a phone, and the Timeline key no 
   const offsets = await page.evaluate(() =>
     [...document.querySelectorAll('.timeline-key [data-mark]')].map((mark) => Math.round(mark.getBoundingClientRect().left - mark.parentElement!.getBoundingClientRect().left)),
   );
-  expect(offsets).toEqual([0, 0, 0]);
+  expect(offsets).toEqual([0]); // Init: the Amp Envelope alone, nothing else moving (issue 63)
 });

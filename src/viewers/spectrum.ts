@@ -175,7 +175,7 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
       });
       const held = frozenCurve(viewer.frozen, live);
       const { gains } = held.key === key ? held : frozenCurve(false, live);
-      // The Effective Cutoff's colour, as on the Timeline: this is the Filter's shape at that Cutoff.
+      // The Filter's colour, lightened: this is the Filter's shape at that Cutoff.
       g.strokeStyle = cssVar(canvas, '--cutoff-line');
       g.globalAlpha = 0.85;
       g.lineWidth = curveWidth(canvas);

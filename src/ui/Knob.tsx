@@ -109,6 +109,7 @@ export function Knob({ id, value, onChange, inactive }: Props) {
             id={id}
             centre={centre}
             radius={centre - 2}
+            trackRadius={groove}
             dotRadius={g === GEOMETRY.play ? 5 : 4}
             arc={(from, to, r) => arc(centre, r, from, to)}
             point={(p, r) => point(centre, r, angleOf(p))}

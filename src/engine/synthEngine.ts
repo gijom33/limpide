@@ -71,8 +71,8 @@ export interface SynthEngine {
   lfoSwingAt(time: number, lfo?: LfoNumber): number;
   /** The Cutoff knob's own setting at `time` (before modulation). */
   baseCutoffAt(time: number): number;
-  /** The Filter Envelope's Amount at `time`: at zero it moves nothing, and the Timeline leaves it out. */
-  filterEnvAmountAt(time: number): number;
+  /** The Patch in force at `time` (none before the first): what the Timeline draws at that moment. */
+  patchAt(time: number): Patch | undefined;
   now(): number;
   /**
    * The Response Curve: gain (linear) at each frequency from the Oscillator Tap to the Filter Tap, at the
@@ -751,7 +751,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       const then = patchAt(time);
       return then ? effectiveCutoff(then) : 0;
     },
-    filterEnvAmountAt: (time) => patchAt(time)?.filterEnvAmount ?? 0,
+    patchAt,
     now: () => ctx.currentTime,
     setTapSource(source) {
       if (source === tapSource) return;

@@ -53,7 +53,8 @@ test('the Envelope Timeline shows the Filter Envelope once its Amount is set, wi
   const key = panel.locator('[data-mark="filterEnvelope"]');
   await expect(key).toBeHidden(); // Init's Amount is zero: the Envelope moves nothing (the owner, 2026-10-28)
   await page.getByRole('slider', { name: 'Filter Envelope Amount' }).press('ArrowUp');
-  await expect(key).toHaveText('Filter Envelope');
+  await expect(key).toHaveText('Filter Env'); // short on screen, whole for a screen reader
+  await expect(key).toHaveAccessibleName('Filter Envelope');
   await expect(key).toBeVisible();
   const canvas = panel.locator('canvas');
   const level = () => canvas.getAttribute('data-filter-envelope').then(Number);

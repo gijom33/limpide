@@ -30,7 +30,9 @@ test('the Maths Layer is off at first; on, it shows Q, dB, the formulas and the 
   await page.getByRole('radiogroup', { name: 'Osc 1 Waveform' }).getByRole('radio', { name: 'Square' }).click();
   await expect(page.getByLabel('Oscillator formula')).toContainText('odd n only');
   await expect(page.getByLabel('Filter formula')).toContainText(/^\|H\| = \(.*\)²/);
-  // The Effective Cutoff's value on the Timeline.
+  // The Effective Cutoff's value on the Timeline, while its line is drawn: once the Filter Envelope moves it (issue 63).
+  await expect(page.locator('.timeline canvas')).toHaveAttribute('data-cutoff-readout', '');
+  await page.getByRole('slider', { name: 'Filter Envelope Amount' }).press('ArrowUp');
   await expect(page.locator('.timeline canvas')).toHaveAttribute('data-cutoff-readout', /Hz$/);
 
   await page.reload();

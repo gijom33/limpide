@@ -207,7 +207,7 @@ The Filter's gain per frequency at the Effective Cutoff, drawn over the Spectrum
 _Avoid_: Filter curve, transfer function (maths layer only), EQ curve
 
 **Envelope Timeline**:
-A Viewer plotting both Envelopes and the Effective Cutoff over time, the present at its right edge.
+A Viewer plotting, over time with the present at its right edge, what changes the sound: the Amp Envelope always; the Filter Envelope while its Amount is set; the Effective Cutoff while the Filter Envelope or an LFO moves it; every other Destination an active LFO moves, on its knob's scale. A moved Parameter is a broken line in its stage's colour (the Cutoff dotted, what LFO 1 moves dashed, what LFO 2 moves dash-dotted); its key, on screen, says Cutoff, Filter Env and Amp Env.
 _Avoid_: ADSR display
 
 **Freeze**:

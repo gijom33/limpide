@@ -46,13 +46,12 @@
   --stage-osc: #08ad72;
   --stage-filter: #e36b02;
   --stage-amp: #a052fe;
-  /* Modulation: what moves the stages over time (the LFO & Envelopes section, the rings to come). No stage uses it. */
+  /* Modulation: what moves the stages over time (the LFO & Envelopes section, the rings), both LFOs in this one blue
+     (the owner, 2026-10-28). No stage uses it. */
   --stage-mod: #5b8cff;
   --mod-dot: #a9c2ff;
-  /* LFO 2: a very light blue, its own beside LFO 1's and never the text colour. */
-  --mod-2: #c9d7ff;
-  /* The Effective Cutoff on the Timeline: the Filter's colour lightened towards the text (either theme), so it
-     reads apart from the Filter Envelope's orange area under it. */
+  /* The Response Curve on the Filter Spectrum: the Filter's colour lightened towards the text (either theme), so it
+     reads apart from the orange Harmonics under it. */
   --cutoff-line: color-mix(in srgb, var(--stage-filter) 55%, var(--text));
   color-scheme: dark;
   font-family: system-ui, -apple-system, sans-serif;
@@ -77,7 +76,6 @@
   --stage-amp: #7a1fd0;
   --stage-mod: #2f5fe0;
   --mod-dot: #2f5fe0;
-  --mod-2: #1c3170;
   --shadow-panel: 0 10px 32px rgba(0, 0, 0, 0.18);
   color-scheme: light;
 }
@@ -162,13 +160,16 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 .knob-marker { stroke: var(--text); stroke-linecap: round; }
 /* Modulation (issue 20): a ring outside the value arc over the range modulation reaches, and a dot at the value now,
    in the modulation colour. */
-.knob-ring, .knob-share { fill: none; stroke: var(--stage-mod); stroke-width: 2.5; stroke-linecap: round; }
+/* Thicker than the Filter Envelope's white ring (the owner, 2026-10-28): blue on the panel reads lighter than white on
+   the track, so 3.5 looks as heavy as its 2.5. */
+.knob-ring, .knob-share { fill: none; stroke: var(--stage-mod); stroke-width: 3.5; stroke-linecap: round; }
 /* Pointing at a source: its share bright and a little thicker, the rest of the ring dimmed. */
 .knob-ring[data-dim] { opacity: 0.35; }
-.knob-share { stroke-width: 3; }
-/* LFO 2 in its very light blue (very dark in the light theme), here as on its plot, so a ring shows which LFO moves
-   which part. */
-.knob-share[data-source='lfo2'] { stroke: var(--mod-2); }
+.knob-share { stroke-width: 4; }
+/* The Filter Envelope's ring (issue 63, the owner): white, as thin as the LFOs' ring, drawn on the knob's thick track. */
+.knob-envelope { fill: none; stroke: #fff; stroke-width: 2.5; stroke-linecap: round; }
+:root[data-theme='light'] .knob-envelope { stroke: var(--text); }
+.knob-envelope[data-dim] { opacity: 0.35; }
 /* The live dot: bigger than the ring is thick, brighter than it, and cut out of it by a panel-coloured edge. */
 .knob-live { fill: var(--mod-dot); stroke: var(--panel); stroke-width: 2; }
 @media (prefers-reduced-motion: reduce) { .knob-live { display: none !important; } }
@@ -374,8 +375,15 @@ main[data-frozen] .tap-canvases::before {
 .timeline-key [data-mark]::before { content: ''; width: 12px; height: 8px; border-radius: 2px; }
 .timeline-key [data-mark='amp']::before { background: color-mix(in srgb, var(--stage-amp) 45%, transparent); border-top: 1.5px solid var(--stage-amp); }
 .timeline-key [data-mark='filterEnvelope']::before { background: color-mix(in srgb, var(--stage-filter) 35%, transparent); border-top: 1.5px solid var(--stage-filter); }
-.timeline-key [data-mark='cutoff']::before { height: 0; border-top: 2px solid var(--cutoff-line); }
-.timeline-key [data-mark][hidden] { display: none; }
+/* What the Filter Envelope or an LFO moves: a broken line in its stage's colour and its own pattern, as on the plot. */
+.timeline-key [data-pattern] { --line: var(--stage-mod); }
+.timeline-key [data-stage='osc'] { --line: var(--stage-osc); }
+.timeline-key [data-stage='filter'] { --line: var(--stage-filter); }
+.timeline-key [data-stage='amp'] { --line: var(--stage-amp); }
+.timeline-key [data-pattern]::before { width: 16px; height: 2px; border-radius: 1px; }
+.timeline-key [data-pattern='dots']::before { background: radial-gradient(circle, var(--line) 0 1px, transparent 1.2px) 0 50% / 4px 2px repeat-x; }
+.timeline-key [data-pattern='dashes']::before { background: repeating-linear-gradient(90deg, var(--line) 0 5px, transparent 5px 8px); }
+.timeline-key [data-pattern='dashDot']::before { background: repeating-linear-gradient(90deg, var(--line) 0 6px, transparent 6px 8px, var(--line) 8px 9.5px, transparent 9.5px 11.5px); }
 main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-offset: -1px; }
 /* The Filter Envelope: Amount, then the four faders, in one row that wraps like any other. */
 .sub-block { container-type: inline-size; }
@@ -628,8 +636,6 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .lfo-retrigger-field::after { content: ''; height: var(--knob-value-h); }
 .lfo-retrigger { margin: calc((var(--dial-big) - var(--control-h)) / 2) 0; }
 .lfo-retrigger[aria-pressed='true'] { color: var(--bg); background: var(--stage); border-color: var(--stage); }
-/* LFO 2 in its very light blue (very dark in the light theme): its knob arcs, its plot, its share of a ring. */
-.lfo-rows[data-lfo='2'] { --stage: var(--mod-2); }
 .lfo-plot {
   display: block; width: 132px; min-width: 72px; height: auto; min-height: 48px; align-self: stretch;
   background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-inner);
@@ -1024,8 +1030,8 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   .lfo-plot { width: 100%; }
   /* The Timeline has no time labels: on a phone their 12 px go back to the page, the plot as tall as before. */
   .timeline-plot { height: 108px; }
-  /* No names beside the LFOs, so their rows have the section's whole width: the first is LFO 1, the second, in its
-     lighter blue, LFO 2 (each group keeps its name for screen readers). */
+  /* No names beside the LFOs, so their rows have the section's whole width: the first is LFO 1, the second LFO 2,
+     both in the LFOs' one blue (each group keeps its name for screen readers). */
   .timeline-controls .sub-block > h3, .timeline-controls .sub-block > .tip-anchor:first-child { display: none; }
   /* Viewers: wider than tall, a little lower than elsewhere. */
   .tap canvas { aspect-ratio: 3 / 1; min-height: 96px; }

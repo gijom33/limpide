@@ -12,7 +12,7 @@ test('the Waveform, Filter Mode and LFO Waveform pickers look the same, the chos
       const g = getComputedStyle(group);
       const checked = getComputedStyle(group.querySelector<HTMLElement>('[aria-checked="true"]')!);
       const unchecked = getComputedStyle(group.querySelector<HTMLElement>('[aria-checked="false"]')!);
-      // The section's colour, as the chosen option resolves it (LFO 2 has its own).
+      // The section's colour, as the chosen option resolves it.
       const probe = document.createElement('span');
       probe.style.background = 'var(--stage)';
       group.querySelector('[aria-checked="true"]')!.append(probe);
@@ -35,6 +35,9 @@ test('the Waveform, Filter Mode and LFO Waveform pickers look the same, the chos
   }, PICKERS);
   for (const { name, look } of looks.slice(1)) expect(look, name).toEqual(looks[0].look);
   for (const { name, checkedBackground, stage } of looks) expect(checkedBackground, name).toBe(stage);
-  expect(new Set(looks.map((l) => l.stage)).size, 'each section its own colour').toBe(looks.length);
+  // Each section its own colour, both LFOs in the one blue (the owner, 2026-10-28, issue 63).
+  const stage = (name: string) => looks.find((l) => l.name === name)!.stage;
+  expect(stage('LFO 2 Waveform')).toBe(stage('LFO 1 Waveform'));
+  expect(new Set(looks.map((l) => l.stage)).size, 'each section its own colour').toBe(looks.length - 1);
   for (const { name, spareRight } of looks) expect(spareRight, `${name}: no empty track after the last icon`).toBeLessThanOrEqual(6);
 });

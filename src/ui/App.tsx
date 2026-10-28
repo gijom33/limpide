@@ -609,6 +609,7 @@ export function App() {
           <EnvelopeTimeline
             engine={session.engine}
             view={view}
+            patch={patch}
             controls={
               <div className="timeline-controls">
                 {([1, 2] as const).map((n) => (

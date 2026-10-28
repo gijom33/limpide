@@ -93,7 +93,7 @@ export const TIPS = {
   envAmount: {
     title: 'Envelope Amount',
     body: 'How far the Filter Envelope moves the Cutoff, in octaves: +2 lifts it two octaves at the Envelope’s peak; negative values sweep it down instead.',
-    how: 'Turn it up with a short Decay for a pluck. Watch the orange line on the Envelope Timeline.',
+    how: 'Turn it up with a short Decay for a pluck. Watch the orange dotted line on the Envelope Timeline.',
   },
   filterMode: {
     title: 'Filter Mode',
@@ -115,12 +115,12 @@ export const TIPS = {
   },
   timeline: {
     title: 'LFO & Envelopes',
-    body: 'What changes the sound over time: the LFO, and the Envelope Timeline beside it. The Timeline shows the last four seconds. Violet: the Amp Envelope. Orange: the Cutoff, with the frequencies the Filter lets through shaded below it, and the Filter Envelope when its Amount is set. The faint dashed line is the Cutoff knob itself.',
+    body: 'What changes the sound over time: the LFO, and the Envelope Timeline beside it. The Timeline shows the last four seconds. The violet fill is the Amp Envelope, the orange one the Filter Envelope when its Amount is set. A broken line in its section’s colour is each knob the Filter Envelope or an LFO moves: the Cutoff dotted, what LFO 1 moves dashed, what LFO 2 moves dash-dotted, with the knob’s own setting faint behind it.',
     how: 'Play a Note and let go: the Release is drawn after the key comes up.',
   },
   lfo: {
     title: 'LFO',
-    body: 'A slow, repeating wave that moves something for you: the Cutoff (wah, wobble), the pitch (vibrato), the Pulse Width (a shimmering PWM chorus), the Volume (tremolo) and more. Rate is how fast, Depth how far. There are two: aim them at different things, or both at one for two speeds of movement (LFO 2 draws in a lighter blue).',
+    body: 'A slow, repeating wave that moves something for you: the Cutoff (wah, wobble), the pitch (vibrato), the Pulse Width (a shimmering PWM chorus), the Volume (tremolo) and more. Rate is how fast, Depth how far. There are two: aim them at different things, or both at one for two speeds of movement. Both are drawn in the same blue.',
     how: 'Turn Depth up and watch the knob it moves: a ring shows how far, a dot where it is now.',
   },
   lfoRetrigger: {
@@ -245,11 +245,11 @@ export const TIPS = {
   },
   timelineCutoff: {
     title: 'Cutoff',
-    body: 'Orange line: where the Filter’s Cutoff really is, after the Filter Envelope, the LFOs, Velocity and Key Track, on the frequency scale at the right. The faint dashed line is the Cutoff knob’s own setting.',
+    body: 'Orange dotted line: where the Filter’s Cutoff really is, after the Filter Envelope, the LFOs, Velocity and Key Track, on the frequency scale at the right. The faint dashed line is the Cutoff knob’s own setting.',
   },
   envelopeTimeline: {
     title: 'Envelope Timeline',
-    body: 'The last four seconds, the newest at the right: the Filter Envelope (orange fill, when its Amount is set), the Cutoff (orange line) and the Amp Envelope (violet fill).',
+    body: 'The last four seconds, the newest at the right: the Filter Envelope (orange fill, when its Amount is set), the Cutoff (orange dotted line) and the Amp Envelope (violet fill).',
     how: 'Play a Note and let go: the Release is drawn after the key comes up.',
   },
 } satisfies Record<string, TipContent>;

@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** waiting for the owner's final design. The prototype was stopped on 2026-10-28 (decided by the owner): the owner will give the final decision, built straight on main without a prototype.
+**Status:** done (2026-10-28). The prototype was stopped (decided by the owner) and the owner's final design built straight on main.
 
 ## Decisions (grilling, 2026-10-27 and 2026-10-28, decided by the owner)
 
@@ -35,5 +35,20 @@ The owner liked none of the first candidates: bands, ticks, the trail and the Ti
 What came out of the prototype onto main, at the owner's word: the Timeline's Amp Envelope is the Envelope alone (no tremolo ripple), its key says Cutoff (not Effective Cutoff) and runs Filter Envelope, Cutoff, Amp Envelope, and the Filter Envelope shows only while its Amount is set. A Volume line was added and taken away again.
 
 - [x] Grill: what the person should read off the control (each source's reach, their sum, their motion), where (the ring, the Timeline, the LFO plots), and on which controls
+## Decisions (the final design, 2026-10-28, decided by the owner)
+
+19. **Both LFOs the same blue**, LFO 1's, everywhere (their knobs, plots and rings).
+20. **The blue outer ring is the LFOs' reach**, both together when both aim at one Parameter; 3.5 wide, so it reads as heavy as the white ring.
+21. **The Filter Envelope's ring is white**, thin (2.5), drawn on the knob's own thick track, from the Cutoff to where the Envelope takes it.
+22. **Pointing at an LFO's controls lights nothing** on the rings; the Filter Envelope's controls dim the blue ring, Velocity's and Key Track's light their share.
+23. **The live dot rides a ring:** with neither ring (Velocity or Key Track alone moving the Cutoff, as in Tremolo Keys), no dot.
+24. **The Timeline draws only what moves:** the Amp Envelope always (the Envelope alone, no tremolo ripple); the Filter Envelope while its Amount is set; the Cutoff while the Filter Envelope or an LFO moves it; each other Destination an active LFO moves, once, on its knob's scale, with the knob's setting faint and dashed. No text inside the plot but the Cutoff's scale.
+25. **A moved Parameter's line is in its stage's colour**, broken: the Cutoff dotted, what LFO 1 moves dashed, what LFO 2 alone moves dash-dotted.
+26. **The key** lists what LFO 1 moves, what LFO 2 moves, the Cutoff, the Filter Envelope, then the Amp Envelope, each swatch drawn as its line; "Env" on screen for Envelope, the whole word for a screen reader.
+
+Claude's calls, open to the owner: the Pulse Width line follows Osc 1's Pulse Width (the LFO moves both); Velocity and Key Track alone don't bring the Cutoff line.
+
+How it was built: `src/modulation/lfoTargets.ts` (what the active LFOs move, and where it is at a moment), `timelineShows` and `linePattern` in `src/viewers/timeline.ts` (the key reads the same), `engine.patchAt` for the Patch at each moment, the rings in `src/ui/modulationRing.tsx`. Tests: `lfoTargets.test.ts`, and the Timeline's and rings' e2e specs.
+
 - [x] A prototype of the candidates, on its own branch (stopped by the owner)
-- [ ] Build the owner's final design
+- [x] Build the owner's final design
