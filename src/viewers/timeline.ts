@@ -141,14 +141,21 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
       g.lineDashOffset = 0;
     };
 
-    // A Parameter the Filter Envelope or an LFO moves (the owner, 2026-10-28): its knob's setting faint and dashed,
-    // then where it is now in its own pattern (`linePattern`), both in its stage's colour.
+    // A Parameter the Filter Envelope or an LFO moves (the owner, 2026-10-28): its knob's setting a faint solid line,
+    // apart from LFO 1's dashes (issue 71), then where it is now in its own pattern (`linePattern`), both in its
+    // stage's colour.
     const line = (name: string, colourVar: string, pattern: LinePattern, y: (m: Modulation, x: number) => number, base: (time: number) => number) => {
       if (columns < 2) return;
       g.strokeStyle = cssVar(canvas, colourVar);
       g.globalAlpha = 0.5;
       g.lineWidth = 1;
-      dashed(`${name} base`, samples.map((_, x) => base(timeAt(x + 0.5))), [4, 4]);
+      g.beginPath();
+      for (let x = 0; x < columns; x++) {
+        const y = base(timeAt(x + 0.5));
+        if (x) g.lineTo(x, y);
+        else g.moveTo(x, y);
+      }
+      g.stroke();
       g.globalAlpha = 1;
       g.lineWidth = curveWidth(canvas) * (pattern === 'dots' ? DOT_WIDTH : 1);
       g.lineCap = 'round';
@@ -158,7 +165,7 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
     if (shows.cutoff) line('cutoff', '--stage-filter', 'dots', (m) => yHz(m.cutoff), (time) => yHz(source.baseCutoffAt(time)));
 
     // What else the LFOs move, each the same way on its knob's own scale (bottom to top) in its stage's colour: the
-    // knob's setting dashed, where it is now solid; the key names them.
+    // knob's setting faint, where it is now in its pattern; the key names them.
     const patches = shows.destinations.length ? samples.map((_, x) => source.patchAt(timeAt(x + 0.5))) : [];
     const levels = shows.destinations.map((d) => samples.map((m, x) => (patches[x] ? destinationLevel(d, patches[x], m) : 0)));
     shows.destinations.forEach((d, i) => {

@@ -118,6 +118,27 @@ test('Display leaves the Demo playing: opening it, its settings, Space’s Freez
   await page.keyboard.up('a');
 });
 
+test('with Display open, a key on the on-screen piano ends the Demo (issue 71)', async ({ page }) => {
+  await page.goto('/');
+  await demo(page).click();
+  await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
+  await openDisplay(page);
+  // Whichever key comes first: the Demo moves the piano's Octave as it plays.
+  await page.getByRole('group', { name: 'Piano' }).getByRole('button').first().click();
+  await expect(demo(page)).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.getByRole('status').filter({ hasText: 'The Demo stopped: you are playing now.' })).toBeVisible();
+});
+
+test('with Display open, a computer-keyboard piano key ends the Demo (issue 71)', async ({ page }) => {
+  await page.goto('/');
+  await demo(page).click();
+  await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
+  await openDisplay(page);
+  await page.keyboard.press('a');
+  await expect(demo(page)).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.getByRole('status').filter({ hasText: 'The Demo stopped: you are playing now.' })).toBeVisible();
+});
+
 test.describe('on a phone', () => {
   test.use({ viewport: { width: 393, height: 852 } });
 

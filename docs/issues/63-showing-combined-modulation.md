@@ -55,3 +55,4 @@ How it was built: `src/modulation/lfoTargets.ts` (what the active LFOs move, and
 
 Later, 2026-10-28, decided by the owner (see the inbox's Triaged lines): no ring moves from Note to Note; Velocity and Key Track got their own grey rings beyond the white one, so decisions 7 and 22 no longer hold for them: no source lights a blue share, and pointing at the Filter Envelope, Velocity or Key Track dims the blue ring. The dot rides the knob's own track whatever moves it.
 Later still, 2026-10-28, decided by the owner: pointing at Velocity or Key Track dims nothing either; only the Filter Envelope's controls dim the blue ring.
+Later, 2026-10-28, decided by the owner (issue 71): the knob's setting on the Timeline is faint and solid, no longer dashed, so it does not read like LFO 1's dashes; decision 24 no longer holds for its dashing.

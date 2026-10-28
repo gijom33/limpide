@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement
+**Status:** done (2026-10-28). The knob's own setting on the Timeline is a faint solid line; a press on the on-screen piano ends the Demo with Display open.
 
 ## Agent Brief
 
@@ -24,12 +24,17 @@
 - The Demo's take-over rules: the listeners that decide which presses end it, and their exception for Display
 
 **Acceptance criteria:**
-- [ ] The setting line is drawn without a dash pattern; LFO 1's and LFO 2's keep theirs
-- [ ] An e2e test: Demo playing, Display open, a press on an on-screen piano key ends the Demo and the card says the person took over
-- [ ] The same with a computer-keyboard piano key
-- [ ] The issue 64 tests (Display's own controls, Space, Escape, outside click keep the Demo playing) still pass
+- [x] The setting line is drawn without a dash pattern; LFO 1's and LFO 2's keep theirs
+- [x] An e2e test: Demo playing, Display open, a press on an on-screen piano key ends the Demo and the card says the person took over
+- [x] The same with a computer-keyboard piano key
+- [x] The issue 64 tests (Display's own controls, Space, Escape, outside click keep the Demo playing) still pass
 
 **Out of scope:**
 - Any other Timeline style, or the Timeline's length
 - What ends the Song or a Tutorial's Listen
 - Display's own controls: they keep the Demo playing
+
+## How it was built
+
+- The setting line: `line` in `src/viewers/timeline.ts` strokes it plainly at half alpha instead of through `dashed` with 4-4; the Timeline's tooltips in `src/ui/tips.ts` say solid. Test: `e2e/envelopes.spec.ts` records the Timeline's strokes for a few frames (every faint one undashed, LFO 1's still 5-3).
+- The Demo: its pointer listener in `src/ui/hooks/usePlayers.ts` still ignores presses while Display is open, except on the piano. A computer-keyboard key already ended it with Display open; its test guards that. Tests in `e2e/demo.spec.ts`; the press takes the piano's first key, since the Demo moves the Octave as it plays.

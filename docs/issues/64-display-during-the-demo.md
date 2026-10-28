@@ -8,3 +8,5 @@
 
 - [x] Opening and closing Display, its options, Snapshot and its Clear, Freeze, the axes and Scope cycles leave the Demo playing; Space freezes without ending it
 - [x] An e2e test beside the Demo's other "keeps playing" tests (`e2e/demo.spec.ts`)
+
+Later, 2026-10-28, decided by the owner (issue 71): with Display open, a press on the on-screen piano ends the Demo, as it does with Display closed; a click elsewhere that closes the panel still leaves it playing.

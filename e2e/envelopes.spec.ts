@@ -88,3 +88,30 @@ test('an LFO on Volume leaves the Timeline’s Amp Envelope still (issue 53, rev
   expect(Math.max(...seen) - Math.min(...seen), JSON.stringify(seen)).toBeLessThan(0.02);
 });
 
+
+test('a moved knob’s own setting is a faint solid line, its LFO 1 line still dashed (issue 71)', async ({ page }) => {
+  await page.goto('/');
+  await ready(page);
+  const lfo = page.getByRole('group', { name: 'LFO 1', exact: true });
+  await lfo.getByRole('button', { name: /Destination:/ }).click();
+  await lfo.getByRole('menuitemradio', { name: 'Volume' }).click();
+  await lfo.getByRole('slider', { name: 'LFO 1 Depth' }).press('End');
+  const canvas = page.getByLabel('Envelope Timeline', { exact: true });
+  await expect(canvas).toHaveAttribute('data-shows', /volume/);
+  // Each stroke of a few frames: its pen's alpha and dash pattern.
+  const strokes = await canvas.evaluate(async (c: HTMLCanvasElement) => {
+    const g = c.getContext('2d')!;
+    const seen: { alpha: number; dash: number[] }[] = [];
+    const stroke = g.stroke.bind(g);
+    g.stroke = (...args: []) => {
+      seen.push({ alpha: g.globalAlpha, dash: g.getLineDash() });
+      stroke(...args);
+    };
+    await new Promise((done) => setTimeout(done, 300));
+    return seen;
+  });
+  const faint = strokes.filter((s) => s.alpha === 0.5);
+  expect(faint.length).toBeGreaterThan(0);
+  expect(faint.every((s) => s.dash.length === 0)).toBe(true);
+  expect(strokes.some((s) => s.alpha === 1 && s.dash.join() === '5,3')).toBe(true);
+});

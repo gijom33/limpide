@@ -172,7 +172,8 @@ export function usePlayers({ session, patchRef, patchName, setPatch, loadPatch, 
   // Knobs, faders and the stages' switches (Waveforms, Filter Mode and Slope, Voices, the LFOs' shapes and
   // destinations) can be changed while it plays, and the sound follows; moving around the page (the section strip,
   // the Oscillator tabs) leaves it playing too. So does Display, which shows the sound without changing it (issue 64):
-  // opening it, its settings, Space's Freeze, and the click or Escape that closes it.
+  // opening it, its settings, Space's Freeze, and the click or Escape that closes it, unless that click is on the
+  // piano, which plays (issue 71).
   useEffect(() => {
     if (demo === null) return;
     const stop = () => stopDemoRef.current(true);
@@ -193,7 +194,7 @@ export function usePlayers({ session, patchRef, patchName, setPatch, loadPatch, 
     const onPointer = (e: PointerEvent) => {
       const target = e.target as Element;
       if ((!target.closest('main') && !target.closest('.section-strip')) || target.closest('[data-demo]') || shapesSound(target)) return;
-      if (inDisplay(target) || displayOpen()) return;
+      if (inDisplay(target) || (displayOpen() && !target.closest('.piano'))) return;
       if (e.pointerType === 'mouse' || getComputedStyle(target).touchAction === 'none') stop();
       else tap = e.pointerId;
     };
