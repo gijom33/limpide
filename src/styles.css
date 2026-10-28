@@ -621,14 +621,14 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 /* Not size containers: a container has no intrinsic width, and in this content-sized column it would collapse. */
 .timeline-controls .sub-block { container-type: normal; flex-wrap: nowrap; flex-direction: row; align-items: flex-start; gap: 10px; }
 .timeline-controls .sub-block > h3, .timeline-controls .sub-block > .tip-anchor:first-child { flex: none; margin-top: 8px; }
-/* One LFO in two rows: its shape and destination, then Rate and Depth with its plot beside them, as tall as they. */
+/* One LFO in two rows: its shape and destination, then Depth and Rate with its plot beside them, as tall as they. */
 .lfo-rows { display: flex; flex-direction: column; gap: var(--space-2); flex: none; }
 .lfo-pickers { display: flex; flex-wrap: wrap; align-items: center; gap: 6px var(--space-2); }
 .lfo-pickers .segmented { flex-wrap: nowrap; }
 .lfo-play { display: flex; align-items: stretch; gap: var(--space-3); }
 .lfo-play .knobs { flex: none; flex-wrap: nowrap; }
 .lfo-play > .tip-anchor { display: flex; flex: 1 1 auto; min-width: 0; }
-/* Retrigger: an icon button beside Rate and Depth, centred where their dials are, its name under it as theirs are
+/* Retrigger: an icon button beside Depth and Rate, centred where their dials are, its name under it as theirs are
    (and, where theirs have one, an empty value line), so the three share one label line. On, it is filled with the
    LFO's colour, as a selector's chosen option is. */
 .lfo-retrigger-field { display: flex; flex-direction: column; align-items: center; gap: var(--knob-text-gap); }
@@ -645,6 +645,8 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .lfo-plot-axis { stroke: var(--grid); }
 .lfo-plot-line { fill: none; stroke: var(--stage); stroke-width: var(--curve-w); stroke-linejoin: round; vector-effect: non-scaling-stroke; }
 .lfo-plot-dot { fill: var(--stage); stroke: var(--bg); stroke-width: 1.5; }
+/* At Depth 0 the plot dims as the Rate knob does: the LFO runs but moves nothing (the owner, 2026-10-28). */
+.lfo-plot[data-inactive] svg { opacity: 0.3; }
 
 /* An LFO's destination, picked like a Patch: ‹ name ›, the name opening a menu grouped by stage. */
 .destination-picker { position: relative; display: flex; align-items: center; gap: 2px; }

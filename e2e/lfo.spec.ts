@@ -33,28 +33,34 @@ test('two LFOs sit in the LFO & Envelopes section, each with shape buttons, a de
   await expect(lfo(page, 1).getByRole('radio', { name: 'Sine' })).toHaveAttribute('aria-checked', 'true'); // LFO 1 untouched
 });
 
-test('each LFO is two rows: shape and destination above, Rate, Depth and its plot below', async ({ page }) => {
+test('each LFO is two rows: shape and destination above, Depth, Rate and its plot below', async ({ page }) => {
   await page.goto('/');
   for (const n of [1, 2] as const) {
     const top = async (name: RegExp | string) => (await lfo(page, n).getByRole(typeof name === 'string' ? 'slider' : 'button', { name }).first().boundingBox())!;
     const shapes = (await lfo(page, n).getByRole('radiogroup').boundingBox())!;
     const destination = await top(/Destination:/);
     const rate = await top('Rate');
+    const depth = await top('Depth');
     const plotBox = (await plot(page, n).boundingBox())!;
     expect(Math.abs(shapes.y + shapes.height / 2 - (destination.y + destination.height / 2)), 'shape and destination on one row').toBeLessThan(4);
     expect(rate.y, 'the knobs below').toBeGreaterThan(shapes.y + shapes.height);
+    expect(depth.x, 'Depth before Rate (the owner, 2026-10-28)').toBeLessThan(rate.x);
     expect(plotBox.y, 'the plot beside the knobs').toBeGreaterThan(shapes.y + shapes.height);
   }
 });
 
-test('an LFO’s Rate wakes up once its Depth is turned up', async ({ page }) => {
+test('an LFO’s Rate and plot wake up once its Depth is turned up', async ({ page }) => {
   await page.goto('/');
   for (const n of [1, 2] as const) {
     const rate = lfo(page, n).locator('.knob', { has: page.getByRole('slider', { name: 'Rate' }) });
     await expect(rate).toHaveAttribute('data-inactive', 'true');
+    await expect(plot(page, n)).toHaveAttribute('data-inactive', 'true');
+    await expect(plot(page, n).locator('svg')).toHaveCSS('opacity', '0.3');
     await lfo(page, n).getByRole('slider', { name: 'Depth' }).focus();
     await page.keyboard.press('ArrowUp');
     await expect(rate).not.toHaveAttribute('data-inactive');
+    await expect(plot(page, n)).not.toHaveAttribute('data-inactive');
+    await expect(plot(page, n).locator('svg')).toHaveCSS('opacity', '1');
   }
 });
 

@@ -122,7 +122,7 @@ export const TIPS = {
   },
   lfo: {
     title: 'LFO',
-    body: 'A slow, repeating wave that moves something for you: the Cutoff (wah, wobble), the pitch (vibrato), the Pulse Width (a shimmering PWM chorus), the Volume (tremolo) and more. Rate is how fast, Depth how far. There are two: aim them at different things, or both at one for two speeds of movement. Both are drawn in the same blue.',
+    body: 'A slow, repeating wave that moves something for you: the Cutoff (wah, wobble), the pitch (vibrato), the Pulse Width (a shimmering PWM chorus), the Volume (tremolo) and more. Depth is how far, Rate how fast. There are two: aim them at different things, or both at one for two speeds of movement. Both are drawn in the same blue.',
     how: 'Turn Depth up and watch the knob it moves: a ring shows how far, a dot where it is now.',
   },
   lfoRetrigger: {

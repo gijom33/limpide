@@ -6,7 +6,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
-- 2026-10-28, the owner: "Swap the Depth and rate buttons. Dim the LFO viewer when LFO is deactivated."
 - 2026-10-28, from the 1.13.0 review: the Maths Layer still writes the Cutoff's value inside the Timeline, where issue 63 decision 24 wants no text but the Cutoff's scale. Keep it (the Maths Layer is asked for), or move it?
 - 2026-10-28, from the 1.13.0 review: a knob's own setting on the Timeline (faint, thin, dashed 4-4) looks close to LFO 1's line (dashed 5-3); only width and fading tell them apart. A faint solid line instead?
 - 2026-10-28, from the 1.13.0 review: while Display is open, no press anywhere ends the Demo, a key on the on-screen piano included (`usePlayers.ts`); issue 64 only asked that the press closing Display leave it playing.
@@ -57,3 +56,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-28, evening: issue 63's final design and the owner's asks while building it, done at once into [63](./issues/63-showing-combined-modulation.md) (decisions 19 to 26): both LFOs in LFO 1's blue; the blue ring the LFOs' reach, thicker; the Filter Envelope's ring white on the knob's track; no highlight from the LFOs' controls; the Timeline drawing only what moves, each moved Parameter a broken line in its stage's colour (dots, dashes, dash-dots), the key in the owner's order with Env for Envelope. The owner's bug, a lone dot on the Cutoff with Tremolo Keys (Velocity and Key Track alone move it), fixed with them: the dot rides a ring. The keyboard's dots with Acid were its Glide, kept (decided by the owner).
 2026-10-28, evening: the owner's bug, a Preset with a Tutorial lit only on its name's half (selected, then hovered), fixed at once: the whole pill lights up.
 2026-10-28, evening: the owner's idea, a 2-second Timeline, done at once, decided by the owner: the window is two seconds (a grid line each second, as before), and the tips say so. Long Tail's four-second Release now runs past the Timeline's width, which still shows the tail crossing it; its description is kept (Claude's call, open to the owner).
+2026-10-28, evening: the owner's two LFO asks, done at once, decided by the owner: Depth now comes before Rate in each LFO, and the LFO's plot dims (as the Rate knob does, 30 %) while its Depth is 0. The LFO tip reads "Depth is how far, Rate how fast" to match.

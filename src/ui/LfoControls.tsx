@@ -31,8 +31,8 @@ interface Props {
 }
 
 /**
- * One LFO, in two rows: its shape and destination, then its Rate and Depth, its Retrigger switch, and a plot of it
- * moving.
+ * One LFO, in two rows: its shape and destination, then its Depth and Rate (the owner, 2026-10-28: how far first,
+ * then how fast), its Retrigger switch, and a plot of it moving, dimmed while the Depth is 0.
  */
 export function LfoControls({ lfo, engine, patch, onParam, onPatch }: Props) {
   const keys = LFO_KEYS[lfo];
@@ -67,11 +67,11 @@ export function LfoControls({ lfo, engine, patch, onParam, onPatch }: Props) {
         </div>
         <div className="lfo-play">
           <div className="knobs">
-            <Tooltip content={TIPS.lfoRate}>
-              <Knob id={keys.rate} value={patch[keys.rate]} onChange={(v) => onParam(keys.rate, v)} inactive={off} />
-            </Tooltip>
             <Tooltip content={TIPS.lfoDepth}>
               <Knob id={keys.amount} value={patch[keys.amount]} onChange={(v) => onParam(keys.amount, v)} />
+            </Tooltip>
+            <Tooltip content={TIPS.lfoRate}>
+              <Knob id={keys.rate} value={patch[keys.rate]} onChange={(v) => onParam(keys.rate, v)} inactive={off} />
             </Tooltip>
             <Tooltip content={TIPS.lfoRetrigger}>
               <div className="lfo-retrigger-field">
@@ -95,6 +95,7 @@ export function LfoControls({ lfo, engine, patch, onParam, onPatch }: Props) {
             <LfoPlot
               engine={engine}
               lfo={lfo}
+              inactive={off}
               // What the plot shows, for a screen reader (issue 51).
               label={`LFO ${lfo}: ${SHAPES.find((s) => s.waveform === patch[keys.waveform])!.label}, ${formatParam(keys.rate, patch[keys.rate])}, Depth ${formatParam(keys.amount, patch[keys.amount])}, on ${DESTINATIONS[patch[keys.destination]].label}`}
             />
