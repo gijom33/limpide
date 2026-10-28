@@ -4,8 +4,13 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-10-28, the owner: "Bug: A white dot sometimes appears on the cutoff button even if there is no envelope nor LFO assigned to it. This is the case with Tremolo Keys."
+- 2026-10-28, the owner: "Show the whole button as selected." and "When hovering, there are still issues." (a Preset with a Tutorial in the Patches panel: only the name's half lit)
+- 2026-10-28, the owner: "When pitch is selected by an inactive LFO, do not show the blue dots on keyboard." (the dots seen were Acid's Glide; the owner: "Keep for Glide")
+
 ## Ideas
 
+- 2026-10-28, the owner, issue 63 (the knob rings and the Timeline, said while building): "Do not systematically show cutoff. It will be shown only if the filter envelope is active or if it is targeted by an LFO. As a result, if filter envelope and LFOs are inactive, only show Amp Envelope." / "If both LFOs target the same parameter, show the combined outer ring. The filter envelope ring should be white, as thin as the LFO rings and an overlay of the thick ring in orange." / "Remove the text inside the timeline viewer." / "Get rid of the \"highlight\" effect when hovering the LFO knobs." / "In the timeline viewer, use the color of the section in which the targeted parameter belongs. In the legend, list the LFO 1 targeted parameter first, then the one targeted by LFO 2 then the cutoff-related parameters and finally the Amp envelope." / "Invert those two in legend." (Cutoff before Filter Envelope) / "Let's show all the \"targeted\" parameters, whether they are by LFOs or Filter Envelope like Cutoff, the same color as their section and slightly dotted lines. Reflect that in legend too." / "Instead of \"Envelope\" in legend, say \"Env\"" / "Use different dotted lines for the three." / "Make the LFO rings as thick as the filter envelope ring."
 - 2026-10-28, the owner, issue 63's final design: "Make the two LFOs the same blue as LFO 1. Show on timeline the filter envelope only when active. Also show in timeline the parameters that are targeted by an active LFO."
 
 ## Dropped
