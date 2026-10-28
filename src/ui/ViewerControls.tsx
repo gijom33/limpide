@@ -80,6 +80,7 @@ const TIMELINE_SECONDS = [
   { value: 1, label: '1s' },
   { value: 2, label: '2s' },
   { value: 3, label: '3s' },
+  { value: 4, label: '4s' },
 ] as const;
 
 interface AxesProps extends Props {

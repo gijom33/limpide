@@ -6,10 +6,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
-- 2026-10-28, the owner: "Make the dashes for cutoff more visible"
-- 2026-10-28, the owner: "Also add 4s to the choices for envelope timeline."
-- 2026-10-28, the owner: "On env timeline, while the legend shows the dotted lines very well, it's hardly visible in the timeline itself, is there a trick we can use so that it's not moving so fast that it looks like a blur for the user?"
-- 2026-10-28, the owner: "When hovering a button, show value instead of name."
 - 2026-10-28, from the 1.13.0 review: the Maths Layer still writes the Cutoff's value inside the Timeline, where issue 63 decision 24 wants no text but the Cutoff's scale. Keep it (the Maths Layer is asked for), or move it?
 - 2026-10-28, from the 1.13.0 review: a knob's own setting on the Timeline (faint, thin, dashed 4-4) looks close to LFO 1's line (dashed 5-3); only width and fading tell them apart. A faint solid line instead?
 - 2026-10-28, from the 1.13.0 review: while Display is open, no press anywhere ends the Demo, a key on the on-screen piano included (`usePlayers.ts`); issue 64 only asked that the press closing Display leave it playing.
@@ -63,3 +59,5 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-28, evening: the owner's two LFO asks, done at once, decided by the owner: Depth now comes before Rate in each LFO, and the LFO's plot dims (as the Rate knob does, 30 %) while its Depth is 0. The LFO tip reads "Depth is how far, Rate how fast" to match.
 2026-10-28, evening: the owner's Env Timeline length, done at once, decided by the owner: Display's Axes gains Env Timeline, 1s, 2s or 3s, 2s at first. Not remembered across visits, as Scope cycles is not (Claude's call, open to the owner).
 2026-10-28, evening: the owner's idea, a search and a category filter for the Patches, went to [69](./issues/69-patch-search-and-categories.md), grilled there.
+2026-10-28, night: the owner's Timeline asks, done at once, decided by the owner. The broken lines' marks travel with the curve instead of crawling: each line starts its dash pattern where the last frame's had got to, at the new left edge (marks pinned to time alone lost a square LFO's vertical edges, the owner saw). The Cutoff's dots are bigger and wider apart (a pen 1.75 times as thick, every 6 px), in the key too. Env Timeline offers 4s as well.
+2026-10-28, night: the owner's hover ask, done at once, decided by the owner: where a knob shows only its name (600 px wide or less), hovering it or a fader shows its value in the name's place, as turning it does. Only where a pointer hovers, so a tap leaves nothing up (Claude's call, open to the owner). On a wider window the value is already under the name.

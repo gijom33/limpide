@@ -196,3 +196,26 @@ test.describe('on a phone', () => {
     expect(n.y).toBeGreaterThan(d.y + d.height - 1);
   });
 });
+
+test.describe('in a narrow window with a mouse', () => {
+  test.use({ viewport: { width: 560, height: 900 } });
+
+  test('hovering a knob or fader shows its value in its name’s place, as turning it does (the owner, 2026-10-28)', async ({ page }) => {
+    await page.goto('/');
+    for (const name of ['Cutoff', 'Filter Attack']) {
+      const dial = page.getByRole('slider', { name });
+      const control = dial.locator('xpath=ancestor::div[contains(@class, "knob")][1]');
+      const label = control.locator('.knob-label');
+      const value = control.locator('.knob-value > span').first();
+      await dial.scrollIntoViewIfNeeded();
+      await expect(value).toBeHidden();
+      await control.hover();
+      await expect(value, name).toBeVisible();
+      await expect(value).toHaveText((await dial.getAttribute('aria-valuetext'))!);
+      await expect(label).toBeHidden();
+      await page.mouse.move(0, 0);
+      await expect(value).toBeHidden();
+      await expect(label).toBeVisible();
+    }
+  });
+});

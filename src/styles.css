@@ -380,7 +380,7 @@ main[data-frozen] .tap-canvases::before {
 .timeline-key [data-stage='filter'] { --line: var(--stage-filter); }
 .timeline-key [data-stage='amp'] { --line: var(--stage-amp); }
 .timeline-key [data-pattern]::before { width: 16px; height: 2px; border-radius: 1px; }
-.timeline-key [data-pattern='dots']::before { background: radial-gradient(circle, var(--line) 0 1px, transparent 1.2px) 0 50% / 4px 2px repeat-x; }
+.timeline-key [data-pattern='dots']::before { height: 3px; background: radial-gradient(circle, var(--line) 0 1.5px, transparent 1.7px) 0 50% / 6px 3px repeat-x; }
 .timeline-key [data-pattern='dashes']::before { background: repeating-linear-gradient(90deg, var(--line) 0 5px, transparent 5px 8px); }
 .timeline-key [data-pattern='dashDot']::before { background: repeating-linear-gradient(90deg, var(--line) 0 6px, transparent 6px 8px, var(--line) 8px 9.5px, transparent 9.5px 11.5px); }
 main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-offset: -1px; }
@@ -1024,6 +1024,12 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   .knob-value { position: absolute; left: 0; right: 0; bottom: 0; height: var(--knob-label-h); line-height: var(--knob-label-h); font-size: var(--text-sm); color: var(--text); }
   .knob:not([data-changing]) .knob-value > :first-child { visibility: hidden; }
   .knob[data-changing] .knob-label { visibility: hidden; }
+  /* Hovered, a knob or fader shows its value in its name's place too, as turning it does (the owner, 2026-10-28). Only
+     where a pointer hovers: a tap would otherwise leave the value up. */
+  @media (hover: hover) {
+    .knob:hover .knob-value > :first-child { visibility: visible; }
+    .knob:hover .knob-label { visibility: hidden; }
+  }
   .lfo-retrigger-field::after { display: none; }
   /* The LFOs one under the other, each plot taking what its knobs leave, so it never runs past the section. */
   .timeline-controls { flex-direction: column; align-items: stretch; }

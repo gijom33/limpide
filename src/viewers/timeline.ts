@@ -30,12 +30,14 @@ export function timelineShows(patch: Patch | undefined) {
 
 /**
  * Each moved Parameter's line, told apart by its pattern as well as its colour (the owner, 2026-10-28): the Cutoff
- * fine dots, what LFO 1 moves short dashes, what LFO 2 alone moves dash-dots. The key draws the same.
+ * dots, what LFO 1 moves short dashes, what LFO 2 alone moves dash-dots. The key draws the same. The dots are drawn
+ * with a thicker pen (`DOT_WIDTH`), so each reads as a round dot rather than a speck (the owner, 2026-10-28).
  */
 export type LinePattern = 'dots' | 'dashes' | 'dashDot';
 export const linePattern = (patch: Patch, moved: LfoDestination | 'cutoff'): LinePattern =>
   moved === 'cutoff' ? 'dots' : patch.lfoAmount > 0 && patch.lfoDestination === moved ? 'dashes' : 'dashDot';
-const DASHES: Record<LinePattern, number[]> = { dots: [0.5, 3.5], dashes: [5, 3], dashDot: [7, 3, 0.5, 3] };
+const DASHES: Record<LinePattern, number[]> = { dots: [0.5, 5.5], dashes: [5, 3], dashDot: [7, 3, 0.5, 3] };
+const DOT_WIDTH = 1.75; // times the curve's width
 
 /**
  * The Envelope Timeline: the last few seconds of the Amp and Filter Envelopes (areas, 0–1 on a shared scale), the
@@ -45,6 +47,8 @@ const DASHES: Record<LinePattern, number[]> = { dots: [0.5, 3.5], dashes: [5, 3]
  */
 export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: () => ViewSettings) {
   const frozenNow = createFreezeLatch<number>();
+  /** Each broken line's last frame: its left edge's time, the length along it at each column, and how far its pattern had got. */
+  const dashState = new Map<string, { left: number; lengths: number[]; travelled: number }>();
 
   const DOT_RADIUS = 3.5;
   return function draw() {
@@ -109,38 +113,56 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
     // leaves it still (the owner, 2026-10-28): its dip is the Volume's own line, below.
     area('--stage-amp', 0.1, (m) => m.amp);
 
+    // A broken line whose marks travel left with the curve and so hold still against it. Dashed from the left edge
+    // alone, the marks were measured along the path from wherever the edge happened to be, which changes every frame,
+    // so they crawled and blurred (the owner, 2026-10-28). The browser still measures them along the path (a vertical
+    // edge is dashed like the rest), but each line starts its pattern where the previous frame's had got to at the
+    // new left edge: the length of curve that scrolled off.
+    const pixelsPerSecond = width / seconds;
+    const dashed = (key: string, ys: number[], dashes: number[]) => {
+      const lengths = [0];
+      for (let x = 1; x < ys.length; x++) lengths.push(lengths[x - 1] + Math.hypot(1, ys[x] - ys[x - 1]));
+      const left = timeAt(0);
+      const before = dashState.get(key);
+      const gone = before ? (left - before.left) * pixelsPerSecond : -1;
+      let travelled = 0;
+      if (before && gone >= 0 && gone < before.lengths.length - 1) {
+        const i = Math.floor(gone);
+        travelled = before.travelled + before.lengths[i] + (before.lengths[i + 1] - before.lengths[i]) * (gone - i);
+      }
+      dashState.set(key, { left, lengths, travelled });
+      const period = dashes.reduce((sum, d) => sum + d, 0);
+      g.setLineDash(dashes);
+      g.lineDashOffset = travelled % period;
+      g.beginPath();
+      ys.forEach((y, x) => (x ? g.lineTo(x, y) : g.moveTo(x, y)));
+      g.stroke();
+      g.setLineDash([]);
+      g.lineDashOffset = 0;
+    };
+
     // A Parameter the Filter Envelope or an LFO moves (the owner, 2026-10-28): its knob's setting faint and dashed,
     // then where it is now in its own pattern (`linePattern`), both in its stage's colour.
-    const line = (colourVar: string, pattern: LinePattern, y: (m: Modulation, x: number) => number, base: (time: number) => number) => {
+    const line = (name: string, colourVar: string, pattern: LinePattern, y: (m: Modulation, x: number) => number, base: (time: number) => number) => {
+      if (columns < 2) return;
       g.strokeStyle = cssVar(canvas, colourVar);
       g.globalAlpha = 0.5;
       g.lineWidth = 1;
-      g.setLineDash([4, 4]);
-      g.beginPath();
-      for (let x = 0; x < columns; x++) {
-        const yBase = base(timeAt(x + 0.5));
-        if (x) g.lineTo(x, yBase);
-        else g.moveTo(x, yBase);
-      }
-      g.stroke();
+      dashed(`${name} base`, samples.map((_, x) => base(timeAt(x + 0.5))), [4, 4]);
       g.globalAlpha = 1;
-      g.lineWidth = curveWidth(canvas);
-      g.setLineDash(DASHES[pattern]);
+      g.lineWidth = curveWidth(canvas) * (pattern === 'dots' ? DOT_WIDTH : 1);
       g.lineCap = 'round';
-      g.beginPath();
-      samples.forEach((m, x) => (x ? g.lineTo(x, y(m, x)) : g.moveTo(x, y(m, x))));
-      g.stroke();
-      g.setLineDash([]);
+      dashed(name, samples.map((m, x) => y(m, x)), DASHES[pattern]);
       g.lineCap = 'butt';
     };
-    if (shows.cutoff) line('--stage-filter', 'dots', (m) => yHz(m.cutoff), (time) => yHz(source.baseCutoffAt(time)));
+    if (shows.cutoff) line('cutoff', '--stage-filter', 'dots', (m) => yHz(m.cutoff), (time) => yHz(source.baseCutoffAt(time)));
 
     // What else the LFOs move, each the same way on its knob's own scale (bottom to top) in its stage's colour: the
     // knob's setting dashed, where it is now solid; the key names them.
     const patches = shows.destinations.length ? samples.map((_, x) => source.patchAt(timeAt(x + 0.5))) : [];
     const levels = shows.destinations.map((d) => samples.map((m, x) => (patches[x] ? destinationLevel(d, patches[x], m) : 0)));
     shows.destinations.forEach((d, i) => {
-      line(`--stage-${DESTINATIONS[d].stage}`, patchNow ? linePattern(patchNow, d) : 'dashes', (_, x) => yLevel(levels[i][x]), (time) => {
+      line(d, `--stage-${DESTINATIONS[d].stage}`, patchNow ? linePattern(patchNow, d) : 'dashes', (_, x) => yLevel(levels[i][x]), (time) => {
         const then = source.patchAt(time);
         return yLevel(then ? knobLevel(d, then) : 0);
       });

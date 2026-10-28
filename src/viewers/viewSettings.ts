@@ -7,7 +7,7 @@ export interface ViewSettings {
   /** Cycles of the Note shown in each Scope. */
   cycles: 1 | 2 | 4;
   /** Seconds of the Envelope Timeline, "now" at its right edge (the owner, 2026-10-28: 2 by default). */
-  timelineSeconds: 1 | 2 | 3;
+  timelineSeconds: 1 | 2 | 3 | 4;
   /** The Ideal Reference: each Oscillator's Harmonics at the Oscillator Tap's level, or undefined to hide it. */
   ideal?: readonly IdealPartial[];
   /** Which marks are switched on. */

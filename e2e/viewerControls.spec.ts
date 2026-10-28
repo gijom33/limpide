@@ -130,7 +130,7 @@ test('a Snapshot keeps the waveform on every Scope as well as every Spectrum', a
   for (const scope of await scopes.all()) await expect(scope).not.toHaveAttribute('data-snapshot', 'true');
 });
 
-test('the Env Timeline shows 2 seconds at first, and 1 or 3 when chosen under Axes (the owner, 2026-10-28)', async ({ page }) => {
+test('the Env Timeline shows 2 seconds at first, and 1, 3 or 4 when chosen under Axes (the owner, 2026-10-28)', async ({ page }) => {
   await page.goto('/');
   const timeline = page.getByLabel('Envelope Timeline', { exact: true });
   await expect(timeline).toHaveAttribute('data-seconds', '2');
@@ -139,6 +139,8 @@ test('the Env Timeline shows 2 seconds at first, and 1 or 3 when chosen under Ax
   await expect(length.getByRole('radio', { name: '2s' })).toHaveAttribute('aria-checked', 'true');
   await length.getByRole('radio', { name: '3s' }).click();
   await expect(timeline).toHaveAttribute('data-seconds', '3');
+  await length.getByRole('radio', { name: '4s' }).click();
+  await expect(timeline).toHaveAttribute('data-seconds', '4');
   await length.getByRole('radio', { name: '1s' }).click();
   await expect(timeline).toHaveAttribute('data-seconds', '1');
 });
