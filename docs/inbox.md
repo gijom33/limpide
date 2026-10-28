@@ -20,7 +20,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 - Need to find a better way to represent the effect of the two LFOs when set on set knob and the combined effect of filter envelop with LFO.
 - Would be nice to allow the user to tweak the synth parameters during the demo. Only a change of patch would override the parameters. That would be fun for the user to tweak the demo.
 - Should be okay to change display settings while demo, song and tutorials are running.
-- Make the checkmarks when a step in tutorial is validated more visible. Move back the target values during tutorial to top of knob or fader, etc. Remove the "Maths" aspect in the tutorial.
 
 ## Dropped
 
@@ -51,3 +50,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-27: the small knobs' tick scaled down with their cap, done at once (shorter, starting off-centre, 2 px).
 2026-10-27: "the demo deactivates the ideal rings", explained, not a bug: Ideal stays on (it is stored), but the Kick and the riser have no Oscillator (Osc 1 at 0), so the Ideal Reference has nothing to draw; the rings are back from Acid on, and after the Demo ends on Init.
 2026-10-27: the owner's Ideal question went to [61](./issues/61-ideal-every-oscillator.md), grilled and built there: the Ideal from every Oscillator, a shape each.
+2026-10-27: the owner's Tutorial changes done at once, in [59](./issues/59-tutorials-after-review-5.md): a made Step's tick a filled badge (on the instruction and beside "Step n of m"), the target back above its control, Acid's Maths Step taken out.

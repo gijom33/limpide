@@ -116,11 +116,6 @@ export const TUTORIALS: Tutorial[] = [
         note: 'A tall peak rises on the Curve at the Cutoff, and the Harmonics there ring out: the squelchy, vocal heart of acid.',
       },
       {
-        kind: 'display', overlay: 'maths',
-        say: 'In Display, turn on Maths.',
-        note: 'Resonance now reads as Q 2.92 ×2: how sharp the peak is (0.71 is flat), in each of the 24 dB Slope’s two stages. The Curve’s formula sits on the Filter Spectrum.',
-      },
-      {
         kind: 'param', id: 'filterEnvAmount', to: 3.5,
         say: 'Set the Filter Envelope’s Amount to +3.5 octaves.',
         note: 'Each Note now sweeps the peak up and back down, a “yow” on every Note. Watch it run along the Filter Spectrum.',

@@ -43,9 +43,7 @@ test('a Tutorial from the Patches panel: Init loaded, the control ringed with it
   const fader = page.getByRole('slider', { name: 'Osc 2', exact: true });
   await expect(fader).toBeVisible();
   await expect(ringed(page)).toHaveAttribute('data-learn', 'param:mixOsc2');
-  // The target in place of the fader's name, so it covers neither the tab above nor the readout (issue 59, decision 6).
-  await expect(ringed(page).locator('.knob-label')).toHaveAttribute('data-tutorial-target', '→ 50 %');
-  await expect(ringed(page)).not.toHaveAttribute('data-tutorial-target');
+  await expect(ringed(page)).toHaveAttribute('data-tutorial-target', '→ 50 %');
   await expect(card(page).getByRole('button', { name: 'Next' })).toBeDisabled();
 
   // Turned by keys to near half: the Step is made, the fader snaps to the exact target, and the note shows.
@@ -55,6 +53,7 @@ test('a Tutorial from the Patches panel: Init loaded, the control ringed with it
   for (let i = 0; i < 23; i++) await page.keyboard.press('ArrowUp');
   await expect(fader).toHaveAttribute('aria-valuetext', '46 %');
   await expect(note).toBeVisible();
+  await expect(progress(page)).toHaveAttribute('data-done'); // its tick, in the top row too
   await expect(fader).toHaveAttribute('aria-valuetext', '50 %');
   await expect(fader).toBeFocused(); // the card never takes the focus
   await action(page, 'Next').click();
@@ -256,7 +255,7 @@ test('a Snapshot Step rings the Display button, then Snapshot, and counts a new 
   await action(page, 'Start').click();
   await action(page, 'Do it for me').click();
   await action(page, 'Next').click();
-  await expect(progress(page)).toHaveText('Step 2 of 15');
+  await expect(progress(page)).toHaveText('Step 2 of 14');
   await expect(ringed(page)).toHaveAttribute('aria-label', 'Display');
   await page.getByRole('button', { name: 'Display' }).click();
   const snapshot = page.getByRole('button', { name: 'Snapshot', exact: true });
