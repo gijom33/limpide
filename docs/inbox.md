@@ -4,22 +4,12 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
-- Favicon still not showing in Safari.
-- A square or saw LFO on Volume overshoots its edges (the LFO's Fourier series, Gibbs, about ±1.18): at full Depth the gain passes the Envelope's level by about 9 % and dips below 0 (polarity flips) for well under a millisecond at each edge, where the model stays at exactly ±1. The same overshoot reaches every destination. From the 1.12.0 code review.
-
 ## Ideas
-
-- The Harmonic Markers' ticks still draw over an empty Spectrum after a reload; only the Ideal rings hide. The owner wrote "ideal harmonic markers": to confirm whether the ticks should hide too. From the 1.12.1 review.
-- The Timeline key's tooltips are reached by hover and long press only: its entries are not focusable and have no description for screen readers. From the 1.12.1 review.
-- Folding the Demo card hides its caption, which is also what a screen reader hears change (aria-live). From the 1.12.1 review.
-- The cards' phone breakpoint (600 px) is written in `cardPlacement.tsx` as well as the CSS; the clamp uses innerWidth, so a card can slide under a scroll bar. From the 1.12.1 review.
-- Two inbox rules slipped on 2026-10-27: the Ideal-rings and Waveform-alignment reports were fixed without an inbox line first. From the 1.12.1 review.
-- One list per LFO Destination: a new one meant editing the type and both CHOICES lists (`patch.ts`), the Tutorials' names (`tutorial.ts`), the picker's labels and stages (`DestinationPicker.tsx`, its stage type repeating STAGES) and the CSS; the label "Volume" is written twice. From the 1.12.0 code review.
-- `tremolo()` writes out `lfoOffset`'s sum again rather than calling it (to compute the swings once). From the 1.12.0 code review.
-- ADR-0006's "at full Sustain the Amp Tap equals the Filter Tap" holds only without an LFO on Volume; the ADR is frozen (ADR-0010), so a note needs a new ADR or a line elsewhere. From the 1.12.0 code review.
 
 ## Dropped
 
+- 2026-10-27, from the 1.12.1 review, two inbox rules slipped (fixes made without an inbox line first): nothing to build. The rule is in CLAUDE.md and has been followed since. Claude's call, open to the owner.
+- 2026-10-27, from the 1.12.0 review, a note on ADR-0006's "at full Sustain the Amp Tap equals the Filter Tap": already made. [ADR-0011](./adr/0011-the-amp-tap-after-volume.md) amends that consequence (true only at 100 % Volume and with no LFO on Volume). Claude's call, open to the owner.
 - 2026-10-27, the owner's idea to tweak the synth during the Demo, a change of Patch alone overriding it: already so since [36](./issues/36-demo-track.md). Knobs, faders and the stages' switches can be changed while it plays, and the Demo's own moves skip a control turned by hand until its next Preset (`e2e/demo.spec.ts`). What did end it was opening Display, which went to [64](./issues/64-display-during-the-demo.md). Claude's call, open to the owner.
 
 ## Triaged
@@ -53,3 +43,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-27: the owner's bug, "Step n of m" moving up when its tick showed, fixed at once in [59](./issues/59-tutorials-after-review-5.md): the badge sat on the words' baseline and pushed them 4 px off the name's line; each tick now sits in a flex row, and the test checks the words against the name.
 2026-10-27, the owner's ideas: showing two LFOs on one control, and the Filter Envelope with an LFO, went to [63](./issues/63-showing-combined-modulation.md), to grill; Display settings while the Demo, Song and Tutorials play went to [64](./issues/64-display-during-the-demo.md) (only the Demo stops today); tweaking during the Demo dropped, already so (see Dropped).
 2026-10-27: the owner's bug, the Curve ahead of the Filter Spectrum, fixed at once, the owner choosing among two ways. The Spectrum analyses the last 8192 samples (about 170 ms) and so shows about 85 ms ago, while the Curve was drawn for now: on Wobble's 3 Hz sweep a quarter of each wobble apart. The Curve (and the Ideal rings it scales) is now drawn for the middle of the Spectrum's window; the knobs' rings and the Timeline stay on now. A shorter window, the other way, would have blurred the Harmonics of low Notes. Test in `src/engine/synthEngine.browser.test.ts`.
+2026-10-27: the rest of the inbox. The favicon in Safari went to [65](./issues/65-favicon-in-safari.md) (the SVG is listed last again, so Safari takes it); the square and saw LFOs' overshoot to [66](./issues/66-lfo-edge-overshoot.md), to diagnose first; four small review lines to [67](./issues/67-small-fixes-after-1-12.md), the Harmonic Markers' ticks waiting for the owner's answer; one list of LFO Destinations and `tremolo()` on `lfoOffset` to [68](./issues/68-lfo-destinations-in-one-list.md); two lines dropped (see Dropped).
