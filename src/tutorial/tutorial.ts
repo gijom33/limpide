@@ -10,14 +10,15 @@ interface Words {
 }
 
 /**
- * One change in a Tutorial: a Parameter to a target, a choice to an option, or a Display option switched on (which
- * shows the sound differently without changing it).
+ * One change in a Tutorial: a Parameter to a target, a choice to an option, a Display option switched on (which
+ * shows the sound differently without changing it), or an Action pressed (a Snapshot, to compare against).
  */
 export type Step = Words &
   (
     | { kind: 'param'; id: ParamId; to: number }
     | { [C in ChoiceId]: { kind: 'choice'; id: C; to: Patch[C] } }[ChoiceId]
     | { kind: 'display'; overlay: Overlay }
+    | { kind: 'action'; id: 'snapshot' }
   );
 
 /** A Preset rebuilt from Init in Steps, the person turning each control (issue 40). */
@@ -37,7 +38,7 @@ export interface Tutorial {
 /** How close a knob or fader must come to its target, as a share of its travel. */
 export const TOLERANCE = 0.05;
 
-/** Whether the Patch (and the Display options) are where the Step asks. */
+/** Whether the Patch (and the Display options) are where the Step asks. An Action is made by its press, which only the page sees. */
 export function reached(step: Step, patch: Patch, overlays: Overlays): boolean {
   switch (step.kind) {
     case 'param': {
@@ -48,6 +49,8 @@ export function reached(step: Step, patch: Patch, overlays: Overlays): boolean {
       return patch[step.id] === step.to;
     case 'display':
       return overlays[step.overlay];
+    case 'action':
+      return false;
   }
 }
 
@@ -75,10 +78,11 @@ const CHOICE_NAMES: Record<string, string> = {
   note: 'On', free: 'Off',
 };
 
-/** The target as its control shows it: "800 Hz", "24 dB", "Square", or "On" for a switch or a Display option. */
+/** The target as its control shows it: "800 Hz", "24 dB", "Square", or "On" for a switch or a Display option ("Press" for an Action). */
 export function targetText(step: Step): string {
   if (step.kind === 'param') return formatParam(step.id, step.to);
   if (step.kind === 'display') return 'On';
+  if (step.kind === 'action') return 'Press';
   if (step.id === 'filterSlope') return `${step.to} dB`;
   return CHOICE_NAMES[String(step.to)] ?? String(step.to);
 }

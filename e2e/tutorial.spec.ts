@@ -21,8 +21,8 @@ async function doEverything(page: Page) {
     const next = card(page).getByRole('button', { name: /^(Next|Finish)$/ });
     if (!(await next.isVisible())) return;
     const doIt = action(page, 'Do it for me');
-    // A Step already within reach ticks itself after a moment (Bass's Filter Decay), taking the button away mid-click:
-    // so click until the Step is made, however slow the machine.
+    // The Step is made a moment after the press, once the control rests within reach: so click until it is made,
+    // however slow the machine.
     await expect(async () => {
       if (await doIt.isVisible()) await doIt.click({ timeout: 2000 });
       await expect(next).toBeEnabled({ timeout: 2000 });
@@ -43,7 +43,9 @@ test('a Tutorial from the Patches panel: Init loaded, the control ringed with it
   const fader = page.getByRole('slider', { name: 'Osc 2', exact: true });
   await expect(fader).toBeVisible();
   await expect(ringed(page)).toHaveAttribute('data-learn', 'param:mixOsc2');
-  await expect(ringed(page)).toHaveAttribute('data-tutorial-target', '→ 50 %');
+  // The target in place of the fader's name, so it covers neither the tab above nor the readout (issue 59, decision 6).
+  await expect(ringed(page).locator('.knob-label')).toHaveAttribute('data-tutorial-target', '→ 50 %');
+  await expect(ringed(page)).not.toHaveAttribute('data-tutorial-target');
   await expect(card(page).getByRole('button', { name: 'Next' })).toBeDisabled();
 
   // Turned by keys to near half: the Step is made, the fader snaps to the exact target, and the note shows.
@@ -228,3 +230,49 @@ test('a drag that passes through the target on its way past does not count: the 
   await expect(card(page).getByText('Louder, not different')).toBeHidden();
   await expect(action(page, 'Next')).toBeDisabled();
 });
+
+test('a knob already within reach when its Step comes waits for a touch, then counts and snaps (issue 59)', async ({ page }) => {
+  await open(page, 'Bass');
+  await action(page, 'Start').click();
+  for (let i = 0; i < 9; i++) {
+    await action(page, 'Do it for me').click();
+    await action(page, 'Next').click();
+  }
+  // The Filter Decay: Init's 250 ms is within reach of 180 ms, and stays as it is until the learner moves it.
+  await expect(progress(page)).toHaveText('Step 10 of 15');
+  const decay = ringed(page).getByRole('slider');
+  await expect(decay).toHaveAttribute('aria-valuetext', '250 ms');
+  await page.waitForTimeout(800);
+  await expect(decay).toHaveAttribute('aria-valuetext', '250 ms');
+  await expect(action(page, 'Next')).toBeDisabled();
+  await decay.focus();
+  await page.keyboard.press('ArrowDown');
+  await expect(card(page).getByText('That fall is the thump')).toBeVisible();
+  await expect(decay).toHaveAttribute('aria-valuetext', '180 ms');
+});
+
+test('a Snapshot Step rings the Display button, then Snapshot, and counts a new Snapshot (issue 59)', async ({ page }) => {
+  await open(page, 'Acid');
+  await action(page, 'Start').click();
+  await action(page, 'Do it for me').click();
+  await action(page, 'Next').click();
+  await expect(progress(page)).toHaveText('Step 2 of 15');
+  await expect(ringed(page)).toHaveAttribute('aria-label', 'Display');
+  await page.getByRole('button', { name: 'Display' }).click();
+  const snapshot = page.getByRole('button', { name: 'Snapshot', exact: true });
+  await expect(ringed(page)).toHaveAttribute('data-learn', 'action:snapshot');
+  await expect(ringed(page)).not.toHaveAttribute('data-tutorial-target');
+  await snapshot.click();
+  await expect(snapshot).toHaveAttribute('aria-pressed', 'true');
+  await expect(card(page)).toContainText('a faint trace of this bright saw');
+});
+
+for (const [width, text, small, cardWidth] of [[1920, '15px', '14px', 720], [1024, '13px', '12px', 640]] as const) {
+  test(`at ${width} px the Tutorial card's text is ${text} and the card ${cardWidth} px wide (issue 59)`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await open(page, 'Bass');
+    await expect(card(page).locator('.tutorial-words')).toHaveCSS('font-size', text);
+    await expect(progress(page)).toHaveCSS('font-size', small);
+    expect((await card(page).boundingBox())!.width).toBe(cardWidth);
+  });
+}

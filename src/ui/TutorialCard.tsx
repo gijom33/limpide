@@ -28,7 +28,7 @@ interface Props {
 const selectorOf = (step: Step) => (step.kind === 'display' ? `[data-overlay="${step.overlay}"]` : `[data-learn="${step.kind}:${step.id}"]`);
 
 /**
- * Rings the Step's control, with its target beside it ("→ 800 Hz"), and marks its section in the phone's strip. A
+ * Rings the Step's control, with its target in place of its name ("→ 800 Hz"), and marks its section in the phone's strip. A
  * Display option rings the Display button until its panel opens. A control on a hidden tab, or out of sight, is
  * brought into view above the card.
  */
@@ -49,12 +49,19 @@ function useRing(step: Step | undefined, made: boolean) {
       clear();
       if (!live) return null;
       let element = document.querySelector(selectorOf(step));
-      // Until the Display option is on, the Display button stands for it while its panel is shut; once on, nothing.
-      if (step.kind === 'display' && !element?.checkVisibility()) element = made ? null : document.querySelector('button[aria-label="Display"]');
+      // Until the Display option is on (or the Snapshot taken), the Display button stands for it while its panel is shut;
+      // once made, nothing.
+      const inDisplay = step.kind === 'display' || step.kind === 'action';
+      if (inDisplay && !element?.checkVisibility()) element = made ? null : document.querySelector('button[aria-label="Display"]');
       if (!element) return null;
       element.setAttribute('data-tutorial', '');
-      if (step.kind !== 'display') element.setAttribute('data-tutorial-target', `→ ${targetText(step)}`);
       marked.push(element);
+      if (step.kind === 'param' || step.kind === 'choice') {
+        // On a knob or fader the target takes the place of its name, covering no neighbour (issue 59, decision 6).
+        const label = element.querySelector(':scope > .knob-label') ?? element;
+        label.setAttribute('data-tutorial-target', `→ ${targetText(step)}`);
+        if (label !== element) marked.push(label);
+      }
       const section = element.closest('section[aria-label]')?.getAttribute('aria-label');
       const strip = section && document.querySelector(`.section-strip [data-section="${section}"]`);
       if (strip) {

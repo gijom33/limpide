@@ -101,14 +101,24 @@ export const TUTORIALS: Tutorial[] = [
     steps: [
       steeper,
       {
+        kind: 'action', id: 'snapshot',
+        say: 'Play a Note or press Listen, then take a Snapshot in Display: a faint copy of the Viewers to compare with.',
+        note: 'The Scopes and Spectrums keep a faint trace of this bright saw. Every change from here shows against it.',
+      },
+      {
         kind: 'param', id: 'cutoff', to: 250,
         say: 'Turn the Cutoff down to about 250 Hz.',
-        note: 'The saw goes dark: in the Filter Spectrum only the first few Harmonics are left.',
+        note: 'The saw goes dark: in the Filter Spectrum only the first few Harmonics are left, and the Snapshot’s faint trace shows all that was taken away.',
       },
       {
         kind: 'param', id: 'resonance', to: 0.8,
         say: 'Raise Resonance to about 80 %.',
         note: 'A tall peak rises on the Curve at the Cutoff, and the Harmonics there ring out: the squelchy, vocal heart of acid.',
+      },
+      {
+        kind: 'display', overlay: 'maths',
+        say: 'In Display, turn on Maths.',
+        note: 'Resonance now reads as Q 2.92 ×2: how sharp the peak is (0.71 is flat), in each of the 24 dB Slope’s two stages. The Curve’s formula sits on the Filter Spectrum.',
       },
       {
         kind: 'param', id: 'filterEnvAmount', to: 3.5,

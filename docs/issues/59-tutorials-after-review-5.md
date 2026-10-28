@@ -44,3 +44,5 @@ Numbered on from the docked cards' four.
 6. **The target takes the place of the control's name** ("→ 280 Hz" where "Cutoff" was) while its Step is open, so the readout stays in sight and no neighbour is covered. A control with no name line under it (the choice buttons) keeps the label above.
 7. **Bigger cards from 1280 px windows up:** both docked cards' text at 15 px (14 px for the smaller lines) and the cards 720 px wide. Phones and smaller windows unchanged; browser zoom stays the teacher's way to reach the back row.
 8. **Snapshot and Maths in Acid.** A Snapshot Step before the Cutoff comes down (a new kind of Step: a press of the Snapshot button, made by a Snapshot taken after the Step comes up), so the next notes compare against the faint trace; a Maths Step after Resonance, which then reads as Q. Guides stay out of the Tutorials: they mark headroom, which none of the four Presets is about.
+
+Built in `src/ui/hooks/useTutorialState.ts`, `src/ui/TutorialCard.tsx`, `src/tutorial/tutorials.ts` and `src/styles.css`; tested in `e2e/tutorial.spec.ts`.

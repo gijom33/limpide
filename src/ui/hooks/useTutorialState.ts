@@ -3,7 +3,7 @@ import type { KeyValueStorage } from '../../app/storage';
 import type { Patch } from '../../patch/patch';
 import { PRESETS } from '../../patch/presets';
 import { loadFinished, saveFinished } from '../../tutorial/progress';
-import { applyStep, controlName, differences, reached, type Tutorial } from '../../tutorial/tutorial';
+import { applyStep, controlName, differences, reached, type Step, type Tutorial } from '../../tutorial/tutorial';
 import type { Overlays } from '../../viewers/overlays';
 
 /** How long a control must rest within reach of its target for the Step to count. */
@@ -17,6 +17,9 @@ interface Host {
   loadPatch(name: string, patch: Patch): void;
   overlays: Overlays;
   setOverlays: Dispatch<SetStateAction<Overlays>>;
+  /** The current Snapshot's number (null when none): a new one makes a Snapshot Step. */
+  snapshot: number | null;
+  takeSnapshot(): void;
   /** A Tutorial starts: whatever plays by itself stops. */
   onStart(): void;
   /** A Tutorial ends: its Listen stops. */
@@ -27,9 +30,10 @@ interface Host {
  * A Tutorial (issue 57): a Preset rebuilt from Init, the person turning each control. `index` is −1 on the first card
  * and `steps.length` on the last. A Step is made when its control reaches the target, however it got there (hand,
  * keys, MIDI, "Do it for me"); a knob or fader then snaps to the exact value, so the finished sound is the Preset's.
+ * `since` is what the Step's control held when the card came to it.
  */
-export function useTutorialState({ storage, patch, patchName, setPatch, loadPatch, overlays, setOverlays, onStart, onEnd }: Host) {
-  const [lesson, setLesson] = useState<{ tutorial: Tutorial; index: number; done: boolean[] } | null>(null);
+export function useTutorialState({ storage, patch, patchName, setPatch, loadPatch, overlays, setOverlays, snapshot, takeSnapshot, onStart, onEnd }: Host) {
+  const [lesson, setLesson] = useState<{ tutorial: Tutorial; index: number; done: boolean[]; since?: unknown } | null>(null);
   const [finished, setFinished] = useState(() => loadFinished(storage));
   const preset = lesson && PRESETS.find((p) => p.name === lesson.tutorial.preset)!;
   const step = lesson?.tutorial.steps[lesson.index];
@@ -46,24 +50,38 @@ export function useTutorialState({ storage, patch, patchName, setPatch, loadPatc
     onEnd();
     setLesson(null);
   };
-  const move = (delta: number) => setLesson((l) => l && { ...l, index: Math.min(l.tutorial.steps.length, Math.max(-1, l.index + delta)) });
+  const held = (s: Step | undefined) => (s?.kind === 'param' ? patch[s.id] : s?.kind === 'action' ? snapshot : undefined);
+  const move = (delta: number) =>
+    setLesson((l) => {
+      if (!l) return l;
+      const index = Math.min(l.tutorial.steps.length, Math.max(-1, l.index + delta));
+      return { ...l, index, since: held(l.tutorial.steps[index]) };
+    });
   const matchPreset = () => preset && loadPatch(preset.name, preset.patch);
   const doIt = () => {
     if (!step) return;
     if (step.kind === 'display') setOverlays((v) => ({ ...v, [step.overlay]: true }));
+    else if (step.kind === 'action') takeSnapshot();
     else setPatch((p) => applyStep(p, step));
   };
 
   // It counts once the control rests within reach, not as a drag passes through on its way past (review 5, 2026-10-27):
-  // any change before then starts the wait again.
+  // any change before then starts the wait again. A knob found within reach, but not on its target, waits for a touch,
+  // so nothing moves by itself (issue 59, decision 5); a Snapshot Step waits for a new Snapshot.
+  const made =
+    !!step &&
+    !!lesson &&
+    (step.kind === 'action'
+      ? snapshot !== null && snapshot !== lesson.since
+      : reached(step, patch, overlays) && (step.kind !== 'param' || patch[step.id] !== lesson.since || patch[step.id] === step.to));
   useEffect(() => {
-    if (!lesson || !step || lesson.done[lesson.index] || !reached(step, patch, overlays)) return;
+    if (!lesson || !step || lesson.done[lesson.index] || !made) return;
     const timer = setTimeout(() => {
-      if (step.kind !== 'display' && patch[step.id] !== step.to) setPatch((p) => applyStep(p, step));
+      if ((step.kind === 'param' || step.kind === 'choice') && patch[step.id] !== step.to) setPatch((p) => applyStep(p, step));
       setLesson((l) => l && { ...l, done: l.done.map((d, i) => d || i === l.index) });
     }, SETTLE_MS);
     return () => clearTimeout(timer);
-  }, [lesson, step, patch, overlays, setPatch]);
+  }, [lesson, step, made, patch, setPatch]);
 
   // The last card: the Tutorial counts as finished, and a sound that matches is named after its Preset.
   const matches = differs.length === 0;

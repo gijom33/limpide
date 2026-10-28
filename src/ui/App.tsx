@@ -177,6 +177,8 @@ export function App() {
   });
   const tutorial = useTutorialState({
     storage, patch, patchName, setPatch, loadPatch, overlays, setOverlays,
+    snapshot: viewer.snapshot,
+    takeSnapshot: () => dispatchViewer({ type: 'takeSnapshot' }),
     onStart: () => {
       players.stopDemo();
       players.setTookOver(false);
