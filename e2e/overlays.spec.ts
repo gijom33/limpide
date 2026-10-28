@@ -42,3 +42,14 @@ test('the Ideal rings show only while a sound is there to compare them with: non
   await expect.poll(rings, { timeout: 10000 }).toBeGreaterThan(3);
   await page.keyboard.up('KeyA'); // the Oscillators run on after the Release, their trace and rings with them
 });
+
+test('the Harmonic Markers’ ticks show only while a sound is there, as the Ideal rings: none after a reload, before a Note (the owner, 2026-10-27)', async ({ page }) => {
+  await page.goto('/');
+  const ticks = () => page.getByLabel('Oscillator Spectrum', { exact: true }).getAttribute('data-markers').then(Number);
+  // The browser holds the sound back until a tap, so the Spectrum is empty.
+  await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/); // drawing
+  await expect.poll(ticks).toBe(0);
+  await page.keyboard.down('KeyA');
+  await expect.poll(ticks, { timeout: 10000 }).toBeGreaterThan(7);
+  await page.keyboard.up('KeyA');
+});

@@ -198,13 +198,17 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
       g.textAlign = 'left';
     }
 
-    // Harmonic Markers: a tick on every Harmonic, labels where there is room (fundamental by note name).
-    if (overlays.harmonics) {
+    // Harmonic Markers: a tick on every Harmonic, labels where there is room (fundamental by note name), while the
+    // trace shows a sound, as the Ideal rings (the owner, 2026-10-27): none while silent, as after a reload.
+    const sounding = outline.some((v) => yOf(v) < height - 0.5);
+    const ticks = overlays.harmonics && sounding ? markers : [];
+    canvas.dataset.markers = String(ticks.length);
+    if (ticks.length) {
       g.textAlign = 'center';
       g.fillStyle = muted;
       g.strokeStyle = muted;
       g.lineWidth = 1;
-      for (const m of markers) {
+      for (const m of ticks) {
         const x = xOf(m.frequency);
         g.beginPath();
         g.moveTo(x, 0);
@@ -218,7 +222,6 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
     // The Ideal Reference: theory's level for each Harmonic of each Oscillator (after the Filter, when there is one),
     // a circle for Osc 1, a square for Osc 2, a triangle for the Sub (the owner, 2026-10-27), while the trace shows a
     // sound to compare them with: none while silent, as after a reload before a Note.
-    const sounding = outline.some((v) => yOf(v) < height - 0.5);
     const partials = showIdeal && overlays.ideal && sounding && ideal ? ideal : undefined;
     let ringCount = 0;
     if (partials && f0 > 0) {
