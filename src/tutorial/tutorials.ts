@@ -38,7 +38,7 @@ export const TUTORIALS: Tutorial[] = [
       {
         kind: 'display', overlay: 'ideal',
         say: 'Open Display and turn on Ideal.',
-        note: 'The rings mark Osc 1’s saw alone. The bars below and between them are Osc 2’s square, an octave down.',
+        note: 'Circles mark where Osc 1’s saw puts its Harmonics, squares where Osc 2’s square puts its own: an octave down, they fall in between.',
       },
       {
         kind: 'param', id: 'cutoff', to: 280,
@@ -181,7 +181,7 @@ export const TUTORIALS: Tutorial[] = [
       {
         kind: 'param', id: 'pulseWidth', to: 0.3,
         say: 'Set Pulse Width to 30 %.',
-        note: 'The gaps in the Oscillator Spectrum move further apart, and the tone is a little fuller.',
+        note: 'The gaps in the Oscillator Spectrum move closer together, and the tone is a little fuller.',
       },
       {
         kind: 'param', id: 'ampSustain', to: 0,
@@ -272,7 +272,7 @@ export const TUTORIALS: Tutorial[] = [
       {
         kind: 'choice', id: 'lfoRetrigger', to: 'note',
         say: 'Switch on LFO 1’s Retrigger.',
-        note: 'Every Note now starts its wobble from the top, so it lands on the beat. Watch the Timeline start again at each Note.',
+        note: 'Every Note now starts its wobble from the same point, so it lands on the beat. Watch the Timeline start again at each Note.',
       },
       {
         kind: 'param', id: 'ampSustain', to: 1,

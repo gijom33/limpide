@@ -129,7 +129,7 @@ test('a Display option Step rings the Display button, then the option once the p
   await expect(ringed(page)).toHaveAttribute('data-overlay', 'ideal');
   await ideal.click();
   await expect(ideal).toHaveAttribute('aria-pressed', 'true');
-  await expect(card(page)).toContainText('The rings mark Osc 1’s saw alone');
+  await expect(card(page)).toContainText('Circles mark where Osc 1’s saw puts its Harmonics');
 });
 
 test('Listen repeats the Tutorial’s phrase on the sound as it is, until pressed again; Quit stops it and leaves the sound', async ({ page }) => {
