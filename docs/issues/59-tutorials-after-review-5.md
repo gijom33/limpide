@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** in progress. Five fixed at once (2026-10-27); the rest wait for the owner's decisions
+**Status:** done. Five fixed at once (2026-10-27); the rest decided by the owner and built (Decisions below)
 
 Fixed at once:
 
@@ -16,13 +16,13 @@ Fixed at once:
 
 For the owner:
 
-- [ ] **A Step within reach when it comes ticks itself** (Bass's Filter Decay, 250 → 180 ms; Pluck's Amp Decay). The grilling decided so (issue 40, decision 5); the learner found it confusing. Keep it, or ask for a touch first?
+- [x] **A Step within reach when it comes ticks itself** (Bass's Filter Decay, 250 → 180 ms; Pluck's Amp Decay). The grilling decided so (issue 40, decision 5); the learner found it confusing. Keep it, or ask for a touch first? Decided: a touch first (decision 5 below).
 - [x] **The card covers the pictures the Step talks about** at 1920 × 1080 (the bottom of the Spectrums, the Maths formula) and at 150 % zoom (most of the Filter Spectrum). A smaller card, a card beside the sections on wide screens, or scrolling the Step's Viewer into view too? Done (2026-10-27): the card folds and moves, as the owner asked (Decisions below).
 - [x] **The Tutorials are hard to find after the welcome**: only the Patch name leads to them. A door in About, or in the header? Decided by the owner (2026-10-27): a Tutorial button in the header, after Demo. It lists the four, the finished ticked; picking one starts it. The header's zones sit 12 px apart and its wordless buttons pad 6 px, so the piano keeps its key widths (`e2e/header.spec.ts`, `e2e/tutorial.spec.ts`).
-- [ ] **The "→ target" label covers its neighbour** (the Osc 2 tab, the Filter Mode icons, the Cutoff readout): below the control instead, or inside the ring?
+- [x] **The "→ target" label covers its neighbour** (the Osc 2 tab, the Filter Mode icons, the Cutoff readout): below the control instead, or inside the ring? Decided: in place of the control's name (decision 6).
 - [x] **No Tooltips on the Viewers, the faders, or the Timeline legend**. Done (2026-10-27, asked by the owner): each Scope and Spectrum says which Tap it is and what it shows, every fader (the Mixer's Osc 1 and Osc 2, both Envelopes' stages), LFO Rate and Depth, the Timeline and each entry of its key; `e2e/tooltips.spec.ts` hovers them all. (The Timeline's two oranges, which review 5 found alike in both runs, are intentional: decided by the owner, 2026-10-27, not to change.)
-- [ ] **Small on a projector**: the card's and the Demo card's text 12 to 13 px at 1920 × 1080
-- [ ] **No Tutorial uses Snapshot, Maths or Guides**: a fifth Tutorial, or a Step in one of the four
+- [x] **Small on a projector**: the card's and the Demo card's text 12 to 13 px at 1920 × 1080. Decided: bigger from 1280 px (decision 7).
+- [x] **No Tutorial uses Snapshot, Maths or Guides**: a fifth Tutorial, or a Step in one of the four. Decided: a Snapshot Step and a Maths Step in Acid (decision 8).
 
 ## Decisions on the docked cards (grilling, 2026-10-27, decided by the owner)
 
@@ -35,3 +35,12 @@ From the owner's inbox line: "Would be nice if we could move the popped up infor
 
 Built in `src/ui/cardPlacement.tsx`; tested in `e2e/dockedCards.spec.ts`.
 
+
+## Decisions on the rest (grilling, 2026-10-27, decided by the owner)
+
+Numbered on from the docked cards' four.
+
+5. **A Step already in reach waits for a touch.** A knob or fader within reach of its target, but not on it, when its Step comes up is left alone until the learner moves it; from then on it counts as any Step does, resting within reach for 0.4 s. "Do it for me" still makes it. This reverses issue 40's decision 5 for that case only: a control already exactly on its target, or a Display option already on, shows as done.
+6. **The target takes the place of the control's name** ("→ 280 Hz" where "Cutoff" was) while its Step is open, so the readout stays in sight and no neighbour is covered. A control with no name line under it (the choice buttons) keeps the label above.
+7. **Bigger cards from 1280 px windows up:** both docked cards' text at 15 px (14 px for the smaller lines) and the cards 720 px wide. Phones and smaller windows unchanged; browser zoom stays the teacher's way to reach the back row.
+8. **Snapshot and Maths in Acid.** A Snapshot Step before the Cutoff comes down (a new kind of Step: a press of the Snapshot button, made by a Snapshot taken after the Step comes up), so the next notes compare against the faint trace; a Maths Step after Resonance, which then reads as Q. Guides stay out of the Tutorials: they mark headroom, which none of the four Presets is about.
