@@ -4,6 +4,7 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-10-28, the owner: "With Poly Pluck in the demo song, I still see the envelope ring jump around. That is not right, do you agree?" Then, of two ways: "Thin grey ring"
 ## Ideas
 
 - 2026-10-28, from the 1.14.0 review: on a window wider than 600 px, hovering a knob or fader changes nothing, since its value already shows under its name. The owner asked for the name to be replaced by the value: on wide windows too, or is the value line enough?
