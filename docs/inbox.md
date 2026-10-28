@@ -4,6 +4,7 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-10-28, the owner: "Isn't the white moving ball moving at wrong location? Isn't it supposed to stay within the envelope ring?" "Velocity Bite has this problem for instance"
 ## Ideas
 
 - 2026-10-28, from the 1.13.0 review: the Maths Layer still writes the Cutoff's value inside the Timeline, where issue 63 decision 24 wants no text but the Cutoff's scale. Keep it (the Maths Layer is asked for), or move it?
