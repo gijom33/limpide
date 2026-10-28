@@ -18,6 +18,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 - `tremolo()` writes out `lfoOffset`'s sum again rather than calling it (to compute the swings once). From the 1.12.0 code review.
 - ADR-0006's "at full Sustain the Amp Tap equals the Filter Tap" holds only without an LFO on Volume; the ADR is frozen (ADR-0010), so a note needs a new ADR or a line elsewhere. From the 1.12.0 code review.
 - Need to find a better way to represent the effect of the two LFOs when set on set knob and the combined effect of filter envelop with LFO.
+- Would be nice to allow the user to tweak the synth parameters during the demo. Only a change of patch would override the parameters. That would be fun for the user to tweak the demo.
+- Should be okay to change display settings while demo, song and tutorials are running.
 
 ## Dropped
 
