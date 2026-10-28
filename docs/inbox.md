@@ -6,6 +6,7 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- 2026-10-28, the owner: "Make the dashes for cutoff more visible"
 - 2026-10-28, the owner: "Also add 4s to the choices for envelope timeline."
 - 2026-10-28, the owner: "On env timeline, while the legend shows the dotted lines very well, it's hardly visible in the timeline itself, is there a trick we can use so that it's not moving so fast that it looks like a blur for the user?"
 - 2026-10-28, the owner: "When hovering a button, show value instead of name."
