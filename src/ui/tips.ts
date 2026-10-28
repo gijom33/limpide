@@ -253,7 +253,7 @@ export const TIPS = {
   },
   envelopeTimeline: {
     title: 'Envelope Timeline',
-    body: 'The last four seconds, the newest at the right: the Amp Envelope (violet), the Filter Envelope (orange fill), the Cutoff (orange line) and the Volume (light violet line).',
+    body: 'The last four seconds, the newest at the right: the Filter Envelope (orange fill), the Cutoff (orange line), the Amp Envelope (violet fill) and the Volume (light violet line).',
     how: 'Play a Note and let go: the Release is drawn after the key comes up.',
   },
 } satisfies Record<string, TipContent>;

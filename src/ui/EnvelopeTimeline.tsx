@@ -6,10 +6,11 @@ import type { ViewSettings } from '../viewers/viewSettings';
 import { Tooltip } from './Tooltip';
 import { TIPS } from './tips';
 
+// In the signal chain's order, each Envelope beside what it moves: the Filter's, then the Amp's.
 const KEY = [
-  ['amp', 'Amp Envelope', TIPS.timelineAmp],
   ['filterEnvelope', 'Filter Envelope', TIPS.timelineFilterEnvelope],
   ['cutoff', 'Cutoff', TIPS.timelineCutoff],
+  ['amp', 'Amp Envelope', TIPS.timelineAmp],
   ['volume', 'Volume', TIPS.timelineVolume],
 ] as const;
 
