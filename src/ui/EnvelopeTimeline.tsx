@@ -6,12 +6,12 @@ import type { ViewSettings } from '../viewers/viewSettings';
 import { Tooltip } from './Tooltip';
 import { TIPS } from './tips';
 
-// In the signal chain's order, each Envelope beside what it moves: the Filter's, then the Amp's.
+// In the signal chain's order, the Filter Envelope beside the Cutoff it moves, then the Amp Envelope. The Filter
+// Envelope's entry shows only while its Amount is set (the Timeline hides it).
 const KEY = [
   ['filterEnvelope', 'Filter Envelope', TIPS.timelineFilterEnvelope],
   ['cutoff', 'Cutoff', TIPS.timelineCutoff],
   ['amp', 'Amp Envelope', TIPS.timelineAmp],
-  ['volume', 'Volume', TIPS.timelineVolume],
 ] as const;
 
 /** The LFO & Envelopes section, under the signal chain: the LFO beside the Envelope Timeline, in the modulation colour. */

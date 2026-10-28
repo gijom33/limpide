@@ -115,7 +115,7 @@ export const TIPS = {
   },
   timeline: {
     title: 'LFO & Envelopes',
-    body: 'What changes the sound over time: the LFO, and the Envelope Timeline beside it. The Timeline shows the last four seconds. Violet: the Amp Envelope, and the Volume as a light line. Orange: the Cutoff, with the frequencies the Filter lets through shaded below it. The faint dashed lines are the Cutoff and Volume knobs themselves.',
+    body: 'What changes the sound over time: the LFO, and the Envelope Timeline beside it. The Timeline shows the last four seconds. Violet: the Amp Envelope. Orange: the Cutoff, with the frequencies the Filter lets through shaded below it, and the Filter Envelope when its Amount is set. The faint dashed line is the Cutoff knob itself.',
     how: 'Play a Note and let go: the Release is drawn after the key comes up.',
   },
   lfo: {
@@ -247,13 +247,9 @@ export const TIPS = {
     title: 'Cutoff',
     body: 'Orange line: where the Filter’s Cutoff really is, after the Filter Envelope, the LFOs, Velocity and Key Track, on the frequency scale at the right. The faint dashed line is the Cutoff knob’s own setting.',
   },
-  timelineVolume: {
-    title: 'Volume',
-    body: 'Light violet line: the Amp’s Volume, after an LFO on Volume dips it (tremolo), nothing to full on the Envelopes’ scale. The faint dashed line is the Volume knob’s own setting.',
-  },
   envelopeTimeline: {
     title: 'Envelope Timeline',
-    body: 'The last four seconds, the newest at the right: the Filter Envelope (orange fill), the Cutoff (orange line), the Amp Envelope (violet fill) and the Volume (light violet line).',
+    body: 'The last four seconds, the newest at the right: the Filter Envelope (orange fill, when its Amount is set), the Cutoff (orange line) and the Amp Envelope (violet fill).',
     how: 'Play a Note and let go: the Release is drawn after the key comes up.',
   },
 } satisfies Record<string, TipContent>;

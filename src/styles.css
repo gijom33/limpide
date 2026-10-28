@@ -54,8 +54,6 @@
   /* The Effective Cutoff on the Timeline: the Filter's colour lightened towards the text (either theme), so it
      reads apart from the Filter Envelope's orange area under it. */
   --cutoff-line: color-mix(in srgb, var(--stage-filter) 55%, var(--text));
-  /* The Volume on the Timeline, the same way: the Amp's violet lightened, apart from the Amp Envelope's area. */
-  --volume-line: color-mix(in srgb, var(--stage-amp) 55%, var(--text));
   color-scheme: dark;
   font-family: system-ui, -apple-system, sans-serif;
 }
@@ -377,7 +375,7 @@ main[data-frozen] .tap-canvases::before {
 .timeline-key [data-mark='amp']::before { background: color-mix(in srgb, var(--stage-amp) 45%, transparent); border-top: 1.5px solid var(--stage-amp); }
 .timeline-key [data-mark='filterEnvelope']::before { background: color-mix(in srgb, var(--stage-filter) 35%, transparent); border-top: 1.5px solid var(--stage-filter); }
 .timeline-key [data-mark='cutoff']::before { height: 0; border-top: 2px solid var(--cutoff-line); }
-.timeline-key [data-mark='volume']::before { height: 0; border-top: 2px solid var(--volume-line); }
+.timeline-key [data-mark][hidden] { display: none; }
 main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-offset: -1px; }
 /* The Filter Envelope: Amount, then the four faders, in one row that wraps like any other. */
 .sub-block { container-type: inline-size; }

@@ -13,13 +13,13 @@ interface Source {
   now(): number;
   /** The Cutoff knob's own setting at a moment, drawn faintly so the Envelope's push away from it shows. */
   baseCutoffAt(time: number): number;
-  /** The Volume knob's own setting at a moment, drawn faintly so an LFO's dip below it shows. */
-  baseVolumeAt(time: number): number;
+  /** The Filter Envelope's Amount at a moment: at zero it moves nothing, and is left out. */
+  filterEnvAmountAt(time: number): number;
 }
 
 /**
- * The Envelope Timeline: the last few seconds of the Amp and Filter Envelopes (areas, 0–1 on a shared scale), the
- * Volume (a line on the same scale) and the Effective Cutoff (a line, log Hz on the right), computed from the Modulation model for past moments. "Now" is
+ * The Envelope Timeline: the last few seconds of the Amp and Filter Envelopes (areas, 0–1 on a shared scale; the
+ * Filter's only while its Amount moves the Cutoff) and the Effective Cutoff (a line, log Hz on the right), computed from the Modulation model for past moments. "Now" is
  * the right edge.
  */
 export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: () => ViewSettings) {
@@ -72,9 +72,14 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
     };
 
     // Filter Envelope: an area on the 0–1 level scale, the shape that (times Amount) pushes the Effective Cutoff.
-    // Light fills, so where the two overlap they read no heavier than one Viewer's shading (16 %).
-    area('--stage-filter', 0.1, (m) => m.filter);
+    // Light fills, so where the two overlap they read no heavier than one Viewer's shading (16 %). Only while its
+    // Amount moves the Cutoff (the owner, 2026-10-28): at zero the Envelope runs but changes nothing. Its key entry
+    // shows and hides with it.
+    const filterShown = source.filterEnvAmountAt(now) !== 0;
+    if (filterShown) area('--stage-filter', 0.1, (m) => m.filter);
     canvas.dataset.filterEnvelope = (samples.at(-1)?.filter ?? 0).toFixed(3);
+    const filterKey = canvas.closest('.timeline')?.querySelector<HTMLElement>('[data-mark="filterEnvelope"]');
+    if (filterKey && filterKey.hidden === filterShown) filterKey.hidden = !filterShown;
     const latest = samples.at(-1);
     canvas.dataset.ampLevel = (latest?.amp ?? 0).toFixed(3);
 
@@ -82,8 +87,7 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
     // leaves it still (the owner, 2026-10-28), its dip shown by the Volume knob's ring.
     area('--stage-amp', 0.1, (m) => m.amp);
 
-    // A knob's setting (dashed), then its Effective value the modulation makes of it: the Volume on the 0–1 level
-    // scale (an LFO on Volume dips it, the owner, 2026-10-28), then the Cutoff on the Hz scale.
+    // The Cutoff knob's setting (dashed), then the Effective Cutoff the modulation makes of it.
     const line = (colourVar: string, y: (m: Modulation) => number, base: (time: number) => number) => {
       g.strokeStyle = cssVar(canvas, colourVar);
       g.globalAlpha = 0.5;
@@ -103,8 +107,6 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
       samples.forEach((m, x) => (x ? g.lineTo(x, y(m)) : g.moveTo(x, y(m))));
       g.stroke();
     };
-    line('--volume-line', (m) => yLevel(m.volume), (time) => yLevel(source.baseVolumeAt(time)));
-    canvas.dataset.volume = (latest?.volume ?? 0).toFixed(3);
     line('--cutoff-line', (m) => yHz(m.cutoff), (time) => yHz(source.baseCutoffAt(time)));
 
     // "Now" on each line, as on the LFO's plot: a dot in its colour, ringed in the background so lines crossing
@@ -121,9 +123,8 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
       g.strokeStyle = background;
       g.stroke();
     };
-    dot('--stage-filter', yLevel(last.filter));
+    if (filterShown) dot('--stage-filter', yLevel(last.filter));
     dot('--stage-amp', yLevel(last.amp));
-    dot('--volume-line', yLevel(last.volume));
     dot('--cutoff-line', yHz(last.cutoff));
 
     // The Cutoff scale's labels over the traces, each on a halo of the background, so the Cutoff line never strikes

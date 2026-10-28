@@ -87,7 +87,9 @@ test('every Viewer, fader and the Timeline key explain themselves, the tooltip b
   }
   await check(page.getByRole('slider', { name: 'LFO 1 Rate' }), 'Rate');
   await check(page.getByRole('slider', { name: 'LFO 2 Depth' }), 'Depth');
-  for (const [mark, title] of [['amp', 'Amp Envelope'], ['filterEnvelope', 'Filter Envelope'], ['cutoff', 'Cutoff'], ['volume', 'Volume']]) {
+  await page.getByRole('slider', { name: 'Filter Envelope Amount' }).press('ArrowUp'); // its key entry shows only then
+  await page.evaluate(() => (document.activeElement as HTMLElement).blur()); // and its own tooltip goes
+  for (const [mark, title] of [['filterEnvelope', 'Filter Envelope'], ['cutoff', 'Cutoff'], ['amp', 'Amp Envelope']]) {
     await check(page.locator(`.timeline-key [data-mark="${mark}"]`), title);
   }
   await page.getByRole('tab', { name: 'Mixer' }).click();
