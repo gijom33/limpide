@@ -21,6 +21,16 @@
 11. **On touch:** the Timeline follows the last modulated knob touched or moved, until another.
 12. **The prototype is the real app:** on a `prototype/` branch, a small switch bar at the top for bands, ticks, trail and Timeline trace, applied to every knob at once, with a patch preloaded that has the Filter Envelope and both LFOs on the Cutoff.
 
+## Decisions (the prototype, 2026-10-28, decided by the owner)
+
+The owner liked none of the first candidates: bands, ticks, the trail and the Timeline following a knob all went. What replaced them, on the prototype branch `prototype/combined-modulation`:
+
+13. **One ring for both LFOs together**, from the knob's value, in the LFOs' blue.
+14. **The Filter Envelope's own ring**, in orange, the outermost (first drawn inside the LFOs' ring in the Cutoff's light orange; the owner moved it out and to orange).
+15. **Both LFOs the same blue**, LFO 1's: a must.
+16. **The Timeline plots the LFOs added together** while both share a Destination, with an LFOs entry in blue in its key.
+17. **Both rings thicker** than today's ring, touching.
+
 - [x] Grill: what the person should read off the control (each source's reach, their sum, their motion), where (the ring, the Timeline, the LFO plots), and on which controls
 - [ ] A prototype of the candidates, on its own branch
 - [ ] Build the one chosen
