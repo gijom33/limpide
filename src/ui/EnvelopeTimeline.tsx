@@ -6,6 +6,12 @@ import type { ViewSettings } from '../viewers/viewSettings';
 import { Tooltip } from './Tooltip';
 import { TIPS } from './tips';
 
+const KEY = [
+  ['amp', 'Amp Envelope', TIPS.timelineAmp],
+  ['filterEnvelope', 'Filter Envelope', TIPS.timelineFilterEnvelope],
+  ['cutoff', 'Effective Cutoff', TIPS.timelineCutoff],
+] as const;
+
 /** The LFO & Envelopes section, under the signal chain: the LFO beside the Envelope Timeline, in the modulation colour. */
 export function EnvelopeTimeline({ engine, view, controls }: { engine: SynthEngine; view(): ViewSettings; controls?: ReactNode }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -18,17 +24,17 @@ export function EnvelopeTimeline({ engine, view, controls }: { engine: SynthEngi
           <span className="has-tip">LFO &amp; Envelopes</span>
         </Tooltip>
       </h2>
-      {/* The key sits on the title line, over the plot it explains. */}
+      {/* The key sits on the title line, over the plot it explains. Each entry is a named image in the Tab order, so its
+          tooltip comes on focus and is its description for screen readers (issue 67). */}
       <span className="timeline-key">
-        <Tooltip content={TIPS.timelineAmp}>
-          <span data-mark="amp">Amp Envelope</span>
-        </Tooltip>
-        <Tooltip content={TIPS.timelineFilterEnvelope}>
-          <span data-mark="filterEnvelope">Filter Envelope</span>
-        </Tooltip>
-        <Tooltip content={TIPS.timelineCutoff}>
-          <span data-mark="cutoff">Effective Cutoff</span>
-        </Tooltip>
+        {KEY.map(([mark, name, tip]) => (
+          <Tooltip key={mark} content={tip}>
+            {/* biome-ignore lint/a11y/noNoninteractiveTabindex: focusable so a keyboard reaches its explanation */}
+            <span data-mark={mark} role="img" aria-label={name} tabIndex={0}>
+              {name}
+            </span>
+          </Tooltip>
+        ))}
       </span>
       {controls}
       {/* The plot fills a box that takes its height from the controls beside it: the canvas itself never

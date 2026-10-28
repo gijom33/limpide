@@ -78,6 +78,24 @@ test('the Viewers are images with names, the LFO plots say what they show', asyn
   await expect(page.getByRole('img', { name: /^LFO 1: Sine, 2\.00 Hz, Depth 0 %, on Cutoff$/ })).toHaveCount(1);
 });
 
+test('the Timeline key’s entries are reached by Tab, named, and described, their tooltip shown on focus (issue 67)', async ({ page }) => {
+  await page.goto('/');
+  const names = ['Amp Envelope', 'Filter Envelope', 'Effective Cutoff'];
+  for (const name of names) {
+    const entry = page.locator('.timeline-key').getByRole('img', { name, exact: true });
+    await expect(entry, name).toHaveAttribute('tabindex', '0');
+    await expect(entry, name).toHaveAccessibleDescription(/\w{12,}/);
+  }
+  // By Tab from the section's heading tip: each entry in turn, its tooltip shown.
+  await page.locator('.timeline-key').getByRole('img', { name: names[0] }).focus();
+  await page.keyboard.press('Shift+Tab');
+  for (const name of names) {
+    await page.keyboard.press('Tab');
+    await expect(page.locator('.timeline-key').getByRole('img', { name, exact: true })).toBeFocused();
+    await expect(page.getByRole('tooltip').locator('visible=true').locator('strong')).toHaveText(name);
+  }
+});
+
 test('the letter keys can be turned off in Display, and stay off', async ({ page }) => {
   await page.goto('/');
   const piano = page.getByRole('group', { name: 'Piano' });

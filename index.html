@@ -4,10 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Limpide</title>
-    <!-- The ICO first, for Safari (which drew neither the SVG nor the PNG in its tabs), then the SVG for browsers that
-         draw it; the PNG inside the ICO is the 32 px one. -->
-    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <!-- The SVG, then the ICO last: a browser takes the last icon it can draw, and Safari drew neither the SVG nor the
+         PNG in its tabs, nor the ICO while listed first (issue 65). The ICO's name is new, as Safari keeps the icons it
+         has already fetched; the PNG inside it is the 32 px one. -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/tab-icon.ico" sizes="32x32" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
   </head>
   <body>

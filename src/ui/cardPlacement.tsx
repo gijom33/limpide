@@ -2,7 +2,8 @@ import { type CSSProperties, type MouseEvent, type PointerEvent, type RefObject,
 import { safeStorage } from '../app/storage';
 import { ChevronIcon } from './icons';
 
-const PHONE = '(max-width: 600px)';
+/** Whether the card may move: the CSS says, so the phone's breakpoint is written once (issue 67). */
+const pinned = (card: HTMLElement | null) => !!card && getComputedStyle(card).getPropertyValue('--card-pinned').trim() === '1';
 
 /**
  * A docked card (the Demo's, a Tutorial's) the person can fold to its top row and, from the 2 × 2 layout up, drag
@@ -25,9 +26,11 @@ export function useCardPlacement(card: RefObject<HTMLElement | null>, kind: 'dem
     const box = card.current?.getBoundingClientRect();
     if (!box) return wanted;
     const [left, top] = [box.left - current.x, box.top - current.y]; // where it sits unmoved
+    // The document's width, not the window's: a scroll bar is not room for the card.
+    const { clientWidth, clientHeight } = document.documentElement;
     return {
-      x: Math.min(innerWidth - box.width - left, Math.max(-left, wanted.x)),
-      y: Math.min(innerHeight - box.height - top, Math.max(-top, wanted.y)),
+      x: Math.min(clientWidth - box.width - left, Math.max(-left, wanted.x)),
+      y: Math.min(clientHeight - box.height - top, Math.max(-top, wanted.y)),
     };
   };
 
@@ -36,7 +39,7 @@ export function useCardPlacement(card: RefObject<HTMLElement | null>, kind: 'dem
   useEffect(() => {
     const keepIn = () =>
       setOffset((o) => {
-        const next = matchMedia(PHONE).matches ? { x: 0, y: 0 } : within(o, o);
+        const next = pinned(card.current) ? { x: 0, y: 0 } : within(o, o);
         return next.x === o.x && next.y === o.y ? o : next; // unmoved: no new render
       });
     addEventListener('resize', keepIn);
@@ -50,7 +53,7 @@ export function useCardPlacement(card: RefObject<HTMLElement | null>, kind: 'dem
 
   const handle = {
     onPointerDown(e: PointerEvent<HTMLElement>) {
-      if (e.button !== 0 || (e.target as Element).closest('button') || matchMedia(PHONE).matches) return;
+      if (e.button !== 0 || (e.target as Element).closest('button') || pinned(card.current)) return;
       drag.current = { x: e.clientX, y: e.clientY, from: offset };
       e.currentTarget.setPointerCapture(e.pointerId);
       e.preventDefault();

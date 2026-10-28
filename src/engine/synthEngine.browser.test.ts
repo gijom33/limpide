@@ -331,7 +331,7 @@ describe('filterResponse (the Response Curve)', () => {
     const engine = createSynthEngine(ctx);
     engine.applyPatch({ ...defaultPatch(), cutoff: 300, resonance: 0 });
     const at2k = () => engine.filterResponse(Float32Array.of(2000))[0];
-    const read = (t: number, act: () => number | void) =>
+    const read = <T,>(t: number, act: () => T) =>
       ctx.suspend(t).then(() => {
         const value = act();
         void ctx.resume();
@@ -342,8 +342,8 @@ describe('filterResponse (the Response Curve)', () => {
     const later = read(1.2, at2k);
     await ctx.startRendering();
     await jump;
-    expect(dB((await soon) as number)).toBeLessThan(-20);
-    expect(dB((await later) as number)).toBeGreaterThan(-1);
+    expect(dB(await soon)).toBeLessThan(-20);
+    expect(dB(await later)).toBeGreaterThan(-1);
   });
 
   it('shows the Resonance peak at the Cutoff, above the pass band', () => {

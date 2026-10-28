@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** to build
+**Status:** built, to confirm in Safari after the next deploy. The SVG is listed first and the ICO last, renamed `tab-icon.ico` so Safari fetches it anew rather than reuse what it cached (Claude's call, open to the owner: the order alone had been tried both ways). General advice found while checking: [favicon.im](https://favicon.im/blog/svg-favicon-complete-guide), [Framer on Safari's cache](https://www.framer.com/ja/help/articles/why-isn-t-safari-displaying-the-favicon/).
 
-- [ ] The ICO (or a PNG) listed after the SVG in `index.html`, with a test that the last `rel="icon"` is not an SVG
+- [x] The ICO listed after the SVG in `index.html`, with a test that the last `rel="icon"` is the ICO (`e2e/brand.spec.ts`)
 - [ ] Confirmed in Safari after the deploy, with Safari's favicon cache cleared (the owner)

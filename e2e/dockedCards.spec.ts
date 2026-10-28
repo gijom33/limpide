@@ -34,6 +34,9 @@ test('on a laptop the Demo card moves by its top row, stays in the window, and a
   const cornered = await box(page);
   expect(Math.round(cornered.x)).toBe(0);
   expect(Math.round(cornered.y)).toBe(0);
+  await dragBy(page, 4000, 0); // far past the right edge: it stops at the page's, short of any scroll bar
+  const right = await box(page);
+  expect(Math.round(right.x + right.width)).toBe(await page.evaluate(() => document.documentElement.clientWidth));
   await expect(page.getByRole('button', { name: 'Demo' })).toHaveAttribute('aria-pressed', 'true'); // not a takeover
   await demoCard(page).locator('.demo-bar-name').dblclick();
   const back = await box(page);
@@ -46,7 +49,11 @@ test('the Demo card folds to its top row, and stays folded the next time', async
   await startDemo(page);
   const open = await box(page);
   await demoCard(page).getByRole('button', { name: 'Fold the card' }).click();
-  await expect(demoCard(page).locator('.demo-bar-caption')).toBeHidden();
+  // Out of sight, but still read out as it changes (aria-live), not taken out of the page (issue 67).
+  const caption = demoCard(page).locator('.demo-bar-caption');
+  await expect(caption).toHaveCSS('clip-path', 'inset(50%)');
+  await expect(caption).not.toHaveCSS('display', 'none');
+  await expect(caption).toHaveAttribute('aria-live', 'polite');
   await expect(demoCard(page).getByRole('button', { name: 'Stop' })).toBeVisible();
   expect((await box(page)).height).toBeLessThan(open.height);
   await page.reload();
@@ -63,7 +70,7 @@ test('a folded Tutorial card keeps its way forward in the top row', async ({ pag
   await page.getByRole('dialog', { name: 'Patches' }).getByRole('group', { name: 'Tutorials' }).getByRole('button', { name: /^Tutorial: Bass/ }).click();
   const card = page.getByRole('region', { name: /^Tutorial: / });
   await card.getByRole('button', { name: 'Fold the card' }).click();
-  await expect(card.locator('.tutorial-words')).toBeHidden();
+  await expect(card.locator('.tutorial-words')).toHaveCSS('clip-path', 'inset(50%)'); // out of sight, still read out
   await card.getByRole('button', { name: 'Start', exact: true }).click();
   await expect(card.locator('.tutorial-progress')).toHaveText('Step 1 of 15');
   await expect(card.getByRole('button', { name: 'Next', exact: true })).toBeVisible();
@@ -79,6 +86,6 @@ test.describe('on a phone', () => {
     await dragBy(page, 0, -300);
     expect(Math.round((await box(page)).y)).toBe(Math.round(home.y));
     await demoCard(page).getByRole('button', { name: 'Fold the card' }).click();
-    await expect(demoCard(page).locator('.demo-bar-caption')).toBeHidden();
+    await expect(demoCard(page).locator('.demo-bar-caption')).toHaveCSS('clip-path', 'inset(50%)'); // out of sight, still read out
   });
 });
