@@ -17,6 +17,7 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 - One list per LFO Destination: a new one meant editing the type and both CHOICES lists (`patch.ts`), the Tutorials' names (`tutorial.ts`), the picker's labels and stages (`DestinationPicker.tsx`, its stage type repeating STAGES) and the CSS; the label "Volume" is written twice. From the 1.12.0 code review.
 - `tremolo()` writes out `lfoOffset`'s sum again rather than calling it (to compute the swings once). From the 1.12.0 code review.
 - ADR-0006's "at full Sustain the Amp Tap equals the Filter Tap" holds only without an LFO on Volume; the ADR is frozen (ADR-0010), so a note needs a new ADR or a line elsewhere. From the 1.12.0 code review.
+- Need to find a better way to represent the effect of the two LFOs when set on set knob and the combined effect of filter envelop with LFO.
 
 ## Dropped
 
