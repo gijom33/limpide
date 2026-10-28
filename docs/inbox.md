@@ -20,6 +20,7 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 - Need to find a better way to represent the effect of the two LFOs when set on set knob and the combined effect of filter envelop with LFO.
 - Would be nice to allow the user to tweak the synth parameters during the demo. Only a change of patch would override the parameters. That would be fun for the user to tweak the demo.
 - Should be okay to change display settings while demo, song and tutorials are running.
+- Make the checkmarks when a step in tutorial is validated more visible. Move back the target values during tutorial to top of knob or fader, etc. Remove the "Maths" aspect in the tutorial.
 
 ## Dropped
 
