@@ -117,7 +117,7 @@ export const TIPS = {
   },
   timeline: {
     title: 'LFO & Envelopes',
-    body: 'What changes the sound over time: the LFO, and the Envelope Timeline beside it. The Timeline shows the last four seconds. The violet fill is the Amp Envelope, the orange one the Filter Envelope when its Amount is set. A broken line in its section’s colour is each knob the Filter Envelope or an LFO moves: the Cutoff dotted, what LFO 1 moves dashed, what LFO 2 alone moves dash-dotted, with the knob’s own setting faint behind it.',
+    body: 'What changes the sound over time: the LFO, and the Envelope Timeline beside it. The Timeline shows the last two seconds. The violet fill is the Amp Envelope, the orange one the Filter Envelope when its Amount is set. A broken line in its section’s colour is each knob the Filter Envelope or an LFO moves: the Cutoff dotted, what LFO 1 moves dashed, what LFO 2 alone moves dash-dotted, with the knob’s own setting faint behind it.',
     how: 'Play a Note and let go: the Release is drawn after the key comes up.',
   },
   lfo: {
@@ -239,7 +239,7 @@ export const TIPS = {
   },
   timelineAmp: {
     title: 'Amp Envelope',
-    body: 'Violet: the newest Note’s Amp Envelope over the last four seconds, from nothing to full.',
+    body: 'Violet: the newest Note’s Amp Envelope over the last two seconds, from nothing to full.',
   },
   timelineFilterEnvelope: {
     title: 'Filter Envelope',
@@ -251,7 +251,7 @@ export const TIPS = {
   },
   envelopeTimeline: {
     title: 'Envelope Timeline',
-    body: 'The last four seconds, the newest at the right: the Amp Envelope (violet fill), and what moves: the Filter Envelope (orange fill, when its Amount is set), the Cutoff (orange dots) and each knob an LFO moves (dashed for LFO 1’s, dash-dotted for LFO 2’s, in its section’s colour).',
+    body: 'The last two seconds, the newest at the right: the Amp Envelope (violet fill), and what moves: the Filter Envelope (orange fill, when its Amount is set), the Cutoff (orange dots) and each knob an LFO moves (dashed for LFO 1’s, dash-dotted for LFO 2’s, in its section’s colour).',
     how: 'Play a Note and let go: the Release is drawn after the key comes up.',
   },
 } satisfies Record<string, TipContent>;

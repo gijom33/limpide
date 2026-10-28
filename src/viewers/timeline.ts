@@ -5,7 +5,7 @@ import { cssVar, curveWidth, haloText, prepareCanvas } from './canvas';
 import { createFreezeLatch } from './freezeLatch';
 import type { ViewSettings } from './viewSettings';
 
-const WINDOW_SECONDS = 4;
+const WINDOW_SECONDS = 2;
 const F_MIN = 20;
 const F_MAX = 20000;
 
