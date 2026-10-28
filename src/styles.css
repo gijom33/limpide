@@ -855,21 +855,13 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .patch-filters { display: flex; align-items: flex-start; gap: 6px 12px; }
 .patch-search { flex: none; display: flex; align-items: center; gap: 4px; }
 .patch-search h3 { flex: none; margin: 0 6px 0 0; }
-.patch-search input {
-  width: 240px; min-width: 0; height: var(--control-h); padding: 0 8px; font: inherit; font-size: var(--text-md); color: var(--text);
-  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-control);
-}
+.patch-search input { width: 240px; }
 /* Its own ×, the same on every browser, rather than the browser's. */
 .patch-search input::-webkit-search-cancel-button { appearance: none; }
 .patch-categories { flex: 1 1 0; min-width: 0; display: flex; flex-wrap: wrap; gap: 3px 4px; }
-.patch-category {
-  flex: none; height: var(--control-h); padding: 0 10px; font: inherit; font-size: var(--text-sm); color: var(--muted); cursor: pointer;
-  background: none; border: 1px solid var(--border); border-radius: var(--radius-control);
-}
-.patch-category:hover { color: var(--text); background: var(--control-hover); }
-.patch-category[aria-checked='true'] { color: var(--text); background: var(--control-on); }
-/* A phone: one row of categories, scrolled sideways, so the Presets keep the height. */
-@media (max-width: 600px) {
+/* A phone, and the sections 2 × 2 up to 860 px (issue 72): one row of categories under the search box, scrolled
+   sideways, so the Presets keep the height. Beside the box there, they wrapped into four rows. */
+@media (max-width: 860px) {
   .patch-filters { flex-direction: column; align-items: stretch; }
   .patch-search input { flex: 1; width: auto; }
   .patch-categories { flex: none; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
@@ -886,11 +878,15 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   font-size: var(--text-sm); font-weight: 500; color: var(--muted);
 }
 .patch-list { display: flex; flex-wrap: wrap; gap: 3px 4px; }
-.patch-item { height: var(--control-h); padding: 0 10px; font: inherit; font-size: var(--text-md); color: var(--text); cursor: pointer; background: none; border: 1px solid var(--border); border-radius: var(--radius-control); }
-.patch-item:hover { background: var(--control-hover); }
-.patch-item[aria-current='true'] { background: var(--control-on); }
+.patch-item, .patch-category { height: var(--control-h); padding: 0 10px; font: inherit; font-size: var(--text-md); color: var(--text); cursor: pointer; background: none; border: 1px solid var(--border); border-radius: var(--radius-control); }
+.patch-item:hover, .patch-category:hover { background: var(--control-hover); }
+.patch-item[aria-current='true'], .patch-category[aria-checked='true'] { background: var(--control-on); }
+/* The category pills: a Patch item's shape, in the smaller, muted words of a choice. */
+.patch-category { flex: none; font-size: var(--text-sm); color: var(--muted); }
+.patch-category:hover, .patch-category[aria-checked='true'] { color: var(--text); }
 .patch-mine { display: inline-flex; gap: 1px; }
-.patch-delete { height: var(--control-h); min-width: var(--control-h); padding: 0 6px; font: inherit; font-size: var(--text-md); color: var(--muted); cursor: pointer; background: none; border: 1px solid var(--border); border-radius: var(--radius-control); }
+/* A saved Patch's delete and the search's clear: the same small square. */
+.patch-delete, .patch-search-clear { height: var(--control-h); min-width: var(--control-h); padding: 0 6px; font: inherit; font-size: var(--text-md); color: var(--muted); cursor: pointer; background: none; border: 1px solid var(--border); border-radius: var(--radius-control); }
 .patch-delete-confirm { color: var(--danger); border-color: var(--danger); }
 .patch-empty { margin: 0; font-size: var(--text-md); color: var(--muted); }
 /* The one-row header gives the keyboard what its sides leave: below 1300 px its buttons show their icons and drop
@@ -918,10 +914,11 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .about-menu { display: flex; }
 .patch-save { display: flex; gap: 6px; margin-top: 8px; max-width: 440px; }
 .patch-panel > .patch-link { max-width: 440px; }
-.patch-save input, .patch-link {
-  flex: 1; min-width: 0; height: var(--control-h); padding: 0 8px; font: inherit; font-size: var(--text-md); color: var(--text);
+.patch-search input, .patch-save input, .patch-link {
+  min-width: 0; height: var(--control-h); padding: 0 8px; font: inherit; font-size: var(--text-md); color: var(--text);
   background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-control);
 }
+.patch-save input, .patch-link { flex: 1; }
 .patch-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .patch-actions label { cursor: pointer; }
 .patch-status { margin: 0; min-height: 16px; font-size: var(--text-md); color: var(--muted); }

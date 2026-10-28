@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement
+**Status:** done (2026-10-28). The search box named "Search", one row of categories up to 860 px, a live count of what is found, a line for saved Patches a category hides, and the code tidied.
 
 ## Decisions (triage, 2026-10-28, decided by the owner)
 
@@ -39,14 +39,21 @@
 - The `Library` the panel lists My Patches from
 
 **Acceptance criteria:**
-- [ ] The search box is found by role `searchbox` and name "Search" (tests updated)
-- [ ] At 700 × 900 the category radiogroup is one row (its height one pill's) and scrolls sideways; at 1440 it wraps beside the box as now
-- [ ] Typing a search updates a `role="status"` element's text with the count; it is empty when the search is cleared
-- [ ] With a Patch saved and the Bass category chosen, My Patches shows the line above; with none saved, "None saved yet."
-- [ ] Every existing test of the Patch panel and of the search passes, with only the box's name changed; the design audit passes
-- [ ] `npx tsc`, `npm run lint`, `npx vitest run`, `npx playwright test` green
+- [x] The search box is found by role `searchbox` and name "Search" (tests updated)
+- [x] At 700 × 900 the category radiogroup is one row (its height one pill's) and scrolls sideways; at 1440 it wraps beside the box as now
+- [x] Typing a search updates a `role="status"` element's text with the count; it is empty when the search is cleared
+- [x] With a Patch saved and the Bass category chosen, My Patches shows the line above; with none saved, "None saved yet."
+- [x] Every existing test of the Patch panel and of the search passes, with only the box's name changed; the design audit passes
+- [x] `npx tsc`, `npm run lint`, `npx vitest run`, `npx playwright test` green
 
 **Out of scope:**
 - What a search matches or its order (decisions 3, 11 and 12 of issue 69)
 - The ‹ › arrows, saving, renaming, deleting, files and Share links, beyond moving code
 - The categories' look above 860 px
+
+## How it was built
+
+- `src/patch/presetSearch.ts`: `matchesWords` (was `matchesName`); `categoryLists` answers what a category lists, for the search and the panel; `inCategory` narrows what was found, so the panel runs `searchPresets` once on All and narrows it (the Tutorials need All's names); `resultRows` builds the rows as `ResultRow` (kind, label, Presets). Unit tests for the last three.
+- `src/ui/PatchSearch.tsx`: the search box, the categories, the results and the count's live region, said 600 ms after typing pauses. `PatchBar.tsx` keeps the search and category (they outlive the panel), Escape, My Patches, saving, deleting, files and sharing.
+- `src/styles.css`: the 600 px rule for the categories is 860 px; the search field shares the Save field's rule, the pills the Patch items', the × the delete's, under a class of its own (`patch-search-clear`).
+- Tests (`e2e/patchSearch.spec.ts`): the box by its new name, the count, the line for hidden saved Patches, the categories at 700 and 1440 px. Two existing lines changed beyond the box's name, Claude's call, open to the owner: under Bass with nothing saved, the test had "None saved yet." hidden, and decision 4 shows it; and `e2e/patches.spec.ts` picks the import's message among the panel's two status regions by its text.

@@ -93,7 +93,7 @@ test('a Patch exports as a file and imports back', async ({ page }) => {
 test('importing something that is not a Patch says why, and changes nothing', async ({ page }) => {
   await patchName(page).click();
   await page.getByLabel('Import file').setInputFiles({ name: 'tune.json', mimeType: 'application/json', buffer: Buffer.from('{"tempo":120}') });
-  await expect(page.getByRole('dialog', { name: 'Patches' }).getByRole('status')).toContainText(/not a Limpide Patch/i);
+  await expect(page.getByRole('dialog', { name: 'Patches' }).getByRole('status').filter({ hasText: /not a Limpide Patch/i })).toBeVisible();
   await expect(cutoff(page)).toHaveAttribute('aria-valuetext', '2.00 kHz');
 });
 

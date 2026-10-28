@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { defaultPatch } from './patch';
-import { CATEGORIES, isSearch, matchesName, searchPresets } from './presetSearch';
+import { CATEGORIES, categoryLists, isSearch, matchesWords, resultRows, searchPresets } from './presetSearch';
 import { PRESET_GROUPS, PRESETS, type Preset, type PresetGroup } from './presets';
 
 const preset = (name: string, group: PresetGroup, about: string): Preset => ({ name, group, about, patch: defaultPatch() });
@@ -58,8 +58,33 @@ describe('the categories', () => {
   });
 
   it('a saved Patch matches by its name', () => {
-    expect(matchesName('bass my', 'My bass')).toBe(true);
-    expect(matchesName('bass', 'Mybass')).toBe(false);
-    expect(matchesName('', 'Anything')).toBe(true);
+    expect(matchesWords('bass my', 'My bass')).toBe(true);
+    expect(matchesWords('bass', 'Mybass')).toBe(false);
+    expect(matchesWords('', 'Anything')).toBe(true);
+  });
+
+  it('All lists everything, a Preset group its Presets alone, the Tutorials and My Patches themselves (issue 72)', () => {
+    expect(categoryLists('All')).toEqual({ presets: true, tutorials: true, mine: true });
+    expect(categoryLists('Bass')).toEqual({ presets: true, tutorials: false, mine: false });
+    expect(categoryLists('Tutorials')).toEqual({ presets: false, tutorials: true, mine: false });
+    expect(categoryLists('My Patches')).toEqual({ presets: false, tutorials: false, mine: true });
+  });
+});
+
+describe('resultRows', () => {
+  it('lists the Presets by group, the empty groups left out; while searching, by name then by description (issue 72)', () => {
+    const rows = resultRows(searchPresets('', 'All', LIST), false);
+    expect(rows.map((r) => [r.kind, r.label, names(r.presets)])).toEqual([
+      ['group', 'Filter', ['Resonant Ring']],
+      ['group', 'LFO', ['Slow Vibrato']],
+      ['group', 'Pads', ['Warm Pad', 'Pad']],
+      ['group', 'Drums', ['Hi-hat']],
+    ]);
+    const found = resultRows(searchPresets('warm', 'All', LIST), true);
+    expect(found.map((r) => [r.kind, r.label, names(r.presets)])).toEqual([
+      ['byName', 'Name', ['Warm Pad']],
+      ['byDescription', 'Description', ['Pad']],
+    ]);
+    expect(resultRows(searchPresets('drums', 'All', LIST), true).map((r) => r.kind)).toEqual(['byName']);
   });
 });

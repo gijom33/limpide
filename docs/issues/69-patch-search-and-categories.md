@@ -28,3 +28,5 @@ Claude's calls, open to the owner: the design audit's waivers for the Patch item
 - [x] The Patch panel's search box and categories (`PatchBar.tsx`), with e2e tests on a computer and a phone (`e2e/patchSearch.spec.ts`)
 - [x] Escape, Enter and the focus on opening; the search and category kept until a reload
 - [x] After its own review (2026-10-28): Escape clears the search from anywhere in the panel, not only the box; Enter with nothing typed loads nothing (it loaded Init over the sound); spaces or punctuation alone are no search (`isSearch`; "?" listed all 91 in one row); a kept search is selected on opening again, so typing starts a new one; Search All gives the focus to the box rather than losing it with the button, and is 24 px tall. The rest went to the inbox
+
+Later, 2026-10-28, decided by the owner (issue 72): the box is named "Search"; the categories are one sideways-scrolling row up to 860 px; a polite status says how many were found; under the Tutorials or a Preset group, My Patches says where saved Patches are, or "None saved yet."; the matcher is `matchesWords`, and the search and categories are their own component, `PatchSearch.tsx`.

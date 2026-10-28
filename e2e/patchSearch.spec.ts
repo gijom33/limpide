@@ -3,7 +3,7 @@ import { expect, type Page, test } from '@playwright/test';
 // Issue 69: a search box and a row of categories narrow the Patch panel.
 const patchName = (page: Page) => page.getByRole('button', { name: /^Patch:/ });
 const panel = (page: Page) => page.getByRole('dialog', { name: 'Patches' });
-const search = (page: Page) => panel(page).getByRole('searchbox', { name: 'Search Presets' });
+const search = (page: Page) => panel(page).getByRole('searchbox', { name: 'Search', exact: true });
 const category = (page: Page, name: string) => panel(page).getByRole('radiogroup', { name: 'Category' }).getByRole('radio', { name, exact: true });
 const row = (page: Page, name: string) => panel(page).getByRole('group', { name, exact: true });
 
@@ -85,7 +85,7 @@ test.describe('on a computer', () => {
     await expect(row(page, 'Bass').getByRole('button', { name: 'Acid', exact: true })).toBeVisible();
     await expect(row(page, 'Leads')).toBeHidden();
     await expect(row(page, 'Tutorials')).toBeHidden();
-    await expect(panel(page).getByText('None saved yet.')).toBeHidden(); // My Patches is a category of its own
+    await expect(panel(page).getByText('None saved yet.')).toBeVisible(); // none saved, under any category (issue 72)
     await expect(panel(page).getByRole('textbox', { name: 'Patch name' })).toBeVisible(); // but Save stays
 
     await search(page).fill('vibrato');
@@ -132,6 +132,55 @@ test.describe('on a computer', () => {
     await page.keyboard.press('ArrowRight');
     await expect(category(page, 'Tutorials')).toBeFocused();
     await expect(category(page, 'Tutorials')).toHaveAttribute('aria-checked', 'true');
+  });
+
+  test('the number found is said once typing pauses, and nothing once the search is cleared (issue 72)', async ({ page }) => {
+    await patchName(page).click();
+    const count = panel(page).getByRole('status').filter({ hasText: /found/ });
+    await page.keyboard.type('bell');
+    await expect(count).toHaveText('3 found'); // Twelfth Bell and Bell Chords by name, Glass Keys by description
+    await search(page).fill('zzz');
+    await expect(count).toHaveText('Nothing found');
+    await panel(page).getByRole('button', { name: 'Clear the search' }).click();
+    await expect(count).toHaveCount(0);
+  });
+
+  test('under a Preset group, My Patches says where the saved Patches are (issue 72)', async ({ page }) => {
+    await patchName(page).click();
+    await panel(page).getByRole('textbox', { name: 'Patch name' }).fill('My bass');
+    await panel(page).getByRole('button', { name: 'Save', exact: true }).click();
+    await category(page, 'Bass').click();
+    await expect(panel(page).getByText('Your saved Patches are under All and My Patches.')).toBeVisible();
+    await expect(panel(page).getByRole('button', { name: 'Load My bass' })).toBeHidden();
+    await category(page, 'Tutorials').click();
+    await expect(panel(page).getByText('Your saved Patches are under All and My Patches.')).toBeVisible();
+    await category(page, 'All').click();
+    await expect(panel(page).getByRole('button', { name: 'Load My bass' })).toBeVisible();
+    await expect(panel(page).getByText('Your saved Patches are under All and My Patches.')).toBeHidden();
+  });
+
+  test('the categories are one row scrolling sideways up to 860 px wide, and wrap beside the search box above (issue 72)', async ({ page }) => {
+    const layout = () =>
+      panel(page)
+        .getByRole('radiogroup', { name: 'Category' })
+        .evaluate((el) => {
+          const pill = el.firstElementChild!.getBoundingClientRect();
+          const box = document.querySelector('.patch-panel input[type="search"]')!.getBoundingClientRect();
+          return { height: el.getBoundingClientRect().height, pill: pill.height, scrolls: el.scrollWidth > el.clientWidth, below: el.getBoundingClientRect().top >= box.bottom };
+        });
+    await page.setViewportSize({ width: 700, height: 900 });
+    await patchName(page).click();
+    const narrow = await layout();
+    expect(narrow.height).toBeCloseTo(narrow.pill, 0);
+    expect(narrow.scrolls).toBe(true);
+    expect(narrow.below).toBe(true);
+    await page.keyboard.press('Escape');
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await patchName(page).click();
+    const wide = await layout();
+    expect(wide.below).toBe(false);
+    expect(wide.scrolls).toBe(false);
+    expect(wide.height).toBeGreaterThan(wide.pill * 1.5); // wrapping
   });
 });
 
