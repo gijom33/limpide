@@ -102,7 +102,7 @@ export const TRACK: Track = {
       ] },
     // The break (issue 60): held chords on a pad whose Filter Envelope takes seconds to open, so the Effective Cutoff
     // climbs across the Timeline under each chord.
-    { preset: 'Sweep Pad', caption: 'A pad whose Filter opens over seconds: watch the Effective Cutoff climb across the Timeline under each chord.',
+    { preset: 'Sweep Pad', caption: 'A pad whose Filter opens over seconds: watch the Cutoff climb across the Timeline under each chord.',
       phrase: 'A2+E3+A3+C4:8 F2+C3+F3+A3:8',
       moves: [{ id: 'resonance', from: 0.5, to: 0.65 }] },
     // The hook again (issue 60), brighter: the Cutoff opens wide and the Pulse Width comes back to square, so the

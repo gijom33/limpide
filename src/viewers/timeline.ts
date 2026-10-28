@@ -13,11 +13,13 @@ interface Source {
   now(): number;
   /** The Cutoff knob's own setting at a moment, drawn faintly so the Envelope's push away from it shows. */
   baseCutoffAt(time: number): number;
+  /** The Volume knob's own setting at a moment, drawn faintly so an LFO's dip below it shows. */
+  baseVolumeAt(time: number): number;
 }
 
 /**
- * The Envelope Timeline: the last few seconds of the Amp and Filter Envelopes (areas, 0–1 on a shared scale) and
- * the Effective Cutoff (a line, log Hz on the right), computed from the Modulation model for past moments. "Now" is
+ * The Envelope Timeline: the last few seconds of the Amp and Filter Envelopes (areas, 0–1 on a shared scale), the
+ * Volume (a line on the same scale) and the Effective Cutoff (a line, log Hz on the right), computed from the Modulation model for past moments. "Now" is
  * the right edge.
  */
 export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: () => ViewSettings) {
@@ -80,24 +82,30 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
     // leaves it still (the owner, 2026-10-28), its dip shown by the Volume knob's ring.
     area('--stage-amp', 0.1, (m) => m.amp);
 
-    // The Cutoff knob's setting (dashed), then the Effective Cutoff the Filter Envelope makes of it.
-    g.strokeStyle = cssVar(canvas, '--cutoff-line');
-    g.globalAlpha = 0.5;
-    g.lineWidth = 1;
-    g.setLineDash([4, 4]);
-    g.beginPath();
-    for (let x = 0; x < columns; x++) {
-      const y = yHz(source.baseCutoffAt(timeAt(x + 0.5)));
-      if (x) g.lineTo(x, y);
-      else g.moveTo(x, y);
-    }
-    g.stroke();
-    g.setLineDash([]);
-    g.globalAlpha = 1;
-    g.lineWidth = curveWidth(canvas);
-    g.beginPath();
-    samples.forEach((m, x) => (x ? g.lineTo(x, yHz(m.cutoff)) : g.moveTo(x, yHz(m.cutoff))));
-    g.stroke();
+    // A knob's setting (dashed), then its Effective value the modulation makes of it: the Volume on the 0–1 level
+    // scale (an LFO on Volume dips it, the owner, 2026-10-28), then the Cutoff on the Hz scale.
+    const line = (colourVar: string, y: (m: Modulation) => number, base: (time: number) => number) => {
+      g.strokeStyle = cssVar(canvas, colourVar);
+      g.globalAlpha = 0.5;
+      g.lineWidth = 1;
+      g.setLineDash([4, 4]);
+      g.beginPath();
+      for (let x = 0; x < columns; x++) {
+        const yBase = base(timeAt(x + 0.5));
+        if (x) g.lineTo(x, yBase);
+        else g.moveTo(x, yBase);
+      }
+      g.stroke();
+      g.setLineDash([]);
+      g.globalAlpha = 1;
+      g.lineWidth = curveWidth(canvas);
+      g.beginPath();
+      samples.forEach((m, x) => (x ? g.lineTo(x, y(m)) : g.moveTo(x, y(m))));
+      g.stroke();
+    };
+    line('--volume-line', (m) => yLevel(m.volume), (time) => yLevel(source.baseVolumeAt(time)));
+    canvas.dataset.volume = (latest?.volume ?? 0).toFixed(3);
+    line('--cutoff-line', (m) => yHz(m.cutoff), (time) => yHz(source.baseCutoffAt(time)));
 
     // "Now" on each line, as on the LFO's plot: a dot in its colour, ringed in the background so lines crossing
     // there stay apart.
@@ -115,6 +123,7 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
     };
     dot('--stage-filter', yLevel(last.filter));
     dot('--stage-amp', yLevel(last.amp));
+    dot('--volume-line', yLevel(last.volume));
     dot('--cutoff-line', yHz(last.cutoff));
 
     // The Cutoff scale's labels over the traces, each on a halo of the background, so the Cutoff line never strikes

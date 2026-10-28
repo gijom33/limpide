@@ -9,7 +9,8 @@ import { TIPS } from './tips';
 const KEY = [
   ['amp', 'Amp Envelope', TIPS.timelineAmp],
   ['filterEnvelope', 'Filter Envelope', TIPS.timelineFilterEnvelope],
-  ['cutoff', 'Effective Cutoff', TIPS.timelineCutoff],
+  ['cutoff', 'Cutoff', TIPS.timelineCutoff],
+  ['volume', 'Volume', TIPS.timelineVolume],
 ] as const;
 
 /** The LFO & Envelopes section, under the signal chain: the LFO beside the Envelope Timeline, in the modulation colour. */

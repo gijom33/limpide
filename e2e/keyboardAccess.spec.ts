@@ -80,11 +80,11 @@ test('the Viewers are images with names, the LFO plots say what they show', asyn
 
 test('the Timeline key’s entries are reached by Tab, named, and described, their tooltip shown on focus (issue 67)', async ({ page }) => {
   await page.goto('/');
-  const names = ['Amp Envelope', 'Filter Envelope', 'Effective Cutoff'];
+  const names = ['Amp Envelope', 'Filter Envelope', 'Cutoff', 'Volume'];
   for (const name of names) {
     const entry = page.locator('.timeline-key').getByRole('img', { name, exact: true });
     await expect(entry, name).toHaveAttribute('tabindex', '0');
-    await expect(entry, name).toHaveAccessibleDescription(/\w{12,}/);
+    await expect(entry, name).toHaveAccessibleDescription(/(\w+\W+){6,}/);
   }
   // By Tab from the section's heading tip: each entry in turn, its tooltip shown.
   await page.locator('.timeline-key').getByRole('img', { name: names[0] }).focus();

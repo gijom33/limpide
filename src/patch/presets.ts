@@ -93,7 +93,7 @@ group('Filter', [
   ['Key Track Demo', 'Full Key Track: play low then high, and the Response Curve moves with the Harmonic Markers, so every Note keeps the same brightness.', {
     cutoff: 500, resonance: 0.35, filterSlope: 24, keyTrack: 1, ampSustain: 1,
   }],
-  ['Velocity Bite', 'Velocity opens the Filter: tap a MIDI pad softly then hard (or click low on a piano key) and watch the Effective Cutoff jump.', {
+  ['Velocity Bite', 'Velocity opens the Filter: tap a MIDI pad softly then hard (or click low on a piano key) and watch the Timeline’s Cutoff jump.', {
     cutoff: 300, resonance: 0.4, filterSlope: 24, velocityCutoff: 1, filterEnvAmount: 2, filterDecay: 0.3, filterSustain: 0.2, ampSustain: 0.8,
   }],
 ]);
@@ -137,7 +137,7 @@ group('LFO', [
   ['Stepped', 'A square LFO on the Cutoff: no sweep, just two places, and the Response Curve hops between them.', {
     cutoff: 600, resonance: 0.4, ampSustain: 1, lfoWaveform: 'square', lfoDestination: 'cutoff', lfoRate: 1, lfoAmount: 0.6,
   }],
-  ['Ramp', 'A saw LFO on the Cutoff: it climbs for a second, then drops at once. Watch the Timeline’s Effective Cutoff draw the teeth.', {
+  ['Ramp', 'A saw LFO on the Cutoff: it climbs for a second, then drops at once. Watch the Timeline’s Cutoff draw the teeth.', {
     cutoff: 600, resonance: 0.4, ampSustain: 1, lfoWaveform: 'saw', lfoDestination: 'cutoff', lfoRate: 1, lfoAmount: 0.6,
   }],
   ['Sidebands', 'Vibrato at 20 Hz is too fast to hear as vibrato: each Harmonic grows sidebands either side of it in the Spectrum.', {
@@ -318,7 +318,7 @@ group('Pads', [
     lfoRate: 0.2, lfoAmount: 0.1, lfo2Destination: 'pitch', lfo2Rate: 5, lfo2Amount: 0.15,
     ampAttack: 0.6, ampSustain: 0.9, ampRelease: 1.5,
   }],
-  ['Sweep Pad', 'A Filter Envelope seconds long: hold a Note and watch the Effective Cutoff climb across the whole Timeline.', {
+  ['Sweep Pad', 'A Filter Envelope seconds long: hold a Note and watch the Cutoff climb across the whole Timeline.', {
     voices: 8, osc2Detune: -9, mixOsc2: 0.8, filterSlope: 24, cutoff: 150, resonance: 0.5, filterEnvAmount: 5, filterAttack: 4, filterDecay: 4,
     filterSustain: 0.4, filterRelease: 3, ampAttack: 0.5, ampSustain: 1, ampRelease: 3,
   }],
@@ -436,7 +436,7 @@ group('Movement & Effects', [
   ['Helicopter', 'A fast square LFO chopping the Filter on Noise and a Sub: rotor blades.', {
     mixOsc1: 0, mixNoise: 0.8, mixSub: 0.5, cutoff: 500, resonance: 0.3, lfoWaveform: 'square', lfoRate: 11, lfoAmount: 0.9, ampSustain: 1,
   }],
-  ['Laser', 'A Filter Envelope that falls fast from far above: each Note zaps down. Look at the Effective Cutoff dive on the Timeline.', {
+  ['Laser', 'A Filter Envelope that falls fast from far above: each Note zaps down. Look at the Cutoff dive on the Timeline.', {
     waveform: 'square', filterSlope: 24, cutoff: 200, resonance: 0.85, filterEnvAmount: 5, filterAttack: 0.001, filterDecay: 0.15,
     filterSustain: 0, ampAttack: 0.001, ampDecay: 0.3, ampSustain: 0, ampRelease: 0.1,
   }],

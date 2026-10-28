@@ -115,7 +115,7 @@ export const TIPS = {
   },
   timeline: {
     title: 'LFO & Envelopes',
-    body: 'What changes the sound over time: the LFO, and the Envelope Timeline beside it. The Timeline shows the last four seconds. Violet: the Amp Envelope. Orange: the Effective Cutoff, with the frequencies the Filter lets through shaded below it. The faint dashed line is the Cutoff knob itself.',
+    body: 'What changes the sound over time: the LFO, and the Envelope Timeline beside it. The Timeline shows the last four seconds. Violet: the Amp Envelope, and the Volume as a light line. Orange: the Cutoff, with the frequencies the Filter lets through shaded below it. The faint dashed lines are the Cutoff and Volume knobs themselves.',
     how: 'Play a Note and let go: the Release is drawn after the key comes up.',
   },
   lfo: {
@@ -244,12 +244,16 @@ export const TIPS = {
     body: 'Orange fill: the Filter Envelope’s level, nothing to full. Times Envelope Amount, it is how far it pushes the Cutoff.',
   },
   timelineCutoff: {
-    title: 'Effective Cutoff',
+    title: 'Cutoff',
     body: 'Orange line: where the Filter’s Cutoff really is, after the Filter Envelope, the LFOs, Velocity and Key Track, on the frequency scale at the right. The faint dashed line is the Cutoff knob’s own setting.',
+  },
+  timelineVolume: {
+    title: 'Volume',
+    body: 'Light violet line: the Amp’s Volume, after an LFO on Volume dips it (tremolo), nothing to full on the Envelopes’ scale. The faint dashed line is the Volume knob’s own setting.',
   },
   envelopeTimeline: {
     title: 'Envelope Timeline',
-    body: 'The last four seconds, the newest at the right: the Amp Envelope (violet), the Filter Envelope (orange fill) and the Effective Cutoff (orange line).',
+    body: 'The last four seconds, the newest at the right: the Amp Envelope (violet), the Filter Envelope (orange fill), the Cutoff (orange line) and the Volume (light violet line).',
     how: 'Play a Note and let go: the Release is drawn after the key comes up.',
   },
 } satisfies Record<string, TipContent>;
@@ -310,6 +314,6 @@ export const OVERLAY_TIPS: Record<Overlay, TipContent> = {
   },
   maths: {
     title: 'Maths Layer',
-    body: 'The quantities behind the sound: Resonance as the Filter’s Q, the Mixer’s levels and the Amp’s Sustain in dB, the Harmonic formula of Osc 1’s Waveform on the Oscillator Spectrum, the Response Curve’s formula on the Filter Spectrum, and the Effective Cutoff’s value on the Timeline.',
+    body: 'The quantities behind the sound: Resonance as the Filter’s Q, the Mixer’s levels and the Amp’s Sustain in dB, the Harmonic formula of Osc 1’s Waveform on the Oscillator Spectrum, the Response Curve’s formula on the Filter Spectrum, and the Cutoff’s value on the Timeline.',
   },
 };
