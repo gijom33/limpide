@@ -6,7 +6,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
-- 2026-10-28, the owner: "Make the demo popup closeable."
 - 2026-10-28, from the 1.14.0 review: pointing at Velocity (and now Key Track) dims the blue ring, as the Filter Envelope's controls do, which was not asked.
 - 2026-10-28, from the 1.14.0 review: on a window wider than 600 px, hovering a knob or fader changes nothing, since its value already shows under its name. The owner asked for the name to be replaced by the value: on wide windows too, or is the value line enough?
 - 2026-10-28, from the 1.14.0 review: Swell's description says the Timeline shows its 1.5 s ramp, which does not fit a 1 s Env Timeline; Long Tail's four-second tail is wider than the 2 s default. Point them at the Env Timeline choice?
@@ -76,3 +75,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-28, night: the owner's idea, Velocity's thin ring greyed a little, done at once, decided by the owner: it is drawn at 55 % (dimmed further, 35 %, when pointing elsewhere dims the white rings).
 2026-10-28, night: the owner's bug, Poly Pluck's white ring jumping with each key, fixed at once, decided by the owner (of two ways, a grey ring for Key Track): no ring moves from Note to Note any more. Key Track draws grey rings below and above the white and Velocity's, over what it can take away or add across the on-screen piano's 17 keys, so they change with the octave only (the Demo moves the piano to show its part); the blue ring no longer follows Velocity or Key Track either. Pointing at Key Track no longer draws a blue share, so no source does and the share is gone. The Modulation model's `played`, added earlier tonight for the shifting rings, went with them. Also answers the review's line about Key Track moving the white rings.
 2026-10-28, night: the owner's ask, done at once, decided by the owner: Velocity's and Key Track's grey rings are as wide as the Filter Envelope's white ring; all three end square, the white ring starting exactly at the knob's value where the orange arc ends (both flat-ended).
+2026-10-28, night: the owner's ask, a closable Demo card, done at once, decided by the owner: an × beside Stop closes the card and leaves the Demo playing; Stop or the lit Demo button stop it, and the next Demo brings the card back (what the × does, Claude's call, open to the owner).

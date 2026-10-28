@@ -1156,6 +1156,8 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   background: var(--panel); border: 1px solid var(--accent); border-radius: var(--radius-panel); box-shadow: var(--shadow-panel);
 }
 :root[data-docked] main { margin-bottom: calc(var(--docked-h, 0px) + var(--space-3)); }
+/* The Demo's card closed with its ×, the Demo playing on (the owner, 2026-10-28). */
+.docked[hidden] { display: none; }
 /* Folded, a card keeps only its top row (issue 59). From the 2 × 2 layout up, that row is the handle it moves by. */
 /* Its live text, the Demo's caption or a Tutorial's words, only goes out of sight: a screen reader still hears it change
    (issue 67). */

@@ -233,3 +233,17 @@ test('where the page fits its window, the Demo’s card adds no scroll bar: it s
   await page.waitForTimeout(300);
   expect(await scrolls()).toBe(false);
 });
+
+test('the Demo’s card closes with its ×, the Demo playing on, and comes back with the next Demo (the owner, 2026-10-28)', async ({ page }) => {
+  await page.goto('/');
+  await demo(page).click();
+  const card = page.getByRole('region', { name: 'Demo' });
+  await expect(card).toContainText('Kick');
+  await card.getByRole('button', { name: 'Close the card' }).click();
+  await expect(card).toBeHidden();
+  await expect(demo(page)).toHaveAttribute('aria-pressed', 'true'); // still playing
+  await demo(page).click(); // the lit Demo button stops it
+  await expect(demo(page)).toHaveAttribute('aria-pressed', 'false');
+  await demo(page).click();
+  await expect(card).toContainText('Kick');
+});
