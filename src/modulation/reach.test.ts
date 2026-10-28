@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { defaultPatch, type Patch } from '../patch/patch';
-import { cutoffReach, detuneReach, pulseWidthReach, resonanceReach, semitoneReach, volumeReach } from './reach';
+import { cutoffReach, detuneReach, keyTrackOctaves, pulseWidthReach, resonanceReach, semitoneReach, volumeReach } from './reach';
 
 const patch = (changes: Partial<Patch>): Patch => ({ ...defaultPatch(), cutoff: 1000, ...changes });
 
@@ -107,3 +107,16 @@ describe('how far the LFOs reach the Volume knob (issue 62)', () => {
   });
 });
 
+
+describe('how far Key Track can take the Cutoff over a span of Notes (the grey Key Track rings)', () => {
+  it('down for Notes below C4, up for Notes above, in proportion to Key Track', () => {
+    expect(keyTrackOctaves(patch({ keyTrack: 1 }), 48, 84)).toEqual([-1, 2]);
+    expect(keyTrackOctaves(patch({ keyTrack: 0.5 }), 48, 84)).toEqual([-0.5, 1]);
+  });
+
+  it('one way only when every Note is on one side of C4, and nowhere with Key Track off', () => {
+    expect(keyTrackOctaves(patch({ keyTrack: 1 }), 60, 72)).toEqual([0, 1]);
+    expect(keyTrackOctaves(patch({ keyTrack: 1 }), 36, 48)).toEqual([-2, 0]);
+    expect(keyTrackOctaves(patch({ keyTrack: 0 }), 36, 84)).toEqual([0, 0]);
+  });
+});

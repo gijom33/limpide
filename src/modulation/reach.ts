@@ -64,6 +64,15 @@ export function cutoffReach(patch: Patch, sounding: Sounding | null): Reach | nu
   return { lo: hz(lo), hi: hz(hi), shares };
 }
 
+/**
+ * How far Key Track can take the Cutoff, in octaves, over Notes from `low` to `high`: down for those below C4, up for
+ * those above, nothing where it is off (the Cutoff knob's grey Key Track rings, the owner, 2026-10-28).
+ */
+export function keyTrackOctaves(patch: Patch, low: number, high: number): [number, number] {
+  const [a, b] = [low, high].map((note) => (patch.keyTrack * (note - KEY_TRACK_CENTRE)) / 12);
+  return [Math.min(0, a, b) || 0, Math.max(0, a, b) || 0]; // || 0: no −0 from Key Track off below C4
+}
+
 /** The LFOs' reach alone on the Cutoff (both together when both aim at it): the knob's blue ring (issue 63). */
 export const lfoCutoffReach = (patch: Patch) => cutoffReach({ ...patch, filterEnvAmount: 0, velocityCutoff: 0, keyTrack: 0 }, null);
 

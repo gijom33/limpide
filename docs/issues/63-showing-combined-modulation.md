@@ -52,3 +52,5 @@ How it was built: `src/modulation/lfoTargets.ts` (what the active LFOs move, and
 
 - [x] A prototype of the candidates, on its own branch (stopped by the owner)
 - [x] Build the owner's final design
+
+Later, 2026-10-28, decided by the owner (see the inbox's Triaged lines): no ring moves from Note to Note; Velocity and Key Track got their own grey rings beyond the white one, so decisions 7 and 22 no longer hold for them: no source lights a blue share, and pointing at the Filter Envelope, Velocity or Key Track dims the blue ring. The dot rides the knob's own track whatever moves it.

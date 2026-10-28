@@ -47,7 +47,16 @@ export function DemoBar({ playing, tookOver, onStop, onPlayAgain, onDismiss }: P
             <button type="button" className="tool" onClick={onStop}>
               Stop
             </button>
-            <button type="button" className="tool tool-icon" aria-label="Close the card" onClick={() => setClosed(true)}>
+            <button
+                type="button"
+                className="tool tool-icon"
+                aria-label="Close the card"
+                onClick={() => {
+                  setClosed(true);
+                  // The card goes, and focus with it: back to the Demo button, which stops it.
+                  document.querySelector<HTMLElement>('button[aria-label="Demo"]')?.focus();
+                }}
+              >
               <CloseIcon />
             </button>
           </div>

@@ -2,8 +2,7 @@ import { createContext, type RefObject, useContext, useEffect, useRef } from 're
 import type { SynthEngine } from '../engine/synthEngine';
 import { keyToNote } from '../input/keyboardLayout';
 import { effectiveValue } from '../modulation/destinations';
-import { KEY_TRACK_CENTRE } from '../modulation/modulationModel';
-import { cutoffReach, detuneReach, lfoCutoffReach, pulseWidthReach, type Reach, resonanceReach, semitoneReach, volumeReach } from '../modulation/reach';
+import { cutoffReach, detuneReach, keyTrackOctaves, lfoCutoffReach, pulseWidthReach, type Reach, resonanceReach, semitoneReach, volumeReach } from '../modulation/reach';
 import { PARAMS, type ParamId, type Patch } from '../patch/patch';
 import { valueToPosition } from '../patch/taper';
 import { addToRenderLoop } from '../viewers/renderLoop';
@@ -22,8 +21,8 @@ type Range = [number, number];
 /**
  * Where modulation can take a Parameter, and its value at this moment while a Note sounds. Every ring holds still
  * while Notes play (the owner, 2026-10-28): the LFOs' reach (both together when both aim at it); on the Cutoff, the
- * Filter Envelope's sweep, then, thinner and beyond it, all Velocity can add, soft to hard, and all Key Track can
- * add or take away over the on-screen piano's keys. The dot (the Effective Cutoff) runs along them whatever the
+ * Filter Envelope's sweep, then, greyed and beyond it, all Velocity can add, soft to hard, and all Key Track can
+ * add or take away over the on-screen piano's keys and an octave either side. The dot (the Effective Cutoff) runs along them whatever the
  * Note.
  */
 function modulated(
@@ -36,14 +35,15 @@ function modulated(
   const now = m.amp > AUDIBLE ? effectiveValue(id, patch, m) : null;
   if (id === 'cutoff') {
     const lfos = lfoCutoffReach(patch);
-    const still = cutoffReach({ ...patch, lfoAmount: 0, lfo2Amount: 0, keyTrack: 0 }, null);
-    const env = still?.shares.filterEnvelope;
+    const sweep = cutoffReach({ ...patch, lfoAmount: 0, lfo2Amount: 0, keyTrack: 0 }, null);
+    const env = sweep?.shares.filterEnvelope;
     const top = env ? Math.max(env[0], env[1]) : patch.cutoff; // Velocity only raises the Cutoff: past the sweep's top
-    const [lo, hi] = still ? [still.lo, still.hi] : [patch.cutoff, patch.cutoff];
-    // Key Track over the piano's lowest and highest keys, in octaves: below the lowest ring and above the highest.
-    const [low, high] = [keyToNote('KeyA', octave)!, keyToNote('Semicolon', octave)!].map((note) => (patch.keyTrack * (note - KEY_TRACK_CENTRE)) / 12);
-    const keyTrack: Range[] = [...(low < 0 ? [[lo * 2 ** low, lo] as Range] : []), ...(high > 0 ? [[hi, hi * 2 ** high] as Range] : [])];
-    if (!lfos && !still && !keyTrack.length) return null;
+    const [lo, hi] = sweep ? [sweep.lo, sweep.hi] : [patch.cutoff, patch.cutoff];
+    // Key Track over the piano's keys and an octave either side, below the lowest ring and above the highest: the
+    // Demo moves the piano to show most of a part's Notes, not all (Poly Pluck's arpeggio dips below its C4).
+    const [down, up] = keyTrackOctaves(patch, keyToNote('KeyA', octave)! - 12, keyToNote('Semicolon', octave)! + 12);
+    const keyTrack: Range[] = [...(down < 0 ? [[lo * 2 ** down, lo] as Range] : []), ...(up > 0 ? [[hi, hi * 2 ** up] as Range] : [])];
+    if (!lfos && !sweep && !keyTrack.length) return null;
     return {
       reach: lfos,
       envelope: env,
@@ -106,7 +106,7 @@ interface Props {
 /**
  * Serum-style modulation on a knob (issue 20, then issue 63): a blue ring outside the value arc over the range the
  * LFOs can take the Parameter (both together when both aim at it); on the knob's own track, a thin white ring over
- * the Filter Envelope's sweep and thinner grey ones beyond it over what Velocity and Key Track can add; and a dot at
+ * the Filter Envelope's sweep and grey ones beyond it over what Velocity and Key Track can add; and a dot at
  * its Effective value while a Note sounds, on the knob's own track. Pointing at the Filter Envelope, Velocity or Key
  * Track dims the LFOs' ring; the LFOs' own controls change nothing on the rings. Drawn by the render loop, outside
  * React (ADR-0002), from the Modulation model (ADR-0003). Reduced motion keeps the rings and drops the moving dot.
@@ -130,10 +130,12 @@ export function ModulationRing({ id, centre, radius, trackRadius, dotRadius, arc
     return addToRenderLoop(() => {
       const [r, e, v, k, d] = [ring.current, envelope.current, velocity.current, keyTrack.current, dot.current];
       if (!r || !e || !v || !k || !d || !context.patch.current) return;
-      const now = modulated(id, context.patch.current, context.engine, context.octave.current ?? 4);
+      const now = modulated(id, context.patch.current, context.engine, context.octave.current);
       const shown = (path: SVGPathElement, ranges: Range[] | undefined, at: number) => {
-        path.style.display = ranges ? '' : 'none';
-        if (ranges) path.setAttribute('d', ranges.map(([from, to]) => draw.current.arc(position(from), position(to), at)).join(' '));
+        // A range pinned past the dial's end draws nothing (an arc is never shorter than half a degree).
+        const seen = ranges?.filter(([from, to]) => Math.abs(position(to) - position(from)) > 0.001);
+        path.style.display = seen?.length ? '' : 'none';
+        if (seen?.length) path.setAttribute('d', seen.map(([from, to]) => draw.current.arc(position(from), position(to), at)).join(' '));
       };
       const reach = now?.reach;
       shown(r, reach ? [[reach.lo, reach.hi]] : undefined, radius);
