@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** done (2026-10-27), but for the taste pass listed at the end. Was: the first two done (2026-10-26); the rest to do. **Before the LinkedIn post:** the first two (a 1366 × 768 laptop is common)
+**Status:** ready-for-human · enhancement. Left: the taste pass listed at the end, for the owner's eye. The rest done (2026-10-27). Was: the first two done (2026-10-26); the rest to do. **Before the LinkedIn post:** the first two (a 1366 × 768 laptop is common)
 
 - [x] The Filter Envelope's Release fader wraps alone onto a second line, and the Osc tabs fall below their heading, at 1331–1434 px (1366 × 768 included, where the page then scrolls), 601–603 px and 345–369 px. Fixed: on laptop windows from 1331 px the fader columns take what the row leaves (44 to 56 px: 47 at 1331, 50 at 1366, 56 from 1434); at 601 px they may go to 37 ("Release" was already wider than its 40 px column); on phones under about 372 px (a stage under 331 px) the row names go above, as they did under 345. The Filter Envelope stays on one line from 320 to 1920 px, and 1366 × 768 scrolls 835 px where it scrolled 957
 - [x] One inner margin for every section on every layout: on phones the stages have 12 px and LFO & Envelopes 16; at 861–960 px 8 against 16 (the 2 × 2 layout was fixed in 1.8.1). An e2e test like the 2 × 2 one, at every layout. Done: LFO & Envelopes takes the stages' padding on phones (12 px) and at 861–960 px (8 px); `e2e/toolbarLayout.spec.ts` checks every heading's inset at six sizes, and the Filter Envelope on one line at nine

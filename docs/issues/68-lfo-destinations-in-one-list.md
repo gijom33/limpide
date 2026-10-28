@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** to build; no visible change
+**Status:** ready-for-agent · enhancement. To build; no visible change
 
 - [ ] One list of Destinations (id, label, stage), read by the Patch's types and choices, the Tutorials, the picker and its colours
 - [ ] `tremolo()` built on `lfoOffset`

@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** built, to verify on the real C16. The layout is data in `src/midi/c16.ts` (tested at that seam only, the owner's choice): 58 Mappings on channel 1. It is applied by itself once, the first time a C16 is seen with nothing mapped (`limpide.c16Layout` remembers it, so removing it sticks); the MIDI panel's "C16 layout" button, offered while a C16 is connected, puts it back. Knobs find their Encoder Mode on their first turn (three values, then it is kept); buttons are toggles, so every message is a press, and on a choice (Retrigger) a press steps to the next option. Each bank has its own CCs, so the first control touched after a bank switch tells which bank it is: its section is brought into view (the section strip's follow, on a phone; not while learning). ADR-0009 records the decision to ship this one layout.
+**Status:** ready-for-human · enhancement. Built, to verify on the real C16. The layout is data in `src/midi/c16.ts` (tested at that seam only, the owner's choice): 58 Mappings on channel 1. It is applied by itself once, the first time a C16 is seen with nothing mapped (`limpide.c16Layout` remembers it, so removing it sticks); the MIDI panel's "C16 layout" button, offered while a C16 is connected, puts it back. Knobs find their Encoder Mode on their first turn (three values, then it is kept); buttons are toggles, so every message is a press, and on a choice (Retrigger) a press steps to the next option. Each bank has its own CCs, so the first control touched after a bank switch tells which bank it is: its section is brought into view (the section strip's follow, on a phone; not while learning). ADR-0009 records the decision to ship this one layout.
 
 | Bank | Encoders 1–8 | Faders 1–4 |
 |---|---|---|

@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** built, to try on the friend's phone. From 601 to 860 px the sections sit 2 × 2: the chain is two columns, LFO & Envelopes in the Amp's row (it lives inside the chain since issue 43; before, `main` was the grid and the chain let its stages into it with `display: contents`), and each row's Viewers line up through the stages' subgrid. Below, a phone's layout; above, three stages across, unchanged.
+**Status:** ready-for-human · enhancement. Built, to try on the friend's phone. From 601 to 860 px the sections sit 2 × 2: the chain is two columns, LFO & Envelopes in the Amp's row (it lives inside the chain since issue 43; before, `main` was the grid and the chain let its stages into it with `display: contents`), and each row's Viewers line up through the stages' subgrid. Below, a phone's layout; above, three stages across, unchanged.
 
 - [x] Find the widths where three stages no longer leave the Viewers their floor, and where two do: the new layout's range, measured rather than guessed. From 601 to 860 px the stages were one under another, a Viewer up to 810 × 260 and the Oscillators alone on a foldable's screen; from 861 px three across, at the Viewers' floor (248 × 78) but the whole instrument on screen. The range is therefore 601 to 860; three across keeps 861 and up, where a laptop window or a tablet on its side fits without scrolling
 - [x] Sections 2 × 2 in that range, each stage's Viewers at their floor or wider; the playing row and the piano as on a laptop

@@ -4,11 +4,11 @@
 
 **Blocked by:** none
 
-**Status:** done (2026-10-26); CI's new steps to confirm on the next push. **Before the LinkedIn post:** yes (the post invites people to read the repository)
+**Status:** done (2026-10-26); closed (2026-10-28, decided by the owner): CI's new steps (the engine and Playwright suites before the deploy) have run green on every deploy since. **Before the LinkedIn post:** yes (the post invites people to read the repository)
 
 - [x] The PRD: "Limpide (formerly Limpide)" (line 11), tooltips no longer out of scope, the testing decisions as they are (three suites, not one smoke test)
 - [x] ADR-0007's consequences agree with each other and with the code (the Amp Tap's default is the sum, `'all'`); ADR-0001 no longer promises the Ghost. ADR-0007 is amended in place with a dated line, not superseded: whether a reversal should take a new ADR is for issue 56
 - [x] `CONTEXT.md`: the Preset entry without a count that ages; the stray `_Avoid_` line moved to Preset
 - [x] The comment at `src/engine/synthEngine.ts:15` on the Amp Tap's default
-- [x] CI (`.github/workflows/deploy.yml`) runs the engine suite and the Playwright e2e suite before deploying, both browsers, or the README says what it runs. Done: both run before the build is deployed, a failure retried once on CI (a WebKit crash was seen locally), the test results kept a week when one fails; to confirm on the next push
+- [x] CI (`.github/workflows/deploy.yml`) runs the engine suite and the Playwright e2e suite before deploying, both browsers, or the README says what it runs. Done: both run before the build is deployed, a failure retried once on CI (a WebKit crash was seen locally), the test results kept a week when one fails; confirmed on every deploy since (2026-10-28)
 - [x] A pass over every ADR and the glossary against the code, findings fixed or logged. Done (2026-10-26): ADR-0003 (the Ghost, two twin filters, two LFOs), ADR-0004 (Encoder Mode detection, Quick Setup for any Controller), ADR-0006 (no OVER label since f3aa691, the compressed margin, LIMITING, the Sub, the master level by √Voices, the Amp Tap's sum), ADR-0008 (compact knob sizes, the play list's origin), ADR-0009 (Glide on bank A); the glossary's LFO, Mixer, Effective Cutoff, Nominal Level, Harmonic Marker, Envelope Timeline, Snapshot, Mapping, Action, MIDI Learn and Quick Setup

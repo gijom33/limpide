@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** done (2026-10-26), but for the owner's GitHub profile. **Before the LinkedIn post:** yes (the post is about the build as much as the synth)
+**Status:** ready-for-human · enhancement. Left: the owner's GitHub profile. The rest done (2026-10-26). **Before the LinkedIn post:** yes (the post is about the build as much as the synth)
 
 - [x] About: one honest line on how it was built (designed and directed by the owner, code written with Claude Code), and the owner's name linked to LinkedIn or a site. Wording decided by the owner (2026-10-26): "Designed and directed by Guillaume Boillet; code written with Claude Code, Anthropic’s AI coding agent.", the name linked to the owner's LinkedIn
 - [x] README: a screenshot or short GIF under the tagline, and one plain-words line before the feature list ("turn a knob and watch what it does to the sound"). Done: `docs/screenshot.png` (the Demo playing Acid, 1440 × 900), linked to the site; "Every picture on the page moves with the sound you hear" under it

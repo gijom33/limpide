@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** to diagnose first: whether it is heard, and what keeps the corners without the ringing (fewer terms with a smoothing window, a clamp after the LFO, or a waveshaper).
+**Status:** ready-for-agent · bug. To diagnose first, with `/diagnosing-bugs`: whether it is heard, and what keeps the corners without the ringing (fewer terms with a smoothing window, a clamp after the LFO, or a waveshaper).
 
 - [ ] A test that measures the engine's square and saw LFOs against ±1 at their edges
 - [ ] The fix, and the model and sound still agreeing elsewhere in the cycle

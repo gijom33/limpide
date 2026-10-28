@@ -4,11 +4,11 @@
 
 **Blocked by:** 11, 05, 12
 
-**Status:** superseded. Tried on the real C16 (2026-10-25): it works, but its steps followed the device's controls and jumped around the page, and a fader paused mid-move was learned again for the next step. Quick Setup now serves any Controller: every Parameter played live in the page's order, then the Actions, and a control learned for one step is never taken by another. The C16 gets its own layout, by bank, in [34](./34-c16-bank-layout.md).
+**Status:** superseded, closed (2026-10-28, decided by the owner): its last box, the C16 check, is issue 34's. Tried on the real C16 (2026-10-25): it works, but its steps followed the device's controls and jumped around the page, and a fader paused mid-move was learned again for the next step. Quick Setup now serves any Controller: every Parameter played live in the page's order, then the Actions, and a control learned for one step is never taken by another. The C16 gets its own layout, by bank, in [34](./34-c16-bank-layout.md).
 
 - [x] Quick Setup sequence as a pure state machine over Learn steps, tested (advance, skip, back, finish, cancel)
 - [x] Actions dispatched from Mappings, tested
-- [ ] Verified on the real C16; record the observed CCs and Encoder Mode in the Further Notes of the PRD
+- [ ] ~~Verified on the real C16; record the observed CCs and Encoder Mode in the Further Notes of the PRD~~ Dropped (2026-10-28, decided by the owner): the real C16 is checked under [34](./34-c16-bank-layout.md)
 
 ## Observed on the real C16
 
