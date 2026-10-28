@@ -22,24 +22,29 @@ function modulated(id: ParamId, patch: Patch, engine: SynthEngine): { reach: Rea
   const now = m.amp > AUDIBLE ? effectiveValue(id, patch, m) : null;
   if (id === 'cutoff') {
     // The Note heard, held or in its Release: Velocity and Key Track hold the Cutoff where it put them until it has
-    // faded, so the rings stay shifted with the dot (the owner, 2026-10-28: on Velocity Bite the white ring jumped
-    // back at the key's release and left the dot past its end).
+    // faded.
     const heard = m.sounding ?? (now === null ? null : m.played);
     const all = cutoffReach(patch, heard);
     if (!all) return null;
-    // Velocity and Key Track, fixed for the Note heard, shift both rings with it, as they shift the Cutoff (each
-    // share is the knob's value and that shift's end: their product over the value squared is the shift's ratio).
-    const shift = heard
-      ? (['velocity', 'keyTrack'] as const).reduce((ratio, source) => {
-          const share = all.shares[source];
-          return share ? (ratio * share[0] * share[1]) / patch.cutoff ** 2 : ratio;
-        }, 1)
-      : 1;
+    // A source's shift for the Note heard, as a ratio (each share is the knob's value and that shift's end: their
+    // product over the value squared is the shift's ratio).
+    const shift = (sources: readonly Source[]) =>
+      heard
+        ? sources.reduce((ratio, source) => {
+            const share = all.shares[source];
+            return share ? (ratio * share[0] * share[1]) / patch.cutoff ** 2 : ratio;
+          }, 1)
+        : 1;
+    // The white ring holds still (the owner, 2026-10-28): it spans the Filter Envelope's sweep and all Velocity can
+    // add to it, soft to hard, so the dot (the Effective Cutoff) runs along it whatever the Note's Velocity. Only Key
+    // Track, the key's own pitch, moves it. The blue ring, the LFOs' swing, goes where Velocity and Key Track take it.
     const lfos = lfoCutoffReach(patch);
-    const env = all.shares.filterEnvelope;
+    const sweep = all.shares.filterEnvelope && cutoffReach({ ...patch, lfoAmount: 0, lfo2Amount: 0, keyTrack: 0 }, null);
+    const byKey = shift(['keyTrack']);
+    const byNote = shift(['velocity', 'keyTrack']);
     return {
-      reach: lfos && { ...lfos, lo: lfos.lo * shift, hi: lfos.hi * shift },
-      envelope: env && [env[0] * shift, env[1] * shift],
+      reach: lfos && { ...lfos, lo: lfos.lo * byNote, hi: lfos.hi * byNote },
+      envelope: sweep ? [sweep.lo * byKey, sweep.hi * byKey] : undefined,
       shares: all.shares,
       now,
     };

@@ -152,18 +152,21 @@ test('both LFOs on the Cutoff make one blue ring, wider than one alone, both LFO
   expect(await colour(2)).toBe(await colour(1));
 });
 
-test('Velocity keeps the Filter Envelope’s white ring shifted through the Release, with the dot on it (the owner, 2026-10-28)', async ({ page }) => {
+test('with Velocity on the Cutoff the white ring holds still, before, during and after a Note, and spans what Velocity adds (the owner, 2026-10-28)', async ({ page }) => {
   await page.goto('/');
   await listening(page);
   await turnUp(page, 'Filter', 'Amount', 15);
-  await turnUp(page, 'Filter', 'Velocity', 100);
   await turnUp(page, 'Amp', 'Release', 30); // a Release long enough to look at
   const cutoff = knob(page, 'Filter', 'Cutoff');
+  const sweepAlone = await envelopeRing(cutoff).getAttribute('d'); // no Velocity: the Envelope's sweep alone
+  await turnUp(page, 'Filter', 'Velocity', 100);
+  await expect(envelopeRing(cutoff)).not.toHaveAttribute('d', sweepAlone!); // longer, by all Velocity can add
+  const before = await envelopeRing(cutoff).getAttribute('d');
   await page.keyboard.down('KeyA');
   await expect(dot(cutoff)).toBeVisible();
-  const held = await envelopeRing(cutoff).getAttribute('d');
+  expect(await envelopeRing(cutoff).getAttribute('d')).toBe(before); // held: still
   await page.keyboard.up('KeyA');
   await page.waitForTimeout(150);
   await expect(dot(cutoff)).toBeVisible(); // still heard
-  expect(await envelopeRing(cutoff).getAttribute('d')).toBe(held); // the ring did not jump back at the release
+  expect(await envelopeRing(cutoff).getAttribute('d')).toBe(before); // released: still
 });
