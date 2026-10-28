@@ -21,11 +21,15 @@ function modulated(id: ParamId, patch: Patch, engine: SynthEngine): { reach: Rea
   const m = engine.modulationAt();
   const now = m.amp > AUDIBLE ? effectiveValue(id, patch, m) : null;
   if (id === 'cutoff') {
-    const all = cutoffReach(patch, m.sounding);
+    // The Note heard, held or in its Release: Velocity and Key Track hold the Cutoff where it put them until it has
+    // faded, so the rings stay shifted with the dot (the owner, 2026-10-28: on Velocity Bite the white ring jumped
+    // back at the key's release and left the dot past its end).
+    const heard = m.sounding ?? (now === null ? null : m.played);
+    const all = cutoffReach(patch, heard);
     if (!all) return null;
-    // Velocity and Key Track, fixed for the Note sounding, shift both rings with it, as they shift the Cutoff (each
+    // Velocity and Key Track, fixed for the Note heard, shift both rings with it, as they shift the Cutoff (each
     // share is the knob's value and that shift's end: their product over the value squared is the shift's ratio).
-    const shift = m.sounding
+    const shift = heard
       ? (['velocity', 'keyTrack'] as const).reduce((ratio, source) => {
           const share = all.shares[source];
           return share ? (ratio * share[0] * share[1]) / patch.cutoff ** 2 : ratio;

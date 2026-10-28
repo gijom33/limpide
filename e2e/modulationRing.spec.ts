@@ -151,3 +151,19 @@ test('both LFOs on the Cutoff make one blue ring, wider than one alone, both LFO
     page.getByRole('group', { name: `LFO ${n}`, exact: true }).getByRole('slider', { name: 'Depth' }).evaluate((el) => getComputedStyle(el.closest('.lfo-rows')!).getPropertyValue('--stage'));
   expect(await colour(2)).toBe(await colour(1));
 });
+
+test('Velocity keeps the Filter Envelope’s white ring shifted through the Release, with the dot on it (the owner, 2026-10-28)', async ({ page }) => {
+  await page.goto('/');
+  await listening(page);
+  await turnUp(page, 'Filter', 'Amount', 15);
+  await turnUp(page, 'Filter', 'Velocity', 100);
+  await turnUp(page, 'Amp', 'Release', 30); // a Release long enough to look at
+  const cutoff = knob(page, 'Filter', 'Cutoff');
+  await page.keyboard.down('KeyA');
+  await expect(dot(cutoff)).toBeVisible();
+  const held = await envelopeRing(cutoff).getAttribute('d');
+  await page.keyboard.up('KeyA');
+  await page.waitForTimeout(150);
+  await expect(dot(cutoff)).toBeVisible(); // still heard
+  expect(await envelopeRing(cutoff).getAttribute('d')).toBe(held); // the ring did not jump back at the release
+});

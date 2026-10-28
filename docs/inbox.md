@@ -4,7 +4,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
-- 2026-10-28, the owner: "Isn't the white moving ball moving at wrong location? Isn't it supposed to stay within the envelope ring?" "Velocity Bite has this problem for instance"
 ## Ideas
 
 - 2026-10-28, from the 1.13.0 review: the Maths Layer still writes the Cutoff's value inside the Timeline, where issue 63 decision 24 wants no text but the Cutoff's scale. Keep it (the Maths Layer is asked for), or move it?
@@ -63,3 +62,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-28, night: the owner's Timeline asks, done at once, decided by the owner. The broken lines' marks travel with the curve instead of crawling: each line starts its dash pattern where the last frame's had got to, at the new left edge (marks pinned to time alone lost a square LFO's vertical edges, the owner saw). The Cutoff's dots are bigger and wider apart (a pen 1.75 times as thick, every 6 px), in the key too. Env Timeline offers 4s as well.
 2026-10-28, night: the owner's hover ask, done at once, decided by the owner: where a knob shows only its name (600 px wide or less), hovering it or a fader shows its value in the name's place, as turning it does. Only where a pointer hovers, so a tap leaves nothing up (Claude's call, open to the owner). On a wider window the value is already under the name.
 2026-10-28, night: the owner's ask, the Ideal on by default, done at once, decided by the owner: a first visit shows the Ideal Reference with the Harmonic Markers and the Curve. A browser that has visited keeps what it saved (every visit saves all the Display options, so a saved Ideal off cannot be told from the old default). Bass's "turn on Ideal" Step stays: it shows done when it comes, its note still read, and asks for Ideal only from a learner who turned it off (Claude's call, open to the owner).
+2026-10-28, night: the owner's bug, the Cutoff's dot past the white ring on Velocity Bite, fixed at once: Velocity (and Key Track) hold the Cutoff where the last Note put them through its Release, but the rings dropped that shift the moment the key was let go, so the white ring jumped back and left the dot past its end. The Modulation model now gives the last Note played, held or not, and the rings keep its shift while it is heard. Test in `e2e/modulationRing.spec.ts`.
