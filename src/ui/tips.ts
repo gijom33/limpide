@@ -70,6 +70,7 @@ export const TIPS = {
   velocityCutoff: {
     title: 'Velocity → Cutoff',
     body: 'How much harder hits open the Filter: up to two octaves for the hardest. Velocity comes from MIDI pads and keys, or from where you click on a piano key.',
+    how: 'Turn it up and watch the Cutoff knob: a thin white ring, past the Filter Envelope’s, shows how far a hard Note can open it.',
   },
   sub: {
     title: 'Sub-oscillator',

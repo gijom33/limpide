@@ -166,7 +166,10 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 .knob-ring[data-dim] { opacity: 0.35; }
 .knob-share { stroke-width: 4; }
 /* The Filter Envelope's ring (issue 63, the owner): white and thin, drawn on the knob's thick track. */
-.knob-envelope { fill: none; stroke: #fff; stroke-width: 2.5; stroke-linecap: round; }
+.knob-envelope { fill: none; stroke: #fff; stroke-width: 2.5; }
+/* Velocity's reach, thinner, beyond the Envelope's (the owner, 2026-10-28). Both end square, exactly where their
+   values are: a round end ran past the knob's value. */
+.knob-velocity { stroke-width: 1.25; }
 :root[data-theme='light'] .knob-envelope { stroke: var(--text); }
 .knob-envelope[data-dim] { opacity: 0.35; }
 /* The live dot: bigger than the ring is thick, brighter than it, and cut out of it by a panel-coloured edge. */

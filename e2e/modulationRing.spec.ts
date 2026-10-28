@@ -8,7 +8,9 @@ const knob = (page: Page, region: string, name: string) =>
   page.getByRole('region', { name: region }).locator('.knob', { has: page.getByRole('slider', { name: sliderName(name) }) });
 const ring = (k: ReturnType<typeof knob>) => k.locator('.knob-ring');
 /** The Filter Envelope's white ring, on the knob's own track (issue 63). */
-const envelopeRing = (k: ReturnType<typeof knob>) => k.locator('.knob-envelope');
+const envelopeRing = (k: ReturnType<typeof knob>) => k.locator('.knob-envelope:not(.knob-velocity)');
+/** Velocity's thinner white ring, beyond the Envelope's (the owner, 2026-10-28). */
+const velocityRing = (k: ReturnType<typeof knob>) => k.locator('.knob-velocity');
 const dot = (k: ReturnType<typeof knob>) => k.locator('.knob-live');
 const listening = (page: Page) => expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);
 
@@ -88,7 +90,7 @@ test('an LFO on Pulse Width rings both Oscillators’ Pulse Width knobs, and not
   await expect(ring(knob(page, 'Filter', 'Cutoff'))).toBeHidden();
 });
 
-test('pointing at a source: the LFOs’ controls light nothing, the Filter Envelope dims the blue ring, Velocity lights its share (issue 63)', async ({ page }) => {
+test('pointing at a source: the LFOs’ controls light nothing, the Filter Envelope and Velocity dim the blue ring and light no share (issue 63)', async ({ page }) => {
   await page.goto('/');
   await turnUp(page, 'LFO 1', 'Depth', 10);
   await turnUp(page, 'Filter', 'Amount', 10);
@@ -105,11 +107,14 @@ test('pointing at a source: the LFOs’ controls light nothing, the Filter Envel
   await page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name: 'Amount' }).focus();
   await expect(ring(cutoff)).toHaveAttribute('data-dim', '');
   await expect(envelopeRing(cutoff)).not.toHaveAttribute('data-dim');
+  // Velocity has its own white ring: no blue share for it (the owner, 2026-10-28).
   await page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name: 'Velocity' }).focus();
-  await expect(share).toBeVisible();
-  await expect(share).toHaveAttribute('data-source', 'velocity');
-  await page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name: 'Velocity' }).blur();
+  await page.waitForTimeout(100);
   await expect(share).toBeHidden();
+  await expect(ring(cutoff)).toHaveAttribute('data-dim', '');
+  await expect(velocityRing(cutoff)).not.toHaveAttribute('data-dim');
+  await page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name: 'Velocity' }).blur();
+  await expect(ring(cutoff)).not.toHaveAttribute('data-dim');
 });
 
 test('with reduced motion asked for, the ring stays and the moving dot does not show', async ({ page }) => {
@@ -152,21 +157,28 @@ test('both LFOs on the Cutoff make one blue ring, wider than one alone, both LFO
   expect(await colour(2)).toBe(await colour(1));
 });
 
-test('with Velocity on the Cutoff the white ring holds still, before, during and after a Note, and spans what Velocity adds (the owner, 2026-10-28)', async ({ page }) => {
+test('Velocity draws a thinner white ring beyond the Envelope’s, and neither moves before, during or after a Note (the owner, 2026-10-28)', async ({ page }) => {
   await page.goto('/');
   await listening(page);
   await turnUp(page, 'Filter', 'Amount', 15);
   await turnUp(page, 'Amp', 'Release', 30); // a Release long enough to look at
   const cutoff = knob(page, 'Filter', 'Cutoff');
-  const sweepAlone = await envelopeRing(cutoff).getAttribute('d'); // no Velocity: the Envelope's sweep alone
+  await expect(velocityRing(cutoff)).toBeHidden();
+  const sweep = await envelopeRing(cutoff).getAttribute('d');
   await turnUp(page, 'Filter', 'Velocity', 100);
-  await expect(envelopeRing(cutoff)).not.toHaveAttribute('d', sweepAlone!); // longer, by all Velocity can add
-  const before = await envelopeRing(cutoff).getAttribute('d');
+  await expect(velocityRing(cutoff)).toBeVisible();
+  await expect(envelopeRing(cutoff)).toHaveAttribute('d', sweep!); // the Envelope's ring unchanged
+  await expect(cutoff.locator('.knob-ring')).toBeHidden(); // and no blue ring: no LFO
+  const reach = await velocityRing(cutoff).getAttribute('d');
+  // Velocity's ring starts where the Envelope's ends.
+  const end = (d: string) => d.trim().split(/\s+/).slice(-2).join(' ');
+  const start = (d: string) => d.trim().split(/\s+/).slice(0, 2).join(' ').slice(1); // after the M
+  expect(start(reach!)).toBe(end(sweep!));
   await page.keyboard.down('KeyA');
   await expect(dot(cutoff)).toBeVisible();
-  expect(await envelopeRing(cutoff).getAttribute('d')).toBe(before); // held: still
+  for (const [ring, d] of [[envelopeRing(cutoff), sweep], [velocityRing(cutoff), reach]] as const) expect(await ring.getAttribute('d')).toBe(d); // held: still
   await page.keyboard.up('KeyA');
   await page.waitForTimeout(150);
   await expect(dot(cutoff)).toBeVisible(); // still heard
-  expect(await envelopeRing(cutoff).getAttribute('d')).toBe(before); // released: still
+  for (const [ring, d] of [[envelopeRing(cutoff), sweep], [velocityRing(cutoff), reach]] as const) expect(await ring.getAttribute('d')).toBe(d); // released: still
 });

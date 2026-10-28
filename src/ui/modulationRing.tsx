@@ -17,7 +17,11 @@ const AUDIBLE = 0.002;
  * Envelope's on the Cutoff, every source's share (for pointing at one), and its value at this moment while a Note
  * sounds.
  */
-function modulated(id: ParamId, patch: Patch, engine: SynthEngine): { reach: Reach | null; envelope?: [number, number]; shares: Reach['shares']; now: number | null } | null {
+function modulated(
+  id: ParamId,
+  patch: Patch,
+  engine: SynthEngine,
+): { reach: Reach | null; envelope?: [number, number]; velocity?: [number, number]; shares: Reach['shares']; now: number | null } | null {
   const m = engine.modulationAt();
   const now = m.amp > AUDIBLE ? effectiveValue(id, patch, m) : null;
   if (id === 'cutoff') {
@@ -35,16 +39,20 @@ function modulated(id: ParamId, patch: Patch, engine: SynthEngine): { reach: Rea
             return share ? (ratio * share[0] * share[1]) / patch.cutoff ** 2 : ratio;
           }, 1)
         : 1;
-    // The white ring holds still (the owner, 2026-10-28): it spans the Filter Envelope's sweep and all Velocity can
-    // add to it, soft to hard, so the dot (the Effective Cutoff) runs along it whatever the Note's Velocity. Only Key
-    // Track, the key's own pitch, moves it. The blue ring, the LFOs' swing, goes where Velocity and Key Track take it.
+    // The white rings hold still (the owner, 2026-10-28): the Filter Envelope's sweep, then, thinner and beyond it,
+    // all Velocity can add, soft to hard, so the dot (the Effective Cutoff) runs along them whatever the Note's
+    // Velocity. Only Key Track, the key's own pitch, moves them. The blue ring, the LFOs' swing, goes where Velocity
+    // and Key Track take it.
     const lfos = lfoCutoffReach(patch);
-    const sweep = all.shares.filterEnvelope && cutoffReach({ ...patch, lfoAmount: 0, lfo2Amount: 0, keyTrack: 0 }, null);
+    const env = all.shares.filterEnvelope;
+    const sweep = patch.velocityCutoff ? cutoffReach({ ...patch, lfoAmount: 0, lfo2Amount: 0, keyTrack: 0 }, null) : null;
+    const from = env ? Math.max(env[0], env[1]) : patch.cutoff; // Velocity only raises the Cutoff: past the sweep's top
     const byKey = shift(['keyTrack']);
     const byNote = shift(['velocity', 'keyTrack']);
     return {
       reach: lfos && { ...lfos, lo: lfos.lo * byNote, hi: lfos.hi * byNote },
-      envelope: sweep ? [sweep.lo * byKey, sweep.hi * byKey] : undefined,
+      envelope: env && [env[0] * byKey, env[1] * byKey],
+      velocity: sweep && sweep.hi > from ? [from * byKey, sweep.hi * byKey] : undefined,
       shares: all.shares,
       now,
     };
@@ -64,7 +72,9 @@ const LFO_REACH: Partial<Record<ParamId, (patch: Patch) => Reach | null>> = {
 };
 
 // The source a pointer is over, or that has the keyboard focus: its share of every ring is drawn bright. Not the
-// LFOs' controls (the owner, 2026-10-28): the blue ring is already theirs alone.
+// LFOs' controls (the owner, 2026-10-28): the blue ring is already theirs alone. Nor the Filter Envelope's and
+// Velocity's: the white rings are theirs (the owner, 2026-10-28: a blue share for Velocity confused); pointing at
+// them dims the blue ring.
 const SOURCES: Record<string, Source> = {
   'param:filterEnvAmount': 'filterEnvelope', 'param:filterAttack': 'filterEnvelope', 'param:filterDecay': 'filterEnvelope',
   'param:filterSustain': 'filterEnvelope', 'param:filterRelease': 'filterEnvelope',
@@ -102,8 +112,9 @@ interface Props {
 /**
  * Serum-style modulation on a knob (issue 20, then issue 63): a blue ring outside the value arc over the range the
  * LFOs can take the Parameter (both together when both aim at it), a thin white ring on the knob's own track over
- * the Filter Envelope's, and a dot at its Effective value while a Note sounds. Pointing at Velocity or Key Track, or
- * focusing it, draws its share bright over the dimmed rings; pointing at the Filter Envelope dims the LFOs' ring.
+ * the Filter Envelope's, a thinner one beyond it over what Velocity can add, and a dot at its Effective value while
+ * a Note sounds. Pointing at Key Track, or focusing it, draws its share bright over the dimmed rings; pointing at the
+ * Filter Envelope or Velocity dims the LFOs' ring.
  * The LFOs' own controls change nothing on the rings. Drawn by the render loop, outside React (ADR-0002), from the
  * Modulation model (ADR-0003). Reduced motion keeps the rings and drops the moving dot.
  */
@@ -111,6 +122,7 @@ export function ModulationRing({ id, centre, radius, trackRadius, dotRadius, arc
   const context = useContext(ModulationContext);
   const ring = useRef<SVGPathElement>(null);
   const envelope = useRef<SVGPathElement>(null);
+  const velocity = useRef<SVGPathElement>(null);
   const share = useRef<SVGPathElement>(null);
   const dot = useRef<SVGCircleElement>(null);
   const draw = useRef({ arc, point });
@@ -125,9 +137,10 @@ export function ModulationRing({ id, centre, radius, trackRadius, dotRadius, arc
     return addToRenderLoop(() => {
       const r = ring.current;
       const e = envelope.current;
+      const v = velocity.current;
       const s = share.current;
       const d = dot.current;
-      if (!r || !e || !s || !d || !context.patch.current) return;
+      if (!r || !e || !v || !s || !d || !context.patch.current) return;
       const now = modulated(id, context.patch.current, context.engine);
       const reach = now?.reach;
       r.style.display = reach ? '' : 'none';
@@ -135,20 +148,25 @@ export function ModulationRing({ id, centre, radius, trackRadius, dotRadius, arc
       const env = now?.envelope;
       e.style.display = env ? '' : 'none';
       if (env) e.setAttribute('d', draw.current.arc(position(env[0]), position(env[1]), trackRadius));
+      const vel = now?.velocity;
+      v.style.display = vel ? '' : 'none';
+      if (vel) v.setAttribute('d', draw.current.arc(position(vel[0]), position(vel[1]), trackRadius));
       const source = attention.pointed ?? attention.focused;
-      const part = source && source !== 'filterEnvelope' && now?.shares[source];
+      const white = source === 'filterEnvelope' || source === 'velocity';
+      const part = source && !white && now?.shares[source];
       s.style.display = part ? '' : 'none';
-      r.toggleAttribute('data-dim', !!part || source === 'filterEnvelope');
-      e.toggleAttribute('data-dim', !!source && source !== 'filterEnvelope');
+      r.toggleAttribute('data-dim', !!part || white);
+      e.toggleAttribute('data-dim', !!part);
+      v.toggleAttribute('data-dim', !!part);
       if (part) {
         s.setAttribute('d', draw.current.arc(position(part[0]), position(part[1]), radius));
         s.dataset.source = source!;
       }
-      // The dot rides a ring: with neither (only Velocity or Key Track moving the Cutoff, as in Tremolo Keys), none.
-      const live = reach || env ? (now?.now ?? null) : null;
+      // The dot rides a ring: with none (only Key Track moving the Cutoff), none.
+      const live = reach || env || vel ? (now?.now ?? null) : null;
       d.style.display = live === null || still.matches ? 'none' : '';
       if (live !== null) {
-        // On the blue ring, or on the white one when the Filter Envelope alone moves the Cutoff.
+        // On the blue ring, or on the white ones when no LFO moves the Cutoff.
         const [x, y] = draw.current.point(position(live), reach ? radius : trackRadius);
         d.setAttribute('cx', x.toFixed(2));
         d.setAttribute('cy', y.toFixed(2));
@@ -159,6 +177,7 @@ export function ModulationRing({ id, centre, radius, trackRadius, dotRadius, arc
   return (
     <>
       <path ref={envelope} className="knob-envelope" style={{ display: 'none' }} />
+      <path ref={velocity} className="knob-envelope knob-velocity" style={{ display: 'none' }} />
       <path ref={ring} className="knob-ring" style={{ display: 'none' }} />
       <path ref={share} className="knob-share" style={{ display: 'none' }} />
       <circle ref={dot} className="knob-live" cx={centre} cy={centre} r={dotRadius} style={{ display: 'none' }} />
