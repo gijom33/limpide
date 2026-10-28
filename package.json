@@ -29,7 +29,8 @@
     "test:engine": "vitest run --project engine",
     "test:e2e": "playwright test",
     "typecheck": "tsc",
-    "lint": "biome check"
+    "lint": "biome check",
+    "prepare": "git config core.hooksPath .githooks || true"
   },
   "dependencies": {
     "react": "^19.3.1",
