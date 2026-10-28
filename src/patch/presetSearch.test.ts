@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { defaultPatch } from './patch';
-import { CATEGORIES, matchesName, searchPresets } from './presetSearch';
+import { CATEGORIES, isSearch, matchesName, searchPresets } from './presetSearch';
 import { PRESET_GROUPS, PRESETS, type Preset, type PresetGroup } from './presets';
 
 const preset = (name: string, group: PresetGroup, about: string): Preset => ({ name, group, about, patch: defaultPatch() });
@@ -42,6 +42,13 @@ describe('searchPresets', () => {
     expect(searchPresets('', 'My Patches', LIST)).toEqual({ byName: [], byDescription: [] });
     expect(searchPresets('pad', 'Tutorials', LIST)).toEqual({ byName: [], byDescription: [] });
     expect(searchPresets('', 'All', PRESETS).byName).toEqual(PRESETS);
+  });
+});
+
+describe('isSearch', () => {
+  it('is a search only with a word typed: spaces or punctuation alone are not one', () => {
+    for (const typed of ['', '   ', '?', ' - ']) expect(isSearch(typed), JSON.stringify(typed)).toBe(false);
+    for (const typed of ['a', ' res ', 'hi-hat']) expect(isSearch(typed), typed).toBe(true);
   });
 });
 

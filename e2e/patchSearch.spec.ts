@@ -45,6 +45,37 @@ test.describe('on a computer', () => {
     await page.keyboard.press('Escape');
     await expect(panel(page)).toBeHidden();
     await expect(patchName(page)).toBeFocused();
+
+    // From elsewhere in the panel too (the 1.14.0 review): the categories, here.
+    await patchName(page).click();
+    await search(page).fill('acid');
+    await category(page, 'All').focus();
+    await page.keyboard.press('Escape');
+    await expect(search(page)).toHaveValue('');
+    await expect(panel(page)).toBeVisible();
+  });
+
+  test('Enter with nothing typed loads nothing, nor does a search of punctuation alone list every Preset', async ({ page }) => {
+    // The 1.14.0 review: Enter on the empty box loaded Init over the sound; "?" left one row of all 91.
+    await patchName(page).click();
+    const before = await patchName(page).textContent();
+    await page.keyboard.press('Enter');
+    await expect(panel(page)).toBeVisible();
+    await expect(patchName(page)).toHaveText(before!);
+    await search(page).fill('?');
+    await expect(row(page, 'Bass')).toBeVisible();
+    await expect(row(page, 'Name')).toBeHidden();
+  });
+
+  test('a search kept from before is selected on opening again, so typing starts a new one', async ({ page }) => {
+    await patchName(page).click();
+    await page.keyboard.type('bell');
+    await page.keyboard.press('Escape'); // clears
+    await page.keyboard.type('acid');
+    await patchName(page).click(); // closes, the search kept
+    await patchName(page).click();
+    await page.keyboard.type('pad');
+    await expect(search(page)).toHaveValue('pad');
   });
 
   test('a category shows its Presets alone; a search looks inside it, and offers All when nothing is found', async ({ page }) => {
@@ -61,6 +92,7 @@ test.describe('on a computer', () => {
     await expect(panel(page).getByText('Nothing matches “vibrato” in Bass.')).toBeVisible();
     await panel(page).getByRole('button', { name: 'Search All' }).click();
     await expect(category(page, 'All')).toHaveAttribute('aria-checked', 'true');
+    await expect(search(page)).toBeFocused(); // not lost with the button (the 1.14.0 review)
     await expect(row(page, 'Name').getByRole('button', { name: 'Slow Vibrato' })).toBeVisible();
 
     // The Tutorials: their row alone, narrowed by name.

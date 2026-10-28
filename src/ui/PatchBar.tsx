@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Library } from '../patch/library';
 import type { Patch } from '../patch/patch';
-import { CATEGORIES, type Category, matchesName, searchPresets } from '../patch/presetSearch';
+import { CATEGORIES, type Category, isSearch, matchesName, searchPresets } from '../patch/presetSearch';
 import { PRESET_GROUPS, PRESETS, type Preset, presetAfter, SHARED_NAME } from '../patch/presets';
 import { patchFromJSON, patchToJSON, shareHash } from '../patch/serialize';
 import { TutorialIcon } from './icons';
@@ -42,6 +42,8 @@ export function PatchBar({ name, changed, patch, library, onLoad, tutorials, onT
   const opener = useRef<HTMLButtonElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const searchBox = useRef<HTMLInputElement>(null);
+  const queryRef = useRef(query);
+  queryRef.current = query;
   /** The panel closes, and the focus goes back to the button that opened it, not to the page (issue 51). */
   const closeToOpener = () => {
     setOpen(false);
@@ -54,10 +56,15 @@ export function PatchBar({ name, changed, patch, library, onLoad, tutorials, onT
   // biome-ignore lint/correctness/useExhaustiveDependencies: closeToOpener is rebuilt each render, the same each time
   useEffect(() => {
     if (!open) return;
-    // Escape closes it back to its button; a press elsewhere closes it and leaves the focus where the press went.
+    // Escape clears the search first, wherever the focus is in the panel, then closes it back to its button; a press
+    // elsewhere closes it and leaves the focus where the press went.
     const close = (e: Event) => {
       if (e instanceof KeyboardEvent) {
-        if (e.key === 'Escape') closeToOpener();
+        if (e.key !== 'Escape') return;
+        if (queryRef.current) {
+          setQuery('');
+          searchBox.current?.focus();
+        } else closeToOpener();
       } else if (!wrapper.current?.contains(e.target as Node)) setOpen(false);
     };
     document.addEventListener('keydown', close);
@@ -69,8 +76,9 @@ export function PatchBar({ name, changed, patch, library, onLoad, tutorials, onT
   }, [open]);
 
   // The search box takes the focus on a computer, to type at once; not on a touch screen, whose keyboard would cover the list.
+  // A search kept from before is selected, so typing starts a new one and Enter still loads its first.
   useEffect(() => {
-    if (open && !matchMedia('(pointer: coarse)').matches) searchBox.current?.focus();
+    if (open && !matchMedia('(pointer: coarse)').matches) searchBox.current?.select();
   }, [open]);
 
   // The arrows step through sounds and close the panel; picking in the open panel keeps it open, to audition.
@@ -134,7 +142,7 @@ export function PatchBar({ name, changed, patch, library, onLoad, tutorials, onT
   };
 
   // What the panel lists: while searching, the Presets that match by name, then by description, in place of the groups.
-  const searching = query.trim() !== '';
+  const searching = isSearch(query);
   const found = searchPresets(query, category);
   const byName = searchPresets(query, 'All').byName;
   const shownTutorials = category === 'All' || category === 'Tutorials' ? tutorials.filter((t) => byName.some((p) => p.name === t.preset)) : [];
@@ -210,14 +218,10 @@ export function PatchBar({ name, changed, patch, library, onLoad, tutorials, onT
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => {
-                  // Escape clears the search first; with nothing typed, it closes the panel as anywhere else in it.
-                  if (e.key === 'Escape' && query) {
+                  // Escape is the panel's (it clears the search first). Enter loads the first found, once something is typed.
+                  if (e.key === 'Enter') {
                     e.preventDefault();
-                    e.stopPropagation();
-                    setQuery('');
-                  } else if (e.key === 'Enter') {
-                    e.preventDefault();
-                    loadFirst();
+                    if (searching) loadFirst();
                   }
                 }}
               />
@@ -271,7 +275,11 @@ export function PatchBar({ name, changed, patch, library, onLoad, tutorials, onT
                 <p className="patch-empty">
                   {category === 'All' ? `Nothing matches “${query.trim()}”.` : `Nothing matches “${query.trim()}” in ${category}.`}
                   {category !== 'All' && (
-                    <button type="button" className="patch-search-all" onClick={() => setCategory('All')}>
+                    <button type="button" className="patch-search-all" onClick={() => {
+                        setCategory('All');
+                        searchBox.current?.focus(); // the button goes with the message
+                      }}
+                    >
                       Search All
                     </button>
                   )}

@@ -13,6 +13,9 @@ const words = (text: string) =>
     .split(/[^\p{L}\p{N}]+/u)
     .filter(Boolean);
 
+/** Whether something was typed to search for: a word, not only spaces or punctuation (which would match everything). */
+export const isSearch = (query: string) => words(query).length > 0;
+
 /**
  * Whether a text, a saved Patch's name for one, matches what was typed: every word typed starts a word of the text.
  * "res" finds Resonance, "one" not phone; nothing typed finds all.
