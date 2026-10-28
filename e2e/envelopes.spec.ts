@@ -61,7 +61,7 @@ test('the Envelope Timeline shows the Filter Envelope too, with its own key, ris
   await page.keyboard.up('KeyA');
 });
 
-test('an LFO on Volume ripples the Timeline’s Amp Envelope as it makes tremolo (issue 53)', async ({ page }) => {
+test('an LFO on Volume leaves the Timeline’s Amp Envelope still (issue 53, reversed by the owner 2026-10-28)', async ({ page }) => {
   await page.goto('/');
   await ready(page);
   const lfo = page.getByRole('group', { name: 'LFO 1', exact: true });
@@ -71,14 +71,15 @@ test('an LFO on Volume ripples the Timeline’s Amp Envelope as it makes tremolo
   const level = () => page.getByRole('region', { name: 'LFO & Envelopes' }).locator('canvas').getAttribute('data-amp-level').then(Number);
   await page.getByRole('button', { name: 'Hold' }).click();
   await page.keyboard.down('KeyA');
+  await expect.poll(level, { timeout: 5000 }).toBeCloseTo(0.7, 2); // Init's Amp Sustain
   const seen: number[] = [];
   for (let i = 0; i < 12; i++) {
     seen.push(await level());
     await page.waitForTimeout(60);
   }
   await page.keyboard.up('KeyA');
-  // At full Depth the LFO (2 Hz) dips the level to silence and back, twice a second.
-  expect(Math.max(...seen) - Math.min(...seen), JSON.stringify(seen)).toBeGreaterThan(0.3);
-  expect(Math.max(...seen), JSON.stringify(seen)).toBeLessThanOrEqual(1);
+  // At full Depth the LFO (2 Hz) dips the sound to silence and back, twice a second; the Envelope drawn stays at its
+  // Sustain.
+  expect(Math.max(...seen) - Math.min(...seen), JSON.stringify(seen)).toBeLessThan(0.02);
 });
 

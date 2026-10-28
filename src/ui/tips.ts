@@ -115,7 +115,7 @@ export const TIPS = {
   },
   timeline: {
     title: 'LFO & Envelopes',
-    body: 'What changes the sound over time: the LFO, and the Envelope Timeline beside it. The Timeline shows the last four seconds. Violet: the Amp Envelope (loudness; an LFO on Volume ripples it). Orange: the Effective Cutoff, with the frequencies the Filter lets through shaded below it. The faint dashed line is the Cutoff knob itself.',
+    body: 'What changes the sound over time: the LFO, and the Envelope Timeline beside it. The Timeline shows the last four seconds. Violet: the Amp Envelope. Orange: the Effective Cutoff, with the frequencies the Filter lets through shaded below it. The faint dashed line is the Cutoff knob itself.',
     how: 'Play a Note and let go: the Release is drawn after the key comes up.',
   },
   lfo: {
@@ -237,7 +237,7 @@ export const TIPS = {
   },
   timelineAmp: {
     title: 'Amp Envelope',
-    body: 'Violet: how loud the newest Note is over the last four seconds, from nothing to full. An LFO on Volume ripples it.',
+    body: 'Violet: the newest Note’s Amp Envelope over the last four seconds, from nothing to full.',
   },
   timelineFilterEnvelope: {
     title: 'Filter Envelope',

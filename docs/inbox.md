@@ -4,8 +4,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
-- 2026-10-28, the owner: "The AMP envelope in timeline should not be affected by the LFOs"
-
 ## Ideas
 
 ## Dropped
@@ -46,3 +44,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-27, the owner's ideas: showing two LFOs on one control, and the Filter Envelope with an LFO, went to [63](./issues/63-showing-combined-modulation.md), to grill; Display settings while the Demo, Song and Tutorials play went to [64](./issues/64-display-during-the-demo.md) (only the Demo stops today); tweaking during the Demo dropped, already so (see Dropped).
 2026-10-27: the owner's bug, the Curve ahead of the Filter Spectrum, fixed at once, the owner choosing among two ways. The Spectrum analyses the last 8192 samples (about 170 ms) and so shows about 85 ms ago, while the Curve was drawn for now: on Wobble's 3 Hz sweep a quarter of each wobble apart. The Curve (and the Ideal rings it scales) is now drawn for the middle of the Spectrum's window; the knobs' rings and the Timeline stay on now. A shorter window, the other way, would have blurred the Harmonics of low Notes. Test in `src/engine/synthEngine.browser.test.ts`.
 2026-10-27: the rest of the inbox. The favicon in Safari went to [65](./issues/65-favicon-in-safari.md) (the SVG is listed last again, so Safari takes it); the square and saw LFOs' overshoot to [66](./issues/66-lfo-edge-overshoot.md), to diagnose first; four small review lines to [67](./issues/67-small-fixes-after-1-12.md), the Harmonic Markers' ticks waiting for the owner's answer; one list of LFO Destinations and `tremolo()` on `lfoOffset` to [68](./issues/68-lfo-destinations-in-one-list.md); two lines dropped (see Dropped).
+2026-10-28: the Timeline's Amp Envelope moved by an LFO on Volume, fixed at once: it draws the Envelope alone, so tremolo no longer ripples it (the owner's reversal of [53](./issues/53-presets-and-synth-features.md)'s decision 1, decided by the owner). It also no longer scales with the Volume knob: the line is the Envelope, as its name says; Claude's call, open to the owner.
