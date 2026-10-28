@@ -1,6 +1,6 @@
-import type { Modulation } from '../engine/synthEngine';
 import { type LfoDestination, lfos, PARAMS, type ParamId, type Patch } from '../patch/patch';
 import { valueToPosition } from '../patch/taper';
+import type { Modulation } from './modulationModel';
 import { LFO_DETUNE_CENTS, LFO_OSC2_CENTS, LFO_PITCH_CENTS, LFO_PULSE_WIDTH, lfoOffset, MAX_PULSE, MIN_PULSE } from './modulationModel';
 
 /**

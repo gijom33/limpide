@@ -19,3 +19,5 @@
 
 - **Velocity and Key Track are fixed for a Note**, so they shift the range rather than widen it: while a Note sounds the ring uses its Velocity and key; with none, Velocity reaches as far as the hardest strike would open the Filter, and Key Track stays at C4, where it changes nothing.
 - The dot's value is the model's Effective Cutoff itself (`modulationAt().cutoff`), which the existing engine tests already hold to the sound at the LFO's peak and trough, so it needs no test of its own.
+
+Later, 2026-10-28 (issue 70): the reach functions return only the range a ring covers, and on the Cutoff the Filter Envelope's sweep; the per-source shares, which no ring read any more, are gone.

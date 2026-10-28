@@ -2,14 +2,13 @@ import { type Adsr, type AutomationStep, envelopeSchedule, type GateEvent, level
 import { createLfoClock, glideFrequency, glideFrom, glideTimeConstant, type LfoWaveform, lfoShape } from '../modulation/lfo';
 import {
   effectiveCutoff, effectiveResonance, effectiveVolume, KEY_TRACK_CENTRE, LFO_CUTOFF_OCTAVES, LFO_DETUNE_CENTS, LFO_OSC2_CENTS,
-  LFO_PITCH_CENTS, LFO_PULSE_WIDTH, LFO_RESONANCE, LFO_VOLUME, lfoSwings, MAX_PULSE, MIN_PULSE, soundingPitch,
+  LFO_PITCH_CENTS, LFO_PULSE_WIDTH, LFO_RESONANCE, LFO_VOLUME, lfoSwings, MAX_PULSE, MIN_PULSE, type Modulation, soundingPitch,
   VELOCITY_CUTOFF_OCTAVES,
 } from '../modulation/modulationModel';
 import { bandwidthOctaves } from '../modulation/passBand';
-import type { Sounding } from '../modulation/reach';
 import { harmonicSeries } from '../music/harmonics';
 import { frequencyToNote, noteToFrequency } from '../music/pitch';
-import { type FilterMode, GLIDE_OFF, type Lfo, type LfoDestination, type LfoNumber, lfos, PARAMS, type Patch, type Voices } from '../patch/patch';
+import { GLIDE_OFF, type Lfo, type LfoDestination, type LfoNumber, lfos, PARAMS, type Patch, type Voices } from '../patch/patch';
 import { filterStages, type Stage } from './filterDesign';
 
 /**
@@ -24,28 +23,6 @@ export interface Taps {
   oscillator: AnalyserNode;
   filter: AnalyserNode;
   amp: AnalyserNode;
-}
-
-/** What the Modulation model says at a moment: both Envelope levels, the Effective Cutoff and the Filter's shape. */
-export interface Modulation {
-  amp: number;
-  filter: number;
-  cutoff: number;
-  /** Each LFO's value (−1 to 1), LFO 1 first. */
-  lfo: [number, number];
-  mode: FilterMode;
-  /** The Resonance after the LFOs (0–1). */
-  resonance: number;
-  /** Band-pass and notch width in octaves. */
-  bandwidth: number;
-  /** What the Amp is multiplied by (0–1): the Volume knob, dipped by the LFOs on Volume (issue 62). */
-  volume: number;
-  /** The newest Note while its key is held (or Hold keeps it), with its Velocity; null once released. */
-  sounding: Sounding | null;
-  /** The pitch the newest Note sounds at, in semitones (fractional through a Glide or vibrato); A4 before any. */
-  pitch: number;
-  /** How far an LFO on Pitch moves it right now, in semitones: `pitch` less the Note where the Glide has taken it. */
-  vibrato: number;
 }
 
 export interface SynthEngine {

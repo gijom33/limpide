@@ -54,6 +54,47 @@ export function reached(step: Step, patch: Patch, overlays: Overlays): boolean {
   }
 }
 
+/** What a Step is checked against: the Patch, the Display options, and the current Snapshot's number (null when none). */
+export interface Scene {
+  patch: Patch;
+  overlays: Overlays;
+  snapshot: number | null;
+}
+
+/** What a Step's control holds: a knob's or fader's value, the Snapshot's number for an Action, nothing for the rest. */
+export type Held = number | null | undefined;
+export function held(step: Step | undefined, { patch, snapshot }: Scene): Held {
+  if (step?.kind === 'param') return patch[step.id];
+  if (step?.kind === 'action') return snapshot;
+  return undefined;
+}
+
+/**
+ * Whether the Step is made, `since` being what its control held when its card came to it (`held`). A knob found
+ * within reach but not on its target waits for a touch, so nothing moves by itself (issue 59, decision 5); an Action
+ * waits for a new press (a new Snapshot).
+ */
+export function isMade(step: Step, scene: Scene, since: Held): boolean {
+  if (step.kind === 'action') return scene.snapshot !== null && scene.snapshot !== since;
+  if (!reached(step, scene.patch, scene.overlays)) return false;
+  return step.kind !== 'param' || scene.patch[step.id] !== since || scene.patch[step.id] === step.to;
+}
+
+/** Whether the Patch holds the Step's exact target, as a made Step's knob is snapped to; a Display or Action Step sets none. */
+export function onTarget(step: Step, patch: Patch): boolean {
+  return step.kind === 'param' || step.kind === 'choice' ? patch[step.id] === step.to : true;
+}
+
+/** Whether the Step's control is in the Display panel (a Display option, or Snapshot), rather than on the page. */
+export const inDisplay = (step: Step) => step.kind === 'display' || step.kind === 'action';
+
+/** "Do it for me": the Step's change, made through what the page offers. */
+export function doStep(step: Step, page: { setPatch(change: (patch: Patch) => Patch): void; showOverlay(overlay: Overlay): void; takeSnapshot(): void }) {
+  if (step.kind === 'display') page.showOverlay(step.overlay);
+  else if (step.kind === 'action') page.takeSnapshot();
+  else page.setPatch((patch) => applyStep(patch, step));
+}
+
 /** The Patch with the Step's change made exactly. */
 export function applyStep(patch: Patch, step: Step): Patch {
   if (step.kind === 'param') return setParam(patch, step.id, step.to);

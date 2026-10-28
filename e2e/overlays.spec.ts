@@ -28,22 +28,22 @@ test('explanations live in tooltips, not as text on screen', async ({ page }) =>
   await expect(page.getByRole('tooltip')).toContainText('gain at every frequency');
 });
 
-test('the Ideal rings show only while a sound is there to compare them with: none after a reload, before a Note (the owner, 2026-10-27)', async ({ page }) => {
+test('the Ideal marks show only while a sound is there to compare them with: none after a reload, before a Note (the owner, 2026-10-27)', async ({ page }) => {
   await page.goto('/');
   await openDisplay(page);
   await expect(page.getByRole('group', { name: 'Show on Viewers' }).getByRole('button', { name: 'Ideal' })).toHaveAttribute('aria-pressed', 'true'); // on at first
   await page.keyboard.press('Escape');
-  const rings = () => page.getByLabel('Oscillator Spectrum', { exact: true }).getAttribute('data-ideal-rings').then(Number);
+  const marks = () => page.getByLabel('Oscillator Spectrum', { exact: true }).getAttribute('data-ideal-marks').then(Number);
   // A reload, with Ideal remembered: the browser holds the sound back until a tap, so the Spectrum is empty.
   await page.reload();
   await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/); // drawing
-  await expect.poll(rings).toBe(0);
+  await expect.poll(marks).toBe(0);
   await page.keyboard.down('KeyA');
-  await expect.poll(rings, { timeout: 10000 }).toBeGreaterThan(3);
-  await page.keyboard.up('KeyA'); // the Oscillators run on after the Release, their trace and rings with them
+  await expect.poll(marks, { timeout: 10000 }).toBeGreaterThan(3);
+  await page.keyboard.up('KeyA'); // the Oscillators run on after the Release, their trace and marks with them
 });
 
-test('the Harmonic Markers’ ticks show only while a sound is there, as the Ideal rings: none after a reload, before a Note (the owner, 2026-10-27)', async ({ page }) => {
+test('the Harmonic Markers’ ticks show only while a sound is there, as the Ideal marks: none after a reload, before a Note (the owner, 2026-10-27)', async ({ page }) => {
   await page.goto('/');
   const ticks = () => page.getByLabel('Oscillator Spectrum', { exact: true }).getAttribute('data-markers').then(Number);
   // The browser holds the sound back until a tap, so the Spectrum is empty.

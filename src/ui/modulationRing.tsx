@@ -17,6 +17,14 @@ export const ModulationContext = createContext<{ engine: SynthEngine; patch: Ref
 const AUDIBLE = 0.002;
 
 type Range = [number, number];
+/** What a knob's rings and dot show at a moment (`modulated`). */
+interface Modulated {
+  reach: Reach | null;
+  envelope?: Range;
+  velocity?: Range;
+  keyTrack?: Range[];
+  now: number | null;
+}
 
 /**
  * Where modulation can take a Parameter, and its value at this moment while a Note sounds. Every ring holds still
@@ -25,18 +33,13 @@ type Range = [number, number];
  * add or take away over the on-screen piano's keys and an octave either side. The dot (the Effective Cutoff) runs along them whatever the
  * Note.
  */
-function modulated(
-  id: ParamId,
-  patch: Patch,
-  engine: SynthEngine,
-  octave: number,
-): { reach: Reach | null; envelope?: Range; velocity?: Range; keyTrack?: Range[]; now: number | null } | null {
+function modulated(id: ParamId, patch: Patch, engine: SynthEngine, octave: number): Modulated | null {
   const m = engine.modulationAt();
   const now = m.amp > AUDIBLE ? effectiveValue(id, patch, m) : null;
   if (id === 'cutoff') {
     const lfos = lfoCutoffReach(patch);
-    const sweep = cutoffReach({ ...patch, lfoAmount: 0, lfo2Amount: 0, keyTrack: 0 }, null);
-    const env = sweep?.shares.filterEnvelope;
+    const sweep = cutoffReach(patch);
+    const env = sweep?.envelope;
     const top = env ? Math.max(env[0], env[1]) : patch.cutoff; // Velocity only raises the Cutoff: past the sweep's top
     const [lo, hi] = sweep ? [sweep.lo, sweep.hi] : [patch.cutoff, patch.cutoff];
     // Key Track over the piano's keys and an octave either side, below the lowest ring and above the highest: the
@@ -84,6 +87,18 @@ function listen() {
   addEventListener('focusout', () => (attention.focused = false));
 }
 
+/**
+ * Each ring, in drawing order (the blue one over the others): its class, whether it is drawn on the knob's own track
+ * (or outside the value arc), and the ranges it covers. Every ring is drawn the same way, hidden when it covers nothing.
+ */
+const RINGS: { className: string; onTrack: boolean; ranges(m: Modulated): Range[] | undefined }[] = [
+  { className: 'knob-envelope', onTrack: true, ranges: (m) => m.envelope && [m.envelope] },
+  { className: 'knob-envelope knob-velocity', onTrack: true, ranges: (m) => m.velocity && [m.velocity] },
+  { className: 'knob-envelope knob-keytrack', onTrack: true, ranges: (m) => m.keyTrack },
+  { className: 'knob-ring', onTrack: false, ranges: (m) => (m.reach ? [[m.reach.lo, m.reach.hi]] : undefined) },
+];
+const BLUE = RINGS.length - 1;
+
 /** The Parameters modulation can move, and so the knobs that carry a ring. */
 export const MODULATED: ReadonlySet<ParamId> = new Set(['cutoff', 'resonance', 'pulseWidth', 'osc2PulseWidth', 'osc2Semitone', 'osc2Detune', 'volume']);
 
@@ -110,10 +125,7 @@ interface Props {
  */
 export function ModulationRing({ id, centre, radius, trackRadius, dotRadius, arc, point }: Props) {
   const context = useContext(ModulationContext);
-  const ring = useRef<SVGPathElement>(null);
-  const envelope = useRef<SVGPathElement>(null);
-  const velocity = useRef<SVGPathElement>(null);
-  const keyTrack = useRef<SVGPathElement>(null);
+  const rings = useRef<(SVGPathElement | null)[]>([]);
   const dot = useRef<SVGCircleElement>(null);
   const draw = useRef({ arc, point });
   draw.current = { arc, point };
@@ -125,21 +137,17 @@ export function ModulationRing({ id, centre, radius, trackRadius, dotRadius, arc
     const still = matchMedia('(prefers-reduced-motion: reduce)');
     listen();
     return addToRenderLoop(() => {
-      const [r, e, v, k, d] = [ring.current, envelope.current, velocity.current, keyTrack.current, dot.current];
-      if (!r || !e || !v || !k || !d || !context.patch.current) return;
+      const [paths, d] = [rings.current, dot.current];
+      if (RINGS.some((_, i) => !paths[i]) || !d || !context.patch.current) return;
       const now = modulated(id, context.patch.current, context.engine, context.octave.current);
-      const shown = (path: SVGPathElement, ranges: Range[] | undefined, at: number) => {
+      RINGS.forEach((ring, i) => {
+        const path = paths[i]!;
         // A range pinned past the dial's end draws nothing (an arc is never shorter than half a degree).
-        const seen = ranges?.filter(([from, to]) => Math.abs(position(to) - position(from)) > 0.001);
+        const seen = (now ? ring.ranges(now) : undefined)?.filter(([from, to]) => Math.abs(position(to) - position(from)) > 0.001);
         path.style.display = seen?.length ? '' : 'none';
-        if (seen?.length) path.setAttribute('d', seen.map(([from, to]) => draw.current.arc(position(from), position(to), at)).join(' '));
-      };
-      const reach = now?.reach;
-      shown(r, reach ? [[reach.lo, reach.hi]] : undefined, radius);
-      shown(e, now?.envelope && [now.envelope], trackRadius);
-      shown(v, now?.velocity && [now.velocity], trackRadius);
-      shown(k, now?.keyTrack, trackRadius);
-      r.toggleAttribute('data-dim', attention.pointed || attention.focused);
+        if (seen?.length) path.setAttribute('d', seen.map(([from, to]) => draw.current.arc(position(from), position(to), ring.onTrack ? trackRadius : radius)).join(' '));
+      });
+      paths[BLUE]!.toggleAttribute('data-dim', attention.pointed || attention.focused);
       const live = now?.now ?? null;
       d.style.display = live === null || still.matches ? 'none' : '';
       if (live !== null) {
@@ -154,10 +162,16 @@ export function ModulationRing({ id, centre, radius, trackRadius, dotRadius, arc
 
   return (
     <>
-      <path ref={envelope} className="knob-envelope" style={{ display: 'none' }} />
-      <path ref={velocity} className="knob-envelope knob-velocity" style={{ display: 'none' }} />
-      <path ref={keyTrack} className="knob-envelope knob-keytrack" style={{ display: 'none' }} />
-      <path ref={ring} className="knob-ring" style={{ display: 'none' }} />
+      {RINGS.map((ring, i) => (
+        <path
+          key={ring.className}
+          ref={(path) => {
+            rings.current[i] = path;
+          }}
+          className={ring.className}
+          style={{ display: 'none' }}
+        />
+      ))}
       <circle ref={dot} className="knob-live" cx={centre} cy={centre} r={dotRadius} style={{ display: 'none' }} />
     </>
   );

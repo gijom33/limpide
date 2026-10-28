@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { defaultPatch, PARAMS, type Patch } from '../patch/patch';
 import { positionToValue, valueToPosition } from '../patch/taper';
 import { DEFAULT_OVERLAYS } from '../viewers/overlays';
-import { applyStep, controlName, differences, reached, rebuild, type Step, type Tutorial, targetText } from './tutorial';
+import { applyStep, controlName, differences, doStep, held, inDisplay, isMade, onTarget, reached, rebuild, type Step, type Tutorial, targetText } from './tutorial';
 
 const cutoff: Step = { kind: 'param', id: 'cutoff', to: 800, say: 'Turn Cutoff down.', note: 'Darker.' };
 const slope: Step = { kind: 'choice', id: 'filterSlope', to: 24, say: 'Choose 24 dB.', note: 'Steeper.' };
@@ -69,5 +69,41 @@ describe('a Tutorial', () => {
     expect(controlName('osc2Octave')).toBe('Osc 2 Octave');
     expect(controlName('mixOsc2')).toBe('Osc 2 level');
     expect(controlName('lfoRetrigger')).toBe('LFO 1 Retrigger');
+  });
+});
+
+describe('whether a Step is made (issue 70: asked of the Step, whatever its kind)', () => {
+  const scene = (changes: Partial<Patch>, snapshot: number | null = null) => ({ patch: { ...defaultPatch(), ...changes }, overlays: DEFAULT_OVERLAYS, snapshot });
+  const knob: Step = { kind: 'param', id: 'cutoff', to: 800, say: '', note: '' };
+  const press: Step = { kind: 'action', id: 'snapshot', say: '', note: '' };
+
+  it('a knob once moved within reach, or found on its target; one found within reach waits for a touch', () => {
+    expect(isMade(knob, scene({ cutoff: 810 }), 2000)).toBe(true);
+    expect(isMade(knob, scene({ cutoff: 810 }), 810)).toBe(false);
+    expect(isMade(knob, scene({ cutoff: 800 }), 800)).toBe(true);
+    expect(held(knob, scene({ cutoff: 810 }))).toBe(810);
+  });
+
+  it('an Action by a new Snapshot, not the one there when its card came', () => {
+    expect(held(press, scene({}, 3))).toBe(3);
+    expect(isMade(press, scene({}, 3), 3)).toBe(false);
+    expect(isMade(press, scene({}, 4), 3)).toBe(true);
+    expect(isMade(press, scene({}), null)).toBe(false);
+  });
+
+  it('the Patch is on target once snapped; Display and Action Steps set none', () => {
+    expect(onTarget(knob, { ...defaultPatch(), cutoff: 810 })).toBe(false);
+    expect(onTarget(knob, { ...defaultPatch(), cutoff: 800 })).toBe(true);
+    expect(onTarget(press, defaultPatch())).toBe(true);
+  });
+
+  it('“Do it for me” makes each kind’s change through the page', () => {
+    const done: string[] = [];
+    const page = { setPatch: () => done.push('patch'), showOverlay: (o: string) => done.push(o), takeSnapshot: () => done.push('snapshot') };
+    doStep(knob, page);
+    doStep(press, page);
+    doStep({ kind: 'display', overlay: 'ideal', say: '', note: '' }, page);
+    expect(done).toEqual(['patch', 'snapshot', 'ideal']);
+    expect(inDisplay(press) && !inDisplay(knob)).toBe(true);
   });
 });

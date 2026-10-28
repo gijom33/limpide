@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { type Step, type Tutorial, targetText } from '../tutorial/tutorial';
+import { inDisplay, type Step, type Tutorial, targetText } from '../tutorial/tutorial';
 import { FoldButton, useCardPlacement } from './cardPlacement';
 import { useDocked } from './docked';
 import { CloseIcon, NoteIcon } from './icons';
@@ -51,8 +51,7 @@ function useRing(step: Step | undefined, made: boolean) {
       let element = document.querySelector(selectorOf(step));
       // Until the Display option is on (or the Snapshot taken), the Display button stands for it while its panel is shut;
       // once made, nothing.
-      const inDisplay = step.kind === 'display' || step.kind === 'action';
-      if (inDisplay && !element?.checkVisibility()) element = made ? null : document.querySelector('button[aria-label="Display"]');
+      if (inDisplay(step) && !element?.checkVisibility()) element = made ? null : document.querySelector('button[aria-label="Display"]');
       if (!element) return null;
       element.setAttribute('data-tutorial', '');
       if (step.kind === 'param' || step.kind === 'choice') element.setAttribute('data-tutorial-target', `→ ${targetText(step)}`);

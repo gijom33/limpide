@@ -16,7 +16,7 @@ interface Props {
   view(): ViewSettings;
   /** Draw the Ideal Reference rings on this Tap's Spectrum. */
   showIdeal?: boolean;
-  /** The Filter's gain: drawn as the Response Curve and applied to the Ideal rings. */
+  /** The Filter's gain: drawn as the Response Curve and applied to the Ideal marks. */
   response?(frequencies: Float32Array<ArrayBuffer>): Float32Array;
   /** Whether the safety limiter is bending the sound: given for the Amp Tap, shown as LIMITING. */
   limiting?(): boolean;

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import type { Modulation } from '../engine/synthEngine';
 import { defaultPatch, type Patch } from '../patch/patch';
 import { linePattern, timelineShows } from '../viewers/timeline';
 import { destinationLevel, knobLevel, lfoDestinations } from './destinations';
+import type { Modulation } from './modulationModel';
 
 const patch = (change: Partial<Patch>): Patch => ({ ...defaultPatch(), lfoAmount: 0, lfo2Amount: 0, ...change });
 const at = (change: Partial<Modulation>): Modulation => ({

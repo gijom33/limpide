@@ -1,4 +1,35 @@
-import { type LfoDestination, lfos, type Patch } from '../patch/patch';
+import { type FilterMode, type LfoDestination, lfos, type Patch } from '../patch/patch';
+
+/** The Note sounding, whose Velocity and key are fixed for as long as it sounds. */
+export interface Sounding {
+  note: number;
+  velocity: number;
+}
+
+/**
+ * What the Modulation model says at a moment: both Envelope levels, the Effective Cutoff and the Filter's shape. The
+ * engine computes it and the Viewers and rings read it, so it lives with the model rather than in the engine.
+ */
+export interface Modulation {
+  amp: number;
+  filter: number;
+  cutoff: number;
+  /** Each LFO's value (−1 to 1), LFO 1 first. */
+  lfo: [number, number];
+  mode: FilterMode;
+  /** The Resonance after the LFOs (0–1). */
+  resonance: number;
+  /** Band-pass and notch width in octaves. */
+  bandwidth: number;
+  /** What the Amp is multiplied by (0–1): the Volume knob, dipped by the LFOs on Volume (issue 62). */
+  volume: number;
+  /** The newest Note while its key is held (or Hold keeps it), with its Velocity; null once released. */
+  sounding: Sounding | null;
+  /** The pitch the newest Note sounds at, in semitones (fractional through a Glide or vibrato); A4 before any. */
+  pitch: number;
+  /** How far an LFO on Pitch moves it right now, in semitones: `pitch` less the Note where the Glide has taken it. */
+  vibrato: number;
+}
 
 /** How far the LFO moves things at full Amount. */
 export const LFO_CUTOFF_OCTAVES = 2;

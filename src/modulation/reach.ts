@@ -4,24 +4,10 @@ import {
   VELOCITY_CUTOFF_OCTAVES,
 } from './modulationModel';
 
-/** What moves a Parameter away from its knob's own value. */
-export type Source = 'filterEnvelope' | 'lfo1' | 'lfo2' | 'velocity' | 'keyTrack';
-const LFO_SOURCES = ['lfo1', 'lfo2'] as const;
-
-/**
- * How far modulation can take a Parameter with the Patch as it is (the modulation ring): the lowest and highest
- * values, and each source's own share, as the range it would give alone, from the knob's own value.
- */
+/** How far modulation can take a Parameter with the Patch as it is (a modulation ring): its lowest and highest values. */
 export interface Reach {
   lo: number;
   hi: number;
-  shares: Partial<Record<Source, [number, number]>>;
-}
-
-/** The Note sounding, whose Velocity and key are fixed for as long as it sounds. */
-export interface Sounding {
-  note: number;
-  velocity: number;
 }
 
 const MIN_HZ = 20;
@@ -29,39 +15,35 @@ const MAX_HZ = 20000;
 /** Less spread than this is no ring. */
 const NO_SPREAD = 1.001;
 
+/** A Cutoff `octaves` from the knob's, within what the Filter can reach. */
+const cutoffAt = (patch: Patch, octaves: number) => Math.min(MAX_HZ, Math.max(MIN_HZ, patch.cutoff * 2 ** octaves));
+
+/** The reach of ranges in octaves from the Cutoff knob, added up; none when it spreads no further than the knob. */
+function cutoffSpread(patch: Patch, ranges: [number, number][]): Reach | null {
+  const lo = cutoffAt(patch, ranges.reduce((sum, [a]) => sum + a, 0));
+  const hi = cutoffAt(patch, ranges.reduce((sum, [, b]) => sum + b, 0));
+  return hi / lo < NO_SPREAD ? null : { lo, hi };
+}
+
 /**
- * The Effective Cutoff's reach (ADR-0003's model, at its extremes). The Filter Envelope sweeps from the Cutoff to
- * Envelope Amount octaves away; each LFO aimed at the Cutoff swings it up to two octaves each way. Velocity and Key
- * Track are fixed for a Note: while one sounds they move the whole range; with none, Velocity reaches as far as the
- * hardest strike would open it, and Key Track stays at C4, where it is the knob's own value.
+ * The Effective Cutoff's reach from the Filter Envelope and Velocity (the Cutoff knob's white and grey rings,
+ * ADR-0003's model at its extremes), with `envelope`, the Filter Envelope's sweep alone: from the Cutoff to Envelope
+ * Amount octaves away. Velocity reaches as far as the hardest strike would open it.
  */
-export function cutoffReach(patch: Patch, sounding: Sounding | null): Reach | null {
-  const octaves: Partial<Record<Source, [number, number]>> = {};
-  if (patch.filterEnvAmount) octaves.filterEnvelope = [Math.min(0, patch.filterEnvAmount), Math.max(0, patch.filterEnvAmount)];
-  lfoSwings(patch, 'cutoff', LFO_CUTOFF_OCTAVES).forEach((swing, i) => {
-    if (swing) octaves[LFO_SOURCES[i]] = [-swing, swing];
-  });
-  if (patch.velocityCutoff) {
-    const full = VELOCITY_CUTOFF_OCTAVES * patch.velocityCutoff;
-    octaves.velocity = sounding ? [0, full * sounding.velocity] : [0, full];
-  }
-  if (patch.keyTrack && sounding && sounding.note !== KEY_TRACK_CENTRE) {
-    const shift = (patch.keyTrack * (sounding.note - KEY_TRACK_CENTRE)) / 12;
-    octaves.keyTrack = [Math.min(0, shift), Math.max(0, shift)];
-  }
-  // Velocity and Key Track at the Note sounding are one value each: they shift the range rather than widen it.
-  const fixed = (source: Source) => sounding && (source === 'velocity' || source === 'keyTrack');
-  let lo = 0;
-  let hi = 0;
-  for (const [source, [a, b]] of Object.entries(octaves) as [Source, [number, number]][]) {
-    const shift = fixed(source) ? (a || b) : 0;
-    lo += fixed(source) ? shift : a;
-    hi += fixed(source) ? shift : b;
-  }
-  const hz = (o: number) => Math.min(MAX_HZ, Math.max(MIN_HZ, patch.cutoff * 2 ** o));
-  if (hz(hi) / hz(lo) < NO_SPREAD) return null;
-  const shares = Object.fromEntries(Object.entries(octaves).map(([source, [a, b]]) => [source, [hz(a), hz(b)]]));
-  return { lo: hz(lo), hi: hz(hi), shares };
+export function cutoffReach(patch: Patch): (Reach & { envelope?: [number, number] }) | null {
+  const envelope: [number, number] = [Math.min(0, patch.filterEnvAmount), Math.max(0, patch.filterEnvAmount)];
+  const reach = cutoffSpread(patch, [envelope, [0, VELOCITY_CUTOFF_OCTAVES * patch.velocityCutoff]]);
+  if (!reach) return null;
+  return patch.filterEnvAmount ? { ...reach, envelope: [cutoffAt(patch, envelope[0]), cutoffAt(patch, envelope[1])] } : reach;
+}
+
+/**
+ * The LFOs' reach on the Cutoff (both together when both aim at it), up to two octaves each way each at full Depth:
+ * the knob's blue ring (issue 63).
+ */
+export function lfoCutoffReach(patch: Patch): Reach | null {
+  const total = lfoSwings(patch, 'cutoff', LFO_CUTOFF_OCTAVES).reduce((sum, swing) => sum + swing, 0);
+  return cutoffSpread(patch, [[-total, total]]);
 }
 
 /**
@@ -73,22 +55,13 @@ export function keyTrackOctaves(patch: Patch, low: number, high: number): [numbe
   return [Math.min(0, a, b) || 0, Math.max(0, a, b) || 0]; // || 0: no −0 from Key Track off below C4
 }
 
-/** The LFOs' reach alone on the Cutoff (both together when both aim at it): the knob's blue ring (issue 63). */
-export const lfoCutoffReach = (patch: Patch) => cutoffReach({ ...patch, filterEnvAmount: 0, velocityCutoff: 0, keyTrack: 0 }, null);
-
 /**
  * The LFOs' reach on a Parameter they swing evenly around its knob's value: `perDepth` each way at full Depth, both
- * together kept within `room` (as the sound is), each LFO's share its own swing.
+ * together kept within `room` (as the sound is).
  */
 function lfoReach(patch: Patch, destination: LfoDestination, value: number, perDepth: number, room = Infinity): Reach | null {
-  const swings = lfoSwings(patch, destination, perDepth, room);
-  const total = swings[0] + swings[1];
-  if (total <= 0) return null;
-  const shares: Reach['shares'] = {};
-  swings.forEach((swing, i) => {
-    if (swing) shares[LFO_SOURCES[i]] = [value - swing, value + swing];
-  });
-  return { lo: value - total, hi: value + total, shares };
+  const [a, b] = lfoSwings(patch, destination, perDepth, room);
+  return a + b > 0 ? { lo: value - a - b, hi: value + a + b } : null;
 }
 
 /** A Pulse Width's reach: each LFO aimed at Pulse Width swings it 40 points each way at full Depth, as the sound does. */
@@ -110,12 +83,6 @@ export const detuneReach = (patch: Patch) => lfoReach(patch, 'detune', patch.osc
  * foot (to silence at full Depth), never above it.
  */
 export function volumeReach(patch: Patch): Reach | null {
-  const swings = lfoSwings(patch, 'volume', LFO_VOLUME, LFO_VOLUME);
-  const total = swings[0] + swings[1];
-  if (total <= 0) return null;
-  const shares: Reach['shares'] = {};
-  swings.forEach((swing, i) => {
-    if (swing) shares[LFO_SOURCES[i]] = [patch.volume * (1 - 2 * swing), patch.volume];
-  });
-  return { lo: patch.volume * (1 - 2 * total), hi: patch.volume, shares };
+  const [a, b] = lfoSwings(patch, 'volume', LFO_VOLUME, LFO_VOLUME);
+  return a + b > 0 ? { lo: patch.volume * (1 - 2 * (a + b)), hi: patch.volume } : null;
 }

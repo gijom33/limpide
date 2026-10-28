@@ -4,13 +4,14 @@ import { frequencyAxis, levelAxis } from './axes';
 import { cssVar, curveWidth, haloText, prepareCanvas } from './canvas';
 import { createFreezeLatch } from './freezeLatch';
 import { harmonicMarkers } from './harmonicMarkers';
-import { aboveFloor, ringsToDraw, spectrumOutline } from './outline';
+import { aboveFloor, marksToDraw, spectrumOutline } from './outline';
 import { hoverReadout, interpolatedPeak, snapToPeak } from './readout';
 import { amplitudeToSpectrumDb } from './spectrumScale';
 import type { ViewSettings } from './viewSettings';
 
 const MIN_LABEL_GAP = 22;
-const RING_GAP = 6;
+/** The least gap between two of one source's Ideal Reference marks, in pixels. */
+const MARK_GAP = 6;
 // Where the Response Curve's 0 dB gain sits. On the dB axis the curve shares the Spectrum's dB-per-pixel
 // scale, so its slopes (12 dB/octave…) read true against the Harmonics.
 const GAIN_ZERO_DB = -20;
@@ -28,9 +29,9 @@ const LINEAR_TOP_DB = amplitudeToSpectrumDb(OSCILLATOR_LEVEL);
 interface Options {
   fundamental(): number;
   view(): ViewSettings;
-  /** Draw the Ideal Reference (from the view settings) as hollow rings. */
+  /** Draw the Ideal Reference (from the view settings) as hollow marks. */
   showIdeal?: boolean;
-  /** The Filter's gain per frequency: drawn as the Response Curve, and applied to the Ideal rings. */
+  /** The Filter's gain per frequency: drawn as the Response Curve, and applied to the Ideal marks. */
   response?(frequencies: Float32Array<ArrayBuffer>): Float32Array;
   /** Cursor position over the canvas (CSS pixels), for the hover readout. */
   hover?(): { x: number; y: number } | null;
@@ -79,12 +80,12 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
   const bins = new Float32Array(analyser.frequencyBinCount).fill(-Infinity);
   const binHz = sampleRate / analyser.fftSize;
   const nyquist = sampleRate / 2;
-  // While frozen, everything drawn over the frame (Markers, rings, Curve) stays with that frame's Note and
+  // While frozen, everything drawn over the frame (Markers, Ideal marks, Curve) stays with that frame's Note and
   // Patch, even if a new Note is played or a knob is turned.
   const frozenFundamental = createFreezeLatch<number>();
   const frozenIdeal = createFreezeLatch<readonly IdealPartial[] | undefined>();
   const frozenCurve = createFreezeLatch<{ key: string; gains: Float32Array }>();
-  const frozenRings = createFreezeLatch<{ key: string; gains: Float32Array }>();
+  const frozenIdealGains = createFreezeLatch<{ key: string; gains: Float32Array }>();
   let snapshotToken: number | null = null;
   let snapshotBins: Float32Array | null = null;
 
@@ -199,7 +200,7 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
     }
 
     // Harmonic Markers: a tick on every Harmonic, labels where there is room (fundamental by note name), while the
-    // trace shows a sound, as the Ideal rings (the owner, 2026-10-27): none while silent, as after a reload.
+    // trace shows a sound, as the Ideal marks (the owner, 2026-10-27): none while silent, as after a reload.
     const sounding = outline.some((v) => yOf(v) < height - 0.5);
     const ticks = overlays.harmonics && sounding ? markers : [];
     canvas.dataset.markers = String(ticks.length);
@@ -223,13 +224,13 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
     // a circle for Osc 1, a square for Osc 2, a triangle for the Sub (the owner, 2026-10-27), while the trace shows a
     // sound to compare them with: none while silent, as after a reload before a Note.
     const partials = showIdeal && overlays.ideal && sounding && ideal ? ideal : undefined;
-    let ringCount = 0;
+    let markCount = 0;
     if (partials && f0 > 0) {
       const shown = partials.filter((p) => f0 * p.ratio <= maxFrequency);
       const key = shown.map((p) => `${p.source}${p.ratio.toFixed(4)}`).join(',');
       const live = () => ({ key, gains: response ? response(Float32Array.from(shown, (p) => f0 * p.ratio)) : new Float32Array(shown.length).fill(1) });
-      const held = frozenRings(viewer.frozen, live);
-      const { gains } = held.key === key ? held : frozenRings(false, live);
+      const held = frozenIdealGains(viewer.frozen, live);
+      const { gains } = held.key === key ? held : frozenIdealGains(false, live);
       g.strokeStyle = text;
       g.lineWidth = 1;
       const marks = shown.map((p, i) => ({ x: xOf(f0 * p.ratio), y: yOf(amplitudeToSpectrumDb(p.level * gains[i])), source: p.source }));
@@ -237,14 +238,14 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
       // source is thinned on its own, so two on one Harmonic both show.
       for (const source of ['osc1', 'osc2', 'sub'] as const) {
         const own = marks.filter((m) => m.source === source);
-        for (const i of ringsToDraw(own, height - 0.5, RING_GAP)) {
-          ringCount++;
+        for (const i of marksToDraw(own, height - 0.5, MARK_GAP)) {
+          markCount++;
           idealMark(g, own[i].x, own[i].y, source);
         }
       }
     }
 
-    canvas.dataset.idealRings = String(ringCount);
+    canvas.dataset.idealMarks = String(markCount);
 
     // The frequency axis's labels last, over the Harmonic bars, each on a halo of the background (issue 47).
     g.font = '10px system-ui, sans-serif';

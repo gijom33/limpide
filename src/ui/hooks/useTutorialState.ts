@@ -3,7 +3,7 @@ import type { KeyValueStorage } from '../../app/storage';
 import type { Patch } from '../../patch/patch';
 import { PRESETS } from '../../patch/presets';
 import { loadFinished, saveFinished } from '../../tutorial/progress';
-import { applyStep, controlName, differences, reached, type Step, type Tutorial } from '../../tutorial/tutorial';
+import { applyStep, controlName, differences, doStep, type Held, held, isMade, onTarget, type Tutorial } from '../../tutorial/tutorial';
 import type { Overlays } from '../../viewers/overlays';
 
 /** How long a control must rest within reach of its target for the Step to count. */
@@ -33,7 +33,7 @@ interface Host {
  * `since` is what the Step's control held when the card came to it.
  */
 export function useTutorialState({ storage, patch, patchName, setPatch, loadPatch, overlays, setOverlays, snapshot, takeSnapshot, onStart, onEnd }: Host) {
-  const [lesson, setLesson] = useState<{ tutorial: Tutorial; index: number; done: boolean[]; since?: unknown } | null>(null);
+  const [lesson, setLesson] = useState<{ tutorial: Tutorial; index: number; done: boolean[]; since?: Held } | null>(null);
   const [finished, setFinished] = useState(() => loadFinished(storage));
   const preset = lesson && PRESETS.find((p) => p.name === lesson.tutorial.preset)!;
   const step = lesson?.tutorial.steps[lesson.index];
@@ -50,34 +50,25 @@ export function useTutorialState({ storage, patch, patchName, setPatch, loadPatc
     onEnd();
     setLesson(null);
   };
-  const held = (s: Step | undefined) => (s?.kind === 'param' ? patch[s.id] : s?.kind === 'action' ? snapshot : undefined);
+  const scene = { patch, overlays, snapshot };
   const move = (delta: number) =>
     setLesson((l) => {
       if (!l) return l;
       const index = Math.min(l.tutorial.steps.length, Math.max(-1, l.index + delta));
-      return { ...l, index, since: held(l.tutorial.steps[index]) };
+      return { ...l, index, since: held(l.tutorial.steps[index], scene) };
     });
   const matchPreset = () => preset && loadPatch(preset.name, preset.patch);
   const doIt = () => {
-    if (!step) return;
-    if (step.kind === 'display') setOverlays((v) => ({ ...v, [step.overlay]: true }));
-    else if (step.kind === 'action') takeSnapshot();
-    else setPatch((p) => applyStep(p, step));
+    if (step) doStep(step, { setPatch, showOverlay: (overlay) => setOverlays((v) => ({ ...v, [overlay]: true })), takeSnapshot });
   };
 
   // It counts once the control rests within reach, not as a drag passes through on its way past (review 5, 2026-10-27):
-  // any change before then starts the wait again. A knob found within reach, but not on its target, waits for a touch,
-  // so nothing moves by itself (issue 59, decision 5); a Snapshot Step waits for a new Snapshot.
-  const made =
-    !!step &&
-    !!lesson &&
-    (step.kind === 'action'
-      ? snapshot !== null && snapshot !== lesson.since
-      : reached(step, patch, overlays) && (step.kind !== 'param' || patch[step.id] !== lesson.since || patch[step.id] === step.to));
+  // any change before then starts the wait again.
+  const made = !!step && !!lesson && isMade(step, scene, lesson.since);
   useEffect(() => {
     if (!lesson || !step || lesson.done[lesson.index] || !made) return;
     const timer = setTimeout(() => {
-      if ((step.kind === 'param' || step.kind === 'choice') && patch[step.id] !== step.to) setPatch((p) => applyStep(p, step));
+      if (!onTarget(step, patch)) setPatch((p) => applyStep(p, step));
       setLesson((l) => l && { ...l, done: l.done.map((d, i) => d || i === l.index) });
     }, SETTLE_MS);
     return () => clearTimeout(timer);

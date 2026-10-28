@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement
+**Status:** done (2026-10-28). The reach module trimmed to what the rings read, one way of drawing every Cutoff ring, the Timeline's dash state tested and pruned, the Ideal's marks named marks, the Tutorial's Step kinds asked of the Step, and the `Modulation` type moved out of the engine. Nothing visible changed.
 
 ## Agent Brief
 
@@ -35,13 +35,22 @@
 - The `Modulation` type
 
 **Acceptance criteria:**
-- [ ] `npx tsc`, `npm run lint`, `npx vitest run` and `npx playwright test` green, with no screenshot or behaviour test changed except for renamed selectors
-- [ ] No production code path is reached only by tests in the reach module (checked by reading the callers)
-- [ ] The Timeline's dash state has a unit test, and its size stays bounded when lines come and go
-- [ ] `grep -rn -i 'ring' ` over the Spectrum's code finds no name for the Ideal's marks
-- [ ] No module under the modulation folder imports from the engine
+- [x] `npx tsc`, `npm run lint`, `npx vitest run` and `npx playwright test` green, with no screenshot or behaviour test changed except for renamed selectors
+- [x] No production code path is reached only by tests in the reach module (checked by reading the callers)
+- [x] The Timeline's dash state has a unit test, and its size stays bounded when lines come and go
+- [x] `grep -rn -i 'ring' ` over the Spectrum's code finds no name for the Ideal's marks
+- [x] No module under the modulation folder imports from the engine
 
 **Out of scope:**
 - Any visible change to the rings, the Timeline, the Spectrum or the Tutorials
 - The LFO Destinations list (issue 68)
 - The Timeline's knob-setting line and the Demo's stop rules (issue 71)
+
+## How it was built
+
+- **Reach** (`src/modulation/reach.ts`): `Reach` is `{ lo, hi }`. `cutoffReach(patch)` covers the Filter Envelope and Velocity, with the sweep alone as `envelope`; `lfoCutoffReach` the LFOs alone; neither takes a Note any more. The per-source `shares`, the sounding-Note branch and the `Source` type are gone; the tests cover what the rings read.
+- **Rings** (`src/ui/modulationRing.tsx`): a `RINGS` table (class, on the track or outside, the ranges each covers) that one loop draws and the render maps to paths.
+- **Timeline**: `createDashState` (`src/viewers/dashState.ts`) keeps only the previous frame's lines, so a line no longer drawn is forgotten; `dashState.test.ts` pins the pattern to time across frames and shows a dropped line starting afresh. `line()` takes an options object.
+- **Ideal marks**: `marksToDraw`, `MARK_GAP`, `frozenIdealGains`, `markCount` and `data-ideal-marks` (`e2e/overlays.spec.ts` follows the attribute).
+- **Steps** (`src/tutorial/tutorial.ts`): `held`, `isMade`, `onTarget`, `inDisplay` and `doStep` answer per kind what the state hook and the card asked by checking `'action'`; `since` is `Held` (a number, null or undefined). Unit tests in `tutorial.test.ts`.
+- **The cycle**: `Modulation` and `Sounding` live in `src/modulation/modulationModel.ts`; the engine imports them.
