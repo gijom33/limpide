@@ -6,6 +6,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- 2026-10-28, the owner, issue 63's final design: "Make the two LFOs the same blue as LFO 1. Show on timeline the filter envelope only when active. Also show in timeline the parameters that are targeted by an active LFO."
+
 ## Dropped
 
 - 2026-10-27, from the 1.12.1 review, two inbox rules slipped (fixes made without an inbox line first): nothing to build. The rule is in CLAUDE.md and has been followed since. Claude's call, open to the owner.
