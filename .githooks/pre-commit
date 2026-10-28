@@ -1,3 +1,3 @@
 #!/bin/sh
-# Type check and lint before every commit (ADR-0012). The tests stay out: see CLAUDE.md.
-npx tsc && npm run lint --silent
+# Before every commit (ADR-0012): the inbox rules, then the type check and the lint. The tests stay out: see CLAUDE.md.
+node --experimental-strip-types --no-warnings scripts/commitChecks.ts inbox && npx tsc && npm run lint --silent

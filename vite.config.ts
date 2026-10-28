@@ -91,7 +91,7 @@ export default defineConfig({
         test: {
           name: 'unit',
           environment: 'node',
-          include: ['src/**/*.test.ts'],
+          include: ['src/**/*.test.ts', 'scripts/**/*.test.ts'],
           exclude: ['src/**/*.browser.test.ts'],
         },
       },
