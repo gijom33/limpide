@@ -1195,6 +1195,11 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 .patch-finished { color: var(--accent); font-weight: 600; }
 .patch-split { display: inline-flex; border: 1px solid var(--border); border-radius: var(--radius-control); }
 .patch-split .patch-item { border: none; }
+/* One pill (the owner, 2026-10-28): pointed at or loaded, the whole of it lights up, never one half; the loaded
+   Preset stays lit while pointed at, as a plain Preset does. */
+.patch-split .patch-item, .patch-split .patch-item:hover { background: none; }
+.patch-split:hover { background: var(--control-hover); }
+.patch-split:has(.patch-item[aria-current='true']) { background: var(--control-on); }
 .patch-split > :last-child .patch-item { padding-left: 6px; }
 .patch-tutorial { display: inline-flex; align-items: center; justify-content: flex-end; min-width: 28px; padding: 0 0 0 10px; }
 /* Phones: the card two lines high, a tap on them (or +) for the rest; once a Step is made, its note in the instruction's place. */
