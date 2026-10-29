@@ -6,6 +6,7 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- From the 1.15.1 review: the piano's width (two octave buttons and ten white keys) is written twice in the styles for 1200 to 1919 px, once for the top row's column and once for the keyboard's own columns; the header's 2 px and 4 px gaps are bare numbers.
 ## Dropped
 
 - 2026-10-28, from the issue 69 review, the category pills beside the search box on a computer where decision 7 says under it: nothing to build, decided by the owner; decision 7 is amended to match what is built (and decision 13, which assumed it).
