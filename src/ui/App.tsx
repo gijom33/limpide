@@ -1,18 +1,13 @@
-import { useEffect, useMemo, useReducer, useRef, useState, useSyncExternalStore } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { type AudioSession, getAudioSession } from '../app/session';
 import { safeStorage } from '../app/storage';
 import { type AudioStatus, unlockAudio } from '../app/unlockAudio';
 import { rememberWelcome, welcomeFor } from '../app/welcome';
-import { OSCILLATOR_LEVEL } from '../engine/synthEngine';
 import { shiftOctave } from '../input/keyboardLayout';
-import { idealPartials } from '../music/idealReference';
 import { type Formula, harmonicFormula, responseFormula } from '../music/maths';
 import { CHOICES, type ParamId, type Patch, setFilter, setParam, setWaveform } from '../patch/patch';
 import { PRESETS } from '../patch/presets';
 import { TUTORIALS } from '../tutorial/tutorials';
-import { loadOverlays, saveOverlays, toggleOverlay } from '../viewers/overlays';
-import { INITIAL_VIEWER_STATE, viewerReducer } from '../viewers/viewerState';
-import type { ViewSettings } from '../viewers/viewSettings';
 import { About } from './About';
 import { DemoBar } from './DemoBar';
 import { DisplayMenu } from './DisplayMenu';
@@ -58,7 +53,6 @@ const STAGE_TIPS = {
   ampAttack: 'attack', ampDecay: 'decay', ampSustain: 'sustain', ampRelease: 'release',
 } as const;
 
-const IDEAL_HARMONICS = 256;
 const LETTER_KEYS = 'limpide.letterKeys';
 const BEND_RANGE = 'limpide.bendRange';
 /** The piano starts on C4, the octave the octave buttons count from. */
@@ -122,8 +116,10 @@ function Block({ title, stage, ids, patch, onChange, children, more, heading, ex
 export function App() {
   const storage = useMemo(safeStorage, []);
   const [session] = useState(() => getAudioSession(storage));
-  const { patches, library } = session;
+  const { patches, library, viewers: viewerStore } = session;
   const { patch, name: patchName, changed } = useSyncExternalStore(patches.subscribe, patches.get);
+  const settings = useSyncExternalStore(viewerStore.subscribe, viewerStore.get);
+  const { viewer, overlays } = settings;
   useEffect(() => {
     // A share link has done its job once loaded; drop it so a reload keeps later edits (autosaved).
     if (location.hash.startsWith('#p=')) history.replaceState(null, '', location.pathname + location.search);
@@ -158,15 +154,9 @@ export function App() {
   const [bendRange, setBendRange] = useState(() => Number(storage.getItem(BEND_RANGE)) || 2);
   useEffect(() => storage.setItem(BEND_RANGE, String(bendRange)), [storage, bendRange]);
 
-  const [viewer, dispatchViewer] = useReducer(viewerReducer, INITIAL_VIEWER_STATE);
-  useSpaceFreezes(dispatchViewer);
-  useEffect(() => session.engine.setTapSource(viewer.tapSource), [session, viewer.tapSource]);
+  useSpaceFreezes(viewerStore.dispatch);
   const [theme, setTheme] = useState(loadTheme);
   useEffect(() => applyTheme(theme), [theme]);
-  const [cycles, setCycles] = useState<ViewSettings['cycles']>(2);
-  const [timelineSeconds, setTimelineSeconds] = useState<ViewSettings['timelineSeconds']>(2);
-  const [overlays, setOverlays] = useState(() => loadOverlays(storage));
-  useEffect(() => saveOverlays(storage, overlays), [storage, overlays]);
 
   const players = usePlayers({
     session, octaveRef, setOctave, heldNotes,
@@ -177,9 +167,10 @@ export function App() {
     },
   });
   const tutorial = useTutorialState({
-    storage, patch, patchName, patches, overlays, setOverlays,
+    storage, patch, patchName, patches, overlays,
+    showOverlay: (overlay) => viewerStore.dispatch({ type: 'showOverlay', overlay }),
     snapshot: viewer.snapshot,
-    takeSnapshot: () => dispatchViewer({ type: 'takeSnapshot' }),
+    takeSnapshot: () => viewerStore.dispatch({ type: 'takeSnapshot' }),
     onStart: () => {
       players.stopAll();
       players.setTookOver(false);
@@ -190,7 +181,7 @@ export function App() {
   const tutorialList = TUTORIALS.map((t) => ({ preset: t.preset, finished: tutorial.finished.has(t.preset) }));
   const startTutorial = (preset: string) => tutorial.start(TUTORIALS.find((t) => t.preset === preset)!);
   const midi = useMidi({
-    storage, session, pressHoldRef, dispatchViewer,
+    storage, session, pressHoldRef,
     onNote: () => players.stopDemoRef.current(true),
     onBend: (amount) => session.engine.setBend(amount * bendRange * 100),
     onPedal: setPedal,
@@ -202,17 +193,8 @@ export function App() {
   });
   const { learnContext, learning } = midi;
 
-  // The Ideal Reference at the Oscillator Tap's level: the same series the engine plays, scaled by the Nominal Level.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: only what the Ideal Reference depends on, not the whole Patch
-  const ideal = useMemo(
-    () => idealPartials(patch, IDEAL_HARMONICS).map((p) => ({ ...p, level: p.level * OSCILLATOR_LEVEL })),
-    [patch.waveform, patch.pulseWidth, patch.mixOsc1, patch.mixSub],
-  );
-
-  // Read by the render loop every frame; a stable getter keeps the Viewers mounted while settings change.
-  const viewSettings = useRef<ViewSettings>({ cycles, timelineSeconds, ideal, overlays, viewer });
-  viewSettings.current = { cycles, timelineSeconds, ideal, overlays, viewer };
-  const view = useRef(() => viewSettings.current).current;
+  // Read by the render loop every frame, outside React (issue 77).
+  const view = viewerStore.get;
 
   // A change by hand: a knob, a fader or a switch.
   const edit = (change: (patch: Patch) => Patch) => patches.change(change, 'hand');
@@ -337,13 +319,13 @@ export function App() {
               <section className="toolbar" aria-label="Viewer controls">
                 <div className="toolbar-groups">
                   <ToolGroup title="View">
-                    <ViewActions state={viewer} dispatch={dispatchViewer} />
+                    <ViewActions state={viewer} dispatch={viewerStore.dispatch} />
                   </ToolGroup>
                   <ToolGroup title="Axes">
-                    <AxesControls state={viewer} dispatch={dispatchViewer} cycles={cycles} onCycles={setCycles} timelineSeconds={timelineSeconds} onTimelineSeconds={setTimelineSeconds} />
+                    <AxesControls settings={settings} dispatch={viewerStore.dispatch} />
                   </ToolGroup>
                   <ToolGroup title="Show">
-                    <OverlayToggles value={overlays} onToggle={(o) => setOverlays((v) => toggleOverlay(v, o))} />
+                    <OverlayToggles value={overlays} onToggle={(overlay) => viewerStore.dispatch({ type: 'toggleOverlay', overlay })} />
                   </ToolGroup>
                   <ToolGroup title="Keys">
                     <Tooltip content={TIPS.letterKeys}>

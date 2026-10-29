@@ -6,7 +6,7 @@ It also fixes a bug found while grilling it: the Ideal Reference was recomputed 
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement
+**Status:** done (2026-10-28). The Viewer settings live in one store beside the Patch store; App keeps none of them in React state. The Ideal Reference follows every change to the Patch, so its Osc 2 marks now follow Osc 2. The Playwright suite passes untouched.
 
 ## Agent Brief
 
@@ -29,9 +29,9 @@ It also fixes a bug found while grilling it: the Ideal Reference was recomputed 
 - The settings the Viewers read every frame (unchanged in shape)
 
 **Acceptance criteria:**
-- [ ] `npx tsc`, `npm run lint`, `npx vitest run` and `npx playwright test` green, no Playwright test changed
-- [ ] No Viewer setting kept in React state; no dispatch passed between hooks
-- [ ] Node tests: only the overlays are saved; a new store starts from the saved overlays; the Amp Tap's source reaches the engine at once; the Ideal Reference follows Osc 2's level and tuning
+- [x] `npx tsc`, `npm run lint`, `npx vitest run` and `npx playwright test` green, no Playwright test changed
+- [x] No Viewer setting kept in React state; no dispatch passed between hooks
+- [x] Node tests: only the overlays are saved; a new store starts from the saved overlays; the Amp Tap's source reaches the engine at once; the Ideal Reference follows Osc 2's level and tuning
 
 **Out of scope:**
 - Saving any other Viewer setting (decision 3)
@@ -50,3 +50,10 @@ Claude's calls, open to the owner:
 
 7. The store recomputes the Ideal Reference on every change to the Patch, rather than on a list of the values it reads, so no list can fall behind what it reads again.
 8. Built in the session that grilled it, test-first, not pushed.
+
+## How it was built
+
+- **The store** (`src/viewers/viewerStore.ts`): `createViewerStore({ storage, patches, setTapSource })` returns `get()` (the `ViewSettings` the Viewers read, the same object until the next change), `dispatch(action)` and `subscribe(listener)`. `ViewSettingsAction` is the reducer's `ViewerAction` plus `setCycles`, `setTimelineSeconds`, `toggleOverlay` and `showOverlay`; the reducer itself is unchanged. A change saves the overlays when they changed and hands the engine the Amp Tap's source when it changed, then tells the subscribers. The Ideal Reference is recomputed on every Patch change. Tests: `viewerStore.test.ts`.
+- **The session** (`src/app/session.ts`) makes it after the Patch store, as `viewers`.
+- **App** reads it with `useSyncExternalStore` and hands the render loop its `get`; the reducer, the two states, the overlays' state and effects, the Ideal's memo and the bundled reference are gone. The Space key, a Controller's pads, the Display panel and a Tutorial dispatch to it; the MIDI hook takes it from the session.
+

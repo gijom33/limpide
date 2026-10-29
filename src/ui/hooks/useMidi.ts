@@ -1,4 +1,4 @@
-import { type Dispatch, type MutableRefObject, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { type MutableRefObject, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import type { AudioSession } from '../../app/session';
 import type { KeyValueStorage } from '../../app/storage';
 import { c16Bank, c16Layout, isC16 } from '../../midi/c16';
@@ -9,7 +9,6 @@ import { createMappingStore, type Mapping, type Target } from '../../midi/mappin
 import { QUICK_SETUP, type QuickSetupEvent, type QuickSetupState, quickSetupReducer, startQuickSetup, takenControls } from '../../midi/quickSetup';
 import { CHOICES, type ChoiceId, PARAMS, setParam } from '../../patch/patch';
 import { positionToValue, valueToPosition } from '../../patch/taper';
-import type { ViewerAction } from '../../viewers/viewerState';
 import type { MidiState } from '../MidiPanel';
 import { reveal } from '../reveal';
 import { SECTIONS, type SectionName } from '../sections';
@@ -35,7 +34,6 @@ interface Host {
   storage: KeyValueStorage;
   session: AudioSession;
   pressHoldRef: MutableRefObject<() => void>;
-  dispatchViewer: Dispatch<ViewerAction>;
   /** A Note from a Controller: the Demo stops, the person has taken over. */
   onNote(): void;
   /** A keyboard's own controls, while unmapped (issue 52): the bend wheel (−1 to 1), the sustain pedal, a Program
@@ -51,8 +49,8 @@ interface Host {
  * between renders, so the surface reads and changes the Patch in its store, which the sound follows at once.
  */
 export function useMidi(host: Host) {
-  const { storage, session, pressHoldRef, dispatchViewer, onNote } = host;
-  const { patches } = session;
+  const { storage, session, pressHoldRef, onNote } = host;
+  const { patches, viewers } = session;
   const keyboard = useRef(host);
   keyboard.current = host;
   const [midi, setMidi] = useState<MidiState>({ kind: 'pending' });
@@ -104,8 +102,8 @@ export function useMidi(host: Host) {
       },
       action: (id) => {
         if (id === 'hold') pressHoldRef.current();
-        else if (id === 'freeze') dispatchViewer({ type: 'toggleFreeze' });
-        else if (id === 'snapshot') dispatchViewer({ type: 'takeSnapshot' });
+        else if (id === 'freeze') viewers.dispatch({ type: 'toggleFreeze' });
+        else if (id === 'snapshot') viewers.dispatch({ type: 'takeSnapshot' });
         else patches.step(id === 'nextPreset' ? 1 : -1);
       },
       press: (note, velocity) => session.input.press(note, velocity),
@@ -119,7 +117,7 @@ export function useMidi(host: Host) {
         if (state.phase === 'armed' && state.learned) onLearned.current(state.learned);
       },
     });
-  }, [mappingStore, session, patches, pressHoldRef, dispatchViewer]);
+  }, [mappingStore, session, patches, viewers, pressHoldRef]);
 
   // Quick Setup: a sequence of Learn steps. Each Mapping learned moves it on to the next step's target.
   const [setup, setSetup] = useState<QuickSetupState | null>(null);

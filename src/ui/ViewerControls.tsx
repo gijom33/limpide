@@ -1,5 +1,5 @@
-import type { Dispatch } from 'react';
-import type { ViewerAction, ViewerState } from '../viewers/viewerState';
+import type { ViewerState } from '../viewers/viewerState';
+import type { ViewSettingsAction } from '../viewers/viewerStore';
 import type { ViewSettings } from '../viewers/viewSettings';
 import { CameraIcon, CloseIcon, PauseIcon } from './icons';
 import { useLearnable } from './learn';
@@ -9,7 +9,7 @@ import { TIPS } from './tips';
 
 interface Props {
   state: ViewerState;
-  dispatch: Dispatch<ViewerAction>;
+  dispatch(action: ViewSettingsAction): void;
 }
 
 /** Freeze and Snapshot: actions on what the Viewers show. */
@@ -83,15 +83,9 @@ const TIMELINE_SECONDS = [
   { value: 4, label: '4s' },
 ] as const;
 
-interface AxesProps extends Props {
-  cycles: ViewSettings['cycles'];
-  onCycles(c: ViewSettings['cycles']): void;
-  timelineSeconds: ViewSettings['timelineSeconds'];
-  onTimelineSeconds(s: ViewSettings['timelineSeconds']): void;
-}
-
 /** How the Spectrum, Scope and Envelope Timeline axes are scaled. */
-export function AxesControls({ state, dispatch, cycles, onCycles, timelineSeconds, onTimelineSeconds }: AxesProps) {
+export function AxesControls({ settings, dispatch }: { settings: ViewSettings; dispatch: Props['dispatch'] }) {
+  const state = settings.viewer;
   return (
     <>
       <Tooltip content={TIPS.frequencyAxis}>
@@ -113,10 +107,10 @@ export function AxesControls({ state, dispatch, cycles, onCycles, timelineSecond
         />
       </Tooltip>
       <Tooltip content={TIPS.cycles}>
-        <Segmented label="Scope cycles" caption="Cycles" value={cycles} options={CYCLES} onChange={onCycles} />
+        <Segmented label="Scope cycles" caption="Cycles" value={settings.cycles} options={CYCLES} onChange={(cycles) => dispatch({ type: 'setCycles', cycles })} />
       </Tooltip>
       <Tooltip content={TIPS.timelineSeconds}>
-        <Segmented label="Env Timeline length" caption="Env Timeline" value={timelineSeconds} options={TIMELINE_SECONDS} onChange={onTimelineSeconds} />
+        <Segmented label="Env Timeline length" caption="Env Timeline" value={settings.timelineSeconds} options={TIMELINE_SECONDS} onChange={(seconds) => dispatch({ type: 'setTimelineSeconds', seconds })} />
       </Tooltip>
     </>
   );

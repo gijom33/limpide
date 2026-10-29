@@ -1,11 +1,11 @@
-import { type Dispatch, type SetStateAction, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { KeyValueStorage } from '../../app/storage';
 import type { Patch } from '../../patch/patch';
 import type { PatchStore } from '../../patch/patchStore';
 import { PRESETS } from '../../patch/presets';
 import { loadFinished, saveFinished } from '../../tutorial/progress';
 import { applyStep, controlName, differences, doStep, type Held, held, isMade, onTarget, type Tutorial } from '../../tutorial/tutorial';
-import type { Overlays } from '../../viewers/overlays';
+import type { Overlay, Overlays } from '../../viewers/overlays';
 
 /** How long a control must rest within reach of its target for the Step to count. */
 const SETTLE_MS = 400;
@@ -17,7 +17,8 @@ interface Host {
   /** Where the Tutorial's own changes go: its first Init, "Do it for me", a Step's snap, the matching Preset. */
   patches: PatchStore;
   overlays: Overlays;
-  setOverlays: Dispatch<SetStateAction<Overlays>>;
+  /** A Display Step done for the person: the overlay on. */
+  showOverlay(overlay: Overlay): void;
   /** The current Snapshot's number (null when none): a new one makes a Snapshot Step. */
   snapshot: number | null;
   takeSnapshot(): void;
@@ -33,7 +34,7 @@ interface Host {
  * keys, MIDI, "Do it for me"); a knob or fader then snaps to the exact value, so the finished sound is the Preset's.
  * `since` is what the Step's control held when the card came to it.
  */
-export function useTutorialState({ storage, patch, patchName, patches, overlays, setOverlays, snapshot, takeSnapshot, onStart, onEnd }: Host) {
+export function useTutorialState({ storage, patch, patchName, patches, overlays, showOverlay, snapshot, takeSnapshot, onStart, onEnd }: Host) {
   const [lesson, setLesson] = useState<{ tutorial: Tutorial; index: number; done: boolean[]; since?: Held } | null>(null);
   const [finished, setFinished] = useState(() => loadFinished(storage));
   const preset = lesson && PRESETS.find((p) => p.name === lesson.tutorial.preset)!;
@@ -60,7 +61,7 @@ export function useTutorialState({ storage, patch, patchName, patches, overlays,
     });
   const matchPreset = () => preset && patches.load(preset.name, preset.patch);
   const doIt = () => {
-    if (step) doStep(step, { setPatch: (change) => patches.change(change, 'tutorial'), showOverlay: (overlay) => setOverlays((v) => ({ ...v, [overlay]: true })), takeSnapshot });
+    if (step) doStep(step, { setPatch: (change) => patches.change(change, 'tutorial'), showOverlay, takeSnapshot });
   };
 
   // It counts once the control rests within reach, not as a drag passes through on its way past (review 5, 2026-10-27):

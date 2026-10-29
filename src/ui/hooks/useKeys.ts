@@ -62,7 +62,7 @@ export const freezesOnSpace = (e: KeyboardEvent) => e.code === 'Space' && !(e.ta
  * Space Freezes the Viewers, unless what has the focus uses Space itself (a button, an option: issue 51, WCAG 2.1.1);
  * on a knob, a Viewer or nothing in particular it Freezes. It never plays a Note, and must not scroll.
  */
-export function useSpaceFreezes(dispatchViewer: Dispatch<ViewerAction>) {
+export function useSpaceFreezes(dispatchViewer: (action: ViewerAction) => void) {
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (!freezesOnSpace(e)) return;

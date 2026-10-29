@@ -3,6 +3,7 @@ import { createNoteInput, type NoteInput } from '../input/noteInput';
 import { createLibrary, type Library } from '../patch/library';
 import { createPatchStore, type PatchStore } from '../patch/patchStore';
 import { initialPatch } from '../patch/presets';
+import { createViewerStore, type ViewerStore } from '../viewers/viewerStore';
 import type { KeyValueStorage } from './storage';
 import { playThroughSilentMode } from './unlockAudio';
 
@@ -12,6 +13,8 @@ export interface AudioSession {
   input: NoteInput;
   /** The Patch being played (ADR-0013): every change reaches the engine and the Note input through it, at once. */
   patches: PatchStore;
+  /** What the Viewers read every frame: Freeze, the Snapshot, the axes, the overlays, the Ideal Reference (issue 77). */
+  viewers: ViewerStore;
   /** The named Patches, and the autosaved Last session. */
   library: Library;
   /** Whether the page opened on a Share link's Patch. */
@@ -58,11 +61,13 @@ export function getAudioSession(storage: KeyValueStorage): AudioSession {
       input.setVoices(patch.voices);
     },
   });
+  const viewers = createViewerStore({ storage, patches, setTapSource: (source) => engine.setTapSource(source) });
   session = {
     ctx,
     engine,
     input,
     patches,
+    viewers,
     library,
     shared: start.shared,
     onHeld(listener) {
