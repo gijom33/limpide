@@ -16,7 +16,7 @@ export function idealReference(patch: Patch, count: number): Float32Array {
 /** Where the Ideal puts its marks: one per Harmonic of each Oscillator that sounds (issue 61). */
 export type IdealSource = 'osc1' | 'osc2' | 'sub';
 export interface IdealPartial {
-  /** Its frequency over the fundamental the Viewers count from (the Sub's pitch when it plays, else Osc 1's). */
+  /** Its frequency over the fundamental the Viewers count from (the Sub's pitch when it plays, else Osc 1's, at its Octave). */
   ratio: number;
   /** Its level at the Oscillator Tap, before the Nominal Level, as idealReference's. */
   level: number;
@@ -31,7 +31,8 @@ export interface IdealPartial {
  */
 export function idealPartials(patch: Patch, count: number): IdealPartial[] {
   const root = patch.mixSub > 0 ? 2 : 1; // Osc 1's pitch, in Harmonics of the fundamental
-  const osc2 = root * 2 ** (patch.osc2Octave + patch.osc2Semitone / 12 + patch.osc2Detune / 1200);
+  // Osc 2 counts from the Note played, Osc 1 from its Octave (issue 90).
+  const osc2 = root * 2 ** (patch.osc2Octave - patch.osc1Octave + patch.osc2Semitone / 12 + patch.osc2Detune / 1200);
   const series = (source: IdealSource, magnitudes: Float32Array, mix: number, pitch: number) =>
     mix > 0 ? Array.from({ length: count - 1 }, (_, i) => ({ ratio: (i + 1) * pitch, level: magnitudes[i + 1] * mix, source })) : [];
   return [

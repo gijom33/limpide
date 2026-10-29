@@ -35,7 +35,7 @@ How many Notes a Patch lets sound at once (1 to 8). At 1 the instrument is monop
 _Avoid_: Polyphony (the setting), voice count
 
 **Oscillator**:
-A source producing a periodic Waveform at a pitch. There are two, Osc 1 and Osc 2.
+A source producing a periodic Waveform at a pitch. There are two, Osc 1 and Osc 2. Osc 1 sounds at the Note played, moved by whole octaves by its Octave; the Sub follows it.
 _Avoid_: VCO, generator
 
 **Waveform**:
@@ -47,11 +47,11 @@ The fraction of a pulse Waveform's cycle spent high; 50% is a square.
 _Avoid_: Duty cycle, PWM (PWM is pulse width being modulated)
 
 **Transpose**:
-Osc 2's offset from Osc 1 in whole Octaves and Semitones, before Detune.
+Osc 2's offset from the Note played in whole Octaves and Semitones, before Detune.
 _Avoid_: Interval, coarse tune
 
 **Detune**:
-Osc 2's fine pitch offset relative to Osc 1, in cents, on top of its Transpose.
+Osc 2's fine pitch offset in cents, on top of its Transpose.
 _Avoid_: Fine tune, spread
 
 **Noise**:

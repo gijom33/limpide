@@ -13,6 +13,7 @@ export type SectionName = (typeof SECTIONS)[number]['name'];
 /** The section each Parameter's control sits in. */
 export const SECTION_OF: Record<ParamId, SectionName> = {
   pulseWidth: 'Oscillators',
+  osc1Octave: 'Oscillators',
   osc2Octave: 'Oscillators',
   osc2Semitone: 'Oscillators',
   osc2Detune: 'Oscillators',

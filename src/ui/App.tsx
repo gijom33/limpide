@@ -404,6 +404,7 @@ export function App() {
                       </Tooltip>
                       <div className="knobs">
                         <Knob id="pulseWidth" value={patch.pulseWidth} onChange={(v) => change('pulseWidth', v)} inactive={patch.waveform !== 'pulse'} />
+                        <Knob id="osc1Octave" value={patch.osc1Octave} onChange={(v) => change('osc1Octave', v)} />
                       </div>
                     </SubBlock>
                     ),

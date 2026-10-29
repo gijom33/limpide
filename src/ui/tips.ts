@@ -55,7 +55,7 @@ export const TIPS = {
   },
   tuning: {
     title: 'Tuning',
-    body: 'Octave, Semitone and Detune are Osc 2’s offsets from Osc 1, whichever tab is showing. Osc 1 is the pitch you play; they wake up once Osc 2 is mixed in.',
+    body: 'Octave, Semitone and Detune are Osc 2’s offsets from the Note you play, whichever tab is showing. They wake up once Osc 2 is heard.',
   },
   tapSource: {
     title: 'Viewers follow',
@@ -215,6 +215,11 @@ export const TIPS = {
     body: 'Boosts the Harmonics right at the Cutoff, so the Filter sings or whistles there. A little adds bite; a lot rings.',
     how: 'Turn it up and watch the bump on the Response Curve, then sweep the Cutoff: the bump lifts each Harmonic as it passes.',
   },
+  osc1Octave: {
+    title: 'Octave',
+    body: 'Shifts Osc 1 by whole octaves from the Note you play, and the Sub with it: −1 for a bass an octave down. Osc 2 stays on the Note, so its Octave now sets how far apart the two are.',
+    how: 'Set it to −1 and watch the Scope: each cycle takes twice as long.',
+  },
   octave: {
     title: 'Octave',
     body: 'Shifts Osc 2 up or down by whole octaves from the Note you play: 2× or ½× the pitch, the same note higher or lower.',
@@ -319,6 +324,7 @@ export const VIEWER_TIPS: Record<'Oscillator' | 'Filter' | 'Amp', { scope: TipCo
 export const PARAM_TIPS: Record<ParamId, TipContent> = {
   pulseWidth: TIPS.pulseWidth,
   osc2PulseWidth: TIPS.pulseWidth,
+  osc1Octave: TIPS.osc1Octave,
   osc2Octave: TIPS.octave,
   osc2Semitone: TIPS.semitone,
   osc2Detune: TIPS.detune,

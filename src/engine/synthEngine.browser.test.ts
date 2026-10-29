@@ -1241,3 +1241,41 @@ describe('the Timeline’s past stays put while knobs turn (the model’s histor
     expect(seen[1].cutoff).toBeCloseTo(seen[0].cutoff, 6);
   });
 });
+
+describe('Osc 1 Octave (issue 90)', () => {
+  const A2 = 45; // 110 Hz
+  const clean = { cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001, waveform: 'sine' } as const;
+  const steady = (s: Float32Array) => s.subarray(SR / 2, SR / 2 + Math.round((20 * SR) / 27.5)); // whole periods of 27.5 Hz
+
+  it('moves Osc 1 by whole octaves, and the Sub with it', async () => {
+    const down = steady(await render(2, { ...clean, osc1Octave: -1 }, (e) => e.noteOn(A2, 1, 0)));
+    expect(dB(toneAmplitude(down, SR, 110) / toneAmplitude(down, SR, 55))).toBeLessThan(-60);
+    const sub = steady(await render(2, { ...clean, osc1Octave: -1, mixOsc1: 0, mixSub: 1 }, (e) => e.noteOn(A2, 1, 0)));
+    expect(dB(toneAmplitude(sub, SR, 55) / toneAmplitude(sub, SR, 27.5))).toBeLessThan(-60);
+  });
+
+  it('leaves Osc 2 on the Note played', async () => {
+    const s = steady(await render(2, { ...clean, osc2Waveform: 'sine', osc1Octave: 1, mixOsc1: 0, mixOsc2: 1 }, (e) => e.noteOn(A2, 1, 0)));
+    expect(dB(toneAmplitude(s, SR, 220) / toneAmplitude(s, SR, 110))).toBeLessThan(-60);
+  });
+
+  it('counts Cycle Lock from Osc 1, and from the Sub below it', () => {
+    const engine = createSynthEngine(new OfflineAudioContext(1, SR, SR));
+    engine.applyPatch({ ...defaultPatch(), osc1Octave: -1 });
+    engine.noteOn(57, 1, 0);
+    expect(engine.fundamental()).toBeCloseTo(110);
+    engine.applyPatch({ ...defaultPatch(), osc1Octave: 1, mixSub: 0.5 });
+    expect(engine.fundamental()).toBeCloseTo(220);
+  });
+
+  for (const osc2Octave of [1, 2])
+    it(`keeps a pulse's width at its knob's whatever its tuning (Osc 2 at +${osc2Octave} oct, 25 %)`, async () => {
+      const solo2 = { cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001, mixOsc1: 0, mixOsc2: 1, osc2Waveform: 'pulse', osc2PulseWidth: 0.25 } as const;
+      const s = await render(1, { ...solo2, osc2Octave }, (e) => e.noteOn(A2, 1, 0));
+      const f = 110 * 2 ** osc2Octave;
+      const window = s.subarray(SR / 2, SR / 2 + Math.round((40 * SR) / 110));
+      const h = (n: number) => toneAmplitude(window, SR, f * n);
+      expect(dB(h(4) / h(1)), 'every 4th Harmonic missing').toBeLessThan(-40);
+      expect(dB(h(2) / h(1)), 'even Harmonics present').toBeGreaterThan(-6);
+    });
+});

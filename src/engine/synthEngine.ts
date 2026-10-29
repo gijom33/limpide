@@ -391,6 +391,8 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
 
   const waveKeys = new Map<OscillatorNode, string>();
   const pulseWidths = [0.5, 0.5];
+  // Each Oscillator's pitch over the Note's, from its knobs: a pulse's width is a fraction of its own cycle (issue 90).
+  const ratios = [1, 1];
   const pitches: { time: number; frequency: number; note: number; glide: number }[] = [];
   osc.frequency.value = A4;
   osc2.frequency.value = A4;
@@ -399,12 +401,13 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   /** Point each pulse's delay at (width / frequency), and scale its LFO swing for that frequency. */
   const tunePulses = (frequency: number, t: number, timeConstant?: number) => {
     oscillators.forEach((o, i) => {
-      const delay = pulseWidths[i] / frequency;
+      const own = frequency * ratios[i];
+      const delay = pulseWidths[i] / own;
       if (timeConstant) o.delay.delayTime.setTargetAtTime(delay, t, timeConstant);
       else o.delay.delayTime.setValueAtTime(delay, t);
       const width = pulseWidths[i];
       const swings = patch ? destinationSwings(patch, 'pulseWidth', width) : [0, 0];
-      swings.forEach((swing, n) => o.pwm[n].gain.setValueAtTime(swing / frequency, t));
+      swings.forEach((swing, n) => o.pwm[n].gain.setValueAtTime(swing / own, t));
     });
   };
 
@@ -466,8 +469,14 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
       patch = next;
       setWave(0, next.waveform, next.pulseWidth, t);
       setWave(1, next.osc2Waveform, next.osc2PulseWidth, t);
+      const osc2Tuning = next.osc2Octave * 1200 + next.osc2Semitone * 100 + next.osc2Detune;
+      ratios[0] = 2 ** next.osc1Octave;
+      ratios[1] = 2 ** (osc2Tuning / 1200);
       tunePulses(frequencyAt(t), t);
-      osc2.detune.setValueAtTime(next.osc2Octave * 1200 + next.osc2Semitone * 100 + next.osc2Detune, t);
+      // Osc 1's Octave moves it and the Sub; Osc 2's offsets count from the Note.
+      osc.detune.setValueAtTime(next.osc1Octave * 1200, t);
+      sub.detune.setValueAtTime(next.osc1Octave * 1200, t);
+      osc2.detune.setValueAtTime(osc2Tuning, t);
       mix1.gain.setValueAtTime(next.mixOsc1 * OSCILLATOR_LEVEL, t);
       mix2.gain.setValueAtTime(next.mixOsc2 * OSCILLATOR_LEVEL, t);
       mixNoise.gain.setValueAtTime(next.mixNoise * OSCILLATOR_LEVEL, t);
@@ -732,11 +741,12 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
 
   return {
     taps,
-    // During a Glide, the frequency the Oscillators have reached: Cycle Lock follows the slide.
+    // During a Glide, the frequency the Oscillators have reached: Cycle Lock follows the slide, at Osc 1's Octave.
     // With the Sub sounding, the sound repeats at the Sub's pitch, an octave lower: that is the fundamental.
     fundamental: () => {
-      const frequency = (glidingAt(ctx.currentTime) || A4) * 2 ** (bendAt(ctx.currentTime) / 1200);
-      return patchAt(ctx.currentTime)?.mixSub ? frequency / 2 : frequency;
+      const then = patchAt(ctx.currentTime);
+      const frequency = (glidingAt(ctx.currentTime) || A4) * 2 ** ((then?.osc1Octave ?? 0) + bendAt(ctx.currentTime) / 1200);
+      return then?.mixSub ? frequency / 2 : frequency;
     },
     modulationAt,
     lfoSwingAt: (time, n = 1) => {

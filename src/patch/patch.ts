@@ -20,6 +20,7 @@ export interface ParamDef extends Range {
 
 export type ParamId =
   | 'pulseWidth'
+  | 'osc1Octave'
   | 'osc2Octave'
   | 'osc2Semitone'
   | 'osc2Detune'
@@ -107,6 +108,8 @@ const time = (id: ParamId, label: string, dflt: number, control: Control): Param
 
 export const PARAMS: Record<ParamId, ParamDef> = {
   pulseWidth: { id: 'pulseWidth', label: 'Pulse Width', unit: '%', min: 0.05, max: 0.95, taper: 'linear', default: 0.25, control: 'set' },
+  // Osc 1's range (issue 90): the Sub follows it; Osc 2's offsets count from the Note played.
+  osc1Octave: { id: 'osc1Octave', label: 'Octave', unit: 'oct', min: -2, max: 2, taper: 'linear', default: 0, step: 1, control: 'set' },
   osc2Octave: { id: 'osc2Octave', label: 'Octave', unit: 'oct', min: -2, max: 2, taper: 'linear', default: 0, step: 1, control: 'set' },
   osc2Semitone: { id: 'osc2Semitone', label: 'Semitone', unit: 'st', min: -12, max: 12, taper: 'linear', default: 0, step: 1, control: 'set' },
   osc2Detune: { id: 'osc2Detune', label: 'Detune', unit: 'cents', min: -50, max: 50, taper: 'linear', default: 0, control: 'play' },
@@ -240,6 +243,7 @@ export function paramName(id: ParamId): string {
   if (/^(filter|amp)(Attack|Decay|Sustain|Release)$/.test(id)) return `${id.startsWith('amp') ? 'Amp' : 'Filter'} ${label}`;
   if (id.startsWith('lfo2')) return `LFO 2 ${label}`;
   if (id.startsWith('lfo')) return `LFO 1 ${label}`;
+  if (id.startsWith('osc1')) return `Osc 1 ${label}`;
   if (id.startsWith('osc2')) return `Osc 2 ${label}`;
   return label;
 }
