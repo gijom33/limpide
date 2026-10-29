@@ -7,7 +7,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 ## Ideas
 
 - 2026-10-29, the owner, asked what to do with the Timeline's thin flat lines (each moved knob's own setting): "Remove them"
-- 2026-10-29, the owner, of Claude's list of typical additions to the Oscillators (1 Ring Modulation, 2 Cross-modulation, 3 an Octave on Osc 1, 4 Sub options, 5 Pink Noise, 6 the Filter Envelope on Osc 2's pitch, 7 Hard Sync): "Do not include 7 in plan. Implement 1 to 6."
 
 ## Dropped
 
@@ -88,3 +87,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-28, the 1.15.0 review's other findings (triage, Claude's call, open to the owner): Display settings remembered three ways went to [87](./issues/87-display-settings-remembered-in-one-place.md).
 2026-10-29, the 1.15.1 review's other findings (triage, Claude's call, open to the owner): the piano's width written twice and the header's bare gaps to Dropped.
 2026-10-29, the owner's Timeline bug: the flickering marks fixed at once. Each frame sampled the curves afresh from the left edge, so a fast LFO's steep curve measured a pixel or two longer or shorter from frame to frame, and its marks, laid out along that length, jumped (most at the right edge). The Timeline now samples on a grid fixed to time, the same moments every frame, and each mark holds its place on the curve (`timelineGrid` in `src/viewers/timeline.ts`, tests beside it). The two thin flat lines are each moved knob's own setting (Pulse Width's, Detune's), faint and solid since [71](./issues/71-timeline-setting-line-and-demo-stop.md); whether to keep them is the owner's question.
+2026-10-29, the owner's six Oscillator additions (triage, decided by the owner, Hard Sync left out): Ring Modulation went to [88](./issues/88-ring-modulation.md), Cross-modulation to [89](./issues/89-cross-modulation.md), an Octave on Osc 1 to [90](./issues/90-osc1-octave.md) (with a pulse width bug found while planning it), the Sub's options to [91](./issues/91-sub-options.md), Pink Noise to [92](./issues/92-pink-noise.md), the Filter Envelope on Osc 2's pitch to [93](./issues/93-filter-envelope-on-osc2-pitch.md).
