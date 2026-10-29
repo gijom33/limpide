@@ -4,26 +4,26 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement
+**Status:** done (2026-10-29). An FM knob in Osc 1's Pitch row swings Osc 1's frequency by Osc 2, an index of 4 at full on every Note; the FM Sidebands Preset shows it. Not yet listened to by the owner.
 
 ## Agent Brief
 
 **Category:** enhancement
-**Summary:** A Cross Mod knob on Osc 2's tab sets how far Osc 2 swings Osc 1's frequency.
+**Summary:** An FM knob sets how far Osc 2 swings Osc 1's frequency.
 
 **Current behavior:**
 - The two Oscillators only add in the Mixer.
 
 **Desired behavior:**
-- A Cross Mod Parameter (0–100 %, off by default) on Osc 2's tab. Osc 2's wave moves Osc 1's frequency, linearly, by up to four times Osc 2's own frequency at full (a modulation index of 4), the same index on every Note.
+- A Cross Mod Parameter (0–100 %, off by default), labelled FM, on Osc 1's tab. Osc 2's wave moves Osc 1's frequency, linearly, by up to four times Osc 2's own frequency at full (a modulation index of 4), the same index on every Note.
 - Osc 2 modulates whatever its Mixer level: its tab and Tuning knobs wake up while Cross Mod is up.
 - The Sub is not modulated; the Ideal Reference keeps Osc 1's plain Harmonics, so the sidebands show beside them.
 - A Preset shows it off.
 
 **Acceptance criteria:**
-- [ ] Two sines at one pitch with Cross Mod up gain sidebands at the 2nd and 3rd Harmonic, absent at 0 (engine test)
-- [ ] The index is the same an octave apart (engine test, the sideband's level relative to the fundamental within 1 dB)
-- [ ] An old Patch loads with Cross Mod off; every existing test passes
+- [x] Two sines at one pitch with Cross Mod up gain sidebands at the 2nd and 3rd Harmonic, absent at 0 (engine test)
+- [x] The index is the same an octave apart (engine test, the sideband's level relative to the fundamental within 1 dB)
+- [x] An old Patch loads with Cross Mod off; every existing test passes
 
 **Out of scope:**
 - Exponential FM, Osc 1 moving Osc 2, Hard Sync
@@ -32,4 +32,11 @@
 
 1. Built with the other five: decided by the owner.
 2. Linear FM, its index scaled by Osc 2's frequency, so a Patch sounds alike on every Note (exponential FM would detune the Note as it deepens): Claude's call, open to the owner.
-3. Full Cross Mod is an index of 4; the knob is a play-sized one on Osc 2's tab, Osc 2 being the one that modulates: Claude's call, open to the owner.
+3. Full Cross Mod is an index of 4: Claude's call, open to the owner.
+4. Revised while building: the knob is labelled FM (the glossary's word; Cross Mod in its tooltip), a small set-and-forget knob, in Osc 1's Pitch row beside its Octave, the Oscillator it moves. Play-sized beside Osc 2's Pulse Width, it pushed Pulse Width off the Waveform picker's side on laptops and phones; "Cross Mod" was too wide a name for the row: Claude's call, open to the owner. Where the row sits is the owner's decision 4 of [90](./90-osc1-octave.md).
+
+## How it was built
+
+- **The engine** (`src/engine/synthEngine.ts`): Osc 2's output into Osc 1's `frequency` through a gain of Cross Mod × 4 × Osc 2's frequency (over Osc 1's Octave ratio, which scales what reaches it), set with each Note and following its Glide.
+- **The knob** `crossMod`, labelled FM, a small set-and-forget one (ADR-0008, decision 4), so not in the Quick Setup. The Ideal keeps plain Osc 1, so the sidebands show beside its circles (the tip says so). The glossary's word is FM.
+- Tests: "Cross-modulation (issue 89)" in the engine's browser tests; Preset: FM Sidebands (Intervals).

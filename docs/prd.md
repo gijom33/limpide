@@ -131,6 +131,12 @@ Brought into scope by the grilling of [issue 40](./issues/40-preset-tutorials.md
 88. As a learner, I want to explore off the path without being locked, and at the end to see what differs from the Preset and match it in one tap, so that experimenting costs nothing.
 89. As a first-time visitor, I want a Tutorial button in the Welcome, and a Tutorials list in the Patches panel, so that I know where to start.
 90. As a player, I want a Volume knob in the Amp, which an LFO on Volume rings as it does the Cutoff, so that I set the level and see the tremolo's reach (issue 62).
+91. As a learner, I want Ring Modulation in the Mixer and the Ideal's marks at its sums and differences, so that I see why it sounds like a bell (issue 88).
+92. As a player, I want Osc 2 to modulate Osc 1's frequency (FM, cross-modulation), so that I can make growls and clangs and see their sidebands (issue 89).
+93. As a player, I want an Octave on Osc 1, so that I can drop it under Osc 2 or play a bass an octave down (issue 90).
+94. As a player, I want the Sub one or two octaves down, square or sine, so that a bass gets the weight it needs (issue 91).
+95. As a learner, I want pink Noise beside white, so that I hear and see what a noise's colour means (issue 92).
+96. As a player, I want the Filter Envelope to move Osc 2's pitch, so that Notes can start with a zap (issue 93).
 
 ## Implementation Decisions
 

@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement
+**Status:** done (2026-10-29). A Ring fader after Osc 2 mixes in Osc 1 times Osc 2; the Ideal marks its sums and differences with diamonds; the Ring Bell Preset shows it. Not yet listened to by the owner.
 
 ## Agent Brief
 
@@ -21,9 +21,9 @@
 - A Preset shows it off.
 
 **Acceptance criteria:**
-- [ ] Two sines a fifth apart through Ring alone sound at their difference and their sum, with no energy at either pitch (engine test)
-- [ ] The Ideal's Ring partials for two sines are exactly the sum and the difference, at half the product of the levels (unit test)
-- [ ] An old Patch or Share link without Ring loads with it off; every existing test passes
+- [x] Two sines a fifth apart through Ring alone sound at their difference and their sum, with no energy at either pitch (engine test)
+- [x] The Ideal's Ring partials for two sines are exactly the sum and the difference, at half the product of the levels (unit test)
+- [x] An old Patch or Share link without Ring loads with it off; every existing test passes
 
 **Out of scope:**
 - Hard Sync (decided by the owner)
@@ -34,3 +34,10 @@
 1. Built with the other five, Hard Sync left out: decided by the owner.
 2. Ring is a Mixer source on a fader, not a switch on Osc 2: Claude's call, open to the owner.
 3. Ring takes the two Oscillators before their Mixer levels, so Osc 2 can be heard through Ring alone, as on most analogue Ring Modulators: Claude's call, open to the owner.
+
+## How it was built
+
+- **The engine** (`src/engine/synthEngine.ts`): each Voice sends Osc 1's output through a gain whose gain Osc 2's output drives, so the product, before either Mixer level; then the Ring fader at the Nominal Level.
+- **The Ideal** (`src/music/idealReference.ts`): `ringPartials`, from the first 16 Harmonics of each Oscillator (enough to read the pattern; all 256 gave tens of thousands of marks), coincident ones adding as power. A new `ring` source, drawn as a diamond (`src/viewers/spectrum.ts`).
+- **Osc 2 heard** (`osc2Heard` in `src/patch/patch.ts`): mixed in, through Ring or through Cross Mod; Osc 2's tab badge, its Pulse Width and the Tuning knobs follow it.
+- **Ring** joins the Quick Setup's Mixer step, after Osc 2. Tests: "Ring Modulation (issue 88)" in the engine's browser tests and the Ideal's unit tests; Presets: Ring Bell (Intervals).

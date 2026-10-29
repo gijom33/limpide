@@ -26,3 +26,7 @@
 - **Short laptop screens** (up to 960 pt tall): faders 72 px, Viewers down to their 78 pt floor. **Compact windows** (below 1330 pt wide or 760 pt tall): knobs 52/40 px, faders 64 px, and a row of knobs or faders has its name above it so the row stays on one line; a row of choices (Mode, Voices) keeps its name beside. Below 960 pt wide the stages' side padding is 8 pt.
 - **Inactive** greys out the whole dial or fader, marker included, to 30 %, and the readout to 45 %, at the owner's request (the design principles say so; WCAG 1.4.11 exempts inactive controls).
 - The page is darker in the dark theme (look B's panels) and slightly grey in the light theme, for every part of the app, not only the controls.
+
+## Later
+
+- 2026-10-29: Osc 2's Tuning is no longer one row shared under both Oscillator tabs. Each tab has its own pitch row under its Waveform (Osc 1: Octave and FM; Osc 2: its Tuning and Env Amount), decided by the owner in [90](./90-osc1-octave.md), since Osc 1's new knobs did not fit beside Pulse Width on narrow screens.

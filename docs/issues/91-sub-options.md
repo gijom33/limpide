@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement
+**Status:** done (2026-10-29). The Sub's Octave (−1 or −2) and Waveform (square or sine) are two choices in the Mixer's name column; the Sine Sub Two Down Preset shows them.
 
 ## Agent Brief
 
@@ -15,14 +15,14 @@
 - The Sub is always a square an octave below Osc 1.
 
 **Desired behavior:**
-- A Sub Octave choice, −1 (the default) or −2, and a Sub Waveform choice, square (the default) or sine, in the Mixer under the faders, each Learnable by MIDI.
+- A Sub Octave choice, −1 (the default) or −2, and a Sub Waveform choice, square (the default) or sine, in the Mixer, each Learnable by MIDI.
 - Cycle Lock, the Harmonic Markers and the Ideal Reference count from the Sub's pitch while it sounds, one or two octaves down; the Ideal draws its sine or square series.
 - A Preset shows it off.
 
 **Acceptance criteria:**
-- [ ] The Sub at −2 sounds two octaves below Osc 1; as a sine it has no 3rd Harmonic (engine tests)
-- [ ] Cycle Lock's fundamental is a quarter of Osc 1's with the Sub at −2 (engine test); the Ideal follows both choices (unit test)
-- [ ] An old Patch loads with a square an octave down; every existing test passes
+- [x] The Sub at −2 sounds two octaves below Osc 1; as a sine it has no 3rd Harmonic (engine tests)
+- [x] Cycle Lock's fundamental is a quarter of Osc 1's with the Sub at −2 (engine test); the Ideal follows both choices (unit test)
+- [x] An old Patch loads with a square an octave down; every existing test passes
 
 **Out of scope:**
 - More Sub Waveforms, or a Sub on Osc 2
@@ -30,4 +30,11 @@
 ## Decisions (triage, 2026-10-29)
 
 1. Built with the other five: decided by the owner.
-2. Choices, not knobs, since each has two values, placed in the Mixer beside the Sub's fader with the Noise's colour: Claude's call, open to the owner.
+2. Choices, not knobs, since each has two values, in the Mixer's name column under LEVELS with the Noise's colour (a row under the faders took their height): Claude's call, open to the owner.
+
+## How it was built
+
+- **The choices** `subOctave` and `subWaveform` (`src/patch/patch.ts`), Learnable by MIDI (their names in `src/midi/mappings.ts` and the Tutorials'), under LEVELS in the Mixer's name column with the Noise colour: −1 and −2, and the Sub's two Waveforms as icons. In a stage under 300 px they are one line above the faders, in place of LEVELS. Five faders beside the column are as wide as the Envelopes' where they fit, never under 40 px (`src/styles.css`).
+- **The engine** (`src/engine/synthEngine.ts`): each Voice builds both Sub waves once and switches between them; the second octave is in the Sub's `detune`. Cycle Lock counts from the Sub at either octave.
+- **The Ideal** (`src/music/idealReference.ts`): the root is 2 or 4 Harmonics up from the Sub, the Sub's series its own Waveform's; `idealReference` is now built from `idealPartials`, so it follows both.
+- Tests: "the Sub’s Octave and Waveform (issue 91)" in the engine's browser tests and the Ideal's unit tests; Preset: Sine Sub Two Down (Shapes).
