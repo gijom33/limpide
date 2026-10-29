@@ -27,6 +27,8 @@ export default defineConfig({
   webServer: {
     command: 'npx vite build --mode e2e --outDir dist-e2e --logLevel warn && npx vite preview --mode e2e --outDir dist-e2e --port 5199 --strictPort',
     url: 'http://localhost:5199',
-    reuseExistingServer: !process.env.CI,
+    // Never another run's server: it stops when that run ends, and every test left fails to connect (715 did, the
+    // retro of 2026-10-28). A second run fails at once on the busy port instead (one run at a time: CLAUDE.md).
+    reuseExistingServer: false,
   },
 });

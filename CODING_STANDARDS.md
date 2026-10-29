@@ -12,6 +12,7 @@ A change that makes something untrue fixes it in the same commit: a tooltip (`sr
 - **One shape, one place.** The same steps for several siblings (each modulation ring shown or hidden and its path set, each Timeline line drawn) live in one helper they all call; a CSS rule that copies another shares its selector instead.
 - **Many positional arguments become one options object** once a call can't be read without the signature.
 - **The same question asked in several files** (which categories list Presets, which Step kinds act) is answered once, where the thing is defined.
+- **A silenced dependency check names what it leaves out, and why the result cannot depend on it.** A `biome-ignore` of `useExhaustiveDependencies` is a claim about what the function reads: check it against the function's body. The Ideal Reference's memo claimed to list what it depended on, missed six of Osc 2's values, and its marks ignored Osc 2 (issue 77).
 
 ## Names
 
