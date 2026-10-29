@@ -35,17 +35,30 @@ describe('the Viewer settings store (issue 77)', () => {
     expect(viewers.get()).not.toBe(first);
   });
 
-  it('saves the overlays, and only them: a new page starts from them, unfrozen and on its defaults', () => {
+  it('saves every Display setting, never Freeze or the Snapshot: a new page starts from them (issue 85)', () => {
     const { storage, viewers } = setup();
     viewers.dispatch({ type: 'toggleOverlay', overlay: 'curve' });
     viewers.dispatch({ type: 'setCycles', cycles: 4 });
+    viewers.dispatch({ type: 'setTimelineSeconds', seconds: 3 });
     viewers.dispatch({ type: 'setFrequencyScale', scale: 'linear' });
+    viewers.dispatch({ type: 'setLevelScale', scale: 'linear' });
+    viewers.dispatch({ type: 'setTapSource', source: 'newest' });
     viewers.dispatch({ type: 'toggleFreeze' });
     viewers.dispatch({ type: 'takeSnapshot' });
-    expect(Object.keys(storage.data)).toEqual(['limpide.overlays']);
-    const next = setup(storage).viewers.get();
-    expect(next.overlays.curve).toBe(false);
-    expect(next).toMatchObject({ cycles: 2, viewer: { frozen: false, snapshot: null, frequencyScale: 'log' } });
+    const { viewers: next, sources } = setup(storage);
+    expect(next.get()).toMatchObject({
+      cycles: 4,
+      timelineSeconds: 3,
+      overlays: { curve: false },
+      viewer: { frequencyScale: 'linear', levelScale: 'linear', tapSource: 'newest', frozen: false, snapshot: null },
+    });
+    expect(sources).toEqual(['newest']); // the engine hears the saved source as the store is built
+  });
+
+  it('starts a garbled or unknown saved setting at its default, keeping the others (issue 85)', () => {
+    const storage = memoryStorage({ 'limpide.viewSettings': JSON.stringify({ cycles: 3, timelineSeconds: 4, frequencyScale: 'sideways', tapSource: 'newest' }) });
+    expect(setup(storage).viewers.get()).toMatchObject({ cycles: 2, timelineSeconds: 4, viewer: { frequencyScale: 'log', tapSource: 'newest' } });
+    expect(setup(memoryStorage({ 'limpide.viewSettings': '{not json' })).viewers.get()).toMatchObject({ cycles: 2, timelineSeconds: 2 });
   });
 
   it('hands the Amp Tap its source as soon as it changes, and tells its subscribers after', () => {

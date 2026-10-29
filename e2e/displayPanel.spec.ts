@@ -77,3 +77,16 @@ test('the theme is chosen in the Display panel, and remembered', async ({ page }
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
 });
+
+test('every Display setting is remembered across a reload, Freeze and the Snapshot aside (issue 85)', async ({ page }) => {
+  await page.goto('/');
+  await openDisplay(page);
+  const choose = (group: string, option: string) => page.getByRole('radiogroup', { name: group }).getByRole('radio', { name: option, exact: true });
+  const settings = [['Frequency axis', 'Lin'], ['Level axis', 'Lin'], ['Scope cycles', '4'], ['Env Timeline length', '3s'], ['Viewers follow', 'Newest']] as const;
+  for (const [group, option] of settings) await choose(group, option).click();
+  await page.getByRole('button', { name: 'Freeze' }).click();
+  await page.reload();
+  await openDisplay(page);
+  for (const [group, option] of settings) await expect(choose(group, option)).toHaveAttribute('aria-checked', 'true');
+  await expect(page.getByRole('button', { name: 'Freeze' })).toHaveAttribute('aria-pressed', 'false');
+});
