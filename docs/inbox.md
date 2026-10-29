@@ -4,6 +4,7 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-10-29, the owner (a screenshot with LFO 1 on Pulse Width and LFO 2 on Detune, two arrows at two thin flat lines across the Timeline): "There are some buggy lines in the timeline viewer. The dashed lines also seem \"flickery\" at the edges because the ink/no ink does not always fall at same location on line."
 ## Ideas
 
 ## Dropped
