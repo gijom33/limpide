@@ -88,9 +88,10 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 /* Grows with the screen up to where lines of controls stop being comfortable to scan. */
 main { max-width: 1920px; margin: 0 auto; padding: var(--space-4); }
 /* Laptop and wide windows: one row in the header's one order (issue 44). The Wordmark, the Patch and the playing
-   buttons (Demo, Song, Hold) on the left, the keyboard in the centre, set-up (MIDI, Display, About) on the right. The
-   side columns are never narrower than what they hold and share the rest equally, so the keyboard sits centred when
-   there is room; its column takes what they leave, up to the piano at full size. The Display panel is anchored to the
+   buttons (Demo, Tutorial, Song) on the left, the keyboard in the centre, set-up (Hold, MIDI, Display, About) on the
+   right; in three across the Wordmark sits over the Patch and Song under Demo and Tutorial (issue 82). The side columns
+   are never narrower than what they hold and share the rest equally, so the keyboard sits centred when there is room;
+   its column takes what they leave, up to the piano at full size. The Display panel is anchored to the
    header (not its button), so it can always use, and never exceed, the window's width. */
 header {
   position: relative; display: grid; grid-template-columns: minmax(max-content, 1fr) minmax(0, var(--keyboard-w)) minmax(max-content, 1fr);

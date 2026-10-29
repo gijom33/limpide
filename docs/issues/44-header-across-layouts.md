@@ -37,4 +37,4 @@ Decided by the owner on 2026-10-26, all four as proposed:
 - [x] The design principles' audit: the piano's keys meet the 24 px target on laptop, foldable and wide screens (44 and 26 px), so their three waivers are gone; the phone's stays
 - [x] Tried by the owner (2026-10-26): "New header looks good"
 
-Since then (2026-10-29, [issue 82](./82-top-row-centres-the-piano.md), decided by the owner): in three across (861 to 1919 px) the logo sits over the Patch picker and Song under Demo and Tutorial, two high, so the piano can sit at the page's centre; the order left to right is otherwise the same.
+Since then (2026-10-29, [issue 82](./82-top-row-centres-the-piano.md), decided by the owner): in three across (861 to 1919 px) the logo sits over the Patch picker and Song under Demo and Tutorial, two high, so the piano can sit at the page's centre; the order left to right is otherwise the same. Between 861 and about 1000 px the row is now 64 px tall where it was 52 (its piano larger), so the short windows above scroll 12 px more there.

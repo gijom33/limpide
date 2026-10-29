@@ -126,7 +126,7 @@ const pianoPlace = (page: import('@playwright/test').Page) =>
     const header = document.querySelector('header')!.getBoundingClientRect();
     return { offset: Math.round((piano.left + piano.right) / 2 - (header.left + header.right) / 2), headerHeight: Math.round(header.height) };
   });
-for (const width of [1200, 1280, 1366, 1440, 1600, 1800]) {
+for (const width of [1200, 1280, 1366, 1440, 1600, 1800, 1900]) {
   test(`the piano sits at the page's centre, the top row no taller (${width}px, issue 82)`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/');
@@ -135,12 +135,12 @@ for (const width of [1200, 1280, 1366, 1440, 1600, 1800]) {
     expect(headerHeight).toBeLessThanOrEqual(64);
   });
 }
-for (const width of [880, 1000, 1100]) {
+for (const width of [861, 880, 1000, 1100]) {
   test(`the piano keeps its size and comes nearer the centre where centring would shrink it (${width}px, issue 82)`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/');
     const { offset, headerHeight } = await pianoPlace(page);
-    expect(Math.abs(offset)).toBeLessThanOrEqual(80); // 140 to 170 px before
+    expect(Math.abs(offset)).toBeLessThanOrEqual(80);
     expect(headerHeight).toBeLessThanOrEqual(64);
   });
 }

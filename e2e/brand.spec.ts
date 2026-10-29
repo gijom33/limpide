@@ -23,7 +23,7 @@ test('the header shows the Limpide logo and wordmark, and the tab and home scree
 });
 
 for (const width of [861, 872, 884, 900, 920, 1000, 1100, 1440, 1710, 1920]) {
-  test(`the Limpide name is on screen, over the Patch picker in three across and on the header line wider, at ${width}px`, async ({ page }) => {
+  test(`the Limpide name is on screen, over the Patch picker in three across (issue 82) and on the header line wider, at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/');
     const title = page.getByRole('heading', { level: 1, name: 'Limpide' });
