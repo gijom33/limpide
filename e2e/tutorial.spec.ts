@@ -15,20 +15,24 @@ async function open(page: Page, preset: string) {
   await expect(card(page)).toBeVisible();
 }
 
+/**
+ * The Step on the card made with "Do it for me", then Next (or Finish). The Step is made a moment after the press, once
+ * the control rests within reach, and one already made (a Display option on at first) hides the button by itself: so
+ * click while it shows, until Next is enabled, however slow the machine.
+ */
+async function makeStep(page: Page) {
+  const next = card(page).getByRole('button', { name: /^(Next|Finish)$/ });
+  const doIt = action(page, 'Do it for me');
+  await expect(async () => {
+    if (await doIt.isVisible()) await doIt.click({ timeout: 2000 });
+    await expect(next).toBeEnabled({ timeout: 2000 });
+  }).toPass({ timeout: 30000 });
+  await next.click();
+}
+
 /** Every Step made with "Do it for me", to the last card. */
 async function doEverything(page: Page) {
-  for (;;) {
-    const next = card(page).getByRole('button', { name: /^(Next|Finish)$/ });
-    if (!(await next.isVisible())) return;
-    const doIt = action(page, 'Do it for me');
-    // The Step is made a moment after the press, once the control rests within reach: so click until it is made,
-    // however slow the machine.
-    await expect(async () => {
-      if (await doIt.isVisible()) await doIt.click({ timeout: 2000 });
-      await expect(next).toBeEnabled({ timeout: 2000 });
-    }).toPass({ timeout: 30000 });
-    await next.click();
-  }
+  while (await card(page).getByRole('button', { name: /^(Next|Finish)$/ }).isVisible()) await makeStep(page);
 }
 
 test('a Tutorial from the Patches panel: Init loaded, the control ringed with its target, turned by hand, then its note', async ({ page }) => {
@@ -246,10 +250,8 @@ test('a drag that passes through the target on its way past does not count: the 
 test('a knob already within reach when its Step comes waits for a touch, then counts and snaps (issue 59)', async ({ page }) => {
   await open(page, 'Bass');
   await action(page, 'Start').click();
-  for (let i = 0; i < 9; i++) {
-    await action(page, 'Do it for me').click();
-    await action(page, 'Next').click();
-  }
+  // Step 4's Ideal is on at first, so that Step makes itself and its "Do it for me" goes: `makeStep` waits either way.
+  for (let i = 0; i < 9; i++) await makeStep(page);
   // The Filter Decay: Init's 250 ms is within reach of 180 ms, and stays as it is until the learner moves it.
   await expect(progress(page)).toHaveText('Step 10 of 15');
   const decay = ringed(page).getByRole('slider');
