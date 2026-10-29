@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · enhancement. Built (2026-10-27), for the owner to listen to: the breath shortens only the Notes that ran to their part's end (the sixteenths); a long Release, as the Strings' or the Sweep Pad's, still rings into the next part on its new sound
+**Status:** done (2026-10-28), cleared by the owner after listening. Built (2026-10-27): the breath shortens only the Notes that ran to their part's end (the sixteenths); a long Release, as the Strings' or the Sweep Pad's, still rings into the next part on its new sound
 
 ## What makes a change harsh (found before the grilling)
 
