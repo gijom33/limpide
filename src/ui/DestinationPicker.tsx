@@ -1,14 +1,9 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { DESTINATIONS } from '../modulation/destinations';
-import { CHOICES, type LfoDestination, type LfoNumber } from '../patch/patch';
+import { LFO_DESTINATIONS, type LfoDestination, type LfoNumber, STAGES } from '../patch/patch';
 import { useLearnable } from './learn';
 
-const STAGES = [
-  { stage: 'osc', name: 'Oscillators' },
-  { stage: 'filter', name: 'Filter' },
-  { stage: 'amp', name: 'Amp' },
-] as const;
-const ORDER = CHOICES.lfoDestination;
+const ORDER = LFO_DESTINATIONS.map((d) => d.id);
 
 interface Props {
   lfo: LfoNumber;
@@ -92,14 +87,14 @@ export function DestinationPicker({ lfo, value, onChange }: Props) {
       </button>
       {open && (
         <div className="destination-menu" role="menu" aria-label={label} onKeyDown={onMenuKey}>
-          {STAGES.map(({ stage, name }) => (
-            <div key={stage} role="group" aria-label={name} data-stage={stage}>
+          {STAGES.map((stage) => (
+            <div key={stage.id} role="group" aria-label={stage.name} data-stage={stage.id}>
               <span className="destination-stage" aria-hidden="true">
-                {name}
+                {stage.name}
               </span>
-              {ORDER.filter((d) => DESTINATIONS[d].stage === stage).map((d) => (
-                <button key={d} type="button" role="menuitemradio" aria-checked={d === value} tabIndex={-1} onClick={() => pick(d)}>
-                  {DESTINATIONS[d].label}
+              {LFO_DESTINATIONS.filter((d) => d.stage === stage.id).map((d) => (
+                <button key={d.id} type="button" role="menuitemradio" aria-checked={d.id === value} tabIndex={-1} onClick={() => pick(d.id)}>
+                  {d.label}
                 </button>
               ))}
             </div>

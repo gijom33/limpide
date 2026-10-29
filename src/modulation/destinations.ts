@@ -1,21 +1,10 @@
-import { type LfoDestination, lfos, PARAMS, type ParamId, type Patch } from '../patch/patch';
+import { LFO_DESTINATIONS, type LfoDestination, lfos, PARAMS, type ParamId, type Patch } from '../patch/patch';
 import { valueToPosition } from '../patch/taper';
 import type { Modulation } from './modulationModel';
 import { LFO_DETUNE_CENTS, LFO_OSC2_CENTS, LFO_PITCH_CENTS, LFO_PULSE_WIDTH, lfoOffset, MAX_PULSE, MIN_PULSE } from './modulationModel';
 
-/**
- * Each LFO Destination: its name, its stage (whose colour it takes, in the menu and on the Timeline) and the knob it
- * moves (Pitch has none: it moves the Note).
- */
-export const DESTINATIONS: Record<LfoDestination, { label: string; stage: 'osc' | 'filter' | 'amp'; param: ParamId | null }> = {
-  pitch: { label: 'Pitch', stage: 'osc', param: null },
-  osc2Pitch: { label: 'Osc 2 Pitch', stage: 'osc', param: 'osc2Semitone' },
-  detune: { label: 'Detune', stage: 'osc', param: 'osc2Detune' },
-  pulseWidth: { label: 'Pulse Width', stage: 'osc', param: 'pulseWidth' },
-  cutoff: { label: 'Cutoff', stage: 'filter', param: 'cutoff' },
-  resonance: { label: 'Resonance', stage: 'filter', param: 'resonance' },
-  volume: { label: 'Volume', stage: 'amp', param: 'volume' },
-};
+/** Each LFO Destination by its id (`LFO_DESTINATIONS`): its name, its stage and the knob it moves. */
+export const DESTINATIONS = Object.fromEntries(LFO_DESTINATIONS.map((d) => [d.id, d])) as Record<LfoDestination, (typeof LFO_DESTINATIONS)[number]>;
 
 /** The Destinations an active LFO (Depth above zero) moves, LFO 1's first, each once (both LFOs on one: one). */
 export const lfoDestinations = (patch: Patch): LfoDestination[] => [

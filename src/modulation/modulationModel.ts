@@ -107,8 +107,8 @@ export function effectiveResonance(patch: Patch, lfo: readonly number[] = []): n
  * Envelope sets the loudest the Note gets and the LFOs pull it down from there.
  */
 export function tremolo(patch: Patch, lfo: readonly number[] = []): number {
-  const [one, two] = lfoSwings(patch, 'volume', LFO_VOLUME, LFO_VOLUME);
-  return 1 - one - two + one * (lfo[0] ?? 0) + two * (lfo[1] ?? 0);
+  // Each LFO's value less one: at its top (+1) the gain is 1, at its foot (−1) twice its swing below.
+  return 1 + lfoOffset(patch, 'volume', LFO_VOLUME, [(lfo[0] ?? 0) - 1, (lfo[1] ?? 0) - 1], LFO_VOLUME);
 }
 
 /** What the Amp's Envelope is multiplied by: the Volume knob, and the tremolo dipping from it (issue 62). */

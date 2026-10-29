@@ -50,8 +50,31 @@ export type ParamId =
 
 export type FilterMode = 'lowpass' | 'highpass' | 'bandpass' | 'notch';
 export type FilterSlope = 12 | 24;
-/** Where an LFO goes: the Oscillators' pitch, Osc 2's alone (an octave, or its Detune), the Pulse Width, the Filter, the Volume. */
-export type LfoDestination = 'pitch' | 'osc2Pitch' | 'detune' | 'pulseWidth' | 'cutoff' | 'resonance' | 'volume';
+/** The sound's three stages, in the signal's order, with their sections' names; each has its colour. */
+export const STAGES = [
+  { id: 'osc', name: 'Oscillators' },
+  { id: 'filter', name: 'Filter' },
+  { id: 'amp', name: 'Amp' },
+] as const;
+export type StageId = (typeof STAGES)[number]['id'];
+
+/**
+ * Where an LFO goes, in the order the arrows step and the menu lists them: the Oscillators' pitch, Osc 2's alone (an
+ * octave, or its Detune), the Pulse Width, the Filter, the Volume. Each with its name, its stage (whose colour it takes,
+ * in the menu and on the Timeline) and the knob it moves (Pitch has none: it moves the Note). The one list the Patch's
+ * type and choices, the Tutorials, the picker and the Timeline read (issue 68).
+ */
+export const LFO_DESTINATIONS = [
+  { id: 'pitch', label: 'Pitch', stage: 'osc', param: null },
+  { id: 'osc2Pitch', label: 'Osc 2 Pitch', stage: 'osc', param: 'osc2Semitone' },
+  { id: 'detune', label: 'Detune', stage: 'osc', param: 'osc2Detune' },
+  { id: 'pulseWidth', label: 'Pulse Width', stage: 'osc', param: 'pulseWidth' },
+  { id: 'cutoff', label: 'Cutoff', stage: 'filter', param: 'cutoff' },
+  { id: 'resonance', label: 'Resonance', stage: 'filter', param: 'resonance' },
+  { id: 'volume', label: 'Volume', stage: 'amp', param: 'volume' },
+] as const satisfies readonly { id: string; label: string; stage: StageId; param: ParamId | null }[];
+export type LfoDestination = (typeof LFO_DESTINATIONS)[number]['id'];
+const DESTINATION_IDS = LFO_DESTINATIONS.map((d) => d.id);
 /** Whether an LFO runs freely or starts its cycle again at every Note (retrigger, or key sync). */
 export type LfoRetrigger = 'free' | 'note';
 /** How many Notes can sound at once. 1 is monophonic (last-note priority, Glide); more play chords (ADR-0007). */
@@ -147,9 +170,9 @@ export const CHOICES = {
   filterMode: ['lowpass', 'highpass', 'bandpass', 'notch'],
   filterSlope: [12, 24],
   lfoWaveform: ['sine', 'triangle', 'square', 'saw', 'sawDown'],
-  lfoDestination: ['pitch', 'osc2Pitch', 'detune', 'pulseWidth', 'cutoff', 'resonance', 'volume'],
+  lfoDestination: DESTINATION_IDS,
   lfo2Waveform: ['sine', 'triangle', 'square', 'saw', 'sawDown'],
-  lfo2Destination: ['pitch', 'osc2Pitch', 'detune', 'pulseWidth', 'cutoff', 'resonance', 'volume'],
+  lfo2Destination: DESTINATION_IDS,
   lfoRetrigger: ['free', 'note'],
   lfo2Retrigger: ['free', 'note'],
   voices: [1, 2, 3, 4, 5, 6, 7, 8],

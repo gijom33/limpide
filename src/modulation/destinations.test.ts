@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { defaultPatch, type Patch } from '../patch/patch';
+import { CHOICES, defaultPatch, LFO_DESTINATIONS, type Patch, STAGES } from '../patch/patch';
+import { targetText } from '../tutorial/tutorial';
 import { linePattern, timelineShows } from '../viewers/timeline';
-import { destinationLevel, knobLevel, lfoDestinations } from './destinations';
+import { DESTINATIONS, destinationLevel, knobLevel, lfoDestinations } from './destinations';
 import type { Modulation } from './modulationModel';
 
 const patch = (change: Partial<Patch>): Patch => ({ ...defaultPatch(), lfoAmount: 0, lfo2Amount: 0, ...change });
@@ -69,5 +70,18 @@ describe('linePattern: the three moved lines told apart', () => {
   });
   it('gives a Destination both LFOs share LFO 1’s dashes', () => {
     expect(linePattern(patch({ lfoDestination: 'resonance', lfoAmount: 0.5, lfo2Destination: 'resonance', lfo2Amount: 0.5 }), 'resonance')).toBe('dashes');
+  });
+});
+
+describe('the LFO Destinations, one list (issue 68)', () => {
+  it('feeds both LFOs’ choices, the lookup by id and the Tutorials’ names, in one order', () => {
+    const ids = LFO_DESTINATIONS.map((d) => d.id);
+    expect(CHOICES.lfoDestination).toEqual(ids);
+    expect(CHOICES.lfo2Destination).toEqual(ids);
+    expect(Object.keys(DESTINATIONS)).toEqual(ids);
+    for (const d of LFO_DESTINATIONS) {
+      expect(targetText({ kind: 'choice', id: 'lfoDestination', to: d.id, say: '', note: '' })).toBe(d.label);
+      expect(STAGES.map((s) => s.id)).toContain(d.stage);
+    }
   });
 });
