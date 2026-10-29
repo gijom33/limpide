@@ -11,7 +11,7 @@ import { addToRenderLoop } from '../viewers/renderLoop';
  * What a knob's modulation ring reads every frame: the engine's Modulation model, the Patch as it is now, and the
  * on-screen piano's octave (Key Track's ring spans its keys).
  */
-export const ModulationContext = createContext<{ engine: SynthEngine; patch: RefObject<Patch>; octave: RefObject<number> } | null>(null);
+export const ModulationContext = createContext<{ engine: SynthEngine; patch(): Patch; octave: RefObject<number> } | null>(null);
 
 /** The Effective value can only be heard once the Amp Envelope has risen above this. */
 const AUDIBLE = 0.002;
@@ -138,8 +138,8 @@ export function ModulationRing({ id, centre, radius, trackRadius, dotRadius, arc
     listen();
     return addToRenderLoop(() => {
       const [paths, d] = [rings.current, dot.current];
-      if (RINGS.some((_, i) => !paths[i]) || !d || !context.patch.current) return;
-      const now = modulated(id, context.patch.current, context.engine, context.octave.current);
+      if (RINGS.some((_, i) => !paths[i]) || !d) return;
+      const now = modulated(id, context.patch(), context.engine, context.octave.current);
       RINGS.forEach((ring, i) => {
         const path = paths[i]!;
         // A range pinned past the dial's end draws nothing (an arc is never shorter than half a degree).

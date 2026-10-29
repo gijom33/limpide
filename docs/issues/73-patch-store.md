@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement
+**Status:** done (2026-10-28). The Patch lives in a store made beside the audio session; the engine and the Note input hear each change before React; the Demo's knobs listen for a hand's or a Controller's changes. Nothing visible changed: the Playwright suite passes untouched.
 
 ## Agent Brief
 
@@ -31,9 +31,9 @@
 - The players', the MIDI hook's, the Hold hook's and the Tutorial hook's inputs, which take the store or its writes instead of a Patch reference and setters
 
 **Acceptance criteria:**
-- [ ] `npx tsc`, `npm run lint`, `npx vitest run` and `npx playwright test` green, with no Playwright test changed
-- [ ] No Patch reference written outside the store; the engine's `applyPatch` called only by the store's apply
-- [ ] Node tests over a fake apply and fake storage: the engine hears a change before subscribers, whoever made it; a Controller's move reaches the engine without a render; two Preset steps before a render step twice; a load resets "changed" and a change sets it; the Last session is autosaved after a pause, not on every change; the start is a Share link, else the Last session, else Init; the Demo skips a knob turned by hand (a Controller's turn included) until its next Preset
+- [x] `npx tsc`, `npm run lint`, `npx vitest run` and `npx playwright test` green, with no Playwright test changed
+- [x] No Patch reference written outside the store; the engine's `applyPatch` called only by the store's apply
+- [x] Node tests over a fake apply and fake storage: the engine hears a change before subscribers, whoever made it; a Controller's move reaches the engine without a render; two Preset steps before a render step twice; a load resets "changed" and a change sets it; the Last session is autosaved after a pause, not on every change; the start is a Share link, else the Last session, else Init; the Demo skips a knob turned by hand (a Controller's turn included) until its next Preset
 
 **Out of scope:**
 - The players' shared scheduling and which one plays (the review's candidate 3)
@@ -58,3 +58,12 @@ Claude's calls, open to the owner:
 
 11. The Demo finds what a person turned by comparing the Patch before and after their change, Parameters only. A knob pushed against its stop, which changes nothing, no longer counts as turned; it has no value for the Demo to override anyway.
 12. The engine keeps its guard against two Patches at the same instant: with every change applied at once, a knob drag can send two inside one audio render quantum.
+
+## How it was built
+
+- **The store** (`src/patch/patchStore.ts`): `createPatchStore({ start, library, apply })` returns `get()` (`{ patch, name, changed }`, the same object until the next change, as `useSyncExternalStore` needs), `change(edit, by)`, `load(name, patch)`, `step(delta)` and `subscribe(listener)`, whose listener gets `{ before, after, by }`. Each write calls `apply`, then sets the read, then restarts the 300 ms autosave, then tells the listeners. Tests: `patchStore.test.ts`.
+- **The start**: the store applies its start Patch and schedules the first autosave as it is made, as the old effects did on mount; the one-per-page session is what keeps React's double build from doing it twice. Choosing the start (a Share link, else the Last session, else Init) stays `initialPatch`, already tested in `presets.test.ts`. Clearing the Share link from the address stays an effect in `App`.
+- **The session** (`src/app/session.ts`): `getAudioSession(storage)` makes the library, the start, the engine, the Note input and the store, whose `apply` is the engine's `applyPatch` and the Note input's `setVoices`. It carries `patches`, `library` and `shared`. The `applyPatch` effect in `App` is gone.
+- **The Demo's knobs** (`src/demo/demoKnobs.ts`): `createDemoKnobs(store)`, made each time the Demo starts and stopped with it: `newPart(preset?)` forgets what was turned and loads the part, `turn(id, value)` changes the Patch as `'demo'` unless a hand or a Controller moved that Parameter since. Tests: `demoKnobs.test.ts`.
+- **The hooks**: `usePatchState` is deleted. `usePlayers`, `useMidi` and `useHold` read the store from the session; `useTutorialState` takes it and writes as `'tutorial'`. The rings' and the Pitch marker's context reads the Patch through a function, not a reference. `App` changes the Patch by hand through one `edit` helper.
+

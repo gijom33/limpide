@@ -65,14 +65,14 @@ export function PitchMarker() {
       const m = context.engine.modulationAt();
       note = m.sounding?.note ?? note;
       const spots: ReturnType<typeof place>[] = [];
-      if (m.amp > AUDIBLE && note !== null && pitchMoves(context.patch.current)) {
+      if (m.amp > AUDIBLE && note !== null && pitchMoves(context.patch())) {
         const origin = piano.getBoundingClientRect();
         const black = piano.querySelector<HTMLElement>('[data-black]')?.getClientRects()[0]?.width ?? 0;
         const shift = still.matches ? 0 : (m.vibrato * black) / 2;
         const gliding = still.matches ? note : m.pitch - m.vibrato;
         spots.push(place(piano, origin, gliding, shift));
         // A chord's other Notes, with several Voices: every other key lit (one Voice sounds only the newest).
-        const others = context.patch.current.voices > 1 ? piano.querySelectorAll<HTMLElement>('[aria-pressed="true"]') : [];
+        const others = context.patch().voices > 1 ? piano.querySelectorAll<HTMLElement>('[aria-pressed="true"]') : [];
         for (const key of others) {
           const other = Number(key.dataset.note);
           if (other !== Math.round(gliding) && spots.length < DOTS) spots.push(place(piano, origin, other, shift));

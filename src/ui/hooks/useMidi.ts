@@ -1,4 +1,4 @@
-import { type Dispatch, type MutableRefObject, type SetStateAction, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { type Dispatch, type MutableRefObject, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import type { AudioSession } from '../../app/session';
 import type { KeyValueStorage } from '../../app/storage';
 import { c16Bank, c16Layout, isC16 } from '../../midi/c16';
@@ -7,7 +7,7 @@ import { describeMessage, targetKey } from '../../midi/describe';
 import { connectMidi, type MidiAccessLike, midiSupport } from '../../midi/inputs';
 import { createMappingStore, type Mapping, type Target } from '../../midi/mappings';
 import { QUICK_SETUP, type QuickSetupEvent, type QuickSetupState, quickSetupReducer, startQuickSetup, takenControls } from '../../midi/quickSetup';
-import { CHOICES, type ChoiceId, PARAMS, type ParamId, type Patch, setParam } from '../../patch/patch';
+import { CHOICES, type ChoiceId, PARAMS, setParam } from '../../patch/patch';
 import { positionToValue, valueToPosition } from '../../patch/taper';
 import type { ViewerAction } from '../../viewers/viewerState';
 import type { MidiState } from '../MidiPanel';
@@ -34,11 +34,6 @@ async function midiPermission(): Promise<PermissionState> {
 interface Host {
   storage: KeyValueStorage;
   session: AudioSession;
-  patchRef: MutableRefObject<Patch>;
-  setPatch: Dispatch<SetStateAction<Patch>>;
-  stepPreset(delta: number): void;
-  /** Knobs a Controller turns count as turned by hand: the Demo leaves them alone. */
-  turnedByHand: MutableRefObject<Set<ParamId>>;
   pressHoldRef: MutableRefObject<() => void>;
   dispatchViewer: Dispatch<ViewerAction>;
   /** A Note from a Controller: the Demo stops, the person has taken over. */
@@ -53,17 +48,16 @@ interface Host {
 /**
  * MIDI Controllers: their Notes join the same Note input as the keyboard and piano; their knobs, pads and encoders
  * drive what they were mapped to (MIDI Learn first, ADR-0004), or the C16's own layout (ADR-0009). Messages arrive
- * between renders, so the surface reads and writes the Patch through `patchRef`.
+ * between renders, so the surface reads and changes the Patch in its store, which the sound follows at once.
  */
 export function useMidi(host: Host) {
-  const { storage, session, patchRef, setPatch, stepPreset, turnedByHand, pressHoldRef, dispatchViewer, onNote } = host;
+  const { storage, session, pressHoldRef, dispatchViewer, onNote } = host;
+  const { patches } = session;
   const keyboard = useRef(host);
   keyboard.current = host;
   const [midi, setMidi] = useState<MidiState>({ kind: 'pending' });
   const [activity, setActivity] = useState<string | null>(null);
   const [learn, setLearn] = useState<LearnState>({ phase: 'off' });
-  const stepPresetRef = useRef(stepPreset);
-  stepPresetRef.current = stepPreset;
   const onNoteRef = useRef(onNote);
   onNoteRef.current = onNote;
 
@@ -96,27 +90,23 @@ export function useMidi(host: Host) {
     };
     return createControlSurface({
       store: mappingStore,
-      position: (id) => valueToPosition(PARAMS[id], patchRef.current[id]),
+      position: (id) => valueToPosition(PARAMS[id], patches.get().patch[id]),
       setPosition: (id, position) => {
-        const next = setParam(patchRef.current, id, positionToValue(PARAMS[id], position));
-        patchRef.current = next;
-        turnedByHand.current.add(id);
-        setPatch((p) => setParam(p, id, next[id]));
+        patches.change((p) => setParam(p, id, positionToValue(PARAMS[id], position)), 'controller');
       },
       choice: (id) => {
         const options = choiceOptions(id);
-        return { index: options.indexOf(patchRef.current[id] as never), count: options.length };
+        return { index: options.indexOf(patches.get().patch[id] as never), count: options.length };
       },
       setChoice: (id, index) => {
         const value = choiceOptions(id)[index];
-        patchRef.current = { ...patchRef.current, [id]: value };
-        setPatch((p) => ({ ...p, [id]: value }));
+        patches.change((p) => ({ ...p, [id]: value }), 'controller');
       },
       action: (id) => {
         if (id === 'hold') pressHoldRef.current();
         else if (id === 'freeze') dispatchViewer({ type: 'toggleFreeze' });
         else if (id === 'snapshot') dispatchViewer({ type: 'takeSnapshot' });
-        else stepPresetRef.current(id === 'nextPreset' ? 1 : -1);
+        else patches.step(id === 'nextPreset' ? 1 : -1);
       },
       press: (note, velocity) => session.input.press(note, velocity),
       release: (note) => session.input.release(note),
@@ -129,7 +119,7 @@ export function useMidi(host: Host) {
         if (state.phase === 'armed' && state.learned) onLearned.current(state.learned);
       },
     });
-  }, [mappingStore, session, patchRef, setPatch, turnedByHand, pressHoldRef, dispatchViewer]);
+  }, [mappingStore, session, patches, pressHoldRef, dispatchViewer]);
 
   // Quick Setup: a sequence of Learn steps. Each Mapping learned moves it on to the next step's target.
   const [setup, setSetup] = useState<QuickSetupState | null>(null);

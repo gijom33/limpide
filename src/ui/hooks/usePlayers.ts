@@ -1,10 +1,10 @@
 import { type Dispatch, type MutableRefObject, type SetStateAction, useEffect, useRef, useState } from 'react';
 import type { AudioSession } from '../../app/session';
+import { createDemoKnobs } from '../../demo/demoKnobs';
 import { type DemoHost, startDemo } from '../../demo/player';
 import { startSong } from '../../demo/song';
 import { SHARED_RIFF, TRACK, type Track } from '../../demo/track';
 import { shiftOctave } from '../../input/keyboardLayout';
-import { type ParamId, type Patch, setParam } from '../../patch/patch';
 import { PRESETS } from '../../patch/presets';
 import type { Tutorial } from '../../tutorial/tutorial';
 import { SECTION_OF, type SectionName } from '../sections';
@@ -12,10 +12,6 @@ import { freezesOnSpace } from './useKeys';
 
 interface Host {
   session: AudioSession;
-  patchRef: MutableRefObject<Patch>;
-  patchName: string;
-  setPatch: Dispatch<SetStateAction<Patch>>;
-  loadPatch(name: string, patch: Patch): void;
   octaveRef: MutableRefObject<number>;
   setOctave: Dispatch<SetStateAction<number>>;
   /** The Notes held by hand: one ends the Song. */
@@ -29,15 +25,15 @@ interface Host {
  * the Song (a loop on the loaded Patch, which it never changes) and a Tutorial's Listen (its phrase, over and over).
  * One plays at a time; the Notes they play are lit on the piano.
  */
-export function usePlayers({ session, patchRef, patchName, setPatch, loadPatch, octaveRef, setOctave, heldNotes, onDemoStart }: Host) {
-  const { engine } = session;
+export function usePlayers({ session, octaveRef, setOctave, heldNotes, onDemoStart }: Host) {
+  const { engine, patches } = session;
   const onDemoStartRef = useRef(onDemoStart);
   onDemoStartRef.current = onDemoStart;
   // The Notes the Demo, the Song or Listen is playing, lit on the piano.
   const [playedNotes, setPlayedNotes] = useState<number[]>([]);
   const notes: Pick<DemoHost, 'now' | 'voices' | 'noteOn' | 'noteOff' | 'release'> = {
     now: () => engine.now(),
-    voices: () => patchRef.current.voices,
+    voices: () => patches.get().patch.voices,
     noteOn: (note, velocity, at) => engine.noteOn(note, velocity, at),
     noteOff: (at) => engine.noteOff(at),
     release: (note, at) => engine.release(note, at),
@@ -49,8 +45,6 @@ export function usePlayers({ session, patchRef, patchName, setPatch, loadPatch, 
   const [demoTrack, setDemoTrack] = useState<Track>(TRACK);
   const [tookOver, setTookOver] = useState(false);
   const demoStop = useRef<(() => void) | null>(null);
-  // Knobs turned by hand while the Demo plays stay where they were put until its next Preset: its own moves skip them.
-  const turnedByHand = useRef(new Set<ParamId>());
   // The section of the knob the Demo is turning, for the page to follow; a scroll of the person's own stops the
   // following until the Demo's next part.
   const [follow, setFollow] = useState<{ name: SectionName; key: number } | null>(null);
@@ -92,29 +86,19 @@ export function usePlayers({ session, patchRef, patchName, setPatch, loadPatch, 
     onDemoStartRef.current();
     setTookOver(false);
     const track = shared
-      ? { bpm: TRACK.bpm, parts: [{ preset: patchName, phrase: SHARED_RIFF, caption: 'The sound someone shared with you: turn any knob and hear it change.' }] }
+      ? { bpm: TRACK.bpm, parts: [{ preset: patches.get().name, phrase: SHARED_RIFF, caption: 'The sound someone shared with you: turn any knob and hear it change.' }] }
       : TRACK;
     setDemoTrack(track);
-    demoStop.current = startDemo(
+    // Knobs turned by hand while the Demo plays stay where they were put until its next part.
+    const knobs = createDemoKnobs(patches);
+    const stopPlayer = startDemo(
       {
         ...notes,
-        // The Patch goes to the engine at once, not on the next render: the part's first Notes follow straight away.
         load: (part) => {
-          turnedByHand.current.clear();
           followPaused.current = false;
-          if (shared) return patchRef.current;
-          const preset = PRESETS.find((p) => p.name === part.preset)!;
-          loadPatch(preset.name, preset.patch);
-          patchRef.current = preset.patch;
-          engine.applyPatch(preset.patch);
-          return preset.patch;
+          return knobs.newPart(shared ? undefined : PRESETS.find((p) => p.name === part.preset)!);
         },
-        setParam: (id, value) => {
-          if (turnedByHand.current.has(id)) return;
-          patchRef.current = setParam(patchRef.current, id, value);
-          engine.applyPatch(patchRef.current);
-          setPatch((p) => setParam(p, id, value));
-        },
+        setParam: knobs.turn,
         onMove: (id) => {
           if (!followPaused.current) setFollow((f) => ({ name: SECTION_OF[id], key: (f?.key ?? 0) + 1 }));
         },
@@ -124,15 +108,20 @@ export function usePlayers({ session, patchRef, patchName, setPatch, loadPatch, 
         onEnd: () => {
           // The track is over: back to the starting point, silent, as if nothing had been touched. The shared sound
           // stays loaded.
+          knobs.stop();
           demoStop.current = null;
           setDemo(null);
           if (shared) return;
           const init = PRESETS[0];
-          loadPatch(init.name, init.patch);
+          patches.load(init.name, init.patch);
         },
       },
       track,
     );
+    demoStop.current = () => {
+      stopPlayer();
+      knobs.stop();
+    };
   };
   const toggleDemo = () => (demoStop.current ? stopDemo() : playDemo());
 
@@ -151,7 +140,7 @@ export function usePlayers({ session, patchRef, patchName, setPatch, loadPatch, 
       listenStop.current = startDemo(
         {
           ...notes,
-          load: () => patchRef.current,
+          load: () => patches.get().patch,
           setParam: () => {},
           onMove: () => {},
           onStep: () => {},
@@ -250,7 +239,7 @@ export function usePlayers({ session, patchRef, patchName, setPatch, loadPatch, 
   );
 
   return {
-    playedNotes, turnedByHand,
+    playedNotes,
     demo, demoTrack, follow, tookOver, setTookOver, playDemo, stopDemo, stopDemoRef, toggleDemo,
     song, stopSong, toggleSong,
     listening, startListen, stopListen,

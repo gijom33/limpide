@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { useEffect, useMemo, useReducer, useRef, useState, useSyncExternalStore } from 'react';
 import { type AudioSession, getAudioSession } from '../app/session';
 import { safeStorage } from '../app/storage';
 import { type AudioStatus, unlockAudio } from '../app/unlockAudio';
@@ -22,7 +22,6 @@ import { FilterShape } from './FilterShape';
 import { useHold } from './hooks/useHold';
 import { useComputerKeyboard, useSpaceFreezes } from './hooks/useKeys';
 import { useMidi } from './hooks/useMidi';
-import { usePatchState } from './hooks/usePatchState';
 import { usePlayers } from './hooks/usePlayers';
 import { useTutorialState } from './hooks/useTutorialState';
 import { HoldIcon, InfoIcon, NoteIcon, PlayIcon } from './icons';
@@ -122,9 +121,15 @@ function Block({ title, stage, ids, patch, onChange, children, more, heading, ex
 
 export function App() {
   const storage = useMemo(safeStorage, []);
-  const { library, start, patch, setPatch, patchRef, patchName, loadPatch, stepPreset, changed } = usePatchState(storage);
+  const [session] = useState(() => getAudioSession(storage));
+  const { patches, library } = session;
+  const { patch, name: patchName, changed } = useSyncExternalStore(patches.subscribe, patches.get);
+  useEffect(() => {
+    // A share link has done its job once loaded; drop it so a reload keeps later edits (autosaved).
+    if (location.hash.startsWith('#p=')) history.replaceState(null, '', location.pathname + location.search);
+  }, []);
   // A brand-new browser opens on About as a welcome, once; read before the first autosave makes it a Last session.
-  const [welcome, setWelcome] = useState(() => welcomeFor(start.shared, storage, library));
+  const [welcome, setWelcome] = useState(() => welcomeFor(session.shared, storage, library));
   const [about, setAbout] = useState(welcome !== null);
   const closeAbout = () => {
     setAbout(false);
@@ -136,24 +141,19 @@ export function App() {
     }
   };
 
-  const [session] = useState(() => getAudioSession(patch));
   const [audioStatus, setAudioStatus] = useState<AudioStatus>('waiting');
   // Sound starts on the first key press, click or drag; there is no button to press first.
   useEffect(() => unlockAudio(session.ctx, window, setAudioStatus), [session]);
-  useEffect(() => {
-    session.engine.applyPatch(patch);
-    session.input.setVoices(patch.voices);
-  }, [session, patch]);
 
   const [octave, setOctave] = useState(DEFAULT_OCTAVE);
   const octaveRef = useRef(octave);
   octaveRef.current = octave;
-  const modulationContext = useMemo(() => ({ engine: session.engine, patch: patchRef, octave: octaveRef }), [session, patchRef]);
+  const modulationContext = useMemo(() => ({ engine: session.engine, patch: () => patches.get().patch, octave: octaveRef }), [session, patches]);
   // The letter keys play Notes unless turned off in Display (issue 51); remembered.
   const [letterKeys, setLetterKeys] = useState(() => storage.getItem(LETTER_KEYS) !== 'off');
   useEffect(() => storage.setItem(LETTER_KEYS, letterKeys ? 'on' : 'off'), [storage, letterKeys]);
   useComputerKeyboard(session, octaveRef, setOctave, letterKeys);
-  const { hold, pressHold, pressHoldRef, heldNotes, setPedal } = useHold(session, patchRef);
+  const { hold, pressHold, pressHoldRef, heldNotes, setPedal } = useHold(session);
   // How far a keyboard's bend wheel takes the pitch, in semitones each way (issue 52); remembered.
   const [bendRange, setBendRange] = useState(() => Number(storage.getItem(BEND_RANGE)) || 2);
   useEffect(() => storage.setItem(BEND_RANGE, String(bendRange)), [storage, bendRange]);
@@ -169,7 +169,7 @@ export function App() {
   useEffect(() => saveOverlays(storage, overlays), [storage, overlays]);
 
   const players = usePlayers({
-    session, patchRef, patchName, setPatch, loadPatch, octaveRef, setOctave, heldNotes,
+    session, octaveRef, setOctave, heldNotes,
     // The Demo loads its own Presets, and the page stays where the Demo leaves it.
     onDemoStart: () => {
       tutorial.end();
@@ -177,7 +177,7 @@ export function App() {
     },
   });
   const tutorial = useTutorialState({
-    storage, patch, patchName, setPatch, loadPatch, overlays, setOverlays,
+    storage, patch, patchName, patches, overlays, setOverlays,
     snapshot: viewer.snapshot,
     takeSnapshot: () => dispatchViewer({ type: 'takeSnapshot' }),
     onStart: () => {
@@ -192,15 +192,14 @@ export function App() {
   const tutorialList = TUTORIALS.map((t) => ({ preset: t.preset, finished: tutorial.finished.has(t.preset) }));
   const startTutorial = (preset: string) => tutorial.start(TUTORIALS.find((t) => t.preset === preset)!);
   const midi = useMidi({
-    storage, session, patchRef, setPatch, stepPreset, pressHoldRef, dispatchViewer,
-    turnedByHand: players.turnedByHand,
+    storage, session, pressHoldRef, dispatchViewer,
     onNote: () => players.stopDemoRef.current(true),
     onBend: (amount) => session.engine.setBend(amount * bendRange * 100),
     onPedal: setPedal,
     // Program n is the n-th Preset (0 is Init), so a keyboard's Program buttons step through them.
     onProgram: (number) => {
       const preset = PRESETS[number];
-      if (preset) loadPatch(preset.name, preset.patch);
+      if (preset) patches.load(preset.name, preset.patch);
     },
   });
   const { learnContext, learning } = midi;
@@ -217,10 +216,9 @@ export function App() {
   viewSettings.current = { cycles, timelineSeconds, ideal, overlays, viewer };
   const view = useRef(() => viewSettings.current).current;
 
-  const change = (id: ParamId, value: number) => {
-    players.turnedByHand.current.add(id);
-    setPatch((p) => setParam(p, id, value));
-  };
+  // A change by hand: a knob, a fader or a switch.
+  const edit = (change: (patch: Patch) => Patch) => patches.change(change, 'hand');
+  const change = (id: ParamId, value: number) => edit((p) => setParam(p, id, value));
 
   const viewers = (
     tap: keyof AudioSession['engine']['taps'],
@@ -271,7 +269,7 @@ export function App() {
                 changed={changed}
                 patch={patch}
                 library={library}
-                onLoad={loadPatch}
+                onLoad={patches.load}
                 tutorials={tutorialList}
                 onTutorial={startTutorial}
               />
@@ -426,7 +424,7 @@ export function App() {
                     content: (
                     <SubBlock title="Osc 1" label="Waveform" group>
                       <Tooltip content={TIPS.waveform}>
-                        <WaveformPicker label="Osc 1 Waveform" choice="waveform" value={patch.waveform} onChange={(w) => setPatch((p) => setWaveform(p, w))} />
+                        <WaveformPicker label="Osc 1 Waveform" choice="waveform" value={patch.waveform} onChange={(w) => edit((p) => setWaveform(p, w))} />
                       </Tooltip>
                       <div className="knobs">
                         <Tooltip content={TIPS.pulseWidth}>
@@ -445,7 +443,7 @@ export function App() {
                     content: (
                       <SubBlock title="Osc 2" label="Waveform" group>
                         <Tooltip content={TIPS.waveform}>
-                          <WaveformPicker label="Osc 2 Waveform" choice="osc2Waveform" value={patch.osc2Waveform} onChange={(w) => setPatch((p) => setWaveform(p, w, 'osc2'))} />
+                          <WaveformPicker label="Osc 2 Waveform" choice="osc2Waveform" value={patch.osc2Waveform} onChange={(w) => edit((p) => setWaveform(p, w, 'osc2'))} />
                         </Tooltip>
                         <div className="knobs">
                           {/* Pulse Width first, where Osc 1 has it, so it stays put when switching tabs. */}
@@ -519,7 +517,7 @@ export function App() {
             onChange={change}
             heading={
               <SubBlock title="Mode">
-                <FilterShape mode={patch.filterMode} slope={patch.filterSlope} onChange={(c) => setPatch((p) => setFilter(p, c))} />
+                <FilterShape mode={patch.filterMode} slope={patch.filterSlope} onChange={(c) => edit((p) => setFilter(p, c))} />
               </SubBlock>
             }
             more={
@@ -591,7 +589,7 @@ export function App() {
                     caption="Voices"
                     value={patch.voices}
                     options={CHOICES.voices.map((v) => ({ value: v, label: String(v) }))}
-                    onChange={(voices) => setPatch((p) => ({ ...p, voices }))}
+                    onChange={(voices) => edit((p) => ({ ...p, voices }))}
                     learn={{ kind: 'choice', id: 'voices' }}
                   />
                 </Tooltip>
@@ -614,7 +612,7 @@ export function App() {
             controls={
               <div className="timeline-controls">
                 {([1, 2] as const).map((n) => (
-                  <LfoControls key={n} lfo={n} engine={session.engine} patch={patch} onParam={change} onPatch={setPatch} />
+                  <LfoControls key={n} lfo={n} engine={session.engine} patch={patch} onParam={change} onPatch={edit} />
                 ))}
               </div>
             }

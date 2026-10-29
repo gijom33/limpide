@@ -1,6 +1,7 @@
 import { type Dispatch, type SetStateAction, useEffect, useState } from 'react';
 import type { KeyValueStorage } from '../../app/storage';
 import type { Patch } from '../../patch/patch';
+import type { PatchStore } from '../../patch/patchStore';
 import { PRESETS } from '../../patch/presets';
 import { loadFinished, saveFinished } from '../../tutorial/progress';
 import { applyStep, controlName, differences, doStep, type Held, held, isMade, onTarget, type Tutorial } from '../../tutorial/tutorial';
@@ -13,8 +14,8 @@ interface Host {
   storage: KeyValueStorage;
   patch: Patch;
   patchName: string;
-  setPatch: Dispatch<SetStateAction<Patch>>;
-  loadPatch(name: string, patch: Patch): void;
+  /** Where the Tutorial's own changes go: its first Init, "Do it for me", a Step's snap, the matching Preset. */
+  patches: PatchStore;
   overlays: Overlays;
   setOverlays: Dispatch<SetStateAction<Overlays>>;
   /** The current Snapshot's number (null when none): a new one makes a Snapshot Step. */
@@ -32,7 +33,7 @@ interface Host {
  * keys, MIDI, "Do it for me"); a knob or fader then snaps to the exact value, so the finished sound is the Preset's.
  * `since` is what the Step's control held when the card came to it.
  */
-export function useTutorialState({ storage, patch, patchName, setPatch, loadPatch, overlays, setOverlays, snapshot, takeSnapshot, onStart, onEnd }: Host) {
+export function useTutorialState({ storage, patch, patchName, patches, overlays, setOverlays, snapshot, takeSnapshot, onStart, onEnd }: Host) {
   const [lesson, setLesson] = useState<{ tutorial: Tutorial; index: number; done: boolean[]; since?: Held } | null>(null);
   const [finished, setFinished] = useState(() => loadFinished(storage));
   const preset = lesson && PRESETS.find((p) => p.name === lesson.tutorial.preset)!;
@@ -43,7 +44,7 @@ export function useTutorialState({ storage, patch, patchName, setPatch, loadPatc
   const start = (tutorial: Tutorial) => {
     onStart();
     const init = PRESETS[0];
-    loadPatch(init.name, init.patch);
+    patches.load(init.name, init.patch);
     setLesson({ tutorial, index: -1, done: tutorial.steps.map(() => false) });
   };
   const end = () => {
@@ -57,9 +58,9 @@ export function useTutorialState({ storage, patch, patchName, setPatch, loadPatc
       const index = Math.min(l.tutorial.steps.length, Math.max(-1, l.index + delta));
       return { ...l, index, since: held(l.tutorial.steps[index], scene) };
     });
-  const matchPreset = () => preset && loadPatch(preset.name, preset.patch);
+  const matchPreset = () => preset && patches.load(preset.name, preset.patch);
   const doIt = () => {
-    if (step) doStep(step, { setPatch, showOverlay: (overlay) => setOverlays((v) => ({ ...v, [overlay]: true })), takeSnapshot });
+    if (step) doStep(step, { setPatch: (change) => patches.change(change, 'tutorial'), showOverlay: (overlay) => setOverlays((v) => ({ ...v, [overlay]: true })), takeSnapshot });
   };
 
   // It counts once the control rests within reach, not as a drag passes through on its way past (review 5, 2026-10-27):
@@ -68,15 +69,14 @@ export function useTutorialState({ storage, patch, patchName, setPatch, loadPatc
   useEffect(() => {
     if (!lesson || !step || lesson.done[lesson.index] || !made) return;
     const timer = setTimeout(() => {
-      if (!onTarget(step, patch)) setPatch((p) => applyStep(p, step));
+      if (!onTarget(step, patch)) patches.change((p) => applyStep(p, step), 'tutorial');
       setLesson((l) => l && { ...l, done: l.done.map((d, i) => d || i === l.index) });
     }, SETTLE_MS);
     return () => clearTimeout(timer);
-  }, [lesson, step, made, patch, setPatch]);
+  }, [lesson, step, made, patch, patches]);
 
   // The last card: the Tutorial counts as finished, and a sound that matches is named after its Preset.
   const matches = differs.length === 0;
-  // biome-ignore lint/correctness/useExhaustiveDependencies: loadPatch is rebuilt each render, the same each time
   useEffect(() => {
     if (!atEnd || !preset) return;
     setFinished((f) => {
@@ -85,8 +85,8 @@ export function useTutorialState({ storage, patch, patchName, setPatch, loadPatc
       saveFinished(storage, next);
       return next;
     });
-    if (matches && patchName !== preset.name) loadPatch(preset.name, preset.patch);
-  }, [atEnd, preset, matches, patchName, storage]);
+    if (matches && patchName !== preset.name) patches.load(preset.name, preset.patch);
+  }, [atEnd, preset, matches, patchName, storage, patches]);
 
   return { lesson, preset, finished, differs: differs.map(controlName), start, end, move, matchPreset, doIt };
 }

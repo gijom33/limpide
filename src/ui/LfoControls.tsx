@@ -1,4 +1,3 @@
-import type { Dispatch, SetStateAction } from 'react';
 import type { SynthEngine } from '../engine/synthEngine';
 import { DESTINATIONS } from '../modulation/destinations';
 import type { LfoWaveform } from '../modulation/lfo';
@@ -27,7 +26,7 @@ interface Props {
   engine: SynthEngine;
   patch: Patch;
   onParam(id: ParamId, value: number): void;
-  onPatch: Dispatch<SetStateAction<Patch>>;
+  onPatch(change: (patch: Patch) => Patch): void;
 }
 
 /**

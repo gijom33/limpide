@@ -1,14 +1,13 @@
-import { type MutableRefObject, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { AudioSession } from '../../app/session';
 import { createHoldTaps, type Rhythm, startRhythm } from '../../input/holdRhythm';
-import type { Patch } from '../../patch/patch';
 
 /**
  * Hold, and the Notes held by hand. Hold's clicks: the first switches it on; quick clicks after it, before a Note is
  * held, tap a rhythm, and the held Notes then repeat on it (single Notes and chords in turn on several Voices) until
  * Hold goes off. `pressHoldRef` is for a Controller's pad, between renders.
  */
-export function useHold(session: AudioSession, patchRef: MutableRefObject<Patch>) {
+export function useHold(session: AudioSession) {
   const [hold, setHold] = useState(false);
   // A keyboard's sustain pedal holds Notes as Hold does, while it is down (issue 52). It reaches the Note input at once,
   // not on the next render: a Note released just after the pedal goes down must be held.
@@ -46,7 +45,7 @@ export function useHold(session: AudioSession, patchRef: MutableRefObject<Patch>
       {
         now: () => engine.now(),
         notes: () => heldRef.current,
-        voices: () => patchRef.current.voices,
+        voices: () => session.patches.get().patch.voices,
         noteOn: (note, velocity, at) => engine.noteOn(note, velocity, at),
         release: (note, at) => engine.release(note, at),
         noteOff: (at) => engine.noteOff(at),
@@ -57,7 +56,7 @@ export function useHold(session: AudioSession, patchRef: MutableRefObject<Patch>
       stop();
       session.muteInput(false);
     };
-  }, [session, hold, rhythm, patchRef]);
+  }, [session, hold, rhythm]);
 
   return { hold, pressHold, pressHoldRef, heldNotes, setPedal };
 }
