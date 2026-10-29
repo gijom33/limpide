@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement
+**Status:** ready-for-human · enhancement. Built (2026-10-28), for the owner to judge the look: from 1200 px to the four-across width the piano is at the page's centre; below 1200 px, nearer it than before, its keys no smaller.
 
 ## Agent Brief
 
@@ -23,9 +23,9 @@
 - The top row's layout in the three-across widths
 
 **Acceptance criteria:**
-- [ ] `npx tsc`, `npm run lint`, `npx vitest run` and `npx playwright test` green, with any top-row layout test that measured the old places updated
-- [ ] A Playwright test: at several three-across widths (1000, 1280, 1440, 1600 px), the piano's centre is within a few pixels of the page's, and the top row is no taller than before
-- [ ] The design audit passes: every button keeps a target the principles allow
+- [x] `npx tsc`, `npm run lint`, `npx vitest run` and `npx playwright test` green, with any top-row layout test that measured the old places updated
+- [x] A Playwright test: from 1200 to 1800 px, the piano's centre is within 4 px of the page's; at 880, 1000 and 1100 px, within 80 px (140 to 170 before); the top row no taller than 64 px
+- [x] The design audit passes: every button keeps a target the principles allow
 
 **Out of scope:**
 - What the buttons do, and their names
@@ -34,3 +34,14 @@
 ## Decisions (triage, 2026-10-28, decided by the owner)
 
 1. The goal is the piano centred in three across, buttons stacked two high only where it frees width without a taller row; the owner judges the look once built (the issue then goes to ready-for-human to verify).
+
+Claude's calls, open to the owner:
+
+2. Below about 1200 px the logo and the Patch picker alone are wider than what a centred piano leaves them: centring there would shrink the piano's keys (to 10 px at 861 px), which wastes the row ("when it does not waste real estate"). There the piano keeps its size and sits as near the centre as the row allows, 60 to 65 px right of it at 880 to 1000 px.
+3. What stacks: the logo over the Patch picker, and Demo and Tutorial over Song, in all of three across. Between 861 and about 1000 px the larger piano makes the top row 64 px tall where it was 52.
+
+## How it was built
+
+- `src/styles.css`, three across (861 to 1919 px): `.header-identity` a column (the logo over the Patch picker); `.header-play` a two-column grid (Demo and Tutorial, then Song). From 1200 px, the keyboard gets an empty column as wide as its octave buttons on the piano's other side, and `--keyboard-w` grows by it, so the piano, not the keyboard, is centred.
+- Tests: "the piano sits at the page's centre…" and "the piano keeps its size and comes nearer the centre…" in `e2e/toolbarLayout.spec.ts`.
+

@@ -916,6 +916,19 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 @media (min-width: 861px) and (max-width: 919px) {
   header, .header-left, .header-identity { column-gap: var(--space-2); }
 }
+/* Three across, the piano at the page's centre (issue 82, the owner: "stack buttons in the top row… we could recenter
+   the keyboard"): the logo sits over the Patch picker, so the side left of the piano is no wider than the right. */
+@media (min-width: 861px) and (max-width: 1919px) {
+  .header-identity { flex-direction: column; align-items: flex-start; row-gap: 2px; }
+  /* And Demo and Tutorial over Song, two high as the octave buttons are. */
+  .header-play { display: grid; grid-template-columns: repeat(2, max-content); gap: 4px 6px; }
+}
+/* Where the row has room to spare, the keyboard balances its octave buttons with an empty column as wide on the other
+   side, so the piano itself, not the keyboard, is at the centre (issue 82). */
+@media (min-width: 1200px) and (max-width: 1919px) {
+  :root { --keyboard-w: calc(2 * (var(--control-h) + 4px) + 10 * var(--white-key-max)); }
+  .keyboard { grid-template-columns: var(--control-h) minmax(0, calc(10 * var(--white-key-max))) var(--control-h); grid-template-areas: 'up piano .' 'down piano .'; }
+}
 .about-menu { display: flex; }
 .patch-save { display: flex; gap: 6px; margin-top: 8px; max-width: 440px; }
 .patch-panel > .patch-link { max-width: 440px; }
