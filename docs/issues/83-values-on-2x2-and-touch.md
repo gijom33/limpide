@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement
+**Status:** done (2026-10-28). The 2 × 2 layout shows each control's name alone, its value in the name's place while it changes or is hovered, as a phone does; while a finger drags a control, its name stays under it and the bubble alone shows the value.
 
 ## Agent Brief
 
@@ -25,10 +25,10 @@
 - The rules that show a control's value or its name, by layout and by what is changing it
 
 **Acceptance criteria:**
-- [ ] `npx tsc`, `npm run lint`, `npx vitest run` and `npx playwright test` green
-- [ ] Playwright at 760 px: a knob's value hidden at rest and shown in its name's place when the arrow keys change it
-- [ ] Playwright on a touch phone: while a finger drags a knob, the bubble shows its value and the name stays under the knob
-- [ ] The fits-the-screen tests pass at the 2 × 2 widths
+- [x] `npx tsc`, `npm run lint`, `npx vitest run` and `npx playwright test` green
+- [x] Playwright at 760 px: a knob's value hidden at rest and shown in its name's place when the arrow keys change it
+- [x] Playwright on a touch phone: while a finger drags a knob, the bubble shows its value and the name stays under the knob
+- [x] The fits-the-screen tests pass at the 2 × 2 widths
 
 **Out of scope:**
 - Laptop and wide windows
@@ -38,3 +38,9 @@
 
 1. The 2 × 2 layout hides the values as a phone does.
 2. While the bubble shows, the name stays: the control is never replaced, only its name was (Claude's reading of the idea, confirmed by the owner).
+
+## How it was built
+
+- The phone's value rules (no line for values, the value in the name's place while `data-changing` or hovered) moved from the phone's media block to one up to 860 px (`src/styles.css`); a control with `data-bubble` (a finger dragging it) keeps its name and hides the in-place value.
+- Tests in `e2e/knob.spec.ts`: "on the 2 × 2 layout" (value at rest, while changing, on hover) and "a finger dragging a knob keeps its name under it…" (Chromium, real touch input).
+

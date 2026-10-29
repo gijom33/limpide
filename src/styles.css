@@ -1029,21 +1029,10 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 .tool-primary { color: var(--bg); background: var(--accent); border-color: var(--accent); font-weight: 600; }
 .tool-primary:hover { color: var(--bg); background: color-mix(in srgb, var(--accent) 85%, var(--text)); }
 
-/* Phones: every line counts. A knob keeps only its name under the dial; while it changes (by hand, keys, MIDI,
-   the Demo, a Patch) its value shows in the name's place for a moment, so nothing moves. Spacing tightens too. */
-@media (max-width: 600px) {
-  /* Big knobs less big than on a laptop, so a row of two big and two small fits a 375 pt phone. */
-  :root { --knob-value-h: 0px; --dial-big: 60px; --dial-small: 52px; --fader-h: 88px; --label-gap: 8px; }
-  /* Fader columns as wide as the Filter Envelope's row leaves them (its name, Amount and four faders on one line),
-     up to a laptop's: the stage's width is the sub-block's, a container. */
-  .knob[data-kind='fader'] {
-    --fader-col: clamp(40px, (100cqw - var(--label-col) - var(--label-gap) - var(--dial-big) - 4 * var(--knob-gap)) / 4, 56px);
-  }
-  main { padding: var(--space-3) var(--space-2); }
-  .chain { margin: var(--space-3) 0; row-gap: var(--space-3); }
-  .block { padding: var(--space-2) var(--space-3); gap: var(--space-2); }
-  /* LFO & Envelopes with the stages' margins (issue 47). */
-  .chain > .timeline { padding: var(--space-2) var(--space-3); }
+/* Phones and the sections 2 × 2 (issue 83): every line counts. A knob keeps only its name under the dial; while it
+   changes (by hand, keys, MIDI, the Demo, a Patch) its value shows in the name's place for a moment, so nothing moves. */
+@media (max-width: 860px) {
+  :root { --knob-value-h: 0px; }
   .knob { position: relative; }
   .knob-value { position: absolute; left: 0; right: 0; bottom: 0; height: var(--knob-label-h); line-height: var(--knob-label-h); font-size: var(--text-sm); color: var(--text); }
   .knob:not([data-changing]) .knob-value > :first-child { visibility: hidden; }
@@ -1054,6 +1043,24 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
     .knob:hover .knob-value > :first-child { visibility: visible; }
     .knob:hover .knob-label { visibility: hidden; }
   }
+  /* A finger dragging a control already sees its value in the bubble above it: the name stays (the owner, issue 83). */
+  .knob[data-bubble] .knob-value > :first-child { visibility: hidden; }
+  .knob[data-bubble] .knob-label { visibility: visible; }
+}
+/* Phones: spacing tightens too. */
+@media (max-width: 600px) {
+  /* Big knobs less big than on a laptop, so a row of two big and two small fits a 375 pt phone. */
+  :root { --dial-big: 60px; --dial-small: 52px; --fader-h: 88px; --label-gap: 8px; }
+  /* Fader columns as wide as the Filter Envelope's row leaves them (its name, Amount and four faders on one line),
+     up to a laptop's: the stage's width is the sub-block's, a container. */
+  .knob[data-kind='fader'] {
+    --fader-col: clamp(40px, (100cqw - var(--label-col) - var(--label-gap) - var(--dial-big) - 4 * var(--knob-gap)) / 4, 56px);
+  }
+  main { padding: var(--space-3) var(--space-2); }
+  .chain { margin: var(--space-3) 0; row-gap: var(--space-3); }
+  .block { padding: var(--space-2) var(--space-3); gap: var(--space-2); }
+  /* LFO & Envelopes with the stages' margins (issue 47). */
+  .chain > .timeline { padding: var(--space-2) var(--space-3); }
   .lfo-retrigger-field::after { display: none; }
   /* The LFOs one under the other, each plot taking what its knobs leave, so it never runs past the section. */
   .timeline-controls { flex-direction: column; align-items: stretch; }

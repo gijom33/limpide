@@ -147,6 +147,22 @@ test.describe('on a phone', () => {
     await expect(bubble).toHaveCount(0);
   });
 
+  test('a finger dragging a knob keeps its name under it, the bubble alone showing the value (issue 83)', async ({ page, browserName }) => {
+    test.skip(browserName !== 'chromium', 'touch input through the DevTools protocol');
+    await page.goto('/');
+    const dial = page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name: 'Cutoff' });
+    const knob = dial.locator('xpath=ancestor::div[contains(@class, "knob")][1]');
+    await dial.scrollIntoViewIfNeeded();
+    const box = (await dial.boundingBox())!;
+    const x = box.x + box.width / 2;
+    const y = box.y + box.height / 2;
+    await finger(page, [{ x, y }, { x, y: y - 10 }, { x, y: y - 30 }], async () => {
+      await expect(page.locator('.value-bubble')).toBeVisible();
+      await expect(knob.locator('.knob-label')).toBeVisible();
+      await expect(knob.locator('.knob-value > span').first()).toBeHidden();
+    });
+  });
+
   test('a finger dragging across a fader’s track scrolls the page and leaves the fader alone', async ({ page, browserName }) => {
     test.skip(browserName !== 'chromium', 'touch input through the DevTools protocol');
     await page.goto('/');
@@ -219,3 +235,27 @@ test.describe('in a narrow window with a mouse', () => {
     }
   });
 });
+
+test.describe('on the 2 × 2 layout', () => {
+  test.use({ viewport: { width: 760, height: 1000 } });
+
+  test('a knob shows its name, and its value in the name’s place only while it changes or is hovered, as on a phone (issue 83)', async ({ page }) => {
+    await page.goto('/');
+    const dial = page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name: 'Cutoff' });
+    const knob = dial.locator('xpath=ancestor::div[contains(@class, "knob")][1]');
+    const name = knob.locator('.knob-label');
+    const value = knob.locator('.knob-value > span').first();
+    await dial.scrollIntoViewIfNeeded();
+    await expect(name).toBeVisible();
+    await expect(value).toBeHidden();
+    const [k, n] = await Promise.all([knob.boundingBox(), name.boundingBox()]);
+    expect(k!.y + k!.height).toBeCloseTo(n!.y + n!.height, 0); // no line for values under the name
+    await dial.press('ArrowUp');
+    await expect(value).toBeVisible();
+    await expect(name).toBeHidden();
+    await expect(value).toBeHidden({ timeout: 3000 });
+    await knob.hover();
+    await expect(value).toBeVisible();
+  });
+});
+
