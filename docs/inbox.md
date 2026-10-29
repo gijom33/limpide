@@ -6,6 +6,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- From the 1.15.0 review: Display settings are remembered three ways (the Viewer settings store's key, the overlays' own key, and App's on/off pairs for the letter keys and Tooltips), with the load-and-check code copied between the store and the overlays, a try/catch around a storage that never throws, and a key named only `KEY`; which Display settings are remembered is answered in two places.
+
 ## Dropped
 
 - 2026-10-28, from the issue 69 review, the category pills beside the search box on a computer where decision 7 says under it: nothing to build, decided by the owner; decision 7 is amended to match what is built (and decision 13, which assumed it).
