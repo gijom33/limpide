@@ -227,7 +227,18 @@ test('Key Track draws grey rings over the piano’s keys, and no ring moves from
   const keyRing = cutoff.locator('.knob-keytrack');
   await expect(keyRing).toBeVisible();
   const rings = () => Promise.all([envelopeRing(cutoff), keyRing, ring(cutoff)].map((r) => r.getAttribute('d')));
-  const before = await rings();
+  // The rings once the render loop has drawn the last knob turn: a slow runner drew the LFO's last Depth step only
+  // after a first read (the 1.14.1 deploy, WebKit).
+  let before = await rings();
+  await expect
+    .poll(async () => {
+      await page.waitForTimeout(100);
+      const now = await rings();
+      const still = JSON.stringify(now) === JSON.stringify(before);
+      before = now;
+      return still;
+    })
+    .toBe(true);
   for (const key of ['KeyA', 'KeyK', 'Semicolon']) {
     await page.keyboard.down(key);
     await expect(dot(cutoff)).toBeVisible();
