@@ -1,7 +1,8 @@
 import { useId, useRef } from 'react';
+import { MODULATED } from '../modulation/destinations';
 import { PARAMS, type ParamId } from '../patch/patch';
 import { valueToPosition } from '../patch/taper';
-import { MODULATED, ModulationRing } from './modulationRing';
+import { ModulationRing } from './modulationRing';
 import { useParamControl, useWheel } from './paramControl';
 
 const DRAG_PIXELS_FOR_FULL_TRAVEL = 200;

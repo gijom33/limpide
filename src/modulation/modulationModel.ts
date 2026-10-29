@@ -1,4 +1,4 @@
-import { type FilterMode, type LfoDestination, lfos, type Patch } from '../patch/patch';
+import { type FilterMode, type LfoDestination, lfos, type ParamId, type Patch } from '../patch/patch';
 
 /** The Note sounding, whose Velocity and key are fixed for as long as it sounds. */
 export interface Sounding {
@@ -31,23 +31,41 @@ export interface Modulation {
   vibrato: number;
 }
 
-/** How far the LFO moves things at full Amount. */
-export const LFO_CUTOFF_OCTAVES = 2;
-export const LFO_PITCH_CENTS = 100;
-export const LFO_PULSE_WIDTH = 0.4;
-/** Resonance swings by its whole range (0–1) at full Depth, as far as the knob's value leaves room each way. */
-export const LFO_RESONANCE = 1;
-/**
- * Volume (tremolo) dips at most to silence: each LFO's swing is half its Depth, around a level that falls by the
- * total swing, so the wave's top is the Envelope's own level and its foot full Depth below it (issue 53).
- */
-export const LFO_VOLUME = 0.5;
-/** Osc 2 Pitch swings an octave each way, its Detune 50 cents (the Detune knob's range). */
-export const LFO_OSC2_CENTS = 1200;
-export const LFO_DETUNE_CENTS = 50;
 /** The narrowest and widest pulse the Oscillators make, however far the LFO swings them. */
-export const MIN_PULSE = 0.05;
-export const MAX_PULSE = 0.95;
+const MIN_PULSE = 0.05;
+const MAX_PULSE = 0.95;
+
+/** What an LFO does to one Destination: see `LFO_LAWS`. */
+export interface LfoLaw {
+  perDepth: number;
+  room?(value: number): number;
+  knobs: readonly ParamId[];
+}
+
+/**
+ * What an LFO does to each Destination (issue 74), read by the model, the engine, the rings and the Timeline alike:
+ * `perDepth`, how far one LFO at full Depth swings it each way, in its knobs' unit; `room`, how far it may go each way
+ * from a knob's value before an end (both LFOs together kept within it); `knobs`, those whose ring shows it.
+ */
+export const LFO_LAWS = {
+  /** A semitone each way; Pitch has no knob. */
+  pitch: { perDepth: 1, knobs: [] },
+  /** An octave each way, on the Semitone knob. */
+  osc2Pitch: { perDepth: 12, knobs: ['osc2Semitone'] },
+  /** 50 cents each way, the Detune knob's range. */
+  detune: { perDepth: 50, knobs: ['osc2Detune'] },
+  /** 40 points each way, on both Oscillators' Pulse Width, never past the narrowest or widest pulse. */
+  pulseWidth: { perDepth: 0.4, room: (width: number) => Math.min(width - MIN_PULSE, MAX_PULSE - width), knobs: ['pulseWidth', 'osc2PulseWidth'] },
+  /** Two octaves each way. */
+  cutoff: { perDepth: 2, knobs: ['cutoff'] },
+  /** Its whole range (0–1), as far as the knob's value leaves room each way. */
+  resonance: { perDepth: 1, room: (resonance: number) => Math.min(resonance, 1 - resonance), knobs: ['resonance'] },
+  /**
+   * Volume (tremolo) dips at most to silence: each LFO's swing is half its Depth, around a level that falls by the
+   * total swing, so the wave's top is the Envelope's own level and its foot full Depth below it (issue 53).
+   */
+  volume: { perDepth: 0.5, room: () => 0.5, knobs: ['volume'] },
+} as const satisfies Record<LfoDestination, LfoLaw>;
 /** How far the hardest hit opens the Filter at full Velocity amount. */
 export const VELOCITY_CUTOFF_OCTAVES = 2;
 
@@ -64,7 +82,7 @@ const MAX_HZ = 20000;
  * octave per octave of the Note from C4 at 100 %. `note` is fractional during a Glide.
  */
 export function effectiveCutoff(patch: Patch, filterEnvelope = 0, lfo: readonly number[] = [], velocity = 0, note = KEY_TRACK_CENTRE): number {
-  const lfoOctaves = lfoOffset(patch, 'cutoff', LFO_CUTOFF_OCTAVES, lfo);
+  const lfoOctaves = lfoOffset(patch, 'cutoff', lfo);
   const velocityOctaves = VELOCITY_CUTOFF_OCTAVES * patch.velocityCutoff * velocity;
   const keyOctaves = (patch.keyTrack * (note - KEY_TRACK_CENTRE)) / 12;
   const hz = patch.cutoff * 2 ** (patch.filterEnvAmount * filterEnvelope + lfoOctaves + velocityOctaves + keyOctaves);
@@ -76,7 +94,7 @@ export function effectiveCutoff(patch: Patch, filterEnvelope = 0, lfo: readonly 
  * by up to a semitone each way by the LFO aimed at Pitch.
  */
 export function soundingPitch(patch: Patch, gliding: number, lfo: readonly number[] = []): number {
-  return gliding + lfoOffset(patch, 'pitch', LFO_PITCH_CENTS / 100, lfo);
+  return gliding + lfoOffset(patch, 'pitch', lfo);
 }
 
 /**
@@ -90,16 +108,24 @@ export function lfoSwings(patch: Patch, destination: LfoDestination, perDepth: n
   return [wanted[0] * scale, wanted[1] * scale];
 }
 
-/** Where both LFOs take a destination right now: each one's swing times its value (`lfo`, −1 to 1 each). */
-export function lfoOffset(patch: Patch, destination: LfoDestination, perDepth: number, lfo: readonly number[], room = Infinity) {
-  const [one, two] = lfoSwings(patch, destination, perDepth, room);
+/** Each LFO's swing on a Destination by its law, in its knobs' unit, from a knob's `value` (where its room is measured). */
+export function destinationSwings(patch: Patch, destination: LfoDestination, value = 0): [number, number] {
+  const law: LfoLaw = LFO_LAWS[destination];
+  return lfoSwings(patch, destination, law.perDepth, law.room?.(value));
+}
+
+/**
+ * Where both LFOs take a Destination right now, in its knobs' unit, from a knob's `value`: each one's swing times its
+ * value (`lfo`, −1 to 1 each).
+ */
+export function lfoOffset(patch: Patch, destination: LfoDestination, lfo: readonly number[], value = 0) {
+  const [one, two] = destinationSwings(patch, destination, value);
   return one * (lfo[0] ?? 0) + two * (lfo[1] ?? 0);
 }
 
 /** The Resonance after the LFOs: they swing it around the knob's value, never past 0 or 1. */
 export function effectiveResonance(patch: Patch, lfo: readonly number[] = []): number {
-  const room = Math.min(patch.resonance, 1 - patch.resonance);
-  return patch.resonance + lfoOffset(patch, 'resonance', LFO_RESONANCE, lfo, room);
+  return patch.resonance + lfoOffset(patch, 'resonance', lfo, patch.resonance);
 }
 
 /**
@@ -108,7 +134,7 @@ export function effectiveResonance(patch: Patch, lfo: readonly number[] = []): n
  */
 export function tremolo(patch: Patch, lfo: readonly number[] = []): number {
   // Each LFO's value less one: at its top (+1) the gain is 1, at its foot (−1) twice its swing below.
-  return 1 + lfoOffset(patch, 'volume', LFO_VOLUME, [(lfo[0] ?? 0) - 1, (lfo[1] ?? 0) - 1], LFO_VOLUME);
+  return 1 + lfoOffset(patch, 'volume', [(lfo[0] ?? 0) - 1, (lfo[1] ?? 0) - 1]);
 }
 
 /** What the Amp's Envelope is multiplied by: the Volume knob, and the tremolo dipping from it (issue 62). */
@@ -119,5 +145,5 @@ export function effectiveVolume(patch: Patch, lfo: readonly number[] = []): numb
 /** Osc 2's tuning against Osc 1, in cents: Octave, Semitone and Detune, then the LFOs on Osc 2 Pitch and on Detune. */
 export function osc2Cents(patch: Patch, lfo: readonly number[] = []): number {
   const knobs = patch.osc2Octave * 1200 + patch.osc2Semitone * 100 + patch.osc2Detune;
-  return knobs + lfoOffset(patch, 'osc2Pitch', LFO_OSC2_CENTS, lfo) + lfoOffset(patch, 'detune', LFO_DETUNE_CENTS, lfo);
+  return knobs + lfoOffset(patch, 'osc2Pitch', lfo) * 100 + lfoOffset(patch, 'detune', lfo);
 }

@@ -1,10 +1,23 @@
 import { LFO_DESTINATIONS, type LfoDestination, lfos, PARAMS, type ParamId, type Patch } from '../patch/patch';
 import { valueToPosition } from '../patch/taper';
-import type { Modulation } from './modulationModel';
-import { LFO_DETUNE_CENTS, LFO_OSC2_CENTS, LFO_PITCH_CENTS, LFO_PULSE_WIDTH, lfoOffset, MAX_PULSE, MIN_PULSE } from './modulationModel';
+import { LFO_LAWS, lfoOffset, type Modulation } from './modulationModel';
 
-/** Each LFO Destination by its id (`LFO_DESTINATIONS`): its name, its stage and the knob it moves. */
-export const DESTINATIONS = Object.fromEntries(LFO_DESTINATIONS.map((d) => [d.id, d])) as Record<LfoDestination, (typeof LFO_DESTINATIONS)[number]>;
+type Destination = (typeof LFO_DESTINATIONS)[number] & (typeof LFO_LAWS)[LfoDestination];
+
+/**
+ * Each LFO Destination by its id: from `LFO_DESTINATIONS` its name, its stage and the knob the Timeline draws it on;
+ * from its law how far it swings, its room and the knobs whose ring shows it.
+ */
+export const DESTINATIONS = Object.fromEntries(LFO_DESTINATIONS.map((d) => [d.id, { ...d, ...LFO_LAWS[d.id] }])) as Record<LfoDestination, Destination>;
+
+/** The Destination an LFO moves a knob by, if any. */
+const DESTINATION_OF = new Map<ParamId, LfoDestination>(
+  LFO_DESTINATIONS.flatMap((d) => LFO_LAWS[d.id].knobs.map((knob): [ParamId, LfoDestination] => [knob, d.id])),
+);
+export const destinationOf = (knob: ParamId): LfoDestination | undefined => DESTINATION_OF.get(knob);
+
+/** The Parameters modulation can move, and so the knobs that carry a ring: every knob a law names. */
+export const MODULATED: ReadonlySet<ParamId> = new Set(DESTINATION_OF.keys());
 
 /** The Destinations an active LFO (Depth above zero) moves, LFO 1's first, each once (both LFOs on one: one). */
 export const lfoDestinations = (patch: Patch): LfoDestination[] => [
@@ -17,20 +30,15 @@ export const lfoDestinations = (patch: Patch): LfoDestination[] => [
 
 /**
  * A modulated Parameter's Effective value at a moment, from the Modulation model: the knob's value as the Filter
- * Envelope and the LFOs move it (both LFOs added together when both aim at it), as the sound does. A knob nothing
- * moves is its own value.
+ * Envelope and the LFOs move it (both LFOs added together when both aim at it), as the sound does. The Cutoff and the
+ * Volume are the model's own; an LFO swings the others evenly around the knob, by their law. A knob nothing moves is
+ * its own value.
  */
 export function effectiveValue(param: ParamId, patch: Patch, m: Modulation): number {
   if (param === 'cutoff') return m.cutoff;
-  if (param === 'resonance') return m.resonance;
   if (param === 'volume') return m.volume;
-  if (param === 'osc2Semitone') return patch.osc2Semitone + lfoOffset(patch, 'osc2Pitch', LFO_OSC2_CENTS / 100, m.lfo);
-  if (param === 'osc2Detune') return patch.osc2Detune + lfoOffset(patch, 'detune', LFO_DETUNE_CENTS, m.lfo);
-  if (param === 'pulseWidth' || param === 'osc2PulseWidth') {
-    const room = Math.min(patch[param] - MIN_PULSE, MAX_PULSE - patch[param]);
-    return patch[param] + lfoOffset(patch, 'pulseWidth', LFO_PULSE_WIDTH, m.lfo, room);
-  }
-  return patch[param];
+  const destination = destinationOf(param);
+  return destination ? patch[param] + lfoOffset(patch, destination, m.lfo, patch[param]) : patch[param];
 }
 
 /** A value's place on its knob, 0–1 along the knob's own scale (its taper), kept within it. */
@@ -52,5 +60,5 @@ export const knobLevel = (destination: LfoDestination, patch: Patch): number => 
 export function destinationLevel(destination: LfoDestination, patch: Patch, m: Modulation): number {
   const { param } = DESTINATIONS[destination];
   if (param) return onKnob(param, effectiveValue(param, patch, m));
-  return Math.min(1, Math.max(0, 0.5 + m.vibrato / (2 * (LFO_PITCH_CENTS / 100))));
+  return Math.min(1, Math.max(0, 0.5 + m.vibrato / (2 * LFO_LAWS.pitch.perDepth)));
 }

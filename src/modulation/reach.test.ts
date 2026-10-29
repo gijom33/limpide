@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { defaultPatch, type Patch } from '../patch/patch';
-import { cutoffReach, detuneReach, keyTrackOctaves, lfoCutoffReach, pulseWidthReach, resonanceReach, semitoneReach, volumeReach } from './reach';
+import { cutoffReach, evenReach, keyTrackOctaves, lfoCutoffReach, volumeReach } from './reach';
 
 const patch = (changes: Partial<Patch>): Patch => ({ ...defaultPatch(), cutoff: 1000, ...changes });
 
@@ -45,18 +45,18 @@ describe('how far the LFOs reach the Cutoff (its blue ring)', () => {
 
 describe('how far the LFO reaches a Pulse Width (the modulation ring)', () => {
   it('reaches nowhere unless the LFO is aimed at Pulse Width with some Depth', () => {
-    expect(pulseWidthReach(patch({ lfoDestination: 'cutoff', lfoAmount: 1 }), 0.5)).toBeNull();
-    expect(pulseWidthReach(patch({ lfoDestination: 'pulseWidth', lfoAmount: 0 }), 0.5)).toBeNull();
+    expect(evenReach(patch({ pulseWidth: 0.5, lfoDestination: 'cutoff', lfoAmount: 1 }), 'pulseWidth')).toBeNull();
+    expect(evenReach(patch({ pulseWidth: 0.5, lfoDestination: 'pulseWidth', lfoAmount: 0 }), 'pulseWidth')).toBeNull();
   });
 
   it('swings it 40 points each way at full Depth', () => {
-    const reach = pulseWidthReach(patch({ lfoDestination: 'pulseWidth', lfoAmount: 0.5 }), 0.5)!;
+    const reach = evenReach(patch({ pulseWidth: 0.5, lfoDestination: 'pulseWidth', lfoAmount: 0.5 }), 'pulseWidth')!;
     expect(reach.lo).toBeCloseTo(0.3);
     expect(reach.hi).toBeCloseTo(0.7);
   });
 
   it('as the sound does, swings no further than the narrowest pulse allows, each way alike', () => {
-    const reach = pulseWidthReach(patch({ lfoDestination: 'pulseWidth', lfoAmount: 1 }), 0.15)!;
+    const reach = evenReach(patch({ pulseWidth: 0.15, lfoDestination: 'pulseWidth', lfoAmount: 1 }), 'pulseWidth')!;
     expect(reach.lo).toBeCloseTo(0.05);
     expect(reach.hi).toBeCloseTo(0.25);
   });
@@ -64,20 +64,20 @@ describe('how far the LFO reaches a Pulse Width (the modulation ring)', () => {
 
 describe('how far the LFOs reach the new destinations', () => {
   it('Resonance: around the knob, as far as it can go each way alike', () => {
-    expect(resonanceReach(patch({ resonance: 0.5 }))).toBeNull();
-    const reach = resonanceReach(patch({ resonance: 0.3, lfo2Destination: 'resonance', lfo2Amount: 1 }))!;
+    expect(evenReach(patch({ resonance: 0.5 }), 'resonance')).toBeNull();
+    const reach = evenReach(patch({ resonance: 0.3, lfo2Destination: 'resonance', lfo2Amount: 1 }), 'resonance')!;
     expect([reach.lo, reach.hi]).toEqual([expect.closeTo(0), expect.closeTo(0.6)]);
   });
 
   it('Osc 2 Pitch on the Semitone knob: twelve semitones each way at full Depth', () => {
-    const reach = semitoneReach(patch({ osc2Semitone: 2, lfoDestination: 'osc2Pitch', lfoAmount: 0.5 }))!;
+    const reach = evenReach(patch({ osc2Semitone: 2, lfoDestination: 'osc2Pitch', lfoAmount: 0.5 }), 'osc2Semitone')!;
     expect([reach.lo, reach.hi]).toEqual([-4, 8]);
   });
 
   it('Detune: 50 cents each way at full Depth', () => {
-    const reach = detuneReach(patch({ osc2Detune: 10, lfoDestination: 'detune', lfoAmount: 0.2 }))!;
+    const reach = evenReach(patch({ osc2Detune: 10, lfoDestination: 'detune', lfoAmount: 0.2 }), 'osc2Detune')!;
     expect([reach.lo, reach.hi]).toEqual([0, 20]);
-    expect(detuneReach(patch({ lfoDestination: 'osc2Pitch', lfoAmount: 1 }))).toBeNull();
+    expect(evenReach(patch({ lfoDestination: 'osc2Pitch', lfoAmount: 1 }), 'osc2Detune')).toBeNull();
   });
 });
 

@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { CHOICES, defaultPatch, LFO_DESTINATIONS, type Patch, STAGES } from '../patch/patch';
+import { CHOICES, defaultPatch, LFO_DESTINATIONS, PARAMS, type Patch, STAGES } from '../patch/patch';
 import { targetText } from '../tutorial/tutorial';
 import { linePattern, timelineShows } from '../viewers/timeline';
-import { DESTINATIONS, destinationLevel, knobLevel, lfoDestinations } from './destinations';
-import type { Modulation } from './modulationModel';
+import { DESTINATIONS, destinationLevel, effectiveValue, knobLevel, lfoDestinations, MODULATED } from './destinations';
+import { destinationSwings, LFO_LAWS, type LfoLaw, type Modulation } from './modulationModel';
+import { evenReach } from './reach';
 
 const patch = (change: Partial<Patch>): Patch => ({ ...defaultPatch(), lfoAmount: 0, lfo2Amount: 0, ...change });
 const at = (change: Partial<Modulation>): Modulation => ({
@@ -83,5 +84,36 @@ describe('the LFO Destinations, one list (issue 68)', () => {
       expect(targetText({ kind: 'choice', id: 'lfoDestination', to: d.id, say: '', note: '' })).toBe(d.label);
       expect(STAGES.map((s) => s.id)).toContain(d.stage);
     }
+  });
+});
+
+describe('the LFOs swing each even Destination by its law (issue 74)', () => {
+  const EVEN = ['pitch', 'osc2Pitch', 'detune', 'pulseWidth', 'resonance'] as const;
+  it.each(EVEN)("%s: full Depth on one LFO swings it the law's amount each way, both LFOs within its room, its knobs following", (d) => {
+    const law: LfoLaw = LFO_LAWS[d];
+    const { perDepth, knobs } = law;
+    const one = patch({ lfoDestination: d, lfoAmount: 1 });
+    if (!knobs.length) expect(destinationSwings(one, d)).toEqual([perDepth, 0]);
+    for (const knob of knobs) {
+      const middle = (PARAMS[knob].min + PARAMS[knob].max) / 2;
+      const room = law.room?.(middle) ?? Infinity;
+      const swing = Math.min(perDepth, room);
+      const p = { ...one, [knob]: middle };
+      expect(destinationSwings(p, d, middle)).toEqual([swing, 0]);
+      expect(effectiveValue(knob, p, at({ lfo: [1, 0] }))).toBeCloseTo(middle + swing);
+      expect(effectiveValue(knob, p, at({ lfo: [-1, 0] }))).toBeCloseTo(middle - swing);
+      expect(evenReach(p, knob)).toEqual({ lo: expect.closeTo(middle - swing), hi: expect.closeTo(middle + swing) });
+      const [a, b] = destinationSwings({ ...p, lfo2Destination: d, lfo2Amount: 1 }, d, middle);
+      expect(a + b).toBeCloseTo(Math.min(2 * perDepth, room));
+    }
+  });
+  it('keeps a Pulse Width and the Resonance off their ends: the room narrows near them', () => {
+    expect(LFO_LAWS.pulseWidth.room(0.9)).toBeCloseTo(0.05);
+    expect(LFO_LAWS.pulseWidth.room(0.1)).toBeCloseTo(0.05);
+    expect(LFO_LAWS.resonance.room(0.1)).toBeCloseTo(0.1);
+    expect(LFO_LAWS.resonance.room(0.8)).toBeCloseTo(0.2);
+  });
+  it('rings every knob a law names, and only those: Pulse Width on both Oscillators', () => {
+    expect([...MODULATED].sort()).toEqual(['cutoff', 'osc2Detune', 'osc2PulseWidth', 'osc2Semitone', 'pulseWidth', 'resonance', 'volume']);
   });
 });

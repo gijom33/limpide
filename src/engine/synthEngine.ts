@@ -1,14 +1,13 @@
 import { type Adsr, type AutomationStep, envelopeSchedule, type GateEvent, levelAfter } from '../modulation/envelope';
 import { createLfoClock, glideFrequency, glideFrom, glideTimeConstant, type LfoWaveform, lfoShape } from '../modulation/lfo';
 import {
-  effectiveCutoff, effectiveResonance, effectiveVolume, KEY_TRACK_CENTRE, LFO_CUTOFF_OCTAVES, LFO_DETUNE_CENTS, LFO_OSC2_CENTS,
-  LFO_PITCH_CENTS, LFO_PULSE_WIDTH, LFO_RESONANCE, LFO_VOLUME, lfoSwings, MAX_PULSE, MIN_PULSE, type Modulation, soundingPitch,
+  destinationSwings, effectiveCutoff, effectiveResonance, effectiveVolume, KEY_TRACK_CENTRE, type Modulation, soundingPitch,
   VELOCITY_CUTOFF_OCTAVES,
 } from '../modulation/modulationModel';
 import { bandwidthOctaves } from '../modulation/passBand';
 import { harmonicSeries } from '../music/harmonics';
 import { frequencyToNote, noteToFrequency } from '../music/pitch';
-import { GLIDE_OFF, type Lfo, type LfoDestination, type LfoNumber, lfos, PARAMS, type Patch, type Voices } from '../patch/patch';
+import { GLIDE_OFF, type Lfo, type LfoNumber, lfos, PARAMS, type Patch, type Voices } from '../patch/patch';
 import { filterStages, type Stage } from './filterDesign';
 
 /**
@@ -404,7 +403,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
       if (timeConstant) o.delay.delayTime.setTargetAtTime(delay, t, timeConstant);
       else o.delay.delayTime.setValueAtTime(delay, t);
       const width = pulseWidths[i];
-      const swings = patch ? lfoSwings(patch, 'pulseWidth', LFO_PULSE_WIDTH, Math.min(width - MIN_PULSE, MAX_PULSE - width)) : [0, 0];
+      const swings = patch ? destinationSwings(patch, 'pulseWidth', width) : [0, 0];
       swings.forEach((swing, n) => o.pwm[n].gain.setValueAtTime(swing / frequency, t));
     });
   };
@@ -789,15 +788,16 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
         lfoClocks[i].forgetBefore(t - MODEL_SECONDS);
       });
       for (const v of voices) v.apply(next, t);
-      const each = (destination: LfoDestination, perDepth: number) => lfoSwings(next, destination, perDepth);
-      const cutoffCents = each('cutoff', LFO_CUTOFF_OCTAVES * 1200);
-      const pitchCents = each('pitch', LFO_PITCH_CENTS);
-      const osc2 = each('osc2Pitch', LFO_OSC2_CENTS).map((c, i) => c + each('detune', LFO_DETUNE_CENTS)[i]);
+      // The laws' swings (issue 74), in the units the nodes take: cents for the pitches and the Cutoff.
+      const cutoffCents = destinationSwings(next, 'cutoff').map((octaves) => octaves * 1200);
+      const pitchCents = destinationSwings(next, 'pitch').map((semitones) => semitones * 100);
+      const detuneCents = destinationSwings(next, 'detune');
+      const osc2 = destinationSwings(next, 'osc2Pitch').map((semitones, i) => semitones * 100 + detuneCents[i]);
       // Resonance: each stage's Q moves from where the swing's low end puts it to where its high end does.
-      const resonances = lfoSwings(next, 'resonance', LFO_RESONANCE, Math.min(next.resonance, 1 - next.resonance));
+      const resonances = destinationSwings(next, 'resonance', next.resonance);
       // Volume: the knob's level (issue 62), the tremolo resting its total swing below it, so the wave's top is the
       // knob's own level; each LFO's swing scaled with it.
-      const volumeSwings = lfoSwings(next, 'volume', LFO_VOLUME, LFO_VOLUME).map((s) => s * next.volume);
+      const volumeSwings = destinationSwings(next, 'volume').map((s) => s * next.volume);
       tremoloRest.offset.setValueAtTime(next.volume - volumeSwings[0] - volumeSwings[1], t);
       lfos(next).forEach((l, i) => {
         const nodes = shared.lfos[i];

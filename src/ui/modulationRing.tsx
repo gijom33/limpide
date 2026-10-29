@@ -2,7 +2,7 @@ import { createContext, type RefObject, useContext, useEffect, useRef } from 're
 import type { SynthEngine } from '../engine/synthEngine';
 import { keyToNote } from '../input/keyboardLayout';
 import { effectiveValue } from '../modulation/destinations';
-import { cutoffReach, detuneReach, keyTrackOctaves, lfoCutoffReach, pulseWidthReach, type Reach, resonanceReach, semitoneReach, volumeReach } from '../modulation/reach';
+import { cutoffReach, evenReach, keyTrackOctaves, lfoCutoffReach, type Reach, volumeReach } from '../modulation/reach';
 import { PARAMS, type ParamId, type Patch } from '../patch/patch';
 import { valueToPosition } from '../patch/taper';
 import { addToRenderLoop } from '../viewers/renderLoop';
@@ -55,19 +55,10 @@ function modulated(id: ParamId, patch: Patch, engine: SynthEngine, octave: numbe
       now,
     };
   }
-  const reach = LFO_REACH[id]?.(patch);
+  // The other ring-carrying knobs: the LFOs swing them evenly around the knob's own value (Volume, down from it).
+  const reach = id === 'volume' ? volumeReach(patch) : evenReach(patch, id);
   return reach ? { reach, now } : null;
 }
-
-/** The other ring-carrying knobs' reach: the LFOs swing them evenly around the knob's own value (Volume, down from it). */
-const LFO_REACH: Partial<Record<ParamId, (patch: Patch) => Reach | null>> = {
-  pulseWidth: (p) => pulseWidthReach(p, p.pulseWidth),
-  osc2PulseWidth: (p) => pulseWidthReach(p, p.osc2PulseWidth),
-  resonance: resonanceReach,
-  volume: volumeReach,
-  osc2Semitone: semitoneReach,
-  osc2Detune: detuneReach,
-};
 
 // A control of the Filter Envelope that a pointer is over, or that has the keyboard focus: its ring is the white one,
 // so the blue ring dims. The LFOs' own controls change nothing (the owner, 2026-10-28): the blue ring is already theirs
@@ -98,9 +89,6 @@ const RINGS: { className: string; onTrack: boolean; ranges(m: Modulated): Range[
   { className: 'knob-ring', onTrack: false, ranges: (m) => (m.reach ? [[m.reach.lo, m.reach.hi]] : undefined) },
 ];
 const BLUE = RINGS.length - 1;
-
-/** The Parameters modulation can move, and so the knobs that carry a ring. */
-export const MODULATED: ReadonlySet<ParamId> = new Set(['cutoff', 'resonance', 'pulseWidth', 'osc2PulseWidth', 'osc2Semitone', 'osc2Detune', 'volume']);
 
 interface Props {
   id: ParamId;

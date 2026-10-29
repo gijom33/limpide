@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement
+**Status:** done (2026-10-28). One law per LFO Destination, read by the model, the engine, the rings and the Effective value; the seven constants, the three copies of each room rule and the rings' hand-written lists are gone. Nothing seen or heard changed: the engine's browser tests and the Playwright suite pass untouched.
 
 ## Agent Brief
 
@@ -31,10 +31,10 @@
 - The set of knobs that carry a ring
 
 **Acceptance criteria:**
-- [ ] `npx tsc`, `npm run lint`, `npx vitest run` and `npx playwright test` green; no engine browser test or Playwright test changed
-- [ ] No module outside the laws computes a Pulse Width's or a Resonance's room, and no per-Destination amount constant remains
-- [ ] A table-driven unit test over every even Destination: full Depth on one LFO swings it the law's amount each way, both LFOs together stay within its room, and its knob's Effective value follows
-- [ ] The knobs that carry a ring are derived, and a test pins them to today's seven
+- [x] `npx tsc`, `npm run lint`, `npx vitest run` and `npx playwright test` green; no engine browser test or Playwright test changed
+- [x] No module outside the laws computes a Pulse Width's or a Resonance's room, and no per-Destination amount constant remains
+- [x] A table-driven unit test over every even Destination: full Depth on one LFO swings it the law's amount each way, both LFOs together stay within its room, and its knob's Effective value follows
+- [x] The knobs that carry a ring are derived, and a test pins them to today's seven
 
 **Out of scope:**
 - The engine's audio wiring per Destination
@@ -55,3 +55,12 @@ Claude's calls, open to the owner:
 7. No ADR: the table carries out ADR-0003 (the model mirrors the audio graph) without a new decision. CONTEXT.md is unchanged: Destination and Depth are already there, and a law's room is code, not a domain word.
 8. Built in the session that grilled it, test-first, committed as it goes, not pushed, as issue 73 was.
 9. The four reach helpers that become one line over the generic reach (Pulse Width, Resonance, Osc 2 Pitch, Detune) go, since the rings call the generic one and a function only tests reach is dead (CODING_STANDARDS). Their test cases keep their values and expectations and call the generic reach instead: the one place decision 5 is bent.
+
+## How it was built
+
+- **The laws** (`src/modulation/modulationModel.ts`): `LFO_LAWS`, one `LfoLaw` per Destination (`perDepth` in its knobs' unit, an optional `room(value)`, `knobs`), checked with `satisfies Record<LfoDestination, LfoLaw>`. `destinationSwings(patch, destination, value)` gives each LFO's swing by the law; `lfoOffset` takes the LFOs' values and a knob's value instead of an amount and a room. `lfoSwings` stays as the primitive the law calls. The pulse's narrowest and widest are private to the law.
+- **The lookup** (`src/modulation/destinations.ts`): `DESTINATIONS` joins each `LFO_DESTINATIONS` row with its law. `destinationOf(knob)` and `MODULATED` (the ring-carrying knobs) are derived from the laws' `knobs`. `effectiveValue` keeps the model's Cutoff and Volume and swings every other knob evenly by its law; the Resonance now takes that generic path, the same formula as the model's.
+- **The reach** (`src/modulation/reach.ts`): `evenReach(patch, knob)` replaces the Pulse Width, Resonance, Semitone and Detune helpers; the rings call it for every knob but the Cutoff and the Volume. Their tests in `reach.test.ts` call it with the same values and expectations (decision 9).
+- **The engine** (`src/engine/synthEngine.ts`): its PWM, LFO gains, Resonance and tremolo read `destinationSwings` and convert to the nodes' units (cents for the pitches and the Cutoff); its wiring is unchanged.
+- **The test**: `destinations.test.ts` runs every even Destination through its law (swing, Effective value, reach, both LFOs within the room), checks the rooms near the ends, and pins the ring-carrying knobs to the seven of before.
+
