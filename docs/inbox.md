@@ -6,8 +6,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
-- From the 1.15.0 review: Display settings are remembered three ways (the Viewer settings store's key, the overlays' own key, and App's on/off pairs for the letter keys and Tooltips), with the load-and-check code copied between the store and the overlays, a try/catch around a storage that never throws, and a key named only `KEY`; which Display settings are remembered is answered in two places.
-
 ## Dropped
 
 - 2026-10-28, from the issue 69 review, the category pills beside the search box on a computer where decision 7 says under it: nothing to build, decided by the owner; decision 7 is amended to match what is built (and decision 13, which assumed it).
@@ -83,3 +81,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-28, the issue 69 review's lines (triage, decided by the owner): the search box's words, the categories in one row up to 860 px, a result count for screen readers, a word for saved Patches hidden by a category, and the code smells in the same files went to [72](./issues/72-patch-panel-after-its-review.md); the pills' place and Swell's two texts to Dropped.
 2026-10-28, the owner's bug and six ideas (triage, decided by the owner): the Envelopes' rows placed unlike went to [80](./issues/80-amp-envelope-row-beside-its-name.md); tooltips switchable in Display to [81](./issues/81-tooltips-switch-in-display.md); the top row centring the piano to [82](./issues/82-top-row-centres-the-piano.md); the values on the 2 × 2 layout and on touch screens to [83](./issues/83-values-on-2x2-and-touch.md); statistics on the project, with runtime performance added, to [84](./issues/84-project-statistics.md), waiting on the owner's answers; every Display setting remembered to [85](./issues/85-display-settings-remembered.md).
 2026-10-28, the owner's bug, Glide below the Voices (triage, decided by the owner): reproduced at 1075 px wide, went to [86](./issues/86-glide-beside-the-voices.md).
+2026-10-28, the 1.15.0 review's other findings (triage, Claude's call, open to the owner): Display settings remembered three ways went to [87](./issues/87-display-settings-remembered-in-one-place.md).
