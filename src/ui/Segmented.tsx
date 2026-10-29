@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { Target } from '../midi/mappings';
 import { useLearnable } from './learn';
 import { radioGroupKeys, radioTabIndex } from './radioGroup';
@@ -8,8 +9,8 @@ interface Props<T extends string | number> {
   /** Short visible caption, e.g. "Freq". */
   caption?: string;
   value: T;
-  /** `name` is the accessible name when the visible label is abbreviated (e.g. "12" for "12 dB"). */
-  options: readonly { value: T; label: string; name?: string }[];
+  /** `name` is the accessible name when the visible label is abbreviated (e.g. "12" for "12 dB") or a picture. */
+  options: readonly { value: T; label: ReactNode; name?: string }[];
   onChange(value: T): void;
   /** What MIDI Learn maps when this choice is clicked in Learn, if it can be mapped. */
   learn?: Target;

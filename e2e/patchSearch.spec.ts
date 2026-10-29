@@ -16,8 +16,8 @@ test.describe('on a computer', () => {
     await patchName(page).click();
     await expect(search(page)).toBeFocused();
     await page.keyboard.type('bell');
-    // Two by their names; Glass Keys only by its description.
-    await expect(row(page, 'Name').getByRole('button')).toHaveText(['Twelfth Bell', 'Bell Chords']);
+    // Three by their names; Glass Keys only by its description.
+    await expect(row(page, 'Name').getByRole('button')).toHaveText(['Twelfth Bell', 'Ring Bell', 'Bell Chords']);
     await expect(row(page, 'Description').getByRole('button')).toHaveText(['Glass Keys']);
     await expect(row(page, 'Bass')).toBeHidden(); // the groups give way to the two rows
     const [name, description] = await Promise.all([row(page, 'Name').boundingBox(), row(page, 'Description').boundingBox()]);
@@ -138,7 +138,7 @@ test.describe('on a computer', () => {
     await patchName(page).click();
     const count = panel(page).getByRole('status').filter({ hasText: /found/ });
     await page.keyboard.type('bell');
-    await expect(count).toHaveText('3 found'); // Twelfth Bell and Bell Chords by name, Glass Keys by description
+    await expect(count).toHaveText('4 found'); // Twelfth Bell, Ring Bell and Bell Chords by name, Glass Keys by description
     await search(page).fill('zzz');
     await expect(count).toHaveText('Nothing found');
     await panel(page).getByRole('button', { name: 'Clear the search' }).click();

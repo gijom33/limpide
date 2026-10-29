@@ -30,8 +30,8 @@ describe('control', () => {
   // stages are faders.
   it('gives each Parameter the control its role calls for', () => {
     const of = (control: string) => Object.values(PARAMS).filter((d) => d.control === control).map((d) => d.id).sort();
-    expect(of('play')).toEqual(['crossMod', 'cutoff', 'filterEnvAmount', 'lfo2Amount', 'lfo2Rate', 'lfoAmount', 'lfoRate', 'osc2Detune', 'resonance', 'volume']);
-    expect(of('set')).toEqual(['glide', 'keyTrack', 'osc1Octave', 'osc2EnvAmount', 'osc2Octave', 'osc2PulseWidth', 'osc2Semitone', 'pulseWidth', 'velocityCutoff']);
+    expect(of('play')).toEqual(['cutoff', 'filterEnvAmount', 'lfo2Amount', 'lfo2Rate', 'lfoAmount', 'lfoRate', 'osc2Detune', 'resonance', 'volume']);
+    expect(of('set')).toEqual(['crossMod', 'glide', 'keyTrack', 'osc1Octave', 'osc2EnvAmount', 'osc2Octave', 'osc2PulseWidth', 'osc2Semitone', 'pulseWidth', 'velocityCutoff']);
     expect(of('fader')).toEqual([
       'ampAttack', 'ampDecay', 'ampRelease', 'ampSustain', 'filterAttack', 'filterDecay', 'filterRelease', 'filterSustain',
       'mixNoise', 'mixOsc1', 'mixOsc2', 'mixRing', 'mixSub',

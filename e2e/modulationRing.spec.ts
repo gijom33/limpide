@@ -130,6 +130,7 @@ test('with reduced motion asked for, the ring stays and the moving dot does not 
 
 test('LFO 2 rings the knobs of its new destinations: Resonance, Osc 2’s Semitone (Osc 2 Pitch) and Detune', async ({ page }) => {
   await page.goto('/');
+  await page.getByRole('tab', { name: /Osc 2/ }).click(); // Osc 2's Tuning is on its tab (issue 90)
   await turnUp(page, 'LFO 2', 'Depth', 25);
   for (const [destination, region, name] of [['Resonance', 'Filter', 'Resonance'], ['Osc 2 Pitch', 'Oscillators', 'Semitone'], ['Detune', 'Oscillators', 'Detune']]) {
     const k = knob(page, region, name);

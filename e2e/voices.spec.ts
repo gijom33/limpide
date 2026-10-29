@@ -56,29 +56,22 @@ test('the Display panel chooses what the Amp Viewers follow: all Voices by defau
   await page.keyboard.up('a');
 });
 
-test('Osc 2’s tuning knobs are one shared row below both Oscillator tabs: same place and state whichever shows', async ({ page }) => {
+// Each Oscillator's tab has its own pitch row under its Waveform (the owner, issue 90; it was one shared row of Osc
+// 2's tuning under both tabs, issue 19).
+test('Osc 2’s Tuning is a row of its own tab, greyed out until Osc 2 is heard: mixed in, through Ring or by FM', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
   const tuning = page.getByRole('group', { name: 'Tuning' });
-  await expect(tuning.getByRole('slider')).toHaveCount(3);
-  const state = async () =>
-    page.evaluate(() =>
-      [...document.querySelectorAll('[aria-label="Tuning"] .knob')].map((k) => {
-        const r = k.querySelector('.knob-dial')!.getBoundingClientRect();
-        return `${k.querySelector('.knob-label')!.textContent} ${Math.round(r.left)},${Math.round(r.top)} inactive=${k.hasAttribute('data-inactive')}`;
-      }),
-    );
-  const onOsc1 = await state();
-  expect(onOsc1.every((s) => s.endsWith('inactive=true'))).toBe(true); // Osc 2 is mixed out in Init
+  await expect(tuning).toBeHidden(); // Osc 1's tab shows its own pitch row
+  await expect(page.getByRole('group', { name: 'Osc 1 Pitch' }).getByRole('slider')).toHaveCount(2);
   await page.getByRole('tab', { name: /Osc 2/ }).click();
-  expect(await state()).toEqual(onOsc1);
-  await page.getByRole('tab', { name: 'Mixer' }).click();
-  await page.getByRole('group', { name: 'Mixer' }).getByRole('slider', { name: 'Osc 2' }).focus();
+  await expect(tuning.getByRole('slider')).toHaveCount(4);
+  await expect(tuning.locator('.knob:not([data-inactive])')).toHaveCount(0); // Osc 2 is mixed out in Init
+  await page.getByRole('tab', { name: 'Osc 1' }).click();
+  await page.getByRole('group', { name: 'Osc 1 Pitch' }).getByRole('slider', { name: 'FM' }).focus();
   await page.keyboard.press('ArrowUp');
   await page.getByRole('tab', { name: /Osc 2/ }).click();
-  await expect(tuning.locator('.knob[data-inactive]')).toHaveCount(0);
-  await page.getByRole('tab', { name: 'Osc 1' }).click();
-  await expect(tuning.locator('.knob[data-inactive]')).toHaveCount(0); // still awake on the other tab
+  await expect(tuning.locator('.knob[data-inactive]')).toHaveCount(0); // heard through FM
 });
 
 test('Glide sits beside Voices in the Amp, greyed out with more than one Voice (it only slides a single Voice)', async ({ page }) => {

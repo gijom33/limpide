@@ -75,7 +75,7 @@ group('Intervals', [
   ['Ring Bell', 'Two sines through Ring alone, Osc 2 an octave and a minor third up: neither pitch sounds, only their sum and difference, an out-of-tune pair that rings like a bell.', {
     waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, osc2Semitone: 3, mixOsc1: 0, mixRing: 1, ...OPEN, ampSustain: 0, ampDecay: 1.8, ampRelease: 1.8,
   }],
-  ['Cross Mod Sidebands', 'Osc 2, a sine an octave up and silent, swings Osc 1’s pitch: sidebands grow beside the Ideal’s circles, which mark plain Osc 1. Turn Cross Mod to move them.', {
+  ['FM Sidebands', 'Osc 2, a sine an octave up and silent, swings Osc 1’s pitch: sidebands grow beside the Ideal’s circles, which mark plain Osc 1. Turn FM to move them.', {
     waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, crossMod: 0.3, ...OPEN,
   }],
 ]);
@@ -248,7 +248,7 @@ group('Leads', [
     filterSlope: 24, cutoff: 2200, resonance: 0.3, keyTrack: 0.5, glide: 0.06, ampSustain: 0.9, ampRelease: 0.3,
     lfoDestination: 'cutoff', lfoRate: 0.2, lfoAmount: 0.3, lfo2Destination: 'pitch', lfo2Rate: 5.5, lfo2Amount: 0.3, lfo2Retrigger: 'note',
   }],
-  ['Poly Mod Zap', 'The Filter Envelope throws Osc 2 two octaves up and lets it fall as it opens the Filter, while Osc 2 swings Osc 1 (Cross Mod): each Note starts with a laser zap.', {
+  ['Poly Mod Zap', 'The Filter Envelope throws Osc 2 two octaves up and lets it fall as it opens the Filter, while Osc 2 swings Osc 1 (FM): each Note starts with a laser zap.', {
     osc2EnvAmount: 24, mixOsc2: 0.5, crossMod: 0.15,
     cutoff: 1200, resonance: 0.35, filterEnvAmount: 2, filterAttack: 0.002, filterDecay: 0.25, filterSustain: 0, ampSustain: 0.8,
   }],
@@ -474,12 +474,12 @@ group('Movement & Effects', [
   ['Stutter', 'A square LFO chopping the Filter, retriggered: every Note starts its stutter open, on the beat.', {
     waveform: 'square', mixSub: 0.4, cutoff: 300, resonance: 0.3, ampSustain: 1, lfoWaveform: 'square', lfoDestination: 'cutoff', lfoRate: 8, lfoAmount: 0.8, lfoRetrigger: 'note',
   }],
-  ['Out of Tune', 'Osc 2 a full 50 cents off: a sour quarter-tone, beating so fast it sounds like two different Notes.', {
-    osc2Detune: 50, mixOsc2: 1, cutoff: 5000, resonance: 0, ampSustain: 1,
-  }],
   ['Pink Surf', 'Pink Noise alone, a slow LFO sweeping the Filter: waves rolling in. Switch the Noise to White and hear the hiss come back, and the Spectrum’s floor level out.', {
     mixOsc1: 0, mixNoise: 1, noiseColour: 'pink', cutoff: 1200, resonance: 0.2,
     lfoDestination: 'cutoff', lfoRate: 0.12, lfoAmount: 0.6, ampAttack: 1.5, ampSustain: 1, ampRelease: 2.5,
+  }],
+  ['Out of Tune', 'Osc 2 a full 50 cents off: a sour quarter-tone, beating so fast it sounds like two different Notes.', {
+    osc2Detune: 50, mixOsc2: 1, cutoff: 5000, resonance: 0, ampSustain: 1,
   }],
 ]);
 

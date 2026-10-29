@@ -125,8 +125,8 @@ export const PARAMS: Record<ParamId, ParamDef> = {
   osc2Semitone: { id: 'osc2Semitone', label: 'Semitone', unit: 'st', min: -12, max: 12, taper: 'linear', default: 0, step: 1, control: 'set' },
   osc2Detune: { id: 'osc2Detune', label: 'Detune', unit: 'cents', min: -50, max: 50, taper: 'linear', default: 0, control: 'play' },
   osc2PulseWidth: { id: 'osc2PulseWidth', label: 'Pulse Width', unit: '%', min: 0.05, max: 0.95, taper: 'linear', default: 0.25, control: 'set' },
-  // How far Osc 2 swings Osc 1's frequency (issue 89): at full, four times Osc 2's own frequency.
-  crossMod: level('crossMod', 'Cross Mod', 0, 'play'),
+  // FM (issue 89): how far Osc 2 swings Osc 1's frequency, at full four times Osc 2's own frequency.
+  crossMod: level('crossMod', 'FM', 0, 'set'),
   // How far the Filter Envelope moves Osc 2's pitch at its peak (issue 93), as a Prophet's Poly Mod does.
   osc2EnvAmount: { id: 'osc2EnvAmount', label: 'Env Amount', unit: 'st', min: -24, max: 24, taper: 'linear', default: 0, control: 'set' },
   mixOsc1: level('mixOsc1', 'Osc 1', 1, 'fader'),

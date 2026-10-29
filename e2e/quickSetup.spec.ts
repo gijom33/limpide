@@ -16,7 +16,7 @@ const knob = (n: number) => times(4, cc(n, 1));
 const firstKnobs = () => [1, 2, 3, 4].flatMap(knob);
 const fader = (n: number) => [cc(32 + n, 10), cc(32 + n, 11), cc(32 + n, 12), cc(32 + n, 13)];
 const button = (n: number) => [cc(48 + n, 127), cc(48 + n, 0)];
-const STEPS = 26;
+const STEPS = 27;
 
 test.beforeEach(({ page }) => withFakeController(page));
 
@@ -34,9 +34,9 @@ test('Quick Setup walks through every control played live, in the page’s order
   await play(page, ...knob(4));
   await expect(prompt(page)).toContainText('Mixer · Osc 1');
   await expect(page.getByRole('tab', { name: 'Mixer' })).toHaveAttribute('aria-selected', 'true');
-  for (let n = 1; n <= 4; n++) await play(page, ...fader(n)); // the Mixer
+  for (let n = 1; n <= 5; n++) await play(page, ...fader(n)); // the Mixer, Ring included (issue 88)
   await expect(prompt(page)).toContainText('Filter Envelope · Attack');
-  for (let n = 5; n <= 12; n++) await play(page, ...fader(n)); // the two Envelopes
+  for (let n = 6; n <= 13; n++) await play(page, ...fader(n)); // the two Envelopes
   await expect(prompt(page)).toContainText('Amp · Volume'); // issue 62
   await play(page, ...knob(9));
   await expect(prompt(page)).toContainText('LFO 1 · Rate');
@@ -71,7 +71,7 @@ test('a fader that pauses mid-move and moves on never fills the next step', asyn
   await expect(prompt(page)).toContainText('Mixer · Osc 2');
   await expect(setup(page)).toContainText(`6 of ${STEPS}`);
   await play(page, ...fader(2));
-  await expect(prompt(page)).toContainText('Mixer · Noise');
+  await expect(prompt(page)).toContainText('Mixer · Ring');
 });
 
 test('steps can be skipped and gone back to', async ({ page }) => {

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-test('Osc 1, Osc 2 and the Mixer are tabs, one shown at a time; Osc 2’s tuning shows under both Oscillators', async ({ page }) => {
+test('Osc 1, Osc 2 and the Mixer are tabs, one shown at a time, each Oscillator with its own pitch row (issue 90)', async ({ page }) => {
   await page.goto('/');
   const tabs = page.getByRole('tablist', { name: 'Oscillator' });
   const osc1 = tabs.getByRole('tab', { name: 'Osc 1' });
@@ -10,6 +10,7 @@ test('Osc 1, Osc 2 and the Mixer are tabs, one shown at a time; Osc 2’s tuning
     for (const [name, locator] of [
       ['Osc 1', page.getByRole('radiogroup', { name: 'Osc 1 Waveform' })],
       ['Osc 2', page.getByRole('radiogroup', { name: 'Osc 2 Waveform' })],
+      ['Osc 1 Pitch', page.getByRole('group', { name: 'Osc 1 Pitch' })],
       ['Tuning', page.getByRole('group', { name: 'Tuning' })],
       ['Mixer', page.getByRole('group', { name: 'Mixer' })],
     ] as const) {
@@ -18,7 +19,7 @@ test('Osc 1, Osc 2 and the Mixer are tabs, one shown at a time; Osc 2’s tuning
     }
   };
   await expect(osc1).toHaveAttribute('aria-selected', 'true');
-  await shows(['Osc 1', 'Tuning']);
+  await shows(['Osc 1', 'Osc 1 Pitch']);
   await osc2.click();
   await expect(osc2).toHaveAttribute('aria-selected', 'true');
   await shows(['Osc 2', 'Tuning']);

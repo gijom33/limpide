@@ -55,7 +55,7 @@ export const TIPS = {
   },
   tuning: {
     title: 'Tuning',
-    body: 'Octave, Semitone and Detune are Osc 2’s offsets from the Note you play, whichever tab is showing. They wake up once Osc 2 is heard.',
+    body: 'Octave, Semitone and Detune are Osc 2’s offsets from the Note you play; Env Amount lets the Filter Envelope move it from there. They wake up once Osc 2 is heard: mixed in, through Ring, or swinging Osc 1 (FM).',
   },
   tapSource: {
     title: 'Viewers follow',
@@ -74,7 +74,7 @@ export const TIPS = {
   },
   sub: {
     title: 'Sub-oscillator',
-    body: 'A square (or sine) an octave (or two) below Osc 1, for weight; its shape and octave are under the faders. The sound now repeats at the Sub’s pitch, so the Harmonics are counted from it: an octave down, a square Sub fills the odd ones and Osc 1 the even ones.',
+    body: 'A square or sine an octave below Osc 1 (or two), for weight; its octave and shape are beside the faders. The sound now repeats at the Sub’s pitch, so the Harmonics are counted from it: an octave down, a square Sub fills the odd ones and Osc 1 the even ones.',
     how: 'Turn it up on Hollow Square or Init and watch every other rung of the Harmonic ladder fill in.',
   },
   subOptions: {
@@ -190,13 +190,13 @@ export const TIPS = {
     body: 'An unpitched hiss with energy at every frequency: in the Spectrum it fills the gaps between Harmonics. Filter it for wind, breath or percussion.',
   },
   crossMod: {
-    title: 'Cross Mod',
-    body: 'Osc 2 swings Osc 1’s pitch up and down hundreds of times a second (FM), whatever Osc 2’s own fader. Too fast to hear as vibrato, it becomes tone: new partials fan out either side of each Harmonic, from a growl to a clang. Osc 2’s tuning decides where they land.',
-    how: 'Pick Sine on both and turn Cross Mod up: watch spikes grow beside the Ideal’s circles, which mark plain Osc 1.',
+    title: 'FM',
+    body: 'Frequency modulation (cross-modulation): Osc 2 swings Osc 1’s pitch up and down hundreds of times a second, whatever Osc 2’s own fader. Too fast to hear as vibrato, it becomes tone: new partials fan out either side of each Harmonic, from a growl to a clang. Osc 2’s tuning decides where they land.',
+    how: 'Pick Sine on both and turn FM up: watch spikes grow beside the Ideal’s circles, which mark plain Osc 1.',
   },
   osc2EnvAmount: {
     title: 'Env Amount',
-    body: 'How many semitones the Filter Envelope moves Osc 2 at its peak: Osc 2 jumps by the Amount as a Note starts, then settles with the Envelope’s Decay and Sustain. Up or down, two octaves at most. With Cross Mod or Ring, the sweep becomes a zap.',
+    body: 'How many semitones the Filter Envelope moves Osc 2 at its peak: Osc 2 jumps by the Amount as a Note starts, then settles with the Envelope’s Decay and Sustain. Up or down, two octaves at most. With FM or Ring, the sweep becomes a zap.',
     how: 'Mix Osc 2 in, set Env Amount to +12 and the Filter Envelope’s Sustain to 0: each Note starts an octave up and falls.',
   },
   ring: {
@@ -240,6 +240,10 @@ export const TIPS = {
     body: 'Boosts the Harmonics right at the Cutoff, so the Filter sings or whistles there. A little adds bite; a lot rings.',
     how: 'Turn it up and watch the bump on the Response Curve, then sweep the Cutoff: the bump lifts each Harmonic as it passes.',
   },
+  osc1Pitch: {
+    title: 'Pitch',
+    body: 'Osc 1’s Octave, from the Note you play, and FM: how far Osc 2 swings Osc 1’s pitch at audio rate, which turns Osc 1’s Harmonics into clusters of new ones.',
+  },
   osc1Octave: {
     title: 'Octave',
     body: 'Shifts Osc 1 by whole octaves from the Note you play, and the Sub with it: −1 for a bass an octave down. Osc 2 stays on the Note, so its Octave now sets how far apart the two are.',
@@ -255,7 +259,7 @@ export const TIPS = {
   },
   // Issue 59: the faders, the LFO knobs and the Timeline's key, which had none.
   osc1Level: { title: 'Osc 1', body: 'How much of Osc 1 goes into the Filter: its level in the mix.' },
-  osc2Level: { title: 'Osc 2', body: 'How much of Osc 2 goes into the Filter. At 0 it is silent, and its tab and Tuning knobs grey out unless Ring or Cross Mod still uses it.' },
+  osc2Level: { title: 'Osc 2', body: 'How much of Osc 2 goes into the Filter. At 0 it is silent, and its tab and Tuning knobs grey out unless Ring or FM still uses it.' },
   attack: {
     title: 'Attack',
     body: 'How long the Envelope takes to rise from nothing to full once a key goes down: short for a sharp start (a pluck), long for a slow swell (a pad).',

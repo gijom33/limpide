@@ -294,7 +294,7 @@ const filterAdsr = (p: Patch): Adsr => ({ attack: p.filterAttack, decay: p.filte
 
 // A released Voice counts as free again once its Release has run this many time constants.
 const RELEASE_TAIL = 6;
-/** Cross Mod at full: Osc 2 swings Osc 1's frequency by four times its own (a modulation index of 4, issue 89). */
+/** FM (`crossMod`) at full: Osc 2 swings Osc 1's frequency by four times its own (a modulation index of 4, issue 89). */
 const CROSS_MOD_INDEX = 4;
 const A4 = noteToFrequency(69);
 
@@ -458,7 +458,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   // Each Oscillator's pitch over the Note's, from its knobs: a pulse's width is a fraction of its own cycle (issue 90).
   const ratios = [1, 1];
   /**
-   * Cross Mod's gain on a Note of `frequency`: the index times Osc 2's frequency, in Hz. Osc 1's Octave scales what
+   * FM's gain on a Note of `frequency`: the index times Osc 2's frequency, in Hz. Osc 1's Octave scales what
    * reaches its frequency, so the gain is divided by it, keeping the index the knob's.
    */
   const crossDepth = (frequency: number) => (patch ? (patch.crossMod * CROSS_MOD_INDEX * frequency * ratios[1]) / ratios[0] : 0);

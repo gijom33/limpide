@@ -65,9 +65,12 @@ test('the new Preset is announced after Next Preset', async ({ page }) => {
 
 test('sliders that share a label have distinct names: the Envelopes’ stages, the LFOs’ Rate and Depth', async ({ page }) => {
   await page.goto('/');
-  for (const name of ['Filter Attack', 'Amp Attack', 'Filter Release', 'Amp Release', 'LFO 1 Rate', 'LFO 2 Rate', 'LFO 1 Depth', 'LFO 2 Depth', 'Osc 2 Octave']) {
+  for (const name of ['Filter Attack', 'Amp Attack', 'Filter Release', 'Amp Release', 'LFO 1 Rate', 'LFO 2 Rate', 'LFO 1 Depth', 'LFO 2 Depth', 'Osc 1 Octave']) {
     await expect(page.getByRole('slider', { name, exact: true }), name).toHaveCount(1);
   }
+  // Each Oscillator's Octave is on its own tab (issue 90).
+  await page.getByRole('tab', { name: /Osc 2/ }).click();
+  await expect(page.getByRole('slider', { name: 'Osc 2 Octave', exact: true })).toHaveCount(1);
 });
 
 test('the Viewers are images with names, the LFO plots say what they show', async ({ page }) => {

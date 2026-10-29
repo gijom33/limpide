@@ -1361,7 +1361,7 @@ describe('Cross-modulation (issue 89)', () => {
     return (n: number) => toneAmplitude(window, SR, f * n);
   };
 
-  it('gives Osc 1 sidebands on its Harmonics, none while Cross Mod is down', async () => {
+  it('gives Osc 1 sidebands on its Harmonics, none while FM is down', async () => {
     const off = await harmonics(45, 0);
     expect(dB(off(2) / off(1))).toBeLessThan(-60);
     const on = await harmonics(45, 0.25);

@@ -25,6 +25,15 @@ interface Props {
   choice: 'waveform' | 'osc2Waveform';
 }
 
+/** One cycle of a Waveform, drawn as the picker draws it (the Sub's square and sine too). */
+export function WaveIcon({ waveform }: { waveform: Waveform }) {
+  return (
+    <svg viewBox="0 0 28 16" width="20" height="12" aria-hidden="true">
+      <path d={ICONS[waveform]} fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 /** The Waveforms as icons in one segmented track (their names are the radios' accessible labels). */
 export function WaveformPicker({ label, value, onChange, choice }: Props) {
   const learnable = useLearnable({ kind: 'choice', id: choice });

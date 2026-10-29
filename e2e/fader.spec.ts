@@ -22,7 +22,7 @@ test('the Mixer levels and both envelopes are vertical faders; the other Paramet
   // The Envelopes' faders are named with their Envelope (issue 51).
   expect(vertical.sort()).toEqual(
     [
-      'Osc 1', 'Osc 2', 'Noise', 'Sub',
+      'Osc 1', 'Osc 2', 'Ring', 'Noise', 'Sub',
       'Filter Attack', 'Filter Decay', 'Filter Sustain', 'Filter Release',
       'Amp Attack', 'Amp Decay', 'Amp Sustain', 'Amp Release',
     ].sort(),

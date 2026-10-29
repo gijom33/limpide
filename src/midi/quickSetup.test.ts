@@ -14,7 +14,7 @@ describe('Quick Setup steps', () => {
   it('asks for every Parameter played live, the Filter first, then in the page’s order, then the Actions', () => {
     expect(QUICK_SETUP.map((s) => [s.group, s.target.id].filter(Boolean).join(' · '))).toEqual([
       'Filter · cutoff', 'Filter · resonance', 'Filter · filterEnvAmount',
-      'Osc 2 · crossMod', 'Osc 2 · osc2Detune',
+      'Osc 2 · osc2Detune',
       'Mixer · mixOsc1', 'Mixer · mixOsc2', 'Mixer · mixRing', 'Mixer · mixNoise', 'Mixer · mixSub',
       'Filter Envelope · filterAttack', 'Filter Envelope · filterDecay', 'Filter Envelope · filterSustain', 'Filter Envelope · filterRelease',
       'Amp Envelope · ampAttack', 'Amp Envelope · ampDecay', 'Amp Envelope · ampSustain', 'Amp Envelope · ampRelease', 'Amp · volume',
