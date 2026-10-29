@@ -58,3 +58,5 @@ Claude's calls, open to the owner:
 - **App** reads it with `useSyncExternalStore` and hands the render loop its `get`; the reducer, the two states, the overlays' state and effects, the Ideal's memo and the bundled reference are gone. The Space key, a Controller's pads, the Display panel and a Tutorial dispatch to it; the MIDI hook takes it from the session.
 
 Since then (2026-10-28, the code review of issues 73 to 79): the Space key's hook takes the store, as the MIDI hook does, so no dispatch is passed between hooks; the `ViewSettings` comment says who keeps them.
+
+Since then (2026-10-28, triage of the owner's idea): decision 3 changes, the owner now asking that every Display setting be remembered; that work is [85](./85-display-settings-remembered.md).

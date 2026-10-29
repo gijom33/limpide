@@ -4,16 +4,7 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
-- The envelope actuators are not placed the same way for the FILTER and AMP sections. This should be fixable.
-
 ## Ideas
-
-- In the Display menu, add a selector to hide or show the tooltips. On by default.
-- When it does not waste real estate, feel free to stack buttons in the top row, with the 3-across in particular. It looks like, by doing that, we could recenter the keyboard.
-- For the 2x2 view, I would hide the actuators values by default just like for the phone view.
-- When really on a touch screen, we have a beautiful overlay to show value. In that case, there is no need to replace the actuators (knob or fader) with their value. That is redundant information.
-- I am interested in gathering statistics about the project in terms of project size, quality, and performance.
-- All display settings should be remembered.
 
 ## Dropped
 
@@ -88,3 +79,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-28, the owner's answers to two 1.14.0 review lines, done at once, decided by the owner: "Let’s not have any dimming happening when pointing at velocity or key track" (the Filter Envelope's controls still dim the blue ring); "Sure for swell and long tail": Swell's and Long Tail's descriptions point at Display's Env Timeline (2 s or more for Swell, 4 s for Long Tail).
 2026-10-28, the backlog clean-up ([ADR-0012](./adr/0012-following-the-ai-hero-skills.md), decided by the owner): the code tidy-ups from the 1.13.0 and 1.14.0 reviews went to [70](./issues/70-code-tidy-ups-after-1-14.md) (issue 69's `presetSearch.ts` points were already fixed in `40ec78a`); the Timeline's dashed setting line and the Demo under Display to [71](./issues/71-timeline-setting-line-and-demo-stop.md); the Maths Layer's value in the Timeline to Dropped.
 2026-10-28, the issue 69 review's lines (triage, decided by the owner): the search box's words, the categories in one row up to 860 px, a result count for screen readers, a word for saved Patches hidden by a category, and the code smells in the same files went to [72](./issues/72-patch-panel-after-its-review.md); the pills' place and Swell's two texts to Dropped.
+2026-10-28, the owner's bug and six ideas (triage, decided by the owner): the Envelopes' rows placed unlike went to [80](./issues/80-amp-envelope-row-beside-its-name.md); tooltips switchable in Display to [81](./issues/81-tooltips-switch-in-display.md); the top row centring the piano to [82](./issues/82-top-row-centres-the-piano.md); the values on the 2 × 2 layout and on touch screens to [83](./issues/83-values-on-2x2-and-touch.md); statistics on the project, with runtime performance added, to [84](./issues/84-project-statistics.md), waiting on the owner's answers; every Display setting remembered to [85](./issues/85-display-settings-remembered.md).
