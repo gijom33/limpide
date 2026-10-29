@@ -4,7 +4,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
-- 2026-10-29, the owner (a screenshot with LFO 1 on Pulse Width and LFO 2 on Detune, two arrows at two thin flat lines across the Timeline): "There are some buggy lines in the timeline viewer. The dashed lines also seem \"flickery\" at the edges because the ink/no ink does not always fall at same location on line."
 ## Ideas
 
 ## Dropped
@@ -85,3 +84,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-28, the owner's bug, Glide below the Voices (triage, decided by the owner): reproduced at 1075 px wide, went to [86](./issues/86-glide-beside-the-voices.md).
 2026-10-28, the 1.15.0 review's other findings (triage, Claude's call, open to the owner): Display settings remembered three ways went to [87](./issues/87-display-settings-remembered-in-one-place.md).
 2026-10-29, the 1.15.1 review's other findings (triage, Claude's call, open to the owner): the piano's width written twice and the header's bare gaps to Dropped.
+2026-10-29, the owner's Timeline bug: the flickering marks fixed at once. Each frame sampled the curves afresh from the left edge, so a fast LFO's steep curve measured a pixel or two longer or shorter from frame to frame, and its marks, laid out along that length, jumped (most at the right edge). The Timeline now samples on a grid fixed to time, the same moments every frame, and each mark holds its place on the curve (`timelineGrid` in `src/viewers/timeline.ts`, tests beside it). The two thin flat lines are each moved knob's own setting (Pulse Width's, Detune's), faint and solid since [71](./issues/71-timeline-setting-line-and-demo-stop.md); whether to keep them is the owner's question.

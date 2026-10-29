@@ -63,6 +63,21 @@ export function timelineKey(patch: Patch | undefined): KeyEntry[] {
     { mark: 'amp', name: 'Amp Envelope' },
   ];
 }
+/**
+ * The moments the Timeline samples, one pixel apart on a grid fixed to time rather than to the left edge, and where
+ * each falls across the plot (`xs`, the first within a pixel of the left edge). Every frame samples the same moments
+ * as it scrolls, so a curve keeps its exact shape and its length: sampled afresh from the edge each frame, a fast LFO's
+ * steep curve measured a pixel or more longer or shorter from frame to frame, and its marks jumped (the owner,
+ * 2026-10-29).
+ */
+export function timelineGrid(now: number, seconds: number, pixelsPerSecond: number) {
+  const left = (now - seconds) * pixelsPerSecond;
+  const first = Math.ceil(left);
+  const count = Math.floor(now * pixelsPerSecond) - first + 1;
+  const ks = Array.from({ length: Math.max(count, 0) }, (_, i) => first + i);
+  return { times: ks.map((k) => k / pixelsPerSecond), xs: ks.map((k) => k - left) };
+}
+
 const DASHES: Record<LinePattern, number[]> = { dots: [0.5, 5.5], dashes: [5, 3], dashDot: [7, 3, 0.5, 3] };
 const DOT_WIDTH = 1.75; // times the curve's width
 
@@ -86,7 +101,6 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
     const plot = height - 2 * pad; // a grid line every second, unlabelled: "now" is the right edge
     const seconds = view().timelineSeconds;
     canvas.dataset.seconds = String(seconds);
-    const timeAt = (x: number) => now - seconds + (x / width) * seconds;
     const yLevel = (level: number) => pad + (1 - level) * plot;
     const yHz = (hz: number) => pad + (1 - Math.log(hz / F_MIN) / Math.log(F_MAX / F_MIN)) * plot;
 
@@ -104,7 +118,9 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
     }
 
     const columns = Math.ceil(width);
-    const samples = Array.from({ length: columns }, (_, x) => source.modulationAt(timeAt(x + 0.5)));
+    const pixelsPerSecond = width / seconds;
+    const { times, xs } = timelineGrid(now, seconds, pixelsPerSecond);
+    const samples = times.map((time) => source.modulationAt(time));
 
     // An Envelope as a filled area with its outline, on the 0–1 level scale.
     const area = (colourVar: string, alpha: number, level: (m: Modulation) => number) => {
@@ -112,16 +128,16 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
       g.fillStyle = colour;
       g.globalAlpha = alpha;
       g.beginPath();
-      g.moveTo(0, yLevel(0));
-      samples.forEach((m, x) => g.lineTo(x, yLevel(level(m))));
-      g.lineTo(columns, yLevel(0));
+      g.moveTo(xs[0], yLevel(0));
+      samples.forEach((m, i) => g.lineTo(xs[i], yLevel(level(m))));
+      g.lineTo(xs.at(-1) ?? 0, yLevel(0));
       g.closePath();
       g.fill();
       g.globalAlpha = 1;
       g.strokeStyle = colour;
       g.lineWidth = curveWidth(canvas);
       g.beginPath();
-      samples.forEach((m, x) => (x ? g.lineTo(x, yLevel(level(m))) : g.moveTo(x, yLevel(level(m)))));
+      samples.forEach((m, i) => (i ? g.lineTo(xs[i], yLevel(level(m))) : g.moveTo(xs[i], yLevel(level(m)))));
       g.stroke();
     };
 
@@ -141,13 +157,12 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
     area('--stage-amp', 0.1, (m) => m.amp);
 
     // A broken line whose marks hold still against the curve as it scrolls (`createDashState`).
-    const pixelsPerSecond = width / seconds;
     const dashed = (key: string, ys: number[], dashes: number[]) => {
       const period = dashes.reduce((sum, d) => sum + d, 0);
       g.setLineDash(dashes);
-      g.lineDashOffset = dashState.start(key, timeAt(0), ys, pixelsPerSecond) % period;
+      g.lineDashOffset = dashState.start(key, times[0], ys, pixelsPerSecond) % period;
       g.beginPath();
-      ys.forEach((y, x) => (x ? g.lineTo(x, y) : g.moveTo(x, y)));
+      ys.forEach((y, i) => (i ? g.lineTo(xs[i], y) : g.moveTo(xs[i], y)));
       g.stroke();
       g.setLineDash([]);
       g.lineDashOffset = 0;
@@ -156,30 +171,26 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
     // A Parameter the Filter Envelope or an LFO moves (the owner, 2026-10-28): its knob's setting a faint solid line,
     // apart from LFO 1's dashes (issue 71), then where it is now in its own pattern (`linePattern`), both in its
     // stage's colour.
-    const line = ({ name, colourVar, pattern, y, base }: { name: string; colourVar: string; pattern: LinePattern; y: (m: Modulation, x: number) => number; base: (time: number) => number }) => {
-      if (columns < 2) return;
+    const line = ({ name, colourVar, pattern, y, base }: { name: string; colourVar: string; pattern: LinePattern; y: (m: Modulation, i: number) => number; base: (time: number) => number }) => {
+      if (times.length < 2) return;
       g.strokeStyle = cssVar(canvas, colourVar);
       g.globalAlpha = 0.5;
       g.lineWidth = 1;
       g.beginPath();
-      for (let x = 0; x < columns; x++) {
-        const y = base(timeAt(x + 0.5));
-        if (x) g.lineTo(x, y);
-        else g.moveTo(x, y);
-      }
+      times.forEach((time, i) => (i ? g.lineTo(xs[i], base(time)) : g.moveTo(xs[i], base(time))));
       g.stroke();
       g.globalAlpha = 1;
       g.lineWidth = curveWidth(canvas) * (pattern === 'dots' ? DOT_WIDTH : 1);
       g.lineCap = 'round';
-      dashed(name, samples.map((m, x) => y(m, x)), DASHES[pattern]);
+      dashed(name, samples.map((m, i) => y(m, i)), DASHES[pattern]);
       g.lineCap = 'butt';
     };
     if (shows.cutoff) line({ name: 'cutoff', colourVar: '--stage-filter', pattern: 'dots', y: (m) => yHz(m.cutoff), base: (time) => yHz(source.baseCutoffAt(time)) });
 
     // What else the LFOs move, each the same way on its knob's own scale (bottom to top) in its stage's colour: the
     // knob's setting faint, where it is now in its pattern; the key names them.
-    const patches = shows.destinations.length ? samples.map((_, x) => source.patchAt(timeAt(x + 0.5))) : [];
-    const levels = shows.destinations.map((d) => samples.map((m, x) => (patches[x] ? destinationLevel(d, patches[x], m) : 0)));
+    const patches = shows.destinations.length ? times.map((time) => source.patchAt(time)) : [];
+    const levels = shows.destinations.map((d) => samples.map((m, i) => (patches[i] ? destinationLevel(d, patches[i], m) : 0)));
     shows.destinations.forEach((d, i) => {
       line({
         name: d,
