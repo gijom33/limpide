@@ -135,7 +135,7 @@ export function App() {
   const [bendRange, setBendRange] = useState(() => Number(storage.getItem(BEND_RANGE)) || 2);
   useEffect(() => storage.setItem(BEND_RANGE, String(bendRange)), [storage, bendRange]);
 
-  useSpaceFreezes(viewerStore.dispatch);
+  useSpaceFreezes(viewerStore);
   const [theme, setTheme] = useState(loadTheme);
   useEffect(() => applyTheme(theme), [theme]);
 

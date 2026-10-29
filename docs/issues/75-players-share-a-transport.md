@@ -66,3 +66,4 @@ Claude's calls, open to the owner:
 - **The release on one Voice**: no engine change; the engine test "on one Voice, releasing the Note sounding closes the Gate…" pins it. The players' tests on choosing a Note's end are gone; their other tests keep their expectations with releases for ends.
 - **What plays** (`usePlayers`): one `playing` value ('demo', 'song', 'listen' or none) and one stop; `play(kind, start)` stops what plays first. A Tutorial calls `stopAll`.
 
+Since then (2026-10-28, the code review of issues 73 to 79): decision 9, Listen looping without end, kept by the owner.

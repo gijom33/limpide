@@ -2,7 +2,6 @@ import { createSynthEngine, type SynthEngine } from '../engine/synthEngine';
 import { createNoteInput, type NoteInput } from '../input/noteInput';
 import { createLibrary, type Library } from '../patch/library';
 import { createPatchStore, type PatchStore } from '../patch/patchStore';
-import { initialPatch } from '../patch/presets';
 import { createViewerStore, type ViewerStore } from '../viewers/viewerStore';
 import type { KeyValueStorage } from './storage';
 import { playThroughSilentMode } from './unlockAudio';
@@ -40,7 +39,6 @@ export function getAudioSession(storage: KeyValueStorage): AudioSession {
   const ctx = new AudioContext({ latencyHint: 'interactive' });
   const engine = createSynthEngine(ctx);
   const library = createLibrary(storage);
-  const start = initialPatch(location.hash, library);
   const listeners = new Set<(notes: number[]) => void>();
   let muted = false;
   const input = createNoteInput(
@@ -54,7 +52,7 @@ export function getAudioSession(storage: KeyValueStorage): AudioSession {
     (notes) => listeners.forEach((l) => l(notes)),
   );
   const patches = createPatchStore({
-    start,
+    hash: location.hash,
     library,
     apply: (patch) => {
       engine.applyPatch(patch);
@@ -69,7 +67,7 @@ export function getAudioSession(storage: KeyValueStorage): AudioSession {
     patches,
     viewers,
     library,
-    shared: start.shared,
+    shared: patches.shared,
     onHeld(listener) {
       listeners.add(listener);
       return () => listeners.delete(listener);

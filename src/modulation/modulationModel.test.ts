@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { defaultPatch, setParam } from '../patch/patch';
-import { effectiveCutoff, effectiveResonance, effectiveVolume, lfoSwings, osc2Cents, soundingPitch, tremolo } from './modulationModel';
+import { destinationSwings, effectiveCutoff, effectiveResonance, effectiveVolume, osc2Cents, soundingPitch, tremolo } from './modulationModel';
 
 describe('Modulation model: Effective Cutoff', () => {
   it('is the Cutoff itself while nothing modulates the Filter', () => {
@@ -103,10 +103,10 @@ describe('two LFOs', () => {
   it('together swing no further than the destination allows, sharing what room there is by their Depths', () => {
     const pulse = { ...defaultPatch(), lfoDestination: 'pulseWidth', lfoAmount: 1, lfo2Destination: 'pulseWidth', lfo2Amount: 0.5 } as const;
     // 40 + 20 points wanted around 50 %, 45 allowed each way: three quarters of each.
-    const [one, two] = lfoSwings(pulse, 'pulseWidth', 0.4, 0.45);
+    const [one, two] = destinationSwings(pulse, 'pulseWidth', 0.5);
     expect(one).toBeCloseTo(0.3);
     expect(two).toBeCloseTo(0.15);
-    expect(lfoSwings(pulse, 'cutoff', 2)).toEqual([0, 0]);
+    expect(destinationSwings(pulse, 'cutoff')).toEqual([0, 0]);
   });
 
   it('LFO 2 on Pitch makes vibrato as LFO 1 does', () => {

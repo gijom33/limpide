@@ -57,3 +57,4 @@ Claude's calls, open to the owner:
 - **The session** (`src/app/session.ts`) makes it after the Patch store, as `viewers`.
 - **App** reads it with `useSyncExternalStore` and hands the render loop its `get`; the reducer, the two states, the overlays' state and effects, the Ideal's memo and the bundled reference are gone. The Space key, a Controller's pads, the Display panel and a Tutorial dispatch to it; the MIDI hook takes it from the session.
 
+Since then (2026-10-28, the code review of issues 73 to 79): the Space key's hook takes the store, as the MIDI hook does, so no dispatch is passed between hooks; the `ViewSettings` comment says who keeps them.

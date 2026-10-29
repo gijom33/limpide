@@ -1,6 +1,6 @@
 import type { Library } from './library';
 import type { Patch } from './patch';
-import { presetAfter } from './presets';
+import { initialPatch, presetAfter } from './presets';
 
 /** Who made a change: the Demo's "turned by hand" listens for a hand's or a Controller's. */
 export type ChangeBy = 'hand' | 'controller' | 'demo' | 'tutorial' | 'load';
@@ -25,9 +25,11 @@ const AUTOSAVE_MS = 300;
 /**
  * The Patch being played, outside React (ADR-0013). Every change goes to `apply` (the engine and the Note input) at
  * once, before any subscriber hears of it, so a Controller's move or the Demo's reaches the sound without waiting for a
- * render. The Last session is autosaved a moment after the start and after each run of changes.
+ * render. It starts on the Share link's Patch in `hash`, else the Last session, else Init. The Last session is autosaved
+ * a moment after the start and after each run of changes.
  */
-export function createPatchStore({ start, library, apply }: { start: { patch: Patch; name: string }; library: Pick<Library, 'saveCurrent'>; apply(patch: Patch): void }) {
+export function createPatchStore({ hash, library, apply }: { hash: string; library: Library; apply(patch: Patch): void }) {
+  const start = initialPatch(hash, library);
   let baseline = start.patch;
   let now: PatchNow = { patch: start.patch, name: start.name, changed: false };
   const listeners = new Set<(change: PatchChange) => void>();
@@ -53,6 +55,8 @@ export function createPatchStore({ start, library, apply }: { start: { patch: Pa
   saveSoon();
 
   return {
+    /** Whether the page opened on a Share link's Patch. */
+    shared: start.shared,
     get: (): PatchNow => now,
     /** The Patch changed by one of the Patch module's functions (`setParam`, `setLfo`…), and who changed it. */
     change(edit: (patch: Patch) => Patch, by: Exclude<ChangeBy, 'load'>) {

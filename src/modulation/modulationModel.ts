@@ -101,7 +101,7 @@ export function soundingPitch(patch: Patch, gliding: number, lfo: readonly numbe
  * How far each LFO swings a destination at the top of its wave, in the destination's units: `perDepth` at full Depth,
  * both kept together within `room` each way (a Pulse Width or the Resonance cannot pass its ends), shared by Depth.
  */
-export function lfoSwings(patch: Patch, destination: LfoDestination, perDepth: number, room = Infinity): [number, number] {
+function lfoSwings(patch: Patch, destination: LfoDestination, perDepth: number, room = Infinity): [number, number] {
   const wanted = lfos(patch).map((l) => (l.destination === destination ? perDepth * l.amount : 0)) as [number, number];
   const total = wanted[0] + wanted[1];
   const scale = total > room ? Math.max(0, room) / total : 1;

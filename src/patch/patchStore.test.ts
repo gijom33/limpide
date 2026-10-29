@@ -4,13 +4,16 @@ import { createLibrary } from './library';
 import { defaultPatch, type Patch, setParam } from './patch';
 import { createPatchStore } from './patchStore';
 import { PRESETS } from './presets';
+import { shareHash } from './serialize';
 
-const setup = (start = { patch: defaultPatch(), name: 'Init' }) => {
+/** A store on a page opened at `hash`, with `lastSession` autosaved by an earlier visit, if any. */
+const setup = ({ hash = '', lastSession }: { hash?: string; lastSession?: Patch } = {}) => {
   const heard: string[] = [];
   const applied: Patch[] = [];
   const library = createLibrary(memoryStorage());
+  if (lastSession) library.saveCurrent(lastSession);
   const store = createPatchStore({
-    start,
+    hash,
     library,
     apply: (patch) => {
       applied.push(patch);
@@ -25,11 +28,18 @@ describe('The Patch store (issue 73)', () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
 
-  it('starts on the Patch it is given, and the engine hears it at once', () => {
-    const start = { patch: PRESETS[3].patch, name: PRESETS[3].name };
-    const { store, applied } = setup(start);
-    expect(store.get()).toEqual({ patch: start.patch, name: start.name, changed: false });
-    expect(applied).toEqual([start.patch]);
+  it('starts on a Share link’s Patch, and the engine hears it at once (the code review of issues 73 to 79)', () => {
+    const { store, applied } = setup({ hash: `#${shareHash(PRESETS[3].patch, 'Dark & low')}`, lastSession: PRESETS[5].patch });
+    expect(store.get()).toEqual({ patch: PRESETS[3].patch, name: 'Dark & low', changed: false });
+    expect(store.shared).toBe(true);
+    expect(applied).toEqual([PRESETS[3].patch]);
+  });
+
+  it('starts on the Last session without a Share link, and on Init on a first visit (the code review of issues 73 to 79)', () => {
+    const last = setup({ lastSession: PRESETS[5].patch }).store;
+    expect(last.get()).toMatchObject({ patch: PRESETS[5].patch, name: 'Last session' });
+    expect(last.shared).toBe(false);
+    expect(setup().store.get()).toMatchObject({ patch: defaultPatch(), name: 'Init' });
   });
 
   it('hands every change to the engine before its subscribers, whoever made it', () => {

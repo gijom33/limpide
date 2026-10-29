@@ -2,7 +2,7 @@ import type { IdealPartial } from '../music/idealReference';
 import type { Overlays } from './overlays';
 import type { ViewerState } from './viewerState';
 
-/** Settings the Viewers read every frame (React writes them; the render loop never re-mounts for them). */
+/** Settings the Viewers read every frame, kept by the Viewer settings store (issue 77): the render loop reads them, React subscribes. */
 export interface ViewSettings {
   /** Cycles of the Note shown in each Scope. */
   cycles: 1 | 2 | 4;

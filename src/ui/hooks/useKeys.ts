@@ -1,7 +1,7 @@
 import { type Dispatch, type MutableRefObject, type SetStateAction, useEffect } from 'react';
 import type { AudioSession } from '../../app/session';
 import { keyToNote, octaveKey, shiftOctave } from '../../input/keyboardLayout';
-import type { ViewerAction } from '../../viewers/viewerState';
+import type { ViewerStore } from '../../viewers/viewerStore';
 
 /**
  * The computer keyboard as a piano (`A W S E D F T G…`), `Z` and `X` for the octave. A key released after an octave
@@ -62,12 +62,12 @@ export const freezesOnSpace = (e: KeyboardEvent) => e.code === 'Space' && !(e.ta
  * Space Freezes the Viewers, unless what has the focus uses Space itself (a button, an option: issue 51, WCAG 2.1.1);
  * on a knob, a Viewer or nothing in particular it Freezes. It never plays a Note, and must not scroll.
  */
-export function useSpaceFreezes(dispatchViewer: (action: ViewerAction) => void) {
+export function useSpaceFreezes(viewers: ViewerStore) {
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (!freezesOnSpace(e)) return;
       e.preventDefault();
-      if (!e.repeat) dispatchViewer({ type: 'toggleFreeze' });
+      if (!e.repeat) viewers.dispatch({ type: 'toggleFreeze' });
     };
     const up = (e: KeyboardEvent) => {
       if (freezesOnSpace(e)) e.preventDefault();
@@ -78,5 +78,5 @@ export function useSpaceFreezes(dispatchViewer: (action: ViewerAction) => void) 
       window.removeEventListener('keydown', down);
       window.removeEventListener('keyup', up);
     };
-  }, [dispatchViewer]);
+  }, [viewers]);
 }

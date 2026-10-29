@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createLibrary } from '../patch/library';
-import { defaultPatch, setParam } from '../patch/patch';
+import { setParam } from '../patch/patch';
 import { createPatchStore } from '../patch/patchStore';
 import { memoryStorage } from '../test/memoryStorage';
 import { DEFAULT_OVERLAYS } from './overlays';
@@ -8,7 +8,7 @@ import type { TapSource } from './viewerState';
 import { createViewerStore } from './viewerStore';
 
 const setup = (storage = memoryStorage()) => {
-  const patches = createPatchStore({ start: { patch: { ...defaultPatch(), mixOsc2: 0 }, name: 'Init' }, library: createLibrary(memoryStorage()), apply: () => {} });
+  const patches = createPatchStore({ hash: '', library: createLibrary(memoryStorage()), apply: () => {} });
   const sources: TapSource[] = [];
   const viewers = createViewerStore({ storage, patches, setTapSource: (source) => sources.push(source) });
   return { storage, patches, viewers, sources };

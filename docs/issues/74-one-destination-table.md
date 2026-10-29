@@ -64,3 +64,4 @@ Claude's calls, open to the owner:
 - **The engine** (`src/engine/synthEngine.ts`): its PWM, LFO gains, Resonance and tremolo read `destinationSwings` and convert to the nodes' units (cents for the pitches and the Cutoff); its wiring is unchanged.
 - **The test**: `destinations.test.ts` runs every even Destination through its law (swing, Effective value, reach, both LFOs within the room), checks the rooms near the ends, and pins the ring-carrying knobs to the seven of before.
 
+Since then (2026-10-28, the code review of issues 73 to 79): `lfoSwings` is private to the model, its test going through `destinationSwings`.

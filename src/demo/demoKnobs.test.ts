@@ -7,7 +7,7 @@ import { memoryStorage } from '../test/memoryStorage';
 import { createDemoKnobs } from './demoKnobs';
 
 const setup = () => {
-  const store = createPatchStore({ start: PRESETS[0], library: createLibrary(memoryStorage()), apply: () => {} });
+  const store = createPatchStore({ hash: '', library: createLibrary(memoryStorage()), apply: () => {} });
   return { store, knobs: createDemoKnobs(store) };
 };
 
