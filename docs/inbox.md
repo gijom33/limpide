@@ -7,6 +7,7 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 ## Ideas
 
 - 2026-10-29, the owner, asked what to do with the Timeline's thin flat lines (each moved knob's own setting): "Remove them"
+- 2026-10-29, the owner, of Claude's list of typical additions to the Oscillators (1 Ring Modulation, 2 Cross-modulation, 3 an Octave on Osc 1, 4 Sub options, 5 Pink Noise, 6 the Filter Envelope on Osc 2's pitch, 7 Hard Sync): "Do not include 7 in plan. Implement 1 to 6."
 
 ## Dropped
 
