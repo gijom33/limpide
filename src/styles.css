@@ -597,6 +597,16 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   .block .voices-field .segmented-field { flex-wrap: wrap; grid-template-columns: max-content; }
   .voices-field .field-caption { flex: 1 1 100%; }
 }
+/* On the narrowest phones, both Envelope rows have their names above them and their faders the stage's whole width,
+   alike (issue 80): beside their names, Linux's wider fonts brought the Amp's Release within 7 pt of Volume (the 1.15.0
+   deploy; the 1.12.4 deploy before it). */
+@media (max-width: 600px) {
+  @container (max-width: 379px) {
+    .block .sub-block:has(.envelope-knobs) > h3, .block .sub-block:has(.envelope-knobs) > .tip-anchor:first-child { flex: 1 1 100%; align-self: auto; }
+    .block .sub-block:has(.envelope-knobs) h3 { min-height: 0; }
+    .block .sub-block:has(.envelope-knobs) .knob[data-kind='fader'] { --fader-col: clamp(40px, (100cqw - var(--dial-big) - 4 * var(--knob-gap)) / 4, 56px); }
+  }
+}
 @media (max-width: 600px) {
   @container (max-width: 330px) {
     .block .sub-block > h3, .block .sub-block > .tip-anchor:first-child { flex: 1 1 100%; align-self: auto; }

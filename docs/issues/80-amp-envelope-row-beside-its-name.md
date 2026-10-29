@@ -45,3 +45,5 @@ Claude's calls, open to the owner:
 - The Amp's row is wrapped as the Filter's (`envelope-knobs` around `knobs-envelope` in `src/ui/App.tsx`), so the rule that put a direct `knobs-envelope` child on a line of its own, and the phone's wider Amp fader columns, are gone from `src/styles.css`.
 - Test: "the Amp's Envelope row is laid out as the Filter's" in `e2e/envelopes.spec.ts`, at seven widths from 360 to 1920 px.
 
+Since then (2026-10-28, the 1.15.0 deploy): on GitHub's Linux fonts the Amp's Release came within 7 pt of Volume at 375 px, beside its name. On phones whose stage is under 380 px wide (up to about 420 px), both Envelope rows now have their names above them and their faders the whole width, still alike; wider, both sit beside their names.
+
