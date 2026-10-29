@@ -136,7 +136,7 @@ export function Tooltip({ content, children, longPress = true }: { content: TipC
           role="tooltip"
           ref={tipRef}
           className="tooltip"
-          hidden={!open}
+          hidden={!open || !enabled}
           style={position ? { left: position.left, top: position.top } : { left: -9999, top: 0 }}
         >
           <strong>{content.title}</strong>

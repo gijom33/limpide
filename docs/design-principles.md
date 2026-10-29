@@ -15,7 +15,7 @@ The rules every screen change is judged against, the way issue 15's audit judged
 
 - **Size follows use** (Fitts's law: time to hit a target grows with distance and shrinks with size). Parameters worth turning while playing get the big knob; set-and-forget Parameters get the small one ([ADR-0008](./adr/0008-knob-size-follows-the-parameter-s-role.md)).
 - **Follow hardware conventions** (Nielsen 2: match between the system and the real world). Levels and envelope stages are faders, as on mixing desks and classic synths; everything else is a knob.
-- **Every control shows its value in real units** (Nielsen 1: visibility of system status). On phones, where room is short, a value shows only while it changes: above the finger while a finger drags it, in the name's place when something else moves it (keys, MIDI, the Demo).
+- **Every control shows its value in real units** (Nielsen 1: visibility of system status). On phones and in the 2 × 2 layout, where room is short, a value shows only while it changes: above the finger while a finger drags it, in the name's place when something else moves it (keys, MIDI, the Demo).
 - **One material for every control** (Gestalt similarity). Knob caps and fader handles are the same raised cap with the same marker line; only the movement differs.
 - **Inactive is clearly greyed out.** A control that is adjustable but has no effect right now (Osc 2's tuning while Osc 2 is silent, the Filter Envelope at Amount 0) greys out as a whole, marker included, to 30 %; its name stays readable. WCAG 1.4.11 leaves inactive controls out of its contrast minimum.
 - **Every change can be undone in one gesture** (Nielsen 3: user control and freedom). Double-click or double-tap resets a control to its default.

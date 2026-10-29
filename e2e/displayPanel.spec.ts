@@ -93,7 +93,7 @@ test('every Display setting is remembered across a reload, Freeze and the Snapsh
 
 test('Tooltips can be switched off in Display: none opens, a knob keeps its description, and the choice is kept (issue 81)', async ({ page }) => {
   await page.goto('/');
-  const open = page.locator('[role="tooltip"]:not([hidden])');
+  const open = page.getByRole('tooltip');
   const cutoff = page.getByRole('slider', { name: 'Cutoff' });
   const tooltips = page.getByRole('radiogroup', { name: 'Tooltips' });
   await openDisplay(page);
@@ -104,9 +104,11 @@ test('Tooltips can be switched off in Display: none opens, a knob keeps its desc
   await page.waitForTimeout(700);
   await expect(open).toHaveCount(0);
   await page.keyboard.press('Shift'); // the keyboard in use, so focus shows as it would from Tab
-  await cutoff.focus();
-  await page.waitForTimeout(200);
-  await expect(open).toHaveCount(0);
+  for (const control of [cutoff, page.getByRole('button', { name: 'Demo' })]) {
+    await control.focus();
+    await page.waitForTimeout(200);
+    await expect(open).toHaveCount(0);
+  }
   await expect(cutoff).toHaveAccessibleDescription(/Cutoff/);
   await page.reload();
   await openDisplay(page);
@@ -115,4 +117,16 @@ test('Tooltips can be switched off in Display: none opens, a knob keeps its desc
   await page.keyboard.press('Escape');
   await cutoff.hover();
   await expect(open).toHaveCount(1);
+});
+
+test('switching Tooltips off with the arrow keys leaves no tooltip open, the switch’s own included (the 1.15.0 review)', async ({ page }) => {
+  await page.goto('/');
+  await openDisplay(page);
+  const on = page.getByRole('radiogroup', { name: 'Tooltips' }).getByRole('radio', { name: 'On', exact: true });
+  await page.keyboard.press('Shift');
+  await on.focus();
+  await page.keyboard.press('ArrowRight'); // to Off
+  await expect(page.getByRole('radiogroup', { name: 'Tooltips' }).getByRole('radio', { name: 'Off', exact: true })).toHaveAttribute('aria-checked', 'true');
+  await page.waitForTimeout(200);
+  await expect(page.getByRole('tooltip')).toHaveCount(0);
 });

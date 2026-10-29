@@ -386,7 +386,8 @@ main[data-frozen] .tap-canvases::before {
 .timeline-key [data-pattern='dashes']::before { background: repeating-linear-gradient(90deg, var(--line) 0 5px, transparent 5px 8px); }
 .timeline-key [data-pattern='dashDot']::before { background: repeating-linear-gradient(90deg, var(--line) 0 6px, transparent 6px 8px, var(--line) 8px 9.5px, transparent 9.5px 11.5px); }
 main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-offset: -1px; }
-/* The Filter Envelope: Amount, then the four faders, in one row that wraps like any other. */
+/* The Envelopes' rows (the Filter's Amount then four faders, the Amp's four faders then Volume), each one row that
+   wraps like any other, laid out alike (issue 80). */
 .sub-block { container-type: inline-size; }
 .envelope-knobs { flex: 1 1 0; min-width: 0; }
 .sub-block .knobs { min-height: 0; }
@@ -588,12 +589,11 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   .block .sub-block > h3, .block .sub-block > .tip-anchor:first-child { flex: 1 1 100%; align-self: auto; }
   .block .sub-block:has(.knob) h3 { min-height: 0; }
   .tab-list { padding-left: 0; }
-  .block .voices-field .segmented-field { flex-wrap: wrap; grid-template-columns: max-content; }
-  .voices-field .field-caption { flex: 1 1 100%; }
 }
 /* The Voices name beside its numbers only where Glide still fits after them (issue 86, the owner: "Glide should always
-   be on right side of voices number"): the name, the numbers and Glide need about 310 px, more than a row of knobs. */
-@container (max-width: 324px) {
+   be on right side of voices number"): the name, the numbers and Glide need about 310 px with a laptop's knobs, more
+   than a row of knobs; under 331 px, the phones' own threshold, leaves room for wider fonts. */
+@container (max-width: 330px) {
   .block .voices-field .segmented-field { flex-wrap: wrap; grid-template-columns: max-content; }
   .voices-field .field-caption { flex: 1 1 100%; }
 }
@@ -602,8 +602,6 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
     .block .sub-block > h3, .block .sub-block > .tip-anchor:first-child { flex: 1 1 100%; align-self: auto; }
     .block .sub-block:has(.knob) h3 { min-height: 0; }
     .tab-list { padding-left: 0; }
-    .block .voices-field .segmented-field { flex-wrap: wrap; grid-template-columns: max-content; }
-    .voices-field .field-caption { flex: 1 1 100%; }
   }
 }
 
