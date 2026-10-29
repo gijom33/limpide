@@ -7,7 +7,7 @@ import {
 import { bandwidthOctaves } from '../modulation/passBand';
 import { harmonicSeries } from '../music/harmonics';
 import { frequencyToNote, noteToFrequency } from '../music/pitch';
-import { GLIDE_OFF, type Lfo, type LfoNumber, lfos, PARAMS, type Patch, type SubWaveform, type Voices } from '../patch/patch';
+import { GLIDE_OFF, type Lfo, type LfoNumber, lfos, type NoiseColour, PARAMS, type Patch, type SubWaveform, type Voices } from '../patch/patch';
 import { filterStages, type Stage } from './filterDesign';
 
 /**
@@ -107,6 +107,37 @@ function noiseBuffer(ctx: BaseAudioContext): AudioBuffer {
     seed = (seed * 1664525 + 1013904223) >>> 0;
     data[i] = (seed / 2 ** 32) * 2 - 1;
   }
+  return buffer;
+}
+
+const rmsOf = (data: Float32Array) => Math.sqrt(data.reduce((sum, v) => sum + v * v, 0) / data.length);
+
+/**
+ * Pink Noise (issue 92): the white loop through Paul Kellet's filter, falling 3 dB an octave, at white's RMS. The
+ * filter runs over the loop twice and keeps the second pass, so its end leads into its start without a click; its
+ * offset is taken out.
+ */
+function pinkBuffer(ctx: BaseAudioContext, white: AudioBuffer): AudioBuffer {
+  const input = white.getChannelData(0);
+  const buffer = ctx.createBuffer(1, input.length, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  const b = [0, 0, 0, 0, 0, 0, 0];
+  for (let pass = 0; pass < 2; pass++)
+    for (let i = 0; i < input.length; i++) {
+      const x = input[i];
+      b[0] = 0.99886 * b[0] + x * 0.0555179;
+      b[1] = 0.99332 * b[1] + x * 0.0750759;
+      b[2] = 0.969 * b[2] + x * 0.153852;
+      b[3] = 0.8665 * b[3] + x * 0.3104856;
+      b[4] = 0.55 * b[4] + x * 0.5329522;
+      b[5] = -0.7616 * b[5] - x * 0.016898;
+      data[i] = b[0] + b[1] + b[2] + b[3] + b[4] + b[5] + b[6] + x * 0.5362;
+      b[6] = x * 0.115926;
+    }
+  const mean = data.reduce((sum, v) => sum + v, 0) / data.length;
+  for (let i = 0; i < data.length; i++) data[i] -= mean;
+  const scale = rmsOf(input) / rmsOf(data);
+  for (let i = 0; i < data.length; i++) data[i] *= scale;
   return buffer;
 }
 
@@ -293,7 +324,7 @@ interface Shared {
   bend: ConstantSourceNode;
   /** The tremolo's resting gain, into every Voice's: 1 less the LFOs' total swing on Volume. */
   tremoloRest: ConstantSourceNode;
-  noise: AudioBuffer;
+  noise: Record<NoiseColour, AudioBuffer>;
   master: GainNode;
 }
 
@@ -307,9 +338,16 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   // Oscillator Tap.
   const oscillators = [createVoiceOscillator(ctx), createVoiceOscillator(ctx)];
   const [osc, osc2] = oscillators.map((v) => v.node);
-  const noise = ctx.createBufferSource();
-  noise.buffer = shared.noise;
-  noise.loop = true;
+  // Both colours of Noise run; the Patch's colour is the one let through.
+  const noises = (['white', 'pink'] as const).map((colour) => {
+    const source = ctx.createBufferSource();
+    source.buffer = shared.noise[colour];
+    source.loop = true;
+    const gate = ctx.createGain();
+    gate.gain.value = colour === 'white' ? 1 : 0;
+    source.connect(gate);
+    return { colour, source, gate };
+  });
   const [mix1, mix2, mixNoise] = [ctx.createGain(), ctx.createGain(), ctx.createGain()];
   mix1.gain.value = OSCILLATOR_LEVEL;
   mix2.gain.value = 0;
@@ -317,7 +355,8 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   const mixer = ctx.createGain();
   oscillators[0].out.connect(mix1).connect(mixer);
   oscillators[1].out.connect(mix2).connect(mixer);
-  noise.connect(mixNoise).connect(mixer);
+  for (const n of noises) n.gate.connect(mixNoise);
+  mixNoise.connect(mixer);
   // The Sub-oscillator: a square or a sine, one or two octaves below Osc 1 (issue 91), following its pitch, Glide and
   // vibrato. It runs an octave down; its detune takes it the second.
   const sub = ctx.createOscillator();
@@ -377,7 +416,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
 
   mixer.connect(filter).connect(filter2).connect(amp).connect(tremoloGain).connect(shared.master);
   // Every Voice's noise starts at a different point of the loop, so a chord's noise is not one noise, louder.
-  noise.start(0, (index * NOISE_SECONDS) / MAX_VOICES);
+  for (const n of noises) n.source.start(0, (index * NOISE_SECONDS) / MAX_VOICES);
 
   // The shared LFOs, wired to this Voice's destinations through the shared gains set from their Depths.
   shared.lfos.forEach((l, i) => {
@@ -491,6 +530,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
       mix1.gain.setValueAtTime(next.mixOsc1 * OSCILLATOR_LEVEL, t);
       mix2.gain.setValueAtTime(next.mixOsc2 * OSCILLATOR_LEVEL, t);
       mixNoise.gain.setValueAtTime(next.mixNoise * OSCILLATOR_LEVEL, t);
+      for (const n of noises) n.gate.gain.setValueAtTime(n.colour === next.noiseColour ? 1 : 0, t);
       mixSub.gain.setValueAtTime(next.mixSub * OSCILLATOR_LEVEL, t);
       // The base Cutoff; the Filter Envelope adds to it through detune.
       const stages = filterStages(next.filterMode, next.filterSlope, next.resonance);
@@ -563,7 +603,8 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   const tremoloRest = ctx.createConstantSource();
   tremoloRest.offset.value = 1;
   tremoloRest.start();
-  const shared: Shared = { lfos: [lfoNodes(), lfoNodes()], bend, tremoloRest, noise: noiseBuffer(ctx), master };
+  const white = noiseBuffer(ctx);
+  const shared: Shared = { lfos: [lfoNodes(), lfoNodes()], bend, tremoloRest, noise: { white, pink: pinkBuffer(ctx, white) }, master };
   const voices = Array.from({ length: MAX_VOICES }, (_, i) => createVoice(ctx, shared, i));
   const waves = new Map<keyof typeof LFO_SERIES, PeriodicWave>();
   const wave = (w: keyof typeof LFO_SERIES) => waves.get(w) ?? waves.set(w, lfoWave(ctx, w)).get(w)!;

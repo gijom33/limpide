@@ -81,6 +81,8 @@ export type LfoRetrigger = 'free' | 'note';
 /** How far the Sub sits below Osc 1, in octaves, and its Waveform (issue 91). */
 export type SubOctave = -1 | -2;
 export type SubWaveform = 'square' | 'sine';
+/** White Noise has equal energy at every frequency, pink equal energy per octave (issue 92). */
+export type NoiseColour = 'white' | 'pink';
 /** How many Notes can sound at once. 1 is monophonic (last-note priority, Glide); more play chords (ADR-0007). */
 export type Voices = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
@@ -89,6 +91,7 @@ export type Patch = Record<ParamId, number> & {
   osc2Waveform: Waveform;
   subOctave: SubOctave;
   subWaveform: SubWaveform;
+  noiseColour: NoiseColour;
   filterMode: FilterMode;
   filterSlope: FilterSlope;
   lfoWaveform: LfoWaveform;
@@ -156,6 +159,7 @@ export function defaultPatch(): Patch {
     // The Sub a square an octave down, as it always was.
     subOctave: -1,
     subWaveform: 'square',
+    noiseColour: 'white',
     filterMode: 'lowpass',
     filterSlope: 12,
     lfoWaveform: 'sine',
@@ -180,6 +184,7 @@ export const CHOICES = {
   osc2Waveform: ['saw', 'sine', 'triangle', 'square', 'pulse'],
   subOctave: [-1, -2],
   subWaveform: ['square', 'sine'],
+  noiseColour: ['white', 'pink'],
   filterMode: ['lowpass', 'highpass', 'bandpass', 'notch'],
   filterSlope: [12, 24],
   lfoWaveform: ['sine', 'triangle', 'square', 'saw', 'sawDown'],

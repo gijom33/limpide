@@ -116,7 +116,7 @@ const CHOICE_NAMES: Record<string, string> = {
   saw: 'Saw', sine: 'Sine', triangle: 'Triangle', square: 'Square', pulse: 'Pulse', sawDown: 'Saw Down',
   lowpass: 'Low-pass', highpass: 'High-pass', bandpass: 'Band-pass', notch: 'Notch',
   ...Object.fromEntries(LFO_DESTINATIONS.map((d) => [d.id, d.label])),
-  note: 'On', free: 'Off',
+  note: 'On', free: 'Off', white: 'White', pink: 'Pink',
 };
 
 /** The target as its control shows it: "800 Hz", "24 dB", "Square", or "On" for a switch or a Display option ("Press" for an Action). */
@@ -130,7 +130,7 @@ export function targetText(step: Step): string {
 }
 
 const CHOICE_CONTROLS: Record<ChoiceId, string> = {
-  waveform: 'Osc 1 Waveform', osc2Waveform: 'Osc 2 Waveform', subOctave: 'Sub Octave', subWaveform: 'Sub Waveform', filterMode: 'Filter Mode', filterSlope: 'Slope',
+  waveform: 'Osc 1 Waveform', osc2Waveform: 'Osc 2 Waveform', subOctave: 'Sub Octave', subWaveform: 'Sub Waveform', noiseColour: 'Noise Colour', filterMode: 'Filter Mode', filterSlope: 'Slope',
   lfoWaveform: 'LFO 1 Waveform', lfoDestination: 'LFO 1 Destination', lfoRetrigger: 'LFO 1 Retrigger',
   lfo2Waveform: 'LFO 2 Waveform', lfo2Destination: 'LFO 2 Destination', lfo2Retrigger: 'LFO 2 Retrigger', voices: 'Voices',
 };

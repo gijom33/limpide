@@ -23,6 +23,7 @@ export const CHOICE_LABELS: Record<ChoiceId, string> = {
   osc2Waveform: 'Osc 2 Waveform',
   subOctave: 'Sub Octave',
   subWaveform: 'Sub Waveform',
+  noiseColour: 'Noise Colour',
   filterMode: 'Filter Mode',
   filterSlope: 'Slope',
   lfoWaveform: 'LFO 1 Waveform',

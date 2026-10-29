@@ -55,7 +55,7 @@ Osc 2's fine pitch offset in cents, on top of its Transpose.
 _Avoid_: Fine tune, spread
 
 **Noise**:
-An unpitched source of equal energy across frequencies, mixed alongside the Oscillators.
+An unpitched source mixed alongside the Oscillators, in one of two colours: white (equal energy at every frequency) or pink (equal energy in every octave, falling 3 dB an octave).
 _Avoid_: White noise generator, hiss
 
 **Mixer**:

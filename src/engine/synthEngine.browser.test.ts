@@ -1303,3 +1303,31 @@ describe('the Sub’s Octave and Waveform (issue 91)', () => {
     expect(engine.fundamental()).toBeCloseTo(55);
   });
 });
+
+describe('Pink Noise (issue 92)', () => {
+  const noiseAlone = { cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001, mixOsc1: 0, mixNoise: 1 } as const;
+  // The average level in a band a third of an octave wide around `f`, from many short Hann-windowed frames.
+  const bandLevel = (s: Float32Array, f: number) => {
+    let sum = 0;
+    let n = 0;
+    for (let from = SR / 2; from + 4096 <= s.length; from += 4096)
+      for (const k of [0.9, 0.95, 1, 1.05, 1.1]) {
+        sum += toneAmplitudeHann(s.subarray(from, from + 4096), SR, f * k) ** 2;
+        n++;
+      }
+    return Math.sqrt(sum / n);
+  };
+
+  it('falls 3 dB an octave, 10 dB a decade; white stays level', async () => {
+    const pink = await render(3, { ...noiseAlone, noiseColour: 'pink' }, (e) => e.noteOn(57, 1, 0));
+    const white = await render(3, noiseAlone, (e) => e.noteOn(57, 1, 0));
+    expect(dB(bandLevel(pink, 4000) / bandLevel(pink, 400))).toBeCloseTo(-10, -0.5);
+    expect(Math.abs(dB(bandLevel(white, 4000) / bandLevel(white, 400)))).toBeLessThan(2);
+  });
+
+  it('is as loud as white (RMS within 1 dB)', async () => {
+    const pink = await render(2, { ...noiseAlone, noiseColour: 'pink' }, (e) => e.noteOn(57, 1, 0));
+    const white = await render(2, noiseAlone, (e) => e.noteOn(57, 1, 0));
+    expect(Math.abs(dB(rms(pink, SR / 2) / rms(white, SR / 2)))).toBeLessThan(1);
+  });
+});

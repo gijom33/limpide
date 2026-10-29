@@ -189,6 +189,11 @@ export const TIPS = {
     title: 'Noise',
     body: 'An unpitched hiss with energy at every frequency: in the Spectrum it fills the gaps between Harmonics. Filter it for wind, breath or percussion.',
   },
+  noiseColour: {
+    title: 'Noise colour',
+    body: 'White Noise has the same energy at every frequency, so it hisses. Pink has the same energy in every octave: it falls 3 dB an octave, a softer rush like rain or surf. Both are equally loud overall.',
+    how: 'Raise the Noise fader and switch colours: the Spectrum’s floor tilts down to the right on Pink.',
+  },
   // Issue 49: the core controls and the stages, so a newcomer finds words where they look first.
   oscillators: {
     title: 'Oscillators',

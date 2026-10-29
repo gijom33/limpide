@@ -467,6 +467,16 @@ export function App() {
                             learn={{ kind: 'choice', id: 'subWaveform' }}
                           />
                         </Tooltip>
+                        <Tooltip content={TIPS.noiseColour}>
+                          <Segmented
+                            label="Noise Colour"
+                            caption="Noise"
+                            value={patch.noiseColour}
+                            options={CHOICES.noiseColour.map((v) => ({ value: v, label: v === 'white' ? 'White' : 'Pink' }))}
+                            onChange={(noiseColour) => edit((p) => ({ ...p, noiseColour }))}
+                            learn={{ kind: 'choice', id: 'noiseColour' }}
+                          />
+                        </Tooltip>
                       </div>
                     </SubBlock>
                     ),
