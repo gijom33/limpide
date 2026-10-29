@@ -22,22 +22,27 @@ test('the header shows the Limpide logo and wordmark, and the tab and home scree
   expect(icons.filter((i) => i.rel === 'icon').at(-1)!.href).toMatch(/\.ico$/);
 });
 
-for (const width of [861, 872, 884, 900, 920, 1000, 1100, 1440, 1710]) {
-  test(`the Limpide name is on screen, on the header line, at ${width}px`, async ({ page }) => {
+for (const width of [861, 872, 884, 900, 920, 1000, 1100, 1440, 1710, 1920]) {
+  test(`the Limpide name is on screen, over the Patch picker in three across and on the header line wider, at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/');
     const title = page.getByRole('heading', { level: 1, name: 'Limpide' });
     await expect(title).toBeVisible();
-    const { text, header, display } = await page.evaluate(() => ({
+    const { text, header, display, patch } = await page.evaluate(() => ({
       text: document.querySelector('.wordmark-text')!.getBoundingClientRect(),
       header: document.querySelector('header')!.getBoundingClientRect(),
       display: document.querySelector('.display-menu')!.getBoundingClientRect(),
+      patch: document.querySelector('.header-identity > :last-child')!.getBoundingClientRect(),
     }));
     expect(text.width).toBeGreaterThan(60); // drawn at full size, not clipped away
     expect(text.right).toBeLessThanOrEqual(header.right);
     expect(display.right).toBeLessThanOrEqual(header.right + 1); // the Display button stays inside the window
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-    expect(Math.abs(text.top + text.height / 2 - (display.top + display.height / 2))).toBeLessThanOrEqual(8); // one line
+    if (width < 1920) {
+      // Three across: the name over the Patch picker, so the piano can sit at the centre (issue 82, the owner, 2026-10-29).
+      expect(text.bottom).toBeLessThanOrEqual(patch.top + 1);
+      expect(text.top).toBeGreaterThanOrEqual(header.top - 1);
+    } else expect(Math.abs(text.top + text.height / 2 - (display.top + display.height / 2))).toBeLessThanOrEqual(8); // one line
   });
 }
 

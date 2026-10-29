@@ -117,3 +117,30 @@ for (const [width, height] of [[345, 800], [360, 800], [601, 900], [861, 800], [
     for (const k of tops) expect(k.top).toBeLessThan(tops[0].bottom);
   });
 }
+
+// Issue 82 (the owner's idea, 2026-10-28): in three across, the top row stacks what it can two high so the piano sits at
+// the page's centre, wherever that leaves it its full size; the row grows no taller.
+const pianoPlace = (page: import('@playwright/test').Page) =>
+  page.evaluate(() => {
+    const piano = document.querySelector('.piano')!.getBoundingClientRect();
+    const header = document.querySelector('header')!.getBoundingClientRect();
+    return { offset: Math.round((piano.left + piano.right) / 2 - (header.left + header.right) / 2), headerHeight: Math.round(header.height) };
+  });
+for (const width of [1200, 1280, 1366, 1440, 1600, 1800]) {
+  test(`the piano sits at the page's centre, the top row no taller (${width}px, issue 82)`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/');
+    const { offset, headerHeight } = await pianoPlace(page);
+    expect(Math.abs(offset)).toBeLessThanOrEqual(4);
+    expect(headerHeight).toBeLessThanOrEqual(64);
+  });
+}
+for (const width of [880, 1000, 1100]) {
+  test(`the piano keeps its size and comes nearer the centre where centring would shrink it (${width}px, issue 82)`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/');
+    const { offset, headerHeight } = await pianoPlace(page);
+    expect(Math.abs(offset)).toBeLessThanOrEqual(80); // 140 to 170 px before
+    expect(headerHeight).toBeLessThanOrEqual(64);
+  });
+}

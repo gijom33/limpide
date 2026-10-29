@@ -36,3 +36,5 @@ Decided by the owner on 2026-10-26, all four as proposed:
 - [x] The whole instrument still on screen where it was: at 1440 × 900 the Viewers go from 122 to 110 px. Short windows that already scrolled (861 × 700: 838 px of page, 1000 × 800: 827) scroll 12 to 24 px more
 - [x] The design principles' audit: the piano's keys meet the 24 px target on laptop, foldable and wide screens (44 and 26 px), so their three waivers are gone; the phone's stays
 - [x] Tried by the owner (2026-10-26): "New header looks good"
+
+Since then (2026-10-29, [issue 82](./82-top-row-centres-the-piano.md), decided by the owner): in three across (861 to 1919 px) the logo sits over the Patch picker and Song under Demo and Tutorial, two high, so the piano can sit at the page's centre; the order left to right is otherwise the same.

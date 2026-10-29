@@ -39,8 +39,10 @@ for (const [size, [width, height]] of Object.entries(SIZES)) {
     await page.goto('/');
     const h = await header(page);
     expect(h.demo.right).toBeLessThanOrEqual(h.tutorial.left);
-    expect(h.tutorial.right).toBeLessThanOrEqual(h.song.left);
-    expect(h.song.right).toBeLessThanOrEqual(h.hold.left);
+    // In three across, Song sits under Demo, two high (issue 82, the owner, 2026-10-29); elsewhere after Tutorial.
+    if (size === 'laptop') expect(h.song.top).toBeGreaterThanOrEqual(h.demo.bottom);
+    else expect(h.tutorial.right).toBeLessThanOrEqual(h.song.left);
+    expect(Math.max(h.song.right, h.tutorial.right)).toBeLessThanOrEqual(h.hold.left);
     expect(h.hold.right).toBeLessThanOrEqual(h.midi.left);
     expect(h.midi.right).toBeLessThanOrEqual(h.display.left);
     expect(h.display.right).toBeLessThanOrEqual(h.about.left);
