@@ -26,6 +26,7 @@ export type ParamId =
   | 'osc2Detune'
   | 'osc2PulseWidth'
   | 'crossMod'
+  | 'osc2EnvAmount'
   | 'mixOsc1'
   | 'mixOsc2'
   | 'mixRing'
@@ -126,6 +127,8 @@ export const PARAMS: Record<ParamId, ParamDef> = {
   osc2PulseWidth: { id: 'osc2PulseWidth', label: 'Pulse Width', unit: '%', min: 0.05, max: 0.95, taper: 'linear', default: 0.25, control: 'set' },
   // How far Osc 2 swings Osc 1's frequency (issue 89): at full, four times Osc 2's own frequency.
   crossMod: level('crossMod', 'Cross Mod', 0, 'play'),
+  // How far the Filter Envelope moves Osc 2's pitch at its peak (issue 93), as a Prophet's Poly Mod does.
+  osc2EnvAmount: { id: 'osc2EnvAmount', label: 'Env Amount', unit: 'st', min: -24, max: 24, taper: 'linear', default: 0, control: 'set' },
   mixOsc1: level('mixOsc1', 'Osc 1', 1, 'fader'),
   mixOsc2: level('mixOsc2', 'Osc 2', 0, 'fader'),
   // Osc 1 times Osc 2 (issue 88), whatever their own levels.

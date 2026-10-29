@@ -406,6 +406,10 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   filterEnvelope.connect(envelopeAmount);
   envelopeAmount.connect(filter.detune);
   envelopeAmount.connect(filter2.detune);
+  // The same Envelope on Osc 2's pitch (issue 93): its Env Amount in cents.
+  const osc2EnvAmount = ctx.createGain();
+  osc2EnvAmount.gain.value = 0;
+  filterEnvelope.connect(osc2EnvAmount).connect(osc2.detune);
   filterEnvelope.start();
 
   // Velocity → Cutoff, the same way: the Note's Velocity (held until the next Note) times the amount, in cents.
@@ -561,6 +565,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
       const cutoff = effectiveCutoff(next);
       [filter, filter2].forEach((node, i) => setStage(node, stages[i], cutoff, t));
       envelopeAmount.gain.setValueAtTime(next.filterEnvAmount * 1200, t);
+      osc2EnvAmount.gain.setValueAtTime(next.osc2EnvAmount * 100, t);
       velocityAmount.gain.setValueAtTime(next.velocityCutoff * VELOCITY_CUTOFF_OCTAVES * 1200, t);
       keyTrackAmount.gain.setValueAtTime(next.keyTrack * 100, t); // cents per semitone
     },

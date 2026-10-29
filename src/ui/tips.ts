@@ -194,6 +194,11 @@ export const TIPS = {
     body: 'Osc 2 swings Osc 1’s pitch up and down hundreds of times a second (FM), whatever Osc 2’s own fader. Too fast to hear as vibrato, it becomes tone: new partials fan out either side of each Harmonic, from a growl to a clang. Osc 2’s tuning decides where they land.',
     how: 'Pick Sine on both and turn Cross Mod up: watch spikes grow beside the Ideal’s circles, which mark plain Osc 1.',
   },
+  osc2EnvAmount: {
+    title: 'Env Amount',
+    body: 'How many semitones the Filter Envelope moves Osc 2 at its peak: Osc 2 jumps by the Amount as a Note starts, then settles with the Envelope’s Decay and Sustain. Up or down, two octaves at most. With Cross Mod or Ring, the sweep becomes a zap.',
+    how: 'Mix Osc 2 in, set Env Amount to +12 and the Filter Envelope’s Sustain to 0: each Note starts an octave up and falls.',
+  },
   ring: {
     title: 'Ring',
     body: 'Osc 1 multiplied by Osc 2, whatever their own faders: in place of the two pitches you hear their sum and their difference, for bells, gongs and metallic clangs. Detune or Semitone on Osc 2 changes which.',
@@ -345,6 +350,7 @@ export const PARAM_TIPS: Record<ParamId, TipContent> = {
   pulseWidth: TIPS.pulseWidth,
   osc2PulseWidth: TIPS.pulseWidth,
   crossMod: TIPS.crossMod,
+  osc2EnvAmount: TIPS.osc2EnvAmount,
   osc1Octave: TIPS.osc1Octave,
   osc2Octave: TIPS.octave,
   osc2Semitone: TIPS.semitone,

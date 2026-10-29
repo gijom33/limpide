@@ -430,6 +430,8 @@ export function App() {
                           />
                           {/* What Osc 2 does to Osc 1 (issue 89): it works whatever Osc 2's own fader. */}
                           <Knob id="crossMod" value={patch.crossMod} onChange={(v) => change('crossMod', v)} />
+                          {/* The Filter Envelope on Osc 2's pitch (issue 93). */}
+                          <Knob id="osc2EnvAmount" value={patch.osc2EnvAmount} onChange={(v) => change('osc2EnvAmount', v)} inactive={!osc2Heard(patch)} />
                         </div>
                       </SubBlock>
                     ),

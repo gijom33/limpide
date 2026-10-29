@@ -54,6 +54,10 @@ _Avoid_: Interval, coarse tune
 Osc 2's fine pitch offset in cents, on top of its Transpose.
 _Avoid_: Fine tune, spread
 
+**Env Amount (Osc 2)**:
+How many semitones the Filter Envelope moves Osc 2's pitch at its peak, up or down: the Envelope shapes the Cutoff and, by this Amount, Osc 2's tuning.
+_Avoid_: Pitch envelope, Poly Mod (fine in a tooltip)
+
 **Noise**:
 An unpitched source mixed alongside the Oscillators, in one of two colours: white (equal energy at every frequency) or pink (equal energy in every octave, falling 3 dB an octave).
 _Avoid_: White noise generator, hiss

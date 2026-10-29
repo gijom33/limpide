@@ -1375,3 +1375,19 @@ describe('Cross-modulation (issue 89)', () => {
     expect(dB(high(2) / high(1))).toBeCloseTo(dB(low(2) / low(1)), 0);
   });
 });
+
+describe('the Filter Envelope on Osc 2’s pitch (issue 93)', () => {
+  const osc2Alone = { cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001, osc2Waveform: 'sine', mixOsc1: 0, mixOsc2: 1, filterAttack: 0.001 } as const;
+
+  it('takes Osc 2 an octave up at the Envelope’s full level, and back once it has fallen to a Sustain of 0', async () => {
+    const held = await render(1, { ...osc2Alone, osc2EnvAmount: 12, filterSustain: 1 }, (e) => e.noteOn(45, 1, 0));
+    expect(frequencyAround(held, SR, 0.7, 0.2)).toBeCloseTo(220, -1);
+    const fallen = await render(1, { ...osc2Alone, osc2EnvAmount: 12, filterSustain: 0, filterDecay: 0.05 }, (e) => e.noteOn(45, 1, 0));
+    expect(frequencyAround(fallen, SR, 0.7, 0.2)).toBeCloseTo(110, -1);
+  });
+
+  it('leaves Osc 2 alone at 0', async () => {
+    const s = await render(1, { ...osc2Alone, filterSustain: 1 }, (e) => e.noteOn(45, 1, 0));
+    expect(frequencyAround(s, SR, 0.7, 0.2)).toBeCloseTo(110, -1);
+  });
+});

@@ -129,6 +129,13 @@ describe('the new LFO destinations', () => {
     expect(osc2Cents(patch, [1])).toBeCloseTo(1910);
     expect(osc2Cents({ ...patch, lfoDestination: 'detune', lfoAmount: 0.5 }, [-1])).toBeCloseTo(685);
   });
+
+  it('adds the Filter Envelope times Osc 2’s Env Amount, in semitones (issue 93)', () => {
+    const patch = { ...defaultPatch(), osc2Semitone: 7, osc2EnvAmount: 12 };
+    expect(osc2Cents(patch, [0, 0], 0)).toBe(700);
+    expect(osc2Cents(patch, [0, 0], 0.5)).toBeCloseTo(1300);
+    expect(osc2Cents({ ...patch, osc2EnvAmount: -24 }, [0, 0], 1)).toBeCloseTo(-1700);
+  });
 });
 
 describe('Volume: tremolo (issue 53)', () => {

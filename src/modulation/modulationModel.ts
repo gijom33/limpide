@@ -142,8 +142,11 @@ export function effectiveVolume(patch: Patch, lfo: readonly number[] = []): numb
   return patch.volume * tremolo(patch, lfo);
 }
 
-/** Osc 2's tuning against Osc 1, in cents: Octave, Semitone and Detune, then the LFOs on Osc 2 Pitch and on Detune. */
-export function osc2Cents(patch: Patch, lfo: readonly number[] = []): number {
+/**
+ * Osc 2's tuning against the Note played, in cents: Octave, Semitone and Detune, then the LFOs on Osc 2 Pitch and on
+ * Detune, and the Filter Envelope's level times its Env Amount (issue 93).
+ */
+export function osc2Cents(patch: Patch, lfo: readonly number[] = [], filterEnvelope = 0): number {
   const knobs = patch.osc2Octave * 1200 + patch.osc2Semitone * 100 + patch.osc2Detune;
-  return knobs + lfoOffset(patch, 'osc2Pitch', lfo) * 100 + lfoOffset(patch, 'detune', lfo);
+  return knobs + lfoOffset(patch, 'osc2Pitch', lfo) * 100 + lfoOffset(patch, 'detune', lfo) + patch.osc2EnvAmount * filterEnvelope * 100;
 }
