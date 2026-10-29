@@ -125,11 +125,12 @@ export function targetText(step: Step): string {
   if (step.kind === 'display') return 'On';
   if (step.kind === 'action') return 'Press';
   if (step.id === 'filterSlope') return `${step.to} dB`;
+  if (step.id === 'subOctave') return `−${-step.to} oct`;
   return CHOICE_NAMES[String(step.to)] ?? String(step.to);
 }
 
 const CHOICE_CONTROLS: Record<ChoiceId, string> = {
-  waveform: 'Osc 1 Waveform', osc2Waveform: 'Osc 2 Waveform', filterMode: 'Filter Mode', filterSlope: 'Slope',
+  waveform: 'Osc 1 Waveform', osc2Waveform: 'Osc 2 Waveform', subOctave: 'Sub Octave', subWaveform: 'Sub Waveform', filterMode: 'Filter Mode', filterSlope: 'Slope',
   lfoWaveform: 'LFO 1 Waveform', lfoDestination: 'LFO 1 Destination', lfoRetrigger: 'LFO 1 Retrigger',
   lfo2Waveform: 'LFO 2 Waveform', lfo2Destination: 'LFO 2 Destination', lfo2Retrigger: 'LFO 2 Retrigger', voices: 'Voices',
 };

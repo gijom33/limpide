@@ -71,3 +71,21 @@ describe('the Ideal from every Oscillator (the owner, 2026-10-27): each sourceâ€
     expect(partials.map((p) => p.ratio)).toEqual([...partials.map((p) => p.ratio)].sort((a, b) => a - b));
   });
 });
+
+describe('the Subâ€™s Octave and Waveform in the Ideal (issue 91)', () => {
+  const at = (partials: ReturnType<typeof idealPartials>, source: string, ratio: number) =>
+    partials.find((p) => p.source === source && Math.abs(p.ratio - ratio) < 1e-3);
+
+  it('counts from the Sub two octaves down: Osc 1 on every fourth Harmonic', () => {
+    const partials = idealPartials({ ...defaultPatch(), mixSub: 1, subOctave: -2 }, 64);
+    expect(at(partials, 'osc1', 4)).toBeDefined();
+    expect(at(partials, 'osc1', 2)).toBeUndefined();
+    expect(at(partials, 'sub', 3)!.level).toBeCloseTo(square[3]);
+    expect(idealReference({ ...defaultPatch(), mixSub: 1, subOctave: -2 }, 64)[4]).toBeCloseTo(saw[1]);
+  });
+
+  it('draws a sine Sub as its one Harmonic', () => {
+    const partials = idealPartials({ ...defaultPatch(), mixSub: 1, subWaveform: 'sine' }, 64);
+    expect(partials.filter((p) => p.source === 'sub').map((p) => p.ratio)).toEqual([1]);
+  });
+});

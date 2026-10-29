@@ -306,6 +306,8 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 
 /* A segmented control is one shape; the selected segment is filled. */
 .segmented-field { display: inline-flex; align-items: center; gap: 6px; }
+/* The Mixer's per-source choices (the Sub's octave and shape, the Noise's colour), in a row under the faders. */
+.source-choices { display: flex; flex-wrap: wrap; align-items: center; gap: var(--knob-row-gap) var(--knob-gap); margin-top: var(--knob-row-gap); }
 .field-caption { font-size: var(--text-md); color: var(--muted); }
 .segmented {
   display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 2px;

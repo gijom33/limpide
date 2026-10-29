@@ -157,7 +157,7 @@ How hard a Note was struck (0–1): from MIDI, from how low you press an on-scre
 _Avoid_: Intensity, force
 
 **Sub-oscillator**:
-A square wave an octave below Osc 1, following its pitch, with its own Mixer level. While it sounds, the fundamental is the Sub's pitch, so Harmonic Markers and Cycle Lock count from there.
+A square or sine wave one or two octaves below Osc 1 (its Sub Octave), following its pitch, with its own Mixer level. While it sounds, the fundamental is the Sub's pitch, so Harmonic Markers and Cycle Lock count from there.
 _Avoid_: Sub, sub-bass (fine in UI copy)
 
 **Key Track**:

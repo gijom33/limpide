@@ -1279,3 +1279,27 @@ describe('Osc 1 Octave (issue 90)', () => {
       expect(dB(h(2) / h(1)), 'even Harmonics present').toBeGreaterThan(-6);
     });
 });
+
+describe('the Sub’s Octave and Waveform (issue 91)', () => {
+  const A2 = 45; // 110 Hz: the Sub at 55 Hz, or 27.5 Hz two octaves down
+  const subAlone = { cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001, mixOsc1: 0, mixSub: 1 } as const;
+  const steady = (s: Float32Array) => s.subarray(SR / 2, SR / 2 + Math.round((20 * SR) / 27.5));
+
+  it('sits two octaves below Osc 1 at −2', async () => {
+    const s = steady(await render(2, { ...subAlone, subOctave: -2 }, (e) => e.noteOn(A2, 1, 0)));
+    expect(dB(toneAmplitude(s, SR, 55) / toneAmplitude(s, SR, 27.5))).toBeLessThan(-60);
+    expect(dB(toneAmplitude(s, SR, 82.5) / toneAmplitude(s, SR, 27.5))).toBeCloseTo(dB(1 / 3), 0); // a square's 3rd
+  });
+
+  it('has no 3rd Harmonic as a sine', async () => {
+    const s = steady(await render(2, { ...subAlone, subWaveform: 'sine' }, (e) => e.noteOn(A2, 1, 0)));
+    expect(dB(toneAmplitude(s, SR, 165) / toneAmplitude(s, SR, 55))).toBeLessThan(-60);
+  });
+
+  it('counts Cycle Lock from the Sub, two octaves down', () => {
+    const engine = createSynthEngine(new OfflineAudioContext(1, SR, SR));
+    engine.applyPatch({ ...defaultPatch(), mixSub: 1, subOctave: -2 });
+    engine.noteOn(57, 1, 0);
+    expect(engine.fundamental()).toBeCloseTo(55);
+  });
+});

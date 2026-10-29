@@ -74,8 +74,13 @@ export const TIPS = {
   },
   sub: {
     title: 'Sub-oscillator',
-    body: 'A square wave an octave below Osc 1, for weight. The sound now repeats an octave lower, so the Harmonics are counted from the Sub: it fills the odd ones, and Osc 1 the even ones.',
+    body: 'A square (or sine) an octave (or two) below Osc 1, for weight; its shape and octave are under the faders. The sound now repeats at the Sub’s pitch, so the Harmonics are counted from it: an octave down, a square Sub fills the odd ones and Osc 1 the even ones.',
     how: 'Turn it up on Hollow Square or Init and watch every other rung of the Harmonic ladder fill in.',
+  },
+  subOptions: {
+    title: 'Sub',
+    body: 'Where the Sub sits, one or two octaves below Osc 1, and its shape: a square for buzz, a sine for a clean, round weight. Two octaves down, the Harmonics count from the Sub and Osc 1 lands on every fourth one.',
+    how: 'Raise the Sub fader, pick −2 and Sine, and watch a single low spike appear far left in the Spectrum.',
   },
   keyTrack: {
     title: 'Key Track',

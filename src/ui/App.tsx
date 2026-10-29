@@ -446,6 +446,28 @@ export function App() {
                         <Fader id="mixNoise" value={patch.mixNoise} onChange={(v) => change('mixNoise', v)} />
                         <Fader id="mixSub" value={patch.mixSub} onChange={(v) => change('mixSub', v)} />
                       </div>
+                      {/* Each source's own choices, under the faders (issues 91 and 92). */}
+                      <div className="source-choices">
+                        <Tooltip content={TIPS.subOptions}>
+                          <Segmented
+                            label="Sub Octave"
+                            caption="Sub"
+                            value={patch.subOctave}
+                            options={CHOICES.subOctave.map((v) => ({ value: v, label: `−${-v}`, name: `${-v} octave${v === -1 ? '' : 's'} down` }))}
+                            onChange={(subOctave) => edit((p) => ({ ...p, subOctave }))}
+                            learn={{ kind: 'choice', id: 'subOctave' }}
+                          />
+                        </Tooltip>
+                        <Tooltip content={TIPS.subOptions}>
+                          <Segmented
+                            label="Sub Waveform"
+                            value={patch.subWaveform}
+                            options={CHOICES.subWaveform.map((v) => ({ value: v, label: v === 'square' ? 'Square' : 'Sine' }))}
+                            onChange={(subWaveform) => edit((p) => ({ ...p, subWaveform }))}
+                            learn={{ kind: 'choice', id: 'subWaveform' }}
+                          />
+                        </Tooltip>
+                      </div>
                     </SubBlock>
                     ),
                   },

@@ -7,7 +7,7 @@ import {
 import { bandwidthOctaves } from '../modulation/passBand';
 import { harmonicSeries } from '../music/harmonics';
 import { frequencyToNote, noteToFrequency } from '../music/pitch';
-import { GLIDE_OFF, type Lfo, type LfoNumber, lfos, PARAMS, type Patch, type Voices } from '../patch/patch';
+import { GLIDE_OFF, type Lfo, type LfoNumber, lfos, PARAMS, type Patch, type SubWaveform, type Voices } from '../patch/patch';
 import { filterStages, type Stage } from './filterDesign';
 
 /**
@@ -318,10 +318,17 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   oscillators[0].out.connect(mix1).connect(mixer);
   oscillators[1].out.connect(mix2).connect(mixer);
   noise.connect(mixNoise).connect(mixer);
-  // The Sub-oscillator: a square an octave below Osc 1, following its pitch, Glide and vibrato.
+  // The Sub-oscillator: a square or a sine, one or two octaves below Osc 1 (issue 91), following its pitch, Glide and
+  // vibrato. It runs an octave down; its detune takes it the second.
   const sub = ctx.createOscillator();
-  const square = harmonicSeries('square', 0.5, WAVE_HARMONICS);
-  sub.setPeriodicWave(ctx.createPeriodicWave(square.real, square.imag, { disableNormalization: true }));
+  const subWaves = Object.fromEntries(
+    (['square', 'sine'] as const).map((w) => {
+      const { real, imag } = harmonicSeries(w, 0.5, WAVE_HARMONICS);
+      return [w, ctx.createPeriodicWave(real, imag, { disableNormalization: true })];
+    }),
+  ) as Record<SubWaveform, PeriodicWave>;
+  let subWaveform: SubWaveform = 'square';
+  sub.setPeriodicWave(subWaves.square);
   sub.frequency.value = A4 / 2;
   const mixSub = ctx.createGain();
   mixSub.gain.value = 0;
@@ -475,7 +482,11 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
       tunePulses(frequencyAt(t), t);
       // Osc 1's Octave moves it and the Sub; Osc 2's offsets count from the Note.
       osc.detune.setValueAtTime(next.osc1Octave * 1200, t);
-      sub.detune.setValueAtTime(next.osc1Octave * 1200, t);
+      sub.detune.setValueAtTime((next.osc1Octave + next.subOctave + 1) * 1200, t);
+      if (next.subWaveform !== subWaveform) {
+        subWaveform = next.subWaveform;
+        sub.setPeriodicWave(subWaves[subWaveform]);
+      }
       osc2.detune.setValueAtTime(osc2Tuning, t);
       mix1.gain.setValueAtTime(next.mixOsc1 * OSCILLATOR_LEVEL, t);
       mix2.gain.setValueAtTime(next.mixOsc2 * OSCILLATOR_LEVEL, t);
@@ -742,11 +753,11 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   return {
     taps,
     // During a Glide, the frequency the Oscillators have reached: Cycle Lock follows the slide, at Osc 1's Octave.
-    // With the Sub sounding, the sound repeats at the Sub's pitch, an octave lower: that is the fundamental.
+    // With the Sub sounding, the sound repeats at the Sub's pitch, one or two octaves lower: that is the fundamental.
     fundamental: () => {
       const then = patchAt(ctx.currentTime);
       const frequency = (glidingAt(ctx.currentTime) || A4) * 2 ** ((then?.osc1Octave ?? 0) + bendAt(ctx.currentTime) / 1200);
-      return then?.mixSub ? frequency / 2 : frequency;
+      return then?.mixSub ? frequency * 2 ** then.subOctave : frequency;
     },
     modulationAt,
     lfoSwingAt: (time, n = 1) => {
