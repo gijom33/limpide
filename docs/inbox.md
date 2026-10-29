@@ -4,7 +4,16 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- The envelope actuators are not placed the same way for the FILTER and AMP sections. This should be fixable.
+
 ## Ideas
+
+- In the Display menu, add a selector to hide or show the tooltips. On by default.
+- When it does not waste real estate, feel free to stack buttons in the top row, with the 3-across in particular. It looks like, by doing that, we could recenter the keyboard.
+- For the 2x2 view, I would hide the actuators values by default just like for the phone view.
+- When really on a touch screen, we have a beautiful overlay to show value. In that case, there is no need to replace the actuators (knob or fader) with their value. That is redundant information.
+- I am interested in gathering statistics about the project in terms of project size, quality, and performance.
+- All display settings should be remembered.
 
 ## Dropped
 
