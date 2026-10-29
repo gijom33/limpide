@@ -1,6 +1,6 @@
 import { DESTINATIONS, destinationLevel, knobLevel, lfoDestinations } from '../modulation/destinations';
 import type { Modulation } from '../modulation/modulationModel';
-import { formatParam, type LfoDestination, type Patch } from '../patch/patch';
+import { formatParam, type LfoDestination, type Patch, type StageId } from '../patch/patch';
 import { cssVar, curveWidth, haloText, prepareCanvas } from './canvas';
 import { createDashState } from './dashState';
 import { createFreezeLatch } from './freezeLatch';
@@ -37,6 +37,32 @@ export function timelineShows(patch: Patch | undefined) {
 export type LinePattern = 'dots' | 'dashes' | 'dashDot';
 export const linePattern = (patch: Patch, moved: LfoDestination | 'cutoff'): LinePattern =>
   moved === 'cutoff' ? 'dots' : patch.lfoAmount > 0 && patch.lfoDestination === moved ? 'dashes' : 'dashDot';
+
+/** A key entry: what it marks and names, and for a moved Parameter its line's stage colour and pattern. */
+export interface KeyEntry {
+  mark: string;
+  name: string;
+  destination?: LfoDestination;
+  stage?: StageId;
+  pattern?: LinePattern;
+}
+
+/**
+ * The key: what the Timeline draws with this Patch (`timelineShows`), in the owner's order (2026-10-28): what LFO 1
+ * moves, then what LFO 2 moves, then the Cutoff and the Filter Envelope, last the Amp Envelope. An LFO on the Cutoff
+ * shows as the Cutoff. With no Filter Envelope and no LFO, the Amp Envelope alone.
+ */
+export function timelineKey(patch: Patch | undefined): KeyEntry[] {
+  const shows = timelineShows(patch);
+  return [
+    ...(patch
+      ? shows.destinations.map((d) => ({ mark: `lfo-${d}`, name: DESTINATIONS[d].label, destination: d, stage: DESTINATIONS[d].stage, pattern: linePattern(patch, d) }))
+      : []),
+    ...(shows.cutoff ? [{ mark: 'cutoff', name: 'Cutoff', stage: 'filter' as const, pattern: 'dots' as const }] : []),
+    ...(shows.filterEnvelope ? [{ mark: 'filterEnvelope', name: 'Filter Envelope' }] : []),
+    { mark: 'amp', name: 'Amp Envelope' },
+  ];
+}
 const DASHES: Record<LinePattern, number[]> = { dots: [0.5, 5.5], dashes: [5, 3], dashDot: [7, 3, 0.5, 3] };
 const DOT_WIDTH = 1.75; // times the curve's width
 
@@ -104,7 +130,7 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
     // Amount moves the Cutoff: at zero the Envelope runs but changes nothing.
     const patchNow = source.patchAt(now);
     const shows = timelineShows(patchNow);
-    canvas.dataset.shows = ['amp', ...(shows.filterEnvelope ? ['filterEnvelope'] : []), ...(shows.cutoff ? ['cutoff'] : []), ...shows.destinations].join(' ');
+    canvas.dataset.shows = timelineKey(patchNow).map((e) => e.mark).join(' ');
     if (shows.filterEnvelope) area('--stage-filter', 0.1, (m) => m.filter);
     canvas.dataset.filterEnvelope = (samples.at(-1)?.filter ?? 0).toFixed(3);
     const latest = samples.at(-1);

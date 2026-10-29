@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement
+**Status:** done (2026-10-28). The key's entries and order come from one pure list beside what the Timeline shows; the key and the canvas's attribute both read it. Nothing visible changed: the Playwright suite passes untouched.
 
 ## Agent Brief
 
@@ -23,8 +23,8 @@
 - The Timeline's key entries for a Patch
 
 **Acceptance criteria:**
-- [ ] `npx tsc`, `npm run lint`, `npx vitest run` and `npx playwright test` green, no Playwright test changed
-- [ ] A node test pins the key's order and contents: the Amp Envelope alone; the Filter Envelope and the Cutoff once its Amount is set; an LFO on the Cutoff as the Cutoff; LFO 1's then LFO 2's Destinations first, with their patterns and stages
+- [x] `npx tsc`, `npm run lint`, `npx vitest run` and `npx playwright test` green, no Playwright test changed
+- [x] A node test pins the key's order and contents: the Amp Envelope alone; the Filter Envelope and the Cutoff once its Amount is set; an LFO on the Cutoff as the Cutoff; LFO 1's then LFO 2's Destinations first, with their patterns and stages
 
 **Out of scope:**
 - The drawing: where lines, dots and labels go (the PRD leaves canvas pixels untested)
@@ -38,3 +38,9 @@ Claude's calls, open to the owner:
 
 2. The canvas's attribute lists the key's marks in the key's order (an LFO line as `lfo-` and its Destination). The one Playwright test that reads it looks for a Destination's name, which the marks keep.
 3. Built in the session that grilled it, test-first, not pushed.
+
+## How it was built
+
+- **The list** (`src/viewers/timeline.ts`): `timelineKey(patch)` returns `KeyEntry`s (mark, name, and for a moved Parameter its Destination, stage and pattern), built from `timelineShows` and `linePattern`. The canvas's `data-shows` is its marks. Tests: `timeline.test.ts`.
+- **The key** (`src/ui/EnvelopeTimeline.tsx`): renders `timelineKey(patch)`, each entry's tip from `tipOf`.
+
