@@ -6,9 +6,9 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
-- From the 1.15.1 review: the piano's width (two octave buttons and ten white keys) is written twice in the styles for 1200 to 1919 px, once for the top row's column and once for the keyboard's own columns; the header's 2 px and 4 px gaps are bare numbers.
 ## Dropped
 
+- 2026-10-29, from the 1.15.1 review, the piano's width written twice in the styles for 1200 to 1919 px, and the header's bare 2 px and 4 px gaps: kept. One shared width would carry the top row's 4 px gaps into every layout's keyboard, and the gaps are used once each, beside the rules they space. Claude's call, open to the owner.
 - 2026-10-28, from the issue 69 review, the category pills beside the search box on a computer where decision 7 says under it: nothing to build, decided by the owner; decision 7 is amended to match what is built (and decision 13, which assumed it).
 - 2026-10-28, from the issue 69 review, the Env Timeline's tooltip ("3 or 4 s fit a slow Swell") against Swell's description ("at 2 s or more"): both true, decided by the owner; Swell's Attack is 1.5 s, which the default 2 s shows whole.
 - 2026-10-28, from the issue 69 review, typing in the search box ending the Demo: never reached, since opening the Patch panel (a click or Enter on its button, inside the page) already ends it, as any control that does not shape the sound does. Claude's call, open to the owner.
@@ -83,3 +83,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-28, the owner's bug and six ideas (triage, decided by the owner): the Envelopes' rows placed unlike went to [80](./issues/80-amp-envelope-row-beside-its-name.md); tooltips switchable in Display to [81](./issues/81-tooltips-switch-in-display.md); the top row centring the piano to [82](./issues/82-top-row-centres-the-piano.md); the values on the 2 × 2 layout and on touch screens to [83](./issues/83-values-on-2x2-and-touch.md); statistics on the project, with runtime performance added, to [84](./issues/84-project-statistics.md), waiting on the owner's answers; every Display setting remembered to [85](./issues/85-display-settings-remembered.md).
 2026-10-28, the owner's bug, Glide below the Voices (triage, decided by the owner): reproduced at 1075 px wide, went to [86](./issues/86-glide-beside-the-voices.md).
 2026-10-28, the 1.15.0 review's other findings (triage, Claude's call, open to the owner): Display settings remembered three ways went to [87](./issues/87-display-settings-remembered-in-one-place.md).
+2026-10-29, the 1.15.1 review's other findings (triage, Claude's call, open to the owner): the piano's width written twice and the header's bare gaps to Dropped.
