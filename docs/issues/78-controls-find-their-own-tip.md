@@ -1,6 +1,6 @@
 # 78: Knobs and faders find their own tip
 
-**What to build:** Every knob and fader knows its Parameter, yet its tooltip is chosen where it is placed: the app's main component wraps 18 of them in a tooltip naming the tip by hand, with a table for the eight Envelope faders, and the LFO controls wrap their Depth and Rate the same way. Nothing checks that every Parameter has a tip. One map gives each Parameter its tip, and the knob and the fader look theirs up. The main component's stage block also drops four props it never uses. Candidate 6 of the architecture review of 2026-10-28, in the version the owner chose. Nothing visible changes.
+**What to build:** Every knob and fader knows its Parameter, yet its tooltip is chosen where it is placed: the app's main component wraps 17 of them in a tooltip naming the tip by hand, with a table for the eight Envelope faders, and the LFO controls wrap their Depth and Rate the same way. Nothing checks that every Parameter has a tip. One map gives each Parameter its tip, and the knob and the fader look theirs up. The main component's stage block also drops four props it never uses. Candidate 6 of the architecture review of 2026-10-28, in the version the owner chose. Nothing visible changes.
 
 **Blocked by:** none
 
