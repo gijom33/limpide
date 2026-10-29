@@ -31,6 +31,12 @@ describe('Presets', () => {
     expect(using((p) => p.lfo2Amount > 0)).toBeGreaterThanOrEqual(8);
     expect(using((p) => p.lfoAmount > 0 && p.lfo2Amount > 0)).toBeGreaterThanOrEqual(4); // both at once
     expect(using((p) => (p.lfoAmount > 0 && p.lfoRetrigger === 'note') || (p.lfo2Amount > 0 && p.lfo2Retrigger === 'note'))).toBeGreaterThanOrEqual(3);
+    // The Oscillators' additions (issues 88 to 93).
+    for (const [name, uses] of Object.entries({
+      ring: (p) => p.mixRing > 0, crossMod: (p) => p.crossMod > 0, osc1Octave: (p) => p.osc1Octave !== 0, subOctave: (p) => p.mixSub > 0 && p.subOctave === -2,
+      subWaveform: (p) => p.mixSub > 0 && p.subWaveform === 'sine', pink: (p) => p.mixNoise > 0 && p.noiseColour === 'pink', osc2EnvAmount: (p) => p.osc2EnvAmount !== 0,
+    } satisfies Record<string, (p: (typeof PRESETS)[number]['patch']) => boolean>))
+      expect(using(uses), name).toBeGreaterThan(0);
   });
 
   it('have different names, and no two sound the same', () => {

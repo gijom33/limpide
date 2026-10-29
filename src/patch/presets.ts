@@ -49,6 +49,9 @@ group('Shapes', [
   }],
   ['Sub Ladder', 'A square an octave below a saw: the Sub fills the odd rungs of a ladder that now starts an octave lower, Osc 1 the even ones.', { mixSub: 0.7, ...OPEN }],
   ['Square on Square', 'Two squares an octave apart, through the Sub: a staircase in the Scope, every Harmonic of the lower one present.', { waveform: 'square', mixSub: 1, ...OPEN }],
+  ['Sine Sub Two Down', 'A sine Sub two octaves under a saw: one clean spike far left in the Spectrum, the ladder counted from it, Osc 1 on every fourth rung.', {
+    mixSub: 0.8, subOctave: -2, subWaveform: 'sine', ...OPEN,
+  }],
 ]);
 
 group('Intervals', [
@@ -68,6 +71,12 @@ group('Intervals', [
   ['Fast Beats', 'Two saws 40 cents apart: the beating is so fast it becomes roughness. Compare with Slow Beats.', { osc2Detune: 40, mixOsc2: 1, cutoff: 6000, resonance: 0, ampSustain: 1 }],
   ['Twelfth Bell', 'A sine an octave and a fifth above another (3:1): a pure, bell-like interval, three peaks per cycle of the lower one.', {
     waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, osc2Semitone: 7, mixOsc2: 0.6, ...OPEN, ampSustain: 0.4, ampDecay: 1.5, ampRelease: 1.5,
+  }],
+  ['Ring Bell', 'Two sines through Ring alone, Osc 2 an octave and a minor third up: neither pitch sounds, only their sum and difference, an out-of-tune pair that rings like a bell.', {
+    waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, osc2Semitone: 3, mixOsc1: 0, mixRing: 1, ...OPEN, ampSustain: 0, ampDecay: 1.8, ampRelease: 1.8,
+  }],
+  ['Cross Mod Sidebands', 'Osc 2, a sine an octave up and silent, swings Osc 1’s pitch: sidebands grow beside the Ideal’s circles, which mark plain Osc 1. Turn Cross Mod to move them.', {
+    waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, crossMod: 0.3, ...OPEN,
   }],
 ]);
 
@@ -203,6 +212,10 @@ group('Bass', [
     mixOsc2: 0.6, osc2Detune: -8, mixSub: 0.7, filterSlope: 24, cutoff: 350, resonance: 0.6,
     lfoWaveform: 'square', lfoRate: 4, lfoAmount: 0.5, ampSustain: 1, ampRelease: 0.15,
   }],
+  ['Split Octave Bass', 'Osc 1 dropped an octave by its own Octave, Osc 2 left on the Note and a few cents off: a wide bass, the Scope repeating at Osc 1’s slower cycle.', {
+    osc1Octave: -1, osc2Waveform: 'square', osc2Detune: 7, mixOsc2: 0.5,
+    filterSlope: 24, cutoff: 500, resonance: 0.3, filterEnvAmount: 2, filterAttack: 0.002, filterDecay: 0.2, filterSustain: 0.1, ampSustain: 1, ampRelease: 0.15,
+  }],
 ]);
 
 group('Leads', [
@@ -234,6 +247,10 @@ group('Leads', [
   ['Singing Lead', 'A saw lead with a vibrato that starts the same way on every Note (LFO 2, retriggered), and LFO 1 breathing the Cutoff slowly underneath.', {
     filterSlope: 24, cutoff: 2200, resonance: 0.3, keyTrack: 0.5, glide: 0.06, ampSustain: 0.9, ampRelease: 0.3,
     lfoDestination: 'cutoff', lfoRate: 0.2, lfoAmount: 0.3, lfo2Destination: 'pitch', lfo2Rate: 5.5, lfo2Amount: 0.3, lfo2Retrigger: 'note',
+  }],
+  ['Poly Mod Zap', 'The Filter Envelope throws Osc 2 two octaves up and lets it fall as it opens the Filter, while Osc 2 swings Osc 1 (Cross Mod): each Note starts with a laser zap.', {
+    osc2EnvAmount: 24, mixOsc2: 0.5, crossMod: 0.15,
+    cutoff: 1200, resonance: 0.35, filterEnvAmount: 2, filterAttack: 0.002, filterDecay: 0.25, filterSustain: 0, ampSustain: 0.8,
   }],
 ]);
 
@@ -459,6 +476,10 @@ group('Movement & Effects', [
   }],
   ['Out of Tune', 'Osc 2 a full 50 cents off: a sour quarter-tone, beating so fast it sounds like two different Notes.', {
     osc2Detune: 50, mixOsc2: 1, cutoff: 5000, resonance: 0, ampSustain: 1,
+  }],
+  ['Pink Surf', 'Pink Noise alone, a slow LFO sweeping the Filter: waves rolling in. Switch the Noise to White and hear the hiss come back, and the Spectrum’s floor level out.', {
+    mixOsc1: 0, mixNoise: 1, noiseColour: 'pink', cutoff: 1200, resonance: 0.2,
+    lfoDestination: 'cutoff', lfoRate: 0.12, lfoAmount: 0.6, ampAttack: 1.5, ampSustain: 1, ampRelease: 2.5,
   }],
 ]);
 
