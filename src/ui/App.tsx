@@ -493,13 +493,15 @@ export function App() {
             stage="amp"
             more={
               <SubBlock title="Amp Envelope" label="Envelope" tip={TIPS.ampEnvelope}>
-                {/* Four faders and a big knob, as the Filter Envelope's row: the stage's whole width, under its name. */}
-                <div className="knobs knobs-envelope">
-                  {(['ampAttack', 'ampDecay', 'ampSustain', 'ampRelease'] as const).map((id) => (
-                    <Fader key={id} id={id} value={patch[id]} onChange={(v) => change(id, v)} />
-                  ))}
-                  {/* The Amp's level, right of its Envelope (the owner, issue 62): an LFO on Volume rings it. */}
-                  <Knob id="volume" value={patch.volume} onChange={(v) => change('volume', v)} />
+                {/* Four faders and a big knob, laid out as the Filter Envelope's row, its name placed alike (issue 80). */}
+                <div className="envelope-knobs">
+                  <div className="knobs knobs-envelope">
+                    {(['ampAttack', 'ampDecay', 'ampSustain', 'ampRelease'] as const).map((id) => (
+                      <Fader key={id} id={id} value={patch[id]} onChange={(v) => change(id, v)} />
+                    ))}
+                    {/* The Amp's level, right of its Envelope (the owner, issue 62): an LFO on Volume rings it. */}
+                    <Knob id="volume" value={patch.volume} onChange={(v) => change('volume', v)} />
+                  </div>
                 </div>
               </SubBlock>
             }

@@ -115,3 +115,20 @@ test('a moved knob’s own setting is a faint solid line, its LFO 1 line still d
   expect(faint.every((s) => s.dash.length === 0)).toBe(true);
   expect(strokes.some((s) => s.alpha === 1 && s.dash.join() === '5,3')).toBe(true);
 });
+
+// Issue 80 (the owner's bug, 2026-10-28): the Amp's Envelope row places its name as the Filter's does, beside its
+// controls on phones and full-size windows, above them on compact ones, with faders as wide.
+for (const [width, height] of [[360, 800], [390, 844], [760, 1000], [1100, 800], [1331, 800], [1440, 900], [1920, 1080]]) {
+  test(`the Amp's Envelope row is laid out as the Filter's (${width}px)`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await page.goto('/');
+    const layout = (stage: string) =>
+      page.locator(`section[aria-label="${stage}"] .sub-block:has(.knobs-envelope)`).evaluate((row) => {
+        const name = row.querySelector('h3')!.getBoundingClientRect();
+        const first = row.querySelector('.knobs-envelope .knob')!.getBoundingClientRect();
+        const fader = row.querySelector('.knobs-envelope .knob[data-kind="fader"]')!.getBoundingClientRect();
+        return { beside: name.right <= first.left && name.bottom > first.top, faderWidth: Math.round(fader.width) };
+      });
+    expect(await layout('Amp')).toEqual(await layout('Filter'));
+  });
+}

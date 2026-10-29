@@ -402,7 +402,6 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .sub-block { flex-direction: row; flex-wrap: wrap; align-items: center; column-gap: var(--space-3); }
 .sub-block > h3, .sub-block > .tip-anchor:first-child { flex: 1 1 100%; }
 .sub-block > .knobs { flex: 1 1 auto; }
-.sub-block > .knobs-envelope { flex: 1 1 100%; }
 
 /* Large screens: the app fills exactly the window height, and the Viewers share whatever the controls leave,
    so the whole instrument is on screen without scrolling. Smaller screens keep natural heights and scroll. */
@@ -1033,11 +1032,6 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
      up to a laptop's: the stage's width is the sub-block's, a container. */
   .knob[data-kind='fader'] {
     --fader-col: clamp(40px, (100cqw - var(--label-col) - var(--label-gap) - var(--dial-big) - 4 * var(--knob-gap)) / 4, 56px);
-  }
-  /* The Amp's Envelope row sits under its name (four faders and the Volume knob, issue 62): its faders take the whole
-     width, not what a name beside them would leave. In Linux's fonts 8 pt was not enough there (the 1.12.4 deploy). */
-  .block[data-stage='amp'] .knobs-envelope .knob[data-kind='fader'] {
-    --fader-col: clamp(40px, (100cqw - var(--dial-big) - 4 * var(--knob-gap)) / 4, 56px);
   }
   main { padding: var(--space-3) var(--space-2); }
   .chain { margin: var(--space-3) 0; row-gap: var(--space-3); }
