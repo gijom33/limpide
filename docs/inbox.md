@@ -4,6 +4,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- Glide should always be on right side of voices number. (About 1000 px wide, three stages across, Chrome.)
+
 ## Ideas
 
 ## Dropped
