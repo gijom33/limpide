@@ -189,6 +189,11 @@ export const TIPS = {
     title: 'Noise',
     body: 'An unpitched hiss with energy at every frequency: in the Spectrum it fills the gaps between Harmonics. Filter it for wind, breath or percussion.',
   },
+  ring: {
+    title: 'Ring',
+    body: 'Osc 1 multiplied by Osc 2, whatever their own faders: in place of the two pitches you hear their sum and their difference, for bells, gongs and metallic clangs. Detune or Semitone on Osc 2 changes which.',
+    how: 'Pick Sine on both, Ring up and the others down, Osc 2 a fifth up: the Spectrum shows two spikes, neither at the Note.',
+  },
   noiseColour: {
     title: 'Noise colour',
     body: 'White Noise has the same energy at every frequency, so it hisses. Pink has the same energy in every octave: it falls 3 dB an octave, a softer rush like rain or surf. Both are equally loud overall.',
@@ -240,7 +245,7 @@ export const TIPS = {
   },
   // Issue 59: the faders, the LFO knobs and the Timeline's key, which had none.
   osc1Level: { title: 'Osc 1', body: 'How much of Osc 1 goes into the Filter: its level in the mix.' },
-  osc2Level: { title: 'Osc 2', body: 'How much of Osc 2 goes into the Filter. At 0 it is silent, and its tab and Tuning knobs grey out.' },
+  osc2Level: { title: 'Osc 2', body: 'How much of Osc 2 goes into the Filter. At 0 it is silent, and its tab and Tuning knobs grey out unless Ring or Cross Mod still uses it.' },
   attack: {
     title: 'Attack',
     body: 'How long the Envelope takes to rise from nothing to full once a key goes down: short for a sharp start (a pluck), long for a slow swell (a pad).',
@@ -340,6 +345,7 @@ export const PARAM_TIPS: Record<ParamId, TipContent> = {
   osc2Detune: TIPS.detune,
   mixOsc1: TIPS.osc1Level,
   mixOsc2: TIPS.osc2Level,
+  mixRing: TIPS.ring,
   mixNoise: TIPS.noise,
   mixSub: TIPS.sub,
   cutoff: TIPS.cutoff,
@@ -370,7 +376,7 @@ export const OVERLAY_TIPS: Record<Overlay, TipContent> = {
   },
   ideal: {
     title: 'Ideal Reference',
-    body: 'Marks where theory puts each Harmonic of each Oscillator, at its Mixer level: a circle for Osc 1, a square for Osc 2, a triangle for the Sub. On the Filter Tap they show where each should land after the Filter.',
+    body: 'Marks where theory puts each Harmonic of each Oscillator, at its Mixer level: a circle for Osc 1, a square for Osc 2, a triangle for the Sub, a diamond for Ring. On the Filter Tap they show where each should land after the Filter.',
   },
   curve: {
     title: 'Response Curve',

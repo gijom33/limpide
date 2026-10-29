@@ -14,7 +14,7 @@ describe('defaultPatch', () => {
       [
         'ampAttack', 'ampDecay', 'ampRelease', 'ampSustain', 'cutoff', 'pulseWidth', 'resonance',
         'filterEnvAmount', 'filterAttack', 'filterDecay', 'filterSustain', 'filterRelease',
-        'osc1Octave', 'osc2Octave', 'osc2Semitone', 'osc2Detune', 'osc2PulseWidth', 'mixOsc1', 'mixOsc2', 'mixNoise', 'mixSub',
+        'osc1Octave', 'osc2Octave', 'osc2Semitone', 'osc2Detune', 'osc2PulseWidth', 'mixOsc1', 'mixOsc2', 'mixRing', 'mixNoise', 'mixSub',
         'lfoRate', 'lfoAmount', 'lfo2Rate', 'lfo2Amount', 'glide', 'velocityCutoff', 'keyTrack', 'volume',
       ].sort(),
     );
@@ -34,7 +34,7 @@ describe('control', () => {
     expect(of('set')).toEqual(['glide', 'keyTrack', 'osc1Octave', 'osc2Octave', 'osc2PulseWidth', 'osc2Semitone', 'pulseWidth', 'velocityCutoff']);
     expect(of('fader')).toEqual([
       'ampAttack', 'ampDecay', 'ampRelease', 'ampSustain', 'filterAttack', 'filterDecay', 'filterRelease', 'filterSustain',
-      'mixNoise', 'mixOsc1', 'mixOsc2', 'mixSub',
+      'mixNoise', 'mixOsc1', 'mixOsc2', 'mixRing', 'mixSub',
     ]);
   });
 });

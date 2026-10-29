@@ -58,8 +58,12 @@ _Avoid_: Fine tune, spread
 An unpitched source mixed alongside the Oscillators, in one of two colours: white (equal energy at every frequency) or pink (equal energy in every octave, falling 3 dB an octave).
 _Avoid_: White noise generator, hiss
 
+**Ring**:
+Osc 1 multiplied by Osc 2, a source in the Mixer of its own (Ring Modulation): it sounds at the sums and differences of their Harmonics, not at either pitch.
+_Avoid_: Ring mod (fine in UI copy), AM
+
 **Mixer**:
-The stage setting the level of each source (Osc 1, Osc 2, Sub, Noise) before the Filter.
+The stage setting the level of each source (Osc 1, Osc 2, Ring, Sub, Noise) before the Filter.
 _Avoid_: Levels, balance
 
 **Filter**:
@@ -199,7 +203,7 @@ A label on the Spectrum identifying a Harmonic by number (the fundamental by its
 _Avoid_: Peak label
 
 **Ideal Reference**:
-The theoretical Harmonic levels of each Oscillator's Waveform (e.g. 1/n for saw) at its Mixer level, drawn for comparison with what's measured: a circle for Osc 1, a square for Osc 2, a triangle for the Sub, each where its Harmonics fall.
+The theoretical Harmonic levels of each Oscillator's Waveform (e.g. 1/n for saw) at its Mixer level, drawn for comparison with what's measured: a circle for Osc 1, a square for Osc 2, a triangle for the Sub, each where its Harmonics fall; a diamond for each of Ring's sums and differences.
 _Avoid_: Expected spectrum, model curve
 
 **Response Curve**:

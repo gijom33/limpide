@@ -20,6 +20,7 @@ export const SECTION_OF: Record<ParamId, SectionName> = {
   osc2PulseWidth: 'Oscillators',
   mixOsc1: 'Oscillators',
   mixOsc2: 'Oscillators',
+  mixRing: 'Oscillators',
   mixNoise: 'Oscillators',
   mixSub: 'Oscillators',
   velocityCutoff: 'Filter',

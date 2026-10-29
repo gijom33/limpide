@@ -1331,3 +1331,23 @@ describe('Pink Noise (issue 92)', () => {
     expect(Math.abs(dB(rms(pink, SR / 2) / rms(white, SR / 2)))).toBeLessThan(1);
   });
 });
+
+describe('Ring Modulation (issue 88)', () => {
+  const A2 = 45; // 110 Hz
+  const ringAlone = { cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001, waveform: 'sine', osc2Waveform: 'sine', mixOsc1: 0, mixOsc2: 0, mixRing: 1 } as const;
+
+  it('sounds two sines a fifth apart at their difference and their sum, and at neither pitch', async () => {
+    const s = await render(1.5, { ...ringAlone, osc2Semitone: 7 }, (e) => e.noteOn(A2, 1, 0));
+    const window = s.subarray(SR / 2, SR / 2 + 32768);
+    const fifth = 110 * 2 ** (7 / 12);
+    const at = (f: number) => toneAmplitudeHann(window, SR, f);
+    expect(dB(at(fifth - 110) / at(fifth + 110))).toBeCloseTo(0, 0);
+    expect(dB(at(110) / at(fifth + 110))).toBeLessThan(-40);
+    expect(dB(at(fifth) / at(fifth + 110))).toBeLessThan(-40);
+  });
+
+  it('is silent while Ring is down, whatever the Oscillators', async () => {
+    const s = await render(0.5, { ...ringAlone, mixRing: 0, osc2Semitone: 7 }, (e) => e.noteOn(A2, 1, 0));
+    expect(rms(s, SR / 4)).toBeLessThan(1e-6);
+  });
+});

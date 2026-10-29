@@ -357,6 +357,14 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   oscillators[1].out.connect(mix2).connect(mixer);
   for (const n of noises) n.gate.connect(mixNoise);
   mixNoise.connect(mixer);
+  // Ring Modulation (issue 88): Osc 1 through a gain that Osc 2 sets, so their product, before their own levels.
+  const ring = ctx.createGain();
+  ring.gain.value = 0;
+  oscillators[0].out.connect(ring);
+  oscillators[1].out.connect(ring.gain);
+  const mixRing = ctx.createGain();
+  mixRing.gain.value = 0;
+  ring.connect(mixRing).connect(mixer);
   // The Sub-oscillator: a square or a sine, one or two octaves below Osc 1 (issue 91), following its pitch, Glide and
   // vibrato. It runs an octave down; its detune takes it the second.
   const sub = ctx.createOscillator();
@@ -532,6 +540,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
       mixNoise.gain.setValueAtTime(next.mixNoise * OSCILLATOR_LEVEL, t);
       for (const n of noises) n.gate.gain.setValueAtTime(n.colour === next.noiseColour ? 1 : 0, t);
       mixSub.gain.setValueAtTime(next.mixSub * OSCILLATOR_LEVEL, t);
+      mixRing.gain.setValueAtTime(next.mixRing * OSCILLATOR_LEVEL, t);
       // The base Cutoff; the Filter Envelope adds to it through detune.
       const stages = filterStages(next.filterMode, next.filterSlope, next.resonance);
       const cutoff = effectiveCutoff(next);

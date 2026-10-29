@@ -89,3 +89,21 @@ describe('the Sub’s Octave and Waveform in the Ideal (issue 91)', () => {
     expect(partials.filter((p) => p.source === 'sub').map((p) => p.ratio)).toEqual([1]);
   });
 });
+
+describe('Ring Modulation in the Ideal (issue 88)', () => {
+  const sines = { ...defaultPatch(), waveform: 'sine', osc2Waveform: 'sine', mixOsc1: 0, mixOsc2: 0 } as const;
+  const sine = harmonicSeries('sine', 0.5, 4).magnitudes[1];
+
+  it('marks two sines’ sum and difference, at half the product of their levels, and nothing else', () => {
+    const partials = idealPartials({ ...sines, mixRing: 0.8, osc2Semitone: 7 }, 64);
+    const fifth = 2 ** (7 / 12);
+    expect(partials.map((p) => p.source)).toEqual(['ring', 'ring']);
+    expect(partials[0].ratio).toBeCloseTo(fifth - 1);
+    expect(partials[1].ratio).toBeCloseTo(fifth + 1);
+    for (const p of partials) expect(p.level).toBeCloseTo((sine * sine * 0.8) / 2);
+  });
+
+  it('marks nothing while Ring is down', () => {
+    expect(idealPartials({ ...sines, osc2Semitone: 7 }, 64)).toEqual([]);
+  });
+});

@@ -27,6 +27,7 @@ export type ParamId =
   | 'osc2PulseWidth'
   | 'mixOsc1'
   | 'mixOsc2'
+  | 'mixRing'
   | 'mixNoise'
   | 'mixSub'
   | 'lfoRate'
@@ -124,6 +125,8 @@ export const PARAMS: Record<ParamId, ParamDef> = {
   osc2PulseWidth: { id: 'osc2PulseWidth', label: 'Pulse Width', unit: '%', min: 0.05, max: 0.95, taper: 'linear', default: 0.25, control: 'set' },
   mixOsc1: level('mixOsc1', 'Osc 1', 1, 'fader'),
   mixOsc2: level('mixOsc2', 'Osc 2', 0, 'fader'),
+  // Osc 1 times Osc 2 (issue 88), whatever their own levels.
+  mixRing: level('mixRing', 'Ring', 0, 'fader'),
   mixNoise: level('mixNoise', 'Noise', 0, 'fader'),
   mixSub: level('mixSub', 'Sub', 0, 'fader'),
   lfoRate: { id: 'lfoRate', label: 'Rate', unit: 'Hz', min: 0.05, max: 20, taper: 'log', default: 2, control: 'play' },
@@ -173,6 +176,9 @@ export function defaultPatch(): Patch {
     voices: 1,
   };
 }
+
+/** Whether Osc 2 is heard: mixed in, or through Ring (issue 88). */
+export const osc2Heard = (patch: Patch) => patch.mixOsc2 > 0 || patch.mixRing > 0;
 
 export function setFilter(patch: Patch, { mode, slope }: { mode?: FilterMode; slope?: FilterSlope }): Patch {
   return { ...patch, filterMode: mode ?? patch.filterMode, filterSlope: slope ?? patch.filterSlope };

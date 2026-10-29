@@ -5,7 +5,7 @@ import { type AudioStatus, unlockAudio } from '../app/unlockAudio';
 import { rememberWelcome, welcomeFor } from '../app/welcome';
 import { shiftOctave } from '../input/keyboardLayout';
 import { type Formula, harmonicFormula, responseFormula } from '../music/maths';
-import { CHOICES, type ParamId, type Patch, setFilter, setParam, setWaveform } from '../patch/patch';
+import { CHOICES, osc2Heard, type ParamId, type Patch, setFilter, setParam, setWaveform } from '../patch/patch';
 import { PRESETS } from '../patch/presets';
 import { TUTORIALS } from '../tutorial/tutorials';
 import { About } from './About';
@@ -413,7 +413,7 @@ export function App() {
                     id: 'osc2',
                     label: 'Osc 2',
                     tip: TIPS.osc2,
-                    badge: patch.mixOsc2 > 0,
+                    badge: osc2Heard(patch),
                     badgeLabel: 'sounding',
                     content: (
                       <SubBlock title="Osc 2" label="Waveform" group>
@@ -426,7 +426,7 @@ export function App() {
                             id="osc2PulseWidth"
                             value={patch.osc2PulseWidth}
                             onChange={(v) => change('osc2PulseWidth', v)}
-                            inactive={patch.mixOsc2 === 0 || patch.osc2Waveform !== 'pulse'}
+                            inactive={!osc2Heard(patch) || patch.osc2Waveform !== 'pulse'}
                           />
                         </div>
                       </SubBlock>
@@ -443,6 +443,7 @@ export function App() {
                       <div className="knobs">
                         <Fader id="mixOsc1" value={patch.mixOsc1} onChange={(v) => change('mixOsc1', v)} />
                         <Fader id="mixOsc2" value={patch.mixOsc2} onChange={(v) => change('mixOsc2', v)} />
+                        <Fader id="mixRing" value={patch.mixRing} onChange={(v) => change('mixRing', v)} />
                         <Fader id="mixNoise" value={patch.mixNoise} onChange={(v) => change('mixNoise', v)} />
                         <Fader id="mixSub" value={patch.mixSub} onChange={(v) => change('mixSub', v)} />
                       </div>
@@ -483,16 +484,16 @@ export function App() {
                   },
                 ]}
                 // Osc 2's offsets from Osc 1, under both Oscillators: one set of knobs in one state, whichever
-                // Oscillator shows (greyed out while Osc 2 is not mixed in). The Mixer takes its place.
+                // Oscillator shows (greyed out while Osc 2 is not heard). The Mixer takes its place.
                 shared={{
                   under: ['osc1', 'osc2'],
                   content: (
                     <SubBlock title="Tuning" tip={TIPS.tuning} group>
                       <div className="knobs">
                         {(['osc2Octave', 'osc2Semitone'] as const).map((id) => (
-                          <Knob key={id} id={id} value={patch[id]} onChange={(v) => change(id, v)} inactive={patch.mixOsc2 === 0} />
+                          <Knob key={id} id={id} value={patch[id]} onChange={(v) => change(id, v)} inactive={!osc2Heard(patch)} />
                         ))}
-                        <Knob id="osc2Detune" value={patch.osc2Detune} onChange={(v) => change('osc2Detune', v)} inactive={patch.mixOsc2 === 0} />
+                        <Knob id="osc2Detune" value={patch.osc2Detune} onChange={(v) => change('osc2Detune', v)} inactive={!osc2Heard(patch)} />
                       </div>
                     </SubBlock>
                   ),
