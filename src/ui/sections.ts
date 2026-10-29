@@ -18,6 +18,7 @@ export const SECTION_OF: Record<ParamId, SectionName> = {
   osc2Semitone: 'Oscillators',
   osc2Detune: 'Oscillators',
   osc2PulseWidth: 'Oscillators',
+  crossMod: 'Oscillators',
   mixOsc1: 'Oscillators',
   mixOsc2: 'Oscillators',
   mixRing: 'Oscillators',

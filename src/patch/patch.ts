@@ -25,6 +25,7 @@ export type ParamId =
   | 'osc2Semitone'
   | 'osc2Detune'
   | 'osc2PulseWidth'
+  | 'crossMod'
   | 'mixOsc1'
   | 'mixOsc2'
   | 'mixRing'
@@ -123,6 +124,8 @@ export const PARAMS: Record<ParamId, ParamDef> = {
   osc2Semitone: { id: 'osc2Semitone', label: 'Semitone', unit: 'st', min: -12, max: 12, taper: 'linear', default: 0, step: 1, control: 'set' },
   osc2Detune: { id: 'osc2Detune', label: 'Detune', unit: 'cents', min: -50, max: 50, taper: 'linear', default: 0, control: 'play' },
   osc2PulseWidth: { id: 'osc2PulseWidth', label: 'Pulse Width', unit: '%', min: 0.05, max: 0.95, taper: 'linear', default: 0.25, control: 'set' },
+  // How far Osc 2 swings Osc 1's frequency (issue 89): at full, four times Osc 2's own frequency.
+  crossMod: level('crossMod', 'Cross Mod', 0, 'play'),
   mixOsc1: level('mixOsc1', 'Osc 1', 1, 'fader'),
   mixOsc2: level('mixOsc2', 'Osc 2', 0, 'fader'),
   // Osc 1 times Osc 2 (issue 88), whatever their own levels.
@@ -177,8 +180,8 @@ export function defaultPatch(): Patch {
   };
 }
 
-/** Whether Osc 2 is heard: mixed in, or through Ring (issue 88). */
-export const osc2Heard = (patch: Patch) => patch.mixOsc2 > 0 || patch.mixRing > 0;
+/** Whether Osc 2 is heard: mixed in, through Ring (issue 88), or moving Osc 1 (issue 89). */
+export const osc2Heard = (patch: Patch) => patch.mixOsc2 > 0 || patch.mixRing > 0 || patch.crossMod > 0;
 
 export function setFilter(patch: Patch, { mode, slope }: { mode?: FilterMode; slope?: FilterSlope }): Patch {
   return { ...patch, filterMode: mode ?? patch.filterMode, filterSlope: slope ?? patch.filterSlope };

@@ -428,6 +428,8 @@ export function App() {
                             onChange={(v) => change('osc2PulseWidth', v)}
                             inactive={!osc2Heard(patch) || patch.osc2Waveform !== 'pulse'}
                           />
+                          {/* What Osc 2 does to Osc 1 (issue 89): it works whatever Osc 2's own fader. */}
+                          <Knob id="crossMod" value={patch.crossMod} onChange={(v) => change('crossMod', v)} />
                         </div>
                       </SubBlock>
                     ),

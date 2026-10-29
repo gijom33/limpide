@@ -294,6 +294,8 @@ const filterAdsr = (p: Patch): Adsr => ({ attack: p.filterAttack, decay: p.filte
 
 // A released Voice counts as free again once its Release has run this many time constants.
 const RELEASE_TAIL = 6;
+/** Cross Mod at full: Osc 2 swings Osc 1's frequency by four times its own (a modulation index of 4, issue 89). */
+const CROSS_MOD_INDEX = 4;
 const A4 = noteToFrequency(69);
 
 /**
@@ -358,6 +360,10 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   for (const n of noises) n.gate.connect(mixNoise);
   mixNoise.connect(mixer);
   // Ring Modulation (issue 88): Osc 1 through a gain that Osc 2 sets, so their product, before their own levels.
+  // Cross-modulation (issue 89): Osc 2 into Osc 1's frequency, through a gain that tracks the Note (see crossDepth).
+  const cross = ctx.createGain();
+  cross.gain.value = 0;
+  oscillators[1].out.connect(cross).connect(osc.frequency);
   const ring = ctx.createGain();
   ring.gain.value = 0;
   oscillators[0].out.connect(ring);
@@ -447,6 +453,11 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   const pulseWidths = [0.5, 0.5];
   // Each Oscillator's pitch over the Note's, from its knobs: a pulse's width is a fraction of its own cycle (issue 90).
   const ratios = [1, 1];
+  /**
+   * Cross Mod's gain on a Note of `frequency`: the index times Osc 2's frequency, in Hz. Osc 1's Octave scales what
+   * reaches its frequency, so the gain is divided by it, keeping the index the knob's.
+   */
+  const crossDepth = (frequency: number) => (patch ? (patch.crossMod * CROSS_MOD_INDEX * frequency * ratios[1]) / ratios[0] : 0);
   const pitches: { time: number; frequency: number; note: number; glide: number }[] = [];
   osc.frequency.value = A4;
   osc2.frequency.value = A4;
@@ -507,6 +518,9 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
         else node.frequency.setValueAtTime(f, t);
       }
       tunePulses(frequency, t, glide ? glideTimeConstant(glide) : undefined);
+      holdAt(cross.gain, t);
+      if (glide) cross.gain.setTargetAtTime(crossDepth(frequency), t, glideTimeConstant(glide));
+      else cross.gain.setValueAtTime(crossDepth(frequency), t);
       holdAt(trackedNote.offset, t);
       if (glide) trackedNote.offset.setTargetAtTime(note - KEY_TRACK_CENTRE, t, glideTimeConstant(glide));
       else trackedNote.offset.setValueAtTime(note - KEY_TRACK_CENTRE, t);
@@ -527,6 +541,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
       ratios[0] = 2 ** next.osc1Octave;
       ratios[1] = 2 ** (osc2Tuning / 1200);
       tunePulses(frequencyAt(t), t);
+      cross.gain.setValueAtTime(crossDepth(frequencyAt(t)), t);
       // Osc 1's Octave moves it and the Sub; Osc 2's offsets count from the Note.
       osc.detune.setValueAtTime(next.osc1Octave * 1200, t);
       sub.detune.setValueAtTime((next.osc1Octave + next.subOctave + 1) * 1200, t);

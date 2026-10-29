@@ -1351,3 +1351,27 @@ describe('Ring Modulation (issue 88)', () => {
     expect(rms(s, SR / 4)).toBeLessThan(1e-6);
   });
 });
+
+describe('Cross-modulation (issue 89)', () => {
+  const sines = { cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001, waveform: 'sine', osc2Waveform: 'sine' } as const;
+  const harmonics = async (note: number, crossMod: number) => {
+    const s = await render(1.5, { ...sines, crossMod }, (e) => e.noteOn(note, 1, 0));
+    const f = 440 * 2 ** ((note - 69) / 12);
+    const window = s.subarray(SR / 2, SR / 2 + Math.round((40 * SR) / f) * 1);
+    return (n: number) => toneAmplitude(window, SR, f * n);
+  };
+
+  it('gives Osc 1 sidebands on its Harmonics, none while Cross Mod is down', async () => {
+    const off = await harmonics(45, 0);
+    expect(dB(off(2) / off(1))).toBeLessThan(-60);
+    const on = await harmonics(45, 0.25);
+    expect(dB(on(2) / on(1))).toBeGreaterThan(-20);
+    expect(dB(on(3) / on(1))).toBeGreaterThan(-40);
+  });
+
+  it('keeps the same index on every Note: an octave up, the same spectrum', async () => {
+    const low = await harmonics(45, 0.25);
+    const high = await harmonics(57, 0.25);
+    expect(dB(high(2) / high(1))).toBeCloseTo(dB(low(2) / low(1)), 0);
+  });
+});

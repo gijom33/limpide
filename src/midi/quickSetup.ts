@@ -21,7 +21,7 @@ const actions = (...ids: Extract<Target, { kind: 'action' }>['id'][]): SetupStep
 // The Filter first, the knobs a player reaches for first (review 2, issue 53); then the page's order.
 export const QUICK_SETUP: SetupStep[] = [
   ...params('Filter', 'cutoff', 'resonance', 'filterEnvAmount'),
-  ...params('Osc 2', 'osc2Detune'),
+  ...params('Osc 2', 'crossMod', 'osc2Detune'),
   ...params('Mixer', 'mixOsc1', 'mixOsc2', 'mixRing', 'mixNoise', 'mixSub'),
   ...params('Filter Envelope', 'filterAttack', 'filterDecay', 'filterSustain', 'filterRelease'),
   ...params('Amp Envelope', 'ampAttack', 'ampDecay', 'ampSustain', 'ampRelease'),

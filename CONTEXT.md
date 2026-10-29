@@ -62,6 +62,10 @@ _Avoid_: White noise generator, hiss
 Osc 1 multiplied by Osc 2, a source in the Mixer of its own (Ring Modulation): it sounds at the sums and differences of their Harmonics, not at either pitch.
 _Avoid_: Ring mod (fine in UI copy), AM
 
+**Cross Mod**:
+How far Osc 2 swings Osc 1's frequency at audio rate (linear FM), whatever Osc 2's own Mixer level: new partials appear either side of Osc 1's Harmonics.
+_Avoid_: FM amount, cross-modulation depth
+
 **Mixer**:
 The stage setting the level of each source (Osc 1, Osc 2, Ring, Sub, Noise) before the Filter.
 _Avoid_: Levels, balance
