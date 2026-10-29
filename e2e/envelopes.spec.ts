@@ -89,7 +89,7 @@ test('an LFO on Volume leaves the Timeline’s Amp Envelope still (issue 53, rev
 });
 
 
-test('a moved knob’s own setting is a faint solid line, its LFO 1 line still dashed (issue 71)', async ({ page }) => {
+test('a moved knob’s line alone, without a line for its own setting, its LFO 1 line still dashed (the owner, 2026-10-29)', async ({ page }) => {
   await page.goto('/');
   await ready(page);
   const lfo = page.getByRole('group', { name: 'LFO 1', exact: true });
@@ -110,9 +110,9 @@ test('a moved knob’s own setting is a faint solid line, its LFO 1 line still d
     await new Promise((done) => setTimeout(done, 300));
     return seen;
   });
-  const faint = strokes.filter((s) => s.alpha === 0.5);
-  expect(faint.length).toBeGreaterThan(0);
-  expect(faint.every((s) => s.dash.length === 0)).toBe(true);
+  // Issue 71's faint line for the knob's own setting is gone: every stroke is drawn at full strength.
+  expect(strokes.length).toBeGreaterThan(0);
+  expect(strokes.filter((s) => s.alpha < 1)).toEqual([]);
   expect(strokes.some((s) => s.alpha === 1 && s.dash.join() === '5,3')).toBe(true);
 });
 

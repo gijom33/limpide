@@ -6,6 +6,8 @@
 
 **Status:** done (2026-10-28). The knob's own setting on the Timeline is a faint solid line; a press on the on-screen piano ends the Demo with Display open.
 
+**Since then:** the owner had the setting line removed (2026-10-29): the Timeline draws each moved knob's line alone.
+
 ## Agent Brief
 
 **Category:** enhancement

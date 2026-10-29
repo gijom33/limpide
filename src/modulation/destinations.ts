@@ -47,12 +47,6 @@ const onKnob = (param: ParamId, value: number) => {
   return valueToPosition(def, Math.min(def.max, Math.max(def.min, value)));
 };
 
-/** A Destination's knob setting, 0–1 on its scale: where the LFOs swing it from. Pitch, which has none, the middle. */
-export const knobLevel = (destination: LfoDestination, patch: Patch): number => {
-  const { param } = DESTINATIONS[destination];
-  return param ? onKnob(param, patch[param]) : 0.5;
-};
-
 /**
  * Where a Destination is at a moment, 0–1 on its knob's scale: its Effective value. Pitch is the Note's own pitch in
  * the middle and one LFO's full swing (a semitone each way) at the edges, both LFOs together kept within them.

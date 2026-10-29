@@ -122,7 +122,7 @@ export const TIPS = {
   },
   timeline: {
     title: 'LFO & Envelopes',
-    body: 'What changes the sound over time: the LFO, and the Envelope Timeline beside it. The Timeline shows the last two seconds (1 to 4 in Display). The violet fill is the Amp Envelope, the orange one the Filter Envelope when its Amount is set. A broken line in its section’s colour is each knob the Filter Envelope or an LFO moves: the Cutoff dotted, what LFO 1 moves dashed, what LFO 2 alone moves dash-dotted, with the knob’s own setting a faint solid line behind it.',
+    body: 'What changes the sound over time: the LFO, and the Envelope Timeline beside it. The Timeline shows the last two seconds (1 to 4 in Display). The violet fill is the Amp Envelope, the orange one the Filter Envelope when its Amount is set. A broken line in its section’s colour is each knob the Filter Envelope or an LFO moves: the Cutoff dotted, what LFO 1 moves dashed, what LFO 2 alone moves dash-dotted.',
     how: 'Play a Note and let go: the Release is drawn after the key comes up.',
   },
   lfo: {
@@ -256,7 +256,7 @@ export const TIPS = {
   },
   timelineCutoff: {
     title: 'Cutoff',
-    body: 'Orange dotted line: where the Filter’s Cutoff really is, after the Filter Envelope, the LFOs, Velocity and Key Track, on the frequency scale at the right. The faint solid line is the Cutoff knob’s own setting.',
+    body: 'Orange dotted line: where the Filter’s Cutoff really is, after the Filter Envelope, the LFOs, Velocity and Key Track, on the frequency scale at the right.',
   },
   envelopeTimeline: {
     title: 'Envelope Timeline',
@@ -271,8 +271,8 @@ export function lfoLineTip(destination: LfoDestination): TipContent {
   const { label, stage } = DESTINATIONS[destination];
   const colour = LINE_COLOUR[stage];
   return destination === 'pitch'
-    ? { title: label, body: `${colour} broken line: the pitch as the LFO moves it (vibrato), a semitone up at the top and down at the bottom. The faint solid middle line is the Note’s own pitch.` }
-    : { title: label, body: `${colour} broken line: the ${label} as the LFO moves it (both LFOs added together when both aim at it), on its knob’s scale, bottom to top. The faint solid line is the knob’s own setting.` };
+    ? { title: label, body: `${colour} broken line: the pitch as the LFO moves it (vibrato), a semitone up at the top and down at the bottom, the Note’s own pitch in the middle.` }
+    : { title: label, body: `${colour} broken line: the ${label} as the LFO moves it (both LFOs added together when both aim at it), on its knob’s scale, bottom to top.` };
 }
 
 /** Each Tap's two Viewers (issue 59): what the Scope and the Spectrum there show. */
