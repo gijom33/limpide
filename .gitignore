@@ -1,5 +1,6 @@
 node_modules/
 dist/
+dist-e2e/
 .DS_Store
 coverage/
 test-results/

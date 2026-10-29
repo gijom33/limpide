@@ -22,9 +22,10 @@ export default defineConfig({
   ],
   // The tests run against the built site, as published: one bundle per page load, so pages open quickly even when
   // the whole suite keeps the machine busy (the dev server's many small modules made loads crawl). Built in its own
-  // mode, which leaves out the visit counter.
+  // mode, which leaves out the visit counter, and into its own folder: built into `dist`, it replaced the counted
+  // build the deploy publishes, and the site counted no visits from 2026-10-26 to 2026-10-28.
   webServer: {
-    command: 'npx vite build --mode e2e --logLevel warn && npx vite preview --mode e2e --port 5199 --strictPort',
+    command: 'npx vite build --mode e2e --outDir dist-e2e --logLevel warn && npx vite preview --mode e2e --outDir dist-e2e --port 5199 --strictPort',
     url: 'http://localhost:5199',
     reuseExistingServer: !process.env.CI,
   },
