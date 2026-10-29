@@ -4,6 +4,8 @@ import { PARAMS, type ParamId } from '../patch/patch';
 import { valueToPosition } from '../patch/taper';
 import { ModulationRing } from './modulationRing';
 import { useParamControl, useWheel } from './paramControl';
+import { Tooltip } from './Tooltip';
+import { PARAM_TIPS } from './tips';
 
 const DRAG_PIXELS_FOR_FULL_TRAVEL = 200;
 /** How far a pointer may wander before a press counts as a drag rather than a click. */
@@ -60,64 +62,66 @@ export function Knob({ id, value, onChange, inactive }: Props) {
   const wheel = useWheel(c.position, c.setPosition);
 
   return (
-    <div className="knob" data-size={g === GEOMETRY.play ? 'big' : 'small'} data-inactive={inactive || undefined} {...c.attributes}>
-      <svg
-        ref={wheel}
-        className="knob-dial"
-        viewBox={`0 0 ${g.size} ${g.size}`}
-        {...c.slider}
-        onPointerDown={(e) => {
-          c.grab(e, e.currentTarget);
-          drag.current = { x: e.clientX, y: e.clientY, position: c.position, moved: false };
-        }}
-        onPointerMove={(e) => {
-          const d = drag.current;
-          if (!d) return;
-          if (Math.abs(e.clientX - d.x) + Math.abs(e.clientY - d.y) > CLICK_SLOP) d.moved = true;
-          const scale = e.shiftKey ? 0.1 : 1;
-          c.setPosition(d.position + ((d.y - e.clientY) / DRAG_PIXELS_FOR_FULL_TRAVEL) * scale);
-        }}
-        onPointerUp={(e) => {
-          const d = drag.current;
-          drag.current = null;
-          c.release();
-          // A click on the arc, outside the cap: the single-pointer way to set a value (WCAG 2.5.7).
-          if (!d || d.moved) return;
-          const r = e.currentTarget.getBoundingClientRect();
-          const [dx, dy] = [e.clientX - (r.left + r.width / 2), e.clientY - (r.top + r.height / 2)];
-          const degrees = (Math.atan2(dx, -dy) * 180) / Math.PI;
-          if (Math.hypot(dx, dy) > (g.cap / g.size) * r.width && Math.abs(degrees) <= SWEEP_DEGREES / 2) {
-            c.setPosition(degrees / SWEEP_DEGREES + 0.5);
-          }
-        }}
-        onPointerCancel={() => {
-          drag.current = null;
-          c.release();
-        }}
-      >
-        <defs>
-          <radialGradient id={gradient} cx="50%" cy="38%" r="65%">
-            <stop offset="0%" className="knob-cap-hi" />
-            <stop offset="100%" className="knob-cap-lo" />
-          </radialGradient>
-        </defs>
-        <path className="knob-groove" d={arc(centre, groove, 0, 1)} strokeWidth={g.arcWidth} />
-        <path className="knob-arc" d={arc(centre, groove, origin, c.position)} strokeWidth={g.arcWidth} />
-        <circle className="knob-cap" cx={centre} cy={centre} r={g.cap} fill={`url(#${gradient})`} />
-        <line className="knob-marker" x1={markerX0} y1={markerY0} x2={markerX1} y2={markerY1} strokeWidth={g.markerWidth} />
-        {MODULATED.has(id) && (
-          <ModulationRing
-            id={id}
-            centre={centre}
-            radius={centre - 2}
-            trackRadius={groove}
-            dotRadius={g === GEOMETRY.play ? 5 : 4}
-            arc={(from, to, r) => arc(centre, r, from, to)}
-            point={(p, r) => point(centre, r, angleOf(p))}
-          />
-        )}
-      </svg>
-      {c.text}
-    </div>
+    <Tooltip content={PARAM_TIPS[id]}>
+      <div className="knob" data-size={g === GEOMETRY.play ? 'big' : 'small'} data-inactive={inactive || undefined} {...c.attributes}>
+        <svg
+          ref={wheel}
+          className="knob-dial"
+          viewBox={`0 0 ${g.size} ${g.size}`}
+          {...c.slider}
+          onPointerDown={(e) => {
+            c.grab(e, e.currentTarget);
+            drag.current = { x: e.clientX, y: e.clientY, position: c.position, moved: false };
+          }}
+          onPointerMove={(e) => {
+            const d = drag.current;
+            if (!d) return;
+            if (Math.abs(e.clientX - d.x) + Math.abs(e.clientY - d.y) > CLICK_SLOP) d.moved = true;
+            const scale = e.shiftKey ? 0.1 : 1;
+            c.setPosition(d.position + ((d.y - e.clientY) / DRAG_PIXELS_FOR_FULL_TRAVEL) * scale);
+          }}
+          onPointerUp={(e) => {
+            const d = drag.current;
+            drag.current = null;
+            c.release();
+            // A click on the arc, outside the cap: the single-pointer way to set a value (WCAG 2.5.7).
+            if (!d || d.moved) return;
+            const r = e.currentTarget.getBoundingClientRect();
+            const [dx, dy] = [e.clientX - (r.left + r.width / 2), e.clientY - (r.top + r.height / 2)];
+            const degrees = (Math.atan2(dx, -dy) * 180) / Math.PI;
+            if (Math.hypot(dx, dy) > (g.cap / g.size) * r.width && Math.abs(degrees) <= SWEEP_DEGREES / 2) {
+              c.setPosition(degrees / SWEEP_DEGREES + 0.5);
+            }
+          }}
+          onPointerCancel={() => {
+            drag.current = null;
+            c.release();
+          }}
+        >
+          <defs>
+            <radialGradient id={gradient} cx="50%" cy="38%" r="65%">
+              <stop offset="0%" className="knob-cap-hi" />
+              <stop offset="100%" className="knob-cap-lo" />
+            </radialGradient>
+          </defs>
+          <path className="knob-groove" d={arc(centre, groove, 0, 1)} strokeWidth={g.arcWidth} />
+          <path className="knob-arc" d={arc(centre, groove, origin, c.position)} strokeWidth={g.arcWidth} />
+          <circle className="knob-cap" cx={centre} cy={centre} r={g.cap} fill={`url(#${gradient})`} />
+          <line className="knob-marker" x1={markerX0} y1={markerY0} x2={markerX1} y2={markerY1} strokeWidth={g.markerWidth} />
+          {MODULATED.has(id) && (
+            <ModulationRing
+              id={id}
+              centre={centre}
+              radius={centre - 2}
+              trackRadius={groove}
+              dotRadius={g === GEOMETRY.play ? 5 : 4}
+              arc={(from, to, r) => arc(centre, r, from, to)}
+              point={(p, r) => point(centre, r, angleOf(p))}
+            />
+          )}
+        </svg>
+        {c.text}
+      </div>
+    </Tooltip>
   );
 }

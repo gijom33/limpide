@@ -1,5 +1,5 @@
 import { DESTINATIONS } from '../modulation/destinations';
-import type { LfoDestination } from '../patch/patch';
+import type { LfoDestination, ParamId } from '../patch/patch';
 import type { Overlay } from '../viewers/overlays';
 import type { TipContent } from './Tooltip';
 
@@ -306,6 +306,41 @@ export const VIEWER_TIPS: Record<'Oscillator' | 'Filter' | 'Amp', { scope: TipCo
       body: 'The Harmonics of what you hear: the Filter’s, all rising and falling together with the Amp Envelope.',
     },
   },
+};
+
+/**
+ * Each Parameter's tip, which its knob or fader shows by itself (issue 78). Keyed by every Parameter, so a new one
+ * needs a tip before it type-checks. The Envelopes' stages share theirs; both Pulse Widths, LFOs' Depths and Rates too.
+ */
+export const PARAM_TIPS: Record<ParamId, TipContent> = {
+  pulseWidth: TIPS.pulseWidth,
+  osc2PulseWidth: TIPS.pulseWidth,
+  osc2Octave: TIPS.octave,
+  osc2Semitone: TIPS.semitone,
+  osc2Detune: TIPS.detune,
+  mixOsc1: TIPS.osc1Level,
+  mixOsc2: TIPS.osc2Level,
+  mixNoise: TIPS.noise,
+  mixSub: TIPS.sub,
+  cutoff: TIPS.cutoff,
+  resonance: TIPS.resonance,
+  velocityCutoff: TIPS.velocityCutoff,
+  keyTrack: TIPS.keyTrack,
+  filterEnvAmount: TIPS.envAmount,
+  filterAttack: TIPS.attack,
+  filterDecay: TIPS.decay,
+  filterSustain: TIPS.sustain,
+  filterRelease: TIPS.release,
+  ampAttack: TIPS.attack,
+  ampDecay: TIPS.decay,
+  ampSustain: TIPS.sustain,
+  ampRelease: TIPS.release,
+  volume: TIPS.volume,
+  glide: TIPS.glide,
+  lfoAmount: TIPS.lfoDepth,
+  lfoRate: TIPS.lfoRate,
+  lfo2Amount: TIPS.lfoDepth,
+  lfo2Rate: TIPS.lfoRate,
 };
 
 export const OVERLAY_TIPS: Record<Overlay, TipContent> = {

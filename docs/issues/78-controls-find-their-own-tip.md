@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement
+**Status:** done (2026-10-28). Every Parameter's tip is in one map that the type checker holds complete; Knob and Fader show their own; the 19 hand-written wrappers, the Envelope faders' table and the stage block's four dead props are gone. Nothing visible changed: the Playwright suite passes untouched.
 
 ## Agent Brief
 
@@ -25,9 +25,9 @@
 - Knob and Fader, which no longer need a tooltip around them
 
 **Acceptance criteria:**
-- [ ] `npx tsc`, `npm run lint`, `npx vitest run` and `npx playwright test` green, no Playwright test changed
-- [ ] No tooltip wraps a knob or a fader at its call site
-- [ ] A node test: every Parameter's tip has a title and a body
+- [x] `npx tsc`, `npm run lint`, `npx vitest run` and `npx playwright test` green, no Playwright test changed
+- [x] No tooltip wraps a knob or a fader at its call site
+- [x] A node test: every Parameter's tip has a title and a body
 
 **Out of scope:**
 - One table for the choices' names and order (version B, not chosen)
@@ -40,3 +40,10 @@
 Claude's calls, open to the owner:
 
 2. Built in the session that grilled it, test-first, not pushed.
+
+## How it was built
+
+- **The map** (`src/ui/tips.ts`): `PARAM_TIPS: Record<ParamId, TipContent>`. Tests: `src/ui/tips.test.ts`, one case per Parameter.
+- **The controls** (`src/ui/Knob.tsx`, `src/ui/Fader.tsx`): each wraps its own root in a `Tooltip` with `PARAM_TIPS[id]`, the same markup the call sites made.
+- **The call sites**: App's 17 wrappers and the LFO controls' two go, with `STAGE_TIPS`; the tuning knobs are a list of ids. `Block` takes only `title`, `stage`, `children`, `more`, `heading`, `viewers` and `tip`.
+
