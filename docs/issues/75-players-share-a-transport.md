@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement
+**Status:** done (2026-10-28). One Transport plays the Demo's, the Song's, Listen's and the Hold rhythm's Notes; the players end every Note by releasing it; the Demo, the Song and Listen share one value for what plays. Nothing heard or seen changed: the Playwright suite passes untouched.
 
 ## Agent Brief
 
@@ -31,11 +31,11 @@
 - The players' hosts, which lose the Voices and the choice of Note end
 
 **Acceptance criteria:**
-- [ ] `npx tsc`, `npm run lint`, `npx vitest run` and `npx playwright test` green, no Playwright test changed
-- [ ] No player asks for the Voices; no player writes a timer, a look-ahead loop or the stop sequence of its own
-- [ ] The Transport's tests: Notes handed over ahead of the clock and not before, a chord's starts before its ends, starts and ends in time order, the lit keys, the end of a source, the stop
-- [ ] An engine test: on one Voice, releasing the Note sounding closes the Gate, and releasing one it has moved on from does not; a chord on one Voice ends with its last Note
-- [ ] The players' own tests keep their expectations, with Note ends as releases
+- [x] `npx tsc`, `npm run lint`, `npx vitest run` and `npx playwright test` green, no Playwright test changed
+- [x] No player asks for the Voices to end a Note (the Hold rhythm still asks them to choose what it plays); no player writes a timer, a look-ahead loop or the stop sequence of its own
+- [x] The Transport's tests: Notes handed over ahead of the clock and not before, a chord's starts before its ends, starts and ends in time order, the lit keys, the end of a source, the stop
+- [x] An engine test: on one Voice, releasing the Note sounding closes the Gate, and releasing one it has moved on from does not; a chord on one Voice ends with its last Note
+- [x] The players' own tests keep their expectations, with Note ends as releases
 
 **Out of scope:**
 - The Demo's stop rule (what a person does that stops it), the review's candidate 7
@@ -56,3 +56,13 @@ Claude's calls, open to the owner:
 8. The engine needs no change for decision 2: its release already closes the Gate on one Voice for the Note sounding. The new engine test pins it before the players rely on it.
 9. Listen loops its phrase without end instead of starting again after 64 passes, which put a lead-in's gap and a pass without its breath every 64 passes (a few minutes in).
 10. No ADR (ADR-0007's Note Off and release stay as they are); CONTEXT.md unchanged, the Transport being code, not a domain word. Built here, test-first, not pushed.
+
+## How it was built
+
+- **The Transport** (`src/play/transport.ts`): `startTransport(host, source, { lookahead, tick })`. A `Source` is asked on each tick for the Notes due before the horizon and hands them to `play`, each a `Played` (note, Velocity, `on`, `off`); it returns `'end'` when over, or a shorter wait in ms. The Transport groups a chord's starts before its ends, lights the keys through `onNotes` where the host has it, and on stop closes the Gate now and past the look-ahead. Tests: `transport.test.ts`.
+- **The phrase loop** (`loopPhrase` in `src/demo/phrase.ts`): a phrase on a loop as a source, with an optional breath before each pass's end and a transposition read as each Note falls due. The Song is the loop with the piano's octave; Listen (`startPhraseLoop` in `src/demo/player.ts`) is the loop with the Demo's lead-in and breath, and the piano on the phrase's octave.
+- **The Demo** (`startDemo`): its parts, Preset loads, breath, knob moves and octave make a source; it hands a part's Notes to `play` before the next part's Preset loads, so they keep their own sound (issue 60).
+- **The Hold rhythm** (`startRhythm`): its taps make a source; it still asks the Voices to choose what a tap plays.
+- **The release on one Voice**: no engine change; the engine test "on one Voice, releasing the Note sounding closes the Gate…" pins it. The players' tests on choosing a Note's end are gone; their other tests keep their expectations with releases for ends.
+- **What plays** (`usePlayers`): one `playing` value ('demo', 'song', 'listen' or none) and one stop; `play(kind, start)` stops what plays first. A Tutorial calls `stopAll`.
+

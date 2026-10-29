@@ -5,13 +5,11 @@ import { SONG, type SongHost, startSong } from './song';
 function fakeHost() {
   let clock = 0;
   let octave = 4;
-  let voices = 8;
   const calls: { kind: string; note?: number; at: number }[] = [];
   const keys: number[][] = [];
   const host: SongHost = {
     now: () => clock,
     octave: () => octave,
-    voices: () => voices,
     noteOn: (note, _v, at) => calls.push({ kind: 'on', note, at }),
     noteOff: (at) => calls.push({ kind: 'off', at }),
     release: (note, at) => calls.push({ kind: 'release', note, at }),
@@ -23,7 +21,7 @@ function fakeHost() {
       vi.advanceTimersByTime(40);
     }
   };
-  return { host, calls, keys, run, setOctave: (o: number) => (octave = o), setVoices: (v: number) => (voices = v) };
+  return { host, calls, keys, run, setOctave: (o: number) => (octave = o) };
 }
 
 const length = phraseLength(SONG.phrase, SONG.bpm);
@@ -76,22 +74,6 @@ describe('the Song', () => {
     // Every release is of a Note that was started.
     const started = new Set(ons(calls).map((c) => c.note));
     expect(calls.filter((c) => c.kind === 'release').every((c) => started.has(c.note))).toBe(true);
-    stop();
-    vi.useRealTimers();
-  });
-
-  it('on one Voice, ends each Note by closing the Gate; on several, releases it by Note', () => {
-    vi.useFakeTimers();
-    const { host, calls, run, setVoices } = fakeHost();
-    setVoices(1);
-    const stop = startSong(host);
-    run(1);
-    expect(calls.some((c) => c.kind === 'off')).toBe(true);
-    expect(calls.some((c) => c.kind === 'release')).toBe(false);
-    setVoices(8);
-    const at = calls.length;
-    run(1);
-    expect(calls.slice(at).some((c) => c.kind === 'release')).toBe(true);
     stop();
     vi.useRealTimers();
   });

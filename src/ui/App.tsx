@@ -181,10 +181,8 @@ export function App() {
     snapshot: viewer.snapshot,
     takeSnapshot: () => dispatchViewer({ type: 'takeSnapshot' }),
     onStart: () => {
-      players.stopDemo();
+      players.stopAll();
       players.setTookOver(false);
-      players.stopSong();
-      players.stopListen();
     },
     onEnd: players.stopListen,
   });

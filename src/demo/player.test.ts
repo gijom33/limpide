@@ -14,16 +14,13 @@ const track: Track = {
 
 function fakeHost(voicesOf: Record<string, number>) {
   let clock = 0;
-  let voices = 1;
   const calls: string[] = [];
   const host: DemoHost = {
     now: () => clock,
     load: (part) => {
       calls.push(`load ${part.preset}`);
-      voices = voicesOf[part.preset];
-      return { ...defaultPatch(), voices: voices as 1 | 4 };
+      return { ...defaultPatch(), voices: voicesOf[part.preset] as 1 | 4 };
     },
-    voices: () => voices,
     setParam: (id, value) => calls.push(`${id}=${value.toFixed(0)}`),
     onMove: (id) => calls.push(`move ${id}`),
     noteOn: (note, _v, at) => calls.push(`on ${note} @${at.toFixed(3)}`),
@@ -39,7 +36,7 @@ function fakeHost(voicesOf: Record<string, number>) {
     clock += s;
     vi.advanceTimersByTime(40);
   };
-  return { host, calls, advance, setVoices: (n: number) => (voices = n) };
+  return { host, calls, advance };
 }
 
 beforeEach(() => vi.useFakeTimers());
@@ -60,7 +57,7 @@ describe('the Demo player', () => {
     expect(calls.slice(0, 3)).toEqual(['load Mono', 'step 0', 'octave 3']);
     expect(calls.filter((c) => c.startsWith('on'))).toEqual([]); // nothing is handed over until it is near
     advance(0.2);
-    expect(calls.filter((c) => c.startsWith('on') || c.startsWith('off'))).toEqual(['on 48 @0.300', 'off @0.725']);
+    expect(calls.filter((c) => c.startsWith('on') || c.startsWith('release'))).toEqual(['on 48 @0.300', 'release 48 @0.725']);
     advance(0.9); // 1.1 s: the chord at 1.3 s is not near yet
     expect(calls).toContain('on 52 @0.800');
     expect(calls).not.toContain('load Poly');
@@ -82,18 +79,8 @@ describe('the Demo player', () => {
     // C3, a sixteenth at 0.3 s, would end at 0.406 s; its part ends at 0.425 s, so it is let go at 0.3625 s.
     startDemo(host, { bpm: 120, parts: [{ preset: 'A', phrase: 'C3:.25' }, { preset: 'B', phrase: 'E3:.25' }] });
     for (let i = 0; i < 10; i++) advance(0.1);
-    expect(calls).toContain('off @0.362'); // 0.3625, rounded down in binary
-    expect(calls).toContain('off @0.531'); // the last part's Note keeps its length: 0.425 + 0.106
-  });
-
-  it('releases each Note the way the Voices set now call for, even when they change while it plays', () => {
-    const { host, calls, advance, setVoices } = fakeHost({ Mono: 1, Poly: 4 });
-    startDemo(host, track);
-    advance(0.2);
-    expect(calls).toContain('off @0.725'); // C3, on one Voice
-    setVoices(4); // the person picks 4 Voices
-    advance(0.5);
-    expect(calls).toContain('release 52 @1.225'); // E3, by note
+    expect(calls).toContain('release 48 @0.362'); // 0.3625, rounded down in binary
+    expect(calls).toContain('release 52 @0.531'); // the last part's Note keeps its length: 0.425 + 0.106
   });
 
   it('plays the track once, then ends by itself and hands nothing more to the engine', () => {
@@ -153,15 +140,5 @@ describe('the Demo player', () => {
     expect(keys()).toBe('keys -');
     stop();
     expect(calls.at(-1)).toBe('keys -');
-  });
-
-  it('stops: no more Notes are handed over after stop', () => {
-    const { host, calls, advance } = fakeHost({ Mono: 1, Poly: 4 });
-    const stop = startDemo(host, track);
-    stop();
-    const before = calls.length;
-    advance(5);
-    vi.advanceTimersByTime(500);
-    expect(calls.length).toBe(before);
   });
 });

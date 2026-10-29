@@ -1,3 +1,6 @@
+import type { Played, Source } from '../play/transport';
+
+
 /**
  * A phrase is a line of music in a small notation, one token per step, separated by spaces:
  *   `C3:1`        a Note for one beat
@@ -51,4 +54,35 @@ export function phraseLength(text: string, bpm: number): number {
     .trim()
     .split(/\s+/)
     .reduce((beats, token) => beats + Number(token.split(':')[1].split('@')[0]), 0) * (60 / bpm);
+}
+
+/**
+ * A phrase on a loop for the Transport (the Song, a Tutorial's Listen), from `start` on the audio clock, each pass
+ * straight after the last. A Note still sounding `breath` beats before a pass ends is let go then; `transpose`, in
+ * semitones, is read as each Note falls due (the Song follows the piano's octave from the next Note).
+ */
+export function loopPhrase(
+  phrase: string,
+  bpm: number,
+  start: number,
+  { breath = 0, transpose = () => 0 }: { breath?: number; transpose?(): number } = {},
+): Source {
+  const events = parsePhrase(phrase, bpm);
+  const length = phraseLength(phrase, bpm);
+  const letGo = length - breath * (60 / bpm);
+  let pass = start;
+  let next = 0;
+  return (horizon, _now, play) => {
+    const due: Played[] = [];
+    while (pass + events[next].time < horizon) {
+      const e = events[next];
+      const on = pass + e.time;
+      due.push({ note: e.note + transpose(), velocity: e.velocity, on, off: Math.max(on, Math.min(pass + letGo, on + e.duration)) });
+      if (++next === events.length) {
+        next = 0;
+        pass += length;
+      }
+    }
+    play(due);
+  };
 }

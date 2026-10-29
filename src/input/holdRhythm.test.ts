@@ -102,10 +102,10 @@ describe('the rhythm player', () => {
     const times = ons.map((c) => Number(c.split('@')[1]));
     expect(times.slice(1).map((t, i) => +(t - times[i]).toFixed(2))).toEqual([0.5, 1, 0.5, 1]);
     // Each Note ends before the next tap.
-    expect(calls.filter((c) => c.startsWith('off')).length).toBeGreaterThanOrEqual(4);
+    expect(calls.filter((c) => c.startsWith('release')).length).toBeGreaterThanOrEqual(4);
     // A Note sounds for at most a beat, so the long gap is a rest.
-    const firstOff = Number(calls.filter((c) => c.startsWith('off'))[1].split('@')[1]);
-    expect(firstOff - times[1]).toBeCloseTo(0.5 * 0.85, 2);
+    const firstEnd = Number(calls.filter((c) => c.startsWith('release'))[1].split('@')[1]);
+    expect(firstEnd - times[1]).toBeCloseTo(0.5 * 0.85, 2);
     stop();
     vi.useRealTimers();
   });

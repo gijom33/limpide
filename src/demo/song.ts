@@ -1,18 +1,10 @@
-import { parsePhrase, phraseLength } from './phrase';
+import { startTransport, type TransportHost } from '../play/transport';
+import { loopPhrase } from './phrase';
 
-/** What the Song needs from the app: the audio clock, the piano's octave, the Patch's Voices and the engine's Note calls. */
-export interface SongHost {
-  now(): number;
+/** What the Song needs from the app besides the Transport's clock, Notes and keys: the piano's octave. */
+export interface SongHost extends TransportHost {
   /** The piano's octave: its first key is this octave's C. */
   octave(): number;
-  /** How many Voices the Patch has now, which decides how Notes end: the person may change it while the Song plays. */
-  voices(): number;
-  noteOn(note: number, velocity: number, at: number): void;
-  /** Every Voice releases (one Voice). */
-  noteOff(at: number): void;
-  /** The Voice playing `note` releases (several Voices). */
-  release(note: number, at: number): void;
-  /** The Notes sounding right now, whenever that changes: for the on-screen piano. */
   onNotes(notes: number[]): void;
 }
 
@@ -53,67 +45,11 @@ const LOOKAHEAD = 0.15;
 const TICK_MS = 40;
 const LEAD_IN = 0.2;
 
-type Step = { time: number; on: boolean; id: number; note: number; velocity: number };
-
 /**
- * Plays the Song on a loop until stopped, on whatever Patch is loaded. Each Note's start and end go to the engine in
- * time order; a Note takes the octave and the Voices of the moment it starts, and ends as it started. Returns the
- * stop function, which silences everything at once.
+ * Plays the Song on a loop until stopped, on whatever Patch is loaded. A Note takes the piano's octave of the moment it
+ * falls due. Returns the stop function, which silences everything at once.
  */
 export function startSong(host: SongHost): () => void {
-  const steps: Step[] = parsePhrase(SONG.phrase, SONG.bpm).flatMap((e, id) => [
-    { time: e.time, on: true, id, note: e.note, velocity: e.velocity },
-    { time: e.time + e.duration, on: false, id, note: e.note, velocity: 0 },
-  ]);
-  // Ends before starts at the same moment; a chord's Notes keep their order, so its top Note starts last.
-  steps.sort((a, b) => a.time - b.time || Number(a.on) - Number(b.on));
-  const length = phraseLength(SONG.phrase, SONG.bpm);
-
-  let start = host.now() + LEAD_IN;
-  let next = 0;
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const sounding = new Map<number, { note: number; oneVoice: boolean; from: number; to: number }>();
-  let shown = '';
-
-  const tick = () => {
-    const now = host.now();
-    while (start + steps[next].time < now + LOOKAHEAD) {
-      const step = steps[next];
-      const at = start + step.time;
-      if (step.on) {
-        const note = step.note + 12 * (host.octave() - WRITTEN_OCTAVE);
-        host.noteOn(note, step.velocity, at);
-        sounding.set(step.id, { note, oneVoice: host.voices() === 1, from: at, to: Infinity });
-      } else {
-        const played = sounding.get(step.id)!;
-        if (played.oneVoice) host.noteOff(at);
-        else host.release(played.note, at);
-        played.to = at;
-      }
-      if (++next === steps.length) {
-        next = 0;
-        start += length;
-      }
-    }
-    const lit: number[] = [];
-    for (const [id, played] of sounding) {
-      if (played.to <= now) sounding.delete(id);
-      else if (played.from <= now) lit.push(played.note);
-    }
-    const key = lit.join(',');
-    if (key !== shown) {
-      shown = key;
-      host.onNotes(lit);
-    }
-    timer = setTimeout(tick, TICK_MS);
-  };
-
-  tick();
-  return () => {
-    clearTimeout(timer);
-    const now = host.now();
-    host.noteOff(now);
-    host.noteOff(now + LOOKAHEAD + 0.05); // and whatever was already handed to the engine
-    host.onNotes([]);
-  };
+  const source = loopPhrase(SONG.phrase, SONG.bpm, host.now() + LEAD_IN, { transpose: () => 12 * (host.octave() - WRITTEN_OCTAVE) });
+  return startTransport(host, source, { lookahead: LOOKAHEAD, tick: TICK_MS });
 }

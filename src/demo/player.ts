@@ -1,31 +1,27 @@
 import { PARAMS, type ParamId, type Patch } from '../patch/patch';
 import { positionToValue, valueToPosition } from '../patch/taper';
-import { type PhraseEvent, parsePhrase, phraseLength } from './phrase';
+import { type Played, type Source, startTransport, type TransportHost } from '../play/transport';
+import { loopPhrase, parsePhrase, phraseLength } from './phrase';
 import { type Part, TRACK, type Track } from './track';
 
-/** What the Demo needs from the app: the audio clock, a way to load a Preset, and the engine's Note calls. */
-export interface DemoHost {
-  now(): number;
+/** What Listen needs from the app: the Transport's clock, Notes and keys, and the piano's octave. */
+export interface ListenHost extends TransportHost {
+  onNotes(notes: number[]): void;
+  /** The octave the on-screen piano should show, so the part's Notes are in view. */
+  showOctave(octave: number): void;
+}
+
+/** What the Demo needs from the app besides: a way to load a Preset, turn its knobs, and say where it is. */
+export interface DemoHost extends ListenHost {
   /** Load the part's Preset, into the engine at once; returns it (its values start the moves). */
   load(part: Part): Patch;
-  /** How many Voices the Patch has now, which decides how Notes are released: the person may change it mid-part. */
-  voices(): number;
   /** Turn a knob: the Patch's Parameter takes this value now, in the engine too. */
   setParam(id: ParamId, value: number): void;
   /** A knob starts to move: the page may bring it into view. */
   onMove(id: ParamId): void;
-  noteOn(note: number, velocity: number, at: number): void;
+  onStep(index: number): void;
   /** The track is over: every part has played once. */
   onEnd(): void;
-  /** Every Voice releases (one-Voice Presets). */
-  noteOff(at: number): void;
-  /** The Voice playing `note` releases (several Voices). */
-  release(note: number, at: number): void;
-  onStep(index: number): void;
-  /** The Notes sounding right now, whenever that changes: for the on-screen piano. */
-  onNotes(notes: number[]): void;
-  /** The octave the on-screen piano should show, so the part's Notes are in view. */
-  showOctave(octave: number): void;
 }
 
 // Notes are handed to the engine this far ahead of the clock: enough to be on time, little enough to stop quickly.
@@ -56,9 +52,9 @@ export function octaveShowing(notes: number[]): number {
 
 /**
  * Plays the track once, without a break: each part's Preset is loaded at its bar line, just before its first Note is
- * handed to the engine, and each part but the last takes a short breath at its end. Knobs are turned on the same look-ahead as the Notes, so a jump on a bar line
- * is in force when that bar's first Note starts. After the last part it ends by itself. Returns the stop function,
- * which silences everything at once.
+ * handed to the engine, and each part but the last takes a short breath at its end. Knobs are turned on the same
+ * look-ahead as the Notes, so a jump on a bar line is in force when that bar's first Note starts. After the last part it
+ * ends by itself. Returns the stop function, which silences everything at once.
  */
 export function startDemo(host: DemoHost, track: Track = TRACK): () => void {
   const beat = 60 / track.bpm;
@@ -71,12 +67,10 @@ export function startDemo(host: DemoHost, track: Track = TRACK): () => void {
   }
   const end = at;
 
-  let timer: ReturnType<typeof setTimeout> | undefined;
   let index = -1;
-  let events: (PhraseEvent & { off: number })[] = [];
+  let notes: Played[] = [];
   let queued = 0;
   let moves: { id: ParamId; from: number; to: number; start: number; end: number; started: boolean; done: boolean }[] = [];
-  let shown = '';
 
   const enter = (i: number) => {
     index = i;
@@ -88,7 +82,12 @@ export function startDemo(host: DemoHost, track: Track = TRACK): () => void {
     const parsed = parsePhrase(part.phrase, track.bpm);
     host.showOctave(octaveShowing(parsed.map((e) => e.note)));
     const letGo = i < track.parts.length - 1 ? start + length - BREATH * beat : Infinity;
-    events = parsed.map((e) => ({ ...e, time: start + e.time, off: Math.max(start + e.time, Math.min(letGo, start + e.time + e.duration)) }));
+    notes = parsed.map((e) => ({
+      note: e.note,
+      velocity: e.velocity,
+      on: start + e.time,
+      off: Math.max(start + e.time, Math.min(letGo, start + e.time + e.duration)),
+    }));
     queued = 0;
     moves = (part.moves ?? []).map((m) => ({
       id: m.id,
@@ -117,62 +116,35 @@ export function startDemo(host: DemoHost, track: Track = TRACK): () => void {
     if (moving) host.onMove(moving);
   };
 
-  /** Hands the engine the current part's Notes that start before `until`. */
-  const handOver = (until: number) => {
-    while (queued < events.length && events[queued].time < until) {
-      // A chord's Notes all start before any of them stops, so the model's history stays in time order.
-      const time = events[queued].time;
-      let last = queued;
-      while (last < events.length && events[last].time === time) last++;
-      for (let i = queued; i < last; i++) host.noteOn(events[i].note, events[i].velocity, events[i].time);
-      const voices = host.voices();
-      for (let i = queued; i < last; i++) if (voices === 1) host.noteOff(events[i].off); else host.release(events[i].note, events[i].off);
-      queued = last;
-    }
-  };
-
-  const lightKeys = (now: number) => {
-    const notes = events.filter((e) => e.time <= now && now < e.off).map((e) => e.note);
-    const key = notes.join(',');
-    if (key !== shown) {
-      shown = key;
-      host.onNotes(notes);
-    }
-  };
-
-  const tick = () => {
-    const now = host.now();
+  // Each part's Notes are played before the next part's Preset loads, so they keep their own sound (issue 60).
+  const source: Source = (horizon, now, play) => {
     if (now >= end) {
       turnKnobs(end);
-      host.onNotes([]);
-      host.onEnd();
-      return;
+      return 'end';
     }
-    const horizon = now + LOOKAHEAD;
-    let wait = TICK_MS;
     for (;;) {
       turnKnobs(horizon);
       const boundary = index + 1 < track.parts.length ? starts[index + 1] : Infinity;
-      handOver(Math.min(horizon, boundary));
-      if (boundary >= horizon) break;
+      let last = queued;
+      while (last < notes.length && notes[last].on < Math.min(horizon, boundary)) last++;
+      play(notes.slice(queued, last));
+      queued = last;
+      if (boundary >= horizon) return;
       const switchAt = boundary - SWITCH_AHEAD;
-      if (now < switchAt) {
-        wait = Math.max(5, Math.min(TICK_MS, (switchAt - now) * 1000)); // back in time for the switch, without spinning
-        break;
-      }
+      if (now < switchAt) return Math.max(5, (switchAt - now) * 1000); // back in time for the switch, without spinning
       enter(index + 1);
     }
-    lightKeys(now);
-    timer = setTimeout(tick, wait);
   };
 
   enter(0);
-  tick();
-  return () => {
-    clearTimeout(timer);
-    const now = host.now();
-    host.noteOff(now);
-    host.noteOff(now + LOOKAHEAD + 0.05); // and whatever was already handed to the engine
-    host.onNotes([]);
-  };
+  return startTransport(host, source, { lookahead: LOOKAHEAD, tick: TICK_MS });
+}
+
+/**
+ * A Tutorial's Listen: its phrase over and over on the Patch as it is, from a breath after pressing it, each pass
+ * letting go a breath before its end as the Demo's parts do, with the piano on the phrase's octave.
+ */
+export function startPhraseLoop(host: ListenHost, { phrase, bpm }: { phrase: string; bpm: number }): () => void {
+  host.showOctave(octaveShowing(parsePhrase(phrase, bpm).map((e) => e.note)));
+  return startTransport(host, loopPhrase(phrase, bpm, host.now() + LEAD_IN, { breath: BREATH }), { lookahead: LOOKAHEAD, tick: TICK_MS });
 }

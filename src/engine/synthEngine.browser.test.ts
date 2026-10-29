@@ -1116,6 +1116,31 @@ describe('several Voices (ADR-0007)', () => {
     expect(dB(tone(s, 164.8) / tone(s, 110))).toBeLessThan(-30);
   });
 
+  it('on one Voice, releasing the Note sounding closes the Gate, and releasing one it has moved on from does not (issue 75)', async () => {
+    const level = (s: Float32Array, from: number) => rms(s, Math.round(SR * from), Math.round(SR * (from + 0.1)));
+    const mono = { ...steady, voices: 1 as const };
+    const ended = await render(1, mono, (e) => {
+      e.noteOn(A2, 1, 0);
+      e.release(A2, 0.3);
+    });
+    expect(level(ended, 0.1)).toBeGreaterThan(0.02);
+    expect(level(ended, 0.6)).toBeLessThan(1e-3);
+    const movedOn = await render(1, mono, (e) => {
+      e.noteOn(A2, 1, 0);
+      e.noteOn(E3, 1, 0.2);
+      e.release(A2, 0.3); // E3 has the Voice now: it sounds on
+    });
+    expect(level(movedOn, 0.6)).toBeGreaterThan(0.02);
+    // A chord on one Voice plays its last Note, and ends when that Note is released.
+    const chordEnded = await render(1, mono, (e) => {
+      e.noteOn(A2, 1, 0);
+      e.noteOn(E3, 1, 0);
+      e.release(A2, 0.3);
+      e.release(E3, 0.3);
+    });
+    expect(level(chordEnded, 0.6)).toBeLessThan(1e-3);
+  });
+
   it('takes the oldest Voice when every Voice is sounding', async () => {
     const s = await render(1, { ...steady, voices: 2 }, (e) => {
       e.noteOn(A2, 1, 0);

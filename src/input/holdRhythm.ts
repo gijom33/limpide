@@ -1,3 +1,5 @@
+import { type Source, startTransport, type TransportHost } from '../play/transport';
+
 /** Clicks on Hold this close together (seconds) are taps of a rhythm rather than switching it off. */
 export const TAP_GAP = 2;
 
@@ -51,17 +53,14 @@ export function createHoldTaps() {
   };
 }
 
-/** What the rhythm player needs from the app: the audio clock, the Notes held, the Voices and the engine's Note calls. */
-export interface RhythmHost {
-  now(): number;
+/**
+ * What the rhythm player needs from the app besides the Transport's clock and Notes: the Notes held, and the Voices,
+ * which decide what each tap plays. The piano lights the held keys itself.
+ */
+export interface RhythmHost extends TransportHost {
   /** The Notes held now (keys down and Notes Hold keeps), oldest first. */
   notes(): number[];
   voices(): number;
-  noteOn(note: number, velocity: number, at: number): void;
-  /** The Voice playing `note` releases (several Voices). */
-  release(note: number, at: number): void;
-  /** Every Voice releases (one Voice). */
-  noteOff(at: number): void;
 }
 
 // Notes are handed to the engine this far ahead of the clock.
@@ -82,38 +81,27 @@ export function startRhythm(host: RhythmHost, { gaps, beat }: Rhythm): () => voi
   let next: number | null = null; // when the next tap plays; null while nothing is held
   let step = 0;
   let single = 0; // which held Note the next single-Note tap plays
-  let timer: ReturnType<typeof setTimeout> | undefined;
 
-  const tick = () => {
-    const now = host.now();
+  const source: Source = (horizon, now, play) => {
     if (!host.notes().length) {
       next = null;
       step = 0;
       single = 0;
-    } else {
-      next ??= now;
-      while (next < now + LOOKAHEAD) {
-        const notes = host.notes();
-        const oneVoice = host.voices() === 1;
-        const chordPass = Math.floor(step / gaps.length) % 2 === 1;
-        const play = oneVoice ? [notes[notes.length - 1]] : chordPass ? notes : [notes[single++ % notes.length]];
-        const gap = gaps[step % gaps.length];
-        const end = next + Math.min(gap, beat) * GATE;
-        for (const note of play) host.noteOn(note, VELOCITY, next);
-        if (oneVoice) host.noteOff(end);
-        else for (const note of play) host.release(note, end);
-        next += gap;
-        step++;
-      }
+      return;
     }
-    timer = setTimeout(tick, TICK_MS);
+    next ??= now;
+    while (next < horizon) {
+      const notes = host.notes();
+      const chordPass = Math.floor(step / gaps.length) % 2 === 1;
+      const tap = host.voices() === 1 ? [notes[notes.length - 1]] : chordPass ? notes : [notes[single++ % notes.length]];
+      const gap = gaps[step % gaps.length];
+      const off = next + Math.min(gap, beat) * GATE;
+      const on = next;
+      play(tap.map((note) => ({ note, velocity: VELOCITY, on, off })));
+      next += gap;
+      step++;
+    }
   };
 
-  tick();
-  return () => {
-    clearTimeout(timer);
-    const now = host.now();
-    host.noteOff(now);
-    host.noteOff(now + LOOKAHEAD + 0.05); // and whatever was already handed to the engine
-  };
+  return startTransport(host, source, { lookahead: LOOKAHEAD, tick: TICK_MS });
 }

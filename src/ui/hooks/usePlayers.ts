@@ -1,14 +1,17 @@
 import { type Dispatch, type MutableRefObject, type SetStateAction, useEffect, useRef, useState } from 'react';
 import type { AudioSession } from '../../app/session';
 import { createDemoKnobs } from '../../demo/demoKnobs';
-import { type DemoHost, startDemo } from '../../demo/player';
+import { startDemo, startPhraseLoop } from '../../demo/player';
 import { startSong } from '../../demo/song';
 import { SHARED_RIFF, TRACK, type Track } from '../../demo/track';
 import { shiftOctave } from '../../input/keyboardLayout';
 import { PRESETS } from '../../patch/presets';
+import type { TransportHost } from '../../play/transport';
 import type { Tutorial } from '../../tutorial/tutorial';
 import { SECTION_OF, type SectionName } from '../sections';
 import { freezesOnSpace } from './useKeys';
+
+type Playing = 'demo' | 'song' | 'listen';
 
 interface Host {
   session: AudioSession;
@@ -31,20 +34,36 @@ export function usePlayers({ session, octaveRef, setOctave, heldNotes, onDemoSta
   onDemoStartRef.current = onDemoStart;
   // The Notes the Demo, the Song or Listen is playing, lit on the piano.
   const [playedNotes, setPlayedNotes] = useState<number[]>([]);
-  const notes: Pick<DemoHost, 'now' | 'voices' | 'noteOn' | 'noteOff' | 'release'> = {
+  const transport: TransportHost & { onNotes(notes: number[]): void } = {
     now: () => engine.now(),
-    voices: () => patches.get().patch.voices,
     noteOn: (note, velocity, at) => engine.noteOn(note, velocity, at),
     noteOff: (at) => engine.noteOff(at),
     release: (note, at) => engine.release(note, at),
+    onNotes: setPlayedNotes,
+  };
+  const showOctave = (octave: number) => setOctave(shiftOctave(octave, 0));
+
+  // What plays by itself, one at a time (issue 75): starting one stops the one playing.
+  const [playing, setPlaying] = useState<Playing | null>(null);
+  const current = useRef<{ kind: Playing; stop(): void } | null>(null);
+  /** Stops what plays, or only `kind` if that is what plays. */
+  const stop = (kind?: Playing) => {
+    if (!current.current || (kind && current.current.kind !== kind)) return;
+    current.current.stop();
+    current.current = null;
+    setPlaying(null);
+  };
+  const play = (kind: Playing, start: () => () => void) => {
+    stop();
+    current.current = { kind, stop: start() };
+    setPlaying(kind);
   };
 
-  // The Demo: which part plays (null when stopped), the track (the Demo's, or a riff on a shared sound), and whether a
-  // Note or a control just stopped it (its card says so).
-  const [demo, setDemo] = useState<number | null>(null);
+  // The Demo: which part plays, the track (the Demo's, or a riff on a shared sound), and whether a Note or a control
+  // just stopped it (its card says so).
+  const [part, setPart] = useState(0);
   const [demoTrack, setDemoTrack] = useState<Track>(TRACK);
   const [tookOver, setTookOver] = useState(false);
-  const demoStop = useRef<(() => void) | null>(null);
   // The section of the knob the Demo is turning, for the page to follow; a scroll of the person's own stops the
   // following until the Demo's next part.
   const [follow, setFollow] = useState<{ name: SectionName; key: number } | null>(null);
@@ -52,110 +71,68 @@ export function usePlayers({ session, octaveRef, setOctave, heldNotes, onDemoSta
 
   /** `tookOver`: the person played or touched something, and the Demo's card says it stopped. */
   const stopDemo = (tookOver = false) => {
-    if (tookOver && demoStop.current) setTookOver(true);
-    demoStop.current?.();
-    demoStop.current = null;
-    setDemo(null);
+    if (tookOver && current.current?.kind === 'demo') setTookOver(true);
+    stop('demo');
   };
   const stopDemoRef = useRef(stopDemo);
   stopDemoRef.current = stopDemo;
 
-  // The Song: it moves with the piano's octave. Playing a Note, the Demo or the Song button stops it.
-  const [song, setSong] = useState(false);
-  const songStop = useRef<(() => void) | null>(null);
-  const stopSong = () => {
-    songStop.current?.();
-    songStop.current = null;
-    setSong(false);
-  };
-
-  // Listen: a Tutorial's phrase, played over and over on the Patch as it is now, so both hands are free.
-  const [listening, setListening] = useState(false);
-  const listenStop = useRef<(() => void) | null>(null);
-  const stopListen = () => {
-    listenStop.current?.();
-    listenStop.current = null;
-    setListening(false);
-  };
-
   /** The track; or, with `shared`, only a riff, played on the Patch loaded now (a Share link's). */
   const playDemo = ({ shared = false } = {}) => {
-    stopDemo();
-    stopSong();
-    stopListen();
+    stop();
     onDemoStartRef.current();
     setTookOver(false);
     const track = shared
       ? { bpm: TRACK.bpm, parts: [{ preset: patches.get().name, phrase: SHARED_RIFF, caption: 'The sound someone shared with you: turn any knob and hear it change.' }] }
       : TRACK;
     setDemoTrack(track);
-    // Knobs turned by hand while the Demo plays stay where they were put until its next part.
-    const knobs = createDemoKnobs(patches);
-    const stopPlayer = startDemo(
-      {
-        ...notes,
-        load: (part) => {
-          followPaused.current = false;
-          return knobs.newPart(shared ? undefined : PRESETS.find((p) => p.name === part.preset)!);
-        },
-        setParam: knobs.turn,
-        onMove: (id) => {
-          if (!followPaused.current) setFollow((f) => ({ name: SECTION_OF[id], key: (f?.key ?? 0) + 1 }));
-        },
-        onStep: setDemo,
-        onNotes: setPlayedNotes,
-        showOctave: (o) => setOctave(shiftOctave(o, 0)),
-        onEnd: () => {
-          // The track is over: back to the starting point, silent, as if nothing had been touched. The shared sound
-          // stays loaded.
-          knobs.stop();
-          demoStop.current = null;
-          setDemo(null);
-          if (shared) return;
-          const init = PRESETS[0];
-          patches.load(init.name, init.patch);
-        },
-      },
-      track,
-    );
-    demoStop.current = () => {
-      stopPlayer();
-      knobs.stop();
-    };
-  };
-  const toggleDemo = () => (demoStop.current ? stopDemo() : playDemo());
-
-  const toggleSong = () => {
-    if (songStop.current) return stopSong();
-    stopDemo();
-    stopListen();
-    songStop.current = startSong({ ...notes, octave: () => octaveRef.current, onNotes: setPlayedNotes });
-    setSong(true);
-  };
-
-  const startListen = (tutorial: Tutorial) => {
-    stopDemo();
-    stopSong();
-    const play = () => {
-      listenStop.current = startDemo(
+    play('demo', () => {
+      // Knobs turned by hand while the Demo plays stay where they were put until its next part.
+      const knobs = createDemoKnobs(patches);
+      const stopPlayer = startDemo(
         {
-          ...notes,
-          load: () => patches.get().patch,
-          setParam: () => {},
-          onMove: () => {},
-          onStep: () => {},
-          onNotes: setPlayedNotes,
-          showOctave: (o) => setOctave(shiftOctave(o, 0)),
-          onEnd: play,
+          ...transport,
+          showOctave,
+          load: (p) => {
+            followPaused.current = false;
+            return knobs.newPart(shared ? undefined : PRESETS.find((preset) => preset.name === p.preset)!);
+          },
+          setParam: knobs.turn,
+          onMove: (id) => {
+            if (!followPaused.current) setFollow((f) => ({ name: SECTION_OF[id], key: (f?.key ?? 0) + 1 }));
+          },
+          onStep: setPart,
+          onEnd: () => {
+            // The track is over: back to the starting point, silent, as if nothing had been touched. The shared sound
+            // stays loaded.
+            knobs.stop();
+            current.current = null;
+            setPlaying(null);
+            if (shared) return;
+            const init = PRESETS[0];
+            patches.load(init.name, init.patch);
+          },
         },
-        // The phrase many times over, as one track: the player starts each part on the last one's end, so the loop
-        // keeps time (started again at each end, it fell off the beat by the player's lead-in).
-        { bpm: tutorial.bpm, parts: Array.from({ length: 64 }, () => ({ preset: tutorial.preset, phrase: tutorial.phrase })) },
+        track,
       );
-    };
-    play();
-    setListening(true);
+      return () => {
+        stopPlayer();
+        knobs.stop();
+      };
+    });
   };
+  const toggleDemo = () => (current.current?.kind === 'demo' ? stopDemo() : playDemo());
+
+  // The Song: it moves with the piano's octave. Playing a Note, the Demo or the Song button stops it.
+  const stopSong = () => stop('song');
+  const toggleSong = () =>
+    current.current?.kind === 'song' ? stopSong() : play('song', () => startSong({ ...transport, octave: () => octaveRef.current }));
+
+  // Listen: a Tutorial's phrase, played over and over on the Patch as it is now, so both hands are free.
+  const stopListen = () => stop('listen');
+  const startListen = (tutorial: Tutorial) => play('listen', () => startPhraseLoop({ ...transport, showOctave }, tutorial));
+
+  const demo = playing === 'demo' ? part : null;
 
   // Playing anything, or touching a control that does not shape the sound, ends the Demo: the person has taken over.
   // Knobs, faders and the stages' switches (Waveforms, Filter Mode and Slope, Voices, the LFOs' shapes and
@@ -216,11 +193,9 @@ export function usePlayers({ session, octaveRef, setOctave, heldNotes, onDemoSta
 
   // A Note played by hand (keyboard, piano or MIDI) ends the Song: the person has taken over. Only a Note played
   // after it started: one already held (Hold) when the Song starts does not.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: on a new Note only; stopSong reads the ref of what plays
   useEffect(() => {
-    if (!heldNotes.length || !songStop.current) return;
-    songStop.current();
-    songStop.current = null;
-    setSong(false);
+    if (heldNotes.length) stopSong();
   }, [heldNotes]);
   // The Demo's "you are playing now" stays a moment, then goes.
   useEffect(() => {
@@ -230,18 +205,14 @@ export function usePlayers({ session, octaveRef, setOctave, heldNotes, onDemoSta
   }, [tookOver]);
   // Nothing plays on after the page goes.
   useEffect(
-    () => () => {
-      listenStop.current?.();
-      songStop.current?.();
-      demoStop.current?.();
-    },
+    () => () => current.current?.stop(),
     [],
   );
 
   return {
-    playedNotes,
+    playedNotes, stopAll: () => stop(),
     demo, demoTrack, follow, tookOver, setTookOver, playDemo, stopDemo, stopDemoRef, toggleDemo,
-    song, stopSong, toggleSong,
-    listening, startListen, stopListen,
+    song: playing === 'song', stopSong, toggleSong,
+    listening: playing === 'listen', startListen, stopListen,
   };
 }
