@@ -97,3 +97,26 @@ test('Glide sits beside Voices in the Amp, greyed out with more than one Voice (
   await voices.getByRole('radio', { name: '1', exact: true }).click();
   await expect(glide).not.toHaveAttribute('data-inactive');
 });
+
+// Issue 86 (the owner's bug, 2026-10-28): Glide is right of the Voices numbers and level with them at every width; at
+// 1075 px the name beside the numbers left Glide no room, and it wrapped under them.
+test('Glide stays right of the Voices numbers at every width (issue 86)', async ({ page }) => {
+  test.setTimeout(120_000);
+  await page.goto('/');
+  const wrong: string[] = [];
+  for (let width = 340; width <= 1920; width += 7) {
+    await page.setViewportSize({ width, height: 900 });
+    const place = await page.evaluate(
+      () =>
+        new Promise<{ right: boolean; level: boolean }>((resolve) =>
+          requestAnimationFrame(() => {
+            const numbers = document.querySelector('.voices-field [role="radiogroup"]')!.getBoundingClientRect();
+            const glide = document.querySelector('.voices-field .knob')!.getBoundingClientRect();
+            resolve({ right: glide.left >= numbers.right, level: glide.top < numbers.bottom });
+          }),
+        ),
+    );
+    if (!place.right || !place.level) wrong.push(`${width}px`);
+  }
+  expect(wrong).toEqual([]);
+});

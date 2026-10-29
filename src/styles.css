@@ -591,6 +591,12 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   .block .voices-field .segmented-field { flex-wrap: wrap; grid-template-columns: max-content; }
   .voices-field .field-caption { flex: 1 1 100%; }
 }
+/* The Voices name beside its numbers only where Glide still fits after them (issue 86, the owner: "Glide should always
+   be on right side of voices number"): the name, the numbers and Glide need about 310 px, more than a row of knobs. */
+@container (max-width: 324px) {
+  .block .voices-field .segmented-field { flex-wrap: wrap; grid-template-columns: max-content; }
+  .voices-field .field-caption { flex: 1 1 100%; }
+}
 @media (max-width: 600px) {
   @container (max-width: 330px) {
     .block .sub-block > h3, .block .sub-block > .tip-anchor:first-child { flex: 1 1 100%; align-self: auto; }
