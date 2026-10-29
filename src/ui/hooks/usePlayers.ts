@@ -3,6 +3,7 @@ import type { AudioSession } from '../../app/session';
 import { createDemoKnobs } from '../../demo/demoKnobs';
 import { startDemo, startPhraseLoop } from '../../demo/player';
 import { startSong } from '../../demo/song';
+import { demoStop, type Touched } from '../../demo/stopRule';
 import { SHARED_RIFF, TRACK, type Track } from '../../demo/track';
 import { shiftOctave } from '../../input/keyboardLayout';
 import { PRESETS } from '../../patch/presets';
@@ -12,6 +13,17 @@ import { SECTION_OF, type SectionName } from '../sections';
 import { freezesOnSpace } from './useKeys';
 
 type Playing = 'demo' | 'song' | 'listen';
+
+/** What a key press or a touch was on, for the Demo's stop rule: the one place its selectors live (issue 79). */
+function touchedBy(target: EventTarget | null): Touched {
+  if (!(target instanceof Element)) return 'outside';
+  if (target.closest('[data-demo]')) return 'demo';
+  if (target.closest('.display-menu')) return 'display';
+  if (target.closest('.knob, .block-controls [role="radio"], .timeline-controls [role="radio"], .destination-picker, .section-strip, [role="tab"]')) return 'sound';
+  if (!target.closest('main')) return 'outside';
+  if (target.closest('.piano')) return 'piano';
+  return 'page';
+}
 
 interface Host {
   session: AudioSession;
@@ -134,35 +146,30 @@ export function usePlayers({ session, octaveRef, setOctave, heldNotes, onDemoSta
 
   const demo = playing === 'demo' ? part : null;
 
-  // Playing anything, or touching a control that does not shape the sound, ends the Demo: the person has taken over.
-  // Knobs, faders and the stages' switches (Waveforms, Filter Mode and Slope, Voices, the LFOs' shapes and
-  // destinations) can be changed while it plays, and the sound follows; moving around the page (the section strip,
-  // the Oscillator tabs) leaves it playing too. So does Display, which shows the sound without changing it (issue 64):
-  // opening it, its settings, Space's Freeze, and the click or Escape that closes it, unless that click is on the
-  // piano, which plays (issue 71).
+  // While the Demo plays, each key press and touch is described to its stop rule (`demoStop`, issue 79), which says
+  // whether the person has taken over.
   useEffect(() => {
     if (demo === null) return;
     const stop = () => stopDemoRef.current(true);
-    const shapesSound = (target: EventTarget | null) =>
-      target instanceof Element &&
-      !!target.closest('.knob, .block-controls [role="radio"], .timeline-controls [role="radio"], .destination-picker, .section-strip, [role="tab"]');
-    const inDisplay = (target: EventTarget | null) => target instanceof Element && !!target.closest('.display-menu');
     const displayOpen = () => !!document.querySelector('.display-panel');
     const onKey = (e: KeyboardEvent) => {
-      if (freezesOnSpace(e) || (e.key === 'Escape' && displayOpen())) return;
-      if (e.key === 'Enter' && shapesSound(e.target)) return;
-      if ((e.key === 'Enter' || e.key === ' ') && inDisplay(e.target)) return;
-      if (!e.metaKey && !e.ctrlKey && !e.altKey && !['Shift', 'Tab'].includes(e.key)) stop();
+      const event = { kind: 'key', key: e.key, freezes: freezesOnSpace(e), modifier: e.metaKey || e.ctrlKey || e.altKey } as const;
+      if (demoStop({ ...event, touched: touchedBy(e.target), displayOpen: displayOpen() }) === 'stop') stop();
     };
     // A finger on the page may only be scrolling it: unless it lands on a control that takes touches itself
     // (knobs, piano), wait for it to lift. If the browser took it over to scroll, it is cancelled instead.
     let tap: number | null = null;
     const onPointer = (e: PointerEvent) => {
       const target = e.target as Element;
-      if ((!target.closest('main') && !target.closest('.section-strip')) || target.closest('[data-demo]') || shapesSound(target)) return;
-      if (inDisplay(target) || (displayOpen() && !target.closest('.piano'))) return;
-      if (e.pointerType === 'mouse' || getComputedStyle(target).touchAction === 'none') stop();
-      else tap = e.pointerId;
+      const decision = demoStop({
+        kind: 'pointer',
+        touched: touchedBy(target),
+        displayOpen: displayOpen(),
+        mouse: e.pointerType === 'mouse',
+        takesTouches: getComputedStyle(target).touchAction === 'none',
+      });
+      if (decision === 'stop') stop();
+      else if (decision === 'onLift') tap = e.pointerId;
     };
     const onLift = (e: PointerEvent) => {
       if (e.pointerId === tap) stop();

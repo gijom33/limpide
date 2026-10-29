@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement
+**Status:** done (2026-10-28). One pure function decides from a plain description of each key press and touch; the selectors are in one step that names what was touched; a node table test covers every rule. Nothing visible changed: the Playwright suite passes untouched.
 
 ## Agent Brief
 
@@ -26,9 +26,9 @@
 - What a target is, for the Demo
 
 **Acceptance criteria:**
-- [ ] `npx tsc`, `npm run lint`, `npx vitest run` and `npx playwright test` green, no Playwright test changed
-- [ ] No selector in the listener's rules: they are all in the step that names what was touched
-- [ ] A node table test of every rule above, issues 64 and 71 among them
+- [x] `npx tsc`, `npm run lint`, `npx vitest run` and `npx playwright test` green, no Playwright test changed
+- [x] No selector in the listener's rules: they are all in the step that names what was touched
+- [x] A node table test of every rule above, issues 64 and 71 among them
 
 **Out of scope:**
 - Controls declaring what they are with an attribute (version B, not chosen)
@@ -42,3 +42,10 @@ Claude's calls, open to the owner:
 
 2. What was touched is named in a fixed order (the Demo's own controls, Display, a control that shapes the sound, outside the page, the piano, the rest of the page), so a target that is two of them is named the way the old checks treated it.
 3. Built in the session that grilled it, test-first, not pushed.
+
+## How it was built
+
+- **The decision** (`src/demo/stopRule.ts`): `demoStop(event)` returns `'stop'`, `'onLift'` or `'playOn'` for a `DemoEvent` (a key or a pointer) and its `Touched`. Tests: `stopRule.test.ts`, 23 cases.
+- **The naming step** (`touchedBy` in `src/ui/hooks/usePlayers.ts`): the selectors, in the order of decision 2.
+- **The listener** (the same hook): describes each key press and pointer press and acts on the decision; the page following the Demo's knobs and a scroll pausing it are as they were.
+
