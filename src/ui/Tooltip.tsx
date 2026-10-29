@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import { createContext, type ReactNode, useContext, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { placeTooltip } from './placeTooltip';
 
@@ -9,6 +9,9 @@ export interface TipContent {
   /** How to use it (optional). */
   how?: string;
 }
+
+/** Whether tooltips open at all: Display's Tooltips switch (issue 81). Off, each control keeps its description. */
+export const TooltipsContext = createContext(true);
 
 const HOVER_DELAY_MS = 350;
 // On a touch screen, holding a control this long without moving shows its explanation (issue 49).
@@ -23,6 +26,7 @@ const LONG_PRESS_SLOP = 8;
  */
 export function Tooltip({ content, children, longPress = true }: { content: TipContent; children: ReactNode; longPress?: boolean }) {
   const id = useId();
+  const enabled = useContext(TooltipsContext);
   const wrapperRef = useRef<HTMLSpanElement>(null);
   const tipRef = useRef<HTMLDivElement>(null);
   const timer = useRef<number | undefined>(undefined);
@@ -41,6 +45,7 @@ export function Tooltip({ content, children, longPress = true }: { content: TipC
   }, [id]);
 
   const show = (delay: number) => {
+    if (!enabled) return;
     window.clearTimeout(timer.current);
     timer.current = window.setTimeout(() => setOpen(true), delay);
   };
@@ -90,7 +95,7 @@ export function Tooltip({ content, children, longPress = true }: { content: TipC
       onPointerLeave={(e) => e.pointerType === 'mouse' && hide()}
       onPointerDown={(e) => {
         hide();
-        if (e.pointerType !== 'touch' || !longPress) return;
+        if (e.pointerType !== 'touch' || !longPress || !enabled) return;
         press.current = { x: e.clientX, y: e.clientY };
         timer.current = window.setTimeout(() => {
           pinned.current = true;

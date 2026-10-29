@@ -37,7 +37,7 @@ import { SubBlock } from './SubBlock';
 import { Tabs } from './Tabs';
 import { TapViewers } from './TapViewers';
 import { ToolGroup } from './ToolGroup';
-import { type TipContent, Tooltip } from './Tooltip';
+import { type TipContent, Tooltip, TooltipsContext } from './Tooltip';
 import { TutorialCard } from './TutorialCard';
 import { TutorialMenu } from './TutorialMenu';
 import { applyTheme, loadTheme, type Theme } from './theme';
@@ -48,6 +48,7 @@ import { WaveformPicker } from './WaveformPicker';
 import { Wordmark } from './Wordmark';
 
 const LETTER_KEYS = 'limpide.letterKeys';
+const TOOLTIPS = 'limpide.tooltips';
 const BEND_RANGE = 'limpide.bendRange';
 /** The piano starts on C4, the octave the octave buttons count from. */
 const DEFAULT_OCTAVE = 4;
@@ -130,6 +131,9 @@ export function App() {
   const [letterKeys, setLetterKeys] = useState(() => storage.getItem(LETTER_KEYS) !== 'off');
   useEffect(() => storage.setItem(LETTER_KEYS, letterKeys ? 'on' : 'off'), [storage, letterKeys]);
   useComputerKeyboard(session, octaveRef, setOctave, letterKeys);
+  // Tooltips open unless turned off in Display (issue 81); remembered.
+  const [tooltips, setTooltips] = useState(() => storage.getItem(TOOLTIPS) !== 'off');
+  useEffect(() => storage.setItem(TOOLTIPS, tooltips ? 'on' : 'off'), [storage, tooltips]);
   const { hold, pressHold, pressHoldRef, heldNotes, setPedal } = useHold(session);
   // How far a keyboard's bend wheel takes the pitch, in semitones each way (issue 52); remembered.
   const [bendRange, setBendRange] = useState(() => Number(storage.getItem(BEND_RANGE)) || 2);
@@ -202,6 +206,7 @@ export function App() {
     );
 
   return (
+    <TooltipsContext.Provider value={tooltips}>
     <LearnContext.Provider value={learnContext}>
     <ModulationContext.Provider value={modulationContext}>
     <MathsContext.Provider value={overlays.maths ? patch : null}>
@@ -318,6 +323,19 @@ export function App() {
                           { value: 'off', label: 'Off', name: 'Letter keys off' },
                         ]}
                         onChange={(v) => setLetterKeys(v === 'on')}
+                      />
+                    </Tooltip>
+                  </ToolGroup>
+                  <ToolGroup title="Tips">
+                    <Tooltip content={TIPS.tooltips}>
+                      <Segmented
+                        label="Tooltips"
+                        value={tooltips ? 'on' : 'off'}
+                        options={[
+                          { value: 'on', label: 'On' },
+                          { value: 'off', label: 'Off' },
+                        ]}
+                        onChange={(v) => setTooltips(v === 'on')}
                       />
                     </Tooltip>
                   </ToolGroup>
@@ -571,5 +589,6 @@ export function App() {
     </MathsContext.Provider>
     </ModulationContext.Provider>
     </LearnContext.Provider>
+    </TooltipsContext.Provider>
   );
 }

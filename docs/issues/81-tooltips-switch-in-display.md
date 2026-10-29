@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement
+**Status:** done (2026-10-28). Display has a Tooltips switch under Tips, on at first and remembered; off, no tooltip opens on hover, focus or long press, and each control keeps its description for screen readers.
 
 ## Agent Brief
 
@@ -26,9 +26,9 @@
 - The Display panel's settings and what is saved
 
 **Acceptance criteria:**
-- [ ] `npx tsc`, `npm run lint`, `npx vitest run` and `npx playwright test` green
-- [ ] Playwright: with Tooltips off, hovering a knob and focusing a button open no tooltip; the knob still has its description; after a reload the switch is still off; on again, tooltips open
-- [ ] The design audit passes with the new switch
+- [x] `npx tsc`, `npm run lint`, `npx vitest run` and `npx playwright test` green
+- [x] Playwright: with Tooltips off, hovering a knob and focusing a button open no tooltip; the knob still has its description; after a reload the switch is still off; on again, tooltips open
+- [x] The design audit passes with the new switch
 
 **Out of scope:**
 - The Tutorial and Demo cards, which are not tooltips
@@ -37,3 +37,10 @@
 ## Decisions (triage, 2026-10-28, decided by the owner)
 
 1. Off hides tooltips on hover, focus and long press; screen readers keep the descriptions; the switch is on by default and remembered.
+
+## How it was built
+
+- `TooltipsContext` (`src/ui/Tooltip.tsx`), provided by App: a tooltip off neither opens nor pins on a long press; its text stays in the page, hidden, so `aria-describedby` still reads it.
+- App keeps the choice under `limpide.tooltips`, as it does the letter keys, and Display's new Tips group holds the switch, with its own tip (`TIPS.tooltips`).
+- Test: "Tooltips can be switched off in Display…" in `e2e/displayPanel.spec.ts`.
+

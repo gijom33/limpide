@@ -90,3 +90,29 @@ test('every Display setting is remembered across a reload, Freeze and the Snapsh
   for (const [group, option] of settings) await expect(choose(group, option)).toHaveAttribute('aria-checked', 'true');
   await expect(page.getByRole('button', { name: 'Freeze' })).toHaveAttribute('aria-pressed', 'false');
 });
+
+test('Tooltips can be switched off in Display: none opens, a knob keeps its description, and the choice is kept (issue 81)', async ({ page }) => {
+  await page.goto('/');
+  const open = page.locator('[role="tooltip"]:not([hidden])');
+  const cutoff = page.getByRole('slider', { name: 'Cutoff' });
+  const tooltips = page.getByRole('radiogroup', { name: 'Tooltips' });
+  await openDisplay(page);
+  await expect(tooltips.getByRole('radio', { name: 'On', exact: true })).toHaveAttribute('aria-checked', 'true'); // on at first
+  await tooltips.getByRole('radio', { name: 'Off', exact: true }).click();
+  await page.keyboard.press('Escape');
+  await cutoff.hover();
+  await page.waitForTimeout(700);
+  await expect(open).toHaveCount(0);
+  await page.keyboard.press('Shift'); // the keyboard in use, so focus shows as it would from Tab
+  await cutoff.focus();
+  await page.waitForTimeout(200);
+  await expect(open).toHaveCount(0);
+  await expect(cutoff).toHaveAccessibleDescription(/Cutoff/);
+  await page.reload();
+  await openDisplay(page);
+  await expect(tooltips.getByRole('radio', { name: 'Off', exact: true })).toHaveAttribute('aria-checked', 'true');
+  await tooltips.getByRole('radio', { name: 'On', exact: true }).click();
+  await page.keyboard.press('Escape');
+  await cutoff.hover();
+  await expect(open).toHaveCount(1);
+});
