@@ -6,6 +6,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- 2026-10-29, the owner, asked what to do with the Timeline's thin flat lines (each moved knob's own setting): "Remove them"
+
 ## Dropped
 
 - 2026-10-29, from the 1.15.1 review, the piano's width written twice in the styles for 1200 to 1919 px, and the header's bare 2 px and 4 px gaps: kept. One shared width would carry the top row's 4 px gaps into every layout's keyboard, and the gaps are used once each, beside the rules they space. Claude's call, open to the owner.
