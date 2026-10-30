@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { OSCILLATOR_LEVEL } from '../engine/synthEngine';
-import { fmDepthKept, idealPartials } from '../music/idealReference';
+import { fmDepthKept, idealFmKept, idealPartials } from '../music/idealReference';
 import { createLibrary } from '../patch/library';
 import { setParam } from '../patch/patch';
 import { createPatchStore } from '../patch/patchStore';
@@ -8,6 +8,12 @@ import { memoryStorage } from '../test/memoryStorage';
 import { DEFAULT_OVERLAYS } from './overlays';
 import type { TapSource } from './viewerState';
 import { createViewerStore } from './viewerStore';
+
+// Counted, to see how often the Ideal works out FM's kept depth; it still answers as it does.
+vi.mock('../music/idealReference', async (original) => {
+  const actual = await original<typeof import('../music/idealReference')>();
+  return { ...actual, idealFmKept: vi.fn(actual.idealFmKept) };
+});
 
 const setup = (storage = memoryStorage()) => {
   const patches = createPatchStore({ hash: '', library: createLibrary(memoryStorage()), apply: () => {} });
@@ -98,5 +104,17 @@ describe('the Viewer settings store (issue 77)', () => {
     expect(sideband(60)).toBeCloseTo(at(1), 6);
     expect(sideband(96)).toBeCloseTo(at(fmDepthKept(patch, 440 * 2 ** (27 / 12), 48000)), 3); // kept to a thousandth
     expect(sideband(96)).toBeLessThan(sideband(60) / 2);
+  });
+
+  it('works out FM’s kept depth once for a Note however many frames and Spectra ask (the 1.16.1 review)', () => {
+    const { patches, viewers } = setup();
+    patches.change((p) => ({ ...p, waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, osc2Semitone: 10, crossMod: 0.3 }), 'hand');
+    const ideal = viewers.get().ideal!;
+    vi.mocked(idealFmKept).mockClear();
+    const first = ideal(2093, 48000);
+    for (let frame = 0; frame < 10; frame++) expect(ideal(2093, 48000)).toBe(first);
+    expect(idealFmKept).toHaveBeenCalledTimes(1);
+    ideal(1046.5, 48000); // another Note
+    expect(idealFmKept).toHaveBeenCalledTimes(2);
   });
 });

@@ -61,13 +61,17 @@ const KEPT_IDEALS = 16;
  */
 const idealOf = (patch: Patch): IdealAt => {
   const known = new Map<number, readonly IdealPartial[]>();
+  // The last Note's answer: every Spectrum asks every frame, and the kept depth is a search (fmDepthKept).
+  let last: { fundamental: number; sampleRate: number; ideal: readonly IdealPartial[] } | undefined;
   return (fundamental, sampleRate) => {
+    if (last?.fundamental === fundamental && last.sampleRate === sampleRate) return last.ideal;
     const kept = Math.round(idealFmKept(patch, fundamental, sampleRate) * 1000) / 1000;
     const ideal = known.get(kept) ?? idealPartials(patch, IDEAL_HARMONICS, kept).map((p) => ({ ...p, level: p.level * OSCILLATOR_LEVEL }));
     if (!known.has(kept)) {
       if (known.size >= KEPT_IDEALS) known.clear();
       known.set(kept, ideal);
     }
+    last = { fundamental, sampleRate, ideal };
     return ideal;
   };
 };
