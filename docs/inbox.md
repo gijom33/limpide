@@ -6,7 +6,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
-- 2026-10-29, the owner: "Just like for OSC 2, add a green dot next to OSC 1 and SUB & NOISE if any oscillator under those sections is in use."
 - 2026-10-29, the owner, asked what to do with the Timeline's thin flat lines (each moved knob's own setting): "Remove them"
 
 ## Dropped
@@ -90,3 +89,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-29, the owner's Timeline bug: the flickering marks fixed at once. Each frame sampled the curves afresh from the left edge, so a fast LFO's steep curve measured a pixel or two longer or shorter from frame to frame, and its marks, laid out along that length, jumped (most at the right edge). The Timeline now samples on a grid fixed to time, the same moments every frame, and each mark holds its place on the curve (`timelineGrid` in `src/viewers/timeline.ts`, tests beside it). The two thin flat lines are each moved knob's own setting (Pulse Width's, Detune's), faint and solid since [71](./issues/71-timeline-setting-line-and-demo-stop.md); whether to keep them is the owner's question.
 2026-10-29, the owner's six Oscillator additions (triage, decided by the owner, Hard Sync left out): Ring Modulation went to [88](./issues/88-ring-modulation.md), Cross-modulation to [89](./issues/89-cross-modulation.md), an Octave on Osc 1 to [90](./issues/90-osc1-octave.md) (with a pulse width bug found while planning it), the Sub's options to [91](./issues/91-sub-options.md), Pink Noise to [92](./issues/92-pink-noise.md), the Filter Envelope on Osc 2's pitch to [93](./issues/93-filter-envelope-on-osc2-pitch.md).
 2026-10-29, the owner's Ring bug and call (triage, decided by the owner): the Oscillators restarting on each Note, and the Ring diamonds exact when in tune, went to [94](./issues/94-oscillators-restart-on-each-note.md).
+2026-10-29, the owner's sounding dots, done at once, decided by the owner: the Osc 1 tab shows a dot while Osc 1 is heard (its fader or Ring up), the Sub & Noise tab while the Sub's or the Noise's fader is up, as Osc 2's does. Each dot's room is kept while it is off, so the tabs never move; on the narrowest stages (a 2 × 2 stage at 620 px, a laptop's at 900) the tabs sit tighter to keep all four on one line. Test in `e2e/oscTabs.spec.ts`.

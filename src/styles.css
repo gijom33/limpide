@@ -591,7 +591,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 }
 /* The Oscillator tabs start where the controls do. */
 .tab-list { padding-left: calc(var(--label-col) + var(--label-gap)); }
-/* Four tabs need about 340 px: beside the names' column only where that leaves them room, on one line each. */
+/* Four tabs, three with a sounding dot's room, need about 365 px: beside the names' column only where that leaves them room, on one line each. */
 .tab-list [role='tab'] { white-space: nowrap; }
 @container (max-width: 460px) {
   .tab-list { padding-left: 0; }
@@ -599,6 +599,10 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 @container (max-width: 350px) {
   .tab-list { gap: 0; }
   .tab-list [role='tab'] { padding-inline: 7px; letter-spacing: 0.04em; }
+}
+/* Narrower still (a 2 × 2 stage at 620 px, a laptop's at 900), with three sounding dots' room kept: tighter again. */
+@container (max-width: 280px) {
+  .tab-list [role='tab'] { padding-inline: 4px; gap: 4px; letter-spacing: 0.02em; }
 }
 /* The Sub's and the Noise's choices one under another, their captions one width, so the controls line up. */
 .choice-list { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); min-width: 0; }

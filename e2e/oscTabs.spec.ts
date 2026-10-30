@@ -58,6 +58,29 @@ test('the Osc 2 tab shows when Osc 2 is sounding, even while Osc 1 is selected',
   await expect(osc2).toHaveAttribute('data-sounding', 'true');
 });
 
+test('Osc 1 and Sub & Noise show a dot too while any of their sources is heard', async ({ page }) => {
+  await page.goto('/');
+  const tabs = page.getByRole('tablist', { name: 'Oscillator' });
+  const osc1 = tabs.getByRole('tab', { name: /Osc 1/ });
+  const subNoise = tabs.getByRole('tab', { name: /Sub & Noise/ });
+  await expect(osc1).toHaveAttribute('data-sounding', 'true');
+  await expect(subNoise).not.toHaveAttribute('data-sounding', 'true');
+  await tabs.getByRole('tab', { name: 'Mixer' }).click();
+  const mixer = page.getByRole('group', { name: 'Mixer' });
+  await mixer.getByRole('slider', { name: 'Noise' }).focus();
+  await page.keyboard.press('ArrowUp');
+  await expect(subNoise).toHaveAttribute('data-sounding', 'true');
+  // Osc 1 down, but Ring still multiplies it by Osc 2: still heard.
+  await mixer.getByRole('slider', { name: 'Ring' }).focus();
+  await page.keyboard.press('ArrowUp');
+  await mixer.getByRole('slider', { name: 'Osc 1' }).focus();
+  await page.keyboard.press('Home');
+  await expect(osc1).toHaveAttribute('data-sounding', 'true');
+  await mixer.getByRole('slider', { name: 'Ring' }).focus();
+  await page.keyboard.press('Home');
+  await expect(osc1).not.toHaveAttribute('data-sounding', 'true');
+});
+
 test('Osc 2’s dot never pushes the Mixer tab aside: its room is kept while it is hidden', async ({ page }) => {
   await page.goto('/');
   const mixer = page.getByRole('tab', { name: 'Mixer' });

@@ -5,7 +5,7 @@ import { type AudioStatus, unlockAudio } from '../app/unlockAudio';
 import { rememberWelcome, welcomeFor } from '../app/welcome';
 import { shiftOctave } from '../input/keyboardLayout';
 import { type Formula, harmonicFormula, responseFormula } from '../music/maths';
-import { CHOICES, osc2Heard, type ParamId, type Patch, setFilter, setParam, setWaveform } from '../patch/patch';
+import { CHOICES, osc1Heard, osc2Heard, type ParamId, type Patch, setFilter, setParam, setWaveform, subNoiseHeard } from '../patch/patch';
 import { PRESETS } from '../patch/presets';
 import { TUTORIALS } from '../tutorial/tutorials';
 import { About } from './About';
@@ -397,6 +397,9 @@ export function App() {
                   {
                     id: 'osc1',
                     label: 'Osc 1',
+                    // A dot on each source's tab while it is heard, as on Osc 2's (the owner).
+                    badge: osc1Heard(patch),
+                    badgeLabel: 'sounding',
                     content: (
                       <>
                         <SubBlock title="Osc 1" label="Waveform" group>
@@ -458,6 +461,8 @@ export function App() {
                     id: 'subNoise',
                     label: 'Sub & Noise',
                     tip: TIPS.subNoise,
+                    badge: subNoiseHeard(patch),
+                    badgeLabel: 'sounding',
                     content: (
                       <>
                         <SubBlock title="Sub" tip={TIPS.subOptions} group>

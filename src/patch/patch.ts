@@ -183,8 +183,14 @@ export function defaultPatch(): Patch {
   };
 }
 
+/** Whether Osc 1 is heard: mixed in, or through Ring (issue 88). */
+export const osc1Heard = (patch: Patch) => patch.mixOsc1 > 0 || patch.mixRing > 0;
+
 /** Whether Osc 2 is heard: mixed in, through Ring (issue 88), or moving Osc 1 (issue 89). */
 export const osc2Heard = (patch: Patch) => patch.mixOsc2 > 0 || patch.mixRing > 0 || patch.crossMod > 0;
+
+/** Whether the Sub or the Noise is heard: either fader up. */
+export const subNoiseHeard = (patch: Patch) => patch.mixSub > 0 || patch.mixNoise > 0;
 
 export function setFilter(patch: Patch, { mode, slope }: { mode?: FilterMode; slope?: FilterSlope }): Patch {
   return { ...patch, filterMode: mode ?? patch.filterMode, filterSlope: slope ?? patch.filterSlope };
