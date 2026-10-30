@@ -12,6 +12,8 @@
 
 **Status:** done (2026-10-30). The Presets sit in sound families, the five near-copies are gone, review 15's ten are added at their family's level, and a Bass starts the keyboard on C2. Not yet heard by the owner: the owner listens to the added Presets before the release.
 
+**Since then (2026-10-30, [126](./126-the-keyboard-octave-a-patch-carries.md)):** the octave buttons, Z and X write the Patch's keyboard octave, so a saved Patch or a Share link keeps the octave the player last chose rather than the Preset's; the octave alone does not mark the Patch changed.
+
 ## Questions for the owner
 
 1. **Categories:** reorganise as the report proposes (Chords dissolved into the sound families, Keys & Organs, Plucks & Mallets, Strings, Brass & Choir; "8 Voices" said in each description instead)? Claude's recommendation: yes.
