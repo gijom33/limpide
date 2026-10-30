@@ -361,3 +361,100 @@ test('each part is a segment as wide as it is long, the playing one filling over
   await expect(card.getByRole('group', { name: 'Part 3 of 15' })).toBeVisible();
   expect(await filled()).toBeLessThan(0.2); // a jump starts the segment's fill again
 });
+
+/** Each part's segment, from the first: its box, and whether it is the part playing. */
+const segments = (card: import('@playwright/test').Locator) =>
+  card.locator('.demo-bar-parts > button').evaluateAll((all) => all.map((b) => b.getBoundingClientRect().toJSON() as DOMRect));
+
+for (const width of [601, 690, 1440]) {
+  test(`from 601 px up every part's segment is at least 24 × 24 px, in a row of its own, still as wide as its part is long (issue 99), at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/');
+    await demo(page).click();
+    const card = page.getByRole('region', { name: 'Demo', exact: true });
+    await expect(card).toContainText('Kick');
+    const boxes = await segments(card);
+    expect(boxes).toHaveLength(15);
+    for (const [i, b] of boxes.entries()) {
+      expect(b.width, `part ${i + 1}'s width`).toBeGreaterThanOrEqual(23.5);
+      expect(b.height, `part ${i + 1}'s height`).toBeGreaterThanOrEqual(23.5);
+    }
+    // One row, under the name and the card's buttons.
+    expect(new Set(boxes.map((b) => Math.round(b.top))).size).toBe(1);
+    for (const name of ['Fold the card', 'Stop', 'Close the card']) {
+      expect((await card.getByRole('button', { name, exact: true }).boundingBox())!.y + 1, name).toBeLessThan(boxes[0].top);
+    }
+    // Acid plays 8 bars, the Kick 4, Brass Section 6: in the 640 px card and up each is wider in proportion and only
+    // Self-Oscillation (2 bars) is drawn wider than its share; in a narrower card the 4-bar parts are held at 24 px too.
+    const [kick, acid, selfOsc, brass] = [boxes[0].width, boxes[1].width, boxes[5].width, boxes[14].width];
+    if (width >= 690) {
+      expect(Math.abs(acid - 2 * kick)).toBeLessThanOrEqual(4);
+      expect(Math.abs(brass - 1.5 * kick)).toBeLessThanOrEqual(4);
+    }
+    expect(acid).toBeGreaterThan(brass);
+    expect(brass).toBeGreaterThan(kick);
+    expect(selfOsc).toBeLessThanOrEqual(kick);
+    // The shortest part's segment plays from it.
+    await card.getByRole('button', { name: 'Play from part 6, Self-Oscillation' }).click();
+    await expect(card.getByRole('group', { name: 'Part 6 of 15' })).toBeVisible();
+    await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
+    // The Previous and Next part buttons are the phone's: here the segments are big enough.
+    await expect(card.getByRole('button', { name: 'Previous part' })).toBeHidden();
+    await expect(card.getByRole('button', { name: 'Next part' })).toBeHidden();
+  });
+}
+
+test('on a phone the segments are 44 px tall, with Previous part and Next part buttons of 44 × 44 px beside them, by pointer and by keyboard (issue 99)', async ({ page, browserName }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto('/');
+  await demo(page).click();
+  const card = page.getByRole('region', { name: 'Demo', exact: true });
+  await expect(card).toContainText('Kick');
+  const previous = card.getByRole('button', { name: 'Previous part', exact: true });
+  const next = card.getByRole('button', { name: 'Next part', exact: true });
+  const boxes = await segments(card);
+  for (const [i, b] of boxes.entries()) expect(b.height, `part ${i + 1}'s height`).toBeGreaterThanOrEqual(43.5);
+  for (const [name, button] of [['Previous', previous], ['Next', next]] as const) {
+    const b = (await button.boundingBox())!;
+    expect(Math.min(b.width, b.height), name).toBeGreaterThanOrEqual(43.5);
+  }
+  // Beside the segments: Previous at their start, Next at their end, on their row.
+  const [p, n] = [(await previous.boundingBox())!, (await next.boundingBox())!];
+  expect(p.x + p.width).toBeLessThanOrEqual(boxes[0].left);
+  expect(n.x).toBeGreaterThanOrEqual(boxes[14].right);
+  expect(Math.abs(p.y - boxes[0].top)).toBeLessThanOrEqual(1);
+  // Still sized by their parts: Acid twice the Kick.
+  expect(Math.abs(boxes[1].width - 2 * boxes[0].width)).toBeLessThanOrEqual(3);
+  // On the first part there is no part before: Previous is greyed out and says so, and keeps the focus.
+  await expect(previous).toHaveAttribute('aria-disabled', 'true');
+  await next.click();
+  await expect(card.getByRole('group', { name: 'Part 2 of 15' })).toBeVisible();
+  await expect(previous).not.toHaveAttribute('aria-disabled', 'true');
+  await previous.click();
+  await expect(card.getByRole('group', { name: 'Part 1 of 15' })).toBeVisible();
+  // From the keyboard: Enter and Space press them, the focus stays, the Demo plays on.
+  await next.focus();
+  await page.keyboard.press('Enter');
+  await expect(card.getByRole('group', { name: 'Part 2 of 15' })).toBeVisible();
+  await page.keyboard.press(' ');
+  await expect(card.getByRole('group', { name: 'Part 3 of 15' })).toBeVisible();
+  await expect(next).toBeFocused();
+  await previous.focus();
+  await page.keyboard.press('Enter');
+  await expect(card.getByRole('group', { name: 'Part 2 of 15' })).toBeVisible();
+  await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
+  // Tab reaches them in the order they stand: Previous, the parts (one stop), Next. (Not in WebKit, where Tab skips
+  // buttons unless Safari's settings ask for them.)
+  if (browserName !== 'webkit') {
+    await page.keyboard.press('Tab');
+    await expect(card.getByRole('group', { name: /^Part / }).locator('button:focus')).toHaveCount(1);
+    await page.keyboard.press('Tab');
+    await expect(next).toBeFocused();
+  }
+  // On the last part, Next is greyed out.
+  await card.getByRole('button', { name: /^Play from part 15,/ }).click();
+  await expect(next).toHaveAttribute('aria-disabled', 'true');
+  await next.click({ force: true }); // greyed out, it does nothing
+  await expect(card.getByRole('group', { name: 'Part 15 of 15' })).toBeVisible();
+  await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
+});

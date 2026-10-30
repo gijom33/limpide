@@ -50,6 +50,11 @@ const WAIVERS: Waiver[] = [
   { rule: 'target', selector: '.wordmark-button', floor: 24, size: 'phone' },
   { rule: 'target', selector: '.patch-bar > .tool', floor: 18, size: 'phone' },
   { rule: 'target', selector: '.piano button', floor: 23.5, size: 'phone' },
+  // Phone targets, the Demo card's segments (issue 99, decided by the owner): 44 px tall, but fifteen a finger wide
+  // need 660 px, so each is as wide as its part is long, 8 to 18 px. The card's Previous part and Next part buttons,
+  // 44 × 44 px beside them, are the full-size way along the parts (WCAG 2.5.5 and 2.5.8 accept a full-size control
+  // that does the same).
+  { rule: 'target', selector: '.demo-bar-parts > button', floor: 7.5, size: 'phone' },
 ];
 
 const SIZES = {
@@ -70,6 +75,15 @@ const STATES: { name: string; open?(page: Page): Promise<void>; close?(page: Pag
   { name: 'Display panel', open: (page) => page.getByRole('button', { name: 'Display', exact: true }).click(), close: (page) => page.getByRole('button', { name: 'Display', exact: true }).click() },
   { name: 'MIDI panel', open: (page) => page.getByRole('button', { name: 'MIDI', exact: true }).click(), close: (page) => page.getByRole('button', { name: 'MIDI', exact: true }).click() },
   { name: 'About', open: (page) => page.getByRole('button', { name: 'About', exact: true }).click(), close: (page) => page.keyboard.press('Escape') },
+  // Last, since the Demo loads its Presets (issue 99).
+  {
+    name: 'Demo card',
+    open: async (page) => {
+      await page.getByRole('button', { name: 'Demo', exact: true }).click();
+      await expect(page.getByRole('region', { name: 'Demo', exact: true }).locator('.demo-bar-caption')).toBeVisible();
+    },
+    close: (page) => page.getByRole('region', { name: 'Demo', exact: true }).getByRole('button', { name: 'Stop', exact: true }).click(),
+  },
 ];
 
 async function audit(page: Page, size: keyof typeof SIZES, theme: 'dark' | 'light', rules: Rule[]) {

@@ -772,6 +772,9 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   background: #121317; border-color: #000;
 }
 .piano button[aria-pressed='true'] { background: var(--stage-osc); color: var(--bg); border-color: var(--stage-osc); }
+/* In the light theme mixed darker, as a chosen Oscillators option is, so a held C's octave name reads at 4.5:1 (found
+   when the design audit opened the playing Demo, issue 99). */
+:root[data-theme='light'] .piano button[aria-pressed='true'] { --held: color-mix(in srgb, var(--stage-osc) 75%, var(--text)); background: var(--held); border-color: var(--held); }
 .piano button span { pointer-events: none; line-height: 1; } /* a box as tall as the letters: the pitch dot stays above it */
 /* The pitch sounding (issue 21): a blue dot where a finger presses the key, drawn over every key, ringed in the
    other key colour so it stands out on both; its centre is at the point PitchMarker gives. */
@@ -1333,14 +1336,16 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   .tutorial:not([data-expanded]) .tutorial-say[data-done], .tutorial:not([data-expanded]) .tutorial-words p + p:not(.tutorial-then) { display: none; }
   .tutorial-actions .tool { min-height: 32px; padding: 0 var(--space-2); }
 }
-/* The Demo's card (issue 50): the sound's name, a dot per part, Stop; under them, what to hear and see. */
-.demo-bar-top { display: flex; align-items: center; gap: var(--space-3); }
-/* A fixed width, so the dots after it never move as the parts' names change (the owner, 2026-10-29); a longer name ends
-   in an ellipsis (the tooltip-less card names each dot's part to screen readers). */
-.demo-bar-name { font-weight: 600; font-size: var(--card-text); flex: 0 0 clamp(5.5em, 24vw, 9em); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The Demo's card (issue 50): the sound's name and its buttons; under them a segment per part; then what to hear and
+   see. The segments have a row of their own at every width (issue 99, decided by the owner), so each can be a target. */
+.demo-bar-top { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--space-3); }
+/* The rest of its row; a longer name ends in an ellipsis (the card names each segment's part to screen readers). */
+.demo-bar-name { font-weight: 600; font-size: var(--card-text); flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.demo-bar-track { flex: 1 1 100%; display: flex; align-items: center; gap: var(--space-1); }
 .demo-bar-parts { flex: 1 1 auto; display: flex; gap: 3px; min-width: 0; }
-/* Each segment a button as tall as a finger, its bar drawn inside, as wide as its part is long (flex-grow, set inline). */
-.demo-bar-parts > button { flex: 1 1 0; min-width: 4px; height: 24px; padding: 0; border: 0; background: none; cursor: pointer; display: flex; align-items: center; border-radius: 3px; }
+/* Each segment a button, its bar drawn inside, as wide as its part is long (flex-grow, set inline) and never under the
+   design principles' 24 px target: only the shortest part, Self-Oscillation, is drawn wider than its share. */
+.demo-bar-parts > button { flex: 1 1 0; min-width: 24px; height: 24px; padding: 0; border: 0; background: none; cursor: pointer; display: flex; align-items: center; border-radius: 3px; }
 .demo-bar-parts > button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .demo-bar-segment { position: relative; display: block; width: 100%; height: 6px; border-radius: 3px; overflow: hidden; background: color-mix(in srgb, var(--muted) 30%, transparent); }
 .demo-bar-parts > button:hover .demo-bar-segment { background: color-mix(in srgb, var(--muted) 55%, transparent); }
@@ -1349,15 +1354,22 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 /* The playing part fills over its length (its duration and start set inline); a negative delay picks it up where it is. */
 .demo-bar-fill { position: absolute; inset: 0; background: var(--accent); transform-origin: left; animation: demo-fill linear both; }
 @keyframes demo-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-/* On a phone the segments take a row of their own under the name and the buttons, so their lengths still show. */
+.demo-bar-step { display: none; }
+/* On a phone fifteen segments a finger wide do not fit (660 px): they are a finger tall, as wide as their row allows,
+   and Previous part and Next part beside them are the full-size way along them (issue 99, decided by the owner). */
 @media (max-width: 600px) {
-  .demo-bar-top { flex-wrap: wrap; row-gap: 0; }
-  .demo-bar-name { flex: 1 1 auto; }
-  .demo-bar-parts { order: 1; flex-basis: 100%; }
+  .demo-bar-parts > button { min-width: 8px; height: 44px; }
+  .demo-bar .demo-bar-step { display: inline-flex; width: 44px; height: 44px; flex: none; font-size: var(--text-lg); }
+  .demo-bar .demo-bar-step[aria-disabled='true'] { opacity: 0.45; cursor: default; }
 }
 .demo-bar-caption { margin: 0; font-size: var(--card-text); line-height: 1.45; }
 .demo-bar-top > .demo-bar-caption { flex: 1 1 auto; }
-.demo-bar .tool { min-height: 36px; padding: 0 var(--space-3); flex: none; }
+/* The segments' row brings its own space above and below the bar, so the card has no gap of its own; from 601 px up
+   its buttons are the page's 28 px and its edges 8 px, so with the segments under them it is no taller than it was
+   with them beside (at 1440 × 900 it sits on LFO 2's knobs, and covers no more of them: issue 99). */
+.demo-bar { gap: 0; }
+@media (min-width: 601px) { .demo-bar { padding-block: var(--space-2); } }
+.demo-bar .tool { padding: 0 var(--space-3); flex: none; }
 .demo-bar .tool-icon { padding: 0; }
 @media (max-width: 600px) {
   .demo-bar-caption { font-size: var(--text-md); }
