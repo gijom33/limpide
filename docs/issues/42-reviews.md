@@ -166,4 +166,4 @@ A professional sound designer who has built factory Preset banks for commercial 
 - [x] The Learner's second run, once the tutorials are built (issue 40): 2026-10-27, [report](../reviews/2026-10-27/5-learner-teacher.md), findings in [59](./59-tutorials-after-review-5.md)
 - [x] The code review, since the first commit; the findings to the inbox. Done another way: the code-review skill runs over each minor version since 1.11.1, its findings to the inbox (2026-10-28)
 - [x] Profile 11's review (the open-source legal expert), 2026-10-26: a company could use or fork it today (MIT, the 3 shipped dependencies MIT, no copyleft among 108 dev dependencies, no third-party assets), once a fork adds the third-party notices and drops the counter; contributions should wait for a CONTRIBUTING (issue 56). Its findings in the inbox; AI authorship stated is issue 48
-- [ ] Profile 15's review (the sound designer and Preset curator), added by the owner 2026-10-30
+- [x] Profile 15's review (the sound designer and Preset curator), added by the owner 2026-10-30, ran the same day on 1.16.0: [report](../reviews/2026-10-30/15-sound-designer.md), its findings to the inbox
