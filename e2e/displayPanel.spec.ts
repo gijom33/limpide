@@ -104,7 +104,7 @@ test('Tooltips can be switched off in Display: none opens, a knob keeps its desc
   await page.waitForTimeout(700);
   await expect(open).toHaveCount(0);
   await page.keyboard.press('Shift'); // the keyboard in use, so focus shows as it would from Tab
-  for (const control of [cutoff, page.getByRole('button', { name: 'Demo' })]) {
+  for (const control of [cutoff, page.getByRole('button', { name: 'Demo', exact: true })]) {
     await control.focus();
     await page.waitForTimeout(200);
     await expect(open).toHaveCount(0);
@@ -134,8 +134,9 @@ test('with Tooltips off, the header’s buttons shown as icons alone still show 
   // Escape put the focus back on the Display button, which may show its name: away from it first.
   await page.evaluate(() => (document.activeElement as HTMLElement).blur());
   await expect(shown).toHaveCount(0);
+  const headerButton = (name: string) => page.getByRole('button', { name, exact: true });
   for (const name of ['Hold', 'MIDI', 'Display', 'About', 'Demo', 'Tutorial', 'Song']) {
-    const button = page.locator(`header button[aria-label="${name}"]`);
+    const button = headerButton(name);
     await button.hover();
     await expect(shown).toHaveText(name); // its name alone, no explanation
     // Where its tip would open: under the button.
@@ -146,9 +147,9 @@ test('with Tooltips off, the header’s buttons shown as icons alone still show 
   }
   // The keyboard too; the button's description is still its full tip.
   await page.keyboard.press('Shift');
-  await page.getByRole('button', { name: 'Demo' }).focus();
+  await page.getByRole('button', { name: 'Demo', exact: true }).focus();
   await expect(shown).toHaveText('Demo');
-  await expect(page.getByRole('button', { name: 'Demo' })).toHaveAccessibleDescription(/A track of about three minutes/);
+  await expect(page.getByRole('button', { name: 'Demo', exact: true })).toHaveAccessibleDescription(/A track of about three minutes/);
   await page.keyboard.press('Escape');
   await expect(shown).toHaveCount(0);
   await page.evaluate(() => (document.activeElement as HTMLElement).blur());
@@ -156,8 +157,9 @@ test('with Tooltips off, the header’s buttons shown as icons alone still show 
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.mouse.move(500, 500);
   for (const name of ['Hold', 'Demo']) {
-    await page.locator(`header button[aria-label="${name}"]`).hover();
-    await page.waitForTimeout(700);
+    // With its word in view, a hover starts no tip at all (Tooltip's show), so none can open later either.
+    await expect(headerButton(name).getByText(name, { exact: true })).toBeVisible();
+    await headerButton(name).hover();
     await expect(shown).toHaveCount(0);
   }
 });

@@ -64,7 +64,7 @@ test('opened from a Share link, the welcome says a sound was shared and plays th
 test.describe('on a short phone', () => {
   test.use({ hasTouch: true });
   for (const height of [659, 540]) {
-    test(`at 393 × ${height} the welcome's three buttons are on the first screen, the credits scrolling above them`, async ({ page }) => {
+    test(`at 393 × ${height} the welcome's three buttons are on the first screen, the credits scrolling above them (issue 105)`, async ({ page }) => {
       await page.setViewportSize({ width: 393, height });
       await page.goto('/');
       for (const name of ['Play the Demo', 'Follow the Tutorial', 'Close']) {

@@ -297,7 +297,7 @@ test('a right-click on a knob turns nothing, so its context menu cannot leave a 
 });
 
 // Issue 105 (the 1.16.0 review): a notch is 4 % of a knob's travel, and a stepped knob rounded it back to where it was.
-test('one wheel notch turns a stepped knob one step, and small trackpad scrolls add up to one', async ({ page }) => {
+test('one wheel notch turns a stepped knob one step, and small trackpad scrolls add up to one (issue 105)', async ({ page }) => {
   await page.goto('/');
   // The scrolls in one go inside the page: gathered scroll is forgotten after a second, which a loaded machine's round
   // trips can take.

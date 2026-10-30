@@ -168,7 +168,7 @@ test.describe('the Patch name', () => {
       return { cut, room };
     }, names);
 
-  test('at 601 px a short name shows whole: Init, Kick', async ({ page }) => {
+  test('at 601 px a short name shows whole: Init, Kick (issue 105)', async ({ page }) => {
     await page.setViewportSize({ width: 601, height: 900 });
     await page.goto('/');
     const { cut } = await cutNames(page, ['Init', 'Kick', 'Bass', 'Acid']);
@@ -176,7 +176,7 @@ test.describe('the Patch name', () => {
   });
 
   for (const width of [861, 900, 1000, 1100, 1279]) {
-    test(`at ${width} px a name is cut only where the header has no room left for it`, async ({ page }) => {
+    test(`at ${width} px a name is cut only where the header has no room left for it (issue 105)`, async ({ page }) => {
       await page.setViewportSize({ width, height: 900 });
       await page.goto('/');
       const names = await presetNames(page);

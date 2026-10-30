@@ -19,7 +19,7 @@ for (const [width, height] of [[1440, 900], [2560, 1300], [690, 830], [601, 900]
 
 // Issue 105 (the 1.16.0 review): from 601 px the panel was as wide as its button, one word a line, its buttons cut.
 for (const [width, height] of [[601, 900], [690, 830], [1440, 900], [1920, 1080]] as const) {
-  test(`at ${width}×${height} the MIDI panel's content fits inside it, every word whole`, async ({ page }) => {
+  test(`at ${width}×${height} the MIDI panel's content fits inside it, every word whole (issue 105)`, async ({ page }) => {
     await withFakeController(page);
     await page.setViewportSize({ width, height });
     await page.goto('/');
