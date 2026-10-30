@@ -142,3 +142,53 @@ test.describe('the sections 2 × 2', () => {
     await expect(logo).toBeInViewport();
   });
 });
+
+// Issue 105 (the 1.16.0 review): at 601 px the Patch name had a 17 px text box, every Preset read "I…"; at 861 to
+// 1100 px longer names were cut where the header had room for more.
+test.describe('the Patch name', () => {
+  /** The Presets' names, once each, from the Patches panel. */
+  const presetNames = async (page: Page) => {
+    await page.getByRole('button', { name: /^Patch: / }).click();
+    const names = [...new Set(await page.locator('.patch-presets .patch-item').allTextContents())];
+    await page.keyboard.press('Escape');
+    return names;
+  };
+  /** Each name shown in the Patch button in turn: those it cuts, with their width and the text box's. */
+  const cutNames = (page: Page, names: string[]) =>
+    page.evaluate((names) => {
+      const text = document.querySelector('.patch-name > span')!;
+      const shown = text.textContent;
+      const cut = names.flatMap((name) => {
+        text.textContent = name;
+        return text.scrollWidth > text.clientWidth ? [{ name, width: text.scrollWidth }] : [];
+      });
+      text.textContent = 'W'.repeat(60);
+      const room = text.clientWidth;
+      text.textContent = shown;
+      return { cut, room };
+    }, names);
+
+  test('at 601 px a short name shows whole: Init, Kick', async ({ page }) => {
+    await page.setViewportSize({ width: 601, height: 900 });
+    await page.goto('/');
+    const { cut } = await cutNames(page, ['Init', 'Kick', 'Bass', 'Acid']);
+    expect(cut).toEqual([]);
+  });
+
+  for (const width of [861, 900, 1000, 1100, 1279]) {
+    test(`at ${width} px a name is cut only where the header has no room left for it`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto('/');
+      const names = await presetNames(page);
+      const { cut, room } = await cutNames(page, names);
+      test.info().annotations.push({ type: 'cut', description: `${room} px: ${cut.map((c) => c.name).join(', ') || 'none'}` });
+      for (const c of cut) expect(c.width, c.name).toBeGreaterThan(room);
+      // Its column has nothing more to give: the name takes the column's spare room, up to the widest Preset's.
+      const spare = await page.evaluate(() => {
+        const column = document.querySelector('.header-left')!.getBoundingClientRect();
+        return column.right - document.querySelector('header [aria-label="Next Preset"]')!.getBoundingClientRect().right;
+      });
+      if (cut.length) expect(spare).toBeLessThanOrEqual(1);
+    });
+  }
+});

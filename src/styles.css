@@ -891,10 +891,19 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
    the right; long Preset names show an ellipsis. */
 @media (max-width: 1099px) { .patch-name { width: 104px; } }
 @media (max-width: 879px) { .patch-name { width: 86px; } }
+/* Those widths are what the name asks of the header, so they alone place the keyboard. Where its own column has room
+   to spare (the column is wider than what it holds), the name takes it, up to the widest Preset's: nothing else moves,
+   and a name is cut only where the header has no room left for it (issue 105). */
+@media (min-width: 861px) {
+  .header-identity, .patch-bar { flex: 1 1 auto; }
+  .patch-bar > .tip-anchor { flex: 1 0 auto; max-width: 172px; }
+  .patch-name { flex: 1 0 auto; }
+}
 .patch-name span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-/* The dot sits at the button's right, out of the flow, so the centred name never slides when it appears (issue 47); the
-   button keeps room for it on both sides. */
-.patch-name { position: relative; padding-inline: 16px; }
+/* The dot sits at the button's right, out of the flow, so the name never slides when it appears (issue 47); the
+   button keeps room for it on the right. The left keeps only a gap: a short window's narrow name needs every pixel
+   (issue 105: at 601 px Init read "I…"). */
+.patch-name { position: relative; padding-inline: 8px 16px; }
 .patch-changed { position: absolute; right: 7px; top: calc(50% - 3px); width: 6px; height: 6px; border-radius: 50%; background: var(--text); }
 /* The sound you are playing, and a list to open (the owner's choice, 2026-10-27): the name bright and bold, the
    border a step brighter than the buttons around it, and a ▾ after the name. Only the greys every control has: the
@@ -1213,14 +1222,17 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 @media (max-width: 860px) and (prefers-reduced-motion: reduce) { header { transition: none; } }
 /* The sections 2 × 2: two rows, the Patch and the buttons beside each other (there is room), then the keyboard,
    its 17 keys at a finger's width. The header edges the page's padding. A section the Demo brings into view lands
-   below the header. */
+   below the header. Its groups and the logo sit 8 px apart and the buttons pad 4 px, so beside the buttons' words a
+   short Preset name (Init, Kick) shows whole at 601 px, in Linux's wider fonts too (issue 105: every name read "I…"). */
 @media (min-width: 601px) and (max-width: 860px) {
   header {
     margin: calc(-1 * var(--space-4)) calc(-1 * var(--space-4)) 0;
     padding: var(--space-3) var(--space-4) var(--space-2);
     grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: 'identity play set' 'keys keys keys';
-    column-gap: var(--space-3);
+    column-gap: var(--space-2);
   }
+  .header-identity { column-gap: var(--space-2); }
+  header :is(.demo-button, [aria-label='Hold'], .midi-status, .display-menu .tool, .about-menu .tool) { padding-inline: 4px; }
   .chain > * { scroll-margin-top: calc(var(--header-h, 0px) + var(--space-2)); }
 }
 
