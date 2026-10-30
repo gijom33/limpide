@@ -77,8 +77,10 @@ export function auditPage({ rules, minTarget, waivers }: AuditOptions): AuditRes
     for (let e: Element | null = el; e; e = e.parentElement) o *= Number(getComputedStyle(e).opacity);
     return o;
   };
+  // Text for screen readers alone (clipped to nothing, e.g. a tab dot's "sounding") is never seen, so has no contrast.
   const shown = (el: Element) => {
     const r = el.getBoundingClientRect();
+    if (el.closest('.visually-hidden')) return false;
     return r.width > 0 && r.height > 0 && el.checkVisibility({ visibilityProperty: true, opacityProperty: true });
   };
   // Inactive controls are greyed out on purpose (WCAG 1.4.11 and 1.4.3 leave them out).
