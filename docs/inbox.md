@@ -4,7 +4,15 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-10-30, from review 15 (the sound designer and Preset curator, docs/reviews/2026-10-30): Velocity on the Cutoff changes nothing audible on seven Presets that set it (Electric Piano, Tremolo Keys, Poly Keys, Tine Piano, Felt Piano, FM Bell, Duo Lead): soft and hard strikes within 1 % in brightness, their sines and triangles having nothing above the Cutoff; three descriptions promise a brighter strike.
+- 2026-10-30, from review 15 (the sound designer and Preset curator, docs/reviews/2026-10-30): a retriggered LFO starts in the middle of its wave: Key Sync opens at 500 Hz, closes to 172 Hz, then jumps to 1.48 kHz at 0.34 s, the reverse of its words (Zap Pluck and Wobble alike); the engine could start a Saw at its foot and a Saw Down at its peak.
+- 2026-10-30, from review 15 (the sound designer and Preset curator, docs/reviews/2026-10-30): Trill on C4 plays only C#4 and B3, never the Note pressed; Organ's square Sub gives nine rungs where its words say three; Marimba's strike is its darker part; Square Lead's delayed vibrato does not exist; Sync-ish Lead is 11 dB under the Leads.
+- 2026-10-30, from review 15 (the sound designer and Preset curator, docs/reviews/2026-10-30): 29 dB separates Choir (−36 dBFS) from Wobble (−7 dBFS) on C4, the Kick sits 8 dB under the Open Hat, and the master's room for several Voices costs 9 dB on any single Note of an 8-Voice Preset.
 ## Ideas
+
+- 2026-10-30, from review 15 (the sound designer and Preset curator, docs/reviews/2026-10-30): near-copies (Organ and Chord Organ, Glass Keys and Bell Chords, Electric Piano and Poly Keys, Pad and Chord Pad, Fast Beats and Out of Tune) and a Chords group that is a feature, not a sound family: a reorganised category list (Keys & Organs, Plucks & Mallets, Strings, Brass & Choir) in the report.
+- 2026-10-30, from review 15 (the sound designer and Preset curator, docs/reviews/2026-10-30): ten Presets to add, each rendered: Riser, Phase Pad, Flute, House Organ, Sub Drop, Rave Stab, PWM Bass, Pick Pluck, Ride, Analog Drift Lead; tricks no Preset uses yet (a negative Env Amount, Noise as a strike, a Sub two down on a bass, Velocity on a pad).
+- 2026-10-30, from review 15 (the sound designer and Preset curator, docs/reviews/2026-10-30): the Bass group plays in the tenor register on the default keys: let a Preset carry a keyboard octave, the Bass group at C2 (a product change, the owner's call).
 
 ## Dropped
 
