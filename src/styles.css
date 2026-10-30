@@ -958,9 +958,10 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 @media (min-width: 861px) {
   header, .header-left, .header-identity { column-gap: 12px; }
 }
-/* With their words (1300 px up), the header's buttons pad 6 px and sit 6 px apart, its zones 8 px: Linux's wider fonts
-   left the piano 2 px short of its 44 px keys at 1440 (the 1.12.2 deploy). Measured with Verdana, wider still. */
-@media (min-width: 1300px) {
+/* From 1280 px, where the Patch picker widens to show every name, the header's buttons pad 6 px and sit 6 px apart,
+   its zones 8 px: Linux's wider fonts left the piano 2 px short of its 44 px keys at 1440 (the 1.12.2 deploy), and the
+   logo and picker 13 px past their side at 1280 (the 1.16.0 deploy). Measured with Verdana, wider still. */
+@media (min-width: 1280px) {
   header, .header-left, .header-identity { column-gap: 8px; }
   .header-play, .header-set, .header-right { gap: 6px; }
   header :is(.demo-button, [aria-label='Hold'], .midi-status, .display-menu > .tip-anchor > .tool, .about-menu .tool) { padding: 0 6px; }
@@ -985,6 +986,11 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 /* From 1200 px, where the sides leave the piano its full size, the keyboard balances its octave buttons with an empty
    column as wide on the other side, so the piano itself, not the keyboard, is at the centre (issue 82). Below, that
    column would take width from the piano's keys. */
+/* Up to 1365 px the piano's keys are 42 px, so the logo and the Patch picker beside it keep room for Linux's wider
+   fonts and the piano stays at the centre (the 1.16.0 deploy). */
+@media (min-width: 1280px) and (max-width: 1365px) {
+  :root { --white-key-max: 42px; }
+}
 @media (min-width: 1200px) and (max-width: 1919px) {
   :root { --keyboard-w: calc(2 * (var(--control-h) + 4px) + 10 * var(--white-key-max)); }
   .keyboard { grid-template-columns: var(--control-h) minmax(0, calc(10 * var(--white-key-max))) var(--control-h); grid-template-areas: 'up piano .' 'down piano .'; }

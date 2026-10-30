@@ -6,6 +6,8 @@
 
 **Status:** done (2026-10-29). The Sub's Octave (−1 or −2) and Waveform (square or sine) are two choices on the Oscillators' Sub & Noise tab; the Sine Sub Two Down Preset shows them.
 
+**Since then:** the Preset is named Sub Two Down (2026-10-30): its longer name was cut short in the Patch picker on Linux's wider fonts (the 1.16.0 deploy).
+
 ## Agent Brief
 
 **Category:** enhancement

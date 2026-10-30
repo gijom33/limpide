@@ -49,7 +49,7 @@ group('Shapes', [
   }],
   ['Sub Ladder', 'A square an octave below a saw: the Sub fills the odd rungs of a ladder that now starts an octave lower, Osc 1 the even ones.', { mixSub: 0.7, ...OPEN }],
   ['Square on Square', 'Two squares an octave apart, through the Sub: a staircase in the Scope, every Harmonic of the lower one present.', { waveform: 'square', mixSub: 1, ...OPEN }],
-  ['Sine Sub Two Down', 'A sine Sub two octaves under a saw: one clean spike far left in the Spectrum, the ladder counted from it, Osc 1 on every fourth rung.', {
+  ['Sub Two Down', 'A sine Sub two octaves under a saw: one clean spike far left in the Spectrum, the ladder counted from it, Osc 1 on every fourth rung.', {
     mixSub: 0.8, subOctave: -2, subWaveform: 'sine', ...OPEN,
   }],
 ]);
