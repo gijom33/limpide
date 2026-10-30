@@ -9,7 +9,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · bug
+**Status:** done (2026-10-30). The Demo's parts play and move from the keyboard without stopping it, Tab follows the header as it stands at every width, the Tutorial card takes the focus when picked, keeps it, and never hides a focused control, and each greyed-out control tells a screen reader why.
 
 ## Agent Brief
 
@@ -31,13 +31,22 @@
 - What greys a control out
 
 **Acceptance criteria:**
-- [ ] A keyboard-only test plays the Demo from a chosen segment with Enter and Space, and moves along with the arrows, without stopping it
-- [ ] The header test checks Tab order against the controls' positions on screen at the phone, 2 × 2, laptop and wide sizes, and its name says what it checks
-- [ ] At 1440 × 900 with the Tutorial card docked, every Tab stop can be focused and is unobscured; picking a Tutorial and pressing Next keep focus out of the page body
-- [ ] Each greyed-out control's accessible description names why it is inactive, and loses it when active again
-- [ ] The design audit and the screenshots of every layout are unchanged
+- [x] A keyboard-only test plays the Demo from a chosen segment with Enter and Space, and moves along with the arrows, without stopping it
+- [x] The header test checks Tab order against the controls' positions on screen at the phone, 2 × 2, laptop and wide sizes, and its name says what it checks
+- [x] At 1440 × 900 with the Tutorial card docked, every Tab stop can be focused and is unobscured; picking a Tutorial and pressing Next keep focus out of the page body
+- [x] Each greyed-out control's accessible description names why it is inactive, and loses it when active again
+- [x] The design audit and the screenshots of every layout are unchanged
 
 **Out of scope:**
 - The segments' size (99)
 - The greyed-out controls' contrast: kept at the design principles' 30 %, since they still turn and now say why (Claude's call, open to the owner)
 - The review's other notes (the welcome's focus on the build link, the Display panel left open after Tab, the Viewers' descriptions): left in its report for a later pass
+
+## How it was built
+
+- **The Demo's parts** (`src/ui/DemoBar.tsx`, `src/demo/stopRule.ts`): the stop rule lets Enter, Space, the arrows, Home and End through on the Demo's own card and button, so Enter or Space on a part plays from it as a click does, and Enter on the lit Demo button now stops it (it used to stop and restart it). Each part's button keeps its key whatever plays (the fill alone is new on each start), so the focus stays on it as the parts go by. The parts are one Tab stop, on the part playing or the one last focused; the arrows, Home and End move along them without playing (Claude's call, open to the owner: the radio groups' and tabs' pattern, so Tab passes the 15 parts in one step). None of it depends on where the parts sit, so it holds if [99](./99-demo-segments-as-targets.md) moves them. Tests: `src/demo/stopRule.test.ts` (five rows), `e2e/demo.spec.ts` "from the keyboard alone…".
+- **The header** (`src/ui/App.tsx`, `src/ui/hooks/useMediaQuery.ts`): up to 860 px the header's groups are put in the DOM as the screen shows them (the Wordmark and the Patch, Demo to Song, Hold to About, then the keyboard), wider as before; keyed, so React moves them when the window crosses 860 px rather than starting them again. The CSS is unchanged. Test: `e2e/header.spec.ts` "at W×H (size) Tab meets the header's controls as they stand on screen…" at the phone, 2 × 2, laptop and wide sizes (each stop right of the last, or on a row below it); the placement test is renamed for what it checks.
+- **The Tutorial card** (`src/ui/docked.ts`, `src/ui/TutorialCard.tsx`): a docked card (the Tutorial's or the Demo's) scrolls a control the keyboard focuses out from under it (keyboard focus only, so a knob pressed by its edge never moves under the pointer), where the page can scroll; the Tutorial card keeps room below the last section, so at 1440 × 900 all of them come clear. A picked Tutorial focuses its Start, after the welcome or the panel has put the focus back on their buttons; Next waiting for its Step is `aria-disabled` instead of `disabled`, so it keeps the focus and looks the same; when the button the focus was on goes (Back on the first card, "Do it for me" once made, Finish), the focus goes to the card's way forward. It still never takes the focus from a control being turned. Tests: `e2e/tutorial.spec.ts` "picking a Tutorial puts the focus on its card…", "at 1440 × 900 … every Tab stop comes clear of the card" (it found 9 stops under the card before the change), and the welcome's test.
+- **Greyed-out controls** (`src/ui/inactive.tsx`; `Knob`, `Fader`, `Segmented`, `WaveformPicker`, `Tooltip`): `inactive` is now the reason, such as "No effect while Osc 2 is silent", "No effect unless Osc 1's Waveform is Pulse", "No effect while the Filter Envelope Amount and Osc 2's Env Amount are 0", "No effect while LFO 1's Depth is 0", "No effect with more than one Voice". It goes in a hidden element that the control's description reads first, ahead of its tooltip, and goes when the control acts again; the tooltip now adds its own id beside it instead of replacing it. Test: `e2e/keyboardAccess.spec.ts` "a greyed-out control tells a screen reader why…".
+- **The look:** screenshots at 390, 690, 1000, 1440 and 1920 px, of the page and of the Tutorial card at Step 1, were pixel-identical before and after (a throwaway comparison, not kept). The layout specs passed, also with Verdana forced. The Demo's tip no longer says any key stops it.
+- **Tests run:** `npx vitest run` (834 passed); the whole Playwright suite in Chromium and WebKit (857 passed; the issue 81 Tooltips test failed once under load and passed alone). The two Tab-walking tests skip WebKit, as `e2e/layoutPolish.spec.ts` does, since Safari tabs to buttons only when its settings ask it to; the Tutorial focus test runs in both.
