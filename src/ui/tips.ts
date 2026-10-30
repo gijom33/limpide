@@ -201,7 +201,7 @@ export const TIPS = {
   },
   ring: {
     title: 'Ring',
-    body: 'Osc 1 multiplied by Osc 2, whatever their own faders: in place of the two pitches you hear their sum and their difference, for bells, gongs and metallic clangs. Detune or Semitone on Osc 2 changes which.',
+    body: 'Osc 1 multiplied by Osc 2, whatever their own faders: in place of the two pitches you hear their sum and their difference, for bells, gongs and metallic clangs. Detune or Semitone on Osc 2 changes which. With the two in tune, both waves jump at the same instant, and their product dips for that instant: a faint click once a cycle, at every Harmonic, that the Ideal leaves out.',
     how: 'Pick Sine on both, Ring up and the others down, Osc 2 a fifth up: the Spectrum shows two spikes, neither at the Note.',
   },
   subNoise: {

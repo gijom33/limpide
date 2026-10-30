@@ -1,4 +1,4 @@
-# 95: The Oscillators' top Harmonics tapered, so their edges stop ringing
+# 95: Ring's click in tune, said in its tip (first: the Oscillators' edges tapered, tried and undone)
 
 **What to build:** Each Oscillator's top Harmonics fall smoothly to nothing below where the browser cuts them off, so a wave's jumps no longer overshoot and ripple. Two in-tune Oscillators through Ring then make the wave the Ideal draws, not that wave plus a click each cycle. The owner's bug and call (inbox, 2026-10-29).
 
@@ -6,7 +6,7 @@ Today a browser plays an Oscillator's Harmonics only up to about half its sample
 
 **Blocked by:** none
 
-**Status:** needs-triage · bug. Tried and undone (2026-10-29): the taper does not remove the click, see Findings; the owner to choose again.
+**Status:** done (2026-10-29). The taper was tried and undone (it does not remove the click, see Findings); the Ring tip now says that two in-tune Oscillators click faintly once a cycle and that the Ideal leaves the click out.
 
 ## Agent Brief
 
@@ -23,9 +23,10 @@ Today a browser plays an Oscillator's Harmonics only up to about half its sample
 - Levels below the fade are unchanged.
 
 **Acceptance criteria:**
-- [ ] A Saw times a Square in tune through Ring: the even Harmonics (the click) at least 20 dB lower than today (engine test)
-- [ ] A Saw's Harmonics below the fade at the same level as before (existing engine tests pass)
-- [ ] The Ideal's marks fall in the fade as the sound does (unit test)
+- [ ] ~~A Saw times a Square in tune through Ring: the even Harmonics (the click) at least 20 dB lower than today (engine test)~~ The taper cannot do it (Findings)
+- [ ] ~~A Saw's Harmonics below the fade at the same level as before~~ No taper
+- [ ] ~~The Ideal's marks fall in the fade as the sound does~~ No taper
+- [x] After decision 2: the Ring tip says the click is there and the Ideal leaves it out
 
 **Out of scope:**
 - Aliasing from FM or from pitch moving far up mid-Note (the browser still stops anything past its limit)
@@ -33,7 +34,8 @@ Today a browser plays an Oscillator's Harmonics only up to about half its sample
 
 ## Decisions
 
-1. Smooth the clicks out rather than leave them and say so in the Ring tip, decided by the owner. Every Oscillator gets a slightly softer very top, so every Preset changes a little there.
+1. Smooth the clicks out rather than leave them and say so in the Ring tip, decided by the owner. Every Oscillator gets a slightly softer very top, so every Preset changes a little there. Tried and undone (Findings).
+2. Say it in the Ring tip, decided by the owner. The owner first chose to draw it, and it was built: the Ideal working Ring in tune out from the waves as Chrome plays them, cut at the Note's Nyquist frequency, matched the sound within 0.1 dB on C3, C4 and C5 at every Harmonic, even ones included. The owner then changed their mind before it was committed: "I changed my mind, use the Ring tip to mention it only." Not kept.
 
 ## Findings (2026-10-29)
 
