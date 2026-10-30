@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import type { Welcome } from '../app/welcome';
 import { Logo } from './Logo';
 
@@ -34,6 +34,8 @@ export function About({
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const title = useId();
+  const credits = useRef<HTMLDListElement>(null);
+  const more = useMoreBelow(credits, open);
 
   useEffect(() => {
     const d = dialog.current!;
@@ -81,7 +83,9 @@ export function About({
           {' · '}
           {day(date)}
         </p>
-        <dl className="about-credits">
+        {/* On a short window the credits scroll inside the card, faded at the foot while more is below, so the way in
+            stays on the first screen (issue 105: on a 393 × 659 phone it fell below it, with no hint). */}
+        <dl ref={credits} className="about-credits" data-more={more || undefined}>
           <dt>Made by</dt>
           <dd>
             Designed and directed by{' '}
@@ -156,4 +160,23 @@ export function About({
       </div>
     </dialog>
   );
+}
+
+/** Whether the element, scrolled inside, has more below what it shows: its foot fades while it has. */
+function useMoreBelow(element: React.RefObject<HTMLElement | null>, open: boolean): boolean {
+  const [more, setMore] = useState(false);
+  useEffect(() => {
+    const e = element.current;
+    if (!open || !e) return;
+    const update = () => setMore(e.scrollTop + e.clientHeight < e.scrollHeight - 1);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(e);
+    e.addEventListener('scroll', update, { passive: true });
+    return () => {
+      observer.disconnect();
+      e.removeEventListener('scroll', update);
+    };
+  }, [element, open]);
+  return more;
 }

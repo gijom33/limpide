@@ -57,3 +57,29 @@ test('opened from a Share link, the welcome says a sound was shared and plays th
   await expect(demo(page)).toHaveAttribute('aria-pressed', 'false', { timeout: 15000 }); // one riff, then it stops
   await expect(page.getByRole('button', { name: /^Patch/ })).toContainText('Shared Patch');
 });
+
+// Issue 105 (the 1.16.0 review): on a 393 × 659 phone the credits pushed the three buttons below the fold, with no
+// hint that the card scrolled. The published site adds a Privacy paragraph the tests' build leaves out: 393 × 540
+// stands in for it.
+test.describe('on a short phone', () => {
+  test.use({ hasTouch: true });
+  for (const height of [659, 540]) {
+    test(`at 393 × ${height} the welcome's three buttons are on the first screen, the credits scrolling above them`, async ({ page }) => {
+      await page.setViewportSize({ width: 393, height });
+      await page.goto('/');
+      for (const name of ['Play the Demo', 'Follow the Tutorial', 'Close']) {
+        await expect(about(page).getByRole('button', { name, exact: true }), name).toBeInViewport({ ratio: 1 });
+      }
+      const credits = about(page).locator('.about-credits');
+      // What does not fit scrolls inside the credits, faded at the foot while more is below, and only there.
+      const scrolls = await credits.evaluate((dl) => dl.scrollHeight > dl.clientHeight);
+      if (scrolls) {
+        await expect(credits).toHaveAttribute('data-more');
+        expect(await credits.evaluate((dl) => getComputedStyle(dl).maskImage)).toContain('gradient');
+        await credits.evaluate((dl) => dl.scrollTo({ top: dl.scrollHeight }));
+        await expect(credits).not.toHaveAttribute('data-more');
+      }
+      expect(await about(page).evaluate((d) => d.scrollHeight <= d.clientHeight)).toBe(true);
+    });
+  }
+});

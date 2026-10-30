@@ -543,6 +543,13 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px var(--space-3); width: 100%; margin: var(--space-1) 0;
   padding-top: var(--space-3); border-top: 1px solid var(--border); font-size: var(--text-lg); line-height: 1.4; text-align: left;
 }
+/* The card is never taller than the window: on a short one the credits give way, scrolling inside it (at least three
+   lines of them), so the buttons under them stay on the first screen; their foot fades while more is below (issue
+   105). The card itself scrolls only where even that cannot fit. */
+.about-body { max-height: calc(100dvh - 34px); }
+.about-body > * { flex: none; }
+.about-body > .about-credits { flex: 0 1 auto; min-height: 4.5em; overflow-y: auto; overscroll-behavior: contain; }
+.about-credits[data-more] { mask-image: linear-gradient(to bottom, #000 calc(100% - 40px), transparent); }
 .about-credits dt { color: var(--muted); }
 .about-credits dd { margin: 0; }
 /* A link's words stay together ("Source on GitHub" broke over two lines, issue 47). */
