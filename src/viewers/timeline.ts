@@ -1,4 +1,4 @@
-import { DESTINATIONS, destinationLevel, knobLevel, lfoDestinations } from '../modulation/destinations';
+import { DESTINATIONS, destinationLevel, lfoDestinations } from '../modulation/destinations';
 import type { Modulation } from '../modulation/modulationModel';
 import { formatParam, type LfoDestination, type Patch, type StageId } from '../patch/patch';
 import { cssVar, curveWidth, haloText, prepareCanvas } from './canvas';
@@ -12,8 +12,6 @@ const F_MAX = 20000;
 interface Source {
   modulationAt(time: number): Modulation;
   now(): number;
-  /** The Cutoff knob's own setting at a moment, drawn faintly so the Envelope's push away from it shows. */
-  baseCutoffAt(time: number): number;
   /** The Patch in force at a moment: whether the Filter Envelope and the LFOs move anything, and what. */
   patchAt(time: number): Patch | undefined;
 }
@@ -168,27 +166,20 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
       g.lineDashOffset = 0;
     };
 
-    // A Parameter the Filter Envelope or an LFO moves (the owner, 2026-10-28): its knob's setting a faint solid line,
-    // apart from LFO 1's dashes (issue 71), then where it is now in its own pattern (`linePattern`), both in its
-    // stage's colour.
-    const line = ({ name, colourVar, pattern, y, base }: { name: string; colourVar: string; pattern: LinePattern; y: (m: Modulation, i: number) => number; base: (time: number) => number }) => {
+    // A Parameter the Filter Envelope or an LFO moves (the owner, 2026-10-28): where it is now in its own pattern
+    // (`linePattern`), in its stage's colour. The knob's own setting is not drawn (the owner, 2026-10-29).
+    const line = ({ name, colourVar, pattern, y }: { name: string; colourVar: string; pattern: LinePattern; y: (m: Modulation, i: number) => number }) => {
       if (times.length < 2) return;
       g.strokeStyle = cssVar(canvas, colourVar);
-      g.globalAlpha = 0.5;
-      g.lineWidth = 1;
-      g.beginPath();
-      times.forEach((time, i) => (i ? g.lineTo(xs[i], base(time)) : g.moveTo(xs[i], base(time))));
-      g.stroke();
-      g.globalAlpha = 1;
       g.lineWidth = curveWidth(canvas) * (pattern === 'dots' ? DOT_WIDTH : 1);
       g.lineCap = 'round';
       dashed(name, samples.map((m, i) => y(m, i)), DASHES[pattern]);
       g.lineCap = 'butt';
     };
-    if (shows.cutoff) line({ name: 'cutoff', colourVar: '--stage-filter', pattern: 'dots', y: (m) => yHz(m.cutoff), base: (time) => yHz(source.baseCutoffAt(time)) });
+    if (shows.cutoff) line({ name: 'cutoff', colourVar: '--stage-filter', pattern: 'dots', y: (m) => yHz(m.cutoff) });
 
     // What else the LFOs move, each the same way on its knob's own scale (bottom to top) in its stage's colour: the
-    // knob's setting faint, where it is now in its pattern; the key names them.
+    // where it is now in its pattern; the key names them.
     const patches = shows.destinations.length ? times.map((time) => source.patchAt(time)) : [];
     const levels = shows.destinations.map((d) => samples.map((m, i) => (patches[i] ? destinationLevel(d, patches[i], m) : 0)));
     shows.destinations.forEach((d, i) => {
@@ -197,10 +188,6 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
         colourVar: `--stage-${DESTINATIONS[d].stage}`,
         pattern: patchNow ? linePattern(patchNow, d) : 'dashes',
         y: (_, x) => yLevel(levels[i][x]),
-        base: (time) => {
-          const then = source.patchAt(time);
-          return yLevel(then ? knobLevel(d, then) : 0);
-        },
       });
     });
     canvas.dataset.destinations = shows.destinations.map((d, i) => `${d}:${(levels[i].at(-1) ?? 0).toFixed(3)}`).join(' ');

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { CHOICES, defaultPatch, LFO_DESTINATIONS, PARAMS, type Patch, STAGES } from '../patch/patch';
 import { targetText } from '../tutorial/tutorial';
 import { linePattern, timelineShows } from '../viewers/timeline';
-import { DESTINATIONS, destinationLevel, effectiveValue, knobLevel, lfoDestinations, MODULATED } from './destinations';
+import { DESTINATIONS, destinationLevel, effectiveValue, lfoDestinations, MODULATED } from './destinations';
 import { destinationSwings, LFO_LAWS, type LfoLaw, type Modulation } from './modulationModel';
 import { evenReach } from './reach';
 
@@ -25,10 +25,6 @@ describe('lfoDestinations: what the active LFOs move (issue 63)', () => {
 });
 
 describe('destinationLevel: where a moved Parameter is, 0–1 on its knob', () => {
-  it('knobLevel is the knob’s own setting, Pitch’s the middle', () => {
-    expect(knobLevel('volume', patch({ volume: 0.6 }))).toBeCloseTo(0.6);
-    expect(knobLevel('pitch', patch({}))).toBe(0.5);
-  });
   it('follows the Modulation model where it already answers (the Volume after its dip)', () => {
     expect(destinationLevel('volume', patch({ volume: 0.6 }), at({ volume: 0.3 }))).toBeCloseTo(0.3);
   });

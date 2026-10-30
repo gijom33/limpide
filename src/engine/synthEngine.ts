@@ -46,8 +46,6 @@ export interface SynthEngine {
    * it. `modulationAt(time).lfo` alone (scaled), cheap enough to draw point by point.
    */
   lfoSwingAt(time: number, lfo?: LfoNumber): number;
-  /** The Cutoff knob's own setting at `time` (before modulation). */
-  baseCutoffAt(time: number): number;
   /** The Patch in force at `time` (none before the first): what the Timeline draws at that moment. */
   patchAt(time: number): Patch | undefined;
   now(): number;
@@ -888,10 +886,6 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       if (!then) return 0;
       const l = lfos(then)[n - 1];
       return l.amount * lfoShape(l.waveform, lfoClocks[n - 1].phaseAt(time));
-    },
-    baseCutoffAt: (time) => {
-      const then = patchAt(time);
-      return then ? effectiveCutoff(then) : 0;
     },
     patchAt,
     now: () => ctx.currentTime,
