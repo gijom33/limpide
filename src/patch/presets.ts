@@ -206,7 +206,7 @@ group('Bass', [
     waveform: 'square', mixSub: 0.6, filterSlope: 24, cutoff: 220, resonance: 0.3, velocityCutoff: 0.8,
     filterEnvAmount: 3, filterDecay: 0.2, filterSustain: 0, ampAttack: 0.001, ampDecay: 0.4, ampSustain: 0, ampRelease: 0.15, keyTrack: 0.5,
   }],
-  ['Wobble', 'The LFO sweeping a resonant 24 dB low-pass, retriggered: every Note starts its wobble from the top, so it lands on the beat. Watch the Timeline restart.', {
+  ['Wobble', 'The LFO sweeping a resonant 24 dB low-pass, retriggered: every Note starts its wobble at the Cutoff and opens from there, so it lands on the beat. Watch the Timeline restart.', {
     osc2Waveform: 'square', osc2Octave: -1, mixOsc2: 0.6,
     filterSlope: 24, cutoff: 300, resonance: 0.65,
     lfoRate: 3, lfoAmount: 0.7, lfoRetrigger: 'note', ampSustain: 1, ampRelease: 0.2,

@@ -119,7 +119,7 @@ A slow, repeating modulation source; there are two, each moving one Destination:
 _Avoid_: Modulator, wobble, LFO amount (say Depth)
 
 **Retrigger**:
-An LFO setting: on, the LFO starts its cycle again at every Note (each Note gets the same wobble from its start); off, it runs freely and each Note catches it wherever it is. Off by default.
+An LFO setting: on, the LFO starts its cycle again at every Note, where its Waveform classically starts: a Saw at its foot, a Saw Down at its top, a Square on its upper half, a Sine and a Triangle at the centre rising (each Note gets the same wobble from its start); off, it runs freely and each Note catches it wherever it is. Off by default.
 _Avoid_: Key sync (fine in a tooltip), reset, phase reset
 
 **Glide**:

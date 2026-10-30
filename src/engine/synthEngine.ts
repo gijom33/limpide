@@ -1,5 +1,5 @@
 import { type Adsr, type AutomationStep, DIP, envelopeSchedule, type GateEvent, levelAfter } from '../modulation/envelope';
-import { createLfoClock, glideFrequency, glideFrom, glideTimeConstant, type LfoWaveform, lfoShape } from '../modulation/lfo';
+import { createLfoClock, glideFrequency, glideFrom, glideTimeConstant, LFO_START, type LfoWaveform, lfoShape } from '../modulation/lfo';
 import {
   destinationSwings, effectiveCutoff, effectiveResonance, effectiveVolume, KEY_TRACK_CENTRE, type Modulation, soundingPitch,
   VELOCITY_CUTOFF_OCTAVES,
@@ -202,11 +202,14 @@ function createAnalyser(ctx: BaseAudioContext): AnalyserNode {
 }
 
 /**
- * The LFO Waveforms with corners, from their series as Web Audio defines its own oscillators, but not normalised:
- * normalising scales the series to its overshoot at the corners, so a square's plateaus would sit near ±0.85 and a
- * saw's ramp would fall short, while the Modulation model (and every Viewer) has them at exactly ±1 (ADR-0003).
+ * The LFO Waveforms as series of sines, as Web Audio defines its own oscillators, but not normalised: normalising
+ * scales the series to its overshoot at the corners, so a square's plateaus would sit near ±0.85 and a saw's ramp
+ * would fall short, while the Modulation model (and every Viewer) has them at exactly ±1 (ADR-0003). A sine and a
+ * triangle play as Web Audio's own unless a restart starts them part-way through their cycle (issue 124).
  */
-const LFO_SERIES: Record<'square' | 'saw' | 'sawDown', (n: number) => number> = {
+const LFO_SERIES: Record<LfoWaveform, (n: number) => number> = {
+  sine: (n) => (n === 1 ? 1 : 0),
+  triangle: (n) => (n % 2 ? (n % 4 === 1 ? 8 : -8) / (n * Math.PI) ** 2 : 0),
   square: (n) => (n % 2 ? 4 / (n * Math.PI) : 0),
   saw: (n) => (n % 2 ? 2 : -2) / (n * Math.PI),
   sawDown: (n) => (n % 2 ? -2 : 2) / (n * Math.PI),
@@ -221,9 +224,18 @@ const LFO_TERMS = 2048;
  */
 const sigma = (n: number) => Math.sin((Math.PI * n) / LFO_TERMS) / ((Math.PI * n) / LFO_TERMS);
 
-function lfoWave(ctx: BaseAudioContext, waveform: keyof typeof LFO_SERIES): PeriodicWave {
-  const real = new Float32Array(LFO_TERMS);
-  const imag = real.map((_, n) => (n ? LFO_SERIES[waveform](n) * sigma(n) : 0));
+/**
+ * An LFO Waveform whose cycle starts at phase `start` of the Modulation model's (`lfoShape`'s): an oscillator always
+ * starts at its wave's phase 0, so a retriggered one is given its wave turned to start there (issue 124). Each term
+ * sin(2πn(p + start)) is a sine and a cosine of 2πnp.
+ */
+function lfoWave(ctx: BaseAudioContext, waveform: LfoWaveform, start: number): PeriodicWave {
+  const [real, imag] = [new Float32Array(LFO_TERMS), new Float32Array(LFO_TERMS)];
+  for (let n = 1; n < LFO_TERMS; n++) {
+    const term = LFO_SERIES[waveform](n) * sigma(n);
+    real[n] = term * Math.sin(2 * Math.PI * n * start);
+    imag[n] = term * Math.cos(2 * Math.PI * n * start);
+  }
   return ctx.createPeriodicWave(real, imag, { disableNormalization: true });
 }
 
@@ -239,10 +251,13 @@ function lfoClamp(ctx: BaseAudioContext): WaveShaperNode {
   return clamp;
 }
 
-/** Set an LFO oscillator's Waveform: a sine or a triangle (whose series never overshoots) as Web Audio's own. */
-function setLfoWaveform(lfo: OscillatorNode, waveform: LfoWaveform, wave: (w: keyof typeof LFO_SERIES) => PeriodicWave) {
-  if (waveform === 'sine' || waveform === 'triangle') lfo.type = waveform;
-  else lfo.setPeriodicWave(wave(waveform));
+/**
+ * Set an LFO oscillator's Waveform, its cycle starting at phase `start` (where it was restarted, issue 124): a sine or
+ * a triangle (whose series never overshoots) starting at 0 as Web Audio's own.
+ */
+function setLfoWaveform(lfo: OscillatorNode, waveform: LfoWaveform, start: number, wave: (w: LfoWaveform, start: number) => PeriodicWave) {
+  if (start === 0 && (waveform === 'sine' || waveform === 'triangle')) lfo.type = waveform;
+  else lfo.setPeriodicWave(wave(waveform, start));
 }
 
 /** A stop for a node to play on: a stop called again replaces the last, and there is no way to take one back. */
@@ -825,25 +840,35 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     lfos: [lfoNodes(), lfoNodes()], bend, tremoloRest, noise: { white, pink: pinkBuffer(ctx, white) }, wave: oscillatorWave, master,
   };
   const voices = Array.from({ length: MAX_VOICES }, (_, i) => createVoice(ctx, shared, i));
-  const waves = new Map<keyof typeof LFO_SERIES, PeriodicWave>();
-  const wave = (w: keyof typeof LFO_SERIES) => waves.get(w) ?? waves.set(w, lfoWave(ctx, w)).get(w)!;
+  const waves = new Map<string, PeriodicWave>();
+  const wave = (w: LfoWaveform, start: number) => {
+    const key = `${w} ${start}`;
+    return waves.get(key) ?? waves.set(key, lfoWave(ctx, w, start)).get(key)!;
+  };
+  // Where each LFO oscillator's cycle started, as a phase of its Waveform: a retriggered one's at its Waveform's
+  // start then (`LFO_START`), kept through any later change of Waveform, as the model's clock keeps it (issue 124).
+  const lfoStarts = new WeakMap<OscillatorNode, number>();
+  const setLfoWave = (node: OscillatorNode, waveform: LfoWaveform) => setLfoWaveform(node, waveform, lfoStarts.get(node) ?? 0, wave);
   const lfoStart = ctx.currentTime;
   // The model's copy of each LFO's phase, advanced with every Rate change exactly as its oscillator is (ADR-0003).
   const lfoClocks = [createLfoClock(lfoStart, PARAMS.lfoRate.default), createLfoClock(lfoStart, PARAMS.lfo2Rate.default)];
   /**
-   * A retriggering LFO starts its cycle again at `t`: a new oscillator takes over from the running one there (an
-   * oscillator cannot be reset), and the model's clock restarts with it. A chord's Notes restart it once.
+   * A retriggering LFO starts its cycle again at `t`, where its Waveform classically starts (issue 124): a new
+   * oscillator takes over from the running one there (an oscillator cannot be reset), and the model's clock restarts
+   * with it, at the same phase. A chord's Notes restart it once.
    */
   const restartLfo = (i: number, l: Lfo, t: number) => {
     const nodes = shared.lfos[i];
+    const start = LFO_START[l.waveform];
     const restarted = nodes.takeover.restart(t, () => {
       const next = ctx.createOscillator();
-      setLfoWaveform(next, l.waveform, wave);
+      lfoStarts.set(next, start);
+      setLfoWave(next, l.waveform);
       next.frequency.value = l.rate;
       next.connect(nodes.bus);
       return next;
     });
-    if (restarted) lfoClocks[i].restart(t);
+    if (restarted) lfoClocks[i].restart(t, start);
   };
   /** Both LFOs' values at `t`, under the Patch then in force. */
   const lfoValues = (then: Patch, t: number): [number, number] => {
@@ -1083,7 +1108,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
         const nodes = shared.lfos[i];
         // A restart handed over ahead of now leaves the old oscillator running until then: it follows too.
         for (const osc of nodes.takeover.nodes()) {
-          setLfoWaveform(osc, l.waveform, wave);
+          setLfoWave(osc, l.waveform);
           osc.frequency.setValueAtTime(l.rate, t);
         }
         nodes.toCutoff.gain.setValueAtTime(cutoffCents[i], t);

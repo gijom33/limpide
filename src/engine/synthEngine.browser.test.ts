@@ -721,6 +721,103 @@ describe('LFO edges (issue 66)', () => {
     });
 });
 
+// Issue 124: a retriggered LFO starts each Waveform where it classically starts, not at the browser oscillator's own
+// phase 0 (the middle of a saw's ramp). Measured as issue 66's are, on Volume at full Depth (a gain of 0.5 + 0.5 ×
+// the LFO), with the Note at 0.3 s, where a free LFO at 1 Hz is far from any of these starts.
+describe('where a retriggered LFO starts (issue 124)', () => {
+  const tremolo = { cutoff: 20000, waveform: 'sine', ampSustain: 1, ampAttack: 0.001, lfoDestination: 'volume', lfoAmount: 1, lfoRate: 1 } as const;
+  const NOTE = 0.3;
+  /**
+   * The tremolo's gain over the Amp Tap's window ending at `until` (by default 0.4 s, the Note's first tenth of a
+   * second), and its times; `change`, if given, is applied at 0.56 s.
+   */
+  const gains = async (patch: Partial<Patch>, until = 0.4, change?: Partial<Patch>) => {
+    const tap = async (amount: number) => {
+      const ctx = new OfflineAudioContext(1, SR * (until + 0.1), SR);
+      const engine = createSynthEngine(ctx);
+      const first = { ...defaultPatch(), ...tremolo, ...patch, lfoAmount: amount };
+      engine.applyPatch(first);
+      engine.noteOn(69, 1, NOTE);
+      const amp = new Float32Array(engine.taps.amp.fftSize);
+      const changed = change && ctx.suspend(0.56).then(() => {
+        engine.applyPatch({ ...first, ...change });
+        void ctx.resume();
+      });
+      const captured = ctx.suspend(until).then(() => {
+        engine.taps.amp.getFloatTimeDomainData(amp);
+        void ctx.resume();
+      });
+      await ctx.startRendering();
+      await Promise.all([changed, captured]);
+      return { amp, engine };
+    };
+    const [moved, still] = [await tap(1), await tap(0)];
+    const peak = Math.max(...still.amp.map(Math.abs));
+    const measured: { time: number; gain: number }[] = [];
+    still.amp.forEach((s, i) => {
+      if (Math.abs(s) > 0.3 * peak) measured.push({ time: until - (still.amp.length - i) / SR, gain: moved.amp[i] / s });
+    });
+    return { measured, engine: moved.engine };
+  };
+
+  // Each Waveform's classic start: a Saw at its foot, a Saw Down at its top, a Square at the start of its upper half,
+  // a Sine and a Triangle at the centre, rising.
+  for (const [lfoWaveform, start] of [['saw', -1], ['sawDown', 1], ['square', 1], ['sine', 0], ['triangle', 0]] as const)
+    it(`starts a retriggered ${lfoWaveform} at ${start} at the Note, in the sound as in the model`, async () => {
+      const { measured, engine } = await gains({ lfoWaveform, lfoRetrigger: 'note' });
+      expect(engine.lfoSwingAt(NOTE)).toBeCloseTo(start, 9);
+      // Its first values, a millisecond to five in (past the series' corner): at 1 Hz the wave has moved under 2 %.
+      const first = measured.filter((g) => g.time > NOTE + 0.001 && g.time < NOTE + 0.005);
+      expect(first.length).toBeGreaterThan(10);
+      for (const g of first) expect(g.gain).toBeCloseTo(0.5 + 0.5 * start, 1);
+      // And the model follows the sound sample by sample, from there on.
+      const after = measured.filter((g) => g.time > NOTE + 0.001);
+      const gap = Math.max(...after.map((g) => Math.abs(g.gain - engine.modulationAt(g.time).volume)));
+      expect(gap).toBeLessThan(0.005);
+    });
+
+  it('leaves a free LFO where it is: a saw at 0.3 s, three tenths into its cycle, at 0.6', async () => {
+    const { measured, engine } = await gains({ lfoWaveform: 'saw' });
+    expect(engine.lfoSwingAt(NOTE)).toBeCloseTo(0.6, 9);
+    const first = measured.filter((g) => g.time > NOTE + 0.001 && g.time < NOTE + 0.005);
+    for (const g of first) expect(g.gain).toBeCloseTo(0.8, 1);
+  });
+
+  it('keeps the sound and the model together when the Waveform changes after a retriggered saw', async () => {
+    // The saw restarted half a cycle along its phase: a sine switched to at 0.56 s runs on from there, in both.
+    const { measured, engine } = await gains({ lfoWaveform: 'saw', lfoRetrigger: 'note' }, 0.704, { lfoWaveform: 'sine' });
+    const after = measured.filter((g) => g.time > 0.57);
+    expect(after.length).toBeGreaterThan(1000);
+    const gap = Math.max(...after.map((g) => Math.abs(g.gain - engine.modulationAt(g.time).volume)));
+    expect(gap).toBeLessThan(0.005);
+  });
+
+  it('opens Key Sync at the Note and closes it over the LFO’s cycle, as its words say', async () => {
+    const keySync = PRESETS.find((p) => p.name === 'Key Sync')!.patch;
+    let engine: ReturnType<typeof createSynthEngine> | undefined;
+    const s = await render(1.2, keySync, (e) => {
+      engine = e;
+      e.noteOn(57, 1, NOTE); // A3
+    });
+    // How bright: the centre of its Harmonics' power (the 1st to the 20th, a level-weighted mean of their numbers), in
+    // 50 ms windows (whole cycles of 220 Hz) over the 1.5 Hz cycle's two thirds of a second.
+    const centre = (from: number) => {
+      let [weighted, total] = [0, 0];
+      for (let h = 1; h <= 20; h++) {
+        const p = toneAmplitude(s, SR, 220 * h, Math.round((NOTE + from) * SR), Math.round((NOTE + from + 0.05) * SR)) ** 2;
+        weighted += h * p;
+        total += p;
+      }
+      return weighted / total;
+    };
+    const centres = [0.01, 0.2, 0.4, 0.6].map(centre);
+    for (let i = 1; i < centres.length; i++) expect(centres[i], centres.map((c) => c.toFixed(2)).join(', ')).toBeLessThan(centres[i - 1]);
+    // The model: open at its top at the Note (1.48 kHz), closed to its foot at the cycle's end (172 Hz).
+    expect(engine!.modulationAt(NOTE).cutoff).toBeGreaterThan(1400);
+    expect(engine!.modulationAt(NOTE + 0.66).cutoff).toBeLessThan(180);
+  });
+});
+
 describe('Osc 2, Noise and the Mixer', () => {
   const A2 = 45; // 110 Hz
   const clean = { cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001, waveform: 'sine', osc2Waveform: 'sine' } as const;

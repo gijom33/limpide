@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createLfoClock, glideFrequency, lfoPhase, lfoShape } from './lfo';
+import { createLfoClock, glideFrequency, LFO_START, lfoPhase, lfoShape } from './lfo';
 
 describe('lfoShape: one cycle of each LFO Waveform (phase 0–1), like Web Audio’s own oscillators', () => {
   it('sine starts at 0 and peaks a quarter of the way through', () => {
@@ -30,6 +30,19 @@ describe('lfoShape: one cycle of each LFO Waveform (phase 0–1), like Web Audio
     expect(lfoShape('sawDown', 0)).toBeCloseTo(0);
     expect(lfoShape('sawDown', 0.25)).toBeCloseTo(-0.5);
     expect(lfoShape('sawDown', 0.75)).toBeCloseTo(0.5);
+  });
+});
+
+describe('LFO_START: where a retriggered LFO starts each Waveform (issue 124, decided by the owner)', () => {
+  it('a Saw at its foot, a Saw Down at its top, a Square on its upper half, a Sine and a Triangle at the centre rising', () => {
+    expect(lfoShape('saw', LFO_START.saw)).toBe(-1);
+    expect(lfoShape('sawDown', LFO_START.sawDown)).toBe(1);
+    expect(lfoShape('square', LFO_START.square)).toBe(1);
+    expect(lfoShape('square', LFO_START.square + 0.49)).toBe(1); // the whole upper half is ahead
+    for (const w of ['sine', 'triangle'] as const) {
+      expect(lfoShape(w, LFO_START[w])).toBeCloseTo(0, 9);
+      expect(lfoShape(w, LFO_START[w] + 0.01)).toBeGreaterThan(0);
+    }
   });
 });
 
@@ -104,15 +117,25 @@ describe('createLfoClock', () => {
 
   it('restarts its cycle at a Note (retrigger): phase 0 there, then on at the Rate', () => {
     const clock = createLfoClock(0, 2);
-    clock.restart(1.3);
+    clock.restart(1.3, 0);
     expect(clock.phaseAt(1.2)).toBeCloseTo(0.4); // untouched before the restart
     expect(clock.phaseAt(1.3)).toBeCloseTo(0);
     expect(clock.phaseAt(1.55)).toBeCloseTo(0.5);
   });
 
+  it('restarts at the phase it is given, and keeps it through a later Rate change (issue 124)', () => {
+    const clock = createLfoClock(0, 2);
+    clock.restart(1.3, 0.5);
+    expect(clock.phaseAt(1.3)).toBeCloseTo(0.5);
+    expect(clock.phaseAt(1.425)).toBeCloseTo(0.75); // a quarter of a cycle on at 2 Hz
+    clock.setRate(1, 4); // a Rate change before it, made after it was handed over
+    expect(clock.phaseAt(1.3)).toBeCloseTo(0.5);
+    expect(clock.phaseAt(1.4)).toBeCloseTo(0.9);
+  });
+
   it('takes a restart scheduled ahead of a later Rate change made before it (a Note handed over early)', () => {
     const clock = createLfoClock(0, 1);
-    clock.restart(2); // a Note scheduled for t = 2
+    clock.restart(2, 0); // a Note scheduled for t = 2
     clock.setRate(1.5, 4); // the Rate turned at 1.5, before the Note sounds
     expect(clock.phaseAt(1.75)).toBeCloseTo(0.5 + 4 * 0.25 - 1); // 1.5 cycles + 1 cycle
     expect(clock.phaseAt(2)).toBeCloseTo(0);
@@ -121,9 +144,9 @@ describe('createLfoClock', () => {
 
   it('forgets old restarts without moving the phase after them', () => {
     const clock = createLfoClock(0, 3);
-    clock.restart(1);
+    clock.restart(1, 0.5);
     clock.setRate(2, 1);
-    clock.restart(3);
+    clock.restart(3, 0.5);
     const before = [3.2, 3.7].map((t) => clock.phaseAt(t));
     clock.forgetBefore(3.1);
     expect([3.2, 3.7].map((t) => clock.phaseAt(t))).toEqual(before);
