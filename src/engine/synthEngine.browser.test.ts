@@ -551,25 +551,33 @@ describe('modulationAt for past moments (the Envelope Timeline)', () => {
     expect(hi).toBeCloseTo(61, 1);
     expect(swing('cutoff')).toEqual([60, 60]);
   });
-  it('a Gate earlier than Notes already handed over (Hold switched off mid-rhythm) cancels them, as in the sound', () => {
-    const ctx = new OfflineAudioContext(1, SR, SR);
-    const engine = createSynthEngine(ctx);
-    engine.applyPatch({ ...defaultPatch(), ampAttack: 0.005, ampSustain: 1, ampRelease: 0.3, filterAttack: 0.005 });
-    engine.noteOn(60, 0.9, 0);
-    // The rhythm hands the next tap over ahead of the clock…
-    engine.noteOn(60, 0.9, 0.5);
-    engine.noteOff(0.8);
-    // …then Hold goes off at 0.45, before it.
-    engine.noteOff(0.45);
-    const at = engine.modulationAt(0.45);
-    for (const t of [0.5, 0.6, 0.8, 0.9]) {
-      const m = engine.modulationAt(t);
-      expect(m.amp, `amp at ${t}`).toBeGreaterThanOrEqual(0);
-      expect(m.amp, `amp at ${t}`).toBeLessThan(at.amp); // releasing: no new Attack at 0.5
-      expect(m.filter, `filter at ${t}`).toBeGreaterThanOrEqual(0);
-      expect(m.sounding, `at ${t}`).toBeNull();
-    }
-  });
+  // On several Voices too (issue 101): a handed-over Note has its release recorded already, and is cancelled all the same.
+  for (const voices of [1, 4] as const)
+    it(`a Gate earlier than Notes already handed over (Hold switched off mid-rhythm) cancels them, as in the sound (${voices} Voice${voices > 1 ? 's' : ''})`, async () => {
+      const ctx = new OfflineAudioContext(1, SR * 1.2, SR);
+      const engine = createSynthEngine(ctx);
+      engine.applyPatch({ ...defaultPatch(), voices, ampAttack: 0.005, ampSustain: 1, ampRelease: 0.1, filterAttack: 0.005 });
+      const chord = [60, 64];
+      // A tap of the rhythm, a chord, its end handed over with its start, as the Transport does…
+      for (const note of chord) engine.noteOn(note, 0.9, 0);
+      for (const note of chord) engine.release(note, 0.4);
+      // …the next tap, handed over ahead of the clock…
+      for (const note of chord) engine.noteOn(note, 0.9, 0.5);
+      for (const note of chord) engine.release(note, 0.8);
+      // …then Hold goes off at 0.45, before it.
+      engine.noteOff(0.45);
+      const at = engine.modulationAt(0.45);
+      for (const t of [0.5, 0.6, 0.8, 0.9]) {
+        const m = engine.modulationAt(t);
+        expect(m.amp, `amp at ${t}`).toBeGreaterThanOrEqual(0);
+        expect(m.amp, `amp at ${t}`).toBeLessThan(at.amp); // releasing: no new Attack at 0.5
+        expect(m.filter, `filter at ${t}`).toBeGreaterThanOrEqual(0);
+        expect(m.sounding, `at ${t}`).toBeNull();
+      }
+      // Silence once the Release from 0.45 has run, where the tap handed over would have sounded until 0.8.
+      const s = (await ctx.startRendering()).getChannelData(0);
+      expect(rms(s, SR * 0.75, SR * 1.2)).toBeLessThan(rms(s, SR * 0.1, SR * 0.4) * 0.001);
+    });
 });
 
 describe('two LFOs and their destinations', () => {
@@ -1507,5 +1515,83 @@ describe('the Filter Envelope on Osc 2’s pitch (issue 93)', () => {
   it('leaves Osc 2 alone at 0', async () => {
     const s = await render(1, { ...osc2Alone, filterSustain: 1 }, (e) => e.noteOn(45, 1, 0));
     expect(frequencyAround(s, SR, 0.7, 0.2)).toBeCloseTo(110, -1);
+  });
+});
+
+describe('Notes handed over ahead of the clock (issue 101)', () => {
+  const bareSine = { cutoff: 20000, resonance: 0, waveform: 'sine', ampAttack: 0.001, ampSustain: 1, ampRelease: 0.01 } as const;
+  const peak = (s: Float32Array, from: number, to: number) => s.subarray(Math.round(from * SR), Math.round(to * SR)).reduce((m, v) => Math.max(m, Math.abs(v)), 0);
+  /** The Demo plays a Note at 0 and hands the next over for `next`; a key takes over at `key`, before it. */
+  const takeOver = (e: ReturnType<typeof createSynthEngine>, key: number, next: number) => {
+    e.noteOn(69, 1, 0);
+    e.release(69, next - 0.05);
+    e.noteOn(69, 1, next);
+    e.release(69, next + 0.2);
+    e.noteOff(key); // the Demo stops…
+    e.noteOn(69, 1, key); // …and the key plays
+  };
+
+  it('a key taking over within the look-ahead sounds one copy of each Oscillator: a bare sine peaks as one Note does', async () => {
+    // A4 is 132 whole cycles at 0.3 s: two copies would be in phase, and double.
+    const s = await render(1, bareSine, (e) => takeOver(e, 0.3, 0.5));
+    expect(peak(s, 0.32, 0.6) / peak(s, 0.1, 0.28)).toBeCloseTo(1, 1);
+  });
+
+  it('a retriggering LFO taking over within the look-ahead runs alone, in the sound as in the model', async () => {
+    // A square LFO at 1 Hz on the pitch: the Demo's is down from 0.5 s; the key's, restarted at 0.6 s, is up.
+    const patch = { ...bareSine, lfoDestination: 'pitch', lfoAmount: 1, lfoRate: 1, lfoWaveform: 'square', lfoRetrigger: 'note' } as const;
+    let model = 0;
+    const s = await render(1.2, patch, (e) => {
+      takeOver(e, 0.6, 0.8);
+      model = e.lfoSwingAt(0.7);
+    });
+    expect(model).toBe(1);
+    expect(frequencyAround(s, SR, 0.7, 0.02)).toBeCloseTo(440 * 2 ** (1 / 12), 0);
+  });
+
+  it('over many Notes, removes every connection made to and from an Oscillator once it has ended', async () => {
+    const made = new Map<object, Set<object>>(); // a node → what it feeds, nodes and params
+    const { connect, disconnect } = AudioNode.prototype;
+    AudioNode.prototype.connect = function (this: AudioNode, destination: AudioNode | AudioParam, ...rest: number[]) {
+      if (!made.has(this)) made.set(this, new Set());
+      made.get(this)!.add(destination);
+      return (connect as (...a: unknown[]) => AudioNode).call(this, destination, ...rest);
+    } as typeof connect;
+    AudioNode.prototype.disconnect = function (this: AudioNode, ...args: unknown[]) {
+      const destination = args[0];
+      if (destination instanceof AudioNode || destination instanceof AudioParam) made.get(this)?.delete(destination);
+      else made.delete(this);
+      return (disconnect as (...a: unknown[]) => void).apply(this, args);
+    } as typeof disconnect;
+    try {
+      const ctx = new OfflineAudioContext(1, SR * 4, SR);
+      const ended = new Set<OscillatorNode>();
+      const create = ctx.createOscillator.bind(ctx);
+      ctx.createOscillator = () => {
+        const o = create();
+        o.addEventListener('ended', () => ended.add(o));
+        return o;
+      };
+      const engine = createSynthEngine(ctx);
+      engine.applyPatch({ ...defaultPatch(), voices: 4, lfoRetrigger: 'note', lfo2Retrigger: 'note' });
+      // Many Notes on several Voices, each played as the players do, and a key taking over before some.
+      for (let i = 0; i < 30; i++) {
+        const t = i * 0.1;
+        engine.noteOn(48 + (i % 12), 1, t + 0.05);
+        engine.release(48 + (i % 12), t + 0.09);
+        if (i % 3 === 0) engine.noteOn(60, 1, t + 0.02);
+      }
+      await ctx.startRendering();
+      await new Promise((resolve) => setTimeout(resolve, 50)); // the ended events
+      const fed = (o: OscillatorNode) => [...made.values()].filter((to) => to.has(o.frequency) || to.has(o.detune)).length;
+      expect(ended.size).toBeGreaterThan(100);
+      for (const o of ended) {
+        expect(made.get(o)?.size ?? 0, 'what it fed').toBe(0);
+        expect(fed(o), 'what fed it').toBe(0);
+      }
+    } finally {
+      AudioNode.prototype.connect = connect;
+      AudioNode.prototype.disconnect = disconnect;
+    }
   });
 });

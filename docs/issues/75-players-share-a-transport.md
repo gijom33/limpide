@@ -6,6 +6,8 @@
 
 **Status:** done (2026-10-28). One Transport plays the Demo's, the Song's, Listen's and the Hold rhythm's Notes; the players end every Note by releasing it; the Demo, the Song and Listen share one value for what plays. Nothing heard or seen changed: the Playwright suite passes untouched.
 
+**Since then:** the stop closes the Gate once, now: the engine's Note Off reaches the Notes already handed over on any number of Voices, which the second Gate off just past the look-ahead did not on several (issue 101, 2026-10-30).
+
 ## Agent Brief
 
 **Category:** enhancement

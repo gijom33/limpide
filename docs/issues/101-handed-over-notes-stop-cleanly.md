@@ -8,7 +8,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · bug
+**Status:** done (2026-10-30). A key or a stop that comes before a Note the players handed over leaves one copy of each Oscillator and LFO sounding, a stopped player's handed-over Notes release from the stop on any number of Voices, and an ended Oscillator is disconnected both ways. Not yet heard by the owner.
 
 ## Agent Brief
 
@@ -30,10 +30,18 @@
 - The engine's Note Off, and the shared transport's stop
 
 **Acceptance criteria:**
-- [ ] An engine test: a key taking over within the look-ahead peaks as one Note does, not two (a bare sine stays at 1.0)
-- [ ] The existing engine test of a stopped player, extended to several Voices, finds silence after the Release
-- [ ] An engine test counts the connections made and removed over many Notes and finds them equal once the nodes end
+- [x] An engine test: a key taking over within the look-ahead peaks as one Note does, not two (a bare sine stays at 1.0)
+- [x] The existing engine test of a stopped player, extended to several Voices, finds silence after the Release
+- [x] An engine test counts the connections made and removed over many Notes and finds them equal once the nodes end
 
 **Out of scope:**
 - How long the look-ahead is
 - Whether each Note restarts the Oscillators (issue 94; the click during a Release is [102](./102-a-note-during-a-release-clicks.md))
+
+## How it was built
+
+- **One node at a time.** The Oscillators and the LFOs now share one helper, `createTakeover` in `src/engine/synthEngine.ts`, which keeps every node not yet ended with when it stops. A restart stops every node still due to sound past its moment there: the one playing and, when it comes before a restart handed over already, the node that one was replacing (the reviewer's fix, `stop(t)` on the previous node, covered two restarts but not three handed over in a row). A node scheduled to start later is stopped before its start, so it never sounds; Chromium still sends its ended event (checked offline). A new wave or LFO Rate reaches every node not yet ended, as before.
+- **Disconnected both ways.** An ended Oscillator is disconnected from its frequency and detune sources as well as from its outputs, as the reviewer suggested; an LFO's oscillator has no inputs.
+- **Note Off.** The engine's Note Off closes every Voice whose Note has no release recorded or one later than the Note Off, so a Note a player handed over ends at the stop on several Voices as on one. The Transport's stop therefore closes the Gate once, now: its second Gate off just past the look-ahead served nothing any more and is gone (Claude's call, open to the owner); issue 75 has a "Since then" line.
+- **Tests** (`src/engine/synthEngine.browser.test.ts`). A bare sine, the Demo's next Note handed over for 0.5 s and a key taking over at 0.3 s (A4 in phase): the peak was 2.0 times one Note's, now 1.0. A square LFO retriggered by the key at 0.6 s, the Demo's handed over for 0.8 s: the sound sat at 440 Hz (the two LFOs cancelling) against the model's semitone up; now it follows the model. The stopped-player test runs on 1 and 4 Voices and renders the sound: on 4 Voices the handed-over chord played after the stop and the model showed it sounding; now both are silent after the Release. A count of connections over 30 Notes on 4 Voices with retriggering LFOs finds none left on any of the 100-odd Oscillators that ended (2 each before). The Transport's stop test expects one Gate off. Vitest: 833 passed. Playwright not run in this lane.
+- **Not changed.** A Note handed over still restarts its Voice's Oscillators at its time after a stop, inside the Release: the click that makes is issue 102's.
