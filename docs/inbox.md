@@ -6,6 +6,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- 2026-10-29, the owner: "I think the new OSCILLATOR features (FM, RING, ENV amount, pink noise, sub) deserve to be showcased in many more presets. We also want some of the most impressively sounding and looking ones to be included in the demo. Impress me!"
+- 2026-10-29, the owner: "All knobs in deactivated oscillators settings shoud be greyed out like pulse width is when the square of any width is not selected. I would also like to explore \"greying out\" the selectors. For NOISE, make the button only the dot. For SUB, make the selector cells the same size as the waveform selector for OSC 1 and OSC 2."
 - 2026-10-29, the owner, asked what to do with the Timeline's thin flat lines (each moved knob's own setting): "Remove them"
 
 ## Dropped
