@@ -29,3 +29,16 @@
 **Out of scope:**
 - Any change to how anything sounds or looks
 - Renaming the Patch field (it would break saved Patches and Share links)
+
+## Added in triage (2026-10-30)
+
+From the fourteen reviews of 1.16.0 (review 8, [report](../reviews/2026-10-30/8-oss-sceptic.md)), in the same spirit, behaviour unchanged:
+
+- **Refs kept in step by hand:** the hooks split from the App still assign 12 refs during render and carry 7 lint waivers on effect dependencies, four with the same "rebuilt each render, the same each time" claim the coding standards say went wrong in issue 77. Use React 19's effect events where they fit, and drop the waivers they make unneeded.
+- **Hooks without tests:** the MIDI and players hooks get unit tests of their own.
+- **A guard no test holds:** removing the legato fix's one-Voice condition (issue 94) leaves every engine test green; add a test that fails without it.
+
+Acceptance, added:
+- [ ] No ref is assigned during render where an effect event can do its work, and each remaining lint waiver says why
+- [ ] The MIDI and players hooks have unit tests
+- [ ] An engine test fails if the legato fix applies with several Voices

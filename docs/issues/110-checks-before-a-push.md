@@ -1,0 +1,24 @@
+# 110: The checks before a push, and process rules in one place
+
+**What to build:** From the fourteen reviews of 1.16.0 (the inbox, 2026-10-30; reviews 4, 8 and 10, [AI expert](../reviews/2026-10-30/4-ai-expert.md), [open-source sceptic](../reviews/2026-10-30/8-oss-sceptic.md), [methodology](../reviews/2026-10-30/10-methodology.md)):
+
+- **Linux fonts:** 6 of the last 11 release pushes failed CI on GitHub's Linux fonts after a green Mac run (1.12.2, 1.12.3, 1.12.4, 1.14.1, 1.15.0, 1.16.0); three reviewers ask for the layout tests in Playwright's Linux image before a push.
+- **Fact-check:** the check of new Preset and tip words ran after the push, so 1.16.0 shipped nine false claims; put it in the release steps before the push, with the ear stand-in.
+- **"Done at once":** such changes skip the issues they overturn (the 2026-10-29 header relayout reversed issue 82's decision 4 and issue 44's one order without touching either). Write the "Since then" rule into the issue tracker's guide, and give a change that alters an issue's decision, a setting or a batch of Presets an issue number.
+- **Rules drifting:** the code review's scope changed in the release steps only (ADR-0010 and issues 25 and 42 still say minor releases), and amended ADRs (0006, 0013) do not name their amendments.
+
+Claude's recommendations for reviews next time, in the inbox's Ideas at the owner's word, include the same Linux check; they stay there until the owner triages them.
+
+**Blocked by:** none
+
+**Status:** needs-triage · enhancement. Questions for the owner below.
+
+## Questions for the owner
+
+1. **The Linux check:** how should the layout tests run in Linux before a push? Docker isn't installed on this Mac.
+   - **a. (Claude's recommendation)** Push the release commit to a branch first; GitHub runs the full suite there without deploying, and main is pushed only once it is green. No install; it costs the CI's 20 minutes.
+   - **b.** Install a Docker runtime (Colima) here and run Playwright's Linux image locally.
+   - **c.** Bundle one font with the app so Mac and Linux draw alike; it changes the app's look slightly, everywhere.
+2. **Fact-check and ear stand-in before the push:** add them as release steps for any release that adds or changes Preset or tip words? Claude's recommendation: yes.
+3. **"Done at once":** a change that alters an issue's decision, a setting, or a batch of Presets gets an issue number, and the overturned issue a "Since then" line, written into the issue tracker's guide? Claude's recommendation: yes.
+4. **Rules in one place:** the release steps are the one home of the release rules; ADR-0010 gets a superseding ADR for the code review's scope, issues 25 and 42 point to the release steps, and an amended ADR's Status line names its amendment (the Status line being the one part an accepted ADR may change)? Claude's recommendation: yes.
