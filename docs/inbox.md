@@ -6,6 +6,9 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- 2026-10-30, the owner: "Make the sections for which it makes sense deactivatable. The deactivated sections (could be arpeggiator, filter, lfo or effects) would collapse on the phone."
+- 2026-10-30, the owner: "Add a tempo and midi sync. Tempo used by aroegiator and can be used to sync lfo rate and others."
+- 2026-10-30, the owner: "Add Easter egg with Claude dancing or singing. Add tutorial for FM and ring presets."
 - 2026-10-30, Claude's recommendation for reviews next time, which the owner asked to keep: A ripple-hunter agent, run on a change before the full suite: it finds every test, tip, Preset description and glossary line still stating the old fact (a count, a list's order, a line no longer drawn). Issue 97's run took 22 minutes to find five tests still expecting seven LFO targets.
 - 2026-10-30, Claude's recommendation for reviews next time, which the owner asked to keep: A fact-checker agent for Preset descriptions and tips: it renders each new or changed Preset through the engine offline and tests every claim its words make ("FM from 0 to 60 % every four seconds").
 - 2026-10-30, Claude's recommendation for reviews next time, which the owner asked to keep: An ear stand-in agent: it renders each new Preset on a few Notes and reports clipping (the limiter stepping in), near-silence, a click at a Note's start, a level far from its neighbours, harshness, before the owner listens.
