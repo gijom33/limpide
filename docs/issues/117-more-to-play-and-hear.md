@@ -11,7 +11,7 @@
 
 **Blocked by:** none
 
-**Status:** needs-triage · enhancement. Questions for the owner below.
+**Status:** done (2026-10-30): triaged with the owner. Legato mode went to [119](./119-legato-mode.md), recording to [120](./120-recording.md), the additive oscillator to [121](./121-additive-oscillator.md); unison, Hard Sync and a peak mode to `.out-of-scope/`.
 
 ## Questions for the owner
 
@@ -21,3 +21,12 @@
 4. **Hard Sync?** Claude's recommendation: no, as long as ADR-0001 holds. To `.out-of-scope/`, naming the ADR.
 5. **A peak mode?** Claude's recommendation: no; the notch covers the case worth teaching. Dropped.
 6. **Recording?** Claude's recommendation: yes, a small one: a record button that captures what is played and saves a WAV file, with the Patch's Share link beside it. The PRD's scope amended.
+
+## Decisions (triage, 2026-10-30, decided by the owner)
+
+1. Legato mode: yes, a switch beside Glide with one Voice ([119](./119-legato-mode.md)).
+2. The additive oscillator: yes, later, as its own issue to grill ([121](./121-additive-oscillator.md)).
+3. Unison: no, out of scope as the PRD says ([`.out-of-scope/unison.md`](../../.out-of-scope/unison.md)).
+4. Hard Sync: no, while ADR-0001 holds ([`.out-of-scope/hard-sync.md`](../../.out-of-scope/hard-sync.md)).
+5. A peak Filter mode: no, the notch covers the case worth teaching ([`.out-of-scope/peak-filter-mode.md`](../../.out-of-scope/peak-filter-mode.md)).
+6. Recording: yes, a small one, saving a WAV file; the PRD's scope amended ([120](./120-recording.md)).

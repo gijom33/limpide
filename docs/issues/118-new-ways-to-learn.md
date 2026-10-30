@@ -8,10 +8,16 @@
 
 **Blocked by:** none
 
-**Status:** needs-triage · enhancement. Questions for the owner below.
+**Status:** done (2026-10-30): triaged with the owner. Match the sound went to [122](./122-match-the-sound.md), a Patch in plain words to [123](./123-a-patch-in-plain-words.md); the signal-flow view to `.out-of-scope/`.
 
 ## Questions for the owner
 
 1. **Match the sound?** Claude's recommendation: yes, as its own issue to grill. It is the idea closest to Limpide's aim (hearing what a knob does), and the Viewers already show the distance (the Spectrum, the Ideal).
 2. **A signal-flow view?** Claude's recommendation: not now. The page's sections already run in the signal's order, and a diagram would take a Viewer's place. To `.out-of-scope/` for now.
 3. **A Patch in plain words?** Claude's recommendation: yes, a small one: one generated line under the Patch name, beside the about line of [109](./109-teaching-the-new-oscillator-features.md) (a Preset shows its own about line; a changed or saved Patch shows the generated one).
+
+## Decisions (triage, 2026-10-30, decided by the owner)
+
+1. Match the sound: yes, as its own issue to grill ([122](./122-match-the-sound.md)).
+2. A signal-flow view: not now ([`.out-of-scope/signal-flow-view.md`](../../.out-of-scope/signal-flow-view.md)).
+3. A Patch in plain words: yes, a small one ([123](./123-a-patch-in-plain-words.md)).

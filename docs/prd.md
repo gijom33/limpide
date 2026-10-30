@@ -185,7 +185,7 @@ Brought into scope by the grilling of [issue 40](./issues/40-preset-tutorials.md
 - LFO tempo sync: Limpide keeps no tempo to sync to, with no sequencer or arpeggiator (decided by the owner, issue 53, 2026-10-27). Retrigger locks an LFO to each Note instead.
 - Custom DSP or analogue-modelled filters ([ADR-0001](./adr/0001-native-web-audio-nodes-over-custom-dsp.md)).
 - A spectrogram.
-- An arpeggiator or sequencer, MIDI output, and audio recording or export.
+- An arpeggiator or sequencer, and MIDI output. (Recording to a WAV file came into scope on 2026-10-30, decided by the owner, [issue 120](./issues/120-recording.md); a tempo and an arpeggiator are to grill in [issue 112](./issues/112-tempo-midi-clock-and-an-arpeggiator.md).)
 - Accounts and cloud sync. (Phones were out of scope until 1.1.0; they are now a first-class layout.)
 - Drawing your own LFO shapes, and graphical envelope editors.
 
