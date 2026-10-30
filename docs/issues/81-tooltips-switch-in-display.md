@@ -6,6 +6,8 @@
 
 **Status:** done (2026-10-28). Display has a Tooltips switch under Tips, on at first and remembered; off, no tooltip opens on hover, focus or long press, and each control keeps its description for screen readers.
 
+**Since then:** (2026-10-30, [issue 106](./106-header-icons-named-with-tips-off.md), decided by the owner) with Tooltips off, a header button shown as its icon alone (861 to 1099 px) still shows its name alone on hover and focus; the long tips stay off, and a long press still opens nothing.
+
 ## Agent Brief
 
 **Category:** enhancement

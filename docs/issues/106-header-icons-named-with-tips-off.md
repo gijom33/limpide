@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · bug. The owner chose names on hover (decision below).
+**Status:** done (2026-10-30). With Tips off, hovering or focusing a header button shown as its icon alone (861 to 1099 px) shows its name alone where its tip would open; a button showing its word, and every other control, shows nothing.
 
 ## Question for the owner
 
@@ -27,9 +27,17 @@ With Tips off, should an icon-only button still show its name alone (one word, "
 - A button showing its word already shows nothing more with Tips off.
 
 **Acceptance criteria:**
-- [ ] At 1000 px with Tips off, hovering each icon-only header button shows its name and nothing else
-- [ ] At 1440 px with Tips off, hovering a worded button shows nothing
-- [ ] Issue 81 has a "Since then" line
+- [x] At 1000 px with Tips off, hovering each icon-only header button shows its name and nothing else
+- [x] At 1440 px with Tips off, hovering a worded button shows nothing
+- [x] Issue 81 has a "Since then" line
 
 **Out of scope:**
 - Any other control's tips
+
+## How it was built
+
+- `src/ui/Tooltip.tsx`: with Tooltips off, a Tooltip whose control holds a hidden header word (`.tool-word`, `.demo-word`, hidden by the CSS from 861 to 1099 px) still opens on hover or keyboard focus, as a second bubble holding the tip's title alone, placed as the tip would be. That bubble is `aria-hidden`: the button's name already says it, and its description stays the full tip. With Tooltips on nothing changed. No call site changed: the word in the button is what tells.
+- `src/ui/tips.ts`: the Tooltips switch's tip says a button showing its icon alone shows just its name.
+- Test: "with Tooltips off, the header's buttons shown as icons alone still show their names…" in `e2e/displayPanel.spec.ts`: at 1000 px each of the seven buttons shows its name alone on hover, under the button, and Demo on focus; at 1440 px Hold and Demo show nothing. It failed before the change. The issue 81 test there now steps away from the Display button that Escape refocuses before counting the Cutoff's tooltip: it had passed only while the Cutoff's had not opened yet, and failed under load.
+- Run: `e2e/displayPanel.spec.ts`, `header.spec.ts`, `about.spec.ts`, `tooltips.spec.ts`, `touchTips.spec.ts` in Chromium and WebKit, green, and again with Verdana forced; `npx vitest run` green.
+- A long press on a touch screen still opens nothing with Tips off: the decision named hover, and issue 81's "no long press" stands (Claude's call, open to the owner).
