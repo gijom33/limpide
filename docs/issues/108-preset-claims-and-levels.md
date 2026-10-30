@@ -43,7 +43,7 @@ From review 15 ([report](../reviews/2026-10-30/15-sound-designer.md), "Presets t
 - **Levels:** Choir (−36 dBFS) to Wobble (−7 dBFS) on C4, the Kick 8 dB under the Open Hat, Breathing Pad's peak growing 15 dB towards C6, Acid, Wobble and Screamer loud. Levelled with each Preset's Volume, the master's room for Voices kept unless [125](./125-the-preset-collection.md) decides otherwise.
 - **Pluck and Chorus Pluck** at one Voice in a group of 6- to 8-Voice keys: Chorus Pluck to 6 Voices; Pluck stays at one for its Tutorial.
 
-Key Sync, Zap Pluck and Wobble wait on [124](./124-where-a-retriggered-lfo-starts.md): their fix is the engine's or their words', as the owner decides there. The collection's shape (categories, near-copies, additions) is 125's. Claude's call, open to the owner.
+Key Sync, Zap Pluck and Wobble wait on [124](./124-where-a-retriggered-lfo-starts.md), where the owner chose to fix the engine (2026-10-30): after it, their words are checked again. The collection's shape (categories, near-copies, additions) is 125's. Claude's call, open to the owner.
 
 Acceptance, added:
 - [ ] Each Preset above, rendered again, does what its words say (soft and hard strikes measurably differ where Velocity is promised)
