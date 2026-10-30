@@ -1348,6 +1348,21 @@ describe('Ring Modulation (issue 88)', () => {
     expect(dB(at(fifth) / at(fifth + 110))).toBeLessThan(-40);
   });
 
+  it('does not restart the Oscillators on a legato Note, a key pressed while one is held (issue 94, decision 2)', async () => {
+    // One Voice, one sine, a Glide: the second key slides on from the first, so the wave carries on, with no jump.
+    const patch = { cutoff: 20000, resonance: 0, ampAttack: 0.001, ampSustain: 1, waveform: 'sine', glide: 0.2 } as const;
+    const s = await render(0.8, patch, (e) => {
+      e.noteOn(45, 1, 0);
+      e.noteOn(52, 1, 0.5023); // a quarter of a 110 Hz cycle past a whole number of them
+    });
+    const steepest = (from: number, to: number) => {
+      let most = 0;
+      for (let i = Math.round(from * SR) + 1; i < Math.round(to * SR); i++) most = Math.max(most, Math.abs(s[i] - s[i - 1]));
+      return most;
+    };
+    expect(steepest(0.497, 0.507)).toBeLessThan(1.5 * steepest(0.3, 0.45));
+  });
+
   it('sounds the same on a Note whether or not Osc 2 was retuned before it (issue 94)', async () => {
     const squares = { ...defaultPatch(), ...ringAlone, waveform: 'square', osc2Waveform: 'square' } as const;
     const second = async (away: number) => {

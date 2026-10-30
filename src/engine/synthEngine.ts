@@ -978,7 +978,10 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       const t = at(time);
       if (patch) lfos(patch).forEach((l, i) => l.retrigger === 'note' && restartLfo(i, l, t));
       const voice = allocate(note, t);
-      voice.restart(t);
+      // A legato Note, one Voice pressed on while its Note still sounds held, slides on from it: restarting the
+      // Oscillators there would click mid-sound (issue 94, decision 2).
+      const legato = voiceCount() === 1 && voice.note !== null && voice.releasedAt === null;
+      if (!legato) voice.restart(t);
       voice.note = note;
       follow(voice);
       setLeadPitch(voice, note, t);

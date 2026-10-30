@@ -6,6 +6,8 @@
 
 **Status:** done (2026-10-29). Each Note starts Osc 1, Osc 2 and the Sub together at the start of their cycles, so a Patch sounds the same whatever came before; with Osc 2 a whole number of octaves from Osc 1, the Ideal draws Ring's partials from the two waves' product, so two in-tune Squares draw none, as they sound. Not yet heard by the owner.
 
+**Since then:** the 1.16.0 review found that a legato Note restarted them all the same (one Voice, a key pressed while another is held, sent a Note On, which always restarted); fixed 2026-10-30, with an engine test that the wave carries on with no jump.
+
 ## Agent Brief
 
 **Category:** bug
