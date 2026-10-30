@@ -270,7 +270,7 @@ test('a Snapshot Step rings the Display button, then Snapshot, and counts a new 
   await action(page, 'Start').click();
   await action(page, 'Do it for me').click();
   await action(page, 'Next').click();
-  await expect(progress(page)).toHaveText('Step 2 of 14');
+  await expect(progress(page)).toHaveText('Step 2 of 15');
   await expect(ringed(page)).toHaveAttribute('aria-label', 'Display');
   await page.getByRole('button', { name: 'Display' }).click();
   const snapshot = page.getByRole('button', { name: 'Snapshot', exact: true });

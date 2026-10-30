@@ -165,6 +165,11 @@ export const TUTORIALS: Tutorial[] = [
         say: 'Shorten the Amp’s Release to about 80 ms.',
         note: 'Notes stop as soon as they end: a tight line.',
       },
+      {
+        kind: 'param', id: 'volume', to: 0.6,
+        say: 'Last, turn the Amp’s Volume down to 60 %.',
+        note: 'A resonant peak makes a loud sound: at 60 % this line plays about as loud as the other basses, with room to spare.',
+      },
     ],
   },
   {
@@ -283,6 +288,11 @@ export const TUTORIALS: Tutorial[] = [
         kind: 'param', id: 'ampRelease', to: 0.2,
         say: 'Shorten the Amp’s Release to about 200 ms.',
         note: 'Notes stop soon after you let go.',
+      },
+      {
+        kind: 'param', id: 'volume', to: 0.45,
+        say: 'Last, turn the Amp’s Volume down to 45 %.',
+        note: 'The resonant peak sweeping through the Harmonics makes a loud sound: at 45 % the wobble plays about as loud as the other basses.',
       },
     ],
   },
