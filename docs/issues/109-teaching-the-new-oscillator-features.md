@@ -46,3 +46,8 @@ The owner's own idea in the inbox (2026-10-30, "Add tutorial for FM and ring pre
 
 **Out of scope:**
 - The owner's own Tutorial idea and the brainstorm's line in the inbox, until the owner triages them
+
+## Added in triage (2026-10-30)
+
+- The owner's idea (inbox, 2026-10-30), "Add tutorial for FM and ring presets", is answered by decision 1: the FM Ladder and Ring Bell Tutorials.
+- Claude's brainstorm line (inbox, 2026-10-30) also names the LFO on FM. No fourth Tutorial: Breathing Bell's about line, shown under the Patch name by decision 3, points at it. Claude's call, open to the owner.

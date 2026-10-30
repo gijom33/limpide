@@ -29,6 +29,7 @@ Claude's recommendations for reviews next time, in the inbox's Ideas at the owne
 2. For a release that adds or changes Preset or tip words, the fact-check and the ear stand-in run before the push.
 3. A change that alters an issue's decision, a setting, or a batch of Presets gets an issue number, and the overturned issue a "Since then" line; written into the issue tracker's guide.
 4. The release steps are the one home of the release rules: a new ADR supersedes ADR-0010's point on the code review's scope, issues 25 and 42 point to the release steps, and an amended ADR's Status line names its amendment (0006, 0013).
+5. Added in triage of the inbox's last lines (2026-10-30): the ripple hunter (review 12's agent) runs with the fact-check and the ear stand-in before the push, on any release with issue work, to find every test, tip, description and doc still stating an old fact. Claude's call, open to the owner. Claude's other recommendations kept in the inbox are answered here: the Linux check by decision 1, the fact-checker and ear stand-in by decision 2; the generated Patches at the edges went to [116](./116-patches-at-the-edges.md).
 
 ## Agent Brief
 
@@ -37,7 +38,7 @@ Claude's recommendations for reviews next time, in the inbox's Ideas at the owne
 
 **Desired behavior:**
 - **CI on a branch:** a push to a release branch runs the same build and full suite as main, without deploying; pull requests too. Only main deploys.
-- **Release steps:** before main is pushed, the release commit is pushed to its branch and its CI run is green; for words added or changed in Presets or tips, the fact-check and the ear stand-in have run and their findings are fixed or answered.
+- **Release steps:** before main is pushed, the release commit is pushed to its branch and its CI run is green; for words added or changed in Presets or tips, the fact-check and the ear stand-in have run, and for any issue work the ripple hunter, their findings fixed or answered.
 - **The issue tracker's guide** states the "Since then" rule and when a change needs an issue (decision 3).
 - **One home:** the new ADR, the pointers from issues 25 and 42, and the Status lines of ADR-0006 and ADR-0013 naming their amendments (decision 4).
 
