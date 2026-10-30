@@ -4,8 +4,11 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-10-29, the owner, on the Timeline during the Demo (on the oscillator branch, port 5180): "Looks like the faint line is back. Didn't we fix that already?"
 ## Ideas
 
+- 2026-10-29, the owner, on the Demo's card: "Would be great if we could switch sections by clicking on the dots while the demo is playing."
+- 2026-10-29, the owner: "Let's improve the demo: The wobble sounds bad at high LFO rates. Talking FM sounds VERY bad, replace with something else. Glass Pad also is not great at all, especially just before singing lead."
 - 2026-10-29, the owner: "I think the new OSCILLATOR features (FM, RING, ENV amount, pink noise, sub) deserve to be showcased in many more presets. We also want some of the most impressively sounding and looking ones to be included in the demo. Impress me!"
 - 2026-10-29, the owner, asked what to do with the Timeline's thin flat lines (each moved knob's own setting): "Remove them"
 
