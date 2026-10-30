@@ -90,6 +90,12 @@ export function createLfoClock(start: number, rate: number) {
       marks[i].cycles = start;
       recount(i, false);
     },
+    /** The restarts after `time` are called off (a Gate off before their Notes): the cycle runs on through them. */
+    cancelAfter(time: number) {
+      const i = indexAt(time);
+      for (const mark of marks.slice(i + 1)) mark.restart = false;
+      recount(i, false);
+    },
     /** The phase (0–1) at `time`. */
     phaseAt(time: number) {
       const m = marks[indexAt(time)];

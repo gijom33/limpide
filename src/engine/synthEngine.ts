@@ -857,12 +857,19 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   const lfoStart = ctx.currentTime;
   // The model's copy of each LFO's phase, advanced with every Rate change exactly as its oscillator is (ADR-0003).
   const lfoClocks = [createLfoClock(lfoStart, PARAMS.lfoRate.default), createLfoClock(lfoStart, PARAMS.lfo2Rate.default)];
+  // The chord each LFO last restarted for: when its Notes were asked for, and when it restarted.
+  const lfoChords: ({ asked: number; t: number } | null)[] = [null, null];
   /**
    * A retriggering LFO starts its cycle again at `t`, where its Waveform classically starts (issue 124): a new
    * oscillator takes over from the running one there (an oscillator cannot be reset), and the model's clock restarts
-   * with it, at the same phase. A chord's Notes restart it once.
+   * with it, at the same phase; restarts handed over for after `t` are called off in both. A chord's Notes, asked for
+   * at the same moment, restart it once, where the first of them starts: those that dip first (issue 102) start 3 ms
+   * into its cycle, rather than it jumping 3 ms into the others'.
    */
-  const restartLfo = (i: number, l: Lfo, t: number) => {
+  const restartLfo = (i: number, l: Lfo, asked: number, t: number) => {
+    const chord = lfoChords[i];
+    if (chord && chord.asked === asked && chord.t <= t) return;
+    lfoChords[i] = { asked, t };
     const nodes = shared.lfos[i];
     const start = LFO_START[l.waveform];
     const restarted = nodes.takeover.restart(t, () => {
@@ -873,7 +880,17 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       next.connect(nodes.bus);
       return next;
     });
-    if (restarted) lfoClocks[i].restart(t, start);
+    if (!restarted) return;
+    lfoClocks[i].cancelAfter(t);
+    lfoClocks[i].restart(t, start);
+  };
+  /** Call off the LFOs' restarts after `t`, in the sound and the model, for a Note whose Gate closed before it started. */
+  const cancelLfoRestarts = (t: number) => {
+    shared.lfos.forEach((nodes, i) => {
+      nodes.takeover.cancelAfter(t);
+      lfoClocks[i].cancelAfter(t);
+      if ((lfoChords[i]?.t ?? -Infinity) > t) lfoChords[i] = null;
+    });
   };
   /** Both LFOs' values at `t`, under the Patch then in force. */
   const lfoValues = (then: Patch, t: number): [number, number] => {
@@ -951,8 +968,11 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       voice.freeAt = Infinity;
     } else {
       // A Gate off before its Note has started (one handed over, then stopped; a key let go within the dip) calls off
-      // the Note's restart of the Oscillators, which would come inside the Release (issue 102).
-      if (voice.startedAt > t) voice.cancelRestarts(t);
+      // the Note's restart of the Oscillators and of the retriggered LFOs, which would come inside the Release (issue 102).
+      if (voice.startedAt > t) {
+        voice.cancelRestarts(t);
+        cancelLfoRestarts(t);
+      }
       voice.releasedAt = t;
       voice.freeAt = t + patch.ampRelease * RELEASE_TAIL;
     }
@@ -1144,7 +1164,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       // Its history holds the Notes handed over ahead of the clock, so one of those dips as it will sound.
       const dipFrom = !legato && levelAt(voice.amps, asked) > SILENT ? asked : undefined;
       const t = dipFrom === undefined ? asked : asked + DIP;
-      if (patch) lfos(patch).forEach((l, i) => l.retrigger === 'note' && restartLfo(i, l, t));
+      if (patch) lfos(patch).forEach((l, i) => l.retrigger === 'note' && restartLfo(i, l, asked, t));
       if (!legato) voice.restart(t, noteToFrequency(note));
       voice.note = note;
       setLeadPitch(voice, note, t);

@@ -151,4 +151,15 @@ describe('createLfoClock', () => {
     clock.forgetBefore(3.1);
     expect([3.2, 3.7].map((t) => clock.phaseAt(t))).toEqual(before);
   });
+
+  it('calls off the restarts after a moment, its cycle running on through them, a Rate change there kept (the 1.16.1 review)', () => {
+    const clock = createLfoClock(0, 1);
+    clock.restart(0.5, 0);
+    clock.restart(2, 0.5);
+    clock.setRate(2, 2);
+    clock.cancelAfter(1);
+    expect(clock.phaseAt(0.75)).toBeCloseTo(0.25); // the restart before it stands
+    expect(clock.phaseAt(2)).toBeCloseTo(0.5); // 1.5 cycles since 0.5
+    expect(clock.phaseAt(2.1)).toBeCloseTo(0.7); // on at the Rate set at 2
+  });
 });

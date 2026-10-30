@@ -1880,6 +1880,41 @@ describe('a Note reaching a Voice still sounding dips first, so it does not clic
       expect(peak(due + 0.005, due + 0.03) / peak(due - 0.03, due - 0.005)).toBeLessThan((1.1 * level(due + 0.005)) / level(due - 0.03));
     });
 
+  it('does not restart a retriggered LFO for a Note called off before it starts: the Release keeps its LFO, in the sound as in the model (the 1.16.1 review)', async () => {
+    // A square LFO at 1 Hz on the pitch, started at 0: down from 0.5 s. The Note handed over for `due` would start it up again.
+    const patch = { ...sine, ampRelease: 1.5, lfoDestination: 'pitch', lfoAmount: 1, lfoRate: 1, lfoWaveform: 'square', lfoRetrigger: 'note' } as const;
+    let model = 0;
+    const s = await render(1, patch, (e) => {
+      calledOff['a player stopped before it'](e);
+      model = e.lfoSwingAt(0.65);
+    });
+    expect(model).toBe(-1);
+    expect(frequencyAround(s, SR, 0.65, 0.02)).toBeCloseTo(440 * 2 ** (-1 / 12), 0);
+  });
+
+  it('restarts a retriggered LFO once for a chord, where its Notes that do not dip start, whichever comes first (the 1.16.1 review)', async () => {
+    // C4, in its Release, takes its own Voice again and dips; E4 starts at once on the free one.
+    const patch = { ...sine, voices: 2, ampRelease: 0.4, lfoDestination: 'pitch', lfoAmount: 1, lfoRate: 5, lfoWaveform: 'saw', lfoRetrigger: 'note' } as const;
+    const chord = 0.35;
+    const renders: Float32Array[] = [];
+    for (const notes of [[60, 64], [64, 60]]) {
+      let swing = 0;
+      const s = await render(0.6, patch, (e) => {
+        e.noteOn(60, 1, 0);
+        e.release(60, 0.3);
+        for (const note of notes) e.noteOn(note, 1, chord);
+        swing = e.lfoSwingAt(chord + 0.02);
+      });
+      expect(swing, `${notes}`).toBeCloseTo(-0.8, 6); // a 5 Hz saw from its foot at the chord, a tenth of a cycle on
+      renders.push(s);
+    }
+    // One restart in the sound too, whichever Note came first: the two play alike.
+    const [one, other] = renders;
+    let most = 0;
+    for (let i = Math.round(chord * SR); i < one.length; i++) most = Math.max(most, Math.abs(one[i] - other[i]));
+    expect(most).toBeLessThan(1e-4);
+  });
+
   /**
    * A4, let go just before 0.3 s, and E4 into its Release at 0.32 s: the Amp's gain, sample by sample from 0.31 s to
    * 0.336 s (the Amp Tap over the Filter Tap, wherever the wave is not near zero), beside the model's. `live` changes
