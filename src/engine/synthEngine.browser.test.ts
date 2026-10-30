@@ -177,7 +177,7 @@ describe('shared scale across Taps', () => {
       }
     }
     expect(worst).toBeLessThan(0.8);
-  });
+  }, 60_000); // 30 renders: past the default limit when the whole suite runs at once
 
   it('plays an open saw at the Nominal Level times the master volume (0.5 × 0.45)', async () => {
     const s = await render(0.5, { cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001 }, (e) => e.noteOn(45, 1, 0));
