@@ -37,6 +37,7 @@ Found while building: the brief cannot be met as written. The Demo has 15 parts 
 
 1. From 601 px up, the segments move to a row of their own under the part's name and the buttons, as on phones (about 606 px): each segment at least 24 px wide and 24 px tall, its width still set by its part's length, so only the shortest part is drawn wider than its share. This changes the one-row card decided on 2026-10-29.
 2. On phones the segments stay pressable, 44 px tall and as wide as their row allows (about 22 px at the least), with "Previous part" and "Next part" buttons of 44 × 44 px beside them; WCAG 2.5.5 and 2.5.8 accept a full-size control doing the same. The design audit opens the Demo card and waives the segments on phones alone, naming these buttons as the reason.
+3. Once built (2026-10-30), shown the phone card: the segments keep their parts' lengths at 8 to 18 px, below decision 2's "about 22 px", Previous and Next being the full-size way to jump; and a clear gap between the ‹ › buttons and the segments.
 
 ## How it was built
 

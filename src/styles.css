@@ -1382,6 +1382,8 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
    and Previous part and Next part beside them are the full-size way along them (issue 99, decided by the owner). */
 @media (max-width: 600px) {
   .demo-bar-parts > button { min-width: 8px; height: 44px; }
+  /* A clear gap between ‹ › and the segments, so neither is pressed for the other (the owner, 2026-10-30). */
+  .demo-bar-track { gap: var(--space-3); }
   .demo-bar .demo-bar-step { display: inline-flex; width: 44px; height: 44px; flex: none; font-size: var(--text-lg); }
   .demo-bar .demo-bar-step[aria-disabled='true'] { opacity: 0.45; cursor: default; }
 }
