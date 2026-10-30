@@ -6,11 +6,11 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
-- 2026-10-29, the owner: "double clicking osc 1 in mixer to bring level to zero"
 - 2026-10-29, the owner, asked what to do with the Timeline's thin flat lines (each moved knob's own setting): "Remove them"
 
 ## Dropped
 
+- 2026-10-29, the owner's idea, a double-click bringing the Osc 1 fader to zero: withdrawn by the owner ("that was a bad idea indeed") once told that a double-click resets every knob and fader to its default, Osc 1's being 100 %. See [`.out-of-scope/double-click-to-zero.md`](../.out-of-scope/double-click-to-zero.md).
 - 2026-10-29, from the 1.15.1 review, the piano's width written twice in the styles for 1200 to 1919 px, and the header's bare 2 px and 4 px gaps: kept. One shared width would carry the top row's 4 px gaps into every layout's keyboard, and the gaps are used once each, beside the rules they space. Claude's call, open to the owner.
 - 2026-10-28, from the issue 69 review, the category pills beside the search box on a computer where decision 7 says under it: nothing to build, decided by the owner; decision 7 is amended to match what is built (and decision 13, which assumed it).
 - 2026-10-28, from the issue 69 review, the Env Timeline's tooltip ("3 or 4 s fit a slow Swell") against Swell's description ("at 2 s or more"): both true, decided by the owner; Swell's Attack is 1.5 s, which the default 2 s shows whole.
