@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** done (2026-10-29). The Sub's Octave (−1 or −2) and Waveform (square or sine) are two choices in the Mixer's name column; the Sine Sub Two Down Preset shows them.
+**Status:** done (2026-10-29). The Sub's Octave (−1 or −2) and Waveform (square or sine) are two choices on the Oscillators' Sub & Noise tab; the Sine Sub Two Down Preset shows them.
 
 ## Agent Brief
 
@@ -30,11 +30,12 @@
 ## Decisions (triage, 2026-10-29)
 
 1. Built with the other five: decided by the owner.
-2. Choices, not knobs, since each has two values, in the Mixer's name column under LEVELS with the Noise's colour (a row under the faders took their height): Claude's call, open to the owner.
+2. Choices, not knobs, since each has two values, in the Mixer's name column under LEVELS with the Noise's colour (a row under the faders took their height): Claude's call, open to the owner. Superseded by decision 3.
+3. The Sub's and the Noise's choices on a Sub & Noise tab of their own, between Osc 2 and the Mixer, so no tab is taller than two rows and the Mixer is its faders alone: decided by the owner (layout B of three; the others were a Mod tab for FM and Env Amount, or both new tabs).
 
 ## How it was built
 
-- **The choices** `subOctave` and `subWaveform` (`src/patch/patch.ts`), Learnable by MIDI (their names in `src/midi/mappings.ts` and the Tutorials'), under LEVELS in the Mixer's name column with the Noise colour: −1 and −2, and the Sub's two Waveforms as icons. In a stage under 300 px they are one line above the faders, in place of LEVELS. Five faders beside the column are as wide as the Envelopes' where they fit, never under 40 px (`src/styles.css`).
+- **The choices** `subOctave` and `subWaveform` (`src/patch/patch.ts`), Learnable by MIDI (their names in `src/midi/mappings.ts` and the Tutorials'), on the Sub & Noise tab (decision 3), its Octave above its Waveform, the Noise's Colour under them, their captions one width so the choices line up: −1 and −2, and the Sub's two Waveforms as icons. The Mixer keeps LEVELS alone in its name column; five faders beside it are as wide as the Envelopes' where they fit, never under 40 px (`src/styles.css`).
 - **The engine** (`src/engine/synthEngine.ts`): each Voice builds both Sub waves once and switches between them; the second octave is in the Sub's `detune`. Cycle Lock counts from the Sub at either octave.
 - **The Ideal** (`src/music/idealReference.ts`): the root is 2 or 4 Harmonics up from the Sub, the Sub's series its own Waveform's; `idealReference` is now built from `idealPartials`, so it follows both.
 - Tests: "the Sub’s Octave and Waveform (issue 91)" in the engine's browser tests and the Ideal's unit tests; Preset: Sine Sub Two Down (Shapes).

@@ -453,25 +453,18 @@ export function App() {
                     ),
                   },
                   {
-                    // The third tab, so the Mixer's faders and the Oscillators' rows take turns and the stage is no
-                    // taller than the others (all of them at once made it the tallest).
-                    id: 'mixer',
-                    label: 'Mixer',
-                    tip: TIPS.mixer,
-                    fill: true,
+                    // The Sub's and the Noise's own choices (issues 91 and 92), on a tab of their own (the owner), so
+                    // the Mixer is its faders alone and no tab is taller than two rows.
+                    id: 'subNoise',
+                    label: 'Sub & Noise',
+                    tip: TIPS.subNoise,
                     content: (
-                    <SubBlock title="Mixer" label="Levels" tip={TIPS.mixer} group showTitle={false}>
-                      {/* The name's column also holds the Sub's and the Noise's own choices (issues 91 and 92), so the
-                          faders keep the tab's whole height. */}
-                      <div className="mixer-side">
-                        <Tooltip content={TIPS.mixer}>
-                          <h3 className="has-tip">Levels</h3>
-                        </Tooltip>
-                        <Tooltip content={TIPS.subOptions}>
-                          <div className="source-choice">
-                            <span className="field-caption" aria-hidden="true">Sub</span>
+                      <>
+                        <SubBlock title="Sub" tip={TIPS.subOptions} group>
+                          <div className="choice-list">
                             <Segmented
                               label="Sub Octave"
+                              caption="Octave"
                               value={patch.subOctave}
                               options={CHOICES.subOctave.map((v) => ({ value: v, label: `−${-v}`, name: `${-v} octave${v === -1 ? '' : 's'} down` }))}
                               onChange={(subOctave) => edit((p) => ({ ...p, subOctave }))}
@@ -479,28 +472,51 @@ export function App() {
                             />
                             <Segmented
                               label="Sub Waveform"
+                              caption="Waveform"
                               value={patch.subWaveform}
                               options={CHOICES.subWaveform.map((v) => ({ value: v, label: <WaveIcon waveform={v} />, name: v === 'square' ? 'Square' : 'Sine' }))}
                               onChange={(subWaveform) => edit((p) => ({ ...p, subWaveform }))}
                               learn={{ kind: 'choice', id: 'subWaveform' }}
                             />
                           </div>
-                        </Tooltip>
-                        <Tooltip content={TIPS.noiseColour}>
-                          <div className="source-choice">
-                            <span className="field-caption" aria-hidden="true">Noise</span>
+                        </SubBlock>
+                        <SubBlock title="Noise" tip={TIPS.noiseColour} group>
+                          <div className="choice-list">
                             <Segmented
                               label="Noise Colour"
+                              caption="Colour"
                               value={patch.noiseColour}
                               options={CHOICES.noiseColour.map((v) => ({
                                 value: v,
-                                label: <span className="noise-swatch" data-colour={v} />,
+                                label: (
+                                  <>
+                                    <span className="noise-swatch" data-colour={v} />
+                                    {v === 'white' ? 'White' : 'Pink'}
+                                  </>
+                                ),
                                 name: v === 'white' ? 'White' : 'Pink',
                               }))}
                               onChange={(noiseColour) => edit((p) => ({ ...p, noiseColour }))}
                               learn={{ kind: 'choice', id: 'noiseColour' }}
                             />
                           </div>
+                        </SubBlock>
+                      </>
+                    ),
+                  },
+                  {
+                    // The last tab, so the Mixer's faders and the Oscillators' rows take turns and the stage is no
+                    // taller than the others (all of them at once made it the tallest).
+                    id: 'mixer',
+                    label: 'Mixer',
+                    tip: TIPS.mixer,
+                    fill: true,
+                    content: (
+                    <SubBlock title="Mixer" label="Levels" tip={TIPS.mixer} group showTitle={false}>
+                      {/* The name's column, so five faders share what is left of the width. */}
+                      <div className="mixer-side">
+                        <Tooltip content={TIPS.mixer}>
+                          <h3 className="has-tip">Levels</h3>
                         </Tooltip>
                       </div>
                       <div className="knobs">

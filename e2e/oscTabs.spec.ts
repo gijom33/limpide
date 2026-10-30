@@ -1,10 +1,11 @@
 import { expect, test } from '@playwright/test';
 
-test('Osc 1, Osc 2 and the Mixer are tabs, one shown at a time, each Oscillator with its own pitch row (issue 90)', async ({ page }) => {
+test('Osc 1, Osc 2, Sub & Noise and the Mixer are tabs, one shown at a time, each Oscillator with its own pitch row (issue 90)', async ({ page }) => {
   await page.goto('/');
   const tabs = page.getByRole('tablist', { name: 'Oscillator' });
   const osc1 = tabs.getByRole('tab', { name: 'Osc 1' });
   const osc2 = tabs.getByRole('tab', { name: /Osc 2/ });
+  const subNoise = tabs.getByRole('tab', { name: 'Sub & Noise' });
   const mixer = tabs.getByRole('tab', { name: 'Mixer' });
   const shows = async (visible: string[]) => {
     for (const [name, locator] of [
@@ -12,6 +13,8 @@ test('Osc 1, Osc 2 and the Mixer are tabs, one shown at a time, each Oscillator 
       ['Osc 2', page.getByRole('radiogroup', { name: 'Osc 2 Waveform' })],
       ['Osc 1 Pitch', page.getByRole('group', { name: 'Osc 1 Pitch' })],
       ['Tuning', page.getByRole('group', { name: 'Tuning' })],
+      ['Sub', page.getByRole('group', { name: 'Sub', exact: true })],
+      ['Noise', page.getByRole('group', { name: 'Noise', exact: true })],
       ['Mixer', page.getByRole('group', { name: 'Mixer' })],
     ] as const) {
       if (visible.includes(name)) await expect(locator, name).toBeVisible();
@@ -23,6 +26,11 @@ test('Osc 1, Osc 2 and the Mixer are tabs, one shown at a time, each Oscillator 
   await osc2.click();
   await expect(osc2).toHaveAttribute('aria-selected', 'true');
   await shows(['Osc 2', 'Tuning']);
+  await subNoise.click();
+  await expect(subNoise).toHaveAttribute('aria-selected', 'true');
+  await shows(['Sub', 'Noise']);
+  await expect(page.getByRole('radiogroup', { name: 'Sub Octave' })).toBeVisible();
+  await expect(page.getByRole('radiogroup', { name: 'Noise Colour' })).toBeVisible();
   await mixer.click();
   await expect(mixer).toHaveAttribute('aria-selected', 'true');
   await shows(['Mixer']);

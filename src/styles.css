@@ -311,19 +311,15 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 
 /* A segmented control is one shape; the selected segment is filled. */
 .segmented-field { display: inline-flex; align-items: center; gap: 6px; }
-/* The Mixer's name column (issues 91 and 92): LEVELS, then the Sub's octave and shape and the Noise's colour, each
-   under its source's name, small enough for the column, so the faders keep the tab's whole height. */
-.block .sub-block > .mixer-side { flex: 0 0 calc(var(--label-col) - 4px); align-self: stretch; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+/* The Mixer's name column: LEVELS alone, a little narrower than a name's, so its five faders fit beside it. */
+.block .sub-block > .mixer-side { flex: 0 0 calc(var(--label-col) - 4px); align-self: stretch; display: flex; flex-direction: column; min-width: 0; }
 .mixer-side > .tip-anchor:first-child { align-self: flex-start; }
-.source-choice { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
 /* Five faders beside it, as wide as the Envelopes' where they fit, else sharing what the column leaves, never under
-   40 px (a 48 px step with the gap, the faders' roomy spacing); the column is a little narrower than a name's for it. */
+   40 px (a 48 px step with the gap, the faders' roomy spacing). */
 .mixer-side ~ .knobs { --mixer-share: calc((100cqw - var(--label-col) + 4px - var(--label-gap) - 4 * var(--knob-gap)) / 5); }
 .mixer-side ~ .knobs .knob[data-kind='fader'] { width: min(var(--fader-col), max(40px, var(--mixer-share))); }
-.source-choice .field-caption { font-size: var(--text-sm); }
-.source-choice .segmented { flex-wrap: nowrap; }
-.source-choice .segmented button[role='radio'] { min-width: 26px; padding: 0 4px; height: 22px; }
-.noise-swatch { width: 10px; height: 10px; border-radius: 50%; border: 1px solid var(--muted); background: #ffffff; }
+/* The Noise's colours each with a dot of the colour, on the Sub & Noise tab. */
+.noise-swatch { display: inline-block; width: 10px; height: 10px; margin-right: 6px; border-radius: 50%; border: 1px solid var(--muted); background: #ffffff; }
 .noise-swatch[data-colour='pink'] { background: #ff8fb8; }
 .field-caption { font-size: var(--text-md); color: var(--muted); }
 .segmented {
@@ -595,6 +591,18 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 }
 /* The Oscillator tabs start where the controls do. */
 .tab-list { padding-left: calc(var(--label-col) + var(--label-gap)); }
+/* Four tabs need about 340 px: beside the names' column only where that leaves them room, on one line each. */
+.tab-list [role='tab'] { white-space: nowrap; }
+@container (max-width: 460px) {
+  .tab-list { padding-left: 0; }
+}
+@container (max-width: 350px) {
+  .tab-list { gap: 0; }
+  .tab-list [role='tab'] { padding-inline: 7px; letter-spacing: 0.04em; }
+}
+/* The Sub's and the Noise's choices one under another, their captions one width, so the controls line up. */
+.choice-list { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); min-width: 0; }
+.choice-list .field-caption { min-width: 5.5em; }
 .voices-field .segmented-field { gap: var(--label-gap); }
 .voices-field .field-caption {
   flex: 0 0 var(--label-col); font-size: var(--text-sm); font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em;
@@ -606,13 +614,10 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   .block .sub-block:has(.knob) h3 { min-height: 0; }
   .tab-list { padding-left: 0; }
 }
-/* There the Mixer's name column is one line above the faders, in place of the LEVELS line (the Mixer tab names it):
-   the Sub's and the Noise's choices side by side, so the faders lose no more height than the name took. */
+/* There the Mixer's name column goes, as the other names go above their rows: the Mixer tab names the faders. */
 @container (max-width: 299px) {
-  .block .sub-block > .mixer-side { flex: 1 1 100%; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
+  .block .sub-block > .mixer-side { display: none; }
   .mixer-side ~ .knobs { --mixer-share: calc((100cqw - 4 * var(--knob-gap)) / 5); }
-  .mixer-side > .tip-anchor:first-child { display: none; }
-  .source-choice { flex-direction: row; align-items: center; gap: 4px; }
 }
 /* The Voices name beside its numbers only where Glide still fits after them (issue 86, the owner: "Glide should always
    be on right side of voices number"): the name, the numbers and Glide need about 310 px with a laptop's knobs, more

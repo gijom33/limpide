@@ -74,7 +74,7 @@ export const TIPS = {
   },
   sub: {
     title: 'Sub-oscillator',
-    body: 'A square or sine an octave below Osc 1 (or two), for weight; its octave and shape are beside the faders. The sound now repeats at the Sub’s pitch, so the Harmonics are counted from it: an octave down, a square Sub fills the odd ones and Osc 1 the even ones.',
+    body: 'A square or sine an octave below Osc 1 (or two), for weight; its octave and shape are on the Sub & Noise tab, its level on the Mixer. The sound now repeats at the Sub’s pitch, so the Harmonics are counted from it: an octave down, a square Sub fills the odd ones and Osc 1 the even ones.',
     how: 'Turn it up on Hollow Square or Init and watch every other rung of the Harmonic ladder fill in.',
   },
   subOptions: {
@@ -203,6 +203,10 @@ export const TIPS = {
     title: 'Ring',
     body: 'Osc 1 multiplied by Osc 2, whatever their own faders: in place of the two pitches you hear their sum and their difference, for bells, gongs and metallic clangs. Detune or Semitone on Osc 2 changes which.',
     how: 'Pick Sine on both, Ring up and the others down, Osc 2 a fifth up: the Spectrum shows two spikes, neither at the Note.',
+  },
+  subNoise: {
+    title: 'Sub & Noise',
+    body: 'The Sub’s octave and shape, and the Noise’s colour. How loud each is, is set on the Mixer.',
   },
   noiseColour: {
     title: 'Noise colour',
