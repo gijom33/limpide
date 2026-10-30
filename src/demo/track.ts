@@ -44,6 +44,8 @@ const arpeggio = (chord: string) => {
 };
 /** One bar of the wobble bass: the root held, struck again, then the octave to close the bar. */
 const wobbleBar = (root: string, octave: string) => `${root}:1.5@1 ${root}:.5 ${root}:.75 ${root}:.75 ${octave}:.5@1`;
+/** One bar of an eighth-note bass bouncing between the root and its octave, the beats accented. */
+const bounceBar = (root: string, octave: string) => times(`${root}:.5@1 ${octave}:.5@.6`, 4);
 /** Five stabs across the bar, pushed off the beat. */
 const pushedStabs = (chord: string) => `${chord}:.5@1 -:.25 ${chord}:.5 -:.25 ${chord}:.5@1 -:.5 ${chord}:.5 -:.25 ${chord}:.5@1 -:.25`;
 /** One bar of electric-piano comping: the chord struck three times, the second softer, across the bar. */
@@ -92,28 +94,40 @@ export const TRACK: Track = {
     // faster and faster; then a beat of silence.
     { preset: 'Self-Oscillation', caption: 'No Oscillator at all: the Filter sings on its own as it sweeps from low to high.', phrase: 'A2:7@1 -:1',
       moves: [{ id: 'cutoff', from: 300, to: 12000, end: 7 }, { id: 'lfoAmount', from: 0, to: 0.3, end: 7 }, { id: 'lfoRate', from: SYNC.quarter, to: SYNC.thirtySecond, end: 7 }] },
-    // The drop: a wobble bass, its LFO restarted by every Note and set to the beat: eighths, quickening to sixteenths
-    // at the end of each four bars. Its Depth grows from a gentle sway, on a milder Resonance than the Preset's.
+    // The drop: a wobble bass, its LFO restarted by every Note and set to the beat: quarters, quickening to eighths at
+    // the end of each four bars, no faster (the owner, 2026-10-29: it sounded bad at high rates). Its Depth grows from a
+    // gentle sway, on a milder Resonance than the Preset's.
     { preset: 'Wobble', caption: 'A slow wave opens and closes the Filter in time with the beat: the wobble.', phrase: times([wobbleBar('A1', 'A2'), wobbleBar('F1', 'F2'), wobbleBar('C2', 'C3'), wobbleBar('G1', 'G2')].join(' '), 2),
       moves: [
-        ...rateByBar([[0, SYNC.eighth], [3, SYNC.sixteenth], [4, SYNC.eighth], [7, SYNC.sixteenth]]),
+        ...rateByBar([[0, SYNC.quarter], [3, SYNC.eighth], [4, SYNC.quarter], [7, SYNC.eighth]]),
         { id: 'lfoAmount', from: 0.3, to: 0.5 },
         { id: 'resonance', to: 0.45, start: 0, end: 0 },
       ] },
     // The drop's second half (the owner, 2026-10-28): LFO 2 joins LFO 1 on the Cutoff. LFO 1 wobbles on the quarter,
-    // LFO 2 flutters on the sixteenth, then the thirty-second at the end of each four bars, its Depth growing.
+    // LFO 2 flutters on the eighth, then the sixteenth at the end of each four bars (no thirty-seconds, the owner,
+    // 2026-10-29), its Depth growing.
     { preset: 'Double Wobble', caption: 'The wobble doubled: LFO 2 joins LFO 1 on the Cutoff, a fast flutter riding the slow sweep. One blue ring spans both.',
       phrase: times([wobbleBar('A1', 'A2'), wobbleBar('F1', 'F2'), wobbleBar('C2', 'C3'), wobbleBar('G1', 'G2')].join(' '), 2),
       moves: [
         { id: 'lfoRate', to: SYNC.quarter, start: 0, end: 0 },
-        ...[[0, SYNC.sixteenth], [3, SYNC.thirtySecond], [4, SYNC.sixteenth], [7, SYNC.thirtySecond]].map(([bar, hz]): KnobMove => ({ id: 'lfo2Rate', to: hz, start: bar * 4, end: bar * 4 })),
+        ...[[0, SYNC.eighth], [3, SYNC.sixteenth], [4, SYNC.eighth], [7, SYNC.sixteenth]].map(([bar, hz]): KnobMove => ({ id: 'lfo2Rate', to: hz, start: bar * 4, end: bar * 4 })),
         { id: 'lfo2Amount', from: 0.1, to: 0.35 },
       ] },
+    // The drop's last eight bars (the owner, 2026-10-29: the new Oscillator features in the Demo): an FM bass bouncing
+    // between root and octave, its FM growing so the sidebands spread up the Spectrum.
+    { preset: 'FM Bass', caption: 'FM: Osc 2 swings Osc 1’s pitch hundreds of times a second. As FM grows, sidebands spread up the Spectrum and the bass gets its bite.',
+      phrase: times([bounceBar('A1', 'A2'), bounceBar('F1', 'F2'), bounceBar('C2', 'C3'), bounceBar('G1', 'G2')].join(' '), 2),
+      moves: [{ id: 'crossMod', from: 0.12, to: 0.4 }] },
     // The break (issue 60): held chords on a pad whose Filter Envelope takes seconds to open, so the Effective Cutoff
     // climbs across the Timeline under each chord.
     { preset: 'Sweep Pad', caption: 'A pad whose Filter opens over seconds: watch the Cutoff climb across the Timeline under each chord.',
       phrase: 'A2+E3+A3+C4:8 F2+C3+F3+A3:8',
       moves: [{ id: 'resonance', from: 0.5, to: 0.65 }] },
+    // The break's second half: the chords go on as an organ three octaves wide (Osc 1 an octave up, the Sub two
+    // octaves under it), the Sub swelling in.
+    { preset: 'Cathedral', caption: 'Three octaves at once: Osc 1 an octave up, Osc 2 on the Note, and the Sub two octaves below Osc 1 swelling in. Three families of Harmonics in the Spectrum.',
+      phrase: 'C3+G3+C4+E4:8 G2+D3+G3+B3:8',
+      moves: [{ id: 'mixSub', from: 0.2, to: 0.9 }] },
     // A melody over the chords (the owner, 2026-10-28): one Voice, so each Note glides from the last, with LFO 2's
     // vibrato restarting on every Note and LFO 1 breathing the Cutoff. The Glide lengthens and the vibrato deepens.
     { preset: 'Singing Lead', caption: 'A lead that slides from Note to Note (Glide) and sings with vibrato (LFO 2 on Pitch), while LFO 1 breathes the Filter. Watch the piano’s dot slide and shake.',
@@ -122,6 +136,10 @@ export const TRACK: Track = {
         'C5:.5 E5:.5 A5:3', 'G5:.5 F5:.5 E5:1 C5:2', 'E5:1.5 D5:.5 C5:1 G4:1', 'B4:3 -:1',
       ].join(' '),
       moves: [{ id: 'glide', from: 0.06, to: 0.18 }, { id: 'lfo2Amount', from: 0.2, to: 0.4 }] },
+    // Bells over the chords: an FM bell rings out each chord's Notes, FM growing until they clang like struck metal.
+    { preset: 'FM Bell', caption: 'An FM bell: a sine swung by another 3.56 times higher. As FM grows, the partials spread and the bells turn to clanging metal.',
+      phrase: 'A4:1@.9 C5:1@.6 E5:1@.8 A5:1@.7 F4:1@.9 A4:1@.6 C5:1@.8 F5:1@.7 E4:1@.9 G4:1@.6 C5:1@.8 E5:1@.7 D4:1@.9 G4:1@.6 B4:1@.8 D5:1@.7',
+      moves: [{ id: 'crossMod', from: 0.15, to: 0.5 }] },
     // The hook again (issue 60), brighter: the Cutoff opens wide and the Pulse Width comes back to square, so the
     // Filter Spectrum fills up to the top and the even Harmonics fall away again.
     { preset: 'Poly Pluck', caption: 'The hook again, brighter: the Filter opens wide and the Spectrum fills to the top.', phrase: times(['A3 C4 E4 A4', 'A3 C4 F4 A4', 'G3 C4 E4 G4', 'G3 B3 D4 G4'].map(arpeggio).join(' '), 2),

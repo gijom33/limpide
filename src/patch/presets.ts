@@ -75,8 +75,14 @@ group('Intervals', [
   ['Ring Bell', 'Two sines through Ring alone, Osc 2 an octave and a minor third up: neither pitch sounds, only their sum and difference, an out-of-tune pair that rings like a bell.', {
     waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, osc2Semitone: 3, mixOsc1: 0, mixRing: 1, ...OPEN, ampSustain: 0, ampDecay: 1.8, ampRelease: 1.8,
   }],
-  ['FM Sidebands', 'Osc 2, a sine an octave up and silent, swings Osc 1’s pitch: sidebands grow beside the Ideal’s circles, which mark plain Osc 1. Turn FM to move them.', {
+  ['FM Sidebands', 'Osc 2, a sine an octave up and silent, swings Osc 1’s pitch: sidebands grow either side of the Harmonic, and the Ideal’s circles follow them. Turn FM to spread them.', {
     waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, crossMod: 0.3, ...OPEN,
+  }],
+  ['Ring Octave', 'A square times a square an octave up, through Ring alone: the product is a square again, at the Note’s pitch. The Ideal’s diamonds sit on its odd Harmonics only.', {
+    waveform: 'square', osc2Waveform: 'square', osc2Octave: 1, mixOsc1: 0, mixRing: 1, ...OPEN,
+  }],
+  ['FM Ladder', 'Two sines on the same Note, Osc 2 silent but swinging Osc 1 hard (FM): one Harmonic becomes a whole ladder of them, a buzz grown from pure tones. Turn FM down and watch the rungs fold away.', {
+    waveform: 'sine', osc2Waveform: 'sine', crossMod: 0.5, ...OPEN,
   }],
 ]);
 
@@ -216,6 +222,15 @@ group('Bass', [
     osc1Octave: -1, osc2Waveform: 'square', osc2Detune: 7, mixOsc2: 0.5,
     filterSlope: 24, cutoff: 500, resonance: 0.3, filterEnvAmount: 2, filterAttack: 0.002, filterDecay: 0.2, filterSustain: 0.1, ampSustain: 1, ampRelease: 0.15,
   }],
+  ['FM Bass', 'A sine swung by a sine on the same Note (FM), over a sine Sub. The Filter Envelope throws Osc 2 an octave up at each strike (Env Amount), so the sidebands jump wide and settle back: a rubbery, punchy attack.', {
+    waveform: 'sine', osc2Waveform: 'sine', crossMod: 0.35, osc2EnvAmount: 12, mixSub: 0.6, subWaveform: 'sine',
+    filterSlope: 24, cutoff: 1800, resonance: 0.15, filterEnvAmount: 1.5, filterAttack: 0.001, filterDecay: 0.18, filterSustain: 0,
+    ampAttack: 0.002, ampDecay: 0.6, ampSustain: 0.6, ampRelease: 0.15,
+  }],
+  ['808 Boom', 'Osc 2 alone, a sine the Filter Envelope throws two octaves up and drops in a flash (Env Amount), over a long sine Sub: the click and dive of an 808 kick, then its boom. Watch the spike fall in the Spectrum.', {
+    waveform: 'sine', mixOsc1: 0, osc2Waveform: 'sine', mixOsc2: 0.8, osc2EnvAmount: 24, mixSub: 1, subWaveform: 'sine',
+    cutoff: 20000, resonance: 0, filterAttack: 0.001, filterDecay: 0.06, filterSustain: 0, ampAttack: 0.001, ampDecay: 1.2, ampSustain: 0, ampRelease: 0.3,
+  }],
 ]);
 
 group('Leads', [
@@ -251,6 +266,14 @@ group('Leads', [
   ['Poly Mod Zap', 'The Filter Envelope throws Osc 2 two octaves up and lets it fall as it opens the Filter, while Osc 2 swings Osc 1 (FM): each Note starts with a laser zap.', {
     osc2EnvAmount: 24, mixOsc2: 0.5, crossMod: 0.15,
     cutoff: 1200, resonance: 0.35, filterEnvAmount: 2, filterAttack: 0.002, filterDecay: 0.25, filterSustain: 0, ampSustain: 0.8,
+  }],
+  ['Ring Lead', 'A saw with Ring on top, Osc 2 a sine an octave and a tritone up: the Note stays clear while metallic partials ring around it, and LFO 2’s vibrato makes them shimmer. Diamonds mark them beside the circles.', {
+    mixOsc1: 0.6, osc2Waveform: 'sine', osc2Octave: 1, osc2Semitone: 6, osc2Detune: 3, mixRing: 0.6,
+    cutoff: 4000, resonance: 0.2, keyTrack: 0.5, glide: 0.05, lfo2Destination: 'pitch', lfo2Rate: 5.5, lfo2Amount: 0.12, ampSustain: 0.9, ampRelease: 0.3,
+  }],
+  ['Ring Sweep', 'A saw times a saw that the Filter Envelope throws an octave and a fifth up and slides back over half a second (Env Amount): Ring’s partials sweep down into place on every Note, a tearing, sync-like scream.', {
+    mixOsc1: 0.4, osc2EnvAmount: 19, mixRing: 0.8, cutoff: 3500, resonance: 0.3,
+    filterAttack: 0.001, filterDecay: 0.5, filterSustain: 0, ampSustain: 0.9, ampRelease: 0.25,
   }],
 ]);
 
@@ -292,6 +315,14 @@ group('Keys & Plucks', [
     waveform: 'square', osc2Detune: 6, mixOsc2: 0.8, cutoff: 900, resonance: 0.2, filterEnvAmount: 3, filterAttack: 0.001, filterDecay: 0.25, filterSustain: 0,
     ampAttack: 0.001, ampDecay: 0.6, ampSustain: 0, ampRelease: 0.4, lfo2Destination: 'detune', lfo2Rate: 0.4, lfo2Amount: 0.35,
   }],
+  ['FM Bell', 'A sine swung by another 3.56 times higher (FM): partials that are not Harmonics, so it rings like struck metal, on eight Voices. The Filter Envelope makes each strike bright, then mellow; the Ideal’s circles follow every sideband.', {
+    voices: 8, waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, osc2Semitone: 10, crossMod: 0.3, cutoff: 2500, keyTrack: 0.6, velocityCutoff: 0.4,
+    filterEnvAmount: 2, filterAttack: 0.001, filterDecay: 0.5, filterSustain: 0.2, ampAttack: 0.002, ampDecay: 3, ampSustain: 0, ampRelease: 1.5,
+  }],
+  ['Kalimba', 'A short sine with a little FM from a sine two octaves up: a quick metallic tine, then a round tone, on eight Voices. The sidebands sit far apart, every fourth Harmonic.', {
+    voices: 8, waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 2, crossMod: 0.12, cutoff: 3000, keyTrack: 0.5,
+    filterEnvAmount: 1.5, filterAttack: 0.001, filterDecay: 0.12, filterSustain: 0, ampAttack: 0.001, ampDecay: 0.7, ampSustain: 0, ampRelease: 0.4,
+  }],
 ]);
 
 // Pianos: a strike that darkens as it decays, harder for a harder hit, on eight Voices so held Notes ring on.
@@ -314,6 +345,10 @@ group('Pianos', [
   ['Toy Piano', 'A sine with a square two octaves up, short and tinny: the metal tines of a toy, on eight Voices.', {
     voices: 8, waveform: 'sine', osc2Waveform: 'square', osc2Octave: 2, mixOsc2: 0.3, cutoff: 5000, resonance: 0, keyTrack: 0.8,
     ampAttack: 0.001, ampDecay: 0.8, ampSustain: 0, ampRelease: 0.3,
+  }],
+  ['Tine Piano', 'An FM electric piano: a sine swung by a sine on the same Note. Velocity opens the Filter, so a soft Note is a mellow tine and a hard one barks.', {
+    voices: 8, waveform: 'sine', osc2Waveform: 'sine', crossMod: 0.22, cutoff: 1200, velocityCutoff: 0.8, keyTrack: 0.5,
+    filterEnvAmount: 2.5, filterAttack: 0.001, filterDecay: 0.35, filterSustain: 0.15, ampAttack: 0.002, ampDecay: 2.5, ampSustain: 0.1, ampRelease: 0.6,
   }],
 ]);
 
@@ -363,6 +398,19 @@ group('Pads', [
   ['Trance Gate', 'A held chord chopped by a Square LFO on Volume at full Depth: on, off, on, off, sixteen times a bar, the gated pad of trance.', {
     voices: 8, osc2Detune: 9, mixOsc2: 0.9, cutoff: 1800, resonance: 0.2, ampAttack: 0.01, ampSustain: 1, ampRelease: 0.3,
     lfoWaveform: 'square', lfoDestination: 'volume', lfoRate: 8, lfoAmount: 1, lfoRetrigger: 'note',
+  }],
+  ['Cathedral', 'Three octaves at once: Osc 1 a square an octave up, Osc 2 a sine on the Note, the Sub a sine two octaves under Osc 1. A slow organ on eight Voices, its Harmonics in three clean families.', {
+    voices: 8, waveform: 'square', osc1Octave: 1, mixOsc1: 0.35, osc2Waveform: 'sine', mixOsc2: 0.8, mixSub: 0.8, subOctave: -2, subWaveform: 'sine',
+    cutoff: 3500, resonance: 0.1, ampAttack: 0.4, ampSustain: 1, ampRelease: 2,
+  }],
+  ['Glass Pad', 'A triangle with Ring against a sine an octave and a major third above, swelling slowly: glassy partials between the Harmonics, and LFO 2 drifting Osc 2 so they shimmer. Watch the diamonds between the circles.', {
+    voices: 6, waveform: 'triangle', osc2Waveform: 'sine', osc2Octave: 1, osc2Semitone: 4, osc2Detune: 7, mixOsc1: 0.6, mixRing: 0.7, cutoff: 6000, resonance: 0.1,
+    ampAttack: 1.2, ampSustain: 0.9, ampRelease: 2.5, lfo2Destination: 'detune', lfo2Rate: 0.3, lfo2Amount: 0.5,
+  }],
+  ['Deep Space', 'Pink Noise, a sine Sub two octaves down and Ring between two sines a tritone apart, under a Filter that breathes: a dark, slowly turning drone for chords.', {
+    voices: 4, waveform: 'sine', osc2Waveform: 'sine', osc2Semitone: 6, osc2Detune: 11, mixOsc1: 0.3, mixRing: 0.5, mixSub: 0.7, subOctave: -2, subWaveform: 'sine',
+    mixNoise: 0.25, noiseColour: 'pink', cutoff: 1500, resonance: 0.4, lfoDestination: 'cutoff', lfoRate: 0.07, lfoAmount: 0.5,
+    lfo2Destination: 'osc2Pitch', lfo2Rate: 0.05, lfo2Amount: 0.1, ampAttack: 2, ampSustain: 1, ampRelease: 4,
   }],
 ]);
 
@@ -437,6 +485,19 @@ group('Drums', [
     waveform: 'square', osc2Waveform: 'square', osc2Semitone: 7, mixOsc2: 0.8, filterMode: 'bandpass', cutoff: 800, resonance: 0.6,
     ampAttack: 0.001, ampDecay: 0.3, ampSustain: 0, ampRelease: 0.15,
   }],
+  ['Clang', 'Two squares a tritone apart through Ring and a high-pass, cut short: the clank of struck metal, its partials nowhere near a ladder.', {
+    waveform: 'square', osc2Waveform: 'square', osc2Semitone: 6, osc2Detune: 9, mixOsc1: 0, mixRing: 1, filterMode: 'highpass', cutoff: 600, resonance: 0.2,
+    ampAttack: 0.001, ampDecay: 0.35, ampSustain: 0, ampRelease: 0.15,
+  }],
+  ['Zap Tom', 'Osc 2, a sine the Filter Envelope throws an octave up and drops at once (Env Amount), with a breath of Pink Noise: a tom that falls in pitch as it sounds.', {
+    mixOsc1: 0, osc2Waveform: 'sine', mixOsc2: 1, osc2EnvAmount: 12, mixNoise: 0.2, noiseColour: 'pink', cutoff: 4000, resonance: 0,
+    filterAttack: 0.001, filterDecay: 0.15, filterSustain: 0, ampAttack: 0.001, ampDecay: 0.4, ampSustain: 0, ampRelease: 0.2,
+  }],
+  ['Gong', 'Two sines an octave and a tritone apart through Ring, a wash of Pink Noise and a six-second fade: a gong, its partials shimmering as LFO 2 drifts Osc 2.', {
+    waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, osc2Semitone: 6, osc2Detune: 13, mixOsc1: 0.25, mixRing: 0.8, mixNoise: 0.12, noiseColour: 'pink',
+    cutoff: 5000, resonance: 0.1, filterEnvAmount: 1.5, filterAttack: 0.002, filterDecay: 1.5, filterSustain: 0.3,
+    ampAttack: 0.002, ampDecay: 6, ampSustain: 0, ampRelease: 4, lfo2Destination: 'osc2Pitch', lfo2Rate: 0.4, lfo2Amount: 0.02,
+  }],
 ]);
 
 group('Movement & Effects', [
@@ -477,6 +538,13 @@ group('Movement & Effects', [
   ['Pink Surf', 'Pink Noise alone, a slow LFO sweeping the Filter: waves rolling in. Switch the Noise to White and hear the hiss come back, and the Spectrum’s floor level out.', {
     mixOsc1: 0, mixNoise: 1, noiseColour: 'pink', cutoff: 1200, resonance: 0.2,
     lfoDestination: 'cutoff', lfoRate: 0.12, lfoAmount: 0.6, ampAttack: 1.5, ampSustain: 1, ampRelease: 2.5,
+  }],
+  ['FM Sweep', 'LFO 1 slides Osc 2’s pitch slowly up and down while it swings Osc 1 (FM): the sidebands fan out, fold back and pass through each other. The Ideal’s circles mark where they sit with the LFO at rest.', {
+    waveform: 'sine', osc2Waveform: 'sine', crossMod: 0.4, ...OPEN, lfoDestination: 'osc2Pitch', lfoRate: 0.15, lfoAmount: 0.5, ampRelease: 1,
+  }],
+  ['Robot', 'A saw times a low sine (Ring), Osc 2 an octave and a minor third below the Note, through a band-pass the LFO rocks: a buzzing, metallic voice, like a robot talking.', {
+    osc2Waveform: 'sine', osc2Octave: -1, osc2Semitone: -3, mixOsc1: 0, mixRing: 1, filterMode: 'bandpass', cutoff: 1500, resonance: 0.25,
+    lfoDestination: 'cutoff', lfoRate: 3, lfoAmount: 0.3, ampSustain: 1,
   }],
   ['Out of Tune', 'Osc 2 a full 50 cents off: a sour quarter-tone, beating so fast it sounds like two different Notes.', {
     osc2Detune: 50, mixOsc2: 1, cutoff: 5000, resonance: 0, ampSustain: 1,

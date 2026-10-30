@@ -17,10 +17,10 @@ function oneAtATime(phrase: string) {
 }
 
 describe('the Demo track', () => {
-  it('is about two and a half minutes of music (issue 60, then the owner, 2026-10-28), every part whole bars, so each Preset lands on a bar line', () => {
+  it('is about three minutes of music (issue 60, the owner on 2026-10-28, then the new Oscillator parts), every part whole bars, so each Preset lands on a bar line', () => {
     const seconds = TRACK.parts.reduce((s, part) => s + phraseLength(part.phrase, TRACK.bpm), 0);
-    expect(seconds).toBeGreaterThanOrEqual(140);
-    expect(seconds).toBeLessThanOrEqual(160);
+    expect(seconds).toBeGreaterThanOrEqual(165);
+    expect(seconds).toBeLessThanOrEqual(180);
     for (const part of TRACK.parts) expect(Number.isInteger(bars(part.phrase)), `${part.preset}: ${bars(part.phrase)} bars`).toBe(true);
   });
 
@@ -81,7 +81,8 @@ describe('issue 60', () => {
 describe('the owner, 2026-10-28', () => {
   it('doubles the wobble with both LFOs on the Cutoff, and plays a lead with Glide and vibrato after the break', () => {
     expect(TRACK.parts.map((p) => p.preset)).toEqual([
-      'Kick', 'Acid', 'Poly Pluck', 'Strings', 'Tremolo Keys', 'Self-Oscillation', 'Wobble', 'Double Wobble', 'Sweep Pad', 'Singing Lead', 'Poly Pluck', 'Brass Section',
+      'Kick', 'Acid', 'Poly Pluck', 'Strings', 'Tremolo Keys', 'Self-Oscillation', 'Wobble', 'Double Wobble', 'FM Bass', 'Sweep Pad', 'Cathedral',
+      'Singing Lead', 'FM Bell', 'Poly Pluck', 'Brass Section',
     ]);
     const double = preset('Double Wobble')!.patch;
     expect([double.lfoAmount > 0, double.lfo2Amount > 0, double.lfoDestination, double.lfo2Destination]).toEqual([true, true, 'cutoff', 'cutoff']);
@@ -92,3 +93,19 @@ describe('the owner, 2026-10-28', () => {
   });
 });
 
+describe('the owner, 2026-10-29: the new Oscillator features in the Demo', () => {
+  it('plays FM, the Sub two octaves down and FM again, each turning its own new knob', () => {
+    const part = (name: string) => TRACK.parts.find((p) => p.preset === name)!;
+    expect(part('FM Bass').moves!.map((m) => m.id)).toContain('crossMod');
+    expect(part('Cathedral').moves!.map((m) => m.id)).toContain('mixSub');
+    expect(preset('Cathedral')!.patch.subOctave).toBe(-2);
+    expect(part('FM Bell').moves!.map((m) => m.id)).toContain('crossMod');
+  });
+
+  it('keeps every LFO at an eighth or slower on the wobble, a sixteenth on its flutter (the owner, 2026-10-29)', () => {
+    const fastest = (name: string, id: 'lfoRate' | 'lfo2Rate') =>
+      Math.max(...TRACK.parts.filter((p) => p.preset === name).flatMap((p) => p.moves!.filter((m) => m.id === id).map((m) => m.to)));
+    expect(fastest('Wobble', 'lfoRate')).toBeLessThanOrEqual((TRACK.bpm / 60) * 2);
+    expect(fastest('Double Wobble', 'lfo2Rate')).toBeLessThanOrEqual((TRACK.bpm / 60) * 4);
+  });
+});
