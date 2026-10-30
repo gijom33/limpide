@@ -12,7 +12,7 @@
 
 **Blocked by:** none
 
-**Status:** needs-triage · enhancement. Questions and two owner-only steps below.
+**Status:** ready-for-agent · enhancement. The owner accepted the answers (decisions below); SECURITY.md waits on the owner's step 2.
 
 ## For the owner alone
 
@@ -25,3 +25,34 @@
 2. **DCO sign-off for contributors** (`git commit -s`)? Claude's recommendation: no for now. It adds a step for a first contributor, and nobody has contributed yet; MIT's terms in CONTRIBUTING already cover what they send.
 3. **AI-assisted contributions:** ask contributors to say so with a `Co-Authored-By` line, as the project does? Claude's recommendation: yes, one sentence in CONTRIBUTING.
 4. **The copyright line:** change it to "© Guillaume Boillet, to the extent of the author's rights; written with Claude Code" and add Limpide's MIT licence to the third-party notices? Claude's recommendation: yes for the notices. For the wording, only a lawyer can say what holds; the reviewer's suggestion is a start, not advice.
+
+## Decisions (triage, 2026-10-30, decided by the owner)
+
+1. Go ahead with the screenshot, one merged README section on how it was built, Release titles as "Limpide 1.16.0" (old ones renamed), a credit line under the tagline, pull requests in their own CI group with deploys never cancelled, and SECURITY.md once private reporting is on.
+2. No DCO sign-off for now.
+3. CONTRIBUTING asks contributors to mark AI help with a `Co-Authored-By` line, in one sentence.
+4. Limpide's MIT licence goes into the third-party notices. The copyright wording waits for a lawyer; nothing changes in it until then.
+
+## Agent Brief
+
+**Category:** enhancement
+**Summary:** The README shows today's app and its author, CI never cancels a deploy, and the community files say how to report and contribute.
+
+**Desired behavior:**
+- **README:** a new screenshot of today's app (the wide layout, the Dark theme); one section on how Limpide was built; under the tagline, one line crediting the author, linked as About links the name.
+- **Releases:** every GitHub Release titled "Limpide X.Y.Z"; the release steps say so.
+- **CI:** pull requests (and branch runs) in a group of their own; the deploy's group never cancels a run in progress.
+- **CONTRIBUTING:** one sentence asking for AI help to be marked with a `Co-Authored-By` line.
+- **Notices:** the third-party notices the build writes end with Limpide's own licence.
+- **SECURITY.md**, once the owner has switched on private reporting: report privately through the repository's Security tab; no email address.
+
+**Acceptance criteria:**
+- [ ] The README's screenshot shows four Oscillator tabs and the header as it is
+- [ ] Every Release's title has the one form
+- [ ] A pull request's run cannot cancel a main deploy (the workflow's groups say so)
+- [ ] The built notices end with the MIT licence
+- [ ] SECURITY.md points to private reporting, which is on
+
+**Out of scope:**
+- The copyright line's wording (a lawyer's)
+- The owner's GitHub profile (the owner's)

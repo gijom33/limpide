@@ -11,7 +11,7 @@ Claude's recommendations for reviews next time, in the inbox's Ideas at the owne
 
 **Blocked by:** none
 
-**Status:** needs-triage · enhancement. Questions for the owner below.
+**Status:** ready-for-agent · enhancement. The owner accepted the four answers (decisions below).
 
 ## Questions for the owner
 
@@ -22,3 +22,30 @@ Claude's recommendations for reviews next time, in the inbox's Ideas at the owne
 2. **Fact-check and ear stand-in before the push:** add them as release steps for any release that adds or changes Preset or tip words? Claude's recommendation: yes.
 3. **"Done at once":** a change that alters an issue's decision, a setting, or a batch of Presets gets an issue number, and the overturned issue a "Since then" line, written into the issue tracker's guide? Claude's recommendation: yes.
 4. **Rules in one place:** the release steps are the one home of the release rules; ADR-0010 gets a superseding ADR for the code review's scope, issues 25 and 42 point to the release steps, and an amended ADR's Status line names its amendment (the Status line being the one part an accepted ADR may change)? Claude's recommendation: yes.
+
+## Decisions (triage, 2026-10-30, decided by the owner)
+
+1. The Linux check: the release commit goes to a branch first; GitHub runs the full suite there without deploying, and main is pushed only once it is green.
+2. For a release that adds or changes Preset or tip words, the fact-check and the ear stand-in run before the push.
+3. A change that alters an issue's decision, a setting, or a batch of Presets gets an issue number, and the overturned issue a "Since then" line; written into the issue tracker's guide.
+4. The release steps are the one home of the release rules: a new ADR supersedes ADR-0010's point on the code review's scope, issues 25 and 42 point to the release steps, and an amended ADR's Status line names its amendment (0006, 0013).
+
+## Agent Brief
+
+**Category:** enhancement
+**Summary:** The release steps catch Linux layout failures and false words before main is pushed, and each process rule lives in one place.
+
+**Desired behavior:**
+- **CI on a branch:** a push to a release branch runs the same build and full suite as main, without deploying; pull requests too. Only main deploys.
+- **Release steps:** before main is pushed, the release commit is pushed to its branch and its CI run is green; for words added or changed in Presets or tips, the fact-check and the ear stand-in have run and their findings are fixed or answered.
+- **The issue tracker's guide** states the "Since then" rule and when a change needs an issue (decision 3).
+- **One home:** the new ADR, the pointers from issues 25 and 42, and the Status lines of ADR-0006 and ADR-0013 naming their amendments (decision 4).
+
+**Acceptance criteria:**
+- [ ] A branch push runs the suite on GitHub and deploys nothing
+- [ ] The release steps read in order: local suite, branch CI green, checks on words, then main
+- [ ] No two documents state the code review's scope differently
+
+**Out of scope:**
+- Bundling a font (not chosen)
+- The CI's concurrency groups ([111](./111-the-repository-front-page-and-community-files.md)), though the two touch the same workflow
