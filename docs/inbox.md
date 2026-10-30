@@ -4,7 +4,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
-- 2026-10-29, the owner: "On a computer with a mouse, sometimes I can change knobs value even after having released the mouse button. This is a bug."
 ## Ideas
 
 - 2026-10-29, the owner, asked what to do with the Timeline's thin flat lines (each moved knob's own setting): "Remove them"
@@ -96,3 +95,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-29, the owner's Ring clicks (triage, decided by the owner): the Oscillators' top Harmonics tapered so their edges stop ringing went to [95](./issues/95-smooth-oscillator-edges.md).
 2026-10-29, the owner's FM ask (triage, decided by the owner): FM's sidebands in the Ideal went to [96](./issues/96-fm-sidebands-in-the-ideal.md).
 2026-10-29, the owner's two Oscillator row asks, done at once, decided by the owner: Osc 1's Pitch row takes a big dial's room, so its name and knobs stand exactly where Osc 2's Tuning (with its big Detune) does, at every width measured (375 to 1920 px); on Sub & Noise, each source's name sits on the line of its first choice (SUB beside Octave) and the Noise has 8 px more room above it.
+2026-10-29, the owner's knob bug, fixed at once: a knob or fader turned only while it heard a button held, and stopped only when it heard the release. A release the page never got (let go outside the window, or taken by the context menu of a right- or Ctrl-click) left it following the mouse. Now a move with no button held ends the drag, losing hold of the pointer ends it, and only the main button (not a right- or Ctrl-click) starts one. Tests in `e2e/knob.spec.ts`, red before the fix.

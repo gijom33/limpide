@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import type { ParamId } from '../patch/patch';
-import { useParamControl, useWheel } from './paramControl';
+import { held, pressed, useParamControl, useWheel } from './paramControl';
 import { Tooltip } from './Tooltip';
 import { PARAM_TIPS } from './tips';
 
@@ -41,6 +41,7 @@ export function Fader({ id, value, onChange, inactive }: Props) {
           className="fader"
           style={{ '--position': c.position } as React.CSSProperties}
           onPointerDown={(e) => {
+            if (!pressed(e)) return;
             const onCap = e.target === cap.current;
             if (onCap) c.grab(e, cap.current!);
             press.current = { y: e.clientY, position: c.position, onCap, moved: false };
@@ -48,6 +49,12 @@ export function Fader({ id, value, onChange, inactive }: Props) {
           onPointerMove={(e) => {
             const p = press.current;
             if (!p) return;
+            if (!held(e)) {
+              // The button was let go where the page never heard it: the press is over.
+              press.current = null;
+              c.release();
+              return;
+            }
             if (Math.abs(e.clientY - p.y) > TAP_SLOP) p.moved = true;
             if (p.onCap) {
               const track = e.currentTarget;
@@ -66,6 +73,10 @@ export function Fader({ id, value, onChange, inactive }: Props) {
             }
           }}
           onPointerCancel={() => {
+            press.current = null;
+            c.release();
+          }}
+          onLostPointerCapture={() => {
             press.current = null;
             c.release();
           }}

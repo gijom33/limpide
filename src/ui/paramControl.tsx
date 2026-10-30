@@ -101,6 +101,15 @@ export function useParamControl(id: ParamId, value: number, onChange: (value: nu
   return { def, position, setPosition, slider, grab, focusByPointer, release, attributes, text };
 }
 
+/**
+ * A press that may turn a control: the main button only, so a right- or Ctrl-click (whose context menu takes the
+ * release) never starts a drag that outlives it (the owner's bug).
+ */
+export const pressed = (e: React.PointerEvent) => e.button === 0 && !(e.pointerType === 'mouse' && e.ctrlKey);
+
+/** Whether the press is still on: a move with no button held means its release never reached the page. */
+export const held = (e: React.PointerEvent) => (e.buttons & 1) === 1;
+
 /** True for a moment after `value` changes, however it was changed (hand, keys, MIDI, the Demo, a Patch). */
 function useChanging(value: number): boolean {
   const [changing, setChanging] = useState(false);

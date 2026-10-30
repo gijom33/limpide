@@ -259,3 +259,39 @@ test.describe('on the 2 × 2 layout', () => {
   });
 });
 
+
+// The owner's bug: a knob kept turning after the mouse button was let go. The release never reached the page (let go
+// outside the window, or taken by the context menu of a right- or Ctrl-click), so the knob kept following the mouse.
+for (const name of ['Cutoff', 'Osc 1'] as const) {
+  test(`${name} stops following the mouse once no button is held, even when the release never arrived`, async ({ page }) => {
+    await page.goto('/');
+    if (name === 'Osc 1') await page.getByRole('tab', { name: 'Mixer' }).click();
+    const control = page.getByRole('slider', { name, exact: true });
+    const before = await control.getAttribute('aria-valuenow');
+    const box = (await control.boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    // The button is up again, but no release came: the next moves say so, with no button held.
+    await control.evaluate((el, y) => {
+      const target = el.closest('.fader') ?? el;
+      const r = el.getBoundingClientRect();
+      for (const dy of [10, 40, 80]) {
+        target.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, pointerId: 1, pointerType: 'mouse', buttons: 0, clientX: r.x + r.width / 2, clientY: y + dy }));
+      }
+    }, box.y + box.height / 2);
+    expect(await control.getAttribute('aria-valuenow')).toBe(before);
+    await page.mouse.up();
+  });
+}
+
+test('a right-click on a knob turns nothing, so its context menu cannot leave a drag behind', async ({ page }) => {
+  await page.goto('/');
+  const cutoff = page.getByRole('slider', { name: 'Cutoff' });
+  const before = await cutoff.getAttribute('aria-valuenow');
+  const box = (await cutoff.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down({ button: 'right' });
+  await page.mouse.move(box.x + box.width / 2, box.y - 60, { steps: 6 });
+  await page.mouse.up({ button: 'right' });
+  expect(await cutoff.getAttribute('aria-valuenow')).toBe(before);
+});

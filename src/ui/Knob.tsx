@@ -3,7 +3,7 @@ import { MODULATED } from '../modulation/destinations';
 import { PARAMS, type ParamId } from '../patch/patch';
 import { valueToPosition } from '../patch/taper';
 import { ModulationRing } from './modulationRing';
-import { useParamControl, useWheel } from './paramControl';
+import { held, pressed, useParamControl, useWheel } from './paramControl';
 import { Tooltip } from './Tooltip';
 import { PARAM_TIPS } from './tips';
 
@@ -70,12 +70,19 @@ export function Knob({ id, value, onChange, inactive }: Props) {
           viewBox={`0 0 ${g.size} ${g.size}`}
           {...c.slider}
           onPointerDown={(e) => {
+            if (!pressed(e)) return;
             c.grab(e, e.currentTarget);
             drag.current = { x: e.clientX, y: e.clientY, position: c.position, moved: false };
           }}
           onPointerMove={(e) => {
             const d = drag.current;
             if (!d) return;
+            if (!held(e)) {
+              // The button was let go where the page never heard it: the drag is over.
+              drag.current = null;
+              c.release();
+              return;
+            }
             if (Math.abs(e.clientX - d.x) + Math.abs(e.clientY - d.y) > CLICK_SLOP) d.moved = true;
             const scale = e.shiftKey ? 0.1 : 1;
             c.setPosition(d.position + ((d.y - e.clientY) / DRAG_PIXELS_FOR_FULL_TRAVEL) * scale);
@@ -94,6 +101,10 @@ export function Knob({ id, value, onChange, inactive }: Props) {
             }
           }}
           onPointerCancel={() => {
+            drag.current = null;
+            c.release();
+          }}
+          onLostPointerCapture={() => {
             drag.current = null;
             c.release();
           }}
