@@ -6,7 +6,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
-- 2026-10-29, the owner: "Why doesn't the FM mode show more ideal marks?"; told the Ideal keeps plain Osc 1 under FM (issue 89), and how the sidebands could be drawn: "Draw FM sidebands"
 - 2026-10-29, the owner, asked what to do with the Timeline's thin flat lines (each moved knob's own setting): "Remove them"
 
 ## Dropped
@@ -94,3 +93,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-29, the owner's sounding dots, done at once, decided by the owner: the Osc 1 tab shows a dot while Osc 1 is heard (its fader or Ring up), the Sub & Noise tab while the Sub's or the Noise's fader is up, as Osc 2's does. Each dot's room is kept while it is off, so the tabs never move; on the narrowest stages (a 2 × 2 stage at 620 px, a laptop's at 900) the tabs sit tighter to keep all four on one line. Test in `e2e/oscTabs.spec.ts`.
 2026-10-29, the owner's ask, done at once, decided by the owner: FM counts towards Osc 2 being heard only while Osc 1 is heard (its fader or Ring up), so FM on a silent Osc 1 lights no dot on Osc 2's tab. Osc 2's Pulse Width and Tuning knobs grey out with the dot, as before, and the Osc 2 fader's tip says so. Test in `e2e/voices.spec.ts`.
 2026-10-29, the owner's Ring clicks (triage, decided by the owner): the Oscillators' top Harmonics tapered so their edges stop ringing went to [95](./issues/95-smooth-oscillator-edges.md).
+2026-10-29, the owner's FM ask (triage, decided by the owner): FM's sidebands in the Ideal went to [96](./issues/96-fm-sidebands-in-the-ideal.md).
