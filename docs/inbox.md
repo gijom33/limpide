@@ -4,8 +4,12 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-10-29, the owner: "In demo song, Double Wobble also sounds bad at high frequency LFO"
+- 2026-10-29, the owner, on the Demo's card: "The position of the dots should not vary with the name of the preset."
 ## Ideas
 
+- 2026-10-29, the owner, on the header between 861 and 1919 px: "Having the preset picker below the logo is very bad. Fix it. Feel free to move the demo, tutorial and song buttons to right side of keyboard. Feel free to put the 4 buttons on right also on two rows if the place is needed."
+- 2026-10-29, the owner, on the first version of that header (Demo, Tutorial and Song over Hold, MIDI, Display and About): "Swap the two rows"
 ## Dropped
 
 - 2026-10-29, the owner's idea, a double-click bringing the Osc 1 fader to zero: withdrawn by the owner ("that was a bad idea indeed") once told that a double-click resets every knob and fader to its default, Osc 1's being 100 %. See [`.out-of-scope/double-click-to-zero.md`](../.out-of-scope/double-click-to-zero.md).
