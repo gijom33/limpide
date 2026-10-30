@@ -12,7 +12,7 @@ export interface TransportHost {
   noteOn(note: number, velocity: number, at: number): void;
   /** The Voice playing `note` releases; on one Voice, the Gate closes if `note` is the one sounding. */
   release(note: number, at: number): void;
-  /** Every Voice releases: for stopping. */
+  /** Every Voice releases at `at`, a Note handed over for later included: for stopping. */
   noteOff(at: number): void;
   /** The Notes sounding right now, whenever that changes: left out where the piano lights its own keys (Hold). */
   onNotes?(notes: number[]): void;
@@ -76,8 +76,7 @@ export function startTransport(host: TransportHost, source: Source, { lookahead,
   return () => {
     clearTimeout(timer);
     const now = host.now();
-    host.noteOff(now);
-    host.noteOff(now + lookahead + 0.05); // and whatever was already handed to the engine
+    host.noteOff(now); // the engine's Note Off closes the Notes already handed over too (issue 101)
     host.onNotes?.([]);
   };
 }

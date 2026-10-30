@@ -98,12 +98,12 @@ describe('the Transport (issue 75)', () => {
     expect(calls.length).toBe(before);
   });
 
-  it('stops: the Gate closed now and past whatever was handed over, the keys cleared, nothing more', () => {
+  it('stops: the Gate closed now, which ends what was handed over too (issue 101), the keys cleared, nothing more', () => {
     const { host, calls, run } = fakeHost();
     const stop = startTransport(host, once([note(60, 0.1, 0.4), note(62, 1, 1.3)]), { lookahead: 0.15, tick: 40 });
     run(0.2);
     stop();
-    expect(calls.slice(-3)).toEqual(['off @0.20', 'off @0.40', 'keys -']);
+    expect(calls.slice(-2)).toEqual(['off @0.20', 'keys -']);
     const before = calls.length;
     run(2);
     expect(calls.length).toBe(before);

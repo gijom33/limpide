@@ -58,6 +58,29 @@ test('octave shift moves the piano and the computer keys (buttons, or Z / X)', a
   await expect(piano.getByRole('button', { name: 'C3' })).toHaveAttribute('aria-pressed', 'false');
 });
 
+test('a Bass Preset starts the keyboard on C2, Init brings back C4, and the octave buttons move it after either (issue 125)', async ({ page }) => {
+  await page.goto('/');
+  const piano = page.getByRole('group', { name: 'Piano' });
+  const patches = page.getByRole('dialog', { name: 'Patches' });
+  const load = async (name: string) => {
+    await page.getByRole('button', { name: /^Patch:/ }).click();
+    await patches.getByRole('button', { name, exact: true }).click();
+  };
+  await load('Sub Bass');
+  await expect(piano.getByRole('button', { name: 'C2' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Octave down' })).toHaveText('−2'); // counted from C4, as ever
+  await page.keyboard.down('KeyA');
+  await expect(piano.getByRole('button', { name: 'C2' })).toHaveAttribute('aria-pressed', 'true');
+  await page.keyboard.up('KeyA');
+  await page.getByRole('button', { name: 'Octave up' }).click();
+  await expect(piano.getByRole('button', { name: 'C3' })).toBeVisible();
+  await load('Init');
+  await expect(piano.getByRole('button', { name: 'C4' })).toBeVisible();
+  await expect(piano.getByRole('button', { name: 'C2' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Octave down' }).click();
+  await expect(piano.getByRole('button', { name: 'C3' })).toBeVisible();
+});
+
 test('a shifted octave shades the button it was shifted with, darker the further it is from C4; none at C4', async ({ page }) => {
   await page.goto('/');
   const down = page.getByRole('button', { name: 'Octave down' });

@@ -6,6 +6,8 @@
 
 **Status:** done (2026-10-29). Under FM the Ideal draws Osc 1's sidebands: exactly (the Bessel functions) while Osc 2 is a Sine, from one cycle of the swung wave while Osc 2 is whole octaves from Osc 1, plain Osc 1 otherwise. Within 0.02 dB of the sound in both engine tests. Not yet seen by the owner.
 
+**Since then:** the Ideal draws the sidebands at the depth the Note keeps, which shrinks at the top so they do not fold back ([103](./103-fm-and-ring-fold-back-at-the-top.md), 2026-10-30).
+
 ## Agent Brief
 
 **Category:** enhancement

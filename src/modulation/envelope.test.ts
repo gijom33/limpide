@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { type AutomationStep, envelopeLevel, envelopeSchedule, type GateEvent } from './envelope';
+import { type AutomationStep, DIP, envelopeLevel, envelopeSchedule, type GateEvent } from './envelope';
 
 const adsr = { attack: 0.1, decay: 0.2, sustain: 0.5, release: 0.3 };
 const on = (time: number, peak = 1): GateEvent => ({ time, on: true, adsr, peak });
@@ -38,6 +38,24 @@ describe('envelopeLevel', () => {
     const before = envelopeLevel([on(0), off(1)], 1.1);
     expect(before).toBeGreaterThan(0.05);
     expect(envelopeLevel(events, 1.1 + 1e-9)).toBeCloseTo(before, 6);
+  });
+
+  it('dips in a straight line to silence over DIP, from wherever it was, and attacks from silence after it (issue 102)', () => {
+    const dip: GateEvent = { time: 1, on: false, adsr, peak: 0, dip: true };
+    const events = [on(0), off(0.8), dip, on(1 + DIP)];
+    const before = envelopeLevel([on(0), off(0.8)], 1);
+    expect(envelopeLevel(events, 1 + DIP / 4)).toBeCloseTo(before * 0.75, 9);
+    expect(envelopeLevel(events, 1 + DIP)).toBeCloseTo(0, 12);
+    expect(envelopeLevel(events, 1 + DIP + 0.1)).toBeCloseTo(envelopeLevel([on(0)], 0.1), 9);
+  });
+});
+
+describe('a dip’s schedule', () => {
+  it('sets the level it starts from outright, then ramps to silence at the end of the dip (issue 102)', () => {
+    expect(envelopeSchedule({ time: 1, on: false, adsr, peak: 0, dip: true }, 0.4)).toEqual([
+      { kind: 'cancelAndSet', time: 1, value: 0.4 },
+      { kind: 'linearRamp', time: 1 + DIP, target: 0 },
+    ]);
   });
 });
 

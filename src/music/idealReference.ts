@@ -1,3 +1,4 @@
+import { destinationSwings } from '../modulation/modulationModel';
 import type { Patch } from '../patch/patch';
 import { harmonicSeries } from './harmonics';
 
@@ -26,22 +27,26 @@ export interface IdealPartial {
   source: IdealSource;
 }
 
+/** Osc 1's pitch in Harmonics of the fundamental the Viewers count from: the Sub's pitch when it plays. */
+const osc1Pitch = (patch: Patch) => (patch.mixSub > 0 ? 2 ** -patch.subOctave : 1);
+/** Osc 2's pitch over Osc 1's: Osc 2 counts from the Note played, Osc 1 from its Octave (issue 90). */
+const osc2Ratio = (patch: Patch) => 2 ** (patch.osc2Octave - patch.osc1Octave + patch.osc2Semitone / 12 + patch.osc2Detune / 1200);
+
 /**
  * The Ideal from every Oscillator (the owner, 2026-10-27): Osc 1, Osc 2 and the Sub, each its Fourier series at its
  * Mixer level, each Harmonic where it falls. Osc 2 lands between Osc 1's Harmonics off an octave, a few cents off
  * with Detune. Where two land on one Harmonic both are kept, each at its own level, so each Oscillator's own marks
  * show (how they add depends on how their waves line up; Ring alone is worked out from it). Noise has no Harmonics
- * to predict. Low to high.
+ * to predict. Low to high. `fmKept` is how much of FM's depth the Note keeps at the top (fmDepthKept).
  */
-export function idealPartials(patch: Patch, count: number): IdealPartial[] {
-  const root = patch.mixSub > 0 ? 2 ** -patch.subOctave : 1; // Osc 1's pitch, in Harmonics of the fundamental
-  // Osc 2 counts from the Note played, Osc 1 from its Octave (issue 90).
-  const osc2 = root * 2 ** (patch.osc2Octave - patch.osc1Octave + patch.osc2Semitone / 12 + patch.osc2Detune / 1200);
+export function idealPartials(patch: Patch, count: number, fmKept = 1): IdealPartial[] {
+  const root = osc1Pitch(patch);
+  const osc2 = root * osc2Ratio(patch);
   const series = (source: IdealSource, magnitudes: Float32Array, mix: number, pitch: number) =>
     mix > 0 ? Array.from({ length: count - 1 }, (_, i) => ({ ratio: (i + 1) * pitch, level: magnitudes[i + 1] * mix, source })) : [];
   return [
-    // Under FM, Osc 1 as FM makes it, where that can be worked out (issue 96).
-    ...((patch.crossMod > 0 && patch.mixOsc1 > 0 && fmPartials(patch, root, osc2, count)) ||
+    // Under FM, Osc 1 as FM makes it, where that can be worked out (issue 96), at the depth the Note keeps (issue 103).
+    ...((patch.crossMod > 0 && patch.mixOsc1 > 0 && fmPartials(patch, root, osc2, count, fmKept)) ||
       series('osc1', harmonicSeries(patch.waveform, patch.pulseWidth, count).magnitudes, patch.mixOsc1, root)),
     ...series('osc2', harmonicSeries(patch.osc2Waveform, patch.osc2PulseWidth, count).magnitudes, patch.mixOsc2, osc2),
     ...series('sub', harmonicSeries(patch.subWaveform, 0.5, count).magnitudes, patch.mixSub, 1),
@@ -131,6 +136,49 @@ function pulseScale(width: number): number {
 export const FM_INDEX = 4;
 
 /**
+ * The top of what the browser plays (issue 103): half its sample rate, where anything higher folds back, but never
+ * above a 48 kHz device's, so FM and Ring sound the same on a faster one.
+ */
+export const playedTop = (sampleRate: number) => Math.min(sampleRate, 48000) / 2;
+
+/** The share of FM's sound its kept depth may put past the top (−65 dB): folded back, it stays under −60 dB. */
+const FOLD_SHARE = 10 ** -6.5;
+
+/** The share of a Sine at `osc1` Hz swung by a Sine at `osc2` Hz with `index` that lies past `top`: Σ J_k² there. */
+function shareAbove(index: number, osc1: number, osc2: number, top: number): number {
+  const reach = Math.ceil(index + 10 * Math.cbrt(index + 1) + 10);
+  const j = besselJ(index, reach);
+  let share = 0;
+  for (let k = -reach; k <= reach; k++) if (Math.abs(osc1 + k * osc2) > top) share += j[Math.abs(k)] ** 2;
+  return share;
+}
+
+/**
+ * How much of FM's depth a Note keeps (issue 103), from 0 to 1: all of it, unless Osc 1's sidebands at FM's peak (the
+ * knob plus its LFOs' swing) would pass the top of what the browser plays; then as much as keeps what passes it under
+ * FOLD_SHARE. Worked out for Osc 1's fundamental swung by Osc 2's, as Sines (every FM Preset's Waveforms), at Osc 1's
+ * frequency `osc1Hz`. The engine scales FM's depth by it on each Note, and the Ideal draws the same.
+ */
+export function fmDepthKept(patch: Patch, osc1Hz: number, sampleRate: number): number {
+  const peak = FM_INDEX * destinationSwings(patch, 'fm', patch.crossMod).reduce((sum, swing) => sum + swing, patch.crossMod);
+  const osc2Hz = osc1Hz * osc2Ratio(patch);
+  const top = playedTop(sampleRate);
+  if (peak === 0 || shareAbove(peak, osc1Hz, osc2Hz, top) <= FOLD_SHARE) return 1;
+  // The share grows with the index, so halve the gap between an index that passes and one that does not.
+  let [kept, over] = [0, peak];
+  while (over - kept > peak * 1e-4) {
+    const mid = (kept + over) / 2;
+    if (shareAbove(mid, osc1Hz, osc2Hz, top) <= FOLD_SHARE) kept = mid;
+    else over = mid;
+  }
+  return kept / peak;
+}
+
+/** How much of FM's depth the Ideal's Note keeps, at the Viewers' `fundamental` (Hz) on a device of `sampleRate`. */
+export const idealFmKept = (patch: Patch, fundamental: number, sampleRate: number) =>
+  fmDepthKept(patch, osc1Pitch(patch) * fundamental, sampleRate);
+
+/**
  * Osc 1's partials under FM (issue 96), at its Mixer level, or null where they cannot be worked out. FM swings Osc 1's
  * frequency by FM_INDEX × FM × Osc 2's frequency, following Osc 2's wave, so its Harmonic n is swung with an index n
  * times that. With Osc 2 a whole number of octaves from Osc 1 both start their cycles together (issue 94) and the
@@ -138,8 +186,8 @@ export const FM_INDEX = 4;
  * partial at n × Osc 1 + k × Osc 2 for every k, at its level times |J_k| of its index (a negative frequency folds
  * back): the classic FM result. Any other Osc 2 has no such result: null.
  */
-function fmPartials(patch: Patch, osc1: number, osc2: number, count: number): IdealPartial[] | null {
-  const index = FM_INDEX * patch.crossMod;
+function fmPartials(patch: Patch, osc1: number, osc2: number, count: number, kept: number): IdealPartial[] | null {
+  const index = FM_INDEX * patch.crossMod * kept;
   const octaves = Math.log2(osc2 / osc1);
   if (Math.abs(octaves - Math.round(octaves)) < 1e-9) {
     const base = Math.min(osc1, osc2);

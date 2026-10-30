@@ -6,6 +6,8 @@
 
 **Status:** done (2026-10-29). An FM knob in Osc 1's Pitch row swings Osc 1's frequency by Osc 2, an index of 4 at full on every Note; the FM Sidebands Preset shows it. Not yet listened to by the owner.
 
+**Since then:** the index is no longer the same on every Note at the top: a Note shrinks it as far as keeps Osc 1's sidebands under the top of what the browser plays, so none fold back; every Preset keeps it whole below F♯5, and all but Clang Alarm, Breathing Bell and Glass Shimmer below C6 ([103](./103-fm-and-ring-fold-back-at-the-top.md), 2026-10-30).
+
 ## Agent Brief
 
 **Category:** enhancement

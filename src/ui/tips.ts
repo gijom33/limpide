@@ -191,7 +191,7 @@ export const TIPS = {
   },
   crossMod: {
     title: 'FM',
-    body: 'Frequency modulation (cross-modulation): Osc 2 swings Osc 1’s pitch up and down hundreds of times a second, whatever Osc 2’s own fader. Too fast to hear as vibrato, it becomes tone: new partials fan out either side of each Harmonic, from a growl to a clang. Osc 2’s tuning decides where they land.',
+    body: 'Frequency modulation (cross-modulation): Osc 2 swings Osc 1’s pitch up and down at Osc 2’s own frequency, whatever Osc 2’s own fader: hundreds of times a second in the middle of the keyboard, tens on the lowest Notes. Too fast to hear as vibrato, it becomes tone: new partials, from a growl to a clang. Osc 2’s tuning decides where they land: in tune or whole octaves away, on the Harmonics themselves, changing their levels; anywhere else, between them. High up, FM holds itself back as far as keeps them under the top of what the browser can play, so none fold back.',
     how: 'Pick Sine on both and turn FM up: the Ideal’s circles fan out into sidebands with the spikes. They are drawn while Osc 2 is a Sine, or whole octaves from Osc 1; otherwise the circles mark plain Osc 1. An LFO aimed at FM swings it too: raise FM first, since the swing goes only as far below the knob as above it.',
   },
   osc2EnvAmount: {
@@ -250,8 +250,8 @@ export const TIPS = {
   },
   osc1Octave: {
     title: 'Octave',
-    body: 'Shifts Osc 1 by whole octaves from the Note you play, and the Sub with it: −1 for a bass an octave down. Osc 2 stays on the Note, so its Octave now sets how far apart the two are.',
-    how: 'Set it to −1 and watch the Scope: each cycle takes twice as long.',
+    body: 'Shifts Osc 1 by whole octaves from the Note you play, and the Sub with it: −1 for a bass an octave down. Osc 2 stays on the Note, so the two sit as far apart as Osc 2’s Octave less Osc 1’s: an octave, with this at −1 and Osc 2’s at 0.',
+    how: 'Set it to −1 and watch the Spectrum: the spikes and the Harmonic Markers move an octave down. The Scope looks the same: Cycle Lock follows Osc 1 and fits the same number of cycles across its width, each now twice as long.',
   },
   octave: {
     title: 'Octave',

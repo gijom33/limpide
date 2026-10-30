@@ -81,27 +81,47 @@ function fft(re: Float64Array, im: Float64Array) {
   }
 }
 
-/**
- * How loud everything between the Harmonics of `fundamental` is (noise, aliasing, anything inharmonic), in dB
- * against the Harmonics themselves, over the last `size` samples. Blackman–Harris windowed (sidelobes about −92 dB),
- * each Harmonic taken as the 8 bins either side of it, so the Harmonics' own skirts do not count as noise.
- */
-export function betweenHarmonicsDb(samples: Float32Array, sampleRate: number, fundamental: number, size = 16384): number {
+/** The power in each bin of `size` samples from `from`, Blackman–Harris windowed (sidelobes about −92 dB). */
+function powerSpectrum(samples: Float32Array, from: number, size: number): Float64Array {
   const re = new Float64Array(size);
   const im = new Float64Array(size);
   for (let i = 0; i < size; i++) {
     const x = (2 * Math.PI * i) / (size - 1);
-    re[i] = samples[samples.length - size + i] * (0.35875 - 0.48829 * Math.cos(x) + 0.14128 * Math.cos(2 * x) - 0.01168 * Math.cos(3 * x));
+    re[i] = samples[from + i] * (0.35875 - 0.48829 * Math.cos(x) + 0.14128 * Math.cos(2 * x) - 0.01168 * Math.cos(3 * x));
   }
   fft(re, im);
+  return Float64Array.from({ length: size / 2 }, (_, k) => re[k] ** 2 + im[k] ** 2);
+}
+
+/**
+ * How loud everything between the Harmonics of `fundamental` is (noise, aliasing, anything inharmonic), in dB
+ * against the Harmonics themselves, over the last `size` samples, each Harmonic taken as the 8 bins either side of it,
+ * so the Harmonics' own skirts do not count as noise.
+ */
+export function betweenHarmonicsDb(samples: Float32Array, sampleRate: number, fundamental: number, size = 16384): number {
+  const power = powerSpectrum(samples, samples.length - size, size);
   const binHz = sampleRate / size;
   let harmonic = 0;
   let between = 0;
   for (let k = Math.ceil(20 / binHz); k < size / 2; k++) {
     const n = Math.round((k * binHz) / fundamental);
-    const power = re[k] ** 2 + im[k] ** 2;
-    if (n >= 1 && Math.abs(k * binHz - n * fundamental) <= 8 * binHz) harmonic += power;
-    else between += power;
+    if (n >= 1 && Math.abs(k * binHz - n * fundamental) <= 8 * binHz) harmonic += power[k];
+    else between += power[k];
   }
   return 10 * Math.log10(between / harmonic);
+}
+
+/**
+ * How loud everything above `frequency` is, in dB against everything below it, over `size` samples from `from`.
+ * Rendered at 192 kHz, what lies past 24 kHz is what a 48 kHz device would fold back (review 14's method).
+ */
+export function energyAboveDb(samples: Float32Array, sampleRate: number, frequency: number, from: number, size: number): number {
+  const power = powerSpectrum(samples, from, size);
+  let below = 0;
+  let above = 0;
+  for (let k = 1; k < size / 2; k++) {
+    if ((k * sampleRate) / size > frequency) above += power[k];
+    else below += power[k];
+  }
+  return 10 * Math.log10(above / below);
 }

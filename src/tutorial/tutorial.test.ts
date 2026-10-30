@@ -57,6 +57,8 @@ describe('a Tutorial', () => {
     const preset: Patch = rebuild(sample);
     expect(differences(preset, preset)).toEqual([]);
     expect(differences({ ...preset, cutoff: 900, waveform: 'square' }, preset)).toEqual(['cutoff', 'waveform']);
+    // A bass's keyboard octave is no control a Step turns (issue 125).
+    expect(differences(preset, { ...preset, keyboardOctave: 2 })).toEqual([]);
   });
 
   it('names a control so it cannot be mistaken for another', () => {

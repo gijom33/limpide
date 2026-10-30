@@ -18,6 +18,14 @@ export function lfoShape(waveform: LfoWaveform, phase: number): number {
 }
 
 /**
+ * Where a retriggered LFO starts each Waveform, as a phase of `lfoShape` (issue 124, decided by the owner): where each
+ * classically starts, so a retriggered falling saw opens and closes on every Note. A Saw at its foot and a Saw Down at
+ * its top, half way along the browser's own cycle; a Square at the start of its upper half, a Sine and a Triangle at
+ * the centre rising, where the browser's cycle starts already.
+ */
+export const LFO_START: Record<LfoWaveform, number> = { sine: 0, triangle: 0, square: 0, saw: 0.5, sawDown: 0.5 };
+
+/**
  * The LFO's phase (0–1) at `time`, integrating its Rate over the history of Rate changes, just as a running
  * oscillator does, so the model never drifts from the sound when the Rate knob moves.
  */
@@ -33,8 +41,8 @@ export function lfoPhase(history: readonly { time: number; rate: number }[], tim
 /**
  * The LFO's phase over time, across every Rate change and restart since it started, kept as running cycle counts:
  * each mark stores how many cycles had passed when it was made (a restart, at a Note when the LFO retriggers, starts
- * again from none). Old marks can then be forgotten without moving the phase of anything after them (integrating
- * from the start would need them all), and finding the phase is a binary search. Marks may arrive out of order (a
+ * again from its Waveform's start, `LFO_START`). Old marks can then be forgotten without moving the phase of anything
+ * after them (integrating from the start would need them all), and finding the phase is a binary search. Marks may arrive out of order (a
  * Note handed to the engine ahead of a Rate change made before it sounds): the ones after are then recounted.
  */
 export function createLfoClock(start: number, rate: number) {
@@ -56,7 +64,7 @@ export function createLfoClock(start: number, rate: number) {
       const prev = marks[i - 1];
       if (marks[i].restart && rateChanged) marks[i].rate = prev.rate;
       else if (!marks[i].restart) rateChanged = false; // a later Rate change of its own stands
-      marks[i].cycles = marks[i].restart ? 0 : prev.cycles + prev.rate * (marks[i].time - prev.time);
+      if (!marks[i].restart) marks[i].cycles = prev.cycles + prev.rate * (marks[i].time - prev.time);
     }
   };
   /** The mark at exactly `time`, made if there is none, with the Rate and cycles in force there. */
@@ -75,11 +83,11 @@ export function createLfoClock(start: number, rate: number) {
       marks[i].rate = next;
       recount(i, true);
     },
-    /** The cycle starts again at `time` (a Note, when the LFO retriggers). */
-    restart(time: number) {
+    /** The cycle starts again at `time` (a Note, when the LFO retriggers), at phase `start`. */
+    restart(time: number, start: number) {
       const i = markAt(time);
       marks[i].restart = true;
-      marks[i].cycles = 0;
+      marks[i].cycles = start;
       recount(i, false);
     },
     /** The phase (0–1) at `time`. */

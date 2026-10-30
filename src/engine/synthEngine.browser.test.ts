@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { envelopeLevel, type GateEvent } from '../modulation/envelope';
+import { DIP, envelopeLevel, type GateEvent } from '../modulation/envelope';
 import { harmonicSeries, type Waveform } from '../music/harmonics';
-import { idealPartials, idealReference } from '../music/idealReference';
+import { fmDepthKept, idealPartials, idealReference } from '../music/idealReference';
 import { defaultPatch, type Patch } from '../patch/patch';
 import { PRESETS } from '../patch/presets';
-import { betweenHarmonicsDb, dB, frequencyAround, rms, toneAmplitude, toneAmplitudeHann } from '../test/measure';
+import { betweenHarmonicsDb, dB, energyAboveDb, frequencyAround, rms, toneAmplitude, toneAmplitudeHann } from '../test/measure';
 import { amplitudeToSpectrumDb } from '../viewers/spectrumScale';
 import { createSynthEngine, OSCILLATOR_LEVEL } from './synthEngine';
 
@@ -16,6 +16,13 @@ async function render(seconds: number, patch: Partial<Patch>, play: (e: ReturnTy
   engine.applyPatch({ ...defaultPatch(), ...patch });
   play(engine);
   return (await ctx.startRendering()).getChannelData(0);
+}
+
+/** The largest step between neighbouring samples from `from` to `to` seconds: a click is one far past the wave's own. */
+function steepestStep(s: Float32Array, from: number, to: number) {
+  let most = 0;
+  for (let i = Math.round(from * SR) + 1; i < Math.round(to * SR); i++) most = Math.max(most, Math.abs(s[i] - s[i - 1]));
+  return most;
 }
 
 describe('saw through the low-pass Filter', () => {
@@ -474,13 +481,16 @@ describe('modulationAt for past moments (the Envelope Timeline)', () => {
     const ampAdsr = { attack: patch.ampAttack, decay: patch.ampDecay, sustain: patch.ampSustain, release: patch.ampRelease };
     const filterAdsr = { attack: patch.filterAttack, decay: patch.filterDecay, sustain: patch.filterSustain, release: patch.filterRelease };
     // Notes that retrigger before the Release ends, and releases before the Decay ends: every segment starts mid-way.
+    // Each Note but the first comes while the last still sounds: it dips first, and starts after the dip (issue 102).
     for (const [on, off, velocity] of [[0.1, 0.3, 1], [0.4, 0.45, 0.5], [0.5, 1.2, 0.8], [1.3, 1.31, 1]]) {
       engine.noteOn(60, velocity, on);
       engine.noteOff(off);
-      amp.push({ time: on, on: true, adsr: ampAdsr, peak: velocity }, { time: off, on: false, adsr: ampAdsr, peak: velocity });
-      filter.push({ time: on, on: true, adsr: filterAdsr, peak: 1 }, { time: off, on: false, adsr: filterAdsr, peak: 1 });
+      const start = on === 0.1 ? on : on + DIP;
+      if (start !== on) amp.push({ time: on, on: false, adsr: ampAdsr, peak: 0, dip: true });
+      amp.push({ time: start, on: true, adsr: ampAdsr, peak: velocity }, { time: off, on: false, adsr: ampAdsr, peak: velocity });
+      filter.push({ time: start, on: true, adsr: filterAdsr, peak: 1 }, { time: off, on: false, adsr: filterAdsr, peak: 1 });
     }
-    for (let t = 0; t < 2; t += 0.01) {
+    for (let t = 0; t < 2; t += 0.001) {
       const m = engine.modulationAt(t);
       expect(m.amp).toBeCloseTo(envelopeLevel(amp, t), 9);
       expect(m.filter).toBeCloseTo(envelopeLevel(filter, t), 9);
@@ -551,25 +561,33 @@ describe('modulationAt for past moments (the Envelope Timeline)', () => {
     expect(hi).toBeCloseTo(61, 1);
     expect(swing('cutoff')).toEqual([60, 60]);
   });
-  it('a Gate earlier than Notes already handed over (Hold switched off mid-rhythm) cancels them, as in the sound', () => {
-    const ctx = new OfflineAudioContext(1, SR, SR);
-    const engine = createSynthEngine(ctx);
-    engine.applyPatch({ ...defaultPatch(), ampAttack: 0.005, ampSustain: 1, ampRelease: 0.3, filterAttack: 0.005 });
-    engine.noteOn(60, 0.9, 0);
-    // The rhythm hands the next tap over ahead of the clock…
-    engine.noteOn(60, 0.9, 0.5);
-    engine.noteOff(0.8);
-    // …then Hold goes off at 0.45, before it.
-    engine.noteOff(0.45);
-    const at = engine.modulationAt(0.45);
-    for (const t of [0.5, 0.6, 0.8, 0.9]) {
-      const m = engine.modulationAt(t);
-      expect(m.amp, `amp at ${t}`).toBeGreaterThanOrEqual(0);
-      expect(m.amp, `amp at ${t}`).toBeLessThan(at.amp); // releasing: no new Attack at 0.5
-      expect(m.filter, `filter at ${t}`).toBeGreaterThanOrEqual(0);
-      expect(m.sounding, `at ${t}`).toBeNull();
-    }
-  });
+  // On several Voices too (issue 101): a handed-over Note has its release recorded already, and is cancelled all the same.
+  for (const voices of [1, 4] as const)
+    it(`a Gate earlier than Notes already handed over (Hold switched off mid-rhythm) cancels them, as in the sound (${voices} Voice${voices > 1 ? 's' : ''})`, async () => {
+      const ctx = new OfflineAudioContext(1, SR * 1.2, SR);
+      const engine = createSynthEngine(ctx);
+      engine.applyPatch({ ...defaultPatch(), voices, ampAttack: 0.005, ampSustain: 1, ampRelease: 0.1, filterAttack: 0.005 });
+      const chord = [60, 64];
+      // A tap of the rhythm, a chord, its end handed over with its start, as the Transport does…
+      for (const note of chord) engine.noteOn(note, 0.9, 0);
+      for (const note of chord) engine.release(note, 0.4);
+      // …the next tap, handed over ahead of the clock…
+      for (const note of chord) engine.noteOn(note, 0.9, 0.5);
+      for (const note of chord) engine.release(note, 0.8);
+      // …then Hold goes off at 0.45, before it.
+      engine.noteOff(0.45);
+      const at = engine.modulationAt(0.45);
+      for (const t of [0.5, 0.6, 0.8, 0.9]) {
+        const m = engine.modulationAt(t);
+        expect(m.amp, `amp at ${t}`).toBeGreaterThanOrEqual(0);
+        expect(m.amp, `amp at ${t}`).toBeLessThan(at.amp); // releasing: no new Attack at 0.5
+        expect(m.filter, `filter at ${t}`).toBeGreaterThanOrEqual(0);
+        expect(m.sounding, `at ${t}`).toBeNull();
+      }
+      // Silence once the Release from 0.45 has run, where the tap handed over would have sounded until 0.8.
+      const s = (await ctx.startRendering()).getChannelData(0);
+      expect(rms(s, SR * 0.75, SR * 1.2)).toBeLessThan(rms(s, SR * 0.1, SR * 0.4) * 0.001);
+    });
 });
 
 describe('two LFOs and their destinations', () => {
@@ -701,6 +719,103 @@ describe('LFO edges (issue 66)', () => {
       const gap = Math.max(...farFromJump.map((g) => Math.abs(g.gain - engine.modulationAt(g.time).volume)));
       expect(gap).toBeLessThan(0.005); // the LFO within 1 %
     });
+});
+
+// Issue 124: a retriggered LFO starts each Waveform where it classically starts, not at the browser oscillator's own
+// phase 0 (the middle of a saw's ramp). Measured as issue 66's are, on Volume at full Depth (a gain of 0.5 + 0.5 ×
+// the LFO), with the Note at 0.3 s, where a free LFO at 1 Hz is far from any of these starts.
+describe('where a retriggered LFO starts (issue 124)', () => {
+  const tremolo = { cutoff: 20000, waveform: 'sine', ampSustain: 1, ampAttack: 0.001, lfoDestination: 'volume', lfoAmount: 1, lfoRate: 1 } as const;
+  const NOTE = 0.3;
+  /**
+   * The tremolo's gain over the Amp Tap's window ending at `until` (by default 0.4 s, the Note's first tenth of a
+   * second), and its times; `change`, if given, is applied at 0.56 s.
+   */
+  const gains = async (patch: Partial<Patch>, until = 0.4, change?: Partial<Patch>) => {
+    const tap = async (amount: number) => {
+      const ctx = new OfflineAudioContext(1, SR * (until + 0.1), SR);
+      const engine = createSynthEngine(ctx);
+      const first = { ...defaultPatch(), ...tremolo, ...patch, lfoAmount: amount };
+      engine.applyPatch(first);
+      engine.noteOn(69, 1, NOTE);
+      const amp = new Float32Array(engine.taps.amp.fftSize);
+      const changed = change && ctx.suspend(0.56).then(() => {
+        engine.applyPatch({ ...first, ...change });
+        void ctx.resume();
+      });
+      const captured = ctx.suspend(until).then(() => {
+        engine.taps.amp.getFloatTimeDomainData(amp);
+        void ctx.resume();
+      });
+      await ctx.startRendering();
+      await Promise.all([changed, captured]);
+      return { amp, engine };
+    };
+    const [moved, still] = [await tap(1), await tap(0)];
+    const peak = Math.max(...still.amp.map(Math.abs));
+    const measured: { time: number; gain: number }[] = [];
+    still.amp.forEach((s, i) => {
+      if (Math.abs(s) > 0.3 * peak) measured.push({ time: until - (still.amp.length - i) / SR, gain: moved.amp[i] / s });
+    });
+    return { measured, engine: moved.engine };
+  };
+
+  // Each Waveform's classic start: a Saw at its foot, a Saw Down at its top, a Square at the start of its upper half,
+  // a Sine and a Triangle at the centre, rising.
+  for (const [lfoWaveform, start] of [['saw', -1], ['sawDown', 1], ['square', 1], ['sine', 0], ['triangle', 0]] as const)
+    it(`starts a retriggered ${lfoWaveform} at ${start} at the Note, in the sound as in the model`, async () => {
+      const { measured, engine } = await gains({ lfoWaveform, lfoRetrigger: 'note' });
+      expect(engine.lfoSwingAt(NOTE)).toBeCloseTo(start, 9);
+      // Its first values, a millisecond to five in (past the series' corner): at 1 Hz the wave has moved under 2 %.
+      const first = measured.filter((g) => g.time > NOTE + 0.001 && g.time < NOTE + 0.005);
+      expect(first.length).toBeGreaterThan(10);
+      for (const g of first) expect(g.gain).toBeCloseTo(0.5 + 0.5 * start, 1);
+      // And the model follows the sound sample by sample, from there on.
+      const after = measured.filter((g) => g.time > NOTE + 0.001);
+      const gap = Math.max(...after.map((g) => Math.abs(g.gain - engine.modulationAt(g.time).volume)));
+      expect(gap).toBeLessThan(0.005);
+    });
+
+  it('leaves a free LFO where it is: a saw at 0.3 s, three tenths into its cycle, at 0.6', async () => {
+    const { measured, engine } = await gains({ lfoWaveform: 'saw' });
+    expect(engine.lfoSwingAt(NOTE)).toBeCloseTo(0.6, 9);
+    const first = measured.filter((g) => g.time > NOTE + 0.001 && g.time < NOTE + 0.005);
+    for (const g of first) expect(g.gain).toBeCloseTo(0.8, 1);
+  });
+
+  it('keeps the sound and the model together when the Waveform changes after a retriggered saw', async () => {
+    // The saw restarted half a cycle along its phase: a sine switched to at 0.56 s runs on from there, in both.
+    const { measured, engine } = await gains({ lfoWaveform: 'saw', lfoRetrigger: 'note' }, 0.704, { lfoWaveform: 'sine' });
+    const after = measured.filter((g) => g.time > 0.57);
+    expect(after.length).toBeGreaterThan(1000);
+    const gap = Math.max(...after.map((g) => Math.abs(g.gain - engine.modulationAt(g.time).volume)));
+    expect(gap).toBeLessThan(0.005);
+  });
+
+  it('opens Key Sync at the Note and closes it over the LFO’s cycle, as its words say', async () => {
+    const keySync = PRESETS.find((p) => p.name === 'Key Sync')!.patch;
+    let engine: ReturnType<typeof createSynthEngine> | undefined;
+    const s = await render(1.2, keySync, (e) => {
+      engine = e;
+      e.noteOn(57, 1, NOTE); // A3
+    });
+    // How bright: the centre of its Harmonics' power (the 1st to the 20th, a level-weighted mean of their numbers), in
+    // 50 ms windows (whole cycles of 220 Hz) over the 1.5 Hz cycle's two thirds of a second.
+    const centre = (from: number) => {
+      let [weighted, total] = [0, 0];
+      for (let h = 1; h <= 20; h++) {
+        const p = toneAmplitude(s, SR, 220 * h, Math.round((NOTE + from) * SR), Math.round((NOTE + from + 0.05) * SR)) ** 2;
+        weighted += h * p;
+        total += p;
+      }
+      return weighted / total;
+    };
+    const centres = [0.01, 0.2, 0.4, 0.6].map(centre);
+    for (let i = 1; i < centres.length; i++) expect(centres[i], centres.map((c) => c.toFixed(2)).join(', ')).toBeLessThan(centres[i - 1]);
+    // The model: open at its top at the Note (1.48 kHz), closed to its foot at the cycle's end (172 Hz).
+    expect(engine!.modulationAt(NOTE).cutoff).toBeGreaterThan(1400);
+    expect(engine!.modulationAt(NOTE + 0.66).cutoff).toBeLessThan(180);
+  });
 });
 
 describe('Osc 2, Noise and the Mixer', () => {
@@ -1355,12 +1470,7 @@ describe('Ring Modulation (issue 88)', () => {
       e.noteOn(45, 1, 0);
       e.noteOn(52, 1, 0.5023); // a quarter of a 110 Hz cycle past a whole number of them
     });
-    const steepest = (from: number, to: number) => {
-      let most = 0;
-      for (let i = Math.round(from * SR) + 1; i < Math.round(to * SR); i++) most = Math.max(most, Math.abs(s[i] - s[i - 1]));
-      return most;
-    };
-    expect(steepest(0.497, 0.507)).toBeLessThan(1.5 * steepest(0.3, 0.45));
+    expect(steepestStep(s, 0.497, 0.507)).toBeLessThan(1.5 * steepestStep(s, 0.3, 0.45));
   });
 
   it('sounds the same on a Note whether or not Osc 2 was retuned before it (issue 94)', async () => {
@@ -1494,6 +1604,83 @@ describe('FM’s sidebands in the Ideal (issue 96)', () => {
   });
 });
 
+describe('FM and Ring under the top, and no offset (issue 103)', () => {
+  const preset = (name: string) => PRESETS.find((p) => p.name === name)!.patch;
+  const C4 = 60;
+  const C6 = 84;
+  const C7 = 96;
+  const hz = (note: number) => 440 * 2 ** ((note - 69) / 12);
+  /** A Note held from 0 to `hold`, rendered at `rate`. */
+  const play = async (patch: Patch, note: number, seconds: number, rate = SR, hold = seconds) => {
+    const ctx = new OfflineAudioContext(1, Math.round(rate * seconds), rate);
+    const engine = createSynthEngine(ctx);
+    engine.applyPatch(patch);
+    engine.noteOn(note, 1, 0);
+    engine.noteOff(hold);
+    return (await ctx.startRendering()).getChannelData(0);
+  };
+  const HIGH = 192000;
+  /** Rendered at 192 kHz, nothing folds: what lies past 24 kHz is what a 48 kHz device folds back. */
+  const foldedDb = async (patch: Patch, note: number) => energyAboveDb(await play(patch, note, 0.8, HIGH), HIGH, 24000, HIGH * 0.05, 131072);
+
+  for (const name of ['Clang Alarm', 'Breathing Bell', 'FM Bell'])
+    it(`keeps ${name} on C7 from folding back: under −60 dB past 24 kHz, rendered at 192 kHz as review 14 measured`, async () => {
+      expect(await foldedDb(preset(name), C7)).toBeLessThan(-60);
+    });
+
+  it('hears what lies past 24 kHz when there is some: a plain Saw on C7 (control case)', async () => {
+    expect(await foldedDb({ ...defaultPatch(), cutoff: 20000, resonance: 0, ampSustain: 1 }, C7)).toBeGreaterThan(-40);
+  });
+
+  it('draws the Ideal at the depth the Note keeps: two Sines like FM Bell’s on C7 sound at its sidebands', async () => {
+    const patch = {
+      ...defaultPatch(), cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001,
+      waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, osc2Semitone: 10, crossMod: 0.3,
+    } as const;
+    const kept = fmDepthKept(patch, hz(C7), SR);
+    expect(kept).toBeLessThan(0.5);
+    // At the Oscillator Tap, where the Ideal is drawn: the open Filter already bends the top a little.
+    const window = (await tapsAt(0.5, patch, C7)).oscillator;
+    const marks = idealPartials(patch, 16, kept).filter((p) => p.source === 'osc1' && p.ratio * hz(C7) < 20000);
+    const top = Math.max(...marks.map((p) => p.level));
+    const shown = marks.filter((p) => p.level > top / 100);
+    expect(shown.length).toBeGreaterThan(2); // the carrier and sidebands, not one plain Harmonic
+    const heard = shown.map((p) => toneAmplitudeHann(window, SR, hz(C7) * p.ratio));
+    const loudest = Math.max(...heard);
+    // Within 1 dB: the browser sums Osc 1's swing sample by sample, which with Osc 2 at 7.5 kHz swings it about 4 %
+    // further than the Ideal's index (J_2, 40 dB down, 0.7 dB louder).
+    for (const [i, p] of shown.entries())
+      expect(Math.abs(dB(heard[i] / loudest) - dB(p.level / top)), `the partial at ${p.ratio.toFixed(3)}`).toBeLessThan(1);
+  });
+
+  it('takes FM Ladder’s offset out: under −60 dBFS while the Gate is open, the Oscillator Tap’s wave centred', async () => {
+    const s = await play(preset('FM Ladder'), C4, 1.2, SR, 1);
+    const mean = s.subarray(0, SR).reduce((sum, v) => sum + v, 0) / SR;
+    expect(dB(Math.abs(mean))).toBeLessThan(-60);
+    const taps = await tapsAt(0.9, preset('FM Ladder'), C4);
+    const tapMean = taps.oscillator.reduce((sum, v) => sum + v, 0) / taps.oscillator.length;
+    const peak = taps.oscillator.reduce((most, v) => Math.max(most, Math.abs(v)), 0);
+    expect(Math.abs(tapMean) / peak).toBeLessThan(0.01);
+  });
+
+  for (const note of [C4, C6])
+    it(`keeps Ring Octave clean between its Harmonics on ${note === C4 ? 'C4' : 'C6'}: under −60 dB`, async () => {
+      expect(betweenHarmonicsDb(await play(preset('Ring Octave'), note, 1), SR, hz(note))).toBeLessThan(-60);
+    });
+
+  it('drops only while Ring is up the Harmonics Ring would fold: a Saw through the Mixer alone keeps its full wave', async () => {
+    const saws = { ...defaultPatch(), cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001, mixRing: 0 };
+    const fifteenth = async (patch: Patch) => {
+      const s = await play(patch, C6, 0.6);
+      const window = s.subarray(SR * 0.2, SR * 0.2 + 16384);
+      return dB(toneAmplitudeHann(window, SR, hz(C6) * 15) / toneAmplitudeHann(window, SR, hz(C6)));
+    };
+    // A Saw's 15th Harmonic (15.7 kHz) at 1/15 of its first; with Ring up beside it, past the 12 kHz each of two Saws keeps.
+    expect(await fifteenth(saws)).toBeCloseTo(dB(1 / 15), 0);
+    expect(await fifteenth({ ...saws, mixRing: 0.001 })).toBeLessThan(dB(1 / 15) - 40);
+  });
+});
+
 describe('the Filter Envelope on Osc 2’s pitch (issue 93)', () => {
   const osc2Alone = { cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001, osc2Waveform: 'sine', mixOsc1: 0, mixOsc2: 1, filterAttack: 0.001 } as const;
 
@@ -1507,5 +1694,228 @@ describe('the Filter Envelope on Osc 2’s pitch (issue 93)', () => {
   it('leaves Osc 2 alone at 0', async () => {
     const s = await render(1, { ...osc2Alone, filterSustain: 1 }, (e) => e.noteOn(45, 1, 0));
     expect(frequencyAround(s, SR, 0.7, 0.2)).toBeCloseTo(110, -1);
+  });
+});
+
+describe('Notes handed over ahead of the clock (issue 101)', () => {
+  const bareSine = { cutoff: 20000, resonance: 0, waveform: 'sine', ampAttack: 0.001, ampSustain: 1, ampRelease: 0.01 } as const;
+  const peak = (s: Float32Array, from: number, to: number) => s.subarray(Math.round(from * SR), Math.round(to * SR)).reduce((m, v) => Math.max(m, Math.abs(v)), 0);
+  /** The Demo plays a Note at 0 and hands the next over for `next`; a key takes over at `key`, before it. */
+  const takeOver = (e: ReturnType<typeof createSynthEngine>, key: number, next: number) => {
+    e.noteOn(69, 1, 0);
+    e.release(69, next - 0.05);
+    e.noteOn(69, 1, next);
+    e.release(69, next + 0.2);
+    e.noteOff(key); // the Demo stops…
+    e.noteOn(69, 1, key); // …and the key plays
+  };
+
+  it('a key taking over within the look-ahead sounds one copy of each Oscillator: a bare sine peaks as one Note does', async () => {
+    // A4 is 132 whole cycles at 0.3 s: two copies would be in phase, and double.
+    const s = await render(1, bareSine, (e) => takeOver(e, 0.3, 0.5));
+    expect(peak(s, 0.32, 0.6) / peak(s, 0.1, 0.28)).toBeCloseTo(1, 1);
+  });
+
+  it('a retriggering LFO taking over within the look-ahead runs alone, in the sound as in the model', async () => {
+    // A square LFO at 1 Hz on the pitch: the Demo's is down from 0.5 s; the key's, restarted at 0.6 s, is up.
+    const patch = { ...bareSine, lfoDestination: 'pitch', lfoAmount: 1, lfoRate: 1, lfoWaveform: 'square', lfoRetrigger: 'note' } as const;
+    let model = 0;
+    const s = await render(1.2, patch, (e) => {
+      takeOver(e, 0.6, 0.8);
+      model = e.lfoSwingAt(0.7);
+    });
+    expect(model).toBe(1);
+    expect(frequencyAround(s, SR, 0.7, 0.02)).toBeCloseTo(440 * 2 ** (1 / 12), 0);
+  });
+
+  it('over many Notes, removes every connection made to and from an Oscillator once it has ended', async () => {
+    const made = new Map<object, Set<object>>(); // a node → what it feeds, nodes and params
+    const { connect, disconnect } = AudioNode.prototype;
+    AudioNode.prototype.connect = function (this: AudioNode, destination: AudioNode | AudioParam, ...rest: number[]) {
+      if (!made.has(this)) made.set(this, new Set());
+      made.get(this)!.add(destination);
+      return (connect as (...a: unknown[]) => AudioNode).call(this, destination, ...rest);
+    } as typeof connect;
+    AudioNode.prototype.disconnect = function (this: AudioNode, ...args: unknown[]) {
+      const destination = args[0];
+      if (destination instanceof AudioNode || destination instanceof AudioParam) made.get(this)?.delete(destination);
+      else made.delete(this);
+      return (disconnect as (...a: unknown[]) => void).apply(this, args);
+    } as typeof disconnect;
+    try {
+      const ctx = new OfflineAudioContext(1, SR * 4, SR);
+      const ended = new Set<OscillatorNode>();
+      const create = ctx.createOscillator.bind(ctx);
+      ctx.createOscillator = () => {
+        const o = create();
+        o.addEventListener('ended', () => ended.add(o));
+        return o;
+      };
+      const engine = createSynthEngine(ctx);
+      engine.applyPatch({ ...defaultPatch(), voices: 4, lfoRetrigger: 'note', lfo2Retrigger: 'note' });
+      // Many Notes on several Voices, each played as the players do, and a key taking over before some.
+      for (let i = 0; i < 30; i++) {
+        const t = i * 0.1;
+        engine.noteOn(48 + (i % 12), 1, t + 0.05);
+        engine.release(48 + (i % 12), t + 0.09);
+        if (i % 3 === 0) engine.noteOn(60, 1, t + 0.02);
+      }
+      await ctx.startRendering();
+      await new Promise((resolve) => setTimeout(resolve, 50)); // the ended events
+      const fed = (o: OscillatorNode) => [...made.values()].filter((to) => to.has(o.frequency) || to.has(o.detune)).length;
+      expect(ended.size).toBeGreaterThan(100);
+      for (const o of ended) {
+        expect(made.get(o)?.size ?? 0, 'what it fed').toBe(0);
+        expect(fed(o), 'what fed it').toBe(0);
+      }
+    } finally {
+      AudioNode.prototype.connect = connect;
+      AudioNode.prototype.disconnect = disconnect;
+    }
+  });
+});
+
+describe('a Note reaching a Voice still sounding dips first, so it does not click (issue 102)', () => {
+  // Init with a sine, the Filter open so it does not smooth a click away.
+  const sine = { waveform: 'sine', cutoff: 20000 } as const;
+  /** The largest second difference between samples: a burst of high frequencies, on a Patch that swells slowly. */
+  const sharpest = (s: Float32Array, from: number, to: number) => {
+    let most = 0;
+    for (let i = Math.round(from * SR) + 2; i < Math.round(to * SR); i++) most = Math.max(most, Math.abs(s[i] - 2 * s[i - 1] + s[i - 2]));
+    return most;
+  };
+
+  // C2, let go at 0.5 s, then a Note about 50 ms into its Release, where C2's wave is at its peak (36¼ cycles): the
+  // review's staccato line. The step was 36 times the steady sine's (0.4 s Release) and 66 times (1.5 s); now the
+  // steepest is the new Note's own Attack, as from silence.
+  for (const [ampRelease, next] of [[0.4, 38], [1.5, 38], [1.5, 36]] as const)
+    it(`plays a Note into the last one's Release with no step past the steady sine's (Init, ${ampRelease} s Release, ${next === 36 ? 'the same key again' : 'D2'})`, async () => {
+      const s = await render(1.4, { ...sine, ampRelease }, (e) => {
+        e.noteOn(36, 1, 0);
+        e.noteOff(0.5);
+        e.noteOn(next, 1, 0.5542);
+      });
+      expect(steepestStep(s, 0.55, 0.6)).toBeLessThan(1.5 * steepestStep(s, 1, 1.3));
+    });
+
+  // A burst 2.4 times the sustain's before.
+  it('strikes a chord again in Glass Pad’s Release with no burst past its sustain’s', async () => {
+    const glassPad = PRESETS.find((p) => p.name === 'Glass Pad')!.patch;
+    const chord = [60, 64, 67];
+    const s = await render(3, glassPad, (e) => {
+      for (const note of chord) e.noteOn(note, 1, 0);
+      e.noteOff(1.8);
+      for (const note of chord) e.noteOn(note, 1, 2);
+    });
+    expect(sharpest(s, 1.99, 2.1)).toBeLessThan(1.5 * sharpest(s, 1.3, 1.8));
+  });
+
+  it('takes a held Voice for a new Note with no step past the steady chord’s (2 Voices)', async () => {
+    const s = await render(1, { ...sine, voices: 2 }, (e) => {
+      e.noteOn(45, 1, 0);
+      e.noteOn(52, 1, 0.1);
+      e.noteOn(57, 1, 0.30227); // A3 takes A2's Voice, A2 still held, at its wave's peak (33¼ cycles)
+    });
+    expect(steepestStep(s, 0.295, 0.35)).toBeLessThan(1.5 * steepestStep(s, 0.7, 0.95));
+  });
+
+  // A Gate off before the Note it closes has started. Issue 101 left the first to 102: the Demo stopped, or Hold switched
+  // off, before a Note it handed over. A4, its restart due at a quarter of a cycle (245¼ cycles, after the dip): a step
+  // there if it restarts (9 and 7 times the held Note's steepest before), 1.4 times the level if a second copy joins in.
+  const due = 245.25 / 440;
+  const calledOff = {
+    'a player stopped before it': (e: ReturnType<typeof createSynthEngine>) => {
+      e.noteOn(69, 1, 0);
+      e.release(69, 0.45);
+      e.noteOn(69, 1, due - DIP); // handed over: the Voice will still sound then, so it dips first
+      e.release(69, 0.8);
+      e.noteOff(0.5);
+    },
+    'a key let go within the dip, on 2 Voices': (e: ReturnType<typeof createSynthEngine>) => {
+      e.noteOn(69, 1, 0);
+      e.noteOn(69, 1, due - DIP); // the key again: its own Voice, still sounding
+      e.release(69, due - DIP / 2);
+    },
+  };
+  for (const [how, play] of Object.entries(calledOff))
+    it(`does not restart the Oscillators for a Note called off before it starts (${how}): the Release runs on, one copy, with no step`, async () => {
+      let engine: ReturnType<typeof createSynthEngine> | undefined;
+      const s = await render(1, { ...sine, ampRelease: 1.5, voices: how.endsWith('2 Voices') ? 2 : 1 }, (e) => {
+        engine = e;
+        play(e);
+      });
+      expect(steepestStep(s, due - 0.02, due + 0.02)).toBeLessThan(1.1 * steepestStep(s, 0.4, 0.45));
+      // One copy: the sound's level falls as the model's does, where a second copy would add 40 % to it.
+      const peak = (from: number, to: number) => s.subarray(Math.round(from * SR), Math.round(to * SR)).reduce((m, v) => Math.max(m, Math.abs(v)), 0);
+      const level = (t: number) => engine!.modulationAt(t).amp;
+      expect(peak(due + 0.005, due + 0.03) / peak(due - 0.03, due - 0.005)).toBeLessThan((1.1 * level(due + 0.005)) / level(due - 0.03));
+    });
+
+  /**
+   * A4, let go just before 0.3 s, and E4 into its Release at 0.32 s: the Amp's gain, sample by sample from 0.31 s to
+   * 0.336 s (the Amp Tap over the Filter Tap, wherever the wave is not near zero), beside the model's. `live` changes
+   * the Gate at its moment, as the page does, rather than all ahead.
+   */
+  async function dipAtTheTaps(live: boolean) {
+    const quantum = 128 / SR; // where an offline context can suspend
+    const [off, on, end] = [112 * quantum, 120 * quantum, 126 * quantum];
+    const ctx = new OfflineAudioContext(1, SR * 0.5, SR);
+    const engine = createSynthEngine(ctx);
+    engine.applyPatch({ ...defaultPatch(), ...sine, resonance: 0, ampAttack: 0.005 });
+    engine.noteOn(69, 1, 0);
+    const changes = [() => engine.noteOff(off), () => engine.noteOn(64, 1, on)];
+    if (live) [off, on].forEach((t, i) => ctx.suspend(t).then(() => { changes[i](); void ctx.resume(); }));
+    else for (const change of changes) change();
+    const read = (a: AnalyserNode) => {
+      const s = new Float32Array(a.fftSize);
+      a.getFloatTimeDomainData(s);
+      return s;
+    };
+    const captured = ctx.suspend(end).then(() => {
+      const taps = { amp: read(engine.taps.amp), filter: read(engine.taps.filter) };
+      void ctx.resume();
+      return taps;
+    });
+    await ctx.startRendering();
+    const { amp, filter } = await captured;
+    const gains = [];
+    for (let i = 0; i < amp.length; i++) {
+      const time = end - (amp.length - i) / SR;
+      if (time >= 0.31 && Math.abs(filter[i]) > 0.05) gains.push({ time, sound: amp[i] / filter[i], model: engine.modulationAt(time).amp });
+    }
+    return { gains, engine, on };
+  }
+
+  it('dips in the model as in the sound: the Amp Envelope, sample by sample, through the dip and the next Attack (ADR-0003)', async () => {
+    const { gains, engine, on } = await dipAtTheTaps(false);
+    expect(gains.length).toBeGreaterThan(500);
+    for (const { time, sound, model } of gains) expect(sound, `at ${time}`).toBeCloseTo(model, 4);
+    const before = engine.modulationAt(on).amp;
+    expect(engine.modulationAt(on + DIP / 2).amp).toBeCloseTo(before / 2, 9); // a straight line…
+    expect(engine.modulationAt(on + DIP).amp).toBeCloseTo(0, 12); // …to silence, where the Note starts
+  });
+
+  it('starts the Attack from the dip’s silence without cancelAndHoldAtTime too (Firefox), played live', async () => {
+    const original = AudioParam.prototype.cancelAndHoldAtTime;
+    // @ts-expect-error: removed for this test, as in Firefox
+    delete AudioParam.prototype.cancelAndHoldAtTime;
+    try {
+      const { gains } = await dipAtTheTaps(true);
+      for (const { time, sound, model } of gains) expect(sound, `at ${time}`).toBeCloseTo(model, 2);
+    } finally {
+      AudioParam.prototype.cancelAndHoldAtTime = original;
+    }
+  });
+
+  it('starts a Note into silence when it is asked for, within a sample', async () => {
+    const asked = 0.4;
+    const s = await render(0.6, { ...sine, cutoff: 20000, ampAttack: 0.001, ampRelease: 0.02 }, (e) => {
+      e.noteOn(69, 1, 0);
+      e.noteOff(0.1); // faded long before the next
+      e.noteOn(69, 1, asked);
+    });
+    // The limiter's oversampling delays the whole output a little: count from where the first Note starts.
+    const onset = (from: number) => Math.round(from * SR) + s.subarray(Math.round(from * SR)).findIndex((v) => Math.abs(v) > 1e-4);
+    expect(Math.abs(onset(0.3) - onset(0) - asked * SR)).toBeLessThanOrEqual(1);
   });
 });

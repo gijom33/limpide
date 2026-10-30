@@ -141,6 +141,23 @@ A lawyer or compliance lead who reviews open-source projects before a company us
 - **Asks:** Is the licence clear, and does it cover the code, the docs and the Presets? Are the dependencies' licences compatible (a licence scan of the lockfile)? Who owns code written with an AI agent, and is that stated? Are third-party names (the Synido TempoPAD C16, Chrome, Safari) used fairly? Does the visit counter (GoatCounter) need a privacy note, and is the one in the README enough? Is there a contributor agreement, or does it need one?
 - **Success:** a list of risks, ranked, each with the file and the fix
 
+### 12 to 14. The ripple hunter, the fact-checker and the ear stand-in
+
+Claude's three reviewers, kept by the owner and first run on 1.16.0 (2026-10-30): the ripple hunter finds every test, tip, description and doc still stating what a change made untrue; the fact-checker renders each new or changed Preset and tip through the engine and tests every claim its words make; the ear stand-in renders each new Preset and reports levels, clicks, clipping, harshness and fold-back. Their briefs are the reports' own opening lines: [12](../reviews/2026-10-30/12-ripple-hunter.md), [13](../reviews/2026-10-30/13-fact-checker.md), [14](../reviews/2026-10-30/14-ear-stand-in.md).
+
+### 15. The sound designer and Preset curator
+
+A professional sound designer who has built factory Preset banks for commercial synths and curated libraries of hundreds of sounds. Added by the owner, 2026-10-30: "an expert at crafting synth presets, at organizing them, at creating a cohesive collection with a lot of variety, and highlight all the clever tricks which lead to amazing sounding sounds".
+
+- **Where:** the site (laptop, 1440 × 900, Chromium, a MIDI keyboard), every Preset played, plus the Preset list in the repository and offline renders through the engine (as the ear stand-in does) to check what the ear suggests. **Time:** 60 minutes
+- **Goals:** judge the Presets one by one and as a collection; say which are the best and why, which to cut or rework, and which sounds are missing
+- **Asks:**
+  - **Each Preset:** does it sound finished, playable across the keyboard, with sensible Velocity, Glide and Release? Is its name evocative and its description true and inviting?
+  - **The collection:** is it cohesive (a shared level, character and naming style) yet varied (every category covered, no near-duplicates)? Are the categories and their order right, and does the first Preset of each category sell it?
+  - **The tricks:** which settings make a Preset sound better than its knobs suggest (an LFO on Detune for width, FM kept small for bite, the Filter Envelope opening on Velocity, a Sub two octaves down, Ring a tritone away), and is each trick shown off by at least one Preset and explained where a learner meets it?
+  - **What is missing:** classic sounds every synth's factory bank has, and tricks Limpide's controls allow that no Preset uses yet
+- **Success:** a ranked list: Presets to rework (with the settings to change), Presets to add (with their settings), a reorganised category list if needed, and the ten best tricks, each with the Preset that shows it
+
 ## To do
 
 - [x] Choose the personas (owner, 2026-10-26: profiles 1 to 4 the owner's, 5 to 7 completing them)
@@ -149,3 +166,4 @@ A lawyer or compliance lead who reviews open-source projects before a company us
 - [x] The Learner's second run, once the tutorials are built (issue 40): 2026-10-27, [report](../reviews/2026-10-27/5-learner-teacher.md), findings in [59](./59-tutorials-after-review-5.md)
 - [x] The code review, since the first commit; the findings to the inbox. Done another way: the code-review skill runs over each minor version since 1.11.1, its findings to the inbox (2026-10-28)
 - [x] Profile 11's review (the open-source legal expert), 2026-10-26: a company could use or fork it today (MIT, the 3 shipped dependencies MIT, no copyleft among 108 dev dependencies, no third-party assets), once a fork adds the third-party notices and drops the counter; contributions should wait for a CONTRIBUTING (issue 56). Its findings in the inbox; AI authorship stated is issue 48
+- [x] Profile 15's review (the sound designer and Preset curator), added by the owner 2026-10-30, ran the same day on 1.16.0: [report](../reviews/2026-10-30/15-sound-designer.md), its findings to the inbox

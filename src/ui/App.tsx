@@ -3,7 +3,7 @@ import { type AudioSession, getAudioSession } from '../app/session';
 import { safeStorage } from '../app/storage';
 import { type AudioStatus, unlockAudio } from '../app/unlockAudio';
 import { rememberWelcome, welcomeFor } from '../app/welcome';
-import { shiftOctave } from '../input/keyboardLayout';
+import { DEFAULT_OCTAVE, shiftOctave, startingOctave } from '../input/keyboardLayout';
 import { type Formula, harmonicFormula, responseFormula } from '../music/maths';
 import { CHOICES, osc1Heard, osc2Heard, type ParamId, type Patch, setFilter, setParam, setWaveform, subNoiseHeard } from '../patch/patch';
 import { PRESETS } from '../patch/presets';
@@ -51,8 +51,6 @@ import { Wordmark } from './Wordmark';
 const LETTER_KEYS = 'limpide.letterKeys';
 const TOOLTIPS = 'limpide.tooltips';
 const BEND_RANGE = 'limpide.bendRange';
-/** The piano starts on C4, the octave the octave buttons count from. */
-const DEFAULT_OCTAVE = 4;
 /** Phones and the sections 2 × 2: the stylesheet's breakpoint, where the header's groups take rows of their own. */
 const STACKED_HEADER = '(max-width: 860px)';
 /** Why a greyed-out control does nothing now, for a screen reader (issue 104): what several controls share. */
@@ -130,9 +128,12 @@ export function App() {
   // Sound starts on the first key press, click or drag; there is no button to press first.
   useEffect(() => unlockAudio(session.ctx, window, setAudioStatus), [session]);
 
-  const [octave, setOctave] = useState(DEFAULT_OCTAVE);
+  const [octave, setOctave] = useState(() => startingOctave(patches.get().patch));
   const octaveRef = useRef(octave);
   octaveRef.current = octave;
+  // A Patch loaded starts the keyboard in its own octave, a bass on C2, or else on C4 (issue 125); the octave buttons
+  // move it after. The Demo and Listen then show their phrase's octave over it.
+  useEffect(() => patches.subscribe(({ after, by }) => by === 'load' && setOctave(startingOctave(after))), [patches]);
   const modulationContext = useMemo(() => ({ engine: session.engine, patch: () => patches.get().patch, octave: octaveRef }), [session, patches]);
   // The letter keys play Notes unless turned off in Display (issue 51); remembered.
   const [letterKeys, setLetterKeys] = useState(() => storage.getItem(LETTER_KEYS) !== 'off');

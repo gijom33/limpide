@@ -1,12 +1,12 @@
-import { type Adsr, type AutomationStep, envelopeSchedule, type GateEvent, levelAfter } from '../modulation/envelope';
-import { createLfoClock, glideFrequency, glideFrom, glideTimeConstant, type LfoWaveform, lfoShape } from '../modulation/lfo';
+import { type Adsr, type AutomationStep, DIP, envelopeSchedule, type GateEvent, levelAfter } from '../modulation/envelope';
+import { createLfoClock, glideFrequency, glideFrom, glideTimeConstant, LFO_START, type LfoWaveform, lfoShape } from '../modulation/lfo';
 import {
   destinationSwings, effectiveCutoff, effectiveResonance, effectiveVolume, KEY_TRACK_CENTRE, type Modulation, soundingPitch,
   VELOCITY_CUTOFF_OCTAVES,
 } from '../modulation/modulationModel';
 import { bandwidthOctaves } from '../modulation/passBand';
-import { harmonicSeries } from '../music/harmonics';
-import { FM_INDEX } from '../music/idealReference';
+import { harmonicSeries, type Waveform } from '../music/harmonics';
+import { FM_INDEX, fmDepthKept, playedTop } from '../music/idealReference';
 import { frequencyToNote, noteToFrequency } from '../music/pitch';
 import { GLIDE_OFF, type Lfo, type LfoNumber, lfos, type NoiseColour, PARAMS, type Patch, type SubWaveform, type Voices } from '../patch/patch';
 import { filterStages, type Stage } from './filterDesign';
@@ -33,7 +33,7 @@ export interface SynthEngine {
   pitchChange(note: number, at?: number): void;
   /** A keyboard's bend wheel: every Voice's pitch moves by `cents` from `at` on, until the next bend (issue 52). */
   setBend(cents: number, at?: number): void;
-  /** The Gate closes: every Voice releases. */
+  /** The Gate closes: every Voice releases, a Note handed over to start or end later included (issue 101). */
   noteOff(at?: number): void;
   /** Several Voices: the Voice playing `note` releases; the others keep sounding. */
   release(note: number, at?: number): void;
@@ -142,6 +142,15 @@ function pinkBuffer(ctx: BaseAudioContext, white: AudioBuffer): AudioBuffer {
 
 // Enough Harmonics to reach Nyquist from the lowest Notes; the browser band-limits per pitch.
 const WAVE_HARMONICS = 1024;
+// The Oscillators' waves cut short for Ring (issue 103) kept for the Notes to come: each holds many tables.
+const CUT_WAVES = 32;
+/**
+ * Each Voice's offset is taken out below this, by a second-order high-pass (issue 103): FM with Osc 2 on Osc 1's pitch
+ * puts a sideband at 0 Hz, and two in-tune waves through Ring their product's average. That offset holds from Note to
+ * Note, so the filter settles once per Patch; this low, it bends a 110 Hz saw's ramps by about 2 % in the Scope, where
+ * 5 Hz would bend them by 10 %.
+ */
+const DC_BLOCK = 1;
 // A Voice's own pitches, kept to tune its pulses through a Glide.
 const HISTORY = 64;
 // The Modulation model's history (Gate events, the newest Note's pitches, Patches in force) is kept by age, not
@@ -193,11 +202,14 @@ function createAnalyser(ctx: BaseAudioContext): AnalyserNode {
 }
 
 /**
- * The LFO Waveforms with corners, from their series as Web Audio defines its own oscillators, but not normalised:
- * normalising scales the series to its overshoot at the corners, so a square's plateaus would sit near ±0.85 and a
- * saw's ramp would fall short, while the Modulation model (and every Viewer) has them at exactly ±1 (ADR-0003).
+ * The LFO Waveforms as series of sines, as Web Audio defines its own oscillators, but not normalised: normalising
+ * scales the series to its overshoot at the corners, so a square's plateaus would sit near ±0.85 and a saw's ramp
+ * would fall short, while the Modulation model (and every Viewer) has them at exactly ±1 (ADR-0003). A sine and a
+ * triangle play as Web Audio's own unless a restart starts them part-way through their cycle (issue 124).
  */
-const LFO_SERIES: Record<'square' | 'saw' | 'sawDown', (n: number) => number> = {
+const LFO_SERIES: Record<LfoWaveform, (n: number) => number> = {
+  sine: (n) => (n === 1 ? 1 : 0),
+  triangle: (n) => (n % 2 ? (n % 4 === 1 ? 8 : -8) / (n * Math.PI) ** 2 : 0),
   square: (n) => (n % 2 ? 4 / (n * Math.PI) : 0),
   saw: (n) => (n % 2 ? 2 : -2) / (n * Math.PI),
   sawDown: (n) => (n % 2 ? -2 : 2) / (n * Math.PI),
@@ -212,9 +224,18 @@ const LFO_TERMS = 2048;
  */
 const sigma = (n: number) => Math.sin((Math.PI * n) / LFO_TERMS) / ((Math.PI * n) / LFO_TERMS);
 
-function lfoWave(ctx: BaseAudioContext, waveform: keyof typeof LFO_SERIES): PeriodicWave {
-  const real = new Float32Array(LFO_TERMS);
-  const imag = real.map((_, n) => (n ? LFO_SERIES[waveform](n) * sigma(n) : 0));
+/**
+ * An LFO Waveform whose cycle starts at phase `start` of the Modulation model's (`lfoShape`'s): an oscillator always
+ * starts at its wave's phase 0, so a retriggered one is given its wave turned to start there (issue 124). Each term
+ * sin(2πn(p + start)) is a sine and a cosine of 2πnp.
+ */
+function lfoWave(ctx: BaseAudioContext, waveform: LfoWaveform, start: number): PeriodicWave {
+  const [real, imag] = [new Float32Array(LFO_TERMS), new Float32Array(LFO_TERMS)];
+  for (let n = 1; n < LFO_TERMS; n++) {
+    const term = LFO_SERIES[waveform](n) * sigma(n);
+    real[n] = term * Math.sin(2 * Math.PI * n * start);
+    imag[n] = term * Math.cos(2 * Math.PI * n * start);
+  }
   return ctx.createPeriodicWave(real, imag, { disableNormalization: true });
 }
 
@@ -230,17 +251,75 @@ function lfoClamp(ctx: BaseAudioContext): WaveShaperNode {
   return clamp;
 }
 
-/** Set an LFO oscillator's Waveform: a sine or a triangle (whose series never overshoots) as Web Audio's own. */
-function setLfoWaveform(lfo: OscillatorNode, waveform: LfoWaveform, wave: (w: keyof typeof LFO_SERIES) => PeriodicWave) {
-  if (waveform === 'sine' || waveform === 'triangle') lfo.type = waveform;
-  else lfo.setPeriodicWave(wave(waveform));
+/**
+ * Set an LFO oscillator's Waveform, its cycle starting at phase `start` (where it was restarted, issue 124): a sine or
+ * a triangle (whose series never overshoots) starting at 0 as Web Audio's own.
+ */
+function setLfoWaveform(lfo: OscillatorNode, waveform: LfoWaveform, start: number, wave: (w: LfoWaveform, start: number) => PeriodicWave) {
+  if (start === 0 && (waveform === 'sine' || waveform === 'triangle')) lfo.type = waveform;
+  else lfo.setPeriodicWave(wave(waveform, start));
+}
+
+/** A stop for a node to play on: a stop called again replaces the last, and there is no way to take one back. */
+const NEVER = 1e9;
+
+/**
+ * The oscillators behind one that can start its cycle again (issue 94): an OscillatorNode cannot be reset, so at each
+ * restart a new one takes over. A restart handed over ahead of now leaves the node it replaces running until then;
+ * one earlier still stops every node at its own moment, so one node sounds at a time however restarts arrive (issue
+ * 101). An ended node is cut off by `cut`.
+ */
+function createTakeover(first: OscillatorNode, start: number, cut: (node: OscillatorNode) => void) {
+  // Each node not yet ended, and when it starts and stops.
+  const running = new Map<OscillatorNode, { start: number; stop: number }>();
+  const add = (node: OscillatorNode, at: number) => {
+    running.set(node, { start: at, stop: Infinity });
+    node.onended = () => {
+      running.delete(node);
+      cut(node);
+    };
+    node.start(at);
+  };
+  add(first, start);
+  let restartAt = -1;
+  return {
+    /** Every node not yet ended: a new wave or rate reaches each. */
+    nodes: () => running.keys(),
+    /** A node from `make` takes over at `t`; a second restart at the same moment is the same one (false). */
+    restart(t: number, make: () => OscillatorNode) {
+      if (t === restartAt) return false;
+      restartAt = t;
+      for (const [node, span] of running) {
+        if (span.stop <= t) continue;
+        node.stop(t); // one not yet started never sounds, and ends all the same
+        span.stop = t;
+      }
+      add(make(), t);
+      return true;
+    },
+    /**
+     * The restarts handed over for after `t` are called off (a Gate off before their Notes, issue 102): their nodes
+     * never sound, and the node sounding at `t` plays on, rather than restart inside the Release.
+     */
+    cancelAfter(t: number) {
+      for (const [node, span] of running) {
+        if (span.start > t) {
+          node.stop(t);
+          span.stop = t;
+        } else if (span.stop > t && span.stop !== Infinity) {
+          node.stop(NEVER);
+          span.stop = Infinity;
+        }
+      }
+      if (restartAt > t) restartAt = -1;
+    },
+  };
 }
 
 /**
- * An oscillator that can start its cycle again (issue 94). An OscillatorNode cannot be reset, so a new one takes over
- * at the moment, as a retriggered LFO's does. Everything that moves its pitch reaches it through two constant
- * sources that stay for the Voice's life, its frequency (Hz) and its detune (cents): each node, at 0 on both, only
- * adds them up, so a restart rewires nothing but the node itself.
+ * An oscillator that can start its cycle again (issue 94). Everything that moves its pitch reaches it through two
+ * constant sources that stay for the Voice's life, its frequency (Hz) and its detune (cents): each node, at 0 on
+ * both, only adds them up, so a restart rewires nothing but the node itself.
  */
 function createRestartable(ctx: BaseAudioContext, frequency: number, outputs: AudioNode[]) {
   const [hz, cents] = [ctx.createConstantSource(), ctx.createConstantSource()];
@@ -259,32 +338,28 @@ function createRestartable(ctx: BaseAudioContext, frequency: number, outputs: Au
     for (const o of outputs) node.connect(o);
     return node;
   };
-  let node = make();
-  node.start();
-  // A restart scheduled ahead of now leaves the old node playing until then: a new wave reaches it too.
-  let previous: OscillatorNode | null = null;
-  let restartAt = -1;
+  // An ended node is cut from what feeds it as well as from what it feeds (issue 101).
+  const takeover = createTakeover(make(), ctx.currentTime, (node) => {
+    hz.disconnect(node.frequency);
+    cents.disconnect(node.detune);
+    node.disconnect();
+  });
   return {
     frequency: hz.offset,
     detune: cents.offset,
     setWave(next: PeriodicWave) {
       wave = next;
-      for (const n of previous ? [node, previous] : [node]) n.setPeriodicWave(next);
+      for (const n of takeover.nodes()) n.setPeriodicWave(next);
     },
-    /** Start the cycle again at `t`; a second restart at the same moment is the same one. */
-    restart(t: number) {
-      if (t === restartAt) return;
-      restartAt = t;
-      const old = node;
-      node = make();
-      node.start(t);
-      old.stop(t);
-      old.onended = () => {
-        old.disconnect();
-        if (previous === old) previous = null;
-      };
-      previous = old;
+    /**
+     * Start the cycle again at `t`; a second restart at the same moment is the same one. A `next` wave is the new
+     * node's, and the wave from then on; the node it takes over from keeps its own until `t`.
+     */
+    restart(t: number, next?: PeriodicWave) {
+      if (next) wave = next;
+      takeover.restart(t, make);
     },
+    cancelAfter: takeover.cancelAfter,
   };
 }
 type Restartable = ReturnType<typeof createRestartable>;
@@ -337,6 +412,10 @@ function holdAt(param: AudioParam, t: number) {
 function play(param: AudioParam, steps: AutomationStep[], scale = 1) {
   for (const s of steps) {
     if (s.kind === 'cancelAndHold') holdAt(param, s.time);
+    else if (s.kind === 'cancelAndSet') {
+      param.cancelScheduledValues(s.time);
+      param.setValueAtTime(s.value * scale, s.time);
+    } else if (s.kind === 'linearRamp') param.linearRampToValueAtTime(s.target * scale, s.time);
     else param.setTargetAtTime(s.target * scale, s.time, s.timeConstant);
   }
 }
@@ -346,6 +425,8 @@ const filterAdsr = (p: Patch): Adsr => ({ attack: p.filterAttack, decay: p.filte
 
 // A released Voice counts as free again once its Release has run this many time constants.
 const RELEASE_TAIL = 6;
+// Below this level (−60 dB) a Voice counts as silent: a Note restarts its Oscillators at once, with no dip (issue 102).
+const SILENT = 0.001;
 const A4 = noteToFrequency(69);
 
 /**
@@ -357,11 +438,8 @@ const A4 = noteToFrequency(69);
  * bus is the LFO's clamp, holding it within ±1.
  */
 interface LfoNodes {
-  osc: OscillatorNode;
+  takeover: ReturnType<typeof createTakeover>;
   bus: WaveShaperNode;
-  /** The oscillator a restart is replacing, until it stops; and when the newest restart starts. */
-  previous: OscillatorNode | null;
-  restartAt: number;
   toCutoff: GainNode;
   toPitch: GainNode;
   toOsc2: GainNode;
@@ -369,7 +447,7 @@ interface LfoNodes {
   toVolume: GainNode;
 }
 
-/** What every Voice shares: the LFOs, the pitch bend, the noise loop, and where the Voices' outputs go. */
+/** What every Voice shares: the LFOs, the pitch bend, the noise loop, the Oscillators' waves, and where the Voices' outputs go. */
 interface Shared {
   lfos: [LfoNodes, LfoNodes];
   /** The pitch bend in cents, into every Oscillator's detune (the LFO on Pitch goes there too). */
@@ -377,6 +455,8 @@ interface Shared {
   /** The tremolo's resting gain, into every Voice's: 1 less the LFOs' total swing on Volume. */
   tremoloRest: ConstantSourceNode;
   noise: Record<NoiseColour, AudioBuffer>;
+  /** A Waveform's series up to its Harmonic `harmonics`, as a wave the Oscillators play. */
+  wave(waveform: Exclude<Waveform, 'pulse'>, harmonics: number): PeriodicWave;
   master: GainNode;
 }
 
@@ -386,8 +466,8 @@ interface Shared {
  * ever plays the first, exactly as the monophonic instrument did.
  */
 function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
-  // Sources → Mixer. Each source's Mixer level is scaled by the Nominal Level; the Mixer's output is the
-  // Oscillator Tap.
+  // Sources → Mixer. Each source's Mixer level is scaled by the Nominal Level; the Mixer's output, its offset taken
+  // out, is the Oscillator Tap.
   const oscillators = [createVoiceOscillator(ctx), createVoiceOscillator(ctx)];
   const [osc, osc2] = oscillators.map((v) => v.source);
   // Both colours of Noise run; the Patch's colour is the one let through.
@@ -440,6 +520,11 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   let subWaveform: SubWaveform = 'square';
   sub.setWave(subWaves.square);
   mixSub.connect(mixer);
+  const dcBlock = ctx.createBiquadFilter();
+  dcBlock.type = 'highpass';
+  dcBlock.frequency.value = DC_BLOCK;
+  dcBlock.Q.value = -3.01; // in dB: a flat Butterworth response
+  mixer.connect(dcBlock);
   // Two stages: the second is transparent at 12 dB and doubles the Slope at 24 dB (filterStages).
   const filter = ctx.createBiquadFilter();
   const filter2 = ctx.createBiquadFilter();
@@ -485,7 +570,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   keyTrackAmount.connect(filter2.detune);
   trackedNote.start();
 
-  mixer.connect(filter).connect(filter2).connect(amp).connect(tremoloGain).connect(shared.master);
+  dcBlock.connect(filter).connect(filter2).connect(amp).connect(tremoloGain).connect(shared.master);
   // Every Voice's noise starts at a different point of the loop, so a chord's noise is not one noise, louder.
   for (const n of noises) n.source.start(0, (index * NOISE_SECONDS) / MAX_VOICES);
 
@@ -516,11 +601,15 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
    * reaches its frequency, so the gain is divided by it, keeping the index the knob's.
    */
   const crossDepth = (frequency: number, fm = patch?.crossMod ?? 0) => (fm * FM_INDEX * frequency * ratios[1]) / ratios[0];
-  /** FM's gain, and each LFO's swing of it by its law (issue 97), on a Note of `frequency`: at once, or over a Glide. */
+  /**
+   * FM's gain, and each LFO's swing of it by its law (issue 97), on a Note of `frequency`: at once, or over a Glide.
+   * High up, all of them shrink together as far as keeps Osc 1's sidebands under the top (issue 103).
+   */
   const tuneCross = (frequency: number, t: number, timeConstant?: number) => {
     const swings = patch ? destinationSwings(patch, 'fm', patch.crossMod) : [0, 0];
+    const kept = patch ? fmDepthKept(patch, frequency * ratios[0], ctx.sampleRate) : 1;
     [cross, ...crossLfos].forEach((node, i) => {
-      const depth = crossDepth(frequency, i ? swings[i - 1] : undefined);
+      const depth = crossDepth(frequency, i ? swings[i - 1] : undefined) * kept;
       if (timeConstant) node.gain.setTargetAtTime(depth, t, timeConstant);
       else node.gain.setValueAtTime(depth, t);
     });
@@ -541,18 +630,38 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
     });
   };
 
+  /**
+   * How many Harmonics Osc 1 and Osc 2 play on a Note of `frequency`: all of them, but while Ring is up only those whose
+   * products with the other's stay under the top of what the browser plays, so Ring's sums do not fold back (issue
+   * 103). A Sine needs only its own pitch; two richer waves share the top evenly. Each keeps at least its first.
+   */
+  const harmonicsOn = (frequency: number): number[] => {
+    if (!patch?.mixRing) return [WAVE_HARMONICS, WAVE_HARMONICS];
+    const hz = ratios.map((r) => frequency * r);
+    const rich = [patch.waveform, patch.osc2Waveform].map((w) => w !== 'sine');
+    const top = playedTop(ctx.sampleRate);
+    const reach = (i: number) => (rich[i] ? Math.max(top / 2, hz[i]) : hz[i]);
+    return [0, 1].map((i) => (rich[i] ? Math.min(WAVE_HARMONICS, Math.max(1, Math.floor((top - reach(1 - i)) / hz[i]))) : WAVE_HARMONICS));
+  };
+  /** Osc `i`'s wave on a Note of `frequency`, if it is not the one it plays already. */
+  const nextWave = (i: number, frequency: number) => {
+    const waveform = (i ? patch?.osc2Waveform : patch?.waveform) ?? 'saw';
+    const series = waveform === 'pulse' ? 'saw' : waveform;
+    const harmonics = harmonicsOn(frequency)[i];
+    const key = `${series} ${harmonics}`;
+    if (waveKeys[i] === key) return undefined;
+    waveKeys[i] = key;
+    return shared.wave(series, harmonics);
+  };
+
   // Play exactly the Fourier series the Ideal Reference draws (normalisation is already in it). A pulse plays a
   // saw here, and becomes a pulse through the delayed, inverted copy.
   const sawPeak = harmonicSeries('saw', 0.5, WAVE_HARMONICS).magnitudes[1];
   const setWave = (i: number, waveform: Patch['waveform'], width: number, t: number) => {
     const o = oscillators[i];
     const pulse = waveform === 'pulse';
-    const key = pulse ? 'saw' : waveform;
-    if (waveKeys[i] !== key) {
-      waveKeys[i] = key;
-      const { real, imag } = harmonicSeries(pulse ? 'saw' : waveform, 0.5, WAVE_HARMONICS);
-      o.source.setWave(ctx.createPeriodicWave(real, imag, { disableNormalization: true }));
-    }
+    const wave = nextWave(i, frequencyAt(t));
+    if (wave) o.source.setWave(wave);
     pulseWidths[i] = width;
     // saw(t) − saw(t − d·T) has |Harmonic n| = 2·|sin(πnd)| × the saw's: scale it to the pulse series' level.
     const scale = pulse ? harmonicSeries('pulse', width, 256).magnitudes[1] / (2 * Math.sin(Math.PI * width) * sawPeak) : 1;
@@ -565,6 +674,8 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   const voice = {
     /** The Note this Voice is playing or releasing; null once it has faded. */
     note: null as number | null,
+    /** Its own Amp Envelope's Gate events, so a Note can tell whether it still sounds (issue 102). */
+    amps: [] as GateRecord[],
     startedAt: -Infinity,
     /** When its key went up, and when its Release will have faded, or null while the key is down. */
     releasedAt: null as number | null,
@@ -590,25 +701,37 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
       else trackedNote.offset.setValueAtTime(note - KEY_TRACK_CENTRE, t);
     },
 
-    /** Start Osc 1, Osc 2 and the Sub at the start of their cycles, together (issue 94): each Note sounds the same. */
-    restart(t: number) {
-      for (const o of [osc, osc2, sub]) o.restart(t);
+    /**
+     * Start Osc 1, Osc 2 and the Sub at the start of their cycles, together (issue 94): each Note sounds the same. Osc 1
+     * and Osc 2 start on their waves for the Note's `frequency` (issue 103).
+     */
+    restart(t: number, frequency: number) {
+      [osc, osc2].forEach((o, i) => o.restart(t, nextWave(i, frequency)));
+      sub.restart(t);
+    },
+    /** Call off their restarts after `t`, for a Note whose Gate closed before it started (issue 102). */
+    cancelRestarts(t: number) {
+      for (const o of [osc, osc2, sub]) o.cancelAfter(t);
     },
 
-    /** Play the model's Envelope schedules for a Gate change. */
-    gate(ampEvent: GateEvent, filterEvent: GateEvent, velocity: number) {
+    /**
+     * Play the model's Envelope schedules for a Gate change. After a dip the Attack carries on from its silence with no
+     * hold between: without cancelAndHoldAtTime (Firefox) a hold would bring back the level from before the dip.
+     */
+    gate(ampEvent: GateEvent, filterEvent: GateEvent, velocity: number, dip?: GateRecord) {
       if (ampEvent.on) noteVelocity.offset.setValueAtTime(velocity, ampEvent.time);
-      play(amp.gain, envelopeSchedule(ampEvent));
+      const attack = envelopeSchedule(ampEvent);
+      play(amp.gain, dip ? [...envelopeSchedule(dip, dip.start), ...attack.filter((s) => s.kind !== 'cancelAndHold')] : attack);
       play(filterEnvelope.offset, envelopeSchedule(filterEvent));
     },
 
     apply(next: Patch, t: number) {
       patch = next;
-      setWave(0, next.waveform, next.pulseWidth, t);
-      setWave(1, next.osc2Waveform, next.osc2PulseWidth, t);
       const osc2Tuning = next.osc2Octave * 1200 + next.osc2Semitone * 100 + next.osc2Detune;
       ratios[0] = 2 ** next.osc1Octave;
       ratios[1] = 2 ** (osc2Tuning / 1200);
+      setWave(0, next.waveform, next.pulseWidth, t);
+      setWave(1, next.osc2Waveform, next.osc2PulseWidth, t);
       tunePulses(frequencyAt(t), t);
       tuneCross(frequencyAt(t), t);
       // Osc 1's Octave moves it and the Sub; Osc 2's offsets count from the Note.
@@ -637,10 +760,10 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
 
     /** A Tap listens to this Voice's stage: a side branch, so observing never alters the sound. */
     attach(taps: Taps, tap: TapName) {
-      ({ oscillator: mixer, filter: filter2, amp: tremoloGain } as const)[tap].connect(taps[tap]);
+      ({ oscillator: dcBlock, filter: filter2, amp: tremoloGain } as const)[tap].connect(taps[tap]);
     },
     detach(taps: Taps, tap: TapName) {
-      ({ oscillator: mixer, filter: filter2, amp: tremoloGain } as const)[tap].disconnect(taps[tap]);
+      ({ oscillator: dcBlock, filter: filter2, amp: tremoloGain } as const)[tap].disconnect(taps[tap]);
     },
   };
   return voice;
@@ -689,7 +812,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       bus.connect(g);
       return g;
     });
-    return { osc, bus, previous: null, restartAt: -1, toCutoff, toPitch, toOsc2, toQ: [q1, q2], toVolume };
+    return { takeover: createTakeover(osc, ctx.currentTime, (node) => node.disconnect()), bus, toCutoff, toPitch, toOsc2, toQ: [q1, q2], toVolume };
   };
   const bend = ctx.createConstantSource();
   bend.offset.value = 0;
@@ -698,36 +821,54 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   tremoloRest.offset.value = 1;
   tremoloRest.start();
   const white = noiseBuffer(ctx);
-  const shared: Shared = { lfos: [lfoNodes(), lfoNodes()], bend, tremoloRest, noise: { white, pink: pinkBuffer(ctx, white) }, master };
+  // The Oscillators' waves, shared by every Voice; the most recently asked for are kept, as each Note may ask for its
+  // own while Ring is up (issue 103).
+  const oscillatorWaves = new Map<string, PeriodicWave>();
+  const oscillatorWave = (waveform: Exclude<Waveform, 'pulse'>, harmonics: number) => {
+    const key = `${waveform} ${harmonics}`;
+    let wave = oscillatorWaves.get(key);
+    if (wave) oscillatorWaves.delete(key);
+    else {
+      const { real, imag } = harmonicSeries(waveform, 0.5, WAVE_HARMONICS);
+      wave = ctx.createPeriodicWave(real.subarray(0, harmonics + 1), imag.subarray(0, harmonics + 1), { disableNormalization: true });
+    }
+    oscillatorWaves.set(key, wave);
+    if (oscillatorWaves.size > CUT_WAVES) oscillatorWaves.delete(oscillatorWaves.keys().next().value as string);
+    return wave;
+  };
+  const shared: Shared = {
+    lfos: [lfoNodes(), lfoNodes()], bend, tremoloRest, noise: { white, pink: pinkBuffer(ctx, white) }, wave: oscillatorWave, master,
+  };
   const voices = Array.from({ length: MAX_VOICES }, (_, i) => createVoice(ctx, shared, i));
-  const waves = new Map<keyof typeof LFO_SERIES, PeriodicWave>();
-  const wave = (w: keyof typeof LFO_SERIES) => waves.get(w) ?? waves.set(w, lfoWave(ctx, w)).get(w)!;
+  const waves = new Map<string, PeriodicWave>();
+  const wave = (w: LfoWaveform, start: number) => {
+    const key = `${w} ${start}`;
+    return waves.get(key) ?? waves.set(key, lfoWave(ctx, w, start)).get(key)!;
+  };
+  // Where each LFO oscillator's cycle started, as a phase of its Waveform: a retriggered one's at its Waveform's
+  // start then (`LFO_START`), kept through any later change of Waveform, as the model's clock keeps it (issue 124).
+  const lfoStarts = new WeakMap<OscillatorNode, number>();
+  const setLfoWave = (node: OscillatorNode, waveform: LfoWaveform) => setLfoWaveform(node, waveform, lfoStarts.get(node) ?? 0, wave);
   const lfoStart = ctx.currentTime;
-  for (const l of shared.lfos) l.osc.start(lfoStart);
   // The model's copy of each LFO's phase, advanced with every Rate change exactly as its oscillator is (ADR-0003).
   const lfoClocks = [createLfoClock(lfoStart, PARAMS.lfoRate.default), createLfoClock(lfoStart, PARAMS.lfo2Rate.default)];
   /**
-   * A retriggering LFO starts its cycle again at `t`: a new oscillator takes over from the running one there (an
-   * oscillator cannot be reset), and the model's clock restarts with it. A chord's Notes restart it once.
+   * A retriggering LFO starts its cycle again at `t`, where its Waveform classically starts (issue 124): a new
+   * oscillator takes over from the running one there (an oscillator cannot be reset), and the model's clock restarts
+   * with it, at the same phase. A chord's Notes restart it once.
    */
   const restartLfo = (i: number, l: Lfo, t: number) => {
     const nodes = shared.lfos[i];
-    if (nodes.restartAt === t) return;
-    const next = ctx.createOscillator();
-    setLfoWaveform(next, l.waveform, wave);
-    next.frequency.value = l.rate;
-    next.connect(nodes.bus);
-    next.start(t);
-    const old = nodes.osc;
-    old.stop(t);
-    old.onended = () => {
-      old.disconnect();
-      if (nodes.previous === old) nodes.previous = null;
-    };
-    nodes.previous = old;
-    nodes.osc = next;
-    nodes.restartAt = t;
-    lfoClocks[i].restart(t);
+    const start = LFO_START[l.waveform];
+    const restarted = nodes.takeover.restart(t, () => {
+      const next = ctx.createOscillator();
+      lfoStarts.set(next, start);
+      setLfoWave(next, l.waveform);
+      next.frequency.value = l.rate;
+      next.connect(nodes.bus);
+      return next;
+    });
+    if (restarted) lfoClocks[i].restart(t, start);
   };
   /** Both LFOs' values at `t`, under the Patch then in force. */
   const lfoValues = (then: Patch, t: number): [number, number] => {
@@ -775,26 +916,38 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     const previous = events[events.length - 2];
     if (previous) entry.start = levelAfter(previous, previous.start, entry.time);
     trim(events, e.time);
+    return entry;
   };
   const levelAt = (events: readonly GateRecord[], t: number) => {
     const i = lastAt(events, t);
     return i < 0 ? 0 : levelAfter(events[i], events[i].start, t);
   };
-  /** A Gate change on a Voice; recorded in the model's history when it is the newest Note's. */
-  const gate = (voice: Voice, on: boolean, t: number, velocity: number) => {
+  /**
+   * A Gate change on a Voice, recorded in its own history, and in the model's when it is the newest Note's. A Gate on
+   * after a dip from `dipFrom` (issue 102) records the dip first, as the Amp Envelope plays it.
+   */
+  const gate = (voice: Voice, on: boolean, t: number, velocity: number, dipFrom?: number) => {
     if (!patch) return;
     const ampEvent: GateEvent = { time: t, on, adsr: ampAdsr(patch), peak: velocity };
     const filterEvent: GateEvent = { time: t, on, adsr: filterAdsr(patch), peak: 1 };
+    const dipEvent: GateEvent | undefined = dipFrom === undefined ? undefined : { time: dipFrom, on: false, adsr: ampAdsr(patch), peak: 0, dip: true };
+    // The sound dips from the Voice's own level; the model's history from its newest Note's.
+    const dip = dipEvent && record(voice.amps, dipEvent);
+    if (dipEvent && voice === lead) record(ampEvents, dipEvent);
+    record(voice.amps, ampEvent);
     if (voice === lead) {
       record(ampEvents, ampEvent);
       record(filterEvents, filterEvent);
     }
-    voice.gate(ampEvent, filterEvent, velocity);
+    voice.gate(ampEvent, filterEvent, velocity, dip);
     if (on) {
       voice.startedAt = t;
       voice.releasedAt = null;
       voice.freeAt = Infinity;
     } else {
+      // A Gate off before its Note has started (one handed over, then stopped; a key let go within the dip) calls off
+      // the Note's restart of the Oscillators, which would come inside the Release (issue 102).
+      if (voice.startedAt > t) voice.cancelRestarts(t);
       voice.releasedAt = t;
       voice.freeAt = t + patch.ampRelease * RELEASE_TAIL;
     }
@@ -953,9 +1106,9 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       tremoloRest.offset.setValueAtTime(next.volume - volumeSwings[0] - volumeSwings[1], t);
       lfos(next).forEach((l, i) => {
         const nodes = shared.lfos[i];
-        // A restart scheduled ahead of now leaves the old oscillator running until then: it follows too.
-        for (const osc of nodes.previous ? [nodes.osc, nodes.previous] : [nodes.osc]) {
-          setLfoWaveform(osc, l.waveform, wave);
+        // A restart handed over ahead of now leaves the old oscillator running until then: it follows too.
+        for (const osc of nodes.takeover.nodes()) {
+          setLfoWave(osc, l.waveform);
           osc.frequency.setValueAtTime(l.rate, t);
         }
         nodes.toCutoff.gain.setValueAtTime(cutoffCents[i], t);
@@ -975,17 +1128,22 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     },
 
     noteOn(note, velocity, time) {
-      const t = at(time);
-      if (patch) lfos(patch).forEach((l, i) => l.retrigger === 'note' && restartLfo(i, l, t));
-      const voice = allocate(note, t);
+      const asked = at(time);
+      const voice = allocate(note, asked);
       // A legato Note, one Voice pressed on while its Note still sounds held, slides on from it: restarting the
       // Oscillators there would click mid-sound (issue 94, decision 2).
       const legato = voiceCount() === 1 && voice.note !== null && voice.releasedAt === null;
-      if (!legato) voice.restart(t);
-      voice.note = note;
       follow(voice);
+      // Any other Note restarts them. On a Voice still sounding (in its Release, or taken while held) it dips to silence
+      // first, so the restart does not click, and the Note starts after the dip, the same way every time (issue 102).
+      // Its history holds the Notes handed over ahead of the clock, so one of those dips as it will sound.
+      const dipFrom = !legato && levelAt(voice.amps, asked) > SILENT ? asked : undefined;
+      const t = dipFrom === undefined ? asked : asked + DIP;
+      if (patch) lfos(patch).forEach((l, i) => l.retrigger === 'note' && restartLfo(i, l, t));
+      if (!legato) voice.restart(t, noteToFrequency(note));
+      voice.note = note;
       setLeadPitch(voice, note, t);
-      gate(voice, true, t, velocity);
+      gate(voice, true, t, velocity, dipFrom);
     },
 
     pitchChange(note, time) {
@@ -1002,9 +1160,10 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
 
     noteOff(time) {
       const t = at(time);
-      // The newest Note first, so the model records its Gate off; the others just release.
+      // The newest Note first, so the model records its Gate off; the others just release. A Note a player handed
+      // over has its release recorded already, later than `t`: it closes at `t` too (issue 101).
       for (const v of [...voices].sort((a, b) => (a === lead ? -1 : b === lead ? 1 : 0))) {
-        if (v.note !== null && v.releasedAt === null) gate(v, false, t, 0);
+        if (v.note !== null && (v.releasedAt === null || v.releasedAt > t)) gate(v, false, t, 0);
       }
       // One Voice never allocates, so its Gate off must count whether or not a Note was recorded for it.
       if (voiceCount() === 1 && (voices[0].note === null || voices[0].releasedAt !== t)) gate(voices[0], false, t, 0);

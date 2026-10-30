@@ -11,7 +11,7 @@ The complete set of parameter values that defines one sound.
 _Avoid_: Preset (when you mean the user's sound), program, settings
 
 **Preset**:
-A read-only Patch shipped with the app, built to show off one idea, in groups (Shapes, Filter, Bass, Pads…). The Patch panel offers the groups as its categories, beside All, the Tutorials and My Patches (issue 69).
+A read-only Patch shipped with the app, built to show off one idea, in groups (Shapes, Filter, Bass, Pads…). The Patch panel offers the groups as its categories, beside All, the Tutorials and My Patches (issue 69). The lessons come first, then the sounds by family (issue 125). A Preset may start the keyboard in its own octave when loaded, the Basses on C2; the octave buttons move it after, and a saved Patch or a Share link keeps it.
 _Avoid_: Factory patch, template
 
 **Share link**:
@@ -67,7 +67,7 @@ Osc 1 multiplied by Osc 2, a source in the Mixer of its own (Ring Modulation): i
 _Avoid_: Ring mod (fine in UI copy), AM
 
 **FM**:
-How far Osc 2 swings Osc 1's frequency at audio rate (linear frequency modulation, or cross-modulation), whatever Osc 2's own Mixer level: new partials appear either side of Osc 1's Harmonics.
+How far Osc 2 swings Osc 1's frequency at audio rate (linear frequency modulation, or cross-modulation), whatever Osc 2's own Mixer level: new partials appear either side of Osc 1's Harmonics. High up, it is held back as far as keeps them under the top of what the browser plays.
 _Avoid_: Cross Mod (fine in a tooltip), FM amount
 
 **Mixer**:
@@ -119,7 +119,7 @@ A slow, repeating modulation source; there are two, each moving one Destination:
 _Avoid_: Modulator, wobble, LFO amount (say Depth)
 
 **Retrigger**:
-An LFO setting: on, the LFO starts its cycle again at every Note (each Note gets the same wobble from its start); off, it runs freely and each Note catches it wherever it is. Off by default.
+An LFO setting: on, the LFO starts its cycle again at every Note, where its Waveform classically starts: a Saw at its foot, a Saw Down at its top, a Square on its upper half, a Sine and a Triangle at the centre rising (each Note gets the same wobble from its start); off, it runs freely and each Note catches it wherever it is. Off by default.
 _Avoid_: Key sync (fine in a tooltip), reset, phase reset
 
 **Glide**:
@@ -135,6 +135,10 @@ _Avoid_: Key, trigger
 **Gate**:
 The on/off state of a Voice. On while its Note is held (or Hold is on), off otherwise.
 _Avoid_: Trigger, key down
+
+**Dip**:
+What a Note does to a Voice still sounding (in its Release, or taken while held) before it starts: 3 ms in a straight line down to silence, then the Oscillators restart and the Note starts, 3 ms late, so it starts the same way as a Note into silence, without a click (issue 102). A Note into silence, or a legato one, has none.
+_Avoid_: Declick, fade (fine in a tooltip)
 
 **Note Priority**:
 With one Voice, the rule picking which held Note sounds: last-note priority, so the newest held Note wins, and releasing it returns to the previous one. With more Voices, every held Note sounds, and a Note beyond the last free Voice takes the oldest one.

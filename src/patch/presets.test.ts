@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { memoryStorage } from '../test/memoryStorage';
 import { createLibrary } from './library';
-import { defaultPatch, setParam } from './patch';
+import { CHOICES, defaultPatch, PARAMS, type ParamId, type Patch, setParam } from './patch';
 import { initialPatch, PRESET_GROUPS, PRESETS, stepPreset } from './presets';
 import { patchToShare, sanitizePatch, shareHash } from './serialize';
+import { valueToPosition } from './taper';
 
 describe('Presets', () => {
   it('start from a clean Init, then offer plenty of sounds, grouped so they can be found', () => {
@@ -44,6 +45,64 @@ describe('Presets', () => {
     expect(new Set(PRESETS.map((p) => JSON.stringify(p.patch))).size).toBe(PRESETS.length);
   });
 
+  // Review 15's families (issue 125, decision 1): the lessons as they were, then the sounds by what they are, not by
+  // how many Notes they play.
+  it('sit in the families of issue 125: the lessons, then the sounds', () => {
+    expect(PRESET_GROUPS).toEqual([
+      'Start', 'Shapes', 'Intervals', 'Filter', 'Envelope', 'LFO',
+      'Bass', 'Leads', 'Keys & Organs', 'Pianos', 'Plucks & Mallets', 'Pads', 'Strings, Brass & Choir', 'Drums', 'Movement & Effects',
+    ]);
+    const family = (name: string) => PRESETS.find((p) => p.name === name)?.group;
+    expect(['Organ', 'House Organ', 'Cathedral', 'Electric Piano', 'Rave Stab'].map(family)).toEqual(Array(5).fill('Keys & Organs'));
+    expect(['Toy Piano', 'Marimba', 'Vibes', 'Glass Keys', 'FM Bell', 'Poly Pluck', 'Pick Pluck'].map(family)).toEqual(Array(7).fill('Plucks & Mallets'));
+    expect(['PWM Strings', 'Strings', 'Brass Swell', 'Brass Section', 'Choir'].map(family)).toEqual(Array(5).fill('Strings, Brass & Choir'));
+    // Pluck keeps one Voice for its Tutorial, so it sits with the lessons, beside Pluck Shape.
+    expect(family('Pluck')).toBe('Envelope');
+    expect(PRESETS.find((p) => p.group === 'Movement & Effects')!.name).toBe('Laser');
+    // Gone: the near-copies of decision 2.
+    for (const name of ['Chord Organ', 'Poly Keys', 'Bell Chords', 'Chord Pad', 'Out of Tune']) expect(family(name), name).toBeUndefined();
+    // Added: review 15's ten.
+    const added = ['Riser', 'Phase Pad', 'Flute', 'House Organ', 'Sub Drop', 'Rave Stab', 'PWM Bass', 'Pick Pluck', 'Ride', 'Analog Drift Lead'];
+    expect(added.map(family)).toEqual(['Movement & Effects', 'Pads', 'Leads', 'Keys & Organs', 'Movement & Effects', 'Keys & Organs', 'Bass', 'Plucks & Mallets', 'Drums', 'Leads']);
+  });
+
+  it('say so when they play on eight Voices (issue 125)', () => {
+    for (const p of PRESETS.filter((p) => p.patch.voices === 8)) expect(p.about, p.name).toMatch(/eight Voices/);
+  });
+
+  it('start the keyboard on C2 for every Bass, and leave it on C4 for the rest (issue 125)', () => {
+    for (const p of PRESETS) expect(p.patch.keyboardOctave, p.name).toBe(p.group === 'Bass' ? 2 : undefined);
+  });
+
+  /**
+   * How far apart two Patches are (review 15's distance): each Parameter's difference as a share of its control's
+   * travel, added up, and 1 for each choice that differs. Volume is left out: it levels a sound, it does not make another.
+   */
+  const distance = (a: Patch, b: Patch) => {
+    const params = (Object.keys(PARAMS) as ParamId[]).filter((id) => id !== 'volume');
+    const travel = params.reduce((sum, id) => sum + Math.abs(valueToPosition(PARAMS[id], a[id]) - valueToPosition(PARAMS[id], b[id])), 0);
+    return travel + (Object.keys(CHOICES) as (keyof typeof CHOICES)[]).filter((k) => a[k] !== b[k]).length;
+  };
+  /** Pairs closer than that on purpose: lessons that change one control to compare. */
+  const ALIKE: Record<string, string> = {
+    'Slow Vibrato ~ Fast Vibrato': 'the same vibrato at 2 and 8 Hz: the LFO lesson',
+    'Perfect Fifth ~ Major Third': 'the same two sines a fifth, then a third, apart: the Intervals lesson',
+    'Major Third ~ Slow Beats': 'the same two sines a third, then 4 cents, apart: the Intervals lesson',
+  };
+  it('are no near-copies: every two at least 0.3 apart, unless named with why (review 15)', () => {
+    const close: string[] = [];
+    for (const [i, a] of PRESETS.entries())
+      for (const b of PRESETS.slice(i + 1)) {
+        const pair = `${a.name} ~ ${b.name}`;
+        if (distance(a.patch, b.patch) < 0.3 && !ALIKE[pair]) close.push(`${pair} ${distance(a.patch, b.patch).toFixed(2)}`);
+      }
+    expect(close).toEqual([]);
+    for (const pair of Object.keys(ALIKE)) {
+      const [a, b] = pair.split(' ~ ').map((name) => PRESETS.find((p) => p.name === name)!.patch);
+      expect(distance(a, b), pair).toBeLessThan(0.3);
+    }
+  });
+
   it('are all valid Patches, with nothing clamped or replaced', () => {
     for (const preset of PRESETS) expect(sanitizePatch(preset.patch), preset.name).toEqual(preset.patch);
   });
@@ -54,9 +113,8 @@ describe('Presets', () => {
 
   // Issue 53: a chord on a Pad played one Note. Sounds made to be played as chords have Voices for them; a drone,
   // a pluck and the teaching Presets stay on one Voice.
-  it('give chords their Voices: every Pad (but the drone), Piano and key', () => {
-    const keys = ['Harp', 'Clav', 'Organ', 'Electric Piano', 'Marimba', 'Glass Keys'];
-    const chordal = PRESETS.filter((p) => (p.group === 'Pads' && p.name !== 'Dark Drone') || p.group === 'Pianos' || keys.includes(p.name));
+  it('give chords their Voices: every Pad (but the drone), Piano, key and mallet', () => {
+    const chordal = PRESETS.filter((p) => (p.group === 'Pads' && p.name !== 'Dark Drone') || ['Pianos', 'Keys & Organs', 'Plucks & Mallets'].includes(p.group));
     expect(chordal.length).toBeGreaterThan(15);
     for (const p of chordal) expect(p.patch.voices, p.name).toBeGreaterThan(1);
   });
@@ -93,7 +151,7 @@ describe('tremolo (issue 60)', () => {
   it('Tremolo Keys and Trance Gate aim an LFO at Volume: a gentle sine, and a full-Depth Square that chops the pad', () => {
     const keys = PRESETS.find((p) => p.name === 'Tremolo Keys')!;
     const gate = PRESETS.find((p) => p.name === 'Trance Gate')!;
-    expect(keys.group).toBe('Keys & Plucks');
+    expect(keys.group).toBe('Keys & Organs');
     expect(keys.patch).toMatchObject({ lfoDestination: 'volume', lfoWaveform: 'sine' });
     expect(keys.patch.voices).toBeGreaterThan(1);
     expect(gate.group).toBe('Pads');

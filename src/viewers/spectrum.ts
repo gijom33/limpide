@@ -97,7 +97,6 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
 
   return function draw() {
     const { overlays, viewer } = view();
-    const ideal = frozenIdeal(viewer.frozen, () => view().ideal);
     if (!viewer.frozen) {
       analyser.getFloatFrequencyData(bins);
     }
@@ -140,6 +139,7 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
     const scaleOverlapsLabels = overlays.curve && response && yOf(zero) - 2 - DB_LABEL_HEIGHT < MARKER_LABEL_ROW;
     const labelsEndAt = scaleOverlapsLabels ? width - g.measureText('−48 dB').width - 3 - MIN_LABEL_GAP / 2 : Infinity;
     const f0 = frozenFundamental(viewer.frozen, fundamental);
+    const ideal = frozenIdeal(viewer.frozen, () => view().ideal?.(f0, sampleRate));
     const markers = harmonicMarkers(f0, {
       // A tick on every Harmonic; a label on each of the first seven, and no further (the owner, 2026-10-26).
       maxFrequency, xOf, minLabelGap: g.measureText('8').width + 1, labelsEndAt,

@@ -30,6 +30,12 @@ describe('sanitizePatch: anything from outside becomes a valid Patch', () => {
     expect([patch.cutoff, patch.waveform, patch.filterSlope, patch.lfoDestination, patch.resonance]).toEqual([d.cutoff, d.waveform, d.filterSlope, d.lfoDestination, d.resonance]);
   });
 
+  it('keeps the keyboard octave a Patch starts in, and drops one the keyboard cannot reach (issue 125)', () => {
+    expect(sanitizePatch({ keyboardOctave: 2 })).toEqual({ ...defaultPatch(), keyboardOctave: 2 });
+    for (const keyboardOctave of [9, 1.5, 'low']) expect(sanitizePatch({ keyboardOctave })).toEqual(defaultPatch());
+    expect(sanitizePatch({ cutoff: 500 })).not.toHaveProperty('keyboardOctave'); // a Patch from before has none
+  });
+
   it('copes with something that is not an object at all', () => {
     expect(sanitizePatch(null)).toEqual(defaultPatch());
     expect(sanitizePatch('hello')).toEqual(defaultPatch());
@@ -64,6 +70,12 @@ describe('JSON files', () => {
 describe('share links', () => {
   it('round-trips a Patch', () => {
     expect(patchFromShare(patchToShare(custom()))).toEqual(custom());
+  });
+
+  it('carries the keyboard octave a Patch starts in, as a file does (issue 125)', () => {
+    const bass = { ...custom(), keyboardOctave: 2 };
+    expect(patchFromShare(patchToShare(bass))).toEqual(bass);
+    expect(patchFromJSON(patchToJSON(bass))).toEqual(bass);
   });
 
   it('only carries what differs from the defaults, so links stay short', () => {
