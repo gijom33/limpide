@@ -6,6 +6,7 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- 2026-10-29, the owner: "Why doesn't the FM mode show more ideal marks?"; told the Ideal keeps plain Osc 1 under FM (issue 89), and how the sidebands could be drawn: "Draw FM sidebands"
 - 2026-10-29, the owner, asked what to do with the Timeline's thin flat lines (each moved knob's own setting): "Remove them"
 
 ## Dropped
