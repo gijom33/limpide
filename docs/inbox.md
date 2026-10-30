@@ -4,14 +4,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
-- From the 1.16.0 review: Osc 2's pulse width and FM's depth are sized for Osc 2's knobs, not where Env Amount takes its pitch, so a 25 % pulse swept up 24 semitones goes silent at the Envelope's peak and FM's index falls as Osc 2 rises; the Ideal places Osc 2 (its squares, the Ring diamonds, the whole-octave FM marks) without the Amount × Sustain it rests at. No Preset uses a pulse on Osc 2 with Env Amount.
-- From the 1.16.0 review: a knob moved during a Glide sets FM's depth (and the pulses' delays, since before) for the mid-slide pitch, cutting the slide short, so the index is off until the next Note.
-- From the 1.16.0 review: the Demo card's segments are as narrow as 4 px for a short part, under the 24 px (laptop) and 44 px (phone) targets, with no waiver; the design audit never opens the card.
-
 ## Ideas
 
-- From the 1.16.0 review, code tidy-ups: no test compares the sound with the Modulation model for an LFO on FM or the Filter Envelope on Osc 2 (ADR-0003); Osc 2's cents worked out in three places, `osc2Cents`'s Envelope term reached only by a test; FM named `crossMod`, `cross`, `crossDepth` where the glossary says avoid Cross Mod; `FM_INDEX` in the Ideal's module, not with its Parameter; the Ideal's comment still says Osc 1 and the Sub only; Ring's and FM's partials, Knob's and Fader's release handling, and the Demo bar's CSS each written twice; the Ideal's sources listed by hand in the Spectrum; `ratios`; a style selecting on an accessible name.
-- From the 1.16.0 review, two changes no spec asked for: Ring joins the Quick Setup's Mixer step, and the Filter Envelope's faders stay lit while Env Amount is set though Osc 2 is not heard.
 - 2026-10-30, Claude's recommendation for reviews next time, which the owner asked to keep: A ripple-hunter agent, run on a change before the full suite: it finds every test, tip, Preset description and glossary line still stating the old fact (a count, a list's order, a line no longer drawn). Issue 97's run took 22 minutes to find five tests still expecting seven LFO targets.
 - 2026-10-30, Claude's recommendation for reviews next time, which the owner asked to keep: A fact-checker agent for Preset descriptions and tips: it renders each new or changed Preset through the engine offline and tests every claim its words make ("FM from 0 to 60 % every four seconds").
 - 2026-10-30, Claude's recommendation for reviews next time, which the owner asked to keep: An ear stand-in agent: it renders each new Preset on a few Notes and reports clipping (the limiter stepping in), near-silence, a click at a Note's start, a level far from its neighbours, harshness, before the owner listens.
@@ -34,6 +28,7 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Dropped
 
+- 2026-10-30, from the 1.16.0 review, two changes no spec asked for: Ring in the Quick Setup's Mixer step, and the Filter Envelope's faders lit while Env Amount is set though Osc 2 is not heard. Kept: the Mixer step shows every level the Mixer has, and the faders say what Env Amount uses. Claude's call, open to the owner.
 - 2026-10-29, the owner's idea, a double-click bringing the Osc 1 fader to zero: withdrawn by the owner ("that was a bad idea indeed") once told that a double-click resets every knob and fader to its default, Osc 1's being 100 %. See [`.out-of-scope/double-click-to-zero.md`](../.out-of-scope/double-click-to-zero.md).
 - 2026-10-29, from the 1.15.1 review, the piano's width written twice in the styles for 1200 to 1919 px, and the header's bare 2 px and 4 px gaps: kept. One shared width would carry the top row's 4 px gaps into every layout's keyboard, and the gaps are used once each, beside the rules they space. Claude's call, open to the owner.
 - 2026-10-28, from the issue 69 review, the category pills beside the search box on a computer where decision 7 says under it: nothing to build, decided by the owner; decision 7 is amended to match what is built (and decision 13, which assumed it).
@@ -131,3 +126,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-29, the owner's Demo card asks, done at once, decided by the owner: each part is a segment as wide as it is long, the parts played full, the playing one filling over its length, each still a button that plays on from its part; on a phone the segments take a row of their own under the name and the buttons. The docked cards (the Demo's and a Tutorial's) are framed by a hairline and the panel's shadow instead of the accent's orange line. Test in `e2e/demo.spec.ts`.
 2026-10-29, the owner's question on more LFO targets (grilled, decided by the owner): FM went to [97](./issues/97-fm-as-an-lfo-target.md), the only target added for now.
 2026-10-30, the owner's ask for more striking FM Presets went to [97](./issues/97-fm-as-an-lfo-target.md), done there: five more, each a different LFO motion on FM. The brainstorm's ideas stay in Ideas, untriaged at the owner's word.
+2026-10-30, the 1.16.0 review's other findings (triage, Claude's call, open to the owner): what follows Osc 2's pitch under its Envelope or a Glide went to [98](./issues/98-osc2-pitch-moved-by-its-envelope.md), with questions for the owner; the Demo card's segments as targets to [99](./issues/99-demo-segments-as-targets.md); the code tidy-ups to [100](./issues/100-code-tidy-ups-after-1-16.md); two unasked changes to Dropped. The legato restart it found is fixed for 1.16.0.
