@@ -23,7 +23,7 @@ test('the header shows the Limpide logo and wordmark, and the tab and home scree
 });
 
 for (const width of [861, 872, 884, 900, 920, 1000, 1100, 1440, 1710, 1920]) {
-  test(`the Limpide name is on screen, over the Patch picker in three across (issue 82) and on the header line wider, at ${width}px`, async ({ page }) => {
+  test(`the Limpide name is on screen, the Patch picker beside it on the header line (the owner, 2026-10-29), at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/');
     const title = page.getByRole('heading', { level: 1, name: 'Limpide' });
@@ -38,11 +38,10 @@ for (const width of [861, 872, 884, 900, 920, 1000, 1100, 1440, 1710, 1920]) {
     expect(text.right).toBeLessThanOrEqual(header.right);
     expect(display.right).toBeLessThanOrEqual(header.right + 1); // the Display button stays inside the window
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-    if (width < 1920) {
-      // Three across: the name over the Patch picker, so the piano can sit at the centre (issue 82, the owner, 2026-10-29).
-      expect(text.bottom).toBeLessThanOrEqual(patch.top + 1);
-      expect(text.top).toBeGreaterThanOrEqual(header.top - 1);
-    } else expect(Math.abs(text.top + text.height / 2 - (display.top + display.height / 2))).toBeLessThanOrEqual(8); // one line
+    // The Patch picker beside the name, never under it (the owner, 2026-10-29: "very bad").
+    expect(text.right).toBeLessThanOrEqual(patch.left);
+    expect(Math.abs(text.top + text.height / 2 - (patch.top + patch.height / 2))).toBeLessThanOrEqual(8);
+    expect(text.top).toBeGreaterThanOrEqual(header.top - 1);
   });
 }
 

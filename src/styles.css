@@ -87,9 +87,9 @@ body { margin: 0; background: var(--bg); color: var(--text); -webkit-user-select
 input, textarea { -webkit-user-select: text; user-select: text; }
 /* Grows with the screen up to where lines of controls stop being comfortable to scan. */
 main { max-width: 1920px; margin: 0 auto; padding: var(--space-4); }
-/* Laptop and wide windows: one row in the header's one order (issue 44). The Wordmark, the Patch and the playing
-   buttons (Demo, Tutorial, Song) on the left, the keyboard in the centre, set-up (Hold, MIDI, Display, About) on the
-   right; in three across the Wordmark sits over the Patch and Song under Demo and Tutorial (issue 82). The side columns
+/* Laptop and wide windows: one row in the header's one order (issue 44). The Wordmark and the Patch on the left, the
+   keyboard in the centre, set-up (Hold, MIDI, Display, About) and the playing buttons (Demo, Tutorial, Song) on the
+   right, in two rows up to 1919 px, set-up on top (the owner, 2026-10-29: the Patch beside the logo, never under it). The side columns
    are never narrower than what they hold and share the rest equally, so the keyboard sits centred when there is room;
    its column takes what they leave, up to the piano at full size. The Display panel is anchored to the
    header (not its button), so it can always use, and never exceed, the window's width. */
@@ -98,7 +98,7 @@ header {
   align-items: center; gap: var(--space-4);
 }
 .header-left, .header-identity { display: flex; align-items: center; gap: var(--space-4); min-width: 0; }
-.header-play { margin-left: auto; display: flex; align-items: center; gap: var(--space-2); }
+.header-play, .header-set { display: flex; align-items: center; gap: var(--space-2); }
 .header-right { justify-self: end; display: flex; align-items: center; gap: var(--space-2); }
 /* Hold wears its icon like the buttons around it; the words give way first where room is short. */
 header .tool-glyph { display: block; }
@@ -880,10 +880,13 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .patch-bar > .tool { flex: none; }
 .patch-name { width: 150px; justify-content: center; gap: 6px; }
 /* Bold, with its ▾ (the owner's option A), a factory name needs more room in wider fonts: 172 px from 1200 px up. */
-@media (min-width: 1200px) { .patch-name { width: 172px; } }
+@media (min-width: 1280px) { .patch-name { width: 172px; } }
+/* Where the buttons right of the keyboard show their words in two rows (1100 to 1279 px), the Patch name as wide as
+   leaves the two sides alike, so the piano stays at the centre. */
+@media (min-width: 1100px) and (max-width: 1279px) { .patch-name { width: 134px; } }
 /* Narrow windows (one-row header, down to 861 px): a shorter fixed width, so the Display button keeps its place on
    the right; long Preset names show an ellipsis. */
-@media (max-width: 959px) { .patch-name { width: 104px; } }
+@media (max-width: 1099px) { .patch-name { width: 104px; } }
 @media (max-width: 879px) { .patch-name { width: 86px; } }
 .patch-name span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 /* The dot sits at the button's right, out of the flow, so the centred name never slides when it appears (issue 47); the
@@ -959,22 +962,25 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
    left the piano 2 px short of its 44 px keys at 1440 (the 1.12.2 deploy). Measured with Verdana, wider still. */
 @media (min-width: 1300px) {
   header, .header-left, .header-identity { column-gap: 8px; }
-  .header-play, .header-right { gap: 6px; }
+  .header-play, .header-set, .header-right { gap: 6px; }
   header :is(.demo-button, [aria-label='Hold'], .midi-status, .display-menu > .tip-anchor > .tool, .about-menu .tool) { padding: 0 6px; }
 }
-@media (min-width: 861px) and (max-width: 1299px) {
+/* From 1100 px the buttons right of the keyboard, two rows high, keep their words: about as wide as the logo and the
+   Patch on the left, so the piano stays at the centre (the owner, 2026-10-29). */
+@media (min-width: 861px) and (max-width: 1099px) {
   header :is(.demo-word, .tool-word) { display: none; }
   header :is(.demo-button, [aria-label='Hold'], .midi-status, .display-menu > .tip-anchor > .tool, .about-menu .tool) { padding: 0 6px; }
 }
 @media (min-width: 861px) and (max-width: 919px) {
   header, .header-left, .header-identity { column-gap: var(--space-2); }
 }
-/* Three across, the piano at the page's centre (issue 82, the owner: "stack buttons in the top row… we could recenter
-   the keyboard"): the logo sits over the Patch picker, so the side left of the piano is no wider than the right. */
+/* Three across (issue 82, the owner: "stack buttons in the top row… we could recenter the keyboard"): the buttons right
+   of the keyboard in two rows, two high as the octave buttons are, set-up over Demo, Tutorial and Song, so the Patch
+   picker can sit beside the logo (the owner, 2026-10-29). */
 @media (min-width: 861px) and (max-width: 1919px) {
-  .header-identity { flex-direction: column; align-items: flex-start; row-gap: 2px; }
-  /* And Demo and Tutorial over Song, two high as the octave buttons are. */
-  .header-play { display: grid; grid-template-columns: repeat(2, max-content); gap: 4px 6px; }
+  /* Two rows of 25 px and their 2 px gap: 52 px, the piano's least height, so the header is never taller than it. */
+  .header-right { flex-direction: column; align-items: flex-end; row-gap: 2px; }
+  .header-right .tool { height: 25px; min-height: 0; }
 }
 /* From 1200 px, where the sides leave the piano its full size, the keyboard balances its octave buttons with an empty
    column as wide on the other side, so the piano itself, not the keyboard, is at the centre (issue 82). Below, that
@@ -1172,8 +1178,9 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   :root[data-header-collapsed] { --header-hidden: var(--header-hide, 0px); }
   .header-left { display: contents; }
   .header-identity { grid-area: identity; gap: var(--space-3); }
-  .header-play { grid-area: play; margin-left: 0; gap: var(--space-1); }
-  .header-right { grid-area: set; gap: var(--space-1); }
+  .header-right { display: contents; }
+  .header-play { grid-area: play; gap: var(--space-1); }
+  .header-set { grid-area: set; gap: var(--space-1); }
   .keyboard { grid-area: keys; }
   /* The Patch name takes the room beside the logo. */
   .patch-bar { flex: 1 1 auto; }
@@ -1321,7 +1328,9 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 }
 /* The Demo's card (issue 50): the sound's name, a dot per part, Stop; under them, what to hear and see. */
 .demo-bar-top { display: flex; align-items: center; gap: var(--space-3); }
-.demo-bar-name { font-weight: 600; font-size: var(--card-text); }
+/* A fixed width, so the dots after it never move as the parts' names change (the owner, 2026-10-29); a longer name ends
+   in an ellipsis (the tooltip-less card names each dot's part to screen readers). */
+.demo-bar-name { font-weight: 600; font-size: var(--card-text); flex: 0 0 clamp(5.5em, 24vw, 9em); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .demo-bar-parts { flex: 1 1 auto; display: flex; min-width: 0; }
 /* Each dot a button as tall as a finger, its 8 px dot drawn inside; narrower on a small card, never under the dot. */
 .demo-bar-parts > button { flex: 0 1 14px; min-width: 9px; height: 24px; padding: 0; border: 0; background: none; cursor: pointer; display: grid; place-items: center; border-radius: 4px; }

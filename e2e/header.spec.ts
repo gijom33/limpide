@@ -1,7 +1,7 @@
 import { expect, type Page, test } from '@playwright/test';
 
-// Issue 44: one header across the layouts. The same order at every width (the Wordmark and the Patch; Demo, Tutorial, Song;
-// the keyboard; Hold, MIDI, Display, About), the octave buttons stacked beside the piano, and from 601 px up the
+// Issue 44: one header across the layouts. The same order at every width (the Wordmark and the Patch; the keyboard; Hold,
+// MIDI, Display, About; Demo, Tutorial, Song: the owner, 2026-10-29), the octave buttons stacked beside the piano, and from 601 px up the
 // piano's 17 keys at a finger's width where there is room. In the sections 2 × 2 the header stays at the top and
 // slides its first row away, as on a phone.
 
@@ -34,24 +34,26 @@ async function header(page: Page) {
 }
 
 for (const [size, [width, height]] of Object.entries(SIZES)) {
-  test(`one order at ${width}×${height} (${size}): Demo, Tutorial, Song, then Hold, MIDI, Display, About; the octave buttons stacked left of the piano`, async ({ page }) => {
+  test(`one order at ${width}×${height} (${size}): Hold, MIDI, Display, About, then Demo, Tutorial, Song; the octave buttons stacked left of the piano`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await page.goto('/');
     const h = await header(page);
     expect(h.demo.right).toBeLessThanOrEqual(h.tutorial.left);
-    // In three across, Song sits under Demo, two high (issue 82, the owner, 2026-10-29); elsewhere after Tutorial.
-    if (size === 'laptop') expect(h.song.top).toBeGreaterThanOrEqual(h.demo.bottom);
-    else expect(h.tutorial.right).toBeLessThanOrEqual(h.song.left);
-    expect(Math.max(h.song.right, h.tutorial.right)).toBeLessThanOrEqual(h.hold.left);
+    expect(h.tutorial.right).toBeLessThanOrEqual(h.song.left);
     expect(h.hold.right).toBeLessThanOrEqual(h.midi.left);
     expect(h.midi.right).toBeLessThanOrEqual(h.display.left);
     expect(h.display.right).toBeLessThanOrEqual(h.about.left);
     expect(h.up.bottom).toBeLessThanOrEqual(h.down.top + 1);
     expect(h.up.right).toBeLessThanOrEqual(h.piano.left);
-    if (size === 'laptop' || size === 'wide') {
-      // One row: the keyboard between the playing and the set-up buttons, Hold first on the right (the owner, 2026-10-27).
-      expect(h.song.right).toBeLessThanOrEqual(h.up.left);
+    if (size === 'laptop') {
+      // Right of the keyboard, two rows: set-up over Demo, Tutorial and Song, so the Patch sits beside the logo (the owner,
+      // 2026-10-29), Hold first on the right (the owner, 2026-10-27).
+      expect(h.piano.right).toBeLessThanOrEqual(Math.min(h.hold.left, h.demo.left));
+      expect(h.demo.top).toBeGreaterThanOrEqual(h.about.bottom);
+    } else if (size === 'wide') {
+      // One row right of the keyboard: Hold first, then the rest of set-up, then Demo, Tutorial and Song.
       expect(h.piano.right).toBeLessThanOrEqual(h.hold.left);
+      expect(h.about.right).toBeLessThanOrEqual(h.demo.left);
       for (const b of [h.demo, h.about]) expect(b.top).toBeGreaterThanOrEqual(h.piano.top);
     } else {
       // The buttons on a row of their own, the keyboard under them.

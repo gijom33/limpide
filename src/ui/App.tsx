@@ -224,8 +224,8 @@ export function App() {
         ) : (
           <LearnBar state={midi.learn} />
         )}
-        {/* One order at every width (issue 44): the Wordmark and the Patch, playing and learning (Demo, Tutorial, Song), the
-            keyboard, then Hold and set-up (Hold, MIDI, Display, About). Each layout places these groups; none reorders them. */}
+        {/* One order at every width (issue 44): the Wordmark and the Patch, the keyboard, then playing and learning (Demo,
+            Tutorial, Song) and set-up (Hold, MIDI, Display, About). Each layout places these groups; none reorders them. */}
         <header>
           <div className="header-left">
             <div className="header-identity">
@@ -239,21 +239,6 @@ export function App() {
                 tutorials={tutorialList}
                 onTutorial={startTutorial}
               />
-            </div>
-            <div className="header-play" role="group" aria-label="Play">
-              <Tooltip content={TIPS.demo}>
-                <button type="button" className="tool tool-mode demo-button" aria-label="Demo" aria-pressed={players.demo !== null} data-demo onClick={players.toggleDemo}>
-                  <PlayIcon />
-                  <span className="demo-word">Demo</span>
-                </button>
-              </Tooltip>
-              <TutorialMenu tutorials={tutorialList} onStart={startTutorial} />
-              <Tooltip content={TIPS.song}>
-                <button type="button" className="tool tool-mode demo-button" aria-label="Song" aria-pressed={players.song} data-demo onClick={players.toggleSong}>
-                  <NoteIcon />
-                  <span className="demo-word">Song</span>
-                </button>
-              </Tooltip>
             </div>
           </div>
           {/* Up before down, as they stand on screen, so Tab meets them in that order (issue 47). */}
@@ -269,100 +254,119 @@ export function App() {
             </Tooltip>
           </div>
           <div className="header-right">
-            {/* Hold first on the right (the owner, 2026-10-27), the Tutorial taking its place on the left: the two sides
-                stay about as wide, so the piano keeps the header's centre. */}
-            <Tooltip content={TIPS.hold}>
-              <button
-                type="button"
-                className="tool"
-                aria-pressed={hold}
-                data-learn="action:hold"
-                data-mapped={learnContext.mapped.has('action:hold') || undefined}
-                data-learn-selected={learnContext.selected === 'action:hold' || undefined}
-                aria-label="Hold"
-                onClick={pressHold}
-              >
-                <HoldIcon />
-                <span className="tool-word">Hold</span>
-              </button>
-            </Tooltip>
-            <MidiPanel
-              state={midi.midi}
-              onOpen={midi.connect}
-              activity={midi.activity}
-              mappings={midi.mappings}
-              learning={learning}
-              onLearn={() => midi.surface.startLearn()}
-              onDone={() => (midi.setup ? midi.updateSetup({ type: 'finish' }) : midi.surface.stopLearn())}
-              onQuickSetup={() => midi.updateSetup({ type: 'start' })}
-              onC16Layout={midi.applyC16Layout}
-              onRemove={(control) => midi.mappingStore.remove(control)}
-              onClear={() => midi.mappingStore.clear()}
-              bendRange={bendRange}
-              onBendRange={setBendRange}
-            />
-            <DisplayMenu active={viewer.frozen || viewer.snapshot !== null}>
-              <section className="toolbar" aria-label="Viewer controls">
-                <div className="toolbar-groups">
-                  <ToolGroup title="View">
-                    <ViewActions state={viewer} dispatch={viewerStore.dispatch} />
-                  </ToolGroup>
-                  <ToolGroup title="Axes">
-                    <AxesControls settings={settings} dispatch={viewerStore.dispatch} />
-                  </ToolGroup>
-                  <ToolGroup title="Show">
-                    <OverlayToggles value={overlays} onToggle={(overlay) => viewerStore.dispatch({ type: 'toggleOverlay', overlay })} />
-                  </ToolGroup>
-                  <ToolGroup title="Keys">
-                    <Tooltip content={TIPS.letterKeys}>
-                      <Segmented
-                        label="Letter keys"
-                        value={letterKeys ? 'on' : 'off'}
-                        options={[
-                          { value: 'on', label: 'Play', name: 'Letter keys play Notes' },
-                          { value: 'off', label: 'Off', name: 'Letter keys off' },
-                        ]}
-                        onChange={(v) => setLetterKeys(v === 'on')}
-                      />
-                    </Tooltip>
-                  </ToolGroup>
-                  <ToolGroup title="Tips">
-                    <Tooltip content={TIPS.tooltips}>
-                      <Segmented
-                        label="Tooltips"
-                        value={tooltips ? 'on' : 'off'}
-                        options={[
-                          { value: 'on', label: 'On' },
-                          { value: 'off', label: 'Off' },
-                        ]}
-                        onChange={(v) => setTooltips(v === 'on')}
-                      />
-                    </Tooltip>
-                  </ToolGroup>
-                  <ToolGroup title="Theme">
-                    <Tooltip content={TIPS.theme}>
-                      <Segmented
-                        label="Theme"
-                        value={theme}
-                        options={[
-                          { value: 'dark', label: 'Dark' },
-                          { value: 'light', label: 'Light' },
-                        ]}
-                        onChange={(v) => setTheme(v as Theme)}
-                      />
-                    </Tooltip>
-                  </ToolGroup>
-                </div>
-              </section>
-            </DisplayMenu>
-            <div className="about-menu">
-              <Tooltip content={TIPS.about}>
-                <button type="button" className="tool" aria-label="About" aria-haspopup="dialog" onClick={() => setAbout(true)}>
-                  <InfoIcon />
-                  <span className="tool-word">About</span>
+            {/* Set-up, then playing and learning: right of the keyboard (the owner, 2026-10-29), so the Patch picker sits
+                beside the logo; set-up first, so Hold stays first on the right (the owner, 2026-10-27). Up to 1919 px
+                they take two rows, set-up on top; on phones each group has a row place of its own. */}
+            <div className="header-set">
+              {/* Hold first among the set-up buttons (the owner, 2026-10-27). */}
+              <Tooltip content={TIPS.hold}>
+                <button
+                  type="button"
+                  className="tool"
+                  aria-pressed={hold}
+                  data-learn="action:hold"
+                  data-mapped={learnContext.mapped.has('action:hold') || undefined}
+                  data-learn-selected={learnContext.selected === 'action:hold' || undefined}
+                  aria-label="Hold"
+                  onClick={pressHold}
+                >
+                  <HoldIcon />
+                  <span className="tool-word">Hold</span>
                 </button>
               </Tooltip>
+              <MidiPanel
+                state={midi.midi}
+                onOpen={midi.connect}
+                activity={midi.activity}
+                mappings={midi.mappings}
+                learning={learning}
+                onLearn={() => midi.surface.startLearn()}
+                onDone={() => (midi.setup ? midi.updateSetup({ type: 'finish' }) : midi.surface.stopLearn())}
+                onQuickSetup={() => midi.updateSetup({ type: 'start' })}
+                onC16Layout={midi.applyC16Layout}
+                onRemove={(control) => midi.mappingStore.remove(control)}
+                onClear={() => midi.mappingStore.clear()}
+                bendRange={bendRange}
+                onBendRange={setBendRange}
+              />
+              <DisplayMenu active={viewer.frozen || viewer.snapshot !== null}>
+                <section className="toolbar" aria-label="Viewer controls">
+                  <div className="toolbar-groups">
+                    <ToolGroup title="View">
+                      <ViewActions state={viewer} dispatch={viewerStore.dispatch} />
+                    </ToolGroup>
+                    <ToolGroup title="Axes">
+                      <AxesControls settings={settings} dispatch={viewerStore.dispatch} />
+                    </ToolGroup>
+                    <ToolGroup title="Show">
+                      <OverlayToggles value={overlays} onToggle={(overlay) => viewerStore.dispatch({ type: 'toggleOverlay', overlay })} />
+                    </ToolGroup>
+                    <ToolGroup title="Keys">
+                      <Tooltip content={TIPS.letterKeys}>
+                        <Segmented
+                          label="Letter keys"
+                          value={letterKeys ? 'on' : 'off'}
+                          options={[
+                            { value: 'on', label: 'Play', name: 'Letter keys play Notes' },
+                            { value: 'off', label: 'Off', name: 'Letter keys off' },
+                          ]}
+                          onChange={(v) => setLetterKeys(v === 'on')}
+                        />
+                      </Tooltip>
+                    </ToolGroup>
+                    <ToolGroup title="Tips">
+                      <Tooltip content={TIPS.tooltips}>
+                        <Segmented
+                          label="Tooltips"
+                          value={tooltips ? 'on' : 'off'}
+                          options={[
+                            { value: 'on', label: 'On' },
+                            { value: 'off', label: 'Off' },
+                          ]}
+                          onChange={(v) => setTooltips(v === 'on')}
+                        />
+                      </Tooltip>
+                    </ToolGroup>
+                    <ToolGroup title="Theme">
+                      <Tooltip content={TIPS.theme}>
+                        <Segmented
+                          label="Theme"
+                          value={theme}
+                          options={[
+                            { value: 'dark', label: 'Dark' },
+                            { value: 'light', label: 'Light' },
+                          ]}
+                          onChange={(v) => setTheme(v as Theme)}
+                        />
+                      </Tooltip>
+                    </ToolGroup>
+                  </div>
+                </section>
+              </DisplayMenu>
+              <div className="about-menu">
+                <Tooltip content={TIPS.about}>
+                  <button type="button" className="tool" aria-label="About" aria-haspopup="dialog" onClick={() => setAbout(true)}>
+                    <InfoIcon />
+                    <span className="tool-word">About</span>
+                  </button>
+                </Tooltip>
+              </div>
             </div>
+              <div className="header-play" role="group" aria-label="Play">
+                <Tooltip content={TIPS.demo}>
+                  <button type="button" className="tool tool-mode demo-button" aria-label="Demo" aria-pressed={players.demo !== null} data-demo onClick={players.toggleDemo}>
+                    <PlayIcon />
+                    <span className="demo-word">Demo</span>
+                  </button>
+                </Tooltip>
+                <TutorialMenu tutorials={tutorialList} onStart={startTutorial} />
+                <Tooltip content={TIPS.song}>
+                  <button type="button" className="tool tool-mode demo-button" aria-label="Song" aria-pressed={players.song} data-demo onClick={players.toggleSong}>
+                    <NoteIcon />
+                    <span className="demo-word">Song</span>
+                  </button>
+                </Tooltip>
+              </div>
           </div>
         </header>
         <SectionStrip follow={players.demo === null ? midi.bankFollow : players.follow} />

@@ -135,12 +135,14 @@ for (const width of [1200, 1280, 1366, 1440, 1600, 1800, 1900]) {
     expect(headerHeight).toBeLessThanOrEqual(64);
   });
 }
+// Below 1100 px the Patch picker beside the logo (the owner, 2026-10-29) makes the left side wider than the icons on the
+// right, and their words would take the piano's keys under 26 px: it keeps its size, up to 100 px right of the centre.
 for (const width of [861, 880, 1000, 1100]) {
   test(`the piano keeps its size and comes nearer the centre where centring would shrink it (${width}px, issue 82)`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/');
     const { offset, headerHeight } = await pianoPlace(page);
-    expect(Math.abs(offset)).toBeLessThanOrEqual(80);
+    expect(Math.abs(offset)).toBeLessThanOrEqual(100);
     expect(headerHeight).toBeLessThanOrEqual(64);
   });
 }

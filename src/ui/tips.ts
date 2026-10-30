@@ -89,7 +89,7 @@ export const TIPS = {
   },
   demo: {
     title: 'Demo',
-    body: 'A track of about three minutes, played by Limpide alone: a kick, an acid line, an arpeggio, strings, tremolo keys, a riser, a wobble bass, the wobble doubled by a second LFO, an FM bass, a sweeping pad, an organ three octaves wide, a gliding, singing lead, FM bells, the arpeggio again and brass stabs, a Preset each, knobs turning as it builds and drops; then it returns to Init and stops. The page follows the knob being turned; the piano shows the Notes.',
+    body: 'A track of about three minutes, played by Limpide alone: a kick, an acid line, an arpeggio, strings, tremolo keys, a riser, a wobble bass, the wobble doubled by a second LFO, a wide octave bass, a sweeping pad, an organ three octaves wide, FM bells, a gliding, singing lead, the arpeggio again and brass stabs, a Preset each, knobs turning as it builds and drops; then it returns to Init and stops. The page follows the knob being turned; the piano shows the Notes.',
     how: 'Turn a knob or flip a switch while it plays and hear the change; the Demo leaves a knob you turned alone until its next Preset. Scroll yourself and the page stops following until then. Press any key, play a Note, or touch any other control to take over; the Demo stops at once. It never changes the Display settings.',
   },
   song: {
