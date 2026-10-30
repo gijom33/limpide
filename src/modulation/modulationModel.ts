@@ -56,6 +56,8 @@ export const LFO_LAWS = {
   detune: { perDepth: 50, knobs: ['osc2Detune'] },
   /** 40 points each way, on both Oscillators' Pulse Width, never past the narrowest or widest pulse. */
   pulseWidth: { perDepth: 0.4, room: (width: number) => Math.min(width - MIN_PULSE, MAX_PULSE - width), knobs: ['pulseWidth', 'osc2PulseWidth'] },
+  /** Its whole range (0–1), as far as the FM knob leaves room each way: none at 0 (issue 97). */
+  fm: { perDepth: 1, room: (fm: number) => Math.min(fm, 1 - fm), knobs: ['crossMod'] },
   /** Two octaves each way. */
   cutoff: { perDepth: 2, knobs: ['cutoff'] },
   /** Its whole range (0–1), as far as the knob's value leaves room each way. */

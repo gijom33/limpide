@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement
+**Status:** done (2026-10-30). Either LFO aims at FM, after Pulse Width, swinging it as Resonance is swung; the FM knob rings, the Timeline draws it, the Ideal stays on the knob; six Presets show it (Breathing Bell, then five more striking ones the owner asked for). Not yet heard by the owner.
 
 ## Agent Brief
 
@@ -32,12 +32,12 @@
 - The Presets
 
 **Acceptance criteria:**
-- [ ] FM is listed after Pulse Width, and the arrows step to it and past it
-- [ ] Unit: at FM 50 % and full Depth the swing reaches 0 and 100 %; at FM 0 it is 0; at FM 80 % it stops at 100 %
-- [ ] Engine test: with LFO 1 on FM, a sideband's level rises and falls with the LFO (absent at the trough when it reaches 0)
-- [ ] The FM knob draws the LFO's ring and dot; the Timeline shows FM in its key
-- [ ] The Ideal's marks stay put while the LFO swings FM
-- [ ] The new Preset loads, plays and shows the swing; every existing test passes
+- [x] FM is listed after Pulse Width, and the arrows step to it and past it
+- [x] Unit: at FM 50 % and full Depth the swing reaches 0 and 100 %; at FM 0 it is 0; at FM 80 % it stops at 100 %
+- [x] Engine test: with LFO 1 on FM, a sideband's level rises and falls with the LFO (absent at the trough when it reaches 0)
+- [x] The FM knob draws the LFO's ring and dot; the Timeline shows FM in its key
+- [x] The Ideal's marks stay put while the LFO swings FM
+- [x] The new Preset loads, plays and shows the swing; every existing test passes
 
 **Out of scope:**
 - Any other new Destination (a Mixer level, one LFO moving the other: the PRD keeps out a modulation matrix)
@@ -51,3 +51,18 @@
 3. The Ideal stays on the knob's FM, as with Pulse Width.
 4. Named FM, after Pulse Width, in the Oscillators' colour.
 5. One Preset to show it; the Demo unchanged. Its name and sound: Claude's call, open to the owner.
+6. Added after the build (the inbox, 2026-10-30): "Can we had more presets, more strinking ones?" Five more, each a different LFO motion on FM: decided by the owner; which sounds, Claude's call, open to the owner.
+
+## How it was built
+
+- **The list and the law:** FM in `LFO_DESTINATIONS` (`src/patch/patch.ts`), its law in `LFO_LAWS` (`src/modulation/modulationModel.ts`), the same room rule as Resonance's on the `crossMod` knob, so the rings, the dot, the Timeline and its key follow from them. Unit tests in `src/modulation/destinations.test.ts` and `src/patch/patch.test.ts`.
+- **The engine** (`src/engine/synthEngine.ts`): each Voice routes both LFOs into FM's gain through a gain of its own, set to the law's swing times the index times Osc 2's frequency, as FM's own gain is, and following Glide with it. Test in `src/engine/synthEngine.browser.test.ts`: at FM 25 % and full Depth the 2nd Harmonic's sideband is above −15 dB at the LFO's peak and below −45 dB at its trough; it fails without the engine change.
+- **The Ideal** is computed from the Patch alone, so it stays on the knob's FM with no change.
+- **The FM knob's ring and the Timeline:** `e2e/modulationRing.spec.ts`.
+- **The Presets** (`src/patch/presets.ts`), each a different motion of an LFO on FM:
+  - Breathing Bell (LFO): a slow sine, FM swung from 0 to 60 % every four seconds.
+  - FM Growl (Bass): a retriggered triangle at 3 Hz, two sines in tune and a sine Sub, FM from 0 to 100 %.
+  - Zap Pluck (Keys & Plucks): a retriggered falling saw, each strike starting at full FM and melting to a sine.
+  - Glass Shimmer (Pads): a slow triangle on FM, LFO 2 drifting the modulator's Detune.
+  - Clang Alarm and Machine Chatter (Movement & Effects): a square hopping between a sine and a clang; both LFOs on FM, a slow sine under a fast square.
+  The Preset test now asks for an LFO on FM; the Patch search tests count Breathing Bell among the bells, and the Pulse Width ring test picks the Pulse Width knob out of Osc 1's group, which FM shares.

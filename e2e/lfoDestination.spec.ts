@@ -1,23 +1,23 @@
 import { expect, type Page, test } from '@playwright/test';
 
-// Each LFO's destination is picked like a Patch (issue 26): ‹ and › step through the seven (Volume since issue 53),
+// Each LFO's destination is picked like a Patch (issue 26): ‹ and › step through the eight (Volume since issue 53, FM since 97),
 // and the name in the middle opens a menu of them all, grouped by stage.
 
 const lfo = (page: Page, n: 1 | 2) => page.getByRole('group', { name: `LFO ${n}`, exact: true });
 const name = (page: Page, n: 1 | 2) => lfo(page, n).getByRole('button', { name: /Destination:/ });
 
-test('‹ and › step through the seven destinations, wrapping round', async ({ page }) => {
+test('‹ and › step through the eight destinations, wrapping round', async ({ page }) => {
   await page.goto('/');
   await expect(name(page, 1)).toHaveAccessibleName('LFO 1 Destination: Cutoff');
   const next = lfo(page, 1).getByRole('button', { name: 'Next destination' });
   const seen: string[] = [];
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < 8; i++) {
     await next.click();
     seen.push(((await name(page, 1).getAttribute('aria-label')) ?? '').replace('LFO 1 Destination: ', ''));
   }
-  expect(seen).toEqual(['Resonance', 'Volume', 'Pitch', 'Osc 2 Pitch', 'Detune', 'Pulse Width', 'Cutoff']);
+  expect(seen).toEqual(['Resonance', 'Volume', 'Pitch', 'Osc 2 Pitch', 'Detune', 'Pulse Width', 'FM', 'Cutoff']);
   await lfo(page, 1).getByRole('button', { name: 'Previous destination' }).click();
-  await expect(name(page, 1)).toHaveAccessibleName('LFO 1 Destination: Pulse Width');
+  await expect(name(page, 1)).toHaveAccessibleName('LFO 1 Destination: FM');
 });
 
 test('the name opens a menu of every destination, grouped by stage; picking one closes it', async ({ page }) => {
@@ -25,7 +25,7 @@ test('the name opens a menu of every destination, grouped by stage; picking one 
   await name(page, 2).click();
   const menu = lfo(page, 2).getByRole('menu');
   await expect(menu).toBeVisible();
-  await expect(menu.getByRole('group', { name: 'Oscillators' }).getByRole('menuitemradio')).toHaveText(['Pitch', 'Osc 2 Pitch', 'Detune', 'Pulse Width']);
+  await expect(menu.getByRole('group', { name: 'Oscillators' }).getByRole('menuitemradio')).toHaveText(['Pitch', 'Osc 2 Pitch', 'Detune', 'Pulse Width', 'FM']);
   await expect(menu.getByRole('group', { name: 'Filter' }).getByRole('menuitemradio')).toHaveText(['Cutoff', 'Resonance']);
   await expect(menu.getByRole('group', { name: 'Amp' }).getByRole('menuitemradio')).toHaveText(['Volume']);
   await expect(menu.getByRole('menuitemradio', { name: 'Pitch', exact: true })).toHaveAttribute('aria-checked', 'true'); // LFO 2 starts on Pitch

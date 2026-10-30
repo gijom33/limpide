@@ -64,7 +64,7 @@ export type StageId = (typeof STAGES)[number]['id'];
 
 /**
  * Where an LFO goes, in the order the arrows step and the menu lists them: the Oscillators' pitch, Osc 2's alone (an
- * octave, or its Detune), the Pulse Width, the Filter, the Volume. Each with its name, its stage (whose colour it takes,
+ * octave, or its Detune), the Pulse Width, FM (issue 97), the Filter, the Volume. Each with its name, its stage (whose colour it takes,
  * in the menu and on the Timeline) and the knob it moves (Pitch has none: it moves the Note). The one list the Patch's
  * type and choices, the Tutorials, the picker and the Timeline read (issue 68).
  */
@@ -73,6 +73,7 @@ export const LFO_DESTINATIONS = [
   { id: 'osc2Pitch', label: 'Osc 2 Pitch', stage: 'osc', param: 'osc2Semitone' },
   { id: 'detune', label: 'Detune', stage: 'osc', param: 'osc2Detune' },
   { id: 'pulseWidth', label: 'Pulse Width', stage: 'osc', param: 'pulseWidth' },
+  { id: 'fm', label: 'FM', stage: 'osc', param: 'crossMod' },
   { id: 'cutoff', label: 'Cutoff', stage: 'filter', param: 'cutoff' },
   { id: 'resonance', label: 'Resonance', stage: 'filter', param: 'resonance' },
   { id: 'volume', label: 'Volume', stage: 'amp', param: 'volume' },

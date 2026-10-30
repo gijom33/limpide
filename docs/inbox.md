@@ -6,7 +6,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
-- 2026-10-30, the owner, on Breathing Bell, the one Preset with an LFO on FM: "Can we had more presets, more strinking ones?"
 - 2026-10-30, from Claude's brainstorm of what to do another day, which the owner asked to keep: Hard Sync: Osc 1 restarts its cycle each time Osc 2 does, a classic lead, the Scope's cut waves and the Spectrum's sweeping peaks as Osc 1 is tuned (left out of issue 89 only).
 - 2026-10-30, from Claude's brainstorm of what to do another day, which the owner asked to keep: An additive oscillator: each Harmonic's level set by drawbars, as on an organ, building the Spectrum by hand beside the Ideal Reference.
 - 2026-10-30, from Claude's brainstorm of what to do another day, which the owner asked to keep: Tutorials for the new oscillator features: FM, Ring, the Sub, Pink Noise and the LFO on FM have no guided lesson yet.
@@ -120,3 +119,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-29, the owner's Demo card bug, fixed at once: the part's name has a fixed width (an ellipsis when longer), so the dots never move from one part to the next. Test in `e2e/demo.spec.ts`.
 2026-10-29, the owner's Demo card asks, done at once, decided by the owner: each part is a segment as wide as it is long, the parts played full, the playing one filling over its length, each still a button that plays on from its part; on a phone the segments take a row of their own under the name and the buttons. The docked cards (the Demo's and a Tutorial's) are framed by a hairline and the panel's shadow instead of the accent's orange line. Test in `e2e/demo.spec.ts`.
 2026-10-29, the owner's question on more LFO targets (grilled, decided by the owner): FM went to [97](./issues/97-fm-as-an-lfo-target.md), the only target added for now.
+2026-10-30, the owner's ask for more striking FM Presets went to [97](./issues/97-fm-as-an-lfo-target.md), done there: five more, each a different LFO motion on FM. The brainstorm's ideas stay in Ideas, untriaged at the owner's word.

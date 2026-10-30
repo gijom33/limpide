@@ -167,6 +167,10 @@ group('LFO', [
   ['Chorus Drift', 'The LFO on Detune: Osc 2 drifts in and out of tune with Osc 1, and the beating speeds up and slows down with it.', {
     osc2Detune: 0, mixOsc2: 1, cutoff: 5000, resonance: 0, ampSustain: 1, lfoDestination: 'detune', lfoRate: 0.3, lfoAmount: 0.4,
   }],
+  ['Breathing Bell', 'A slow LFO on FM: the bell’s sidebands grow and fold away every four seconds, from a pure sine to struck metal and back. The FM knob’s blue ring shows the swing, from 0 to 60 %; the Ideal’s circles stay where the knob is set.', {
+    voices: 4, waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, osc2Semitone: 10, crossMod: 0.3, ...OPEN,
+    lfoDestination: 'fm', lfoRate: 0.25, lfoAmount: 1, ampAttack: 0.01, ampRelease: 1.5,
+  }],
   ['Double Motion', 'Two LFOs at once: LFO 1 sweeps the Cutoff slowly, LFO 2 adds a quick vibrato. The Cutoff’s blue ring is LFO 1’s; the Timeline draws the pitch as LFO 2 moves it.', {
     cutoff: 900, resonance: 0.4, ampSustain: 1, lfoDestination: 'cutoff', lfoRate: 0.25, lfoAmount: 0.7,
     lfo2Destination: 'pitch', lfo2Rate: 6, lfo2Amount: 0.25,
@@ -230,6 +234,10 @@ group('Bass', [
   ['808 Boom', 'Osc 2 alone, a sine the Filter Envelope throws two octaves up and drops in a flash (Env Amount), over a long sine Sub: the click and dive of an 808 kick, then its boom. Watch the spike fall in the Spectrum.', {
     waveform: 'sine', mixOsc1: 0, osc2Waveform: 'sine', mixOsc2: 0.8, osc2EnvAmount: 24, mixSub: 1, subWaveform: 'sine',
     cutoff: 20000, resonance: 0, filterAttack: 0.001, filterDecay: 0.06, filterSustain: 0, ampAttack: 0.001, ampDecay: 1.2, ampSustain: 0, ampRelease: 0.3,
+  }],
+  ['FM Growl', 'A triangle LFO on FM, three times a second and restarted with each Note: two sines in tune with a sine Sub below them, swinging from a pure tone to a buzzing growl and back. The Spectrum’s sidebands pump in and out with it.', {
+    waveform: 'sine', osc2Waveform: 'sine', crossMod: 0.5, mixSub: 0.5, subWaveform: 'sine', cutoff: 4000, resonance: 0.2, ampSustain: 1,
+    lfoWaveform: 'triangle', lfoDestination: 'fm', lfoRate: 3, lfoAmount: 1, lfoRetrigger: 'note',
   }],
 ]);
 
@@ -323,6 +331,11 @@ group('Keys & Plucks', [
     voices: 8, waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 2, crossMod: 0.12, cutoff: 3000, keyTrack: 0.5,
     filterEnvAmount: 1.5, filterAttack: 0.001, filterDecay: 0.12, filterSustain: 0, ampAttack: 0.001, ampDecay: 0.7, ampSustain: 0, ampRelease: 0.4,
   }],
+  ['Zap Pluck', 'A falling saw LFO on FM, restarted with each Note: every strike starts at full FM, a bright metallic zap, and melts to a pure sine as it decays, on eight Voices.', {
+    voices: 8, waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, crossMod: 0.5, cutoff: 8000, resonance: 0,
+    lfoWaveform: 'sawDown', lfoDestination: 'fm', lfoRate: 3, lfoAmount: 1, lfoRetrigger: 'note',
+    ampAttack: 0.001, ampDecay: 0.35, ampSustain: 0, ampRelease: 0.3,
+  }],
 ]);
 
 // Pianos: a strike that darkens as it decays, harder for a harder hit, on eight Voices so held Notes ring on.
@@ -411,6 +424,11 @@ group('Pads', [
     voices: 4, waveform: 'sine', osc2Waveform: 'sine', osc2Semitone: 6, osc2Detune: 11, mixOsc1: 0.3, mixRing: 0.5, mixSub: 0.7, subOctave: -2, subWaveform: 'sine',
     mixNoise: 0.25, noiseColour: 'pink', cutoff: 1500, resonance: 0.4, lfoDestination: 'cutoff', lfoRate: 0.07, lfoAmount: 0.5,
     lfo2Destination: 'osc2Pitch', lfo2Rate: 0.05, lfo2Amount: 0.1, ampAttack: 2, ampSustain: 1, ampRelease: 4,
+  }],
+  ['Glass Shimmer', 'A slow LFO 1 on FM swings a sine two octaves up through Osc 1, while LFO 2 drifts that sine’s Detune: the partials glint and shift like light through glass, on eight Voices.', {
+    voices: 8, waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 2, crossMod: 0.25, cutoff: 6000, resonance: 0,
+    lfoWaveform: 'triangle', lfoDestination: 'fm', lfoRate: 0.15, lfoAmount: 1, lfo2Destination: 'detune', lfo2Rate: 0.3, lfo2Amount: 0.3,
+    ampAttack: 1.5, ampSustain: 1, ampRelease: 3,
   }],
 ]);
 
@@ -545,6 +563,14 @@ group('Movement & Effects', [
   ['Robot', 'A saw times a low sine (Ring), Osc 2 an octave and a minor third below the Note, through a band-pass the LFO rocks: a buzzing, metallic voice, like a robot talking.', {
     osc2Waveform: 'sine', osc2Octave: -1, osc2Semitone: -3, mixOsc1: 0, mixRing: 1, filterMode: 'bandpass', cutoff: 1500, resonance: 0.25,
     lfoDestination: 'cutoff', lfoRate: 3, lfoAmount: 0.3, ampSustain: 1,
+  }],
+  ['Clang Alarm', 'A square LFO on FM: the sound hops between a pure sine and a full metal clang two and a half times a second, the Spectrum’s sidebands switching on and off with it.', {
+    waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, osc2Semitone: 10, crossMod: 0.5, ...OPEN,
+    lfoWaveform: 'square', lfoDestination: 'fm', lfoRate: 2.5, lfoAmount: 1,
+  }],
+  ['Machine Chatter', 'Both LFOs on FM: LFO 1 a slow sine, LFO 2 a fast square, together swinging FM between 0 and 100 %. The sidebands of a fifth stutter and surge like a machine talking to itself.', {
+    waveform: 'sine', osc2Waveform: 'sine', osc2Semitone: 7, crossMod: 0.5, ...OPEN,
+    lfoDestination: 'fm', lfoRate: 0.2, lfoAmount: 0.25, lfo2Waveform: 'square', lfo2Destination: 'fm', lfo2Rate: 8, lfo2Amount: 0.25,
   }],
   ['Out of Tune', 'Osc 2 a full 50 cents off: a sour quarter-tone, beating so fast it sounds like two different Notes.', {
     osc2Detune: 50, mixOsc2: 1, cutoff: 5000, resonance: 0, ampSustain: 1,

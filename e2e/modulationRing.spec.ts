@@ -84,9 +84,11 @@ test('an LFO on Pulse Width rings both Oscillators’ Pulse Width knobs, and not
   await page.goto('/');
   await aim(page, 1, 'Pulse Width');
   await turnUp(page, 'LFO 1', 'Depth', 25);
-  await expect(ring(page.getByRole('group', { name: 'Osc 1' }).locator('.knob'))).toBeVisible();
+  // Each Oscillator's own Pulse Width knob: Osc 1's group also holds FM, a ringed knob too since issue 97.
+  const pulseWidth = (osc: string) => page.getByRole('group', { name: osc }).locator('.knob', { has: page.getByRole('slider', { name: sliderName('Pulse Width') }) });
+  await expect(ring(pulseWidth('Osc 1'))).toBeVisible();
   await page.getByRole('tab', { name: /Osc 2/ }).click();
-  await expect(ring(page.getByRole('group', { name: 'Osc 2' }).locator('.knob'))).toBeVisible();
+  await expect(ring(pulseWidth('Osc 2'))).toBeVisible();
   await expect(ring(knob(page, 'Filter', 'Cutoff'))).toBeHidden();
 });
 
@@ -138,6 +140,17 @@ test('LFO 2 rings the knobs of its new destinations: Resonance, Osc 2’s Semito
     await aim(page, 2, destination);
     await expect(ring(k), destination).toBeVisible();
   }
+});
+
+test('an LFO on FM rings the FM knob once FM is up, and the Timeline names it (issue 97)', async ({ page }) => {
+  await page.goto('/');
+  const fm = knob(page, 'Oscillators', 'FM');
+  await turnUp(page, 'LFO 2', 'Depth', 25);
+  await aim(page, 2, 'FM');
+  await expect(page.getByLabel('Envelope Timeline', { exact: true })).toHaveAttribute('data-shows', /lfo-fm/);
+  await expect(ring(fm)).toBeHidden(); // FM at 0: no room below it, so nothing to swing
+  await turnUp(page, 'Oscillators', 'FM', 20);
+  await expect(ring(fm)).toBeVisible();
 });
 
 test('both LFOs on the Cutoff make one blue ring, wider than one alone, both LFOs in the same blue (issue 63)', async ({ page }) => {

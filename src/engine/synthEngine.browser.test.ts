@@ -1429,6 +1429,26 @@ describe('Cross-modulation (issue 89)', () => {
   });
 });
 
+describe('an LFO on FM (issue 97)', () => {
+  it('swings the sidebands with the LFO, down to none at its trough when it reaches 0', async () => {
+    // FM at 25 %, LFO 1 at full Depth on it, slow and retriggered: it swings FM from 0 to 50 % once a second.
+    const patch = {
+      cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001, waveform: 'sine', osc2Waveform: 'sine', crossMod: 0.25,
+      lfoDestination: 'fm', lfoAmount: 1, lfoRate: 1, lfoWaveform: 'sine', lfoRetrigger: 'note',
+    } as const;
+    const s = await render(1.2, patch, (e) => e.noteOn(45, 1, 0));
+    const f = 110;
+    const second = (at: number) => {
+      const start = Math.round(at * SR);
+      const window = s.subarray(start, start + Math.round((8 * SR) / f));
+      return dB(toneAmplitude(window, SR, 2 * f) / toneAmplitude(window, SR, f));
+    };
+    // A sine LFO peaks a quarter of a cycle in (FM at 50 %) and dips three quarters in (FM at 0).
+    expect(second(0.21)).toBeGreaterThan(-15);
+    expect(second(0.71)).toBeLessThan(-45);
+  });
+});
+
 describe('FM’s sidebands in the Ideal (issue 96)', () => {
   const A2 = 45; // 110 Hz
   const fm = { cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001, mixOsc1: 1, mixOsc2: 0 } as const;

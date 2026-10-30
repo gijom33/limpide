@@ -115,7 +115,7 @@ How far, in octaves, the Filter Envelope pushes the Effective Cutoff away from t
 _Avoid_: Env depth, intensity
 
 **LFO**:
-A slow, repeating modulation source; there are two, each moving one Destination: Pitch (vibrato), Osc 2 Pitch, Detune, Pulse Width (PWM), Cutoff, Resonance or Volume (tremolo). **Rate** is how fast it repeats, **Depth** how far it moves things.
+A slow, repeating modulation source; there are two, each moving one Destination: Pitch (vibrato), Osc 2 Pitch, Detune, Pulse Width (PWM), FM, Cutoff, Resonance or Volume (tremolo). **Rate** is how fast it repeats, **Depth** how far it moves things.
 _Avoid_: Modulator, wobble, LFO amount (say Depth)
 
 **Retrigger**:

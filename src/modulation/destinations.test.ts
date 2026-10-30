@@ -84,7 +84,7 @@ describe('the LFO Destinations, one list (issue 68)', () => {
 });
 
 describe('the LFOs swing each even Destination by its law (issue 74)', () => {
-  const EVEN = ['pitch', 'osc2Pitch', 'detune', 'pulseWidth', 'resonance'] as const;
+  const EVEN = ['pitch', 'osc2Pitch', 'detune', 'pulseWidth', 'fm', 'resonance'] as const;
   it.each(EVEN)("%s: full Depth on one LFO swings it the law's amount each way, both LFOs within its room, its knobs following", (d) => {
     const law: LfoLaw = LFO_LAWS[d];
     const { perDepth, knobs } = law;
@@ -109,7 +109,13 @@ describe('the LFOs swing each even Destination by its law (issue 74)', () => {
     expect(LFO_LAWS.resonance.room(0.1)).toBeCloseTo(0.1);
     expect(LFO_LAWS.resonance.room(0.8)).toBeCloseTo(0.2);
   });
+  it('swings FM as it does the Resonance: its whole range from the middle, nothing at 0, never past 100 % (issue 97)', () => {
+    const fm = (crossMod: number) => destinationSwings(patch({ crossMod, lfoDestination: 'fm', lfoAmount: 1 }), 'fm', crossMod);
+    expect(fm(0.5)).toEqual([0.5, 0]);
+    expect(fm(0)).toEqual([0, 0]);
+    expect(fm(0.8)[0]).toBeCloseTo(0.2);
+  });
   it('rings every knob a law names, and only those: Pulse Width on both Oscillators', () => {
-    expect([...MODULATED].sort()).toEqual(['cutoff', 'osc2Detune', 'osc2PulseWidth', 'osc2Semitone', 'pulseWidth', 'resonance', 'volume']);
+    expect([...MODULATED].sort()).toEqual(['crossMod', 'cutoff', 'osc2Detune', 'osc2PulseWidth', 'osc2Semitone', 'pulseWidth', 'resonance', 'volume']);
   });
 });
