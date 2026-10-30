@@ -6,6 +6,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- 2026-10-29, the owner: "Should we extend the list of targets the LFOs can reach?"
+
 ## Dropped
 
 - 2026-10-29, the owner's idea, a double-click bringing the Osc 1 fader to zero: withdrawn by the owner ("that was a bad idea indeed") once told that a double-click resets every knob and fader to its default, Osc 1's being 100 %. See [`.out-of-scope/double-click-to-zero.md`](../.out-of-scope/double-click-to-zero.md).
