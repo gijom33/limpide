@@ -6,8 +6,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
-- 2026-10-29, the owner: "Should we extend the list of targets the LFOs can reach?"
-
 ## Dropped
 
 - 2026-10-29, the owner's idea, a double-click bringing the Osc 1 fader to zero: withdrawn by the owner ("that was a bad idea indeed") once told that a double-click resets every knob and fader to its default, Osc 1's being 100 %. See [`.out-of-scope/double-click-to-zero.md`](../.out-of-scope/double-click-to-zero.md).
@@ -105,3 +103,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-29, the owner's header asks, done at once, decided by the owner: the Patch picker sits beside the logo at every width; Demo, Tutorial and Song moved right of the keyboard, after set-up (Hold first on the right still), from 861 to 1919 px in two rows, set-up on top (the owner's "Swap the two rows"), each 25 px high so the header is never taller than the piano. From 1100 px the buttons keep their words and the Patch name is 134 px wide up to 1279, so the piano stays at the centre from 1200 px up; below 1100 the left side is the wider and the piano keeps its size up to 100 px right of the centre (Claude's call, open to the owner; issue 82 asked for 80). Tab now meets the keyboard before the buttons.
 2026-10-29, the owner's Demo card bug, fixed at once: the part's name has a fixed width (an ellipsis when longer), so the dots never move from one part to the next. Test in `e2e/demo.spec.ts`.
 2026-10-29, the owner's Demo card asks, done at once, decided by the owner: each part is a segment as wide as it is long, the parts played full, the playing one filling over its length, each still a button that plays on from its part; on a phone the segments take a row of their own under the name and the buttons. The docked cards (the Demo's and a Tutorial's) are framed by a hairline and the panel's shadow instead of the accent's orange line. Test in `e2e/demo.spec.ts`.
+2026-10-29, the owner's question on more LFO targets (grilled, decided by the owner): FM went to [97](./issues/97-fm-as-an-lfo-target.md), the only target added for now.
