@@ -25,6 +25,7 @@ npm run dev
 | `npm run test:unit` | Unit tests (Node) |
 | `npm run test:engine` | The audio engine in headless Chromium |
 | `npm run test:e2e` | The built site in Chromium and WebKit, with Playwright (`npx playwright install chromium webkit` once) |
+| `npm run stats` | The release's row on [the statistics page](docs/statistics.md): the whole suite, the build, the page load and the running app (`-- --quick` to check the command, `-- --history` for the release tags' exact numbers) |
 
 Every push to `main` runs all of these before it deploys.
 
