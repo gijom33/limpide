@@ -7,6 +7,20 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 ## Ideas
 
 - 2026-10-30, the owner, on Breathing Bell, the one Preset with an LFO on FM: "Can we had more presets, more strinking ones?"
+- 2026-10-30, from Claude's brainstorm of what to do another day, which the owner asked to keep: Hard Sync: Osc 1 restarts its cycle each time Osc 2 does, a classic lead, the Scope's cut waves and the Spectrum's sweeping peaks as Osc 1 is tuned (left out of issue 89 only).
+- 2026-10-30, from Claude's brainstorm of what to do another day, which the owner asked to keep: An additive oscillator: each Harmonic's level set by drawbars, as on an organ, building the Spectrum by hand beside the Ideal Reference.
+- 2026-10-30, from Claude's brainstorm of what to do another day, which the owner asked to keep: Tutorials for the new oscillator features: FM, Ring, the Sub, Pink Noise and the LFO on FM have no guided lesson yet.
+- 2026-10-30, from Claude's brainstorm of what to do another day, which the owner asked to keep: Velocity on the Volume: a harder hit plays louder, not only brighter.
+- 2026-10-30, from Claude's brainstorm of what to do another day, which the owner asked to keep: The mod wheel on the vibrato's Depth, as MIDI keyboards expect, with an on-screen wheel for phones.
+- 2026-10-30, from Claude's brainstorm of what to do another day, which the owner asked to keep: A legato mode: a Note played while another is held glides there without restarting the Envelopes.
+- 2026-10-30, from Claude's brainstorm of what to do another day, which the owner asked to keep: Another Filter mode: a notch or a peak, both of which the browser's filters make.
+- 2026-10-30, from Claude's brainstorm of what to do another day, which the owner asked to keep: Match the sound: Limpide plays a hidden Patch and the player turns knobs to match it, the Spectrum showing how close; ear training as a game.
+- 2026-10-30, from Claude's brainstorm of what to do another day, which the owner asked to keep: A signal-flow view: the Oscillators, the Filter and the Amp as blocks, each lit while it sounds, with arrows where the LFOs go.
+- 2026-10-30, from Claude's brainstorm of what to do another day, which the owner asked to keep: A Patch described in plain words ("a detuned saw, filtered low, opening on each Note").
+- 2026-10-30, from Claude's brainstorm of what to do another day, which the owner asked to keep: Effects (delay, reverb, chorus): out of scope in the PRD, so the owner's call.
+- 2026-10-30, from Claude's brainstorm of what to do another day, which the owner asked to keep: Recording or WAV export, to share a sound and not only a link: out of scope in the PRD, so the owner's call.
+- 2026-10-30, from Claude's brainstorm of what to do another day, which the owner asked to keep: An arpeggiator: out of scope in the PRD, with the tempo it brings; the owner's call.
+- 2026-10-30, from Claude's brainstorm of what to do another day, which the owner asked to keep: Unison, a thick supersaw: out of scope in the PRD (ADR-0007), the Viewers following one Note; the owner's call.
 
 ## Dropped
 
