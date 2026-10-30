@@ -9,6 +9,8 @@
 
 **Status:** done (2026-10-30). Review 13's nine false claims and review 15's hold when rendered, and every Preset plays within 3 dB of its group's median on C4, five named exceptions apart, by its own Volume and a few reworked sounds; an engine test checks both. Not yet heard by the owner: the changed Presets wait for the owner's ear before the release.
 
+**Since then:** (2026-10-30) [125](./125-the-preset-collection.md) regrouped the Presets into sound families: the level test's groups are those families, Pluck sits in the Envelope lesson with no exception, Poly Keys and Chord Organ are gone, and Duo Lead and Cathedral changed Volume.
+
 **Since then:** [124](./124-where-a-retriggered-lfo-starts.md) is built (2026-10-30): a retriggered LFO starts each Waveform where it classically starts. Key Sync's words now hold (rendered: the Cutoff opens at 1.5 kHz at the Note and closes to 170 Hz over two thirds of a second). Wobble's "from the top" was corrected there (a retriggered Sine starts at the centre, rising). Zap Pluck now starts at full FM and is nearly a pure sine by 0.3 s, as its words say, but its zap comes back every third of a second, about 30 dB down, which its words leave out: that, and its level, are this issue's.
 
 ## Agent Brief
