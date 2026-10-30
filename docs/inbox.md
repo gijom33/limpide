@@ -6,6 +6,11 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- 2026-10-30, from the 1.16.1 code review (standards): `keyboardOctave` lives in the Patch but needs leaving out in three places (the choices, the sanitizer, the differences); the 860 px breakpoint is written in both the styles and the App; the Demo card's keys listed again in the stop rule.
+- 2026-10-30, from the 1.16.1 code review (standards): three hand-rolled caches with three eviction policies (the Oscillators' waves, the LFO waves, the Ideal's); "No effect while the Sub is silent" written inline twice beside its siblings' constants.
+- 2026-10-30, from the 1.16.1 code review (standards): names and shapes: `CUT_WAVES` is a cache size; `useWheel(c.position, c.setPosition, c.unit)` could take the control; `StepButton` picks its glyph from its label's words; `group(…, shared)` serves one field and overrides each Preset's own; the Patch file format now imports from the keyboard's layout.
+- 2026-10-30, from the 1.16.1 code review (spec): a restored Patch (Last session, a Share link) opens the page in its keyboard octave, and a Bass reworked into a lead and saved still starts on C2, with no control to see or clear the octave.
+
 ## Dropped
 
 - 2026-10-30, from Claude's brainstorm, Velocity on the Volume ("a harder hit plays louder, not only brighter"): already so. The Amp Envelope's Attack rises to the Note's Velocity (PRD story 9). Claude's call, open to the owner.
