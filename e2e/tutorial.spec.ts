@@ -231,7 +231,65 @@ test.describe('a first visit', () => {
     await about.getByRole('button', { name: 'Follow the Tutorial' }).click();
     await expect(about).toBeHidden();
     await expect(card(page)).toHaveAccessibleName('Tutorial: Bass');
+    await expect(action(page, 'Start')).toBeFocused(); // not the Demo button behind it (issue 104)
   });
+});
+
+test('picking a Tutorial puts the focus on its card, and its Next keeps it there, Step after Step (issue 104)', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Tutorial', exact: true }).focus();
+  await page.keyboard.press('Enter');
+  await page.getByRole('button', { name: 'Tutorial: Bass', exact: true }).last().focus();
+  await page.keyboard.press('Enter');
+  await expect(action(page, 'Start')).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(progress(page)).toHaveText('Step 1 of 15');
+  const next = action(page, 'Next');
+  await expect(next).toBeFocused();
+  await expect(next).toBeDisabled(); // until the Step is made
+  await page.keyboard.press('Enter');
+  await expect(progress(page)).toHaveText('Step 1 of 15');
+  await action(page, 'Do it for me').focus(); // Safari tabs to buttons only when its settings ask it to
+  await page.keyboard.press('Enter');
+  await expect(next).toBeEnabled();
+  await expect(next).toBeFocused(); // the button pressed has gone: the way forward has the focus
+  await page.keyboard.press('Enter');
+  await expect(progress(page)).toHaveText('Step 2 of 15');
+  await expect(next).toBeFocused();
+  // Back to the first card, whose Back goes: the focus moves to Start.
+  await action(page, 'Back').focus();
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Enter');
+  await expect(progress(page)).toHaveText('15 steps');
+  await expect(action(page, 'Start')).toBeFocused();
+
+  // From the Patches panel too.
+  await page.getByRole('button', { name: /^Patch: / }).click();
+  await page.getByRole('dialog', { name: 'Patches' }).getByRole('group', { name: 'Tutorials' }).getByRole('button', { name: /^Tutorial: Acid/ }).click();
+  await expect(card(page)).toHaveAccessibleName('Tutorial: Acid');
+  await expect(action(page, 'Start')).toBeFocused();
+});
+
+test('at 1440 × 900 with the Tutorial card docked, every Tab stop comes clear of the card (issue 104)', async ({ page, browserName }) => {
+  test.skip(browserName === 'webkit', 'Safari tabs to buttons only when its settings ask it to');
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await open(page, 'Bass');
+  await page.locator('header button').first().focus(); // from the top of the page
+  let stops = 0;
+  for (;; await page.keyboard.press('Tab')) {
+    const stop = await page.evaluate(async () => {
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      const el = document.activeElement as HTMLElement;
+      if (el.closest('.docked')) return null;
+      const box = el.getBoundingClientRect();
+      const on = document.elementFromPoint(box.left + box.width / 2, Math.min(box.bottom - 1, box.top + box.height / 2));
+      return { name: el.getAttribute('aria-label') ?? el.textContent, hidden: !!on?.closest('.docked') };
+    });
+    if (!stop) break;
+    stops++;
+    expect(stop.hidden, `${stop.name}, under the card`).toBe(false);
+  }
+  expect(stops).toBeGreaterThan(50);
 });
 
 test('a drag that passes through the target on its way past does not count: the control must rest within reach', async ({ page }) => {

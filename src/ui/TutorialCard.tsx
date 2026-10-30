@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { type FocusEvent, type RefObject, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { inDisplay, type Step, type Tutorial, targetText } from '../tutorial/tutorial';
 import { FoldButton, useCardPlacement } from './cardPlacement';
 import { useDocked } from './docked';
@@ -92,8 +92,29 @@ function useRing(step: Step | undefined, made: boolean) {
 }
 
 /**
+ * Where the keyboard's focus goes on the card (issue 104): to its way forward (Start) when a Tutorial is picked, after
+ * the welcome or the panel it was picked from has put it back on their buttons; and there again when a button it was on
+ * goes (Back on the first card, "Do it for me" once the Step is made, Finish at the end: Done), never to the page.
+ */
+function useCardFocus(card: RefObject<HTMLElement | null>, tutorial: Tutorial) {
+  const forward = () => card.current?.querySelector<HTMLElement>('.tool-primary')?.focus();
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a new Tutorial is the trigger; forward reads the card's ref
+  useEffect(() => {
+    const frame = requestAnimationFrame(forward);
+    return () => cancelAnimationFrame(frame);
+  }, [tutorial]);
+  // The last element the focus was on in the card, to tell a button that went from a click elsewhere on the page.
+  const last = useRef<Element | null>(null);
+  useLayoutEffect(() => {
+    if (last.current && !last.current.isConnected && document.activeElement === document.body) forward();
+  });
+  return { onFocus: (e: FocusEvent) => (last.current = e.target) };
+}
+
+/**
  * A Tutorial's card, docked at the bottom of the page (issue 57): what to do, then what to hear and see, with Back,
- * "Do it for me", Next, Listen and Quit. It never takes the focus; each new text is announced.
+ * "Do it for me", Next, Listen and Quit. Picked, it takes the focus on its Start; the Steps never take it from the
+ * control being turned. Each new text is announced.
  */
 export function TutorialCard({ tutorial, about, index, done, differs, listening, onListen, onBack, onNext, onDoIt, onMatch, onQuit }: Props) {
   const steps = tutorial.steps;
@@ -105,15 +126,18 @@ export function TutorialCard({ tutorial, about, index, done, differs, listening,
   useRing(step, made);
   useDocked(card);
   const place = useCardPlacement(card, 'tutorial', tutorial.preset);
+  const focus = useCardFocus(card, tutorial);
 
+  // Until the Step is made, Next says it is unavailable but keeps the focus, so pressing it leaves the keyboard there.
+  const waiting = !!step && !made;
   const primary = index < steps.length && (
-    <button type="button" className="tool tool-primary" disabled={!!step && !made} onClick={onNext}>
+    <button type="button" className="tool tool-primary" aria-disabled={waiting || undefined} onClick={() => !waiting && onNext()}>
       {index < 0 ? 'Start' : index === steps.length - 1 ? 'Finish' : 'Next'}
     </button>
   );
   const progress = step ? `Step ${index + 1} of ${steps.length}` : index < 0 ? `${steps.length} steps` : 'Done';
   return (
-    <section ref={card} className="docked tutorial" aria-label={`Tutorial: ${tutorial.preset}`} data-expanded={expanded || undefined} {...place.cardProps}>
+    <section ref={card} className="docked tutorial" aria-label={`Tutorial: ${tutorial.preset}`} data-expanded={expanded || undefined} {...place.cardProps} {...focus}>
       <div className="tutorial-top" {...place.handle}>
         <span className="tutorial-name">{tutorial.preset}</span>
         <span className="tutorial-progress" data-done={made || undefined}>
