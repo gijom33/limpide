@@ -1,0 +1,62 @@
+# Persona review 11: the open-source legal expert
+
+Laptop, 30 minutes, 2026-10-30, version 1.16.0 (live build `328a370`, the same as `main`). Read: `LICENSE`, `package.json`, `package-lock.json` (licence scan), `README.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `.github/` (templates, `deploy.yml`), `vite.config.ts`, `src/ui/About.tsx`, `src/patch/serialize.ts`, `src/patch/presets.ts`, `src/demo/track.ts`; a build into a scratch folder (`npx vite build --outDir <scratch>`, so `dist/` and every tracked file were untouched); `gh api` for the community profile and repository settings; the live site driven with Playwright (Chromium and WebKit) from the repository's `node_modules`. Nothing in the repository was changed besides this report.
+
+This is a compliance read, not legal advice. Where a point turns on the law of a particular country, it is marked **lawyer to confirm**.
+
+## First impression
+
+"Same MIT project, but it has grown up: a CONTRIBUTING, a code of conduct, templates, a `third-party-notices.txt`, a Privacy line, and the AI authorship stated in the README and About. GitHub's community profile went from 42 to 85. The three things I flagged on 1.8.1 look fixed; let's prove it on the live site, then see what a company's intake checklist would still flag."
+
+## What they tried
+
+1. **The licence and its coverage.** `LICENSE` unchanged (MIT, `Copyright (c) 2026 Guillaume Boillet`); `gh api repos/gijom33/limpide` → `MIT`. The README's License section now says "MIT © Guillaume Boillet: the code, the Presets, the Demo's music and the docs", and About says the same ("the code, the Presets, the music and the docs"). My old risk 6 (coverage of non-code content implicit) is closed.
+2. **Dependencies.** `package-lock.json`, 120 entries (111 on 2026-10-26). Production: MIT 3 (`react` 19.3.1, `react-dom` 19.3.1, `scheduler` 0.28.0), unchanged. Development: MIT 67, Apache-2.0 26, MPL-2.0 12 (`lightningcss` and its 11 platform binaries, unmodified, not shipped), `MIT OR Apache-2.0` 9 (new since 1.8.1, permissive), ISC 2, BSD-3-Clause 1. No GPL family, no missing licence. `src/` imports only `react`, `react-dom` and (in tests) `vitest`.
+3. **The third-party notices.** `vite.config.ts` now has a `third-party-notices` plugin that walks `dependencies` recursively, copies each package's LICENSE file and pulls in embedded `| MIT` comments. My build wrote `third-party-notices.txt` (3,646 bytes): React, react-dom (with "Modernizr 3.0.0pre (Custom Build) | MIT"), scheduler, each with Meta's copyright line and the full MIT text. Live: `https://gijom33.github.io/limpide/third-party-notices.txt` → 200, `text/plain`, byte-identical length; About links to it ("Third-party notices"). Because it is generated from `node_modules`, a new runtime dependency will appear in it without anyone remembering to. Good engineering, not just a fix.
+4. **The visit counter, live.** Fresh Chromium context: `GET https://gc.zgo.at/count.v4.js`, then `POST https://gijom33.goatcounter.com/count?p=%2Flimpide%2F&t=Limpide&s=1440%2C900%2C1&b=153`. Same in WebKit. No cookies. The script tag now carries `integrity="sha384-nRw6…dxI+"` and `crossorigin="anonymous"`; I hashed the live `count.v4.js` myself and it matches, so my old risk 7 (no integrity pinning) is closed too. Opened with `?utm_source=linkedin#p=…&n=…`: the query string goes to GoatCounter (`q=%3Futm_source%3Dlinkedin`), the fragment does not, and the page strips `#p=` afterwards (`App.tsx` line 107). The page title sent (`t=Limpide`) never carries the Patch name.
+5. **Forks and the counter.** `vite.config.ts` reads `GOATCOUNTER_URL` and injects nothing when it is unset; `deploy.yml` sets it only when `github.repository == 'gijom33/limpide'`. A fork's build, a fork's own run of the same workflow, development and the tests never count. The README says so. Old risk 3: closed, and closed properly.
+6. **The privacy wording.** About's Privacy entry (shown only on a counted build, `counted &&`): "Visits are counted with GoatCounter: no cookies, no personal data stored. Like any web page it receives your IP address and browser, to count you once. Your sounds stay in your browser: a share link carries one after its #, which is never sent." The README matches. The absolute "no personal data" of 1.8.1 is now "no personal data stored". Accurate as far as I can test.
+7. **What is stored in the browser.** After a first visit: `limpide.bendRange`, `limpide.current`, `limpide.letterKeys`, `limpide.theme`, `limpide.tooltips` (the code can also write `patches`, `mappings`, `overlays`, `viewSettings`, `welcomed`, `tutorialsFinished`, `cardFolded`, `c16Layout`). All functional settings or the visitor's own sounds, read and written only by the page. Strictly necessary storage under the ePrivacy rules in my reading; **lawyer to confirm** for the EU.
+8. **The share link, again.** Since 1.11 it carries the Patch's name as well: `#p=<base64url>&n=<name>` (`serialize.ts`, `shareHash`), read back trimmed to 60 characters and shown as plain text in the Patch selector (React escapes it; I tried `n=Official: update at evil.example` and it rendered as a harmless, truncated name). The Patch itself still passes `sanitizePatch` (known numbers and choices only). The only free text is a name the sharer typed, visible in the link before it is sent.
+9. **AI authorship.** README "How this was built": "designed and directed by Guillaume Boillet, and its code written with Claude Code … (every commit says so in its `Co-Authored-By` line)"; About says the same. My old risk 4 is answered on disclosure. What is not answered: the copyright line still claims everything ("© Guillaume Boillet: the code …") without saying it covers only what the owner can hold rights in.
+10. **Contributions.** `CONTRIBUTING.md` (new) ends "Contributions are under the MIT License, as the rest of the project", and the PR template repeats it: an explicit inbound = outbound statement, which is what most corporate policies look for first. No DCO sign-off, no rule on AI-assisted contributions from others. `CODE_OF_CONDUCT.md` adopts the Contributor Covenant 2.1 by reference (not copied, so no CC BY attribution question), with the owner's LinkedIn as the only private contact. No `SECURITY.md`; `gh api repos/gijom33/limpide/private-vulnerability-reporting` → `{"enabled":false}`; Dependabot security updates disabled. Community profile: 85 %.
+11. **New third-party material since 2026-10-26.** No fonts (still system stacks), no samples (every sound synthesised), no third-party images: `public/` holds the own mark (`favicon.svg`, `apple-touch-icon.png`, `tab-icon.ico`, a render of the same mark); `docs/screenshot.png` is Limpide itself. About 60 new Presets with descriptive names; the only brand-adjacent ones are "808 Boom" ("the click and dive of an 808 kick") and "Acid" ("the classic acid line"): "808" is used descriptively for a kind of drum sound, not as Roland's TR-808 mark, and no logo or product claim goes with it. Low risk. The Demo grew to fourteen parts and a `SHARED_RIFF`, all over Am–F–C–G and written as note strings; I recognised no existing melody. `docs/agents/*.md` paraphrase the AI Hero skills' vocabulary in the project's own words; nothing is copied wholesale.
+
+## What worked
+
+- All three findings of 2026-10-26 are fixed, and fixed in a way a fork inherits: generated notices, an opt-in counter address, integrity-pinned script.
+- Licence coverage, AI authorship and privacy are now stated where visitors and code users look (README and About), consistently, and the About wording was accurate in every test I ran.
+- Production dependencies remain three MIT packages; the dev tree has no copyleft beyond the unmodified, unshipped MPL-2.0 `lightningcss`.
+- An explicit inbound = outbound line in CONTRIBUTING and the PR template.
+- The share link and the counter request still carry nothing a visitor didn't choose to put there.
+
+## Where they got stuck
+
+- **No private route for a security report.** No `SECURITY.md`, GitHub's private vulnerability reporting is off, and the code of conduct's only private channel is LinkedIn (which needs an account and a real identity). The owner chose not to publish an email (issue 56); GitHub's private reporting fits that choice and costs a toggle. A company's intake checklist (and OpenSSF Scorecard's Security-Policy check) flags this first.
+- **Contribution terms stop at "under MIT".** No DCO sign-off, and nothing on AI-assisted contributions, which is odd for a project whose own code is written by an agent and whose policy on its own commits is a `Co-Authored-By` trailer.
+- **The copyright line overclaims slightly.** "© Guillaume Boillet: the code" sits two paragraphs below "its code written with Claude Code". Under the US Copyright Office's 2025 view, purely AI-generated material without sufficient human control isn't protected; the owner's direction is extensive, but how much of each file is protectable is a fact question. **Lawyer to confirm**, along with the AI provider's current terms on output ownership.
+- **Minor, privacy:** the note names GoatCounter but not GitHub Pages (which also receives and logs every request), says nothing of the referrer and query string that reach GoatCounter, and offers no contact for a data-protection request. For a non-commercial personal demo this is probably proportionate; **lawyer to confirm** whether GDPR Article 13 wants more.
+- **Minor, forks:** `third-party-notices.txt` lists React's notices but not Limpide's own; a fork that deploys keeps Limpide's MIT notice only through About's "MIT License" text and source link. Appending `LICENSE` to the notices file would make the built site self-contained.
+- **Minor, share link:** the Share panel says "anyone who opens it hears this Patch" but not that the Patch's name travels too; harmless unless someone names a Patch after themselves.
+
+## Would they
+
+- **Approve use by a company (the hosted site, or internally): yes.** Permissive licences only, notices shipped, a cookieless counter disclosed in the page.
+- **Approve a fork: yes, now without changes.** The notices are generated, and a fork's deploy doesn't count visitors unless it sets its own address.
+- **Approve a contribution: yes, with a note to the employee.** The inbound = outbound line is enough for many policies; those that require a DCO, or a stance on AI-written patches, would still ask for a one-off sign-off until CONTRIBUTING says it.
+- **Approve publishing it as it stands: yes.** Nothing above blocks; the three findings below are hygiene.
+- **Recommend it as an example of a well-documented solo open-source project: yes**, the provenance trail (ADRs, issues, reviews, commit trailers) is better than most company projects I review.
+
+## Since 1.8.1
+
+- Third-party notices: fixed (generated `third-party-notices.txt`, linked from About, live and complete).
+- Privacy: fixed (a Privacy line in About on counted builds; README softened to "no personal data stored").
+- The counter on forks: fixed (`GOATCOUNTER_URL`, set only for this repository in `deploy.yml`).
+- Also closed: integrity pinning of the counter script (old risk 7), licence coverage of Presets, music and docs (old risk 6), AI authorship disclosed in README and About (old risk 4, disclosure part), CONTRIBUTING, code of conduct and templates (old risk 5, partly: no DCO or AI-contribution rule).
+- New since: the share link carries a free-text name; 60 new Presets and a longer Demo (checked, nothing borrowed); the community profile at 85 %.
+
+## Three findings, ranked
+
+1. No private route for security reports: no `SECURITY.md`, GitHub private vulnerability reporting off (`enabled: false`), conduct reports only via LinkedIn; the owner switches on private reporting in the repository settings and a `SECURITY.md` points to it (no email needed).
+2. CONTRIBUTING says contributions are under MIT but asks for no DCO sign-off and says nothing on AI-assisted contributions: add "sign off with `git commit -s` (DCO)" and "disclose AI help with a `Co-Authored-By` trailer, as the project does", and a box in the PR template.
+3. README's "© Guillaume Boillet: the code …" claims all of code written by Claude Code: qualify it ("to the extent of the owner's rights; no third-party code knowingly included") and append Limpide's own `LICENSE` to `third-party-notices.txt` (lawyer to confirm the wording and the provider's terms on outputs).
