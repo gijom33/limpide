@@ -4,6 +4,7 @@ import type { Track } from '../demo/track';
 import { FoldButton, useCardPlacement } from './cardPlacement';
 import { useDocked } from './docked';
 import { CloseIcon } from './icons';
+import { arrowTarget } from './radioGroup';
 
 interface Props {
   /** The track, the part playing and when it began (the page's clock, ms); null once the Demo has stopped. */
@@ -125,18 +126,9 @@ export function DemoBar({ playing, tookOver, onStop, onJump, onPlayAgain, onDism
   );
 }
 
-const STEPS: Record<string, number | 'first' | 'last'> = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1, Home: 'first', End: 'last' };
-
 /** The arrows move the focus to the next or previous part, Home and End to the first and last; nothing plays yet. */
 function moveAlong(e: KeyboardEvent<HTMLElement>) {
-  const step = STEPS[e.key];
-  if (step === undefined || e.altKey || e.metaKey || e.ctrlKey) return;
-  const segments = [...e.currentTarget.querySelectorAll<HTMLElement>('button')];
-  const at = segments.indexOf(document.activeElement as HTMLElement);
-  if (at < 0) return;
-  const next = step === 'first' ? 0 : step === 'last' ? segments.length - 1 : Math.min(segments.length - 1, Math.max(0, at + step));
-  e.preventDefault();
-  segments[next].focus();
+  arrowTarget(e, 'button', { wrap: false })?.focus();
 }
 
 /**
