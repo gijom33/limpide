@@ -36,6 +36,18 @@ describe('the Tutorials', () => {
         }
       });
 
+      // Issue 105: on a phone the Bass Tutorial's Ideal Step spoke of circles on the Oscillator Spectrum, under the card.
+      it('points each Step at the Viewer its note names, so the page can bring it into view', () => {
+        const named = /(Oscillator|Filter|Amp) (Scope|Spectrum)|Timeline/;
+        for (const step of tutorial.steps) {
+          const name = step.note.match(named)?.[0];
+          if (name) expect(step.viewer, step.note).toBe(name === 'Timeline' ? 'Envelope Timeline' : name);
+        }
+        // The Ideal Step's circles and squares are on the Oscillator Spectrum, though its note does not say so.
+        const ideal = tutorial.steps.find((s) => s.kind === 'display' && s.overlay === 'ideal');
+        if (ideal) expect(ideal.viewer).toBe('Oscillator Spectrum');
+      });
+
       it('has a phrase for Listen and a summary', () => {
         expect(parsePhrase(tutorial.phrase, tutorial.bpm).length).toBeGreaterThan(4);
         expect(tutorial.summary.length).toBeGreaterThan(20);

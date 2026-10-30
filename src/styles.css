@@ -1327,8 +1327,9 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 .tutorial-actions .tool { min-height: 36px; padding: 0 var(--space-3); gap: 6px; }
 .tutorial-actions .tool[aria-disabled='true'] { opacity: 0.45; cursor: default; }
 .tutorial-spacer { flex: 1 1 auto; }
-/* The Step's control: a steady ring in the accent colour, and its target beside it. */
-[data-tutorial] { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: var(--radius-control); scroll-margin: calc(var(--header-h, 0px) + 56px) 0 calc(var(--docked-h, 0px) + 24px); }
+/* The Step's control: a steady ring in the accent colour, and its target beside it. Its scroll margins are the room
+   they take round it, kept in view with it (docked.ts brings it clear of the header and the card). */
+[data-tutorial] { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: var(--radius-control); scroll-margin: 28px 0 6px; }
 [data-tutorial-target] { position: relative; }
 [data-tutorial-target]::after {
   content: attr(data-tutorial-target); position: absolute; z-index: 5; left: 50%; bottom: calc(100% + 6px); transform: translateX(-50%);
@@ -1347,13 +1348,14 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 .patch-split:has(.patch-item[aria-current='true']) { background: var(--control-on); }
 .patch-split > :last-child .patch-item { padding-left: 6px; }
 .patch-tutorial { display: inline-flex; align-items: center; justify-content: flex-end; min-width: 28px; padding: 0 0 0 10px; }
-/* Phones: the card two lines high, a tap on them (or +) for the rest; once a Step is made, its note in the instruction's place. */
+/* Phones: the card two lines high, a tap on them (or +) for the rest; once a Step is made, its note in the instruction's
+   place, whole: it says what to hear and see, and was cut short with "…" (issue 105). */
 @media (max-width: 600px) {
   /* Pinned to the bottom edge: cardPlacement.tsx reads --card-pinned, so it only folds. */
   .docked { --card-pinned: 1; bottom: 0; width: 100vw; border-radius: var(--radius-panel) var(--radius-panel) 0 0; border-width: 1px 0 0; padding: var(--space-2) var(--space-3) calc(var(--space-2) + env(safe-area-inset-bottom)); gap: 6px; }
   .tutorial-more { display: inline-flex; }
   .tutorial-words { font-size: var(--text-md); cursor: pointer; }
-  .tutorial:not([data-expanded]) .tutorial-words { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+  .tutorial:not([data-expanded], [data-made]) .tutorial-words { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
   .tutorial:not([data-expanded]) .tutorial-say[data-done], .tutorial:not([data-expanded]) .tutorial-words p + p:not(.tutorial-then) { display: none; }
   .tutorial-actions .tool { min-height: 32px; padding: 0 var(--space-2); }
 }

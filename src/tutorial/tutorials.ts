@@ -11,11 +11,13 @@ const osc2Square = (level: number, percent: string): Step[] => [
     kind: 'choice', id: 'osc2Waveform', to: 'square',
     say: 'Make Osc 2 a Square.',
     note: 'A square has only the odd Harmonics: the Oscillator Scope’s shape changes, not the pitch.',
+    viewer: 'Oscillator Scope',
   },
   {
     kind: 'param', id: 'osc2Octave', to: -1,
     say: 'Set Octave to −1, so Osc 2 plays an octave below Osc 1.',
     note: 'The sound gains a floor. New Harmonics appear below and between Osc 1’s, and the Scope’s pattern repeats half as often.',
+    viewer: 'Oscillator Spectrum',
   },
 ];
 
@@ -23,6 +25,7 @@ const steeper: Step = {
   kind: 'choice', id: 'filterSlope', to: 24,
   say: 'Choose the Filter’s 24 dB Slope.',
   note: 'Above the Cutoff, Harmonics now fall away twice as fast: the Curve steepens and the upper bars sink.',
+  viewer: 'Filter Spectrum',
 };
 
 /** The four first Tutorials (issue 58); the Welcome opens the first. */
@@ -39,22 +42,26 @@ export const TUTORIALS: Tutorial[] = [
         kind: 'display', overlay: 'ideal',
         say: 'Open Display and see that Ideal is on (turn it on if not).',
         note: 'Circles mark where Osc 1’s saw puts its Harmonics, squares where Osc 2’s square puts its own: an octave down, they fall in between.',
+        viewer: 'Oscillator Spectrum',
       },
       {
         kind: 'param', id: 'cutoff', to: 280,
         say: 'Turn the Filter’s Cutoff down to about 280 Hz.',
         note: 'The Filter Spectrum loses its upper Harmonics: the bright buzz becomes a dark hum. The Curve shows where the Filter starts to cut.',
+        viewer: 'Filter Spectrum',
       },
       steeper,
       {
         kind: 'param', id: 'resonance', to: 0.35,
         say: 'Raise Resonance to about 35 %.',
         note: 'A small bump rises on the Curve at the Cutoff: the Harmonics there get a lift, a little bite.',
+        viewer: 'Filter Spectrum',
       },
       {
         kind: 'param', id: 'filterEnvAmount', to: 2.5,
         say: 'Set the Filter Envelope’s Amount to +2.5 octaves.',
         note: 'Each Note now opens the Filter, then lets it close again: play one and watch the Curve jump up and fall back.',
+        viewer: 'Filter Spectrum',
       },
       {
         kind: 'param', id: 'filterAttack', to: 0.002,
@@ -90,6 +97,7 @@ export const TUTORIALS: Tutorial[] = [
         kind: 'param', id: 'ampRelease', to: 0.12,
         say: 'Shorten the Amp’s Release to about 120 ms.',
         note: 'Notes stop as soon as you let go, tight, as a bass line needs. The Amp Scope shows each one end.',
+        viewer: 'Amp Scope',
       },
     ],
   },
@@ -104,21 +112,25 @@ export const TUTORIALS: Tutorial[] = [
         kind: 'action', id: 'snapshot',
         say: 'Play a Note or press Listen, then take a Snapshot in Display: a faint copy of the Viewers to compare with.',
         note: 'The Scopes and Spectrums keep a faint trace of this bright saw. Every change from here shows against it.',
+        viewer: 'Filter Spectrum',
       },
       {
         kind: 'param', id: 'cutoff', to: 250,
         say: 'Turn the Cutoff down to about 250 Hz.',
         note: 'The saw goes dark: in the Filter Spectrum only the first few Harmonics are left, and the Snapshot’s faint trace shows all that was taken away.',
+        viewer: 'Filter Spectrum',
       },
       {
         kind: 'param', id: 'resonance', to: 0.8,
         say: 'Raise Resonance to about 80 %.',
         note: 'A tall peak rises on the Curve at the Cutoff, and the Harmonics there ring out: the squelchy, vocal heart of acid.',
+        viewer: 'Filter Spectrum',
       },
       {
         kind: 'param', id: 'filterEnvAmount', to: 3.5,
         say: 'Set the Filter Envelope’s Amount to +3.5 octaves.',
         note: 'Each Note now sweeps the peak up and back down, a “yow” on every Note. Watch it run along the Filter Spectrum.',
+        viewer: 'Filter Spectrum',
       },
       {
         kind: 'param', id: 'filterAttack', to: 0.001,
@@ -177,16 +189,19 @@ export const TUTORIALS: Tutorial[] = [
         kind: 'choice', id: 'waveform', to: 'pulse',
         say: 'Make Osc 1 a Pulse.',
         note: 'In the Oscillator Spectrum, gaps open in the row of Harmonics: the Pulse Width (25 %) decides where.',
+        viewer: 'Oscillator Spectrum',
       },
       {
         kind: 'param', id: 'pulseWidth', to: 0.3,
         say: 'Set Pulse Width to 30 %.',
         note: 'The gaps in the Oscillator Spectrum move closer together, and the tone is a little fuller.',
+        viewer: 'Oscillator Spectrum',
       },
       {
         kind: 'param', id: 'ampSustain', to: 0,
         say: 'In the Amp Envelope, pull Sustain all the way down.',
         note: 'Hold a key: the Note fades away by itself, even while held. The Amp Scope shows it die out. That fade is a pluck.',
+        viewer: 'Amp Scope',
       },
       {
         kind: 'param', id: 'ampDecay', to: 0.45,
@@ -208,16 +223,19 @@ export const TUTORIALS: Tutorial[] = [
         kind: 'param', id: 'cutoff', to: 220,
         say: 'Turn the Cutoff down to about 220 Hz.',
         note: 'Muffled: hardly any Harmonics get through. The Filter Envelope will open it for each Note.',
+        viewer: 'Filter Spectrum',
       },
       {
         kind: 'param', id: 'resonance', to: 0.5,
         say: 'Raise Resonance to 50 %.',
         note: 'A peak at the Cutoff gives a hollow, woody colour.',
+        viewer: 'Filter Spectrum',
       },
       {
         kind: 'param', id: 'filterEnvAmount', to: 4,
         say: 'Set the Filter Envelope’s Amount to +4 octaves.',
         note: 'Each Note now flashes bright and darkens: in the Filter Spectrum the Harmonics flash up and vanish.',
+        viewer: 'Filter Spectrum',
       },
       {
         kind: 'param', id: 'filterAttack', to: 0.001,
@@ -253,11 +271,13 @@ export const TUTORIALS: Tutorial[] = [
         kind: 'param', id: 'cutoff', to: 300,
         say: 'Turn the Cutoff down to about 300 Hz.',
         note: 'Dark: only the lowest Harmonics get through. The LFO will open it.',
+        viewer: 'Filter Spectrum',
       },
       {
         kind: 'param', id: 'resonance', to: 0.65,
         say: 'Raise Resonance to about 65 %.',
         note: 'A peak at the Cutoff: when it moves, you will hear it talk.',
+        viewer: 'Filter Spectrum',
       },
       {
         kind: 'param', id: 'lfoAmount', to: 0.7,
@@ -273,6 +293,7 @@ export const TUTORIALS: Tutorial[] = [
         kind: 'choice', id: 'lfoRetrigger', to: 'note',
         say: 'Switch on LFO 1’s Retrigger.',
         note: 'Every Note now starts its wobble from the same point, so it lands on the beat. Watch the Timeline start again at each Note.',
+        viewer: 'Envelope Timeline',
       },
       {
         kind: 'param', id: 'ampSustain', to: 1,

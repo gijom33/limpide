@@ -3,10 +3,17 @@ import { PRESETS } from '../patch/presets';
 import { valueToPosition } from '../patch/taper';
 import type { Overlay, Overlays } from '../viewers/overlays';
 
-/** What every Step says: what to do, then, once it is done, a note on what to hear and see. */
+/** A Viewer a Step can point at, by its accessible name: a Tap's Scope or Spectrum, or the Envelope Timeline. */
+export type ViewerName = `${'Oscillator' | 'Filter' | 'Amp'} ${'Scope' | 'Spectrum'}` | 'Envelope Timeline';
+
+/**
+ * What every Step says: what to do, then, once it is done, a note on what to hear and see; and the Viewer where the
+ * note's change shows, if it names or points at one, which the page brings into view with the control (issue 105).
+ */
 interface Words {
   say: string;
   note: string;
+  viewer?: ViewerName;
 }
 
 /**

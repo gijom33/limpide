@@ -1,4 +1,5 @@
 import { type RefObject, useEffect } from 'react';
+import { headerBottomAt } from './SectionStrip';
 
 /**
  * A card docked at the bottom of the page (a Tutorial's, the Demo's). Its height is `--docked-h`, so a control
@@ -55,5 +56,34 @@ function clearOfCard(card: HTMLElement | null, focused: EventTarget | null) {
   const [top, bottom] = [Math.max(control.top, over.top), Math.min(control.bottom, over.bottom)];
   if (left >= right || top >= bottom) return;
   if (!card.contains(document.elementFromPoint((left + right) / 2, (top + bottom) / 2))) return;
-  scrollBy({ top: control.bottom + CLEARANCE - over.top, behavior: 'instant' });
+  bringClear(card, [focused], 'instant');
+}
+
+/**
+ * Scrolls the page the least that shows the elements between the header and the card (issue 105: a Tutorial Step's
+ * control and the Viewer it points at), none of them in the header, each with its scroll margins. Where they do not fit
+ * together, the first ones do, the first alone at least.
+ */
+export function bringClear(card: HTMLElement, elements: readonly Element[], behavior: ScrollBehavior) {
+  const floor = card.getBoundingClientRect().top - CLEARANCE;
+  const end = document.documentElement.scrollHeight - innerHeight;
+  const ceiling = (y: number) => headerBottomAt(y) + CLEARANCE;
+  for (let n = elements.length; n > 0; n--) {
+    // Each element's own scroll margins too: the room its ring and target take round it.
+    const boxes = elements.slice(0, n).map((e) => {
+      const box = e.getBoundingClientRect();
+      const style = getComputedStyle(e);
+      return { top: box.top - parseFloat(style.scrollMarginTop), bottom: box.bottom + parseFloat(style.scrollMarginBottom) };
+    });
+    const [top, bottom] = [Math.min(...boxes.map((b) => b.top)), Math.max(...boxes.map((b) => b.bottom))];
+    // Lifted above the card, or lowered below the header as it will be on the way up (its rows come back).
+    let y = scrollY;
+    if (bottom > floor) y = Math.min(end, scrollY + bottom - floor);
+    else if (top < ceiling(scrollY)) y = Math.max(0, scrollY + top - ceiling(scrollY - 1));
+    const fits = top + scrollY - y >= ceiling(y) - 1 && bottom + scrollY - y <= floor + 1;
+    if (fits || n === 1) {
+      if (Math.abs(y - scrollY) >= 1) scrollTo({ top: y, behavior });
+      return;
+    }
+  }
 }

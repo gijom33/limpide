@@ -21,13 +21,18 @@ async function open(page: Page, preset: string) {
  * click while it shows, until Next is enabled, however slow the machine.
  */
 async function makeStep(page: Page) {
+  await doIt(page);
+  await card(page).getByRole('button', { name: /^(Next|Finish)$/ }).click();
+}
+
+/** The Step on the card made with "Do it for me", as `makeStep` does, staying on it. */
+async function doIt(page: Page) {
   const next = card(page).getByRole('button', { name: /^(Next|Finish)$/ });
   const doIt = action(page, 'Do it for me');
   await expect(async () => {
     if (await doIt.isVisible()) await doIt.click({ timeout: 2000 });
     await expect(next).toBeEnabled({ timeout: 2000 });
   }).toPass({ timeout: 30000 });
-  await next.click();
 }
 
 /** Every Step made with "Do it for me", to the last card. */
@@ -163,30 +168,47 @@ test('the Demo ends a Tutorial (it loads its own Presets)', async ({ page }) => 
   await expect(card(page)).toBeHidden();
 });
 
-for (const [layout, width, height] of [['phone', 375, 812], ['2 × 2', 690, 830]] as const) {
-  test(`on a ${layout}, every Step's control comes into view, clear of the header and the card`, async ({ page }) => {
-    await page.emulateMedia({ reducedMotion: 'reduce' });
-    await page.setViewportSize({ width, height });
-    await open(page, 'Wobble');
-    await action(page, 'Start').click();
-    for (;;) {
-      await page.waitForTimeout(150); // the jump to the control
-      const clear = await page.evaluate(() => {
-        const control = document.querySelector('[data-tutorial]:not(.section-strip button)')!.getBoundingClientRect();
-        const card = document.querySelector('.tutorial')!.getBoundingClientRect();
-        const header = document.querySelector('header')!.getBoundingClientRect();
-        const strip = document.querySelector('.section-strip')?.getBoundingClientRect();
-        const top = Math.max(header.bottom, strip?.height ? strip.bottom : 0);
-        return { above: control.bottom <= card.top, below: control.top >= top, control: Math.round(control.top), card: Math.round(card.top), top: Math.round(top) };
-      });
-      const step = await progress(page).textContent();
-      expect(clear, `${step}`).toMatchObject({ above: true, below: true });
+/**
+ * Where an element stands: "clear" between the header (and the phone's strip) and the card, or for one in the header,
+ * on screen; "hidden" otherwise; "none" without one.
+ */
+const standing = (page: Page, selector: string) =>
+  page.evaluate((selector) => {
+    const element = document.querySelector(selector);
+    if (!element) return 'none';
+    const box = element.getBoundingClientRect();
+    if (element.closest('header')) return box.top >= 0 && box.bottom <= innerHeight ? 'clear' : 'hidden';
+    const card = document.querySelector('.tutorial')!.getBoundingClientRect();
+    const header = document.querySelector('header')!.getBoundingClientRect();
+    const strip = document.querySelector('.section-strip')?.getBoundingClientRect();
+    const top = Math.max(header.bottom, strip?.height ? strip.bottom : 0);
+    return box.bottom <= card.top && box.top >= top ? 'clear' : `hidden: ${Math.round(box.top)} to ${Math.round(box.bottom)} between ${Math.round(top)} and ${Math.round(card.top)}`;
+  }, selector);
+
+// Issue 105 (the 1.16.0 review): on a 393 × 659 phone the Bass Tutorial's Ideal Step spoke of circles and squares on the
+// Oscillator Spectrum, under the card, its note cut short with "…".
+for (const [layout, width, height] of [['phone', 375, 812], ['short phone', 393, 659], ['2 × 2', 690, 830]] as const) {
+  for (const preset of ['Bass', 'Acid', 'Pluck', 'Wobble']) {
+    test(`on a ${layout}, each Step of ${preset} brings its control, then the Viewer its note names, clear of the header and the card`, async ({ page }) => {
+      test.setTimeout(90000); // fifteen Steps, each made and checked twice
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await page.setViewportSize({ width, height });
+      await open(page, preset);
+      await action(page, 'Start').click();
       const next = card(page).getByRole('button', { name: /^(Next|Finish)$/ });
-      await action(page, 'Do it for me').click();
-      if ((await next.textContent()) === 'Finish') break;
-      await next.click();
-    }
-  });
+      for (;;) {
+        const step = await progress(page).textContent();
+        await expect.poll(() => standing(page, '[data-tutorial]:not(.section-strip button)'), `${step}: its control`).toMatch(/^(clear|none)$/);
+        await doIt(page);
+        await expect.poll(() => standing(page, '[data-tutorial-viewer]'), `${step}: its Viewer`).toMatch(/^(clear|none)$/);
+        // Its note, which says what to hear and see, whole.
+        const words = card(page).locator('.tutorial-words');
+        expect(await words.evaluate((w) => w.scrollHeight <= w.clientHeight + 1), `${step}: its note whole`).toBe(true);
+        if ((await next.textContent()) === 'Finish') break;
+        await next.click();
+      }
+    });
+  }
 }
 
 test('on a phone the card shows two lines; a tap on the text, or on +, shows it whole, and another folds it', async ({ page }) => {

@@ -16,6 +16,19 @@ const collapseHeader = (collapsed: boolean) => document.documentElement.toggleAt
 const section = (name: string) => document.querySelector<HTMLElement>(`section[aria-label="${name}"]`);
 
 /**
+ * How far down the window the header and the strip will reach once the page has scrolled to `y`: where the header is
+ * sticky (up to 860 px), its rows above the piano slide away on the way down past the page's top and come back on the
+ * way up, as the scroll listener below has them do; wider, it scrolls away with the page.
+ */
+export function headerBottomAt(y: number): number {
+  const header = document.querySelector('header')!;
+  if (getComputedStyle(header).position !== 'sticky') return Math.max(0, header.getBoundingClientRect().bottom + scrollY - y);
+  const collapsed = y > scrollY ? y > TOP : y < scrollY ? false : document.documentElement.hasAttribute('data-header-collapsed');
+  const hide = collapsed ? parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-hide')) || 0 : 0;
+  return header.offsetHeight - hide + (document.querySelector('.section-strip')?.getBoundingClientRect().height ?? 0);
+}
+
+/**
  * Phones only (CSS hides it elsewhere, where every section is on screen at once): a strip of the sections, sticky
  * under the header. It shows which section is in view (the one a third of the way down what the header and strip
  * leave visible) and jumps to a section when tapped, landing its top just under the strip.

@@ -1,7 +1,7 @@
 import { type FocusEvent, type RefObject, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { inDisplay, type Step, type Tutorial, targetText } from '../tutorial/tutorial';
 import { FoldButton, useCardPlacement } from './cardPlacement';
-import { useDocked } from './docked';
+import { bringClear, useDocked } from './docked';
 import { CloseIcon, NoteIcon } from './icons';
 import { reveal } from './reveal';
 
@@ -30,9 +30,10 @@ const selectorOf = (step: Step) => (step.kind === 'display' ? `[data-overlay="${
 /**
  * Rings the Step's control, with its target above it ("→ 800 Hz"), and marks its section in the phone's strip. A
  * Display option rings the Display button until its panel opens. A control on a hidden tab, or out of sight, is
- * brought into view above the card.
+ * brought into view between the header and the card, with the Viewer the Step points at where both fit; once the Step
+ * is made its note speaks of that Viewer, so the Viewer comes first (issue 105).
  */
-function useRing(step: Step | undefined, made: boolean) {
+function useRing(step: Step | undefined, made: boolean, card: RefObject<HTMLElement | null>) {
   useEffect(() => {
     if (!step) return;
     let marked: Element[] = [];
@@ -65,15 +66,19 @@ function useRing(step: Step | undefined, made: boolean) {
       return element;
     };
     const element = mark();
-    let scroll: ReturnType<typeof setTimeout> | undefined;
-    if (element) {
-      reveal(element);
-      // After the tab it was on has had a frame to show.
-      scroll = setTimeout(() => {
-        const smooth = !matchMedia('(prefers-reduced-motion: reduce)').matches;
-        element.scrollIntoView({ block: 'nearest', behavior: smooth ? 'smooth' : 'auto' });
-      }, 50);
-    }
+    const viewer = step.viewer ? document.querySelector(`[aria-label="${step.viewer}"]`) : null;
+    viewer?.setAttribute('data-tutorial-viewer', '');
+    if (element) reveal(element);
+    // After the tab it was on has had a frame to show, and the card its new height.
+    const scroll = setTimeout(() => {
+      const behavior = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+      // The Display button, standing for an option in its panel, is in the header: the header comes back for it.
+      if (element?.closest('header')) element.scrollIntoView({ block: 'nearest', behavior });
+      else if (card.current) {
+        const both = [element, viewer].filter((e) => e !== null);
+        bringClear(card.current, made ? both.reverse() : both, behavior);
+      }
+    }, 50);
     // A tab switched or the Display panel opened by the person: the ring follows its control.
     let again: ReturnType<typeof setTimeout> | undefined;
     const follow = () => {
@@ -87,8 +92,9 @@ function useRing(step: Step | undefined, made: boolean) {
       clearTimeout(scroll);
       document.removeEventListener('click', follow);
       clear();
+      viewer?.removeAttribute('data-tutorial-viewer');
     };
-  }, [step, made]);
+  }, [step, made, card]);
 }
 
 /**
@@ -121,9 +127,10 @@ export function TutorialCard({ tutorial, about, index, done, differs, listening,
   const step = index >= 0 ? steps[index] : undefined;
   const made = step ? done[index] : false;
   const card = useRef<HTMLElement>(null);
-  // On a phone the card shows two lines; a tap on them, or on +, shows the rest (issue 40, decision 7).
+  // On a phone the card shows two lines; a tap on them, or on +, shows the rest (issue 40, decision 7). A made Step's
+  // note shows whole, as it says what to hear and see (issue 105).
   const [expanded, setExpanded] = useState(false);
-  useRing(step, made);
+  useRing(step, made, card);
   useDocked(card);
   const place = useCardPlacement(card, 'tutorial', tutorial.preset);
   const focus = useCardFocus(card, tutorial);
@@ -137,7 +144,7 @@ export function TutorialCard({ tutorial, about, index, done, differs, listening,
   );
   const progress = step ? `Step ${index + 1} of ${steps.length}` : index < 0 ? `${steps.length} steps` : 'Done';
   return (
-    <section ref={card} className="docked tutorial" aria-label={`Tutorial: ${tutorial.preset}`} data-expanded={expanded || undefined} {...place.cardProps} {...focus}>
+    <section ref={card} className="docked tutorial" aria-label={`Tutorial: ${tutorial.preset}`} data-expanded={expanded || undefined} data-made={made || undefined} {...place.cardProps} {...focus}>
       <div className="tutorial-top" {...place.handle}>
         <span className="tutorial-name">{tutorial.preset}</span>
         <span className="tutorial-progress" data-done={made || undefined}>
