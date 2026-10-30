@@ -87,9 +87,9 @@ body { margin: 0; background: var(--bg); color: var(--text); -webkit-user-select
 input, textarea { -webkit-user-select: text; user-select: text; }
 /* Grows with the screen up to where lines of controls stop being comfortable to scan. */
 main { max-width: 1920px; margin: 0 auto; padding: var(--space-4); }
-/* Laptop and wide windows: one row in the header's one order (issue 44). The Wordmark and the Patch on the left, the
-   keyboard in the centre, set-up (Hold, MIDI, Display, About) and the playing buttons (Demo, Tutorial, Song) on the
-   right, in two rows up to 1919 px, set-up on top (the owner, 2026-10-29: the Patch beside the logo, never under it). The side columns
+/* Laptop and wide windows: the header on one line (issue 44). The Wordmark and the Patch on the left, the keyboard in
+   the centre, set-up (Hold, MIDI, Display, About) and the playing buttons (Demo, Tutorial, Song) on the right, in two
+   rows up to 1919 px, set-up on top, and in one from 1920 px (the owner, 2026-10-29: the Patch beside the logo, never under it). The side columns
    are never narrower than what they hold and share the rest equally, so the keyboard sits centred when there is room;
    its column takes what they leave, up to the piano at full size. The Display panel is anchored to the
    header (not its button), so it can always use, and never exceed, the window's width. */
@@ -410,7 +410,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .envelope-knobs { flex: 1 1 0; min-width: 0; }
 .sub-block .knobs { min-height: 0; }
 
-/* The Oscillators stage: Osc 1, Osc 2 and the Mixer stacked; the first needs no divider above it. */
+/* The Oscillators stage: four tabs (Osc 1, Osc 2, Sub & Noise, Mixer), one shown at a time. */
 /* The rows of a stage are evenly spaced: one gap, the stage's, between every row, with no dividers. */
 .source-rows { display: flex; flex-direction: column; gap: var(--space-2); flex: 1 1 100%; }
 /* In the stage columns nothing may shrink below its content (an explicit min-height on .knobs would otherwise
@@ -969,9 +969,9 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .patch-delete, .patch-search-clear { height: var(--control-h); min-width: var(--control-h); padding: 0 6px; font: inherit; font-size: var(--text-md); color: var(--muted); cursor: pointer; background: none; border: 1px solid var(--border); border-radius: var(--radius-control); }
 .patch-delete-confirm { color: var(--danger); border-color: var(--danger); }
 .patch-empty { margin: 0; font-size: var(--text-md); color: var(--muted); }
-/* The one-row header gives the keyboard what its sides leave: below 1300 px its buttons show their icons and drop
-   their words (the tooltips name them), so the piano keeps keys of 30 px or more down to 1000 px. Below 920 px the
-   header's zones sit closer together. */
+/* The one-line header gives the keyboard what its sides leave: from 861 to 1099 px its buttons show their icons and
+   drop their words (the tooltips name them); from 1100 px, two rows high, they keep them. Below 920 px the header's
+   zones sit closer together. */
 /* With the Tutorial button (issue 59), one more in the row: the zones sit 12 px apart and, without their words, the
    buttons pad 6 px, so the piano keeps 44 px keys at 1440 and 26 px or more at 861. */
 @media (min-width: 861px) {

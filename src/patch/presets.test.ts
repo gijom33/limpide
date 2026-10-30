@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { memoryStorage } from '../test/memoryStorage';
 import { createLibrary } from './library';
-import { CHOICES, defaultPatch, PARAMS, type ParamId, type Patch, setParam } from './patch';
+import { CHOICES, defaultPatch, LFO_DESTINATIONS, PARAMS, type ParamId, type Patch, setParam } from './patch';
 import { initialPatch, PRESET_GROUPS, PRESETS, stepPreset } from './presets';
 import { patchToShare, sanitizePatch, shareHash } from './serialize';
 import { valueToPosition } from './taper';
@@ -26,9 +26,9 @@ describe('Presets', () => {
     expect(using((p) => p.voices > 1)).toBeGreaterThanOrEqual(6);
     expect(using((p) => p.voices === 2)).toBeGreaterThan(0); // not only the maximum
     for (const mode of ['lowpass', 'highpass', 'bandpass', 'notch'] as const) expect(using((p) => p.filterMode === mode), mode).toBeGreaterThan(0);
-    // Every LFO destination, both LFOs, and Retrigger.
+    // Every LFO Destination, read from the one list, both LFOs, and Retrigger.
     const aims = (p: (typeof PRESETS)[number]['patch'], d: string) => (p.lfoAmount > 0 && p.lfoDestination === d) || (p.lfo2Amount > 0 && p.lfo2Destination === d);
-    for (const d of ['cutoff', 'pitch', 'pulseWidth', 'fm', 'resonance', 'osc2Pitch', 'detune'] as const) expect(using((p) => aims(p, d)), d).toBeGreaterThan(0);
+    for (const { id } of LFO_DESTINATIONS) expect(using((p) => aims(p, id)), id).toBeGreaterThan(0);
     expect(using((p) => p.lfo2Amount > 0)).toBeGreaterThanOrEqual(8);
     expect(using((p) => p.lfoAmount > 0 && p.lfo2Amount > 0)).toBeGreaterThanOrEqual(4); // both at once
     expect(using((p) => (p.lfoAmount > 0 && p.lfoRetrigger === 'note') || (p.lfo2Amount > 0 && p.lfo2Retrigger === 'note'))).toBeGreaterThanOrEqual(3);

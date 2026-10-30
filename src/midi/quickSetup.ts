@@ -14,8 +14,8 @@ const actions = (...ids: Extract<Target, { kind: 'action' }>['id'][]): SetupStep
   ids.map((id) => ({ target: { kind: 'action', id }, prompt: 'Press a button' }));
 
 /**
- * Every Parameter played live (the knobs worth turning while playing and the faders, ADR-0008), in the page's
- * order: the Oscillators, the Filter, the Amp, the LFOs; then the Actions. Settings made once for a sound (Octave,
+ * Every Parameter played live (the knobs worth turning while playing and the faders, ADR-0008): the Filter's big
+ * knobs, then the page's order, the Oscillators, the Envelopes, the Amp, the LFOs; then the Actions. Settings made once for a sound (Octave,
  * the Waveforms, Pulse Width, Filter Mode, Velocity, Glide, Voices…) are left to MIDI Learn.
  */
 // The Filter first, the knobs a player reaches for first (review 2, issue 53); then the page's order.

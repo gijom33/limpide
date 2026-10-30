@@ -688,7 +688,8 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
       append(pitches, { time: t, frequency, note, glide });
       if (pitches.length > HISTORY) pitches.shift();
       for (const [node, f] of [[osc, frequency], [osc2, frequency], [sub, frequency / 2]] as const) {
-        // Every Oscillator follows the Note: Osc 2's offsets ride on top, through its detune; the Sub an octave down.
+        // Every Oscillator follows the Note, the Sub from an octave down: Osc 1's Octave, Osc 2's offsets and the Sub's
+        // second octave ride on top, through their detunes.
         holdAt(node.frequency, t);
         if (glide) node.frequency.setTargetAtTime(f, t, glideTimeConstant(glide));
         else node.frequency.setValueAtTime(f, t);

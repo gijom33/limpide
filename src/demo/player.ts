@@ -56,7 +56,7 @@ export function octaveShowing(notes: number[]): number {
  * handed to the engine, and each part but the last takes a short breath at its end. Knobs are turned on the same
  * look-ahead as the Notes, so a jump on a bar line is in force when that bar's first Note starts. After the last part it
  * ends by itself. Returns the stop function, which silences everything at once. `from` starts it at that part (the
- * card's dots, the owner): the parts before it are skipped.
+ * card's segments, the owner): the parts before it are skipped.
  */
 export function startDemo(host: DemoHost, track: Track = TRACK, from = 0): () => void {
   const beat = 60 / track.bpm;

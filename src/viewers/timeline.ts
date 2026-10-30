@@ -178,8 +178,8 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
     };
     if (shows.cutoff) line({ name: 'cutoff', colourVar: '--stage-filter', pattern: 'dots', y: (m) => yHz(m.cutoff) });
 
-    // What else the LFOs move, each the same way on its knob's own scale (bottom to top) in its stage's colour: the
-    // where it is now in its pattern; the key names them.
+    // What else the LFOs move, each the same way on its knob's own scale (bottom to top) in its stage's colour: where
+    // it is now, in its pattern; the key names them.
     const patches = shows.destinations.length ? times.map((time) => source.patchAt(time)) : [];
     const levels = shows.destinations.map((d) => samples.map((m, i) => (patches[i] ? destinationLevel(d, patches[i], m) : 0)));
     shows.destinations.forEach((d, i) => {

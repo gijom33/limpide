@@ -93,7 +93,7 @@ export function usePlayers({ session, octaveRef, setOctave, heldNotes, onDemoSta
 
   /**
    * The track; or, with `shared`, only a riff, played on the Patch loaded now (a Share link's). `from` starts it at
-   * that part: a dot on its card (the owner).
+   * that part: a segment on its card (the owner).
    */
   const playDemo = ({ shared = false, from = 0 } = {}) => {
     stop();

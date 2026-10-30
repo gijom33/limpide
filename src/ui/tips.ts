@@ -1,7 +1,22 @@
 import { DESTINATIONS } from '../modulation/destinations';
-import type { LfoDestination, ParamId } from '../patch/patch';
+import { LFO_DESTINATIONS, type LfoDestination, type ParamId } from '../patch/patch';
 import type { Overlay } from '../viewers/overlays';
 import type { TipContent } from './Tooltip';
+
+/**
+ * What an LFO does to each Destination at full Depth (issue 107), keyed by every Destination, so a new one needs its
+ * words before it type-checks; the tip lists them in the picker's order.
+ */
+const LFO_DESTINATION_WORDS: Record<LfoDestination, string> = {
+  pitch: 'a semitone each way (vibrato).',
+  osc2Pitch: 'Osc 2 alone, an octave each way (sweeps against Osc 1).',
+  detune: 'Osc 2 alone, 50 cents each way (a beating chorus).',
+  pulseWidth: 'each Oscillator’s (PWM; only heard on a Pulse).',
+  fm: 'up to its whole range, but only as far each way as the FM knob leaves room: none at 0, so raise FM first (its partials growing and fading).',
+  cutoff: 'two octaves each way (wah).',
+  resonance: 'across its range (a vocal, whistling sweep).',
+  volume: 'down from the Amp Envelope’s level to silence (tremolo).',
+};
 
 // Every explanation in one place: what the control does, in plain words, then how to use it.
 export const TIPS = {
@@ -40,7 +55,7 @@ export const TIPS = {
   midi: { title: 'MIDI', body: '' },
   quickSetup: {
     title: 'Quick Setup',
-    body: 'Maps your Controller in one pass: it asks for a control for each knob and fader played live (the big knobs and the faders), in the page’s order from the Oscillators to the LFOs, then a button for Hold, Freeze, Snapshot and the Preset arrows. Settings made once for a sound (Octave, the Waveforms, Filter Mode, Glide, Voices…) are left to MIDI Learn.',
+    body: 'Maps your Controller in one pass: it asks for a control for each knob and fader played live (the big knobs and the faders), the Filter’s first, then in the page’s order from the Oscillators to the LFOs, then a button for Hold, Freeze, Snapshot and the Preset arrows. Settings made once for a sound (Octave, the Waveforms, Filter Mode, Glide, Voices…) are left to MIDI Learn.',
     how: 'Skip any step. Finish (or Escape) keeps what is mapped; Cancel puts back your Mappings from before.',
   },
   c16Layout: {
@@ -123,7 +138,7 @@ export const TIPS = {
   },
   filterEnvelope: {
     title: 'Filter Envelope',
-    body: 'An Attack–Decay–Sustain–Release shape, like the Amp’s, that moves the Cutoff instead of the loudness. Envelope Amount sets how far.',
+    body: 'An Attack–Decay–Sustain–Release shape, like the Amp’s, that moves the Cutoff instead of the loudness. Envelope Amount sets how far. It can bend Osc 2’s pitch too, by Osc 2’s own Env Amount: its faders stay lit while either Amount is set.',
   },
   timeline: {
     title: 'LFO & Envelopes',
@@ -146,7 +161,7 @@ export const TIPS = {
   },
   lfoDestination: {
     title: 'LFO Destination',
-    body: 'What the LFO moves, at full Depth. Pitch: a semitone each way (vibrato). Osc 2 Pitch: Osc 2 alone, an octave each way (sweeps against Osc 1). Detune: Osc 2 alone, 50 cents each way (a beating chorus). Pulse Width: each Oscillator’s (PWM; only heard on a Pulse). Cutoff: two octaves each way (wah). Resonance: across its range (a vocal, whistling sweep). Volume: down from the Amp Envelope’s level to silence (tremolo).',
+    body: `What the LFO moves, at full Depth. ${LFO_DESTINATIONS.map((d) => `${d.label}: ${LFO_DESTINATION_WORDS[d.id]}`).join(' ')}`,
   },
   glide: {
     title: 'Glide',
@@ -174,8 +189,8 @@ export const TIPS = {
   },
   osc2: {
     title: 'Osc 2',
-    body: 'A second Oscillator that follows the Note, shifted by whole Octaves and Semitones and fine-tuned by Detune.',
-    how: 'Raise Osc 2 in the Mixer to hear it. A few cents of Detune makes the sound beat: watch the Scope swell and fade.',
+    body: 'A second Oscillator that follows the Note, shifted by whole Octaves and Semitones and fine-tuned by Detune; its Env Amount lets the Filter Envelope bend its pitch.',
+    how: 'Raise Osc 2 in the Mixer to hear it (Ring and FM use it even with its fader at 0). A few cents of Detune makes the sound beat: watch the Scope swell and fade.',
   },
   detune: {
     title: 'Detune',
@@ -187,12 +202,12 @@ export const TIPS = {
   },
   noise: {
     title: 'Noise',
-    body: 'An unpitched hiss with energy at every frequency: in the Spectrum it fills the gaps between Harmonics. Filter it for wind, breath or percussion.',
+    body: 'An unpitched sound with energy at every frequency, a hiss in White or a softer rush in Pink (its colour, on the Sub & Noise tab): in the Spectrum it fills the gaps between Harmonics. Filter it for wind, breath or percussion.',
   },
   crossMod: {
     title: 'FM',
-    body: 'Frequency modulation (cross-modulation): Osc 2 swings Osc 1’s pitch up and down at Osc 2’s own frequency, whatever Osc 2’s own fader: hundreds of times a second in the middle of the keyboard, tens on the lowest Notes. Too fast to hear as vibrato, it becomes tone: new partials, from a growl to a clang. Osc 2’s tuning decides where they land: in tune or whole octaves away, on the Harmonics themselves, changing their levels; anywhere else, between them. High up, FM holds itself back as far as keeps them under the top of what the browser can play, so none fold back.',
-    how: 'Pick Sine on both and turn FM up: the Ideal’s circles fan out into sidebands with the spikes. They are drawn while Osc 2 is a Sine, or whole octaves from Osc 1; otherwise the circles mark plain Osc 1. An LFO aimed at FM swings it too: raise FM first, since the swing goes only as far below the knob as above it.',
+    body: 'To see it clearly, set Osc 1 and Osc 2 to Sine and turn FM up: from a single spike, a ladder of new partials grows. On Init’s two saws no new spikes appear: the new partials land on the Harmonics already there and only change their heights. FM is Osc 2 swinging Osc 1’s pitch at Osc 2’s own frequency, whatever Osc 2’s own fader: too fast to hear as vibrato, it becomes tone, from a growl to a clang. With Osc 2 in tune or whole octaves away, the partials land on the Harmonics, changing their levels; anywhere else, between them. High up, FM holds itself back so they stay under the top of what the browser can play.',
+    how: 'Then move Osc 2’s Semitone: the partials leave the Harmonic ladder. The Ideal’s circles follow them while Osc 2 is a Sine, or whole octaves from Osc 1; otherwise they mark plain Osc 1. An LFO aimed at FM swings it too: raise FM first, since the swing goes only as far below the knob as above it.',
   },
   osc2EnvAmount: {
     title: 'Env Amount',
@@ -216,7 +231,7 @@ export const TIPS = {
   // Issue 49: the core controls and the stages, so a newcomer finds words where they look first.
   oscillators: {
     title: 'Oscillators',
-    body: 'Where the sound starts: a tone at the pitch you play, with a shape (the Waveform) that decides which Harmonics it has. Two Oscillators, a Sub an octave down and Noise are mixed here, then sent to the Filter.',
+    body: 'Where the sound starts: a tone at the pitch you play, with a shape (the Waveform) that decides which Harmonics it has. Two Oscillators, Ring (the two multiplied), a Sub one or two octaves down and Noise are mixed here, then sent to the Filter.',
     how: 'Pick a Waveform and watch both pictures below change: the Scope draws its shape, the Spectrum its Harmonics.',
   },
   filter: {

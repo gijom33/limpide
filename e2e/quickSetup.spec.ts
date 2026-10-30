@@ -20,7 +20,7 @@ const STEPS = 27;
 
 test.beforeEach(({ page }) => withFakeController(page));
 
-test('Quick Setup walks through every control played live, in the page’s order, and maps it all', async ({ page }) => {
+test('Quick Setup walks through every control played live, the Filter’s first and then in the page’s order, and maps it all', async ({ page }) => {
   await startSetup(page);
   await expect(prompt(page)).toContainText('Move a control → Filter · Cutoff');
   await expect(setup(page)).toContainText(`1 of ${STEPS}`);

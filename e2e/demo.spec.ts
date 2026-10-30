@@ -269,7 +269,7 @@ test('the Demo’s card closes with its ×, the Demo playing on, and comes back 
   await expect(card).toContainText('Kick');
 });
 
-test('a dot on the Demo’s card plays on from its part, and the Demo keeps playing (the owner)', async ({ page }) => {
+test('a segment on the Demo’s card plays on from its part, and the Demo keeps playing (the owner)', async ({ page }) => {
   await page.goto('/');
   await demo(page).click();
   const card = page.getByRole('region', { name: 'Demo' });
@@ -327,16 +327,16 @@ for (const width of [393, 1440]) {
     await page.goto('/');
     await demo(page).click();
     const card = page.getByRole('region', { name: 'Demo' });
-    const firstDot = () => card.getByRole('button', { name: /^Play from part 1,/ }).evaluate((el) => Math.round(el.getBoundingClientRect().left));
+    const firstSegment = () => card.getByRole('button', { name: /^Play from part 1,/ }).evaluate((el) => Math.round(el.getBoundingClientRect().left));
     await expect(card).toContainText('Kick');
-    const before = await firstDot();
+    const before = await firstSegment();
     await card.getByRole('button', { name: 'Play from part 6, Self-Oscillation' }).click();
     await expect(card.getByRole('group', { name: 'Part 6 of 15' })).toBeVisible();
-    expect(await firstDot()).toBe(before);
-    // The name never runs under the dots.
-    const [name, dots] = await Promise.all([card.locator('.demo-bar-name'), card.locator('.demo-bar-parts')].map((l) => l.evaluate((el) => el.getBoundingClientRect().toJSON())));
+    expect(await firstSegment()).toBe(before);
+    // The name never runs under the segments.
+    const [name, segments] = await Promise.all([card.locator('.demo-bar-name'), card.locator('.demo-bar-parts')].map((l) => l.evaluate((el) => el.getBoundingClientRect().toJSON())));
     // Beside them, or on a phone above them: never over them.
-    expect(name.right <= dots.left || name.bottom <= dots.top).toBe(true);
+    expect(name.right <= segments.left || name.bottom <= segments.top).toBe(true);
   });
 }
 
