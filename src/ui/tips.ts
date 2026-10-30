@@ -263,7 +263,7 @@ export const TIPS = {
   },
   // Issue 59: the faders, the LFO knobs and the Timeline's key, which had none.
   osc1Level: { title: 'Osc 1', body: 'How much of Osc 1 goes into the Filter: its level in the mix.' },
-  osc2Level: { title: 'Osc 2', body: 'How much of Osc 2 goes into the Filter. At 0 it is silent, and its tab and Tuning knobs grey out unless Ring or FM still uses it.' },
+  osc2Level: { title: 'Osc 2', body: 'How much of Osc 2 goes into the Filter. At 0 it is silent, and its tab and Tuning knobs grey out unless Ring, or FM on an Osc 1 you can hear, still uses it.' },
   attack: {
     title: 'Attack',
     body: 'How long the Envelope takes to rise from nothing to full once a key goes down: short for a sharp start (a pluck), long for a slow swell (a pad).',

@@ -6,7 +6,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
-- 2026-10-29, the owner: "if FM is used but OSC 1 is silent, do not add dot on OSC 2"
 - 2026-10-29, the owner, asked what to do with the Timeline's thin flat lines (each moved knob's own setting): "Remove them"
 
 ## Dropped
@@ -91,3 +90,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-29, the owner's six Oscillator additions (triage, decided by the owner, Hard Sync left out): Ring Modulation went to [88](./issues/88-ring-modulation.md), Cross-modulation to [89](./issues/89-cross-modulation.md), an Octave on Osc 1 to [90](./issues/90-osc1-octave.md) (with a pulse width bug found while planning it), the Sub's options to [91](./issues/91-sub-options.md), Pink Noise to [92](./issues/92-pink-noise.md), the Filter Envelope on Osc 2's pitch to [93](./issues/93-filter-envelope-on-osc2-pitch.md).
 2026-10-29, the owner's Ring bug and call (triage, decided by the owner): the Oscillators restarting on each Note, and the Ring diamonds exact when in tune, went to [94](./issues/94-oscillators-restart-on-each-note.md).
 2026-10-29, the owner's sounding dots, done at once, decided by the owner: the Osc 1 tab shows a dot while Osc 1 is heard (its fader or Ring up), the Sub & Noise tab while the Sub's or the Noise's fader is up, as Osc 2's does. Each dot's room is kept while it is off, so the tabs never move; on the narrowest stages (a 2 × 2 stage at 620 px, a laptop's at 900) the tabs sit tighter to keep all four on one line. Test in `e2e/oscTabs.spec.ts`.
+2026-10-29, the owner's ask, done at once, decided by the owner: FM counts towards Osc 2 being heard only while Osc 1 is heard (its fader or Ring up), so FM on a silent Osc 1 lights no dot on Osc 2's tab. Osc 2's Pulse Width and Tuning knobs grey out with the dot, as before, and the Osc 2 fader's tip says so. Test in `e2e/voices.spec.ts`.

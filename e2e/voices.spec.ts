@@ -58,7 +58,7 @@ test('the Display panel chooses what the Amp Viewers follow: all Voices by defau
 
 // Each Oscillator's tab has its own pitch row under its Waveform (the owner, issue 90; it was one shared row of Osc
 // 2's tuning under both tabs, issue 19).
-test('Osc 2’s Tuning is a row of its own tab, greyed out until Osc 2 is heard: mixed in, through Ring or by FM', async ({ page }) => {
+test('Osc 2’s Tuning is a row of its own tab, greyed out until Osc 2 is heard: mixed in, through Ring or by FM on a heard Osc 1', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
   const tuning = page.getByRole('group', { name: 'Tuning' });
@@ -72,6 +72,14 @@ test('Osc 2’s Tuning is a row of its own tab, greyed out until Osc 2 is heard:
   await page.keyboard.press('ArrowUp');
   await page.getByRole('tab', { name: /Osc 2/ }).click();
   await expect(tuning.locator('.knob[data-inactive]')).toHaveCount(0); // heard through FM
+  // FM on a silent Osc 1 is not heard: no dot, greyed out again.
+  await page.getByRole('tab', { name: 'Mixer' }).click();
+  await page.getByRole('group', { name: 'Mixer' }).getByRole('slider', { name: 'Osc 1' }).focus();
+  await page.keyboard.press('Home');
+  const osc2 = page.getByRole('tab', { name: /Osc 2/ });
+  await expect(osc2).not.toHaveAttribute('data-sounding', 'true');
+  await osc2.click();
+  await expect(tuning.locator('.knob:not([data-inactive])')).toHaveCount(0);
 });
 
 test('Glide sits beside Voices in the Amp, greyed out with more than one Voice (it only slides a single Voice)', async ({ page }) => {
