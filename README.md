@@ -44,6 +44,7 @@ Then open the address it prints (usually http://localhost:5173).
 | `npm run test:unit` | Fast unit tests (Node) |
 | `npm run test:engine` | Audio engine tests in headless Chromium |
 | `npm run test:e2e` | End-to-end tests with Playwright |
+| `npm run stats` | Measure the project for [the statistics page](docs/statistics.md), before a release |
 
 The browser tests need Playwright's browsers once: `npx playwright install chromium webkit`.
 
@@ -54,6 +55,11 @@ TypeScript, React and Vite, on the browser's native Web Audio nodes; no audio li
 - [CONTEXT.md](CONTEXT.md): the project's vocabulary (Patch, Voice, Tap, Effective Cutoff…). Code and docs use these words exactly.
 - [docs/adr](docs/adr): architecture decisions and why they were made.
 - [docs/issues](docs/issues): the vertical slices the app was built in, in order.
+- [docs/statistics.md](docs/statistics.md): the project's size, quality and performance, release by release (`npm run stats`).
+
+<!-- statistics -->
+At 1.16.0 (2026-10-30): 13,047 lines of app code, 912 tests written, 214.5 kB of JavaScript gzipped. Every number, release by release, is on [the statistics page](docs/statistics.md).
+<!-- /statistics -->
 
 ## How this was built
 
