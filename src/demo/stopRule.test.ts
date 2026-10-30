@@ -34,6 +34,11 @@ describe('what stops the Demo (issue 79)', () => {
     ['Space on a Display setting (issue 64)', key(' ', 'display'), 'playOn'],
     ['Space on a button that uses it, elsewhere', key(' ', 'page'), 'stop'],
     ['a piano letter with Display open (issue 71)', key('a', 'page', { displayOpen: true }), 'stop'],
+    ['Enter on a part of the Demo’s card, which plays from it (issue 104)', key('Enter', 'demo'), 'playOn'],
+    ['Space on a part of the Demo’s card (issue 104)', key(' ', 'demo'), 'playOn'],
+    ['an arrow moving along the Demo’s parts (issue 104)', key('ArrowRight', 'demo'), 'playOn'],
+    ['Home or End on the Demo’s parts (issue 104)', key('End', 'demo'), 'playOn'],
+    ['a letter that plays a Note, from the Demo’s card', key('a', 'demo'), 'stop'],
   ] as const)('a key: %s → %s', (_, event, expected) => {
     expect(demoStop(event)).toBe(expected);
   });

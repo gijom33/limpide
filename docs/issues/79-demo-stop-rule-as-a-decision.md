@@ -6,6 +6,8 @@
 
 **Status:** done (2026-10-28). One pure function decides from a plain description of each key press and touch; the selectors are in one step that names what was touched; a node table test covers every rule. Nothing visible changed: the Playwright suite passes untouched.
 
+**Since then:** (2026-10-30, [issue 104](./104-keyboard-and-screen-readers-after-1-16.md)) on the Demo's own card and button, Enter, Space, the arrows, Home and End play on too, so its parts work from the keyboard.
+
 ## Agent Brief
 
 **Category:** enhancement

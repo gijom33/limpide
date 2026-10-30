@@ -285,6 +285,42 @@ test('a dot on the Demo’s card plays on from its part, and the Demo keeps play
   await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
 });
 
+test('from the keyboard alone, Enter and Space on a part play from it and keep the focus there, the arrows move along the parts, and the Demo plays on (issue 104)', async ({ page }) => {
+  await page.goto('/');
+  await demo(page).focus();
+  await page.keyboard.press('Enter');
+  const card = page.getByRole('region', { name: 'Demo', exact: true });
+  await expect(card).toContainText('Kick');
+  const part = (n: number) => card.getByRole('button', { name: new RegExp(`^Play from part ${n},`) });
+  // The parts are one Tab stop, on the part playing (the arrows move along them).
+  await expect(card.getByRole('group', { name: /^Part / }).locator('button[tabindex="0"]')).toHaveCount(1);
+  await part(1).focus();
+  for (let i = 0; i < 4; i++) await page.keyboard.press('ArrowRight');
+  await expect(part(5)).toBeFocused();
+  await expect(part(5)).not.toHaveAttribute('aria-current', 'step'); // moving along plays nothing
+  await page.keyboard.press('Enter');
+  await expect(card.getByRole('group', { name: 'Part 5 of 15' })).toBeVisible();
+  await expect(part(5)).toBeFocused();
+  await page.keyboard.press('ArrowLeft');
+  await page.keyboard.press(' ');
+  await expect(card.getByRole('group', { name: 'Part 4 of 15' })).toBeVisible();
+  await expect(part(4)).toBeFocused();
+  await page.keyboard.press('End');
+  await expect(part(15)).toBeFocused();
+  await page.keyboard.press('Home');
+  await expect(part(1)).toBeFocused();
+  await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
+  await expect(part(1)).not.toHaveAttribute('aria-current', 'step');
+  // Tab leaves the parts in one step, for the card's other buttons.
+  await page.keyboard.press('Tab');
+  await expect(part(2)).not.toBeFocused();
+  await expect(card.locator('.demo-bar-parts button:focus')).toHaveCount(0);
+  // Enter on the lit Demo button stops it, as a click does.
+  await demo(page).focus();
+  await page.keyboard.press('Enter');
+  await expect(demo(page)).toHaveAttribute('aria-pressed', 'false');
+});
+
 for (const width of [393, 1440]) {
   test(`the parts' segments stay put whatever the part's name (the owner, 2026-10-29), at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 800 });
