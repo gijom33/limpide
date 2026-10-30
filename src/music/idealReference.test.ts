@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { defaultPatch, type Patch } from '../patch/patch';
 import { harmonicSeries } from './harmonics';
-import { idealPartials, idealReference } from './idealReference';
+import { besselJ, idealPartials, idealReference } from './idealReference';
 
 const saw = harmonicSeries('saw', 0.5, 64).magnitudes;
 const square = harmonicSeries('square', 0.5, 64).magnitudes;
@@ -133,5 +133,38 @@ describe('Ring Modulation in the Ideal (issue 88)', () => {
 
   it('marks nothing while Ring is down', () => {
     expect(idealPartials({ ...sines, osc2Semitone: 7 }, 64)).toEqual([]);
+  });
+});
+
+describe('FM in the Ideal (issue 96)', () => {
+  it('works out the Bessel functions FM’s sidebands follow', () => {
+    const one = besselJ(1, 3);
+    expect(one[0]).toBeCloseTo(0.7651976866, 8);
+    expect(one[1]).toBeCloseTo(0.4400505857, 8);
+    expect(one[2]).toBeCloseTo(0.1149034849, 8);
+    expect(besselJ(10, 0)[0]).toBeCloseTo(-0.2459357645, 8);
+    expect(besselJ(100, 100)[100]).toBeCloseTo(0.09636667330, 7);
+  });
+
+  const sines = { ...defaultPatch(), waveform: 'sine', osc2Waveform: 'sine', osc2Semitone: 7 } as const;
+  const osc1 = (patch: Partial<Patch>) => idealPartials({ ...sines, ...patch }, 64).filter((p) => p.source === 'osc1');
+
+  it('draws plain Osc 1 while FM is down', () => {
+    expect(osc1({ crossMod: 0 }).map((p) => p.ratio)).toEqual([1]);
+  });
+
+  it('draws a Sine swung by a Sine at the carrier and its sidebands, at |J_k| of the index', () => {
+    const fifth = 2 ** (7 / 12);
+    const marks = osc1({ crossMod: 0.25 }); // an index of 1
+    const j = besselJ(1, 3);
+    const at = (ratio: number) => marks.find((p) => Math.abs(p.ratio - ratio) < 1e-6)?.level;
+    expect(at(1)).toBeCloseTo(j[0], 6);
+    expect(at(1 + fifth)).toBeCloseTo(j[1], 6);
+    expect(at(fifth - 1)).toBeCloseTo(j[1], 6); // 1 − a fifth, folded back
+    expect(at(1 + 2 * fifth)).toBeCloseTo(j[2], 6);
+  });
+
+  it('keeps plain Osc 1 where nothing simple says what FM does: a Square Osc 2 a fifth up', () => {
+    expect(osc1({ osc2Waveform: 'square', crossMod: 0.25 }).map((p) => p.ratio)).toEqual([1]);
   });
 });

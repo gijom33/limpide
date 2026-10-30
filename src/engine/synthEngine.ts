@@ -6,6 +6,7 @@ import {
 } from '../modulation/modulationModel';
 import { bandwidthOctaves } from '../modulation/passBand';
 import { harmonicSeries } from '../music/harmonics';
+import { FM_INDEX } from '../music/idealReference';
 import { frequencyToNote, noteToFrequency } from '../music/pitch';
 import { GLIDE_OFF, type Lfo, type LfoNumber, lfos, type NoiseColour, PARAMS, type Patch, type SubWaveform, type Voices } from '../patch/patch';
 import { filterStages, type Stage } from './filterDesign';
@@ -347,8 +348,6 @@ const filterAdsr = (p: Patch): Adsr => ({ attack: p.filterAttack, decay: p.filte
 
 // A released Voice counts as free again once its Release has run this many time constants.
 const RELEASE_TAIL = 6;
-/** FM (`crossMod`) at full: Osc 2 swings Osc 1's frequency by four times its own (a modulation index of 4, issue 89). */
-const CROSS_MOD_INDEX = 4;
 const A4 = noteToFrequency(69);
 
 /**
@@ -512,7 +511,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
    * FM's gain on a Note of `frequency`: the index times Osc 2's frequency, in Hz. Osc 1's Octave scales what
    * reaches its frequency, so the gain is divided by it, keeping the index the knob's.
    */
-  const crossDepth = (frequency: number) => (patch ? (patch.crossMod * CROSS_MOD_INDEX * frequency * ratios[1]) / ratios[0] : 0);
+  const crossDepth = (frequency: number) => (patch ? (patch.crossMod * FM_INDEX * frequency * ratios[1]) / ratios[0] : 0);
   const pitches: { time: number; frequency: number; note: number; glide: number }[] = [];
   let patch: Patch | undefined;
 

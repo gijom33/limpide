@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { envelopeLevel, type GateEvent } from '../modulation/envelope';
 import { harmonicSeries, type Waveform } from '../music/harmonics';
-import { idealReference } from '../music/idealReference';
+import { idealPartials, idealReference } from '../music/idealReference';
 import { defaultPatch, type Patch } from '../patch/patch';
 import { PRESETS } from '../patch/presets';
 import { betweenHarmonicsDb, dB, frequencyAround, rms, toneAmplitude, toneAmplitudeHann } from '../test/measure';
@@ -1426,6 +1426,36 @@ describe('Cross-modulation (issue 89)', () => {
     const low = await harmonics(45, 0.25);
     const high = await harmonics(57, 0.25);
     expect(dB(high(2) / high(1))).toBeCloseTo(dB(low(2) / low(1)), 0);
+  });
+});
+
+describe('FM’s sidebands in the Ideal (issue 96)', () => {
+  const A2 = 45; // 110 Hz
+  const fm = { cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001, mixOsc1: 1, mixOsc2: 0 } as const;
+  /** Each of Osc 1's marks the sound reaches within 40 dB of the strongest, as dB from the strongest: the Ideal's and the sound's. */
+  const compare = async (patch: Partial<Patch>) => {
+    const full = { ...defaultPatch(), ...fm, ...patch };
+    const s = await render(1.5, full, (e) => e.noteOn(A2, 1, 0));
+    const window = s.subarray(SR / 2, SR / 2 + 32768);
+    const marks = idealPartials(full, 64).filter((p) => p.source === 'osc1' && p.ratio * 110 < 4000);
+    const top = Math.max(...marks.map((p) => p.level));
+    const shown = marks.filter((p) => p.level > top / 100);
+    const heard = shown.map((p) => toneAmplitudeHann(window, SR, 110 * p.ratio));
+    const loudest = Math.max(...heard);
+    return shown.map((p, i) => ({ ratio: p.ratio, ideal: dB(p.level / top), sound: dB(heard[i] / loudest) }));
+  };
+
+  it('draws two Sines a fifth apart with FM at each sideband the sound makes (the Bessel functions)', async () => {
+    const marks = await compare({ waveform: 'sine', osc2Waveform: 'sine', osc2Semitone: 7, crossMod: 0.25 });
+    expect(marks.length).toBeGreaterThan(4); // the carrier and sidebands either side, not one plain Harmonic
+    for (const m of marks) expect(Math.abs(m.sound - m.ideal), `the partial at ${m.ratio.toFixed(3)}`).toBeLessThan(0.5);
+  });
+
+  it('draws a Saw modulated by a Square in tune at each Harmonic the sound makes (worked out from the waves)', async () => {
+    const marks = await compare({ waveform: 'saw', osc2Waveform: 'square', crossMod: 0.1 });
+    for (const m of marks.slice(0, 8)) expect(Math.abs(m.sound - m.ideal), `Harmonic ${m.ratio}`).toBeLessThan(1);
+    // FM moves the levels away from a plain Saw's 1/n.
+    expect(Math.abs(marks[1].ideal - dB(1 / 2))).toBeGreaterThan(1);
   });
 });
 

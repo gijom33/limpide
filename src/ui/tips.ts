@@ -192,7 +192,7 @@ export const TIPS = {
   crossMod: {
     title: 'FM',
     body: 'Frequency modulation (cross-modulation): Osc 2 swings Osc 1’s pitch up and down hundreds of times a second, whatever Osc 2’s own fader. Too fast to hear as vibrato, it becomes tone: new partials fan out either side of each Harmonic, from a growl to a clang. Osc 2’s tuning decides where they land.',
-    how: 'Pick Sine on both and turn FM up: watch spikes grow beside the Ideal’s circles, which mark plain Osc 1.',
+    how: 'Pick Sine on both and turn FM up: the Ideal’s circles fan out into sidebands with the spikes. They are drawn while Osc 2 is a Sine, or whole octaves from Osc 1; otherwise the circles mark plain Osc 1.',
   },
   osc2EnvAmount: {
     title: 'Env Amount',

@@ -40,7 +40,9 @@ export function idealPartials(patch: Patch, count: number): IdealPartial[] {
   const series = (source: IdealSource, magnitudes: Float32Array, mix: number, pitch: number) =>
     mix > 0 ? Array.from({ length: count - 1 }, (_, i) => ({ ratio: (i + 1) * pitch, level: magnitudes[i + 1] * mix, source })) : [];
   return [
-    ...series('osc1', harmonicSeries(patch.waveform, patch.pulseWidth, count).magnitudes, patch.mixOsc1, root),
+    // Under FM, Osc 1 as FM makes it, where that can be worked out (issue 96).
+    ...((patch.crossMod > 0 && patch.mixOsc1 > 0 && fmPartials(patch, root, osc2, count)) ||
+      series('osc1', harmonicSeries(patch.waveform, patch.pulseWidth, count).magnitudes, patch.mixOsc1, root)),
     ...series('osc2', harmonicSeries(patch.osc2Waveform, patch.osc2PulseWidth, count).magnitudes, patch.mixOsc2, osc2),
     ...series('sub', harmonicSeries(patch.subWaveform, 0.5, count).magnitudes, patch.mixSub, 1),
     ...ringPartials(patch, root, osc2, count),
@@ -119,6 +121,137 @@ function ringProduct(patch: Patch, n1: number, n2: number, harmonics: number): F
   return levels;
 }
 
+/** How much the engine scales a saw less its delayed copy, so the pulse it makes has the pulse series' level. */
+function pulseScale(width: number): number {
+  const sawPeak = harmonicSeries('saw', 0.5, ENGINE_HARMONICS).magnitudes[1];
+  return harmonicSeries('pulse', width, 256).magnitudes[1] / (2 * Math.sin(Math.PI * width) * sawPeak);
+}
+
+/** FM (`crossMod`) at full: Osc 2 swings Osc 1's frequency by four times its own (a modulation index of 4, issue 89). */
+export const FM_INDEX = 4;
+
+/**
+ * Osc 1's partials under FM (issue 96), at its Mixer level, or null where they cannot be worked out. FM swings Osc 1's
+ * frequency by FM_INDEX × FM × Osc 2's frequency, following Osc 2's wave, so its Harmonic n is swung with an index n
+ * times that. With Osc 2 a whole number of octaves from Osc 1 both start their cycles together (issue 94) and the
+ * swung wave repeats: its partials come from one cycle of it. Otherwise, with Osc 2 a Sine, each Harmonic n gives a
+ * partial at n × Osc 1 + k × Osc 2 for every k, at its level times |J_k| of its index (a negative frequency folds
+ * back): the classic FM result. Any other Osc 2 has no such result: null.
+ */
+function fmPartials(patch: Patch, osc1: number, osc2: number, count: number): IdealPartial[] | null {
+  const index = FM_INDEX * patch.crossMod;
+  const octaves = Math.log2(osc2 / osc1);
+  if (Math.abs(octaves - Math.round(octaves)) < 1e-9) {
+    const base = Math.min(osc1, osc2);
+    const levels = fmCycle(patch, Math.round(osc1 / base), Math.round(osc2 / base), Math.ceil(count / base), index);
+    return Array.from(levels, (level, m) => ({ ratio: m * base, level: level * patch.mixOsc1, source: 'osc1' as const })).filter(
+      (p) => p.ratio > 0 && p.ratio < count,
+    );
+  }
+  if (patch.osc2Waveform !== 'sine') return null;
+  const pulse = patch.waveform === 'pulse';
+  const levels = harmonicSeries(pulse ? 'saw' : patch.waveform, 0.5, ENGINE_HARMONICS).magnitudes;
+  const scale = pulse ? pulseScale(patch.pulseWidth) : 1;
+  const power = new Map<string, { ratio: number; power: number }>();
+  const most = Math.min(ENGINE_HARMONICS - 1, Math.ceil((1.5 * count) / osc1));
+  for (let n = 1; n <= most; n++) {
+    if (levels[n] < 1e-9) continue;
+    // The sidebands that land below `count`, either side, and no further than J_k reaches.
+    const reach = Math.ceil(n * index + 10 * Math.cbrt(n * index + 1) + 10);
+    const low = Math.max(-reach, Math.ceil((-count - n * osc1) / osc2));
+    const high = Math.min(reach, Math.floor((count - n * osc1) / osc2));
+    if (low > high) continue;
+    const j = besselJ(n * index, Math.max(Math.abs(low), Math.abs(high)));
+    for (let k = low; k <= high; k++) {
+      const frequency = n * osc1 + k * osc2;
+      const ratio = Math.abs(frequency);
+      if (ratio < 1e-6 || ratio >= count) continue;
+      let level = levels[n] * Math.abs(j[Math.abs(k)]);
+      // A pulse: the swung saw less its copy one width of Osc 1's cycle behind.
+      if (pulse) level *= 2 * scale * Math.abs(Math.sin((Math.PI * frequency * patch.pulseWidth) / osc1));
+      if (level <= 1e-7) continue;
+      const key = ratio.toFixed(6);
+      const entry = power.get(key) ?? power.set(key, { ratio, power: 0 }).get(key)!;
+      entry.power += level * level;
+    }
+  }
+  return [...power.values()].map(({ ratio, power: p }) => ({ ratio, level: Math.sqrt(p) * patch.mixOsc1, source: 'osc1' as const }));
+}
+
+/**
+ * The Bessel functions of the first kind J_0(x) … J_kmax(x), by Miller's backward recurrence, normalised so that
+ * J_0 + 2(J_2 + J_4 + …) = 1.
+ */
+export function besselJ(x: number, kmax: number): Float64Array {
+  const out = new Float64Array(kmax + 1);
+  if (x === 0) {
+    out[0] = 1;
+    return out;
+  }
+  const top = Math.max(kmax, x);
+  let k = 2 * Math.ceil((top + 20 + Math.sqrt(40 * top)) / 2);
+  let [above, here] = [0, 1e-30]; // J_(k+1), J_k, unscaled
+  let sum = 0;
+  for (; k > 0; k--) {
+    const below = ((2 * k) / x) * here - above; // J_(k−1)
+    [above, here] = [here, below];
+    if (k - 1 <= kmax) out[k - 1] = here;
+    if (k - 1 > 0 && (k - 1) % 2 === 0) sum += 2 * here;
+    if (Math.abs(here) > 1e200) {
+      // Rescale before it overflows.
+      for (let i = k - 1; i <= kmax; i++) out[i] *= 1e-200;
+      [above, here, sum] = [above * 1e-200, here * 1e-200, sum * 1e-200];
+    }
+  }
+  sum += here; // J_0
+  for (let i = 0; i <= kmax; i++) out[i] /= sum;
+  return out;
+}
+
+const cycles = new Map<string, Float64Array>();
+
+/**
+ * The level of each Harmonic (index m, of the lower pitch) of Osc 1 swung by Osc 2 at whole-number pitches n1 and n2
+ * of it, both starting their cycles together, up to `harmonics` (issue 96): Osc 1's phase is its own plus the integral
+ * of Osc 2's wave times the index, one cycle sampled as the engine plays it (a pulse a swung saw less its copy one
+ * width of Osc 1's cycle behind), and Fourier-transformed. Kept by its arguments.
+ */
+function fmCycle(patch: Patch, n1: number, n2: number, harmonics: number, index: number): Float64Array {
+  const samples = 2 ** Math.ceil(Math.log2(Math.max(2048, SAMPLES_PER_HARMONIC * harmonics * (1 + index))));
+  const key = `${patch.waveform} ${patch.pulseWidth} ${patch.osc2Waveform} ${patch.osc2PulseWidth} ${n1} ${n2} ${index} ${samples}`;
+  const known = cycles.get(key);
+  if (known) return known;
+  if (cycles.size >= PRODUCTS_LIMIT) cycles.clear();
+  const swing = engineWave(patch.osc2Waveform, patch.osc2PulseWidth);
+  // FM's share of Osc 1's phase at each sample (between samples' edges, as ringProduct's), from Osc 2's wave summed
+  // at each step's middle.
+  const extra = new Float64Array(samples + 1);
+  let sum = (swing((2 * Math.PI * n2 * 0.25) / samples) * 0.5) / samples;
+  for (let i = 0; i <= samples; i++) {
+    extra[i] = 2 * Math.PI * index * n2 * sum;
+    sum += swing((2 * Math.PI * n2 * (i + 1)) / samples) / samples;
+  }
+  const phase = (t: number) => {
+    // t in samples, any real number: FM's share repeats each cycle.
+    const wrapped = ((t % samples) + samples) % samples;
+    const i = Math.floor(wrapped);
+    const share = extra[i] + (extra[i + 1] - extra[i]) * (wrapped - i);
+    return (2 * Math.PI * n1 * (t + 0.5)) / samples + share;
+  };
+  const pulse = patch.waveform === 'pulse';
+  const wave = engineWave(pulse ? 'saw' : patch.waveform, 0.5);
+  const scale = pulse ? pulseScale(patch.pulseWidth) : 1;
+  const lag = (patch.pulseWidth * samples) / n1; // one width of Osc 1's cycle, in samples
+  const re = new Float64Array(samples);
+  const im = new Float64Array(samples);
+  for (let i = 0; i < samples; i++) re[i] = pulse ? scale * (wave(phase(i)) - wave(phase(i - lag))) : wave(phase(i));
+  fft(re, im);
+  const levels = new Float64Array(Math.min(harmonics, samples / 2));
+  for (let m = 1; m < levels.length; m++) levels[m] = (2 * Math.hypot(re[m], im[m])) / samples;
+  cycles.set(key, levels);
+  return levels;
+}
+
 /**
  * An Oscillator's wave at a phase, as the engine plays it: each Waveform its unending series' shape at the engine's
  * scale, and a pulse built the engine's way, a saw less a copy of it one width behind.
@@ -140,8 +273,7 @@ function engineWave(waveform: Patch['waveform'], width: number): (phase: number)
     case 'square':
       return scaled('square', 4 / Math.PI, (phase) => (wrapped(phase) >= 0 ? 1 : -1));
     case 'pulse': {
-      const sawPeak = harmonicSeries('saw', 0.5, ENGINE_HARMONICS).magnitudes[1];
-      const scale = harmonicSeries('pulse', width, 256).magnitudes[1] / (2 * Math.sin(Math.PI * width) * sawPeak);
+      const scale = pulseScale(width);
       const lag = 2 * Math.PI * width;
       return (phase) => scale * (saw(phase) - saw(phase - lag));
     }
