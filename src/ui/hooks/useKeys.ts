@@ -1,6 +1,6 @@
-import { type Dispatch, type MutableRefObject, type SetStateAction, useEffect } from 'react';
+import { type MutableRefObject, useEffect } from 'react';
 import type { AudioSession } from '../../app/session';
-import { keyToNote, octaveKey, shiftOctave } from '../../input/keyboardLayout';
+import { keyToNote, octaveKey } from '../../input/keyboardLayout';
 import type { ViewerStore } from '../../viewers/viewerStore';
 
 /**
@@ -10,7 +10,8 @@ import type { ViewerStore } from '../../viewers/viewerStore';
 export function useComputerKeyboard(
   session: AudioSession,
   octaveRef: MutableRefObject<number>,
-  setOctave: Dispatch<SetStateAction<number>>,
+  /** Moves the keyboard that many octaves, as the octave buttons do. */
+  moveOctave: (delta: number) => void,
   /** Off: the letter keys are left alone (issue 51, WCAG 2.1.4: single-key shortcuts can be turned off). */
   enabled = true,
 ) {
@@ -24,7 +25,7 @@ export function useComputerKeyboard(
     const down = (e: KeyboardEvent) => {
       if (e.repeat || isTyping(e)) return;
       const shift = octaveKey(e.code);
-      if (shift) return setOctave((o) => shiftOctave(o, shift));
+      if (shift) return moveOctave(shift);
       const note = keyToNote(e.code, octaveRef.current);
       if (note === undefined) return;
       keyNotes.set(e.code, note);
@@ -49,7 +50,7 @@ export function useComputerKeyboard(
       window.removeEventListener('keyup', up);
       window.removeEventListener('blur', releaseAll);
     };
-  }, [session, octaveRef, setOctave, enabled]);
+  }, [session, octaveRef, moveOctave, enabled]);
 }
 
 /** What Space already presses or types into when it has the focus: a button, an option, a tab, a link, a field. */

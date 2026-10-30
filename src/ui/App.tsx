@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { type AudioSession, getAudioSession } from '../app/session';
 import { safeStorage } from '../app/storage';
 import { type AudioStatus, unlockAudio } from '../app/unlockAudio';
@@ -134,11 +134,22 @@ export function App() {
   // A Patch loaded starts the keyboard in its own octave, a bass on C2, or else on C4 (issue 125); the octave buttons
   // move it after. The Demo and Listen then show their phrase's octave over it.
   useEffect(() => patches.subscribe(({ after, by }) => by === 'load' && setOctave(startingOctave(after))), [patches]);
+  // The octave buttons, Z and X move the keyboard from the octave shown and write it into the Patch, so a saved or
+  // shared Patch opens where the player left it (issue 126).
+  const moveOctave = useCallback(
+    (delta: number) => {
+      const next = shiftOctave(octaveRef.current, delta);
+      octaveRef.current = next;
+      setOctave(next);
+      patches.change((p) => ({ ...p, keyboardOctave: next }), 'hand');
+    },
+    [patches],
+  );
   const modulationContext = useMemo(() => ({ engine: session.engine, patch: () => patches.get().patch, octave: octaveRef }), [session, patches]);
   // The letter keys play Notes unless turned off in Display (issue 51); remembered.
   const [letterKeys, setLetterKeys] = useState(() => storage.getItem(LETTER_KEYS) !== 'off');
   useEffect(() => storage.setItem(LETTER_KEYS, letterKeys ? 'on' : 'off'), [storage, letterKeys]);
-  useComputerKeyboard(session, octaveRef, setOctave, letterKeys);
+  useComputerKeyboard(session, octaveRef, moveOctave, letterKeys);
   // Tooltips open unless turned off in Display (issue 81); remembered.
   const [tooltips, setTooltips] = useState(() => storage.getItem(TOOLTIPS) !== 'off');
   useEffect(() => storage.setItem(TOOLTIPS, tooltips ? 'on' : 'off'), [storage, tooltips]);
@@ -237,10 +248,10 @@ export function App() {
   // Up before down, as they stand on screen, so Tab meets them in that order (issue 47).
   const keyboard = (
     <div key="keyboard" className="keyboard">
-      <button type="button" className="tool tool-icon octave" aria-label="Octave up" {...shifted(octave - DEFAULT_OCTAVE)} onClick={() => setOctave((o) => shiftOctave(o, 1))}>
+      <button type="button" className="tool tool-icon octave" aria-label="Octave up" {...shifted(octave - DEFAULT_OCTAVE)} onClick={() => moveOctave(1)}>
         {octave > DEFAULT_OCTAVE ? `+${octave - DEFAULT_OCTAVE}` : '+'}
       </button>
-      <button type="button" className="tool tool-icon octave" aria-label="Octave down" {...shifted(DEFAULT_OCTAVE - octave)} onClick={() => setOctave((o) => shiftOctave(o, -1))}>
+      <button type="button" className="tool tool-icon octave" aria-label="Octave down" {...shifted(DEFAULT_OCTAVE - octave)} onClick={() => moveOctave(-1)}>
         {octave < DEFAULT_OCTAVE ? `−${DEFAULT_OCTAVE - octave}` : '−'}
       </button>
       <Tooltip content={TIPS.keyboard} longPress={false}>

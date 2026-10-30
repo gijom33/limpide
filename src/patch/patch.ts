@@ -107,7 +107,8 @@ export type Patch = Record<ParamId, number> & {
   voices: Voices;
   /**
    * The octave the computer keyboard and the on-screen piano start in when the Patch is loaded (issue 125): 2 for a
-   * bass, its first key C2. Absent, they start on C4; the octave buttons move them after either way.
+   * bass, its first key C2. Absent, they start on C4. The octave buttons move them after, and write the octave here, so
+   * a saved or shared Patch keeps the one the player last chose (issue 126).
    */
   keyboardOctave?: number;
 };

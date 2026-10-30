@@ -5,7 +5,7 @@ import { initialPatch, presetAfter } from './presets';
 /** Who made a change: the Demo's "turned by hand" listens for a hand's or a Controller's. */
 export type ChangeBy = 'hand' | 'controller' | 'demo' | 'tutorial' | 'load';
 
-/** The Patch being played, its name, and whether it differs from what it was when loaded or saved. */
+/** The Patch being played, its name, and whether its sound differs from what it was when loaded or saved. */
 export interface PatchNow {
   patch: Patch;
   name: string;
@@ -21,6 +21,9 @@ export interface PatchChange {
 export type PatchStore = ReturnType<typeof createPatchStore>;
 
 const AUTOSAVE_MS = 300;
+
+/** The Patch as "changed" compares it: the keyboard octave left out, the octave buttons' to write (issue 126). */
+const sound = ({ keyboardOctave: _, ...rest }: Patch) => JSON.stringify(rest);
 
 /**
  * The Patch being played, outside React (ADR-0013). Every change goes to `apply` (the engine and the Note input) at
@@ -42,7 +45,7 @@ export function createPatchStore({ hash, library, apply }: { hash: string; libra
   const set = (after: Patch, name: string, by: ChangeBy) => {
     const before = now.patch;
     apply(after);
-    now = { patch: after, name, changed: JSON.stringify(after) !== JSON.stringify(baseline) };
+    now = { patch: after, name, changed: sound(after) !== sound(baseline) };
     saveSoon();
     for (const listener of listeners) listener({ before, after, by });
   };

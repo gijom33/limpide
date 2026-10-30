@@ -76,6 +76,50 @@ test('a share link opens the same sound in a fresh page', async ({ page, browser
   await fresh.close();
 });
 
+test('the octave buttons write the Patch’s keyboard octave: a saved Patch and a Share link open where the player left it (issue 126)', async ({ page, browser }) => {
+  test.slow(); // two fresh pages and a save: in WebKit on a busy machine, past the usual 30 s
+  const menu = page.getByRole('dialog', { name: 'Patches' });
+  const key = (on: Page, name: string) => on.getByRole('group', { name: 'Piano' }).getByRole('button', { name });
+  const load = async (name: string) => {
+    await patchName(page).click();
+    await menu.getByRole('button', { name, exact: true }).click();
+  };
+  /** The Share link made now opens a fresh page with the keyboard on `first`. */
+  const shareOpensOn = async (first: string) => {
+    await patchName(page).click();
+    await page.getByRole('button', { name: 'Copy share link' }).click();
+    const link = await page.getByRole('textbox', { name: 'Share link' }).inputValue();
+    await page.keyboard.press('Escape');
+    await expect(menu).toBeHidden();
+    const fresh = await browser.newPage();
+    await fresh.goto(link);
+    await expect(key(fresh, first)).toHaveCount(1);
+    await expect(key(fresh, first === 'C2' ? 'C4' : 'C2')).toHaveCount(0);
+    await fresh.close();
+  };
+  await load('Sub Bass');
+  await expect(key(page, 'C2')).toHaveCount(1);
+  await shareOpensOn('C2'); // nothing touched: the Bass's own octave
+  const up = page.getByRole('button', { name: 'Octave up' });
+  await up.click();
+  await up.click();
+  await expect(key(page, 'C4')).toHaveCount(1);
+  await expect(patchName(page)).not.toHaveAttribute('data-changed', 'true'); // the octave alone is no change
+  await shareOpensOn('C4');
+  await patchName(page).click();
+  await menu.getByRole('textbox', { name: 'Patch name' }).fill('My bass');
+  await menu.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(patchName(page)).toContainText('My bass');
+  await page.keyboard.press('Escape');
+  await expect(menu).toBeHidden();
+  await load('Sub Bass'); // back on C2
+  await expect(key(page, 'C2')).toHaveCount(1);
+  await patchName(page).click();
+  await menu.getByRole('button', { name: 'Load My bass' }).click();
+  await expect(key(page, 'C4')).toHaveCount(1);
+  await expect(key(page, 'C2')).toHaveCount(0);
+});
+
 test('a Patch exports as a file and imports back', async ({ page }) => {
   await page.getByRole('button', { name: 'Next Preset' }).click(); // Bass
   await patchName(page).click();

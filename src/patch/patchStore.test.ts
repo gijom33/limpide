@@ -84,6 +84,16 @@ describe('The Patch store (issue 73)', () => {
     expect(store.get()).toMatchObject({ name: 'Mine', changed: false });
   });
 
+  it('does not count the keyboard octave alone as a change from the Patch loaded (issue 126)', () => {
+    const { store } = setup();
+    const bass = PRESETS.find((p) => p.patch.keyboardOctave === 2)!;
+    store.load(bass.name, bass.patch);
+    store.change((p) => ({ ...p, keyboardOctave: 4 }), 'hand');
+    expect(store.get()).toMatchObject({ name: bass.name, changed: false, patch: { keyboardOctave: 4 } });
+    store.change((p) => setParam(p, 'cutoff', 500), 'hand');
+    expect(store.get().changed).toBe(true);
+  });
+
   it('keeps the same read between changes, as React needs, and a new one after', () => {
     const { store } = setup();
     const first = store.get();
