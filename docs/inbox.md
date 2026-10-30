@@ -4,6 +4,7 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-10-29, the owner, on a Saw times a Square through Ring, in tune: "see current settings, why are the ideal marks not in line with the spectrum?"; told the even Harmonics and the rising hiss are a click each cycle, where the two waves' band-limited edges ripple together: "Smooth the clicks out"
 ## Ideas
 
 - 2026-10-29, the owner, asked what to do with the Timeline's thin flat lines (each moved knob's own setting): "Remove them"
