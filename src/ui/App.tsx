@@ -645,11 +645,12 @@ export function App() {
           <DemoBar
             playing={
               players.demo !== null && players.demoTrack.parts[players.demo]
-                ? { part: players.demoTrack.parts[players.demo], index: players.demo, count: players.demoTrack.parts.length }
+                ? { part: players.demoTrack.parts[players.demo], index: players.demo, names: players.demoTrack.parts.map((p) => p.preset) }
                 : null
             }
             tookOver={players.tookOver}
             onStop={() => players.stopDemo()}
+            onJump={(from) => players.playDemo({ from })}
             onPlayAgain={() => players.playDemo()}
             onDismiss={() => players.setTookOver(false)}
           />

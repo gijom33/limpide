@@ -5,11 +5,13 @@ import { useDocked } from './docked';
 import { CloseIcon } from './icons';
 
 interface Props {
-  /** The part playing and where it falls in the track; null once the Demo has stopped. */
-  playing: { part: Part; index: number; count: number } | null;
+  /** The part playing, where it falls in the track and every part's Preset; null once the Demo has stopped. */
+  playing: { part: Part; index: number; names: readonly string[] } | null;
   /** The Demo was stopped by the person playing or touching something: the bar says so for a moment. */
   tookOver: boolean;
   onStop(): void;
+  /** Play on from that part (a dot). */
+  onJump(index: number): void;
   onPlayAgain(): void;
   onDismiss(): void;
 }
@@ -21,7 +23,7 @@ interface Props {
  * lit Demo button stop it); the next Demo brings it back. When a Note or a control stops the Demo, it says so, so a
  * first visitor does not think they broke it.
  */
-export function DemoBar({ playing, tookOver, onStop, onPlayAgain, onDismiss }: Props) {
+export function DemoBar({ playing, tookOver, onStop, onJump, onPlayAgain, onDismiss }: Props) {
   const card = useRef<HTMLElement>(null);
   useDocked(card, 'when-scrolling');
   const place = useCardPlacement(card, 'demo', playing ? 'playing' : 'stopped');
@@ -37,10 +39,19 @@ export function DemoBar({ playing, tookOver, onStop, onPlayAgain, onDismiss }: P
         <>
           <div className="demo-bar-top" {...place.handle}>
             <span className="demo-bar-name">{playing.part.preset}</span>
-            <span className="demo-bar-parts" role="img" aria-label={`Part ${playing.index + 1} of ${playing.count}`}>
-              {Array.from({ length: playing.count }, (_, i) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: a dot per part, in order; the parts never change
-                <span key={i} data-done={i < playing.index || undefined} data-current={i === playing.index || undefined} />
+            {/* A dot per part: which is playing, and a click plays on from any of them (the owner). */}
+            <span className="demo-bar-parts" role="group" aria-label={`Part ${playing.index + 1} of ${playing.names.length}`}>
+              {playing.names.map((name, i) => (
+                <button
+                  // biome-ignore lint/suspicious/noArrayIndexKey: a dot per part, in order; a Preset can play twice
+                  key={i}
+                  type="button"
+                  aria-label={`Play from part ${i + 1}, ${name}`}
+                  aria-current={i === playing.index ? 'step' : undefined}
+                  data-done={i < playing.index || undefined}
+                  data-current={i === playing.index || undefined}
+                  onClick={() => onJump(i)}
+                />
               ))}
             </span>
             <FoldButton folded={place.folded} onToggle={place.toggleFold} />

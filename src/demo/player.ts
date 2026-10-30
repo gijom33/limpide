@@ -54,16 +54,17 @@ export function octaveShowing(notes: number[]): number {
  * Plays the track once, without a break: each part's Preset is loaded at its bar line, just before its first Note is
  * handed to the engine, and each part but the last takes a short breath at its end. Knobs are turned on the same
  * look-ahead as the Notes, so a jump on a bar line is in force when that bar's first Note starts. After the last part it
- * ends by itself. Returns the stop function, which silences everything at once.
+ * ends by itself. Returns the stop function, which silences everything at once. `from` starts it at that part (the
+ * card's dots, the owner): the parts before it are skipped.
  */
-export function startDemo(host: DemoHost, track: Track = TRACK): () => void {
+export function startDemo(host: DemoHost, track: Track = TRACK, from = 0): () => void {
   const beat = 60 / track.bpm;
   const first = host.now() + LEAD_IN;
   const starts: number[] = [];
   let at = first;
-  for (const part of track.parts) {
+  for (const [i, part] of track.parts.entries()) {
     starts.push(at);
-    at += phraseLength(part.phrase, track.bpm);
+    if (i >= from) at += phraseLength(part.phrase, track.bpm);
   }
   const end = at;
 
@@ -136,7 +137,7 @@ export function startDemo(host: DemoHost, track: Track = TRACK): () => void {
     }
   };
 
-  enter(0);
+  enter(from);
   return startTransport(host, source, { lookahead: LOOKAHEAD, tick: TICK_MS });
 }
 

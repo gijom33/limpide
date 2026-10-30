@@ -221,7 +221,7 @@ test('on a phone the Demo’s card keeps the sound’s name, what to listen for,
   await expect(card).toBeInViewport();
   await expect(card).toContainText('Kick');
   await expect(card).toContainText('A kick drum, made by the synth');
-  await expect(card.getByRole('img', { name: 'Part 1 of 12' })).toBeVisible();
+  await expect(card.getByRole('group', { name: 'Part 1 of 15' })).toBeVisible();
   // The page follows the Demo's knobs and the header slides away; the card stays.
   await page.mouse.wheel(0, 600);
   await expect(card).toBeInViewport();
@@ -267,4 +267,20 @@ test('the Demo’s card closes with its ×, the Demo playing on, and comes back 
   await expect(demo(page)).toHaveAttribute('aria-pressed', 'false');
   await demo(page).click();
   await expect(card).toContainText('Kick');
+});
+
+test('a dot on the Demo’s card plays on from its part, and the Demo keeps playing (the owner)', async ({ page }) => {
+  await page.goto('/');
+  await demo(page).click();
+  const card = page.getByRole('region', { name: 'Demo' });
+  await expect(card).toContainText('Kick');
+  await card.getByRole('button', { name: 'Play from part 7, Wobble' }).click();
+  await expect(card).toContainText('Wobble');
+  await expect(card.getByRole('group', { name: 'Part 7 of 15' })).toBeVisible();
+  await expect(card.getByRole('button', { name: 'Play from part 7, Wobble' })).toHaveAttribute('aria-current', 'step');
+  await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
+  // Back to an earlier part too.
+  await card.getByRole('button', { name: 'Play from part 2, Acid' }).click();
+  await expect(card.getByRole('group', { name: 'Part 2 of 15' })).toBeVisible();
+  await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
 });

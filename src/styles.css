@@ -1322,10 +1322,14 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 /* The Demo's card (issue 50): the sound's name, a dot per part, Stop; under them, what to hear and see. */
 .demo-bar-top { display: flex; align-items: center; gap: var(--space-3); }
 .demo-bar-name { font-weight: 600; font-size: var(--card-text); }
-.demo-bar-parts { flex: 1 1 auto; display: flex; gap: 4px; }
-.demo-bar-parts > span { width: 8px; height: 8px; border-radius: 50%; border: 1px solid var(--muted); box-sizing: border-box; }
-.demo-bar-parts > span[data-done] { background: var(--muted); }
-.demo-bar-parts > span[data-current] { background: var(--accent); border-color: var(--accent); }
+.demo-bar-parts { flex: 1 1 auto; display: flex; min-width: 0; }
+/* Each dot a button as tall as a finger, its 8 px dot drawn inside; narrower on a small card, never under the dot. */
+.demo-bar-parts > button { flex: 0 1 14px; min-width: 9px; height: 24px; padding: 0; border: 0; background: none; cursor: pointer; display: grid; place-items: center; border-radius: 4px; }
+.demo-bar-parts > button::before { content: ''; width: 8px; height: 8px; border-radius: 50%; border: 1px solid var(--muted); box-sizing: border-box; }
+.demo-bar-parts > button:hover::before { border-color: var(--text); }
+.demo-bar-parts > button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.demo-bar-parts > button[data-done]::before { background: var(--muted); }
+.demo-bar-parts > button[data-current]::before { background: var(--accent); border-color: var(--accent); }
 .demo-bar-caption { margin: 0; font-size: var(--card-text); line-height: 1.45; }
 .demo-bar-top > .demo-bar-caption { flex: 1 1 auto; }
 .demo-bar .tool { min-height: 36px; padding: 0 var(--space-3); flex: none; }

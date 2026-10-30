@@ -89,8 +89,11 @@ export function usePlayers({ session, octaveRef, setOctave, heldNotes, onDemoSta
   const stopDemoRef = useRef(stopDemo);
   stopDemoRef.current = stopDemo;
 
-  /** The track; or, with `shared`, only a riff, played on the Patch loaded now (a Share link's). */
-  const playDemo = ({ shared = false } = {}) => {
+  /**
+   * The track; or, with `shared`, only a riff, played on the Patch loaded now (a Share link's). `from` starts it at
+   * that part: a dot on its card (the owner).
+   */
+  const playDemo = ({ shared = false, from = 0 } = {}) => {
     stop();
     onDemoStartRef.current();
     setTookOver(false);
@@ -126,6 +129,7 @@ export function usePlayers({ session, octaveRef, setOctave, heldNotes, onDemoSta
           },
         },
         track,
+        from,
       );
       return () => {
         stopPlayer();
