@@ -6,6 +6,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- 2026-10-30, the owner: "Add an adversarial agent reviewer who would be an expert at crafting synth presets, at organizing them, at creating a cohesive collection with a lot of variety, and highlight all the clever tricks which lead to amazing sounding sounds."
+
 ## Dropped
 
 - 2026-10-30, from Claude's brainstorm, Velocity on the Volume ("a harder hit plays louder, not only brighter"): already so. The Amp Envelope's Attack rises to the Note's Velocity (PRD story 9). Claude's call, open to the owner.
