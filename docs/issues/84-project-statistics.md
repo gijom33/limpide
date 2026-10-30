@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · enhancement. Built; the first row is measured at the next release, on a quiet machine. Every release so far has its exact numbers (size and build), read from its tag.
+**Status:** ready-for-human · enhancement. Built; the first row is measured on a quiet machine: 1.16.1's run was set aside, the machine overloaded (about 40 end-to-end tests timed out), and 1.16.1 was released without it (decided by the owner, 2026-10-30). Every release so far has its exact numbers (size and build), read from its tag.
 
 ## Triage Notes
 
