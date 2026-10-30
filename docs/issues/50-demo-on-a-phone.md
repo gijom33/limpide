@@ -6,6 +6,8 @@
 
 **Status:** done (2026-10-26)
 
+**Since then:** (2026-10-29, the owner, the inbox) the dots became a segment per part, as wide as the part is long, each playing on from its part; (2026-10-30, [issue 99](./99-demo-segments-as-targets.md), decided by the owner) the segments have a row of their own under the name and the buttons at every width, at least 24 px from 601 px up, and on phones Previous part and Next part buttons beside them.
+
 - [x] A one-line caption per moment of the Demo, in plain words ("Acid: the filter opens and closes"), shown where the eye is
 - [x] The sound's name and a way to stop the Demo in view while it plays, the header slid away or not
 - [x] Some sign of progress (which part of how many, or time left)
