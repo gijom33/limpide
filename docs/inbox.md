@@ -4,6 +4,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-10-29, the owner, on two in-tune Squares through Ring, the Ideal's diamonds where the sound is near silence: "fix the Ring diamonds so they account for phase?"; then, shown that Osc 1 and Osc 2 run free, so the same Patch sounds different after Osc 2 is retuned and brought back: "Restart on each Note"
+
 ## Ideas
 
 - 2026-10-29, the owner, asked what to do with the Timeline's thin flat lines (each moved knob's own setting): "Remove them"
