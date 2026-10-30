@@ -92,7 +92,8 @@ describe('Amp Envelope', () => {
 
   it('is silent before the Gate opens', async () => {
     const s = await play(1);
-    expect(rms(s, 0, at(0.1))).toBe(0);
+    // Not exactly 0: the limiter's oversampling spreads the Note's first samples a few back (about −400 dB).
+    expect(rms(s, 0, at(0.1))).toBeLessThan(1e-12);
   });
 
   it('holds at the Sustain level while the Gate is open', async () => {
@@ -1080,7 +1081,8 @@ describe('several Voices (ADR-0007)', () => {
     });
     await ctx.startRendering();
     const osc = await captured;
-    expect(dB(toneAmplitude(osc, SR, 110) / toneAmplitude(osc, SR, 164.8))).toBeLessThan(-30);
+    // Hann-windowed: a rectangular window lets the newest Note's saw leak into 110 Hz by as much, as its cycle falls.
+    expect(dB(toneAmplitudeHann(osc, SR, 110) / toneAmplitudeHann(osc, SR, 164.8))).toBeLessThan(-30);
     expect(engine.fundamental()).toBeCloseTo(164.8, 0);
   });
 
@@ -1102,7 +1104,7 @@ describe('several Voices (ADR-0007)', () => {
     });
     await ctx.startRendering();
     const taps = await captured;
-    const older = (s: Float32Array) => dB(toneAmplitude(s, SR, 110) / toneAmplitude(s, SR, 164.8));
+    const older = (s: Float32Array) => dB(toneAmplitudeHann(s, SR, 110) / toneAmplitudeHann(s, SR, 164.8));
     expect(older(taps.amp)).toBeGreaterThan(-3); // both Notes at the Amp Tap
     expect(older(taps.oscillator)).toBeLessThan(-30); // the newest alone before it, so Cycle Lock and the Markers stay exact
     expect(older(taps.filter)).toBeLessThan(-30);
@@ -1344,6 +1346,57 @@ describe('Ring Modulation (issue 88)', () => {
     expect(dB(at(fifth - 110) / at(fifth + 110))).toBeCloseTo(0, 0);
     expect(dB(at(110) / at(fifth + 110))).toBeLessThan(-40);
     expect(dB(at(fifth) / at(fifth + 110))).toBeLessThan(-40);
+  });
+
+  it('sounds the same on a Note whether or not Osc 2 was retuned before it (issue 94)', async () => {
+    const squares = { ...defaultPatch(), ...ringAlone, waveform: 'square', osc2Waveform: 'square' } as const;
+    const second = async (away: number) => {
+      const ctx = new OfflineAudioContext(1, SR * 2, SR);
+      const e = createSynthEngine(ctx);
+      e.applyPatch(squares);
+      e.noteOn(A2, 1, 0);
+      e.noteOff(0.1);
+      // Osc 2 a semitone up for a while, then back, before the next Note (a context suspends once at a moment).
+      if (away) {
+        ctx.suspend(0.25).then(() => {
+          e.applyPatch({ ...squares, osc2Semitone: 1 });
+          ctx.resume();
+        });
+        ctx.suspend(0.25 + Math.round(away * 128) / 128).then(() => {
+          e.applyPatch(squares);
+          ctx.resume();
+        });
+      }
+      e.noteOn(A2, 1, 1);
+      const s = (await ctx.startRendering()).getChannelData(0);
+      return toneAmplitude(s, SR, 220, 1.25 * SR, 1.25 * SR + 40 * (SR / 110));
+    };
+    const [never, retuned] = [await second(0), await second(0.37)];
+    expect(Math.abs(dB(retuned / never))).toBeLessThan(0.5);
+  });
+
+  it('sounds a Square times a Square an octave up at the levels the Ideal draws (issue 94)', async () => {
+    const patch = { ...defaultPatch(), ...ringAlone, waveform: 'square', osc2Waveform: 'square', osc2Octave: 1 } as const;
+    const ctx = new OfflineAudioContext(1, SR, SR);
+    const engine = createSynthEngine(ctx);
+    engine.applyPatch(patch);
+    engine.noteOn(A2, 1, 0);
+    const frame = ctx.suspend(0.5).then(() => {
+      const s = new Float32Array(engine.taps.oscillator.fftSize);
+      engine.taps.oscillator.getFloatTimeDomainData(s);
+      void ctx.resume();
+      return s;
+    });
+    await ctx.startRendering();
+    const samples = await frame;
+    const ideal = idealReference(patch, 16);
+    for (const n of [1, 3, 5, 7]) {
+      const measured = toneAmplitudeHann(samples, SR, 110 * n);
+      expect(Math.abs(dB(measured / (ideal[n] * OSCILLATOR_LEVEL))), `Harmonic ${n} of 110 Hz`).toBeLessThan(0.5);
+    }
+    // The even ones cancel, in the sound as in the Ideal.
+    for (const n of [2, 4, 6]) expect(ideal[n]).toBe(0);
+    for (const n of [2, 4, 6]) expect(dB(toneAmplitudeHann(samples, SR, 110 * n) / (ideal[1] * OSCILLATOR_LEVEL))).toBeLessThan(-40);
   });
 
   it('is silent while Ring is down, whatever the Oscillators', async () => {
