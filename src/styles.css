@@ -1038,9 +1038,11 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   background: var(--panel); border: 1px solid var(--muted); border-radius: var(--radius-panel); box-shadow: var(--shadow-panel);
   font-size: var(--text-md);
 }
+/* There its width is its content's, up to 380 px, not a share of the button it hangs from (issue 105: a 60 px strip,
+   one word a line). Its right edge is on the button's, which leaves it the room on the left at every width. */
 @media (min-width: 601px) {
   .midi-menu { position: relative; }
-  .midi-panel { left: auto; right: 0; transform: none; }
+  .midi-panel { left: auto; right: 0; transform: none; width: max-content; max-width: 380px; }
 }
 .midi-connection { margin: 0; color: var(--muted); line-height: 1.4; }
 .midi-heading { font-size: var(--text-sm); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }

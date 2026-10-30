@@ -1,8 +1,9 @@
 import { expect, test } from '@playwright/test';
+import { midiPanel, openMidi, withFakeController } from './fakeMidi';
 
 // Issue 47: the layout's loose ends.
 
-for (const [width, height] of [[1440, 900], [2560, 1300], [690, 830]] as const) {
+for (const [width, height] of [[1440, 900], [2560, 1300], [690, 830], [601, 900], [1920, 1080]] as const) {
   test(`the MIDI panel opens under its own button, inside the window, at ${width}×${height}`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await page.goto('/');
@@ -13,6 +14,37 @@ for (const [width, height] of [[1440, 900], [2560, 1300], [690, 830]] as const) 
     expect(Math.abs(panel.x + panel.width - (own.x + own.width))).toBeLessThanOrEqual(1);
     expect(panel.x).toBeGreaterThanOrEqual(0);
     expect(panel.y).toBeGreaterThan(own.y + own.height);
+  });
+}
+
+// Issue 105 (the 1.16.0 review): from 601 px the panel was as wide as its button, one word a line, its buttons cut.
+for (const [width, height] of [[601, 900], [690, 830], [1440, 900], [1920, 1080]] as const) {
+  test(`at ${width}×${height} the MIDI panel's content fits inside it, every word whole`, async ({ page }) => {
+    await withFakeController(page);
+    await page.setViewportSize({ width, height });
+    await page.goto('/');
+    await openMidi(page);
+    await expect(midiPanel(page).getByRole('radio', { name: '2 semitones', exact: true })).toBeVisible();
+    const fit = await midiPanel(page).evaluate((panel) => {
+      const box = panel.getBoundingClientRect();
+      const outside = [...panel.querySelectorAll('*')]
+        .filter((e) => e.getClientRects().length && !e.closest('.midi-mappings'))
+        .filter((e) => {
+          const r = e.getBoundingClientRect();
+          return r.left < box.left - 0.5 || r.right > box.right + 0.5;
+        })
+        .map((e) => e.textContent?.slice(0, 24));
+      return { outside, width: Math.round(box.width), left: box.left, right: box.right, clipped: panel.scrollWidth > panel.clientWidth };
+    });
+    expect(fit.outside).toEqual([]);
+    expect(fit.clipped).toBe(false);
+    expect(fit.width).toBeGreaterThanOrEqual(300); // its sentences on lines of words, not a word a line
+    expect(fit.left).toBeGreaterThanOrEqual(0);
+    expect(fit.right).toBeLessThanOrEqual(width);
+    for (const name of ['MIDI Learn', 'Quick Setup']) {
+      const button = midiPanel(page).getByRole('button', { name, exact: true });
+      expect(await button.evaluate((b) => b.scrollWidth <= b.clientWidth), name).toBe(true);
+    }
   });
 }
 
