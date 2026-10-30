@@ -7,8 +7,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 - 2026-10-29, the owner: "On a computer with a mouse, sometimes I can change knobs value even after having released the mouse button. This is a bug."
 ## Ideas
 
-- 2026-10-29, the owner: "The PITCH row for OSC 1 should be at same height as TUNING row for OSC 2."
-- 2026-10-29, the owner: "The SUB tag on left side of SUB & NOISE should be higher, aligned with Octave... Bring the NOISE section a bit lower for clarity"
 - 2026-10-29, the owner, asked what to do with the Timeline's thin flat lines (each moved knob's own setting): "Remove them"
 
 ## Dropped
@@ -97,3 +95,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-29, the owner's ask, done at once, decided by the owner: FM counts towards Osc 2 being heard only while Osc 1 is heard (its fader or Ring up), so FM on a silent Osc 1 lights no dot on Osc 2's tab. Osc 2's Pulse Width and Tuning knobs grey out with the dot, as before, and the Osc 2 fader's tip says so. Test in `e2e/voices.spec.ts`.
 2026-10-29, the owner's Ring clicks (triage, decided by the owner): the Oscillators' top Harmonics tapered so their edges stop ringing went to [95](./issues/95-smooth-oscillator-edges.md).
 2026-10-29, the owner's FM ask (triage, decided by the owner): FM's sidebands in the Ideal went to [96](./issues/96-fm-sidebands-in-the-ideal.md).
+2026-10-29, the owner's two Oscillator row asks, done at once, decided by the owner: Osc 1's Pitch row takes a big dial's room, so its name and knobs stand exactly where Osc 2's Tuning (with its big Detune) does, at every width measured (375 to 1920 px); on Sub & Noise, each source's name sits on the line of its first choice (SUB beside Octave) and the Noise has 8 px more room above it.

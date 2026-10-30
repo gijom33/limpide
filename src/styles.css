@@ -584,6 +584,10 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .block .sub-block:has(.knob) { --row-dial: var(--dial-small); }
 .block .sub-block:has(.knob[data-size='big']) { --row-dial: var(--dial-big); }
 .block .sub-block:has(.knob) h3 { display: flex; align-items: center; min-height: var(--row-dial); }
+/* Osc 1's Pitch row takes a big dial's room, so it stands where Osc 2's Tuning, with its big Detune, does on the next
+   tab (the owner): its name centred on that height, its small knobs down to where Tuning's small ones sit. */
+.block .sub-block[aria-label='Osc 1 Pitch'] { --row-dial: var(--dial-big); }
+.block .sub-block[aria-label='Osc 1 Pitch'] > .knobs { padding-top: calc(var(--dial-big) - var(--dial-small)); }
 /* A picker may sit in its tooltip's anchor (the Waveforms): the same line, through it. */
 .block .sub-block:has(.knob):has(> .segmented, > .tip-anchor > .segmented) h3,
 .block .sub-block:has(.knob) > .segmented, .block .sub-block:has(.knob) > .tip-anchor:has(> .segmented) {
@@ -607,6 +611,12 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 /* The Sub's and the Noise's choices one under another, their captions one width, so the controls line up. */
 .choice-list { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); min-width: 0; }
 .choice-list .field-caption { min-width: 5.5em; }
+/* Each source's name on the line of its first choice (the Sub's beside Octave), and a little more room above the
+   Noise, so the two sources read apart (the owner). */
+.block .sub-block:has(> .choice-list) > h3, .block .sub-block:has(> .choice-list) > .tip-anchor:first-child { align-self: flex-start; }
+.block .sub-block:has(> .choice-list) h3 { display: flex; align-items: center; min-height: var(--control-h); }
+.block .sub-block:has(> .choice-list) { align-items: flex-start; }
+.block .sub-block:has(> .choice-list) + .sub-block:has(> .choice-list) { margin-top: var(--space-2); }
 .voices-field .segmented-field { gap: var(--label-gap); }
 .voices-field .field-caption {
   flex: 0 0 var(--label-col); font-size: var(--text-sm); font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em;
