@@ -6,6 +6,8 @@
 
 **Status:** done (2026-10-27)
 
+**Since then:** (2026-10-30, [issue 105](./105-header-and-panels-on-every-screen.md)) a stepped knob (an Octave, Osc 2's Semitone) moves one step for each notch's worth of scroll, small trackpad scrolls adding up to it; a notch's 4 % rounded back to the same Octave. Other knobs and faders still turn 4 % a notch.
+
 - [x] Pads and keys Presets with Voices to play chords: 7 of the 9 Pads (Pad, PWM Strings, Warm Pad, Brass Swell, Choir, Sweep Pad, Dark Drone), Organ, Electric Piano, Marimba, Glass Keys, Harp and Clav are at 1 Voice. A Presets test that a chordal Preset has more than one. Done: all twelve at 8 Voices; Dark Drone stays on one, a drone being one Note. `presets.test.ts` holds every Pad but the drone, every Piano and the six keys above one Voice
 - [x] A share link keeps the Patch name (it opens as "Shared Patch")
 - [x] The mouse wheel turns a knob under the pointer

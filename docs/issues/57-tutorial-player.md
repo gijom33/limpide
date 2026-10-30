@@ -8,6 +8,8 @@
 
 **Since then:** (2026-10-30, [issue 104](./104-keyboard-and-screen-readers-after-1-16.md)) the card takes the focus when a Tutorial is picked, on its Start, and keeps it on its way forward when the button pressed goes; Next waiting for its Step is `aria-disabled`, so it keeps the focus. It still never takes the focus from the control being turned.
 
+**Since then:** (2026-10-30, [issue 105](./105-header-and-panels-on-every-screen.md)) a Step can name the Viewer its note points at; the page scrolls the least that shows the control and that Viewer between the header and the card, the Viewer first once the Step is made. On a phone a made Step's note shows whole.
+
 - [x] The data: a Tutorial is a Preset's name, a Listen phrase and its Steps; a Step is one Parameter and its target, or one Display option, with an instruction and a note. A test helper applies the Steps to Init
 - [x] Checking a Step: a knob or fader within 5 % of its travel (on its own Taper), a choice exactly; reached, it snaps to the target and shows the note; a Step already at its target shows as done
 - [x] The card, docked at the bottom on every layout: intro, Steps ("Step 2 of 7"), the last card with what differs and "Match the Preset"; Back (moves the card only), Next, "Do it for me", Quit, Listen; on a phone one or two lines, tapped to show all

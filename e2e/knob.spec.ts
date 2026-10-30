@@ -299,11 +299,12 @@ test('a right-click on a knob turns nothing, so its context menu cannot leave a 
 // Issue 105 (the 1.16.0 review): a notch is 4 % of a knob's travel, and a stepped knob rounded it back to where it was.
 test('one wheel notch turns a stepped knob one step, and small trackpad scrolls add up to one', async ({ page }) => {
   await page.goto('/');
-  const wheelOver = async (name: string, deltas: number[]) => {
-    const box = (await page.getByRole('slider', { name, exact: true }).boundingBox())!;
-    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-    for (const deltaY of deltas) await page.mouse.wheel(0, deltaY);
-  };
+  // The scrolls in one go inside the page: gathered scroll is forgotten after a second, which a loaded machine's round
+  // trips can take.
+  const wheelOver = (name: string, deltas: number[]) =>
+    page.getByRole('slider', { name, exact: true }).evaluate((dial, deltas) => {
+      for (const deltaY of deltas) dial.dispatchEvent(new WheelEvent('wheel', { deltaY, bubbles: true, cancelable: true }));
+    }, deltas);
   const octave = page.getByRole('slider', { name: 'Osc 1 Octave', exact: true });
   await wheelOver('Osc 1 Octave', [-100]);
   await expect(octave).toHaveAttribute('aria-valuetext', '+1 oct');
