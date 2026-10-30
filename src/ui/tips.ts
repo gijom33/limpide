@@ -161,7 +161,7 @@ export const TIPS = {
   },
   tooltips: {
     title: 'Tooltips',
-    body: 'Whether explanations like this one open when you point at a control, reach it with the keyboard, or hold it on a touch screen. Off, they stay closed; a screen reader still reads them. Your choice is remembered.',
+    body: 'Whether explanations like this one open when you point at a control, reach it with the keyboard, or hold it on a touch screen. Off, they stay closed, and a button showing its icon alone shows just its name; a screen reader still reads them. Your choice is remembered.',
   },
   letterKeys: {
     title: 'Letter keys',

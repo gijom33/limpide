@@ -11,8 +11,14 @@ export interface TipContent {
   how?: string;
 }
 
-/** Whether tooltips open at all: Display's Tooltips switch (issue 81). Off, each control keeps its description. */
+/**
+ * Whether tooltips open at all: Display's Tooltips switch (issue 81). Off, each control keeps its description, and a
+ * header button showing its icon alone still shows its name (issue 106).
+ */
 export const TooltipsContext = createContext(true);
+
+// A header button's word, which it drops where the header is short of room (861 to 1099 px).
+const WORD = '.tool-word, .demo-word';
 
 const HOVER_DELAY_MS = 350;
 // On a touch screen, holding a control this long without moving shows its explanation (issue 49).
@@ -23,15 +29,19 @@ const LONG_PRESS_SLOP = 8;
  * Explains the control it wraps: after a short pause on hover, at once on keyboard focus, and on a touch screen
  * when it is held still for half a second; Escape, leaving or pressing dismisses it (on touch, the next touch).
  * Linked to the control with aria-describedby so screen readers announce it too. `longPress` off where holding
- * is how the control is played (the piano).
+ * is how the control is played (the piano). With Tooltips off, only a header button showing its icon alone opens one,
+ * on hover or focus, with its name alone.
  */
 export function Tooltip({ content, children, longPress = true }: { content: TipContent; children: ReactNode; longPress?: boolean }) {
   const id = useId();
   const enabled = useContext(TooltipsContext);
   const wrapperRef = useRef<HTMLSpanElement>(null);
   const tipRef = useRef<HTMLDivElement>(null);
+  const nameRef = useRef<HTMLDivElement>(null);
   const timer = useRef<number | undefined>(undefined);
   const [open, setOpen] = useState(false);
+  // Open with its name alone, the tip's title: Tooltips off, on a button whose word is hidden (issue 106).
+  const [named, setNamed] = useState(false);
   const [position, setPosition] = useState<{ left: number; top: number } | null>(null);
   // A finger down, waiting to become a long press; and whether one opened the tooltip, which then stays after the
   // finger lifts (a touch "leaves" as it ends) and keeps the control from acting on that release.
@@ -49,7 +59,10 @@ export function Tooltip({ content, children, longPress = true }: { content: TipC
   }, [id]);
 
   const show = (delay: number) => {
-    if (!enabled) return;
+    const word = wrapperRef.current?.querySelector(WORD);
+    const iconAlone = !!word && word.getClientRects().length === 0;
+    if (!enabled && !iconAlone) return;
+    setNamed(!enabled);
     window.clearTimeout(timer.current);
     timer.current = window.setTimeout(() => setOpen(true), delay);
   };
@@ -59,6 +72,7 @@ export function Tooltip({ content, children, longPress = true }: { content: TipC
     pinned.current = false;
     swallowClick.current = false;
     setOpen(false);
+    setNamed(false);
     setPosition(null);
   };
 
@@ -82,14 +96,16 @@ export function Tooltip({ content, children, longPress = true }: { content: TipC
   }, [open]);
 
   useLayoutEffect(() => {
-    if (!open || !wrapperRef.current || !tipRef.current) return;
+    const tipEl = (named ? nameRef : tipRef).current;
+    if (!open || !wrapperRef.current || !tipEl) return;
     // A wrapper with no box of its own (display: contents, around a Viewer's canvas) is placed by what it wraps.
     const own = wrapperRef.current.getBoundingClientRect();
     const trigger = own.width || own.height ? own : (wrapperRef.current.firstElementChild?.getBoundingClientRect() ?? own);
-    const tip = tipRef.current.getBoundingClientRect();
+    const tip = tipEl.getBoundingClientRect();
     setPosition(placeTooltip(trigger, tip, { width: window.innerWidth, height: window.innerHeight }));
-  }, [open]);
+  }, [open, named]);
 
+  const place = position ? { left: position.left, top: position.top } : { left: -9999, top: 0 };
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: it listens to what bubbles up from the control it wraps
     <span
@@ -135,20 +151,22 @@ export function Tooltip({ content, children, longPress = true }: { content: TipC
     >
       {children}
       {createPortal(
-        <div
-          id={id}
-          role="tooltip"
-          ref={tipRef}
-          className="tooltip"
-          hidden={!open || !enabled}
-          style={position ? { left: position.left, top: position.top } : { left: -9999, top: 0 }}
-        >
+        <div id={id} role="tooltip" ref={tipRef} className="tooltip" hidden={!open || named || !enabled} style={place}>
           <strong>{content.title}</strong>
           <span>{content.body}</span>
           {content.how && <span className="tooltip-how">{content.how}</span>}
         </div>,
         document.body,
       )}
+      {/* The name alone, where the tip would open; the button's own name already says it to a screen reader. */}
+      {open &&
+        named &&
+        createPortal(
+          <div ref={nameRef} className="tooltip" aria-hidden="true" style={place}>
+            <strong>{content.title}</strong>
+          </div>,
+          document.body,
+        )}
     </span>
   );
 }

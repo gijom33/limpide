@@ -115,8 +115,51 @@ test('Tooltips can be switched off in Display: none opens, a knob keeps its desc
   await expect(tooltips.getByRole('radio', { name: 'Off', exact: true })).toHaveAttribute('aria-checked', 'true');
   await tooltips.getByRole('radio', { name: 'On', exact: true }).click();
   await page.keyboard.press('Escape');
+  // Escape puts the focus back on the Display button, whose tip opens: away from it, so only the knob's is counted (it
+  // passed only while the knob's had not opened yet, and failed under load).
+  await page.evaluate(() => (document.activeElement as HTMLElement).blur());
   await cutoff.hover();
   await expect(open).toHaveCount(1);
+  await expect(open).toContainText('Cutoff');
+});
+
+test('with Tooltips off, the header’s buttons shown as icons alone still show their names, and a worded one nothing (issue 106)', async ({ page }) => {
+  // From 861 to 1099 px the buttons right of the keyboard drop their words.
+  await page.setViewportSize({ width: 1000, height: 800 });
+  await page.goto('/');
+  await openDisplay(page);
+  await page.getByRole('radiogroup', { name: 'Tooltips' }).getByRole('radio', { name: 'Off', exact: true }).click();
+  await page.keyboard.press('Escape');
+  const shown = page.locator('.tooltip:visible');
+  // Escape put the focus back on the Display button, which may show its name: away from it first.
+  await page.evaluate(() => (document.activeElement as HTMLElement).blur());
+  await expect(shown).toHaveCount(0);
+  for (const name of ['Hold', 'MIDI', 'Display', 'About', 'Demo', 'Tutorial', 'Song']) {
+    const button = page.locator(`header button[aria-label="${name}"]`);
+    await button.hover();
+    await expect(shown).toHaveText(name); // its name alone, no explanation
+    // Where its tip would open: under the button.
+    const [tip, own] = [await shown.boundingBox(), await button.boundingBox()];
+    expect(tip!.y).toBeGreaterThanOrEqual(own!.y + own!.height);
+    await page.mouse.move(500, 500);
+    await expect(shown).toHaveCount(0);
+  }
+  // The keyboard too; the button's description is still its full tip.
+  await page.keyboard.press('Shift');
+  await page.getByRole('button', { name: 'Demo' }).focus();
+  await expect(shown).toHaveText('Demo');
+  await expect(page.getByRole('button', { name: 'Demo' })).toHaveAccessibleDescription(/A track of about three minutes/);
+  await page.keyboard.press('Escape');
+  await expect(shown).toHaveCount(0);
+  await page.evaluate(() => (document.activeElement as HTMLElement).blur());
+  // Wide enough for the words, the buttons show nothing more.
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.mouse.move(500, 500);
+  for (const name of ['Hold', 'Demo']) {
+    await page.locator(`header button[aria-label="${name}"]`).hover();
+    await page.waitForTimeout(700);
+    await expect(shown).toHaveCount(0);
+  }
 });
 
 test('switching Tooltips off with the arrow keys leaves no tooltip open, the switch’s own included (the 1.15.0 review)', async ({ page }) => {
