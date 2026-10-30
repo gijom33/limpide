@@ -6,6 +6,8 @@
 
 **Status:** done; lengthened to about two minutes by [issue 60](./60-demo-longer-smoother.md). At first 75 seconds, 40 bars at 128 BPM over Am–F–C–G: Kick (4 bars), Acid (8), Poly Pluck (8), Strings (4), Self-Oscillation as the riser (2, the last beat silent), Wobble (8), Brass Section (4, then the first chord left to ring). Knobs turn on the same look-ahead as the Notes, so the Wobble's LFO Rate jumps are in force when each bar's first Note restarts it. On a laptop every section is usually on screen and the page stays put.
 
+**Since then:** the Demo is about three minutes, in 15 parts: Double Wobble and Singing Lead joined on 2026-10-28, then Split Octave Bass, Cathedral and FM Bell on 2026-10-29 (the owner's asks, no issue). Noted by [issue 107](./107-words-1-16-made-untrue.md).
+
 The owner's calls (2026-10-25):
 
 - **Synth only.** No drum machine or backing under it: everything heard is the one Patch, so the Viewers explain every sound. The punch comes from the synth's own Kick, Acid, Wobble and stabs.

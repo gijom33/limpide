@@ -71,7 +71,7 @@ How far Osc 2 swings Osc 1's frequency at audio rate (linear frequency modulatio
 _Avoid_: Cross Mod (fine in a tooltip), FM amount
 
 **Mixer**:
-The stage setting the level of each source (Osc 1, Osc 2, Ring, Sub, Noise) before the Filter.
+The stage setting the level of each source (Osc 1, Osc 2, Ring, Noise, Sub) before the Filter.
 _Avoid_: Levels, balance
 
 **Filter**:

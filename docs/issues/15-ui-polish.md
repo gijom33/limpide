@@ -46,3 +46,5 @@ Each finding names where it is, the rule it breaks, and the fix. Tick to approve
 - [x] **A11 Dividers in the Timeline.** The LFO and Glide groups have no divider between them while every other sibling group has one; the Glide knob also has no heading. Decided: left as it is (the knob label names it; a divider would split a 3-knob row).
 
 Since then (2026-10-29, [issue 82](./82-top-row-centres-the-piano.md), decided by the owner): the full name still shows at every width, at full size; in three across it sits over the Patch picker rather than on the header's line.
+
+Since then (2026-10-29, the owner's ask, no issue; noted by [issue 107](./107-words-1-16-made-untrue.md)): that stacking was replaced the same day. The name is back on the header's line at every width, the Patch picker beside it.
