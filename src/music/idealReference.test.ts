@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { defaultPatch } from '../patch/patch';
+import { defaultPatch, type Patch } from '../patch/patch';
 import { harmonicSeries } from './harmonics';
 import { idealPartials, idealReference } from './idealReference';
 
@@ -101,6 +101,34 @@ describe('Ring Modulation in the Ideal (issue 88)', () => {
     expect(partials[0].ratio).toBeCloseTo(fifth - 1);
     expect(partials[1].ratio).toBeCloseTo(fifth + 1);
     for (const p of partials) expect(p.level).toBeCloseTo((sine * sine * 0.8) / 2);
+  });
+
+  // Both start their cycles together on each Note (issue 94): in tune, their product is one known wave.
+  const ring = (patch: Partial<Patch>) => idealPartials({ ...sines, mixRing: 1, ...patch }, 64).filter((p) => p.source === 'ring');
+  const engineScale = (w: 'saw' | 'square', firstHarmonic: number) => harmonicSeries(w, 0.5, 1024).magnitudes[1] / firstHarmonic;
+
+  it('marks nothing for two in-tune Squares: their product is a constant', () => {
+    expect(ring({ waveform: 'square', osc2Waveform: 'square' })).toEqual([]);
+  });
+
+  it('marks two in-tune Saws as their product, a parabola: every Harmonic, at 1/n²', () => {
+    const s = engineScale('saw', 2 / Math.PI);
+    const partials = ring({ waveform: 'saw', osc2Waveform: 'saw' });
+    expect(partials.slice(0, 4).map((p) => p.ratio)).toEqual([1, 2, 3, 4]);
+    for (const p of partials.slice(0, 8)) expect(p.level).toBeCloseTo((s * s * 4) / (Math.PI * p.ratio) ** 2, 3);
+  });
+
+  it('marks a Square times a Square an octave up as a Square at the lower pitch', () => {
+    const s = engineScale('square', 4 / Math.PI);
+    const partials = ring({ waveform: 'square', osc2Waveform: 'square', osc2Octave: 1 });
+    expect(partials.slice(0, 4).map((p) => p.ratio)).toEqual([1, 3, 5, 7]);
+    for (const p of partials.slice(0, 4)) expect(p.level).toBeCloseTo((s * s * 4) / (Math.PI * p.ratio), 3);
+  });
+
+  it('marks two in-tune Sines at twice their pitch alone', () => {
+    const partials = ring({ mixRing: 0.8 });
+    expect(partials.map((p) => p.ratio)).toEqual([2]);
+    expect(partials[0].level).toBeCloseTo((sine * sine * 0.8) / 2);
   });
 
   it('marks nothing while Ring is down', () => {

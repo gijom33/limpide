@@ -238,26 +238,79 @@ function setLfoWaveform(lfo: OscillatorNode, waveform: LfoWaveform, wave: (w: ke
 }
 
 /**
+ * An oscillator that can start its cycle again (issue 94). An OscillatorNode cannot be reset, so a new one takes over
+ * at the moment, as a retriggered LFO's does. Everything that moves its pitch reaches it through two constant
+ * sources that stay for the Voice's life, its frequency (Hz) and its detune (cents): each node, at 0 on both, only
+ * adds them up, so a restart rewires nothing but the node itself.
+ */
+function createRestartable(ctx: BaseAudioContext, frequency: number, outputs: AudioNode[]) {
+  const [hz, cents] = [ctx.createConstantSource(), ctx.createConstantSource()];
+  hz.offset.value = frequency;
+  cents.offset.value = 0;
+  hz.start();
+  cents.start();
+  let wave: PeriodicWave | null = null;
+  const make = () => {
+    const node = ctx.createOscillator();
+    node.frequency.value = 0;
+    node.detune.value = 0;
+    if (wave) node.setPeriodicWave(wave);
+    hz.connect(node.frequency);
+    cents.connect(node.detune);
+    for (const o of outputs) node.connect(o);
+    return node;
+  };
+  let node = make();
+  node.start();
+  // A restart scheduled ahead of now leaves the old node playing until then: a new wave reaches it too.
+  let previous: OscillatorNode | null = null;
+  let restartAt = -1;
+  return {
+    frequency: hz.offset,
+    detune: cents.offset,
+    setWave(next: PeriodicWave) {
+      wave = next;
+      for (const n of previous ? [node, previous] : [node]) n.setPeriodicWave(next);
+    },
+    /** Start the cycle again at `t`; a second restart at the same moment is the same one. */
+    restart(t: number) {
+      if (t === restartAt) return;
+      restartAt = t;
+      const old = node;
+      node = make();
+      node.start(t);
+      old.stop(t);
+      old.onended = () => {
+        old.disconnect();
+        if (previous === old) previous = null;
+      };
+      previous = old;
+    },
+  };
+}
+type Restartable = ReturnType<typeof createRestartable>;
+
+/**
  * One Oscillator. Most Waveforms play their Fourier series directly (a PeriodicWave). A pulse is built the
  * analogue way, as a saw minus a delayed copy of itself: the delay (width / frequency) sets the Pulse Width and,
- * unlike a PeriodicWave, can be modulated smoothly (PWM). It is scaled to match the pulse's series exactly.
+ * unlike a PeriodicWave, can be modulated smoothly (PWM). It is scaled to match the pulse's series exactly. After a
+ * restart the delay still holds the old cycle for one width: a fraction of a cycle, inside the Note's attack.
  */
 function createVoiceOscillator(ctx: BaseAudioContext) {
-  const node = ctx.createOscillator();
   const direct = ctx.createGain();
   const delay = ctx.createDelay(1);
   const inverted = ctx.createGain();
   const out = ctx.createGain();
   const pwm = [ctx.createGain(), ctx.createGain()]; // each LFO → delay time
-  node.connect(direct).connect(out);
-  node.connect(delay).connect(inverted).connect(out);
+  const source: Restartable = createRestartable(ctx, A4, [direct, delay]);
+  direct.connect(out);
+  delay.connect(inverted).connect(out);
   for (const g of pwm) {
     g.connect(delay.delayTime);
     g.gain.value = 0;
   }
   inverted.gain.value = 0;
-  node.start();
-  return { node, out, direct, delay, inverted, pwm };
+  return { source, out, direct, delay, inverted, pwm };
 }
 
 /** Set a biquad to a stage: scheduled at `t` for the playing filter, immediately (no `t`) for a twin. */
@@ -339,7 +392,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   // Sources → Mixer. Each source's Mixer level is scaled by the Nominal Level; the Mixer's output is the
   // Oscillator Tap.
   const oscillators = [createVoiceOscillator(ctx), createVoiceOscillator(ctx)];
-  const [osc, osc2] = oscillators.map((v) => v.node);
+  const [osc, osc2] = oscillators.map((v) => v.source);
   // Both colours of Noise run; the Patch's colour is the one let through.
   const noises = (['white', 'pink'] as const).map((colour) => {
     const source = ctx.createBufferSource();
@@ -373,7 +426,9 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   ring.connect(mixRing).connect(mixer);
   // The Sub-oscillator: a square or a sine, one or two octaves below Osc 1 (issue 91), following its pitch, Glide and
   // vibrato. It runs an octave down; its detune takes it the second.
-  const sub = ctx.createOscillator();
+  const mixSub = ctx.createGain();
+  mixSub.gain.value = 0;
+  const sub = createRestartable(ctx, A4 / 2, [mixSub]);
   const subWaves = Object.fromEntries(
     (['square', 'sine'] as const).map((w) => {
       const { real, imag } = harmonicSeries(w, 0.5, WAVE_HARMONICS);
@@ -381,12 +436,8 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
     }),
   ) as Record<SubWaveform, PeriodicWave>;
   let subWaveform: SubWaveform = 'square';
-  sub.setPeriodicWave(subWaves.square);
-  sub.frequency.value = A4 / 2;
-  const mixSub = ctx.createGain();
-  mixSub.gain.value = 0;
-  sub.connect(mixSub).connect(mixer);
-  sub.start();
+  sub.setWave(subWaves.square);
+  mixSub.connect(mixer);
   // Two stages: the second is transparent at 12 dB and doubles the Slope at 24 dB (filterStages).
   const filter = ctx.createBiquadFilter();
   const filter2 = ctx.createBiquadFilter();
@@ -446,14 +497,14 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
     l.toOsc2.connect(osc2.detune);
     l.toVolume.connect(tremoloGain.gain);
     for (const o of oscillators) {
-      l.toPitch.connect(o.node.detune);
+      l.toPitch.connect(o.source.detune);
       l.bus.connect(o.pwm[i]);
     }
   });
   shared.bend.connect(sub.detune);
-  for (const o of oscillators) shared.bend.connect(o.node.detune);
+  for (const o of oscillators) shared.bend.connect(o.source.detune);
 
-  const waveKeys = new Map<OscillatorNode, string>();
+  const waveKeys: (string | undefined)[] = [];
   const pulseWidths = [0.5, 0.5];
   // Each Oscillator's pitch over the Note's, from its knobs: a pulse's width is a fraction of its own cycle (issue 90).
   const ratios = [1, 1];
@@ -463,8 +514,6 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
    */
   const crossDepth = (frequency: number) => (patch ? (patch.crossMod * CROSS_MOD_INDEX * frequency * ratios[1]) / ratios[0] : 0);
   const pitches: { time: number; frequency: number; note: number; glide: number }[] = [];
-  osc.frequency.value = A4;
-  osc2.frequency.value = A4;
   let patch: Patch | undefined;
 
   /** Point each pulse's delay at (width / frequency), and scale its LFO swing for that frequency. */
@@ -487,10 +536,10 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
     const o = oscillators[i];
     const pulse = waveform === 'pulse';
     const key = pulse ? 'saw' : waveform;
-    if (waveKeys.get(o.node) !== key) {
-      waveKeys.set(o.node, key);
+    if (waveKeys[i] !== key) {
+      waveKeys[i] = key;
       const { real, imag } = harmonicSeries(pulse ? 'saw' : waveform, 0.5, WAVE_HARMONICS);
-      o.node.setPeriodicWave(ctx.createPeriodicWave(real, imag, { disableNormalization: true }));
+      o.source.setWave(ctx.createPeriodicWave(real, imag, { disableNormalization: true }));
     }
     pulseWidths[i] = width;
     // saw(t) − saw(t − d·T) has |Harmonic n| = 2·|sin(πnd)| × the saw's: scale it to the pulse series' level.
@@ -530,6 +579,11 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
       else trackedNote.offset.setValueAtTime(note - KEY_TRACK_CENTRE, t);
     },
 
+    /** Start Osc 1, Osc 2 and the Sub at the start of their cycles, together (issue 94): each Note sounds the same. */
+    restart(t: number) {
+      for (const o of [osc, osc2, sub]) o.restart(t);
+    },
+
     /** Play the model's Envelope schedules for a Gate change. */
     gate(ampEvent: GateEvent, filterEvent: GateEvent, velocity: number) {
       if (ampEvent.on) noteVelocity.offset.setValueAtTime(velocity, ampEvent.time);
@@ -551,7 +605,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
       sub.detune.setValueAtTime((next.osc1Octave + next.subOctave + 1) * 1200, t);
       if (next.subWaveform !== subWaveform) {
         subWaveform = next.subWaveform;
-        sub.setPeriodicWave(subWaves[subWaveform]);
+        sub.setWave(subWaves[subWaveform]);
       }
       osc2.detune.setValueAtTime(osc2Tuning, t);
       mix1.gain.setValueAtTime(next.mixOsc1 * OSCILLATOR_LEVEL, t);
@@ -917,6 +971,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       const t = at(time);
       if (patch) lfos(patch).forEach((l, i) => l.retrigger === 'note' && restartLfo(i, l, t));
       const voice = allocate(note, t);
+      voice.restart(t);
       voice.note = note;
       follow(voice);
       setLeadPitch(voice, note, t);
