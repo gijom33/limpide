@@ -4,12 +4,9 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
-- 2026-10-29, the owner: "In the demo song, FM bass sounds bad, maybe change octave or another preset?"
-- 2026-10-29, the owner: "In demo song, Double Wobble also sounds bad at high frequency LFO"
 - 2026-10-29, the owner, on the Demo's card: "The position of the dots should not vary with the name of the preset."
 ## Ideas
 
-- 2026-10-29, the owner: "Try to swap the Singing Lead and FM Bell sections in the demo song. SHould make for a better buildup. Do you agree?"
 - 2026-10-29, the owner, on the Demo's card: "Replace dots by rectangles represent each section, filling up over time with width proportional to the section length. Find a more subtle way to delimit the popup than this thick orange line."
 - 2026-10-29, the owner, on the header between 861 and 1919 px: "Having the preset picker below the logo is very bad. Fix it. Feel free to move the demo, tutorial and song buttons to right side of keyboard. Feel free to put the 4 buttons on right also on two rows if the place is needed."
 - 2026-10-29, the owner, on the first version of that header (Demo, Tutorial and Song over Hold, MIDI, Display and About): "Swap the two rows"
@@ -106,3 +103,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-29, the owner's showcase ask and Demo notes, done at once, decided by the owner: 17 new Presets built on the Oscillators' additions (Ring Octave, FM Ladder, FM Bass, 808 Boom, Ring Lead, Ring Sweep, FM Bell, Kalimba, Tine Piano, Cathedral, Glass Pad, Deep Space, Clang, Zap Tom, Gong, FM Sweep, Robot), each loudness-checked against the old ones and the most visual ones looked at with a Note held; FM Sidebands' text says the Ideal now follows FM. The Demo gains three parts: FM Bass after Double Wobble (FM growing), Cathedral after Sweep Pad (the Sub swelling in two octaves down) and FM Bell after Singing Lead (FM growing), so it runs about three minutes, not two and a half (Claude's call, open to the owner). From the owner's notes on a first version: Talking FM is gone, from the Demo and the Presets ("sounds VERY bad"); Glass Pad's part became Cathedral; the Wobble's LFO goes no faster than eighths and Double Wobble's flutter no faster than sixteenths. Not yet heard by the owner in this form.
 2026-10-29, the owner's ask, done at once, decided by the owner: each dot on the Demo's card is a button that plays on from its part (the Demo restarts there, its parts before skipped), the current one marked for screen readers; the dots narrow on a small card, never under the dot. Test in `e2e/demo.spec.ts`.
 2026-10-29, the owner's faint line on the Timeline, seen on the oscillator branch: the setting lines were removed on main (the owner's "Remove them", above) after the branch was cut; main merged into it, so they are gone there too.
+2026-10-29, the owner's Demo notes, done at once, decided by the owner: Double Wobble's flutter (LFO 2) stays on the eighth throughout; Split Octave Bass replaces FM Bass after Double Wobble (Osc 1 an octave down by its own Octave, the Filter opening bar by bar); FM Bell now plays before Singing Lead, so the bells lead into the melody and the melody into the hook (Claude agreed: Cathedral's organ no longer sits right before the lead). Not yet heard by the owner.

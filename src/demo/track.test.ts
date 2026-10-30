@@ -81,8 +81,8 @@ describe('issue 60', () => {
 describe('the owner, 2026-10-28', () => {
   it('doubles the wobble with both LFOs on the Cutoff, and plays a lead with Glide and vibrato after the break', () => {
     expect(TRACK.parts.map((p) => p.preset)).toEqual([
-      'Kick', 'Acid', 'Poly Pluck', 'Strings', 'Tremolo Keys', 'Self-Oscillation', 'Wobble', 'Double Wobble', 'FM Bass', 'Sweep Pad', 'Cathedral',
-      'Singing Lead', 'FM Bell', 'Poly Pluck', 'Brass Section',
+      'Kick', 'Acid', 'Poly Pluck', 'Strings', 'Tremolo Keys', 'Self-Oscillation', 'Wobble', 'Double Wobble', 'Split Octave Bass', 'Sweep Pad', 'Cathedral',
+      'FM Bell', 'Singing Lead', 'Poly Pluck', 'Brass Section',
     ]);
     const double = preset('Double Wobble')!.patch;
     expect([double.lfoAmount > 0, double.lfo2Amount > 0, double.lfoDestination, double.lfo2Destination]).toEqual([true, true, 'cutoff', 'cutoff']);
@@ -94,18 +94,20 @@ describe('the owner, 2026-10-28', () => {
 });
 
 describe('the owner, 2026-10-29: the new Oscillator features in the Demo', () => {
-  it('plays FM, the Sub two octaves down and FM again, each turning its own new knob', () => {
+  it('plays Osc 1’s Octave, the Sub two octaves down and FM, the bells before the lead', () => {
     const part = (name: string) => TRACK.parts.find((p) => p.preset === name)!;
-    expect(part('FM Bass').moves!.map((m) => m.id)).toContain('crossMod');
+    expect(preset('Split Octave Bass')!.patch.osc1Octave).toBe(-1);
+    const names = TRACK.parts.map((p) => p.preset);
+    expect(names.indexOf('FM Bell')).toBe(names.indexOf('Singing Lead') - 1);
     expect(part('Cathedral').moves!.map((m) => m.id)).toContain('mixSub');
     expect(preset('Cathedral')!.patch.subOctave).toBe(-2);
     expect(part('FM Bell').moves!.map((m) => m.id)).toContain('crossMod');
   });
 
-  it('keeps every LFO at an eighth or slower on the wobble, a sixteenth on its flutter (the owner, 2026-10-29)', () => {
+  it('keeps the wobbles’ LFOs at an eighth or slower, the flutter too (the owner, 2026-10-29)', () => {
     const fastest = (name: string, id: 'lfoRate' | 'lfo2Rate') =>
       Math.max(...TRACK.parts.filter((p) => p.preset === name).flatMap((p) => p.moves!.filter((m) => m.id === id).map((m) => m.to)));
     expect(fastest('Wobble', 'lfoRate')).toBeLessThanOrEqual((TRACK.bpm / 60) * 2);
-    expect(fastest('Double Wobble', 'lfo2Rate')).toBeLessThanOrEqual((TRACK.bpm / 60) * 4);
+    expect(fastest('Double Wobble', 'lfo2Rate')).toBeLessThanOrEqual((TRACK.bpm / 60) * 2);
   });
 });
