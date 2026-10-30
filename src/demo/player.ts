@@ -19,7 +19,8 @@ export interface DemoHost extends ListenHost {
   setParam(id: ParamId, value: number): void;
   /** A knob starts to move: the page may bring it into view. */
   onMove(id: ParamId): void;
-  onStep(index: number): void;
+  /** A part begins `wait` seconds from now (its Preset loads just before its first Note). */
+  onStep(index: number, wait: number): void;
   /** The track is over: every part has played once. */
   onEnd(): void;
 }
@@ -79,7 +80,7 @@ export function startDemo(host: DemoHost, track: Track = TRACK, from = 0): () =>
     const start = starts[i];
     const length = phraseLength(part.phrase, track.bpm);
     const patch = host.load(part);
-    host.onStep(i);
+    host.onStep(i, Math.max(0, start - host.now()));
     const parsed = parsePhrase(part.phrase, track.bpm);
     host.showOctave(octaveShowing(parsed.map((e) => e.note)));
     const letGo = i < track.parts.length - 1 ? start + length - BREATH * beat : Infinity;

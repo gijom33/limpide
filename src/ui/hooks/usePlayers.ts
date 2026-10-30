@@ -74,6 +74,8 @@ export function usePlayers({ session, octaveRef, setOctave, heldNotes, onDemoSta
   // The Demo: which part plays, the track (the Demo's, or a riff on a shared sound), and whether a Note or a control
   // just stopped it (its card says so).
   const [part, setPart] = useState(0);
+  // When the part playing began, as the page's clock has it, so the Demo's card can fill its segment in time.
+  const [partStart, setPartStart] = useState(0);
   const [demoTrack, setDemoTrack] = useState<Track>(TRACK);
   const [tookOver, setTookOver] = useState(false);
   // The section of the knob the Demo is turning, for the page to follow; a scroll of the person's own stops the
@@ -116,7 +118,10 @@ export function usePlayers({ session, octaveRef, setOctave, heldNotes, onDemoSta
           onMove: (id) => {
             if (!followPaused.current) setFollow((f) => ({ name: SECTION_OF[id], key: (f?.key ?? 0) + 1 }));
           },
-          onStep: setPart,
+          onStep: (index, wait) => {
+            setPart(index);
+            setPartStart(performance.now() + wait * 1000);
+          },
           onEnd: () => {
             // The track is over: back to the starting point, silent, as if nothing had been touched. The shared sound
             // stays loaded.
@@ -222,7 +227,7 @@ export function usePlayers({ session, octaveRef, setOctave, heldNotes, onDemoSta
 
   return {
     playedNotes, stopAll: () => stop(),
-    demo, demoTrack, follow, tookOver, setTookOver, playDemo, stopDemo, stopDemoRef, toggleDemo,
+    demo, demoTrack, partStart, follow, tookOver, setTookOver, playDemo, stopDemo, stopDemoRef, toggleDemo,
     song: playing === 'song', stopSong, toggleSong,
     listening: playing === 'listen', startListen, stopListen,
   };

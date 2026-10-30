@@ -649,7 +649,7 @@ export function App() {
           <DemoBar
             playing={
               players.demo !== null && players.demoTrack.parts[players.demo]
-                ? { part: players.demoTrack.parts[players.demo], index: players.demo, names: players.demoTrack.parts.map((p) => p.preset) }
+                ? { track: players.demoTrack, index: players.demo, startedAt: players.partStart }
                 : null
             }
             tookOver={players.tookOver}

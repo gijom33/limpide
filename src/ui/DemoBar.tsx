@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import type { Part } from '../demo/track';
+import { phraseLength } from '../demo/phrase';
+import type { Track } from '../demo/track';
 import { FoldButton, useCardPlacement } from './cardPlacement';
 import { useDocked } from './docked';
 import { CloseIcon } from './icons';
 
 interface Props {
-  /** The part playing, where it falls in the track and every part's Preset; null once the Demo has stopped. */
-  playing: { part: Part; index: number; names: readonly string[] } | null;
+  /** The track, the part playing and when it began (the page's clock, ms); null once the Demo has stopped. */
+  playing: { track: Track; index: number; startedAt: number } | null;
   /** The Demo was stopped by the person playing or touching something: the bar says so for a moment. */
   tookOver: boolean;
   onStop(): void;
@@ -29,6 +30,9 @@ export function DemoBar({ playing, tookOver, onStop, onJump, onPlayAgain, onDism
   const place = useCardPlacement(card, 'demo', playing ? 'playing' : 'stopped');
   const [closed, setClosed] = useState(false);
   const running = playing !== null;
+  const parts = playing?.track.parts ?? [];
+  const part = parts[playing?.index ?? 0];
+  const lengths = parts.map((p) => phraseLength(p.phrase, playing!.track.bpm));
   useEffect(() => {
     if (!running) setClosed(false);
   }, [running]);
@@ -38,20 +42,24 @@ export function DemoBar({ playing, tookOver, onStop, onJump, onPlayAgain, onDism
       {playing ? (
         <>
           <div className="demo-bar-top" {...place.handle}>
-            <span className="demo-bar-name">{playing.part.preset}</span>
-            {/* A dot per part: which is playing, and a click plays on from any of them (the owner). */}
-            <span className="demo-bar-parts" role="group" aria-label={`Part ${playing.index + 1} of ${playing.names.length}`}>
-              {playing.names.map((name, i) => (
+            <span className="demo-bar-name">{part.preset}</span>
+            {/* A segment per part, as wide as the part is long: the parts played full, the one playing filling over its
+                length, and a click on any plays on from it (the owner). */}
+            <span className="demo-bar-parts" role="group" aria-label={`Part ${playing.index + 1} of ${parts.length}`}>
+              {parts.map((p, i) => (
                 <button
-                  // biome-ignore lint/suspicious/noArrayIndexKey: a dot per part, in order; a Preset can play twice
-                  key={i}
+                  // The playing segment anew on every start, so its fill starts again (a jump back to it too).
+                  key={i === playing.index ? `${i} ${playing.startedAt}` : i}
                   type="button"
-                  aria-label={`Play from part ${i + 1}, ${name}`}
+                  aria-label={`Play from part ${i + 1}, ${p.preset}`}
                   aria-current={i === playing.index ? 'step' : undefined}
                   data-done={i < playing.index || undefined}
                   data-current={i === playing.index || undefined}
+                  style={{ flexGrow: lengths[i] }}
                   onClick={() => onJump(i)}
-                />
+                >
+                  <span className="demo-bar-segment">{i === playing.index && <PartFill seconds={lengths[i]} startedAt={playing.startedAt} />}</span>
+                </button>
               ))}
             </span>
             <FoldButton folded={place.folded} onToggle={place.toggleFold} />
@@ -71,9 +79,9 @@ export function DemoBar({ playing, tookOver, onStop, onJump, onPlayAgain, onDism
               <CloseIcon />
             </button>
           </div>
-          {playing.part.caption && (
+          {part.caption && (
             <p className="demo-bar-caption" aria-live="polite">
-              {playing.part.caption}
+              {part.caption}
             </p>
           )}
         </>
@@ -94,4 +102,13 @@ export function DemoBar({ playing, tookOver, onStop, onJump, onPlayAgain, onDism
       )}
     </section>
   );
+}
+
+/**
+ * The playing part's segment filling over its length, from when the part began. Its timing is fixed when it appears (a
+ * new part, or a jump, gives a new one): worked out again on a later render, the fill would jump.
+ */
+function PartFill({ seconds, startedAt }: { seconds: number; startedAt: number }) {
+  const [style] = useState(() => ({ animationDuration: `${seconds}s`, animationDelay: `${(startedAt - performance.now()) / 1000}s` }));
+  return <span className="demo-bar-fill" style={style} />;
 }

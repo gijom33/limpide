@@ -1256,7 +1256,8 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   position: fixed; z-index: 40; left: 50%; bottom: var(--space-3); transform: translate(calc(-50% + var(--card-dx, 0px)), var(--card-dy, 0px));
   width: min(var(--card-w, 640px), calc(100vw - 2 * var(--space-3))); box-sizing: border-box;
   display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3) var(--space-4);
-  background: var(--panel); border: 1px solid var(--accent); border-radius: var(--radius-panel); box-shadow: var(--shadow-panel);
+  /* A hairline and the panel's shadow, not the accent: it frames the card without shouting (the owner, 2026-10-29). */
+  background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-panel); box-shadow: var(--shadow-panel);
 }
 :root[data-docked] main { margin-bottom: calc(var(--docked-h, 0px) + var(--space-3)); }
 /* The Demo's card closed with its ×, the Demo playing on (the owner, 2026-10-28). */
@@ -1331,14 +1332,23 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 /* A fixed width, so the dots after it never move as the parts' names change (the owner, 2026-10-29); a longer name ends
    in an ellipsis (the tooltip-less card names each dot's part to screen readers). */
 .demo-bar-name { font-weight: 600; font-size: var(--card-text); flex: 0 0 clamp(5.5em, 24vw, 9em); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.demo-bar-parts { flex: 1 1 auto; display: flex; min-width: 0; }
-/* Each dot a button as tall as a finger, its 8 px dot drawn inside; narrower on a small card, never under the dot. */
-.demo-bar-parts > button { flex: 0 1 14px; min-width: 9px; height: 24px; padding: 0; border: 0; background: none; cursor: pointer; display: grid; place-items: center; border-radius: 4px; }
-.demo-bar-parts > button::before { content: ''; width: 8px; height: 8px; border-radius: 50%; border: 1px solid var(--muted); box-sizing: border-box; }
-.demo-bar-parts > button:hover::before { border-color: var(--text); }
-.demo-bar-parts > button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-.demo-bar-parts > button[data-done]::before { background: var(--muted); }
-.demo-bar-parts > button[data-current]::before { background: var(--accent); border-color: var(--accent); }
+.demo-bar-parts { flex: 1 1 auto; display: flex; gap: 3px; min-width: 0; }
+/* Each segment a button as tall as a finger, its bar drawn inside, as wide as its part is long (flex-grow, set inline). */
+.demo-bar-parts > button { flex: 1 1 0; min-width: 4px; height: 24px; padding: 0; border: 0; background: none; cursor: pointer; display: flex; align-items: center; border-radius: 3px; }
+.demo-bar-parts > button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.demo-bar-segment { position: relative; display: block; width: 100%; height: 6px; border-radius: 3px; overflow: hidden; background: color-mix(in srgb, var(--muted) 30%, transparent); }
+.demo-bar-parts > button:hover .demo-bar-segment { background: color-mix(in srgb, var(--muted) 55%, transparent); }
+.demo-bar-segment::after { content: ''; position: absolute; inset: 0; background: var(--accent); transform-origin: left; transform: scaleX(0); }
+.demo-bar-parts > button[data-done] .demo-bar-segment::after { transform: scaleX(1); }
+/* The playing part fills over its length (its duration and start set inline); a negative delay picks it up where it is. */
+.demo-bar-fill { position: absolute; inset: 0; background: var(--accent); transform-origin: left; animation: demo-fill linear both; }
+@keyframes demo-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+/* On a phone the segments take a row of their own under the name and the buttons, so their lengths still show. */
+@media (max-width: 600px) {
+  .demo-bar-top { flex-wrap: wrap; row-gap: 0; }
+  .demo-bar-name { flex: 1 1 auto; }
+  .demo-bar-parts { order: 1; flex-basis: 100%; }
+}
 .demo-bar-caption { margin: 0; font-size: var(--card-text); line-height: 1.45; }
 .demo-bar-top > .demo-bar-caption { flex: 1 1 auto; }
 .demo-bar .tool { min-height: 36px; padding: 0 var(--space-3); flex: none; }

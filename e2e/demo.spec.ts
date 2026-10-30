@@ -286,7 +286,7 @@ test('a dot on the Demo’s card plays on from its part, and the Demo keeps play
 });
 
 for (const width of [393, 1440]) {
-  test(`the dots stay put whatever the part's name (the owner, 2026-10-29), at ${width}px`, async ({ page }) => {
+  test(`the parts' segments stay put whatever the part's name (the owner, 2026-10-29), at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 800 });
     await page.goto('/');
     await demo(page).click();
@@ -299,6 +299,29 @@ for (const width of [393, 1440]) {
     expect(await firstDot()).toBe(before);
     // The name never runs under the dots.
     const [name, dots] = await Promise.all([card.locator('.demo-bar-name'), card.locator('.demo-bar-parts')].map((l) => l.evaluate((el) => el.getBoundingClientRect().toJSON())));
-    expect(name.right).toBeLessThanOrEqual(dots.left);
+    // Beside them, or on a phone above them: never over them.
+    expect(name.right <= dots.left || name.bottom <= dots.top).toBe(true);
   });
 }
+
+test('each part is a segment as wide as it is long, the playing one filling over time (the owner, 2026-10-29)', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  await demo(page).click();
+  const card = page.getByRole('region', { name: 'Demo' });
+  await expect(card).toContainText('Kick');
+  const width = (n: number) => card.getByRole('button', { name: new RegExp(`^Play from part ${n},`) }).evaluate((el) => el.getBoundingClientRect().width);
+  // Acid plays 8 bars, the Kick 4: twice as wide, give or take the gaps between segments.
+  expect(Math.abs((await width(2)) - 2 * (await width(1)))).toBeLessThanOrEqual(4);
+  const filled = () =>
+    card.locator('.demo-bar-fill').evaluate((el) => {
+      const [fill, track] = [el.getBoundingClientRect().width, el.parentElement!.getBoundingClientRect().width];
+      return fill / track;
+    });
+  const early = await filled();
+  await page.waitForTimeout(1500);
+  expect(await filled()).toBeGreaterThan(early + 0.1); // 1.5 s of a 7.5 s part
+  await card.getByRole('button', { name: 'Play from part 3, Poly Pluck' }).click();
+  await expect(card.getByRole('group', { name: 'Part 3 of 15' })).toBeVisible();
+  expect(await filled()).toBeLessThan(0.2); // a jump starts the segment's fill again
+});
