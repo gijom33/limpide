@@ -4,8 +4,14 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- From the 1.16.0 review: Osc 2's pulse width and FM's depth are sized for Osc 2's knobs, not where Env Amount takes its pitch, so a 25 % pulse swept up 24 semitones goes silent at the Envelope's peak and FM's index falls as Osc 2 rises; the Ideal places Osc 2 (its squares, the Ring diamonds, the whole-octave FM marks) without the Amount × Sustain it rests at. No Preset uses a pulse on Osc 2 with Env Amount.
+- From the 1.16.0 review: a knob moved during a Glide sets FM's depth (and the pulses' delays, since before) for the mid-slide pitch, cutting the slide short, so the index is off until the next Note.
+- From the 1.16.0 review: the Demo card's segments are as narrow as 4 px for a short part, under the 24 px (laptop) and 44 px (phone) targets, with no waiver; the design audit never opens the card.
+
 ## Ideas
 
+- From the 1.16.0 review, code tidy-ups: no test compares the sound with the Modulation model for an LFO on FM or the Filter Envelope on Osc 2 (ADR-0003); Osc 2's cents worked out in three places, `osc2Cents`'s Envelope term reached only by a test; FM named `crossMod`, `cross`, `crossDepth` where the glossary says avoid Cross Mod; `FM_INDEX` in the Ideal's module, not with its Parameter; the Ideal's comment still says Osc 1 and the Sub only; Ring's and FM's partials, Knob's and Fader's release handling, and the Demo bar's CSS each written twice; the Ideal's sources listed by hand in the Spectrum; `ratios`; a style selecting on an accessible name.
+- From the 1.16.0 review, two changes no spec asked for: Ring joins the Quick Setup's Mixer step, and the Filter Envelope's faders stay lit while Env Amount is set though Osc 2 is not heard.
 - 2026-10-30, Claude's recommendation for reviews next time, which the owner asked to keep: A ripple-hunter agent, run on a change before the full suite: it finds every test, tip, Preset description and glossary line still stating the old fact (a count, a list's order, a line no longer drawn). Issue 97's run took 22 minutes to find five tests still expecting seven LFO targets.
 - 2026-10-30, Claude's recommendation for reviews next time, which the owner asked to keep: A fact-checker agent for Preset descriptions and tips: it renders each new or changed Preset through the engine offline and tests every claim its words make ("FM from 0 to 60 % every four seconds").
 - 2026-10-30, Claude's recommendation for reviews next time, which the owner asked to keep: An ear stand-in agent: it renders each new Preset on a few Notes and reports clipping (the limiter stepping in), near-silence, a click at a Note's start, a level far from its neighbours, harshness, before the owner listens.
