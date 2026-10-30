@@ -6,7 +6,7 @@ Today a browser plays an Oscillator's Harmonics only up to about half its sample
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · bug
+**Status:** needs-triage · bug. Tried and undone (2026-10-29): the taper does not remove the click, see Findings; the owner to choose again.
 
 ## Agent Brief
 
@@ -34,3 +34,10 @@ Today a browser plays an Oscillator's Harmonics only up to about half its sample
 ## Decisions
 
 1. Smooth the clicks out rather than leave them and say so in the Ring tip, decided by the owner. Every Oscillator gets a slightly softer very top, so every Preset changes a little there.
+
+## Findings (2026-10-29)
+
+- Measured before: a Saw times a Square in tune through Ring, its even Harmonics (the click) at −42.5 dB from the fundamental on C3, −36.3 on C4, −29.8 on C5: 6 dB louder each octave up, as a click of fixed length is.
+- With every Oscillator's Harmonics faded out from 0.5 to 0.78 of the Nyquist frequency, per Note: −40.7, −34.4, −27.5, slightly worse. Undone.
+- The samples show why: the click is one sample where the product drops almost to zero (0.137, 0.019, 0.165), on the cycle's peak, and Saw times Saw and Square times Square show the same. Wherever both waves jump at once, a wave that is band-limited (as every browser Oscillator must be) passes through zero mid-jump, so for that instant their product does too. It is the true product of two band-limited waves, not ringing; a smoother top only lengthens each jump, and the dip with it. Claude's explanation to the owner (the two ripples multiplying) was wrong.
+- What is left: draw it (the Ideal's Ring partials from the waves as the browser plays them, cut at the Note's Nyquist, so the even Harmonics get diamonds too), or say it (the Ring tip: a tiny click once a cycle when the two are in tune, which the Ideal leaves out).
