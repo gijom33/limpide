@@ -295,3 +295,31 @@ test('a right-click on a knob turns nothing, so its context menu cannot leave a 
   await page.mouse.up({ button: 'right' });
   expect(await cutoff.getAttribute('aria-valuenow')).toBe(before);
 });
+
+// Issue 105 (the 1.16.0 review): a notch is 4 % of a knob's travel, and a stepped knob rounded it back to where it was.
+test('one wheel notch turns a stepped knob one step, and small trackpad scrolls add up to one', async ({ page }) => {
+  await page.goto('/');
+  const wheelOver = async (name: string, deltas: number[]) => {
+    const box = (await page.getByRole('slider', { name, exact: true }).boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    for (const deltaY of deltas) await page.mouse.wheel(0, deltaY);
+  };
+  const octave = page.getByRole('slider', { name: 'Osc 1 Octave', exact: true });
+  await wheelOver('Osc 1 Octave', [-100]);
+  await expect(octave).toHaveAttribute('aria-valuetext', '+1 oct');
+  await wheelOver('Osc 1 Octave', [100]);
+  await expect(octave).toHaveAttribute('aria-valuetext', '0 oct');
+
+  await page.getByRole('tab', { name: /Osc 2/ }).click();
+  const semitone = page.getByRole('slider', { name: 'Osc 2 Semitone', exact: true });
+  await wheelOver('Osc 2 Semitone', Array(8).fill(-10));
+  await expect(semitone).toHaveAttribute('aria-valuetext', '0 st'); // not yet a notch's worth
+  await wheelOver('Osc 2 Semitone', [-10, -10]);
+  await expect(semitone).toHaveAttribute('aria-valuetext', '+1 st');
+
+  // A knob without steps still turns 4 % a notch.
+  const resonance = page.getByRole('slider', { name: 'Resonance', exact: true });
+  const before = Number(await resonance.getAttribute('aria-valuenow'));
+  await wheelOver('Resonance', [-100]);
+  await expect.poll(async () => Number(await resonance.getAttribute('aria-valuenow'))).toBe(before + 4);
+});

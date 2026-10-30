@@ -25,7 +25,7 @@ export function Fader({ id, value, onChange, inactive }: Props) {
   const c = useParamControl(id, value, onChange);
   const cap = useRef<HTMLDivElement>(null);
   const press = useRef<{ y: number; position: number; onCap: boolean; moved: boolean } | null>(null);
-  const wheel = useWheel(c.position, c.setPosition);
+  const wheel = useWheel(c.position, c.setPosition, c.unit);
   const dimmed = useInactive(inactive);
 
   // Where the cap's centre would be for a pointer at `clientY`: the cap travels the track less its own height.

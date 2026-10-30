@@ -60,7 +60,7 @@ export function Knob({ id, value, onChange, inactive }: Props) {
   const [markerX1, markerY1] = point(centre, g.markerTo, angleOf(c.position));
   const gradient = `knob-cap-${useId().replace(/[^\w-]/g, '')}`; // a plain id, safe inside url(#…)
   const drag = useRef<{ x: number; y: number; position: number; moved: boolean } | null>(null);
-  const wheel = useWheel(c.position, c.setPosition);
+  const wheel = useWheel(c.position, c.setPosition, c.unit);
   const dimmed = useInactive(inactive);
 
   return (

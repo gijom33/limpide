@@ -25,6 +25,8 @@ function widestReadouts(id: ParamId): string[] {
 export function useParamControl(id: ParamId, value: number, onChange: (value: number) => void) {
   const def = PARAMS[id];
   const position = valueToPosition(def, value);
+  // A stepped Parameter's (Octave, Semitone) travel per step: less would round back to where it was.
+  const unit = def.step ? def.step / (def.max - def.min) : 0;
   const setPosition = (p: number) => onChange(positionToValue(def, Math.min(1, Math.max(0, p))));
   const learnable = useLearnable({ kind: 'param', id });
   // In the Maths Layer some controls read the quantity behind their value instead (Q, dB): sized for it while on.
@@ -47,8 +49,7 @@ export function useParamControl(id: ParamId, value: number, onChange: (value: nu
     onDoubleClick: () => onChange(def.default),
     onKeyDown: (e: React.KeyboardEvent<HTMLElement | SVGElement>) => {
       delete (e.currentTarget as HTMLElement).dataset.pointer; // keyboard focus from now on: show the ring
-      // A stepped Parameter (Octave, Semitone) moves a whole step per key: less would round back to where it was.
-      const unit = def.step ? def.step / (def.max - def.min) : 0;
+      // A stepped Parameter moves a whole step per key.
       const step = Math.max(unit, e.shiftKey ? 0.002 : 0.02);
       // Page Up and Down a tenth of the travel, Home and End to its ends (the WAI-ARIA slider pattern, issue 51).
       const page = Math.max(unit, 0.1);
@@ -98,7 +99,7 @@ export function useParamControl(id: ParamId, value: number, onChange: (value: nu
       </div>
     </>
   );
-  return { def, position, setPosition, slider, grab, focusByPointer, release, attributes, text };
+  return { def, position, unit, setPosition, slider, grab, focusByPointer, release, attributes, text };
 }
 
 /**
@@ -126,15 +127,22 @@ function useChanging(value: number): boolean {
 
 /** Travel per pixel of wheel or trackpad scroll: a mouse wheel's notch (about 100 px) turns a control 4 %. */
 const WHEEL_TRAVEL = 0.0004;
+/** The scroll that moves a stepped control one step: about a notch (Firefox's is 99 px), however many events make it. */
+const STEP_PIXELS = 90;
+/** Scroll gathered towards a step is forgotten after this long without any. */
+const STEP_FORGET_MS = 1000;
 
 /**
  * The mouse wheel or a two-finger scroll over a control turns it (issue 53), Shift for fine, and the page does not
  * scroll meanwhile. React's wheel listeners cannot stop the scroll (they are passive), so this is the element's own.
+ * A stepped control (`unit`, its travel per step) moves a step for each notch's worth of scroll in one direction,
+ * small trackpad scrolls adding up to it (issue 105: a notch rounded back to the same Octave).
  */
-export function useWheel(position: number, setPosition: (p: number) => void) {
-  const latest = useRef({ position, setPosition });
-  latest.current = { position, setPosition };
+export function useWheel(position: number, setPosition: (p: number) => void, unit = 0) {
+  const latest = useRef({ position, setPosition, unit });
+  latest.current = { position, setPosition, unit };
   const listening = useRef<{ element: Element; listener: (e: WheelEvent) => void } | null>(null);
+  const gathered = useRef({ pixels: 0, at: 0 });
   // A ref callback, so it follows the element however it is mounted.
   return useCallback((element: Element | null) => {
     if (listening.current) listening.current.element.removeEventListener('wheel', listening.current.listener as EventListener);
@@ -144,8 +152,16 @@ export function useWheel(position: number, setPosition: (p: number) => void) {
       const pixels = e.deltaMode === WheelEvent.DOM_DELTA_LINE ? e.deltaY * 33 : e.deltaY;
       if (!pixels) return;
       e.preventDefault();
-      const { position, setPosition } = latest.current;
-      setPosition(position - pixels * WHEEL_TRAVEL * (e.shiftKey ? 0.1 : 1));
+      const { position, setPosition, unit } = latest.current;
+      if (!unit) return setPosition(position - pixels * WHEEL_TRAVEL * (e.shiftKey ? 0.1 : 1));
+      const g = gathered.current;
+      if (Math.sign(g.pixels) !== Math.sign(pixels) || e.timeStamp - g.at > STEP_FORGET_MS) g.pixels = 0;
+      g.pixels += pixels;
+      g.at = e.timeStamp;
+      const steps = Math.trunc(g.pixels / STEP_PIXELS);
+      if (!steps) return;
+      g.pixels = 0; // what is left over would make some notches move two steps
+      setPosition(position - steps * unit);
     };
     element.addEventListener('wheel', listener as EventListener, { passive: false });
     listening.current = { element, listener };
