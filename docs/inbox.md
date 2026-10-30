@@ -6,6 +6,11 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- 2026-10-30, Claude's recommendation for reviews next time, which the owner asked to keep: A ripple-hunter agent, run on a change before the full suite: it finds every test, tip, Preset description and glossary line still stating the old fact (a count, a list's order, a line no longer drawn). Issue 97's run took 22 minutes to find five tests still expecting seven LFO targets.
+- 2026-10-30, Claude's recommendation for reviews next time, which the owner asked to keep: A fact-checker agent for Preset descriptions and tips: it renders each new or changed Preset through the engine offline and tests every claim its words make ("FM from 0 to 60 % every four seconds").
+- 2026-10-30, Claude's recommendation for reviews next time, which the owner asked to keep: An ear stand-in agent: it renders each new Preset on a few Notes and reports clipping (the limiter stepping in), near-silence, a click at a Note's start, a level far from its neighbours, harshness, before the owner listens.
+- 2026-10-30, Claude's recommendation for reviews next time, which the owner asked to keep: A check, not an agent: the layout tests in Playwright's Linux image before a push, since 1.15.0 passed on the Mac and failed on GitHub's wider Linux fonts.
+- 2026-10-30, Claude's recommendation for reviews next time, which the owner asked to keep: A check, not an agent: a test generating thousands of Patches at the edges (every knob at an end, both LFOs on one target, FM and Ring at full), none giving silence, an error value, a stuck limiter or a slow frame.
 - 2026-10-30, from Claude's brainstorm of what to do another day, which the owner asked to keep: Hard Sync: Osc 1 restarts its cycle each time Osc 2 does, a classic lead, the Scope's cut waves and the Spectrum's sweeping peaks as Osc 1 is tuned (left out of issue 89 only).
 - 2026-10-30, from Claude's brainstorm of what to do another day, which the owner asked to keep: An additive oscillator: each Harmonic's level set by drawbars, as on an organ, building the Spectrum by hand beside the Ideal Reference.
 - 2026-10-30, from Claude's brainstorm of what to do another day, which the owner asked to keep: Tutorials for the new oscillator features: FM, Ring, the Sub, Pink Noise and the LFO on FM have no guided lesson yet.
