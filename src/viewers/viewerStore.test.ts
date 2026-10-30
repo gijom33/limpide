@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { OSCILLATOR_LEVEL } from '../engine/synthEngine';
+import { fmDepthKept, idealPartials } from '../music/idealReference';
 import { createLibrary } from '../patch/library';
 import { setParam } from '../patch/patch';
 import { createPatchStore } from '../patch/patchStore';
@@ -74,12 +76,27 @@ describe('the Viewer settings store (issue 77)', () => {
 
   it("follows the Patch with the Ideal Reference, Osc 2's level and tuning included (the bug found grilling issue 77)", () => {
     const { patches, viewers } = setup();
-    const osc2 = () => (viewers.get().ideal ?? []).filter((p) => p.source === 'osc2');
+    const osc2 = () => (viewers.get().ideal?.(440, 48000) ?? []).filter((p) => p.source === 'osc2');
     expect(osc2()).toEqual([]);
     patches.change((p) => setParam(p, 'mixOsc2', 1), 'hand');
     expect(osc2().length).toBeGreaterThan(0);
     const fundamental = osc2()[0].ratio;
     patches.change((p) => setParam(p, 'osc2Octave', 1), 'hand');
     expect(osc2()[0].ratio).toBeCloseTo(fundamental * 2);
+  });
+
+  it('draws FM’s sidebands at the depth the Note keeps at the top (issue 103)', () => {
+    const { patches, viewers } = setup();
+    // FM Bell's Oscillators: a Sine swung by a Sine an octave and a minor seventh up.
+    patches.change((p) => ({ ...p, waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, osc2Semitone: 10, crossMod: 0.3 }), 'hand');
+    const sideband = (note: number) => {
+      const marks = viewers.get().ideal?.(440 * 2 ** ((note - 69) / 12), 48000) ?? [];
+      return marks.find((p) => p.source === 'osc1' && p.ratio > 4)?.level ?? 0;
+    };
+    const patch = patches.get().patch;
+    const at = (kept: number) => idealPartials(patch, 256, kept).find((p) => p.source === 'osc1' && p.ratio > 4)!.level * OSCILLATOR_LEVEL;
+    expect(sideband(60)).toBeCloseTo(at(1), 6);
+    expect(sideband(96)).toBeCloseTo(at(fmDepthKept(patch, 440 * 2 ** (27 / 12), 48000)), 3); // kept to a thousandth
+    expect(sideband(96)).toBeLessThan(sideband(60) / 2);
   });
 });

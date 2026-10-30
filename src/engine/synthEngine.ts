@@ -5,8 +5,8 @@ import {
   VELOCITY_CUTOFF_OCTAVES,
 } from '../modulation/modulationModel';
 import { bandwidthOctaves } from '../modulation/passBand';
-import { harmonicSeries } from '../music/harmonics';
-import { FM_INDEX } from '../music/idealReference';
+import { harmonicSeries, type Waveform } from '../music/harmonics';
+import { FM_INDEX, fmDepthKept, playedTop } from '../music/idealReference';
 import { frequencyToNote, noteToFrequency } from '../music/pitch';
 import { GLIDE_OFF, type Lfo, type LfoNumber, lfos, type NoiseColour, PARAMS, type Patch, type SubWaveform, type Voices } from '../patch/patch';
 import { filterStages, type Stage } from './filterDesign';
@@ -142,6 +142,15 @@ function pinkBuffer(ctx: BaseAudioContext, white: AudioBuffer): AudioBuffer {
 
 // Enough Harmonics to reach Nyquist from the lowest Notes; the browser band-limits per pitch.
 const WAVE_HARMONICS = 1024;
+// The Oscillators' waves cut short for Ring (issue 103) kept for the Notes to come: each holds many tables.
+const CUT_WAVES = 32;
+/**
+ * Each Voice's offset is taken out below this, by a second-order high-pass (issue 103): FM with Osc 2 on Osc 1's pitch
+ * puts a sideband at 0 Hz, and two in-tune waves through Ring their product's average. That offset holds from Note to
+ * Note, so the filter settles once per Patch; this low, it bends a 110 Hz saw's ramps by about 2 % in the Scope, where
+ * 5 Hz would bend them by 10 %.
+ */
+const DC_BLOCK = 1;
 // A Voice's own pitches, kept to tune its pulses through a Glide.
 const HISTORY = 64;
 // The Modulation model's history (Gate events, the newest Note's pitches, Patches in force) is kept by age, not
@@ -327,8 +336,12 @@ function createRestartable(ctx: BaseAudioContext, frequency: number, outputs: Au
       wave = next;
       for (const n of takeover.nodes()) n.setPeriodicWave(next);
     },
-    /** Start the cycle again at `t`; a second restart at the same moment is the same one. */
-    restart(t: number) {
+    /**
+     * Start the cycle again at `t`; a second restart at the same moment is the same one. A `next` wave is the new
+     * node's, and the wave from then on; the node it takes over from keeps its own until `t`.
+     */
+    restart(t: number, next?: PeriodicWave) {
+      if (next) wave = next;
       takeover.restart(t, make);
     },
     cancelAfter: takeover.cancelAfter,
@@ -419,7 +432,7 @@ interface LfoNodes {
   toVolume: GainNode;
 }
 
-/** What every Voice shares: the LFOs, the pitch bend, the noise loop, and where the Voices' outputs go. */
+/** What every Voice shares: the LFOs, the pitch bend, the noise loop, the Oscillators' waves, and where the Voices' outputs go. */
 interface Shared {
   lfos: [LfoNodes, LfoNodes];
   /** The pitch bend in cents, into every Oscillator's detune (the LFO on Pitch goes there too). */
@@ -427,6 +440,8 @@ interface Shared {
   /** The tremolo's resting gain, into every Voice's: 1 less the LFOs' total swing on Volume. */
   tremoloRest: ConstantSourceNode;
   noise: Record<NoiseColour, AudioBuffer>;
+  /** A Waveform's series up to its Harmonic `harmonics`, as a wave the Oscillators play. */
+  wave(waveform: Exclude<Waveform, 'pulse'>, harmonics: number): PeriodicWave;
   master: GainNode;
 }
 
@@ -436,8 +451,8 @@ interface Shared {
  * ever plays the first, exactly as the monophonic instrument did.
  */
 function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
-  // Sources → Mixer. Each source's Mixer level is scaled by the Nominal Level; the Mixer's output is the
-  // Oscillator Tap.
+  // Sources → Mixer. Each source's Mixer level is scaled by the Nominal Level; the Mixer's output, its offset taken
+  // out, is the Oscillator Tap.
   const oscillators = [createVoiceOscillator(ctx), createVoiceOscillator(ctx)];
   const [osc, osc2] = oscillators.map((v) => v.source);
   // Both colours of Noise run; the Patch's colour is the one let through.
@@ -490,6 +505,11 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   let subWaveform: SubWaveform = 'square';
   sub.setWave(subWaves.square);
   mixSub.connect(mixer);
+  const dcBlock = ctx.createBiquadFilter();
+  dcBlock.type = 'highpass';
+  dcBlock.frequency.value = DC_BLOCK;
+  dcBlock.Q.value = -3.01; // in dB: a flat Butterworth response
+  mixer.connect(dcBlock);
   // Two stages: the second is transparent at 12 dB and doubles the Slope at 24 dB (filterStages).
   const filter = ctx.createBiquadFilter();
   const filter2 = ctx.createBiquadFilter();
@@ -535,7 +555,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   keyTrackAmount.connect(filter2.detune);
   trackedNote.start();
 
-  mixer.connect(filter).connect(filter2).connect(amp).connect(tremoloGain).connect(shared.master);
+  dcBlock.connect(filter).connect(filter2).connect(amp).connect(tremoloGain).connect(shared.master);
   // Every Voice's noise starts at a different point of the loop, so a chord's noise is not one noise, louder.
   for (const n of noises) n.source.start(0, (index * NOISE_SECONDS) / MAX_VOICES);
 
@@ -566,11 +586,15 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
    * reaches its frequency, so the gain is divided by it, keeping the index the knob's.
    */
   const crossDepth = (frequency: number, fm = patch?.crossMod ?? 0) => (fm * FM_INDEX * frequency * ratios[1]) / ratios[0];
-  /** FM's gain, and each LFO's swing of it by its law (issue 97), on a Note of `frequency`: at once, or over a Glide. */
+  /**
+   * FM's gain, and each LFO's swing of it by its law (issue 97), on a Note of `frequency`: at once, or over a Glide.
+   * High up, all of them shrink together as far as keeps Osc 1's sidebands under the top (issue 103).
+   */
   const tuneCross = (frequency: number, t: number, timeConstant?: number) => {
     const swings = patch ? destinationSwings(patch, 'fm', patch.crossMod) : [0, 0];
+    const kept = patch ? fmDepthKept(patch, frequency * ratios[0], ctx.sampleRate) : 1;
     [cross, ...crossLfos].forEach((node, i) => {
-      const depth = crossDepth(frequency, i ? swings[i - 1] : undefined);
+      const depth = crossDepth(frequency, i ? swings[i - 1] : undefined) * kept;
       if (timeConstant) node.gain.setTargetAtTime(depth, t, timeConstant);
       else node.gain.setValueAtTime(depth, t);
     });
@@ -591,18 +615,38 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
     });
   };
 
+  /**
+   * How many Harmonics Osc 1 and Osc 2 play on a Note of `frequency`: all of them, but while Ring is up only those whose
+   * products with the other's stay under the top of what the browser plays, so Ring's sums do not fold back (issue
+   * 103). A Sine needs only its own pitch; two richer waves share the top evenly. Each keeps at least its first.
+   */
+  const harmonicsOn = (frequency: number): number[] => {
+    if (!patch?.mixRing) return [WAVE_HARMONICS, WAVE_HARMONICS];
+    const hz = ratios.map((r) => frequency * r);
+    const rich = [patch.waveform, patch.osc2Waveform].map((w) => w !== 'sine');
+    const top = playedTop(ctx.sampleRate);
+    const reach = (i: number) => (rich[i] ? Math.max(top / 2, hz[i]) : hz[i]);
+    return [0, 1].map((i) => (rich[i] ? Math.min(WAVE_HARMONICS, Math.max(1, Math.floor((top - reach(1 - i)) / hz[i]))) : WAVE_HARMONICS));
+  };
+  /** Osc `i`'s wave on a Note of `frequency`, if it is not the one it plays already. */
+  const nextWave = (i: number, frequency: number) => {
+    const waveform = (i ? patch?.osc2Waveform : patch?.waveform) ?? 'saw';
+    const series = waveform === 'pulse' ? 'saw' : waveform;
+    const harmonics = harmonicsOn(frequency)[i];
+    const key = `${series} ${harmonics}`;
+    if (waveKeys[i] === key) return undefined;
+    waveKeys[i] = key;
+    return shared.wave(series, harmonics);
+  };
+
   // Play exactly the Fourier series the Ideal Reference draws (normalisation is already in it). A pulse plays a
   // saw here, and becomes a pulse through the delayed, inverted copy.
   const sawPeak = harmonicSeries('saw', 0.5, WAVE_HARMONICS).magnitudes[1];
   const setWave = (i: number, waveform: Patch['waveform'], width: number, t: number) => {
     const o = oscillators[i];
     const pulse = waveform === 'pulse';
-    const key = pulse ? 'saw' : waveform;
-    if (waveKeys[i] !== key) {
-      waveKeys[i] = key;
-      const { real, imag } = harmonicSeries(pulse ? 'saw' : waveform, 0.5, WAVE_HARMONICS);
-      o.source.setWave(ctx.createPeriodicWave(real, imag, { disableNormalization: true }));
-    }
+    const wave = nextWave(i, frequencyAt(t));
+    if (wave) o.source.setWave(wave);
     pulseWidths[i] = width;
     // saw(t) − saw(t − d·T) has |Harmonic n| = 2·|sin(πnd)| × the saw's: scale it to the pulse series' level.
     const scale = pulse ? harmonicSeries('pulse', width, 256).magnitudes[1] / (2 * Math.sin(Math.PI * width) * sawPeak) : 1;
@@ -642,9 +686,13 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
       else trackedNote.offset.setValueAtTime(note - KEY_TRACK_CENTRE, t);
     },
 
-    /** Start Osc 1, Osc 2 and the Sub at the start of their cycles, together (issue 94): each Note sounds the same. */
-    restart(t: number) {
-      for (const o of [osc, osc2, sub]) o.restart(t);
+    /**
+     * Start Osc 1, Osc 2 and the Sub at the start of their cycles, together (issue 94): each Note sounds the same. Osc 1
+     * and Osc 2 start on their waves for the Note's `frequency` (issue 103).
+     */
+    restart(t: number, frequency: number) {
+      [osc, osc2].forEach((o, i) => o.restart(t, nextWave(i, frequency)));
+      sub.restart(t);
     },
     /** Call off their restarts after `t`, for a Note whose Gate closed before it started (issue 102). */
     cancelRestarts(t: number) {
@@ -664,11 +712,11 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
 
     apply(next: Patch, t: number) {
       patch = next;
-      setWave(0, next.waveform, next.pulseWidth, t);
-      setWave(1, next.osc2Waveform, next.osc2PulseWidth, t);
       const osc2Tuning = next.osc2Octave * 1200 + next.osc2Semitone * 100 + next.osc2Detune;
       ratios[0] = 2 ** next.osc1Octave;
       ratios[1] = 2 ** (osc2Tuning / 1200);
+      setWave(0, next.waveform, next.pulseWidth, t);
+      setWave(1, next.osc2Waveform, next.osc2PulseWidth, t);
       tunePulses(frequencyAt(t), t);
       tuneCross(frequencyAt(t), t);
       // Osc 1's Octave moves it and the Sub; Osc 2's offsets count from the Note.
@@ -697,10 +745,10 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
 
     /** A Tap listens to this Voice's stage: a side branch, so observing never alters the sound. */
     attach(taps: Taps, tap: TapName) {
-      ({ oscillator: mixer, filter: filter2, amp: tremoloGain } as const)[tap].connect(taps[tap]);
+      ({ oscillator: dcBlock, filter: filter2, amp: tremoloGain } as const)[tap].connect(taps[tap]);
     },
     detach(taps: Taps, tap: TapName) {
-      ({ oscillator: mixer, filter: filter2, amp: tremoloGain } as const)[tap].disconnect(taps[tap]);
+      ({ oscillator: dcBlock, filter: filter2, amp: tremoloGain } as const)[tap].disconnect(taps[tap]);
     },
   };
   return voice;
@@ -758,7 +806,24 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   tremoloRest.offset.value = 1;
   tremoloRest.start();
   const white = noiseBuffer(ctx);
-  const shared: Shared = { lfos: [lfoNodes(), lfoNodes()], bend, tremoloRest, noise: { white, pink: pinkBuffer(ctx, white) }, master };
+  // The Oscillators' waves, shared by every Voice; the most recently asked for are kept, as each Note may ask for its
+  // own while Ring is up (issue 103).
+  const oscillatorWaves = new Map<string, PeriodicWave>();
+  const oscillatorWave = (waveform: Exclude<Waveform, 'pulse'>, harmonics: number) => {
+    const key = `${waveform} ${harmonics}`;
+    let wave = oscillatorWaves.get(key);
+    if (wave) oscillatorWaves.delete(key);
+    else {
+      const { real, imag } = harmonicSeries(waveform, 0.5, WAVE_HARMONICS);
+      wave = ctx.createPeriodicWave(real.subarray(0, harmonics + 1), imag.subarray(0, harmonics + 1), { disableNormalization: true });
+    }
+    oscillatorWaves.set(key, wave);
+    if (oscillatorWaves.size > CUT_WAVES) oscillatorWaves.delete(oscillatorWaves.keys().next().value as string);
+    return wave;
+  };
+  const shared: Shared = {
+    lfos: [lfoNodes(), lfoNodes()], bend, tremoloRest, noise: { white, pink: pinkBuffer(ctx, white) }, wave: oscillatorWave, master,
+  };
   const voices = Array.from({ length: MAX_VOICES }, (_, i) => createVoice(ctx, shared, i));
   const waves = new Map<keyof typeof LFO_SERIES, PeriodicWave>();
   const wave = (w: keyof typeof LFO_SERIES) => waves.get(w) ?? waves.set(w, lfoWave(ctx, w)).get(w)!;
@@ -1050,7 +1115,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       const dipFrom = !legato && levelAt(voice.amps, asked) > SILENT ? asked : undefined;
       const t = dipFrom === undefined ? asked : asked + DIP;
       if (patch) lfos(patch).forEach((l, i) => l.retrigger === 'note' && restartLfo(i, l, t));
-      if (!legato) voice.restart(t);
+      if (!legato) voice.restart(t, noteToFrequency(note));
       voice.note = note;
       setLeadPitch(voice, note, t);
       gate(voice, true, t, velocity, dipFrom);

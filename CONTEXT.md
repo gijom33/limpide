@@ -67,7 +67,7 @@ Osc 1 multiplied by Osc 2, a source in the Mixer of its own (Ring Modulation): i
 _Avoid_: Ring mod (fine in UI copy), AM
 
 **FM**:
-How far Osc 2 swings Osc 1's frequency at audio rate (linear frequency modulation, or cross-modulation), whatever Osc 2's own Mixer level: new partials appear either side of Osc 1's Harmonics.
+How far Osc 2 swings Osc 1's frequency at audio rate (linear frequency modulation, or cross-modulation), whatever Osc 2's own Mixer level: new partials appear either side of Osc 1's Harmonics. High up, it is held back as far as keeps them under the top of what the browser plays.
 _Avoid_: Cross Mod (fine in a tooltip), FM amount
 
 **Mixer**:

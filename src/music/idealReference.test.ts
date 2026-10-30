@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { defaultPatch, type Patch } from '../patch/patch';
+import { PRESETS } from '../patch/presets';
 import { harmonicSeries } from './harmonics';
-import { besselJ, idealPartials, idealReference } from './idealReference';
+import { besselJ, fmDepthKept, idealPartials, idealReference } from './idealReference';
 
 const saw = harmonicSeries('saw', 0.5, 64).magnitudes;
 const square = harmonicSeries('square', 0.5, 64).magnitudes;
@@ -166,5 +167,52 @@ describe('FM in the Ideal (issue 96)', () => {
 
   it('keeps plain Osc 1 where nothing simple says what FM does: a Square Osc 2 a fifth up', () => {
     expect(osc1({ osc2Waveform: 'square', crossMod: 0.25 }).map((p) => p.ratio)).toEqual([1]);
+  });
+});
+
+describe('FM’s depth at the top (issue 103)', () => {
+  const hz = (note: number) => 440 * 2 ** ((note - 69) / 12);
+  const preset = (name: string) => PRESETS.find((p) => p.name === name)!.patch;
+  const kept = (patch: Patch, note: number, rate = 48000) => fmDepthKept(patch, hz(note) * 2 ** patch.osc1Octave, rate);
+  const C6 = 84;
+  const C7 = 96;
+
+  it('keeps every FM Preset’s whole depth below F♯5, and below C6 all but the three widest', () => {
+    const widest = ['Clang Alarm', 'Breathing Bell', 'Glass Shimmer'];
+    for (const { name, patch } of PRESETS.filter((p) => p.patch.crossMod > 0))
+      for (let note = 0; note < (widest.includes(name) ? 78 : C6); note++) expect(kept(patch, note), `${name} on ${note}`).toBe(1);
+  });
+
+  it('shrinks Clang Alarm’s depth on C7 just enough that under −65 dB of it lies past 24 kHz', () => {
+    const alarm = preset('Clang Alarm');
+    // Osc 2 is 3.56 times Osc 1; on C7 (2093 Hz) the sidebands from k = 3 up, and from k = −4 down, lie past 24 kHz.
+    const past = (index: number) => {
+      const j = besselJ(index, 30);
+      let share = 0;
+      for (let k = 3; k <= 30; k++) share += j[k] ** 2 + (k >= 4 ? j[k] ** 2 : 0);
+      return 10 * Math.log10(share);
+    };
+    // Its square LFO takes FM from 0 to 100 %: an index of 4 at the peak.
+    const index = 4 * kept(alarm, C7);
+    expect(index).toBeLessThan(1);
+    expect(past(index)).toBeLessThanOrEqual(-65);
+    expect(past(index * 1.01)).toBeGreaterThan(-65);
+  });
+
+  it('counts FM’s LFO swing: without it Clang Alarm’s knob alone (50 %) keeps twice the share', () => {
+    const alarm = preset('Clang Alarm');
+    expect(kept({ ...alarm, lfoAmount: 0 }, C7)).toBeCloseTo(2 * kept(alarm, C7), 3);
+  });
+
+  it('plays the same on a 192 kHz device as on a 48 kHz one, and keeps less on a 44.1 kHz one', () => {
+    const bell = preset('FM Bell');
+    expect(kept(bell, C7, 192000)).toBe(kept(bell, C7));
+    expect(kept(bell, C7, 44100)).toBeLessThanOrEqual(kept(bell, C7));
+    expect(kept(preset('FM Sidebands'), C7, 44100)).toBeLessThan(1);
+  });
+
+  it('draws FM’s sidebands at the depth kept: half of 50 % is drawn as 25 %', () => {
+    const sines = { ...defaultPatch(), waveform: 'sine', osc2Waveform: 'sine', osc2Semitone: 7 } as const;
+    expect(idealPartials({ ...sines, crossMod: 0.5 }, 64, 0.5)).toEqual(idealPartials({ ...sines, crossMod: 0.25 }, 64));
   });
 });

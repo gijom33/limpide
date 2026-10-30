@@ -1,11 +1,11 @@
 import type { KeyValueStorage } from '../app/storage';
 import { OSCILLATOR_LEVEL } from '../engine/synthEngine';
-import { idealPartials } from '../music/idealReference';
+import { type IdealPartial, idealFmKept, idealPartials } from '../music/idealReference';
 import type { Patch } from '../patch/patch';
 import type { PatchStore } from '../patch/patchStore';
 import { loadOverlays, type Overlay, saveOverlays, toggleOverlay } from './overlays';
 import { INITIAL_VIEWER_STATE, type TapSource, type ViewerAction, viewerReducer } from './viewerState';
-import type { ViewSettings } from './viewSettings';
+import type { IdealAt, ViewSettings } from './viewSettings';
 
 /** Every way the Viewer settings change: the reducer's, and the Scope's cycles, the Timeline's length, the overlays. */
 export type ViewSettingsAction =
@@ -52,8 +52,25 @@ function loadSaved(storage: KeyValueStorage): Partial<Saved> {
   }
 }
 
-/** The Ideal Reference at the Oscillator Tap's level: the same series the engine plays, scaled by the Nominal Level. */
-const idealOf = (patch: Patch) => idealPartials(patch, IDEAL_HARMONICS).map((p) => ({ ...p, level: p.level * OSCILLATOR_LEVEL }));
+/** Ideals kept per Patch, by the share of FM's depth their Note keeps: a few Notes' worth. */
+const KEPT_IDEALS = 16;
+
+/**
+ * The Ideal Reference at the Oscillator Tap's level: the same series the engine plays, scaled by the Nominal Level, at
+ * the share of FM's depth the Note keeps (issue 103; to a thousandth, so a Note held reuses its Ideal every frame).
+ */
+const idealOf = (patch: Patch): IdealAt => {
+  const known = new Map<number, readonly IdealPartial[]>();
+  return (fundamental, sampleRate) => {
+    const kept = Math.round(idealFmKept(patch, fundamental, sampleRate) * 1000) / 1000;
+    const ideal = known.get(kept) ?? idealPartials(patch, IDEAL_HARMONICS, kept).map((p) => ({ ...p, level: p.level * OSCILLATOR_LEVEL }));
+    if (!known.has(kept)) {
+      if (known.size >= KEPT_IDEALS) known.clear();
+      known.set(kept, ideal);
+    }
+    return ideal;
+  };
+};
 
 function reduce(settings: ViewSettings, action: ViewSettingsAction): ViewSettings {
   switch (action.type) {

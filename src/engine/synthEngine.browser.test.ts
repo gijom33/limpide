@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { DIP, envelopeLevel, type GateEvent } from '../modulation/envelope';
 import { harmonicSeries, type Waveform } from '../music/harmonics';
-import { idealPartials, idealReference } from '../music/idealReference';
+import { fmDepthKept, idealPartials, idealReference } from '../music/idealReference';
 import { defaultPatch, type Patch } from '../patch/patch';
 import { PRESETS } from '../patch/presets';
-import { betweenHarmonicsDb, dB, frequencyAround, rms, toneAmplitude, toneAmplitudeHann } from '../test/measure';
+import { betweenHarmonicsDb, dB, energyAboveDb, frequencyAround, rms, toneAmplitude, toneAmplitudeHann } from '../test/measure';
 import { amplitudeToSpectrumDb } from '../viewers/spectrumScale';
 import { createSynthEngine, OSCILLATOR_LEVEL } from './synthEngine';
 
@@ -1504,6 +1504,83 @@ describe('FM’s sidebands in the Ideal (issue 96)', () => {
     for (const m of marks.slice(0, 8)) expect(Math.abs(m.sound - m.ideal), `Harmonic ${m.ratio}`).toBeLessThan(1);
     // FM moves the levels away from a plain Saw's 1/n.
     expect(Math.abs(marks[1].ideal - dB(1 / 2))).toBeGreaterThan(1);
+  });
+});
+
+describe('FM and Ring under the top, and no offset (issue 103)', () => {
+  const preset = (name: string) => PRESETS.find((p) => p.name === name)!.patch;
+  const C4 = 60;
+  const C6 = 84;
+  const C7 = 96;
+  const hz = (note: number) => 440 * 2 ** ((note - 69) / 12);
+  /** A Note held from 0 to `hold`, rendered at `rate`. */
+  const play = async (patch: Patch, note: number, seconds: number, rate = SR, hold = seconds) => {
+    const ctx = new OfflineAudioContext(1, Math.round(rate * seconds), rate);
+    const engine = createSynthEngine(ctx);
+    engine.applyPatch(patch);
+    engine.noteOn(note, 1, 0);
+    engine.noteOff(hold);
+    return (await ctx.startRendering()).getChannelData(0);
+  };
+  const HIGH = 192000;
+  /** Rendered at 192 kHz, nothing folds: what lies past 24 kHz is what a 48 kHz device folds back. */
+  const foldedDb = async (patch: Patch, note: number) => energyAboveDb(await play(patch, note, 0.8, HIGH), HIGH, 24000, HIGH * 0.05, 131072);
+
+  for (const name of ['Clang Alarm', 'Breathing Bell', 'FM Bell'])
+    it(`keeps ${name} on C7 from folding back: under −60 dB past 24 kHz, rendered at 192 kHz as review 14 measured`, async () => {
+      expect(await foldedDb(preset(name), C7)).toBeLessThan(-60);
+    });
+
+  it('hears what lies past 24 kHz when there is some: a plain Saw on C7 (control case)', async () => {
+    expect(await foldedDb({ ...defaultPatch(), cutoff: 20000, resonance: 0, ampSustain: 1 }, C7)).toBeGreaterThan(-40);
+  });
+
+  it('draws the Ideal at the depth the Note keeps: two Sines like FM Bell’s on C7 sound at its sidebands', async () => {
+    const patch = {
+      ...defaultPatch(), cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001,
+      waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, osc2Semitone: 10, crossMod: 0.3,
+    } as const;
+    const kept = fmDepthKept(patch, hz(C7), SR);
+    expect(kept).toBeLessThan(0.5);
+    // At the Oscillator Tap, where the Ideal is drawn: the open Filter already bends the top a little.
+    const window = (await tapsAt(0.5, patch, C7)).oscillator;
+    const marks = idealPartials(patch, 16, kept).filter((p) => p.source === 'osc1' && p.ratio * hz(C7) < 20000);
+    const top = Math.max(...marks.map((p) => p.level));
+    const shown = marks.filter((p) => p.level > top / 100);
+    expect(shown.length).toBeGreaterThan(2); // the carrier and sidebands, not one plain Harmonic
+    const heard = shown.map((p) => toneAmplitudeHann(window, SR, hz(C7) * p.ratio));
+    const loudest = Math.max(...heard);
+    // Within 1 dB: the browser sums Osc 1's swing sample by sample, which with Osc 2 at 7.5 kHz swings it about 4 %
+    // further than the Ideal's index (J_2, 40 dB down, 0.7 dB louder).
+    for (const [i, p] of shown.entries())
+      expect(Math.abs(dB(heard[i] / loudest) - dB(p.level / top)), `the partial at ${p.ratio.toFixed(3)}`).toBeLessThan(1);
+  });
+
+  it('takes FM Ladder’s offset out: under −60 dBFS while the Gate is open, the Oscillator Tap’s wave centred', async () => {
+    const s = await play(preset('FM Ladder'), C4, 1.2, SR, 1);
+    const mean = s.subarray(0, SR).reduce((sum, v) => sum + v, 0) / SR;
+    expect(dB(Math.abs(mean))).toBeLessThan(-60);
+    const taps = await tapsAt(0.9, preset('FM Ladder'), C4);
+    const tapMean = taps.oscillator.reduce((sum, v) => sum + v, 0) / taps.oscillator.length;
+    const peak = taps.oscillator.reduce((most, v) => Math.max(most, Math.abs(v)), 0);
+    expect(Math.abs(tapMean) / peak).toBeLessThan(0.01);
+  });
+
+  for (const note of [C4, C6])
+    it(`keeps Ring Octave clean between its Harmonics on ${note === C4 ? 'C4' : 'C6'}: under −60 dB`, async () => {
+      expect(betweenHarmonicsDb(await play(preset('Ring Octave'), note, 1), SR, hz(note))).toBeLessThan(-60);
+    });
+
+  it('drops only while Ring is up the Harmonics Ring would fold: a Saw through the Mixer alone keeps its full wave', async () => {
+    const saws = { ...defaultPatch(), cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001, mixRing: 0 };
+    const fifteenth = async (patch: Patch) => {
+      const s = await play(patch, C6, 0.6);
+      const window = s.subarray(SR * 0.2, SR * 0.2 + 16384);
+      return dB(toneAmplitudeHann(window, SR, hz(C6) * 15) / toneAmplitudeHann(window, SR, hz(C6)));
+    };
+    // A Saw's 15th Harmonic (15.7 kHz) at 1/15 of its first; with Ring up beside it, past the 12 kHz each of two Saws keeps.
+    expect(await fifteenth(saws)).toBeCloseTo(dB(1 / 15), 0);
+    expect(await fifteenth({ ...saws, mixRing: 0.001 })).toBeLessThan(dB(1 / 15) - 40);
   });
 });
 
