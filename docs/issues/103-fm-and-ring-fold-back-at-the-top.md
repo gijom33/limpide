@@ -88,3 +88,7 @@ Every Preset on C4, loudest 100 ms: above 20 Hz, none moves by more than 0.03 dB
 
 **Found:** high up, the sound's FM is a little deeper than the Ideal's: the browser sums Osc 1's swing sample by sample, which with Osc 2 at 7.5 kHz (FM Bell's on C7) swings it about 4 % further. Its second sidebands sound 0.7 dB louder than drawn; the new test allows 1 dB there.
 
+## Decisions after the build (2026-10-30, decided by the owner, from the 1.16.1 code review)
+
+4. Accepted: FM's limit starts a little below C6 on three Presets (Clang Alarm from F♯5, Breathing Bell from A♯5, Glass Shimmer from B5), by little there; this amends decision 2's "below C6 nothing changes".
+5. Accepted: while Ring is up, Osc 1 and Osc 2 heard through the Mixer lose the same top Harmonics as Ring's waves (Ring Sweep's Saw above about 12 kHz), rather than a second set of Oscillators per Voice.

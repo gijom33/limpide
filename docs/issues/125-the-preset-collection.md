@@ -90,3 +90,8 @@ Each word was checked by rendering (`src/patch/presets.browser.test.ts`, "the te
 4. **Every Bass starts on C2**, 808 Boom and FM Growl included, as the decision says "the Basses"; the other families keep C4.
 5. **The end of a Bass, Acid or Wobble Tutorial moves the keyboard to C2**, since it loads the Preset once the sound matches.
 6. **Movement & Effects' order:** Laser, then Riser and Sub Drop, then the rest as before; Glide Slide moves to sixth.
+
+## Decisions after the build (2026-10-30, decided by the owner, from the 1.16.1 code review)
+
+6. Accepted: Pluck moves into the Envelope lesson after Pluck Shape, at one Voice for its Tutorial; this amends decision 1's "the lessons as they are".
+7. Accepted: a MIDI Program Change loads the Preset at its place in the new list, so Program numbers load other Presets than in 1.16.0, and the last Presets past the 128th (from Ocean on) are reached only by Next and Previous Preset.
