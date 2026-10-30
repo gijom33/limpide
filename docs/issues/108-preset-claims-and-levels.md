@@ -5,9 +5,11 @@
 - **False claims:** Zap Pluck does the reverse of its words (a restarted falling saw LFO starts mid-ramp, so each Note starts at FM 50 %, is a pure sine at 1/6 s, then jumps to full FM in its tail). Kalimba's sidebands sit on the odd Harmonics, not every fourth, and its "tine, then a round tone" never happens. Tine Piano's "a hard one barks" and FM Bell's "bright, then mellow" are inaudible (their Filters sit above every partial). FM Sidebands' "either side of the Harmonic" folds onto the Harmonics; the Osc 1 Octave tip's "each cycle takes twice as long" doesn't show on the Scope (Cycle Lock), its body gets the gap between the Oscillators wrong, and the FM tip's "hundreds of times a second" is tens on low Notes. Nine in all, in review 13's report.
 - **Level jumps:** Clang, Zap Tom and Gong play 7 to 8 dB over the other Drums (Zap Tom 15 dB over Tom); Robot 12 dB under its group (18 dB on C2); Ring Lead, Ring Sweep and Breathing Bell about 6.5 dB under theirs.
 
-**Blocked by:** [124](./124-where-a-retriggered-lfo-starts.md) for Key Sync, Zap Pluck and Wobble only
+**Blocked by:** none ([124](./124-where-a-retriggered-lfo-starts.md), which held back Key Sync, Zap Pluck and Wobble, is done)
 
 **Status:** ready-for-agent · bug
+
+**Since then:** [124](./124-where-a-retriggered-lfo-starts.md) is built (2026-10-30): a retriggered LFO starts each Waveform where it classically starts. Key Sync's words now hold (rendered: the Cutoff opens at 1.5 kHz at the Note and closes to 170 Hz over two thirds of a second). Wobble's "from the top" was corrected there (a retriggered Sine starts at the centre, rising). Zap Pluck now starts at full FM and is nearly a pure sine by 0.3 s, as its words say, but its zap comes back every third of a second, about 30 dB down, which its words leave out: that, and its level, are this issue's.
 
 ## Agent Brief
 
