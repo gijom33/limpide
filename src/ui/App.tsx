@@ -404,18 +404,25 @@ export function App() {
                       <>
                         <SubBlock title="Osc 1" label="Waveform" group>
                           <Tooltip content={TIPS.waveform}>
-                            <WaveformPicker label="Osc 1 Waveform" choice="waveform" value={patch.waveform} onChange={(w) => edit((p) => setWaveform(p, w))} />
+                            <WaveformPicker
+                              label="Osc 1 Waveform"
+                              choice="waveform"
+                              value={patch.waveform}
+                              onChange={(w) => edit((p) => setWaveform(p, w))}
+                              inactive={!osc1Heard(patch)}
+                            />
                           </Tooltip>
                           <div className="knobs">
-                            <Knob id="pulseWidth" value={patch.pulseWidth} onChange={(v) => change('pulseWidth', v)} inactive={patch.waveform !== 'pulse'} />
+                            <Knob id="pulseWidth" value={patch.pulseWidth} onChange={(v) => change('pulseWidth', v)} inactive={!osc1Heard(patch) || patch.waveform !== 'pulse'} />
                           </div>
                         </SubBlock>
                         {/* Each Oscillator's pitch under its Waveform, on its own tab (the owner, issue 90): Osc 1's
                             Octave, and FM, Osc 2 swinging Osc 1's pitch whatever Osc 2's own fader (issue 89). */}
                         <SubBlock title="Osc 1 Pitch" label="Pitch" tip={TIPS.osc1Pitch} group>
                           <div className="knobs">
-                            <Knob id="osc1Octave" value={patch.osc1Octave} onChange={(v) => change('osc1Octave', v)} />
-                            <Knob id="crossMod" value={patch.crossMod} onChange={(v) => change('crossMod', v)} />
+                            {/* Greyed out while Osc 1 is not heard (the owner); its Octave also moves the Sub. */}
+                            <Knob id="osc1Octave" value={patch.osc1Octave} onChange={(v) => change('osc1Octave', v)} inactive={!osc1Heard(patch) && patch.mixSub === 0} />
+                            <Knob id="crossMod" value={patch.crossMod} onChange={(v) => change('crossMod', v)} inactive={!osc1Heard(patch)} />
                           </div>
                         </SubBlock>
                       </>
@@ -431,7 +438,13 @@ export function App() {
                       <>
                         <SubBlock title="Osc 2" label="Waveform" group>
                           <Tooltip content={TIPS.waveform}>
-                            <WaveformPicker label="Osc 2 Waveform" choice="osc2Waveform" value={patch.osc2Waveform} onChange={(w) => edit((p) => setWaveform(p, w, 'osc2'))} />
+                            <WaveformPicker
+                              label="Osc 2 Waveform"
+                              choice="osc2Waveform"
+                              value={patch.osc2Waveform}
+                              onChange={(w) => edit((p) => setWaveform(p, w, 'osc2'))}
+                              inactive={!osc2Heard(patch)}
+                            />
                           </Tooltip>
                           <div className="knobs">
                             {/* Pulse Width where Osc 1 has it, so it stays put when switching tabs. */}
@@ -474,6 +487,8 @@ export function App() {
                               options={CHOICES.subOctave.map((v) => ({ value: v, label: `−${-v}`, name: `${-v} octave${v === -1 ? '' : 's'} down` }))}
                               onChange={(subOctave) => edit((p) => ({ ...p, subOctave }))}
                               learn={{ kind: 'choice', id: 'subOctave' }}
+                              iconic
+                              inactive={patch.mixSub === 0}
                             />
                             <Segmented
                               label="Sub Waveform"
@@ -482,6 +497,8 @@ export function App() {
                               options={CHOICES.subWaveform.map((v) => ({ value: v, label: <WaveIcon waveform={v} />, name: v === 'square' ? 'Square' : 'Sine' }))}
                               onChange={(subWaveform) => edit((p) => ({ ...p, subWaveform }))}
                               learn={{ kind: 'choice', id: 'subWaveform' }}
+                              iconic
+                              inactive={patch.mixSub === 0}
                             />
                           </div>
                         </SubBlock>
@@ -493,16 +510,13 @@ export function App() {
                               value={patch.noiseColour}
                               options={CHOICES.noiseColour.map((v) => ({
                                 value: v,
-                                label: (
-                                  <>
-                                    <span className="noise-swatch" data-colour={v} />
-                                    {v === 'white' ? 'White' : 'Pink'}
-                                  </>
-                                ),
+                                label: <span className="noise-swatch" data-colour={v} />,
                                 name: v === 'white' ? 'White' : 'Pink',
                               }))}
                               onChange={(noiseColour) => edit((p) => ({ ...p, noiseColour }))}
                               learn={{ kind: 'choice', id: 'noiseColour' }}
+                              iconic
+                              inactive={patch.mixNoise === 0}
                             />
                           </div>
                         </SubBlock>
@@ -563,7 +577,7 @@ export function App() {
                   <div className="knobs knobs-envelope">
                     <Knob id="filterEnvAmount" value={patch.filterEnvAmount} onChange={(v) => change('filterEnvAmount', v)} />
                     {(['filterAttack', 'filterDecay', 'filterSustain', 'filterRelease'] as const).map((id) => (
-                      <Fader key={id} id={id} value={patch[id]} onChange={(v) => change(id, v)} inactive={patch.filterEnvAmount === 0} />
+                      <Fader key={id} id={id} value={patch[id]} onChange={(v) => change(id, v)} inactive={patch.filterEnvAmount === 0 && patch.osc2EnvAmount === 0} />
                     ))}
                   </div>
                 </div>

@@ -168,3 +168,30 @@ for (const [width, height] of [[375, 812], [430, 932], [690, 830], [1100, 900], 
     expect(m.inDial, JSON.stringify(m)).toBe(true);
   });
 }
+
+test('controls of a source not heard are greyed out, choices too, and wake when it is heard', async ({ page }) => {
+  await page.goto('/');
+  // Controls on hidden tabs too: by name, not by role (which skips them).
+  const inactive = (name: string) => page.locator(`[aria-label="${name}"]`).evaluate((el) => !!el.closest('[data-inactive]'));
+  const mixer = page.getByRole('group', { name: 'Mixer' });
+  const fader = async (name: string, key: 'End' | 'Home') => {
+    await page.getByRole('tab', { name: 'Mixer' }).click();
+    await mixer.getByRole('slider', { name, exact: true }).focus();
+    await page.keyboard.press(key);
+  };
+  // Init: Osc 1 sounds; Osc 2, the Sub and the Noise do not.
+  expect(await inactive('Osc 1 Waveform')).toBe(false);
+  expect(await inactive('FM')).toBe(false);
+  expect(await inactive('Osc 2 Waveform')).toBe(true);
+  for (const name of ['Sub Octave', 'Sub Waveform', 'Noise Colour']) expect(await inactive(name), name).toBe(true);
+  await fader('Sub', 'End');
+  expect(await inactive('Sub Octave')).toBe(false);
+  expect(await inactive('Noise Colour')).toBe(true);
+  await fader('Noise', 'End');
+  expect(await inactive('Noise Colour')).toBe(false);
+  // Osc 1 down: its Waveform and FM grey out, its Octave stays (it moves the Sub too).
+  await fader('Osc 1', 'Home');
+  expect(await inactive('Osc 1 Waveform')).toBe(true);
+  expect(await inactive('FM')).toBe(true);
+  expect(await inactive('Osc 1 Octave')).toBe(false);
+});

@@ -14,15 +14,19 @@ interface Props<T extends string | number> {
   onChange(value: T): void;
   /** What MIDI Learn maps when this choice is clicked in Learn, if it can be mapped. */
   learn?: Target;
+  /** Cells as wide as the Waveform picker's, for short labels and pictures (the Sub's, the Noise's). */
+  iconic?: boolean;
+  /** Greyed out, as a knob is, while what it sets is not heard; it still works. */
+  inactive?: boolean;
 }
 
 /** One either/or choice drawn as a single control with the selected segment filled. */
-export function Segmented<T extends string | number>({ label, caption, value, options, onChange, learn }: Props<T>) {
+export function Segmented<T extends string | number>({ label, caption, value, options, onChange, learn, iconic, inactive }: Props<T>) {
   const learnable = useLearnable(learn);
   return (
-    <div className="segmented-field">
+    <div className="segmented-field" data-inactive={inactive || undefined}>
       {caption && <span className="field-caption" aria-hidden="true">{caption}</span>}
-      <div className="segmented" role="radiogroup" aria-label={label} onKeyDown={radioGroupKeys} {...learnable}>
+      <div className={iconic ? 'segmented icon-picker' : 'segmented'} role="radiogroup" aria-label={label} onKeyDown={radioGroupKeys} {...learnable}>
         {options.map((o, i) => (
           <button
             key={String(o.value)}

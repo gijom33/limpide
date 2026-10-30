@@ -188,6 +188,8 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
    with it; the name stays readable. WCAG 1.4.11 leaves inactive controls out of its contrast minimum. */
 .knob[data-inactive] :is(.knob-dial, .fader) { opacity: 0.3; }
 .knob[data-inactive] .knob-value { opacity: 0.45; }
+/* A choice greys out as a knob's dial does, while what it sets is not heard (the owner); its caption stays. */
+.segmented-field[data-inactive] > .segmented, .segmented[data-inactive] { opacity: 0.3; }
 
 /* Icon pickers (Waveforms, Filter Mode, LFO Waveform): one segmented track, as wide as its icons. */
 .icon-picker { width: fit-content; flex: none; }
@@ -318,8 +320,8 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
    40 px (a 48 px step with the gap, the faders' roomy spacing). */
 .mixer-side ~ .knobs { --mixer-share: calc((100cqw - var(--label-col) + 4px - var(--label-gap) - 4 * var(--knob-gap)) / 5); }
 .mixer-side ~ .knobs .knob[data-kind='fader'] { width: min(var(--fader-col), max(40px, var(--mixer-share))); }
-/* The Noise's colours each with a dot of the colour, on the Sub & Noise tab. */
-.noise-swatch { display: inline-block; width: 10px; height: 10px; margin-right: 6px; border-radius: 50%; border: 1px solid var(--muted); background: #ffffff; }
+/* The Noise's colours, each a dot of the colour alone (the owner), on the Sub & Noise tab. */
+.noise-swatch { display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid var(--muted); background: #ffffff; }
 .noise-swatch[data-colour='pink'] { background: #ff8fb8; }
 .field-caption { font-size: var(--text-md); color: var(--muted); }
 .segmented {
