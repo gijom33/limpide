@@ -84,7 +84,7 @@ export function About({
           {day(date)}
         </p>
         {/* On a short window the credits scroll inside the card, faded at the foot while more is below, so the way in
-            stays on the first screen (issue 105: on a 393 × 659 phone it fell below it, with no hint). */}
+            stays on the first screen, a 393 × 659 phone's included (issue 105). */}
         <dl ref={credits} className="about-credits" data-more={more || undefined}>
           <dt>Made by</dt>
           <dd>

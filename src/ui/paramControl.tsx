@@ -136,7 +136,7 @@ const STEP_FORGET_MS = 1000;
  * The mouse wheel or a two-finger scroll over a control turns it (issue 53), Shift for fine, and the page does not
  * scroll meanwhile. React's wheel listeners cannot stop the scroll (they are passive), so this is the element's own.
  * A stepped control (`unit`, its travel per step) moves a step for each notch's worth of scroll in one direction,
- * small trackpad scrolls adding up to it (issue 105: a notch rounded back to the same Octave).
+ * small trackpad scrolls adding up to it, so a notch always moves an Octave one step (issue 105).
  */
 export function useWheel(position: number, setPosition: (p: number) => void, unit = 0) {
   const latest = useRef({ position, setPosition, unit });
