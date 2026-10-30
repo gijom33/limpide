@@ -6,6 +6,8 @@
 
 **Status:** done (2026-10-30). A retriggered LFO starts each Waveform where it classically starts, a Saw at its foot, a Saw Down at its top, a Square on its upper half, a Sine and a Triangle at the centre rising, in the sound, the Modulation model and the LFO's plot alike; a free LFO is unchanged. Not yet heard by the owner.
 
+**Since then:** [108](./108-preset-claims-and-levels.md) (2026-10-30) slowed Zap Pluck's falling saw from 3 to 2 Hz, so its next zap comes at 0.5 s, 49 dB under the strike, rather than at 0.34 s; and gave Square Lead a retriggered vibrato, starting in tune.
+
 ## Question for the owner
 
 Where should a retriggered LFO start its wave?

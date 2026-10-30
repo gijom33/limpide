@@ -10,6 +10,8 @@
 
 **Status:** done (2026-10-30). High up, FM's depth shrinks on each Note as far as keeps its sidebands under the top of what the browser plays, Ring's two waves drop the Harmonics their product would fold, and each Voice's offset is taken out below 1 Hz, so FM Ladder's wave sits centred in the Scope. Not yet heard by the owner: the owner listens to the FM and Ring Presets high up before the release.
 
+**Since then:** [108](./108-preset-claims-and-levels.md) (2026-10-30) changed FM Bell's, Kalimba's and Tine Piano's Filters and many Presets' Volume, so the levels and offsets measured below are 1.16.0's; FM Bell on C7 still folds back under −60 dB.
+
 ## Questions for the owner
 
 1. **The DC offset:** take it out of each Voice (a very low filter, below anything heard), so the Scope centres FM Ladder's wave? Claude's recommendation: yes. It changes nothing you can hear.
