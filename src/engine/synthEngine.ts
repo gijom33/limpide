@@ -285,6 +285,8 @@ function createTakeover(first: OscillatorNode, start: number, cut: (node: Oscill
   return {
     /** Every node not yet ended: a new wave or rate reaches each. */
     nodes: () => running.keys(),
+    /** Every node not yet ended, and when it starts. */
+    starts: () => [...running].map(([node, span]) => [node, span.start] as const),
     /** A node from `make` takes over at `t`; a second restart at the same moment is the same one (false). */
     restart(t: number, make: () => OscillatorNode) {
       if (t === restartAt) return false;
@@ -327,15 +329,23 @@ function createRestartable(ctx: BaseAudioContext, frequency: number, outputs: Au
   cents.offset.value = 0;
   hz.start();
   cents.start();
-  let wave: PeriodicWave | null = null;
-  const make = () => {
+  // The wave each node plays: a node handed over for a later Note plays that Note's (issue 103).
+  const waves = new Map<OscillatorNode, PeriodicWave>();
+  const play = (node: OscillatorNode, wave: PeriodicWave) => {
+    if (waves.get(node) === wave) return;
+    node.setPeriodicWave(wave);
+    waves.set(node, wave);
+  };
+  let latest: OscillatorNode;
+  const make = (wave?: PeriodicWave) => {
     const node = ctx.createOscillator();
     node.frequency.value = 0;
     node.detune.value = 0;
-    if (wave) node.setPeriodicWave(wave);
+    if (wave) play(node, wave);
     hz.connect(node.frequency);
     cents.connect(node.detune);
     for (const o of outputs) node.connect(o);
+    latest = node;
     return node;
   };
   // An ended node is cut from what feeds it as well as from what it feeds (issue 101).
@@ -343,21 +353,21 @@ function createRestartable(ctx: BaseAudioContext, frequency: number, outputs: Au
     hz.disconnect(node.frequency);
     cents.disconnect(node.detune);
     node.disconnect();
+    waves.delete(node);
   });
   return {
     frequency: hz.offset,
     detune: cents.offset,
-    setWave(next: PeriodicWave) {
-      wave = next;
-      for (const n of takeover.nodes()) n.setPeriodicWave(next);
+    /** Each node not yet ended plays `waveAt(when it starts)`, so one handed over for a later Note keeps that Note's. */
+    setWave(waveAt: (start: number) => PeriodicWave) {
+      for (const [node, start] of takeover.starts()) play(node, waveAt(start));
     },
     /**
-     * Start the cycle again at `t`; a second restart at the same moment is the same one. A `next` wave is the new
-     * node's, and the wave from then on; the node it takes over from keeps its own until `t`.
+     * Start the cycle again at `t`, on `wave`; the node it takes over from keeps its own until `t`. A second restart at
+     * the same moment is the same one: its node plays the later Note's `wave`.
      */
-    restart(t: number, next?: PeriodicWave) {
-      if (next) wave = next;
-      takeover.restart(t, make);
+    restart(t: number, wave: PeriodicWave) {
+      if (!takeover.restart(t, () => make(wave))) play(latest, wave);
     },
     cancelAfter: takeover.cancelAfter,
   };
@@ -518,7 +528,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
     }),
   ) as Record<SubWaveform, PeriodicWave>;
   let subWaveform: SubWaveform = 'square';
-  sub.setWave(subWaves.square);
+  sub.setWave(() => subWaves.square);
   mixSub.connect(mixer);
   const dcBlock = ctx.createBiquadFilter();
   dcBlock.type = 'highpass';
@@ -592,7 +602,6 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   shared.bend.connect(sub.detune);
   for (const o of oscillators) shared.bend.connect(o.source.detune);
 
-  const waveKeys: (string | undefined)[] = [];
   const pulseWidths = [0.5, 0.5];
   // Each Oscillator's pitch over the Note's, from its knobs: a pulse's width is a fraction of its own cycle (issue 90).
   const ratios = [1, 1];
@@ -643,15 +652,10 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
     const reach = (i: number) => (rich[i] ? Math.max(top / 2, hz[i]) : hz[i]);
     return [0, 1].map((i) => (rich[i] ? Math.min(WAVE_HARMONICS, Math.max(1, Math.floor((top - reach(1 - i)) / hz[i]))) : WAVE_HARMONICS));
   };
-  /** Osc `i`'s wave on a Note of `frequency`, if it is not the one it plays already. */
-  const nextWave = (i: number, frequency: number) => {
+  /** Osc `i`'s wave on a Note of `frequency`. */
+  const waveOn = (i: number, frequency: number) => {
     const waveform = (i ? patch?.osc2Waveform : patch?.waveform) ?? 'saw';
-    const series = waveform === 'pulse' ? 'saw' : waveform;
-    const harmonics = harmonicsOn(frequency)[i];
-    const key = `${series} ${harmonics}`;
-    if (waveKeys[i] === key) return undefined;
-    waveKeys[i] = key;
-    return shared.wave(series, harmonics);
+    return shared.wave(waveform === 'pulse' ? 'saw' : waveform, harmonicsOn(frequency)[i]);
   };
 
   // Play exactly the Fourier series the Ideal Reference draws (normalisation is already in it). A pulse plays a
@@ -660,8 +664,8 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   const setWave = (i: number, waveform: Patch['waveform'], width: number, t: number) => {
     const o = oscillators[i];
     const pulse = waveform === 'pulse';
-    const wave = nextWave(i, frequencyAt(t));
-    if (wave) o.source.setWave(wave);
+    // The node sounding at `t` takes the wave for the pitch then; one handed over for a later Note, that Note's.
+    o.source.setWave((start) => waveOn(i, start > t ? pitches[lastAt(pitches, start)].frequency : frequencyAt(t)));
     pulseWidths[i] = width;
     // saw(t) − saw(t − d·T) has |Harmonic n| = 2·|sin(πnd)| × the saw's: scale it to the pulse series' level.
     const scale = pulse ? harmonicSeries('pulse', width, 256).magnitudes[1] / (2 * Math.sin(Math.PI * width) * sawPeak) : 1;
@@ -707,8 +711,8 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
      * and Osc 2 start on their waves for the Note's `frequency` (issue 103).
      */
     restart(t: number, frequency: number) {
-      [osc, osc2].forEach((o, i) => o.restart(t, nextWave(i, frequency)));
-      sub.restart(t);
+      [osc, osc2].forEach((o, i) => o.restart(t, waveOn(i, frequency)));
+      sub.restart(t, subWaves[subWaveform]);
     },
     /** Call off their restarts after `t`, for a Note whose Gate closed before it started (issue 102). */
     cancelRestarts(t: number) {
@@ -740,7 +744,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
       sub.detune.setValueAtTime((next.osc1Octave + next.subOctave + 1) * 1200, t);
       if (next.subWaveform !== subWaveform) {
         subWaveform = next.subWaveform;
-        sub.setWave(subWaves[subWaveform]);
+        sub.setWave(() => subWaves[next.subWaveform]);
       }
       osc2.detune.setValueAtTime(osc2Tuning, t);
       mix1.gain.setValueAtTime(next.mixOsc1 * OSCILLATOR_LEVEL, t);

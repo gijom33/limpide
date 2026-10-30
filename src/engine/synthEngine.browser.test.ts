@@ -1679,6 +1679,35 @@ describe('FM and Ring under the top, and no offset (issue 103)', () => {
     expect(await fifteenth(saws)).toBeCloseTo(dB(1 / 15), 0);
     expect(await fifteenth({ ...saws, mixRing: 0.001 })).toBeLessThan(dB(1 / 15) - 40);
   });
+
+  const ringed = { ...defaultPatch(), cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001, ampRelease: 0.01, mixRing: 0.001 };
+
+  it('keeps a Note handed over on its own wave when a knob turns before it starts: C4 after C7, its 15th Harmonic whole (the 1.16.1 review)', async () => {
+    const ctx = new OfflineAudioContext(1, SR, SR);
+    const engine = createSynthEngine(ctx);
+    engine.applyPatch(ringed);
+    engine.noteOn(C7, 1, 0);
+    engine.release(C7, 0.2);
+    engine.noteOn(C4, 1, 0.4); // handed over, and C7's Release faded by then: no dip
+    const turned = ctx.suspend(0.3).then(() => {
+      engine.applyPatch({ ...ringed, cutoff: 19000 });
+      void ctx.resume();
+    });
+    const s = (await ctx.startRendering()).getChannelData(0);
+    await turned;
+    // C4 keeps 45 Harmonics beside Ring; C7's wave has 5.
+    const window = s.subarray(SR * 0.6, SR * 0.6 + 16384);
+    expect(dB(toneAmplitudeHann(window, SR, hz(C4) * 15) / toneAmplitudeHann(window, SR, hz(C4)))).toBeCloseTo(dB(1 / 15), 0);
+  });
+
+  it('gives a Note taking a Voice at the moment another started there its own wave: C7 after C4 and E4 on 2 Voices folds nothing back (the 1.16.1 review)', async () => {
+    const ctx = new OfflineAudioContext(1, HIGH * 0.8, HIGH);
+    const engine = createSynthEngine(ctx);
+    engine.applyPatch({ ...ringed, voices: 2 });
+    for (const note of [C4, 64, C7]) engine.noteOn(note, 1, 0); // C7 takes C4's Voice, at the moment C4 started
+    const s = (await ctx.startRendering()).getChannelData(0);
+    expect(energyAboveDb(s, HIGH, 24000, HIGH * 0.05, 131072)).toBeLessThan(-60);
+  });
 });
 
 describe('the Filter Envelope on Osc 2’s pitch (issue 93)', () => {
