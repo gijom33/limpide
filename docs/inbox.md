@@ -4,8 +4,11 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-10-29, the owner: "On a computer with a mouse, sometimes I can change knobs value even after having released the mouse button. This is a bug."
 ## Ideas
 
+- 2026-10-29, the owner: "The PITCH row for OSC 1 should be at same height as TUNING row for OSC 2."
+- 2026-10-29, the owner: "The SUB tag on left side of SUB & NOISE should be higher, aligned with Octave... Bring the NOISE section a bit lower for clarity"
 - 2026-10-29, the owner, asked what to do with the Timeline's thin flat lines (each moved knob's own setting): "Remove them"
 
 ## Dropped
