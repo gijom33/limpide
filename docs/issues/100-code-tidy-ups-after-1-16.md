@@ -42,3 +42,11 @@ Acceptance, added:
 - [ ] No ref is assigned during render where an effect event can do its work, and each remaining lint waiver says why
 - [ ] The MIDI and players hooks have unit tests
 - [ ] An engine test fails if the legato fix applies with several Voices
+
+## Added in triage (2026-10-30, the 1.16.1 code review)
+
+From the release review's standards axis, judgement calls, behaviour unchanged (Claude's call, open to the owner):
+
+- **One place each:** the Patch's keyboard octave is left out by hand in three places (the choices, the sanitizer, the differences); the 860 px breakpoint is written in the styles and the App; the Demo card's keys are listed again in the stop rule.
+- **Caches:** the Oscillators' waves, the LFO waves and the Ideal keep three caches with three eviction policies; one small cache shape for all three.
+- **Names and shapes:** the wave cache's size named `CUT_WAVES`; the wheel hook taking three of a control's fields rather than the control; the step buttons choosing their glyph from their label's words; a Preset group's shared fields overriding each Preset's own, for one field; the Patch file format importing from the keyboard's layout; "No effect while the Sub is silent" written inline twice.
