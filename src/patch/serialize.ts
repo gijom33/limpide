@@ -1,4 +1,5 @@
 import { FORMER_NAME } from '../app/legacy';
+import { isKeyboardOctave } from '../input/keyboardLayout';
 import { CHOICES, defaultPatch, PARAMS, type ParamId, type Patch, setParam } from './patch';
 
 const FORMAT = { app: 'limpide', version: 1 } as const;
@@ -17,6 +18,8 @@ export function sanitizePatch(input: unknown): Patch {
   for (const [key, allowed] of Object.entries(CHOICES) as [keyof typeof CHOICES, readonly unknown[]][]) {
     if (allowed.includes(source[key])) patch = { ...patch, [key]: source[key] };
   }
+  // Kept only when it is one the keyboard can start in; a Patch from before issue 125 has none.
+  if (isKeyboardOctave(source.keyboardOctave)) patch = { ...patch, keyboardOctave: source.keyboardOctave };
   return patch;
 }
 

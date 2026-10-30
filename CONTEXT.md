@@ -11,7 +11,7 @@ The complete set of parameter values that defines one sound.
 _Avoid_: Preset (when you mean the user's sound), program, settings
 
 **Preset**:
-A read-only Patch shipped with the app, built to show off one idea, in groups (Shapes, Filter, Bass, Pads…). The Patch panel offers the groups as its categories, beside All, the Tutorials and My Patches (issue 69).
+A read-only Patch shipped with the app, built to show off one idea, in groups (Shapes, Filter, Bass, Pads…). The Patch panel offers the groups as its categories, beside All, the Tutorials and My Patches (issue 69). The lessons come first, then the sounds by family (issue 125). A Preset may start the keyboard in its own octave when loaded, the Basses on C2; the octave buttons move it after, and a saved Patch or a Share link keeps it.
 _Avoid_: Factory patch, template
 
 **Share link**:

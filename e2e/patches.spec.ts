@@ -26,7 +26,7 @@ test('the Preset arrows step through the factory sounds', async ({ page }) => {
   await expect(cutoff(page)).toHaveAttribute('aria-valuetext', '20.00 kHz'); // its Patch is loaded
   await page.getByRole('button', { name: 'Previous Preset' }).click();
   await page.getByRole('button', { name: 'Previous Preset' }).click();
-  await expect(patchName(page)).toContainText('Out of Tune'); // wraps around to the last
+  await expect(patchName(page)).toContainText('Machine Chatter'); // wraps around to the last
 });
 
 test('an edit marks the Patch as changed, and the sound comes back after a reload (autosave)', async ({ page }) => {
@@ -137,7 +137,7 @@ for (const [width, height] of [[1710, 1060], [1100, 800], [872, 700]]) {
     await page.goto('/');
     await patchName(page).click();
     const menu = page.getByRole('dialog', { name: 'Patches' });
-    for (const group of ['Shapes', 'Intervals', 'Filter', 'Envelope', 'LFO', 'Bass', 'Leads', 'Keys & Plucks', 'Pianos', 'Pads', 'Chords', 'Drums', 'Movement & Effects']) {
+    for (const group of ['Shapes', 'Intervals', 'Filter', 'Envelope', 'LFO', 'Bass', 'Leads', 'Keys & Organs', 'Pianos', 'Plucks & Mallets', 'Pads', 'Strings, Brass & Choir', 'Drums', 'Movement & Effects']) {
       await expect(menu.getByRole('group', { name: group }).getByRole('button').first(), group).toBeAttached();
     }
     await expect(menu.getByRole('group', { name: 'Bass' }).getByRole('button', { name: 'Sub Bass' })).toBeAttached();
@@ -151,10 +151,10 @@ for (const [width, height] of [[1710, 1060], [1100, 800], [872, 700]]) {
     const scrolls = await menu.locator('.patch-results').evaluate((el) => el.scrollHeight > el.clientHeight + 1);
     expect(scrolls).toBe(height < 840);
     // The last Preset can be reached (the list scrolls when the window is short) and loaded.
-    const last = menu.getByRole('button', { name: 'Out of Tune' });
+    const last = menu.getByRole('button', { name: 'Machine Chatter' });
     await last.scrollIntoViewIfNeeded();
     await last.click();
-    await expect(patchName(page)).toContainText('Out of Tune');
+    await expect(patchName(page)).toContainText('Machine Chatter');
   });
 }
 

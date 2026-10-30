@@ -932,7 +932,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .patch-search-all { margin-left: 8px; min-height: 24px; padding: 0 4px; font: inherit; color: var(--text); text-decoration: underline; cursor: pointer; background: none; border: none; }
 .patch-group { display: grid; grid-template-columns: 76px minmax(0, 1fr); column-gap: 10px; align-items: start; }
 .patch-panel > section:not(.patch-presets) { flex: none; }
-/* A narrow label column: the long names (Keys & Plucks, Movement & Effects) take two lines, the first level with the
+/* A narrow label column: the long names (Keys & Organs, Movement & Effects) take two lines or more, the first level with the
    row's first Preset. */
 .patch-group-name {
   margin: 0; padding-top: calc((var(--control-h) - 1.25em) / 2); line-height: 1.25;

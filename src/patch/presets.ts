@@ -9,12 +9,14 @@ export const PRESET_GROUPS = [
   'Filter',
   'Envelope',
   'LFO',
+  // The lessons above, the sounds below: by family, not by how many Notes they play (issue 125).
   'Bass',
   'Leads',
-  'Keys & Plucks',
+  'Keys & Organs',
   'Pianos',
+  'Plucks & Mallets',
   'Pads',
-  'Chords',
+  'Strings, Brass & Choir',
   'Drums',
   'Movement & Effects',
 ] as const;
@@ -30,8 +32,9 @@ export interface Preset {
 
 /** Factory sounds, each built to show one idea; read-only. Grouped, in the order the arrows step through them. */
 export const PRESETS: Preset[] = [];
-const group = (name: PresetGroup, presets: [string, string, Partial<Patch>][]) => {
-  for (const [title, about, changes] of presets) PRESETS.push({ name: title, group: name, about, patch: { ...defaultPatch(), ...changes } });
+/** A group's Presets, each from Init; `shared` is what the whole group has in common (the Basses' keyboard octave). */
+const group = (name: PresetGroup, presets: [string, string, Partial<Patch>][], shared: Partial<Patch> = {}) => {
+  for (const [title, about, changes] of presets) PRESETS.push({ name: title, group: name, about, patch: { ...defaultPatch(), ...changes, ...shared } });
 };
 
 // A steady, open sound for looking at shapes.
@@ -113,7 +116,8 @@ group('Filter', [
   }],
 ]);
 
-// The same open saw under different Envelopes: the Timeline draws each contour.
+// The same open saw under different Envelopes: the Timeline draws each contour. Pluck adds the Filter Envelope, on the one
+// Voice its Tutorial builds (issue 125).
 const SAW = { cutoff: 20000, resonance: 0 } as const;
 group('Envelope', [
   ['Gate', 'No shape at all: on with the key and off with it, a rectangle on the Timeline.', {
@@ -121,6 +125,12 @@ group('Envelope', [
   }],
   ['Pluck Shape', 'Attack at once, then Decay to nothing: a spike on the Timeline that fades whether or not the key stays down.', {
     ...SAW, ampAttack: 0.001, ampDecay: 0.7, ampSustain: 0, ampRelease: 0.2,
+  }],
+  ['Pluck', 'A pulse into a resonant 24 dB Filter that the Envelope snaps open and shut: see the Harmonics flash and vanish.', {
+    waveform: 'pulse', pulseWidth: 0.3,
+    filterSlope: 24, cutoff: 220, resonance: 0.5,
+    filterEnvAmount: 4, filterAttack: 0.001, filterDecay: 0.22, filterSustain: 0, filterRelease: 0.2,
+    ampAttack: 0.001, ampDecay: 0.45, ampSustain: 0, ampRelease: 0.3,
   }],
   ['Swell', 'A slow Attack: the sound takes a second and a half to arrive, and the Timeline shows the ramp (at 2 s or more: Display, Env Timeline).', {
     ...SAW, ampAttack: 1.5, ampDecay: 0.5, ampSustain: 0.9, ampRelease: 1.5,
@@ -180,6 +190,7 @@ group('LFO', [
   }],
 ]);
 
+// Basses start the keyboard on C2, where they belong, rather than the tenor of C4 (issue 125, decision 4).
 group('Bass', [
   ['Bass', 'A saw with a square an octave below, through a 24 dB Filter whose Envelope gives each Note a thump.', {
     osc2Waveform: 'square', osc2Octave: -1, mixOsc2: 0.5,
@@ -205,6 +216,11 @@ group('Bass', [
   ['Pluck Bass', 'Velocity-sensitive and short: soft Notes are dull, hard ones bite. The Sub keeps the low end steady.', {
     waveform: 'square', mixSub: 0.6, filterSlope: 24, cutoff: 220, resonance: 0.3, velocityCutoff: 0.8,
     filterEnvAmount: 3, filterDecay: 0.2, filterSustain: 0, ampAttack: 0.001, ampDecay: 0.4, ampSustain: 0, ampRelease: 0.15, keyTrack: 0.5,
+  }],
+  ['PWM Bass', 'A pulse whose width LFO 1 sweeps (PWM) over a Sub, through a 24 dB Filter that thumps on each Note: the moving bass of a Juno. Watch the pulse widen and narrow in the Scope.', {
+    waveform: 'pulse', pulseWidth: 0.5, mixSub: 0.7, filterSlope: 24, cutoff: 350, resonance: 0.25, keyTrack: 0.5, velocityCutoff: 0.5,
+    filterEnvAmount: 2.5, filterAttack: 0.002, filterDecay: 0.25, filterSustain: 0.2, lfoDestination: 'pulseWidth', lfoRate: 0.8, lfoAmount: 0.8,
+    ampAttack: 0.002, ampSustain: 0.9, ampRelease: 0.12,
   }],
   ['Wobble', 'The LFO sweeping a resonant 24 dB low-pass, retriggered: every Note starts its wobble at the Cutoff and opens from there, so it lands on the beat. Watch the Timeline restart.', {
     volume: 0.45, osc2Waveform: 'square', osc2Octave: -1, mixOsc2: 0.6,
@@ -239,7 +255,7 @@ group('Bass', [
     waveform: 'sine', osc2Waveform: 'sine', crossMod: 0.5, mixSub: 0.5, subWaveform: 'sine', cutoff: 4000, resonance: 0.2, ampSustain: 1,
     lfoWaveform: 'triangle', lfoDestination: 'fm', lfoRate: 3, lfoAmount: 1, lfoRetrigger: 'note',
   }],
-]);
+], { keyboardOctave: 2 });
 
 group('Leads', [
   ['Lead', 'Two saws a few cents apart (watch them beat in a 4-cycle Scope), with vibrato from the LFO and a little Glide.', {
@@ -263,6 +279,11 @@ group('Leads', [
   ['Whistle', 'A pure sine with gentle vibrato: watch the single Harmonic wobble left and right in the Spectrum.', {
     volume: 0.85, waveform: 'sine', ...OPEN, lfoDestination: 'pitch', lfoRate: 5.5, lfoAmount: 0.18, ampAttack: 0.05, ampRelease: 0.2,
   }],
+  ['Flute', 'A triangle with a breath of pink Noise and a soft Attack, LFO 2’s vibrato and LFO 1’s light tremolo at the same 5 Hz: a flute. Key Track keeps it as bright high as low.', {
+    waveform: 'triangle', osc2Waveform: 'sine', osc2Octave: 1, mixOsc2: 0.15, mixNoise: 0.12, noiseColour: 'pink', cutoff: 1800, resonance: 0.1, keyTrack: 1,
+    velocityCutoff: 0.4, filterEnvAmount: 0.8, filterAttack: 0.06, filterDecay: 0.3, filterSustain: 0.3, ampAttack: 0.08, ampDecay: 0.3, ampSustain: 0.85, ampRelease: 0.25,
+    lfoDestination: 'volume', lfoRate: 5, lfoAmount: 0.08, lfo2Destination: 'pitch', lfo2Rate: 5, lfo2Amount: 0.08, glide: 0.04,
+  }],
   ['Sync-ish Lead', 'Osc 2 a twelfth up and slightly detuned, through a band-pass: a cutting, nasal lead that hints at hard sync.', {
     osc2Octave: 1, osc2Semitone: 7, osc2Detune: 5, mixOsc2: 0.8, filterMode: 'bandpass', cutoff: 1000, resonance: 0.1, keyTrack: 0.6,
     ampSustain: 0.9, ampRelease: 0.2,
@@ -283,26 +304,18 @@ group('Leads', [
     mixOsc1: 0.8, osc2EnvAmount: 19, mixRing: 1, cutoff: 3500, resonance: 0.3,
     filterAttack: 0.001, filterDecay: 0.5, filterSustain: 0, ampSustain: 0.9, ampRelease: 0.25,
   }],
+  ['Duo Lead', 'Two Voices only: fifths and octaves under one hand, and a third Note takes the oldest Voice. The Viewers follow the newest.', {
+    voices: 2, osc2Detune: 7, mixOsc2: 0.9, cutoff: 2500, resonance: 0.2, keyTrack: 0.4, velocityCutoff: 0.3,
+    ampAttack: 0.01, ampDecay: 0.2, ampSustain: 0.8, ampRelease: 0.3, lfoDestination: 'pitch', lfoRate: 5.5, lfoAmount: 0.08,
+  }],
+  ['Analog Drift Lead', 'LFO 1 drifts the pitch 4 cents either way, one swing every eight seconds, too slow to hear as vibrato, while LFO 2 wanders Osc 2’s Detune: the unsteady tuning of an old analogue lead.', {
+    volume: 0.8, osc2Detune: 7, mixOsc2: 0.7, mixSub: 0.3, filterSlope: 24, cutoff: 1400, resonance: 0.35, keyTrack: 0.7, velocityCutoff: 0.5,
+    filterEnvAmount: 1.5, filterAttack: 0.005, filterDecay: 0.6, filterSustain: 0.45, glide: 0.07,
+    lfoDestination: 'pitch', lfoRate: 0.13, lfoAmount: 0.04, lfo2Destination: 'detune', lfo2Rate: 0.7, lfo2Amount: 0.15, ampAttack: 0.004, ampSustain: 0.9, ampRelease: 0.25,
+  }],
 ]);
 
-group('Keys & Plucks', [
-  ['Pluck', 'A pulse into a resonant 24 dB Filter that the Envelope snaps open and shut: see the Harmonics flash and vanish.', {
-    waveform: 'pulse', pulseWidth: 0.3,
-    filterSlope: 24, cutoff: 220, resonance: 0.5,
-    filterEnvAmount: 4, filterAttack: 0.001, filterDecay: 0.22, filterSustain: 0, filterRelease: 0.2,
-    ampAttack: 0.001, ampDecay: 0.45, ampSustain: 0, ampRelease: 0.3,
-  }],
-  ['Harp', 'A triangle plucked through a short Filter Envelope, with Key Track so high strings ring as bright as low ones.', {
-    voices: 8, waveform: 'triangle', cutoff: 800, resonance: 0.2, keyTrack: 1, filterEnvAmount: 2, filterDecay: 0.3, filterSustain: 0,
-    ampAttack: 0.001, ampDecay: 1.2, ampSustain: 0, ampRelease: 1,
-  }],
-  ['Clav', 'Two thin pulses a few cents apart through a high-pass, short and velocity-sensitive: a funky, percussive key.', {
-    voices: 8, waveform: 'pulse', pulseWidth: 0.15, osc2Waveform: 'pulse', osc2PulseWidth: 0.15, osc2Detune: 5, mixOsc2: 0.8, filterMode: 'highpass', cutoff: 300, resonance: 0.3, velocityCutoff: 0.6,
-    ampAttack: 0.001, ampDecay: 0.25, ampSustain: 0.2, ampRelease: 0.08,
-  }],
-  ['Organ', 'A sine, a sine an octave up and a sine Sub, like drawbars: no Envelope shape at all, just on and off, and three clean rungs in the Spectrum.', {
-    volume: 0.65, voices: 8, waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, mixOsc2: 0.6, mixSub: 0.5, subWaveform: 'sine', ...OPEN, ampAttack: 0.005, ampRelease: 0.03,
-  }],
+group('Keys & Organs', [
   ['Electric Piano', 'A triangle with a quiet square an octave up, through a low Filter that Velocity opens: soft Notes are round, hard ones brighter. A long decay, on eight Voices.', {
     voices: 8, waveform: 'triangle', osc2Waveform: 'square', osc2Octave: 1, mixOsc2: 0.3, cutoff: 200, resonance: 0, keyTrack: 0.7, velocityCutoff: 1,
     filterSlope: 24, filterEnvAmount: 0.5, filterAttack: 0.001, filterDecay: 0.5, filterSustain: 0.2, ampAttack: 0.003, ampDecay: 2, ampSustain: 0.15, ampRelease: 0.5,
@@ -311,30 +324,24 @@ group('Keys & Plucks', [
     voices: 6, waveform: 'triangle', osc2Waveform: 'square', osc2Octave: 1, mixOsc2: 0.3, cutoff: 200, resonance: 0, keyTrack: 0.7, velocityCutoff: 1,
     filterSlope: 24, filterEnvAmount: 0.5, filterAttack: 0.001, filterDecay: 0.5, filterSustain: 0.2, ampAttack: 0.003, ampDecay: 2, ampSustain: 0.35, ampRelease: 0.5, lfoDestination: 'volume', lfoRate: 5, lfoAmount: 0.5,
   }],
-  ['Marimba', 'A sine and a square two octaves up, gone almost at once: the bright tick of the mallet, then the round tone.', {
-    voices: 8, waveform: 'sine', osc2Waveform: 'square', osc2Octave: 2, mixOsc2: 0.25, cutoff: 700, keyTrack: 0.8, filterEnvAmount: 2.5, filterAttack: 0.001, filterDecay: 0.06, filterSustain: 0,
-    ampAttack: 0.001, ampDecay: 0.6, ampSustain: 0, ampRelease: 0.4,
+  ['Clav', 'Two thin pulses a few cents apart through a high-pass, short and velocity-sensitive: a funky, percussive key on eight Voices.', {
+    voices: 8, waveform: 'pulse', pulseWidth: 0.15, osc2Waveform: 'pulse', osc2PulseWidth: 0.15, osc2Detune: 5, mixOsc2: 0.8, filterMode: 'highpass', cutoff: 300, resonance: 0.3, velocityCutoff: 0.6,
+    ampAttack: 0.001, ampDecay: 0.25, ampSustain: 0.2, ampRelease: 0.08,
   }],
-  ['Glass Keys', 'Two sines a twelfth apart with a slow decay: bell-like, and the Scope shows the 3:1 pattern fading together.', {
-    volume: 0.75, voices: 8, waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, osc2Semitone: 7, osc2Detune: 3, mixOsc2: 0.7, ...OPEN,
-    ampAttack: 0.002, ampDecay: 2.5, ampSustain: 0, ampRelease: 1.5,
+  ['Organ', 'A sine, a sine an octave up and a sine Sub, like drawbars: no Envelope shape at all, just on and off, and three clean rungs in the Spectrum, on eight Voices.', {
+    volume: 0.65, voices: 8, waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, mixOsc2: 0.6, mixSub: 0.5, subWaveform: 'sine', ...OPEN, ampAttack: 0.005, ampRelease: 0.03,
   }],
-  ['Chorus Pluck', 'A pluck with LFO 2 slowly detuning Osc 2: a wide, gently moving shimmer on every Note, on six Voices.', {
-    volume: 0.6, voices: 6, waveform: 'square', osc2Detune: 6, mixOsc2: 0.8, cutoff: 900, resonance: 0.2, filterEnvAmount: 3, filterAttack: 0.001, filterDecay: 0.25, filterSustain: 0,
-    ampAttack: 0.001, ampDecay: 0.6, ampSustain: 0, ampRelease: 0.4, lfo2Destination: 'detune', lfo2Rate: 0.4, lfo2Amount: 0.35,
+  ['House Organ', 'A square, a sine an octave up and a sine Sub, with a Filter Envelope that brightens each strike and a level that falls back: the percussive organ of house, on eight Voices.', {
+    volume: 0.75, voices: 8, waveform: 'square', osc2Waveform: 'sine', osc2Octave: 1, mixOsc2: 0.6, mixSub: 0.5, subWaveform: 'sine', cutoff: 800, resonance: 0.1, keyTrack: 0.5, velocityCutoff: 0.5,
+    filterEnvAmount: 2.5, filterAttack: 0.001, filterDecay: 0.15, filterSustain: 0, ampAttack: 0.001, ampDecay: 0.6, ampSustain: 0.35, ampRelease: 0.12,
   }],
-  ['FM Bell', 'A sine swung by another 3.56 times higher (FM): partials that are not Harmonics, so it rings like struck metal, on eight Voices. The Filter Envelope makes each strike bright, then mellow; the Ideal’s circles follow every sideband.', {
-    voices: 8, waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, osc2Semitone: 10, crossMod: 0.3, cutoff: 400, resonance: 0, keyTrack: 1, velocityCutoff: 0.5,
-    filterEnvAmount: 3, filterAttack: 0.001, filterDecay: 0.6, filterSustain: 0, ampAttack: 0.002, ampDecay: 3, ampSustain: 0, ampRelease: 1.5,
+  ['Cathedral', 'Three octaves at once: Osc 1 a square an octave up, Osc 2 a sine on the Note, the Sub a sine two octaves under Osc 1. A slow organ on eight Voices, its Harmonics in three clean families.', {
+    volume: 0.75, voices: 8, waveform: 'square', osc1Octave: 1, mixOsc1: 0.35, osc2Waveform: 'sine', mixOsc2: 0.8, mixSub: 0.8, subOctave: -2, subWaveform: 'sine',
+    cutoff: 3500, resonance: 0.1, ampAttack: 0.4, ampSustain: 1, ampRelease: 2,
   }],
-  ['Kalimba', 'A short sine with a little FM from a sine two octaves up, through a 24 dB Filter whose Envelope snaps shut: a quick bright tine, then a round tone, on eight Voices. The sidebands sit on the odd Harmonics, the lower ones folded back onto them.', {
-    voices: 8, waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 2, crossMod: 0.2, filterSlope: 24, cutoff: 450, resonance: 0, keyTrack: 1,
-    filterEnvAmount: 3, filterAttack: 0.001, filterDecay: 0.12, filterSustain: 0, ampAttack: 0.001, ampDecay: 0.7, ampSustain: 0, ampRelease: 0.4,
-  }],
-  ['Zap Pluck', 'A falling saw LFO on FM, restarted with each Note: every strike starts at full FM, a bright metallic zap, and melts to a pure sine as it decays, on eight Voices.', {
-    voices: 8, waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, crossMod: 0.5, cutoff: 8000, resonance: 0,
-    lfoWaveform: 'sawDown', lfoDestination: 'fm', lfoRate: 2, lfoAmount: 1, lfoRetrigger: 'note',
-    ampAttack: 0.001, ampDecay: 0.35, ampSustain: 0, ampRelease: 0.3,
+  ['Rave Stab', 'Osc 2 a fifth above Osc 1 over a Sub, through a resonant 24 dB Filter that snaps open and shut: one finger plays a fifth, a chord a stab of six pitches, on six Voices.', {
+    voices: 6, osc2Semitone: 7, osc2Detune: 6, mixOsc2: 0.8, mixSub: 0.5, filterSlope: 24, cutoff: 600, resonance: 0.45, velocityCutoff: 0.6,
+    filterEnvAmount: 3.5, filterAttack: 0.001, filterDecay: 0.2, filterSustain: 0.1, ampAttack: 0.001, ampDecay: 0.35, ampSustain: 0, ampRelease: 0.15,
   }],
 ]);
 
@@ -345,52 +352,82 @@ group('Pianos', [
     cutoff: 1500, resonance: 0.1, filterEnvAmount: 2, filterDecay: 0.6, filterSustain: 0.1, filterRelease: 0.3, keyTrack: 0.7, velocityCutoff: 0.6,
     ampAttack: 0.002, ampDecay: 2.5, ampSustain: 0.1, ampRelease: 0.4,
   }],
-  ['Felt Piano', 'Soft and dark, as if a felt strip lay over the strings: a triangle through a low Cutoff with a slow, long decay. Velocity opens the Filter a little: a harder Note is brighter.', {
+  ['Felt Piano', 'Soft and dark, as if a felt strip lay over the strings: a triangle through a low Cutoff with a slow, long decay. Velocity opens the Filter a little: a harder Note is brighter. On eight Voices.', {
     voices: 8, waveform: 'triangle', osc2Waveform: 'triangle', osc2Detune: 3, mixOsc2: 0.4,
     cutoff: 300, resonance: 0, filterEnvAmount: 0.5, filterDecay: 0.8, filterSustain: 0.2, keyTrack: 0.5, velocityCutoff: 0.8,
     ampAttack: 0.01, ampDecay: 3, ampSustain: 0.2, ampRelease: 0.8,
   }],
-  ['Honky-Tonk', 'A second saw 14 cents off: the two strings of a neglected upright beat against each other, and the Scope never settles.', {
+  ['Honky-Tonk', 'A second saw 14 cents off: the two strings of a neglected upright beat against each other, and the Scope never settles. On eight Voices.', {
     volume: 0.8, voices: 8, waveform: 'pulse', pulseWidth: 0.35, osc2Waveform: 'saw', osc2Detune: 14, mixOsc2: 0.9,
     cutoff: 1800, resonance: 0.1, filterEnvAmount: 2, filterDecay: 0.6, filterSustain: 0.1, filterRelease: 0.3, keyTrack: 0.7, velocityCutoff: 0.6,
     ampAttack: 0.002, ampDecay: 2.2, ampSustain: 0.1, ampRelease: 0.4,
   }],
-  ['Toy Piano', 'A sine with a square two octaves up, short and tinny: the metal tines of a toy, on eight Voices.', {
-    voices: 8, waveform: 'sine', osc2Waveform: 'square', osc2Octave: 2, mixOsc2: 0.3, cutoff: 5000, resonance: 0, keyTrack: 0.8,
-    ampAttack: 0.001, ampDecay: 0.8, ampSustain: 0, ampRelease: 0.3,
-  }],
-  ['Tine Piano', 'An FM electric piano: a sine swung by a sine on the same Note, through a low 24 dB Filter that Velocity opens, so a soft Note is a mellow tine and a hard one barks.', {
+  ['Tine Piano', 'An FM electric piano: a sine swung by a sine on the same Note, through a low 24 dB Filter that Velocity opens, so a soft Note is a mellow tine and a hard one barks, on eight Voices.', {
     voices: 8, waveform: 'sine', osc2Waveform: 'sine', crossMod: 0.35, filterSlope: 24, cutoff: 200, resonance: 0, velocityCutoff: 1, keyTrack: 0.5,
     filterEnvAmount: 0.5, filterAttack: 0.001, filterDecay: 0.4, filterSustain: 0.2, ampAttack: 0.002, ampDecay: 2.5, ampSustain: 0.1, ampRelease: 0.6,
   }],
 ]);
 
+group('Plucks & Mallets', [
+  ['Poly Pluck', 'A snapping Filter Envelope on six Voices: strum a chord and each Note gets its own flash of Harmonics; Key Track keeps the high strings bright.', {
+    voices: 6, waveform: 'pulse', pulseWidth: 0.3, cutoff: 500, resonance: 0.4, filterSlope: 24, filterEnvAmount: 3, filterDecay: 0.18, filterSustain: 0, keyTrack: 0.8,
+    ampAttack: 0.001, ampDecay: 0.5, ampSustain: 0, ampRelease: 0.3,
+  }],
+  ['Harp', 'A triangle plucked through a short Filter Envelope, with Key Track so high strings ring as bright as low ones, on eight Voices.', {
+    voices: 8, waveform: 'triangle', cutoff: 800, resonance: 0.2, keyTrack: 1, filterEnvAmount: 2, filterDecay: 0.3, filterSustain: 0,
+    ampAttack: 0.001, ampDecay: 1.2, ampSustain: 0, ampRelease: 1,
+  }],
+  ['Chorus Pluck', 'A pluck with LFO 2 slowly detuning Osc 2: a wide, gently moving shimmer on every Note, on six Voices.', {
+    volume: 0.6, voices: 6, waveform: 'square', osc2Detune: 6, mixOsc2: 0.8, cutoff: 900, resonance: 0.2, filterEnvAmount: 3, filterAttack: 0.001, filterDecay: 0.25, filterSustain: 0,
+    ampAttack: 0.001, ampDecay: 0.6, ampSustain: 0, ampRelease: 0.4, lfo2Destination: 'detune', lfo2Rate: 0.4, lfo2Amount: 0.35,
+  }],
+  ['Pick Pluck', 'Noise through a Filter Envelope that snaps open and shut in a tenth of a second: the scratch of a pick on the strike, gone as the Filter closes, while a saw and a square an octave up ring on, on six Voices.', {
+    voices: 6, osc2Waveform: 'square', osc2Octave: 1, osc2Detune: 5, mixOsc2: 0.35, mixNoise: 0.5, filterSlope: 24, cutoff: 350, resonance: 0.25, keyTrack: 0.8, velocityCutoff: 0.6,
+    filterEnvAmount: 4, filterAttack: 0.001, filterDecay: 0.08, filterSustain: 0.15, filterRelease: 0.2, ampAttack: 0.001, ampDecay: 0.9, ampSustain: 0, ampRelease: 0.3,
+  }],
+  ['Marimba', 'A sine and a square two octaves up, gone almost at once: the bright tick of the mallet, then the round tone, on eight Voices.', {
+    voices: 8, waveform: 'sine', osc2Waveform: 'square', osc2Octave: 2, mixOsc2: 0.25, cutoff: 700, keyTrack: 0.8, filterEnvAmount: 2.5, filterAttack: 0.001, filterDecay: 0.06, filterSustain: 0,
+    ampAttack: 0.001, ampDecay: 0.6, ampSustain: 0, ampRelease: 0.4,
+  }],
+  ['Vibes', 'A vibraphone: sine bars with a little vibrato and a long decay, on eight Voices so chords ring together.', {
+    voices: 8, waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 2, mixOsc2: 0.2, cutoff: 6000, keyTrack: 0.5,
+    ampAttack: 0.001, ampDecay: 1.6, ampSustain: 0, ampRelease: 1, lfoDestination: 'pitch', lfoRate: 5, lfoAmount: 0.06,
+  }],
+  ['Kalimba', 'A short sine with a little FM from a sine two octaves up, through a 24 dB Filter whose Envelope snaps shut: a quick bright tine, then a round tone, on eight Voices. The sidebands sit on the odd Harmonics, the lower ones folded back onto them.', {
+    voices: 8, waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 2, crossMod: 0.2, filterSlope: 24, cutoff: 450, resonance: 0, keyTrack: 1,
+    filterEnvAmount: 3, filterAttack: 0.001, filterDecay: 0.12, filterSustain: 0, ampAttack: 0.001, ampDecay: 0.7, ampSustain: 0, ampRelease: 0.4,
+  }],
+  ['Toy Piano', 'A sine with a square two octaves up, short and tinny: the metal tines of a toy, on eight Voices.', {
+    voices: 8, waveform: 'sine', osc2Waveform: 'square', osc2Octave: 2, mixOsc2: 0.3, cutoff: 5000, resonance: 0, keyTrack: 0.8,
+    ampAttack: 0.001, ampDecay: 0.8, ampSustain: 0, ampRelease: 0.3,
+  }],
+  ['Glass Keys', 'Two sines a twelfth apart with a slow decay: bell-like, and the Scope shows the 3:1 pattern fading together. On eight Voices.', {
+    volume: 0.75, voices: 8, waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, osc2Semitone: 7, osc2Detune: 3, mixOsc2: 0.7, ...OPEN,
+    ampAttack: 0.002, ampDecay: 2.5, ampSustain: 0, ampRelease: 1.5,
+  }],
+  ['FM Bell', 'A sine swung by another 3.56 times higher (FM): partials that are not Harmonics, so it rings like struck metal, on eight Voices. The Filter Envelope makes each strike bright, then mellow; the Ideal’s circles follow every sideband.', {
+    voices: 8, waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, osc2Semitone: 10, crossMod: 0.3, cutoff: 400, resonance: 0, keyTrack: 1, velocityCutoff: 0.5,
+    filterEnvAmount: 3, filterAttack: 0.001, filterDecay: 0.6, filterSustain: 0, ampAttack: 0.002, ampDecay: 3, ampSustain: 0, ampRelease: 1.5,
+  }],
+  ['Zap Pluck', 'A falling saw LFO on FM, restarted with each Note: every strike starts at full FM, a bright metallic zap, and melts to a pure sine as it decays, on eight Voices.', {
+    voices: 8, waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, crossMod: 0.5, cutoff: 8000, resonance: 0,
+    lfoWaveform: 'sawDown', lfoDestination: 'fm', lfoRate: 2, lfoAmount: 1, lfoRetrigger: 'note',
+    ampAttack: 0.001, ampDecay: 0.35, ampSustain: 0, ampRelease: 0.3,
+  }],
+]);
+
 group('Pads', [
-  ['Pad', 'Slow Envelopes swell the sound in and out, detuned saws and a breath of Noise thicken it, and the LFO keeps the Filter moving.', {
+  ['Pad', 'Slow Envelopes swell the sound in and out, detuned saws and a breath of Noise thicken it, and the LFO keeps the Filter moving, on eight Voices.', {
     voices: 8, osc2Detune: -14, mixOsc2: 0.8, mixNoise: 0.05,
     cutoff: 900, resonance: 0.2, filterEnvAmount: 1.2, filterAttack: 1.2, filterDecay: 1.5, filterSustain: 0.6, filterRelease: 1.5,
     ampAttack: 0.9, ampDecay: 1, ampSustain: 0.8, ampRelease: 1.8,
     lfoRate: 0.3, lfoAmount: 0.15,
   }],
-  ['PWM Strings', 'Two slowly modulated pulses: the Pulse Width sweep gives the chorus-like shimmer of a string machine.', {
-    voices: 8, waveform: 'pulse', pulseWidth: 0.4, osc2Waveform: 'pulse', osc2PulseWidth: 0.6, osc2Detune: 7, mixOsc2: 0.8, cutoff: 3000, resonance: 0.1,
-    lfoDestination: 'pulseWidth', lfoRate: 0.6, lfoAmount: 0.6, keyTrack: 0.5, ampAttack: 0.4, ampSustain: 0.9, ampRelease: 1.2,
-  }],
-  ['Warm Pad', 'Detuned saws over a Sub, a low Cutoff that opens slowly: dark and wide.', {
+  ['Warm Pad', 'Detuned saws over a Sub, a low Cutoff that opens slowly: dark and wide, on eight Voices.', {
     voices: 8, osc2Detune: 12, mixOsc2: 0.9, mixSub: 0.4, cutoff: 600, resonance: 0.15, filterEnvAmount: 1.5, filterAttack: 2, filterDecay: 2, filterSustain: 0.5,
     filterRelease: 2, ampAttack: 1.2, ampSustain: 0.9, ampRelease: 2.5, keyTrack: 0.4,
   }],
-  ['Brass Swell', 'The Filter Envelope opens a little slower than the Amp: each Note starts dark and blooms bright, like a horn.', {
-    voices: 8, osc2Detune: 6, mixOsc2: 0.6,
-    cutoff: 500, resonance: 0.25, filterEnvAmount: 2.5, filterAttack: 0.12, filterDecay: 0.6, filterSustain: 0.55, filterRelease: 0.3,
-    ampAttack: 0.04, ampDecay: 0.3, ampSustain: 0.85, ampRelease: 0.25, keyTrack: 0.5,
-  }],
-  ['Choir', 'Detuned saws through a low-pass with a resonant peak, a touch of Noise for breath: a vowel-like “aah”, and LFO 2 adding a singer’s slow vibrato.', {
-    volume: 0.8, voices: 8, osc2Detune: 10, mixOsc2: 1, mixNoise: 0.08, cutoff: 1100, resonance: 0.6, keyTrack: 0.3,
-    lfoRate: 0.2, lfoAmount: 0.1, lfo2Destination: 'pitch', lfo2Rate: 5, lfo2Amount: 0.15,
-    ampAttack: 0.6, ampSustain: 0.9, ampRelease: 1.5,
-  }],
-  ['Sweep Pad', 'A Filter Envelope seconds long: hold a Note and watch the Cutoff climb across the whole Timeline.', {
+  ['Sweep Pad', 'A Filter Envelope seconds long: hold a Note and watch the Cutoff climb across the whole Timeline. On eight Voices.', {
     volume: 0.6, voices: 8, osc2Detune: -9, mixOsc2: 0.8, filterSlope: 24, cutoff: 150, resonance: 0.5, filterEnvAmount: 5, filterAttack: 4, filterDecay: 4,
     filterSustain: 0.4, filterRelease: 3, ampAttack: 0.5, ampSustain: 1, ampRelease: 3,
   }],
@@ -408,13 +445,17 @@ group('Pads', [
     lfoWaveform: 'triangle', lfoDestination: 'resonance', lfoRate: 0.17, lfoAmount: 0.5, lfo2Waveform: 'triangle', lfo2Destination: 'cutoff', lfo2Rate: 0.11, lfo2Amount: 0.5,
     ampAttack: 1.2, ampSustain: 1, ampRelease: 2.5,
   }],
-  ['Trance Gate', 'A held chord chopped by a Square LFO on Volume at full Depth: on, off, on, off, sixteen times a bar, the gated pad of trance.', {
+  ['Trance Gate', 'A held chord chopped by a Square LFO on Volume at full Depth: on, off, on, off, sixteen times a bar, the gated pad of trance, on eight Voices.', {
     voices: 8, osc2Detune: 9, mixOsc2: 0.9, cutoff: 1800, resonance: 0.2, ampAttack: 0.01, ampSustain: 1, ampRelease: 0.3,
     lfoWaveform: 'square', lfoDestination: 'volume', lfoRate: 8, lfoAmount: 1, lfoRetrigger: 'note',
   }],
-  ['Cathedral', 'Three octaves at once: Osc 1 a square an octave up, Osc 2 a sine on the Note, the Sub a sine two octaves under Osc 1. A slow organ on eight Voices, its Harmonics in three clean families.', {
-    voices: 8, waveform: 'square', osc1Octave: 1, mixOsc1: 0.35, osc2Waveform: 'sine', mixOsc2: 0.8, mixSub: 0.8, subOctave: -2, subWaveform: 'sine',
-    cutoff: 3500, resonance: 0.1, ampAttack: 0.4, ampSustain: 1, ampRelease: 2,
+  ['Phase Pad', 'A notch swept slowly through two detuned saws, LFO 2 drifting their Detune: the phaser you can make without effects, on eight Voices. Watch the hole travel along the Spectrum.', {
+    voices: 8, osc2Detune: 8, mixOsc2: 0.9, filterMode: 'notch', cutoff: 1200, resonance: 0.55, lfoWaveform: 'triangle', lfoDestination: 'cutoff', lfoRate: 0.15, lfoAmount: 0.8,
+    lfo2Destination: 'detune', lfo2Rate: 0.4, lfo2Amount: 0.2, ampAttack: 0.6, ampSustain: 0.9, ampRelease: 2,
+  }],
+  ['Chorus Chords', 'Four Voices of saws with LFO 2 detuning Osc 2: a chord that widens and narrows slowly, like an old chorus pedal.', {
+    volume: 0.7, voices: 4, osc2Detune: 4, mixOsc2: 0.9, cutoff: 3000, resonance: 0.1, ampAttack: 0.05, ampSustain: 0.8, ampRelease: 0.8,
+    lfo2Destination: 'detune', lfo2Rate: 0.5, lfo2Amount: 0.3,
   }],
   ['Glass Pad', 'A triangle with Ring against a sine an octave and a major third above, swelling slowly: glassy partials between the Harmonics, and LFO 2 drifting Osc 2 so they shimmer. Watch the diamonds between the circles.', {
     voices: 6, waveform: 'triangle', osc2Waveform: 'sine', osc2Octave: 1, osc2Semitone: 4, osc2Detune: 7, mixOsc1: 0.8, mixRing: 1, cutoff: 6000, resonance: 0.1,
@@ -432,50 +473,30 @@ group('Pads', [
   }],
 ]);
 
-// Several Voices: chords for playing. Eight where Notes ring on or chords are held, six for shorter sounds.
-// The Oscillator and Filter Viewers follow the newest Note (ADR-0007), so each also shows one Note cleanly.
-group('Chords', [
-  ['Chord Pad', 'Eight Voices of detuned saws under a slow Filter: hold a chord, and the Viewers show only the Note you played last.', {
-    voices: 8, osc2Detune: -12, mixOsc2: 0.8,
-    cutoff: 1200, resonance: 0.15, filterEnvAmount: 1, filterAttack: 1.5, filterDecay: 2, filterSustain: 0.5, filterRelease: 2,
-    ampAttack: 0.8, ampDecay: 1, ampSustain: 0.85, ampRelease: 2, lfoRate: 0.25, lfoAmount: 0.12,
-  }],
-  ['Poly Keys', 'An electric piano on eight Voices: Velocity brightens each strike, and the Timeline draws the newest Note’s Envelope while the others ring on.', {
-    voices: 8, waveform: 'triangle', osc2Waveform: 'square', osc2Octave: 1, mixOsc2: 0.3, cutoff: 200, resonance: 0, keyTrack: 0.7, velocityCutoff: 1,
-    filterSlope: 24, filterEnvAmount: 0.5, filterAttack: 0.001, filterDecay: 0.5, filterSustain: 0.2, ampAttack: 0.003, ampDecay: 1.8, ampSustain: 0.2, ampRelease: 0.6,
-  }],
-  ['Chord Organ', 'Drawbar sines on eight Voices: every held key sounds at once with no Envelope shape at all, so a chord is simply on and off.', {
-    volume: 0.8, voices: 8, waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, mixOsc2: 0.5, mixSub: 0.5, subWaveform: 'sine', ...OPEN, ampAttack: 0.005, ampRelease: 0.03,
-  }],
-  ['Poly Pluck', 'A snapping Filter Envelope on six Voices: strum a chord and each Note gets its own flash of Harmonics; Key Track keeps the high strings bright.', {
-    voices: 6, waveform: 'pulse', pulseWidth: 0.3, cutoff: 500, resonance: 0.4, filterSlope: 24, filterEnvAmount: 3, filterDecay: 0.18, filterSustain: 0, keyTrack: 0.8,
-    ampAttack: 0.001, ampDecay: 0.5, ampSustain: 0, ampRelease: 0.3,
+group('Strings, Brass & Choir', [
+  ['PWM Strings', 'Two slowly modulated pulses: the Pulse Width sweep gives the chorus-like shimmer of a string machine, on eight Voices.', {
+    voices: 8, waveform: 'pulse', pulseWidth: 0.4, osc2Waveform: 'pulse', osc2PulseWidth: 0.6, osc2Detune: 7, mixOsc2: 0.8, cutoff: 3000, resonance: 0.1,
+    lfoDestination: 'pulseWidth', lfoRate: 0.6, lfoAmount: 0.6, keyTrack: 0.5, ampAttack: 0.4, ampSustain: 0.9, ampRelease: 1.2,
   }],
   ['Strings', 'A string section: eight Voices of slowly modulated pulses with a soft attack. Hold a chord and watch the Pulse Width shimmer on the newest Note.', {
     volume: 0.6, voices: 8, waveform: 'pulse', pulseWidth: 0.5, osc2Waveform: 'pulse', osc2PulseWidth: 0.45, osc2Detune: 8, mixOsc2: 0.8, cutoff: 3500, resonance: 0.05,
     lfoDestination: 'pulseWidth', lfoRate: 0.7, lfoAmount: 0.5, lfo2Destination: 'detune', lfo2Rate: 0.25, lfo2Amount: 0.3,
     ampAttack: 0.4, ampDecay: 0.5, ampSustain: 0.9, ampRelease: 1.2,
   }],
+  ['Brass Swell', 'The Filter Envelope opens a little slower than the Amp: each Note starts dark and blooms bright, like a horn, on eight Voices.', {
+    voices: 8, osc2Detune: 6, mixOsc2: 0.6,
+    cutoff: 500, resonance: 0.25, filterEnvAmount: 2.5, filterAttack: 0.12, filterDecay: 0.6, filterSustain: 0.55, filterRelease: 0.3,
+    ampAttack: 0.04, ampDecay: 0.3, ampSustain: 0.85, ampRelease: 0.25, keyTrack: 0.5,
+  }],
   ['Brass Section', 'Horns on six Voices: each Note blooms from dark to bright as its Filter Envelope opens, and further for a harder hit.', {
     voices: 6, osc2Detune: 6, mixOsc2: 0.7, cutoff: 700, resonance: 0.1, filterSlope: 24,
     filterEnvAmount: 2.5, filterAttack: 0.12, filterDecay: 0.5, filterSustain: 0.6, filterRelease: 0.3, velocityCutoff: 0.5,
     ampAttack: 0.06, ampDecay: 0.3, ampSustain: 0.85, ampRelease: 0.35,
   }],
-  ['Vibes', 'A vibraphone: sine bars with a little vibrato and a long decay, on eight Voices so chords ring together.', {
-    voices: 8, waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 2, mixOsc2: 0.2, cutoff: 6000, keyTrack: 0.5,
-    ampAttack: 0.001, ampDecay: 1.6, ampSustain: 0, ampRelease: 1, lfoDestination: 'pitch', lfoRate: 5, lfoAmount: 0.06,
-  }],
-  ['Duo Lead', 'Two Voices only: fifths and octaves under one hand, and a third Note takes the oldest Voice. The Viewers follow the newest.', {
-    volume: 0.5, voices: 2, osc2Detune: 7, mixOsc2: 0.9, cutoff: 2500, resonance: 0.2, keyTrack: 0.4, velocityCutoff: 0.3,
-    ampAttack: 0.01, ampDecay: 0.2, ampSustain: 0.8, ampRelease: 0.3, lfoDestination: 'pitch', lfoRate: 5.5, lfoAmount: 0.08,
-  }],
-  ['Bell Chords', 'Twelfth-stacked sines on eight Voices with a long decay: a chord of bells, each Note fading at its own pace while the Timeline shows the newest.', {
-    voices: 8, waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, osc2Semitone: 7, osc2Detune: 4, mixOsc2: 0.6, ...OPEN,
-    ampAttack: 0.002, ampDecay: 3, ampSustain: 0, ampRelease: 2,
-  }],
-  ['Chorus Chords', 'Four Voices of saws with LFO 2 detuning Osc 2: a chord that widens and narrows slowly, like an old chorus pedal.', {
-    volume: 0.7, voices: 4, osc2Detune: 4, mixOsc2: 0.9, cutoff: 3000, resonance: 0.1, ampAttack: 0.05, ampSustain: 0.8, ampRelease: 0.8,
-    lfo2Destination: 'detune', lfo2Rate: 0.5, lfo2Amount: 0.3,
+  ['Choir', 'Detuned saws through a low-pass with a resonant peak, a touch of Noise for breath: a vowel-like “aah”, and LFO 2 adding a singer’s slow vibrato, on eight Voices.', {
+    volume: 0.8, voices: 8, osc2Detune: 10, mixOsc2: 1, mixNoise: 0.08, cutoff: 1100, resonance: 0.6, keyTrack: 0.3,
+    lfoRate: 0.2, lfoAmount: 0.1, lfo2Destination: 'pitch', lfo2Rate: 5, lfo2Amount: 0.15,
+    ampAttack: 0.6, ampSustain: 0.9, ampRelease: 1.5,
   }],
 ]);
 
@@ -494,6 +515,10 @@ group('Drums', [
   }],
   ['Open Hat', 'The same Noise, let ring for half a second: compare the Amp Envelope with Hi-hat on the Timeline.', {
     volume: 0.55, mixOsc1: 0, mixNoise: 1, filterMode: 'highpass', cutoff: 6000, resonance: 0.3, ampAttack: 0.001, ampDecay: 0.5, ampSustain: 0, ampRelease: 0.3,
+  }],
+  ['Ride', 'Two squares an octave and a tritone apart through Ring, with Noise, through a high-pass at 5 kHz: the recipe of an 808’s cymbal, fading over a second and a half. Key Track moves the high-pass with the Note.', {
+    waveform: 'square', osc2Waveform: 'square', osc2Octave: 1, osc2Semitone: 6, osc2Detune: 17, mixOsc1: 0, mixRing: 0.7, mixNoise: 0.35, filterMode: 'highpass', cutoff: 5000, resonance: 0.2, keyTrack: 0.6,
+    ampAttack: 0.001, ampDecay: 1.6, ampSustain: 0, ampRelease: 1.2,
   }],
   ['Tom', 'A singing Filter an octave above the Kick with a gentler drop, and Noise for the skin.', {
     mixOsc1: 0, mixNoise: 0.8, cutoff: 120, resonance: 1, filterSlope: 24, filterEnvAmount: 1.5, filterAttack: 0.001, filterDecay: 0.15, filterSustain: 0,
@@ -519,8 +544,18 @@ group('Drums', [
 ]);
 
 group('Movement & Effects', [
-  ['Glide Slide', 'A long Glide: play two Notes and watch the pitch slide between them, while Cycle Lock keeps the Scope steady all the way.', {
-    volume: 0.4, waveform: 'square', cutoff: 3000, resonance: 0.2, glide: 0.5, ampSustain: 1, keyTrack: 1,
+  ['Laser', 'A Filter Envelope that falls fast from far above: each Note zaps down. Look at the Cutoff dive on the Timeline.', {
+    volume: 0.25, waveform: 'square', filterSlope: 24, cutoff: 200, resonance: 0.85, filterEnvAmount: 5, filterAttack: 0.001, filterDecay: 0.15,
+    filterSustain: 0, ampAttack: 0.001, ampDecay: 0.3, ampSustain: 0, ampRelease: 0.1,
+  }],
+  ['Riser', 'Hold a Note: the Filter Envelope’s six-second Attack lifts a high-pass from 200 Hz past 5 kHz and Osc 2 almost two octaves (Env Amount), together, over Noise, while a saw LFO ripples the Volume. Watch the Cutoff climb on the Timeline.', {
+    mixOsc1: 0.5, mixOsc2: 0.6, osc2Detune: 12, osc2EnvAmount: 24, mixNoise: 0.5, filterMode: 'highpass', cutoff: 200, resonance: 0.4, keyTrack: 1,
+    filterEnvAmount: 5, filterAttack: 6, filterDecay: 0.5, filterSustain: 1, filterRelease: 0.5, ampAttack: 3, ampSustain: 1, ampRelease: 0.8,
+    lfoWaveform: 'saw', lfoDestination: 'volume', lfoRate: 6, lfoAmount: 0.3,
+  }],
+  ['Sub Drop', 'Osc 2 alone, a sine the Filter Envelope throws two octaves up and lets fall over its 1.8 s Decay (Env Amount), over a sine Sub: 808 Boom slowed into a long dive. Watch the spike slide down the Spectrum.', {
+    volume: 0.5, waveform: 'sine', mixOsc1: 0, osc2Waveform: 'sine', mixOsc2: 1, osc2Octave: 1, osc2EnvAmount: 24, mixSub: 0.6, subWaveform: 'sine', cutoff: 20000, resonance: 0,
+    filterAttack: 0.001, filterDecay: 1.8, filterSustain: 0, ampAttack: 0.002, ampDecay: 2.5, ampSustain: 0, ampRelease: 1,
   }],
   ['Wind', 'Noise only, through a band-pass that the LFO sweeps: no Harmonics at all, just a band of energy moving like a gust.', {
     mixOsc1: 0, mixNoise: 1, filterMode: 'bandpass', cutoff: 2000, resonance: 0.1,
@@ -529,6 +564,9 @@ group('Movement & Effects', [
   ['Ocean', 'Noise through a low-pass that rises and falls slowly, like waves on a beach.', {
     mixOsc1: 0, mixNoise: 1, cutoff: 1200, resonance: 0.1, lfoWaveform: 'triangle', lfoRate: 0.12, lfoAmount: 0.8,
     ampAttack: 1.5, ampSustain: 1, ampRelease: 3,
+  }],
+  ['Glide Slide', 'A long Glide: play two Notes and watch the pitch slide between them, while Cycle Lock keeps the Scope steady all the way.', {
+    volume: 0.4, waveform: 'square', cutoff: 3000, resonance: 0.2, glide: 0.5, ampSustain: 1, keyTrack: 1,
   }],
   ['Trill', 'Osc 2 alone, a semitone up, and a square LFO on its pitch at a twelfth of full Depth: it jumps a semitone either way, between the Note itself and the whole tone above, six times a second. A trill on the key you press.', {
     volume: 0.6, waveform: 'triangle', mixOsc1: 0, osc2Waveform: 'triangle', osc2Semitone: 1, mixOsc2: 1, cutoff: 4000,
@@ -539,10 +577,6 @@ group('Movement & Effects', [
   }],
   ['Helicopter', 'A fast square LFO chopping the Filter on Noise and a Sub: rotor blades.', {
     volume: 0.35, mixOsc1: 0, mixNoise: 0.8, mixSub: 0.5, cutoff: 500, resonance: 0.3, lfoWaveform: 'square', lfoRate: 11, lfoAmount: 0.9, ampSustain: 1,
-  }],
-  ['Laser', 'A Filter Envelope that falls fast from far above: each Note zaps down. Look at the Cutoff dive on the Timeline.', {
-    volume: 0.25, waveform: 'square', filterSlope: 24, cutoff: 200, resonance: 0.85, filterEnvAmount: 5, filterAttack: 0.001, filterDecay: 0.15,
-    filterSustain: 0, ampAttack: 0.001, ampDecay: 0.3, ampSustain: 0, ampRelease: 0.1,
   }],
   ['Siren', 'Osc 2 alone, the LFO on its pitch at full Depth: a whole octave up and down, a siren’s wail.', {
     volume: 0.6, mixOsc1: 0, mixOsc2: 1, osc2Waveform: 'triangle', cutoff: 6000, resonance: 0.1, ampSustain: 1, lfoWaveform: 'triangle', lfoDestination: 'osc2Pitch', lfoRate: 0.4, lfoAmount: 1,
@@ -572,9 +606,6 @@ group('Movement & Effects', [
   ['Machine Chatter', 'Both LFOs on FM: LFO 1 a slow sine, LFO 2 a fast square, together swinging FM between 0 and 100 %. The sidebands of a fifth stutter and surge like a machine talking to itself.', {
     volume: 0.5, waveform: 'sine', osc2Waveform: 'sine', osc2Semitone: 7, crossMod: 0.5, ...OPEN,
     lfoDestination: 'fm', lfoRate: 0.2, lfoAmount: 0.25, lfo2Waveform: 'square', lfo2Destination: 'fm', lfo2Rate: 8, lfo2Amount: 0.25,
-  }],
-  ['Out of Tune', 'Osc 2 a full 50 cents off: a sour quarter-tone, beating so fast it sounds like two different Notes.', {
-    volume: 0.5, osc2Detune: 50, mixOsc2: 1, cutoff: 5000, resonance: 0, ampSustain: 1,
   }],
 ]);
 

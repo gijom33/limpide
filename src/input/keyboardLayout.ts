@@ -1,3 +1,5 @@
+import type { Patch } from '../patch/patch';
+
 // Piano layout on a QWERTY keyboard: home row = white keys, row above = black keys.
 const SEMITONE_BY_CODE: Record<string, number> = {
   KeyA: 0, KeyW: 1, KeyS: 2, KeyE: 3, KeyD: 4, KeyF: 5, KeyT: 6, KeyG: 7,
@@ -17,3 +19,12 @@ const HIGHEST_OCTAVE = 7;
 export const octaveKey = (code: string): -1 | 0 | 1 => (code === 'KeyZ' ? -1 : code === 'KeyX' ? 1 : 0);
 
 export const shiftOctave = (octave: number, delta: number) => Math.min(HIGHEST_OCTAVE, Math.max(LOWEST_OCTAVE, octave + delta));
+
+/** Whether the keyboard can start in this octave: a whole one the octave buttons reach. */
+export const isKeyboardOctave = (octave: unknown): octave is number => Number.isInteger(octave) && shiftOctave(octave as number, 0) === octave;
+
+/** The piano starts on C4, the octave the octave buttons count from. */
+export const DEFAULT_OCTAVE = 4;
+
+/** The octave the keyboard starts in when a Patch is loaded: its own (a bass's C2, issue 125), else C4. */
+export const startingOctave = (patch: Patch) => patch.keyboardOctave ?? DEFAULT_OCTAVE;

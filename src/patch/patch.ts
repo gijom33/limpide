@@ -105,6 +105,11 @@ export type Patch = Record<ParamId, number> & {
   lfoRetrigger: LfoRetrigger;
   lfo2Retrigger: LfoRetrigger;
   voices: Voices;
+  /**
+   * The octave the computer keyboard and the on-screen piano start in when the Patch is loaded (issue 125): 2 for a
+   * bass, its first key C2. Absent, they start on C4; the octave buttons move them after either way.
+   */
+  keyboardOctave?: number;
 };
 
 /** Glide at its minimum is off: Notes change pitch at once. */
@@ -213,7 +218,7 @@ export const CHOICES = {
   lfoRetrigger: ['free', 'note'],
   lfo2Retrigger: ['free', 'note'],
   voices: [1, 2, 3, 4, 5, 6, 7, 8],
-} as const satisfies { [K in Exclude<keyof Patch, ParamId>]: readonly Patch[K][] };
+} as const satisfies { [K in Exclude<keyof Patch, ParamId | 'keyboardOctave'>]: readonly Patch[K][] };
 
 /** A Patch setting picked from a list (a Waveform, the Filter Mode…), rather than turned like a Parameter. */
 export type ChoiceId = keyof typeof CHOICES;

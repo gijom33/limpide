@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { parsePhrase } from '../demo/phrase';
 import { PRESETS } from '../patch/presets';
 import { DEFAULT_OVERLAYS } from '../viewers/overlays';
-import { applyStep, reached } from './tutorial';
+import { applyStep, differences, reached } from './tutorial';
 import { TUTORIALS } from './tutorials';
 
 describe('the Tutorials', () => {
@@ -16,7 +16,9 @@ describe('the Tutorials', () => {
         const preset = PRESETS.find((p) => p.name === tutorial.preset)!;
         let patch = PRESETS[0].patch;
         for (const step of tutorial.steps) patch = applyStep(patch, step);
-        expect(patch).toEqual(preset.patch);
+        // Every Parameter and choice; the keyboard's octave comes with loading the Preset at the end (issue 125).
+        expect(differences(patch, preset.patch)).toEqual([]);
+        expect({ ...patch, keyboardOctave: preset.patch.keyboardOctave }).toEqual(preset.patch);
       });
 
       it('asks for something new at every Step, one control each', () => {
