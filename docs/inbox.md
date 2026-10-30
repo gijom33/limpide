@@ -4,10 +4,13 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-10-29, the owner: "In the demo song, FM bass sounds bad, maybe change octave or another preset?"
 - 2026-10-29, the owner: "In demo song, Double Wobble also sounds bad at high frequency LFO"
 - 2026-10-29, the owner, on the Demo's card: "The position of the dots should not vary with the name of the preset."
 ## Ideas
 
+- 2026-10-29, the owner: "Try to swap the Singing Lead and FM Bell sections in the demo song. SHould make for a better buildup. Do you agree?"
+- 2026-10-29, the owner, on the Demo's card: "Replace dots by rectangles represent each section, filling up over time with width proportional to the section length. Find a more subtle way to delimit the popup than this thick orange line."
 - 2026-10-29, the owner, on the header between 861 and 1919 px: "Having the preset picker below the logo is very bad. Fix it. Feel free to move the demo, tutorial and song buttons to right side of keyboard. Feel free to put the 4 buttons on right also on two rows if the place is needed."
 - 2026-10-29, the owner, on the first version of that header (Demo, Tutorial and Song over Hold, MIDI, Display and About): "Swap the two rows"
 ## Dropped
