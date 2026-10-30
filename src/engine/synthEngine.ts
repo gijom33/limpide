@@ -1,4 +1,4 @@
-import { type Adsr, type AutomationStep, envelopeSchedule, type GateEvent, levelAfter } from '../modulation/envelope';
+import { type Adsr, type AutomationStep, DIP, envelopeSchedule, type GateEvent, levelAfter } from '../modulation/envelope';
 import { createLfoClock, glideFrequency, glideFrom, glideTimeConstant, type LfoWaveform, lfoShape } from '../modulation/lfo';
 import {
   destinationSwings, effectiveCutoff, effectiveResonance, effectiveVolume, KEY_TRACK_CENTRE, type Modulation, soundingPitch,
@@ -236,6 +236,9 @@ function setLfoWaveform(lfo: OscillatorNode, waveform: LfoWaveform, wave: (w: ke
   else lfo.setPeriodicWave(wave(waveform));
 }
 
+/** A stop for a node to play on: a stop called again replaces the last, and there is no way to take one back. */
+const NEVER = 1e9;
+
 /**
  * The oscillators behind one that can start its cycle again (issue 94): an OscillatorNode cannot be reset, so at each
  * restart a new one takes over. A restart handed over ahead of now leaves the node it replaces running until then;
@@ -243,10 +246,10 @@ function setLfoWaveform(lfo: OscillatorNode, waveform: LfoWaveform, wave: (w: ke
  * 101). An ended node is cut off by `cut`.
  */
 function createTakeover(first: OscillatorNode, start: number, cut: (node: OscillatorNode) => void) {
-  // Each node not yet ended, and when it stops.
-  const running = new Map<OscillatorNode, number>();
+  // Each node not yet ended, and when it starts and stops.
+  const running = new Map<OscillatorNode, { start: number; stop: number }>();
   const add = (node: OscillatorNode, at: number) => {
-    running.set(node, Infinity);
+    running.set(node, { start: at, stop: Infinity });
     node.onended = () => {
       running.delete(node);
       cut(node);
@@ -262,13 +265,29 @@ function createTakeover(first: OscillatorNode, start: number, cut: (node: Oscill
     restart(t: number, make: () => OscillatorNode) {
       if (t === restartAt) return false;
       restartAt = t;
-      for (const [node, stop] of running) {
-        if (stop <= t) continue;
+      for (const [node, span] of running) {
+        if (span.stop <= t) continue;
         node.stop(t); // one not yet started never sounds, and ends all the same
-        running.set(node, t);
+        span.stop = t;
       }
       add(make(), t);
       return true;
+    },
+    /**
+     * The restarts handed over for after `t` are called off (a Gate off before their Notes, issue 102): their nodes
+     * never sound, and the node sounding at `t` plays on, rather than restart inside the Release.
+     */
+    cancelAfter(t: number) {
+      for (const [node, span] of running) {
+        if (span.start > t) {
+          node.stop(t);
+          span.stop = t;
+        } else if (span.stop > t && span.stop !== Infinity) {
+          node.stop(NEVER);
+          span.stop = Infinity;
+        }
+      }
+      if (restartAt > t) restartAt = -1;
     },
   };
 }
@@ -312,6 +331,7 @@ function createRestartable(ctx: BaseAudioContext, frequency: number, outputs: Au
     restart(t: number) {
       takeover.restart(t, make);
     },
+    cancelAfter: takeover.cancelAfter,
   };
 }
 type Restartable = ReturnType<typeof createRestartable>;
@@ -364,6 +384,10 @@ function holdAt(param: AudioParam, t: number) {
 function play(param: AudioParam, steps: AutomationStep[], scale = 1) {
   for (const s of steps) {
     if (s.kind === 'cancelAndHold') holdAt(param, s.time);
+    else if (s.kind === 'cancelAndSet') {
+      param.cancelScheduledValues(s.time);
+      param.setValueAtTime(s.value * scale, s.time);
+    } else if (s.kind === 'linearRamp') param.linearRampToValueAtTime(s.target * scale, s.time);
     else param.setTargetAtTime(s.target * scale, s.time, s.timeConstant);
   }
 }
@@ -373,6 +397,8 @@ const filterAdsr = (p: Patch): Adsr => ({ attack: p.filterAttack, decay: p.filte
 
 // A released Voice counts as free again once its Release has run this many time constants.
 const RELEASE_TAIL = 6;
+// Below this level (−60 dB) a Voice counts as silent: a Note restarts its Oscillators at once, with no dip (issue 102).
+const SILENT = 0.001;
 const A4 = noteToFrequency(69);
 
 /**
@@ -589,6 +615,8 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   const voice = {
     /** The Note this Voice is playing or releasing; null once it has faded. */
     note: null as number | null,
+    /** Its own Amp Envelope's Gate events, so a Note can tell whether it still sounds (issue 102). */
+    amps: [] as GateRecord[],
     startedAt: -Infinity,
     /** When its key went up, and when its Release will have faded, or null while the key is down. */
     releasedAt: null as number | null,
@@ -618,11 +646,19 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
     restart(t: number) {
       for (const o of [osc, osc2, sub]) o.restart(t);
     },
+    /** Call off their restarts after `t`, for a Note whose Gate closed before it started (issue 102). */
+    cancelRestarts(t: number) {
+      for (const o of [osc, osc2, sub]) o.cancelAfter(t);
+    },
 
-    /** Play the model's Envelope schedules for a Gate change. */
-    gate(ampEvent: GateEvent, filterEvent: GateEvent, velocity: number) {
+    /**
+     * Play the model's Envelope schedules for a Gate change. After a dip the Attack carries on from its silence with no
+     * hold between: without cancelAndHoldAtTime (Firefox) a hold would bring back the level from before the dip.
+     */
+    gate(ampEvent: GateEvent, filterEvent: GateEvent, velocity: number, dip?: GateRecord) {
       if (ampEvent.on) noteVelocity.offset.setValueAtTime(velocity, ampEvent.time);
-      play(amp.gain, envelopeSchedule(ampEvent));
+      const attack = envelopeSchedule(ampEvent);
+      play(amp.gain, dip ? [...envelopeSchedule(dip, dip.start), ...attack.filter((s) => s.kind !== 'cancelAndHold')] : attack);
       play(filterEnvelope.offset, envelopeSchedule(filterEvent));
     },
 
@@ -790,26 +826,38 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     const previous = events[events.length - 2];
     if (previous) entry.start = levelAfter(previous, previous.start, entry.time);
     trim(events, e.time);
+    return entry;
   };
   const levelAt = (events: readonly GateRecord[], t: number) => {
     const i = lastAt(events, t);
     return i < 0 ? 0 : levelAfter(events[i], events[i].start, t);
   };
-  /** A Gate change on a Voice; recorded in the model's history when it is the newest Note's. */
-  const gate = (voice: Voice, on: boolean, t: number, velocity: number) => {
+  /**
+   * A Gate change on a Voice, recorded in its own history, and in the model's when it is the newest Note's. A Gate on
+   * after a dip from `dipFrom` (issue 102) records the dip first, as the Amp Envelope plays it.
+   */
+  const gate = (voice: Voice, on: boolean, t: number, velocity: number, dipFrom?: number) => {
     if (!patch) return;
     const ampEvent: GateEvent = { time: t, on, adsr: ampAdsr(patch), peak: velocity };
     const filterEvent: GateEvent = { time: t, on, adsr: filterAdsr(patch), peak: 1 };
+    const dipEvent: GateEvent | undefined = dipFrom === undefined ? undefined : { time: dipFrom, on: false, adsr: ampAdsr(patch), peak: 0, dip: true };
+    // The sound dips from the Voice's own level; the model's history from its newest Note's.
+    const dip = dipEvent && record(voice.amps, dipEvent);
+    if (dipEvent && voice === lead) record(ampEvents, dipEvent);
+    record(voice.amps, ampEvent);
     if (voice === lead) {
       record(ampEvents, ampEvent);
       record(filterEvents, filterEvent);
     }
-    voice.gate(ampEvent, filterEvent, velocity);
+    voice.gate(ampEvent, filterEvent, velocity, dip);
     if (on) {
       voice.startedAt = t;
       voice.releasedAt = null;
       voice.freeAt = Infinity;
     } else {
+      // A Gate off before its Note has started (one handed over, then stopped; a key let go within the dip) calls off
+      // the Note's restart of the Oscillators, which would come inside the Release (issue 102).
+      if (voice.startedAt > t) voice.cancelRestarts(t);
       voice.releasedAt = t;
       voice.freeAt = t + patch.ampRelease * RELEASE_TAIL;
     }
@@ -990,17 +1038,22 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     },
 
     noteOn(note, velocity, time) {
-      const t = at(time);
-      if (patch) lfos(patch).forEach((l, i) => l.retrigger === 'note' && restartLfo(i, l, t));
-      const voice = allocate(note, t);
+      const asked = at(time);
+      const voice = allocate(note, asked);
       // A legato Note, one Voice pressed on while its Note still sounds held, slides on from it: restarting the
       // Oscillators there would click mid-sound (issue 94, decision 2).
       const legato = voiceCount() === 1 && voice.note !== null && voice.releasedAt === null;
+      follow(voice);
+      // Any other Note restarts them. On a Voice still sounding (in its Release, or taken while held) it dips to silence
+      // first, so the restart does not click, and the Note starts after the dip, the same way every time (issue 102).
+      // Its history holds the Notes handed over ahead of the clock, so one of those dips as it will sound.
+      const dipFrom = !legato && levelAt(voice.amps, asked) > SILENT ? asked : undefined;
+      const t = dipFrom === undefined ? asked : asked + DIP;
+      if (patch) lfos(patch).forEach((l, i) => l.retrigger === 'note' && restartLfo(i, l, t));
       if (!legato) voice.restart(t);
       voice.note = note;
-      follow(voice);
       setLeadPitch(voice, note, t);
-      gate(voice, true, t, velocity);
+      gate(voice, true, t, velocity, dipFrom);
     },
 
     pitchChange(note, time) {

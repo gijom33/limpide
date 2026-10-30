@@ -8,6 +8,8 @@
 
 **Since then:** the 1.16.0 review found that a legato Note restarted them all the same (one Voice, a key pressed while another is held, sent a Note On, which always restarted); fixed 2026-10-30, with an engine test that the wave carries on with no jump.
 
+**Since then:** a Note reaching a Voice still sounding (in its Release, or taken while held) dips it to silence over 3 ms before restarting the Oscillators, so the restart does not click, and starts 3 ms late; every Note still starts the same way ([102](./102-a-note-during-a-release-clicks.md), 2026-10-30).
+
 ## Agent Brief
 
 **Category:** bug

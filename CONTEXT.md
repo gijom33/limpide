@@ -136,6 +136,10 @@ _Avoid_: Key, trigger
 The on/off state of a Voice. On while its Note is held (or Hold is on), off otherwise.
 _Avoid_: Trigger, key down
 
+**Dip**:
+What a Note does to a Voice still sounding (in its Release, or taken while held) before it starts: 3 ms in a straight line down to silence, then the Oscillators restart and the Note starts, 3 ms late, so it starts the same way as a Note into silence, without a click (issue 102). A Note into silence, or a legato one, has none.
+_Avoid_: Declick, fade (fine in a tooltip)
+
 **Note Priority**:
 With one Voice, the rule picking which held Note sounds: last-note priority, so the newest held Note wins, and releasing it returns to the previous one. With more Voices, every held Note sounds, and a Note beyond the last free Voice takes the oldest one.
 _Avoid_: Voice stealing

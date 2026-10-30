@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { envelopeLevel, type GateEvent } from '../modulation/envelope';
+import { DIP, envelopeLevel, type GateEvent } from '../modulation/envelope';
 import { harmonicSeries, type Waveform } from '../music/harmonics';
 import { idealPartials, idealReference } from '../music/idealReference';
 import { defaultPatch, type Patch } from '../patch/patch';
@@ -16,6 +16,13 @@ async function render(seconds: number, patch: Partial<Patch>, play: (e: ReturnTy
   engine.applyPatch({ ...defaultPatch(), ...patch });
   play(engine);
   return (await ctx.startRendering()).getChannelData(0);
+}
+
+/** The largest step between neighbouring samples from `from` to `to` seconds: a click is one far past the wave's own. */
+function steepestStep(s: Float32Array, from: number, to: number) {
+  let most = 0;
+  for (let i = Math.round(from * SR) + 1; i < Math.round(to * SR); i++) most = Math.max(most, Math.abs(s[i] - s[i - 1]));
+  return most;
 }
 
 describe('saw through the low-pass Filter', () => {
@@ -474,13 +481,16 @@ describe('modulationAt for past moments (the Envelope Timeline)', () => {
     const ampAdsr = { attack: patch.ampAttack, decay: patch.ampDecay, sustain: patch.ampSustain, release: patch.ampRelease };
     const filterAdsr = { attack: patch.filterAttack, decay: patch.filterDecay, sustain: patch.filterSustain, release: patch.filterRelease };
     // Notes that retrigger before the Release ends, and releases before the Decay ends: every segment starts mid-way.
+    // Each Note but the first comes while the last still sounds: it dips first, and starts after the dip (issue 102).
     for (const [on, off, velocity] of [[0.1, 0.3, 1], [0.4, 0.45, 0.5], [0.5, 1.2, 0.8], [1.3, 1.31, 1]]) {
       engine.noteOn(60, velocity, on);
       engine.noteOff(off);
-      amp.push({ time: on, on: true, adsr: ampAdsr, peak: velocity }, { time: off, on: false, adsr: ampAdsr, peak: velocity });
-      filter.push({ time: on, on: true, adsr: filterAdsr, peak: 1 }, { time: off, on: false, adsr: filterAdsr, peak: 1 });
+      const start = on === 0.1 ? on : on + DIP;
+      if (start !== on) amp.push({ time: on, on: false, adsr: ampAdsr, peak: 0, dip: true });
+      amp.push({ time: start, on: true, adsr: ampAdsr, peak: velocity }, { time: off, on: false, adsr: ampAdsr, peak: velocity });
+      filter.push({ time: start, on: true, adsr: filterAdsr, peak: 1 }, { time: off, on: false, adsr: filterAdsr, peak: 1 });
     }
-    for (let t = 0; t < 2; t += 0.01) {
+    for (let t = 0; t < 2; t += 0.001) {
       const m = engine.modulationAt(t);
       expect(m.amp).toBeCloseTo(envelopeLevel(amp, t), 9);
       expect(m.filter).toBeCloseTo(envelopeLevel(filter, t), 9);
@@ -1363,12 +1373,7 @@ describe('Ring Modulation (issue 88)', () => {
       e.noteOn(45, 1, 0);
       e.noteOn(52, 1, 0.5023); // a quarter of a 110 Hz cycle past a whole number of them
     });
-    const steepest = (from: number, to: number) => {
-      let most = 0;
-      for (let i = Math.round(from * SR) + 1; i < Math.round(to * SR); i++) most = Math.max(most, Math.abs(s[i] - s[i - 1]));
-      return most;
-    };
-    expect(steepest(0.497, 0.507)).toBeLessThan(1.5 * steepest(0.3, 0.45));
+    expect(steepestStep(s, 0.497, 0.507)).toBeLessThan(1.5 * steepestStep(s, 0.3, 0.45));
   });
 
   it('sounds the same on a Note whether or not Osc 2 was retuned before it (issue 94)', async () => {
@@ -1593,5 +1598,150 @@ describe('Notes handed over ahead of the clock (issue 101)', () => {
       AudioNode.prototype.connect = connect;
       AudioNode.prototype.disconnect = disconnect;
     }
+  });
+});
+
+describe('a Note reaching a Voice still sounding dips first, so it does not click (issue 102)', () => {
+  // Init with a sine, the Filter open so it does not smooth a click away.
+  const sine = { waveform: 'sine', cutoff: 20000 } as const;
+  /** The largest second difference between samples: a burst of high frequencies, on a Patch that swells slowly. */
+  const sharpest = (s: Float32Array, from: number, to: number) => {
+    let most = 0;
+    for (let i = Math.round(from * SR) + 2; i < Math.round(to * SR); i++) most = Math.max(most, Math.abs(s[i] - 2 * s[i - 1] + s[i - 2]));
+    return most;
+  };
+
+  // C2, let go at 0.5 s, then a Note about 50 ms into its Release, where C2's wave is at its peak (36¼ cycles): the
+  // review's staccato line. The step was 36 times the steady sine's (0.4 s Release) and 66 times (1.5 s); now the
+  // steepest is the new Note's own Attack, as from silence.
+  for (const [ampRelease, next] of [[0.4, 38], [1.5, 38], [1.5, 36]] as const)
+    it(`plays a Note into the last one's Release with no step past the steady sine's (Init, ${ampRelease} s Release, ${next === 36 ? 'the same key again' : 'D2'})`, async () => {
+      const s = await render(1.4, { ...sine, ampRelease }, (e) => {
+        e.noteOn(36, 1, 0);
+        e.noteOff(0.5);
+        e.noteOn(next, 1, 0.5542);
+      });
+      expect(steepestStep(s, 0.55, 0.6)).toBeLessThan(1.5 * steepestStep(s, 1, 1.3));
+    });
+
+  // A burst 2.4 times the sustain's before.
+  it('strikes a chord again in Glass Pad’s Release with no burst past its sustain’s', async () => {
+    const glassPad = PRESETS.find((p) => p.name === 'Glass Pad')!.patch;
+    const chord = [60, 64, 67];
+    const s = await render(3, glassPad, (e) => {
+      for (const note of chord) e.noteOn(note, 1, 0);
+      e.noteOff(1.8);
+      for (const note of chord) e.noteOn(note, 1, 2);
+    });
+    expect(sharpest(s, 1.99, 2.1)).toBeLessThan(1.5 * sharpest(s, 1.3, 1.8));
+  });
+
+  it('takes a held Voice for a new Note with no step past the steady chord’s (2 Voices)', async () => {
+    const s = await render(1, { ...sine, voices: 2 }, (e) => {
+      e.noteOn(45, 1, 0);
+      e.noteOn(52, 1, 0.1);
+      e.noteOn(57, 1, 0.30227); // A3 takes A2's Voice, A2 still held, at its wave's peak (33¼ cycles)
+    });
+    expect(steepestStep(s, 0.295, 0.35)).toBeLessThan(1.5 * steepestStep(s, 0.7, 0.95));
+  });
+
+  // A Gate off before the Note it closes has started. Issue 101 left the first to 102: the Demo stopped, or Hold switched
+  // off, before a Note it handed over. A4, its restart due at a quarter of a cycle (245¼ cycles, after the dip): a step
+  // there if it restarts (9 and 7 times the held Note's steepest before), 1.4 times the level if a second copy joins in.
+  const due = 245.25 / 440;
+  const calledOff = {
+    'a player stopped before it': (e: ReturnType<typeof createSynthEngine>) => {
+      e.noteOn(69, 1, 0);
+      e.release(69, 0.45);
+      e.noteOn(69, 1, due - DIP); // handed over: the Voice will still sound then, so it dips first
+      e.release(69, 0.8);
+      e.noteOff(0.5);
+    },
+    'a key let go within the dip, on 2 Voices': (e: ReturnType<typeof createSynthEngine>) => {
+      e.noteOn(69, 1, 0);
+      e.noteOn(69, 1, due - DIP); // the key again: its own Voice, still sounding
+      e.release(69, due - DIP / 2);
+    },
+  };
+  for (const [how, play] of Object.entries(calledOff))
+    it(`does not restart the Oscillators for a Note called off before it starts (${how}): the Release runs on, one copy, with no step`, async () => {
+      let engine: ReturnType<typeof createSynthEngine> | undefined;
+      const s = await render(1, { ...sine, ampRelease: 1.5, voices: how.endsWith('2 Voices') ? 2 : 1 }, (e) => {
+        engine = e;
+        play(e);
+      });
+      expect(steepestStep(s, due - 0.02, due + 0.02)).toBeLessThan(1.1 * steepestStep(s, 0.4, 0.45));
+      // One copy: the sound's level falls as the model's does, where a second copy would add 40 % to it.
+      const peak = (from: number, to: number) => s.subarray(Math.round(from * SR), Math.round(to * SR)).reduce((m, v) => Math.max(m, Math.abs(v)), 0);
+      const level = (t: number) => engine!.modulationAt(t).amp;
+      expect(peak(due + 0.005, due + 0.03) / peak(due - 0.03, due - 0.005)).toBeLessThan((1.1 * level(due + 0.005)) / level(due - 0.03));
+    });
+
+  /**
+   * A4, let go just before 0.3 s, and E4 into its Release at 0.32 s: the Amp's gain, sample by sample from 0.31 s to
+   * 0.336 s (the Amp Tap over the Filter Tap, wherever the wave is not near zero), beside the model's. `live` changes
+   * the Gate at its moment, as the page does, rather than all ahead.
+   */
+  async function dipAtTheTaps(live: boolean) {
+    const quantum = 128 / SR; // where an offline context can suspend
+    const [off, on, end] = [112 * quantum, 120 * quantum, 126 * quantum];
+    const ctx = new OfflineAudioContext(1, SR * 0.5, SR);
+    const engine = createSynthEngine(ctx);
+    engine.applyPatch({ ...defaultPatch(), ...sine, resonance: 0, ampAttack: 0.005 });
+    engine.noteOn(69, 1, 0);
+    const changes = [() => engine.noteOff(off), () => engine.noteOn(64, 1, on)];
+    if (live) [off, on].forEach((t, i) => ctx.suspend(t).then(() => { changes[i](); void ctx.resume(); }));
+    else for (const change of changes) change();
+    const read = (a: AnalyserNode) => {
+      const s = new Float32Array(a.fftSize);
+      a.getFloatTimeDomainData(s);
+      return s;
+    };
+    const captured = ctx.suspend(end).then(() => {
+      const taps = { amp: read(engine.taps.amp), filter: read(engine.taps.filter) };
+      void ctx.resume();
+      return taps;
+    });
+    await ctx.startRendering();
+    const { amp, filter } = await captured;
+    const gains = [];
+    for (let i = 0; i < amp.length; i++) {
+      const time = end - (amp.length - i) / SR;
+      if (time >= 0.31 && Math.abs(filter[i]) > 0.05) gains.push({ time, sound: amp[i] / filter[i], model: engine.modulationAt(time).amp });
+    }
+    return { gains, engine, on };
+  }
+
+  it('dips in the model as in the sound: the Amp Envelope, sample by sample, through the dip and the next Attack (ADR-0003)', async () => {
+    const { gains, engine, on } = await dipAtTheTaps(false);
+    expect(gains.length).toBeGreaterThan(500);
+    for (const { time, sound, model } of gains) expect(sound, `at ${time}`).toBeCloseTo(model, 4);
+    const before = engine.modulationAt(on).amp;
+    expect(engine.modulationAt(on + DIP / 2).amp).toBeCloseTo(before / 2, 9); // a straight line…
+    expect(engine.modulationAt(on + DIP).amp).toBeCloseTo(0, 12); // …to silence, where the Note starts
+  });
+
+  it('starts the Attack from the dip’s silence without cancelAndHoldAtTime too (Firefox), played live', async () => {
+    const original = AudioParam.prototype.cancelAndHoldAtTime;
+    // @ts-expect-error: removed for this test, as in Firefox
+    delete AudioParam.prototype.cancelAndHoldAtTime;
+    try {
+      const { gains } = await dipAtTheTaps(true);
+      for (const { time, sound, model } of gains) expect(sound, `at ${time}`).toBeCloseTo(model, 2);
+    } finally {
+      AudioParam.prototype.cancelAndHoldAtTime = original;
+    }
+  });
+
+  it('starts a Note into silence when it is asked for, within a sample', async () => {
+    const asked = 0.4;
+    const s = await render(0.6, { ...sine, cutoff: 20000, ampAttack: 0.001, ampRelease: 0.02 }, (e) => {
+      e.noteOn(69, 1, 0);
+      e.noteOff(0.1); // faded long before the next
+      e.noteOn(69, 1, asked);
+    });
+    // The limiter's oversampling delays the whole output a little: count from where the first Note starts.
+    const onset = (from: number) => Math.round(from * SR) + s.subarray(Math.round(from * SR)).findIndex((v) => Math.abs(v) > 1e-4);
+    expect(Math.abs(onset(0.3) - onset(0) - asked * SR)).toBeLessThanOrEqual(1);
   });
 });

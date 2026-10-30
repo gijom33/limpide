@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · bug. The owner chose the quick dip (decisions below).
+**Status:** done (2026-10-30). A Note reaching a Voice still sounding (in its Release, or taken while held) takes it in a straight line to silence over 3 ms, then restarts the Oscillators and starts, 3 ms late; a Note into silence starts at once, and a legato one slides on as before. Not yet heard by the owner.
 
 ## Question for the owner
 
@@ -35,10 +35,23 @@ Which way, when a Note reaches a Voice that is still sounding?
 - The engine's Note On and its restart of the Oscillators
 
 **Acceptance criteria:**
-- [ ] An engine test plays a Note during a Release (Init, and a 1.5 s Release) and finds no step bigger than a few times the steady slope
-- [ ] The same for a chord struck again on Glass Pad and a stolen held Voice
-- [ ] A Note into silence starts within a sample of when it is asked for
-- [ ] The legato test still passes
+- [x] An engine test plays a Note during a Release (Init, and a 1.5 s Release) and finds no step bigger than a few times the steady slope
+- [x] The same for a chord struck again on Glass Pad and a stolen held Voice
+- [x] A Note into silence starts within a sample of when it is asked for
+- [x] The legato test still passes
 
 **Out of scope:**
 - The handed-over Notes doubling ([101](./101-handed-over-notes-stop-cleanly.md))
+
+## How it was built
+
+- **The dip** (`src/modulation/envelope.ts`, `src/engine/synthEngine.ts`). At a Note On the engine asks the Voice's own Amp Envelope history (each Voice now keeps one) for its level at the Note's moment; above −60 dB the Voice is still sounding. It then dips: the Amp Envelope falls in a straight line to silence over `DIP` (3 ms), and everything the Note does starts at the dip's end: the Oscillators' restart, the pitch and its Glide, both Envelopes, the Velocity, a retriggered LFO. A Note handed over ahead of the clock asks the history at its own moment, which holds the release the player handed over before it, so it dips exactly when it will still sound.
+- **The model** (ADR-0003). The dip is a Gate event of its own in the Modulation model, a Gate off that falls in a straight line rather than releasing, so the Timeline and the Amp Envelope's level follow it. For its 3 ms the model reports no Note sounding.
+- **Two browser details.** Chromium starts a straight ramp placed after `cancelAndHoldAtTime` mid-curve at its target at once (measured: the gain fell to 0 in one sample), so the dip sets the level it starts from, the model's, outright, then ramps. The Attack after it follows on with no hold between: without `cancelAndHoldAtTime` (Firefox) the hold would bring back the level from before the dip.
+- **A Note called off before it starts** (left to this issue by [101](./101-handed-over-notes-stop-cleanly.md)). A Gate off before its Note has started (a player stopped, Hold switched off, a key let go within the dip) calls off that Note's restart of the Oscillators, which used to come inside the Release: the restart's new node is stopped before it starts, and the node sounding plays on. The browser cannot take a stop back, so it is called again for a moment that never comes (`NEVER`, 10⁹ s).
+- **Tests** (`src/engine/synthEngine.browser.test.ts`, `src/modulation/envelope.test.ts`). On Init with a sine and the Filter open, a Note 54 ms into C2's Release, timed for C2's peak: the steepest step was 36 times the steady sine's (0.4 s Release) and 66 times (1.5 s, D2 or C2 again); now 1.3 times, the new Note's own Attack, as from silence. Glass Pad's C major chord struck again 0.2 s into its Release: a second difference 2.4 times its sustain's, now 0.6. A held A2 taken by A3 on 2 Voices at A2's peak: 16 times, now under 1.5. A Note called off before it starts (a player stopped, a key let go within the dip), A4's restart due at a quarter of its cycle: 9 and 7 times the held Note's steepest step, now under 1.1, and the level follows the model's (a first try at calling the restart off left a second copy playing, 1.3 times the level: the test now checks it). The Amp's gain at the Taps (the Amp Tap over the Filter Tap, sample by sample) matches the model through the dip and the next Attack within 10⁻⁴, and within 10⁻² without `cancelAndHoldAtTime`, played live (it failed with the hold kept). A Note into silence starts on the sample asked for, counted from the first Note (the limiter's oversampling delays the whole output by about 190 samples). The model test that replays every Gate event now expects the dips of its three Notes played into a Release, checked every millisecond. The legato test and the other engine tests pass unchanged.
+- **Claude's calls, open to the owner.**
+  1. The dip is a straight line, not the Envelopes' curve: exactly silent when the Oscillators restart, and never steeper than it must be (an exponential fall over 3 ms starts 3.5 times steeper than the steady sine, and leaves a residue).
+  2. A Voice counts as still sounding while its Amp Envelope is above −60 dB (0.001); below, a Note starts at once.
+  3. Only the Amp Envelope dips. The Filter Envelope starts from where it is, as before, 3 ms later: sweeping the Cutoff down within 3 ms could itself be heard on a resonant Patch.
+  4. The Notes of one chord can start 3 ms apart: those reaching a silent Voice at once, those reaching a sounding one after the dip. A retriggered LFO then restarts at both moments.
