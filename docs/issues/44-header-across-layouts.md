@@ -38,3 +38,5 @@ Decided by the owner on 2026-10-26, all four as proposed:
 - [x] Tried by the owner (2026-10-26): "New header looks good"
 
 Since then (2026-10-29, [issue 82](./82-top-row-centres-the-piano.md), decided by the owner): in three across (861 to 1919 px) the logo sits over the Patch picker and Song under Demo and Tutorial, two high, so the piano can sit at the page's centre; the order left to right is otherwise the same. Between 861 and about 1000 px the row is now 64 px tall where it was 52 (its piano larger), so the short windows above scroll 12 px more there.
+
+Since then (2026-10-30, [issue 104](./104-keyboard-and-screen-readers-after-1-16.md)): the DOM order is no longer one for every width, since the header of 2026-10-29 placed set-up before the playing buttons in the DOM but after them on phones and in 2 × 2. Up to 860 px the header now holds the Wordmark and the Patch, Demo, Tutorial and Song, Hold to About, then the keyboard; wider, the Wordmark and the Patch, the keyboard, then Hold to About and Demo to Song. Each is the order on screen, so focus follows it at every width; `e2e/header.spec.ts` checks Tab against the controls' positions at the four sizes.

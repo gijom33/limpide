@@ -1153,8 +1153,8 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   /* Viewers: wider than tall, a little lower than elsewhere. */
   .tap canvas { aspect-ratio: 3 / 1; min-height: 96px; }
 
-  /* The header in three rows: logo and Patch; then the playing buttons (Demo, Song, Hold) on the left and set-up
-     (MIDI, Display, About) on the right; then the keyboard, its eight white keys as wide as the rest of the screen
+  /* The header in three rows: logo and Patch; then the playing buttons (Demo, Tutorial, Song) on the left and set-up
+     (Hold, MIDI, Display, About) on the right; then the keyboard, its eight white keys as wide as the rest of the screen
      allows. It edges the page's padding (see the header up to 860 px, below). */
   header {
     margin: calc(-1 * var(--space-3)) calc(-1 * var(--space-2)) 0;

@@ -2,6 +2,7 @@ import { useId, useRef } from 'react';
 import { MODULATED } from '../modulation/destinations';
 import { PARAMS, type ParamId } from '../patch/patch';
 import { valueToPosition } from '../patch/taper';
+import { useInactive } from './inactive';
 import { ModulationRing } from './modulationRing';
 import { held, pressed, useParamControl, useWheel } from './paramControl';
 import { Tooltip } from './Tooltip';
@@ -39,8 +40,8 @@ interface Props {
   id: ParamId;
   value: number;
   onChange(value: number): void;
-  /** Dimmed when the Parameter has no audible effect right now (still adjustable). */
-  inactive?: boolean;
+  /** Why the Parameter has no audible effect right now ("No effect while Osc 2 is silent"): dimmed, still adjustable. */
+  inactive?: string | false;
 }
 
 /**
@@ -60,10 +61,11 @@ export function Knob({ id, value, onChange, inactive }: Props) {
   const gradient = `knob-cap-${useId().replace(/[^\w-]/g, '')}`; // a plain id, safe inside url(#…)
   const drag = useRef<{ x: number; y: number; position: number; moved: boolean } | null>(null);
   const wheel = useWheel(c.position, c.setPosition);
+  const dimmed = useInactive(inactive);
 
   return (
     <Tooltip content={PARAM_TIPS[id]}>
-      <div className="knob" data-size={g === GEOMETRY.play ? 'big' : 'small'} data-inactive={inactive || undefined} {...c.attributes}>
+      <div className="knob" data-size={g === GEOMETRY.play ? 'big' : 'small'} {...dimmed.props} {...c.attributes}>
         <svg
           ref={wheel}
           className="knob-dial"
@@ -132,6 +134,7 @@ export function Knob({ id, value, onChange, inactive }: Props) {
           )}
         </svg>
         {c.text}
+        {dimmed.note}
       </div>
     </Tooltip>
   );

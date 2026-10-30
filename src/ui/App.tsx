@@ -16,6 +16,7 @@ import { Fader } from './Fader';
 import { FilterShape } from './FilterShape';
 import { useHold } from './hooks/useHold';
 import { useComputerKeyboard, useSpaceFreezes } from './hooks/useKeys';
+import { useMediaQuery } from './hooks/useMediaQuery';
 import { useMidi } from './hooks/useMidi';
 import { usePlayers } from './hooks/usePlayers';
 import { useTutorialState } from './hooks/useTutorialState';
@@ -52,6 +53,12 @@ const TOOLTIPS = 'limpide.tooltips';
 const BEND_RANGE = 'limpide.bendRange';
 /** The piano starts on C4, the octave the octave buttons count from. */
 const DEFAULT_OCTAVE = 4;
+/** Phones and the sections 2 × 2: the stylesheet's breakpoint, where the header's groups take rows of their own. */
+const STACKED_HEADER = '(max-width: 860px)';
+/** Why a greyed-out control does nothing now, for a screen reader (issue 104): what several controls share. */
+const OSC1_SILENT = 'No effect while Osc 1 is silent';
+const OSC2_SILENT = 'No effect while Osc 2 is silent';
+const FILTER_ENVELOPE_IDLE = "No effect while the Filter Envelope Amount and Osc 2's Env Amount are 0";
 /** An octave button's shade, and its count (+2, −1): the octaves the piano is shifted its way (none at C4, or
     shifted the other way). */
 const shifted = (octaves: number) =>
@@ -140,6 +147,7 @@ export function App() {
   useEffect(() => storage.setItem(BEND_RANGE, String(bendRange)), [storage, bendRange]);
 
   useSpaceFreezes(viewerStore);
+  const narrow = useMediaQuery(STACKED_HEADER);
   const [theme, setTheme] = useState(loadTheme);
   useEffect(() => applyTheme(theme), [theme]);
 
@@ -205,6 +213,162 @@ export function App() {
       />
     );
 
+  // The header's groups: Tab meets them as they stand on screen (issue 104). Up to 860 px (phones, and the sections
+  // 2 × 2) the playing buttons come before set-up and the keyboard after both, on a row of its own; wider, the
+  // keyboard comes before the buttons right of it, set-up on top. The CSS places the groups; this puts them in that
+  // order, so the focus follows. React moves them, keyed, when the window crosses 860 px: nothing in them restarts.
+  const identity = (
+    <div key="identity" className="header-left">
+      <div className="header-identity">
+        <Wordmark onOpen={() => setAbout(true)} />
+        <PatchBar
+          name={patchName}
+          changed={changed}
+          patch={patch}
+          library={library}
+          onLoad={patches.load}
+          tutorials={tutorialList}
+          onTutorial={startTutorial}
+        />
+      </div>
+    </div>
+  );
+  // Up before down, as they stand on screen, so Tab meets them in that order (issue 47).
+  const keyboard = (
+    <div key="keyboard" className="keyboard">
+      <button type="button" className="tool tool-icon octave" aria-label="Octave up" {...shifted(octave - DEFAULT_OCTAVE)} onClick={() => setOctave((o) => shiftOctave(o, 1))}>
+        {octave > DEFAULT_OCTAVE ? `+${octave - DEFAULT_OCTAVE}` : '+'}
+      </button>
+      <button type="button" className="tool tool-icon octave" aria-label="Octave down" {...shifted(DEFAULT_OCTAVE - octave)} onClick={() => setOctave((o) => shiftOctave(o, -1))}>
+        {octave < DEFAULT_OCTAVE ? `−${DEFAULT_OCTAVE - octave}` : '−'}
+      </button>
+      <Tooltip content={TIPS.keyboard} longPress={false}>
+        <Piano octave={octave} held={players.playedNotes.length ? [...heldNotes, ...players.playedNotes] : heldNotes} input={session.input} invite={audioStatus === 'waiting'} />
+      </Tooltip>
+    </div>
+  );
+  // Hold first among the set-up buttons (the owner, 2026-10-27).
+  const setUp = (
+    <div key="set" className="header-set">
+      <Tooltip content={TIPS.hold}>
+        <button
+          type="button"
+          className="tool"
+          aria-pressed={hold}
+          data-learn="action:hold"
+          data-mapped={learnContext.mapped.has('action:hold') || undefined}
+          data-learn-selected={learnContext.selected === 'action:hold' || undefined}
+          aria-label="Hold"
+          onClick={pressHold}
+        >
+          <HoldIcon />
+          <span className="tool-word">Hold</span>
+        </button>
+      </Tooltip>
+      <MidiPanel
+        state={midi.midi}
+        onOpen={midi.connect}
+        activity={midi.activity}
+        mappings={midi.mappings}
+        learning={learning}
+        onLearn={() => midi.surface.startLearn()}
+        onDone={() => (midi.setup ? midi.updateSetup({ type: 'finish' }) : midi.surface.stopLearn())}
+        onQuickSetup={() => midi.updateSetup({ type: 'start' })}
+        onC16Layout={midi.applyC16Layout}
+        onRemove={(control) => midi.mappingStore.remove(control)}
+        onClear={() => midi.mappingStore.clear()}
+        bendRange={bendRange}
+        onBendRange={setBendRange}
+      />
+      <DisplayMenu active={viewer.frozen || viewer.snapshot !== null}>
+        <section className="toolbar" aria-label="Viewer controls">
+          <div className="toolbar-groups">
+            <ToolGroup title="View">
+              <ViewActions state={viewer} dispatch={viewerStore.dispatch} />
+            </ToolGroup>
+            <ToolGroup title="Axes">
+              <AxesControls settings={settings} dispatch={viewerStore.dispatch} />
+            </ToolGroup>
+            <ToolGroup title="Show">
+              <OverlayToggles value={overlays} onToggle={(overlay) => viewerStore.dispatch({ type: 'toggleOverlay', overlay })} />
+            </ToolGroup>
+            <ToolGroup title="Keys">
+              <Tooltip content={TIPS.letterKeys}>
+                <Segmented
+                  label="Letter keys"
+                  value={letterKeys ? 'on' : 'off'}
+                  options={[
+                    { value: 'on', label: 'Play', name: 'Letter keys play Notes' },
+                    { value: 'off', label: 'Off', name: 'Letter keys off' },
+                  ]}
+                  onChange={(v) => setLetterKeys(v === 'on')}
+                />
+              </Tooltip>
+            </ToolGroup>
+            <ToolGroup title="Tips">
+              <Tooltip content={TIPS.tooltips}>
+                <Segmented
+                  label="Tooltips"
+                  value={tooltips ? 'on' : 'off'}
+                  options={[
+                    { value: 'on', label: 'On' },
+                    { value: 'off', label: 'Off' },
+                  ]}
+                  onChange={(v) => setTooltips(v === 'on')}
+                />
+              </Tooltip>
+            </ToolGroup>
+            <ToolGroup title="Theme">
+              <Tooltip content={TIPS.theme}>
+                <Segmented
+                  label="Theme"
+                  value={theme}
+                  options={[
+                    { value: 'dark', label: 'Dark' },
+                    { value: 'light', label: 'Light' },
+                  ]}
+                  onChange={(v) => setTheme(v as Theme)}
+                />
+              </Tooltip>
+            </ToolGroup>
+          </div>
+        </section>
+      </DisplayMenu>
+      <div className="about-menu">
+        <Tooltip content={TIPS.about}>
+          <button type="button" className="tool" aria-label="About" aria-haspopup="dialog" onClick={() => setAbout(true)}>
+            <InfoIcon />
+            <span className="tool-word">About</span>
+          </button>
+        </Tooltip>
+      </div>
+    </div>
+  );
+  const play = (
+    <div key="play" className="header-play" role="group" aria-label="Play">
+      <Tooltip content={TIPS.demo}>
+        <button type="button" className="tool tool-mode demo-button" aria-label="Demo" aria-pressed={players.demo !== null} data-demo onClick={players.toggleDemo}>
+          <PlayIcon />
+          <span className="demo-word">Demo</span>
+        </button>
+      </Tooltip>
+      <TutorialMenu tutorials={tutorialList} onStart={startTutorial} />
+      <Tooltip content={TIPS.song}>
+        <button type="button" className="tool tool-mode demo-button" aria-label="Song" aria-pressed={players.song} data-demo onClick={players.toggleSong}>
+          <NoteIcon />
+          <span className="demo-word">Song</span>
+        </button>
+      </Tooltip>
+    </div>
+  );
+  // Set-up and playing and learning, right of the keyboard (the owner, 2026-10-29), so the Patch picker sits beside the
+  // logo; set-up first there, so Hold stays first on the right (the owner, 2026-10-27).
+  const right = (
+    <div key="right" className="header-right">
+      {narrow ? [play, setUp] : [setUp, play]}
+    </div>
+  );
+
   return (
     <TooltipsContext.Provider value={tooltips}>
     <LearnContext.Provider value={learnContext}>
@@ -224,151 +388,9 @@ export function App() {
         ) : (
           <LearnBar state={midi.learn} />
         )}
-        {/* One order at every width (issue 44): the Wordmark and the Patch, the keyboard, then playing and learning (Demo,
-            Tutorial, Song) and set-up (Hold, MIDI, Display, About). Each layout places these groups; none reorders them. */}
-        <header>
-          <div className="header-left">
-            <div className="header-identity">
-              <Wordmark onOpen={() => setAbout(true)} />
-              <PatchBar
-                name={patchName}
-                changed={changed}
-                patch={patch}
-                library={library}
-                onLoad={patches.load}
-                tutorials={tutorialList}
-                onTutorial={startTutorial}
-              />
-            </div>
-          </div>
-          {/* Up before down, as they stand on screen, so Tab meets them in that order (issue 47). */}
-          <div className="keyboard">
-            <button type="button" className="tool tool-icon octave" aria-label="Octave up" {...shifted(octave - DEFAULT_OCTAVE)} onClick={() => setOctave((o) => shiftOctave(o, 1))}>
-              {octave > DEFAULT_OCTAVE ? `+${octave - DEFAULT_OCTAVE}` : '+'}
-            </button>
-            <button type="button" className="tool tool-icon octave" aria-label="Octave down" {...shifted(DEFAULT_OCTAVE - octave)} onClick={() => setOctave((o) => shiftOctave(o, -1))}>
-              {octave < DEFAULT_OCTAVE ? `−${DEFAULT_OCTAVE - octave}` : '−'}
-            </button>
-            <Tooltip content={TIPS.keyboard} longPress={false}>
-              <Piano octave={octave} held={players.playedNotes.length ? [...heldNotes, ...players.playedNotes] : heldNotes} input={session.input} invite={audioStatus === 'waiting'} />
-            </Tooltip>
-          </div>
-          <div className="header-right">
-            {/* Set-up, then playing and learning: right of the keyboard (the owner, 2026-10-29), so the Patch picker sits
-                beside the logo; set-up first, so Hold stays first on the right (the owner, 2026-10-27). Up to 1919 px
-                they take two rows, set-up on top; on phones each group has a row place of its own. */}
-            <div className="header-set">
-              {/* Hold first among the set-up buttons (the owner, 2026-10-27). */}
-              <Tooltip content={TIPS.hold}>
-                <button
-                  type="button"
-                  className="tool"
-                  aria-pressed={hold}
-                  data-learn="action:hold"
-                  data-mapped={learnContext.mapped.has('action:hold') || undefined}
-                  data-learn-selected={learnContext.selected === 'action:hold' || undefined}
-                  aria-label="Hold"
-                  onClick={pressHold}
-                >
-                  <HoldIcon />
-                  <span className="tool-word">Hold</span>
-                </button>
-              </Tooltip>
-              <MidiPanel
-                state={midi.midi}
-                onOpen={midi.connect}
-                activity={midi.activity}
-                mappings={midi.mappings}
-                learning={learning}
-                onLearn={() => midi.surface.startLearn()}
-                onDone={() => (midi.setup ? midi.updateSetup({ type: 'finish' }) : midi.surface.stopLearn())}
-                onQuickSetup={() => midi.updateSetup({ type: 'start' })}
-                onC16Layout={midi.applyC16Layout}
-                onRemove={(control) => midi.mappingStore.remove(control)}
-                onClear={() => midi.mappingStore.clear()}
-                bendRange={bendRange}
-                onBendRange={setBendRange}
-              />
-              <DisplayMenu active={viewer.frozen || viewer.snapshot !== null}>
-                <section className="toolbar" aria-label="Viewer controls">
-                  <div className="toolbar-groups">
-                    <ToolGroup title="View">
-                      <ViewActions state={viewer} dispatch={viewerStore.dispatch} />
-                    </ToolGroup>
-                    <ToolGroup title="Axes">
-                      <AxesControls settings={settings} dispatch={viewerStore.dispatch} />
-                    </ToolGroup>
-                    <ToolGroup title="Show">
-                      <OverlayToggles value={overlays} onToggle={(overlay) => viewerStore.dispatch({ type: 'toggleOverlay', overlay })} />
-                    </ToolGroup>
-                    <ToolGroup title="Keys">
-                      <Tooltip content={TIPS.letterKeys}>
-                        <Segmented
-                          label="Letter keys"
-                          value={letterKeys ? 'on' : 'off'}
-                          options={[
-                            { value: 'on', label: 'Play', name: 'Letter keys play Notes' },
-                            { value: 'off', label: 'Off', name: 'Letter keys off' },
-                          ]}
-                          onChange={(v) => setLetterKeys(v === 'on')}
-                        />
-                      </Tooltip>
-                    </ToolGroup>
-                    <ToolGroup title="Tips">
-                      <Tooltip content={TIPS.tooltips}>
-                        <Segmented
-                          label="Tooltips"
-                          value={tooltips ? 'on' : 'off'}
-                          options={[
-                            { value: 'on', label: 'On' },
-                            { value: 'off', label: 'Off' },
-                          ]}
-                          onChange={(v) => setTooltips(v === 'on')}
-                        />
-                      </Tooltip>
-                    </ToolGroup>
-                    <ToolGroup title="Theme">
-                      <Tooltip content={TIPS.theme}>
-                        <Segmented
-                          label="Theme"
-                          value={theme}
-                          options={[
-                            { value: 'dark', label: 'Dark' },
-                            { value: 'light', label: 'Light' },
-                          ]}
-                          onChange={(v) => setTheme(v as Theme)}
-                        />
-                      </Tooltip>
-                    </ToolGroup>
-                  </div>
-                </section>
-              </DisplayMenu>
-              <div className="about-menu">
-                <Tooltip content={TIPS.about}>
-                  <button type="button" className="tool" aria-label="About" aria-haspopup="dialog" onClick={() => setAbout(true)}>
-                    <InfoIcon />
-                    <span className="tool-word">About</span>
-                  </button>
-                </Tooltip>
-              </div>
-            </div>
-              <div className="header-play" role="group" aria-label="Play">
-                <Tooltip content={TIPS.demo}>
-                  <button type="button" className="tool tool-mode demo-button" aria-label="Demo" aria-pressed={players.demo !== null} data-demo onClick={players.toggleDemo}>
-                    <PlayIcon />
-                    <span className="demo-word">Demo</span>
-                  </button>
-                </Tooltip>
-                <TutorialMenu tutorials={tutorialList} onStart={startTutorial} />
-                <Tooltip content={TIPS.song}>
-                  <button type="button" className="tool tool-mode demo-button" aria-label="Song" aria-pressed={players.song} data-demo onClick={players.toggleSong}>
-                    <NoteIcon />
-                    <span className="demo-word">Song</span>
-                  </button>
-                </Tooltip>
-              </div>
-          </div>
-        </header>
+        {/* The Wordmark and the Patch, the keyboard, set-up (Hold, MIDI, Display, About) and playing and learning (Demo,
+            Tutorial, Song), in the order each layout shows them (issues 44 and 104). */}
+        <header>{narrow ? [identity, right, keyboard] : [identity, keyboard, right]}</header>
         <SectionStrip follow={players.demo === null ? midi.bankFollow : players.follow} />
         <About
           open={about}
@@ -413,11 +435,16 @@ export function App() {
                               choice="waveform"
                               value={patch.waveform}
                               onChange={(w) => edit((p) => setWaveform(p, w))}
-                              inactive={!osc1Heard(patch)}
+                              inactive={!osc1Heard(patch) && OSC1_SILENT}
                             />
                           </Tooltip>
                           <div className="knobs">
-                            <Knob id="pulseWidth" value={patch.pulseWidth} onChange={(v) => change('pulseWidth', v)} inactive={!osc1Heard(patch) || patch.waveform !== 'pulse'} />
+                            <Knob
+                              id="pulseWidth"
+                              value={patch.pulseWidth}
+                              onChange={(v) => change('pulseWidth', v)}
+                              inactive={(!osc1Heard(patch) && OSC1_SILENT) || (patch.waveform !== 'pulse' && "No effect unless Osc 1's Waveform is Pulse")}
+                            />
                           </div>
                         </SubBlock>
                         {/* Each Oscillator's pitch under its Waveform, on its own tab (the owner, issue 90): Osc 1's
@@ -425,8 +452,8 @@ export function App() {
                         <SubBlock title="Osc 1 Pitch" label="Pitch" tip={TIPS.osc1Pitch} group>
                           <div className="knobs">
                             {/* Greyed out while Osc 1 is not heard (the owner); its Octave also moves the Sub. */}
-                            <Knob id="osc1Octave" value={patch.osc1Octave} onChange={(v) => change('osc1Octave', v)} inactive={!osc1Heard(patch) && patch.mixSub === 0} />
-                            <Knob id="crossMod" value={patch.crossMod} onChange={(v) => change('crossMod', v)} inactive={!osc1Heard(patch)} />
+                            <Knob id="osc1Octave" value={patch.osc1Octave} onChange={(v) => change('osc1Octave', v)} inactive={!osc1Heard(patch) && patch.mixSub === 0 && 'No effect while Osc 1 and the Sub are silent'} />
+                            <Knob id="crossMod" value={patch.crossMod} onChange={(v) => change('crossMod', v)} inactive={!osc1Heard(patch) && OSC1_SILENT} />
                           </div>
                         </SubBlock>
                       </>
@@ -447,7 +474,7 @@ export function App() {
                               choice="osc2Waveform"
                               value={patch.osc2Waveform}
                               onChange={(w) => edit((p) => setWaveform(p, w, 'osc2'))}
-                              inactive={!osc2Heard(patch)}
+                              inactive={!osc2Heard(patch) && OSC2_SILENT}
                             />
                           </Tooltip>
                           <div className="knobs">
@@ -456,7 +483,7 @@ export function App() {
                               id="osc2PulseWidth"
                               value={patch.osc2PulseWidth}
                               onChange={(v) => change('osc2PulseWidth', v)}
-                              inactive={!osc2Heard(patch) || patch.osc2Waveform !== 'pulse'}
+                              inactive={(!osc2Heard(patch) && OSC2_SILENT) || (patch.osc2Waveform !== 'pulse' && "No effect unless Osc 2's Waveform is Pulse")}
                             />
                           </div>
                         </SubBlock>
@@ -465,7 +492,7 @@ export function App() {
                         <SubBlock title="Tuning" tip={TIPS.tuning} group>
                           <div className="knobs">
                             {(['osc2Octave', 'osc2Semitone', 'osc2Detune', 'osc2EnvAmount'] as const).map((id) => (
-                              <Knob key={id} id={id} value={patch[id]} onChange={(v) => change(id, v)} inactive={!osc2Heard(patch)} />
+                              <Knob key={id} id={id} value={patch[id]} onChange={(v) => change(id, v)} inactive={!osc2Heard(patch) && OSC2_SILENT} />
                             ))}
                           </div>
                         </SubBlock>
@@ -492,7 +519,7 @@ export function App() {
                               onChange={(subOctave) => edit((p) => ({ ...p, subOctave }))}
                               learn={{ kind: 'choice', id: 'subOctave' }}
                               iconic
-                              inactive={patch.mixSub === 0}
+                              inactive={patch.mixSub === 0 && 'No effect while the Sub is silent'}
                             />
                             <Segmented
                               label="Sub Waveform"
@@ -502,7 +529,7 @@ export function App() {
                               onChange={(subWaveform) => edit((p) => ({ ...p, subWaveform }))}
                               learn={{ kind: 'choice', id: 'subWaveform' }}
                               iconic
-                              inactive={patch.mixSub === 0}
+                              inactive={patch.mixSub === 0 && 'No effect while the Sub is silent'}
                             />
                           </div>
                         </SubBlock>
@@ -520,7 +547,7 @@ export function App() {
                               onChange={(noiseColour) => edit((p) => ({ ...p, noiseColour }))}
                               learn={{ kind: 'choice', id: 'noiseColour' }}
                               iconic
-                              inactive={patch.mixNoise === 0}
+                              inactive={patch.mixNoise === 0 && 'No effect while the Noise is silent'}
                             />
                           </div>
                         </SubBlock>
@@ -581,7 +608,7 @@ export function App() {
                   <div className="knobs knobs-envelope">
                     <Knob id="filterEnvAmount" value={patch.filterEnvAmount} onChange={(v) => change('filterEnvAmount', v)} />
                     {(['filterAttack', 'filterDecay', 'filterSustain', 'filterRelease'] as const).map((id) => (
-                      <Fader key={id} id={id} value={patch[id]} onChange={(v) => change(id, v)} inactive={patch.filterEnvAmount === 0 && patch.osc2EnvAmount === 0} />
+                      <Fader key={id} id={id} value={patch[id]} onChange={(v) => change(id, v)} inactive={patch.filterEnvAmount === 0 && patch.osc2EnvAmount === 0 && FILTER_ENVELOPE_IDLE} />
                     ))}
                   </div>
                 </div>
@@ -625,7 +652,7 @@ export function App() {
                   />
                 </Tooltip>
                 {/* Beside Voices, because it only slides a single Voice: with more, each Note starts at its pitch. */}
-                <Knob id="glide" value={patch.glide} onChange={(v) => change('glide', v)} inactive={patch.voices > 1} />
+                <Knob id="glide" value={patch.glide} onChange={(v) => change('glide', v)} inactive={patch.voices > 1 && 'No effect with more than one Voice'} />
               </div>
             }
             viewers={viewers('amp', 'Amp', { limiting: session.engine.limiting })}

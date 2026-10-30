@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import type { ParamId } from '../patch/patch';
+import { useInactive } from './inactive';
 import { held, pressed, useParamControl, useWheel } from './paramControl';
 import { Tooltip } from './Tooltip';
 import { PARAM_TIPS } from './tips';
@@ -11,8 +12,8 @@ interface Props {
   id: ParamId;
   value: number;
   onChange(value: number): void;
-  /** Dimmed when the Parameter has no audible effect right now (still adjustable). */
-  inactive?: boolean;
+  /** Why the Parameter has no audible effect right now ("No effect while Osc 2 is silent"): dimmed, still adjustable. */
+  inactive?: string | false;
 }
 
 /**
@@ -25,6 +26,7 @@ export function Fader({ id, value, onChange, inactive }: Props) {
   const cap = useRef<HTMLDivElement>(null);
   const press = useRef<{ y: number; position: number; onCap: boolean; moved: boolean } | null>(null);
   const wheel = useWheel(c.position, c.setPosition);
+  const dimmed = useInactive(inactive);
 
   // Where the cap's centre would be for a pointer at `clientY`: the cap travels the track less its own height.
   const positionAt = (track: HTMLElement, clientY: number) => {
@@ -35,7 +37,7 @@ export function Fader({ id, value, onChange, inactive }: Props) {
 
   return (
     <Tooltip content={PARAM_TIPS[id]}>
-      <div className="knob" data-kind="fader" data-inactive={inactive || undefined} {...c.attributes}>
+      <div className="knob" data-kind="fader" {...dimmed.props} {...c.attributes}>
         <div
           ref={wheel}
           className="fader"
@@ -86,6 +88,7 @@ export function Fader({ id, value, onChange, inactive }: Props) {
           <div ref={cap} className="fader-cap" aria-orientation="vertical" {...c.slider} />
         </div>
         {c.text}
+        {dimmed.note}
       </div>
     </Tooltip>
   );

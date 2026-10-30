@@ -1,8 +1,9 @@
 import { expect, type Page, test } from '@playwright/test';
 
-// Issue 44: one header across the layouts. The same order at every width (the Wordmark and the Patch; the keyboard; Hold,
-// MIDI, Display, About; Demo, Tutorial, Song: the owner, 2026-10-29), the octave buttons stacked beside the piano, and from 601 px up the
-// piano's 17 keys at a finger's width where there is room. In the sections 2 × 2 the header stays at the top and
+// Issue 44: one header across the layouts. Its groups the same at every width (the Wordmark and the Patch; the keyboard;
+// Hold, MIDI, Display, About; Demo, Tutorial, Song: the owner, 2026-10-29), each layout placing them in rows of its own,
+// and Tab meeting them as they stand on screen (issue 104); the octave buttons stacked beside the piano, and from 601 px
+// up the piano's 17 keys at a finger's width where there is room. In the sections 2 × 2 the header stays at the top and
 // slides its first row away, as on a phone.
 
 const SIZES = {
@@ -34,7 +35,7 @@ async function header(page: Page) {
 }
 
 for (const [size, [width, height]] of Object.entries(SIZES)) {
-  test(`one order at ${width}×${height} (${size}): Hold, MIDI, Display, About, then Demo, Tutorial, Song; the octave buttons stacked left of the piano`, async ({ page }) => {
+  test(`at ${width}×${height} (${size}) Demo, Tutorial, Song and Hold, MIDI, Display, About each read left to right, placed for the layout; the octave buttons stacked left of the piano`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await page.goto('/');
     const h = await header(page);
@@ -59,6 +60,34 @@ for (const [size, [width, height]] of Object.entries(SIZES)) {
       // The buttons on a row of their own, the keyboard under them.
       expect(h.piano.top).toBeGreaterThanOrEqual(h.demo.bottom);
       expect(h.demo.top).toBe(h.about.top);
+    }
+  });
+}
+
+for (const [size, [width, height]] of Object.entries(SIZES)) {
+  test(`at ${width}×${height} (${size}) Tab meets the header's controls as they stand on screen: each one right of the last, or on a row below it (issue 104)`, async ({ page, browserName }) => {
+    test.skip(browserName === 'webkit', 'Safari tabs to buttons only when its settings ask it to');
+    await page.setViewportSize({ width, height });
+    await page.goto('/');
+    await page.locator('.piano button').first().waitFor();
+    const stops: { name: string; left: number; right: number; top: number; bottom: number }[] = [];
+    await page.keyboard.press('Tab');
+    for (;;) {
+      const stop = await page.evaluate(() => {
+        const el = document.activeElement!;
+        if (!el.closest('header')) return null;
+        const r = el.getBoundingClientRect();
+        return { name: el.getAttribute('aria-label') ?? el.textContent ?? '', left: r.left, right: r.right, top: r.top, bottom: r.bottom };
+      });
+      if (!stop) break;
+      stops.push(stop);
+      await page.keyboard.press('Tab');
+    }
+    const names = stops.map((s) => s.name);
+    for (const name of ['Octave up', 'Octave down', 'Hold', 'MIDI', 'Display', 'About', 'Demo', 'Tutorial', 'Song']) expect(names).toContain(name);
+    for (let i = 1; i < stops.length; i++) {
+      const [a, b] = [stops[i - 1], stops[i]];
+      expect(b.left >= a.right - 1 || b.top >= a.bottom - 1, `${a.name} → ${b.name}: ${names.join(', ')}`).toBe(true);
     }
   });
 }

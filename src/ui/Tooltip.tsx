@@ -1,5 +1,6 @@
 import { createContext, type ReactNode, useContext, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { addDescription, removeDescription } from './inactive';
 import { placeTooltip } from './placeTooltip';
 
 export interface TipContent {
@@ -38,10 +39,13 @@ export function Tooltip({ content, children, longPress = true }: { content: TipC
   const pinned = useRef(false);
   const swallowClick = useRef(false);
 
-  // The control itself (not this wrapper) carries the description, so it is announced on focus.
+  // The control itself (not this wrapper) carries the description, so it is announced on focus; after the reason it is
+  // greyed out, if it is (issue 104).
   useEffect(() => {
     const target = wrapperRef.current?.querySelector('[role="radiogroup"], [role="group"], button, [role="slider"], [role="img"]');
-    target?.setAttribute('aria-describedby', id);
+    if (!target) return;
+    addDescription(target, id, 'last');
+    return () => removeDescription(target, id);
   }, [id]);
 
   const show = (delay: number) => {

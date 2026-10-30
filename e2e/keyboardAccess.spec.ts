@@ -131,3 +131,46 @@ test.describe('a first visit', () => {
     await expect(page.getByRole('button', { name: 'Demo', exact: true })).toBeFocused();
   });
 });
+
+test('a greyed-out control tells a screen reader why it does nothing now, and stops saying so once it acts (issue 104)', async ({ page }) => {
+  await page.goto('/');
+  const why = /^No effect/;
+  // Pulse Width on a Saw: still described by its tooltip, the reason first.
+  const width = page.getByRole('group', { name: 'Osc 1' }).getByRole('slider', { name: 'Pulse Width' });
+  await expect(width).toHaveAccessibleDescription(/^No effect unless Osc 1's Waveform is Pulse\. Pulse Width/);
+  await page.getByRole('radiogroup', { name: 'Osc 1 Waveform' }).getByRole('radio', { name: 'Pulse' }).click();
+  await expect(width).not.toHaveAccessibleDescription(why);
+  await expect(width).toHaveAccessibleDescription(/^Pulse Width/);
+
+  // The Filter Envelope at Amount 0.
+  const attack = page.getByRole('slider', { name: 'Filter Attack', exact: true });
+  await expect(attack).toHaveAccessibleDescription(/^No effect while the Filter Envelope Amount and Osc 2's Env Amount are 0\./);
+  await page.getByRole('slider', { name: 'Filter Envelope Amount' }).press('ArrowUp');
+  await expect(attack).not.toHaveAccessibleDescription(why);
+
+  // An LFO's Rate at Depth 0.
+  const rate = page.getByRole('slider', { name: 'LFO 1 Rate', exact: true });
+  await expect(rate).toHaveAccessibleDescription(/^No effect while LFO 1's Depth is 0\./);
+  await page.getByRole('slider', { name: 'LFO 1 Depth', exact: true }).press('ArrowUp');
+  await expect(rate).not.toHaveAccessibleDescription(why);
+
+  // Glide with more than one Voice.
+  const glide = page.getByRole('slider', { name: 'Glide', exact: true });
+  await expect(glide).not.toHaveAccessibleDescription(why);
+  await page.getByRole('radiogroup', { name: 'Voices' }).getByRole('radio', { name: '4' }).click();
+  await expect(glide).toHaveAccessibleDescription(/^No effect with more than one Voice\./);
+
+  // A silent Osc 2's Waveform and tuning, which wake up once it is mixed in.
+  await page.getByRole('tab', { name: /Osc 2/ }).click();
+  const detune = page.getByRole('slider', { name: 'Osc 2 Detune', exact: true });
+  await expect(detune).toHaveAccessibleDescription(/^No effect while Osc 2 is silent\./);
+  await expect(page.getByRole('radiogroup', { name: 'Osc 2 Waveform' })).toHaveAccessibleDescription(/^No effect while Osc 2 is silent\./);
+  // The Sub's choices, without a tooltip of their own, say it too.
+  await page.getByRole('tab', { name: /Sub & Noise/ }).click();
+  await expect(page.getByRole('radiogroup', { name: 'Sub Octave' })).toHaveAccessibleDescription('No effect while the Sub is silent.');
+  await page.getByRole('tab', { name: 'Mixer' }).click();
+  await page.getByRole('slider', { name: 'Osc 2', exact: true }).press('ArrowUp');
+  await page.getByRole('tab', { name: /Osc 2/ }).click();
+  await expect(detune).not.toHaveAccessibleDescription(why);
+  await expect(page.getByRole('radiogroup', { name: 'Osc 2 Waveform' })).not.toHaveAccessibleDescription(why);
+});

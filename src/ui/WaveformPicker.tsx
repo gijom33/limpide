@@ -1,4 +1,5 @@
 import type { Waveform } from '../music/harmonics';
+import { useInactive } from './inactive';
 import { useLearnable } from './learn';
 import { radioGroupKeys, radioTabIndex } from './radioGroup';
 
@@ -23,8 +24,8 @@ interface Props {
   onChange(waveform: Waveform): void;
   /** Which Oscillator's Waveform this is, for MIDI Learn. */
   choice: 'waveform' | 'osc2Waveform';
-  /** Greyed out, as a knob is, while the Oscillator is not heard; it still works. */
-  inactive?: boolean;
+  /** Why it has no audible effect right now: greyed out, as a knob is, while the Oscillator is not heard; it still works. */
+  inactive?: string | false;
 }
 
 /** One cycle of a Waveform, drawn as the picker draws it (the Sub's square and sine too). */
@@ -39,12 +40,13 @@ export function WaveIcon({ waveform }: { waveform: Waveform }) {
 /** The Waveforms as icons in one segmented track (their names are the radios' accessible labels). */
 export function WaveformPicker({ label, value, onChange, choice, inactive }: Props) {
   const learnable = useLearnable({ kind: 'choice', id: choice });
+  const dimmed = useInactive(inactive);
   return (
     <div
       className="segmented icon-picker waveforms"
       role="radiogroup"
       aria-label={label}
-      data-inactive={inactive || undefined}
+      {...dimmed.props}
       onKeyDown={radioGroupKeys}
       {...learnable}
     >
@@ -63,6 +65,7 @@ export function WaveformPicker({ label, value, onChange, choice, inactive }: Pro
           </svg>
         </button>
       ))}
+      {dimmed.note}
     </div>
   );
 }

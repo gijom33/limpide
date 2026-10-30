@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { Target } from '../midi/mappings';
+import { useInactive } from './inactive';
 import { useLearnable } from './learn';
 import { radioGroupKeys, radioTabIndex } from './radioGroup';
 
@@ -16,15 +17,16 @@ interface Props<T extends string | number> {
   learn?: Target;
   /** Cells as wide as the Waveform picker's, for short labels and pictures (the Sub's, the Noise's). */
   iconic?: boolean;
-  /** Greyed out, as a knob is, while what it sets is not heard; it still works. */
-  inactive?: boolean;
+  /** Why it has no audible effect right now: greyed out, as a knob is, while what it sets is not heard; it still works. */
+  inactive?: string | false;
 }
 
 /** One either/or choice drawn as a single control with the selected segment filled. */
 export function Segmented<T extends string | number>({ label, caption, value, options, onChange, learn, iconic, inactive }: Props<T>) {
   const learnable = useLearnable(learn);
+  const dimmed = useInactive(inactive);
   return (
-    <div className="segmented-field" data-inactive={inactive || undefined}>
+    <div className="segmented-field" {...dimmed.props}>
       {caption && <span className="field-caption" aria-hidden="true">{caption}</span>}
       <div className={iconic ? 'segmented icon-picker' : 'segmented'} role="radiogroup" aria-label={label} onKeyDown={radioGroupKeys} {...learnable}>
         {options.map((o, i) => (
@@ -41,6 +43,7 @@ export function Segmented<T extends string | number>({ label, caption, value, op
           </button>
         ))}
       </div>
+      {dimmed.note}
     </div>
   );
 }
