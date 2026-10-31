@@ -147,12 +147,12 @@ export function App() {
     },
     [patches],
   );
-  // C, A, D, E played by hand calls the mascot up from behind the Amp, and again sends it back down (issue 115); not
-  // remembered across a reload.
+  // C, A, D, E played by hand calls the mascot up from behind the Amp, and again sends it away, melting (issue 115);
+  // not remembered across a reload.
   const [mascot, setMascot] = useState<'off' | 'up' | 'leaving'>('off');
   useEffect(() => {
     const phrase = createCallingPhrase();
-    return session.onPress((note) => phrase.press(note, performance.now() / 1000) && setMascot((m) => (m === 'up' ? 'leaving' : 'up')));
+    return session.onPress((note) => phrase.press(note, performance.now() / 1000) && setMascot((m) => (m === 'off' ? 'up' : m === 'up' ? 'leaving' : m)));
   }, [session]);
   const mascotGone = useCallback(() => setMascot((m) => (m === 'leaving' ? 'off' : m)), []);
   const modulationContext = useMemo(() => ({ engine: session.engine, patch: () => patches.get().patch, octave: octaveRef }), [session, patches]);
@@ -724,7 +724,7 @@ export function App() {
             onQuit={tutorial.end}
           />
         )}
-        {mascot !== 'off' && <Mascot leaving={mascot === 'leaving'} onGone={mascotGone} />}
+        {mascot !== 'off' && <Mascot patches={patches} leaving={mascot === 'leaving'} onGone={mascotGone} />}
       </main>
     </MathsContext.Provider>
     </ModulationContext.Provider>
