@@ -4,6 +4,7 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-10-31, the owner, turning the C16's knobs: "There seems to be a delay between the move and the actual impact on screen."
 ## Ideas
 
 ## Dropped
