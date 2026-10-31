@@ -6,10 +6,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
-- 2026-10-31, the owner: "need to add agent reviewer who would be a complete synth neophyte who is expecting to have fun and learn with the tutorials."
-- 2026-10-31, the owner: "Would be better if text in tutorials are fun to read and easy to understand and self-explanatory."
-- 2026-10-31, the owner: "During tour, we could use tricks such as viewer freeze to explain ADSR."
-
 ## Dropped
 
 - 2026-10-30, from Claude's brainstorm, Velocity on the Volume ("a harder hit plays louder, not only brighter"): already so. The Amp Envelope's Attack rises to the Note's Velocity (PRD story 9). Claude's call, open to the owner.
@@ -122,3 +118,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-30, the owner's glass bug, fixed at once: drinking, the glass turned over came to a point beside its eyes, a pixel short of the drop; now the rim's middle goes against its side at its mouth, under its left eye, so the rim's edge is on its lips, the glass still turned as far and covering no eye.
 2026-10-30, the owner's ask for a page of Bead's secrets, done at once, decided by the owner: [bead.md](./bead.md) lists all it does, issues 115 and 127 together: calling it and sending it away, where it lives, its own life and every funny turn, each control's answer, the five words spelled with Notes, playing with it, the theme and the date, the Demo's acts, reduced motion. Linked from neither the README nor the tips, which leave Bead out on purpose (115, decision 7). Claude's call, open to the owner.
 2026-10-30, the owner's idea of a lesson on how synthesis works (triage, Claude's call, open to the owner): to [128](./issues/128-how-a-synth-works.md), five questions for the owner, each with Claude's recommendation (a Tutorial of its own before Bass, a Step per section pointing at its Taps' Viewers).
+2026-10-31, the owner's idea of a synth neophyte reviewer (triage, Claude's call, open to the owner): to [42](./issues/42-reviews.md) as profile 16, who takes the Tour and the Tutorials to have fun and learn; its first run waits for the Tour's release, and it runs again whenever a release changes their words.
+2026-10-31, the owner's idea of Tutorial words fun to read and self-explanatory (triage, Claude's call, open to the owner): to [129](./issues/129-words-fun-to-read.md), five questions for the owner, each with Claude's recommendation (a light voice, every synth word explained where a Tutorial first uses it, after profile 16's first review).
+2026-10-31, the owner's idea of Viewer tricks such as Freeze to explain ADSR in the Tour (triage, Claude's call, open to the owner): to [130](./issues/130-the-tour-freezes-to-show-adsr.md), five questions for the owner, each with Claude's recommendation (the Amp card freezes the Envelope Timeline once each stage's shape is drawn, Decay and Sustain added).
