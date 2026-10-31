@@ -5,7 +5,7 @@ While the owner sleeps, Claude builds the issues that need nothing from the owne
 ## How a night runs
 
 - **When:** a scheduled task in the Claude desktop app starts it every evening at 23:00. New issues start until 05:00 and the night ends by 07:00, with at most four issues built.
-- **Where:** a worktree at `~/limpide-night/<date>`, on the branch `night/<date>` cut from `main`. It is outside iCloud, whose syncing breaks git operations with many steps (a rebase on 2026-10-29 stopped midway and left the "… 2" copies). The Documents checkout, `main` and the other sessions' branches stay as they were.
+- **Where:** a worktree at `~/limpide-night/<date>`, on the branch `night/<date>` cut from `main`. It was first put outside iCloud, whose syncing breaks git operations with many steps (a rebase on 2026-10-29 stopped midway and left the "… 2" copies); since 2026-10-31 the checkout itself is outside it, at `~/Developer/Limpide`. The main checkout, `main` and the other sessions' branches stay as they were.
 - **What:** each issue whose Status is `ready-for-agent` and whose blockers are done, unless another session's worktree or unmerged branch carries its number. Bugs come first.
 - **How:** one subagent per issue with a fresh context. It runs `/implement`, which builds with `/tdd` and ends with `/code-review`. Issues run one at a time, because the Playwright tests share port 5199.
 - **A question for the owner** stops that issue, not the night: the question goes into the issue with Claude's recommendation, its Status becomes `needs-info`, and its code is set aside.

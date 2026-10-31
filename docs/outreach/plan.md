@@ -80,8 +80,8 @@ Scheduled tasks run while the Claude desktop app is open; one due while it is cl
 
 | Task | When | Prompt |
 | --- | --- | --- |
-| Limpide roundup | Mondays, 9:00 | In `~/Documents/Claude/Projects/Limpide`, run the outreach skill's roundup branch (`.claude/skills/outreach/SKILL.md`, argument `roundup`). Write the drafts only; post nothing and commit nothing. Report the file and the places due. |
-| Limpide digest | Mondays and Thursdays, 8:30 | In `~/Documents/Claude/Projects/Limpide`, run the outreach skill's digest branch (`.claude/skills/outreach/SKILL.md`, argument `digest`). Write the digest only; post nothing and commit nothing. Report the mentions that need a reply. |
+| Limpide roundup | Mondays, 9:00 | In `~/Developer/Limpide`, run the outreach skill's roundup branch (`.claude/skills/outreach/SKILL.md`, argument `roundup`). Write the drafts only; post nothing and commit nothing. Report the file and the places due. |
+| Limpide digest | Mondays and Thursdays, 8:30 | In `~/Developer/Limpide`, run the outreach skill's digest branch (`.claude/skills/outreach/SKILL.md`, argument `digest`). Write the digest only; post nothing and commit nothing. Report the mentions that need a reply. |
 
 ### 6. The weekly routine (the owner, about 20 minutes)
 

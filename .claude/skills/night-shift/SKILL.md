@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 The owner is asleep, so nobody answers until morning. You build the issues that need nothing from the owner, one at a time, each in a fresh subagent, on a **night branch**, and leave a **morning report**. Why it runs this way: [`docs/night-shift.md`](../../../docs/night-shift.md).
 
-**The checkout** is `~/Documents/Claude/Projects/Limpide`, called `main checkout` below. The night works in a worktree at `~/limpide-night/<date>`, outside iCloud, since iCloud's sync breaks git operations with many steps. The date is the evening's, `YYYY-MM-DD`.
+**The checkout** is `~/Developer/Limpide`, called `main checkout` below. The night works in a worktree at `~/limpide-night/<date>`, apart from the main checkout. The date is the evening's, `YYYY-MM-DD`.
 
 ## The night's bounds
 
