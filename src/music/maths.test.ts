@@ -69,6 +69,14 @@ describe('the Maths Layer under FM and Ring (issue 109)', () => {
     expect(oscillatorFormulas(defaultPatch())).toEqual([harmonicFormula('saw', 0.25)]);
   });
 
+  it('Osc 1 silent (its fader down, Ring off): its series marked as not the sound, FM up or not', () => {
+    for (const crossMod of [0, 0.5]) {
+      const [line, ...rest] = oscillatorFormulas({ ...defaultPatch(), mixOsc1: 0, mixRing: 0, crossMod });
+      expect(rest).toEqual([]);
+      expect(line.where).toContain('Osc 1 is silent: not the sound now');
+    }
+  });
+
   it('with FM at 50 %: the sideband rule, β = 2 and its Bessel sizes, and the saw’s series no longer the sound’s', () => {
     const lines = oscillatorFormulas({ ...defaultPatch(), crossMod: 0.5 });
     expect(lines[0].formula).toBe('n f₁ + k f₂:  bₙ |Jₖ(n β)|,  β = 4 × FM = 2.00');

@@ -45,7 +45,8 @@ export function oscillatorFormulas(patch: Patch): Formula[] {
   const series = harmonicFormula(patch.waveform, patch.pulseWidth);
   const fm = patch.crossMod > 0 && osc1Heard(patch);
   const ring = patch.mixRing > 0;
-  if (!fm && !ring) return [series];
+  // Osc 1 silent (its fader down, Ring off): its series, but not what sounds, FM or not.
+  if (!fm && !ring) return [osc1Heard(patch) ? series : { formula: series.formula, where: `${series.where}; Osc 1 is silent: not the sound now` }];
   const r = osc2Ratio(patch);
   const lines: Formula[] = [];
   if (fm) {
