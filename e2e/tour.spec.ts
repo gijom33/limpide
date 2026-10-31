@@ -149,7 +149,7 @@ for (const at of [1, 2, 3, 4]) {
     await page.keyboard.press('ArrowUp');
     await expect(patchName(page)).toHaveAttribute('data-changed');
     const saved = () => page.evaluate(() => localStorage.getItem('limpide.current'));
-    await expect.poll(saved).toContain('"resonance"');
+    await expect.poll(saved).toContain('"resonance":0.82'); // the turn itself saved, not only Acid
     const mine = await saved();
     expect(mine).not.toBeNull();
     await expect.poll(saved).toBe(mine); // the autosave has settled
