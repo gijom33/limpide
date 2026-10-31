@@ -97,9 +97,10 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    # One deploy at a time, and never one stopped halfway (as GitHub's own Pages workflow): a newer one waits.
     concurrency:
       group: pages
-      cancel-in-progress: true
+      cancel-in-progress: false
     steps:
       - id: deployment
         uses: actions/deploy-pages@v5

@@ -50,3 +50,11 @@ From the release review's standards axis, judgement calls, behaviour unchanged (
 - **One place each:** the Patch's keyboard octave is left out by hand in three places (the choices, the sanitizer, the differences); the 860 px breakpoint is written in the styles and the App; the Demo card's keys are listed again in the stop rule.
 - **Caches:** the Oscillators' waves, the LFO waves and the Ideal keep three caches with three eviction policies; one small cache shape for all three.
 - **Names and shapes:** the wave cache's size named `CUT_WAVES`; the wheel hook taking three of a control's fields rather than the control; the step buttons choosing their glyph from their label's words; a Preset group's shared fields overriding each Preset's own, for one field; the Patch file format importing from the keyboard's layout; "No effect while the Sub is silent" written inline twice.
+
+From the 1.17.0 release review (2026-10-30), its standards axis, behaviour unchanged (Claude's call, open to the owner):
+
+- **One place each:** the right-column test (`rightmost - right < 4`) and the in-view test (`top - HEIGHT - HEADROOM >= 0`) each written twice in Bead's component; `WAVE_NAMES` in the Maths Layer a third copy of the Waveforms' names (the picker's labels, the Tutorials').
+- **Shapes:** `choosePerch` takes seven positional arguments (an options object, as the standards ask); Bead's component, over 800 lines, does its line, visits, throwing, surfing, leaving and drawing in one render loop (split by what changes together); it reaches into the LFO plot's private `PAD` and `SPAN` to find the plot's line (the plot could give "the line's y at x").
+- **Names and types:** App's `mascot` (`'off' | 'up' | 'leaving'`) and `bead` (`'unmet' | 'on' | 'off'`), where `'off'` means two things (`beadPresence`, `beadSwitch`); the Bead switch's stored value cast unchecked from storage (a named type and a parse); the theme handler in Bead's component assigning `themeSwitched` above its declaration (safe, as it runs later, but reads like an error); the comment "The Tutorials, from the Patches panel…" now above the Preset about line's code.
+- **Fragile:** a Preset's about line is found by comparing `JSON.stringify` of the Patch, which depends on key order (safe while `load` keeps the Preset's own object).
+
