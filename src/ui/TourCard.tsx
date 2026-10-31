@@ -40,7 +40,7 @@ function useSectionInView(card: Card, docked: RefObject<HTMLElement | null>) {
     // page changes size while it is shown (on GitHub's Linux the last card came out 22 px taller after the scroll).
     let shown = false;
     const resized = new ResizeObserver(() => shown && bring());
-    if (docked.current) resized.observe(docked.current);
+    if (docked.current) resized.observe(docked.current, { box: 'border-box' });
     resized.observe(document.querySelector('main')!);
     const scroll = setTimeout(() => {
       shown = true;

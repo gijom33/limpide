@@ -19,7 +19,7 @@ export function useDocked(card: RefObject<HTMLElement | null>, room: 'always' | 
       root.toggleAttribute('data-docked', room === 'always' || main.offsetTop + main.offsetHeight > innerHeight);
     };
     const observer = new ResizeObserver(update);
-    observer.observe(card.current!);
+    observer.observe(card.current!, { box: 'border-box' }); // its offsetHeight, padding and border included
     observer.observe(main);
     addEventListener('resize', update);
     update();
