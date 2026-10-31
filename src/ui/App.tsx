@@ -358,7 +358,6 @@ export function App() {
               <ToolGroup title="Bead">
                 <Tooltip content={{ title: 'Bead', body: 'The water drop B, E, A, D calls. Off, it melts away and the Notes do nothing.' }}>
                   <div className="bead-switch">
-                    <BeadIcon on={bead === 'on'} />
                     <Segmented
                       label="Bead"
                       value={bead}
@@ -368,6 +367,7 @@ export function App() {
                       ]}
                       onChange={(v) => switchBead(v === 'on')}
                     />
+                    <BeadIcon on={bead === 'on'} />
                   </div>
                 </Tooltip>
               </ToolGroup>

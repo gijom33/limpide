@@ -279,3 +279,23 @@ test('a pointer over it tickles it; a click sends tiny drops every way', async (
   await page.mouse.click(now.x, now.y);
   await expect.poll(() => page.locator('.mascot-spray rect:not([style*="none"])').count()).toBeGreaterThan(4);
 });
+
+test('clicked again and again, it runs off', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  await listening(page);
+  await play(page, 'jdhs');
+  await expect.poll(async () => Math.abs((await footing(page)).below) <= 1).toBe(true);
+  const where = async () => {
+    const box = (await page.locator('.mascot-drop').boundingBox())!;
+    return { x: box.x + 9, y: box.y + box.height - 8 };
+  };
+  const start = await where();
+  for (let i = 0; i < 7; i++) {
+    const at = await where();
+    if (Math.abs(at.x - start.x) > 30) break;
+    await page.mouse.click(at.x, at.y);
+    await page.waitForTimeout(120);
+  }
+  await expect.poll(async () => Math.abs((await where()).x - start.x), { timeout: 4000 }).toBeGreaterThan(40);
+});

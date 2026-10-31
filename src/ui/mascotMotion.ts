@@ -45,12 +45,14 @@ export interface Pose {
   burst: { count: number; spread: Fling } | null;
   /** The funny turn it is doing, if any. */
   doing: Trick | null;
-  /** Something it has for a trick: an umbrella on its head, or a glass of water beside it (full, half, empty). */
-  prop: 'none' | 'umbrella' | 'glassFull' | 'glassHalf' | 'glassEmpty';
+  /** Something it has for a trick: an umbrella on its head, a glass of water (full, half, empty), a water gun. */
+  prop: 'none' | 'umbrella' | 'glassFull' | 'glassHalf' | 'glassEmpty' | 'gun';
   /** A little rain cloud over it. */
   cloud: boolean;
   /** How far the glass has come up to its mouth and tipped, drinking (0 to 1). */
   sip: number;
+  /** The frame it has had enough of being tickled or clicked, and runs off. */
+  escaped: boolean;
   /** Melted away: it can go. */
   gone: boolean;
 }
@@ -96,6 +98,12 @@ const DANCE_SPEED = 170;
 
 /** A tickle lasts this long after the pointer last moved on it. */
 const TICKLE_SECONDS = 0.35;
+/** Fed up past this (seconds of tickling, a click counting `POKE`, forgotten at `FORGIVE` a second), it runs off. */
+const FED_UP = 2.5;
+const POKE = 0.6;
+const FORGIVE = 0.25;
+/** Having run off, it will not be tickled for this long. */
+const AWAY_SECONDS = 4;
 
 /** Its funny turns when nothing is played, and how long each lasts. */
 /** Frightened at an end of its room, it scoots back this far. */
@@ -123,6 +131,7 @@ const resting: Omit<Pose, 'x'> = {
   prop: 'none',
   cloud: false,
   sip: 0,
+  escaped: false,
   gone: false,
 };
 
@@ -155,6 +164,23 @@ export function createMascotMotion(random: () => number = Math.random) {
   let danceWay: -1 | 1 = 1;
   let tickledUntil = -Infinity;
   let lastRoom: Room | null = null;
+  // Its tricks, dealt like a shuffled deck: each once before any comes again.
+  let deck: Trick[] = [];
+  const deal = (): Trick => {
+    if (!deck.length) {
+      deck = [...PICKED_TRICKS];
+      for (let i = deck.length - 1; i > 0; i--) {
+        const j = Math.floor(random() * (i + 1));
+        [deck[i], deck[j]] = [deck[j], deck[i]];
+      }
+    }
+    return deck.pop()!;
+  };
+  // How fed up it is with being tickled and clicked; past `FED_UP` it runs off, and keeps away a while.
+  let fedUp = 0;
+  let lastTickle = -Infinity;
+  let escapedUntil = -Infinity;
+  let escaping = false;
   const started = new Map<Gesture, { at: number; side: -1 | 1 }>();
   // Reduced motion: the pose holds until a Note or a gesture.
   let heardNote: number | null = null;
@@ -189,7 +215,7 @@ export function createMascotMotion(random: () => number = Math.random) {
     if (gesture === 'perform') {
       // With nothing played for a while, a funny turn on cue; with music, a glance.
       if (now - busySince >= LISTENING_SECONDS && leftAt === null) {
-        perform(PICKED_TRICKS[Math.floor(random() * PICKED_TRICKS.length)], now);
+        perform(deal(), now);
         return;
       }
       gesture = 'look';
@@ -220,11 +246,19 @@ export function createMascotMotion(random: () => number = Math.random) {
     },
     /** Tickled (a pointer over it), until a moment after the last call: it squirms and giggles. */
     tickle(now: number) {
-      if (leftAt !== null) return;
+      if (leftAt !== null || now < escapedUntil) return;
+      fedUp += Math.min(0.1, Math.max(0, now - lastTickle));
+      lastTickle = now;
       tickledUntil = now + TICKLE_SECONDS;
       busySince = now;
       trick = null;
       target = null;
+    },
+    /** Clicked or touched: a tickle, and it counts for more. */
+    poke(now: number) {
+      if (leftAt !== null || now < escapedUntil) return;
+      this.tickle(now);
+      fedUp += POKE;
     },
     /** Put down at `at` (after a fall or a flight to another line): it carries on from there. */
     place(at: number) {
@@ -300,6 +334,20 @@ export function createMascotMotion(random: () => number = Math.random) {
         return { ...(dozing ? { ...still, eyes: 'shut' } : still), x };
       }
 
+      // Had enough of tickles and clicks: it runs off, to the far end of its room, eyes shut, droplets flying.
+      fedUp = Math.max(0, fedUp - FORGIVE * dt);
+      let escapedNow = false;
+      if (fedUp >= FED_UP) {
+        fedUp = 0;
+        escapedUntil = now + AWAY_SECONDS;
+        tickledUntil = -Infinity;
+        trick = null;
+        target = x - room.min > room.max - x ? room.min : room.max;
+        speed = 230;
+        gait = 'scoot';
+        escaping = true;
+        escapedNow = true;
+      }
       if (trick && now - trick.at >= lasting(trick.name)) {
         // Frightened at the edge, it scoots back from it.
         if (trick.name === 'scared') {
@@ -313,7 +361,7 @@ export function createMascotMotion(random: () => number = Math.random) {
       if (target === null && trick === null && !dozing && now >= nextIdea) {
         const roll = random();
         if (idle && roll < 0.35) {
-          perform(PICKED_TRICKS[Math.floor(random() * PICKED_TRICKS.length)], now);
+          perform(deal(), now);
         } else if (roll < (idle ? 0.45 : 0.25)) {
           startGesture('look', now);
           nextIdea = now + between(1, 3);
@@ -345,6 +393,7 @@ export function createMascotMotion(random: () => number = Math.random) {
         if (Math.abs(away) <= speed * dt) {
           x = target;
           target = null;
+          escaping = false;
           nextIdea = now + between(1, 3.5);
           // At an end of its room, now and then it looks over the edge and takes fright.
           const end = x - room.min < 2 ? -1 : room.max - x < 2 ? 1 : 0;
@@ -405,6 +454,11 @@ export function createMascotMotion(random: () => number = Math.random) {
         });
       }
 
+      if (escapedNow) {
+        pose.escaped = true;
+        pose.burst = { count: 3, spread: 'side' };
+      }
+      if (escaping && walking) pose.eyes = 'shut';
       if (now < tickledUntil) {
         // Squirming and giggling: a quick wiggle, little hops, its tail going, its feet everywhere.
         const w = 2 * Math.PI * now;

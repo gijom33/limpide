@@ -194,7 +194,7 @@ export const TRICK_MOVES = {
       if (p >= 0.2 && p < 0.6) {
         const gulp = Math.sin((p - 0.2) * TAU * 6);
         pose.sip += 0.08 * gulp;
-        pose.tilt -= 6;
+        pose.tilt += 4; // its head back a little, to drink
         pose.stretch *= 1 + 0.04 * gulp + 0.25 * (p - 0.2);
         pose.eyes = 'shut';
       } else if (p >= 0.6) {
@@ -205,6 +205,34 @@ export const TRICK_MOVES = {
           c.spray(1, 'spout', Infinity);
         } else pose.eyes = 'happy';
       } else pose.eyes = 'happy';
+    },
+  },
+  /**
+   * A water gun: pulled out, it turns to aim it its way, fires a jet of water with a little recoil, blows on the
+   * barrel like a cowboy, and puts it away. (The gun is drawn on its left: it faces right by turning round.)
+   */
+  waterGun: {
+    seconds: 2.8,
+    move(pose, p, c) {
+      pose.turn = c.side > 0 ? -1 : 1;
+      if (p < 0.88) pose.prop = 'gun';
+      if (p < 0.12) {
+        pose.lift += Math.sin((p / 0.12) * Math.PI) * 4;
+        pose.eyes = 'happy';
+      } else if (p < 0.3) {
+        pose.eyes = 'left'; // along the barrel, turned with it
+      } else if (p < 0.68) {
+        pose.x -= c.side * Math.abs(Math.sin(c.now * TAU * 15)) * 1.5; // the recoil
+        pose.tilt -= c.side * 3;
+        pose.eyes = 'happy';
+        c.spray(1, 'jet', 0.03);
+      } else if (p < 0.85) {
+        pose.eyes = 'shut'; // blowing on the barrel
+        pose.stretch *= 1 + 0.05 * Math.sin(((p - 0.68) / 0.17) * Math.PI);
+      } else {
+        pose.wag = Math.sin(c.now * TAU * 6) * 25;
+        pose.eyes = 'happy';
+      }
     },
   },
   /** Three bounces, getting lower. */

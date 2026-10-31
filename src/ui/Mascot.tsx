@@ -55,6 +55,14 @@ const UMBRELLA = {
   handle: [[4, -4, 1, 4]],
 } satisfies Record<string, Rect[]>;
 const GLASS: Rect[] = [[-7, 5, 1, 8], [-3, 5, 1, 8], [-6, 12, 3, 1]];
+/** A toy water gun held at its left: its tank of water on top, its body and barrel, its grip. */
+const GUN = {
+  tank: [[-4, 6, 2, 1]],
+  body: [[-3, 7, 3, 2], [-6, 8, 3, 1]],
+  grip: [[-2, 9, 1, 2]],
+} satisfies Record<string, Rect[]>;
+/** The gun's muzzle, in the drawing's pixels from the drop's box: where its jet leaves. */
+const MUZZLE = { x: -12, y: 17 };
 const WATER = { glassFull: [[-6, 6, 3, 6]], glassHalf: [[-6, 9, 3, 3]], glassEmpty: [] } satisfies Record<string, Rect[]>;
 const CLOUD: Rect[] = [[2, -16, 4, 1], [0, -15, 8, 1], [-1, -14, 11, 2], [0, -12, 9, 1]];
 
@@ -179,6 +187,7 @@ export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leav
   const glass = useRef<SVGGElement>(null);
   const water = useRef(new Map<string, SVGGElement>());
   const cloud = useRef<SVGGElement>(null);
+  const gun = useRef<SVGGElement>(null);
   // A pointer on it tickles it; a click or a touch sends droplets every way (set up with the drawing below).
   const touched = useRef<{ tickle(): void; poke(): void } | null>(null);
   const leavingRef = useRef(leaving);
@@ -216,7 +225,7 @@ export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leav
     touched.current = {
       tickle: () => motion.tickle(context.engine.now()),
       poke: () => {
-        motion.tickle(context.engine.now());
+        motion.poke(context.engine.now());
         motion.gesture('louder', context.engine.now());
         droplets.fling(9, middle.x, middle.y, 'all');
       },
@@ -277,6 +286,8 @@ export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leav
         still.matches,
         room.room,
       );
+      // Run off: on a large screen, to another section.
+      if (pose.escaped && !stacked.matches) nextVisit = now;
       const where = place.frame(perch, room.room, now, still.matches, pose.x);
       if (where.landedAt !== null) motion.place(where.landedAt);
       foot = where.foot;
@@ -347,16 +358,23 @@ export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leav
             droplets.fling(1, at, ground - HEIGHT - 22, 'rain', 0.5, onUmbrella ? ground - HEIGHT - 18 - pose.lift : ground);
           }
         } else {
-          const from = fling === 'up' || fling === 'drip' ? base.y : fling === 'spout' ? ground - HEIGHT - pose.lift : middle.y;
-          droplets.fling(count, base.x, from, fling, 1);
+          if (fling === 'jet') {
+            // From the muzzle, turned with it: the gun is drawn on its left.
+            const facing = pose.turn < 0 ? -1 : 1;
+            droplets.fling(count, left + DROP_MIDDLE + facing * (MUZZLE.x - DROP_MIDDLE), ground - HEIGHT - pose.lift + MUZZLE.y, 'jet', -facing);
+          } else {
+            const from = fling === 'up' || fling === 'drip' ? base.y : fling === 'spout' ? ground - HEIGHT - pose.lift : middle.y;
+            droplets.fling(count, base.x, from, fling, 1);
+          }
         }
       }
       // Its props: shown as the trick has them.
       umbrella.current!.style.display = pose.prop === 'umbrella' ? '' : 'none';
+      gun.current!.style.display = pose.prop === 'gun' ? '' : 'none';
       const glassy = pose.prop.startsWith('glass');
       glass.current!.style.display = glassy ? '' : 'none';
-      // Lifted to its mouth and tipped toward it, about the glass's rim on the drop's side.
-      glass.current!.setAttribute('transform', pose.sip ? `translate(${4 * pose.sip} ${-2.5 * pose.sip}) rotate(${55 * pose.sip} -3 5)` : '');
+      // Lifted to its mouth, its rim just under its eyes, and tipped up to pour, about that rim.
+      glass.current!.setAttribute('transform', pose.sip ? `translate(${7 * pose.sip} ${6 * pose.sip}) rotate(${40 * pose.sip} -3 5)` : '');
       for (const [level, g] of water.current) g.style.display = level === pose.prop ? '' : 'none';
       cloud.current!.style.display = pose.cloud ? '' : 'none';
       if (where.moving === 'flying' && where.thrust && now - lastExhaust > 0.035) {
@@ -421,6 +439,11 @@ export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leav
               </g>
             )),
           )}
+          <g ref={gun} style={{ display: 'none' }}>
+            <g className="mascot-body">{rects(GUN.tank)}</g>
+            <g className="mascot-gun">{rects(GUN.body)}</g>
+            <g className="mascot-handle">{rects(GUN.grip)}</g>
+          </g>
           <g ref={umbrella} style={{ display: 'none' }}>
             <g className="mascot-umbrella">{rects(UMBRELLA.canopy)}</g>
             <g className="mascot-handle">{rects(UMBRELLA.handle)}</g>

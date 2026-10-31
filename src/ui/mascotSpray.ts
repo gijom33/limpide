@@ -14,9 +14,9 @@ export interface Droplet {
  * How droplets leave it: `up`, a splash up and out from its foot (landing, smashing down); `side`, flung out sideways
  * (shaking itself, sneezing); `down`, sprayed below (its tail pushing it up); `all`, escaping every way (a click or a
  * touch); `drip`, dribbled at its foot (waddling); `spout`, straight up from its head (a fountain, a burp); `rain`,
- * falling from a cloud.
+ * falling from a cloud; `jet`, shot from a water gun, its way given by `strength`'s sign.
  */
-export type Fling = 'up' | 'side' | 'down' | 'all' | 'drip' | 'spout' | 'rain';
+export type Fling = 'up' | 'side' | 'down' | 'all' | 'drip' | 'spout' | 'rain' | 'jet';
 
 /** Gravity on a droplet, in pixels a second squared (lighter than on the drop itself, for a slower, prettier arc). */
 export const DROPLET_GRAVITY = 1500;
@@ -54,6 +54,9 @@ export function createSpray(random: () => number = Math.random) {
         } else if (fling === 'rain') {
           vx = 0;
           vy = between(160, 220);
+        } else if (fling === 'jet') {
+          vx = Math.sign(strength || 1) * between(380, 480);
+          vy = -between(0, 70);
         } else {
           const angle = random() * 2 * Math.PI;
           const speed = between(110, 260);

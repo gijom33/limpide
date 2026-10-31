@@ -5,7 +5,7 @@ import { PICKED_TRICKS, TRICK_MOVES, type Trick } from './mascotTricks';
 
 const resting: Pose = {
   form: 'drop', splash: 'none', legs: 'stand', eyes: 'open', x: 0, lift: 0, tilt: 0, stretch: 1, turn: 1, wag: 0, fade: 1,
-  burst: null, doing: null, prop: 'none', cloud: false, sip: 0, gone: false,
+  burst: null, doing: null, prop: 'none', cloud: false, sip: 0, escaped: false, gone: false,
 };
 
 /** A trick played through at 60 frames a second: its poses, and the droplets it asked for. */
@@ -75,6 +75,15 @@ describe("the mascot's funny turns (issue 115)", () => {
     const hiccups = play('hiccup').poses.map((p) => p.eyes === 'shut').filter((shut, i, all) => shut && !all[i - 1]);
     expect(hiccups).toHaveLength(3);
     expect(play('puddle').sprays).toEqual(['up']);
+  });
+
+  it('pulls a water gun, turns to aim it its way, fires a jet, and puts it away', () => {
+    for (const side of [-1, 1] as const) {
+      const { poses, sprays } = play('waterGun', side);
+      expect(poses[Math.floor(poses.length / 2)]).toMatchObject({ prop: 'gun', turn: side > 0 ? -1 : 1 });
+      expect(poses.at(-1)!.prop).toBe('none');
+      expect(sprays.filter((f) => f === 'jet').length).toBeGreaterThan(10);
+    }
   });
 
   it('moonwalks backwards, looking ahead; chases its tail round and round', () => {

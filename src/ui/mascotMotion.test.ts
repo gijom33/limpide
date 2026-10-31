@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createMascotMotion, DOZE_SECONDS, GESTURE_SECONDS, type Heard, HOP_SECONDS, LEAVE_SECONDS, NUDGE_PX, type Pose, type Room } from './mascotMotion';
+import { PICKED_TRICKS } from './mascotTricks';
 
 const quiet: Heard = { amp: 0, sway: 0, struck: null };
 const playing: Heard = { amp: 0.5, sway: 0, struck: null };
@@ -215,6 +216,47 @@ describe('the mascot dancing, tickled and frightened (issue 115)', () => {
       expect(Math.abs(poses[Math.min(poses.length - 1, fright + 45)].x - end)).toBeGreaterThan(15);
     }
     expect(frightened).toBeGreaterThan(1);
+  });
+});
+
+describe('the mascot fed up, and its tricks dealt (issue 115)', () => {
+  it('deals its tricks like a shuffled deck: each once before any comes again', () => {
+    const motion = createMascotMotion(seeded(6));
+    motion.frame(quiet, 0, false, wide);
+    const dealt: string[] = [];
+    for (let i = 0; i < PICKED_TRICKS.length; i++) {
+      const t = 4 + i * 0.5; // a cue again within a gesture's length carries on
+      motion.gesture('perform', t);
+      dealt.push(motion.frame(quiet, t, false, wide).doing!);
+    }
+    expect(new Set(dealt).size).toBe(PICKED_TRICKS.length);
+  });
+
+  it('tickled too long, it runs off to the far end of its room, and will not be tickled for a while', () => {
+    const motion = createMascotMotion(() => 0.5);
+    motion.frame(quiet, 0, false, { min: 0, max: 200 }); // the middle
+    motion.place(40); // nearer the left end
+    const poses: Pose[] = [];
+    for (let t = 0.1; t <= 6; t += 1 / 60) {
+      motion.tickle(t);
+      poses.push(motion.frame(quiet, t, false, { min: 0, max: 200 }));
+    }
+    const ran = poses.findIndex((p) => p.escaped);
+    expect(ran / 60).toBeGreaterThan(2);
+    expect(ran / 60).toBeLessThan(5);
+    expect(poses.slice(ran).some((p) => p.x === 200)).toBe(true);
+    expect(poses.slice(ran + 5, ran + 60).every((p) => p.eyes !== 'happy')).toBe(true);
+  });
+
+  it('clicked again and again, it runs off too', () => {
+    const motion = createMascotMotion(() => 0.5);
+    motion.frame(quiet, 0, false, wide);
+    let ran = false;
+    for (let i = 0; i < 6 && !ran; i++) {
+      motion.poke(0.2 + i * 0.25);
+      ran = motion.frame(quiet, 0.2 + i * 0.25, false, wide).escaped;
+    }
+    expect(ran).toBe(true);
   });
 });
 

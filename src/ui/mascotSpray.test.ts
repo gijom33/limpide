@@ -42,6 +42,12 @@ describe("the mascot's droplets (issue 115)", () => {
     expect(all.some((d) => d.vx < 0) && all.some((d) => d.vx > 0) && all.some((d) => d.vy > 0)).toBe(true);
   });
 
+  it('a water gun shoots a fast jet its way', () => {
+    const spray = createSpray(seeded(13));
+    spray.fling(5, 0, 0, 'jet', -1);
+    expect(spray.step(0).every((d) => d.vx < -300)).toBe(true);
+  });
+
   it('rain falls straight down and ends where it lands', () => {
     const spray = createSpray(seeded(11));
     spray.fling(5, 50, 0, 'rain', 0.5, 40);
