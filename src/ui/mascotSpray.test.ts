@@ -48,6 +48,20 @@ describe("the mascot's droplets (issue 115)", () => {
     expect(spray.step(0).every((d) => d.vx < -300)).toBe(true);
   });
 
+  it('water poured from a glass falls as it goes, a little its way, until it reaches the mouth', () => {
+    const spray = createSpray(seeded(17));
+    spray.fling(4, 0, 0, 'pour', 1, 10);
+    const first = spray.step(0.02).map((d) => ({ ...d }));
+    expect(first.every((d) => d.vx > 0 && d.vy > 0)).toBe(true);
+    expect(spray.step(0.2)).toHaveLength(0);
+  });
+
+  it("a fountain's jet goes up at its angle", () => {
+    const spray = createSpray(seeded(19));
+    spray.fling(3, 0, 0, 'arc', 0.5);
+    for (const d of spray.step(0)) expect(Math.atan2(d.vx, -d.vy)).toBeCloseTo(0.5, 6);
+  });
+
   it('rain falls straight down and ends where it lands', () => {
     const spray = createSpray(seeded(11));
     spray.fling(5, 50, 0, 'rain', 0.5, 40);

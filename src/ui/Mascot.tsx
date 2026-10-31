@@ -4,7 +4,7 @@ import type { PatchStore } from '../patch/patchStore';
 import { addToRenderLoop } from '../viewers/renderLoop';
 import { gesturesOf } from './mascotGestures';
 import { createMascotMotion, type Pose, type Room } from './mascotMotion';
-import { choosePerch, createMascotPlace, type Moving, type Perch } from './mascotPlace';
+import { acrossOf, choosePerch, createMascotPlace, type Moving, type Perch } from './mascotPlace';
 import { createSpray, MOST_DROPLETS } from './mascotSpray';
 import { ModulationContext } from './modulationRing';
 import { SECTIONS } from './sections';
@@ -49,11 +49,17 @@ const PARTS = {
 } satisfies { [P in 'form' | 'splash' | 'legs' | 'eyes']: Record<Pose[P], Rect[]> };
 type Part = keyof typeof PARTS;
 
-/** Its props, on the same grid: an umbrella balanced on the tip of its head, a glass beside it, a cloud above. */
+/** Its props, on the same grid: an umbrella over its head, wider than it (folded, then open), a glass. */
 const UMBRELLA = {
-  canopy: [[4, -9, 1, 1], [3, -8, 3, 1], [1, -7, 7, 1], [0, -6, 9, 1], [0, -5, 1, 1], [2, -5, 1, 1], [4, -5, 1, 1], [6, -5, 1, 1], [8, -5, 1, 1]],
-  handle: [[4, -4, 1, 4]],
+  canopy: [[4, -11, 1, 1], [2, -10, 5, 1], [0, -9, 9, 1], [-2, -8, 13, 1], [-3, -7, 15, 1], [-3, -6, 1, 1], [0, -6, 2, 1], [3, -6, 3, 1], [7, -6, 2, 1], [11, -6, 1, 1]],
+  shut: [[4, -11, 1, 1], [3, -10, 3, 5]],
+  handle: [[4, -5, 1, 5]],
 } satisfies Record<string, Rect[]>;
+/** The open umbrella's span across and its top, on the grid: the rain falling there ends on it. */
+const CANOPY = { from: -3, to: 12, top: -8 };
+/** The rain falls from a stretch of sky this wide either side of it, from this high over its edge, in pixels. */
+const RAIN_WIDE = 80;
+const RAIN_HIGH = 120;
 const GLASS: Rect[] = [[-7, 5, 1, 8], [-3, 5, 1, 8], [-6, 12, 3, 1]];
 /** A toy water gun held at its left: its tank of water on top, its body and barrel, its grip. */
 const GUN = {
@@ -63,8 +69,21 @@ const GUN = {
 } satisfies Record<string, Rect[]>;
 /** The gun's muzzle, in the drawing's pixels from the drop's box: where its jet leaves. */
 const MUZZLE = { x: -12, y: 17 };
-const WATER = { glassFull: [[-6, 6, 3, 6]], glassHalf: [[-6, 9, 3, 3]], glassEmpty: [] } satisfies Record<string, Rect[]>;
-const CLOUD: Rect[] = [[2, -16, 4, 1], [0, -15, 8, 1], [-1, -14, 11, 2], [0, -12, 9, 1]];
+/** The water in the glass: at its bottom upright; turned over, at its rim, where it falls to. */
+const WATER = {
+  glassFull: [[-6, 6, 3, 6]],
+  glassHalf: [[-6, 9, 3, 3]],
+  glassLow: [[-6, 11, 3, 1]],
+  glassHalfOver: [[-6, 6, 3, 3]],
+  glassLowOver: [[-6, 6, 3, 1]],
+  glassEmpty: [],
+} satisfies Record<string, Rect[]>;
+/** Drinking: the glass's rim (its middle, on the glass) goes to here, beside and above its mouth, turned this far. */
+const RIM = { x: -5, y: 5 };
+const POURING_AT = { x: -1, y: 7 };
+const TURNED_OVER = 135;
+/** Its mouth's height on the drawing: the poured water ends there. */
+const MOUTH_Y = 10.5;
 
 /** Its size on screen: 2 px a square of the grid. */
 const WIDTH = 44;
@@ -185,9 +204,9 @@ export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leav
   const tail = useRef<SVGGElement>(null);
   const spray = useRef<SVGSVGElement>(null);
   const umbrella = useRef<SVGGElement>(null);
+  const shutUmbrella = useRef<SVGGElement>(null);
   const glass = useRef<SVGGElement>(null);
   const water = useRef(new Map<string, SVGGElement>());
-  const cloud = useRef<SVGGElement>(null);
   const gun = useRef<SVGGElement>(null);
   // A pointer on it tickles it; a click or a touch sends droplets every way (set up with the drawing below).
   const touched = useRef<{ tickle(): void; poke(): void } | null>(null);
@@ -342,7 +361,7 @@ export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leav
       shown = pose;
 
       const page = (outer.offsetParent ?? document.body).getBoundingClientRect();
-      const left = (where.x ?? pose.x) - page.left;
+      const left = acrossOf(where, pose.x) - page.left;
       const ground = where.foot - page.top;
       outer.style.transform = `translate(${left}px, ${ground - HEIGHT - HEADROOM}px)`;
       // Its droplets, in the page: a splash as it lands (harder, more), its smash, its shake, its tail's spray.
@@ -352,14 +371,22 @@ export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leav
       if (pose.burst) {
         const { count, spread: fling } = pose.burst;
         if (fling === 'rain') {
-          // From the cloud; on the umbrella, if it is up and the drop falls on it, else down to the edge.
+          // From the sky all around; on the umbrella, if it is open and the drop falls on it, else down to the edge.
+          const grid = HEIGHT / 13;
           for (let i = 0; i < count; i++) {
-            const at = left + Math.random() * 20 - 2;
-            const onUmbrella = pose.prop === 'umbrella' && at >= left - 1 && at <= left + 19;
-            droplets.fling(1, at, ground - HEIGHT - 22, 'rain', 0.5, onUmbrella ? ground - HEIGHT - 18 - pose.lift : ground);
+            const at = base.x + (Math.random() * 2 - 1) * RAIN_WIDE;
+            const onUmbrella = pose.prop === 'umbrella' && at >= left + CANOPY.from * grid && at <= left + CANOPY.to * grid;
+            droplets.fling(1, at, ground - RAIN_HIGH, 'rain', 0.5, onUmbrella ? ground - HEIGHT + CANOPY.top * grid - pose.lift : ground);
           }
         } else {
-          if (fling === 'jet') {
+          if (fling === 'arc') {
+            // Up from its head, in an arc back down to its edge.
+            droplets.fling(count, base.x, ground - HEIGHT - pose.lift, 'arc', pose.burst.aim ?? 0, ground);
+          } else if (fling === 'pour') {
+            // From the glass's rim, falling into its mouth.
+            const grid = HEIGHT / 13;
+            droplets.fling(count, left + POURING_AT.x * grid, ground - HEIGHT + POURING_AT.y * grid, 'pour', 1, ground - HEIGHT + MOUTH_Y * grid);
+          } else if (fling === 'jet') {
             // From the muzzle, turned with it: the gun is drawn on its left.
             const facing = pose.turn < 0 ? -1 : 1;
             droplets.fling(count, left + DROP_MIDDLE + facing * (MUZZLE.x - DROP_MIDDLE), ground - HEIGHT - pose.lift + MUZZLE.y, 'jet', -facing);
@@ -371,13 +398,18 @@ export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leav
       }
       // Its props: shown as the trick has them.
       umbrella.current!.style.display = pose.prop === 'umbrella' ? '' : 'none';
+      shutUmbrella.current!.style.display = pose.prop === 'umbrellaShut' ? '' : 'none';
       gun.current!.style.display = pose.prop === 'gun' ? '' : 'none';
       const glassy = pose.prop.startsWith('glass');
       glass.current!.style.display = glassy ? '' : 'none';
-      // Lifted to its mouth, its rim just under its eyes, and tipped up to pour, about that rim.
-      glass.current!.setAttribute('transform', pose.sip ? `translate(${7 * pose.sip} ${6 * pose.sip}) rotate(${40 * pose.sip} -3 5)` : '');
-      for (const [level, g] of water.current) g.style.display = level === pose.prop ? '' : 'none';
-      cloud.current!.style.display = pose.cloud ? '' : 'none';
+      // Lifted beside its mouth and turned over, about its rim, the open end toward its mouth.
+      const s = pose.sip;
+      glass.current!.setAttribute(
+        'transform',
+        s ? `translate(${(POURING_AT.x - RIM.x) * s} ${(POURING_AT.y - RIM.y) * s}) rotate(${TURNED_OVER * s} ${RIM.x} ${RIM.y})` : '',
+      );
+      const level = pose.sip > 0.5 && (pose.prop === 'glassHalf' || pose.prop === 'glassLow') ? `${pose.prop}Over` : pose.prop;
+      for (const [name, g] of water.current) g.style.display = name === level ? '' : 'none';
       if (where.moving === 'flying' && where.thrust && now - lastExhaust > 0.035) {
         droplets.fling(1, base.x, ground + TAIL_LENGTH, 'down');
         lastExhaust = now;
@@ -445,6 +477,10 @@ export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leav
             <g className="mascot-gun">{rects(GUN.body)}</g>
             <g className="mascot-handle">{rects(GUN.grip)}</g>
           </g>
+          <g ref={shutUmbrella} style={{ display: 'none' }}>
+            <g className="mascot-umbrella">{rects(UMBRELLA.shut)}</g>
+            <g className="mascot-handle">{rects(UMBRELLA.handle)}</g>
+          </g>
           <g ref={umbrella} style={{ display: 'none' }}>
             <g className="mascot-umbrella">{rects(UMBRELLA.canopy)}</g>
             <g className="mascot-handle">{rects(UMBRELLA.handle)}</g>
@@ -452,9 +488,6 @@ export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leav
         </svg>
       </div>
       <svg className="mascot-props" viewBox="0 0 22 13" width={WIDTH} height={HEIGHT} shapeRendering="crispEdges">
-        <g ref={cloud} className="mascot-cloud" style={{ display: 'none' }}>
-          {rects(CLOUD)}
-        </g>
         <g ref={glass} style={{ display: 'none' }}>
           {Object.entries(WATER).map(([level, list]) => (
             <g

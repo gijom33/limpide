@@ -14,14 +14,16 @@ export interface Droplet {
  * How droplets leave it: `up`, a splash up and out from its foot (landing, smashing down); `side`, flung out sideways
  * (shaking itself, sneezing); `down`, sprayed below (its tail pushing it up); `all`, escaping every way (a click or a
  * touch); `drip`, dribbled at its foot (waddling); `spout`, straight up from its head (a fountain, a burp); `rain`,
- * falling from a cloud; `jet`, shot from a water gun, its way given by `strength`'s sign.
+ * falling from a cloud; `jet`, shot from a water gun, its way given by `strength`'s sign; `pour`, out of a glass
+ * turned over, a little its way (`strength`'s sign); `arc`, a fountain's jet up at the angle `strength` (radians from
+ * straight up, positive to the right).
  */
-export type Fling = 'up' | 'side' | 'down' | 'all' | 'drip' | 'spout' | 'rain' | 'jet';
+export type Fling = 'up' | 'side' | 'down' | 'all' | 'drip' | 'spout' | 'rain' | 'jet' | 'pour' | 'arc';
 
 /** Gravity on a droplet, in pixels a second squared (lighter than on the drop itself, for a slower, prettier arc). */
 export const DROPLET_GRAVITY = 1500;
 /** The most droplets in the air at once; older ones make way. */
-export const MOST_DROPLETS = 40;
+export const MOST_DROPLETS = 60;
 
 /**
  * The mascot's droplets (issue 115): flung at `x`, `y` (`fling`), each flies under gravity until its life is over, or
@@ -54,6 +56,13 @@ export function createSpray(random: () => number = Math.random) {
         } else if (fling === 'rain') {
           vx = 0;
           vy = between(160, 220);
+        } else if (fling === 'arc') {
+          const speed = between(400, 440);
+          vx = Math.sin(strength) * speed;
+          vy = -Math.cos(strength) * speed;
+        } else if (fling === 'pour') {
+          vx = Math.sign(strength || 1) * between(70, 110);
+          vy = between(0, 40);
         } else if (fling === 'jet') {
           vx = Math.sign(strength || 1) * between(380, 480);
           vy = -between(0, 70);
@@ -63,7 +72,7 @@ export function createSpray(random: () => number = Math.random) {
           vx = Math.cos(angle) * speed;
           vy = Math.sin(angle) * speed - 60;
         }
-        droplets.push({ x: x + (fling === 'rain' ? 0 : between(-3, 3)), y, vx, vy, age: 0, life: fling === 'rain' ? 2 : between(0.45, 0.85), until });
+        droplets.push({ x: x + (fling === 'rain' || fling === 'pour' || fling === 'arc' ? 0 : between(-3, 3)), y, vx, vy, age: 0, life: fling === 'rain' || fling === 'arc' ? 2 : between(0.45, 0.85), until });
       }
       if (droplets.length > MOST_DROPLETS) droplets = droplets.slice(-MOST_DROPLETS);
     },

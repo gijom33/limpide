@@ -1,6 +1,6 @@
 import type { Gesture } from './mascotGestures';
 import type { Fling } from './mascotSpray';
-import { PICKED_TRICKS, TRICK_MOVES, type Trick } from './mascotTricks';
+import { JOKES, PICKED_TRICKS, TRICK_MOVES, type Trick } from './mascotTricks';
 
 /** What the mascot hears each frame, from the Modulation model (issue 115). */
 export interface Heard {
@@ -42,14 +42,12 @@ export interface Pose {
   /** Its opacity, 1 until a film fades. */
   fade: number;
   /** Droplets to fling this frame (see `Fling`). */
-  burst: { count: number; spread: Fling } | null;
+  burst: { count: number; spread: Fling; aim?: number } | null;
   /** The funny turn it is doing, if any. */
   doing: Trick | null;
-  /** Something it has for a trick: an umbrella on its head, a glass of water (full, half, empty), a water gun. */
-  prop: 'none' | 'umbrella' | 'glassFull' | 'glassHalf' | 'glassEmpty' | 'gun';
-  /** A little rain cloud over it. */
-  cloud: boolean;
-  /** How far the glass has come up to its mouth and tipped, drinking (0 to 1). */
+  /** Something it has for a trick: an umbrella over its head (folded, open), a glass of water, a water gun. */
+  prop: 'none' | 'umbrellaShut' | 'umbrella' | 'glassFull' | 'glassHalf' | 'glassLow' | 'glassEmpty' | 'gun';
+  /** How far the glass has come up beside its mouth and turned over, drinking (0 to 1). */
   sip: number;
   /** The frame it has had enough of being tickled or clicked, and runs off. */
   escaped: boolean;
@@ -129,7 +127,6 @@ const resting: Omit<Pose, 'x'> = {
   burst: null,
   doing: null,
   prop: 'none',
-  cloud: false,
   sip: 0,
   escaped: false,
   gone: false,
@@ -158,17 +155,17 @@ export function createMascotMotion(random: () => number = Math.random) {
   let busySince = 0; // the last time it heard something or a control was turned
   let wakeUntil = -Infinity; // dozing, it wakes now and then until this
   let nextWake = Infinity;
-  let trick: { name: Trick; at: number; side: -1 | 1; sprayed: number } | null = null;
+  let trick: { name: Trick; at: number; side: -1 | 1; sprayed: Map<Fling, number> } | null = null;
   let leftAt: number | null = null;
   let smashed = false;
   let danceWay: -1 | 1 = 1;
   let tickledUntil = -Infinity;
   let lastRoom: Room | null = null;
-  // Its tricks, dealt like a shuffled deck: each once before any comes again.
+  // Its tricks, dealt like a shuffled deck: each once before any comes again, the jokes three times.
   let deck: Trick[] = [];
   const deal = (): Trick => {
     if (!deck.length) {
-      deck = [...PICKED_TRICKS];
+      deck = [...PICKED_TRICKS, ...JOKES, ...JOKES];
       for (let i = deck.length - 1; i > 0; i--) {
         const j = Math.floor(random() * (i + 1));
         [deck[i], deck[j]] = [deck[j], deck[i]];
@@ -203,7 +200,7 @@ export function createMascotMotion(random: () => number = Math.random) {
       speed = Math.abs(travel) / lasting(name);
       gait = 'trick';
     } else target = null;
-    trick = { name, at: now, side: way, sprayed: -Infinity };
+    trick = { name, at: now, side: way, sprayed: new Map() };
     nextIdea = now + lasting(name) + between(0.8, 2.5);
   };
 
@@ -302,7 +299,7 @@ export function createMascotMotion(random: () => number = Math.random) {
         wakeUntil = now + between(6, 12);
         nextWake = Infinity;
         dozing = false;
-        trick = { name: 'yawn', at: now, side: side(), sprayed: -Infinity };
+        trick = { name: 'yawn', at: now, side: side(), sprayed: new Map() };
         nextIdea = now + lasting('yawn') + between(0.5, 1.5);
       }
 
@@ -398,7 +395,7 @@ export function createMascotMotion(random: () => number = Math.random) {
           // At an end of its room, now and then it looks over the edge and takes fright.
           const end = x - room.min < 2 ? -1 : room.max - x < 2 ? 1 : 0;
           if (end && gait !== 'dance' && gait !== 'scoot' && gait !== 'trick' && room.max - room.min > 30 && random() < 0.5) {
-            trick = { name: 'scared', at: now, side: end, sprayed: -Infinity };
+            trick = { name: 'scared', at: now, side: end, sprayed: new Map() };
             nextIdea = now + lasting('scared') + between(1, 2.5);
           }
         } else {
@@ -445,11 +442,12 @@ export function createMascotMotion(random: () => number = Math.random) {
         TRICK_MOVES[doing.name].move(pose, (now - doing.at) / lasting(doing.name), {
           now,
           side: doing.side,
-          spray(count, spread, every) {
-            if (now - doing.sprayed < every) return;
-            if (every === Infinity && doing.sprayed > -Infinity) return;
-            pose.burst = { count, spread };
-            doing.sprayed = now;
+          spray(count, spread, every, aim) {
+            // Each kind of droplet on its own: no more often than `every`, or once in the trick.
+            const last = doing.sprayed.get(spread);
+            if (last !== undefined && (every === Infinity || now - last < every)) return;
+            pose.burst = { count, spread, aim };
+            doing.sprayed.set(spread, now);
           },
         });
       }

@@ -6,8 +6,8 @@ export interface TrickContext {
   now: number;
   /** The way it does the trick: −1 left, 1 right. */
   side: -1 | 1;
-  /** Fling `count` droplets, once every `every` seconds at most (Infinity: once in the trick). */
-  spray(count: number, fling: Fling, every: number): void;
+  /** Fling `count` droplets, once every `every` seconds at most (Infinity: once in the trick), `aim` for an `arc`. */
+  spray(count: number, fling: Fling, every: number, aim?: number): void;
 }
 
 interface TrickMove {
@@ -160,47 +160,50 @@ export const TRICK_MOVES = {
     },
   },
   /**
-   * A little cloud comes over and rains on it: it winces and shivers, then puts up an umbrella, balanced on the tip of
-   * its head, and sways happily under it while the rain patters on it; then the cloud is gone, and the umbrella.
+   * It starts to rain all around: it winces, then quickly pops a folded umbrella up over its head and opens it, big
+   * enough to keep it dry, and sways happily under it while the rain patters on it; then the rain stops, and it puts it
+   * away.
    */
   umbrella: {
-    seconds: 3.4,
+    seconds: 3.6,
     move(pose, p, c) {
-      pose.cloud = p < 0.88;
-      if (p < 0.88) c.spray(1, 'rain', 0.045);
-      if (p < 0.2) {
+      if (p < 0.86) c.spray(2, 'rain', 0.03);
+      if (p < 0.07) {
         pose.eyes = 'shut';
         pose.stretch *= 0.92;
         pose.x += Math.sin(c.now * TAU * 16) * 1;
+      } else if (p < 0.11) {
+        pose.prop = 'umbrellaShut';
+        pose.lift += 3;
+        pose.eyes = 'happy';
       } else if (p < 0.92) {
         pose.prop = 'umbrella';
-        const up = bump(p, 0.24, 0.08);
-        pose.lift += up * 4;
         pose.tilt += Math.sin(c.now * TAU * 0.8) * 5;
         pose.eyes = 'happy';
       }
     },
   },
   /**
-   * A glass of water appears beside it: it lifts it to its mouth and tips it, drinking it down in gulps as the water
-   * goes, puts it down, swells a little, and burps a droplet.
+   * A glass of water appears beside it: it lifts it and turns it over beside its mouth, and the water pours out of it
+   * into its mouth, falling as water falls, while it gulps and fills up; then the empty glass goes back down, and it
+   * burps a droplet.
    */
   drink: {
-    seconds: 3.2,
+    seconds: 3.6,
     move(pose, p, c) {
-      if (p < 0.9) pose.prop = p < 0.3 ? 'glassFull' : p < 0.48 ? 'glassHalf' : 'glassEmpty';
-      // Up to its mouth, held there tipped while it drinks, then down again.
-      pose.sip = p < 0.1 ? 0 : p < 0.2 ? (p - 0.1) / 0.1 : p < 0.6 ? 1 : p < 0.7 ? 1 - (p - 0.6) / 0.1 : 0;
-      if (p >= 0.2 && p < 0.6) {
-        const gulp = Math.sin((p - 0.2) * TAU * 6);
-        pose.sip += 0.08 * gulp;
-        pose.tilt += 4; // its head back a little, to drink
-        pose.stretch *= 1 + 0.04 * gulp + 0.25 * (p - 0.2);
+      if (p < 0.88) pose.prop = p < 0.4 ? 'glassFull' : p < 0.52 ? 'glassHalf' : p < 0.64 ? 'glassLow' : 'glassEmpty';
+      // Up and over, held there while it pours, then back down.
+      pose.sip = p < 0.08 ? 0 : p < 0.24 ? (p - 0.08) / 0.16 : p < 0.7 ? 1 : p < 0.8 ? 1 - (p - 0.7) / 0.1 : 0;
+      if (p >= 0.26 && p < 0.66) {
+        const gulp = Math.sin((p - 0.26) * TAU * 7);
+        pose.stretch *= 1 + 0.04 * gulp + 0.3 * (p - 0.26); // filling up
+        pose.tilt += 3;
         pose.eyes = 'shut';
-      } else if (p >= 0.6) {
-        const q = (p - 0.6) / 0.4;
-        pose.stretch *= 1.1 * (1 - q) + q;
-        if (q > 0.35 && q < 0.5) {
+        c.spray(1, 'pour', 0.03);
+      } else if (p >= 0.66) {
+        const q = (p - 0.66) / 0.34;
+        pose.stretch *= 1.12 * (1 - q) + q;
+        if (q > 0.45 && q < 0.6) {
           pose.eyes = 'shut';
           c.spray(1, 'spout', Infinity);
         } else pose.eyes = 'happy';
@@ -233,6 +236,25 @@ export const TRICK_MOVES = {
         pose.wag = Math.sin(c.now * TAU * 6) * 25;
         pose.eyes = 'happy';
       }
+    },
+  },
+  /**
+   * A fountain show, like a grand hotel's in Las Vegas: two jets from the top of its head, swinging side to side and
+   * crossing as it sways with them, drawing arcs of water; then a finale straight up.
+   */
+  fountainShow: {
+    seconds: 4,
+    move(pose, p, c) {
+      const swing = Math.sin(c.now * TAU * 0.7);
+      pose.tilt += swing * 10;
+      pose.lift += Math.abs(Math.sin(c.now * TAU * 1.4)) * 2;
+      pose.stretch *= 1.08;
+      pose.eyes = 'happy';
+      if (p < 0.85) {
+        // The two jets take turns, mirrored, so they cross.
+        const side = Math.floor(c.now / 0.025) % 2 ? 1 : -1;
+        c.spray(1, 'arc', 0.025, side * swing * 0.6);
+      } else c.spray(10, 'spout', Infinity);
     },
   },
   /** Three bounces, getting lower. */
@@ -308,3 +330,5 @@ export const TRICK_MOVES = {
 export type Trick = keyof typeof TRICK_MOVES;
 /** The tricks picked at random. */
 export const PICKED_TRICKS = (Object.keys(TRICK_MOVES) as Trick[]).filter((t) => (TRICK_MOVES[t] as TrickMove).picked !== false);
+/** The jokes, which come up more often than the other tricks: dealt three times each. */
+export const JOKES: readonly Trick[] = ['drink', 'umbrella', 'waterGun', 'fountainShow'];

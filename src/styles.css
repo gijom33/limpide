@@ -810,12 +810,11 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .mascot-body { fill: var(--mascot-body); }
 .mascot-shine { fill: var(--mascot-shine); }
 .mascot-eyes { fill: var(--mascot-eye); }
-/* Its props: an umbrella in the Amp's purple, a glass and a grey cloud; still, beside the drop. */
+/* Its props: an umbrella in the Amp's purple, a glass, a water gun; the glass still, beside the drop. */
 .mascot-props { position: absolute; bottom: 0; left: 0; overflow: visible; }
 .mascot-umbrella { fill: var(--stage-amp); }
 .mascot-handle { fill: var(--muted); }
 .mascot-gun { fill: var(--stage-filter); }
-.mascot-cloud { fill: color-mix(in srgb, var(--muted) 70%, var(--panel)); }
 /* Bead's switch in Display: its picture there while on; turned off, it melts away, and pops back on. */
 .bead-switch { display: flex; align-items: center; gap: var(--space-2); }
 .bead-icon { --mascot-body: #6cc8f0; --mascot-shine: #e8f8ff; --mascot-eye: #14161b; transform-origin: 20% 100%; }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createMascotMotion, DOZE_SECONDS, GESTURE_SECONDS, type Heard, HOP_SECONDS, LEAVE_SECONDS, NUDGE_PX, type Pose, type Room } from './mascotMotion';
-import { PICKED_TRICKS } from './mascotTricks';
+import { JOKES, PICKED_TRICKS } from './mascotTricks';
 
 const quiet: Heard = { amp: 0, sway: 0, struck: null };
 const playing: Heard = { amp: 0.5, sway: 0, struck: null };
@@ -95,7 +95,7 @@ describe("the mascot's own life (issue 115)", () => {
 
   it('with nothing played, does many funny turns, at random', () => {
     const seen = new Set<string>();
-    for (const seed of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]) {
+    for (let seed = 1; seed <= 24; seed++) {
       for (const p of run(createMascotMotion(seeded(seed)), 0, DOZE_SECONDS - 0.5, quiet)) if (p.doing) seen.add(p.doing);
     }
     expect(seen.size).toBeGreaterThanOrEqual(12);
@@ -220,16 +220,18 @@ describe('the mascot dancing, tickled and frightened (issue 115)', () => {
 });
 
 describe('the mascot fed up, and its tricks dealt (issue 115)', () => {
-  it('deals its tricks like a shuffled deck: each once before any comes again', () => {
+  it('deals its tricks like a shuffled deck: each once before any comes again, the jokes three times', () => {
     const motion = createMascotMotion(seeded(6));
     motion.frame(quiet, 0, false, wide);
     const dealt: string[] = [];
-    for (let i = 0; i < PICKED_TRICKS.length; i++) {
+    const cards = PICKED_TRICKS.length + 2 * JOKES.length;
+    for (let i = 0; i < cards; i++) {
       const t = 4 + i * 0.5; // a cue again within a gesture's length carries on
       motion.gesture('perform', t);
       dealt.push(motion.frame(quiet, t, false, wide).doing!);
     }
     expect(new Set(dealt).size).toBe(PICKED_TRICKS.length);
+    for (const joke of JOKES) expect(dealt.filter((d) => d === joke)).toHaveLength(3);
   });
 
   it('tickled too long, it runs off to the far end of its room, and will not be tickled for a while', () => {

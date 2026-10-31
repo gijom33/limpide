@@ -52,6 +52,12 @@ const HARD_LANDING = 1400;
 /** Landing: the splash, the squash and its wobble back. */
 export const LANDING_SECONDS = 0.7;
 
+/**
+ * Where it is across the window this frame: in the air, where its fall or flight has it; the frame it lands, where it
+ * landed (its stroll takes that up only from the next frame); else where its stroll has it.
+ */
+export const acrossOf = (placed: Placed, strolling: number) => placed.x ?? placed.landedAt ?? strolling;
+
 /** A section's top edge, in the window's pixels: the sections it may stand on, top to bottom. */
 export interface Edge {
   id: string;

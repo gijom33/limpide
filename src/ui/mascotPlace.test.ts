@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { choosePerch, createMascotPlace, GRAVITY, LANDING_SECONDS, type Moving, type Perch, type Placed, type Span, WINDUP_SECONDS } from './mascotPlace';
+import { acrossOf, choosePerch, createMascotPlace, GRAVITY, LANDING_SECONDS, type Moving, type Perch, type Placed, type Span, WINDUP_SECONDS } from './mascotPlace';
 
 const H = 26;
 const ROOM = 18;
@@ -62,6 +62,16 @@ describe('the mascot between its lines, by the laws of motion (issue 115)', () =
     expect(landing[0].impact).toBeGreaterThan(0.6); // 400 px is a hard fall
     expect(landing.length / 60).toBeCloseTo(LANDING_SECONDS, 1);
     expect(frames.at(-1)!.foot).toBe(700);
+  });
+
+  it('the frame it lands, it is where it landed, not where its stroll had it, so its splash is there', () => {
+    const place = createMascotPlace({ random: () => 0.5 });
+    place.frame(edge('Oscillators', 300), span, 0, false, 100);
+    const frames = run(place, 1 / 60, 2, () => edge('Filter', 700), false, { min: 200, max: 260 });
+    const landing = frames.find((f) => f.landedAt !== null)!;
+    expect(acrossOf(landing, 100)).toBe(230);
+    expect(acrossOf(frames.find((f) => f.moving === 'falling')!, 100)).not.toBe(100);
+    expect(acrossOf(frames.at(-1)!, 230)).toBe(230);
   });
 
   it('a short drop lands softly', () => {
