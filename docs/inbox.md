@@ -6,6 +6,7 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- 2026-10-31, the owner, on the C16's new layout: "Some buttons like the preeset selector should be a momentary trigger. Same for hold. Once we have mapped all the buttons, I will need to reconfigure some. It would be interesting to have a PDF I could print. a one pager showing all the settings that I would print and put next to the C16 for reference."
 ## Dropped
 
 - 2026-10-30, from Claude's brainstorm, Velocity on the Volume ("a harder hit plays louder, not only brighter"): already so. The Amp Envelope's Attack rises to the Note's Velocity (PRD story 9). Claude's call, open to the owner.
