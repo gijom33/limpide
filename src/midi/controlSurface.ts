@@ -95,12 +95,18 @@ export function createControlSurface(synth: Synth) {
   const clicks = new Map<string, number>(); // encoder clicks towards the next choice, per control
   const detecting = new Map<string, number[]>(); // the first values of knobs finding their Encoder Mode
 
+  /**
+   * A Relative message as one step up or down: an encoder turned fast sends bigger steps (Relative #1's 66 and 62),
+   * which raced the knob on screen ahead of the hand (the owner, issue 145), so only the way it turns counts.
+   */
+  const step = (mode: Exclude<Mapping['mode'], 'absolute' | 'detect' | 'trigger' | 'toggle'>, value: number) => Math.sign(relativeDelta(mode, value));
+
   const moveParam = (mapping: Mapping, id: ParamId, value: number) => {
     const target = mapping.target;
     if (mapping.mode === 'trigger' || mapping.mode === 'toggle' || mapping.mode === 'detect') return;
     const current = synth.position(id);
     if (mapping.mode !== 'absolute') {
-      synth.setPosition(id, Math.min(1, Math.max(0, current + relativeDelta(mapping.mode, value) * RELATIVE_STEP)));
+      synth.setPosition(id, Math.min(1, Math.max(0, current + step(mapping.mode, value) * RELATIVE_STEP)));
       synth.touched?.(target, 'moved');
       return;
     }
@@ -138,7 +144,7 @@ export function createControlSurface(synth: Synth) {
     } else if (mapping.mode === 'absolute') {
       next = Math.min(count - 1, Math.floor((value / 128) * count));
     } else {
-      const total = (clicks.get(controlKey(mapping.control)) ?? 0) + relativeDelta(mapping.mode, value);
+      const total = (clicks.get(controlKey(mapping.control)) ?? 0) + step(mapping.mode, value);
       const steps = Math.trunc(total / CLICKS_PER_CHOICE);
       next = Math.min(count - 1, Math.max(0, index + steps));
       // Turns past either end are dropped, so turning back responds at once.

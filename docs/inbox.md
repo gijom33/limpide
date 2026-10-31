@@ -4,7 +4,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
-- 2026-10-31, the owner, trying the C16's knobs at Relative #1: "I think the \"fast mode\" for the knobs is not helpful. The knob in Limpide moves way to fast and creates a disconnect between position and reality."
 ## Ideas
 
 ## Dropped
@@ -132,3 +131,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-31, the owner's bug of C16 knobs taken for Relative (K7 on Osc 2's Pulse Width at 0 around CC 50): to [144](./issues/144-c16-knobs-taken-for-relative.md), fixed at once, to try on the real C16 (triage and fix, Claude's call, open to the owner).
 2026-10-31, the owner's C16 button modes and printable card (triage, Claude's call, open to the owner): to [145](./issues/145-the-c16-layout-strip-by-strip.md), the new C16 layout from profile 17's review, to grill; Hold and the Preset arrows momentary and a one-page card to print are its first decisions, the owner's.
 2026-10-31, the owner's idea of a tip link in About (triage, Claude's call, open to the owner): to [146](./issues/146-a-tip-link-in-about.md), four questions for the owner, each with Claude's recommendation (v1 as About's polish; the service chosen after a look at current fees; one line in About and the README; the account the owner's own step).
+2026-10-31, the owner's bug of C16 knobs moving too fast in a fast turn: into [145](./issues/145-the-c16-layout-strip-by-strip.md), decision 13, fixed at once: one step a message, however fast the knob turns (triage, Claude's call, open to the owner).

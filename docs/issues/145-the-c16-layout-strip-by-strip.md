@@ -74,6 +74,7 @@
 10. **Bank D:** LFO 1 on strips 1 and 2, LFO 2 on 3 and 4, Waveform and Destination over Depth and Rate; R1–R4 Retrigger and Sync for each; faders free for now.
 11. **Built after 112 and 119,** so Sync and Legato have their places from the start; the card with it. **Since then (2026-10-31):** built first, at the owner's word, the two places kept for 112 and 119 to fill.
 12. **The owner's C16 is set:** every knob Relative #1 (2026-10-31). The 22 momentary buttons (M1–M4 and S3 on every bank, R1 and R2 on bank A) are set once this is built: today's layout would read their release as a second press.
+13. **One step a message, however fast the knob turns** (2026-10-31): the owner, trying the knobs at Relative #1, "I think the \"fast mode\" for the knobs is not helpful. The knob in Limpide moves way to fast and creates a disconnect between position and reality." A fast turn's 66 or 62 now moves one step (1 % of the range), as 65 or 63 does, so the knob on screen keeps with the hand. For every Relative Mapping, MIDI-Learned ones too. Decided by the owner; how, Claude's call, open to the owner: if one step is still too fast or too slow for the C16's turn, the step's size is the next tweak.
 
 ## How it was built
 
