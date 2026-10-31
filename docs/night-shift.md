@@ -21,7 +21,7 @@ While the owner sleeps, Claude builds the issues that need nothing from the owne
 
 ## What it needs
 
-- **The Mac awake overnight:** on its charger with the lid open (a closed lid on battery sleeps whatever the settings), and the app's keep-awake setting on.
+- **The Mac awake at 23:00:** the app's keep-awake setting (on) holds it awake only while Claude works, so it cannot stop the Mac idle-sleeping before the task starts. Leave the Mac on its charger with the lid open, and in System Settings → Battery → Options (or Energy) turn on "Prevent automatic sleeping on power adapter when the display is off". A task due while the Mac sleeps runs when it wakes; after 05:00 it builds nothing and only reports.
 - **The Claude app open.** A task due while it is closed runs at the next launch.
-- **Auto permission mode** for the task, so a permission prompt doesn't hold up the night.
+- **Auto permission mode:** the task is saved in Auto, so a permission prompt doesn't hold up the night. Change it by editing the task, under Scheduled in the app's sidebar.
 - **Usage:** a night of four issues uses about as much as four issues built by day.
