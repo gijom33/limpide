@@ -49,7 +49,7 @@ const standing = (page: Page, name: string) =>
 test.describe('a first visit', () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
-  test('the welcome offers the Demo and the Tour, no Tutorial; the Tour starts on Init and takes the focus', async ({ page }) => {
+  test('the welcome offers the Demo and the Tour, no Tutorial; the Tour starts on Init and takes the focus (issue 128)', async ({ page }) => {
     await page.goto('/');
     await expect(about(page).locator('.about-actions').getByRole('button')).toHaveText(['Play the Demo', 'Take the Tour', 'Close']);
     await about(page).getByRole('button', { name: 'Take the Tour' }).click();
@@ -60,7 +60,7 @@ test.describe('a first visit', () => {
   });
 });
 
-test('About offers the Tour every time; the Patches panel lists no Tour', async ({ page }) => {
+test('About offers the Tour every time; the Patches panel lists no Tour (issue 128)', async ({ page }) => {
   await page.goto('/');
   await patchName(page).click();
   await expect(page.getByRole('dialog', { name: 'Patches' })).not.toContainText(/\bTour\b/);
@@ -69,16 +69,19 @@ test('About offers the Tour every time; the Patches panel lists no Tour', async 
   await expect(progress(page)).toHaveText('1 of 4');
 });
 
-test('the Tour stops the Demo when it starts', async ({ page }) => {
+test('the Tour stops the Demo and the Song when it starts (issue 128)', async ({ page }) => {
   await page.goto('/');
-  const demo = page.getByRole('button', { name: 'Demo', exact: true });
-  await demo.click();
-  await expect(demo).toHaveAttribute('aria-pressed', 'true');
-  await startFromAbout(page);
-  await expect(demo).toHaveAttribute('aria-pressed', 'false');
+  for (const name of ['Demo', 'Song']) {
+    const button = page.getByRole('button', { name, exact: true });
+    await button.click();
+    await expect(button, name).toHaveAttribute('aria-pressed', 'true');
+    await startFromAbout(page);
+    await expect(button, name).toHaveAttribute('aria-pressed', 'false');
+    await card(page).getByRole('button', { name: 'Close the Tour' }).click();
+  }
 });
 
-test('each card turns its control by itself and plays the phrase; Next and Back move between them', async ({ page }) => {
+test('each card turns its control by itself and plays the phrase; Next and Back move between them (issue 128)', async ({ page }) => {
   test.setTimeout(60000);
   await page.goto('/');
   await startFromAbout(page);
@@ -108,7 +111,7 @@ test('each card turns its control by itself and plays the phrase; Next and Back 
   await expect(progress(page)).toHaveText('3 of 4');
 });
 
-test('grabbing the control being turned takes it over: it stops moving for that card', async ({ page }) => {
+test('grabbing the control being turned takes it over: it stops moving for that card (issue 128)', async ({ page }) => {
   await page.goto('/');
   await startFromAbout(page);
   await action(page, 'Next').click();
@@ -120,7 +123,7 @@ test('grabbing the control being turned takes it over: it stops moving for that 
   await expect(cutoff).toBeFocused(); // the card never takes the focus from it
 });
 
-test('Next, Back and Close work from the keyboard', async ({ page }) => {
+test('Next, Back and Close work from the keyboard (issue 128)', async ({ page }) => {
   await page.goto('/');
   await startFromAbout(page);
   await expect(action(page, 'Next')).toBeFocused();
@@ -137,7 +140,7 @@ test('Next, Back and Close work from the keyboard', async ({ page }) => {
 });
 
 for (const at of [1, 2, 3, 4]) {
-  test(`closed at card ${at}, the Tour gives back the Patch the person had, value for value`, async ({ page }) => {
+  test(`closed at card ${at}, the Tour gives back the Patch the person had, value for value (issue 128)`, async ({ page }) => {
     await page.goto('/');
     await patchName(page).click();
     await page.getByRole('dialog', { name: 'Patches' }).getByRole('button', { name: 'Acid', exact: true }).first().click();
@@ -165,7 +168,7 @@ for (const at of [1, 2, 3, 4]) {
   });
 }
 
-test('the last card’s Bass button starts the Bass Tutorial', async ({ page }) => {
+test('the last card’s Bass button starts the Bass Tutorial (issue 128)', async ({ page }) => {
   await page.goto('/');
   await startFromAbout(page);
   for (let i = 1; i < 4; i++) await action(page, 'Next').click();
@@ -176,7 +179,7 @@ test('the last card’s Bass button starts the Bass Tutorial', async ({ page }) 
 });
 
 for (const [layout, width, height] of [['phone', 375, 812], ['short phone', 393, 659], ['2 × 2', 690, 830], ['laptop', 1280, 800], ['large screen', 1920, 1080]] as const) {
-  test(`on a ${layout}, each card brings its Viewers into view, clear of the header and the card`, async ({ page }) => {
+  test(`on a ${layout}, each card brings its Viewers into view, clear of the header and the card (issue 128)`, async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.setViewportSize({ width, height });
     await page.goto('/');

@@ -77,11 +77,13 @@ export function useTourState({ patches, onStart, onCard, onEnd }: Host) {
     });
     const began = performance.now();
     const turn = () => {
+      // Ended by a load between this card's last render and its cleanup: the Patch loaded is the person's.
+      if (!kept.current) return;
       const { values, moving } = tourAt(card, (performance.now() - began) / 1000);
       setMoving(moving);
       const patch = patches.get().patch;
-      const mine = Object.fromEntries(Object.entries(values).filter(([id, value]) => !taken.has(id as keyof Patch) && patch[id as keyof Patch] !== value));
-      if (Object.keys(mine).length) patches.change((p) => withValues(p, mine), 'tour');
+      const due = Object.fromEntries(Object.entries(values).filter(([id, value]) => !taken.has(id as keyof Patch) && patch[id as keyof Patch] !== value));
+      if (Object.keys(due).length) patches.change((p) => withValues(p, due), 'tour');
     };
     turn();
     const timer = setInterval(turn, TICK_MS);
@@ -98,5 +100,5 @@ export function useTourState({ patches, onStart, onCard, onEnd }: Host) {
   // Nothing turns on after the page goes.
   useEffect(() => () => finishRef.current(), []);
 
-  return { index, card: index === null ? null : TOUR[index], moving, start, end: () => finish(), move };
+  return { index, moving, start, end: () => finish(), move };
 }

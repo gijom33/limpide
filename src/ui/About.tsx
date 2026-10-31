@@ -29,7 +29,7 @@ export function About({
   onClose: () => void;
   /** The welcome's play button: the Demo, or the Demo's riff on the shared Patch. */
   onPlay?: () => void;
-  /** The Tour: a first look at each Section, in place of the first Tutorial (issue 128). */
+  /** The Tour: a first look at each Section (issue 128). */
   onTour?: () => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
@@ -128,7 +128,7 @@ export function About({
           )}
         </dl>
         {/* At the bottom every time, beside Close (the owner, 2026-10-27): the Demo, in the green of a key that
-            plays, and the Tour (issue 128, where the first Tutorial was), in the accent a Tutorial's control wears. */}
+            plays, and the Tour (issue 128), in the accent a Tutorial's control wears. */}
         <div className="about-actions">
           <button
             type="button"

@@ -17,7 +17,8 @@ interface Props {
   onClose(): void;
 }
 
-const controlOf = (move: TourMove) => document.querySelector(`[data-learn="${move.kind}:${move.id}"]`);
+/** A control on the page, by what it sets: a move's, or the one a card watches. */
+const controlOf = ({ kind, id }: Pick<TourMove, 'kind' | 'id'>) => document.querySelector(`[data-learn="${kind}:${id}"]`);
 
 /**
  * Brings the card's Section into view: its controls shown (on their tab), and its Viewers, its controls and the one it
@@ -33,7 +34,7 @@ function useSectionInView(card: Card, docked: RefObject<HTMLElement | null>) {
     // After the tab it was on has had a frame to show, and the card its new height.
     const scroll = setTimeout(() => {
       const behavior = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
-      const watched = card.watch ? document.querySelector(`[data-learn="param:${card.watch}"]`) : null;
+      const watched = card.watch ? controlOf({ kind: 'param', id: card.watch }) : null;
       if (docked.current) bringClear(docked.current, [...viewers, ...controls, ...(watched ? [watched] : [])], behavior);
     }, 50);
     return () => {

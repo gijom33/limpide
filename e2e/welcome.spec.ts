@@ -11,7 +11,7 @@ const db = (page: Page) =>
 test('a first visit opens on the welcome; Play the Demo starts it, sound and all; a second visit opens on the synth', async ({ page }) => {
   await page.goto('/');
   await expect(about(page)).toBeVisible();
-  // The three ways out, at the bottom (the owner, 2026-10-27): the Demo, the Tour (issue 128, where the Tutorial was), Close.
+  // The three ways out, at the bottom (the owner, 2026-10-27): the Demo, the Tour (issue 128), Close.
   await expect(about(page).locator('.about-actions').getByRole('button')).toHaveText(['Play the Demo', 'Take the Tour', 'Close']);
   await about(page).getByRole('button', { name: 'Play the Demo' }).click();
   await expect(about(page)).toBeHidden();

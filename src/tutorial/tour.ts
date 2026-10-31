@@ -33,16 +33,16 @@ export interface TourCard {
   moves: TourMove[];
 }
 
-/** The Tour's own sound: Init, a saw through an open low-pass Filter (decision 6). */
+/** The Tour's own sound: Init, a saw through an open low-pass Filter (issue 128, decision 6). */
 export const TOUR_PATCH = PRESETS[0];
 
-/** The four cards: the Oscillators with the Mixer, the Filter, the Amp, the LFOs (decisions 3 and 4). */
+/** The four cards: the Oscillators with the Mixer, the Filter, the Amp, the LFOs (issue 128, decisions 3 and 4). */
 export const TOUR: TourCard[] = [
   {
     title: 'Oscillators and Mixer',
     chain: 'The sound starts here: the Oscillators make it, and the Mixer sends it on to the Filter.',
-    does: 'An Oscillator repeats one shape, its Waveform, as many times a second as the Note’s pitch, and the shape is the timbre. The synth is stepping Osc 1 from Saw to Square to Sine. The Mixer’s faders set how much of each source goes on: here only Osc 1’s is up.',
-    sees: 'The Oscillator Scope draws the shape; the Oscillator Spectrum, its Harmonics: a saw has every one, a square only the odd ones, a sine just one.',
+    does: 'An Oscillator plays its Waveform, one cycle after another, as many times a second as the Note’s pitch, and the Waveform sets the timbre. The synth is stepping Osc 1 from Saw to Square to Sine. The Mixer, on its own tab, sets how much of each source goes on: here only Osc 1’s fader is up.',
+    sees: 'The Oscillator Scope draws the Waveform; the Oscillator Spectrum, its Harmonics: a saw has every one, a square only the odd ones, a sine just one.',
     viewers: ['Oscillator Scope', 'Oscillator Spectrum'],
     phrase: 'A3:1.5 -:.5 A3:1.5 -:.5 E3:1.5 -:.5 G3:1.5 -:.5',
     bpm: 100,
@@ -63,9 +63,9 @@ export const TOUR: TourCard[] = [
   },
   {
     title: 'Amp',
-    chain: 'The Amp takes the Filter’s sound and sends it on, through the master volume, to your speakers.',
+    chain: 'The Amp takes the Filter’s sound and sends it on to your speakers.',
     does: 'It sets how loud each Note is over time, following the Amp Envelope: Attack is how long a Note takes to rise once a key goes down, Release how long it takes to fade once the key is let go. The synth lengthens the Attack, then the Release, and brings each back.',
-    sees: 'The Amp Scope is what you hear, its height the level: with a long Attack each Note swells in, with a long Release it fades on after the key is up.',
+    sees: 'The Amp Scope is what you hear, its height the level: with a long Attack each Note swells in, with a long Release it fades on after the key is up. On the Amp Spectrum the Harmonics rise and fall together.',
     viewers: ['Amp Scope', 'Amp Spectrum'],
     phrase: 'C3:2 -:2 G3:2 -:2',
     bpm: 100,
