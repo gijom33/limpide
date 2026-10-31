@@ -162,7 +162,7 @@ export function App() {
     if (spelled && beadPresence === 'up') setWord((w) => ({ word: spelled, count: (w?.count ?? 0) + 1 }));
     if (!called || beadSwitch === 'off') return;
     setBeadSwitch('on');
-    setBeadPresence((m) => (m === 'away' ? 'up' : m === 'up' ? 'leaving' : m));
+    setBeadPresence((p) => (p === 'away' ? 'up' : p === 'up' ? 'leaving' : p));
   });
   useEffect(() => {
     const phrase = createCallingPhrase();
@@ -174,9 +174,9 @@ export function App() {
   }, [session]);
   const switchBead = (on: boolean) => {
     setBeadSwitch(on ? 'on' : 'off');
-    setBeadPresence((m) => (on ? (m === 'away' ? 'up' : m) : m === 'up' ? 'leaving' : m));
+    setBeadPresence((p) => (on ? (p === 'away' ? 'up' : p) : p === 'up' ? 'leaving' : p));
   };
-  const mascotGone = useCallback(() => setBeadPresence((m) => (m === 'leaving' ? 'away' : m)), []);
+  const beadGone = useCallback(() => setBeadPresence((p) => (p === 'leaving' ? 'away' : p)), []);
   const modulationContext = useMemo(() => ({ engine: session.engine, patch: () => patches.get().patch, octave: octaveRef }), [session, patches]);
   // The letter keys play Notes unless turned off in Display (issue 51); remembered.
   const [letterKeys, setLetterKeys] = useDisplaySetting(storage, 'letterKeys');
@@ -798,7 +798,7 @@ export function App() {
           />
         )}
         {beadPresence !== 'away' && (
-          <Mascot patches={patches} leaving={beadPresence === 'leaving'} onGone={mascotGone} theme={theme} demoPart={players.demo} word={word} />
+          <Mascot patches={patches} leaving={beadPresence === 'leaving'} onGone={beadGone} theme={theme} demoPart={players.demo} word={word} />
         )}
       </main>
     </MathsContext.Provider>

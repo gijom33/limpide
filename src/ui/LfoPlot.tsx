@@ -19,13 +19,18 @@ const SPAN = 1;
 /** Whether a plot of this width draws a line wider than `width`: its line keeps clear of its edges. */
 export const lineWiderThan = (plotWidth: number, width: number) => plotWidth - 2 * PAD > width;
 
+/** Where a plot `height` tall draws an LFO's `value` (−1 to 1): the y from its top. */
+const yOf = (value: number, height: number) => height / 2 - value * (height / 2 - PAD);
+/** The moment a plot draws at `along` its line (0 at its left end, 1 at its right, the newest), at `now`. */
+const timeAt = (along: number, now: number) => now - SPAN + along * SPAN;
+
 /**
- * Where a plot of `width` × `height` draws an LFO's line at `x` from its left (its ends held to the line's), at the
- * engine's `now`: the y from its top. The mascot surfs on it (the owner, 2026-10-30).
+ * Where a plot of `width` × `height` (`box`) draws an LFO's line at `x` from its left (its ends held to the line's),
+ * at the engine's `now`: the y from its top. The Bead surfs on it (the owner, 2026-10-30).
  */
-export function lineAt(engine: Pick<SynthEngine, 'lfoSwingAt'>, lfo: LfoNumber, { width, height }: { width: number; height: number }, x: number, now: number) {
-  const along = Math.min(1, Math.max(0, (x - PAD) / (width - 2 * PAD)));
-  return height / 2 - engine.lfoSwingAt(now - SPAN + along * SPAN, lfo) * (height / 2 - PAD);
+export function lineAt({ engine, lfo, box, x, now }: { engine: Pick<SynthEngine, 'lfoSwingAt'>; lfo: LfoNumber; box: { width: number; height: number }; x: number; now: number }) {
+  const along = Math.min(1, Math.max(0, (x - PAD) / (box.width - 2 * PAD)));
+  return yOf(engine.lfoSwingAt(timeAt(along, now), lfo), box.height);
 }
 
 
@@ -53,13 +58,13 @@ export function LfoPlot({ engine, lfo, label, inactive }: { engine: SynthEngine;
       dot.current?.setAttribute('cx', String(w - PAD));
     });
     observer.observe(box.current!);
-    const y = (value: number) => (h / 2 - value * (h / 2 - PAD)).toFixed(1);
+    const y = (value: number) => yOf(value, h).toFixed(1);
     const stop = addToRenderLoop(() => {
       if (!w || !h) return;
       const now = engine.now();
       const points: string[] = [];
       for (let i = 0; i <= SAMPLES; i++) {
-        const t = now - SPAN + (i / SAMPLES) * SPAN;
+        const t = timeAt(i / SAMPLES, now);
         points.push(`${(PAD + (i / SAMPLES) * (w - 2 * PAD)).toFixed(1)} ${y(engine.lfoSwingAt(t, lfo))}`);
       }
       line.current?.setAttribute('d', `M${points.join(' L')}`);

@@ -4,7 +4,7 @@ import { TRACK } from '../../demo/track';
 import { renderHook, testSession } from '../../test/renderHook';
 import { usePlayers } from './usePlayers';
 
-/** usePlayers with a session that writes down what it plays; `started` counts the Demo's starts the page is told of. */
+/** usePlayers with a session that writes down what it plays; `told.demoStarts` counts the Demo's starts the page is told of. */
 async function players() {
   const { session, played } = testSession();
   const told = { demoStarts: 0, octave: 4 };

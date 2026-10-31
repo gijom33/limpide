@@ -270,11 +270,9 @@ export function Mascot({
     theme(theme: Theme): void;
   } | null>(null);
   const press = useRef<{ x: number; y: number; picked: boolean } | null>(null);
-  // What the loop reads each frame, in refs, as the Viewers' loops do (ADR-0002).
-  const demoRef = useRef(demoPart);
-  demoRef.current = demoPart;
-  const leavingRef = useRef(leaving);
-  leavingRef.current = leaving;
+  // What the loop and its handlers read of the props, as they are now.
+  const demoPartNow = useEffectEvent(() => demoPart);
+  const leavingNow = useEffectEvent(() => leaving);
   const gone = useEffectEvent(onGone);
 
   useEffect(() => {
@@ -330,7 +328,7 @@ export function Mascot({
         droplets.fling(9, middle.x, middle.y, 'all');
       },
       pick: (x, y) => {
-        if (still.matches || leaveBy !== null || leavingRef.current) return false;
+        if (still.matches || leaveBy !== null || leavingNow()) return false;
         grip = { x: x - drawnAt.left, y: y - drawnAt.foot };
         moves = [{ t: performance.now() / 1000, x, y }];
         motion.pickUp(context.engine.now());
@@ -413,7 +411,7 @@ export function Mascot({
       }
       // Through a Demo part, one of its acts in turn; surfing, its line is an LFO's shape as its plot draws it: the
       // first in view of an LFO that is on, its Depth above 0 (the owner, 2026-10-30). With none, another act.
-      const part = demoRef.current;
+      const part = demoPartNow();
       const plot = (part === null ? [] : [...document.querySelectorAll<HTMLElement>(`${LFO_PLOTS}:not([data-inactive])`)])
         .map((el) => ({ lfo: Number(el.dataset.lfo) as 1 | 2, box: el.getBoundingClientRect() }))
         .find(({ box }) => lineWiderThan(box.width, WIDTH) && roomAbove(box) && box.bottom <= innerHeight);
@@ -424,12 +422,12 @@ export function Mascot({
       if (act === 'surf' && plot && !still.matches && moving !== 'held' && moving !== 'thrown' && !shown?.doing) {
         // Where the plot draws the LFO under its middle: a second of it across, the newest at the right.
         const { box } = plot;
-        const wave = box.top + lineAt(context.engine, plot.lfo, box, drawnAt.left + DROP_MIDDLE - box.left, now);
+        const wave = box.top + lineAt({ engine: context.engine, lfo: plot.lfo, box, x: drawnAt.left + DROP_MIDDLE - box.left, now });
         perch = { id: `surf ${plot.lfo}`, foot: wave, hanging: false };
         surfRoom = { min: box.left, max: box.right - WIDTH };
       }
       // Leaving: on its line it melts; hanging or in the air it drips away down the window.
-      if (leavingRef.current && leaveBy === null) {
+      if (leavingNow() && leaveBy === null) {
         leaveBy = moving === 'standing' || moving === 'landing' ? 'melt' : 'rain';
         if (leaveBy === 'melt') motion.leave(now);
       }

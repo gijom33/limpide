@@ -156,11 +156,10 @@ export function usePlayers({ session, octaveRef, setOctave, heldNotes, onDemoSta
   // whether the person has taken over.
   useEffect(() => {
     if (demo === null) return;
-    const stop = tookOverNow;
     const displayOpen = () => !!document.querySelector('.display-panel');
     const onKey = (e: KeyboardEvent) => {
       const event = { kind: 'key', key: e.key, freezes: freezesOnSpace(e), modifier: e.metaKey || e.ctrlKey || e.altKey } as const;
-      if (demoStop({ ...event, touched: touchedBy(e.target), displayOpen: displayOpen() }) === 'stop') stop();
+      if (demoStop({ ...event, touched: touchedBy(e.target), displayOpen: displayOpen() }) === 'stop') tookOverNow();
     };
     // A finger on the page may only be scrolling it: unless it lands on a control that takes touches itself
     // (knobs, piano), wait for it to lift. If the browser took it over to scroll, it is cancelled instead.
@@ -174,11 +173,11 @@ export function usePlayers({ session, octaveRef, setOctave, heldNotes, onDemoSta
         mouse: e.pointerType === 'mouse',
         takesTouches: getComputedStyle(target).touchAction === 'none',
       });
-      if (decision === 'stop') stop();
+      if (decision === 'stop') tookOverNow();
       else if (decision === 'onLift') tap = e.pointerId;
     };
     const onLift = (e: PointerEvent) => {
-      if (e.pointerId === tap) stop();
+      if (e.pointerId === tap) tookOverNow();
     };
     const onCancel = () => (tap = null);
     // The person scrolling: the page stops following the Demo's knobs until its next part. A finger on a knob or the

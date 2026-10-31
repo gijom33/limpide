@@ -132,8 +132,8 @@ export function SectionStrip({ follow }: { follow?: { name: SectionName; key: nu
     setCurrent(name);
   };
 
-  // Only a new follow moves the page.
   const jumpNow = useEffectEvent(jump);
+  // Only a new follow moves the page.
   useEffect(() => {
     const target = follow && section(follow.name);
     if (!target) return;
