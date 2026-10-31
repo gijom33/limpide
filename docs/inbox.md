@@ -6,6 +6,7 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- 2026-10-31, the owner: "Add a link to buy me a coffee or something that sounds like this, it would be in the how about, and it would be a nice way to get some pocket money."
 ## Dropped
 
 - 2026-10-30, from Claude's brainstorm, Velocity on the Volume ("a harder hit plays louder, not only brighter"): already so. The Amp Envelope's Attack rises to the Note's Velocity (PRD story 9). Claude's call, open to the owner.
