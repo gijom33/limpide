@@ -1487,17 +1487,18 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 
 /* The C16 card (issue 145): one landscape sheet to print, light whatever the theme, fitting A4 and Letter alike
    (259 × 186 mm inside 10 mm margins). On screen, the same sheet on grey, with a Print button. */
-@page { size: landscape; margin: 10mm; }
+@page c16-card { size: landscape; margin: 10mm; }
 body:has(.c16-card) { background: #e7e9ec; }
 .c16-card {
   box-sizing: border-box; width: 259mm; height: 186mm; margin: 24px auto; padding: 0;
   display: flex; flex-direction: column; gap: 3mm;
   color: #16181d; background: #fff; font: 7.5pt/1.25 system-ui, sans-serif; -webkit-user-select: text; user-select: text;
+  page: c16-card; /* landscape for the card alone: the app prints as it did */
 }
 .c16-card-head { display: flex; align-items: baseline; gap: 4mm; }
 .c16-card-head h1 { margin: 0; font-size: 13pt; white-space: nowrap; }
 .c16-card-head p { margin: 0; flex: 1; font-size: 8pt; }
-.c16-print { font: inherit; padding: 2px 10px; border: 1px solid #9aa0a8; border-radius: 4px; background: #f3f4f6; color: inherit; cursor: pointer; }
+.c16-print { font: 500 13px/1 system-ui, sans-serif; min-height: 32px; padding: 0 14px; border: 1px solid #9aa0a8; border-radius: 4px; background: #f3f4f6; color: inherit; cursor: pointer; }
 .c16-banks { flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 3mm; min-height: 0; }
 .c16-bank { border: 0.3mm solid #9aa0a8; border-radius: 2mm; padding: 1.5mm 2mm 2mm; display: flex; flex-direction: column; min-height: 0; }
 .c16-bank h2 { margin: 0 0 1mm; font-size: 9.5pt; text-transform: none; letter-spacing: 0; color: inherit; }

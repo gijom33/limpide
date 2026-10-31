@@ -436,7 +436,7 @@ describe('the C16 layout’s buttons and its own input (issue 145)', () => {
     surface.handle(cc(64, 127), true);
     surface.handle(cc(1, 66), true);
     expect(r.actions).toEqual(['nextPreset']);
-    expect(r.positions.cutoff).toBeGreaterThan(0.5); // two steps up
+    expect(r.positions.cutoff).toBeGreaterThan(0.5); // a third of a step up
   });
 
   it('lets a Mapping learned from any Controller answer every Controller', () => {
@@ -450,7 +450,7 @@ describe('the C16 layout’s buttons and its own input (issue 145)', () => {
   });
 });
 
-describe('the C16’s knobs, one step for each bit of turning (issue 145)', () => {
+describe('the C16’s knobs: a 65 one step, a 66 a third of one (issue 145)', () => {
   /** A C16 knob on the Cutoff, from 0. */
   const c16Knob = () => {
     const positions: Partial<Record<ParamId, number>> = { cutoff: 0 };

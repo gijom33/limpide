@@ -6,7 +6,7 @@ The cause: on a phone Bead stands on a section's top edge only with room for its
 
 **Blocked by:** none
 
-**Status:** needs-triage · bug. Bead on the line built (2026-10-31, decisions 1 and 2); the owner's idea of hovering where it loses its edge waits on the owner's yes to Claude's plan below.
+**Status:** needs-info · bug. Bead on the line built (2026-10-31, decisions 1 and 2); the owner's idea of hovering where it loses its edge waits on the owner's yes to Claude's plan below.
 
 ## Decisions
 

@@ -60,7 +60,7 @@ export const TIPS = {
   },
   c16Layout: {
     title: 'C16 layout',
-    body: 'Maps the whole TempoPAD C16, a section per bank (A the Oscillators, B the Filter, C the Amp, D the LFOs), each strip a column of the section: the top knobs its top row, the faders its levels or Envelope, the R buttons its switches. On every bank, M1 to M4 are the Preset arrows, Freeze and Hold, and S3 Snapshot. It answers the C16 only, so another keyboard’s pedal and mod wheel keep theirs.',
+    body: 'Maps the whole TempoPAD C16, a section per bank (A the Oscillators, B the Filter, C the Amp, D the LFOs), each strip a column of the section: the top knobs its top row, the faders its levels or Envelope, the R buttons its switches and Waveforms. On every bank, M1 to M4 are the Preset arrows, Freeze and Hold, and S3 Snapshot. It answers the C16 only, so another keyboard’s pedal and mod wheel keep theirs.',
     how: 'Set the C16’s knobs to Relative #1 and the buttons as the printed card says. Applied by itself the first time a C16 is plugged in; this puts it back, replacing your Mappings.',
   },
   c16Card: {

@@ -6,7 +6,7 @@ const url = process.argv[2] ?? 'http://localhost:5173/#c16-card';
 const browser = await chromium.launch();
 const page = await browser.newPage();
 await page.goto(url);
-await page.locator('.c16-bank').first().waitFor();
+await page.getByRole('region', { name: /^Bank A: / }).waitFor();
 for (const [format, path] of [['A4', 'docs/c16-card.pdf'], ['Letter', 'test-results/c16-card-letter.pdf']] as const) {
   const margin = { top: '10mm', right: '10mm', bottom: '10mm', left: '10mm' }; // a printer's own edge, as the page's @page says
   const pdf = await page.pdf({ format, landscape: true, printBackground: true, margin, path });

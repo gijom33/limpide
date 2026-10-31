@@ -3,7 +3,7 @@ import { BUTTON_ROWS, buttonCc, buttonMode, C16_BANKS, type C16Place, faderCc, k
 /** One place on the card: its name on the C16 (K1, F3, M2…), what it drives or "free", and its CC. */
 function Cell({ name, place, cc, mode }: { name: string; place: C16Place; cc: number; mode?: 'trigger' | 'toggle' }) {
   return (
-    <div className={`c16-cell${place ? '' : ' c16-free'}`}>
+    <div role="listitem" className={`c16-cell${place ? '' : ' c16-free'}`}>
       <span className="c16-name">
         <span>
           {name} <span className="c16-cc">CC {cc}</span>
@@ -42,7 +42,7 @@ export function C16Card() {
             </h2>
             <div className="c16-strips">
               {[0, 1, 2, 3].map((s) => (
-                <div key={s} className="c16-strip">
+                <div key={s} role="list" aria-label={`Strip ${s + 1}`} className="c16-strip">
                   <Cell name={`K${s + 1}`} place={bank.knobs[s]} cc={knobCc(b, s)} />
                   <Cell name={`K${s + 5}`} place={bank.knobs[s + 4]} cc={knobCc(b, s + 4)} />
                   <Cell name={`F${s + 1}`} place={bank.faders[s]} cc={faderCc(b, s)} />

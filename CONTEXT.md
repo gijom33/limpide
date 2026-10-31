@@ -257,11 +257,11 @@ A connected MIDI hardware device, such as the Synido TempoPAD C16.
 _Avoid_: Device, MIDI keyboard
 
 **Mapping**:
-A link from one Controller control (a channel plus CC or note) to a Parameter, a choice (a Waveform, the Filter Mode, Voices…) or an Action. A button acts on its press, or, if it is a **toggle button** (one value per press, each the other), on every message.
+A link from one Controller control (a channel plus CC or note) to a Parameter, a choice (a Waveform, the Filter Mode, Voices…) or an Action. A **momentary button** (127 pressed, 0 let go) acts on its press; a **toggle button** (one value per press, each the other) on every message. The C16 layout's Mappings answer a C16 only; any other answers every Controller.
 _Avoid_: Binding, assignment
 
 **C16 layout**:
-The one built-in set of Mappings, for the TempoPAD C16: each of its 4 banks plays one section, and its first buttons are the Actions on every bank. Applied by itself once, when a C16 is first plugged in with nothing mapped (ADR-0009).
+The one built-in set of Mappings, for the TempoPAD C16: each of its 4 banks plays one section, each strip of its panel (two knobs, a fader, the M, S and R buttons) a column of that section, and M1–M4 and S3 are the same Actions on every bank. Its knobs are set to Relative #1 and its buttons as its printed card says. Applied by itself when a C16 is first plugged in with nothing mapped (ADR-0009, ADR-0017).
 _Avoid_: Preset (a Preset is a sound), default mapping
 
 **Action**:
@@ -277,7 +277,7 @@ A guided sequence of MIDI Learn steps for any Controller: the Parameters played 
 _Avoid_: Wizard (fine in UI copy), onboarding
 
 **Encoder Mode**:
-How a Controller knob reports movement. **Absolute** sends a position (0–127). **Relative** sends increments. Detected during MIDI Learn; a knob of the C16 layout finds it on its first turn.
+How a Controller knob reports movement. **Absolute** sends a position (0–127). **Relative** sends increments. Detected during MIDI Learn; the C16 layout's knobs are declared Relative (ADR-0017).
 _Avoid_: Knob type
 
 **Pickup**:

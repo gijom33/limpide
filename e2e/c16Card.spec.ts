@@ -4,25 +4,26 @@ import { midiPanel, openMidi, withFakeController } from './fakeMidi';
 
 // The C16 card (issue 145): the layout on one page to print and keep beside the C16, built from the layout's data.
 
-test('shows every place of the C16 layout, bank by bank, each button marked Momentary or Toggle', async ({ page }) => {
+test('shows every place of the C16 layout, bank by bank, each button marked Momentary or Toggle (issue 145)', async ({ page }) => {
   await page.goto('/#c16-card');
-  const banks = page.locator('.c16-bank');
+  const banks = page.getByRole('region', { name: /^Bank [A-D]: / });
   await expect(banks).toHaveCount(4);
-  await expect(banks.nth(0)).toHaveAccessibleName('Bank A: Oscillators');
-  // 24 places a bank: 8 knobs, 4 faders, 12 buttons; those the layout drives are named, the others free.
-  await expect(page.locator('.c16-cell')).toHaveCount(4 * 24);
-  await expect(page.locator('.c16-cell:not(.c16-free)')).toHaveCount(new Set(c16Layout().map((m) => m.control.number)).size);
-  await expect(page.locator('.c16-cell .c16-mode')).toHaveCount(4 * 12);
-  const nextOnB = page.locator('.c16-bank').nth(1).locator('.c16-cell').filter({ hasText: 'M2' });
+  await expect(banks.first()).toHaveAccessibleName('Bank A: Oscillators');
+  // 24 places a bank, four strips of six: 2 knobs, a fader, 3 buttons; those the layout drives are named, the others free.
+  const places = page.getByRole('listitem');
+  await expect(places).toHaveCount(4 * 24);
+  await expect(places.filter({ hasNotText: /free$/ })).toHaveCount(new Set(c16Layout().map((m) => m.control.number)).size);
+  await expect(places.filter({ hasText: /Momentary|Toggle/ })).toHaveCount(4 * 12);
+  const nextOnB = page.getByRole('region', { name: 'Bank B: Filter' }).getByRole('listitem').filter({ hasText: 'M2' });
   await expect(nextOnB).toContainText('Next Preset');
   await expect(nextOnB).toContainText('CC 64');
   await expect(nextOnB).toContainText('Momentary');
 });
 
-test('prints on one landscape page, A4 or Letter', async ({ page, browserName }) => {
+test('prints on one landscape page, A4 or Letter (issue 145)', async ({ page, browserName }) => {
   test.skip(browserName !== 'chromium', 'Only Chromium prints to PDF');
   await page.goto('/#c16-card');
-  await expect(page.locator('.c16-bank')).toHaveCount(4);
+  await expect(page.getByRole('region', { name: /^Bank [A-D]: / })).toHaveCount(4);
   const margin = { top: '10mm', right: '10mm', bottom: '10mm', left: '10mm' };
   for (const format of ['A4', 'Letter']) {
     const pdf = await page.pdf({ format, landscape: true, printBackground: true, margin });
@@ -30,7 +31,7 @@ test('prints on one landscape page, A4 or Letter', async ({ page, browserName })
   }
 });
 
-test('is offered in the MIDI panel while a C16 is connected, in a new tab', async ({ page }) => {
+test('is offered in the MIDI panel while a C16 is connected, in a new tab (issue 145)', async ({ page }) => {
   await withFakeController(page, 'Synido TempoPAD C16');
   await openMidi(page);
   const link = midiPanel(page).getByRole('link', { name: 'Print C16 card' });

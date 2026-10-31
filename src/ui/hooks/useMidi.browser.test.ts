@@ -13,10 +13,11 @@ function controller(name: string) {
 }
 
 /** useMidi with a session that writes down what it plays, and a host that writes down what it is told. */
-async function midi(name = 'Keystation 49') {
+async function midi(name = 'Keystation 49', stored: Record<string, string> = {}) {
   const device = controller(name);
   vi.spyOn(navigator, 'requestMIDIAccess').mockResolvedValue(device.access as unknown as MIDIAccess);
   const { session, storage, played } = testSession();
+  for (const [key, value] of Object.entries(stored)) storage.setItem(key, value);
   const told: string[] = [];
   const host = {
     storage, session,
@@ -110,6 +111,19 @@ describe('useMidi: a Controller (the 1.16.0 review)', () => {
     await m.send(0xb0, 64, 0);
     expect(m.told).toEqual(['preset step']);
     expect(m.session.patches.get().name).not.toBe(before);
+  });
+
+  it('brings the first C16 layout over to today’s once, then leaves what is learned on its places (issue 145)', async () => {
+    const first = [{ control: { kind: 'cc', channel: 1, number: 8 }, target: { kind: 'param', id: 'glide' }, mode: 'relative-centred' }];
+    const m = await midi('Synido TempoPAD C16', { 'limpide.mappings': JSON.stringify(first), 'limpide.c16Layout': '1' });
+    unmount = m.unmount;
+    const at = (cc: number) => m.result.current.mappings.find((x) => x.control.number === cc);
+    expect(at(8)?.target).toEqual({ kind: 'param', id: 'osc2EnvAmount' }); // today's K8 on bank A
+    await act(async () => {
+      m.result.current.mappingStore.set({ control: { kind: 'cc', channel: 1, number: 8 }, target: { kind: 'param', id: 'glide' }, mode: 'relative-centred' });
+    });
+    await act(async () => void m.access.dispatchEvent(new Event('statechange'))); // the C16 connects again
+    expect(at(8)?.target).toEqual({ kind: 'param', id: 'glide' });
   });
 
   it('leaves a keyboard with nothing mapped as it is', async () => {

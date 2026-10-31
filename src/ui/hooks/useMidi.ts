@@ -16,6 +16,8 @@ import { WAVEFORM_ORDER } from '../WaveformPicker';
 
 /** Set once the C16 layout has been applied by itself, so it is never applied again unasked. */
 const C16_APPLIED = 'limpide.c16Layout';
+/** What C16_APPLIED holds once today's layout (issue 145) is in place, applied or brought over from the first. */
+const C16_LAYOUT_VERSION = '2';
 
 /** A choice's options in on-screen order (the Waveform pickers show them differently from the stored list). */
 const choiceOptions = (id: ChoiceId): readonly unknown[] =>
@@ -68,7 +70,7 @@ export function useMidi(host: Host) {
   // person who removed it meant to); the MIDI panel puts it back at any time.
   const applyC16Layout = () => {
     mappingStore.restore(c16Layout());
-    storage.setItem(C16_APPLIED, '1');
+    storage.setItem(C16_APPLIED, C16_LAYOUT_VERSION);
   };
   // A C16 control moved on another bank than the last: its section is brought into view (on a phone, where one
   // section shows at a time).
@@ -240,9 +242,13 @@ export function useMidi(host: Host) {
             c16Connected.current = devices.some(isC16);
             const fresh = mappingStore.list().length === 0 && storage.getItem(C16_APPLIED) === null;
             if (c16Connected.current && fresh) applyC16LayoutNow();
-            // The first layout, stored before issue 145, becomes today's; a person's own Mappings stay.
-            const upgraded = c16Connected.current && upgradeC16Layout(mappingStore.list());
-            if (upgraded) mappingStore.restore(upgraded);
+            // The first layout, stored before issue 145, becomes today's, once; a person's own Mappings stay, and so
+            // does anything learned later on a place the first layout had.
+            if (c16Connected.current && storage.getItem(C16_APPLIED) !== C16_LAYOUT_VERSION) {
+              const upgraded = upgradeC16Layout(mappingStore.list());
+              if (upgraded) mappingStore.restore(upgraded);
+              storage.setItem(C16_APPLIED, C16_LAYOUT_VERSION);
+            }
           },
         });
       },
