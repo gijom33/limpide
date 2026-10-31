@@ -6,6 +6,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- 2026-10-31, the owner: "I am interested in having you work at night while I am in bed on the issues where you do not need me." Then, on Claude's answer (a nightly run of the ready-for-agent issues on a night branch, no push): "Set it up".
+
 ## Dropped
 
 - 2026-10-30, from Claude's brainstorm, Velocity on the Volume ("a harder hit plays louder, not only brighter"): already so. The Amp Envelope's Attack rises to the Note's Velocity (PRD story 9). Claude's call, open to the owner.
