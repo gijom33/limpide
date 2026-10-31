@@ -382,11 +382,13 @@ type Restartable = ReturnType<typeof createRestartable>;
  */
 const FOLLOWED_CENTS = 12000;
 
+/** Cents between the points of CYCLE_CURVE: the line between two is within a millionth of the curve. */
+const CYCLE_STEP = 2;
 /**
  * One cycle's length, as a share of the Note's period, at `x` × FOLLOWED_CENTS cents off the Note (x from −1 to 1):
- * 2^(−cents/1200). Two cents a step: the line between steps is within a millionth of the curve.
+ * 2^(−cents/1200).
  */
-const CYCLE_CURVE = Float32Array.from({ length: 12001 }, (_, i) => 2 ** (-(i / 6000 - 1) * (FOLLOWED_CENTS / 1200)));
+const CYCLE_CURVE = Float32Array.from({ length: (2 * FOLLOWED_CENTS) / CYCLE_STEP + 1 }, (_, i) => 2 ** (-(i * CYCLE_STEP - FOLLOWED_CENTS) / 1200));
 
 /**
  * One Oscillator. Most Waveforms play their Fourier series directly (a PeriodicWave). A pulse is built the
@@ -410,20 +412,20 @@ function createVoiceOscillator(ctx: BaseAudioContext) {
   const pwm = [ctx.createGain(), ctx.createGain()]; // each LFO → the width
   const period = ctx.createGain(); // the Note's period, in seconds
   period.gain.value = 1 / A4;
-  const cents = ctx.createGain(); // the shaper's input runs from −1 to 1
-  cents.gain.value = 1 / FOLLOWED_CENTS;
+  const centsIn = ctx.createGain(); // the shaper takes −1 to 1 for ±FOLLOWED_CENTS
+  centsIn.gain.value = 1 / FOLLOWED_CENTS;
   const cycle = ctx.createWaveShaper();
   cycle.curve = CYCLE_CURVE;
-  const following = ctx.createGain();
-  following.gain.value = 0;
+  const toDelay = ctx.createGain(); // the width's share of the Note's period, times the cycle's length
+  toDelay.gain.value = 0;
   delay.delayTime.value = 0;
-  source.cents.connect(cents).connect(cycle).connect(following.gain);
+  source.cents.connect(centsIn).connect(cycle).connect(toDelay.gain);
   width.connect(period);
   for (const g of pwm) {
     g.connect(period);
     g.gain.value = 0;
   }
-  period.connect(following).connect(delay.delayTime);
+  period.connect(toDelay).connect(delay.delayTime);
   width.start();
   direct.connect(out);
   delay.connect(inverted).connect(out);
@@ -451,6 +453,12 @@ function holdAt(param: AudioParam, t: number) {
     param.cancelScheduledValues(t);
     param.setValueAtTime(param.value, t);
   }
+}
+
+/** Move `param` to `value` at `t`: at once, or sliding there with a Glide's `timeConstant`. */
+function moveTo(param: AudioParam, value: number, t: number, timeConstant?: number) {
+  if (timeConstant) param.setTargetAtTime(value, t, timeConstant);
+  else param.setValueAtTime(value, t);
 }
 
 function play(param: AudioParam, steps: AutomationStep[], scale = 1) {
@@ -636,7 +644,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   shared.bend.connect(sub.detune);
   for (const o of oscillators) shared.bend.connect(o.source.detune);
 
-  // Each Oscillator's pitch over the Note's, from its knobs: a pulse's width is a fraction of its own cycle (issue 90).
+  // Each Oscillator's pitch over the Note's, from its knobs: FM's depth and the Harmonics Ring keeps count from them.
   const ratios = [1, 1];
   /**
    * FM's gain on a Note of `frequency`: the index times Osc 2's frequency, in Hz. Osc 1's Octave scales what
@@ -651,10 +659,13 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
     const swings = patch ? destinationSwings(patch, 'fm', patch.crossMod) : [0, 0];
     const kept = patch ? fmDepthKept(patch, frequency * ratios[0], ctx.sampleRate) : 1;
     [cross, ...crossLfos].forEach((node, i) => {
-      const depth = crossDepth(frequency, i ? swings[i - 1] : undefined) * kept;
-      if (timeConstant) node.gain.setTargetAtTime(depth, t, timeConstant);
-      else node.gain.setValueAtTime(depth, t);
+      moveTo(node.gain, crossDepth(frequency, i ? swings[i - 1] : undefined) * kept, t, timeConstant);
     });
+  };
+  /** FM's depth from `t` on, for a Note of `frequency` that starts there: at once, or over its `glide`. */
+  const crossTo = (frequency: number, t: number, glide: number) => {
+    for (const node of [cross, ...crossLfos]) holdAt(node.gain, t);
+    tuneCross(frequency, t, glide ? glideTimeConstant(glide) : undefined);
   };
   const pitches: { time: number; frequency: number; note: number; glide: number }[] = [];
   let patch: Patch | undefined;
@@ -663,8 +674,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   const tunePulses = (frequency: number, t: number, timeConstant?: number) => {
     for (const o of oscillators) {
       holdAt(o.period.gain, t);
-      if (timeConstant) o.period.gain.setTargetAtTime(1 / frequency, t, timeConstant);
-      else o.period.gain.setValueAtTime(1 / frequency, t);
+      moveTo(o.period.gain, 1 / frequency, t, timeConstant);
     }
   };
 
@@ -722,19 +732,17 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
       const frequency = noteToFrequency(note);
       append(pitches, { time: t, frequency, note, glide });
       if (pitches.length > HISTORY) pitches.shift();
+      const slide = glide ? glideTimeConstant(glide) : undefined;
       for (const [node, f] of [[osc, frequency], [osc2, frequency], [sub, frequency / 2]] as const) {
         // Every Oscillator follows the Note, the Sub from an octave down: Osc 1's Octave, Osc 2's offsets and the Sub's
         // second octave ride on top, through their detunes.
         holdAt(node.frequency, t);
-        if (glide) node.frequency.setTargetAtTime(f, t, glideTimeConstant(glide));
-        else node.frequency.setValueAtTime(f, t);
+        moveTo(node.frequency, f, t, slide);
       }
-      tunePulses(frequency, t, glide ? glideTimeConstant(glide) : undefined);
-      for (const node of [cross, ...crossLfos]) holdAt(node.gain, t);
-      tuneCross(frequency, t, glide ? glideTimeConstant(glide) : undefined);
+      tunePulses(frequency, t, slide);
+      crossTo(frequency, t, glide);
       holdAt(trackedNote.offset, t);
-      if (glide) trackedNote.offset.setTargetAtTime(note - KEY_TRACK_CENTRE, t, glideTimeConstant(glide));
-      else trackedNote.offset.setValueAtTime(note - KEY_TRACK_CENTRE, t);
+      moveTo(trackedNote.offset, note - KEY_TRACK_CENTRE, t, slide);
     },
 
     /**
@@ -768,10 +776,12 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
       ratios[1] = 2 ** (osc2Tuning / 1200);
       setWave(0, next.waveform, next.pulseWidth, t);
       setWave(1, next.osc2Waveform, next.osc2PulseWidth, t);
+      // FM's depth for the new knobs: through a Glide, from where the slide has reached on to the Note's, with the
+      // Oscillators; and again at the start of each Note handed over for later (issue 98).
       tuneCross(frequencyAt(t), t);
-      // Through a Glide, from where the slide has reached on to the Note's, with the Oscillators (issue 98).
       const sliding = pitches[lastAt(pitches, t)];
       if (sliding?.glide) tuneCross(sliding.frequency, t, glideTimeConstant(sliding.glide));
+      for (const later of pitches) if (later.time > t) crossTo(later.frequency, later.time, later.glide);
       // Osc 1's Octave moves it and the Sub; Osc 2's offsets count from the Note.
       osc.detune.setValueAtTime(next.osc1Octave * 1200, t);
       sub.detune.setValueAtTime((next.osc1Octave + next.subOctave + 1) * 1200, t);

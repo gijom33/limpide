@@ -67,12 +67,12 @@ describe('the Ideal from every Oscillator (the owner, 2026-10-27): each source�
     expect(of(up, 'osc2', 1)).toBeDefined();
   });
 
-  it('puts Osc 2 Env Amount × Sustain off its knobs while a Note is held, on them once released (issue 98)', () => {
+  it('puts Osc 2 Env Amount × Sustain off its knobs while its Gate is on, on them once released (issue 98)', () => {
     const patch = { ...defaultPatch(), ...sine, mixOsc2: 1, osc2Semitone: 2, osc2EnvAmount: 10, filterSustain: 0.5 };
-    expect(of(idealPartials(patch, 64, 1, true), 'osc2', 2 ** (7 / 12))).toBeDefined();
-    expect(of(idealPartials(patch, 64, 1, false), 'osc2', 2 ** (2 / 12))).toBeDefined();
-    // At a Sustain of 0 the Envelope lets Osc 2 back to its knobs while the Note is still held.
-    expect(of(idealPartials({ ...patch, filterSustain: 0 }, 64, 1, true), 'osc2', 2 ** (2 / 12))).toBeDefined();
+    expect(of(idealPartials(patch, 64, { gateOn: true }), 'osc2', 2 ** (7 / 12))).toBeDefined();
+    expect(of(idealPartials(patch, 64, { gateOn: false }), 'osc2', 2 ** (2 / 12))).toBeDefined();
+    // At a Sustain of 0 the Envelope lets Osc 2 back to its knobs while the Gate is still on.
+    expect(of(idealPartials({ ...patch, filterSustain: 0 }, 64, { gateOn: true }), 'osc2', 2 ** (2 / 12))).toBeDefined();
   });
 
   it('comes in order, low to high', () => {
@@ -221,6 +221,6 @@ describe('FM’s depth at the top (issue 103)', () => {
 
   it('draws FM’s sidebands at the depth kept: half of 50 % is drawn as 25 %', () => {
     const sines = { ...defaultPatch(), waveform: 'sine', osc2Waveform: 'sine', osc2Semitone: 7 } as const;
-    expect(idealPartials({ ...sines, crossMod: 0.5 }, 64, 0.5)).toEqual(idealPartials({ ...sines, crossMod: 0.25 }, 64));
+    expect(idealPartials({ ...sines, crossMod: 0.5 }, 64, { fmKept: 0.5 })).toEqual(idealPartials({ ...sines, crossMod: 0.25 }, 64));
   });
 });

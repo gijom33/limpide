@@ -52,7 +52,7 @@ function loadSaved(storage: KeyValueStorage): Partial<Saved> {
   }
 }
 
-/** Ideals kept per Patch, by the share of FM's depth their Note keeps and whether it is held: a few Notes' worth. */
+/** Ideals kept per Patch, by the share of FM's depth their Note keeps and its Gate: a few Notes' worth. */
 const KEPT_IDEALS = 16;
 
 /**
@@ -61,18 +61,18 @@ const KEPT_IDEALS = 16;
  */
 const idealOf = (patch: Patch): IdealAt => {
   const known = new Map<string, readonly IdealPartial[]>();
-  // The last Note's answer: every Spectrum asks every frame, and the kept depth is a search (fmDepthKept).
+  // The last Note's kept depth: every Spectrum asks every frame, and it is a search (fmDepthKept).
   let last: { fundamental: number; sampleRate: number; kept: number } | undefined;
-  return (fundamental, sampleRate, held = false) => {
+  return (fundamental, sampleRate, gateOn = false) => {
     const kept =
       last?.fundamental === fundamental && last.sampleRate === sampleRate
         ? last.kept
         : Math.round(idealFmKept(patch, fundamental, sampleRate) * 1000) / 1000;
     last = { fundamental, sampleRate, kept };
-    const key = `${kept} ${held}`;
+    const key = `${kept} ${gateOn}`;
     let ideal = known.get(key);
     if (!ideal) {
-      ideal = idealPartials(patch, IDEAL_HARMONICS, kept, held).map((p) => ({ ...p, level: p.level * OSCILLATOR_LEVEL }));
+      ideal = idealPartials(patch, IDEAL_HARMONICS, { fmKept: kept, gateOn }).map((p) => ({ ...p, level: p.level * OSCILLATOR_LEVEL }));
       if (known.size >= KEPT_IDEALS) known.clear();
       known.set(key, ideal);
     }

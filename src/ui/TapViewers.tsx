@@ -16,8 +16,8 @@ interface Props {
   view(): ViewSettings;
   /** Draw the Ideal Reference rings on this Tap's Spectrum. */
   showIdeal?: boolean;
-  /** Whether the newest Note is held, for the Ideal (issue 98). */
-  held?(): boolean;
+  /** Whether the newest Note's Gate is on, for the Ideal (issue 98). */
+  gateOn?(): boolean;
   /** The Filter's gain: drawn as the Response Curve and applied to the Ideal marks. */
   response?(frequencies: Float32Array<ArrayBuffer>): Float32Array;
   /** Whether the safety limiter is bending the sound: given for the Amp Tap, shown as LIMITING. */
@@ -30,7 +30,7 @@ interface Props {
  * Scope + Spectrum for one Tap, with no caption: the stage's panel says which it is. Canvases are mounted once and
  * drawn by the render loop. The level is measured but not shown; the Scope carries it as `data-db` (for tests).
  */
-export function TapViewers({ name, analyser, sampleRate, fundamental, view, showIdeal, held, response, limiting, formulas }: Props) {
+export function TapViewers({ name, analyser, sampleRate, fundamental, view, showIdeal, gateOn, response, limiting, formulas }: Props) {
   const scopeRef = useRef<HTMLCanvasElement>(null);
   const spectrumRef = useRef<HTMLCanvasElement>(null);
   const hoverRef = useRef<{ x: number; y: number } | null>(null);
@@ -41,7 +41,7 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, view, show
       fundamental,
       view,
       showIdeal,
-      held,
+      gateOn,
       response,
       hover: () => hoverRef.current,
     });
@@ -51,7 +51,7 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, view, show
       drawSpectrum();
       scopeRef.current!.dataset.db = String(level());
     });
-  }, [analyser, sampleRate, fundamental, view, showIdeal, held, response, limiting]);
+  }, [analyser, sampleRate, fundamental, view, showIdeal, gateOn, response, limiting]);
 
   return (
     <figure className="tap" data-tap={name} aria-label={`${name} Tap`}>

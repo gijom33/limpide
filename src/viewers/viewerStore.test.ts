@@ -93,12 +93,12 @@ describe('the Viewer settings store (issue 77)', () => {
 
   it('puts Osc 2 where a held Note’s Envelope keeps it, and back on its knobs once released (issue 98)', () => {
     const { patches, viewers } = setup();
-    // Env Amount 24 at a Sustain of 0.5: a held Note keeps Osc 2 an octave above its knobs.
+    // Env Amount 24 at a Sustain of 0.5: while the Gate is on, Osc 2 rests an octave above its knobs.
     patches.change((p) => ({ ...p, mixOsc2: 1, osc2EnvAmount: 24, filterSustain: 0.5 }), 'hand');
-    const osc2 = (held: boolean) => (viewers.get().ideal?.(440, 48000, held) ?? []).find((p) => p.source === 'osc2')!.ratio;
+    const osc2 = (gateOn: boolean) => (viewers.get().ideal?.(440, 48000, gateOn) ?? []).find((p) => p.source === 'osc2')!.ratio;
     expect(osc2(true)).toBeCloseTo(2);
     expect(osc2(false)).toBeCloseTo(1);
-    expect(osc2(true)).toBeCloseTo(2); // the held answer is not the released one kept
+    expect(osc2(true)).toBeCloseTo(2); // the Gate's answer is not the released one kept
   });
 
   it('draws FM’s sidebands at the depth the Note keeps at the top (issue 103)', () => {
@@ -110,7 +110,7 @@ describe('the Viewer settings store (issue 77)', () => {
       return marks.find((p) => p.source === 'osc1' && p.ratio > 4)?.level ?? 0;
     };
     const patch = patches.get().patch;
-    const at = (kept: number) => idealPartials(patch, 256, kept).find((p) => p.source === 'osc1' && p.ratio > 4)!.level * OSCILLATOR_LEVEL;
+    const at = (kept: number) => idealPartials(patch, 256, { fmKept: kept }).find((p) => p.source === 'osc1' && p.ratio > 4)!.level * OSCILLATOR_LEVEL;
     expect(sideband(60)).toBeCloseTo(at(1), 6);
     expect(sideband(96)).toBeCloseTo(at(fmDepthKept(patch, 440 * 2 ** (27 / 12), 48000)), 3); // kept to a thousandth
     expect(sideband(96)).toBeLessThan(sideband(60) / 2);
