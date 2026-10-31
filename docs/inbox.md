@@ -4,6 +4,7 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-10-31, the owner, on a phone (Bead under the section tabs, by the Oscillators' top edge): "Bead does not sit exactly on line when on top row. I understand there are issues with how to handle top row but if it's manageable, please fix."
 ## Ideas
 
 ## Dropped
