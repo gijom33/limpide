@@ -25,6 +25,8 @@ export interface Modulation {
   volume: number;
   /** The newest Note while its key is held (or Hold keeps it), with its Velocity; null once released. */
   sounding: Sounding | null;
+  /** When the newest Note started (its Gate opened), in the engine's seconds; null before any (issue 115). */
+  struck: number | null;
   /** The pitch the newest Note sounds at, in semitones (fractional through a Glide or vibrato); A4 before any. */
   pitch: number;
   /** How far an LFO on Pitch moves it right now, in semitones: `pitch` less the Note where the Glide has taken it. */

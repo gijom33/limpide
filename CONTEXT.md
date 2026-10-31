@@ -168,6 +168,10 @@ _Avoid_: Stage (an Envelope's), lesson
 A house loop in C minor that plays on whatever Patch is loaded and never changes it, so the sound can be shaped under a tune. It only uses the 13 keys from the piano's C to the C above, and moves with the piano's octave. One Voice plays its chords as a single line. A Note, the Demo or the Song button stops it.
 _Avoid_: Loop, backing track, sequence
 
+**Mascot**:
+A small creature after Claude's, called by playing C, A, D, E by hand and sent away the same way. It perches right of the name of the section of the last control turned and moves with what is heard; it makes no sound. Left out of the tips and the README on purpose.
+_Avoid_: Easter egg (the idea, not the thing), sprite, pet
+
 **Velocity**:
 How hard a Note was struck (0–1): from MIDI, from how low you press an on-screen piano key, or full for the computer keyboard. It scales the Amp level and, by the **Velocity → Cutoff** amount, the Effective Cutoff.
 _Avoid_: Intensity, force

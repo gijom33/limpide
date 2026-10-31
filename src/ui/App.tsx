@@ -3,6 +3,7 @@ import { type AudioSession, getAudioSession } from '../app/session';
 import { safeStorage } from '../app/storage';
 import { type AudioStatus, unlockAudio } from '../app/unlockAudio';
 import { rememberWelcome, welcomeFor } from '../app/welcome';
+import { createCallingPhrase } from '../input/callingPhrase';
 import { DEFAULT_OCTAVE, shiftOctave, startingOctave } from '../input/keyboardLayout';
 import { type Formula, harmonicFormula, responseFormula } from '../music/maths';
 import { CHOICES, osc1Heard, osc2Heard, type ParamId, type Patch, setFilter, setParam, setWaveform, subNoiseHeard } from '../patch/patch';
@@ -25,6 +26,7 @@ import { Knob } from './Knob';
 import { LearnBar } from './LearnBar';
 import { LfoControls } from './LfoControls';
 import { LearnContext } from './learn';
+import { Mascot } from './Mascot';
 import { MidiPanel } from './MidiPanel';
 import { MathsContext } from './mathsContext';
 import { ModulationContext } from './modulationRing';
@@ -35,6 +37,7 @@ import { QuickSetupPanel } from './QuickSetupPanel';
 import { SectionStrip } from './SectionStrip';
 import { Segmented } from './Segmented';
 import { SubBlock } from './SubBlock';
+import { type SectionName, sectionOfField } from './sections';
 import { Tabs } from './Tabs';
 import { TapViewers } from './TapViewers';
 import { ToolGroup } from './ToolGroup';
@@ -143,6 +146,24 @@ export function App() {
       setOctave(next);
       patches.change((p) => ({ ...p, keyboardOctave: next }), 'hand');
     },
+    [patches],
+  );
+  // C, A, D, E played by hand calls the mascot, and again sends it away (issue 115); not remembered across a reload.
+  const [mascot, setMascot] = useState(false);
+  useEffect(() => {
+    const phrase = createCallingPhrase();
+    return session.onPress((note) => phrase.press(note, performance.now() / 1000) && setMascot((on) => !on));
+  }, [session]);
+  // It perches on the section of the last control turned, by hand or by a Controller; the Oscillators at first.
+  const [mascotSection, setMascotSection] = useState<SectionName>('Oscillators');
+  useEffect(
+    () =>
+      patches.subscribe(({ before, after, by }) => {
+        if (by !== 'hand' && by !== 'controller') return;
+        const field = (Object.keys(after) as (keyof Patch)[]).find((f) => before[f] !== after[f]);
+        const section = field && sectionOfField(field);
+        if (section) setMascotSection(section);
+      }),
     [patches],
   );
   const modulationContext = useMemo(() => ({ engine: session.engine, patch: () => patches.get().patch, octave: octaveRef }), [session, patches]);
@@ -714,6 +735,7 @@ export function App() {
             onQuit={tutorial.end}
           />
         )}
+        {mascot && <Mascot section={mascotSection} />}
       </main>
     </MathsContext.Provider>
     </ModulationContext.Provider>

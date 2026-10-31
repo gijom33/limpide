@@ -1058,6 +1058,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       bandwidth: then ? bandwidthOctaves(filterStages(then.filterMode, then.filterSlope, resonance)[0].Q) : 1,
       volume: then ? effectiveVolume(then, lfo) : 1,
       sounding: gate?.on ? { note, velocity } : null,
+      struck: opened >= 0 ? ampEvents[opened].time : null,
       pitch: gliding + vibrato + bendAt(t) / 100,
       vibrato,
     };

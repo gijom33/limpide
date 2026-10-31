@@ -434,6 +434,38 @@ describe('Resonance and level', () => {
   });
 });
 
+describe('what the mascot reads (issue 115)', () => {
+  it("gives when the newest Note started, a Note handed over ahead only from its start, a dip's from after the dip", () => {
+    const ctx = new OfflineAudioContext(1, SR * 2, SR);
+    const engine = createSynthEngine(ctx);
+    engine.applyPatch({ ...defaultPatch(), ampRelease: 0.5 });
+    expect(engine.modulationAt(0).struck).toBeNull();
+    engine.noteOn(60, 1, 0.1);
+    engine.noteOff(0.3);
+    engine.noteOn(62, 1, 0.4); // into the Release: it dips first
+    expect(engine.modulationAt(0.2).struck).toBeCloseTo(0.1, 6);
+    expect(engine.modulationAt(0.35).struck).toBeCloseTo(0.1, 6);
+    expect(engine.modulationAt(0.5).struck).toBeCloseTo(0.4 + DIP, 6);
+  });
+
+  it('reading it changes nothing in the sound', async () => {
+    const play = (e: ReturnType<typeof createSynthEngine>, read: boolean) => {
+      for (let i = 0; i < 8; i++) {
+        e.noteOn([60, 69, 62, 64][i % 4], 0.8, i * 0.12);
+        if (read) for (let t = 0; t < 1; t += 1 / 30) e.modulationAt(t);
+        e.release([60, 69, 62, 64][i % 4], i * 0.12 + 0.1);
+      }
+    };
+    const patch = { voices: 4 as const, lfoAmount: 0.5, lfoDestination: 'cutoff' as const, lfoRetrigger: 'note' as const };
+    const without = await render(1, patch, (e) => play(e, false));
+    const read = await render(1, patch, (e) => play(e, true));
+    // Two renders of the same Notes already differ by about 2e-7 (the browser's rounding): within −120 dB is the same.
+    let most = 0;
+    for (let i = 0; i < read.length; i++) most = Math.max(most, Math.abs(read[i] - without[i]));
+    expect(most).toBeLessThan(1e-6);
+  });
+});
+
 describe('modulationAt for past moments (the Envelope Timeline)', () => {
   // Issue 45: the Timeline asks for every pixel column, every frame. Each moment must cost the same however many Notes
   // the history holds (it replayed the whole history per column: 3.7 ms a frame grew to 31 ms after 600 Notes).

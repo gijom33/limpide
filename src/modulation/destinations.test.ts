@@ -8,7 +8,7 @@ import { evenReach } from './reach';
 
 const patch = (change: Partial<Patch>): Patch => ({ ...defaultPatch(), lfoAmount: 0, lfo2Amount: 0, ...change });
 const at = (change: Partial<Modulation>): Modulation => ({
-  amp: 1, filter: 0, cutoff: 1000, lfo: [0, 0], mode: 'lowpass', resonance: 0.2, bandwidth: 1, volume: 1, sounding: null, pitch: 69, vibrato: 0,
+  amp: 1, filter: 0, cutoff: 1000, lfo: [0, 0], mode: 'lowpass', resonance: 0.2, bandwidth: 1, volume: 1, sounding: null, struck: null, pitch: 69, vibrato: 0,
   ...change,
 });
 

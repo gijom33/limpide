@@ -790,6 +790,16 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   border-radius: 50%; pointer-events: none; background: var(--stage-mod); border: 1.5px solid #121317;
 }
 .pitch-marker[data-on-black] { border-color: #fff; }
+
+/* The mascot (issue 115): over the page, under the header and the cards, never in the way of a pointer. */
+.mascot {
+  position: absolute; left: 0; top: 0; z-index: 5; pointer-events: none; transform-origin: 50% 100%;
+  --mascot-body: #d97757; --mascot-eye: #14161b;
+}
+:root[data-theme='light'] .mascot { --mascot-body: #c4633f; }
+.mascot svg { display: block; overflow: visible; }
+.mascot-body { fill: var(--mascot-body); }
+.mascot-eyes { fill: var(--mascot-eye); }
 /* Until sound starts (the browser waits for the page to be used), a label over the keys invites a first Note: a key
    on the computer keyboard or the piano ("tap" on touch screens). It lets presses through to the keys, and takes
    no room, so nothing moves when it goes. It fades in after a moment: a browser that allows sound switches it on
