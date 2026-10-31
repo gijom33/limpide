@@ -6,6 +6,10 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- 2026-10-31, the owner: "need to add agent reviewer who would be a complete synth neophyte who is expecting to have fun and learn with the tutorials."
+- 2026-10-31, the owner: "Would be better if text in tutorials are fun to read and easy to understand and self-explanatory."
+- 2026-10-31, the owner: "During tour, we could use tricks such as viewer freeze to explain ADSR."
+
 ## Dropped
 
 - 2026-10-30, from Claude's brainstorm, Velocity on the Volume ("a harder hit plays louder, not only brighter"): already so. The Amp Envelope's Attack rises to the Note's Velocity (PRD story 9). Claude's call, open to the owner.
