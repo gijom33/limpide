@@ -1,13 +1,13 @@
-/** C, A, D, E: the Notes hidden in the name, as pitch classes (C = 0). */
-const PHRASE = [0, 9, 2, 4];
+/** B, E, A, D, as in a bead of water: the mascot's Notes, as pitch classes (C = 0). */
+const PHRASE = [11, 4, 9, 2];
 
 /** The longest the phrase may take, from its first Note to its last, in seconds. */
 export const CALLING_SECONDS = 4;
 
 /**
- * The Notes that call the mascot and send it away (issue 115): C, A, D, E in that order, in any octave, within
+ * The Notes that call the mascot and send it away (issue 115): B, E, A, D in that order, in any octave, within
  * `CALLING_SECONDS`. `press` hears each Note the player presses, at `time` in seconds; true when it completes the
- * phrase. A Note out of order starts it over (a C, from its first Note).
+ * phrase. A Note out of order starts it over (a B, from its first Note).
  */
 export function createCallingPhrase() {
   let heard = 0; // how many of the phrase's Notes have come in order

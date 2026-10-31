@@ -791,16 +791,16 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 }
 .pitch-marker[data-on-black] { border-color: #fff; }
 
-/* The mascot (issue 115): a box standing on the Amp's top edge, hiding what goes below it, so the drop comes up from
-   behind the Amp. Over the page, under the header and the cards, never in the way of a pointer. */
+/* The mascot (issue 115): a box on its line, which hides what is beyond that line while the drop comes into view. Over
+   the page, under the header and the cards, never in the way of a pointer. */
 .mascot {
-  position: absolute; left: 0; top: 0; z-index: 5; pointer-events: none; overflow: hidden;
+  position: absolute; left: 0; top: 0; z-index: 5; pointer-events: none;
   --mascot-body: #6cc8f0; --mascot-shine: #e8f8ff; --mascot-eye: #14161b;
 }
 :root[data-theme='light'] .mascot { --mascot-body: #2b8fd6; --mascot-shine: #ffffff; }
 /* It stands at the box's foot, and leans about the drop's foot, not the tail's. */
 .mascot-drop { position: absolute; bottom: 0; left: 0; transform-origin: 20% 100%; }
-.mascot svg { display: block; }
+.mascot svg { display: block; overflow: visible; }
 .mascot-body { fill: var(--mascot-body); }
 .mascot-shine { fill: var(--mascot-shine); }
 .mascot-eyes { fill: var(--mascot-eye); }

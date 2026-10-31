@@ -143,7 +143,13 @@ export function createMascotMotion(random: () => number = Math.random) {
         nextStroll = now + 1.5 + random() * 3;
         nextBlink = now + 2 + random() * 4;
       }
-      x = clamp(x!);
+      x = x!;
+      // A new room: it walks into it, rather than jumping.
+      if (x !== clamp(x) && target === null) {
+        target = clamp(x);
+        speed = NUDGE_SPEED;
+        sliding = false;
+      }
       const struck = heard.struck !== null && heard.struck !== heardNote;
       heardNote = heard.struck;
       const silent = heard.amp < SILENT;

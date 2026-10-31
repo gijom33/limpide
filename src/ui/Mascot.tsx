@@ -4,7 +4,9 @@ import type { PatchStore } from '../patch/patchStore';
 import { addToRenderLoop } from '../viewers/renderLoop';
 import { gesturesOf } from './mascotGestures';
 import { createMascotMotion, type Pose, type Room } from './mascotMotion';
+import { choosePerch, createMascotPlace, type Perch } from './mascotPlace';
 import { ModulationContext } from './modulationRing';
+import { SECTIONS } from './sections';
 
 type Rect = readonly [x: number, y: number, width: number, height: number];
 
@@ -49,48 +51,59 @@ const WIDTH = 44;
 const HEIGHT = 26;
 /** Room over its head for its leaps and the splash. */
 const HEADROOM = 18;
-/** How long it takes to come up from behind the Amp. */
+/** How long it takes to come up from behind its edge, or down from under the header. */
 export const RISE_SECONDS = 0.4;
+/** Phones and the sections 2 × 2 (the stylesheet's breakpoint): it keeps in view as the page scrolls. */
+const STACKED = '(max-width: 860px)';
 
 const rects = (list: readonly Rect[]) => list.map(([x, y, w, h]) => <rect key={`${x} ${y}`} x={x} y={y} width={w} height={h} />);
 
-/** What it must keep clear of, above the Amp's top edge. */
+/** What it must keep clear of, above its edge. */
 const IN_THE_WAY = 'button, [role=slider], [role=tab], [role=radio], input, canvas, .piano, .knob-value, .fader';
-/** The spots tried along the edge, this many pixels apart. */
+/** The spots tried along an edge, this many pixels apart. */
 const STEP = 4;
 
 /**
- * Its room along the Amp's top edge, from the Amp's left: the stretch of spots whose box covers least of the controls
- * and Viewers above the edge, around the leftmost of those (a free stretch of the header over the Amp in three or four
+ * Its room along a section's top edge, in the window's pixels: the stretch of spots whose box covers least of the
+ * controls and Viewers above the edge, around the leftmost of those (a free stretch of the header in three or four
  * across; elsewhere the bottom of the Viewer above, about as much everywhere).
  */
-function roomOn(amp: DOMRect): Room {
-  const box = { top: amp.top - HEIGHT - HEADROOM, bottom: amp.top };
+function roomOn(section: DOMRect): Room {
+  const box = { top: section.top - HEIGHT - HEADROOM, bottom: section.top };
   const above = [...document.querySelectorAll<HTMLElement>(IN_THE_WAY)]
     .filter((el) => !el.closest('.mascot') && el.checkVisibility({ visibilityProperty: true }))
     .map((el) => el.getBoundingClientRect())
-    .filter((r) => r.width > 0 && r.top < box.bottom && r.bottom > box.top && r.right > amp.left && r.left < amp.right);
+    .filter((r) => r.width > 0 && r.top < box.bottom && r.bottom > box.top && r.right > section.left && r.left < section.right);
   const covers = (x: number) =>
     above.reduce(
-      (sum, r) => sum + Math.max(0, Math.min(r.right, amp.left + x + WIDTH) - Math.max(r.left, amp.left + x)) * Math.max(0, Math.min(r.bottom, box.bottom) - Math.max(r.top, box.top)),
+      (sum, r) => sum + Math.max(0, Math.min(r.right, x + WIDTH) - Math.max(r.left, x)) * Math.max(0, Math.min(r.bottom, box.bottom) - Math.max(r.top, box.top)),
       0,
     );
-  const spots = Array.from({ length: Math.max(1, Math.floor((amp.width - WIDTH) / STEP) + 1) }, (_, i) => i * STEP);
+  const spots = Array.from({ length: Math.max(1, Math.floor((section.width - WIDTH) / STEP) + 1) }, (_, i) => section.left + i * STEP);
   const least = Math.min(...spots.map(covers));
   // Within a pixel row of the least is as clear.
   const clear = (x: number) => covers(x) <= least + WIDTH;
   const best = spots.find(clear)!;
   let max = best;
-  while (max + STEP <= amp.width - WIDTH && clear(max + STEP)) max += STEP;
+  while (max + STEP <= section.right - WIDTH && clear(max + STEP)) max += STEP;
   return { min: best, max };
 }
 
+/** The four sections on the page, by name, where shown. */
+const sectionBoxes = () =>
+  SECTIONS.map(({ name }) => ({ id: name as string, box: document.querySelector(`section[aria-label="${name}"]`)?.getBoundingClientRect() })).filter(
+    (s): s is { id: string; box: DOMRect } => !!s.box && s.box.width > 0,
+  );
+
 /**
- * The mascot (issue 115), called by C, A, D, E: a water drop trailing the Limpide logo, which comes up from behind
- * the Amp section and lives on its top edge, strolling along the stretch with least above it. It moves with what is
- * heard, as the Viewers read it (the Modulation model), and with every control turned, by hand, a Controller or the
- * Demo (`gesturesOf`); sent away, it jumps, splashes and melts. It adds nothing to the sound. No focus, no pointer,
- * nothing for a screen reader. Drawn by the render loop, outside React (ADR-0002).
+ * The mascot (issue 115), called by B, E, A, D, as in a bead of water: a water drop trailing the Limpide logo. In
+ * three and four across it comes up from behind the top right section and lives on its top edge, strolling along the
+ * stretch with least above it. On a phone and in 2 × 2 it keeps in view as the page scrolls, on the top edge of a
+ * section in the right column, or hanging under the header when none has room: to a lower line it falls like rain
+ * and lands with a splash, to a higher one it flies up on its tail. It moves with what is heard, as the Viewers read it
+ * (the Modulation model), and with every control turned, by hand, a Controller or the Demo (`gesturesOf`); sent away,
+ * it jumps, splashes and melts, or, hanging or in the air, drips away down the window. It adds nothing to the sound.
+ * No focus, no pointer, nothing for a screen reader. Drawn by the render loop, outside React (ADR-0002).
  */
 export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leaving: boolean; onGone: () => void }) {
   const context = useContext(ModulationContext);
@@ -106,53 +119,119 @@ export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leav
   useEffect(() => {
     if (!context) return;
     const still = matchMedia('(prefers-reduced-motion: reduce)');
+    const stacked = matchMedia(STACKED);
     const motion = createMascotMotion();
+    const place = createMascotPlace();
     const stopListening = patches.subscribe(({ before, after, by }) => {
       for (const gesture of gesturesOf(before, after, by)) motion.gesture(gesture, context.engine.now());
     });
     let shown: Pose | null = null;
-    let up = 0; // how far it has come up from behind the Amp, 0 to 1
+    let up = 0; // how far it has come into view, 0 to 1
+    let arrivedHanging = false;
     let last = performance.now() / 1000;
+    let perch: Perch | null = null;
+    let foot: number | null = null;
+    let leaveBy: 'melt' | 'rain' | null = null;
     let room: { key: string; room: Room } | null = null;
     const stopDrawing = addToRenderLoop(() => {
       const outer = frame.current!;
       const seconds = performance.now() / 1000;
       const dt = Math.min(0.1, seconds - last);
       last = seconds;
-      const amp = document.querySelector('section[aria-label="Amp"]')?.getBoundingClientRect();
-      if (!amp) return;
-      const origin = (outer.offsetParent ?? document.body).getBoundingClientRect();
-      // Its room is found again only when the Amp moves or changes size against the page.
-      const key = `${amp.left - origin.left} ${amp.top - origin.top} ${amp.width}`;
-      if (room?.key !== key) room = { key, room: roomOn(amp) };
-      if (leavingRef.current) motion.leave(context.engine.now());
+      const now = context.engine.now();
+      const sections = sectionBoxes();
+      if (!sections.length) return;
+
+      // Its line: the top right section's edge; on a phone or in 2 × 2, a right-column edge in view, or the header.
+      let on: { id: string; box: DOMRect | null };
+      if (!stacked.matches) {
+        const top = Math.min(...sections.map((s) => s.box.top));
+        const right = sections.filter((s) => s.box.top - top < 4).reduce((a, b) => (b.box.right > a.box.right ? b : a));
+        perch = { id: right.id, foot: right.box.top, hanging: false };
+        on = right;
+      } else {
+        const rightmost = Math.max(...sections.map((s) => s.box.right));
+        const column = sections.filter((s) => rightmost - s.box.right < 4).sort((a, b) => a.box.top - b.box.top);
+        const ceiling = Math.max(0, ...['header', '.section-strip'].map((q) => document.querySelector(q)?.getBoundingClientRect().bottom ?? 0));
+        perch = choosePerch(perch?.id ?? null, column.map((s) => ({ id: s.id, top: s.box.top })), ceiling, innerHeight, HEIGHT, HEADROOM, foot ?? ceiling);
+        const id = perch.id;
+        on = column.find((s) => s.id === id) ?? { id, box: null };
+        if (!on.box) {
+          const span = column[0].box;
+          on = { id, box: new DOMRect(span.left, perch.foot, span.width, 0) };
+        }
+      }
+      // Leaving: on its line it melts; hanging or in the air it drips away down the window.
+      if (leavingRef.current && leaveBy === null) {
+        const where = place.frame(perch, now, still.matches).moving;
+        leaveBy = where === 'standing' || where === 'landing' ? 'melt' : 'rain';
+        if (leaveBy === 'melt') motion.leave(now);
+      }
+      if (leaveBy === 'rain') perch = { id: 'away', foot: innerHeight + HEIGHT + HEADROOM, hanging: false };
+
+      // Its room along the line, found again only when the line moves against the page or changes.
+      const box = on.box!;
+      const key = `${perch.id} ${box.left + scrollX} ${perch.hanging ? 0 : box.top + scrollY} ${box.width}`;
+      if (room?.key !== key) room = { key, room: perch.hanging ? { min: box.left + 4, max: box.right - WIDTH - 4 } : roomOn(box) };
 
       const m = context.engine.modulationAt();
       const heard = lfos(context.patch()).flatMap((l, i) => (l.amount > 0 ? [m.lfo[i]] : []));
       const pose = motion.frame(
         { amp: m.amp * m.volume, sway: heard.length ? heard.reduce((a, b) => a + b, 0) / heard.length : 0, struck: m.struck },
-        context.engine.now(),
+        now,
         still.matches,
         room.room,
       );
-      if (pose.gone) {
+      const where = place.frame(perch, now, still.matches);
+      foot = where.foot;
+      if (pose.gone || (leaveBy === 'rain' && where.foot >= innerHeight + HEIGHT)) {
         goneRef.current();
         return;
       }
+
+      // Between lines and under the header, the line's moves take over the sound's and the controls'.
+      let tailTurn = 0;
+      let origin = '20% 100%';
+      if (where.moving === 'hanging') {
+        Object.assign(pose, { legs: 'stand', splash: 'none', lift: 0, tilt: still.matches ? 0 : Math.sin(now * 2.2) * 6 });
+        origin = '20% 0%'; // it swings from its tip
+      } else if (where.moving === 'falling') {
+        Object.assign(pose, { legs: 'tuck', splash: 'none', eyes: 'open', lift: 0, tilt: 0, stretch: 1.3 }); // a raindrop
+      } else if (where.moving === 'flying') {
+        Object.assign(pose, { legs: 'tuck', splash: 'none', eyes: 'happy', lift: 0, tilt: 0, stretch: 1.05 });
+        tailTurn = 90 + Math.sin(now * 2 * Math.PI * 12) * 22; // its tail under it, spinning
+      } else if (where.moving === 'landing') {
+        const p = where.landed;
+        if (p < 0.25) Object.assign(pose, { splash: 'wide', eyes: 'shut', legs: 'stand', lift: 0, stretch: 0.7 });
+        else {
+          const q = (p - 0.25) / 0.75;
+          // Back up with a little overshoot.
+          const back = 1 + 2.7 * (q - 1) ** 3 + 1.7 * (q - 1) ** 2;
+          Object.assign(pose, { splash: 'none', lift: 0, stretch: 0.7 + 0.3 * back, eyes: q < 0.5 ? 'happy' : pose.eyes });
+        }
+      }
+
       for (const part of Object.keys(PARTS) as Part[]) {
         if (shown?.[part] === pose[part]) continue;
         if (shown) parts.current.get(`${part} ${shown[part]}`)!.style.display = 'none';
         parts.current.get(`${part} ${pose[part]}`)!.style.display = '';
       }
       if (shown?.form !== pose.form) tail.current!.style.display = pose.form === 'drop' ? '' : 'none';
+      tail.current!.setAttribute('transform', tailTurn ? `rotate(${tailTurn} 9 9)` : '');
       shown = pose;
-      // A box whose bottom is the Amp's top edge, hiding what is below it: the Amp's panel, which it comes up from behind.
-      outer.style.transform = `translate(${amp.left - origin.left + pose.x}px, ${amp.top - origin.top - HEIGHT - HEADROOM}px)`;
+
+      const page = (outer.offsetParent ?? document.body).getBoundingClientRect();
+      outer.style.transform = `translate(${pose.x - page.left}px, ${where.foot - HEIGHT - HEADROOM - page.top}px)`;
+      // Coming into view: up from behind its edge, or down from under the header, hidden beyond that line.
+      if (up === 0) arrivedHanging = perch.hanging;
       up = still.matches ? 1 : Math.min(1, up + dt / RISE_SECONDS);
-      const rise = up * up * (3 - 2 * up); // eased in and out, from its full height below the edge
+      const rise = up * up * (3 - 2 * up);
+      const hidden = (1 - rise) * HEIGHT;
+      outer.style.clipPath = up < 1 ? (arrivedHanging ? `inset(${HEADROOM}px -60px -60px -60px)` : 'inset(-60px -60px 0 -60px)') : 'none';
       const el = drop.current!;
       el.style.opacity = String(pose.fade);
-      el.style.transform = `translateY(${(1 - rise) * HEIGHT - pose.lift}px) rotate(${pose.tilt}deg) scale(${2 - pose.stretch}, ${pose.stretch})`;
+      el.style.transformOrigin = origin;
+      el.style.transform = `translateY(${(arrivedHanging ? -hidden : hidden) - pose.lift}px) rotate(${pose.tilt}deg) scale(${2 - pose.stretch}, ${pose.stretch})`;
     });
     return () => {
       stopListening();

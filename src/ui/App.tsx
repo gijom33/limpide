@@ -147,8 +147,8 @@ export function App() {
     },
     [patches],
   );
-  // C, A, D, E played by hand calls the mascot up from behind the Amp, and again sends it away, melting (issue 115);
-  // not remembered across a reload.
+  // B, E, A, D played by hand, as in a bead of water, calls the mascot, and again sends it away (issue 115); not
+  // remembered across a reload.
   const [mascot, setMascot] = useState<'off' | 'up' | 'leaving'>('off');
   useEffect(() => {
     const phrase = createCallingPhrase();
