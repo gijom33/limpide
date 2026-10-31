@@ -1,0 +1,100 @@
+import { act } from 'react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { renderHook, testSession } from '../../test/renderHook';
+import { useMidi } from './useMidi';
+
+/** A Controller plugged in, as Web MIDI shows it: its messages are sent with `send`. */
+function controller(name: string) {
+  const input = Object.assign(new EventTarget(), { id: name, name, state: 'connected' as const });
+  const access = Object.assign(new EventTarget(), { inputs: { values: () => [input].values() } });
+  const send = (...bytes: number[]) =>
+    act(async () => void input.dispatchEvent(Object.assign(new Event('midimessage'), { data: Uint8Array.from(bytes) })));
+  return { access, send };
+}
+
+/** useMidi with a session that writes down what it plays, and a host that writes down what it is told. */
+async function midi(name = 'Keystation 49') {
+  const device = controller(name);
+  vi.spyOn(navigator, 'requestMIDIAccess').mockResolvedValue(device.access as unknown as MIDIAccess);
+  const { session, storage, played } = testSession();
+  const told: string[] = [];
+  const host = {
+    storage, session,
+    pressHoldRef: { current: () => void told.push('hold') },
+    onNote: () => void told.push('note'),
+    onBend: (amount: number) => void told.push(`bend ${amount.toFixed(1)}`),
+    onPedal: (down: boolean) => void told.push(`pedal ${down ? 'down' : 'up'}`),
+    onProgram: (number: number) => void told.push(`program ${number}`),
+    onPresetStep: () => void told.push('preset step'),
+  };
+  const hook = await renderHook(useMidi, host);
+  await act(async () => hook.result.current.connect());
+  await vi.waitFor(() => expect(hook.result.current.midi.kind).toBe('ready'));
+  return { ...hook, ...device, session, played, told, host };
+}
+
+describe('useMidi: a Controller (the 1.16.0 review)', () => {
+  let unmount = async () => {};
+  afterEach(async () => {
+    await unmount();
+    vi.restoreAllMocks();
+  });
+
+  it('names the Controller connected, and plays its Notes, telling the page a Note came', async () => {
+    const m = await midi();
+    unmount = m.unmount;
+    expect(m.result.current.midi).toEqual({ kind: 'ready', devices: ['Keystation 49'] });
+    await m.send(0x90, 60, 100);
+    await m.send(0x80, 60, 0);
+    expect(m.played).toEqual(['press 60', 'let go 60']);
+    expect(m.told).toEqual(['note']);
+  });
+
+  it('tells the latest host of a Note, after the page has rendered again', async () => {
+    const m = await midi();
+    unmount = m.unmount;
+    const told: string[] = [];
+    await m.rerender({ ...m.host, onNote: () => void told.push('the new host') });
+    await m.send(0x90, 60, 100);
+    expect(told).toEqual(['the new host']);
+    expect(m.told).toEqual([]);
+  });
+
+  it('hands an unmapped keyboard’s pedal and Program Change to the host, and its mod wheel to the LFO’s Depth (issue 52)', async () => {
+    const m = await midi();
+    unmount = m.unmount;
+    await m.send(0xb0, 64, 127);
+    await m.send(0xc0, 5);
+    await m.send(0xb0, 1, 127);
+    expect(m.told).toEqual(['pedal down', 'program 5']);
+    expect(m.session.patches.get().patch.lfoAmount).toBe(1);
+  });
+
+  it('acts on a pad mapped to an Action: Hold through the host, the next Preset in the Patch', async () => {
+    const m = await midi();
+    unmount = m.unmount;
+    await act(async () => {
+      m.result.current.mappingStore.set({ control: { kind: 'note', channel: 10, number: 36 }, target: { kind: 'action', id: 'hold' }, mode: 'trigger' });
+      m.result.current.mappingStore.set({ control: { kind: 'note', channel: 10, number: 37 }, target: { kind: 'action', id: 'nextPreset' }, mode: 'trigger' });
+    });
+    const before = m.session.patches.get().name;
+    await m.send(0x99, 36, 100);
+    await m.send(0x99, 37, 100);
+    // Every Note from a Controller tells the page one came, a pad's too: the person has taken over from the Demo.
+    expect(m.told).toEqual(['note', 'hold', 'note', 'preset step']);
+    expect(m.session.patches.get().name).not.toBe(before);
+    expect(m.played).toEqual([]); // a mapped pad plays no Note
+  });
+
+  it('lays out a C16 by itself the first time one is plugged in with nothing mapped (ADR-0009)', async () => {
+    const m = await midi('TEMPOPAD C16');
+    unmount = m.unmount;
+    expect(m.result.current.mappings.length).toBeGreaterThan(0);
+  });
+
+  it('leaves a keyboard with nothing mapped as it is', async () => {
+    const m = await midi();
+    unmount = m.unmount;
+    expect(m.result.current.mappings).toEqual([]);
+  });
+});

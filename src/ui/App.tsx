@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { type AudioSession, getAudioSession } from '../app/session';
 import { safeStorage } from '../app/storage';
 import { type AudioStatus, unlockAudio } from '../app/unlockAudio';
@@ -132,6 +132,7 @@ export function App() {
   useEffect(() => unlockAudio(session.ctx, window, setAudioStatus), [session]);
 
   const [octave, setOctave] = useState(() => startingOctave(patches.get().patch));
+  // The octave between renders too: the computer keyboard, the Song and the rings read it as a key moves it.
   const octaveRef = useRef(octave);
   octaveRef.current = octave;
   // A Patch loaded starts the keyboard in its own octave, a bass on C2, or else on C4 (issue 125); the octave buttons
@@ -153,24 +154,23 @@ export function App() {
   // do nothing, for anyone who would rather not (the owner, 2026-10-30).
   const [mascot, setMascot] = useState<'off' | 'up' | 'leaving'>('off');
   const [bead, setBead] = useDisplaySetting(storage, 'bead');
-  const beadRef = useRef(bead);
-  beadRef.current = bead;
-  const mascotRef = useRef(mascot);
-  mascotRef.current = mascot;
   // While it is out, five more words spelled with Notes each cue a trick (issue 127).
   const [word, setWord] = useState<{ word: Word; count: number } | null>(null);
+  /** A Note played by hand: `spelled`, the word it ends, if any; `called`, whether it ends the calling phrase. */
+  const heard = useEffectEvent((spelled: Word | null, called: boolean) => {
+    if (spelled && mascot === 'up') setWord((w) => ({ word: spelled, count: (w?.count ?? 0) + 1 }));
+    if (!called || bead === 'off') return;
+    setBead('on');
+    setMascot((m) => (m === 'off' ? 'up' : m === 'up' ? 'leaving' : m));
+  });
   useEffect(() => {
     const phrase = createCallingPhrase();
     const words = createWordsHeard();
     return session.onPress((note) => {
       const time = performance.now() / 1000;
-      const spelled = words.press(note, time);
-      if (spelled && mascotRef.current === 'up') setWord((w) => ({ word: spelled, count: (w?.count ?? 0) + 1 }));
-      if (!phrase.press(note, time) || beadRef.current === 'off') return;
-      setBead('on');
-      setMascot((m) => (m === 'off' ? 'up' : m === 'up' ? 'leaving' : m));
+      heard(words.press(note, time), phrase.press(note, time));
     });
-  }, [session, setBead]);
+  }, [session]);
   const switchBead = (on: boolean) => {
     setBead(on ? 'on' : 'off');
     setMascot((m) => (on ? (m === 'off' ? 'up' : m) : m === 'up' ? 'leaving' : m));
@@ -236,7 +236,7 @@ export function App() {
   const startTutorial = (preset: string) => tutorial.start(TUTORIALS.find((t) => t.preset === preset)!);
   const midi = useMidi({
     storage, session, pressHoldRef,
-    onNote: () => players.stopDemoRef.current(true),
+    onNote: () => players.stopDemo(true),
     onBend: (amount) => session.engine.setBend(amount * bendRange * 100),
     onPedal: setPedal,
     // Program n is the n-th Preset (0 is Init), so a keyboard's Program buttons step through them.

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { SECTIONS, type SectionName } from './sections';
 
 /** The gap left between the strip and a section it jumps to. */
@@ -132,7 +132,8 @@ export function SectionStrip({ follow }: { follow?: { name: SectionName; key: nu
     setCurrent(name);
   };
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: jump is rebuilt each render, the same each time; only a new follow moves the page
+  // Only a new follow moves the page.
+  const jumpNow = useEffectEvent(jump);
   useEffect(() => {
     const target = follow && section(follow.name);
     if (!target) return;
@@ -145,7 +146,7 @@ export function SectionStrip({ follow }: { follow?: { name: SectionName; key: nu
     // In view: all of it below the strip, or, for a section taller than what is left, its top where a jump lands it.
     const room = innerHeight - strip.bottom;
     const shown = box.height <= room ? box.top >= strip.bottom - 1 && box.bottom <= innerHeight + 1 : Math.abs(box.top - strip.bottom - LANDING_GAP) < 24;
-    if (!shown) jump(follow.name);
+    if (!shown) jumpNow(follow.name);
   }, [follow]);
 
   return (

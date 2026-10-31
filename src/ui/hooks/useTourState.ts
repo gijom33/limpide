@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { type ParamId, type Patch, setParam } from '../../patch/patch';
 import type { KeptPatch, PatchStore } from '../../patch/patchStore';
 import { TOUR, TOUR_PATCH, type TourCard, type TourMove, tourAt } from '../../tutorial/tour';
@@ -38,8 +38,6 @@ export function useTourState({ patches, onStart, onCard, onEnd }: Host) {
   // The control the synth is turning now, for the card to ring.
   const [moving, setMoving] = useState<TourMove['id'] | null>(null);
   const kept = useRef<KeptPatch | null>(null);
-  const host = useRef({ onCard, onEnd });
-  host.current = { onCard, onEnd };
 
   /** Ends the Tour, giving back the person's Patch unless `restore` is false (they loaded another). */
   const finish = (restore = true) => {
@@ -47,13 +45,13 @@ export function useTourState({ patches, onStart, onCard, onEnd }: Host) {
     if (!mine) return;
     // Let go first: the Patch given back is heard as a load, which would end the Tour again.
     kept.current = null;
-    host.current.onEnd();
+    onEnd();
     if (restore) patches.restore(mine);
     setIndex(null);
     setMoving(null);
   };
-  const finishRef = useRef(finish);
-  finishRef.current = finish;
+  const finishNow = useEffectEvent(finish);
+  const showCard = useEffectEvent((card: TourCard) => onCard(card));
 
   /** Starts the Tour; started again while it runs, back to its first card. */
   const start = () => {
@@ -69,10 +67,10 @@ export function useTourState({ patches, onStart, onCard, onEnd }: Host) {
     if (index === null) return;
     const card = TOUR[index];
     patches.change((p) => withValues(p, Object.fromEntries(TURNED.map((id) => [id, TOUR_PATCH.patch[id]]))), 'tour');
-    host.current.onCard(card);
+    showCard(card);
     const taken = new Set<keyof Patch>();
     const unsubscribe = patches.subscribe(({ before, after, by }) => {
-      if (by === 'load') finishRef.current(false);
+      if (by === 'load') finishNow(false);
       else if (by === 'hand' || by === 'controller') for (const m of card.moves) if (before[m.id] !== after[m.id]) taken.add(m.id);
     });
     const began = performance.now();
@@ -88,7 +86,7 @@ export function useTourState({ patches, onStart, onCard, onEnd }: Host) {
     turn();
     const timer = setInterval(turn, TICK_MS);
     // A page closed or reloaded mid-Tour keeps the person's Patch as its Last session, not the Tour's.
-    const onHide = () => finishRef.current();
+    const onHide = () => finishNow();
     addEventListener('pagehide', onHide);
     return () => {
       clearInterval(timer);
@@ -98,7 +96,7 @@ export function useTourState({ patches, onStart, onCard, onEnd }: Host) {
   }, [index, patches]);
 
   // Nothing turns on after the page goes.
-  useEffect(() => () => finishRef.current(), []);
+  useEffect(() => () => finishNow(), []);
 
   return { index, moving, start, end: () => finish(), move };
 }

@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useEffectEvent, useRef, useState } from 'react';
 import type { Theme } from '../app/displaySettings';
 import type { Word } from '../input/callingPhrase';
 import { lfos } from '../patch/patch';
@@ -264,12 +264,12 @@ export function Mascot({
     theme(theme: Theme): void;
   } | null>(null);
   const press = useRef<{ x: number; y: number; picked: boolean } | null>(null);
+  // What the loop reads each frame, in refs, as the Viewers' loops do (ADR-0002).
   const demoRef = useRef(demoPart);
   demoRef.current = demoPart;
   const leavingRef = useRef(leaving);
   leavingRef.current = leaving;
-  const goneRef = useRef(onGone);
-  goneRef.current = onGone;
+  const gone = useEffectEvent(onGone);
 
   useEffect(() => {
     if (!context) return;
@@ -452,7 +452,7 @@ export function Mascot({
       foot = where.foot;
       moving = where.moving;
       if (pose.gone || (leaveBy === 'rain' && where.foot >= innerHeight + HEIGHT)) {
-        goneRef.current();
+        gone();
         return;
       }
 

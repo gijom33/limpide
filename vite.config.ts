@@ -97,6 +97,9 @@ export default defineConfig({
       },
       {
         extends: true,
+        // The hooks' tests render React: bundled before the first test, so a late discovery cannot reload the page
+        // with a second copy of React.
+        optimizeDeps: { include: ['react', 'react-dom/client'] },
         test: {
           name: 'engine',
           include: ['src/**/*.browser.test.ts'],

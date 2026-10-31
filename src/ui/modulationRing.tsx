@@ -1,4 +1,4 @@
-import { createContext, type RefObject, useContext, useEffect, useRef } from 'react';
+import { createContext, type RefObject, useContext, useEffect, useEffectEvent, useRef } from 'react';
 import type { SynthEngine } from '../engine/synthEngine';
 import { keyToNote } from '../input/keyboardLayout';
 import { effectiveValue } from '../modulation/destinations';
@@ -115,8 +115,8 @@ export function ModulationRing({ id, centre, radius, trackRadius, dotRadius, arc
   const context = useContext(ModulationContext);
   const rings = useRef<(SVGPathElement | null)[]>([]);
   const dot = useRef<SVGCircleElement>(null);
-  const draw = useRef({ arc, point });
-  draw.current = { arc, point };
+  const arcNow = useEffectEvent(arc);
+  const pointNow = useEffectEvent(point);
 
   useEffect(() => {
     if (!context) return;
@@ -133,7 +133,7 @@ export function ModulationRing({ id, centre, radius, trackRadius, dotRadius, arc
         // A range pinned past the dial's end draws nothing (an arc is never shorter than half a degree).
         const seen = (now ? ring.ranges(now) : undefined)?.filter(([from, to]) => Math.abs(position(to) - position(from)) > 0.001);
         path.style.display = seen?.length ? '' : 'none';
-        if (seen?.length) path.setAttribute('d', seen.map(([from, to]) => draw.current.arc(position(from), position(to), ring.onTrack ? trackRadius : radius)).join(' '));
+        if (seen?.length) path.setAttribute('d', seen.map(([from, to]) => arcNow(position(from), position(to), ring.onTrack ? trackRadius : radius)).join(' '));
       });
       paths[BLUE]!.toggleAttribute('data-dim', attention.pointed || attention.focused);
       const live = now?.now ?? null;
@@ -141,7 +141,7 @@ export function ModulationRing({ id, centre, radius, trackRadius, dotRadius, arc
       if (live !== null) {
         // Always on the knob's own track, where its value arc and the white rings are, whatever moves it (the owner,
         // 2026-10-28): the rings say how far each source reaches, the dot where the value is.
-        const [x, y] = draw.current.point(position(live), trackRadius);
+        const [x, y] = pointNow(position(live), trackRadius);
         d.setAttribute('cx', x.toFixed(2));
         d.setAttribute('cy', y.toFixed(2));
       }
