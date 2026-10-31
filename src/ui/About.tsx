@@ -5,6 +5,8 @@ import { Logo } from './Logo';
 const SOURCE = 'https://github.com/gijom33/limpide';
 /** Where to reach the author (issue 48). */
 const AUTHOR = 'https://www.linkedin.com/in/guillaume-boillet-18208310';
+/** Where a visitor who enjoyed Limpide can give a little (issue 146). */
+const COFFEE = 'https://buymeacoffee.com/gijom33';
 
 /** "24 Oct 2026" from "2026-10-24". */
 const day = (iso: string) =>
@@ -97,6 +99,13 @@ export function About({
               AI Hero
             </a>{' '}
             methodology.
+          </dd>
+          <dt>Support</dt>
+          <dd>
+            Enjoying Limpide?{' '}
+            <a href={COFFEE} target="_blank" rel="noreferrer">
+              Buy me a coffee
+            </a>
           </dd>
           <dt>Sound</dt>
           <dd>The Web Audio API, in your browser</dd>

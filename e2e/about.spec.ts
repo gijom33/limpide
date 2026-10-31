@@ -12,6 +12,7 @@ test('the logo opens the About splash: version, build and credits; Close, Escape
   await expect(about).toContainText(`Version ${version}`);
   await expect(about).toContainText('Guillaume Boillet');
   await expect(about.getByRole('link', { name: 'Source on GitHub' })).toHaveAttribute('href', 'https://github.com/gijom33/limpide');
+  await expect(about.getByRole('link', { name: 'Buy me a coffee' })).toHaveAttribute('href', 'https://buymeacoffee.com/gijom33'); // issue 146
 
   await about.getByRole('button', { name: 'Close' }).click();
   await expect(about).toBeHidden();
