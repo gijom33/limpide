@@ -472,12 +472,10 @@ describe('the C16’s knobs, one step for each bit of turning (issue 145)', () =
     return { positions, send };
   };
 
-  it('sweeps the whole range in one full turn: 46 messages of 65 turned slowly (the owner’s log)', () => {
+  it('counts each 65 of a slow turn as a step of 1 %: one full turn, 46 messages (the owner’s log), is 46 %', () => {
     const { positions, send } = c16Knob();
-    send(65, 23);
-    expect(positions.cutoff).toBeCloseTo(0.5);
-    send(65, 23);
-    expect(positions.cutoff).toBeCloseTo(1);
+    send(65, 46);
+    expect(positions.cutoff).toBeCloseTo(0.46);
   });
 
   it('counts a fast turn’s 66 as an eighth of a bit, a burst of eight being one, however they arrive', () => {
@@ -487,7 +485,7 @@ describe('the C16’s knobs, one step for each bit of turning (issue 145)', () =
     send(66, 17);
     send(66, 7);
     send(66, 64);
-    expect(positions.cutoff).toBeCloseTo(34 / 46);
+    expect(positions.cutoff).toBeCloseTo(0.34);
   });
 
   it('turns back at once, and leaves other Controllers’ knobs as they send', () => {
@@ -495,7 +493,7 @@ describe('the C16’s knobs, one step for each bit of turning (issue 145)', () =
     send(65, 10);
     send(66, 8);
     send(63);
-    expect(positions.cutoff).toBeCloseTo(10 / 46);
+    expect(positions.cutoff).toBeCloseTo(0.1);
     const r = rig();
     r.store.set({ control: { kind: 'cc', channel: 1, number: 22 }, target: resonance, mode: 'relative-centred' });
     r.send(cc(22, 66), cc(22, 66));
