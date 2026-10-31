@@ -81,20 +81,21 @@ const STACKED = '(max-width: 860px)';
 
 const rects = (list: readonly Rect[]) => list.map(([x, y, w, h]) => <rect key={`${x} ${y}`} x={x} y={y} width={w} height={h} />);
 
-/** What it must keep clear of, above its edge. */
-const IN_THE_WAY = 'button, [role=slider], [role=tab], [role=radio], input, canvas, .piano, .knob-value, .fader';
+/** What it must keep clear of, above its edge: the controls, and (in three and four across) the Viewers. */
+const CONTROLS = 'button, [role=slider], [role=tab], [role=radio], input, .piano, .knob-value, .fader';
 /** The spots tried along an edge, this many pixels apart. */
 const STEP = 4;
 
 /**
- * Its room along a section's top edge, in the window's pixels: the stretch of spots where it covers least of the
- * controls and Viewers above the edge, standing (its leaps may brush past them; it takes no pointer), around the
- * leftmost of those: the whole edge in three or four across; on a phone and in 2 × 2, where the Viewer above comes
- * close, its left end.
+ * Its room along a section's top edge, in the window's pixels: the stretch of spots where it covers least of what is
+ * above the edge, standing (its leaps may brush past it), around the leftmost of those: the whole edge in three or
+ * four across. On a phone and in 2 × 2 the Viewer of the section above comes down to just over the edge all along it:
+ * there it keeps clear of the controls only, and passes over the Viewer's bottom, rather than being kept to the edge's
+ * left end (the owner, 2026-10-30).
  */
-function roomOn(section: DOMRect): Room {
+function roomOn(section: DOMRect, viewers: boolean): Room {
   const box = { top: section.top - HEIGHT - 2, bottom: section.top };
-  const above = [...document.querySelectorAll<HTMLElement>(IN_THE_WAY)]
+  const above = [...document.querySelectorAll<HTMLElement>(viewers ? `${CONTROLS}, canvas` : CONTROLS)]
     .filter((el) => !el.closest('.mascot') && el.checkVisibility({ visibilityProperty: true }))
     .map((el) => el.getBoundingClientRect())
     .filter((r) => r.width > 0 && r.top < box.bottom && r.bottom > box.top && r.right > section.left && r.left < section.right);
@@ -276,7 +277,7 @@ export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leav
       // Its room along the line, found again only when the line moves against the page or changes.
       const box = on.box;
       const key = `${perch.id} ${box.left + scrollX} ${perch.hanging ? 0 : box.top + scrollY} ${box.width}`;
-      if (room?.key !== key) room = { key, room: perch.hanging ? { min: box.left + 4, max: box.right - WIDTH - 4 } : roomOn(box) };
+      if (room?.key !== key) room = { key, room: perch.hanging ? { min: box.left + 4, max: box.right - WIDTH - 4 } : roomOn(box, !stacked.matches) };
 
       const m = context.engine.modulationAt();
       const heard = lfos(context.patch()).flatMap((l, i) => (l.amount > 0 ? [m.lfo[i]] : []));
