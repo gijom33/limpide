@@ -6,6 +6,13 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- 2026-10-31, from the 1.18.0 review, the Tour's card copies the Tutorial card's shell (the top row, the tap-to-show words with the same two lint waivers, the actions row), and its classes say "tutorial" though the Tour is not a Tutorial: one docked-card shell for both.
+- 2026-10-31, from the 1.18.0 review, Osc 2's Envelope term is worked out twice (`osc2Rest` beside `osc2Cents`, which issue 100 made the one answer), and FM's index (FM_INDEX times FM) is written out in four places.
+- 2026-10-31, from the 1.18.0 review, small names: the engine tests' "duty" for the Pulse Width (an avoided word), the type `TourCard` sharing its component's name, a phrase and its BPM travelling together unnamed, the Ideal's cache keyed by a string.
+- 2026-10-31, from the 1.18.0 review, the cards' folds and the bend range are still remembered outside the one module issue 87 made for the Display settings.
+- 2026-10-31, from the 1.18.0 fact-check, the Tour's Amp card says the synth lengthens the Attack, then the Release, but a Note takes the length set when its key goes down or up: with the knobs' taper few Notes get the longest (0.8 s once in 48 s). Its words, or its timing.
+- 2026-10-31, from the 1.18.0 fact-check, FM Bass's "the sidebands jump wide and settle back" and Poly Mod Zap's "laser zap" are true to the ear but loose: the strike is FM's thinnest moment, and the zap is Osc 2's own fall.
+- 2026-10-31, from the 1.18.0 ripple hunt, no test checks the focus lands on Start when the Tour's "Build a Bass" opens Bass; the Welcome's test for it (issue 104) went with the Welcome's Tutorial button.
 ## Dropped
 
 - 2026-10-30, from Claude's brainstorm, Velocity on the Volume ("a harder hit plays louder, not only brighter"): already so. The Amp Envelope's Attack rises to the Note's Velocity (PRD story 9). Claude's call, open to the owner.
