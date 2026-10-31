@@ -12,11 +12,14 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: pages-${{ github.ref }}
   cancel-in-progress: true
 
+# The checks run side by side, and the site deploys only once all are green. The end-to-end tests, three quarters of
+# the time when they ran in one job (23 of 28 minutes for 1.16.1), are split over eight: each browser in four shards.
 jobs:
-  build:
+  # The types, the lint (Biome: React hooks rules, imports organised), the unit tests, and the site as published.
+  checks:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -25,49 +28,78 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      # The types and the lint (Biome: React hooks rules, imports organised, so no duplicate import).
       - run: npx tsc
       - run: npm run lint
       - run: npm run test:unit
-      # The engine renders real audio in Chromium; the end-to-end tests play the built site in Chromium and WebKit.
-      # The browsers are cached by Playwright's version: on a hit only the system libraries they need are installed.
-      # Both installs are time-limited: on 2026-10-27 the install hung twice for over half an hour on GitHub's side.
-      - id: playwright
-        run: echo "version=$(npx playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
-      - id: browsers
-        uses: actions/cache@v6
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
-      - if: steps.browsers.outputs.cache-hit != 'true'
-        timeout-minutes: 10
-        run: npx playwright install --with-deps chromium webkit
-      - if: steps.browsers.outputs.cache-hit == 'true'
-        timeout-minutes: 10
-        run: npx playwright install-deps chromium webkit
-      - run: npm run test:engine
       # The published site counts visits on the owner's GoatCounter; a fork's workflow sets its own address, or none.
       - run: npm run build
         env:
           GOATCOUNTER_URL: ${{ github.repository == 'gijom33/limpide' && 'https://gijom33.goatcounter.com/count' || '' }}
-      - run: npm run test:e2e
-      - if: failure()
-        uses: actions/upload-artifact@v7
-        with:
-          name: playwright-report
-          path: test-results
-          retention-days: 7
       - uses: actions/upload-pages-artifact@v5
         with:
           path: dist
 
+  # The engine renders real audio in Chromium; the end-to-end tests play the built site in Chromium and WebKit. Both
+  # run on GitHub's own Ubuntu, whose fonts the layout tests are measured in (not Playwright's image, whose differ).
+  browsers:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: engine, browser: chromium }
+          - { name: e2e chromium 1/4, browser: chromium, shard: 1/4 }
+          - { name: e2e chromium 2/4, browser: chromium, shard: 2/4 }
+          - { name: e2e chromium 3/4, browser: chromium, shard: 3/4 }
+          - { name: e2e chromium 4/4, browser: chromium, shard: 4/4 }
+          - { name: e2e webkit 1/4, browser: webkit, shard: 1/4 }
+          - { name: e2e webkit 2/4, browser: webkit, shard: 2/4 }
+          - { name: e2e webkit 3/4, browser: webkit, shard: 3/4 }
+          - { name: e2e webkit 4/4, browser: webkit, shard: 4/4 }
+    name: ${{ matrix.name }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # The browser is cached by Playwright's version: on a hit only the system libraries it needs are installed.
+      # Both installs are time-limited: on 2026-10-27 the install hung twice for over half an hour on GitHub's side.
+      - id: playwright
+        run: echo "version=$(npx playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+      - id: cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ matrix.browser }}-${{ steps.playwright.outputs.version }}
+      - if: steps.cache.outputs.cache-hit != 'true'
+        timeout-minutes: 10
+        run: npx playwright install --with-deps ${{ matrix.browser }}
+      - if: steps.cache.outputs.cache-hit == 'true'
+        timeout-minutes: 10
+        run: npx playwright install-deps ${{ matrix.browser }}
+      - if: matrix.name == 'engine'
+        run: npm run test:engine
+      - if: matrix.shard
+        run: npx playwright test --project=${{ matrix.browser }} --shard=${{ matrix.shard }}
+      - if: failure() && matrix.shard
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report-${{ matrix.browser }}-${{ strategy.job-index }}
+          path: test-results
+          retention-days: 7
+
   deploy:
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-    needs: build
+    needs: [checks, browsers]
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: pages
+      cancel-in-progress: true
     steps:
       - id: deployment
         uses: actions/deploy-pages@v5
