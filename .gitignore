@@ -9,3 +9,6 @@ playwright-report/
 # Vitest browser-mode captures of failed tests
 .vitest-attachments/
 __screenshots__/
+
+# The outreach skill's drafts: they quote people, and stay off the public repository
+docs/outreach/drafts/

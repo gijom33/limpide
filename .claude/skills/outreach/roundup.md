@@ -1,0 +1,7 @@
+# The roundup
+
+1. **What is new.** The last roundup is the newest `*-roundup.md` in `docs/outreach/drafts/`; its first line names the versions it covered (`Covers: v1.16.0 – v1.17.0`). List the GitHub releases after it (`gh release list`, `gh release view <tag>`). With none after it, write no file and report "nothing new since vX.Y.Z".
+2. **What a synth player would care about.** From those releases' notes and the issues they name, keep what someone playing Limpide would see or hear: new controls, Presets, Tutorials, Viewers, layouts, fixes a player noticed. Leave out tests, tidy-ups and process. Done when each kept item has one line on what it lets you do and the issue it came from.
+3. **Which places are due.** For each place in `places.md`, compare its Last posted date with its Cadence. Write down which are due, and for each that is not, when it will be. A place whose rules ask for a feature worth its own post (most subreddits) is due only when the kept items hold one; say which item, or that there is none.
+4. **One draft per due place,** in its format: a reply in the owner's own thread for a forum, a post for a subreddit, a tip for the press. Lead with the one item a player would try first, the rest after in a short list, then the link. Add a shot list for a 20–30 s clip of the lead item.
+5. **The file's first line** is `Covers: vA – vB`, then the drafts, then the not-due places, then the Checked list.
