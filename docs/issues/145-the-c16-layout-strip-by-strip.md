@@ -2,7 +2,7 @@
 
 **What to build:** A new built-in layout for the TempoPAD C16, from profile 17's review ([report](../reviews/2026-10-31/17-midi-mapping-geek.md)) and the owner's real C16: each strip of the panel (two knobs, a fader, the M, S and R buttons) a column of its section on screen, so a player finds a control without looking. It replaces [34](./34-c16-bank-layout.md)'s layout, and comes with a one-page card to print and keep beside the C16.
 
-**Blocked by:** none. Built before [112](./112-tempo-midi-clock-and-an-arpeggiator.md) and [119](./119-legato-mode.md) at the owner's word (2026-10-31: "implement 145"): their places (bank D's R2 and R4 for Sync, bank C's R2 for Legato) are kept free, and each of those issues fills its own
+**Blocked by:** none. Built before [112](./112-tempo-midi-clock-and-an-arpeggiator.md) and [119](./119-legato-mode.md) at the owner's word (2026-10-31: "implement 145"): their places (bank D's R2 and R4 for Sync, bank C's R2 for Legato) are kept free, and each of those issues fills its own. Since then (2026-10-31): 112 filled bank D's R2 and R4 with each LFO's Sync, a C16 set up with this layout gaining them where its own Mappings leave them free.
 
 **Status:** ready-for-human · enhancement. Built (2026-10-31), not pushed: to try on the owner's C16, its 22 momentary buttons set as the card says. The owner expects some buttons' modes to change after trying.
 

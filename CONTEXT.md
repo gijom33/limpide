@@ -115,12 +115,16 @@ How far, in octaves, the Filter Envelope pushes the Effective Cutoff away from t
 _Avoid_: Env depth, intensity
 
 **LFO**:
-A slow, repeating modulation source; there are two, each moving one Destination: Pitch (vibrato), Osc 2 Pitch, Detune, Pulse Width (PWM), FM, Cutoff, Resonance or Volume (tremolo). **Rate** is how fast it repeats, **Depth** how far it moves things.
+A slow, repeating modulation source; there are two, each moving one Destination: Pitch (vibrato), Osc 2 Pitch, Detune, Pulse Width (PWM), FM, Cutoff, Resonance or Volume (tremolo). **Rate** is how fast it repeats (in Hz, or with Sync on a note value), **Depth** how far it moves things.
 _Avoid_: Modulator, wobble, LFO amount (say Depth)
 
 **Retrigger**:
 An LFO setting: on, the LFO starts its cycle again at every Note, where its Waveform classically starts: a Saw at its foot, a Saw Down at its top, a Square on its upper half, a Sine and a Triangle at the centre rising (each Note gets the same wobble from its start); off, it runs freely and each Note catches it wherever it is. Off by default.
 _Avoid_: Key sync (fine in a tooltip), reset, phase reset
+
+**Sync**:
+An LFO setting: on, its Rate is a **note value** at the Tempo, from 4 bars to 1/32, straight, dotted (D) or triplet (T), read with its Hz ("1/8 · 4 Hz"), and running freely it starts its cycle on the beat; off, the Rate is in Hz again, as it was. Off by default (issue 112).
+_Avoid_: Tempo sync (fine in a tooltip), BPM sync, clock sync
 
 **Glide**:
 The time taken to slide from one note's pitch to the next.
@@ -143,6 +147,10 @@ _Avoid_: Declick, fade (fine in a tooltip)
 **Note Priority**:
 With one Voice, the rule picking which held Note sounds: last-note priority, so the newest held Note wins, and releasing it returns to the previous one. With more Voices, every held Note sounds, and a Note beyond the last free Voice takes the oldest one.
 _Avoid_: Voice stealing
+
+**Tempo**:
+The page's beats per minute, 40 to 240, 120 by default: never a Patch's, kept between visits, set by hand or with **Tap** (the BPM follows taps in time). An LFO with Sync on follows it. While the Demo, the Song, the Tour or a Tutorial plays, the Tempo is the player's own, its beats counted from its first Note, and the person's comes back when it stops (issue 112, ADR-0018).
+_Avoid_: BPM (the unit, fine on screen), clock, speed
 
 **Hold**:
 A mode that keeps Notes sounding after their keys are released, so the sound sustains while you adjust Parameters: with one Voice until a new key or Hold off, with more until Hold off, one Note per Voice at most (a Note beyond them lets the oldest go). Pressing the key of a Note Hold keeps lets that Note go; Hold stays on. The piano keeps their keys lit. Quick clicks on Hold after switching it on, before a Note is held, tap a rhythm: the held Notes then repeat on it, looping (on several Voices, the whole rhythm once as single Notes in turn, then once as the chord).
@@ -235,7 +243,7 @@ The Filter's gain per frequency at the Effective Cutoff, drawn over the Spectrum
 _Avoid_: Filter curve, transfer function (maths layer only), EQ curve
 
 **Envelope Timeline**:
-A Viewer plotting, over time with the present at its right edge, what changes the sound: the Amp Envelope always; the Filter Envelope while its Amount is set; the Effective Cutoff while the Filter Envelope or an LFO moves it; every other Destination an active LFO moves, on its knob's scale. A moved Parameter is a broken line in its stage's colour (the Cutoff dotted, what LFO 1 moves dashed, what LFO 2 alone moves dash-dotted). Its key lists what LFO 1 moves, what LFO 2 moves, the Cutoff, the Filter Envelope and the Amp Envelope, the Envelopes as Filter Env and Amp Env on screen.
+A Viewer plotting, over time with the present at its right edge, what changes the sound: the Amp Envelope always; the Filter Envelope while its Amount is set; the Effective Cutoff while the Filter Envelope or an LFO moves it; every other Destination an active LFO moves, on its knob's scale. A moved Parameter is a broken line in its stage's colour (the Cutoff dotted, what LFO 1 moves dashed, what LFO 2 alone moves dash-dotted). Its key lists what LFO 1 moves, what LFO 2 moves, the Cutoff, the Filter Envelope and the Amp Envelope, the Envelopes as Filter Env and Amp Env on screen. While an LFO is synced, faint broken lines mark the Tempo's beats, as on that LFO's plot.
 _Avoid_: ADSR display
 
 **Freeze**:
@@ -265,7 +273,7 @@ The one built-in set of Mappings, for the TempoPAD C16: each of its 4 banks play
 _Avoid_: Preset (a Preset is a sound), default mapping
 
 **Action**:
-A momentary command that is not a Parameter: toggle Hold, Freeze, take a Snapshot, previous or next Preset.
+A momentary command that is not a Parameter: toggle Hold, Freeze, take a Snapshot, previous or next Preset, Tap.
 _Avoid_: Command, shortcut
 
 **MIDI Learn**:

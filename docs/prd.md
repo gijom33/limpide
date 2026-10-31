@@ -96,6 +96,7 @@ Judged against [the design principles](./design-principles.md).
 81. As a user, I want About centred on screen and an ⓘ button at every screen size, so that I can always find out what this is.
 82. As a sound designer, I want the LFO to reach more destinations (Resonance, Osc 2's pitch and its Detune as well as Cutoff, Pitch and Pulse Width; the Volume, for tremolo, since issue 53; FM, since issue 97), picked with arrows or from a menu like the Patch bar's, so that one LFO makes more kinds of movement.
 83. As a sound designer, I want two LFOs, each with its own Waveform, Rate, Depth and destination, so that I can make vibrato and a filter sweep at once, or two speeds of movement on one control.
+101. As a player, I want the page to keep a tempo, set by hand or by tapping, and each LFO to sync its Rate to it in note values, its cycle landing on the beat, so that a wobble or a tremolo plays in time (issue 112, [ADR-0018](./adr/0018-limpide-keeps-a-tempo.md)).
 
 ### MIDI and the TempoPAD C16
 50. As a C16 owner, I want Limpide to detect my Controller when plugged in, so that I know it's connected.
@@ -166,6 +167,7 @@ Framed by the owner on 2026-10-31 ([issue 131](./issues/131-v1.md), which tracks
 - **Effective Cutoff:** computed by a pure modulation model that also produces the automation schedule ([ADR-0003](./adr/0003-modulation-model-mirrors-the-audio-graph.md)).
 - **Voices:** 1 to 8 per Patch; 1 Voice is monophonic with last-note priority and Glide. The Oscillator and Filter Viewers and the Timeline follow the newest Note; the Amp Viewers show every Voice by default ([ADR-0007](./adr/0007-optional-polyphony-viewers-follow-the-newest-note.md)).
 - **Controls:** knob size follows the Parameter's role, play or set-and-forget ([ADR-0008](./adr/0008-knob-size-follows-the-parameter-s-role.md)); levels and envelope stages are faders. Modulation rings and the piano's pitch marker are drawn by the render loop from the Modulation model, outside React (ADR-0002, ADR-0003).
+- **The tempo:** the page's, outside the Patch; an LFO with Sync on follows it in note values, its cycle locked to the beat, and a player takes it over while it plays ([ADR-0018](./adr/0018-limpide-keeps-a-tempo.md), issue 112; LFO tempo sync was out of scope until then, issue 53).
 - **MIDI:** MIDI Learn first, Encoder Mode auto-detected, and Pickup for Absolute Mappings ([ADR-0004](./adr/0004-midi-learn-first-no-hardcoded-controller-map.md)); one built-in layout, the C16's, a section per bank, each strip a column of it ([ADR-0009](./adr/0009-a-built-in-layout-for-the-c16.md), [ADR-0017](./adr/0017-the-c16-layout-strip-by-strip.md)).
 - **Tuning:** A4 = 440 Hz, equal temperament.
 
@@ -201,7 +203,6 @@ Framed by the owner on 2026-10-31 ([issue 131](./issues/131-v1.md), which tracks
 - Unison, and Viewers that show more than one Note at once ([ADR-0007](./adr/0007-optional-polyphony-viewers-follow-the-newest-note.md)).
 - Effects (delay, reverb, chorus, distortion). (Kept out by the owner again on 2026-10-30, [issue 113](./issues/113-effects.md).)
 - A modulation matrix beyond two LFOs with a single destination each.
-- LFO tempo sync: Limpide kept no tempo to sync to, with no sequencer or arpeggiator (decided by the owner, issue 53, 2026-10-27); Retrigger locks an LFO to each Note instead. (Since 2026-10-31 a tempo with MIDI clock sync, for LFO sync, is in v1, decided by the owner, [issue 112](./issues/112-tempo-midi-clock-and-an-arpeggiator.md).)
 - Custom DSP or analogue-modelled filters ([ADR-0001](./adr/0001-native-web-audio-nodes-over-custom-dsp.md)).
 - A spectrogram.
 - An arpeggiator or sequencer, and MIDI output. (Recording to a WAV file came into scope on 2026-10-30, decided by the owner, [issue 120](./issues/120-recording.md), and went to v2 on 2026-10-31; a tempo, grilled on 2026-10-31, is in [issue 112](./issues/112-tempo-midi-clock-and-an-arpeggiator.md); the arpeggiator stays out, decided by the owner on 2026-10-30: it won't help people understand how synths work, and the plugin Limpide is to become will be just a synth.)
