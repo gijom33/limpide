@@ -80,10 +80,43 @@ describe("the mascot's own life (issue 115)", () => {
 
   it('stays put while it dozes', () => {
     const motion = createMascotMotion(seeded(3));
-    const poses = run(motion, 0, 30, quiet);
+    const poses = run(motion, 0, DOZE_SECONDS + 7.5, quiet); // it first wakes 8 to 15 s after dozing off
     const dozing = poses.slice(60 * (DOZE_SECONDS + 0.1));
     expect(new Set(dozing.map((p) => p.x)).size).toBe(1);
     expect(dozing.every((p) => p.eyes === 'shut')).toBe(true);
+  });
+
+  it('strolls and plays even when nothing is heard, before dozing', () => {
+    const poses = run(createMascotMotion(seeded(5)), 0, DOZE_SECONDS - 0.5, quiet);
+    const xs = poses.map((p) => p.x);
+    expect(Math.max(...xs) - Math.min(...xs)).toBeGreaterThan(40);
+  });
+
+  it('with nothing played, does funny turns: shaking, turning round, bouncing, wagging…', () => {
+    const tricks = new Set<string>();
+    for (const seed of [1, 2, 3, 4]) {
+      for (const p of run(createMascotMotion(seeded(seed)), 0, DOZE_SECONDS - 0.5, quiet, spot)) {
+        if (p.splash === 'wide') tricks.add('shake');
+        if (p.turn < 0) tricks.add('spin');
+        if (p.lift > 3) tricks.add('bounce');
+        if (Math.abs(p.wag) > 10 && p.eyes === 'happy') tricks.add('wag');
+        if (Math.abs(p.tilt) > 12) tricks.add('peek');
+      }
+    }
+    expect(tricks.size).toBeGreaterThanOrEqual(4);
+  });
+
+  it('keeps its tricks for when nothing is played: with music it listens', () => {
+    const poses = run(createMascotMotion(seeded(2)), 0, 15, playing, spot);
+    expect(poses.some((p) => p.turn < 0 || p.splash === 'wide' || Math.abs(p.wag) > 0)).toBe(false);
+  });
+
+  it('wakes now and then from dozing, yawning, then dozes off again', () => {
+    const poses = run(createMascotMotion(seeded(9)), 0, DOZE_SECONDS + 40, quiet, spot);
+    const later = poses.slice(60 * (DOZE_SECONDS + 1));
+    const awake = later.filter((p) => p.eyes !== 'shut').length;
+    expect(awake).toBeGreaterThan(60);
+    expect(later.at(-1)!.eyes === 'shut' || awake < later.length).toBe(true);
   });
 });
 

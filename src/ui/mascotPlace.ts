@@ -9,15 +9,44 @@ export interface Perch {
 }
 
 /** How it is on its line, or between two. */
-export type Moving = 'standing' | 'hanging' | 'falling' | 'landing' | 'flying';
+export type Moving = 'standing' | 'hanging' | 'falling' | 'flying' | 'landing';
 
-/** Falling as rain: its gravity, in pixels a second squared. */
-const GRAVITY = 2400;
-/** Flying up on its tail: its push, and its top speed, in pixels a second. */
-const PUSH = 1800;
-const TOP_SPEED = 520;
-/** Landing: the splash and its recovery, in seconds. */
-export const LANDING_SECONDS = 0.45;
+/** Where along a line it may stand: its box's left, in the window's pixels. */
+export interface Span {
+  min: number;
+  max: number;
+}
+
+/** Where it is this frame. */
+export interface Placed {
+  foot: number;
+  /** Between lines, its place across the window, which it alone decides then; null on a line. */
+  x: number | null;
+  moving: Moving;
+  /** Flying up, its tail is pushing. */
+  thrust: boolean;
+  /** Its speed across and down the window, in pixels a second. */
+  vx: number;
+  vy: number;
+  /** Landing: how far through (0 to 1), and how hard it hit (0 to 1). */
+  landed: number;
+  impact: number;
+  /** The frame it lands: where, across the window, so its stroll carries on from there. */
+  landedAt: number | null;
+}
+
+/** Gravity, in pixels a second squared. */
+export const GRAVITY = 2200;
+/** Its tail's push, flying up: thrice gravity. */
+const THRUST = 3 * GRAVITY;
+/** How far it clears an edge it flies up to, in pixels, before dropping onto it. */
+const CLEARANCE = 8;
+/** Stepping off an edge, its little hop up, in pixels a second. */
+const HOP_OFF = 180;
+/** The speed of a landing that splashes it flattest, in pixels a second. */
+const HARD_LANDING = 1400;
+/** Landing: the splash, the squash and its wobble back. */
+export const LANDING_SECONDS = 0.7;
 
 /** A section's top edge, in the window's pixels: the sections it may stand on, top to bottom. */
 export interface Edge {
@@ -40,55 +69,110 @@ export function choosePerch(current: string | null, edges: readonly Edge[], ceil
 }
 
 /**
- * Where the mascot is between its lines (issue 115). On its line it follows it as the page scrolls. To a lower one it
- * falls like rain, faster and faster, and lands with a splash; to a higher one it flies up on its tail. With reduced
- * motion it is on the new line at once.
+ * Where the mascot is between its lines (issue 115), by the laws of motion. On its line it follows it as the page
+ * scrolls. To a lower one it hops off its edge (or lets go of the header) and falls under gravity, across to a spot in
+ * the new line's span, landing as hard as it fell. To a higher one its tail pushes it up until it has just the speed to
+ * clear the edge, then it coasts over and drops onto it. Hanging, it climbs to the header the same way and holds on.
+ * `from` starts it falling from that height (an arrival from the top of the window). With reduced motion it is on the
+ * new line at once.
  */
-export function createMascotPlace() {
+export function createMascotPlace({ from, random = Math.random }: { from?: number; random?: () => number } = {}) {
   let on: string | null = null; // the line it is on, or flying or falling to
   let foot = 0;
+  let x = 0;
+  let toX = 0;
+  let vx = 0;
+  let vy = 0;
   let moving: Moving = 'standing';
-  let speed = 0;
+  let thrust = false;
   let landedAt = -Infinity;
+  let impact = 0;
   let last: number | null = null;
+  const placed = (landedX: number | null = null): Placed => ({
+    foot,
+    x: moving === 'falling' || moving === 'flying' ? x : null,
+    moving,
+    thrust: moving === 'flying' && thrust,
+    vx,
+    vy,
+    landed: moving === 'landing' ? Math.min(1, (last! - landedAt) / LANDING_SECONDS) : 1,
+    impact,
+    landedAt: landedX,
+  });
+  /** A spot in `span` for it to land: where it is if that is in it, else one at random. */
+  const spotIn = (span: Span, at: number) => (at >= span.min && at <= span.max ? at : span.min + random() * (span.max - span.min));
+
   return {
-    frame(perch: Perch, now: number, reduced: boolean): { foot: number; moving: Moving; landed: number } {
-      const dt = last === null ? 0 : Math.min(0.1, now - last);
+    /** This frame, on `perch` (whose span is `span`), at `at` across the window when on its line. */
+    frame(perch: Perch, span: Span, now: number, reduced: boolean, at: number): Placed {
+      const dt = last === null ? 0 : Math.min(0.05, now - last);
       last = now;
       const settled: Moving = perch.hanging ? 'hanging' : 'standing';
       if (on === null || reduced) {
+        const arriving = on === null && !reduced && from !== undefined && !perch.hanging;
         on = perch.id;
-        foot = perch.foot;
-        moving = settled;
-        return { foot, moving, landed: 1 };
+        if (arriving) {
+          foot = from;
+          x = toX = at;
+          vx = vy = 0;
+          moving = 'falling';
+        } else {
+          foot = perch.foot;
+          moving = settled;
+          return placed();
+        }
       }
       if (perch.id !== on) {
         on = perch.id;
-        // A hanging drop whose header moves comes with it; any other change of line is a fall or a flight.
-        moving = perch.foot > foot ? 'falling' : 'flying';
-        speed = 0;
+        x = at;
+        toX = spotIn(span, at);
+        if (moving === 'hanging' && perch.hanging) foot = perch.foot;
+        else if (perch.foot > foot) {
+          // Down: a little hop off its edge, or letting go of the header.
+          vy = moving === 'hanging' ? 0 : -HOP_OFF;
+          moving = 'falling';
+        } else {
+          moving = 'flying';
+          thrust = true;
+          vy = Math.min(vy, 0);
+        }
       }
-      if (moving === 'falling') {
-        speed += GRAVITY * dt;
-        foot += speed * dt;
-        if (foot >= perch.foot) {
-          foot = perch.foot;
+      if (moving === 'falling' || moving === 'flying') {
+        const goal = perch.foot;
+        const pushing = moving === 'flying' && thrust;
+        vy += (GRAVITY - (pushing ? THRUST : 0)) * dt;
+        foot += vy * dt;
+        if (pushing) {
+          // Enough speed to coast up to just over the line: the tail stops pushing.
+          const above = foot - (goal - CLEARANCE);
+          if (vy < 0 && vy * vy >= 2 * GRAVITY * Math.max(0, above)) thrust = false;
+          if (perch.hanging && foot <= goal) {
+            foot = goal;
+            moving = 'hanging';
+            vx = vy = 0;
+            return placed(toX);
+          }
+        }
+        // Across: at the speed that brings it over its spot when it comes down onto the line.
+        const down = goal - foot;
+        const timeLeft = pushing ? 0.35 : (vy + Math.sqrt(Math.max(0, vy * vy + 2 * GRAVITY * Math.max(0, down)))) / GRAVITY;
+        vx = (toX - x) / Math.max(0.05, timeLeft);
+        x += vx * dt;
+        if (!pushing && vy > 0 && foot >= goal) {
+          foot = goal;
+          impact = Math.min(1, vy / HARD_LANDING);
           moving = perch.hanging ? 'hanging' : 'landing';
           landedAt = now;
+          x = toX;
+          vx = vy = 0;
+          return placed(toX);
         }
-      } else if (moving === 'flying') {
-        speed = Math.min(TOP_SPEED, speed + PUSH * dt);
-        foot -= speed * dt;
-        if (foot <= perch.foot) {
-          foot = perch.foot;
-          moving = settled;
-        }
-      } else {
-        foot = perch.foot;
-        if (moving === 'landing' && now - landedAt >= LANDING_SECONDS) moving = settled;
-        if (moving !== 'landing') moving = settled;
+        return placed();
       }
-      return { foot, moving, landed: moving === 'landing' ? (now - landedAt) / LANDING_SECONDS : 1 };
+      foot = perch.foot;
+      if (moving === 'landing' && now - landedAt >= LANDING_SECONDS) moving = settled;
+      if (moving !== 'landing') moving = settled;
+      return placed();
     },
   };
 }

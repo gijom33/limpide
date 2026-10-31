@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { choosePerch, createMascotPlace, LANDING_SECONDS, type Moving, type Perch } from './mascotPlace';
+import { choosePerch, createMascotPlace, GRAVITY, LANDING_SECONDS, type Moving, type Perch, type Placed, type Span } from './mascotPlace';
 
 const H = 26;
 const ROOM = 18;
@@ -27,60 +27,107 @@ describe('which line the mascot is on, on a phone or in 2 × 2 (issue 115)', () 
   });
 });
 
-/** Frames at 60 a second, the perch given by `at(t)`. */
-function run(place: ReturnType<typeof createMascotPlace>, from: number, to: number, at: (t: number) => Perch, reduced = false) {
-  const frames: { t: number; foot: number; moving: Moving; landed: number }[] = [];
-  for (let t = from; t <= to; t += 1 / 60) frames.push({ t, ...place.frame(at(t), t, reduced) });
+/** Frames at 60 a second, the perch given by `at(t)`, standing at `x` when on its line. */
+function run(place: ReturnType<typeof createMascotPlace>, from: number, to: number, at: (t: number) => Perch, reduced = false, span: Span = { min: 0, max: 300 }) {
+  const frames: (Placed & { t: number })[] = [];
+  let x = 100;
+  for (let t = from; t <= to; t += 1 / 60) {
+    const f = place.frame(at(t), span, t, reduced, x);
+    if (f.landedAt !== null) x = f.landedAt;
+    frames.push({ t, ...f });
+  }
   return frames;
 }
 const edge = (id: string, foot: number): Perch => ({ id, foot, hanging: false });
 const changes = (frames: { moving: Moving }[]) => frames.map((f) => f.moving).filter((m, i, all) => m !== all[i - 1]);
+const span = { min: 0, max: 300 };
 
-describe('the mascot between its lines (issue 115)', () => {
+describe('the mascot between its lines, by the laws of motion (issue 115)', () => {
   it('follows its edge as the page scrolls', () => {
     const place = createMascotPlace();
     const frames = run(place, 0, 1, (t) => edge('Amp', 400 - 100 * t));
-    expect(frames.every((f) => f.moving === 'standing' && Math.abs(f.foot - (400 - 100 * f.t)) < 1e-9)).toBe(true);
+    expect(frames.every((f) => f.moving === 'standing' && Math.abs(f.foot - (400 - 100 * f.t)) < 1e-9 && f.x === null)).toBe(true);
   });
 
-  it('to a lower edge, falls like rain, faster and faster, then lands with a splash and stands', () => {
+  it('to a lower edge, hops off, falls under gravity, lands as hard as it fell, wobbles, and stands', () => {
     const place = createMascotPlace();
-    place.frame(edge('Oscillators', 300), 0, false);
-    const frames = run(place, 0.01, 1.5, () => edge('Filter', 700));
+    place.frame(edge('Oscillators', 300), span, 0, false, 100);
+    const frames = run(place, 1 / 60, 2, () => edge('Filter', 700));
     expect(changes(frames)).toEqual(['falling', 'landing', 'standing']);
     const falling = frames.filter((f) => f.moving === 'falling');
-    const steps = falling.slice(1).map((f, i) => f.foot - falling[i].foot);
-    expect(steps.at(-1)!).toBeGreaterThan(steps[0] * 3);
+    expect(Math.min(...falling.map((f) => f.foot))).toBeLessThan(300); // the hop off
+    // Its speed grows by gravity each frame.
+    for (let i = 1; i < falling.length; i++) expect(falling[i].vy - falling[i - 1].vy).toBeCloseTo(GRAVITY / 60, 0);
     const landing = frames.filter((f) => f.moving === 'landing');
+    expect(landing[0].impact).toBeGreaterThan(0.6); // 400 px is a hard fall
     expect(landing.length / 60).toBeCloseTo(LANDING_SECONDS, 1);
     expect(frames.at(-1)!.foot).toBe(700);
   });
 
-  it('to a higher line, flies up on its tail, and from under the header to an edge, drops', () => {
+  it('a short drop lands softly', () => {
     const place = createMascotPlace();
-    place.frame(edge('Filter', 700), 0, false);
-    const up = run(place, 0.01, 1.5, () => ({ id: 'ceiling', foot: 276, hanging: true }));
+    place.frame(edge('Oscillators', 300), span, 0, false, 100);
+    const frames = run(place, 1 / 60, 1.5, () => edge('Filter', 330));
+    expect(frames.find((f) => f.moving === 'landing')!.impact).toBeLessThan(0.4);
+  });
+
+  it('falls across to a spot in the new line, landing there', () => {
+    const place = createMascotPlace({ random: () => 0.5 });
+    place.frame(edge('Oscillators', 300), span, 0, false, 100);
+    const frames = run(place, 1 / 60, 2, () => edge('Filter', 700), false, { min: 200, max: 260 });
+    const falling = frames.filter((f) => f.moving === 'falling');
+    expect(falling[0].x).toBeLessThan(130);
+    expect(frames.find((f) => f.landedAt !== null)!.landedAt).toBe(230); // the middle, with this random
+  });
+
+  it('to a higher edge, its tail pushes until it can coast over, then it drops onto the edge', () => {
+    const place = createMascotPlace();
+    place.frame(edge('Filter', 700), span, 0, false, 100);
+    const frames = run(place, 1 / 60, 2, () => edge('Oscillators', 300));
+    expect(changes(frames)).toEqual(['flying', 'landing', 'standing']);
+    const flying = frames.filter((f) => f.moving === 'flying');
+    const pushing = flying.filter((f) => f.thrust);
+    expect(pushing.length).toBeGreaterThan(3);
+    expect(flying.slice(flying.indexOf(pushing.at(-1)!) + 1).every((f) => !f.thrust)).toBe(true);
+    // Over the edge at the top of its arc, by a little, and onto it from above.
+    const top = Math.min(...flying.map((f) => f.foot));
+    expect(top).toBeLessThan(300);
+    expect(top).toBeGreaterThan(300 - 20);
+    expect(frames.find((f) => f.moving === 'landing')!.impact).toBeLessThan(0.4);
+  });
+
+  it('climbs to the header and holds on; letting go, it drops to an edge below', () => {
+    const place = createMascotPlace();
+    place.frame(edge('Filter', 700), span, 0, false, 100);
+    const up = run(place, 1 / 60, 1.5, () => ({ id: 'ceiling', foot: 276, hanging: true }));
     expect(changes(up)).toEqual(['flying', 'hanging']);
     expect(up.at(-1)!.foot).toBe(276);
     const down = run(place, 1.51, 3, () => edge('Amp', 600));
     expect(changes(down)).toEqual(['falling', 'landing', 'standing']);
+    expect(Math.min(...down.map((f) => f.foot))).toBeGreaterThanOrEqual(276); // no hop: it lets go
   });
 
-  it('turns back mid-flight for a new line, from where it is', () => {
+  it('arriving from the top of the window, falls onto its edge', () => {
+    const place = createMascotPlace({ from: -40 });
+    const frames = run(place, 0, 1.5, () => edge('Amp', 108));
+    expect(changes(frames)).toEqual(['falling', 'landing', 'standing']);
+    expect(frames[0].foot).toBeLessThan(0);
+  });
+
+  it('turns back mid-fall for a new line, from where it is', () => {
     const place = createMascotPlace();
-    place.frame(edge('Oscillators', 300), 0, false);
-    const falling = run(place, 0.01, 0.2, () => edge('Filter', 900));
+    place.frame(edge('Oscillators', 300), span, 0, false, 100);
+    const falling = run(place, 1 / 60, 0.4, () => edge('Filter', 900));
     const mid = falling.at(-1)!.foot;
     expect(mid).toBeGreaterThan(300);
-    const back = run(place, 0.21, 2, () => edge('Oscillators', 300));
+    const back = run(place, 0.41, 3, () => edge('Oscillators', 300));
     expect(back[0].moving).toBe('flying');
-    expect(back[0].foot).toBeLessThan(mid);
     expect(back.at(-1)).toMatchObject({ foot: 300, moving: 'standing' });
   });
 
   it('with reduced motion, is on the new line at once', () => {
-    const place = createMascotPlace();
-    place.frame(edge('Oscillators', 300), 0, true);
-    expect(place.frame(edge('Filter', 700), 0.02, true)).toMatchObject({ foot: 700, moving: 'standing' });
+    const place = createMascotPlace({ from: -40 });
+    place.frame(edge('Oscillators', 300), span, 0, true, 100);
+    expect(place.frame(edge('Filter', 700), span, 0.02, true, 100)).toMatchObject({ foot: 700, moving: 'standing' });
   });
 });

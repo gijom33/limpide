@@ -37,10 +37,10 @@ const watchDrop = (page: Page) =>
   });
 const watched = (page: Page) => page.evaluate(() => (window as unknown as { belows: number[] }).belows);
 
-/** What its box overlaps: the controls and values, and with `viewers` the Viewers too. */
+/** What the drop overlaps, standing: the controls and values, and with `viewers` the Viewers too. */
 const covered = (page: Page, viewers: boolean) =>
   mascot(page).evaluate((el, withViewers) => {
-    const m = el.getBoundingClientRect();
+    const m = el.querySelector('.mascot-drop')!.getBoundingClientRect();
     const controls = document.querySelectorAll<HTMLElement>(`button, [role=slider], [role=tab], [role=radio], input, .knob-value, .fader${withViewers ? ', canvas' : ''}`);
     return [...controls]
       .filter((c) => c.checkVisibility({ visibilityProperty: true }))
@@ -88,7 +88,7 @@ for (const [size, viewport, section] of [
     await page.goto('/');
     await listening(page);
     await play(page, 'jdhs');
-    await expect.poll(async () => (await footing(page, section)).below <= 0).toBe(true);
+    await expect.poll(async () => Math.abs((await footing(page, section)).below) <= 1).toBe(true); // landed and standing
     // Strolling, held awake by a Note, it stays on the edge, within the section, covering nothing.
     await page.keyboard.down('f');
     for (let i = 0; i < 6; i++) {
@@ -169,8 +169,10 @@ test('it comes up from behind the Amp, and leaves jumping, then melting; with re
   await listening(page);
   await watchDrop(page);
   await play(page, 'jdhs');
-  await expect.poll(async () => (await footing(page)).below <= 0).toBe(true);
-  expect(Math.max(...(await watched(page)))).toBeGreaterThan(15); // it came up from behind the Amp
+  await expect.poll(async () => Math.abs((await footing(page)).below) <= 1).toBe(true);
+  // It came into view up from behind the Amp, or (one time in three) down from the top of the window.
+  const came = await watched(page);
+  expect(Math.max(...came) > 15 || Math.min(...came) < -60, `${Math.min(...came)} to ${Math.max(...came)}`).toBe(true);
   await watchDrop(page);
   await play(page, 'jdhs');
   await expect(mascot(page)).toHaveCount(0);

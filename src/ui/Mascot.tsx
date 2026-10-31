@@ -4,7 +4,7 @@ import type { PatchStore } from '../patch/patchStore';
 import { addToRenderLoop } from '../viewers/renderLoop';
 import { gesturesOf } from './mascotGestures';
 import { createMascotMotion, type Pose, type Room } from './mascotMotion';
-import { choosePerch, createMascotPlace, type Perch } from './mascotPlace';
+import { choosePerch, createMascotPlace, type Moving, type Perch } from './mascotPlace';
 import { ModulationContext } from './modulationRing';
 import { SECTIONS } from './sections';
 
@@ -64,12 +64,13 @@ const IN_THE_WAY = 'button, [role=slider], [role=tab], [role=radio], input, canv
 const STEP = 4;
 
 /**
- * Its room along a section's top edge, in the window's pixels: the stretch of spots whose box covers least of the
- * controls and Viewers above the edge, around the leftmost of those (a free stretch of the header in three or four
- * across; elsewhere the bottom of the Viewer above, about as much everywhere).
+ * Its room along a section's top edge, in the window's pixels: the stretch of spots where it covers least of the
+ * controls and Viewers above the edge, standing (its leaps may brush past them; it takes no pointer), around the
+ * leftmost of those: the whole edge in three or four across; on a phone and in 2 × 2, where the Viewer above comes
+ * close, its left end.
  */
 function roomOn(section: DOMRect): Room {
-  const box = { top: section.top - HEIGHT - HEADROOM, bottom: section.top };
+  const box = { top: section.top - HEIGHT - 2, bottom: section.top };
   const above = [...document.querySelectorAll<HTMLElement>(IN_THE_WAY)]
     .filter((el) => !el.closest('.mascot') && el.checkVisibility({ visibilityProperty: true }))
     .map((el) => el.getBoundingClientRect())
@@ -97,13 +98,16 @@ const sectionBoxes = () =>
 
 /**
  * The mascot (issue 115), called by B, E, A, D, as in a bead of water: a water drop trailing the Limpide logo. In
- * three and four across it comes up from behind the top right section and lives on its top edge, strolling along the
- * stretch with least above it. On a phone and in 2 × 2 it keeps in view as the page scrolls, on the top edge of a
- * section in the right column, or hanging under the header when none has room: to a lower line it falls like rain
- * and lands with a splash, to a higher one it flies up on its tail. It moves with what is heard, as the Viewers read it
- * (the Modulation model), and with every control turned, by hand, a Controller or the Demo (`gesturesOf`); sent away,
- * it jumps, splashes and melts, or, hanging or in the air, drips away down the window. It adds nothing to the sound.
- * No focus, no pointer, nothing for a screen reader. Drawn by the render loop, outside React (ADR-0002).
+ * three and four across it lives on the top edge of the top right section; on a phone and in 2 × 2 it keeps in view as
+ * the page scrolls, on the top edge of a section in the right column, or hanging under the header when none has room.
+ * It comes at a spot at random, one of three ways (up from behind its edge, down from the top of the window like rain,
+ * or popping up with a hop), and lives its life along its line (`createMascotMotion`): strolls, glances, funny turns
+ * when nothing is played, dozing. Between lines it moves by the laws of motion (`createMascotPlace`): falling, it
+ * stretches like a raindrop as it speeds up and splashes as hard as it lands; flying up, its tail spins under it. It
+ * moves with what is heard, as the Viewers read it (the Modulation model), and with every control turned, by hand, a
+ * Controller or the Demo (`gesturesOf`); sent away, it jumps, splashes and melts, or, hanging or in the air, drips away
+ * down the window. It adds nothing to the sound. No focus, no pointer, nothing for a screen reader. Drawn by the render
+ * loop, outside React (ADR-0002).
  */
 export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leaving: boolean; onGone: () => void }) {
   const context = useContext(ModulationContext);
@@ -121,16 +125,18 @@ export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leav
     const still = matchMedia('(prefers-reduced-motion: reduce)');
     const stacked = matchMedia(STACKED);
     const motion = createMascotMotion();
-    const place = createMascotPlace();
+    const arrival = (['rise', 'rain', 'pop'] as const)[Math.floor(Math.random() * 3)];
+    const place = createMascotPlace(arrival === 'rain' ? { from: -HEADROOM } : {});
     const stopListening = patches.subscribe(({ before, after, by }) => {
       for (const gesture of gesturesOf(before, after, by)) motion.gesture(gesture, context.engine.now());
     });
     let shown: Pose | null = null;
     let up = 0; // how far it has come into view, 0 to 1
-    let arrivedHanging = false;
+    let comingFrom: 'edge' | 'header' | 'sky' | null = null;
     let last = performance.now() / 1000;
     let perch: Perch | null = null;
     let foot: number | null = null;
+    let moving: Moving = 'standing';
     let leaveBy: 'melt' | 'rain' | null = null;
     let room: { key: string; room: Room } | null = null;
     const stopDrawing = addToRenderLoop(() => {
@@ -143,7 +149,7 @@ export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leav
       if (!sections.length) return;
 
       // Its line: the top right section's edge; on a phone or in 2 × 2, a right-column edge in view, or the header.
-      let on: { id: string; box: DOMRect | null };
+      let on: { id: string; box: DOMRect };
       if (!stacked.matches) {
         const top = Math.min(...sections.map((s) => s.box.top));
         const right = sections.filter((s) => s.box.top - top < 4).reduce((a, b) => (b.box.right > a.box.right ? b : a));
@@ -155,22 +161,18 @@ export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leav
         const ceiling = Math.max(0, ...['header', '.section-strip'].map((q) => document.querySelector(q)?.getBoundingClientRect().bottom ?? 0));
         perch = choosePerch(perch?.id ?? null, column.map((s) => ({ id: s.id, top: s.box.top })), ceiling, innerHeight, HEIGHT, HEADROOM, foot ?? ceiling);
         const id = perch.id;
-        on = column.find((s) => s.id === id) ?? { id, box: null };
-        if (!on.box) {
-          const span = column[0].box;
-          on = { id, box: new DOMRect(span.left, perch.foot, span.width, 0) };
-        }
+        const span = column[0].box;
+        on = column.find((s) => s.id === id) ?? { id, box: new DOMRect(span.left, perch.foot, span.width, 0) };
       }
       // Leaving: on its line it melts; hanging or in the air it drips away down the window.
       if (leavingRef.current && leaveBy === null) {
-        const where = place.frame(perch, now, still.matches).moving;
-        leaveBy = where === 'standing' || where === 'landing' ? 'melt' : 'rain';
+        leaveBy = moving === 'standing' || moving === 'landing' ? 'melt' : 'rain';
         if (leaveBy === 'melt') motion.leave(now);
       }
       if (leaveBy === 'rain') perch = { id: 'away', foot: innerHeight + HEIGHT + HEADROOM, hanging: false };
 
       // Its room along the line, found again only when the line moves against the page or changes.
-      const box = on.box!;
+      const box = on.box;
       const key = `${perch.id} ${box.left + scrollX} ${perch.hanging ? 0 : box.top + scrollY} ${box.width}`;
       if (room?.key !== key) room = { key, room: perch.hanging ? { min: box.left + 4, max: box.right - WIDTH - 4 } : roomOn(box) };
 
@@ -182,8 +184,10 @@ export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leav
         still.matches,
         room.room,
       );
-      const where = place.frame(perch, now, still.matches);
+      const where = place.frame(perch, room.room, now, still.matches, pose.x);
+      if (where.landedAt !== null) motion.place(where.landedAt);
       foot = where.foot;
+      moving = where.moving;
       if (pose.gone || (leaveBy === 'rain' && where.foot >= innerHeight + HEIGHT)) {
         goneRef.current();
         return;
@@ -192,23 +196,28 @@ export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leav
       // Between lines and under the header, the line's moves take over the sound's and the controls'.
       let tailTurn = 0;
       let origin = '20% 100%';
+      const across = Math.max(-15, Math.min(15, where.vx / 40)); // leaning into its way across
       if (where.moving === 'hanging') {
         Object.assign(pose, { legs: 'stand', splash: 'none', lift: 0, tilt: still.matches ? 0 : Math.sin(now * 2.2) * 6 });
         origin = '20% 0%'; // it swings from its tip
       } else if (where.moving === 'falling') {
-        Object.assign(pose, { legs: 'tuck', splash: 'none', eyes: 'open', lift: 0, tilt: 0, stretch: 1.3 }); // a raindrop
+        // Hopping off, tucked; then a raindrop, longer the faster it falls.
+        const speed = Math.max(0, where.vy);
+        Object.assign(pose, { legs: 'tuck', splash: 'none', lift: 0, tilt: across, turn: 1, eyes: where.vy < 0 ? 'happy' : 'open' });
+        pose.stretch = where.vy < 0 ? 0.92 : 1 + Math.min(0.35, speed / 1600);
       } else if (where.moving === 'flying') {
-        Object.assign(pose, { legs: 'tuck', splash: 'none', eyes: 'happy', lift: 0, tilt: 0, stretch: 1.05 });
-        tailTurn = 90 + Math.sin(now * 2 * Math.PI * 12) * 22; // its tail under it, spinning
-      } else if (where.moving === 'landing') {
+        Object.assign(pose, { legs: 'tuck', splash: 'none', lift: 0, tilt: across, turn: 1, eyes: where.thrust ? 'happy' : 'open' });
+        pose.stretch = 1 + Math.min(0.2, Math.abs(where.vy) / 2600);
+        // Its tail under it, spinning while it pushes, swinging back up as it coasts.
+        tailTurn = where.thrust ? 90 + Math.sin(now * 2 * Math.PI * 12) * 22 : Math.max(0, Math.min(90, -where.vy / 6));
+      } else if (where.moving === 'landing' && leaveBy !== 'melt') {
+        // Squashed as hard as it hit, then a wobble that dies away, like a drop of jelly.
         const p = where.landed;
-        if (p < 0.25) Object.assign(pose, { splash: 'wide', eyes: 'shut', legs: 'stand', lift: 0, stretch: 0.7 });
-        else {
-          const q = (p - 0.25) / 0.75;
-          // Back up with a little overshoot.
-          const back = 1 + 2.7 * (q - 1) ** 3 + 1.7 * (q - 1) ** 2;
-          Object.assign(pose, { splash: 'none', lift: 0, stretch: 0.7 + 0.3 * back, eyes: q < 0.5 ? 'happy' : pose.eyes });
-        }
+        const wobble = Math.exp(-5 * p) * Math.cos(16 * p);
+        Object.assign(pose, { legs: 'stand', lift: 0, turn: 1 });
+        pose.stretch = 1 - 0.4 * where.impact * wobble;
+        pose.splash = p < 0.3 && where.impact > 0.25 ? 'wide' : p < 0.2 && where.impact > 0.1 ? 'up' : 'none';
+        pose.eyes = p < 0.15 ? 'shut' : where.impact > 0.5 && p < 0.55 ? 'happy' : pose.eyes;
       }
 
       for (const part of Object.keys(PARTS) as Part[]) {
@@ -217,21 +226,25 @@ export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leav
         parts.current.get(`${part} ${pose[part]}`)!.style.display = '';
       }
       if (shown?.form !== pose.form) tail.current!.style.display = pose.form === 'drop' ? '' : 'none';
-      tail.current!.setAttribute('transform', tailTurn ? `rotate(${tailTurn} 9 9)` : '');
+      const turnTail = tailTurn + pose.wag;
+      tail.current!.setAttribute('transform', turnTail ? `rotate(${turnTail} 9 9)` : '');
       shown = pose;
 
       const page = (outer.offsetParent ?? document.body).getBoundingClientRect();
-      outer.style.transform = `translate(${pose.x - page.left}px, ${where.foot - HEIGHT - HEADROOM - page.top}px)`;
-      // Coming into view: up from behind its edge, or down from under the header, hidden beyond that line.
-      if (up === 0) arrivedHanging = perch.hanging;
-      up = still.matches ? 1 : Math.min(1, up + dt / RISE_SECONDS);
+      outer.style.transform = `translate(${(where.x ?? pose.x) - page.left}px, ${where.foot - HEIGHT - HEADROOM - page.top}px)`;
+      // Coming into view: up from behind its edge (fast for a pop, then a hop), down from under the header, or, falling
+      // from the top of the window, all at once.
+      comingFrom ??= perch.hanging ? 'header' : arrival === 'rain' ? 'sky' : 'edge';
+      const wasUp = up;
+      up = still.matches || comingFrom === 'sky' ? 1 : Math.min(1, up + dt / (arrival === 'pop' ? RISE_SECONDS / 2 : RISE_SECONDS));
+      if (arrival === 'pop' && wasUp < 1 && up === 1) motion.gesture('new', now);
       const rise = up * up * (3 - 2 * up);
       const hidden = (1 - rise) * HEIGHT;
-      outer.style.clipPath = up < 1 ? (arrivedHanging ? `inset(${HEADROOM}px -60px -60px -60px)` : 'inset(-60px -60px 0 -60px)') : 'none';
+      outer.style.clipPath = up < 1 ? (comingFrom === 'header' ? `inset(${HEADROOM}px -60px -60px -60px)` : 'inset(-60px -60px 0 -60px)') : 'none';
       const el = drop.current!;
       el.style.opacity = String(pose.fade);
       el.style.transformOrigin = origin;
-      el.style.transform = `translateY(${(arrivedHanging ? -hidden : hidden) - pose.lift}px) rotate(${pose.tilt}deg) scale(${2 - pose.stretch}, ${pose.stretch})`;
+      el.style.transform = `translateY(${(comingFrom === 'header' ? -hidden : hidden) - pose.lift}px) rotate(${pose.tilt}deg) scale(${(2 - pose.stretch) * pose.turn}, ${pose.stretch})`;
     });
     return () => {
       stopListening();
