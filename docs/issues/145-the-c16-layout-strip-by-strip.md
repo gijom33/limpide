@@ -95,7 +95,7 @@
 
 **Since then (2026-10-31):** half a step, the owner's next trial ("Make 66 half a step").
 
-**Since then (2026-10-31):** a third of a step, the owner's next trial ("Make it one third").
+**Since then (2026-10-31):** a third of a step, the owner's next trial ("Make it one third"), kept: "Ok, good enough". So a C16 knob's 65 moves 1 %, a 66 a third of that; decided by the owner.
 
 ## Comments
 
