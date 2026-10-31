@@ -178,7 +178,7 @@ test('the last card’s Bass button starts the Bass Tutorial (issue 128)', async
   await expect(patchName(page)).toHaveAttribute('aria-label', 'Patch: Init');
 });
 
-test('a card that grows as it settles still leaves its Viewer clear (issue 128)', async ({ page }) => {
+test('a card that grows while shown still leaves its Viewer clear (issue 128)', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto('/');

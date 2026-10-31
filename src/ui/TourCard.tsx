@@ -17,9 +17,6 @@ interface Props {
   onClose(): void;
 }
 
-/** How long after a card opens the page is brought clear again when the card or the page changes size. */
-const SETTLING_MS = 2000;
-
 /** A control on the page, by what it sets: a move's, or the one a card watches. */
 const controlOf = ({ kind, id }: Pick<TourMove, 'kind' | 'id'>) => document.querySelector(`[data-learn="${kind}:${id}"]`);
 
@@ -39,20 +36,18 @@ function useSectionInView(card: Card, docked: RefObject<HTMLElement | null>) {
       const watched = card.watch ? controlOf({ kind: 'param', id: card.watch }) : null;
       if (docked.current) bringClear(docked.current, [...viewers, ...controls, ...(watched ? [watched] : [])], behavior);
     };
-    // After the tab it was on has had a frame to show, and the card its new height; then again while the card and the
-    // page settle, if either changes size (on GitHub's Linux the last card came out 22 px taller after the scroll).
-    let settling = false;
-    const resized = new ResizeObserver(() => settling && bring());
+    // After the tab it was on has had a frame to show, and the card its new height; then again whenever the card or the
+    // page changes size while it is shown (on GitHub's Linux the last card came out 22 px taller after the scroll).
+    let shown = false;
+    const resized = new ResizeObserver(() => shown && bring());
     if (docked.current) resized.observe(docked.current);
     resized.observe(document.querySelector('main')!);
     const scroll = setTimeout(() => {
-      settling = true;
+      shown = true;
       bring();
     }, 50);
-    const settled = setTimeout(() => resized.disconnect(), SETTLING_MS);
     return () => {
       clearTimeout(scroll);
-      clearTimeout(settled);
       resized.disconnect();
       for (const viewer of viewers) viewer.removeAttribute('data-tutorial-viewer');
     };
