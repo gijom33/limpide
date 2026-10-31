@@ -78,9 +78,12 @@ const WATER = {
   glassLowOver: [[-6, 6, 3, 1]],
   glassEmpty: [],
 } satisfies Record<string, Rect[]>;
-/** Drinking: the glass's rim (its middle, on the glass) goes to here, beside and above its mouth, turned this far. */
+/**
+ * Drinking: the glass's rim (its middle, on the glass) goes to here, turned this far: against its side at its mouth,
+ * under its left eye, the rim's edge on its lips (the owner, 2026-10-30).
+ */
 const RIM = { x: -5, y: 5 };
-const POURING_AT = { x: -1, y: 7 };
+const POURING_AT = { x: 0.5, y: 9 };
 const TURNED_OVER = 135;
 /** Its mouth's height on the drawing: the poured water ends there. */
 const MOUTH_Y = 10.5;

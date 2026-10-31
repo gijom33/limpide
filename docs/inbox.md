@@ -4,8 +4,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
-- 2026-10-30, the owner, on Bead's drinking trick: "The edge of the glass Bead drinks is supposed to touch his lips..."
-
 ## Ideas
 
 ## Dropped
@@ -117,3 +115,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-30, review 15's findings (triage, Claude's call, open to the owner): the Presets to rework (Velocity unheard on seven, Trill, Organ, Marimba, Square Lead, Sync-ish Lead, the levels) went to [108](./issues/108-preset-claims-and-levels.md); where a retriggered LFO starts to [124](./issues/124-where-a-retriggered-lfo-starts.md); near-copies, categories, the ten Presets to add, the Basses' register and the master's room to [125](./issues/125-the-preset-collection.md), questions for the owner.
 2026-10-30, the 1.16.1 code review's judgement calls (triage, Claude's call, open to the owner): the standards ones joined [100](./issues/100-code-tidy-ups-after-1-16.md); the keyboard octave a saved or shared Patch keeps went to [126](./issues/126-the-keyboard-octave-a-patch-carries.md), a question for the owner. The review's bugs and rule breaches are fixed before the release.
 2026-10-30, Claude's ideas for Bead's tricks (triage, Claude's call, open to the owner): all seventeen went to [127](./issues/127-more-tricks-for-bead.md), each a question for the owner with Claude's recommendation (yes to most; no to surfing the Scope and to turning a knob, both of which would cover what Bead must not).
+2026-10-30, the owner's glass bug, fixed at once: drinking, the glass turned over came to a point beside its eyes, a pixel short of the drop; now the rim's middle goes against its side at its mouth, under its left eye, so the rim's edge is on its lips, the glass still turned as far and covering no eye.
