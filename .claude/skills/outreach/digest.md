@@ -5,9 +5,9 @@
 
    | Source | How |
    | --- | --- |
-   | The owner's threads | each URL in `places.md`'s Our thread column: WebFetch it (a Reddit thread as `<url>.json`); the new replies |
+   | The owner's threads | each place's **Our thread** link in `places.md`: WebFetch it (a Reddit thread as `<url>.json`); the new replies |
    | Reddit | WebSearch `"Limpide" synth site:reddit.com`, and `https://www.reddit.com/search.json?q=limpide&sort=new` |
-   | Elektronauts, lines | `https://forum.elektronauts.com/search.json?q=limpide`, `https://llllllll.co/search.json?q=limpide` |
+   | Elektronauts, lines | `https://www.elektronauts.com/search.json?q=limpide`, `https://llllllll.co/search.json?q=limpide` |
    | KVR, Gearspace | WebSearch `"Limpide" site:kvraudio.com`, `"Limpide" site:gearspace.com` |
    | Hacker News | `https://hn.algolia.com/api/v1/search_by_date?query=limpide` |
    | YouTube, blogs | WebSearch `"Limpide" synth` |

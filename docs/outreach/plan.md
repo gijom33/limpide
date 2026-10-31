@@ -8,6 +8,8 @@ How Limpide is made known among synth players, producers and Web Audio developer
 - A ban, or a post called out as written by an AI, would make Limpide known for the wrong reason.
 - These places trust the person who made the tool. "I made this to learn how synths work" is welcome from the developer.
 
+- AI is the touchiest subject in these places (checked 2026-10-30). Hacker News, lines, Elektronauts, Audiofanzine and r/webdev bar AI-written posts. lines asks that any AI use be disclosed, and LinuxFr.org and Zeste de Savoir are wary of software built with AI. In those places the agent writes notes, you write the post, and the post says plainly how Limpide's code is written and what you did.
+
 So the agent reads, searches and writes drafts. The owner rewrites them in their own voice, posts them, and answers people. The agent has no account anywhere.
 
 ## The pieces
@@ -15,7 +17,7 @@ So the agent reads, searches and writes drafts. The owner rewrites them in their
 | Piece | What it is |
 | --- | --- |
 | The `outreach` skill (`.claude/skills/outreach/`) | Claude's instructions. Typed by hand: `/outreach places`, `/outreach intro <place>`, `/outreach roundup`, `/outreach digest`. |
-| [places.md](./places.md) | The places: who is there, the angle, how to post, cadence, rules, the owner's threads, when last posted. |
+| [places.md](./places.md) | The places, French first: who is there, the angle, how to post, cadence, rules, AI, the owner's thread, when last posted. |
 | `docs/outreach/drafts/` | Every run's output, one file each. Git-ignored: the drafts and the people quoted stay off the public repository. |
 | Two scheduled tasks | The weekly roundup and the twice-weekly digest, in the Claude desktop app. |
 
@@ -38,7 +40,7 @@ Every claim about Limpide in a draft is checked against the code or a done issue
 
 ### 2. Check the places (Claude, once, then monthly)
 
-Run `/outreach places`. It fills the Rules column of [places.md](./places.md) and suggests up to three more places. Read the changes, cross out any place you would rather skip, and commit it (`No issue: the outreach places' rules`).
+Run `/outreach places`. It checks each place's rules at the source and writes them, with links and dates, into [places.md](./places.md), then suggests up to three more places. First run: 2026-10-30, with the French places added. Reddit and Gearspace block automated reading, so their rules are marked unverified, for you to read before posting. Read the changes, cross out any place you would rather skip, and commit it (`No issue: the outreach places' rules`).
 
 ### 3. The launch clip (the owner, once)
 
@@ -57,7 +59,20 @@ One place at a time, a few days apart, so you can answer everyone in the first h
 3. Post it with the clip, then put the thread's link and the date in [places.md](./places.md).
 4. Stay for the first two hours to answer.
 
-A suggested order: lines and Elektronauts (smaller and kind, good for a first round of feedback), then KVR and Gearspace, then r/synthesizers, then the producer subreddits, then Show HN, then the press tips once a few threads show people using it.
+The French places come first: you are French, and a French developer writing in French is a story of its own there. Their drafts are written in French. A suggested order (Claude's call, open to the owner):
+
+1. **AudioKeys** (after a word with an administrator), then the **Hardware.fr** home-studio topic: synth players, for a first round of feedback.
+2. **Audiofanzine**: the news item, then answers in its freeware thread.
+3. **Zeste de Savoir** and **LinuxFr.org**, written about how it was built, saying from the first lines how the code is written.
+4. **Korben** and **KR home-studio**, once a few threads show people using it.
+
+Then the rest:
+
+1. **KVR**'s announcements board, then **Gearspace** once its rules are read.
+2. **r/synthesizers**, after a message to its moderators, then the producer subreddits' weekly threads.
+3. **Show HN**, written entirely by you.
+4. **lines**, once your account reaches Trust Level 2. Its "Keep It Human" rule makes it the place where AI-written code meets the most resistance.
+5. The English press tips.
 
 ### 5. The two scheduled tasks (Claude creates them on the owner's word)
 
