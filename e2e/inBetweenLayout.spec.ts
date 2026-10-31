@@ -59,13 +59,16 @@ for (const [width, height] of [
 test('a phone keeps one section under another, with the strip; a laptop window keeps three stages across', async ({ page }) => {
   await page.setViewportSize({ width: 600, height: 900 });
   await page.goto('/');
-  let { sections: [osc, filter] } = await boxes(page);
+  const { sections: [osc, filter] } = await boxes(page);
   expect(filter.top).toBeGreaterThan(osc.top + osc.height - 1);
   await page.setViewportSize({ width: 861, height: 900 });
-  ({ sections: [osc, filter] } = await boxes(page));
-  const amp = (await boxes(page)).sections[2];
-  expect(filter.top).toBe(osc.top);
-  expect(amp.top).toBe(osc.top);
+  // All three read at once, and again until the resized layout has settled.
+  await expect
+    .poll(async () => {
+      const [osc, filter, amp] = (await boxes(page)).sections;
+      return [filter.top - osc.top, amp.top - osc.top];
+    })
+    .toEqual([0, 0]);
 });
 
 test('the four sections have the same inner margins: each heading as far from its section’s corner', async ({ page }) => {
