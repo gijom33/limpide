@@ -10,8 +10,9 @@
 
 - The panel: knobs K1–K4 over K5–K8, faders F1–F4 under them, and under each fader the buttons M, S and R (M1–M4, S1–S4, R1–R4); then 16 pads, and the bank buttons A to D (with CTRL BANK).
 - The buttons' CCs count down each strip, then across: bank A's M1 49, S1 50, R1 51, M2 52 … R4 60; each bank 12 more.
-- Faders from CC 33 (F1, bank A). The knobs' order: to confirm.
-- The knobs send positions ([144](./144-c16-knobs-taken-for-relative.md)). Every button can be set on the device to toggle or momentary; the owner's are all toggles today.
+- Knobs K1–K8 are CC 1–8 across the rows (K5 under K1), faders F1–F4 CC 33–36, each bank the next 8, 4 and 12 (the user guide V1.0, its companion software's pages).
+- The knobs send positions as the owner's C16 is set ([144](./144-c16-knobs-taken-for-relative.md)); the companion editor also offers Relative #1, #2 and #3, which the V1.0 guide does not explain. The owner's test: Relative #1 is centred on 64, sending 65 or 66 turning right and 63 or 62 turning left, two steps when turned fast. Limpide already reads that style (64-centred, with the turn's speed).
+- Every button can be set on the device to toggle or momentary; the owner's are all toggles today. Momentary sends 127 on press and 0 on release; toggle sends one message per press, 127 and 0 in turn (the guide).
 - Over Bluetooth MIDI it is "Synido TempoPAD C16 BT Bluetooth" ([143](./143-bluetooth-midi.md)).
 
 ## Decisions so far
