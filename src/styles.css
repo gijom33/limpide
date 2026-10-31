@@ -815,6 +815,32 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .mascot-umbrella { fill: var(--stage-amp); }
 .mascot-handle { fill: var(--muted); }
 .mascot-gun { fill: var(--stage-filter); }
+/* Issue 127: its twin as Detune splits it, an ice cube, its static with the Noise, its costumes and its new props.
+   Picked up by a finger, it is dragged rather than the page scrolled; its props take no pointer. */
+.mascot-drop { touch-action: none; }
+.mascot-prop rect { pointer-events: none; }
+.mascot-twin { opacity: 0.75; }
+.mascot-ice { fill: #bfe9ff; opacity: 0.55; }
+.mascot-static { fill: var(--text); }
+.mascot-sheet { fill: #f4f5f7; }
+:root[data-theme='light'] .mascot-sheet { fill: #dfe4ea; }
+.mascot-hat-red { fill: #e0303a; }
+.mascot-hat-night { fill: var(--stage-mod); }
+.mascot-hat-stripe { fill: var(--stage-osc); }
+.mascot-hat-band { fill: var(--stage-amp); }
+.mascot-hat-pom { fill: var(--stage-filter); }
+.mascot-cup { fill: #efe9df; }
+.mascot-coffee { fill: #6b4226; }
+.mascot-hand { fill: var(--mascot-body); stroke: var(--mascot-eye); stroke-width: 0.15; }
+.mascot-case { fill: var(--stage-filter); }
+.mascot-bubble { fill: var(--mascot-shine); opacity: 0.7; }
+/* Fishing: its line, hook and catch in the page's pixels, the line hanging straight down whatever Bead does. */
+.mascot-fishing { position: absolute; left: 0; top: 0; width: 1px; height: 1px; overflow: visible; z-index: 5; pointer-events: none; }
+.mascot-line { stroke: var(--muted); stroke-width: 1; shape-rendering: geometricPrecision; }
+.mascot-hook { fill: var(--muted); }
+.mascot-note { fill: var(--stage-mod); }
+.mascot-sun { fill: #ffc531; }
+.mascot-cloud { fill: var(--muted); }
 /* Bead's switch in Display: its picture there while on; turned off, it melts away, and pops back on. */
 .bead-switch { display: flex; align-items: center; gap: var(--space-2); }
 .bead-icon { --mascot-body: #6cc8f0; --mascot-shine: #e8f8ff; --mascot-eye: #14161b; transform-origin: 20% 100%; }

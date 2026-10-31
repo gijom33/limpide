@@ -1,15 +1,17 @@
 import { useContext, useEffect, useRef, useState } from 'react';
+import type { Word } from '../input/callingPhrase';
 import { lfos } from '../patch/patch';
 import type { PatchStore } from '../patch/patchStore';
 import { addToRenderLoop } from '../viewers/renderLoop';
-import { gesturesOf } from './mascotGestures';
-import { createMascotMotion, type Pose, type Room } from './mascotMotion';
+import { PAD as LFO_PAD, SPAN as LFO_SPAN } from './LfoPlot';
+import { gesturesOf, looksOf } from './mascotGestures';
+import { type Act, createMascotMotion, hatOn, type Pose, type Room, SCREAMING } from './mascotMotion';
+import { CATCH, CLOUD, HATS, HOOK, ICE, type Picture, PROPS, type Rect, ROD_TIP, SKY, TAILS } from './mascotPictures';
 import { acrossOf, choosePerch, createMascotPlace, type Moving, type Perch } from './mascotPlace';
 import { createSpray, MOST_DROPLETS } from './mascotSpray';
 import { ModulationContext } from './modulationRing';
 import { SECTIONS } from './sections';
-
-type Rect = readonly [x: number, y: number, width: number, height: number];
+import type { Theme } from './theme';
 
 /**
  * The drawing, on a 22 × 13 grid: a water drop, its tail the Limpide logo's stroke (a saw tooth softening into a sine)
@@ -43,6 +45,9 @@ const PARTS = {
     left: [[1, 7, 1, 2], [5, 7, 1, 2]],
     right: [[3, 7, 1, 2], [7, 7, 1, 2]],
     happy: [[1, 8, 1, 1], [2, 7, 1, 1], [3, 8, 1, 1], [5, 8, 1, 1], [6, 7, 1, 1], [7, 8, 1, 1]],
+    wide: [[1, 7, 2, 2], [5, 7, 2, 2]],
+    dead: [[1, 7, 1, 1], [3, 7, 1, 1], [2, 8, 1, 1], [1, 9, 1, 1], [3, 9, 1, 1], [5, 7, 1, 1], [7, 7, 1, 1], [6, 8, 1, 1], [5, 9, 1, 1], [7, 9, 1, 1]],
+    peek: [[1, 7, 1, 1], [3, 7, 1, 1], [2, 8, 1, 1], [1, 9, 1, 1], [3, 9, 1, 1], [6, 7, 1, 2]],
     melted: [[2, 11, 1, 1], [6, 11, 1, 1]],
     none: [],
   },
@@ -79,14 +84,14 @@ const WATER = {
   glassEmpty: [],
 } satisfies Record<string, Rect[]>;
 /**
- * Drinking: the glass's rim (its middle, on the glass) goes to here, turned this far: against its side at its mouth,
- * under its left eye, the rim's edge on its lips (the owner, 2026-10-30).
+ * Drinking: the glass's rim (its middle, on the glass) goes to here, turned this far: over its mouth, under its eyes,
+ * the glass running off to the left just under its left eye (the owner, 2026-10-30: over the mouth, then a bit higher).
  */
 const RIM = { x: -5, y: 5 };
-const POURING_AT = { x: 0.5, y: 9 };
-const TURNED_OVER = 135;
-/** Its mouth's height on the drawing: the poured water ends there. */
-const MOUTH_Y = 10.5;
+const POURING_AT = { x: 4, y: 10.5 };
+const TURNED_OVER = 100;
+/** Its mouth's height on the drawing: the poured water ends there, just under the rim. */
+const MOUTH_Y = 12.5;
 
 /** Its size on screen: 2 px a square of the grid. */
 const WIDTH = 44;
@@ -102,6 +107,17 @@ const TAIL_LENGTH = 26;
 const STACKED = '(max-width: 860px)';
 
 const rects = (list: readonly Rect[]) => list.map(([x, y, w, h]) => <rect key={`${x} ${y}`} x={x} y={y} width={w} height={h} />);
+const picture = (groups: Picture) => groups.map(([className, list]) => <g key={className} className={className}>{rects(list)}</g>);
+
+/** A press on it that moves this far, in pixels, picks it up (issue 127); one that does not is a click. */
+const PICK_UP_PX = 6;
+/** Its eyes follow a pointer this near its middle, in pixels. */
+const EYES_ON_PX = 150;
+/** The pixels of its static with the Noise. */
+const STATIC_DOTS = 10;
+/** The Demo's acts, one per part in turn; surfing an LFO's shape only where one is in view (the owner, 2026-10-30). */
+const ACTS: readonly Act[] = ['conduct', 'airGuitar', 'surf'];
+const LFO_PLOTS = '.lfo-plot[data-lfo]';
 
 /** What it must keep clear of, above its edge: the controls, and (in three and four across) the Viewers. */
 const CONTROLS = 'button, [role=slider], [role=tab], [role=radio], input, .piano, .knob-value, .fader';
@@ -199,7 +215,24 @@ export function BeadIcon({ on }: { on: boolean }) {
  * down the window. It adds nothing to the sound. No focus, no pointer, nothing for a screen reader. Drawn by the render
  * loop, outside React (ADR-0002).
  */
-export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leaving: boolean; onGone: () => void }) {
+export function Mascot({
+  patches,
+  leaving,
+  onGone,
+  theme,
+  demoPart,
+  word,
+}: {
+  patches: PatchStore;
+  leaving: boolean;
+  onGone: () => void;
+  /** The theme: switched while it is out, it reacts (issue 127). */
+  theme: Theme;
+  /** The Demo part playing, or null: each part, one of its acts. */
+  demoPart: number | null;
+  /** The last word spelled with Notes while it is out, `count` telling one from the next. */
+  word: { word: Word; count: number } | null;
+}) {
   const context = useContext(ModulationContext);
   const frame = useRef<HTMLDivElement>(null);
   const drop = useRef<HTMLDivElement>(null);
@@ -211,8 +244,28 @@ export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leav
   const glass = useRef<SVGGElement>(null);
   const water = useRef(new Map<string, SVGGElement>());
   const gun = useRef<SVGGElement>(null);
-  // A pointer on it tickles it; a click or a touch sends droplets every way (set up with the drawing below).
-  const touched = useRef<{ tickle(): void; poke(): void } | null>(null);
+  const twin = useRef<SVGUseElement>(null);
+  const ice = useRef<SVGGElement>(null);
+  const fuzz = useRef<SVGGElement>(null);
+  const fishing = useRef<SVGSVGElement>(null);
+  // The tail's shapes, the hats and the new props, each a group shown when the pose has it (issue 127).
+  const tails = useRef(new Map<string, SVGGElement>());
+  const hats = useRef(new Map<string, SVGGElement>());
+  const props = useRef(new Map<string, SVGGElement>());
+  // A pointer on it tickles it; a click or a touch sends droplets every way; a press that moves picks it up, to be
+  // thrown (set up with the drawing below). Words and the theme reach its moves the same way.
+  const touched = useRef<{
+    tickle(): void;
+    poke(): void;
+    pick(x: number, y: number): boolean;
+    drag(x: number, y: number): void;
+    letGo(): void;
+    word(word: Word): void;
+    theme(theme: Theme): void;
+  } | null>(null);
+  const press = useRef<{ x: number; y: number; picked: boolean } | null>(null);
+  const demoRef = useRef(demoPart);
+  demoRef.current = demoPart;
   const leavingRef = useRef(leaving);
   leavingRef.current = leaving;
   const goneRef = useRef(onGone);
@@ -225,9 +278,19 @@ export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leav
     const motion = createMascotMotion();
     const arrival = (['rise', 'rain', 'pop'] as const)[Math.floor(Math.random() * 3)];
     const place = createMascotPlace(arrival === 'rain' ? { from: -HEADROOM } : {});
+    motion.dress(hatOn(new Date()));
     const stopListening = patches.subscribe(({ before, after, by }) => {
       for (const gesture of gesturesOf(before, after, by)) motion.gesture(gesture, context.engine.now());
+      // Resonance turned past three quarters: it screams a moment (issue 127).
+      if (by !== 'load' && after.resonance !== before.resonance && after.resonance > SCREAMING) motion.scream(context.engine.now());
+      // A Waveform chosen: its tail takes that wave a moment (issue 127).
+      if (by !== 'load' && after.waveform !== before.waveform) motion.wave(after.waveform, context.engine.now());
+      else if (by !== 'load' && after.osc2Waveform !== before.osc2Waveform) motion.wave(after.osc2Waveform, context.engine.now());
     });
+    // Where the pointer is in the window, for its eyes.
+    let pointer: { x: number; y: number } | null = null;
+    const follow = (e: PointerEvent) => void (pointer = e.pointerType === 'mouse' ? { x: e.clientX, y: e.clientY } : null);
+    addEventListener('pointermove', follow, { passive: true });
     let shown: Pose | null = null;
     let up = 0; // how far it has come into view, 0 to 1
     let comingFrom: 'edge' | 'header' | 'sky' | null = null;
@@ -245,6 +308,11 @@ export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leav
     let lastExhaust = -Infinity;
     // Where its middle is in the page, for droplets flung by a click.
     let middle = { x: 0, y: 0 };
+    // Where it was drawn last, in the window: its box's left and its foot.
+    let drawnAt = { left: 0, foot: 0 };
+    // Held by the pointer: where it took hold of it, from its box's left and its foot, and its last moves, for the throw.
+    let grip = { x: 0, y: 0 };
+    let moves: { t: number; x: number; y: number }[] = [];
     touched.current = {
       tickle: () => motion.tickle(context.engine.now()),
       poke: () => {
@@ -252,7 +320,31 @@ export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leav
         motion.gesture('louder', context.engine.now());
         droplets.fling(9, middle.x, middle.y, 'all');
       },
+      pick: (x, y) => {
+        if (still.matches || leaveBy !== null || leavingRef.current) return false;
+        grip = { x: x - drawnAt.left, y: y - drawnAt.foot };
+        moves = [{ t: performance.now() / 1000, x, y }];
+        motion.pickUp(context.engine.now());
+        place.hold(drawnAt.left, drawnAt.foot);
+        return true;
+      },
+      drag: (x, y) => {
+        const t = performance.now() / 1000;
+        moves = [...moves.filter((m) => t - m.t < 0.1), { t, x, y }];
+        place.hold(x - grip.x, y - grip.y);
+      },
+      letGo: () => {
+        // Its speed over the last tenth of a second.
+        const [first, last] = [moves[0], moves.at(-1)!];
+        const dt = Math.max(0.016, last.t - first.t);
+        place.toss((last.x - first.x) / dt, (last.y - first.y) / dt, { min: 0, max: innerWidth - WIDTH });
+        motion.thrown(context.engine.now());
+      },
+      word: (w) => motion.word(w, context.engine.now()),
+      theme: (t) => void (themeSwitched = t),
     };
+    // A theme switched in Display: it reacts once the panel is closed, where it can be seen.
+    let themeSwitched: Theme | null = null;
     const stopDrawing = addToRenderLoop(() => {
       const outer = frame.current!;
       const seconds = performance.now() / 1000;
@@ -261,12 +353,18 @@ export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leav
       const now = context.engine.now();
       const sections = sectionBoxes();
       if (!sections.length) return;
+      if (themeSwitched && !document.querySelector('.display-panel, [role=dialog]')) {
+        motion.theme(themeSwitched, now);
+        themeSwitched = null;
+      }
 
       // Its line: the top right section's edge; on a phone or in 2 × 2, a right-column edge in view, or the header.
       let on: { id: string; box: DOMRect };
+      let homeId: string | null = null;
       if (!stacked.matches) {
         const top = Math.min(...sections.map((s) => s.box.top));
         const home = sections.filter((s) => s.box.top - top < 4).reduce((a, b) => (b.box.right > a.box.right ? b : a));
+        homeId = home.id;
         // Now and then a visit to another section in view: down to one below, or across to one beside; then home.
         const inView = (s: { box: DOMRect }) => s.box.top - HEIGHT - HEADROOM >= 0 && s.box.top <= innerHeight - 4;
         if (visit && (now >= visit.until || !sections.some((s) => s.id === visit!.id && inView(s)))) {
@@ -289,6 +387,36 @@ export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leav
         const span = column[0].box;
         on = column.find((s) => s.id === id) ?? { id, box: new DOMRect(span.left, perch.foot, span.width, 0) };
       }
+      // Thrown (issue 127): it lands on the first edge under it that it comes down onto, staying there a while.
+      if (moving === 'thrown') {
+        const under = (stacked.matches ? sections.filter((s) => Math.max(...sections.map((t) => t.box.right)) - s.box.right < 4) : sections)
+          .filter((s) => s.box.left <= drawnAt.left + DROP_MIDDLE && s.box.right >= drawnAt.left + DROP_MIDDLE && s.box.top >= drawnAt.foot - 1)
+          .sort((a, b) => a.box.top - b.box.top)[0];
+        if (under) {
+          on = under;
+          perch = { id: under.id, foot: under.box.top, hanging: false };
+          if (homeId !== null) visit = under.id === homeId ? null : { id: under.id, until: now + between(8, 18) };
+        }
+      }
+      // Through a Demo part, one of its acts in turn; surfing, its line is an LFO's shape as its plot draws it, the
+      // first in view that moves (else the first in view).
+      const part = demoRef.current;
+      const plots = (part === null ? [] : [...document.querySelectorAll<HTMLElement>(LFO_PLOTS)])
+        .map((el) => ({ lfo: Number(el.dataset.lfo) as 1 | 2, moving: !el.dataset.inactive, box: el.getBoundingClientRect() }))
+        .filter(({ box }) => box.width > WIDTH + 2 * LFO_PAD && box.top - HEIGHT - HEADROOM >= 0 && box.bottom <= innerHeight);
+      const plot = plots.find((p) => p.moving) ?? plots[0];
+      let act: Act | null = part === null || leaveBy !== null ? null : ACTS[part % ACTS.length];
+      if (act === 'surf' && !plot) act = part! % 2 ? 'airGuitar' : 'conduct';
+      motion.act(act);
+      let surfRoom: Room | null = null;
+      if (act === 'surf' && plot && moving !== 'held' && moving !== 'thrown') {
+        // Where the plot draws the LFO under its middle: a second of it across, the newest at the right.
+        const { box } = plot;
+        const along = Math.min(1, Math.max(0, (drawnAt.left + DROP_MIDDLE - box.left - LFO_PAD) / (box.width - 2 * LFO_PAD)));
+        const swing = context.engine.lfoSwingAt(now - LFO_SPAN + along * LFO_SPAN, plot.lfo);
+        perch = { id: `surf ${plot.lfo}`, foot: box.top + box.height / 2 - swing * (box.height / 2 - LFO_PAD), hanging: false };
+        surfRoom = { min: box.left, max: box.right - WIDTH };
+      }
       // Leaving: on its line it melts; hanging or in the air it drips away down the window.
       if (leavingRef.current && leaveBy === null) {
         leaveBy = moving === 'standing' || moving === 'landing' ? 'melt' : 'rain';
@@ -299,12 +427,17 @@ export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leav
       // Its room along the line, found again only when the line moves against the page or changes.
       const box = on.box;
       const key = `${perch.id} ${box.left + scrollX} ${perch.hanging ? 0 : box.top + scrollY} ${box.width}`;
-      if (room?.key !== key) room = { key, room: perch.hanging ? { min: box.left + 4, max: box.right - WIDTH - 4 } : roomOn(box, !stacked.matches) };
+      if (surfRoom) room = { key: 'surf', room: surfRoom };
+      else if (room?.key !== key) room = { key, room: perch.hanging ? { min: box.left + 4, max: box.right - WIDTH - 4 } : roomOn(box, !stacked.matches) };
 
       const m = context.engine.modulationAt();
       const heard = lfos(context.patch()).flatMap((l, i) => (l.amount > 0 ? [m.lfo[i]] : []));
+      const amp = m.amp * m.volume;
+      // Its eyes on a pointer near its middle.
+      const near = pointer && Math.hypot(pointer.x - drawnAt.left - DROP_MIDDLE, pointer.y - drawnAt.foot + HEIGHT / 2) < EYES_ON_PX;
+      motion.pointer(near && pointer ? pointer.x - drawnAt.left - DROP_MIDDLE : null);
       const pose = motion.frame(
-        { amp: m.amp * m.volume, sway: heard.length ? heard.reduce((a, b) => a + b, 0) / heard.length : 0, struck: m.struck },
+        { amp, sway: heard.length ? heard.reduce((a, b) => a + b, 0) / heard.length : 0, struck: m.struck, ...looksOf(context.patch(), amp) },
         now,
         still.matches,
         room.room,
@@ -324,7 +457,16 @@ export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leav
       let tailTurn = 0;
       let origin = '20% 100%';
       const across = Math.max(-15, Math.min(15, where.vx / 40)); // leaning into its way across
-      if (where.moving === 'hanging') {
+      if (where.moving === 'held') {
+        // Dangling from the pointer, wriggling, eyes wide.
+        Object.assign(pose, { legs: 'tuck', splash: 'none', lift: 0, turn: 1, eyes: 'wide', stretch: 1.12, tilt: Math.sin(now * 2 * Math.PI * 3) * 10 });
+        origin = '20% 0%';
+      } else if (where.moving === 'thrown') {
+        // Tumbling through the air.
+        Object.assign(pose, { legs: 'tuck', splash: 'none', lift: 0, turn: 1, eyes: 'shut', stretch: 1 });
+        pose.tilt = (now * 600 * (where.vx < 0 ? -1 : 1)) % 360;
+        origin = '20% 60%';
+      } else if (where.moving === 'hanging') {
         Object.assign(pose, { legs: 'stand', splash: 'none', lift: 0, tilt: still.matches ? 0 : Math.sin(now * 2.2) * 6 });
         origin = '20% 0%'; // it swings from its tip
       } else if (where.moving === 'falling') {
@@ -357,14 +499,44 @@ export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leav
         parts.current.get(`${part} ${pose[part]}`)!.style.display = '';
       }
       if (shown?.form !== pose.form) tail.current!.style.display = pose.form === 'drop' ? '' : 'none';
+      if (shown?.tail !== pose.tail) for (const [shape, g] of tails.current) g.style.display = shape === pose.tail ? '' : 'none';
+      if (shown?.hat !== pose.hat) for (const [name, g] of hats.current) g.style.display = name === pose.hat ? '' : 'none';
+      if (shown?.prop !== pose.prop) for (const [name, g] of props.current) g.style.display = name === pose.prop ? '' : 'none';
+      // Its twin, Detune splitting it, off to its left by half as many squares as pixels; frozen; its static. Each
+      // written only as it changes, to keep its frames cheap.
+      const twinned = pose.twin > 0 && pose.form === 'drop';
+      if (twinned || shown?.twin) {
+        twin.current!.style.display = twinned ? '' : 'none';
+        if (twinned) twin.current!.setAttribute('transform', `translate(${-pose.twin / 2} 0)`);
+      }
+      if (pose.ice > 0 || shown?.ice) {
+        ice.current!.style.display = pose.ice > 0 ? '' : 'none';
+        ice.current!.style.opacity = String(pose.ice);
+      }
+      if (pose.fuzz > 0 || shown?.fuzz) {
+        const dots = fuzz.current!.children;
+        for (let i = 0; i < dots.length; i++) {
+          const dot = dots[i] as SVGRectElement;
+          const on = Math.random() < pose.fuzz * 0.7;
+          dot.style.display = on ? '' : 'none';
+          if (on) {
+            dot.setAttribute('x', String(Math.floor(Math.random() * 9)));
+            dot.setAttribute('y', String(1 + Math.floor(Math.random() * 11)));
+          }
+        }
+      }
       // Turned down, the tail leaves from under the drop's middle rather than its side.
       const under = Math.min(1, tailTurn / 90);
       const turnTail = tailTurn + pose.wag;
       tail.current!.setAttribute('transform', turnTail ? `translate(${-4.5 * under} ${3 * under}) rotate(${turnTail} 9 9)` : '');
       shown = pose;
+      // What it is doing, for the tests (issue 127).
+      const marks = { act: act ?? '', tail: pose.tail, hat: pose.hat, doing: pose.doing ?? '', prop: pose.prop, moving: where.moving };
+      for (const [mark, value] of Object.entries(marks)) if (outer.dataset[mark] !== value) outer.dataset[mark] = value;
 
       const page = (outer.offsetParent ?? document.body).getBoundingClientRect();
-      const left = acrossOf(where, pose.x) - page.left;
+      drawnAt = { left: acrossOf(where, pose.x), foot: where.foot };
+      const left = acrossOf(where, pose.x) - page.left + (pose.fuzz ? (Math.random() * 2 - 1) * pose.fuzz : 0);
       const ground = where.foot - page.top;
       outer.style.transform = `translate(${left}px, ${ground - HEIGHT - HEADROOM}px)`;
       // Its droplets, in the page: a splash as it lands (harder, more), its smash, its shake, its tail's spray.
@@ -393,8 +565,14 @@ export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leav
             // From the muzzle, turned with it: the gun is drawn on its left.
             const facing = pose.turn < 0 ? -1 : 1;
             droplets.fling(count, left + DROP_MIDDLE + facing * (MUZZLE.x - DROP_MIDDLE), ground - HEIGHT - pose.lift + MUZZLE.y, 'jet', -facing);
+          } else if (fling === 'shower') {
+            // From under its cloud, down onto it.
+            const grid = HEIGHT / 13;
+            const at = left + (CLOUD.from + Math.random() * (CLOUD.to - CLOUD.from)) * grid;
+            droplets.fling(count, at, ground - HEIGHT + CLOUD.bottom * grid, 'shower', 0.5, ground);
           } else {
-            const from = fling === 'up' || fling === 'drip' ? base.y : fling === 'spout' ? ground - HEIGHT - pose.lift : middle.y;
+            const top = ground - HEIGHT * pose.size - pose.lift;
+            const from = fling === 'up' || fling === 'drip' ? base.y : fling === 'spout' || fling === 'steam' ? top : middle.y;
             droplets.fling(count, base.x, from, fling, 1);
           }
         }
@@ -418,6 +596,33 @@ export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leav
         lastExhaust = now;
       }
       drawDroplets(spray.current!, droplets.step(dt));
+      // Fishing: the line hangs straight down from the rod's tip, wherever its lean and turn put the tip, to the hook,
+      // down past the window's bottom or on the way back up with its catch (the owner, 2026-10-30).
+      const fish = fishing.current!;
+      if (pose.hook === null || pose.form !== 'drop') {
+        if (fish.style.display !== 'none') fish.style.display = 'none';
+      } else {
+        fish.style.display = '';
+        const grid = HEIGHT / 13;
+        const tip = ROD_TIP[pose.prop === 'rodBite' ? 'rodBite' : 'rod'];
+        // The tip as the drop's transform puts it: scaled, then turned, about its foot, then lifted.
+        const [ox, oy] = [WIDTH * 0.2, HEIGHT];
+        const dx = (tip.x * grid - ox) * (2 - pose.stretch) * pose.turn * pose.size;
+        const dy = (tip.y * grid - oy) * pose.stretch * pose.size;
+        const a = (pose.tilt * Math.PI) / 180;
+        const x = left + ox + dx * Math.cos(a) - dy * Math.sin(a);
+        const y = ground - pose.lift + dx * Math.sin(a) + dy * Math.cos(a);
+        const bottom = innerHeight - page.top + 30;
+        const hookY = y + pose.hook * Math.max(0, bottom - y);
+        const [line, hook, caught] = fish.children as unknown as [SVGLineElement, SVGGElement, SVGGElement];
+        line.setAttribute('x1', String(x));
+        line.setAttribute('y1', String(y));
+        line.setAttribute('x2', String(x));
+        line.setAttribute('y2', String(hookY));
+        hook.setAttribute('transform', `translate(${x} ${hookY})`);
+        caught.setAttribute('transform', `translate(${x} ${hookY})`);
+        caught.style.display = pose.caught ? '' : 'none';
+      }
       // Coming into view: up from behind its edge (fast for a pop, then a hop), down from under the header, or, falling
       // from the top of the window, all at once.
       comingFrom ??= perch.hanging ? 'header' : arrival === 'rain' ? 'sky' : 'edge';
@@ -430,13 +635,43 @@ export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leav
       const el = drop.current!;
       el.style.opacity = String(pose.fade);
       el.style.transformOrigin = origin;
-      el.style.transform = `translateY(${(comingFrom === 'header' ? -hidden : hidden) - pose.lift}px) rotate(${pose.tilt}deg) scale(${(2 - pose.stretch) * pose.turn}, ${pose.stretch})`;
+      el.style.transform = `translateY(${(comingFrom === 'header' ? -hidden : hidden) - pose.lift}px) rotate(${pose.tilt}deg) scale(${(2 - pose.stretch) * pose.turn * pose.size}, ${pose.stretch * pose.size})`;
     });
     return () => {
       stopListening();
       stopDrawing();
+      removeEventListener('pointermove', follow);
     };
   }, [context, patches]);
+
+  // A word spelled with Notes while it is out, and the theme switched (issue 127): each once, as it comes.
+  const wordSeen = useRef(word?.count);
+  useEffect(() => {
+    if (!word || word.count === wordSeen.current) return;
+    wordSeen.current = word.count;
+    touched.current?.word(word.word);
+  }, [word]);
+  const themeSeen = useRef(theme);
+  useEffect(() => {
+    if (theme === themeSeen.current) return;
+    themeSeen.current = theme;
+    touched.current?.theme(theme);
+  }, [theme]);
+
+  const part = (part: Part) =>
+    Object.entries(PARTS[part]).map(([variant, list]) => (
+      <g
+        key={`${part} ${variant}`}
+        ref={(g) => void (g ? parts.current.set(`${part} ${variant}`, g) : parts.current.delete(`${part} ${variant}`))}
+        className={part === 'eyes' ? 'mascot-eyes' : 'mascot-body'}
+        style={{ display: 'none' }}
+      >
+        {rects(list)}
+        {part === 'form' && variant === 'drop' && <g className="mascot-shine">{rects(SHINE)}</g>}
+      </g>
+    ));
+  const keep = (map: { current: Map<string, SVGGElement> }, name: string) => (g: SVGGElement | null) =>
+    void (g ? map.current.set(name, g) : map.current.delete(name));
 
   return (
     <>
@@ -446,35 +681,90 @@ export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leav
         <rect key={i} width={2} height={2} style={{ display: 'none' }} />
       ))}
     </svg>
+    <svg ref={fishing} className="mascot-fishing" aria-hidden="true" shapeRendering="crispEdges" style={{ display: 'none' }}>
+      <line className="mascot-line" />
+      <g className="mascot-hook">{rects(HOOK)}</g>
+      <g className="mascot-note">{rects(CATCH)}</g>
+    </svg>
     <div ref={frame} className="mascot" aria-hidden="true" style={{ width: WIDTH, height: HEIGHT + HEADROOM }}>
       <div
         ref={drop}
         className="mascot-drop"
         style={{ transform: `translateY(${HEIGHT}px)` }}
-        onPointerMove={(e) => e.pointerType === 'mouse' && touched.current?.tickle()}
-        onPointerDown={() => touched.current?.poke()}
+        onPointerMove={(e) => {
+          // Pressed and moved far enough, it is picked up and follows the pointer (issue 127); else a mouse tickles.
+          const held = press.current;
+          if (held) {
+            if (!held.picked && Math.hypot(e.clientX - held.x, e.clientY - held.y) > PICK_UP_PX) held.picked = touched.current?.pick(held.x, held.y) ?? false;
+            if (held.picked) touched.current?.drag(e.clientX, e.clientY);
+          } else if (e.pointerType === 'mouse') touched.current?.tickle();
+        }}
+        onPointerDown={(e) => {
+          e.currentTarget.setPointerCapture(e.pointerId);
+          press.current = { x: e.clientX, y: e.clientY, picked: false };
+        }}
+        onPointerUp={() => {
+          // Let go: thrown if it was picked up, else a click.
+          const held = press.current;
+          press.current = null;
+          if (held?.picked) touched.current?.letGo();
+          else if (held) touched.current?.poke();
+        }}
+        onPointerCancel={() => {
+          const held = press.current;
+          press.current = null;
+          if (held?.picked) touched.current?.letGo();
+        }}
       >
         <svg viewBox="0 0 22 13" width={WIDTH} height={HEIGHT} shapeRendering="crispEdges">
-          <g ref={tail}>
-            {(Object.keys(TAIL) as (keyof typeof TAIL)[]).map((stage) => (
-              <g key={stage} style={{ fill: `var(--stage-${stage})` }}>
-                {rects(TAIL[stage])}
+          {/* Its twin, as Detune splits it (issue 127): itself again, behind it. */}
+          <use ref={twin} href="#bead-self" className="mascot-twin" style={{ display: 'none' }} />
+          <g id="bead-self">
+            <g ref={tail}>
+              <g ref={keep(tails, 'logo')} style={{ display: 'none' }}>
+                {(Object.keys(TAIL) as (keyof typeof TAIL)[]).map((stage) => (
+                  <g key={stage} style={{ fill: `var(--stage-${stage})` }}>
+                    {rects(TAIL[stage])}
+                  </g>
+                ))}
               </g>
+              {Object.entries(TAILS).map(([shape, stages]) => (
+                <g key={shape} ref={keep(tails, shape)} style={{ display: 'none' }}>
+                  {(Object.keys(stages) as (keyof typeof stages)[]).map((stage) => (
+                    <g key={stage} style={{ fill: `var(--stage-${stage})` }}>
+                      {rects(stages[stage])}
+                    </g>
+                  ))}
+                </g>
+              ))}
+            </g>
+            {part('form')}
+            {part('splash')}
+            {part('legs')}
+            <g ref={keep(hats, 'ghost')} style={{ display: 'none' }}>
+              {picture(HATS.ghost)}
+            </g>
+            {part('eyes')}
+          </g>
+          <g ref={ice} style={{ display: 'none' }}>
+            {picture(ICE)}
+          </g>
+          <g ref={fuzz} className="mascot-static">
+            {Array.from({ length: STATIC_DOTS }, (_, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: a fixed set of dots, reused by position
+              <rect key={i} width={1} height={1} style={{ display: 'none' }} />
             ))}
           </g>
-          {(Object.keys(PARTS) as Part[]).flatMap((part) =>
-            Object.entries(PARTS[part]).map(([variant, list]) => (
-              <g
-                key={`${part} ${variant}`}
-                ref={(g) => void (g ? parts.current.set(`${part} ${variant}`, g) : parts.current.delete(`${part} ${variant}`))}
-                className={part === 'eyes' ? 'mascot-eyes' : 'mascot-body'}
-                style={{ display: 'none' }}
-              >
-                {rects(list)}
-                {part === 'form' && variant === 'drop' && <g className="mascot-shine">{rects(SHINE)}</g>}
-              </g>
-            )),
-          )}
+          {(['christmas', 'party', 'nightcap'] as const).map((hat) => (
+            <g key={hat} ref={keep(hats, hat)} className="mascot-prop" style={{ display: 'none' }}>
+              {picture(HATS[hat])}
+            </g>
+          ))}
+          {Object.entries(PROPS).map(([name, groups]) => (
+            <g key={name} ref={keep(props, name)} className="mascot-prop" style={{ display: 'none' }}>
+              {picture(groups)}
+            </g>
+          ))}
           <g ref={gun} style={{ display: 'none' }}>
             <g className="mascot-body">{rects(GUN.tank)}</g>
             <g className="mascot-gun">{rects(GUN.body)}</g>
@@ -504,6 +794,11 @@ export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leav
           ))}
           <g className="mascot-handle">{rects(GLASS)}</g>
         </g>
+        {Object.entries(SKY).map(([name, groups]) => (
+          <g key={name} ref={keep(props, name)} className="mascot-prop" style={{ display: 'none' }}>
+            {picture(groups)}
+          </g>
+        ))}
       </svg>
     </div>
     </>

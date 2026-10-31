@@ -8,8 +8,8 @@ export interface Perch {
   hanging: boolean;
 }
 
-/** How it is on its line, or between two. */
-export type Moving = 'standing' | 'hanging' | 'falling' | 'flying' | 'landing';
+/** How it is on its line, or between two; or in the pointer's hold, or thrown from it (issue 127). */
+export type Moving = 'standing' | 'hanging' | 'falling' | 'flying' | 'landing' | 'held' | 'thrown';
 
 /** Where along a line it may stand: its box's left, in the window's pixels. */
 export interface Span {
@@ -47,6 +47,10 @@ export const WINDUP_SECONDS = 0.25;
 const CLEARANCE = 8;
 /** Stepping off an edge, its little hop up, in pixels a second. */
 const HOP_OFF = 180;
+/** The fastest it can be thrown, in pixels a second. */
+export const FASTEST_THROW = 1800;
+/** Thrown against a side of the window, it bounces back with this much of its speed. */
+const BOUNCE = 0.5;
 /** The speed of a landing that splashes it flattest, in pixels a second. */
 const HARD_LANDING = 1400;
 /** Landing: the splash, the squash and its wobble back. */
@@ -101,9 +105,10 @@ export function createMascotPlace({ from, random = Math.random }: { from?: numbe
   let landedAt = -Infinity;
   let impact = 0;
   let last: number | null = null;
+  let walls: Span = { min: -Infinity, max: Infinity };
   const placed = (landedX: number | null = null): Placed => ({
     foot,
-    x: moving === 'falling' || moving === 'flying' ? x : null,
+    x: moving === 'falling' || moving === 'flying' || moving === 'held' || moving === 'thrown' ? x : null,
     moving,
     thrust: moving === 'flying' && thrust,
     windup: moving === 'flying' ? Math.min(1, (last! - windupFrom) / WINDUP_SECONDS) : 1,
@@ -117,11 +122,60 @@ export function createMascotPlace({ from, random = Math.random }: { from?: numbe
   const spotIn = (span: Span, at: number) => (at >= span.min && at <= span.max ? at : span.min + random() * (span.max - span.min));
 
   return {
+    /** Held by the pointer (issue 127), its box's left at `across` and its foot at `down`, in the window's pixels. */
+    hold(across: number, down: number) {
+      x = toX = across;
+      foot = down;
+      vx = vy = 0;
+      moving = 'held';
+    },
+    /** Let go at this speed (capped): it flies under gravity, bouncing off the window's sides, `between` its lefts. */
+    toss(speedAcross: number, speedDown: number, between: Span) {
+      if (moving !== 'held') return;
+      const speed = Math.hypot(speedAcross, speedDown);
+      const scale = speed > FASTEST_THROW ? FASTEST_THROW / speed : 1;
+      vx = speedAcross * scale;
+      vy = speedDown * scale;
+      walls = between;
+      moving = 'thrown';
+    },
     /** This frame, on `perch` (whose span is `span`), at `at` across the window when on its line. */
     frame(perch: Perch, span: Span, now: number, reduced: boolean, at: number): Placed {
       const dt = last === null ? 0 : Math.min(0.05, now - last);
       last = now;
       const settled: Moving = perch.hanging ? 'hanging' : 'standing';
+      if (moving === 'held') {
+        on = perch.id;
+        return placed();
+      }
+      if (moving === 'thrown') {
+        // Free under gravity: it lands on the line when it comes down onto it from above; under it, it flies back up.
+        on = perch.id;
+        const before = foot;
+        vy += GRAVITY * dt;
+        foot += vy * dt;
+        x += vx * dt;
+        if (x < walls.min || x > walls.max) {
+          x = Math.min(walls.max, Math.max(walls.min, x));
+          vx = -vx * BOUNCE;
+        }
+        if (vy > 0 && before <= perch.foot && foot >= perch.foot) {
+          foot = perch.foot;
+          impact = Math.min(1, vy / HARD_LANDING);
+          moving = perch.hanging ? 'hanging' : 'landing';
+          landedAt = now;
+          vx = vy = 0;
+          return placed(x);
+        }
+        if (vy > 0 && foot > perch.foot) {
+          toX = spotIn(span, x);
+          windupFrom = -Infinity;
+          clearance = CLEARANCE;
+          moving = 'flying';
+          thrust = true;
+        }
+        return placed();
+      }
       if (on === null || reduced) {
         const arriving = on === null && !reduced && from !== undefined && !perch.hanging;
         on = perch.id;

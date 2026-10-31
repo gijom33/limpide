@@ -77,3 +77,17 @@ describe("the mascot's droplets (issue 115)", () => {
     expect(spray.step(1)).toHaveLength(0);
   });
 });
+
+describe('steam (issue 127)', () => {
+  it('rises from it, slowing, and is gone within a second', () => {
+    const spray = createSpray(() => 0.5);
+    spray.fling(1, 100, 100, 'steam');
+    const ys: number[] = [];
+    for (let i = 0; i < 30; i++) ys.push(spray.step(1 / 60)[0]?.y ?? Number.NaN);
+    expect(ys.every((y) => y < 100)).toBe(true);
+    expect(ys[29]).toBeLessThan(ys[0]);
+    for (let i = 0; i < 40; i++) spray.step(1 / 60);
+    expect(spray.step(1 / 60)).toHaveLength(0);
+  });
+});
+

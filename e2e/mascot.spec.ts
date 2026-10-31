@@ -299,3 +299,105 @@ test('clicked again and again, it runs off', async ({ page }) => {
   }
   await expect.poll(async () => Math.abs((await where()).x - start.x), { timeout: 4000 }).toBeGreaterThan(40);
 });
+
+// Issue 127: what the controls, five words spelled with Notes, the pointer, the theme, the date and the Demo make of
+// it. Its element says what it is doing (data-doing, data-tail, data-hat, data-act, data-moving), for these tests.
+
+test('while it is out, words spelled with Notes cue its tricks; B, E, A, D still sends it away', async ({ page }) => {
+  await page.goto('/');
+  await listening(page);
+  await play(page, 'sdhs'); // D, E, A, D before it is out: nothing
+  await expect(mascot(page)).toHaveCount(0);
+  await play(page, 'jdhs');
+  await expect(mascot(page)).toHaveCount(1);
+  await play(page, 'sdhs');
+  await expect(mascot(page)).toHaveAttribute('data-doing', 'playDead');
+  await page.waitForTimeout(3500);
+  await play(page, 'fhsd'); // F, A, D, E
+  await expect(mascot(page)).toHaveAttribute('data-doing', 'ghost');
+  await page.waitForTimeout(3000);
+  await play(page, 'jdhs');
+  await expect(mascot(page)).toHaveCount(0);
+});
+
+test('a Waveform chosen: its tail takes that wave a moment, then is the logo again', async ({ page }) => {
+  await page.goto('/');
+  await listening(page);
+  await play(page, 'jdhs');
+  await expect(mascot(page)).toHaveAttribute('data-tail', 'logo');
+  await page.getByRole('radio', { name: 'Square', exact: true }).first().click();
+  await expect(mascot(page)).toHaveAttribute('data-tail', 'square');
+  await expect(mascot(page)).toHaveAttribute('data-tail', 'logo', { timeout: 5000 });
+});
+
+test('dragged and let go, it is thrown, and lands on an edge', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  await listening(page);
+  await play(page, 'jdhs');
+  await expect.poll(async () => Math.abs((await footing(page)).below) <= 1).toBe(true);
+  const box = (await page.locator('.mascot-drop').boundingBox())!;
+  const at = { x: box.x + 9, y: box.y + box.height - 8 };
+  await page.mouse.move(at.x, at.y);
+  await page.mouse.down();
+  for (let i = 1; i <= 8; i++) await page.mouse.move(at.x - i * 25, at.y - i * 12);
+  await expect(mascot(page)).toHaveAttribute('data-moving', 'held');
+  await page.mouse.up();
+  await expect(mascot(page)).toHaveAttribute('data-moving', 'thrown');
+  await expect(mascot(page)).toHaveAttribute('data-moving', 'standing', { timeout: 5000 });
+  // Somewhere along to the left, on a section's top edge.
+  const landed = await page.locator('.mascot-drop').evaluate((el) => {
+    const drop = el.getBoundingClientRect();
+    const tops = [...document.querySelectorAll('section[aria-label]')].map((s) => s.getBoundingClientRect().top);
+    return { left: drop.left, onEdge: tops.some((top) => Math.abs(drop.bottom - top) <= 2) };
+  });
+  expect(landed.left).toBeLessThan(box.x - 50);
+  expect(landed.onEdge).toBe(true);
+});
+
+test('on 31 October it wears a ghost sheet', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-10-31T12:00:00'));
+  await page.goto('/');
+  await listening(page);
+  await play(page, 'jdhs');
+  await expect(mascot(page)).toHaveAttribute('data-hat', 'ghost');
+});
+
+test('the theme switched: it shades its eyes once Display is closed', async ({ page }) => {
+  await page.goto('/');
+  await listening(page);
+  await play(page, 'jdhs');
+  await openDisplay(page);
+  await page.getByRole('radio', { name: 'Light', exact: true }).click();
+  await page.waitForTimeout(300);
+  await expect(mascot(page)).not.toHaveAttribute('data-doing', 'shades');
+  await page.getByRole('button', { name: 'Display' }).click();
+  await expect(mascot(page)).toHaveAttribute('data-doing', 'shades');
+});
+
+test('through the Demo it conducts, then plays air guitar, then surfs an LFO shape', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  await listening(page);
+  await play(page, 'jdhs');
+  await page.getByRole('button', { name: 'Demo', exact: true }).click();
+  await expect(mascot(page)).toHaveAttribute('data-act', 'conduct');
+  await page.getByRole('button', { name: /^Play from part 2,/ }).click();
+  await expect(mascot(page)).toHaveAttribute('data-act', 'airGuitar');
+  await page.getByRole('button', { name: /^Play from part 3,/ }).click();
+  await expect(mascot(page)).toHaveAttribute('data-act', 'surf');
+  // Down onto an LFO's plot, riding along it.
+  await expect
+    .poll(
+      () =>
+        page.locator('.mascot-drop').evaluate((el) => {
+          const drop = el.getBoundingClientRect();
+          return [...document.querySelectorAll('.lfo-plot')].some((p) => {
+            const plot = p.getBoundingClientRect();
+            return drop.left >= plot.left - 1 && drop.right <= plot.right + 1 && drop.bottom > plot.top && drop.bottom < plot.bottom;
+          });
+        }),
+      { timeout: 5000 },
+    )
+    .toBe(true);
+});

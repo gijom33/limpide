@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { defaultPatch, type Patch } from '../patch/patch';
-import { gesturesOf } from './mascotGestures';
+import { gesturesOf, looksOf } from './mascotGestures';
 
 const init = defaultPatch();
 const turned = (change: Partial<Patch>, by: Parameters<typeof gesturesOf>[2] = 'hand') => gesturesOf(init, { ...init, ...change }, by);
@@ -37,3 +37,18 @@ describe("the mascot's answer to a control turned (issue 115)", () => {
     expect(turned({ keyboardOctave: 2 })).toEqual([]);
   });
 });
+
+describe("what some controls make of the mascot's look (issue 127)", () => {
+  it('Detune splits it only while both Oscillators are in the Mixer', () => {
+    expect(looksOf({ ...init, mixOsc1: 1, mixOsc2: 1, osc2Detune: 12 }, 0).detune).toBe(12);
+    expect(looksOf({ ...init, mixOsc1: 1, mixOsc2: 0, osc2Detune: 12 }, 0).detune).toBe(0);
+  });
+
+  it('the Filter fully closed, and the Noise only while something is heard', () => {
+    expect(looksOf({ ...init, cutoff: 20 }, 0).closed).toBe(true);
+    expect(looksOf({ ...init, cutoff: 40 }, 0).closed).toBe(false);
+    expect(looksOf({ ...init, mixNoise: 0.6 }, 0.5).noise).toBe(0.6);
+    expect(looksOf({ ...init, mixNoise: 0.6 }, 0).noise).toBe(0);
+  });
+});
+

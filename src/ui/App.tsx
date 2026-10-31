@@ -3,7 +3,7 @@ import { type AudioSession, getAudioSession } from '../app/session';
 import { safeStorage } from '../app/storage';
 import { type AudioStatus, unlockAudio } from '../app/unlockAudio';
 import { rememberWelcome, welcomeFor } from '../app/welcome';
-import { createCallingPhrase } from '../input/callingPhrase';
+import { createCallingPhrase, createWordsHeard, type Word } from '../input/callingPhrase';
 import { DEFAULT_OCTAVE, shiftOctave, startingOctave } from '../input/keyboardLayout';
 import { type Formula, harmonicFormula, responseFormula } from '../music/maths';
 import { CHOICES, osc1Heard, osc2Heard, type ParamId, type Patch, setFilter, setParam, setWaveform, subNoiseHeard } from '../patch/patch';
@@ -156,10 +156,18 @@ export function App() {
   useEffect(() => void (bead !== 'unmet' && storage.setItem(BEAD, bead)), [storage, bead]);
   const beadRef = useRef(bead);
   beadRef.current = bead;
+  const mascotRef = useRef(mascot);
+  mascotRef.current = mascot;
+  // While it is out, five more words spelled with Notes each cue a trick (issue 127).
+  const [word, setWord] = useState<{ word: Word; count: number } | null>(null);
   useEffect(() => {
     const phrase = createCallingPhrase();
+    const words = createWordsHeard();
     return session.onPress((note) => {
-      if (!phrase.press(note, performance.now() / 1000) || beadRef.current === 'off') return;
+      const time = performance.now() / 1000;
+      const spelled = words.press(note, time);
+      if (spelled && mascotRef.current === 'up') setWord((w) => ({ word: spelled, count: (w?.count ?? 0) + 1 }));
+      if (!phrase.press(note, time) || beadRef.current === 'off') return;
       setBead('on');
       setMascot((m) => (m === 'off' ? 'up' : m === 'up' ? 'leaving' : m));
     });
@@ -756,7 +764,9 @@ export function App() {
             onQuit={tutorial.end}
           />
         )}
-        {mascot !== 'off' && <Mascot patches={patches} leaving={mascot === 'leaving'} onGone={mascotGone} />}
+        {mascot !== 'off' && (
+          <Mascot patches={patches} leaving={mascot === 'leaving'} onGone={mascotGone} theme={theme} demoPart={players.demo} word={word} />
+        )}
       </main>
     </MathsContext.Provider>
     </ModulationContext.Provider>

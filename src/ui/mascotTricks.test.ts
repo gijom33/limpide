@@ -4,7 +4,7 @@ import type { Fling } from './mascotSpray';
 import { PICKED_TRICKS, TRICK_MOVES, type Trick } from './mascotTricks';
 
 const resting: Pose = {
-  form: 'drop', splash: 'none', legs: 'stand', eyes: 'open', x: 0, lift: 0, tilt: 0, stretch: 1, turn: 1, wag: 0, fade: 1,
+  form: 'drop', splash: 'none', legs: 'stand', eyes: 'open', tail: 'logo', hat: 'none', ice: 0, fuzz: 0, twin: 0, size: 1, hook: null, caught: false, x: 0, lift: 0, tilt: 0, stretch: 1, turn: 1, wag: 0, fade: 1,
   burst: null, doing: null, prop: 'none', sip: 0, escaped: false, gone: false,
 };
 
@@ -111,4 +111,58 @@ describe("the mascot's funny turns (issue 115)", () => {
     const turns = play('chase').poses.map((p) => p.turn < 0).filter((back, i, all) => back && !all[i - 1]);
     expect(turns.length).toBeGreaterThanOrEqual(3);
   });
+
+  it('more water gags (issue 127): evaporating and raining back, a soap bubble that pops, skipping rope, fishing', () => {
+    const evaporate = play('evaporate');
+    expect(Math.min(...evaporate.poses.map((p) => p.size))).toBeLessThan(0.3);
+    expect(evaporate.poses.at(-1)!.size).toBe(1);
+    expect(evaporate.poses.map((p) => p.prop).filter((g, i, all) => g !== all[i - 1])).toEqual(['sun', 'cloud', 'none']);
+    expect(evaporate.sprays.includes('steam') && evaporate.sprays.includes('shower')).toBe(true);
+    const bubble = play('bubble');
+    expect(bubble.poses.map((p) => p.prop).filter((g, i, all) => g !== all[i - 1])).toEqual(['bubbleSmall', 'bubble', 'none']);
+    expect(Math.max(...bubble.poses.map((p) => p.lift))).toBeGreaterThan(12);
+    expect(bubble.sprays).toEqual(['all']); // the pop
+    // Five turns of its tail, a hop each time it comes under.
+    const rope = play('skipRope').poses;
+    const hops = rope.map((p) => p.lift > 3).filter((up, i, all) => up && !all[i - 1]);
+    expect(hops).toHaveLength(5);
+    // The hook cast down past the window's bottom, bobbing, a bite, then reeled up with a ♪ on it.
+    const fishing = play('fishing').poses;
+    expect(fishing.map((p) => p.prop).filter((g, i, all) => g !== all[i - 1])).toEqual(['rod', 'rodBite', 'rod']);
+    expect(fishing[0].hook).toBe(0);
+    expect(Math.max(...fishing.map((p) => p.hook!))).toBeGreaterThanOrEqual(1);
+    const reeled = fishing.findIndex((p) => p.caught);
+    expect(fishing[reeled].hook).toBeGreaterThan(0.9);
+    expect(fishing.at(-1)).toMatchObject({ hook: 0, caught: true });
+    expect(fishing.slice(reeled).every((p, i, all) => i === 0 || p.hook! <= all[i - 1].hook!)).toBe(true); // up, never down
+    expect(PICKED_TRICKS).toEqual(expect.arrayContaining(['evaporate', 'bubble', 'skipRope', 'fishing']));
+  });
+
+  it('the words\' tricks and the theme\'s come only for a reason, never at random', () => {
+    for (const t of ['playDead', 'ghost', 'coffee', 'earsCovered', 'suitcase', 'nightcap', 'shades'] as const) expect(PICKED_TRICKS).not.toContain(t);
+  });
+
+  it('plays dead on its back, crosses for eyes, peeks once, and pops up', () => {
+    const { poses } = play('playDead');
+    expect(Math.min(...poses.map((p) => p.tilt))).toBe(-90);
+    const eyes = poses.map((p) => p.eyes).filter((e, i, all) => e !== all[i - 1]);
+    expect(eyes).toEqual(['dead', 'peek', 'dead', 'happy']);
+    expect(poses.at(-1)!.tilt).toBe(0);
+  });
+
+  it('fades to a ghost and back; drinks a coffee; covers its ears; drags a suitcase along', () => {
+    const ghost = play('ghost').poses;
+    expect(Math.min(...ghost.map((p) => p.fade))).toBeLessThan(0.2);
+    expect(ghost.at(-1)!.fade).toBeGreaterThan(0.95);
+    expect(play('coffee').poses[0].prop).toBe('cup');
+    expect(play('earsCovered').poses[0]).toMatchObject({ prop: 'hands', eyes: 'shut' });
+    expect(TRICK_MOVES.suitcase.travel).toBeGreaterThan(0);
+    expect(play('suitcase', -1).poses.every((p) => p.prop === 'suitcase' && p.turn === -1)).toBe(true);
+  });
+
+  it('the theme switched: a nightcap for dark, a hand shading its eyes for light', () => {
+    expect(play('nightcap').poses.every((p) => p.hat === 'nightcap')).toBe(true);
+    expect(play('shades').poses.every((p) => p.prop === 'visor')).toBe(true);
+  });
 });
+

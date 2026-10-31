@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CALLING_SECONDS, createCallingPhrase } from './callingPhrase';
+import { CALLING_SECONDS, createCallingPhrase, createWordsHeard } from './callingPhrase';
 
 // B, E, A, D around the fourth octave (C4 = 60).
 const B = 59;
@@ -41,5 +41,33 @@ describe('the Notes that call the mascot (issue 115)', () => {
     const times = [0, 0.3, 0.6, 0.9, 1.2, 1.5, 1.8, 2.1];
     const done = [B, E, A, D, B, E, A, D].map((note, i) => phrase.press(note, times[i]));
     expect(done).toEqual([false, false, false, true, false, false, false, true]);
+  });
+});
+
+describe('the words Bead answers to (issue 127)', () => {
+  const F = 65;
+  const C = 60;
+  const G = 67;
+  const hear = (notes: number[], gap = 0.3) => {
+    const words = createWordsHeard();
+    return notes.map((note, i) => words.press(note, i * gap)).filter(Boolean);
+  };
+
+  it('each of the five, in any octave', () => {
+    expect(hear([D, E, A, D + 12])).toEqual(['dead']);
+    expect(hear([F, A, D, E])).toEqual(['fade']);
+    expect(hear([C, A, F, E])).toEqual(['cafe']);
+    expect(hear([D, E, A, F])).toEqual(['deaf']);
+    expect(hear([B, A, G, G, A, G, E], 0.5)).toEqual(['baggage']);
+  });
+
+  it('a Note counts towards several at once, and B, E, A, D is none of them', () => {
+    // D, E, A, D, then on from that D: E, A, F.
+    expect(hear([D, E, A, D, E, A, F])).toEqual(['dead', 'deaf']);
+    expect(hear([B, E, A, D])).toEqual([]);
+  });
+
+  it('within the same time as B, E, A, D', () => {
+    expect(hear([B, A, G, G, A, G, E], CALLING_SECONDS / 6 + 0.01)).toEqual([]);
   });
 });

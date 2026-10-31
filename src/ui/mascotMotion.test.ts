@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createMascotMotion, DOZE_SECONDS, GESTURE_SECONDS, type Heard, HOP_SECONDS, LEAVE_SECONDS, NUDGE_PX, type Pose, type Room } from './mascotMotion';
+import { createMascotMotion, DOZE_SECONDS, GESTURE_SECONDS, type Heard, HOP_SECONDS, hatOn, LEAVE_SECONDS, NUDGE_PX, type Pose, type Room, WAVE_SECONDS } from './mascotMotion';
 import { JOKES, PICKED_TRICKS } from './mascotTricks';
 
 const quiet: Heard = { amp: 0, sway: 0, struck: null };
@@ -304,3 +304,119 @@ describe('the mascot with reduced motion (issue 115)', () => {
     expect(motion.frame(playing, 10.4, true, wide).gone).toBe(true);
   });
 });
+
+describe('what the controls, the words, the page and the Demo make of it (issue 127)', () => {
+  it('a Waveform chosen: its tail takes that wave a moment, then is the logo again', () => {
+    const motion = createMascotMotion(seeded());
+    motion.frame(quiet, 0, false, spot);
+    motion.wave('square', 1);
+    expect(motion.frame(quiet, 1.1, false, spot).tail).toBe('square');
+    expect(motion.frame(quiet, 1 + WAVE_SECONDS - 0.1, false, spot).tail).toBe('square');
+    expect(motion.frame(quiet, 1 + WAVE_SECONDS + 0.1, false, spot).tail).toBe('logo');
+  });
+
+  it('Resonance turned past three quarters: eyes wide, tail straight, a moment only (the owner)', () => {
+    const motion = createMascotMotion(seeded());
+    motion.frame(quiet, 0, false, spot);
+    motion.scream(1);
+    expect(motion.frame(quiet, 1.1, false, spot)).toMatchObject({ tail: 'straight', eyes: 'wide' });
+    expect(motion.frame(quiet, 1 + WAVE_SECONDS + 0.1, false, spot).tail).toBe('logo');
+  });
+
+  it('Detune splits it in two, farther the more, wobbling as they beat; one drop at 0', () => {
+    const motion = createMascotMotion(seeded());
+    const gaps = (detune: number) => run(motion, 1, 3, { ...quiet, detune }, spot).map((p) => p.twin);
+    expect(gaps(0).every((g) => g === 0)).toBe(true);
+    const small = gaps(10);
+    const big = gaps(-50);
+    expect(Math.max(...big)).toBeGreaterThan(Math.max(...small));
+    expect(Math.max(...big) - Math.min(...big)).toBeGreaterThan(3); // the wobble
+    expect(Math.max(...big)).toBeLessThanOrEqual(16);
+  });
+
+  it('the Filter fully closed freezes it still in an ice cube; opened, it melts, dripping', () => {
+    const motion = createMascotMotion(seeded());
+    const frozen = run(motion, 1, 2, { ...playing, closed: true }, wide);
+    expect(frozen.at(-1)!.ice).toBe(1);
+    const xs = frozen.slice(-20).map((p) => p.x);
+    expect(Math.max(...xs) - Math.min(...xs)).toBeLessThan(2); // a shiver, no stroll
+    const melting = run(motion, 2, 4, playing, wide);
+    expect(melting[10].ice).toBeGreaterThan(0);
+    expect(melting.at(-1)!.ice).toBe(0);
+    expect(melting.filter((p) => p.burst?.spread === 'drip').length).toBeGreaterThan(3);
+  });
+
+  it('the Noise heard gives it static, more the louder; none with reduced motion', () => {
+    const motion = createMascotMotion(seeded());
+    expect(motion.frame({ ...playing, noise: 0.8 }, 1, false, spot).fuzz).toBe(0.8);
+    expect(motion.frame({ ...playing, noise: 0 }, 1.1, false, spot).fuzz).toBe(0);
+    expect(createMascotMotion(seeded()).frame({ ...playing, noise: 0.8 }, 1, true, spot).fuzz).toBe(0);
+  });
+
+  it('a word cues its trick at once; the theme its own', () => {
+    const motion = createMascotMotion(seeded());
+    motion.frame(playing, 0, false, spot);
+    motion.word('dead', 1);
+    expect(motion.frame(playing, 1.1, false, spot).doing).toBe('playDead');
+    motion.word('baggage', 5);
+    expect(motion.frame(playing, 5.1, false, wide).doing).toBe('suitcase');
+    motion.theme('dark', 10);
+    expect(motion.frame(playing, 10.1, false, spot)).toMatchObject({ doing: 'nightcap', hat: 'nightcap' });
+    motion.theme('light', 15);
+    expect(motion.frame(playing, 15.1, false, spot)).toMatchObject({ doing: 'shades', prop: 'visor' });
+  });
+
+  it('after a coffee it strolls faster for a while', () => {
+    const speeds = (coffee: boolean) => {
+      const motion = createMascotMotion(seeded(7));
+      motion.frame(playing, 0, false, wide);
+      if (coffee) motion.word('cafe', 0.1);
+      const poses = run(motion, 3.2, 12, playing, wide);
+      return poses.reduce((sum, p, i) => sum + (i ? Math.abs(p.x - poses[i - 1].x) : 0), 0);
+    };
+    expect(speeds(true)).toBeGreaterThan(speeds(false) * 1.3);
+  });
+
+  it('its eyes follow a pointer near it, when nothing else has them', () => {
+    const motion = createMascotMotion(() => 0.99);
+    motion.frame(quiet, 0, false, spot);
+    motion.pointer(60);
+    expect(motion.frame(quiet, 0.5, false, spot).eyes).toBe('right');
+    motion.pointer(-60);
+    expect(motion.frame(quiet, 0.6, false, spot).eyes).toBe('left');
+    motion.pointer(null);
+    expect(motion.frame(quiet, 0.7, false, spot).eyes).toBe('open');
+  });
+
+  it('its costume for the date, under a nightcap a moment when the theme turns dark', () => {
+    expect(hatOn(new Date(2026, 9, 31))).toBe('ghost');
+    expect(hatOn(new Date(2026, 11, 24))).toBe('christmas');
+    expect(hatOn(new Date(2026, 11, 26))).toBe('christmas');
+    expect(hatOn(new Date(2026, 11, 27))).toBe('none');
+    expect(hatOn(new Date(2027, 9, 24))).toBe('party');
+    const motion = createMascotMotion(seeded());
+    motion.dress('christmas');
+    expect(motion.frame(quiet, 0, false, spot).hat).toBe('christmas');
+    motion.theme('dark', 1);
+    expect(motion.frame(quiet, 1.1, false, spot).hat).toBe('nightcap');
+    expect(motion.frame(quiet, 6, false, spot).hat).toBe('christmas');
+  });
+
+  it('through a Demo part: the baton down on each Note; air guitar strummed on its tail; surfing end to end', () => {
+    const motion = createMascotMotion(seeded());
+    motion.frame(playing, 0, false, wide);
+    motion.act('conduct');
+    expect(motion.frame({ ...playing, struck: 1 }, 1.05, false, wide).prop).toBe('batonDown');
+    expect(motion.frame({ ...playing, struck: 1 }, 1.5, false, wide).prop).toBe('baton');
+    motion.act('airGuitar');
+    const strum = motion.frame({ ...playing, struck: 2 }, 2.02, false, wide);
+    expect(strum.wag).toBeGreaterThan(50);
+    expect(strum.eyes).toBe('shut');
+    motion.act('surf');
+    const ride = run(motion, 3, 12, playing, wide);
+    expect(Math.min(...ride.map((p) => p.x))).toBe(0);
+    expect(Math.max(...ride.map((p) => p.x))).toBe(200);
+    expect(ride.every((p) => p.doing === null)).toBe(true);
+  });
+});
+

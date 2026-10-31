@@ -325,6 +325,236 @@ export const TRICK_MOVES = {
       }
     },
   },
+  /**
+   * A little sun comes out (issue 127): it squints, shrinks into steam and fades, a cloud gathers over it and rains it
+   * back, growing again, and the cloud goes.
+   */
+  evaporate: {
+    seconds: 4.2,
+    move(pose, p, c) {
+      if (p < 0.1) {
+        pose.prop = 'sun';
+        pose.eyes = 'happy';
+      } else if (p < 0.45) {
+        const q = (p - 0.1) / 0.35;
+        pose.prop = 'sun';
+        pose.size = 1 - 0.75 * q;
+        pose.fade = 1 - 0.65 * q;
+        pose.eyes = 'shut';
+        c.spray(1, 'steam', 0.06);
+      } else if (p < 0.55) {
+        pose.prop = 'cloud';
+        pose.size = 0.25;
+        pose.fade = 0.35;
+        pose.eyes = 'shut';
+      } else if (p < 0.85) {
+        const q = (p - 0.55) / 0.3;
+        pose.prop = 'cloud';
+        pose.size = 0.25 + 0.75 * q;
+        pose.fade = 0.35 + 0.65 * q;
+        pose.eyes = q > 0.6 ? 'happy' : 'shut';
+        c.spray(1, 'shower', 0.04);
+      } else {
+        pose.eyes = 'happy';
+        pose.wag = Math.sin(c.now * TAU * 6) * 25;
+      }
+    },
+  },
+  /** It blows a soap bubble, gets caught inside and floats up a little; the bubble pops and it drops back down. */
+  bubble: {
+    seconds: 3.4,
+    move(pose, p, c) {
+      const FLOAT = 14;
+      if (p < 0.2) {
+        pose.prop = 'bubbleSmall';
+        pose.stretch *= 1 + 0.05 * Math.sin(c.now * TAU * 3);
+        pose.eyes = 'happy';
+      } else if (p < 0.78) {
+        pose.prop = 'bubble';
+        pose.lift += FLOAT * Math.sin(Math.min(1, (p - 0.2) / 0.25) * (Math.PI / 2));
+        pose.tilt += Math.sin(c.now * TAU * 0.9) * 6;
+        pose.legs = 'tuck';
+        pose.eyes = 'wide';
+      } else if (p < 0.9) {
+        // Popped: a burst of droplets, and down it drops.
+        c.spray(8, 'all', Infinity);
+        const q = (p - 0.78) / 0.12;
+        pose.lift += FLOAT * (1 - q * q);
+        pose.legs = 'tuck';
+        pose.eyes = 'shut';
+      } else {
+        pose.stretch *= 1 - 0.2 * Math.sin(((p - 0.9) / 0.1) * Math.PI);
+        pose.eyes = 'happy';
+      }
+    },
+  },
+  /** Skipping rope with its own tail: round and round it, a hop each time it comes under. */
+  skipRope: {
+    seconds: 2.6,
+    move(pose, p) {
+      const angle = (p * 5 * 360) % 360; // its tail, turned clockwise: down under it at 90°
+      pose.wag = angle;
+      const up = angle > 40 && angle < 140 ? Math.sin(((angle - 40) / 100) * Math.PI) : 0;
+      pose.lift += up * 7;
+      pose.legs = up > 0.1 ? 'tuck' : 'stand';
+      pose.eyes = 'happy';
+    },
+  },
+  /**
+   * Fishing off its edge (the rod drawn on its left: it faces its way by turning round): a cast, the hook dropping
+   * down past the window's bottom as a weight falls; a wait, the hook bobbing, Bead looking about; a bite, the rod bent
+   * and jerking; then it reels the hook back up with a little ♪ on it, and shows it off. The line hangs straight down
+   * from the rod's tip whatever Bead does (the owner, 2026-10-30).
+   */
+  fishing: {
+    seconds: 5.6,
+    move(pose, p, c) {
+      pose.turn = c.side > 0 ? -1 : 1;
+      pose.prop = 'rod';
+      if (p < 0.08) {
+        // The cast: the rod swung back and over, the hook still at its tip.
+        pose.tilt -= c.side * 8 * Math.sin((p / 0.08) * Math.PI);
+        pose.hook = 0;
+        pose.eyes = 'happy';
+      } else if (p < 0.24) {
+        const q = (p - 0.08) / 0.16;
+        pose.hook = q * q; // falling, faster and faster
+        pose.eyes = 'happy';
+      } else if (p < 0.52) {
+        pose.hook = 1 + 0.015 * Math.sin(c.now * TAU * 0.8);
+        pose.eyes = Math.floor(c.now / 0.7) % 2 ? 'left' : 'right';
+        pose.lift += Math.abs(Math.sin(c.now * TAU * 0.5));
+      } else if (p < 0.62) {
+        // A bite: the line tugged down in jerks, the rod bent, Bead startled.
+        pose.prop = 'rodBite';
+        pose.hook = 1 + 0.06 * Math.abs(Math.sin(c.now * TAU * 6));
+        pose.x += Math.sin(c.now * TAU * 18);
+        pose.eyes = 'wide';
+      } else if (p < 0.86) {
+        // Reeling it in, leaning back, the ♪ coming up on the hook.
+        const q = (p - 0.62) / 0.24;
+        pose.prop = 'rodBite';
+        pose.hook = 1 - q * q * (3 - 2 * q);
+        pose.caught = true;
+        pose.tilt += c.side * 10;
+        pose.eyes = 'shut';
+      } else {
+        // Showing off its catch, dangling at the rod's tip.
+        pose.hook = 0;
+        pose.caught = true;
+        pose.lift += Math.sin(((p - 0.86) / 0.14) * Math.PI) * 5;
+        pose.eyes = 'happy';
+      }
+    },
+  },
+  /**
+   * D, E, A, D (issue 127): it keels over onto its back, its tail in the air, crosses for eyes, peeks to see if anyone
+   * noticed, and pops up. (It turns about its left foot: leftwards keeps it on its edge.)
+   */
+  playDead: {
+    seconds: 3.4,
+    picked: false,
+    move(pose, p, c) {
+      const down = -90;
+      // Lying, its left side would sink under its edge: lifted that much.
+      const LYING_LIFT = 9;
+      if (p < 0.12) {
+        const q = p / 0.12;
+        pose.tilt += down * q * q;
+        pose.lift += LYING_LIFT * q * q;
+        pose.eyes = 'dead';
+      } else if (p < 0.8) {
+        pose.tilt += down;
+        pose.lift += LYING_LIFT;
+        pose.legs = 'tuck';
+        pose.eyes = p > 0.58 && p < 0.72 ? 'peek' : 'dead';
+      } else if (p < 0.9) {
+        const q = (p - 0.8) / 0.1;
+        pose.tilt += down * (1 - q);
+        pose.lift += Math.sin(q * Math.PI) * 8;
+        pose.eyes = 'happy';
+      } else {
+        pose.eyes = 'happy';
+        pose.wag = Math.sin(c.now * TAU * 6) * 25;
+      }
+    },
+  },
+  /** F, A, D, E: it fades to a ghost, floating, eyes wide, and back. */
+  ghost: {
+    seconds: 2.8,
+    picked: false,
+    move(pose, p, c) {
+      const faded = p < 0.35 ? p / 0.35 : p < 0.65 ? 1 : 1 - (p - 0.65) / 0.35;
+      pose.fade = 1 - 0.85 * faded;
+      pose.lift += faded * (3 + Math.sin(c.now * TAU * 1.2) * 2);
+      pose.legs = faded > 0.5 ? 'tuck' : 'stand';
+      pose.eyes = faded > 0.5 ? 'wide' : 'happy';
+    },
+  },
+  /** C, A, F, E: a tiny cup of coffee, two sips, then wide awake and jittery (it strolls faster for a while after). */
+  coffee: {
+    seconds: 3,
+    picked: false,
+    move(pose, p, c) {
+      if (p < 0.85) pose.prop = 'cup';
+      const sip = bump(p, 0.27, 0.15) + bump(p, 0.52, 0.15);
+      pose.tilt += c.side * 6 * sip;
+      if (p < 0.62) pose.eyes = sip > 0.2 ? 'shut' : 'happy';
+      else {
+        pose.eyes = 'wide';
+        pose.x += Math.sin(c.now * TAU * 16) * 1.2;
+        pose.lift += Math.abs(Math.sin(c.now * TAU * 4)) * 3;
+      }
+    },
+  },
+  /** D, E, A, F: its hands over its ears, eyes screwed shut, squashed down, shuddering. */
+  earsCovered: {
+    seconds: 2.2,
+    picked: false,
+    move(pose, p, c) {
+      if (p < 0.9) {
+        pose.prop = 'hands';
+        pose.eyes = 'shut';
+        pose.stretch *= 0.9;
+        pose.x += Math.sin(c.now * TAU * 12) * 0.8;
+      } else pose.eyes = 'open';
+    },
+  },
+  /** B, A, G, G, A, G, E: it drags a suitcase along its edge, leaning into it, the suitcase behind it. */
+  suitcase: {
+    seconds: 3.6,
+    travel: 60,
+    picked: false,
+    move(pose, p, c) {
+      pose.prop = 'suitcase';
+      pose.turn = c.side > 0 ? 1 : -1; // the suitcase, drawn on its left, behind it
+      pose.tilt += c.side * 8;
+      pose.legs = Math.floor(c.now / 0.2) % 2 ? 'walkA' : 'walkB';
+      pose.lift += Math.floor(c.now / 0.2) % 2;
+      pose.eyes = p < 0.9 ? 'shut' : 'happy';
+    },
+  },
+  /** The dark theme switched on: a nightcap, a yawn, a sleepy sway. */
+  nightcap: {
+    seconds: 2.6,
+    picked: false,
+    move(pose, p, c) {
+      pose.hat = 'nightcap';
+      pose.stretch *= 1 + 0.15 * bump(p, 0.3, 0.4) + 0.03 * Math.sin(c.now * TAU * 0.5);
+      pose.tilt += Math.sin(c.now * TAU * 0.4) * 4;
+      pose.eyes = 'shut';
+    },
+  },
+  /** The light theme switched on: squinting, a hand shading its eyes, looking about. */
+  shades: {
+    seconds: 2.4,
+    picked: false,
+    move(pose, p) {
+      pose.prop = 'visor';
+      pose.eyes = p < 0.3 ? 'shut' : p < 0.6 ? 'left' : p < 0.9 ? 'right' : 'happy';
+      pose.stretch *= 0.95;
+    },
+  },
 } satisfies Record<string, TrickMove>;
 
 export type Trick = keyof typeof TRICK_MOVES;

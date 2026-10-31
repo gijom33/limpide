@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { acrossOf, choosePerch, createMascotPlace, GRAVITY, LANDING_SECONDS, type Moving, type Perch, type Placed, type Span, WINDUP_SECONDS } from './mascotPlace';
+import { acrossOf, choosePerch, createMascotPlace, FASTEST_THROW, GRAVITY, LANDING_SECONDS, type Moving, type Perch, type Placed, type Span, WINDUP_SECONDS } from './mascotPlace';
 
 const H = 26;
 const ROOM = 18;
@@ -164,3 +164,60 @@ describe('the mascot between its lines, by the laws of motion (issue 115)', () =
     expect(place.frame(edge('Filter', 700), span, 0.02, true, 100)).toMatchObject({ foot: 700, moving: 'standing' });
   });
 });
+
+describe('picked up and thrown (issue 127)', () => {
+  const edge: Perch = { id: 'Amp', foot: 400, hanging: false };
+  const walls: Span = { min: 0, max: 1000 };
+  const held = () => {
+    const place = createMascotPlace();
+    place.frame(edge, { min: 0, max: 300 }, 0, false, 100);
+    return place;
+  };
+
+  it('held, it is where the pointer has it, off its line', () => {
+    const place = held();
+    place.hold(250, 300);
+    const f = place.frame(edge, { min: 0, max: 300 }, 0.1, false, 100);
+    expect(f).toMatchObject({ moving: 'held', foot: 300, x: 250 });
+  });
+
+  it('let go, it flies under gravity, and lands on its line coming down onto it, as hard as it fell', () => {
+    const place = held();
+    place.hold(200, 300);
+    place.toss(300, -400, walls);
+    const frames = run(place, 0.1, 2, () => edge);
+    const flight = frames.filter((f) => f.moving === 'thrown');
+    expect(Math.min(...flight.map((f) => f.foot))).toBeLessThan(300); // up first
+    expect(flight.at(-1)!.x!).toBeGreaterThan(300); // and on across
+    const landing = frames.find((f) => f.landedAt !== null)!;
+    expect(landing).toMatchObject({ moving: 'landing', foot: 400 });
+    expect(landing.impact).toBeGreaterThan(0.5);
+  });
+
+  it('thrown at a side of the window, it bounces back off it', () => {
+    const place = held();
+    place.hold(950, 300);
+    place.toss(800, -200, walls);
+    const xs = run(place, 0.1, 1, () => edge).filter((f) => f.moving === 'thrown').map((f) => f.x!);
+    expect(Math.max(...xs)).toBe(1000);
+    expect(xs.at(-1)!).toBeLessThan(1000);
+  });
+
+  it('let go under its line, it flies back up onto it with its tail', () => {
+    const place = held();
+    place.hold(150, 500);
+    place.toss(0, 0, walls);
+    const frames = run(place, 0.1, 3, () => edge);
+    expect(frames.some((f) => f.moving === 'flying')).toBe(true);
+    expect(frames.at(-1)!.foot).toBe(400);
+  });
+
+  it('never thrown faster than its fastest', () => {
+    const place = held();
+    place.hold(500, 300);
+    place.toss(30000, 0, walls);
+    const [first] = run(place, 0.1, 0.12, () => edge);
+    expect(first.vx).toBeLessThanOrEqual(FASTEST_THROW);
+  });
+});
+

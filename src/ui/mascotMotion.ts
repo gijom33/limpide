@@ -1,3 +1,5 @@
+import type { Word } from '../input/callingPhrase';
+import type { Waveform } from '../music/harmonics';
 import type { Gesture } from './mascotGestures';
 import type { Fling } from './mascotSpray';
 import { JOKES, PICKED_TRICKS, TRICK_MOVES, type Trick } from './mascotTricks';
@@ -10,7 +12,18 @@ export interface Heard {
   sway: number;
   /** When the newest Note started, in the engine's seconds; null before any. */
   struck: number | null;
+  /** What some controls make of it (issue 127): Osc 2's Detune against Osc 1, in cents, 0 unless both are heard. */
+  detune?: number;
+  /** The Filter fully closed. */
+  closed?: boolean;
+  /** The Noise's level, 0 to 1, while it is heard. */
+  noise?: number;
 }
+
+/** What it does through a Demo part (issue 127): conducting, air guitar on its tail, or surfing an LFO's shape. */
+export type Act = 'conduct' | 'airGuitar' | 'surf';
+/** What it wears: a costume for the date, or a nightcap for the dark theme. */
+export type Hat = 'none' | 'ghost' | 'christmas' | 'party' | 'nightcap';
 
 /** Where along its line it may stand: its box's left, in the window's pixels. */
 export interface Room {
@@ -25,8 +38,23 @@ export interface Pose {
   /** Droplets thrown up over its head, or out to its sides. */
   splash: 'none' | 'up' | 'wide';
   legs: 'stand' | 'tuck' | 'walkA' | 'walkB';
-  /** `melted`: shut, low on a puddle; `none`: a film has none. */
-  eyes: 'open' | 'shut' | 'left' | 'right' | 'happy' | 'melted' | 'none';
+  /** `melted`: shut, low on a puddle; `none`: a film has none; `dead`: crosses; `peek`: one cross, one open. */
+  eyes: 'open' | 'shut' | 'left' | 'right' | 'happy' | 'wide' | 'dead' | 'peek' | 'melted' | 'none';
+  /** Its tail: the logo, a Waveform for a moment, or straight, stiff with Resonance. */
+  tail: 'logo' | Waveform | 'straight';
+  hat: Hat;
+  /** How frozen it is in an ice cube, 0 to 1. */
+  ice: number;
+  /** Its static with the Noise, 0 to 1. */
+  fuzz: number;
+  /** Its twin's way off to its left, in pixels, Detune splitting it; 0, one drop. */
+  twin: number;
+  /** Its size, shrinking as it evaporates. */
+  size: number;
+  /** Fishing, how far down its hook is, 0 at the rod's tip to 1 past the window's bottom; null, no line. */
+  hook: number | null;
+  /** The ♪ it caught, on its hook. */
+  caught: boolean;
   /** Its place along the line, in the window's pixels. */
   x: number;
   /** How high it is off its line, in pixels. */
@@ -45,14 +73,33 @@ export interface Pose {
   burst: { count: number; spread: Fling; aim?: number } | null;
   /** The funny turn it is doing, if any. */
   doing: Trick | null;
-  /** Something it has for a trick: an umbrella over its head (folded, open), a glass of water, a water gun. */
-  prop: 'none' | 'umbrellaShut' | 'umbrella' | 'glassFull' | 'glassHalf' | 'glassLow' | 'glassEmpty' | 'gun';
+  /**
+   * Something it has for a trick: an umbrella over its head (folded, open), a glass of water, a water gun; a coffee
+   * cup, hands over its ears, a suitcase, a baton (up, down), a hand shading its eyes, the sun, a cloud, a soap bubble
+   * (small, round it), a fishing rod (straight, bent by a bite).
+   */
+  prop:
+    | 'none' | 'umbrellaShut' | 'umbrella' | 'glassFull' | 'glassHalf' | 'glassLow' | 'glassEmpty' | 'gun'
+    | 'cup' | 'hands' | 'suitcase' | 'baton' | 'batonDown' | 'visor' | 'sun' | 'cloud' | 'bubbleSmall' | 'bubble'
+    | 'rod' | 'rodBite';
   /** How far the glass has come up beside its mouth and turned over, drinking (0 to 1). */
   sip: number;
   /** The frame it has had enough of being tickled or clicked, and runs off. */
   escaped: boolean;
   /** Melted away: it can go. */
   gone: boolean;
+}
+
+/**
+ * What it wears on the visitor's date (issue 127): a ghost sheet on 31 October, a Christmas hat from 24 to 26
+ * December, a party hat on 24 October, the day Limpide went on GitHub.
+ */
+export function hatOn(date: Date): Hat {
+  const [month, day] = [date.getMonth() + 1, date.getDate()];
+  if (month === 10 && day === 31) return 'ghost';
+  if (month === 12 && day >= 24 && day <= 26) return 'christmas';
+  if (month === 10 && day === 24) return 'party';
+  return 'none';
 }
 
 /** A hop on a Note: its length, in seconds, and its height, in pixels. */
@@ -103,12 +150,28 @@ const FORGIVE = 0.25;
 /** Having run off, it will not be tickled for this long. */
 const AWAY_SECONDS = 4;
 
-/** Its funny turns when nothing is played, and how long each lasts. */
 /** Frightened at an end of its room, it scoots back this far. */
 const BACK_OFF_PX = 26;
 const lasting = (trick: Trick) => TRICK_MOVES[trick].seconds;
 /** How it strolls: a walk, a hop along, or a scoot; and their speeds, in pixels a second. */
 type Gait = 'walk' | 'hop' | 'scoot' | 'dance' | 'trick';
+
+/** A Waveform changed, its tail takes that wave this long (issue 127). */
+export const WAVE_SECONDS = 3;
+/** Resonance turned past this screams a moment, as long as a Waveform's tail: eyes wide, tail straight. */
+export const SCREAMING = 0.75;
+/** Detune at its most (50 cents) puts its twin this far off, in pixels, wobbling at most this fast (Hz), as they beat. */
+const TWIN_PX = 16;
+const TWIN_BEAT = 3;
+/** How long it takes to freeze into an ice cube, and to melt out of one. */
+const FREEZE_SECONDS = 0.4;
+const MELT_SECONDS = 1.2;
+/** After a coffee, it strolls this much faster, and sooner, for this long. */
+const CAFFEINE = 1.8;
+const CAFFEINE_SECONDS = 12;
+/** The trick each word cues (issue 127); and surfing an LFO's shape, its speed along it, in pixels a second. */
+const WORD_TRICKS: Record<Word, Trick> = { dead: 'playDead', fade: 'ghost', cafe: 'coffee', deaf: 'earsCovered', baggage: 'suitcase' };
+const SURF_SPEED = 70;
 
 /** The eyes it shows in turn on each Note or gesture with reduced motion asked for. */
 const STILL_EYES: Pose['eyes'][] = ['left', 'open', 'right', 'happy'];
@@ -118,6 +181,14 @@ const resting: Omit<Pose, 'x'> = {
   splash: 'none',
   legs: 'stand',
   eyes: 'open',
+  tail: 'logo',
+  hat: 'none',
+  ice: 0,
+  fuzz: 0,
+  twin: 0,
+  size: 1,
+  hook: null,
+  caught: false,
   lift: 0,
   tilt: 0,
   stretch: 1,
@@ -161,6 +232,15 @@ export function createMascotMotion(random: () => number = Math.random) {
   let danceWay: -1 | 1 = 1;
   let tickledUntil = -Infinity;
   let lastRoom: Room | null = null;
+  // What the controls, the page and the Demo make of it (issue 127).
+  let wave: { shape: Waveform; until: number } | null = null;
+  let screamUntil = -Infinity;
+  let ice = 0;
+  let lastDrip = -Infinity;
+  let caffeineUntil = -Infinity;
+  let hat: Hat = 'none';
+  let act: Act | null = null;
+  let pointer: number | null = null;
   // Its tricks, dealt like a shuffled deck: each once before any comes again, the jokes three times.
   let deck: Trick[] = [];
   const deal = (): Trick => {
@@ -202,6 +282,7 @@ export function createMascotMotion(random: () => number = Math.random) {
     } else target = null;
     trick = { name, at: now, side: way, sprayed: new Map() };
     nextIdea = now + lasting(name) + between(0.8, 2.5);
+    if (name === 'coffee') caffeineUntil = now + lasting(name) + CAFFEINE_SECONDS;
   };
 
   const startGesture = (gesture: Gesture, now: number) => {
@@ -232,6 +313,23 @@ export function createMascotMotion(random: () => number = Math.random) {
     }
   };
 
+  /**
+   * What the controls and the date make of its look (issue 127): its tail a Waveform for a moment, or straight a moment
+   * as Resonance screams, else the logo (the owner, 2026-10-30); a twin as Detune splits it, wobbling as the two beat; frozen with the Filter closed; static
+   * with the Noise; its costume, unless a trick gave it a nightcap. With reduced motion, still: no wobble, no static.
+   */
+  const dressed = (pose: Pose, heard: Heard, now: number, reduced: boolean): Pose => {
+    if (wave && now >= wave.until) wave = null;
+    pose.tail = wave?.shape ?? (now < screamUntil ? 'straight' : pose.tail);
+    const cents = Math.min(50, Math.abs(heard.detune ?? 0));
+    const gap = (TWIN_PX * cents) / 50;
+    pose.twin = gap < 0.5 ? 0 : reduced ? gap : gap * (0.75 + 0.25 * Math.sin(now * 2 * Math.PI * TWIN_BEAT * (cents / 50)));
+    pose.ice = ice;
+    pose.fuzz = reduced ? 0 : Math.min(1, heard.noise ?? 0);
+    if (pose.hat === 'none') pose.hat = hat;
+    return pose;
+  };
+
   return {
     /** A control turned: its gesture starts now (in the engine's seconds). */
     gesture(gesture: Gesture, now: number) {
@@ -257,10 +355,60 @@ export function createMascotMotion(random: () => number = Math.random) {
       this.tickle(now);
       fedUp += POKE;
     },
-    /** Put down at `at` (after a fall or a flight to another line): it carries on from there. */
+    /** Put down at `at` (after a fall, a flight or a throw): it carries on from there, running off still if it was. */
     place(at: number) {
       x = at;
+      if (!escaping) target = null;
+    },
+    /** Picked up by the pointer (issue 127): whatever it was doing stops. */
+    pickUp(now: number) {
+      if (leftAt !== null) return;
+      trick = null;
       target = null;
+      busySince = now;
+    },
+    /** Thrown: it counts towards running off, as a click does. */
+    thrown(now: number) {
+      if (leftAt !== null || now < escapedUntil) return;
+      fedUp += POKE;
+      busySince = now;
+    },
+    /** A word spelled with Notes (issue 127): its trick, at once. */
+    word(word: Word, now: number) {
+      if (leftAt !== null) return;
+      gestureCount++;
+      perform(WORD_TRICKS[word], now);
+    },
+    /** The theme switched: a nightcap for dark, its eyes shaded for light, for a few seconds. */
+    theme(theme: 'dark' | 'light', now: number) {
+      if (leftAt !== null) return;
+      gestureCount++;
+      perform(theme === 'dark' ? 'nightcap' : 'shades', now);
+    },
+    /** A Waveform chosen: its tail takes that wave for `WAVE_SECONDS`. */
+    wave(shape: Waveform, now: number) {
+      wave = { shape, until: now + WAVE_SECONDS };
+      gestureCount++;
+    },
+    /** Resonance turned past three quarters: eyes wide and tail straight for `WAVE_SECONDS`. */
+    scream(now: number) {
+      screamUntil = now + WAVE_SECONDS;
+      gestureCount++;
+    },
+    /** What it wears for the date. */
+    dress(costume: Hat) {
+      hat = costume;
+    },
+    /** What it does through a Demo part, or null: its own life. */
+    act(doing: Act | null) {
+      if (doing === act) return;
+      act = doing;
+      target = null;
+      if (doing) trick = null;
+    },
+    /** How far the pointer is across from its middle, in pixels, while near; null when it is not. */
+    pointer(dx: number | null) {
+      pointer = dx;
     },
     frame(heard: Heard, now: number, reduced: boolean, room: Room): Pose {
       lastRoom = room;
@@ -284,7 +432,13 @@ export function createMascotMotion(random: () => number = Math.random) {
       const struck = heard.struck !== null && heard.struck !== heardNote;
       heardNote = heard.struck;
       const silent = heard.amp < SILENT;
-      if (!silent) busySince = now;
+      if (!silent || act) busySince = now;
+      // Freezing with the Filter fully closed, melting as it opens; frozen, it stops what it was doing.
+      const closed = !!heard.closed;
+      if (closed && ice === 0) trick = null;
+      ice = Math.min(1, Math.max(0, ice + (closed ? dt / FREEZE_SECONDS : -dt / MELT_SECONDS)));
+      if (reduced) ice = closed ? 1 : 0;
+      const frozen = ice > 0.5;
       const idle = now - busySince >= LISTENING_SECONDS;
       let dozing = now - busySince >= DOZE_SECONDS && now >= wakeUntil;
       if (dozing && nextWake === Infinity) {
@@ -327,8 +481,8 @@ export function createMascotMotion(random: () => number = Math.random) {
         target = null;
         if (struck || gestureCount !== seenGestures) still = { ...resting, eyes: STILL_EYES[stillCount++ % STILL_EYES.length] };
         seenGestures = gestureCount;
-        if (now < tickledUntil) return { ...still, eyes: 'happy', x };
-        return { ...(dozing ? { ...still, eyes: 'shut' } : still), x };
+        const held: Pose = { ...(now < tickledUntil ? { ...still, eyes: 'happy' } : dozing ? { ...still, eyes: 'shut' } : still), x };
+        return dressed(held, heard, now, true);
       }
 
       // Had enough of tickles and clicks: it runs off, to the far end of its room, eyes shut, droplets flying.
@@ -355,7 +509,14 @@ export function createMascotMotion(random: () => number = Math.random) {
         trick = null;
       }
       // What next, when it is free: a stroll, a glance, or (with nothing played) a funny turn.
-      if (target === null && trick === null && !dozing && now >= nextIdea) {
+      // Surfing an LFO's shape through a Demo part: along it, end to end.
+      if (act === 'surf' && target === null && !frozen) {
+        target = x - room.min < room.max - x ? room.max : room.min;
+        speed = SURF_SPEED;
+        gait = 'slide';
+      }
+      const buzzing = now < caffeineUntil;
+      if (target === null && trick === null && !dozing && !frozen && !act && now >= nextIdea) {
         const roll = random();
         if (idle && roll < 0.35) {
           perform(deal(), now);
@@ -367,12 +528,12 @@ export function createMascotMotion(random: () => number = Math.random) {
           target = random() < 0.33 ? (random() < 0.5 ? room.min : room.max) : room.min + random() * (room.max - room.min);
           const style = random();
           gait = style < 0.6 ? 'walk' : style < 0.85 ? 'hop' : 'scoot';
-          speed = gait === 'walk' ? between(28, 55) : gait === 'hop' ? 50 : 115;
+          speed = (gait === 'walk' ? between(28, 55) : gait === 'hop' ? 50 : 115) * (buzzing ? CAFFEINE : 1);
           nextIdea = Infinity;
         }
       }
       // Dancing: with each Note a step along, one way, turning back at an end or now and then.
-      if (struck && !silent && (target === null || gait === 'dance')) {
+      if (struck && !silent && !frozen && (target === null || gait === 'dance')) {
         if (random() < 0.2) danceWay = danceWay > 0 ? -1 : 1;
         let step = danceWay * between(...DANCE_STEP);
         if (clamp(x + step) !== x + step) {
@@ -391,10 +552,10 @@ export function createMascotMotion(random: () => number = Math.random) {
           x = target;
           target = null;
           escaping = false;
-          nextIdea = now + between(1, 3.5);
+          nextIdea = now + between(1, 3.5) / (buzzing ? 2 : 1);
           // At an end of its room, now and then it looks over the edge and takes fright.
           const end = x - room.min < 2 ? -1 : room.max - x < 2 ? 1 : 0;
-          if (end && gait !== 'dance' && gait !== 'scoot' && gait !== 'trick' && room.max - room.min > 30 && random() < 0.5) {
+          if (end && gait !== 'dance' && gait !== 'scoot' && gait !== 'trick' && gait !== 'slide' && room.max - room.min > 30 && random() < 0.5) {
             trick = { name: 'scared', at: now, side: end, sprayed: new Map() };
             nextIdea = now + lasting('scared') + between(1, 2.5);
           }
@@ -434,6 +595,28 @@ export function createMascotMotion(random: () => number = Math.random) {
           if (gait === 'scoot') pose.tilt += walking * 8; // leaning into it
         }
         if (pose.eyes !== 'happy') pose.eyes = walking > 0 ? 'right' : 'left';
+      }
+      // A pointer near: its eyes on it, when they are free.
+      if (pointer !== null && !walking && (pose.eyes === 'open' || pose.eyes === 'left' || pose.eyes === 'right')) {
+        pose.eyes = pointer > 6 ? 'right' : pointer < -6 ? 'left' : 'open';
+      }
+      if (now < screamUntil && (pose.eyes === 'open' || pose.eyes === 'left' || pose.eyes === 'right')) pose.eyes = 'wide';
+      if (buzzing && !walking && !trick) pose.x += Math.sin(now * 2 * Math.PI * 11) * 0.6; // jittery
+      if (act === 'conduct') {
+        // The baton down on each Note, up between them.
+        const since = heard.struck === null ? Infinity : now - heard.struck;
+        pose.prop = since < 0.15 ? 'batonDown' : 'baton';
+        pose.tilt += since < 0.15 ? 4 : -2;
+        if (pose.eyes === 'open') pose.eyes = 'happy';
+      } else if (act === 'airGuitar') {
+        // Its tail held across it like a guitar, strummed on each Note, eyes shut, rocking.
+        const since = heard.struck === null ? Infinity : now - heard.struck;
+        pose.wag = 40 + (since < 0.2 ? 18 * (1 - since / 0.2) : 0);
+        pose.tilt += Math.sin(now * 2 * Math.PI * 1.5) * 6;
+        pose.eyes = 'shut';
+      } else if (act === 'surf') {
+        pose.legs = 'stand';
+        pose.eyes = 'happy';
       }
 
       if (trick) {
@@ -492,7 +675,16 @@ export function createMascotMotion(random: () => number = Math.random) {
         else if (gesture === 'look' && pose.eyes !== 'happy') pose.eyes = side > 0 ? 'right' : 'left';
       }
       if (now < blinkUntil && (pose.eyes === 'open' || pose.eyes === 'left' || pose.eyes === 'right')) pose.eyes = 'shut';
-      return pose;
+      if (frozen) {
+        // Stiff in its ice cube, shivering, its eyes open.
+        Object.assign(pose, { legs: 'stand', lift: 0, tilt: 0, stretch: 1, wag: 0, eyes: 'open', prop: 'none' });
+        pose.x += Math.sin(now * 2 * Math.PI * 14) * 0.6;
+      } else if (ice > 0 && !closed && !pose.burst && now - lastDrip > 0.08) {
+        // Melting, it drips.
+        pose.burst = { count: 1, spread: 'drip' };
+        lastDrip = now;
+      }
+      return dressed(pose, heard, now, false);
     },
   };
 }

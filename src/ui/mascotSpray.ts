@@ -8,20 +8,24 @@ export interface Droplet {
   life: number;
   /** Where it ends as it falls, if somewhere: an umbrella, the edge. */
   until: number;
+  /** Its gravity, in pixels a second squared: steam's rises. */
+  gravity: number;
 }
 
 /**
  * How droplets leave it: `up`, a splash up and out from its foot (landing, smashing down); `side`, flung out sideways
  * (shaking itself, sneezing); `down`, sprayed below (its tail pushing it up); `all`, escaping every way (a click or a
  * touch); `drip`, dribbled at its foot (waddling); `spout`, straight up from its head (a fountain, a burp); `rain`,
- * falling from a cloud; `jet`, shot from a water gun, its way given by `strength`'s sign; `pour`, out of a glass
+ * falling from the sky around; `shower`, from a cloud just over it; `steam`, rising as it evaporates; `jet`, shot from a water gun, its way given by `strength`'s sign; `pour`, out of a glass
  * turned over, a little its way (`strength`'s sign); `arc`, a fountain's jet up at the angle `strength` (radians from
  * straight up, positive to the right).
  */
-export type Fling = 'up' | 'side' | 'down' | 'all' | 'drip' | 'spout' | 'rain' | 'jet' | 'pour' | 'arc';
+export type Fling = 'up' | 'side' | 'down' | 'all' | 'drip' | 'spout' | 'rain' | 'shower' | 'steam' | 'jet' | 'pour' | 'arc';
 
 /** Gravity on a droplet, in pixels a second squared (lighter than on the drop itself, for a slower, prettier arc). */
 export const DROPLET_GRAVITY = 1500;
+/** Steam rises, slowing as it goes. */
+const STEAM_GRAVITY = 30;
 /** The most droplets in the air at once; older ones make way. */
 export const MOST_DROPLETS = 60;
 
@@ -53,9 +57,12 @@ export function createSpray(random: () => number = Math.random) {
         } else if (fling === 'spout') {
           vx = between(-50, 50);
           vy = -between(280, 420);
-        } else if (fling === 'rain') {
+        } else if (fling === 'rain' || fling === 'shower') {
           vx = 0;
           vy = between(160, 220);
+        } else if (fling === 'steam') {
+          vx = between(-20, 20);
+          vy = -between(25, 45);
         } else if (fling === 'arc') {
           const speed = between(400, 440);
           vx = Math.sin(strength) * speed;
@@ -72,14 +79,16 @@ export function createSpray(random: () => number = Math.random) {
           vx = Math.cos(angle) * speed;
           vy = Math.sin(angle) * speed - 60;
         }
-        droplets.push({ x: x + (fling === 'rain' || fling === 'pour' || fling === 'arc' ? 0 : between(-3, 3)), y, vx, vy, age: 0, life: fling === 'rain' || fling === 'arc' ? 2 : between(0.45, 0.85), until });
+        const spread = fling === 'shower' ? between(-10, 10) : fling === 'rain' || fling === 'pour' || fling === 'arc' ? 0 : between(-3, 3);
+        const life = fling === 'rain' || fling === 'shower' || fling === 'arc' ? 2 : fling === 'steam' ? between(0.6, 0.9) : between(0.45, 0.85);
+        droplets.push({ x: x + spread, y, vx, vy, age: 0, life, until, gravity: fling === 'steam' ? STEAM_GRAVITY : DROPLET_GRAVITY });
       }
       if (droplets.length > MOST_DROPLETS) droplets = droplets.slice(-MOST_DROPLETS);
     },
     /** Moves them on by `dt` seconds; those whose life is over are gone. */
     step(dt: number): readonly Droplet[] {
       for (const d of droplets) {
-        d.vy += DROPLET_GRAVITY * dt;
+        d.vy += d.gravity * dt;
         d.x += d.vx * dt;
         d.y += d.vy * dt;
         d.age += dt;

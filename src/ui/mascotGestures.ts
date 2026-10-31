@@ -1,5 +1,6 @@
-import type { ParamId, Patch } from '../patch/patch';
+import { PARAMS, type ParamId, type Patch } from '../patch/patch';
 import type { ChangeBy } from '../patch/patchStore';
+import type { Heard } from './mascotMotion';
 
 /** The mascot's answers to a control turned (issue 115). */
 export type Gesture =
@@ -72,4 +73,20 @@ export function gesturesOf(before: Patch, after: Patch, by: ChangeBy): Gesture[]
     else gestures.add((after[field] as number) > (before[field] as number) ? answer[0] : answer[1]);
   }
   return [...gestures];
+}
+
+/** The Amp level it can no longer hear (as the motion's). */
+const SILENT = 0.002;
+
+/**
+ * What some controls make of Bead's look (issue 127), from the Patch and the Amp's level: Osc 2's Detune while both
+ * Oscillators are in the Mixer (two sounds beating, two drops); the Filter fully closed; the Noise's
+ * level while something is heard.
+ */
+export function looksOf(patch: Patch, amp: number): Pick<Heard, 'detune' | 'closed' | 'noise'> {
+  return {
+    detune: patch.mixOsc1 > 0 && patch.mixOsc2 > 0 ? patch.osc2Detune : 0,
+    closed: patch.cutoff <= PARAMS.cutoff.min * 1.01,
+    noise: amp >= SILENT ? patch.mixNoise : 0,
+  };
 }

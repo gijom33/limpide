@@ -5,7 +5,7 @@ import { addToRenderLoop } from '../viewers/renderLoop';
 
 // The plot draws in its own CSS pixels, whatever shape the layout gives it, so full Depth spans its whole height
 // (a fixed box scaled to fit left bands above and below in squarer plots). The line keeps clear of the edges.
-const PAD = 5;
+export const PAD = 5;
 /** Points along the line: two per pixel of a wide plot, so even a dozen cycles keep their shape. */
 const SAMPLES = 400;
 /**
@@ -14,7 +14,7 @@ const SAMPLES = 400;
  * of a cycle per frame and read as noise (the wagon-wheel effect); over a second, a frame moves the trace a few
  * units at most.
  */
-const SPAN = 1;
+export const SPAN = 1;
 
 
 /**
