@@ -37,6 +37,7 @@ Every push to `main` runs all of these before it deploys.
 - New behaviour comes with a test: a unit test where the logic is plain, the engine tests where it is sound, Playwright where it is the page.
 - Keep a pull request to one thing, and say in it what you tested and in which browsers.
 - Commit subjects start with the issue they serve (`Issue 53:`) or `No issue:`, in 72 characters or fewer ([ADR-0010](docs/adr/0010-how-the-work-is-recorded.md)). [CLAUDE.md](CLAUDE.md) holds the rest of the house rules, which Claude Code follows.
+- If an AI tool helped write a change, say so in its commits with a `Co-Authored-By` line naming the tool, as this project's commits do for Claude Code.
 
 ## What help is welcome
 
