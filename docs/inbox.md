@@ -7,6 +7,7 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 - 2026-10-31, the owner: "Bead sometimes lands at different location than where the trajectory shows."
 ## Ideas
 
+- 2026-10-31, the owner: "I really wanted Bead to sometime \"ride\" the LFOs. Let's make it so if the waveform is suitable to a nice move and rate is slow enough."
 ## Dropped
 
 - 2026-10-30, from Claude's brainstorm, Velocity on the Volume ("a harder hit plays louder, not only brighter"): already so. The Amp Envelope's Attack rises to the Note's Velocity (PRD story 9). Claude's call, open to the owner.
