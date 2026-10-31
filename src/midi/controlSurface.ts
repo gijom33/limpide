@@ -14,13 +14,11 @@ const PICKUP_TOLERANCE = 0.5 / 127 + 1e-9;
 /** Encoder clicks per choice, so stepping through Waveforms is deliberate rather than jumpy. */
 const CLICKS_PER_CHOICE = 2;
 /**
- * The C16's knobs, paced to the hand (issue 145): turned fast they send more messages and bigger steps (one fast
- * turn, 136 messages of 66; one slow turn, 46 of 65, the owner's log), so each counts as one step in its direction,
- * and at most one step every STEP_MS: a full turn takes a hand a third of a second at fastest, 46 steps. Up to
- * PACE_ALLOWANCE steps may come at once after a pause, as messages arrive in bursts.
+ * The C16's knobs, one step for each bit of turning (issue 145): a bit sends one 65 (or 63) turned slowly and, past
+ * a speed, a burst of eight 66s (or 62s) a millisecond apart, at the same pace as the bits before it (the owner's
+ * logs: 54 bits in 1.125 turns, 46 to a turn). So a message within BIT_MS of the knob's last belongs to that bit.
  */
-const STEP_MS = 7;
-const PACE_ALLOWANCE = 3;
+const BIT_MS = 10;
 /** Values a knob of unknown Encoder Mode sends before it moves anything: enough to tell its mode. */
 const DETECT_VALUES = 3;
 /**
@@ -105,18 +103,16 @@ export function createControlSurface(synth: Synth) {
   const clicks = new Map<string, number>(); // encoder clicks towards the next choice, per control
   const detecting = new Map<string, number[]>(); // the first values of knobs finding their Encoder Mode
 
-  const pace = new Map<string, { allowance: number; at: number }>(); // each C16 knob's steps still allowed, and when
-  /** A Relative message's steps: as sent, or for a C16 knob one step in its direction, if the pace allows it. */
+  const lastMessage = new Map<string, number>(); // each C16 knob's last message, in ms
+  /** A Relative message's steps: as sent, or for a C16 knob one step in its direction for each new bit of turning. */
   const relativeSteps = (mapping: Mapping, mode: 'relative-twos' | 'relative-centred', value: number) => {
     const delta = relativeDelta(mode, value);
     if (mapping.device !== 'c16') return delta;
     const now = synth.now?.() ?? performance.now();
     const key = controlKey(mapping.control);
-    const last = pace.get(key) ?? { allowance: PACE_ALLOWANCE, at: now };
-    const allowance = Math.min(PACE_ALLOWANCE, last.allowance + (now - last.at) / STEP_MS);
-    const allowed = allowance >= 1;
-    pace.set(key, { allowance: allowed ? allowance - 1 : allowance, at: now });
-    return allowed ? Math.sign(delta) : 0;
+    const last = lastMessage.get(key);
+    lastMessage.set(key, now);
+    return last !== undefined && now - last < BIT_MS ? 0 : Math.sign(delta);
   };
 
   const moveParam = (mapping: Mapping, id: ParamId, value: number) => {

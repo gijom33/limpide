@@ -450,7 +450,7 @@ describe('the C16 layout’s buttons and its own input (issue 145)', () => {
   });
 });
 
-describe('the C16’s knobs paced to the hand (issue 145)', () => {
+describe('the C16’s knobs, one step for each bit of turning (issue 145)', () => {
   /** A C16 knob on the Cutoff, from 0, and a clock the test moves. */
   const c16Knob = () => {
     let t = 0;
@@ -468,32 +468,47 @@ describe('the C16’s knobs paced to the hand (issue 145)', () => {
       release: () => {},
     });
     store.set({ control: { kind: 'cc', channel: 1, number: 24 }, target: cutoff, mode: 'relative-centred', device: 'c16' });
-    const send = (at: number, value: number) => {
+    let at = 0;
+    /** A single message `gap` ms after the last. */
+    const single = (gap: number, value = 65) => {
+      at += gap;
       t = at;
       surface.handle(cc(24, value), true);
     };
-    return { positions, send };
+    /** A burst of eight 66s a millisecond apart, starting `gap` ms after the last message: one bit, turned fast. */
+    const burst = (gap: number) => {
+      single(gap, 66);
+      for (let i = 0; i < 7; i++) single(1, 66);
+    };
+    return { positions, single, burst };
   };
 
-  it('counts every message of a slow turn: one full turn, 46 messages of 65 (the owner’s log), is 46 steps', () => {
-    const { positions, send } = c16Knob();
-    for (let i = 0; i < 46; i++) send(i * 200, 65);
+  it('counts each message of a slow turn: one full turn, 46 messages of 65 (the owner’s log), is 46 steps', () => {
+    const { positions, single } = c16Knob();
+    for (let i = 0; i < 46; i++) single(200);
     expect(positions.cutoff).toBeCloseTo(0.46);
   });
 
-  it('holds a fast turn to the steps a hand can make: one full turn, 138 messages of 66 in a third of a second, is about 46 steps', () => {
-    const { positions, send } = c16Knob();
-    // As the owner's log: bursts of 8 messages a millisecond apart, a burst every 19 ms, for 325 ms.
-    for (let burst = 0; burst < 17; burst++) for (let i = 0; i < 8; i++) send(burst * 19 + i, 66);
-    expect(positions.cutoff!).toBeGreaterThan(0.4);
-    expect(positions.cutoff!).toBeLessThan(0.52);
+  it('counts a burst of 66s as the one bit it stands for: the owner’s 1.125 turns, slow to fast, are 54 steps', () => {
+    const { positions, single, burst } = c16Knob();
+    // The owner's log, event by event: the gaps between bits shrink from 200 ms to about 25, then bursts.
+    single(500);
+    for (const gap of [209, 111, 133, 141, 115, 91, 86, 83, 91, 82, 81, 51, 53, 48, 52, 44, 60, 39, 61, 58, 61, 55, 45, 38, 50, 22, 33, 45, 24, 39, 40, 22]) single(gap);
+    for (const gap of [26, 18, 22, 24, 27]) burst(gap);
+    for (const gap of [32, 35, 31]) single(gap);
+    burst(34);
+    for (const gap of [15, 30, 50, 28, 35, 36]) single(gap);
+    for (const gap of [23, 19, 16, 25, 26]) burst(gap);
+    single(37);
+    expect(positions.cutoff).toBeCloseTo(0.54);
   });
 
-  it('turns back at once, a step at a time, and leaves other Controllers’ knobs unpaced', () => {
-    const { positions, send } = c16Knob();
-    for (let i = 0; i < 10; i++) send(i * 200, 65);
-    send(2100, 62);
-    expect(positions.cutoff).toBeCloseTo(0.09);
+  it('turns back at once, a step at a time, and leaves other Controllers’ knobs as they send', () => {
+    const { positions, single, burst } = c16Knob();
+    for (let i = 0; i < 10; i++) single(200);
+    burst(30);
+    single(30, 62);
+    expect(positions.cutoff).toBeCloseTo(0.1);
     const r = rig();
     r.store.set({ control: { kind: 'cc', channel: 1, number: 22 }, target: resonance, mode: 'relative-centred' });
     r.send(cc(22, 66), cc(22, 66));
