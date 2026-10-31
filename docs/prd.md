@@ -180,12 +180,12 @@ Brought into scope by the grilling of [issue 40](./issues/40-preset-tutorials.md
 ## Out of Scope
 
 - Unison, and Viewers that show more than one Note at once ([ADR-0007](./adr/0007-optional-polyphony-viewers-follow-the-newest-note.md)).
-- Effects (delay, reverb, chorus, distortion).
+- Effects (delay, reverb, chorus, distortion). (Kept out by the owner again on 2026-10-30, [issue 113](./issues/113-effects.md).)
 - A modulation matrix beyond two LFOs with a single destination each.
-- LFO tempo sync: Limpide keeps no tempo to sync to, with no sequencer or arpeggiator (decided by the owner, issue 53, 2026-10-27). Retrigger locks an LFO to each Note instead.
+- LFO tempo sync: Limpide keeps no tempo to sync to, with no sequencer or arpeggiator (decided by the owner, issue 53, 2026-10-27). Retrigger locks an LFO to each Note instead. (A tempo with MIDI clock sync, for LFO sync, is to grill in [issue 112](./issues/112-tempo-midi-clock-and-an-arpeggiator.md), decided by the owner on 2026-10-30.)
 - Custom DSP or analogue-modelled filters ([ADR-0001](./adr/0001-native-web-audio-nodes-over-custom-dsp.md)).
 - A spectrogram.
-- An arpeggiator or sequencer, and MIDI output. (Recording to a WAV file came into scope on 2026-10-30, decided by the owner, [issue 120](./issues/120-recording.md); a tempo and an arpeggiator are to grill in [issue 112](./issues/112-tempo-midi-clock-and-an-arpeggiator.md).)
+- An arpeggiator or sequencer, and MIDI output. (Recording to a WAV file came into scope on 2026-10-30, decided by the owner, [issue 120](./issues/120-recording.md); a tempo is to grill in [issue 112](./issues/112-tempo-midi-clock-and-an-arpeggiator.md); the arpeggiator stays out, decided by the owner on 2026-10-30: it won't help people understand how synths work, and the plugin Limpide is to become will be just a synth.)
 - Accounts and cloud sync. (Phones were out of scope until 1.1.0; they are now a first-class layout.)
 - Drawing your own LFO shapes, and graphical envelope editors.
 

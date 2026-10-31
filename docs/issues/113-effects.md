@@ -6,7 +6,7 @@ The PRD's Out of Scope lists "Effects (delay, reverb, chorus, distortion)". The 
 
 **Blocked by:** none
 
-**Status:** needs-triage · enhancement. To grill with the owner before anything is built.
+**Status:** closed by the owner (2026-10-30): out of scope, as the PRD has it ("Get rid of 113, it is indeed out of scope"), to keep the project's scope from growing too big. Nothing built; [`.out-of-scope/effects.md`](../../.out-of-scope/effects.md).
 
 ## What a grilling would settle
 

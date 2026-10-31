@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** needs-triage · enhancement. Later, to grill with the owner before anything is built.
+**Status:** needs-triage · enhancement. Later, to grill with the owner before anything is built: the owner wants to explore it later (2026-10-30).
 
 ## What a grilling would settle
 

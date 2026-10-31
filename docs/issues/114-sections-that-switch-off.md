@@ -6,7 +6,7 @@ Today no section has an off switch: the Filter is always in the path, and an LFO
 
 **Blocked by:** none for the Filter and the LFOs; 112 and 113 for their own sections
 
-**Status:** needs-triage · enhancement. To grill with the owner, best alongside 112 and 113.
+**Status:** closed by the owner (2026-10-30): given up, to keep the project's scope from growing too big; with no effects ([113](./113-effects.md)) or arpeggiator ([112](./112-tempo-midi-clock-and-an-arpeggiator.md)), little was left to switch off. Nothing built; [`.out-of-scope/sections-that-switch-off.md`](../../.out-of-scope/sections-that-switch-off.md).
 
 ## What a grilling would settle
 
