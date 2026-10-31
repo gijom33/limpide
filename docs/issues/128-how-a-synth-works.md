@@ -6,7 +6,7 @@ What exists already: Bass, the Tutorial the Welcome opens today ([58](./58-first
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement. Grilled on 2026-10-30, the owner's answers below.
+**Status:** ready-for-human · enhancement. Built (2026-10-30) on the branch `claude/tour-128-3e1430`: every decision below, with Claude's calls 14 to 24; for the owner to try, and to answer the questions under Built, before the release.
 
 ## Decisions
 
@@ -26,6 +26,20 @@ Decided by the owner, 2026-10-30, unless marked otherwise:
 12. **Section in the glossary:** the page's four parts, defined in CONTEXT.md.
 13. The Tour stops the Demo and the Song when it starts, and its card docks where a Tutorial's card does, the page bringing each Section and its Viewers into view, on a phone too. Claude's call, open to the owner.
 
+Made while building it (2026-10-30), each Claude's call, open to the owner:
+
+14. The button reads "Take the Tour", in the Welcome and the About alike, between "Play the Demo" and "Close".
+15. Four cards, no fifth: the LFOs card is the last, its words ending "That is the whole chain. Now build a sound yourself", with "Build a Bass" and "Done" in place of Next. A closing card where nothing moves would break decision 8.
+16. Each card starts with every control the Tour turns back on Init's values, so each Section's change is heard alone; other controls the person turned stay as they are.
+17. The moves: the Waveform Saw, Square, Sine, Square, 2.4 s each; the Cutoff 2 kHz down to 150 Hz and back, 4 s each way, then Resonance 20 % to 80 % and back, 3 s each way; the Amp's Attack 10 ms to 0.8 s and back, then its Release 0.4 s to 2 s and back, 4 s each way; LFO 1's Depth (a Sine at 2 Hz on the Cutoff, Init's) 0 to 60 %, held 3 s, and back. Knobs move evenly along their travel.
+18. Each card has its own phrase, for what it shows: held Notes for the Waveform, running octaves for the Filter, Notes with rests for the Amp (so the Release is heard), long Notes for the LFO. It plays from the first card to the end; there is no Listen button.
+19. A control the card turns, once turned by hand or by a Controller, stays where the person put it for the rest of that card, even if the synth had not reached it yet; the card's other control keeps moving.
+20. The card rings the control being turned (and its section in the phone's strip), and brings into view its Viewers first, then its controls, then, where there is room, the Cutoff knob for the LFOs card, whose words speak of its dot.
+21. A Patch the person loads during the Tour ends it and stays loaded. Starting the Demo or a Tutorial ends it too, giving the person's Patch back first. A page closed or reloaded mid-Tour also gives it back, saved as the Last session at once.
+22. Starting the Tour while it runs goes back to its first card.
+23. The card folds and moves as a Tutorial's does; its fold is remembered apart from theirs.
+24. The README's "What you can do" gains a line for the Tour.
+
 ## Agent Brief
 
 **Category:** enhancement
@@ -44,14 +58,29 @@ Decided by the owner, 2026-10-30, unless marked otherwise:
 - The Welcome and the About, the Tutorial player's card, the Patch, the Viewers' accessible names, Listen's phrase notation
 
 **Acceptance criteria:**
-- [ ] The Welcome shows the Demo and the Tour, no Tutorial button; the About shows the Tour; the Patches panel has no Tour
-- [ ] Each of the four cards moves its control by itself and plays the phrase; the matching Viewer is in view at every layout
-- [ ] Grabbing the moving control stops the movement; Next, Back and Close work from the keyboard
-- [ ] After the Tour, ended or closed at any card, the Patch is the one the person had before, value for value
-- [ ] The last card's Bass button starts the Bass Tutorial
-- [ ] The cards' words are checked against the engine by the fact-check before the push
+- [x] The Welcome shows the Demo and the Tour, no Tutorial button; the About shows the Tour; the Patches panel has no Tour
+- [x] Each of the four cards moves its control by itself and plays the phrase; the matching Viewer is in view at every layout
+- [x] Grabbing the moving control stops the movement; Next, Back and Close work from the keyboard
+- [x] After the Tour, ended or closed at any card, the Patch is the one the person had before, value for value
+- [x] The last card's Bass button starts the Bass Tutorial
+- [x] The cards' words are checked against the engine by the fact-check before the push (from the code, 2026-10-30; the release's fact-check renders them before the push)
 
 **Out of scope:**
 - A diagram of the signal chain
 - FM, Ring, Glide, the Sub's options, the Noise
 - Steps the person must complete, as a Tutorial has
+
+## Built
+
+2026-10-30. The Tour's cards and moves are data with a pure `tourAt` (unit tests); the Patch store keeps the person's Patch and gives it back, name and changed mark too (unit test); `e2e/tour.spec.ts` covers the Welcome and About, every card moving its control and playing, a grab, the keyboard, the Patch coming back closed at each card, the Bass button, and the Viewers clear of the header and the card on a phone, a short phone, 2 × 2, a laptop and a large screen.
+
+**The fact-check** (the cards' words read against the engine, the Modulation model and the Viewers' code; nothing rendered): no false claim. Fixed from it: the Filter is fed by the Mixer ("as the Mixer sends it"), and the dot on the Cutoff knob swings "while a Note sounds". Left: under reduced motion the knob's dot is never drawn, so the LFOs card's words about it point at nothing there; the Timeline's Cutoff line is not drawn at the start and end of each pass, while the Depth is 0.
+
+**The code review** (Standards and Spec), fixed: comments that told history, a field no caller read, "master volume" and "shape" (avoided words) in the cards, a selector built twice, the Mixer named but never shown (the card now says it is on its own tab), the Amp Spectrum pointed at but not described, no test that the Song stops, the test names without the issue, and a tick that could write the Tour's values onto a Patch the person had just loaded. Noted, not changed:
+- The Tour's hand keeps its own "turned by hand stays put" rather than the Demo's (`createDemoKnobs`), which turns only knobs; the Tour turns the Waveform too.
+- `TourCard` repeats some of the Tutorial card's ringing and scrolling (the strip's mark, the click that re-marks after a tab switch, the delayed scroll); a shared helper is a possible tidy-up.
+- The Last session is the Tour's Patch while the Tour runs; only a page closed or reloaded (`pagehide`) gives the person's back. A phone that kills a tab in the background without `pagehide` loses it. Giving it back when the page is hidden would end the Tour on every switch of tab.
+
+**Questions for the owner:**
+1. Init plays one Voice, so a Note played by hand takes that Voice from the phrase while held rather than sounding beside it (decision 9 says it joins). Should the Tour's Patch be Init with more Voices?
+2. The timings and depths of decision 17, and the phrases of 18: right to the ear?

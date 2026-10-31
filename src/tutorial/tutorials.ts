@@ -63,7 +63,7 @@ const steeper: Step = {
   viewer: 'Filter Spectrum',
 };
 
-/** The four first Tutorials (issue 58), then the lessons of issue 109; the Welcome opens the first. */
+/** The four first Tutorials (issue 58), then the lessons of issue 109; the Tour's last card opens the first (issue 128). */
 export const TUTORIALS: Tutorial[] = [
   {
     preset: 'Bass',

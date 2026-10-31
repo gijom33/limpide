@@ -15,22 +15,22 @@ const day = (iso: string) =>
  * and so does the ⓘ button. It closes with its button, Escape, or a click outside it.
  *
  * A brand-new browser sees it once as a welcome, with a word on what to do first. Every time, its last row plays the
- * Demo (or, from a Share link, the shared sound), starts the first Tutorial, or closes it.
+ * Demo (or, from a Share link, the shared sound), starts the Tour (issue 128), or closes it.
  */
 export function About({
   open,
   welcome = null,
   onClose,
   onPlay,
-  onTutorial,
+  onTour,
 }: {
   open: boolean;
   welcome?: Welcome | null;
   onClose: () => void;
   /** The welcome's play button: the Demo, or the Demo's riff on the shared Patch. */
   onPlay?: () => void;
-  /** The welcome's Tutorial button: the first Tutorial, Bass. */
-  onTutorial?: () => void;
+  /** The Tour: a first look at each Section (issue 128). */
+  onTour?: () => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const title = useId();
@@ -128,7 +128,7 @@ export function About({
           )}
         </dl>
         {/* At the bottom every time, beside Close (the owner, 2026-10-27): the Demo, in the green of a key that
-            plays, and the first Tutorial, in the accent a Tutorial's control wears. */}
+            plays, and the Tour (issue 128), in the accent a Tutorial's control wears. */}
         <div className="about-actions">
           <button
             type="button"
@@ -148,10 +148,10 @@ export function About({
             className="tool tool-primary"
             onClick={() => {
               onClose();
-              onTutorial?.();
+              onTour?.();
             }}
           >
-            Follow the Tutorial
+            Take the Tour
           </button>
           <button type="button" className="tool" onClick={onClose}>
             Close

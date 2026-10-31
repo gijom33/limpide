@@ -129,6 +129,22 @@ describe('The Patch store (issue 73)', () => {
     expect(library.loadCurrent()?.cutoff).toBe(1000);
   });
 
+  it('gives back a Patch kept aside exactly as it was: its values, its name, its changed mark, and saves it at once (issue 128)', () => {
+    const { store, library } = setup();
+    store.load(PRESETS[4].name, PRESETS[4].patch);
+    store.change((p) => setParam(p, 'cutoff', 640), 'hand');
+    const mine = store.get();
+    const kept = store.keep();
+    store.load('Init', defaultPatch());
+    store.change((p) => setParam(p, 'resonance', 0.9), 'tour');
+    store.restore(kept);
+    expect(store.get()).toEqual(mine);
+    expect(library.loadCurrent()).toEqual(mine.patch); // a reload straight after finds it, not the Tour's
+    // What it is compared with came back too: turned back to the Preset's value, it is unchanged again.
+    store.change((p) => setParam(p, 'cutoff', PRESETS[4].patch.cutoff), 'hand');
+    expect(store.get()).toMatchObject({ name: PRESETS[4].name, changed: false });
+  });
+
   it('stops telling a subscriber that unsubscribed', () => {
     const { store } = setup();
     const listener = vi.fn();
