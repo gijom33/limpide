@@ -86,11 +86,14 @@ export function createControlSurface(synth: Synth) {
     clearTimeout(justLearned.quiet);
     justLearned.quiet = setTimeout(() => (justLearned = null), LEARN_SETTLE_MS);
   };
+  const keepOff = (control: Control) => {
+    clearTimeout(justLearned?.quiet);
+    justLearned = { control };
+    settleJustLearned();
+  };
   const learned = (mapping: Mapping) => {
     store.set(mapping);
-    clearTimeout(justLearned?.quiet);
-    justLearned = { control: mapping.control };
-    settleJustLearned();
+    keepOff(mapping.control);
     setLearn({ phase: 'armed', target: null, learned: mapping });
   };
   // Controls the selected target must not be learned from (Quick Setup's other steps').
@@ -196,8 +199,8 @@ export function createControlSurface(synth: Synth) {
     learned({
       control: learn.control,
       target: learn.target,
-      // A button on an Action: its release came, so it is momentary; none came, so it is a toggle.
-      mode: learn.target.kind === 'action' ? (values.some((v) => v < 64) ? 'trigger' : 'toggle') : detectEncoderMode(values),
+      // On an Action, one message alone is a toggle's press; a second (a release, or a knob's turn) is momentary.
+      mode: learn.target.kind === 'action' ? (values.length > 1 ? 'trigger' : 'toggle') : detectEncoderMode(values),
     });
   };
 
@@ -215,8 +218,8 @@ export function createControlSurface(synth: Synth) {
         return false;
       values.push(message.value);
       clearTimeout(settle);
-      // A button's release ends Learn at once; a knob, once it has sent enough to tell its Encoder Mode.
-      if (learn.target.kind === 'action' ? message.value < 64 : values.length >= LEARN_VALUES) finishListening();
+      // A second message on an Action ends Learn at once, a knob once it has sent enough to tell its Encoder Mode.
+      if (values.length >= (learn.target.kind === 'action' ? 2 : LEARN_VALUES)) finishListening();
       else settle = setTimeout(finishListening, LEARN_SETTLE_MS);
       return true;
     }
@@ -237,16 +240,12 @@ export function createControlSurface(synth: Synth) {
         channel: message.channel,
         number: message.controller,
       };
-      // A button on an Action is heard out (issue 147): a press is momentary if its release follows within the
-      // settle time, a toggle if not; a first message at or below the middle is a toggle whose light was on, since a
-      // momentary press never starts with its release. The release is used up here, firing nothing.
-      if (target.kind === 'action' && message.value < 64) {
-        learned({ control, target, mode: 'toggle' });
-      } else {
-        setLearn({ phase: 'listening', target, control });
-        values = [];
-        learnFrom(message);
-      }
+      // Heard out until it has been still a moment: a knob for its Encoder Mode, a button on an Action for whether
+      // a release follows its press (momentary) or not (a toggle, whatever its value: a lit one sends 0) (issue 147).
+      // Its messages meanwhile are used up by Learn, the release among them, so they fire nothing.
+      setLearn({ phase: 'listening', target, control });
+      values = [];
+      learnFrom(message);
       return true;
     }
     if (message.type === 'noteOn' && target.kind === 'action') {
@@ -295,7 +294,12 @@ export function createControlSurface(synth: Synth) {
     },
     /** Selects what the next control moved is learned for, other than any control in `avoid`. */
     select(target: Target, avoid: readonly Control[] = []) {
-      finishListening();
+      // A button cut short (a click on screen, Quick Setup's Skip) is not guessed: nothing is learned, and its
+      // release, still to come, is not learned for the next target.
+      if (learn.phase === 'listening' && learn.target.kind === 'action') {
+        clearTimeout(settle);
+        keepOff(learn.control);
+      } else finishListening();
       avoiding = avoid;
       setLearn({ phase: 'armed', target });
     },

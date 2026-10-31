@@ -188,7 +188,7 @@ describe('MIDI Learn, one control after another', () => {
     expect(store.list().map((m) => m.target)).toEqual([resonance]);
   });
 
-  it('the button just learned is not learned again for the next Action', () => {
+  it('the button just learned is not learned again for the next Action (issue 147)', () => {
     const { surface, store, actions, send } = rig();
     surface.startLearn();
     surface.select(hold);
@@ -233,12 +233,36 @@ describe('MIDI Learn tells a toggle button from a momentary one (issue 147)', ()
     expect(actions).toEqual(['hold', 'hold', 'hold']);
   });
 
-  it('a first message at or below the middle: a toggle whose light was on, learned at once', () => {
+  it('a first message at or below the middle, alone: a toggle whose light was on', () => {
     const { surface, store, send } = rig();
     surface.startLearn();
     surface.select(hold);
     send(cc(49, 0));
+    vi.advanceTimersByTime(600);
     expect(store.find(button)?.mode).toBe('toggle');
+  });
+
+  it('a knob turned on an Action stays momentary, as before: the rest of its turn fires nothing', () => {
+    const { surface, store, actions, send } = rig();
+    surface.startLearn();
+    surface.select({ kind: 'action', id: 'nextPreset' });
+    send(cc(20, 30), cc(20, 31), cc(20, 32), cc(20, 33), cc(20, 34));
+    expect(store.find({ kind: 'cc', channel: 1, number: 20 })?.mode).toBe('trigger');
+    expect(actions).toEqual([]);
+  });
+
+  it('another target selected while a button is heard out: nothing is learned or fired, and its release is not learned next', () => {
+    const { surface, store, actions, send } = rig();
+    surface.startLearn();
+    surface.select(hold);
+    send(cc(49, 127));
+    surface.select({ kind: 'action', id: 'freeze' }); // Quick Setup's Skip, or a click on screen
+    send(cc(49, 0)); // letting go
+    vi.advanceTimersByTime(600);
+    expect(store.list()).toEqual([]);
+    expect(actions).toEqual([]);
+    send(cc(50, 127), cc(50, 0));
+    expect(store.find({ kind: 'cc', channel: 1, number: 50 })?.target).toEqual({ kind: 'action', id: 'freeze' });
   });
 
   it('the release ends Learn once: one Mapping made, so Quick Setup moves on one step', () => {
