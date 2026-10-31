@@ -449,3 +449,54 @@ describe('the C16 layout’s buttons and its own input (issue 145)', () => {
     expect(r.positions.cutoff).toBeGreaterThan(fromC16);
   });
 });
+
+describe('the C16’s knobs paced to the hand (issue 145)', () => {
+  /** A C16 knob on the Cutoff, from 0, and a clock the test moves. */
+  const c16Knob = () => {
+    let t = 0;
+    const positions: Partial<Record<ParamId, number>> = { cutoff: 0 };
+    const store = createMappingStore(memoryStorage());
+    const surface = createControlSurface({
+      store,
+      now: () => t,
+      position: (id) => positions[id] ?? 0,
+      setPosition: (id, p) => void (positions[id] = p),
+      action: () => {},
+      choice: () => ({ index: 0, count: 5 }),
+      setChoice: () => {},
+      press: () => {},
+      release: () => {},
+    });
+    store.set({ control: { kind: 'cc', channel: 1, number: 24 }, target: cutoff, mode: 'relative-centred', device: 'c16' });
+    const send = (at: number, value: number) => {
+      t = at;
+      surface.handle(cc(24, value), true);
+    };
+    return { positions, send };
+  };
+
+  it('counts every message of a slow turn: one full turn, 46 messages of 65 (the owner’s log), is 46 steps', () => {
+    const { positions, send } = c16Knob();
+    for (let i = 0; i < 46; i++) send(i * 200, 65);
+    expect(positions.cutoff).toBeCloseTo(0.46);
+  });
+
+  it('holds a fast turn to the steps a hand can make: one full turn, 138 messages of 66 in a third of a second, is about 46 steps', () => {
+    const { positions, send } = c16Knob();
+    // As the owner's log: bursts of 8 messages a millisecond apart, a burst every 19 ms, for 325 ms.
+    for (let burst = 0; burst < 17; burst++) for (let i = 0; i < 8; i++) send(burst * 19 + i, 66);
+    expect(positions.cutoff!).toBeGreaterThan(0.4);
+    expect(positions.cutoff!).toBeLessThan(0.52);
+  });
+
+  it('turns back at once, a step at a time, and leaves other Controllers’ knobs unpaced', () => {
+    const { positions, send } = c16Knob();
+    for (let i = 0; i < 10; i++) send(i * 200, 65);
+    send(2100, 62);
+    expect(positions.cutoff).toBeCloseTo(0.09);
+    const r = rig();
+    r.store.set({ control: { kind: 'cc', channel: 1, number: 22 }, target: resonance, mode: 'relative-centred' });
+    r.send(cc(22, 66), cc(22, 66));
+    expect(r.positions.resonance).toBeCloseTo(0.24); // two steps a message, as it sends them
+  });
+});

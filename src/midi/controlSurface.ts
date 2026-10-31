@@ -13,6 +13,14 @@ const RELATIVE_STEP = 0.01;
 const PICKUP_TOLERANCE = 0.5 / 127 + 1e-9;
 /** Encoder clicks per choice, so stepping through Waveforms is deliberate rather than jumpy. */
 const CLICKS_PER_CHOICE = 2;
+/**
+ * The C16's knobs, paced to the hand (issue 145): turned fast they send more messages and bigger steps (one fast
+ * turn, 136 messages of 66; one slow turn, 46 of 65, the owner's log), so each counts as one step in its direction,
+ * and at most one step every STEP_MS: a full turn takes a hand a third of a second at fastest, 46 steps. Up to
+ * PACE_ALLOWANCE steps may come at once after a pause, as messages arrive in bursts.
+ */
+const STEP_MS = 7;
+const PACE_ALLOWANCE = 3;
 /** Values a knob of unknown Encoder Mode sends before it moves anything: enough to tell its mode. */
 const DETECT_VALUES = 3;
 /**
@@ -34,6 +42,8 @@ export type LearnState =
 
 interface Synth {
   store: MappingStore;
+  /** The time in milliseconds, for pacing the C16's knobs (the page's clock unless a test gives one). */
+  now?(): number;
   /** A Parameter's control position (0–1), and setting it. */
   position(id: ParamId): number;
   setPosition(id: ParamId, position: number): void;
@@ -95,12 +105,26 @@ export function createControlSurface(synth: Synth) {
   const clicks = new Map<string, number>(); // encoder clicks towards the next choice, per control
   const detecting = new Map<string, number[]>(); // the first values of knobs finding their Encoder Mode
 
+  const pace = new Map<string, { allowance: number; at: number }>(); // each C16 knob's steps still allowed, and when
+  /** A Relative message's steps: as sent, or for a C16 knob one step in its direction, if the pace allows it. */
+  const relativeSteps = (mapping: Mapping, mode: 'relative-twos' | 'relative-centred', value: number) => {
+    const delta = relativeDelta(mode, value);
+    if (mapping.device !== 'c16') return delta;
+    const now = synth.now?.() ?? performance.now();
+    const key = controlKey(mapping.control);
+    const last = pace.get(key) ?? { allowance: PACE_ALLOWANCE, at: now };
+    const allowance = Math.min(PACE_ALLOWANCE, last.allowance + (now - last.at) / STEP_MS);
+    const allowed = allowance >= 1;
+    pace.set(key, { allowance: allowed ? allowance - 1 : allowance, at: now });
+    return allowed ? Math.sign(delta) : 0;
+  };
+
   const moveParam = (mapping: Mapping, id: ParamId, value: number) => {
     const target = mapping.target;
     if (mapping.mode === 'trigger' || mapping.mode === 'toggle' || mapping.mode === 'detect') return;
     const current = synth.position(id);
     if (mapping.mode !== 'absolute') {
-      synth.setPosition(id, Math.min(1, Math.max(0, current + relativeDelta(mapping.mode, value) * RELATIVE_STEP)));
+      synth.setPosition(id, Math.min(1, Math.max(0, current + relativeSteps(mapping, mapping.mode, value) * RELATIVE_STEP)));
       synth.touched?.(target, 'moved');
       return;
     }
@@ -138,7 +162,7 @@ export function createControlSurface(synth: Synth) {
     } else if (mapping.mode === 'absolute') {
       next = Math.min(count - 1, Math.floor((value / 128) * count));
     } else {
-      const total = (clicks.get(controlKey(mapping.control)) ?? 0) + relativeDelta(mapping.mode, value);
+      const total = (clicks.get(controlKey(mapping.control)) ?? 0) + relativeSteps(mapping, mapping.mode, value);
       const steps = Math.trunc(total / CLICKS_PER_CHOICE);
       next = Math.min(count - 1, Math.max(0, index + steps));
       // Turns past either end are dropped, so turning back responds at once.
