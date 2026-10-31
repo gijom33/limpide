@@ -13,8 +13,8 @@ export interface MidiAccessLike extends EventTarget {
 }
 
 interface Handlers {
-  /** A message, with the name of the Controller it came from and when it arrived (ms, the page's clock). */
-  onMessage(message: MidiMessage, from: string, at: number): void;
+  /** A message, with the name of the Controller it came from. */
+  onMessage(message: MidiMessage, from: string): void;
   /** The connected Controllers' names, whenever they change. */
   onDevices(names: string[]): void;
 }
@@ -34,7 +34,7 @@ export function connectMidi(access: MidiAccessLike, { onMessage, onDevices }: Ha
       for (const message of parser.feed((event as Event & { data: Uint8Array }).data)) {
         if (message.type === 'noteOn') held.set(message.note, message.channel);
         if (message.type === 'noteOff') held.delete(message.note);
-        onMessage(message, input.name ?? 'MIDI device', event.timeStamp);
+        onMessage(message, input.name ?? 'MIDI device');
       }
     };
     input.addEventListener('midimessage', listener);
@@ -46,7 +46,7 @@ export function connectMidi(access: MidiAccessLike, { onMessage, onDevices }: Ha
     if (!entry) return;
     entry.input.removeEventListener('midimessage', entry.listener);
     attached.delete(id);
-    for (const [note, channel] of entry.held) onMessage({ type: 'noteOff', channel, note }, entry.input.name ?? 'MIDI device', performance.now());
+    for (const [note, channel] of entry.held) onMessage({ type: 'noteOff', channel, note }, entry.input.name ?? 'MIDI device');
   };
 
   const report = () => onDevices([...attached.values()].map(({ input }) => input.name ?? 'MIDI device'));

@@ -14,11 +14,11 @@ const PICKUP_TOLERANCE = 0.5 / 127 + 1e-9;
 /** Encoder clicks per choice, so stepping through Waveforms is deliberate rather than jumpy. */
 const CLICKS_PER_CHOICE = 2;
 /**
- * The C16's knobs, one step for each bit of turning (issue 145): a bit sends one 65 (or 63) turned slowly and, past
- * a speed, a burst of eight 66s (or 62s) a millisecond apart, at the same pace as the bits before it (the owner's
- * logs: 54 bits in 1.125 turns, 46 to a turn). So a message within BIT_MS of the knob's last belongs to that bit.
+ * The C16's knobs, one step for each bit of turning (issue 145): a bit sends one 65 (or 63) turned slowly and, past a
+ * speed, a burst of eight 66s (or 62s). So a 66 is an eighth of a step. Counted by message, not by time: the bursts
+ * reach the page split and merged (the owner's logs: 47 steps for 1.125 turns, 46 to a turn).
  */
-const BIT_MS = 10;
+const BURST = 8;
 /** Values a knob of unknown Encoder Mode sends before it moves anything: enough to tell its mode. */
 const DETECT_VALUES = 3;
 /**
@@ -40,8 +40,6 @@ export type LearnState =
 
 interface Synth {
   store: MappingStore;
-  /** The time in milliseconds, for pacing the C16's knobs (the page's clock unless a test gives one). */
-  now?(): number;
   /** A Parameter's control position (0–1), and setting it. */
   position(id: ParamId): number;
   setPosition(id: ParamId, position: number): void;
@@ -103,19 +101,11 @@ export function createControlSurface(synth: Synth) {
   const clicks = new Map<string, number>(); // encoder clicks towards the next choice, per control
   const detecting = new Map<string, number[]>(); // the first values of knobs finding their Encoder Mode
 
-  const lastMessage = new Map<string, number>(); // each C16 knob's last message, in ms
-  /** A Relative message's steps: as sent, or for a C16 knob one step in its direction for each new bit of turning. */
-  let arrived: number | undefined; // when the message being handled arrived, in ms, if its Controller said
+  /** A Relative message's steps: as sent, or for a C16 knob one a bit of turning, a burst's message an eighth. */
   const relativeSteps = (mapping: Mapping, mode: 'relative-twos' | 'relative-centred', value: number) => {
     const delta = relativeDelta(mode, value);
-    if (mapping.device !== 'c16') return delta;
-    // When the message arrived, not when the page got to it: a fast turn's messages queue behind a render, then are
-    // handled all at once, and would pass for one bit (the owner: "when going faster, hardly anything happens").
-    const now = arrived ?? synth.now?.() ?? performance.now();
-    const key = controlKey(mapping.control);
-    const last = lastMessage.get(key);
-    lastMessage.set(key, now);
-    return last !== undefined && now - last < BIT_MS ? 0 : Math.sign(delta);
+    if (mapping.device !== 'c16' || Math.abs(delta) <= 1) return delta;
+    return Math.sign(delta) / BURST;
   };
 
   const moveParam = (mapping: Mapping, id: ParamId, value: number) => {
@@ -124,7 +114,6 @@ export function createControlSurface(synth: Synth) {
     const current = synth.position(id);
     if (mapping.mode !== 'absolute') {
       const steps = relativeSteps(mapping, mapping.mode, value);
-      if (steps === 0) return; // the rest of a bit already counted: nothing to draw again
       synth.setPosition(id, Math.min(1, Math.max(0, current + steps * RELATIVE_STEP)));
       synth.touched?.(target, 'moved');
       return;
@@ -270,12 +259,8 @@ export function createControlSurface(synth: Synth) {
   };
 
   return {
-    /**
-     * A message from a Controller; `fromC16` when that Controller is a C16, whose layout's Mappings answer it alone;
-     * `at`, when it arrived (Web MIDI's timestamp, in ms on the page's clock).
-     */
-    handle(incoming: MidiMessage, fromC16 = false, at?: number) {
-      arrived = at;
+    /** A message from a Controller; `fromC16` when that Controller is a C16, whose layout's Mappings answer it alone. */
+    handle(incoming: MidiMessage, fromC16 = false) {
       if (incoming.type === 'program') return synth.program?.(incoming.program);
       const message: ControlMessage =
         incoming.type === 'pitchBend'

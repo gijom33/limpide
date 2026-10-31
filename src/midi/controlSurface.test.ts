@@ -451,14 +451,12 @@ describe('the C16 layout’s buttons and its own input (issue 145)', () => {
 });
 
 describe('the C16’s knobs, one step for each bit of turning (issue 145)', () => {
-  /** A C16 knob on the Cutoff, from 0, and a clock the test moves. */
+  /** A C16 knob on the Cutoff, from 0. */
   const c16Knob = () => {
-    let t = 0;
     const positions: Partial<Record<ParamId, number>> = { cutoff: 0 };
     const store = createMappingStore(memoryStorage());
     const surface = createControlSurface({
       store,
-      now: () => t,
       position: (id) => positions[id] ?? 0,
       setPosition: (id, p) => void (positions[id] = p),
       action: () => {},
@@ -468,66 +466,39 @@ describe('the C16’s knobs, one step for each bit of turning (issue 145)', () =
       release: () => {},
     });
     store.set({ control: { kind: 'cc', channel: 1, number: 24 }, target: cutoff, mode: 'relative-centred', device: 'c16' });
-    let at = 0;
-    /** A single message `gap` ms after the last. */
-    const single = (gap: number, value = 65) => {
-      at += gap;
-      t = at;
-      surface.handle(cc(24, value), true);
+    const send = (value: number, times = 1) => {
+      for (let i = 0; i < times; i++) surface.handle(cc(24, value), true);
     };
-    /** A burst of eight 66s a millisecond apart, starting `gap` ms after the last message: one bit, turned fast. */
-    const burst = (gap: number) => {
-      single(gap, 66);
-      for (let i = 0; i < 7; i++) single(1, 66);
-    };
-    return { positions, single, burst };
+    return { positions, send };
   };
 
-  it('counts each message of a slow turn: one full turn, 46 messages of 65 (the owner’s log), is 46 steps', () => {
-    const { positions, single } = c16Knob();
-    for (let i = 0; i < 46; i++) single(200);
+  it('counts each 65 of a slow turn as a step: one full turn, 46 messages (the owner’s log), is 46 steps', () => {
+    const { positions, send } = c16Knob();
+    send(65, 46);
     expect(positions.cutoff).toBeCloseTo(0.46);
   });
 
-  it('counts a burst of 66s as the one bit it stands for: the owner’s 1.125 turns, slow to fast, are 54 steps', () => {
-    const { positions, single, burst } = c16Knob();
-    // The owner's log, event by event: the gaps between bits shrink from 200 ms to about 25, then bursts.
-    single(500);
-    for (const gap of [209, 111, 133, 141, 115, 91, 86, 83, 91, 82, 81, 51, 53, 48, 52, 44, 60, 39, 61, 58, 61, 55, 45, 38, 50, 22, 33, 45, 24, 39, 40, 22]) single(gap);
-    for (const gap of [26, 18, 22, 24, 27]) burst(gap);
-    for (const gap of [32, 35, 31]) single(gap);
-    burst(34);
-    for (const gap of [15, 30, 50, 28, 35, 36]) single(gap);
-    for (const gap of [23, 19, 16, 25, 26]) burst(gap);
-    single(37);
-    expect(positions.cutoff).toBeCloseTo(0.54);
+  it('counts a fast turn’s 66 as an eighth of a step, a burst of eight being one bit, however they arrive', () => {
+    // The owner's 1.125 turns, slow to fast: 43 single 65s and 88 66s in bursts.
+    const a = c16Knob();
+    a.send(65, 43);
+    a.send(66, 88);
+    expect(a.positions.cutoff).toBeCloseTo(0.54);
+    // Half a turn slow, then 0.625 fast: 31 single 65s and 128 66s, some bursts split or merged on the way.
+    const b = c16Knob();
+    b.send(65, 29);
+    b.send(66, 17);
+    b.send(66, 7);
+    b.send(66, 104);
+    b.send(65, 2);
+    expect(b.positions.cutoff).toBeCloseTo(0.47);
   });
 
-  it('times each bit by when its message arrived, not when the page got to it: a busy page still counts every bit', () => {
-    const positions: Partial<Record<ParamId, number>> = { cutoff: 0 };
-    const store = createMappingStore(memoryStorage());
-    const surface = createControlSurface({
-      store,
-      now: () => 1000, // every message handled at the same moment, after a long render
-      position: (id) => positions[id] ?? 0,
-      setPosition: (id, p) => void (positions[id] = p),
-      action: () => {},
-      choice: () => ({ index: 0, count: 5 }),
-      setChoice: () => {},
-      press: () => {},
-      release: () => {},
-    });
-    store.set({ control: { kind: 'cc', channel: 1, number: 24 }, target: cutoff, mode: 'relative-centred', device: 'c16' });
-    // Five bits turned fast, each a burst of eight 66s that arrived a millisecond apart, the bursts 25 ms apart.
-    for (let bit = 0; bit < 5; bit++) for (let i = 0; i < 8; i++) surface.handle(cc(24, 66), true, bit * 25 + i);
-    expect(positions.cutoff).toBeCloseTo(0.05);
-  });
-
-  it('turns back at once, a step at a time, and leaves other Controllers’ knobs as they send', () => {
-    const { positions, single, burst } = c16Knob();
-    for (let i = 0; i < 10; i++) single(200);
-    burst(30);
-    single(30, 62);
+  it('turns back at once, and leaves other Controllers’ knobs as they send', () => {
+    const { positions, send } = c16Knob();
+    send(65, 10);
+    send(66, 8);
+    send(63);
     expect(positions.cutoff).toBeCloseTo(0.1);
     const r = rig();
     r.store.set({ control: { kind: 'cc', channel: 1, number: 22 }, target: resonance, mode: 'relative-centred' });

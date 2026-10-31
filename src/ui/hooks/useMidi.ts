@@ -221,7 +221,7 @@ export function useMidi(host: Host) {
       (access) => {
         if (cancelled) return;
         dispose = connectMidi(access as unknown as MidiAccessLike, {
-          onMessage: (m, from, at) => {
+          onMessage: (m, from) => {
             const fromC16 = isC16(from);
             if (m.type === 'noteOn') noteFromController();
             if (fromC16 && m.type === 'cc' && surface.learnState().phase === 'off') {
@@ -232,7 +232,7 @@ export function useMidi(host: Host) {
                 setBankFollow((f) => ({ name: SECTIONS[bank].name, key: (f?.key ?? 0) + 1 }));
               }
             }
-            surface.handle(m, fromC16, at);
+            surface.handle(m, fromC16);
             setActivity(describeMessage(m));
           },
           onDevices: (devices) => {
