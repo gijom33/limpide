@@ -137,6 +137,7 @@ Brought into scope by the grilling of [issue 40](./issues/40-preset-tutorials.md
 94. As a player, I want the Sub one or two octaves down, square or sine, so that a bass gets the weight it needs (issue 91).
 95. As a learner, I want pink Noise beside white, so that I hear and see what a noise's colour means (issue 92).
 96. As a player, I want the Filter Envelope to move Osc 2's pitch, so that Notes can start with a zap (issue 93).
+97. As a first-time visitor who has never seen a synth, I want a Tour of the Sections in the signal's order, the synth turning each one's main controls itself while I listen and watch its Viewers, so that I know what each part is for before I build a sound; the Welcome's button for it takes the place of story 89's Tutorial button (issue 128).
 
 ## Implementation Decisions
 
