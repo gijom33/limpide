@@ -1,6 +1,6 @@
 # Following the AI Hero skills
 
-**Status:** accepted · **Date:** 2026-10-28 · **Decided by:** the owner (grilling of 2026-10-28, questions 1 to 14)
+**Status:** accepted, point 8's "full suite before a push" superseded by [ADR-0015](./0015-ci-runs-the-end-to-end-tests-before-a-deploy.md) · **Date:** 2026-10-28 · **Decided by:** the owner (grilling of 2026-10-28, questions 1 to 14)
 
 The owner asked to "clean the backlog and catch up with the AI Hero methodology before moving forward". Limpide had followed Matt Pocock's skills since the start (PRD, issues, ADRs, `CONTEXT.md`, grillings), but never ran their setup: no `docs/agents/` told `/triage`, `/to-tickets` or `/implement` where the issues live, issue Status lines were free text ("built, to verify on the real C16", "to diagnose first"), a rejected idea lived only as a line in the inbox's Dropped list, and nothing checked a commit before it was made. So, after 1.14.0:
 

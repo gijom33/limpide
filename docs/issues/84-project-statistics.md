@@ -6,6 +6,8 @@
 
 **Status:** ready-for-human · enhancement. Built; the first row is measured on a quiet machine: 1.16.1's run was set aside, the machine overloaded (about 40 end-to-end tests timed out), and 1.16.1 was released without it (decided by the owner, 2026-10-30). Every release so far has its exact numbers (size and build), read from its tag.
 
+**Since then:** the statistics run after the push, not before the release commit ([ADR-0015](../adr/0015-ci-runs-the-end-to-end-tests-before-a-deploy.md), decided by the owner on 2026-10-30; `docs/releasing.md`, step 7).
+
 ## Triage Notes
 
 **What we've established so far:**
