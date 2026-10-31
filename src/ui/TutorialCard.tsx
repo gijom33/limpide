@@ -100,15 +100,16 @@ function useRing(step: Step | undefined, made: boolean, card: RefObject<HTMLElem
 /**
  * Where the keyboard's focus goes on the card (issue 104): to its way forward (Start) when a Tutorial is picked, after
  * the welcome or the panel it was picked from has put it back on their buttons; and there again when a button it was on
- * goes (Back on the first card, "Do it for me" once the Step is made, Finish at the end: Done), never to the page.
+ * goes (Back on the first card, "Do it for me" once the Step is made, Finish at the end: Done), never to the page. The
+ * Tour's card does the same (issue 128); `opening` is what was picked.
  */
-function useCardFocus(card: RefObject<HTMLElement | null>, tutorial: Tutorial) {
+export function useCardFocus(card: RefObject<HTMLElement | null>, opening: unknown) {
   const forward = () => card.current?.querySelector<HTMLElement>('.tool-primary')?.focus();
-  // biome-ignore lint/correctness/useExhaustiveDependencies: a new Tutorial is the trigger; forward reads the card's ref
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a new opening is the trigger; forward reads the card's ref
   useEffect(() => {
     const frame = requestAnimationFrame(forward);
     return () => cancelAnimationFrame(frame);
-  }, [tutorial]);
+  }, [opening]);
   // The last element the focus was on in the card, to tell a button that went from a click elsewhere on the page.
   const last = useRef<Element | null>(null);
   useLayoutEffect(() => {

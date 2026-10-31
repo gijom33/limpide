@@ -6,12 +6,12 @@ import { ChevronIcon } from './icons';
 const pinned = (card: HTMLElement | null) => !!card && getComputedStyle(card).getPropertyValue('--card-pinned').trim() === '1';
 
 /**
- * A docked card (the Demo's, a Tutorial's) the person can fold to its top row and, from the 2 × 2 layout up, drag
+ * A docked card (the Demo's, a Tutorial's, the Tour's) the person can fold to its top row and, from the 2 × 2 layout up, drag
  * by that row to see what it covers (the owner's decisions, issue 59, 2026-10-27). The fold is remembered for each
  * kind of card; the place is not: the card opens at the bottom each time. A double-click on the top row puts it back.
  * On a phone the card spans the bottom edge and only folds.
  */
-export function useCardPlacement(card: RefObject<HTMLElement | null>, kind: 'demo' | 'tutorial', opening: unknown) {
+export function useCardPlacement(card: RefObject<HTMLElement | null>, kind: 'demo' | 'tutorial' | 'tour', opening: unknown) {
   const storage = useMemo(safeStorage, []);
   const key = `limpide.cardFolded.${kind}`;
   const [folded, setFolded] = useState(() => storage.getItem(key) === '1');

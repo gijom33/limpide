@@ -6,7 +6,7 @@ import { applyStep, differences, reached } from './tutorial';
 import { TUTORIALS } from './tutorials';
 
 describe('the Tutorials', () => {
-  it('start with Bass, the one the Welcome opens, then Acid, Pluck and Wobble, then issue 109’s three', () => {
+  it('start with Bass, the one the Tour’s last card opens, then Acid, Pluck and Wobble, then issue 109’s three', () => {
     expect(TUTORIALS.map((t) => t.preset)).toEqual(['Bass', 'Acid', 'Pluck', 'Wobble', 'FM Ladder', 'Ring Bell', 'Deep Breath']);
   });
 

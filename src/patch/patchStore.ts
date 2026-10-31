@@ -2,8 +2,8 @@ import type { Library } from './library';
 import type { Patch } from './patch';
 import { initialPatch, presetAfter } from './presets';
 
-/** Who made a change: the Demo's "turned by hand" listens for a hand's or a Controller's. */
-export type ChangeBy = 'hand' | 'controller' | 'demo' | 'tutorial' | 'load';
+/** Who made a change: the Demo's "turned by hand" listens for a hand's or a Controller's, and so does the Tour's. */
+export type ChangeBy = 'hand' | 'controller' | 'demo' | 'tutorial' | 'tour' | 'load';
 
 /** The Patch being played, its name, and whether its sound differs from what it was when loaded or saved. */
 export interface PatchNow {
@@ -19,6 +19,12 @@ export interface PatchChange {
 }
 
 export type PatchStore = ReturnType<typeof createPatchStore>;
+
+/** A Patch set aside with what "changed" compares it against, to be given back as it was (`keep`, `restore`). */
+export interface KeptPatch {
+  now: PatchNow;
+  baseline: Patch;
+}
 
 const AUTOSAVE_MS = 300;
 
@@ -67,6 +73,18 @@ export function createPatchStore({ hash, library, apply }: { hash: string; libra
     },
     /** A Patch loaded under a name, which becomes what "changed" compares against. */
     load,
+    /** The Patch as it is now, set aside: the Tour plays on its own and gives this back (issue 128). */
+    keep: (): KeptPatch => ({ now, baseline }),
+    /**
+     * A kept Patch back exactly as it was, name and changed mark too, heard as a load; saved as the Last session at
+     * once, so a page closed straight after keeps it.
+     */
+    restore(kept: KeptPatch) {
+      baseline = kept.baseline;
+      set(kept.now.patch, kept.now.name, 'load');
+      clearTimeout(autosave);
+      library.saveCurrent(now.patch);
+    },
     /** The next (+1) or previous (−1) Preset from the one loaded now, even twice before a render (a Controller's pads). */
     step(delta: number) {
       const preset = presetAfter(now.name, delta);

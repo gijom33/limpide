@@ -8,7 +8,6 @@ import { SHARED_RIFF, TRACK, type Track } from '../../demo/track';
 import { shiftOctave } from '../../input/keyboardLayout';
 import { PRESETS } from '../../patch/presets';
 import type { TransportHost } from '../../play/transport';
-import type { Tutorial } from '../../tutorial/tutorial';
 import { SECTION_OF, type SectionName } from '../sections';
 import { freezesOnSpace } from './useKeys';
 
@@ -37,7 +36,8 @@ interface Host {
 
 /**
  * The three things that play by themselves: the Demo (a track of Presets, knobs turning, until anything is touched),
- * the Song (a loop on the loaded Patch, which it never changes) and a Tutorial's Listen (its phrase, over and over).
+ * the Song (a loop on the loaded Patch, which it never changes) and a Tutorial's Listen (its phrase, over and over),
+ * which a Tour card's phrase plays as well.
  * One plays at a time; the Notes they play are lit on the piano.
  */
 export function usePlayers({ session, octaveRef, setOctave, heldNotes, onDemoStart }: Host) {
@@ -149,9 +149,9 @@ export function usePlayers({ session, octaveRef, setOctave, heldNotes, onDemoSta
   const toggleSong = () =>
     current.current?.kind === 'song' ? stopSong() : play('song', () => startSong({ ...transport, octave: () => octaveRef.current }));
 
-  // Listen: a Tutorial's phrase, played over and over on the Patch as it is now, so both hands are free.
+  // Listen: a Tutorial's phrase, or a Tour card's, played over and over on the Patch as it is now, so both hands are free.
   const stopListen = () => stop('listen');
-  const startListen = (tutorial: Tutorial) => play('listen', () => startPhraseLoop({ ...transport, showOctave }, tutorial));
+  const startListen = (phrase: { phrase: string; bpm: number }) => play('listen', () => startPhraseLoop({ ...transport, showOctave }, phrase));
 
   const demo = playing === 'demo' ? part : null;
 

@@ -248,19 +248,6 @@ test('the header’s Tutorial button lists the Tutorials, ticks the finished, an
   await expect(button).toHaveAttribute('aria-expanded', 'false');
 });
 
-test.describe('a first visit', () => {
-  test.use({ storageState: { cookies: [], origins: [] } });
-
-  test('the welcome offers the Tutorial, which opens Bass', async ({ page }) => {
-    await page.goto('/');
-    const about = page.getByRole('dialog', { name: 'Limpide' });
-    await about.getByRole('button', { name: 'Follow the Tutorial' }).click();
-    await expect(about).toBeHidden();
-    await expect(card(page)).toHaveAccessibleName('Tutorial: Bass');
-    await expect(action(page, 'Start')).toBeFocused(); // not the Demo button behind it (issue 104)
-  });
-});
-
 test('picking a Tutorial puts the focus on its card, and its Next keeps it there, Step after Step (issue 104)', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Tutorial', exact: true }).focus();

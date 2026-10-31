@@ -21,6 +21,7 @@ import { useMediaQuery } from './hooks/useMediaQuery';
 import { useMidi } from './hooks/useMidi';
 import { usePlayers } from './hooks/usePlayers';
 import { usePresetAbout } from './hooks/usePresetAbout';
+import { useTourState } from './hooks/useTourState';
 import { useTutorialState } from './hooks/useTutorialState';
 import { HoldIcon, InfoIcon, NoteIcon, PlayIcon } from './icons';
 import { Knob } from './Knob';
@@ -42,6 +43,7 @@ import { Tabs } from './Tabs';
 import { TapViewers } from './TapViewers';
 import { ToolGroup } from './ToolGroup';
 import { type TipContent, Tooltip, TooltipsContext } from './Tooltip';
+import { TourCard } from './TourCard';
 import { TutorialCard } from './TutorialCard';
 import { TutorialMenu } from './TutorialMenu';
 import { applyTheme, loadTheme, type Theme } from './theme';
@@ -200,6 +202,7 @@ export function App() {
     session, octaveRef, setOctave, heldNotes,
     // The Demo loads its own Presets, and the page stays where the Demo leaves it.
     onDemoStart: () => {
+      tour.end();
       tutorial.end();
       midi.setBankFollow(null);
     },
@@ -210,9 +213,21 @@ export function App() {
     snapshot: viewer.snapshot,
     takeSnapshot: () => viewerStore.dispatch({ type: 'takeSnapshot' }),
     onStart: () => {
+      tour.end();
       players.stopAll();
       players.setTookOver(false);
     },
+    onEnd: players.stopListen,
+  });
+  // The Tour (issue 128): from the Welcome and the About, on a Patch of its own, the person's given back at its end.
+  const tour = useTourState({
+    patches,
+    onStart: () => {
+      tutorial.end();
+      players.stopAll();
+      players.setTookOver(false);
+    },
+    onCard: players.startListen,
     onEnd: players.stopListen,
   });
   // The Tutorials, from the Patches panel and the header's Tutorial button alike.
@@ -468,7 +483,7 @@ export function App() {
           welcome={welcome}
           onClose={closeAbout}
           onPlay={() => players.playDemo({ shared: welcome === 'shared' })}
-          onTutorial={() => tutorial.start(TUTORIALS[0])}
+          onTour={tour.start}
         />
 
         {audioStatus === 'blocked' && (
@@ -755,6 +770,19 @@ export function App() {
             onJump={(from) => players.playDemo({ from })}
             onPlayAgain={() => players.playDemo()}
             onDismiss={() => players.setTookOver(false)}
+          />
+        )}
+        {tour.index !== null && (
+          <TourCard
+            index={tour.index}
+            moving={tour.moving}
+            onBack={() => tour.move(-1)}
+            onNext={() => tour.move(1)}
+            onBass={() => {
+              tour.end();
+              tutorial.start(TUTORIALS[0]);
+            }}
+            onClose={tour.end}
           />
         )}
         {tutorial.lesson && tutorial.preset && (
