@@ -252,9 +252,10 @@ export function createMascotPlace({ from, random = Math.random }: { from?: numbe
             return placed(toX);
           }
         }
-        // Across: at the speed that brings it over its spot when it comes down onto the line.
+        // Across: at the speed that brings it over its spot when it comes down onto the line, the time till then solving
+        // down = vy t + GRAVITY t² / 2 (down is positive, so rising, vy < 0, leaves it longer).
         const down = goal - foot;
-        const timeLeft = pushing ? 0.35 : (vy + Math.sqrt(Math.max(0, vy * vy + 2 * GRAVITY * Math.max(0, down)))) / GRAVITY;
+        const timeLeft = pushing ? 0.35 : (-vy + Math.sqrt(Math.max(0, vy * vy + 2 * GRAVITY * Math.max(0, down)))) / GRAVITY;
         vx = (toX - x) / Math.max(0.05, timeLeft);
         x += vx * dt;
         if (!pushing && vy > 0 && foot >= goal) {

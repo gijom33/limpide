@@ -143,6 +143,19 @@ describe('the mascot between its lines, by the laws of motion (issue 115)', () =
     expect(top(600)).toBeGreaterThan(top(850) + 30);
   });
 
+  it('comes down onto its spot by its own flight, never moved across on the frame it lands (issue 140)', () => {
+    // Across, to a section beside it, down to one below and up to one above: the frame it lands, no step across bigger
+    // than two of its flight's own just before (it lands part way through a frame).
+    for (const [from, to, toX] of [[300, 300, 100], [300, 700, 900], [700, 300, 100], [300, 300, 900]]) {
+      const place = createMascotPlace({ random: () => 0.5 });
+      place.frame(edge('Amp', from), { min: 0, max: 1000 }, 0, false, 500);
+      const frames = run(place, 1 / 60, 3, () => edge('Filter', to), false, { min: toX, max: toX }, 500);
+      const landing = frames.findIndex((f) => f.landedAt !== null);
+      const last = frames[landing - 1];
+      expect(Math.abs(toX - last.x!), `${from} to ${to}, to ${toX}`).toBeLessThan((2 * Math.abs(last.vx)) / 60 + 2);
+    }
+  });
+
   it('climbs to the header and holds on; letting go, it drops to an edge below', () => {
     const place = createMascotPlace();
     place.frame(edge('Filter', 700), span, 0, false, 100);
