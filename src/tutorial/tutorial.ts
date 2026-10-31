@@ -1,4 +1,5 @@
-import { type ChoiceId, formatParam, LFO_DESTINATIONS, PARAMS, type ParamId, type Patch, paramName, setParam } from '../patch/patch';
+import { WAVEFORM_NAMES } from '../music/harmonics';
+import { type ChoiceId, formatParam, LFO_DESTINATIONS, PARAMS, type ParamId, type Patch, paramName, setParam, soundFields } from '../patch/patch';
 import { PRESETS } from '../patch/presets';
 import { valueToPosition } from '../patch/taper';
 import type { Overlay, Overlays } from '../viewers/overlays';
@@ -119,11 +120,11 @@ export function rebuild(tutorial: Tutorial): Patch {
  * Step sets it, and loading the Preset at the end brings it (issue 125).
  */
 export function differences(patch: Patch, preset: Patch): (keyof Patch)[] {
-  return (Object.keys(preset) as (keyof Patch)[]).filter((key) => key !== 'keyboardOctave' && patch[key] !== preset[key]);
+  return soundFields(preset).filter((key) => patch[key] !== preset[key]);
 }
 
 const CHOICE_NAMES: Record<string, string> = {
-  saw: 'Saw', sine: 'Sine', triangle: 'Triangle', square: 'Square', pulse: 'Pulse', sawDown: 'Saw Down',
+  ...WAVEFORM_NAMES, sawDown: 'Saw Down',
   lowpass: 'Low-pass', highpass: 'High-pass', bandpass: 'Band-pass', notch: 'Notch',
   ...Object.fromEntries(LFO_DESTINATIONS.map((d) => [d.id, d.label])),
   note: 'On', free: 'Off', white: 'White', pink: 'Pink',

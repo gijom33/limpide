@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DIP, envelopeLevel, type GateEvent } from '../modulation/envelope';
+import { lfoOffset, osc2Cents } from '../modulation/modulationModel';
 import { harmonicSeries, type Waveform } from '../music/harmonics';
 import { fmDepthKept, idealPartials, idealReference } from '../music/idealReference';
 import { defaultPatch, type Patch } from '../patch/patch';
@@ -1562,10 +1563,10 @@ describe('Ring Modulation (issue 88)', () => {
   });
 });
 
-describe('Cross-modulation (issue 89)', () => {
+describe('FM (issue 89)', () => {
   const sines = { cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001, waveform: 'sine', osc2Waveform: 'sine' } as const;
-  const harmonics = async (note: number, crossMod: number) => {
-    const s = await render(1.5, { ...sines, crossMod }, (e) => e.noteOn(note, 1, 0));
+  const harmonics = async (note: number, fm: number) => {
+    const s = await render(1.5, { ...sines, crossMod: fm }, (e) => e.noteOn(note, 1, 0));
     const f = 440 * 2 ** ((note - 69) / 12);
     const window = s.subarray(SR / 2, SR / 2 + Math.round((40 * SR) / f) * 1);
     return (n: number) => toneAmplitude(window, SR, f * n);
@@ -1603,6 +1604,36 @@ describe('an LFO on FM (issue 97)', () => {
     // A sine LFO peaks a quarter of a cycle in (FM at 50 %) and dips three quarters in (FM at 0).
     expect(second(0.21)).toBeGreaterThan(-15);
     expect(second(0.71)).toBeLessThan(-45);
+  });
+
+  it('sounds the sidebands the Ideal draws for the FM the model gives, at each end of a square LFO (ADR-0003)', async () => {
+    // FM at 30 %, LFO 1 at a fifth of its Depth on it: FM at 50 % for the LFO's first second, 10 % for its next.
+    const patch = {
+      ...defaultPatch(), cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001, waveform: 'sine', osc2Waveform: 'sine', osc2Semitone: 7,
+      crossMod: 0.3, lfoDestination: 'fm', lfoAmount: 0.2, lfoRate: 0.5, lfoWaveform: 'square', lfoRetrigger: 'note',
+    } as const;
+    let engine!: ReturnType<typeof createSynthEngine>;
+    const s = await render(2, patch, (e) => {
+      engine = e;
+      e.noteOn(57, 1, 0); // 220 Hz
+    });
+    const fms: number[] = [];
+    for (const t of [0.5, 1.5]) {
+      const fm = patch.crossMod + lfoOffset(patch, 'fm', engine.modulationAt(t).lfo, patch.crossMod);
+      fms.push(fm);
+      const window = s.subarray(Math.round(t * SR) - 4096, Math.round(t * SR) + 4096);
+      const marks = idealPartials({ ...patch, crossMod: fm, lfoAmount: 0 }, 32).filter((p) => p.ratio * 220 < 4000);
+      const top = Math.max(...marks.map((p) => p.level));
+      const shown = marks.filter((p) => p.level > top / 100);
+      const heard = shown.map((p) => toneAmplitudeHann(window, SR, 220 * p.ratio));
+      const loudest = Math.max(...heard);
+      expect(shown.length, `at ${t} s`).toBeGreaterThan(2);
+      shown.forEach((p, i) =>
+        expect(Math.abs(dB(heard[i] / loudest) - dB(p.level / top)), `the partial at ${p.ratio.toFixed(3)}, ${t} s`).toBeLessThan(0.5),
+      );
+    }
+    expect(fms[0]).toBeCloseTo(0.5);
+    expect(fms[1]).toBeCloseTo(0.1);
   });
 });
 
@@ -1789,6 +1820,24 @@ describe('the Filter Envelope on Osc 2’s pitch (issue 93)', () => {
   it('leaves Osc 2 alone at 0', async () => {
     const s = await render(1, { ...osc2Alone, filterSustain: 1 }, (e) => e.noteOn(45, 1, 0));
     expect(frequencyAround(s, SR, 0.7, 0.2)).toBeCloseTo(110, -1);
+  });
+
+  it('slides Osc 2 down with the Envelope as the model says, through its Decay (ADR-0003)', async () => {
+    const patch = { ...defaultPatch(), ...osc2Alone, osc2EnvAmount: 12, filterDecay: 2, filterSustain: 0 };
+    let engine!: ReturnType<typeof createSynthEngine>;
+    const s = await render(2, patch, (e) => {
+      engine = e;
+      e.noteOn(69, 1, 0);
+    });
+    const heard = [0.1, 0.3, 1].map((t) => {
+      const { lfo, filter } = engine.modulationAt(t);
+      const model = 440 * 2 ** (osc2Cents(patch, lfo, filter) / 1200);
+      expect(Math.abs(1200 * Math.log2(frequencyAround(s, SR, t, 0.01) / model)), `cents from the model at ${t} s`).toBeLessThan(5);
+      return model;
+    });
+    // It has moved: from most of an octave up, most of the way back to the Note.
+    expect(heard[0]).toBeGreaterThan(700);
+    expect(heard[2]).toBeLessThan(500);
   });
 });
 
@@ -2040,6 +2089,32 @@ describe('a Note reaching a Voice still sounding dips first, so it does not clic
     });
     expect(steepestStep(s, 0.295, 0.35)).toBeLessThan(1.5 * steepestStep(s, 0.7, 0.95));
   });
+
+  // The legato rule's one-Voice condition (the 1.16.0 review): on several Voices a held Voice taken by a new Note, or
+  // its key struck again, restarts after a dip; on one Voice the same Note is legato and slides on.
+  const takings = {
+    'a held Voice taken for a new Note': [45, 52, 57],
+    'a held key struck again': [45, 52, 45],
+  };
+  for (const [how, [first, second, third]] of Object.entries(takings))
+    it(`restarts ${how} on 2 Voices, dipping first; on 1 Voice it is legato (issue 94)`, async () => {
+      const struck = async (voices: 1 | 2) => {
+        let engine!: ReturnType<typeof createSynthEngine>;
+        await render(0.5, { ...sine, voices, ampAttack: 0.001, ampSustain: 1 }, (e) => {
+          engine = e;
+          e.noteOn(first, 1, 0);
+          e.noteOn(second, 1, 0.1);
+          e.noteOn(third, 1, 0.3);
+        });
+        return { at: engine.modulationAt(0.4).struck, inDip: engine.modulationAt(0.3 + DIP * 0.9).amp };
+      };
+      const two = await struck(2);
+      expect(two.at).toBeCloseTo(0.3 + DIP, 6);
+      expect(two.inDip).toBeLessThan(0.2);
+      const one = await struck(1);
+      expect(one.at).toBeCloseTo(0.3, 6);
+      expect(one.inDip).toBeGreaterThan(0.9);
+    });
 
   // A Gate off before the Note it closes has started. Issue 101 left the first to 102: the Demo stopped, or Hold switched
   // off, before a Note it handed over. A4, its restart due at a quarter of a cycle (245¼ cycles, after the dip): a step

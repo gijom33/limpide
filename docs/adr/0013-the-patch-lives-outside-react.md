@@ -1,6 +1,6 @@
 # The Patch lives in a store outside React, and the engine hears each change first
 
-**Status:** accepted · **Date:** 2026-10-28 · **Decided by:** the owner (grilling of [issue 73](../issues/73-patch-store.md))
+**Status:** accepted, its consequence "building it has no side effect" amended by [ADR-0014](./0014-the-stores-are-built-once-with-their-effects.md) · **Date:** 2026-10-28 · **Decided by:** the owner (grilling of [issue 73](../issues/73-patch-store.md))
 
 Extends [ADR-0002](./0002-viewers-and-engine-live-outside-react.md).
 

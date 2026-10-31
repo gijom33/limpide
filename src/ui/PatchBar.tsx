@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import type { Library } from '../patch/library';
 import type { Patch } from '../patch/patch';
 import { type Category, categoryLists, isSearch, matchesWords } from '../patch/presetSearch';
@@ -42,8 +42,6 @@ export function PatchBar({ name, changed, patch, library, onLoad, about, tutoria
   const opener = useRef<HTMLButtonElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const searchBox = useRef<HTMLInputElement>(null);
-  const queryRef = useRef(query);
-  queryRef.current = query;
   /** The panel closes, and the focus goes back to the button that opened it, not to the page (issue 51). */
   const closeToOpener = () => {
     setOpen(false);
@@ -53,20 +51,19 @@ export function PatchBar({ name, changed, patch, library, onLoad, about, tutoria
   const stepping = useRef({ name, from: name });
   if (stepping.current.from !== name) stepping.current = { name, from: name };
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: closeToOpener is rebuilt each render, the same each time
+  // Escape clears the search first, wherever the focus is in the panel, then closes it back to its button; a press
+  // elsewhere closes it and leaves the focus where the press went.
+  const close = useEffectEvent((e: Event) => {
+    if (e instanceof KeyboardEvent) {
+      if (e.key !== 'Escape') return;
+      if (query) {
+        setQuery('');
+        searchBox.current?.focus();
+      } else closeToOpener();
+    } else if (!wrapper.current?.contains(e.target as Node)) setOpen(false);
+  });
   useEffect(() => {
     if (!open) return;
-    // Escape clears the search first, wherever the focus is in the panel, then closes it back to its button; a press
-    // elsewhere closes it and leaves the focus where the press went.
-    const close = (e: Event) => {
-      if (e instanceof KeyboardEvent) {
-        if (e.key !== 'Escape') return;
-        if (queryRef.current) {
-          setQuery('');
-          searchBox.current?.focus();
-        } else closeToOpener();
-      } else if (!wrapper.current?.contains(e.target as Node)) setOpen(false);
-    };
     document.addEventListener('keydown', close);
     document.addEventListener('pointerdown', close);
     return () => {

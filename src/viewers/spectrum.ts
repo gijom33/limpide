@@ -62,23 +62,32 @@ function strokeColumns(g: CanvasRenderingContext2D, values: Float32Array, yOf: (
   g.stroke();
 }
 
-/** One Ideal mark, outlined: a circle (Osc 1), a square (Osc 2), a triangle (the Sub) or a diamond (Ring), about 5 px across. */
-function idealMark(g: CanvasRenderingContext2D, x: number, y: number, source: IdealSource) {
-  g.beginPath();
-  if (source === 'osc1') g.arc(x, y, 2.5, 0, 2 * Math.PI);
-  else if (source === 'osc2') g.rect(x - 2.5, y - 2.5, 5, 5);
-  else if (source === 'ring') {
+/**
+ * Each Ideal source's mark, about 5 px across, in the order they are drawn: a circle for Osc 1, a square for Osc 2, a
+ * triangle for the Sub (the owner, 2026-10-27), a diamond for Ring (issue 88).
+ */
+const IDEAL_MARKS: Record<IdealSource, (g: CanvasRenderingContext2D, x: number, y: number) => void> = {
+  osc1: (g, x, y) => g.arc(x, y, 2.5, 0, 2 * Math.PI),
+  osc2: (g, x, y) => g.rect(x - 2.5, y - 2.5, 5, 5),
+  sub: (g, x, y) => {
+    g.moveTo(x, y - 3);
+    g.lineTo(x + 3, y + 2.2);
+    g.lineTo(x - 3, y + 2.2);
+    g.closePath();
+  },
+  ring: (g, x, y) => {
     g.moveTo(x, y - 3);
     g.lineTo(x + 3, y);
     g.lineTo(x, y + 3);
     g.lineTo(x - 3, y);
     g.closePath();
-  } else {
-    g.moveTo(x, y - 3);
-    g.lineTo(x + 3, y + 2.2);
-    g.lineTo(x - 3, y + 2.2);
-    g.closePath();
-  }
+  },
+};
+
+/** One Ideal mark, outlined, in its source's shape. */
+function idealMark(g: CanvasRenderingContext2D, x: number, y: number, source: IdealSource) {
+  g.beginPath();
+  IDEAL_MARKS[source](g, x, y);
   g.stroke();
 }
 
@@ -228,9 +237,9 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
       g.textAlign = 'left';
     }
 
-    // The Ideal Reference: theory's level for each Harmonic of each Oscillator (after the Filter, when there is one),
-    // a circle for Osc 1, a square for Osc 2, a triangle for the Sub (the owner, 2026-10-27), a diamond for Ring (issue 88), while the trace shows a
-    // sound to compare them with: none while silent, as after a reload before a Note.
+    // The Ideal Reference: theory's level for each Harmonic of each Oscillator (after the Filter, when there is one), a
+    // shape for each source (IDEAL_MARKS), while the trace shows a sound to compare them with: none while silent, as
+    // after a reload before a Note.
     const partials = showIdeal && overlays.ideal && sounding && ideal ? ideal : undefined;
     let markCount = 0;
     if (partials && f0 > 0) {
@@ -244,7 +253,7 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
       const marks = shown.map((p, i) => ({ x: xOf(f0 * p.ratio), y: yOf(amplitudeToSpectrumDb(p.level * gains[i])), source: p.source }));
       // None below the floor (as the Curve), none where one source's Harmonics crowd closer than a mark's width: each
       // source is thinned on its own, so two on one Harmonic both show.
-      for (const source of ['osc1', 'osc2', 'sub', 'ring'] as const) {
+      for (const source of Object.keys(IDEAL_MARKS) as IdealSource[]) {
         const own = marks.filter((m) => m.source === source);
         for (const i of marksToDraw(own, height - 0.5, MARK_GAP)) {
           markCount++;

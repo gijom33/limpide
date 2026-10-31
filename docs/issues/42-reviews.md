@@ -4,7 +4,7 @@
 
 **Blocked by:** none (the Learner's second run waits for the tutorials, [40](./40-preset-tutorials.md))
 
-**Status:** ready-for-human · enhancement. Left: the owner's tap-through of the real LinkedIn link on a phone, and profile 16's first run once the Tour is released. The ten persona reviews ran on 2026-10-26 (version 1.8.1), the Learner's second run on 2026-10-27, and a code review runs at every minor release since 1.11.1 ([ADR-0010](../adr/0010-how-the-work-is-recorded.md)); trimmed (2026-10-28, decided by the owner).
+**Status:** ready-for-human · enhancement. Left: the owner's tap-through of the real LinkedIn link on a phone, and profile 16's first run once the Tour is released. The ten persona reviews ran on 2026-10-26 (version 1.8.1), the Learner's second run on 2026-10-27, and a code review runs before releases since 1.11.1, as [the release steps](../releasing.md) say; trimmed (2026-10-28, decided by the owner).
 
 ## Why these profiles
 
@@ -145,6 +145,8 @@ A lawyer or compliance lead who reviews open-source projects before a company us
 
 Claude's three reviewers, kept by the owner and first run on 1.16.0 (2026-10-30): the ripple hunter finds every test, tip, description and doc still stating what a change made untrue; the fact-checker renders each new or changed Preset and tip through the engine and tests every claim its words make; the ear stand-in renders each new Preset and reports levels, clicks, clipping, harshness and fold-back. Their briefs are the reports' own opening lines: [12](../reviews/2026-10-30/12-ripple-hunter.md), [13](../reviews/2026-10-30/13-fact-checker.md), [14](../reviews/2026-10-30/14-ear-stand-in.md).
 
+**Since then (2026-10-30, [issue 110](./110-checks-before-a-push.md)):** they run before a release's push, as [the release steps](../releasing.md) say. Decided by the owner, the ripple hunter's part Claude's call, open to the owner.
+
 ### 15. The sound designer and Preset curator
 
 A professional sound designer who has built factory Preset banks for commercial synths and curated libraries of hundreds of sounds. Added by the owner, 2026-10-30: "an expert at crafting synth presets, at organizing them, at creating a cohesive collection with a lot of variety, and highlight all the clever tricks which lead to amazing sounding sounds".
@@ -178,3 +180,5 @@ Someone who has never touched a synth and opens Limpide to have fun and learn so
 - [x] Profile 11's review (the open-source legal expert), 2026-10-26: a company could use or fork it today (MIT, the 3 shipped dependencies MIT, no copyleft among 108 dev dependencies, no third-party assets), once a fork adds the third-party notices and drops the counter; contributions should wait for a CONTRIBUTING (issue 56). Its findings in the inbox; AI authorship stated is issue 48
 - [x] Profile 15's review (the sound designer and Preset curator), added by the owner 2026-10-30, ran the same day on 1.16.0: [report](../reviews/2026-10-30/15-sound-designer.md), its findings to the inbox
 - [ ] Profile 16's review (the synth neophyte), added by the owner 2026-10-31: once the Tour is released, on the Tour and every Tutorial; its findings to the inbox and to [129](./129-words-fun-to-read.md)
+
+**Since then (2026-10-28, the retro of issues 73 to 79; recorded 2026-10-30 by [issue 110](./110-checks-before-a-push.md)):** the code review is no longer for minor versions only; which releases get it, [the release steps](../releasing.md) say ([ADR-0016](../adr/0016-the-release-steps-are-the-one-home-of-the-release-rules.md)). Decided by the owner.

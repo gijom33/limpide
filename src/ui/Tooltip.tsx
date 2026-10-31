@@ -1,4 +1,4 @@
-import { createContext, type ReactNode, useContext, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import { createContext, type ReactNode, useContext, useEffect, useEffectEvent, useId, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { addDescription, removeDescription } from './inactive';
 import { placeTooltip } from './placeTooltip';
@@ -78,13 +78,13 @@ export function Tooltip({ content, children, longPress = true }: { content: TipC
 
   useEffect(() => () => window.clearTimeout(timer.current), []);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: hide is rebuilt each render, the same each time
+  const hideNow = useEffectEvent(hide);
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && hide();
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && hideNow();
     // Opened by a long press: the next touch anywhere, or a scroll, puts it away.
-    const onTouchElsewhere = (e: PointerEvent) => pinned.current && !wrapperRef.current?.contains(e.target as Node) && hide();
-    const onScroll = () => pinned.current && hide();
+    const onTouchElsewhere = (e: PointerEvent) => pinned.current && !wrapperRef.current?.contains(e.target as Node) && hideNow();
+    const onScroll = () => pinned.current && hideNow();
     document.addEventListener('keydown', onKey);
     document.addEventListener('pointerdown', onTouchElsewhere);
     window.addEventListener('scroll', onScroll, { passive: true });

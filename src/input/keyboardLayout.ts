@@ -1,4 +1,4 @@
-import type { Patch } from '../patch/patch';
+import { KEYBOARD_OCTAVES, type Patch } from '../patch/patch';
 
 // Piano layout on a QWERTY keyboard: home row = white keys, row above = black keys.
 const SEMITONE_BY_CODE: Record<string, number> = {
@@ -12,16 +12,11 @@ export function keyToNote(code: string, octave: number): number | undefined {
   return semitone === undefined ? undefined : 12 * (octave + 1) + semitone;
 }
 
-const LOWEST_OCTAVE = 0;
-const HIGHEST_OCTAVE = 7;
-
 /** Z shifts the keyboard an octave down, X an octave up. */
 export const octaveKey = (code: string): -1 | 0 | 1 => (code === 'KeyZ' ? -1 : code === 'KeyX' ? 1 : 0);
 
-export const shiftOctave = (octave: number, delta: number) => Math.min(HIGHEST_OCTAVE, Math.max(LOWEST_OCTAVE, octave + delta));
-
-/** Whether the keyboard can start in this octave: a whole one the octave buttons reach. */
-export const isKeyboardOctave = (octave: unknown): octave is number => Number.isInteger(octave) && shiftOctave(octave as number, 0) === octave;
+export const shiftOctave = (octave: number, delta: number) =>
+  Math.min(KEYBOARD_OCTAVES.highest, Math.max(KEYBOARD_OCTAVES.lowest, octave + delta));
 
 /** The piano starts on C4, the octave the octave buttons count from. */
 export const DEFAULT_OCTAVE = 4;

@@ -595,8 +595,8 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .block .sub-block:has(.knob) h3 { display: flex; align-items: center; min-height: var(--row-dial); }
 /* Osc 1's Pitch row takes a big dial's room, so it stands where Osc 2's Tuning, with its big Detune, does on the next
    tab (the owner): its name centred on that height, its small knobs down to where Tuning's small ones sit. */
-.block .sub-block[aria-label='Osc 1 Pitch'] { --row-dial: var(--dial-big); }
-.block .sub-block[aria-label='Osc 1 Pitch'] > .knobs { padding-top: calc(var(--dial-big) - var(--dial-small)); }
+.block .sub-block.osc1-pitch { --row-dial: var(--dial-big); }
+.block .sub-block.osc1-pitch > .knobs { padding-top: calc(var(--dial-big) - var(--dial-small)); }
 /* A picker may sit in its tooltip's anchor (the Waveforms): the same line, through it. */
 .block .sub-block:has(.knob):has(> .segmented, > .tip-anchor > .segmented) h3,
 .block .sub-block:has(.knob) > .segmented, .block .sub-block:has(.knob) > .tip-anchor:has(> .segmented) {
@@ -759,8 +759,8 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   display: grid; grid-template-columns: var(--control-h) minmax(0, calc(10 * var(--white-key-max)));
   grid-template-areas: 'up piano' 'down piano'; gap: 4px; justify-content: center;
 }
-.keyboard > [aria-label='Octave up'] { grid-area: up; }
-.keyboard > [aria-label='Octave down'] { grid-area: down; }
+.keyboard > .octave-up { grid-area: up; }
+.keyboard > .octave-down { grid-area: down; }
 .keyboard > .tip-anchor { grid-area: piano; display: flex; container-type: inline-size; }
 /* Each octave button half the piano's height. */
 .keyboard > .tool-icon { width: auto; height: auto; align-self: stretch; }
@@ -1062,13 +1062,13 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 @media (min-width: 1280px) {
   header, .header-left, .header-identity { column-gap: 8px; }
   .header-play, .header-set, .header-right { gap: 6px; }
-  header :is(.demo-button, [aria-label='Hold'], .midi-status, .display-menu > .tip-anchor > .tool, .about-menu .tool) { padding: 0 6px; }
+  header :is(.demo-button, .hold-button, .midi-status, .display-menu > .tip-anchor > .tool, .about-menu .tool) { padding: 0 6px; }
 }
 /* From 1100 px the buttons right of the keyboard, two rows high, keep their words: about as wide as the logo and the
    Patch on the left, so the piano stays at the centre (the owner, 2026-10-29). */
 @media (min-width: 861px) and (max-width: 1099px) {
   header :is(.demo-word, .tool-word) { display: none; }
-  header :is(.demo-button, [aria-label='Hold'], .midi-status, .display-menu > .tip-anchor > .tool, .about-menu .tool) { padding: 0 6px; }
+  header :is(.demo-button, .hold-button, .midi-status, .display-menu > .tip-anchor > .tool, .about-menu .tool) { padding: 0 6px; }
 }
 @media (min-width: 861px) and (max-width: 919px) {
   header, .header-left, .header-identity { column-gap: var(--space-2); }
@@ -1298,10 +1298,10 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   .display-menu .display-dot { position: absolute; top: 5px; right: 5px; } /* not a third line under icon and word */
   /* The playing and set-up buttons: each icon over its word (a tooltip needs a pointer, so on a touch screen the word
      says what the icon does), 44 pt tall for a finger. */
-  header :is(.demo-button, [aria-label='Hold'], .midi-status, .display-menu .tool, .about-menu .tool) {
+  header :is(.demo-button, .hold-button, .midi-status, .display-menu .tool, .about-menu .tool) {
     flex-direction: column; justify-content: center; gap: 2px; height: auto; min-height: 44px; padding: 3px 6px 2px;
   }
-  header :is(.demo-button, [aria-label='Hold'], .midi-status, .display-menu .tool, .about-menu .tool) :is(.demo-word, .tool-word) {
+  header :is(.demo-button, .hold-button, .midi-status, .display-menu .tool, .about-menu .tool) :is(.demo-word, .tool-word) {
     display: block; font-size: 9px; line-height: 10px;
   }
 }
@@ -1318,7 +1318,7 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
     column-gap: var(--space-2);
   }
   .header-identity { column-gap: var(--space-2); }
-  header :is(.demo-button, [aria-label='Hold'], .midi-status, .display-menu .tool, .about-menu .tool) { padding-inline: 4px; }
+  header :is(.demo-button, .hold-button, .midi-status, .display-menu .tool, .about-menu .tool) { padding-inline: 4px; }
   .chain > * { scroll-margin-top: calc(var(--header-h, 0px) + var(--space-2)); }
 }
 
@@ -1451,10 +1451,11 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 .demo-bar-parts > button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .demo-bar-segment { position: relative; display: block; width: 100%; height: 6px; border-radius: 3px; overflow: hidden; background: color-mix(in srgb, var(--muted) 30%, transparent); }
 .demo-bar-parts > button:hover .demo-bar-segment { background: color-mix(in srgb, var(--muted) 55%, transparent); }
-.demo-bar-segment::after { content: ''; position: absolute; inset: 0; background: var(--accent); transform-origin: left; transform: scaleX(0); }
+.demo-bar-segment::after, .demo-bar-fill { position: absolute; inset: 0; background: var(--accent); transform-origin: left; }
+.demo-bar-segment::after { content: ''; transform: scaleX(0); }
 .demo-bar-parts > button[data-done] .demo-bar-segment::after { transform: scaleX(1); }
 /* The playing part fills over its length (its duration and start set inline); a negative delay picks it up where it is. */
-.demo-bar-fill { position: absolute; inset: 0; background: var(--accent); transform-origin: left; animation: demo-fill linear both; }
+.demo-bar-fill { animation: demo-fill linear both; }
 @keyframes demo-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 .demo-bar-step { display: none; }
 /* On a phone fifteen segments a finger wide do not fit (660 px): they are a finger tall, as wide as their row allows,

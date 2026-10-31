@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from 'react';
 import { DESTINATIONS } from '../modulation/destinations';
 import { LFO_DESTINATIONS, type LfoDestination, type LfoNumber, STAGES } from '../patch/patch';
 import { useLearnable } from './learn';
@@ -33,7 +33,7 @@ export function DestinationPicker({ lfo, value, onChange }: Props) {
   };
 
   // Opened near the bottom of the window (the LFOs sit low on a laptop), the menu opens upwards instead.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: measured again each time the menu opens
+  // biome-ignore lint/correctness/useExhaustiveDependencies: open is the trigger (the menu is in the page only while it is), not a value read here
   useLayoutEffect(() => {
     const menu = wrapper.current?.querySelector<HTMLElement>('[role="menu"]');
     if (!menu) return;
@@ -43,11 +43,11 @@ export function DestinationPicker({ lfo, value, onChange }: Props) {
   }, [open]);
 
   // Open: the destination in force takes the focus; a press outside closes the menu.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: close is rebuilt each render, the same each time
+  const closeNow = useEffectEvent(close);
   useEffect(() => {
     if (!open) return;
     wrapper.current?.querySelector<HTMLElement>('[role="menuitemradio"][aria-checked="true"]')?.focus();
-    const outside = (e: PointerEvent) => !wrapper.current?.contains(e.target as Node) && close(false);
+    const outside = (e: PointerEvent) => !wrapper.current?.contains(e.target as Node) && closeNow(false);
     document.addEventListener('pointerdown', outside);
     return () => document.removeEventListener('pointerdown', outside);
   }, [open]);

@@ -1,11 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import type { AudioSession } from '../../app/session';
 import { createHoldTaps, type Rhythm, startRhythm } from '../../input/holdRhythm';
 
 /**
  * Hold, and the Notes held by hand. Hold's clicks: the first switches it on; quick clicks after it, before a Note is
  * held, tap a rhythm, and the held Notes then repeat on it (single Notes and chords in turn on several Voices) until
- * Hold goes off. `pressHoldRef` is for a Controller's pad, between renders.
+ * Hold goes off. `pressHoldRef` and `setPedal` are for a Controller's pad and pedal, whose messages the control
+ * surface handles between renders, outside any effect: they read refs, kept with each render.
  */
 export function useHold(session: AudioSession) {
   const [hold, setHold] = useState(false);
@@ -19,8 +20,6 @@ export function useHold(session: AudioSession) {
     session.input.setHold(holdRef.current || down, { letGo: holdRef.current });
   };
   const [heldNotes, setHeldNotes] = useState<number[]>([]);
-  const heldRef = useRef(heldNotes);
-  heldRef.current = heldNotes;
   const [holdTaps] = useState(createHoldTaps);
   const [rhythm, setRhythm] = useState<Rhythm | null>(null);
 
@@ -28,7 +27,7 @@ export function useHold(session: AudioSession) {
   useEffect(() => session.input.setHold(hold || pedalRef.current, { letGo: hold }), [session, hold]);
 
   const pressHold = () => {
-    setHold(holdTaps.press(performance.now() / 1000, heldRef.current.length > 0));
+    setHold(holdTaps.press(performance.now() / 1000, heldNotes.length > 0));
     setRhythm(holdTaps.rhythm());
   };
   const pressHoldRef = useRef(pressHold);
@@ -37,6 +36,8 @@ export function useHold(session: AudioSession) {
   useEffect(() => {
     if (heldNotes.length) holdTaps.noteArrived();
   }, [holdTaps, heldNotes]);
+  // The Notes held by hand right now: the rhythm reads them on each beat.
+  const heldNow = useEffectEvent(() => heldNotes);
   useEffect(() => {
     if (!hold || !rhythm) return;
     const { engine } = session;
@@ -44,7 +45,7 @@ export function useHold(session: AudioSession) {
     const stop = startRhythm(
       {
         now: () => engine.now(),
-        notes: () => heldRef.current,
+        notes: () => heldNow(),
         voices: () => session.patches.get().patch.voices,
         noteOn: (note, velocity, at) => engine.noteOn(note, velocity, at),
         release: (note, at) => engine.release(note, at),

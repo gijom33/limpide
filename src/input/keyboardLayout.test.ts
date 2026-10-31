@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { defaultPatch } from '../patch/patch';
-import { DEFAULT_OCTAVE, isKeyboardOctave, keyToNote, octaveKey, shiftOctave, startingOctave } from './keyboardLayout';
+import { defaultPatch, isKeyboardOctave } from '../patch/patch';
+import { DEFAULT_OCTAVE, keyToNote, octaveKey, shiftOctave, startingOctave } from './keyboardLayout';
 
 describe('computer-keyboard layout', () => {
   it('maps the home row to white keys starting at C of the chosen octave', () => {

@@ -64,7 +64,7 @@ export function DemoBar({ playing, tookOver, onStop, onJump, onPlayAgain, onDism
             </button>
             {/* The parts in a row of their own under the name and the buttons, after them for Tab too (issue 99). */}
             <div className="demo-bar-track">
-              <StepButton label="Previous part" to={playing.index - 1} count={parts.length} onJump={onJump} />
+              <StepButton step={-1} from={playing.index} count={parts.length} onJump={onJump} />
               {/* A segment per part, as wide as the part is long: the parts played full, the one playing filling over
                   its length, and a click on any plays on from it (the owner). From the keyboard they are one Tab stop:
                   the arrows, Home and End move along them, Enter or Space plays from one, and the focus stays on it
@@ -98,7 +98,7 @@ export function DemoBar({ playing, tookOver, onStop, onJump, onPlayAgain, onDism
                   </button>
                 ))}
               </span>
-              <StepButton label="Next part" to={playing.index + 1} count={parts.length} onJump={onJump} />
+              <StepButton step={1} from={playing.index} count={parts.length} onJump={onJump} />
             </div>
           </div>
           {part.caption && (
@@ -136,11 +136,18 @@ function moveAlong(e: KeyboardEvent<HTMLElement>) {
  * segments a finger wide, so these two are the full-size way along them. Past the first or the last part it is greyed
  * out, and keeps the focus (issue 104's Next).
  */
-function StepButton({ label, to, count, onJump }: { label: string; to: number; count: number; onJump(index: number): void }) {
+function StepButton({ step, from, count, onJump }: { step: -1 | 1; from: number; count: number; onJump(index: number): void }) {
+  const to = from + step;
   const none = to < 0 || to >= count;
   return (
-    <button type="button" className="tool tool-icon demo-bar-step" aria-label={label} aria-disabled={none || undefined} onClick={() => !none && onJump(to)}>
-      {label.startsWith('Previous') ? '‹' : '›'}
+    <button
+      type="button"
+      className="tool tool-icon demo-bar-step"
+      aria-label={step < 0 ? 'Previous part' : 'Next part'}
+      aria-disabled={none || undefined}
+      onClick={() => !none && onJump(to)}
+    >
+      {step < 0 ? '‹' : '›'}
     </button>
   );
 }

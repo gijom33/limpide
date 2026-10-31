@@ -1,4 +1,4 @@
-import { type Dispatch, type MutableRefObject, type SetStateAction, useEffect, useRef, useState } from 'react';
+import { type Dispatch, type MutableRefObject, type SetStateAction, useEffect, useEffectEvent, useRef, useState } from 'react';
 import type { AudioSession } from '../../app/session';
 import { createDemoKnobs } from '../../demo/demoKnobs';
 import { startDemo, startPhraseLoop } from '../../demo/player';
@@ -42,8 +42,6 @@ interface Host {
  */
 export function usePlayers({ session, octaveRef, setOctave, heldNotes, onDemoStart }: Host) {
   const { engine, patches } = session;
-  const onDemoStartRef = useRef(onDemoStart);
-  onDemoStartRef.current = onDemoStart;
   // The Notes the Demo, the Song or Listen is playing, lit on the piano.
   const [playedNotes, setPlayedNotes] = useState<number[]>([]);
   const transport: TransportHost & { onNotes(notes: number[]): void } = {
@@ -88,8 +86,7 @@ export function usePlayers({ session, octaveRef, setOctave, heldNotes, onDemoSta
     if (tookOver && current.current?.kind === 'demo') setTookOver(true);
     stop('demo');
   };
-  const stopDemoRef = useRef(stopDemo);
-  stopDemoRef.current = stopDemo;
+  const tookOverNow = useEffectEvent(() => stopDemo(true));
 
   /**
    * The track; or, with `shared`, only a riff, played on the Patch loaded now (a Share link's). `from` starts it at
@@ -97,7 +94,7 @@ export function usePlayers({ session, octaveRef, setOctave, heldNotes, onDemoSta
    */
   const playDemo = ({ shared = false, from = 0 } = {}) => {
     stop();
-    onDemoStartRef.current();
+    onDemoStart();
     setTookOver(false);
     const track = shared
       ? { bpm: TRACK.bpm, parts: [{ preset: patches.get().name, phrase: SHARED_RIFF, caption: 'The sound someone shared with you: turn any knob and hear it change.' }] }
@@ -159,11 +156,10 @@ export function usePlayers({ session, octaveRef, setOctave, heldNotes, onDemoSta
   // whether the person has taken over.
   useEffect(() => {
     if (demo === null) return;
-    const stop = () => stopDemoRef.current(true);
     const displayOpen = () => !!document.querySelector('.display-panel');
     const onKey = (e: KeyboardEvent) => {
       const event = { kind: 'key', key: e.key, freezes: freezesOnSpace(e), modifier: e.metaKey || e.ctrlKey || e.altKey } as const;
-      if (demoStop({ ...event, touched: touchedBy(e.target), displayOpen: displayOpen() }) === 'stop') stop();
+      if (demoStop({ ...event, touched: touchedBy(e.target), displayOpen: displayOpen() }) === 'stop') tookOverNow();
     };
     // A finger on the page may only be scrolling it: unless it lands on a control that takes touches itself
     // (knobs, piano), wait for it to lift. If the browser took it over to scroll, it is cancelled instead.
@@ -177,11 +173,11 @@ export function usePlayers({ session, octaveRef, setOctave, heldNotes, onDemoSta
         mouse: e.pointerType === 'mouse',
         takesTouches: getComputedStyle(target).touchAction === 'none',
       });
-      if (decision === 'stop') stop();
+      if (decision === 'stop') tookOverNow();
       else if (decision === 'onLift') tap = e.pointerId;
     };
     const onLift = (e: PointerEvent) => {
-      if (e.pointerId === tap) stop();
+      if (e.pointerId === tap) tookOverNow();
     };
     const onCancel = () => (tap = null);
     // The person scrolling: the page stops following the Demo's knobs until its next part. A finger on a knob or the
@@ -209,9 +205,9 @@ export function usePlayers({ session, octaveRef, setOctave, heldNotes, onDemoSta
 
   // A Note played by hand (keyboard, piano or MIDI) ends the Song: the person has taken over. Only a Note played
   // after it started: one already held (Hold) when the Song starts does not.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: on a new Note only; stopSong reads the ref of what plays
+  const stopSongNow = useEffectEvent(stopSong);
   useEffect(() => {
-    if (heldNotes.length) stopSong();
+    if (heldNotes.length) stopSongNow();
   }, [heldNotes]);
   // The Demo's "you are playing now" stays a moment, then goes.
   useEffect(() => {
@@ -227,7 +223,7 @@ export function usePlayers({ session, octaveRef, setOctave, heldNotes, onDemoSta
 
   return {
     playedNotes, stopAll: () => stop(),
-    demo, demoTrack, partStart, follow, tookOver, setTookOver, playDemo, stopDemo, stopDemoRef, toggleDemo,
+    demo, demoTrack, partStart, follow, tookOver, setTookOver, playDemo, stopDemo, toggleDemo,
     song: playing === 'song', stopSong, toggleSong,
     listening: playing === 'listen', startListen, stopListen,
   };

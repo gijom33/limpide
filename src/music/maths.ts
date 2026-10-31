@@ -1,7 +1,7 @@
 import { filterStages } from '../engine/filterDesign';
-import { type FilterMode, type FilterSlope, osc1Heard, type ParamId, type Patch } from '../patch/patch';
-import type { Waveform } from './harmonics';
-import { besselJ, FM_INDEX, osc2Ratio } from './idealReference';
+import { type FilterMode, type FilterSlope, FM_INDEX, osc1Heard, type ParamId, type Patch } from '../patch/patch';
+import { WAVEFORM_NAMES, type Waveform } from './harmonics';
+import { besselJ, osc2Ratio } from './idealReference';
 
 /**
  * The Maths Layer's content (issue 14): the quantities behind the sound, as data. The formulas are the ones the
@@ -30,7 +30,6 @@ export function harmonicFormula(waveform: Waveform, pulseWidth: number): Formula
   }
 }
 
-const WAVE_NAMES: Record<Waveform, string> = { sine: 'Sine', saw: 'Saw', square: 'Square', triangle: 'Triangle', pulse: 'Pulse' };
 
 /** A ratio as the Maths Layer writes it: "1", "2.38". */
 const ratioText = (r: number) => String(Number(r.toFixed(2)));
@@ -53,7 +52,7 @@ export function oscillatorFormulas(patch: Patch): Formula[] {
     const index = FM_INDEX * patch.crossMod;
     const j = Array.from(besselJ(index, 3), (v) => Math.abs(v).toFixed(2)).join(' ');
     const landing = Math.abs(r - Math.round(r)) < 1e-6 && r >= 1 ? 'on the Harmonics' : 'between the Harmonics';
-    const osc2 = patch.osc2Waveform === 'sine' ? '' : `; Osc 2 a ${WAVE_NAMES[patch.osc2Waveform]}: its 1st Harmonic only`;
+    const osc2 = patch.osc2Waveform === 'sine' ? '' : `; Osc 2 a ${WAVEFORM_NAMES[patch.osc2Waveform]}: its 1st Harmonic only`;
     lines.push({
       formula: `n f₁ + k f₂:  bₙ |Jₖ(n β)|,  β = ${FM_INDEX} × FM = ${index.toFixed(2)}`,
       where: `f₂ / f₁ = ${ratioText(r)}: ${landing}; |J₀…J₃(β)| ${j}${osc2}`,

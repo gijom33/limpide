@@ -70,8 +70,8 @@ describe('the Maths Layer under FM and Ring (issue 109)', () => {
   });
 
   it('Osc 1 silent (its fader down, Ring off): its series marked as not the sound, FM up or not', () => {
-    for (const crossMod of [0, 0.5]) {
-      const [line, ...rest] = oscillatorFormulas({ ...defaultPatch(), mixOsc1: 0, mixRing: 0, crossMod });
+    for (const fm of [0, 0.5]) {
+      const [line, ...rest] = oscillatorFormulas({ ...defaultPatch(), mixOsc1: 0, mixRing: 0, crossMod: fm });
       expect(rest).toEqual([]);
       expect(line.where).toContain('Osc 1 is silent: not the sound now');
     }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { type AudioSession, getAudioSession } from '../app/session';
 import { safeStorage } from '../app/storage';
 import { type AudioStatus, unlockAudio } from '../app/unlockAudio';
@@ -15,6 +15,7 @@ import { DisplayMenu } from './DisplayMenu';
 import { EnvelopeTimeline } from './EnvelopeTimeline';
 import { Fader } from './Fader';
 import { FilterShape } from './FilterShape';
+import { useDisplaySetting } from './hooks/useDisplaySetting';
 import { useHold } from './hooks/useHold';
 import { useComputerKeyboard, useSpaceFreezes } from './hooks/useKeys';
 import { useMediaQuery } from './hooks/useMediaQuery';
@@ -39,6 +40,7 @@ import { QuickSetupPanel } from './QuickSetupPanel';
 import { SectionStrip } from './SectionStrip';
 import { Segmented } from './Segmented';
 import { SubBlock } from './SubBlock';
+import { STACKED } from './sections';
 import { Tabs } from './Tabs';
 import { TapViewers } from './TapViewers';
 import { ToolGroup } from './ToolGroup';
@@ -46,22 +48,17 @@ import { type TipContent, Tooltip, TooltipsContext } from './Tooltip';
 import { TourCard } from './TourCard';
 import { TutorialCard } from './TutorialCard';
 import { TutorialMenu } from './TutorialMenu';
-import { applyTheme, loadTheme, type Theme } from './theme';
 import { TIPS, type VIEWER_TIPS } from './tips';
 
 import { AxesControls, ViewActions } from './ViewerControls';
 import { WaveformPicker, WaveIcon } from './WaveformPicker';
 import { Wordmark } from './Wordmark';
 
-const LETTER_KEYS = 'limpide.letterKeys';
-const TOOLTIPS = 'limpide.tooltips';
-const BEAD = 'limpide.bead';
 const BEND_RANGE = 'limpide.bendRange';
-/** Phones and the sections 2 × 2: the stylesheet's breakpoint, where the header's groups take rows of their own. */
-const STACKED_HEADER = '(max-width: 860px)';
 /** Why a greyed-out control does nothing now, for a screen reader (issue 104): what several controls share. */
 const OSC1_SILENT = 'No effect while Osc 1 is silent';
 const OSC2_SILENT = 'No effect while Osc 2 is silent';
+const SUB_SILENT = 'No effect while the Sub is silent';
 const FILTER_ENVELOPE_IDLE = "No effect while the Filter Envelope Amount and Osc 2's Env Amount are 0";
 /** An octave button's shade, and its count (+2, −1): the octaves the piano is shifted its way (none at C4, or
     shifted the other way). */
@@ -135,6 +132,7 @@ export function App() {
   useEffect(() => unlockAudio(session.ctx, window, setAudioStatus), [session]);
 
   const [octave, setOctave] = useState(() => startingOctave(patches.get().patch));
+  // The octave between renders too: the computer keyboard, the Song and the rings read it as a key moves it.
   const octaveRef = useRef(octave);
   octaveRef.current = octave;
   // A Patch loaded starts the keyboard in its own octave, a bass on C2, or else on C4 (issue 125); the octave buttons
@@ -154,49 +152,47 @@ export function App() {
   // B, E, A, D played by hand, as in a bead of water, calls the mascot, and again sends it away (issue 115); not
   // remembered across a reload. Once met, Display has a switch for it, remembered: off, it melts away and the Notes
   // do nothing, for anyone who would rather not (the owner, 2026-10-30).
-  const [mascot, setMascot] = useState<'off' | 'up' | 'leaving'>('off');
-  const [bead, setBead] = useState(() => (storage.getItem(BEAD) ?? 'unmet') as 'unmet' | 'on' | 'off');
-  useEffect(() => void (bead !== 'unmet' && storage.setItem(BEAD, bead)), [storage, bead]);
-  const beadRef = useRef(bead);
-  beadRef.current = bead;
-  const mascotRef = useRef(mascot);
-  mascotRef.current = mascot;
+  // Where the Bead is (away, up, or leaving), apart from its switch in Display (unmet until first called, then on or off).
+  const [beadPresence, setBeadPresence] = useState<'away' | 'up' | 'leaving'>('away');
+  const [beadSwitch, setBeadSwitch] = useDisplaySetting(storage, 'bead');
   // While it is out, five more words spelled with Notes each cue a trick (issue 127).
   const [word, setWord] = useState<{ word: Word; count: number } | null>(null);
+  /** A Note played by hand: `spelled`, the word it ends, if any; `called`, whether it ends the calling phrase. */
+  const heard = useEffectEvent((spelled: Word | null, called: boolean) => {
+    if (spelled && beadPresence === 'up') setWord((w) => ({ word: spelled, count: (w?.count ?? 0) + 1 }));
+    if (!called || beadSwitch === 'off') return;
+    setBeadSwitch('on');
+    setBeadPresence((p) => (p === 'away' ? 'up' : p === 'up' ? 'leaving' : p));
+  });
   useEffect(() => {
     const phrase = createCallingPhrase();
     const words = createWordsHeard();
     return session.onPress((note) => {
       const time = performance.now() / 1000;
-      const spelled = words.press(note, time);
-      if (spelled && mascotRef.current === 'up') setWord((w) => ({ word: spelled, count: (w?.count ?? 0) + 1 }));
-      if (!phrase.press(note, time) || beadRef.current === 'off') return;
-      setBead('on');
-      setMascot((m) => (m === 'off' ? 'up' : m === 'up' ? 'leaving' : m));
+      heard(words.press(note, time), phrase.press(note, time));
     });
   }, [session]);
   const switchBead = (on: boolean) => {
-    setBead(on ? 'on' : 'off');
-    setMascot((m) => (on ? (m === 'off' ? 'up' : m) : m === 'up' ? 'leaving' : m));
+    setBeadSwitch(on ? 'on' : 'off');
+    setBeadPresence((p) => (on ? (p === 'away' ? 'up' : p) : p === 'up' ? 'leaving' : p));
   };
-  const mascotGone = useCallback(() => setMascot((m) => (m === 'leaving' ? 'off' : m)), []);
+  const beadGone = useCallback(() => setBeadPresence((p) => (p === 'leaving' ? 'away' : p)), []);
   const modulationContext = useMemo(() => ({ engine: session.engine, patch: () => patches.get().patch, octave: octaveRef }), [session, patches]);
   // The letter keys play Notes unless turned off in Display (issue 51); remembered.
-  const [letterKeys, setLetterKeys] = useState(() => storage.getItem(LETTER_KEYS) !== 'off');
-  useEffect(() => storage.setItem(LETTER_KEYS, letterKeys ? 'on' : 'off'), [storage, letterKeys]);
-  useComputerKeyboard(session, octaveRef, moveOctave, letterKeys);
+  const [letterKeys, setLetterKeys] = useDisplaySetting(storage, 'letterKeys');
+  useComputerKeyboard(session, octaveRef, moveOctave, letterKeys === 'on');
   // Tooltips open unless turned off in Display (issue 81); remembered.
-  const [tooltips, setTooltips] = useState(() => storage.getItem(TOOLTIPS) !== 'off');
-  useEffect(() => storage.setItem(TOOLTIPS, tooltips ? 'on' : 'off'), [storage, tooltips]);
+  const [tooltips, setTooltips] = useDisplaySetting(storage, 'tooltips');
   const { hold, pressHold, pressHoldRef, heldNotes, setPedal } = useHold(session);
   // How far a keyboard's bend wheel takes the pitch, in semitones each way (issue 52); remembered.
   const [bendRange, setBendRange] = useState(() => Number(storage.getItem(BEND_RANGE)) || 2);
   useEffect(() => storage.setItem(BEND_RANGE, String(bendRange)), [storage, bendRange]);
 
   useSpaceFreezes(viewerStore);
-  const narrow = useMediaQuery(STACKED_HEADER);
-  const [theme, setTheme] = useState(loadTheme);
-  useEffect(() => applyTheme(theme), [theme]);
+  const narrow = useMediaQuery(STACKED);
+  // The stylesheet reads the theme from the page's root, so the whole page follows it.
+  const [theme, setTheme] = useDisplaySetting(storage, 'theme');
+  useEffect(() => void (document.documentElement.dataset.theme = theme), [theme]);
 
   const players = usePlayers({
     session, octaveRef, setOctave, heldNotes,
@@ -230,18 +226,18 @@ export function App() {
     onCard: players.startListen,
     onEnd: players.stopListen,
   });
-  // The Tutorials, from the Patches panel and the header's Tutorial button alike.
   // The person's loads show the Preset's about line under its name (issue 109).
   const presetAbout = usePresetAbout(patches);
   const loadPreset = (name: string, patch: Patch) => {
     patches.load(name, patch);
     presetAbout.show();
   };
+  // The Tutorials, from the Patches panel and the header's Tutorial button alike.
   const tutorialList = TUTORIALS.map((t) => ({ preset: t.preset, finished: tutorial.finished.has(t.preset) }));
   const startTutorial = (preset: string) => tutorial.start(TUTORIALS.find((t) => t.preset === preset)!);
   const midi = useMidi({
     storage, session, pressHoldRef,
-    onNote: () => players.stopDemoRef.current(true),
+    onNote: () => players.stopDemo(true),
     onBend: (amount) => session.engine.setBend(amount * bendRange * 100),
     onPedal: setPedal,
     // Program n is the n-th Preset (0 is Init), so a keyboard's Program buttons step through them.
@@ -307,10 +303,10 @@ export function App() {
   // Up before down, as they stand on screen, so Tab meets them in that order (issue 47).
   const keyboard = (
     <div key="keyboard" className="keyboard">
-      <button type="button" className="tool tool-icon octave" aria-label="Octave up" {...shifted(octave - DEFAULT_OCTAVE)} onClick={() => moveOctave(1)}>
+      <button type="button" className="tool tool-icon octave octave-up" aria-label="Octave up" {...shifted(octave - DEFAULT_OCTAVE)} onClick={() => moveOctave(1)}>
         {octave > DEFAULT_OCTAVE ? `+${octave - DEFAULT_OCTAVE}` : '+'}
       </button>
-      <button type="button" className="tool tool-icon octave" aria-label="Octave down" {...shifted(DEFAULT_OCTAVE - octave)} onClick={() => moveOctave(-1)}>
+      <button type="button" className="tool tool-icon octave octave-down" aria-label="Octave down" {...shifted(DEFAULT_OCTAVE - octave)} onClick={() => moveOctave(-1)}>
         {octave < DEFAULT_OCTAVE ? `−${DEFAULT_OCTAVE - octave}` : '−'}
       </button>
       <Tooltip content={TIPS.keyboard} longPress={false}>
@@ -324,7 +320,7 @@ export function App() {
       <Tooltip content={TIPS.hold}>
         <button
           type="button"
-          className="tool"
+          className="tool hold-button"
           aria-pressed={hold}
           data-learn="action:hold"
           data-mapped={learnContext.mapped.has('action:hold') || undefined}
@@ -367,12 +363,12 @@ export function App() {
               <Tooltip content={TIPS.letterKeys}>
                 <Segmented
                   label="Letter keys"
-                  value={letterKeys ? 'on' : 'off'}
+                  value={letterKeys}
                   options={[
                     { value: 'on', label: 'Play', name: 'Letter keys play Notes' },
                     { value: 'off', label: 'Off', name: 'Letter keys off' },
                   ]}
-                  onChange={(v) => setLetterKeys(v === 'on')}
+                  onChange={setLetterKeys}
                 />
               </Tooltip>
             </ToolGroup>
@@ -380,29 +376,29 @@ export function App() {
               <Tooltip content={TIPS.tooltips}>
                 <Segmented
                   label="Tooltips"
-                  value={tooltips ? 'on' : 'off'}
+                  value={tooltips}
                   options={[
                     { value: 'on', label: 'On' },
                     { value: 'off', label: 'Off' },
                   ]}
-                  onChange={(v) => setTooltips(v === 'on')}
+                  onChange={setTooltips}
                 />
               </Tooltip>
             </ToolGroup>
-            {bead !== 'unmet' && (
+            {beadSwitch !== 'unmet' && (
               <ToolGroup title="Bead">
                 <Tooltip content={{ title: 'Bead', body: 'The water drop B, E, A, D calls. Off, it melts away and the Notes do nothing.' }}>
                   <div className="bead-switch">
                     <Segmented
                       label="Bead"
-                      value={bead}
+                      value={beadSwitch}
                       options={[
                         { value: 'on', label: 'On', name: 'Bead on' },
                         { value: 'off', label: 'Off', name: 'Bead off' },
                       ]}
                       onChange={(v) => switchBead(v === 'on')}
                     />
-                    <BeadIcon on={bead === 'on'} />
+                    <BeadIcon on={beadSwitch === 'on'} />
                   </div>
                 </Tooltip>
               </ToolGroup>
@@ -416,7 +412,7 @@ export function App() {
                     { value: 'dark', label: 'Dark' },
                     { value: 'light', label: 'Light' },
                   ]}
-                  onChange={(v) => setTheme(v as Theme)}
+                  onChange={setTheme}
                 />
               </Tooltip>
             </ToolGroup>
@@ -459,7 +455,7 @@ export function App() {
   );
 
   return (
-    <TooltipsContext.Provider value={tooltips}>
+    <TooltipsContext.Provider value={tooltips === 'on'}>
     <LearnContext.Provider value={learnContext}>
     <ModulationContext.Provider value={modulationContext}>
     <MathsContext.Provider value={overlays.maths ? patch : null}>
@@ -538,7 +534,7 @@ export function App() {
                         </SubBlock>
                         {/* Each Oscillator's pitch under its Waveform, on its own tab (the owner, issue 90): Osc 1's
                             Octave, and FM, Osc 2 swinging Osc 1's pitch whatever Osc 2's own fader (issue 89). */}
-                        <SubBlock title="Osc 1 Pitch" label="Pitch" tip={TIPS.osc1Pitch} group>
+                        <SubBlock title="Osc 1 Pitch" label="Pitch" tip={TIPS.osc1Pitch} group className="osc1-pitch">
                           <div className="knobs">
                             {/* Greyed out while Osc 1 is not heard (the owner); its Octave also moves the Sub. */}
                             <Knob id="osc1Octave" value={patch.osc1Octave} onChange={(v) => change('osc1Octave', v)} inactive={!osc1Heard(patch) && patch.mixSub === 0 && 'No effect while Osc 1 and the Sub are silent'} />
@@ -608,7 +604,7 @@ export function App() {
                               onChange={(subOctave) => edit((p) => ({ ...p, subOctave }))}
                               learn={{ kind: 'choice', id: 'subOctave' }}
                               iconic
-                              inactive={patch.mixSub === 0 && 'No effect while the Sub is silent'}
+                              inactive={patch.mixSub === 0 && SUB_SILENT}
                             />
                             <Segmented
                               label="Sub Waveform"
@@ -618,7 +614,7 @@ export function App() {
                               onChange={(subWaveform) => edit((p) => ({ ...p, subWaveform }))}
                               learn={{ kind: 'choice', id: 'subWaveform' }}
                               iconic
-                              inactive={patch.mixSub === 0 && 'No effect while the Sub is silent'}
+                              inactive={patch.mixSub === 0 && SUB_SILENT}
                             />
                           </div>
                         </SubBlock>
@@ -804,8 +800,8 @@ export function App() {
             onQuit={tutorial.end}
           />
         )}
-        {mascot !== 'off' && (
-          <Mascot patches={patches} leaving={mascot === 'leaving'} onGone={mascotGone} theme={theme} demoPart={players.demo} word={word} />
+        {beadPresence !== 'away' && (
+          <Mascot patches={patches} leaving={beadPresence === 'leaving'} onGone={beadGone} theme={theme} demoPart={players.demo} word={word} />
         )}
       </main>
     </MathsContext.Provider>

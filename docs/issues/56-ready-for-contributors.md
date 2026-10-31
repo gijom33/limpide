@@ -22,3 +22,4 @@ The code of conduct adopts the Contributor Covenant 2.1 by reference (its text i
 5. **Claude's calls marked** "Claude's call, open to the owner"; a grilling's answers kept in its issue as a numbered Decisions list.
 6. **Written down in [ADR-0010](../adr/0010-how-the-work-is-recorded.md) and a root `CLAUDE.md`**, linked from CONTRIBUTING and the README.
 
+**Since then (2026-10-30, [issue 110](./110-checks-before-a-push.md)):** decision 1's code review is no longer for minor versions only (the retro of issues 73 to 79, 2026-10-28): which releases get it, [the release steps](../releasing.md) say. Recorded in [ADR-0016](../adr/0016-the-release-steps-are-the-one-home-of-the-release-rules.md), which supersedes ADR-0010's point 5. Decided by the owner.

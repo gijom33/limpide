@@ -1,6 +1,6 @@
 # CI runs the end-to-end tests before a deploy, not the release routine
 
-**Status:** accepted · **Date:** 2026-10-30 · **Decided by:** the owner
+**Status:** accepted, "the deploy run is the end-to-end gate" amended by [ADR-0016](./0016-the-release-steps-are-the-one-home-of-the-release-rules.md) (a branch run before `main`) · **Date:** 2026-10-30 · **Decided by:** the owner
 
 Supersedes [ADR-0012](./0012-following-the-ai-hero-skills.md)'s point 8 as far as "the full suite before a push" (ADR-0012 is frozen, ADR-0010): the rest of that point, the pre-commit hook and the tests covering a change while working, stands.
 

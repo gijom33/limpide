@@ -32,9 +32,12 @@ export interface Preset {
 
 /** Factory sounds, each built to show one idea; read-only. Grouped, in the order the arrows step through them. */
 export const PRESETS: Preset[] = [];
-/** A group's Presets, each from Init; `shared` is what the whole group has in common (the Basses' keyboard octave). */
+/**
+ * A group's Presets, each from Init; `shared` is what the whole group has in common (the Basses' keyboard octave),
+ * which a Preset's own fields override.
+ */
 const group = (name: PresetGroup, presets: [string, string, Partial<Patch>][], shared: Partial<Patch> = {}) => {
-  for (const [title, about, changes] of presets) PRESETS.push({ name: title, group: name, about, patch: { ...defaultPatch(), ...changes, ...shared } });
+  for (const [title, about, changes] of presets) PRESETS.push({ name: title, group: name, about, patch: { ...defaultPatch(), ...shared, ...changes } });
 };
 
 // A steady, open sound for looking at shapes.

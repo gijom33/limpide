@@ -1,17 +1,17 @@
-import { useContext, useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useEffectEvent, useRef, useState } from 'react';
+import type { Theme } from '../app/displaySettings';
 import type { Word } from '../input/callingPhrase';
 import { lfos } from '../patch/patch';
 import type { PatchStore } from '../patch/patchStore';
 import { addToRenderLoop } from '../viewers/renderLoop';
-import { PAD as LFO_PAD, SPAN as LFO_SPAN } from './LfoPlot';
+import { lineAt, lineWiderThan } from './LfoPlot';
 import { gesturesOf, looksOf } from './mascotGestures';
 import { type Act, createMascotMotion, hatOn, type Pose, type Room, SCREAMING } from './mascotMotion';
 import { CATCH, CLOUD, HATS, HOOK, ICE, type Picture, PROPS, type Rect, ROD_TIP, SKY, TAILS } from './mascotPictures';
 import { acrossOf, choosePerch, createMascotPlace, type Moving, type Perch } from './mascotPlace';
 import { createSpray, MOST_DROPLETS } from './mascotSpray';
 import { ModulationContext } from './modulationRing';
-import { SECTIONS } from './sections';
-import type { Theme } from './theme';
+import { SECTIONS, STACKED } from './sections';
 
 /**
  * The drawing, on a 22 × 13 grid: a water drop, its tail the Limpide logo's stroke (a saw tooth softening into a sine)
@@ -103,8 +103,14 @@ export const RISE_SECONDS = 0.4;
 /** The drop's middle from its box's left, and its tail's length turned down under it, in pixels. */
 const DROP_MIDDLE = 9;
 const TAIL_LENGTH = 26;
-/** Phones and the sections 2 × 2 (the stylesheet's breakpoint): it keeps in view as the page scrolls. */
-const STACKED = '(max-width: 860px)';
+
+/** Whether an edge leaves room above it in the window for the mascot to stand on it, its headroom too. */
+const roomAbove = (box: DOMRect) => box.top - HEIGHT - HEADROOM >= 0;
+/** The sections in the right-hand column: their right edges at the rightmost, give or take a few pixels. */
+function rightColumn<S extends { box: DOMRect }>(sections: readonly S[]): S[] {
+  const rightmost = Math.max(...sections.map((s) => s.box.right));
+  return sections.filter((s) => rightmost - s.box.right < 4);
+}
 
 const rects = (list: readonly Rect[]) => list.map(([x, y, w, h]) => <rect key={`${x} ${y}`} x={x} y={y} width={w} height={h} />);
 const picture = (groups: Picture) => groups.map(([className, list]) => <g key={className} className={className}>{rects(list)}</g>);
@@ -264,16 +270,15 @@ export function Mascot({
     theme(theme: Theme): void;
   } | null>(null);
   const press = useRef<{ x: number; y: number; picked: boolean } | null>(null);
-  const demoRef = useRef(demoPart);
-  demoRef.current = demoPart;
-  const leavingRef = useRef(leaving);
-  leavingRef.current = leaving;
-  const goneRef = useRef(onGone);
-  goneRef.current = onGone;
+  // What the loop and its handlers read of the props, as they are now.
+  const demoPartNow = useEffectEvent(() => demoPart);
+  const leavingNow = useEffectEvent(() => leaving);
+  const gone = useEffectEvent(onGone);
 
   useEffect(() => {
     if (!context) return;
     const still = matchMedia('(prefers-reduced-motion: reduce)');
+    // Phones and the sections 2 × 2: it keeps in view as the page scrolls.
     const stacked = matchMedia(STACKED);
     const motion = createMascotMotion();
     const arrival = (['rise', 'rain', 'pop'] as const)[Math.floor(Math.random() * 3)];
@@ -313,6 +318,8 @@ export function Mascot({
     // Held by the pointer: where it took hold of it, from its box's left and its foot, and its last moves, for the throw.
     let grip = { x: 0, y: 0 };
     let moves: { t: number; x: number; y: number }[] = [];
+    // A theme switched in Display: it reacts once the panel is closed, where it can be seen.
+    let themeSwitched: Theme | null = null;
     touched.current = {
       tickle: () => motion.tickle(context.engine.now()),
       poke: () => {
@@ -321,7 +328,7 @@ export function Mascot({
         droplets.fling(9, middle.x, middle.y, 'all');
       },
       pick: (x, y) => {
-        if (still.matches || leaveBy !== null || leavingRef.current) return false;
+        if (still.matches || leaveBy !== null || leavingNow()) return false;
         grip = { x: x - drawnAt.left, y: y - drawnAt.foot };
         moves = [{ t: performance.now() / 1000, x, y }];
         motion.pickUp(context.engine.now());
@@ -343,8 +350,6 @@ export function Mascot({
       word: (w) => motion.word(w, context.engine.now()),
       theme: (t) => void (themeSwitched = t),
     };
-    // A theme switched in Display: it reacts once the panel is closed, where it can be seen.
-    let themeSwitched: Theme | null = null;
     const stopDrawing = addToRenderLoop(() => {
       const outer = frame.current!;
       const seconds = performance.now() / 1000;
@@ -369,7 +374,7 @@ export function Mascot({
         const home = sections.filter((s) => s.box.top - top < 4).reduce((a, b) => (b.box.right > a.box.right ? b : a));
         homeId = home.id;
         // Now and then a visit to another section in view: down to one below, or across to one beside; then home.
-        const inView = (s: { box: DOMRect }) => s.box.top - HEIGHT - HEADROOM >= 0 && s.box.top <= innerHeight - 4;
+        const inView = (s: { box: DOMRect }) => roomAbove(s.box) && s.box.top <= innerHeight - 4;
         if (visit && (now >= visit.until || !sections.some((s) => s.id === visit!.id && inView(s)))) {
           visit = null;
           nextVisit = now + between(20, 40);
@@ -383,17 +388,19 @@ export function Mascot({
         on = sections.find((s) => s.id === visit?.id) ?? home;
         perch = { id: on.id, foot: on.box.top, hanging: false };
       } else {
-        const rightmost = Math.max(...sections.map((s) => s.box.right));
-        const column = sections.filter((s) => rightmost - s.box.right < 4).sort((a, b) => a.box.top - b.box.top);
+        const column = rightColumn(sections).sort((a, b) => a.box.top - b.box.top);
         const ceiling = Math.max(0, ...['header', '.section-strip'].map((q) => document.querySelector(q)?.getBoundingClientRect().bottom ?? 0));
-        perch = choosePerch(perch?.id ?? null, column.map((s) => ({ id: s.id, top: s.box.top })), ceiling, innerHeight, HEIGHT, HEADROOM, foot ?? ceiling);
+        perch = choosePerch({
+          current: perch?.id ?? null, edges: column.map((s) => ({ id: s.id, top: s.box.top })), ceiling, bottom: innerHeight,
+          height: HEIGHT, headroom: HEADROOM, where: foot ?? ceiling,
+        });
         const id = perch.id;
         const span = column[0].box;
         on = column.find((s) => s.id === id) ?? { id, box: new DOMRect(span.left, perch.foot, span.width, 0) };
       }
       // Thrown (issue 127): it lands on the first edge under it that it comes down onto, staying there a while.
       if (moving === 'thrown') {
-        const under = (stacked.matches ? sections.filter((s) => Math.max(...sections.map((t) => t.box.right)) - s.box.right < 4) : sections)
+        const under = (stacked.matches ? rightColumn(sections) : sections)
           .filter((s) => s.box.left <= drawnAt.left + DROP_MIDDLE && s.box.right >= drawnAt.left + DROP_MIDDLE && s.box.top >= drawnAt.foot - 1)
           .sort((a, b) => a.box.top - b.box.top)[0];
         if (under) {
@@ -404,10 +411,10 @@ export function Mascot({
       }
       // Through a Demo part, one of its acts in turn; surfing, its line is an LFO's shape as its plot draws it: the
       // first in view of an LFO that is on, its Depth above 0 (the owner, 2026-10-30). With none, another act.
-      const part = demoRef.current;
+      const part = demoPartNow();
       const plot = (part === null ? [] : [...document.querySelectorAll<HTMLElement>(`${LFO_PLOTS}:not([data-inactive])`)])
         .map((el) => ({ lfo: Number(el.dataset.lfo) as 1 | 2, box: el.getBoundingClientRect() }))
-        .find(({ box }) => box.width > WIDTH + 2 * LFO_PAD && box.top - HEIGHT - HEADROOM >= 0 && box.bottom <= innerHeight);
+        .find(({ box }) => lineWiderThan(box.width, WIDTH) && roomAbove(box) && box.bottom <= innerHeight);
       let act: Act | null = part === null || leaveBy !== null ? null : ACTS[part % ACTS.length];
       if (act === 'surf' && !plot) act = part! % 2 ? 'airGuitar' : 'conduct';
       motion.act(act);
@@ -415,13 +422,12 @@ export function Mascot({
       if (act === 'surf' && plot && !still.matches && moving !== 'held' && moving !== 'thrown' && !shown?.doing) {
         // Where the plot draws the LFO under its middle: a second of it across, the newest at the right.
         const { box } = plot;
-        const along = Math.min(1, Math.max(0, (drawnAt.left + DROP_MIDDLE - box.left - LFO_PAD) / (box.width - 2 * LFO_PAD)));
-        const swing = context.engine.lfoSwingAt(now - LFO_SPAN + along * LFO_SPAN, plot.lfo);
-        perch = { id: `surf ${plot.lfo}`, foot: box.top + box.height / 2 - swing * (box.height / 2 - LFO_PAD), hanging: false };
+        const wave = box.top + lineAt({ engine: context.engine, lfo: plot.lfo, box, x: drawnAt.left + DROP_MIDDLE - box.left, now });
+        perch = { id: `surf ${plot.lfo}`, foot: wave, hanging: false };
         surfRoom = { min: box.left, max: box.right - WIDTH };
       }
       // Leaving: on its line it melts; hanging or in the air it drips away down the window.
-      if (leavingRef.current && leaveBy === null) {
+      if (leavingNow() && leaveBy === null) {
         leaveBy = moving === 'standing' || moving === 'landing' ? 'melt' : 'rain';
         if (leaveBy === 'melt') motion.leave(now);
       }
@@ -452,7 +458,7 @@ export function Mascot({
       foot = where.foot;
       moving = where.moving;
       if (pose.gone || (leaveBy === 'rain' && where.foot >= innerHeight + HEIGHT)) {
-        goneRef.current();
+        gone();
         return;
       }
 

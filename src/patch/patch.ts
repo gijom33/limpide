@@ -25,6 +25,7 @@ export type ParamId =
   | 'osc2Semitone'
   | 'osc2Detune'
   | 'osc2PulseWidth'
+  // FM's Parameter, named for cross-modulation: saved Patches and Share links carry the name, so it stays.
   | 'crossMod'
   | 'osc2EnvAmount'
   | 'mixOsc1'
@@ -113,6 +114,23 @@ export type Patch = Record<ParamId, number> & {
   keyboardOctave?: number;
 };
 
+/**
+ * The Patch's fields that make its sound: all but the keyboard octave, which says where the keys start (issue 126).
+ * What compares sounds (a Patch changed, a Tutorial's differences, the mascot's answers) and the choices go by them.
+ */
+export type SoundField = Exclude<keyof Patch, 'keyboardOctave'>;
+export const soundFields = (patch: Patch) => (Object.keys(patch) as (keyof Patch)[]).filter((key): key is SoundField => key !== 'keyboardOctave');
+/** Whether two Patches sound the same: every sound field equal, whatever order their fields were written in. */
+export const sameSound = (a: Patch, b: Patch) => soundFields(a).length === soundFields(b).length && soundFields(a).every((key) => a[key] === b[key]);
+/** Whether two Patches are the same, field for field, the keyboard octave too. */
+export const samePatch = (a: Patch, b: Patch) => sameSound(a, b) && a.keyboardOctave === b.keyboardOctave;
+
+/** The octaves the keyboard reaches: C0 to C7, by the octave buttons. */
+export const KEYBOARD_OCTAVES = { lowest: 0, highest: 7 } as const;
+/** Whether the keyboard can start in this octave: a whole one the octave buttons reach. */
+export const isKeyboardOctave = (octave: unknown): octave is number =>
+  Number.isInteger(octave) && (octave as number) >= KEYBOARD_OCTAVES.lowest && (octave as number) <= KEYBOARD_OCTAVES.highest;
+
 /** Glide at its minimum is off: Notes change pitch at once. */
 export const GLIDE_OFF = 0.001;
 
@@ -124,6 +142,9 @@ const time = (id: ParamId, label: string, dflt: number, control: Control): Param
   id, label, unit: 's', min: 0.001, max: 10, taper: 'log', default: dflt, control,
 });
 
+/** FM at full: Osc 2 swings Osc 1's frequency by four times its own (a modulation index of 4, issue 89). */
+export const FM_INDEX = 4;
+
 export const PARAMS: Record<ParamId, ParamDef> = {
   pulseWidth: { id: 'pulseWidth', label: 'Pulse Width', unit: '%', min: 0.05, max: 0.95, taper: 'linear', default: 0.25, control: 'set' },
   // Osc 1's range (issue 90): the Sub follows it; Osc 2's offsets count from the Note played.
@@ -132,7 +153,8 @@ export const PARAMS: Record<ParamId, ParamDef> = {
   osc2Semitone: { id: 'osc2Semitone', label: 'Semitone', unit: 'st', min: -12, max: 12, taper: 'linear', default: 0, step: 1, control: 'set' },
   osc2Detune: { id: 'osc2Detune', label: 'Detune', unit: 'cents', min: -50, max: 50, taper: 'linear', default: 0, control: 'play' },
   osc2PulseWidth: { id: 'osc2PulseWidth', label: 'Pulse Width', unit: '%', min: 0.05, max: 0.95, taper: 'linear', default: 0.25, control: 'set' },
-  // FM (issue 89): how far Osc 2 swings Osc 1's frequency, at full four times Osc 2's own frequency.
+  // FM (issue 89): how far Osc 2 swings Osc 1's frequency, at full FM_INDEX times Osc 2's own frequency. Its id keeps
+  // cross-modulation's name (see ParamId).
   crossMod: level('crossMod', 'FM', 0, 'set'),
   // How far the Filter Envelope moves Osc 2's pitch at its peak (issue 93), as a Prophet's Poly Mod does.
   osc2EnvAmount: { id: 'osc2EnvAmount', label: 'Env Amount', unit: 'st', min: -24, max: 24, taper: 'linear', default: 0, control: 'set' },
@@ -219,7 +241,7 @@ export const CHOICES = {
   lfoRetrigger: ['free', 'note'],
   lfo2Retrigger: ['free', 'note'],
   voices: [1, 2, 3, 4, 5, 6, 7, 8],
-} as const satisfies { [K in Exclude<keyof Patch, ParamId | 'keyboardOctave'>]: readonly Patch[K][] };
+} as const satisfies { [K in Exclude<SoundField, ParamId>]: readonly Patch[K][] };
 
 /** A Patch setting picked from a list (a Waveform, the Filter Mode…), rather than turned like a Parameter. */
 export type ChoiceId = keyof typeof CHOICES;

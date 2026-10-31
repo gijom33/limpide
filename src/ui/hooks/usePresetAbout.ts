@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { samePatch } from '../../patch/patch';
 import type { PatchStore } from '../../patch/patchStore';
 import { PRESETS } from '../../patch/presets';
 
@@ -24,7 +25,7 @@ export function usePresetAbout(patches: PatchStore) {
   const show = () => {
     const { name, patch } = patches.get();
     const preset = PRESETS.find((p) => p.name === name);
-    if (preset && JSON.stringify(preset.patch) === JSON.stringify(patch)) setAbout({ text: preset.about, shown: true });
+    if (preset && samePatch(preset.patch, patch)) setAbout({ text: preset.about, shown: true });
   };
   return { about, show };
 }

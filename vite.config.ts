@@ -43,7 +43,7 @@ const goatCounter = {
   ],
 };
 
-// The licences of the code the site ships besides its own (React and what it needs), written beside the page as
+// The licences of the code the site ships (React and what it needs, then Limpide's own), written beside the page as
 // third-party-notices.txt and linked from About: the minified bundle drops their notices, which MIT asks to keep.
 function shippedPackages(names: string[], found = new Set<string>()): Set<string> {
   for (const name of names) {
@@ -74,7 +74,10 @@ const thirdPartyNotices = {
       const text = file ? readFileSync(`node_modules/${name}/${file}`, 'utf8').trim() : `License: ${license}`;
       return `${name} ${version}\n\n${text}${bundledNotices(name)}`;
     });
-    const source = `${['Limpide includes the following third-party software.', ...sections].join(`\n\n${'-'.repeat(72)}\n\n`)}\n`;
+    // Limpide's own licence comes last, so the file holds every licence the site ships under (issue 111).
+    const own = `Limpide ${build.version}\n\n${readFileSync('LICENSE', 'utf8').trim()}`;
+    const intro = 'Limpide includes the following third-party software; its own licence comes last.';
+    const source = `${[intro, ...sections, own].join(`\n\n${'-'.repeat(72)}\n\n`)}\n`;
     this.emitFile({ type: 'asset', fileName: 'third-party-notices.txt', source });
   },
 };
@@ -97,6 +100,9 @@ export default defineConfig({
       },
       {
         extends: true,
+        // The hooks' tests render React: bundled before the first test, so a late discovery cannot reload the page
+        // with a second copy of React.
+        optimizeDeps: { include: ['react', 'react-dom/client'] },
         test: {
           name: 'engine',
           include: ['src/**/*.browser.test.ts'],

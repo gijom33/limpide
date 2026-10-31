@@ -1,4 +1,4 @@
-import { type MutableRefObject, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { type MutableRefObject, useEffect, useEffectEvent, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import type { AudioSession } from '../../app/session';
 import type { KeyValueStorage } from '../../app/storage';
 import { c16Bank, c16Layout, isC16 } from '../../midi/c16';
@@ -53,13 +53,14 @@ interface Host {
 export function useMidi(host: Host) {
   const { storage, session, pressHoldRef, onNote } = host;
   const { patches, viewers } = session;
+  // The control surface is made once (below) and calls back between renders, outside any effect, so what it calls
+  // is kept in refs with each render: the host's, and onLearned.
   const keyboard = useRef(host);
   keyboard.current = host;
   const [midi, setMidi] = useState<MidiState>({ kind: 'pending' });
   const [activity, setActivity] = useState<string | null>(null);
   const [learn, setLearn] = useState<LearnState>({ phase: 'off' });
-  const onNoteRef = useRef(onNote);
-  onNoteRef.current = onNote;
+  const noteFromController = useEffectEvent(() => onNote());
 
   const mappingStore = useMemo(() => createMappingStore(storage), [storage]);
   const mappings = useSyncExternalStore(mappingStore.subscribe, mappingStore.list);
@@ -145,8 +146,7 @@ export function useMidi(host: Host) {
       if (next.phase === 'cancelled') mappingStore.restore(next.before);
     }
   };
-  const updateSetupRef = useRef(updateSetup);
-  updateSetupRef.current = updateSetup;
+  const finishSetup = useEffectEvent(() => updateSetup({ type: 'finish' }));
   onLearned.current = (mapping) => updateSetup({ type: 'learned', mapping });
   const closeSetup = () => {
     setupRef.current = null;
@@ -171,7 +171,7 @@ export function useMidi(host: Host) {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
       e.stopPropagation();
-      if (setupRef.current?.phase === 'running') updateSetupRef.current({ type: 'finish' });
+      if (setupRef.current?.phase === 'running') finishSetup();
       else surface.stopLearn();
     };
     for (const type of types) document.addEventListener(type, select, { capture: true });
@@ -210,8 +210,7 @@ export function useMidi(host: Host) {
     };
   }, []);
 
-  const applyC16LayoutRef = useRef(applyC16Layout);
-  applyC16LayoutRef.current = applyC16Layout;
+  const applyC16LayoutNow = useEffectEvent(applyC16Layout);
   useEffect(() => {
     const support = midiSupport(navigator);
     if (support !== 'supported') return setMidi({ kind: 'unsupported', ios: support === 'ios' });
@@ -223,7 +222,7 @@ export function useMidi(host: Host) {
         if (cancelled) return;
         dispose = connectMidi(access as unknown as MidiAccessLike, {
           onMessage: (m) => {
-            if (m.type === 'noteOn') onNoteRef.current();
+            if (m.type === 'noteOn') noteFromController();
             if (c16Connected.current && m.type === 'cc' && surface.learnState().phase === 'off') {
               const control = { kind: 'cc' as const, channel: m.channel, number: m.controller };
               const bank = c16Bank(control);
@@ -239,7 +238,7 @@ export function useMidi(host: Host) {
             setMidi({ kind: 'ready', devices });
             c16Connected.current = devices.some(isC16);
             const fresh = mappingStore.list().length === 0 && storage.getItem(C16_APPLIED) === null;
-            if (c16Connected.current && fresh) applyC16LayoutRef.current();
+            if (c16Connected.current && fresh) applyC16LayoutNow();
           },
         });
       },

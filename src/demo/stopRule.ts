@@ -1,3 +1,5 @@
+import { ARROW_STEPS } from '../input/arrowKeys';
+
 /**
  * What a key press or a touch was on, for the Demo: a control that shapes the sound (knobs, faders, the stages'
  * switches, an LFO's Destination, the section strip, the tabs), Display, the piano, the Demo's own card and button,
@@ -27,8 +29,8 @@ export type DemoEvent =
       takesTouches: boolean;
     };
 
-/** The keys that press the Demo's own buttons or move along its parts: none of them plays a Note. */
-const DEMO_KEYS = new Set(['Enter', ' ', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End']);
+/** The keys that press the Demo's own buttons (Enter, Space) or move along its parts: none of them plays a Note. */
+const DEMO_KEYS = new Set(['Enter', ' ', ...Object.keys(ARROW_STEPS)]);
 
 /**
  * Whether a key press or a touch ends the Demo (issue 79): playing anything, or touching a control that does not

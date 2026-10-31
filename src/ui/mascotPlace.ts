@@ -68,12 +68,28 @@ export interface Edge {
   top: number;
 }
 
+/** What choosePerch weighs, in the window's pixels. */
+export interface PerchChoice {
+  /** The edge it is on now, if any. */
+  current: string | null;
+  edges: readonly Edge[];
+  /** The bottom of the header (and the section strip): nothing above it is in view. */
+  ceiling: number;
+  /** The window's bottom. */
+  bottom: number;
+  /** The drop's height, and the room it needs over it. */
+  height: number;
+  headroom: number;
+  /** Where its foot is now. */
+  where: number;
+}
+
 /**
  * Which line to be on, on a phone or in 2 × 2 (issue 115), where it must stay in view: a section's top edge with room
  * over it below the header, and on the window, else the header's bottom to hang from. It keeps its edge while that has
  * room for the drop; moving, it takes the edge nearest to where it is.
  */
-export function choosePerch(current: string | null, edges: readonly Edge[], ceiling: number, bottom: number, height: number, headroom: number, where: number): Perch {
+export function choosePerch({ current, edges, ceiling, bottom, height, headroom, where }: PerchChoice): Perch {
   const keep = edges.find((e) => e.id === current && e.top - height >= ceiling && e.top <= bottom);
   if (keep) return { id: keep.id, foot: keep.top, hanging: false };
   const roomy = edges.filter((e) => e.top - height - headroom >= ceiling && e.top <= bottom - 4);

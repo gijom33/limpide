@@ -7,37 +7,6 @@ export type Overlays = Record<Overlay, boolean>;
  *  Curve. The Scope guides and the Maths Layer are there to be asked for, so the Viewers start uncluttered. */
 export const DEFAULT_OVERLAYS: Overlays = { harmonics: true, ideal: true, curve: true, guides: false, maths: false };
 
-const KEY = 'limpide.overlays';
-
-interface KeyValueStorage {
-  getItem(key: string): string | null;
-  setItem(key: string, value: string): void;
-}
-
 export function toggleOverlay(overlays: Overlays, overlay: Overlay): Overlays {
   return { ...overlays, [overlay]: !overlays[overlay] };
-}
-
-export function loadOverlays(storage: KeyValueStorage): Overlays {
-  try {
-    const saved: unknown = JSON.parse(storage.getItem(KEY) ?? '{}');
-    const result = { ...DEFAULT_OVERLAYS };
-    if (saved && typeof saved === 'object') {
-      for (const o of OVERLAYS) {
-        const v = (saved as Record<string, unknown>)[o];
-        if (typeof v === 'boolean') result[o] = v;
-      }
-    }
-    return result;
-  } catch {
-    return { ...DEFAULT_OVERLAYS };
-  }
-}
-
-export function saveOverlays(storage: KeyValueStorage, overlays: Overlays): void {
-  try {
-    storage.setItem(KEY, JSON.stringify(overlays));
-  } catch {
-    // Storage unavailable: the choice still applies for this visit.
-  }
 }

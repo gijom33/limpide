@@ -1,6 +1,5 @@
 import { FORMER_NAME } from '../app/legacy';
-import { isKeyboardOctave } from '../input/keyboardLayout';
-import { CHOICES, defaultPatch, PARAMS, type ParamId, type Patch, setParam } from './patch';
+import { CHOICES, defaultPatch, isKeyboardOctave, PARAMS, type ParamId, type Patch, setParam } from './patch';
 
 const FORMAT = { app: 'limpide', version: 1 } as const;
 

@@ -109,7 +109,35 @@ export function useParamControl(id: ParamId, value: number, onChange: (value: nu
 export const pressed = (e: React.PointerEvent) => e.button === 0 && !(e.pointerType === 'mouse' && e.ctrlKey);
 
 /** Whether the press is still on: a move with no button held means its release never reached the page. */
-export const held = (e: React.PointerEvent) => (e.buttons & 1) === 1;
+const held = (e: React.PointerEvent) => (e.buttons & 1) === 1;
+
+/**
+ * A press on a knob or a fader: what it started with, kept until it ends however it ends (let go, cancelled, its
+ * capture lost, or a move with no button held, its release never heard), each end releasing the control.
+ */
+export function usePress<T>(control: { release(): void }) {
+  const press = useRef<T | null>(null);
+  /** Ends the press and gives what it started with, or null if none was on. */
+  const end = () => {
+    const p = press.current;
+    press.current = null;
+    control.release();
+    return p;
+  };
+  return {
+    start: (p: T) => {
+      press.current = p;
+    },
+    /** The press a move carries on, or null: none is on, or its button was let go where the page never heard it. */
+    move(e: React.PointerEvent): T | null {
+      if (press.current && !held(e)) end();
+      return press.current;
+    },
+    end,
+    /** The handlers for the ends that need nothing more. */
+    ends: { onPointerCancel: end, onLostPointerCapture: end },
+  };
+}
 
 /** True for a moment after `value` changes, however it was changed (hand, keys, MIDI, the Demo, a Patch). */
 function useChanging(value: number): boolean {
@@ -138,7 +166,9 @@ const STEP_FORGET_MS = 1000;
  * A stepped control (`unit`, its travel per step) moves a step for each notch's worth of scroll in one direction,
  * small trackpad scrolls adding up to it, so a notch always moves an Octave one step (issue 105).
  */
-export function useWheel(position: number, setPosition: (p: number) => void, unit = 0) {
+export function useWheel(control: { position: number; setPosition(p: number): void; unit: number }) {
+  const { position, setPosition, unit } = control;
+  // The listener is added by a ref callback, not an effect, so it reads the control kept here with each render.
   const latest = useRef({ position, setPosition, unit });
   latest.current = { position, setPosition, unit };
   const listening = useRef<{ element: Element; listener: (e: WheelEvent) => void } | null>(null);

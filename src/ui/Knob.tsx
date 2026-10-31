@@ -1,10 +1,10 @@
-import { useId, useRef } from 'react';
+import { useId } from 'react';
 import { MODULATED } from '../modulation/destinations';
 import { PARAMS, type ParamId } from '../patch/patch';
 import { valueToPosition } from '../patch/taper';
 import { useInactive } from './inactive';
 import { ModulationRing } from './modulationRing';
-import { held, pressed, useParamControl, useWheel } from './paramControl';
+import { pressed, useParamControl, usePress, useWheel } from './paramControl';
 import { Tooltip } from './Tooltip';
 import { PARAM_TIPS } from './tips';
 
@@ -59,8 +59,8 @@ export function Knob({ id, value, onChange, inactive }: Props) {
   const [markerX0, markerY0] = point(centre, g.markerFrom, angleOf(c.position));
   const [markerX1, markerY1] = point(centre, g.markerTo, angleOf(c.position));
   const gradient = `knob-cap-${useId().replace(/[^\w-]/g, '')}`; // a plain id, safe inside url(#…)
-  const drag = useRef<{ x: number; y: number; position: number; moved: boolean } | null>(null);
-  const wheel = useWheel(c.position, c.setPosition, c.unit);
+  const drag = usePress<{ x: number; y: number; position: number; moved: boolean }>(c);
+  const wheel = useWheel(c);
   const dimmed = useInactive(inactive);
 
   return (
@@ -74,25 +74,17 @@ export function Knob({ id, value, onChange, inactive }: Props) {
           onPointerDown={(e) => {
             if (!pressed(e)) return;
             c.grab(e, e.currentTarget);
-            drag.current = { x: e.clientX, y: e.clientY, position: c.position, moved: false };
+            drag.start({ x: e.clientX, y: e.clientY, position: c.position, moved: false });
           }}
           onPointerMove={(e) => {
-            const d = drag.current;
+            const d = drag.move(e);
             if (!d) return;
-            if (!held(e)) {
-              // The button was let go where the page never heard it: the drag is over.
-              drag.current = null;
-              c.release();
-              return;
-            }
             if (Math.abs(e.clientX - d.x) + Math.abs(e.clientY - d.y) > CLICK_SLOP) d.moved = true;
             const scale = e.shiftKey ? 0.1 : 1;
             c.setPosition(d.position + ((d.y - e.clientY) / DRAG_PIXELS_FOR_FULL_TRAVEL) * scale);
           }}
           onPointerUp={(e) => {
-            const d = drag.current;
-            drag.current = null;
-            c.release();
+            const d = drag.end();
             // A click on the arc, outside the cap: the single-pointer way to set a value (WCAG 2.5.7).
             if (!d || d.moved) return;
             const r = e.currentTarget.getBoundingClientRect();
@@ -102,14 +94,7 @@ export function Knob({ id, value, onChange, inactive }: Props) {
               c.setPosition(degrees / SWEEP_DEGREES + 0.5);
             }
           }}
-          onPointerCancel={() => {
-            drag.current = null;
-            c.release();
-          }}
-          onLostPointerCapture={() => {
-            drag.current = null;
-            c.release();
-          }}
+          {...drag.ends}
         >
           <defs>
             <radialGradient id={gradient} cx="50%" cy="38%" r="65%">
