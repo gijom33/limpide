@@ -87,6 +87,8 @@
 
 17. **A burst's 66 is an eighth of a step, counted by message, not time** (2026-10-31), replacing decisions 15 and 16: the owner's third log (half a turn slow, 0.625 fast), plotted, shows the bursts reach the page split (1 + 7 messages, 19 ms apart) and merged (two bursts 3 ms apart), so no time rule can tell bits apart; the owner then needed four turns for the full range ("That's ridiculous"). Counted as an eighth each, the three logs give 46, 54 and 47 steps for 1, 1.125 and 1.125 turns. The C16 sends fewer bursts than bits in its fastest turns, so those fall a little short; none runs ahead. Claude's call, open to the owner.
 
+18. **One full turn of a C16 knob sweeps the whole range** (2026-10-31): each bit is 1/46 of the range, so a turn is end to end; decision 13's "Since then" kept 1 % and two turns, which the owner tried and changed: "One turn". Other Controllers' Relative knobs keep 1 % a step. Decided by the owner.
+
 ## Comments
 
 - 2026-10-31, the owner, turning the C16's knobs (over Bluetooth, on the development server): "There seems to be a delay between the move and the actual impact on screen." Measured with a stand-in C16 in Chromium at 1440 × 900: one message reaches the knob on screen in 17 ms on the built site and 41 ms on the development server, and turns of 20 and 60 messages a second, or 10 at once, leave nothing queued (no long task). So the page keeps up; Bluetooth MIDI's own latency is the likeliest cause, the development server and decision 13's slower fast turn the others. Waiting on the owner's test over USB.

@@ -19,6 +19,8 @@ const CLICKS_PER_CHOICE = 2;
  * reach the page split and merged (the owner's logs: 47 steps for 1.125 turns, 46 to a turn).
  */
 const BURST = 8;
+/** One full turn of a C16 knob, about 46 bits (the owner's logs), sweeps the whole range (the owner: "One turn"). */
+const C16_STEP = 1 / 46;
 /** Values a knob of unknown Encoder Mode sends before it moves anything: enough to tell its mode. */
 const DETECT_VALUES = 3;
 /**
@@ -114,7 +116,7 @@ export function createControlSurface(synth: Synth) {
     const current = synth.position(id);
     if (mapping.mode !== 'absolute') {
       const steps = relativeSteps(mapping, mapping.mode, value);
-      synth.setPosition(id, Math.min(1, Math.max(0, current + steps * RELATIVE_STEP)));
+      synth.setPosition(id, Math.min(1, Math.max(0, current + steps * (mapping.device === 'c16' ? C16_STEP : RELATIVE_STEP))));
       synth.touched?.(target, 'moved');
       return;
     }
