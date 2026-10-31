@@ -193,7 +193,11 @@ test('it comes up from behind the Amp, and leaves jumping, then melting; with re
   await expect(mascot(page)).toHaveCount(0, { timeout: 500 });
 });
 
-test('it adds under a millisecond to each frame the Viewers draw (their own runs vary by half that)', async ({ page }) => {
+test('it adds under a millisecond to each frame the Viewers draw (their own runs vary by half that)', async ({ page, browserName }) => {
+  // Measured in Chromium only (issue 138): WebKit's clock counts whole milliseconds and, on GitHub's runner, draws some
+  // fifteen frames a second, so two seconds' average wanders by ±0.7 ms with Bead or without, and a 1 ms bound fails
+  // on noise. In Chromium on Linux Bead adds under 0.1 ms.
+  test.skip(browserName !== 'chromium', "WebKit's whole-millisecond clock cannot measure a fraction of one");
   // Every frame callback's run time, summed: the Viewers' render loop is one of them (ADR-0002).
   await page.addInitScript(() => {
     const w = window as unknown as { frameWork: number; frames: number };
