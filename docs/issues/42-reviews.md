@@ -170,6 +170,19 @@ Someone who has never touched a synth and opens Limpide to have fun and learn so
 - **Success:** they can say in their own words what the Oscillators, the Filter, the Amp and an LFO do, and they finished at least two Tutorials because they wanted to
 - **Runs again:** whenever a release changes the Tutorials' or the Tour's words, with the fact-checker (13), so the words stay both clear and true (Claude's call, open to the owner). Its findings feed [129](./129-words-fun-to-read.md).
 
+### 17. The MIDI mapping geek
+
+An avid synth player who owns a desk of controllers, maps every synth and plugin they own, and has opinions on where each control belongs under the hands. Added by the owner, 2026-10-31: "Let's invoke a new avid synthesizer MIDI mapping geek. We want the mapping of controllers on the C16 to match as intuitively as possible the Limpide Synth."
+
+- **Where:** the C16's layout in the repository (the layout's data, ADR-0009, issue 34's table, the PRD's MIDI stories), the TempoPAD C16's own hardware (its manual and photos: how its knobs, faders, pads and buttons sit on the panel), and the site's panel at 1440 × 900 and on a phone, to see where each control sits on the screen. No hardware: the owner tries the result on the real C16. **Time:** 45 minutes
+- **Goals:** propose the C16 layout that a player finds without looking: each bank's knobs and faders laid out as the section's controls are on the screen, the most played under the most natural hands, the buttons where a player expects them
+- **Asks:**
+  - **What is not reached:** every Parameter and choice the page has, and the ones on their way (issue 112's LFO Sync, issue 119's Legato, issue 132's aftertouch Destination): which belong on the C16, which can stay off it
+  - **The banks:** is a bank per section still right with the Oscillators grown past one bank's knobs; where do the extras go (a bank's free places, a second page, the faders)?
+  - **Under the hands:** knobs in the screen's order and rows; faders for what a player rides (levels, Envelopes); stepped choices on knobs or buttons; the free places kept for what will come
+  - **Conventions:** what the C16's factory layout and other controllers' habits teach (CC 1 as the mod wheel, a sustain on CC 64, Envelopes as four faders)
+- **Success:** a table per bank, every place filled or left free with a reason, each change from today's layout with why; and the findings, one line each, for the inbox
+
 ## To do
 
 - [x] Choose the personas (owner, 2026-10-26: profiles 1 to 4 the owner's, 5 to 7 completing them)
@@ -180,5 +193,6 @@ Someone who has never touched a synth and opens Limpide to have fun and learn so
 - [x] Profile 11's review (the open-source legal expert), 2026-10-26: a company could use or fork it today (MIT, the 3 shipped dependencies MIT, no copyleft among 108 dev dependencies, no third-party assets), once a fork adds the third-party notices and drops the counter; contributions should wait for a CONTRIBUTING (issue 56). Its findings in the inbox; AI authorship stated is issue 48
 - [x] Profile 15's review (the sound designer and Preset curator), added by the owner 2026-10-30, ran the same day on 1.16.0: [report](../reviews/2026-10-30/15-sound-designer.md), its findings to the inbox
 - [ ] Profile 16's review (the synth neophyte), added by the owner 2026-10-31: once the Tour is released, on the Tour and every Tutorial; its findings to the inbox and to [129](./129-words-fun-to-read.md)
+- [ ] Profile 17's review (the MIDI mapping geek), added by the owner 2026-10-31: the C16's layout, its findings to the inbox and [34](./34-c16-bank-layout.md)
 
 **Since then (2026-10-28, the retro of issues 73 to 79; recorded 2026-10-30 by [issue 110](./110-checks-before-a-push.md)):** the code review is no longer for minor versions only; which releases get it, [the release steps](../releasing.md) say ([ADR-0016](../adr/0016-the-release-steps-are-the-one-home-of-the-release-rules.md)). Decided by the owner.

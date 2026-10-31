@@ -6,7 +6,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
-- 2026-10-31, the owner: "Let's invoke a new avid synthesizer MIDI mapping geek. We want the mapping of controllers on the C16 to match as intuitively as possible the Limpide Synth."
 ## Dropped
 
 - 2026-10-30, from Claude's brainstorm, Velocity on the Volume ("a harder hit plays louder, not only brighter"): already so. The Amp Envelope's Attack rises to the Note's Velocity (PRD story 9). Claude's call, open to the owner.
@@ -128,3 +127,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-31, the owner's two Bead lines: the bug of Bead landing away from where its flight shows to [140](./issues/140-bead-lands-off-its-trajectory.md), waiting on the owner for when it happens (triage, Claude's call, open to the owner); the idea of Bead riding the LFOs to [141](./issues/141-bead-rides-the-lfos.md), in v1 as Bead's polish (decided by the owner), when the Waveform is a Sine or a Triangle and the Rate 1 Hz or slower (Claude's call, open to the owner).
 2026-10-31, the owner's bug of Bead off the line under a phone's section tabs: to [142](./issues/142-bead-on-the-line-under-the-tabs.md), built at once, decided by the owner (Bead stands on the line, drawn over the tabs' foot); the owner's idea of Bead hovering where it loses ground, there too, Claude's plan waiting on the owner's yes.
 2026-10-31, the owner's idea of Bluetooth MIDI (triage, Claude's call, open to the owner): to [143](./issues/143-bluetooth-midi.md), three questions for the owner, each with Claude's recommendation (a first check of a paired C16 on the Mac with issue 34's; v1 if that is all it needs).
+2026-10-31, the owner's MIDI mapping reviewer, done at once into [42](./issues/42-reviews.md), decided by the owner: profile 17, the MIDI mapping geek, who proposes the C16 layout a player finds without looking; its findings to the inbox and [34](./issues/34-c16-bank-layout.md). The profile's details are Claude's call, open to the owner.
