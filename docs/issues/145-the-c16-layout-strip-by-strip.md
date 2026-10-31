@@ -91,6 +91,8 @@
 
 **Since then (2026-10-31):** back to 1 % a bit, a 65 one step and a 66 an eighth, about two turns end to end: the owner, "No let's keep the 1% increment with the 65 message."
 
+**Since then (2026-10-31):** a 66 counts a quarter of a step, not an eighth, the owner's trial ("Make 66 one quarter to see."); the fast turns, which the C16 under-reports, then go further.
+
 ## Comments
 
 - 2026-10-31, the owner, turning the C16's knobs (over Bluetooth, on the development server): "There seems to be a delay between the move and the actual impact on screen." Measured with a stand-in C16 in Chromium at 1440 × 900: one message reaches the knob on screen in 17 ms on the built site and 41 ms on the development server, and turns of 20 and 60 messages a second, or 10 at once, leave nothing queued (no long task). So the page keeps up; Bluetooth MIDI's own latency is the likeliest cause, the development server and decision 13's slower fast turn the others. Waiting on the owner's test over USB.

@@ -14,11 +14,11 @@ const PICKUP_TOLERANCE = 0.5 / 127 + 1e-9;
 /** Encoder clicks per choice, so stepping through Waveforms is deliberate rather than jumpy. */
 const CLICKS_PER_CHOICE = 2;
 /**
- * The C16's knobs, one step for each bit of turning (issue 145): a bit sends one 65 (or 63) turned slowly and, past a
- * speed, a burst of eight 66s (or 62s). So a 66 is an eighth of a step. Counted by message, not by time: the bursts
- * reach the page split and merged (the owner's logs: 47 steps for 1.125 turns, 46 to a turn).
+ * The C16's knobs (issue 145): a bit of turning sends one 65 (or 63) turned slowly and, past a speed, a burst of
+ * eight 66s (or 62s), which reach the page split and merged, so they are counted by message, not by time. A 66 is a
+ * quarter of a step, not an eighth, as the C16 sends fewer bursts than bits when turned fast (the owner's trial).
  */
-const BURST = 8;
+const FAST_STEP = 1 / 4;
 /** Values a knob of unknown Encoder Mode sends before it moves anything: enough to tell its mode. */
 const DETECT_VALUES = 3;
 /**
@@ -101,11 +101,11 @@ export function createControlSurface(synth: Synth) {
   const clicks = new Map<string, number>(); // encoder clicks towards the next choice, per control
   const detecting = new Map<string, number[]>(); // the first values of knobs finding their Encoder Mode
 
-  /** A Relative message's steps: as sent, or for a C16 knob one a bit of turning, a burst's message an eighth. */
+  /** A Relative message's steps: as sent, or for a C16 knob one for a 65, a quarter for a 66. */
   const relativeSteps = (mapping: Mapping, mode: 'relative-twos' | 'relative-centred', value: number) => {
     const delta = relativeDelta(mode, value);
     if (mapping.device !== 'c16' || Math.abs(delta) <= 1) return delta;
-    return Math.sign(delta) / BURST;
+    return Math.sign(delta) * FAST_STEP;
   };
 
   const moveParam = (mapping: Mapping, id: ParamId, value: number) => {
