@@ -4,6 +4,7 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-10-31, the owner: "Bead sometimes lands at different location than where the trajectory shows."
 ## Ideas
 
 ## Dropped
