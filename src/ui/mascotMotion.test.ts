@@ -371,6 +371,34 @@ describe('what the controls, the words, the page and the Demo make of it (issue 
     expect(motion.frame(playing, 15.1, false, spot)).toMatchObject({ doing: 'shades', prop: 'visor' });
   });
 
+  it('words and the theme that come during a funny turn each play after it, in order', () => {
+    const motion = createMascotMotion(seeded());
+    motion.frame(playing, 0, false, spot);
+    motion.word('dead', 1);
+    motion.word('cafe', 1.2);
+    motion.theme('dark', 1.4);
+    const doing = run(motion, 1.1, 30, playing, spot).map((p) => p.doing).filter((d, i, all) => d && d !== all[i - 1]);
+    expect(doing.slice(0, 3)).toEqual(['playDead', 'coffee', 'nightcap']);
+  });
+
+  it('with reduced motion, a word, the theme or the Slope cue only changes its pose, and tickles still work after', () => {
+    const motion = createMascotMotion(seeded());
+    motion.frame(quiet, 0, true, spot);
+    const before = motion.frame(quiet, 0.5, true, spot).eyes;
+    motion.word('dead', 1);
+    const after = motion.frame(quiet, 1.1, true, spot);
+    expect(after.doing).toBeNull();
+    expect(after.eyes).not.toBe(before);
+    motion.gesture('perform', 5);
+    expect(motion.frame(quiet, 5.1, true, spot).doing).toBeNull();
+    motion.tickle(6);
+    expect(motion.frame(quiet, 6.05, true, spot).eyes).toBe('happy');
+    motion.gesture('taller', 7);
+    const turned = motion.frame(quiet, 7.1, true, spot).eyes;
+    motion.gesture('louder', 8);
+    expect(motion.frame(quiet, 8.1, true, spot).eyes).not.toBe(turned);
+  });
+
   it('after a coffee it strolls faster for a while', () => {
     const speeds = (coffee: boolean) => {
       const motion = createMascotMotion(seeded(7));

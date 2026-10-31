@@ -242,7 +242,8 @@ export function createMascotMotion(random: () => number = Math.random) {
   let act: Act | null = null;
   let pointer: number | null = null;
   // A word's or the theme's turn asked for during another: it comes next.
-  let queued: Trick | null = null;
+  // Words and the theme's reactions that came during a funny turn, in order, each after the one before.
+  const queued: Trick[] = [];
   // Its tricks, dealt like a shuffled deck: each once before any comes again, the jokes three times.
   let deck: Trick[] = [];
   const deal = (): Trick => {
@@ -373,7 +374,7 @@ export function createMascotMotion(random: () => number = Math.random) {
     pickUp(now: number) {
       if (leftAt !== null) return;
       trick = null;
-      queued = null;
+      queued.length = 0;
       target = null;
       busySince = now;
     },
@@ -388,14 +389,14 @@ export function createMascotMotion(random: () => number = Math.random) {
       if (leftAt !== null) return;
       gestureCount++;
       // During a funny turn, it comes once that ends.
-      if (trick) queued = WORD_TRICKS[word];
+      if (trick) queued.push(WORD_TRICKS[word]);
       else perform(WORD_TRICKS[word], now);
     },
     /** The theme switched: a nightcap for dark, its eyes shaded for light, for a few seconds. */
     theme(theme: 'dark' | 'light', now: number) {
       if (leftAt !== null) return;
       gestureCount++;
-      if (trick) queued = theme === 'dark' ? 'nightcap' : 'shades';
+      if (trick) queued.push(theme === 'dark' ? 'nightcap' : 'shades');
       else perform(theme === 'dark' ? 'nightcap' : 'shades', now);
     },
     /** A Waveform chosen: its tail takes that wave for `WAVE_SECONDS`. */
@@ -490,6 +491,10 @@ export function createMascotMotion(random: () => number = Math.random) {
       }
 
       if (reduced) {
+        // No funny turns with reduced motion: what starts one (a word, the theme, the Slope's cue) changes its pose.
+        if (trick) gestureCount++;
+        trick = null;
+        queued.length = 0;
         target = null;
         if (struck || gestureCount !== seenGestures) still = { ...resting, eyes: STILL_EYES[stillCount++ % STILL_EYES.length] };
         seenGestures = gestureCount;
@@ -519,10 +524,8 @@ export function createMascotMotion(random: () => number = Math.random) {
           gait = 'scoot';
         }
         trick = null;
-        if (queued) {
-          perform(queued, now);
-          queued = null;
-        }
+        const next = queued.shift();
+        if (next) perform(next, now);
       }
       // What next, when it is free: a stroll, a glance, or (with nothing played) a funny turn.
       // Surfing an LFO's shape through a Demo part: along it, end to end.

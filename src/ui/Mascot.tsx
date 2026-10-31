@@ -412,7 +412,7 @@ export function Mascot({
       if (act === 'surf' && !plot) act = part! % 2 ? 'airGuitar' : 'conduct';
       motion.act(act);
       let surfRoom: Room | null = null;
-      if (act === 'surf' && plot && moving !== 'held' && moving !== 'thrown' && !shown?.doing) {
+      if (act === 'surf' && plot && !still.matches && moving !== 'held' && moving !== 'thrown' && !shown?.doing) {
         // Where the plot draws the LFO under its middle: a second of it across, the newest at the right.
         const { box } = plot;
         const along = Math.min(1, Math.max(0, (drawnAt.left + DROP_MIDDLE - box.left - LFO_PAD) / (box.width - 2 * LFO_PAD)));
