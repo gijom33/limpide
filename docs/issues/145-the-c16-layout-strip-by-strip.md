@@ -2,7 +2,7 @@
 
 **What to build:** A new built-in layout for the TempoPAD C16, from profile 17's review ([report](../reviews/2026-10-31/17-midi-mapping-geek.md)) and the owner's real C16: each strip of the panel (two knobs, a fader, the M, S and R buttons) a column of its section on screen, so a player finds a control without looking. It replaces [34](./34-c16-bank-layout.md)'s layout, and comes with a one-page card to print and keep beside the C16.
 
-**Blocked by:** [112](./112-tempo-midi-clock-and-an-arpeggiator.md) (LFO Sync) and [119](./119-legato-mode.md) (Legato), so their switches have their places from the start
+**Blocked by:** none. Built before [112](./112-tempo-midi-clock-and-an-arpeggiator.md) and [119](./119-legato-mode.md) at the owner's word (2026-10-31: "implement 145"): their places (bank D's R2 and R4 for Sync, bank C's R2 for Legato) are kept free, and each of those issues fills its own
 
 **Status:** ready-for-agent · enhancement. In v1 ([131](./131-v1.md)), replacing 34's layout. Grilled with the owner, 2026-10-31.
 
@@ -72,5 +72,5 @@
 8. **Bank B:** K1–K4 Cutoff, Resonance, Velocity, Key Track; K5 Env Amount under Cutoff; K6 Mode; K7 and K8 free; F1–F4 the Filter Envelope; R1 Slope.
 9. **Bank C:** K1 Voices, K2 Glide, K8 Volume over the Release fader; F1–F4 the Amp Envelope; R2 Legato.
 10. **Bank D:** LFO 1 on strips 1 and 2, LFO 2 on 3 and 4, Waveform and Destination over Depth and Rate; R1–R4 Retrigger and Sync for each; faders free for now.
-11. **Built after 112 and 119,** so Sync and Legato have their places from the start; the card with it.
+11. **Built after 112 and 119,** so Sync and Legato have their places from the start; the card with it. **Since then (2026-10-31):** built first, at the owner's word, the two places kept for 112 and 119 to fill.
 12. **The owner's C16 is set:** every knob Relative #1 (2026-10-31). The 22 momentary buttons (M1–M4 and S3 on every bank, R1 and R2 on bank A) are set once this is built: today's layout would read their release as a second press.

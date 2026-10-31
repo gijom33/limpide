@@ -19,6 +19,7 @@
 - With several Voices, the switch greys out as other inactive controls do, with a description saying why.
 - The Modulation model and the Timeline follow: a legato Note draws no new Attack.
 - A tip says what it does and to try it with Glide; one Preset (a lead) uses it.
+- On the C16, bank C's R2 button (a toggle) switches Legato ([145](./145-the-c16-layout-strip-by-strip.md)'s layout, which keeps that place for it); the printable C16 card shows it.
 
 **Key interfaces:**
 - The Patch and its Voice-related controls
@@ -29,6 +30,7 @@
 - [ ] The model's Envelope levels match the engine's for a legato line (the model-against-sound test)
 - [ ] A Patch without the field loads with Legato off; a Share link carries it
 - [ ] With 2 or more Voices the switch is greyed out and described
+- [ ] The C16's R2 on bank C switches Legato, and the C16 card shows it
 - [ ] Every test passes in Linux's fonts too
 
 **Out of scope:**
