@@ -17,6 +17,9 @@ interface Props {
   onClose(): void;
 }
 
+/** How long after a card opens the page is brought clear again when the card or the page changes size. */
+const SETTLING_MS = 2000;
+
 /** A control on the page, by what it sets: a move's, or the one a card watches. */
 const controlOf = ({ kind, id }: Pick<TourMove, 'kind' | 'id'>) => document.querySelector(`[data-learn="${kind}:${id}"]`);
 
@@ -31,14 +34,26 @@ function useSectionInView(card: Card, docked: RefObject<HTMLElement | null>) {
     for (const control of controls) reveal(control);
     const viewers = card.viewers.map((name) => document.querySelector(`[aria-label="${name}"]`)).filter((e) => e !== null);
     for (const viewer of viewers) viewer.setAttribute('data-tutorial-viewer', '');
-    // After the tab it was on has had a frame to show, and the card its new height.
-    const scroll = setTimeout(() => {
+    const bring = () => {
       const behavior = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
       const watched = card.watch ? controlOf({ kind: 'param', id: card.watch }) : null;
       if (docked.current) bringClear(docked.current, [...viewers, ...controls, ...(watched ? [watched] : [])], behavior);
+    };
+    // After the tab it was on has had a frame to show, and the card its new height; then again while the card and the
+    // page settle, if either changes size (on GitHub's Linux the last card came out 22 px taller after the scroll).
+    let settling = false;
+    const resized = new ResizeObserver(() => settling && bring());
+    if (docked.current) resized.observe(docked.current);
+    resized.observe(document.querySelector('main')!);
+    const scroll = setTimeout(() => {
+      settling = true;
+      bring();
     }, 50);
+    const settled = setTimeout(() => resized.disconnect(), SETTLING_MS);
     return () => {
       clearTimeout(scroll);
+      clearTimeout(settled);
+      resized.disconnect();
       for (const viewer of viewers) viewer.removeAttribute('data-tutorial-viewer');
     };
   }, [card, docked]);

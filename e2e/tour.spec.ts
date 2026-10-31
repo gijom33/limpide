@@ -178,6 +178,18 @@ test('the last card’s Bass button starts the Bass Tutorial (issue 128)', async
   await expect(patchName(page)).toHaveAttribute('aria-label', 'Patch: Init');
 });
 
+test('a card that grows as it settles still leaves its Viewer clear (issue 128)', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto('/');
+  await startFromAbout(page);
+  for (let i = 1; i < 4; i++) await action(page, 'Next').click();
+  await expect.poll(() => standing(page, 'Envelope Timeline')).toBe('clear');
+  // As GitHub's Linux fonts did: the card 30 px taller after the page has been scrolled for it.
+  await card(page).evaluate((el) => (el.style.paddingBottom = `${parseFloat(getComputedStyle(el).paddingBottom) + 30}px`));
+  await expect.poll(() => standing(page, 'Envelope Timeline')).toBe('clear');
+});
+
 for (const [layout, width, height] of [['phone', 375, 812], ['short phone', 393, 659], ['2 × 2', 690, 830], ['laptop', 1280, 800], ['large screen', 1920, 1080]] as const) {
   test(`on a ${layout}, each card brings its Viewers into view, clear of the header and the card (issue 128)`, async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
