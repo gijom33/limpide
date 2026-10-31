@@ -33,21 +33,21 @@ export interface SuiteCounts {
   skipped: number;
 }
 
-/** The counts in Vitest's JSON report (`--reporter=json`). */
+/** The counts in Vitest's JSON report (`--reporter=json`); `tests` are those that ran, the skipped ones apart. */
 export function vitestCounts(report: string): SuiteCounts {
   const r = JSON.parse(report);
-  return {
-    tests: r.numTotalTests,
-    passed: r.numPassedTests,
-    failed: r.numFailedTests,
-    skipped: (r.numPendingTests ?? 0) + (r.numTodoTests ?? 0),
-  };
+  const skipped = (r.numPendingTests ?? 0) + (r.numTodoTests ?? 0);
+  return { tests: r.numTotalTests - skipped, passed: r.numPassedTests, failed: r.numFailedTests, skipped };
 }
 
-/** The counts in Playwright's JSON report: a test is counted once per browser it runs in; a flaky one passed on a retry. */
+/**
+ * The counts in Playwright's JSON report: a test is counted once per browser it runs in; a flaky one passed on a retry.
+ * `tests` are those that ran: a test skipped on purpose (a touch-only one in a desktop browser) is neither passed nor
+ * failed, so "981 of 998 passing" no longer reads as 17 failures.
+ */
 export function playwrightCounts(report: string): SuiteCounts {
   const { expected, unexpected, flaky, skipped } = JSON.parse(report).stats;
-  return { tests: expected + unexpected + flaky + skipped, passed: expected + flaky, failed: unexpected, skipped };
+  return { tests: expected + unexpected + flaky, passed: expected + flaky, failed: unexpected, skipped };
 }
 
 /** The type errors `tsc --pretty false` printed. */

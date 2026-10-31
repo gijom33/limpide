@@ -58,7 +58,7 @@ TypeScript, React and Vite, on the browser's native Web Audio nodes; no audio li
 - [docs/statistics.md](docs/statistics.md): the project's size, quality and performance, release by release (`npm run stats`).
 
 <!-- statistics -->
-At 1.16.0 (2026-10-30): 13,047 lines of app code, 912 tests written, 214.5 kB of JavaScript gzipped. Every number, release by release, is on [the statistics page](docs/statistics.md).
+At 1.17.0 (2026-10-31): 16,832 lines of app code, 2,099 tests, all passing, 53.7% of the app code’s lines run by the unit and engine tests, 237.7 kB of JavaScript gzipped, the page drawn in 228 ms, the Demo at 59 frames a second for 104.2% of a processor core. Every number, release by release, is on [the statistics page](docs/statistics.md).
 <!-- /statistics -->
 
 ## How this was built

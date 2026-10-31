@@ -8,6 +8,8 @@
 
 **Since then:** the statistics run after the push, not before the release commit ([ADR-0015](../adr/0015-ci-runs-the-end-to-end-tests-before-a-deploy.md), decided by the owner on 2026-10-30; `docs/releasing.md`, step 7).
 
+**Since then:** the first row, 1.17.0's, measured on 2026-10-31 after its push, on a quiet machine, in 13 minutes (not the hour expected). Its end-to-end count first read "981 of 998": the 17 are tests skipped on purpose, now left out of what ran, so it reads "981 of 981" (Claude's call, open to the owner).
+
 ## Triage Notes
 
 **What we've established so far:**

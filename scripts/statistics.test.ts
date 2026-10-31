@@ -27,12 +27,12 @@ const row = (version: string, values: Row['values'] = {}): Row => ({
 describe('reading a suite’s results (issue 84)', () => {
   it('counts Vitest’s tests, passed, failed and skipped', () => {
     const report = JSON.stringify({ numTotalTests: 130, numPassedTests: 126, numFailedTests: 1, numPendingTests: 2, numTodoTests: 1, testResults: [] });
-    expect(vitestCounts(report)).toEqual({ tests: 130, passed: 126, failed: 1, skipped: 3 });
+    expect(vitestCounts(report)).toEqual({ tests: 127, passed: 126, failed: 1, skipped: 3 });
   });
 
   it('counts Playwright’s tests, a flaky one as passed on its retry', () => {
     const report = JSON.stringify({ suites: [], errors: [], stats: { startTime: '', duration: 1000, expected: 300, unexpected: 2, flaky: 1, skipped: 4 } });
-    expect(playwrightCounts(report)).toEqual({ tests: 307, passed: 301, failed: 2, skipped: 4 });
+    expect(playwrightCounts(report)).toEqual({ tests: 303, passed: 301, failed: 2, skipped: 4 });
   });
 
   it('counts TypeScript’s errors and Biome’s errors and warnings', () => {
