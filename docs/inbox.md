@@ -6,6 +6,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- 2026-10-30, the owner: "I am interested in creating an agent who would help me get Limpide known in the electronic music, synth community. I would ask him to update the community on latest enhanecements on a regular basis. I would have it be active on forums and reddit. How can I make that happen?" Then, on Claude's answer (the agent drafts, the owner posts): "Yes, build a detailed plan for me to deploy."
+
 ## Dropped
 
 - 2026-10-30, from Claude's brainstorm, Velocity on the Volume ("a harder hit plays louder, not only brighter"): already so. The Amp Envelope's Attack rises to the Note's Velocity (PRD story 9). Claude's call, open to the owner.
