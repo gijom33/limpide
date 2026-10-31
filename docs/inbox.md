@@ -6,6 +6,7 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- 2026-10-31, the owner: "I would like to mention granular synthesis as another v2 candidate."
 - 2026-10-31, from the 1.18.0 review, the Tour's card copies the Tutorial card's shell (the top row, the tap-to-show words with the same two lint waivers, the actions row), and its classes say "tutorial" though the Tour is not a Tutorial: one docked-card shell for both.
 - 2026-10-31, from the 1.18.0 review, Osc 2's Envelope term is worked out twice (`osc2Rest` beside `osc2Cents`, which issue 100 made the one answer), and FM's index (FM_INDEX times FM) is written out in four places.
 - 2026-10-31, from the 1.18.0 review, small names: the engine tests' "duty" for the Pulse Width (an avoided word), the type `TourCard` sharing its component's name, a phrase and its BPM travelling together unnamed, the Ideal's cache keyed by a string.
