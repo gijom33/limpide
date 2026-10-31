@@ -6,6 +6,9 @@
 
 **Status:** superseded (2026-10-31) by [145](./145-the-c16-layout-strip-by-strip.md). Checked on the real C16 with the owner: its names over USB and Bluetooth are recognised, and what it sends led to the new layout, its knobs declared Relative and its buttons as the printed card says.
 
+
+The first layout, as built (1.5.0 to 1.18.0); [145](./145-the-c16-layout-strip-by-strip.md)'s replaced it in 1.19.0.
+
 | Bank | Encoders 1–8 | Faders 1–4 |
 |---|---|---|
 | A · Oscillators | Osc 1 Waveform, Pulse Width, Osc 2 Waveform, Octave, Semitone, Detune, Osc 2 Pulse Width, Glide | Mixer: Osc 1, Osc 2, Sub, Noise |

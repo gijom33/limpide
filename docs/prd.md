@@ -15,7 +15,7 @@ Limpide (formerly SynthView) is a browser-based subtractive synthesizer laid out
 - **Modulation over time:** an Envelope Timeline shows both Envelopes and the Effective Cutoff moving in time.
 - **Studying a frame:** Freeze, Snapshot (A/B), axis toggles and a hover readout.
 - **Hands-free listening:** Hold sustains the sound while you turn knobs.
-- **Playing:** from the computer keyboard, the on-screen piano, or a MIDI Controller. The Synido TempoPAD C16 is the primary target and is mapped in seconds with Quick Setup.
+- **Playing:** from the computer keyboard, the on-screen piano, or a MIDI Controller. The Synido TempoPAD C16 is the primary target and maps itself when plugged in; Quick Setup maps any other Controller in one pass.
 - **Sounds and sharing:** Patches autosave and can be named, exported as JSON, or shared by URL.
 - **The maths:** an optional Maths Layer reveals Q, dB values and formulas for those who want it.
 
