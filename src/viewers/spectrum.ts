@@ -31,6 +31,8 @@ interface Options {
   view(): ViewSettings;
   /** Draw the Ideal Reference (from the view settings) as hollow marks. */
   showIdeal?: boolean;
+  /** Whether the newest Note's Gate is on: the Ideal then follows where its Envelope keeps Osc 2 (issue 98). */
+  gateOn?(): boolean;
   /** The Filter's gain per frequency: drawn as the Response Curve, and applied to the Ideal marks. */
   response?(frequencies: Float32Array<ArrayBuffer>): Float32Array;
   /** Cursor position over the canvas (CSS pixels), for the hover readout. */
@@ -82,7 +84,7 @@ function idealMark(g: CanvasRenderingContext2D, x: number, y: number, source: Id
 
 /** A Spectrum of one Tap, with Harmonic Markers and the overlays the learner has switched on. */
 export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode, sampleRate: number, options: Options) {
-  const { fundamental, view, showIdeal, response, hover } = options;
+  const { fundamental, view, showIdeal, gateOn, response, hover } = options;
   const bins = new Float32Array(analyser.frequencyBinCount).fill(-Infinity);
   const binHz = sampleRate / analyser.fftSize;
   const nyquist = sampleRate / 2;
@@ -139,7 +141,7 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
     const scaleOverlapsLabels = overlays.curve && response && yOf(zero) - 2 - DB_LABEL_HEIGHT < MARKER_LABEL_ROW;
     const labelsEndAt = scaleOverlapsLabels ? width - g.measureText('−48 dB').width - 3 - MIN_LABEL_GAP / 2 : Infinity;
     const f0 = frozenFundamental(viewer.frozen, fundamental);
-    const ideal = frozenIdeal(viewer.frozen, () => view().ideal?.(f0, sampleRate));
+    const ideal = frozenIdeal(viewer.frozen, () => view().ideal?.(f0, sampleRate, gateOn?.() ?? false));
     const markers = harmonicMarkers(f0, {
       // A tick on every Harmonic; a label on each of the first seven, and no further (the owner, 2026-10-26).
       maxFrequency, xOf, minLabelGap: g.measureText('8').width + 1, labelsEndAt,

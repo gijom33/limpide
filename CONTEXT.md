@@ -43,7 +43,7 @@ The shape of an Oscillator's cycle: sine, triangle, saw, square, or pulse.
 _Avoid_: Wave type, shape
 
 **Pulse Width**:
-The fraction of a pulse Waveform's cycle spent high; 50% is a square.
+The fraction of a pulse Waveform's cycle spent high; 50% is a square. It holds at whatever pitch the Oscillator sounds, however its tuning, Env Amount, an LFO, the bend or a Glide moves it.
 _Avoid_: Duty cycle, PWM (PWM is pulse width being modulated)
 
 **Transpose**:
@@ -67,7 +67,7 @@ Osc 1 multiplied by Osc 2, a source in the Mixer of its own (Ring Modulation): i
 _Avoid_: Ring mod (fine in UI copy), AM
 
 **FM**:
-How far Osc 2 swings Osc 1's frequency at audio rate (linear frequency modulation, or cross-modulation), whatever Osc 2's own Mixer level: new partials appear either side of Osc 1's Harmonics. High up, it is held back as far as keeps them under the top of what the browser plays.
+How far Osc 2 swings Osc 1's frequency at audio rate (linear frequency modulation, or cross-modulation), whatever Osc 2's own Mixer level: new partials appear either side of Osc 1's Harmonics. Its depth is set by the knobs: as Env Amount takes Osc 2 up, the swing stays and the index falls, as in analogue cross-modulation. High up, it is held back as far as keeps them under the top of what the browser plays.
 _Avoid_: Cross Mod (fine in a tooltip), FM amount
 
 **Mixer**:
@@ -227,7 +227,7 @@ A label on the Spectrum identifying a Harmonic by number (the fundamental by its
 _Avoid_: Peak label
 
 **Ideal Reference**:
-The theoretical Harmonic levels of each Oscillator's Waveform (e.g. 1/n for saw) at its Mixer level, drawn for comparison with what's measured: a circle for Osc 1 (its FM sidebands too, while Osc 2 is a Sine or whole octaves from it), a square for Osc 2, a triangle for the Sub, each where its Harmonics fall; a diamond for each of Ring's sums and differences.
+The theoretical Harmonic levels of each Oscillator's Waveform (e.g. 1/n for saw) at its Mixer level, drawn for comparison with what's measured: a circle for Osc 1 (its FM sidebands too, while Osc 2 is a Sine or whole octaves from it), a square for Osc 2, a triangle for the Sub, each where its Harmonics fall; a diamond for each of Ring's sums and differences. While a Note is held, Osc 2's, Ring's and FM's marks count from where the Filter Envelope's Sustain keeps Osc 2 (Env Amount × Sustain off its knobs).
 _Avoid_: Expected spectrum, model curve
 
 **Response Curve**:

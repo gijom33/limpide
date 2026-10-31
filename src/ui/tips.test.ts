@@ -14,3 +14,10 @@ it('the LFO Destination tip names every Destination, in the order the picker lis
   for (const [i, d] of LFO_DESTINATIONS.entries()) expect(places[i], d.label).toBeGreaterThan(0);
   expect(places).toEqual([...places].sort((a, b) => a - b));
 });
+
+it('FM’s tip says its depth follows the knobs, not the Envelope (issue 98)', () => {
+  const { body } = TIPS.crossMod;
+  expect(body).toMatch(/depth/);
+  expect(body).toMatch(/knobs/);
+  expect(body).toMatch(/Env Amount/);
+});

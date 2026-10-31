@@ -52,7 +52,7 @@ function loadSaved(storage: KeyValueStorage): Partial<Saved> {
   }
 }
 
-/** Ideals kept per Patch, by the share of FM's depth their Note keeps: a few Notes' worth. */
+/** Ideals kept per Patch, by the share of FM's depth their Note keeps and its Gate: a few Notes' worth. */
 const KEPT_IDEALS = 16;
 
 /**
@@ -60,18 +60,22 @@ const KEPT_IDEALS = 16;
  * the share of FM's depth the Note keeps (issue 103; to a thousandth, so a Note held reuses its Ideal every frame).
  */
 const idealOf = (patch: Patch): IdealAt => {
-  const known = new Map<number, readonly IdealPartial[]>();
-  // The last Note's answer: every Spectrum asks every frame, and the kept depth is a search (fmDepthKept).
-  let last: { fundamental: number; sampleRate: number; ideal: readonly IdealPartial[] } | undefined;
-  return (fundamental, sampleRate) => {
-    if (last?.fundamental === fundamental && last.sampleRate === sampleRate) return last.ideal;
-    const kept = Math.round(idealFmKept(patch, fundamental, sampleRate) * 1000) / 1000;
-    const ideal = known.get(kept) ?? idealPartials(patch, IDEAL_HARMONICS, kept).map((p) => ({ ...p, level: p.level * OSCILLATOR_LEVEL }));
-    if (!known.has(kept)) {
+  const known = new Map<string, readonly IdealPartial[]>();
+  // The last Note's kept depth: every Spectrum asks every frame, and it is a search (fmDepthKept).
+  let last: { fundamental: number; sampleRate: number; kept: number } | undefined;
+  return (fundamental, sampleRate, gateOn = false) => {
+    const kept =
+      last?.fundamental === fundamental && last.sampleRate === sampleRate
+        ? last.kept
+        : Math.round(idealFmKept(patch, fundamental, sampleRate) * 1000) / 1000;
+    last = { fundamental, sampleRate, kept };
+    const key = `${kept} ${gateOn}`;
+    let ideal = known.get(key);
+    if (!ideal) {
+      ideal = idealPartials(patch, IDEAL_HARMONICS, { fmKept: kept, gateOn }).map((p) => ({ ...p, level: p.level * OSCILLATOR_LEVEL }));
       if (known.size >= KEPT_IDEALS) known.clear();
-      known.set(kept, ideal);
+      known.set(key, ideal);
     }
-    last = { fundamental, sampleRate, ideal };
     return ideal;
   };
 };

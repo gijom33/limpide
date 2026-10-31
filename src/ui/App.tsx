@@ -255,6 +255,8 @@ export function App() {
 
   // Read by the render loop every frame, outside React (issue 77).
   const view = viewerStore.get;
+  // Whether the newest Note's Gate is on, for the Ideal on the Spectra that draw it (issue 98).
+  const gateOn = useCallback(() => session.engine.modulationAt().sounding !== null, [session]);
 
   // A change by hand: a knob, a fader or a switch.
   const edit = (change: (patch: Patch) => Patch) => patches.change(change, 'hand');
@@ -276,6 +278,7 @@ export function App() {
         sampleRate={session.ctx.sampleRate}
         fundamental={session.engine.fundamental}
         view={view}
+        gateOn={extra.showIdeal ? gateOn : undefined}
         {...extra}
       />
     );
