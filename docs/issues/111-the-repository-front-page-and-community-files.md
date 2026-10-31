@@ -12,12 +12,13 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement. The owner accepted the answers (decisions below); SECURITY.md waits on the owner's step 2.
+**Status:** ready-for-human · enhancement. Built (2026-10-30) on night/2026-10-30, for the owner to try. Still waiting on the owner's own steps: the old Releases renamed (step 3), and private reporting switched on (step 2), after which SECURITY.md is written.
 
 ## For the owner alone
 
 1. Fill in the GitHub profile's name, bio and link (GitHub › Settings › Public profile).
 2. Switch on private vulnerability reporting (the repository's Settings › Code security). A SECURITY.md then points to it, with no email address.
+3. Rename the eight Releases not yet titled "Limpide X.Y.Z" (v1.13.0 to v1.17.0; v1.12.4 and older already are): `for v in 1.13.0 1.14.0 1.14.1 1.15.0 1.15.1 1.16.0 1.16.1 1.17.0; do gh release edit "v$v" --title "Limpide $v"; done`. New ones get the title from the release steps.
 
 ## Questions for the owner
 
@@ -47,12 +48,34 @@
 - **SECURITY.md**, once the owner has switched on private reporting: report privately through the repository's Security tab; no email address.
 
 **Acceptance criteria:**
-- [ ] The README's screenshot shows four Oscillator tabs and the header as it is
+- [x] The README's screenshot shows four Oscillator tabs and the header as it is
 - [ ] Every Release's title has the one form
-- [ ] A pull request's run cannot cancel a main deploy (the workflow's groups say so)
-- [ ] The built notices end with the MIT licence
+- [x] A pull request's run cannot cancel a main deploy (the workflow's groups say so)
+- [x] The built notices end with the MIT licence
 - [ ] SECURITY.md points to private reporting, which is on
 
 **Out of scope:**
 - The copyright line's wording (a lawyer's)
 - The owner's GitHub profile (the owner's)
+
+## How it was built
+
+Built at night on 2026-10-30, on the branch night/2026-10-30, for the owner to try.
+
+- **Notices:** the build writes Limpide's own licence (the LICENSE file, headed with the version) as the last section of `third-party-notices.txt`; the About test checks that the last section is it.
+- **CI:** runs on `main` share one group that never cancels a run in progress, so a newer push waits for the deploy in flight. A pull request or a release branch runs in a group of its own ref (`checks-…`), which can never be main's, and a newer push to it cancels its older run.
+- **README:** a new screenshot; a credit line under the tagline ("Designed and directed by Guillaume Boillet; code written with Claude Code, Anthropic's AI coding agent", the name linked to the same LinkedIn page as About); "How it's built" and "How this was built" merged into one section under the second name (CONTRIBUTING links it), with the statistics' summary at its end. The License line now says the notices end with Limpide's own licence; its copyright wording is unchanged (Decision 4).
+- **Releases:** the release steps create each Release with `--title "Limpide X.Y.Z"`. The old titles are left for the owner to rename (step 3), since the night shift changes nothing on GitHub.
+- **CONTRIBUTING:** one sentence asks for AI help to be marked with a `Co-Authored-By` line naming the tool.
+- **SECURITY.md:** not written. Private vulnerability reporting was still off on 2026-10-31 (read through GitHub's API), and SECURITY.md waits on it.
+
+Calls made without the owner (Claude's call, open to the owner):
+
+1. The screenshot is the Demo playing Acid at 1920 × 1080 (the four sections across), saved at 1.25× (2400 × 1350), with the Demo's card closed so every Viewer shows whole. With the card open it covers the foot of the Filter's and Amp's Spectrum; it would show what to listen for, though.
+2. The credit line follows About's words, Claude Code included; the merged section then only says every commit names Claude Code.
+3. The deploy job keeps its own `pages` group, now redundant beside the run's `main` group but harmless.
+4. A side effect of the CI groups: a third push to `main` while one run is going replaces the one waiting, so that middle commit is never deployed alone (the newest is).
+
+What to check: the README's top (the credit line and the screenshot) on GitHub once pushed; `third-party-notices.txt` from About on the deployed site; and the first pull request's or release branch's run shows a `checks-…` group, not `main`.
+
+Tests: `npx tsc`, `npm run lint`, `npx vitest run` (1,149 passed) and `e2e/about.spec.ts` in Chromium and WebKit (12 passed). The README, CONTRIBUTING, release steps and workflow have no behaviour a test can check locally.
