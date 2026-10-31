@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · bug. Triaged with the owner on 2026-10-30 (decisions below). Built (2026-10-31): the four decisions; for the owner to listen to a pulse under Env Amount, FM Bass and Poly Mod Zap, and to look at the Ideal on a held Note, before the release.
+**Status:** done (2026-10-31). Triaged with the owner on 2026-10-30 (decisions below), built on 2026-10-31, and accepted by the owner without trying it ("OK I trust you on the fix"). Claude's calls below stay open to the owner.
 
 ## What happens
 
