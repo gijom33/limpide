@@ -2,7 +2,8 @@ import type { IdealPartial } from '../music/idealReference';
 import type { Overlays } from './overlays';
 import type { ViewerState } from './viewerState';
 
-export type IdealAt = (fundamental: number, sampleRate: number) => readonly IdealPartial[];
+/** The Ideal for a Note of `fundamental` Hz on a device of `sampleRate`, while that Note is `held` or after (issue 98). */
+export type IdealAt = (fundamental: number, sampleRate: number, held?: boolean) => readonly IdealPartial[];
 
 /** Settings the Viewers read every frame, kept by the Viewer settings store (issue 77): the render loop reads them, React subscribes. */
 export interface ViewSettings {

@@ -26,10 +26,11 @@ async function play(patch: Patch, notes: number[], hold: number, seconds: number
   const curve = Object.getOwnPropertyDescriptor(WaveShaperNode.prototype, 'curve')!;
   ctx.createWaveShaper = () => {
     const node = shaper();
-    // The limiter's curve is the one longer than the LFOs' two-point clamp: ±4 in, ±4 out, a straight line.
+    // The limiter's curve is the one longer than the LFOs' two-point clamp that passes negative values (a pulse's
+    // cycle, issue 98, is all positive): ±4 in, ±4 out, a straight line.
     Object.defineProperty(node, 'curve', {
       get: () => curve.get!.call(node),
-      set: (c: Float32Array) => curve.set!.call(node, c.length > 2 ? Float32Array.of(-4, 4) : c),
+      set: (c: Float32Array) => curve.set!.call(node, c.length > 2 && c[0] < 0 ? Float32Array.of(-4, 4) : c),
     });
     return node;
   };

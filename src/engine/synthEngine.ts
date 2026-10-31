@@ -358,6 +358,8 @@ function createRestartable(ctx: BaseAudioContext, frequency: number, outputs: Au
   return {
     frequency: hz.offset,
     detune: cents.offset,
+    /** What its detune sums to, everything that moves its pitch off `frequency`, as a signal in cents. */
+    cents,
     /** Each node not yet ended plays `waveAt(when it starts)`, so one handed over for a later Note keeps that Note's. */
     setWave(waveAt: (start: number) => PeriodicWave) {
       for (const [node, start] of takeover.starts()) play(node, waveAt(start));
@@ -375,26 +377,58 @@ function createRestartable(ctx: BaseAudioContext, frequency: number, outputs: Au
 type Restartable = ReturnType<typeof createRestartable>;
 
 /**
+ * How far a pulse's delay follows its Oscillator's pitch (issue 98): from this many cents down to as many up, past
+ * what Env Amount, both LFOs, the bend and the tuning knobs reach together.
+ */
+const FOLLOWED_CENTS = 12000;
+
+/**
+ * One cycle's length, as a share of the Note's period, at `x` × FOLLOWED_CENTS cents off the Note (x from −1 to 1):
+ * 2^(−cents/1200). Two cents a step: the line between steps is within a millionth of the curve.
+ */
+const CYCLE_CURVE = Float32Array.from({ length: 12001 }, (_, i) => 2 ** (-(i / 6000 - 1) * (FOLLOWED_CENTS / 1200)));
+
+/**
  * One Oscillator. Most Waveforms play their Fourier series directly (a PeriodicWave). A pulse is built the
  * analogue way, as a saw minus a delayed copy of itself: the delay (width / frequency) sets the Pulse Width and,
  * unlike a PeriodicWave, can be modulated smoothly (PWM). It is scaled to match the pulse's series exactly. After a
  * restart the delay still holds the old cycle for one width: a fraction of a cycle, inside the Note's attack.
+ *
+ * The delay is the width (the knob, and each LFO's swing of it) times the Note's period, times one cycle's length at
+ * the pitch the Oscillator sounds over the Note's (issue 98): a waveshaper turns everything that moves its pitch, in
+ * cents, into 2^(−cents/1200) at audio rate, so the width stays the knob's however Env Amount, an LFO, the bend or
+ * its tuning moves it. A Glide moves the Note's period, which slides with the Oscillators.
  */
 function createVoiceOscillator(ctx: BaseAudioContext) {
   const direct = ctx.createGain();
   const delay = ctx.createDelay(1);
   const inverted = ctx.createGain();
   const out = ctx.createGain();
-  const pwm = [ctx.createGain(), ctx.createGain()]; // each LFO → delay time
   const source: Restartable = createRestartable(ctx, A4, [direct, delay]);
-  direct.connect(out);
-  delay.connect(inverted).connect(out);
+  const width = ctx.createConstantSource();
+  width.offset.value = 0.5;
+  const pwm = [ctx.createGain(), ctx.createGain()]; // each LFO → the width
+  const period = ctx.createGain(); // the Note's period, in seconds
+  period.gain.value = 1 / A4;
+  const cents = ctx.createGain(); // the shaper's input runs from −1 to 1
+  cents.gain.value = 1 / FOLLOWED_CENTS;
+  const cycle = ctx.createWaveShaper();
+  cycle.curve = CYCLE_CURVE;
+  const following = ctx.createGain();
+  following.gain.value = 0;
+  delay.delayTime.value = 0;
+  source.cents.connect(cents).connect(cycle).connect(following.gain);
+  width.connect(period);
   for (const g of pwm) {
-    g.connect(delay.delayTime);
+    g.connect(period);
     g.gain.value = 0;
   }
+  period.connect(following).connect(delay.delayTime);
+  width.start();
+  direct.connect(out);
+  delay.connect(inverted).connect(out);
   inverted.gain.value = 0;
-  return { source, out, direct, delay, inverted, pwm };
+  return { source, out, direct, inverted, width, pwm, period };
 }
 
 /** Set a biquad to a stage: scheduled at `t` for the playing filter, immediately (no `t`) for a twin. */
@@ -602,7 +636,6 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   shared.bend.connect(sub.detune);
   for (const o of oscillators) shared.bend.connect(o.source.detune);
 
-  const pulseWidths = [0.5, 0.5];
   // Each Oscillator's pitch over the Note's, from its knobs: a pulse's width is a fraction of its own cycle (issue 90).
   const ratios = [1, 1];
   /**
@@ -626,17 +659,13 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   const pitches: { time: number; frequency: number; note: number; glide: number }[] = [];
   let patch: Patch | undefined;
 
-  /** Point each pulse's delay at (width / frequency), and scale its LFO swing for that frequency. */
+  /** Give each pulse the period of a Note of `frequency`: at once, or over a Glide. */
   const tunePulses = (frequency: number, t: number, timeConstant?: number) => {
-    oscillators.forEach((o, i) => {
-      const own = frequency * ratios[i];
-      const delay = pulseWidths[i] / own;
-      if (timeConstant) o.delay.delayTime.setTargetAtTime(delay, t, timeConstant);
-      else o.delay.delayTime.setValueAtTime(delay, t);
-      const width = pulseWidths[i];
-      const swings = patch ? destinationSwings(patch, 'pulseWidth', width) : [0, 0];
-      swings.forEach((swing, n) => o.pwm[n].gain.setValueAtTime(swing / own, t));
-    });
+    for (const o of oscillators) {
+      holdAt(o.period.gain, t);
+      if (timeConstant) o.period.gain.setTargetAtTime(1 / frequency, t, timeConstant);
+      else o.period.gain.setValueAtTime(1 / frequency, t);
+    }
   };
 
   /**
@@ -666,7 +695,9 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
     const pulse = waveform === 'pulse';
     // The node sounding at `t` takes the wave for the pitch then; one handed over for a later Note, that Note's.
     o.source.setWave((start) => waveOn(i, start > t ? pitches[lastAt(pitches, start)].frequency : frequencyAt(t)));
-    pulseWidths[i] = width;
+    o.width.offset.setValueAtTime(width, t);
+    const swings = patch ? destinationSwings(patch, 'pulseWidth', width) : [0, 0];
+    swings.forEach((swing, n) => o.pwm[n].gain.setValueAtTime(swing, t));
     // saw(t) − saw(t − d·T) has |Harmonic n| = 2·|sin(πnd)| × the saw's: scale it to the pulse series' level.
     const scale = pulse ? harmonicSeries('pulse', width, 256).magnitudes[1] / (2 * Math.sin(Math.PI * width) * sawPeak) : 1;
     o.direct.gain.setValueAtTime(scale, t);
@@ -737,8 +768,10 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
       ratios[1] = 2 ** (osc2Tuning / 1200);
       setWave(0, next.waveform, next.pulseWidth, t);
       setWave(1, next.osc2Waveform, next.osc2PulseWidth, t);
-      tunePulses(frequencyAt(t), t);
       tuneCross(frequencyAt(t), t);
+      // Through a Glide, from where the slide has reached on to the Note's, with the Oscillators (issue 98).
+      const sliding = pitches[lastAt(pitches, t)];
+      if (sliding?.glide) tuneCross(sliding.frequency, t, glideTimeConstant(sliding.glide));
       // Osc 1's Octave moves it and the Sub; Osc 2's offsets count from the Note.
       osc.detune.setValueAtTime(next.osc1Octave * 1200, t);
       sub.detune.setValueAtTime((next.osc1Octave + next.subOctave + 1) * 1200, t);

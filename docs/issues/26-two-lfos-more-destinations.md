@@ -24,4 +24,4 @@ Not a destination: Volume (tremolo), which has no clean picture; nor Noise or Os
 - [x] Selector: arrows step and wrap, the menu picks, grouped and coloured by stage; keyboard and screen reader reach every destination; MIDI Learn still maps a control to it
 - [x] Tips: each destination says what it sounds like
 
-Known limit: a Pulse wave's width is a delay set for the Note's pitch, so an LFO on Osc 2 Pitch also swings Osc 2's Pulse Width a little.
+Known limit: a Pulse wave's width is a delay set for the Note's pitch, so an LFO on Osc 2 Pitch also swings Osc 2's Pulse Width a little. Ended by [98](./98-osc2-pitch-moved-by-its-envelope.md) (2026-10-31): the width now follows the pitch.

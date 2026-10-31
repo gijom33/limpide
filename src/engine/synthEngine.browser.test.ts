@@ -1636,6 +1636,40 @@ describe('FM’s sidebands in the Ideal (issue 96)', () => {
   });
 });
 
+describe('the Ideal on a held Envelope (issue 98)', () => {
+  const A2 = 45; // 110 Hz
+  // Env Amount 14 at a Sustain of 0.5 holds Osc 2 a fifth above its knobs while the Note is held.
+  const held = { cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001, osc2EnvAmount: 14, filterAttack: 0.001, filterDecay: 0.05, filterSustain: 0.5 } as const;
+  /** Each of `source`'s marks within 40 dB of its strongest, under 4 kHz, as dB from the strongest: the Ideal's and the sound's. */
+  const compare = async (patch: Partial<Patch>, source: string) => {
+    const full = { ...defaultPatch(), ...held, ...patch };
+    const s = await render(1.5, full, (e) => e.noteOn(A2, 1, 0));
+    const window = s.subarray(SR / 2, SR / 2 + 32768);
+    const marks = idealPartials(full, 64, 1, true).filter((p) => p.source === source && p.ratio * 110 < 4000);
+    const top = Math.max(...marks.map((p) => p.level));
+    const shown = marks.filter((p) => p.level > top / 100);
+    const heard = shown.map((p) => toneAmplitudeHann(window, SR, 110 * p.ratio));
+    const loudest = Math.max(...heard);
+    return shown.map((p, i) => ({ ratio: p.ratio, ideal: dB(p.level / top), sound: dB(heard[i] / loudest) }));
+  };
+  const onPeaks = (marks: Awaited<ReturnType<typeof compare>>) => {
+    expect(marks.length).toBeGreaterThan(1);
+    for (const m of marks) expect(Math.abs(m.sound - m.ideal), `the mark at ${m.ratio.toFixed(3)}`).toBeLessThan(1);
+  };
+
+  it('puts Osc 2’s squares on its Harmonics a fifth up', async () => {
+    onPeaks(await compare({ mixOsc1: 0, mixOsc2: 1, osc2Waveform: 'square' }, 'osc2'));
+  });
+
+  it('puts Ring’s diamonds on the sum and difference with Osc 2 a fifth up', async () => {
+    onPeaks(await compare({ mixOsc1: 0, mixOsc2: 0, mixRing: 1, waveform: 'sine', osc2Waveform: 'sine' }, 'ring'));
+  });
+
+  it('puts FM’s circles on the sidebands of Osc 2 a fifth up, at the index the knobs set', async () => {
+    onPeaks(await compare({ mixOsc1: 1, mixOsc2: 0, crossMod: 0.25, waveform: 'sine', osc2Waveform: 'sine' }, 'osc1'));
+  });
+});
+
 describe('FM and Ring under the top, and no offset (issue 103)', () => {
   const preset = (name: string) => PRESETS.find((p) => p.name === name)!.patch;
   const C4 = 60;
@@ -1755,6 +1789,108 @@ describe('the Filter Envelope on Osc 2’s pitch (issue 93)', () => {
   it('leaves Osc 2 alone at 0', async () => {
     const s = await render(1, { ...osc2Alone, filterSustain: 1 }, (e) => e.noteOn(45, 1, 0));
     expect(frequencyAround(s, SR, 0.7, 0.2)).toBeCloseTo(110, -1);
+  });
+});
+
+describe('what follows an Oscillator’s pitch when something moves it (issue 98)', () => {
+  const A3 = 57; // 220 Hz
+  const pulse = { cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001, waveform: 'pulse', pulseWidth: 0.25, osc2Waveform: 'pulse', osc2PulseWidth: 0.25 } as const;
+  const solo2 = { ...pulse, mixOsc1: 0, mixOsc2: 1 } as const;
+  /**
+   * The share of each 50 ms window, from `from` to `to` seconds, that the wave spends above its mean, and its RMS: a
+   * 25 % pulse spends a quarter of its cycle on one side, whatever its pitch.
+   */
+  const duties = (s: Float32Array, from: number, to: number) => {
+    const size = Math.round(0.05 * SR);
+    const out: { at: number; duty: number; level: number }[] = [];
+    for (let start = Math.round(from * SR); start + size <= Math.round(to * SR); start += size) {
+      const window = s.subarray(start, start + size);
+      const mean = window.reduce((sum, v) => sum + v, 0) / size;
+      const above = window.filter((v) => v > mean).length / size;
+      out.push({ at: start / SR, duty: Math.min(above, 1 - above), level: rms(window) });
+    }
+    return out;
+  };
+  const steadyLevel = async () => rms((await render(0.6, solo2, (e) => e.noteOn(A3, 1, 0))).subarray(SR * 0.3));
+
+  for (const osc2EnvAmount of [12, 24])
+    it(`keeps a pulse at 25 %, never silent, as Env Amount sweeps Osc 2 up to +${osc2EnvAmount} semitones`, async () => {
+      // A one-second Attack takes Osc 2 up smoothly; full Sustain holds it at the top.
+      const s = await render(1.6, { ...solo2, osc2EnvAmount, filterAttack: 1, filterSustain: 1 }, (e) => e.noteOn(A3, 1, 0));
+      const level = await steadyLevel();
+      for (const w of duties(s, 0.05, 1.55)) {
+        expect(Math.abs(w.duty - 0.25), `the width at ${w.at.toFixed(2)} s`).toBeLessThan(0.03);
+        expect(dB(w.level / level), `the level at ${w.at.toFixed(2)} s`).toBeGreaterThan(-3);
+      }
+    });
+
+  it('keeps a pulse at 25 % under an LFO on Osc 2 Pitch, an octave each way', async () => {
+    const s = await render(2.1, { ...solo2, lfoDestination: 'osc2Pitch', lfoAmount: 1, lfoRate: 0.5, lfoWaveform: 'sine', lfoRetrigger: 'note' }, (e) => e.noteOn(A3, 1, 0));
+    for (const w of duties(s, 0.05, 2.05)) expect(Math.abs(w.duty - 0.25), `the width at ${w.at.toFixed(2)} s`).toBeLessThan(0.03);
+  });
+
+  it('keeps a pulse at 25 % on Osc 1 under the pitch bend, an octave up', async () => {
+    const s = await render(1, pulse, (e) => {
+      e.noteOn(A3, 1, 0);
+      e.setBend(1200, 0.3);
+    });
+    for (const w of duties(s, 0.35, 0.95)) expect(Math.abs(w.duty - 0.25), `the width at ${w.at.toFixed(2)} s`).toBeLessThan(0.03);
+    expect(frequencyAround(s, SR, 0.7, 0.2)).toBeCloseTo(440, -1);
+  });
+
+  it('leaves FM’s depth on the knobs: Osc 2 held a fifth up by Env Amount sounds as Osc 2 tuned a fifth up, its index down by the fifth', async () => {
+    const sines = { cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001, waveform: 'sine', osc2Waveform: 'sine', mixOsc2: 0 } as const;
+    const fifth = 2 ** (7 / 12);
+    const enveloped = await render(1.5, { ...sines, crossMod: 0.3, osc2EnvAmount: 7, filterAttack: 0.001, filterSustain: 1 }, (e) => e.noteOn(45, 1, 0));
+    const tuned = await render(1.5, { ...sines, crossMod: 0.3 / fifth, osc2Semitone: 7 }, (e) => e.noteOn(45, 1, 0));
+    const window = (s: Float32Array) => s.subarray(SR / 2, SR / 2 + 32768);
+    // The carrier and its sidebands either side, at 110 Hz + k × Osc 2's.
+    for (const k of [-2, -1, 0, 1, 2]) {
+      const f = Math.abs(110 + k * 110 * fifth);
+      const [a, b] = [enveloped, tuned].map((s) => toneAmplitudeHann(window(s), SR, f));
+      expect(dB(a / b), `the sideband at ${f.toFixed(1)} Hz`).toBeCloseTo(0, 0);
+    }
+  });
+
+  /** A Note of A2 gliding to A3 over 0.4 s, a knob turned 0.1 s into the slide. */
+  const glidingWithAKnob = async (patch: Partial<Patch>) => {
+    const ctx = new OfflineAudioContext(1, SR * 2, SR);
+    const engine = createSynthEngine(ctx);
+    const full = { ...defaultPatch(), ...patch, glide: 0.4 };
+    engine.applyPatch(full);
+    engine.noteOn(45, 1, 0);
+    engine.noteOn(A3, 1, 0.5);
+    const turned = ctx.suspend(0.6).then(() => {
+      engine.applyPatch({ ...full, cutoff: 19000 });
+      void ctx.resume();
+    });
+    const s = (await ctx.startRendering()).getChannelData(0);
+    await turned;
+    return s;
+  };
+
+  it('keeps a pulse sliding on to the Note’s pitch after a knob turns mid-Glide: 25 % at the Glide’s end', async () => {
+    const s = await glidingWithAKnob(pulse);
+    expect(frequencyAround(s, SR, 1.6, 0.2)).toBeCloseTo(220, -1);
+    for (const w of duties(s, 1.4, 1.95)) expect(Math.abs(w.duty - 0.25), `the width at ${w.at.toFixed(2)} s`).toBeLessThan(0.03);
+  });
+
+  it('keeps FM’s depth sliding on to the Note’s pitch after a knob turns mid-Glide: the sidebands of the Note played alone', async () => {
+    const fm = { cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001, waveform: 'sine', osc2Waveform: 'sine', mixOsc2: 0, osc2Semitone: 7, crossMod: 0.25 } as const;
+    const glided = await glidingWithAKnob(fm);
+    const alone = await render(2, fm, (e) => e.noteOn(A3, 1, 0));
+    const fifth = 2 ** (7 / 12);
+    const window = (s: Float32Array) => s.subarray(SR * 1.4, SR * 1.4 + 16384);
+    const level = (s: Float32Array, k: number) => toneAmplitudeHann(window(s), SR, Math.abs(220 + k * 220 * fifth));
+    for (const k of [-2, -1, 1, 2]) {
+      const [a, b] = [glided, alone].map((s) => dB(level(s, k) / level(s, 0)));
+      expect(a - b, `the sideband k = ${k}`).toBeCloseTo(0, 0);
+    }
+  });
+
+  it('measures 50 % at 50 % (control case: the measure tells widths apart)', async () => {
+    const s = await render(0.6, { ...solo2, osc2PulseWidth: 0.5 }, (e) => e.noteOn(A3, 1, 0));
+    for (const w of duties(s, 0.1, 0.55)) expect(Math.abs(w.duty - 0.5)).toBeLessThan(0.03);
   });
 });
 

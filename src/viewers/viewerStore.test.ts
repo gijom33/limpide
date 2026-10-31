@@ -91,6 +91,16 @@ describe('the Viewer settings store (issue 77)', () => {
     expect(osc2()[0].ratio).toBeCloseTo(fundamental * 2);
   });
 
+  it('puts Osc 2 where a held Note’s Envelope keeps it, and back on its knobs once released (issue 98)', () => {
+    const { patches, viewers } = setup();
+    // Env Amount 24 at a Sustain of 0.5: a held Note keeps Osc 2 an octave above its knobs.
+    patches.change((p) => ({ ...p, mixOsc2: 1, osc2EnvAmount: 24, filterSustain: 0.5 }), 'hand');
+    const osc2 = (held: boolean) => (viewers.get().ideal?.(440, 48000, held) ?? []).find((p) => p.source === 'osc2')!.ratio;
+    expect(osc2(true)).toBeCloseTo(2);
+    expect(osc2(false)).toBeCloseTo(1);
+    expect(osc2(true)).toBeCloseTo(2); // the held answer is not the released one kept
+  });
+
   it('draws FM’s sidebands at the depth the Note keeps at the top (issue 103)', () => {
     const { patches, viewers } = setup();
     // FM Bell's Oscillators: a Sine swung by a Sine an octave and a minor seventh up.

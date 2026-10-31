@@ -67,6 +67,14 @@ describe('the Ideal from every Oscillator (the owner, 2026-10-27): each sourceâ€
     expect(of(up, 'osc2', 1)).toBeDefined();
   });
 
+  it('puts Osc 2 Env Amount Ã— Sustain off its knobs while a Note is held, on them once released (issue 98)', () => {
+    const patch = { ...defaultPatch(), ...sine, mixOsc2: 1, osc2Semitone: 2, osc2EnvAmount: 10, filterSustain: 0.5 };
+    expect(of(idealPartials(patch, 64, 1, true), 'osc2', 2 ** (7 / 12))).toBeDefined();
+    expect(of(idealPartials(patch, 64, 1, false), 'osc2', 2 ** (2 / 12))).toBeDefined();
+    // At a Sustain of 0 the Envelope lets Osc 2 back to its knobs while the Note is still held.
+    expect(of(idealPartials({ ...patch, filterSustain: 0 }, 64, 1, true), 'osc2', 2 ** (2 / 12))).toBeDefined();
+  });
+
   it('comes in order, low to high', () => {
     const partials = idealPartials({ ...defaultPatch(), mixOsc2: 1, osc2Semitone: 7, mixSub: 1 }, 32);
     expect(partials.map((p) => p.ratio)).toEqual([...partials.map((p) => p.ratio)].sort((a, b) => a - b));

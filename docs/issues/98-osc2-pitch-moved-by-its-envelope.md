@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · bug. Triaged with the owner on 2026-10-30 (decisions below).
+**Status:** ready-for-human · bug. Triaged with the owner on 2026-10-30 (decisions below). Built (2026-10-31): the four decisions; for the owner to listen to a pulse under Env Amount, FM Bass and Poly Mod Zap, and to look at the Ideal on a held Note, before the release.
 
 ## What happens
 
@@ -42,11 +42,29 @@ Decided by the owner at triage, 2026-10-30, unless marked otherwise. All four cl
 - The Voice's pulse Oscillators and FM gain, the Ideal Reference, FM's tip
 
 **Acceptance criteria:**
-- [ ] A 25 % pulse on Osc 2 swept by Env Amount to +12 and +24 semitones measures 25 % throughout and is never silent; the same under an LFO on Osc 2 Pitch
-- [ ] FM Bass and Poly Mod Zap sound as before (FM's depth unchanged)
-- [ ] With Sustain above 0 and a Note held, the Ideal's Osc 2, Ring and FM marks sit on the measured Spectrum's peaks
-- [ ] A regression test: a knob moved mid-Glide leaves the pulse width and FM's index on the Note's pitch at the Glide's end
-- [ ] FM's tip states that FM's depth follows the knobs, not the Envelope
+- [x] A 25 % pulse on Osc 2 swept by Env Amount to +12 and +24 semitones measures 25 % throughout and is never silent; the same under an LFO on Osc 2 Pitch
+- [x] FM Bass and Poly Mod Zap sound as before (FM's depth unchanged)
+- [x] With Sustain above 0 and a Note held, the Ideal's Osc 2, Ring and FM marks sit on the measured Spectrum's peaks
+- [x] A regression test: a knob moved mid-Glide leaves the pulse width and FM's index on the Note's pitch at the Glide's end
+- [x] FM's tip states that FM's depth follows the knobs, not the Envelope
 
 **Out of scope:**
 - FM's index following Osc 2's pitch (decision 2)
+
+## How it was built
+
+- **The pulse** (`createVoiceOscillator` in the engine). The delay is now the width (the knob, plus each LFO's swing of it) times the Note's period, times one cycle's length at the pitch the Oscillator sounds over the Note's. That last factor is a WaveShaper: it takes everything the Oscillator's detune sums to, in cents, and gives 2^(−cents/1200) at audio rate. Env Amount, both LFOs (Pitch, Osc 2 Pitch, Detune), the bend and the tuning knobs all move the pitch through that detune, so the width stays the knob's whatever moves it. The Note's period slides with a Glide, so a knob turned mid-Glide no longer touches it.
+- **FM's depth** is unchanged by Env Amount (decision 2): FM Bass, Poly Mod Zap and Thin Pulse render sample for sample as before (rendered on both engines and compared, difference 0). PWM Morph differs by rounding only, at −89 dB. FM's tip now says the depth is set by the knobs, not by Env Amount, and that FM thins as the Envelope takes Osc 2 up.
+- **A knob turned mid-Glide** sets FM's depth for where the slide has got to, then slides it on to the Note's with the Oscillators (decision 4).
+- **The Ideal** (`idealPartials`, `osc2Rest`): while a Note is held it places Osc 2, Ring and FM at Env Amount × Sustain semitones off Osc 2's knobs, with FM's index divided by as much (the depth stays the knobs'). The Spectra that draw the Ideal ask the engine whether the newest Note is held, from the Modulation model's `sounding`, so Hold counts as held.
+- **The glossary**: Pulse Width, FM and Ideal Reference say what follows a moved pitch and what does not.
+- **Tests.** Engine (browser): a 25 % pulse measured as 25 % (the share of each 50 ms spent on one side) throughout a sweep of Env Amount to +12 and +24, never silent; under an LFO on Osc 2 Pitch; on Osc 1 under a bend; a control at 50 %. FM's depth on the knobs: Osc 2 held a fifth up by Env Amount sounds as Osc 2 tuned a fifth up at FM over the fifth. The Ideal on a held Envelope: Osc 2's squares, Ring's diamonds and FM's circles within 1 dB of the measured peaks. Mid-Glide (the regression tests): a pulse at 25 % and FM's sidebands as the Note's played alone at the Glide's end (the pulse test fails on the engine before this issue). Unit: the Ideal held and released, the Viewer store's held and released answers, FM's tip.
+- The Preset level tests straighten the limiter's curve to hear what reaches it. They used to find it as "the shaper with a curve longer than two points", which now also caught the pulse's shaper. They now find it as the one whose curve goes negative.
+
+## Claude's calls, open to the owner
+
+1. **The shaping stage takes the Oscillator's whole detune,** the tuning knobs included, not only what moves it. A pulse's width was already kept across Osc 1's Octave and Osc 2's tuning (90), and now one path keeps it for everything. It follows ±10 octaves off the Note, past what everything together reaches. The delay is capped at one second, so a pulse far below the keyboard (under about 1 Hz) still drifts, as before.
+2. **"Held" is the newest Note's key down, or Hold keeping it.** Through the Attack and Decay, the Ideal already draws Osc 2 where it will rest, not where it is on its way. Once released, it is back on the knobs.
+3. **Known limit: whole octaves under a held Envelope.** Where Osc 2's resting pitch is a whole number of octaves from Osc 1, the Ideal works FM and Ring out from one cycle of the two waves, as if they started their cycles together. They do at a Note's start, but not once the Envelope has moved Osc 2 there, so with waves richer than a Sine those marks can be off. Sines under Ring are unaffected. No Preset rests there: FM Bass and Poly Mod Zap fall to a Sustain of 0, so they rest on their knobs.
+4. **A pulse's period still slides through a Glide as an exponential in the period,** where the Oscillators slide as one in frequency, as before this issue: mid-slide the width is a little off, and exact at the Glide's end.
+

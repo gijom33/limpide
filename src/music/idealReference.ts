@@ -31,22 +31,30 @@ export interface IdealPartial {
 const osc1Pitch = (patch: Patch) => (patch.mixSub > 0 ? 2 ** -patch.subOctave : 1);
 /** Osc 2's pitch over Osc 1's: Osc 2 counts from the Note played, Osc 1 from its Octave (issue 90). */
 export const osc2Ratio = (patch: Patch) => 2 ** (patch.osc2Octave - patch.osc1Octave + patch.osc2Semitone / 12 + patch.osc2Detune / 1200);
+/**
+ * Where Osc 2 rests off its knobs, in semitones: while a Note is `held`, its Env Amount times the Filter Envelope's
+ * Sustain; released, none (issue 98).
+ */
+export const osc2Rest = (patch: Patch, held: boolean) => (held ? patch.osc2EnvAmount * patch.filterSustain : 0);
 
 /**
  * The Ideal from every Oscillator (the owner, 2026-10-27): Osc 1, Osc 2 and the Sub, each its Fourier series at its
  * Mixer level, each Harmonic where it falls. Osc 2 lands between Osc 1's Harmonics off an octave, a few cents off
  * with Detune. Where two land on one Harmonic both are kept, each at its own level, so each Oscillator's own marks
  * show (how they add depends on how their waves line up; Ring alone is worked out from it). Noise has no Harmonics
- * to predict. Low to high. `fmKept` is how much of FM's depth the Note keeps at the top (fmDepthKept).
+ * to predict. Low to high. `fmKept` is how much of FM's depth the Note keeps at the top (fmDepthKept). While a Note is
+ * `held`, Osc 2, Ring and FM count from where the Filter Envelope holds Osc 2 (osc2Rest, issue 98); FM's depth stays the
+ * knobs', so its index falls as far as Osc 2 rises.
  */
-export function idealPartials(patch: Patch, count: number, fmKept = 1): IdealPartial[] {
+export function idealPartials(patch: Patch, count: number, fmKept = 1, held = false): IdealPartial[] {
   const root = osc1Pitch(patch);
-  const osc2 = root * osc2Ratio(patch);
+  const rest = 2 ** (osc2Rest(patch, held) / 12);
+  const osc2 = root * osc2Ratio(patch) * rest;
   const series = (source: IdealSource, magnitudes: Float32Array, mix: number, pitch: number) =>
     mix > 0 ? Array.from({ length: count - 1 }, (_, i) => ({ ratio: (i + 1) * pitch, level: magnitudes[i + 1] * mix, source })) : [];
   return [
     // Under FM, Osc 1 as FM makes it, where that can be worked out (issue 96), at the depth the Note keeps (issue 103).
-    ...((patch.crossMod > 0 && patch.mixOsc1 > 0 && fmPartials(patch, root, osc2, count, fmKept)) ||
+    ...((patch.crossMod > 0 && patch.mixOsc1 > 0 && fmPartials(patch, root, osc2, count, (FM_INDEX * patch.crossMod * fmKept) / rest)) ||
       series('osc1', harmonicSeries(patch.waveform, patch.pulseWidth, count).magnitudes, patch.mixOsc1, root)),
     ...series('osc2', harmonicSeries(patch.osc2Waveform, patch.osc2PulseWidth, count).magnitudes, patch.mixOsc2, osc2),
     ...series('sub', harmonicSeries(patch.subWaveform, 0.5, count).magnitudes, patch.mixSub, 1),
@@ -180,14 +188,13 @@ export const idealFmKept = (patch: Patch, fundamental: number, sampleRate: numbe
 
 /**
  * Osc 1's partials under FM (issue 96), at its Mixer level, or null where they cannot be worked out. FM swings Osc 1's
- * frequency by FM_INDEX × FM × Osc 2's frequency, following Osc 2's wave, so its Harmonic n is swung with an index n
- * times that. With Osc 2 a whole number of octaves from Osc 1 both start their cycles together (issue 94) and the
+ * frequency by `index` × Osc 2's frequency, following Osc 2's wave, so its Harmonic n is swung with an index n times
+ * that. With Osc 2 a whole number of octaves from Osc 1 both start their cycles together (issue 94) and the
  * swung wave repeats: its partials come from one cycle of it. Otherwise, with Osc 2 a Sine, each Harmonic n gives a
  * partial at n × Osc 1 + k × Osc 2 for every k, at its level times |J_k| of its index (a negative frequency folds
  * back): the classic FM result. Any other Osc 2 has no such result: null.
  */
-function fmPartials(patch: Patch, osc1: number, osc2: number, count: number, kept: number): IdealPartial[] | null {
-  const index = FM_INDEX * patch.crossMod * kept;
+function fmPartials(patch: Patch, osc1: number, osc2: number, count: number, index: number): IdealPartial[] | null {
   const octaves = Math.log2(osc2 / osc1);
   if (Math.abs(octaves - Math.round(octaves)) < 1e-9) {
     const base = Math.min(osc1, osc2);
