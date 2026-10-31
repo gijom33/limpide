@@ -4,6 +4,7 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-10-31, from the 1.18.0 release, Bead's frame-cost test (`e2e/mascot.spec.ts`, "it adds under a millisecond to each frame") failed in WebKit on GitHub in three of six runs (1.11 to 1.65 ms against 1), both tries each time, while here Bead adds nothing measurable in 1.18.0 or 1.17.0 (−0.6 to −0.3 ms): a timing test too tight for GitHub's runner, which held the deploy until a re-run.
 ## Ideas
 
 - 2026-10-31, from the 1.18.0 review, the Tour's card copies the Tutorial card's shell (the top row, the tap-to-show words with the same two lint waivers, the actions row), and its classes say "tutorial" though the Tour is not a Tutorial: one docked-card shell for both.
