@@ -4,7 +4,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
-- 2026-10-31, the owner, the C16 over Bluetooth, its layout applied (CC 7 and CC 8 shown Relative, CC 1 to 6 Absolute): "Bank A K7 sends CC7 messages. It's apparently linked to OSC 2 Pulse Width but the knob is already at 0 when CC is around 50."
 ## Ideas
 
 ## Dropped
@@ -129,3 +128,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-31, the owner's bug of Bead off the line under a phone's section tabs: to [142](./issues/142-bead-on-the-line-under-the-tabs.md), built at once, decided by the owner (Bead stands on the line, drawn over the tabs' foot); the owner's idea of Bead hovering where it loses ground, there too, Claude's plan waiting on the owner's yes.
 2026-10-31, the owner's idea of Bluetooth MIDI (triage, Claude's call, open to the owner): to [143](./issues/143-bluetooth-midi.md), three questions for the owner, each with Claude's recommendation (a first check of a paired C16 on the Mac with issue 34's; v1 if that is all it needs).
 2026-10-31, the owner's MIDI mapping reviewer, done at once into [42](./issues/42-reviews.md), decided by the owner: profile 17, the MIDI mapping geek, who proposes the C16 layout a player finds without looking; its findings to the inbox and [34](./issues/34-c16-bank-layout.md). The profile's details are Claude's call, open to the owner.
+2026-10-31, the owner's bug of C16 knobs taken for Relative (K7 on Osc 2's Pulse Width at 0 around CC 50): to [144](./issues/144-c16-knobs-taken-for-relative.md), fixed at once, to try on the real C16 (triage and fix, Claude's call, open to the owner).

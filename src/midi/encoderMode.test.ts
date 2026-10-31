@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { detectEncoderMode, relativeDelta } from './encoderMode';
+import { detectEncoderMode, detectKnobMode, relativeDelta } from './encoderMode';
 
 describe('Encoder Mode detection', () => {
   it('reads a knob sweeping through positions as Absolute', () => {
@@ -19,6 +19,22 @@ describe('Encoder Mode detection', () => {
     expect(detectEncoderMode([65, 65, 65, 65])).toBe('relative-centred');
     expect(detectEncoderMode([63, 63, 62, 63])).toBe('relative-centred');
     expect(detectEncoderMode([65, 63])).toBe('relative-centred');
+  });
+
+  it("reads a C16 knob's first turn: Relative when it repeats or varies its step, Absolute when it steps through positions (issue 144)", () => {
+    // A quick turn of an endless encoder: its steps vary, all near 0 or near 64.
+    expect(detectKnobMode([3, 2, 4])).toBe('relative-twos');
+    expect(detectKnobMode([1, 1, 1])).toBe('relative-twos');
+    expect(detectKnobMode([125, 126, 125])).toBe('relative-twos');
+    expect(detectKnobMode([66, 68, 67])).toBe('relative-centred');
+    expect(detectKnobMode([65, 65, 65])).toBe('relative-centred');
+    expect(detectKnobMode([62, 63, 62])).toBe('relative-centred');
+    // A knob sending positions, turned near the middle or the bottom: steady steps one way, never a repeat.
+    expect(detectKnobMode([50, 49, 48])).toBe('absolute');
+    expect(detectKnobMode([60, 61, 62])).toBe('absolute');
+    expect(detectKnobMode([2, 3, 4])).toBe('absolute');
+    expect(detectKnobMode([126, 124, 122])).toBe('absolute');
+    expect(detectKnobMode([20, 40, 60])).toBe('absolute');
   });
 
   it('turns a Relative value into a signed step', () => {

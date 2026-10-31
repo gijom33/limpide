@@ -24,10 +24,14 @@ export function detectEncoderMode(values: number[]): EncoderMode {
 
 /**
  * The Encoder Mode of a knob known to be an endless encoder unless it shows otherwise (the C16 layout's): values all
- * near 0 or all near 64 are Relative, even without a repeat or a ±1 step, as a quick turn sends 3, 2, 4; anything
- * else is Absolute (the device set to send positions).
+ * near 0 or all near 64 are Relative, even without a repeat or a ±1 step, as a quick turn sends 3, 2, 4; but values
+ * that step one way with no repeat are positions, wherever they are (a knob near the middle sends 50, 49, 48, issue
+ * 144); anything else is Absolute (the device set to send positions).
  */
 export function detectKnobMode(values: number[]): EncoderMode {
+  const steps = values.slice(1).map((v, i) => v - values[i]);
+  const steady = steps.length > 0 && (steps.every((d) => d > 0) || steps.every((d) => d < 0));
+  if (steady) return 'absolute';
   const near = (centre: number) => values.every((v) => v !== centre && Math.abs(((v - centre + 192) % 128) - 64) <= 15);
   return near(0) ? 'relative-twos' : near(64) ? 'relative-centred' : 'absolute';
 }
