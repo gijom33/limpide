@@ -9,7 +9,7 @@ The owner's own idea in the inbox (2026-10-30, "Add tutorial for FM and ring pre
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement. The owner accepted the three answers (decisions below). The three Tutorials are built (2026-10-30, below); the Maths Layer and the about line are not.
+**Status:** done (2026-10-30): the three Tutorials, the Maths Layer under FM and Ring, and the about line, built as below. Two of Claude's calls are open to the owner: Deep Breath, a Preset of its own, and the about line shown only for the person's loads.
 
 ## Questions for the owner
 
@@ -41,8 +41,8 @@ The owner's own idea in the inbox (2026-10-30, "Add tutorial for FM and ring pre
 **Acceptance criteria:**
 - [x] Each new Tutorial passes the existing Tutorial tests (every Step's control in view on every layout, "Do it for me" to the end gives the Preset)
 - [x] Each Tutorial's words are checked against the engine before the push
-- [ ] With FM 50 % or Ring 100 % the Maths Layer no longer states the saw's series as the sound's
-- [ ] Loading a Preset shows its about line; turning a knob hides it
+- [x] With FM 50 % or Ring 100 % the Maths Layer no longer states the saw's series as the sound's
+- [x] Loading a Preset shows its about line; turning a knob hides it
 
 **Out of scope:**
 - The owner's own Tutorial idea and the brainstorm's line in the inbox, until the owner triages them
@@ -61,3 +61,13 @@ The owner's own idea in the inbox (2026-10-30, "Add tutorial for FM and ring pre
 - **Deep Breath**, 8 Steps: the Sub up (a square an octave down), its Octave −2, its Waveform Sine, the Noise up to 30 % (White, a level floor), its Colour Pink (the floor tilts), the Filter opened, the Sustain full. A Preset of its own in Shapes, after Sub Two Down: Sub Two Down with Pink Noise at 30 %, since a Tutorial must end on its Preset exactly and Sub Two Down has no Noise. Claude's call, open to the owner.
 
 Each one's Steps rebuild its Preset from Init (the unit test); in Playwright, each Step's control and Viewer come clear of the header and the card on the two phones and the 2 × 2, and "Do it for me" to the end names the Patch after the Preset (now checked for all seven). The notes' claims are rendered offline at the Step that makes them (`src/patch/presets.browser.test.ts`): FM's rungs, Ring's sum and difference on and off the ladder with neither pitch left, the Sub's rungs two octaves down as a square and as a sine; Pink's fall and equal loudness were already tested in the engine. Deep Breath's level sits within 3 dB of the Shapes.
+
+**The Maths Layer (2026-10-30).** The Oscillator Spectrum's chip is now a list of lines (`oscillatorFormulas` in `src/music/maths.ts`), each a formula and what its letters mean, kept short so none wraps at 1440 px:
+
+- Neither FM nor Ring up: Osc 1's series, as before.
+- FM up, while Osc 1 is heard: `n f₁ + k f₂:  bₙ |Jₖ(n β)|,  β = 4 × FM = 2.00`, then the figures for the knobs (f₂ / f₁, on or between the Harmonics, |J₀…J₃(β)|, and when Osc 2 is not a Sine, that only its 1st Harmonic is counted); under it Osc 1's series, marked "Osc 1 before FM, not the sound now".
+- Ring up: `Ring, Osc 1 × Osc 2:  n f₁ ± m f₂,  ½ bₙ cₘ`, with the first pair for the knobs (1.38 and 3.38 × f₁ on Ring Bell; in tune, 0, an offset the engine takes out, and 2). Osc 1's series stays while its fader is up ("Osc 1's own, Ring adds the rest"), and goes when Osc 1 is heard through Ring alone.
+
+The Sub, Osc 2's own fader and the Noise are still not written (the Ideal draws them). The Maths Layer's tip and its CONTEXT.md entry name the new lines.
+
+**The about line (2026-10-30).** Under the Patch name, over the page like the Patch panel (anchored to the header's left end, so nothing moves), passing clicks through to the controls beneath. Shown when the person loads a Preset: the arrows, the Patch panel, a Controller's pads or a Program Change; any change to the sound, or another load, takes it away. The Demo's and a Tutorial's loads show none, as their captions and cards say what they load (Claude's call, open to the owner). A screen reader hears it once, with the name; a knob turned hides it without saying the name again. Built in `src/ui/hooks/usePresetAbout.ts`.

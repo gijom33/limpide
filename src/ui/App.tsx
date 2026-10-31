@@ -5,7 +5,7 @@ import { type AudioStatus, unlockAudio } from '../app/unlockAudio';
 import { rememberWelcome, welcomeFor } from '../app/welcome';
 import { createCallingPhrase, createWordsHeard, type Word } from '../input/callingPhrase';
 import { DEFAULT_OCTAVE, shiftOctave, startingOctave } from '../input/keyboardLayout';
-import { type Formula, harmonicFormula, responseFormula } from '../music/maths';
+import { type Formula, oscillatorFormulas, responseFormula } from '../music/maths';
 import { CHOICES, osc1Heard, osc2Heard, type ParamId, type Patch, setFilter, setParam, setWaveform, subNoiseHeard } from '../patch/patch';
 import { PRESETS } from '../patch/presets';
 import { TUTORIALS } from '../tutorial/tutorials';
@@ -20,6 +20,7 @@ import { useComputerKeyboard, useSpaceFreezes } from './hooks/useKeys';
 import { useMediaQuery } from './hooks/useMediaQuery';
 import { useMidi } from './hooks/useMidi';
 import { usePlayers } from './hooks/usePlayers';
+import { usePresetAbout } from './hooks/usePresetAbout';
 import { useTutorialState } from './hooks/useTutorialState';
 import { HoldIcon, InfoIcon, NoteIcon, PlayIcon } from './icons';
 import { Knob } from './Knob';
@@ -215,6 +216,12 @@ export function App() {
     onEnd: players.stopListen,
   });
   // The Tutorials, from the Patches panel and the header's Tutorial button alike.
+  // The person's loads show the Preset's about line under its name (issue 109).
+  const presetAbout = usePresetAbout(patches);
+  const loadPreset = (name: string, patch: Patch) => {
+    patches.load(name, patch);
+    presetAbout.show();
+  };
   const tutorialList = TUTORIALS.map((t) => ({ preset: t.preset, finished: tutorial.finished.has(t.preset) }));
   const startTutorial = (preset: string) => tutorial.start(TUTORIALS.find((t) => t.preset === preset)!);
   const midi = useMidi({
@@ -225,8 +232,9 @@ export function App() {
     // Program n is the n-th Preset (0 is Init), so a keyboard's Program buttons step through them.
     onProgram: (number) => {
       const preset = PRESETS[number];
-      if (preset) patches.load(preset.name, preset.patch);
+      if (preset) loadPreset(preset.name, preset.patch);
     },
+    onPresetStep: presetAbout.show,
   });
   const { learnContext, learning } = midi;
 
@@ -244,7 +252,7 @@ export function App() {
       showIdeal?: boolean;
       response?(f: Float32Array<ArrayBuffer>): Float32Array;
       limiting?(): boolean;
-      formula?: Formula;
+      formulas?: Formula[];
     } = {},
   ) => (
       <TapViewers
@@ -270,7 +278,8 @@ export function App() {
           changed={changed}
           patch={patch}
           library={library}
-          onLoad={patches.load}
+          onLoad={loadPreset}
+          about={presetAbout.about}
           tutorials={tutorialList}
           onTutorial={startTutorial}
         />
@@ -475,7 +484,7 @@ export function App() {
             stage="osc"
             viewers={viewers('oscillator', 'Oscillator', {
               showIdeal: true,
-              formula: overlays.maths ? harmonicFormula(patch.waveform, patch.pulseWidth) : undefined,
+              formulas: overlays.maths ? oscillatorFormulas(patch) : undefined,
             })}
             more={
             <div className="source-rows">
@@ -680,7 +689,7 @@ export function App() {
             viewers={viewers('filter', 'Filter', {
               showIdeal: true,
               response: session.engine.filterResponse,
-              formula: overlays.maths ? responseFormula(patch.filterMode, patch.filterSlope) : undefined,
+              formulas: overlays.maths ? [responseFormula(patch.filterMode, patch.filterSlope)] : undefined,
             })}
           />
           <Block

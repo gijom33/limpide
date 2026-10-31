@@ -30,7 +30,7 @@ export interface IdealPartial {
 /** Osc 1's pitch in Harmonics of the fundamental the Viewers count from: the Sub's pitch when it plays. */
 const osc1Pitch = (patch: Patch) => (patch.mixSub > 0 ? 2 ** -patch.subOctave : 1);
 /** Osc 2's pitch over Osc 1's: Osc 2 counts from the Note played, Osc 1 from its Octave (issue 90). */
-const osc2Ratio = (patch: Patch) => 2 ** (patch.osc2Octave - patch.osc1Octave + patch.osc2Semitone / 12 + patch.osc2Detune / 1200);
+export const osc2Ratio = (patch: Patch) => 2 ** (patch.osc2Octave - patch.osc1Octave + patch.osc2Semitone / 12 + patch.osc2Detune / 1200);
 
 /**
  * The Ideal from every Oscillator (the owner, 2026-10-27): Osc 1, Osc 2 and the Sub, each its Fourier series at its

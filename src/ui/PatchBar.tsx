@@ -4,6 +4,7 @@ import type { Patch } from '../patch/patch';
 import { type Category, categoryLists, isSearch, matchesWords } from '../patch/presetSearch';
 import { PRESETS, presetAfter, SHARED_NAME } from '../patch/presets';
 import { patchFromJSON, patchToJSON, shareHash } from '../patch/serialize';
+import type { PresetAbout } from './hooks/usePresetAbout';
 import { useLearnable } from './learn';
 import { PatchSearch } from './PatchSearch';
 import { Tooltip } from './Tooltip';
@@ -15,6 +16,8 @@ interface Props {
   library: Library;
   /** Load a Patch and make it the new baseline for "changed". */
   onLoad(name: string, patch: Patch): void;
+  /** The loaded Preset's about line, under the name until the sound changes (issue 109). */
+  about: PresetAbout;
   /** The Presets that have a Tutorial, and whether it has been played to the end. */
   tutorials: readonly { preset: string; finished: boolean }[];
   onTutorial(preset: string): void;
@@ -24,7 +27,7 @@ interface Props {
  * The current Patch's name with Preset arrows, and a panel to save, load, delete, export, import and share. The panel's
  * search and category (`PatchSearch`) narrow what it lists, and stay until the page reloads (issue 69).
  */
-export function PatchBar({ name, changed, patch, library, onLoad, tutorials, onTutorial }: Props) {
+export function PatchBar({ name, changed, patch, library, onLoad, about, tutorials, onTutorial }: Props) {
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState('');
   const [link, setLink] = useState('');
@@ -151,10 +154,16 @@ export function PatchBar({ name, changed, patch, library, onLoad, tutorials, onT
       <button type="button" className="tool tool-icon" aria-label="Next Preset" {...learnNext} onClick={() => step(1)}>
         ›
       </button>
-      {/* The sound loaded, said to a screen reader, after the arrows, a Preset picked or a Controller's pad (issue 51). */}
+      {/* The sound loaded, said to a screen reader, after the arrows, a Preset picked or a Controller's pad (issue 51),
+          with its about line when one shows; the line itself under the name, over the page, so nothing moves. */}
       <span className="visually-hidden" role="status">
-        {name}
+        {about.text ? `${name}. ${about.text}` : name}
       </span>
+      {about.shown && (
+        <p className="patch-about" aria-hidden="true">
+          {about.text}
+        </p>
+      )}
 
       {open && (
         <div className="patch-panel" role="dialog" aria-label="Patches">

@@ -29,6 +29,26 @@ test('the Preset arrows step through the factory sounds', async ({ page }) => {
   await expect(patchName(page)).toContainText('Machine Chatter'); // wraps around to the last
 });
 
+test('a Preset loaded shows its about line under the name, and a knob turned, or the Demo, takes it away (issue 109)', async ({ page }) => {
+  const about = page.locator('.patch-about');
+  await expect(about).toHaveCount(0); // not for the sound the page opens on
+  await page.getByRole('button', { name: 'Next Preset' }).click();
+  await expect(about).toHaveText(/^One Harmonic and nothing else/);
+  // Said once, with the name; clicks go through it to the controls beneath.
+  await expect(page.locator('.patch-bar [role="status"]')).toHaveText(/^Pure Sine\. One Harmonic/);
+  await expect(about).toHaveCSS('pointer-events', 'none');
+  await nudge(page);
+  await expect(about).toHaveCount(0);
+  await expect(page.locator('.patch-bar [role="status"]')).toHaveText(/^Pure Sine\. One Harmonic/); // not said again
+
+  // From the Patches panel too; another load in the Demo's hands takes it away.
+  await patchName(page).click();
+  await page.getByRole('dialog', { name: 'Patches' }).getByRole('button', { name: 'FM Ladder', exact: true }).click();
+  await expect(about).toHaveText(/^Two sines on the same Note/);
+  await page.getByRole('button', { name: 'Demo' }).click();
+  await expect(about).toHaveCount(0);
+});
+
 test('an edit marks the Patch as changed, and the sound comes back after a reload (autosave)', async ({ page }) => {
   await nudge(page);
   const value = await cutoff(page).getAttribute('aria-valuetext');

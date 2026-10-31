@@ -39,6 +39,26 @@ test('the Maths Layer is off at first; on, it shows Q, dB, the formulas and the 
   await expect(value(page, 'Filter', 'Resonance')).toHaveText(/^Q /);
 });
 
+test('under FM and Ring the Maths Layer gives their rules for the knobs, and no longer the saw’s series as the sound’s (issue 109)', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.addInitScript(() => localStorage.setItem('limpide.overlays', JSON.stringify({ maths: true })));
+  await page.goto('/');
+  const formula = page.getByLabel('Oscillator formula');
+  await expect(formula).toContainText('every n: each Harmonic 1/n of the first');
+  const fm = page.getByRole('region', { name: 'Oscillators' }).getByRole('slider', { name: 'FM' });
+  await fm.focus();
+  for (let i = 0; i < 25; i++) await page.keyboard.press('ArrowUp');
+  await expect(fm).toHaveAttribute('aria-valuetext', '50 %');
+  await expect(formula).toContainText('β = 4 × FM = 2.00');
+  await expect(formula).toContainText('Osc 1 before FM, not the sound now');
+  await expect(formula).not.toContainText('every n: each Harmonic 1/n of the first');
+
+  await page.getByRole('button', { name: /^Patch: / }).click();
+  await page.getByRole('dialog', { name: 'Patches' }).getByRole('button', { name: 'Ring Bell', exact: true }).click();
+  await expect(formula).toHaveText(/^Ring, Osc 1 × Osc 2.*the first pair 1\.38 and 3\.38 × f₁$/s);
+  await expect(formula).not.toContainText('bₙ =');
+});
+
 test('the Maths Layer keeps the page inside a laptop screen and moves no knob', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');

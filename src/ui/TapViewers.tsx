@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { Fragment, useEffect, useRef } from 'react';
 import type { Formula } from '../music/maths';
 import { createLevelMeter } from '../viewers/level';
 import { addToRenderLoop } from '../viewers/renderLoop';
@@ -20,15 +20,15 @@ interface Props {
   response?(frequencies: Float32Array<ArrayBuffer>): Float32Array;
   /** Whether the safety limiter is bending the sound: given for the Amp Tap, shown as LIMITING. */
   limiting?(): boolean;
-  /** The Maths Layer's formula for this Tap's Spectrum, when the layer is on. */
-  formula?: Formula;
+  /** The Maths Layer's formulas for this Tap's Spectrum, when the layer is on: each with what its letters mean. */
+  formulas?: Formula[];
 }
 
 /**
  * Scope + Spectrum for one Tap, with no caption: the stage's panel says which it is. Canvases are mounted once and
  * drawn by the render loop. The level is measured but not shown; the Scope carries it as `data-db` (for tests).
  */
-export function TapViewers({ name, analyser, sampleRate, fundamental, view, showIdeal, response, limiting, formula }: Props) {
+export function TapViewers({ name, analyser, sampleRate, fundamental, view, showIdeal, response, limiting, formulas }: Props) {
   const scopeRef = useRef<HTMLCanvasElement>(null);
   const spectrumRef = useRef<HTMLCanvasElement>(null);
   const hoverRef = useRef<{ x: number; y: number } | null>(null);
@@ -69,10 +69,14 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, view, show
           onPointerLeave={() => (hoverRef.current = null)}
         />
         </Tooltip>
-        {formula && (
+        {formulas && (
           <p className="maths-formula" role="note" aria-label={`${name} formula`}>
-            <span>{formula.formula}</span>
-            <span className="maths-where">{formula.where}</span>
+            {formulas.map((f) => (
+              <Fragment key={f.formula}>
+                <span>{f.formula}</span>
+                <span className="maths-where">{f.where}</span>
+              </Fragment>
+            ))}
           </p>
         )}
       </div>

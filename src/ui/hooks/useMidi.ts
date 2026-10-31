@@ -41,6 +41,8 @@ interface Host {
   onBend(amount: number): void;
   onPedal(down: boolean): void;
   onProgram(number: number): void;
+  /** A pad mapped to the next or previous Preset has loaded it. */
+  onPresetStep(): void;
 }
 
 /**
@@ -104,7 +106,10 @@ export function useMidi(host: Host) {
         if (id === 'hold') pressHoldRef.current();
         else if (id === 'freeze') viewers.dispatch({ type: 'toggleFreeze' });
         else if (id === 'snapshot') viewers.dispatch({ type: 'takeSnapshot' });
-        else patches.step(id === 'nextPreset' ? 1 : -1);
+        else {
+          patches.step(id === 'nextPreset' ? 1 : -1);
+          keyboard.current.onPresetStep();
+        }
       },
       press: (note, velocity) => session.input.press(note, velocity),
       release: (note) => session.input.release(note),

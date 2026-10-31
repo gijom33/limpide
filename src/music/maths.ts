@@ -1,6 +1,7 @@
 import { filterStages } from '../engine/filterDesign';
-import type { FilterMode, FilterSlope, ParamId, Patch } from '../patch/patch';
+import { type FilterMode, type FilterSlope, osc1Heard, type ParamId, type Patch } from '../patch/patch';
 import type { Waveform } from './harmonics';
+import { besselJ, FM_INDEX, osc2Ratio } from './idealReference';
 
 /**
  * The Maths Layer's content (issue 14): the quantities behind the sound, as data. The formulas are the ones the
@@ -27,6 +28,47 @@ export function harmonicFormula(waveform: Waveform, pulseWidth: number): Formula
     case 'pulse':
       return { formula: 'aₙ = 4 sin(π n d) / (π n)', where: `d = ${Math.round(pulseWidth * 100)} %: zero wherever n d is whole` };
   }
+}
+
+const WAVE_NAMES: Record<Waveform, string> = { sine: 'Sine', saw: 'Saw', square: 'Square', triangle: 'Triangle', pulse: 'Pulse' };
+
+/** A ratio as the Maths Layer writes it: "1", "2.38". */
+const ratioText = (r: number) => String(Number(r.toFixed(2)));
+
+/**
+ * The Oscillator Spectrum's lines (issue 109): Osc 1's Harmonic series while it is what sounds; under FM, FM's rule with
+ * the figures for the knobs, Osc 1's series marked as what FM starts from; with Ring up, the sum and the difference.
+ * Its own series is left out where Osc 1 is heard through Ring alone. The Sub, Osc 2's own fader and the Noise are not
+ * written (the Ideal draws them).
+ */
+export function oscillatorFormulas(patch: Patch): Formula[] {
+  const series = harmonicFormula(patch.waveform, patch.pulseWidth);
+  const fm = patch.crossMod > 0 && osc1Heard(patch);
+  const ring = patch.mixRing > 0;
+  if (!fm && !ring) return [series];
+  const r = osc2Ratio(patch);
+  const lines: Formula[] = [];
+  if (fm) {
+    const index = FM_INDEX * patch.crossMod;
+    const j = Array.from(besselJ(index, 3), (v) => Math.abs(v).toFixed(2)).join(' ');
+    const landing = Math.abs(r - Math.round(r)) < 1e-6 && r >= 1 ? 'on the Harmonics' : 'between the Harmonics';
+    const osc2 = patch.osc2Waveform === 'sine' ? '' : `; Osc 2 a ${WAVE_NAMES[patch.osc2Waveform]}: its 1st Harmonic only`;
+    lines.push({
+      formula: `n f₁ + k f₂:  bₙ |Jₖ(n β)|,  β = ${FM_INDEX} × FM = ${index.toFixed(2)}`,
+      where: `f₂ / f₁ = ${ratioText(r)}: ${landing}; |J₀…J₃(β)| ${j}${osc2}`,
+    });
+    lines.push({ formula: series.formula, where: 'bₙ: Osc 1 before FM, not the sound now' });
+  } else if (patch.mixOsc1 > 0) {
+    lines.push({ formula: series.formula, where: `${series.where}; Osc 1’s own, Ring adds the rest` });
+  }
+  if (ring) {
+    const difference = Math.abs(r - 1);
+    lines.push({
+      formula: 'Ring, Osc 1 × Osc 2:  n f₁ ± m f₂,  ½ bₙ cₘ',
+      where: `sums and differences (cₘ: Osc 2’s series); the first pair ${difference < 1e-6 ? '0 (taken out)' : ratioText(difference)} and ${ratioText(r + 1)} × f₁`,
+    });
+  }
+  return lines;
 }
 
 /** The 12 dB core of each Filter Mode's gain, over x = f / fc. */

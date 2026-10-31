@@ -239,7 +239,7 @@ A captured Scope and Spectrum trace, kept faint for A/B comparison against the l
 _Avoid_: Reference trace, pin, compare
 
 **Maths Layer**:
-An optional overlay revealing the underlying quantities behind Parameters and Viewers: Resonance as Q, levels in dB, the Harmonic formula of Osc 1's Waveform, the Response Curve's formula, and the Effective Cutoff's value. Switched on in the Display panel; off by default.
+An optional overlay revealing the underlying quantities behind Parameters and Viewers: Resonance as Q, levels in dB, the Harmonic formula of Osc 1's Waveform (FM's sidebands and Ring's sums and differences when they are up), the Response Curve's formula, and the Effective Cutoff's value. Switched on in the Display panel; off by default.
 _Avoid_: Advanced mode, expert mode
 
 ### Control surface
