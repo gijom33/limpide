@@ -4,6 +4,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-10-30, the owner, on Bead's drinking trick: "The edge of the glass Bead drinks is supposed to touch his lips..."
+
 ## Ideas
 
 ## Dropped
