@@ -32,6 +32,8 @@ export const CHOICE_LABELS: Record<ChoiceId, string> = {
   lfo2Destination: 'LFO 2 Destination',
   lfoRetrigger: 'LFO 1 Retrigger',
   lfo2Retrigger: 'LFO 2 Retrigger',
+  lfoSync: 'LFO 1 Sync',
+  lfo2Sync: 'LFO 2 Sync',
   voices: 'Voices',
 };
 

@@ -298,6 +298,10 @@ export const TIPS = {
     body: 'How loud the Amp lets the sound through, after its Envelope. An LFO aimed at Volume dips it from here, for tremolo: its ring shows how far.',
   },
   lfoRate: { title: 'Rate', body: 'How fast the LFO repeats, in cycles a second (Hz): 0.05 Hz is one slow sweep every 20 seconds, 20 Hz a fast flutter.' },
+  lfoNote: { title: 'Rate', body: 'With Sync on, how often the LFO repeats, as a note value at the tempo: 1 bar, 1/4, 1/8 (D dotted, T triplet), its Hz beside it.' },
+  lfoSync: { title: 'Sync', body: 'On: the Rate is a note value at the tempo, and the LFO’s cycle lands on the beat. Off: the Rate is in Hz, as it was.' },
+  tempo: { title: 'Tempo', body: 'The page’s beats per minute, which an LFO with Sync on follows. Drag it or use the arrows; double-click to type it.' },
+  tap: { title: 'Tap', body: 'Tap it in time, four times or more: the tempo follows your taps.' },
   lfoDepth: {
     title: 'Depth',
     body: 'How far the LFO moves its Destination. At 0 it moves nothing.',
@@ -404,8 +408,10 @@ export const PARAM_TIPS: Record<ParamId, TipContent> = {
   glide: TIPS.glide,
   lfoAmount: TIPS.lfoDepth,
   lfoRate: TIPS.lfoRate,
+  lfoNote: TIPS.lfoNote,
   lfo2Amount: TIPS.lfoDepth,
   lfo2Rate: TIPS.lfoRate,
+  lfo2Note: TIPS.lfoNote,
 };
 
 export const OVERLAY_TIPS: Record<Overlay, TipContent> = {

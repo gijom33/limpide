@@ -1,8 +1,9 @@
 import type { LfoWaveform } from '../modulation/lfo';
 import type { Waveform } from '../music/harmonics';
+import { NOTE_VALUES, noteHz, noteIndex } from '../music/tempo';
 import type { Range } from './taper';
 
-export type Unit = 'Hz' | 's' | '%' | 'oct' | 'st' | 'cents';
+export type Unit = 'Hz' | 's' | '%' | 'oct' | 'st' | 'cents' | 'note';
 
 /** How a Parameter is turned (ADR-0008): a big knob if worth turning while playing, a small one if set and
  *  forgotten, a fader for levels and envelope stages. */
@@ -16,6 +17,11 @@ export interface ParamDef extends Range {
   control: Control;
   /** Values snap to multiples of this (e.g. whole octaves). */
   step?: number;
+  /**
+   * The Parameter whose knob turns this one, where it has none of its own: an LFO's note value is turned by its Rate
+   * knob while Sync is on (issue 112), so MIDI Learn and Quick Setup know the Rate alone.
+   */
+  knob?: ParamId;
 }
 
 export type ParamId =
@@ -35,8 +41,10 @@ export type ParamId =
   | 'mixSub'
   | 'lfoRate'
   | 'lfoAmount'
+  | 'lfoNote'
   | 'lfo2Rate'
   | 'lfo2Amount'
+  | 'lfo2Note'
   | 'glide'
   | 'velocityCutoff'
   | 'keyTrack'
@@ -83,6 +91,8 @@ export type LfoDestination = (typeof LFO_DESTINATIONS)[number]['id'];
 const DESTINATION_IDS = LFO_DESTINATIONS.map((d) => d.id);
 /** Whether an LFO runs freely or starts its cycle again at every Note (retrigger, or key sync). */
 export type LfoRetrigger = 'free' | 'note';
+/** Whether an LFO's Rate is in Hz ('off') or a note value at the page's tempo, its cycle locked to the beat (issue 112). */
+export type LfoSync = 'off' | 'on';
 /** How far the Sub sits below Osc 1, in octaves, and its Waveform (issue 91). */
 export type SubOctave = -1 | -2;
 export type SubWaveform = 'square' | 'sine';
@@ -105,6 +115,8 @@ export type Patch = Record<ParamId, number> & {
   lfo2Destination: LfoDestination;
   lfoRetrigger: LfoRetrigger;
   lfo2Retrigger: LfoRetrigger;
+  lfoSync: LfoSync;
+  lfo2Sync: LfoSync;
   voices: Voices;
   /**
    * The octave the computer keyboard and the on-screen piano start in when the Patch is loaded (issue 125): 2 for a
@@ -142,6 +154,14 @@ const time = (id: ParamId, label: string, dflt: number, control: Control): Param
   id, label, unit: 's', min: 0.001, max: 10, taper: 'log', default: dflt, control,
 });
 
+/**
+ * An LFO's note value while Sync is on (issue 112): its place among `NOTE_VALUES`, slowest first, turned by the Rate
+ * knob a step at a time. A quarter Note by default, the Rate's own 2 Hz at 120 BPM.
+ */
+const noteValue = (id: ParamId, knob: ParamId): ParamDef => ({
+  id, label: 'Rate', unit: 'note', min: 0, max: NOTE_VALUES.length - 1, taper: 'linear', default: noteIndex('1/4'), step: 1, control: 'play', knob,
+});
+
 /** FM at full: Osc 2 swings Osc 1's frequency by four times its own (a modulation index of 4, issue 89). */
 export const FM_INDEX = 4;
 
@@ -166,8 +186,10 @@ export const PARAMS: Record<ParamId, ParamDef> = {
   mixSub: level('mixSub', 'Sub', 0, 'fader'),
   lfoRate: { id: 'lfoRate', label: 'Rate', unit: 'Hz', min: 0.05, max: 20, taper: 'log', default: 2, control: 'play' },
   lfoAmount: level('lfoAmount', 'Depth', 0, 'play'),
+  lfoNote: noteValue('lfoNote', 'lfoRate'),
   lfo2Rate: { id: 'lfo2Rate', label: 'Rate', unit: 'Hz', min: 0.05, max: 20, taper: 'log', default: 2, control: 'play' },
   lfo2Amount: level('lfo2Amount', 'Depth', 0, 'play'),
+  lfo2Note: noteValue('lfo2Note', 'lfo2Rate'),
   // Up to 2 s, slowly at first: a fifth of the travel is about 80 ms, a slide you hear (on a log taper to 10 s it was
   // 6 ms, review 2).
   glide: { id: 'glide', label: 'Glide', unit: 's', min: GLIDE_OFF, max: 2, taper: 'square', default: GLIDE_OFF, control: 'set' },
@@ -208,6 +230,9 @@ export function defaultPatch(): Patch {
     // Both run freely, so a Patch from before retrigger sounds as it did.
     lfoRetrigger: 'free',
     lfo2Retrigger: 'free',
+    // Rates in Hz, so a Patch from before the tempo (issue 112) sounds as it did.
+    lfoSync: 'off',
+    lfo2Sync: 'off',
     voices: 1,
   };
 }
@@ -240,6 +265,8 @@ export const CHOICES = {
   lfo2Destination: DESTINATION_IDS,
   lfoRetrigger: ['free', 'note'],
   lfo2Retrigger: ['free', 'note'],
+  lfoSync: ['off', 'on'],
+  lfo2Sync: ['off', 'on'],
   voices: [1, 2, 3, 4, 5, 6, 7, 8],
 } as const satisfies { [K in Exclude<SoundField, ParamId>]: readonly Patch[K][] };
 
@@ -251,29 +278,48 @@ export type LfoNumber = 1 | 2;
 
 /** The Patch's names for one LFO's settings. */
 export const LFO_KEYS = {
-  1: { rate: 'lfoRate', amount: 'lfoAmount', waveform: 'lfoWaveform', destination: 'lfoDestination', retrigger: 'lfoRetrigger' },
-  2: { rate: 'lfo2Rate', amount: 'lfo2Amount', waveform: 'lfo2Waveform', destination: 'lfo2Destination', retrigger: 'lfo2Retrigger' },
+  1: { rate: 'lfoRate', amount: 'lfoAmount', note: 'lfoNote', waveform: 'lfoWaveform', destination: 'lfoDestination', retrigger: 'lfoRetrigger', sync: 'lfoSync' },
+  2: { rate: 'lfo2Rate', amount: 'lfo2Amount', note: 'lfo2Note', waveform: 'lfo2Waveform', destination: 'lfo2Destination', retrigger: 'lfo2Retrigger', sync: 'lfo2Sync' },
 } as const;
 
 /** One LFO's settings. */
 export interface Lfo {
+  /** In Hz, while Sync is off. */
   rate: number;
   amount: number;
+  /** The note value (an index of `NOTE_VALUES`), while Sync is on. */
+  note: number;
   waveform: LfoWaveform;
   destination: LfoDestination;
   retrigger: LfoRetrigger;
+  sync: LfoSync;
 }
 
 /** Both LFOs' settings, LFO 1 first. */
 export const lfos = (patch: Patch): [Lfo, Lfo] =>
   ([1, 2] as const).map((n) => {
     const k = LFO_KEYS[n];
-    return { rate: patch[k.rate], amount: patch[k.amount], waveform: patch[k.waveform], destination: patch[k.destination], retrigger: patch[k.retrigger] };
+    return {
+      rate: patch[k.rate], amount: patch[k.amount], note: patch[k.note], waveform: patch[k.waveform], destination: patch[k.destination],
+      retrigger: patch[k.retrigger], sync: patch[k.sync],
+    };
   }) as [Lfo, Lfo];
+
+/** How fast an LFO repeats at `bpm`, in Hz: its Rate, or with Sync on its note value at the tempo (issue 112). */
+export const lfoHz = (lfo: Lfo, bpm: number) => (lfo.sync === 'on' ? noteHz(lfo.note, bpm) : lfo.rate);
+
+/** The Parameter an LFO's Rate knob turns now: its Hz, or with Sync on its note value (issue 112). */
+export const rateKnob = (patch: Patch, lfo: LfoNumber): ParamId => {
+  const k = LFO_KEYS[lfo];
+  return patch[k.sync] === 'on' ? k.note : k.rate;
+};
+
+/** The Parameter a control mapped to `id` turns now: an LFO's Rate turns its note value while Sync is on. */
+export const knobTurns = (patch: Patch, id: ParamId): ParamId => (id === 'lfoRate' ? rateKnob(patch, 1) : id === 'lfo2Rate' ? rateKnob(patch, 2) : id);
 
 export function setLfo(
   patch: Patch,
-  { waveform, destination, retrigger }: { waveform?: LfoWaveform; destination?: LfoDestination; retrigger?: LfoRetrigger },
+  { waveform, destination, retrigger, sync }: { waveform?: LfoWaveform; destination?: LfoDestination; retrigger?: LfoRetrigger; sync?: LfoSync },
   lfo: LfoNumber = 1,
 ): Patch {
   const k = LFO_KEYS[lfo];
@@ -282,6 +328,7 @@ export function setLfo(
     [k.waveform]: waveform ?? patch[k.waveform],
     [k.destination]: destination ?? patch[k.destination],
     [k.retrigger]: retrigger ?? patch[k.retrigger],
+    [k.sync]: sync ?? patch[k.sync],
   };
 }
 
@@ -327,6 +374,8 @@ export function formatParam(id: ParamId, value: number): string {
       return signed(value, 0, 'st');
     case 'cents':
       return signed(value, 0, '¢');
+    case 'note':
+      return NOTE_VALUES[Math.round(value)].name;
   }
 }
 

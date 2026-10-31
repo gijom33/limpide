@@ -3,6 +3,7 @@ import { DIP, envelopeLevel, type GateEvent } from '../modulation/envelope';
 import { lfoOffset, osc2Cents } from '../modulation/modulationModel';
 import { harmonicSeries, type Waveform } from '../music/harmonics';
 import { fmDepthKept, idealPartials, idealReference } from '../music/idealReference';
+import { noteIndex } from '../music/tempo';
 import { defaultPatch, type Patch } from '../patch/patch';
 import { PRESETS } from '../patch/presets';
 import { betweenHarmonicsDb, dB, energyAboveDb, frequencyAround, rms, toneAmplitude, toneAmplitudeHann } from '../test/measure';
@@ -995,6 +996,106 @@ describe('Filter Modes and Slopes', () => {
       return dB(Math.max(...engine.filterResponse(scan)));
     };
     for (const r of [0.5, 0.8]) expect(Math.abs(peak(24, r) - peak(12, r)), `Resonance ${r}`).toBeLessThan(2);
+  });
+});
+
+// Issue 112: an LFO with Sync on repeats once a note value at the tempo, and with Retrigger free its cycle lands on
+// the beat. Measured as issue 66's are, on Volume at full Depth: the Amp Tap with the LFO, divided sample by sample by
+// the same Note without it, is the tremolo's gain, 0.5 + 0.5 × the LFO (the output lags it, through the limiter's
+// oversampling). A quarter-Note saw starts each cycle at its foot, so the gain is 0 on every beat and climbs to 1.
+describe('an LFO synced to the tempo (issue 112)', () => {
+  const tremolo = {
+    cutoff: 20000, waveform: 'sine', ampSustain: 1, ampAttack: 0.001, lfoDestination: 'volume', lfoAmount: 1, lfoWaveform: 'saw',
+    lfoSync: 'on', lfoNote: noteIndex('1/4'),
+  } as const;
+  const SECONDS = 1.6;
+  /** The Amp Tap's windows end at these moments (whole 128-frame quanta), each holding a beat or the change. */
+  const CAPTURES = [0.32, 0.72, 0.96, 1.28, 1.52];
+  /**
+   * The tremolo's gain and its times, with the tempo 120 BPM counted from 0.2 s and the Note at 0; at 0.8 s, `then`
+   * is done (a tempo set, a Patch changed, at the run's Depth).
+   */
+  const gains = async (patch: Partial<Patch>, then: (e: ReturnType<typeof createSynthEngine>, lfoAmount: number) => void) => {
+    const run = async (amount: number) => {
+      const ctx = new OfflineAudioContext(1, SR * SECONDS, SR);
+      const engine = createSynthEngine(ctx);
+      engine.setTempo(120, 0.2);
+      engine.applyPatch({ ...defaultPatch(), ...tremolo, ...patch, lfoAmount: amount });
+      engine.noteOn(69, 1, 0);
+      const changed = ctx.suspend(0.8).then(() => {
+        then(engine, amount);
+        void ctx.resume();
+      });
+      const windows = CAPTURES.map((at) =>
+        ctx.suspend(at).then(() => {
+          const amp = new Float32Array(engine.taps.amp.fftSize);
+          engine.taps.amp.getFloatTimeDomainData(amp);
+          void ctx.resume();
+          return { at, amp };
+        }),
+      );
+      await ctx.startRendering();
+      await changed;
+      return { windows: await Promise.all(windows), engine };
+    };
+    const [moved, still] = [await run(1), await run(0)];
+    const measured: { time: number; gain: number }[] = [];
+    still.windows.forEach(({ at, amp }, w) => {
+      const peak = Math.max(...amp.map(Math.abs));
+      amp.forEach((s, i) => {
+        if (Math.abs(s) > 0.3 * peak) measured.push({ time: at - (amp.length - i) / SR, gain: moved.windows[w].amp[i] / s });
+      });
+    });
+    return { measured, engine: moved.engine };
+  };
+  /** The largest gap between the sound's gain and the model's, a millisecond or more from the saw's jumps at `beats`. */
+  const gap = (measured: { time: number; gain: number }[], engine: ReturnType<typeof createSynthEngine>, from: number, to: number, beats: number[]) => {
+    const away = measured.filter((g) => g.time > from && g.time < to && beats.every((b) => Math.abs(g.time - b) > 0.001));
+    expect(away.length).toBeGreaterThan(1000);
+    return Math.max(...away.map((g) => Math.abs(g.gain - engine.modulationAt(g.time).volume)));
+  };
+  const near = (measured: { time: number; gain: number }[], at: number) => measured.filter((g) => g.time > at + 0.001 && g.time < at + 0.004);
+
+  it('starts its cycle on each beat: a quarter-Note saw at its foot on the beats of 120 BPM, in the sound as in the model', async () => {
+    const { measured, engine } = await gains({}, () => {});
+    for (const beat of [0.2, 0.7, 1.2]) {
+      expect(engine.lfoSwingAt(beat), `model at ${beat} s`).toBeCloseTo(-1, 9);
+      expect(engine.lfoSwingAt(beat + 0.25), `half a beat on, ${beat} s`).toBeCloseTo(0, 9);
+      for (const g of near(measured, beat)) expect(g.gain, `sound just after ${beat} s`).toBeCloseTo(0, 1);
+    }
+    expect(gap(measured, engine, 0.21, SECONDS, [0.7, 1.2])).toBeLessThan(0.005);
+  });
+
+  it('follows a tempo set at once, its beat count started again there, the model on the sound across the change', async () => {
+    // At 90 BPM a quarter Note is 2/3 s: the saw's foot at 0.8 s, where the tempo was set, and at 1.4667 s.
+    const { measured, engine } = await gains({}, (e) => e.setTempo(90));
+    for (const beat of [0.8, 0.8 + 2 / 3]) {
+      expect(engine.lfoSwingAt(beat), `model at ${beat} s`).toBeCloseTo(-1, 9);
+      for (const g of near(measured, beat)) expect(g.gain, `sound just after ${beat} s`).toBeCloseTo(0, 1);
+    }
+    expect(engine.tempo()).toEqual({ bpm: 90, origin: 0.8 });
+    expect(gap(measured, engine, 0.21, SECONDS, [0.7, 0.8, 0.8 + 2 / 3])).toBeLessThan(0.005);
+  });
+
+  it('locks to the beat when Sync comes on', async () => {
+    // Off until 0.8 s at 0.7 Hz; on there, the saw lands on the beats of 120 BPM counted from 0.2 s: 1.2 s, 1.7 s.
+    const synced = await gains({ lfoSync: 'off', lfoRate: 0.7 }, (e, lfoAmount) => e.applyPatch({ ...defaultPatch(), ...tremolo, lfoAmount }));
+    expect(synced.engine.lfoSwingAt(1.2)).toBeCloseTo(-1, 9);
+    for (const g of near(synced.measured, 1.2)) expect(g.gain).toBeCloseTo(0, 1);
+    expect(gap(synced.measured, synced.engine, 0.81, SECONDS, [1.2])).toBeLessThan(0.005);
+  });
+
+  it('restarts at each Note with Retrigger on, at the note value’s Hz, which follows the tempo', async () => {
+    const { engine } = await gains({ lfoRetrigger: 'note' }, (e) => {
+      e.setTempo(60);
+      e.noteOn(69, 1, 1);
+    });
+    // Restarted at the Note at 0, a 2 Hz saw is at its foot on every half second, the beat count left aside.
+    expect(engine.lfoSwingAt(0.5)).toBeCloseTo(-1, 9);
+    expect(engine.lfoSwingAt(0.2)).toBeCloseTo(-0.2, 9);
+    // At 60 BPM from 0.8 s, 1 Hz, and the Note at 1 s restarts it there.
+    expect(engine.lfoSwingAt(1)).toBeCloseTo(-1, 9);
+    expect(engine.lfoSwingAt(1.25)).toBeCloseTo(-0.5, 9);
   });
 });
 

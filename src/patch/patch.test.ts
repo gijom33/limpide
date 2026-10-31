@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { CHOICES, defaultPatch, formatParam, PARAMS, samePatch, sameSound, setFilter, setLfo, setParam, setWaveform } from './patch';
+import { noteIndex } from '../music/tempo';
+import { CHOICES, defaultPatch, formatParam, knobTurns, lfoHz, lfos, PARAMS, rateKnob, samePatch, sameSound, setFilter, setLfo, setParam, setWaveform } from './patch';
 
 describe('defaultPatch', () => {
   it('starts every Parameter at its declared default', () => {
@@ -15,7 +16,7 @@ describe('defaultPatch', () => {
         'ampAttack', 'ampDecay', 'ampRelease', 'ampSustain', 'cutoff', 'pulseWidth', 'resonance',
         'filterEnvAmount', 'filterAttack', 'filterDecay', 'filterSustain', 'filterRelease',
         'osc1Octave', 'osc2Octave', 'osc2Semitone', 'osc2Detune', 'osc2PulseWidth', 'crossMod', 'osc2EnvAmount', 'mixOsc1', 'mixOsc2', 'mixRing', 'mixNoise', 'mixSub',
-        'lfoRate', 'lfoAmount', 'lfo2Rate', 'lfo2Amount', 'glide', 'velocityCutoff', 'keyTrack', 'volume',
+        'lfoRate', 'lfoAmount', 'lfoNote', 'lfo2Rate', 'lfo2Amount', 'lfo2Note', 'glide', 'velocityCutoff', 'keyTrack', 'volume',
       ].sort(),
     );
   });
@@ -30,7 +31,8 @@ describe('control', () => {
   // stages are faders.
   it('gives each Parameter the control its role calls for', () => {
     const of = (control: string) => Object.values(PARAMS).filter((d) => d.control === control).map((d) => d.id).sort();
-    expect(of('play')).toEqual(['cutoff', 'filterEnvAmount', 'lfo2Amount', 'lfo2Rate', 'lfoAmount', 'lfoRate', 'osc2Detune', 'resonance', 'volume']);
+    // The note values turn by the LFOs' Rate knobs (issue 112), so they are big knobs too.
+    expect(of('play')).toEqual(['cutoff', 'filterEnvAmount', 'lfo2Amount', 'lfo2Note', 'lfo2Rate', 'lfoAmount', 'lfoNote', 'lfoRate', 'osc2Detune', 'resonance', 'volume']);
     expect(of('set')).toEqual(['crossMod', 'glide', 'keyTrack', 'osc1Octave', 'osc2EnvAmount', 'osc2Octave', 'osc2PulseWidth', 'osc2Semitone', 'pulseWidth', 'velocityCutoff']);
     expect(of('fader')).toEqual([
       'ampAttack', 'ampDecay', 'ampRelease', 'ampSustain', 'filterAttack', 'filterDecay', 'filterRelease', 'filterSustain',
@@ -132,6 +134,31 @@ describe('LFO and Glide', () => {
   it('LFO 2 changes without touching LFO 1', () => {
     const p = setLfo(defaultPatch(), { waveform: 'saw', destination: 'resonance' }, 2);
     expect([p.lfo2Waveform, p.lfo2Destination, p.lfoWaveform, p.lfoDestination]).toEqual(['saw', 'resonance', 'sine', 'cutoff']);
+  });
+});
+
+describe('Sync (issue 112)', () => {
+  it('starts off, each LFO on a quarter Note, so a Patch from before the tempo sounds as it did', () => {
+    const p = defaultPatch();
+    expect([p.lfoSync, p.lfo2Sync]).toEqual(['off', 'off']);
+    expect([formatParam('lfoNote', p.lfoNote), formatParam('lfo2Note', p.lfo2Note)]).toEqual(['1/4', '1/4']);
+  });
+
+  it('turns the Rate knob to the note value while on, and back to the Hz it had when off, each kept', () => {
+    let p = setParam(setParam(defaultPatch(), 'lfoRate', 5.5), 'lfoNote', noteIndex('1/8 T'));
+    expect(rateKnob(p, 1)).toBe('lfoRate');
+    p = setLfo(p, { sync: 'on' }, 1);
+    expect([rateKnob(p, 1), rateKnob(p, 2), knobTurns(p, 'lfoRate'), knobTurns(p, 'lfo2Rate'), knobTurns(p, 'cutoff')]).toEqual(['lfoNote', 'lfo2Rate', 'lfoNote', 'lfo2Rate', 'cutoff']);
+    expect(lfoHz(lfos(p)[0], 120)).toBeCloseTo(6, 12);
+    p = setLfo(p, { sync: 'off' }, 1);
+    expect([p.lfoRate, formatParam('lfoNote', p.lfoNote)]).toEqual([5.5, '1/8 T']);
+    expect(lfoHz(lfos(p)[0], 120)).toBe(5.5);
+  });
+
+  it('steps the note value whole, one of the 24', () => {
+    expect(setParam(defaultPatch(), 'lfoNote', 3.4).lfoNote).toBe(3);
+    expect(setParam(defaultPatch(), 'lfoNote', 99).lfoNote).toBe(23);
+    expect(formatParam('lfoNote', 23)).toBe('1/32 T');
   });
 });
 
