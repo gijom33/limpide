@@ -196,7 +196,8 @@ export function createControlSurface(synth: Synth) {
     learned({
       control: learn.control,
       target: learn.target,
-      mode: detectEncoderMode(values),
+      // A button on an Action: its release came, so it is momentary; none came, so it is a toggle.
+      mode: learn.target.kind === 'action' ? (values.some((v) => v < 64) ? 'trigger' : 'toggle') : detectEncoderMode(values),
     });
   };
 
@@ -214,7 +215,8 @@ export function createControlSurface(synth: Synth) {
         return false;
       values.push(message.value);
       clearTimeout(settle);
-      if (values.length >= LEARN_VALUES) finishListening();
+      // A button's release ends Learn at once; a knob, once it has sent enough to tell its Encoder Mode.
+      if (learn.target.kind === 'action' ? message.value < 64 : values.length >= LEARN_VALUES) finishListening();
       else settle = setTimeout(finishListening, LEARN_SETTLE_MS);
       return true;
     }
@@ -235,8 +237,11 @@ export function createControlSurface(synth: Synth) {
         channel: message.channel,
         number: message.controller,
       };
-      if (target.kind === 'action') {
-        learned({ control, target, mode: 'trigger' });
+      // A button on an Action is heard out (issue 147): a press is momentary if its release follows within the
+      // settle time, a toggle if not; a first message at or below the middle is a toggle whose light was on, since a
+      // momentary press never starts with its release. The release is used up here, firing nothing.
+      if (target.kind === 'action' && message.value < 64) {
+        learned({ control, target, mode: 'toggle' });
       } else {
         setLearn({ phase: 'listening', target, control });
         values = [];

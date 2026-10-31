@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ChoiceId, ParamId } from '../patch/patch';
 import { memoryStorage } from '../test/memoryStorage';
-import { createControlSurface } from './controlSurface';
+import { createControlSurface, type LearnState } from './controlSurface';
 import { createMappingStore } from './mappings';
 import type { MidiMessage } from './parser';
 
@@ -33,6 +33,7 @@ function rig(round = (p: number) => p) {
   const actions: string[] = [];
   const notes: string[] = [];
   const touched: string[] = [];
+  const learns: LearnState[] = [];
   const store = createMappingStore(memoryStorage());
   const surface = createControlSurface({
     store,
@@ -44,9 +45,10 @@ function rig(round = (p: number) => p) {
     press: (note) => void notes.push(`on ${note}`),
     release: (note) => void notes.push(`off ${note}`),
     touched: (target, state) => void touched.push(`${target.id} ${state}`),
+    learnChanged: (state) => void learns.push(state),
   });
   const send = (...messages: MidiMessage[]) => messages.forEach((m) => surface.handle(m));
-  return { positions, choices, actions, notes, touched, store, surface, send };
+  return { positions, choices, actions, notes, touched, learns, store, surface, send };
 }
 
 beforeEach(() => vi.useFakeTimers());
@@ -186,16 +188,74 @@ describe('MIDI Learn, one control after another', () => {
     expect(store.list().map((m) => m.target)).toEqual([resonance]);
   });
 
-  it('a button’s release is not learned for the next Action', () => {
-    const { surface, store, send } = rig();
+  it('the button just learned is not learned again for the next Action', () => {
+    const { surface, store, actions, send } = rig();
+    surface.startLearn();
+    surface.select(hold);
+    send(cc(49, 127), cc(49, 0));
+    surface.select({ kind: 'action', id: 'freeze' });
+    send(cc(49, 127), cc(49, 0)); // pressed again at once: it is Hold's now
+    expect(store.list().map((m) => m.target)).toEqual([hold]);
+    expect(actions).toEqual(['hold']);
+    send(cc(50, 127), cc(50, 0));
+    expect(store.find({ kind: 'cc', channel: 1, number: 50 })?.target).toEqual({ kind: 'action', id: 'freeze' });
+  });
+});
+
+describe('MIDI Learn tells a toggle button from a momentary one (issue 147)', () => {
+  const button = { kind: 'cc', channel: 1, number: 49 } as const;
+
+  it('a press and its release within half a second: momentary, firing once a press', () => {
+    const { surface, store, actions, send } = rig();
     surface.startLearn();
     surface.select(hold);
     send(cc(49, 127));
-    surface.select({ kind: 'action', id: 'freeze' });
-    send(cc(49, 0)); // letting go of the same button
-    expect(store.list().map((m) => m.target)).toEqual([hold]);
-    send(cc(50, 127));
-    expect(store.find({ kind: 'cc', channel: 1, number: 50 })?.target).toEqual({ kind: 'action', id: 'freeze' });
+    vi.advanceTimersByTime(150);
+    send(cc(49, 0));
+    expect(store.find(button)?.mode).toBe('trigger');
+    expect(actions).toEqual([]); // the release that ended Learn fired nothing
+    surface.stopLearn();
+    send(cc(49, 127), cc(49, 0), cc(49, 127), cc(49, 0));
+    expect(actions).toEqual(['hold', 'hold']);
+  });
+
+  it('a press with no release for half a second: a toggle, firing on every message after', () => {
+    const { surface, store, actions, send } = rig();
+    surface.startLearn();
+    surface.select(hold);
+    send(cc(49, 127));
+    expect(store.find(button)).toBeUndefined(); // waiting for a release
+    vi.advanceTimersByTime(600);
+    expect(store.find(button)?.mode).toBe('toggle');
+    expect(actions).toEqual([]);
+    surface.stopLearn();
+    send(cc(49, 0), cc(49, 127), cc(49, 0));
+    expect(actions).toEqual(['hold', 'hold', 'hold']);
+  });
+
+  it('a first message at or below the middle: a toggle whose light was on, learned at once', () => {
+    const { surface, store, send } = rig();
+    surface.startLearn();
+    surface.select(hold);
+    send(cc(49, 0));
+    expect(store.find(button)?.mode).toBe('toggle');
+  });
+
+  it('the release ends Learn once: one Mapping made, so Quick Setup moves on one step', () => {
+    const { surface, learns, send } = rig();
+    surface.startLearn();
+    surface.select(hold);
+    send(cc(49, 127), cc(49, 0));
+    vi.advanceTimersByTime(600);
+    expect(learns.filter((s) => s.phase === 'armed' && s.learned)).toHaveLength(1);
+  });
+
+  it('a pad (a note) on an Action stays momentary, learned at once', () => {
+    const { surface, store, send } = rig();
+    surface.startLearn();
+    surface.select(hold);
+    send(noteOn(36));
+    expect(store.find({ kind: 'note', channel: 10, number: 36 })?.mode).toBe('trigger');
   });
 });
 

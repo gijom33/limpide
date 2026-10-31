@@ -78,6 +78,33 @@ test('an Action learns from a pad: the pad then toggles Hold and no longer plays
   await expect(hold).toHaveAttribute('aria-pressed', 'false');
 });
 
+test('an Action learns a toggle button as Toggle and a momentary one as Momentary, and each fires once a press (issue 147)', async ({ page }) => {
+  const hold = page.getByRole('button', { name: 'Hold', exact: true });
+  const patchName = page.getByRole('button', { name: /^Patch: / });
+  const mappings = midiPanel(page).getByRole('list', { name: 'Mappings' });
+  await startLearn(page);
+  await hold.click();
+  await play(page, cc(49, 127)); // a toggle: one message a press, nothing on letting go
+  await expect(learnBar(page)).toContainText(/Hold.*CC 49/);
+  await page.getByRole('button', { name: 'Next Preset' }).click();
+  await play(page, cc(50, 127), cc(50, 0)); // a momentary button: pressed, let go
+  await expect(learnBar(page)).toContainText(/Next Preset.*CC 50/);
+  await expect(hold).toHaveAttribute('aria-pressed', 'false'); // learning fired nothing
+  await expect(patchName).toHaveAttribute('aria-label', 'Patch: Init');
+  await page.keyboard.press('Escape');
+
+  await openMidi(page);
+  await expect(mappings).toContainText(/Hold.*CC 49 · Toggle/);
+  await expect(mappings).toContainText(/Next Preset.*CC 50 · Momentary/);
+  await play(page, cc(49, 0)); // the toggle's next press
+  await expect(hold).toHaveAttribute('aria-pressed', 'true');
+  await page.waitForTimeout(2100); // past the time for tapping a Hold rhythm
+  await play(page, cc(49, 127)); // and the one after
+  await expect(hold).toHaveAttribute('aria-pressed', 'false');
+  await play(page, cc(50, 127), cc(50, 0));
+  await expect(patchName).toHaveAttribute('aria-label', 'Patch: Pure Sine'); // one step, not two
+});
+
 test('the Activity Monitor shows the last message received', async ({ page }) => {
   await openMidi(page);
   const monitor = midiPanel(page).getByRole('status', { name: 'MIDI activity' });

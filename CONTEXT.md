@@ -269,7 +269,7 @@ A momentary command that is not a Parameter: toggle Hold, Freeze, take a Snapsho
 _Avoid_: Command, shortcut
 
 **MIDI Learn**:
-The mode in which the next Controller message received becomes the Mapping for the selected Parameter, choice or Action.
+The mode in which the next Controller message received becomes the Mapping for the selected Parameter, choice or Action. A button learned on an Action is heard out for half a second: its release in that time makes it momentary, none a toggle; a first message at or below the middle is a toggle at once (issue 147).
 _Avoid_: Auto-map
 
 **Quick Setup**:
