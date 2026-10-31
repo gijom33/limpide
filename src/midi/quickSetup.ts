@@ -16,7 +16,7 @@ const actions = (...ids: Extract<Target, { kind: 'action' }>['id'][]): SetupStep
 /**
  * Every Parameter played live (the knobs worth turning while playing and the faders, ADR-0008): the Filter's big
  * knobs, then the page's order, the Oscillators, the Envelopes, the Amp, the LFOs; then the Actions. Settings made once for a sound (Octave,
- * the Waveforms, Pulse Width, Filter Mode, Velocity, Glide, Voices…) are left to MIDI Learn.
+ * the Waveforms, Pulse Width, Filter Mode, Velocity, Glide, Voices…) and the tempo's BPM are left to MIDI Learn.
  */
 // The Filter first, the knobs a player reaches for first (review 2, issue 53); then the page's order.
 export const QUICK_SETUP: SetupStep[] = [
@@ -28,7 +28,8 @@ export const QUICK_SETUP: SetupStep[] = [
   ...params('Amp', 'volume'),
   ...params('LFO 1', 'lfoRate', 'lfoAmount'),
   ...params('LFO 2', 'lfo2Rate', 'lfo2Amount'),
-  ...actions('hold', 'freeze', 'snapshot', 'previousPreset', 'nextPreset'),
+  // Tap, the tempo's (issue 112), after the Patch's own Actions.
+  ...actions('hold', 'freeze', 'snapshot', 'previousPreset', 'nextPreset', 'tap'),
 ];
 
 export interface QuickSetupState {

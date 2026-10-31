@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buttonCc, c16Bank, c16Layout, isC16, upgradeC16Layout } from './c16';
+import { addC16Places, buttonCc, c16Bank, c16Layout, isC16, upgradeC16Layout } from './c16';
 import type { Mapping } from './mappings';
 
 /** What the layout maps a CC on channel 1 to: "param:cutoff", or undefined when it is left free. */
@@ -58,7 +58,7 @@ describe('the C16 layout, strip by strip (issue 145)', () => {
       faders: [undefined, undefined, undefined, undefined],
       M: SHARED_M,
       S: [undefined, undefined, 'action:snapshot', undefined],
-      R: ['choice:lfoRetrigger', undefined, 'choice:lfo2Retrigger', undefined], // R2 and R4 kept for Sync (issue 112)
+      R: ['choice:lfoRetrigger', 'choice:lfoSync', 'choice:lfo2Retrigger', 'choice:lfo2Sync'], // each LFO's Retrigger and Sync (issue 112)
     });
     expect(at(layout, 97)).toBeUndefined();
   });
@@ -130,5 +130,25 @@ describe('the first C16 layout, brought to today’s (issue 145)', () => {
     expect(upgradeC16Layout([])).toBeNull();
     expect(upgradeC16Layout(c16Layout())).toBeNull();
     expect(upgradeC16Layout([{ control: cc(1), target: { kind: 'param', id: 'cutoff' }, mode: 'absolute' }])).toBeNull();
+  });
+});
+
+describe('issue 145’s layout, brought to today’s (issue 112)', () => {
+  const sync = (layout: Mapping[]) => layout.filter((m) => m.target.kind === 'choice' && /^lfo2?Sync$/.test(m.target.id));
+  const before = c16Layout().filter((m) => !sync([m]).length);
+
+  it('gains each LFO’s Sync on bank D’s R2 and R4, as toggles', () => {
+    const added = addC16Places(before)!;
+    expect(sync(added).map((m) => [m.control.number, m.target.id, m.mode])).toEqual([
+      [buttonCc(3, 'R', 1), 'lfoSync', 'toggle'],
+      [buttonCc(3, 'R', 3), 'lfo2Sync', 'toggle'],
+    ]);
+    expect(added).toHaveLength(c16Layout().length);
+  });
+
+  it('leaves a place the person has used since to them, and adds nothing to today’s layout', () => {
+    const own: Mapping = { control: { kind: 'cc', channel: 1, number: buttonCc(3, 'R', 1) }, target: { kind: 'action', id: 'tap' }, mode: 'trigger' };
+    expect(sync(addC16Places([...before, own])!).map((m) => m.target.id)).toEqual(['lfo2Sync']);
+    expect(addC16Places(c16Layout())).toBeNull();
   });
 });

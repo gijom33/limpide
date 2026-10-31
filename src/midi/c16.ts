@@ -31,8 +31,8 @@ const shared = (s: C16Place[], r: C16Place[]) => ({ M: SHARED_M, S: [s[0], s[1],
 const FREE = [null, null, null, null];
 
 /**
- * The four banks, the page's sections in order (issue 145, decided by the owner). Bank D's R2 and R4 are kept for
- * the LFOs' Sync (issue 112), bank C's R2 for Legato (issue 119).
+ * The four banks, the page's sections in order (issue 145, decided by the owner). Bank D's R row has each LFO's
+ * Retrigger and Sync side by side (issue 112); bank C's R2 is kept for Legato (issue 119).
  */
 export const C16_BANKS: C16Bank[] = [
   {
@@ -70,7 +70,10 @@ export const C16_BANKS: C16Bank[] = [
       at(param('lfoAmount'), 'LFO 1 Depth'), at(param('lfoRate'), 'LFO 1 Rate'), at(param('lfo2Amount'), 'LFO 2 Depth'), at(param('lfo2Rate'), 'LFO 2 Rate'),
     ],
     faders: FREE,
-    buttons: shared(FREE, [at(choice('lfoRetrigger'), 'LFO 1 Retrigger'), null, at(choice('lfo2Retrigger'), 'LFO 2 Retrigger'), null]),
+    buttons: shared(FREE, [
+      at(choice('lfoRetrigger'), 'LFO 1 Retrigger'), at(choice('lfoSync'), 'LFO 1 Sync'),
+      at(choice('lfo2Retrigger'), 'LFO 2 Retrigger'), at(choice('lfo2Sync'), 'LFO 2 Sync'),
+    ]),
   },
 ];
 
@@ -158,4 +161,19 @@ export function upgradeC16Layout(stored: readonly Mapping[]): Mapping[] | null {
   const layout = c16Layout();
   const own = stored.filter((m) => !first(m) && !layout.some((l) => sameControl(l.control, m.control) || sameTarget(l.target, m.target)));
   return [...own, ...layout];
+}
+
+/** The places today's layout has that issue 145's left free, by target: each LFO's Sync (issue 112). */
+const ADDED_SINCE_145 = ['choice:lfoSync', 'choice:lfo2Sync'];
+
+/**
+ * Stored Mappings with the places added to the layout since issue 145's (each LFO's Sync, issue 112), where the
+ * person's Mappings leave both the control and the target free: a C16 set up with issue 145's layout gets them, and
+ * a place the person has used since stays theirs. Null when there is nothing to add.
+ */
+export function addC16Places(stored: readonly Mapping[]): Mapping[] | null {
+  const added = c16Layout().filter(
+    (l) => ADDED_SINCE_145.includes(`${l.target.kind}:${l.target.id}`) && !stored.some((m) => sameControl(l.control, m.control) || sameTarget(l.target, m.target)),
+  );
+  return added.length ? [...stored, ...added] : null;
 }

@@ -1,13 +1,14 @@
 import { type MutableRefObject, useEffect, useEffectEvent, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import type { AudioSession } from '../../app/session';
 import type { KeyValueStorage } from '../../app/storage';
-import { c16Bank, c16Layout, isC16, upgradeC16Layout } from '../../midi/c16';
+import { addC16Places, c16Bank, c16Layout, isC16, upgradeC16Layout } from '../../midi/c16';
 import { createControlSurface, type LearnState } from '../../midi/controlSurface';
 import { describeMessage, targetKey } from '../../midi/describe';
 import { connectMidi, type MidiAccessLike, midiSupport } from '../../midi/inputs';
 import { createMappingStore, type Mapping, type Target } from '../../midi/mappings';
 import { QUICK_SETUP, type QuickSetupEvent, type QuickSetupState, quickSetupReducer, startQuickSetup, takenControls } from '../../midi/quickSetup';
-import { CHOICES, type ChoiceId, PARAMS, setParam } from '../../patch/patch';
+import { TEMPO } from '../../music/tempo';
+import { CHOICES, type ChoiceId, knobTurns, PARAMS, setParam } from '../../patch/patch';
 import { positionToValue, valueToPosition } from '../../patch/taper';
 import type { MidiState } from '../MidiPanel';
 import { reveal } from '../reveal';
@@ -16,8 +17,8 @@ import { WAVEFORM_ORDER } from '../WaveformPicker';
 
 /** Set once the C16 layout has been applied by itself, so it is never applied again unasked. */
 const C16_APPLIED = 'limpide.c16Layout';
-/** What C16_APPLIED holds once today's layout (issue 145) is in place, applied or brought over from the first. */
-const C16_LAYOUT_VERSION = '2';
+/** What C16_APPLIED holds once today's layout is in place, applied or brought over from an earlier one: 2 for issue 145's, 3 since each LFO's Sync (issue 112). */
+const C16_LAYOUT_VERSION = '3';
 
 /** A choice's options in on-screen order (the Waveform pickers show them differently from the stored list). */
 const choiceOptions = (id: ChoiceId): readonly unknown[] =>
@@ -97,6 +98,9 @@ export function useMidi(host: Host) {
       setPosition: (id, position) => {
         patches.change((p) => setParam(p, id, positionToValue(PARAMS[id], position)), 'controller');
       },
+      turned: (id) => knobTurns(patches.get().patch, id),
+      tempoPosition: () => (session.tempo.get().bpm - TEMPO.min) / (TEMPO.max - TEMPO.min),
+      setTempoPosition: (position) => session.tempo.set(TEMPO.min + position * (TEMPO.max - TEMPO.min)),
       choice: (id) => {
         const options = choiceOptions(id);
         return { index: options.indexOf(patches.get().patch[id] as never), count: options.length };
@@ -109,6 +113,7 @@ export function useMidi(host: Host) {
         if (id === 'hold') pressHoldRef.current();
         else if (id === 'freeze') viewers.dispatch({ type: 'toggleFreeze' });
         else if (id === 'snapshot') viewers.dispatch({ type: 'takeSnapshot' });
+        else if (id === 'tap') session.tempo.tap();
         else {
           patches.step(id === 'nextPreset' ? 1 : -1);
           keyboard.current.onPresetStep();
@@ -247,6 +252,9 @@ export function useMidi(host: Host) {
             if (c16Connected.current && storage.getItem(C16_APPLIED) !== C16_LAYOUT_VERSION) {
               const upgraded = upgradeC16Layout(mappingStore.list());
               if (upgraded) mappingStore.restore(upgraded);
+              // Issue 145's layout gains the places added since, where the person's Mappings leave them free.
+              const added = storage.getItem(C16_APPLIED) === '2' && addC16Places(mappingStore.list());
+              if (added) mappingStore.restore(added);
               storage.setItem(C16_APPLIED, C16_LAYOUT_VERSION);
             }
           },

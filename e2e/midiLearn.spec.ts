@@ -246,3 +246,40 @@ test('each Action does its own job from its own pad: Next and Previous Preset, F
   await play(page, ...pad(40));
   await expect(page.getByRole('button', { name: 'Hold' })).toHaveAttribute('aria-pressed', 'true');
 });
+
+test('the tempo learns a knob and Tap a pad; a knob on an LFO’s Rate turns its note value while Sync is on (issue 112)', async ({ page }) => {
+  const bpm = page.getByRole('spinbutton', { name: 'Tempo' });
+  const rate = page.getByRole('slider', { name: 'LFO 1 Rate' });
+  await startLearn(page);
+  await bpm.click();
+  await expect(learnBar(page)).toContainText(/Tempo/);
+  await play(page, ...times(4, cc(30, 1)));
+  await expect(learnBar(page)).toContainText(/Tempo.*CC 30/);
+  await page.getByRole('button', { name: 'Tap', exact: true }).click();
+  await play(page, [0x99, 38, 100], [0x89, 38, 0]);
+  await expect(learnBar(page)).toContainText(/Tap.*Note D2/);
+  await rate.click();
+  await play(page, ...times(4, cc(31, 1)));
+  await expect(learnBar(page)).toContainText(/LFO 1 Rate.*CC 31/);
+  await page.keyboard.press('Escape');
+
+  await play(page, ...times(5, cc(30, 1))); // two BPM a click
+  await expect(bpm).toHaveAttribute('aria-valuenow', '130');
+  await page.getByRole('button', { name: 'LFO 1 Sync' }).click();
+  await expect(rate).toHaveAttribute('aria-valuetext', /^1\/4, /);
+  await play(page, ...times(2, cc(31, 1))); // a note value for every two clicks
+  await expect(rate).toHaveAttribute('aria-valuetext', /^1\/8 D, /);
+  await page.getByRole('button', { name: 'LFO 1 Sync' }).click();
+  await expect(rate).toHaveAttribute('aria-valuetext', /Hz$/);
+  // The pad mapped to Tap, twice half a second apart (timed inside the page): the tempo follows, at about 120.
+  await page.evaluate(async () => {
+    const { playMidi } = window as unknown as { playMidi(bytes: number[]): void };
+    for (let i = 0; i < 2; i++) {
+      playMidi([0x99, 38, 100]);
+      playMidi([0x89, 38, 0]);
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+  });
+  const tapped = Number(await bpm.getAttribute('aria-valuenow'));
+  expect(Math.abs(tapped - 120)).toBeLessThanOrEqual(4);
+});

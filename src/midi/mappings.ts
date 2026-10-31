@@ -2,13 +2,15 @@ import { CHOICES, type ChoiceId, PARAMS, type ParamId } from '../patch/patch';
 import type { EncoderMode } from './encoderMode';
 
 /** A momentary command that is not a Parameter. */
-export type ActionId = 'hold' | 'freeze' | 'snapshot' | 'nextPreset' | 'previousPreset';
+export type ActionId = 'hold' | 'freeze' | 'snapshot' | 'nextPreset' | 'previousPreset' | 'tap';
 export const ACTIONS: Record<ActionId, string> = {
   hold: 'Hold',
   freeze: 'Freeze',
   snapshot: 'Snapshot',
   nextPreset: 'Next Preset',
   previousPreset: 'Previous Preset',
+  // The tempo's Tap (issue 112).
+  tap: 'Tap',
 };
 
 /** One control on a Controller: a channel plus a CC or note number. */
@@ -37,7 +39,12 @@ export const CHOICE_LABELS: Record<ChoiceId, string> = {
   voices: 'Voices',
 };
 
-export type Target = { kind: 'param'; id: ParamId } | { kind: 'choice'; id: ChoiceId } | { kind: 'action'; id: ActionId };
+/** What a Mapping drives: a Parameter, a choice, an Action, or the page's tempo, outside the Patch (issue 112). */
+export type Target =
+  | { kind: 'param'; id: ParamId }
+  | { kind: 'choice'; id: ChoiceId }
+  | { kind: 'action'; id: ActionId }
+  | { kind: 'tempo'; id: 'bpm' };
 
 /**
  * A link from a Controller control to a Parameter (by Encoder Mode) or an Action. A knob whose Encoder Mode is not
@@ -78,7 +85,8 @@ const isMapping = (m: unknown): m is Mapping => {
     !!t &&
     ((t.kind === 'param' && Object.hasOwn(PARAMS, t.id)) ||
       (t.kind === 'choice' && Object.hasOwn(CHOICES, t.id)) ||
-      (t.kind === 'action' && Object.hasOwn(ACTIONS, t.id))) &&
+      (t.kind === 'action' && Object.hasOwn(ACTIONS, t.id)) ||
+      (t.kind === 'tempo' && t.id === 'bpm')) &&
     MODES.includes(mode as string) &&
     ((m as Partial<Mapping>).device === undefined || (m as Partial<Mapping>).device === 'c16')
   );

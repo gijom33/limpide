@@ -1,4 +1,5 @@
-import type { ChoiceId, ParamId } from '../patch/patch';
+import { TEMPO } from '../music/tempo';
+import { type ChoiceId, PARAMS, type ParamId } from '../patch/patch';
 import { detectEncoderMode, detectKnobMode, relativeDelta } from './encoderMode';
 import { type ActionId, type Control, controlKey, type Mapping, type MappingStore, sameControl, type Target } from './mappings';
 import type { MidiMessage } from './parser';
@@ -44,6 +45,11 @@ interface Synth {
   /** A Parameter's control position (0–1), and setting it. */
   position(id: ParamId): number;
   setPosition(id: ParamId, position: number): void;
+  /** The Parameter a control mapped to `id` turns now: an LFO's Rate turns its note value while Sync is on (issue 112). */
+  turned?(id: ParamId): ParamId;
+  /** The tempo's position (0–1, from the slowest BPM to the fastest), and setting it (issue 112). */
+  tempoPosition?(): number;
+  setTempoPosition?(position: number): void;
   action(id: ActionId): void;
   /** A choice's current index among its options, in on-screen order, and setting it. */
   choice(id: ChoiceId): { index: number; count: number };
@@ -103,6 +109,7 @@ export function createControlSurface(synth: Synth) {
   const pickups = new Map<string, PickupState>();
   const pressed = new Map<string, boolean>();
   const clicks = new Map<string, number>(); // encoder clicks towards the next choice, per control
+  const gathered = new Map<string, number>(); // a Relative knob's travel towards a stepped dial's next step, per control
   const detecting = new Map<string, number[]>(); // the first values of knobs finding their Encoder Mode
 
   /** A Relative message's steps: as sent, or for a C16 knob one for a 65, a third for a 66. */
@@ -112,13 +119,25 @@ export function createControlSurface(synth: Synth) {
     return Math.sign(delta) * C16_BURST_STEP;
   };
 
-  const moveParam = (mapping: Mapping, id: ParamId, value: number) => {
+  /**
+   * A knob or fader moving a dial (a Parameter, or the tempo): Relative by steps, Absolute with Pickup. A stepped dial
+   * (`unit`, its travel per step: an Octave, a note value, a BPM) gathers a Relative knob's steps until they make a
+   * whole one, a step for every two clicks at most, so a slow turn or a C16's thirds still move it.
+   */
+  const moveDial = (mapping: Mapping, dial: { get(): number; set(position: number): void; unit: number }, value: number) => {
     const target = mapping.target;
     if (mapping.mode === 'trigger' || mapping.mode === 'toggle' || mapping.mode === 'detect') return;
-    const current = synth.position(id);
+    const current = dial.get();
     if (mapping.mode !== 'absolute') {
       const steps = relativeSteps(mapping, mapping.mode, value);
-      synth.setPosition(id, Math.min(1, Math.max(0, current + steps * RELATIVE_STEP)));
+      if (!dial.unit) dial.set(Math.min(1, Math.max(0, current + steps * RELATIVE_STEP)));
+      else {
+        const key = controlKey(mapping.control);
+        const travel = (gathered.get(key) ?? 0) + steps * Math.max(RELATIVE_STEP, dial.unit / CLICKS_PER_CHOICE);
+        const whole = Math.trunc(travel / dial.unit + (travel > 0 ? 1e-9 : -1e-9));
+        gathered.set(key, travel - whole * dial.unit);
+        if (whole) dial.set(Math.min(1, Math.max(0, current + whole * dial.unit)));
+      }
       synth.touched?.(target, 'moved');
       return;
     }
@@ -131,12 +150,25 @@ export function createControlSurface(synth: Synth) {
       state.following = knob;
     state.knob = knob;
     if (state.following !== undefined) {
-      synth.setPosition(id, knob);
-      state.following = synth.position(id); // what it took: a stepped Parameter rounds
+      dial.set(knob);
+      state.following = dial.get(); // what it took: a stepped dial rounds
     }
     pickups.set(controlKey(mapping.control), state);
     synth.touched?.(target, state.following !== undefined ? 'moved' : 'waiting');
   };
+
+  /** A Parameter as a dial: the one its control turns now. */
+  const paramDial = (id: ParamId) => {
+    const turned = synth.turned?.(id) ?? id;
+    const { step, min, max } = PARAMS[turned];
+    return { get: () => synth.position(turned), set: (p: number) => synth.setPosition(turned, p), unit: step ? step / (max - min) : 0 };
+  };
+  /** The tempo as a dial, a BPM a step (issue 112). */
+  const tempoDial = () => ({
+    get: () => synth.tempoPosition?.() ?? 0,
+    set: (p: number) => synth.setTempoPosition?.(p),
+    unit: 1 / (TEMPO.max - TEMPO.min),
+  });
 
   /** Whether a button's message is a press: its CC rising past the middle, not its release (a momentary one's 0). */
   const pressedNow = (mapping: Mapping, value: number) => {
@@ -178,9 +210,10 @@ export function createControlSurface(synth: Synth) {
       store.replace(found);
       return apply(found, message);
     }
-    if (target.kind === 'param' || target.kind === 'choice') {
+    if (target.kind === 'param' || target.kind === 'choice' || target.kind === 'tempo') {
       if (message.type !== 'cc') return;
-      if (target.kind === 'param') moveParam(mapping, target.id, message.value);
+      if (target.kind === 'param') moveDial(mapping, paramDial(target.id), message.value);
+      else if (target.kind === 'tempo') moveDial(mapping, tempoDial(), message.value);
       else moveChoice(mapping, target.id, message.value);
       return;
     }

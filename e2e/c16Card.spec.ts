@@ -18,6 +18,13 @@ test('shows every place of the C16 layout, bank by bank, each button marked Mome
   await expect(nextOnB).toContainText('Next Preset');
   await expect(nextOnB).toContainText('CC 64');
   await expect(nextOnB).toContainText('Momentary');
+  // Each LFO's Sync beside its Retrigger on bank D's R row, toggles (issue 112).
+  const bankD = page.getByRole('region', { name: 'Bank D: LFO & Envelopes' }).getByRole('listitem');
+  for (const [place, what] of [['R1', 'LFO 1 Retrigger'], ['R2', 'LFO 1 Sync'], ['R3', 'LFO 2 Retrigger'], ['R4', 'LFO 2 Sync']]) {
+    const cell = bankD.filter({ hasText: new RegExp(`^${place} `) });
+    await expect(cell, place).toContainText(what);
+    await expect(cell, place).toContainText('Toggle');
+  }
 });
 
 test('prints on one landscape page, A4 or Letter (issue 145)', async ({ page, browserName }) => {

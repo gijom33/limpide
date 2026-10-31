@@ -15,7 +15,13 @@ export const describeTargetShort = (target: Target) => (target.kind === 'param' 
 
 export const describeTarget = (target: Target) =>
   // A Parameter by its full name ("Filter Envelope Amount", "LFO 2 Depth"), so a Mapping never leaves it unclear (issue 52).
-  target.kind === 'param' ? paramName(target.id) : target.kind === 'choice' ? CHOICE_LABELS[target.id] : ACTIONS[target.id];
+  target.kind === 'param'
+    ? paramName(target.id)
+    : target.kind === 'choice'
+      ? CHOICE_LABELS[target.id]
+      : target.kind === 'action'
+        ? ACTIONS[target.id]
+        : 'Tempo';
 
 const MODE_LABELS: Record<Mapping['mode'], string> = {
   absolute: 'Absolute, with Pickup',

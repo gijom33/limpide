@@ -534,6 +534,56 @@ describe('the C16 layout’s buttons and its own input (issue 145)', () => {
   });
 });
 
+describe('the Rate, a note value with Sync on, and the tempo (issue 112)', () => {
+  /** A synth whose LFO 1 Rate knob turns its note value (positions in steps of 1/23), with a tempo from 40 to 240. */
+  const synced = () => {
+    const positions: Partial<Record<ParamId, number>> = { lfoRate: 0.5, lfoNote: 13 / 23 };
+    let tempo = 80 / 200; // 120 BPM
+    const actions: string[] = [];
+    const store = createMappingStore(memoryStorage());
+    const surface = createControlSurface({
+      store,
+      position: (id) => positions[id] ?? 0,
+      setPosition: (id, p) => void (positions[id] = id === 'lfoNote' ? Math.round(p * 23) / 23 : p),
+      turned: (id) => (id === 'lfoRate' ? 'lfoNote' : id),
+      tempoPosition: () => tempo,
+      setTempoPosition: (p) => void (tempo = Math.round(p * 200) / 200),
+      action: (id) => void actions.push(id),
+      choice: () => ({ index: 0, count: 5 }),
+      setChoice: () => {},
+      press: () => {},
+      release: () => {},
+    });
+    return { positions, store, surface, actions, tempo: () => 40 + tempo * 200 };
+  };
+
+  it('turns the note value from a control mapped to the Rate: a step for every two clicks of a Relative knob, a C16’s thirds gathered', () => {
+    const r = synced();
+    r.store.set({ control: { kind: 'cc', channel: 1, number: 30 }, target: { kind: 'param', id: 'lfoRate' }, mode: 'relative-centred', device: 'c16' });
+    r.surface.handle(cc(30, 65), true);
+    expect(r.positions.lfoNote).toBeCloseTo(13 / 23, 9); // half a step: not yet
+    r.surface.handle(cc(30, 65), true);
+    expect(r.positions.lfoNote).toBeCloseTo(14 / 23, 9);
+    for (let i = 0; i < 6; i++) r.surface.handle(cc(30, 66), true); // six thirds: two clicks, one step
+    expect(r.positions.lfoNote).toBeCloseTo(15 / 23, 9);
+    expect(r.positions.lfoRate).toBe(0.5); // the Hz kept for when Sync goes off
+  });
+
+  it('maps the tempo to a knob, a BPM a step, and Tap to a button', () => {
+    const r = synced();
+    r.store.set({ control: { kind: 'cc', channel: 1, number: 31 }, target: { kind: 'tempo', id: 'bpm' }, mode: 'relative-twos' });
+    r.store.set({ control: { kind: 'cc', channel: 1, number: 32 }, target: { kind: 'action', id: 'tap' }, mode: 'trigger' });
+    r.surface.handle(cc(31, 1));
+    r.surface.handle(cc(31, 1));
+    expect(r.tempo()).toBe(124);
+    r.surface.handle(cc(31, 127));
+    expect(r.tempo()).toBe(122);
+    r.surface.handle(cc(32, 127));
+    r.surface.handle(cc(32, 0));
+    expect(r.actions).toEqual(['tap']);
+  });
+});
+
 describe('the C16’s knobs: a 65 one step, a 66 a third of one (issue 145)', () => {
   /** A C16 knob on the Cutoff, from 0. */
   const c16Knob = () => {
