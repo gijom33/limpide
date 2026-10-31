@@ -40,6 +40,7 @@ import { QuickSetupPanel } from './QuickSetupPanel';
 import { SectionStrip } from './SectionStrip';
 import { Segmented } from './Segmented';
 import { SubBlock } from './SubBlock';
+import { STACKED } from './sections';
 import { Tabs } from './Tabs';
 import { TapViewers } from './TapViewers';
 import { ToolGroup } from './ToolGroup';
@@ -54,11 +55,10 @@ import { WaveformPicker, WaveIcon } from './WaveformPicker';
 import { Wordmark } from './Wordmark';
 
 const BEND_RANGE = 'limpide.bendRange';
-/** Phones and the sections 2 × 2: the stylesheet's breakpoint, where the header's groups take rows of their own. */
-const STACKED_HEADER = '(max-width: 860px)';
 /** Why a greyed-out control does nothing now, for a screen reader (issue 104): what several controls share. */
 const OSC1_SILENT = 'No effect while Osc 1 is silent';
 const OSC2_SILENT = 'No effect while Osc 2 is silent';
+const SUB_SILENT = 'No effect while the Sub is silent';
 const FILTER_ENVELOPE_IDLE = "No effect while the Filter Envelope Amount and Osc 2's Env Amount are 0";
 /** An octave button's shade, and its count (+2, −1): the octaves the piano is shifted its way (none at C4, or
     shifted the other way). */
@@ -188,7 +188,7 @@ export function App() {
   useEffect(() => storage.setItem(BEND_RANGE, String(bendRange)), [storage, bendRange]);
 
   useSpaceFreezes(viewerStore);
-  const narrow = useMediaQuery(STACKED_HEADER);
+  const narrow = useMediaQuery(STACKED);
   // The stylesheet reads the theme from the page's root, so the whole page follows it.
   const [theme, setTheme] = useDisplaySetting(storage, 'theme');
   useEffect(() => void (document.documentElement.dataset.theme = theme), [theme]);
@@ -600,7 +600,7 @@ export function App() {
                               onChange={(subOctave) => edit((p) => ({ ...p, subOctave }))}
                               learn={{ kind: 'choice', id: 'subOctave' }}
                               iconic
-                              inactive={patch.mixSub === 0 && 'No effect while the Sub is silent'}
+                              inactive={patch.mixSub === 0 && SUB_SILENT}
                             />
                             <Segmented
                               label="Sub Waveform"
@@ -610,7 +610,7 @@ export function App() {
                               onChange={(subWaveform) => edit((p) => ({ ...p, subWaveform }))}
                               learn={{ kind: 'choice', id: 'subWaveform' }}
                               iconic
-                              inactive={patch.mixSub === 0 && 'No effect while the Sub is silent'}
+                              inactive={patch.mixSub === 0 && SUB_SILENT}
                             />
                           </div>
                         </SubBlock>

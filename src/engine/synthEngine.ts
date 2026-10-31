@@ -5,6 +5,7 @@ import {
   soundingPitch, VELOCITY_CUTOFF_OCTAVES,
 } from '../modulation/modulationModel';
 import { bandwidthOctaves } from '../modulation/passBand';
+import { createCache } from '../music/cache';
 import { harmonicSeries, type Waveform } from '../music/harmonics';
 import { fmDepthKept, playedTop } from '../music/idealReference';
 import { frequencyToNote, noteToFrequency } from '../music/pitch';
@@ -142,8 +143,11 @@ function pinkBuffer(ctx: BaseAudioContext, white: AudioBuffer): AudioBuffer {
 
 // Enough Harmonics to reach Nyquist from the lowest Notes; the browser band-limits per pitch.
 const WAVE_HARMONICS = 1024;
-// The Oscillators' waves cut short for Ring (issue 103) kept for the Notes to come: each holds many tables.
-const CUT_WAVES = 32;
+// How many of the Oscillators' waves are kept, cut short for Ring (issue 103), for the Notes to come: each holds
+// many tables.
+const KEPT_WAVES = 32;
+// The LFOs' waves kept: one per Waveform and start, which a retriggered LFO keeps through a change of Waveform.
+const KEPT_LFO_WAVES = 32;
 /**
  * Each Voice's offset is taken out below this, by a second-order high-pass (issue 103): FM with Osc 2 on Osc 1's pitch
  * puts a sideband at 0 Hz, and two in-tune waves through Ring their product's average. That offset holds from Note to
@@ -828,28 +832,18 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   const white = noiseBuffer(ctx);
   // The Oscillators' waves, shared by every Voice; the most recently asked for are kept, as each Note may ask for its
   // own while Ring is up (issue 103).
-  const oscillatorWaves = new Map<string, PeriodicWave>();
-  const oscillatorWave = (waveform: Exclude<Waveform, 'pulse'>, harmonics: number) => {
-    const key = `${waveform} ${harmonics}`;
-    let wave = oscillatorWaves.get(key);
-    if (wave) oscillatorWaves.delete(key);
-    else {
+  const oscillatorWaves = createCache<string, PeriodicWave>(KEPT_WAVES);
+  const oscillatorWave = (waveform: Exclude<Waveform, 'pulse'>, harmonics: number) =>
+    oscillatorWaves.get(`${waveform} ${harmonics}`, () => {
       const { real, imag } = harmonicSeries(waveform, 0.5, WAVE_HARMONICS);
-      wave = ctx.createPeriodicWave(real.subarray(0, harmonics + 1), imag.subarray(0, harmonics + 1), { disableNormalization: true });
-    }
-    oscillatorWaves.set(key, wave);
-    if (oscillatorWaves.size > CUT_WAVES) oscillatorWaves.delete(oscillatorWaves.keys().next().value as string);
-    return wave;
-  };
+      return ctx.createPeriodicWave(real.subarray(0, harmonics + 1), imag.subarray(0, harmonics + 1), { disableNormalization: true });
+    });
   const shared: Shared = {
     lfos: [lfoNodes(), lfoNodes()], bend, tremoloRest, noise: { white, pink: pinkBuffer(ctx, white) }, wave: oscillatorWave, master,
   };
   const voices = Array.from({ length: MAX_VOICES }, (_, i) => createVoice(ctx, shared, i));
-  const waves = new Map<string, PeriodicWave>();
-  const wave = (w: LfoWaveform, start: number) => {
-    const key = `${w} ${start}`;
-    return waves.get(key) ?? waves.set(key, lfoWave(ctx, w, start)).get(key)!;
-  };
+  const lfoWaves = createCache<string, PeriodicWave>(KEPT_LFO_WAVES);
+  const wave = (w: LfoWaveform, start: number) => lfoWaves.get(`${w} ${start}`, () => lfoWave(ctx, w, start));
   // Where each LFO oscillator's cycle started, as a phase of its Waveform: a retriggered one's at its Waveform's
   // start then (`LFO_START`), kept through any later change of Waveform, as the model's clock keeps it (issue 124).
   const lfoStarts = new WeakMap<OscillatorNode, number>();

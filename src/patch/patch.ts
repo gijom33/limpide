@@ -114,6 +114,21 @@ export type Patch = Record<ParamId, number> & {
   keyboardOctave?: number;
 };
 
+/**
+ * The Patch's fields that make its sound: all but the keyboard octave, which says where the keys start (issue 126).
+ * What compares sounds (a Patch changed, a Tutorial's differences, the mascot's answers) and the choices go by them.
+ */
+export type SoundField = Exclude<keyof Patch, 'keyboardOctave'>;
+export const soundFields = (patch: Patch) => (Object.keys(patch) as (keyof Patch)[]).filter((key): key is SoundField => key !== 'keyboardOctave');
+/** The Patch without its keyboard octave. */
+export const soundOf = ({ keyboardOctave: _, ...sound }: Patch) => sound;
+
+/** The octaves the keyboard reaches: C0 to C7, by the octave buttons. */
+export const KEYBOARD_OCTAVES = { lowest: 0, highest: 7 } as const;
+/** Whether the keyboard can start in this octave: a whole one the octave buttons reach. */
+export const isKeyboardOctave = (octave: unknown): octave is number =>
+  Number.isInteger(octave) && (octave as number) >= KEYBOARD_OCTAVES.lowest && (octave as number) <= KEYBOARD_OCTAVES.highest;
+
 /** Glide at its minimum is off: Notes change pitch at once. */
 export const GLIDE_OFF = 0.001;
 
@@ -224,7 +239,7 @@ export const CHOICES = {
   lfoRetrigger: ['free', 'note'],
   lfo2Retrigger: ['free', 'note'],
   voices: [1, 2, 3, 4, 5, 6, 7, 8],
-} as const satisfies { [K in Exclude<keyof Patch, ParamId | 'keyboardOctave'>]: readonly Patch[K][] };
+} as const satisfies { [K in Exclude<SoundField, ParamId>]: readonly Patch[K][] };
 
 /** A Patch setting picked from a list (a Waveform, the Filter Mode…), rather than turned like a Parameter. */
 export type ChoiceId = keyof typeof CHOICES;

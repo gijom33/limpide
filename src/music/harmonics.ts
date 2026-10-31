@@ -1,3 +1,5 @@
+import { createCache } from './cache';
+
 export type Waveform = 'sine' | 'triangle' | 'saw' | 'square' | 'pulse';
 
 export interface HarmonicSeries {
@@ -11,8 +13,7 @@ export interface HarmonicSeries {
 
 // Series already computed, by their arguments: every Voice's two Oscillators ask for the same pulse at each Patch
 // change, which the Demo makes every frame (issue 45). Bounded, as a dragged Pulse Width asks for a new one each time.
-const computed = new Map<string, HarmonicSeries>();
-const COMPUTED_LIMIT = 64;
+const computed = createCache<string, HarmonicSeries>(64);
 
 /**
  * The Fourier series of a Waveform, scaled so one cycle peaks at ±1. The engine plays exactly these
@@ -21,12 +22,7 @@ const COMPUTED_LIMIT = 64;
  */
 export function harmonicSeries(waveform: Waveform, pulseWidth: number, count: number): HarmonicSeries {
   const key = `${waveform} ${waveform === 'pulse' ? pulseWidth : ''} ${count}`;
-  const known = computed.get(key);
-  if (known) return known;
-  if (computed.size >= COMPUTED_LIMIT) computed.clear();
-  const series = computeSeries(waveform, pulseWidth, count);
-  computed.set(key, series);
-  return series;
+  return computed.get(key, () => computeSeries(waveform, pulseWidth, count));
 }
 
 function computeSeries(waveform: Waveform, pulseWidth: number, count: number): HarmonicSeries {

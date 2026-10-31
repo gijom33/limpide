@@ -8,6 +8,12 @@ export const SECTIONS = [
   { short: 'LFO & Env', name: 'LFO & Envelopes' },
 ] as const;
 
+/**
+ * Phones and the sections 2 × 2: the stylesheet's breakpoint, where the header's groups take rows of their own and the
+ * section strip sticks. The stylesheet cannot read it, so a test checks the stylesheet has it.
+ */
+export const STACKED = '(max-width: 860px)';
+
 export type SectionName = (typeof SECTIONS)[number]['name'];
 
 /** The section each Parameter's control sits in. */

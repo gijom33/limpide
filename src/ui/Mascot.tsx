@@ -11,7 +11,7 @@ import { CATCH, CLOUD, HATS, HOOK, ICE, type Picture, PROPS, type Rect, ROD_TIP,
 import { acrossOf, choosePerch, createMascotPlace, type Moving, type Perch } from './mascotPlace';
 import { createSpray, MOST_DROPLETS } from './mascotSpray';
 import { ModulationContext } from './modulationRing';
-import { SECTIONS } from './sections';
+import { SECTIONS, STACKED } from './sections';
 
 /**
  * The drawing, on a 22 × 13 grid: a water drop, its tail the Limpide logo's stroke (a saw tooth softening into a sine)
@@ -103,8 +103,6 @@ export const RISE_SECONDS = 0.4;
 /** The drop's middle from its box's left, and its tail's length turned down under it, in pixels. */
 const DROP_MIDDLE = 9;
 const TAIL_LENGTH = 26;
-/** Phones and the sections 2 × 2 (the stylesheet's breakpoint): it keeps in view as the page scrolls. */
-const STACKED = '(max-width: 860px)';
 
 const rects = (list: readonly Rect[]) => list.map(([x, y, w, h]) => <rect key={`${x} ${y}`} x={x} y={y} width={w} height={h} />);
 const picture = (groups: Picture) => groups.map(([className, list]) => <g key={className} className={className}>{rects(list)}</g>);
@@ -274,6 +272,7 @@ export function Mascot({
   useEffect(() => {
     if (!context) return;
     const still = matchMedia('(prefers-reduced-motion: reduce)');
+    // Phones and the sections 2 × 2: it keeps in view as the page scrolls.
     const stacked = matchMedia(STACKED);
     const motion = createMascotMotion();
     const arrival = (['rise', 'rain', 'pop'] as const)[Math.floor(Math.random() * 3)];

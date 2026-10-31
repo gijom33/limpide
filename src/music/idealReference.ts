@@ -1,5 +1,6 @@
 import { destinationSwings, osc2Cents } from '../modulation/modulationModel';
 import { FM_INDEX, type Patch } from '../patch/patch';
+import { createCache } from './cache';
 import { harmonicSeries } from './harmonics';
 
 /**
@@ -115,8 +116,9 @@ function powerSum() {
 const SAMPLES_PER_HARMONIC = 16;
 // The engine's Oscillators play this many Harmonics; the Ideal scales each wave as they are scaled.
 const ENGINE_HARMONICS = 1024;
-const products = new Map<string, Float64Array>();
-const PRODUCTS_LIMIT = 16;
+/** How many of Ring's products and FM's cycles are kept, for the Patches asked for most recently. */
+const KEPT_CYCLES = 16;
+const products = createCache<string, Float64Array>(KEPT_CYCLES);
 
 /**
  * The level of each Harmonic (index m, of the lower pitch) of Osc 1 times Osc 2 at whole-number pitches n1 and n2 of
@@ -127,23 +129,21 @@ const PRODUCTS_LIMIT = 16;
 function ringProduct(patch: Patch, n1: number, n2: number, harmonics: number): Float64Array {
   const samples = 2 ** Math.ceil(Math.log2(Math.max(1024, SAMPLES_PER_HARMONIC * harmonics)));
   const key = `${patch.waveform} ${patch.pulseWidth} ${patch.osc2Waveform} ${patch.osc2PulseWidth} ${n1} ${n2} ${samples}`;
-  const known = products.get(key);
-  if (known) return known;
-  if (products.size >= PRODUCTS_LIMIT) products.clear();
-  const one = engineWave(patch.waveform, patch.pulseWidth);
-  const two = engineWave(patch.osc2Waveform, patch.osc2PulseWidth);
-  const re = new Float64Array(samples);
-  const im = new Float64Array(samples);
-  for (let i = 0; i < samples; i++) {
-    // Between samples' edges, so no sample falls on a jump.
-    const phase = (2 * Math.PI * (i + 0.5)) / samples;
-    re[i] = one(n1 * phase) * two(n2 * phase);
-  }
-  fft(re, im);
-  const levels = new Float64Array(Math.min(harmonics, samples / 2));
-  for (let m = 1; m < levels.length; m++) levels[m] = (2 * Math.hypot(re[m], im[m])) / samples;
-  products.set(key, levels);
-  return levels;
+  return products.get(key, () => {
+    const one = engineWave(patch.waveform, patch.pulseWidth);
+    const two = engineWave(patch.osc2Waveform, patch.osc2PulseWidth);
+    const re = new Float64Array(samples);
+    const im = new Float64Array(samples);
+    for (let i = 0; i < samples; i++) {
+      // Between samples' edges, so no sample falls on a jump.
+      const phase = (2 * Math.PI * (i + 0.5)) / samples;
+      re[i] = one(n1 * phase) * two(n2 * phase);
+    }
+    fft(re, im);
+    const levels = new Float64Array(Math.min(harmonics, samples / 2));
+    for (let m = 1; m < levels.length; m++) levels[m] = (2 * Math.hypot(re[m], im[m])) / samples;
+    return levels;
+  });
 }
 
 /** How much the engine scales a saw less its delayed copy, so the pulse it makes has the pulse series' level. */
@@ -267,7 +267,7 @@ export function besselJ(x: number, kmax: number): Float64Array {
   return out;
 }
 
-const cycles = new Map<string, Float64Array>();
+const cycles = createCache<string, Float64Array>(KEPT_CYCLES);
 
 /**
  * The level of each Harmonic (index m, of the lower pitch) of Osc 1 swung by Osc 2 at whole-number pitches n1 and n2
@@ -278,37 +278,35 @@ const cycles = new Map<string, Float64Array>();
 function fmCycle(patch: Patch, n1: number, n2: number, harmonics: number, index: number): Float64Array {
   const samples = 2 ** Math.ceil(Math.log2(Math.max(2048, SAMPLES_PER_HARMONIC * harmonics * (1 + index))));
   const key = `${patch.waveform} ${patch.pulseWidth} ${patch.osc2Waveform} ${patch.osc2PulseWidth} ${n1} ${n2} ${index} ${samples}`;
-  const known = cycles.get(key);
-  if (known) return known;
-  if (cycles.size >= PRODUCTS_LIMIT) cycles.clear();
-  const swing = engineWave(patch.osc2Waveform, patch.osc2PulseWidth);
-  // FM's share of Osc 1's phase at each sample (between samples' edges, as ringProduct's), from Osc 2's wave summed
-  // at each step's middle.
-  const extra = new Float64Array(samples + 1);
-  let sum = (swing((2 * Math.PI * n2 * 0.25) / samples) * 0.5) / samples;
-  for (let i = 0; i <= samples; i++) {
-    extra[i] = 2 * Math.PI * index * n2 * sum;
-    sum += swing((2 * Math.PI * n2 * (i + 1)) / samples) / samples;
-  }
-  const phase = (t: number) => {
-    // t in samples, any real number: FM's share repeats each cycle.
-    const wrapped = ((t % samples) + samples) % samples;
-    const i = Math.floor(wrapped);
-    const share = extra[i] + (extra[i + 1] - extra[i]) * (wrapped - i);
-    return (2 * Math.PI * n1 * (t + 0.5)) / samples + share;
-  };
-  const pulse = patch.waveform === 'pulse';
-  const wave = engineWave(pulse ? 'saw' : patch.waveform, 0.5);
-  const scale = pulse ? pulseScale(patch.pulseWidth) : 1;
-  const lag = (patch.pulseWidth * samples) / n1; // one width of Osc 1's cycle, in samples
-  const re = new Float64Array(samples);
-  const im = new Float64Array(samples);
-  for (let i = 0; i < samples; i++) re[i] = pulse ? scale * (wave(phase(i)) - wave(phase(i - lag))) : wave(phase(i));
-  fft(re, im);
-  const levels = new Float64Array(Math.min(harmonics, samples / 2));
-  for (let m = 1; m < levels.length; m++) levels[m] = (2 * Math.hypot(re[m], im[m])) / samples;
-  cycles.set(key, levels);
-  return levels;
+  return cycles.get(key, () => {
+    const swing = engineWave(patch.osc2Waveform, patch.osc2PulseWidth);
+    // FM's share of Osc 1's phase at each sample (between samples' edges, as ringProduct's), from Osc 2's wave summed
+    // at each step's middle.
+    const extra = new Float64Array(samples + 1);
+    let sum = (swing((2 * Math.PI * n2 * 0.25) / samples) * 0.5) / samples;
+    for (let i = 0; i <= samples; i++) {
+      extra[i] = 2 * Math.PI * index * n2 * sum;
+      sum += swing((2 * Math.PI * n2 * (i + 1)) / samples) / samples;
+    }
+    const phase = (t: number) => {
+      // t in samples, any real number: FM's share repeats each cycle.
+      const wrapped = ((t % samples) + samples) % samples;
+      const i = Math.floor(wrapped);
+      const share = extra[i] + (extra[i + 1] - extra[i]) * (wrapped - i);
+      return (2 * Math.PI * n1 * (t + 0.5)) / samples + share;
+    };
+    const pulse = patch.waveform === 'pulse';
+    const wave = engineWave(pulse ? 'saw' : patch.waveform, 0.5);
+    const scale = pulse ? pulseScale(patch.pulseWidth) : 1;
+    const lag = (patch.pulseWidth * samples) / n1; // one width of Osc 1's cycle, in samples
+    const re = new Float64Array(samples);
+    const im = new Float64Array(samples);
+    for (let i = 0; i < samples; i++) re[i] = pulse ? scale * (wave(phase(i)) - wave(phase(i - lag))) : wave(phase(i));
+    fft(re, im);
+    const levels = new Float64Array(Math.min(harmonics, samples / 2));
+    for (let m = 1; m < levels.length; m++) levels[m] = (2 * Math.hypot(re[m], im[m])) / samples;
+    return levels;
+  });
 }
 
 /**

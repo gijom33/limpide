@@ -1,5 +1,5 @@
 import type { Library } from './library';
-import type { Patch } from './patch';
+import { type Patch, soundOf } from './patch';
 import { initialPatch, presetAfter } from './presets';
 
 /** Who made a change: the Demo's "turned by hand" listens for a hand's or a Controller's, and so does the Tour's. */
@@ -28,8 +28,8 @@ export interface KeptPatch {
 
 const AUTOSAVE_MS = 300;
 
-/** The Patch as "changed" compares it: the keyboard octave left out, the octave buttons' to write (issue 126). */
-const sound = ({ keyboardOctave: _, ...rest }: Patch) => JSON.stringify(rest);
+/** The Patch as "changed" compares it: its sound, not the keyboard octave the octave buttons write (issue 126). */
+const sound = (patch: Patch) => JSON.stringify(soundOf(patch));
 
 /**
  * The Patch being played, outside React (ADR-0013). Every change goes to `apply` (the engine and the Note input) at

@@ -1,6 +1,7 @@
 import { type DisplayValue, recall, remember } from '../app/displaySettings';
 import type { KeyValueStorage } from '../app/storage';
 import { OSCILLATOR_LEVEL } from '../engine/synthEngine';
+import { createCache } from '../music/cache';
 import { type IdealPartial, idealFmKept, idealPartials } from '../music/idealReference';
 import type { Patch } from '../patch/patch';
 import type { PatchStore } from '../patch/patchStore';
@@ -38,17 +39,13 @@ const KEPT_IDEALS = 16;
  * the share of FM's depth the Note keeps (issue 103; to a thousandth, so a Note held reuses its Ideal every frame).
  */
 const idealOf = (patch: Patch): IdealAt => {
-  const known = new Map<number, readonly IdealPartial[]>();
+  const known = createCache<number, readonly IdealPartial[]>(KEPT_IDEALS);
   // The last Note's answer: every Spectrum asks every frame, and the kept depth is a search (fmDepthKept).
   let last: { fundamental: number; sampleRate: number; ideal: readonly IdealPartial[] } | undefined;
   return (fundamental, sampleRate) => {
     if (last?.fundamental === fundamental && last.sampleRate === sampleRate) return last.ideal;
     const kept = Math.round(idealFmKept(patch, fundamental, sampleRate) * 1000) / 1000;
-    const ideal = known.get(kept) ?? idealPartials(patch, IDEAL_HARMONICS, kept).map((p) => ({ ...p, level: p.level * OSCILLATOR_LEVEL }));
-    if (!known.has(kept)) {
-      if (known.size >= KEPT_IDEALS) known.clear();
-      known.set(kept, ideal);
-    }
+    const ideal = known.get(kept, () => idealPartials(patch, IDEAL_HARMONICS, kept).map((p) => ({ ...p, level: p.level * OSCILLATOR_LEVEL })));
     last = { fundamental, sampleRate, ideal };
     return ideal;
   };

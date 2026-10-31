@@ -1,4 +1,4 @@
-import { PARAMS, type ParamId, type Patch } from '../patch/patch';
+import { PARAMS, type ParamId, type Patch, soundFields } from '../patch/patch';
 import type { ChangeBy } from '../patch/patchStore';
 import type { Heard } from './mascotMotion';
 
@@ -63,8 +63,8 @@ const ANSWERS: Record<ParamId, Gesture | readonly [up: Gesture, down: Gesture]> 
 export function gesturesOf(before: Patch, after: Patch, by: ChangeBy): Gesture[] {
   if (by === 'load') return ['new'];
   const gestures = new Set<Gesture>();
-  for (const field of Object.keys(after) as (keyof Patch)[]) {
-    if (before[field] === after[field] || field === 'keyboardOctave') continue;
+  for (const field of soundFields(after)) {
+    if (before[field] === after[field]) continue;
     const answer = ANSWERS[field as ParamId];
     // The Filter's Slope cues a funny turn (the owner's, 2026-10-30).
     if (field === 'filterSlope') gestures.add('perform');

@@ -1,6 +1,5 @@
 import type { KeyboardEvent } from 'react';
-
-const STEPS: Record<string, number | 'first' | 'last'> = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1, Home: 'first', End: 'last' };
+import { ARROW_STEPS } from '../input/arrowKeys';
 
 /**
  * Where an arrow key moves the focus along the group's `items` (the WAI-ARIA keys): to the next or previous one, past
@@ -8,7 +7,7 @@ const STEPS: Record<string, number | 'first' | 'last'> = { ArrowRight: 1, ArrowD
  * for any other key, or when the focus is not on one of them.
  */
 export function arrowTarget(e: KeyboardEvent<HTMLElement>, items: string, { wrap }: { wrap: boolean }): HTMLElement | undefined {
-  const step = STEPS[e.key];
+  const step = ARROW_STEPS[e.key];
   if (step === undefined || e.altKey || e.metaKey || e.ctrlKey) return;
   const all = [...e.currentTarget.querySelectorAll<HTMLElement>(items)];
   const at = all.indexOf(document.activeElement as HTMLElement);
