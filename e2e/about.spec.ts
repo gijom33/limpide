@@ -58,7 +58,7 @@ test('About is centred over a dimmed page, on a phone, a laptop and a large scre
 
 // Issue 42's legal review: the site ships React, whose MIT notice the minified bundle drops, so the build writes the
 // notices beside the page; and only the published site's deploy counts visits, never a fork's or a test build.
-test('About links the third-party notices, which carry React’s licence', async ({ page, request }) => {
+test('About links the third-party notices, which carry React’s licence and end with Limpide’s own', async ({ page, request }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'About', exact: true }).click();
   const link = page.getByRole('link', { name: 'Third-party notices' });
@@ -67,6 +67,10 @@ test('About links the third-party notices, which carry React’s licence', async
   for (const name of ['react', 'react-dom', 'scheduler']) expect(notices).toMatch(new RegExp(`^${name} \\d`, 'm'));
   expect(notices).toContain('MIT License');
   expect(notices).toContain('Modernizr');
+  // Issue 111: the notices end with Limpide's own licence, the MIT terms the rest of the site ships under.
+  const own = notices.split(`\n${'-'.repeat(72)}\n`).at(-1)!.trim();
+  expect(own).toMatch(/^Limpide \d+\.\d+\.\d+\n\nMIT License\n\nCopyright \(c\) 2026 Guillaume Boillet\n/);
+  expect(own).toMatch(/OTHER DEALINGS IN THE\nSOFTWARE\.$/);
 });
 
 test('a build without a counter address counts no visits, and About makes no claim about them', async ({ page }) => {
