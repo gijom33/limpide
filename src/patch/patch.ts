@@ -25,6 +25,7 @@ export type ParamId =
   | 'osc2Semitone'
   | 'osc2Detune'
   | 'osc2PulseWidth'
+  // FM's Parameter, named for cross-modulation: saved Patches and Share links carry the name, so it stays.
   | 'crossMod'
   | 'osc2EnvAmount'
   | 'mixOsc1'
@@ -124,6 +125,9 @@ const time = (id: ParamId, label: string, dflt: number, control: Control): Param
   id, label, unit: 's', min: 0.001, max: 10, taper: 'log', default: dflt, control,
 });
 
+/** FM at full: Osc 2 swings Osc 1's frequency by four times its own (a modulation index of 4, issue 89). */
+export const FM_INDEX = 4;
+
 export const PARAMS: Record<ParamId, ParamDef> = {
   pulseWidth: { id: 'pulseWidth', label: 'Pulse Width', unit: '%', min: 0.05, max: 0.95, taper: 'linear', default: 0.25, control: 'set' },
   // Osc 1's range (issue 90): the Sub follows it; Osc 2's offsets count from the Note played.
@@ -132,7 +136,8 @@ export const PARAMS: Record<ParamId, ParamDef> = {
   osc2Semitone: { id: 'osc2Semitone', label: 'Semitone', unit: 'st', min: -12, max: 12, taper: 'linear', default: 0, step: 1, control: 'set' },
   osc2Detune: { id: 'osc2Detune', label: 'Detune', unit: 'cents', min: -50, max: 50, taper: 'linear', default: 0, control: 'play' },
   osc2PulseWidth: { id: 'osc2PulseWidth', label: 'Pulse Width', unit: '%', min: 0.05, max: 0.95, taper: 'linear', default: 0.25, control: 'set' },
-  // FM (issue 89): how far Osc 2 swings Osc 1's frequency, at full four times Osc 2's own frequency.
+  // FM (issue 89): how far Osc 2 swings Osc 1's frequency, at full FM_INDEX times Osc 2's own frequency. Its id is
+  // cross-modulation's, which saved Patches and Share links carry: renaming it would break them.
   crossMod: level('crossMod', 'FM', 0, 'set'),
   // How far the Filter Envelope moves Osc 2's pitch at its peak (issue 93), as a Prophet's Poly Mod does.
   osc2EnvAmount: { id: 'osc2EnvAmount', label: 'Env Amount', unit: 'st', min: -24, max: 24, taper: 'linear', default: 0, control: 'set' },

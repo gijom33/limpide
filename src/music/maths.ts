@@ -1,7 +1,7 @@
 import { filterStages } from '../engine/filterDesign';
-import { type FilterMode, type FilterSlope, osc1Heard, type ParamId, type Patch } from '../patch/patch';
+import { type FilterMode, type FilterSlope, FM_INDEX, osc1Heard, type ParamId, type Patch } from '../patch/patch';
 import type { Waveform } from './harmonics';
-import { besselJ, FM_INDEX, osc2Ratio } from './idealReference';
+import { besselJ, osc2Ratio } from './idealReference';
 
 /**
  * The Maths Layer's content (issue 14): the quantities behind the sound, as data. The formulas are the ones the

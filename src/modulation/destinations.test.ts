@@ -110,7 +110,7 @@ describe('the LFOs swing each even Destination by its law (issue 74)', () => {
     expect(LFO_LAWS.resonance.room(0.8)).toBeCloseTo(0.2);
   });
   it('swings FM as it does the Resonance: its whole range from the middle, nothing at 0, never past 100 % (issue 97)', () => {
-    const fm = (crossMod: number) => destinationSwings(patch({ crossMod, lfoDestination: 'fm', lfoAmount: 1 }), 'fm', crossMod);
+    const fm = (amount: number) => destinationSwings(patch({ crossMod: amount, lfoDestination: 'fm', lfoAmount: 1 }), 'fm', amount);
     expect(fm(0.5)).toEqual([0.5, 0]);
     expect(fm(0)).toEqual([0, 0]);
     expect(fm(0.8)[0]).toBeCloseTo(0.2);
