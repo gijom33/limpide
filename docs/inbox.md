@@ -6,7 +6,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
-- 2026-10-31, the owner: "Add a link to buy me a coffee or something that sounds like this, it would be in the how about, and it would be a nice way to get some pocket money."
 ## Dropped
 
 - 2026-10-30, from Claude's brainstorm, Velocity on the Volume ("a harder hit plays louder, not only brighter"): already so. The Amp Envelope's Attack rises to the Note's Velocity (PRD story 9). Claude's call, open to the owner.
@@ -131,3 +130,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-31, the owner's MIDI mapping reviewer, done at once into [42](./issues/42-reviews.md), decided by the owner: profile 17, the MIDI mapping geek, who proposes the C16 layout a player finds without looking; its findings to the inbox and [34](./issues/34-c16-bank-layout.md). The profile's details are Claude's call, open to the owner.
 2026-10-31, the owner's bug of C16 knobs taken for Relative (K7 on Osc 2's Pulse Width at 0 around CC 50): to [144](./issues/144-c16-knobs-taken-for-relative.md), fixed at once, to try on the real C16 (triage and fix, Claude's call, open to the owner).
 2026-10-31, the owner's C16 button modes and printable card (triage, Claude's call, open to the owner): to [145](./issues/145-the-c16-layout-strip-by-strip.md), the new C16 layout from profile 17's review, to grill; Hold and the Preset arrows momentary and a one-page card to print are its first decisions, the owner's.
+2026-10-31, the owner's idea of a tip link in About (triage, Claude's call, open to the owner): to [146](./issues/146-a-tip-link-in-about.md), four questions for the owner, each with Claude's recommendation (v1 as About's polish; the service chosen after a look at current fees; one line in About and the README; the account the owner's own step).
