@@ -18,17 +18,24 @@ function widestReadouts(id: ParamId): string[] {
   return [...all].sort((a, b) => b.length - a.length).slice(0, 4);
 }
 
+/** A second figure beside a control's value, in small type, and the widest it can be: a synced Rate's Hz (issue 112). */
+export interface ValueDetail {
+  text: string;
+  widest: string;
+}
+
 /**
  * What every Parameter control shares, knob or fader: its position, the arrow keys (Shift for fine), double-click
- * to reset, MIDI Learn, the moment it changes, and the value bubble above a finger that drags it.
+ * to reset, MIDI Learn (as the Parameter whose knob it is, `def.knob`), the moment it changes, and the value bubble
+ * above a finger that drags it.
  */
-export function useParamControl(id: ParamId, value: number, onChange: (value: number) => void) {
+export function useParamControl(id: ParamId, value: number, onChange: (value: number) => void, detail?: ValueDetail) {
   const def = PARAMS[id];
   const position = valueToPosition(def, value);
   // A stepped Parameter's (Octave, Semitone) travel per step: less would round back to where it was.
   const unit = def.step ? def.step / (def.max - def.min) : 0;
   const setPosition = (p: number) => onChange(positionToValue(def, Math.min(1, Math.max(0, p))));
-  const learnable = useLearnable({ kind: 'param', id });
+  const learnable = useLearnable({ kind: 'param', id: def.knob ?? id });
   // In the Maths Layer some controls read the quantity behind their value instead (Q, dB): sized for it while on.
   const mathsPatch = useContext(MathsContext);
   const maths = mathsPatch ? mathsReadout(id, value, mathsPatch) : undefined;
@@ -45,7 +52,7 @@ export function useParamControl(id: ParamId, value: number, onChange: (value: nu
     'aria-valuemin': 0,
     'aria-valuemax': 100,
     'aria-valuenow': Math.round(position * 100),
-    'aria-valuetext': formatParam(id, value),
+    'aria-valuetext': detail ? `${formatParam(id, value)}, ${detail.text}` : formatParam(id, value),
     onDoubleClick: () => onChange(def.default),
     onKeyDown: (e: React.KeyboardEvent<HTMLElement | SVGElement>) => {
       delete (e.currentTarget as HTMLElement).dataset.pointer; // keyboard focus from now on: show the ring
@@ -85,15 +92,20 @@ export function useParamControl(id: ParamId, value: number, onChange: (value: nu
     'data-bubble': touching || undefined,
     ...learnable,
   };
+  const beside = (text: string) => <span className="knob-value-detail"> · {text}</span>;
   const text = (
     <>
       {touching && <div className="value-bubble">{readout}</div>}
       <div className="knob-label">{def.label}</div>
       <div className="knob-value">
-        <span data-maths={maths !== undefined || undefined}>{readout}</span>
+        <span data-maths={maths !== undefined || undefined}>
+          {readout}
+          {detail && beside(detail.text)}
+        </span>
         {widest.map((t) => (
           <span key={t} className="knob-value-sizer" aria-hidden="true">
             {t}
+            {detail && beside(detail.widest)}
           </span>
         ))}
       </div>

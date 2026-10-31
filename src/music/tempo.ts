@@ -31,6 +31,11 @@ export function formatSyncedRate(index: number, bpm: number): { note: string; hz
   return { note: NOTE_VALUES[index].name, hz: `${hz >= 10 ? Math.round(hz) : Number(hz.toPrecision(2))} Hz` };
 }
 
+/** The widest Hz a synced Rate can read, at any note value and tempo, so its knob keeps one width as it turns. */
+export const WIDEST_SYNCED_HZ = NOTE_VALUES.flatMap((_, i) =>
+  Array.from({ length: TEMPO.max - TEMPO.min + 1 }, (_, b) => formatSyncedRate(i, TEMPO.min + b).hz),
+).reduce((a, b) => (b.length > a.length ? b : a));
+
 /** Taps further apart than the slowest beat start the count again. */
 const LONGEST_TAP = 60 / TEMPO.min;
 /** How many of the last taps the tempo is taken from. */

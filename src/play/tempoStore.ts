@@ -15,7 +15,16 @@ export interface TempoState {
  * plays, its own BPM is in force, counted from its first beat, and the person's comes back when it stops; meanwhile
  * the person's cannot be set. Built once, in the audio session (ADR-0014).
  */
-export function createTempoStore({ storage, engine }: { storage: KeyValueStorage; engine: Pick<SynthEngine, 'setTempo' | 'now'> }) {
+export function createTempoStore({
+  storage,
+  engine,
+  clock = () => performance.now() / 1000,
+}: {
+  storage: KeyValueStorage;
+  engine: Pick<SynthEngine, 'setTempo' | 'now'>;
+  /** The page's clock, in seconds, which times the taps: the audio clock stands still until sound is allowed. */
+  clock?: () => number;
+}) {
   let own = recall(storage, 'tempo').bpm;
   let state: TempoState = { bpm: own, player: false };
   let taps: number[] = [];
@@ -43,14 +52,14 @@ export function createTempoStore({ storage, engine }: { storage: KeyValueStorage
       setOwn(bpm);
     },
     /**
-     * A tap on Tap, at `time` on the engine's clock: from the second on, the BPM follows the taps, and the beats are
-     * counted from the last, so a synced LFO lands where the person tapped.
+     * A tap on Tap, timed by the page's clock: from the second on, the BPM follows the taps, and the beats are counted
+     * from the last, on the engine's clock, so a synced LFO lands where the person tapped.
      */
-    tap(time = engine.now()) {
+    tap() {
       if (state.player) return;
-      taps = [...taps.slice(-7), time];
+      taps = [...taps.slice(-7), clock()];
       const bpm = tappedBpm(taps);
-      if (bpm !== undefined) setOwn(bpm, time);
+      if (bpm !== undefined) setOwn(bpm, engine.now());
     },
     /** A player starts: its BPM is in force, its beats counted from `origin` (its first, on the engine's clock). */
     take(bpm: number, origin: number) {

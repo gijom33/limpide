@@ -461,6 +461,11 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
      the other sections'. */
   .chain > .timeline { grid-template-rows: auto auto auto minmax(120px, 1fr); }
   .chain > .timeline .timeline-plot { height: auto; min-height: 120px; }
+  /* Beside Retrigger and Sync (issue 112), each LFO's plot takes what its knobs leave, as on a phone, so the row fits
+     from 601 px. */
+  .chain > .timeline :is(.timeline-controls > .sub-block, .lfo-rows) { flex: 1 1 auto; min-width: 0; }
+  .chain > .timeline .lfo-play { gap: var(--space-2); }
+  .chain > .timeline .lfo-plot { width: 100%; min-width: 48px; }
 }
 /* Wide screens, from 1920 px: the four sections side by side, LFO & Envelopes a column beside the stages, so the
    height its row took goes to the Viewers (issue 43). A quarter of 1920 px is what three across gives a stage on a
@@ -695,13 +700,15 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .lfo-play { display: flex; align-items: stretch; gap: var(--space-3); }
 .lfo-play .knobs { flex: none; flex-wrap: nowrap; }
 .lfo-play > .tip-anchor { display: flex; flex: 1 1 auto; min-width: 0; }
-/* Retrigger: an icon button beside Depth and Rate, centred where their dials are, its name under it as theirs are
-   (and, where theirs have one, an empty value line), so the three share one label line. On, it is filled with the
-   LFO's colour, as a selector's chosen option is. */
-.lfo-retrigger-field { display: flex; flex-direction: column; align-items: center; gap: var(--knob-text-gap); }
-.lfo-retrigger-field::after { content: ''; height: var(--knob-value-h); }
-.lfo-retrigger { margin: calc((var(--dial-big) - var(--control-h)) / 2) 0; }
-.lfo-retrigger[aria-pressed='true'] { color: var(--bg); background: var(--stage); border-color: var(--stage); }
+/* Retrigger and Sync (issue 112): icon buttons beside Depth and Rate, centred where their dials are, each name under it
+   as theirs are (and, where theirs have one, an empty value line), so all four share one label line. On, a switch is
+   filled with the LFO's colour, as a selector's chosen option is. */
+.lfo-switch-field { display: flex; flex-direction: column; align-items: center; gap: var(--knob-text-gap); }
+.lfo-switch-field::after { content: ''; height: var(--knob-value-h); }
+.lfo-switch { margin: calc((var(--dial-big) - var(--control-h)) / 2) 0; }
+.lfo-switch[aria-pressed='true'] { color: var(--bg); background: var(--stage); border-color: var(--stage); }
+/* A synced Rate's Hz beside its note value, in small type: "1/8 · 4 Hz". */
+.knob-value-detail { font-size: 0.85em; }
 .lfo-plot {
   display: block; width: 132px; min-width: 72px; height: auto; min-height: 48px; align-self: stretch;
   background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-inner);
@@ -710,6 +717,8 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 /* The drawing fills whatever box the layout gives the plot; it never sizes it (issue: full Depth, full height). */
 .lfo-plot svg { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
 .lfo-plot-axis { stroke: var(--grid); }
+/* The tempo's beats, while the LFO is synced (issue 112): broken, so they read apart from the axis. */
+.lfo-plot-beats { stroke: var(--grid); stroke-dasharray: 2 3; }
 .lfo-plot-line { fill: none; stroke: var(--stage); stroke-width: var(--curve-w); stroke-linejoin: round; vector-effect: non-scaling-stroke; }
 .lfo-plot-dot { fill: var(--stage); stroke: var(--bg); stroke-width: 1.5; }
 /* At Depth 0 the plot dims as the Rate knob does: the LFO runs but moves nothing (the owner, 2026-10-28). */
@@ -1069,10 +1078,19 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
    Patch on the left, so the piano stays at the centre (the owner, 2026-10-29). */
 @media (min-width: 861px) and (max-width: 1099px) {
   header :is(.demo-word, .tool-word) { display: none; }
+  /* The BPM its number alone, as the buttons beside it their icons (issue 112); its tooltip and name say BPM. */
+  .tempo-unit { display: none; }
   header :is(.demo-button, .hold-button, .midi-status, .display-menu > .tip-anchor > .tool, .about-menu .tool) { padding: 0 6px; }
 }
 @media (min-width: 861px) and (max-width: 919px) {
   header, .header-left, .header-identity { column-gap: var(--space-2); }
+}
+/* The tempo beside Hold (issue 112) leaves the set-up row no room for its buttons' words up to 1365 px: there Hold,
+   MIDI, Display and About show their icons alone (their tooltips name them), so the piano stays at the centre with its
+   keys; Demo, Tutorial and Song keep theirs from 1100 px. Claude's call, open to the owner. */
+@media (min-width: 1100px) and (max-width: 1365px) {
+  .header-set .tool-word { display: none; }
+  .header-set :is(.hold-button, .midi-status, .display-menu > .tip-anchor > .tool, .about-menu .tool) { padding: 0 6px; }
 }
 /* Three across (issue 82, the owner: "stack buttons in the top row… we could recenter the keyboard"): the buttons right
    of the keyboard in two rows, two high as the octave buttons are, set-up over Demo, Tutorial and Song, so the Patch
@@ -1086,8 +1104,9 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
    column as wide on the other side, so the piano itself, not the keyboard, is at the centre (issue 82). Below, that
    column would take width from the piano's keys. */
 /* Up to 1365 px the piano's keys are 42 px, so the logo and the Patch picker beside it keep room for Linux's wider
-   fonts and the piano stays at the centre (the 1.16.0 deploy). */
-@media (min-width: 1280px) and (max-width: 1365px) {
+   fonts and the piano stays at the centre (the 1.16.0 deploy); from 1200 px since the tempo (issue 112), whose set-up
+   row leaves the right side narrower than the left, so the left alone sets where the piano sits. */
+@media (min-width: 1200px) and (max-width: 1365px) {
   :root { --white-key-max: 42px; }
 }
 @media (min-width: 1200px) and (max-width: 1919px) {
@@ -1114,6 +1133,23 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 }
 .tutorial-menu-panel .tool { justify-content: flex-start; gap: 8px; white-space: nowrap; }
 .tutorial-menu-done { margin-left: auto; padding-left: 12px; color: var(--accent); }
+/* The tempo (issue 112): the BPM in a box as wide as its widest, so nothing beside it moves as it changes, dragged up
+   and down (a finger's drag is its own, not the page's scroll); Tap beside it. Below 861 px the BPM alone, opening a
+   small field with the BPM and Tap under it, its right edge on the button's. */
+.tempo { display: flex; align-items: center; gap: 4px; }
+.tempo-bpm { justify-content: center; gap: 3px; padding: 0 6px; cursor: ns-resize; touch-action: none; font-variant-numeric: tabular-nums; }
+.tempo-tap { padding: 0 8px; }
+.tempo-bpm[aria-disabled='true'], .tempo-tap[aria-disabled='true'] { cursor: default; }
+.tempo-value { min-width: 3ch; text-align: right; color: var(--text); font-variant-numeric: tabular-nums; }
+.tempo-unit { font-size: var(--text-xs); }
+.tempo-typing { width: calc(3ch + 52px); text-align: center; color: var(--text); background: var(--bg); cursor: text; }
+.tempo-menu { position: relative; display: flex; }
+.tempo-panel {
+  position: absolute; z-index: 60; top: calc(100% + 6px); right: 0; display: flex; align-items: center; gap: 8px; padding: 10px;
+  background: var(--panel); border: 1px solid var(--muted); border-radius: var(--radius-panel); box-shadow: var(--shadow-panel);
+}
+.tempo-panel .tool { min-height: 44px; }
+
 /* The Display button and its panel: the display settings, out of the way until wanted. */
 .display-menu { position: static; }
 .display-menu .tool { position: relative; }
@@ -1241,7 +1277,7 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   .block { padding: var(--space-2) var(--space-3); gap: var(--space-2); }
   /* LFO & Envelopes with the stages' margins (issue 47). */
   .chain > .timeline { padding: var(--space-2) var(--space-3); }
-  .lfo-retrigger-field::after { display: none; }
+  .lfo-switch-field::after { display: none; }
   /* The LFOs one under the other, each plot taking what its knobs leave, so it never runs past the section. */
   .timeline-controls { flex-direction: column; align-items: stretch; }
   .timeline-controls > .sub-block, .lfo-rows { flex: 1 1 auto; min-width: 0; }
@@ -1299,10 +1335,10 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   .display-menu .display-dot { position: absolute; top: 5px; right: 5px; } /* not a third line under icon and word */
   /* The playing and set-up buttons: each icon over its word (a tooltip needs a pointer, so on a touch screen the word
      says what the icon does), 44 pt tall for a finger. */
-  header :is(.demo-button, .hold-button, .midi-status, .display-menu .tool, .about-menu .tool) {
+  header :is(.demo-button, .hold-button, .midi-status, .display-menu .tool, .about-menu .tool, .tempo-open) {
     flex-direction: column; justify-content: center; gap: 2px; height: auto; min-height: 44px; padding: 3px 6px 2px;
   }
-  header :is(.demo-button, .hold-button, .midi-status, .display-menu .tool, .about-menu .tool) :is(.demo-word, .tool-word) {
+  header :is(.demo-button, .hold-button, .midi-status, .display-menu .tool, .about-menu .tool, .tempo-open) :is(.demo-word, .tool-word) {
     display: block; font-size: 9px; line-height: 10px;
   }
 }
@@ -1319,8 +1355,14 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
     column-gap: var(--space-2);
   }
   .header-identity { column-gap: var(--space-2); }
-  header :is(.demo-button, .hold-button, .midi-status, .display-menu .tool, .about-menu .tool) { padding-inline: 4px; }
+  header :is(.demo-button, .hold-button, .midi-status, .display-menu .tool, .about-menu .tool, .tempo-open) { padding-inline: 4px; }
   .chain > * { scroll-margin-top: calc(var(--header-h, 0px) + var(--space-2)); }
+}
+/* With the tempo in set-up (issue 112), the narrowest 2 × 2 windows pad the buttons 2 px and set them 2 px apart, so
+   the row fits and a short Preset name still shows whole at 601 px. */
+@media (min-width: 601px) and (max-width: 680px) {
+  .header-play, .header-set { gap: 2px; }
+  header :is(.demo-button, .hold-button, .midi-status, .display-menu .tool, .about-menu .tool, .tempo-open) { padding-inline: 2px; }
 }
 
 /* The sections strip (phones): equal tabs under the header, each underlined in its section's colour when it is the

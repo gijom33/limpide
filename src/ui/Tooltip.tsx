@@ -52,7 +52,7 @@ export function Tooltip({ content, children, longPress = true }: { content: TipC
   // The control itself (not this wrapper) carries the description, so it is announced on focus; after the reason it is
   // greyed out, if it is (issue 104).
   useEffect(() => {
-    const target = wrapperRef.current?.querySelector('[role="radiogroup"], [role="group"], button, [role="slider"], [role="img"]');
+    const target = wrapperRef.current?.querySelector('[role="radiogroup"], [role="group"], button, [role="slider"], [role="spinbutton"], [role="img"]');
     if (!target) return;
     addDescription(target, id, 'last');
     return () => removeDescription(target, id);

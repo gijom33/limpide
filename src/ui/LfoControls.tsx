@@ -1,9 +1,10 @@
 import type { SynthEngine } from '../engine/synthEngine';
 import { DESTINATIONS } from '../modulation/destinations';
 import type { LfoWaveform } from '../modulation/lfo';
-import { formatParam, LFO_KEYS, type LfoNumber, type ParamId, type Patch, setLfo } from '../patch/patch';
+import { formatSyncedRate, WIDEST_SYNCED_HZ } from '../music/tempo';
+import { formatParam, LFO_KEYS, type LfoNumber, type ParamId, type Patch, rateKnob, setLfo } from '../patch/patch';
 import { DestinationPicker } from './DestinationPicker';
-import { RetriggerIcon } from './icons';
+import { RetriggerIcon, SyncIcon } from './icons';
 import { Knob } from './Knob';
 import { LfoPlot } from './LfoPlot';
 import { useLearnable } from './learn';
@@ -25,20 +26,54 @@ interface Props {
   lfo: LfoNumber;
   engine: SynthEngine;
   patch: Patch;
+  /** The page's tempo, which a synced Rate reads its Hz at (issue 112). */
+  bpm: number;
   onParam(id: ParamId, value: number): void;
   onPatch(change: (patch: Patch) => Patch): void;
 }
 
 /**
- * One LFO, in two rows: its shape and destination, then its Depth and Rate (the owner, 2026-10-28: how far first,
- * then how fast), its Retrigger switch, and a plot of it moving, dimmed while the Depth is 0.
+ * One of an LFO's switches beside its knobs, Retrigger or Sync: an icon button, its short name under it as the knobs'
+ * are, learnable as its two-way choice.
  */
-export function LfoControls({ lfo, engine, patch, onParam, onPatch }: Props) {
+function LfoSwitch({ lfo, choice, name, short, on, icon, tip, onToggle }: {
+  lfo: LfoNumber;
+  choice: (typeof LFO_KEYS)[LfoNumber]['retrigger' | 'sync'];
+  name: string;
+  short: string;
+  on: boolean;
+  icon: React.ReactNode;
+  tip: (typeof TIPS)[keyof typeof TIPS];
+  onToggle(): void;
+}) {
+  const learn = useLearnable({ kind: 'choice', id: choice });
+  return (
+    <Tooltip content={tip}>
+      <div className="lfo-switch-field">
+        <button type="button" className="tool tool-icon lfo-switch" aria-label={`LFO ${lfo} ${name}`} aria-pressed={on} onClick={onToggle} {...learn}>
+          {icon}
+        </button>
+        <div className="knob-label" aria-hidden="true">
+          {short}
+        </div>
+      </div>
+    </Tooltip>
+  );
+}
+
+/**
+ * One LFO, in two rows: its shape and destination, then its Depth and Rate (the owner, 2026-10-28: how far first,
+ * then how fast), its Retrigger and Sync switches, and a plot of it moving, dimmed while the Depth is 0. With Sync on
+ * the Rate knob turns its note value, its Hz at the tempo beside it (issue 112).
+ */
+export function LfoControls({ lfo, engine, patch, bpm, onParam, onPatch }: Props) {
   const keys = LFO_KEYS[lfo];
   const off = patch[keys.amount] === 0;
   const learnShape = useLearnable({ kind: 'choice', id: keys.waveform });
-  const learnRetrigger = useLearnable({ kind: 'choice', id: keys.retrigger });
   const retrigger = patch[keys.retrigger] === 'note';
+  const synced = patch[keys.sync] === 'on';
+  const rate = rateKnob(patch, lfo);
+  const rateText = synced ? Object.values(formatSyncedRate(patch[keys.note], bpm)).join(' · ') : formatParam(rate, patch[rate]);
   return (
     <SubBlock title={`LFO ${lfo}`} tip={TIPS.lfo} group>
       <div className="lfo-rows" data-lfo={lfo}>
@@ -67,24 +102,33 @@ export function LfoControls({ lfo, engine, patch, onParam, onPatch }: Props) {
         <div className="lfo-play">
           <div className="knobs">
             <Knob id={keys.amount} value={patch[keys.amount]} onChange={(v) => onParam(keys.amount, v)} />
-            <Knob id={keys.rate} value={patch[keys.rate]} onChange={(v) => onParam(keys.rate, v)} inactive={off && `No effect while LFO ${lfo}'s Depth is 0`} />
-            <Tooltip content={TIPS.lfoRetrigger}>
-              <div className="lfo-retrigger-field">
-                <button
-                  type="button"
-                  className="tool tool-icon lfo-retrigger"
-                  aria-label={`LFO ${lfo} Retrigger`}
-                  aria-pressed={retrigger}
-                  onClick={() => onPatch((p) => setLfo(p, { retrigger: retrigger ? 'free' : 'note' }, lfo))}
-                  {...learnRetrigger}
-                >
-                  <RetriggerIcon />
-                </button>
-                <div className="knob-label" aria-hidden="true">
-                  Retrig
-                </div>
-              </div>
-            </Tooltip>
+            <Knob
+              id={rate}
+              value={patch[rate]}
+              onChange={(v) => onParam(rate, v)}
+              detail={synced ? { text: formatSyncedRate(patch[keys.note], bpm).hz, widest: WIDEST_SYNCED_HZ } : undefined}
+              inactive={off && `No effect while LFO ${lfo}'s Depth is 0`}
+            />
+            <LfoSwitch
+              lfo={lfo}
+              choice={keys.retrigger}
+              name="Retrigger"
+              short="Retrig"
+              on={retrigger}
+              icon={<RetriggerIcon />}
+              tip={TIPS.lfoRetrigger}
+              onToggle={() => onPatch((p) => setLfo(p, { retrigger: retrigger ? 'free' : 'note' }, lfo))}
+            />
+            <LfoSwitch
+              lfo={lfo}
+              choice={keys.sync}
+              name="Sync"
+              short="Sync"
+              on={synced}
+              icon={<SyncIcon />}
+              tip={TIPS.lfoSync}
+              onToggle={() => onPatch((p) => setLfo(p, { sync: synced ? 'off' : 'on' }, lfo))}
+            />
           </div>
           <Tooltip content={TIPS.lfoWaveform}>
             <LfoPlot
@@ -92,7 +136,7 @@ export function LfoControls({ lfo, engine, patch, onParam, onPatch }: Props) {
               lfo={lfo}
               inactive={off}
               // What the plot shows, for a screen reader (issue 51).
-              label={`LFO ${lfo}: ${SHAPES.find((s) => s.waveform === patch[keys.waveform])!.label}, ${formatParam(keys.rate, patch[keys.rate])}, Depth ${formatParam(keys.amount, patch[keys.amount])}, on ${DESTINATIONS[patch[keys.destination]].label}`}
+              label={`LFO ${lfo}: ${SHAPES.find((s) => s.waveform === patch[keys.waveform])!.label}, ${rateText}, Depth ${formatParam(keys.amount, patch[keys.amount])}, on ${DESTINATIONS[patch[keys.destination]].label}`}
             />
           </Tooltip>
         </div>

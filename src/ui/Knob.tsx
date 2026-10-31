@@ -4,7 +4,7 @@ import { PARAMS, type ParamId } from '../patch/patch';
 import { valueToPosition } from '../patch/taper';
 import { useInactive } from './inactive';
 import { ModulationRing } from './modulationRing';
-import { pressed, useParamControl, usePress, useWheel } from './paramControl';
+import { pressed, useParamControl, usePress, useWheel, type ValueDetail } from './paramControl';
 import { Tooltip } from './Tooltip';
 import { PARAM_TIPS } from './tips';
 
@@ -42,6 +42,8 @@ interface Props {
   onChange(value: number): void;
   /** Why the Parameter has no audible effect right now ("No effect while Osc 2 is silent"): dimmed, still adjustable. */
   inactive?: string | false;
+  /** A second figure beside the value, in small type: a synced Rate's Hz (issue 112). */
+  detail?: ValueDetail;
 }
 
 /**
@@ -49,8 +51,8 @@ interface Props {
  * line, big for Parameters worth turning while playing and small for the others (ADR-0008). Drag vertically (Shift
  * for fine), arrow keys, double-click to reset.
  */
-export function Knob({ id, value, onChange, inactive }: Props) {
-  const c = useParamControl(id, value, onChange);
+export function Knob({ id, value, onChange, inactive, detail }: Props) {
+  const c = useParamControl(id, value, onChange, detail);
   const g = GEOMETRY[PARAMS[id].control === 'play' ? 'play' : 'set'];
   const centre = g.size / 2;
   const groove = centre - 8;

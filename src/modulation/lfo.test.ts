@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createLfoClock, glideFrequency, LFO_START, lfoPhase, lfoShape } from './lfo';
+import { beatsBetween, createLfoClock, glideFrequency, LFO_START, lfoPhase, lfoShape } from './lfo';
 
 describe('lfoShape: one cycle of each LFO Waveform (phase 0–1), like Web Audio’s own oscillators', () => {
   it('sine starts at 0 and peaks a quarter of the way through', () => {
@@ -161,5 +161,13 @@ describe('createLfoClock', () => {
     expect(clock.phaseAt(0.75)).toBeCloseTo(0.25); // the restart before it stands
     expect(clock.phaseAt(2)).toBeCloseTo(0.5); // 1.5 cycles since 0.5
     expect(clock.phaseAt(2.1)).toBeCloseTo(0.7); // on at the Rate set at 2
+  });
+});
+
+describe('beatsBetween (issue 112)', () => {
+  it('gives the beats of a tempo between two moments, counted from its origin', () => {
+    expect(beatsBetween({ bpm: 120, origin: 0.2 }, 0, 1.3)).toEqual([0.2, 0.7, 1.2]);
+    expect(beatsBetween({ bpm: 60, origin: 10 }, 5.5, 7)).toEqual([6, 7]);
+    expect(beatsBetween({ bpm: 120, origin: 0 }, 0.1, 0.4)).toEqual([]);
   });
 });

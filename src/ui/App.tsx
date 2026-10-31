@@ -43,6 +43,7 @@ import { SubBlock } from './SubBlock';
 import { STACKED } from './sections';
 import { Tabs } from './Tabs';
 import { TapViewers } from './TapViewers';
+import { TempoControl } from './TempoControl';
 import { ToolGroup } from './ToolGroup';
 import { type TipContent, Tooltip, TooltipsContext } from './Tooltip';
 import { TourCard } from './TourCard';
@@ -108,6 +109,7 @@ export function App() {
   const [session] = useState(() => getAudioSession(storage));
   const { patches, library, viewers: viewerStore } = session;
   const { patch, name: patchName, changed } = useSyncExternalStore(patches.subscribe, patches.get);
+  const tempo = useSyncExternalStore(session.tempo.subscribe, session.tempo.get);
   const settings = useSyncExternalStore(viewerStore.subscribe, viewerStore.get);
   const { viewer, overlays } = settings;
   useEffect(() => {
@@ -332,6 +334,8 @@ export function App() {
           <span className="tool-word">Hold</span>
         </button>
       </Tooltip>
+      {/* The page's tempo beside Hold (issue 112): the BPM, and Tap from 861 px. */}
+      <TempoControl tempo={tempo} onSet={session.tempo.set} onTap={() => session.tempo.tap()} />
       <MidiPanel
         state={midi.midi}
         onOpen={midi.connect}
@@ -751,7 +755,7 @@ export function App() {
             controls={
               <div className="timeline-controls">
                 {([1, 2] as const).map((n) => (
-                  <LfoControls key={n} lfo={n} engine={session.engine} patch={patch} onParam={change} onPatch={edit} />
+                  <LfoControls key={n} lfo={n} engine={session.engine} patch={patch} bpm={tempo.bpm} onParam={change} onPatch={edit} />
                 ))}
               </div>
             }

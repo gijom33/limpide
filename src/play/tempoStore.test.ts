@@ -34,16 +34,17 @@ describe('the tempo (issue 112)', () => {
     expect(createTempoStore({ storage: memoryStorage({ 'limpide.tempo': '{"bpm":"fast"}' }), engine: fakeEngine().host }).get().bpm).toBe(120);
   });
 
-  it('follows four taps, its beats counted from the last, Hold’s rhythm apart', () => {
+  it('follows four taps on the page’s clock, its beats counted from the last on the engine’s, Hold’s rhythm apart', () => {
     const { engine, host } = fakeEngine();
-    const tempo = createTempoStore({ storage: memoryStorage(), engine: host });
-    for (const t of [10, 10.6, 11.2, 11.8]) tempo.tap(t);
+    let now = 0;
+    const tempo = createTempoStore({ storage: memoryStorage(), engine: host, clock: () => now });
+    for (const t of [10, 10.6, 11.2, 11.8]) {
+      now = t;
+      engine.time = t + 100;
+      tempo.tap();
+    }
     expect(tempo.get().bpm).toBe(100);
-    expect(engine.handed.at(-1)).toEqual({ bpm: 100, origin: 11.8 });
-    // On the engine's clock by default.
-    engine.time = 12.4;
-    tempo.tap();
-    expect(engine.handed.at(-1)).toEqual({ bpm: 100, origin: 12.4 });
+    expect(engine.handed.at(-1)).toEqual({ bpm: 100, origin: 111.8 });
   });
 
   it('gives way to a player’s tempo while it plays, its beats counted from its first, then comes back', () => {
@@ -57,8 +58,8 @@ describe('the tempo (issue 112)', () => {
     expect(engine.handed.at(-1)).toEqual({ bpm: 128, origin: 5.3 });
     // Set by hand meanwhile: nothing changes until the player stops.
     tempo.set(150);
-    tempo.tap(1);
-    tempo.tap(1.2);
+    tempo.tap();
+    tempo.tap();
     expect(tempo.get().bpm).toBe(128);
     engine.time = 9;
     tempo.giveBack();

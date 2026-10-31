@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type { SynthEngine } from '../engine/synthEngine';
-import type { LfoNumber } from '../patch/patch';
+import { beatsBetween } from '../modulation/lfo';
+import { LFO_KEYS, type LfoNumber } from '../patch/patch';
 import { addToRenderLoop } from '../viewers/renderLoop';
 
 // The plot draws in its own CSS pixels, whatever shape the layout gives it, so full Depth spans its whole height
@@ -37,12 +38,14 @@ export function lineAt({ engine, lfo, box, x, now }: { engine: Pick<SynthEngine,
 /**
  * The LFO as it moves: its recent history from the Modulation model, scrolling, the newest at the right with a dot
  * (ADR-0003: the same LFO the sound has). Its height is the Depth: flat at 0, the plot's full height at 100 %. Drawn by the render loop, outside React (ADR-0002).
- * Dimmed as an inactive knob is while its Depth is 0 (the owner, 2026-10-28).
+ * Dimmed as an inactive knob is while its Depth is 0 (the owner, 2026-10-28). While the LFO is synced, the tempo's
+ * beats are marked across it, so its cycle is seen landing on them (issue 112).
  */
 export function LfoPlot({ engine, lfo, label, inactive }: { engine: SynthEngine; lfo: LfoNumber; label: string; inactive?: boolean }) {
   const box = useRef<HTMLDivElement>(null);
   const svg = useRef<SVGSVGElement>(null);
   const axis = useRef<SVGLineElement>(null);
+  const beats = useRef<SVGPathElement>(null);
   const line = useRef<SVGPathElement>(null);
   const dot = useRef<SVGCircleElement>(null);
 
@@ -69,6 +72,11 @@ export function LfoPlot({ engine, lfo, label, inactive }: { engine: SynthEngine;
       }
       line.current?.setAttribute('d', `M${points.join(' L')}`);
       dot.current?.setAttribute('cy', y(engine.lfoSwingAt(now, lfo)));
+      const synced = engine.patchAt(now)?.[LFO_KEYS[lfo].sync] === 'on';
+      const marks = synced ? beatsBetween(engine.tempo(), timeAt(0, now), now) : [];
+      const xOf = (t: number) => (PAD + ((t - timeAt(0, now)) / SPAN) * (w - 2 * PAD)).toFixed(1);
+      beats.current?.setAttribute('d', marks.map((t) => `M${xOf(t)} 0 V${h}`).join(' '));
+      if (box.current) box.current.dataset.beats = String(marks.length);
     });
     return () => {
       observer.disconnect();
@@ -79,6 +87,7 @@ export function LfoPlot({ engine, lfo, label, inactive }: { engine: SynthEngine;
   return (
     <div className="lfo-plot" ref={box} role="img" aria-label={label} data-lfo={lfo} data-inactive={inactive || undefined}>
       <svg ref={svg} aria-hidden="true">
+        <path ref={beats} className="lfo-plot-beats" d="" />
         <line ref={axis} className="lfo-plot-axis" x1={PAD} />
         <path ref={line} className="lfo-plot-line" d="" />
         <circle ref={dot} className="lfo-plot-dot" r="3.5" />

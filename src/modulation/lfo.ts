@@ -134,3 +134,11 @@ export function glideFrequency(history: readonly { time: number; frequency: numb
 
 /** Glide as automation: the time constant setTargetAtTime needs to match glideFrequency. */
 export const glideTimeConstant = (glide: number) => glide / GLIDE_SHARPNESS;
+
+/** The beats of a tempo between two moments (engine seconds): `bpm`, counted from `origin` (issue 112). */
+export function beatsBetween({ bpm, origin }: { bpm: number; origin: number }, from: number, to: number): number[] {
+  const beat = 60 / bpm;
+  const beats: number[] = [];
+  for (let k = Math.ceil((from - origin) / beat); origin + k * beat <= to; k++) beats.push(origin + k * beat);
+  return beats;
+}
