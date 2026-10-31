@@ -375,7 +375,7 @@ test('the theme switched: it shades its eyes once Display is closed', async ({ p
   await expect(mascot(page)).toHaveAttribute('data-doing', 'shades');
 });
 
-test('through the Demo it conducts, then plays air guitar, then surfs an LFO shape', async ({ page }) => {
+test('through the Demo it conducts, then plays air guitar, then surfs an LFO shape, only an LFO that is on', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
   await listening(page);
@@ -385,17 +385,31 @@ test('through the Demo it conducts, then plays air guitar, then surfs an LFO sha
   await page.getByRole('button', { name: /^Play from part 2,/ }).click();
   await expect(mascot(page)).toHaveAttribute('data-act', 'airGuitar');
   await page.getByRole('button', { name: /^Play from part 3,/ }).click();
+  // By the mouse, which leaves the Demo playing (a key would take over from it).
+  const depth = async (lfo: number) => {
+    const box = (await page.getByRole('slider', { name: `LFO ${lfo} Depth`, exact: true }).boundingBox())!;
+    return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  };
+  // Both LFOs off (a double-click puts each Depth back to its 0): no surfing; it conducts instead.
+  for (const lfo of [1, 2]) {
+    const at = await depth(lfo);
+    await page.mouse.dblclick(at.x, at.y);
+  }
+  await expect(mascot(page)).toHaveAttribute('data-act', 'conduct');
+  // LFO 1 on, its Depth dragged up: down onto its plot, riding along it.
+  const at = await depth(1);
+  await page.mouse.move(at.x, at.y);
+  await page.mouse.down();
+  await page.mouse.move(at.x, at.y - 120, { steps: 8 });
+  await page.mouse.up();
   await expect(mascot(page)).toHaveAttribute('data-act', 'surf');
-  // Down onto an LFO's plot, riding along it.
   await expect
     .poll(
       () =>
         page.locator('.mascot-drop').evaluate((el) => {
           const drop = el.getBoundingClientRect();
-          return [...document.querySelectorAll('.lfo-plot')].some((p) => {
-            const plot = p.getBoundingClientRect();
-            return drop.left >= plot.left - 1 && drop.right <= plot.right + 1 && drop.bottom > plot.top && drop.bottom < plot.bottom;
-          });
+          const plot = document.querySelector('.lfo-plot[data-lfo="1"]')!.getBoundingClientRect();
+          return drop.left >= plot.left - 1 && drop.right <= plot.right + 1 && drop.bottom > plot.top && drop.bottom < plot.bottom;
         }),
       { timeout: 5000 },
     )

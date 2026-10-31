@@ -402,13 +402,12 @@ export function Mascot({
           if (homeId !== null) visit = under.id === homeId ? null : { id: under.id, until: now + between(8, 18) };
         }
       }
-      // Through a Demo part, one of its acts in turn; surfing, its line is an LFO's shape as its plot draws it, the
-      // first in view that moves (else the first in view).
+      // Through a Demo part, one of its acts in turn; surfing, its line is an LFO's shape as its plot draws it: the
+      // first in view of an LFO that is on, its Depth above 0 (the owner, 2026-10-30). With none, another act.
       const part = demoRef.current;
-      const plots = (part === null ? [] : [...document.querySelectorAll<HTMLElement>(LFO_PLOTS)])
-        .map((el) => ({ lfo: Number(el.dataset.lfo) as 1 | 2, moving: !el.dataset.inactive, box: el.getBoundingClientRect() }))
-        .filter(({ box }) => box.width > WIDTH + 2 * LFO_PAD && box.top - HEIGHT - HEADROOM >= 0 && box.bottom <= innerHeight);
-      const plot = plots.find((p) => p.moving) ?? plots[0];
+      const plot = (part === null ? [] : [...document.querySelectorAll<HTMLElement>(`${LFO_PLOTS}:not([data-inactive])`)])
+        .map((el) => ({ lfo: Number(el.dataset.lfo) as 1 | 2, box: el.getBoundingClientRect() }))
+        .find(({ box }) => box.width > WIDTH + 2 * LFO_PAD && box.top - HEIGHT - HEADROOM >= 0 && box.bottom <= innerHeight);
       let act: Act | null = part === null || leaveBy !== null ? null : ACTS[part % ACTS.length];
       if (act === 'surf' && !plot) act = part! % 2 ? 'airGuitar' : 'conduct';
       motion.act(act);

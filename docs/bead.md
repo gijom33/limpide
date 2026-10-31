@@ -79,7 +79,7 @@ While Bead is out, five more words spelled with Notes, like B, E, A, D, each cue
 Through the Demo's parts, in turn, Bead:
 - conducts with a tiny baton, down on each Note;
 - plays air guitar on its tail, strummed on each Note;
-- surfs an LFO's shape: it jumps onto an LFO's plot and rides the line, end to end, as the LFO moves it. Where no LFO plot is in view, it conducts or plays air guitar instead.
+- surfs an LFO's shape: it jumps onto the plot of an LFO that is on (its Depth above 0) and rides the line, end to end, as the LFO moves it. With no LFO on, or none in view, it conducts or plays air guitar instead.
 
 ## With reduced motion
 
