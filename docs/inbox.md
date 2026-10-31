@@ -6,10 +6,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
-- 2026-10-31, the owner: "need to add agent reviewer who would be a complete synth neophyte who is expecting to have fun and learn with the tutorials."
-- 2026-10-31, the owner: "Would be better if text in tutorials are fun to read and easy to understand and self-explanatory."
-- 2026-10-31, the owner: "During tour, we could use tricks such as viewer freeze to explain ADSR."
-
 ## Dropped
 
 - 2026-10-30, from Claude's brainstorm, Velocity on the Volume ("a harder hit plays louder, not only brighter"): already so. The Amp Envelope's Attack rises to the Note's Velocity (PRD story 9). Claude's call, open to the owner.
@@ -124,3 +120,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-30, the owner's idea of a lesson on how synthesis works (triage, Claude's call, open to the owner): to [128](./issues/128-how-a-synth-works.md), five questions for the owner, each with Claude's recommendation (a Tutorial of its own before Bass, a Step per section pointing at its Taps' Viewers).
 2026-10-30, the owner's outreach agent, done at once, decided by the owner (the agent drafts, the owner posts): [the outreach plan](./outreach/plan.md), with [the places](./outreach/places.md) and the `outreach` skill (`/outreach places`, `intro <place>`, `roundup`, `digest`), its drafts git-ignored. The cadence per place is Claude's call, open to the owner. Deploying it is the owner's: the accounts, the launch clip, the first posts, and a yes to the two scheduled tasks.
 2026-10-31, the owner's night shift, done at once, decided by the owner: [night-shift.md](./night-shift.md) and the `night-shift` skill. Every evening at 23:00 a scheduled task builds up to four ready-for-agent issues, one fresh subagent each, on `night/<date>` in a worktree outside iCloud. An issue needing the owner gets its questions and waits. A morning report goes in `docs/night/` (git-ignored), and nothing is pushed. The hours and the limit of four are Claude's call, open to the owner.
+2026-10-31, the owner's idea of a synth neophyte reviewer (triage, Claude's call, open to the owner): to [42](./issues/42-reviews.md) as profile 16, who takes the Tour and the Tutorials to have fun and learn; its first run waits for the Tour's release, and it runs again whenever a release changes their words.
+2026-10-31, the owner's idea of Tutorial words fun to read and self-explanatory (triage, Claude's call, open to the owner): to [129](./issues/129-words-fun-to-read.md), five questions for the owner, each with Claude's recommendation (a light voice, every synth word explained where a Tutorial first uses it, after profile 16's first review).
+2026-10-31, the owner's idea of Viewer tricks such as Freeze to explain ADSR in the Tour (triage, Claude's call, open to the owner): to [130](./issues/130-the-tour-freezes-to-show-adsr.md), five questions for the owner, each with Claude's recommendation (the Amp card freezes the Envelope Timeline once each stage's shape is drawn, Decay and Sustain added).

@@ -6,7 +6,7 @@ What exists already: Bass, the Tutorial the Welcome opens today ([58](./58-first
 
 **Blocked by:** none
 
-**Status:** ready-for-human · enhancement. Built (2026-10-30) on the branch `claude/tour-128-3e1430`: every decision below, with Claude's calls 14 to 24; for the owner to try, and to answer the questions under Built, before the release.
+**Status:** done (2026-10-31). Built on the branch `claude/tour-128-3e1430`: every decision below, with Claude's calls 14 to 24. Tried by the owner, "good enough for now", so both questions under Built are answered as built; not yet released.
 
 ## Decisions
 
@@ -84,3 +84,5 @@ Made while building it (2026-10-30), each Claude's call, open to the owner:
 **Questions for the owner:**
 1. Init plays one Voice, so a Note played by hand takes that Voice from the phrase while held rather than sounding beside it (decision 9 says it joins). Should the Tour's Patch be Init with more Voices?
 2. The timings and depths of decision 17, and the phrases of 18: right to the ear?
+
+**The owner's answers (2026-10-31, decided by the owner):** having tried the Tour, "it's good enough for now". So both are left as built: the Tour's Patch stays Init with one Voice (a Note played by hand takes the phrase's Voice while held, which decision 9 had not foreseen), and the timings, depths and phrases stay as they are.

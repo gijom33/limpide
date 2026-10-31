@@ -4,7 +4,7 @@
 
 **Blocked by:** none (the Learner's second run waits for the tutorials, [40](./40-preset-tutorials.md))
 
-**Status:** ready-for-human · enhancement. Left: the owner's tap-through of the real LinkedIn link on a phone. The ten persona reviews ran on 2026-10-26 (version 1.8.1), the Learner's second run on 2026-10-27, and a code review runs at every minor release since 1.11.1 ([ADR-0010](../adr/0010-how-the-work-is-recorded.md)); trimmed (2026-10-28, decided by the owner).
+**Status:** ready-for-human · enhancement. Left: the owner's tap-through of the real LinkedIn link on a phone, and profile 16's first run once the Tour is released. The ten persona reviews ran on 2026-10-26 (version 1.8.1), the Learner's second run on 2026-10-27, and a code review runs at every minor release since 1.11.1 ([ADR-0010](../adr/0010-how-the-work-is-recorded.md)); trimmed (2026-10-28, decided by the owner).
 
 ## Why these profiles
 
@@ -158,6 +158,16 @@ A professional sound designer who has built factory Preset banks for commercial 
   - **What is missing:** classic sounds every synth's factory bank has, and tricks Limpide's controls allow that no Preset uses yet
 - **Success:** a ranked list: Presets to rework (with the settings to change), Presets to add (with their settings), a reorganised category list if needed, and the ten best tricks, each with the Preset that shows it
 
+### 16. The synth neophyte, here to have fun and learn
+
+Someone who has never touched a synth and opens Limpide to have fun and learn something, through the Tour and the Tutorials. Added by the owner, 2026-10-31: "need to add agent reviewer who would be a complete synth neophyte who is expecting to have fun and learn with the tutorials." Unlike profile 1, they have time and want to learn; unlike profile 5, they know no synth words at all and stop reading when it gets dull.
+
+- **Where:** the site (laptop, 1440 × 900, Chromium, no MIDI keyboard), then a phone (393 × 852, WebKit). **Time:** 45 minutes
+- **Goals:** take the Tour, then the Tutorials in the order the page offers them; say what they learnt, and whether they had fun
+- **Asks:** Is each Step and card understood on one reading, without looking anything up? Which words are never explained? Where is it dull, too long or too dense, and where is it fun? Do they hear and see what the words say they will? Do they want to do the next Tutorial?
+- **Success:** they can say in their own words what the Oscillators, the Filter, the Amp and an LFO do, and they finished at least two Tutorials because they wanted to
+- **Runs again:** whenever a release changes the Tutorials' or the Tour's words, with the fact-checker (13), so the words stay both clear and true (Claude's call, open to the owner). Its findings feed [129](./129-words-fun-to-read.md).
+
 ## To do
 
 - [x] Choose the personas (owner, 2026-10-26: profiles 1 to 4 the owner's, 5 to 7 completing them)
@@ -167,3 +177,4 @@ A professional sound designer who has built factory Preset banks for commercial 
 - [x] The code review, since the first commit; the findings to the inbox. Done another way: the code-review skill runs over each minor version since 1.11.1, its findings to the inbox (2026-10-28)
 - [x] Profile 11's review (the open-source legal expert), 2026-10-26: a company could use or fork it today (MIT, the 3 shipped dependencies MIT, no copyleft among 108 dev dependencies, no third-party assets), once a fork adds the third-party notices and drops the counter; contributions should wait for a CONTRIBUTING (issue 56). Its findings in the inbox; AI authorship stated is issue 48
 - [x] Profile 15's review (the sound designer and Preset curator), added by the owner 2026-10-30, ran the same day on 1.16.0: [report](../reviews/2026-10-30/15-sound-designer.md), its findings to the inbox
+- [ ] Profile 16's review (the synth neophyte), added by the owner 2026-10-31: once the Tour is released, on the Tour and every Tutorial; its findings to the inbox and to [129](./129-words-fun-to-read.md)
