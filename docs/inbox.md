@@ -7,6 +7,7 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 - 2026-10-31, the owner, on a phone (Bead under the section tabs, by the Oscillators' top edge): "Bead does not sit exactly on line when on top row. I understand there are issues with how to handle top row but if it's manageable, please fix."
 ## Ideas
 
+- 2026-10-31, the owner, on Bead under a phone's section tabs: "If Bead has nowehere to go, maybe we can make it fly with its tail and stay local to where it lost ground."
 ## Dropped
 
 - 2026-10-30, from Claude's brainstorm, Velocity on the Volume ("a harder hit plays louder, not only brighter"): already so. The Amp Envelope's Attack rises to the Note's Velocity (PRD story 9). Claude's call, open to the owner.
