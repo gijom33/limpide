@@ -288,6 +288,12 @@ export function createMascotMotion(random: () => number = Math.random) {
   const startGesture = (gesture: Gesture, now: number) => {
     const before = started.get(gesture);
     if (before && now - before.at < GESTURE_SECONDS) return;
+    // A funny turn under way plays to its end before anything else moves it (the owner, 2026-10-30): a control turned
+    // meanwhile only keeps it listening.
+    if (trick && gesture !== 'look') {
+      busySince = now;
+      return;
+    }
     started.set(gesture, { at: now, side: side() });
     gestureCount++;
     if (gesture === 'perform') {
@@ -403,8 +409,8 @@ export function createMascotMotion(random: () => number = Math.random) {
     act(doing: Act | null) {
       if (doing === act) return;
       act = doing;
-      target = null;
-      if (doing) trick = null;
+      // A funny turn under way ends first.
+      if (!trick) target = null;
     },
     /** How far the pointer is across from its middle, in pixels, while near; null when it is not. */
     pointer(dx: number | null) {
@@ -510,7 +516,7 @@ export function createMascotMotion(random: () => number = Math.random) {
       }
       // What next, when it is free: a stroll, a glance, or (with nothing played) a funny turn.
       // Surfing an LFO's shape through a Demo part: along it, end to end.
-      if (act === 'surf' && target === null && !frozen) {
+      if (act === 'surf' && target === null && !frozen && !trick) {
         target = x - room.min < room.max - x ? room.max : room.min;
         speed = SURF_SPEED;
         gait = 'slide';
@@ -533,7 +539,7 @@ export function createMascotMotion(random: () => number = Math.random) {
         }
       }
       // Dancing: with each Note a step along, one way, turning back at an end or now and then.
-      if (struck && !silent && !frozen && (target === null || gait === 'dance')) {
+      if (struck && !silent && !frozen && !trick && (target === null || gait === 'dance')) {
         if (random() < 0.2) danceWay = danceWay > 0 ? -1 : 1;
         let step = danceWay * between(...DANCE_STEP);
         if (clamp(x + step) !== x + step) {
@@ -573,7 +579,7 @@ export function createMascotMotion(random: () => number = Math.random) {
       if (dozing) pose.stretch = 1 + 0.03 * Math.sin(now * 2 * Math.PI * 0.3); // breathing
       if (!silent) {
         const since = heard.struck === null ? Infinity : now - heard.struck;
-        pose.lift = since < HOP_SECONDS ? Math.sin((since / HOP_SECONDS) * Math.PI) * HOP_PX : 0;
+        pose.lift = since < HOP_SECONDS && !trick ? Math.sin((since / HOP_SECONDS) * Math.PI) * HOP_PX : 0;
         const happy = pose.lift > 0 || heard.amp > LOUD;
         pose.splash = happy ? 'up' : 'none';
         pose.legs = pose.lift > 0 ? 'tuck' : 'stand';

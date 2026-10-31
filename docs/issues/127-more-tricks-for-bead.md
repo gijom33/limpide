@@ -37,7 +37,7 @@ Water drop gags, among the funny turns when nothing is played:
 
 **Blocked by:** none
 
-**Status:** ready-for-human · enhancement. Built (2026-10-30): every decision below, with the owner's changes from trying it (15 to 19); for the owner to try before the release.
+**Status:** ready-for-human · enhancement. Built (2026-10-30): every decision below, with the owner's changes from trying it (15 to 20); for the owner to try before the release.
 
 ## Questions for the owner
 
@@ -78,6 +78,7 @@ Water drop gags, among the funny turns when nothing is played:
 17. Drinking, the glass's rim is really over its mouth (issue 115's glass, moved again), then a bit higher. Decided by the owner.
 18. Its tail is the Limpide logo whenever no special animation is on: Resonance's straight tail and wide eyes come for a moment as it is turned past three quarters, not for as long as it stays there (amends decision 4). Decided by the owner.
 19. Fishing, the line does not turn with Bead: it hangs straight down from the rod's tip, the hook going down, and coming back up with the ♪, properly animated. Decided by the owner.
+20. A funny turn plays to its end before any big movement: Bead had jumped while fishing. Decided by the owner. Which moves wait (a visit to another section, the dance step and hop on each Note, a control's walk or other answer, the Demo's surfing) and which do not (a tickle, a click, being picked up, a word, being sent away, the ice): Claude's call, open to the owner.
 
 Claude's calls, open to the owner: "a few seconds" for the tail is 3 s; the words get the same 4 s from first Note to last as B, E, A, D, BAGGAGE's seven Notes included; the air guitar is for the Demo only; where the Scope is out of view (a phone scrolled away from it), a surfing part becomes conducting or air guitar.
 
@@ -122,6 +123,8 @@ Claude's calls, open to the owner: "a few seconds" for the tail is 3 s; the word
 - **The date**: `hatOn` reads the visitor's date: a ghost sheet (drawn under its eyes) on 31 October, a Christmas hat from 24 to 26 December, a party hat on 24 October.
 - **The Demo** (`act`): each part in turn, conducting (the baton down on each Note), air guitar (its tail held across it, strummed on each Note) and surfing: on the first LFO plot in view that moves (else the first in view), sliding end to end along it, its foot where the plot draws the LFO under its middle (`lfoSwingAt` over the plot's second, as `LfoPlot` draws it); with no plot in view, conducting or air guitar instead. The Demo's dancing steps go on under the first two.
 - **The glass** (decision 17): turned 100° rather than 135°, its rim's middle over the mouth, under the eyes, then raised by about 1.5 px; the glass runs off to the left just under the left eye, touching its lowest pixel.
+- **A funny turn plays to its end** (decision 20): while one is under way a control turned only keeps Bead listening (no gesture, no walk, no new turn on the Filter Slope's cue), a Note brings no hop and no dance step, a Demo part's act waits to move it, and no visit to another section starts. Tickles, clicks, a pick-up, a word and B, E, A, D still act at once.
+- **Its frame cost.** The draw-cost test (`it adds under a millisecond…`) failed in WebKit while other test runs loaded the machine, at 1.6 to 2.4 ms, before this issue as after it (measured on the commit before 127, in a worktree). Two changes keep 127 within it: the twin's copy of its drawing is linked to the drawing only while Detune shows it (WebKit copied it again at every change while hidden), and the page's position is read with the sections at the start of each frame, before anything is written, rather than after the parts are shown (a read after a write had WebKit work out the page's styles in the middle of the frame). On a quiet machine it then passes three runs in three, as the commit before 127 does.
 - **Its element** says what it is doing, for the tests: `data-doing`, `data-tail`, `data-hat`, `data-act`, `data-moving`, `data-prop`. Its new styles are written only as they change, keeping its frame cost within the draw-cost test's budget.
-- **Tests.** Unit: the words (3), the tricks (5 more), the looks, words, theme, dates, coffee, pointer and acts (10), throwing (5), `looksOf` (2), the tails drawn unbroken (2), steam (1). Playwright (`e2e/mascot.spec.ts`, both browsers): the words while out and not before; a Waveform's tail and back; dragged and thrown onto an edge; the ghost sheet on 31 October; the theme's reaction once Display is closed; the Demo's three acts, surfing on an LFO plot.
+- **Tests.** Unit: the words (3), the tricks (5 more), the looks, words, theme, dates, coffee, pointer and acts (10), a turn played to its end (1; the deck's test now lets each turn end before the next cue), throwing (5), `looksOf` (2), the tails drawn unbroken (2), steam (1). Playwright (`e2e/mascot.spec.ts`, both browsers): the words while out and not before; a Waveform's tail and back; dragged and thrown onto an edge; the ghost sheet on 31 October; the theme's reaction once Display is closed; the Demo's three acts, surfing on an LFO plot.
 

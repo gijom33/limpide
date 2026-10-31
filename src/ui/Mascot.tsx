@@ -351,8 +351,11 @@ export function Mascot({
       const dt = Math.min(0.1, seconds - last);
       last = seconds;
       const now = context.engine.now();
+      // Every layout read first, before this frame writes anything: a read after a write would make the browser work
+      // out the page's styles again in the middle of the frame.
       const sections = sectionBoxes();
       if (!sections.length) return;
+      const page = (outer.offsetParent ?? document.body).getBoundingClientRect();
       if (themeSwitched && !document.querySelector('.display-panel, [role=dialog]')) {
         motion.theme(themeSwitched, now);
         themeSwitched = null;
@@ -371,7 +374,8 @@ export function Mascot({
           visit = null;
           nextVisit = now + between(20, 40);
         }
-        if (!visit && now >= nextVisit && !still.matches && leaveBy === null && moving === 'standing') {
+        // Not in the middle of a funny turn: it plays to its end first (the owner, 2026-10-30).
+        if (!visit && now >= nextVisit && !still.matches && leaveBy === null && moving === 'standing' && !shown?.doing) {
           const away = sections.filter((s) => s.id !== home.id && inView(s));
           if (away.length) visit = { id: away[Math.floor(Math.random() * away.length)].id, until: now + between(8, 18) };
           else nextVisit = now + between(10, 20);
@@ -409,7 +413,7 @@ export function Mascot({
       if (act === 'surf' && !plot) act = part! % 2 ? 'airGuitar' : 'conduct';
       motion.act(act);
       let surfRoom: Room | null = null;
-      if (act === 'surf' && plot && moving !== 'held' && moving !== 'thrown') {
+      if (act === 'surf' && plot && moving !== 'held' && moving !== 'thrown' && !shown?.doing) {
         // Where the plot draws the LFO under its middle: a second of it across, the newest at the right.
         const { box } = plot;
         const along = Math.min(1, Math.max(0, (drawnAt.left + DROP_MIDDLE - box.left - LFO_PAD) / (box.width - 2 * LFO_PAD)));
@@ -506,6 +510,9 @@ export function Mascot({
       // written only as it changes, to keep its frames cheap.
       const twinned = pose.twin > 0 && pose.form === 'drop';
       if (twinned || shown?.twin) {
+        // Linked to its drawing only while shown: WebKit copies a linked drawing again at every change to it.
+        if (twinned) twin.current!.setAttribute('href', '#bead-self');
+        else twin.current!.removeAttribute('href');
         twin.current!.style.display = twinned ? '' : 'none';
         if (twinned) twin.current!.setAttribute('transform', `translate(${-pose.twin / 2} 0)`);
       }
@@ -534,7 +541,6 @@ export function Mascot({
       const marks = { act: act ?? '', tail: pose.tail, hat: pose.hat, doing: pose.doing ?? '', prop: pose.prop, moving: where.moving };
       for (const [mark, value] of Object.entries(marks)) if (outer.dataset[mark] !== value) outer.dataset[mark] = value;
 
-      const page = (outer.offsetParent ?? document.body).getBoundingClientRect();
       drawnAt = { left: acrossOf(where, pose.x), foot: where.foot };
       const left = acrossOf(where, pose.x) - page.left + (pose.fuzz ? (Math.random() * 2 - 1) * pose.fuzz : 0);
       const ground = where.foot - page.top;
@@ -718,7 +724,7 @@ export function Mascot({
       >
         <svg viewBox="0 0 22 13" width={WIDTH} height={HEIGHT} shapeRendering="crispEdges">
           {/* Its twin, as Detune splits it (issue 127): itself again, behind it. */}
-          <use ref={twin} href="#bead-self" className="mascot-twin" style={{ display: 'none' }} />
+          <use ref={twin} className="mascot-twin" style={{ display: 'none' }} />
           <g id="bead-self">
             <g ref={tail}>
               <g ref={keep(tails, 'logo')} style={{ display: 'none' }}>

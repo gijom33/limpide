@@ -225,10 +225,15 @@ describe('the mascot fed up, and its tricks dealt (issue 115)', () => {
     motion.frame(quiet, 0, false, wide);
     const dealt: string[] = [];
     const cards = PICKED_TRICKS.length + 2 * JOKES.length;
-    for (let i = 0; i < cards; i++) {
-      const t = 4 + i * 0.5; // a cue again within a gesture's length carries on
-      motion.gesture('perform', t);
-      dealt.push(motion.frame(quiet, t, false, wide).doing!);
+    // Each turn dealt, by itself or on cue, then cut short by a pick-up, so the next comes once it listens no more.
+    for (let t = 4; dealt.length < cards; t += 3.1) {
+      let pose = motion.frame(quiet, t, false, wide);
+      if (!pose.doing) {
+        motion.gesture('perform', t);
+        pose = motion.frame(quiet, t + 0.01, false, wide);
+      }
+      dealt.push(pose.doing!);
+      motion.pickUp(t + 0.02);
     }
     expect(new Set(dealt).size).toBe(PICKED_TRICKS.length);
     for (const joke of JOKES) expect(dealt.filter((d) => d === joke)).toHaveLength(3);
@@ -417,6 +422,25 @@ describe('what the controls, the words, the page and the Demo make of it (issue 
     expect(Math.min(...ride.map((p) => p.x))).toBe(0);
     expect(Math.max(...ride.map((p) => p.x))).toBe(200);
     expect(ride.every((p) => p.doing === null)).toBe(true);
+  });
+
+  it('a funny turn plays to its end: a control turned or a Note meanwhile neither stops nor moves it (the owner)', () => {
+    const motion = createMascotMotion(seeded());
+    motion.frame(quiet, 0, false, wide);
+    motion.place(100);
+    motion.word('deaf', 1); // its ears covered for 2.2 s, standing where it is
+    const during: Pose[] = [];
+    for (let t = 1.05; t < 3.1; t += 1 / 60) {
+      if (Math.abs(t - 1.5) < 0.01) motion.gesture('brighter', t);
+      during.push(motion.frame({ ...playing, struck: t > 2 ? 2 : null }, t, false, wide));
+    }
+    expect(during.every((p) => p.doing === 'earsCovered')).toBe(true);
+    expect(during.every((p) => Math.abs(p.x - 100) < 2 && p.lift === 0)).toBe(true);
+    // Over, the next control walks it again.
+    motion.frame(playing, 3.4, false, wide);
+    motion.gesture('brighter', 3.5);
+    const after = run(motion, 3.5, 4.2, playing, wide);
+    expect(after.at(-1)!.x).toBeGreaterThan(110);
   });
 });
 
