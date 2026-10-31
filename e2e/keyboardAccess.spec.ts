@@ -57,10 +57,10 @@ test('Import file is a button the keyboard reaches', async ({ page }) => {
   await expect(importButton).toBeFocused();
 });
 
-test('the new Preset is announced after Next Preset', async ({ page }) => {
+test('the new Preset is announced after Next Preset, with its about line (issue 109)', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Next Preset' }).click();
-  await expect(page.locator('.patch-bar [role="status"]')).toHaveText('Pure Sine');
+  await expect(page.locator('.patch-bar [role="status"]')).toHaveText(/^Pure Sine\. One Harmonic and nothing else/);
 });
 
 test('sliders that share a label have distinct names: the Envelopes’ stages, the LFOs’ Rate and Depth', async ({ page }) => {
