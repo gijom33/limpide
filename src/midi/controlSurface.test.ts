@@ -244,15 +244,15 @@ describe('Mapped controls', () => {
     expect(positions.cutoff).toBe(0.7);
   });
 
-  it('a Relative encoder nudges the Parameter one step a message, in either direction, within 0–1, however fast it turns (issue 145)', () => {
+  it('a Relative encoder nudges the Parameter as far as it turned, in either direction, within 0–1 (a fast turn’s 3 is three steps, issue 145)', () => {
     const { store, positions, send } = rig();
     store.set({
       control: { kind: 'cc', channel: 1, number: 21 },
       target: cutoff,
       mode: 'relative-twos',
     });
-    send(cc(21, 1), cc(21, 1), cc(21, 3)); // a fast turn's 3 is one step, so the knob on screen keeps with the hand
-    expect(positions.cutoff).toBeCloseTo(0.53);
+    send(cc(21, 1), cc(21, 1), cc(21, 3)); // a fast turn packs three steps into one message: they all count
+    expect(positions.cutoff).toBeCloseTo(0.55);
     send(cc(21, 125));
     expect(positions.cutoff).toBeCloseTo(0.52);
     store.set({

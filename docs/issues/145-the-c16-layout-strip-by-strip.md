@@ -77,6 +77,8 @@
 13. **One step a message, however fast the knob turns** (2026-10-31): the owner, trying the knobs at Relative #1, "I think the \"fast mode\" for the knobs is not helpful. The knob in Limpide moves way to fast and creates a disconnect between position and reality." A fast turn's 66 or 62 now moves one step (1 % of the range), as 65 or 63 does, so the knob on screen keeps with the hand. For every Relative Mapping, MIDI-Learned ones too. Decided by the owner; how, Claude's call, open to the owner: if one step is still too fast or too slow for the C16's turn, the step's size is the next tweak.
 
 
+**Since then (2026-10-31):** decision 13 is undone. The owner found a fast turn then fell short ("If I move the knob fast, it has not moved enough in Limpide"): the C16 sends one message per stretch of turning and packs two when turned fast, so 66 is two real steps, not a speed bonus. Every step counts again; the step's size is to be set so a full turn covers the range. The C16's knobs send nothing when turned very slowly, in every mode (the owner, 2026-10-31): a limit of the device, its firmware to check. Claude's call, open to the owner.
+
 ## Comments
 
 - 2026-10-31, the owner, turning the C16's knobs (over Bluetooth, on the development server): "There seems to be a delay between the move and the actual impact on screen." Measured with a stand-in C16 in Chromium at 1440 × 900: one message reaches the knob on screen in 17 ms on the built site and 41 ms on the development server, and turns of 20 and 60 messages a second, or 10 at once, leave nothing queued (no long task). So the page keeps up; Bluetooth MIDI's own latency is the likeliest cause, the development server and decision 13's slower fast turn the others. Waiting on the owner's test over USB.
