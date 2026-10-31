@@ -4,13 +4,13 @@ import { createMascotMotion, DOZE_SECONDS, type Heard, HOP_SECONDS } from './mas
 const quiet: Heard = { amp: 0, sway: 0, struck: null };
 
 describe("the mascot's moves (issue 115)", () => {
-  it('hops on a Note: up then down within the hop, arms up, then back on its feet', () => {
+  it('hops on a Note: up then down within the hop, with a splash, then back on its feet', () => {
     const motion = createMascotMotion();
     motion.frame(quiet, 0, false);
     const mid = motion.frame({ amp: 0.5, sway: 0, struck: 1 }, 1 + HOP_SECONDS / 2, false);
     expect(mid.lift).toBeGreaterThan(4);
     expect(mid.legs).toBe('tuck');
-    expect(mid.arms).toBe('up');
+    expect(mid.splash).toBe(true);
     const after = motion.frame({ amp: 0.5, sway: 0, struck: 1 }, 1 + HOP_SECONDS + 0.01, false);
     expect(after.lift).toBe(0);
     expect(after.legs).toBe('stand');
@@ -32,13 +32,13 @@ describe("the mascot's moves (issue 115)", () => {
     expect(motion.frame({ amp: 0.5, sway: 0, struck: null }, 1.2, false).tilt).toBe(0);
   });
 
-  it('stretches with the Amp level, and throws its arms up when loud', () => {
+  it('stretches with the Amp level, and splashes when loud', () => {
     const motion = createMascotMotion();
     const soft = motion.frame({ amp: 0.2, sway: 0, struck: null }, 1, false);
     const loud = motion.frame({ amp: 1, sway: 0, struck: null }, 1.1, false);
     expect(loud.stretch).toBeGreaterThan(soft.stretch);
-    expect(loud.arms).toBe('up');
-    expect(soft.arms).toBe('down');
+    expect(loud.splash).toBe(true);
+    expect(soft.splash).toBe(false);
   });
 
   it('keeps still when nothing sounds, and dozes off after a while', () => {
@@ -58,13 +58,5 @@ describe("the mascot's moves (issue 115)", () => {
     const next = motion.frame({ amp: 0.3, sway: -1, struck: 2 }, 2, true);
     expect(next).not.toEqual(first);
     expect(next).toMatchObject({ lift: 0, tilt: 0, stretch: 1 });
-  });
-
-  it('walks with its legs in turn, looking where it goes', () => {
-    const motion = createMascotMotion();
-    const steps = [0, 0.15, 0.3].map((t) => motion.frame({ amp: 0.5, sway: 1, struck: null }, t, false, 1));
-    expect(steps.map((s) => s.legs)).toEqual(['walkA', 'walkB', 'walkA']);
-    expect(steps.every((s) => s.eyes === 'right' && s.tilt === 0)).toBe(true);
-    expect(motion.frame(quiet, 0.4, false, -1).eyes).toBe('left');
   });
 });

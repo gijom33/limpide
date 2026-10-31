@@ -1,4 +1,4 @@
-import { PARAMS, type ParamId, type Patch } from '../patch/patch';
+import type { ParamId } from '../patch/patch';
 
 /** The four sections, top to bottom on a phone: the strip's short word, and the section's own name. */
 export const SECTIONS = [
@@ -45,13 +45,3 @@ export const SECTION_OF: Record<ParamId, SectionName> = {
   lfo2Rate: 'LFO & Envelopes',
   lfo2Amount: 'LFO & Envelopes',
 };
-
-/** The section of a Patch field's control, Parameter or choice; null for one with no control in a section. */
-export function sectionOfField(field: keyof Patch): SectionName | null {
-  if (field in PARAMS) return SECTION_OF[field as ParamId];
-  if (field.startsWith('lfo')) return 'LFO & Envelopes';
-  if (field.startsWith('filter')) return 'Filter';
-  if (field === 'voices') return 'Amp';
-  if (field === 'keyboardOctave') return null;
-  return 'Oscillators';
-}

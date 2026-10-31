@@ -169,7 +169,7 @@ A house loop in C minor that plays on whatever Patch is loaded and never changes
 _Avoid_: Loop, backing track, sequence
 
 **Mascot**:
-A small creature after Claude's, called by playing C, A, D, E by hand and sent away the same way. It perches right of the name of the section of the last control turned and moves with what is heard; it makes no sound. Left out of the tips and the README on purpose.
+A pixel water drop whose tail is the Limpide logo, called by playing C, A, D, E by hand and sent away the same way. It comes up from behind the Amp section, stands on its top edge and moves with what is heard; it makes no sound. Left out of the tips and the README on purpose.
 _Avoid_: Easter egg (the idea, not the thing), sprite, pet
 
 **Velocity**:

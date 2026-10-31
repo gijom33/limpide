@@ -37,7 +37,6 @@ import { QuickSetupPanel } from './QuickSetupPanel';
 import { SectionStrip } from './SectionStrip';
 import { Segmented } from './Segmented';
 import { SubBlock } from './SubBlock';
-import { type SectionName, sectionOfField } from './sections';
 import { Tabs } from './Tabs';
 import { TapViewers } from './TapViewers';
 import { ToolGroup } from './ToolGroup';
@@ -148,24 +147,14 @@ export function App() {
     },
     [patches],
   );
-  // C, A, D, E played by hand calls the mascot, and again sends it away (issue 115); not remembered across a reload.
-  const [mascot, setMascot] = useState(false);
+  // C, A, D, E played by hand calls the mascot up from behind the Amp, and again sends it back down (issue 115); not
+  // remembered across a reload.
+  const [mascot, setMascot] = useState<'off' | 'up' | 'leaving'>('off');
   useEffect(() => {
     const phrase = createCallingPhrase();
-    return session.onPress((note) => phrase.press(note, performance.now() / 1000) && setMascot((on) => !on));
+    return session.onPress((note) => phrase.press(note, performance.now() / 1000) && setMascot((m) => (m === 'up' ? 'leaving' : 'up')));
   }, [session]);
-  // It perches on the section of the last control turned, by hand or by a Controller; the Oscillators at first.
-  const [mascotSection, setMascotSection] = useState<SectionName>('Oscillators');
-  useEffect(
-    () =>
-      patches.subscribe(({ before, after, by }) => {
-        if (by !== 'hand' && by !== 'controller') return;
-        const field = (Object.keys(after) as (keyof Patch)[]).find((f) => before[f] !== after[f]);
-        const section = field && sectionOfField(field);
-        if (section) setMascotSection(section);
-      }),
-    [patches],
-  );
+  const mascotGone = useCallback(() => setMascot((m) => (m === 'leaving' ? 'off' : m)), []);
   const modulationContext = useMemo(() => ({ engine: session.engine, patch: () => patches.get().patch, octave: octaveRef }), [session, patches]);
   // The letter keys play Notes unless turned off in Display (issue 51); remembered.
   const [letterKeys, setLetterKeys] = useState(() => storage.getItem(LETTER_KEYS) !== 'off');
@@ -735,7 +724,7 @@ export function App() {
             onQuit={tutorial.end}
           />
         )}
-        {mascot && <Mascot section={mascotSection} />}
+        {mascot !== 'off' && <Mascot leaving={mascot === 'leaving'} onGone={mascotGone} />}
       </main>
     </MathsContext.Provider>
     </ModulationContext.Provider>

@@ -10,8 +10,9 @@ export interface Heard {
 
 /** A pose and where it stands: the drawing's parts, and its hop, lean and stretch. */
 export interface Pose {
-  arms: 'down' | 'up';
-  legs: 'stand' | 'tuck' | 'walkA' | 'walkB';
+  /** Droplets thrown up over its head. */
+  splash: boolean;
+  legs: 'stand' | 'tuck';
   eyes: 'open' | 'shut' | 'left' | 'right' | 'happy';
   /** How high the hop has it, in pixels. */
   lift: number;
@@ -28,25 +29,23 @@ const HOP_PX = 6;
 export const DOZE_SECONDS = 2;
 /** The Amp level it can no longer hear (−54 dB, as the Pitch Marker's). */
 const SILENT = 0.002;
-/** Loud enough to throw its arms up. */
+/** Loud enough to splash. */
 const LOUD = 0.85;
 /** Its lean at an LFO's full swing, in degrees, and how far it must lean to look that way. */
 const LEAN = 7;
 const LOOK = 0.6;
 /** Its stretch at full level. */
 const STRETCH = 0.1;
-/** A step's length while it walks, in seconds. */
-const STEP_SECONDS = 0.15;
 
 /** The poses it takes in turn on each Note with reduced motion asked for. */
 const STILL_POSES: Pose['eyes'][] = ['left', 'open', 'right', 'happy'];
 
-const resting: Pose = { arms: 'down', legs: 'stand', eyes: 'open', lift: 0, tilt: 0, stretch: 1 };
+const resting: Pose = { splash: false, legs: 'stand', eyes: 'open', lift: 0, tilt: 0, stretch: 1 };
 
 /**
  * The mascot's moves (issue 115): a hop on each Note's start, a lean with the LFOs, a stretch with the Amp's level,
- * arms up when loud; still when nothing sounds, dozing after `DOZE_SECONDS`. With reduced motion it never moves and
- * changes pose only on each Note. `walking` (−1 left, 1 right) has it stepping to another section instead.
+ * a splash when loud; still when nothing sounds, dozing after `DOZE_SECONDS`. With reduced motion it never moves and
+ * changes pose only on each Note.
  */
 export function createMascotMotion() {
   let heardNote: number | null = null; // the start of the Note it last heard
@@ -54,17 +53,13 @@ export function createMascotMotion() {
   let still: Pose = resting;
   let stillCount = 0;
   return {
-    frame(heard: Heard, now: number, reduced: boolean, walking: -1 | 0 | 1 = 0): Pose {
+    frame(heard: Heard, now: number, reduced: boolean): Pose {
       const struck = heard.struck !== null && heard.struck !== heardNote;
       heardNote = heard.struck;
       const silent = heard.amp < SILENT;
       if (!silent) quietSince = null;
       else quietSince ??= now;
       const dozing = quietSince !== null && now - quietSince >= DOZE_SECONDS;
-      if (walking) {
-        const legs = Math.floor(now / STEP_SECONDS + 1e-9) % 2 ? 'walkB' : 'walkA';
-        return { ...resting, legs: reduced ? 'stand' : legs, eyes: walking > 0 ? 'right' : 'left' };
-      }
       if (reduced) {
         if (struck) still = { ...resting, eyes: STILL_POSES[stillCount++ % STILL_POSES.length] };
         return dozing ? { ...still, eyes: 'shut' } : still;
@@ -76,7 +71,7 @@ export function createMascotMotion() {
       const loud = heard.amp > LOUD;
       const look = heard.sway > LOOK ? 'right' : heard.sway < -LOOK ? 'left' : 'open';
       return {
-        arms: hopping || loud ? 'up' : 'down',
+        splash: hopping || loud,
         legs: hopping ? 'tuck' : 'stand',
         eyes: hopping || loud ? 'happy' : look,
         lift,

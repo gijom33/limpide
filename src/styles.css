@@ -791,14 +791,18 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 }
 .pitch-marker[data-on-black] { border-color: #fff; }
 
-/* The mascot (issue 115): over the page, under the header and the cards, never in the way of a pointer. */
+/* The mascot (issue 115): a box standing on the Amp's top edge, hiding what goes below it, so the drop comes up from
+   behind the Amp. Over the page, under the header and the cards, never in the way of a pointer. */
 .mascot {
-  position: absolute; left: 0; top: 0; z-index: 5; pointer-events: none; transform-origin: 50% 100%;
-  --mascot-body: #d97757; --mascot-eye: #14161b;
+  position: absolute; left: 0; top: 0; z-index: 5; pointer-events: none; overflow: hidden;
+  --mascot-body: #6cc8f0; --mascot-shine: #e8f8ff; --mascot-eye: #14161b;
 }
-:root[data-theme='light'] .mascot { --mascot-body: #c4633f; }
-.mascot svg { display: block; overflow: visible; }
+:root[data-theme='light'] .mascot { --mascot-body: #2b8fd6; --mascot-shine: #ffffff; }
+/* It stands at the box's foot, and leans about the drop's foot, not the tail's. */
+.mascot-drop { position: absolute; bottom: 0; left: 0; transform-origin: 20% 100%; }
+.mascot svg { display: block; }
 .mascot-body { fill: var(--mascot-body); }
+.mascot-shine { fill: var(--mascot-shine); }
 .mascot-eyes { fill: var(--mascot-eye); }
 /* Until sound starts (the browser waits for the page to be used), a label over the keys invites a first Note: a key
    on the computer keyboard or the piano ("tap" on touch screens). It lets presses through to the keys, and takes
