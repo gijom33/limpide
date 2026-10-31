@@ -6,7 +6,7 @@ The owner's issues and specs live as Markdown files in this repository ([ADR-001
 
 - **The spec:** [`docs/prd.md`](../prd.md), one for the whole product. A bigger feature's spec is its issue's "What to build" and Decisions.
 - **Issues:** one file each, `docs/issues/NN-<slug>.md`, numbered on from the highest (two digits until 99). Never a combined tickets file.
-- **The inbox:** [`docs/inbox.md`](../inbox.md), the `needs-triage` queue. The owner's bug or idea goes in, in the owner's words, committed alone; triage is the next commit (an issue, a line in an existing issue, done at once, or Dropped with the reason).
+- **The inbox:** [`docs/inbox.md`](../inbox.md), the `needs-triage` queue. The owner's bug or idea goes in, in the owner's words, committed alone; triage is the next commit (an issue, a line in an existing issue, done at once, or Dropped with the reason). Done at once is for what needs no issue (below).
 - **Rejected feature ideas:** [`.out-of-scope/`](../../.out-of-scope/), one file per concept.
 
 ## An issue's file
@@ -31,6 +31,11 @@ The owner's issues and specs live as Markdown files in this repository ([ADR-001
 - **A `ready-for-agent` issue** carries an `## Agent Brief` (the triage skill's AGENT-BRIEF.md): behaviour, interfaces, acceptance criteria, out of scope; no file paths or line numbers.
 - **Decisions** from a grilling go in a numbered list, each saying who decided ("decided by the owner", or "Claude's call, open to the owner").
 - **Notes added later** go under a heading of their own at the bottom (`## How it was built`, `## Comments`); file paths belong there.
+
+## When a change overturns an issue
+
+- **A change that needs an issue:** one that alters an issue's decision, adds or changes a setting the page offers, or adds, cuts or reworks a batch of Presets (two or more) gets an issue number, even when it is done at once: a new issue, or a line in the issue it changes, and its commits start `Issue N:`. `No issue:` is for a change that overturns nothing an issue says: a typo, a steadier test, the docs catching up with the code, the tooling.
+- **"Since then":** an issue whose decision, ticked box or built behaviour a later change overturns gets a line at its bottom, in the same commit as the change: `**Since then (YYYY-MM-DD, issue N):** what is now true, and who decided.` Its decision and its box stay as they were, so the record reads in order. An open issue whose look or behaviour the change replaced says so in its Status line too, so the owner is not asked to judge what no longer ships.
 
 ## Queries
 

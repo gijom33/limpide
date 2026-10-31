@@ -1,6 +1,6 @@
 # How the work is recorded
 
-**Status:** accepted · **Date:** 2026-10-27 · **Decided by:** the owner (grilling of [issue 56](../issues/56-ready-for-contributors.md))
+**Status:** accepted, point 5 (a code review at each minor version) superseded by [ADR-0016](./0016-the-release-steps-are-the-one-home-of-the-release-rules.md) · **Date:** 2026-10-27 · **Decided by:** the owner (grilling of [issue 56](../issues/56-ready-for-contributors.md))
 
 Limpide is built by one owner directing Claude Code, a commit every few minutes. The methodology review ([review 10](../reviews/2026-10-26/10-methodology.md)) and the AI-expert review ([review 4](../reviews/2026-10-26/4-ai-expert.md)) found the method sound but its record patchy: 40 % of commits named an issue, subjects ran to hundreds of characters, ADRs had no status or date and were edited in place (ADR-0007 reversed within 50 minutes by rewriting it), Claude's own calls were unmarked, ideas were triaged before their words were ever committed, and no code review had run. So from 1.11.1 on:
 

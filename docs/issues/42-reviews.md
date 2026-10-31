@@ -4,7 +4,7 @@
 
 **Blocked by:** none (the Learner's second run waits for the tutorials, [40](./40-preset-tutorials.md))
 
-**Status:** ready-for-human · enhancement. Left: the owner's tap-through of the real LinkedIn link on a phone. The ten persona reviews ran on 2026-10-26 (version 1.8.1), the Learner's second run on 2026-10-27, and a code review runs at every minor release since 1.11.1 ([ADR-0010](../adr/0010-how-the-work-is-recorded.md)); trimmed (2026-10-28, decided by the owner).
+**Status:** ready-for-human · enhancement. Left: the owner's tap-through of the real LinkedIn link on a phone. The ten persona reviews ran on 2026-10-26 (version 1.8.1), the Learner's second run on 2026-10-27, and a code review runs before releases since 1.11.1, as [the release steps](../releasing.md) say; trimmed (2026-10-28, decided by the owner).
 
 ## Why these profiles
 
@@ -143,7 +143,7 @@ A lawyer or compliance lead who reviews open-source projects before a company us
 
 ### 12 to 14. The ripple hunter, the fact-checker and the ear stand-in
 
-Claude's three reviewers, kept by the owner and first run on 1.16.0 (2026-10-30): the ripple hunter finds every test, tip, description and doc still stating what a change made untrue; the fact-checker renders each new or changed Preset and tip through the engine and tests every claim its words make; the ear stand-in renders each new Preset and reports levels, clicks, clipping, harshness and fold-back. Their briefs are the reports' own opening lines: [12](../reviews/2026-10-30/12-ripple-hunter.md), [13](../reviews/2026-10-30/13-fact-checker.md), [14](../reviews/2026-10-30/14-ear-stand-in.md).
+Claude's three reviewers, kept by the owner and first run on 1.16.0 (2026-10-30): the ripple hunter finds every test, tip, description and doc still stating what a change made untrue; the fact-checker renders each new or changed Preset and tip through the engine and tests every claim its words make; the ear stand-in renders each new Preset and reports levels, clicks, clipping, harshness and fold-back. Their briefs are the reports' own opening lines: [12](../reviews/2026-10-30/12-ripple-hunter.md), [13](../reviews/2026-10-30/13-fact-checker.md), [14](../reviews/2026-10-30/14-ear-stand-in.md). Since then (2026-10-30, [issue 110](./110-checks-before-a-push.md)), they run before a release's push, as [the release steps](../releasing.md) say.
 
 ### 15. The sound designer and Preset curator
 
@@ -164,6 +164,6 @@ A professional sound designer who has built factory Preset banks for commercial 
 - [x] Each persona's review: what they tried, what worked, what stopped them; the findings to the inbox (2026-10-26, 33 lines). The reports: [`docs/reviews/2026-10-26/`](../reviews/2026-10-26/). Their screenshots stayed in the session's scratch folder and are not kept
 - [ ] The owner taps through the real LinkedIn link once on a phone (the in-app browser)
 - [x] The Learner's second run, once the tutorials are built (issue 40): 2026-10-27, [report](../reviews/2026-10-27/5-learner-teacher.md), findings in [59](./59-tutorials-after-review-5.md)
-- [x] The code review, since the first commit; the findings to the inbox. Done another way: the code-review skill runs over each minor version since 1.11.1, its findings to the inbox (2026-10-28)
+- [x] The code review, since the first commit; the findings to the inbox. Done another way: the code-review skill runs before releases since 1.11.1, its findings to the inbox (2026-10-28); which releases, [the release steps](../releasing.md) say
 - [x] Profile 11's review (the open-source legal expert), 2026-10-26: a company could use or fork it today (MIT, the 3 shipped dependencies MIT, no copyleft among 108 dev dependencies, no third-party assets), once a fork adds the third-party notices and drops the counter; contributions should wait for a CONTRIBUTING (issue 56). Its findings in the inbox; AI authorship stated is issue 48
 - [x] Profile 15's review (the sound designer and Preset curator), added by the owner 2026-10-30, ran the same day on 1.16.0: [report](../reviews/2026-10-30/15-sound-designer.md), its findings to the inbox
