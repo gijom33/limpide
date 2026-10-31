@@ -105,10 +105,13 @@ export function createControlSurface(synth: Synth) {
 
   const lastMessage = new Map<string, number>(); // each C16 knob's last message, in ms
   /** A Relative message's steps: as sent, or for a C16 knob one step in its direction for each new bit of turning. */
+  let arrived: number | undefined; // when the message being handled arrived, in ms, if its Controller said
   const relativeSteps = (mapping: Mapping, mode: 'relative-twos' | 'relative-centred', value: number) => {
     const delta = relativeDelta(mode, value);
     if (mapping.device !== 'c16') return delta;
-    const now = synth.now?.() ?? performance.now();
+    // When the message arrived, not when the page got to it: a fast turn's messages queue behind a render, then are
+    // handled all at once, and would pass for one bit (the owner: "when going faster, hardly anything happens").
+    const now = arrived ?? synth.now?.() ?? performance.now();
     const key = controlKey(mapping.control);
     const last = lastMessage.get(key);
     lastMessage.set(key, now);
@@ -120,7 +123,9 @@ export function createControlSurface(synth: Synth) {
     if (mapping.mode === 'trigger' || mapping.mode === 'toggle' || mapping.mode === 'detect') return;
     const current = synth.position(id);
     if (mapping.mode !== 'absolute') {
-      synth.setPosition(id, Math.min(1, Math.max(0, current + relativeSteps(mapping, mapping.mode, value) * RELATIVE_STEP)));
+      const steps = relativeSteps(mapping, mapping.mode, value);
+      if (steps === 0) return; // the rest of a bit already counted: nothing to draw again
+      synth.setPosition(id, Math.min(1, Math.max(0, current + steps * RELATIVE_STEP)));
       synth.touched?.(target, 'moved');
       return;
     }
@@ -265,8 +270,12 @@ export function createControlSurface(synth: Synth) {
   };
 
   return {
-    /** A message from a Controller; `fromC16` when that Controller is a C16, whose layout's Mappings answer it alone. */
-    handle(incoming: MidiMessage, fromC16 = false) {
+    /**
+     * A message from a Controller; `fromC16` when that Controller is a C16, whose layout's Mappings answer it alone;
+     * `at`, when it arrived (Web MIDI's timestamp, in ms on the page's clock).
+     */
+    handle(incoming: MidiMessage, fromC16 = false, at?: number) {
+      arrived = at;
       if (incoming.type === 'program') return synth.program?.(incoming.program);
       const message: ControlMessage =
         incoming.type === 'pitchBend'

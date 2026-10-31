@@ -503,6 +503,26 @@ describe('the C16’s knobs, one step for each bit of turning (issue 145)', () =
     expect(positions.cutoff).toBeCloseTo(0.54);
   });
 
+  it('times each bit by when its message arrived, not when the page got to it: a busy page still counts every bit', () => {
+    const positions: Partial<Record<ParamId, number>> = { cutoff: 0 };
+    const store = createMappingStore(memoryStorage());
+    const surface = createControlSurface({
+      store,
+      now: () => 1000, // every message handled at the same moment, after a long render
+      position: (id) => positions[id] ?? 0,
+      setPosition: (id, p) => void (positions[id] = p),
+      action: () => {},
+      choice: () => ({ index: 0, count: 5 }),
+      setChoice: () => {},
+      press: () => {},
+      release: () => {},
+    });
+    store.set({ control: { kind: 'cc', channel: 1, number: 24 }, target: cutoff, mode: 'relative-centred', device: 'c16' });
+    // Five bits turned fast, each a burst of eight 66s that arrived a millisecond apart, the bursts 25 ms apart.
+    for (let bit = 0; bit < 5; bit++) for (let i = 0; i < 8; i++) surface.handle(cc(24, 66), true, bit * 25 + i);
+    expect(positions.cutoff).toBeCloseTo(0.05);
+  });
+
   it('turns back at once, a step at a time, and leaves other Controllers’ knobs as they send', () => {
     const { positions, single, burst } = c16Knob();
     for (let i = 0; i < 10; i++) single(200);

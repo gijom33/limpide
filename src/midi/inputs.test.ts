@@ -44,7 +44,7 @@ describe('connectMidi', () => {
     const pad = new FakeInput('a', 'Synido TempoPAD C16');
     const { onMessage } = setup(pad);
     pad.send(0x90, 60, 127);
-    expect(onMessage).toHaveBeenCalledWith({ type: 'noteOn', channel: 1, note: 60, velocity: 1 }, 'Synido TempoPAD C16');
+    expect(onMessage).toHaveBeenCalledWith({ type: 'noteOn', channel: 1, note: 60, velocity: 1 }, 'Synido TempoPAD C16', expect.any(Number));
   });
 
   it('starts listening to a Controller plugged in later', () => {
@@ -54,7 +54,7 @@ describe('connectMidi', () => {
     access.plug(pad);
     expect(onDevices).toHaveBeenLastCalledWith(['Synido TempoPAD C16']);
     pad.send(0xb0, 74, 64);
-    expect(onMessage).toHaveBeenCalledWith({ type: 'cc', channel: 1, controller: 74, value: 64 }, 'Synido TempoPAD C16');
+    expect(onMessage).toHaveBeenCalledWith({ type: 'cc', channel: 1, controller: 74, value: 64 }, 'Synido TempoPAD C16', expect.any(Number));
   });
 
   it('releases every Note still held on a Controller when it is unplugged, so nothing sticks', () => {
