@@ -1,14 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_OVERLAYS, loadOverlays, OVERLAYS, saveOverlays, toggleOverlay } from './overlays';
-
-function memoryStorage(initial: Record<string, string> = {}) {
-  const data = { ...initial };
-  return {
-    getItem: (k: string) => data[k] ?? null,
-    setItem: (k: string, v: string) => void (data[k] = v),
-    data,
-  };
-}
+import { DEFAULT_OVERLAYS, OVERLAYS, toggleOverlay } from './overlays';
 
 describe('Viewer overlays', () => {
   it('offers Harmonic Markers, the Ideal Reference, the Response Curve and the Scope guides', () => {
@@ -24,27 +15,5 @@ describe('Viewer overlays', () => {
     expect(next.curve).toBe(false);
     expect(next.harmonics).toBe(true);
     expect(DEFAULT_OVERLAYS.curve).toBe(true);
-  });
-
-  it('remembers the choice across visits', () => {
-    const storage = memoryStorage();
-    saveOverlays(storage, toggleOverlay(DEFAULT_OVERLAYS, 'guides'));
-    expect(loadOverlays(storage)).toEqual({ ...DEFAULT_OVERLAYS, guides: true });
-  });
-
-  it('falls back to defaults for anything missing or garbled in storage', () => {
-    expect(loadOverlays(memoryStorage())).toEqual(DEFAULT_OVERLAYS);
-    expect(loadOverlays(memoryStorage({ 'limpide.overlays': '{not json' }))).toEqual(DEFAULT_OVERLAYS);
-    // "ghost" was an overlay once: a choice saved for it is simply ignored now.
-    expect(loadOverlays(memoryStorage({ 'limpide.overlays': '{"guides":true,"ghost":false,"bogus":1,"curve":"yes"}' }))).toEqual({
-      ...DEFAULT_OVERLAYS,
-      guides: true,
-    });
-  });
-
-  it('still works when storage itself is unavailable (private mode)', () => {
-    const broken = { getItem: () => { throw new Error('denied'); }, setItem: () => { throw new Error('denied'); } };
-    expect(loadOverlays(broken)).toEqual(DEFAULT_OVERLAYS);
-    expect(() => saveOverlays(broken, DEFAULT_OVERLAYS)).not.toThrow();
   });
 });

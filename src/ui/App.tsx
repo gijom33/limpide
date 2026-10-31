@@ -15,6 +15,7 @@ import { DisplayMenu } from './DisplayMenu';
 import { EnvelopeTimeline } from './EnvelopeTimeline';
 import { Fader } from './Fader';
 import { FilterShape } from './FilterShape';
+import { useDisplaySetting } from './hooks/useDisplaySetting';
 import { useHold } from './hooks/useHold';
 import { useComputerKeyboard, useSpaceFreezes } from './hooks/useKeys';
 import { useMediaQuery } from './hooks/useMediaQuery';
@@ -46,16 +47,12 @@ import { type TipContent, Tooltip, TooltipsContext } from './Tooltip';
 import { TourCard } from './TourCard';
 import { TutorialCard } from './TutorialCard';
 import { TutorialMenu } from './TutorialMenu';
-import { applyTheme, loadTheme, type Theme } from './theme';
 import { TIPS, type VIEWER_TIPS } from './tips';
 
 import { AxesControls, ViewActions } from './ViewerControls';
 import { WaveformPicker, WaveIcon } from './WaveformPicker';
 import { Wordmark } from './Wordmark';
 
-const LETTER_KEYS = 'limpide.letterKeys';
-const TOOLTIPS = 'limpide.tooltips';
-const BEAD = 'limpide.bead';
 const BEND_RANGE = 'limpide.bendRange';
 /** Phones and the sections 2 × 2: the stylesheet's breakpoint, where the header's groups take rows of their own. */
 const STACKED_HEADER = '(max-width: 860px)';
@@ -155,8 +152,7 @@ export function App() {
   // remembered across a reload. Once met, Display has a switch for it, remembered: off, it melts away and the Notes
   // do nothing, for anyone who would rather not (the owner, 2026-10-30).
   const [mascot, setMascot] = useState<'off' | 'up' | 'leaving'>('off');
-  const [bead, setBead] = useState(() => (storage.getItem(BEAD) ?? 'unmet') as 'unmet' | 'on' | 'off');
-  useEffect(() => void (bead !== 'unmet' && storage.setItem(BEAD, bead)), [storage, bead]);
+  const [bead, setBead] = useDisplaySetting(storage, 'bead');
   const beadRef = useRef(bead);
   beadRef.current = bead;
   const mascotRef = useRef(mascot);
@@ -174,7 +170,7 @@ export function App() {
       setBead('on');
       setMascot((m) => (m === 'off' ? 'up' : m === 'up' ? 'leaving' : m));
     });
-  }, [session]);
+  }, [session, setBead]);
   const switchBead = (on: boolean) => {
     setBead(on ? 'on' : 'off');
     setMascot((m) => (on ? (m === 'off' ? 'up' : m) : m === 'up' ? 'leaving' : m));
@@ -182,12 +178,10 @@ export function App() {
   const mascotGone = useCallback(() => setMascot((m) => (m === 'leaving' ? 'off' : m)), []);
   const modulationContext = useMemo(() => ({ engine: session.engine, patch: () => patches.get().patch, octave: octaveRef }), [session, patches]);
   // The letter keys play Notes unless turned off in Display (issue 51); remembered.
-  const [letterKeys, setLetterKeys] = useState(() => storage.getItem(LETTER_KEYS) !== 'off');
-  useEffect(() => storage.setItem(LETTER_KEYS, letterKeys ? 'on' : 'off'), [storage, letterKeys]);
-  useComputerKeyboard(session, octaveRef, moveOctave, letterKeys);
+  const [letterKeys, setLetterKeys] = useDisplaySetting(storage, 'letterKeys');
+  useComputerKeyboard(session, octaveRef, moveOctave, letterKeys === 'on');
   // Tooltips open unless turned off in Display (issue 81); remembered.
-  const [tooltips, setTooltips] = useState(() => storage.getItem(TOOLTIPS) !== 'off');
-  useEffect(() => storage.setItem(TOOLTIPS, tooltips ? 'on' : 'off'), [storage, tooltips]);
+  const [tooltips, setTooltips] = useDisplaySetting(storage, 'tooltips');
   const { hold, pressHold, pressHoldRef, heldNotes, setPedal } = useHold(session);
   // How far a keyboard's bend wheel takes the pitch, in semitones each way (issue 52); remembered.
   const [bendRange, setBendRange] = useState(() => Number(storage.getItem(BEND_RANGE)) || 2);
@@ -195,8 +189,9 @@ export function App() {
 
   useSpaceFreezes(viewerStore);
   const narrow = useMediaQuery(STACKED_HEADER);
-  const [theme, setTheme] = useState(loadTheme);
-  useEffect(() => applyTheme(theme), [theme]);
+  // The stylesheet reads the theme from the page's root, so the whole page follows it.
+  const [theme, setTheme] = useDisplaySetting(storage, 'theme');
+  useEffect(() => void (document.documentElement.dataset.theme = theme), [theme]);
 
   const players = usePlayers({
     session, octaveRef, setOctave, heldNotes,
@@ -364,12 +359,12 @@ export function App() {
               <Tooltip content={TIPS.letterKeys}>
                 <Segmented
                   label="Letter keys"
-                  value={letterKeys ? 'on' : 'off'}
+                  value={letterKeys}
                   options={[
                     { value: 'on', label: 'Play', name: 'Letter keys play Notes' },
                     { value: 'off', label: 'Off', name: 'Letter keys off' },
                   ]}
-                  onChange={(v) => setLetterKeys(v === 'on')}
+                  onChange={setLetterKeys}
                 />
               </Tooltip>
             </ToolGroup>
@@ -377,12 +372,12 @@ export function App() {
               <Tooltip content={TIPS.tooltips}>
                 <Segmented
                   label="Tooltips"
-                  value={tooltips ? 'on' : 'off'}
+                  value={tooltips}
                   options={[
                     { value: 'on', label: 'On' },
                     { value: 'off', label: 'Off' },
                   ]}
-                  onChange={(v) => setTooltips(v === 'on')}
+                  onChange={setTooltips}
                 />
               </Tooltip>
             </ToolGroup>
@@ -413,7 +408,7 @@ export function App() {
                     { value: 'dark', label: 'Dark' },
                     { value: 'light', label: 'Light' },
                   ]}
-                  onChange={(v) => setTheme(v as Theme)}
+                  onChange={setTheme}
                 />
               </Tooltip>
             </ToolGroup>
@@ -456,7 +451,7 @@ export function App() {
   );
 
   return (
-    <TooltipsContext.Provider value={tooltips}>
+    <TooltipsContext.Provider value={tooltips === 'on'}>
     <LearnContext.Provider value={learnContext}>
     <ModulationContext.Provider value={modulationContext}>
     <MathsContext.Provider value={overlays.maths ? patch : null}>

@@ -40,4 +40,5 @@
 
 - The Viewer settings store saves the five settings under their own key (`limpide.viewSettings`), each checked against the values it may take when read back; the overlays keep theirs. Tests: `src/viewers/viewerStore.test.ts`.
 - Test: "every Display setting is remembered across a reload, Freeze and the Snapshot aside (issue 85)" in `e2e/displayPanel.spec.ts`.
+- Since (2026-10-30, issue 87): the keys and the check against the allowed values live in `src/app/displaySettings.ts`, with every other Display setting; the store reads and writes through it. Tests: `src/app/displaySettings.test.ts`.
 

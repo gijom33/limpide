@@ -1,4 +1,5 @@
 import { useContext, useEffect, useRef, useState } from 'react';
+import type { Theme } from '../app/displaySettings';
 import type { Word } from '../input/callingPhrase';
 import { lfos } from '../patch/patch';
 import type { PatchStore } from '../patch/patchStore';
@@ -11,7 +12,6 @@ import { acrossOf, choosePerch, createMascotPlace, type Moving, type Perch } fro
 import { createSpray, MOST_DROPLETS } from './mascotSpray';
 import { ModulationContext } from './modulationRing';
 import { SECTIONS } from './sections';
-import type { Theme } from './theme';
 
 /**
  * The drawing, on a 22 × 13 grid: a water drop, its tail the Limpide logo's stroke (a saw tooth softening into a sine)
