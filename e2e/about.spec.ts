@@ -58,7 +58,7 @@ test('About is centred over a dimmed page, on a phone, a laptop and a large scre
 
 // Issue 42's legal review: the site ships React, whose MIT notice the minified bundle drops, so the build writes the
 // notices beside the page; and only the published site's deploy counts visits, never a fork's or a test build.
-test('About links the third-party notices, which carry React’s licence and end with Limpide’s own', async ({ page, request }) => {
+test('About links the third-party notices, which carry React’s licence and end with Limpide’s own (issues 42, 111)', async ({ page, request }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'About', exact: true }).click();
   const link = page.getByRole('link', { name: 'Third-party notices' });

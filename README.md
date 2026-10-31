@@ -55,7 +55,7 @@ The browser tests need Playwright's browsers once: `npx playwright install chrom
 
 TypeScript, React and Vite, on the browser's native Web Audio nodes; no audio libraries.
 
-Its code was written with Claude Code, and every commit says so in its `Co-Authored-By` line. The work follows Matt Pocock's [AI Hero](https://www.aihero.dev) method, and everything it produced is in this repository:
+Every commit names Claude Code in its `Co-Authored-By` line. The work follows Matt Pocock's [AI Hero](https://www.aihero.dev) method, and everything it produced is in this repository:
 
 1. **A PRD** ([docs/prd.md](docs/prd.md)): who it is for, the user stories, what is out of scope, how it is tested.
 2. **Issues** ([docs/issues](docs/issues)): the vertical slices the app was built in, in order, each with what to build, its checklist and what was measured. Plans are "grilled" (questioned until the decisions are explicit) before they are built.
@@ -75,4 +75,4 @@ At 1.17.0 (2026-10-31): 16,832 lines of app code, 2,099 tests, all passing, 53.7
 
 ## License
 
-[MIT](LICENSE) © Guillaume Boillet: the code, the Presets, the Demo's music and the docs. The site also ships React (MIT); the build writes its notices to `third-party-notices.txt`, linked from About.
+[MIT](LICENSE) © Guillaume Boillet: the code, the Presets, the Demo's music and the docs. The site also ships React (MIT); the build writes its notices, then Limpide's own licence, to `third-party-notices.txt`, linked from About.
