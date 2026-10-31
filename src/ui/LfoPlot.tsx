@@ -5,7 +5,7 @@ import { addToRenderLoop } from '../viewers/renderLoop';
 
 // The plot draws in its own CSS pixels, whatever shape the layout gives it, so full Depth spans its whole height
 // (a fixed box scaled to fit left bands above and below in squarer plots). The line keeps clear of the edges.
-export const PAD = 5;
+const PAD = 5;
 /** Points along the line: two per pixel of a wide plot, so even a dozen cycles keep their shape. */
 const SAMPLES = 400;
 /**
@@ -14,7 +14,19 @@ const SAMPLES = 400;
  * of a cycle per frame and read as noise (the wagon-wheel effect); over a second, a frame moves the trace a few
  * units at most.
  */
-export const SPAN = 1;
+const SPAN = 1;
+
+/** Whether a plot of this width draws a line wider than `width`: its line keeps clear of its edges. */
+export const lineWiderThan = (plotWidth: number, width: number) => plotWidth - 2 * PAD > width;
+
+/**
+ * Where a plot of `width` × `height` draws an LFO's line at `x` from its left (its ends held to the line's), at the
+ * engine's `now`: the y from its top. The mascot surfs on it (the owner, 2026-10-30).
+ */
+export function lineAt(engine: Pick<SynthEngine, 'lfoSwingAt'>, lfo: LfoNumber, { width, height }: { width: number; height: number }, x: number, now: number) {
+  const along = Math.min(1, Math.max(0, (x - PAD) / (width - 2 * PAD)));
+  return height / 2 - engine.lfoSwingAt(now - SPAN + along * SPAN, lfo) * (height / 2 - PAD);
+}
 
 
 /**

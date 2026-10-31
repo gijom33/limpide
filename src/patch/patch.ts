@@ -120,8 +120,10 @@ export type Patch = Record<ParamId, number> & {
  */
 export type SoundField = Exclude<keyof Patch, 'keyboardOctave'>;
 export const soundFields = (patch: Patch) => (Object.keys(patch) as (keyof Patch)[]).filter((key): key is SoundField => key !== 'keyboardOctave');
-/** The Patch without its keyboard octave. */
-export const soundOf = ({ keyboardOctave: _, ...sound }: Patch) => sound;
+/** Whether two Patches sound the same: every sound field equal, whatever order their fields were written in. */
+export const sameSound = (a: Patch, b: Patch) => soundFields(a).length === soundFields(b).length && soundFields(a).every((key) => a[key] === b[key]);
+/** Whether two Patches are the same, field for field, the keyboard octave too. */
+export const samePatch = (a: Patch, b: Patch) => sameSound(a, b) && a.keyboardOctave === b.keyboardOctave;
 
 /** The octaves the keyboard reaches: C0 to C7, by the octave buttons. */
 export const KEYBOARD_OCTAVES = { lowest: 0, highest: 7 } as const;

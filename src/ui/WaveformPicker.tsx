@@ -1,4 +1,4 @@
-import type { Waveform } from '../music/harmonics';
+import { WAVEFORM_NAMES, type Waveform } from '../music/harmonics';
 import { useInactive } from './inactive';
 import { useLearnable } from './learn';
 import { radioGroupKeys, radioTabIndex } from './radioGroup';
@@ -15,7 +15,6 @@ const ICONS: Record<Waveform, string> = {
 /** The Waveforms in on-screen order, so a Controller steps through them as they appear. */
 export const WAVEFORM_ORDER = Object.keys(ICONS) as Waveform[];
 
-const LABELS: Record<Waveform, string> = { sine: 'Sine', triangle: 'Triangle', saw: 'Saw', square: 'Square', pulse: 'Pulse' };
 
 interface Props {
   /** Accessible name, e.g. "Osc 1 Waveform". */
@@ -57,7 +56,7 @@ export function WaveformPicker({ label, value, onChange, choice, inactive }: Pro
           role="radio"
           aria-checked={w === value}
           tabIndex={radioTabIndex(w === value, i, true)}
-          aria-label={LABELS[w]}
+          aria-label={WAVEFORM_NAMES[w]}
           onClick={() => onChange(w)}
         >
           <svg viewBox="0 0 28 16" width="24" height="14" aria-hidden="true">

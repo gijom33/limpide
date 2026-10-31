@@ -2,6 +2,9 @@ import { createCache } from './cache';
 
 export type Waveform = 'sine' | 'triangle' | 'saw' | 'square' | 'pulse';
 
+/** Each Waveform's name, as its picker, the Tutorials and the Maths Layer write it. */
+export const WAVEFORM_NAMES: Record<Waveform, string> = { sine: 'Sine', triangle: 'Triangle', saw: 'Saw', square: 'Square', pulse: 'Pulse' };
+
 export interface HarmonicSeries {
   /** cos coefficients, index = Harmonic number (0 is DC, always 0). */
   real: Float32Array;

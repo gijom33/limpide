@@ -4,7 +4,7 @@ import { acrossOf, choosePerch, createMascotPlace, FASTEST_THROW, GRAVITY, LANDI
 const H = 26;
 const ROOM = 18;
 const pick = (current: string | null, tops: Record<string, number>, ceiling = 250, where = 300) =>
-  choosePerch(current, Object.entries(tops).map(([id, top]) => ({ id, top })), ceiling, 812, H, ROOM, where);
+  choosePerch({ current, edges: Object.entries(tops).map(([id, top]) => ({ id, top })), ceiling, bottom: 812, height: H, headroom: ROOM, where });
 
 describe('which line the mascot is on, on a phone or in 2 × 2 (issue 115)', () => {
   it('stands on a section edge with room over it, below the header and on the window', () => {

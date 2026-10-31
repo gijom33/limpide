@@ -1,5 +1,5 @@
 import type { Library } from './library';
-import { type Patch, soundOf } from './patch';
+import { type Patch, sameSound } from './patch';
 import { initialPatch, presetAfter } from './presets';
 
 /** Who made a change: the Demo's "turned by hand" listens for a hand's or a Controller's, and so does the Tour's. */
@@ -28,9 +28,6 @@ export interface KeptPatch {
 
 const AUTOSAVE_MS = 300;
 
-/** The Patch as "changed" compares it: its sound, not the keyboard octave the octave buttons write (issue 126). */
-const sound = (patch: Patch) => JSON.stringify(soundOf(patch));
-
 /**
  * The Patch being played, outside React (ADR-0013). Every change goes to `apply` (the engine and the Note input) at
  * once, before any subscriber hears of it, so a Controller's move or the Demo's reaches the sound without waiting for a
@@ -51,7 +48,8 @@ export function createPatchStore({ hash, library, apply }: { hash: string; libra
   const set = (after: Patch, name: string, by: ChangeBy) => {
     const before = now.patch;
     apply(after);
-    now = { patch: after, name, changed: sound(after) !== sound(baseline) };
+    // Changed once its sound is not the one loaded: the keyboard octave the octave buttons write is not (issue 126).
+    now = { patch: after, name, changed: !sameSound(after, baseline) };
     saveSoon();
     for (const listener of listeners) listener({ before, after, by });
   };

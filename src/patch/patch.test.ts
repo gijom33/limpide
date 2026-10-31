@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CHOICES, defaultPatch, formatParam, PARAMS, setFilter, setLfo, setParam, setWaveform } from './patch';
+import { CHOICES, defaultPatch, formatParam, PARAMS, samePatch, sameSound, setFilter, setLfo, setParam, setWaveform } from './patch';
 
 describe('defaultPatch', () => {
   it('starts every Parameter at its declared default', () => {
@@ -192,5 +192,21 @@ describe('formatParam', () => {
   it('shows levels as percentages', () => {
     expect(formatParam('ampSustain', 0.7)).toBe('70 %');
     expect(formatParam('resonance', 0.255)).toBe('26 %');
+  });
+});
+
+describe('comparing Patches (the 1.17.0 review)', () => {
+  it('goes field by field, whatever order the fields were written in', () => {
+    const patch = defaultPatch();
+    const reversed = Object.fromEntries(Object.entries(patch).reverse()) as typeof patch;
+    expect(samePatch(patch, reversed)).toBe(true);
+    expect(samePatch(patch, { ...patch, cutoff: 900 })).toBe(false);
+  });
+
+  it('hears the sound alone: the keyboard octave changes the Patch, not its sound (issue 126)', () => {
+    const patch = defaultPatch();
+    const moved = { ...patch, keyboardOctave: 2 };
+    expect(sameSound(patch, moved)).toBe(true);
+    expect(samePatch(patch, moved)).toBe(false);
   });
 });
