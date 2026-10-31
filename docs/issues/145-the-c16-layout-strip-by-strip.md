@@ -76,6 +76,11 @@
 12. **The owner's C16 is set:** every knob Relative #1 (2026-10-31). The 22 momentary buttons (M1–M4 and S3 on every bank, R1 and R2 on bank A) are set once this is built: today's layout would read their release as a second press.
 13. **One step a message, however fast the knob turns** (2026-10-31): the owner, trying the knobs at Relative #1, "I think the \"fast mode\" for the knobs is not helpful. The knob in Limpide moves way to fast and creates a disconnect between position and reality." A fast turn's 66 or 62 now moves one step (1 % of the range), as 65 or 63 does, so the knob on screen keeps with the hand. For every Relative Mapping, MIDI-Learned ones too. Decided by the owner; how, Claude's call, open to the owner: if one step is still too fast or too slow for the C16's turn, the step's size is the next tweak.
 
+
+## Comments
+
+- 2026-10-31, the owner, turning the C16's knobs (over Bluetooth, on the development server): "There seems to be a delay between the move and the actual impact on screen." Measured with a stand-in C16 in Chromium at 1440 × 900: one message reaches the knob on screen in 17 ms on the built site and 41 ms on the development server, and turns of 20 and 60 messages a second, or 10 at once, leave nothing queued (no long task). So the page keeps up; Bluetooth MIDI's own latency is the likeliest cause, the development server and decision 13's slower fast turn the others. Waiting on the owner's test over USB.
+
 ## How it was built
 
 - **The layout's data** (`src/midi/c16.ts`): `C16_BANKS`, each bank's knobs, faders and M, S, R buttons as places with a target and the card's short name; `knobCc`, `faderCc` and `buttonCc` (down each strip, then across); `buttonMode` (toggle for a choice of two, momentary otherwise); `c16Layout()` marks every Mapping `device: 'c16'`, knobs `relative-centred`, faders `absolute`. `upgradeC16Layout` recognises the first layout's Mappings (issue 34's, CC by CC) and swaps them for the new one, keeping a person's own; the MIDI hook runs it whenever a C16 is connected.

@@ -4,7 +4,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
-- 2026-10-31, the owner, turning the C16's knobs: "There seems to be a delay between the move and the actual impact on screen."
 ## Ideas
 
 ## Dropped
@@ -133,3 +132,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-31, the owner's C16 button modes and printable card (triage, Claude's call, open to the owner): to [145](./issues/145-the-c16-layout-strip-by-strip.md), the new C16 layout from profile 17's review, to grill; Hold and the Preset arrows momentary and a one-page card to print are its first decisions, the owner's.
 2026-10-31, the owner's idea of a tip link in About (triage, Claude's call, open to the owner): to [146](./issues/146-a-tip-link-in-about.md), four questions for the owner, each with Claude's recommendation (v1 as About's polish; the service chosen after a look at current fees; one line in About and the README; the account the owner's own step).
 2026-10-31, the owner's bug of C16 knobs moving too fast in a fast turn: into [145](./issues/145-the-c16-layout-strip-by-strip.md), decision 13, fixed at once: one step a message, however fast the knob turns (triage, Claude's call, open to the owner).
+2026-10-31, the owner's bug of a delay from the C16's knobs to the screen: into [145](./issues/145-the-c16-layout-strip-by-strip.md)'s comments, measured (the page keeps up: 17 ms built, 41 ms in development), waiting on the owner's test over USB to tell Bluetooth's latency apart (triage, Claude's call, open to the owner).
