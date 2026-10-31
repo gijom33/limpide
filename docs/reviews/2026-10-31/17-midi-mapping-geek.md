@@ -199,3 +199,7 @@ At 1440 the LFOs sit side by side, LFO 1 on the left and LFO 2 on the right. Eac
 5. **Clock:** does the C16 send MIDI clock, Start and Stop (from PLAY or TAP TEMPO) over USB and Bluetooth? Does TAP TEMPO send anything else? This settles whether S1 needs a Tap (issues 112 and 136).
 6. **Aftertouch:** do the pads send channel pressure in KEYBOARD mode? The MIDI panel's Activity Monitor will show it once issue 132 lands.
 7. **USB and Bluetooth together:** with both connected, does Limpide list two C16s and receive each message twice? If so, every toggle Action cancels itself out.
+
+## Answers from the owner, after the review (2026-10-31)
+
+- **The buttons' CCs count down each strip, then across** (question 1): on bank A, M1 is CC 49, S1 50, R1 51, M2 52, S2 53, R2 54, M3 55, S3 56, R3 57, M4 58, S4 59, R4 60; bank B's M4 is CC 70. The tables above assumed the M row first; the button places they name stand, their CCs follow this order. Today's shared buttons are therefore M1 Hold, S1 Freeze, R1 Snapshot, M2 Previous Preset, S2 Next Preset, and bank D's Retriggers R2 and M3. The sustain pedal's CC 64 is bank B's M2 (Previous Preset), so finding 2 stands, on M2.

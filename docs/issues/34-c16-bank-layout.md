@@ -22,3 +22,7 @@ Buttons, on every bank: Hold, Freeze, Snapshot, Previous Preset, Next Preset. On
 - [ ] Verified on the real C16, and the MIDI name it gives confirmed (Limpide looks for "TempoPAD C16")
 
 Known limits, from the review: MIDI Learn and Quick Setup map an Action button as a momentary one, so a C16 toggle button relearned for an Action acts on every other press (the layout's own buttons are toggles); a bank's section is followed from the CC alone, so another Controller sending channel-1 CCs in the C16's ranges moves it too. Learning an Action on a new control replaces it on all four banks, as a Mapping's target has one control when learned; the MIDI panel's Remove takes off one control's Mapping.
+
+## Comments
+
+- 2026-10-31, the owner, from the real C16: its buttons' CCs count down each strip (M, S, R) and then across, so the layout's "buttons 1 to 5" are M1 (Hold), S1 (Freeze), R1 (Snapshot), M2 (Previous Preset) and S2 (Next Preset), and bank D's 6 and 7 (the Retriggers) are R2 and M3. Over Bluetooth MIDI the C16 is "Synido TempoPAD C16 BT Bluetooth" and is recognised ([143](./143-bluetooth-midi.md)). Its knobs send positions ([144](./144-c16-knobs-taken-for-relative.md)). Profile 17's review proposes a new layout: [report](../reviews/2026-10-31/17-midi-mapping-geek.md).
