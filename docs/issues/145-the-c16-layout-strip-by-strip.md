@@ -20,9 +20,12 @@
 1. **Hold and the Preset arrows are momentary buttons;** the owner will set those buttons so on the C16 once the layout is decided. Decided by the owner, 2026-10-31: "Some buttons like the preeset selector should be a momentary trigger. Same for hold." The other buttons' modes come with the grilling.
 2. **A one-page card to print,** showing every bank's knobs, faders and buttons, and each button's mode to set on the device. Decided by the owner, 2026-10-31: "a one pager showing all the settings that I would print and put next to the C16 for reference." Claude's recommendation, open to the owner: made from the layout's own data, so it never disagrees with what Limpide does.
 
+3. **The buttons:** M1 Previous Preset, M2 Next Preset, M3 Freeze, M4 Hold and S3 Snapshot on every bank, all five momentary (Freeze too: a shared toggle would have four lights that disagree; a momentary one lights only under the finger, and the page shows Freeze). Each section's own switches are toggles on its R row and free S places; a button stepping a choice of more than two (a Waveform) is momentary; the free places stay toggles, the factory setting. Profile 17's plan, decided by the owner, 2026-10-31. Stepping a choice from a momentary button needs a change: today such a Mapping does nothing.
+4. **The knobs are declared Relative #1** (64-centred), not detected: no Pickup dead zone, no jump after a Preset change. The card says to set every knob to Relative #1. Decided by the owner, 2026-10-31; an ADR beside ADR-0009 records it.
+5. **The layout answers the C16 only:** its Mappings hold for messages from the C16's own input, so another Controller's sustain pedal or mod wheel keeps its usual meaning; Mappings made with MIDI Learn still answer any device. Decided by the owner, 2026-10-31.
+6. **The card is a page in Limpide,** opened from the MIDI panel and built from the layout's data, printing on one landscape page (A4 or Letter): the four banks drawn as the panel, every place named, each button's mode and the knobs' mode; and a PDF of it for the owner. Decided by the owner, 2026-10-31.
+
 ## To grill
 
 - Each bank's places, from the review's proposal: what goes where, what stays free.
-- The knobs: declared Absolute, or detected as today (the review recommends declared, with an ADR beside [ADR-0009](../adr/0009-a-built-in-layout-for-the-c16.md)).
-- The layout tied to the C16's own input, so another Controller's sustain pedal (CC 64, bank B's M2) or mod wheel (CC 1, bank A's K1) does not reach it (review finding 2).
 - The review's other findings (11 to 14) and its questions that only the device answers.
