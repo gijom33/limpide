@@ -101,7 +101,7 @@ Judged against [the design principles](./design-principles.md).
 50. As a C16 owner, I want Limpide to detect my Controller when plugged in, so that I know it's connected.
 51. As a C16 owner, I want MIDI notes from the pads (KEYBOARD mode) to play the synth with Velocity, so that I can play it like an instrument.
 52. As a Controller owner, I want a Quick Setup that asks me for a control for each Parameter played live, in the page's order, then a button for each Action, so that my Controller is mapped in one pass, whichever it is.
-53. As a C16 owner, I want my C16 to work the moment it is plugged in, its four banks driving the four sections (Oscillators, Filter, Amp, LFO & Envelopes) and its buttons the Actions, and switching bank to bring that section into view, so that I never have to map it (issue 34).
+53. As a C16 owner, I want my C16 to work the moment it is plugged in, its four banks driving the four sections (Oscillators, Filter, Amp, LFO & Envelopes), each strip a column of its section, its buttons the Actions, the Waveform steps and the two-way switches, and switching bank to bring that section into view, so that I never have to map it (issues 34 and 145).
 54. As a user, I want MIDI Learn on any Parameter or Action, so that I can map any control to anything, including on other Controllers.
 55. As a user, I want the Encoder Mode detected automatically during Learn, so that endless encoders work whatever my C16's firmware sends.
 56. As a user, I want Pickup on Absolute Mappings, so that Parameters don't jump when the knob position and the Patch disagree.
@@ -151,7 +151,7 @@ Framed by the owner on 2026-10-31 ([issue 131](./issues/131-v1.md), which tracks
 - **Every feature the VST/AU plugin will need,** so that the plugin's spec is v1's synth: tempo sync for the LFOs (issue 112), Legato (119) and channel aftertouch (132). The engine stays on native Web Audio nodes; the port is the plugin's own project.
 - **Bead** is the last feature that is not essential.
 
-**In v1, still to do:** issues 112 (with 136 and 137), 119 and 132; the Maths Layer complete (133), History in the tooltips (134) and a Patch in plain words (123); the polish of 116, 129, 130, 47, 34, 42, 48 and 111, and the inbox's findings; then one last full review round, finding only nitpicks.
+**In v1, still to do:** issues 112 (with 136 and 137), 119 and 132; the Maths Layer complete (133), History in the tooltips (134) and a Patch in plain words (123); the polish of 116, 129, 130, 47, 145, 42, 48 and 111, and the inbox's findings; then one last full review round, finding only nitpicks.
 
 **v2,** a list and not a commitment ("It will only depend on what the reaction is in the synth world", the owner): recording to a WAV file (120), the additive oscillator (121), Match the sound (122) and granular synthesis (135). A new idea after the frame goes there, unless it is a bug or polish of something in v1. Each v2 issue is blocked by issue 131.
 

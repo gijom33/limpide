@@ -4,7 +4,8 @@ import { openDisplay } from './helpers';
 // The mascot (issue 115): B, E, A, D played by hand, as in a bead of water, calls it up from behind the top right
 // section, and again sends it away, melting. In three and four across it lives on that section's top edge, along the
 // stretch that covers least above it: nothing, where the header has room. On a phone and in 2 × 2 it keeps in view as
-// the page scrolls: on a right-column section's top edge, or hanging under the header.
+// the page scrolls: on a right-column section's top edge (over a phone's section tabs while an edge shows under them,
+// issue 142), or hanging under the header when none shows.
 
 const mascot = (page: Page) => page.locator('.mascot');
 const listening = (page: Page) => expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);

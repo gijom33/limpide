@@ -174,7 +174,7 @@ Someone who has never touched a synth and opens Limpide to have fun and learn so
 
 An avid synth player who owns a desk of controllers, maps every synth and plugin they own, and has opinions on where each control belongs under the hands. Added by the owner, 2026-10-31: "Let's invoke a new avid synthesizer MIDI mapping geek. We want the mapping of controllers on the C16 to match as intuitively as possible the Limpide Synth."
 
-- **Where:** the C16's layout in the repository (the layout's data, ADR-0009, issue 34's table, the PRD's MIDI stories), the TempoPAD C16's own hardware (its manual and photos: how its knobs, faders, pads and buttons sit on the panel), and the site's panel at 1440 × 900 and on a phone, to see where each control sits on the screen. No hardware: the owner tries the result on the real C16. **Time:** 45 minutes
+- **Where:** the C16's layout in the repository (the layout's data, ADR-0017 and ADR-0009, issue 145 and its printable card, the PRD's MIDI stories), the TempoPAD C16's own hardware (its manual and photos: how its knobs, faders, pads and buttons sit on the panel), and the site's panel at 1440 × 900 and on a phone, to see where each control sits on the screen. No hardware: the owner tries the result on the real C16. **Time:** 45 minutes
 - **Goals:** propose the C16 layout that a player finds without looking: each bank's knobs and faders laid out as the section's controls are on the screen, the most played under the most natural hands, the buttons where a player expects them
 - **Asks:**
   - **What is not reached:** every Parameter and choice the page has, and the ones on their way (issue 112's LFO Sync, issue 119's Legato, issue 132's aftertouch Destination): which belong on the C16, which can stay off it

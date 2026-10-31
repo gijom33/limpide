@@ -213,7 +213,8 @@ export function BeadIcon({ on }: { on: boolean }) {
 /**
  * The mascot (issue 115), called by B, E, A, D, as in a bead of water: a water drop trailing the Limpide logo. In
  * three and four across it lives on the top edge of the top right section; on a phone and in 2 × 2 it keeps in view as
- * the page scrolls, on the top edge of a section in the right column, or hanging under the header when none has room.
+ * the page scrolls, on the top edge of a section in the right column (over a phone's section tabs while an edge shows
+ * under them, issue 142), or hanging under the header when none has room.
  * It comes at a spot at random, one of three ways (up from behind its edge, down from the top of the window like rain,
  * or popping up with a hop), and lives its life along its line (`createMascotMotion`): strolls, glances, funny turns
  * when nothing is played, dozing. Between lines it moves by the laws of motion (`createMascotPlace`): falling, it

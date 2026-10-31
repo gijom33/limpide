@@ -44,7 +44,7 @@ const statusText = (state: MidiState) => {
         ? 'MIDI access was not allowed, so Controllers cannot be heard. Allow MIDI in the browser’s site settings, or open Limpide in Chrome or Edge (some built-in browsers never allow it).'
         : devices.length
           ? `Connected: ${devices.join(', ')}. Its keys and pads play the synth, with Velocity.`
-          : 'No MIDI Controller connected. Plug one in (USB) and it is picked up straight away.';
+          : 'No MIDI Controller connected. Plug one in (USB, or pair it over Bluetooth MIDI) and it is picked up straight away.';
 };
 
 /**

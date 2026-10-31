@@ -23,7 +23,7 @@ export function detectEncoderMode(values: number[]): EncoderMode {
 }
 
 /**
- * The Encoder Mode of a knob known to be an endless encoder unless it shows otherwise (the C16 layout's): values all
+ * The Encoder Mode of a knob known to be an endless encoder unless it shows otherwise (the first C16 layout's, issue 34): values all
  * near 0 or all near 64 are Relative, even without a repeat or a ±1 step, as a quick turn sends 3, 2, 4; but values
  * that step one way with no repeat are positions, wherever they are (a knob near the middle sends 50, 49, 48, issue
  * 144); anything else is Absolute (the device set to send positions).

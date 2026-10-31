@@ -804,7 +804,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 /* Its own pixels take the pointer, to be tickled and poked; the box around them lets it through. */
 .mascot-drop rect { pointer-events: visiblePainted; }
 /* Its droplets, in the page's pixels. */
-.mascot-spray { position: absolute; left: 0; top: 0; width: 1px; height: 1px; overflow: visible; z-index: 5; pointer-events: none; fill: var(--mascot-body); }
+.mascot-spray { position: absolute; left: 0; top: 0; width: 1px; height: 1px; overflow: visible; z-index: 9; pointer-events: none; fill: var(--mascot-body); }
 :root .mascot-spray { --mascot-body: #6cc8f0; }
 :root[data-theme='light'] .mascot-spray { --mascot-body: #2b8fd6; }
 .mascot svg { display: block; overflow: visible; }
@@ -836,7 +836,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .mascot-case { fill: var(--stage-filter); }
 .mascot-bubble { fill: var(--mascot-shine); opacity: 0.7; }
 /* Fishing: its line, hook and catch in the page's pixels, the line hanging straight down whatever Bead does. */
-.mascot-fishing { position: absolute; left: 0; top: 0; width: 1px; height: 1px; overflow: visible; z-index: 5; pointer-events: none; }
+.mascot-fishing { position: absolute; left: 0; top: 0; width: 1px; height: 1px; overflow: visible; z-index: 9; pointer-events: none; }
 .mascot-line { stroke: var(--muted); stroke-width: 1; shape-rendering: geometricPrecision; }
 .mascot-hook { fill: var(--muted); }
 .mascot-note { fill: var(--stage-mod); }
