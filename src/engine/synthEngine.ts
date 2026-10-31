@@ -396,7 +396,7 @@ const CYCLE_CURVE = Float32Array.from({ length: (2 * FOLLOWED_CENTS) / CYCLE_STE
 
 /**
  * One Oscillator. Most Waveforms play their Fourier series directly (a PeriodicWave). A pulse is built the
- * analogue way, as a saw minus a delayed copy of itself: the delay (width / frequency) sets the Pulse Width and,
+ * analogue way, as a saw minus a delayed copy of itself: the delay (the width's share of a cycle) sets the Pulse Width and,
  * unlike a PeriodicWave, can be modulated smoothly (PWM). It is scaled to match the pulse's series exactly. After a
  * restart the delay still holds the old cycle for one width: a fraction of a cycle, inside the Note's attack.
  *

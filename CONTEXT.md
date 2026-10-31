@@ -157,11 +157,11 @@ About as a brand-new browser (no Last session, no saved Patches) sees it, once: 
 _Avoid_: Onboarding, splash, intro
 
 **Tutorial**:
-A Preset rebuilt from Init in Steps, with the person turning each control. A card docked at the bottom of the page shows the current Step; nothing is locked, and the last card lists what differs from the Preset. Opened from the Preset's row or the Tutorials list in the Patches panel, or from the Tour's last card.
+A Preset rebuilt from Init in Steps, with the person turning each control. A card docked at the bottom of the page shows the current Step; nothing is locked, and the last card lists what differs from the Preset. Opened from the Preset's row or the Tutorials list in the Patches panel, the header's Tutorial button, or the Tour's last card.
 _Avoid_: Lesson, course, walkthrough, onboarding, tour
 
 **Tour**:
-A first look at the instrument for someone who has never seen a synth: a card for each section, in the signal's order (the Oscillators with the Mixer, the Filter, the Amp, the LFOs), says what it does while the synth turns its main controls itself, on a plain Patch of its own, the person's Patch coming back when it ends. Each card waits for Next. Opened from the Welcome and the About, never from the Patches panel. Not a Tutorial: it rebuilds no Preset, and there is no Preset called Tour.
+A first look at the instrument for someone who has never seen a synth: a card for each Section, in the signal's order (the Oscillators with the Mixer, the Filter, the Amp, the LFOs), says what it does while the synth turns its main controls itself, on a plain Patch of its own, the person's Patch coming back when it ends. Each card waits for Next. Opened from the Welcome and the About, never from the Patches panel. Not a Tutorial: it rebuilds no Preset, and there is no Preset called Tour.
 _Avoid_: Lesson, walkthrough, onboarding, intro, Tutorial
 
 **Step**:

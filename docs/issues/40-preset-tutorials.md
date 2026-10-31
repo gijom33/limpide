@@ -8,6 +8,8 @@
 
 **Since then:** (2026-10-30, [issue 105](./105-header-and-panels-on-every-screen.md)) decision 7: on a phone a made Step's note shows whole, not in two lines (the Ideal Step's was cut short with "…"); the instruction and the first and last cards keep their two lines. A Step also names the Viewer its note points at, and the page brings it clear of the card with the control (Claude's call, open to the owner).
 
+**Since then:** (2026-10-31, [issue 128](./128-how-a-synth-works.md)) the Welcome offers the Tour, not a Tutorial; Bass opens from the Tour's last card ("Build a Bass").
+
 Questions for the grilling:
 
 - Is a tutorial data (the Init Patch, then a list of changes, each with its words), written by hand, or derived from the difference between Init and the Preset with words added?

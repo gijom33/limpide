@@ -36,7 +36,7 @@ When nothing has been played for a few seconds, it does a funny turn now and the
 
 ## What the controls make of it
 
-Every knob and fader you turn, a Controller turns or the Demo turns gets an answer from Bead:
+Every knob and fader you turn, a Controller turns, the Demo or the Tour turns gets an answer from Bead:
 
 - **Cutoff, Filter Envelope Amount, Key Track, Velocity:** it walks right as they open, left as they close.
 - **The Cutoff at its lowest:** Bead freezes into an ice cube, still and shivering. Open the Filter and it melts, dripping.

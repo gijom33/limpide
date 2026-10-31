@@ -56,7 +56,7 @@ const ANSWERS: Record<ParamId, Gesture | readonly [up: Gesture, down: Gesture]> 
 };
 
 /**
- * What the mascot does when the Patch changes (issue 115), by hand, a Controller, the Demo or a Tutorial: each knob or
+ * What the mascot does when the Patch changes (issue 115), by hand, a Controller, the Demo, a Tutorial or the Tour: each knob or
  * fader moved its own way, a glance for a choice (a Waveform, a Mode, a Destination), a funny turn on cue for the
  * Filter's Slope, an excited hop for a Preset loaded. The keyboard octave the octave buttons write is not a sound: nothing.
  */

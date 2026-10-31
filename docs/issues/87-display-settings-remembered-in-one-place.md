@@ -24,9 +24,9 @@
 - The Viewer settings store's saved state, and how the app reads and writes the letter keys, Tooltips and the theme
 
 **Acceptance criteria:**
-- [ ] `npx tsc`, `npm run lint`, `npx vitest run` and `npx playwright test` green, no Playwright test changed
-- [ ] One read-back-and-check helper; no copied parse code
-- [ ] A node test: settings saved under today's keys come back after the change
+- [x] `npx tsc`, `npm run lint`, `npx vitest run` and `npx playwright test` green, no Playwright test changed (on main after the night's merge, 2026-10-31; the one spec changed since, `inBetweenLayout.spec.ts`, was a timing race outside this issue)
+- [x] One read-back-and-check helper; no copied parse code
+- [x] A node test: settings saved under today's keys come back after the change
 
 **Out of scope:**
 - Remembering anything not remembered today

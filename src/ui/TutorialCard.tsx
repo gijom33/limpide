@@ -99,7 +99,7 @@ function useRing(step: Step | undefined, made: boolean, card: RefObject<HTMLElem
 
 /**
  * Where the keyboard's focus goes on the card (issue 104): to its way forward (Start) when a Tutorial is picked, after
- * the welcome or the panel it was picked from has put it back on their buttons; and there again when a button it was on
+ * the Tour's card, the header's list or the panel it was picked from has put it back on their buttons; and there again when a button it was on
  * goes (Back on the first card, "Do it for me" once the Step is made, Finish at the end: Done), never to the page. The
  * Tour's card does the same (issue 128); `opening` is what was picked.
  */

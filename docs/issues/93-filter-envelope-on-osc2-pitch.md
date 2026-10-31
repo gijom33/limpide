@@ -6,6 +6,8 @@
 
 **Status:** done (2026-10-29). An Env Amount knob in Osc 2's Tuning (−24 to +24 semitones) lets the Filter Envelope move Osc 2's pitch, in the sound and the model; the Poly Mod Zap Preset shows it. Not yet listened to by the owner.
 
+**Since then:** (2026-10-31, [issue 98](./98-osc2-pitch-moved-by-its-envelope.md)) the pulse keeps its width however Env Amount or an LFO moves Osc 2.
+
 ## Agent Brief
 
 **Category:** enhancement

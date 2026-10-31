@@ -36,7 +36,8 @@ const KEPT_IDEALS = 16;
 
 /**
  * The Ideal Reference at the Oscillator Tap's level: the same series the engine plays, scaled by the Nominal Level, at
- * the share of FM's depth the Note keeps (issue 103; to a thousandth, so a Note held reuses its Ideal every frame).
+ * the share of FM's depth the Note keeps (issue 103; to a thousandth, so a Note held reuses its Ideal every frame) and
+ * whether its Gate is on, Osc 2 resting where the Filter Envelope holds it (issue 98).
  */
 const idealOf = (patch: Patch): IdealAt => {
   const known = createCache<string, readonly IdealPartial[]>(KEPT_IDEALS);
