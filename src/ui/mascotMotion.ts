@@ -1,4 +1,6 @@
 import type { Gesture } from './mascotGestures';
+import type { Fling } from './mascotSpray';
+import { PICKED_TRICKS, TRICK_MOVES, type Trick } from './mascotTricks';
 
 /** What the mascot hears each frame, from the Modulation model (issue 115). */
 export interface Heard {
@@ -18,8 +20,8 @@ export interface Room {
 
 /** A pose and where it stands: the drawing's parts, and its place, hop, lean, stretch and fade. */
 export interface Pose {
-  /** A drop, or melting: a puddle, then a film. */
-  form: 'drop' | 'puddle' | 'film';
+  /** A drop; or smashed down: squashed, a puddle, spreading, then a film. */
+  form: 'drop' | 'squashed' | 'puddle' | 'spread' | 'film';
   /** Droplets thrown up over its head, or out to its sides. */
   splash: 'none' | 'up' | 'wide';
   legs: 'stand' | 'tuck' | 'walkA' | 'walkB';
@@ -39,6 +41,16 @@ export interface Pose {
   wag: number;
   /** Its opacity, 1 until a film fades. */
   fade: number;
+  /** Droplets to fling this frame (see `Fling`). */
+  burst: { count: number; spread: Fling } | null;
+  /** The funny turn it is doing, if any. */
+  doing: Trick | null;
+  /** Something it has for a trick: an umbrella on its head, or a glass of water beside it (full, half, empty). */
+  prop: 'none' | 'umbrella' | 'glassFull' | 'glassHalf' | 'glassEmpty';
+  /** A little rain cloud over it. */
+  cloud: boolean;
+  /** How far the glass has come up to its mouth and tipped, drinking (0 to 1). */
+  sip: number;
   /** Melted away: it can go. */
   gone: boolean;
 }
@@ -69,19 +81,28 @@ const SLIDE_PX = 40;
 export const GESTURE_SECONDS = 0.45;
 /** A blink's length. */
 const BLINK_SECONDS = 0.13;
-/** Leaving: the jump, the landing's splash, the puddle, then the film fading. */
-const JUMP_SECONDS = 0.35;
-const LEAP_PX = 14;
-const LAND_SECONDS = 0.15;
-const PUDDLE_SECONDS = 0.3;
-const FILM_SECONDS = 0.4;
-export const LEAVE_SECONDS = JUMP_SECONDS + LAND_SECONDS + PUDDLE_SECONDS + FILM_SECONDS;
+/**
+ * Leaving, smashing itself down: a crouch, a leap, a slam back down stretched long, then, at the smash, a burst of
+ * droplets, squashed flat, a puddle, the puddle spreading, and a film fading.
+ */
+const LEAVING = { crouch: 0.12, leap: 0.3, slam: 0.14, squashed: 0.06, puddle: 0.1, spread: 0.3, film: 0.3 } as const;
+export const LEAVE_SECONDS = Object.values(LEAVING).reduce((a, b) => a + b, 0);
+const LEAP_PX = 22;
+/** Droplets in the smash's burst. */
+const SMASH_DROPLETS = 14;
+/** Dancing to the music: each Note a step this long, in pixels, at this speed. */
+const DANCE_STEP: readonly [number, number] = [8, 18];
+const DANCE_SPEED = 170;
+
+/** A tickle lasts this long after the pointer last moved on it. */
+const TICKLE_SECONDS = 0.35;
 
 /** Its funny turns when nothing is played, and how long each lasts. */
-export const TRICKS = { shake: 0.9, bounce: 1, spin: 0.7, jiggle: 1, wag: 1.2, peek: 1.4, yawn: 1.6 } as const;
-export type Trick = keyof typeof TRICKS;
+/** Frightened at an end of its room, it scoots back this far. */
+const BACK_OFF_PX = 26;
+const lasting = (trick: Trick) => TRICK_MOVES[trick].seconds;
 /** How it strolls: a walk, a hop along, or a scoot; and their speeds, in pixels a second. */
-type Gait = 'walk' | 'hop' | 'scoot';
+type Gait = 'walk' | 'hop' | 'scoot' | 'dance' | 'trick';
 
 /** The eyes it shows in turn on each Note or gesture with reduced motion asked for. */
 const STILL_EYES: Pose['eyes'][] = ['left', 'open', 'right', 'happy'];
@@ -97,6 +118,11 @@ const resting: Omit<Pose, 'x'> = {
   turn: 1,
   wag: 0,
   fade: 1,
+  burst: null,
+  doing: null,
+  prop: 'none',
+  cloud: false,
+  sip: 0,
   gone: false,
 };
 
@@ -106,8 +132,9 @@ const resting: Omit<Pose, 'x'> = {
  * itself like a wet dog, turns round, bounces, jiggles, wags its tail, peeks, yawns); with nothing heard or turned for
  * `DOZE_SECONDS` it dozes, waking now and then. The sound moves it: a hop on each Note's start, a lean with the LFOs, a
  * stretch with the Amp's level, a splash when loud. So do the controls (`gesture`): a Cutoff turn walks it that way, an
- * Envelope fader stretches it, Resonance shivers it (see `gesturesOf`). Sent away (`leave`), it jumps, lands with a
- * splash and melts away. With reduced motion it never moves, changes pose only on a Note or a gesture, and goes at
+ * Envelope fader stretches it, Resonance shivers it (see `gesturesOf`). With music it dances along: each Note a step
+ * one way, now and then the other. Sent away (`leave`), it leaps and smashes itself down into a splash that spreads
+ * and fades. With reduced motion it never moves, changes pose only on a Note or a gesture, and goes at
  * once. `random` (0 to 1) is for the tests.
  */
 export function createMascotMotion(random: () => number = Math.random) {
@@ -122,8 +149,12 @@ export function createMascotMotion(random: () => number = Math.random) {
   let busySince = 0; // the last time it heard something or a control was turned
   let wakeUntil = -Infinity; // dozing, it wakes now and then until this
   let nextWake = Infinity;
-  let trick: { name: Trick; at: number; side: -1 | 1 } | null = null;
+  let trick: { name: Trick; at: number; side: -1 | 1; sprayed: number } | null = null;
   let leftAt: number | null = null;
+  let smashed = false;
+  let danceWay: -1 | 1 = 1;
+  let tickledUntil = -Infinity;
+  let lastRoom: Room | null = null;
   const started = new Map<Gesture, { at: number; side: -1 | 1 }>();
   // Reduced motion: the pose holds until a Note or a gesture.
   let heardNote: number | null = null;
@@ -134,11 +165,35 @@ export function createMascotMotion(random: () => number = Math.random) {
   const between = (a: number, b: number) => a + random() * (b - a);
   const side = (): -1 | 1 => (random() < 0.5 ? -1 : 1);
 
+  /** Starts a funny turn now; one that goes somewhere goes the way it has room for. */
+  const perform = (name: Trick, now: number) => {
+    let way = side();
+    const travel = (TRICK_MOVES[name] as { travel?: number }).travel;
+    if (travel && lastRoom) {
+      const { min, max } = lastRoom;
+      const clamp = (v: number) => Math.min(max, Math.max(min, v));
+      if (clamp((x ?? 0) + way * travel) === x) way = way > 0 ? -1 : 1;
+      target = clamp((x ?? 0) + way * travel);
+      speed = Math.abs(travel) / lasting(name);
+      gait = 'trick';
+    } else target = null;
+    trick = { name, at: now, side: way, sprayed: -Infinity };
+    nextIdea = now + lasting(name) + between(0.8, 2.5);
+  };
+
   const startGesture = (gesture: Gesture, now: number) => {
     const before = started.get(gesture);
     if (before && now - before.at < GESTURE_SECONDS) return;
     started.set(gesture, { at: now, side: side() });
     gestureCount++;
+    if (gesture === 'perform') {
+      // With nothing played for a while, a funny turn on cue; with music, a glance.
+      if (now - busySince >= LISTENING_SECONDS && leftAt === null) {
+        perform(PICKED_TRICKS[Math.floor(random() * PICKED_TRICKS.length)], now);
+        return;
+      }
+      gesture = 'look';
+    }
     if (gesture !== 'look') {
       busySince = now;
       trick = null;
@@ -163,12 +218,21 @@ export function createMascotMotion(random: () => number = Math.random) {
     leave(now: number) {
       leftAt ??= now;
     },
+    /** Tickled (a pointer over it), until a moment after the last call: it squirms and giggles. */
+    tickle(now: number) {
+      if (leftAt !== null) return;
+      tickledUntil = now + TICKLE_SECONDS;
+      busySince = now;
+      trick = null;
+      target = null;
+    },
     /** Put down at `at` (after a fall or a flight to another line): it carries on from there. */
     place(at: number) {
       x = at;
       target = null;
     },
     frame(heard: Heard, now: number, reduced: boolean, room: Room): Pose {
+      lastRoom = room;
       const clamp = (v: number) => Math.min(room.max, Math.max(room.min, v));
       const first = last === null;
       const dt = first ? 0 : Math.min(0.1, now - last!);
@@ -204,47 +268,75 @@ export function createMascotMotion(random: () => number = Math.random) {
         wakeUntil = now + between(6, 12);
         nextWake = Infinity;
         dozing = false;
-        trick = { name: 'yawn', at: now, side: side() };
-        nextIdea = now + TRICKS.yawn + between(0.5, 1.5);
+        trick = { name: 'yawn', at: now, side: side(), sprayed: -Infinity };
+        nextIdea = now + lasting('yawn') + between(0.5, 1.5);
       }
 
       if (leftAt !== null) {
         let t = now - leftAt;
         if (reduced || t >= LEAVE_SECONDS) return { ...resting, x, form: 'film', eyes: 'none', fade: 0, gone: true };
-        if (t < JUMP_SECONDS) return { ...resting, x, legs: 'tuck', eyes: 'happy', splash: 'up', lift: Math.sin((t / JUMP_SECONDS) * Math.PI) * LEAP_PX };
-        t -= JUMP_SECONDS;
-        if (t < LAND_SECONDS) return { ...resting, x, eyes: 'shut', splash: 'wide', stretch: 0.75 };
-        t -= LAND_SECONDS;
-        if (t < PUDDLE_SECONDS) return { ...resting, x, form: 'puddle', eyes: 'melted', splash: 'wide' };
-        t -= PUDDLE_SECONDS;
-        return { ...resting, x, form: 'film', eyes: 'none', fade: 1 - t / FILM_SECONDS };
+        const phase = (Object.keys(LEAVING) as (keyof typeof LEAVING)[]).find((k) => {
+          if (t < LEAVING[k]) return true;
+          t -= LEAVING[k];
+          return false;
+        })!;
+        const p = t / LEAVING[phase];
+        if (phase === 'crouch') return { ...resting, x, eyes: 'happy', stretch: 1 - 0.25 * Math.sin((p * Math.PI) / 2) };
+        if (phase === 'leap') return { ...resting, x, legs: 'tuck', eyes: 'happy', lift: LEAP_PX * (1 - (1 - p) ** 2), stretch: 1.12 };
+        if (phase === 'slam') return { ...resting, x, legs: 'tuck', eyes: 'shut', lift: LEAP_PX * (1 - p * p), stretch: 1.12 + 0.25 * p };
+        const burst = smashed ? null : { count: SMASH_DROPLETS, spread: 'up' as const };
+        smashed = true;
+        if (phase === 'squashed') return { ...resting, x, form: 'squashed', eyes: 'melted', splash: 'wide', burst };
+        if (phase === 'puddle') return { ...resting, x, form: 'puddle', eyes: 'melted', splash: 'wide', burst };
+        if (phase === 'spread') return { ...resting, x, form: 'spread', eyes: 'none', stretch: 1 - 0.3 * p, burst };
+        return { ...resting, x, form: 'film', eyes: 'none', stretch: 0.7, fade: 1 - p };
       }
 
       if (reduced) {
         target = null;
         if (struck || gestureCount !== seenGestures) still = { ...resting, eyes: STILL_EYES[stillCount++ % STILL_EYES.length] };
         seenGestures = gestureCount;
+        if (now < tickledUntil) return { ...still, eyes: 'happy', x };
         return { ...(dozing ? { ...still, eyes: 'shut' } : still), x };
       }
 
-      if (trick && now - trick.at >= TRICKS[trick.name]) trick = null;
+      if (trick && now - trick.at >= lasting(trick.name)) {
+        // Frightened at the edge, it scoots back from it.
+        if (trick.name === 'scared') {
+          target = clamp(x - trick.side * BACK_OFF_PX);
+          speed = 150;
+          gait = 'scoot';
+        }
+        trick = null;
+      }
       // What next, when it is free: a stroll, a glance, or (with nothing played) a funny turn.
       if (target === null && trick === null && !dozing && now >= nextIdea) {
         const roll = random();
         if (idle && roll < 0.35) {
-          const names = Object.keys(TRICKS) as Trick[];
-          trick = { name: names[Math.floor(random() * names.length)], at: now, side: side() };
-          nextIdea = now + TRICKS[trick.name] + between(0.8, 2.5);
+          perform(PICKED_TRICKS[Math.floor(random() * PICKED_TRICKS.length)], now);
         } else if (roll < (idle ? 0.45 : 0.25)) {
           startGesture('look', now);
           nextIdea = now + between(1, 3);
         } else {
-          target = room.min + random() * (room.max - room.min);
+          // A stroll somewhere along, or (one in three) right to an end, to look over the edge.
+          target = random() < 0.33 ? (random() < 0.5 ? room.min : room.max) : room.min + random() * (room.max - room.min);
           const style = random();
           gait = style < 0.6 ? 'walk' : style < 0.85 ? 'hop' : 'scoot';
           speed = gait === 'walk' ? between(28, 55) : gait === 'hop' ? 50 : 115;
           nextIdea = Infinity;
         }
+      }
+      // Dancing: with each Note a step along, one way, turning back at an end or now and then.
+      if (struck && !silent && (target === null || gait === 'dance')) {
+        if (random() < 0.2) danceWay = danceWay > 0 ? -1 : 1;
+        let step = danceWay * between(...DANCE_STEP);
+        if (clamp(x + step) !== x + step) {
+          danceWay = danceWay > 0 ? -1 : 1;
+          step = -step;
+        }
+        target = clamp(x + step);
+        speed = DANCE_SPEED;
+        gait = 'dance';
       }
       let walking: -1 | 0 | 1 = 0;
       if (target !== null) {
@@ -254,6 +346,12 @@ export function createMascotMotion(random: () => number = Math.random) {
           x = target;
           target = null;
           nextIdea = now + between(1, 3.5);
+          // At an end of its room, now and then it looks over the edge and takes fright.
+          const end = x - room.min < 2 ? -1 : room.max - x < 2 ? 1 : 0;
+          if (end && gait !== 'dance' && gait !== 'scoot' && gait !== 'trick' && room.max - room.min > 30 && random() < 0.5) {
+            trick = { name: 'scared', at: now, side: end, sprayed: -Infinity };
+            nextIdea = now + lasting('scared') + between(1, 2.5);
+          }
         } else {
           walking = away > 0 ? 1 : -1;
           x += walking * speed * dt;
@@ -282,7 +380,7 @@ export function createMascotMotion(random: () => number = Math.random) {
           const hop = Math.abs(Math.sin(now * Math.PI * 3)) * 5;
           pose.lift += hop;
           pose.legs = hop > 1 ? 'tuck' : 'stand';
-        } else if (gait !== 'slide' && pose.legs === 'stand') {
+        } else if (gait !== 'slide' && gait !== 'dance' && pose.legs === 'stand') {
           const steps = gait === 'scoot' ? STEP_SECONDS / 2 : STEP_SECONDS;
           const second = Math.floor(now / steps) % 2 === 1;
           pose.legs = second ? 'walkB' : 'walkA';
@@ -293,35 +391,29 @@ export function createMascotMotion(random: () => number = Math.random) {
       }
 
       if (trick) {
-        const p = (now - trick.at) / TRICKS[trick.name];
-        const arc = Math.sin(p * Math.PI);
-        if (trick.name === 'shake') {
-          // Like a wet dog: a shiver, droplets flying, eyes screwed shut.
-          pose.x += Math.sin(now * 2 * Math.PI * 18) * 2 * (1 - p);
-          pose.tilt += Math.sin(now * 2 * Math.PI * 9) * 6 * (1 - p);
-          pose.wag = Math.sin(now * 2 * Math.PI * 9) * 25 * (1 - p);
-          pose.eyes = 'shut';
-          if (p > 0.25 && p < 0.7) pose.splash = 'wide';
-        } else if (trick.name === 'bounce') {
-          const hop = Math.abs(Math.sin(p * Math.PI * 3)) * 8 * (1 - 0.5 * p);
-          pose.lift += hop;
-          pose.legs = hop > 1 ? 'tuck' : 'stand';
-          pose.eyes = 'happy';
-        } else if (trick.name === 'spin') {
-          pose.turn = Math.cos(p * 2 * Math.PI);
-          pose.eyes = 'happy';
-        } else if (trick.name === 'jiggle') {
-          pose.stretch *= 1 + 0.18 * Math.sin(p * 10 * Math.PI) * (1 - p);
-        } else if (trick.name === 'wag') {
-          pose.wag = Math.sin(p * 8 * Math.PI) * 30 * (1 - 0.3 * p);
-          pose.eyes = 'happy';
-        } else if (trick.name === 'peek') {
-          pose.tilt += trick.side * 18 * arc;
-          pose.eyes = trick.side > 0 ? 'right' : 'left';
-        } else if (trick.name === 'yawn') {
-          pose.stretch *= 1 + 0.2 * arc;
-          pose.eyes = 'shut';
-        }
+        const doing = trick;
+        pose.doing = doing.name;
+        TRICK_MOVES[doing.name].move(pose, (now - doing.at) / lasting(doing.name), {
+          now,
+          side: doing.side,
+          spray(count, spread, every) {
+            if (now - doing.sprayed < every) return;
+            if (every === Infinity && doing.sprayed > -Infinity) return;
+            pose.burst = { count, spread };
+            doing.sprayed = now;
+          },
+        });
+      }
+
+      if (now < tickledUntil) {
+        // Squirming and giggling: a quick wiggle, little hops, its tail going, its feet everywhere.
+        const w = 2 * Math.PI * now;
+        pose.eyes = 'happy';
+        pose.tilt += Math.sin(w * 7) * 10;
+        pose.lift += Math.abs(Math.sin(w * 5)) * 3;
+        pose.stretch *= 1 + 0.08 * Math.sin(w * 9);
+        pose.wag = Math.sin(w * 8) * 30;
+        pose.legs = Math.floor(now / 0.06) % 2 ? 'walkA' : 'walkB';
       }
 
       for (const [gesture, { at, side }] of started) {

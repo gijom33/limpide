@@ -800,10 +800,40 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 :root[data-theme='light'] .mascot { --mascot-body: #2b8fd6; --mascot-shine: #ffffff; }
 /* It stands at the box's foot, and leans about the drop's foot, not the tail's. */
 .mascot-drop { position: absolute; bottom: 0; left: 0; transform-origin: 20% 100%; }
+/* Its own pixels take the pointer, to be tickled and poked; the box around them lets it through. */
+.mascot-drop rect { pointer-events: visiblePainted; }
+/* Its droplets, in the page's pixels. */
+.mascot-spray { position: absolute; left: 0; top: 0; width: 1px; height: 1px; overflow: visible; z-index: 5; pointer-events: none; fill: var(--mascot-body); }
+:root .mascot-spray { --mascot-body: #6cc8f0; }
+:root[data-theme='light'] .mascot-spray { --mascot-body: #2b8fd6; }
 .mascot svg { display: block; overflow: visible; }
 .mascot-body { fill: var(--mascot-body); }
 .mascot-shine { fill: var(--mascot-shine); }
 .mascot-eyes { fill: var(--mascot-eye); }
+/* Its props: an umbrella in the Amp's purple, a glass and a grey cloud; still, beside the drop. */
+.mascot-props { position: absolute; bottom: 0; left: 0; overflow: visible; }
+.mascot-umbrella { fill: var(--stage-amp); }
+.mascot-handle { fill: var(--muted); }
+.mascot-cloud { fill: color-mix(in srgb, var(--muted) 70%, var(--panel)); }
+/* Bead's switch in Display: its picture there while on; turned off, it melts away, and pops back on. */
+.bead-switch { display: flex; align-items: center; gap: var(--space-2); }
+.bead-icon { --mascot-body: #6cc8f0; --mascot-shine: #e8f8ff; --mascot-eye: #14161b; transform-origin: 20% 100%; }
+:root[data-theme='light'] .bead-icon { --mascot-body: #2b8fd6; --mascot-shine: #ffffff; }
+.bead-icon[data-state='melting'] { animation: bead-melt 0.6s ease-in forwards; }
+.bead-icon[data-state='gone'] { opacity: 0; }
+.bead-icon[data-state='popping'] { animation: bead-pop 0.4s ease-out; }
+@keyframes bead-melt {
+  0% { transform: none; opacity: 1; }
+  30% { transform: translateY(-5px) scale(0.9, 1.12); opacity: 1; }
+  55% { transform: scale(1.5, 0.35); opacity: 1; }
+  100% { transform: scale(2, 0.1); opacity: 0; }
+}
+@keyframes bead-pop {
+  0% { transform: scale(0.3, 0.3); opacity: 0; }
+  60% { transform: scale(1.1, 1.1); opacity: 1; }
+  100% { transform: none; }
+}
+@media (prefers-reduced-motion: reduce) { .bead-icon { animation: none !important; } .bead-icon[data-state='melting'] { opacity: 0; } }
 /* Until sound starts (the browser waits for the page to be used), a label over the keys invites a first Note: a key
    on the computer keyboard or the piano ("tap" on touch screens). It lets presses through to the keys, and takes
    no room, so nothing moves when it goes. It fades in after a moment: a browser that allows sound switches it on

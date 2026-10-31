@@ -28,6 +28,7 @@ describe("the mascot's answer to a control turned (issue 115)", () => {
     expect(turned({ lfo2Rate: 9 })).toEqual(['twirl']);
     expect(turned({ glide: 0.4 })).toEqual(['slide']);
     expect(turned({ waveform: 'square', filterMode: 'highpass' })).toEqual(['look']);
+    expect(turned({ filterSlope: 24 })).toEqual(['perform']);
     expect(turned({ cutoff: 300, resonance: 0.9 }, 'load')).toEqual(['new']);
   });
 

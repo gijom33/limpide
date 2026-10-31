@@ -1,10 +1,11 @@
-import { useContext, useEffect, useRef } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { lfos } from '../patch/patch';
 import type { PatchStore } from '../patch/patchStore';
 import { addToRenderLoop } from '../viewers/renderLoop';
 import { gesturesOf } from './mascotGestures';
 import { createMascotMotion, type Pose, type Room } from './mascotMotion';
 import { choosePerch, createMascotPlace, type Moving, type Perch } from './mascotPlace';
+import { createSpray, MOST_DROPLETS } from './mascotSpray';
 import { ModulationContext } from './modulationRing';
 import { SECTIONS } from './sections';
 
@@ -25,8 +26,10 @@ const TAIL: Record<'osc' | 'filter' | 'amp' | 'mod', Rect[]> = {
 const PARTS = {
   form: {
     drop: [[4, 0, 1, 2], [3, 2, 3, 2], [2, 4, 5, 1], [1, 5, 7, 2], [0, 7, 9, 3], [1, 10, 7, 1], [2, 11, 5, 1]],
+    squashed: [[2, 8, 5, 1], [0, 9, 9, 3], [1, 12, 7, 1]],
     puddle: [[1, 10, 7, 1], [0, 11, 9, 2]],
-    film: [[0, 12, 10, 1]],
+    spread: [[0, 11, 9, 1], [-2, 12, 13, 1]],
+    film: [[-3, 12, 15, 1]],
   },
   splash: {
     none: [],
@@ -46,6 +49,15 @@ const PARTS = {
 } satisfies { [P in 'form' | 'splash' | 'legs' | 'eyes']: Record<Pose[P], Rect[]> };
 type Part = keyof typeof PARTS;
 
+/** Its props, on the same grid: an umbrella balanced on the tip of its head, a glass beside it, a cloud above. */
+const UMBRELLA = {
+  canopy: [[4, -9, 1, 1], [3, -8, 3, 1], [1, -7, 7, 1], [0, -6, 9, 1], [0, -5, 1, 1], [2, -5, 1, 1], [4, -5, 1, 1], [6, -5, 1, 1], [8, -5, 1, 1]],
+  handle: [[4, -4, 1, 4]],
+} satisfies Record<string, Rect[]>;
+const GLASS: Rect[] = [[-7, 5, 1, 8], [-3, 5, 1, 8], [-6, 12, 3, 1]];
+const WATER = { glassFull: [[-6, 6, 3, 6]], glassHalf: [[-6, 9, 3, 3]], glassEmpty: [] } satisfies Record<string, Rect[]>;
+const CLOUD: Rect[] = [[2, -16, 4, 1], [0, -15, 8, 1], [-1, -14, 11, 2], [0, -12, 9, 1]];
+
 /** Its size on screen: 2 px a square of the grid. */
 const WIDTH = 44;
 const HEIGHT = 26;
@@ -53,6 +65,9 @@ const HEIGHT = 26;
 const HEADROOM = 18;
 /** How long it takes to come up from behind its edge, or down from under the header. */
 export const RISE_SECONDS = 0.4;
+/** The drop's middle from its box's left, and its tail's length turned down under it, in pixels. */
+const DROP_MIDDLE = 9;
+const TAIL_LENGTH = 26;
 /** Phones and the sections 2 × 2 (the stylesheet's breakpoint): it keeps in view as the page scrolls. */
 const STACKED = '(max-width: 860px)';
 
@@ -90,11 +105,55 @@ function roomOn(section: DOMRect): Room {
   return { min: best, max };
 }
 
+/** Its droplets on their layer: a pixel of the drawing each, fading as they end. */
+function drawDroplets(layer: SVGSVGElement, droplets: readonly { x: number; y: number; age: number; life: number }[]) {
+  const dots = layer.children;
+  for (let i = 0; i < dots.length; i++) {
+    const dot = dots[i] as SVGRectElement;
+    const d = droplets[i];
+    if (!d) {
+      if (dot.style.display !== 'none') dot.style.display = 'none';
+      continue;
+    }
+    dot.style.display = '';
+    dot.setAttribute('x', String(Math.round(d.x - 1)));
+    dot.setAttribute('y', String(Math.round(d.y - 1)));
+    dot.style.opacity = String(Math.min(1, (1 - d.age / d.life) * 3));
+  }
+}
+
 /** The four sections on the page, by name, where shown. */
 const sectionBoxes = () =>
   SECTIONS.map(({ name }) => ({ id: name as string, box: document.querySelector(`section[aria-label="${name}"]`)?.getBoundingClientRect() })).filter(
     (s): s is { id: string; box: DOMRect } => !!s.box && s.box.width > 0,
   );
+
+/**
+ * Bead as a little picture, still, for its switch in Display (issue 115): there while it is on; turned off, it melts
+ * away as Bead does, and comes back with a pop.
+ */
+export function BeadIcon({ on }: { on: boolean }) {
+  // Melting or popping only when switched, not when Display opens.
+  const [state, setState] = useState<'on' | 'popping' | 'melting' | 'gone'>(on ? 'on' : 'gone');
+  const was = useRef(on);
+  useEffect(() => {
+    if (was.current === on) return;
+    was.current = on;
+    setState(on ? 'popping' : 'melting');
+  }, [on]);
+  return (
+    <svg className="bead-icon" data-state={state} viewBox="0 0 22 13" width={33} height={20} shapeRendering="crispEdges" aria-hidden="true">
+      {(Object.keys(TAIL) as (keyof typeof TAIL)[]).map((stage) => (
+        <g key={stage} style={{ fill: `var(--stage-${stage})` }}>
+          {rects(TAIL[stage])}
+        </g>
+      ))}
+      <g className="mascot-body">{rects(PARTS.form.drop)}</g>
+      <g className="mascot-shine">{rects(SHINE)}</g>
+      <g className="mascot-eyes">{rects(PARTS.eyes.open)}</g>
+    </svg>
+  );
+}
 
 /**
  * The mascot (issue 115), called by B, E, A, D, as in a bead of water: a water drop trailing the Limpide logo. In
@@ -115,6 +174,13 @@ export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leav
   const drop = useRef<HTMLDivElement>(null);
   const parts = useRef(new Map<string, SVGGElement>());
   const tail = useRef<SVGGElement>(null);
+  const spray = useRef<SVGSVGElement>(null);
+  const umbrella = useRef<SVGGElement>(null);
+  const glass = useRef<SVGGElement>(null);
+  const water = useRef(new Map<string, SVGGElement>());
+  const cloud = useRef<SVGGElement>(null);
+  // A pointer on it tickles it; a click or a touch sends droplets every way (set up with the drawing below).
+  const touched = useRef<{ tickle(): void; poke(): void } | null>(null);
   const leavingRef = useRef(leaving);
   leavingRef.current = leaving;
   const goneRef = useRef(onGone);
@@ -139,6 +205,22 @@ export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leav
     let moving: Moving = 'standing';
     let leaveBy: 'melt' | 'rain' | null = null;
     let room: { key: string; room: Room } | null = null;
+    const between = (a: number, b: number) => a + Math.random() * (b - a);
+    // Three or four across: a visit to another section now and then.
+    let visit: { id: string; until: number } | null = null;
+    let nextVisit = context.engine.now() + between(15, 35);
+    const droplets = createSpray();
+    let lastExhaust = -Infinity;
+    // Where its middle is in the page, for droplets flung by a click.
+    let middle = { x: 0, y: 0 };
+    touched.current = {
+      tickle: () => motion.tickle(context.engine.now()),
+      poke: () => {
+        motion.tickle(context.engine.now());
+        motion.gesture('louder', context.engine.now());
+        droplets.fling(9, middle.x, middle.y, 'all');
+      },
+    };
     const stopDrawing = addToRenderLoop(() => {
       const outer = frame.current!;
       const seconds = performance.now() / 1000;
@@ -152,9 +234,20 @@ export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leav
       let on: { id: string; box: DOMRect };
       if (!stacked.matches) {
         const top = Math.min(...sections.map((s) => s.box.top));
-        const right = sections.filter((s) => s.box.top - top < 4).reduce((a, b) => (b.box.right > a.box.right ? b : a));
-        perch = { id: right.id, foot: right.box.top, hanging: false };
-        on = right;
+        const home = sections.filter((s) => s.box.top - top < 4).reduce((a, b) => (b.box.right > a.box.right ? b : a));
+        // Now and then a visit to another section in view: down to one below, or across to one beside; then home.
+        const inView = (s: { box: DOMRect }) => s.box.top - HEIGHT - HEADROOM >= 0 && s.box.top <= innerHeight - 4;
+        if (visit && (now >= visit.until || !sections.some((s) => s.id === visit!.id && inView(s)))) {
+          visit = null;
+          nextVisit = now + between(20, 40);
+        }
+        if (!visit && now >= nextVisit && !still.matches && leaveBy === null && moving === 'standing') {
+          const away = sections.filter((s) => s.id !== home.id && inView(s));
+          if (away.length) visit = { id: away[Math.floor(Math.random() * away.length)].id, until: now + between(8, 18) };
+          else nextVisit = now + between(10, 20);
+        }
+        on = sections.find((s) => s.id === visit?.id) ?? home;
+        perch = { id: on.id, foot: on.box.top, hanging: false };
       } else {
         const rightmost = Math.max(...sections.map((s) => s.box.right));
         const column = sections.filter((s) => rightmost - s.box.right < 4).sort((a, b) => a.box.top - b.box.top);
@@ -205,10 +298,14 @@ export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leav
         const speed = Math.max(0, where.vy);
         Object.assign(pose, { legs: 'tuck', splash: 'none', lift: 0, tilt: across, turn: 1, eyes: where.vy < 0 ? 'happy' : 'open' });
         pose.stretch = where.vy < 0 ? 0.92 : 1 + Math.min(0.35, speed / 1600);
+      } else if (where.moving === 'flying' && where.windup < 1) {
+        // Crouching, its tail swinging round and down under it.
+        Object.assign(pose, { legs: 'stand', splash: 'none', lift: 0, tilt: 0, turn: 1, eyes: 'happy', stretch: 1 - 0.15 * where.windup });
+        tailTurn = 90 * where.windup;
       } else if (where.moving === 'flying') {
         Object.assign(pose, { legs: 'tuck', splash: 'none', lift: 0, tilt: across, turn: 1, eyes: where.thrust ? 'happy' : 'open' });
         pose.stretch = 1 + Math.min(0.2, Math.abs(where.vy) / 2600);
-        // Its tail under it, spinning while it pushes, swinging back up as it coasts.
+        // Its tail straight down under it, whirling while it pushes, swinging back up as it coasts.
         tailTurn = where.thrust ? 90 + Math.sin(now * 2 * Math.PI * 12) * 22 : Math.max(0, Math.min(90, -where.vy / 6));
       } else if (where.moving === 'landing' && leaveBy !== 'melt') {
         // Squashed as hard as it hit, then a wobble that dies away, like a drop of jelly.
@@ -216,7 +313,7 @@ export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leav
         const wobble = Math.exp(-5 * p) * Math.cos(16 * p);
         Object.assign(pose, { legs: 'stand', lift: 0, turn: 1 });
         pose.stretch = 1 - 0.4 * where.impact * wobble;
-        pose.splash = p < 0.3 && where.impact > 0.25 ? 'wide' : p < 0.2 && where.impact > 0.1 ? 'up' : 'none';
+        pose.splash = p < 0.3 ? 'wide' : 'none';
         pose.eyes = p < 0.15 ? 'shut' : where.impact > 0.5 && p < 0.55 ? 'happy' : pose.eyes;
       }
 
@@ -226,12 +323,47 @@ export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leav
         parts.current.get(`${part} ${pose[part]}`)!.style.display = '';
       }
       if (shown?.form !== pose.form) tail.current!.style.display = pose.form === 'drop' ? '' : 'none';
+      // Turned down, the tail leaves from under the drop's middle rather than its side.
+      const under = Math.min(1, tailTurn / 90);
       const turnTail = tailTurn + pose.wag;
-      tail.current!.setAttribute('transform', turnTail ? `rotate(${turnTail} 9 9)` : '');
+      tail.current!.setAttribute('transform', turnTail ? `translate(${-4.5 * under} ${3 * under}) rotate(${turnTail} 9 9)` : '');
       shown = pose;
 
       const page = (outer.offsetParent ?? document.body).getBoundingClientRect();
-      outer.style.transform = `translate(${(where.x ?? pose.x) - page.left}px, ${where.foot - HEIGHT - HEADROOM - page.top}px)`;
+      const left = (where.x ?? pose.x) - page.left;
+      const ground = where.foot - page.top;
+      outer.style.transform = `translate(${left}px, ${ground - HEIGHT - HEADROOM}px)`;
+      // Its droplets, in the page: a splash as it lands (harder, more), its smash, its shake, its tail's spray.
+      const base = { x: left + DROP_MIDDLE, y: ground };
+      middle = { x: base.x, y: ground - HEIGHT / 2 - pose.lift };
+      if (where.landedAt !== null && where.moving === 'landing') droplets.fling(5 + Math.round(9 * where.impact), base.x, base.y, 'up', where.impact);
+      if (pose.burst) {
+        const { count, spread: fling } = pose.burst;
+        if (fling === 'rain') {
+          // From the cloud; on the umbrella, if it is up and the drop falls on it, else down to the edge.
+          for (let i = 0; i < count; i++) {
+            const at = left + Math.random() * 20 - 2;
+            const onUmbrella = pose.prop === 'umbrella' && at >= left - 1 && at <= left + 19;
+            droplets.fling(1, at, ground - HEIGHT - 22, 'rain', 0.5, onUmbrella ? ground - HEIGHT - 18 - pose.lift : ground);
+          }
+        } else {
+          const from = fling === 'up' || fling === 'drip' ? base.y : fling === 'spout' ? ground - HEIGHT - pose.lift : middle.y;
+          droplets.fling(count, base.x, from, fling, 1);
+        }
+      }
+      // Its props: shown as the trick has them.
+      umbrella.current!.style.display = pose.prop === 'umbrella' ? '' : 'none';
+      const glassy = pose.prop.startsWith('glass');
+      glass.current!.style.display = glassy ? '' : 'none';
+      // Lifted to its mouth and tipped toward it, about the glass's rim on the drop's side.
+      glass.current!.setAttribute('transform', pose.sip ? `translate(${4 * pose.sip} ${-2.5 * pose.sip}) rotate(${55 * pose.sip} -3 5)` : '');
+      for (const [level, g] of water.current) g.style.display = level === pose.prop ? '' : 'none';
+      cloud.current!.style.display = pose.cloud ? '' : 'none';
+      if (where.moving === 'flying' && where.thrust && now - lastExhaust > 0.035) {
+        droplets.fling(1, base.x, ground + TAIL_LENGTH, 'down');
+        lastExhaust = now;
+      }
+      drawDroplets(spray.current!, droplets.step(dt));
       // Coming into view: up from behind its edge (fast for a pop, then a hop), down from under the header, or, falling
       // from the top of the window, all at once.
       comingFrom ??= perch.hanging ? 'header' : arrival === 'rain' ? 'sky' : 'edge';
@@ -253,8 +385,21 @@ export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leav
   }, [context, patches]);
 
   return (
+    <>
+    <svg ref={spray} className="mascot-spray" aria-hidden="true" shapeRendering="crispEdges">
+      {Array.from({ length: MOST_DROPLETS }, (_, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: a fixed set of droplets, reused by position
+        <rect key={i} width={2} height={2} style={{ display: 'none' }} />
+      ))}
+    </svg>
     <div ref={frame} className="mascot" aria-hidden="true" style={{ width: WIDTH, height: HEIGHT + HEADROOM }}>
-      <div ref={drop} className="mascot-drop" style={{ transform: `translateY(${HEIGHT}px)` }}>
+      <div
+        ref={drop}
+        className="mascot-drop"
+        style={{ transform: `translateY(${HEIGHT}px)` }}
+        onPointerMove={(e) => e.pointerType === 'mouse' && touched.current?.tickle()}
+        onPointerDown={() => touched.current?.poke()}
+      >
         <svg viewBox="0 0 22 13" width={WIDTH} height={HEIGHT} shapeRendering="crispEdges">
           <g ref={tail}>
             {(Object.keys(TAIL) as (keyof typeof TAIL)[]).map((stage) => (
@@ -276,8 +421,31 @@ export function Mascot({ patches, leaving, onGone }: { patches: PatchStore; leav
               </g>
             )),
           )}
+          <g ref={umbrella} style={{ display: 'none' }}>
+            <g className="mascot-umbrella">{rects(UMBRELLA.canopy)}</g>
+            <g className="mascot-handle">{rects(UMBRELLA.handle)}</g>
+          </g>
         </svg>
       </div>
+      <svg className="mascot-props" viewBox="0 0 22 13" width={WIDTH} height={HEIGHT} shapeRendering="crispEdges">
+        <g ref={cloud} className="mascot-cloud" style={{ display: 'none' }}>
+          {rects(CLOUD)}
+        </g>
+        <g ref={glass} style={{ display: 'none' }}>
+          {Object.entries(WATER).map(([level, list]) => (
+            <g
+              key={level}
+              ref={(g) => void (g ? water.current.set(level, g) : water.current.delete(level))}
+              className="mascot-body"
+              style={{ display: 'none' }}
+            >
+              {rects(list)}
+            </g>
+          ))}
+          <g className="mascot-handle">{rects(GLASS)}</g>
+        </g>
+      </svg>
     </div>
+    </>
   );
 }

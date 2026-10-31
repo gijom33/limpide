@@ -15,6 +15,7 @@ export type Gesture =
   | 'twirl' // wiggles
   | 'slide' // slides along without stepping
   | 'look' // glances aside
+  | 'perform' // with nothing played for a while, a funny turn; else a glance
   | 'new'; // a Preset loaded: an excited hop
 
 /** Each knob and fader's answer: one gesture either way, or one for up and one for down. */
@@ -55,8 +56,8 @@ const ANSWERS: Record<ParamId, Gesture | readonly [up: Gesture, down: Gesture]> 
 
 /**
  * What the mascot does when the Patch changes (issue 115), by hand, a Controller, the Demo or a Tutorial: each knob or
- * fader moved its own way, a glance for a choice (a Waveform, a Mode, a Destination), an excited hop for a Preset
- * loaded. The keyboard octave the octave buttons write is not a sound: nothing.
+ * fader moved its own way, a glance for a choice (a Waveform, a Mode, a Destination), a funny turn on cue for the
+ * Filter's Slope, an excited hop for a Preset loaded. The keyboard octave the octave buttons write is not a sound: nothing.
  */
 export function gesturesOf(before: Patch, after: Patch, by: ChangeBy): Gesture[] {
   if (by === 'load') return ['new'];
@@ -64,7 +65,9 @@ export function gesturesOf(before: Patch, after: Patch, by: ChangeBy): Gesture[]
   for (const field of Object.keys(after) as (keyof Patch)[]) {
     if (before[field] === after[field] || field === 'keyboardOctave') continue;
     const answer = ANSWERS[field as ParamId];
-    if (answer === undefined) gestures.add('look');
+    // The Filter's Slope cues a funny turn (the owner's, 2026-10-30).
+    if (field === 'filterSlope') gestures.add('perform');
+    else if (answer === undefined) gestures.add('look');
     else if (typeof answer === 'string') gestures.add(answer);
     else gestures.add((after[field] as number) > (before[field] as number) ? answer[0] : answer[1]);
   }

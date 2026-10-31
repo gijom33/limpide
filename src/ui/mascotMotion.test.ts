@@ -92,18 +92,24 @@ describe("the mascot's own life (issue 115)", () => {
     expect(Math.max(...xs) - Math.min(...xs)).toBeGreaterThan(40);
   });
 
-  it('with nothing played, does funny turns: shaking, turning round, bouncing, wagging…', () => {
-    const tricks = new Set<string>();
-    for (const seed of [1, 2, 3, 4]) {
-      for (const p of run(createMascotMotion(seeded(seed)), 0, DOZE_SECONDS - 0.5, quiet, spot)) {
-        if (p.splash === 'wide') tricks.add('shake');
-        if (p.turn < 0) tricks.add('spin');
-        if (p.lift > 3) tricks.add('bounce');
-        if (Math.abs(p.wag) > 10 && p.eyes === 'happy') tricks.add('wag');
-        if (Math.abs(p.tilt) > 12) tricks.add('peek');
-      }
+  it('with nothing played, does many funny turns, at random', () => {
+    const seen = new Set<string>();
+    for (const seed of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]) {
+      for (const p of run(createMascotMotion(seeded(seed)), 0, DOZE_SECONDS - 0.5, quiet)) if (p.doing) seen.add(p.doing);
     }
-    expect(tricks.size).toBeGreaterThanOrEqual(4);
+    expect(seen.size).toBeGreaterThanOrEqual(12);
+  });
+
+  it('the Filter Slope cues a funny turn when nothing has been played for a while, and a glance with music', () => {
+    const motion = createMascotMotion(seeded(3));
+    motion.frame(quiet, 0, false, wide);
+    motion.frame(quiet, 4, false, wide);
+    motion.gesture('perform', 4);
+    expect(motion.frame(quiet, 4.05, false, wide).doing).not.toBeNull();
+    const busy = createMascotMotion(seeded(3));
+    busy.frame(playing, 0, false, wide);
+    busy.gesture('perform', 0.5);
+    expect(busy.frame(playing, 0.55, false, wide).doing).toBeNull();
   });
 
   it('keeps its tricks for when nothing is played: with music it listens', () => {
@@ -171,15 +177,65 @@ describe("the mascot's answers to the controls (issue 115)", () => {
   });
 });
 
+describe('the mascot dancing, tickled and frightened (issue 115)', () => {
+  it('dances along with the music, a step each Note, turning back at the ends', () => {
+    const motion = createMascotMotion(seeded(4));
+    const poses: Pose[] = [];
+    for (let t = 0; t <= 8; t += 1 / 60) poses.push(motion.frame({ amp: 0.6, sway: 0, struck: Math.floor(t / 0.25) * 0.25 }, t, false, wide));
+    const xs = poses.map((p) => p.x);
+    expect(Math.max(...xs) - Math.min(...xs)).toBeGreaterThan(80);
+    expect(Math.min(...xs)).toBeGreaterThanOrEqual(0);
+    expect(Math.max(...xs)).toBeLessThanOrEqual(200);
+  });
+
+  it('tickled, squirms and giggles where it is, and stops soon after', () => {
+    const motion = createMascotMotion(() => 0.5);
+    motion.frame(quiet, 0, false, wide);
+    const poses: Pose[] = [];
+    for (let t = 0.5; t <= 1.5; t += 1 / 60) {
+      motion.tickle(t);
+      poses.push(motion.frame(quiet, t, false, wide));
+    }
+    expect(poses.every((p) => p.eyes === 'happy')).toBe(true);
+    expect(Math.max(...poses.map((p) => p.tilt)) - Math.min(...poses.map((p) => p.tilt))).toBeGreaterThan(10);
+    expect(new Set(poses.map((p) => p.x)).size).toBe(1);
+    expect(motion.frame(quiet, 2, false, wide).eyes).not.toBe('happy');
+  });
+
+  it('now and then, at an end of its room, looks over the edge, takes fright and scoots back', () => {
+    let frightened = 0;
+    for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
+      const motion = createMascotMotion(seeded(seed));
+      const poses = run(motion, 0, 19, playing, { min: 0, max: 60 });
+      // A fright: eyes shut, a nervous droplet, at an end; then it is back from that end.
+      const fright = poses.findIndex((p) => p.burst?.spread === 'side' && (p.x < 3 || p.x > 57));
+      if (fright < 0) continue;
+      frightened++;
+      const end = poses[fright].x < 30 ? 0 : 60;
+      expect(Math.abs(poses[Math.min(poses.length - 1, fright + 45)].x - end)).toBeGreaterThan(15);
+    }
+    expect(frightened).toBeGreaterThan(1);
+  });
+});
+
 describe('the mascot leaving (issue 115)', () => {
-  it('jumps, lands with a splash, melts to a puddle, then a film that fades, then is gone', () => {
+  it('crouches, leaps, slams back down stretched long, and smashes into a burst, a puddle that spreads, a film', () => {
     const motion = createMascotMotion(() => 0.5);
     motion.frame(playing, 0, false, spot);
     motion.leave(1);
     const poses = run(motion, 1, 1 + LEAVE_SECONDS + 0.05, playing, spot);
-    expect(Math.max(...poses.map((p) => p.lift))).toBeGreaterThan(10);
-    const forms = poses.map((p) => `${p.form} ${p.splash}`).filter((f, i, all) => f !== all[i - 1]);
-    expect(forms).toEqual(['drop up', 'drop wide', 'puddle wide', 'film none']);
+    expect(poses[3].stretch).toBeLessThan(0.9); // the crouch
+    const top = poses.findIndex((p) => p.lift === Math.max(...poses.map((q) => q.lift)));
+    expect(poses[top].lift).toBeGreaterThan(18);
+    // Coming down it speeds up and stretches long.
+    const slam = poses.slice(top, poses.findIndex((p) => p.form !== 'drop'));
+    expect(slam.at(-1)!.stretch).toBeGreaterThan(1.3);
+    expect(slam.at(-2)!.lift - slam.at(-1)!.lift).toBeGreaterThan(slam[1].lift - slam[2].lift);
+    const forms = poses.map((p) => p.form).filter((f, i, all) => f !== all[i - 1]);
+    expect(forms).toEqual(['drop', 'squashed', 'puddle', 'spread', 'film']);
+    const bursts = poses.filter((p) => p.burst);
+    expect(bursts).toHaveLength(1);
+    expect(bursts[0].burst).toEqual({ count: 14, spread: 'up' });
     const film = poses.filter((p) => p.form === 'film' && !p.gone);
     expect(film[0].fade).toBeGreaterThan(film.at(-1)!.fade);
     expect(poses.at(-1)!.gone).toBe(true);

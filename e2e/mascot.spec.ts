@@ -1,4 +1,5 @@
 import { expect, type Page, test } from '@playwright/test';
+import { openDisplay } from './helpers';
 
 // The mascot (issue 115): B, E, A, D played by hand, as in a bead of water, calls it up from behind the top right
 // section, and again sends it away, melting. In three and four across it lives on that section's top edge, along the
@@ -222,4 +223,59 @@ test('it adds under a millisecond to each frame the Viewers draw (their own runs
   await expect(mascot(page)).toHaveCount(1);
   const shown = Math.min(await perFrame(), await perFrame());
   expect(shown - without).toBeLessThan(1);
+});
+
+test('once met, Display has a Bead switch: off, it melts and the Notes do nothing, remembered; on brings it up', async ({ page }) => {
+  await page.goto('/');
+  await listening(page);
+  await openDisplay(page);
+  await expect(page.getByRole('radiogroup', { name: 'Bead', exact: true })).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await play(page, 'jdhs');
+  await expect(mascot(page)).toHaveCount(1);
+  await openDisplay(page);
+  const bead = page.getByRole('radiogroup', { name: 'Bead', exact: true });
+  await expect(bead.getByRole('radio', { name: 'Bead on' })).toHaveAttribute('aria-checked', 'true');
+  await expect(page.locator('.bead-icon')).toHaveAttribute('data-state', 'on');
+  await bead.getByRole('radio', { name: 'Bead off' }).click();
+  await expect(page.locator('.bead-icon')).toHaveAttribute('data-state', 'melting');
+  await expect(mascot(page)).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await play(page, 'jdhs');
+  await page.waitForTimeout(500);
+  await expect(mascot(page)).toHaveCount(0);
+  await page.reload();
+  await listening(page);
+  await play(page, 'jdhs');
+  await page.waitForTimeout(500);
+  await expect(mascot(page)).toHaveCount(0);
+  await openDisplay(page);
+  await expect(page.locator('.bead-icon')).toHaveAttribute('data-state', 'gone');
+  await bead.getByRole('radio', { name: 'Bead on' }).click();
+  await expect(mascot(page)).toHaveCount(1);
+  await expect(page.locator('.bead-icon')).toHaveAttribute('data-state', 'popping');
+});
+
+test('a pointer over it tickles it; a click sends tiny drops every way', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  await listening(page);
+  await play(page, 'jdhs');
+  await expect.poll(async () => Math.abs((await footing(page)).below) <= 1).toBe(true);
+  // Its middle, on its own pixels.
+  const middle = async () => {
+    const box = (await page.locator('.mascot-drop').boundingBox())!;
+    return { x: box.x + 9, y: box.y + box.height - 8 };
+  };
+  const at = await middle();
+  const tilts: number[] = [];
+  for (let i = 0; i < 12; i++) {
+    await page.mouse.move(at.x + (i % 2), at.y);
+    tilts.push(await page.locator('.mascot-drop').evaluate((el) => Number(el.style.transform.match(/rotate\(([-\d.]+)deg/)![1])));
+    await page.waitForTimeout(40);
+  }
+  expect(Math.max(...tilts) - Math.min(...tilts)).toBeGreaterThan(4); // squirming
+  const now = await middle();
+  await page.mouse.click(now.x, now.y);
+  await expect.poll(() => page.locator('.mascot-spray rect:not([style*="none"])').count()).toBeGreaterThan(4);
 });

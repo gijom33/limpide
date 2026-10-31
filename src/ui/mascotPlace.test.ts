@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { choosePerch, createMascotPlace, GRAVITY, LANDING_SECONDS, type Moving, type Perch, type Placed, type Span } from './mascotPlace';
+import { choosePerch, createMascotPlace, GRAVITY, LANDING_SECONDS, type Moving, type Perch, type Placed, type Span, WINDUP_SECONDS } from './mascotPlace';
 
 const H = 26;
 const ROOM = 18;
@@ -28,9 +28,9 @@ describe('which line the mascot is on, on a phone or in 2 × 2 (issue 115)', () 
 });
 
 /** Frames at 60 a second, the perch given by `at(t)`, standing at `x` when on its line. */
-function run(place: ReturnType<typeof createMascotPlace>, from: number, to: number, at: (t: number) => Perch, reduced = false, span: Span = { min: 0, max: 300 }) {
+function run(place: ReturnType<typeof createMascotPlace>, from: number, to: number, at: (t: number) => Perch, reduced = false, span: Span = { min: 0, max: 300 }, startX = 100) {
   const frames: (Placed & { t: number })[] = [];
-  let x = 100;
+  let x = startX;
   for (let t = from; t <= to; t += 1 / 60) {
     const f = place.frame(at(t), span, t, reduced, x);
     if (f.landedAt !== null) x = f.landedAt;
@@ -94,6 +94,29 @@ describe('the mascot between its lines, by the laws of motion (issue 115)', () =
     expect(top).toBeLessThan(300);
     expect(top).toBeGreaterThan(300 - 20);
     expect(frames.find((f) => f.moving === 'landing')!.impact).toBeLessThan(0.4);
+  });
+
+  it('before flying up, it holds still, swinging its tail down under it', () => {
+    const place = createMascotPlace();
+    place.frame(edge('Filter', 700), span, 0, false, 100);
+    const frames = run(place, 1 / 60, WINDUP_SECONDS + 0.1, () => edge('Oscillators', 300));
+    const winding = frames.filter((f) => f.moving === 'flying' && f.windup < 1);
+    expect(winding.length / 60).toBeCloseTo(WINDUP_SECONDS, 1);
+    expect(winding.every((f) => f.foot === 700)).toBe(true);
+    expect(winding.at(-1)!.windup).toBeGreaterThan(winding[0].windup);
+    expect(frames.at(-1)!.foot).toBeLessThan(700); // then off it goes
+  });
+
+  it('to a section beside it, at its own height, leaps across in an arc, higher the farther', () => {
+    const top = (to: number) => {
+      const place = createMascotPlace({ random: () => 0.5 });
+      place.frame(edge('Amp', 300), { min: 900, max: 1000 }, 0, false, 950);
+      const frames = run(place, 1 / 60, 3, () => edge('Filter', 300), false, { min: to, max: to }, 950);
+      expect(changes(frames)).toEqual(['flying', 'landing', 'standing']);
+      expect(frames.find((f) => f.landedAt !== null)!.landedAt).toBe(to);
+      return 300 - Math.min(...frames.map((f) => f.foot));
+    };
+    expect(top(600)).toBeGreaterThan(top(850) + 30);
   });
 
   it('climbs to the header and holds on; letting go, it drops to an edge below', () => {

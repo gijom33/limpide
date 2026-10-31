@@ -169,7 +169,7 @@ A house loop in C minor that plays on whatever Patch is loaded and never changes
 _Avoid_: Loop, backing track, sequence
 
 **Mascot**:
-Bead: a pixel water drop whose tail is the Limpide logo, called by playing B, E, A, D by hand (as in a bead of water) and sent away the same way. In three and four across it lives on the top edge of the top right section; on a phone and in 2 × 2 it keeps in view as the page scrolls, on a section's edge in the right column or hanging under the header, falling like rain to a lower edge and flying up on its tail to a higher one. It strolls, does funny turns when nothing is played, answers each knob and fader turned and moves with what is heard; sent away, it jumps, splashes and melts. It makes no sound. Left out of the tips and the README on purpose.
+Bead: a pixel water drop whose tail is the Limpide logo, called by playing B, E, A, D by hand (as in a bead of water) and sent away the same way. In three and four across it lives on the top edge of the top right section; on a phone and in 2 × 2 it keeps in view as the page scrolls, on a section's edge in the right column or hanging under the header, falling like rain to a lower edge and flying up on its tail to a higher one. It strolls and dances with the music, does funny turns when nothing is played, answers each knob and fader turned, giggles when tickled by the pointer and sprays droplets when clicked; sent away, it smashes itself down into a splash. Once met, Display has a switch for it. It makes no sound. Left out of the tips and the README on purpose.
 _Avoid_: Easter egg (the idea, not the thing), sprite, pet
 
 **Velocity**:

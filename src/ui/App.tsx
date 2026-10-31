@@ -26,7 +26,7 @@ import { Knob } from './Knob';
 import { LearnBar } from './LearnBar';
 import { LfoControls } from './LfoControls';
 import { LearnContext } from './learn';
-import { Mascot } from './Mascot';
+import { BeadIcon, Mascot } from './Mascot';
 import { MidiPanel } from './MidiPanel';
 import { MathsContext } from './mathsContext';
 import { ModulationContext } from './modulationRing';
@@ -52,6 +52,7 @@ import { Wordmark } from './Wordmark';
 
 const LETTER_KEYS = 'limpide.letterKeys';
 const TOOLTIPS = 'limpide.tooltips';
+const BEAD = 'limpide.bead';
 const BEND_RANGE = 'limpide.bendRange';
 /** Phones and the sections 2 × 2: the stylesheet's breakpoint, where the header's groups take rows of their own. */
 const STACKED_HEADER = '(max-width: 860px)';
@@ -148,12 +149,25 @@ export function App() {
     [patches],
   );
   // B, E, A, D played by hand, as in a bead of water, calls the mascot, and again sends it away (issue 115); not
-  // remembered across a reload.
+  // remembered across a reload. Once met, Display has a switch for it, remembered: off, it melts away and the Notes
+  // do nothing, for anyone who would rather not (the owner, 2026-10-30).
   const [mascot, setMascot] = useState<'off' | 'up' | 'leaving'>('off');
+  const [bead, setBead] = useState(() => (storage.getItem(BEAD) ?? 'unmet') as 'unmet' | 'on' | 'off');
+  useEffect(() => void (bead !== 'unmet' && storage.setItem(BEAD, bead)), [storage, bead]);
+  const beadRef = useRef(bead);
+  beadRef.current = bead;
   useEffect(() => {
     const phrase = createCallingPhrase();
-    return session.onPress((note) => phrase.press(note, performance.now() / 1000) && setMascot((m) => (m === 'off' ? 'up' : m === 'up' ? 'leaving' : m)));
+    return session.onPress((note) => {
+      if (!phrase.press(note, performance.now() / 1000) || beadRef.current === 'off') return;
+      setBead('on');
+      setMascot((m) => (m === 'off' ? 'up' : m === 'up' ? 'leaving' : m));
+    });
   }, [session]);
+  const switchBead = (on: boolean) => {
+    setBead(on ? 'on' : 'off');
+    setMascot((m) => (on ? (m === 'off' ? 'up' : m) : m === 'up' ? 'leaving' : m));
+  };
   const mascotGone = useCallback(() => setMascot((m) => (m === 'leaving' ? 'off' : m)), []);
   const modulationContext = useMemo(() => ({ engine: session.engine, patch: () => patches.get().patch, octave: octaveRef }), [session, patches]);
   // The letter keys play Notes unless turned off in Display (issue 51); remembered.
@@ -340,6 +354,24 @@ export function App() {
                 />
               </Tooltip>
             </ToolGroup>
+            {bead !== 'unmet' && (
+              <ToolGroup title="Bead">
+                <Tooltip content={{ title: 'Bead', body: 'The water drop B, E, A, D calls. Off, it melts away and the Notes do nothing.' }}>
+                  <div className="bead-switch">
+                    <BeadIcon on={bead === 'on'} />
+                    <Segmented
+                      label="Bead"
+                      value={bead}
+                      options={[
+                        { value: 'on', label: 'On', name: 'Bead on' },
+                        { value: 'off', label: 'Off', name: 'Bead off' },
+                      ]}
+                      onChange={(v) => switchBead(v === 'on')}
+                    />
+                  </div>
+                </Tooltip>
+              </ToolGroup>
+            )}
             <ToolGroup title="Theme">
               <Tooltip content={TIPS.theme}>
                 <Segmented
