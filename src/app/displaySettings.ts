@@ -1,3 +1,4 @@
+import { TEMPO } from '../music/tempo';
 import { DEFAULT_OVERLAYS, OVERLAYS, type Overlay } from '../viewers/overlays';
 import { INITIAL_VIEWER_STATE } from '../viewers/viewerState';
 import type { KeyValueStorage } from './storage';
@@ -41,6 +42,11 @@ const DISPLAY = {
   theme: { key: 'limpide.theme', value: choice(['dark', 'light'], 'dark') },
   /** Unmet until B, E, A, D first calls the Bead; Display shows its switch only once met (issue 115). */
   bead: { key: 'limpide.bead', value: choice(['unmet', 'on', 'off'], 'unmet') },
+  /** The tempo (issue 112): the page's, never a Patch's, kept as the Display is; a whole BPM. */
+  tempo: {
+    key: 'limpide.tempo',
+    fields: { bpm: choice(Array.from({ length: TEMPO.max - TEMPO.min + 1 }, (_, i) => TEMPO.min + i), TEMPO.default) },
+  },
 } as const;
 
 type Display = typeof DISPLAY;

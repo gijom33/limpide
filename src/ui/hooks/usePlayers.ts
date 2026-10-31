@@ -50,6 +50,8 @@ export function usePlayers({ session, octaveRef, setOctave, heldNotes, onDemoSta
     noteOff: (at) => engine.noteOff(at),
     release: (note, at) => engine.release(note, at),
     onNotes: setPlayedNotes,
+    // While a player plays, its BPM is the page's, counted from its first Note; the person's comes back after (issue 112).
+    onTempo: (bpm, first) => session.tempo.take(bpm, first),
   };
   const showOctave = (octave: number) => setOctave(shiftOctave(octave, 0));
 
@@ -62,6 +64,7 @@ export function usePlayers({ session, octaveRef, setOctave, heldNotes, onDemoSta
     current.current.stop();
     current.current = null;
     setPlaying(null);
+    session.tempo.giveBack();
   };
   const play = (kind: Playing, start: () => () => void) => {
     stop();
@@ -109,7 +112,7 @@ export function usePlayers({ session, octaveRef, setOctave, heldNotes, onDemoSta
           showOctave,
           load: (p) => {
             followPaused.current = false;
-            return knobs.newPart(shared ? undefined : PRESETS.find((preset) => preset.name === p.preset)!);
+            return knobs.newPart(shared ? undefined : PRESETS.find((preset) => preset.name === p.preset)!, p.synced);
           },
           setParam: knobs.turn,
           onMove: (id) => {
@@ -125,6 +128,7 @@ export function usePlayers({ session, octaveRef, setOctave, heldNotes, onDemoSta
             knobs.stop();
             current.current = null;
             setPlaying(null);
+            session.tempo.giveBack();
             if (shared) return;
             const init = PRESETS[0];
             patches.load(init.name, init.patch);

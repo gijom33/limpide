@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import type { AudioSession } from '../app/session';
 import { createLibrary } from '../patch/library';
 import { createPatchStore } from '../patch/patchStore';
+import { createTempoStore } from '../play/tempoStore';
 import { createViewerStore } from '../viewers/viewerStore';
 import { memoryStorage } from './memoryStorage';
 
@@ -57,8 +58,9 @@ export function testSession() {
     release: (note: number) => void played.push(`let go ${note}`),
     setHold: () => {},
   };
+  const tempo = createTempoStore({ storage, engine: { now: engine.now, setTempo: () => {} } });
   const session = {
-    engine, input, patches, viewers, library, shared: false,
+    engine, input, patches, viewers, library, tempo, shared: false,
     onHeld: () => () => {},
     onPress: (listener: (note: number) => void) => {
       pressed.add(listener);

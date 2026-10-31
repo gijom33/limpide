@@ -61,6 +61,7 @@ export function octaveShowing(notes: number[]): number {
 export function startDemo(host: DemoHost, track: Track = TRACK, from = 0): () => void {
   const beat = 60 / track.bpm;
   const first = host.now() + LEAD_IN;
+  host.onTempo?.(track.bpm, first);
   const starts: number[] = [];
   let at = first;
   for (const [i, part] of track.parts.entries()) {
@@ -148,5 +149,7 @@ export function startDemo(host: DemoHost, track: Track = TRACK, from = 0): () =>
  */
 export function startPhraseLoop(host: ListenHost, { phrase, bpm }: { phrase: string; bpm: number }): () => void {
   host.showOctave(octaveShowing(parsePhrase(phrase, bpm).map((e) => e.note)));
-  return startTransport(host, loopPhrase(phrase, bpm, host.now() + LEAD_IN, { breath: BREATH }), { lookahead: LOOKAHEAD, tick: TICK_MS });
+  const first = host.now() + LEAD_IN;
+  host.onTempo?.(bpm, first);
+  return startTransport(host, loopPhrase(phrase, bpm, first, { breath: BREATH }), { lookahead: LOOKAHEAD, tick: TICK_MS });
 }

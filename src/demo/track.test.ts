@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { noteHz } from '../music/tempo';
 import { PARAMS } from '../patch/patch';
 import { PRESETS } from '../patch/presets';
 import { SECTION_OF } from '../ui/sections';
@@ -105,9 +106,32 @@ describe('the owner, 2026-10-29: the new Oscillator features in the Demo', () =>
   });
 
   it('keeps the wobbles’ LFOs at an eighth or slower, the flutter too (the owner, 2026-10-29)', () => {
-    const fastest = (name: string, id: 'lfoRate' | 'lfo2Rate') =>
-      Math.max(...TRACK.parts.filter((p) => p.preset === name).flatMap((p) => p.moves!.filter((m) => m.id === id).map((m) => m.to)));
-    expect(fastest('Wobble', 'lfoRate')).toBeLessThanOrEqual((TRACK.bpm / 60) * 2);
-    expect(fastest('Double Wobble', 'lfo2Rate')).toBeLessThanOrEqual((TRACK.bpm / 60) * 2);
+    const fastest = (name: string, id: 'lfoNote' | 'lfo2Note') =>
+      Math.max(...TRACK.parts.filter((p) => p.preset === name).flatMap((p) => p.moves!.filter((m) => m.id === id).map((m) => noteHz(m.to, TRACK.bpm))));
+    expect(fastest('Wobble', 'lfoNote')).toBeCloseTo((TRACK.bpm / 60) * 2, 12);
+    expect(fastest('Double Wobble', 'lfo2Note')).toBeCloseTo((TRACK.bpm / 60) * 2, 12);
+  });
+});
+
+describe('the Demo synced to its tempo (issue 112)', () => {
+  it('turns the Rates that jump on the bar lines as note values, Sync on, at the Hz they had: quarters, eighths, sixteenths', () => {
+    const beat = TRACK.bpm / 60;
+    const synced = TRACK.parts.filter((p) => p.synced).map((p) => ({
+      preset: p.preset,
+      synced: p.synced,
+      perBeat: p.moves!.filter((m) => PARAMS[m.id].unit === 'note').map((m) => noteHz(m.to, TRACK.bpm) / beat),
+    }));
+    expect(synced).toEqual([
+      { preset: 'Tremolo Keys', synced: [1], perBeat: [2, 4] },
+      { preset: 'Wobble', synced: [1], perBeat: [1, 2, 1, 2] },
+      { preset: 'Double Wobble', synced: [1, 2], perBeat: [1, 2] },
+    ]);
+    // Every note value turned is a synced LFO's, and no synced LFO's Hz is turned.
+    for (const part of TRACK.parts)
+      for (const m of part.moves ?? []) {
+        const lfo = m.id.startsWith('lfo2') ? 2 : 1;
+        if (PARAMS[m.id].unit === 'note') expect(part.synced, `${part.preset}: ${m.id}`).toContain(lfo);
+        if (m.id === 'lfoRate' || m.id === 'lfo2Rate') expect(part.synced ?? [], `${part.preset}: ${m.id}`).not.toContain(lfo);
+      }
   });
 });
