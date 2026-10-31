@@ -6,8 +6,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
-- 2026-10-31, the owner: "I am interested in having you work at night while I am in bed on the issues where you do not need me." Then, on Claude's answer (a nightly run of the ready-for-agent issues on a night branch, no push): "Set it up".
-
 ## Dropped
 
 - 2026-10-30, from Claude's brainstorm, Velocity on the Volume ("a harder hit plays louder, not only brighter"): already so. The Amp Envelope's Attack rises to the Note's Velocity (PRD story 9). Claude's call, open to the owner.
@@ -121,3 +119,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-30, the owner's ask for a page of Bead's secrets, done at once, decided by the owner: [bead.md](./bead.md) lists all it does, issues 115 and 127 together: calling it and sending it away, where it lives, its own life and every funny turn, each control's answer, the five words spelled with Notes, playing with it, the theme and the date, the Demo's acts, reduced motion. Linked from neither the README nor the tips, which leave Bead out on purpose (115, decision 7). Claude's call, open to the owner.
 2026-10-30, the owner's idea of a lesson on how synthesis works (triage, Claude's call, open to the owner): to [128](./issues/128-how-a-synth-works.md), five questions for the owner, each with Claude's recommendation (a Tutorial of its own before Bass, a Step per section pointing at its Taps' Viewers).
 2026-10-30, the owner's outreach agent, done at once, decided by the owner (the agent drafts, the owner posts): [the outreach plan](./outreach/plan.md), with [the places](./outreach/places.md) and the `outreach` skill (`/outreach places`, `intro <place>`, `roundup`, `digest`), its drafts git-ignored. The cadence per place is Claude's call, open to the owner. Deploying it is the owner's: the accounts, the launch clip, the first posts, and a yes to the two scheduled tasks.
+2026-10-31, the owner's night shift, done at once, decided by the owner: [night-shift.md](./night-shift.md) and the `night-shift` skill. Every evening at 23:00 a scheduled task builds up to four ready-for-agent issues, one fresh subagent each, on `night/<date>` in a worktree outside iCloud. An issue needing the owner gets its questions and waits. A morning report goes in `docs/night/` (git-ignored), and nothing is pushed. The hours and the limit of four are Claude's call, open to the owner.
