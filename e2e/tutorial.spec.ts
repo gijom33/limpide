@@ -188,7 +188,7 @@ const standing = (page: Page, selector: string) =>
 // Issue 105 (the 1.16.0 review): on a 393 × 659 phone the Bass Tutorial's Ideal Step spoke of circles and squares on the
 // Oscillator Spectrum, under the card, its note cut short with "…".
 for (const [layout, width, height] of [['phone', 375, 812], ['short phone', 393, 659], ['2 × 2', 690, 830]] as const) {
-  for (const preset of ['Bass', 'Acid', 'Pluck', 'Wobble']) {
+  for (const preset of ['Bass', 'Acid', 'Pluck', 'Wobble', 'FM Ladder', 'Ring Bell', 'Deep Breath']) {
     test(`on a ${layout}, each Step of ${preset} brings its control, then the Viewer its note names, clear of the header and the card`, async ({ page }) => {
       test.setTimeout(90000); // fifteen Steps, each made and checked twice
       await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -207,6 +207,10 @@ for (const [layout, width, height] of [['phone', 375, 812], ['short phone', 393,
         if ((await next.textContent()) === 'Finish') break;
         await next.click();
       }
+      // "Do it for me" to the end gives the Preset (issue 109).
+      await next.click();
+      await expect(card(page)).toContainText(`This is the ${preset} Preset, built by you.`);
+      await expect(patchName(page)).toHaveAttribute('aria-label', `Patch: ${preset}`);
     });
   }
 }
@@ -234,7 +238,7 @@ test('the header’s Tutorial button lists the Tutorials, ticks the finished, an
   const button = page.getByRole('button', { name: 'Tutorial', exact: true });
   await button.click();
   const list = page.getByRole('group', { name: 'Tutorials' }).filter({ has: page.getByRole('button', { name: /^Tutorial: Bass/ }) }).last();
-  await expect(list.getByRole('button')).toHaveText(['Bass', 'Acid', 'Pluck', 'Wobble']);
+  await expect(list.getByRole('button')).toHaveText(['Bass', 'Acid', 'Pluck', 'Wobble', 'FM Ladder', 'Ring Bell', 'Deep Breath']);
   await page.keyboard.press('Escape');
   await expect(list).toBeHidden();
   await expect(button).toBeFocused();

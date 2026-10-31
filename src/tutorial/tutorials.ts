@@ -21,6 +21,41 @@ const osc2Square = (level: number, percent: string): Step[] => [
   },
 ];
 
+// The Steps that end the lessons on an open, steady sound to look at (issue 109).
+const open = (heard: string): Step[] => [
+  {
+    kind: 'param', id: 'cutoff', to: 20000,
+    say: 'Turn the Filter’s Cutoff all the way up, to 20 kHz.',
+    note: `The Filter now lets every partial through: the Filter Spectrum shows ${heard} just as the Oscillator Spectrum does.`,
+    viewer: 'Filter Spectrum',
+  },
+  {
+    kind: 'param', id: 'resonance', to: 0,
+    say: 'Pull Resonance all the way down.',
+    note: 'Nothing is lifted at the Cutoff any more: wide open, the Filter leaves the sound as it is.',
+  },
+];
+
+const osc1Sine: Step = {
+  kind: 'choice', id: 'waveform', to: 'sine',
+  say: 'Make Osc 1 a Sine.',
+  note: 'One Harmonic and nothing else: a single spike in the Oscillator Spectrum, the smoothest curve in the Scope. Everything from here grows out of it.',
+  viewer: 'Oscillator Spectrum',
+};
+
+/** Osc 2 made a Sine while its fader is down: heard only through FM or Ring, which come next. */
+const silentOsc2 = (how: string): Step => ({
+  kind: 'choice', id: 'osc2Waveform', to: 'sine',
+  say: 'Make Osc 2 a Sine.',
+  note: `Nothing changes: Osc 2’s fader is down in the Mixer, so it is silent. You will hear it only ${how}.`,
+});
+
+const held: Step = {
+  kind: 'param', id: 'ampSustain', to: 1,
+  say: 'Raise the Amp’s Sustain all the way.',
+  note: 'Held Notes stay at their full level, so the picture holds still to read.',
+};
+
 const steeper: Step = {
   kind: 'choice', id: 'filterSlope', to: 24,
   say: 'Choose the Filter’s 24 dB Slope.',
@@ -28,7 +63,7 @@ const steeper: Step = {
   viewer: 'Filter Spectrum',
 };
 
-/** The four first Tutorials (issue 58); the Welcome opens the first. */
+/** The four first Tutorials (issue 58), then the lessons of issue 109; the Welcome opens the first. */
 export const TUTORIALS: Tutorial[] = [
   {
     preset: 'Bass',
@@ -315,6 +350,115 @@ export const TUTORIALS: Tutorial[] = [
         say: 'Last, turn the Amp’s Volume down to 45 %.',
         note: 'The resonant peak sweeping through the Harmonics makes a loud sound: at 45 % the wobble plays about as loud as the other basses.',
       },
+    ],
+  },
+  // Issue 109: FM, Ring, the Sub's choices and the Noise's colour, each on the Preset that shows it off.
+  {
+    preset: 'FM Ladder',
+    bpm: 90,
+    phrase: 'A3:1.5 C4:.5 E4:2 D4:1.5 C4:.5 A3:2',
+    summary: 'FM from Init: two sines on the same Note, Osc 2 silent but swinging Osc 1’s pitch, so one Harmonic grows into a whole ladder of them, through a wide-open Filter.',
+    steps: [
+      osc1Sine,
+      silentOsc2('through what it does to Osc 1'),
+      {
+        kind: 'param', id: 'crossMod', to: 0.5,
+        say: 'Beside Osc 1’s Octave, turn FM up to 50 %.',
+        note: 'Osc 2 now swings Osc 1’s pitch up and down at its own frequency, the Note’s: too fast to hear as vibrato, it becomes tone. The single spike grows into a ladder of Harmonics in the Oscillator Spectrum, a buzz from two pure tones, and the Ideal’s circles mark each rung.',
+        viewer: 'Oscillator Spectrum',
+      },
+      ...open('the whole ladder'),
+      held,
+    ],
+  },
+  {
+    preset: 'Ring Bell',
+    bpm: 100,
+    phrase: 'E4:1 G4:1 A4:2 G4:1 E4:1 D4:2',
+    summary: 'A bell from Init: two sines an octave and a minor third apart, multiplied by Ring with neither heard alone, so only their sum and their difference sound, fading slowly as a struck bell does.',
+    steps: [
+      osc1Sine,
+      silentOsc2('through Ring'),
+      {
+        kind: 'param', id: 'osc2Octave', to: 1,
+        say: 'Set Osc 2’s Octave to +1.',
+        note: 'Still nothing to hear: Osc 2 now plays an octave above the Note, silent, ready for Ring.',
+      },
+      {
+        kind: 'param', id: 'mixRing', to: 1,
+        say: 'Raise Ring in the Mixer all the way.',
+        note: 'Ring is Osc 1 times Osc 2. Two sines multiplied give their sum and their difference: here 3 times the Note, a new spike in the Oscillator Spectrum, and 1 times, under Osc 1’s own. The Ideal’s diamonds mark them.',
+        viewer: 'Oscillator Spectrum',
+      },
+      {
+        kind: 'param', id: 'osc2Semitone', to: 3,
+        say: 'Set Osc 2’s Semitone to +3: an octave and a minor third above the Note.',
+        note: 'The sum and the difference leave the ladder, at about 3.38 and 1.38 times the Note: the diamonds move between the Harmonics in the Oscillator Spectrum, and the sound turns metallic.',
+        viewer: 'Oscillator Spectrum',
+      },
+      {
+        kind: 'param', id: 'mixOsc1', to: 0,
+        say: 'Pull Osc 1 all the way down in the Mixer.',
+        note: 'Ring still sounds, whatever the two faders say: Osc 1’s spike goes from the Oscillator Spectrum, and neither pitch is heard any more, only their sum and difference, an out-of-tune pair that rings like a bell. Quieter, too: two sines multiplied are softer than either alone.',
+        viewer: 'Oscillator Spectrum',
+      },
+      ...open('the two partials'),
+      {
+        kind: 'param', id: 'ampSustain', to: 0,
+        say: 'In the Amp Envelope, pull Sustain all the way down.',
+        note: 'Each Note now fades away by itself, even while held: struck, not bowed. The Amp Scope shows it die out.',
+        viewer: 'Amp Scope',
+      },
+      {
+        kind: 'param', id: 'ampDecay', to: 1.8,
+        say: 'Set the Amp’s Decay to about 1.8 s.',
+        note: 'The fade lasts almost two seconds: the long ring of a bell.',
+      },
+      {
+        kind: 'param', id: 'ampRelease', to: 1.8,
+        say: 'Set its Release to about 1.8 s too.',
+        note: 'Let go early and the bell still rings on.',
+      },
+    ],
+  },
+  {
+    preset: 'Deep Breath',
+    bpm: 80,
+    phrase: 'A3:1.5 C4:.5 D4:2 E4:1.5 D4:.5 C4:2',
+    summary: 'Deep Breath from Init: a saw over a sine Sub two octaves down, and a breath of Pink Noise filling the gaps between the Harmonics, through a wide-open Filter.',
+    steps: [
+      {
+        kind: 'param', id: 'mixSub', to: 0.8,
+        say: 'Raise the Sub in the Mixer to 80 %.',
+        note: 'A square an octave below Osc 1: weight under the saw. The Oscillator Spectrum’s ladder now starts an octave lower, the Sub on its odd rungs (the Ideal’s triangles), Osc 1 on the even ones.',
+        viewer: 'Oscillator Spectrum',
+      },
+      {
+        kind: 'choice', id: 'subOctave', to: -2,
+        say: 'On the Sub & Noise tab, set the Sub’s Octave to −2.',
+        note: 'Two octaves under Osc 1. The ladder counts from the Sub’s pitch, a quarter of Osc 1’s: in the Oscillator Spectrum the Sub’s square fills the odd rungs, Osc 1 every fourth, and the rungs between stay empty.',
+        viewer: 'Oscillator Spectrum',
+      },
+      {
+        kind: 'choice', id: 'subWaveform', to: 'sine',
+        say: 'Make the Sub a Sine.',
+        note: 'The Sub’s odd rungs go, all but the first: one clean spike far left in the Oscillator Spectrum, a deep, round weight with no buzz of its own.',
+        viewer: 'Oscillator Spectrum',
+      },
+      {
+        kind: 'param', id: 'mixNoise', to: 0.3,
+        say: 'Raise Noise in the Mixer to 30 %.',
+        note: 'A hiss over the tone. The Noise is White, the same energy at every frequency: in the Oscillator Spectrum it fills the gaps between the rungs, a floor that runs level across.',
+        viewer: 'Oscillator Spectrum',
+      },
+      {
+        kind: 'choice', id: 'noiseColour', to: 'pink',
+        say: 'On the Sub & Noise tab, switch the Noise’s Colour to Pink.',
+        note: 'The hiss softens into a rush, like breath or distant surf. Pink has the same energy in every octave, so it falls 3 dB an octave: the Oscillator Spectrum’s floor tilts down to the right. Overall it is as loud as the White was.',
+        viewer: 'Oscillator Spectrum',
+      },
+      ...open('the Noise’s floor and every rung'),
+      held,
     ],
   },
 ];

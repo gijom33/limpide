@@ -16,8 +16,10 @@ test.describe('on a computer', () => {
     await patchName(page).click();
     await expect(search(page)).toBeFocused();
     await page.keyboard.type('bell');
-    // Four by their names; Glass Keys only by its description.
-    await expect(row(page, 'Name').getByRole('button')).toHaveText(['Twelfth Bell', 'Ring Bell', 'Breathing Bell', 'FM Bell']);
+    // Four by their names; Glass Keys only by its description. Ring Bell's Tutorial too, in its row and as the cap
+    // beside the Preset (issue 109).
+    await expect(row(page, 'Tutorials').getByRole('button')).toHaveText(['Ring Bell']);
+    await expect(row(page, 'Name').getByRole('button').filter({ hasText: /\S/ })).toHaveText(['Twelfth Bell', 'Ring Bell', 'Breathing Bell', 'FM Bell']);
     await expect(row(page, 'Description').getByRole('button')).toHaveText(['Glass Keys']);
     await expect(row(page, 'Bass')).toBeHidden(); // the groups give way to the two rows
     const [name, description] = await Promise.all([row(page, 'Name').boundingBox(), row(page, 'Description').boundingBox()]);
@@ -138,7 +140,7 @@ test.describe('on a computer', () => {
     await patchName(page).click();
     const count = panel(page).getByRole('status').filter({ hasText: /found/ });
     await page.keyboard.type('bell');
-    await expect(count).toHaveText('5 found'); // Twelfth Bell, Ring Bell, Breathing Bell and FM Bell by name, Glass Keys by description
+    await expect(count).toHaveText('6 found'); // Twelfth Bell, Ring Bell, Breathing Bell and FM Bell by name, Glass Keys by description, Ring Bell's Tutorial
     await search(page).fill('zzz');
     await expect(count).toHaveText('Nothing found');
     await panel(page).getByRole('button', { name: 'Clear the search' }).click();

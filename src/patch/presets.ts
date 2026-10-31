@@ -55,6 +55,10 @@ group('Shapes', [
   ['Sub Two Down', 'A sine Sub two octaves under a saw: one clean spike far left in the Spectrum, the ladder counted from it, Osc 1 on every fourth rung.', {
     mixSub: 0.8, subOctave: -2, subWaveform: 'sine', ...OPEN,
   }],
+  // Issue 109: the Sub's choices and the Noise's colour in one Tutorial.
+  ['Deep Breath', 'Sub Two Down with a breath of Pink Noise: the Sub’s spike far left, the saw’s ladder above it, and the Noise filling the gaps, its floor tilting down to the right. Switch the Noise to White and the floor levels out, the hiss brighter.', {
+    mixSub: 0.8, subOctave: -2, subWaveform: 'sine', mixNoise: 0.3, noiseColour: 'pink', ...OPEN,
+  }],
 ]);
 
 group('Intervals', [

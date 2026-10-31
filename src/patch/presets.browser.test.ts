@@ -1,6 +1,8 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createSynthEngine } from '../engine/synthEngine';
 import { dB, energyAboveDb, frequencyAround, toneAmplitude, toneAmplitudeHann } from '../test/measure';
+import { applyStep } from '../tutorial/tutorial';
+import { tutorialFor } from '../tutorial/tutorials';
 import type { Patch } from './patch';
 import { PRESET_GROUPS, PRESETS } from './presets';
 
@@ -323,5 +325,55 @@ describe('the ten Presets review 15 proposed (issue 125)', () => {
     const cents = Array.from({ length: 80 }, (_, i) => engine.modulationAt(NOTE + i / 10).vibrato * 100);
     expect(Math.max(...cents)).toBeCloseTo(4, 0);
     expect(Math.min(...cents)).toBeCloseTo(-4, 0);
+  });
+});
+
+describe('issue 109’s Tutorials say what the engine plays, at the Step that says it', () => {
+  /** The Patch a Tutorial has built once the Step on `control` is made. */
+  const atStep = (preset: string, control: string) => {
+    const steps = tutorialFor(preset)!.steps;
+    const index = steps.findIndex((s) => s.kind !== 'display' && s.id === control);
+    expect(index, control).toBeGreaterThanOrEqual(0);
+    return steps.slice(0, index + 1).reduce(applyStep, PRESETS[0].patch);
+  };
+  /** A Note on C4 held 0.6 s, and the partial at `ratio` times it against the Note's own, from 0.3 s, in dB. */
+  const partials = async (patch: Patch, ratios: number[]) => {
+    const s = await play(patch, [C4], NOTE + 0.6, NOTE + 0.65);
+    return ratios.map((ratio) => partialDb(s, C4, ratio, 0.3, 0.2));
+  };
+
+  it('FM Ladder: Osc 2 silent changes nothing; FM at 50 % grows the sine into a ladder', async () => {
+    const [silent] = await partials(atStep('FM Ladder', 'osc2Waveform'), [2]);
+    expect(silent).toBeLessThan(-40);
+    const rungs = await partials(atStep('FM Ladder', 'crossMod'), [2, 3, 4]);
+    for (const rung of rungs) expect(rung).toBeGreaterThan(-24);
+  });
+
+  it('Ring Bell: Ring with Osc 2 an octave up adds 3 times the Note; +3 semitones moves both off the ladder', async () => {
+    const [third] = await partials(atStep('Ring Bell', 'mixRing'), [3]);
+    expect(third).toBeGreaterThan(-12);
+    const [difference, sum, ladder] = await partials(atStep('Ring Bell', 'osc2Semitone'), [2 ** (15 / 12) - 1, 2 ** (15 / 12) + 1, 3]);
+    expect(difference).toBeGreaterThan(-15);
+    expect(sum).toBeGreaterThan(-15);
+    expect(ladder).toBeLessThan(-30);
+  });
+
+  it('Ring Bell: with Osc 1 down neither pitch sounds, only the sum and the difference', async () => {
+    const s = await play(atStep('Ring Bell', 'mixOsc1'), [C4], NOTE + 0.6, NOTE + 0.65);
+    const at = (ratio: number) => toneAmplitudeHann(s.subarray(...span(0.3, 0.2)), SR, hz(C4) * ratio);
+    const [difference, sum] = [at(2 ** (15 / 12) - 1), at(2 ** (15 / 12) + 1)];
+    expect(dB(at(1) / difference)).toBeLessThan(-30);
+    expect(dB(at(2 ** (15 / 12)) / sum)).toBeLessThan(-30);
+  });
+
+  it('Deep Breath: a square Sub two down fills the odd rungs, Osc 1 every fourth; as a sine it keeps the first alone', async () => {
+    // In Harmonics of the Note: the Sub's 1st and 3rd rungs, the empty 2nd, Osc 1 on the 4th.
+    const [first, empty, third] = await partials(atStep('Deep Breath', 'subOctave'), [0.25, 0.5, 0.75]);
+    expect(first).toBeGreaterThan(-6);
+    expect(third).toBeGreaterThan(-20);
+    expect(empty).toBeLessThan(-30);
+    const [sineFirst, sineThird] = await partials(atStep('Deep Breath', 'subWaveform'), [0.25, 0.75]);
+    expect(sineFirst).toBeGreaterThan(-6);
+    expect(sineThird).toBeLessThan(-40);
   });
 });

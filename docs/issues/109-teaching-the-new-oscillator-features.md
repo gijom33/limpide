@@ -9,7 +9,7 @@ The owner's own idea in the inbox (2026-10-30, "Add tutorial for FM and ring pre
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement. The owner accepted the three answers (decisions below).
+**Status:** ready-for-agent · enhancement. The owner accepted the three answers (decisions below). The three Tutorials are built (2026-10-30, below); the Maths Layer and the about line are not.
 
 ## Questions for the owner
 
@@ -39,8 +39,8 @@ The owner's own idea in the inbox (2026-10-30, "Add tutorial for FM and ring pre
 - The Patch picker
 
 **Acceptance criteria:**
-- [ ] Each new Tutorial passes the existing Tutorial tests (every Step's control in view on every layout, "Do it for me" to the end gives the Preset)
-- [ ] Each Tutorial's words are checked against the engine before the push
+- [x] Each new Tutorial passes the existing Tutorial tests (every Step's control in view on every layout, "Do it for me" to the end gives the Preset)
+- [x] Each Tutorial's words are checked against the engine before the push
 - [ ] With FM 50 % or Ring 100 % the Maths Layer no longer states the saw's series as the sound's
 - [ ] Loading a Preset shows its about line; turning a knob hides it
 
@@ -51,3 +51,13 @@ The owner's own idea in the inbox (2026-10-30, "Add tutorial for FM and ring pre
 
 - The owner's idea (inbox, 2026-10-30), "Add tutorial for FM and ring presets", is answered by decision 1: the FM Ladder and Ring Bell Tutorials.
 - Claude's brainstorm line (inbox, 2026-10-30) also names the LFO on FM. No fourth Tutorial: Breathing Bell's about line, shown under the Patch name by decision 3, points at it. Claude's call, open to the owner.
+
+## How it was built
+
+**The Tutorials (2026-10-30).** In `src/tutorial/tutorials.ts`, after Wobble, so the header's list and the Patches panel's Tutorials row show them last:
+
+- **FM Ladder**, 6 Steps: Osc 1 a Sine (one spike), Osc 2 a Sine (silent, its fader down: heard only through FM), FM to 50 % (the ladder), then the Filter opened (Cutoff 20 kHz, Resonance 0) and the Amp's Sustain full.
+- **Ring Bell**, 11 Steps: the two Sines, Osc 2 an octave up, Ring up (3 times the Note appears, and 1 times under Osc 1's own), Semitone +3 (the sum and difference leave the ladder), Osc 1 down (neither pitch heard), the Filter opened, then the bell's Envelope (Sustain 0, Decay and Release 1.8 s). Ring comes before the Semitone so its sum and difference are first heard on the ladder, then leave it.
+- **Deep Breath**, 8 Steps: the Sub up (a square an octave down), its Octave −2, its Waveform Sine, the Noise up to 30 % (White, a level floor), its Colour Pink (the floor tilts), the Filter opened, the Sustain full. A Preset of its own in Shapes, after Sub Two Down: Sub Two Down with Pink Noise at 30 %, since a Tutorial must end on its Preset exactly and Sub Two Down has no Noise. Claude's call, open to the owner.
+
+Each one's Steps rebuild its Preset from Init (the unit test); in Playwright, each Step's control and Viewer come clear of the header and the card on the two phones and the 2 × 2, and "Do it for me" to the end names the Patch after the Preset (now checked for all seven). The notes' claims are rendered offline at the Step that makes them (`src/patch/presets.browser.test.ts`): FM's rungs, Ring's sum and difference on and off the ladder with neither pitch left, the Sub's rungs two octaves down as a square and as a sine; Pink's fall and equal loudness were already tested in the engine. Deep Breath's level sits within 3 dB of the Shapes.
