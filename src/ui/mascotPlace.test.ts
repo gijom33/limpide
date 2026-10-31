@@ -3,8 +3,8 @@ import { acrossOf, choosePerch, createMascotPlace, FASTEST_THROW, GRAVITY, LANDI
 
 const H = 26;
 const ROOM = 18;
-const pick = (current: string | null, tops: Record<string, number>, ceiling = 250, where = 300) =>
-  choosePerch({ current, edges: Object.entries(tops).map(([id, top]) => ({ id, top })), ceiling, bottom: 812, height: H, headroom: ROOM, where });
+const pick = (current: string | null, tops: Record<string, number>, ceiling = 250, where = 300, overlap = 0) =>
+  choosePerch({ current, edges: Object.entries(tops).map(([id, top]) => ({ id, top })), ceiling, overlap, bottom: 812, height: H, headroom: ROOM, where });
 
 describe('which line the mascot is on, on a phone or in 2 × 2 (issue 115)', () => {
   it('stands on a section edge with room over it, below the header and on the window', () => {
@@ -20,6 +20,20 @@ describe('which line the mascot is on, on a phone or in 2 × 2 (issue 115)', () 
   it('hangs under the header when no edge is in view, then takes the first one that comes', () => {
     expect(pick('Oscillators', { Oscillators: -200, Filter: 900 })).toEqual({ id: 'ceiling', foot: 250 + H, hanging: true });
     expect(pick('ceiling', { Oscillators: -300, Filter: 790 }, 250, 276).id).toBe('Filter');
+  });
+
+  it('stands on an edge just under the section tabs while it shows, over them, rather than hang off its line (issue 142)', () => {
+    const over = H - 2;
+    // The phone's first section, 12 px under the tabs: on its edge, its top 14 px over them.
+    expect(pick(null, { Oscillators: 250 + 12, Filter: 1200 }, 250, 300, over)).toEqual({ id: 'Oscillators', foot: 262, hanging: false });
+    expect(pick('ceiling', { Oscillators: 250 + 12, Filter: 1200 }, 250, 276, over).id).toBe('Oscillators');
+    // Scrolled until the edge is about to go under the tabs, still on it; once it has, it hangs.
+    expect(pick('Oscillators', { Oscillators: 250 + 2, Filter: 1200 }, 250, 300, over).id).toBe('Oscillators');
+    expect(pick('Oscillators', { Oscillators: 250 + 1, Filter: 1200 }, 250, 300, over).hanging).toBe(true);
+    // Where nothing may be overlapped (the header), as before.
+    expect(pick(null, { Oscillators: 250 + 12, Filter: 1200 }).hanging).toBe(true);
+    // An edge with room under the tabs still comes first.
+    expect(pick(null, { Oscillators: 250 + 12, Filter: 400 }, 250, 300, over).id).toBe('Filter');
   });
 
   it('moving, takes the edge nearest to where it is', () => {

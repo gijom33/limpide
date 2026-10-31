@@ -106,15 +106,17 @@ for (const [size, viewport, section] of [
 const seen = (page: Page) =>
   page.evaluate(() => {
     const drop = document.querySelector('.mascot-drop')!.getBoundingClientRect();
-    const ceiling = Math.max(0, ...['header', '.section-strip'].map((q) => document.querySelector(q)?.getBoundingClientRect().bottom ?? 0));
+    const [header, strip] = ['header', '.section-strip'].map((q) => document.querySelector(q)?.getBoundingClientRect().bottom ?? 0);
+    const ceiling = Math.max(0, header, strip);
     const right = Math.max(...[...document.querySelectorAll('section.block, section[aria-label="LFO & Envelopes"]')].map((s) => s.getBoundingClientRect().right));
     const edge = [...document.querySelectorAll<HTMLElement>('section[aria-label]')].find((s) => {
       const r = s.getBoundingClientRect();
       return Math.abs(r.right - right) < 4 && Math.abs(r.top - drop.bottom) < 2.5; // a stroll bobs it a pixel
     });
     return {
-      // Swinging from its tip under the header, its box reaches a little past the line.
-      inView: drop.top >= ceiling - 6 && drop.bottom <= innerHeight + 1,
+      // Swinging from its tip under the header, its box reaches a little past the line; on an edge just under a phone's
+      // section strip, its top is over the strip's foot by up to its height (issue 142).
+      inView: drop.top >= ceiling - (strip > header ? 26 : 6) && drop.bottom <= innerHeight + 1,
       on: edge ? edge.getAttribute('aria-label') : Math.abs(drop.top - ceiling) < 4 ? 'header' : null,
     };
   });

@@ -4,10 +4,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
-- 2026-10-31, the owner, on a phone (Bead under the section tabs, by the Oscillators' top edge): "Bead does not sit exactly on line when on top row. I understand there are issues with how to handle top row but if it's manageable, please fix."
 ## Ideas
 
-- 2026-10-31, the owner, on Bead under a phone's section tabs: "If Bead has nowehere to go, maybe we can make it fly with its tail and stay local to where it lost ground."
 ## Dropped
 
 - 2026-10-30, from Claude's brainstorm, Velocity on the Volume ("a harder hit plays louder, not only brighter"): already so. The Amp Envelope's Attack rises to the Note's Velocity (PRD story 9). Claude's call, open to the owner.
@@ -127,3 +125,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-31, the owner's idea of Viewer tricks such as Freeze to explain ADSR in the Tour (triage, Claude's call, open to the owner): to [130](./issues/130-the-tour-freezes-to-show-adsr.md), five questions for the owner, each with Claude's recommendation (the Amp card freezes the Envelope Timeline once each stage's shape is drawn, Decay and Sustain added).
 2026-10-31, the 1.18.0 release's and checks' findings (triage, Claude's call, open to the owner): Bead's frame-cost test failing in WebKit on GitHub went to [138](./issues/138-bead-frame-cost-on-github-webkit.md), to diagnose in WebKit on Linux in the owner's session; the review's docked-card shell, sums written twice, small names and settings outside the Display module, the ripple hunt's missing focus test and the fact-check's FM Bass and Poly Mod Zap descriptions to [139](./issues/139-tidy-ups-after-1-18.md); the fact-check's Tour Amp card timing to [130](./issues/130-the-tour-freezes-to-show-adsr.md).
 2026-10-31, the owner's two Bead lines: the bug of Bead landing away from where its flight shows to [140](./issues/140-bead-lands-off-its-trajectory.md), waiting on the owner for when it happens (triage, Claude's call, open to the owner); the idea of Bead riding the LFOs to [141](./issues/141-bead-rides-the-lfos.md), in v1 as Bead's polish (decided by the owner), when the Waveform is a Sine or a Triangle and the Rate 1 Hz or slower (Claude's call, open to the owner).
+2026-10-31, the owner's bug of Bead off the line under a phone's section tabs: to [142](./issues/142-bead-on-the-line-under-the-tabs.md), built at once, decided by the owner (Bead stands on the line, drawn over the tabs' foot); the owner's idea of Bead hovering where it loses ground, there too, Claude's plan waiting on the owner's yes.

@@ -75,6 +75,8 @@ export interface PerchChoice {
   edges: readonly Edge[];
   /** The bottom of the header (and the section strip): nothing above it is in view. */
   ceiling: number;
+  /** How far its top may go over the ceiling, standing on an edge just under it: over the section strip, drawn above it. */
+  overlap: number;
   /** The window's bottom. */
   bottom: number;
   /** The drop's height, and the room it needs over it. */
@@ -87,15 +89,18 @@ export interface PerchChoice {
 /**
  * Which line to be on, on a phone or in 2 × 2 (issue 115), where it must stay in view: a section's top edge with room
  * over it below the header, and on the window, else the header's bottom to hang from. It keeps its edge while that has
- * room for the drop; moving, it takes the edge nearest to where it is.
+ * room for the drop, or `overlap` less; moving, it takes the edge nearest to where it is. With no edge roomy enough, an
+ * edge just under the ceiling, the drop over it by up to `overlap`, rather than hang just off that line (issue 142).
  */
-export function choosePerch({ current, edges, ceiling, bottom, height, headroom, where }: PerchChoice): Perch {
-  const keep = edges.find((e) => e.id === current && e.top - height >= ceiling && e.top <= bottom);
+export function choosePerch({ current, edges, ceiling, overlap, bottom, height, headroom, where }: PerchChoice): Perch {
+  const fits = (e: Edge) => e.top - height >= ceiling - overlap;
+  const keep = edges.find((e) => e.id === current && fits(e) && e.top <= bottom);
   if (keep) return { id: keep.id, foot: keep.top, hanging: false };
   const roomy = edges.filter((e) => e.top - height - headroom >= ceiling && e.top <= bottom - 4);
-  if (!roomy.length) return { id: 'ceiling', foot: ceiling + height, hanging: true };
-  const nearest = roomy.reduce((a, b) => (Math.abs(b.top - where) < Math.abs(a.top - where) ? b : a));
-  return { id: nearest.id, foot: nearest.top, hanging: false };
+  const close = edges.filter((e) => fits(e) && e.top <= bottom - 4);
+  const nearest = (list: readonly Edge[]) => list.reduce((a, b) => (Math.abs(b.top - where) < Math.abs(a.top - where) ? b : a));
+  const on = roomy.length ? nearest(roomy) : close.length ? nearest(close) : null;
+  return on ? { id: on.id, foot: on.top, hanging: false } : { id: 'ceiling', foot: ceiling + height, hanging: true };
 }
 
 /**

@@ -98,6 +98,8 @@ const WIDTH = 44;
 const HEIGHT = 26;
 /** Room over its head for its leaps and the splash. */
 const HEADROOM = 18;
+/** How far under the section strip an edge must show for it to stand there, in pixels (issue 142). */
+const EDGE_SHOWING = 2;
 /** How long it takes to come up from behind its edge, or down from under the header. */
 export const RISE_SECONDS = 0.4;
 /** The drop's middle from its box's left, and its tail's length turned down under it, in pixels. */
@@ -389,9 +391,13 @@ export function Mascot({
         perch = { id: on.id, foot: on.box.top, hanging: false };
       } else {
         const column = rightColumn(sections).sort((a, b) => a.box.top - b.box.top);
-        const ceiling = Math.max(0, ...['header', '.section-strip'].map((q) => document.querySelector(q)?.getBoundingClientRect().bottom ?? 0));
+        const [header, strip] = ['header', '.section-strip'].map((q) => document.querySelector(q)?.getBoundingClientRect().bottom ?? 0);
+        const ceiling = Math.max(0, header, strip);
+        // Under the section strip, not the header, an edge is a line for it while it shows under the strip, the drop over
+        // the strip's foot (issue 142): hanging, its foot would be just off that line.
+        const overlap = strip > header ? HEIGHT - EDGE_SHOWING : 0;
         perch = choosePerch({
-          current: perch?.id ?? null, edges: column.map((s) => ({ id: s.id, top: s.box.top })), ceiling, bottom: innerHeight,
+          current: perch?.id ?? null, edges: column.map((s) => ({ id: s.id, top: s.box.top })), ceiling, overlap, bottom: innerHeight,
           height: HEIGHT, headroom: HEADROOM, where: foot ?? ceiling,
         });
         const id = perch.id;
