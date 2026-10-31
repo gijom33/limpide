@@ -12,7 +12,7 @@ The methodology review of 1.16.0 ([review 10](../reviews/2026-10-30/10-methodolo
 2. **The code review's scope:** before every release that carries issue work (a feature, a fix, a refactor that changes nothing visible), over everything since the last tag; the bugs it finds are fixed before the push, the rest goes to the inbox. This replaces ADR-0010's point 5, which reviewed minor releases only.
 3. **The branch run before `main`:** a release's commit is pushed to its own branch first, where GitHub runs the same build and the whole suite as for `main`, on its Linux, and deploys nothing; `main` is pushed only once that run is green. The deploy run still runs everything and deploys only when green, but it is no longer where a release first meets Linux.
 4. **The checks on words before the push:** for a release that adds or changes Preset or tip words, the fact-checker and the ear stand-in; for any release with issue work, the ripple hunter (issue 42's reviewers 12 to 14). Their findings are fixed or answered before `main` is pushed.
-5. **An amended ADR's Status line names its amendment**, the one part of an accepted ADR that may change: `accepted, its consequence "…" amended by ADR-N`, as ADR-0004 and ADR-0012 already did.
+5. **An amended ADR's Status line names its amendment**, the one part of an accepted ADR that may change: `accepted, <the part, quoted or numbered> amended by ADR-N` (or `superseded by`), as ADR-0004 and ADR-0012 already name what supersedes them in part.
 
 ## Considered Options
 

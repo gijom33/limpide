@@ -16,7 +16,7 @@ The owner directs; Claude proposes and builds. The domain words are in `CONTEXT.
 
 - Every commit: the pre-commit hook runs the inbox checks, `tsc` and the lint (`.githooks/`, switched on by `npm install`).
 - While working: the tests that cover the change. One Playwright run at a time: they share port 5199.
-- Before a push: `npx tsc`, `npm run lint`, `npx vitest run` and the Playwright specs the change touches (`npm run test:changed` finds them); GitHub runs all of Playwright, on a release's branch first and then on `main`, which deploys only when green (`docs/releasing.md`, [ADR-0016](docs/adr/0016-the-release-steps-are-the-one-home-of-the-release-rules.md)).
+- Before a push: `npx tsc`, `npm run lint`, `npx vitest run` and the Playwright specs the change touches (`npm run test:changed` finds them); GitHub runs all of Playwright, and a release follows `docs/releasing.md`, the one home of its rules ([ADR-0016](docs/adr/0016-the-release-steps-are-the-one-home-of-the-release-rules.md)).
 
 ## Agent skills
 

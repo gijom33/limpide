@@ -1,7 +1,6 @@
 name: Test and deploy
 
-# A release's commit goes to its branch (release/X.Y.Z) first, and to main only once that run is green (issue 110,
-# docs/releasing.md): a release branch and a pull request run every check below, and only main deploys.
+# A release branch (release/X.Y.Z, docs/releasing.md) and a pull request run every check below; only main deploys.
 on:
   push:
     branches: [main, 'release/**']

@@ -45,7 +45,7 @@ Then open the address it prints (usually http://localhost:5173).
 | `npm run test:unit` | Fast unit tests (Node) |
 | `npm run test:engine` | Audio engine tests in headless Chromium |
 | `npm run test:e2e` | End-to-end tests with Playwright |
-| `npm run stats` | Measure the project for [the statistics page](docs/statistics.md), before a release |
+| `npm run stats` | Measure the project for [the statistics page](docs/statistics.md), after a release |
 
 The browser tests need Playwright's browsers once: `npx playwright install chromium webkit`.
 
@@ -72,7 +72,7 @@ Limpide was designed and directed by Guillaume Boillet, and its code written wit
 4. **Tests first** where behaviour can be measured: the engine renders real audio and checks Harmonics against theory; Playwright plays the built site in two browsers.
 5. **An inbox** ([docs/inbox.md](docs/inbox.md)): bugs and ideas as they come, triaged into issues.
 6. **Reviews** ([docs/reviews](docs/reviews)): agents playing a dozen kinds of visitor (a curious contact, a synth player, a designer, a teacher, a screen-reader user, a sceptic of AI code…), their findings back in the inbox.
-7. **The agent's working rules** ([CLAUDE.md](CLAUDE.md)): how commits, decisions and releases are recorded ([ADR-0010](docs/adr/0010-how-the-work-is-recorded.md)).
+7. **The agent's working rules** ([CLAUDE.md](CLAUDE.md)): how commits, decisions and releases are recorded ([ADR-0010](docs/adr/0010-how-the-work-is-recorded.md)), and [the release steps](docs/releasing.md).
 
 The owner decides what Limpide is, what it looks like, and what ships; those decisions are dated in the issues. The agent proposes, writes the code, the tests and the docs, and checks its work in a real browser before it is committed.
 

@@ -35,7 +35,7 @@ The owner's issues and specs live as Markdown files in this repository ([ADR-001
 ## When a change overturns an issue
 
 - **A change that needs an issue:** one that alters an issue's decision, adds or changes a setting the page offers, or adds, cuts or reworks a batch of Presets (two or more) gets an issue number, even when it is done at once: a new issue, or a line in the issue it changes, and its commits start `Issue N:`. `No issue:` is for a change that overturns nothing an issue says: a typo, a steadier test, the docs catching up with the code, the tooling.
-- **"Since then":** an issue whose decision, ticked box or built behaviour a later change overturns gets a line at its bottom, in the same commit as the change: `**Since then (YYYY-MM-DD, issue N):** what is now true, and who decided.` Its decision and its box stay as they were, so the record reads in order. An open issue whose look or behaviour the change replaced says so in its Status line too, so the owner is not asked to judge what no longer ships.
+- **"Since then":** an issue whose decision, ticked box or built behaviour a later change overturns gets a line beside what it overturns or at its bottom, in the same commit as the change: `**Since then (YYYY-MM-DD, issue N):** what is now true, and who decided.` Its decision and its box stay as they were, so the record reads in order. An open issue whose look or behaviour the change replaced says so in its Status line too, so the owner is not asked to judge what no longer ships.
 
 ## Queries
 
