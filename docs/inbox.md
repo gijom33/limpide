@@ -6,6 +6,24 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- 2026-10-30, from Claude's ideas for Bead's tricks, which the owner asked to keep: its tail redrawn as the Oscillator's Waveform when the Waveform is changed (saw, square, triangle, sine), Bead looking at it proudly.
+- 2026-10-30, from Claude's ideas for Bead's tricks, which the owner asked to keep: Detune splits it into two Beads drifting slightly apart and wobbling against each other, merging back when Detune is back to 0, as detune does.
+- 2026-10-30, from Claude's ideas for Bead's tricks, which the owner asked to keep: the Cutoff as weather: with the Filter fully closed it freezes into an ice cube and shivers, opening it melts it back.
+- 2026-10-30, from Claude's ideas for Bead's tricks, which the owner asked to keep: a screaming Resonance makes its eyes go wide and its tail stand straight.
+- 2026-10-30, from Claude's ideas for Bead's tricks, which the owner asked to keep: the Noise turns it fuzzy, its pixels crackling with static.
+- 2026-10-30, from Claude's ideas for Bead's tricks, which the owner asked to keep: surfing the Oscillator Scope: it hops onto the trace and rides it, smooth on a sine, stepping on a square, sliding down a saw's ramp (the most work: it has to read the trace).
+- 2026-10-30, from Claude's ideas for Bead's tricks, which the owner asked to keep: more words spelled with Notes, as B, E, A, D is, four Notes or more so none comes by accident: D, E, A, D plays dead, X eyes, then peeks to see if anyone noticed; F, A, D, E fades to a ghost and back; C, A, F, E brings a tiny coffee cup and a faster Bead for a while; D, E, A, F covers its ears; B, A, G, G, A, G, E drags a suitcase along its edge.
+- 2026-10-30, from Claude's ideas for Bead's tricks, which the owner asked to keep: picked up and thrown: dragged, let go, it flies under its own gravity and splats (what a click does now, spraying droplets, would have to give way).
+- 2026-10-30, from Claude's ideas for Bead's tricks, which the owner asked to keep: its eyes follow the pointer while it is near.
+- 2026-10-30, from Claude's ideas for Bead's tricks, which the owner asked to keep: the theme switched: to dark it puts on a nightcap, to light it squints and shades its eyes.
+- 2026-10-30, from Claude's ideas for Bead's tricks, which the owner asked to keep: on dates: a ghost sheet on 31 October, a Christmas hat, a party hat on Limpide's birthday.
+- 2026-10-30, from Claude's ideas for Bead's tricks, which the owner asked to keep: it tries to turn a knob itself, straining; the knob does not move (Bead never changes the sound) and it gives up with a huff.
+- 2026-10-30, from Claude's ideas for Bead's tricks, which the owner asked to keep: during the Demo it conducts with a tiny baton, or plays air guitar on its tail.
+- 2026-10-30, from Claude's ideas for Bead's tricks, which the owner asked to keep: evaporating: a little sun comes out, it shrinks into steam, becomes a cloud and rains itself back down.
+- 2026-10-30, from Claude's ideas for Bead's tricks, which the owner asked to keep: a soap bubble it blows, gets caught inside and floats up a little in, then the bubble pops.
+- 2026-10-30, from Claude's ideas for Bead's tricks, which the owner asked to keep: skipping rope with its own tail.
+- 2026-10-30, from Claude's ideas for Bead's tricks, which the owner asked to keep: fishing off its edge, pulling up a little ♪.
+
 ## Dropped
 
 - 2026-10-30, from Claude's brainstorm, Velocity on the Volume ("a harder hit plays louder, not only brighter"): already so. The Amp Envelope's Attack rises to the Note's Velocity (PRD story 9). Claude's call, open to the owner.
