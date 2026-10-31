@@ -6,6 +6,11 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- 2026-10-31, from the 1.19.0 review, sums written twice in the C16 work: the card's "Momentary"/"Toggle" beside describe.ts's mode labels, the `'trigger' | 'toggle'` type in `buttonMode` and the card's Cell, `'ABCD'[b]` twice in the card, `FIRST_LAYOUT` re-deriving `knobCc` and `faderCc`, the print script copying the card spec's margin and page count, mascot.spec's `26 : 6` standing for Bead's height less `EDGE_SHOWING`, `input.name ?? 'MIDI device'` three times in inputs.ts.
+- 2026-10-31, from the 1.19.0 review, the C16 card's footer hard-codes the shared buttons and "Free places stay Toggle" while its doc comment says it is all built from the layout's data.
+- 2026-10-31, from the 1.19.0 review, small leftovers: `c16Connected` in useMidi is a ref only read where it is set; the `'detect'` knob mode and issue 144's rule now serve only first-layout Mappings not yet brought over; `close` and `on` in `choosePerch`, `bottom - 4` twice beside `fits`; `(m as Partial<Mapping>).device` cast twice in `isMapping`; the C16 tip's "D the LFOs" against the bank's name "LFO & Envelopes".
+- 2026-10-31, from the 1.19.0 review, being a C16 now runs through six modules (c16, mappings, inputs, the control surface's `fromC16` and two `device !== 'c16'` checks, useMidi, the MIDI panel): one seam for what a Controller is might gather it.
+- 2026-10-31, from the 1.19.0 review, issue 34's table still shows the first layout (its Status says it is superseded), and the C16 layout's tip has no way into the card beside its own link.
 ## Dropped
 
 - 2026-10-30, from Claude's brainstorm, Velocity on the Volume ("a harder hit plays louder, not only brighter"): already so. The Amp Envelope's Attack rises to the Note's Velocity (PRD story 9). Claude's call, open to the owner.
