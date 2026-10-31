@@ -120,11 +120,20 @@ export function createControlSurface(synth: Synth) {
     synth.touched?.(target, state.following !== undefined ? 'moved' : 'waiting');
   };
 
+  /** Whether a button's message is a press: its CC rising past the middle, not its release (a momentary one's 0). */
+  const pressedNow = (mapping: Mapping, value: number) => {
+    const down = value >= 64;
+    const wasDown = pressed.get(controlKey(mapping.control)) ?? false;
+    pressed.set(controlKey(mapping.control), down);
+    return down && !wasDown;
+  };
+
   const moveChoice = (mapping: Mapping, id: ChoiceId, value: number) => {
-    if (mapping.mode === 'trigger' || mapping.mode === 'detect') return;
+    if (mapping.mode === 'detect') return;
+    if (mapping.mode === 'trigger' && !pressedNow(mapping, value)) return;
     const { index, count } = synth.choice(id);
     let next: number;
-    if (mapping.mode === 'toggle') {
+    if (mapping.mode === 'toggle' || mapping.mode === 'trigger') {
       next = (index + 1) % count; // a button steps on, round to the first
     } else if (mapping.mode === 'absolute') {
       next = Math.min(count - 1, Math.floor((value / 128) * count));
@@ -163,10 +172,7 @@ export function createControlSurface(synth: Synth) {
       if (message.type === 'cc') synth.action(target.id);
       return;
     }
-    const down = message.type === 'noteOn' || (message.type === 'cc' && message.value >= 64);
-    const wasDown = pressed.get(controlKey(mapping.control)) ?? false;
-    pressed.set(controlKey(mapping.control), down);
-    if (down && (message.type === 'noteOn' || !wasDown)) synth.action(target.id);
+    if (message.type === 'noteOn' || (message.type === 'cc' && pressedNow(mapping, message.value))) synth.action(target.id);
   };
 
   const finishListening = () => {
@@ -239,7 +245,8 @@ export function createControlSurface(synth: Synth) {
   };
 
   return {
-    handle(incoming: MidiMessage) {
+    /** A message from a Controller; `fromC16` when that Controller is a C16, whose layout's Mappings answer it alone. */
+    handle(incoming: MidiMessage, fromC16 = false) {
       if (incoming.type === 'program') return synth.program?.(incoming.program);
       const message: ControlMessage =
         incoming.type === 'pitchBend'
@@ -251,7 +258,7 @@ export function createControlSurface(synth: Synth) {
           ? { kind: 'cc', channel: message.channel, number: message.controller }
           : { kind: 'note', channel: message.channel, number: message.note },
       );
-      if (mapping) return apply(mapping, message);
+      if (mapping && (fromC16 || mapping.device !== 'c16')) return apply(mapping, message);
       // Unmapped: a keyboard's own controls do what a synth player expects.
       if (incoming.type === 'pitchBend') return synth.bend?.(incoming.value);
       if (message.type === 'cc' && message.controller === SUSTAIN) return synth.pedal?.(message.value >= 64);

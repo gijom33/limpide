@@ -6,7 +6,7 @@ The cause: the C16 layout's knobs find their Encoder Mode from their first three
 
 **Blocked by:** none
 
-**Status:** ready-for-human · bug. Fixed (2026-10-31): steady steps one way with no repeat are Absolute wherever they are. To try on the real C16 after pressing "C16 layout" again (the knobs already taken for Relative keep that until then). Claude's call, open to the owner.
+**Status:** superseded (2026-10-31) by [145](./145-the-c16-layout-strip-by-strip.md): the C16 layout's knobs are declared Relative #1, no longer detected. The fix stands for a stored first layout's knobs, still detected until it is brought to the new one.
 
 ## Decisions
 

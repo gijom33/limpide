@@ -1,7 +1,7 @@
 import { type MutableRefObject, useEffect, useEffectEvent, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import type { AudioSession } from '../../app/session';
 import type { KeyValueStorage } from '../../app/storage';
-import { c16Bank, c16Layout, isC16 } from '../../midi/c16';
+import { c16Bank, c16Layout, isC16, upgradeC16Layout } from '../../midi/c16';
 import { createControlSurface, type LearnState } from '../../midi/controlSurface';
 import { describeMessage, targetKey } from '../../midi/describe';
 import { connectMidi, type MidiAccessLike, midiSupport } from '../../midi/inputs';
@@ -221,9 +221,10 @@ export function useMidi(host: Host) {
       (access) => {
         if (cancelled) return;
         dispose = connectMidi(access as unknown as MidiAccessLike, {
-          onMessage: (m) => {
+          onMessage: (m, from) => {
+            const fromC16 = isC16(from);
             if (m.type === 'noteOn') noteFromController();
-            if (c16Connected.current && m.type === 'cc' && surface.learnState().phase === 'off') {
+            if (fromC16 && m.type === 'cc' && surface.learnState().phase === 'off') {
               const control = { kind: 'cc' as const, channel: m.channel, number: m.controller };
               const bank = c16Bank(control);
               if (bank !== undefined && bank !== lastBank.current && mappingStore.find(control)) {
@@ -231,7 +232,7 @@ export function useMidi(host: Host) {
                 setBankFollow((f) => ({ name: SECTIONS[bank].name, key: (f?.key ?? 0) + 1 }));
               }
             }
-            surface.handle(m);
+            surface.handle(m, fromC16);
             setActivity(describeMessage(m));
           },
           onDevices: (devices) => {
@@ -239,6 +240,9 @@ export function useMidi(host: Host) {
             c16Connected.current = devices.some(isC16);
             const fresh = mappingStore.list().length === 0 && storage.getItem(C16_APPLIED) === null;
             if (c16Connected.current && fresh) applyC16LayoutNow();
+            // The first layout, stored before issue 145, becomes today's; a person's own Mappings stay.
+            const upgraded = c16Connected.current && upgradeC16Layout(mappingStore.list());
+            if (upgraded) mappingStore.restore(upgraded);
           },
         });
       },

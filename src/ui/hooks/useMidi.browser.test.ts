@@ -92,6 +92,26 @@ describe('useMidi: a Controller (the 1.16.0 review)', () => {
     expect(m.result.current.mappings.length).toBeGreaterThan(0);
   });
 
+  it('keeps the C16 layout to a C16: a keyboard’s sustain pedal on the same CC still holds the Notes (issue 145)', async () => {
+    const m = await midi('Keystation 49');
+    unmount = m.unmount;
+    await act(async () => {
+      m.result.current.mappingStore.set({ control: { kind: 'cc', channel: 1, number: 64 }, target: { kind: 'action', id: 'nextPreset' }, mode: 'trigger', device: 'c16' });
+    });
+    await m.send(0xb0, 64, 127);
+    expect(m.told).toEqual(['pedal down']);
+  });
+
+  it('lets a C16 play its layout: its CC 64 is a Preset arrow, not a pedal (issue 145)', async () => {
+    const m = await midi('Synido TempoPAD C16 BT Bluetooth');
+    unmount = m.unmount;
+    const before = m.session.patches.get().name;
+    await m.send(0xb0, 64, 127); // bank B's M2, Next Preset
+    await m.send(0xb0, 64, 0);
+    expect(m.told).toEqual(['preset step']);
+    expect(m.session.patches.get().name).not.toBe(before);
+  });
+
   it('leaves a keyboard with nothing mapped as it is', async () => {
     const m = await midi();
     unmount = m.unmount;

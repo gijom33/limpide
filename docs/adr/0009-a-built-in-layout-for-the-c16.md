@@ -1,6 +1,6 @@
 # A built-in layout for the C16, beside MIDI Learn
 
-**Status:** accepted · **Date:** 2026-10-25 · **Decided by:** the owner
+**Status:** accepted; its layout and its knobs' detection superseded by [ADR-0017](./0017-the-c16-layout-strip-by-strip.md) · **Date:** 2026-10-25 · **Decided by:** the owner
 
 Supersedes ADR-0004's "Limpide ships no hard-coded CC table" for the TempoPAD C16 alone. ADR-0004 chose MIDI Learn first because the C16's factory assignments were unknown and its Encoder Mode could vary. The owner has since read them off the device (2026-10-25): channel 1; each of its 4 banks has its own CCs (knobs from 1, faders from 33, buttons from 49, one bank after another); its buttons are toggles. Trying Quick Setup on the real C16 also showed that walking through every control is slow and error-prone, so the owner asked for the C16 to work the moment it is plugged in.
 

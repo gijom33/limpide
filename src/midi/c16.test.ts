@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { c16Bank, c16Layout, isC16 } from './c16';
+import { buttonCc, c16Bank, c16Layout, isC16, upgradeC16Layout } from './c16';
 import type { Mapping } from './mappings';
 
 /** What the layout maps a CC on channel 1 to: "param:cutoff", or undefined when it is left free. */
@@ -7,52 +7,83 @@ const at = (layout: Mapping[], cc: number) => {
   const m = layout.find((m) => m.control.kind === 'cc' && m.control.channel === 1 && m.control.number === cc);
   return m && `${m.target.kind}:${m.target.id}`;
 };
+const modeAt = (layout: Mapping[], cc: number) => layout.find((m) => m.control.number === cc)?.mode;
+/** A bank's knobs (K1–K8), faders (F1–F4), and buttons by row (M1–M4, S1–S4, R1–R4). */
+const bank = (layout: Mapping[], b: number) => ({
+  knobs: [0, 1, 2, 3, 4, 5, 6, 7].map((i) => at(layout, 1 + 8 * b + i)),
+  faders: [0, 1, 2, 3].map((i) => at(layout, 33 + 4 * b + i)),
+  M: [0, 1, 2, 3].map((s) => at(layout, buttonCc(b, 'M', s))),
+  S: [0, 1, 2, 3].map((s) => at(layout, buttonCc(b, 'S', s))),
+  R: [0, 1, 2, 3].map((s) => at(layout, buttonCc(b, 'R', s))),
+});
+const SHARED_M = ['action:previousPreset', 'action:nextPreset', 'action:freeze', 'action:hold'];
 
-describe('the C16 layout', () => {
-  it('gives bank A to the Oscillators: knobs on CC 1–8, faders on CC 33–36', () => {
-    const layout = c16Layout();
-    expect([1, 2, 3, 4, 5, 6, 7, 8].map((cc) => at(layout, cc))).toEqual([
-      'choice:waveform', 'param:pulseWidth', 'choice:osc2Waveform', 'param:osc2Octave',
-      'param:osc2Semitone', 'param:osc2Detune', 'param:osc2PulseWidth', 'param:glide',
-    ]);
-    expect([33, 34, 35, 36].map((cc) => at(layout, cc))).toEqual(['param:mixOsc1', 'param:mixOsc2', 'param:mixSub', 'param:mixNoise']);
+describe('the C16 layout, strip by strip (issue 145)', () => {
+  it('counts the buttons down each strip, then across, as the C16 sends them: M1 49, S1 50, R1 51, M2 52 …', () => {
+    expect([buttonCc(0, 'M', 0), buttonCc(0, 'S', 0), buttonCc(0, 'R', 0), buttonCc(0, 'M', 1), buttonCc(0, 'R', 3)]).toEqual([49, 50, 51, 52, 60]);
+    expect(buttonCc(1, 'M', 3)).toBe(70); // the owner's bank B M4
   });
 
-  it('gives bank B to the Filter, C to the Amp and D to the LFOs, each bank 8 knob CCs and 4 fader CCs on', () => {
-    const layout = c16Layout();
-    const knobs = (first: number) => [0, 1, 2, 3, 4, 5, 6, 7].map((i) => at(layout, first + i));
-    const faders = (first: number) => [0, 1, 2, 3].map((i) => at(layout, first + i));
-    expect(knobs(9)).toEqual([
-      'param:cutoff', 'param:resonance', 'param:filterEnvAmount', 'param:velocityCutoff',
-      'param:keyTrack', 'choice:filterMode', 'choice:filterSlope', undefined,
-    ]);
-    expect(faders(37)).toEqual(['param:filterAttack', 'param:filterDecay', 'param:filterSustain', 'param:filterRelease']);
-    // Free places stay free: the synth will grow into them.
-    expect(knobs(17)).toEqual(['choice:voices', undefined, undefined, undefined, undefined, undefined, undefined, undefined]);
-    expect(faders(41)).toEqual(['param:ampAttack', 'param:ampDecay', 'param:ampSustain', 'param:ampRelease']);
-    expect(knobs(25)).toEqual([
-      'choice:lfoWaveform', 'param:lfoRate', 'param:lfoAmount', 'choice:lfoDestination',
-      'choice:lfo2Waveform', 'param:lfo2Rate', 'param:lfo2Amount', 'choice:lfo2Destination',
-    ]);
-    expect(faders(45)).toEqual([undefined, undefined, undefined, undefined]);
+  it('gives bank A to the Oscillators, each strip a column of the section', () => {
+    expect(bank(c16Layout(), 0)).toEqual({
+      knobs: ['param:osc1Octave', 'param:crossMod', 'param:mixRing', 'param:pulseWidth', 'param:osc2Octave', 'param:osc2Semitone', 'param:osc2Detune', 'param:osc2EnvAmount'],
+      faders: ['param:mixOsc1', 'param:mixOsc2', 'param:mixNoise', 'param:mixSub'],
+      M: SHARED_M,
+      S: [undefined, undefined, 'action:snapshot', 'choice:subOctave'],
+      R: ['choice:waveform', 'choice:osc2Waveform', 'choice:noiseColour', 'choice:subWaveform'],
+    });
   });
 
-  it('puts the same Actions on the first five buttons of every bank (CC 49–60, 61–72…), and Retrigger on bank D’s', () => {
+  it('gives bank B to the Filter, C to the Amp and D to the LFOs; the free places stay free', () => {
     const layout = c16Layout();
-    const buttons = (first: number) => [0, 1, 2, 3, 4, 5, 6].map((i) => at(layout, first + i));
-    const actions = ['action:hold', 'action:freeze', 'action:snapshot', 'action:previousPreset', 'action:nextPreset'];
-    expect(buttons(49)).toEqual([...actions, undefined, undefined]);
-    expect(buttons(61)).toEqual([...actions, undefined, undefined]);
-    expect(buttons(73)).toEqual([...actions, undefined, undefined]);
-    expect(buttons(85)).toEqual([...actions, 'choice:lfoRetrigger', 'choice:lfo2Retrigger']);
+    expect(bank(layout, 1)).toEqual({
+      knobs: ['param:cutoff', 'param:resonance', 'param:velocityCutoff', 'param:keyTrack', 'param:filterEnvAmount', 'choice:filterMode', undefined, undefined],
+      faders: ['param:filterAttack', 'param:filterDecay', 'param:filterSustain', 'param:filterRelease'],
+      M: SHARED_M,
+      S: [undefined, undefined, 'action:snapshot', undefined],
+      R: ['choice:filterSlope', undefined, undefined, undefined],
+    });
+    expect(bank(layout, 2)).toEqual({
+      knobs: ['choice:voices', 'param:glide', undefined, undefined, undefined, undefined, undefined, 'param:volume'],
+      faders: ['param:ampAttack', 'param:ampDecay', 'param:ampSustain', 'param:ampRelease'],
+      M: SHARED_M,
+      S: [undefined, undefined, 'action:snapshot', undefined],
+      R: [undefined, undefined, undefined, undefined], // R2 kept for Legato (issue 119)
+    });
+    expect(bank(layout, 3)).toEqual({
+      knobs: [
+        'choice:lfoWaveform', 'choice:lfoDestination', 'choice:lfo2Waveform', 'choice:lfo2Destination',
+        'param:lfoAmount', 'param:lfoRate', 'param:lfo2Amount', 'param:lfo2Rate',
+      ],
+      faders: [undefined, undefined, undefined, undefined],
+      M: SHARED_M,
+      S: [undefined, undefined, 'action:snapshot', undefined],
+      R: ['choice:lfoRetrigger', undefined, 'choice:lfo2Retrigger', undefined], // R2 and R4 kept for Sync (issue 112)
+    });
     expect(at(layout, 97)).toBeUndefined();
   });
 
-  it('maps the buttons as toggles (each press sends the other value), the faders as positions', () => {
+  it('reads the knobs as Relative #1 (64-centred) and the faders as positions', () => {
     const layout = c16Layout();
-    const modeAt = (cc: number) => layout.find((m) => m.control.number === cc)?.mode;
-    expect([49, 61, 85, 91].map(modeAt)).toEqual(['toggle', 'toggle', 'toggle', 'toggle']);
-    expect([33, 41].map(modeAt)).toEqual(['absolute', 'absolute']);
+    expect([1, 9, 18, 32].map((cc) => modeAt(layout, cc))).toEqual(['relative-centred', 'relative-centred', 'relative-centred', 'relative-centred']);
+    expect([33, 44].map((cc) => modeAt(layout, cc))).toEqual(['absolute', 'absolute']);
+  });
+
+  it('makes the Actions and the Waveform buttons momentary, the two-way switches toggles', () => {
+    const layout = c16Layout();
+    const modes = (b: number, row: 'M' | 'S' | 'R') => [0, 1, 2, 3].map((s) => modeAt(layout, buttonCc(b, row, s)));
+    for (const b of [0, 1, 2, 3]) {
+      expect(modes(b, 'M')).toEqual(['trigger', 'trigger', 'trigger', 'trigger']);
+      expect(modeAt(layout, buttonCc(b, 'S', 2))).toBe('trigger'); // Snapshot
+    }
+    expect(modes(0, 'R')).toEqual(['trigger', 'trigger', 'toggle', 'toggle']); // the Waveforms step; Noise Colour, Sub Waveform switch
+    expect(modeAt(layout, buttonCc(0, 'S', 3))).toBe('toggle'); // Sub Octave
+    expect(modeAt(layout, buttonCc(1, 'R', 0))).toBe('toggle'); // Slope
+    expect([0, 2].map((s) => modeAt(layout, buttonCc(3, 'R', s)))).toEqual(['toggle', 'toggle']); // the Retriggers
+  });
+
+  it('answers a C16 only: every Mapping of it is marked so', () => {
+    expect(c16Layout().every((m) => m.device === 'c16')).toBe(true);
   });
 
   it('tells a control’s bank (0 for A … 3 for D), so a bank switch can bring its section into view', () => {
@@ -67,14 +98,37 @@ describe('the C16 layout', () => {
     expect(c16Bank({ kind: 'note', channel: 1, number: 36 })).toBeUndefined();
   });
 
-  it('knows a C16 by the name it gives', () => {
+  it('knows a C16 by the name it gives, over USB or Bluetooth', () => {
     expect(isC16('Synido TempoPAD C16')).toBe(true);
-    expect(isC16('TempoPAD C16 Bluetooth')).toBe(true);
+    expect(isC16('Synido TempoPAD C16 BT Bluetooth')).toBe(true);
     expect(isC16('Arturia KeyStep')).toBe(false);
   });
+});
 
-  it('lets each knob find its Encoder Mode on its first turn (the C16 can be set to any)', () => {
-    const layout = c16Layout();
-    expect([1, 9, 17, 32].map((cc) => layout.find((m) => m.control.number === cc)?.mode)).toEqual(['detect', 'detect', 'detect', 'detect']);
+describe('the first C16 layout, brought to today’s (issue 145)', () => {
+  const cc = (number: number) => ({ kind: 'cc' as const, channel: 1, number });
+  /** The first layout as it was stored, its knobs' modes found on their first turn. */
+  const first: Mapping[] = [
+    { control: cc(1), target: { kind: 'choice', id: 'waveform' }, mode: 'absolute' },
+    { control: cc(7), target: { kind: 'param', id: 'osc2PulseWidth' }, mode: 'relative-centred' },
+    { control: cc(9), target: { kind: 'param', id: 'cutoff' }, mode: 'detect' },
+    { control: cc(49), target: { kind: 'action', id: 'hold' }, mode: 'toggle' },
+  ];
+
+  it('becomes today’s layout, a person’s own Mappings kept', () => {
+    const own: Mapping = { control: { kind: 'cc', channel: 2, number: 74 }, target: { kind: 'param', id: 'osc2PulseWidth' }, mode: 'absolute' };
+    const upgraded = upgradeC16Layout([...first, own])!;
+    expect(upgraded).toEqual([own, ...c16Layout()]);
+  });
+
+  it('drops an own Mapping that shares a control or a target with the new layout, which takes that place', () => {
+    const onCutoff: Mapping = { control: { kind: 'cc', channel: 3, number: 20 }, target: { kind: 'param', id: 'cutoff' }, mode: 'absolute' };
+    expect(upgradeC16Layout([...first, onCutoff])).toEqual(c16Layout());
+  });
+
+  it('leaves Mappings alone when none is the first layout’s', () => {
+    expect(upgradeC16Layout([])).toBeNull();
+    expect(upgradeC16Layout(c16Layout())).toBeNull();
+    expect(upgradeC16Layout([{ control: cc(1), target: { kind: 'param', id: 'cutoff' }, mode: 'absolute' }])).toBeNull();
   });
 });

@@ -160,6 +160,13 @@ export function MidiPanel({
                   </button>
                 </Tooltip>
               )}
+              {devices.some(isC16) && (
+                <Tooltip content={TIPS.c16Card}>
+                  <a className="tool" href="#c16-card" target="_blank" rel="noopener">
+                    Print C16 card
+                  </a>
+                </Tooltip>
+              )}
             </>
           )}
           {available && (
@@ -182,6 +189,7 @@ export function MidiPanel({
                     <span className="mapping-target">{describeTarget(m.target)}</span>
                     <span className="mapping-control">
                       {describeControl(m.control)} · {describeMode(m.mode)}
+                      {m.device === 'c16' && ' · C16 only'}
                     </span>
                     <button
                       type="button"

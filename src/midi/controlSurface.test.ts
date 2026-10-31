@@ -390,3 +390,62 @@ describe('a keyboard’s own controls, while nothing is mapped to them (issue 52
     expect(heard.filter((h) => h.startsWith('bend'))).toEqual([]);
   });
 });
+
+describe('the C16 layout’s buttons and its own input (issue 145)', () => {
+  const waveform = { kind: 'choice', id: 'waveform' } as const;
+
+  it('steps a choice on a momentary button’s press, not on its release, round to the first', () => {
+    const r = rig();
+    r.store.set({ control: { kind: 'cc', channel: 1, number: 51 }, target: waveform, mode: 'trigger' });
+    r.send(cc(51, 127), cc(51, 0));
+    expect(r.choices.waveform).toBe(3);
+    r.send(cc(51, 127), cc(51, 0), cc(51, 127), cc(51, 0));
+    expect(r.choices.waveform).toBe(0); // the fifth, then round to the first
+  });
+
+  it('fires a momentary Action once a press, a toggle Action on every message', () => {
+    const r = rig();
+    r.store.set({ control: { kind: 'cc', channel: 1, number: 52 }, target: { kind: 'action', id: 'nextPreset' }, mode: 'trigger' });
+    r.store.set({ control: { kind: 'cc', channel: 1, number: 55 }, target: { kind: 'action', id: 'freeze' }, mode: 'toggle' });
+    r.send(cc(52, 127), cc(52, 0), cc(55, 127), cc(55, 0));
+    expect(r.actions).toEqual(['nextPreset', 'freeze', 'freeze']);
+  });
+
+  it('lets a C16 Mapping answer a C16 only: another Controller’s sustain pedal and mod wheel keep their meaning', () => {
+    const r = rig();
+    const pedal: string[] = [];
+    const surface = createControlSurface({
+      store: r.store,
+      position: (id) => r.positions[id] ?? 0,
+      setPosition: (id, p) => void (r.positions[id] = p),
+      action: (id) => void r.actions.push(id),
+      choice: (id) => ({ index: r.choices[id] ?? 0, count: 5 }),
+      setChoice: (id, index) => void (r.choices[id] = index),
+      press: () => {},
+      release: () => {},
+      pedal: (down) => void pedal.push(down ? 'down' : 'up'),
+    });
+    r.store.set({ control: { kind: 'cc', channel: 1, number: 64 }, target: { kind: 'action', id: 'nextPreset' }, mode: 'trigger', device: 'c16' });
+    r.store.set({ control: { kind: 'cc', channel: 1, number: 1 }, target: { kind: 'param', id: 'cutoff' }, mode: 'relative-centred', device: 'c16' });
+    surface.handle(cc(64, 127));
+    surface.handle(cc(1, 127));
+    expect(pedal).toEqual(['down']);
+    expect(r.actions).toEqual([]);
+    expect(r.positions.cutoff).toBe(0.5);
+    expect(r.positions.lfoAmount).toBe(1); // the mod wheel
+    surface.handle(cc(64, 127), true);
+    surface.handle(cc(1, 66), true);
+    expect(r.actions).toEqual(['nextPreset']);
+    expect(r.positions.cutoff).toBeGreaterThan(0.5); // two steps up
+  });
+
+  it('lets a Mapping learned from any Controller answer every Controller', () => {
+    const r = rig();
+    r.store.set({ control: { kind: 'cc', channel: 1, number: 74 }, target: cutoff, mode: 'relative-centred' });
+    r.surface.handle(cc(74, 65), true);
+    const fromC16 = r.positions.cutoff!;
+    expect(fromC16).toBeGreaterThan(0.5);
+    r.surface.handle(cc(74, 65), false);
+    expect(r.positions.cutoff).toBeGreaterThan(fromC16);
+  });
+});

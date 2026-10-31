@@ -22,8 +22,8 @@ const MODE_LABELS: Record<Mapping['mode'], string> = {
   'relative-twos': 'Relative',
   'relative-centred': 'Relative',
   detect: 'Turn it once to set it up',
-  trigger: 'Press',
-  toggle: 'Press',
+  trigger: 'Momentary',
+  toggle: 'Toggle',
 };
 export const describeMode = (mode: Mapping['mode']) => MODE_LABELS[mode];
 

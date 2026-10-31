@@ -40,12 +40,14 @@ export type Target = { kind: 'param'; id: ParamId } | { kind: 'choice'; id: Choi
 /**
  * A link from a Controller control to a Parameter (by Encoder Mode) or an Action. A knob whose Encoder Mode is not
  * known yet ('detect') finds it on its first turn. A button either sends a press and a release ('trigger': it acts
- * on the press) or, as a toggle, one value per press, each the other ('toggle': it acts on every message).
+ * on the press) or, as a toggle, one value per press, each the other ('toggle': it acts on every message). A
+ * Mapping of the C16's layout answers a C16 only ('c16', issue 145); any other answers every Controller.
  */
 export interface Mapping {
   control: Control;
   target: Target;
   mode: EncoderMode | 'detect' | 'trigger' | 'toggle';
+  device?: 'c16';
 }
 
 interface KeyValueStorage {
@@ -75,7 +77,8 @@ const isMapping = (m: unknown): m is Mapping => {
     ((t.kind === 'param' && Object.hasOwn(PARAMS, t.id)) ||
       (t.kind === 'choice' && Object.hasOwn(CHOICES, t.id)) ||
       (t.kind === 'action' && Object.hasOwn(ACTIONS, t.id))) &&
-    MODES.includes(mode as string)
+    MODES.includes(mode as string) &&
+    ((m as Partial<Mapping>).device === undefined || (m as Partial<Mapping>).device === 'c16')
   );
 };
 

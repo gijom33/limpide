@@ -4,7 +4,7 @@
 
 **Blocked by:** none. Built before [112](./112-tempo-midi-clock-and-an-arpeggiator.md) and [119](./119-legato-mode.md) at the owner's word (2026-10-31: "implement 145"): their places (bank D's R2 and R4 for Sync, bank C's R2 for Legato) are kept free, and each of those issues fills its own
 
-**Status:** ready-for-agent · enhancement. In v1 ([131](./131-v1.md)), replacing 34's layout. Grilled with the owner, 2026-10-31.
+**Status:** ready-for-human · enhancement. Built (2026-10-31), not pushed: to try on the owner's C16, its 22 momentary buttons set as the card says. The owner expects some buttons' modes to change after trying.
 
 ## The C16, as the owner's device shows it (2026-10-31)
 
@@ -54,13 +54,13 @@
 - The MIDI panel and its tips; a new printable page
 
 **Acceptance criteria:**
-- [ ] A unit test per bank: each place's CC gives the right target and mode, every other place free
-- [ ] Relative knobs: 65 moves a Parameter one step up, 62 two steps down; a choice steps after its clicks
-- [ ] A momentary button fires on 127 and not on 0; a momentary button on a Waveform steps it on, round to the first
-- [ ] A message on the layout's CCs from another input (a keyboard's CC 64 or CC 1) does not reach the layout; a MIDI-Learned Mapping still answers any input
-- [ ] Stored old-layout Mappings become the new layout; a person's own Mappings are kept
-- [ ] The card shows every place of the data and prints on one page, A4 and Letter (an e2e print-size check)
-- [ ] Every test passes in Linux's fonts too
+- [x] A unit test per bank: each place's CC gives the right target and mode, every other place free
+- [x] Relative knobs: 65 moves a Parameter one step up, 62 two steps down; a choice steps after its clicks
+- [x] A momentary button fires on 127 and not on 0; a momentary button on a Waveform steps it on, round to the first
+- [x] A message on the layout's CCs from another input (a keyboard's CC 64 or CC 1) does not reach the layout; a MIDI-Learned Mapping still answers any input
+- [x] Stored old-layout Mappings become the new layout; a person's own Mappings are kept
+- [x] The card shows every place of the data and prints on one page, A4 and Letter (an e2e print-size check)
+- [x] Every test passes in Linux's fonts too (the card's spec in Playwright's Linux image; GitHub's Ubuntu runs all at the push)
 
 **Out of scope:**
 - Aftertouch's place ([132](./132-aftertouch.md)), a Tap button ([112](./112-tempo-midi-clock-and-an-arpeggiator.md), [136](./136-following-midi-clock.md)), the faders of bank D
@@ -74,3 +74,13 @@
 10. **Bank D:** LFO 1 on strips 1 and 2, LFO 2 on 3 and 4, Waveform and Destination over Depth and Rate; R1–R4 Retrigger and Sync for each; faders free for now.
 11. **Built after 112 and 119,** so Sync and Legato have their places from the start; the card with it. **Since then (2026-10-31):** built first, at the owner's word, the two places kept for 112 and 119 to fill.
 12. **The owner's C16 is set:** every knob Relative #1 (2026-10-31). The 22 momentary buttons (M1–M4 and S3 on every bank, R1 and R2 on bank A) are set once this is built: today's layout would read their release as a second press.
+
+## How it was built
+
+- **The layout's data** (`src/midi/c16.ts`): `C16_BANKS`, each bank's knobs, faders and M, S, R buttons as places with a target and the card's short name; `knobCc`, `faderCc` and `buttonCc` (down each strip, then across); `buttonMode` (toggle for a choice of two, momentary otherwise); `c16Layout()` marks every Mapping `device: 'c16'`, knobs `relative-centred`, faders `absolute`. `upgradeC16Layout` recognises the first layout's Mappings (issue 34's, CC by CC) and swaps them for the new one, keeping a person's own; the MIDI hook runs it whenever a C16 is connected.
+- **The C16 alone** (`src/midi/inputs.ts`, `src/midi/controlSurface.ts`, `src/ui/hooks/useMidi.ts`): each message comes with its Controller's name; `handle(message, fromC16)` skips a `device: 'c16'` Mapping for any other Controller, which then falls through to the keyboard defaults (the sustain pedal, the mod wheel). The bank follow keys on the C16 too.
+- **Momentary buttons on choices:** `moveChoice` steps on a press (127) and not on the release (0), round to the first; Actions share the same press detection.
+- **The MIDI panel:** modes read Momentary or Toggle, the layout's Mappings say "C16 only", and "Print C16 card" opens the card in a new tab; the C16 layout's tip describes the strips.
+- **The card** (`src/ui/C16Card.tsx`, its styles at the end of `src/styles.css`): `#c16-card` renders it instead of the app (`src/main.tsx`); one landscape sheet, light whatever the theme. `npm run c16-card` (with `npm run dev` running) prints it to `docs/c16-card.pdf` (A4) and `test-results/c16-card-letter.pdf`, each checked to be one page; `e2e/c16Card.spec.ts` checks the same in A4 and Letter.
+- **The record:** [ADR-0017](../adr/0017-the-c16-layout-strip-by-strip.md), ADR-0009's Status line, the PRD's Controller facts, issues 34 and 144 superseded by this one, 112 and 119 pointed at their places.
+- Not tried on the real C16 yet: the owner's 22 buttons are still toggles, and the layout reads its momentary ones as momentary.
