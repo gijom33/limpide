@@ -442,5 +442,27 @@ describe('what the controls, the words, the page and the Demo make of it (issue 
     const after = run(motion, 3.5, 4.2, playing, wide);
     expect(after.at(-1)!.x).toBeGreaterThan(110);
   });
+
+  it('fishing, once begun, goes on to the ♪ whatever comes: tickles, a click, a word, the Filter closed, a long quiet (the owner)', () => {
+    // A deal that starts with fishing, cued just before it would doze off.
+    let motion = createMascotMotion(seeded(1));
+    for (let seed = 1; ; seed++) {
+      motion = createMascotMotion(seeded(seed));
+      motion.frame(quiet, 0, false, wide);
+      motion.gesture('perform', 18);
+      if (motion.frame(quiet, 18, false, wide).doing === 'fishing') break;
+    }
+    const poses: Pose[] = [];
+    for (let t = 18 + 1 / 60; t < 18 + 5.6; t += 1 / 60) {
+      if (Math.abs(t - 19) < 0.01) motion.tickle(t);
+      if (Math.abs(t - 19.5) < 0.01) motion.poke(t);
+      if (Math.abs(t - 20) < 0.01) motion.word('dead', t);
+      poses.push(motion.frame({ ...quiet, closed: t > 21 }, t, false, wide));
+    }
+    expect(poses.every((p) => p.doing === 'fishing' && p.ice === 0)).toBe(true);
+    expect(poses.some((p) => p.caught && p.hook === 0)).toBe(true); // it got its ♪
+    // Then the word it heard, before the Filter freezes it.
+    expect(motion.frame(quiet, 23.7, false, wide).doing).toBe('playDead');
+  });
 });
 

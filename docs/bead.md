@@ -32,7 +32,7 @@ When nothing has been played for a few seconds, it does a funny turn now and the
 - **Water gags:** evaporating in the sun and being rained back by a cloud; a soap bubble it gets caught in, floating up until it pops; skipping rope with its own tail; fishing off its edge: it casts, the hook drops down past the bottom of the window, bobs while it waits, jerks at a bite, and comes back up on the line with a little ♪, which Bead shows off.
 - **The others:** a wet-dog shake; a happy waddle dribbling water; jumping in a puddle that is not there; a sneeze; a moonwalk; chasing its tail; a dizzy spin; a little fountain; hiccups; a twist; balancing on one foot; three bounces; a turn round; a jelly jiggle; a tail wag; a peek; a yawn.
 - **Changing the Filter Slope** while nothing has been played cues the next funny turn.
-- **Once begun, a funny turn plays to its end**: a Note, a control turned or a visit to another section waits for it. A tickle, a click, picking it up or a word still interrupts it.
+- **Once begun, a funny turn plays to its end**: fishing goes on until Bead gets its ♪. A Note, a control turned, a visit to another section, dozing off or freezing waits for it; a tickle or a click is not felt; a word or a theme switch comes once it ends. Only picking Bead up or sending it away cuts it short.
 
 ## What the controls make of it
 

@@ -241,6 +241,8 @@ export function createMascotMotion(random: () => number = Math.random) {
   let hat: Hat = 'none';
   let act: Act | null = null;
   let pointer: number | null = null;
+  // A word's or the theme's turn asked for during another: it comes next.
+  let queued: Trick | null = null;
   // Its tricks, dealt like a shuffled deck: each once before any comes again, the jokes three times.
   let deck: Trick[] = [];
   const deal = (): Trick => {
@@ -347,7 +349,8 @@ export function createMascotMotion(random: () => number = Math.random) {
     },
     /** Tickled (a pointer over it), until a moment after the last call: it squirms and giggles. */
     tickle(now: number) {
-      if (leftAt !== null || now < escapedUntil) return;
+      // A funny turn under way plays to its end: it does not feel the tickle (the owner, 2026-10-30).
+      if (leftAt !== null || now < escapedUntil || trick) return;
       fedUp += Math.min(0.1, Math.max(0, now - lastTickle));
       lastTickle = now;
       tickledUntil = now + TICKLE_SECONDS;
@@ -357,7 +360,7 @@ export function createMascotMotion(random: () => number = Math.random) {
     },
     /** Clicked or touched: a tickle, and it counts for more. */
     poke(now: number) {
-      if (leftAt !== null || now < escapedUntil) return;
+      if (leftAt !== null || now < escapedUntil || trick) return;
       this.tickle(now);
       fedUp += POKE;
     },
@@ -370,6 +373,7 @@ export function createMascotMotion(random: () => number = Math.random) {
     pickUp(now: number) {
       if (leftAt !== null) return;
       trick = null;
+      queued = null;
       target = null;
       busySince = now;
     },
@@ -383,13 +387,16 @@ export function createMascotMotion(random: () => number = Math.random) {
     word(word: Word, now: number) {
       if (leftAt !== null) return;
       gestureCount++;
-      perform(WORD_TRICKS[word], now);
+      // During a funny turn, it comes once that ends.
+      if (trick) queued = WORD_TRICKS[word];
+      else perform(WORD_TRICKS[word], now);
     },
     /** The theme switched: a nightcap for dark, its eyes shaded for light, for a few seconds. */
     theme(theme: 'dark' | 'light', now: number) {
       if (leftAt !== null) return;
       gestureCount++;
-      perform(theme === 'dark' ? 'nightcap' : 'shades', now);
+      if (trick) queued = theme === 'dark' ? 'nightcap' : 'shades';
+      else perform(theme === 'dark' ? 'nightcap' : 'shades', now);
     },
     /** A Waveform chosen: its tail takes that wave for `WAVE_SECONDS`. */
     wave(shape: Waveform, now: number) {
@@ -439,14 +446,13 @@ export function createMascotMotion(random: () => number = Math.random) {
       heardNote = heard.struck;
       const silent = heard.amp < SILENT;
       if (!silent || act) busySince = now;
-      // Freezing with the Filter fully closed, melting as it opens; frozen, it stops what it was doing.
-      const closed = !!heard.closed;
-      if (closed && ice === 0) trick = null;
+      // Freezing with the Filter fully closed, melting as it opens; a funny turn under way ends first.
+      const closed = !!heard.closed && !trick;
       ice = Math.min(1, Math.max(0, ice + (closed ? dt / FREEZE_SECONDS : -dt / MELT_SECONDS)));
       if (reduced) ice = closed ? 1 : 0;
       const frozen = ice > 0.5;
       const idle = now - busySince >= LISTENING_SECONDS;
-      let dozing = now - busySince >= DOZE_SECONDS && now >= wakeUntil;
+      let dozing = now - busySince >= DOZE_SECONDS && now >= wakeUntil && !trick;
       if (dozing && nextWake === Infinity) {
         // Dropping off: where it is, as it is.
         nextWake = now + between(8, 15);
@@ -513,6 +519,10 @@ export function createMascotMotion(random: () => number = Math.random) {
           gait = 'scoot';
         }
         trick = null;
+        if (queued) {
+          perform(queued, now);
+          queued = null;
+        }
       }
       // What next, when it is free: a stroll, a glance, or (with nothing played) a funny turn.
       // Surfing an LFO's shape through a Demo part: along it, end to end.
