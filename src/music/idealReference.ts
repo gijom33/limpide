@@ -3,10 +3,11 @@ import { FM_INDEX, type Patch } from '../patch/patch';
 import { harmonicSeries } from './harmonics';
 
 /**
- * The level of each Harmonic (index n) that Osc 1 and the Sub should put at the Oscillator Tap, before the
- * Nominal Level. With the Sub on, the sound repeats at the Sub's pitch, so Harmonics count from there: an octave
- * down, the Sub's square fills the odd ones and Osc 1's series the even ones; two down, Osc 1 every fourth. They
- * never share a Harmonic, so the levels are exact.
+ * The level of each Harmonic (index n) that every Oscillator but Osc 2 should put at the Oscillator Tap, before the
+ * Nominal Level: Osc 1 (as FM makes it), the Sub and Ring, from idealPartials, the levels landing on one Harmonic
+ * added. With the Sub on, the sound repeats at the Sub's pitch, so Harmonics count from there: an octave down, the
+ * Sub's square fills the odd ones and Osc 1's series the even ones; two down, Osc 1 every fourth. The engine's tests
+ * hold the sound to it, Harmonic by Harmonic.
  */
 export function idealReference(patch: Patch, count: number): Float32Array {
   const levels = new Float32Array(count);
@@ -65,30 +66,49 @@ export function idealPartials(patch: Patch, count: number, fmKept = 1): IdealPar
  */
 function ringPartials(patch: Patch, osc1: number, osc2: number, count: number): IdealPartial[] {
   if (patch.mixRing === 0) return [];
-  const octaves = Math.log2(osc2 / osc1);
-  if (Math.abs(octaves - Math.round(octaves)) < 1e-9) {
-    // The product repeats at the lower Oscillator's pitch.
-    const base = Math.min(osc1, osc2);
+  const base = inOctaves(osc1, osc2);
+  if (base) {
     const levels = ringProduct(patch, Math.round(osc1 / base), Math.round(osc2 / base), Math.ceil(count / base));
-    return Array.from(levels, (level, m) => ({ ratio: m * base, level: level * patch.mixRing, source: 'ring' as const })).filter(
-      (p) => p.ratio > 0 && p.ratio < count,
-    );
+    return cyclePartials(levels, base, patch.mixRing, 'ring', count);
   }
   const a = harmonicSeries(patch.waveform, patch.pulseWidth, RING_HARMONICS + 1).magnitudes;
   const b = harmonicSeries(patch.osc2Waveform, patch.osc2PulseWidth, RING_HARMONICS + 1).magnitudes;
-  const power = new Map<string, { ratio: number; power: number }>();
+  const sum = powerSum();
   for (let i = 1; i <= RING_HARMONICS; i++)
     for (let j = 1; j <= RING_HARMONICS; j++) {
       const level = (a[i] * b[j] * patch.mixRing) / 2;
       if (level <= 1e-5) continue;
-      for (const ratio of [Math.abs(i * osc1 - j * osc2), i * osc1 + j * osc2]) {
-        if (ratio < 1e-6 || ratio >= count) continue;
-        const key = ratio.toFixed(6);
-        const entry = power.get(key) ?? power.set(key, { ratio, power: 0 }).get(key)!;
-        entry.power += level * level;
-      }
+      for (const ratio of [Math.abs(i * osc1 - j * osc2), i * osc1 + j * osc2]) if (ratio >= 1e-6 && ratio < count) sum.add(ratio, level);
     }
-  return [...power.values()].map(({ ratio, power: p }) => ({ ratio, level: Math.sqrt(p), source: 'ring' as const }));
+  return sum.partials('ring', 1);
+}
+
+/**
+ * The lower of Osc 1's and Osc 2's pitches when they are a whole number of octaves apart, else null: then both start
+ * their cycles together on each Note (issue 94), so what they make together repeats at that pitch, one known wave.
+ */
+function inOctaves(osc1: number, osc2: number): number | null {
+  const octaves = Math.log2(osc2 / osc1);
+  return Math.abs(octaves - Math.round(octaves)) < 1e-9 ? Math.min(osc1, osc2) : null;
+}
+
+/** The partials of a wave repeating at `base`, from one cycle's level of each Harmonic of it, at `mix`, below `count`. */
+function cyclePartials(levels: Float64Array, base: number, mix: number, source: IdealSource, count: number): IdealPartial[] {
+  return Array.from(levels, (level, m) => ({ ratio: m * base, level: level * mix, source })).filter((p) => p.ratio > 0 && p.ratio < count);
+}
+
+/** Partials whose levels add as power where several land on one frequency, as their alignment drifts. */
+function powerSum() {
+  const power = new Map<string, { ratio: number; power: number }>();
+  return {
+    add(ratio: number, level: number) {
+      const key = ratio.toFixed(6);
+      const entry = power.get(key) ?? power.set(key, { ratio, power: 0 }).get(key)!;
+      entry.power += level * level;
+    },
+    partials: (source: IdealSource, mix: number): IdealPartial[] =>
+      [...power.values()].map(({ ratio, power: p }) => ({ ratio, level: Math.sqrt(p) * mix, source })),
+  };
 }
 
 // Samples of one cycle of the product per Harmonic drawn: enough that the jumps' aliasing stays far below them.
@@ -185,19 +205,16 @@ export const idealFmKept = (patch: Patch, fundamental: number, sampleRate: numbe
  */
 function fmPartials(patch: Patch, osc1: number, osc2: number, count: number, kept: number): IdealPartial[] | null {
   const index = FM_INDEX * patch.crossMod * kept;
-  const octaves = Math.log2(osc2 / osc1);
-  if (Math.abs(octaves - Math.round(octaves)) < 1e-9) {
-    const base = Math.min(osc1, osc2);
+  const base = inOctaves(osc1, osc2);
+  if (base) {
     const levels = fmCycle(patch, Math.round(osc1 / base), Math.round(osc2 / base), Math.ceil(count / base), index);
-    return Array.from(levels, (level, m) => ({ ratio: m * base, level: level * patch.mixOsc1, source: 'osc1' as const })).filter(
-      (p) => p.ratio > 0 && p.ratio < count,
-    );
+    return cyclePartials(levels, base, patch.mixOsc1, 'osc1', count);
   }
   if (patch.osc2Waveform !== 'sine') return null;
   const pulse = patch.waveform === 'pulse';
   const levels = harmonicSeries(pulse ? 'saw' : patch.waveform, 0.5, ENGINE_HARMONICS).magnitudes;
   const scale = pulse ? pulseScale(patch.pulseWidth) : 1;
-  const power = new Map<string, { ratio: number; power: number }>();
+  const sum = powerSum();
   const most = Math.min(ENGINE_HARMONICS - 1, Math.ceil((1.5 * count) / osc1));
   for (let n = 1; n <= most; n++) {
     if (levels[n] < 1e-9) continue;
@@ -214,13 +231,10 @@ function fmPartials(patch: Patch, osc1: number, osc2: number, count: number, kep
       let level = levels[n] * Math.abs(j[Math.abs(k)]);
       // A pulse: the swung saw less its copy one width of Osc 1's cycle behind.
       if (pulse) level *= 2 * scale * Math.abs(Math.sin((Math.PI * frequency * patch.pulseWidth) / osc1));
-      if (level <= 1e-7) continue;
-      const key = ratio.toFixed(6);
-      const entry = power.get(key) ?? power.set(key, { ratio, power: 0 }).get(key)!;
-      entry.power += level * level;
+      if (level > 1e-7) sum.add(ratio, level);
     }
   }
-  return [...power.values()].map(({ ratio, power: p }) => ({ ratio, level: Math.sqrt(p) * patch.mixOsc1, source: 'osc1' as const }));
+  return sum.partials('osc1', patch.mixOsc1);
 }
 
 /**

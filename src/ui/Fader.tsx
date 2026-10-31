@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import type { ParamId } from '../patch/patch';
 import { useInactive } from './inactive';
-import { held, pressed, useParamControl, useWheel } from './paramControl';
+import { pressed, useParamControl, usePress, useWheel } from './paramControl';
 import { Tooltip } from './Tooltip';
 import { PARAM_TIPS } from './tips';
 
@@ -24,8 +24,8 @@ interface Props {
 export function Fader({ id, value, onChange, inactive }: Props) {
   const c = useParamControl(id, value, onChange);
   const cap = useRef<HTMLDivElement>(null);
-  const press = useRef<{ y: number; position: number; onCap: boolean; moved: boolean } | null>(null);
-  const wheel = useWheel(c.position, c.setPosition, c.unit);
+  const press = usePress<{ y: number; position: number; onCap: boolean; moved: boolean }>(c);
+  const wheel = useWheel(c);
   const dimmed = useInactive(inactive);
 
   // Where the cap's centre would be for a pointer at `clientY`: the cap travels the track less its own height.
@@ -46,17 +46,11 @@ export function Fader({ id, value, onChange, inactive }: Props) {
             if (!pressed(e)) return;
             const onCap = e.target === cap.current;
             if (onCap) c.grab(e, cap.current!);
-            press.current = { y: e.clientY, position: c.position, onCap, moved: false };
+            press.start({ y: e.clientY, position: c.position, onCap, moved: false });
           }}
           onPointerMove={(e) => {
-            const p = press.current;
+            const p = press.move(e);
             if (!p) return;
-            if (!held(e)) {
-              // The button was let go where the page never heard it: the press is over.
-              press.current = null;
-              c.release();
-              return;
-            }
             if (Math.abs(e.clientY - p.y) > TAP_SLOP) p.moved = true;
             if (p.onCap) {
               const track = e.currentTarget;
@@ -65,23 +59,14 @@ export function Fader({ id, value, onChange, inactive }: Props) {
             }
           }}
           onPointerUp={(e) => {
-            const p = press.current;
-            press.current = null;
-            c.release();
+            const p = press.end();
             // A click on the track: the single-pointer way to set a value (WCAG 2.5.7).
             if (p && !p.onCap && !p.moved) {
               c.setPosition(positionAt(e.currentTarget, e.clientY));
               c.focusByPointer(cap.current!);
             }
           }}
-          onPointerCancel={() => {
-            press.current = null;
-            c.release();
-          }}
-          onLostPointerCapture={() => {
-            press.current = null;
-            c.release();
-          }}
+          {...press.ends}
         >
           <div className="fader-fill" />
           {/* biome-ignore lint/a11y/useAriaPropsSupportedByRole: the slider role comes from c.slider */}

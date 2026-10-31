@@ -299,10 +299,10 @@ export function App() {
   // Up before down, as they stand on screen, so Tab meets them in that order (issue 47).
   const keyboard = (
     <div key="keyboard" className="keyboard">
-      <button type="button" className="tool tool-icon octave" aria-label="Octave up" {...shifted(octave - DEFAULT_OCTAVE)} onClick={() => moveOctave(1)}>
+      <button type="button" className="tool tool-icon octave octave-up" aria-label="Octave up" {...shifted(octave - DEFAULT_OCTAVE)} onClick={() => moveOctave(1)}>
         {octave > DEFAULT_OCTAVE ? `+${octave - DEFAULT_OCTAVE}` : '+'}
       </button>
-      <button type="button" className="tool tool-icon octave" aria-label="Octave down" {...shifted(DEFAULT_OCTAVE - octave)} onClick={() => moveOctave(-1)}>
+      <button type="button" className="tool tool-icon octave octave-down" aria-label="Octave down" {...shifted(DEFAULT_OCTAVE - octave)} onClick={() => moveOctave(-1)}>
         {octave < DEFAULT_OCTAVE ? `−${DEFAULT_OCTAVE - octave}` : '−'}
       </button>
       <Tooltip content={TIPS.keyboard} longPress={false}>
@@ -316,7 +316,7 @@ export function App() {
       <Tooltip content={TIPS.hold}>
         <button
           type="button"
-          className="tool"
+          className="tool hold-button"
           aria-pressed={hold}
           data-learn="action:hold"
           data-mapped={learnContext.mapped.has('action:hold') || undefined}
@@ -530,7 +530,7 @@ export function App() {
                         </SubBlock>
                         {/* Each Oscillator's pitch under its Waveform, on its own tab (the owner, issue 90): Osc 1's
                             Octave, and FM, Osc 2 swinging Osc 1's pitch whatever Osc 2's own fader (issue 89). */}
-                        <SubBlock title="Osc 1 Pitch" label="Pitch" tip={TIPS.osc1Pitch} group>
+                        <SubBlock title="Osc 1 Pitch" label="Pitch" tip={TIPS.osc1Pitch} group className="osc1-pitch">
                           <div className="knobs">
                             {/* Greyed out while Osc 1 is not heard (the owner); its Octave also moves the Sub. */}
                             <Knob id="osc1Octave" value={patch.osc1Octave} onChange={(v) => change('osc1Octave', v)} inactive={!osc1Heard(patch) && patch.mixSub === 0 && 'No effect while Osc 1 and the Sub are silent'} />
