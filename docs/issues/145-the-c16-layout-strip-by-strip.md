@@ -95,6 +95,8 @@
 
 **Since then (2026-10-31):** half a step, the owner's next trial ("Make 66 half a step").
 
+**Since then (2026-10-31):** a third of a step, the owner's next trial ("Make it one third").
+
 ## Comments
 
 - 2026-10-31, the owner, turning the C16's knobs (over Bluetooth, on the development server): "There seems to be a delay between the move and the actual impact on screen." Measured with a stand-in C16 in Chromium at 1440 × 900: one message reaches the knob on screen in 17 ms on the built site and 41 ms on the development server, and turns of 20 and 60 messages a second, or 10 at once, leave nothing queued (no long task). So the page keeps up; Bluetooth MIDI's own latency is the likeliest cause, the development server and decision 13's slower fast turn the others. Waiting on the owner's test over USB.
