@@ -28,6 +28,7 @@
     "test:unit": "vitest run --project unit",
     "test:engine": "vitest run --project engine",
     "test:e2e": "playwright test",
+    "test:changed": "vitest run --changed origin/main && playwright test --only-changed=origin/main --project=chromium",
     "stats": "node --experimental-strip-types --no-warnings scripts/measureStatistics.ts",
     "typecheck": "tsc",
     "lint": "biome check",

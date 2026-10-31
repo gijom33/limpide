@@ -103,7 +103,8 @@ export default defineConfig({
           browser: {
             enabled: true,
             headless: true,
-            provider: playwright(),
+            // Muted: the engine tests render offline, but nothing they start reaches the speakers either.
+            provider: playwright({ launchOptions: { args: ['--mute-audio'] } }),
             instances: [{ browser: 'chromium' }],
           },
         },
