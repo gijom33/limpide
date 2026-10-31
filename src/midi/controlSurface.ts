@@ -15,10 +15,10 @@ const PICKUP_TOLERANCE = 0.5 / 127 + 1e-9;
 const CLICKS_PER_CHOICE = 2;
 /**
  * The C16's knobs (issue 145): a bit of turning sends one 65 (or 63) turned slowly and, past a speed, a burst of
- * eight 66s (or 62s), which reach the page split and merged, so they are counted by message, not by time. A 66 is a
- * quarter of a step, not an eighth, as the C16 sends fewer bursts than bits when turned fast (the owner's trial).
+ * eight 66s (or 62s), which reach the page split and merged, so they are counted by message, not by time. A 66 is half
+ * a step, not an eighth, as the C16 sends fewer bursts than bits when turned fast (the owner's trial).
  */
-const FAST_STEP = 1 / 4;
+const FAST_STEP = 1 / 2;
 /** Values a knob of unknown Encoder Mode sends before it moves anything: enough to tell its mode. */
 const DETECT_VALUES = 3;
 /**
@@ -101,7 +101,7 @@ export function createControlSurface(synth: Synth) {
   const clicks = new Map<string, number>(); // encoder clicks towards the next choice, per control
   const detecting = new Map<string, number[]>(); // the first values of knobs finding their Encoder Mode
 
-  /** A Relative message's steps: as sent, or for a C16 knob one for a 65, a quarter for a 66. */
+  /** A Relative message's steps: as sent, or for a C16 knob one for a 65, half for a 66. */
   const relativeSteps = (mapping: Mapping, mode: 'relative-twos' | 'relative-centred', value: number) => {
     const delta = relativeDelta(mode, value);
     if (mapping.device !== 'c16' || Math.abs(delta) <= 1) return delta;
