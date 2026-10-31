@@ -4,16 +4,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
-- 2026-10-31, from the 1.18.0 release, Bead's frame-cost test (`e2e/mascot.spec.ts`, "it adds under a millisecond to each frame") failed in WebKit on GitHub in three of six runs (1.11 to 1.65 ms against 1), both tries each time, while here Bead adds nothing measurable in 1.18.0 or 1.17.0 (−0.6 to −0.3 ms): a timing test too tight for GitHub's runner, which held the deploy until a re-run.
 ## Ideas
 
-- 2026-10-31, from the 1.18.0 review, the Tour's card copies the Tutorial card's shell (the top row, the tap-to-show words with the same two lint waivers, the actions row), and its classes say "tutorial" though the Tour is not a Tutorial: one docked-card shell for both.
-- 2026-10-31, from the 1.18.0 review, Osc 2's Envelope term is worked out twice (`osc2Rest` beside `osc2Cents`, which issue 100 made the one answer), and FM's index (FM_INDEX times FM) is written out in four places.
-- 2026-10-31, from the 1.18.0 review, small names: the engine tests' "duty" for the Pulse Width (an avoided word), the type `TourCard` sharing its component's name, a phrase and its BPM travelling together unnamed, the Ideal's cache keyed by a string.
-- 2026-10-31, from the 1.18.0 review, the cards' folds and the bend range are still remembered outside the one module issue 87 made for the Display settings.
-- 2026-10-31, from the 1.18.0 fact-check, the Tour's Amp card says the synth lengthens the Attack, then the Release, but a Note takes the length set when its key goes down or up: with the knobs' taper few Notes get the longest (0.8 s once in 48 s). Its words, or its timing.
-- 2026-10-31, from the 1.18.0 fact-check, FM Bass's "the sidebands jump wide and settle back" and Poly Mod Zap's "laser zap" are true to the ear but loose: the strike is FM's thinnest moment, and the zap is Osc 2's own fall.
-- 2026-10-31, from the 1.18.0 ripple hunt, no test checks the focus lands on Start when the Tour's "Build a Bass" opens Bass; the Welcome's test for it (issue 104) went with the Welcome's Tutorial button.
 ## Dropped
 
 - 2026-10-30, from Claude's brainstorm, Velocity on the Volume ("a harder hit plays louder, not only brighter"): already so. The Amp Envelope's Attack rises to the Note's Velocity (PRD story 9). Claude's call, open to the owner.
@@ -131,3 +123,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-31, the owner's idea of a synth neophyte reviewer (triage, Claude's call, open to the owner): to [42](./issues/42-reviews.md) as profile 16, who takes the Tour and the Tutorials to have fun and learn; its first run waits for the Tour's release, and it runs again whenever a release changes their words.
 2026-10-31, the owner's idea of Tutorial words fun to read and self-explanatory (triage, Claude's call, open to the owner): to [129](./issues/129-words-fun-to-read.md), five questions for the owner, each with Claude's recommendation (a light voice, every synth word explained where a Tutorial first uses it, after profile 16's first review).
 2026-10-31, the owner's idea of Viewer tricks such as Freeze to explain ADSR in the Tour (triage, Claude's call, open to the owner): to [130](./issues/130-the-tour-freezes-to-show-adsr.md), five questions for the owner, each with Claude's recommendation (the Amp card freezes the Envelope Timeline once each stage's shape is drawn, Decay and Sustain added).
+2026-10-31, the 1.18.0 release's and checks' findings (triage, Claude's call, open to the owner): Bead's frame-cost test failing in WebKit on GitHub went to [138](./issues/138-bead-frame-cost-on-github-webkit.md), to diagnose in WebKit on Linux in the owner's session; the review's docked-card shell, sums written twice, small names and settings outside the Display module, the ripple hunt's missing focus test and the fact-check's FM Bass and Poly Mod Zap descriptions to [139](./issues/139-tidy-ups-after-1-18.md); the fact-check's Tour Amp card timing to [130](./issues/130-the-tour-freezes-to-show-adsr.md).

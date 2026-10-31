@@ -15,3 +15,7 @@ What exists already: Freeze stops every Viewer on its frame while the sound play
 3. **Decay and Sustain too?** Claude's recommendation: yes. The card turns Attack, then Decay, then Sustain, then Release, each frozen once its new shape is drawn, so the person sees each knob change one stage of the shape.
 4. **The person's own Freeze:** pressing Space during the Tour freezes or unfreezes as always. Claude's recommendation: like a control the person grabs, their Freeze is theirs for the rest of the card, and the Tour stops freezing on its own. The Tour lets go of its Freeze when the card changes or the Tour ends.
 5. **Other tricks?** A Snapshot (the faint A/B trace) of a short Attack, kept while the Tour lengthens it, so both shapes are seen on the Amp Scope at once. Claude's recommendation: not now. One trick per card is easier to follow; this one can come later.
+
+## Comments
+
+- 2026-10-31, from the 1.18.0 fact-check (inbox): the Amp card says the synth lengthens the Attack, then the Release, but a Note takes the length set when its key goes down or up; with the knobs' taper few Notes get the longest (0.8 s once in 48 s). The card's words or its timing are reworked here, with the freeze. Triage, Claude's call, open to the owner.
