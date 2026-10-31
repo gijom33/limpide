@@ -138,6 +138,24 @@ Brought into scope by the grilling of [issue 40](./issues/40-preset-tutorials.md
 95. As a learner, I want pink Noise beside white, so that I hear and see what a noise's colour means (issue 92).
 96. As a player, I want the Filter Envelope to move Osc 2's pitch, so that Notes can start with a zap (issue 93).
 97. As a first-time visitor who has never seen a synth, I want a Tour of the Sections in the signal's order, the synth turning each one's main controls itself while I listen and watch its Viewers, so that I know what each part is for before I build a sound; the Welcome's button for it takes the place of story 89's Tutorial button (issue 128).
+98. As a player with a keyboard that sends aftertouch, I want pressing harder on a held key to move one Destination I choose, the Cutoff by default, its move shown on the knob's ring, so that the synth answers my touch as a plugin synth would (issue 132).
+99. As a learner, I want the Maths Layer to write the formula behind every Section and Viewer, the one the engine computes, so that I can follow the sound in numbers wherever I look (issue 133).
+100. As a curious learner, I want each tooltip, with the Maths Layer on, to say where its control comes from, every fact sourced, so that I learn the instrument's history along with its maths (issue 134).
+
+## v1: the scope
+
+Framed by the owner on 2026-10-31 ([issue 131](./issues/131-v1.md), which tracks the work and holds the decisions). v1 is a 1.x version the owner deems complete; once it is framed, no new features go in, only polish, and the release that finishes it says "v1 complete".
+
+- **A sound generator,** no more: no effects, no arpeggiator, mono output.
+- **A learning layer** for people getting to know the domain: the Tutorials, the Tour, the Demo, the Maths Layer and the overlays.
+- **Every feature the VST/AU plugin will need,** so that the plugin's spec is v1's synth: tempo sync for the LFOs (issue 112), Legato (119) and channel aftertouch (132). The engine stays on native Web Audio nodes; the port is the plugin's own project.
+- **Bead** is the last feature that is not essential.
+
+**In v1, still to do:** issues 112, 119 and 132; the Maths Layer complete (133), History in the tooltips (134) and a Patch in plain words (123); the polish of 116, 129, 130, 47, 34, 42, 48 and 111, and the inbox's findings; then one last full review round, finding only nitpicks.
+
+**v2,** a list and not a commitment ("It will only depend on what the reaction is in the synth world", the owner): recording to a WAV file (120), the additive oscillator (121), Match the sound (122) and granular synthesis (135). A new idea after the frame goes there, unless it is a bug or polish of something in v1. Each v2 issue is blocked by issue 131.
+
+**After v1:** the word is spread on forums and Reddit, Claude drafting and the owner posting.
 
 ## Implementation Decisions
 
@@ -183,10 +201,11 @@ Brought into scope by the grilling of [issue 40](./issues/40-preset-tutorials.md
 - Unison, and Viewers that show more than one Note at once ([ADR-0007](./adr/0007-optional-polyphony-viewers-follow-the-newest-note.md)).
 - Effects (delay, reverb, chorus, distortion). (Kept out by the owner again on 2026-10-30, [issue 113](./issues/113-effects.md).)
 - A modulation matrix beyond two LFOs with a single destination each.
-- LFO tempo sync: Limpide keeps no tempo to sync to, with no sequencer or arpeggiator (decided by the owner, issue 53, 2026-10-27). Retrigger locks an LFO to each Note instead. (A tempo with MIDI clock sync, for LFO sync, is to grill in [issue 112](./issues/112-tempo-midi-clock-and-an-arpeggiator.md), decided by the owner on 2026-10-30.)
+- LFO tempo sync: Limpide kept no tempo to sync to, with no sequencer or arpeggiator (decided by the owner, issue 53, 2026-10-27); Retrigger locks an LFO to each Note instead. (Since 2026-10-31 a tempo with MIDI clock sync, for LFO sync, is in v1, decided by the owner, [issue 112](./issues/112-tempo-midi-clock-and-an-arpeggiator.md).)
 - Custom DSP or analogue-modelled filters ([ADR-0001](./adr/0001-native-web-audio-nodes-over-custom-dsp.md)).
 - A spectrogram.
-- An arpeggiator or sequencer, and MIDI output. (Recording to a WAV file came into scope on 2026-10-30, decided by the owner, [issue 120](./issues/120-recording.md); a tempo is to grill in [issue 112](./issues/112-tempo-midi-clock-and-an-arpeggiator.md); the arpeggiator stays out, decided by the owner on 2026-10-30: it won't help people understand how synths work, and the plugin Limpide is to become will be just a synth.)
+- An arpeggiator or sequencer, and MIDI output. (Recording to a WAV file came into scope on 2026-10-30, decided by the owner, [issue 120](./issues/120-recording.md), and went to v2 on 2026-10-31; a tempo is to grill in [issue 112](./issues/112-tempo-midi-clock-and-an-arpeggiator.md); the arpeggiator stays out, decided by the owner on 2026-10-30: it won't help people understand how synths work, and the plugin Limpide is to become will be just a synth.)
+- Stereo output and MPE (per-Note expression): Limpide stays a mono voice, like the classic synths it teaches, and takes channel aftertouch only (decided by the owner, [issue 131](./issues/131-v1.md), 2026-10-31).
 - Accounts and cloud sync. (Phones were out of scope until 1.1.0; they are now a first-class layout.)
 - Drawing your own LFO shapes, and graphical envelope editors.
 
