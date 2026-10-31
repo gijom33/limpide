@@ -4,6 +4,7 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-10-31, the owner, the C16 over Bluetooth, its layout applied (CC 7 and CC 8 shown Relative, CC 1 to 6 Absolute): "Bank A K7 sends CC7 messages. It's apparently linked to OSC 2 Pulse Width but the knob is already at 0 when CC is around 50."
 ## Ideas
 
 ## Dropped
