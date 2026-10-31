@@ -2,9 +2,9 @@
 
 **What to build:** From Claude's brainstorm, accepted by the owner in triage ([117](./117-more-to-play-and-hear.md), decision 6, 2026-10-30): a small record button that captures what is played and saves a WAV file, so a sound can be shared and not only a link. The PRD's Out of Scope amended the same day.
 
-**Blocked by:** none
+**Blocked by:** [131](./131-v1.md) (v1)
 
-**Status:** ready-for-agent · enhancement
+**Status:** ready-for-agent · enhancement. v2, not committed: out of v1, decided by the owner in the v1 grilling (2026-10-31, [131](./131-v1.md), decision 6): a DAW records anyway, and the plugin will not need it.
 
 ## Agent Brief
 

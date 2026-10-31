@@ -2,9 +2,9 @@
 
 **What to build:** From Claude's brainstorm, accepted by the owner for later in triage ([117](./117-more-to-play-and-hear.md), decision 2, 2026-10-30): each Harmonic's level set by drawbars, as on an organ, building the Spectrum by hand beside the Ideal Reference. The browser's custom waves make it natively ([ADR-0001](../adr/0001-native-web-audio-nodes-over-custom-dsp.md)).
 
-**Blocked by:** none
+**Blocked by:** [131](./131-v1.md) (v1)
 
-**Status:** needs-triage · enhancement. Later, to grill with the owner before anything is built: the owner wants to explore it later (2026-10-30).
+**Status:** needs-triage · enhancement. v2, not committed (the owner, 2026-10-31, [131](./131-v1.md), decision 6): to grill with the owner before anything is built; the owner wants to explore it later (2026-10-30).
 
 ## What a grilling would settle
 

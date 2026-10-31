@@ -6,7 +6,7 @@ This reverses one thing in the PRD's Out of Scope: "LFO tempo sync: Limpide keep
 
 **Blocked by:** none
 
-**Status:** needs-triage · enhancement. The tempo to grill with the owner before anything is built; the arpeggiator dropped (decisions below).
+**Status:** needs-triage · enhancement. In v1 ([131](./131-v1.md), decision 5, the owner, 2026-10-31): the tempo and the LFOs' sync to it, to grill with the owner before anything is built; the arpeggiator dropped (decisions below).
 
 ## What a grilling would settle
 

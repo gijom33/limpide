@@ -2,9 +2,9 @@
 
 **What to build:** From Claude's brainstorm, accepted by the owner in triage ([118](./118-new-ways-to-learn.md), decision 1, 2026-10-30): Limpide plays a hidden Patch, and the player turns knobs to match it, the Spectrum showing how close; ear training as a game.
 
-**Blocked by:** none
+**Blocked by:** [131](./131-v1.md) (v1)
 
-**Status:** needs-triage · enhancement. To grill with the owner before anything is built.
+**Status:** needs-triage · enhancement. v2, not committed (the owner, 2026-10-31, [131](./131-v1.md), decision 6): to grill with the owner before anything is built.
 
 ## What a grilling would settle
 
