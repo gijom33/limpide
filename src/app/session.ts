@@ -50,7 +50,7 @@ export function getAudioSession(storage: KeyValueStorage): AudioSession {
   const notes = createNoteInput(
     (event) => {
       if (muted && event.type !== 'noteOff') return;
-      if (event.type === 'noteOn') engine.noteOn(event.note, event.velocity);
+      if (event.type === 'noteOn') engine.noteOn(event.note, event.velocity, undefined, { afresh: event.afresh });
       else if (event.type === 'pitchChange') engine.pitchChange(event.note);
       else if (event.type === 'release') engine.release(event.note);
       else engine.noteOff();

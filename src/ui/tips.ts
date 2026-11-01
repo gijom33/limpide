@@ -156,7 +156,7 @@ export const TIPS = {
   },
   lfoRetrigger: {
     title: 'Retrigger',
-    body: 'On: the LFO starts its cycle again at every Note, so each Note gets the same wobble from its start (key sync). Off: it runs on freely, and each Note catches it wherever it is.',
+    body: 'On: the LFO starts its cycle again at every Note (a legato one aside, with Legato on), so each Note gets the same wobble from its start (key sync). Off: it runs on freely, and each Note catches it wherever it is.',
     how: 'Turn it on with a slow LFO on Cutoff and play a few Notes: each one opens the same way. The plot shows the cycle restart.',
   },
   lfoWaveform: {

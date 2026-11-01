@@ -131,7 +131,7 @@ The time taken to slide from one note's pitch to the next.
 _Avoid_: Portamento, slide
 
 **Legato**:
-A switch beside Glide, for one Voice: on, a Note played while the Gate is open (a key held, or Hold on) changes the pitch alone, at once or over the Glide, and the Envelopes and the LFOs set to Retrigger carry on, with no new Attack; with every key up, the next Note starts as any does. Off by default; with more Voices it has no effect (issue 119).
+A switch by Glide, for one Voice: on, a Note played over a key still held changes the pitch alone, at once or over the Glide, and the Envelopes and the LFOs set to Retrigger carry on, with no new Attack; with every key up, even while Hold keeps the last Note, the next Note starts as any does. Off by default; with more Voices it has no effect (issue 119).
 _Avoid_: Mono mode, legato glide, fingered portamento
 
 ### Playing

@@ -30,7 +30,7 @@ const SR = 48000;
 const NOTE = 0.05;
 const END = 0.75;
 /** When a legato line's second Note slides in over its first, before the part judged. */
-const LEGATO = NOTE + 0.1;
+const LEGATO_NOTE = NOTE + 0.1;
 /** The part of the Note judged for silence and offset: past a mid-length Attack, and most of the offset filter's settling. */
 const JUDGED = [0.25, END] as const;
 const NOTES = { low: 36, middle: 60, high: 96 } as const;
@@ -66,7 +66,7 @@ async function play({ patch, bpm }: EdgeCase, notes: readonly number[], { dcBloc
   // With Legato on, one Voice plays a legato line (issue 119): a fifth under the Note, then the Note over it.
   const line = patch.legato === 'on' && patch.voices === 1;
   if (line) engine.noteOn(notes[0] - 7, 1, NOTE);
-  for (const note of notes) engine.noteOn(note, 1, line ? LEGATO : NOTE);
+  for (const note of notes) engine.noteOn(note, 1, line ? LEGATO_NOTE : NOTE);
   return { samples: (await ctx.startRendering()).getChannelData(0), engine };
 }
 

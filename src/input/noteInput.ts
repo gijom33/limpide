@@ -1,7 +1,11 @@
 import type { Voices } from '../patch/patch';
 
 export type VoiceEvent =
-  | { type: 'noteOn'; note: number; velocity: number }
+  /**
+   * `afresh`: one Voice, every key up while Hold keeps the last Note: the Note starts its Envelopes again even with
+   * Legato on, which slides only a Note played over a key held (issue 119).
+   */
+  | { type: 'noteOn'; note: number; velocity: number; afresh?: true }
   /** Monophonic: the sounding Note changes pitch without a new Gate (last-note priority, Glide). */
   | { type: 'pitchChange'; note: number }
   /** The Gate closes: every Voice releases. */
@@ -51,9 +55,10 @@ export function createNoteInput(emit: (event: VoiceEvent) => void, onHeld: (note
 
   const mono = {
     press(note: number, velocity: number) {
+      const afresh = kept !== null;
       gateOpen = true;
       kept = null;
-      emit({ type: 'noteOn', note, velocity });
+      emit(afresh ? { type: 'noteOn', note, velocity, afresh } : { type: 'noteOn', note, velocity });
     },
     release(index: number) {
       const wasSounding = index === held.length - 1;

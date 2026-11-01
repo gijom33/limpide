@@ -29,8 +29,11 @@ export interface Taps {
 
 export interface SynthEngine {
   applyPatch(patch: Patch): void;
-  /** A Note starts: on the one Voice (1 Voice), or on a free Voice (more). The Viewers follow it. */
-  noteOn(note: number, velocity: number, at?: number): void;
+  /**
+   * A Note starts: on the one Voice (1 Voice), or on a free Voice (more). The Viewers follow it. With Legato on, one
+   * played while the Gate is open slides there instead, unless struck `afresh` (every key up, Hold keeping the last).
+   */
+  noteOn(note: number, velocity: number, at?: number, options?: { afresh?: boolean }): void;
   /** One Voice: the sounding Note changes pitch (last-note priority, Glide) without a new Gate. */
   pitchChange(note: number, at?: number): void;
   /** A keyboard's bend wheel: every Voice's pitch moves by `cents` from `at` on, until the next bend (issue 52). */
@@ -1240,16 +1243,16 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       master.gain.setValueAtTime(MASTER_LEVEL / Math.sqrt(next.voices), t);
     },
 
-    noteOn(note, velocity, time) {
+    noteOn(note, velocity, time, { afresh = false } = {}) {
       const asked = at(time);
       const voice = allocate(note, asked);
       // A legato Note, one Voice pressed on while its Note still sounds held, slides on from it: restarting the
       // Oscillators there would click mid-sound (issue 94, decision 2).
       const legato = voiceCount() === 1 && voice.note !== null && voice.releasedAt === null;
       follow(voice);
-      if (legato && patch?.legato === 'on') {
-        // With Legato on it changes the pitch alone (issue 119): the Envelopes and the retriggered LFOs carry on, as
-        // they do when the newest key goes up and the Note returns to one still held.
+      if (legato && !afresh && patch?.legato === 'on') {
+        // With Legato on, played over a key held, it changes the pitch alone (issue 119): the Envelopes and the
+        // retriggered LFOs carry on, as they do when the newest key goes up and the Note returns to one still held.
         voice.note = note;
         setLeadPitch(voice, note, asked);
         return;

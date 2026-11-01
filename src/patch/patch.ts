@@ -99,8 +99,9 @@ export type SubWaveform = 'square' | 'sine';
 /** White Noise has equal energy at every frequency, pink equal energy per octave (issue 92). */
 export type NoiseColour = 'white' | 'pink';
 /**
- * With one Voice, whether a Note played while the Gate is open (a key held, or Hold on) slides there without a new
- * Attack: the Envelopes and the retriggered LFOs carry on (issue 119). Off, it starts both Envelopes again.
+ * With one Voice, whether a Note played over a key still held slides there without a new Attack: the Envelopes and
+ * the retriggered LFOs carry on (issue 119). Off, or with every key up (Hold keeping the last Note or not), a Note
+ * starts both Envelopes again.
  */
 export type Legato = 'off' | 'on';
 /** How many Notes can sound at once. 1 is monophonic (last-note priority, Glide); more play chords (ADR-0007). */

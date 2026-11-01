@@ -683,12 +683,11 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
    under the numbers, its end by Glide, in the room the dial's name and value leave (issue 119). */
 .voices-field { display: flex; flex-wrap: wrap; align-items: flex-start; column-gap: var(--knob-gap); row-gap: var(--knob-row-gap); }
 .voices-choice {
-  display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-2);
+  display: flex; flex: none; flex-direction: column; align-items: flex-end; gap: var(--space-2);
   margin-top: calc(var(--dial-small) * 0.8 - var(--control-h));
 }
 /* Safari leaves the segments' gaps out of the caption-and-segments line's width, so they would spill under Glide:
    that line is a grid (caption column, then the segments at their own width), which Safari sizes in full. */
-.voices-choice { flex: none; }
 .voices-field .segmented-field { display: grid; grid-template-columns: var(--label-col) max-content; }
 .voices-field .segmented button[role='radio'] { min-width: 24px; padding: 0 6px; }
 

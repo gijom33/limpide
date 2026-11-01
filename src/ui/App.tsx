@@ -110,6 +110,8 @@ export function App() {
   const [session] = useState(() => getAudioSession(storage));
   const { patches, library, viewers: viewerStore } = session;
   const { patch, name: patchName, changed } = useSyncExternalStore(patches.subscribe, patches.get);
+  // Glide and Legato act on one Voice alone (issue 119): greyed out, and saying why, with more.
+  const oneVoiceOnly = patch.voices > 1 && 'No effect with more than one Voice';
   const tempo = useSyncExternalStore(session.tempo.subscribe, session.tempo.get);
   const settings = useSyncExternalStore(viewerStore.subscribe, viewerStore.get);
   const { viewer, overlays } = settings;
@@ -747,17 +749,17 @@ export function App() {
                   <Switch
                     name="Legato"
                     short="Legato"
-                    label="beside"
+                    labelAt="beside"
                     on={patch.legato === 'on'}
                     icon={<LegatoIcon />}
                     tip={TIPS.legato}
                     learn={{ kind: 'choice', id: 'legato' }}
-                    inactive={patch.voices > 1 && 'No effect with more than one Voice'}
+                    inactive={oneVoiceOnly}
                     onToggle={() => edit((p) => ({ ...p, legato: p.legato === 'on' ? 'off' : 'on' }))}
                   />
                 </div>
                 {/* Beside Voices, because it only slides a single Voice: with more, each Note starts at its pitch. */}
-                <Knob id="glide" value={patch.glide} onChange={(v) => change('glide', v)} inactive={patch.voices > 1 && 'No effect with more than one Voice'} />
+                <Knob id="glide" value={patch.glide} onChange={(v) => change('glide', v)} inactive={oneVoiceOnly} />
               </div>
             }
             viewers={viewers('amp', 'Amp', { limiting: session.engine.limiting })}

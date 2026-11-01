@@ -119,8 +119,8 @@ test('Legato is a switch by Glide, off by default, kept in the Patch, greyed out
   await expect(field).not.toHaveAttribute('data-inactive');
 });
 
-// Legato's place (issue 119): under the Voices numbers, its end at theirs, left of Glide, at every width; beside Glide
-// it wrapped under the numbers at some widths, a line of its own.
+// Legato's place (issue 119): under the Voices numbers, its end at theirs, left of Glide, at every width, in the room
+// Glide's name and value leave, so the row never wraps.
 test('Legato stays under the Voices numbers, its end by Glide, at every width (issue 119)', async ({ page }) => {
   test.setTimeout(120_000);
   await page.goto('/');

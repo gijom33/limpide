@@ -2423,7 +2423,7 @@ describe('Legato (issue 119)', () => {
     expect(off.pitch).toBeCloseTo(440 * 2 ** (1 / 12), 0);
   });
 
-  it('starts a Note as before when no key is held, and has no effect on several Voices', async () => {
+  it('starts a Note as before when no key is held, Hold keeping the last or not, and has no effect on several Voices', async () => {
     const struck = async (patch: Partial<Patch>, play: (e: ReturnType<typeof createSynthEngine>) => void) => {
       let engine!: ReturnType<typeof createSynthEngine>;
       await render(1.2, { ...slow, legato: 'on', ...patch }, (e) => {
@@ -2438,6 +2438,11 @@ describe('Legato (issue 119)', () => {
       e.noteOff(0.9);
       e.noteOn(81, 1, 0.95);
     })).toBeCloseTo(0.95 + DIP, 6);
+    // Hold keeping the first, every key up: the next is struck afresh, its Attack at once, with no dip (issue 119).
+    expect(await struck({}, (e) => {
+      e.noteOn(69, 1, 0.1);
+      e.noteOn(81, 1, 1, { afresh: true });
+    })).toBe(1);
     // Two Voices: the second key takes a Voice of its own and starts there.
     expect(await struck({ voices: 2 }, (e) => {
       e.noteOn(69, 1, 0.1);

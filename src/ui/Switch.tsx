@@ -10,7 +10,7 @@ import { Tooltip } from './Tooltip';
  * dial's height (an LFO's Retrigger and Sync), or beside it on a line of its own (Legato, issue 119). Learnable as its
  * choice; greyed out, with the reason read after its name, while it has no effect.
  */
-export function Switch({ name, short, on, icon, tip, learn, label = 'under', inactive, onToggle }: {
+export function Switch({ name, short, on, icon, tip, learn, labelAt = 'under', inactive, onToggle }: {
   /** Its full name, for a screen reader. */
   name: string;
   short: string;
@@ -19,7 +19,7 @@ export function Switch({ name, short, on, icon, tip, learn, label = 'under', ina
   tip: TipContent;
   learn: Target;
   /** Where its name goes: under it, among knobs; beside it, on a line of its own. */
-  label?: 'under' | 'beside';
+  labelAt?: 'under' | 'beside';
   inactive?: string | false;
   onToggle(): void;
 }) {
@@ -27,7 +27,7 @@ export function Switch({ name, short, on, icon, tip, learn, label = 'under', ina
   const dimmed = useInactive(inactive);
   return (
     <Tooltip content={tip}>
-      <div className="switch-field" data-label={label} {...dimmed.props}>
+      <div className="switch-field" data-label={labelAt} {...dimmed.props}>
         <button type="button" className="tool tool-icon switch" aria-label={name} aria-pressed={on} onClick={onToggle} {...learnable}>
           {icon}
         </button>
