@@ -4,6 +4,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-10-31, the owner's bug: "Bead's ghosting effect from detune should be symmetric. Ghost on left when detune negative, ghost on right when detune positive."
+
 ## Ideas
 
 ## Dropped
