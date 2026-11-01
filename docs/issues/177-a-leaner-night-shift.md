@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement
+**Status:** ready-for-agent · enhancement. First in the next night's queue, ahead of the bugs, decided by the owner (2026-11-01: "Yes, 177 first"), so the night after it runs by its rules.
 
 ## What the night showed (2026-10-31)
 
