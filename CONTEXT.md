@@ -28,7 +28,7 @@ _Avoid_: Scaling, curve, response
 
 **Grid**:
 The round values a Parameter's control lands on for a press of an arrow key, a wheel's notch or a Relative knob's tick, in its own unit: a semitone of the Cutoff, the next round time of an Envelope stage (10, 11, 12, 14 ms…), 1 % of a level, 0.5 dB of a Mixer fader. Shift steps on a finer Grid, Page Up and Down a coarser one (an octave, double or half, 10 %, 6 dB). A drag or an Absolute knob sets any value; the next press lands on the Grid, and nothing stored is rounded to it. Each control's tip names its steps, where there is a keyboard (issue 160).
-_Avoid_: Increment, resolution, quantise
+_Avoid_: Resolution, quantise, snap (fine in a tooltip)
 
 **Voice**:
 One sound-producing chain: Oscillators → Mixer → Filter → Amp. A Patch has one to eight; the Viewers show the one playing the newest Note (the Amp Tap, all of them, unless asked otherwise).

@@ -159,11 +159,11 @@ export const GLIDE_OFF = 0.001;
 /** Every control shown in %: 1 % a press, Shift 0.1 %, Page 10 % (issue 160). */
 const PERCENT = linearGrid(0.01, 0.001, 0.1, { unit: '1 %', fine: '0.1 %', coarse: '10 %' });
 /** A frequency or a pitch in semitones: a semitone a press, Shift 10 cents, Page an octave. */
-const SEMITONES = { unit: 'a semitone', fine: '10 cents', coarse: 'an octave' };
+const SEMITONE_WORDS = { unit: 'a semitone', fine: '10 cents', coarse: 'an octave' };
 /** The Envelopes' times and Glide: the round series, Page doubling or halving. */
 const TIMES = seriesGrid({ unit: 'the next round time', fine: '1 %', coarse: 'double or half' });
 /** The lowest dB step of a Mixer fader, about one MIDI step up its travel: one press below it is silence. */
-export const LOWEST_DB = -40;
+const LOWEST_DB = -40;
 /** An LFO's free Rate: the times' round series, in Hz. */
 const RATES = seriesGrid({ unit: 'the next round rate', fine: '1 %', coarse: 'double or half' });
 /** An Octave: a whole octave a press. */
@@ -211,7 +211,7 @@ export const PARAMS: Record<ParamId, ParamDef> = {
   // How far the Filter Envelope moves Osc 2's pitch at its peak (issue 93), as a Prophet's Poly Mod does.
   osc2EnvAmount: {
     id: 'osc2EnvAmount', label: 'Env Amount', unit: 'st', min: -24, max: 24, taper: 'linear', default: 0, control: 'set',
-    grid: linearGrid(1, 0.1, 12, SEMITONES),
+    grid: linearGrid(1, 0.1, 12, SEMITONE_WORDS),
   },
   mixOsc1: level('mixOsc1', 'Osc 1', 1, 'fader', MIXER),
   mixOsc2: level('mixOsc2', 'Osc 2', 0, 'fader', MIXER),
@@ -230,7 +230,7 @@ export const PARAMS: Record<ParamId, ParamDef> = {
   glide: { id: 'glide', label: 'Glide', unit: 's', min: GLIDE_OFF, max: 2, taper: 'square', default: GLIDE_OFF, control: 'set', grid: TIMES },
   velocityCutoff: level('velocityCutoff', 'Velocity', 0, 'set'),
   keyTrack: level('keyTrack', 'Key Track', 0, 'set'),
-  cutoff: { id: 'cutoff', label: 'Cutoff', unit: 'Hz', min: 20, max: 20000, taper: 'log', default: 2000, control: 'play', grid: pitchGrid(SEMITONES) },
+  cutoff: { id: 'cutoff', label: 'Cutoff', unit: 'Hz', min: 20, max: 20000, taper: 'log', default: 2000, control: 'play', grid: pitchGrid(SEMITONE_WORDS) },
   resonance: { id: 'resonance', label: 'Resonance', unit: '%', min: 0, max: 1, taper: 'linear', default: 0.2, control: 'play', grid: PERCENT },
   filterEnvAmount: {
     id: 'filterEnvAmount', label: 'Amount', unit: 'oct', min: -5, max: 5, taper: 'linear', default: 0, control: 'play',

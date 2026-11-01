@@ -398,7 +398,7 @@ export const VIEWER_TIPS: Record<'Oscillator' | 'Filter' | 'Amp', { scope: TipCo
  * Keyed by every Parameter, so a new one needs a tip before it type-checks. The Envelopes' stages share theirs; both
  * Pulse Widths, LFOs' Depths and Rates too.
  */
-const PARAM_WORDS: Record<ParamId, TipContent> = {
+const PARAM_EXPLAINED: Record<ParamId, TipContent> = {
   pulseWidth: TIPS.pulseWidth,
   osc2PulseWidth: TIPS.pulseWidth,
   crossMod: TIPS.crossMod,
@@ -435,7 +435,7 @@ const PARAM_WORDS: Record<ParamId, TipContent> = {
   lfo2Note: TIPS.lfoNote,
 };
 export const PARAM_TIPS = Object.fromEntries(
-  (Object.keys(PARAM_WORDS) as ParamId[]).map((id) => [id, { ...PARAM_WORDS[id], keys: stepWords(PARAMS[id].grid) }]),
+  (Object.keys(PARAM_EXPLAINED) as ParamId[]).map((id) => [id, { ...PARAM_EXPLAINED[id], keys: stepWords(PARAMS[id].grid) }]),
 ) as Record<ParamId, TipContent>;
 
 export const OVERLAY_TIPS: Record<Overlay, TipContent> = {

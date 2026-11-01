@@ -23,7 +23,7 @@ How it was done (`e2e/keyboardAccess.spec.ts` tests each):
 - Space: the owner's call was open; Claude took the first option, so the owner may revisit it. Space presses what has the focus when that is a button, an option, a tab, a link or a field, and Freezes otherwise (a knob, a Viewer, nothing). The test that said the opposite now says this.
 - The Scopes, Spectrums and the Timeline are images with their names; each LFO plot says what it shows ("LFO 1: Sine, 2.00 Hz, Depth 0 %, on Cutoff").
 - Every radio group (Waveforms, Filter Mode and Slope, Voices, LFO shapes, the Display choices) is one Tab stop, the chosen option; the arrows, Home and End move the choice (`src/ui/radioGroup.ts`).
-- Knobs and faders take Page Up and Down (a tenth of the travel), Home and End.
+- Knobs and faders take Page Up and Down (a tenth of the travel), Home and End. **Since then** (2026-11-01, [issue 160](./160-steps-in-each-controls-own-unit.md)): the arrows, Shift and Page step on each control's Grid, in its own unit (a semitone, Shift 10 cents, Page an octave on the Cutoff).
 - The Patch's name is in a hidden status, so a new Preset is read out.
 - Sliders whose labels repeat have full names, the label last: "Filter Attack", "Amp Attack", "LFO 1 Rate", "Osc 2 Octave" (`paramName` in `src/patch/patch.ts`). The Mixer's are unique already ("Osc 1", "Noise").
 - Display has a Keys choice: the letter keys play Notes, or are off; remembered.

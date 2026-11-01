@@ -37,10 +37,7 @@ export function linearGrid(unit: number, fine: number, coarse: number, words: Gr
   return { next: (value, direction, size) => nextMultiple(value, direction, steps[size]), words };
 }
 
-/**
- * A stepped Parameter's (an Octave, a Semitone, a note value): a whole step a press, Shift too, and Page `page` steps,
- * as before issue 160.
- */
+/** A stepped Parameter's (an Octave, a Semitone, a note value): a whole step a press, Shift too, and Page `page` steps. */
 export function steppedGrid(step: number, page: number, words: Grid['words']): Grid {
   return {
     next: (value, direction, size) =>

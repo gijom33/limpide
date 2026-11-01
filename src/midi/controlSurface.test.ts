@@ -359,7 +359,7 @@ describe('Mapped controls', () => {
     send(cc(26, 64), cc(26, 64));
     expect(valueAt(positions, 'filterEnvAmount')).toBe(0);
     store.set(absoluteCutoff);
-    send(cc(20, 64)); // a control from 0 up: 64 of 127 as before
+    send(cc(20, 64)); // a control from 0 up: 64 of 127
     expect(positions.cutoff).toBeCloseTo(64 / 127, 9);
   });
 
@@ -608,6 +608,35 @@ describe('the Rate, a note value with Sync on, and the tempo (issue 112)', () =>
     for (let i = 0; i < 6; i++) r.surface.handle(cc(30, 66), true); // six thirds: two clicks, one step
     expect(r.positions.lfoNote).toBeCloseTo(15 / 23, 9);
     expect(r.positions.lfoRate).toBe(0.5); // the Hz kept for when Sync goes off
+  });
+
+  it('keeps a C16’s thirds on the Hz apart from the note value’s clicks, so switching Sync jumps no note value (issue 160)', () => {
+    const positions: Partial<Record<ParamId, number>> = { lfoRate: valueToPosition(PARAMS.lfoRate, 2), lfoNote: 13 / 23 };
+    let sync = false;
+    const store = createMappingStore(memoryStorage());
+    const surface = createControlSurface({
+      ...valuesOf(positions),
+      store,
+      position: (id) => positions[id] ?? 0,
+      setPosition: (id, p) => void (positions[id] = id === 'lfoNote' ? Math.round(p * 23) / 23 : p),
+      turned: (id) => (id === 'lfoRate' && sync ? 'lfoNote' : id),
+      tempoPosition: () => 0,
+      setTempoPosition: () => {},
+      action: () => {},
+      choice: () => ({ index: 0, count: 5 }),
+      setChoice: () => {},
+      press: () => {},
+      release: () => {},
+    });
+    store.set({ control: { kind: 'cc', channel: 1, number: 30 }, target: { kind: 'param', id: 'lfoRate' }, mode: 'relative-centred', device: 'c16' });
+    surface.handle(cc(30, 66), true);
+    surface.handle(cc(30, 66), true); // two thirds of a step on the Hz: not yet one
+    expect(valueAt(positions, 'lfoRate')).toBeCloseTo(2, 9);
+    sync = true;
+    surface.handle(cc(30, 65), true);
+    expect(positions.lfoNote).toBeCloseTo(13 / 23, 9); // half a step: not yet
+    surface.handle(cc(30, 65), true);
+    expect(positions.lfoNote).toBeCloseTo(14 / 23, 9); // one note value, not a jump
   });
 
   it('maps the tempo to a knob, a BPM a step, and Tap to a button', () => {

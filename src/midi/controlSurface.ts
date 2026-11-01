@@ -130,6 +130,7 @@ export function createControlSurface(synth: Synth) {
   const pressed = new Map<string, boolean>();
   const clicks = new Map<string, number>(); // encoder clicks towards the next choice, per control
   const gathered = new Map<string, number>(); // a Relative knob's travel towards a stepped dial's next step, per control
+  const thirds = new Map<string, number>(); // a Relative knob's share of a Grid step not yet moved (a C16's 66s), per control
   const detecting = new Map<string, number[]>(); // the first values of knobs finding their Encoder Mode
 
   /** A Relative message's steps: as sent, or for a C16 knob one for a 65, a third for a 66. */
@@ -154,10 +155,10 @@ export function createControlSurface(synth: Synth) {
       const key = controlKey(mapping.control);
       if (dial.step) {
         // A turn back forgets the thirds gathered the other way, so it answers at once.
-        const before = gathered.get(key) ?? 0;
+        const before = thirds.get(key) ?? 0;
         const total = (Math.sign(before) === -Math.sign(steps) ? 0 : before) + steps;
         const whole = Math.trunc(total + (total > 0 ? 1e-9 : -1e-9));
-        gathered.set(key, total - whole);
+        thirds.set(key, total - whole);
         if (whole) dial.step(whole);
       } else {
         const travel = (gathered.get(key) ?? 0) + steps * Math.max(RELATIVE_STEP, dial.unit / CLICKS_PER_CHOICE);
