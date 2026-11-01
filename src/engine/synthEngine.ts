@@ -944,13 +944,6 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   let tempo: Beat = { bpm: TEMPO.default, origin: lfoStart };
   const locks: (string | null)[] = [null, null];
   const hz = (l: Lfo) => lfoHz(l, tempo.bpm);
-  /**
-   * A retriggering LFO starts its cycle again at `t`, where its Waveform classically starts (issue 124): a new
-   * oscillator takes over from the running one there (an oscillator cannot be reset), and the model's clock restarts
-   * with it, at the same phase; restarts handed over for after `t` are called off in both. A chord's Notes, asked for
-   * at the same moment, restart it once, where the first of them starts: those that dip first (issue 102) start 3 ms
-   * into its cycle, rather than it jumping 3 ms into the others'.
-   */
   /** A new oscillator for LFO `i`, its cycle starting at phase `start` of its Waveform, wired to the LFO's bus. */
   const lfoOscillator = (i: number, l: Lfo, start: number) => () => {
     const next = ctx.createOscillator();
@@ -960,6 +953,13 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     next.connect(shared.lfos[i].bus);
     return next;
   };
+  /**
+   * A retriggering LFO starts its cycle again at `t`, where its Waveform classically starts (issue 124): a new
+   * oscillator takes over from the running one there (an oscillator cannot be reset), and the model's clock restarts
+   * with it, at the same phase; restarts handed over for after `t` are called off in both. A chord's Notes, asked for
+   * at the same moment, restart it once, where the first of them starts: those that dip first (issue 102) start 3 ms
+   * into its cycle, rather than it jumping 3 ms into the others'.
+   */
   const restartLfo = (i: number, l: Lfo, asked: number, t: number) => {
     const chord = lfoChords[i];
     if (chord && chord.asked === asked && chord.t <= t) return;
