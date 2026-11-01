@@ -5,6 +5,7 @@ import { createCache } from '../music/cache';
 import { type IdealPartial, idealFmKept, idealPartials } from '../music/idealReference';
 import type { Patch } from '../patch/patch';
 import type { PatchStore } from '../patch/patchStore';
+import { guideLevel } from './guides';
 import { type Overlay, toggleOverlay } from './overlays';
 import { INITIAL_VIEWER_STATE, type TapSource, type ViewerAction, viewerReducer } from './viewerState';
 import type { IdealAt, ViewSettings } from './viewSettings';
@@ -74,7 +75,7 @@ function reduce(settings: ViewSettings, action: ViewSettingsAction): ViewSetting
  * The settings the Viewers read every frame (issue 77), outside React as the Patch is (ADR-0013): the render loop
  * reads `get`, React subscribes, and `dispatch` is the one way to change them. Every Display setting is saved and a new
  * page starts from it (issue 85), never Freeze or the Snapshot, which are moments; the Amp Tap's source goes to the
- * engine as soon as it changes; the Ideal Reference follows every change to the Patch.
+ * engine as soon as it changes; the Ideal Reference and the Guides follow every change to the Patch.
  */
 export function createViewerStore({
   storage,
@@ -90,6 +91,7 @@ export function createViewerStore({
     cycles,
     timelineSeconds,
     ideal: idealOf(patches.get().patch),
+    guideLevel: guideLevel(patches.get().patch),
     overlays: recall(storage, 'overlays'),
     viewer: { ...INITIAL_VIEWER_STATE, frequencyScale, levelScale, tapSource },
   };
@@ -106,7 +108,7 @@ export function createViewerStore({
   };
 
   setTapSource(settings.viewer.tapSource);
-  patches.subscribe(({ after }) => set({ ...settings, ideal: idealOf(after) }));
+  patches.subscribe(({ after }) => set({ ...settings, ideal: idealOf(after), guideLevel: guideLevel(after) }));
 
   return {
     get: (): ViewSettings => settings,

@@ -443,7 +443,7 @@ export const OVERLAY_TIPS: Record<Overlay, TipContent> = {
   },
   guides: {
     title: 'Scope guides',
-    body: 'Dashed lines at the Oscillator’s level. A trace inside them has only lost energy; one beyond them has been boosted by Resonance.',
+    body: 'Dashed lines at the level the Mixer sends, every source’s level added, so they move with its faders. A trace inside them has only lost energy; one beyond them has been boosted by Resonance.',
   },
   maths: {
     title: 'Maths Layer',

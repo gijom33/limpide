@@ -7,6 +7,7 @@ import { noteIndex } from '../music/tempo';
 import { defaultPatch, type Patch } from '../patch/patch';
 import { PRESETS } from '../patch/presets';
 import { betweenHarmonicsDb, dB, energyAboveDb, frequencyAround, rms, toneAmplitude, toneAmplitudeHann } from '../test/measure';
+import { guideLevel } from '../viewers/guides';
 import { amplitudeToSpectrumDb } from '../viewers/spectrumScale';
 import { createSynthEngine, OSCILLATOR_LEVEL } from './synthEngine';
 
@@ -180,6 +181,31 @@ describe('shared scale across Taps', () => {
     }
     expect(worst).toBeLessThan(0.8);
   }, 60_000); // 30 renders: past the default limit when the whole suite runs at once
+
+  // The Guides (issue 159) stand at the level the Mixer sends, so only Resonance takes a trace beyond them. A band-limited
+  // wave overshoots its own peak at its edges, and the Filter's slope rings a little past it: the allowance for both.
+  const OVERSHOOT = 1.15;
+  const bothUp = { mixOsc1: 1, mixOsc2: 1, ampSustain: 1, ampAttack: 0.001 };
+
+  it('keeps the Oscillator and Filter Taps inside the Guides with both Oscillators up and no Resonance (issue 159)', async () => {
+    let worst = 0;
+    for (const waveform of ['saw', 'square', 'triangle'] as const) {
+      for (const cutoff of [300, 2000, 20000]) {
+        for (const [osc2Detune, filterSlope] of [[0, 12], [7, 24]] as const) {
+          const patch = { ...defaultPatch(), ...bothUp, waveform, osc2Waveform: waveform, cutoff, osc2Detune, filterSlope, resonance: 0 };
+          const taps = await tapsAt(0.4, patch);
+          worst = Math.max(worst, peak(taps.oscillator) / guideLevel(patch), peak(taps.filter) / guideLevel(patch));
+        }
+      }
+    }
+    expect(worst).toBeLessThan(OVERSHOOT);
+  }, 60_000);
+
+  it('takes the Filter Tap beyond the Guides once Resonance is up, both Oscillators up (issue 159)', async () => {
+    const patch = { ...defaultPatch(), ...bothUp, cutoff: 873, resonance: 1 };
+    const taps = await tapsAt(0.4, patch);
+    expect(peak(taps.filter)).toBeGreaterThan(guideLevel(patch) * OVERSHOOT);
+  });
 
   it('plays an open saw at the Nominal Level times the master volume (0.5 × 0.45)', async () => {
     const s = await render(0.5, { cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001 }, (e) => e.noteOn(45, 1, 0));

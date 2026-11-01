@@ -91,6 +91,21 @@ describe('the Viewer settings store (issue 77)', () => {
     expect(osc2()[0].ratio).toBeCloseTo(fundamental * 2);
   });
 
+  it('stands the Guides at the level the Mixer sends, every source added, never past full scale nor at zero (issue 159)', () => {
+    const { patches, viewers } = setup();
+    expect(viewers.get().guideLevel).toBe(0.5); // Init: Osc 1 at full, the Nominal Level
+    patches.change((p) => ({ ...p, mixOsc1: 0.6, mixOsc2: 0.2 }), 'hand');
+    expect(viewers.get().guideLevel).toBeCloseTo(0.4);
+    patches.change((p) => ({ ...p, mixOsc1: 1, mixOsc2: 1 }), 'hand');
+    expect(viewers.get().guideLevel).toBeCloseTo(1);
+    patches.change((p) => ({ ...p, mixOsc1: 0, mixOsc2: 0, mixRing: 0.5, mixSub: 0.5, mixNoise: 0.5 }), 'hand');
+    expect(viewers.get().guideLevel).toBeCloseTo(0.75);
+    patches.change((p) => ({ ...p, mixOsc1: 1, mixOsc2: 1, mixRing: 1, mixSub: 1, mixNoise: 1 }), 'hand');
+    expect(viewers.get().guideLevel).toBe(1); // capped at full scale
+    patches.change((p) => ({ ...p, mixOsc1: 0, mixOsc2: 0, mixRing: 0, mixSub: 0, mixNoise: 0 }), 'hand');
+    expect(viewers.get().guideLevel).toBe(0.5); // nothing up: the Nominal Level, so they never vanish
+  });
+
   it('puts Osc 2 where a held Note’s Envelope keeps it, and back on its knobs once released (issue 98)', () => {
     const { patches, viewers } = setup();
     // Env Amount 24 at a Sustain of 0.5: while the Gate is on, Osc 2 rests an octave above its knobs.

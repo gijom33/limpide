@@ -16,6 +16,8 @@ export interface ViewSettings {
    * under the top as the engine keeps it, issue 103): each Oscillator's Harmonics at the Oscillator Tap's level.
    */
   ideal?: IdealAt;
+  /** Where the Scopes' Guides stand: the level the Mixer sends (guideLevel), following the Patch. */
+  guideLevel: number;
   /** Which marks are switched on. */
   overlays: Overlays;
   /** Freeze, axes and Snapshot. */

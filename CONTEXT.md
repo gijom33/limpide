@@ -211,7 +211,7 @@ A listening point in the Voice where the signal is observed: the **Oscillator Ta
 _Avoid_: Probe, monitor, stage output
 
 **Nominal Level**:
-The Oscillator's peak level (0.5, i.e. −6 dB below full scale), marked on every Scope by the Guides, when they are shown. It leaves headroom for Resonance.
+The Oscillator's peak level (0.5, i.e. −6 dB below full scale), leaving headroom for Resonance: where the Guides stand with one Oscillator at full. The Guides, when they are shown, mark on every Scope the level the Mixer sends, its sources' levels added, up to full scale.
 _Avoid_: Unity, reference level, 0 dB
 
 **Viewer**:
