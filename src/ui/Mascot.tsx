@@ -8,7 +8,7 @@ import { lineAt, lineWiderThan } from './LfoPlot';
 import { gesturesOf, looksOf } from './mascotGestures';
 import { type Act, createMascotMotion, hatOn, type Pose, type Room, SCREAMING } from './mascotMotion';
 import { CATCH, CLOUD, HATS, HOOK, ICE, type Picture, PROPS, type Rect, ROD_TIP, SKY, TAILS } from './mascotPictures';
-import { acrossOf, type Cover, choosePerch, clearAlong, createMascotPlace, type Moving, nearestSpan, type Perch, type Span } from './mascotPlace';
+import { acrossOf, type Cover, choosePerch, clearAlong, createMascotPlace, HOVER_UNDER, type Moving, nearestSpan, type Perch, type Span } from './mascotPlace';
 import { createSpray, MOST_DROPLETS } from './mascotSpray';
 import { ModulationContext } from './modulationRing';
 import { SECTIONS, STACKED } from './sections';
@@ -107,6 +107,9 @@ export const RISE_SECONDS = 0.4;
 /** The drop's middle from its box's left, and its tail's length turned down under it, in pixels. */
 const DROP_MIDDLE = 9;
 const TAIL_LENGTH = 26;
+/** Its tail whirling under it, flying up or hovering: how many times a second, and how far either way, in degrees. */
+const WHIRLS = 12;
+const WHIRL_DEGREES = 22;
 
 /** Whether an edge leaves room above it in the window for the mascot to stand on it, its headroom too. */
 const roomAbove = (box: DOMRect) => box.top - HEIGHT - HEADROOM >= 0;
@@ -489,7 +492,10 @@ export function Mascot({
       // Its room along the line, found again only when the line moves against the page (the card's top, against the
       // window) or changes, or what covers it does.
       const box = on.box;
-      const clear = perch.hovering ? clearAlong({ left: box.left + 4, right: box.right - 4, top: perch.foot }, covers, WIDTH, HEIGHT) : clearOn(box);
+      // Hovering, clear of what covers it up to the top of its bob, the header's foot (issue 164).
+      const clear = perch.hovering
+        ? clearAlong({ left: box.left + 4, right: box.right - 4, top: perch.foot }, covers, WIDTH, HEIGHT + HOVER_UNDER)
+        : clearOn(box);
       const [dx, dy] = on === card ? [0, 0] : [scrollX, scrollY];
       const key = `${perch.id} ${box.left + dx} ${perch.hovering ? 0 : box.top + dy} ${box.width} ${clear.map((c) => `${Math.round(c.min)}-${Math.round(c.max)}`)}`;
       if (surfRoom) room = { key: 'surf', room: surfRoom };
@@ -521,6 +527,8 @@ export function Mascot({
       if (pose.escaped && !stacked.matches) nextVisit = now;
       const where = place.frame(perch, room.room, now, still.matches, pose.x);
       if (where.landedAt !== null) motion.place(where.landedAt);
+      // Caught on its hover line after a throw, it hovers about where it was caught: its room found there again.
+      if (where.landedAt !== null && where.moving === 'hovering') room = null;
       foot = where.foot;
       moving = where.moving;
       if (pose.gone || (leaveBy === 'rain' && where.foot >= innerHeight + HEIGHT)) {
@@ -542,9 +550,10 @@ export function Mascot({
         pose.tilt = (now * 600 * (where.vx < 0 ? -1 : 1)) % 360;
         origin = '20% 60%';
       } else if (where.moving === 'hovering') {
-        // On its tail, straight down under it and whirling (issue 142); its bob is in its foot. With reduced motion, still.
-        Object.assign(pose, { legs: 'tuck', splash: 'none', lift: 0, tilt: 0, turn: 1 });
-        tailTurn = 90 + (still.matches ? 0 : Math.sin(now * 2 * Math.PI * 12) * 22);
+        // On its tail, straight down under it and whirling (issue 142); its bob is in its foot, and nothing stretches it
+        // up over the tabs. With reduced motion, still.
+        Object.assign(pose, { legs: 'tuck', splash: 'none', lift: 0, tilt: 0, turn: 1, stretch: 1 });
+        tailTurn = 90 + (still.matches ? 0 : Math.sin(now * 2 * Math.PI * WHIRLS) * WHIRL_DEGREES);
       } else if (where.moving === 'falling') {
         // Hopping off, tucked; then a raindrop, longer the faster it falls.
         const speed = Math.max(0, where.vy);
@@ -558,7 +567,7 @@ export function Mascot({
         Object.assign(pose, { legs: 'tuck', splash: 'none', lift: 0, tilt: across, turn: 1, eyes: where.thrust ? 'happy' : 'open' });
         pose.stretch = 1 + Math.min(0.2, Math.abs(where.vy) / 2600);
         // Its tail straight down under it, whirling while it pushes, swinging back up as it coasts.
-        tailTurn = where.thrust ? 90 + Math.sin(now * 2 * Math.PI * 12) * 22 : Math.max(0, Math.min(90, -where.vy / 6));
+        tailTurn = where.thrust ? 90 + Math.sin(now * 2 * Math.PI * WHIRLS) * WHIRL_DEGREES : Math.max(0, Math.min(90, -where.vy / 6));
       } else if (where.moving === 'landing' && leaveBy !== 'melt') {
         // Squashed as hard as it hit, then a wobble that dies away, like a drop of jelly.
         const p = where.landed;

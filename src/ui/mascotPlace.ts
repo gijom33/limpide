@@ -58,9 +58,9 @@ const BOUNCE = 0.5;
 /** Taking off to hover, its fastest, in pixels a second, and how fast it eases onto its hover line: its way left, a second. */
 const HOVER_SPEED = 500;
 const HOVER_EASE = 8;
-/** Hovering, its bob up and back, in pixels, and how often, a second. */
+/** Hovering, its bob up and back, in pixels, and how many bobs a second. */
 const HOVER_BOB = 3;
-const BOBS = 0.8;
+const BOBS_A_SECOND = 0.8;
 /** The speed of a landing that splashes it flattest, in pixels a second. */
 const HARD_LANDING = 1400;
 /** Landing: the splash, the squash and its wobble back. */
@@ -160,7 +160,9 @@ export function choosePerch({ current, edges, card = null, ceiling, overlap, bot
  * scrolls. To a lower one it hops off its edge (or lets go of the header) and falls under gravity, across to a spot in
  * the new line's span, landing as hard as it fell. To a higher one it swings its tail down under it, then the tail
  * pushes it up until it has just the speed to clear the edge, and it coasts over and drops onto it. To a line at its
- * own height (a section beside it), the same, in an arc the higher the farther it goes. Hanging, it climbs to the header the same way and holds on.
+ * own height (a section beside it), the same, in an arc the higher the farther it goes. With no edge in view it takes off at once, its tail whirling,
+ * and eases onto its hover line, at its own spot across, bobbing there (issue 142); from it, it drops with no hop, or
+ * flies up without crouching.
  * `from` starts it falling from that height (an arrival from the top of the window). With reduced motion it is on the
  * new line at once.
  */
@@ -237,7 +239,8 @@ export function createMascotPlace({ from, random = Math.random }: { from?: numbe
           foot = perch.foot;
           impact = Math.min(1, vy / HARD_LANDING);
           moving = perch.hovering ? 'hovering' : 'landing';
-          landedAt = hoverSince = now;
+          landedAt = now;
+          if (perch.hovering) hoverSince = now;
           vx = vy = 0;
           return placed(x);
         }
@@ -277,7 +280,7 @@ export function createMascotPlace({ from, random = Math.random }: { from?: numbe
           thrust = true;
           vx = 0;
         } else if (perch.foot > foot) {
-          // Down: a hop off its edge, the bigger the farther across it goes, or letting go of the header.
+          // Down: a hop off its edge, the bigger the farther across it goes; hovering, its tail stops and it drops.
           vy = moving === 'hovering' ? 0 : -(HOP_OFF + Math.min(420, Math.abs(toX - x) * 0.5));
           moving = 'falling';
         } else {
@@ -345,7 +348,7 @@ export function createMascotPlace({ from, random = Math.random }: { from?: numbe
       if (moving === 'landing' && now - landedAt >= LANDING_SECONDS) moving = settled;
       if (moving !== 'landing') moving = settled;
       // Hovering, it bobs gently up from its line and back; with reduced motion, still.
-      if (moving === 'hovering' && !reduced) foot -= (HOVER_BOB * (1 - Math.cos(2 * Math.PI * BOBS * (now - hoverSince)))) / 2;
+      if (moving === 'hovering' && !reduced) foot -= (HOVER_BOB * (1 - Math.cos(2 * Math.PI * BOBS_A_SECOND * (now - hoverSince)))) / 2;
       return placed();
     },
   };

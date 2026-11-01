@@ -139,6 +139,8 @@ const seen = (page: Page) =>
     return {
       // On an edge just under a phone's section strip, its top is over the strip's foot by up to its height (issue 142).
       inView: drop.top >= ceiling - (strip > header ? 26 : 0) && drop.bottom <= innerHeight + 1,
+      // For a failure's message: where it was against the ceiling and the window, and how.
+      at: `top ${Math.round(drop.top)}, bottom ${Math.round(drop.bottom)}, ceiling ${Math.round(ceiling)}, window ${innerHeight}, ${document.querySelector<HTMLElement>('.mascot')!.dataset.moving}`,
       on: edge
         ? edge.getAttribute('aria-label')
         : document.querySelector<HTMLElement>('.mascot')!.dataset.moving === 'hovering' && drop.top >= ceiling && drop.top - ceiling <= 8
@@ -153,8 +155,10 @@ async function scrollThrough(page: Page, step: number) {
   const at = async (y: number) => {
     await page.evaluate((top) => window.scrollTo({ top, behavior: 'instant' }), y);
     await page.waitForTimeout(1200); // it falls or flies there, lands and recovers
+    // On a busy machine its flight may take longer: once it has settled, standing or hovering.
+    await expect(mascot(page)).toHaveAttribute('data-moving', /^(standing|hovering)$/, { timeout: 5000 });
     const where = await seen(page);
-    expect(where.inView, `scrolled to ${y}`).toBe(true);
+    expect(where.inView, `scrolled to ${y}: ${where.at}`).toBe(true);
     places.push(where.on);
   };
   const height = await page.evaluate(() => document.documentElement.scrollHeight - innerHeight);
