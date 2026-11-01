@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, type Locator, type Page, test } from '@playwright/test';
 import { openDisplay } from './helpers';
 
 test('hovering Freeze explains what it does, and how to use it', async ({ page }) => {
@@ -100,4 +100,110 @@ test('every Viewer, fader and the Timeline key explain themselves, the tooltip b
     [...document.querySelectorAll('[role=slider], [role=img]')].filter((e) => e.getClientRects().length && !e.hasAttribute('aria-describedby')).map((e) => e.getAttribute('aria-label')),
   );
   expect(undescribed).toEqual([]);
+});
+
+// Issue 175: a tip stayed up over the menu its control opens (LFO 2's Destination first), hiding choices.
+test.describe('no tip over an open menu', () => {
+  const tip = (page: Page) => page.getByRole('tooltip').locator('visible=true');
+  /** Nothing drawn over any of them: each is what the pointer would find at its centre. */
+  const allSeen = async (items: Locator) => {
+    const covered = await items.evaluateAll((els) =>
+      els.filter((el) => {
+        const r = el.getBoundingClientRect();
+        return !el.contains(document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2));
+      }).map((el) => el.textContent),
+    );
+    expect(covered).toEqual([]);
+  };
+  /** Hovered until its tip shows, then clicked. */
+  const hoverThenClick = async (page: Page, control: Locator) => {
+    await control.hover();
+    await expect(tip(page)).toBeVisible();
+    await control.click();
+  };
+
+  for (const n of [2, 1] as const) {
+    test(`LFO ${n}'s Destination: the tip goes as its menu opens, none shows over the choices, and it comes back after`, async ({ page }) => {
+      await page.goto('/');
+      const lfo = page.getByRole('group', { name: `LFO ${n}`, exact: true });
+      const name = lfo.getByRole('button', { name: /Destination:/ });
+      await hoverThenClick(page, name);
+      const menu = lfo.getByRole('menu');
+      await expect(menu).toBeVisible();
+      await expect(tip(page)).toHaveCount(0);
+      const items = menu.getByRole('menuitemradio');
+      await allSeen(items);
+      // The pointer slides from the name onto the nearest choice, a pixel at a time across the gap between them, as a
+      // hand does; then rests on every choice past the hover delay: still none, nothing covered.
+      const [from, menuBox] = [(await name.boundingBox())!, (await menu.boundingBox())!];
+      const up = menuBox.y < from.y; // the menu opens upwards near the bottom of the window
+      const nearest = up ? items.last() : items.first();
+      const to = (await nearest.boundingBox())!;
+      const [x, y0, y1] = [from.x + from.width / 2, from.y + from.height / 2, to.y + to.height / 2];
+      await page.mouse.move(x, y0);
+      await page.mouse.move(x, y1, { steps: Math.ceil(Math.abs(y1 - y0)) });
+      for (const item of [nearest, ...(await items.all())]) {
+        await item.hover();
+        await page.waitForTimeout(400);
+        await expect(tip(page)).toHaveCount(0);
+        await allSeen(items);
+      }
+      await name.hover();
+      await page.waitForTimeout(400);
+      await expect(tip(page)).toHaveCount(0);
+      await menu.getByRole('menuitemradio', { name: 'Resonance' }).click();
+      await expect(menu).toBeHidden();
+      await expect(name).toHaveAccessibleName(`LFO ${n} Destination: Resonance`);
+      // The next hover shows it again.
+      await page.mouse.move(0, 0);
+      await name.hover();
+      await expect(tip(page)).toBeVisible();
+    });
+  }
+
+  test('from the keyboard too: the tip shown on focus goes as the menu opens', async ({ page }) => {
+    await page.goto('/');
+    const lfo = page.getByRole('group', { name: 'LFO 2', exact: true });
+    const name = lfo.getByRole('button', { name: /Destination:/ });
+    await name.focus();
+    await expect(tip(page)).toBeVisible();
+    await page.keyboard.press('Enter');
+    await expect(lfo.getByRole('menuitemradio', { name: 'Pitch', exact: true })).toBeFocused();
+    await page.keyboard.press('ArrowDown');
+    await expect(tip(page)).toHaveCount(0);
+    // A panel that leaves the focus on its button: the tip goes all the same.
+    await page.keyboard.press('Escape');
+    const display = page.getByRole('button', { name: 'Display' });
+    await display.focus();
+    await expect(tip(page)).toBeVisible();
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('region', { name: 'Viewer controls' })).toBeVisible();
+    await expect(display).toBeFocused();
+    await expect(tip(page)).toHaveCount(0);
+  });
+
+  test('the Patch picker, Display, MIDI and the Tutorial menu: no tip of theirs over what they open', async ({ page }) => {
+    await page.goto('/');
+    for (const [control, opened] of [
+      [page.getByRole('button', { name: /^Patch:/ }), page.getByRole('dialog', { name: 'Patches' })],
+      [page.getByRole('button', { name: 'Display' }), page.getByRole('region', { name: 'Viewer controls' })],
+      [page.getByRole('button', { name: 'MIDI', exact: true }), page.getByRole('dialog', { name: 'MIDI' })],
+      [page.getByRole('button', { name: 'Tutorial', exact: true }), page.getByRole('group', { name: 'Tutorials' })],
+    ] as const) {
+      await page.mouse.move(0, 0);
+      await hoverThenClick(page, control);
+      await expect(opened).toBeVisible();
+      await expect(tip(page)).toHaveCount(0);
+      // Back over the control while it is open, past the hover delay: still none.
+      await page.mouse.move(0, 0);
+      await control.hover();
+      await page.waitForTimeout(600);
+      await expect(tip(page)).toHaveCount(0);
+      await page.keyboard.press('Escape');
+      await expect(opened).toBeHidden();
+      await page.mouse.move(0, 0);
+      await control.hover();
+      await expect(tip(page)).toBeVisible();
+    }
+  });
 });
