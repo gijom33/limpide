@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createSynthEngine } from '../engine/synthEngine';
 import { dB, energyAboveDb, frequencyAround, toneAmplitude, toneAmplitudeHann } from '../test/measure';
+import { straightenLimiter } from '../test/straightLimiter';
 import { applyStep } from '../tutorial/tutorial';
 import { tutorialFor } from '../tutorial/tutorials';
 import type { Patch } from './patch';
@@ -22,18 +23,7 @@ const NOTE = 0.05;
  */
 async function play(patch: Patch, notes: number[], hold: number, seconds: number, velocity = 1) {
   const ctx = new OfflineAudioContext(1, Math.round(SR * seconds), SR);
-  const shaper = ctx.createWaveShaper.bind(ctx);
-  const curve = Object.getOwnPropertyDescriptor(WaveShaperNode.prototype, 'curve')!;
-  ctx.createWaveShaper = () => {
-    const node = shaper();
-    // The limiter's curve is the one longer than the LFOs' two-point clamp that passes negative values (a pulse's
-    // cycle, issue 98, is all positive): ±4 in, ±4 out, a straight line.
-    Object.defineProperty(node, 'curve', {
-      get: () => curve.get!.call(node),
-      set: (c: Float32Array) => curve.set!.call(node, c.length > 2 && c[0] < 0 ? Float32Array.of(-4, 4) : c),
-    });
-    return node;
-  };
+  straightenLimiter(ctx);
   const engine = createSynthEngine(ctx);
   engine.applyPatch(patch);
   notes.forEach((note, i) => engine.noteOn(note, velocity, NOTE + i * 0.01));
