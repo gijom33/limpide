@@ -1,5 +1,6 @@
 import { DESTINATIONS } from '../modulation/destinations';
-import { LFO_DESTINATIONS, type LfoDestination, type ParamId } from '../patch/patch';
+import { stepWords } from '../patch/grid';
+import { LFO_DESTINATIONS, type LfoDestination, PARAMS, type ParamId } from '../patch/patch';
 import type { Overlay } from '../viewers/overlays';
 import type { TipContent } from './Tooltip';
 
@@ -352,7 +353,7 @@ export function lfoLineTip(destination: LfoDestination): TipContent {
 
 /** A synced Rate's tip (issue 176): its Hz at the tempo, which its readout leaves out so its knob keeps one width. */
 export function syncedRateTip(note: string, hz: string, bpm: number): TipContent {
-  return { ...TIPS.lfoNote, body: `${TIPS.lfoNote.body} At ${bpm} BPM, ${note} is ${hz}.` };
+  return { ...PARAM_TIPS.lfoNote, body: `${TIPS.lfoNote.body} At ${bpm} BPM, ${note} is ${hz}.` };
 }
 
 /** Each Tap's two Viewers (issue 59): what the Scope and the Spectrum there show. */
@@ -393,10 +394,11 @@ export const VIEWER_TIPS: Record<'Oscillator' | 'Filter' | 'Amp', { scope: TipCo
 };
 
 /**
- * Each Parameter's tip, which its knob or fader shows by itself (issue 78). Keyed by every Parameter, so a new one
- * needs a tip before it type-checks. The Envelopes' stages share theirs; both Pulse Widths, LFOs' Depths and Rates too.
+ * Each Parameter's tip, which its knob or fader shows by itself (issue 78), with its steps for the keys (issue 160).
+ * Keyed by every Parameter, so a new one needs a tip before it type-checks. The Envelopes' stages share theirs; both
+ * Pulse Widths, LFOs' Depths and Rates too.
  */
-export const PARAM_TIPS: Record<ParamId, TipContent> = {
+const PARAM_WORDS: Record<ParamId, TipContent> = {
   pulseWidth: TIPS.pulseWidth,
   osc2PulseWidth: TIPS.pulseWidth,
   crossMod: TIPS.crossMod,
@@ -432,6 +434,9 @@ export const PARAM_TIPS: Record<ParamId, TipContent> = {
   lfo2Rate: TIPS.lfoRate,
   lfo2Note: TIPS.lfoNote,
 };
+export const PARAM_TIPS = Object.fromEntries(
+  (Object.keys(PARAM_WORDS) as ParamId[]).map((id) => [id, { ...PARAM_WORDS[id], keys: stepWords(PARAMS[id].grid) }]),
+) as Record<ParamId, TipContent>;
 
 export const OVERLAY_TIPS: Record<Overlay, TipContent> = {
   harmonics: {

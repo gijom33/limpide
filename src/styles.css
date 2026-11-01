@@ -362,6 +362,9 @@ main[data-frozen] .tap-canvases::before {
 .tooltip[hidden] { display: none; }
 .tooltip strong { font-size: var(--text-md); font-weight: 600; }
 .tooltip-how { color: var(--muted); }
+/* A knob's or fader's steps for the keys (issue 160): where there is a keyboard, not on a touch screen. */
+.tooltip-keys { color: var(--muted); font-variant-numeric: tabular-nums; }
+@media (hover: none) { .tooltip-keys { display: none; } }
 /* Headings that explain themselves on hover: no underline (it cluttered the panels), just the help cursor. */
 .has-tip { cursor: help; }
 

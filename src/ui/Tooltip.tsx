@@ -9,6 +9,8 @@ export interface TipContent {
   body: string;
   /** How to use it (optional). */
   how?: string;
+  /** A knob's or fader's steps for the keys (issue 160): shown where there is a keyboard, not on a touch screen. */
+  keys?: string;
 }
 
 /**
@@ -166,6 +168,7 @@ export function Tooltip({ content, children, longPress = true }: { content: TipC
           <strong>{content.title}</strong>
           <span>{content.body}</span>
           {content.how && <span className="tooltip-how">{content.how}</span>}
+          {content.keys && <span className="tooltip-keys">{content.keys}</span>}
         </div>,
         document.body,
       )}

@@ -6,6 +6,17 @@ describe("every Parameter's tip (issue 78)", () => {
   it.each(Object.keys(PARAMS) as ParamId[])('%s has a tip with a title and a body, which its knob or fader shows', (id) => {
     expect(PARAM_TIPS[id].title).not.toBe('');
     expect(PARAM_TIPS[id].body).not.toBe('');
+    expect(PARAM_TIPS[id].keys).toMatch(/^↑↓ /); // and its steps (issue 160)
+  });
+
+  it('names each control’s steps: the arrows, Shift and Page (issue 160)', () => {
+    expect(PARAM_TIPS.cutoff.keys).toBe('↑↓ a semitone · Shift 10 cents · Page an octave');
+    expect(PARAM_TIPS.osc2Detune.keys).toBe('↑↓ 1 cent · Shift 0.1 cent · Page 10 cents');
+    expect(PARAM_TIPS.ampSustain.keys).toBe('↑↓ 1 % · Shift 0.1 % · Page 10 %');
+    expect(PARAM_TIPS.mixOsc1.keys).toBe('↑↓ 0.5 dB · Shift 0.1 dB · Page 6 dB');
+    expect(PARAM_TIPS.ampAttack.keys).toBe('↑↓ the next round time · Shift 1 % · Page double or half');
+    expect(PARAM_TIPS.osc1Octave.keys).toBe('↑↓ an octave');
+    expect(syncedRateTip('1/4', '2 Hz', 120).keys).toBe('↑↓ a note value · Page 2 note values');
   });
 });
 

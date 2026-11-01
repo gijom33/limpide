@@ -35,6 +35,18 @@ test('keyboard users get the same explanation on focus, and Escape dismisses it'
   await expect(snapshotTip).toBeHidden();
 });
 
+test('a knob’s and a fader’s tip say their steps for the keys (issue 160)', async ({ page }) => {
+  await page.goto('/');
+  await page.keyboard.press('Tab'); // the keys in use: a focus shows its tip
+  await page.getByRole('slider', { name: 'Cutoff', exact: true }).focus();
+  const tip = page.getByRole('tooltip').filter({ hasText: 'Where the Filter starts' });
+  await expect(tip).toBeVisible();
+  await expect(tip.locator('.tooltip-keys')).toHaveText('↑↓ a semitone · Shift 10 cents · Page an octave');
+  await expect(tip.locator('.tooltip-keys')).toBeVisible();
+  await page.getByRole('slider', { name: 'Amp Sustain', exact: true }).focus();
+  await expect(page.getByRole('tooltip').filter({ hasText: '↑↓ 1 % · Shift 0.1 % · Page 10 %' })).toBeVisible();
+});
+
 test('every toolbar control explains itself, without doubling up on native browser tooltips', async ({ page }) => {
   await page.goto('/');
   await openDisplay(page);
