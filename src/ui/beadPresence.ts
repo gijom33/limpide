@@ -13,6 +13,8 @@ export interface Bead {
   switch: DisplayValue<'bead'>;
   entranceDue: boolean;
   sentAway: boolean;
+  /** How often it came back up once melted this visit (switched on again as it left), so the page draws it afresh. */
+  comebacks: number;
 }
 
 /**
@@ -22,7 +24,13 @@ export interface Bead {
 export type BeadEvent = 'notes' | 'switch on' | 'switch off' | 'entrance' | 'gone';
 
 /** A visit starts with Bead away, to come in by itself unless it was switched off. */
-export const beadOnArrival = (stored: DisplayValue<'bead'>): Bead => ({ presence: 'away', switch: stored, entranceDue: true, sentAway: false });
+export const beadOnArrival = (stored: DisplayValue<'bead'>): Bead => ({
+  presence: 'away',
+  switch: stored,
+  entranceDue: true,
+  sentAway: false,
+  comebacks: 0,
+});
 
 const leaving = (bead: Bead) => (bead.presence === 'up' ? 'leaving' : bead.presence);
 const coming = (bead: Bead) => (bead.presence === 'away' ? 'up' : bead.presence);
@@ -42,12 +50,13 @@ export function beadAfter(bead: Bead, event: BeadEvent): Bead {
       if (bead.presence === 'leaving') return bead;
       return { ...bead, presence: bead.presence === 'up' ? 'leaving' : 'up', entranceDue: false, sentAway: bead.presence === 'up' };
     case 'switch on':
-      return { presence: coming(bead), switch: 'on', entranceDue: false, sentAway: false };
+      return { ...bead, presence: coming(bead), switch: 'on', entranceDue: false, sentAway: false };
     case 'switch off':
-      return { presence: leaving(bead), switch: 'off', entranceDue: false, sentAway: false };
+      return { ...bead, presence: leaving(bead), switch: 'off', entranceDue: false, sentAway: false };
     case 'entrance':
       return bead.entranceDue && bead.switch === 'on' ? { ...bead, presence: coming(bead), entranceDue: false } : { ...bead, entranceDue: false };
     case 'gone':
-      return bead.presence === 'leaving' ? { ...bead, presence: bead.switch === 'on' && !bead.sentAway ? 'up' : 'away' } : bead;
+      if (bead.presence !== 'leaving') return bead;
+      return bead.switch === 'on' && !bead.sentAway ? { ...bead, presence: 'up', comebacks: bead.comebacks + 1 } : { ...bead, presence: 'away' };
   }
 }

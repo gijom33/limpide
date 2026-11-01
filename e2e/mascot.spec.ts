@@ -321,6 +321,25 @@ test.describe('Display’s switch lasts, the Notes are for the visit (issue 150,
   test.describe('switched on', () => {
     test.use({ storageState: holding({ ...WELCOMED, 'limpide.bead': 'on' }) });
 
+    test('switched off and on again while it leaves, it comes back up whole, in the window, once gone', async ({ page }) => {
+      await page.goto('/');
+      await listening(page);
+      await expect(mascot(page)).toHaveCount(1, { timeout: 6000 });
+      await openDisplay(page);
+      await beadSwitch(page).getByRole('radio', { name: 'Bead off' }).click();
+      await page.waitForTimeout(400); // melting, or dripping away down the window
+      await beadSwitch(page).getByRole('radio', { name: 'Bead on' }).click();
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(3000); // gone, and come up again
+      await expect(mascot(page)).toHaveCount(1);
+      const drawn = () =>
+        page.locator('.mascot-drop').evaluate((el) => {
+          const { top, bottom } = el.getBoundingClientRect();
+          return Number(getComputedStyle(el).opacity) > 0.9 && top >= 0 && bottom <= innerHeight;
+        });
+      await expect.poll(drawn).toBe(true);
+    });
+
     test('B, E, A, D sends it away and brings it back, the switch staying on; a reload brings it by itself again', async ({ page }) => {
       await page.goto('/');
       await listening(page);

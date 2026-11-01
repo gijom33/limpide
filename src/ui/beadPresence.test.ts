@@ -47,6 +47,7 @@ describe('Bead out by default (issue 150)', () => {
     expect(off).toMatchObject({ presence: 'leaving', switch: 'off' });
     expect(through(off, 'gone', 'switch on')).toMatchObject({ presence: 'up', switch: 'on' });
     expect(through(off, 'switch on')).toMatchObject({ presence: 'leaving', switch: 'on' });
-    expect(through(off, 'switch on', 'gone')).toMatchObject({ presence: 'up', switch: 'on' });
+    expect(through(off, 'switch on', 'gone')).toMatchObject({ presence: 'up', switch: 'on', comebacks: 1 });
+    expect(through(off, 'gone', 'switch on').comebacks).toBe(0); // up from away: a new Bead anyway
   });
 });

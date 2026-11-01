@@ -837,7 +837,16 @@ export function App() {
           />
         )}
         {bead.presence !== 'away' && (
-          <Mascot patches={patches} leaving={bead.presence === 'leaving'} onGone={beadGone} theme={theme} demoPart={players.demo} word={word} />
+          <Mascot
+            // Come back up once melted, it is drawn afresh: the one that left stays gone.
+            key={bead.comebacks}
+            patches={patches}
+            leaving={bead.presence === 'leaving'}
+            onGone={beadGone}
+            theme={theme}
+            demoPart={players.demo}
+            word={word}
+          />
         )}
       </main>
     </MathsContext.Provider>
