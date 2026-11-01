@@ -30,6 +30,7 @@ Limpide (formerly SynthView) is a browser-based subtractive synthesizer laid out
 6. As a player, I want releasing the newest key to return to the previously held note, so that legato lines work.
 7. As a learner, I want a Hold toggle that keeps the sound playing, so that both hands are free to turn knobs while I watch the Viewers.
 8. As a player, I want Glide between notes, so that I can hear and see pitch slide.
+102. As a player, I want a Legato switch with one Voice, so that a line played over held keys slides from Note to Note without a new Attack, as on a classic monosynth (issue 119).
 9. As a player, I want pad Velocity to change loudness, so that the C16 pads feel expressive.
 10. As a player, I want an optional Velocity amount on the Effective Cutoff, so that harder hits sound brighter.
 11. As a learner, I want sound to start with my first key press, click or drag, with no button to press first: while the browser holds sound back, the piano invites a first Note, and a quiet notice says so if the browser still refuses, so that the browser's autoplay policy never gets in my way or leaves me confused by silence.
@@ -165,7 +166,7 @@ Framed by the owner on 2026-10-31 ([issue 131](./issues/131-v1.md), which tracks
 - **Rendering:** the engine and Viewer renderers live outside React. A single animation loop draws every Viewer ([ADR-0002](./adr/0002-viewers-and-engine-live-outside-react.md)).
 - **The Patch:** kept in one store outside React, which hands each change to the engine before React hears of it ([ADR-0013](./adr/0013-the-patch-lives-outside-react.md)).
 - **Effective Cutoff:** computed by a pure modulation model that also produces the automation schedule ([ADR-0003](./adr/0003-modulation-model-mirrors-the-audio-graph.md)).
-- **Voices:** 1 to 8 per Patch; 1 Voice is monophonic with last-note priority and Glide. The Oscillator and Filter Viewers and the Timeline follow the newest Note; the Amp Viewers show every Voice by default ([ADR-0007](./adr/0007-optional-polyphony-viewers-follow-the-newest-note.md)).
+- **Voices:** 1 to 8 per Patch; 1 Voice is monophonic with last-note priority, Glide and Legato (issue 119). The Oscillator and Filter Viewers and the Timeline follow the newest Note; the Amp Viewers show every Voice by default ([ADR-0007](./adr/0007-optional-polyphony-viewers-follow-the-newest-note.md)).
 - **Controls:** knob size follows the Parameter's role, play or set-and-forget ([ADR-0008](./adr/0008-knob-size-follows-the-parameter-s-role.md)); levels and envelope stages are faders. Modulation rings and the piano's pitch marker are drawn by the render loop from the Modulation model, outside React (ADR-0002, ADR-0003).
 - **The tempo:** the page's, outside the Patch; an LFO with Sync on follows it in note values, its cycle locked to the beat, and a player takes it over while it plays ([ADR-0018](./adr/0018-limpide-keeps-a-tempo.md), issue 112; LFO tempo sync was out of scope until then, issue 53).
 - **MIDI:** MIDI Learn first, Encoder Mode auto-detected, and Pickup for Absolute Mappings ([ADR-0004](./adr/0004-midi-learn-first-no-hardcoded-controller-map.md)); one built-in layout, the C16's, a section per bank, each strip a column of it ([ADR-0009](./adr/0009-a-built-in-layout-for-the-c16.md), [ADR-0017](./adr/0017-the-c16-layout-strip-by-strip.md)).

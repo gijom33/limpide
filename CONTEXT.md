@@ -119,7 +119,7 @@ A slow, repeating modulation source; there are two, each moving one Destination:
 _Avoid_: Modulator, wobble, LFO amount (say Depth)
 
 **Retrigger**:
-An LFO setting: on, the LFO starts its cycle again at every Note, where its Waveform classically starts: a Saw at its foot, a Saw Down at its top, a Square on its upper half, a Sine and a Triangle at the centre rising (each Note gets the same wobble from its start); off, it runs freely and each Note catches it wherever it is. Off by default.
+An LFO setting: on, the LFO starts its cycle again at every Note, where its Waveform classically starts: a Saw at its foot, a Saw Down at its top, a Square on its upper half, a Sine and a Triangle at the centre rising (each Note gets the same wobble from its start); off, it runs freely and each Note catches it wherever it is. A legato Note (Legato on) does not restart it. Off by default.
 _Avoid_: Key sync (fine in a tooltip), reset, phase reset
 
 **Sync**:
@@ -129,6 +129,10 @@ _Avoid_: Tempo sync (fine in a tooltip), BPM sync, clock sync
 **Glide**:
 The time taken to slide from one note's pitch to the next.
 _Avoid_: Portamento, slide
+
+**Legato**:
+A switch beside Glide, for one Voice: on, a Note played while the Gate is open (a key held, or Hold on) changes the pitch alone, at once or over the Glide, and the Envelopes and the LFOs set to Retrigger carry on, with no new Attack; with every key up, the next Note starts as any does. Off by default; with more Voices it has no effect (issue 119).
+_Avoid_: Mono mode, legato glide, fingered portamento
 
 ### Playing
 
