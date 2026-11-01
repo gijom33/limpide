@@ -247,7 +247,7 @@ describe('the Ideal under heavy FM, bounded (issue 166)', () => {
     crossMod: 1, mixSub: 0.5, subOctave: -1,
   } as const;
 
-  it('keeps the loudest few thousand of FM’s sidebands, where a square swung hard makes tens of thousands', () => {
+  it('keeps the loudest thousand of FM’s sidebands, where a square swung hard makes tens of thousands', () => {
     const kept = idealPartials(heavy, 256).filter((p) => p.source === 'osc1');
     expect(kept.length).toBe(1024);
     // Each sideband louder than the quietest kept, worked out where there are fewer of them (up to the 16th Harmonic), is kept.

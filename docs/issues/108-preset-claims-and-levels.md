@@ -97,6 +97,8 @@ From review 15:
 | Drums (−23.7 → −25.6) | Kick −30.7 → −27.2 (−1.6); Snare −23.7 → −25.6 (+0.0); Open Hat −20.4 → −25.6 (+0.0); Tom −34.7 → −26.2 (−0.6); Cowbell −29.1 → −25.2 (+0.4); Clang −20.2 → −25.4 (+0.2); Zap Tom −20.0 → −25.2 (+0.4); Gong −20.8 → −25.2 (+0.4) |
 | Movement & Effects (−16.1 → −22.2) | Glide Slide −14.3 → −22.2 (+0.0); Wind −33.9 → −23.6 (−1.4); Ocean −27.0 → −24.1 (−1.9); Trill −17.7 → −22.1 (+0.1); Wah −30.4 → −24.3 (−2.1); Helicopter −12.6 → −22.1 (+0.1); Laser −10.3 → −22.4 (−0.2); Siren −17.7 → −22.1 (+0.1); Talking Filter −19.1 → −22.2 (+0.0); Stutter −7.2 → −23.1 (−0.9); Pink Surf −16.3 → −22.3 (−0.1); FM Sweep −15.6 → −21.6 (+0.6); Robot −29.3 → −24.7 (−2.5); Clang Alarm −15.9 → −22.0 (+0.2); Machine Chatter −15.9 → −21.9 (+0.3); Out of Tune −15.7 → −21.7 (+0.5) |
 
+2026-10-31: Talking Filter was retuned by issue [166](./166-the-edges-three-findings.md) (its LFO on Resonance no longer lets the saw through unfiltered): Resonance and LFO 2's Depth 0.45, Volume 0.9, its level on C4 −21.7 dBFS, in its group's 3 dB.
+
 **Judgement calls** (Claude's call, open to the owner):
 
 1. **Groups meet the quiet, not the loud:** Volume can only lower, so where a quiet sound could not be raised far enough the rest of its group came down. Movement & Effects' median fell from −16.1 to −22.2 dBFS (Wind, Wah, Robot and Ocean, Noise and band-passes, raised by up to 10 dB still sit near −24), the Drums' from −23.7 to −25.6. The groups now differ more from each other than before (Bass −14.5, Keys & Plucks −27.1): the criterion is per group, and the master's room for Voices puts the 8-Voice groups lower.

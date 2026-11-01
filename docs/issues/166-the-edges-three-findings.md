@@ -58,6 +58,10 @@ Decided by the owner, 2026-10-31 (Claude's recommendations, accepted):
 - **Only FM and Ring are bounded.** The plain series stay at their 256 Harmonics: they cost little, and their levels depend on how many are counted.
 - **Each Ideal mark's precision at the top:** with fewer Harmonics asked for, FM's and Ring's cycles are worked out from fewer samples, which moves a level by up to a thousandth (Poly Mod Zap's carrier on C4: 0.5020 against 0.5017), far below what a mark shows.
 - **`IDEAL_HARMONICS` is no longer exported:** the sweep needed it only to answer the slow frames.
+- **Heavy FM past the cap draws fewer marks than it did:** what the decision's "the Spectrum looks the same" holds for is every Preset (checked on C2 to C7, Gate on and off, by the code review too: no mark added or lost below 20 kHz, levels within 0.02 dB). A Patch past the cap loses some: on C4, a square swung by a Sine three octaves under it drew marks up to 20 kHz and now stops near 13 kHz, where its cycle's samples run out.
+- **The Cutoff clamp reaches a few Presets' top Notes:** on C7, the Envelope or Key Track of 13 low-pass Presets (Piano, Honky-Tonk and Pick Pluck among them) took the Cutoff to 60 to 70 kHz, past what the browser plays; it now stops at 20 kHz, as the Curve draws, and their top Harmonics lose about 0.2 to 3 dB. It comes with decision 2; nothing tests it by ear.
+- **A knob turned with an LFO on Resonance:** the Resonance curve is swapped at once, each Voice's own Q at the moment scheduled for it; the code review notes that for a render quantum (under 3 ms) the two may not yet match, which on a jump of the knob could take a band-pass's Q briefly under its floor. Not reproduced; both take effect at the same moment in practice, as every other change of a Patch does.
+- **The sweep still does not judge silence with the Filter at an end:** there a high-pass at 20 kHz passes only what is above hearing, silent to its check; the new engine test holds the ends instead.
 
 ### What to try and hear
 

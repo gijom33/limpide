@@ -358,8 +358,8 @@ describe('every Viewer draws a Patch at the edges in a frame (issue 116)', () =>
     return took;
   }
   /**
-   * FM at full on Osc 1s richer than a Sine, whose Ideal had tens of thousands of sidebands to work out before issue
-   * 166: Osc 2 a whole number of octaves off (one cycle, Fourier-transformed), or not (each Harmonic's sidebands).
+   * FM at full on Osc 1s richer than a Sine, the heaviest Ideals to work out (issue 166): Osc 2 a whole number of
+   * octaves off (one cycle, Fourier-transformed), or not (each Harmonic's sidebands, thousands of them).
    */
   const fm = { ...defaultPatch(), osc2Waveform: 'sine', mixOsc2: 0, crossMod: 1 } as const;
   const HEAVY_FM: EdgeCase[] = [

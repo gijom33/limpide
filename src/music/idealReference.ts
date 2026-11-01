@@ -251,7 +251,7 @@ function fmPartials(patch: Patch, osc1: number, osc2: number, count: number, ind
   const scale = pulse ? pulseScale(patch.pulseWidth) : 1;
   const sum = powerSum();
   const most = Math.min(ENGINE_HARMONICS - 1, Math.ceil((1.5 * count) / osc1));
-  // Osc 1's Harmonics from the loudest down, until their sidebands are several times as many as are kept (issue 166).
+  // Osc 1's Harmonics from the lowest up, until their sidebands are several times as many as are kept (issue 166).
   let worked = 0;
   for (let n = 1; n <= most && worked < SIDEBANDS_WORKED; n++) {
     if (levels[n] < 1e-9) continue;
