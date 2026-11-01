@@ -272,8 +272,8 @@ test('the tempo learns a knob and Tap a pad; a knob on an LFO’s Rate turns its
   await page.getByRole('button', { name: 'LFO 1 Sync' }).click();
   await expect(rate).toHaveAttribute('aria-valuetext', /Hz$/);
   // The pad mapped to Tap, twice about half a second apart: the tempo follows the taps as they came. The page's
-  // clock times them as Tap does, since a busy machine wakes a 500 ms timer late (60 ms late is 107 BPM, outside
-  // the 120 ± 4 once expected, issue 177): the BPM is checked against the gap that was played, not the one asked for.
+  // clock times them as Tap does, since a busy machine wakes a 500 ms timer late (60 ms late is 107 BPM, issue
+  // 177): the BPM is checked against the gap that was played, not the one asked for.
   const gap = await page.evaluate(async () => {
     const { playMidi } = window as unknown as { playMidi(bytes: number[]): void };
     const at: number[] = [];

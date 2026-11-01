@@ -28,12 +28,13 @@ async function bringBead(page: Page) {
 }
 
 /**
- * Waits until it is `moving` (standing or hovering, by default), giving it `seconds` of its own time. Its motion goes
- * at most LONGEST_STEP a frame, so where frames come slower than that (WebKit on GitHub's runner, about fifteen a
- * second; any browser on a loaded machine) a fall takes longer than the clock says, and a wait of 5 s by the clock
- * caught it still on its way (issue 177). Counted frame by frame as its motion counts them, the wait holds at any rate.
+ * Waits until it stands or hovers, giving it 5 s of its own time. Its motion goes at most LONGEST_STEP a frame, so
+ * where frames come slower than that (WebKit on GitHub's runner, about fifteen a second; any browser on a loaded
+ * machine) a move takes longer than the clock says (issue 177). Counted frame by frame, each frame's share capped as
+ * its motion caps it, the wait holds at any frame rate.
  */
-async function settles(page: Page, seconds = 5, moving: RegExp = /^(standing|hovering)$/) {
+async function settles(page: Page) {
+  const [seconds, moving] = [5, /^(standing|hovering)$/];
   // What it was doing when the wait ended: read again later, it may already be off again (the Demo startles it).
   const seen = await page.evaluate(
     ([limit, step, pattern]) =>
@@ -311,7 +312,7 @@ test('it comes up from behind the Amp, and leaves jumping, then melting; with re
   await expect(mascot(page)).toHaveCount(0, { timeout: 500 });
 });
 
-test('it adds under a millisecond to each frame the Viewers draw, or under their share of a slowed one', async ({ page, browserName }) => {
+test('it adds under a millisecond to each frame the Viewers draw, or under their share of a slowed one (issues 138, 177)', async ({ page, browserName }) => {
   test.slow(); // up to three rounds
   // Measured in Chromium only (issue 138): WebKit's clock counts whole milliseconds and, on GitHub's runner, draws some
   // fifteen frames a second, so two seconds' average wanders by ±0.7 ms with Bead or without, and a 1 ms bound fails
@@ -347,7 +348,7 @@ test('it adds under a millisecond to each frame the Viewers draw, or under their
   // The frame without Bead is the reference: a busy machine slows Bead's drawing with the Viewers', so the bound grows
   // with that frame (Bead measured 1.0 to 1.4 ms at the night's load of 10 to 46, issue 177). On a quiet Mac the
   // Viewers take about 3.6 ms and Bead 0.3 to 0.6 more, and 30 % of that frame is the bound's 1 ms: quiet, the bound
-  // is as before. Other browsers' bursts beside it still pushed one round in six over (at load 30), so it is measured
+  // is 1 ms. Other browsers' bursts beside it still pushed one round in six over (at load 30), so it is measured
   // up to three times, Bead sent away between: a Bead grown dearer fails all three.
   const rounds: string[] = [];
   let within = false;

@@ -9,7 +9,7 @@ While the owner sleeps, Claude builds the issues that need nothing from the owne
 - **Where:** a worktree at `~/limpide-night/<date>`, on the branch `night/<date>` cut from `main`, outside iCloud (whose syncing breaks git operations with many steps). The main checkout, `main` and the other sessions' branches stay as they were.
 - **What:** each issue whose Status is `ready-for-agent` and whose blockers are done, unless another session's worktree or unmerged branch carries its number. Bugs come first.
 - **A quiet machine:** the night starts no dev server and opens no browser pane; reviews, research and prototypes run by day. The report notes the load average at the start; above 8, it says the results may carry load flakes.
-- **Tiers:** the lead names each issue's tier in its brief.
+- **Tiers:** the lead names each issue's tier in its brief, judging by what the change can break; in doubt, full.
   - **Light** (for example words, labels, tips, docs, one panel's layout): `tsc`, the lint, the touched unit tests and the touched Playwright specs in Chromium, one review pass of its own diff.
   - **Full** (for example the engine, MIDI, Bead's motion, layouts across widths, stored settings): the same, plus the touched specs in WebKit and the `code-review` skill.
 - **Builders:** one subagent per full issue, or up to four light issues in one, each with its own commits and its own report section. One at a time, since the Playwright tests share port 5199. No builder runs the whole suite.
@@ -30,7 +30,7 @@ While the owner sleeps, Claude builds the issues that need nothing from the owne
 ## What it needs
 
 - **The Mac awake at 23:00:** the app's keep-awake setting (on) holds it awake only while Claude works, so it cannot stop the Mac idle-sleeping before the task starts. Leave the Mac on its charger with the lid open, and in System Settings → Battery → Options (or Energy) turn on "Prevent automatic sleeping on power adapter when the display is off". A task due while the Mac sleeps runs when it wakes; after 07:00 it builds nothing and only reports.
-- **A quiet Mac:** close busy browser tabs (one tab at a full core kept the night of 2026-10-31 at a load of 20 and more), stop the day's dev servers, and leave no other Claude session working.
+- **A quiet Mac:** close busy browser tabs, stop the day's dev servers, and leave no other Claude session working.
 - **The Claude app open.** A task due while it is closed runs at the next launch.
 - **Auto permission mode:** the task is saved in Auto, so a permission prompt doesn't hold up the night. Change it by editing the task, under Scheduled in the app's sidebar.
 - **Usage:** each issue uses about as much as the same issue built by day; a light one, batched, less.
