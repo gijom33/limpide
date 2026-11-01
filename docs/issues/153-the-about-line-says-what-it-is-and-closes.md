@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · bug
+**Status:** needs-info · bug. Waiting on the owner for where the box goes (2026-10-31, night): no room beside or above the headings holds it at most widths; decisions 1, 2 and 4 are clear and not yet built.
 
 ## Decisions
 
@@ -38,3 +38,15 @@ Claude's call, open to the owner, 2026-10-31 (decision 3 of 109 stands: it still
 
 **Out of scope:**
 - When the line shows (on a load by the person) and its words
+
+## Questions for the owner
+
+Asked at night, 2026-10-31, before building: decision 3's rooms are not there. Measured on this branch's header (with issues 112 and 119), every Preset's line set on one line in the box's 12 px type with its name in bold is 428 px wide at the least, 783 px for the middle one and 1,425 px for the longest (Kalimba, Portamento). The room between the header and the Sections' headings is 41 px tall at three and four across (one line of the box, 31 px), 29 px at 2 × 2 (not even one line) and 66 px on a phone (two lines at the box's padding, three at a tighter one; the longest take five there, and already reach the Oscillators' heading). Beside the headings, the Oscillators' heading lies right under the box's left end, and the gap between it and the Filter's heading is 222 px at 700 px wide and 241 px at 1,100 px (four or five lines, which would reach the Osc tabs). Narrowing the box cannot leave the Oscillators' heading clear, since the heading is under its left end.
+
+1. **Where does the box go, if not over the headings?** The choices, each measured:
+   - (a) **Over the headings' row, as now, made wider:** the box keeps its place under the Patch name; at three and four across it may be as wide as the Oscillators and the Filter together, so it stays one or two lines and never reaches the Osc tabs or the Filter's Mode row. It covers the two headings while it shows; with the name in bold, the × and Escape, it reads as the Preset's description, and the first turn of a knob still takes it away. Acceptance criterion 4 would go.
+   - (b) **Under the headings:** it hangs below the Sections' heading row, over their first controls (the Osc tabs, the Filter's Mode and Slope), the ones its words often name. The headings stay clear.
+   - (c) **Room that opens:** the Sections move down by the box's height while it shows and back up when it goes. A first turn of a knob would move the page under the pointer, unless the room stays until the pointer is let go.
+   - (d) **One line above the headings, as wide as the page:** fits for most Presets at 1,440 px and all at 2,000 px; at 1,100 px and below the long lines need (a), (b) or (c) as well.
+
+   Claude's recommendation: (a). The headings are the one thing on the page not needed while reading the line and playing: every knob and Viewer the words point at stays in view, nothing moves, and the box goes with one click, Escape or the first turn. Decisions 1, 2 and 4 will be built as written, whichever is chosen.
