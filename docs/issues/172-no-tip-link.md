@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement
+**Status:** ready-for-human · enhancement. Built (2026-11-01) on night/2026-10-31, for the owner to try
 
 ## Decisions
 
@@ -30,9 +30,18 @@ Claude's call, open to the owner:
 - Any test or doc naming the link (the About spec, statistics or the PRD)
 
 **Acceptance criteria:**
-- [ ] A search of the repository finds no "buymeacoffee" outside issue 146, this issue, the inbox and .out-of-scope
-- [ ] About shows the share-or-star line with the repository's link; the README too
-- [ ] The About spec covers it; every test passes in Linux's fonts too
+- [x] A search of the repository finds no "buymeacoffee" outside issue 146, this issue, the inbox and .out-of-scope
+- [x] About shows the share-or-star line with the repository's link; the README too
+- [ ] The About spec covers it; every test passes in Linux's fonts too (covered, and it passes in Chromium on the Mac; Linux's fonts are GitHub's run)
 
 **Out of scope:**
 - Any other way of receiving money
+
+## How it was built
+
+- About's Support entry now reads "Enjoying Limpide? Share it, or star it on GitHub", "star it on GitHub" linking to the repository; the `COFFEE` address is gone. The entry keeps its "Support" label: Claude's call, open to the owner.
+- The README's line under "Play it in your browser" reads "Enjoying it? Share it, or ⭐ the repository.", "⭐ the repository" the link; the ☕ went with the coffee.
+- The About spec checks the line, its link, and that no coffee link is left. The short phone's test (the way in on the first screen, 393 × 659) still passes with the longer line.
+- A search finds "buymeacoffee" only in issue 146, this issue, the inbox, .out-of-scope, and `docs/reviews/2026-10-31/13-fact-checker.md`, a dated review's record of what it checked that day, left as written: Claude's call, open to the owner.
+
+**To try:** open About (the logo or ⓘ): the Support entry's line and its link to the repository; on a phone's width, the Demo and the Tour still on the first screen. The README on GitHub shows its line once pushed.
