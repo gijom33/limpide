@@ -126,12 +126,14 @@ const pianoPlace = (page: import('@playwright/test').Page) =>
     const header = document.querySelector('header')!.getBoundingClientRect();
     return { offset: Math.round((piano.left + piano.right) / 2 - (header.left + header.right) / 2), headerHeight: Math.round(header.height) };
   });
+// Since issue 154 (decision 3, decided by the owner: "it's okay if the keyboard is not centered") the piano need not
+// sit at the centre from 1200 px, so the test no longer asks it (Linux's fonts left it 5 px off at 1200 px, the 1.20.0
+// release run); the top row still grows no taller.
 for (const width of [1200, 1280, 1366, 1440, 1600, 1800, 1900]) {
-  test(`the piano sits at the page's centre, the top row no taller (${width}px, issue 82)`, async ({ page }) => {
+  test(`the top row no taller with the piano in it (${width}px, issue 82)`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/');
-    const { offset, headerHeight } = await pianoPlace(page);
-    expect(Math.abs(offset)).toBeLessThanOrEqual(4);
+    const { headerHeight } = await pianoPlace(page);
     expect(headerHeight).toBeLessThanOrEqual(64);
   });
 }
