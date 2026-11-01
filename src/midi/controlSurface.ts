@@ -124,7 +124,10 @@ export function createControlSurface(synth: Synth) {
   const thirds = new Map<string, number>(); // a Relative knob's share of a Grid step not yet moved (a C16's 66s), per control
   const detecting = new Map<string, number[]>(); // the first values of knobs finding their Encoder Mode
 
-  /** A Relative message's steps: as sent, or as the known Controller a layout's Mapping answers counts a fast turn's (a C16's 66 a third). */
+  /**
+   * A Relative message's steps, as sent; but a fast turn's message (more than a step) on a known Controller's layout
+   * counts as that Controller says: a C16's 66 a third of a step.
+   */
   const relativeSteps = (mapping: Mapping, mode: 'relative-twos' | 'relative-centred', value: number) => {
     const delta = relativeDelta(mode, value);
     const fastTurn = answeredBy(mapping)?.fastTurnStep;

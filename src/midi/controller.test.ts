@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { memoryStorage } from '../test/memoryStorage';
 import { c16Layout } from './c16';
-import { answeredBy, answers, builtInLayout, knownAmong, knownController, pluggedIn } from './controller';
+import { answeredBy, answers, knownAmong, knownController, pluggedIn, takeLayout } from './controller';
 import type { Mapping } from './mappings';
 
 // The seam for what a Controller is (issue 149): the rest of the MIDI code asks this module whether an input is a C16
@@ -49,7 +49,7 @@ describe('which Mappings answer which Controller (ADR-0017, issue 149)', () => {
   });
 
   it('the C16 layout is every Mapping the C16’s alone', () => {
-    const layout = builtInLayout('c16', memoryStorage());
+    const layout = takeLayout('c16', memoryStorage());
     expect(layout).toEqual(c16Layout());
     expect(layout.every((m) => answers(m, c16) && !answers(m, other))).toBe(true);
   });

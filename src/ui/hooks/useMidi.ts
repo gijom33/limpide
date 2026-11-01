@@ -1,7 +1,7 @@
 import { type MutableRefObject, useEffect, useEffectEvent, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import type { AudioSession } from '../../app/session';
 import type { KeyValueStorage } from '../../app/storage';
-import { builtInLayout, knownController, pluggedIn } from '../../midi/controller';
+import { knownController, pluggedIn, takeLayout } from '../../midi/controller';
 import { createControlSurface, type LearnState } from '../../midi/controlSurface';
 import { describeMessage, targetKey } from '../../midi/describe';
 import { connectMidi, type MidiAccessLike, midiSupport } from '../../midi/inputs';
@@ -63,7 +63,7 @@ export function useMidi(host: Host) {
   const mappings = useSyncExternalStore(mappingStore.subscribe, mappingStore.list);
   // A known Controller's layout (the C16's): the MIDI panel puts it back at any time; it comes in by itself as the
   // Controller is plugged in (below).
-  const applyLayout = (id: ControllerId) => mappingStore.restore(builtInLayout(id, storage));
+  const applyLayout = (id: ControllerId) => mappingStore.restore(takeLayout(id, storage));
   // A known Controller's control moved on another bank than the last: its section is brought into view (on a phone,
   // where one section shows at a time).
   const lastBank = useRef<number | undefined>(undefined);
@@ -219,7 +219,7 @@ export function useMidi(host: Host) {
           onMessage: (m, name) => {
             const from = knownController(name);
             if (m.type === 'noteOn') noteFromController();
-            if (from?.section && m.type === 'cc' && surface.learnState().phase === 'off') {
+            if (from && m.type === 'cc' && surface.learnState().phase === 'off') {
               const control = { kind: 'cc' as const, channel: m.channel, number: m.controller };
               const bank = from.section(control);
               if (bank !== undefined && bank !== lastBank.current && mappingStore.find(control)) {

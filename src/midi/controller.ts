@@ -17,11 +17,11 @@ export interface KnownController {
   /** Where it is recorded that its layout came in once, and what is recorded once today's layout is in place. */
   applied: { key: string; version: string };
   /** Stored Mappings brought to today's layout from an earlier one, given what was recorded; null: nothing to bring. */
-  upgrade?(stored: readonly Mapping[], recorded: string | null): readonly Mapping[] | null;
-  /** The Section, by its place on the page, a control of its layout plays: the page follows its banks. */
-  section?(control: Control): number | undefined;
+  upgrade(stored: readonly Mapping[], recorded: string | null): readonly Mapping[] | null;
+  /** The Section, by its place on the page, a control of its layout plays (undefined: none): the page follows its banks. */
+  section(control: Control): number | undefined;
   /** The share of a Grid step a Relative message of more than one step (a fast turn) counts for, signed. */
-  fastTurnStep?: number;
+  fastTurnStep: number;
 }
 
 /** One record per tag: a tag added to the Mapping's list without its Controller does not compile. */
@@ -44,8 +44,11 @@ export const answeredBy = (mapping: Mapping): KnownController | undefined => (ma
  */
 export const answers = (mapping: Mapping, from: KnownController | undefined) => !mapping.device || mapping.device === from?.id;
 
-/** A known Controller's built-in layout, recorded as in place: the MIDI panel's button puts it back, replacing every Mapping. */
-export function builtInLayout(id: ControllerId, storage: KeyValueStorage): Mapping[] {
+/**
+ * A known Controller's layout, taken: recorded as in place, so it never comes in by itself again, and returned for
+ * the Mapping store (the MIDI panel's button puts it back, replacing every Mapping).
+ */
+export function takeLayout(id: ControllerId, storage: KeyValueStorage): Mapping[] {
   const known = KNOWN[id];
   storage.setItem(known.applied.key, known.applied.version);
   return known.layout();
@@ -61,9 +64,9 @@ export function pluggedIn(names: readonly string[], stored: readonly Mapping[], 
   for (const known of knownAmong(names)) {
     const recorded = storage.getItem(known.applied.key);
     if (recorded === known.applied.version) continue;
-    if (!mappings.length && recorded === null) mappings = builtInLayout(known.id, storage);
+    if (!mappings.length && recorded === null) mappings = takeLayout(known.id, storage);
     else {
-      mappings = known.upgrade?.(mappings, recorded) ?? mappings;
+      mappings = known.upgrade(mappings, recorded) ?? mappings;
       storage.setItem(known.applied.key, known.applied.version);
     }
   }
