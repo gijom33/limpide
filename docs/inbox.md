@@ -4,6 +4,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-10-31, the owner's bug, with a screen recording of the night branch (localhost:5174, 18:33; macOS kept the file from Claude): "Let's avoid having the text move around when values change. We could use predefined spacing or another trick (maybe stack values?)"
+
 ## Ideas
 
 ## Dropped
