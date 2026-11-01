@@ -894,6 +894,8 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .mascot-drop { position: absolute; bottom: 0; left: 0; transform-origin: 20% 100%; }
 /* Its own pixels take the pointer, to be tickled and poked; the box around them lets it through. */
 .mascot-drop rect { pointer-events: visiblePainted; }
+/* Pointing the way beside a control (issue 151), the pointer passes through it to the control. */
+.mascot[data-pointing='yes'] .mascot-drop rect { pointer-events: none; }
 /* Its droplets, in the page's pixels. */
 .mascot-spray { position: absolute; left: 0; top: 0; width: 1px; height: 1px; overflow: visible; z-index: 9; pointer-events: none; fill: var(--mascot-body); }
 :root .mascot-spray { --mascot-body: #6cc8f0; }

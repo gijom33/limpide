@@ -28,13 +28,12 @@ async function bringBead(page: Page) {
 }
 
 /**
- * Waits until it stands or hovers, giving it 5 s of its own time. Its motion goes at most LONGEST_STEP a frame, so
- * where frames come slower than that (WebKit on GitHub's runner, about fifteen a second; any browser on a loaded
- * machine) a move takes longer than the clock says (issue 177). Counted frame by frame, each frame's share capped as
- * its motion caps it, the wait holds at any frame rate.
+ * Waits until it stands or hovers (or is as `moving` says), giving it `seconds` of its own time. Its motion goes at
+ * most LONGEST_STEP a frame, so where frames come slower than that (WebKit on GitHub's runner, about fifteen a second;
+ * any browser on a loaded machine) a move takes longer than the clock says (issue 177). Counted frame by frame, each
+ * frame's share capped as its motion caps it, the wait holds at any frame rate.
  */
-async function settles(page: Page) {
-  const [seconds, moving] = [5, /^(standing|hovering)$/];
+async function settles(page: Page, moving = /^(standing|hovering)$/, seconds = 5) {
   // What it was doing when the wait ended: read again later, it may already be off again (the Demo startles it).
   const seen = await page.evaluate(
     ([limit, step, pattern]) =>
@@ -814,10 +813,193 @@ test.describe('never under a card (issue 164)', () => {
       for (const top of [...tops, ...[...tops].reverse()]) {
         await page.evaluate((y) => window.scrollTo({ top: y, behavior: 'instant' }), top);
         await page.waitForTimeout(300);
-        // Once it has fallen or flown there and landed: standing, or hovering under the header.
-        await settles(page);
+        // Once it has fallen or flown there and landed: standing, or hovering under the header; or, the Tour pointing
+        // the way to its card's control, clinging beside it (issue 151).
+        await settles(page, /^(standing|hovering|clinging)$/);
         expect(await againstCards(page), `scrolled to ${top}`).toEqual({ cards: 1, under: false, inView: true });
       }
     });
   }
+});
+
+test.describe('pointing the way in a Tutorial and the Tour (issue 151)', () => {
+  const tutorialCard = (page: Page) => page.getByRole('region', { name: /^Tutorial: / });
+  const tourCard = (page: Page) => page.getByRole('region', { name: 'Tour' });
+  const clings = (page: Page) => settles(page, /^clinging$/, 12);
+
+  async function openTutorial(page: Page, preset: string) {
+    await page.getByRole('button', { name: /^Patch: / }).click();
+    await page.getByRole('dialog', { name: 'Patches' }).getByRole('group', { name: 'Tutorials' }).getByRole('button', { name: new RegExp(`^Tutorial: ${preset}`) }).click();
+    await tutorialCard(page).getByRole('button', { name: 'Start' }).click();
+  }
+
+  /** The Step made with "Do it for me", as the Tutorial spec does it, however slow the machine. */
+  async function doIt(page: Page) {
+    const next = tutorialCard(page).getByRole('button', { name: /^(Next|Finish)$/ });
+    const button = tutorialCard(page).getByRole('button', { name: 'Do it for me', exact: true });
+    await expect(async () => {
+      if (await button.isVisible()) await button.click({ timeout: 2000 });
+      await expect(next).toBeEnabled({ timeout: 2000 });
+    }).toPass({ timeout: 30000 });
+  }
+  const next = (page: Page) => tutorialCard(page).getByRole('button', { name: /^(Next|Finish)$/ }).click();
+
+  /**
+   * Where it is against `selector`'s control: beside it (its drawing within a few pixels of the ring, and level with
+   * the control), over neither the ring nor the band its target text takes over the control, its tail on the control's
+   * side, and the pointer passing through it.
+   */
+  const against = (page: Page, selector: string) =>
+    page.evaluate((selector) => {
+      const control = document.querySelector(selector)!.getBoundingClientRect();
+      const drop = document.querySelector('.mascot-drop svg')!.getBoundingClientRect();
+      const ring = { left: control.left - 6, right: control.right + 6, top: control.top - 6, bottom: control.bottom + 6 };
+      const middle = (control.left + control.right) / 2;
+      const target = { left: middle - 30, right: middle + 30, top: control.top - 26, bottom: control.top - 6 };
+      const over = (r: { left: number; right: number; top: number; bottom: number }) => r.left < drop.right && r.right > drop.left && r.top < drop.bottom && r.bottom > drop.top;
+      const gap = Math.max(ring.left - drop.right, drop.left - ring.right);
+      const tail = document.querySelector('#bead-self > g')!.getBoundingClientRect();
+      const body = [...document.querySelectorAll<SVGGElement>('#bead-self > g.mascot-body')].find((g) => g.style.display !== 'none')!.getBoundingClientRect();
+      const towards = Math.sign((tail.left + tail.right) / 2 - (body.left + body.right) / 2) === Math.sign(middle - (drop.left + drop.right) / 2);
+      const hit = document.elementFromPoint((body.left + body.right) / 2, (body.top + body.bottom) / 2);
+      return {
+        beside: gap >= 0 && gap <= 6,
+        level: (drop.top + drop.bottom) / 2 > control.top && (drop.top + drop.bottom) / 2 < control.bottom,
+        covers: over(ring) || over(target),
+        towards,
+        through: !!hit && !hit.closest('.mascot'),
+      };
+    }, selector);
+  const POINTING = { beside: true, level: true, covers: false, towards: true, through: true };
+
+  /** From now, each change of how it moves, in order. */
+  const watchMoves = (page: Page) =>
+    page.evaluate(() => {
+      const w = window as unknown as { moves: string[] };
+      w.moves = [];
+      const sample = () => {
+        const now = document.querySelector<HTMLElement>('.mascot')?.dataset.moving ?? '';
+        if (now !== w.moves.at(-1)) w.moves.push(now);
+        requestAnimationFrame(sample);
+      };
+      requestAnimationFrame(sample);
+    });
+  const moves = (page: Page) => page.evaluate(() => (window as unknown as { moves: string[] }).moves);
+
+  /** Over `ms`, how high it lifts off where it clings at most, in pixels. */
+  const highest = (page: Page, ms: number) =>
+    page.evaluate(
+      (ms) =>
+        new Promise<number>((done) => {
+          let most = 0;
+          const end = performance.now() + ms;
+          const sample = () => {
+            const lift = -Number(/translateY\((-?[\d.]+)px\)/.exec(document.querySelector<HTMLElement>('.mascot-drop')!.style.transform)?.[1] ?? 0);
+            most = Math.max(most, lift);
+            if (performance.now() < end) requestAnimationFrame(sample);
+            else done(most);
+          };
+          requestAnimationFrame(sample);
+        }),
+      ms,
+    );
+
+  test('in a Tutorial it goes beside each Step’s control and points at it; a Step made, a hop; quit, home it hops', async ({ page }) => {
+    test.slow();
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/');
+    await bringBead(page);
+    await openTutorial(page, 'Bass');
+    // Osc 2's level, on the Mixer tab: its usual move to the Oscillators' edge, then a slide down.
+    await clings(page);
+    expect(await against(page, '[data-learn="param:mixOsc2"]')).toEqual(POINTING);
+    await expect(mascot(page)).toHaveAttribute('data-pointing', 'yes');
+    // Made: a happy hop, higher than its bounce.
+    const made = highest(page, 700);
+    await doIt(page);
+    expect(await made).toBeGreaterThan(8);
+    // Osc 2's Waveform, in the same Section: a slide across, never back up to the edge.
+    await watchMoves(page);
+    await next(page);
+    await expect(async () => expect(await against(page, '[data-learn="choice:osc2Waveform"]')).toEqual(POINTING)).toPass({ timeout: 15000 });
+    expect(await moves(page)).not.toContain('flying');
+    expect(await moves(page)).not.toContain('falling');
+    await doIt(page);
+    await next(page);
+    await clings(page);
+    await doIt(page);
+    // The Ideal Display option: the Display button stands for it, in the header.
+    await next(page);
+    await expect(async () => expect(await against(page, 'button[aria-label="Display"]')).toEqual(POINTING)).toPass({ timeout: 15000 });
+    await doIt(page);
+    // The Cutoff, in another Section: its usual move to the Filter's edge, then the slide down.
+    await watchMoves(page);
+    await next(page);
+    await expect(async () => expect(await against(page, '[data-learn="param:cutoff"]')).toEqual(POINTING)).toPass({ timeout: 15000 });
+    const way = await moves(page);
+    expect(way.some((m) => m === 'flying' || m === 'falling')).toBe(true);
+    expect(way.slice(way.findIndex((m) => m === 'flying' || m === 'falling'))).toContain('sliding');
+    // Quit: a hop back up to its edge, where it takes the pointer again.
+    await tutorialCard(page).getByRole('button', { name: 'Quit the tutorial' }).click();
+    await settles(page, /^standing$/, 8);
+    await expect(mascot(page)).toHaveAttribute('data-pointing', 'no');
+    expect((await footing(page)).bottom).toBe(0);
+  });
+
+  test('a control on a hidden tab: it goes back to its edge and looks; shown again, it goes', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/');
+    await bringBead(page);
+    await openTutorial(page, 'Bass');
+    await clings(page);
+    // The Mixer's tab hidden behind Osc 1's.
+    await page.getByRole('tab', { name: /^Osc 1/ }).click();
+    await settles(page, /^standing$/, 8);
+    // Its tail towards the Oscillators, on its left.
+    await expect(page.locator('.mascot-drop')).toHaveAttribute('style', /scale\(-/);
+    await page.getByRole('tab', { name: 'Mixer' }).click();
+    await clings(page);
+    expect(await against(page, '[data-learn="param:mixOsc2"]')).toEqual(POINTING);
+  });
+
+  test('a Tutorial finished: the fountain', async ({ page }) => {
+    test.slow();
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/');
+    await bringBead(page);
+    await openTutorial(page, 'FM Ladder');
+    while (await tutorialCard(page).getByRole('button', { name: /^(Next|Finish)$/ }).isVisible()) {
+      await doIt(page);
+      await next(page);
+    }
+    await expect(mascot(page)).toHaveAttribute('data-doing', 'fountain', { timeout: 5000 });
+  });
+
+  test('the Tour: one control a card, its first move’s; closed, home it hops', async ({ page }) => {
+    test.slow();
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/');
+    await bringBead(page);
+    await page.getByRole('button', { name: 'About' }).click();
+    await page.getByRole('dialog', { name: 'Limpide' }).getByRole('button', { name: 'Take the Tour' }).click();
+    await expect(async () => expect(await against(page, '[data-learn="choice:waveform"]')).toEqual(POINTING)).toPass({ timeout: 20000 });
+    await tourCard(page).getByRole('button', { name: 'Next' }).click();
+    await expect(async () => expect(await against(page, '[data-learn="param:cutoff"]')).toEqual(POINTING)).toPass({ timeout: 20000 });
+    await tourCard(page).getByRole('button', { name: 'Close the Tour' }).click();
+    await settles(page, /^standing$/, 8);
+    await expect(mascot(page)).toHaveAttribute('data-pointing', 'no');
+  });
+
+  test('with reduced motion it stays on its edge, only turning its eyes and tail towards the control', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/');
+    await bringBead(page);
+    await openTutorial(page, 'Bass');
+    // Osc 2's level is far to its left: it faces it, turned round, where it stands.
+    await expect(page.locator('.mascot-drop')).toHaveAttribute('style', /scale\(-1, 1\)/);
+    await page.waitForTimeout(1000);
+    await expect(mascot(page)).toHaveAttribute('data-moving', 'standing');
+    expect((await footing(page)).bottom).toBe(0);
+  });
 });

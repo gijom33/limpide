@@ -241,6 +241,9 @@ export function createMascotMotion(random: () => number = Math.random) {
   let hat: Hat = 'none';
   let act: Act | null = null;
   let pointer: number | null = null;
+  // A Tutorial or the Tour open (issue 151): its own life paused; and the control it points at, if any.
+  let guided = false;
+  let aim: { way: -1 | 1; angle: number; still: boolean } | null = null;
   // A word's or the theme's turn asked for during another: it comes next.
   // Words and the theme's reactions that came during a funny turn, in order, each after the one before.
   const queued: Trick[] = [];
@@ -300,8 +303,8 @@ export function createMascotMotion(random: () => number = Math.random) {
     started.set(gesture, { at: now, side: side() });
     gestureCount++;
     if (gesture === 'perform') {
-      // With nothing played for a while, a funny turn on cue; with music, a glance.
-      if (now - busySince >= LISTENING_SECONDS && leftAt === null) {
+      // With nothing played for a while, a funny turn on cue; with music, or guiding the way, a glance.
+      if (now - busySince >= LISTENING_SECONDS && leftAt === null && !guided) {
         perform(deal(), now);
         return;
       }
@@ -414,6 +417,34 @@ export function createMascotMotion(random: () => number = Math.random) {
     dress(costume: Hat) {
       hat = costume;
     },
+    /** A funny turn for a reason (issue 151: the fountain, a Tutorial finished): at once, or after the one under way. */
+    trick(name: Trick, now: number) {
+      if (leftAt !== null) return;
+      gestureCount++;
+      if (trick) queued.push(name);
+      else perform(name, now);
+    },
+    /**
+     * A Tutorial or the Tour open, or closed (issue 151): while open, no funny turn of its own, no stroll, no dance and
+     * no doze; it still answers the controls, the words and the theme. Closed, its life comes back, fresh from now.
+     */
+    guide(on: boolean) {
+      if (on === guided) return;
+      guided = on;
+      if (!on) {
+        aim = null;
+        busySince = last ?? 0;
+        nextIdea = (last ?? 0) + between(0.8, 2.5);
+      } else target = null;
+    },
+    /**
+     * Facing the control it points at, `way` across the window, its tail aimed `angle` degrees down from level, its eyes
+     * on it; `still` beside it, where the sound no longer moves it (but for blinking), else looking from afar. Null:
+     * nothing to point at.
+     */
+    point(at: { way: -1 | 1; angle: number } | null, still = false) {
+      aim = at && { ...at, still };
+    },
     /** What it does through a Demo part, or null: its own life. */
     act(doing: Act | null) {
       if (doing === act) return;
@@ -454,7 +485,7 @@ export function createMascotMotion(random: () => number = Math.random) {
       if (reduced) ice = closed ? 1 : 0;
       const frozen = ice > 0.5;
       const idle = now - busySince >= LISTENING_SECONDS;
-      let dozing = now - busySince >= DOZE_SECONDS && now >= wakeUntil && !trick;
+      let dozing = now - busySince >= DOZE_SECONDS && now >= wakeUntil && !trick && !guided;
       if (dozing && nextWake === Infinity) {
         // Dropping off: where it is, as it is.
         nextWake = now + between(8, 15);
@@ -500,6 +531,8 @@ export function createMascotMotion(random: () => number = Math.random) {
         if (struck || gestureCount !== seenGestures) still = { ...resting, eyes: STILL_EYES[stillCount++ % STILL_EYES.length] };
         seenGestures = gestureCount;
         const held: Pose = { ...(now < tickledUntil ? { ...still, eyes: 'happy' } : dozing ? { ...still, eyes: 'shut' } : still), x };
+        // Pointing the way, only its eyes and tail turn towards the control (issue 151).
+        if (aim) Object.assign(held, { turn: aim.way, eyes: 'right', wag: aim.angle });
         return dressed(held, heard, now, true);
       }
 
@@ -536,7 +569,7 @@ export function createMascotMotion(random: () => number = Math.random) {
         gait = 'slide';
       }
       const buzzing = now < caffeineUntil;
-      if (target === null && trick === null && !dozing && !frozen && !act && now >= nextIdea) {
+      if (target === null && trick === null && !dozing && !frozen && !act && !guided && now >= nextIdea) {
         const roll = random();
         if (idle && roll < 0.35) {
           perform(deal(), now);
@@ -553,7 +586,7 @@ export function createMascotMotion(random: () => number = Math.random) {
         }
       }
       // Dancing: with each Note a step along, one way, turning back at an end or now and then.
-      if (struck && !silent && !frozen && !trick && (target === null || gait === 'dance')) {
+      if (struck && !silent && !frozen && !trick && !guided && (target === null || gait === 'dance')) {
         if (random() < 0.2) danceWay = danceWay > 0 ? -1 : 1;
         let step = danceWay * between(...DANCE_STEP);
         if (clamp(x + step) !== x + step) {
@@ -575,7 +608,7 @@ export function createMascotMotion(random: () => number = Math.random) {
           nextIdea = now + between(1, 3.5) / (buzzing ? 2 : 1);
           // At an end of its room, now and then it looks over the edge and takes fright.
           const end = x - room.min < 2 ? -1 : room.max - x < 2 ? 1 : 0;
-          if (end && gait !== 'dance' && gait !== 'scoot' && gait !== 'trick' && gait !== 'slide' && room.max - room.min > 30 && random() < 0.5) {
+          if (end && !guided && gait !== 'dance' && gait !== 'scoot' && gait !== 'trick' && gait !== 'slide' && room.max - room.min > 30 && random() < 0.5) {
             trick = { name: 'scared', at: now, side: end, sprayed: new Map() };
             nextIdea = now + lasting('scared') + between(1, 2.5);
           }
@@ -591,7 +624,8 @@ export function createMascotMotion(random: () => number = Math.random) {
 
       const pose: Pose = { ...resting, x, eyes: dozing ? 'shut' : 'open' };
       if (dozing) pose.stretch = 1 + 0.03 * Math.sin(now * 2 * Math.PI * 0.3); // breathing
-      if (!silent) {
+      // Beside the control it points at, the sound no longer moves it (issue 151, decision 4).
+      if (!silent && !aim?.still) {
         const since = heard.struck === null ? Infinity : now - heard.struck;
         pose.lift = since < HOP_SECONDS && !trick ? Math.sin((since / HOP_SECONDS) * Math.PI) * HOP_PX : 0;
         const happy = pose.lift > 0 || heard.amp > LOUD;
@@ -678,12 +712,12 @@ export function createMascotMotion(random: () => number = Math.random) {
           continue;
         }
         const arc = Math.sin(p * Math.PI);
-        if (gesture === 'higher' || gesture === 'new') {
-          pose.lift += arc * (gesture === 'new' ? 8 : 10);
+        if (gesture === 'higher' || gesture === 'new' || gesture === 'hop') {
+          pose.lift += arc * (gesture === 'new' ? 8 : gesture === 'hop' ? 12 : 10);
           pose.legs = 'tuck';
           pose.eyes = 'happy';
-          if (gesture === 'new') pose.splash = 'up';
-        } else if (gesture === 'lower') pose.stretch *= 1 - 0.22 * arc;
+          if (gesture !== 'higher') pose.splash = 'up';
+        } else if (gesture === 'bounce') pose.lift += arc * 5; else if (gesture === 'lower') pose.stretch *= 1 - 0.22 * arc;
         else if (gesture === 'taller') pose.stretch *= 1 + 0.15 * arc;
         else if (gesture === 'shorter') pose.stretch *= 1 - 0.15 * arc;
         else if (gesture === 'rougher') pose.x += Math.sin(now * 2 * Math.PI * 22) * 1.5 * (1 - p);
@@ -693,6 +727,12 @@ export function createMascotMotion(random: () => number = Math.random) {
         } else if (gesture === 'quieter') pose.eyes = 'shut';
         else if (gesture === 'twirl') pose.tilt += Math.sin(p * 4 * Math.PI) * 12 * (1 - p);
         else if (gesture === 'look' && pose.eyes !== 'happy') pose.eyes = side > 0 ? 'right' : 'left';
+      }
+      // Pointing the way (issue 151): facing the control, its tail aimed at it, its eyes on it when they are free.
+      if (aim) {
+        pose.turn *= aim.way;
+        pose.wag += aim.angle;
+        if (pose.eyes === 'open' || pose.eyes === 'left' || pose.eyes === 'right') pose.eyes = 'right';
       }
       if (now < blinkUntil && (pose.eyes === 'open' || pose.eyes === 'left' || pose.eyes === 'right')) pose.eyes = 'shut';
       if (frozen) {

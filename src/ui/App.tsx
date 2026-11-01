@@ -49,8 +49,8 @@ import { TapViewers } from './TapViewers';
 import { TempoControl } from './TempoControl';
 import { ToolGroup } from './ToolGroup';
 import { type TipContent, Tooltip, TooltipsContext } from './Tooltip';
-import { TourCard } from './TourCard';
-import { TutorialCard } from './TutorialCard';
+import { TourCard, tourGuide } from './TourCard';
+import { TutorialCard, tutorialGuide } from './TutorialCard';
 import { TutorialMenu } from './TutorialMenu';
 import { TIPS, type VIEWER_TIPS } from './tips';
 
@@ -238,6 +238,12 @@ export function App() {
     onCard: players.startListen,
     onEnd: players.stopListen,
   });
+  // What Bead points the way to while a Tutorial or the Tour is open (issue 151).
+  const lesson = tutorial.lesson;
+  const guide = useMemo(
+    () => (lesson ? tutorialGuide(lesson.tutorial, lesson.index, lesson.done) : tour.index !== null ? tourGuide(tour.index) : null),
+    [lesson, tour.index],
+  );
   // A Preset picked in the Patches panel shows its about line under its name (issues 109 and 153); the arrows, a
   // Controller's steps and its Program buttons load without it.
   const presetAbout = usePresetAbout(patches);
@@ -845,6 +851,7 @@ export function App() {
             theme={theme}
             demoPart={players.demo}
             word={word}
+            guide={guide}
           />
         )}
       </main>

@@ -17,7 +17,9 @@ export type Gesture =
   | 'slide' // slides along without stepping
   | 'look' // glances aside
   | 'perform' // with nothing played for a while, a funny turn; else a glance
-  | 'new'; // a Preset loaded: an excited hop
+  | 'new' // a Preset loaded: an excited hop
+  | 'bounce' // a new Step or Tour card, beside its control: one small bounce (issue 151)
+  | 'hop'; // a Tutorial's Step made: a happy hop (issue 151)
 
 /** Each knob and fader's answer: one gesture either way, or one for up and one for down. */
 const ANSWERS: Record<ParamId, Gesture | readonly [up: Gesture, down: Gesture]> = {

@@ -9,10 +9,18 @@ export interface Perch {
   id: string;
   foot: number;
   hovering: boolean;
+  /**
+   * Beside a control a Tutorial's Step or a Tour card is about (issue 151): it slides there down the panel, like a drop
+   * on glass, and clings at its side, its span's one spot, following it as the page scrolls.
+   */
+  cling?: boolean;
 }
 
-/** How it is on its line, or between two; or in the pointer's hold, or thrown from it (issue 127). */
-export type Moving = 'standing' | 'hovering' | 'falling' | 'flying' | 'landing' | 'held' | 'thrown';
+/**
+ * How it is on its line, or between two; or in the pointer's hold, or thrown from it (issue 127); or sliding down the
+ * panel to a control and clinging at its side (issue 151).
+ */
+export type Moving = 'standing' | 'hovering' | 'falling' | 'flying' | 'landing' | 'held' | 'thrown' | 'sliding' | 'clinging';
 
 /** Hovering, how far under the header (or the section tabs) its top is, in pixels, at the bottom of its bob (issue 142). */
 export const HOVER_UNDER = 6;
@@ -73,6 +81,11 @@ const BOBS_A_SECOND = 0.8;
 const HARD_LANDING = 1400;
 /** Landing: the splash, the squash and its wobble back. */
 export const LANDING_SECONDS = 0.7;
+/** Sliding down the panel to a control: its fastest, in pixels a second, and how it eases in at the end (its way left, a second). */
+const SLIDE_SPEED = 400;
+const SLIDE_EASE = 6;
+/** The slowest it slides, in pixels a second, so the end of its way does not drag on. */
+const SLIDE_SLOWEST = 30;
 
 /**
  * Where it is across the window this frame: in the air, where its fall or flight has it; the frame it lands, where it
@@ -197,7 +210,7 @@ export function createMascotPlace({ from, random = Math.random }: { from?: numbe
   let walls: Span = { min: -Infinity, max: Infinity };
   const placed = (landedX: number | null = null): Placed => ({
     foot,
-    x: moving === 'falling' || moving === 'flying' || moving === 'held' || moving === 'thrown' ? x : null,
+    x: moving === 'falling' || moving === 'flying' || moving === 'held' || moving === 'thrown' || moving === 'sliding' || moving === 'clinging' ? x : null,
     moving,
     thrust: moving === 'flying' && thrust,
     windup: moving === 'flying' ? Math.min(1, (last! - windupFrom) / WINDUP_SECONDS) : 1,
@@ -266,6 +279,31 @@ export function createMascotPlace({ from, random = Math.random }: { from?: numbe
         }
         return placed();
       }
+      if (perch.cling && !reduced) {
+        // Beside a control (issue 151): from its line, where its stroll has it, or from beside another, where it clings,
+        // it slides there down the panel, easing in, and clings, following the control. Coming in there, it is there.
+        if (on === null) moving = 'clinging';
+        else if (perch.id !== on) {
+          if (moving !== 'sliding' && moving !== 'clinging') x = at;
+          moving = 'sliding';
+        }
+        on = perch.id;
+        const [offX, offY] = [span.min - x, perch.foot - foot];
+        const away = Math.hypot(offX, offY);
+        const step = Math.max(SLIDE_SLOWEST, Math.min(SLIDE_SPEED, SLIDE_EASE * away)) * dt;
+        if (moving === 'clinging' || away <= 0.5 || step >= away) {
+          const arrived = moving === 'sliding';
+          x = span.min;
+          foot = perch.foot;
+          vx = vy = 0;
+          moving = 'clinging';
+          return placed(arrived ? x : null);
+        }
+        x += (offX / away) * step;
+        foot += (offY / away) * step;
+        [vx, vy] = dt > 0 ? [((offX / away) * step) / dt, ((offY / away) * step) / dt] : [0, 0];
+        return placed();
+      }
       if (on === null || reduced) {
         const arriving = on === null && !reduced && from !== undefined && !perch.hovering;
         on = perch.id;
@@ -283,7 +321,8 @@ export function createMascotPlace({ from, random = Math.random }: { from?: numbe
       }
       if (perch.id !== on) {
         on = perch.id;
-        x = at;
+        // Leaving a control's side, from where it clung.
+        if (moving !== 'sliding' && moving !== 'clinging') x = at;
         toX = spotIn(span, at);
         if (moving === 'hovering' && perch.hovering) foot = perch.foot;
         else if (perch.hovering) {

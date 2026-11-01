@@ -506,3 +506,83 @@ describe('what the controls, the words, the page and the Demo make of it (issue 
   });
 });
 
+
+describe('the mascot pointing the way in a Tutorial or the Tour (issue 151)', () => {
+  const music = (t: number): Heard => ({ amp: 0.6, sway: 0.9, struck: Math.floor(t * 2) / 2 });
+
+  it('guided, no funny turn, stroll, dance or doze: it stays where it is, however long, with music or none', () => {
+    const motion = createMascotMotion(seeded(3));
+    motion.guide(true);
+    const quietPoses = run(motion, 0, DOZE_SECONDS * 3, quiet);
+    expect(quietPoses.every((p) => p.doing === null && p.x === quietPoses[0].x)).toBe(true);
+    // Never dozing off: its eyes shut only for a blink.
+    let shut = 0;
+    let longest = 0;
+    for (const p of quietPoses) {
+      shut = p.eyes === 'shut' ? shut + 1 : 0;
+      longest = Math.max(longest, shut);
+    }
+    expect(longest).toBeLessThan(15);
+    const t0 = DOZE_SECONDS * 3;
+    const poses: Pose[] = [];
+    for (let t = t0; t < t0 + 10; t += 1 / 60) poses.push(motion.frame(music(t), t, false, wide));
+    expect(poses.every((p) => p.x === quietPoses[0].x)).toBe(true);
+  });
+
+  it('guided, it still answers the knobs; let go, its life comes back', () => {
+    const motion = createMascotMotion(seeded(5));
+    motion.guide(true);
+    run(motion, 0, 5, quiet);
+    motion.gesture('taller', 5);
+    const stretched = run(motion, 5, 5 + GESTURE_SECONDS, quiet);
+    expect(Math.max(...stretched.map((p) => p.stretch))).toBeGreaterThan(1.1);
+    motion.guide(false);
+    const free = run(motion, 6, 60, quiet);
+    expect(free.some((p) => p.doing !== null)).toBe(true);
+    expect(new Set(free.map((p) => Math.round(p.x))).size).toBeGreaterThan(5);
+  });
+
+  it('pointing, it faces the control, looks at it and aims its tail at it; still with music, but for blinking', () => {
+    const motion = createMascotMotion(seeded(7));
+    motion.guide(true);
+    motion.point({ way: -1, angle: 20 }, true);
+    const poses: Pose[] = [];
+    for (let t = 0; t < 10; t += 1 / 60) poses.push(motion.frame(music(t), t, false, spot));
+    expect(poses.every((p) => p.turn === -1 && p.wag === 20 && p.lift === 0 && p.tilt === 0 && p.splash === 'none')).toBe(true);
+    // Its eyes towards the tail, which it faces: as drawn, then turned round.
+    expect(new Set(poses.map((p) => p.eyes))).toEqual(new Set(['right', 'shut']));
+    // Looking from afar, the sound moves it as ever.
+    motion.point({ way: 1, angle: -30 }, false);
+    const afar: Pose[] = [];
+    for (let t = 10; t < 12; t += 1 / 60) afar.push(motion.frame(music(t), t, false, spot));
+    expect(afar.every((p) => p.turn === 1)).toBe(true);
+    expect(afar.some((p) => p.lift > 0)).toBe(true);
+  });
+
+  it('a small bounce for a new Step, a happy hop for a Step done, the fountain for a Tutorial finished', () => {
+    const motion = createMascotMotion(seeded(9));
+    motion.guide(true);
+    motion.point({ way: 1, angle: 0 }, true);
+    run(motion, 0, 1, quiet, spot);
+    motion.gesture('bounce', 1);
+    const bounce = Math.max(...run(motion, 1, 1 + GESTURE_SECONDS, quiet, spot).map((p) => p.lift));
+    motion.gesture('hop', 2);
+    const hop = run(motion, 2, 2 + GESTURE_SECONDS, quiet, spot);
+    expect(bounce).toBeGreaterThan(2);
+    expect(Math.max(...hop.map((p) => p.lift))).toBeGreaterThan(bounce * 1.5);
+    expect(hop.some((p) => p.eyes === 'happy')).toBe(true);
+    motion.trick('fountain', 3);
+    expect(run(motion, 3, 3.5, quiet, spot).every((p) => p.doing === 'fountain')).toBe(true);
+  });
+
+  it('with reduced motion, only its eyes and tail turn towards the control: no bounce, no hop', () => {
+    const motion = createMascotMotion(seeded(11));
+    motion.guide(true);
+    motion.point({ way: -1, angle: 15 }, false);
+    run(motion, 0, 1, quiet, spot, true);
+    motion.gesture('bounce', 1);
+    motion.gesture('hop', 1.2);
+    const poses = run(motion, 1, 2, quiet, spot, true);
+    expect(poses.every((p) => p.lift === 0 && p.turn === -1 && p.wag === 15 && p.eyes === 'right')).toBe(true);
+  });
+});

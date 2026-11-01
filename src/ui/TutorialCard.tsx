@@ -4,6 +4,7 @@ import { endLine, FROM_INIT } from '../tutorial/tutorials';
 import { FoldButton, useCardPlacement } from './cardPlacement';
 import { bringClear, useDocked } from './docked';
 import { CloseIcon, NoteIcon } from './icons';
+import type { Guide } from './mascotCling';
 import { reveal } from './reveal';
 
 interface Props {
@@ -25,6 +26,26 @@ interface Props {
 
 /** The control a Step asks for: its Parameter's or choice's, or the Display option's (inside the Display panel). */
 const selectorOf = (step: Step) => (step.kind === 'display' ? `[data-overlay="${step.overlay}"]` : `[data-learn="${step.kind}:${step.id}"]`);
+/** The Display button, which stands for an option in its panel while the panel is shut. */
+const DISPLAY_BUTTON = 'button[aria-label="Display"]';
+
+/**
+ * What Bead points the way to through a Tutorial (issue 151): the Step's ringed control, the Display button standing
+ * for an option in its shut panel until the Step is made; nothing on the first card; on the last, the last Step's
+ * control still, the Tutorial finished.
+ */
+export function tutorialGuide(tutorial: Tutorial, index: number, done: readonly boolean[]): Guide {
+  const steps = tutorial.steps;
+  const step = steps[Math.min(index, steps.length - 1)];
+  const made = index >= 0 && index < steps.length && done[index];
+  return {
+    selector: index >= 0 && step ? selectorOf(step) : null,
+    standIn: index >= 0 && index < steps.length && inDisplay(step) && !made ? DISPLAY_BUTTON : null,
+    step: `${tutorial.preset} ${index}`,
+    made,
+    finished: index >= steps.length,
+  };
+}
 
 /**
  * Rings the Step's control, with its target above it ("→ 800 Hz"), and marks its section in the phone's strip. A
@@ -51,7 +72,7 @@ function useRing(step: Step | undefined, made: boolean, card: RefObject<HTMLElem
       let element = document.querySelector(selectorOf(step));
       // Until the Display option is on (or the Snapshot taken), the Display button stands for it while its panel is shut;
       // once made, nothing.
-      if (inDisplay(step) && !element?.checkVisibility()) element = made ? null : document.querySelector('button[aria-label="Display"]');
+      if (inDisplay(step) && !element?.checkVisibility()) element = made ? null : document.querySelector(DISPLAY_BUTTON);
       if (!element) return null;
       element.setAttribute('data-tutorial', '');
       if (step.kind === 'param' || step.kind === 'choice') element.setAttribute('data-tutorial-target', `→ ${targetText(step)}`);
