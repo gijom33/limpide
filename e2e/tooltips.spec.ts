@@ -103,7 +103,7 @@ test('every Viewer, fader and the Timeline key explain themselves, the tooltip b
 });
 
 // Issue 175: a tip stayed up over the menu its control opens (LFO 2's Destination first), hiding choices.
-test.describe('no tip over an open menu', () => {
+test.describe('no tip over an open menu (issue 175)', () => {
   const tip = (page: Page) => page.getByRole('tooltip').locator('visible=true');
   /** Nothing drawn over any of them: each is what the pointer would find at its centre. */
   const allSeen = async (items: Locator) => {
@@ -169,6 +169,7 @@ test.describe('no tip over an open menu', () => {
     await expect(tip(page)).toBeVisible();
     await page.keyboard.press('Enter');
     await expect(lfo.getByRole('menuitemradio', { name: 'Pitch', exact: true })).toBeFocused();
+    await expect(tip(page)).toHaveCount(0);
     await page.keyboard.press('ArrowDown');
     await expect(tip(page)).toHaveCount(0);
     // A panel that leaves the focus on its button: the tip goes all the same.
@@ -205,5 +206,21 @@ test.describe('no tip over an open menu', () => {
       await control.hover();
       await expect(tip(page)).toBeVisible();
     }
+  });
+
+  test.describe('on a narrow screen', () => {
+    test.use({ viewport: { width: 800, height: 900 } });
+
+    test('the Tempo button: no tip of its over the field it opens', async ({ page }) => {
+      await page.goto('/');
+      const open = page.locator('header').getByRole('button', { name: 'Tempo' });
+      await hoverThenClick(page, open);
+      await expect(page.getByRole('spinbutton', { name: 'Tempo' })).toBeVisible();
+      await expect(tip(page)).toHaveCount(0);
+      await page.mouse.move(0, 0);
+      await open.hover();
+      await page.waitForTimeout(600);
+      await expect(tip(page)).toHaveCount(0);
+    });
   });
 });

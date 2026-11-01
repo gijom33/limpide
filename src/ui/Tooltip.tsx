@@ -84,6 +84,7 @@ export function Tooltip({ content, children, longPress = true }: { content: TipC
   useEffect(() => () => window.clearTimeout(timer.current), []);
 
   const hideNow = useEffectEvent(hide);
+  const expandedNow = useEffectEvent(expanded);
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && hideNow();
@@ -91,9 +92,8 @@ export function Tooltip({ content, children, longPress = true }: { content: TipC
     const onTouchElsewhere = (e: PointerEvent) => pinned.current && !wrapperRef.current?.contains(e.target as Node) && hideNow();
     const onScroll = () => pinned.current && hideNow();
     // The control opens its menu, list or panel (a click, Enter or Space): the tip goes at once.
-    const wrapper = wrapperRef.current;
-    const onExpand = new MutationObserver(() => wrapper?.querySelector(EXPANDED) && hideNow());
-    if (wrapper) onExpand.observe(wrapper, { subtree: true, attributeFilter: ['aria-expanded'] });
+    const onExpand = new MutationObserver(() => expandedNow() && hideNow());
+    if (wrapperRef.current) onExpand.observe(wrapperRef.current, { subtree: true, attributeFilter: ['aria-expanded'] });
     document.addEventListener('keydown', onKey);
     document.addEventListener('pointerdown', onTouchElsewhere);
     window.addEventListener('scroll', onScroll, { passive: true });
