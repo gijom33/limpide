@@ -80,14 +80,14 @@ const SIZE_NAMES = Object.keys(SIZES) as Size[];
 
 /** Turns Bead's switch in Display on or off, and closes Display. */
 async function setBead(page: Page, to: 'on' | 'off') {
-  // From the top of the page: narrower than a phone, after the states before it, WebKit lost the click on the switch
-  // at the panel's foot, below the window.
-  await page.evaluate(() => scrollTo(0, 0));
   await page.getByRole('button', { name: 'Display', exact: true }).click();
-  const radio = page.getByRole('radio', { name: `Bead ${to}` });
-  await radio.click();
-  await expect(radio).toHaveAttribute('aria-checked', 'true');
-  await page.getByRole('button', { name: 'Display', exact: true }).click();
+  // By the keyboard, the arrows moving the switch's choice: narrower than a phone the switch is at the panel's foot,
+  // below the window, where WebKit lost a click on it now and then.
+  await page.getByRole('radio', { name: `Bead ${to === 'on' ? 'off' : 'on'}` }).focus();
+  await page.keyboard.press(to === 'on' ? 'ArrowLeft' : 'ArrowRight');
+  await expect(page.getByRole('radio', { name: `Bead ${to}` })).toHaveAttribute('aria-checked', 'true');
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('region', { name: 'Viewer controls' })).toBeHidden();
 }
 
 /** The states to audit, each opened from the page as loaded and closed again. */
@@ -110,21 +110,15 @@ const STATES: { name: string; open?(page: Page): Promise<void>; close?(page: Pag
   { name: 'Display panel', open: (page) => page.getByRole('button', { name: 'Display', exact: true }).click(), close: (page) => page.getByRole('button', { name: 'Display', exact: true }).click() },
   { name: 'MIDI panel', open: (page) => page.getByRole('button', { name: 'MIDI', exact: true }).click(), close: (page) => page.getByRole('button', { name: 'MIDI', exact: true }).click() },
   { name: 'About', open: (page) => page.getByRole('button', { name: 'About', exact: true }).click(), close: (page) => page.keyboard.press('Escape') },
-  // Bead beside About's logo, and its card in place of the credits (issue 163): with its switch on, then off again.
+  // Bead beside About's logo, its card in place of the credits (issue 163): with its switch on, then off again.
   {
-    name: 'About, with Bead',
+    name: 'Bead’s card in About',
     open: async (page) => {
       await setBead(page, 'on');
       await page.getByRole('button', { name: 'About', exact: true }).click();
-      await expect(page.getByRole('button', { name: 'Bead, Limpide’s water drop: its tricks' })).toBeVisible();
-    },
-    close: (page) => page.keyboard.press('Escape'),
-  },
-  {
-    name: 'Bead’s card',
-    open: async (page) => {
-      await page.getByRole('button', { name: 'About', exact: true }).click();
+      await expect(page.getByRole('dialog', { name: 'Limpide' })).toBeVisible();
       await page.getByRole('button', { name: 'Bead, Limpide’s water drop: its tricks' }).click();
+      await expect(page.getByRole('region', { name: 'Bead' })).toBeVisible();
     },
     close: async (page) => {
       await page.keyboard.press('Escape');

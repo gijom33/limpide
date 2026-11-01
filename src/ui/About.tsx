@@ -31,7 +31,7 @@ export function About({
   onClose,
   onPlay,
   onTour,
-  bead = false,
+  beadOn,
 }: {
   open: boolean;
   welcome?: Welcome | null;
@@ -41,20 +41,19 @@ export function About({
   /** The Tour: a first look at each Section (issue 128). */
   onTour?: () => void;
   /** Whether Bead's switch in Display is on: with it off, Bead is not in About either (issue 150, decision 9). */
-  bead?: boolean;
+  beadOn: boolean;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const title = useId();
   const beadTitle = useId();
   const beadButton = useRef<HTMLButtonElement>(null);
   // Bead's card in place of the credits (issue 163); About opens on the credits every time.
-  const [card, setCard] = useState(false);
-  const showsCard = card && bead;
+  const [showsCard, setShowsCard] = useState(false);
   // What scrolls in the credits' place: the credits, or Bead's card.
   const [scroller, setScroller] = useState<HTMLElement | null>(null);
   const more = useMoreBelow(scroller, open);
   const back = () => {
-    setCard(false);
+    setShowsCard(false);
     beadButton.current?.focus();
   };
 
@@ -62,7 +61,7 @@ export function About({
     const d = dialog.current!;
     if (open && !d.open) d.showModal();
     else if (!open && d.open) d.close();
-    if (!open) setCard(false);
+    if (!open) setShowsCard(false);
   }, [open]);
 
   const { version, commit, date, counted } = __BUILD__;
@@ -72,13 +71,18 @@ export function About({
       className="about"
       aria-labelledby={title}
       onClose={onClose}
-      // Escape on Bead's card goes back to the credits; on them, it closes About.
+      // Escape on Bead's card goes back to the credits; on them, it closes About. So does any other close request (a
+      // phone's back gesture), which comes as a cancel.
       onKeyDown={(e) => {
         if (e.key !== 'Escape' || !showsCard) return;
         e.preventDefault();
         back();
       }}
-      onCancel={(e) => showsCard && e.preventDefault()}
+      onCancel={(e) => {
+        if (!showsCard) return;
+        e.preventDefault();
+        back();
+      }}
       // A click on the backdrop lands on the dialog itself; its content fills it edge to edge.
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
@@ -86,14 +90,14 @@ export function About({
         {/* Bead stands on the logo's baseline, to its right, so the logo stays in the middle over the name. */}
         <div className="about-mark">
           <Logo size={72} />
-          {bead && (
+          {beadOn && (
             <button
               ref={beadButton}
               type="button"
               className="about-bead"
               aria-label="Bead, Limpide’s water drop: its tricks"
               aria-expanded={showsCard}
-              onClick={() => setCard((c) => !c)}
+              onClick={() => setShowsCard((shows) => !shows)}
             >
               <BeadIdle />
             </button>
@@ -126,7 +130,7 @@ export function About({
           {' · '}
           {day(date)}
         </p>
-        {/* On a short window the credits scroll inside the card, faded at the foot while more is below, so the way in
+        {/* On a short window the credits (or Bead's card) scroll inside About, faded at the foot while more is below, so the way in
             stays on the first screen, a 393 × 659 phone's included (issue 105). */}
         {showsCard ? (
           <section ref={setScroller} className="about-bead-card" aria-labelledby={beadTitle} data-more={more || undefined}>
@@ -242,19 +246,19 @@ export function About({
 }
 
 /** Whether the element, scrolled inside, has more below what it shows: its foot fades while it has. */
-function useMoreBelow(e: HTMLElement | null, open: boolean): boolean {
+function useMoreBelow(element: HTMLElement | null, open: boolean): boolean {
   const [more, setMore] = useState(false);
   useEffect(() => {
-    if (!open || !e) return;
-    const update = () => setMore(e.scrollTop + e.clientHeight < e.scrollHeight - 1);
+    if (!open || !element) return;
+    const update = () => setMore(element.scrollTop + element.clientHeight < element.scrollHeight - 1);
     update();
     const observer = new ResizeObserver(update);
-    observer.observe(e);
-    e.addEventListener('scroll', update, { passive: true });
+    observer.observe(element);
+    element.addEventListener('scroll', update, { passive: true });
     return () => {
       observer.disconnect();
-      e.removeEventListener('scroll', update);
+      element.removeEventListener('scroll', update);
     };
-  }, [e, open]);
+  }, [element, open]);
   return more;
 }

@@ -7,7 +7,7 @@ import { addToRenderLoop } from '../viewers/renderLoop';
 import { lineAt, lineWiderThan } from './LfoPlot';
 import { gesturesOf, looksOf } from './mascotGestures';
 import { type Act, createMascotMotion, hatOn, type Pose, type Room, SCREAMING } from './mascotMotion';
-import { CATCH, CLOUD, HATS, HOOK, ICE, type Picture, PROPS, type Rect, ROD_TIP, SKY, TAILS } from './mascotPictures';
+import { CATCH, CLOUD, HATS, HOOK, ICE, type Picture, PROPS, type Rect, ROD_TIP, SKY, type Stage, TAILS } from './mascotPictures';
 import { acrossOf, type Cover, choosePerch, clearAlong, createMascotPlace, HOVER_UNDER, type Moving, nearestSpan, type Perch, type Span } from './mascotPlace';
 import { createSpray, MOST_DROPLETS } from './mascotSpray';
 import { ModulationContext } from './modulationRing';
@@ -19,7 +19,7 @@ import { SECTIONS, STACKED } from './sections';
  * drop becomes a puddle, then a film, with no tail.
  */
 const SHINE: Rect[] = [[5, 4, 1, 1]];
-const TAIL: Record<'osc' | 'filter' | 'amp' | 'mod', Rect[]> = {
+const TAIL: Record<Stage, Rect[]> = {
   osc: [[9, 9, 1, 1], [10, 7, 1, 2], [11, 5, 1, 2]],
   filter: [[12, 4, 1, 6], [13, 7, 1, 2], [14, 5, 1, 2], [15, 4, 1, 1]],
   amp: [[16, 4, 1, 1], [17, 5, 1, 2], [18, 7, 1, 2], [19, 9, 1, 1]],
@@ -121,6 +121,13 @@ function rightColumn<S extends { box: DOMRect }>(sections: readonly S[]): S[] {
 
 const rects = (list: readonly Rect[]) => list.map(([x, y, w, h]) => <rect key={`${x} ${y}`} x={x} y={y} width={w} height={h} />);
 const picture = (groups: Picture) => groups.map(([className, list]) => <g key={className} className={className}>{rects(list)}</g>);
+/** A tail, each stage's pixels in its stage's colour, as the logo's stroke. */
+const tailOf = (stages: Record<Stage, readonly Rect[]>) =>
+  (Object.keys(stages) as Stage[]).map((stage) => (
+    <g key={stage} style={{ fill: `var(--stage-${stage})` }}>
+      {rects(stages[stage])}
+    </g>
+  ));
 
 /** A press on it that moves this far, in pixels, picks it up (issue 127); one that does not is a click. */
 const PICK_UP_PX = 6;
@@ -229,11 +236,7 @@ export function BeadIcon({ on }: { on: boolean }) {
   }, [on]);
   return (
     <svg className="bead-icon" data-state={state} viewBox="0 0 22 13" width={33} height={20} shapeRendering="crispEdges" aria-hidden="true">
-      {(Object.keys(TAIL) as (keyof typeof TAIL)[]).map((stage) => (
-        <g key={stage} style={{ fill: `var(--stage-${stage})` }}>
-          {rects(TAIL[stage])}
-        </g>
-      ))}
+      {tailOf(TAIL)}
       <g className="mascot-body">{rects(PARTS.form.drop)}</g>
       <g className="mascot-shine">{rects(SHINE)}</g>
       <g className="mascot-eyes">{rects(PARTS.eyes.open)}</g>
@@ -251,11 +254,7 @@ export function BeadIdle() {
     <svg className="bead-idle" viewBox="0 0 22 13" width={WIDTH * 2} height={HEIGHT * 2} shapeRendering="crispEdges" aria-hidden="true">
       <g className="bead-idle-body">
         <g className="bead-idle-tail">
-          {(Object.keys(TAIL) as (keyof typeof TAIL)[]).map((stage) => (
-            <g key={stage} style={{ fill: `var(--stage-${stage})` }}>
-              {rects(TAIL[stage])}
-            </g>
-          ))}
+          {tailOf(TAIL)}
         </g>
         <g className="mascot-body">
           {rects(PARTS.form.drop)}
@@ -841,19 +840,11 @@ export function Mascot({
           <g id="bead-self">
             <g ref={tail}>
               <g ref={keep(tails, 'logo')} style={{ display: 'none' }}>
-                {(Object.keys(TAIL) as (keyof typeof TAIL)[]).map((stage) => (
-                  <g key={stage} style={{ fill: `var(--stage-${stage})` }}>
-                    {rects(TAIL[stage])}
-                  </g>
-                ))}
+                {tailOf(TAIL)}
               </g>
               {Object.entries(TAILS).map(([shape, stages]) => (
                 <g key={shape} ref={keep(tails, shape)} style={{ display: 'none' }}>
-                  {(Object.keys(stages) as (keyof typeof stages)[]).map((stage) => (
-                    <g key={stage} style={{ fill: `var(--stage-${stage})` }}>
-                      {rects(stages[stage])}
-                    </g>
-                  ))}
+                  {tailOf(stages)}
                 </g>
               ))}
             </g>

@@ -600,20 +600,19 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .about-bead {
   position: absolute; left: calc(100% + var(--space-3)); bottom: 0; display: block; padding: 0; color: inherit;
   background: none; border: 0; border-radius: var(--radius-control); cursor: pointer;
-  --mascot-body: #6cc8f0; --mascot-shine: #e8f8ff; --mascot-eye: #14161b;
 }
-:root[data-theme='light'] .about-bead { --mascot-body: #2b8fd6; --mascot-shine: #ffffff; }
-/* Narrower than 340 px, the logo beside Bead would leave too little room for its tail: the two are centred together. */
+/* Narrower than 340 px (About fits the window down to 280 px, though the page lays out at 320), the logo beside Bead
+   would leave too little room for its tail: the two are centred together. */
 @media (max-width: 339px) {
   .about-mark { display: flex; align-items: flex-end; gap: var(--space-3); }
   .about-bead { position: static; }
 }
 .about-bead:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
 .about-bead svg { display: block; overflow: visible; }
-/* Its idle life, all in the stylesheet: it blinks and glances about, wags its tail, now and then jiggles or hops. */
+/* Its idle life, all in the stylesheet: it blinks and glances about; now and then it jiggles, wags its tail or hops. */
 .bead-idle :is(.bead-idle-body, .bead-idle-tail) { transform-box: view-box; }
 .bead-idle-body { transform-origin: 4.5px 13px; animation: bead-idle-turns 13s ease-in-out infinite; }
-.bead-idle-tail { transform-origin: 9px 9px; animation: bead-idle-wag 3.4s ease-in-out infinite; }
+.bead-idle-tail { transform-origin: 9px 9px; animation: bead-idle-wag 11s ease-in-out infinite; }
 .bead-idle :is(.bead-idle-eyes-shut, .bead-idle-eyes-left, .bead-idle-eyes-right) { opacity: 0; }
 /* The four eyes take turns on one 7.3 s round: open, a blink, a glance left then right, open, a blink. */
 .bead-idle-eyes-open { animation: bead-eyes-open 7.3s step-end infinite; }
@@ -624,7 +623,10 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 @keyframes bead-eyes-shut { 0% { opacity: 0; } 30% { opacity: 1; } 32% { opacity: 0; } 90% { opacity: 1; } 92% { opacity: 0; } }
 @keyframes bead-eyes-left { 0% { opacity: 0; } 55% { opacity: 1; } 63% { opacity: 0; } }
 @keyframes bead-eyes-right { 0% { opacity: 0; } 63% { opacity: 1; } 70% { opacity: 0; } }
-@keyframes bead-idle-wag { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+@keyframes bead-idle-wag {
+  0%, 60%, 76%, 100% { transform: none; }
+  62% { transform: rotate(-14deg); } 65% { transform: rotate(14deg); } 68% { transform: rotate(-14deg); } 71% { transform: rotate(14deg); } 74% { transform: rotate(-6deg); }
+}
 @keyframes bead-idle-turns {
   0%, 38%, 50%, 86%, 100% { transform: none; }
   40% { transform: scale(1.06, 0.94); } 42% { transform: scale(0.95, 1.05); } 44% { transform: scale(1.04, 0.96); } 46% { transform: scale(0.98, 1.02); }
@@ -875,11 +877,10 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 /* The mascot (issue 115): a box on its line, which hides what is beyond that line while the drop comes into view. Over
    the page and a phone's section strip (on an edge just under it, issue 142), under the header and the cards, never in
    the way of a pointer. */
-.mascot {
-  position: absolute; left: 0; top: 0; z-index: 9; pointer-events: none;
-  --mascot-body: #6cc8f0; --mascot-shine: #e8f8ff; --mascot-eye: #14161b;
-}
-:root[data-theme='light'] .mascot { --mascot-body: #2b8fd6; --mascot-shine: #ffffff; }
+.mascot { position: absolute; left: 0; top: 0; z-index: 9; pointer-events: none; }
+/* Its colours, on the page, in Display's switch and in About (issue 163). */
+:is(.mascot, .bead-icon, .about-bead) { --mascot-body: #6cc8f0; --mascot-shine: #e8f8ff; --mascot-eye: #14161b; }
+:root[data-theme='light'] :is(.mascot, .bead-icon, .about-bead) { --mascot-body: #2b8fd6; --mascot-shine: #ffffff; }
 /* It stands at the box's foot, and leans about the drop's foot, not the tail's. */
 .mascot-drop { position: absolute; bottom: 0; left: 0; transform-origin: 20% 100%; }
 /* Its own pixels take the pointer, to be tickled and poked; the box around them lets it through. */
@@ -925,8 +926,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .mascot-cloud { fill: var(--muted); }
 /* Bead's switch in Display: its picture there while on; turned off, it melts away, and pops back on. */
 .bead-switch { display: flex; align-items: center; gap: var(--space-2); }
-.bead-icon { --mascot-body: #6cc8f0; --mascot-shine: #e8f8ff; --mascot-eye: #14161b; transform-origin: 20% 100%; }
-:root[data-theme='light'] .bead-icon { --mascot-body: #2b8fd6; --mascot-shine: #ffffff; }
+.bead-icon { transform-origin: 20% 100%; }
 .bead-icon[data-state='melting'] { animation: bead-melt 0.6s ease-in forwards; }
 .bead-icon[data-state='gone'] { opacity: 0; }
 .bead-icon[data-state='popping'] { animation: bead-pop 0.4s ease-out; }

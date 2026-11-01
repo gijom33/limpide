@@ -374,6 +374,27 @@ test.describe('Display’s switch lasts, the Notes are for the visit (issue 150,
   });
 });
 
+test('About shows it beside the logo while the switch is on, and not once it is off (issue 163)', async ({ page }) => {
+  const about = page.getByRole('dialog', { name: 'Limpide' });
+  const inAbout = about.getByRole('button', { name: 'Bead, Limpide’s water drop: its tricks' });
+  const openAbout = () => page.getByRole('button', { name: 'About', exact: true }).click();
+  await page.goto('/');
+  await openAbout();
+  await expect(about).toBeVisible();
+  await expect(inAbout).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await bringBead(page);
+  await openAbout();
+  await expect(inAbout).toBeVisible();
+  await page.keyboard.press('Escape');
+  await openDisplay(page);
+  await beadSwitch(page).getByRole('radio', { name: 'Bead off' }).click();
+  await page.keyboard.press('Escape');
+  await openAbout();
+  await expect(about).toBeVisible();
+  await expect(inAbout).toHaveCount(0);
+});
+
 test.describe('out by default (issue 150)', () => {
   test.describe('a first visit', () => {
     test.use({ storageState: holding({}) });
