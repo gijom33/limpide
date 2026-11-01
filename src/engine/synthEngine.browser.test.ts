@@ -292,7 +292,7 @@ describe('headroom', () => {
       }
     }
     expect(worst).toBeLessThan(1);
-  }, 60_000); // 72 renders: past the default limit when the whole suite runs at once
+  }, 120_000); // 72 renders, 4.6 s alone: past 60 s in a loaded night's suite (issue 177)
 });
 
 describe('Waveforms match their Ideal Reference', () => {
