@@ -6,6 +6,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- 2026-10-31, the owner's idea, with a screenshot of the header's buttons right of the keyboard on the night branch (localhost:5174, about 1900 px wide): "Let's have a UI/UX expert help with how those buttons are stacked up. I personally hate the fact that they are not aligned and that there seems to be no logic to it. By the way, it's okay if the keyboard is not centered."
+
 ## Dropped
 
 - 2026-10-30, from Claude's brainstorm, Velocity on the Volume ("a harder hit plays louder, not only brighter"): already so. The Amp Envelope's Attack rises to the Note's Velocity (PRD story 9). Claude's call, open to the owner.
