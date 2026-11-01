@@ -4,8 +4,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
-- 2026-11-01, the owner's bug, with a screenshot of About in Safari, a white rounded box drawn around Bead beside the logo: "I get this weird white box around Bead on Safari."
-
 ## Ideas
 
 - 2026-11-01, the owner, on hearing the night's Talking Filter and Portamento (issues 166 and 119): "They sound good, I think. I do not like Talking filter but that's okay"
@@ -198,3 +196,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-11-01, Claude's findings on the night's inefficiencies (triage, the owner asking for the issue): to [177](./issues/177-a-leaner-night-shift.md), ready for an agent: the night in its own session, a quiet machine, tests by risk with one full suite at the end, small issues batched, layout decisions measured at triage, three flaky tests fixed, terser updates (Claude's call, open to the owner).
 2026-11-01, the owner's idea of Bead in About at its own size, level with the bottom of the logo's mark (triage, decided by the owner): to [178](./issues/178-bead-in-about-at-its-own-size.md), ready for an agent. A slip: the idea's inbox line went in with the fact-checker's report commit (`0e0adf2`), not alone, as two sessions committed at once; nothing to build.
 2026-11-01, the owner's performance reviewer, done at once into [42](./issues/42-reviews.md), decided by the owner: profile 18, the performance expert, the Apple M1 with 8 GiB as the floor; its first run after 1.20.0 is out, its findings to the inbox. The profile's details are Claude's call, open to the owner.
+2026-11-01, the owner's bug of a white box round Bead in About on Safari, fixed at once for 1.20.0 (`fcb2191`, issue 163): About's first focus fell on Bead's button, the first control since 163, and Safari ringed it; About now focuses its Demo button as it opens, as before. Claude's call, open to the owner.
