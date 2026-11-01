@@ -8,6 +8,10 @@ import type { PresetAbout } from './hooks/usePresetAbout';
 import { useLearnable } from './learn';
 import { PatchSearch } from './PatchSearch';
 import { Tooltip } from './Tooltip';
+import { TIPS } from './tips';
+
+/** What an Escape closes before the about line: a menu or panel open, not a docked card's own fold or text. */
+const OPEN_ELSEWHERE = '[aria-expanded="true"]:not(.docked *, .demo-bar *), [role="dialog"], dialog[open]';
 
 interface Props {
   name: string;
@@ -75,9 +79,12 @@ export function PatchBar({ name, changed, patch, library, onLoad, onPick, about,
       document.removeEventListener('pointerdown', close);
     };
   }, [open]);
-  // Escape takes the about line away while it shows, unless the panel is open over it: then it closes the panel.
+  // Escape takes the about line away while it shows, unless it is closing something else: a panel or menu open (the
+  // Patches panel over the line, Display, MIDI, Tempo, the Tutorials, About; a card's own unfolded text is not one) or
+  // a field being typed in.
   const closeAbout = useEffectEvent((e: KeyboardEvent) => {
-    if (e.key === 'Escape' && !open) onCloseAbout();
+    if (e.key !== 'Escape' || (e.target as Element).closest?.('input, textarea')) return;
+    if (!document.querySelector(OPEN_ELSEWHERE)) onCloseAbout();
   });
   useEffect(() => {
     if (!about.shown) return;
@@ -92,8 +99,8 @@ export function PatchBar({ name, changed, patch, library, onLoad, onPick, about,
     stepping.current.name = preset.name;
     onLoad(preset.name, preset.patch);
   };
-  /** Loading a sound is the end of the visit: the panel closes so the sound can be played at once. */
-  const load = (next: string, patch: Patch) => {
+  /** Picking a sound is the end of the visit: the panel closes so the sound can be played at once. */
+  const pick = (next: string, patch: Patch) => {
     onPick(next, patch);
     closeToOpener();
   };
@@ -173,7 +180,7 @@ export function PatchBar({ name, changed, patch, library, onLoad, onPick, about,
       </span>
       {about.shown && (
         <p className="patch-about">
-          <Tooltip content={{ title: 'Close', body: 'Close the Preset’s description (Escape does too). It goes by itself at the first change to the sound; every Preset’s description shows on its name in the Patches panel.' }}>
+          <Tooltip content={TIPS.closeDescription}>
             <button
               type="button"
               className="patch-about-close"
@@ -203,7 +210,7 @@ export function PatchBar({ name, changed, patch, library, onLoad, onPick, about,
             searchBox={searchBox}
             tutorials={tutorials}
             mine={mine}
-            onLoad={load}
+            onLoad={pick}
             onTutorial={tutorial}
           />
           <section>
@@ -214,7 +221,7 @@ export function PatchBar({ name, changed, patch, library, onLoad, onPick, about,
               {saved.length > 0 && !listsMine && <p className="patch-empty">Your saved Patches are under All and My Patches.</p>}
               {mine.map((p) => (
                 <span key={p.name} className="patch-mine">
-                  <button type="button" className="patch-item" aria-label={`Load ${p.name}`} aria-current={p.name === name || undefined} onClick={() => load(p.name, p.patch)}>
+                  <button type="button" className="patch-item" aria-label={`Load ${p.name}`} aria-current={p.name === name || undefined} onClick={() => pick(p.name, p.patch)}>
                     {p.name}
                   </button>
                   {confirming === p.name ? (

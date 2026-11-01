@@ -281,7 +281,7 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
   background: none; border: 1px solid transparent; border-radius: var(--radius-control);
 }
 .tool { border-color: var(--border); }
-.tool:hover, .segmented button:hover { color: var(--text); background: var(--control-hover); }
+.tool:hover, .segmented button:hover, .patch-about-close:hover { color: var(--text); background: var(--control-hover); }
 .segmented [aria-checked='true'], .segmented [aria-pressed='true'] {
   color: var(--text); background: var(--control-on);
 }
@@ -299,7 +299,7 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 :root[data-theme='light'] .block[data-stage='osc'] .segmented :is([aria-checked='true'], [aria-pressed='true']) {
   background: color-mix(in srgb, var(--stage) 75%, var(--text));
 }
-.tool:focus-visible, .segmented button:focus-visible { outline: 2px solid var(--text); outline-offset: 1px; }
+.tool:focus-visible, .segmented button:focus-visible, .patch-about-close:focus-visible { outline: 2px solid var(--text); outline-offset: 1px; }
 .tool kbd { font-size: var(--text-xs); padding: 0 4px; line-height: 14px; color: inherit; border-color: currentColor; opacity: 0.6; }
 .tool-icon { width: var(--control-h); padding: 0; justify-content: center; }
 /* An octave button shaded once the piano is shifted that way: a grey that deepens with each octave from C4. */
@@ -1027,8 +1027,6 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   font: inherit; font-size: 16px; line-height: 1; color: var(--text); cursor: pointer;
   background: none; border: 0; border-radius: var(--radius-control);
 }
-.patch-about-close:hover { background: var(--control-hover); }
-.patch-about-close:focus-visible { outline: 2px solid var(--text); outline-offset: 1px; }
 @media (min-width: 1920px) { .patch-about { --about-w: calc((100% - 3 * var(--space-4)) / 2 + var(--space-4)); } }
 /* Up to 860 px the header edges the page's padding: the box lines up with the Sections, as wide as the page's. */
 @media (min-width: 601px) and (max-width: 860px) { .patch-about { left: var(--space-4); --about-w: calc(100% - 2 * var(--space-4)); } }

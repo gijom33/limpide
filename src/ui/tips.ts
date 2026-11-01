@@ -183,6 +183,11 @@ export const TIPS = {
     title: 'Bead',
     body: 'Bead is the little water drop living on the page, answering what you play and turn. Off sends it away, and so does playing B, E, A, D; the same Notes call it back. Your choice is remembered.',
   },
+  // The × of a Preset's description, under the Patch name (issue 153).
+  closeDescription: {
+    title: 'Close',
+    body: 'Closes the Preset’s description; Escape does too. It goes by itself at the first change to the sound. Every Preset’s description shows on its name in the Patches panel.',
+  },
   bendRange: {
     title: 'Pitch bend range',
     body: 'How far a keyboard’s bend wheel takes the pitch, up or down, in semitones: 2 is a whole tone, as on most synths. The sustain pedal holds Notes as Hold does, the mod wheel turns LFO 1’s Depth, and a Program Change loads that Preset, each until you map the control to something else.',

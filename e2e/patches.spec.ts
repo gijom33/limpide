@@ -79,12 +79,20 @@ test('the Preset’s description closes by its × and by Escape, and a click on 
   await page.keyboard.press('Escape');
   await expect(description(page)).toHaveCount(0);
 
-  // While the Patches panel is open over it, Escape closes the panel first.
+  // While the Patches panel is open over it, or another panel, Escape closes that panel first.
   await pick(page, 'Kalimba');
   await patchName(page).click();
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog', { name: 'Patches' })).toBeHidden();
   await expect(description(page)).toBeVisible();
+  const display = page.getByRole('button', { name: 'Display', exact: true });
+  await display.click();
+  await expect(display).toHaveAttribute('aria-expanded', 'true');
+  await page.keyboard.press('Escape');
+  await expect(display).toHaveAttribute('aria-expanded', 'false');
+  await expect(description(page)).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(description(page)).toHaveCount(0);
 });
 
 // Over the Sections' headings, as wide as the Oscillators and the Filter together (issue 153, decided by the owner):
