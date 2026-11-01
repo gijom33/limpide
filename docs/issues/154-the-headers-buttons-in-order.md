@@ -4,7 +4,16 @@
 
 **Blocked by:** [112](./112-tempo-midi-clock-and-an-arpeggiator.md), whose tempo and Tap are among the buttons; the owner's choice among the expert's proposals (below)
 
-**Status:** ready-for-agent · enhancement. The first step (the expert's proposals) can be built now; the build waits on the owner's choice.
+**Status:** needs-info · enhancement. Step 1 done (2026-10-31): the expert's arrangements on the throwaway branch `prototype/154-header` (`prototypes/154-header/index.html`, checked out at `~/limpide-proto/154-header`), for the owner to choose.
+
+## Questions for the owner
+
+1. **Which arrangement?** Each is drawn at 861, 1100, 1440 and 1920 px on the branch `prototype/154-header` (`prototypes/154-header/index.html`), beside today's header, the piano's keys measured under each:
+   - **A, one line by use:** playing (Hold, the BPM, Tap) · learning (Demo, Tutorial, Song) · setting up (MIDI, Display, About), a hairline between, on one line from 1440 px and wrapped into two rows below; 32 keys at 1920 px, 20 at 1440 with only the newcomer's four words.
+   - **B, two rows, what sounds over what opens:** Hold, the tempo, Demo, Song on top (they light when on); MIDI, Display, Tutorial, About below (they open a panel); a 4 × 2 grid at every width; 25 keys at 1440 px and 44 at 1920, every word kept.
+   - **C, columns of two outward from the keys:** Hold one tall button against the piano, then the tempo (BPM over Tap), the players (Demo over Song), the guides (Tutorial over About), set-up (MIDI over Display), 4 px within a use and 14 px between uses; one shape at every width; 25 keys at 1440 px and 42 at 1920, every word kept.
+
+   Claude's recommendation: C, the only one in which every column means something, one shape at every width, the newcomer's four keeping their words from 1100 px; its cost is Hold's tall shape, with B as the fallback.
 
 ## Decisions
 
