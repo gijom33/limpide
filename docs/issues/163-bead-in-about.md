@@ -4,7 +4,7 @@
 
 **Blocked by:** [150](./150-bead-shown-by-default.md), whose rules (Display's switch lasting, the Notes for the visit, never with the switch Off) this line describes
 
-**Status:** ready-for-human · enhancement. Built (2026-11-01) on night/2026-10-31, for the owner to try
+**Status:** done (2026-11-01). Built on night/2026-10-31, shipped in 1.20.0, seen by the owner: "Yes, it's there." Its size and place change in [178](./178-bead-in-about-at-its-own-size.md).
 
 ## Decisions
 
