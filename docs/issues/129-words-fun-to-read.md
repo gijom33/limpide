@@ -23,6 +23,7 @@ Claude's call, open to the owner, from profile 16's review (2026-10-31):
 6. **Each Tutorial gets its own first card** in this voice, saying what it teaches and what the person will hear, instead of leading with its Preset's description (the densest text in the app, which decision 3 leaves as it is, in the Patch panel). Bass already has one.
 7. **One word for the idea, one for the picture:** Harmonic for the idea, and on the Spectrum "the Harmonics' lines"; partials, rungs, spikes and bars go. The words not explained anywhere (Harmonic, Hz, ms, dB, Init, Decay, Sustain, the Filter Envelope) are each explained where a Tutorial or the Tour first uses them.
 8. **The end card points on:** a Tutorial's last card names the next one and what it teaches, and the Tutorial menu gives each a short line of what it teaches.
+9. **The Tour's LFO card points at the Envelope Timeline's dotted line,** which shows the Cutoff swinging, not at the Cutoff knob, which cannot share the screen with it ([158](./158-tour-and-tutorial-slips.md), decided by the owner, 2026-10-31).
 
 ## Agent Brief
 

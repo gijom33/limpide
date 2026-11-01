@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** needs-info · bug. Two slips built (2026-10-31) on night/2026-10-31; the Tour's LFO card waits on the question below
+**Status:** ready-for-human · bug. Built (2026-10-31) on night/2026-10-31, for the owner to try: two slips; the third answered by the owner (the LFO card's words go to 129).
 
 ## Agent Brief
 
@@ -29,6 +29,10 @@
 
 **Out of scope:**
 - The words of the cards and Steps ([129](./129-words-fun-to-read.md))
+
+## Decisions
+
+1. **The Tour's LFO card points at the Timeline, not the Cutoff:** issue [129](./129-words-fun-to-read.md)'s rewrite points it at the Envelope Timeline's dotted line, which shows the Cutoff swinging, and drops the Cutoff knob from the card; criterion 1 goes, and 128's decision 10 (a card's Viewers first) stands. Decided by the owner, 2026-10-31 (option A, Claude's recommendation).
 
 ## Questions for the owner
 
