@@ -20,6 +20,7 @@ The idea is the owner's; how it is done is Claude's call, open to the owner (202
 Decided by the owner, 2026-10-31 (evening), on trying the night's build: "Making Bead appear and disappear is not the same as switching Bead off in the display menu. In the display menu, the switch is intentional and permanent whereas making Bead disappear with BEAD is only temporary and a reload goes back what is defined in the display settings menu."
 
 7. **The switch and the Notes are two things.** Display's switch is the lasting setting, remembered across visits. B, E, A, D only sends Bead away or calls it back for this visit: it changes neither the switch nor what is stored, and a reload goes back to what the switch says. Replaces decision 3's "flips Display's switch to match", and the night's call 1 under How it was built. Claude's call, open to the owner: the Notes call Bead for the visit even with the switch off (they never touch the setting), as 115 let them before its switch.
+8. **With the switch On,** B, E, A, D sends Bead away and, played again, brings it back, the switch reading On throughout. The owner's words, 2026-10-31: "calling BEAD after having made it disappear with a first BEAD, with menu saying BEAD ON, does make the mascot reappear."
 
 ## Agent Brief
 
