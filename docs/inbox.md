@@ -6,8 +6,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
-- 2026-11-01, the owner's idea: "Bead's tail should go to left when it goes right. It's good to have it on right when static as that's what the logo looks like."
-
 - 2026-11-01, the owner, on hearing the night's Talking Filter and Portamento (issues 166 and 119): "They sound good, I think. I do not like Talking filter but that's okay"
 - 2026-11-01, from the 1.20.0 code review, a bug older than 1.19 that issues 112 and 119 widen: a button learned on a Switch (LFO Sync, Legato, Retrigger) never switches it, since Learn reads its values as a knob's Encoder Mode (a momentary 127, 0 taken for Absolute, so on then off at once; a toggle's lone 127 for Relative, −1), and the Learn bar says "keep turning…"; issue 147's press-and-release rule covers only Actions.
 - 2026-11-01, from the 1.20.0 code review, issue 163 against issue 150's decision 2: About shows Bead whenever the switch is on, so a newcomer's welcome card carries it, which 150 kept clear ("not covered or upstaged"); and it shows after B, E, A, D sent Bead away for the visit (163's call 3), not marked as a reversal of 150.
@@ -199,3 +197,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-11-01, the owner's idea of Bead in About at its own size, level with the bottom of the logo's mark (triage, decided by the owner): to [178](./issues/178-bead-in-about-at-its-own-size.md), ready for an agent. A slip: the idea's inbox line went in with the fact-checker's report commit (`0e0adf2`), not alone, as two sessions committed at once; nothing to build.
 2026-11-01, the owner's performance reviewer, done at once into [42](./issues/42-reviews.md), decided by the owner: profile 18, the performance expert, the Apple M1 with 8 GiB as the floor; its first run after 1.20.0 is out, its findings to the inbox. The profile's details are Claude's call, open to the owner.
 2026-11-01, the owner's bug of a white box round Bead in About on Safari, fixed at once for 1.20.0 (`fcb2191`, issue 163): About's first focus fell on Bead's button, the first control since 163, and Safari ringed it; About now focuses its Demo button as it opens, as before. Claude's call, open to the owner.
+2026-11-01, the owner's idea of Bead's tail trailing as it moves (triage): to [179](./issues/179-beads-tail-trails-behind.md), polish for v1, ready for an agent: the tail trails when it moves, on its right when still (decided by the owner); a quick turn, none for small or dance steps (Claude's call, open to the owner).
