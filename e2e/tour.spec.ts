@@ -212,7 +212,7 @@ for (const [layout, width, height] of [['phone', 375, 812], ['short phone', 393,
 
 /** Every Viewer frozen: the Display state the Space bar and Display's Freeze set. */
 const frozen = (page: Page) => page.locator('main[data-frozen]');
-/** What the card names on the frozen picture. */
+/** What the card shows on its line under the words: on the frozen picture, the stage. */
 const naming = (page: Page) => card(page).locator('.tour-frozen [data-shown]');
 
 async function toAmpCard(page: Page) {
@@ -242,7 +242,8 @@ test('the Amp card changes the Attack before its Note, freezes the Viewers once 
   await playing(page);
   await expect(frozen(page)).toHaveCount(0);
   await expect(frozen(page)).toHaveCount(1, { timeout: 5000 });
-  await expect(naming(page)).toHaveText('Frozen: up: Attack');
+  await expect(naming(page)).toHaveText('Frozen up: Attack');
+  await expect(card(page).locator('[aria-live]').last()).toHaveText('Frozen: up: Attack'); // what a screen reader hears
   await expect(attack).toHaveAttribute('aria-valuetext', '600 ms'); // still the Note's, through the freeze
   await expect(frozen(page)).toHaveCount(0, { timeout: 4000 }); // about three seconds
   await expect(naming(page)).not.toContainText('Frozen');
@@ -250,7 +251,7 @@ test('the Amp card changes the Attack before its Note, freezes the Viewers once 
   await expect(attack).toHaveAttribute('aria-valuetext', '10.0 ms'); // the last given back
   await playing(page); // the sound plays on
   await expect(frozen(page)).toHaveCount(1, { timeout: 6000 });
-  await expect(naming(page)).toHaveText('Frozen: down to a level: Decay');
+  await expect(naming(page)).toHaveText('Frozen down to a level: Decay');
 });
 
 test('the person’s own Freeze on the Amp card is theirs: the Tour freezes no more on that card (issue 130)', async ({ page }) => {
@@ -259,7 +260,7 @@ test('the person’s own Freeze on the Amp card is theirs: the Tour freezes no m
   await expect(frozen(page)).toHaveCount(1, { timeout: 8000 }); // the Tour's
   await pressSpace(page);
   await expect(frozen(page)).toHaveCount(0); // Space unfreezes as always
-  await expect(naming(page)).not.toContainText('Frozen');
+  await expect(naming(page)).toHaveCount(0); // and the card no longer says the picture will freeze
   expect(await everFrozen(page, 9000)).toBe(false); // past the next Note's fade
   await pressSpace(page);
   await expect(frozen(page)).toHaveCount(1);

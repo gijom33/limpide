@@ -89,7 +89,7 @@ describe('The Tour (issue 128)', () => {
       // When the Tour freezes, and for how long, read every 50 ms over a pass of the card.
       const spans: { from: number; to: number; frozen: string }[] = [];
       for (let t = 0; t < cycleLength(amp); t += 0.05) {
-        const { frozen } = tourAt(amp, t);
+        const frozen = tourAt(amp, t).naming?.join('; ');
         const last = spans.at(-1);
         if (frozen && last?.frozen === frozen && t - last.to < 0.06) last.to = t;
         else if (frozen) spans.push({ from: t, to: t, frozen });
@@ -98,7 +98,8 @@ describe('The Tour (issue 128)', () => {
       spans.forEach((span, i) => {
         const note = notes[i];
         const fade = note.time + note.duration + tourAt(amp, note.time + note.duration).values.ampRelease!;
-        expect(span.from, span.frozen).toBeGreaterThan(fade); // the Note's Release over
+        // The Note's Release over, with room for the page's clock and the sound's to be a little apart.
+        expect(span.from, span.frozen).toBeGreaterThan(fade + 0.15);
         expect(span.from - note.time, span.frozen).toBeLessThan(2 - 0.2); // its onset still on a 2 s Timeline, with room before it
         expect(span.to - span.from, span.frozen).toBeGreaterThan(2.8);
         expect(span.to - span.from, span.frozen).toBeLessThan(3.2);
@@ -107,7 +108,7 @@ describe('The Tour (issue 128)', () => {
     });
 
     it('freezes nothing on the other cards', () => {
-      for (const c of TOUR.filter((c) => c !== amp)) for (let t = 0; t < cycleLength(c); t += 0.1) expect(tourAt(c, t).frozen, c.title).toBeNull();
+      for (const c of TOUR.filter((c) => c !== amp)) for (let t = 0; t < cycleLength(c); t += 0.1) expect(tourAt(c, t).naming, c.title).toBeNull();
     });
 
     it('changes each far enough to see: a slow Attack, a slow Decay, a low Sustain, a long Release', () => {

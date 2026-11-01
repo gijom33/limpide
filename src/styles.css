@@ -1486,11 +1486,16 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 }
 .tutorial-say[data-done] { align-items: flex-start; }
 /* The Tour's line on the frozen picture (issue 130): every line it can say in one place, only the one said now shown,
-   so the card keeps the height of the longest and never jumps as the picture freezes and runs. */
-.tour-frozen { display: grid; margin: 0; font-size: var(--card-small); line-height: 1.45; }
-.tour-frozen > span { grid-area: 1 / 1; visibility: hidden; color: var(--muted); }
-.tour-frozen > span[data-shown] { visibility: visible; }
-.tour-frozen > span[data-shown]:has(strong) { color: var(--text); }
+   so the card keeps the height of the longest and never jumps as the picture freezes and runs. Its badge is the
+   Viewers' own. */
+.tour-frozen p { display: grid; margin: 0; font-size: var(--card-small); line-height: 1.45; }
+.tour-frozen p > span { grid-area: 1 / 1; visibility: hidden; color: var(--muted); }
+.tour-frozen p > span[data-shown] { visibility: visible; }
+.tour-frozen p > span[data-shown]:has(strong) { color: var(--text); }
+.tour-frozen-badge {
+  display: inline-block; margin-right: 4px; padding: 0 8px; font-size: var(--text-sm); font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--bg); background: var(--text); border-radius: 999px;
+}
 .tutorial-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
 .tutorial-actions .tool { min-height: 36px; padding: 0 var(--space-3); gap: 6px; }
 .tutorial-actions .tool[aria-disabled='true'] { opacity: 0.45; cursor: default; }
