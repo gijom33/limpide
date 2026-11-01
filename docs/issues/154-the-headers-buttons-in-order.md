@@ -28,8 +28,8 @@ Claude's call, open to the owner:
 
 4. **Two steps.** First the expert (an agent in the role of [42](./42-reviews.md)'s profile 3, the UI maniac, with the craft of a product designer) proposes two or three arrangements, each drawn with the `prototype` skill as a page of mock headers at 861, 1100, 1440 and 1920 px, with the logic of each in a line (for instance by use: playing — Hold, the tempo, Tap; learning — Demo, Tutorial, Song; setting up — MIDI, Display, About). The owner chooses in the morning. Then the chosen one is built at every width from 861 px, the design audit having the last word.
 5. **From 861 px only:** the phone and 2 × 2 keep their own rows ([152](./152-the-phones-header-rows-in-2x2.md)).
-7. **Arrangement C**, columns of two outward from the keys: Hold one tall button against the piano, then BPM over Tap, Demo over Song, Tutorial over About, MIDI over Display; 4 px within a use and 14 px between uses; one shape at every width. Decided by the owner, 2026-10-31 ("I like recommendation C for the headers buttons"), on question 1.
 6. **How the keyboard grows:** by whole keys, to the right, into the room the buttons leave, its white keys still at most 44 px; the computer keyboard's 17 keys keep their place and letters, and the keys beyond them play by pointer, touch or MIDI, and light for a Note from MIDI. Each of the expert's arrangements shows where it leaves the keyboard and how many keys that makes.
+7. **Arrangement C**, columns of two outward from the keys: Hold one tall button against the piano, then BPM over Tap, Demo over Song, Tutorial over About, MIDI over Display; 4 px within a use and 14 px between uses; one shape at every width. Decided by the owner, 2026-10-31 ("I like recommendation C for the headers buttons"), on question 1.
 
 ## Agent Brief
 
