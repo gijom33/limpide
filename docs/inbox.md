@@ -4,6 +4,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-10-31, the owner's bug, on the night branch: "When LFO is synced with clock, the rate knob shows the frequency below it on top of clock period ratio. It leads to longer text and the knobs shift around. This is bad. No need to show the frequency."
+
 ## Ideas
 
 ## Dropped
