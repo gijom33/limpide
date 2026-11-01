@@ -1,13 +1,14 @@
-import { OSCILLATOR_LEVEL } from '../engine/synthEngine';
-import type { Patch } from '../patch/patch';
+import { NOISE_PEAK, OSCILLATOR_LEVEL } from '../engine/synthEngine';
+import { MIXER_LEVELS, type Patch } from '../patch/patch';
 
 /**
  * Where the Scopes' Guides stand (issue 159): the level the Mixer sends, every source at its fader's level added, as
- * the engine scales each by the Nominal Level. One Oscillator at full puts them at the Nominal Level; they never go
- * past full scale, and with nothing up they stay at the Nominal Level rather than vanish.
+ * the engine scales each by the Nominal Level, the Noise at its colour's peak. One Oscillator at full puts them at the
+ * Nominal Level; they never go past full scale, and with nothing up they stay at the Nominal Level rather than vanish.
  */
-export function guideLevel(patch: Pick<Patch, 'mixOsc1' | 'mixOsc2' | 'mixRing' | 'mixSub' | 'mixNoise'>): number {
-  const sum = (patch.mixOsc1 + patch.mixOsc2 + patch.mixRing + patch.mixSub + patch.mixNoise) * OSCILLATOR_LEVEL;
+export function guideLevel(patch: Patch): number {
+  const peak = (id: (typeof MIXER_LEVELS)[number]) => (id === 'mixNoise' ? NOISE_PEAK[patch.noiseColour] : 1);
+  const sum = MIXER_LEVELS.reduce((total, id) => total + patch[id] * peak(id), 0) * OSCILLATOR_LEVEL;
   return sum > 0 ? Math.min(1, sum) : OSCILLATOR_LEVEL;
 }
 

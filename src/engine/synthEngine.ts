@@ -153,6 +153,12 @@ function pinkBuffer(ctx: BaseAudioContext, white: AudioBuffer): AudioBuffer {
   return buffer;
 }
 
+/**
+ * Each Noise loop's peak, for the Guides (issue 159): white's samples reach ±1, as an Oscillator does; pink, kept at
+ * white's RMS, reaches about 2.2 at the usual 44.1 and 48 kHz (a little more at 96 kHz).
+ */
+export const NOISE_PEAK: Record<NoiseColour, number> = { white: 1, pink: 2.2 };
+
 // Enough Harmonics to reach Nyquist from the lowest Notes; the browser band-limits per pitch.
 const WAVE_HARMONICS = 1024;
 // How many of the Oscillators' waves are kept, cut short for Ring (issue 103), for the Notes to come: each holds

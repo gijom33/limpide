@@ -100,6 +100,8 @@ describe('the Viewer settings store (issue 77)', () => {
     expect(viewers.get().guideLevel).toBeCloseTo(1);
     patches.change((p) => ({ ...p, mixOsc1: 0, mixOsc2: 0, mixRing: 0.5, mixSub: 0.5, mixNoise: 0.5 }), 'hand');
     expect(viewers.get().guideLevel).toBeCloseTo(0.75);
+    patches.change((p) => ({ ...p, mixRing: 0, mixSub: 0, mixNoise: 0.5, noiseColour: 'pink' }), 'hand');
+    expect(viewers.get().guideLevel).toBeCloseTo(0.55); // pink Noise at its own peak, 2.2 (white's RMS)
     patches.change((p) => ({ ...p, mixOsc1: 1, mixOsc2: 1, mixRing: 1, mixSub: 1, mixNoise: 1 }), 'hand');
     expect(viewers.get().guideLevel).toBe(1); // capped at full scale
     patches.change((p) => ({ ...p, mixOsc1: 0, mixOsc2: 0, mixRing: 0, mixSub: 0, mixNoise: 0 }), 'hand');

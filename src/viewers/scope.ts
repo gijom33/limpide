@@ -34,7 +34,7 @@ export function createScope(
   let snapshotTrace: Float32Array | null = null;
   // The Guides at the Mixer's level, held while frozen like the Note, so they belong to the frozen trace.
   const frozenGuides = createFreezeLatch<number>();
-  const guides = createGuideGlide();
+  const guideGlide = createGuideGlide();
   const still = matchMedia('(prefers-reduced-motion: reduce)');
 
   return function draw() {
@@ -69,7 +69,7 @@ export function createScope(
 
     // Guides at the level the Mixer sends (issue 159), on every Scope: inside them the Filter only removed energy;
     // beyond them (faintly shaded) Resonance added a peak. They glide as the Mixer's faders move.
-    const guideLevel = guides(frozenGuides(view().viewer.frozen, () => view().guideLevel), performance.now(), still.matches);
+    const guideLevel = guideGlide(frozenGuides(view().viewer.frozen, () => view().guideLevel), performance.now(), still.matches);
     canvas.dataset.guides = guideLevel.toFixed(3);
     if (view().overlays.guides) {
       g.fillStyle = cssVar(canvas, '--muted');

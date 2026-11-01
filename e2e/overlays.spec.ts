@@ -56,10 +56,10 @@ test('the Harmonic Markers’ ticks show only while a sound is there, as the Ide
 
 test('the Guides follow the Mixer: one Oscillator at the Nominal Level, Osc 2 added twice as far out, on every Scope (issue 159)', async ({ page }) => {
   await page.goto('/');
-  const guides = (tap: string) => page.getByLabel(`${tap} Scope`, { exact: true });
-  for (const tap of ['Oscillator', 'Filter', 'Amp']) await expect(guides(tap)).toHaveAttribute('data-guides', '0.500');
+  const scope = (tap: string) => page.getByLabel(`${tap} Scope`, { exact: true });
+  for (const tap of ['Oscillator', 'Filter', 'Amp']) await expect(scope(tap)).toHaveAttribute('data-guides', '0.500');
   await page.getByRole('tab', { name: 'Mixer' }).click();
   await page.getByRole('group', { name: 'Mixer' }).getByRole('slider', { name: 'Osc 2' }).focus();
   await page.keyboard.press('End');
-  for (const tap of ['Oscillator', 'Filter', 'Amp']) await expect(guides(tap)).toHaveAttribute('data-guides', '1.000');
+  for (const tap of ['Oscillator', 'Filter', 'Amp']) await expect(scope(tap)).toHaveAttribute('data-guides', '1.000');
 });

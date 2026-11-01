@@ -1,3 +1,4 @@
+import { MIXER_LEVELS } from '../patch/patch';
 import { type Control, type Mapping, sameControl, sameTarget, type Target } from './mappings';
 
 /** One Learn step of a Quick Setup: what to map, where it sits ("Filter Envelope"), and what to ask for. */
@@ -22,7 +23,7 @@ const actions = (...ids: Extract<Target, { kind: 'action' }>['id'][]): SetupStep
 export const QUICK_SETUP: SetupStep[] = [
   ...params('Filter', 'cutoff', 'resonance', 'filterEnvAmount'),
   ...params('Osc 2', 'osc2Detune'),
-  ...params('Mixer', 'mixOsc1', 'mixOsc2', 'mixRing', 'mixNoise', 'mixSub'),
+  ...params('Mixer', ...MIXER_LEVELS),
   ...params('Filter Envelope', 'filterAttack', 'filterDecay', 'filterSustain', 'filterRelease'),
   ...params('Amp Envelope', 'ampAttack', 'ampDecay', 'ampSustain', 'ampRelease'),
   ...params('Amp', 'volume'),

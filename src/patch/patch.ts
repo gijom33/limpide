@@ -246,6 +246,9 @@ export function defaultPatch(): Patch {
   };
 }
 
+/** The Mixer's sources' levels, in the panel's order: what the Mixer adds up. */
+export const MIXER_LEVELS = ['mixOsc1', 'mixOsc2', 'mixRing', 'mixNoise', 'mixSub'] as const satisfies readonly ParamId[];
+
 /** Whether Osc 1 is heard: mixed in, or through Ring (issue 88). */
 export const osc1Heard = (patch: Patch) => patch.mixOsc1 > 0 || patch.mixRing > 0;
 

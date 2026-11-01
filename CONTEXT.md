@@ -211,7 +211,7 @@ A listening point in the Voice where the signal is observed: the **Oscillator Ta
 _Avoid_: Probe, monitor, stage output
 
 **Nominal Level**:
-The Oscillator's peak level (0.5, i.e. −6 dB below full scale), leaving headroom for Resonance: where the Guides stand with one Oscillator at full. The Guides, when they are shown, mark on every Scope the level the Mixer sends, its sources' levels added, up to full scale.
+The Oscillator's peak level (0.5, i.e. −6 dB below full scale), leaving headroom for Resonance: where the Guides stand with one Oscillator at full.
 _Avoid_: Unity, reference level, 0 dB
 
 **Viewer**:
@@ -221,6 +221,10 @@ _Avoid_: Visualiser, graph, panel
 **Scope**:
 A Viewer showing amplitude over time.
 _Avoid_: Oscilloscope (fine in prose), waveform view
+
+**Guides**:
+Dashed lines on every Scope, when they are shown, at the level the Mixer sends: its sources' levels added, up to full scale (the Nominal Level with one Oscillator at full). A trace inside them has only lost energy; one beyond them has been boosted by Resonance.
+_Avoid_: Reference lines, headroom lines
 
 **Cycle Lock**:
 The Scope behaviour that aligns the trace to the Note's period so it stands still, showing a chosen number of cycles (1, 2, 4).

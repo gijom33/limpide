@@ -201,6 +201,15 @@ describe('shared scale across Taps', () => {
     expect(worst).toBeLessThan(OVERSHOOT);
   }, 60_000);
 
+  it('keeps the Oscillator Tap inside the Guides with the Noise up, white or pink, and the Sub (issue 159)', async () => {
+    for (const noiseColour of ['white', 'pink'] as const) {
+      // Below full scale, where the Guides are not capped: a fifth of Osc 1, the Sub and the Noise at 0.3.
+      const patch = { ...defaultPatch(), ampSustain: 1, ampAttack: 0.001, cutoff: 20000, resonance: 0, mixOsc1: 0.2, mixSub: 0.2, mixNoise: 0.3, noiseColour };
+      const taps = await tapsAt(0.4, patch);
+      expect(peak(taps.oscillator) / guideLevel(patch), noiseColour).toBeLessThan(OVERSHOOT);
+    }
+  });
+
   it('takes the Filter Tap beyond the Guides once Resonance is up, both Oscillators up (issue 159)', async () => {
     const patch = { ...defaultPatch(), ...bothUp, cutoff: 873, resonance: 1 };
     const taps = await tapsAt(0.4, patch);
