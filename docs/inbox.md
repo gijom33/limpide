@@ -6,8 +6,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
-- 2026-10-31, the owner's idea, with a screenshot of the Envelope Timeline's key on two lines on a phone (night branch, localhost:5174): "If text is too long and multiple lines are needed, use abbreviations, and even in worst case, just a few letters."
-
 ## Dropped
 
 - 2026-10-30, from Claude's brainstorm, Velocity on the Volume ("a harder hit plays louder, not only brighter"): already so. The Amp Envelope's Attack rises to the Note's Velocity (PRD story 9). Claude's call, open to the owner.
@@ -143,3 +141,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-31, the owner's idea of a UI/UX expert ordering the header's buttons (triage): to [154](./issues/154-the-headers-buttons-in-order.md), polish for v1. Decided by the owner: an expert proposes, the buttons align with a visible logic, and the keyboard need not be centred (issue 82's rule no longer binds). Claude's call, open to the owner: two steps, the expert's two or three arrangements drawn as a prototype for the owner to choose, then the build from 861 px.
 2026-10-31, the owner's idea of a wider keyboard in three and four across (triage, Claude's call, open to the owner): into [154](./issues/154-the-headers-buttons-in-order.md), decisions 3b and 6, since the expert's arrangement of the buttons decides the room the keyboard gets: it grows by whole keys into what the buttons leave, the letter keys' 17 in place.
 2026-10-31, the owner's bug of text moving as values change, which the owner named as a Spectrum's hover readout ("260 Hz · C4 +2¢ · −43 dB") (triage, Claude's call, open to the owner): to [155](./issues/155-the-spectrum-readout-stays-still.md), a bug, ready for an agent: the owner's stacking, three lines in a box of fixed size, each value right-aligned, flipping side only at the edge.
+2026-10-31, the owner's rule of shorter words over a second line (triage): into [the design principles](./design-principles.md) as "One line, shorter words", decided by the owner, and to [156](./issues/156-one-line-shorter-words.md), ready for an agent: the Timeline's key first, every label with a short and a shortest form chosen by its room, and the design audit failing on any that wraps (the forms and the audit check Claude's call, open to the owner).
