@@ -11,15 +11,19 @@ import { sliderName } from './helpers';
  * is measured today: anything new that breaks a rule fails the test, and so does a waived element that gets worse.
  * A waiver nothing needs any more fails the test too, so the list stays true.
  */
+type Size = keyof typeof SIZES;
+/** The phone's waivers hold at both phone widths. */
+const PHONES = ['phone', 'narrowest phone'] as const;
+
 interface Waiver {
   rule: Rule;
   /** The elements it covers. */
   selector: string;
   /** The lowest accepted: a contrast ratio, or a target's shorter side in px. */
   floor: number;
-  /** Only in this theme or at this size; both when left out. */
+  /** Only in this theme or at these sizes; both, or every size, when left out. */
   theme?: 'dark' | 'light';
-  size?: keyof typeof SIZES;
+  size?: Size | readonly Size[];
 }
 // Decided by the owner on 2026-10-25 (issue 27, issue 28): look B's quiet edges and compact controls stay; only the
 // selectors' chosen option became brighter. Each waiver's comment gives what it measured that day.
@@ -43,28 +47,34 @@ const WAIVERS: Waiver[] = [
   // laptop's waiver.
   { rule: 'target', selector: '.segmented button', floor: 20, size: 'foldable' },
   { rule: 'target', selector: '.segmented button', floor: 20, size: 'wide' },
-  // Phone targets: controls at the toolbar height (28 px), selector options (20 to 22 px), the logo (24 px tall),
-  // the Preset arrows (18 px wide), the piano's black keys (24 px wide, beside the octave buttons).
-  { rule: 'target', selector: '.tool, .tab-list [role=tab], .patch-item, .patch-save input, .patch-category, .patch-search input', floor: 28, size: 'phone' },
-  { rule: 'target', selector: '.segmented button', floor: 20, size: 'phone' },
-  { rule: 'target', selector: '.wordmark-button', floor: 24, size: 'phone' },
-  { rule: 'target', selector: '.patch-bar > .tool', floor: 18, size: 'phone' },
+  // Phone targets, at 375 and 320 px: controls at the toolbar height (28 px), selector options (20 to 22 px), the
+  // logo (24 px tall), the Preset arrows (18 px wide), the piano's black keys (24 px wide at 375 px, beside the octave
+  // buttons; 20 px at 320, issue 157).
+  { rule: 'target', selector: '.tool, .tab-list [role=tab], .patch-item, .patch-save input, .patch-category, .patch-search input', floor: 28, size: PHONES },
+  { rule: 'target', selector: '.segmented button', floor: 20, size: PHONES },
+  { rule: 'target', selector: '.wordmark-button', floor: 24, size: PHONES },
+  { rule: 'target', selector: '.patch-bar > .tool', floor: 18, size: PHONES },
   { rule: 'target', selector: '.piano button', floor: 23.5, size: 'phone' },
+  { rule: 'target', selector: '.piano button', floor: 19.5, size: 'narrowest phone' },
   // Phone targets, the Demo card's segments (issue 99, decided by the owner): 44 px tall, but fifteen a finger wide
   // need 660 px, so each is as wide as its part is long, 8 to 18 px. The card's Previous part and Next part buttons,
   // 44 × 44 px beside them, are the full-size way along the parts (WCAG 2.5.5 and 2.5.8 accept a full-size control
   // that does the same).
-  { rule: 'target', selector: '.demo-bar-parts > button', floor: 7.5, size: 'phone' },
+  { rule: 'target', selector: '.demo-bar-parts > button', floor: 7.5, size: PHONES },
 ];
 
 const SIZES = {
   laptop: { width: 1440, height: 900, minTarget: 24 }, // WCAG 2.5.8
   phone: { width: 375, height: 812, minTarget: 44 }, // Apple's 44 pt, WCAG 2.5.5
+  // The narrowest the page lays out (issue 157): the first iPhone SE, small Androids zoomed. Narrower, it scrolls.
+  'narrowest phone': { width: 320, height: 568, minTarget: 44 },
   // A foldable opened flat (issue 38): the sections 2 × 2, with the laptop's controls, so the laptop's minimum.
   foldable: { width: 690, height: 830, minTarget: 24 },
   // A wide screen (issue 43): the four sections side by side, with the laptop's controls.
   wide: { width: 1920, height: 1080, minTarget: 24 },
 } as const;
+
+const SIZE_NAMES = Object.keys(SIZES) as Size[];
 
 /** The states to audit, each opened from the page as loaded and closed again. */
 const STATES: { name: string; open?(page: Page): Promise<void>; close?(page: Page): Promise<void> }[] = [
@@ -106,7 +116,7 @@ async function audit(page: Page, size: keyof typeof SIZES, theme: 'dark' | 'ligh
   // The test browsers hold the sound back until the page is used, so the piano invites a first Note (issue 35): it
   // fades in 0.4 s after the page opens, and caught halfway (a busy machine) it fails. The audit is of the page at rest.
   await page.evaluate(() => Promise.all(document.querySelector('.play-invite')?.getAnimations().map((a) => a.finished) ?? []));
-  const waivers = WAIVERS.filter((w) => rules.includes(w.rule) && (w.theme ?? theme) === theme && (w.size ?? size) === size);
+  const waivers = WAIVERS.filter((w) => rules.includes(w.rule) && (w.theme ?? theme) === theme && [w.size ?? size].flat().includes(size));
   const unexpected: string[] = [];
   const matched = new Set<string>();
   for (const state of STATES) {
@@ -123,7 +133,7 @@ async function audit(page: Page, size: keyof typeof SIZES, theme: 'dark' | 'ligh
 }
 
 for (const theme of ['dark', 'light'] as const) {
-  for (const size of ['laptop', 'phone', 'foldable', 'wide'] as const) {
+  for (const size of SIZE_NAMES) {
     test(`contrast, ${theme} theme, ${size}: text 4.5:1, what draws a control 3:1`, async ({ page }) => {
       const { unexpected, unused } = await audit(page, size, theme, ['text', 'boundary']);
       expect(unexpected, 'failures no waiver covers (or below its floor)').toEqual([]);
@@ -132,9 +142,9 @@ for (const theme of ['dark', 'light'] as const) {
   }
 }
 
-for (const size of ['laptop', 'phone', 'foldable', 'wide'] as const) {
-  test(`targets, ${size}: at least ${SIZES[size].minTarget} × ${SIZES[size].minTarget} px`, async ({ page }) => {
-    const { unexpected, unused } = await audit(page, size, 'dark', ['target']);
+for (const size of SIZE_NAMES) {
+  test(`targets, ${size}: at least ${SIZES[size].minTarget} × ${SIZES[size].minTarget} px, no two controls over each other`, async ({ page }) => {
+    const { unexpected, unused } = await audit(page, size, 'dark', ['target', 'overlap']);
     expect(unexpected, 'failures no waiver covers (or below its floor)').toEqual([]);
     expect(unused, 'waivers nothing needs any more: take them off the list').toEqual([]);
   });

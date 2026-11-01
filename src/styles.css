@@ -84,6 +84,9 @@
 /* An instrument, not a page of text: a drag across it, with a mouse or a finger, never selects anything (the
    owner, 2026-10-27). Text fields stay editable. */
 body { margin: 0; background: var(--bg); color: var(--text); -webkit-user-select: none; user-select: none; }
+/* Never narrower than the narrowest phone (issue 157): in a narrower window the page keeps its 320 px layout and
+   scrolls sideways, rather than squeeze its buttons over each other. */
+body { min-width: 320px; }
 input, textarea { -webkit-user-select: text; user-select: text; }
 /* Grows with the screen up to where lines of controls stop being comfortable to scan. */
 main { max-width: 1920px; margin: 0 auto; padding: var(--space-4); }
@@ -1395,6 +1398,14 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 @media (min-width: 601px) and (max-width: 680px) {
   .header-play, .header-set { gap: 2px; }
   header :is(.demo-button, .hold-button, .midi-status, .display-menu .tool, .about-menu .tool, .tempo-open) { padding-inline: 2px; }
+}
+/* Narrower than most phones (375 px), down to the narrowest (320 px, issue 157), the playing and set-up buttons pad
+   2 px and sit 2 px apart, each at least 32 px wide, so the row fits without one over another, in Linux's wider fonts
+   too; the two groups stay 4 px apart. */
+@media (max-width: 374px) {
+  .header-play, .header-set { gap: 2px; }
+  /* Display's button named as the phone's padding names it, so this wins over that rule. */
+  header :is(.demo-button, .hold-button, .midi-status, .display-menu > .tip-anchor > .tool, .about-menu .tool, .tempo-open) { min-width: 32px; padding-inline: 2px; }
 }
 
 /* The sections strip (phones): equal tabs under the header, each underlined in its section's colour when it is the

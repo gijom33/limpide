@@ -32,17 +32,18 @@ The rules every screen change is judged against, the way issue 15's audit judged
 
 - **Contrast:** text at least 4.5:1 against its background (1.4.3); control boundaries, value arcs and modulation rings at least 3:1 (1.4.11). Checked in both themes.
 - **Targets:** at least 24 × 24 CSS px everywhere (2.5.8); at least 44 × 44 on touch screens (Apple Human Interface Guidelines, WCAG 2.5.5 AAA).
+- **No two controls overlap, from the narrowest phone up** (issue 157): the page never lays out narrower than 320 px; in a narrower window it keeps that layout and scrolls sideways.
 - **Dragging has a single-pointer alternative** (2.5.7): a value can be set without a drag.
 - **Every control works from the keyboard** (2.1.1), with a visible focus ring (2.4.7): a plain ring, shown for keyboard focus only, never after a click or a drag.
 - **Colour is never the only signal** (1.4.1): the modulation ring also differs from the value arc by its position, outside the dial.
 
-Contrast, target sizes and the keyboard are checked on every screen state by `e2e/designPrinciples.spec.ts`.
+Contrast, target sizes, overlapping controls and the keyboard are checked on every screen state by `e2e/designPrinciples.spec.ts`, from the narrowest phone (320 px) to a wide screen.
 
 **Waivers.** Look B departs from two of these rules on purpose (the owner's decision, 2026-10-25, issues 27 and 28): its edges stay quiet, and its controls stay compact. Each departure is a waiver in the spec, with the elements it covers and a floor just under what it measured that day, so nothing waived can get worse unseen:
 
 - Control edges below 3:1: buttons, Patch items and fields (1.1:1 and up), a selector's chosen option (1.45:1 and up), a knob's groove and a fader's track (1.2:1 and up). The text and the value arcs carry the control.
 - Light theme text below 4.5:1: muted text on buttons and selectors (4:1 and up), the Oscillators green as text (3.25:1 and up). The Space hint on Freeze (2.25:1 and up).
-- Targets below 24 px on a laptop: selector options (20 px), the piano's keys (12 px black, 20 px white). Below 44 px on a phone: controls at the toolbar height (28 px), selector options (20 px), the logo (24 px), the Preset arrows (18 px), the black keys (26 px), the Demo card's segments (8 px wide and up, as long as their parts; its Previous part and Next part buttons, 44 px, do the same: issue 99, decided by the owner). On a foldable opened flat (690 × 830, the sections 2 × 2 of issue 38) and a wide screen (1920 × 1080, four across, issue 43), the laptop's controls and so the laptop's two.
+- Targets below 24 px on a laptop: selector options (20 px), the piano's keys (12 px black, 20 px white). Below 44 px on a phone: controls at the toolbar height (28 px), selector options (20 px), the logo (24 px), the Preset arrows (18 px), the black keys (26 px; 20 px on the narrowest phone, 320 px), the Demo card's segments (8 px wide and up, as long as their parts; its Previous part and Next part buttons, 44 px, do the same: issue 99, decided by the owner). On a foldable opened flat (690 × 830, the sections 2 × 2 of issue 38) and a wide screen (1920 × 1080, four across, issue 43), the laptop's controls and so the laptop's two.
 
 ## Sources
 

@@ -1,4 +1,5 @@
 import { expect, type Page, test } from '@playwright/test';
+import { type AuditOptions, auditPage } from './audit';
 
 // Issue 44: one header across the layouts. Its groups the same at every width (the Wordmark and the Patch; the keyboard;
 // Hold, MIDI, Display, About; Demo, Tutorial, Song: the owner, 2026-10-29), each layout placing them in rows of its own,
@@ -113,6 +114,37 @@ test('on the narrowest laptop windows the piano takes what the header leaves, it
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   }
 });
+
+// Issue 157: never narrower than the narrowest phone (320 px). From there up the playing and set-up buttons sit side
+// by side on their row, each a finger tall and at least 32 px wide (the phone's waiver accepts 28), and no two controls
+// lie over each other; in a narrower window the page keeps its 320 px layout and scrolls sideways.
+for (const width of [280, 320, 340, 375]) {
+  test(`at ${width} px the playing and set-up buttons sit side by side and nothing lies over anything, the page ${width < 320 ? 'laid out at 320 px, scrolling sideways' : 'as wide as the window'} (issue 157)`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 700 });
+    await page.goto('/');
+    await page.locator('.piano button').first().waitFor();
+    const names = ['Demo', 'Tutorial', 'Song', 'Hold', 'Tempo', 'MIDI', 'Display', 'About'];
+    const boxes = await page.evaluate(
+      (names) => names.map((name) => document.querySelector(`header button[aria-label="${name}"]`)!.getBoundingClientRect().toJSON() as DOMRect),
+      names,
+    );
+    for (let i = 0; i < names.length; i++) {
+      expect(boxes[i].height, names[i]).toBeGreaterThanOrEqual(44);
+      expect(boxes[i].width, names[i]).toBeGreaterThanOrEqual(32);
+      expect(boxes[i].top, names[i]).toBe(boxes[0].top);
+      if (i) expect(boxes[i].left, `${names[i - 1]} → ${names[i]}`).toBeGreaterThanOrEqual(boxes[i - 1].right);
+    }
+    expect(boxes.at(-1)!.right).toBeLessThanOrEqual(Math.max(width, 320));
+    const overlaps: AuditOptions = { rules: ['overlap'], minTarget: 0, waivers: [] };
+    const { unexpected } = await page.evaluate(auditPage, overlaps);
+    expect(unexpected).toEqual([]);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(Math.max(width, 320));
+    if (width < 320) {
+      await page.evaluate(() => scrollTo(320, 0));
+      expect(await page.evaluate(() => scrollX)).toBe(320 - width);
+    }
+  });
+}
 
 test.describe('the sections 2 × 2', () => {
   test.use({ viewport: { width: 690, height: 830 } });
