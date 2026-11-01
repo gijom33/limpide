@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buttonCc, c16Bank, c16Layout, isC16, upgradeC16Layout } from './c16';
+import { addC16Places, buttonCc, C16_BANKS, c16Bank, c16Layout, describeSharedButtons, isC16, upgradeC16Layout } from './c16';
 import type { Mapping } from './mappings';
 
 /** What the layout maps a CC on channel 1 to: "param:cutoff", or undefined when it is left free. */
@@ -48,7 +48,7 @@ describe('the C16 layout, strip by strip (issue 145)', () => {
       faders: ['param:ampAttack', 'param:ampDecay', 'param:ampSustain', 'param:ampRelease'],
       M: SHARED_M,
       S: [undefined, undefined, 'action:snapshot', undefined],
-      R: [undefined, undefined, undefined, undefined], // R2 kept for Legato (issue 119)
+      R: [undefined, 'choice:legato', undefined, undefined], // Legato under Glide (issue 119)
     });
     expect(bank(layout, 3)).toEqual({
       knobs: [
@@ -58,7 +58,7 @@ describe('the C16 layout, strip by strip (issue 145)', () => {
       faders: [undefined, undefined, undefined, undefined],
       M: SHARED_M,
       S: [undefined, undefined, 'action:snapshot', undefined],
-      R: ['choice:lfoRetrigger', undefined, 'choice:lfo2Retrigger', undefined], // R2 and R4 kept for Sync (issue 112)
+      R: ['choice:lfoRetrigger', 'choice:lfoSync', 'choice:lfo2Retrigger', 'choice:lfo2Sync'], // each LFO's Retrigger and Sync (issue 112)
     });
     expect(at(layout, 97)).toBeUndefined();
   });
@@ -78,6 +78,7 @@ describe('the C16 layout, strip by strip (issue 145)', () => {
     }
     expect(modes(0, 'R')).toEqual(['trigger', 'trigger', 'toggle', 'toggle']); // the Waveforms step; Noise Colour, Sub Waveform switch
     expect(modeAt(layout, buttonCc(0, 'S', 3))).toBe('toggle'); // Sub Octave
+    expect(modeAt(layout, buttonCc(2, 'R', 1))).toBe('toggle'); // Legato
     expect(modeAt(layout, buttonCc(1, 'R', 0))).toBe('toggle'); // Slope
     expect([0, 2].map((s) => modeAt(layout, buttonCc(3, 'R', s)))).toEqual(['toggle', 'toggle']); // the Retriggers
   });
@@ -96,6 +97,13 @@ describe('the C16 layout, strip by strip (issue 145)', () => {
     expect(c16Bank({ kind: 'cc', channel: 2, number: 9 })).toBeUndefined();
     expect(bankOf(0, 97)).toEqual([undefined, undefined]);
     expect(c16Bank({ kind: 'note', channel: 1, number: 36 })).toBeUndefined();
+  });
+
+  it('finds the buttons the same on every bank, for the printed card’s foot (issue 148)', () => {
+    expect(describeSharedButtons()).toBe('M1 Previous Preset, M2 Next Preset, M3 Freeze, M4 Hold, S3 Snapshot');
+    // A shared place changed on one bank is no longer on every bank, and the foot follows.
+    const banks = C16_BANKS.map((b, i) => (i === 2 ? { ...b, buttons: { ...b.buttons, S: [null, null, null, null] } } : b));
+    expect(describeSharedButtons(banks)).toBe('M1 Previous Preset, M2 Next Preset, M3 Freeze, M4 Hold');
   });
 
   it('knows a C16 by the name it gives, over USB or Bluetooth', () => {
@@ -130,5 +138,26 @@ describe('the first C16 layout, brought to today’s (issue 145)', () => {
     expect(upgradeC16Layout([])).toBeNull();
     expect(upgradeC16Layout(c16Layout())).toBeNull();
     expect(upgradeC16Layout([{ control: cc(1), target: { kind: 'param', id: 'cutoff' }, mode: 'absolute' }])).toBeNull();
+  });
+});
+
+describe('issue 145’s layout, brought to today’s (issues 112 and 119)', () => {
+  const addedSince145 = (layout: Mapping[]) => layout.filter((m) => m.target.kind === 'choice' && /^(lfo2?Sync|legato)$/.test(m.target.id));
+  const before = c16Layout().filter((m) => !addedSince145([m]).length);
+
+  it('gains Legato on bank C’s R2 and each LFO’s Sync on bank D’s R2 and R4, as toggles', () => {
+    const added = addC16Places(before)!;
+    expect(addedSince145(added).map((m) => [m.control.number, m.target.id, m.mode])).toEqual([
+      [buttonCc(2, 'R', 1), 'legato', 'toggle'],
+      [buttonCc(3, 'R', 1), 'lfoSync', 'toggle'],
+      [buttonCc(3, 'R', 3), 'lfo2Sync', 'toggle'],
+    ]);
+    expect(added).toHaveLength(c16Layout().length);
+  });
+
+  it('leaves a place the person has used since to them, and adds nothing to today’s layout', () => {
+    const own: Mapping = { control: { kind: 'cc', channel: 1, number: buttonCc(3, 'R', 1) }, target: { kind: 'action', id: 'tap' }, mode: 'trigger' };
+    expect(addedSince145(addC16Places([...before, own])!).map((m) => m.target.id)).toEqual(['legato', 'lfo2Sync']);
+    expect(addC16Places(c16Layout())).toBeNull();
   });
 });

@@ -16,7 +16,7 @@ const knob = (n: number) => times(4, cc(n, 1));
 const firstKnobs = () => [1, 2, 3, 4].flatMap(knob);
 const fader = (n: number) => [cc(32 + n, 10), cc(32 + n, 11), cc(32 + n, 12), cc(32 + n, 13)];
 const button = (n: number) => [cc(48 + n, 127), cc(48 + n, 0)];
-const STEPS = 27;
+const STEPS = 28;
 
 test.beforeEach(({ page }) => withFakeController(page));
 
@@ -43,6 +43,8 @@ test('Quick Setup walks through every control played live, the Filter’s first 
   for (let n = 5; n <= 8; n++) await play(page, ...knob(n)); // the LFOs
   await expect(prompt(page)).toContainText('Press a button → Hold');
   for (let n = 1; n <= 5; n++) await play(page, ...button(n));
+  await expect(prompt(page)).toContainText('Press a button → Tap'); // the tempo's (issue 112)
+  await play(page, ...button(6));
 
   await expect(setup(page)).toContainText(`${STEPS} of ${STEPS} mapped`);
   await setup(page).getByRole('button', { name: 'Close' }).click();

@@ -47,7 +47,7 @@ export interface Pose {
   ice: number;
   /** Its static with the Noise, 0 to 1. */
   fuzz: number;
-  /** Its twin's way off to its left, in pixels, Detune splitting it; 0, one drop. */
+  /** Its twin's way off, in pixels, Detune splitting it: to its left below 0 cents, to its right above (issue 174); 0, one drop. */
   twin: number;
   /** Its size, shrinking as it evaporates. */
   size: number;
@@ -332,7 +332,8 @@ export function createMascotMotion(random: () => number = Math.random) {
     pose.tail = wave?.shape ?? (now < screamUntil ? 'straight' : pose.tail);
     const cents = Math.min(50, Math.abs(heard.detune ?? 0));
     const gap = (TWIN_PX * cents) / 50;
-    pose.twin = gap < 0.5 ? 0 : reduced ? gap : gap * (0.75 + 0.25 * Math.sin(now * 2 * Math.PI * TWIN_BEAT * (cents / 50)));
+    const side = Math.sign(heard.detune ?? 0);
+    pose.twin = gap < 0.5 ? 0 : side * (reduced ? gap : gap * (0.75 + 0.25 * Math.sin(now * 2 * Math.PI * TWIN_BEAT * (cents / 50))));
     pose.ice = ice;
     pose.fuzz = reduced ? 0 : Math.min(1, heard.noise ?? 0);
     if (pose.hat === 'none') pose.hat = hat;

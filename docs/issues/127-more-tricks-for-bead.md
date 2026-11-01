@@ -96,7 +96,7 @@ Claude's calls, open to the owner: "a few seconds" for the tail is 3 s; the word
 - **Theme and dates:** switching the theme gives a reaction of a few seconds (a nightcap for dark, shading its eyes for light). By the visitor's date: a ghost sheet on 31 October, a Christmas hat from 24 to 26 December, a party hat on 24 October.
 - **The Demo:** each Demo part, one of three acts in turn: conducting with a tiny baton on the Notes, air guitar on its tail, or surfing an LFO's plot (decision 15; the Oscillator Scope's trace at first), where one is in view, else another act; back to its edge at the part's end.
 - **Funny turns:** evaporating (a little sun, steam, a cloud raining it back), a soap bubble (blown, caught inside, floating up a little, popping), skipping rope with its tail, fishing off its edge for a little ♪, all in the shuffled deck.
-- **Unchanged:** it makes no sound, takes no focus, is heard by no screen reader, is left out of the tips and the README; with reduced motion it only changes pose.
+- **Unchanged:** it makes no sound, takes no focus, is heard by no screen reader, is left out of the tips and the README; with reduced motion it only changes pose. (Since [150](./150-bead-shown-by-default.md), 2026-10-31: Bead itself is named in the README and Display's tip, its tricks still left out.)
 
 **Acceptance criteria:**
 - [ ] Changing the Waveform shows the tail as that wave, back to the logo 3 s later

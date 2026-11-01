@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createSynthEngine } from '../engine/synthEngine';
 import { dB, energyAboveDb, frequencyAround, toneAmplitude, toneAmplitudeHann } from '../test/measure';
+import { straightenLimiter } from '../test/straightLimiter';
 import { applyStep } from '../tutorial/tutorial';
 import { tutorialFor } from '../tutorial/tutorials';
 import type { Patch } from './patch';
@@ -22,18 +23,7 @@ const NOTE = 0.05;
  */
 async function play(patch: Patch, notes: number[], hold: number, seconds: number, velocity = 1) {
   const ctx = new OfflineAudioContext(1, Math.round(SR * seconds), SR);
-  const shaper = ctx.createWaveShaper.bind(ctx);
-  const curve = Object.getOwnPropertyDescriptor(WaveShaperNode.prototype, 'curve')!;
-  ctx.createWaveShaper = () => {
-    const node = shaper();
-    // The limiter's curve is the one longer than the LFOs' two-point clamp that passes negative values (a pulse's
-    // cycle, issue 98, is all positive): ±4 in, ±4 out, a straight line.
-    Object.defineProperty(node, 'curve', {
-      get: () => curve.get!.call(node),
-      set: (c: Float32Array) => curve.set!.call(node, c.length > 2 && c[0] < 0 ? Float32Array.of(-4, 4) : c),
-    });
-    return node;
-  };
+  straightenLimiter(ctx);
   const engine = createSynthEngine(ctx);
   engine.applyPatch(patch);
   notes.forEach((note, i) => engine.noteOn(note, velocity, NOTE + i * 0.01));
@@ -220,6 +210,44 @@ describe('the Presets do what their words say (issue 108, reviews 13 and 15)', (
     const heard = [];
     for (let t = 1 / 24; t < 1.1; t += 1 / 12) if (t > NOTE + 0.02) heard.push(12 * Math.log2(frequencyAround(s, SR, t, 0.03) / hz(C4)));
     for (const [i, semitones] of heard.entries()) expect(semitones, heard.map((h) => h.toFixed(2)).join(' ')).toBeCloseTo(i % 2 ? 2 : 0, 1);
+  });
+
+  it('Talking Filter talks: two band-passes, one wide and one narrow, by turns, each sweeping with LFO 1 (issue 166)', async () => {
+    const patch = preset('Talking Filter');
+    const ctx = new OfflineAudioContext(1, SR * 3, SR);
+    straightenLimiter(ctx);
+    const engine = createSynthEngine(ctx);
+    engine.applyPatch(patch);
+    engine.noteOn(C4, 1, NOTE);
+    const s = (await ctx.startRendering()).getChannelData(0);
+    /** A 40 ms window's centroid over C4's first 30 Harmonics, in Hz, and its level, in dB. */
+    const windowAt = (t: number) => {
+      const [a, b] = [Math.round(t * SR), Math.round((t + 0.04) * SR)];
+      const power = Array.from({ length: 30 }, (_, n) => toneAmplitude(s, SR, hz(C4) * (n + 1), a, b) ** 2);
+      const total = power.reduce((sum, p) => sum + p, 0);
+      return { centroid: (power.reduce((sum, p, n) => sum + p * (n + 1), 0) / total) * hz(C4), level: 10 * Math.log10(total) };
+    };
+    // LFO 2's square at 0.7 Hz runs from the engine's start: narrow for its first half-cycle, wide for its second.
+    const half = 1 / patch.lfo2Rate / 2;
+    const halves = [half * 2, half * 3].map((from) => {
+      // The band's top and foot in this half, by the model's Cutoff (LFO 1), clear of the square's jumps.
+      const times = Array.from({ length: 50 }, (_, i) => from + 0.05 + (i / 50) * (half - 0.15));
+      const cutoffs = times.map((t) => engine.modulationAt(t + 0.02).cutoff);
+      const [high, low] = [times[cutoffs.indexOf(Math.max(...cutoffs))], times[cutoffs.indexOf(Math.min(...cutoffs))]];
+      const level = times.reduce((sum, t) => sum + windowAt(t).level, 0) / times.length;
+      return { resonance: engine.modulationAt(from + half / 2).resonance, sweep: windowAt(high).centroid / windowAt(low).centroid, level };
+    });
+    const [narrow, wide] = halves;
+    expect(narrow.resonance).toBeCloseTo(0.9, 2);
+    expect(wide.resonance).toBeCloseTo(0, 2);
+    // Each band follows LFO 1 an octave either way: its centroid moves by more than half that.
+    for (const { sweep } of halves) expect(sweep).toBeGreaterThan(2);
+    // The two vowels: the narrow band lets less through.
+    expect(wide.level - narrow.level).toBeGreaterThan(6);
+    // The wide band is still a band-pass: well short of the open saw above 4 kHz.
+    const open = await play({ ...patch, filterMode: 'lowpass', cutoff: 20000, lfoAmount: 0, lfo2Amount: 0 }, [C4], 3, 3);
+    const top = (samples: Float32Array) => energyAboveDb(samples, SR, 4000, Math.round(half * 3.2 * SR), 4096);
+    expect(top(s)).toBeLessThan(top(open) - 6);
   });
 
   it('Square Lead starts each Note’s vibrato in tune, at the centre of the swing', async () => {

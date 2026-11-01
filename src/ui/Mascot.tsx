@@ -1,14 +1,14 @@
 import { useContext, useEffect, useEffectEvent, useRef, useState } from 'react';
 import type { Theme } from '../app/displaySettings';
 import type { Word } from '../input/callingPhrase';
-import { lfos } from '../patch/patch';
+import { type LfoNumber, lfos } from '../patch/patch';
 import type { PatchStore } from '../patch/patchStore';
 import { addToRenderLoop } from '../viewers/renderLoop';
 import { lineAt, lineWiderThan } from './LfoPlot';
 import { gesturesOf, looksOf } from './mascotGestures';
 import { type Act, createMascotMotion, hatOn, type Pose, type Room, SCREAMING } from './mascotMotion';
-import { CATCH, CLOUD, HATS, HOOK, ICE, type Picture, PROPS, type Rect, ROD_TIP, SKY, TAILS } from './mascotPictures';
-import { acrossOf, choosePerch, createMascotPlace, type Moving, type Perch } from './mascotPlace';
+import { CATCH, CLOUD, HATS, HOOK, ICE, type Picture, PROPS, type Rect, ROD_TIP, SKY, type Stage, TAILS } from './mascotPictures';
+import { acrossOf, type Cover, choosePerch, clearAlong, createMascotPlace, HOVER_UNDER, type Moving, nearestSpan, type Perch, ridesFor, type Span } from './mascotPlace';
 import { createSpray, MOST_DROPLETS } from './mascotSpray';
 import { ModulationContext } from './modulationRing';
 import { SECTIONS, STACKED } from './sections';
@@ -19,7 +19,7 @@ import { SECTIONS, STACKED } from './sections';
  * drop becomes a puddle, then a film, with no tail.
  */
 const SHINE: Rect[] = [[5, 4, 1, 1]];
-const TAIL: Record<'osc' | 'filter' | 'amp' | 'mod', Rect[]> = {
+const TAIL: Record<Stage, Rect[]> = {
   osc: [[9, 9, 1, 1], [10, 7, 1, 2], [11, 5, 1, 2]],
   filter: [[12, 4, 1, 6], [13, 7, 1, 2], [14, 5, 1, 2], [15, 4, 1, 1]],
   amp: [[16, 4, 1, 1], [17, 5, 1, 2], [18, 7, 1, 2], [19, 9, 1, 1]],
@@ -100,11 +100,16 @@ const HEIGHT = 26;
 const HEADROOM = 18;
 /** How far under the section strip an edge must show for it to stand there, in pixels (issue 142). */
 const EDGE_SHOWING = 2;
-/** How long it takes to come up from behind its edge, or down from under the header. */
+/** Hovering, how far either way from where it lost ground it may stray, in pixels (issue 142). */
+const HOVER_REACH = 12;
+/** How long it takes to come up from behind its edge, or down from under the header to hover. */
 export const RISE_SECONDS = 0.4;
 /** The drop's middle from its box's left, and its tail's length turned down under it, in pixels. */
 const DROP_MIDDLE = 9;
 const TAIL_LENGTH = 26;
+/** Its tail whirling under it, flying up or hovering: how many times a second, and how far either way, in degrees. */
+const WHIRLS = 12;
+const WHIRL_DEGREES = 22;
 
 /** Whether an edge leaves room above it in the window for the mascot to stand on it, its headroom too. */
 const roomAbove = (box: DOMRect) => box.top - HEIGHT - HEADROOM >= 0;
@@ -116,6 +121,13 @@ function rightColumn<S extends { box: DOMRect }>(sections: readonly S[]): S[] {
 
 const rects = (list: readonly Rect[]) => list.map(([x, y, w, h]) => <rect key={`${x} ${y}`} x={x} y={y} width={w} height={h} />);
 const picture = (groups: Picture) => groups.map(([className, list]) => <g key={className} className={className}>{rects(list)}</g>);
+/** A tail, each stage's pixels in its stage's colour, as the logo's stroke. */
+const tailOf = (stages: Record<Stage, readonly Rect[]>) =>
+  (Object.keys(stages) as Stage[]).map((stage) => (
+    <g key={stage} style={{ fill: `var(--stage-${stage})` }}>
+      {rects(stages[stage])}
+    </g>
+  ));
 
 /** A press on it that moves this far, in pixels, picks it up (issue 127); one that does not is a click. */
 const PICK_UP_PX = 6;
@@ -131,15 +143,24 @@ const LFO_PLOTS = '.lfo-plot[data-lfo]';
 const CONTROLS = 'button, [role=slider], [role=tab], [role=radio], input, .piano, .knob-value, .fader';
 /** The spots tried along an edge, this many pixels apart. */
 const STEP = 4;
+/**
+ * What is drawn over the page, which it never stands under (issue 164): the docked cards (the Demo's, a Tutorial's, the
+ * Tour's), the tips, the open panels and menus, and the Preset's description. It stays drawn under them, so it never covers their
+ * words or buttons.
+ */
+const DOCKED = '.docked:not([hidden])';
+const COVERS = `${DOCKED}, .tooltip:not([hidden]), .patch-about, .patch-panel, .destination-menu, .tutorial-menu-panel, .tempo-panel, .display-panel, .midi-panel, .learn-bar, .quick-setup`;
 
 /**
- * Its room along a section's top edge, in the window's pixels: the stretch of spots where it covers least of what is
- * above the edge, standing (its leaps may brush past it), around the leftmost of those: the whole edge in three or
- * four across. On a phone and in 2 × 2 the Viewer of the section above comes down to just over the edge all along it:
- * there it keeps clear of the controls only, and passes over the Viewer's bottom, rather than being kept to the edge's
- * left end (the owner, 2026-10-30).
+ * Its room along a section's top edge, in the window's pixels: within the stretches `clear` of the cards, tips and panels
+ * (issue 164), the spots where it covers least of what is above the edge, standing (its leaps may brush past it); of
+ * those, the run of spots nearest to `near`, where it is, or with nothing over the edge the leftmost run, as before: the
+ * whole edge in three or four across.
+ * On a phone and in 2 × 2 the Viewer of the section above comes down to just over the edge all along it: there it keeps
+ * clear of the controls only, and passes over the Viewer's bottom, rather than being kept to the edge's left end (the
+ * owner, 2026-10-30).
  */
-function roomOn(section: DOMRect, viewers: boolean): Room {
+function roomOn(section: DOMRect, viewers: boolean, clear: readonly Span[], near: number): Room {
   const box = { top: section.top - HEIGHT - 2, bottom: section.top };
   const above = [...document.querySelectorAll<HTMLElement>(viewers ? `${CONTROLS}, canvas` : CONTROLS)]
     .filter((el) => !el.closest('.mascot') && el.checkVisibility({ visibilityProperty: true }))
@@ -150,14 +171,31 @@ function roomOn(section: DOMRect, viewers: boolean): Room {
       (sum, r) => sum + Math.max(0, Math.min(r.right, x + WIDTH) - Math.max(r.left, x)) * Math.max(0, Math.min(r.bottom, box.bottom) - Math.max(r.top, box.top)),
       0,
     );
-  const spots = Array.from({ length: Math.max(1, Math.floor((section.width - WIDTH) / STEP) + 1) }, (_, i) => section.left + i * STEP);
+  // Each clear stretch's spots, as runs: with nothing over the edge, one run, from its left end.
+  const stretches = clear.map(({ min, max }) => Array.from({ length: Math.floor((max - min) / STEP) + 1 }, (_, i) => min + i * STEP));
+  const spots = stretches.flat();
+  if (!spots.length) return { min: section.left, max: Math.max(section.left, section.right - WIDTH) };
   const least = Math.min(...spots.map(covers));
   // Within a pixel row of the least is as clear.
-  const clear = (x: number) => covers(x) <= least + WIDTH;
-  const best = spots.find(clear)!;
-  let max = best;
-  while (max + STEP <= section.right - WIDTH && clear(max + STEP)) max += STEP;
-  return { min: best, max };
+  const runs = stretches.flatMap((run) =>
+    run.reduce<Span[]>((found, x) => {
+      if (covers(x) > least + WIDTH) return found;
+      const last = found.at(-1);
+      if (last && x - last.max <= STEP) last.max = x;
+      else found.push({ min: x, max: x });
+      return found;
+    }, []),
+  );
+  return nearestSpan(runs, near)!;
+}
+
+/**
+ * Its room hovering (issue 142): along `line`, within `HOVER_REACH` of `at`, where it lost ground; arriving with no edge
+ * in view (`at` null), about a spot at random.
+ */
+function hoverRoom(line: Span, at: number | null): Room {
+  const spot = at === null ? line.min + Math.random() * (line.max - line.min) : Math.min(line.max, Math.max(line.min, at));
+  return { min: Math.max(line.min, spot - HOVER_REACH), max: Math.min(line.max, spot + HOVER_REACH) };
 }
 
 /** Its droplets on their layer: a pixel of the drawing each, fading as they end. */
@@ -198,11 +236,7 @@ export function BeadIcon({ on }: { on: boolean }) {
   }, [on]);
   return (
     <svg className="bead-icon" data-state={state} viewBox="0 0 22 13" width={33} height={20} shapeRendering="crispEdges" aria-hidden="true">
-      {(Object.keys(TAIL) as (keyof typeof TAIL)[]).map((stage) => (
-        <g key={stage} style={{ fill: `var(--stage-${stage})` }}>
-          {rects(TAIL[stage])}
-        </g>
-      ))}
+      {tailOf(TAIL)}
       <g className="mascot-body">{rects(PARTS.form.drop)}</g>
       <g className="mascot-shine">{rects(SHINE)}</g>
       <g className="mascot-eyes">{rects(PARTS.eyes.open)}</g>
@@ -211,16 +245,44 @@ export function BeadIcon({ on }: { on: boolean }) {
 }
 
 /**
- * The mascot (issue 115), called by B, E, A, D, as in a bead of water: a water drop trailing the Limpide logo. In
+ * Bead in About (issue 163), twice its size on the page, standing still on its feet: idle as on the page, it blinks,
+ * glances about, wags its tail, and now and then jiggles or hops. All in the stylesheet, so it costs no frame of the
+ * render loop, and with reduced motion it is still.
+ */
+export function BeadIdle() {
+  return (
+    <svg className="bead-idle" viewBox="0 0 22 13" width={WIDTH * 2} height={HEIGHT * 2} shapeRendering="crispEdges" aria-hidden="true">
+      <g className="bead-idle-body">
+        <g className="bead-idle-tail">
+          {tailOf(TAIL)}
+        </g>
+        <g className="mascot-body">
+          {rects(PARTS.form.drop)}
+          {rects(PARTS.legs.stand)}
+        </g>
+        <g className="mascot-shine">{rects(SHINE)}</g>
+        {(['open', 'shut', 'left', 'right'] as const).map((eyes) => (
+          <g key={eyes} className={`mascot-eyes bead-idle-eyes-${eyes}`}>
+            {rects(PARTS.eyes[eyes])}
+          </g>
+        ))}
+      </g>
+    </svg>
+  );
+}
+
+/**
+ * The mascot (issue 115), out by default (issue 150) and called by B, E, A, D: a water drop trailing the Limpide logo. In
  * three and four across it lives on the top edge of the top right section; on a phone and in 2 × 2 it keeps in view as
  * the page scrolls, on the top edge of a section in the right column (over a phone's section tabs while an edge shows
- * under them, issue 142), or hanging under the header when none has room.
+ * under them, issue 142), or, when none has room, hovering on its tail a little under the header or the tabs, about where
+ * it lost ground (issue 142).
  * It comes at a spot at random, one of three ways (up from behind its edge, down from the top of the window like rain,
  * or popping up with a hop), and lives its life along its line (`createMascotMotion`): strolls, glances, funny turns
  * when nothing is played, dozing. Between lines it moves by the laws of motion (`createMascotPlace`): falling, it
  * stretches like a raindrop as it speeds up and splashes as hard as it lands; flying up, its tail spins under it. It
  * moves with what is heard, as the Viewers read it (the Modulation model), and with every control turned, by hand, a
- * Controller or the Demo (`gesturesOf`); sent away, it jumps, splashes and melts, or, hanging or in the air, drips away
+ * Controller or the Demo (`gesturesOf`); sent away, it jumps, splashes and melts, or, hovering or in the air, drips away
  * down the window. It adds nothing to the sound. No focus, no pointer, nothing for a screen reader. Drawn by the render
  * loop, outside React (ADR-0002).
  */
@@ -309,8 +371,10 @@ export function Mascot({
     let leaveBy: 'melt' | 'rain' | null = null;
     let room: { key: string; room: Room } | null = null;
     const between = (a: number, b: number) => a + Math.random() * (b - a);
-    // Three or four across: a visit to another section now and then.
-    let visit: { id: string; until: number } | null = null;
+    // Three or four across: a visit to another section now and then, or a ride on an LFO's plot (issue 141).
+    let visit: { id: string; until: number; ride?: LfoNumber } | null = null;
+    // Sent away on a ride: it jumps home first, and melts once it has landed there.
+    let gettingOff = false;
     let nextVisit = context.engine.now() + between(15, 35);
     const droplets = createSpray();
     let lastExhaust = -Infinity;
@@ -364,12 +428,30 @@ export function Mascot({
       const sections = sectionBoxes();
       if (!sections.length) return;
       const page = (outer.offsetParent ?? document.body).getBoundingClientRect();
+      // What is over the page: it never stands under it (issue 164).
+      const covers: Cover[] = [...document.querySelectorAll(COVERS)].map((el) => el.getBoundingClientRect()).filter((r) => r.width > 0 && r.height > 0);
+      const docked = document.querySelector(DOCKED)?.getBoundingClientRect();
+      const card = docked && docked.width > 0 ? { id: 'card', box: docked } : null;
+      const clearOn = (box: DOMRect) => clearAlong(box, covers, WIDTH, HEIGHT);
       if (themeSwitched && !document.querySelector('.display-panel, [role=dialog]')) {
         motion.theme(themeSwitched, now);
         themeSwitched = null;
       }
 
-      // Its line: the top right section's edge; on a phone or in 2 × 2, a right-column edge in view, or the header.
+      // The plots of the LFOs that are on, in view, wide enough for it and clear of the cards (issue 164): in a Demo part,
+      // to surf; outside the Demo, those it may ride now and then (issue 141). Looked for only in a Demo part, on a ride,
+      // or with a visit due and an LFO to ride, so a frame costs no more while it stays home.
+      const part = demoPartNow();
+      const rideLfos = stacked.matches ? [] : ridesFor(lfos(context.patch()), context.engine.tempo().bpm, { demo: part !== null, reduced: still.matches });
+      const looking = part !== null || (rideLfos.length > 0 && (visit ? visit.ride !== undefined : now >= nextVisit));
+      const plots = !looking ? [] : [...document.querySelectorAll<HTMLElement>(`${LFO_PLOTS}:not([data-inactive])`)]
+        .map((el) => ({ lfo: Number(el.dataset.lfo) as 1 | 2, box: el.getBoundingClientRect() }))
+        .map((p) => ({ ...p, clear: clearAlong({ left: p.box.left, right: p.box.right, top: p.box.bottom }, covers, WIDTH, HEIGHT + p.box.height) }))
+        .filter(({ box, clear }) => lineWiderThan(box.width, WIDTH) && roomAbove(box) && box.bottom <= innerHeight && clear.length > 0);
+      const rideable = plots.filter((p) => rideLfos.includes(p.lfo));
+
+      // Its line: the top right section's edge; on a phone or in 2 × 2, a right-column edge in view, or a line under the
+      // header to hover on.
       let on: { id: string; box: DOMRect };
       let homeId: string | null = null;
       if (!stacked.matches) {
@@ -377,74 +459,109 @@ export function Mascot({
         const home = sections.filter((s) => s.box.top - top < 4).reduce((a, b) => (b.box.right > a.box.right ? b : a));
         homeId = home.id;
         // Now and then a visit to another section in view: down to one below, or across to one beside; then home.
-        const inView = (s: { box: DOMRect }) => roomAbove(s.box) && s.box.top <= innerHeight - 4;
-        if (visit && (now >= visit.until || !sections.some((s) => s.id === visit!.id && inView(s)))) {
+        const inView = (s: { box: DOMRect }) => roomAbove(s.box) && s.box.top <= innerHeight - 4 && clearOn(s.box).length > 0;
+        // A ride ends as its LFO stops being one to ride (its Depth, Waveform or Rate, the Demo, reduced motion), its
+        // plot goes out of view, or it is picked up or sent away: it jumps home (issue 141).
+        const visitEnds = visit?.ride
+          ? !rideable.some((p) => p.lfo === visit!.ride) || moving === 'held' || leavingNow()
+          : !sections.some((s) => s.id === visit?.id && inView(s));
+        if (visit && (now >= visit.until || visitEnds)) {
+          if (visit.ride && leavingNow()) gettingOff = true;
           visit = null;
           nextVisit = now + between(20, 40);
         }
         // Not in the middle of a funny turn: it plays to its end first (the owner, 2026-10-30).
-        if (!visit && now >= nextVisit && !still.matches && leaveBy === null && moving === 'standing' && !shown?.doing) {
-          const away = sections.filter((s) => s.id !== home.id && inView(s));
-          if (away.length) visit = { id: away[Math.floor(Math.random() * away.length)].id, until: now + between(8, 18) };
+        if (!visit && now >= nextVisit && !still.matches && leaveBy === null && !leavingNow() && moving === 'standing' && !shown?.doing) {
+          // A plot to ride (issue 141) is a choice beside the sections in view.
+          const choices = [
+            ...rideable.map((p) => ({ id: `ride ${p.lfo}`, ride: p.lfo })),
+            ...sections.filter((s) => s.id !== home.id && inView(s)).map((s) => ({ id: s.id })),
+          ];
+          if (choices.length) visit = { ...choices[Math.floor(Math.random() * choices.length)], until: now + between(8, 18) };
           else nextVisit = now + between(10, 20);
         }
         on = sections.find((s) => s.id === visit?.id) ?? home;
-        perch = { id: on.id, foot: on.box.top, hanging: false };
+        // Its edge covered (issue 164): the nearest edge in view clear of it, else the docked card's top.
+        if (!clearOn(on.box).length) {
+          const off = (s: { box: DOMRect }) => Math.hypot(Math.max(0, s.box.left - drawnAt.left, drawnAt.left - s.box.right), s.box.top - drawnAt.foot);
+          const nearest = sections.filter(inView).sort((a, b) => off(a) - off(b))[0];
+          on = nearest ?? (card && clearOn(card.box).length ? card : on);
+        }
+        perch = { id: on.id, foot: on.box.top, hovering: false };
       } else {
         const column = rightColumn(sections).sort((a, b) => a.box.top - b.box.top);
         const [header, strip] = ['header', '.section-strip'].map((q) => document.querySelector(q)?.getBoundingClientRect().bottom ?? 0);
         const ceiling = Math.max(0, header, strip);
         // Under the section strip, not the header, an edge is a line for it while it shows under the strip, the drop over
-        // the strip's foot (issue 142): hanging, its foot would be just off that line.
+        // the strip's foot (issue 142): hovering, it would be just off that line.
         const overlap = strip > header ? HEIGHT - EDGE_SHOWING : 0;
         perch = choosePerch({
-          current: perch?.id ?? null, edges: column.map((s) => ({ id: s.id, top: s.box.top })), ceiling, overlap, bottom: innerHeight,
+          current: perch?.id ?? null,
+          edges: column.map((s) => ({ id: s.id, top: s.box.top, covered: !clearOn(s.box).length })),
+          card: card && { id: card.id, top: card.box.top, covered: !clearOn(card.box).length },
+          ceiling, overlap, bottom: innerHeight,
           height: HEIGHT, headroom: HEADROOM, where: foot ?? ceiling,
         });
         const id = perch.id;
         const span = column[0].box;
-        on = column.find((s) => s.id === id) ?? { id, box: new DOMRect(span.left, perch.foot, span.width, 0) };
+        on = column.find((s) => s.id === id) ?? (id === card?.id ? card : { id, box: new DOMRect(span.left, perch.foot, span.width, 0) });
       }
       // Thrown (issue 127): it lands on the first edge under it that it comes down onto, staying there a while.
       if (moving === 'thrown') {
         const under = (stacked.matches ? rightColumn(sections) : sections)
           .filter((s) => s.box.left <= drawnAt.left + DROP_MIDDLE && s.box.right >= drawnAt.left + DROP_MIDDLE && s.box.top >= drawnAt.foot - 1)
+          .filter((s) => clearOn(s.box).some((c) => drawnAt.left >= c.min - STEP && drawnAt.left <= c.max + STEP))
           .sort((a, b) => a.box.top - b.box.top)[0];
         if (under) {
           on = under;
-          perch = { id: under.id, foot: under.box.top, hanging: false };
+          perch = { id: under.id, foot: under.box.top, hovering: false };
           if (homeId !== null) visit = under.id === homeId ? null : { id: under.id, until: now + between(8, 18) };
         }
       }
       // Through a Demo part, one of its acts in turn; surfing, its line is an LFO's shape as its plot draws it: the
       // first in view of an LFO that is on, its Depth above 0 (the owner, 2026-10-30). With none, another act.
-      const part = demoPartNow();
-      const plot = (part === null ? [] : [...document.querySelectorAll<HTMLElement>(`${LFO_PLOTS}:not([data-inactive])`)])
-        .map((el) => ({ lfo: Number(el.dataset.lfo) as 1 | 2, box: el.getBoundingClientRect() }))
-        .find(({ box }) => lineWiderThan(box.width, WIDTH) && roomAbove(box) && box.bottom <= innerHeight);
+      // Riding outside the Demo (issue 141), the same, on the plot it chose; a funny turn begun meanwhile plays there.
+      const ride = visit?.ride ? rideable.find((p) => p.lfo === visit!.ride) : undefined;
       let act: Act | null = part === null || leaveBy !== null ? null : ACTS[part % ACTS.length];
-      if (act === 'surf' && !plot) act = part! % 2 ? 'airGuitar' : 'conduct';
-      motion.act(act);
+      if (act === 'surf' && !plots.length) act = part! % 2 ? 'airGuitar' : 'conduct';
+      motion.act(act ?? (ride ? 'surf' : null));
+      const plot = act === 'surf' ? plots[0] : ride;
       let surfRoom: Room | null = null;
-      if (act === 'surf' && plot && !still.matches && moving !== 'held' && moving !== 'thrown' && !shown?.doing) {
+      if (plot && !still.matches && moving !== 'held' && moving !== 'thrown' && (ride || !shown?.doing)) {
         // Where the plot draws the LFO under its middle: a second of it across, the newest at the right.
         const { box } = plot;
         const wave = box.top + lineAt({ engine: context.engine, lfo: plot.lfo, box, x: drawnAt.left + DROP_MIDDLE - box.left, now });
-        perch = { id: `surf ${plot.lfo}`, foot: wave, hanging: false };
-        surfRoom = { min: box.left, max: box.right - WIDTH };
+        perch = { id: `surf ${plot.lfo}`, foot: wave, hovering: false };
+        surfRoom = nearestSpan(plot.clear, drawnAt.left)!;
       }
-      // Leaving: on its line it melts; hanging or in the air it drips away down the window.
-      if (leavingNow() && leaveBy === null) {
+      // Leaving: on its line it melts; hovering or in the air it drips away down the window.
+      if (leavingNow() && leaveBy === null && !gettingOff) {
         leaveBy = moving === 'standing' || moving === 'landing' ? 'melt' : 'rain';
         if (leaveBy === 'melt') motion.leave(now);
       }
-      if (leaveBy === 'rain') perch = { id: 'away', foot: innerHeight + HEIGHT + HEADROOM, hanging: false };
+      if (leaveBy === 'rain') perch = { id: 'away', foot: innerHeight + HEIGHT + HEADROOM, hovering: false };
 
-      // Its room along the line, found again only when the line moves against the page or changes.
+      // Its room along the line, found again only when the line moves against the page (the card's top, against the
+      // window) or changes, or what covers it does.
       const box = on.box;
-      const key = `${perch.id} ${box.left + scrollX} ${perch.hanging ? 0 : box.top + scrollY} ${box.width}`;
+      // Hovering, clear of what covers it up to the top of its bob, the header's foot (issue 164).
+      const clear = perch.hovering
+        ? clearAlong({ left: box.left + 4, right: box.right - 4, top: perch.foot }, covers, WIDTH, HEIGHT + HOVER_UNDER)
+        : clearOn(box);
+      const [dx, dy] = on === card ? [0, 0] : [scrollX, scrollY];
+      const key = `${perch.id} ${box.left + dx} ${perch.hovering ? 0 : box.top + dy} ${box.width} ${clear.map((c) => `${Math.round(c.min)}-${Math.round(c.max)}`)}`;
       if (surfRoom) room = { key: 'surf', room: surfRoom };
-      else if (room?.key !== key) room = { key, room: perch.hanging ? { min: box.left + 4, max: box.right - WIDTH - 4 } : roomOn(box, !stacked.matches) };
+      else if (room?.key !== key) {
+        const whole = { min: box.left, max: box.right - WIDTH };
+        // Nothing over the edge, it keeps to the leftmost run, as before; something over it, the run nearest to it.
+        const uncovered = clear.length === 1 && clear[0].min === whole.min && clear[0].max === whole.max;
+        room = {
+          key,
+          room: perch.hovering
+            ? hoverRoom(nearestSpan(clear, drawnAt.left) ?? { min: box.left + 4, max: box.right - WIDTH - 4 }, shown ? drawnAt.left : null)
+            : roomOn(box, !stacked.matches, clear.length ? clear : [whole], uncovered ? -Infinity : drawnAt.left),
+        };
+      }
 
       const m = context.engine.modulationAt();
       const heard = lfos(context.patch()).flatMap((l, i) => (l.amount > 0 ? [m.lfo[i]] : []));
@@ -462,8 +579,11 @@ export function Mascot({
       if (pose.escaped && !stacked.matches) nextVisit = now;
       const where = place.frame(perch, room.room, now, still.matches, pose.x);
       if (where.landedAt !== null) motion.place(where.landedAt);
+      // Caught on its hover line after a throw, it hovers about where it was caught: its room found there again.
+      if (where.landedAt !== null && where.moving === 'hovering') room = null;
       foot = where.foot;
       moving = where.moving;
+      if (moving === 'standing' || moving === 'landing') gettingOff = false;
       if (pose.gone || (leaveBy === 'rain' && where.foot >= innerHeight + HEIGHT)) {
         gone();
         return;
@@ -482,9 +602,11 @@ export function Mascot({
         Object.assign(pose, { legs: 'tuck', splash: 'none', lift: 0, turn: 1, eyes: 'shut', stretch: 1 });
         pose.tilt = (now * 600 * (where.vx < 0 ? -1 : 1)) % 360;
         origin = '20% 60%';
-      } else if (where.moving === 'hanging') {
-        Object.assign(pose, { legs: 'stand', splash: 'none', lift: 0, tilt: still.matches ? 0 : Math.sin(now * 2.2) * 6 });
-        origin = '20% 0%'; // it swings from its tip
+      } else if (where.moving === 'hovering') {
+        // On its tail, straight down under it and whirling (issue 142); its bob is in its foot, and nothing stretches it
+        // up over the tabs. With reduced motion, still.
+        Object.assign(pose, { legs: 'tuck', splash: 'none', lift: 0, tilt: 0, turn: 1, stretch: 1 });
+        tailTurn = 90 + (still.matches ? 0 : Math.sin(now * 2 * Math.PI * WHIRLS) * WHIRL_DEGREES);
       } else if (where.moving === 'falling') {
         // Hopping off, tucked; then a raindrop, longer the faster it falls.
         const speed = Math.max(0, where.vy);
@@ -498,7 +620,7 @@ export function Mascot({
         Object.assign(pose, { legs: 'tuck', splash: 'none', lift: 0, tilt: across, turn: 1, eyes: where.thrust ? 'happy' : 'open' });
         pose.stretch = 1 + Math.min(0.2, Math.abs(where.vy) / 2600);
         // Its tail straight down under it, whirling while it pushes, swinging back up as it coasts.
-        tailTurn = where.thrust ? 90 + Math.sin(now * 2 * Math.PI * 12) * 22 : Math.max(0, Math.min(90, -where.vy / 6));
+        tailTurn = where.thrust ? 90 + Math.sin(now * 2 * Math.PI * WHIRLS) * WHIRL_DEGREES : Math.max(0, Math.min(90, -where.vy / 6));
       } else if (where.moving === 'landing' && leaveBy !== 'melt') {
         // Squashed as hard as it hit, then a wobble that dies away, like a drop of jelly.
         const p = where.landed;
@@ -518,15 +640,16 @@ export function Mascot({
       if (shown?.tail !== pose.tail) for (const [shape, g] of tails.current) g.style.display = shape === pose.tail ? '' : 'none';
       if (shown?.hat !== pose.hat) for (const [name, g] of hats.current) g.style.display = name === pose.hat ? '' : 'none';
       if (shown?.prop !== pose.prop) for (const [name, g] of props.current) g.style.display = name === pose.prop ? '' : 'none';
-      // Its twin, Detune splitting it, off to its left by half as many squares as pixels; frozen; its static. Each
-      // written only as it changes, to keep its frames cheap.
-      const twinned = pose.twin > 0 && pose.form === 'drop';
+      // Its twin, Detune splitting it, off on the side of its sign by half as many squares as pixels, the same side on
+      // the page whichever way it faces (issue 174); frozen; its static. Each written only as it changes, to keep its
+      // frames cheap.
+      const twinned = pose.twin !== 0 && pose.form === 'drop';
       if (twinned || shown?.twin) {
         // Linked to its drawing only while shown: WebKit copies a linked drawing again at every change to it.
         if (twinned) twin.current!.setAttribute('href', '#bead-self');
         else twin.current!.removeAttribute('href');
         twin.current!.style.display = twinned ? '' : 'none';
-        if (twinned) twin.current!.setAttribute('transform', `translate(${-pose.twin / 2} 0)`);
+        if (twinned) twin.current!.setAttribute('transform', `translate(${(pose.turn < 0 ? -pose.twin : pose.twin) / 2} 0)`);
       }
       if (pose.ice > 0 || shown?.ice) {
         ice.current!.style.display = pose.ice > 0 ? '' : 'none';
@@ -550,7 +673,7 @@ export function Mascot({
       tail.current!.setAttribute('transform', turnTail ? `translate(${-4.5 * under} ${3 * under}) rotate(${turnTail} 9 9)` : '');
       shown = pose;
       // What it is doing, for the tests (issue 127).
-      const marks = { act: act ?? '', tail: pose.tail, hat: pose.hat, doing: pose.doing ?? '', prop: pose.prop, moving: where.moving };
+      const marks = { act: act ?? '', ride: ride ? String(ride.lfo) : '', tail: pose.tail, hat: pose.hat, doing: pose.doing ?? '', prop: pose.prop, moving: where.moving };
       for (const [mark, value] of Object.entries(marks)) if (outer.dataset[mark] !== value) outer.dataset[mark] = value;
 
       drawnAt = { left: acrossOf(where, pose.x), foot: where.foot };
@@ -643,7 +766,7 @@ export function Mascot({
       }
       // Coming into view: up from behind its edge (fast for a pop, then a hop), down from under the header, or, falling
       // from the top of the window, all at once.
-      comingFrom ??= perch.hanging ? 'header' : arrival === 'rain' ? 'sky' : 'edge';
+      comingFrom ??= perch.hovering ? 'header' : arrival === 'rain' ? 'sky' : 'edge';
       const wasUp = up;
       up = still.matches || comingFrom === 'sky' ? 1 : Math.min(1, up + dt / (arrival === 'pop' ? RISE_SECONDS / 2 : RISE_SECONDS));
       if (arrival === 'pop' && wasUp < 1 && up === 1) motion.gesture('new', now);
@@ -740,19 +863,11 @@ export function Mascot({
           <g id="bead-self">
             <g ref={tail}>
               <g ref={keep(tails, 'logo')} style={{ display: 'none' }}>
-                {(Object.keys(TAIL) as (keyof typeof TAIL)[]).map((stage) => (
-                  <g key={stage} style={{ fill: `var(--stage-${stage})` }}>
-                    {rects(TAIL[stage])}
-                  </g>
-                ))}
+                {tailOf(TAIL)}
               </g>
               {Object.entries(TAILS).map(([shape, stages]) => (
                 <g key={shape} ref={keep(tails, shape)} style={{ display: 'none' }}>
-                  {(Object.keys(stages) as (keyof typeof stages)[]).map((stage) => (
-                    <g key={stage} style={{ fill: `var(--stage-${stage})` }}>
-                      {rects(stages[stage])}
-                    </g>
-                  ))}
+                  {tailOf(stages)}
                 </g>
               ))}
             </g>

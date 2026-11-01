@@ -9,7 +9,7 @@ export function LearnBar({ state }: { state: LearnState }) {
   if (state.phase === 'off') return null;
   const message =
     state.phase === 'listening'
-      ? `${describeTarget(state.target)}: keep turning…`
+      ? `${describeTarget(state.target)}: ${state.target.kind === 'action' ? 'one moment…' : 'keep turning…'}`
       : state.target
         ? `${describeTarget(state.target)}: now move a knob, fader or pad on your Controller.`
         : 'Click a knob or button to map, then move a control on your Controller.';

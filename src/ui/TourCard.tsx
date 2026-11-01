@@ -10,6 +10,10 @@ interface Props {
   index: number;
   /** The control the synth is turning now. */
   moving: TourMove['id'] | null;
+  /** Whether the synth still freezes the Viewers on this card: not once the person has taken Freeze (issue 130). */
+  freezing: boolean;
+  /** What the card names while the synth has the Viewers frozen, left to right, or null. */
+  naming: string[] | null;
   onBack(): void;
   onNext(): void;
   /** The last card's way on: the first Tutorial, Bass. */
@@ -89,12 +93,38 @@ function useRing(card: Card, moving: TourMove['id'] | null) {
 }
 
 /**
+ * On a card where the synth freezes the Viewers (issue 130), a line under its words, shown however the card is folded on
+ * a phone: what the frozen picture shows, the stage changed or all four; while it runs, a word on what is coming, until
+ * the person takes Freeze. Every line it can say takes the same place, so the card keeps one height; a screen reader
+ * hears the names alone.
+ */
+function FrozenLine({ freezes, freezing, naming }: { freezes: NonNullable<Card['freezes']>; freezing: boolean; naming: string[] | null }) {
+  const shown = naming ? 1 + freezes.findIndex((f) => f.names === naming) : freezing ? 0 : -1;
+  return (
+    <div className="tour-frozen">
+      <p aria-hidden="true">
+        <span data-shown={shown === 0 || undefined}>The picture freezes once each Note has faded.</span>
+        {freezes.map(({ names }, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: the card's freezes never change while it is shown
+          <span key={i} data-shown={shown === i + 1 || undefined}>
+            <strong className="tour-frozen-badge">Frozen</strong> {names.join('; ')}
+          </span>
+        ))}
+      </p>
+      <span className="visually-hidden" aria-live="polite">
+        {naming && `Frozen: ${naming.join('; ')}`}
+      </span>
+    </div>
+  );
+}
+
+/**
  * The Tour's card (issue 128), docked where a Tutorial's card docks: one Section of the page in the signal's order,
  * where the signal comes from and goes, what the Section does and what its Viewers show, while the synth turns its
  * controls. Back and Next move between the cards; the last offers the Bass Tutorial. It takes the focus on its Next when
  * the Tour starts; turning the controls never takes it.
  */
-export function TourCard({ index, moving, onBack, onNext, onBass, onClose }: Props) {
+export function TourCard({ index, moving, freezing, naming, onBack, onNext, onBass, onClose }: Props) {
   const tour = TOUR[index];
   const last = index === TOUR.length - 1;
   const card = useRef<HTMLElement>(null);
@@ -139,6 +169,7 @@ export function TourCard({ index, moving, onBack, onNext, onBass, onClose }: Pro
         <p className="tutorial-then">{tour.sees}</p>
         {last && <p className="tutorial-then">That is the whole chain. Now build a sound yourself: the Bass Tutorial goes through it one control at a time.</p>}
       </div>
+      {tour.freezes && <FrozenLine freezes={tour.freezes} freezing={freezing} naming={naming} />}
       <div className="tutorial-actions">
         <span className="tutorial-spacer" />
         {index > 0 && (

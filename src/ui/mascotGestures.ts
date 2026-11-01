@@ -50,8 +50,10 @@ const ANSWERS: Record<ParamId, Gesture | readonly [up: Gesture, down: Gesture]> 
   mixSub: ['louder', 'quieter'],
   lfoRate: 'twirl',
   lfoAmount: 'twirl',
+  lfoNote: 'twirl',
   lfo2Rate: 'twirl',
   lfo2Amount: 'twirl',
+  lfo2Note: 'twirl',
   glide: 'slide',
 };
 

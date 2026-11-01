@@ -24,7 +24,7 @@ describe('the Display settings remembered (issue 87)', () => {
     const nothing = memoryStorage();
     expect(recall(nothing, 'viewer')).toEqual({ cycles: 2, timelineSeconds: 2, frequencyScale: 'log', levelScale: 'db', tapSource: 'all' });
     expect(recall(nothing, 'overlays')).toEqual({ harmonics: true, ideal: true, curve: true, guides: false, maths: false });
-    expect([recall(nothing, 'letterKeys'), recall(nothing, 'tooltips'), recall(nothing, 'theme'), recall(nothing, 'bead')]).toEqual(['on', 'on', 'dark', 'unmet']);
+    expect([recall(nothing, 'letterKeys'), recall(nothing, 'tooltips'), recall(nothing, 'theme'), recall(nothing, 'bead')]).toEqual(['on', 'on', 'dark', 'on']);
 
     const garbled = memoryStorage({
       'limpide.viewSettings': JSON.stringify({ cycles: 3, timelineSeconds: 4, frequencyScale: 'sideways' }),
@@ -36,9 +36,14 @@ describe('the Display settings remembered (issue 87)', () => {
     });
     expect(recall(garbled, 'viewer')).toMatchObject({ cycles: 2, timelineSeconds: 4, frequencyScale: 'log' });
     expect(recall(garbled, 'overlays')).toEqual({ harmonics: true, ideal: true, curve: true, guides: true, maths: false });
-    expect([recall(garbled, 'letterKeys'), recall(garbled, 'theme'), recall(garbled, 'bead')]).toEqual(['on', 'dark', 'unmet']);
+    expect([recall(garbled, 'letterKeys'), recall(garbled, 'theme'), recall(garbled, 'bead')]).toEqual(['on', 'dark', 'on']);
     expect(recall(memoryStorage({ 'limpide.viewSettings': '{not json', 'limpide.overlays': 'null' }), 'viewer')).toMatchObject({ cycles: 2 });
     expect(recall(memoryStorage({ 'limpide.overlays': 'null' }), 'overlays')).toMatchObject({ harmonics: true });
+  });
+
+  it('treats a browser that never met Bead, under its old "unmet", as on: Bead is out by default (issue 150)', () => {
+    expect(recall(memoryStorage({ 'limpide.bead': 'unmet' }), 'bead')).toBe('on');
+    expect(recall(memoryStorage({ 'limpide.bead': 'on' }), 'bead')).toBe('on');
   });
 
   it('keeps each setting under the same key and in the same form as before, so a reload brings it back', () => {

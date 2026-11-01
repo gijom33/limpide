@@ -66,8 +66,9 @@ test('turning knobs never moves or resizes any knob, whatever width their values
   ]) {
     // A stage is a region; an LFO is a group within its section.
     const knob = page.getByRole(region.startsWith('LFO ') ? 'group' : 'region', { name: region, exact: true }).getByRole('slider', { name: sliderName(name) });
-    // Twenty steps of five key presses, down then up, each followed by a tick for React to render and a look at
-    // every knob, all in the page: as a hundred round trips the test outran its time on a busy machine.
+    // Ten presses of Page Down then ten of Page Up (an octave, double or half: issue 160), each followed by a tick for
+    // React to render and a look at every knob, all in the page: as round trips the test outran its time on a busy
+    // machine.
     const { seen, moved } = await knob.evaluate(async (el, before) => {
       const layout = () =>
         [...document.querySelectorAll<HTMLElement>('.knob')]
@@ -78,9 +79,9 @@ test('turning knobs never moves or resizes any knob, whatever width their values
           });
       const seen = new Set<string | null>();
       const moved: string[] = [];
-      for (const key of ['ArrowDown', 'ArrowUp'])
+      for (const key of ['PageDown', 'PageUp'])
         for (let i = 0; i < 10; i++) {
-          for (let n = 0; n < 5; n++) el.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+          el.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
           // Not requestAnimationFrame: background tabs (parallel runs) pause it.
           await new Promise((resolve) => setTimeout(resolve, 0));
           const value = el.getAttribute('aria-valuetext');
@@ -297,7 +298,8 @@ test('a right-click on a knob turns nothing, so its context menu cannot leave a 
 });
 
 // Issue 105 (the 1.16.0 review): a notch is 4 % of a knob's travel, and a stepped knob rounded it back to where it was.
-test('one wheel notch turns a stepped knob one step, and small trackpad scrolls add up to one (issue 105)', async ({ page }) => {
+// Issue 160: every knob a step of its Grid a notch.
+test('one wheel notch turns a knob one step, and small trackpad scrolls add up to one (issues 105 and 160)', async ({ page }) => {
   await page.goto('/');
   // The scrolls in one go inside the page: gathered scroll is forgotten after a second, which a loaded machine's round
   // trips can take.
@@ -318,9 +320,14 @@ test('one wheel notch turns a stepped knob one step, and small trackpad scrolls 
   await wheelOver('Osc 2 Semitone', [-10, -10]);
   await expect(semitone).toHaveAttribute('aria-valuetext', '+1 st');
 
-  // A knob without steps still turns 4 % a notch.
+  // Every other knob steps on its Grid, a notch a step, trackpad scrolls adding up to one (issue 160).
   const resonance = page.getByRole('slider', { name: 'Resonance', exact: true });
-  const before = Number(await resonance.getAttribute('aria-valuenow'));
+  await expect(resonance).toHaveAttribute('aria-valuetext', '20 %');
   await wheelOver('Resonance', [-100]);
-  await expect.poll(async () => Number(await resonance.getAttribute('aria-valuenow'))).toBe(before + 4);
+  await expect(resonance).toHaveAttribute('aria-valuetext', '21 %');
+  const cutoff = page.getByRole('slider', { name: 'Cutoff', exact: true });
+  await wheelOver('Cutoff', [-100]);
+  await expect(cutoff).toHaveAttribute('aria-valuetext', '2.12 kHz');
+  await wheelOver('Cutoff', Array(9).fill(10));
+  await expect(cutoff).toHaveAttribute('aria-valuetext', '2.00 kHz');
 });

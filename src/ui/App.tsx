@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { recall, remember } from '../app/displaySettings';
 import { type AudioSession, getAudioSession } from '../app/session';
 import { safeStorage } from '../app/storage';
 import { type AudioStatus, unlockAudio } from '../app/unlockAudio';
@@ -10,6 +11,7 @@ import { CHOICES, osc1Heard, osc2Heard, type ParamId, type Patch, setFilter, set
 import { PRESETS } from '../patch/presets';
 import { TUTORIALS } from '../tutorial/tutorials';
 import { About } from './About';
+import { BEAD_ENTRANCE_SECONDS, type BeadEvent, beadAfter, beadOnArrival } from './beadPresence';
 import { DemoBar } from './DemoBar';
 import { DisplayMenu } from './DisplayMenu';
 import { EnvelopeTimeline } from './EnvelopeTimeline';
@@ -24,7 +26,7 @@ import { usePlayers } from './hooks/usePlayers';
 import { usePresetAbout } from './hooks/usePresetAbout';
 import { useTourState } from './hooks/useTourState';
 import { useTutorialState } from './hooks/useTutorialState';
-import { HoldIcon, InfoIcon, NoteIcon, PlayIcon } from './icons';
+import { HoldIcon, InfoIcon, LegatoIcon, NoteIcon, PlayIcon } from './icons';
 import { Knob } from './Knob';
 import { LearnBar } from './LearnBar';
 import { LfoControls } from './LfoControls';
@@ -40,9 +42,11 @@ import { QuickSetupPanel } from './QuickSetupPanel';
 import { SectionStrip } from './SectionStrip';
 import { Segmented } from './Segmented';
 import { SubBlock } from './SubBlock';
+import { Switch } from './Switch';
 import { STACKED } from './sections';
 import { Tabs } from './Tabs';
 import { TapViewers } from './TapViewers';
+import { TempoControl } from './TempoControl';
 import { ToolGroup } from './ToolGroup';
 import { type TipContent, Tooltip, TooltipsContext } from './Tooltip';
 import { TourCard } from './TourCard';
@@ -108,6 +112,9 @@ export function App() {
   const [session] = useState(() => getAudioSession(storage));
   const { patches, library, viewers: viewerStore } = session;
   const { patch, name: patchName, changed } = useSyncExternalStore(patches.subscribe, patches.get);
+  // Glide and Legato act on one Voice alone (issue 119): greyed out, and saying why, with more.
+  const oneVoiceOnly = patch.voices > 1 && 'No effect with more than one Voice';
+  const tempo = useSyncExternalStore(session.tempo.subscribe, session.tempo.get);
   const settings = useSyncExternalStore(viewerStore.subscribe, viewerStore.get);
   const { viewer, overlays } = settings;
   useEffect(() => {
@@ -149,20 +156,26 @@ export function App() {
     },
     [patches],
   );
-  // B, E, A, D played by hand, as in a bead of water, calls the mascot, and again sends it away (issue 115); not
-  // remembered across a reload. Once met, Display has a switch for it, remembered: off, it melts away and the Notes
-  // do nothing, for anyone who would rather not (the owner, 2026-10-30).
-  // Where the Bead is (away, up, or leaving), apart from its switch in Display (unmet until first called, then on or off).
-  const [beadPresence, setBeadPresence] = useState<'away' | 'up' | 'leaving'>('away');
-  const [beadSwitch, setBeadSwitch] = useDisplaySetting(storage, 'bead');
+  // Bead, the mascot (issues 115, 150): out by default, coming in by itself a few seconds after the page opens, or once
+  // the About closes (the welcome among it), so the first thing a newcomer reads is not upstaged. B, E, A, D played by
+  // hand, as in a bead of water, sends it away and calls it back for this visit only. Display's switch is the lasting
+  // setting, remembered: with it off, Bead never appears and the Notes do nothing, for anyone it would annoy (the owner,
+  // 2026-10-31). Its switch is part of its rules (it brings Bead up or sends it away, and the Notes read it), so it is
+  // kept here rather than by `useDisplaySetting`.
+  const [bead, setBead] = useState(() => beadOnArrival(recall(storage, 'bead')));
+  const moveBead = useCallback((event: BeadEvent) => setBead((b) => beadAfter(b, event)), []);
+  useEffect(() => remember(storage, 'bead', bead.switch), [storage, bead.switch]);
+  useEffect(() => {
+    if (!bead.entranceDue || about) return;
+    const timer = setTimeout(() => moveBead('entrance'), BEAD_ENTRANCE_SECONDS * 1000);
+    return () => clearTimeout(timer);
+  }, [bead.entranceDue, about, moveBead]);
   // While it is out, five more words spelled with Notes each cue a trick (issue 127).
   const [word, setWord] = useState<{ word: Word; count: number } | null>(null);
   /** A Note played by hand: `spelled`, the word it ends, if any; `called`, whether it ends the calling phrase. */
   const heard = useEffectEvent((spelled: Word | null, called: boolean) => {
-    if (spelled && beadPresence === 'up') setWord((w) => ({ word: spelled, count: (w?.count ?? 0) + 1 }));
-    if (!called || beadSwitch === 'off') return;
-    setBeadSwitch('on');
-    setBeadPresence((p) => (p === 'away' ? 'up' : p === 'up' ? 'leaving' : p));
+    if (spelled && bead.presence === 'up') setWord((w) => ({ word: spelled, count: (w?.count ?? 0) + 1 }));
+    if (called) moveBead('notes');
   });
   useEffect(() => {
     const phrase = createCallingPhrase();
@@ -172,11 +185,7 @@ export function App() {
       heard(words.press(note, time), phrase.press(note, time));
     });
   }, [session]);
-  const switchBead = (on: boolean) => {
-    setBeadSwitch(on ? 'on' : 'off');
-    setBeadPresence((p) => (on ? (p === 'away' ? 'up' : p) : p === 'up' ? 'leaving' : p));
-  };
-  const beadGone = useCallback(() => setBeadPresence((p) => (p === 'leaving' ? 'away' : p)), []);
+  const beadGone = useCallback(() => moveBead('gone'), [moveBead]);
   const modulationContext = useMemo(() => ({ engine: session.engine, patch: () => patches.get().patch, octave: octaveRef }), [session, patches]);
   // The letter keys play Notes unless turned off in Display (issue 51); remembered.
   const [letterKeys, setLetterKeys] = useDisplaySetting(storage, 'letterKeys');
@@ -206,8 +215,10 @@ export function App() {
   const tutorial = useTutorialState({
     storage, patch, patchName, patches, overlays,
     showOverlay: (overlay) => viewerStore.dispatch({ type: 'showOverlay', overlay }),
+    hideOverlay: (overlay) => viewerStore.dispatch({ type: 'hideOverlay', overlay }),
     snapshot: viewer.snapshot,
     takeSnapshot: () => viewerStore.dispatch({ type: 'takeSnapshot' }),
+    clearSnapshot: () => viewerStore.dispatch({ type: 'clearSnapshot' }),
     onStart: () => {
       tour.end();
       players.stopAll();
@@ -218,6 +229,7 @@ export function App() {
   // The Tour (issue 128): from the Welcome and the About, on a Patch of its own, the person's given back at its end.
   const tour = useTourState({
     patches,
+    viewers: viewerStore,
     onStart: () => {
       tutorial.end();
       players.stopAll();
@@ -226,10 +238,12 @@ export function App() {
     onCard: players.startListen,
     onEnd: players.stopListen,
   });
-  // The person's loads show the Preset's about line under its name (issue 109).
+  // A Preset picked in the Patches panel shows its about line under its name (issues 109 and 153); the arrows, a
+  // Controller's steps and its Program buttons load without it.
   const presetAbout = usePresetAbout(patches);
-  const loadPreset = (name: string, patch: Patch) => {
-    patches.load(name, patch);
+  const load = (name: string, patch: Patch) => patches.load(name, patch);
+  const pickPreset = (name: string, patch: Patch) => {
+    load(name, patch);
     presetAbout.show();
   };
   // The Tutorials, from the Patches panel and the header's Tutorial button alike.
@@ -243,9 +257,8 @@ export function App() {
     // Program n is the n-th Preset (0 is Init), so a keyboard's Program buttons step through them.
     onProgram: (number) => {
       const preset = PRESETS[number];
-      if (preset) loadPreset(preset.name, preset.patch);
+      if (preset) load(preset.name, preset.patch);
     },
-    onPresetStep: presetAbout.show,
   });
   const { learnContext, learning } = midi;
 
@@ -292,8 +305,10 @@ export function App() {
           changed={changed}
           patch={patch}
           library={library}
-          onLoad={loadPreset}
+          onLoad={load}
+          onPick={pickPreset}
           about={presetAbout.about}
+          onCloseAbout={presetAbout.hide}
           tutorials={tutorialList}
           onTutorial={startTutorial}
         />
@@ -332,6 +347,8 @@ export function App() {
           <span className="tool-word">Hold</span>
         </button>
       </Tooltip>
+      {/* The page's tempo beside Hold (issue 112): the BPM, and Tap from 861 px. */}
+      <TempoControl tempo={tempo} onSet={session.tempo.set} onTap={() => session.tempo.tap()} />
       <MidiPanel
         state={midi.midi}
         onOpen={midi.connect}
@@ -341,7 +358,7 @@ export function App() {
         onLearn={() => midi.surface.startLearn()}
         onDone={() => (midi.setup ? midi.updateSetup({ type: 'finish' }) : midi.surface.stopLearn())}
         onQuickSetup={() => midi.updateSetup({ type: 'start' })}
-        onC16Layout={midi.applyC16Layout}
+        onLayout={midi.applyLayout}
         onRemove={(control) => midi.mappingStore.remove(control)}
         onClear={() => midi.mappingStore.clear()}
         bendRange={bendRange}
@@ -359,63 +376,64 @@ export function App() {
             <ToolGroup title="Show">
               <OverlayToggles value={overlays} onToggle={(overlay) => viewerStore.dispatch({ type: 'toggleOverlay', overlay })} />
             </ToolGroup>
-            <ToolGroup title="Keys">
-              <Tooltip content={TIPS.letterKeys}>
-                <Segmented
-                  label="Letter keys"
-                  value={letterKeys}
-                  options={[
-                    { value: 'on', label: 'Play', name: 'Letter keys play Notes' },
-                    { value: 'off', label: 'Off', name: 'Letter keys off' },
-                  ]}
-                  onChange={setLetterKeys}
-                />
-              </Tooltip>
-            </ToolGroup>
-            <ToolGroup title="Tips">
-              <Tooltip content={TIPS.tooltips}>
-                <Segmented
-                  label="Tooltips"
-                  value={tooltips}
-                  options={[
-                    { value: 'on', label: 'On' },
-                    { value: 'off', label: 'Off' },
-                  ]}
-                  onChange={setTooltips}
-                />
-              </Tooltip>
-            </ToolGroup>
-            {beadSwitch !== 'unmet' && (
+            {/* Two choices each: they share one row, and wrap together (issue 162). */}
+            <div className="small-settings">
+              <ToolGroup title="Keys">
+                <Tooltip content={TIPS.letterKeys}>
+                  <Segmented
+                    label="Letter keys"
+                    value={letterKeys}
+                    options={[
+                      { value: 'on', label: 'Play', name: 'Letter keys play Notes' },
+                      { value: 'off', label: 'Off', name: 'Letter keys off' },
+                    ]}
+                    onChange={setLetterKeys}
+                  />
+                </Tooltip>
+              </ToolGroup>
+              <ToolGroup title="Tips">
+                <Tooltip content={TIPS.tooltips}>
+                  <Segmented
+                    label="Tooltips"
+                    value={tooltips}
+                    options={[
+                      { value: 'on', label: 'On' },
+                      { value: 'off', label: 'Off' },
+                    ]}
+                    onChange={setTooltips}
+                  />
+                </Tooltip>
+              </ToolGroup>
               <ToolGroup title="Bead">
-                <Tooltip content={{ title: 'Bead', body: 'The water drop B, E, A, D calls. Off, it melts away and the Notes do nothing.' }}>
+                <Tooltip content={TIPS.bead}>
                   <div className="bead-switch">
                     <Segmented
                       label="Bead"
-                      value={beadSwitch}
+                      value={bead.switch}
                       options={[
                         { value: 'on', label: 'On', name: 'Bead on' },
                         { value: 'off', label: 'Off', name: 'Bead off' },
                       ]}
-                      onChange={(v) => switchBead(v === 'on')}
+                      onChange={(v) => moveBead(v === 'on' ? 'switch on' : 'switch off')}
                     />
-                    <BeadIcon on={beadSwitch === 'on'} />
+                    <BeadIcon on={bead.switch === 'on'} />
                   </div>
                 </Tooltip>
               </ToolGroup>
-            )}
-            <ToolGroup title="Theme">
-              <Tooltip content={TIPS.theme}>
-                <Segmented
-                  label="Theme"
-                  value={theme}
-                  options={[
-                    { value: 'dark', label: 'Dark' },
-                    { value: 'light', label: 'Light' },
-                  ]}
-                  onChange={setTheme}
-                />
-              </Tooltip>
-            </ToolGroup>
+              <ToolGroup title="Theme">
+                <Tooltip content={TIPS.theme}>
+                  <Segmented
+                    label="Theme"
+                    value={theme}
+                    options={[
+                      { value: 'dark', label: 'Dark' },
+                      { value: 'light', label: 'Light' },
+                    ]}
+                    onChange={setTheme}
+                  />
+                </Tooltip>
+              </ToolGroup>
+            </div>
           </div>
         </section>
       </DisplayMenu>
@@ -483,6 +501,7 @@ export function App() {
           onClose={closeAbout}
           onPlay={() => players.playDemo({ shared: welcome === 'shared' })}
           onTour={tour.start}
+          beadOn={bead.switch === 'on'}
         />
 
         {audioStatus === 'blocked' && (
@@ -726,18 +745,33 @@ export function App() {
             }
             heading={
               <div className="voices-field">
-                <Tooltip content={TIPS.voices}>
-                  <Segmented
-                    label="Voices"
-                    caption="Voices"
-                    value={patch.voices}
-                    options={CHOICES.voices.map((v) => ({ value: v, label: String(v) }))}
-                    onChange={(voices) => edit((p) => ({ ...p, voices }))}
-                    learn={{ kind: 'choice', id: 'voices' }}
+                {/* Legato under the numbers, its end by Glide: a one-Voice switch as Glide is, in the room the dial
+                    leaves below them, so the row never wraps (issue 119). */}
+                <div className="voices-choice">
+                  <Tooltip content={TIPS.voices}>
+                    <Segmented
+                      label="Voices"
+                      caption="Voices"
+                      value={patch.voices}
+                      options={CHOICES.voices.map((v) => ({ value: v, label: String(v) }))}
+                      onChange={(voices) => edit((p) => ({ ...p, voices }))}
+                      learn={{ kind: 'choice', id: 'voices' }}
+                    />
+                  </Tooltip>
+                  <Switch
+                    name="Legato"
+                    short="Legato"
+                    labelAt="beside"
+                    on={patch.legato === 'on'}
+                    icon={<LegatoIcon />}
+                    tip={TIPS.legato}
+                    learn={{ kind: 'choice', id: 'legato' }}
+                    inactive={oneVoiceOnly}
+                    onToggle={() => edit((p) => ({ ...p, legato: p.legato === 'on' ? 'off' : 'on' }))}
                   />
-                </Tooltip>
+                </div>
                 {/* Beside Voices, because it only slides a single Voice: with more, each Note starts at its pitch. */}
-                <Knob id="glide" value={patch.glide} onChange={(v) => change('glide', v)} inactive={patch.voices > 1 && 'No effect with more than one Voice'} />
+                <Knob id="glide" value={patch.glide} onChange={(v) => change('glide', v)} inactive={oneVoiceOnly} />
               </div>
             }
             viewers={viewers('amp', 'Amp', { limiting: session.engine.limiting })}
@@ -751,7 +785,7 @@ export function App() {
             controls={
               <div className="timeline-controls">
                 {([1, 2] as const).map((n) => (
-                  <LfoControls key={n} lfo={n} engine={session.engine} patch={patch} onParam={change} onPatch={edit} />
+                  <LfoControls key={n} lfo={n} engine={session.engine} patch={patch} bpm={tempo.bpm} onParam={change} onPatch={edit} />
                 ))}
               </div>
             }
@@ -775,6 +809,8 @@ export function App() {
           <TourCard
             index={tour.index}
             moving={tour.moving}
+            freezing={tour.freezing}
+            naming={tour.naming}
             onBack={() => tour.move(-1)}
             onNext={() => tour.move(1)}
             onBass={() => {
@@ -800,8 +836,8 @@ export function App() {
             onQuit={tutorial.end}
           />
         )}
-        {beadPresence !== 'away' && (
-          <Mascot patches={patches} leaving={beadPresence === 'leaving'} onGone={beadGone} theme={theme} demoPart={players.demo} word={word} />
+        {bead.presence !== 'away' && (
+          <Mascot patches={patches} leaving={bead.presence === 'leaving'} onGone={beadGone} theme={theme} demoPart={players.demo} word={word} />
         )}
       </main>
     </MathsContext.Provider>

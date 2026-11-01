@@ -23,6 +23,8 @@ describe('Presets', () => {
     expect(using((p) => p.keyTrack > 0)).toBeGreaterThanOrEqual(8);
     expect(using((p) => p.velocityCutoff > 0)).toBeGreaterThanOrEqual(5);
     expect(using((p) => p.glide > 0.01)).toBeGreaterThanOrEqual(4);
+    // Legato on a lead of one Voice, beside its Glide (issue 119).
+    expect(PRESETS.filter((p) => p.patch.legato === 'on').map((p) => [p.group, p.patch.voices, p.patch.glide > 0.01])).toEqual([['Leads', 1, true]]);
     expect(using((p) => p.voices > 1)).toBeGreaterThanOrEqual(6);
     expect(using((p) => p.voices === 2)).toBeGreaterThan(0); // not only the maximum
     for (const mode of ['lowpass', 'highpass', 'bandpass', 'notch'] as const) expect(using((p) => p.filterMode === mode), mode).toBeGreaterThan(0);

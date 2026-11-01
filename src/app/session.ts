@@ -2,6 +2,7 @@ import { createSynthEngine, type SynthEngine } from '../engine/synthEngine';
 import { createNoteInput, type NoteInput } from '../input/noteInput';
 import { createLibrary, type Library } from '../patch/library';
 import { createPatchStore, type PatchStore } from '../patch/patchStore';
+import { createTempoStore, type TempoStore } from '../play/tempoStore';
 import { createViewerStore, type ViewerStore } from '../viewers/viewerStore';
 import type { KeyValueStorage } from './storage';
 import { playThroughSilentMode } from './unlockAudio';
@@ -16,6 +17,8 @@ export interface AudioSession {
   viewers: ViewerStore;
   /** The named Patches, and the autosaved Last session. */
   library: Library;
+  /** The page's tempo (issue 112): the person's BPM, or a player's while it plays; synced LFOs follow it. */
+  tempo: TempoStore;
   /** Whether the page opened on a Share link's Patch. */
   shared: boolean;
   /** Be told which Notes are held (from any source), e.g. to light the on-screen piano. */
@@ -47,7 +50,7 @@ export function getAudioSession(storage: KeyValueStorage): AudioSession {
   const notes = createNoteInput(
     (event) => {
       if (muted && event.type !== 'noteOff') return;
-      if (event.type === 'noteOn') engine.noteOn(event.note, event.velocity);
+      if (event.type === 'noteOn') engine.noteOn(event.note, event.velocity, undefined, { afresh: event.afresh });
       else if (event.type === 'pitchChange') engine.pitchChange(event.note);
       else if (event.type === 'release') engine.release(event.note);
       else engine.noteOff();
@@ -70,6 +73,7 @@ export function getAudioSession(storage: KeyValueStorage): AudioSession {
     },
   });
   const viewers = createViewerStore({ storage, patches, setTapSource: (source) => engine.setTapSource(source) });
+  const tempo = createTempoStore({ storage, engine });
   session = {
     ctx,
     engine,
@@ -77,6 +81,7 @@ export function getAudioSession(storage: KeyValueStorage): AudioSession {
     patches,
     viewers,
     library,
+    tempo,
     shared: patches.shared,
     onHeld(listener) {
       listeners.add(listener);

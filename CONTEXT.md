@@ -26,6 +26,10 @@ _Avoid_: Knob, control, setting
 The curve mapping a control's 0–1 position to a Parameter's real value: linear, or logarithmic (equal travel per ratio, used for frequencies and times).
 _Avoid_: Scaling, curve, response
 
+**Grid**:
+The round values a Parameter's control lands on for a press of an arrow key, a wheel's notch or a Relative knob's tick, in its own unit: a semitone of the Cutoff, the next round time of an Envelope stage (10, 11, 12, 14 ms…), 1 % of a level, 0.5 dB of a Mixer fader. Shift steps on a finer Grid, Page Up and Down a coarser one (an octave, double or half, 10 %, 6 dB). A drag or an Absolute knob sets any value; the next press lands on the Grid, and nothing stored is rounded to it. Each control's tip names its steps, where there is a keyboard (issue 160).
+_Avoid_: Resolution, quantise, snap (fine in a tooltip)
+
 **Voice**:
 One sound-producing chain: Oscillators → Mixer → Filter → Amp. A Patch has one to eight; the Viewers show the one playing the newest Note (the Amp Tap, all of them, unless asked otherwise).
 _Avoid_: Channel, synth
@@ -115,16 +119,24 @@ How far, in octaves, the Filter Envelope pushes the Effective Cutoff away from t
 _Avoid_: Env depth, intensity
 
 **LFO**:
-A slow, repeating modulation source; there are two, each moving one Destination: Pitch (vibrato), Osc 2 Pitch, Detune, Pulse Width (PWM), FM, Cutoff, Resonance or Volume (tremolo). **Rate** is how fast it repeats, **Depth** how far it moves things.
+A slow, repeating modulation source; there are two, each moving one Destination: Pitch (vibrato), Osc 2 Pitch, Detune, Pulse Width (PWM), FM, Cutoff, Resonance or Volume (tremolo). **Rate** is how fast it repeats (in Hz, or with Sync on a note value), **Depth** how far it moves things.
 _Avoid_: Modulator, wobble, LFO amount (say Depth)
 
 **Retrigger**:
-An LFO setting: on, the LFO starts its cycle again at every Note, where its Waveform classically starts: a Saw at its foot, a Saw Down at its top, a Square on its upper half, a Sine and a Triangle at the centre rising (each Note gets the same wobble from its start); off, it runs freely and each Note catches it wherever it is. Off by default.
+An LFO setting: on, the LFO starts its cycle again at every Note, where its Waveform classically starts: a Saw at its foot, a Saw Down at its top, a Square on its upper half, a Sine and a Triangle at the centre rising (each Note gets the same wobble from its start); off, it runs freely and each Note catches it wherever it is. A legato Note (Legato on) does not restart it. Off by default.
 _Avoid_: Key sync (fine in a tooltip), reset, phase reset
+
+**Sync**:
+An LFO setting: on, its Rate is a **note value** at the Tempo, from 4 bars to 1/32, straight, dotted (D) or triplet (T), read with its Hz ("1/8 · 4 Hz"), and running freely it starts its cycle on the beat; off, the Rate is in Hz again, as it was. Off by default (issue 112).
+_Avoid_: Tempo sync (fine in a tooltip), BPM sync, clock sync
 
 **Glide**:
 The time taken to slide from one note's pitch to the next.
 _Avoid_: Portamento, slide
+
+**Legato**:
+A switch by Glide, for one Voice: on, a Note played over a key still held changes the pitch alone, at once or over the Glide, and the Envelopes and the LFOs set to Retrigger carry on, with no new Attack; with every key up, even while Hold keeps the last Note, the next Note starts as any does. Off by default; with more Voices it has no effect (issue 119).
+_Avoid_: Mono mode, legato glide, fingered portamento
 
 ### Playing
 
@@ -143,6 +155,10 @@ _Avoid_: Declick, fade (fine in a tooltip)
 **Note Priority**:
 With one Voice, the rule picking which held Note sounds: last-note priority, so the newest held Note wins, and releasing it returns to the previous one. With more Voices, every held Note sounds, and a Note beyond the last free Voice takes the oldest one.
 _Avoid_: Voice stealing
+
+**Tempo**:
+The page's beats per minute, 40 to 240, 120 by default: never a Patch's, kept between visits, set by hand or with **Tap** (the BPM follows taps in time). An LFO with Sync on follows it. While the Demo, the Song, the Tour or a Tutorial plays, the Tempo is the player's own, its beats counted from its first Note, and the person's comes back when it stops (issue 112, ADR-0018).
+_Avoid_: BPM (the unit, fine on screen), clock, speed
 
 **Hold**:
 A mode that keeps Notes sounding after their keys are released, so the sound sustains while you adjust Parameters: with one Voice until a new key or Hold off, with more until Hold off, one Note per Voice at most (a Note beyond them lets the oldest go). Pressing the key of a Note Hold keeps lets that Note go; Hold stays on. The piano keeps their keys lit. Quick clicks on Hold after switching it on, before a Note is held, tap a rhythm: the held Notes then repeat on it, looping (on several Voices, the whole rhythm once as single Notes in turn, then once as the chord).
@@ -165,7 +181,7 @@ A first look at the instrument for someone who has never seen a synth: a card fo
 _Avoid_: Lesson, walkthrough, onboarding, intro, Tutorial
 
 **Step**:
-One change in a Tutorial: one Parameter to a target (reached within 5 % of the control's travel, a choice exactly), or one Display option to switch on. It has an instruction, and a note on what to hear and see, shown once the change is made.
+One change in a Tutorial: one Parameter to a target (reached within 5 % of the control's travel, a choice exactly), or one Display option to switch on (one on already is switched off as its Step comes, and given back if the Tutorial is left before the person switches it on: issue 158). It has an instruction, and a note on what to hear and see, shown once the change is made.
 _Avoid_: Stage (an Envelope's), lesson
 
 **Song**:
@@ -173,7 +189,7 @@ A house loop in C minor that plays on whatever Patch is loaded and never changes
 _Avoid_: Loop, backing track, sequence
 
 **Mascot**:
-Bead: a pixel water drop whose tail is the Limpide logo, called by playing B, E, A, D by hand (as in a bead of water) and sent away the same way. In three and four across it lives on the top edge of the top right section; on a phone and in 2 × 2 it keeps in view as the page scrolls, on a section's edge in the right column or hanging under the header, falling like rain to a lower edge and flying up on its tail to a higher one. It strolls and dances with the music, does funny turns when nothing is played, answers each knob and fader turned, giggles when tickled by the pointer and sprays droplets when clicked; sent away, it smashes itself down into a splash. While it is out, five more words spelled with Notes cue its tricks; it can be picked up and thrown; some controls change its look (its tail a Waveform a moment, a twin with Detune, an ice cube with the Filter closed); through the Demo it conducts, plays air guitar and surfs an LFO's plot. Once met, Display has a switch for it. It makes no sound. Left out of the tips and the README on purpose; everything it does is in [docs/bead.md](docs/bead.md).
+Bead: a pixel water drop whose tail is the Limpide logo, out on the page by default, coming in by itself a few seconds after the page opens; playing B, E, A, D by hand (as in a bead of water) sends it away and calls it back, for that visit only. In three and four across it lives on the top edge of the top right section; on a phone and in 2 × 2 it keeps in view as the page scrolls, on a section's edge in the right column or, with none in view, hovering on its whirling tail a little under the header where it lost ground (issue 142), falling like rain to a lower edge and flying up on its tail to a higher one. It never stands under a docked card, a tip or an open panel: it goes to an edge clear of them, or onto the card's top edge, and is still drawn under them (issue 164). It strolls and dances with the music, does funny turns when nothing is played, answers each knob and fader turned, giggles when tickled by the pointer and sprays droplets when clicked; sent away, it smashes itself down into a splash. While it is out, five more words spelled with Notes cue its tricks; it can be picked up and thrown; some controls change its look (its tail a Waveform a moment, a twin with Detune, an ice cube with the Filter closed); through the Demo it conducts, plays air guitar and surfs an LFO's plot, and outside it, now and then, rides the plot of a slow Sine or Triangle (issue 141). Display has a switch for it, the lasting setting, remembered; off, it never appears and the Notes do nothing. The Notes never turn the switch. It makes no sound. The README and the switch's tip say who it is; its tricks are left out of them on purpose, and everything it does is in [docs/bead.md](docs/bead.md). With the switch on, About shows it beside the logo, a click giving a card of its tricks (issue 163).
 _Avoid_: Easter egg (the idea, not the thing), sprite, pet
 
 **Velocity**:
@@ -199,7 +215,7 @@ A listening point in the Voice where the signal is observed: the **Oscillator Ta
 _Avoid_: Probe, monitor, stage output
 
 **Nominal Level**:
-The Oscillator's peak level (0.5, i.e. −6 dB below full scale), marked on every Scope by the Guides, when they are shown. It leaves headroom for Resonance.
+The Oscillator's peak level (0.5, i.e. −6 dB below full scale), leaving headroom for Resonance: where the Guides stand with one Oscillator at full.
 _Avoid_: Unity, reference level, 0 dB
 
 **Viewer**:
@@ -209,6 +225,10 @@ _Avoid_: Visualiser, graph, panel
 **Scope**:
 A Viewer showing amplitude over time.
 _Avoid_: Oscilloscope (fine in prose), waveform view
+
+**Guides**:
+Dashed lines on every Scope, when they are shown, at the level the Mixer sends: its sources' levels added, up to full scale (the Nominal Level with one Oscillator at full). A trace inside them has only lost energy; one beyond them has been boosted by Resonance.
+_Avoid_: Reference lines, headroom lines
 
 **Cycle Lock**:
 The Scope behaviour that aligns the trace to the Note's period so it stands still, showing a chosen number of cycles (1, 2, 4).
@@ -231,11 +251,11 @@ The theoretical Harmonic levels of each Oscillator's Waveform (e.g. 1/n for saw)
 _Avoid_: Expected spectrum, model curve
 
 **Response Curve**:
-The Filter's gain per frequency at the Effective Cutoff, drawn over the Spectrum.
+The Filter's gain per frequency at the Effective Cutoff, drawn over the Spectrum. Switched on by Display's Filter toggle (issue 161), the line keeping its name.
 _Avoid_: Filter curve, transfer function (maths layer only), EQ curve
 
 **Envelope Timeline**:
-A Viewer plotting, over time with the present at its right edge, what changes the sound: the Amp Envelope always; the Filter Envelope while its Amount is set; the Effective Cutoff while the Filter Envelope or an LFO moves it; every other Destination an active LFO moves, on its knob's scale. A moved Parameter is a broken line in its stage's colour (the Cutoff dotted, what LFO 1 moves dashed, what LFO 2 alone moves dash-dotted). Its key lists what LFO 1 moves, what LFO 2 moves, the Cutoff, the Filter Envelope and the Amp Envelope, the Envelopes as Filter Env and Amp Env on screen.
+A Viewer plotting, over time with the present at its right edge, what changes the sound: the Amp Envelope always; the Filter Envelope while its Amount is set; the Effective Cutoff while the Filter Envelope or an LFO moves it; every other Destination an active LFO moves, on its knob's scale. A moved Parameter is a broken line in its stage's colour (the Cutoff dotted, what LFO 1 moves dashed, what LFO 2 alone moves dash-dotted). Its key lists what LFO 1 moves, what LFO 2 moves, the Cutoff, the Filter Envelope and the Amp Envelope, the Envelopes as Filter Env and Amp Env on screen. While an LFO is synced, faint broken lines mark the Tempo's beats, as on that LFO's plot.
 _Avoid_: ADSR display
 
 **Freeze**:
@@ -243,7 +263,7 @@ Pausing all Viewers on their current frame while the sound keeps playing.
 _Avoid_: Pause, hold (Hold is a playing mode)
 
 **Snapshot**:
-A captured Scope and Spectrum trace, kept faint for A/B comparison against the live ones.
+A captured Scope and Spectrum trace, kept faint for A/B comparison against the live ones. One a Tutorial's Step took is cleared when that Tutorial ends or is left, unless the person has taken another since (issue 158).
 _Avoid_: Reference trace, pin, compare
 
 **Maths Layer**:
@@ -253,7 +273,7 @@ _Avoid_: Advanced mode, expert mode
 ### Control surface
 
 **Controller**:
-A connected MIDI hardware device, such as the Synido TempoPAD C16.
+A connected MIDI hardware device, such as the Synido TempoPAD C16. A **known Controller** is one Limpide recognises by the name it gives and has a built-in layout for: the C16, for now (issue 149).
 _Avoid_: Device, MIDI keyboard
 
 **Mapping**:
@@ -265,11 +285,11 @@ The one built-in set of Mappings, for the TempoPAD C16: each of its 4 banks play
 _Avoid_: Preset (a Preset is a sound), default mapping
 
 **Action**:
-A momentary command that is not a Parameter: toggle Hold, Freeze, take a Snapshot, previous or next Preset.
+A momentary command that is not a Parameter: toggle Hold, Freeze, take a Snapshot, previous or next Preset, Tap.
 _Avoid_: Command, shortcut
 
 **MIDI Learn**:
-The mode in which the next Controller message received becomes the Mapping for the selected Parameter, choice or Action.
+The mode in which the next Controller message received becomes the Mapping for the selected Parameter, choice or Action. A button learned on an Action is heard out for half a second: a second message in that time (its release) makes it momentary; one message alone, whatever its value, a toggle (issue 147).
 _Avoid_: Auto-map
 
 **Quick Setup**:
@@ -277,7 +297,7 @@ A guided sequence of MIDI Learn steps for any Controller: the Parameters played 
 _Avoid_: Wizard (fine in UI copy), onboarding
 
 **Encoder Mode**:
-How a Controller knob reports movement. **Absolute** sends a position (0–127). **Relative** sends increments. Detected during MIDI Learn; the C16 layout's knobs are declared Relative (ADR-0017).
+How a Controller knob reports movement. **Absolute** sends a position (0–127): on a Parameter centred on zero (Detune, the Filter's Amount), 64 is exactly zero, 0 to 64 its lower half and 64 to 127 its upper. **Relative** sends increments, each a step of the Parameter's Grid (a C16's fast 66 a third of one). Detected during MIDI Learn; the C16 layout's knobs are declared Relative (ADR-0017).
 _Avoid_: Knob type
 
 **Pickup**:

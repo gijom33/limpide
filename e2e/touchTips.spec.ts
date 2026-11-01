@@ -28,6 +28,7 @@ test('holding a control shows what it does; it stays after lifting; the next tou
   await finger.up();
   const tip = page.getByRole('tooltip').filter({ hasText: 'Where the Filter starts to take Harmonics away' });
   await expect(tip).toBeVisible();
+  await expect(tip.locator('.tooltip-keys')).toBeHidden(); // no keys on a phone: no steps for them (issue 160)
   await finger.down(page.getByRole('heading', { name: 'Filter', level: 2 }));
   await finger.up();
   await expect(tip).toBeHidden();

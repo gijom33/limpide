@@ -1,5 +1,6 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { mathsReadout, widestMathsReadout } from '../music/maths';
+import { type StepSize, stepParamBy } from '../patch/grid';
 import { formatParam, PARAMS, type ParamId, paramName } from '../patch/patch';
 import { positionToValue, valueToPosition } from '../patch/taper';
 import { useLearnable } from './learn';
@@ -11,30 +12,53 @@ const WIDTH_SAMPLES = 128;
 const SHOW_VALUE_MS = 1200;
 
 /** The longest readouts a Parameter can show, so its control can reserve their width and never change size. */
-function widestReadouts(id: ParamId): string[] {
+function longestReadouts(id: ParamId): string[] {
   const def = PARAMS[id];
   const values = [def.default, ...Array.from({ length: WIDTH_SAMPLES + 1 }, (_, i) => positionToValue(def, i / WIDTH_SAMPLES))];
   const all = new Set(values.map((v) => formatParam(id, v)));
   return [...all].sort((a, b) => b.length - a.length).slice(0, 4);
 }
 
+/** The Parameters one control turns: itself and those turned by its knob, as an LFO's Rate turns its note value. */
+const twins = (id: ParamId): ParamId[] => {
+  const knob = PARAMS[id].knob ?? id;
+  return (Object.keys(PARAMS) as ParamId[]).filter((other) => (PARAMS[other].knob ?? other) === knob);
+};
+
 /**
- * What every Parameter control shares, knob or fader: its position, the arrow keys (Shift for fine), double-click
- * to reset, MIDI Learn, the moment it changes, and the value bubble above a finger that drags it.
+ * The longest readouts a control can show, whichever of its Parameters it turns, so it keeps one width as it turns
+ * and as it changes Parameter: a Rate keeps its width through every Hz and note value, Sync on or off (issue 176).
  */
-export function useParamControl(id: ParamId, value: number, onChange: (value: number) => void) {
+const widestReadouts = (id: ParamId): string[] => [...new Set(twins(id).flatMap(longestReadouts))];
+
+/**
+ * What every Parameter control shares, knob or fader: its position, the arrow keys (steps on its Grid, Shift fine and
+ * Page coarse: issue 160), double-click to reset, MIDI Learn (as the Parameter whose knob it is, `def.knob`), the
+ * moment it changes, and the value bubble above a finger that drags it.
+ */
+export function useParamControl(id: ParamId, value: number, onChange: (value: number) => void, spoken?: string) {
   const def = PARAMS[id];
   const position = valueToPosition(def, value);
-  // A stepped Parameter's (Octave, Semitone) travel per step: less would round back to where it was.
-  const unit = def.step ? def.step / (def.max - def.min) : 0;
   const setPosition = (p: number) => onChange(positionToValue(def, Math.min(1, Math.max(0, p))));
-  const learnable = useLearnable({ kind: 'param', id });
+  // The value the last step set, until a render shows it: steps quicker than renders (a held key, a fast wheel) each
+  // go on from the one before.
+  const stepped = useRef(value);
+  stepped.current = value;
+  /** Moves `steps` steps of `size` along the Parameter's Grid (issue 160), signed. */
+  const nudge = (steps: number, size: StepSize) => {
+    stepped.current = stepParamBy(def, stepped.current, steps, size);
+    onChange(stepped.current);
+  };
+  const learnable = useLearnable({ kind: 'param', id: def.knob ?? id });
   // In the Maths Layer some controls read the quantity behind their value instead (Q, dB): sized for it while on.
   const mathsPatch = useContext(MathsContext);
   const maths = mathsPatch ? mathsReadout(id, value, mathsPatch) : undefined;
   const readout = maths ?? formatParam(id, value);
-  const widestMaths = mathsPatch ? widestMathsReadout(id) : undefined;
-  const widest = useMemo(() => [...widestReadouts(id), ...(widestMaths ? [widestMaths] : [])], [id, widestMaths]);
+  const mathsOn = !!mathsPatch; // the context holds null while the layer is off
+  const widest = useMemo(
+    () => [...widestReadouts(id), ...(mathsOn ? twins(id).flatMap((t) => widestMathsReadout(t) ?? []) : [])],
+    [id, mathsOn],
+  );
   const changing = useChanging(value);
   const [touching, setTouching] = useState(false);
 
@@ -45,20 +69,19 @@ export function useParamControl(id: ParamId, value: number, onChange: (value: nu
     'aria-valuemin': 0,
     'aria-valuemax': 100,
     'aria-valuenow': Math.round(position * 100),
-    'aria-valuetext': formatParam(id, value),
+    'aria-valuetext': spoken ? `${formatParam(id, value)}, ${spoken}` : formatParam(id, value),
     onDoubleClick: () => onChange(def.default),
     onKeyDown: (e: React.KeyboardEvent<HTMLElement | SVGElement>) => {
       delete (e.currentTarget as HTMLElement).dataset.pointer; // keyboard focus from now on: show the ring
-      // A stepped Parameter moves a whole step per key.
-      const step = Math.max(unit, e.shiftKey ? 0.002 : 0.02);
-      // Page Up and Down a tenth of the travel, Home and End to its ends (the WAI-ARIA slider pattern, issue 51).
-      const page = Math.max(unit, 0.1);
-      if (e.key === 'ArrowUp' || e.key === 'ArrowRight') setPosition(position + step);
-      else if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') setPosition(position - step);
-      else if (e.key === 'PageUp') setPosition(position + page);
-      else if (e.key === 'PageDown') setPosition(position - page);
-      else if (e.key === 'Home') setPosition(0);
-      else if (e.key === 'End') setPosition(1);
+      // A step on the Grid, Shift a fine one; Page Up and Down a coarse one, Home and End to the ends (the WAI-ARIA
+      // slider pattern, issue 51). A held key repeats at the system's rate, the same step each time (issue 160).
+      const size = e.shiftKey ? 'fine' : 'unit';
+      if (e.key === 'ArrowUp' || e.key === 'ArrowRight') nudge(1, size);
+      else if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') nudge(-1, size);
+      else if (e.key === 'PageUp') nudge(1, 'coarse');
+      else if (e.key === 'PageDown') nudge(-1, 'coarse');
+      else if (e.key === 'Home') onChange(def.min);
+      else if (e.key === 'End') onChange(def.max);
       else return;
       e.preventDefault();
       e.stopPropagation();
@@ -99,7 +122,7 @@ export function useParamControl(id: ParamId, value: number, onChange: (value: nu
       </div>
     </>
   );
-  return { def, position, unit, setPosition, slider, grab, focusByPointer, release, attributes, text };
+  return { def, position, setPosition, nudge, slider, grab, focusByPointer, release, attributes, text };
 }
 
 /**
@@ -153,9 +176,7 @@ function useChanging(value: number): boolean {
   return changing;
 }
 
-/** Travel per pixel of wheel or trackpad scroll: a mouse wheel's notch (about 100 px) turns a control 4 %. */
-const WHEEL_TRAVEL = 0.0004;
-/** The scroll that moves a stepped control one step: about a notch (Firefox's is 99 px), however many events make it. */
+/** The scroll that moves a control one step: about a notch (Firefox's is 99 px), however many events make it. */
 const STEP_PIXELS = 90;
 /** Scroll gathered towards a step is forgotten after this long without any. */
 const STEP_FORGET_MS = 1000;
@@ -163,14 +184,13 @@ const STEP_FORGET_MS = 1000;
 /**
  * The mouse wheel or a two-finger scroll over a control turns it (issue 53), Shift for fine, and the page does not
  * scroll meanwhile. React's wheel listeners cannot stop the scroll (they are passive), so this is the element's own.
- * A stepped control (`unit`, its travel per step) moves a step for each notch's worth of scroll in one direction,
- * small trackpad scrolls adding up to it, so a notch always moves an Octave one step (issue 105).
+ * A notch's worth of scroll in one direction moves a step of the control's Grid, small trackpad scrolls adding up to
+ * it, so a notch always moves an Octave one step (issue 105) and a Cutoff a semitone (issue 160).
  */
-export function useWheel(control: { position: number; setPosition(p: number): void; unit: number }) {
-  const { position, setPosition, unit } = control;
+export function useWheel(control: { nudge(steps: number, size: StepSize): void }) {
   // The listener is added by a ref callback, not an effect, so it reads the control kept here with each render.
-  const latest = useRef({ position, setPosition, unit });
-  latest.current = { position, setPosition, unit };
+  const latest = useRef(control.nudge);
+  latest.current = control.nudge;
   const listening = useRef<{ element: Element; listener: (e: WheelEvent) => void } | null>(null);
   const gathered = useRef({ pixels: 0, at: 0 });
   // A ref callback, so it follows the element however it is mounted.
@@ -182,8 +202,6 @@ export function useWheel(control: { position: number; setPosition(p: number): vo
       const pixels = e.deltaMode === WheelEvent.DOM_DELTA_LINE ? e.deltaY * 33 : e.deltaY;
       if (!pixels) return;
       e.preventDefault();
-      const { position, setPosition, unit } = latest.current;
-      if (!unit) return setPosition(position - pixels * WHEEL_TRAVEL * (e.shiftKey ? 0.1 : 1));
       const g = gathered.current;
       if (Math.sign(g.pixels) !== Math.sign(pixels) || e.timeStamp - g.at > STEP_FORGET_MS) g.pixels = 0;
       g.pixels += pixels;
@@ -191,7 +209,7 @@ export function useWheel(control: { position: number; setPosition(p: number): vo
       const steps = Math.trunc(g.pixels / STEP_PIXELS);
       if (!steps) return;
       g.pixels = 0; // what is left over would make some notches move two steps
-      setPosition(position - steps * unit);
+      latest.current(-steps, e.shiftKey ? 'fine' : 'unit');
     };
     element.addEventListener('wheel', listener as EventListener, { passive: false });
     listening.current = { element, listener };

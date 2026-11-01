@@ -2,13 +2,15 @@ import { CHOICES, type ChoiceId, PARAMS, type ParamId } from '../patch/patch';
 import type { EncoderMode } from './encoderMode';
 
 /** A momentary command that is not a Parameter. */
-export type ActionId = 'hold' | 'freeze' | 'snapshot' | 'nextPreset' | 'previousPreset';
+export type ActionId = 'hold' | 'freeze' | 'snapshot' | 'nextPreset' | 'previousPreset' | 'tap';
 export const ACTIONS: Record<ActionId, string> = {
   hold: 'Hold',
   freeze: 'Freeze',
   snapshot: 'Snapshot',
   nextPreset: 'Next Preset',
   previousPreset: 'Previous Preset',
+  // The tempo's Tap (issue 112).
+  tap: 'Tap',
 };
 
 /** One control on a Controller: a channel plus a CC or note number. */
@@ -17,6 +19,20 @@ export interface Control {
   channel: number;
   number: number;
 }
+
+/**
+ * The pitch bend wheel as a control: the number after the 128 CCs, so MIDI Learn can map it like a knob (its value
+ * scaled to 0–127, Absolute) (issue 52).
+ */
+export const PITCH_BEND = 128;
+
+/**
+ * The known Controllers, by the tag a Mapping of a built-in layout is stored with (issue 145). Each has its facts
+ * in the Controller module (`controller.ts`), which TypeScript holds to one per tag; the list is here, with the
+ * Mapping's stored shape, so that reading stored Mappings needs nothing of a Controller's layout.
+ */
+export const CONTROLLER_IDS = ['c16'] as const;
+export type ControllerId = (typeof CONTROLLER_IDS)[number];
 
 export const CHOICE_LABELS: Record<ChoiceId, string> = {
   waveform: 'Osc 1 Waveform',
@@ -32,22 +48,35 @@ export const CHOICE_LABELS: Record<ChoiceId, string> = {
   lfo2Destination: 'LFO 2 Destination',
   lfoRetrigger: 'LFO 1 Retrigger',
   lfo2Retrigger: 'LFO 2 Retrigger',
+  lfoSync: 'LFO 1 Sync',
+  lfo2Sync: 'LFO 2 Sync',
   voices: 'Voices',
+  legato: 'Legato',
 };
 
-export type Target = { kind: 'param'; id: ParamId } | { kind: 'choice'; id: ChoiceId } | { kind: 'action'; id: ActionId };
+/** What a Mapping drives: a Parameter, a choice, an Action, or the page's tempo, outside the Patch (issue 112). */
+export type Target =
+  | { kind: 'param'; id: ParamId }
+  | { kind: 'choice'; id: ChoiceId }
+  | { kind: 'action'; id: ActionId }
+  | { kind: 'tempo'; id: 'bpm' };
+
+/** A button's mode: momentary ('trigger') or toggle, as a Mapping says below. */
+export type ButtonMode = 'trigger' | 'toggle';
 
 /**
  * A link from a Controller control to a Parameter (by Encoder Mode) or an Action. A knob whose Encoder Mode is not
- * known yet ('detect') finds it on its first turn. A button either sends a press and a release ('trigger': it acts
+ * known yet ('detect') finds it on its first turn: only the first C16 layout's knobs (issue 34) still stored, kept so
+ * that layout loads until upgradeC16Layout replaces it, and going with it. A button either sends a press and a release ('trigger': it acts
  * on the press) or, as a toggle, one value per press, each the other ('toggle': it acts on every message). A
- * Mapping of the C16's layout answers a C16 only ('c16', issue 145); any other answers every Controller.
+ * Mapping of a known Controller's built-in layout carries its tag and answers that Controller alone (issue 145); any
+ * other answers every Controller. Which input a Mapping answers is the Controller module's to say.
  */
 export interface Mapping {
   control: Control;
   target: Target;
-  mode: EncoderMode | 'detect' | 'trigger' | 'toggle';
-  device?: 'c16';
+  mode: EncoderMode | 'detect' | ButtonMode;
+  device?: ControllerId;
 }
 
 interface KeyValueStorage {
@@ -63,9 +92,11 @@ export const controlKey = (c: Control) => `${c.kind}:${c.channel}:${c.number}`;
 export const sameControl = (a: Control, b: Control) =>
   a.kind === b.kind && a.channel === b.channel && a.number === b.number;
 export const sameTarget = (a: Target, b: Target) => a.kind === b.kind && a.id === b.id;
+/** Whether two Mappings would take one place: the same control, or the same target (one each, issue 34). */
+export const clash = (a: Mapping, b: Mapping) => sameControl(a.control, b.control) || sameTarget(a.target, b.target);
 
 const isMapping = (m: unknown): m is Mapping => {
-  const { control: c, target: t, mode } = (m ?? {}) as Partial<Mapping>;
+  const { control: c, target: t, mode, device } = (m ?? {}) as Partial<Mapping>;
   const byte = (n: unknown, min: number, max: number) =>
     Number.isInteger(n) && (n as number) >= min && (n as number) <= max;
   return (
@@ -76,9 +107,10 @@ const isMapping = (m: unknown): m is Mapping => {
     !!t &&
     ((t.kind === 'param' && Object.hasOwn(PARAMS, t.id)) ||
       (t.kind === 'choice' && Object.hasOwn(CHOICES, t.id)) ||
-      (t.kind === 'action' && Object.hasOwn(ACTIONS, t.id))) &&
+      (t.kind === 'action' && Object.hasOwn(ACTIONS, t.id)) ||
+      (t.kind === 'tempo' && t.id === 'bpm')) &&
     MODES.includes(mode as string) &&
-    ((m as Partial<Mapping>).device === undefined || (m as Partial<Mapping>).device === 'c16')
+    (device === undefined || CONTROLLER_IDS.includes(device))
   );
 };
 
@@ -110,10 +142,7 @@ export function createMappingStore(storage: KeyValueStorage) {
     find: (control: Control) => mappings.find((m) => sameControl(m.control, control)),
     findTarget: (target: Target) => mappings.find((m) => sameTarget(m.target, target)),
     set(mapping: Mapping) {
-      mappings = [
-        ...mappings.filter((m) => !sameControl(m.control, mapping.control) && !sameTarget(m.target, mapping.target)),
-        mapping,
-      ];
+      mappings = [...mappings.filter((m) => !clash(m, mapping)), mapping];
       changed();
     },
     /** The Mapping on the same control, replaced (its mode found, say), leaving every other Mapping as it is. */

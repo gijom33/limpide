@@ -6,6 +6,8 @@
 
 **Status:** done (2026-10-31). "Support: Enjoying Limpide? Buy me a coffee" in About, under the credit, and a line in the README, both to https://buymeacoffee.com/gijom33.
 
+**2026-11-01:** the link was taken out by [172](./172-no-tip-link.md), the owner's decision; a share-or-star line stands in its place.
+
 ## Questions for the owner
 
 1. **v1 or v2?** Under v1's scope rule ([131](./131-v1.md), decision 12) a new idea goes to v2 unless it is a bug or polish of something in v1. Claude's recommendation: v1, as polish of About: one link, no feature.

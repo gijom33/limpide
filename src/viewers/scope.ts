@@ -1,7 +1,7 @@
-import { OSCILLATOR_LEVEL } from '../engine/synthEngine';
 import { cssVar, curveWidth, prepareCanvas } from './canvas';
 import { cycleLockOffset } from './cycleLock';
 import { createFreezeLatch } from './freezeLatch';
+import { createGuideGlide } from './guides';
 import { scopeScale } from './scopeScale';
 import { scopeTrace } from './scopeTrace';
 import { scopeWindow } from './scopeWindow';
@@ -32,6 +32,10 @@ export function createScope(
   const frozenFundamental = createFreezeLatch<number>();
   let snapshotToken: number | null = null;
   let snapshotTrace: Float32Array | null = null;
+  // The Guides at the Mixer's level, held while frozen like the Note, so they belong to the frozen trace.
+  const frozenGuides = createFreezeLatch<number>();
+  const guideGlide = createGuideGlide();
+  const still = matchMedia('(prefers-reduced-motion: reduce)');
 
   return function draw() {
     if (!view().viewer.frozen) analyser.getFloatTimeDomainData(samples);
@@ -63,18 +67,20 @@ export function createScope(
     g.lineTo(width, height / 2);
     g.stroke();
 
-    // Guides at the Oscillator's level, on every Scope: inside them the Filter only removed energy; beyond them
-    // (faintly shaded) Resonance added a peak.
+    // Guides at the level the Mixer sends (issue 159), on every Scope: inside them the Filter only removed energy;
+    // beyond them (faintly shaded) Resonance added a peak. They glide as the Mixer's faders move.
+    const guideLevel = guideGlide(frozenGuides(view().viewer.frozen, () => view().guideLevel), performance.now(), still.matches);
+    canvas.dataset.guides = guideLevel.toFixed(3);
     if (view().overlays.guides) {
       g.fillStyle = cssVar(canvas, '--muted');
       g.globalAlpha = 0.08;
-      g.fillRect(0, 0, width, yOf(OSCILLATOR_LEVEL));
-      g.fillRect(0, yOf(-OSCILLATOR_LEVEL), width, height - yOf(-OSCILLATOR_LEVEL));
+      g.fillRect(0, 0, width, yOf(guideLevel));
+      g.fillRect(0, yOf(-guideLevel), width, height - yOf(-guideLevel));
       g.globalAlpha = 1;
       g.setLineDash([4, 4]);
       g.strokeStyle = cssVar(canvas, '--muted');
       g.beginPath();
-      for (const v of [OSCILLATOR_LEVEL, -OSCILLATOR_LEVEL]) {
+      for (const v of [guideLevel, -guideLevel]) {
         g.moveTo(0, yOf(v));
         g.lineTo(width, yOf(v));
       }

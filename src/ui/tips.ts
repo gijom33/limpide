@@ -1,5 +1,8 @@
+import { bankLetter, C16_BANKS, describeSharedButtons } from '../midi/c16';
+import { describeMode } from '../midi/describe';
 import { DESTINATIONS } from '../modulation/destinations';
-import { LFO_DESTINATIONS, type LfoDestination, type ParamId } from '../patch/patch';
+import { stepWords } from '../patch/grid';
+import { LFO_DESTINATIONS, type LfoDestination, PARAMS, type ParamId } from '../patch/patch';
 import type { Overlay } from '../viewers/overlays';
 import type { TipContent } from './Tooltip';
 
@@ -60,12 +63,12 @@ export const TIPS = {
   },
   c16Layout: {
     title: 'C16 layout',
-    body: 'Maps the whole TempoPAD C16, a section per bank (A the Oscillators, B the Filter, C the Amp, D the LFOs), laid out like the section, row for row where the strips allow: the faders its levels or Envelope, the R buttons its switches and Waveforms. On every bank, M1 to M4 are the Preset arrows, Freeze and Hold, and S3 Snapshot. It answers the C16 only, so another keyboard’s pedal and mod wheel keep theirs.',
-    how: 'Set the C16’s knobs to Relative #1 and the buttons as the printed card says. Applied by itself the first time a C16 is plugged in while nothing is mapped; this puts it back, replacing your Mappings.',
+    body: `Maps the whole TempoPAD C16, a section per bank (${C16_BANKS.map((bank, b) => `${bankLetter(b)} ${bank.name}`).join(', ')}), laid out like the section, row for row where the strips allow: the faders its levels or Envelope, the R buttons its switches and Waveforms. On every bank: ${describeSharedButtons()}. It answers the C16 only, so another keyboard’s pedal and mod wheel keep theirs.`,
+    how: 'Set the C16’s knobs to Relative #1 and each button as the card says: Print C16 card, beside this, opens it. Applied by itself the first time a C16 is plugged in while nothing is mapped; this puts it back, replacing your Mappings.',
   },
   c16Card: {
     title: 'Print C16 card',
-    body: 'Opens a one-page card of the C16 layout to print and keep beside it: every bank’s knobs, faders and buttons, and how to set each button, Momentary or Toggle.',
+    body: `Opens a one-page card of the C16 layout to print and keep beside it: every bank’s knobs, faders and buttons, and how to set each button, ${describeMode('trigger')} or ${describeMode('toggle')}.`,
   },
   midiLearn: {
     title: 'MIDI Learn',
@@ -146,7 +149,7 @@ export const TIPS = {
   },
   timeline: {
     title: 'LFO & Envelopes',
-    body: 'What changes the sound over time: the LFO, and the Envelope Timeline beside it. The Timeline shows the last two seconds (1 to 4 in Display). The violet fill is the Amp Envelope, the orange one the Filter Envelope when its Amount is set. A broken line in its section’s colour is each knob the Filter Envelope or an LFO moves: the Cutoff dotted, what LFO 1 moves dashed, what LFO 2 alone moves dash-dotted.',
+    body: 'What changes the sound over time: the LFO, and the Envelope Timeline beside it. The Timeline shows the last two seconds (1 to 4 in Display). The violet fill is the Amp Envelope, the orange one the Filter Envelope when its Amount is set. A broken line in its section’s colour is each knob the Filter Envelope or an LFO moves: the Cutoff dotted, what LFO 1 moves dashed, what LFO 2 alone moves dash-dotted. While an LFO is synced, faint broken lines mark the beats.',
     how: 'Play a Note and let go: the Release is drawn after the key comes up.',
   },
   lfo: {
@@ -156,12 +159,12 @@ export const TIPS = {
   },
   lfoRetrigger: {
     title: 'Retrigger',
-    body: 'On: the LFO starts its cycle again at every Note, so each Note gets the same wobble from its start (key sync). Off: it runs on freely, and each Note catches it wherever it is.',
+    body: 'On: the LFO starts its cycle again at every Note (a legato one aside, with Legato on), so each Note gets the same wobble from its start (key sync). Off: it runs on freely, and each Note catches it wherever it is.',
     how: 'Turn it on with a slow LFO on Cutoff and play a few Notes: each one opens the same way. The plot shows the cycle restart.',
   },
   lfoWaveform: {
     title: 'LFO',
-    body: 'The LFO as it moves: its last second, the newest at the right, so 1 Hz is one period. Sine and Triangle sweep smoothly, Square jumps between two values, Saw ramps up and drops, Saw Down drops and ramps down. Its height is the Depth.',
+    body: 'The LFO as it moves: its last second, the newest at the right, so 1 Hz is one period. Sine and Triangle sweep smoothly, Square jumps between two values, Saw ramps up and drops, Saw Down drops and ramps down. Its height is the Depth. While it is synced, faint broken lines mark the beats.',
   },
   lfoDestination: {
     title: 'LFO Destination',
@@ -172,8 +175,22 @@ export const TIPS = {
     body: 'Slides the pitch from one Note to the next instead of jumping, over this long. Off plays Notes at once. It works with one Voice only: with more, each Note starts at its own pitch.',
     how: 'Play two keys one after the other and watch the Scope stretch or squeeze as the pitch slides.',
   },
+  legato: {
+    title: 'Legato',
+    body: 'On, with one Voice: a key played while another is held only moves the pitch there. The Envelopes carry on with no new Attack, and an LFO set to Retrigger does not start again, as on a classic monosynth. Let go of every key to strike the next Note afresh.',
+    how: 'Turn Glide up, hold a key and play others over it: the pitch slides from Note to Note and the Timeline draws one Attack.',
+  },
   about: { title: 'About', body: 'The version of Limpide you are playing, who made it, and where its source lives. The logo opens it too.' },
   theme: { title: 'Theme', body: 'Switches between the dark and light look. Your choice is remembered.' },
+  bead: {
+    title: 'Bead',
+    body: 'Bead is the little water drop living on the page, answering what you play and turn. Off keeps it away, remembered, until you switch it on again. While it is on, playing B, E, A, D sends it away for this visit, and the same Notes call it back.',
+  },
+  // The × of a Preset's description, under the Patch name (issue 153).
+  closeDescription: {
+    title: 'Close',
+    body: 'Closes the Preset’s description; Escape does too. It goes by itself at the first change to the sound. Every Preset’s description shows on its name in the Patches panel.',
+  },
   bendRange: {
     title: 'Pitch bend range',
     body: 'How far a keyboard’s bend wheel takes the pitch, up or down, in semitones: 2 is a whole tone, as on most synths. The sustain pedal holds Notes as Hold does, the mod wheel turns LFO 1’s Depth, and a Program Change loads that Preset, each until you map the control to something else.',
@@ -298,6 +315,10 @@ export const TIPS = {
     body: 'How loud the Amp lets the sound through, after its Envelope. An LFO aimed at Volume dips it from here, for tremolo: its ring shows how far.',
   },
   lfoRate: { title: 'Rate', body: 'How fast the LFO repeats, in cycles a second (Hz): 0.05 Hz is one slow sweep every 20 seconds, 20 Hz a fast flutter.' },
+  lfoNote: { title: 'Rate', body: 'With Sync on, how often the LFO repeats, as a note value at the tempo: 1 bar, 1/4, 1/8 (D dotted, T triplet).' },
+  lfoSync: { title: 'Sync', body: 'On: the Rate is a note value at the tempo, and the LFO’s cycle lands on the beat. Off: the Rate is in Hz, as it was.' },
+  tempo: { title: 'Tempo', body: 'The page’s beats per minute, which an LFO with Sync on follows. Drag it or use the arrows; double-click to type it.' },
+  tap: { title: 'Tap', body: 'Tap it in time: from the second tap the tempo follows your last four, its beat where you last tapped.' },
   lfoDepth: {
     title: 'Depth',
     body: 'How far the LFO moves its Destination. At 0 it moves nothing.',
@@ -330,6 +351,11 @@ export function lfoLineTip(destination: LfoDestination): TipContent {
   return destination === 'pitch'
     ? { title: label, body: `${colour} broken line: the pitch as the LFO moves it (vibrato), a semitone up at the top and down at the bottom, the Note’s own pitch in the middle.` }
     : { title: label, body: `${colour} broken line: the ${label} as the LFO moves it (both LFOs added together when both aim at it), on its knob’s scale, bottom to top.` };
+}
+
+/** A synced Rate's tip (issue 176): its Hz at the tempo, which its readout leaves out so its knob keeps one width. */
+export function syncedRateTip(note: string, hz: string, bpm: number): TipContent {
+  return { ...PARAM_TIPS.lfoNote, body: `${TIPS.lfoNote.body} At ${bpm} BPM, ${note} is ${hz}.` };
 }
 
 /** Each Tap's two Viewers (issue 59): what the Scope and the Spectrum there show. */
@@ -370,10 +396,11 @@ export const VIEWER_TIPS: Record<'Oscillator' | 'Filter' | 'Amp', { scope: TipCo
 };
 
 /**
- * Each Parameter's tip, which its knob or fader shows by itself (issue 78). Keyed by every Parameter, so a new one
- * needs a tip before it type-checks. The Envelopes' stages share theirs; both Pulse Widths, LFOs' Depths and Rates too.
+ * Each Parameter's tip, which its knob or fader shows by itself (issue 78), with its steps for the keys (issue 160).
+ * Keyed by every Parameter, so a new one needs a tip before it type-checks. The Envelopes' stages share theirs; both
+ * Pulse Widths, LFOs' Depths and Rates too.
  */
-export const PARAM_TIPS: Record<ParamId, TipContent> = {
+const PARAM_EXPLAINED: Record<ParamId, TipContent> = {
   pulseWidth: TIPS.pulseWidth,
   osc2PulseWidth: TIPS.pulseWidth,
   crossMod: TIPS.crossMod,
@@ -404,9 +431,14 @@ export const PARAM_TIPS: Record<ParamId, TipContent> = {
   glide: TIPS.glide,
   lfoAmount: TIPS.lfoDepth,
   lfoRate: TIPS.lfoRate,
+  lfoNote: TIPS.lfoNote,
   lfo2Amount: TIPS.lfoDepth,
   lfo2Rate: TIPS.lfoRate,
+  lfo2Note: TIPS.lfoNote,
 };
+export const PARAM_TIPS = Object.fromEntries(
+  (Object.keys(PARAM_EXPLAINED) as ParamId[]).map((id) => [id, { ...PARAM_EXPLAINED[id], keys: stepWords(PARAMS[id].grid) }]),
+) as Record<ParamId, TipContent>;
 
 export const OVERLAY_TIPS: Record<Overlay, TipContent> = {
   harmonics: {
@@ -418,12 +450,12 @@ export const OVERLAY_TIPS: Record<Overlay, TipContent> = {
     body: 'Marks where theory puts each Harmonic of each Oscillator, at its Mixer level: a circle for Osc 1, a square for Osc 2, a triangle for the Sub, a diamond for Ring. On the Filter Tap they show where each should land after the Filter.',
   },
   curve: {
-    title: 'Response Curve',
-    body: 'The Filter’s gain at every frequency (scale on the right). Harmonics under the slope get quieter; a bump at the Cutoff is Resonance.',
+    title: 'Filter',
+    body: 'The Response Curve: the Filter’s gain at every frequency (scale on the right). Harmonics under the slope get quieter; a bump at the Cutoff is Resonance.',
   },
   guides: {
     title: 'Scope guides',
-    body: 'Dashed lines at the Oscillator’s level. A trace inside them has only lost energy; one beyond them has been boosted by Resonance.',
+    body: 'Dashed lines at the level the Mixer sends, every source’s level added, so they move with its faders. A trace inside them has only lost energy; one beyond them has been boosted by Resonance.',
   },
   maths: {
     title: 'Maths Layer',

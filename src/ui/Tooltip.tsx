@@ -9,6 +9,8 @@ export interface TipContent {
   body: string;
   /** How to use it (optional). */
   how?: string;
+  /** A knob's or fader's steps for the keys (issue 160): shown where there is a keyboard, not on a touch screen. */
+  keys?: string;
 }
 
 /**
@@ -24,13 +26,16 @@ const HOVER_DELAY_MS = 350;
 // On a touch screen, holding a control this long without moving shows its explanation (issue 49).
 const LONG_PRESS_MS = 500;
 const LONG_PRESS_SLOP = 8;
+// A control whose menu, list or panel is open (the LFOs' Destinations, Patch, Display, MIDI, Tutorial, Tempo).
+const EXPANDED = '[aria-expanded="true"]';
 
 /**
  * Explains the control it wraps: after a short pause on hover, at once on keyboard focus, and on a touch screen
  * when it is held still for half a second; Escape, leaving or pressing dismisses it (on touch, the next touch).
  * Linked to the control with aria-describedby so screen readers announce it too. `longPress` off where holding
  * is how the control is played (the piano). With Tooltips off, only a header button showing its icon alone opens one,
- * on hover or focus, with its name alone.
+ * on hover or focus, with its name alone. None opens while the control's menu, list or panel is open, and opening it
+ * puts away the one shown, so a tip never hides a choice (issue 175); the next hover or focus shows it again.
  */
 export function Tooltip({ content, children, longPress = true }: { content: TipContent; children: ReactNode; longPress?: boolean }) {
   const id = useId();
@@ -52,19 +57,21 @@ export function Tooltip({ content, children, longPress = true }: { content: TipC
   // The control itself (not this wrapper) carries the description, so it is announced on focus; after the reason it is
   // greyed out, if it is (issue 104).
   useEffect(() => {
-    const target = wrapperRef.current?.querySelector('[role="radiogroup"], [role="group"], button, [role="slider"], [role="img"]');
+    const target = wrapperRef.current?.querySelector('[role="radiogroup"], [role="group"], button, [role="slider"], [role="spinbutton"], [role="img"]');
     if (!target) return;
     addDescription(target, id, 'last');
     return () => removeDescription(target, id);
   }, [id]);
 
+  const expanded = () => !!wrapperRef.current?.querySelector(EXPANDED);
   const show = (delay: number) => {
     const word = wrapperRef.current?.querySelector(WORD);
     const iconAlone = !!word && word.getClientRects().length === 0;
     if (!enabled && !iconAlone) return;
     setNamed(!enabled);
     window.clearTimeout(timer.current);
-    timer.current = window.setTimeout(() => setOpen(true), delay);
+    // Asked again when the delay is out: a click in between may have opened the control's menu.
+    timer.current = window.setTimeout(() => !expanded() && setOpen(true), delay);
   };
   const hide = () => {
     window.clearTimeout(timer.current);
@@ -79,16 +86,21 @@ export function Tooltip({ content, children, longPress = true }: { content: TipC
   useEffect(() => () => window.clearTimeout(timer.current), []);
 
   const hideNow = useEffectEvent(hide);
+  const expandedNow = useEffectEvent(expanded);
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && hideNow();
     // Opened by a long press: the next touch anywhere, or a scroll, puts it away.
     const onTouchElsewhere = (e: PointerEvent) => pinned.current && !wrapperRef.current?.contains(e.target as Node) && hideNow();
     const onScroll = () => pinned.current && hideNow();
+    // The control opens its menu, list or panel (a click, Enter or Space): the tip goes at once.
+    const onExpand = new MutationObserver(() => expandedNow() && hideNow());
+    if (wrapperRef.current) onExpand.observe(wrapperRef.current, { subtree: true, attributeFilter: ['aria-expanded'] });
     document.addEventListener('keydown', onKey);
     document.addEventListener('pointerdown', onTouchElsewhere);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => {
+      onExpand.disconnect();
       document.removeEventListener('keydown', onKey);
       document.removeEventListener('pointerdown', onTouchElsewhere);
       window.removeEventListener('scroll', onScroll);
@@ -118,6 +130,7 @@ export function Tooltip({ content, children, longPress = true }: { content: TipC
         if (e.pointerType !== 'touch' || !longPress || !enabled) return;
         press.current = { x: e.clientX, y: e.clientY };
         timer.current = window.setTimeout(() => {
+          if (expanded()) return;
           pinned.current = true;
           swallowClick.current = true;
           setOpen(true);
@@ -155,6 +168,7 @@ export function Tooltip({ content, children, longPress = true }: { content: TipC
           <strong>{content.title}</strong>
           <span>{content.body}</span>
           {content.how && <span className="tooltip-how">{content.how}</span>}
+          {content.keys && <span className="tooltip-keys">{content.keys}</span>}
         </div>,
         document.body,
       )}

@@ -1,4 +1,4 @@
-import { PARAMS, type ParamId, type Patch, setParam } from '../patch/patch';
+import { type LfoNumber, PARAMS, type ParamId, type Patch, setLfo, setParam } from '../patch/patch';
 import type { PatchStore } from '../patch/patchStore';
 import type { Preset } from '../patch/presets';
 
@@ -15,10 +15,14 @@ export function createDemoKnobs(store: PatchStore) {
     for (const id of PARAM_IDS) if (before[id] !== after[id]) turned.add(id);
   });
   return {
-    /** A new part: every knob is the Demo's again. Loads the part's Preset, if it has one; returns the Patch now. */
-    newPart(preset?: Preset): Patch {
+    /**
+     * A new part: every knob is the Demo's again. Loads the part's Preset, if it has one, with Sync on for the LFOs it
+     * plays in note values (issue 112); returns the Patch now.
+     */
+    newPart(preset?: Preset, synced: readonly LfoNumber[] = []): Patch {
       turned.clear();
       if (preset) store.load(preset.name, preset.patch);
+      if (synced.length) store.change((p) => synced.reduce((q, lfo) => setLfo(q, { sync: 'on' }, lfo), p), 'demo');
       return store.get().patch;
     },
     turn(id: ParamId, value: number) {

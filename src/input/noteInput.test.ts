@@ -96,7 +96,19 @@ describe('Hold', () => {
     input.release(60);
     input.press(64, 0.7);
     input.release(64);
-    expect(events.at(-1)).toEqual({ type: 'noteOn', note: 64, velocity: 0.7 });
+    expect(events.at(-1)).toEqual({ type: 'noteOn', note: 64, velocity: 0.7, afresh: true });
+  });
+
+  it('says a Note is struck afresh when every key is up and Hold keeps the last, not when a key is down (issue 119)', () => {
+    const { input, events } = setup();
+    input.setHold(true);
+    input.press(60, 1);
+    input.press(64, 1); // over a key still down: legato, with Legato on
+    expect(events.at(-1)).toEqual({ type: 'noteOn', note: 64, velocity: 1 });
+    input.release(60);
+    input.release(64);
+    input.press(67, 1); // every key up, Hold keeping 64: afresh
+    expect(events.at(-1)).toEqual({ type: 'noteOn', note: 67, velocity: 1, afresh: true });
   });
 
   it('lets the held Note go when its key is pressed again; another press plays it anew (the owner, 2026-10-27)', () => {
@@ -119,7 +131,7 @@ describe('Hold', () => {
     input.press(60, 1);
     input.release(60);
     input.press(60, 0.7);
-    expect(events.at(-1)).toEqual({ type: 'noteOn', note: 60, velocity: 0.7 });
+    expect(events.at(-1)).toEqual({ type: 'noteOn', note: 60, velocity: 0.7, afresh: true });
   });
 
   it('closes the Gate when switched off with no key down', () => {

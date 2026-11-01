@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
-import { expect, test } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
+import { holding, WELCOMED } from './startState';
 
 const { version } = JSON.parse(readFileSync('package.json', 'utf8'));
 
@@ -12,7 +13,10 @@ test('the logo opens the About splash: version, build and credits; Close, Escape
   await expect(about).toContainText(`Version ${version}`);
   await expect(about).toContainText('Guillaume Boillet');
   await expect(about.getByRole('link', { name: 'Source on GitHub' })).toHaveAttribute('href', 'https://github.com/gijom33/limpide');
-  await expect(about.getByRole('link', { name: 'Buy me a coffee' })).toHaveAttribute('href', 'https://buymeacoffee.com/gijom33'); // issue 146
+  // Issue 172: in the tip link's place (issue 146), a share-or-star line, the star linking to the repository.
+  await expect(about).toContainText('Enjoying Limpide? Share it, or star it on GitHub');
+  await expect(about.getByRole('link', { name: 'star it on GitHub' })).toHaveAttribute('href', 'https://github.com/gijom33/limpide');
+  await expect(about.getByRole('link', { name: /coffee/i })).toHaveCount(0);
 
   await about.getByRole('button', { name: 'Close' }).click();
   await expect(about).toBeHidden();
@@ -28,10 +32,11 @@ test('the logo opens the About splash: version, build and credits; Close, Escape
   await expect(about).toBeVisible();
 });
 
-test('an ⓘ button opens About at every width, with the word About from 1100 px up and under its icon in the 2 × 2 layout', async ({ page }) => {
+// From 1100 px Demo, Tutorial and Song keep their words; About, in the set-up row beside the tempo, from 1366 px (issue 112).
+test('an ⓘ button opens About at every width, with the word About from 1366 px up and under its icon in the 2 × 2 layout', async ({ page }) => {
   const about = page.getByRole('dialog', { name: 'Limpide' });
   const button = page.getByRole('button', { name: 'About' });
-  for (const [width, height, word] of [[1440, 900, true], [1100, 900, true], [1099, 900, false], [1000, 800, false], [861, 800, false], [700, 800, true]] as const) {
+  for (const [width, height, word] of [[1440, 900, true], [1366, 900, true], [1365, 900, false], [1100, 900, false], [1099, 900, false], [1000, 800, false], [861, 800, false], [700, 800, true]] as const) {
     await page.setViewportSize({ width, height });
     await page.goto('/');
     await expect(button, `${width}px`).toBeVisible();
@@ -92,4 +97,115 @@ test('About, opened any time, offers the Demo and the Tour beside Close (the own
   await about.getByRole('button', { name: 'Play the Demo' }).click();
   await expect(about).toBeHidden();
   await expect(page.getByRole('button', { name: 'Demo', exact: true })).toHaveAttribute('aria-pressed', 'true');
+});
+
+// Issue 163: Bead, out on the page by default (issue 150), stands beside About's logo at twice its page size, and a
+// click on it shows its card of tricks in place of the credits. With its switch off, About is as before.
+test.describe('Bead in About (issue 163)', () => {
+  const about = (page: Page) => page.getByRole('dialog', { name: 'Limpide' });
+  const bead = (page: Page) => about(page).getByRole('button', { name: 'Bead, Limpide’s water drop: its tricks' });
+  const card = (page: Page) => about(page).getByRole('region', { name: 'Bead' });
+  const credits = (page: Page) => about(page).locator('.about-credits');
+
+  test.describe('switched on', () => {
+    test.use({ storageState: holding({ ...WELCOMED, 'limpide.bead': 'on' }) });
+
+    test('it stands on the logo’s baseline to its right, twice its size on the page', async ({ page }) => {
+      await page.goto('/');
+      await expect(page.locator('.mascot')).toHaveCount(1, { timeout: 6000 });
+      const onPage = (await page.locator('.mascot-drop svg').boundingBox())!;
+      await page.getByRole('button', { name: 'About', exact: true }).click();
+      await expect(bead(page)).toBeVisible();
+      const logo = (await about(page).locator('.logo').boundingBox())!;
+      const drawn = (await bead(page).locator('svg').boundingBox())!;
+      expect(drawn.width / onPage.width).toBeCloseTo(2, 1);
+      expect(drawn.height / onPage.height).toBeCloseTo(2, 1);
+      expect(drawn.x, 'to the logo’s right').toBeGreaterThanOrEqual(logo.x + logo.width);
+      expect(Math.abs(drawn.y + drawn.height - (logo.y + logo.height)), 'on its baseline').toBeLessThanOrEqual(1);
+    });
+
+    test('it fits in About down to the narrowest window, the logo centred with it where the two need room', async ({ page }) => {
+      for (const width of [280, 320, 340, 375]) {
+        await page.setViewportSize({ width, height: 700 });
+        await page.goto('/');
+        await page.getByRole('button', { name: 'About', exact: true }).click();
+        const dialog = (await about(page).boundingBox())!;
+        const drawn = (await bead(page).boundingBox())!;
+        expect(drawn.x + drawn.width, `${width}px`).toBeLessThanOrEqual(dialog.x + dialog.width - 8);
+        expect(await about(page).evaluate((d) => d.scrollWidth <= d.clientWidth), `${width}px: no sideways scroll`).toBe(true);
+      }
+    });
+
+    test('a click shows its card in place of the credits; Back returns to them', async ({ page }) => {
+      await page.goto('/');
+      await page.getByRole('button', { name: 'About', exact: true }).click();
+      await expect(card(page)).toHaveCount(0);
+      await bead(page).click();
+      await expect(card(page)).toBeVisible();
+      await expect(credits(page)).toHaveCount(0);
+      await expect(bead(page)).toHaveAttribute('aria-expanded', 'true');
+      for (const words of ['water drop', 'tickle', 'Display', 'B, E, A, D']) await expect(card(page)).toContainText(words);
+      await expect(card(page).getByRole('listitem').first()).toBeVisible();
+      await expect(card(page).getByRole('link', { name: 'All its secrets' })).toHaveAttribute('href', 'https://github.com/gijom33/limpide/blob/main/docs/bead.md');
+      await card(page).getByRole('button', { name: 'Back' }).click();
+      await expect(card(page)).toHaveCount(0);
+      await expect(credits(page)).toContainText('Guillaume Boillet');
+      await expect(bead(page)).toBeFocused();
+    });
+
+    test('from the keyboard: Enter shows the card, Escape returns to the credits, a second Escape closes About', async ({ page }) => {
+      await page.goto('/');
+      await page.getByRole('button', { name: 'About', exact: true }).click();
+      await bead(page).focus();
+      await page.keyboard.press('Enter');
+      await expect(card(page)).toBeVisible();
+      await page.keyboard.press('Escape');
+      await expect(card(page)).toHaveCount(0);
+      await expect(about(page)).toBeVisible();
+      await expect(credits(page)).toBeVisible();
+      await page.keyboard.press('Escape');
+      await expect(about(page)).toBeHidden();
+      // Opened again, About shows the credits.
+      await page.getByRole('button', { name: 'About', exact: true }).click();
+      await expect(credits(page)).toBeVisible();
+    });
+
+    test('it is idle as on the page: it blinks and moves; with reduced motion it is there, still', async ({ page }) => {
+      await page.goto('/');
+      await page.getByRole('button', { name: 'About', exact: true }).click();
+      await expect(bead(page)).toBeVisible();
+      expect(await bead(page).evaluate((b) => b.getAnimations({ subtree: true }).length)).toBeGreaterThan(0);
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await page.reload();
+      await page.getByRole('button', { name: 'About', exact: true }).click();
+      await expect(bead(page)).toBeVisible();
+      expect(await bead(page).evaluate((b) => b.getAnimations({ subtree: true }).length)).toBe(0);
+    });
+  });
+
+  test.describe('on a short phone, switched on', () => {
+    test.use({ storageState: holding({ 'limpide.bead': 'on' }), viewport: { width: 393, height: 659 }, hasTouch: true });
+
+    test('a tap shows its card; the welcome’s Demo and Tour stay on the first screen, with the credits or the card', async ({ page }) => {
+      await page.goto('/');
+      await expect(about(page)).toBeVisible();
+      const wayIn = async (what: string) => {
+        for (const name of ['Play the Demo', 'Take the Tour']) await expect(about(page).getByRole('button', { name, exact: true }), `${name}, ${what}`).toBeInViewport({ ratio: 1 });
+        await expect(bead(page), what).toBeInViewport({ ratio: 1 });
+        expect(await about(page).evaluate((d) => d.scrollHeight <= d.clientHeight), what).toBe(true);
+      };
+      await wayIn('the credits');
+      await bead(page).tap();
+      await expect(card(page)).toBeVisible();
+      await wayIn('the card');
+    });
+  });
+
+  test('switched off, it is not there: About is as before', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('button', { name: 'About', exact: true }).click();
+    await expect(credits(page)).toBeVisible();
+    await expect(about(page).getByRole('button', { name: /Bead/ })).toHaveCount(0);
+    await expect(about(page).locator('svg')).toHaveCount(1); // the logo alone
+  });
 });

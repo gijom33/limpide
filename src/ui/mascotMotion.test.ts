@@ -330,13 +330,25 @@ describe('what the controls, the words, the page and the Demo make of it (issue 
 
   it('Detune splits it in two, farther the more, wobbling as they beat; one drop at 0', () => {
     const motion = createMascotMotion(seeded());
-    const gaps = (detune: number) => run(motion, 1, 3, { ...quiet, detune }, spot).map((p) => p.twin);
+    const gaps = (detune: number) => run(motion, 1, 3, { ...quiet, detune }, spot).map((p) => Math.abs(p.twin));
     expect(gaps(0).every((g) => g === 0)).toBe(true);
     const small = gaps(10);
     const big = gaps(-50);
     expect(Math.max(...big)).toBeGreaterThan(Math.max(...small));
     expect(Math.max(...big) - Math.min(...big)).toBeGreaterThan(3); // the wobble
     expect(Math.max(...big)).toBeLessThanOrEqual(16);
+  });
+
+  it("Detune's twin stands on the side of its sign: left below 0 cents, right above; still there with reduced motion (issue 174)", () => {
+    const twins = (detune: number, reduced: boolean) => run(createMascotMotion(seeded()), 1, 3, { ...quiet, detune }, spot, reduced).map((p) => p.twin);
+    for (const reduced of [false, true]) {
+      expect(twins(-30, reduced).every((t) => t < 0)).toBe(true);
+      expect(twins(30, reduced).every((t) => t > 0)).toBe(true);
+      expect(twins(0, reduced).every((t) => t === 0)).toBe(true);
+    }
+    // With reduced motion, still: the one gap, 30 cents of 50 putting it 9.6 px off.
+    expect(new Set(twins(-30, true))).toEqual(new Set([-9.6]));
+    expect(new Set(twins(30, true))).toEqual(new Set([9.6]));
   });
 
   it('the Filter fully closed freezes it still in an ice cube; opened, it melts, dripping', () => {

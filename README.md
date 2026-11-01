@@ -6,7 +6,7 @@ Designed and directed by [Guillaume Boillet](https://www.linkedin.com/in/guillau
 
 ▶ **[Play it in your browser](https://gijom33.github.io/limpide/)**. Nothing to install.
 
-☕ Enjoying it? [Buy me a coffee](https://buymeacoffee.com/gijom33).
+Enjoying it? Share it, or [⭐ the repository](https://github.com/gijom33/limpide).
 
 [![Limpide playing its Demo: the Oscillators, Filter and Amp side by side, each with its Scope and Spectrum, and the LFOs and Envelope Timeline beside them](docs/screenshot.png)](https://gijom33.github.io/limpide/)
 
@@ -24,6 +24,7 @@ Ordinary synths give you a sound and a row of knobs, and the cause and effect st
 - **Study a moment.** Freeze, A/B Snapshots, axis toggles and a hover readout. Hold keeps a note sounding while you turn knobs.
 - **Play however you like.** Use the computer keyboard (`A W S E D F T G…`, with `Z`/`X` to change octave), the on-screen piano, or any MIDI controller via MIDI Learn. Patches can have one to eight Voices.
 - **Keep and share sounds.** Presets to start from, autosave, a named Patch library, JSON export, and share links that carry the whole Patch in the URL.
+- **Meet Bead.** A little water drop called Bead lives on the page and answers what you play. Switch it off in Display to keep it away, or play `B, E, A, D` to send it away for the visit.
 
 Works best in **Chrome or Edge**. Safari has no Web MIDI, so MIDI controllers don't work there; everything else does. The same goes for every browser on iPhone and iPad, Chrome included, since Apple makes them all run on Safari's engine.
 

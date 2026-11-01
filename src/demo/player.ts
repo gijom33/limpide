@@ -28,8 +28,8 @@ export interface DemoHost extends ListenHost {
 // Notes are handed to the engine this far ahead of the clock: enough to be on time, little enough to stop quickly.
 const LOOKAHEAD = 0.15;
 const TICK_MS = 40;
-// A breath after pressing Demo before the first Note.
-const LEAD_IN = 0.3;
+// A breath after pressing Demo, or a phrase starting, before the first Note: the Tour counts its card's time from there.
+export const LEAD_IN = 0.3;
 // The next part's Preset loads this long before its bar line, not on the look-ahead: just enough for the engine to
 // have its first Notes, while this part's last Notes and their Release keep their own sound (issue 60).
 const SWITCH_AHEAD = 0.05;
@@ -61,6 +61,7 @@ export function octaveShowing(notes: number[]): number {
 export function startDemo(host: DemoHost, track: Track = TRACK, from = 0): () => void {
   const beat = 60 / track.bpm;
   const first = host.now() + LEAD_IN;
+  host.onTempo?.(track.bpm, first);
   const starts: number[] = [];
   let at = first;
   for (const [i, part] of track.parts.entries()) {
@@ -148,5 +149,7 @@ export function startDemo(host: DemoHost, track: Track = TRACK, from = 0): () =>
  */
 export function startPhraseLoop(host: ListenHost, { phrase, bpm }: { phrase: string; bpm: number }): () => void {
   host.showOctave(octaveShowing(parsePhrase(phrase, bpm).map((e) => e.note)));
-  return startTransport(host, loopPhrase(phrase, bpm, host.now() + LEAD_IN, { breath: BREATH }), { lookahead: LOOKAHEAD, tick: TICK_MS });
+  const first = host.now() + LEAD_IN;
+  host.onTempo?.(bpm, first);
+  return startTransport(host, loopPhrase(phrase, bpm, first, { breath: BREATH }), { lookahead: LOOKAHEAD, tick: TICK_MS });
 }

@@ -36,7 +36,7 @@ test('MIDI Learn: pick a knob on screen, turn one on the Controller, and it driv
   await expect(midiButton(page)).toContainText('1'); // the Controller count is back
 
   await play(page, ...times(10, cc(74, 1)));
-  await expect(cutoff(page)).toHaveAttribute('aria-valuenow', String(before + 10));
+  await expect(cutoff(page)).toHaveAttribute('aria-valuetext', '3.56 kHz'); // ten semitones up from 2 kHz (issue 160)
   await expect(cutoff(page).locator('..')).toHaveAttribute('data-mapped', 'true');
 
   await openMidi(page);
@@ -76,6 +76,33 @@ test('an Action learns from a pad: the pad then toggles Hold and no longer plays
   await page.waitForTimeout(2100); // past the time for tapping a Hold rhythm: the next press switches it off
   await play(page, [0x99, 36, 100], [0x89, 36, 0]);
   await expect(hold).toHaveAttribute('aria-pressed', 'false');
+});
+
+test('an Action learns a toggle button as Toggle and a momentary one as Momentary, and each fires once a press (issue 147)', async ({ page }) => {
+  const hold = page.getByRole('button', { name: 'Hold', exact: true });
+  const patchName = page.getByRole('button', { name: /^Patch: / });
+  const mappings = midiPanel(page).getByRole('list', { name: 'Mappings' });
+  await startLearn(page);
+  await hold.click();
+  await play(page, cc(49, 127)); // a toggle: one message a press, nothing on letting go
+  await expect(learnBar(page)).toContainText(/Hold.*CC 49/);
+  await page.getByRole('button', { name: 'Next Preset' }).click();
+  await play(page, cc(50, 127), cc(50, 0)); // a momentary button: pressed, let go
+  await expect(learnBar(page)).toContainText(/Next Preset.*CC 50/);
+  await expect(hold).toHaveAttribute('aria-pressed', 'false'); // learning fired nothing
+  await expect(patchName).toHaveAttribute('aria-label', 'Patch: Init');
+  await page.keyboard.press('Escape');
+
+  await openMidi(page);
+  await expect(mappings).toContainText(/Hold.*CC 49 · Toggle/);
+  await expect(mappings).toContainText(/Next Preset.*CC 50 · Momentary/);
+  await play(page, cc(49, 0)); // the toggle's next press
+  await expect(hold).toHaveAttribute('aria-pressed', 'true');
+  await page.waitForTimeout(2100); // past the time for tapping a Hold rhythm
+  await play(page, cc(49, 127)); // and the one after
+  await expect(hold).toHaveAttribute('aria-pressed', 'false');
+  await play(page, cc(50, 127), cc(50, 0));
+  await expect(patchName).toHaveAttribute('aria-label', 'Patch: Pure Sine'); // one step, not two
 });
 
 test('the Activity Monitor shows the last message received', async ({ page }) => {
@@ -218,4 +245,41 @@ test('each Action does its own job from its own pad: Next and Previous Preset, F
   await expect(page.getByRole('button', { name: 'Hold' })).toHaveAttribute('aria-pressed', 'false');
   await play(page, ...pad(40));
   await expect(page.getByRole('button', { name: 'Hold' })).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('the tempo learns a knob and Tap a pad; a knob on an LFO’s Rate turns its note value while Sync is on (issue 112)', async ({ page }) => {
+  const bpm = page.getByRole('spinbutton', { name: 'Tempo' });
+  const rate = page.getByRole('slider', { name: 'LFO 1 Rate' });
+  await startLearn(page);
+  await bpm.click();
+  await expect(learnBar(page)).toContainText(/Tempo/);
+  await play(page, ...times(4, cc(30, 1)));
+  await expect(learnBar(page)).toContainText(/Tempo.*CC 30/);
+  await page.getByRole('button', { name: 'Tap', exact: true }).click();
+  await play(page, [0x99, 38, 100], [0x89, 38, 0]);
+  await expect(learnBar(page)).toContainText(/Tap.*Note D2/);
+  await rate.click();
+  await play(page, ...times(4, cc(31, 1)));
+  await expect(learnBar(page)).toContainText(/LFO 1 Rate.*CC 31/);
+  await page.keyboard.press('Escape');
+
+  await play(page, ...times(5, cc(30, 1))); // two BPM a click
+  await expect(bpm).toHaveAttribute('aria-valuenow', '130');
+  await page.getByRole('button', { name: 'LFO 1 Sync' }).click();
+  await expect(rate).toHaveAttribute('aria-valuetext', /^1\/4, /);
+  await play(page, ...times(2, cc(31, 1))); // a note value for every two clicks
+  await expect(rate).toHaveAttribute('aria-valuetext', /^1\/8 D, /);
+  await page.getByRole('button', { name: 'LFO 1 Sync' }).click();
+  await expect(rate).toHaveAttribute('aria-valuetext', /Hz$/);
+  // The pad mapped to Tap, twice half a second apart (timed inside the page): the tempo follows, at about 120.
+  await page.evaluate(async () => {
+    const { playMidi } = window as unknown as { playMidi(bytes: number[]): void };
+    for (let i = 0; i < 2; i++) {
+      playMidi([0x99, 38, 100]);
+      playMidi([0x89, 38, 0]);
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+  });
+  const tapped = Number(await bpm.getAttribute('aria-valuenow'));
+  expect(Math.abs(tapped - 120)).toBeLessThanOrEqual(4);
 });

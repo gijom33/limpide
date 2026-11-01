@@ -1,5 +1,6 @@
 import { act } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
+import { SONG } from '../../demo/song';
 import { TRACK } from '../../demo/track';
 import { renderHook, testSession } from '../../test/renderHook';
 import { usePlayers } from './usePlayers';
@@ -44,6 +45,24 @@ describe('usePlayers: the Demo, the Song and Listen (the 1.16.0 review)', () => 
     await act(async () => p.result.current.stopDemo());
     expect(p.result.current.demo).toBeNull();
     expect(p.result.current.tookOver).toBe(false);
+  });
+
+  it('makes the page’s tempo the player’s while it plays, the person’s coming back when it stops (issue 112)', async () => {
+    const p = await players();
+    unmount = p.unmount;
+    p.session.tempo.set(100);
+    await act(async () => p.result.current.playDemo());
+    expect(p.session.tempo.get()).toEqual({ bpm: TRACK.bpm, player: true });
+    await act(async () => p.result.current.stopDemo());
+    expect(p.session.tempo.get()).toEqual({ bpm: 100, player: false });
+    await act(async () => p.result.current.toggleSong());
+    expect(p.session.tempo.get()).toEqual({ bpm: SONG.bpm, player: true });
+    await act(async () => p.result.current.toggleSong());
+    expect(p.session.tempo.get().bpm).toBe(100);
+    await act(async () => p.result.current.startListen({ phrase: 'C4:1', bpm: 90 }));
+    expect(p.session.tempo.get().bpm).toBe(90);
+    await act(async () => p.result.current.stopListen());
+    expect(p.session.tempo.get().bpm).toBe(100);
   });
 
   it('stops the Demo when the person takes over, and says so: a press on the page, not on a knob (issue 79)', async () => {

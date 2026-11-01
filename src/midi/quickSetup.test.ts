@@ -19,10 +19,11 @@ describe('Quick Setup steps', () => {
       'Filter Envelope · filterAttack', 'Filter Envelope · filterDecay', 'Filter Envelope · filterSustain', 'Filter Envelope · filterRelease',
       'Amp Envelope · ampAttack', 'Amp Envelope · ampDecay', 'Amp Envelope · ampSustain', 'Amp Envelope · ampRelease', 'Amp · volume',
       'LFO 1 · lfoRate', 'LFO 1 · lfoAmount', 'LFO 2 · lfo2Rate', 'LFO 2 · lfo2Amount',
-      'hold', 'freeze', 'snapshot', 'previousPreset', 'nextPreset',
+      'hold', 'freeze', 'snapshot', 'previousPreset', 'nextPreset', 'tap',
     ]);
-    // Exactly the Parameters whose role is played live (ADR-0008): none set once for a sound, none forgotten.
-    const live = Object.values(PARAMS).filter((p) => p.control !== 'set').map((p) => p.id);
+    // Exactly the Parameters whose role is played live (ADR-0008): none set once for a sound, none forgotten. A note
+    // value is turned by its LFO's Rate knob (issue 112): the Rate's step maps both.
+    const live = Object.values(PARAMS).filter((p) => p.control !== 'set' && !p.knob).map((p) => p.id);
     expect(QUICK_SETUP.filter((s) => s.target.kind === 'param').map((s) => s.target.id).sort()).toEqual([...live].sort());
     expect(QUICK_SETUP.filter((s) => s.target.kind === 'action').map((s) => s.target.id).sort()).toEqual(Object.keys(ACTIONS).sort());
   });

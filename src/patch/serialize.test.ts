@@ -15,6 +15,17 @@ describe('sanitizePatch: anything from outside becomes a valid Patch', () => {
     expect([patch.lfoDestination, patch.lfoAmount, patch.lfoRate, patch.lfo2Amount]).toEqual(['pulseWidth', 0.6, 3, 0]);
   });
 
+  it('a Patch from before the tempo loads with Sync off, each LFO in Hz as it was (issue 112)', () => {
+    const patch = sanitizePatch({ lfoRate: 3, lfo2Rate: 7 });
+    expect([patch.lfoSync, patch.lfo2Sync, patch.lfoRate, patch.lfo2Rate]).toEqual(['off', 'off', 3, 7]);
+  });
+
+  it('a Patch from before Legato loads with it off (issue 119)', () => {
+    expect(sanitizePatch({ glide: 0.2 }).legato).toBe('off');
+    expect(sanitizePatch({ legato: 'yes' }).legato).toBe('off');
+    expect(sanitizePatch({ legato: 'on' }).legato).toBe('on');
+  });
+
   it('drops fields it does not know (Patches from newer versions)', () => {
     expect(sanitizePatch({ ...defaultPatch(), reverb: 0.5 })).toEqual(defaultPatch());
   });
@@ -76,6 +87,20 @@ describe('share links', () => {
     const bass = { ...custom(), keyboardOctave: 2 };
     expect(patchFromShare(patchToShare(bass))).toEqual(bass);
     expect(patchFromJSON(patchToJSON(bass))).toEqual(bass);
+  });
+
+  it('carries Legato, only when it is on (issue 119)', () => {
+    const legato = { ...defaultPatch(), legato: 'on' } as const;
+    expect(patchFromShare(patchToShare(legato))).toEqual(legato);
+    expect(JSON.parse(atob(patchToShare(legato).replace(/-/g, '+').replace(/_/g, '/')))).toEqual({ legato: 'on' });
+  });
+
+  it('carries Sync and the note value, and no tempo (issue 112)', () => {
+    const synced = setParam({ ...defaultPatch(), lfo2Sync: 'on' }, 'lfo2Note', 16);
+    expect(patchFromShare(patchToShare(synced))).toEqual(synced);
+    const json = JSON.parse(atob(patchToShare(synced).replace(/-/g, '+').replace(/_/g, '/')));
+    expect(json).toEqual({ lfo2Sync: 'on', lfo2Note: 16 });
+    expect(Object.keys(JSON.parse(patchToJSON(synced)).patch).filter((k) => /tempo|bpm/i.test(k))).toEqual([]);
   });
 
   it('only carries what differs from the defaults, so links stay short', () => {

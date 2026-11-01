@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · bug
+**Status:** ready-for-human · bug. Built (2026-11-01) on night/2026-10-31, for the owner to try
 
 ## Decisions
 
@@ -28,6 +28,14 @@ Claude's call, open to the owner:
 - Bead's drawing of the twin
 
 **Acceptance criteria:**
-- [ ] Detune −30 cents: the twin left of Bead; +30: right; 0: no twin (a unit test on the pose; the mascot spec checks the side in one browser)
-- [ ] Reduced motion: still, on the right side
-- [ ] The mascot specs and Bead's frame-cost test pass as before
+- [x] Detune −30 cents: the twin left of Bead; +30: right; 0: no twin (a unit test on the pose; the mascot spec checks the side in one browser)
+- [x] Reduced motion: still, on the right side
+- [x] The mascot specs and Bead's frame-cost test pass as before
+
+## How it was built
+
+- **The pose:** the twin's offset now carries Detune's sign, negative (to Bead's left) below 0 cents, positive (to its right) above. Its distance, its wobble with the beats and its stillness under reduced motion are as before; within half a pixel of 0 there is one drop, so turned through 0 the twin goes into Bead and comes out the other side. The pose's doc comment and `docs/bead.md` say so.
+- **The drawing:** the twin is moved by the signed offset, with Bead's facing undone. Bead's box is mirrored when it turns round, which also flipped the old twin to its right whenever Bead faced the other way; now the twin stays on Detune's side of the page whichever way Bead faces, and as Bead turns it closes in and comes back out on the same side, without swapping (Claude's call, open to the owner).
+- **Tests:** a unit test on the pose (−30 cents left, +30 right, 0 none, with and without reduced motion, still at 9.6 px with it), red before the fix; in the mascot spec, Chromium only, "Detune splits it, its twin on the side of Detune's sign…" turns Detune to −50 and +50 and checks the twin's side over 30 frames (red on the old drawing).
+- **Tests run:** `npx tsc`, `npm run lint`, the mascot unit tests (107 passed), the whole mascot spec in Chromium (26 passed, the frame-cost test included).
+- **To try:** bring Bead, mix Osc 2 in, and turn Osc 2's Detune down then up: the twin to Bead's left below 0, to its right above, one drop at 0. Let Bead stroll and turn round with Detune set: the twin should stay on its side.

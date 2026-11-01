@@ -1,3 +1,4 @@
+import { MIXER_LEVELS } from '../patch/patch';
 import { type Control, type Mapping, sameControl, sameTarget, type Target } from './mappings';
 
 /** One Learn step of a Quick Setup: what to map, where it sits ("Filter Envelope"), and what to ask for. */
@@ -16,19 +17,20 @@ const actions = (...ids: Extract<Target, { kind: 'action' }>['id'][]): SetupStep
 /**
  * Every Parameter played live (the knobs worth turning while playing and the faders, ADR-0008): the Filter's big
  * knobs, then the page's order, the Oscillators, the Envelopes, the Amp, the LFOs; then the Actions. Settings made once for a sound (Octave,
- * the Waveforms, Pulse Width, Filter Mode, Velocity, Glide, Voices…) are left to MIDI Learn.
+ * the Waveforms, Pulse Width, Filter Mode, Velocity, Glide, Voices…) and the tempo's BPM are left to MIDI Learn.
  */
 // The Filter first, the knobs a player reaches for first (review 2, issue 53); then the page's order.
 export const QUICK_SETUP: SetupStep[] = [
   ...params('Filter', 'cutoff', 'resonance', 'filterEnvAmount'),
   ...params('Osc 2', 'osc2Detune'),
-  ...params('Mixer', 'mixOsc1', 'mixOsc2', 'mixRing', 'mixNoise', 'mixSub'),
+  ...params('Mixer', ...MIXER_LEVELS),
   ...params('Filter Envelope', 'filterAttack', 'filterDecay', 'filterSustain', 'filterRelease'),
   ...params('Amp Envelope', 'ampAttack', 'ampDecay', 'ampSustain', 'ampRelease'),
   ...params('Amp', 'volume'),
   ...params('LFO 1', 'lfoRate', 'lfoAmount'),
   ...params('LFO 2', 'lfo2Rate', 'lfo2Amount'),
-  ...actions('hold', 'freeze', 'snapshot', 'previousPreset', 'nextPreset'),
+  // Tap, the tempo's (issue 112), after the Patch's own Actions.
+  ...actions('hold', 'freeze', 'snapshot', 'previousPreset', 'nextPreset', 'tap'),
 ];
 
 export interface QuickSetupState {

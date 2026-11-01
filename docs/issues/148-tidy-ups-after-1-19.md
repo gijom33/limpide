@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement
+**Status:** ready-for-human · enhancement. Built (2026-11-01) on night/2026-10-31, for the owner to try
 
 ## Agent Brief
 
@@ -25,14 +25,28 @@
 - The MIDI panel's tips
 
 **Acceptance criteria:**
-- [ ] The card and the MIDI panel show the same mode labels from one source
-- [ ] The card's footer is built from the layout's shared buttons; a unit or e2e test changes a shared place and sees the footer follow (or checks the footer against the layout)
-- [ ] The print script and the card's spec share the margin and page count
-- [ ] `c16Connected` is gone; the 'detect' mode carries its comment
-- [ ] The tips name the bank "LFO & Envelopes" and point at the "Print C16 card" button
-- [ ] The C16, MIDI and mascot specs and the design audit pass unchanged; every test passes in Linux's fonts too
+- [x] The card and the MIDI panel show the same mode labels from one source
+- [x] The card's footer is built from the layout's shared buttons; a unit or e2e test changes a shared place and sees the footer follow (or checks the footer against the layout)
+- [x] The print script and the card's spec share the margin and page count
+- [x] `c16Connected` is gone; the 'detect' mode carries its comment
+- [x] The tips name the bank "LFO & Envelopes" and point at the "Print C16 card" button
+- [ ] The C16, MIDI and mascot specs and the design audit pass unchanged; every test passes in Linux's fonts too (they pass in Chromium and WebKit on macOS, the specs touched only to share the card's print constants, check the foot and name Bead's height; Linux's fonts are GitHub's run, after a push)
 
 **Out of scope:**
 - One seam for what a Controller is ([149](./149-one-seam-for-a-controller.md))
 - Any change to the C16 layout's places or a button's mode
 - The MIDI Learn mode bug ([147](./147-midi-learn-tells-toggle-from-momentary.md))
+
+## How it was built
+
+- **Each sum and word once:** the card's Momentary and Toggle (its header, each button and the Print C16 card tip) come from the MIDI panel's mode labels (`describeMode`); the button modes are one type, `ButtonMode`, in the Mappings module; the bank letters one helper (`bankLetter`); the first layout's table counts its CCs with the C16 module's `knobCc`, `faderCc` and `buttonCc`; the print script and the card's spec share the margin and the page count (a small module beside the print script, since it uses Node's Buffer); the mascot spec's 26 is a named `BEAD_HEIGHT`; the inputs module's "MIDI device" is written once.
+- **The card's foot from the data:** the C16 module finds the buttons the same on every bank (`sharedButtons`, today M1 to M4 and S3) and says them as one line; the foot reads that line, a free button's mode (Toggle, the C16's own setting) and the channel from the module. It prints the same words as before. A unit test empties bank C's S row and sees S3 Snapshot leave the line; the card's spec checks the foot against the layout.
+- **Leftovers:** `c16Connected` is a local in the hook; the 'detect' mode and `detectKnobMode` (issue 144's rule) say they serve only a stored first layout and go with `upgradeC16Layout`; Bead's perch chooser names its 4 px over the window's bottom (`TAKEABLE_OVER_BOTTOM`) and its lists `fitting` and `chosen`, with no change to where it goes; the Mapping guard reads `device` once.
+- **Words:** the C16 layout's tip names its banks from the layout ("A Oscillators, B Filter, C Amp, D LFO & Envelopes") and points at the Print C16 card button beside it.
+- **Skipped:** nothing. The mascot spec's sum was `26 : 0` by tonight, not the review's `26 : 6`, and it allows Bead's whole height, not its height less the edge left showing (the code's overlap, 24 px), so the name says its height and the test is unchanged.
+- **Tests run:** `npx tsc`, `npm run lint`; the unit tests of the MIDI modules, the tips, Bead's place and the scripts (271), and the MIDI hook's browser test; in Chromium and WebKit the C16 card, MIDI Learn, Quick Setup, mascot and tooltip specs and the design audit, all passing. Five mascot and MIDI Learn tests (Bead's frame timing, a throw, the tempo knob) failed under the machine's load (load average 22, other sessions running) and passed alone; one of them first failed because the spec's new name was read inside the page, fixed. Then the code review (standards and spec): no bug; its points taken (the C16 layout's tip said the shared buttons too, now from the same line; the PDF helpers out of the app's code; a shorter 'detect' comment; clearer names).
+- **Claude's calls, open to the owner:**
+  1. **The 'detect' mode stays,** for a visitor whose first layout (before 1.19) is still stored: it loads and is brought over when the C16 is next plugged in. It and issue 144's rule may go with the upgrade, a release or two after v1.
+  2. **The C16 layout's tip names all four banks by their names,** "A Oscillators, B Filter, C Amp, D LFO & Envelopes", where it said "A the Oscillators … D the LFOs", and **says the shared buttons as the card does,** "On every bank: M1 Previous Preset, M2 Next Preset, M3 Freeze, M4 Hold, S3 Snapshot", where it said "M1 to M4 are the Preset arrows, Freeze and Hold, and S3 Snapshot". Both from the layout, so neither can drift from it.
+  3. **The tip's way to the card:** "Set the C16’s knobs to Relative #1 and each button as the card says: Print C16 card, beside this, opens it."
+- **To try:** with a C16 connected (or the fake one), hover C16 layout and Print C16 card in the MIDI panel and read the tips; open the card (`#c16-card`) and check its foot reads as before; print it, one page.

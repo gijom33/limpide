@@ -1,21 +1,24 @@
 # Bead's secrets
 
-Everything Bead, Limpide's hidden water drop, can do. Bead is an Easter egg: the tips and the README leave it out on purpose ([115](./issues/115-an-easter-egg.md), decision 7), so this page is the one place it is all written down. How each thing is built is in [115](./issues/115-an-easter-egg.md) and [127](./issues/127-more-tricks-for-bead.md).
+Everything Bead, Limpide's water drop, can do. Bead lives on the page from a first visit, and the README and Display's tip say so ([150](./issues/150-bead-shown-by-default.md)); its tricks are left out of them on purpose, to stay a surprise ([115](./issues/115-an-easter-egg.md), decision 7), so this page is the one place they are all written down. About shows a few: Bead stands beside its logo, and a click on it gives a card of its tricks that links here ([163](./issues/163-bead-in-about.md)). How each thing is built is in [115](./issues/115-an-easter-egg.md), [127](./issues/127-more-tricks-for-bead.md) and [150](./issues/150-bead-shown-by-default.md).
 
 Bead makes no sound and changes nothing you hear. Turning a control only changes how Bead looks or moves.
 
 ## Calling it, and sending it away
 
-- **Play B, E, A, D**, as in a bead of water, within 4 seconds, in any octave: on the computer keyboard (J, D, H, S), the on-screen piano or a MIDI keyboard. Bead comes, in one of three ways chosen at random: up from behind its edge, falling from the top of the window like rain, or popping up with a hop.
-- **Play B, E, A, D again**: it leaps, smashes itself down into a splash, becomes a puddle, then a film that fades. Hanging or in the air, it drips away down the window instead.
-- The Demo, the Song and Hold's rhythm never call it: only Notes you play yourself.
-- Once you have met it, **Display has a Bead switch**, remembered. Off, Bead melts away and the Notes do nothing; on brings it back.
-- Bead is not remembered across a reload.
+- **It comes by itself**, while Display's Bead switch is on, 3 seconds after the page opens, in one of three ways chosen at random: up from behind its edge, falling from the top of the window like rain, or popping up with a hop. On a first visit it waits until the welcome is closed, and whenever About is open.
+- **Play B, E, A, D**, as in a bead of water, within 4 seconds, in any octave: on the computer keyboard (J, D, H, S), the on-screen piano or a MIDI keyboard. It goes away for this visit: it leaps, smashes itself down into a splash, becomes a puddle, then a film that fades. Hovering or in the air, it drips away down the window instead.
+- **Play B, E, A, D again**, and it comes back. While it melts, the Notes do nothing. A reload goes back to what Display's switch says: on, Bead comes by itself again.
+- The Demo, the Song and Hold's rhythm never call it or send it away: only Notes you play yourself.
+- **In About**, while Display's switch is on, Bead stands beside the logo, twice its size on the page, blinking, glancing about and wagging its tail, now and then jiggling or hopping (still, with reduced motion). A click, Enter or a tap on it gives its card in place of the credits: who it is, what it answers, a few funny turns, how to send it away, and a link to this page. Back, Escape or Bead again return to the credits. With the switch off, About has no Bead ([163](./issues/163-bead-in-about.md)).
+- **Display has a Bead switch**, from the first visit, on by default: the lasting setting, remembered across visits. Off, Bead melts away and never appears again, by itself or by the Notes, which then do nothing, until the switch is turned on; on brings it back. The Notes never turn the switch.
 
 ## Where it lives
 
 - **Three or four sections across**: on the top edge of the top right section (the Amp, or LFO & Envelopes), along the stretch where it covers least. Every 15 to 40 seconds it visits another section in view for a while: falling to one below, or leaping in an arc to one beside it.
-- **On a phone and in 2 × 2**: it stays in view as you scroll, on the top edge of a right-hand section. To go down it falls like rain and splashes; to go up it turns its tail down under itself and flies on it. With no edge in view it hangs under the header, swinging from its tip.
+- **It rides the LFOs** ([141](./issues/141-bead-rides-the-lfos.md)): three or four across, a visit may be a ride instead. While an LFO is on (its Depth above 0), a Sine or a Triangle at 1 Hz or slower (with Sync, the Hz its note value gives), its plot in view and clear of the cards, Bead may jump onto the plot and ride its line, as in the Demo's surf, for 8 to 18 seconds, then jump home. It jumps home sooner when the LFO stops being one to ride or its plot goes out of view; picked up, it lets go of the line; sent away, it jumps home and melts there. Never while the Demo plays or with reduced motion.
+- **On a phone and in 2 × 2**: it stays in view as you scroll, on the top edge of a right-hand section. To go down it falls like rain and splashes; to go up it turns its tail down under itself and flies on it. With no edge in view, as when its edge goes under the tabs, it takes off on its whirling tail and hovers where it lost ground, a little under the tabs or the header, bobbing gently, until an edge comes into view to drop or fly onto ([142](./issues/142-bead-on-the-line-under-the-tabs.md)). With reduced motion it hovers still.
+- **Never under a card** ([164](./issues/164-bead-never-under-a-card.md)): it never stands where the Demo's card, a Tutorial's, the Tour's, a tip or an open panel covers it, and strolls only along what they leave clear. When one comes over its spot it goes to the nearest clear stretch of an edge in view; with every edge in view covered, it stands on the card's top edge until one is clear again. It is still drawn under them, so it never covers their words or buttons.
 
 ## Its own life
 
@@ -45,7 +48,7 @@ Every knob and fader you turn, a Controller turns, the Demo or the Tour turns ge
 - **Resonance:** it shivers. Turned past three quarters, it screams for a moment: eyes wide, tail straight.
 - **FM, Ring, Noise:** a shiver. **Volume and the Mixer's levels:** a splash going up, a wince going down. **The LFOs' Rate and Depth:** a wiggle. **Glide:** it slides along without stepping.
 - **A Waveform chosen** (Osc 1's or Osc 2's): its tail becomes that wave for 3 seconds (sine, triangle, saw, square or pulse), then the logo again.
-- **Detune**, while both Oscillators are in the Mixer: Bead splits in two. The more cents, the farther apart the two drops, and the faster they wobble, as two detuned Oscillators beat. At 0 they are one again.
+- **Detune**, while both Oscillators are in the Mixer: Bead splits in two, its twin to its left below 0 cents and to its right above, whichever way Bead faces ([174](./issues/174-beads-detune-twin-on-both-sides.md)). The more cents, the farther apart the two drops, and the faster they wobble, as two detuned Oscillators beat. At 0 they are one again.
 - **The Noise heard:** pixels of static crackle around it, more as the Noise's fader goes up.
 - **Any other choice** (a Mode, a Destination): a glance. **A Preset loaded:** an excited hop.
 
@@ -79,7 +82,7 @@ While Bead is out, five more words spelled with Notes, like B, E, A, D, each cue
 Through the Demo's parts, in turn, Bead:
 - conducts with a tiny baton, down on each Note;
 - plays air guitar on its tail, strummed on each Note;
-- surfs an LFO's shape: it jumps onto the plot of an LFO that is on (its Depth above 0) and rides the line, end to end, as the LFO moves it. With no LFO on, or none in view, it conducts or plays air guitar instead.
+- surfs an LFO's shape: it jumps onto the plot of an LFO that is on (its Depth above 0) and rides the line, end to end, as the LFO moves it. With no LFO on, or none in view, it conducts or plays air guitar instead. Outside the Demo it rides a slow Sine or Triangle now and then (above).
 
 ## With reduced motion
 

@@ -18,6 +18,8 @@ export interface TransportHost {
   onNotes?(notes: number[]): void;
   /** The source is over. */
   onEnd?(): void;
+  /** The player's tempo, its beats counted from its first Note, `first`, on the audio clock (issue 112). */
+  onTempo?(bpm: number, first: number): void;
 }
 
 /**

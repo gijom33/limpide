@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { openDisplay } from './helpers';
+import { FIRST_VISIT } from './startState';
 
 // Issue 51: a sound made and changed without the mouse, and every control named for a screen reader.
 
@@ -36,6 +37,60 @@ test('Home, End, Page Up and Page Down on a knob', async ({ page }) => {
   await expect(resonance).toHaveAttribute('aria-valuenow', '0');
 });
 
+// Issue 160: a press is a step in the control's own unit, landing on round values: a semitone, a time step, 1 %, 0.5 dB.
+test('the arrows step each knob and fader in its own unit, Shift finer and Page coarser (issue 160)', async ({ page }) => {
+  await page.goto('/');
+  const cutoff = page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name: 'Cutoff' });
+  await expect(cutoff).toHaveAttribute('aria-valuetext', '2.00 kHz');
+  await cutoff.press('ArrowUp');
+  await expect(cutoff).toHaveAttribute('aria-valuetext', '2.12 kHz'); // a semitone
+  await cutoff.press('ArrowDown');
+  await cutoff.press('Shift+ArrowUp');
+  await expect(cutoff).toHaveAttribute('aria-valuetext', '2.01 kHz'); // 10 cents
+  await cutoff.press('Shift+ArrowDown');
+  await cutoff.press('PageUp');
+  await expect(cutoff).toHaveAttribute('aria-valuetext', '4.00 kHz'); // an octave
+
+  const attack = page.getByRole('slider', { name: 'Amp Attack', exact: true });
+  await expect(attack).toHaveAttribute('aria-valuetext', '10.0 ms');
+  for (const ms of ['11.0', '12.0', '14.0']) {
+    await attack.press('ArrowUp');
+    await expect(attack).toHaveAttribute('aria-valuetext', `${ms} ms`);
+  }
+  for (let i = 0; i < 3; i++) await attack.press('ArrowDown');
+  await attack.press('PageUp');
+  await expect(attack).toHaveAttribute('aria-valuetext', '20.0 ms'); // double
+
+  const sustain = page.getByRole('slider', { name: 'Amp Sustain', exact: true });
+  await sustain.press('ArrowUp');
+  await expect(sustain).toHaveAttribute('aria-valuetext', '71 %');
+  await sustain.press('ArrowDown');
+  await sustain.press('PageUp');
+  await expect(sustain).toHaveAttribute('aria-valuetext', '80 %');
+});
+
+test('the Mixer’s faders step by dB, to −∞ below the lowest step (issue 160)', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('limpide.overlays', JSON.stringify({ maths: true })));
+  await page.goto('/');
+  await page.getByRole('tab', { name: 'Mixer' }).click();
+  const readout = (name: string) =>
+    page.locator('.knob', { has: page.getByRole('slider', { name, exact: true }) }).locator('.knob-value > span').first();
+  await expect(readout('Osc 1')).toHaveText('0.0 dB');
+  await page.getByRole('slider', { name: 'Osc 1', exact: true }).press('ArrowDown');
+  await expect(readout('Osc 1')).toHaveText('−0.5 dB');
+  await page.getByRole('slider', { name: 'Osc 1', exact: true }).press('PageDown');
+  await expect(readout('Osc 1')).toHaveText('−6.0 dB');
+  const osc2 = page.getByRole('slider', { name: 'Osc 2', exact: true });
+  await expect(readout('Osc 2')).toHaveText('−∞ dB');
+  await osc2.press('ArrowUp');
+  await expect(readout('Osc 2')).toHaveText('−40.0 dB'); // the lowest step
+  await osc2.press('ArrowUp');
+  await expect(readout('Osc 2')).toHaveText('−39.5 dB');
+  await osc2.press('ArrowDown');
+  await osc2.press('ArrowDown');
+  await expect(readout('Osc 2')).toHaveText('−∞ dB');
+});
+
 test('closing a panel puts the focus back on the button that opened it', async ({ page }) => {
   await page.goto('/');
   await patchName(page).click();
@@ -57,10 +112,23 @@ test('Import file is a button the keyboard reaches', async ({ page }) => {
   await expect(importButton).toBeFocused();
 });
 
-test('the new Preset is announced after Next Preset, with its about line (issue 109)', async ({ page }) => {
+test('the new Preset is announced after Next Preset, and with its about line when picked in the panel (issues 109, 153)', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Next Preset' }).click();
-  await expect(page.locator('.patch-bar [role="status"]')).toHaveText(/^Pure Sine\. One Harmonic and nothing else/);
+  await expect(page.locator('.patch-bar [role="status"]')).toHaveText('Pure Sine');
+  await patchName(page).click();
+  await page.getByRole('dialog', { name: 'Patches' }).getByRole('button', { name: 'Init', exact: true }).click();
+  await expect(page.locator('.patch-bar [role="status"]')).toHaveText(/^Init\. The plain starting point/);
+});
+
+test('the × of a Preset’s description is next after Next Preset for the keyboard (issue 153)', async ({ page, browserName }) => {
+  test.skip(browserName === 'webkit', 'Safari tabs to buttons only when its settings ask it to');
+  await page.goto('/');
+  await patchName(page).click();
+  await page.getByRole('dialog', { name: 'Patches' }).getByRole('button', { name: 'Init', exact: true }).click();
+  await page.keyboard.press('Tab'); // from the name, back under the focus after the pick, to Next Preset
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('button', { name: 'Close the Preset’s description' })).toBeFocused();
 });
 
 test('sliders that share a label have distinct names: the Envelopes’ stages, the LFOs’ Rate and Depth', async ({ page }) => {
@@ -124,7 +192,7 @@ test('the letter keys can be turned off in Display, and stay off', async ({ page
 });
 
 test.describe('a first visit', () => {
-  test.use({ storageState: { cookies: [], origins: [] } });
+  test.use({ storageState: FIRST_VISIT });
   test('closing the welcome puts the focus on the Demo button, not the page', async ({ page }) => {
     await page.goto('/');
     await page.getByRole('dialog', { name: 'Limpide' }).getByRole('button', { name: 'Close' }).click();

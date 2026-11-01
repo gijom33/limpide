@@ -129,6 +129,13 @@ describe('the Demo player', () => {
     expect(calls.filter((c) => c.startsWith('move'))).toEqual(['move cutoff', 'move lfoRate']);
   });
 
+  it('hands over its tempo, its beats counted from its first Note (issue 112)', () => {
+    const { host } = fakeHost({ Mono: 1, Poly: 4 });
+    const tempi: [number, number][] = [];
+    startDemo({ ...host, onTempo: (bpm, first) => tempi.push([bpm, first]) }, track);
+    expect(tempi).toEqual([[120, 0.3]]);
+  });
+
   it('lights the keys of the Notes sounding now, and shows the octave the part lives in', () => {
     const { host, calls, advance } = fakeHost({ Mono: 1, Poly: 4 });
     const stop = startDemo(host, track);

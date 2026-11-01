@@ -44,7 +44,7 @@ test('no marker unless something moves the pitch; with Glide on, a Note puts it 
   await page.waitForTimeout(300);
   await expect(marker(page)).toBeHidden();
   await page.keyboard.up('KeyD');
-  await turnUp(page, 'Amp', 'Glide', 38);
+  await turnUp(page, 'Amp', 'Glide', 60);
   await page.keyboard.down('KeyD');
   await expect(marker(page)).toBeVisible();
   await expect.poll(() => markerX(page)).toBeCloseTo(await centre(page, 'E4'), 0);
@@ -55,7 +55,7 @@ test('no marker unless something moves the pitch; with Glide on, a Note puts it 
 test('with Glide, the marker slides between the keys from the old Note to the new one', async ({ page }) => {
   await page.goto('/');
   await listening(page);
-  await turnUp(page, 'Amp', 'Glide', 38); // about a second (2 % a step, on a log scale)
+  await turnUp(page, 'Amp', 'Glide', 60); // a second: from 1 ms, twenty round times a decade (issue 160)
   const c4 = await centre(page, 'C4');
   const c5 = await centre(page, 'C5');
   await page.keyboard.down('KeyA');
@@ -105,7 +105,7 @@ test('an LFO on Pitch wobbles the marker around the key', async ({ page }) => {
 test('the marker sits low on the key, where a finger presses it: higher on a black key, ringed to stand out on each', async ({ page }) => {
   await page.goto('/');
   await listening(page);
-  await turnUp(page, 'Amp', 'Glide', 38);
+  await turnUp(page, 'Amp', 'Glide', 60);
   /** The ring's lightness, 0 (black) to 255 (white). */
   const ring = () => marker(page).evaluate((el) => Number(getComputedStyle(el).borderTopColor.match(/\d+/)![0]));
   const markerY = async () => {

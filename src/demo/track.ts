@@ -1,4 +1,5 @@
-import { GLIDE_OFF, type ParamId } from '../patch/patch';
+import { noteIndex } from '../music/tempo';
+import { GLIDE_OFF, type LfoNumber, type ParamId } from '../patch/patch';
 
 /**
  * The Demo: one original track, played by the synth alone, so the Viewers show everything heard. Each part is a
@@ -21,6 +22,8 @@ export interface Part {
   moves?: KnobMove[];
   /** What to hear and see, in plain words, shown while the part plays (issue 50). */
   caption?: string;
+  /** The LFOs whose Rate is a note value at the track's tempo while the part plays, Sync on (issue 112). */
+  synced?: readonly LfoNumber[];
 }
 
 export interface Track {
@@ -29,8 +32,12 @@ export interface Track {
 }
 
 const BPM = 128;
-/** LFO Rates that land on the beat at the track's tempo, in Hz: a quarter Note, an eighth, a sixteenth, a thirty-second. */
-const SYNC = { quarter: BPM / 60, eighth: (BPM / 60) * 2, sixteenth: (BPM / 60) * 4, thirtySecond: (BPM / 60) * 8 };
+/**
+ * The ends of the LFO Rate sweeps, in Hz, at the track's tempo: a quarter Note, a sixteenth, a thirty-second. A sweep
+ * runs through the Hz between, so it stays in Hz; a Rate that jumps on the bar lines is a note value, its LFO synced
+ * (issue 112).
+ */
+const SWEEP = { quarter: BPM / 60, sixteenth: (BPM / 60) * 4, thirtySecond: (BPM / 60) * 8 };
 
 const times = (text: string, n: number) => Array(n).fill(text).join(' ');
 /** One bar of sixteenths: a Note name is a soft step, `!` after it an accent, `-` a rest. */
@@ -50,8 +57,9 @@ const bounceBar = (root: string, octave: string) => times(`${root}:.5@1 ${octave
 const pushedStabs = (chord: string) => `${chord}:.5@1 -:.25 ${chord}:.5 -:.25 ${chord}:.5@1 -:.5 ${chord}:.5 -:.25 ${chord}:.5@1 -:.25`;
 /** One bar of electric-piano comping: the chord struck three times, the second softer, across the bar. */
 const comp = (chord: string) => `${chord}:1.5@.8 ${chord}:1@.55 ${chord}:1.5@.7`;
-/** An LFO Rate that changes on bar lines: [bar, Hz] pairs, each a jump. */
-const rateByBar = (steps: [number, number][]): KnobMove[] => steps.map(([bar, hz]) => ({ id: 'lfoRate', to: hz, start: bar * 4, end: bar * 4 }));
+/** A synced LFO's note value, changing on bar lines: [bar, note value] pairs, each a jump (issue 112). */
+const noteByBar = (id: 'lfoNote' | 'lfo2Note', steps: [number, string][]): KnobMove[] =>
+  steps.map(([bar, note]) => ({ id, to: noteIndex(note), start: bar * 4, end: bar * 4 }));
 
 // Mostly the root and its octave, the same bar over and over with one Note changed: hypnotic rather than busy.
 const acidA = sixteenths('A1! - A1 A2 A1 - A2! A1 - A1 C2! A1 A2 - G1 A1');
@@ -84,22 +92,24 @@ export const TRACK: Track = {
       moves: [{ id: 'pulseWidth', from: 0.5, to: 0.1, end: 16 }, { id: 'filterDecay', from: 0.18, to: 0.5, start: 16 }, { id: 'cutoff', from: 500, to: 1400, start: 16 }] },
     // The break: the chords held by a string section, the Pulse Width shimmer quickening until it buzzes.
     { preset: 'Strings', caption: 'Held chords that shimmer, the shimmer speeding up until it buzzes.', phrase: 'A2+E3+A3+C4+E4:4 F2+C3+A3+C4+F4:4 C3+G3+C4+E4+G4:4 G2+D3+G3+B3+D4:4',
-      moves: [{ id: 'lfoRate', from: 0.7, to: SYNC.sixteenth }, { id: 'lfoAmount', from: 0.5, to: 0.8 }] },
+      moves: [{ id: 'lfoRate', from: 0.7, to: SWEEP.sixteenth }, { id: 'lfoAmount', from: 0.5, to: 0.8 }] },
     // The lift (issue 60): an electric piano on the same chords, LFO 1 on Volume. The tremolo locks to the beat in
     // eighths and deepens, then quickens to sixteenths for the last two bars, into the riser.
     { preset: 'Tremolo Keys', caption: 'Electric piano chords pulsing in time with the beat, deeper, then twice as fast. Watch the Amp’s wave swell and shrink: tremolo, an LFO on the Volume.',
       phrase: times(['A3+C4+E4', 'F3+A3+C4', 'G3+C4+E4', 'G3+B3+D4'].map(comp).join(' '), 2),
-      moves: [...rateByBar([[0, SYNC.eighth], [6, SYNC.sixteenth]]), { id: 'lfoAmount', from: 0.2, to: 0.8, end: 24 }] },
+      synced: [1],
+      moves: [...noteByBar('lfoNote', [[0, '1/8'], [6, '1/16']]), { id: 'lfoAmount', from: 0.2, to: 0.8, end: 24 }] },
     // The riser: a Filter ringing at full Resonance over the saw, its Cutoff swept across the whole Spectrum while the
     // LFO trembles faster and faster; then a beat of silence.
     { preset: 'Self-Oscillation', caption: 'A whistle climbing from low to high over a low buzz, trembling faster and faster: the Filter, its Resonance at full, rings at its Cutoff as it sweeps up.', phrase: 'A2:7@1 -:1',
-      moves: [{ id: 'cutoff', from: 300, to: 12000, end: 7 }, { id: 'lfoAmount', from: 0, to: 0.3, end: 7 }, { id: 'lfoRate', from: SYNC.quarter, to: SYNC.thirtySecond, end: 7 }] },
+      moves: [{ id: 'cutoff', from: 300, to: 12000, end: 7 }, { id: 'lfoAmount', from: 0, to: 0.3, end: 7 }, { id: 'lfoRate', from: SWEEP.quarter, to: SWEEP.thirtySecond, end: 7 }] },
     // The drop: a wobble bass, its LFO restarted by every Note and set to the beat: quarters, quickening to eighths at
     // the end of each four bars, no faster (the owner, 2026-10-29: it sounded bad at high rates). Its Depth grows from a
     // gentle sway, on a milder Resonance than the Preset's.
     { preset: 'Wobble', caption: 'A deep bass going “wah-wah” in time with the beat, quicker at the end of every four bars: the wobble, a slow wave (the LFO) opening and closing the Filter.', phrase: times([wobbleBar('A1', 'A2'), wobbleBar('F1', 'F2'), wobbleBar('C2', 'C3'), wobbleBar('G1', 'G2')].join(' '), 2),
+      synced: [1],
       moves: [
-        ...rateByBar([[0, SYNC.quarter], [3, SYNC.eighth], [4, SYNC.quarter], [7, SYNC.eighth]]),
+        ...noteByBar('lfoNote', [[0, '1/4'], [3, '1/8'], [4, '1/4'], [7, '1/8']]),
         { id: 'lfoAmount', from: 0.3, to: 0.5 },
         { id: 'resonance', to: 0.45, start: 0, end: 0 },
       ] },
@@ -107,9 +117,10 @@ export const TRACK: Track = {
     // LFO 2 flutters on the eighth throughout (faster sounded bad, the owner, 2026-10-29), its Depth growing.
     { preset: 'Double Wobble', caption: 'The wobble with a quick flutter riding on it, growing: a second, faster LFO moves the Filter too. The Cutoff knob’s blue ring stretches to cover both.',
       phrase: times([wobbleBar('A1', 'A2'), wobbleBar('F1', 'F2'), wobbleBar('C2', 'C3'), wobbleBar('G1', 'G2')].join(' '), 2),
+      synced: [1, 2],
       moves: [
-        { id: 'lfoRate', to: SYNC.quarter, start: 0, end: 0 },
-        { id: 'lfo2Rate', to: SYNC.eighth, start: 0, end: 0 },
+        ...noteByBar('lfoNote', [[0, '1/4']]),
+        ...noteByBar('lfo2Note', [[0, '1/8']]),
         { id: 'lfo2Amount', from: 0.1, to: 0.35 },
       ] },
     // The drop's last eight bars (the owner, 2026-10-29: the new Oscillator features in the Demo, FM Bass replaced as it

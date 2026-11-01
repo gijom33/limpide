@@ -1,10 +1,10 @@
 /**
  * The design principles' measurable rules (docs/design-principles.md), checked on the page as drawn: text contrast,
- * the contrast of what draws a control (its border or fill, a knob's groove and arc, a fader's track and fill), and
- * the size of what a pointer can hit. Runs inside the page (Playwright's evaluate), so it is one self-contained
- * function.
+ * the contrast of what draws a control (its border or fill, a knob's groove and arc, a fader's track and fill), the
+ * size of what a pointer can hit, and that no two controls lie over each other (issue 157). Runs inside the page
+ * (Playwright's evaluate), so it is one self-contained function.
  */
-export type Rule = 'text' | 'boundary' | 'target';
+export type Rule = 'text' | 'boundary' | 'target' | 'overlap';
 
 export interface Finding {
   rule: Rule;
@@ -20,7 +20,8 @@ export interface AuditOptions {
   minTarget: number;
   /**
    * Deliberate exceptions: a finding on an element matching one is accepted as long as it measures at least the
-   * waiver's floor (a contrast ratio, or a target's shorter side in px), so it can never get worse unseen.
+   * waiver's floor (a contrast ratio, or a target's shorter side in px), so it can never get worse unseen. Overlaps
+   * have no waivers.
    */
   waivers: { rule: Rule; selector: string; floor: number }[];
 }
@@ -105,7 +106,7 @@ export function auditPage({ rules, minTarget, waivers }: AuditOptions): AuditRes
     if (!excused.length && !unexpected.some((f) => f.rule === rule && f.what === what)) unexpected.push({ rule, what, measured });
   };
   const scope = [...document.querySelectorAll('header, main, .section-strip, dialog[open]')];
-  const all = scope.flatMap((s) => [s, ...s.querySelectorAll('*')]);
+  const all = [...new Set(scope.flatMap((s) => [s, ...s.querySelectorAll('*')]))]; // the header is in main: once each
 
   // Text: 4.5:1, or 3:1 when large (24 px, or 18.66 px bold).
   for (const el of rules.includes('text') ? all : []) {
@@ -154,8 +155,8 @@ export function auditPage({ rules, minTarget, waivers }: AuditOptions): AuditRes
   for (const el of boundaries.filter((e) => e.matches('.fader-fill'))) drawn(el, [getComputedStyle(el).backgroundColor]);
 
   // Targets: what a pointer can hit, extended by an absolutely placed ::before or ::after (a finger-sized pad).
-  const targets = (rules.includes('target') ? all : []).filter((el) => el.matches('button, input, select, a[href], [role="slider"], [role="radio"], [role="tab"], [role="menuitemradio"]'));
-  for (const el of targets) {
+  const pointable = all.filter((el) => el.matches('button, input, select, a[href], [role="slider"], [role="radio"], [role="tab"], [role="menuitemradio"]'));
+  for (const el of rules.includes('target') ? pointable : []) {
     if (!shown(el) || el.closest('p, dd, li') && el.matches('a')) continue; // a link inside a sentence is exempt
     const r = el.getBoundingClientRect();
     let [w, h] = [r.width, r.height];
@@ -168,5 +169,41 @@ export function auditPage({ rules, minTarget, waivers }: AuditOptions): AuditRes
     }
     if (w < minTarget - 0.5 || h < minTarget - 0.5) fail('target', el, Math.min(w, h), `${Math.round(w)}×${Math.round(h)}`);
   }
+
+  // Overlaps (issue 157): two controls on the same layer whose boxes cross, by more than half a pixel each way. A
+  // layer is what an absolutely placed, fixed or sticky box holds (a panel, a card, the header): a panel open over the
+  // page lies over its controls on purpose. A box is cut to what its scrolling or clipping boxes show, so a list
+  // scrolled within its panel is not over what is below it. The piano's keys are left out: the black ones lie over the
+  // white, as on a piano.
+  const layerOf = (el: Element) => {
+    for (let e = el.parentElement; e; e = e.parentElement) if (/^(absolute|fixed|sticky)$/.test(getComputedStyle(e).position)) return e;
+    return document.documentElement;
+  };
+  const visibleBox = (el: Element, layer: Element) => {
+    const r = el.getBoundingClientRect();
+    let [l, t, rt, b] = [r.left, r.top, r.right, r.bottom];
+    for (let e = el.parentElement; e && e !== layer.parentElement; e = e.parentElement) {
+      const s = getComputedStyle(e);
+      if (s.overflowX === 'visible' && s.overflowY === 'visible') continue;
+      const c = e.getBoundingClientRect();
+      [l, t, rt, b] = [Math.max(l, c.left), Math.max(t, c.top), Math.min(rt, c.right), Math.min(b, c.bottom)];
+    }
+    return { l, t, r: rt, b };
+  };
+  const laidOut = (rules.includes('overlap') ? pointable : [])
+    .filter((el) => shown(el) && !el.closest('.piano'))
+    .map((el) => {
+      const layer = layerOf(el);
+      return { el, layer, box: visibleBox(el, layer) };
+    })
+    .filter(({ box }) => box.r - box.l > 0.5 && box.b - box.t > 0.5);
+  laidOut.forEach((a, i) =>
+    laidOut.slice(i + 1).forEach((b) => {
+      if (a.layer !== b.layer || a.el.contains(b.el) || b.el.contains(a.el)) return;
+      const across = Math.min(a.box.r, b.box.r) - Math.max(a.box.l, b.box.l);
+      const down = Math.min(a.box.b, b.box.b) - Math.max(a.box.t, b.box.t);
+      if (across > 0.5 && down > 0.5) fail('overlap', a.el, across, `over ${where(b.el)} "${name(b.el)}" by ${Math.round(across)}×${Math.round(down)}`);
+    }),
+  );
   return { unexpected, matched: [...matched] };
 }

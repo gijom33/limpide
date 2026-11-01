@@ -35,6 +35,14 @@ describe('the Song', () => {
     expect(((length * SONG.bpm) / 60) % 4).toBe(0);
   });
 
+  it('hands over its tempo, its beats counted from its first Note (issue 112)', () => {
+    const { host } = fakeHost();
+    const tempi: [number, number][] = [];
+    const stop = startSong({ ...host, onTempo: (bpm, first) => tempi.push([bpm, first]) });
+    stop();
+    expect(tempi).toEqual([[SONG.bpm, 0.2]]);
+  });
+
   it('loops without a gap: each pass starts exactly one Song after the last', () => {
     vi.useFakeTimers();
     const { host, calls, run } = fakeHost();

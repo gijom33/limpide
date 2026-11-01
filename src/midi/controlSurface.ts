@@ -1,32 +1,28 @@
-import type { ChoiceId, ParamId } from '../patch/patch';
+import { BPM_STEP } from '../music/tempo';
+import { stepParamBy } from '../patch/grid';
+import { type ChoiceId, PARAMS, type ParamId } from '../patch/patch';
+import { answeredBy, answers, type KnownController } from './controller';
 import { detectEncoderMode, detectKnobMode, relativeDelta } from './encoderMode';
-import { type ActionId, type Control, controlKey, type Mapping, type MappingStore, sameControl, type Target } from './mappings';
+import {
+  type ActionId, type Control, controlKey, type Mapping, type MappingStore, PITCH_BEND, sameControl, type Target,
+} from './mappings';
 import type { MidiMessage } from './parser';
 
 /** Values gathered from a knob while learning it, enough to tell its Encoder Mode. */
 const LEARN_VALUES = 4;
 /** A shorter turn still completes, once the knob has been still this long. */
 const LEARN_SETTLE_MS = 500;
-/** A Relative step moves a Parameter this much of its travel, so a sweep takes a few turns of an encoder. */
+/**
+ * A stepped dial's least travel a Relative click (a Parameter with a Grid moves a step of it, issue 160), so a long
+ * list of steps still takes no more than a click each.
+ */
 const RELATIVE_STEP = 0.01;
 /** An Absolute knob landing this close to a Parameter's position picks it up: half a MIDI step either side. */
 const PICKUP_TOLERANCE = 0.5 / 127 + 1e-9;
 /** Encoder clicks per choice, so stepping through Waveforms is deliberate rather than jumpy. */
 const CLICKS_PER_CHOICE = 2;
-/**
- * A C16 knob's 66 (or 62) as a share of a step (issue 145): a bit of turning sends one 65 (or 63) turned slowly and,
- * past a speed, a burst of eight 66s, which reach the page split and merged, so they are counted by message, not by
- * time. The C16 sends fewer bursts than bits when turned fast, so a 66 counts more than an eighth (the owner,
- * 2026-10-31).
- */
-const C16_BURST_STEP = 1 / 3;
 /** Values a knob of unknown Encoder Mode sends before it moves anything: enough to tell its mode. */
 const DETECT_VALUES = 3;
-/**
- * The pitch bend wheel as a control: the number after the 128 CCs, so MIDI Learn can map it like a knob (its value
- * scaled to 0–127, Absolute) (issue 52).
- */
-export const PITCH_BEND = 128;
 /** The sustain pedal and the mod wheel, by their standard CC numbers. */
 const SUSTAIN = 64;
 const MOD_WHEEL = 1;
@@ -44,6 +40,14 @@ interface Synth {
   /** A Parameter's control position (0–1), and setting it. */
   position(id: ParamId): number;
   setPosition(id: ParamId, position: number): void;
+  /** A Parameter's value, and setting it: a Relative knob steps it on its Grid (issue 160). */
+  value(id: ParamId): number;
+  setValue(id: ParamId, value: number): void;
+  /** The Parameter a control mapped to `id` turns now: an LFO's Rate turns its note value while Sync is on (issue 112). */
+  turned(id: ParamId): ParamId;
+  /** The tempo's position (0–1, from the slowest BPM to the fastest), and setting it (issue 112). */
+  tempoPosition(): number;
+  setTempoPosition(position: number): void;
   action(id: ActionId): void;
   /** A choice's current index among its options, in on-screen order, and setting it. */
   choice(id: ChoiceId): { index: number; count: number };
@@ -59,6 +63,19 @@ interface Synth {
   bend?(amount: number): void;
   pedal?(down: boolean): void;
   program?(number: number): void;
+}
+
+/** What a knob or a fader moves: a Parameter, or the tempo. */
+interface Dial {
+  /** Its position (0–1), and setting it. */
+  get(): number;
+  set(position: number): void;
+  /** Its travel per step, if it moves by whole steps (an Octave, a note value, a BPM), else 0. */
+  unit: number;
+  /** Moves it `steps` steps of its Grid, signed: a Parameter that has one (issue 160). */
+  step?(steps: number): void;
+  /** Whether its travel is centred on zero (Detune, the Filter's Amount), so CC 64 is its zero (issue 160). */
+  centred?: boolean;
 }
 
 /** Pickup per Absolute control: where its knob was, and the position it last gave the Parameter (if following). */
@@ -86,11 +103,14 @@ export function createControlSurface(synth: Synth) {
     clearTimeout(justLearned.quiet);
     justLearned.quiet = setTimeout(() => (justLearned = null), LEARN_SETTLE_MS);
   };
+  const keepOff = (control: Control) => {
+    clearTimeout(justLearned?.quiet);
+    justLearned = { control };
+    settleJustLearned();
+  };
   const learned = (mapping: Mapping) => {
     store.set(mapping);
-    clearTimeout(justLearned?.quiet);
-    justLearned = { control: mapping.control };
-    settleJustLearned();
+    keepOff(mapping.control);
     setLearn({ phase: 'armed', target: null, learned: mapping });
   };
   // Controls the selected target must not be learned from (Quick Setup's other steps').
@@ -100,26 +120,53 @@ export function createControlSurface(synth: Synth) {
   const pickups = new Map<string, PickupState>();
   const pressed = new Map<string, boolean>();
   const clicks = new Map<string, number>(); // encoder clicks towards the next choice, per control
+  const gathered = new Map<string, number>(); // a Relative knob's travel towards a stepped dial's next step, per control
+  const thirds = new Map<string, number>(); // a Relative knob's share of a Grid step not yet moved (a C16's 66s), per control
   const detecting = new Map<string, number[]>(); // the first values of knobs finding their Encoder Mode
 
-  /** A Relative message's steps: as sent, or for a C16 knob one for a 65, a third for a 66. */
+  /**
+   * A Relative message's steps, as sent; but a fast turn's message (more than a step) on a known Controller's layout
+   * counts as that Controller says: a C16's 66 a third of a step.
+   */
   const relativeSteps = (mapping: Mapping, mode: 'relative-twos' | 'relative-centred', value: number) => {
     const delta = relativeDelta(mode, value);
-    if (mapping.device !== 'c16' || Math.abs(delta) <= 1) return delta;
-    return Math.sign(delta) * C16_BURST_STEP;
+    const fastTurn = answeredBy(mapping)?.fastTurnStep;
+    if (fastTurn === undefined || Math.abs(delta) <= 1) return delta;
+    return Math.sign(delta) * fastTurn;
   };
 
-  const moveParam = (mapping: Mapping, id: ParamId, value: number) => {
+  /**
+   * A knob or fader moving a dial (a Parameter, or the tempo): Relative by steps, Absolute with Pickup. A Parameter with
+   * a Grid moves a step of it a click (issue 160), a C16's thirds gathered into whole steps; a stepped dial (`unit`, its
+   * travel per step: an Octave, a note value, a BPM) gathers a Relative knob's steps until they make a whole one, a step
+   * for every two clicks at most, so a slow turn or a C16's thirds still move it.
+   */
+  const moveDial = (mapping: Mapping, dial: Dial, value: number) => {
     const target = mapping.target;
     if (mapping.mode === 'trigger' || mapping.mode === 'toggle' || mapping.mode === 'detect') return;
-    const current = synth.position(id);
+    const current = dial.get();
     if (mapping.mode !== 'absolute') {
       const steps = relativeSteps(mapping, mapping.mode, value);
-      synth.setPosition(id, Math.min(1, Math.max(0, current + steps * RELATIVE_STEP)));
+      const key = controlKey(mapping.control);
+      if (dial.step) {
+        // A turn back forgets the thirds gathered the other way, so it answers at once.
+        const before = thirds.get(key) ?? 0;
+        const total = (Math.sign(before) === -Math.sign(steps) ? 0 : before) + steps;
+        const whole = Math.trunc(total + (total > 0 ? 1e-9 : -1e-9));
+        thirds.set(key, total - whole);
+        if (whole) dial.step(whole);
+      } else {
+        const travel = (gathered.get(key) ?? 0) + steps * Math.max(RELATIVE_STEP, dial.unit / CLICKS_PER_CHOICE);
+        const whole = Math.trunc(travel / dial.unit + (travel > 0 ? 1e-9 : -1e-9));
+        gathered.set(key, travel - whole * dial.unit);
+        if (whole) dial.set(Math.min(1, Math.max(0, current + whole * dial.unit)));
+      }
       synth.touched?.(target, 'moved');
       return;
     }
-    const knob = value / 127;
+    // A control centred on zero has its zero at CC 64 exactly, 0 to 64 its lower half and 64 to 127 its upper (issue
+    // 160); any other spreads the 128 values evenly.
+    const knob = dial.centred ? (value <= 64 ? value / 128 : 0.5 + (value - 64) / 126) : value / 127;
     const state = pickups.get(controlKey(mapping.control)) ?? {};
     // Changed elsewhere since this knob last set it: the knob has to catch the new value.
     if (state.following !== undefined && Math.abs(state.following - current) > 1e-9) state.following = undefined;
@@ -128,12 +175,28 @@ export function createControlSurface(synth: Synth) {
       state.following = knob;
     state.knob = knob;
     if (state.following !== undefined) {
-      synth.setPosition(id, knob);
-      state.following = synth.position(id); // what it took: a stepped Parameter rounds
+      dial.set(knob);
+      state.following = dial.get(); // what it took: a stepped dial rounds
     }
     pickups.set(controlKey(mapping.control), state);
     synth.touched?.(target, state.following !== undefined ? 'moved' : 'waiting');
   };
+
+  /** A Parameter as a dial: the one its control turns now. */
+  const paramDial = (id: ParamId): Dial => {
+    const turned = synth.turned(id);
+    const def = PARAMS[turned];
+    const { step, min, max } = def;
+    return {
+      get: () => synth.position(turned),
+      set: (p: number) => synth.setPosition(turned, p),
+      unit: step ? step / (max - min) : 0,
+      step: step ? undefined : (steps) => synth.setValue(turned, stepParamBy(def, synth.value(turned), steps)),
+      centred: min === -max,
+    };
+  };
+  /** The tempo as a dial, a BPM a step (issue 112). */
+  const tempoDial = (): Dial => ({ get: synth.tempoPosition, set: synth.setTempoPosition, unit: BPM_STEP });
 
   /** Whether a button's message is a press: its CC rising past the middle, not its release (a momentary one's 0). */
   const pressedNow = (mapping: Mapping, value: number) => {
@@ -175,9 +238,10 @@ export function createControlSurface(synth: Synth) {
       store.replace(found);
       return apply(found, message);
     }
-    if (target.kind === 'param' || target.kind === 'choice') {
+    if (target.kind === 'param' || target.kind === 'choice' || target.kind === 'tempo') {
       if (message.type !== 'cc') return;
-      if (target.kind === 'param') moveParam(mapping, target.id, message.value);
+      if (target.kind === 'param') moveDial(mapping, paramDial(target.id), message.value);
+      else if (target.kind === 'tempo') moveDial(mapping, tempoDial(), message.value);
       else moveChoice(mapping, target.id, message.value);
       return;
     }
@@ -196,7 +260,8 @@ export function createControlSurface(synth: Synth) {
     learned({
       control: learn.control,
       target: learn.target,
-      mode: detectEncoderMode(values),
+      // On an Action, one message alone is a toggle's press; a second (a release, or a knob's turn) is momentary.
+      mode: learn.target.kind === 'action' ? (values.length > 1 ? 'trigger' : 'toggle') : detectEncoderMode(values),
     });
   };
 
@@ -214,7 +279,8 @@ export function createControlSurface(synth: Synth) {
         return false;
       values.push(message.value);
       clearTimeout(settle);
-      if (values.length >= LEARN_VALUES) finishListening();
+      // A second message on an Action ends Learn at once, a knob once it has sent enough to tell its Encoder Mode.
+      if (values.length >= (learn.target.kind === 'action' ? 2 : LEARN_VALUES)) finishListening();
       else settle = setTimeout(finishListening, LEARN_SETTLE_MS);
       return true;
     }
@@ -235,13 +301,12 @@ export function createControlSurface(synth: Synth) {
         channel: message.channel,
         number: message.controller,
       };
-      if (target.kind === 'action') {
-        learned({ control, target, mode: 'trigger' });
-      } else {
-        setLearn({ phase: 'listening', target, control });
-        values = [];
-        learnFrom(message);
-      }
+      // Heard out until it has been still a moment: a knob for its Encoder Mode, a button on an Action for whether
+      // a release follows its press (momentary) or not (a toggle, whatever its value: a lit one sends 0) (issue 147).
+      // Its messages meanwhile are used up by Learn, the release among them, so they fire nothing.
+      setLearn({ phase: 'listening', target, control });
+      values = [];
+      learnFrom(message);
       return true;
     }
     if (message.type === 'noteOn' && target.kind === 'action') {
@@ -260,8 +325,8 @@ export function createControlSurface(synth: Synth) {
   };
 
   return {
-    /** A message from a Controller; `fromC16` when that Controller is a C16, whose layout's Mappings answer it alone. */
-    handle(incoming: MidiMessage, fromC16 = false) {
+    /** A message from a Controller: `from` is the known Controller it is (a C16), whose layout's Mappings answer it alone; left out for any other. */
+    handle(incoming: MidiMessage, from?: KnownController) {
       if (incoming.type === 'program') return synth.program?.(incoming.program);
       const message: ControlMessage =
         incoming.type === 'pitchBend'
@@ -273,7 +338,7 @@ export function createControlSurface(synth: Synth) {
           ? { kind: 'cc', channel: message.channel, number: message.controller }
           : { kind: 'note', channel: message.channel, number: message.note },
       );
-      if (mapping && (fromC16 || mapping.device !== 'c16')) return apply(mapping, message);
+      if (mapping && answers(mapping, from)) return apply(mapping, message);
       // Unmapped: a keyboard's own controls do what a synth player expects.
       if (incoming.type === 'pitchBend') return synth.bend?.(incoming.value);
       if (message.type === 'cc' && message.controller === SUSTAIN) return synth.pedal?.(message.value >= 64);
@@ -290,7 +355,12 @@ export function createControlSurface(synth: Synth) {
     },
     /** Selects what the next control moved is learned for, other than any control in `avoid`. */
     select(target: Target, avoid: readonly Control[] = []) {
-      finishListening();
+      // A button cut short (a click on screen, Quick Setup's Skip) is not guessed: nothing is learned, and its
+      // release, still to come, is not learned for the next target.
+      if (learn.phase === 'listening' && learn.target.kind === 'action') {
+        clearTimeout(settle);
+        keepOff(learn.control);
+      } else finishListening();
       avoiding = avoid;
       setLearn({ phase: 'armed', target });
     },

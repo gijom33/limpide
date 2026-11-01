@@ -41,6 +41,13 @@ describe('Mapping store', () => {
     expect(store.list().map((m) => m.target)).toEqual([{ kind: 'param', id: 'resonance' }]);
   });
 
+  it('loads stored Mappings with a known Controller’s tag or none, and drops one tagged for no known Controller (issue 149)', () => {
+    const ofC16: Mapping = { ...cutoffOnKnob, device: 'c16' };
+    const unknown = { ...holdOnPad, device: 'keystep' };
+    const store = createMappingStore(memoryStorage({ 'limpide.mappings': JSON.stringify([ofC16, holdOnPad, unknown]) }));
+    expect(store.list()).toEqual([ofC16, holdOnPad]);
+  });
+
   it('removes the Mapping on one control, and can clear them all', () => {
     const store = createMappingStore(memoryStorage());
     store.set(cutoffOnKnob);

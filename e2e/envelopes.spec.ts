@@ -42,7 +42,7 @@ test('the Filter Envelope knobs wake up once Envelope Amount is turned away from
   const amount = page.getByRole('slider', { name: 'Amount' });
   await amount.focus();
   await page.keyboard.press('ArrowUp');
-  await expect(amount).toHaveAttribute('aria-valuetext', '+0.2 oct');
+  await expect(amount).toHaveAttribute('aria-valuetext', '+0.1 oct');
   await expect(decay).not.toHaveAttribute('data-inactive');
 });
 

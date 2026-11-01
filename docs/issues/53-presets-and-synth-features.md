@@ -6,7 +6,7 @@
 
 **Status:** done (2026-10-27)
 
-**Since then:** (2026-10-30, [issue 105](./105-header-and-panels-on-every-screen.md)) a stepped knob (an Octave, Osc 2's Semitone) moves one step for each notch's worth of scroll, small trackpad scrolls adding up to it; a notch's 4 % rounded back to the same Octave. Other knobs and faders still turn 4 % a notch.
+**Since then:** (2026-10-30, [issue 105](./105-header-and-panels-on-every-screen.md)) a stepped knob (an Octave, Osc 2's Semitone) moves one step for each notch's worth of scroll, small trackpad scrolls adding up to it; a notch's 4 % rounded back to the same Octave. Other knobs and faders still turn 4 % a notch. (2026-11-01, [issue 160](./160-steps-in-each-controls-own-unit.md)) Now every knob and fader moves a step of its Grid a notch, in its own unit (a semitone of the Cutoff, 1 % of a level), Shift a fine step.
 
 - [x] Pads and keys Presets with Voices to play chords: 7 of the 9 Pads (Pad, PWM Strings, Warm Pad, Brass Swell, Choir, Sweep Pad, Dark Drone), Organ, Electric Piano, Marimba, Glass Keys, Harp and Clav are at 1 Voice. A Presets test that a chordal Preset has more than one. Done: all twelve at 8 Voices; Dark Drone stays on one, a drone being one Note. `presets.test.ts` holds every Pad but the drone, every Piano and the six keys above one Voice
 - [x] A share link keeps the Patch name (it opens as "Shared Patch")
@@ -26,6 +26,7 @@ How the rest was done (2026-10-27):
 
 1. **Tremolo: yes, as a seventh LFO destination, Volume**, in the Amp's group of the menu. Depth pulls the volume down from where the Amp Envelope has it, never above it: at full Depth the wave's foot is silence. Two LFOs on Volume share the dip. Its pictures are the ones that already move: the Amp Tap's Scope and Spectrum, and the Timeline's Amp Envelope, which ripples with it (reversed by the owner, 2026-10-28: the Timeline draws the Amp Envelope alone). No ring, since the Amp has no level knob. This reverses issue 26's "no clean picture".
 2. **LFO tempo sync: left out.** Limpide keeps no tempo: a BPM control, MIDI clock or the Hold rhythm would each bring in a concept the PRD lacks, for a feature that matters beside a sequencer, which the PRD leaves out. In the PRD's Out of Scope.
+   **Since then (2026-10-31, issue 112):** reversed by the owner. Limpide keeps a tempo, the page's, and each LFO can sync to it ([ADR-0018](../adr/0018-limpide-keeps-a-tempo.md)); the PRD's Out of Scope no longer lists it.
 
 How Volume was built: `tremolo` in `src/modulation/modulationModel.ts` (the model: 1 less the LFOs' total swing, plus each swing times its LFO, each swing half its Depth); in the engine a gain after each Voice's Amp, fed a shared resting level and each LFO's swing, which the Amp Tap listens after; `Modulation.volume`, which the Timeline multiplies into the Amp Envelope it draws. Tests: the model (`modulationModel.test.ts`), the sound, the Amp Tap and the model together (`synthEngine.browser.test.ts`), the menu and the Timeline (`e2e/lfoDestination.spec.ts`, `e2e/envelopes.spec.ts`).
 

@@ -104,6 +104,24 @@ export const RetriggerIcon = () => (
   </svg>
 );
 
+/** Two eighth Notes beamed: an LFO's Sync, its Rate a note value at the tempo (issue 112). */
+export const SyncIcon = () => (
+  <svg {...base}>
+    <path d="M5.5 12V3.5l7-1.5V10.5" strokeLinejoin="round" />
+    <ellipse cx="3.9" cy="12" rx="1.9" ry="1.5" fill="currentColor" stroke="none" />
+    <ellipse cx="10.9" cy="10.5" rx="1.9" ry="1.5" fill="currentColor" stroke="none" />
+  </svg>
+);
+
+/** Two Notes under a slur, played as one line: Legato (issue 119). */
+export const LegatoIcon = () => (
+  <svg {...base}>
+    <path d="M1.5 7.5C4.5 2 11.5 2 14.5 7.5" strokeLinecap="round" />
+    <ellipse cx="4" cy="12" rx="2.4" ry="1.9" fill="currentColor" stroke="none" />
+    <ellipse cx="12" cy="11" rx="2.4" ry="1.9" fill="currentColor" stroke="none" />
+  </svg>
+);
+
 /** A Tutorial: a mortarboard. */
 export const TutorialIcon = () => (
   <svg {...base}>

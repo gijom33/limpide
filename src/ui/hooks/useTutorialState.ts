@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useEffectEvent, useState } from 'react';
 import type { KeyValueStorage } from '../../app/storage';
 import type { Patch } from '../../patch/patch';
 import type { PatchStore } from '../../patch/patchStore';
@@ -17,15 +17,31 @@ interface Host {
   /** Where the Tutorial's own changes go: its first Init, "Do it for me", a Step's snap, the matching Preset. */
   patches: PatchStore;
   overlays: Overlays;
-  /** A Display Step done for the person: the overlay on. */
+  /** A Display Step done for the person: the overlay on; or the Tutorial's own change given back. */
   showOverlay(overlay: Overlay): void;
+  /** A Display Step coming with its overlay on already: off, for the person to turn on. */
+  hideOverlay(overlay: Overlay): void;
   /** The current Snapshot's number (null when none): a new one makes a Snapshot Step. */
   snapshot: number | null;
   takeSnapshot(): void;
+  /** The Snapshot a Tutorial took, cleared as it ends. */
+  clearSnapshot(): void;
   /** A Tutorial starts: whatever plays by itself stops. */
   onStart(): void;
   /** A Tutorial ends: its Listen stops. */
   onEnd(): void;
+}
+
+/** A Tutorial under way: its card, which Steps are made, and what it changed in the Display itself (issue 158). */
+interface UnderWay {
+  tutorial: Tutorial;
+  index: number;
+  done: boolean[];
+  since?: Held;
+  /** The Display Steps that came with their overlay on, which the Tutorial turned off. */
+  turnedOff: number[];
+  /** The Snapshot its Snapshot Step took, by its number, while it is still the one shown. */
+  took?: number;
 }
 
 /**
@@ -34,31 +50,48 @@ interface Host {
  * keys, MIDI, "Do it for me"); a knob or fader then snaps to the exact value, so the finished sound is the Preset's.
  * `since` is what the Step's control held when the card came to it.
  */
-export function useTutorialState({ storage, patch, patchName, patches, overlays, showOverlay, snapshot, takeSnapshot, onStart, onEnd }: Host) {
-  const [lesson, setLesson] = useState<{ tutorial: Tutorial; index: number; done: boolean[]; since?: Held } | null>(null);
+export function useTutorialState({ storage, patch, patchName, patches, overlays, showOverlay, hideOverlay, snapshot, takeSnapshot, clearSnapshot, onStart, onEnd }: Host) {
+  const [lesson, setLesson] = useState<UnderWay | null>(null);
   const [finished, setFinished] = useState(() => loadFinished(storage));
   const preset = lesson && PRESETS.find((p) => p.name === lesson.tutorial.preset)!;
   const step = lesson?.tutorial.steps[lesson.index];
   const atEnd = !!lesson && lesson.index >= lesson.tutorial.steps.length;
   const differs = atEnd && preset ? differences(patch, preset.patch) : [];
 
+  /** The overlays the Tutorial turned off whose Steps the person has not made: off still, unless they turned one on. */
+  const stillOff = (l: UnderWay) => l.turnedOff.flatMap((i) => (!l.done[i] && l.tutorial.steps[i].kind === 'display' ? [l.tutorial.steps[i].overlay] : []));
+  /**
+   * What the Tutorial changed in the Display is given back as the person had it (issue 158): an overlay it turned off
+   * and they never turned on again; the Snapshot its Step took, unless they cleared it or took another since.
+   */
+  const giveBack = (l: UnderWay | null) => {
+    if (!l) return;
+    for (const overlay of stillOff(l)) showOverlay(overlay);
+    if (l.took !== undefined) clearSnapshot();
+  };
   const start = (tutorial: Tutorial) => {
+    giveBack(lesson);
     onStart();
     const init = PRESETS[0];
     patches.load(init.name, init.patch);
-    setLesson({ tutorial, index: -1, done: tutorial.steps.map(() => false) });
+    setLesson({ tutorial, index: -1, done: tutorial.steps.map(() => false), turnedOff: [] });
   };
   const end = () => {
+    giveBack(lesson);
     onEnd();
     setLesson(null);
   };
   const scene = { patch, overlays, snapshot };
-  const move = (delta: number) =>
-    setLesson((l) => {
-      if (!l) return l;
-      const index = Math.min(l.tutorial.steps.length, Math.max(-1, l.index + delta));
-      return { ...l, index, since: held(l.tutorial.steps[index], scene) };
-    });
+  // A Display Step whose overlay is on already starts by turning it off, so the person turns it on and sees what it adds
+  // (issue 158).
+  const move = (delta: number) => {
+    if (!lesson) return;
+    const index = Math.min(lesson.tutorial.steps.length, Math.max(-1, lesson.index + delta));
+    const next = lesson.tutorial.steps[index];
+    const off = next?.kind === 'display' && !lesson.done[index] && overlays[next.overlay];
+    if (off) hideOverlay(next.overlay);
+    setLesson((l) => l && { ...l, index, since: held(next, scene), turnedOff: off && !l.turnedOff.includes(index) ? [...l.turnedOff, index] : l.turnedOff });
+  };
   const matchPreset = () => preset && patches.load(preset.name, preset.patch);
   const doIt = () => {
     if (step) doStep(step, { setPatch: (change) => patches.change(change, 'tutorial'), showOverlay, takeSnapshot });
@@ -71,10 +104,15 @@ export function useTutorialState({ storage, patch, patchName, patches, overlays,
     if (!lesson || !step || lesson.done[lesson.index] || !made) return;
     const timer = setTimeout(() => {
       if (!onTarget(step, patch)) patches.change((p) => applyStep(p, step), 'tutorial');
-      setLesson((l) => l && { ...l, done: l.done.map((d, i) => d || i === l.index) });
+      setLesson((l) => l && { ...l, done: l.done.map((d, i) => d || i === l.index), took: step.kind === 'action' && snapshot !== null ? snapshot : l.took });
     }, SETTLE_MS);
     return () => clearTimeout(timer);
-  }, [lesson, step, made, patch, patches]);
+  }, [lesson, step, made, patch, patches, snapshot]);
+
+  // A Snapshot the person clears, or takes over the Tutorial's, is theirs: the Tutorial's is no longer shown to clear.
+  useEffect(() => {
+    if (lesson?.took !== undefined && lesson.took !== snapshot) setLesson((l) => l && { ...l, took: undefined });
+  }, [lesson, snapshot]);
 
   // The last card: the Tutorial counts as finished, and a sound that matches is named after its Preset.
   const matches = differs.length === 0;
@@ -88,6 +126,22 @@ export function useTutorialState({ storage, patch, patchName, patches, overlays,
     });
     if (matches && patchName !== preset.name) patches.load(preset.name, preset.patch);
   }, [atEnd, preset, matches, patchName, storage, patches]);
+
+  // A page closed or reloaded mid-Tutorial keeps the overlays as the person had them, since they are remembered (the
+  // Snapshot is not); one kept by the browser to come back to finds them off again, the Steps still to make.
+  const overlaysNow = useEffectEvent((back: boolean) => {
+    for (const overlay of lesson ? stillOff(lesson) : []) (back ? showOverlay : hideOverlay)(overlay);
+  });
+  useEffect(() => {
+    const onHide = () => overlaysNow(true);
+    const onShow = (e: PageTransitionEvent) => e.persisted && overlaysNow(false);
+    addEventListener('pagehide', onHide);
+    addEventListener('pageshow', onShow);
+    return () => {
+      removeEventListener('pagehide', onHide);
+      removeEventListener('pageshow', onShow);
+    };
+  }, []);
 
   return { lesson, preset, finished, differs: differs.map(controlName), start, end, move, matchPreset, doIt };
 }

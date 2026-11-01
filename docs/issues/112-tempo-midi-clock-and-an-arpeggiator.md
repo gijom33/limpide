@@ -6,7 +6,7 @@ This reverses one thing in the PRD's Out of Scope: "LFO tempo sync: Limpide keep
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement. In v1 ([131](./131-v1.md), decision 5, the owner, 2026-10-31). Grilled with the owner on 2026-10-31 and cut in three: this issue the tempo and Sync; following MIDI clock in [136](./136-following-midi-clock.md), teaching it in [137](./137-teaching-tempo-sync.md), both blocked by this one.
+**Status:** ready-for-human · enhancement. Built (2026-10-31) on night/2026-10-31, for the owner to try. In v1 ([131](./131-v1.md), decision 5, the owner, 2026-10-31). Grilled with the owner on 2026-10-31 and cut in three: this issue the tempo and Sync; following MIDI clock in [136](./136-following-midi-clock.md), teaching it in [137](./137-teaching-tempo-sync.md), both blocked by this one.
 
 ## Agent Brief
 
@@ -35,14 +35,14 @@ This reverses one thing in the PRD's Out of Scope: "LFO tempo sync: Limpide keep
 - The C16's layout and MIDI Learn's targets
 
 **Acceptance criteria:**
-- [ ] A unit test: each note value at a few BPMs gives the right Hz (1/8 at 120 BPM is 4 Hz; 1/4 D at 120 is 4/3 Hz; 1 bar at 60 is 0.25 Hz)
-- [ ] An engine test: a synced free LFO's cycle starts on the beat, and the model's phase matches the sound's (the model-against-sound test) across a tempo change
-- [ ] Turning Sync off and on keeps the Hz and the note value each had
-- [ ] A Patch without the new fields loads with Sync off; a Share link carries Sync and the note value; the tempo is not in either
-- [ ] The tempo is remembered after a reload; Tap sets it from four taps
-- [ ] While the Demo plays, the BPM shows the track's; after it stops, the owner's comes back; the Demo sounds as it did
-- [ ] The beat lines show on the LFO plot and the Timeline only while Sync is on
-- [ ] The C16's R2 and R4 on bank D switch Sync, and the C16 card shows them
+- [x] A unit test: each note value at a few BPMs gives the right Hz (1/8 at 120 BPM is 4 Hz; 1/4 D at 120 is 4/3 Hz; 1 bar at 60 is 0.25 Hz)
+- [x] An engine test: a synced free LFO's cycle starts on the beat, and the model's phase matches the sound's (the model-against-sound test) across a tempo change
+- [x] Turning Sync off and on keeps the Hz and the note value each had
+- [x] A Patch without the new fields loads with Sync off; a Share link carries Sync and the note value; the tempo is not in either
+- [x] The tempo is remembered after a reload; Tap sets it from four taps
+- [x] While the Demo plays, the BPM shows the track's; after it stops, the owner's comes back; the Demo sounds as it did
+- [x] The beat lines show on the LFO plot and the Timeline only while Sync is on
+- [x] The C16's R2 and R4 on bank D switch Sync, and the C16 card shows them
 - [ ] The design audit and the fit tests pass at every width; every test passes in Linux's fonts too
 
 **Out of scope:**
@@ -77,3 +77,37 @@ This reverses one thing in the PRD's Out of Scope: "LFO tempo sync: Limpide keep
 16. **Three slices:** this issue the tempo and Sync; [136](./136-following-midi-clock.md) following MIDI clock; [137](./137-teaching-tempo-sync.md) teaching it; both blocked by this one.
 
 Claude's call, open to the owner: a player's beat count starts with the player, so its synced LFOs land on its first beat.
+
+**Since then (2026-11-01, [issue 176](./176-a-synced-rate-shows-its-note-value-alone.md)):** decision 10's Hz beside the note value is gone: a synced Rate reads its note value alone, at one width, so the knobs no longer shift; the Hz is in the Rate's tip. Decided by the owner.
+
+## How it was built (2026-10-31, on night/2026-10-31)
+
+**What was built:**
+- **The tempo:** one BPM for the page (40 to 240, 120 by default), kept between visits as the Display is, never in a Patch, a Share link or a Patch file. A store built once in the audio session hands every change to the engine; setting it starts the beat count again.
+- **In the header,** beside Hold in the set-up row: "120 BPM", dragged up or down (a BPM a pixel), stepped with the arrows (Shift or Page Up/Down by ten, Home and End to the ends), typed after a double-click or Enter; Tap beside it from 861 px. Below 861 px the BPM is a button ("120" over "BPM") that opens a small field with the BPM and Tap in it. Tap follows the last four taps from the second, the beat landing on the last.
+- **Sync:** a note-symbol switch beside each LFO's Retrigger, in the Patch, off by default. On, the Rate knob turns the note value (4 bars to 1/32, straight, D and T, 24 in all, slowest first), reading "1/8 · 4 Hz"; off, the Hz it had comes back. Each is kept apart (`lfoNote`, `lfo2Note`).
+- **The phase:** a synced LFO with Retrigger free starts its cycle on the beat, at its Waveform's start, in the sound and the Modulation model alike; the engine locks it again whenever the tempo, the note value, the Waveform or Sync changes. With Retrigger on, each Note restarts it, at the note value's Hz. Engine tests compare the model with the sound across a tempo change.
+- **The beats shown:** broken lines on a synced LFO's plot, and on the Timeline while either LFO is synced.
+- **The players:** the Demo, the Song, the Tour's and a Tutorial's Listen hand their BPM over, counted from their first Note; the BPM reads theirs and cannot be set meanwhile; the person's comes back when they stop. The Demo's Rates that jump on bar lines (Tremolo Keys, Wobble, Double Wobble) are now note values with Sync on, at the Hz they had at 128 BPM.
+- **MIDI:** bank D's R2 and R4 on the C16 switch each LFO's Sync (toggles), and the C16 card (and its PDF) shows them; a C16 set up with issue 145's layout gains them once, where its own Mappings leave them free. MIDI Learn maps the BPM to a knob and Tap to a button; a control mapped to an LFO's Rate turns its note value while Sync is on.
+- **The record:** ADR-0018 supersedes issue 53's decision; the PRD (a story, an implementation line, Out of Scope), CONTEXT.md (Tempo, Tap, Sync), issues 53 and 145 and the tips follow.
+
+**Claude's calls, open to the owner:**
+1. **The header's room.** The set-up row had none to spare from 861 to 1365 px: there Hold, MIDI, Display and About show their icons alone (their tooltips name them; they keep their words from 1366 px, Demo, Tutorial and Song from 1100 px as before); from 861 to 1099 px the BPM shows its number alone; from 1200 to 1365 px the piano's keys are 42 px, so the piano stays at the centre in Linux's wider fonts (measured with Verdana standing in for them). In 2 × 2 each LFO's plot takes what its knobs leave, as on a phone, and the narrowest 2 × 2 windows (601 to 680 px) pad the header's buttons 2 px.
+2. **The small field below 861 px** is on tablets (2 × 2) as well as phones, since Tap is beside the BPM from 861 px only.
+3. **A drag sets the tempo where it is let go,** the BPM shown as it goes: setting the tempo starts the beat count again, so set at every pixel it restarted a synced LFO's cycle at every pixel. The arrows and a knob mapped to the BPM still set it at each step, each restarting the beat.
+4. **The Demo's sweeps stay in Hz** (the Strings' shimmer, the riser's tremble): they pass through the Hz between note values. Tremolo Keys' LFO, free, now lands on the beat; its Hz is as before.
+5. **Tap joins Quick Setup** after the Preset arrows, as an Action; the BPM is left to MIDI Learn, as the other set-once settings are.
+6. **A Relative knob on a stepped control** gathers its clicks into whole steps, a step for every two clicks at most: before, a Relative knob on an Octave or a Semitone never moved (each 1 % rounded back), and a note value would not have either.
+7. **A player's beat count starts with the player** (already in the Decisions), its first Note on a beat.
+
+**Tests:** tsc, the lint and every Vitest test (1218) pass; the whole Playwright suite in Chromium and WebKit passed but for About's word (fixed) and three WebKit tests that passed when run again alone (the mascot's two, Velocity's ring: the machine's load).
+
+**Not verified here:** "every test passes in Linux's fonts too" (the layouts were measured with Verdana as the stand-in; the branch run on GitHub will say).
+
+**To try in the app:**
+- Turn up LFO 1's Depth on the Cutoff, switch on Sync (the note beside Retrigger): the Rate reads "1/4 · 2 Hz"; turn it, then turn Sync off and on: each keeps its value. Watch the beat lines on its plot and the Timeline.
+- Drag the BPM up and down, type one, tap Tap four times in time; a synced LFO follows at once. Reload: the BPM stays.
+- Play the Demo: the BPM reads 128, greyed; the wobble and the tremolo keys should sound as before. Stop it: your BPM is back.
+- On the C16 (after plugging it in once): bank D's R2 and R4 switch Sync; the card in the MIDI panel shows them.
+- Try the header at 861, 1100, 1280 and 1366 px, and on a phone (the BPM opens its field).

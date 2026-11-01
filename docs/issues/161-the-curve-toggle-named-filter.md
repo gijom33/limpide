@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement
+**Status:** ready-for-human · enhancement. Built (2026-11-01) on night/2026-10-31, for the owner to try
 
 ## Decisions
 
@@ -30,10 +30,19 @@ Claude's call, open to the owner:
 - CONTEXT.md's Response Curve entry (a line on the toggle's name)
 
 **Acceptance criteria:**
-- [ ] Display shows Harmonics, Ideal, Filter, Guides, Maths; the Filter toggle draws the Response Curve as before
-- [ ] A visitor's stored Curve setting still loads
-- [ ] No Step, card or tip says "Curve" for the toggle
+- [x] Display shows Harmonics, Ideal, Filter, Guides, Maths; the Filter toggle draws the Response Curve as before
+- [x] A visitor's stored Curve setting still loads
+- [x] No Step, card or tip says "Curve" for the toggle
 - [ ] The overlay, tooltip and viewer-control specs updated; every test passes in Linux's fonts too
 
 **Out of scope:**
 - Renaming the Response Curve itself
+
+## How it was built
+
+- **The toggle:** Display's Show row reads Harmonics, Ideal, Filter, Guides, Maths, with the dashed orange swatch as before (decision 1). Its accessible name is "Filter’s Response Curve"; its tip is titled Filter and starts "The Response Curve: the Filter’s gain at every frequency" (decision 2). CONTEXT.md's Response Curve entry says Display's Filter toggle switches it on.
+- **The stored setting** keeps its key, `curve`, so a visitor's choice loads as it was.
+- **The Tutorials and the Tour** (decision 3): none tells the person to turn on Curve; every "Curve" in them speaks of the drawn line, and keeps it. Nor does the keyboard shortcut list name the toggle. Nothing there changed.
+- **Tests:** the overlays spec reads the row's five words in order and finds the toggle by its accessible name; a new spec loads a setting kept from before, with the Curve off, and finds the Filter toggle off. The tooltip and viewer-control specs follow the name; a tips unit test for the toggle's tip.
+- **Tests run:** `npx tsc`, `npm run lint`, the tips, Display settings and Viewer unit tests (138 passed); in Chromium the overlay, tooltip and viewer-control specs (26 passed). Linux's fonts are GitHub's run: "Filter" is about as wide as "Curve", and no test measures the row.
+- **To try:** open Display: the Show row reads Filter where it read Curve; switch it off and on, and the dashed Response Curve goes and comes back on the Filter Spectrum. Hover it for its tip. If it was off before, it is still off.

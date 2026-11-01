@@ -68,9 +68,12 @@ test('a Tutorial from the Patches panel: Init loaded, the control ringed with it
   const before = await wordsTop();
   await fader.focus();
   const note = card(page).getByText('Louder, not different');
-  // Up to 46 %, within reach: once it rests there a moment, the Step counts and the fader snaps to the target.
-  for (let i = 0; i < 23; i++) await page.keyboard.press('ArrowUp');
-  await expect(fader).toHaveAttribute('aria-valuetext', '46 %');
+  // Up to −6.5 dB (47 %), within reach: once it rests there a moment, the Step counts and the fader snaps to the target.
+  // A press from silence is its lowest step, −40 dB; six Pages −6 dB; a press down −6.5 dB (issue 160).
+  await page.keyboard.press('ArrowUp');
+  for (let i = 0; i < 6; i++) await page.keyboard.press('PageUp');
+  await page.keyboard.press('ArrowDown');
+  await expect(fader).toHaveAttribute('aria-valuetext', '47 %');
   await expect(note).toBeVisible();
   await expect(progress(page)).toHaveAttribute('data-done'); // its tick, in the top row too, which leaves the words put
   expect(Math.abs((await wordsTop()) - before)).toBeLessThan(1);
@@ -141,6 +144,50 @@ test('a Display option Step rings the Display button, then the option once the p
   await ideal.click();
   await expect(ideal).toHaveAttribute('aria-pressed', 'true');
   await expect(card(page)).toContainText('Circles mark where Osc 1’s saw puts its Harmonics');
+});
+
+// Issue 158 (profile 16's review of 1.19.0): with Ideal on, as it is at first, Bass Step 4 was ticked before the
+// person did anything, so Display and the Ideal stayed a mystery.
+test('a Display Step whose option is on already turns it off, and counts only once the person turns it on (issue 158)', async ({ page }) => {
+  await open(page, 'Bass');
+  await action(page, 'Start').click();
+  for (let i = 0; i < 3; i++) await makeStep(page);
+  await expect(progress(page)).toHaveText('Step 4 of 15');
+  await page.waitForTimeout(800); // longer than a Step takes to count
+  await expect(action(page, 'Next')).toBeDisabled();
+  await expect(action(page, 'Do it for me')).toBeVisible();
+  await expect(card(page)).not.toContainText('Circles mark');
+  await page.getByRole('button', { name: 'Display' }).click();
+  const ideal = page.getByRole('button', { name: 'Ideal' });
+  await expect(ideal).toHaveAttribute('aria-pressed', 'false');
+  await ideal.click();
+  await expect(card(page)).toContainText('Circles mark where Osc 1’s saw puts its Harmonics');
+  await expect(action(page, 'Next')).toBeEnabled();
+});
+
+test('left at a Display Step it turned off, by Quit or a reload, the Tutorial gives the option back (issue 158)', async ({ page }) => {
+  const ideal = page.getByRole('button', { name: 'Ideal' });
+  const toStep4 = async () => {
+    await action(page, 'Start').click();
+    for (let i = 0; i < 3; i++) await makeStep(page);
+    await expect(progress(page)).toHaveText('Step 4 of 15');
+    await page.getByRole('button', { name: 'Display' }).click();
+    await expect(ideal).toHaveAttribute('aria-pressed', 'false');
+    await page.keyboard.press('Escape');
+  };
+  await open(page, 'Bass');
+  await toStep4();
+  await card(page).getByRole('button', { name: 'Quit the tutorial' }).click();
+  await page.getByRole('button', { name: 'Display' }).click();
+  await expect(ideal).toHaveAttribute('aria-pressed', 'true');
+
+  await page.reload();
+  await patchName(page).click();
+  await page.getByRole('dialog', { name: 'Patches' }).getByRole('group', { name: 'Tutorials' }).getByRole('button', { name: /^Tutorial: Bass/ }).click();
+  await toStep4();
+  await page.reload();
+  await page.getByRole('button', { name: 'Display' }).click();
+  await expect(ideal).toHaveAttribute('aria-pressed', 'true');
 });
 
 test('Listen repeats the Tutorial’s phrase on the sound as it is, until pressed again; Quit stops it and leaves the sound', async ({ page }) => {
@@ -311,8 +358,9 @@ test('a drag that passes through the target on its way past does not count: the 
   const fader = page.getByRole('slider', { name: 'Osc 2', exact: true });
   await expect(fader).toBeVisible();
   await fader.focus();
-  // Through 50 % to 80 % in quick presses: never at rest within reach.
-  for (let i = 0; i < 40; i++) await page.keyboard.press('ArrowUp');
+  // Through 50 % to full in quick presses (−40 dB, then up 6 dB a Page): never at rest within reach.
+  await page.keyboard.press('ArrowUp');
+  for (let i = 0; i < 7; i++) await page.keyboard.press('PageUp');
   await page.waitForTimeout(800);
   await expect(card(page).getByText('Louder, not different')).toBeHidden();
   await expect(action(page, 'Next')).toBeDisabled();
@@ -321,7 +369,6 @@ test('a drag that passes through the target on its way past does not count: the 
 test('a knob already within reach when its Step comes waits for a touch, then counts and snaps (issue 59)', async ({ page }) => {
   await open(page, 'Bass');
   await action(page, 'Start').click();
-  // Step 4's Ideal is on at first, so that Step makes itself and its "Do it for me" goes: `makeStep` waits either way.
   for (let i = 0; i < 9; i++) await makeStep(page);
   // The Filter Decay: Init's 250 ms is within reach of 180 ms, and stays as it is until the learner moves it.
   await expect(progress(page)).toHaveText('Step 10 of 15');
@@ -350,6 +397,59 @@ test('a Snapshot Step rings the Display button, then Snapshot, and counts a new 
   await snapshot.click();
   await expect(snapshot).toHaveAttribute('aria-pressed', 'true');
   await expect(card(page)).toContainText('a faint trace of this bright saw');
+});
+
+// Issue 158 (profile 16's review of 1.19.0): Acid's Snapshot stayed on the Viewers through Pluck, Wobble and FM Ladder.
+test.describe('a Snapshot a Tutorial took (issue 158)', () => {
+  const snapshotShown = async (page: Page) => {
+    await page.getByRole('button', { name: 'Display' }).click();
+    const pressed = await page.getByRole('button', { name: 'Snapshot', exact: true }).getAttribute('aria-pressed');
+    await page.keyboard.press('Escape');
+    return pressed;
+  };
+  const toAcidSnapshot = async (page: Page) => {
+    await action(page, 'Start').click();
+    await makeStep(page);
+    await doIt(page);
+    await expect(card(page)).toContainText('a faint trace of this bright saw');
+  };
+  const pick = async (page: Page, preset: string) => {
+    await page.getByRole('button', { name: 'Tutorial', exact: true }).click();
+    await page.getByRole('button', { name: `Tutorial: ${preset}`, exact: true }).last().click();
+    await expect(card(page)).toHaveAccessibleName(`Tutorial: ${preset}`);
+  };
+
+  test('goes when the Tutorial is left, or another is picked', async ({ page }) => {
+    await open(page, 'Acid');
+    await toAcidSnapshot(page);
+    await card(page).getByRole('button', { name: 'Quit the tutorial' }).click();
+    expect(await snapshotShown(page)).toBe('false');
+
+    await pick(page, 'Acid');
+    await toAcidSnapshot(page);
+    await pick(page, 'Pluck');
+    expect(await snapshotShown(page)).toBe('false');
+  });
+
+  test('one the person took themselves stays, even after clearing the Tutorial’s', async ({ page }) => {
+    await open(page, 'Acid');
+    await toAcidSnapshot(page);
+    // Cleared, then one of their own: numbered as the Tutorial's was, it is still theirs.
+    await page.getByRole('button', { name: 'Display' }).click();
+    await page.getByRole('button', { name: 'Clear Snapshot' }).click();
+    await page.getByRole('button', { name: 'Snapshot', exact: true }).click();
+    await page.keyboard.press('Escape');
+    await card(page).getByRole('button', { name: 'Quit the tutorial' }).click();
+    expect(await snapshotShown(page)).toBe('true');
+
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Display' }).click();
+    await page.getByRole('button', { name: 'Snapshot', exact: true }).click();
+    await page.keyboard.press('Escape');
+    await pick(page, 'Bass');
+    await card(page).getByRole('button', { name: 'Quit the tutorial' }).click();
+    expect(await snapshotShown(page)).toBe('true');
+  });
 });
 
 for (const [width, text, small, cardWidth] of [[1920, '15px', '14px', 720], [1024, '13px', '12px', 640]] as const) {

@@ -50,6 +50,8 @@ const LEAD_IN = 0.2;
  * falls due. Returns the stop function, which silences everything at once.
  */
 export function startSong(host: SongHost): () => void {
-  const source = loopPhrase(SONG.phrase, SONG.bpm, host.now() + LEAD_IN, { transpose: () => 12 * (host.octave() - WRITTEN_OCTAVE) });
+  const first = host.now() + LEAD_IN;
+  host.onTempo?.(SONG.bpm, first);
+  const source = loopPhrase(SONG.phrase, SONG.bpm, first, { transpose: () => 12 * (host.octave() - WRITTEN_OCTAVE) });
   return startTransport(host, source, { lookahead: LOOKAHEAD, tick: TICK_MS });
 }

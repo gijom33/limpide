@@ -39,7 +39,9 @@ describe('the Viewer settings store (issue 77)', () => {
     viewers.dispatch({ type: 'toggleOverlay', overlay: 'guides' });
     viewers.dispatch({ type: 'showOverlay', overlay: 'maths' });
     viewers.dispatch({ type: 'showOverlay', overlay: 'maths' });
-    expect(viewers.get()).toMatchObject({ cycles: 4, timelineSeconds: 3, viewer: { frozen: true }, overlays: { guides: true, maths: true } });
+    viewers.dispatch({ type: 'hideOverlay', overlay: 'ideal' });
+    viewers.dispatch({ type: 'hideOverlay', overlay: 'ideal' });
+    expect(viewers.get()).toMatchObject({ cycles: 4, timelineSeconds: 3, viewer: { frozen: true }, overlays: { guides: true, maths: true, ideal: false } });
     expect(viewers.get()).not.toBe(first);
   });
 
@@ -91,6 +93,23 @@ describe('the Viewer settings store (issue 77)', () => {
     expect(osc2()[0].ratio).toBeCloseTo(fundamental * 2);
   });
 
+  it('stands the Guides at the level the Mixer sends, every source added, never past full scale nor at zero (issue 159)', () => {
+    const { patches, viewers } = setup();
+    expect(viewers.get().guideLevel).toBe(0.5); // Init: Osc 1 at full, the Nominal Level
+    patches.change((p) => ({ ...p, mixOsc1: 0.6, mixOsc2: 0.2 }), 'hand');
+    expect(viewers.get().guideLevel).toBeCloseTo(0.4);
+    patches.change((p) => ({ ...p, mixOsc1: 1, mixOsc2: 1 }), 'hand');
+    expect(viewers.get().guideLevel).toBeCloseTo(1);
+    patches.change((p) => ({ ...p, mixOsc1: 0, mixOsc2: 0, mixRing: 0.5, mixSub: 0.5, mixNoise: 0.5 }), 'hand');
+    expect(viewers.get().guideLevel).toBeCloseTo(0.75);
+    patches.change((p) => ({ ...p, mixRing: 0, mixSub: 0, mixNoise: 0.5, noiseColour: 'pink' }), 'hand');
+    expect(viewers.get().guideLevel).toBeCloseTo(0.55); // pink Noise at its own peak, 2.2 (white's RMS)
+    patches.change((p) => ({ ...p, mixOsc1: 1, mixOsc2: 1, mixRing: 1, mixSub: 1, mixNoise: 1 }), 'hand');
+    expect(viewers.get().guideLevel).toBe(1); // capped at full scale
+    patches.change((p) => ({ ...p, mixOsc1: 0, mixOsc2: 0, mixRing: 0, mixSub: 0, mixNoise: 0 }), 'hand');
+    expect(viewers.get().guideLevel).toBe(0.5); // nothing up: the Nominal Level, so they never vanish
+  });
+
   it('puts Osc 2 where a held Note’s Envelope keeps it, and back on its knobs once released (issue 98)', () => {
     const { patches, viewers } = setup();
     // Env Amount 24 at a Sustain of 0.5: while the Gate is on, Osc 2 rests an octave above its knobs.
@@ -114,6 +133,14 @@ describe('the Viewer settings store (issue 77)', () => {
     expect(sideband(60)).toBeCloseTo(at(1), 6);
     expect(sideband(96)).toBeCloseTo(at(fmDepthKept(patch, 440 * 2 ** (27 / 12), 48000)), 3); // kept to a thousandth
     expect(sideband(96)).toBeLessThan(sideband(60) / 2);
+  });
+
+  it('works FM’s sidebands out no higher than the Spectrum’s top, 20 kHz (issue 166)', () => {
+    const { patches, viewers } = setup();
+    patches.change((p) => ({ ...p, waveform: 'saw', osc2Waveform: 'sine', osc2Octave: 1, osc2Semitone: 10, crossMod: 1 }), 'hand');
+    const highest = (hz: number) => Math.max(...(viewers.get().ideal?.(hz, 48000) ?? []).filter((p) => p.source === 'osc1').map((p) => p.ratio * hz));
+    expect(highest(2093)).toBeLessThan(20000 + 2093); // C7: up to its Harmonic at the top
+    expect(highest(65.4)).toBeGreaterThan(16000); // C2: Harmonics up to its 256th, 16.7 kHz
   });
 
   it('works out FM’s kept depth once for a Note however many frames and Spectra ask (the 1.16.1 review)', () => {

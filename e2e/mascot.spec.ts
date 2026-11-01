@@ -1,14 +1,30 @@
 import { expect, type Page, test } from '@playwright/test';
 import { openDisplay } from './helpers';
+import { holding, WELCOMED } from './startState';
 
 // The mascot (issue 115): B, E, A, D played by hand, as in a bead of water, calls it up from behind the top right
 // section, and again sends it away, melting. In three and four across it lives on that section's top edge, along the
 // stretch that covers least above it: nothing, where the header has room. On a phone and in 2 × 2 it keeps in view as
 // the page scrolls: on a right-column section's top edge (over a phone's section tabs while an edge shows under them,
-// issue 142), or hanging under the header when none shows.
+// issue 142), or hovering on its tail under the header when none shows (issue 142). Out by default, it comes in by itself (issue 150). With
+// Display's switch off the Notes do nothing (decision 9), so these tests start with it switched off, as every spec does,
+// and bring it with the switch; then the Notes send it away and call it back for the visit. Those about its default
+// start as they need.
 
 const mascot = (page: Page) => page.locator('.mascot');
 const listening = (page: Page) => expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);
+/** Bead's height on screen, in pixels: the Mascot's HEIGHT. */
+const BEAD_HEIGHT = 26;
+const beadSwitch = (page: Page) => page.getByRole('radiogroup', { name: 'Bead', exact: true });
+
+/** Brings Bead up by Display's switch, then closes Display. */
+async function bringBead(page: Page) {
+  await openDisplay(page);
+  await beadSwitch(page).getByRole('radio', { name: 'Bead on' }).click();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('region', { name: 'Viewer controls' })).toBeHidden();
+  await expect(mascot(page)).toHaveCount(1);
+}
 
 /** Plays Notes on the computer keyboard: J is B4, D E4, H A4, S D4 (B, E, A, D); A C4, F F4. */
 async function play(page: Page, keys: string) {
@@ -53,22 +69,27 @@ const covered = (page: Page, viewers: boolean) =>
       .map((c) => c.getAttribute('aria-label') ?? c.className);
   }, viewers);
 
-test('B, E, A, D brings it and again sends it away; B, E, D, A does nothing', async ({ page }) => {
+test('with the switch on, B, E, A, D sends it away and again brings it; B, E, D, A does nothing (issue 150, decision 8)', async ({ page }) => {
   await page.goto('/');
   await listening(page);
-  await play(page, 'jdsh');
-  await expect(mascot(page)).toHaveCount(0);
-  await play(page, 'jdhs');
-  await expect(mascot(page)).toHaveCount(1);
+  await bringBead(page);
   await expect(mascot(page)).toHaveAttribute('aria-hidden', 'true');
   await expect(mascot(page)).toHaveCSS('pointer-events', 'none');
   await play(page, 'jdhs');
   await expect(mascot(page)).toHaveCount(0);
+  await play(page, 'jdsh');
+  await page.waitForTimeout(500);
+  await expect(mascot(page)).toHaveCount(0);
+  await play(page, 'jdhs');
+  await expect(mascot(page)).toHaveCount(1);
 });
 
 test('it comes in any octave, from the piano too, and the Demo never calls it', async ({ page }) => {
   await page.goto('/');
   await listening(page);
+  await bringBead(page);
+  await play(page, 'jdhs'); // sent away for the visit, the switch still on
+  await expect(mascot(page)).toHaveCount(0);
   const key = (name: string) => page.getByRole('group', { name: 'Piano' }).getByRole('button', { name, exact: true });
   for (const name of ['B4', 'E5', 'A4', 'D5']) {
     const box = (await key(name).boundingBox())!;
@@ -89,7 +110,7 @@ for (const [size, viewport, section] of [
     await page.setViewportSize(viewport);
     await page.goto('/');
     await listening(page);
-    await play(page, 'jdhs');
+    await bringBead(page);
     await expect.poll(async () => Math.abs((await footing(page, section)).below) <= 1).toBe(true); // landed and standing
     // Strolling, held awake by a Note, it stays on the edge, within the section, covering nothing.
     await page.keyboard.down('f');
@@ -103,9 +124,12 @@ for (const [size, viewport, section] of [
   });
 }
 
-/** Where the drop is in the window: on a right-column section's top edge, hanging under the header, or in between. */
+/**
+ * Where the drop is in the window: on a right-column section's top edge, hovering a little under the header or the
+ * section tabs and never over them (issue 142), or in between.
+ */
 const seen = (page: Page) =>
-  page.evaluate(() => {
+  page.evaluate((beadHeight) => {
     const drop = document.querySelector('.mascot-drop')!.getBoundingClientRect();
     const [header, strip] = ['header', '.section-strip'].map((q) => document.querySelector(q)?.getBoundingClientRect().bottom ?? 0);
     const ceiling = Math.max(0, header, strip);
@@ -115,12 +139,17 @@ const seen = (page: Page) =>
       return Math.abs(r.right - right) < 4 && Math.abs(r.top - drop.bottom) < 2.5; // a stroll bobs it a pixel
     });
     return {
-      // Swinging from its tip under the header, its box reaches a little past the line; on an edge just under a phone's
-      // section strip, its top is over the strip's foot by up to its height (issue 142).
-      inView: drop.top >= ceiling - (strip > header ? 26 : 6) && drop.bottom <= innerHeight + 1,
-      on: edge ? edge.getAttribute('aria-label') : Math.abs(drop.top - ceiling) < 4 ? 'header' : null,
+      // On an edge just under a phone's section strip, its top is over the strip's foot by up to its height (issue 142).
+      inView: drop.top >= ceiling - (strip > header ? beadHeight : 0) && drop.bottom <= innerHeight + 1,
+      // For a failure's message: where it was against the ceiling and the window, and how.
+      at: `top ${Math.round(drop.top)}, bottom ${Math.round(drop.bottom)}, ceiling ${Math.round(ceiling)}, window ${innerHeight}, ${document.querySelector<HTMLElement>('.mascot')!.dataset.moving}`,
+      on: edge
+        ? edge.getAttribute('aria-label')
+        : document.querySelector<HTMLElement>('.mascot')!.dataset.moving === 'hovering' && drop.top >= ceiling && drop.top - ceiling <= 8
+          ? 'hovering'
+          : null,
     };
-  });
+  }, BEAD_HEIGHT);
 
 /** Scrolls through the page, down then up, noting where the drop is each time it has settled, and that it is in view. */
 async function scrollThrough(page: Page, step: number) {
@@ -128,8 +157,10 @@ async function scrollThrough(page: Page, step: number) {
   const at = async (y: number) => {
     await page.evaluate((top) => window.scrollTo({ top, behavior: 'instant' }), y);
     await page.waitForTimeout(1200); // it falls or flies there, lands and recovers
+    // On a busy machine its flight may take longer: once it has settled, standing or hovering.
+    await expect(mascot(page)).toHaveAttribute('data-moving', /^(standing|hovering)$/, { timeout: 5000 });
     const where = await seen(page);
-    expect(where.inView, `scrolled to ${y}`).toBe(true);
+    expect(where.inView, `scrolled to ${y}: ${where.at}`).toBe(true);
     places.push(where.on);
   };
   const height = await page.evaluate(() => document.documentElement.scrollHeight - innerHeight);
@@ -147,9 +178,9 @@ for (const [size, viewport, column] of [
     await page.setViewportSize(viewport);
     await page.goto('/');
     await listening(page);
-    await play(page, 'jdhs');
+    await bringBead(page);
     const places = await scrollThrough(page, 250);
-    const edges = places.filter((p) => p !== 'header' && p !== null);
+    const edges = places.filter((p) => p !== 'hovering' && p !== null);
     expect(edges.every((p) => (column as readonly string[]).includes(p!)), places.join(', ')).toBe(true);
     // It moved with the page: more than one place, a later section on the way down.
     expect(new Set(places).size, places.join(', ')).toBeGreaterThan(1);
@@ -158,19 +189,74 @@ for (const [size, viewport, column] of [
   });
 }
 
-test('in a short phone window, with no edge in view, it hangs under the header', async ({ page }) => {
+/** Each frame for `seconds`: the drop's top under the ceiling (the header or the section tabs), its left, and its tail's turn. */
+const watchHover = (page: Page, seconds: number) =>
+  page.evaluate(
+    (ms) =>
+      new Promise<{ under: number; left: number; tail: string; moving: string }[]>((done) => {
+        const samples: { under: number; left: number; tail: string; moving: string }[] = [];
+        const start = performance.now();
+        const sample = () => {
+          const drop = document.querySelector('.mascot-drop')!.getBoundingClientRect();
+          const [header, strip] = ['header', '.section-strip'].map((q) => document.querySelector(q)?.getBoundingClientRect().bottom ?? 0);
+          samples.push({
+            under: drop.top - Math.max(0, header, strip),
+            left: drop.left,
+            tail: document.querySelector('#bead-self > g')!.getAttribute('transform') ?? '',
+            moving: document.querySelector<HTMLElement>('.mascot')!.dataset.moving ?? '',
+          });
+          if (performance.now() - start < ms) requestAnimationFrame(sample);
+          else done(samples);
+        };
+        requestAnimationFrame(sample);
+      }),
+    seconds * 1000,
+  );
+
+test('in a short phone window, with no edge in view, it hovers on its tail where it lost ground, under the tabs (issue 142)', async ({ page }) => {
   test.slow();
-  await page.setViewportSize({ width: 375, height: 560 });
   await page.goto('/');
   await listening(page);
-  await play(page, 'jdhs');
+  await bringBead(page); // before the window shrinks, which would put Display's switch out of reach
+  await page.setViewportSize({ width: 375, height: 560 });
   const places = await scrollThrough(page, 120);
-  expect(places, places.join(', ')).toContain('header');
+  expect(places, places.join(', ')).toContain('hovering');
+  // Down the page from the top, a step at a time, until its edge goes and none is left in view.
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+  await expect(mascot(page)).toHaveAttribute('data-moving', 'standing', { timeout: 5000 });
+  let lostAt: number | null = null;
+  for (let y = 60; lostAt === null; y += 60) {
+    expect(y, 'no edge ever left it').toBeLessThan(4000);
+    const before = await page.locator('.mascot-drop').evaluate((el) => el.getBoundingClientRect().left);
+    await page.evaluate((top) => window.scrollTo({ top, behavior: 'instant' }), y);
+    await page.waitForTimeout(900); // it takes off and settles, or falls to an edge and lands
+    if ((await mascot(page).getAttribute('data-moving')) === 'hovering') lostAt = before;
+  }
+  const hovering = await watchHover(page, 1.5);
+  expect(hovering.every((h) => h.moving === 'hovering')).toBe(true);
+  // A little under the tabs, never over them, bobbing.
+  const unders = hovering.map((h) => h.under);
+  expect(Math.min(...unders), unders.join(', ')).toBeGreaterThanOrEqual(0);
+  expect(Math.max(...unders), unders.join(', ')).toBeLessThanOrEqual(8);
+  expect(Math.max(...unders) - Math.min(...unders)).toBeGreaterThan(1);
+  // Near where it lost ground, across.
+  for (const h of hovering) expect(Math.abs(h.left - lostAt)).toBeLessThanOrEqual(14);
+  // Its tail whirling under it.
+  expect(new Set(hovering.map((h) => h.tail)).size).toBeGreaterThan(3);
+  // With reduced motion, it hovers still: no whirl, no bob.
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const still = await watchHover(page, 1);
+  expect(still.every((h) => h.moving === 'hovering')).toBe(true);
+  expect(new Set(still.map((h) => Math.round(h.under * 10))).size).toBe(1);
+  expect(new Set(still.map((h) => h.tail)).size).toBe(1);
 });
 
 test('it comes up from behind the Amp, and leaves jumping, then melting; with reduced motion it comes and goes at once', async ({ page }) => {
   await page.goto('/');
   await listening(page);
+  await bringBead(page);
+  await play(page, 'jdhs'); // sent away for the visit, so the Notes bring it back
+  await expect(mascot(page)).toHaveCount(0);
   await watchDrop(page);
   await play(page, 'jdhs');
   await expect.poll(async () => Math.abs((await footing(page)).below) <= 1).toBe(true);
@@ -226,48 +312,129 @@ test('it adds under a millisecond to each frame the Viewers draw (their own runs
     return page.evaluate(() => (window as unknown as { frameWork: number }).frameWork / (window as unknown as { frames: number }).frames);
   };
   const without = Math.min(await perFrame(), await perFrame());
-  await play(page, 'jdhs');
-  await expect(mascot(page)).toHaveCount(1);
+  await bringBead(page);
   const shown = Math.min(await perFrame(), await perFrame());
   expect(shown - without).toBeLessThan(1);
 });
 
-test('once met, Display has a Bead switch: off, it melts and the Notes do nothing, remembered; on brings it up', async ({ page }) => {
+test.describe('Display’s switch lasts, the Notes are for the visit (issue 150, decisions 7 to 9)', () => {
+  test.describe('switched on', () => {
+    test.use({ storageState: holding({ ...WELCOMED, 'limpide.bead': 'on' }) });
+
+    test('B, E, A, D sends it away and brings it back, the switch staying on; a reload brings it by itself again', async ({ page }) => {
+      await page.goto('/');
+      await listening(page);
+      await expect(mascot(page)).toHaveCount(1, { timeout: 6000 });
+      await play(page, 'jdhs');
+      await expect(mascot(page)).toHaveCount(0);
+      await openDisplay(page);
+      await expect(beadSwitch(page).getByRole('radio', { name: 'Bead on' })).toHaveAttribute('aria-checked', 'true');
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(4000); // sent away for the visit: it does not come by itself
+      await expect(mascot(page)).toHaveCount(0);
+      await page.reload();
+      await listening(page);
+      await expect(mascot(page)).toHaveCount(1, { timeout: 6000 });
+      await play(page, 'jdhs');
+      await expect(mascot(page)).toHaveCount(0);
+      await play(page, 'jdhs');
+      await expect(mascot(page)).toHaveCount(1);
+      await openDisplay(page);
+      await expect(beadSwitch(page).getByRole('radio', { name: 'Bead on' })).toHaveAttribute('aria-checked', 'true');
+    });
+  });
+
+  test('switched off, it never appears: the Notes do nothing, nor a reload, until the switch is turned on', async ({ page }) => {
+    await page.goto('/');
+    await listening(page);
+    await play(page, 'jdhs');
+    await page.waitForTimeout(4000);
+    await expect(mascot(page)).toHaveCount(0);
+    await play(page, 'jdhs'); // played again just before a reload: the Notes stored nothing either
+    await page.reload();
+    await listening(page);
+    await page.waitForTimeout(4000);
+    await expect(mascot(page)).toHaveCount(0);
+    await play(page, 'jdhs');
+    await page.waitForTimeout(500);
+    await expect(mascot(page)).toHaveCount(0);
+    await openDisplay(page);
+    await expect(beadSwitch(page).getByRole('radio', { name: 'Bead off' })).toHaveAttribute('aria-checked', 'true');
+    await expect(page.locator('.bead-icon')).toHaveAttribute('data-state', 'gone');
+    await beadSwitch(page).getByRole('radio', { name: 'Bead on' }).click();
+    await expect(mascot(page)).toHaveCount(1);
+    await expect(page.locator('.bead-icon')).toHaveAttribute('data-state', 'popping');
+    await beadSwitch(page).getByRole('radio', { name: 'Bead off' }).click();
+    await expect(page.locator('.bead-icon')).toHaveAttribute('data-state', 'melting');
+    await expect(mascot(page)).toHaveCount(0);
+    await page.keyboard.press('Escape');
+    await play(page, 'jdhs');
+    await page.waitForTimeout(500);
+    await expect(mascot(page)).toHaveCount(0);
+  });
+});
+
+test('About shows it beside the logo while the switch is on, and not once it is off (issue 163)', async ({ page }) => {
+  const about = page.getByRole('dialog', { name: 'Limpide' });
+  const inAbout = about.getByRole('button', { name: 'Bead, Limpide’s water drop: its tricks' });
+  const openAbout = () => page.getByRole('button', { name: 'About', exact: true }).click();
   await page.goto('/');
-  await listening(page);
-  await openDisplay(page);
-  await expect(page.getByRole('radiogroup', { name: 'Bead', exact: true })).toHaveCount(0);
+  await openAbout();
+  await expect(about).toBeVisible();
+  await expect(inAbout).toHaveCount(0);
   await page.keyboard.press('Escape');
-  await play(page, 'jdhs');
-  await expect(mascot(page)).toHaveCount(1);
-  await openDisplay(page);
-  const bead = page.getByRole('radiogroup', { name: 'Bead', exact: true });
-  await expect(bead.getByRole('radio', { name: 'Bead on' })).toHaveAttribute('aria-checked', 'true');
-  await expect(page.locator('.bead-icon')).toHaveAttribute('data-state', 'on');
-  await bead.getByRole('radio', { name: 'Bead off' }).click();
-  await expect(page.locator('.bead-icon')).toHaveAttribute('data-state', 'melting');
-  await expect(mascot(page)).toHaveCount(0);
+  await bringBead(page);
+  await openAbout();
+  await expect(inAbout).toBeVisible();
   await page.keyboard.press('Escape');
-  await play(page, 'jdhs');
-  await page.waitForTimeout(500);
-  await expect(mascot(page)).toHaveCount(0);
-  await page.reload();
-  await listening(page);
-  await play(page, 'jdhs');
-  await page.waitForTimeout(500);
-  await expect(mascot(page)).toHaveCount(0);
   await openDisplay(page);
-  await expect(page.locator('.bead-icon')).toHaveAttribute('data-state', 'gone');
-  await bead.getByRole('radio', { name: 'Bead on' }).click();
-  await expect(mascot(page)).toHaveCount(1);
-  await expect(page.locator('.bead-icon')).toHaveAttribute('data-state', 'popping');
+  await beadSwitch(page).getByRole('radio', { name: 'Bead off' }).click();
+  await page.keyboard.press('Escape');
+  await openAbout();
+  await expect(about).toBeVisible();
+  await expect(inAbout).toHaveCount(0);
+});
+
+test.describe('out by default (issue 150)', () => {
+  test.describe('a first visit', () => {
+    test.use({ storageState: holding({}) });
+
+    test('it waits while the welcome is up, then comes in by itself; Display’s switch and its tip show from the start', async ({ page }) => {
+      await page.goto('/');
+      const welcome = page.getByRole('dialog', { name: 'Limpide' });
+      await expect(welcome).toBeVisible();
+      await page.waitForTimeout(4000);
+      await expect(mascot(page)).toHaveCount(0);
+      await welcome.getByRole('button', { name: 'Close' }).click();
+      await expect(mascot(page)).toHaveCount(1, { timeout: 6000 });
+      await openDisplay(page);
+      const bead = page.getByRole('radiogroup', { name: 'Bead', exact: true });
+      await expect(bead.getByRole('radio', { name: 'Bead on' })).toHaveAttribute('aria-checked', 'true');
+      await bead.getByRole('radio', { name: 'Bead off' }).hover();
+      await expect(page.getByRole('tooltip')).toContainText('water drop');
+      await expect(page.getByRole('tooltip')).toContainText('B, E, A, D');
+    });
+  });
+
+  test.describe('switched on', () => {
+    test.use({ storageState: holding({ ...WELCOMED, 'limpide.bead': 'on' }) });
+
+    test('it comes in by itself a few seconds after the page opens, and again after a reload', async ({ page }) => {
+      await page.goto('/');
+      await listening(page);
+      await expect(mascot(page)).toHaveCount(1, { timeout: 6000 });
+      await page.reload();
+      await listening(page);
+      await expect(mascot(page)).toHaveCount(1, { timeout: 6000 });
+    });
+  });
 });
 
 test('a pointer over it tickles it; a click sends tiny drops every way', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
   await listening(page);
-  await play(page, 'jdhs');
+  await bringBead(page);
   await expect.poll(async () => Math.abs((await footing(page)).below) <= 1).toBe(true);
   // Its middle, on its own pixels.
   const middle = async () => {
@@ -291,7 +458,7 @@ test('clicked again and again, it runs off', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
   await listening(page);
-  await play(page, 'jdhs');
+  await bringBead(page);
   await expect.poll(async () => Math.abs((await footing(page)).below) <= 1).toBe(true);
   const where = async () => {
     const box = (await page.locator('.mascot-drop').boundingBox())!;
@@ -315,8 +482,7 @@ test('while it is out, words spelled with Notes cue its tricks; B, E, A, D still
   await listening(page);
   await play(page, 'sdhs'); // D, E, A, D before it is out: nothing
   await expect(mascot(page)).toHaveCount(0);
-  await play(page, 'jdhs');
-  await expect(mascot(page)).toHaveCount(1);
+  await bringBead(page);
   await play(page, 'sdhs');
   await expect(mascot(page)).toHaveAttribute('data-doing', 'playDead');
   await page.waitForTimeout(3500);
@@ -330,18 +496,50 @@ test('while it is out, words spelled with Notes cue its tricks; B, E, A, D still
 test('a Waveform chosen: its tail takes that wave a moment, then is the logo again', async ({ page }) => {
   await page.goto('/');
   await listening(page);
-  await play(page, 'jdhs');
+  await bringBead(page);
   await expect(mascot(page)).toHaveAttribute('data-tail', 'logo');
   await page.getByRole('radio', { name: 'Square', exact: true }).first().click();
   await expect(mascot(page)).toHaveAttribute('data-tail', 'square');
   await expect(mascot(page)).toHaveAttribute('data-tail', 'logo', { timeout: 5000 });
 });
 
+test("Detune splits it, its twin on the side of Detune's sign: left below 0 cents, right above (issue 174)", async ({ page, browserName }) => {
+  test.skip(browserName !== 'chromium', 'the side is drawn alike in every browser; checked in one');
+  await page.goto('/');
+  await listening(page);
+  await bringBead(page);
+  await page.getByRole('tab', { name: 'Mixer' }).click();
+  await page.getByRole('slider', { name: 'Osc 2', exact: true }).press('ArrowUp');
+  await page.getByRole('tab', { name: /Osc 2/ }).click();
+  const detune = page.getByRole('slider', { name: 'Osc 2 Detune', exact: true });
+  // Every frame for half a second, as Bead strolls and turns: where its twin stands, against itself.
+  const sides = () =>
+    page.evaluate(
+      () =>
+        new Promise<number[]>((done) => {
+          const seen: number[] = [];
+          const sample = () => {
+            const self = document.querySelector('#bead-self')!.getBoundingClientRect();
+            const twin = document.querySelector<SVGUseElement>('.mascot-twin')!;
+            const at = twin.checkVisibility() ? twin.getBoundingClientRect() : self;
+            seen.push(Math.sign(Math.round(at.left - self.left)));
+            if (seen.length < 30) requestAnimationFrame(sample);
+            else done(seen);
+          };
+          requestAnimationFrame(sample);
+        }),
+    );
+  await detune.press('Home');
+  await expect.poll(sides).toEqual(Array(30).fill(-1));
+  await detune.press('End');
+  await expect.poll(sides).toEqual(Array(30).fill(1));
+});
+
 test('dragged and let go, it is thrown, and lands on an edge', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
   await listening(page);
-  await play(page, 'jdhs');
+  await bringBead(page);
   await expect.poll(async () => Math.abs((await footing(page)).below) <= 1).toBe(true);
   const box = (await page.locator('.mascot-drop').boundingBox())!;
   const at = { x: box.x + 9, y: box.y + box.height - 8 };
@@ -366,14 +564,14 @@ test('on 31 October it wears a ghost sheet', async ({ page }) => {
   await page.clock.setFixedTime(new Date('2026-10-31T12:00:00'));
   await page.goto('/');
   await listening(page);
-  await play(page, 'jdhs');
+  await bringBead(page);
   await expect(mascot(page)).toHaveAttribute('data-hat', 'ghost');
 });
 
 test('the theme switched: it shades its eyes once Display is closed', async ({ page }) => {
   await page.goto('/');
   await listening(page);
-  await play(page, 'jdhs');
+  await bringBead(page);
   await openDisplay(page);
   await page.getByRole('radio', { name: 'Light', exact: true }).click();
   await page.waitForTimeout(300);
@@ -386,7 +584,7 @@ test('through the Demo it conducts, then plays air guitar, then surfs an LFO sha
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
   await listening(page);
-  await play(page, 'jdhs');
+  await bringBead(page);
   await page.getByRole('button', { name: 'Demo', exact: true }).click();
   await expect(mascot(page)).toHaveAttribute('data-act', 'conduct');
   await page.getByRole('button', { name: /^Play from part 2,/ }).click();
@@ -409,6 +607,14 @@ test('through the Demo it conducts, then plays air guitar, then surfs an LFO sha
   await page.mouse.down();
   await page.mouse.move(at.x, at.y - 120, { steps: 8 });
   await page.mouse.up();
+  // The Demo's card over the plot's foot, it never surfs there (issue 164): dragged aside by its name, it does.
+  await page.waitForTimeout(500);
+  await expect(mascot(page)).toHaveAttribute('data-act', 'conduct');
+  const name = (await page.getByRole('region', { name: 'Demo', exact: true }).locator('.demo-bar-name').boundingBox())!;
+  await page.mouse.move(name.x + 4, name.y + name.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(name.x + 504, name.y + name.height / 2, { steps: 8 });
+  await page.mouse.up();
   await expect(mascot(page)).toHaveAttribute('data-act', 'surf');
   await expect
     .poll(
@@ -421,4 +627,127 @@ test('through the Demo it conducts, then plays air guitar, then surfs an LFO sha
       { timeout: 5000 },
     )
     .toBe(true);
+});
+
+/** Where its foot is against LFO `lfo`'s plot: how far over or under the line the plot draws under its middle, in pixels. */
+const offTheLine = (page: Page, lfo: number) =>
+  mascot(page).evaluate((el, n) => {
+    const box = el.getBoundingClientRect(); // its box's bottom is its foot
+    const plot = document.querySelector(`.lfo-plot[data-lfo="${n}"]`)!;
+    const at = plot.getBoundingClientRect();
+    const points = [...plot.querySelector('.lfo-plot-line')!.getAttribute('d')!.matchAll(/[ML](\S+) (\S+)/g)].map((m) => ({ x: Number(m[1]), y: Number(m[2]) }));
+    const middle = box.left + 9 - at.left; // the drop's middle, the Mascot's DROP_MIDDLE
+    const under = points.reduce((a, b) => (Math.abs(b.x - middle) < Math.abs(a.x - middle) ? b : a));
+    return { off: box.bottom - (at.top + under.y), foot: box.bottom, moving: (el as HTMLElement).dataset.moving };
+  }, lfo);
+
+test('now and then it rides a slow Sine on an LFO plot, along its line, and goes home once the Depth is 0 (issue 141)', async ({ page }) => {
+  test.slow();
+  // Its every roll its lowest: its first visit is due soonest, 15 seconds in, and goes to the first choice, a ride.
+  await page.addInitScript(() => {
+    Math.random = () => 0;
+  });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  // LFO 1 a Sine at half a hertz, half on.
+  await page.goto(`/#p=${Buffer.from(JSON.stringify({ lfoAmount: 0.5, lfoRate: 0.5 })).toString('base64url')}`);
+  await listening(page);
+  await bringBead(page);
+  await page.mouse.move(2, 894); // off every control, so no tip stands over the plot
+  await page.keyboard.down('f'); // a Note held: it listens, and does no funny turn
+  await expect(mascot(page)).toHaveAttribute('data-ride', '1', { timeout: 40_000 });
+  await expect(mascot(page)).toHaveAttribute('data-moving', 'standing', { timeout: 5000 });
+  // On the line, each moment, as it rises and falls.
+  const feet: number[] = [];
+  for (let i = 0; i < 10; i++) {
+    const { off, foot, moving } = await offTheLine(page, 1);
+    expect(moving).toBe('standing');
+    expect(Math.abs(off), `off the line by ${off}`).toBeLessThanOrEqual(4);
+    feet.push(foot);
+    await page.waitForTimeout(150);
+  }
+  expect(Math.max(...feet) - Math.min(...feet), feet.join(', ')).toBeGreaterThan(4);
+  // Its Depth to 0 (a double-click puts it back to its 0): off with a jump home, onto the Amp's edge.
+  const depth = (await page.getByRole('slider', { name: 'LFO 1 Depth', exact: true }).boundingBox())!;
+  await page.mouse.dblclick(depth.x + depth.width / 2, depth.y + depth.height / 2);
+  await page.mouse.move(2, 894);
+  await expect(mascot(page)).toHaveAttribute('data-ride', '');
+  await expect.poll(async () => Math.abs((await footing(page)).below) <= 1, { timeout: 5000 }).toBe(true);
+  await page.keyboard.up('f');
+});
+
+/**
+ * Where the drop is against the docked cards (the Demo's, a Tutorial's, the Tour's): whether any part of its drawing is
+ * under one, and whether it is in the window, below the header (issue 164).
+ */
+const againstCards = (page: Page) =>
+  page.evaluate(() => {
+    const drop = document.querySelector('.mascot-drop svg')!.getBoundingClientRect();
+    const [header, strip] = ['header', '.section-strip'].map((q) => document.querySelector(q)?.getBoundingClientRect().bottom ?? 0);
+    const cards = [...document.querySelectorAll('.docked')].map((c) => c.getBoundingClientRect()).filter((r) => r.width > 0);
+    return {
+      cards: cards.length,
+      under: cards.some((r) => r.left < drop.right && r.right > drop.left && r.top < drop.bottom && r.bottom > drop.top),
+      // Its foot under the header and the section tabs, over which it may stand (issue 142), and on the window.
+      inView: drop.bottom > Math.max(header, strip) && drop.bottom <= innerHeight + 1,
+    };
+  });
+
+test.describe('never under a card (issue 164)', () => {
+  const cards = {
+    Demo: async (page: Page) => {
+      await page.getByRole('button', { name: 'Demo', exact: true }).click();
+    },
+    'a Tutorial': async (page: Page) => {
+      await page.getByRole('button', { name: /^Patch: / }).click();
+      const tutorials = page.getByRole('dialog', { name: 'Patches' }).getByRole('group', { name: 'Tutorials' });
+      await tutorials.getByRole('button', { name: /^Tutorial: Bass/ }).click();
+    },
+    'the Tour': async (page: Page) => {
+      await page.getByRole('button', { name: 'About' }).click();
+      await page.getByRole('dialog', { name: 'Limpide' }).getByRole('button', { name: 'Take the Tour' }).click();
+    },
+  };
+  test('three across, with Display open over its edge, it goes to an edge clear of the panel', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/');
+    await listening(page);
+    await bringBead(page);
+    await openDisplay(page);
+    const panel = page.getByRole('region', { name: 'Viewer controls' });
+    await expect(panel).toBeVisible();
+    await page.mouse.move(2, 894); // off every control, so no tip opens
+    await page.waitForTimeout(300);
+    await expect(mascot(page)).toHaveAttribute('data-moving', /^(standing|hovering)$/, { timeout: 5000 });
+    const under = await page.evaluate(() => {
+      const drop = document.querySelector('.mascot-drop svg')!.getBoundingClientRect();
+      const r = document.querySelector('.display-panel')!.getBoundingClientRect();
+      return r.left < drop.right && r.right > drop.left && r.top < drop.bottom && r.bottom > drop.top;
+    });
+    expect(under).toBe(false);
+  });
+
+  for (const [name, open] of Object.entries(cards)) {
+    test(`on a phone, with ${name}'s card docked, it keeps in view and out from under the card as the page scrolls`, async ({ page }) => {
+      test.slow();
+      await page.setViewportSize({ width: 375, height: 812 });
+      await page.goto('/');
+      await listening(page);
+      await bringBead(page);
+      await open(page);
+      const card = page.getByRole('region', { name: /^(Demo|Tour|Tutorial: .+)$/ });
+      await expect(card).toBeVisible();
+      // The pointer onto the card's blank edge, so no tip of what it was last over stands open.
+      const box = (await card.boundingBox())!;
+      await page.mouse.move(box.x + 3, box.y + box.height / 2);
+      const height = await page.evaluate(() => document.documentElement.scrollHeight - innerHeight);
+      const tops = [...Array.from({ length: Math.floor(height / 200) + 1 }, (_, i) => i * 200), height];
+      for (const top of [...tops, ...[...tops].reverse()]) {
+        await page.evaluate((y) => window.scrollTo({ top: y, behavior: 'instant' }), top);
+        await page.waitForTimeout(300);
+        // Once it has fallen or flown there and landed: standing, or hovering under the header.
+        await expect(mascot(page)).toHaveAttribute('data-moving', /^(standing|hovering)$/, { timeout: 5000 });
+        expect(await againstCards(page), `scrolled to ${top}`).toEqual({ cards: 1, under: false, inView: true });
+      }
+    });
+  }
 });

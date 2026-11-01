@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parsePhrase } from '../demo/phrase';
+import { parsePhrase, phraseLength } from '../demo/phrase';
 import { defaultPatch } from '../patch/patch';
 import { cycleLength, TOUR, TOUR_PATCH, type TourCard, tourAt } from './tour';
 
@@ -11,7 +11,7 @@ describe('The Tour (issue 128)', () => {
     expect(TOUR.map((c) => c.viewers)).toEqual([
       ['Oscillator Scope', 'Oscillator Spectrum'],
       ['Filter Scope', 'Filter Spectrum'],
-      ['Amp Scope', 'Amp Spectrum'],
+      ['Envelope Timeline', 'Amp Scope', 'Amp Spectrum'],
       ['Envelope Timeline'],
     ]);
   });
@@ -30,7 +30,7 @@ describe('The Tour (issue 128)', () => {
   });
 
   it('turns the controls the owner chose, each starting from the Tour’s Patch', () => {
-    expect(TOUR.map((c) => c.moves.map((m) => m.id))).toEqual([['waveform'], ['cutoff', 'resonance'], ['ampAttack', 'ampRelease'], ['lfoAmount']]);
+    expect(TOUR.map((c) => c.moves.map((m) => m.id))).toEqual([['waveform'], ['cutoff', 'resonance'], ['ampAttack', 'ampDecay', 'ampSustain', 'ampRelease'], ['lfoAmount']]);
     for (const c of TOUR) {
       expect(tourAt(c, 0).values, c.title).toEqual(Object.fromEntries(c.moves.map((m) => [m.id, TOUR_PATCH.patch[m.id]])));
     }
@@ -60,14 +60,64 @@ describe('The Tour (issue 128)', () => {
     expect(tourAt(filter, cycleLength(filter))).toEqual(tourAt(filter, 0));
   });
 
-  it('lengthens the Amp’s Attack and brings it back, then its Release', () => {
+  describe('the Amp card turns the Envelope’s four stages, one per Note (issue 130)', () => {
     const amp = card('Amp');
-    const half = (amp.moves[0].seconds * (amp.moves[0].path.length - 1)) / 2;
-    expect(tourAt(amp, half)).toMatchObject({ moving: 'ampAttack', values: { ampRelease: 0.4 } });
-    expect(tourAt(amp, half).values.ampAttack).toBeGreaterThan(0.5);
-    expect(tourAt(amp, 2 * half + 0.01).moving).toBe('ampRelease');
-    expect(tourAt(amp, 3 * half).values).toMatchObject({ ampAttack: 0.01 });
-    expect(tourAt(amp, 3 * half).values.ampRelease).toBeGreaterThan(1.5);
+    const STAGES = ['ampAttack', 'ampDecay', 'ampSustain', 'ampRelease'] as const;
+    const notes = parsePhrase(amp.phrase, amp.bpm);
+    /** The one stage away from the Tour's Patch at `t`, or none. */
+    const changed = (t: number) => STAGES.filter((id) => tourAt(amp, t).values[id] !== TOUR_PATCH.patch[id]);
+
+    it('plays one Note per stage, its moves and its phrase taking the same time, so they stay together', () => {
+      expect(notes).toHaveLength(4);
+      expect(cycleLength(amp)).toBeCloseTo(phraseLength(amp.phrase, amp.bpm), 6);
+    });
+
+    it('changes Attack, then Decay, then Sustain, then Release, each settled before its Note and held until it has faded', () => {
+      notes.forEach((note, i) => {
+        const id = STAGES[i];
+        // Half a second early the knob has stopped, the stage before it back where it was (the only one changed is this
+        // one): the Note carries the change from its key going down to its fade.
+        const release = tourAt(amp, note.time + note.duration).values.ampRelease!;
+        for (const t of [note.time - 0.5, note.time, note.time + note.duration, note.time + note.duration + release]) {
+          expect(changed(t), `${id} at ${t}`).toEqual([id]);
+          expect(tourAt(amp, t).values[id]).toBe(tourAt(amp, note.time).values[id]);
+        }
+      });
+    });
+
+    it('freezes the Viewers about three seconds once each Note has faded, naming its stage; after the last, all four', () => {
+      // When the Tour freezes, and for how long, read every 50 ms over a pass of the card.
+      const spans: { from: number; to: number; frozen: string }[] = [];
+      for (let t = 0; t < cycleLength(amp); t += 0.05) {
+        const frozen = tourAt(amp, t).naming?.join('; ');
+        const last = spans.at(-1);
+        if (frozen && last?.frozen === frozen && t - last.to < 0.06) last.to = t;
+        else if (frozen) spans.push({ from: t, to: t, frozen });
+      }
+      expect(spans.map((s) => s.frozen)).toEqual(['up: Attack', 'down to a level: Decay', 'held: Sustain', 'up: Attack; down to a level: Decay; held: Sustain; let go: Release']);
+      spans.forEach((span, i) => {
+        const note = notes[i];
+        const fade = note.time + note.duration + tourAt(amp, note.time + note.duration).values.ampRelease!;
+        // The Note's Release over, with room for the page's clock and the sound's to be a little apart.
+        expect(span.from, span.frozen).toBeGreaterThan(fade + 0.15);
+        expect(span.from - note.time, span.frozen).toBeLessThan(2 - 0.2); // its onset still on a 2 s Timeline, with room before it
+        expect(span.to - span.from, span.frozen).toBeGreaterThan(2.8);
+        expect(span.to - span.from, span.frozen).toBeLessThan(3.2);
+        if (notes[i + 1]) expect(span.to, span.frozen).toBeLessThan(notes[i + 1].time - 1); // the picture runs before the next
+      });
+    });
+
+    it('freezes nothing on the other cards', () => {
+      for (const c of TOUR.filter((c) => c !== amp)) for (let t = 0; t < cycleLength(c); t += 0.1) expect(tourAt(c, t).naming, c.title).toBeNull();
+    });
+
+    it('changes each far enough to see: a slow Attack, a slow Decay, a low Sustain, a long Release', () => {
+      const at = (i: number) => tourAt(amp, notes[i].time).values;
+      expect(at(0).ampAttack).toBeGreaterThanOrEqual(0.5);
+      expect(at(1).ampDecay).toBeGreaterThanOrEqual(0.8);
+      expect(at(2).ampSustain).toBeLessThanOrEqual(0.35);
+      expect(at(3).ampRelease).toBeGreaterThanOrEqual(0.9);
+    });
   });
 
   it('raises LFO 1’s Depth on the Cutoff, holds it, and takes it away', () => {

@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { acrossOf, choosePerch, createMascotPlace, FASTEST_THROW, GRAVITY, LANDING_SECONDS, type Moving, type Perch, type Placed, type Span, WINDUP_SECONDS } from './mascotPlace';
+import { noteIndex } from '../music/tempo';
+import type { Lfo } from '../patch/patch';
+import { acrossOf, choosePerch, clearAlong, createMascotPlace, FASTEST_THROW, GRAVITY, HOVER_UNDER, LANDING_SECONDS, type Moving, nearestSpan, type Perch, type Placed, ridesFor, type Span, WINDUP_SECONDS } from './mascotPlace';
 
 const H = 26;
 const ROOM = 18;
@@ -8,7 +10,7 @@ const pick = (current: string | null, tops: Record<string, number>, ceiling = 25
 
 describe('which line the mascot is on, on a phone or in 2 × 2 (issue 115)', () => {
   it('stands on a section edge with room over it, below the header and on the window', () => {
-    expect(pick(null, { Oscillators: 300, Filter: 1216 })).toEqual({ id: 'Oscillators', foot: 300, hanging: false });
+    expect(pick(null, { Oscillators: 300, Filter: 1216 })).toEqual({ id: 'Oscillators', foot: 300, hovering: false });
   });
 
   it('keeps its edge as it scrolls up, until the drop no longer fits under the header', () => {
@@ -17,27 +19,91 @@ describe('which line the mascot is on, on a phone or in 2 × 2 (issue 115)', () 
     expect(pick('Oscillators', { Oscillators: 250 + H - 1, Filter: 700 }).id).toBe('Filter');
   });
 
-  it('hangs under the header when no edge is in view, then takes the first one that comes', () => {
-    expect(pick('Oscillators', { Oscillators: -200, Filter: 900 })).toEqual({ id: 'ceiling', foot: 250 + H, hanging: true });
+  it('hovers a little under the header when no edge is in view, then takes the first one that comes (issue 142)', () => {
+    expect(pick('Oscillators', { Oscillators: -200, Filter: 900 })).toEqual({ id: 'ceiling', foot: 250 + H + HOVER_UNDER, hovering: true });
     expect(pick('ceiling', { Oscillators: -300, Filter: 790 }, 250, 276).id).toBe('Filter');
   });
 
-  it('stands on an edge just under the section tabs while it shows, over them, rather than hang off its line (issue 142)', () => {
+  it('stands on an edge just under the section tabs while it shows, over them, rather than hover off its line (issue 142)', () => {
     const over = H - 2;
     // The phone's first section, 12 px under the tabs: on its edge, its top 14 px over them.
-    expect(pick(null, { Oscillators: 250 + 12, Filter: 1200 }, 250, 300, over)).toEqual({ id: 'Oscillators', foot: 262, hanging: false });
+    expect(pick(null, { Oscillators: 250 + 12, Filter: 1200 }, 250, 300, over)).toEqual({ id: 'Oscillators', foot: 262, hovering: false });
     expect(pick('ceiling', { Oscillators: 250 + 12, Filter: 1200 }, 250, 276, over).id).toBe('Oscillators');
-    // Scrolled until the edge is about to go under the tabs, still on it; once it has, it hangs.
+    // Scrolled until the edge is about to go under the tabs, still on it; once it has, it hovers.
     expect(pick('Oscillators', { Oscillators: 250 + 2, Filter: 1200 }, 250, 300, over).id).toBe('Oscillators');
-    expect(pick('Oscillators', { Oscillators: 250 + 1, Filter: 1200 }, 250, 300, over).hanging).toBe(true);
+    expect(pick('Oscillators', { Oscillators: 250 + 1, Filter: 1200 }, 250, 300, over).hovering).toBe(true);
     // Where nothing may be overlapped (the header), as before.
-    expect(pick(null, { Oscillators: 250 + 12, Filter: 1200 }).hanging).toBe(true);
+    expect(pick(null, { Oscillators: 250 + 12, Filter: 1200 }).hovering).toBe(true);
     // An edge with room under the tabs still comes first.
     expect(pick(null, { Oscillators: 250 + 12, Filter: 400 }, 250, 300, over).id).toBe('Filter');
   });
 
   it('moving, takes the edge nearest to where it is', () => {
     expect(pick(null, { Oscillators: 320, Filter: 700 }, 250, 650).id).toBe('Filter');
+  });
+});
+
+const W = 44;
+describe('where along a line it is under no card, tip or panel (issue 164)', () => {
+  const line = { left: 0, right: 375, top: 600 };
+  const card = (top: number, left = 12, right = 363) => ({ left, right, top, bottom: top + 150 });
+
+  it('with nothing over the line, the whole of it', () => {
+    expect(clearAlong(line, [], W, H)).toEqual([{ min: 0, max: 375 - W }]);
+  });
+
+  it('with a card over the line, along its whole width, nowhere', () => {
+    expect(clearAlong(line, [card(590)], W, H)).toEqual([]);
+    expect(clearAlong(line, [card(600 - H + 1)], W, H)).toEqual([]); // over its head by a pixel
+  });
+
+  it('a card under the line, or far over it, leaves it whole', () => {
+    expect(clearAlong(line, [card(600)], W, H)).toEqual([{ min: 0, max: 375 - W }]); // its top on the line
+    expect(clearAlong(line, [{ left: 0, right: 375, top: 100, bottom: 600 - H }], W, H)).toEqual([{ min: 0, max: 375 - W }]);
+  });
+
+  it('a card over part of the line leaves the stretches either side where the whole drop fits', () => {
+    expect(clearAlong({ left: 800, right: 1300, top: 600 }, [card(590, 900, 1100)], W, H)).toEqual([
+      { min: 800, max: 900 - W },
+      { min: 1100, max: 1300 - W },
+    ]);
+    // A gap narrower than the drop is no room.
+    expect(clearAlong(line, [card(590, 0, 100), card(590, 130, 375)], W, H)).toEqual([]);
+  });
+
+  it('of the stretches left, the one nearest to where it is', () => {
+    const spans = [{ min: 0, max: 100 }, { min: 300, max: 400 }];
+    expect(nearestSpan(spans, 50)).toEqual(spans[0]);
+    expect(nearestSpan(spans, 250)).toEqual(spans[1]);
+    expect(nearestSpan(spans, 500)).toEqual(spans[1]);
+    expect(nearestSpan([], 50)).toBeNull();
+  });
+});
+
+describe('which line, with a card docked over the page (issue 164)', () => {
+  // A phone: the section tabs' foot at 250, a card docked from 640 to the window's bottom.
+  const card = { id: 'card', top: 640 };
+  const choose = (current: string | null, edges: { id: string; top: number; covered?: boolean }[], where = 300, docked: typeof card | null = card) =>
+    choosePerch({ current, edges, card: docked, ceiling: 250, overlap: H - 2, bottom: 812, height: H, headroom: ROOM, where });
+
+  it('never keeps nor takes an edge the card covers: it goes to one in view and clear', () => {
+    const edges = [{ id: 'Oscillators', top: 400 }, { id: 'Filter', top: 700, covered: true }];
+    expect(choose('Filter', edges, 700)).toEqual({ id: 'Oscillators', foot: 400, hovering: false });
+    expect(choose(null, edges, 700).id).toBe('Oscillators');
+  });
+
+  it('with every edge in view covered, stands on the card’s top edge, and goes back once one is clear', () => {
+    expect(choose('Filter', [{ id: 'Filter', top: 700, covered: true }], 700)).toEqual({ id: 'card', foot: 640, hovering: false });
+    expect(choose('card', [{ id: 'Filter', top: 700, covered: true }], 640).id).toBe('card');
+    expect(choose('card', [{ id: 'Filter', top: 600 }], 640).id).toBe('Filter');
+  });
+
+  it('with no edge in view at all, hovers under the header (issue 142)', () => {
+    expect(choose('Filter', [{ id: 'Filter', top: -300 }, { id: 'Amp', top: 1200 }], 276).hovering).toBe(true);
+  });
+
+  it('with every edge covered and no card to stand on, hovers', () => {
+    expect(choose('Filter', [{ id: 'Filter', top: 700, covered: true }], 700, null).hovering).toBe(true);
   });
 });
 
@@ -52,9 +118,11 @@ function run(place: ReturnType<typeof createMascotPlace>, from: number, to: numb
   }
   return frames;
 }
-const edge = (id: string, foot: number): Perch => ({ id, foot, hanging: false });
+const edge = (id: string, foot: number): Perch => ({ id, foot, hovering: false });
 const changes = (frames: { moving: Moving }[]) => frames.map((f) => f.moving).filter((m, i, all) => m !== all[i - 1]);
 const span = { min: 0, max: 300 };
+/** Its hover line on a phone, the section tabs' foot at 250. */
+const hover: Perch = { id: 'ceiling', foot: 250 + H + HOVER_UNDER, hovering: true };
 
 describe('the mascot between its lines, by the laws of motion (issue 115)', () => {
   it('follows its edge as the page scrolls', () => {
@@ -156,15 +224,56 @@ describe('the mascot between its lines, by the laws of motion (issue 115)', () =
     }
   });
 
-  it('climbs to the header and holds on; letting go, it drops to an edge below', () => {
+  it('losing ground, takes off at once, its tail whirling, and hovers at its own spot, a little under the tabs (issue 142)', () => {
+    const place = createMascotPlace();
+    place.frame(edge('Oscillators', 252), span, 0, false, 120);
+    const frames = run(place, 1 / 60, 1.5, () => hover, false, { min: 108, max: 132 }, 120);
+    expect(changes(frames)).toEqual(['flying', 'hovering']);
+    const flying = frames.filter((f) => f.moving === 'flying');
+    expect(flying.every((f) => f.thrust && f.windup === 1)).toBe(true); // whirling at once, no crouch first
+    expect(flying.every((f) => f.x === 120)).toBe(true); // where it lost ground, across
+    // Straight to its line, no hop and no fall past it, gently.
+    for (let i = 1; i < flying.length; i++) expect(flying[i].foot).toBeGreaterThanOrEqual(flying[i - 1].foot);
+    expect(Math.max(...flying.map((f) => f.foot))).toBeLessThanOrEqual(hover.foot);
+    expect(flying.length / 60).toBeLessThan(0.7);
+    expect(frames.find((f) => f.landedAt !== null)!.landedAt).toBe(120);
+  });
+
+  it('hovering, bobs gently up and down, its top never over the tabs; with reduced motion, still (issue 142)', () => {
+    const place = createMascotPlace();
+    place.frame(hover, span, 0, false, 120);
+    const feet = run(place, 1 / 60, 3, () => hover, false, span, 120).map((f) => {
+      expect(f.moving).toBe('hovering');
+      return f.foot;
+    });
+    expect(Math.max(...feet)).toBeLessThanOrEqual(hover.foot);
+    expect(Math.min(...feet)).toBeGreaterThanOrEqual(hover.foot - HOVER_UNDER); // its top at the tabs' foot at most
+    expect(Math.max(...feet) - Math.min(...feet)).toBeGreaterThan(1.5);
+    for (let i = 1; i < feet.length; i++) expect(Math.abs(feet[i] - feet[i - 1])).toBeLessThan(0.3); // gently
+    const still = createMascotPlace();
+    expect(run(still, 0, 2, () => hover, true, span, 120).every((f) => f.moving === 'hovering' && f.foot === hover.foot)).toBe(true);
+  });
+
+  it('from an edge far below, flies up under the tabs and hovers; an edge coming into view below, it drops onto it (issue 142)', () => {
     const place = createMascotPlace();
     place.frame(edge('Filter', 700), span, 0, false, 100);
-    const up = run(place, 1 / 60, 1.5, () => ({ id: 'ceiling', foot: 276, hanging: true }));
-    expect(changes(up)).toEqual(['flying', 'hanging']);
-    expect(up.at(-1)!.foot).toBe(276);
-    const down = run(place, 1.51, 3, () => edge('Amp', 600));
+    const up = run(place, 1 / 60, 2, () => hover);
+    expect(changes(up)).toEqual(['flying', 'hovering']);
+    expect(up.at(-1)!.foot).toBeGreaterThanOrEqual(hover.foot - HOVER_UNDER);
+    const left = up.at(-1)!.foot;
+    const down = run(place, 2.01, 3.5, () => edge('Amp', 600));
     expect(changes(down)).toEqual(['falling', 'landing', 'standing']);
-    expect(Math.min(...down.map((f) => f.foot))).toBeGreaterThanOrEqual(276); // no hop: it lets go
+    expect(Math.min(...down.map((f) => f.foot))).toBeGreaterThanOrEqual(left); // no hop: its tail stops, and it drops
+  });
+
+  it('hovering, an edge coming into view just over it, it flies up onto it at once, its tail already under it (issue 142)', () => {
+    const place = createMascotPlace();
+    place.frame(hover, span, 0, false, 100);
+    run(place, 1 / 60, 1, () => hover);
+    const frames = run(place, 1.01, 2.5, () => edge('Oscillators', 252));
+    expect(changes(frames)).toEqual(['flying', 'landing', 'standing']);
+    expect(frames.every((f) => f.windup === 1)).toBe(true);
+    expect(frames.at(-1)!.foot).toBe(252);
   });
 
   it('arriving from the top of the window, falls onto its edge', () => {
@@ -193,7 +302,7 @@ describe('the mascot between its lines, by the laws of motion (issue 115)', () =
 });
 
 describe('picked up and thrown (issue 127)', () => {
-  const edge: Perch = { id: 'Amp', foot: 400, hanging: false };
+  const edge: Perch = { id: 'Amp', foot: 400, hovering: false };
   const walls: Span = { min: 0, max: 1000 };
   const held = () => {
     const place = createMascotPlace();
@@ -239,6 +348,20 @@ describe('picked up and thrown (issue 127)', () => {
     expect(frames.at(-1)!.foot).toBe(400);
   });
 
+  it('thrown with no edge in view, catches itself on its tail coming down to its hover line, or flies up to it (issue 142)', () => {
+    const over = held();
+    over.hold(200, 200);
+    over.toss(0, -300, walls);
+    const caught = run(over, 0.1, 2, () => hover);
+    expect(changes(caught)).toEqual(['thrown', 'hovering']);
+    expect(caught.filter((f) => f.moving === 'hovering').every((f) => f.foot <= hover.foot && f.foot >= hover.foot - HOVER_UNDER)).toBe(true);
+    const under = held();
+    under.hold(150, 500);
+    under.toss(0, 0, walls);
+    const back = run(under, 0.1, 3, () => hover);
+    expect(changes(back)).toEqual(['flying', 'hovering']); // under its line from the first frame
+  });
+
   it('never thrown faster than its fastest', () => {
     const place = held();
     place.hold(500, 300);
@@ -248,3 +371,34 @@ describe('picked up and thrown (issue 127)', () => {
   });
 });
 
+
+describe('which LFOs it may ride, now and then, outside the Demo (issue 141)', () => {
+  const lfo = (settings: Partial<Lfo> = {}): Lfo => ({
+    rate: 0.5, amount: 0.5, note: noteIndex('1/4'), waveform: 'sine', destination: 'cutoff', retrigger: 'free', sync: 'off', ...settings,
+  });
+  const free = { demo: false, reduced: false };
+
+  it('a Sine or a Triangle at 1 Hz or slower, with its Depth above 0', () => {
+    expect(ridesFor([lfo(), lfo({ waveform: 'triangle', rate: 1 })], 120, free)).toEqual([1, 2]);
+    expect(ridesFor([lfo({ rate: 0.05, amount: 0.01 }), lfo({ waveform: 'triangle', rate: 0.2 })], 120, free)).toEqual([1, 2]);
+  });
+
+  it('not a Saw, a Saw Down or a Square, whose cliff would throw it off', () => {
+    for (const waveform of ['saw', 'sawDown', 'square'] as const) expect(ridesFor([lfo({ waveform }), lfo()], 120, free)).toEqual([2]);
+  });
+
+  it('not over 1 Hz, nor at a Depth of 0', () => {
+    expect(ridesFor([lfo({ rate: 1.05 }), lfo({ amount: 0 })], 120, free)).toEqual([]);
+  });
+
+  it('synced, by the Hz its note value gives at the tempo (issue 112)', () => {
+    // A quarter note: 2 Hz at 120 BPM, 1 Hz at 60; a bar: 0.5 Hz at 120.
+    expect(ridesFor([lfo({ sync: 'on', note: noteIndex('1/4'), rate: 0.1 }), lfo({ sync: 'on', note: noteIndex('1 bar'), rate: 5 })], 120, free)).toEqual([2]);
+    expect(ridesFor([lfo({ sync: 'on', note: noteIndex('1/4') }), lfo({ sync: 'on', note: noteIndex('1/8') })], 60, free)).toEqual([1]);
+  });
+
+  it('never while the Demo plays, nor under reduced motion', () => {
+    expect(ridesFor([lfo(), lfo()], 120, { demo: true, reduced: false })).toEqual([]);
+    expect(ridesFor([lfo(), lfo()], 120, { demo: false, reduced: true })).toEqual([]);
+  });
+});

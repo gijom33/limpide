@@ -99,6 +99,50 @@ test('Glide sits beside Voices in the Amp, greyed out with more than one Voice (
   await expect(glide).not.toHaveAttribute('data-inactive');
 });
 
+test('Legato is a switch by Glide, off by default, kept in the Patch, greyed out and described with more than one Voice (issue 119)', async ({ page }) => {
+  await page.goto('/');
+  const amp = page.getByRole('region', { name: 'Amp' });
+  const legato = amp.getByRole('button', { name: 'Legato', exact: true });
+  const field = amp.locator('.switch-field', { has: page.getByRole('button', { name: 'Legato', exact: true }) });
+  await expect(legato).toHaveAttribute('aria-pressed', 'false');
+  await expect(field).not.toHaveAttribute('data-inactive');
+  await expect(legato).toHaveAccessibleDescription(/^Legato/); // its tip, nothing before it
+  await legato.click();
+  await expect(legato).toHaveAttribute('aria-pressed', 'true');
+  await expect.poll(() => page.evaluate(() => Object.values(localStorage).some((v) => v.includes('"legato":"on"')))).toBe(true); // autosaved
+  await page.reload();
+  await expect(legato).toHaveAttribute('aria-pressed', 'true');
+  await voices(page).getByRole('radio', { name: '3', exact: true }).click();
+  await expect(field).toHaveAttribute('data-inactive', 'true');
+  await expect(legato).toHaveAccessibleDescription(/^No effect with more than one Voice\. Legato/);
+  await voices(page).getByRole('radio', { name: '1', exact: true }).click();
+  await expect(field).not.toHaveAttribute('data-inactive');
+});
+
+// Legato's place (issue 119): under the Voices numbers, its end at theirs, left of Glide, at every width, in the room
+// Glide's name and value leave, so the row never wraps.
+test('Legato stays under the Voices numbers, its end by Glide, at every width (issue 119)', async ({ page }) => {
+  test.setTimeout(120_000);
+  await page.goto('/');
+  const wrong: string[] = [];
+  for (let width = 340; width <= 1920; width += 7) {
+    await page.setViewportSize({ width, height: 900 });
+    const place = await page.evaluate(
+      () =>
+        new Promise<{ under: boolean; end: boolean; left: boolean }>((resolve) =>
+          requestAnimationFrame(() => {
+            const numbers = document.querySelector('.voices-field [role="radiogroup"]')!.getBoundingClientRect();
+            const glide = document.querySelector('.voices-field .knob')!.getBoundingClientRect();
+            const legato = document.querySelector('.voices-field .switch-field')!.getBoundingClientRect();
+            resolve({ under: legato.top >= numbers.bottom, end: Math.abs(legato.right - numbers.right) <= 1, left: legato.right <= glide.left });
+          }),
+        ),
+    );
+    if (!place.under || !place.end || !place.left) wrong.push(`${width}px ${JSON.stringify(place)}`);
+  }
+  expect(wrong).toEqual([]);
+});
+
 // Issue 86 (the owner's bug, 2026-10-28): Glide is right of the Voices numbers and level with them at every width; at
 // 1075 px the name beside the numbers left Glide no room, and it wrapped under them.
 test('Glide stays right of the Voices numbers at every width (issue 86)', async ({ page }) => {

@@ -224,3 +224,48 @@ describe('FM’s depth at the top (issue 103)', () => {
     expect(idealPartials({ ...sines, crossMod: 0.5 }, 64, { fmKept: 0.5 })).toEqual(idealPartials({ ...sines, crossMod: 0.25 }, 64));
   });
 });
+
+describe('the Ideal under heavy FM, bounded (issue 166)', () => {
+  const hz = (note: number) => 440 * 2 ** ((note - 69) / 12);
+  /** The Viewers' fundamental on `note`: Osc 1's pitch at its Octave, or the Sub's while it plays. */
+  const fundamental = (patch: Patch, note: number) => hz(note) * 2 ** patch.osc1Octave * (patch.mixSub > 0 ? 2 ** patch.subOctave : 1);
+
+  it('draws every Preset with FM or Ring up to the top of hearing as with no top, to a thousandth, on C2 to C7', () => {
+    for (const { name, patch } of PRESETS.filter((p) => p.patch.crossMod > 0 || p.patch.mixRing > 0))
+      for (const note of [36, 48, 60, 72, 84, 96]) {
+        const top = 20000 / fundamental(patch, note);
+        const heard = (bound?: number) => idealPartials(patch, 256, { gateOn: true, top: bound }).filter((p) => p.ratio < top);
+        const [whole, bounded] = [heard(), heard(top)];
+        expect(bounded.map((p) => p.ratio.toFixed(6)), `${name} on ${note}`).toEqual(whole.map((p) => p.ratio.toFixed(6)));
+        bounded.forEach((p, i) => expect(p.level, `${name} on ${note}, ${p.source} at ${p.ratio}`).toBeCloseTo(whole[i].level, 3));
+      }
+  });
+
+  // A square swung at full FM by a Sine an octave and a quarter-tone under it, over a Sub: tens of thousands of sidebands.
+  const heavy = {
+    ...defaultPatch(), waveform: 'square', osc1Octave: -2, osc2Waveform: 'sine', osc2Octave: -2, osc2Semitone: -12, osc2Detune: 50, mixOsc2: 0,
+    crossMod: 1, mixSub: 0.5, subOctave: -1,
+  } as const;
+
+  it('keeps the loudest thousand of FM’s sidebands, where a square swung hard makes tens of thousands', () => {
+    const kept = idealPartials(heavy, 256).filter((p) => p.source === 'osc1');
+    expect(kept.length).toBe(1024);
+    // Each sideband louder than the quietest kept, worked out where there are fewer of them (up to the 16th Harmonic), is kept.
+    const quietest = Math.min(...kept.map((p) => p.level));
+    const near = idealPartials(heavy, 256, { top: 16 }).filter((p) => p.source === 'osc1' && p.level > 2 * quietest);
+    expect(near.length).toBeGreaterThan(100);
+    const ratios = new Set(kept.map((p) => p.ratio.toFixed(6)));
+    for (const p of near) expect(ratios.has(p.ratio.toFixed(6)), `${p.ratio}`).toBe(true);
+  });
+
+  it('works out FM’s cycle from no more samples than fit a frame, with Osc 2 three octaves under Osc 1 swung hard', () => {
+    // Its cycle is Osc 2's: up to the 256th Harmonic, 2,048 of its own, each swung by an index of 4 and more.
+    const under = { ...defaultPatch(), waveform: 'square', osc2Waveform: 'sine', osc2Octave: -2, osc2Semitone: -12, mixOsc2: 0, crossMod: 1 } as const;
+    const cycle = idealPartials(under, 256).filter((p) => p.source === 'osc1');
+    expect(cycle.length).toBeGreaterThan(100);
+    expect(cycle.length).toBeLessThan(2048);
+    // Its partials are those worked out from as many samples with fewer asked for: the first 32 Harmonics.
+    const fewer = idealPartials(under, 32).filter((p) => p.source === 'osc1');
+    expect(cycle.slice(0, fewer.length)).toEqual(fewer);
+  });
+});

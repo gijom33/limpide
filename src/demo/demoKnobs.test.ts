@@ -21,6 +21,14 @@ describe("The Demo's knobs (issue 73)", () => {
     expect(by).toEqual(['demo']);
   });
 
+  it('turns Sync on for the LFOs a part plays in note values (issue 112)', () => {
+    const { store, knobs } = setup();
+    const wobble = PRESETS.find((p) => p.name === 'Wobble')!;
+    expect(knobs.newPart(wobble, [1])).toMatchObject({ lfoSync: 'on', lfo2Sync: 'off', lfoRetrigger: 'note' });
+    expect(knobs.newPart(PRESETS[1])).toMatchObject({ lfoSync: 'off', lfo2Sync: 'off' });
+    expect(store.get().name).toBe(PRESETS[1].name);
+  });
+
   it('leaves a knob turned by hand, or by a Controller, where it was put until the next part', () => {
     const { store, knobs } = setup();
     knobs.newPart(PRESETS[1]);
