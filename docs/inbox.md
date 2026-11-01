@@ -4,6 +4,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-10-31, the owner's bug: "The tip box prevents user from picking the LFO 2 source. I had to deactivate tips to be able to make a selection."
+
 ## Ideas
 
 ## Dropped
