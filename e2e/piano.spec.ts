@@ -190,6 +190,20 @@ test('with Web MIDI working but nothing plugged in, the indicator is not marked 
   await expect(page.getByRole('button', { name: 'MIDI', exact: true })).not.toHaveAttribute('data-unavailable');
 });
 
+test('with nothing plugged in, the MIDI panel and its tip say a Bluetooth Controller plays once paired in the system (issue 143)', async ({ page }) => {
+  await midiPermission(page, 'granted');
+  await page.addInitScript(() => {
+    const access = Object.assign(new EventTarget(), { inputs: new Map() });
+    Object.defineProperty(navigator, 'requestMIDIAccess', { value: () => Promise.resolve(access), configurable: true });
+  });
+  await page.goto('/');
+  const line = /A Bluetooth one plays once paired in the system’s MIDI settings \(Audio MIDI Setup on a Mac\)/;
+  await page.getByRole('button', { name: 'MIDI', exact: true }).hover();
+  await expect(page.getByRole('tooltip')).toContainText(line);
+  await page.getByRole('button', { name: 'MIDI', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: 'MIDI' }).locator('.midi-connection')).toContainText(line);
+});
+
 test('the MIDI icon carries the status: yellow with nothing plugged in, green with a device, struck through when unavailable', async ({ browser }) => {
   const icon = (p: Page) => p.getByRole('button', { name: 'MIDI', exact: true }).locator('.midi-icon');
   const colour = (p: Page, token: string) => p.evaluate((t) => {

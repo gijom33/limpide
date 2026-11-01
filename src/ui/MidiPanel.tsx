@@ -50,7 +50,8 @@ const statusText = (state: MidiState) => {
         ? 'MIDI access was not allowed, so Controllers cannot be heard. Allow MIDI in the browser’s site settings, or open Limpide in Chrome or Edge (some built-in browsers never allow it).'
         : devices.length
           ? `Connected: ${devices.join(', ')}. Its keys and pads play the synth, with Velocity.`
-          : 'No MIDI Controller connected. Plug one in (USB, or pair it over Bluetooth MIDI) and it is picked up straight away.';
+          : // A Bluetooth Controller is a port like any other once the system has paired it, as the owner's C16 is (issue 143).
+            'No MIDI Controller connected. Plug one in by USB and it is picked up straight away. A Bluetooth one plays once paired in the system’s MIDI settings (Audio MIDI Setup on a Mac), as a TempoPAD C16 does.';
 };
 
 /**
