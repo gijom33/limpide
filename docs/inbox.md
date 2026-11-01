@@ -6,8 +6,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
-- 2026-11-01, from Claude's look at the night of 2026-10-31, asked for by the owner ("I am sure we have been wasteful because of inefficiencies"): most of the night's time went to tests run whole in both browsers inside each issue and again at the end, on a machine loaded by a Chrome tab, the night's dev server and side jobs, so timeouts led to reruns; triage decisions not measured led to rework (153, 158, 150); each subagent cost 80 to 100 k tokens even for a 2-minute change; two reviewers per issue; and the night's lead shared its session with the day's triage (629 k tokens of context).
-
 ## Dropped
 
 - 2026-10-30, from Claude's brainstorm, Velocity on the Volume ("a harder hit plays louder, not only brighter"): already so. The Amp Envelope's Attack rises to the Note's Velocity (PRD story 9). Claude's call, open to the owner.
@@ -159,3 +157,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-31, the owner's bug of Bead's Detune twin always on its left (triage): to [174](./issues/174-beads-detune-twin-on-both-sides.md), a bug, ready for an agent: the twin on Detune's side (decided by the owner), all else as now; queued tonight with the bugs.
 2026-10-31, the owner's bug of a tip hiding LFO 2's Destination menu (triage): to [175](./issues/175-no-tip-over-an-open-menu.md), a bug, ready for an agent and queued tonight with the bugs: opening a menu closes the tip, and no tip shows while one is open, for every menu (Claude's call, open to the owner).
 2026-10-31, the owner's bug of a synced Rate's long readout (triage): to [176](./issues/176-a-synced-rate-shows-its-note-value-alone.md), a bug, ready for an agent and queued tonight with the bugs: the note value alone (decided by the owner, replacing 112's decision 10), at a fixed width (Claude's call, open to the owner).
+2026-11-01, Claude's findings on the night's inefficiencies (triage, the owner asking for the issue): to [177](./issues/177-a-leaner-night-shift.md), ready for an agent: the night in its own session, a quiet machine, tests by risk with one full suite at the end, small issues batched, layout decisions measured at triage, three flaky tests fixed, terser updates (Claude's call, open to the owner).
