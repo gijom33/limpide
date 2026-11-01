@@ -4,7 +4,7 @@
 
 **Blocked by:** none. Relative encoders and the C16's tuning live in the MIDI code that issues 112 and 147 changed on night/2026-10-31; build it on `main` once that night is merged (Claude's call, open to the owner).
 
-**Status:** ready-for-agent · enhancement
+**Status:** ready-for-human · enhancement. Built (2026-11-01) on night/2026-10-31, for the owner to try
 
 ## Decisions
 
@@ -46,16 +46,37 @@ Claude's calls, accepted by the owner with the summary ("It matches what I had i
 - The tips; CONTEXT.md if a new word is needed for the grid
 
 **Acceptance criteria:**
-- [ ] Cutoff at 2.00 kHz: ↑ gives the next semitone (2.12 kHz), Shift ↑ 10 cents, Page Up 4.00 kHz
-- [ ] After a drag to 2.07 kHz, ↑ lands on 2.12 kHz and ↓ on 2.00 kHz
-- [ ] Attack at 10 ms: ↑ 11 ms, ↑ 12, ↑ 14; Page Up 20 ms
-- [ ] Sustain at 70 %: ↑ 71 %, Shift ↑ 70.1 %, Page Up 80 %
-- [ ] Osc 1's Mixer fader at 0.0 dB: ↓ −0.5 dB; at its lowest dB step, ↓ −∞
-- [ ] Detune from MIDI CC 64 is exactly 0 cents; CC 0 and 127 its ends
-- [ ] A C16 tick (65) moves one grid step; a fast 66 a third of one; a wheel notch one step
-- [ ] Each knob's and fader's tip names its steps on a computer, not on a phone
-- [ ] Unit tests for each grid and for snapping; the knob, fader, keyboard-access and MIDI specs updated; every test passes in Linux's fonts too
+- [x] Cutoff at 2.00 kHz: ↑ gives the next semitone (2.12 kHz), Shift ↑ 10 cents, Page Up 4.00 kHz
+- [x] After a drag to 2.07 kHz, ↑ lands on 2.12 kHz and ↓ on 2.00 kHz
+- [x] Attack at 10 ms: ↑ 11 ms, ↑ 12, ↑ 14; Page Up 20 ms
+- [x] Sustain at 70 %: ↑ 71 %, Shift ↑ 70.1 %, Page Up 80 % (70.1 % is the value set; the readout still shows whole percents: call 4)
+- [x] Osc 1's Mixer fader at 0.0 dB: ↓ −0.5 dB; at its lowest dB step, ↓ −∞
+- [x] Detune from MIDI CC 64 is exactly 0 cents; CC 0 and 127 its ends
+- [x] A C16 tick (65) moves one grid step; a fast 66 a third of one; a wheel notch one step
+- [x] Each knob's and fader's tip names its steps on a computer, not on a phone
+- [ ] Unit tests for each grid and for snapping; the knob, fader, keyboard-access and MIDI specs updated; every test passes in Linux's fonts too (all but the last part: Linux's fonts are GitHub's run, after a push; the fader spec needed no change, the faders' steps are in the keyboard-access spec)
 
 **Out of scope:**
 - Any change to a Parameter's range
 - Rounding stored values, Presets or what an absolute MIDI knob sets
+
+## How it was built
+
+- **The Grid** (`src/patch/grid.ts`, a new word in `CONTEXT.md`): each Parameter in `src/patch/patch.ts` declares one, its unit, fine (Shift) and coarse (Page) steps and their words. A press goes to the next value of its size beyond the one it starts from, so a dragged value lands on the grid at once and stays on it; the range's ends are always reached. The kinds: even steps (every percent control 1 %, 0.1 %, 10 %; Detune 1, 0.1, 10 cents; the Filter's Amount 0.1, 0.01, 1 octave; Osc 2's Env Amount a semitone, 10 cents, an octave); pitch (the Cutoff: semitones, 10 cents and octaves counted from 1 kHz); the round series of 20 a decade (10, 11, 12, 14, 16, 18, 20, 22, 25, 28, 32, 36, 40, 45, 50, 56, 63, 71, 80, 90) for the Envelopes' times, Glide and the free LFO Rate, Page doubling or halving to the nearest of the series, Shift 1 % to three figures; dB for the Mixer's five faders (0.5, 0.1, 6 dB, down to −40 dB, then −∞). Stepped controls (Octave, Semitone, a synced Rate's note values) move a whole step, Page 2 as before. Nothing stored is rounded.
+- **Keys and wheel** (`src/ui/paramControl.tsx`): the arrows, Shift and Page step on the Grid, Home and End go to the ends; presses quicker than renders (a held key) each go on from the last. A wheel notch (90 px of scroll, a trackpad's small scrolls adding up) is a step, Shift a fine one.
+- **MIDI** (`src/midi/controlSurface.ts`): a Relative tick is a step of the Grid; a C16's fast 66 or 62 a third of one, gathered into whole steps, a turn back forgetting the thirds so it answers at once. An Absolute knob still sets a position, but on a control centred on zero (Detune, Osc 2's Env Amount, the Filter's Amount, and the Semitone and Octaves, whose zero was already at 64 after rounding) 0 to 64 is the lower half and 64 to 127 the upper, so CC 64 is exactly zero.
+- **The tips** (`src/ui/tips.ts`, `src/ui/Tooltip.tsx`): each knob's and fader's tip ends with its steps ("↑↓ a semitone · Shift 10 cents · Page an octave"), written from its Grid, so they cannot drift apart; hidden on a screen without hover (a phone).
+- **Found on the way:** issue 176's Maths Layer sizers were kept with the layer off (its context holds null, not undefined), which the smoke spec caught; fixed in its own commit, with a line in 176. Issues 51, 53 and 145 get dated lines for the new steps.
+- **Tests:** `src/patch/grid.test.ts` (every Grid, snapping from a drag, the ends, −∞); the control surface's tests (a tick a step, the C16's thirds, a turn back, CC 64 on Detune and the Amount, thirds kept apart when Sync switches); the tips' unit test (every Parameter's steps line); in the browser, the keyboard-access spec (the Cutoff, Attack and Sustain criteria; the Mixer in dB down to −∞ and back), the knob spec (a notch a step, a trackpad's scrolls adding up; the width sweep by Page), the tooltip and touch-tip specs (the line on a computer, none on a phone), the MIDI Learn spec (ten ticks, ten semitones). Specs that counted 2 % presses (LFO, Maths, Tutorial, Tour, Envelopes, pitch marker) now press Page or count the new steps.
+- **Tests run:** `npx tsc`, `npm run lint`; `npx vitest run` 1311 of 1314, the three others (cycle lock, readout box, edge Patches) timing out at 5 s under the full run's load and passing alone; all 574 Chromium specs (12 timed out while unit tests ran beside them, all passing on their rerun); in WebKit the knob, fader, keyboard-access, MIDI Learn, Quick Setup, C16 card, LFO, tooltip, Maths, Envelopes, smoke, Tour, pitch marker and Tutorial specs, all passing but issue 176's synced Rate test, which times out under the parallel load and passes alone (7.9 s). Then the code review (standards and spec): its bug (a C16's thirds on the free Rate jumping the note value once Sync is on) fixed with a test, and its smaller points.
+- **Claude's calls, open to the owner:**
+  1. **The Mixer's faders step in dB whatever they show.** They read % unless the Maths Layer is on, so outside it a press from 100 % reads 94 %, 89 %, 84 %…, and the dozen steps from −40 to −34 dB all read "1 %". Ring steps in dB too, as a Mixer fader, though the Maths Layer does not show it in dB. The other way would be 1 % steps outside the Maths Layer and dB inside it, or the Mixer reading dB always.
+  2. **The lowest dB step is −40 dB** (1 %, about one MIDI step up a fader's travel, decision 7): Page from 0 dB goes −6, −12 … −36, −40, then −∞.
+  3. **The Cutoff's semitones count from 1 kHz,** so 500 Hz, 2 kHz and 4 kHz are on every size; 20 Hz and 20 kHz stay its ends, reached but off the grid (the first semitone up from 20 Hz is 20.9 Hz).
+  4. **Readouts keep their precision:** a Shift step finer than the readout (Sustain's 70.1 %, Detune's 0.1 ¢, the Env Amount's 10 cents, the Amount's 0.01 octave) moves the sound and the knob but reads the same until enough add up, as Shift did before; showing a decimal would widen the knobs that issue 176 just settled.
+  5. **Page has its own grid on even steps, pitch and dB** (from 73 % Page Up is 80 %, from 2.12 kHz 4 kHz, from −0.5 dB −6 dB); **on the series it doubles or halves** to the nearest of it (from 300 ms, 630 ms).
+  6. **Shift on a time is 1 % to three figures** (10.0, 10.1, 10.2 ms): not the round series, which the arrows keep.
+  7. **A trackpad turns slower than before:** 90 px of scroll a step (a Cutoff semitone) where it was 4 % of the travel per 100 px.
+  8. The steps line hides where the screen has no hover (`hover: none`), so a touch laptop with a mouse shows it.
+- **To try:** the Cutoff with ↑, Shift ↑ and Page Up from 2 kHz, then a drag and a press; an Attack from 10 ms; Sustain; the Mixer faders with the Maths Layer on and off (call 1); the wheel and a trackpad over a knob; a C16 knob slow and fast on the Cutoff and an Envelope stage; an Absolute knob or fader on Detune at the middle; a tip on a computer.
+
