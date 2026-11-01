@@ -62,10 +62,45 @@ export const LANDING_SECONDS = 0.7;
  */
 export const acrossOf = (placed: Placed, strolling: number) => placed.x ?? placed.landedAt ?? strolling;
 
+/** A box drawn over the page, in the window's pixels: a docked card, a tip, an open panel (issue 164). */
+export interface Cover {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+}
+
+/**
+ * The stretches of a line where the drop, its foot on the line, is under none of `covers` (issue 164): its box's lefts,
+ * left to right. A cover over its head by a pixel or more takes the spots under it; one whose bottom is at its head, or
+ * whose top is on the line, takes none.
+ */
+export function clearAlong(line: { left: number; right: number; top: number }, covers: readonly Cover[], width: number, height: number): Span[] {
+  let spans: Span[] = line.right - width >= line.left ? [{ min: line.left, max: line.right - width }] : [];
+  for (const c of covers) {
+    if (c.top >= line.top || c.bottom <= line.top - height || c.right <= c.left) continue;
+    // The lefts that would put the drop's box over the cover: from its left less the drop's width to its right.
+    const [from, to] = [c.left - width, c.right];
+    spans = spans.flatMap((s) => {
+      if (to <= s.min || from >= s.max) return [s];
+      return [...(from >= s.min ? [{ min: s.min, max: from }] : []), ...(to <= s.max ? [{ min: to, max: s.max }] : [])];
+    });
+  }
+  return spans;
+}
+
+/** Of `spans`, the one nearest to `x` (the first of two as near), or null if there is none. */
+export const nearestSpan = (spans: readonly Span[], x: number): Span | null => {
+  const off = (s: Span) => Math.max(0, s.min - x, x - s.max);
+  return spans.reduce<Span | null>((a, b) => (a === null || off(b) < off(a) ? b : a), null);
+};
+
 /** A section's top edge, in the window's pixels: the sections it may stand on, top to bottom. */
 export interface Edge {
   id: string;
   top: number;
+  /** A card, a tip or a panel over it leaves no room along it for the drop (issue 164). */
+  covered?: boolean;
 }
 
 /** What choosePerch weighs, in the window's pixels. */
@@ -73,6 +108,8 @@ export interface PerchChoice {
   /** The edge it is on now, if any. */
   current: string | null;
   edges: readonly Edge[];
+  /** The top edge of the docked card (the Demo's, a Tutorial's, the Tour's), if one is docked (issue 164). */
+  card?: Edge | null;
   /** The bottom of the header (and the section strip): nothing above it is in view. */
   ceiling: number;
   /** How far its top may go over the ceiling, standing on an edge just under it: over the section strip, drawn above it. */
@@ -91,15 +128,20 @@ export interface PerchChoice {
  * over it below the header, and on the window, else the header's bottom to hang from. It keeps its edge while that has
  * room for the drop, or `overlap` less; moving, it takes the edge nearest to where it is. With no edge roomy enough, an
  * edge just under the ceiling, the drop over it by up to `overlap`, rather than hang just off that line (issue 142).
+ * An edge a card, a tip or a panel covers is never kept nor taken; with every edge in view covered, it stands on the
+ * docked card's top edge until one is clear again (issue 164).
  */
-export function choosePerch({ current, edges, ceiling, overlap, bottom, height, headroom, where }: PerchChoice): Perch {
+export function choosePerch({ current, edges, card = null, ceiling, overlap, bottom, height, headroom, where }: PerchChoice): Perch {
   const fits = (e: Edge) => e.top - height >= ceiling - overlap;
-  const keep = edges.find((e) => e.id === current && fits(e) && e.top <= bottom);
+  const clear = edges.filter((e) => !e.covered);
+  const keep = clear.find((e) => e.id === current && fits(e) && e.top <= bottom);
   if (keep) return { id: keep.id, foot: keep.top, hanging: false };
-  const roomy = edges.filter((e) => e.top - height - headroom >= ceiling && e.top <= bottom - 4);
-  const close = edges.filter((e) => fits(e) && e.top <= bottom - 4);
+  const roomy = clear.filter((e) => e.top - height - headroom >= ceiling && e.top <= bottom - 4);
+  const close = clear.filter((e) => fits(e) && e.top <= bottom - 4);
   const nearest = (list: readonly Edge[]) => list.reduce((a, b) => (Math.abs(b.top - where) < Math.abs(a.top - where) ? b : a));
-  const on = roomy.length ? nearest(roomy) : close.length ? nearest(close) : null;
+  const hidden = edges.some((e) => e.covered && fits(e) && e.top <= bottom);
+  const onCard = card && !card.covered && hidden && fits(card) && card.top <= bottom ? card : null;
+  const on = roomy.length ? nearest(roomy) : close.length ? nearest(close) : onCard;
   return on ? { id: on.id, foot: on.top, hanging: false } : { id: 'ceiling', foot: ceiling + height, hanging: true };
 }
 

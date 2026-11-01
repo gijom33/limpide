@@ -8,7 +8,7 @@ import { lineAt, lineWiderThan } from './LfoPlot';
 import { gesturesOf, looksOf } from './mascotGestures';
 import { type Act, createMascotMotion, hatOn, type Pose, type Room, SCREAMING } from './mascotMotion';
 import { CATCH, CLOUD, HATS, HOOK, ICE, type Picture, PROPS, type Rect, ROD_TIP, SKY, TAILS } from './mascotPictures';
-import { acrossOf, choosePerch, createMascotPlace, type Moving, type Perch } from './mascotPlace';
+import { acrossOf, type Cover, choosePerch, clearAlong, createMascotPlace, type Moving, nearestSpan, type Perch, type Span } from './mascotPlace';
 import { createSpray, MOST_DROPLETS } from './mascotSpray';
 import { ModulationContext } from './modulationRing';
 import { SECTIONS, STACKED } from './sections';
@@ -131,15 +131,23 @@ const LFO_PLOTS = '.lfo-plot[data-lfo]';
 const CONTROLS = 'button, [role=slider], [role=tab], [role=radio], input, .piano, .knob-value, .fader';
 /** The spots tried along an edge, this many pixels apart. */
 const STEP = 4;
+/**
+ * What is drawn over the page, which it never stands under (issue 164): the docked cards (the Demo's, a Tutorial's, the
+ * Tour's), the tips, the open panels and the Preset's description. It stays drawn under them, so it never covers their
+ * words or buttons.
+ */
+const DOCKED = '.docked:not([hidden])';
+const COVERS = `${DOCKED}, .tooltip:not([hidden]), .patch-about, .patch-panel, .tutorial-menu-panel, .tempo-panel, .display-panel, .midi-panel, .learn-bar, .quick-setup`;
 
 /**
- * Its room along a section's top edge, in the window's pixels: the stretch of spots where it covers least of what is
- * above the edge, standing (its leaps may brush past it), around the leftmost of those: the whole edge in three or
- * four across. On a phone and in 2 × 2 the Viewer of the section above comes down to just over the edge all along it:
- * there it keeps clear of the controls only, and passes over the Viewer's bottom, rather than being kept to the edge's
- * left end (the owner, 2026-10-30).
+ * Its room along a section's top edge, in the window's pixels: within the stretches `clear` of the cards, tips and panels
+ * (issue 164), the spots where it covers least of what is above the edge, standing (its leaps may brush past it); of
+ * those, the run of spots nearest to `near`, where it is: the whole edge in three or four across, with nothing over it.
+ * On a phone and in 2 × 2 the Viewer of the section above comes down to just over the edge all along it: there it keeps
+ * clear of the controls only, and passes over the Viewer's bottom, rather than being kept to the edge's left end (the
+ * owner, 2026-10-30).
  */
-function roomOn(section: DOMRect, viewers: boolean): Room {
+function roomOn(section: DOMRect, viewers: boolean, clear: readonly Span[], near: number): Room {
   const box = { top: section.top - HEIGHT - 2, bottom: section.top };
   const above = [...document.querySelectorAll<HTMLElement>(viewers ? `${CONTROLS}, canvas` : CONTROLS)]
     .filter((el) => !el.closest('.mascot') && el.checkVisibility({ visibilityProperty: true }))
@@ -150,14 +158,22 @@ function roomOn(section: DOMRect, viewers: boolean): Room {
       (sum, r) => sum + Math.max(0, Math.min(r.right, x + WIDTH) - Math.max(r.left, x)) * Math.max(0, Math.min(r.bottom, box.bottom) - Math.max(r.top, box.top)),
       0,
     );
-  const spots = Array.from({ length: Math.max(1, Math.floor((section.width - WIDTH) / STEP) + 1) }, (_, i) => section.left + i * STEP);
+  // Each clear stretch's spots, as runs: with nothing over the edge, one run, from its left end.
+  const stretches = clear.map(({ min, max }) => Array.from({ length: Math.floor((max - min) / STEP) + 1 }, (_, i) => min + i * STEP));
+  const spots = stretches.flat();
+  if (!spots.length) return { min: section.left, max: Math.max(section.left, section.right - WIDTH) };
   const least = Math.min(...spots.map(covers));
   // Within a pixel row of the least is as clear.
-  const clear = (x: number) => covers(x) <= least + WIDTH;
-  const best = spots.find(clear)!;
-  let max = best;
-  while (max + STEP <= section.right - WIDTH && clear(max + STEP)) max += STEP;
-  return { min: best, max };
+  const runs = stretches.flatMap((run) =>
+    run.reduce<Span[]>((found, x) => {
+      if (covers(x) > least + WIDTH) return found;
+      const last = found.at(-1);
+      if (last && x - last.max <= STEP) last.max = x;
+      else found.push({ min: x, max: x });
+      return found;
+    }, []),
+  );
+  return nearestSpan(runs, near)!;
 }
 
 /** Its droplets on their layer: a pixel of the drawing each, fading as they end. */
@@ -364,6 +380,11 @@ export function Mascot({
       const sections = sectionBoxes();
       if (!sections.length) return;
       const page = (outer.offsetParent ?? document.body).getBoundingClientRect();
+      // What is over the page: it never stands under it (issue 164).
+      const covers: Cover[] = [...document.querySelectorAll(COVERS)].map((el) => el.getBoundingClientRect()).filter((r) => r.width > 0 && r.height > 0);
+      const docked = document.querySelector(DOCKED)?.getBoundingClientRect();
+      const card = docked && docked.width > 0 ? { id: 'card', box: docked } : null;
+      const clearOn = (box: DOMRect) => clearAlong(box, covers, WIDTH, HEIGHT);
       if (themeSwitched && !document.querySelector('.display-panel, [role=dialog]')) {
         motion.theme(themeSwitched, now);
         themeSwitched = null;
@@ -377,7 +398,7 @@ export function Mascot({
         const home = sections.filter((s) => s.box.top - top < 4).reduce((a, b) => (b.box.right > a.box.right ? b : a));
         homeId = home.id;
         // Now and then a visit to another section in view: down to one below, or across to one beside; then home.
-        const inView = (s: { box: DOMRect }) => roomAbove(s.box) && s.box.top <= innerHeight - 4;
+        const inView = (s: { box: DOMRect }) => roomAbove(s.box) && s.box.top <= innerHeight - 4 && clearOn(s.box).length > 0;
         if (visit && (now >= visit.until || !sections.some((s) => s.id === visit!.id && inView(s)))) {
           visit = null;
           nextVisit = now + between(20, 40);
@@ -389,6 +410,12 @@ export function Mascot({
           else nextVisit = now + between(10, 20);
         }
         on = sections.find((s) => s.id === visit?.id) ?? home;
+        // Its edge covered (issue 164): the nearest edge in view clear of it, else the docked card's top.
+        if (!clearOn(on.box).length) {
+          const off = (s: { box: DOMRect }) => Math.hypot(Math.max(0, s.box.left - drawnAt.left, drawnAt.left - s.box.right), s.box.top - drawnAt.foot);
+          const nearest = sections.filter(inView).sort((a, b) => off(a) - off(b))[0];
+          on = nearest ?? (card && clearOn(card.box).length ? card : on);
+        }
         perch = { id: on.id, foot: on.box.top, hanging: false };
       } else {
         const column = rightColumn(sections).sort((a, b) => a.box.top - b.box.top);
@@ -398,17 +425,21 @@ export function Mascot({
         // the strip's foot (issue 142): hanging, its foot would be just off that line.
         const overlap = strip > header ? HEIGHT - EDGE_SHOWING : 0;
         perch = choosePerch({
-          current: perch?.id ?? null, edges: column.map((s) => ({ id: s.id, top: s.box.top })), ceiling, overlap, bottom: innerHeight,
+          current: perch?.id ?? null,
+          edges: column.map((s) => ({ id: s.id, top: s.box.top, covered: !clearOn(s.box).length })),
+          card: card && { id: card.id, top: card.box.top, covered: !clearOn(card.box).length },
+          ceiling, overlap, bottom: innerHeight,
           height: HEIGHT, headroom: HEADROOM, where: foot ?? ceiling,
         });
         const id = perch.id;
         const span = column[0].box;
-        on = column.find((s) => s.id === id) ?? { id, box: new DOMRect(span.left, perch.foot, span.width, 0) };
+        on = column.find((s) => s.id === id) ?? (id === card?.id ? card : { id, box: new DOMRect(span.left, perch.foot, span.width, 0) });
       }
       // Thrown (issue 127): it lands on the first edge under it that it comes down onto, staying there a while.
       if (moving === 'thrown') {
         const under = (stacked.matches ? rightColumn(sections) : sections)
           .filter((s) => s.box.left <= drawnAt.left + DROP_MIDDLE && s.box.right >= drawnAt.left + DROP_MIDDLE && s.box.top >= drawnAt.foot - 1)
+          .filter((s) => clearOn(s.box).some((c) => drawnAt.left >= c.min - STEP && drawnAt.left <= c.max + STEP))
           .sort((a, b) => a.box.top - b.box.top)[0];
         if (under) {
           on = under;
@@ -421,7 +452,8 @@ export function Mascot({
       const part = demoPartNow();
       const plot = (part === null ? [] : [...document.querySelectorAll<HTMLElement>(`${LFO_PLOTS}:not([data-inactive])`)])
         .map((el) => ({ lfo: Number(el.dataset.lfo) as 1 | 2, box: el.getBoundingClientRect() }))
-        .find(({ box }) => lineWiderThan(box.width, WIDTH) && roomAbove(box) && box.bottom <= innerHeight);
+        .map((p) => ({ ...p, clear: clearAlong({ left: p.box.left, right: p.box.right, top: p.box.bottom }, covers, WIDTH, HEIGHT + p.box.height) }))
+        .find(({ box, clear }) => lineWiderThan(box.width, WIDTH) && roomAbove(box) && box.bottom <= innerHeight && clear.length > 0);
       let act: Act | null = part === null || leaveBy !== null ? null : ACTS[part % ACTS.length];
       if (act === 'surf' && !plot) act = part! % 2 ? 'airGuitar' : 'conduct';
       motion.act(act);
@@ -431,7 +463,7 @@ export function Mascot({
         const { box } = plot;
         const wave = box.top + lineAt({ engine: context.engine, lfo: plot.lfo, box, x: drawnAt.left + DROP_MIDDLE - box.left, now });
         perch = { id: `surf ${plot.lfo}`, foot: wave, hanging: false };
-        surfRoom = { min: box.left, max: box.right - WIDTH };
+        surfRoom = nearestSpan(plot.clear, drawnAt.left)!;
       }
       // Leaving: on its line it melts; hanging or in the air it drips away down the window.
       if (leavingNow() && leaveBy === null) {
@@ -440,11 +472,21 @@ export function Mascot({
       }
       if (leaveBy === 'rain') perch = { id: 'away', foot: innerHeight + HEIGHT + HEADROOM, hanging: false };
 
-      // Its room along the line, found again only when the line moves against the page or changes.
+      // Its room along the line, found again only when the line moves against the page (the card's top, against the
+      // window) or changes, or what covers it does.
       const box = on.box;
-      const key = `${perch.id} ${box.left + scrollX} ${perch.hanging ? 0 : box.top + scrollY} ${box.width}`;
+      const clear = perch.hanging ? clearAlong({ left: box.left + 4, right: box.right - 4, top: perch.foot }, covers, WIDTH, HEIGHT) : clearOn(box);
+      const [dx, dy] = on === card ? [0, 0] : [scrollX, scrollY];
+      const key = `${perch.id} ${box.left + dx} ${perch.hanging ? 0 : box.top + dy} ${box.width} ${clear.map((c) => `${Math.round(c.min)}-${Math.round(c.max)}`)}`;
       if (surfRoom) room = { key: 'surf', room: surfRoom };
-      else if (room?.key !== key) room = { key, room: perch.hanging ? { min: box.left + 4, max: box.right - WIDTH - 4 } : roomOn(box, !stacked.matches) };
+      else if (room?.key !== key) {
+        room = {
+          key,
+          room: perch.hanging
+            ? (nearestSpan(clear, drawnAt.left) ?? { min: box.left + 4, max: box.right - WIDTH - 4 })
+            : roomOn(box, !stacked.matches, clear.length ? clear : [{ min: box.left, max: box.right - WIDTH }], drawnAt.left),
+        };
+      }
 
       const m = context.engine.modulationAt();
       const heard = lfos(context.patch()).flatMap((l, i) => (l.amount > 0 ? [m.lfo[i]] : []));

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { acrossOf, choosePerch, createMascotPlace, FASTEST_THROW, GRAVITY, LANDING_SECONDS, type Moving, type Perch, type Placed, type Span, WINDUP_SECONDS } from './mascotPlace';
+import { acrossOf, choosePerch, clearAlong, createMascotPlace, FASTEST_THROW, GRAVITY, LANDING_SECONDS, type Moving, nearestSpan, type Perch, type Placed, type Span, WINDUP_SECONDS } from './mascotPlace';
 
 const H = 26;
 const ROOM = 18;
@@ -38,6 +38,70 @@ describe('which line the mascot is on, on a phone or in 2 × 2 (issue 115)', () 
 
   it('moving, takes the edge nearest to where it is', () => {
     expect(pick(null, { Oscillators: 320, Filter: 700 }, 250, 650).id).toBe('Filter');
+  });
+});
+
+const W = 44;
+describe('where along a line it is under no card, tip or panel (issue 164)', () => {
+  const line = { left: 0, right: 375, top: 600 };
+  const card = (top: number, left = 12, right = 363) => ({ left, right, top, bottom: top + 150 });
+
+  it('with nothing over the line, the whole of it', () => {
+    expect(clearAlong(line, [], W, H)).toEqual([{ min: 0, max: 375 - W }]);
+  });
+
+  it('with a card over the line, along its whole width, nowhere', () => {
+    expect(clearAlong(line, [card(590)], W, H)).toEqual([]);
+    expect(clearAlong(line, [card(600 - H + 1)], W, H)).toEqual([]); // over its head by a pixel
+  });
+
+  it('a card under the line, or far over it, leaves it whole', () => {
+    expect(clearAlong(line, [card(600)], W, H)).toEqual([{ min: 0, max: 375 - W }]); // its top on the line
+    expect(clearAlong(line, [{ left: 0, right: 375, top: 100, bottom: 600 - H }], W, H)).toEqual([{ min: 0, max: 375 - W }]);
+  });
+
+  it('a card over part of the line leaves the stretches either side where the whole drop fits', () => {
+    expect(clearAlong({ left: 800, right: 1300, top: 600 }, [card(590, 900, 1100)], W, H)).toEqual([
+      { min: 800, max: 900 - W },
+      { min: 1100, max: 1300 - W },
+    ]);
+    // A gap narrower than the drop is no room.
+    expect(clearAlong(line, [card(590, 0, 100), card(590, 130, 375)], W, H)).toEqual([]);
+  });
+
+  it('of the stretches left, the one nearest to where it is', () => {
+    const spans = [{ min: 0, max: 100 }, { min: 300, max: 400 }];
+    expect(nearestSpan(spans, 50)).toEqual(spans[0]);
+    expect(nearestSpan(spans, 250)).toEqual(spans[1]);
+    expect(nearestSpan(spans, 500)).toEqual(spans[1]);
+    expect(nearestSpan([], 50)).toBeNull();
+  });
+});
+
+describe('which line, with a card docked over the page (issue 164)', () => {
+  // A phone: the section tabs' foot at 250, a card docked from 640 to the window's bottom.
+  const card = { id: 'card', top: 640 };
+  const choose = (current: string | null, edges: { id: string; top: number; covered?: boolean }[], where = 300, docked: typeof card | null = card) =>
+    choosePerch({ current, edges, card: docked, ceiling: 250, overlap: H - 2, bottom: 812, height: H, headroom: ROOM, where });
+
+  it('never keeps nor takes an edge the card covers: it goes to one in view and clear', () => {
+    const edges = [{ id: 'Oscillators', top: 400 }, { id: 'Filter', top: 700, covered: true }];
+    expect(choose('Filter', edges, 700)).toEqual({ id: 'Oscillators', foot: 400, hanging: false });
+    expect(choose(null, edges, 700).id).toBe('Oscillators');
+  });
+
+  it('with every edge in view covered, stands on the card’s top edge, and goes back once one is clear', () => {
+    expect(choose('Filter', [{ id: 'Filter', top: 700, covered: true }], 700)).toEqual({ id: 'card', foot: 640, hanging: false });
+    expect(choose('card', [{ id: 'Filter', top: 700, covered: true }], 640).id).toBe('card');
+    expect(choose('card', [{ id: 'Filter', top: 600 }], 640).id).toBe('Filter');
+  });
+
+  it('with no edge in view at all, hangs under the header as before', () => {
+    expect(choose('Filter', [{ id: 'Filter', top: -300 }, { id: 'Amp', top: 1200 }], 276).hanging).toBe(true);
+  });
+
+  it('with every edge covered and no card to stand on, hangs', () => {
+    expect(choose('Filter', [{ id: 'Filter', top: 700, covered: true }], 700, null).hanging).toBe(true);
   });
 });
 
