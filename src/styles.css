@@ -1594,8 +1594,9 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   .tutorial:not([data-expanded]) .tutorial-say[data-done], .tutorial:not([data-expanded]) .tutorial-words p + p:not(.tutorial-then) { display: none; }
   .tutorial-actions .tool { min-height: 32px; padding: 0 var(--space-2); }
 }
-/* The Demo's card (issue 50): the sound's name and its buttons; under them a segment per part; then what to hear and
-   see. The segments have a row of their own at every width (issue 99, decided by the owner), so each can be a target. */
+/* The Demo's card (issue 50): the sound's name and its buttons; under them what to hear and see; then a segment per
+   part along the bottom (issue 171, decided by the owner). The segments have a row of their own at every width (issue
+   99, decided by the owner), so each can be a target. */
 .demo-bar-top { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--space-3); }
 /* The rest of its row; a longer name ends in an ellipsis (the card names each segment's part to screen readers). */
 .demo-bar-name { font-weight: 600; font-size: var(--card-text); flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1625,6 +1626,14 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 }
 .demo-bar-caption { margin: 0; font-size: var(--card-text); line-height: 1.45; }
 .demo-bar-top > .demo-bar-caption { flex: 1 1 auto; }
+/* The caption's row: every part's caption in the one cell, only the playing one in sight, so the row is as tall as the
+   longest at the card's width and the segments under it stay put (issue 171). Folded, the card shows the name and the
+   segments; the caption only goes out of sight, still read out as it changes (issue 67). */
+.demo-bar-says { flex: 1 1 100%; display: grid; min-width: 0; }
+.demo-bar-says > * { grid-area: 1 / 1; }
+.demo-bar-room { visibility: hidden; font-size: var(--card-text); line-height: 1.45; }
+.demo-bar[data-folded] .demo-bar-room { display: none; }
+.demo-bar[data-folded] .demo-bar-caption { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 /* The segments' row brings its own space above and below the bar, so the card has no gap of its own; from 601 px up
    its buttons are the page's 28 px and its edges 8 px, so with the segments under them it is no taller than it was
    with them beside (at 1440 × 900 it sits on LFO 2's knobs, and covers no more of them: issue 99). */
@@ -1633,7 +1642,7 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 .demo-bar .tool { padding: 0 var(--space-3); flex: none; }
 .demo-bar .tool-icon { padding: 0; }
 @media (max-width: 600px) {
-  .demo-bar-caption { font-size: var(--text-md); }
+  .demo-bar-caption, .demo-bar-room { font-size: var(--text-md); }
   .demo-bar .tool { min-height: 32px; }
 }
 

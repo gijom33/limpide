@@ -19,11 +19,11 @@ interface Props {
 }
 
 /**
- * The Demo's card, docked at the bottom of the page while it plays (issue 50): the sound's name, what to hear and
- * see in plain words, which part of how many, and Stop, all in view however far the page has scrolled. Its ×
- * closes the card and leaves the Demo playing (the owner, 2026-10-28; Claude's call, open to the owner: Stop and the
- * lit Demo button stop it); the next Demo brings it back. When a Note or a control stops the Demo, it says so, so a
- * first visitor does not think they broke it.
+ * The Demo's card, docked at the bottom of the page while it plays (issue 50): the sound's name and Stop, what to
+ * hear and see in plain words under it (issue 171), and which part of how many along the bottom, all in view however
+ * far the page has scrolled. Its × closes the card and leaves the Demo playing (the owner, 2026-10-28; Claude's call,
+ * open to the owner: Stop and the lit Demo button stop it); the next Demo brings it back. When a Note or a control
+ * stops the Demo, it says so, so a first visitor does not think they broke it.
  */
 export function DemoBar({ playing, tookOver, onStop, onJump, onPlayAgain, onDismiss }: Props) {
   const card = useRef<HTMLElement>(null);
@@ -43,70 +43,82 @@ export function DemoBar({ playing, tookOver, onStop, onJump, onPlayAgain, onDism
     // data-demo: a tap on the card is not the person taking over.
     <section ref={card} className="docked demo-bar" aria-label="Demo" data-demo hidden={(running && closed) || undefined} {...place.cardProps}>
       {playing ? (
-        <>
-          <div className="demo-bar-top" {...place.handle}>
-            <span className="demo-bar-name">{part.preset}</span>
-            <FoldButton folded={place.folded} onToggle={place.toggleFold} />
-            <button type="button" className="tool" onClick={onStop}>
-              Stop
-            </button>
-            <button
-              type="button"
-              className="tool tool-icon"
-              aria-label="Close the card"
-              onClick={() => {
-                setClosed(true);
-                // The card goes, and focus with it: back to the Demo button, which stops it.
-                document.querySelector<HTMLElement>('button[aria-label="Demo"]')?.focus();
-              }}
-            >
-              <CloseIcon />
-            </button>
-            {/* The parts in a row of their own under the name and the buttons, after them for Tab too (issue 99). */}
-            <div className="demo-bar-track">
-              <StepButton step={-1} from={playing.index} count={parts.length} onJump={onJump} />
-              {/* A segment per part, as wide as the part is long: the parts played full, the one playing filling over
-                  its length, and a click on any plays on from it (the owner). From the keyboard they are one Tab stop:
-                  the arrows, Home and End move along them, Enter or Space plays from one, and the focus stays on it
-                  (issue 104). */}
-              <span
-                className="demo-bar-parts"
-                role="group"
-                aria-label={`Part ${playing.index + 1} of ${parts.length}`}
-                onKeyDown={moveAlong}
-                onBlur={(e) => !e.currentTarget.contains(e.relatedTarget) && setFocused(null)}
-              >
-                {parts.map((p, i) => (
-                  <button
-                    // The same button whatever plays, so the focus stays on it as the parts go by.
-                    // biome-ignore lint/suspicious/noArrayIndexKey: a part is its place in the track, which never changes
-                    key={i}
-                    type="button"
-                    aria-label={`Play from part ${i + 1}, ${p.preset}`}
-                    aria-current={i === playing.index ? 'step' : undefined}
-                    tabIndex={i === (focused ?? playing.index) ? 0 : -1}
-                    data-done={i < playing.index || undefined}
-                    data-current={i === playing.index || undefined}
-                    style={{ flexGrow: lengths[i] }}
-                    onFocus={() => setFocused(i)}
-                    onClick={() => onJump(i)}
-                  >
-                    <span className="demo-bar-segment">
-                      {/* Anew on every start, so the fill starts again (a jump back to the same part too). */}
-                      {i === playing.index && <PartFill key={playing.startedAt} seconds={lengths[i]} startedAt={playing.startedAt} />}
-                    </span>
-                  </button>
-                ))}
-              </span>
-              <StepButton step={1} from={playing.index} count={parts.length} onJump={onJump} />
-            </div>
+        <div className="demo-bar-top" {...place.handle}>
+          <span className="demo-bar-name">{part.preset}</span>
+          <FoldButton folded={place.folded} onToggle={place.toggleFold} />
+          <button type="button" className="tool" onClick={onStop}>
+            Stop
+          </button>
+          <button
+            type="button"
+            className="tool tool-icon"
+            aria-label="Close the card"
+            onClick={() => {
+              setClosed(true);
+              // The card goes, and focus with it: back to the Demo button, which stops it.
+              document.querySelector<HTMLElement>('button[aria-label="Demo"]')?.focus();
+            }}
+          >
+            <CloseIcon />
+          </button>
+          {/* What to hear and see, under the name (issue 171, decided by the owner). Every part's caption takes the
+              same place, out of sight, so the room is the longest's at the card's width and the segments under it
+              never move from part to part (Claude's call, open to the owner). */}
+          <div className="demo-bar-says">
+            {parts.map(
+              (p, i) =>
+                p.caption && (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: a part is its place in the track, which never changes
+                  <span key={i} className="demo-bar-room" aria-hidden="true">
+                    {p.caption}
+                  </span>
+                ),
+            )}
+            {part.caption && (
+              <p className="demo-bar-caption" aria-live="polite">
+                {part.caption}
+              </p>
+            )}
           </div>
-          {part.caption && (
-            <p className="demo-bar-caption" aria-live="polite">
-              {part.caption}
-            </p>
-          )}
-        </>
+          {/* The parts in a row of their own along the card's bottom, after the rest for Tab too (issues 99, 171). */}
+          <div className="demo-bar-track">
+            <StepButton step={-1} from={playing.index} count={parts.length} onJump={onJump} />
+            {/* A segment per part, as wide as the part is long: the parts played full, the one playing filling over
+                its length, and a click on any plays on from it (the owner). From the keyboard they are one Tab stop:
+                the arrows, Home and End move along them, Enter or Space plays from one, and the focus stays on it
+                (issue 104). */}
+            <span
+              className="demo-bar-parts"
+              role="group"
+              aria-label={`Part ${playing.index + 1} of ${parts.length}`}
+              onKeyDown={moveAlong}
+              onBlur={(e) => !e.currentTarget.contains(e.relatedTarget) && setFocused(null)}
+            >
+              {parts.map((p, i) => (
+                <button
+                  // The same button whatever plays, so the focus stays on it as the parts go by.
+                  // biome-ignore lint/suspicious/noArrayIndexKey: a part is its place in the track, which never changes
+                  key={i}
+                  type="button"
+                  aria-label={`Play from part ${i + 1}, ${p.preset}`}
+                  aria-current={i === playing.index ? 'step' : undefined}
+                  tabIndex={i === (focused ?? playing.index) ? 0 : -1}
+                  data-done={i < playing.index || undefined}
+                  data-current={i === playing.index || undefined}
+                  style={{ flexGrow: lengths[i] }}
+                  onFocus={() => setFocused(i)}
+                  onClick={() => onJump(i)}
+                >
+                  <span className="demo-bar-segment">
+                    {/* Anew on every start, so the fill starts again (a jump back to the same part too). */}
+                    {i === playing.index && <PartFill key={playing.startedAt} seconds={lengths[i]} startedAt={playing.startedAt} />}
+                  </span>
+                </button>
+              ))}
+            </span>
+            <StepButton step={1} from={playing.index} count={parts.length} onJump={onJump} />
+          </div>
+        </div>
       ) : (
         tookOver && (
           <div className="demo-bar-top">

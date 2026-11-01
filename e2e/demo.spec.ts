@@ -321,22 +321,32 @@ test('from the keyboard alone, Enter and Space on a part play from it and keep t
   await expect(demo(page)).toHaveAttribute('aria-pressed', 'false');
 });
 
-for (const width of [393, 1440]) {
-  test(`the parts' segments stay put whatever the part's name (the owner, 2026-10-29), at ${width}px`, async ({ page }) => {
+for (const width of [375, 393, 1100, 1440, 1920]) {
+  test(`the card reads name, caption, segments, and the segments stay put from part to part (the owner, 2026-10-29; issue 171), at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 800 });
     await page.goto('/');
     await demo(page).click();
     const card = page.getByRole('region', { name: 'Demo' });
-    const firstSegment = () => card.getByRole('button', { name: /^Play from part 1,/ }).evaluate((el) => Math.round(el.getBoundingClientRect().left));
+    // Where the first segment sits in the card, across and down.
+    const firstSegment = () =>
+      card.getByRole('button', { name: /^Play from part 1,/ }).evaluate((el) => {
+        const [b, c] = [el.getBoundingClientRect(), el.closest('.demo-bar')!.getBoundingClientRect()];
+        return [Math.round(b.left - c.left), Math.round(b.top - c.top)];
+      });
     await expect(card).toContainText('Kick');
     const before = await firstSegment();
-    await card.getByRole('button', { name: 'Play from part 6, Self-Oscillation' }).click();
-    await expect(card.getByRole('group', { name: 'Part 6 of 15' })).toBeVisible();
-    expect(await firstSegment()).toBe(before);
-    // The name never runs under the segments.
-    const [name, segments] = await Promise.all([card.locator('.demo-bar-name'), card.locator('.demo-bar-parts')].map((l) => l.evaluate((el) => el.getBoundingClientRect().toJSON())));
-    // Beside them, or on a phone above them: never over them.
-    expect(name.right <= segments.left || name.bottom <= segments.top).toBe(true);
+    // The shortest caption, then one of the longest, under the longest name.
+    for (const [n, name] of [[4, 'Strings'], [6, 'Self-Oscillation']] as const) {
+      await card.getByRole('button', { name: `Play from part ${n}, ${name}` }).click();
+      await expect(card.getByRole('group', { name: `Part ${n} of 15` })).toBeVisible();
+      expect(await firstSegment()).toEqual(before);
+    }
+    const [name, caption, segments] = await Promise.all(
+      [card.locator('.demo-bar-name'), card.locator('.demo-bar-caption'), card.locator('.demo-bar-parts')].map((l) => l.evaluate((el) => el.getBoundingClientRect().toJSON())),
+    );
+    // The name, the caption under it, the segments under both: none over another.
+    expect(name.bottom).toBeLessThanOrEqual(caption.top + 0.5);
+    expect(caption.bottom).toBeLessThanOrEqual(segments.top + 0.5);
   });
 }
 
