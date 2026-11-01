@@ -254,6 +254,16 @@ test('the Amp card changes the Attack before its Note, freezes the Viewers once 
   await expect(naming(page)).toHaveText('Frozen down to a level: Decay');
 });
 
+test('folded, the Amp card still says what the frozen picture shows to a screen reader (issue 130)', async ({ page }) => {
+  test.setTimeout(30000);
+  await toAmpCard(page);
+  await card(page).getByRole('button', { name: 'Fold the card' }).click();
+  await expect(frozen(page)).toHaveCount(1, { timeout: 8000 });
+  const heard = card(page).locator('.tour-frozen [aria-live]');
+  await expect(heard).toHaveText('Frozen: up: Attack');
+  await expect(heard).toBeVisible(); // in the accessibility tree: a live region under display: none is never heard
+});
+
 test('the person’s own Freeze on the Amp card is theirs: the Tour freezes no more on that card (issue 130)', async ({ page }) => {
   test.setTimeout(60000);
   await toAmpCard(page);
