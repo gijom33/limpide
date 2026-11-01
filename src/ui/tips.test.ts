@@ -21,3 +21,11 @@ it('FM’s tip says its depth follows the knobs, not the Envelope (issue 98)', (
   expect(body).toMatch(/knobs/);
   expect(body).toMatch(/Env Amount/);
 });
+
+it('Bead’s tip says who Bead is and both ways to send it away, the switch and the Notes (issue 150)', () => {
+  const { title, body } = TIPS.bead;
+  expect(title).toBe('Bead');
+  expect(body).toMatch(/water drop/);
+  expect(body).toMatch(/Off/);
+  expect(body).toMatch(/B, E, A, D/);
+});

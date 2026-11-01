@@ -1,11 +1,13 @@
 import { expect, type Page, test } from '@playwright/test';
 import { openDisplay } from './helpers';
+import { holding, WELCOMED } from './startState';
 
 // The mascot (issue 115): B, E, A, D played by hand, as in a bead of water, calls it up from behind the top right
 // section, and again sends it away, melting. In three and four across it lives on that section's top edge, along the
 // stretch that covers least above it: nothing, where the header has room. On a phone and in 2 × 2 it keeps in view as
 // the page scrolls: on a right-column section's top edge (over a phone's section tabs while an edge shows under them,
-// issue 142), or hanging under the header when none shows.
+// issue 142), or hanging under the header when none shows. Out by default, it comes in by itself (issue 150): these
+// tests start with it switched off, as every spec does, and call it with the Notes, except those about its default.
 
 const mascot = (page: Page) => page.locator('.mascot');
 const listening = (page: Page) => expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);
@@ -232,35 +234,75 @@ test('it adds under a millisecond to each frame the Viewers draw (their own runs
   expect(shown - without).toBeLessThan(1);
 });
 
-test('once met, Display has a Bead switch: off, it melts and the Notes do nothing, remembered; on brings it up', async ({ page }) => {
+test('B, E, A, D sends it away and calls it back, Display’s switch following, remembered; the switch does the same (issue 150)', async ({ page }) => {
   await page.goto('/');
   await listening(page);
-  await openDisplay(page);
-  await expect(page.getByRole('radiogroup', { name: 'Bead', exact: true })).toHaveCount(0);
-  await page.keyboard.press('Escape');
+  const bead = page.getByRole('radiogroup', { name: 'Bead', exact: true });
   await play(page, 'jdhs');
   await expect(mascot(page)).toHaveCount(1);
   await openDisplay(page);
-  const bead = page.getByRole('radiogroup', { name: 'Bead', exact: true });
   await expect(bead.getByRole('radio', { name: 'Bead on' })).toHaveAttribute('aria-checked', 'true');
   await expect(page.locator('.bead-icon')).toHaveAttribute('data-state', 'on');
-  await bead.getByRole('radio', { name: 'Bead off' }).click();
-  await expect(page.locator('.bead-icon')).toHaveAttribute('data-state', 'melting');
-  await expect(mascot(page)).toHaveCount(0);
   await page.keyboard.press('Escape');
   await play(page, 'jdhs');
-  await page.waitForTimeout(500);
   await expect(mascot(page)).toHaveCount(0);
-  await page.reload();
+  await openDisplay(page);
+  await expect(bead.getByRole('radio', { name: 'Bead off' })).toHaveAttribute('aria-checked', 'true');
+  await page.keyboard.press('Escape');
+  await page.reload(); // sent away by the Notes, it stays away
   await listening(page);
-  await play(page, 'jdhs');
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(4000);
   await expect(mascot(page)).toHaveCount(0);
   await openDisplay(page);
   await expect(page.locator('.bead-icon')).toHaveAttribute('data-state', 'gone');
   await bead.getByRole('radio', { name: 'Bead on' }).click();
   await expect(mascot(page)).toHaveCount(1);
   await expect(page.locator('.bead-icon')).toHaveAttribute('data-state', 'popping');
+  await bead.getByRole('radio', { name: 'Bead off' }).click();
+  await expect(page.locator('.bead-icon')).toHaveAttribute('data-state', 'melting');
+  await expect(mascot(page)).toHaveCount(0);
+});
+
+test.describe('out by default (issue 150)', () => {
+  test.describe('a first visit', () => {
+    test.use({ storageState: holding({}) });
+
+    test('it waits while the welcome is up, then comes in by itself; Display’s switch and its tip show from the start', async ({ page }) => {
+      await page.goto('/');
+      const welcome = page.getByRole('dialog', { name: 'Limpide' });
+      await expect(welcome).toBeVisible();
+      await page.waitForTimeout(4000);
+      await expect(mascot(page)).toHaveCount(0);
+      await welcome.getByRole('button', { name: 'Close' }).click();
+      await expect(mascot(page)).toHaveCount(1, { timeout: 6000 });
+      await openDisplay(page);
+      const bead = page.getByRole('radiogroup', { name: 'Bead', exact: true });
+      await expect(bead.getByRole('radio', { name: 'Bead on' })).toHaveAttribute('aria-checked', 'true');
+      await bead.getByRole('radio', { name: 'Bead off' }).hover();
+      await expect(page.getByRole('tooltip')).toContainText('water drop');
+      await expect(page.getByRole('tooltip')).toContainText('B, E, A, D');
+    });
+  });
+
+  test.describe('switched on', () => {
+    test.use({ storageState: holding({ ...WELCOMED, 'limpide.bead': 'on' }) });
+
+    test('it comes in by itself a few seconds after the page opens, and again after a reload', async ({ page }) => {
+      await page.goto('/');
+      await listening(page);
+      await expect(mascot(page)).toHaveCount(1, { timeout: 6000 });
+      await page.reload();
+      await listening(page);
+      await expect(mascot(page)).toHaveCount(1, { timeout: 6000 });
+    });
+  });
+
+  test('switched off, it stays away', async ({ page }) => {
+    await page.goto('/');
+    await listening(page);
+    await page.waitForTimeout(4000);
+    await expect(mascot(page)).toHaveCount(0);
+  });
 });
 
 test('a pointer over it tickles it; a click sends tiny drops every way', async ({ page }) => {

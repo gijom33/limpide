@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { recall, remember } from '../app/displaySettings';
 import { type AudioSession, getAudioSession } from '../app/session';
 import { safeStorage } from '../app/storage';
 import { type AudioStatus, unlockAudio } from '../app/unlockAudio';
@@ -10,6 +11,7 @@ import { CHOICES, osc1Heard, osc2Heard, type ParamId, type Patch, setFilter, set
 import { PRESETS } from '../patch/presets';
 import { TUTORIALS } from '../tutorial/tutorials';
 import { About } from './About';
+import { BEAD_ENTRANCE_SECONDS, type BeadEvent, beadAfter, beadOnArrival } from './beadPresence';
 import { DemoBar } from './DemoBar';
 import { DisplayMenu } from './DisplayMenu';
 import { EnvelopeTimeline } from './EnvelopeTimeline';
@@ -154,20 +156,24 @@ export function App() {
     },
     [patches],
   );
-  // B, E, A, D played by hand, as in a bead of water, calls the mascot, and again sends it away (issue 115); not
-  // remembered across a reload. Once met, Display has a switch for it, remembered: off, it melts away and the Notes
-  // do nothing, for anyone who would rather not (the owner, 2026-10-30).
-  // Where the Bead is (away, up, or leaving), apart from its switch in Display (unmet until first called, then on or off).
-  const [beadPresence, setBeadPresence] = useState<'away' | 'up' | 'leaving'>('away');
-  const [beadSwitch, setBeadSwitch] = useDisplaySetting(storage, 'bead');
+  // Bead, the mascot (issues 115, 150): out by default, coming in by itself a few seconds after the page opens, or once
+  // the About closes (the welcome among it), so the first thing a newcomer reads is not upstaged. B, E, A, D played by
+  // hand, as in a bead of water, sends it away and calls it back; Display's switch does the same, and follows the
+  // Notes. Off is remembered, for anyone who would rather not have it (the owner, 2026-10-30).
+  const [bead, setBead] = useState(() => beadOnArrival(recall(storage, 'bead')));
+  const beadDoes = useCallback((event: BeadEvent) => setBead((b) => beadAfter(b, event)), []);
+  useEffect(() => remember(storage, 'bead', bead.switch), [storage, bead.switch]);
+  useEffect(() => {
+    if (!bead.entranceDue || bead.switch === 'off' || about) return;
+    const timer = setTimeout(() => beadDoes('entrance'), BEAD_ENTRANCE_SECONDS * 1000);
+    return () => clearTimeout(timer);
+  }, [bead.entranceDue, bead.switch, about, beadDoes]);
   // While it is out, five more words spelled with Notes each cue a trick (issue 127).
   const [word, setWord] = useState<{ word: Word; count: number } | null>(null);
   /** A Note played by hand: `spelled`, the word it ends, if any; `called`, whether it ends the calling phrase. */
   const heard = useEffectEvent((spelled: Word | null, called: boolean) => {
-    if (spelled && beadPresence === 'up') setWord((w) => ({ word: spelled, count: (w?.count ?? 0) + 1 }));
-    if (!called || beadSwitch === 'off') return;
-    setBeadSwitch('on');
-    setBeadPresence((p) => (p === 'away' ? 'up' : p === 'up' ? 'leaving' : p));
+    if (spelled && bead.presence === 'up') setWord((w) => ({ word: spelled, count: (w?.count ?? 0) + 1 }));
+    if (called) beadDoes('notes');
   });
   useEffect(() => {
     const phrase = createCallingPhrase();
@@ -177,11 +183,7 @@ export function App() {
       heard(words.press(note, time), phrase.press(note, time));
     });
   }, [session]);
-  const switchBead = (on: boolean) => {
-    setBeadSwitch(on ? 'on' : 'off');
-    setBeadPresence((p) => (on ? (p === 'away' ? 'up' : p) : p === 'up' ? 'leaving' : p));
-  };
-  const beadGone = useCallback(() => setBeadPresence((p) => (p === 'leaving' ? 'away' : p)), []);
+  const beadGone = useCallback(() => beadDoes('gone'), [beadDoes]);
   const modulationContext = useMemo(() => ({ engine: session.engine, patch: () => patches.get().patch, octave: octaveRef }), [session, patches]);
   // The letter keys play Notes unless turned off in Display (issue 51); remembered.
   const [letterKeys, setLetterKeys] = useDisplaySetting(storage, 'letterKeys');
@@ -392,24 +394,22 @@ export function App() {
                 />
               </Tooltip>
             </ToolGroup>
-            {beadSwitch !== 'unmet' && (
-              <ToolGroup title="Bead">
-                <Tooltip content={{ title: 'Bead', body: 'The water drop B, E, A, D calls. Off, it melts away and the Notes do nothing.' }}>
-                  <div className="bead-switch">
-                    <Segmented
-                      label="Bead"
-                      value={beadSwitch}
-                      options={[
-                        { value: 'on', label: 'On', name: 'Bead on' },
-                        { value: 'off', label: 'Off', name: 'Bead off' },
-                      ]}
-                      onChange={(v) => switchBead(v === 'on')}
-                    />
-                    <BeadIcon on={beadSwitch === 'on'} />
-                  </div>
-                </Tooltip>
-              </ToolGroup>
-            )}
+            <ToolGroup title="Bead">
+              <Tooltip content={TIPS.bead}>
+                <div className="bead-switch">
+                  <Segmented
+                    label="Bead"
+                    value={bead.switch}
+                    options={[
+                      { value: 'on', label: 'On', name: 'Bead on' },
+                      { value: 'off', label: 'Off', name: 'Bead off' },
+                    ]}
+                    onChange={(v) => beadDoes(v === 'on' ? 'switch on' : 'switch off')}
+                  />
+                  <BeadIcon on={bead.switch === 'on'} />
+                </div>
+              </Tooltip>
+            </ToolGroup>
             <ToolGroup title="Theme">
               <Tooltip content={TIPS.theme}>
                 <Segmented
@@ -822,8 +822,8 @@ export function App() {
             onQuit={tutorial.end}
           />
         )}
-        {beadPresence !== 'away' && (
-          <Mascot patches={patches} leaving={beadPresence === 'leaving'} onGone={beadGone} theme={theme} demoPart={players.demo} word={word} />
+        {bead.presence !== 'away' && (
+          <Mascot patches={patches} leaving={bead.presence === 'leaving'} onGone={beadGone} theme={theme} demoPart={players.demo} word={word} />
         )}
       </main>
     </MathsContext.Provider>

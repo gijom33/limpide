@@ -211,7 +211,7 @@ export function BeadIcon({ on }: { on: boolean }) {
 }
 
 /**
- * The mascot (issue 115), called by B, E, A, D, as in a bead of water: a water drop trailing the Limpide logo. In
+ * The mascot (issue 115), out by default (issue 150) and called by B, E, A, D: a water drop trailing the Limpide logo. In
  * three and four across it lives on the top edge of the top right section; on a phone and in 2 × 2 it keeps in view as
  * the page scrolls, on the top edge of a section in the right column (over a phone's section tabs while an edge shows
  * under them, issue 142), or hanging under the header when none has room.

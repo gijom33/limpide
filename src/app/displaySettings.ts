@@ -40,8 +40,11 @@ const DISPLAY = {
   letterKeys: { key: 'limpide.letterKeys', value: ON_OFF },
   tooltips: { key: 'limpide.tooltips', value: ON_OFF },
   theme: { key: 'limpide.theme', value: choice(['dark', 'light'], 'dark') },
-  /** Unmet until B, E, A, D first calls the Bead; Display shows its switch only once met (issue 115). */
-  bead: { key: 'limpide.bead', value: choice(['unmet', 'on', 'off'], 'unmet') },
+  /**
+   * Bead out or sent away (issues 115, 150): on by default. A browser that never met it kept "unmet", which is not a
+   * value it may take now, so it reads as on.
+   */
+  bead: { key: 'limpide.bead', value: ON_OFF },
   /** The tempo (issue 112): the page's, never a Patch's, kept as the Display is; a whole BPM. */
   tempo: {
     key: 'limpide.tempo',

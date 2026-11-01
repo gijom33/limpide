@@ -1,16 +1,16 @@
 # Bead's secrets
 
-Everything Bead, Limpide's hidden water drop, can do. Bead is an Easter egg: the tips and the README leave it out on purpose ([115](./issues/115-an-easter-egg.md), decision 7), so this page is the one place it is all written down. How each thing is built is in [115](./issues/115-an-easter-egg.md) and [127](./issues/127-more-tricks-for-bead.md).
+Everything Bead, Limpide's water drop, can do. Bead lives on the page from a first visit, and the README and Display's tip say so ([150](./issues/150-bead-shown-by-default.md)); its tricks are left out of them on purpose, to stay a surprise ([115](./issues/115-an-easter-egg.md), decision 7), so this page is the one place they are all written down. How each thing is built is in [115](./issues/115-an-easter-egg.md), [127](./issues/127-more-tricks-for-bead.md) and [150](./issues/150-bead-shown-by-default.md).
 
 Bead makes no sound and changes nothing you hear. Turning a control only changes how Bead looks or moves.
 
 ## Calling it, and sending it away
 
-- **Play B, E, A, D**, as in a bead of water, within 4 seconds, in any octave: on the computer keyboard (J, D, H, S), the on-screen piano or a MIDI keyboard. Bead comes, in one of three ways chosen at random: up from behind its edge, falling from the top of the window like rain, or popping up with a hop.
-- **Play B, E, A, D again**: it leaps, smashes itself down into a splash, becomes a puddle, then a film that fades. Hanging or in the air, it drips away down the window instead.
-- The Demo, the Song and Hold's rhythm never call it: only Notes you play yourself.
-- Once you have met it, **Display has a Bead switch**, remembered. Off, Bead melts away and the Notes do nothing; on brings it back.
-- Bead is not remembered across a reload.
+- **It comes by itself**, 3 seconds after the page opens, in one of three ways chosen at random: up from behind its edge, falling from the top of the window like rain, or popping up with a hop. On a first visit it waits until the welcome is closed, and whenever About is open.
+- **Play B, E, A, D**, as in a bead of water, within 4 seconds, in any octave: on the computer keyboard (J, D, H, S), the on-screen piano or a MIDI keyboard. It leaps, smashes itself down into a splash, becomes a puddle, then a film that fades. Hanging or in the air, it drips away down the window instead.
+- **Play B, E, A, D again**, and it comes back. While it melts, the Notes do nothing.
+- The Demo, the Song and Hold's rhythm never call it or send it away: only Notes you play yourself.
+- **Display has a Bead switch**, from the first visit. Off, Bead melts away; on brings it back. The Notes turn the switch as they send it away or call it, so a reload keeps what you chose: off, it stays away; on, it comes by itself again.
 
 ## Where it lives
 

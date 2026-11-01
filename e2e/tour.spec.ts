@@ -1,4 +1,5 @@
 import { expect, type Page, test } from '@playwright/test';
+import { FIRST_VISIT } from './startState';
 
 // Issue 128: the Tour, a card for each Section while the synth turns its controls itself, on a Patch of its own.
 
@@ -47,7 +48,7 @@ const standing = (page: Page, name: string) =>
   }, name);
 
 test.describe('a first visit', () => {
-  test.use({ storageState: { cookies: [], origins: [] } });
+  test.use({ storageState: FIRST_VISIT });
 
   test('the welcome offers the Demo and the Tour, no Tutorial; the Tour starts on Init and takes the focus (issue 128)', async ({ page }) => {
     await page.goto('/');

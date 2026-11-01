@@ -1,15 +1,11 @@
 import { expect, type Page, test } from '@playwright/test';
+import { BEAD_OFF, startEmptied } from './startState';
 
 const scope = (page: Page, tap: string) => page.getByLabel(`${tap} Scope`, { exact: true });
 
 /** Opens Limpide with a Patch already in place (as if autosaved), then holds a Note. */
 async function play(page: Page, patch: Record<string, unknown>) {
-  await page.addInitScript((p) => {
-    if (sessionStorage.getItem('seeded')) return;
-    localStorage.clear();
-    localStorage.setItem('limpide.current', JSON.stringify(p));
-    sessionStorage.setItem('seeded', 'true');
-  }, patch);
+  await startEmptied(page, { ...BEAD_OFF, 'limpide.current': JSON.stringify(patch) });
   await page.goto('/');
   await expect(scope(page, 'Amp')).toHaveAttribute('data-db', /.+/);
   await page.getByRole('button', { name: 'Hold' }).click();

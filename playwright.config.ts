@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import { BEAD_OFF, holding, WELCOMED } from './e2e/startState';
 
 export default defineConfig({
   testDir: 'e2e',
@@ -8,12 +9,9 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   use: {
     baseURL: 'http://localhost:5199',
-    // Every test but the welcome's own starts in a browser that has been welcomed already, so About's welcome
-    // never stands over the page (e2e/welcome.spec.ts starts from an empty one).
-    storageState: {
-      cookies: [],
-      origins: [{ origin: 'http://localhost:5199', localStorage: [{ name: 'limpide.welcomed', value: '1' }] }],
-    },
+    // Every test but a first visit's starts in a browser welcomed already, and every one with Bead switched off
+    // (e2e/startState.ts).
+    storageState: holding({ ...WELCOMED, ...BEAD_OFF }),
   },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },

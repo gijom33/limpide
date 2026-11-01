@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { openDisplay } from './helpers';
+import { FIRST_VISIT } from './startState';
 
 // Issue 51: a sound made and changed without the mouse, and every control named for a screen reader.
 
@@ -124,7 +125,7 @@ test('the letter keys can be turned off in Display, and stay off', async ({ page
 });
 
 test.describe('a first visit', () => {
-  test.use({ storageState: { cookies: [], origins: [] } });
+  test.use({ storageState: FIRST_VISIT });
   test('closing the welcome puts the focus on the Demo button, not the page', async ({ page }) => {
     await page.goto('/');
     await page.getByRole('dialog', { name: 'Limpide' }).getByRole('button', { name: 'Close' }).click();

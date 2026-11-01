@@ -1,7 +1,8 @@
 import { expect, type Page, test } from '@playwright/test';
+import { FIRST_VISIT } from './startState';
 
-// A brand-new browser: nothing stored, not even the welcome the other tests start past.
-test.use({ storageState: { cookies: [], origins: [] } });
+// A brand-new browser: not even the welcome the other tests start past.
+test.use({ storageState: FIRST_VISIT });
 
 const about = (page: Page) => page.getByRole('dialog', { name: 'Limpide' });
 const demo = (page: Page) => page.getByRole('button', { name: 'Demo' });
@@ -26,7 +27,7 @@ test('a first visit opens on the welcome; Play the Demo starts it, sound and all
 
 test('the welcome is remembered however it closes: Close, Escape or a click outside', async ({ browser }) => {
   for (const close of ['Close', 'Escape', 'outside'] as const) {
-    const context = await browser.newContext({ storageState: { cookies: [], origins: [] } });
+    const context = await browser.newContext({ storageState: FIRST_VISIT });
     const page = await context.newPage();
     await page.goto('/');
     await expect(about(page), close).toBeVisible();

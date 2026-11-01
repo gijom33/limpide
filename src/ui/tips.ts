@@ -179,6 +179,10 @@ export const TIPS = {
   },
   about: { title: 'About', body: 'The version of Limpide you are playing, who made it, and where its source lives. The logo opens it too.' },
   theme: { title: 'Theme', body: 'Switches between the dark and light look. Your choice is remembered.' },
+  bead: {
+    title: 'Bead',
+    body: 'Bead is the little water drop living on the page, answering what you play and turn. Off sends it away, and so does playing B, E, A, D; the same Notes call it back. Your choice is remembered.',
+  },
   bendRange: {
     title: 'Pitch bend range',
     body: 'How far a keyboard’s bend wheel takes the pitch, up or down, in semitones: 2 is a whole tone, as on most synths. The sustain pedal holds Notes as Hold does, the mod wheel turns LFO 1’s Depth, and a Program Change loads that Preset, each until you map the control to something else.',
