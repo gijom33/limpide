@@ -313,7 +313,7 @@ for (const [width, height] of [[1710, 1060], [1100, 800], [872, 700]]) {
   });
 }
 
-test('the group names take a narrow column, the long ones on two lines', async ({ page }) => {
+test('the group names take a narrow column, each on one line, a long one in a shorter form (issue 156)', async ({ page }) => {
   await page.goto('/');
   await patchName(page).click();
   const menu = page.getByRole('dialog', { name: 'Patches' });
@@ -325,9 +325,12 @@ test('the group names take a narrow column, the long ones on two lines', async (
       return [...range.getClientRects()].map((r) => ({ y: r.y + r.height / 2, right: r.right - h.getBoundingClientRect().left }));
     });
   const long = await lines('Movement & Effects');
-  expect(new Set(long.map((l) => Math.round(l.y))).size).toBe(2); // two lines
+  expect(new Set(long.map((l) => Math.round(l.y))).size).toBe(1); // one line
   expect(Math.max(...long.map((l) => l.right))).toBeLessThanOrEqual(80);
-  // The first line sits level with the row's first Preset.
+  const name = menu.getByRole('group', { name: 'Movement & Effects' }).locator('.patch-group-name');
+  await expect(name).toHaveText('Move & FX', { useInnerText: true });
+  await expect(menu.getByRole('group', { name: 'Bass' }).locator('.patch-group-name')).toHaveText('Bass', { useInnerText: true }); // a short one whole
+  // The name sits level with the row's first Preset.
   const [bass] = await lines('Bass');
   const first = (await menu.getByRole('group', { name: 'Bass' }).getByRole('button').first().boundingBox())!;
   expect(Math.abs(bass.y - (first.y + first.height / 2))).toBeLessThan(2);

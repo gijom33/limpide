@@ -255,7 +255,7 @@ The Filter's gain per frequency at the Effective Cutoff, drawn over the Spectrum
 _Avoid_: Filter curve, transfer function (Synth Geek Layer only), EQ curve
 
 **Envelope Timeline**:
-A Viewer plotting, over time with the present at its right edge, what changes the sound: the Amp Envelope always; the Filter Envelope while its Amount is set; the Effective Cutoff while the Filter Envelope or an LFO moves it; every other Destination an active LFO moves, on its knob's scale. A moved Parameter is a broken line in its stage's colour (the Cutoff dotted, what LFO 1 moves dashed, what LFO 2 alone moves dash-dotted). Its key lists what LFO 1 moves, what LFO 2 moves, the Cutoff, the Filter Envelope and the Amp Envelope, the Envelopes as Filter Env and Amp Env on screen. While an LFO is synced, faint broken lines mark the Tempo's beats, as on that LFO's plot.
+A Viewer plotting, over time with the present at its right edge, what changes the sound: the Amp Envelope always; the Filter Envelope while its Amount is set; the Effective Cutoff while the Filter Envelope or an LFO moves it; every other Destination an active LFO moves, on its knob's scale. A moved Parameter is a broken line in its stage's colour (the Cutoff dotted, what LFO 1 moves dashed, what LFO 2 alone moves dash-dotted). Its key lists what LFO 1 moves, what LFO 2 moves, the Cutoff, the Filter Envelope and the Amp Envelope, the Envelopes as Filter Env and Amp Env on screen, each name shorter still where the key's room runs short (Short forms, below). While an LFO is synced, faint broken lines mark the Tempo's beats, as on that LFO's plot.
 _Avoid_: ADSR display
 
 **Freeze**:
@@ -307,3 +307,24 @@ _Avoid_: Soft takeover, catch
 **Activity Monitor**:
 A small display of the most recent incoming MIDI message.
 _Avoid_: MIDI log, MIDI console
+
+### Short forms
+
+A label, a key or a button's word that would take a second line shows a shorter form instead, chosen by the room it has: an abbreviation, at worst a few letters (the design principles' "One line, shorter words", issue 156). The full name above stays its tooltip and what a screen reader hears; sentences wrap as text does.
+
+| Name | Shorter forms, by step |
+| --- | --- |
+| Filter Envelope | Filter Env, F Env, FE |
+| Amp Envelope | Amp Env, A Env, AE |
+| Osc 2 Pitch | O2 Pitch, O2P |
+| Pulse Width | PW |
+| Detune | Det |
+| Cutoff | Cut |
+| Resonance | Res |
+| Volume | Vol |
+| Keys & Organs | Keys & Org, Keys |
+| Plucks & Mallets | Plucks |
+| Strings, Brass & Choir | Str & Brass, Strings |
+| Movement & Effects | Move & FX, FX |
+
+The Envelopes are Filter Env and Amp Env on screen wherever they fit (the owner, 2026-10-28). A form shows only where a shorter label is needed: the Timeline's key, an LFO's Destination picker, the Patches panel's group names.

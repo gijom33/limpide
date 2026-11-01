@@ -195,8 +195,8 @@ for (const theme of ['dark', 'light'] as const) {
 }
 
 for (const size of SIZE_NAMES) {
-  test(`targets, ${size}: at least ${SIZES[size].minTarget} × ${SIZES[size].minTarget} px, no two controls over each other`, async ({ page }) => {
-    const { unexpected, unused } = await audit(page, size, 'dark', ['target', 'overlap']);
+  test(`targets, ${size}: at least ${SIZES[size].minTarget} × ${SIZES[size].minTarget} px, no two controls over each other, no label on two lines`, async ({ page }) => {
+    const { unexpected, unused } = await audit(page, size, 'dark', ['target', 'overlap', 'wrap']);
     expect(unexpected, 'failures no waiver covers (or below its floor)').toEqual([]);
     expect(unused, 'waivers nothing needs any more: take them off the list').toEqual([]);
   });
@@ -211,6 +211,22 @@ test('the overlap check fails on two controls over each other on the same layer,
   const options: AuditOptions = { rules: ['overlap'], minTarget: 0, waivers: [] };
   const { unexpected } = await page.evaluate(auditPage, options);
   expect(unexpected.map((f) => f.what)).toEqual(['div.row > button.one "One"']);
+});
+
+test('the one-line check fails on a label or a key that runs to a second line, not on a sentence (issue 156)', async ({ page }) => {
+  await page.setContent(`
+    <main style="font: 14px sans-serif">
+      <button class="fits">Cutoff</button>
+      <button class="wraps" style="width: 40px">Filter Envelope</button>
+      <span class="label" style="display: inline-block; width: 40px">Pulse Width</span>
+      <span class="key" data-one-line style="display: flex; flex-wrap: wrap; width: 120px"><span>Pulse Width</span><span>Osc 2 Pitch</span></span>
+      <span class="short-key" data-one-line style="display: flex; width: 300px"><span>PW</span><span>O2P</span></span>
+      <p style="width: 60px">A sentence wraps as text does.</p>
+      <div role="tooltip" style="width: 60px">A tip wraps too.</div>
+    </main>`);
+  const options: AuditOptions = { rules: ['wrap'], minTarget: 0, waivers: [] };
+  const { unexpected } = await page.evaluate(auditPage, options);
+  expect(unexpected.map((f) => f.what)).toEqual(['button.wraps "Filter Envelope"', 'span.label "Pulse Width"', 'span.key "Pulse WidthOsc 2 Pitch"']);
 });
 
 test('every knob and fader works from the keyboard, with a focus ring for the keyboard only', async ({ page }) => {

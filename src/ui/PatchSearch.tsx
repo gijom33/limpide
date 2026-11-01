@@ -3,6 +3,7 @@ import type { Patch } from '../patch/patch';
 import { CATEGORIES, type Category, categoryLists, inCategory, isSearch, resultRows, searchPresets } from '../patch/presetSearch';
 import type { Preset } from '../patch/presets';
 import { TutorialIcon } from './icons';
+import { Forms, useOneLine } from './oneLine';
 import { radioGroupKeys, radioTabIndex } from './radioGroup';
 import { Tooltip } from './Tooltip';
 
@@ -154,9 +155,7 @@ export function PatchSearch({ name, query, onQuery, category, onCategory, search
         )}
         {rows.map((row) => (
           <div key={`${row.kind} ${row.label}`} className="patch-group" role="group" aria-label={row.label}>
-            <span className="patch-group-name" aria-hidden="true">
-              {row.label}
-            </span>
+            <GroupName name={row.label} />
             <div className="patch-list">{row.presets.map(presetItem)}</div>
           </div>
         ))}
@@ -179,5 +178,18 @@ export function PatchSearch({ name, query, onQuery, category, onCategory, search
         )}
       </div>
     </section>
+  );
+}
+
+/**
+ * A group's name in the narrow column beside its Presets, on one line: a long one takes a shorter form (issue 156).
+ * Hidden from screen readers, which hear the group's own name, whole; the category pills above show it whole too.
+ */
+function GroupName({ name }: { name: string }) {
+  const ref = useOneLine<HTMLSpanElement>(name);
+  return (
+    <span className="patch-group-name" aria-hidden="true" ref={ref} data-one-line>
+      <Forms name={name} />
+    </span>
   );
 }

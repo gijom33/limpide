@@ -37,7 +37,7 @@ The rules every screen change is judged against, the way issue 15's audit judged
 - **Every control works from the keyboard** (2.1.1), with a visible focus ring (2.4.7): a plain ring, shown for keyboard focus only, never after a click or a drag.
 - **Colour is never the only signal** (1.4.1): the modulation ring also differs from the value arc by its position, outside the dial.
 
-Contrast, target sizes, overlapping controls and the keyboard are checked on every screen state by `e2e/designPrinciples.spec.ts`, from the narrowest phone (320 px) to a wide screen.
+Contrast, target sizes, overlapping controls, labels on a second line and the keyboard are checked on every screen state by `e2e/designPrinciples.spec.ts`, from the narrowest phone (320 px) to a wide screen.
 
 **Waivers.** Look B departs from two of these rules on purpose (the owner's decision, 2026-10-25, issues 27 and 28): its edges stay quiet, and its controls stay compact. Each departure is a waiver in the spec, with the elements it covers and a floor just under what it measured that day, so nothing waived can get worse unseen:
 

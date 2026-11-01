@@ -416,9 +416,14 @@ main[data-frozen] .tap-canvases::before {
    where the controls sit above it, a height of its own). The canvas fills the box and never sizes it. */
 .timeline-plot { position: relative; min-width: 0; height: clamp(120px, 9vw, 200px); }
 .timeline canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; background: var(--bg); border-radius: var(--radius-inner); }
-/* Wraps rather than running past the section's edge where the plot column is narrow (861–879 px, issue 47). */
+/* One line: where the plot column is narrow its names take shorter forms (issue 156); it wraps rather than running
+   past the section's edge (861–879 px, issue 47) only where even its shortest have no room. */
 .timeline-key { display: flex; flex-wrap: wrap; justify-content: flex-end; min-width: 0; gap: 4px 14px; font-size: var(--text-sm); color: var(--muted); font-weight: 500; text-transform: none; letter-spacing: 0; }
-.timeline-key [data-mark] { display: inline-flex; align-items: center; gap: 5px; }
+.timeline-key [data-mark] { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+/* At its shortest, the key's gaps and line samples tighten too: the five names still fit the 212 px it has at 861 px. */
+.timeline-key[data-shortest] { column-gap: 8px; }
+.timeline-key[data-shortest] [data-mark] { gap: 3px; }
+.timeline-key[data-shortest] [data-pattern]::before { width: 10px; }
 .timeline-key [data-mark]:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; border-radius: 3px; }
 .timeline-key [data-mark]::before { content: ''; width: 12px; height: 8px; border-radius: 2px; }
 .timeline-key [data-mark='amp']::before { background: color-mix(in srgb, var(--stage-amp) 45%, transparent); border-top: 1.5px solid var(--stage-amp); }
@@ -810,6 +815,8 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 /* An LFO's destination, picked like a Patch: ‹ name ›, the name opening a menu grouped by stage. */
 .destination-picker { position: relative; display: flex; align-items: center; gap: 2px; }
 .destination-name { width: 112px; justify-content: center; gap: 6px; color: var(--text); }
+/* The name's room is what the button leaves it: past it, a shorter form (issue 156). */
+.destination-label { min-width: 0; }
 .destination-name::before, .destination-menu [role='menuitemradio']::before {
   content: ''; flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--dest);
 }
@@ -1146,8 +1153,8 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .patch-search-all { margin-left: 8px; min-height: 24px; padding: 0 4px; font: inherit; color: var(--text); text-decoration: underline; cursor: pointer; background: none; border: none; }
 .patch-group { display: grid; grid-template-columns: 76px minmax(0, 1fr); column-gap: 10px; align-items: start; }
 .patch-panel > section:not(.patch-presets) { flex: none; }
-/* A narrow label column: the long names (Keys & Organs, Movement & Effects) take two lines or more, the first level with the
-   row's first Preset. */
+/* A narrow label column, level with the row's first Preset: the long names (Keys & Organs, Movement & Effects) take
+   a shorter form there, on one line (issue 156). */
 .patch-group-name {
   margin: 0; padding-top: calc((var(--control-h) - 1.25em) / 2); line-height: 1.25;
   font-size: var(--text-sm); font-weight: 500; color: var(--muted);
