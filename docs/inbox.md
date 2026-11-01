@@ -4,8 +4,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
-- 2026-10-31, the owner's bug, on the night branch: "When LFO is synced with clock, the rate knob shows the frequency below it on top of clock period ratio. It leads to longer text and the knobs shift around. This is bad. No need to show the frequency."
-
 ## Ideas
 
 ## Dropped
@@ -158,3 +156,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-31, the owner's idea of a Circuit Tracks layout (triage): to [173](./issues/173-a-circuit-tracks-layout.md), in v1 (decided by the owner): a research pass on what it sends, then a grilling, built after [149](./issues/149-one-seam-for-a-controller.md) (Claude's call, open to the owner).
 2026-10-31, the owner's bug of Bead's Detune twin always on its left (triage): to [174](./issues/174-beads-detune-twin-on-both-sides.md), a bug, ready for an agent: the twin on Detune's side (decided by the owner), all else as now; queued tonight with the bugs.
 2026-10-31, the owner's bug of a tip hiding LFO 2's Destination menu (triage): to [175](./issues/175-no-tip-over-an-open-menu.md), a bug, ready for an agent and queued tonight with the bugs: opening a menu closes the tip, and no tip shows while one is open, for every menu (Claude's call, open to the owner).
+2026-10-31, the owner's bug of a synced Rate's long readout (triage): to [176](./issues/176-a-synced-rate-shows-its-note-value-alone.md), a bug, ready for an agent and queued tonight with the bugs: the note value alone (decided by the owner, replacing 112's decision 10), at a fixed width (Claude's call, open to the owner).
