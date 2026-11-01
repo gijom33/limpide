@@ -1059,8 +1059,8 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .patch-delete-confirm { color: var(--danger); border-color: var(--danger); }
 .patch-empty { margin: 0; font-size: var(--text-md); color: var(--muted); }
 /* The one-line header gives the keyboard what its sides leave: from 861 to 1099 px its buttons show their icons and
-   drop their words (the tooltips name them); from 1100 px, two rows high, they keep them. Below 920 px the header's
-   zones sit closer together. */
+   drop their words (the tooltips name them); from 1100 px, two rows high, they keep them, but for the set-up row's
+   beside the tempo, which keep theirs from 1366 px (issue 112). Below 920 px the header's zones sit closer together. */
 /* With the Tutorial button (issue 59), one more in the row: the zones sit 12 px apart and, without their words, the
    buttons pad 6 px, so the piano keeps 44 px keys at 1440 and 26 px or more at 861. */
 @media (min-width: 861px) {
@@ -1074,8 +1074,8 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   .header-play, .header-set, .header-right { gap: 6px; }
   header :is(.demo-button, .hold-button, .midi-status, .display-menu > .tip-anchor > .tool, .about-menu .tool) { padding: 0 6px; }
 }
-/* From 1100 px the buttons right of the keyboard, two rows high, keep their words: about as wide as the logo and the
-   Patch on the left, so the piano stays at the centre (the owner, 2026-10-29). */
+/* From 1100 px the buttons right of the keyboard, two rows high, keep their words (the set-up row's from 1366 px, issue
+   112): about as wide as the logo and the Patch on the left, so the piano stays at the centre (the owner, 2026-10-29). */
 @media (min-width: 861px) and (max-width: 1099px) {
   header :is(.demo-word, .tool-word) { display: none; }
   /* The BPM its number alone, as the buttons beside it their icons (issue 112); its tooltip and name say BPM. */
