@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement. In v1 as Bead's polish, decided by the owner, 2026-10-31 ([131](./131-v1.md), decision 12). The details below are Claude's calls, open to the owner.
+**Status:** ready-for-human · enhancement. Built (2026-11-01) on night/2026-10-31, for the owner to try. In v1 as Bead's polish, decided by the owner, 2026-10-31 ([131](./131-v1.md), decision 12). The details below are Claude's calls, open to the owner.
 
 ## Agent Brief
 
@@ -27,12 +27,28 @@
 - The Patch's LFO Waveforms, Rates and Depths
 
 **Acceptance criteria:**
-- [ ] A unit test of the choice: a Sine or a Triangle at 1 Hz or slower with Depth above 0 is rideable; a Saw, a Square, a Rate over 1 Hz or a Depth of 0 is not
-- [ ] An e2e test: with a slow Sine on LFO 1 and a visit due, Bead's foot follows the plot's line; turning the Depth to 0 sends it home
-- [ ] No ride while the Demo plays or under reduced motion
-- [ ] Bead's frame-cost test still passes
+- [x] A unit test of the choice: a Sine or a Triangle at 1 Hz or slower with Depth above 0 is rideable; a Saw, a Square, a Rate over 1 Hz or a Depth of 0 is not
+- [x] An e2e test: with a slow Sine on LFO 1 and a visit due, Bead's foot follows the plot's line; turning the Depth to 0 sends it home
+- [x] No ride while the Demo plays or under reduced motion
+- [x] Bead's frame-cost test still passes
 - [ ] Every test passes in Linux's fonts too
 
 **Out of scope:**
 - New moves on the ride (tricks belong to [127](./127-more-tricks-for-bead.md))
 - Riding the Envelope Timeline or other Viewers
+
+## How it was built
+
+- **The choice:** a pure `ridesFor` beside Bead's perch choice takes both LFOs and the tempo and gives the LFOs it may ride: Depth above 0, a Sine or a Triangle, 1 Hz or slower (with Sync, the Hz its note value gives at the tempo), none while the Demo plays or with reduced motion. Its unit tests cover each bound, a synced quarter and bar at 60 and 120 BPM, the Demo and reduced motion.
+- **As a visit:** when a visit is due (three or four across, standing, no funny turn, not being sent away), each LFO plot it may ride that is in view, wide enough and clear of the cards (issue 164) is one more choice beside the sections in view, picked at random like them. The ride lasts 8 to 18 seconds, and the next visit comes 20 to 40 seconds after, as from a section.
+- **The ride** is the Demo's surf: it jumps onto the plot and slides along its line, end to end, its foot where the plot draws the LFO under its middle, eyes happy.
+- **Getting off:** the Depth to 0, a Waveform or a Rate out of bounds, the plot out of view or covered, the Demo starting, or reduced motion: it jumps home at once.
+- **Picked up:** the ride ends and it is thrown as anywhere, landing on the first edge it comes down onto, not home. Claude's call, open to the owner: jumping home from the pointer's hold would fight the throw.
+- **Sent away on a ride:** it jumps home first, then melts there, rather than melting on the moving line or dripping away from the air. Claude's call, open to the owner.
+- **A funny turn cued during a ride** (a word spelled with Notes, the theme) plays on the line, and the ride goes on after. The Demo's surf instead drops it home for a trick. Claude's call, open to the owner: a jump home in the middle of a turn would break "once begun, a funny turn plays to its end".
+- **Only three and four across:** on a phone and in 2 × 2 Bead makes no visits, so it never rides there. Claude's call, open to the owner.
+- **The plots are only looked up** in a Demo part, during a ride, or when a visit is due with an LFO to ride, so a frame costs no more while Bead stays home.
+- `docs/bead.md` lists the ride under "Where it lives" and beside the Demo's surf. CONTEXT.md's Mascot entry names it too.
+- **Tests:** the mascot spec's new test sets LFO 1 to a Sine at 0.5 Hz, half on, by a Share link. It stubs `Math.random` to 0 so the first visit is due 15 seconds in and goes to the first choice, a ride. It checks that the foot stays within 4 px of the plotted line as it rises and falls, and that a double-click putting the Depth to 0 ends the ride and lands Bead on the Amp's edge. Bead's frame-cost test failed now and then under the night's load (1.0 to 1.4 ms against its 1 ms bound), and failed just the same with HEAD's Bead swapped back in, so it is a load flake, not this change; it passed on the last full run. In that run WebKit's throw test failed once. Run again, it failed now and then with or without this change (the press missing Bead as it strolled, or a hop as it landed) while the machine was loaded, so it is a load flake too. The last criterion, Linux's fonts, is for GitHub's run to show.
+
+**To try:** at three or four across, turn LFO 1's Depth up and its Rate to 1 Hz or slower, keep a Sine or a Triangle, and wait: within a visit or two (15 to 40 seconds each) Bead may jump onto the plot and ride it. Then turn the Rate past 1 Hz, choose a Saw, or put the Depth to 0, and it jumps home. Try picking it up mid-ride, and playing B, E, A, D mid-ride. With Sync on, a 1/2 at 120 BPM (1 Hz) rides and a 1/4 (2 Hz) does not.
