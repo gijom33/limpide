@@ -39,8 +39,8 @@ export function beadAfter(bead: Bead, event: BeadEvent): Bead {
   switch (event) {
     case 'notes':
       if (bead.switch === 'off') return bead;
-      if (bead.presence === 'away') return { ...bead, presence: 'up', entranceDue: false, sentAway: false };
-      return bead.presence === 'up' ? { ...bead, presence: 'leaving', entranceDue: false, sentAway: true } : bead;
+      if (bead.presence === 'leaving') return bead;
+      return { ...bead, presence: bead.presence === 'up' ? 'leaving' : 'up', entranceDue: false, sentAway: bead.presence === 'up' };
     case 'switch on':
       return { presence: coming(bead), switch: 'on', entranceDue: false, sentAway: false };
     case 'switch off':

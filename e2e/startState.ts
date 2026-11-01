@@ -3,8 +3,8 @@ import type { Page } from '@playwright/test';
 /**
  * What every spec's browser holds when it starts. Bead comes out by itself a few seconds in (issue 150) and its
  * pixels take the pointer, so every spec starts with it switched off: the mascot spec brings it with Display's switch
- * (the Notes do nothing while it is off), or starts from what it needs stored to see it come by itself. All but a first visit's specs start welcomed already, so
- * About's welcome never stands over the page.
+ * (the Notes do nothing while it is off), or starts from what it needs stored to see it come by itself. All but a first
+ * visit's specs start welcomed already, so About's welcome never stands over the page.
  */
 export const BEAD_OFF = { 'limpide.bead': 'off' };
 export const WELCOMED = { 'limpide.welcomed': '1' };

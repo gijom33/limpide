@@ -67,7 +67,7 @@ const covered = (page: Page, viewers: boolean) =>
       .map((c) => c.getAttribute('aria-label') ?? c.className);
   }, viewers);
 
-test('with the switch on, B, E, A, D sends it away and again brings it; B, E, D, A does nothing', async ({ page }) => {
+test('with the switch on, B, E, A, D sends it away and again brings it; B, E, D, A does nothing (issue 150, decision 8)', async ({ page }) => {
   await page.goto('/');
   await listening(page);
   await bringBead(page);
