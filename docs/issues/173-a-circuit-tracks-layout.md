@@ -4,7 +4,7 @@
 
 **Blocked by:** a research pass on what the Circuit Tracks sends (below); the owner's grilling on the layout; [149](./149-one-seam-for-a-controller.md) (one seam for what a Controller is), so a second known Controller is added in one place
 
-**Status:** needs-triage · enhancement. In v1, decided by the owner, 2026-10-31. First a `/research` pass, then a grilling.
+**Status:** needs-triage · enhancement. In v1, decided by the owner, 2026-10-31. The research pass is done ([the findings](../research/173-circuit-tracks.md), 2026-10-31); next, the grilling, and a check on the owner's device for what stayed unsourced.
 
 ## Decisions
 
