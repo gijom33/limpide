@@ -1,8 +1,8 @@
 /**
  * The design principles' measurable rules (docs/design-principles.md), checked on the page as drawn: text contrast,
- * the contrast of what draws a control (its border or fill, a knob's groove and arc, a fader's track and fill), and
- * the size of what a pointer can hit, and that no two controls lie over each other (issue 157). Runs inside the page (Playwright's evaluate), so it is one self-contained
- * function.
+ * the contrast of what draws a control (its border or fill, a knob's groove and arc, a fader's track and fill), the
+ * size of what a pointer can hit, and that no two controls lie over each other (issue 157). Runs inside the page
+ * (Playwright's evaluate), so it is one self-contained function.
  */
 export type Rule = 'text' | 'boundary' | 'target' | 'overlap';
 
@@ -170,19 +170,19 @@ export function auditPage({ rules, minTarget, waivers }: AuditOptions): AuditRes
     if (w < minTarget - 0.5 || h < minTarget - 0.5) fail('target', el, Math.min(w, h), `${Math.round(w)}×${Math.round(h)}`);
   }
 
-  // Overlaps: two controls on the same layer whose boxes cross, by more than half a pixel each way, as the header's
-  // buttons did in a window narrower than a phone (issue 157). A layer is what an absolutely placed, fixed or sticky
-  // box holds (a panel, a card, the header): a panel open over the page lies over its controls on purpose. A box is
-  // cut to what its scrolling or clipping boxes show, so a list scrolled within its panel is not over what is below
-  // it. The piano's keys are left out: the black ones lie over the white, as on a piano.
-  const layer = (el: Element) => {
-    for (let e: Element | null = el; e; e = e.parentElement) if (/^(absolute|fixed|sticky)$/.test(getComputedStyle(e).position)) return e;
+  // Overlaps (issue 157): two controls on the same layer whose boxes cross, by more than half a pixel each way. A
+  // layer is what an absolutely placed, fixed or sticky box holds (a panel, a card, the header): a panel open over the
+  // page lies over its controls on purpose. A box is cut to what its scrolling or clipping boxes show, so a list
+  // scrolled within its panel is not over what is below it. The piano's keys are left out: the black ones lie over the
+  // white, as on a piano.
+  const layerOf = (el: Element) => {
+    for (let e = el.parentElement; e; e = e.parentElement) if (/^(absolute|fixed|sticky)$/.test(getComputedStyle(e).position)) return e;
     return document.documentElement;
   };
-  const clipped = (el: Element, top: Element) => {
+  const visibleBox = (el: Element, layer: Element) => {
     const r = el.getBoundingClientRect();
     let [l, t, rt, b] = [r.left, r.top, r.right, r.bottom];
-    for (let e = el.parentElement; e && e !== top.parentElement; e = e.parentElement) {
+    for (let e = el.parentElement; e && e !== layer.parentElement; e = e.parentElement) {
       const s = getComputedStyle(e);
       if (s.overflowX === 'visible' && s.overflowY === 'visible') continue;
       const c = e.getBoundingClientRect();
@@ -190,12 +190,15 @@ export function auditPage({ rules, minTarget, waivers }: AuditOptions): AuditRes
     }
     return { l, t, r: rt, b };
   };
-  const placed = (rules.includes('overlap') ? pointable : [])
+  const laidOut = (rules.includes('overlap') ? pointable : [])
     .filter((el) => shown(el) && !el.closest('.piano'))
-    .map((el) => ({ el, layer: layer(el), box: clipped(el, layer(el)) }))
+    .map((el) => {
+      const layer = layerOf(el);
+      return { el, layer, box: visibleBox(el, layer) };
+    })
     .filter(({ box }) => box.r - box.l > 0.5 && box.b - box.t > 0.5);
-  placed.forEach((a, i) =>
-    placed.slice(i + 1).forEach((b) => {
+  laidOut.forEach((a, i) =>
+    laidOut.slice(i + 1).forEach((b) => {
       if (a.layer !== b.layer || a.el.contains(b.el) || b.el.contains(a.el)) return;
       const across = Math.min(a.box.r, b.box.r) - Math.max(a.box.l, b.box.l);
       const down = Math.min(a.box.b, b.box.b) - Math.max(a.box.t, b.box.t);

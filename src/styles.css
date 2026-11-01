@@ -1394,18 +1394,17 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   .chain > * { scroll-margin-top: calc(var(--header-h, 0px) + var(--space-2)); }
 }
 /* With the tempo in set-up (issue 112), the narrowest 2 × 2 windows pad the buttons 2 px and set them 2 px apart, so
-   the row fits and a short Preset name still shows whole at 601 px. */
-@media (min-width: 601px) and (max-width: 680px) {
+   the row fits and a short Preset name still shows whole at 601 px. So do windows narrower than most phones (375 px),
+   down to the narrowest (320 px, issue 157), so the playing and set-up row fits without one button over another, in
+   Linux's wider fonts too; the two groups stay 4 px apart. Display's button is named as the phone's own padding rule
+   names it, which raises the whole list to that rule's weight, so this one wins over it. */
+@media (min-width: 601px) and (max-width: 680px), (max-width: 374px) {
   .header-play, .header-set { gap: 2px; }
-  header :is(.demo-button, .hold-button, .midi-status, .display-menu .tool, .about-menu .tool, .tempo-open) { padding-inline: 2px; }
+  header :is(.demo-button, .hold-button, .midi-status, .display-menu > .tip-anchor > .tool, .about-menu .tool, .tempo-open) { padding-inline: 2px; }
 }
-/* Narrower than most phones (375 px), down to the narrowest (320 px, issue 157), the playing and set-up buttons pad
-   2 px and sit 2 px apart, each at least 32 px wide, so the row fits without one over another, in Linux's wider fonts
-   too; the two groups stay 4 px apart. */
+/* There, each at least 32 px wide, and never narrower than its word. */
 @media (max-width: 374px) {
-  .header-play, .header-set { gap: 2px; }
-  /* Display's button named as the phone's padding names it, so this wins over that rule. */
-  header :is(.demo-button, .hold-button, .midi-status, .display-menu > .tip-anchor > .tool, .about-menu .tool, .tempo-open) { min-width: 32px; padding-inline: 2px; }
+  header :is(.demo-button, .hold-button, .midi-status, .display-menu > .tip-anchor > .tool, .about-menu .tool, .tempo-open) { min-width: 32px; flex-shrink: 0; }
 }
 
 /* The sections strip (phones): equal tabs under the header, each underlined in its section's colour when it is the

@@ -124,19 +124,17 @@ for (const width of [280, 320, 340, 375]) {
     await page.goto('/');
     await page.locator('.piano button').first().waitFor();
     const names = ['Demo', 'Tutorial', 'Song', 'Hold', 'Tempo', 'MIDI', 'Display', 'About'];
-    const boxes = await page.evaluate(
-      (names) => names.map((name) => document.querySelector(`header button[aria-label="${name}"]`)!.getBoundingClientRect().toJSON() as DOMRect),
-      names,
-    );
+    const row = page.locator('header');
+    const boxes = await Promise.all(names.map(async (name) => (await row.getByRole('button', { name, exact: true }).boundingBox())!));
     for (let i = 0; i < names.length; i++) {
       expect(boxes[i].height, names[i]).toBeGreaterThanOrEqual(44);
       expect(boxes[i].width, names[i]).toBeGreaterThanOrEqual(32);
-      expect(boxes[i].top, names[i]).toBe(boxes[0].top);
-      if (i) expect(boxes[i].left, `${names[i - 1]} → ${names[i]}`).toBeGreaterThanOrEqual(boxes[i - 1].right);
+      expect(boxes[i].y, names[i]).toBeCloseTo(boxes[0].y, 0);
+      if (i) expect(boxes[i].x, `${names[i - 1]} → ${names[i]}`).toBeGreaterThanOrEqual(boxes[i - 1].x + boxes[i - 1].width);
     }
-    expect(boxes.at(-1)!.right).toBeLessThanOrEqual(Math.max(width, 320));
-    const overlaps: AuditOptions = { rules: ['overlap'], minTarget: 0, waivers: [] };
-    const { unexpected } = await page.evaluate(auditPage, overlaps);
+    expect(boxes[7].x + boxes[7].width).toBeLessThanOrEqual(Math.max(width, 320));
+    const overlapOnly: AuditOptions = { rules: ['overlap'], minTarget: 0, waivers: [] };
+    const { unexpected } = await page.evaluate(auditPage, overlapOnly);
     expect(unexpected).toEqual([]);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(Math.max(width, 320));
     if (width < 320) {
