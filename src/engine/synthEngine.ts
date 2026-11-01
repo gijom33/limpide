@@ -87,7 +87,8 @@ const MASTER_LEVEL = 0.45;
 const BEND_SMOOTHING = 0.004;
 
 const SAFETY_RANGE = 4;
-const SAFETY_KNEE = 0.8;
+/** Where the safety limiter starts to bend the sound: below it, it is exactly linear. */
+export const SAFETY_KNEE = 0.8;
 // The bend levels off a little below full scale: driven hard, the shaper's oversampling filter rings slightly
 // past the curve, and this keeps even that under 1.
 const SAFETY_CEILING = 0.97;

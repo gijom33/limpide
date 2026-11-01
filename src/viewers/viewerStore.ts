@@ -20,7 +20,8 @@ export type ViewSettingsAction =
 
 export type ViewerStore = ReturnType<typeof createViewerStore>;
 
-const IDEAL_HARMONICS = 256;
+/** How many Harmonics of the Note the Ideal Reference counts. */
+export const IDEAL_HARMONICS = 256;
 
 /** The Viewers' Display settings as they are kept (issue 85), besides the overlays. */
 const savedOf = (settings: ViewSettings): DisplayValue<'viewer'> => ({

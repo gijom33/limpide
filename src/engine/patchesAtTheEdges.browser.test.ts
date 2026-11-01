@@ -1,20 +1,22 @@
 import { describe, expect, it } from 'vitest';
 import { osc2Cents } from '../modulation/modulationModel';
 import type { Waveform } from '../music/harmonics';
-import { defaultPatch, type Patch } from '../patch/patch';
+import { idealPartials } from '../music/idealReference';
+import { noteToFrequency } from '../music/pitch';
+import { defaultPatch, PARAMS, type Patch } from '../patch/patch';
 import type { PatchChange } from '../patch/patchStore';
 import { PRESETS } from '../patch/presets';
 import { shareHash } from '../patch/serialize';
 import { type EdgeCase, edgeCases } from '../test/edgePatches';
-import { energyAboveDb } from '../test/measure';
+import { dB, energyAboveDb } from '../test/measure';
 import { memoryStorage } from '../test/memoryStorage';
 import { straightenLimiter } from '../test/straightLimiter';
 import { createScope } from '../viewers/scope';
 import { createSpectrum } from '../viewers/spectrum';
 import { createTimeline } from '../viewers/timeline';
-import { createViewerStore } from '../viewers/viewerStore';
+import { createViewerStore, IDEAL_HARMONICS } from '../viewers/viewerStore';
 import { filterStages } from './filterDesign';
-import { createSynthEngine, type SynthEngine } from './synthEngine';
+import { createSynthEngine, SAFETY_KNEE, type SynthEngine } from './synthEngine';
 
 // Patches at the edges (issue 116): each of the sweep's Patches (`edgeCases`) rendered offline on a low, a middle and
 // a high Note (a chord on all its Voices in the middle), failing on an error value, silence where a source is up and
@@ -32,15 +34,14 @@ const JUDGED = [0.25, END] as const;
 const NOTES = { low: 36, middle: 60, high: 96 } as const;
 /** The middle chord on a Patch of several Voices: thirds stacked from C4. */
 const CHORD = [60, 64, 67, 71, 74, 77, 81, 84];
-/** Where the safety limiter starts to bend the sound (the engine's SAFETY_KNEE). */
-const LIMITER_KNEE = 0.8;
 /** Under this RMS a 50 ms window is silent: −120 dBFS. */
 const SILENT = 1e-6;
 /** The largest offset allowed, against the sound's own level: a third of it (−10 dB). */
 const OFFSET_DB = -10;
 /** How many renders run at once: each OfflineAudioContext renders on its own thread. */
 const AT_ONCE = 10;
-const hz = (note: number) => 440 * 2 ** ((note - 69) / 12);
+/** The Effective Cutoff's range, where the model holds it (20 Hz to 20 kHz), a hair inside each end. */
+const [BOTTOM, TOP] = [PARAMS.cutoff.min * 1.0001, PARAMS.cutoff.max * 0.9999];
 
 /** A render of `notes` on a case's Patch at its Tempo, the limiter straight; `dcBlock: false` takes 103's filter out. */
 async function play({ patch, bpm }: EdgeCase, notes: readonly number[], { dcBlock = true, seconds = END } = {}) {
@@ -96,13 +97,13 @@ const AUDIBLE = (f: number) => f >= 20 && f <= 20000;
  * where what it lets through under 20 Hz is not the model's.
  */
 const closedAtAnEnd = (patch: Patch, cutoff: number) =>
-  (cutoff >= 19999 && (patch.filterMode === 'highpass' || patch.filterMode === 'bandpass')) ||
-  (cutoff <= 20.001 && (patch.filterMode === 'lowpass' || patch.filterMode === 'bandpass'));
+  (cutoff >= TOP && (patch.filterMode === 'highpass' || patch.filterMode === 'bandpass')) ||
+  (cutoff <= BOTTOM && (patch.filterMode === 'lowpass' || patch.filterMode === 'bandpass'));
 
 /**
  * What the Filter lets through at `t`, by the Modulation model, of what the sources that are up play: each pitched
  * source's fundamental and first Harmonics, Ring's sum and difference, Noise's whole band, those a person hears.
- * `heard` is the most it lets through of any of them; `plain`, of a pitched source's fundamental (Noise's 1 kHz).
+ * `heard` is the most it lets through of any of them; `fundamental`, of a pitched source's fundamental (Noise's 1 kHz).
  * `subAudio`: whether something plays under 20 Hz, other than an offset: a source that low, Pink Noise (as much in
  * each octave down to the offset filter's), or where Ring or FM meets Osc 1 and Osc 2, a Harmonic of one that close to
  * a Harmonic of the other (their difference tone).
@@ -110,7 +111,7 @@ const closedAtAnEnd = (patch: Patch, cutoff: number) =>
 function passed(engine: SynthEngine, patch: Patch, t: number, notes: readonly number[]) {
   const m = engine.modulationAt(t);
   // The newest Note is the chord's top: the lowest is as far under it.
-  const f0 = hz(m.pitch + Math.min(...notes) - notes[notes.length - 1]);
+  const f0 = noteToFrequency(m.pitch + Math.min(...notes) - notes[notes.length - 1]);
   const f1 = f0 * 2 ** patch.osc1Octave;
   const f2 = f0 * 2 ** (osc2Cents(patch, m.lfo, m.filter) / 1200);
   const sub = f1 * 2 ** patch.subOctave;
@@ -133,7 +134,7 @@ function passed(engine: SynthEngine, patch: Patch, t: number, notes: readonly nu
     (patch.mixNoise > 0 && patch.noiseColour === 'pink') ||
     (meet && Array.from({ length: 256 }, (_, i) => difference((i % 16) + 1, Math.floor(i / 16) + 1)).some(close));
   const most = (frequencies: number[]) => (frequencies.length ? Math.max(...filterGains(patch, m.cutoff, m.resonance, frequencies)) : 0);
-  return { open: m.amp * m.volume, cutoff: m.cutoff, heard: most(all), plain: most(fundamentals), subAudio };
+  return { open: m.amp * m.volume, cutoff: m.cutoff, heard: most(all), fundamental: most(fundamentals), subAudio };
 }
 
 const span = (from: number, to: number) => [Math.round(from * SR), Math.round(to * SR)] as const;
@@ -166,56 +167,61 @@ function measure(samples: Float32Array, engine: SynthEngine, patch: Patch, notes
     const [a, b] = span(from, from + 0.01);
     frames++;
     for (let i = a; i < b; i++)
-      if (Math.abs(samples[i]) > LIMITER_KNEE) {
+      if (Math.abs(samples[i]) > SAFETY_KNEE) {
         limited++;
         break;
       }
   }
   // Each 50 ms window judged: whether it should sound, whether it does.
   const silent: number[] = [];
-  let [windows, plain] = [0, true];
+  let [windows, offsetJudged, closed] = [0, true, false];
   for (let from = JUDGED[0]; from + 0.05 <= JUDGED[1] + 1e-9; from += 0.05) {
     windows++;
     const p = passed(engine, patch, from + 0.025, notes);
+    closed ||= p.open >= 0.01 && closedAtAnEnd(patch, p.cutoff);
     const shouldSound = p.open >= 0.01 && !closedAtAnEnd(patch, p.cutoff) && p.heard >= 0.1;
     if (shouldSound && rmsOf(samples, ...span(from, from + 0.05)) < SILENT) silent.push(from);
     // The offset is judged only where the Note plainly sounds, and nothing under 20 Hz but an offset could make one.
-    plain &&= p.open >= 0.01 && p.plain >= 0.5 && !p.subAudio && !closedAtAnEnd(patch, p.cutoff) && p.cutoff > 20.001;
+    offsetJudged &&= p.open >= 0.01 && p.fundamental >= 0.5 && !p.subAudio && !closedAtAnEnd(patch, p.cutoff) && p.cutoff > BOTTOM;
   }
   const [a, b] = span(...JUDGED);
   const offset = offsetOf(samples, a, b);
   const level = rmsOf(samples, a, b, offset);
-  return { errorAt, limited: limited / frames, silent, windows, offsetDb: 20 * Math.log10(Math.abs(offset) / level), offsetJudged: plain };
+  return { errorAt, limited: limited / frames, silent, windows, offsetDb: dB(Math.abs(offset) / level), offsetJudged, closed };
 }
 
+type FaultKind = 'error' | 'silence' | 'limiter' | 'offset';
+
 /** What a render does wrong, in words, and which of the faults it is: none when it does nothing wrong. */
-function faultsOf(r: ReturnType<typeof measure>) {
+function faultsOf(r: ReturnType<typeof measure>): { kind: FaultKind; words: string }[] {
   return [
-    ...(r.errorAt >= 0 ? [{ kind: 'error', words: `an error value at ${(r.errorAt / SR).toFixed(3)} s` }] : []),
-    ...(r.silent.length ? [{ kind: 'silence', words: `silent from ${r.silent[0].toFixed(2)} s (${r.silent.length} of ${r.windows} windows of 50 ms)` }] : []),
-    ...(r.limited > 0.5 ? [{ kind: 'limiter', words: `the limiter working in ${Math.round(r.limited * 100)} % of the Note` }] : []),
-    ...(r.offsetJudged && r.offsetDb > OFFSET_DB ? [{ kind: 'offset', words: `an offset ${r.offsetDb.toFixed(1)} dB against its level` }] : []),
+    ...(r.errorAt >= 0 ? [{ kind: 'error' as const, words: `an error value at ${(r.errorAt / SR).toFixed(3)} s` }] : []),
+    ...(r.silent.length ? [{ kind: 'silence' as const, words: `silent from ${r.silent[0].toFixed(2)} s (${r.silent.length} of ${r.windows} windows of 50 ms)` }] : []),
+    ...(r.limited > 0.5 ? [{ kind: 'limiter' as const, words: `the limiter working in ${Math.round(r.limited * 100)} % of the Note` }] : []),
+    ...(r.offsetJudged && r.offsetDb > OFFSET_DB ? [{ kind: 'offset' as const, words: `an offset ${r.offsetDb.toFixed(1)} dB against its level` }] : []),
   ];
 }
 
-/** The sum of the Mixer's levels: past 1, more than one source at full. */
-const mixed = (p: Patch) => p.mixOsc1 + p.mixOsc2 + p.mixRing + p.mixNoise + p.mixSub;
+/**
+ * How far the sources stack, in sources at full: the Mixer's levels summed, times the square root of the Notes played
+ * (a chord's Voices add as power, as the master makes room for them).
+ */
+const stacked = (p: Patch, notes: readonly number[]) => (p.mixOsc1 + p.mixOsc2 + p.mixRing + p.mixNoise + p.mixSub) * Math.sqrt(notes.length);
+const resonanceLfo = (p: Patch) => [p.lfoAmount > 0 && p.lfoDestination === 'resonance', p.lfo2Amount > 0 && p.lfo2Destination === 'resonance'].some(Boolean);
 
 /**
- * Faults the sweep finds that are answered, each with the reason: what a Patch does by design, or a finding written in
- * issue 116 for the owner to hear before it is changed.
+ * Faults the sweep finds that are answered, each with the reason: what a Patch does by design, or one of issue 116's
+ * findings, for the owner to hear before anything is changed.
  */
-const ANSWERED: { reason: string; covers(kind: string, patch: Patch): boolean }[] = [
+const ANSWERED: { reason: string; covers(kind: FaultKind, patch: Patch, notes: readonly number[]): boolean }[] = [
   {
-    reason: 'the limiter is there for sources stacked past one at full (ADR-0006, the LIMITING spec plays every source at full)',
-    covers: (kind, p) => kind === 'limiter' && mixed(p) > 1,
+    reason: 'the limiter is there for sources stacked to two at full or more (ADR-0006; the LIMITING spec plays every source at full)',
+    covers: (kind, p, notes) => kind === 'limiter' && stacked(p, notes) >= 2,
   },
   {
-    reason: 'finding (issue 116, for the owner): an LFO on a band-pass’s or notch’s Resonance swings its Q below zero, where a notch is silent',
-    covers: (kind, p) =>
-      (kind === 'silence' || kind === 'offset' || kind === 'limiter') &&
-      (p.filterMode === 'notch' || p.filterMode === 'bandpass') &&
-      [p.lfoAmount > 0 && p.lfoDestination === 'resonance', p.lfo2Amount > 0 && p.lfo2Destination === 'resonance'].some(Boolean),
+    reason:
+      'finding (issue 116, for the owner): an LFO on a band-pass’s or notch’s Resonance swings its Q below zero, where a notch is silent and a band-pass lets everything through (louder, so the limiter may work, an offset may pass)',
+    covers: (kind, p) => kind !== 'error' && (p.filterMode === 'notch' || p.filterMode === 'bandpass') && resonanceLfo(p),
   },
 ];
 
@@ -237,22 +243,28 @@ describe('Patches at the edges (issue 116)', () => {
     const jobs = edgeCases(SEED).flatMap((c) => notesFor(c.patch).map((notes) => ({ c, notes })));
     const faults: string[] = [];
     const answered = new Map<string, number>();
+    let [offsetsJudged, closedAtTheEnds] = [0, 0];
     await eachAtOnce(jobs, async ({ c, notes }) => {
       const { samples, engine } = await play(c, notes);
-      for (const fault of faultsOf(measure(samples, engine, c.patch, notes))) {
-        const answer = ANSWERED.find((a) => a.covers(fault.kind, c.patch));
+      const measured = measure(samples, engine, c.patch, notes);
+      if (measured.offsetJudged) offsetsJudged++;
+      if (measured.closed) closedAtTheEnds++;
+      for (const fault of faultsOf(measured)) {
+        const answer = ANSWERED.find((a) => a.covers(fault.kind, c.patch, notes));
         if (answer) answered.set(answer.reason, (answered.get(answer.reason) ?? 0) + 1);
         else faults.push(`${fault.words}: ${named(c, notes)}`);
       }
     });
     console.info(`Answered: ${[...answered].map(([reason, n]) => `${n} × ${reason}`).join('; ') || 'none'}`);
+    console.info(`Offset judged on ${offsetsJudged} renders; silence not judged on ${closedAtTheEnds} with the Filter closed at an end of its range`);
     expect(faults.slice(0, 20), `${faults.length} renders of ${jobs.length} at fault (seed ${SEED})`).toEqual([]);
   }, 600_000);
 
   it('finds 1.16.0’s FM offset: FM Ladder on C2, C4 and C6 with issue 103’s filter taken out, and none with it (control)', async () => {
+    const ladder = preset('FM Ladder');
     for (const note of [36, 60, 84]) {
-      const [kept, taken] = await Promise.all([true, false].map((dcBlock) => play(preset('FM Ladder'), [note], { dcBlock })));
-      const kinds = (r: typeof kept) => faultsOf(measure(r.samples, r.engine, preset('FM Ladder').patch, [note])).map((f) => f.kind);
+      const [kept, taken] = await Promise.all([true, false].map((dcBlock) => play(ladder, [note], { dcBlock })));
+      const kinds = (r: typeof kept) => faultsOf(measure(r.samples, r.engine, ladder.patch, [note])).map((f) => f.kind);
       expect(kinds(taken), `MIDI ${note}`).toEqual(['offset']);
       expect(kinds(kept), `MIDI ${note}`).toEqual([]);
     }
@@ -263,7 +275,7 @@ describe('Patches at the edges (issue 116)', () => {
     const { samples, engine } = await play({ name: 'LIMITING', patch, bpm: 120 }, [57]);
     const [fault] = faultsOf(measure(samples, engine, patch, [57]));
     expect(fault.kind).toBe('limiter');
-    expect(ANSWERED.find((a) => a.covers(fault.kind, patch))?.reason).toMatch(/stacked/);
+    expect(ANSWERED.find((a) => a.covers(fault.kind, patch, [57]))?.reason).toMatch(/stacked/);
   });
 
   it('finds a Note silent where the model has it sound: a notch whose Q an LFO on its Resonance takes below zero (control, the finding)', async () => {
@@ -271,7 +283,7 @@ describe('Patches at the edges (issue 116)', () => {
     const { samples, engine } = await play({ name: 'notch', patch, bpm: 120 }, [60]);
     const kinds = faultsOf(measure(samples, engine, patch, [60])).map((f) => f.kind);
     expect(kinds).toContain('silence');
-    expect(ANSWERED.find((a) => a.covers('silence', patch))?.reason).toMatch(/finding/);
+    expect(ANSWERED.find((a) => a.covers('silence', patch, [60]))?.reason).toMatch(/finding/);
   });
 
   // The finding (issue 116, for the owner): the model moves the Resonance, the sound moves the Q by half the swing's
@@ -340,11 +352,12 @@ describe('every Viewer draws a Patch at the edges in a frame (issue 116)', () =>
   const played = async (c: EdgeCase, notes: readonly number[]) => (await play(c, notes, { seconds: 0.6 })).engine;
 
   /**
-   * Slow frames that are answered: a finding written in issue 116 for the owner. With FM on a Waveform richer than a
-   * Sine, the Ideal works out the sidebands of each of Osc 1's Harmonics, thousands of them, once for each Patch; the
-   * frames after it are as quick as any. No Preset comes near (the most partials any Preset's Ideal has is 638).
+   * Slow frames that are answered, a finding of issue 116 for the owner: with FM on a Waveform richer than a Sine, the
+   * Ideal works out the sidebands of each of Osc 1's Harmonics, thousands of them, once for each Patch; the frames after
+   * it are as quick as any. No Preset comes near: the most partials any Preset's Ideal has is 638.
    */
-  const richFm = (p: Patch) => p.crossMod > 0 && p.mixOsc1 > 0 && p.waveform !== 'sine';
+  const SIDEBANDS_PAST_ANY_PRESET = 2000;
+  const manySidebands = (p: Patch) => idealPartials(p, IDEAL_HARMONICS).length > SIDEBANDS_PAST_ANY_PRESET;
 
   it('draws each in under three times Init’s frame and a millisecond, the bound of issue 45’s draw-cost test', async () => {
     const init: EdgeCase = { name: 'Init', patch: { ...defaultPatch(), cutoff: 2001 }, bpm: 120 };
@@ -355,15 +368,16 @@ describe('every Viewer draws a Patch at the edges in a frame (issue 116)', () =>
     const cases = [...edgeCases(SEED).filter((c) => !c.name.startsWith('at random')), ...PRESETS.map((p) => preset(p.name))];
     const engines = new Map<EdgeCase, SynthEngine>();
     await eachAtOnce(cases, async (c) => void engines.set(c, await played(c, notesFor(c.patch)[1])));
-    const [slow, answered]: string[][] = [[], []];
+    const slow: string[] = [];
+    const answered: string[] = [];
     for (const c of cases) {
       const notes = notesFor(c.patch)[1];
       let took = viewersOf(engines.get(c)!, c.patch);
       // A frame over the budget is drawn again, on new Viewers, twice: a slow frame is one that stays slow.
       for (let again = 0; again < 2 && took > budget; again++) took = Math.min(took, viewersOf(await played(c, notes), c.patch));
-      if (took > budget) (richFm(c.patch) ? answered : slow).push(`${took.toFixed(1)} ms: ${named(c, notes)}`);
+      if (took > budget) (manySidebands(c.patch) ? answered : slow).push(`${took.toFixed(1)} ms: ${named(c, notes)}`);
     }
-    console.info(`Slow frames answered (FM on a rich Osc 1, the finding): ${answered.length}`);
+    console.info(`Slow frames answered (an Ideal of thousands of FM sidebands, the finding): ${answered.length}`);
     expect(slow, `budget ${budget.toFixed(1)} ms (Init ${Math.min(...initFrames).toFixed(1)} ms), ${cases.length} Patches`).toEqual([]);
   }, 200_000);
 });
