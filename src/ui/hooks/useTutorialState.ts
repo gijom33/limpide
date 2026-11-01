@@ -24,6 +24,8 @@ interface Host {
   /** The current Snapshot's number (null when none): a new one makes a Snapshot Step. */
   snapshot: number | null;
   takeSnapshot(): void;
+  /** The Snapshot a Tutorial took, cleared as it ends. */
+  clearSnapshot(): void;
   /** A Tutorial starts: whatever plays by itself stops. */
   onStart(): void;
   /** A Tutorial ends: its Listen stops. */
@@ -38,6 +40,8 @@ interface Lesson {
   since?: Held;
   /** The Display Steps that came with their overlay on, which the Tutorial turned off (issue 158). */
   turnedOff: number[];
+  /** The Snapshot its Snapshot Step took, by its number (issue 158). */
+  took?: number | null;
 }
 
 /**
@@ -46,7 +50,7 @@ interface Lesson {
  * keys, MIDI, "Do it for me"); a knob or fader then snaps to the exact value, so the finished sound is the Preset's.
  * `since` is what the Step's control held when the card came to it.
  */
-export function useTutorialState({ storage, patch, patchName, patches, overlays, showOverlay, hideOverlay, snapshot, takeSnapshot, onStart, onEnd }: Host) {
+export function useTutorialState({ storage, patch, patchName, patches, overlays, showOverlay, hideOverlay, snapshot, takeSnapshot, clearSnapshot, onStart, onEnd }: Host) {
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [finished, setFinished] = useState(() => loadFinished(storage));
   const preset = lesson && PRESETS.find((p) => p.name === lesson.tutorial.preset)!;
@@ -55,8 +59,8 @@ export function useTutorialState({ storage, patch, patchName, patches, overlays,
   const differs = atEnd && preset ? differences(patch, preset.patch) : [];
 
   /**
-   * What the Tutorial changed in the Display by itself is given back as the person had it (issue 158): an overlay it
-   * turned off and they never turned on again.
+   * What the Tutorial changed in the Display is given back as the person had it (issue 158): an overlay it turned off
+   * and they never turned on again; the Snapshot its Step took, unless they took another since.
    */
   const giveBack = (l: Lesson | null) => {
     if (!l) return;
@@ -64,6 +68,7 @@ export function useTutorialState({ storage, patch, patchName, patches, overlays,
       const step = l.tutorial.steps[i];
       if (step.kind === 'display' && !l.done[i]) showOverlay(step.overlay);
     }
+    if (l.took != null && l.took === snapshot) clearSnapshot();
   };
   const start = (tutorial: Tutorial) => {
     giveBack(lesson);
@@ -100,10 +105,10 @@ export function useTutorialState({ storage, patch, patchName, patches, overlays,
     if (!lesson || !step || lesson.done[lesson.index] || !made) return;
     const timer = setTimeout(() => {
       if (!onTarget(step, patch)) patches.change((p) => applyStep(p, step), 'tutorial');
-      setLesson((l) => l && { ...l, done: l.done.map((d, i) => d || i === l.index) });
+      setLesson((l) => l && { ...l, done: l.done.map((d, i) => d || i === l.index), took: step.kind === 'action' ? snapshot : l.took });
     }, SETTLE_MS);
     return () => clearTimeout(timer);
-  }, [lesson, step, made, patch, patches]);
+  }, [lesson, step, made, patch, patches, snapshot]);
 
   // The last card: the Tutorial counts as finished, and a sound that matches is named after its Preset.
   const matches = differs.length === 0;

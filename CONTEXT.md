@@ -259,7 +259,7 @@ Pausing all Viewers on their current frame while the sound keeps playing.
 _Avoid_: Pause, hold (Hold is a playing mode)
 
 **Snapshot**:
-A captured Scope and Spectrum trace, kept faint for A/B comparison against the live ones.
+A captured Scope and Spectrum trace, kept faint for A/B comparison against the live ones. One a Tutorial's Step took is cleared when that Tutorial ends or is left, unless the person has taken another since (issue 158).
 _Avoid_: Reference trace, pin, compare
 
 **Maths Layer**:

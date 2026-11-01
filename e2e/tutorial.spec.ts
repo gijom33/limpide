@@ -395,6 +395,49 @@ test('a Snapshot Step rings the Display button, then Snapshot, and counts a new 
   await expect(card(page)).toContainText('a faint trace of this bright saw');
 });
 
+// Issue 158 (profile 16's review of 1.19.0): Acid's Snapshot stayed on the Viewers through Pluck, Wobble and FM Ladder.
+test.describe('a Snapshot a Tutorial took (issue 158)', () => {
+  const snapshotShown = async (page: Page) => {
+    await page.getByRole('button', { name: 'Display' }).click();
+    const pressed = await page.getByRole('button', { name: 'Snapshot', exact: true }).getAttribute('aria-pressed');
+    await page.keyboard.press('Escape');
+    return pressed;
+  };
+  const toAcidSnapshot = async (page: Page) => {
+    await action(page, 'Start').click();
+    await makeStep(page);
+    await doIt(page);
+    await expect(card(page)).toContainText('a faint trace of this bright saw');
+  };
+  const pick = async (page: Page, preset: string) => {
+    await page.getByRole('button', { name: 'Tutorial', exact: true }).click();
+    await page.getByRole('button', { name: `Tutorial: ${preset}`, exact: true }).last().click();
+    await expect(card(page)).toHaveAccessibleName(`Tutorial: ${preset}`);
+  };
+
+  test('goes when the Tutorial is left, or another is picked', async ({ page }) => {
+    await open(page, 'Acid');
+    await toAcidSnapshot(page);
+    await card(page).getByRole('button', { name: 'Quit the tutorial' }).click();
+    expect(await snapshotShown(page)).toBe('false');
+
+    await pick(page, 'Acid');
+    await toAcidSnapshot(page);
+    await pick(page, 'Pluck');
+    expect(await snapshotShown(page)).toBe('false');
+  });
+
+  test('one the person took themselves stays', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Display' }).click();
+    await page.getByRole('button', { name: 'Snapshot', exact: true }).click();
+    await page.keyboard.press('Escape');
+    await pick(page, 'Bass');
+    await card(page).getByRole('button', { name: 'Quit the tutorial' }).click();
+    expect(await snapshotShown(page)).toBe('true');
+  });
+});
+
 for (const [width, text, small, cardWidth] of [[1920, '15px', '14px', 720], [1024, '13px', '12px', 640]] as const) {
   test(`at ${width} px the Tutorial card's text is ${text} and the card ${cardWidth} px wide (issue 59)`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });

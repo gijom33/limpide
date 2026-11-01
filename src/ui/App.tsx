@@ -218,6 +218,7 @@ export function App() {
     hideOverlay: (overlay) => viewerStore.dispatch({ type: 'hideOverlay', overlay }),
     snapshot: viewer.snapshot,
     takeSnapshot: () => viewerStore.dispatch({ type: 'takeSnapshot' }),
+    clearSnapshot: () => viewerStore.dispatch({ type: 'clearSnapshot' }),
     onStart: () => {
       tour.end();
       players.stopAll();
