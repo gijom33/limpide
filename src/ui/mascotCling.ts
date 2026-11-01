@@ -1,7 +1,7 @@
 /** Bead's size on screen (issue 115): 2 px a square of its 22 × 13 grid. */
 export const WIDTH = 44;
 export const HEIGHT = 26;
-/** Its drop's middle from its box's left: turned round, its drawing is mirrored about here's double, 20 % of its width. */
+/** Where its drawing turns round about, from its box's left: 20 % of its width, as the stylesheet's transform origin. */
 const ORIGIN = WIDTH * 0.2;
 /** Its tail's middle, from the top of its drawing: level with the control's middle as it points. */
 const TAIL_Y = 14;

@@ -151,8 +151,8 @@ const PANELS = `${DOCKED}, .patch-about, .patch-panel, .destination-menu, .tutor
 const COVERS = `${PANELS}, .tooltip:not([hidden])`;
 /** Pointing the way (issue 151): what may stand beside a control it clings to, as little covered as can be. */
 const NEIGHBOURS = '[data-learn], canvas, [role=tab], button, h2, h3';
-/** Its tail's root, from its box's left and its foot, where its aim at a control is taken from. */
-const TAIL_ROOT = { x: 18, y: 12 };
+/** Its tail's height over its foot, where its aim at a control is taken from. */
+const TAIL_HEIGHT = 12;
 /** The steepest it aims its tail, up or down, in degrees. */
 const STEEPEST_AIM = 60;
 /** Sliding down the panel, a drip left behind it this often, in seconds. */
@@ -536,9 +536,10 @@ export function Mascot({
         // Now and then a visit to another section in view: down to one below, or across to one beside; then home.
         const inView = (s: { box: DOMRect }) => roomAbove(s.box) && s.box.top <= innerHeight - 4 && clearOn(s.box).length > 0;
         // A ride ends as its LFO stops being one to ride (its Depth, Waveform or Rate, the Demo, reduced motion), its
-        // plot goes out of view, or it is picked up or sent away: it jumps home (issue 141).
+        // plot goes out of view, or it is picked up, sent away or a Tutorial or the Tour opens: it jumps home (issues
+        // 141, 151).
         const visitEnds = visit?.ride
-          ? !rideable.some((p) => p.lfo === visit!.ride) || moving === 'held' || leavingNow()
+          ? !rideable.some((p) => p.lfo === visit!.ride) || moving === 'held' || leavingNow() || guide !== null
           : !sections.some((s) => s.id === visit?.id && inView(s));
         if (visit && ((now >= visit.until && !guide) || visitEnds)) {
           if (visit.ride && leavingNow()) gettingOff = true;
@@ -695,7 +696,7 @@ export function Mascot({
       if (!guide) motion.point(null);
       else if (clinging && beside && moving === 'clinging') motion.point({ way: clinging.turn, angle: 0 }, true);
       else if (aimAt) {
-        const [ax, ay] = [aimAt.x - drawnAt.left - DROP_MIDDLE, aimAt.y - drawnAt.foot + TAIL_ROOT.y];
+        const [ax, ay] = [aimAt.x - drawnAt.left - DROP_MIDDLE, aimAt.y - drawnAt.foot + TAIL_HEIGHT];
         const angle = Math.max(-STEEPEST_AIM, Math.min(STEEPEST_AIM, (Math.atan2(ay, Math.abs(ax)) * 180) / Math.PI));
         motion.point({ way: ax < 0 ? -1 : 1, angle }, clinging !== null);
       } else motion.point(null);
@@ -819,7 +820,7 @@ export function Mascot({
       const turnTail = tailTurn + pose.wag;
       tail.current!.setAttribute('transform', turnTail ? `translate(${-4.5 * under} ${3 * under}) rotate(${turnTail} 9 9)` : '');
       shown = pose;
-      // What it is doing, for the tests (issue 127).
+      // What it is doing, for the tests (issue 127); pointing the way, for the stylesheet too (issue 151).
       // Beside a control, or sliding there, the pointer passes through it to what is under it (issue 151).
       const pointing = where.moving === 'sliding' || where.moving === 'clinging' ? 'yes' : 'no';
       const marks = { act: act ?? '', ride: ride ? String(ride.lfo) : '', tail: pose.tail, hat: pose.hat, doing: pose.doing ?? '', prop: pose.prop, moving: where.moving, pointing };

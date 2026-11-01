@@ -830,7 +830,7 @@ test.describe('pointing the way in a Tutorial and the Tour (issue 151)', () => {
   async function openTutorial(page: Page, preset: string) {
     await page.getByRole('button', { name: /^Patch: / }).click();
     await page.getByRole('dialog', { name: 'Patches' }).getByRole('group', { name: 'Tutorials' }).getByRole('button', { name: new RegExp(`^Tutorial: ${preset}`) }).click();
-    await tutorialCard(page).getByRole('button', { name: 'Start' }).click();
+    await tutorialCard(page).getByRole('button', { name: 'Start', exact: true }).click();
   }
 
   /** The Step made with "Do it for me", as the Tutorial spec does it, however slow the machine. */
@@ -914,6 +914,11 @@ test.describe('pointing the way in a Tutorial and the Tour (issue 151)', () => {
     await clings(page);
     expect(await against(page, '[data-learn="param:mixOsc2"]')).toEqual(POINTING);
     await expect(mascot(page)).toHaveAttribute('data-pointing', 'yes');
+    // A click on it reaches what is under it.
+    const clicked = page.evaluate(() => new Promise<boolean>((done) => document.addEventListener('click', (e) => done(!(e.target as Element).closest('.mascot')), { once: true, capture: true })));
+    const body = (await page.locator('#bead-self > g.mascot-body:visible').first().boundingBox())!;
+    await page.mouse.click(body.x + body.width / 2, body.y + body.height / 2);
+    expect(await clicked).toBe(true);
     // Made: a happy hop, higher than its bounce.
     const made = highest(page, 700);
     await doIt(page);
@@ -983,7 +988,7 @@ test.describe('pointing the way in a Tutorial and the Tour (issue 151)', () => {
     await page.getByRole('button', { name: 'About' }).click();
     await page.getByRole('dialog', { name: 'Limpide' }).getByRole('button', { name: 'Take the Tour' }).click();
     await expect(async () => expect(await against(page, '[data-learn="choice:waveform"]')).toEqual(POINTING)).toPass({ timeout: 20000 });
-    await tourCard(page).getByRole('button', { name: 'Next' }).click();
+    await tourCard(page).getByRole('button', { name: 'Next', exact: true }).click();
     await expect(async () => expect(await against(page, '[data-learn="param:cutoff"]')).toEqual(POINTING)).toPass({ timeout: 20000 });
     await tourCard(page).getByRole('button', { name: 'Close the Tour' }).click();
     await settles(page, /^standing$/, 8);
@@ -996,10 +1001,24 @@ test.describe('pointing the way in a Tutorial and the Tour (issue 151)', () => {
     await page.goto('/');
     await bringBead(page);
     await openTutorial(page, 'Bass');
-    // Osc 2's level is far to its left: it faces it, turned round, where it stands.
+    // Osc 2's level is far to its left: it faces it, turned round, where it stands, and stays there.
     await expect(page.locator('.mascot-drop')).toHaveAttribute('style', /scale\(-1, 1\)/);
-    await page.waitForTimeout(1000);
-    await expect(mascot(page)).toHaveAttribute('data-moving', 'standing');
+    await watchMoves(page);
+    expect(await highest(page, 1000)).toBe(0);
+    expect(await moves(page)).toEqual(['standing']);
     expect((await footing(page)).bottom).toBe(0);
+  });
+
+  test('on a phone it clings beside the Step’s control, under the section tabs and over the card', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto('/');
+    await bringBead(page);
+    await openTutorial(page, 'Bass');
+    await clings(page);
+    expect(await against(page, '[data-learn="param:mixOsc2"]')).toEqual(POINTING);
+    expect(await againstCards(page)).toEqual({ cards: 1, under: false, inView: true });
+    const top = await page.evaluate(() => document.querySelector('.mascot-drop svg')!.getBoundingClientRect().top);
+    const tabs = await page.evaluate(() => document.querySelector('.section-strip')!.getBoundingClientRect().bottom);
+    expect(top).toBeGreaterThanOrEqual(tabs);
   });
 });

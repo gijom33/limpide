@@ -717,7 +717,8 @@ export function createMascotMotion(random: () => number = Math.random) {
           pose.legs = 'tuck';
           pose.eyes = 'happy';
           if (gesture !== 'higher') pose.splash = 'up';
-        } else if (gesture === 'bounce') pose.lift += arc * 5; else if (gesture === 'lower') pose.stretch *= 1 - 0.22 * arc;
+        } else if (gesture === 'bounce') pose.lift += arc * 5;
+        else if (gesture === 'lower') pose.stretch *= 1 - 0.22 * arc;
         else if (gesture === 'taller') pose.stretch *= 1 + 0.15 * arc;
         else if (gesture === 'shorter') pose.stretch *= 1 - 0.15 * arc;
         else if (gesture === 'rougher') pose.x += Math.sin(now * 2 * Math.PI * 22) * 1.5 * (1 - p);
@@ -730,7 +731,7 @@ export function createMascotMotion(random: () => number = Math.random) {
       }
       // Pointing the way (issue 151): facing the control, its tail aimed at it, its eyes on it when they are free.
       if (aim) {
-        pose.turn *= aim.way;
+        pose.turn = aim.way * Math.abs(pose.turn);
         pose.wag += aim.angle;
         if (pose.eyes === 'open' || pose.eyes === 'left' || pose.eyes === 'right') pose.eyes = 'right';
       }

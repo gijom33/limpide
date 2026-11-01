@@ -77,6 +77,17 @@ While Bead is out, five more words spelled with Notes, like B, E, A, D, each cue
 - **Switching the theme** in Display: for the dark theme it puts on a nightcap and yawns; for the light one it squints and shades its eyes. It reacts once Display is closed, so you can see it.
 - **On your date:** a ghost sheet on 31 October, a Christmas hat from 24 to 26 December, and a party hat on 24 October, the day Limpide went on GitHub.
 
+## In a Tutorial and the Tour
+
+While a Tutorial or the Tour is open, Bead points the way ([151](./issues/151-bead-points-in-the-tour-and-tutorials.md)), adding to the ring round the control, never in its place:
+- **It goes to the control**: in a Tutorial, the Step's (the Display button while a Step's option is in its shut panel); in the Tour, the first control each card turns. It makes its usual move to that control's Section, a leap or a fall to its top edge, then slides down the panel like a drop on glass and clings at the control's side, level with it. To another control of the same Section it slides across. It stays with the control as the page scrolls.
+- **Where it clings**: on the side where it covers least of the neighbouring controls and names, the side away from the card when both are as free, never over the ring or the target written above the control.
+- **It points**: it faces the control, looks at it and aims its tail at it, with one small bounce on arriving and at each new Step or card; otherwise it stays still but for blinking. The pointer passes through it there, to whatever is under it.
+- **Out of reach** (in the open Display panel, under the card, on a hidden tab, off the window), it stays where it is and looks towards it: beside the last control while that is still in reach, else on its edge. It goes once the control is shown.
+- **A Step made**: a happy hop. **A Tutorial finished**: a little fountain.
+- **Meanwhile** its funny turns, its visits and rides, its dancing and dozing pause. It still answers the controls, the words and the theme.
+- **Closed**, it hops back up to its edge and its own life comes back.
+
 ## During the Demo
 
 Through the Demo's parts, in turn, Bead:
@@ -86,4 +97,4 @@ Through the Demo's parts, in turn, Bead:
 
 ## With reduced motion
 
-With reduced motion asked for by the system, Bead comes and goes at once and never moves. It changes only its pose (its eyes on each Note or control turned, its tail, the ice, its twin, its costume). It cannot be picked up.
+With reduced motion asked for by the system, Bead comes and goes at once and never moves. It changes only its pose (its eyes on each Note or control turned, its tail, the ice, its twin, its costume). It cannot be picked up. In a Tutorial or the Tour it stays on its edge and turns its eyes and tail towards the control, without the hops.

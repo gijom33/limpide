@@ -26,10 +26,7 @@ interface Props {
 const selectorOf = ({ kind, id }: Pick<TourMove, 'kind' | 'id'>) => `[data-learn="${kind}:${id}"]`;
 const controlOf = (move: Pick<TourMove, 'kind' | 'id'>) => document.querySelector(selectorOf(move));
 
-/**
- * What Bead points the way to on a Tour card (issue 151, decision 2): one control a card, its first move's (no card
- * watches a control of its own since the LFO card stopped bringing the Cutoff, issue 158).
- */
+/** What Bead points the way to on a Tour card (issue 151, decision 2): one control a card, its first move's. */
 export const tourGuide = (index: number): Guide => ({ selector: selectorOf(TOUR[index].moves[0]), standIn: null, step: `tour ${index}`, made: false, finished: false });
 
 /**
