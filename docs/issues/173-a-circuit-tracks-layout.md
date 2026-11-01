@@ -4,7 +4,7 @@
 
 **Blocked by:** a research pass on what the Circuit Tracks sends (below); the owner's grilling on the layout; [149](./149-one-seam-for-a-controller.md) (one seam for what a Controller is), so a second known Controller is added in one place
 
-**Status:** needs-info · enhancement. In v1, decided by the owner, 2026-10-31. Researched and grilled (round 1); waiting on the check on the owner's device (decision 7) and round 2 (which control each knob drives).
+**Status:** needs-info · enhancement. In v1, decided by the owner, 2026-10-31. Researched and grilled; waiting on the check on the owner's device (decisions 7 and 10), then profile 17's proposal of the 16 knobs for the owner's yes, then ready for an agent.
 
 ## Decisions
 
@@ -18,6 +18,12 @@ Grilling, round 1, decided by the owner, 2026-10-31 (Claude's recommendations, a
 5. **Applied as the C16's:** by itself when a Circuit Tracks is plugged in with nothing mapped; a "Circuit Tracks layout" button in the MIDI panel; a one-page card to print.
 6. **Beside a C16:** each built-in layout answers only its own device (ADR-0017), so both play together.
 7. **A check on the owner's device before building:** the owner plugs it in while Claude reads what it sends from the page (each track's knobs, a Patch change, Play and Stop), settling the research's eleven unsourced facts.
+
+Round 2, decided by the owner, 2026-10-31 ("ok"):
+
+8. **Profile 17 proposes the 16 knobs** (the MIDI mapping geek, [42](./42-reviews.md)), from the research and the device check, as for the C16 (for instance MIDI track 1 the sound, Oscillators and Filter; MIDI track 2 its shape, Amp and LFOs; each knob pair the top and bottom of one idea); the owner approves or changes it.
+9. **Pickup** for its knobs, which send positions the device keeps per Project: a control moves only once the knob passes its value, so nothing jumps after a Preset change.
+10. **The device check** whenever the owner has it at hand (after trying the night's work is fine); profile 17's proposal follows it.
 
 ## What the research would gather
 
