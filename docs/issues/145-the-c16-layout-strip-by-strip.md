@@ -4,7 +4,7 @@
 
 **Blocked by:** none. Built before [112](./112-tempo-midi-clock-and-an-arpeggiator.md) and [119](./119-legato-mode.md) at the owner's word (2026-10-31: "implement 145"): their places (bank D's R2 and R4 for Sync, bank C's R2 for Legato) are kept free, and each of those issues fills its own
 
-**Status:** ready-for-human · enhancement. Built (2026-10-31), not pushed: to try on the owner's C16, its 22 momentary buttons set as the card says. The owner expects some buttons' modes to change after trying.
+**Status:** done (2026-10-31). Tried by the owner on the real C16, its buttons set as the card says, with the night's Sync (112) and Legato (119) places on night/2026-10-31: "All fine for C16."
 
 ## The C16, as the owner's device shows it (2026-10-31)
 
