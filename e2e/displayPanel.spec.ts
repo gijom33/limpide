@@ -60,6 +60,23 @@ for (const width of [1710, 1300, 960, 872, 420]) {
   });
 }
 
+// Issue 162: Keys, Tips, Bead and Theme, two choices each, share one row; on a phone, two and two at most.
+for (const [width, rows] of [[1920, 1], [1440, 1], [872, 1], [690, 1], [375, 2], [320, 2]] as const) {
+  test(`Keys, Tips, Bead and Theme share one row, wrapping two and two at most (${width}px, issue 162)`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/');
+    await openDisplay(page);
+    const controls = page.getByRole('region', { name: 'Viewer controls' });
+    const tops: number[] = [];
+    for (const name of ['Keys', 'Tips', 'Bead', 'Theme']) tops.push((await controls.getByRole('group', { name, exact: true }).boundingBox())!.y);
+    const lines = [...new Set(tops.map(Math.round))];
+    expect(lines.length, tops.join(', ')).toBeLessThanOrEqual(rows);
+    // Two and two, never three and one: Keys and Tips together, Bead and Theme together.
+    expect(Math.abs(tops[0] - tops[1]), 'Keys and Tips').toBeLessThan(2);
+    expect(Math.abs(tops[2] - tops[3]), 'Bead and Theme').toBeLessThan(2);
+  });
+}
+
 test('the keyboard sits at the top centre', async ({ page }) => {
   await page.setViewportSize({ width: 1710, height: 1060 });
   await page.goto('/');
