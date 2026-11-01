@@ -26,6 +26,10 @@ _Avoid_: Knob, control, setting
 The curve mapping a control's 0–1 position to a Parameter's real value: linear, or logarithmic (equal travel per ratio, used for frequencies and times).
 _Avoid_: Scaling, curve, response
 
+**Grid**:
+The round values a Parameter's control lands on for a press of an arrow key, a wheel's notch or a Relative knob's tick, in its own unit: a semitone of the Cutoff, the next round time of an Envelope stage (10, 11, 12, 14 ms…), 1 % of a level, 0.5 dB of a Mixer fader. Shift steps on a finer Grid, Page Up and Down a coarser one (an octave, double or half, 10 %, 6 dB). A drag or an Absolute knob sets any value; the next press lands on the Grid, and nothing stored is rounded to it. Each control's tip names its steps, where there is a keyboard (issue 160).
+_Avoid_: Increment, resolution, quantise
+
 **Voice**:
 One sound-producing chain: Oscillators → Mixer → Filter → Amp. A Patch has one to eight; the Viewers show the one playing the newest Note (the Amp Tap, all of them, unless asked otherwise).
 _Avoid_: Channel, synth
@@ -293,7 +297,7 @@ A guided sequence of MIDI Learn steps for any Controller: the Parameters played 
 _Avoid_: Wizard (fine in UI copy), onboarding
 
 **Encoder Mode**:
-How a Controller knob reports movement. **Absolute** sends a position (0–127). **Relative** sends increments. Detected during MIDI Learn; the C16 layout's knobs are declared Relative (ADR-0017).
+How a Controller knob reports movement. **Absolute** sends a position (0–127): on a Parameter centred on zero (Detune, the Filter's Amount), 64 is exactly zero, 0 to 64 its lower half and 64 to 127 its upper. **Relative** sends increments, each a step of the Parameter's Grid (a C16's fast 66 a third of one). Detected during MIDI Learn; the C16 layout's knobs are declared Relative (ADR-0017).
 _Avoid_: Knob type
 
 **Pickup**:

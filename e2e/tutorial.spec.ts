@@ -68,9 +68,12 @@ test('a Tutorial from the Patches panel: Init loaded, the control ringed with it
   const before = await wordsTop();
   await fader.focus();
   const note = card(page).getByText('Louder, not different');
-  // Up to 46 %, within reach: once it rests there a moment, the Step counts and the fader snaps to the target.
-  for (let i = 0; i < 23; i++) await page.keyboard.press('ArrowUp');
-  await expect(fader).toHaveAttribute('aria-valuetext', '46 %');
+  // Up to −6.5 dB (47 %), within reach: once it rests there a moment, the Step counts and the fader snaps to the target.
+  // A press from silence is its lowest step, −40 dB; six Pages −6 dB; a press down −6.5 dB (issue 160).
+  await page.keyboard.press('ArrowUp');
+  for (let i = 0; i < 6; i++) await page.keyboard.press('PageUp');
+  await page.keyboard.press('ArrowDown');
+  await expect(fader).toHaveAttribute('aria-valuetext', '47 %');
   await expect(note).toBeVisible();
   await expect(progress(page)).toHaveAttribute('data-done'); // its tick, in the top row too, which leaves the words put
   expect(Math.abs((await wordsTop()) - before)).toBeLessThan(1);
@@ -355,8 +358,9 @@ test('a drag that passes through the target on its way past does not count: the 
   const fader = page.getByRole('slider', { name: 'Osc 2', exact: true });
   await expect(fader).toBeVisible();
   await fader.focus();
-  // Through 50 % to 80 % in quick presses: never at rest within reach.
-  for (let i = 0; i < 40; i++) await page.keyboard.press('ArrowUp');
+  // Through 50 % to full in quick presses (−40 dB, then up 6 dB a Page): never at rest within reach.
+  await page.keyboard.press('ArrowUp');
+  for (let i = 0; i < 7; i++) await page.keyboard.press('PageUp');
   await page.waitForTimeout(800);
   await expect(card(page).getByText('Louder, not different')).toBeHidden();
   await expect(action(page, 'Next')).toBeDisabled();

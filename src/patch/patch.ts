@@ -1,6 +1,7 @@
 import type { LfoWaveform } from '../modulation/lfo';
 import type { Waveform } from '../music/harmonics';
 import { NOTE_VALUES, noteHz, noteIndex } from '../music/tempo';
+import { decibelGrid, type Grid, linearGrid, pitchGrid, seriesGrid, steppedGrid } from './grid';
 import type { Range } from './taper';
 
 export type Unit = 'Hz' | 's' | '%' | 'oct' | 'st' | 'cents' | 'note';
@@ -17,6 +18,8 @@ export interface ParamDef extends Range {
   control: Control;
   /** Values snap to multiples of this (e.g. whole octaves). */
   step?: number;
+  /** The round values a press, a wheel's notch or an encoder's tick lands on, in the control's own unit (issue 160). */
+  grid: Grid;
   /**
    * The Parameter whose knob turns this one, where it has none of its own: an LFO's note value is turned by its Rate
    * knob while Sync is on (issue 112), so MIDI Learn and Quick Setup know the Rate alone.
@@ -153,12 +156,27 @@ export const isKeyboardOctave = (octave: unknown): octave is number =>
 /** Glide at its minimum is off: Notes change pitch at once. */
 export const GLIDE_OFF = 0.001;
 
-const level = (id: ParamId, label: string, dflt: number, control: Control): ParamDef => ({
-  id, label, unit: '%', min: 0, max: 1, taper: 'linear', default: dflt, control,
+/** Every control shown in %: 1 % a press, Shift 0.1 %, Page 10 % (issue 160). */
+const PERCENT = linearGrid(0.01, 0.001, 0.1, { unit: '1 %', fine: '0.1 %', coarse: '10 %' });
+/** A frequency or a pitch in semitones: a semitone a press, Shift 10 cents, Page an octave. */
+const SEMITONES = { unit: 'a semitone', fine: '10 cents', coarse: 'an octave' };
+/** The Envelopes' times and Glide: the round series, Page doubling or halving. */
+const TIMES = seriesGrid({ unit: 'the next round time', fine: '1 %', coarse: 'double or half' });
+/** The lowest dB step of a Mixer fader, about one MIDI step up its travel: one press below it is silence. */
+export const LOWEST_DB = -40;
+/** An LFO's free Rate: the times' round series, in Hz. */
+const RATES = seriesGrid({ unit: 'the next round rate', fine: '1 %', coarse: 'double or half' });
+/** An Octave: a whole octave a press. */
+const OCTAVES = steppedGrid(1, 1, { unit: 'an octave' });
+/** The Mixer's faders, by their dB (issue 160). */
+const MIXER = decibelGrid(LOWEST_DB, { unit: '0.5 dB', fine: '0.1 dB', coarse: '6 dB' });
+
+const level = (id: ParamId, label: string, dflt: number, control: Control, grid = PERCENT): ParamDef => ({
+  id, label, unit: '%', min: 0, max: 1, taper: 'linear', default: dflt, control, grid,
 });
 
 const time = (id: ParamId, label: string, dflt: number, control: Control): ParamDef => ({
-  id, label, unit: 's', min: 0.001, max: 10, taper: 'log', default: dflt, control,
+  id, label, unit: 's', min: 0.001, max: 10, taper: 'log', default: dflt, control, grid: TIMES,
 });
 
 /**
@@ -167,51 +185,64 @@ const time = (id: ParamId, label: string, dflt: number, control: Control): Param
  */
 const noteValue = (id: ParamId, knob: ParamId): ParamDef => ({
   id, label: 'Rate', unit: 'note', min: 0, max: NOTE_VALUES.length - 1, taper: 'linear', default: noteIndex('1/4'), step: 1, control: 'play', knob,
+  grid: steppedGrid(1, 2, { unit: 'a note value', coarse: '2 note values' }),
 });
 
 /** FM at full: Osc 2 swings Osc 1's frequency by four times its own (a modulation index of 4, issue 89). */
 export const FM_INDEX = 4;
 
 export const PARAMS: Record<ParamId, ParamDef> = {
-  pulseWidth: { id: 'pulseWidth', label: 'Pulse Width', unit: '%', min: 0.05, max: 0.95, taper: 'linear', default: 0.25, control: 'set' },
+  pulseWidth: { id: 'pulseWidth', label: 'Pulse Width', unit: '%', min: 0.05, max: 0.95, taper: 'linear', default: 0.25, control: 'set', grid: PERCENT },
   // Osc 1's range (issue 90): the Sub follows it; Osc 2's offsets count from the Note played.
-  osc1Octave: { id: 'osc1Octave', label: 'Octave', unit: 'oct', min: -2, max: 2, taper: 'linear', default: 0, step: 1, control: 'set' },
-  osc2Octave: { id: 'osc2Octave', label: 'Octave', unit: 'oct', min: -2, max: 2, taper: 'linear', default: 0, step: 1, control: 'set' },
-  osc2Semitone: { id: 'osc2Semitone', label: 'Semitone', unit: 'st', min: -12, max: 12, taper: 'linear', default: 0, step: 1, control: 'set' },
-  osc2Detune: { id: 'osc2Detune', label: 'Detune', unit: 'cents', min: -50, max: 50, taper: 'linear', default: 0, control: 'play' },
-  osc2PulseWidth: { id: 'osc2PulseWidth', label: 'Pulse Width', unit: '%', min: 0.05, max: 0.95, taper: 'linear', default: 0.25, control: 'set' },
+  osc1Octave: { id: 'osc1Octave', label: 'Octave', unit: 'oct', min: -2, max: 2, taper: 'linear', default: 0, step: 1, control: 'set', grid: OCTAVES },
+  osc2Octave: { id: 'osc2Octave', label: 'Octave', unit: 'oct', min: -2, max: 2, taper: 'linear', default: 0, step: 1, control: 'set', grid: OCTAVES },
+  osc2Semitone: {
+    id: 'osc2Semitone', label: 'Semitone', unit: 'st', min: -12, max: 12, taper: 'linear', default: 0, step: 1, control: 'set',
+    grid: steppedGrid(1, 2, { unit: 'a semitone', coarse: '2 semitones' }),
+  },
+  osc2Detune: {
+    id: 'osc2Detune', label: 'Detune', unit: 'cents', min: -50, max: 50, taper: 'linear', default: 0, control: 'play',
+    grid: linearGrid(1, 0.1, 10, { unit: '1 cent', fine: '0.1 cent', coarse: '10 cents' }),
+  },
+  osc2PulseWidth: { id: 'osc2PulseWidth', label: 'Pulse Width', unit: '%', min: 0.05, max: 0.95, taper: 'linear', default: 0.25, control: 'set', grid: PERCENT },
   // FM (issue 89): how far Osc 2 swings Osc 1's frequency, at full FM_INDEX times Osc 2's own frequency. Its id keeps
   // cross-modulation's name (see ParamId).
   crossMod: level('crossMod', 'FM', 0, 'set'),
   // How far the Filter Envelope moves Osc 2's pitch at its peak (issue 93), as a Prophet's Poly Mod does.
-  osc2EnvAmount: { id: 'osc2EnvAmount', label: 'Env Amount', unit: 'st', min: -24, max: 24, taper: 'linear', default: 0, control: 'set' },
-  mixOsc1: level('mixOsc1', 'Osc 1', 1, 'fader'),
-  mixOsc2: level('mixOsc2', 'Osc 2', 0, 'fader'),
+  osc2EnvAmount: {
+    id: 'osc2EnvAmount', label: 'Env Amount', unit: 'st', min: -24, max: 24, taper: 'linear', default: 0, control: 'set',
+    grid: linearGrid(1, 0.1, 12, SEMITONES),
+  },
+  mixOsc1: level('mixOsc1', 'Osc 1', 1, 'fader', MIXER),
+  mixOsc2: level('mixOsc2', 'Osc 2', 0, 'fader', MIXER),
   // Osc 1 times Osc 2 (issue 88), whatever their own levels.
-  mixRing: level('mixRing', 'Ring', 0, 'fader'),
-  mixNoise: level('mixNoise', 'Noise', 0, 'fader'),
-  mixSub: level('mixSub', 'Sub', 0, 'fader'),
-  lfoRate: { id: 'lfoRate', label: 'Rate', unit: 'Hz', min: 0.05, max: 20, taper: 'log', default: 2, control: 'play' },
+  mixRing: level('mixRing', 'Ring', 0, 'fader', MIXER),
+  mixNoise: level('mixNoise', 'Noise', 0, 'fader', MIXER),
+  mixSub: level('mixSub', 'Sub', 0, 'fader', MIXER),
+  lfoRate: { id: 'lfoRate', label: 'Rate', unit: 'Hz', min: 0.05, max: 20, taper: 'log', default: 2, control: 'play', grid: RATES },
   lfoAmount: level('lfoAmount', 'Depth', 0, 'play'),
   lfoNote: noteValue('lfoNote', 'lfoRate'),
-  lfo2Rate: { id: 'lfo2Rate', label: 'Rate', unit: 'Hz', min: 0.05, max: 20, taper: 'log', default: 2, control: 'play' },
+  lfo2Rate: { id: 'lfo2Rate', label: 'Rate', unit: 'Hz', min: 0.05, max: 20, taper: 'log', default: 2, control: 'play', grid: RATES },
   lfo2Amount: level('lfo2Amount', 'Depth', 0, 'play'),
   lfo2Note: noteValue('lfo2Note', 'lfo2Rate'),
   // Up to 2 s, slowly at first: a fifth of the travel is about 80 ms, a slide you hear (on a log taper to 10 s it was
   // 6 ms, review 2).
-  glide: { id: 'glide', label: 'Glide', unit: 's', min: GLIDE_OFF, max: 2, taper: 'square', default: GLIDE_OFF, control: 'set' },
+  glide: { id: 'glide', label: 'Glide', unit: 's', min: GLIDE_OFF, max: 2, taper: 'square', default: GLIDE_OFF, control: 'set', grid: TIMES },
   velocityCutoff: level('velocityCutoff', 'Velocity', 0, 'set'),
   keyTrack: level('keyTrack', 'Key Track', 0, 'set'),
-  cutoff: { id: 'cutoff', label: 'Cutoff', unit: 'Hz', min: 20, max: 20000, taper: 'log', default: 2000, control: 'play' },
-  resonance: { id: 'resonance', label: 'Resonance', unit: '%', min: 0, max: 1, taper: 'linear', default: 0.2, control: 'play' },
-  filterEnvAmount: { id: 'filterEnvAmount', label: 'Amount', unit: 'oct', min: -5, max: 5, taper: 'linear', default: 0, control: 'play' },
+  cutoff: { id: 'cutoff', label: 'Cutoff', unit: 'Hz', min: 20, max: 20000, taper: 'log', default: 2000, control: 'play', grid: pitchGrid(SEMITONES) },
+  resonance: { id: 'resonance', label: 'Resonance', unit: '%', min: 0, max: 1, taper: 'linear', default: 0.2, control: 'play', grid: PERCENT },
+  filterEnvAmount: {
+    id: 'filterEnvAmount', label: 'Amount', unit: 'oct', min: -5, max: 5, taper: 'linear', default: 0, control: 'play',
+    grid: linearGrid(0.1, 0.01, 1, { unit: '0.1 octave', fine: '0.01 octave', coarse: '1 octave' }),
+  },
   filterAttack: time('filterAttack', 'Attack', 0.005, 'fader'),
   filterDecay: time('filterDecay', 'Decay', 0.25, 'fader'),
-  filterSustain: { id: 'filterSustain', label: 'Sustain', unit: '%', min: 0, max: 1, taper: 'linear', default: 0.3, control: 'fader' },
+  filterSustain: { id: 'filterSustain', label: 'Sustain', unit: '%', min: 0, max: 1, taper: 'linear', default: 0.3, control: 'fader', grid: PERCENT },
   filterRelease: time('filterRelease', 'Release', 0.4, 'fader'),
   ampAttack: time('ampAttack', 'Attack', 0.01, 'fader'),
   ampDecay: time('ampDecay', 'Decay', 0.3, 'fader'),
-  ampSustain: { id: 'ampSustain', label: 'Sustain', unit: '%', min: 0, max: 1, taper: 'linear', default: 0.7, control: 'fader' },
+  ampSustain: { id: 'ampSustain', label: 'Sustain', unit: '%', min: 0, max: 1, taper: 'linear', default: 0.7, control: 'fader', grid: PERCENT },
   ampRelease: time('ampRelease', 'Release', 0.4, 'fader'),
   // The Amp's level, after its Envelope (issue 62): full by default, so no Preset changes; an LFO on Volume dips it.
   volume: level('volume', 'Volume', 1, 'play'),

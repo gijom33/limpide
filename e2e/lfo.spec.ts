@@ -4,10 +4,11 @@ import { sliderName } from './helpers';
 const lfo = (page: Page, n: 1 | 2 = 1) => page.getByRole('region', { name: 'LFO & Envelopes' }).getByRole('group', { name: `LFO ${n}`, exact: true });
 const plot = (page: Page, n: 1 | 2 = 1) => page.getByRole('img', { name: new RegExp(`^LFO ${n}:`) });
 
+/** Presses Page Up `steps` times on an LFO's knob: 10 % a press on its Depth, double on its Rate (issue 160). */
 async function turnUp(page: Page, name: string, steps: number, n: 1 | 2 = 1) {
   await lfo(page, n).getByRole('slider', { name: sliderName(name) }).evaluate(async (el, count) => {
     for (let i = 0; i < count; i++) {
-      el.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+      el.dispatchEvent(new KeyboardEvent('keydown', { key: 'PageUp', bubbles: true }));
       await new Promise((resolve) => setTimeout(resolve, 0)); // a tick for React to render each step
     }
   }, steps);
@@ -73,7 +74,7 @@ test('the LFO explains itself', async ({ page }) => {
 test('the LFO plot draws the LFO moving, from the Modulation model', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/); // listening
-  await turnUp(page, 'Depth', 50);
+  await turnUp(page, 'Depth', 10);
   await page.keyboard.down('KeyA'); // sound starts with the first key, and with it the clock the LFO runs on
   const line = plot(page).locator('.lfo-plot-line');
   await expect(line).toHaveAttribute('d', /\d/);
@@ -87,7 +88,7 @@ test('the LFO plot draws the LFO moving, from the Modulation model', async ({ pa
 test('the LFO plot shows one second: as many periods as the Rate in Hz', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);
-  await turnUp(page, 'Depth', 50);
+  await turnUp(page, 'Depth', 10);
   await page.keyboard.down('KeyA');
   // Peaks of the drawn line: points higher than both neighbours (y grows downwards).
   const peaks = () =>
@@ -96,7 +97,7 @@ test('the LFO plot shows one second: as many periods as the Rate in Hz', async (
       return ys.filter((v, i) => i > 0 && i < ys.length - 1 && v < ys[i - 1] && v <= ys[i + 1]).length;
     });
   await expect.poll(peaks).toBe(2); // the default 2 Hz: two periods
-  await turnUp(page, 'Rate', 60);
+  await turnUp(page, 'Rate', 10);
   await expect(lfo(page).getByRole('slider', { name: 'Rate' })).toHaveAttribute('aria-valuetext', '20 Hz');
   await expect.poll(peaks).toBe(20);
   await page.keyboard.up('KeyA');
@@ -108,11 +109,11 @@ test('the LFO plot shows the Depth as well as the Rate: flat at 0, half as tall 
   await page.keyboard.down('KeyA');
   await expect(plot(page).locator('.lfo-plot-line')).toHaveAttribute('d', /\d/);
   expect(await swing(page)).toBe(0);
-  await turnUp(page, 'Depth', 25); // 50 %
+  await turnUp(page, 'Depth', 5); // 50 %
   await expect.poll(() => swing(page)).toBeGreaterThan(0);
   await page.waitForTimeout(1100); // a whole second at that Depth
   const half = await swing(page);
-  await turnUp(page, 'Depth', 25); // 100 %
+  await turnUp(page, 'Depth', 5); // 100 %
   await page.waitForTimeout(1100);
   const full = await swing(page);
   expect(half / full).toBeCloseTo(0.5, 1);
@@ -123,7 +124,7 @@ test('each LFO’s plot draws that LFO: LFO 2 turned up swings, LFO 1 left at 0 
   await page.goto('/');
   await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);
   await page.keyboard.down('KeyA');
-  await turnUp(page, 'Depth', 50, 2);
+  await turnUp(page, 'Depth', 10, 2);
   await expect.poll(() => swing(page, 2)).toBeGreaterThan(10);
   expect(await swing(page, 1)).toBe(0);
   await page.keyboard.up('KeyA');

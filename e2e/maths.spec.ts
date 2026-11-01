@@ -47,7 +47,7 @@ test('under FM and Ring the Maths Layer gives their rules for the knobs, and no 
   await expect(formula).toContainText('every n: each Harmonic 1/n of the first');
   const fm = page.getByRole('region', { name: 'Oscillators' }).getByRole('slider', { name: 'FM' });
   await fm.focus();
-  for (let i = 0; i < 25; i++) await page.keyboard.press('ArrowUp');
+  for (let i = 0; i < 5; i++) await page.keyboard.press('PageUp');
   await expect(fm).toHaveAttribute('aria-valuetext', '50 %');
   await expect(formula).toContainText('β = 4 × FM = 2.00');
   await expect(formula).toContainText('Osc 1 before FM, not the sound now');
