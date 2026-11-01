@@ -2,13 +2,26 @@ import { nearestNote } from '../music/pitch';
 
 const SILENT_DB = -100;
 
-/** What the cursor is over on a Spectrum, e.g. "3.00 kHz · F#7 +23¢ · −42 dB". */
-export function hoverReadout(frequency: number, levelDb: number): string {
-  const hz = frequency >= 1000 ? `${(frequency / 1000).toFixed(2)} kHz` : `${Math.round(frequency)} Hz`;
+/** One line of the hover readout: a value, and the unit (or the cents, after a Note) that follows it. */
+export interface ReadoutLine {
+  value: string;
+  unit: string;
+}
+
+/** What the cursor is over on a Spectrum, one line each: the frequency, the nearest Note with its cents, the level. */
+export function hoverReadoutLines(frequency: number, levelDb: number): ReadoutLine[] {
+  const hz = frequency >= 1000 ? { value: (frequency / 1000).toFixed(2), unit: 'kHz' } : { value: String(Math.round(frequency)), unit: 'Hz' };
   const { name, cents } = nearestNote(frequency);
-  const note = cents ? `${name} ${cents > 0 ? '+' : '−'}${Math.abs(cents)}¢` : name;
-  const level = levelDb > SILENT_DB ? `${levelDb < 0 ? '−' : ''}${Math.abs(Math.round(levelDb))} dB` : 'silent';
-  return `${hz} · ${note} · ${level}`;
+  const note = { value: name, unit: cents ? `${cents > 0 ? '+' : '−'}${Math.abs(cents)}¢` : '' };
+  const level = levelDb > SILENT_DB ? { value: `${levelDb < 0 ? '−' : ''}${Math.abs(Math.round(levelDb))}`, unit: 'dB' } : { value: 'silent', unit: '' };
+  return [hz, note, level];
+}
+
+/** The hover readout as one line of text, for the canvas's readout data, e.g. "3.00 kHz · F#7 +23¢ · −42 dB". */
+export function hoverReadout(frequency: number, levelDb: number): string {
+  return hoverReadoutLines(frequency, levelDb)
+    .map(({ value, unit }) => (unit ? `${value} ${unit}` : value))
+    .join(' · ');
 }
 
 /** The column of the strongest peak within `radius` columns of `column` (or `column` if all are at the floor). */

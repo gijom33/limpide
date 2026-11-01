@@ -5,7 +5,8 @@ import { cssVar, curveWidth, haloText, prepareCanvas } from './canvas';
 import { createFreezeLatch } from './freezeLatch';
 import { harmonicMarkers } from './harmonicMarkers';
 import { aboveFloor, marksToDraw, spectrumOutline } from './outline';
-import { hoverReadout, interpolatedPeak, snapToPeak } from './readout';
+import { hoverReadout, hoverReadoutLines, interpolatedPeak, snapToPeak } from './readout';
+import { type ReadoutColumns, readoutBox, readoutColumns } from './readoutBox';
 import { amplitudeToSpectrumDb } from './spectrumScale';
 import type { ViewSettings } from './viewSettings';
 
@@ -105,6 +106,8 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
   const frozenIdealGains = createFreezeLatch<{ key: string; gains: Float32Array }>();
   let snapshotToken: number | null = null;
   let snapshotBins: Float32Array | null = null;
+  // The hover readout's columns, measured once per font so its box keeps one size (issue 155).
+  let readoutColumnsOf: { font: string; columns: ReadoutColumns } | null = null;
 
   return function draw() {
     const { overlays, viewer } = view();
@@ -270,7 +273,7 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
     g.textAlign = 'left';
     for (const f of fAxis.gridlines) haloText(g, f >= 1000 ? `${f / 1000}k` : `${f}`, xOf(f) + 3, height - 4, background);
 
-    // Hover readout: frequency, nearest note and the level of the trace under the cursor.
+    // Hover readout: frequency, nearest Note and the level of the trace under the cursor, stacked in a box of one size.
     const cursor = hover?.();
     if (!cursor) delete canvas.dataset.readout;
     if (cursor) {
@@ -281,14 +284,18 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
       g.lineTo(col + 0.5, height);
       g.stroke();
       const { frequency, levelDb } = interpolatedPeak(bins, binHz, fAxis.frequencyAt(col), fAxis.frequencyAt(col + 1));
-      const label = hoverReadout(frequency, Number.isFinite(levelDb) ? levelDb : peak[col]);
-      canvas.dataset.readout = label;
-      const w = g.measureText(label).width + 8;
-      const x = Math.min(width - w - 2, Math.max(2, col + 6));
+      const level = Number.isFinite(levelDb) ? levelDb : peak[col];
+      canvas.dataset.readout = hoverReadout(frequency, level);
+      if (readoutColumnsOf?.font !== g.font) readoutColumnsOf = { font: g.font, columns: readoutColumns((t) => g.measureText(t).width) };
+      const box = readoutBox(hoverReadoutLines(frequency, level), readoutColumnsOf.columns, { cursor: col, width });
       g.fillStyle = cssVar(canvas, '--panel');
-      g.fillRect(x, 20, w, 15);
+      g.fillRect(box.x, box.y, box.width, box.height);
       g.fillStyle = text;
-      g.fillText(label, x + 4, 31);
+      for (const t of box.texts) {
+        g.textAlign = t.align;
+        g.fillText(t.text, t.x, t.y);
+      }
+      g.textAlign = 'left';
     }
   };
 }
