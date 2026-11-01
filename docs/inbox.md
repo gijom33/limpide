@@ -4,6 +4,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-10-31, the owner's bug, on a phone during the Demo (night branch): "Bead should never be hidden by the info boxes."
+
 ## Ideas
 
 - 2026-10-31, the owner's idea: "Also tempted to rename the Maths layer into a Synth Geek layer"
