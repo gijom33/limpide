@@ -30,6 +30,7 @@ The owner's issues and specs live as Markdown files in this repository ([ADR-001
 - **The Status line** of an open issue starts with one triage state and one category, from [`triage-labels.md`](./triage-labels.md), then any prose: `**Status:** ready-for-human · enhancement. Built, to verify on the real C16.` A finished issue's Status starts `done`, `closed` or `superseded`, with the date and what happened, and is not rewritten later.
 - **A `ready-for-agent` issue** carries an `## Agent Brief` (the triage skill's AGENT-BRIEF.md): behaviour, interfaces, acceptance criteria, out of scope; no file paths or line numbers.
 - **Decisions** from a grilling go in a numbered list, each saying who decided ("decided by the owner", or "Claude's call, open to the owner").
+- **A decision about where something goes on screen** is measured before it is written: check it against the page at the widths it names (a quick measurement in the browser, the elements' boxes and the room around them). A place with no room is a question for the owner, not a decision.
 - **Notes added later** go under a heading of their own at the bottom (`## How it was built`, `## Comments`); file paths belong there.
 
 ## When a change overturns an issue
