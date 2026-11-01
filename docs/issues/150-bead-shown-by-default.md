@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · enhancement. Built (2026-10-31) on night/2026-10-31, for the owner to try
+**Status:** ready-for-agent · enhancement. Built (2026-10-31) on night/2026-10-31; the owner's correction of decision 3 (decision 7) to build on it the same night.
 
 ## Decisions
 
@@ -16,6 +16,10 @@ The idea is the owner's; how it is done is Claude's call, open to the owner (202
 4. **Display's switch is shown from the start,** not only once Bead has been met, and its tip says in a line who Bead is and how to send it away: the switch, or the Notes.
 5. **The words:** the README says in a line that a water drop called Bead lives on the page; [bead.md](../bead.md) no longer calls Bead hidden, its tricks still listed there and nowhere else.
 6. **Reduced motion:** as now (Bead's own rule for reduced motion holds on a first visit too).
+
+Decided by the owner, 2026-10-31 (evening), on trying the night's build: "Making Bead appear and disappear is not the same as switching Bead off in the display menu. In the display menu, the switch is intentional and permanent whereas making Bead disappear with BEAD is only temporary and a reload goes back what is defined in the display settings menu."
+
+7. **The switch and the Notes are two things.** Display's switch is the lasting setting, remembered across visits. B, E, A, D only sends Bead away or calls it back for this visit: it changes neither the switch nor what is stored, and a reload goes back to what the switch says. Replaces decision 3's "flips Display's switch to match", and the night's call 1 under How it was built. Claude's call, open to the owner: the Notes call Bead for the visit even with the switch off (they never touch the setting), as 115 let them before its switch.
 
 ## Agent Brief
 
