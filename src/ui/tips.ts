@@ -1,3 +1,5 @@
+import { bankLetter, C16_BANKS } from '../midi/c16';
+import { describeMode } from '../midi/describe';
 import { DESTINATIONS } from '../modulation/destinations';
 import { stepWords } from '../patch/grid';
 import { LFO_DESTINATIONS, type LfoDestination, PARAMS, type ParamId } from '../patch/patch';
@@ -61,12 +63,12 @@ export const TIPS = {
   },
   c16Layout: {
     title: 'C16 layout',
-    body: 'Maps the whole TempoPAD C16, a section per bank (A the Oscillators, B the Filter, C the Amp, D the LFOs), laid out like the section, row for row where the strips allow: the faders its levels or Envelope, the R buttons its switches and Waveforms. On every bank, M1 to M4 are the Preset arrows, Freeze and Hold, and S3 Snapshot. It answers the C16 only, so another keyboard’s pedal and mod wheel keep theirs.',
-    how: 'Set the C16’s knobs to Relative #1 and the buttons as the printed card says. Applied by itself the first time a C16 is plugged in while nothing is mapped; this puts it back, replacing your Mappings.',
+    body: `Maps the whole TempoPAD C16, a section per bank (${C16_BANKS.map((bank, b) => `${bankLetter(b)} ${bank.name}`).join(', ')}), laid out like the section, row for row where the strips allow: the faders its levels or Envelope, the R buttons its switches and Waveforms. On every bank, M1 to M4 are the Preset arrows, Freeze and Hold, and S3 Snapshot. It answers the C16 only, so another keyboard’s pedal and mod wheel keep theirs.`,
+    how: 'Set the C16’s knobs to Relative #1 and each button as the card says: Print C16 card, beside this, opens it. Applied by itself the first time a C16 is plugged in while nothing is mapped; this puts it back, replacing your Mappings.',
   },
   c16Card: {
     title: 'Print C16 card',
-    body: 'Opens a one-page card of the C16 layout to print and keep beside it: every bank’s knobs, faders and buttons, and how to set each button, Momentary or Toggle.',
+    body: `Opens a one-page card of the C16 layout to print and keep beside it: every bank’s knobs, faders and buttons, and how to set each button, ${describeMode('trigger')} or ${describeMode('toggle')}.`,
   },
   midiLearn: {
     title: 'MIDI Learn',
