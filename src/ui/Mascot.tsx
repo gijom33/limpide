@@ -8,7 +8,7 @@ import { lineAt, lineWiderThan } from './LfoPlot';
 import { gesturesOf, looksOf } from './mascotGestures';
 import { type Act, createMascotMotion, hatOn, type Pose, type Room, SCREAMING } from './mascotMotion';
 import { CATCH, CLOUD, HATS, HOOK, ICE, type Picture, PROPS, type Rect, ROD_TIP, SKY, type Stage, TAILS } from './mascotPictures';
-import { acrossOf, type Cover, choosePerch, clearAlong, createMascotPlace, HOVER_UNDER, type Moving, nearestSpan, type Perch, type Span } from './mascotPlace';
+import { acrossOf, type Cover, choosePerch, clearAlong, createMascotPlace, HOVER_UNDER, type Moving, nearestSpan, type Perch, ridesFor, type Span } from './mascotPlace';
 import { createSpray, MOST_DROPLETS } from './mascotSpray';
 import { ModulationContext } from './modulationRing';
 import { SECTIONS, STACKED } from './sections';
@@ -371,8 +371,10 @@ export function Mascot({
     let leaveBy: 'melt' | 'rain' | null = null;
     let room: { key: string; room: Room } | null = null;
     const between = (a: number, b: number) => a + Math.random() * (b - a);
-    // Three or four across: a visit to another section now and then.
-    let visit: { id: string; until: number } | null = null;
+    // Three or four across: a visit to another section now and then, or a ride on an LFO's plot (issue 141).
+    let visit: { id: string; until: number; ride?: 1 | 2 } | null = null;
+    // Sent away on a ride: it jumps home first, and melts once it has landed there.
+    let gettingOff = false;
     let nextVisit = context.engine.now() + between(15, 35);
     const droplets = createSpray();
     let lastExhaust = -Infinity;
@@ -436,6 +438,16 @@ export function Mascot({
         themeSwitched = null;
       }
 
+      // The plots of the LFOs that are on, in view, wide enough for it and clear of the cards (issue 164): in a Demo part,
+      // to surf; outside the Demo, those it may ride now and then (issue 141). Looked for only when there may be one.
+      const part = demoPartNow();
+      const rides = stacked.matches ? [] : ridesFor(lfos(context.patch()), context.engine.tempo().bpm, { demo: part !== null, reduced: still.matches });
+      const plots = part === null && !rides.length ? [] : [...document.querySelectorAll<HTMLElement>(`${LFO_PLOTS}:not([data-inactive])`)]
+        .map((el) => ({ lfo: Number(el.dataset.lfo) as 1 | 2, box: el.getBoundingClientRect() }))
+        .map((p) => ({ ...p, clear: clearAlong({ left: p.box.left, right: p.box.right, top: p.box.bottom }, covers, WIDTH, HEIGHT + p.box.height) }))
+        .filter(({ box, clear }) => lineWiderThan(box.width, WIDTH) && roomAbove(box) && box.bottom <= innerHeight && clear.length > 0);
+      const rideable = plots.filter((p) => rides.includes(p.lfo));
+
       // Its line: the top right section's edge; on a phone or in 2 × 2, a right-column edge in view, or a line under the
       // header to hover on.
       let on: { id: string; box: DOMRect };
@@ -446,14 +458,24 @@ export function Mascot({
         homeId = home.id;
         // Now and then a visit to another section in view: down to one below, or across to one beside; then home.
         const inView = (s: { box: DOMRect }) => roomAbove(s.box) && s.box.top <= innerHeight - 4 && clearOn(s.box).length > 0;
-        if (visit && (now >= visit.until || !sections.some((s) => s.id === visit!.id && inView(s)))) {
+        // A ride ends as its LFO stops being one to ride (its Depth, Waveform or Rate, the Demo, reduced motion), its
+        // plot goes out of view, or it is picked up or sent away: it jumps home (issue 141).
+        const over = visit?.ride
+          ? !rideable.some((p) => p.lfo === visit!.ride) || moving === 'held' || leavingNow()
+          : !sections.some((s) => s.id === visit?.id && inView(s));
+        if (visit && (now >= visit.until || over)) {
+          if (visit.ride && leavingNow()) gettingOff = true;
           visit = null;
           nextVisit = now + between(20, 40);
         }
         // Not in the middle of a funny turn: it plays to its end first (the owner, 2026-10-30).
-        if (!visit && now >= nextVisit && !still.matches && leaveBy === null && moving === 'standing' && !shown?.doing) {
-          const away = sections.filter((s) => s.id !== home.id && inView(s));
-          if (away.length) visit = { id: away[Math.floor(Math.random() * away.length)].id, until: now + between(8, 18) };
+        if (!visit && now >= nextVisit && !still.matches && leaveBy === null && !leavingNow() && moving === 'standing' && !shown?.doing) {
+          // A plot to ride (issue 141) is a choice beside the sections in view.
+          const choices = [
+            ...rideable.map((p) => ({ id: `ride ${p.lfo}`, ride: p.lfo })),
+            ...sections.filter((s) => s.id !== home.id && inView(s)).map((s) => ({ id: s.id })),
+          ];
+          if (choices.length) visit = { ...choices[Math.floor(Math.random() * choices.length)], until: now + between(8, 18) };
           else nextVisit = now + between(10, 20);
         }
         on = sections.find((s) => s.id === visit?.id) ?? home;
@@ -496,16 +518,14 @@ export function Mascot({
       }
       // Through a Demo part, one of its acts in turn; surfing, its line is an LFO's shape as its plot draws it: the
       // first in view of an LFO that is on, its Depth above 0 (the owner, 2026-10-30). With none, another act.
-      const part = demoPartNow();
-      const plot = (part === null ? [] : [...document.querySelectorAll<HTMLElement>(`${LFO_PLOTS}:not([data-inactive])`)])
-        .map((el) => ({ lfo: Number(el.dataset.lfo) as 1 | 2, box: el.getBoundingClientRect() }))
-        .map((p) => ({ ...p, clear: clearAlong({ left: p.box.left, right: p.box.right, top: p.box.bottom }, covers, WIDTH, HEIGHT + p.box.height) }))
-        .find(({ box, clear }) => lineWiderThan(box.width, WIDTH) && roomAbove(box) && box.bottom <= innerHeight && clear.length > 0);
+      // Riding outside the Demo (issue 141), the same, on the plot it chose; a funny turn begun meanwhile plays there.
+      const ride = visit?.ride ? rideable.find((p) => p.lfo === visit!.ride) : undefined;
       let act: Act | null = part === null || leaveBy !== null ? null : ACTS[part % ACTS.length];
-      if (act === 'surf' && !plot) act = part! % 2 ? 'airGuitar' : 'conduct';
-      motion.act(act);
+      if (act === 'surf' && !plots.length) act = part! % 2 ? 'airGuitar' : 'conduct';
+      motion.act(act ?? (ride ? 'surf' : null));
+      const plot = act === 'surf' ? plots[0] : ride;
       let surfRoom: Room | null = null;
-      if (act === 'surf' && plot && !still.matches && moving !== 'held' && moving !== 'thrown' && !shown?.doing) {
+      if (plot && !still.matches && moving !== 'held' && moving !== 'thrown' && (ride || !shown?.doing)) {
         // Where the plot draws the LFO under its middle: a second of it across, the newest at the right.
         const { box } = plot;
         const wave = box.top + lineAt({ engine: context.engine, lfo: plot.lfo, box, x: drawnAt.left + DROP_MIDDLE - box.left, now });
@@ -513,7 +533,7 @@ export function Mascot({
         surfRoom = nearestSpan(plot.clear, drawnAt.left)!;
       }
       // Leaving: on its line it melts; hovering or in the air it drips away down the window.
-      if (leavingNow() && leaveBy === null) {
+      if (leavingNow() && leaveBy === null && !gettingOff) {
         leaveBy = moving === 'standing' || moving === 'landing' ? 'melt' : 'rain';
         if (leaveBy === 'melt') motion.leave(now);
       }
@@ -561,6 +581,7 @@ export function Mascot({
       if (where.landedAt !== null && where.moving === 'hovering') room = null;
       foot = where.foot;
       moving = where.moving;
+      if (moving === 'standing' || moving === 'landing') gettingOff = false;
       if (pose.gone || (leaveBy === 'rain' && where.foot >= innerHeight + HEIGHT)) {
         gone();
         return;
@@ -650,7 +671,7 @@ export function Mascot({
       tail.current!.setAttribute('transform', turnTail ? `translate(${-4.5 * under} ${3 * under}) rotate(${turnTail} 9 9)` : '');
       shown = pose;
       // What it is doing, for the tests (issue 127).
-      const marks = { act: act ?? '', tail: pose.tail, hat: pose.hat, doing: pose.doing ?? '', prop: pose.prop, moving: where.moving };
+      const marks = { act: act ?? '', ride: ride ? String(ride.lfo) : '', tail: pose.tail, hat: pose.hat, doing: pose.doing ?? '', prop: pose.prop, moving: where.moving };
       for (const [mark, value] of Object.entries(marks)) if (outer.dataset[mark] !== value) outer.dataset[mark] = value;
 
       drawnAt = { left: acrossOf(where, pose.x), foot: where.foot };

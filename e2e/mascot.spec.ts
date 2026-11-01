@@ -629,6 +629,52 @@ test('through the Demo it conducts, then plays air guitar, then surfs an LFO sha
     .toBe(true);
 });
 
+/** Where its foot is against LFO `lfo`'s plot: how far over or under the line the plot draws under its middle, in pixels. */
+const offTheLine = (page: Page, lfo: number) =>
+  mascot(page).evaluate((el, n) => {
+    const box = el.getBoundingClientRect(); // its box's bottom is its foot
+    const plot = document.querySelector(`.lfo-plot[data-lfo="${n}"]`)!;
+    const at = plot.getBoundingClientRect();
+    const points = [...plot.querySelector('.lfo-plot-line')!.getAttribute('d')!.matchAll(/[ML](\S+) (\S+)/g)].map((m) => ({ x: Number(m[1]), y: Number(m[2]) }));
+    const middle = box.left + 9 - at.left; // the drop's middle, the Mascot's DROP_MIDDLE
+    const under = points.reduce((a, b) => (Math.abs(b.x - middle) < Math.abs(a.x - middle) ? b : a));
+    return { off: box.bottom - (at.top + under.y), foot: box.bottom, moving: (el as HTMLElement).dataset.moving };
+  }, lfo);
+
+test('now and then it rides a slow Sine on an LFO plot, along its line, and goes home once the Depth is 0 (issue 141)', async ({ page }) => {
+  test.slow();
+  // Its every roll its lowest: its first visit is due soonest, 15 seconds in, and goes to the first choice, a ride.
+  await page.addInitScript(() => {
+    Math.random = () => 0;
+  });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  // LFO 1 a Sine at half a hertz, half on.
+  await page.goto(`/#p=${Buffer.from(JSON.stringify({ lfoAmount: 0.5, lfoRate: 0.5 })).toString('base64url')}`);
+  await listening(page);
+  await bringBead(page);
+  await page.mouse.move(2, 894); // off every control, so no tip stands over the plot
+  await page.keyboard.down('f'); // a Note held: it listens, and does no funny turn
+  await expect(mascot(page)).toHaveAttribute('data-ride', '1', { timeout: 40_000 });
+  await expect(mascot(page)).toHaveAttribute('data-moving', 'standing', { timeout: 5000 });
+  // On the line, each moment, as it rises and falls.
+  const feet: number[] = [];
+  for (let i = 0; i < 10; i++) {
+    const { off, foot, moving } = await offTheLine(page, 1);
+    expect(moving).toBe('standing');
+    expect(Math.abs(off), `off the line by ${off}`).toBeLessThanOrEqual(4);
+    feet.push(foot);
+    await page.waitForTimeout(150);
+  }
+  expect(Math.max(...feet) - Math.min(...feet), feet.join(', ')).toBeGreaterThan(4);
+  // Its Depth to 0 (a double-click puts it back to its 0): off with a jump home, onto the Amp's edge.
+  const depth = (await page.getByRole('slider', { name: 'LFO 1 Depth', exact: true }).boundingBox())!;
+  await page.mouse.dblclick(depth.x + depth.width / 2, depth.y + depth.height / 2);
+  await page.mouse.move(2, 894);
+  await expect(mascot(page)).toHaveAttribute('data-ride', '');
+  await expect.poll(async () => Math.abs((await footing(page)).below) <= 1, { timeout: 5000 }).toBe(true);
+  await page.keyboard.up('f');
+});
+
 /**
  * Where the drop is against the docked cards (the Demo's, a Tutorial's, the Tour's): whether any part of its drawing is
  * under one, and whether it is in the window, below the header (issue 164).

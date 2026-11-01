@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { acrossOf, choosePerch, clearAlong, createMascotPlace, FASTEST_THROW, GRAVITY, HOVER_UNDER, LANDING_SECONDS, type Moving, nearestSpan, type Perch, type Placed, type Span, WINDUP_SECONDS } from './mascotPlace';
+import { noteIndex } from '../music/tempo';
+import type { Lfo } from '../patch/patch';
+import { acrossOf, choosePerch, clearAlong, createMascotPlace, FASTEST_THROW, GRAVITY, HOVER_UNDER, LANDING_SECONDS, type Moving, nearestSpan, type Perch, type Placed, ridesFor, type Span, WINDUP_SECONDS } from './mascotPlace';
 
 const H = 26;
 const ROOM = 18;
@@ -369,3 +371,34 @@ describe('picked up and thrown (issue 127)', () => {
   });
 });
 
+
+describe('which LFOs it may ride, now and then, outside the Demo (issue 141)', () => {
+  const lfo = (settings: Partial<Lfo> = {}): Lfo => ({
+    rate: 0.5, amount: 0.5, note: noteIndex('1/4'), waveform: 'sine', destination: 'cutoff', retrigger: 'free', sync: 'off', ...settings,
+  });
+  const free = { demo: false, reduced: false };
+
+  it('a Sine or a Triangle at 1 Hz or slower, with its Depth above 0', () => {
+    expect(ridesFor([lfo(), lfo({ waveform: 'triangle', rate: 1 })], 120, free)).toEqual([1, 2]);
+    expect(ridesFor([lfo({ rate: 0.05, amount: 0.01 }), lfo({ waveform: 'triangle', rate: 0.2 })], 120, free)).toEqual([1, 2]);
+  });
+
+  it('not a Saw, a Saw Down or a Square, whose cliff would throw it off', () => {
+    for (const waveform of ['saw', 'sawDown', 'square'] as const) expect(ridesFor([lfo({ waveform }), lfo()], 120, free)).toEqual([2]);
+  });
+
+  it('not over 1 Hz, nor at a Depth of 0', () => {
+    expect(ridesFor([lfo({ rate: 1.05 }), lfo({ amount: 0 })], 120, free)).toEqual([]);
+  });
+
+  it('synced, by the Hz its note value gives at the tempo (issue 112)', () => {
+    // A quarter note: 2 Hz at 120 BPM, 1 Hz at 60; a bar: 0.5 Hz at 120.
+    expect(ridesFor([lfo({ sync: 'on', note: noteIndex('1/4'), rate: 0.1 }), lfo({ sync: 'on', note: noteIndex('1 bar'), rate: 5 })], 120, free)).toEqual([2]);
+    expect(ridesFor([lfo({ sync: 'on', note: noteIndex('1/4') }), lfo({ sync: 'on', note: noteIndex('1/8') })], 60, free)).toEqual([1]);
+  });
+
+  it('never while the Demo plays, nor under reduced motion', () => {
+    expect(ridesFor([lfo(), lfo()], 120, { demo: true, reduced: false })).toEqual([]);
+    expect(ridesFor([lfo(), lfo()], 120, { demo: false, reduced: true })).toEqual([]);
+  });
+});

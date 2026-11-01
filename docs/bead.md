@@ -16,6 +16,7 @@ Bead makes no sound and changes nothing you hear. Turning a control only changes
 ## Where it lives
 
 - **Three or four sections across**: on the top edge of the top right section (the Amp, or LFO & Envelopes), along the stretch where it covers least. Every 15 to 40 seconds it visits another section in view for a while: falling to one below, or leaping in an arc to one beside it.
+- **It rides the LFOs** ([141](./issues/141-bead-rides-the-lfos.md)): three or four across, a visit may be a ride instead. While an LFO is on (its Depth above 0), a Sine or a Triangle at 1 Hz or slower (with Sync, the Hz its note value gives), its plot in view and clear of the cards, Bead may jump onto the plot and ride its line, as in the Demo's surf, for 8 to 18 seconds, then jump home. It jumps home sooner when the LFO stops being one to ride or its plot goes out of view; picked up, it lets go of the line; sent away, it jumps home and melts there. Never while the Demo plays or with reduced motion.
 - **On a phone and in 2 × 2**: it stays in view as you scroll, on the top edge of a right-hand section. To go down it falls like rain and splashes; to go up it turns its tail down under itself and flies on it. With no edge in view, as when its edge goes under the tabs, it takes off on its whirling tail and hovers where it lost ground, a little under the tabs or the header, bobbing gently, until an edge comes into view to drop or fly onto ([142](./issues/142-bead-on-the-line-under-the-tabs.md)). With reduced motion it hovers still.
 - **Never under a card** ([164](./issues/164-bead-never-under-a-card.md)): it never stands where the Demo's card, a Tutorial's, the Tour's, a tip or an open panel covers it, and strolls only along what they leave clear. When one comes over its spot it goes to the nearest clear stretch of an edge in view; with every edge in view covered, it stands on the card's top edge until one is clear again. It is still drawn under them, so it never covers their words or buttons.
 
@@ -81,7 +82,7 @@ While Bead is out, five more words spelled with Notes, like B, E, A, D, each cue
 Through the Demo's parts, in turn, Bead:
 - conducts with a tiny baton, down on each Note;
 - plays air guitar on its tail, strummed on each Note;
-- surfs an LFO's shape: it jumps onto the plot of an LFO that is on (its Depth above 0) and rides the line, end to end, as the LFO moves it. With no LFO on, or none in view, it conducts or plays air guitar instead.
+- surfs an LFO's shape: it jumps onto the plot of an LFO that is on (its Depth above 0) and rides the line, end to end, as the LFO moves it. With no LFO on, or none in view, it conducts or plays air guitar instead. Outside the Demo it rides a slow Sine or Triangle now and then (above).
 
 ## With reduced motion
 
