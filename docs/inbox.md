@@ -4,6 +4,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-10-31, the owner's bug, with a screenshot of the Oscillator and Filter Scopes on the night branch (localhost:5174), the Guides on, both Oscillators up and the Filter's Resonance at Q 1.32: "Wave goes outside of guides with resonance or simply by adding oscillators."
+
 ## Ideas
 
 ## Dropped
