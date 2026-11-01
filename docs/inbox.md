@@ -6,6 +6,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- 2026-10-31, the owner's idea, with a screenshot of the Demo's card on the night branch (the part's name "Strings", its segments, then its caption "Held chords that shimmer, the shimmer speeding up until it buzzes." at the bottom): "I would move the text below the preset name and keep the progress line at bottom."
+
 ## Dropped
 
 - 2026-10-30, from Claude's brainstorm, Velocity on the Volume ("a harder hit plays louder, not only brighter"): already so. The Amp Envelope's Attack rises to the Note's Velocity (PRD story 9). Claude's call, open to the owner.
