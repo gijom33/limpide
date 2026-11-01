@@ -6,8 +6,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
-- 2026-10-31, the owner's idea, with a screenshot of the Demo's card on the night branch (the part's name "Strings", its segments, then its caption "Held chords that shimmer, the shimmer speeding up until it buzzes." at the bottom): "I would move the text below the preset name and keep the progress line at bottom."
-
 ## Dropped
 
 - 2026-10-30, from Claude's brainstorm, Velocity on the Volume ("a harder hit plays louder, not only brighter"): already so. The Amp Envelope's Attack rises to the Note's Velocity (PRD story 9). Claude's call, open to the owner.
@@ -153,3 +151,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-31, the owner's design for Bead in About, into [163](./issues/163-bead-in-about.md) (decided by the owner): Bead beside the logo, bigger than on the synth, a click giving its tricks; with Bead Off, not there (Claude's call, open to the owner).
 2026-10-31, the owner's bug of Bead hidden by the cards on a phone during the Demo (triage): to [164](./issues/164-bead-never-under-a-card.md), a bug, ready for an agent: never hidden (decided by the owner); Bead moves to a clear edge, or onto the card's top, rather than being drawn over the card (Claude's call, open to the owner).
 2026-10-31, the owner's idea of the Maths Layer renamed the Synth Geek Layer (grilled at once, decided by the owner): to [165](./issues/165-the-synth-geek-layer.md), ready for an agent after the night: "Geek" with glasses on Display's toggle, everything in use renamed, the stored key included.
+2026-10-31, the owner's idea of the Demo card's caption under its name (triage): to [171](./issues/171-the-demo-cards-caption-under-its-name.md), polish for v1, ready for an agent: the caption under the name, the segments at the bottom (decided by the owner); the card's height held so the segments never jump (Claude's call, open to the owner).
