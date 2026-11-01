@@ -4,11 +4,7 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
-- 2026-10-31, the owner's bug, on a phone during the Demo (night branch): "Bead should never be hidden by the info boxes."
-
 ## Ideas
-
-- 2026-10-31, the owner's idea: "Also tempted to rename the Maths layer into a Synth Geek layer"
 
 ## Dropped
 
@@ -153,3 +149,5 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-31, the owner's idea of Display's Keys, Tips, Bead and Theme on one row (triage): to [162](./issues/162-displays-small-settings-on-one-row.md), polish for v1, ready for an agent: one row (decided by the owner), headings above, two and two where narrow (Claude's call, open to the owner).
 2026-10-31, the owner's idea of Bead in About (triage): to [163](./issues/163-bead-in-about.md), polish for v1, ready for an agent once [150](./issues/150-bead-shown-by-default.md) is done: About names Bead (decided by the owner); a credits line with its picture, one sentence and a link to its secrets page, its Notes left to be found (Claude's call, open to the owner).
 2026-10-31, the owner's design for Bead in About, into [163](./issues/163-bead-in-about.md) (decided by the owner): Bead beside the logo, bigger than on the synth, a click giving its tricks; with Bead Off, not there (Claude's call, open to the owner).
+2026-10-31, the owner's bug of Bead hidden by the cards on a phone during the Demo (triage): to [164](./issues/164-bead-never-under-a-card.md), a bug, ready for an agent: never hidden (decided by the owner); Bead moves to a clear edge, or onto the card's top, rather than being drawn over the card (Claude's call, open to the owner).
+2026-10-31, the owner's idea of the Maths Layer renamed the Synth Geek Layer (grilled at once, decided by the owner): to [165](./issues/165-the-synth-geek-layer.md), ready for an agent after the night: "Geek" with glasses on Display's toggle, everything in use renamed, the stored key included.
