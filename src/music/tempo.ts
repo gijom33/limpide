@@ -8,6 +8,12 @@ export const TEMPO = { min: 40, max: 240, default: 120 } as const;
 /** A BPM the tempo can be: whole, from 40 to 240. */
 export const clampBpm = (bpm: number) => Math.min(TEMPO.max, Math.max(TEMPO.min, Math.round(bpm)));
 
+/** The tempo as a control's position (0–1, slowest to fastest), as a knob mapped to it turns it, and back. */
+export const bpmPosition = (bpm: number) => (bpm - TEMPO.min) / (TEMPO.max - TEMPO.min);
+export const positionBpm = (position: number) => TEMPO.min + position * (TEMPO.max - TEMPO.min);
+/** A whole BPM's share of the tempo control's travel. */
+export const BPM_STEP = bpmPosition(TEMPO.min + 1);
+
 const STRAIGHT: [name: string, beats: number][] = [
   ['4 bars', 16], ['2 bars', 8], ['1 bar', 4], ['1/2', 2], ['1/4', 1], ['1/8', 0.5], ['1/16', 0.25], ['1/32', 0.125],
 ];
@@ -39,7 +45,7 @@ export const WIDEST_SYNCED_HZ = NOTE_VALUES.flatMap((_, i) =>
 /** Taps further apart than the slowest beat start the count again. */
 const LONGEST_TAP = 60 / TEMPO.min;
 /** How many of the last taps the tempo is taken from. */
-const TAPS = 4;
+export const TAPS = 4;
 
 /**
  * The BPM the taps give (their times in seconds, oldest first): the mean time between the last four, from the second

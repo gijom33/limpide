@@ -1,4 +1,4 @@
-import { TEMPO } from '../music/tempo';
+import { BPM_STEP } from '../music/tempo';
 import { type ChoiceId, PARAMS, type ParamId } from '../patch/patch';
 import { detectEncoderMode, detectKnobMode, relativeDelta } from './encoderMode';
 import { type ActionId, type Control, controlKey, type Mapping, type MappingStore, sameControl, type Target } from './mappings';
@@ -46,10 +46,10 @@ interface Synth {
   position(id: ParamId): number;
   setPosition(id: ParamId, position: number): void;
   /** The Parameter a control mapped to `id` turns now: an LFO's Rate turns its note value while Sync is on (issue 112). */
-  turned?(id: ParamId): ParamId;
+  turned(id: ParamId): ParamId;
   /** The tempo's position (0–1, from the slowest BPM to the fastest), and setting it (issue 112). */
-  tempoPosition?(): number;
-  setTempoPosition?(position: number): void;
+  tempoPosition(): number;
+  setTempoPosition(position: number): void;
   action(id: ActionId): void;
   /** A choice's current index among its options, in on-screen order, and setting it. */
   choice(id: ChoiceId): { index: number; count: number };
@@ -159,16 +159,12 @@ export function createControlSurface(synth: Synth) {
 
   /** A Parameter as a dial: the one its control turns now. */
   const paramDial = (id: ParamId) => {
-    const turned = synth.turned?.(id) ?? id;
+    const turned = synth.turned(id);
     const { step, min, max } = PARAMS[turned];
     return { get: () => synth.position(turned), set: (p: number) => synth.setPosition(turned, p), unit: step ? step / (max - min) : 0 };
   };
   /** The tempo as a dial, a BPM a step (issue 112). */
-  const tempoDial = () => ({
-    get: () => synth.tempoPosition?.() ?? 0,
-    set: (p: number) => synth.setTempoPosition?.(p),
-    unit: 1 / (TEMPO.max - TEMPO.min),
-  });
+  const tempoDial = () => ({ get: synth.tempoPosition, set: synth.setTempoPosition, unit: BPM_STEP });
 
   /** Whether a button's message is a press: its CC rising past the middle, not its release (a momentary one's 0). */
   const pressedNow = (mapping: Mapping, value: number) => {

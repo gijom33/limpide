@@ -18,6 +18,19 @@ test('the tempo starts at 120 BPM, steps with the arrows and is remembered after
   await expect(bpm(page)).toHaveAttribute('aria-valuenow', '131');
 });
 
+test('a drag up sets the BPM where it is let go, a BPM a pixel (issue 112)', async ({ page }) => {
+  await page.goto('/');
+  const box = (await bpm(page).boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2 - 15, { steps: 5 });
+  await expect(bpm(page)).toHaveAttribute('aria-valuenow', '135');
+  await page.mouse.up();
+  await expect(bpm(page)).toHaveAttribute('aria-valuenow', '135');
+  await page.reload();
+  await expect(bpm(page)).toHaveAttribute('aria-valuenow', '135');
+});
+
 test('a double-click types the BPM; Enter sets it, kept between 40 and 240 (issue 112)', async ({ page }) => {
   await page.goto('/');
   await bpm(page).dblclick();
@@ -93,7 +106,7 @@ test('Sync turns the Rate knob to note values, "1/4 · 2 Hz" at 120 BPM, and off
 
 test('the beats show on the LFO plot and the Timeline only while Sync is on (issue 112)', async ({ page }) => {
   await page.goto('/');
-  const plot = page.locator('.lfo-plot[data-lfo="1"]');
+  const plot = page.getByRole('img', { name: /^LFO 1:/ });
   const timeline = page.getByRole('img', { name: 'Envelope Timeline' });
   // The page's clock runs once sound is allowed: a key starts it.
   await page.getByRole('button', { name: 'Hold' }).click();

@@ -1,7 +1,7 @@
 import { recall, remember } from '../app/displaySettings';
 import type { KeyValueStorage } from '../app/storage';
 import type { SynthEngine } from '../engine/synthEngine';
-import { clampBpm, tappedBpm } from '../music/tempo';
+import { clampBpm, TAPS, tappedBpm } from '../music/tempo';
 
 /** The tempo in force: the BPM, and whether a player holds it (the Demo, the Song, the Tour or a Tutorial). */
 export interface TempoState {
@@ -57,7 +57,7 @@ export function createTempoStore({
      */
     tap() {
       if (state.player) return;
-      taps = [...taps.slice(-7), clock()];
+      taps = [...taps.slice(1 - TAPS), clock()];
       const bpm = tappedBpm(taps);
       if (bpm !== undefined) setOwn(bpm, engine.now());
     },

@@ -72,6 +72,8 @@ export const controlKey = (c: Control) => `${c.kind}:${c.channel}:${c.number}`;
 export const sameControl = (a: Control, b: Control) =>
   a.kind === b.kind && a.channel === b.channel && a.number === b.number;
 export const sameTarget = (a: Target, b: Target) => a.kind === b.kind && a.id === b.id;
+/** Whether two Mappings would take one place: the same control, or the same target (one each, issue 34). */
+export const clash = (a: Mapping, b: Mapping) => sameControl(a.control, b.control) || sameTarget(a.target, b.target);
 
 const isMapping = (m: unknown): m is Mapping => {
   const { control: c, target: t, mode } = (m ?? {}) as Partial<Mapping>;
@@ -120,10 +122,7 @@ export function createMappingStore(storage: KeyValueStorage) {
     find: (control: Control) => mappings.find((m) => sameControl(m.control, control)),
     findTarget: (target: Target) => mappings.find((m) => sameTarget(m.target, target)),
     set(mapping: Mapping) {
-      mappings = [
-        ...mappings.filter((m) => !sameControl(m.control, mapping.control) && !sameTarget(m.target, mapping.target)),
-        mapping,
-      ];
+      mappings = [...mappings.filter((m) => !clash(m, mapping)), mapping];
       changed();
     },
     /** The Mapping on the same control, replaced (its mode found, say), leaving every other Mapping as it is. */

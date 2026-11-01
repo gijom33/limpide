@@ -26,6 +26,9 @@ const cutoff = { kind: 'param', id: 'cutoff' } as const;
 const resonance = { kind: 'param', id: 'resonance' } as const;
 const hold = { kind: 'action', id: 'hold' } as const;
 
+/** What a synth stand-in leaves as it is: each control turns its own Parameter, and no tempo moves (issue 112). */
+const untouched = { turned: (id: ParamId) => id, tempoPosition: () => 0, setTempoPosition: () => {} };
+
 /** A synth stand-in: Parameter positions (0–1), plus a record of Actions, played Notes and knob touches. */
 function rig(round = (p: number) => p) {
   const positions: Partial<Record<ParamId, number>> = { cutoff: 0.5, resonance: 0.2 };
@@ -36,6 +39,7 @@ function rig(round = (p: number) => p) {
   const learns: LearnState[] = [];
   const store = createMappingStore(memoryStorage());
   const surface = createControlSurface({
+    ...untouched,
     store,
     position: (id) => positions[id] ?? 0,
     setPosition: (id, p) => void (positions[id] = round(p)),
@@ -424,6 +428,7 @@ describe('a keyboard’s own controls, while nothing is mapped to them (issue 52
     const heard: string[] = [];
     const store = createMappingStore(memoryStorage());
     const surface = createControlSurface({
+      ...untouched,
       store,
       position: (id) => positions[id] ?? 0,
       setPosition: (id, p) => void (positions[id] = p),
@@ -499,6 +504,7 @@ describe('the C16 layout’s buttons and its own input (issue 145)', () => {
     const r = rig();
     const pedal: string[] = [];
     const surface = createControlSurface({
+      ...untouched,
       store: r.store,
       position: (id) => r.positions[id] ?? 0,
       setPosition: (id, p) => void (r.positions[id] = p),
@@ -590,6 +596,7 @@ describe('the C16’s knobs: a 65 one step, a 66 a third of one (issue 145)', ()
     const positions: Partial<Record<ParamId, number>> = { cutoff: 0 };
     const store = createMappingStore(memoryStorage());
     const surface = createControlSurface({
+      ...untouched,
       store,
       position: (id) => positions[id] ?? 0,
       setPosition: (id, p) => void (positions[id] = p),

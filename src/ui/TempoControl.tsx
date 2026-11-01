@@ -22,11 +22,14 @@ interface Props {
 
 /**
  * The BPM (issue 112): a spin button reading "120 BPM", dragged up and down or stepped with the arrows, a
- * double-click typing it. While a player holds the tempo it shows the player's and cannot be set.
+ * double-click typing it. While a player holds the tempo it shows the player's and cannot be set. A drag sets the
+ * tempo where it is let go, the BPM it reaches shown meanwhile: each tempo set starts the beat count again, so set at
+ * every step it would restart a synced LFO's cycle at every pixel (Claude's call, open to the owner).
  */
 function TempoDial({ tempo, onSet }: Pick<Props, 'tempo' | 'onSet'>) {
-  const { bpm } = tempo;
   const [typing, setTyping] = useState<string | null>(null);
+  const [dragged, setDragged] = useState<number | null>(null);
+  const bpm = dragged ?? tempo.bpm;
   const drag = useRef<{ y: number; bpm: number } | null>(null);
   const learn = useLearnable({ kind: 'tempo', id: 'bpm' });
   const held = tempo.player;
@@ -88,10 +91,17 @@ function TempoDial({ tempo, onSet }: Pick<Props, 'tempo' | 'onSet'>) {
       }}
       onPointerMove={(e) => {
         if (!drag.current || !(e.buttons & 1)) return;
-        set(drag.current.bpm + Math.round((drag.current.y - e.clientY) / DRAG_PIXELS));
+        setDragged(clampBpm(drag.current.bpm + Math.round((drag.current.y - e.clientY) / DRAG_PIXELS)));
       }}
-      onPointerUp={() => (drag.current = null)}
-      onPointerCancel={() => (drag.current = null)}
+      onPointerUp={() => {
+        if (dragged !== null) set(dragged);
+        drag.current = null;
+        setDragged(null);
+      }}
+      onPointerCancel={() => {
+        drag.current = null;
+        setDragged(null);
+      }}
     >
       <span className="tempo-value">{bpm}</span>
       <span className="tempo-unit">BPM</span>

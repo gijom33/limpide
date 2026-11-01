@@ -1,5 +1,5 @@
 import { DESTINATIONS, destinationLevel, lfoDestinations } from '../modulation/destinations';
-import { beatsBetween } from '../modulation/lfo';
+import { type Beat, beatsBetween } from '../modulation/lfo';
 import type { Modulation } from '../modulation/modulationModel';
 import { formatParam, type LfoDestination, type Patch, type StageId } from '../patch/patch';
 import { cssVar, curveWidth, haloText, prepareCanvas } from './canvas';
@@ -16,7 +16,7 @@ interface Source {
   /** The Patch in force at a moment: whether the Filter Envelope and the LFOs move anything, and what. */
   patchAt(time: number): Patch | undefined;
   /** The tempo, whose beats are marked while an LFO is synced (issue 112). */
-  tempo(): { bpm: number; origin: number };
+  tempo(): Beat;
 }
 
 /**

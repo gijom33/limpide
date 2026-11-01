@@ -1,5 +1,6 @@
 import { CHOICES } from '../patch/patch';
-import { type Control, type Mapping, sameControl, sameTarget, type Target } from './mappings';
+import { targetKey } from './describe';
+import { type Control, clash, type Mapping, type Target } from './mappings';
 
 const param = (id: Extract<Target, { kind: 'param' }>['id']): Target => ({ kind: 'param', id });
 const choice = (id: Extract<Target, { kind: 'choice' }>['id']): Target => ({ kind: 'choice', id });
@@ -156,10 +157,10 @@ const FIRST_LAYOUT: [number, string][] = (() => {
 export function upgradeC16Layout(stored: readonly Mapping[]): Mapping[] | null {
   const first = (m: Mapping) =>
     !m.device && m.control.kind === 'cc' && m.control.channel === CHANNEL &&
-    FIRST_LAYOUT.some(([cc, target]) => cc === m.control.number && target === `${m.target.kind}:${m.target.id}`);
+    FIRST_LAYOUT.some(([cc, target]) => cc === m.control.number && target === targetKey(m.target));
   if (!stored.some(first)) return null;
   const layout = c16Layout();
-  const own = stored.filter((m) => !first(m) && !layout.some((l) => sameControl(l.control, m.control) || sameTarget(l.target, m.target)));
+  const own = stored.filter((m) => !first(m) && !layout.some((l) => clash(l, m)));
   return [...own, ...layout];
 }
 
@@ -172,8 +173,6 @@ const ADDED_SINCE_145 = ['choice:lfoSync', 'choice:lfo2Sync'];
  * a place the person has used since stays theirs. Null when there is nothing to add.
  */
 export function addC16Places(stored: readonly Mapping[]): Mapping[] | null {
-  const added = c16Layout().filter(
-    (l) => ADDED_SINCE_145.includes(`${l.target.kind}:${l.target.id}`) && !stored.some((m) => sameControl(l.control, m.control) || sameTarget(l.target, m.target)),
-  );
+  const added = c16Layout().filter((l) => ADDED_SINCE_145.includes(targetKey(l.target)) && !stored.some((m) => clash(l, m)));
   return added.length ? [...stored, ...added] : null;
 }

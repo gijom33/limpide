@@ -1103,9 +1103,9 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 /* From 1200 px, where the sides leave the piano its full size, the keyboard balances its octave buttons with an empty
    column as wide on the other side, so the piano itself, not the keyboard, is at the centre (issue 82). Below, that
    column would take width from the piano's keys. */
-/* Up to 1365 px the piano's keys are 42 px, so the logo and the Patch picker beside it keep room for Linux's wider
-   fonts and the piano stays at the centre (the 1.16.0 deploy); from 1200 px since the tempo (issue 112), whose set-up
-   row leaves the right side narrower than the left, so the left alone sets where the piano sits. */
+/* From 1200 to 1365 px the piano's keys are 42 px, so the logo and the Patch picker beside it keep room for Linux's
+   wider fonts and the piano stays at the centre (the 1.16.0 deploy): the set-up row, its buttons' words hidden beside
+   the tempo (issue 112), leaves the right side narrower than the left, so the left alone sets where the piano sits. */
 @media (min-width: 1200px) and (max-width: 1365px) {
   :root { --white-key-max: 42px; }
 }

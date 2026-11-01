@@ -16,4 +16,3 @@ So:
 
 - The header's set-up row holds the BPM and Tap; the PRD's Out of Scope no longer lists LFO tempo sync.
 - The tempo is outside the Patch, so it is not undone by loading a Preset, not in a Share link and not in a Patch file.
-- A Relative knob mapped to a stepped control (a note value, an Octave, the BPM) gathers its clicks into whole steps.

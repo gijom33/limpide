@@ -1,5 +1,5 @@
 import { type Adsr, type AutomationStep, DIP, envelopeSchedule, type GateEvent, levelAfter } from '../modulation/envelope';
-import { createLfoClock, glideFrequency, glideFrom, glideTimeConstant, LFO_START, type LfoWaveform, lfoShape } from '../modulation/lfo';
+import { type Beat, createLfoClock, glideFrequency, glideFrom, glideTimeConstant, LFO_START, type LfoWaveform, lfoShape } from '../modulation/lfo';
 import {
   destinationSwings, effectiveCutoff, effectiveResonance, effectiveVolume, KEY_TRACK_CENTRE, type Modulation, osc2Cents,
   soundingPitch, VELOCITY_CUTOFF_OCTAVES,
@@ -56,7 +56,7 @@ export interface SynthEngine {
    */
   setTempo(bpm: number, origin?: number): void;
   /** The tempo in force, and where its beats are counted from. */
-  tempo(): { bpm: number; origin: number };
+  tempo(): Beat;
   now(): number;
   /**
    * The Response Curve: gain (linear) at each frequency from the Oscillator Tap to the Filter Tap, at the
@@ -908,7 +908,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   // The chord each LFO last restarted for: when its Notes were asked for, and when it restarted.
   const lfoChords: ({ asked: number; t: number } | null)[] = [null, null];
   // The tempo synced LFOs follow (issue 112), and what each synced free LFO was last locked to the beat with.
-  let tempo: { bpm: number; origin: number } = { bpm: TEMPO.default, origin: lfoStart };
+  let tempo: Beat = { bpm: TEMPO.default, origin: lfoStart };
   const locks: (string | null)[] = [null, null];
   const hz = (l: Lfo) => lfoHz(l, tempo.bpm);
   /**
@@ -918,21 +918,21 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
    * at the same moment, restart it once, where the first of them starts: those that dip first (issue 102) start 3 ms
    * into its cycle, rather than it jumping 3 ms into the others'.
    */
+  /** A new oscillator for LFO `i`, its cycle starting at phase `start` of its Waveform, wired to the LFO's bus. */
+  const lfoOscillator = (i: number, l: Lfo, start: number) => () => {
+    const next = ctx.createOscillator();
+    lfoStarts.set(next, start);
+    setLfoWave(next, l.waveform);
+    next.frequency.value = hz(l);
+    next.connect(shared.lfos[i].bus);
+    return next;
+  };
   const restartLfo = (i: number, l: Lfo, asked: number, t: number) => {
     const chord = lfoChords[i];
     if (chord && chord.asked === asked && chord.t <= t) return;
     lfoChords[i] = { asked, t };
-    const nodes = shared.lfos[i];
     const start = LFO_START[l.waveform];
-    const restarted = nodes.takeover.restart(t, () => {
-      const next = ctx.createOscillator();
-      lfoStarts.set(next, start);
-      setLfoWave(next, l.waveform);
-      next.frequency.value = hz(l);
-      next.connect(nodes.bus);
-      return next;
-    });
-    if (!restarted) return;
+    if (!shared.lfos[i].takeover.restart(t, lfoOscillator(i, l, start))) return;
     lfoClocks[i].cancelAfter(t);
     lfoClocks[i].restart(t, start);
   };
@@ -951,21 +951,9 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       const at = Math.max(t, tempo.origin);
       const cycles = LFO_START[l.waveform] + (at - tempo.origin) * hz(l);
       const start = cycles - Math.floor(cycles);
-      const nodes = shared.lfos[i];
-      nodes.takeover.cancelAfter(t);
+      shared.lfos[i].takeover.cancelAfter(t);
       lfoClocks[i].cancelAfter(t);
-      nodes.takeover.restart(
-        at,
-        () => {
-          const next = ctx.createOscillator();
-          lfoStarts.set(next, start);
-          setLfoWave(next, l.waveform);
-          next.frequency.value = hz(l);
-          next.connect(nodes.bus);
-          return next;
-        },
-        true,
-      );
+      shared.lfos[i].takeover.restart(at, lfoOscillator(i, l, start), true);
       lfoClocks[i].restart(at, start);
     });
   };

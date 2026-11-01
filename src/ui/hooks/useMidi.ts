@@ -7,7 +7,7 @@ import { describeMessage, targetKey } from '../../midi/describe';
 import { connectMidi, type MidiAccessLike, midiSupport } from '../../midi/inputs';
 import { createMappingStore, type Mapping, type Target } from '../../midi/mappings';
 import { QUICK_SETUP, type QuickSetupEvent, type QuickSetupState, quickSetupReducer, startQuickSetup, takenControls } from '../../midi/quickSetup';
-import { TEMPO } from '../../music/tempo';
+import { bpmPosition, positionBpm } from '../../music/tempo';
 import { CHOICES, type ChoiceId, knobTurns, PARAMS, setParam } from '../../patch/patch';
 import { positionToValue, valueToPosition } from '../../patch/taper';
 import type { MidiState } from '../MidiPanel';
@@ -99,8 +99,8 @@ export function useMidi(host: Host) {
         patches.change((p) => setParam(p, id, positionToValue(PARAMS[id], position)), 'controller');
       },
       turned: (id) => knobTurns(patches.get().patch, id),
-      tempoPosition: () => (session.tempo.get().bpm - TEMPO.min) / (TEMPO.max - TEMPO.min),
-      setTempoPosition: (position) => session.tempo.set(TEMPO.min + position * (TEMPO.max - TEMPO.min)),
+      tempoPosition: () => bpmPosition(session.tempo.get().bpm),
+      setTempoPosition: (position) => session.tempo.set(positionBpm(position)),
       choice: (id) => {
         const options = choiceOptions(id);
         return { index: options.indexOf(patches.get().patch[id] as never), count: options.length };
