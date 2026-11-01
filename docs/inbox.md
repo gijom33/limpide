@@ -4,22 +4,7 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
-- 2026-10-31, from profile 16's first review, Tour card 4 says to watch the dot on the Cutoff knob, which is off screen at 1440 × 900 and on a phone.
-- 2026-10-31, from profile 16's first review, Bass Step 4 (Display, Ideal) is ticked before it is done, so Ideal is never explained.
-- 2026-10-31, from profile 16's first review, Acid's Snapshot stays on the pictures through the following Tutorials, unexplained.
-
 ## Ideas
-
-- 2026-10-31, from profile 16's first review, Harmonic, the word the Tour and Tutorials lean on most, is never explained: Tour card 1 should say what it is, and each Tutorial's first use again (129).
-- 2026-10-31, from profile 16's first review, Tour card 1 packs Waveform, cycle, pitch and timbre into one sentence, and says "only Osc 1's fader is up" while the Mixer tab is hidden (129).
-- 2026-10-31, from profile 16's first review, The Filter Envelope arrives unannounced in the Bass, and Decay and Sustain are never explained: the Tour's Amp card should name all four faders (129, 130).
-- 2026-10-31, from profile 16's first review, A Tutorial's first card leads with the Preset's description, which 129 leaves alone and which is the densest text in the app: give each Tutorial its own intro in the new voice (129).
-- 2026-10-31, from profile 16's first review, Harmonics are also called partials, rungs, spikes and bars: one word for the idea, one for the picture (129).
-- 2026-10-31, from profile 16's first review, Ring Bell and FM Ladder explain in arithmetic (sum and difference, 3.38 times the Note): rewrite as what you see and hear (129).
-- 2026-10-31, from profile 16's first review, Seven notes repeat word for word across Tutorials, and three end with the same three tidy-up Steps (129).
-- 2026-10-31, from profile 16's first review, Hz, ms, dB and Init are never explained (129).
-- 2026-10-31, from profile 16's first review, On a phone, the folded Tour card shows the chain line, not what to watch (129).
-- 2026-10-31, from profile 16's first review, The end card doesn't point to the next Tutorial, and the menu's names give no hint of what each teaches.
 
 ## Dropped
 
@@ -158,3 +143,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-31, the owner's bug of text moving as values change, which the owner named as a Spectrum's hover readout ("260 Hz · C4 +2¢ · −43 dB") (triage, Claude's call, open to the owner): to [155](./issues/155-the-spectrum-readout-stays-still.md), a bug, ready for an agent: the owner's stacking, three lines in a box of fixed size, each value right-aligned, flipping side only at the edge.
 2026-10-31, the owner's rule of shorter words over a second line (triage): into [the design principles](./design-principles.md) as "One line, shorter words", decided by the owner, and to [156](./issues/156-one-line-shorter-words.md), ready for an agent: the Timeline's key first, every label with a short and a shortest form chosen by its room, and the design audit failing on any that wraps (the forms and the audit check Claude's call, open to the owner).
 2026-10-31, the owner's bug of buttons overlapping in a very narrow window (278 px) (triage): to [157](./issues/157-no-narrower-than-a-phone.md), a bug, ready for an agent once [112](./issues/112-tempo-midi-clock-and-an-arpeggiator.md) is done: no screen so narrow that buttons overlap (decided by the owner); the page never narrower than 320 px, scrolling sideways below it, and the design audit at 320 px (Claude's call, open to the owner).
+2026-10-31, profile 16's first review's thirteen findings (triage, Claude's call, open to the owner): the three that do not work as they say (the Tour's LFO card pointing at a Cutoff out of view, Bass Step 4 ticked before it is done, Acid's Snapshot left on) to [158](./issues/158-tour-and-tutorial-slips.md), a bug; the ten on words to [129](./issues/129-words-fun-to-read.md), now ready for an agent, with three more decisions (each Tutorial its own first card, one word per idea, the end card pointing on); Decay, Sustain and the Filter Envelope also into [130](./issues/130-the-tour-freezes-to-show-adsr.md)'s comments.
