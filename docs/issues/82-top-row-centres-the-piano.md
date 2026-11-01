@@ -4,6 +4,8 @@
 
 **Blocked by:** none
 
+**Since 2026-10-31 ([154](./154-the-headers-buttons-in-order.md), decided by the owner):** the piano need not be centred; the header's buttons' order comes first.
+
 **Status:** done (2026-10-30). The piano sits at the page's centre in three across from 1200 px; the look the owner was to judge never shipped, so that check is no longer due.
 
 **Since then:** the header of 2026-10-29 (the owner's ask, no issue) replaced this look before 1.16.0 went out. The Patch picker sits beside the logo, not under it, and Demo, Tutorial and Song moved right of the keyboard, under set-up, in two rows from 861 to 1919 px; decision 4 and the stacking in How it was built no longer hold. The piano is still centred from 1200 px; from 861 to 1100 px it keeps its size up to 100 px right of the centre, where the acceptance criteria say 80. The header and brand tests named below are gone; the centring tests stay, at the new bound, beside one for the Patch picker beside the logo. Closed by [issue 107](./107-words-1-16-made-untrue.md).
