@@ -1,10 +1,12 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { TRACK } from '../demo/track';
 import { createSynthEngine } from '../engine/synthEngine';
+import { noteHz } from '../music/tempo';
 import { dB, energyAboveDb, frequencyAround, toneAmplitude, toneAmplitudeHann } from '../test/measure';
 import { straightenLimiter } from '../test/straightLimiter';
 import { applyStep } from '../tutorial/tutorial';
 import { tutorialFor } from '../tutorial/tutorials';
-import type { Patch } from './patch';
+import { type Patch, setLfo, setParam } from './patch';
 import { PRESET_GROUPS, PRESETS } from './presets';
 
 // The Presets rendered offline, as reviews 13 to 15 heard them (issue 108): their levels against their group, and
@@ -405,4 +407,47 @@ describe('issue 109’s Tutorials say what the engine plays, at the Step that sa
     expect(sineFirst).toBeGreaterThan(-6);
     expect(sineThird).toBeLessThan(-40);
   });
+});
+
+// Review 14: the Demo's Tremolo Keys, its LFO synced and free, turns its 1/8 to a 1/16 at bar 6. The player sets it
+// as the bar line comes into its look-ahead, 110 to 150 ms early, in the middle of a chord: the tremolo jumped to the
+// 1/16's phase there and the sound fell 11 dB in 6 ms. It must change speed from where it is, as 1.19.0's Hz did.
+describe('the Demo’s Tremolo Keys at bar 6 (review 14)', () => {
+  const part = TRACK.parts.find((p) => p.preset === 'Tremolo Keys')!;
+  const [eighth, sixteenth] = part.moves!.filter((m) => m.id === 'lfoNote');
+  const ORIGIN = 0.3;
+  const bar = ORIGIN + (sixteenth.start! * 60) / TRACK.bpm;
+  // 130 ms before the bar line, on a quantum, an Am chord held across it.
+  const AT = Math.round(((bar - 0.13) * SR) / 128) * (128 / SR);
+  /** The chord from half a second before the bar line, `from` turned to `to` at AT. */
+  const render = async (from: Patch, to: Patch) => {
+    const ctx = new OfflineAudioContext(1, Math.round(SR * (bar + 0.6)), SR);
+    straightenLimiter(ctx);
+    const engine = createSynthEngine(ctx);
+    engine.setTempo(TRACK.bpm, ORIGIN);
+    engine.applyPatch(from);
+    for (const note of [57, 60, 64]) engine.noteOn(note, 0.8, bar - 0.5);
+    void ctx.suspend(AT).then(() => {
+      engine.applyPatch(to);
+      void ctx.resume();
+    });
+    return (await ctx.startRendering()).getChannelData(0);
+  };
+  /** The largest bend (second difference) from `from` to `to` seconds. */
+  const bend = (s: Float32Array, from: number, to: number) => {
+    let most = 0;
+    for (let i = Math.round(from * SR) + 1; i < Math.round(to * SR) - 1; i++) most = Math.max(most, Math.abs(s[i + 1] - 2 * s[i] + s[i - 1]));
+    return most;
+  };
+
+  it('turns its 1/8 to a 1/16 mid-chord no more sharply than 1.19.0’s Hz did', async () => {
+    let synced = setParam(preset('Tremolo Keys'), 'lfoAmount', 0.8);
+    for (const lfo of part.synced ?? []) synced = setLfo(synced, { sync: 'on' }, lfo);
+    const asHz = setParam(preset('Tremolo Keys'), 'lfoAmount', 0.8);
+    const [now, then] = await Promise.all([
+      render(setParam(synced, 'lfoNote', eighth.to), setParam(synced, 'lfoNote', sixteenth.to)),
+      render(setParam(asHz, 'lfoRate', noteHz(eighth.to, TRACK.bpm)), setParam(asHz, 'lfoRate', noteHz(sixteenth.to, TRACK.bpm))),
+    ]);
+    expect(bend(now, AT - 0.005, bar + 0.4)).toBeLessThan(1.5 * bend(then, AT - 0.005, bar + 0.4));
+  }, 60_000); // two 12-second renders of six Voices: past the default limit when the whole suite runs at once
 });

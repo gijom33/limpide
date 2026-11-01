@@ -80,6 +80,8 @@ Claude's call, open to the owner: a player's beat count starts with the player, 
 
 **Since then (2026-11-01, [issue 176](./176-a-synced-rate-shows-its-note-value-alone.md)):** decision 10's Hz beside the note value is gone: a synced Rate reads its note value alone, at one width, so the knobs no longer shift; the Hz is in the Rate's tip. Decided by the owner.
 
+**Since then (2026-11-01, [review 14](../reviews/2026-11-01/14-ear-stand-in.md), finding 1):** decision 4's lock no longer jumps. When a synced free LFO's note value, Waveform or tempo changes, or Sync comes on, it carries on from its phase at the new Rate and is pulled onto the beat over its next two cycles, running at most a quarter faster or slower meanwhile, in the sound and the Modulation model alike. The jump to the beat's phase clicked on the Volume: the Demo's Tremolo Keys at bar 6 (×16), a note value turned by hand (up to ×121), one BPM or a Tap (up to ×42). Setting the tempo, by hand, by Tap or by typing it, still starts the beat count again, and the LFO is on it two cycles later; only a beat count that starts later than now (a player's first beat, its first Note there) restarts the LFO at once. ADR-0018's "restarts its oscillator where the beat puts it" is now this pull. Claude's call, open to the owner.
+
 ## How it was built (2026-10-31, on night/2026-10-31)
 
 **What was built:**

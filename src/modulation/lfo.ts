@@ -96,6 +96,12 @@ export function createLfoClock(start: number, rate: number) {
       for (const mark of marks.slice(i + 1)) mark.restart = false;
       recount(i, false);
     },
+    /** The Rate changes after `time` are called off (a pull onto the beat cut short, issue 112): restarts stay. */
+    cancelRatesAfter(time: number) {
+      const i = indexAt(time);
+      for (let k = marks.length - 1; k > i; k--) if (!marks[k].restart) marks.splice(k, 1);
+      recount(i, true);
+    },
     /** The phase (0–1) at `time`. */
     phaseAt(time: number) {
       const m = marks[indexAt(time)];

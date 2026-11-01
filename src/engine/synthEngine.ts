@@ -166,6 +166,9 @@ const WAVE_HARMONICS = 1024;
 const KEPT_WAVES = 32;
 // The LFOs' waves kept: one per Waveform and start, which a retriggered LFO keeps through a change of Waveform.
 const KEPT_LFO_WAVES = 32;
+// A synced free LFO comes back onto the beat over this many of its cycles, after its note value or the tempo changes
+// (review 14): off by half a cycle at most, it runs a quarter faster or slower meanwhile.
+const PULL_CYCLES = 2;
 /**
  * Each Voice's offset is taken out below this, by a second-order high-pass (issue 103): FM with Osc 2 on Osc 1's pitch
  * puts a sideband at 0 Hz, and two in-tune waves through Ring their product's average. That offset holds from Note to
@@ -943,7 +946,14 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   // The tempo synced LFOs follow (issue 112), and what each synced free LFO was last locked to the beat with.
   let tempo: Beat = { bpm: TEMPO.default, origin: lfoStart };
   const locks: (string | null)[] = [null, null];
+  // A synced free LFO being pulled onto the beat: the Rate it runs at until then (review 14).
+  const pulls: ({ rate: number; until: number } | null)[] = [null, null];
   const hz = (l: Lfo) => lfoHz(l, tempo.bpm);
+  /** The Rate LFO `i` runs at `t`: its own, or a pull's while it lasts. */
+  const lfoRate = (i: number, l: Lfo, t: number) => {
+    const pull = pulls[i];
+    return pull && t < pull.until ? pull.rate : hz(l);
+  };
   /** A new oscillator for LFO `i`, its cycle starting at phase `start` of its Waveform, wired to the LFO's bus. */
   const lfoOscillator = (i: number, l: Lfo, start: number) => () => {
     const next = ctx.createOscillator();
@@ -969,25 +979,59 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     lfoClocks[i].cancelAfter(t);
     lfoClocks[i].restart(t, start);
   };
+  /** A pull onto the beat still to end after `t` is called off, in the sound and the model: the LFO runs at its Rate. */
+  const endPull = (i: number, l: Lfo, t: number) => {
+    const pull = pulls[i];
+    pulls[i] = null;
+    if (!pull || pull.until <= t) return;
+    for (const osc of shared.lfos[i].takeover.nodes()) {
+      osc.frequency.cancelScheduledValues(t);
+      osc.frequency.setValueAtTime(hz(l), t);
+    }
+    lfoClocks[i].cancelRatesAfter(t);
+    lfoClocks[i].setRate(t, hz(l));
+  };
   /**
    * Each synced LFO running freely starts its cycle on a beat (issue 112): at its Waveform's start (`LFO_START`) on the
    * tempo's origin and every note value after, in the sound and the model alike. Locked again only when what it is
-   * locked with changes (Sync coming on, the note value, the Waveform, the tempo): a new oscillator takes over at `t`
-   * where the beat puts it, or at the origin if that is still to come (a player's first beat).
+   * locked with changes (Sync coming on, the note value, the Waveform, the tempo). From now, it is pulled onto the beat
+   * (review 14): it carries on from its phase and runs a little faster or slower for `PULL_CYCLES` of its cycles, by
+   * the fraction of a cycle it is off the beat (a quarter of its Rate at most), and is on it from there; a jump to the
+   * beat's phase clicked on the Volume. An origin still to come (a player's first beat) restarts it there, a new
+   * oscillator taking over, as the player's first Note starts.
    */
   const lockToBeat = (then: Patch, t: number) => {
     lfos(then).forEach((l, i) => {
       const lock = l.sync === 'on' && l.retrigger === 'free' ? `${tempo.bpm} ${tempo.origin} ${l.note} ${l.waveform}` : null;
       if (lock === locks[i]) return;
       locks[i] = lock;
+      endPull(i, l, t);
       if (!lock) return;
-      const at = Math.max(t, tempo.origin);
-      const cycles = LFO_START[l.waveform] + (at - tempo.origin) * hz(l);
-      const start = cycles - Math.floor(cycles);
-      shared.lfos[i].takeover.cancelAfter(t);
+      const nodes = shared.lfos[i];
+      nodes.takeover.cancelAfter(t);
       lfoClocks[i].cancelAfter(t);
-      shared.lfos[i].takeover.restart(at, lfoOscillator(i, l, start), true);
-      lfoClocks[i].restart(at, start);
+      const rate = hz(l);
+      if (tempo.origin > t) {
+        const start = LFO_START[l.waveform];
+        nodes.takeover.restart(tempo.origin, lfoOscillator(i, l, start), true);
+        lfoClocks[i].restart(tempo.origin, start);
+        return;
+      }
+      // How far the beat is ahead of the LFO, the nearer way round: made up over the pull.
+      const ahead = LFO_START[l.waveform] + (t - tempo.origin) * rate - lfoClocks[i].phaseAt(t);
+      const off = ahead - Math.round(ahead);
+      if (Math.abs(off) < 1e-9) return;
+      // Whole samples, so the oscillator's Rate changes back where the model's does.
+      const span = Math.max(1, Math.round((PULL_CYCLES / rate) * ctx.sampleRate)) / ctx.sampleRate;
+      const pull = { rate: rate + off / span, until: t + span };
+      pulls[i] = pull;
+      for (const osc of nodes.takeover.nodes()) {
+        osc.frequency.cancelScheduledValues(t);
+        osc.frequency.setValueAtTime(pull.rate, t);
+        osc.frequency.setValueAtTime(rate, pull.until);
+      }
+      lfoClocks[i].setRate(t, pull.rate);
+      lfoClocks[i].setRate(pull.until, rate);
     });
   };
   /** Call off the LFOs' restarts after `t`, in the sound and the model, for a Note whose Gate closed before it started. */
@@ -1193,8 +1237,8 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       const t = ctx.currentTime;
       lfos(patch).forEach((l, i) => {
         if (l.sync !== 'on') return;
-        lfoClocks[i].setRate(t, hz(l));
-        for (const osc of shared.lfos[i].takeover.nodes()) osc.frequency.setValueAtTime(hz(l), t);
+        lfoClocks[i].setRate(t, lfoRate(i, l, t));
+        for (const osc of shared.lfos[i].takeover.nodes()) osc.frequency.setValueAtTime(lfoRate(i, l, t), t);
       });
       lockToBeat(patch, t);
     },
@@ -1233,7 +1277,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       patches.push({ time: t, patch: next });
       trim(patches, t);
       lfos(next).forEach((l, i) => {
-        lfoClocks[i].setRate(t, hz(l));
+        lfoClocks[i].setRate(t, lfoRate(i, l, t));
         lfoClocks[i].forgetBefore(t - MODEL_SECONDS);
       });
       for (const v of voices) v.apply(next, t);
@@ -1261,7 +1305,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
         // A restart handed over ahead of now leaves the old oscillator running until then: it follows too.
         for (const osc of nodes.takeover.nodes()) {
           setLfoWave(osc, l.waveform);
-          osc.frequency.setValueAtTime(hz(l), t);
+          osc.frequency.setValueAtTime(lfoRate(i, l, t), t);
         }
         nodes.toCutoff.gain.setValueAtTime(cutoffCents[i], t);
         nodes.toPitch.gain.setValueAtTime(pitchCents[i], t);

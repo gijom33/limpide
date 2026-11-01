@@ -162,6 +162,17 @@ describe('createLfoClock', () => {
     expect(clock.phaseAt(2)).toBeCloseTo(0.5); // 1.5 cycles since 0.5
     expect(clock.phaseAt(2.1)).toBeCloseTo(0.7); // on at the Rate set at 2
   });
+
+  it('calls off the Rate changes after a moment, keeping the restarts and the Rate in force then (issue 112’s pull)', () => {
+    const clock = createLfoClock(0, 1);
+    clock.setRate(1, 3);
+    clock.setRate(2, 1);
+    clock.restart(3, 0.5);
+    clock.cancelRatesAfter(1.5);
+    expect(clock.phaseAt(2.5)).toBeCloseTo(0.5); // 1 cycle, then 1.5 s at 3 Hz
+    expect(clock.phaseAt(3)).toBeCloseTo(0.5);
+    expect(clock.phaseAt(3.1)).toBeCloseTo(0.8); // on at 3 Hz after the restart
+  });
 });
 
 describe('beatsBetween (issue 112)', () => {

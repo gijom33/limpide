@@ -7,6 +7,7 @@ import { noteIndex } from '../music/tempo';
 import { defaultPatch, type Patch } from '../patch/patch';
 import { PRESETS } from '../patch/presets';
 import { betweenHarmonicsDb, dB, energyAboveDb, frequencyAround, rms, toneAmplitude, toneAmplitudeHann } from '../test/measure';
+import { straightenLimiter } from '../test/straightLimiter';
 import { guideLevel } from '../viewers/guides';
 import { amplitudeToSpectrumDb } from '../viewers/spectrumScale';
 import { createSynthEngine, OSCILLATOR_LEVEL } from './synthEngine';
@@ -1109,9 +1110,9 @@ describe('an LFO synced to the tempo (issue 112)', () => {
     cutoff: 20000, waveform: 'sine', ampSustain: 1, ampAttack: 0.001, lfoDestination: 'volume', lfoAmount: 1, lfoWaveform: 'saw',
     lfoSync: 'on', lfoNote: noteIndex('1/4'),
   } as const;
-  const SECONDS = 1.6;
+  const SECONDS = 2.6;
   /** The Amp Tap's windows end at these moments (whole 128-frame quanta), each holding a beat or the change. */
-  const CAPTURES = [0.32, 0.72, 0.96, 1.28, 1.52];
+  const CAPTURES = [0.32, 0.72, 0.84, 0.96, 1.28, 1.52, 1.72, 2.16, 2.24, 2.56];
   /**
    * The tremolo's gain and its times, with the tempo 120 BPM counted from 0.2 s and the Note at 0; at 0.8 s, `then`
    * is done (a tempo set, a Patch changed, at the run's Depth).
@@ -1149,9 +1150,16 @@ describe('an LFO synced to the tempo (issue 112)', () => {
     });
     return { measured, engine: moved.engine };
   };
-  /** The largest gap between the sound's gain and the model's, a millisecond or more from the saw's jumps at `beats`. */
-  const gap = (measured: { time: number; gain: number }[], engine: ReturnType<typeof createSynthEngine>, from: number, to: number, beats: number[]) => {
-    const away = measured.filter((g) => g.time > from && g.time < to && beats.every((b) => Math.abs(g.time - b) > 0.001));
+  /** Where the model's saw jumps from its top to its foot, to a tenth of a millisecond. */
+  const feet = (engine: ReturnType<typeof createSynthEngine>) => {
+    const found: number[] = [];
+    for (let t = 0.0001; t < SECONDS; t += 0.0001) if (engine.lfoSwingAt(t) - engine.lfoSwingAt(t - 0.0001) < -1) found.push(t);
+    return found;
+  };
+  /** The largest gap between the sound's gain and the model's, a millisecond or more from the saw's jumps. */
+  const gap = (measured: { time: number; gain: number }[], engine: ReturnType<typeof createSynthEngine>, from: number, to: number) => {
+    const jumps = feet(engine);
+    const away = measured.filter((g) => g.time > from && g.time < to && jumps.every((b) => Math.abs(g.time - b) > 0.0012));
     expect(away.length).toBeGreaterThan(1000);
     return Math.max(...away.map((g) => Math.abs(g.gain - engine.modulationAt(g.time).volume)));
   };
@@ -1164,26 +1172,47 @@ describe('an LFO synced to the tempo (issue 112)', () => {
       expect(engine.lfoSwingAt(beat + 0.25), `half a beat on, ${beat} s`).toBeCloseTo(0, 9);
       for (const g of near(measured, beat)) expect(g.gain, `sound just after ${beat} s`).toBeCloseTo(0, 1);
     }
-    expect(gap(measured, engine, 0.21, SECONDS, [0.7, 1.2])).toBeLessThan(0.005);
+    expect(gap(measured, engine, 0.21, SECONDS)).toBeLessThan(0.005);
   });
 
-  it('follows a tempo set at once, its beat count started again there, the model on the sound across the change', async () => {
-    // At 90 BPM a quarter Note is 2/3 s: the saw's foot at 0.8 s, where the tempo was set, and at 1.4667 s.
-    const { measured, engine } = await gains({}, (e) => e.setTempo(90));
-    for (const beat of [0.8, 0.8 + 2 / 3]) {
-      expect(engine.lfoSwingAt(beat), `model at ${beat} s`).toBeCloseTo(-1, 9);
+  /** On the beats from `beats`: the sound at the saw's foot just after each, the model a quarter of a `cycle` on. */
+  const onTheBeats = (measured: { time: number; gain: number }[], engine: ReturnType<typeof createSynthEngine>, beats: number[], cycle: number) => {
+    for (const beat of beats) {
+      expect(engine.lfoSwingAt(beat + cycle / 4), `model a quarter after ${beat} s`).toBeCloseTo(-0.5, 6);
+      expect(near(measured, beat).length, `sound measured after ${beat} s`).toBeGreaterThan(50);
       for (const g of near(measured, beat)) expect(g.gain, `sound just after ${beat} s`).toBeCloseTo(0, 1);
     }
+  };
+  /** No jump where the change was made, at 0.8 s, in the model (the sound is held to it by `gap`). */
+  const noJump = (engine: ReturnType<typeof createSynthEngine>) =>
+    expect(Math.abs(engine.lfoSwingAt(0.8001) - engine.lfoSwingAt(0.7999))).toBeLessThan(0.01);
+
+  it('follows a tempo set from where it is, pulled onto the beat counted again there over two cycles, the model on the sound', async () => {
+    // At 90 BPM a quarter Note is 2/3 s, the beat counted from 0.8 s: on it from 0.8 + 4/3 s, then every 2/3 s.
+    const { measured, engine } = await gains({}, (e) => e.setTempo(90));
+    noJump(engine);
+    onTheBeats(measured, engine, [0.8 + 4 / 3], 2 / 3);
+    expect(engine.lfoSwingAt(0.8 + 2 + 1 / 6)).toBeCloseTo(-0.5, 6);
     expect(engine.tempo()).toEqual({ bpm: 90, origin: 0.8 });
-    expect(gap(measured, engine, 0.21, SECONDS, [0.7, 0.8, 0.8 + 2 / 3])).toBeLessThan(0.005);
+    expect(gap(measured, engine, 0.21, SECONDS)).toBeLessThan(0.005);
   });
 
-  it('locks to the beat when Sync comes on', async () => {
-    // Off until 0.8 s at 0.7 Hz; on there, the saw lands on the beats of 120 BPM counted from 0.2 s: 1.2 s, 1.7 s.
+  it('follows a note value turned from where it is, pulled onto its beat over two cycles, the model on the sound', async () => {
+    // A 1/8 at 120 BPM from 0.2 s, 4 Hz: on its beats from 0.8 + 0.5 s, every quarter of a second from 0.2 s.
+    const { measured, engine } = await gains({}, (e, lfoAmount) => e.applyPatch({ ...defaultPatch(), ...tremolo, lfoNote: noteIndex('1/8'), lfoAmount }));
+    noJump(engine);
+    onTheBeats(measured, engine, [1.7, 2.2], 1 / 4);
+    expect(gap(measured, engine, 0.21, SECONDS)).toBeLessThan(0.005);
+  });
+
+  it('is pulled onto the beat when Sync comes on', async () => {
+    // Off until 0.8 s at 0.7 Hz; on there, the saw is pulled onto the beats of 120 BPM counted from 0.2 s over two
+    // cycles of 1/2 s: on them from 1.8 s, the next at 2.2 s.
     const synced = await gains({ lfoSync: 'off', lfoRate: 0.7 }, (e, lfoAmount) => e.applyPatch({ ...defaultPatch(), ...tremolo, lfoAmount }));
-    expect(synced.engine.lfoSwingAt(1.2)).toBeCloseTo(-1, 9);
-    for (const g of near(synced.measured, 1.2)) expect(g.gain).toBeCloseTo(0, 1);
-    expect(gap(synced.measured, synced.engine, 0.81, SECONDS, [1.2])).toBeLessThan(0.005);
+    noJump(synced.engine);
+    onTheBeats(synced.measured, synced.engine, [2.2], 1 / 2);
+    expect(synced.engine.lfoSwingAt(2.7 + 1 / 8)).toBeCloseTo(-0.5, 6);
+    expect(gap(synced.measured, synced.engine, 0.21, SECONDS)).toBeLessThan(0.005);
   });
 
   it('restarts at each Note with Retrigger on, at the note value’s Hz, which follows the tempo', async () => {
@@ -1197,6 +1226,59 @@ describe('an LFO synced to the tempo (issue 112)', () => {
     // At 60 BPM from 0.8 s, 1 Hz, and the Note at 1 s restarts it there.
     expect(engine.lfoSwingAt(1)).toBeCloseTo(-1, 9);
     expect(engine.lfoSwingAt(1.25)).toBeCloseTo(-0.5, 9);
+  });
+});
+
+// Review 14: a synced free LFO jumped to its new phase when its note value or the tempo changed under a Note, and on
+// the Volume that clicked (×121 by hand, ×42 for one BPM). It must change speed from where it is, as a free LFO's Hz
+// change always has (1.19.0's, the control here), and come back onto the beat without a jump.
+describe('a synced free LFO changes speed without a jump (review 14)', () => {
+  const tremolo = {
+    cutoff: 20000, resonance: 0, waveform: 'sine', ampSustain: 1, ampAttack: 0.001,
+    lfoDestination: 'volume', lfoAmount: 0.8, lfoWaveform: 'sine', lfoRetrigger: 'free',
+  } as const;
+  const synced = { ...tremolo, lfoSync: 'on', lfoNote: noteIndex('1/8') } as const;
+  // A quarter into a 1/8's cycle at 120 BPM (4 Hz) from 0, on a quantum: the 1/16's beat puts it half way round.
+  const AT = (211 * 128) / SR;
+  /** A3 held from 0.05 s at 120 BPM counted from 0, `change` done at AT; the limiter straight. */
+  const play = async (patch: Partial<Patch>, change: (e: ReturnType<typeof createSynthEngine>) => void) => {
+    const ctx = new OfflineAudioContext(1, SR * 1.6, SR);
+    straightenLimiter(ctx);
+    const engine = createSynthEngine(ctx);
+    engine.setTempo(120, 0);
+    engine.applyPatch({ ...defaultPatch(), ...patch });
+    engine.noteOn(57, 1, 0.05);
+    void ctx.suspend(AT).then(() => {
+      change(engine);
+      void ctx.resume();
+    });
+    return { s: (await ctx.startRendering()).getChannelData(0), engine };
+  };
+  /** The largest bend (second difference) from `from` to `to` seconds: a jump in the gain is one far past the wave's. */
+  const steepestBend = (s: Float32Array, from: number, to: number) => {
+    let most = 0;
+    for (let i = Math.round(from * SR) + 1; i < Math.round(to * SR) - 1; i++) most = Math.max(most, Math.abs(s[i + 1] - 2 * s[i] + s[i - 1]));
+    return most;
+  };
+  const bendAround = (s: Float32Array) => steepestBend(s, AT - 0.01, AT + 0.6);
+
+  it('a note value turned mid-Note bends no more than a free LFO’s Hz turned, and lands on the new beat', async () => {
+    const { s, engine } = await play(synced, (e) => e.applyPatch({ ...defaultPatch(), ...synced, lfoNote: noteIndex('1/16') }));
+    const free = await play({ ...tremolo, lfoRate: 4 }, (e) => e.applyPatch({ ...defaultPatch(), ...tremolo, lfoRate: 8 }));
+    expect(bendAround(s)).toBeLessThan(1.5 * bendAround(free.s));
+    // On the 1/16's beats once it has been pulled there: a sine at its centre rising on each, a quarter on at its top.
+    for (const beat of [1, 1.125, 1.25]) {
+      expect(engine.lfoSwingAt(beat), `${beat} s`).toBeCloseTo(0, 6);
+      expect(engine.lfoSwingAt(beat + 1 / 32), `${beat} s and a quarter`).toBeCloseTo(0.8, 6);
+    }
+  });
+
+  it('a tempo set mid-Note (one BPM up) bends no more than a free LFO’s Hz turned, and lands on the new beat', async () => {
+    const { s, engine } = await play(synced, (e) => e.setTempo(121));
+    const free = await play({ ...tremolo, lfoRate: 4 }, (e) => e.applyPatch({ ...defaultPatch(), ...tremolo, lfoRate: (4 * 121) / 120 }));
+    expect(bendAround(s)).toBeLessThan(1.5 * bendAround(free.s));
+    // The beat counted again from AT: an 1/8 at 121 BPM is 60 / 121 / 2 s.
+    for (const n of [4, 5, 6]) expect(engine.lfoSwingAt(AT + (n * 30) / 121), `cycle ${n}`).toBeCloseTo(0, 6);
   });
 });
 
