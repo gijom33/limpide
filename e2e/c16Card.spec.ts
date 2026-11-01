@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
-import { c16Layout } from '../src/midi/c16';
+import { c16Layout, sharedButtons } from '../src/midi/c16';
+import { C16_CARD_MARGIN, pdfPages } from '../src/ui/c16CardPdf';
 import { midiPanel, openMidi, withFakeController } from './fakeMidi';
 
 // The C16 card (issue 145): the layout on one page to print and keep beside the C16, built from the layout's data.
@@ -29,16 +30,18 @@ test('shows every place of the C16 layout, bank by bank, each button marked Mome
     await expect(cell, place).toContainText(what);
     await expect(cell, place).toContainText('Toggle');
   }
+  // Its foot lists the buttons the layout has the same on every bank (issue 148).
+  const shared = sharedButtons().map((s) => `${s.name} ${s.place.label}`).join(', ');
+  await expect(page.locator('.c16-card-foot')).toContainText(`On every bank: ${shared}. Free places stay Toggle,`);
 });
 
 test('prints on one landscape page, A4 or Letter (issue 145)', async ({ page, browserName }) => {
   test.skip(browserName !== 'chromium', 'Only Chromium prints to PDF');
   await page.goto('/#c16-card');
   await expect(page.getByRole('region', { name: /^Bank [A-D]: / })).toHaveCount(4);
-  const margin = { top: '10mm', right: '10mm', bottom: '10mm', left: '10mm' };
   for (const format of ['A4', 'Letter']) {
-    const pdf = await page.pdf({ format, landscape: true, printBackground: true, margin });
-    expect((pdf.toString('latin1').match(/\/Type\s*\/Page\b/g) ?? []).length, format).toBe(1);
+    const pdf = await page.pdf({ format, landscape: true, printBackground: true, margin: C16_CARD_MARGIN });
+    expect(pdfPages(pdf), format).toBe(1);
   }
 });
 

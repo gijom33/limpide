@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addC16Places, buttonCc, c16Bank, c16Layout, isC16, upgradeC16Layout } from './c16';
+import { addC16Places, buttonCc, C16_BANKS, type C16Bank, c16Bank, c16Layout, isC16, sharedButtons, upgradeC16Layout } from './c16';
 import type { Mapping } from './mappings';
 
 /** What the layout maps a CC on channel 1 to: "param:cutoff", or undefined when it is left free. */
@@ -97,6 +97,14 @@ describe('the C16 layout, strip by strip (issue 145)', () => {
     expect(c16Bank({ kind: 'cc', channel: 2, number: 9 })).toBeUndefined();
     expect(bankOf(0, 97)).toEqual([undefined, undefined]);
     expect(c16Bank({ kind: 'note', channel: 1, number: 36 })).toBeUndefined();
+  });
+
+  it('finds the buttons the same on every bank, for the printed card’s foot (issue 148)', () => {
+    const named = (banks?: C16Bank[]) => sharedButtons(banks).map((s) => `${s.name} ${s.place.label}`);
+    expect(named()).toEqual(['M1 Previous Preset', 'M2 Next Preset', 'M3 Freeze', 'M4 Hold', 'S3 Snapshot']);
+    // A shared place changed on one bank is no longer on every bank, and the foot follows.
+    const banks = C16_BANKS.map((b, i) => (i === 2 ? { ...b, buttons: { ...b.buttons, S: [null, null, null, null] } } : b));
+    expect(named(banks)).toEqual(['M1 Previous Preset', 'M2 Next Preset', 'M3 Freeze', 'M4 Hold']);
   });
 
   it('knows a C16 by the name it gives, over USB or Bluetooth', () => {

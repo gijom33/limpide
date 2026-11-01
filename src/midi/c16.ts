@@ -1,6 +1,6 @@
 import { CHOICES } from '../patch/patch';
 import { targetKey } from './describe';
-import { type Control, clash, type Mapping, type Target } from './mappings';
+import { type ButtonMode, type Control, clash, type Mapping, type Target } from './mappings';
 
 const param = (id: Extract<Target, { kind: 'param' }>['id']): Target => ({ kind: 'param', id });
 const choice = (id: Extract<Target, { kind: 'choice' }>['id']): Target => ({ kind: 'choice', id });
@@ -78,8 +78,11 @@ export const C16_BANKS: C16Bank[] = [
   },
 ];
 
+/** A bank's letter on the C16, 0 for A … 3 for D. */
+export const bankLetter = (bank: number) => 'ABCD'[bank];
+
 /** The C16's factory CCs, on channel 1: knobs and faders across their rows, buttons down each strip (M, S, R) and then across. */
-const CHANNEL = 1;
+export const C16_CHANNEL = 1;
 const KNOBS = { first: 1, perBank: 8 };
 const FADERS = { first: 33, perBank: 4 };
 const BUTTONS = { first: 49, perBank: 12 };
@@ -92,15 +95,34 @@ export const buttonCc = (bank: number, row: ButtonRow, strip: number) => BUTTONS
  * an Action or a step through a choice of more than two; toggle (one message a press, its light the state) for a
  * two-way switch.
  */
-export const buttonMode = (target: Target): 'trigger' | 'toggle' =>
+export const buttonMode = (target: Target): ButtonMode =>
   target.kind === 'choice' && CHOICES[target.id].length === 2 ? 'toggle' : 'trigger';
+/** A free button's mode: the C16's own setting, left as it is. */
+export const FREE_BUTTON_MODE: ButtonMode = 'toggle';
+
+/** A button the same on every bank, by its name on the C16 ("M1", "S3"), and what it drives. */
+export interface SharedButton {
+  name: string;
+  place: NonNullable<C16Place>;
+}
+
+const samePlace = (a: C16Place, b: C16Place) => !!a && !!b && a.label === b.label && targetKey(a.target) === targetKey(b.target);
+
+/** The buttons that drive the same on every bank, row by row (M, S, R) and strip by strip: what the printed card's foot lists. */
+export function sharedButtons(banks: readonly C16Bank[] = C16_BANKS): SharedButton[] {
+  return BUTTON_ROWS.flatMap((row) =>
+    banks[0].buttons[row].flatMap((place, strip) =>
+      place && banks.every((bank) => samePlace(bank.buttons[row][strip], place)) ? [{ name: `${row}${strip + 1}`, place }] : [],
+    ),
+  );
+}
 
 /**
  * The C16 layout as Mappings, on channel 1, answering a C16 only (issue 145). The knobs are endless and set to the
  * editor's Relative #1 (64-centred: 65 or 66 up, 63 or 62 down); the faders send positions.
  */
 export function c16Layout(): Mapping[] {
-  const cc = (number: number): Control => ({ kind: 'cc', channel: CHANNEL, number });
+  const cc = (number: number): Control => ({ kind: 'cc', channel: C16_CHANNEL, number });
   const device = 'c16' as const;
   return C16_BANKS.flatMap((bank, b) => [
     ...bank.knobs.flatMap((p, i) => (p ? [{ control: cc(knobCc(b, i)), target: p.target, mode: 'relative-centred' as const, device }] : [])),
@@ -113,7 +135,7 @@ export function c16Layout(): Mapping[] {
 
 /** The bank (0 for A … 3 for D) a C16 control belongs to, by its CC; undefined when it is not one of the C16's. */
 export function c16Bank(control: Control): number | undefined {
-  if (control.kind !== 'cc' || control.channel !== CHANNEL) return undefined;
+  if (control.kind !== 'cc' || control.channel !== C16_CHANNEL) return undefined;
   for (const kind of [KNOBS, FADERS, BUTTONS]) {
     const offset = control.number - kind.first;
     if (offset >= 0 && offset < kind.perBank * C16_BANKS.length) return Math.floor(offset / kind.perBank);
@@ -142,10 +164,11 @@ const FIRST_LAYOUT: [number, string][] = (() => {
     [],
   ];
   const actions = ['action:hold', 'action:freeze', 'action:snapshot', 'action:previousPreset', 'action:nextPreset'];
+  // Its buttons counted from each bank's first, down each strip and then across, as today's are.
   return [0, 1, 2, 3].flatMap((b) => [
-    ...knobs[b].map((t, i): [number, string] => [1 + 8 * b + i, t]),
-    ...faders[b].map((t, i): [number, string] => [33 + 4 * b + i, t]),
-    ...[...actions, ...(b === 3 ? ['choice:lfoRetrigger', 'choice:lfo2Retrigger'] : [])].map((t, i): [number, string] => [49 + 12 * b + i, t]),
+    ...knobs[b].map((t, i): [number, string] => [knobCc(b, i), t]),
+    ...faders[b].map((t, i): [number, string] => [faderCc(b, i), t]),
+    ...[...actions, ...(b === 3 ? ['choice:lfoRetrigger', 'choice:lfo2Retrigger'] : [])].map((t, i): [number, string] => [buttonCc(b, 'M', 0) + i, t]),
   ]);
 })();
 
@@ -156,7 +179,7 @@ const FIRST_LAYOUT: [number, string][] = (() => {
  */
 export function upgradeC16Layout(stored: readonly Mapping[]): Mapping[] | null {
   const first = (m: Mapping) =>
-    !m.device && m.control.kind === 'cc' && m.control.channel === CHANNEL &&
+    !m.device && m.control.kind === 'cc' && m.control.channel === C16_CHANNEL &&
     FIRST_LAYOUT.some(([cc, target]) => cc === m.control.number && target === targetKey(m.target));
   if (!stored.some(first)) return null;
   const layout = c16Layout();

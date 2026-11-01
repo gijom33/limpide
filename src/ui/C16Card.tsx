@@ -1,14 +1,21 @@
-import { BUTTON_ROWS, buttonCc, buttonMode, C16_BANKS, type C16Place, faderCc, knobCc } from '../midi/c16';
+import {
+  BUTTON_ROWS, bankLetter, buttonCc, buttonMode, C16_BANKS, C16_CHANNEL, type C16Place, FREE_BUTTON_MODE, faderCc, knobCc, sharedButtons,
+} from '../midi/c16';
+import { describeMode } from '../midi/describe';
+import type { ButtonMode } from '../midi/mappings';
+
+/** A button's mode as the MIDI panel names it, in its colour. */
+const Mode = ({ mode }: { mode: ButtonMode }) => <span className={`c16-mode c16-${mode}`}>{describeMode(mode)}</span>;
 
 /** One place on the card: its name on the C16 (K1, F3, M2…), what it drives or "free", and its CC. */
-function Cell({ name, place, cc, mode }: { name: string; place: C16Place; cc: number; mode?: 'trigger' | 'toggle' }) {
+function Cell({ name, place, cc, mode }: { name: string; place: C16Place; cc: number; mode?: ButtonMode }) {
   return (
     <div role="listitem" className={`c16-cell${place ? '' : ' c16-free'}`}>
       <span className="c16-name">
         <span>
           {name} <span className="c16-cc">CC {cc}</span>
         </span>
-        {mode && <span className={`c16-mode c16-${mode}`}>{mode === 'trigger' ? 'Momentary' : 'Toggle'}</span>}
+        {mode && <Mode mode={mode} />}
       </span>
       <span className="c16-what">{place ? place.label : 'free'}</span>
     </div>
@@ -27,8 +34,7 @@ export function C16Card() {
         <h1>Limpide on the TempoPAD C16</h1>
         <p>
           Choose a bank with <b>CTRL BANK</b>, then <b>A</b> to <b>D</b>. Set every knob to <b>Relative #1</b>, and each
-          button as marked: <span className="c16-mode c16-trigger">Momentary</span> or{' '}
-          <span className="c16-mode c16-toggle">Toggle</span>. The pads play the synth.
+          button as marked: <Mode mode="trigger" /> or <Mode mode="toggle" />. The pads play the synth.
         </p>
         <button type="button" className="c16-print" onClick={() => window.print()}>
           Print
@@ -36,9 +42,9 @@ export function C16Card() {
       </div>
       <div className="c16-banks">
         {C16_BANKS.map((bank, b) => (
-          <section key={bank.name} className="c16-bank" aria-label={`Bank ${'ABCD'[b]}: ${bank.name}`}>
+          <section key={bank.name} className="c16-bank" aria-label={`Bank ${bankLetter(b)}: ${bank.name}`}>
             <h2>
-              <span className="c16-letter">{'ABCD'[b]}</span> {bank.name}
+              <span className="c16-letter">{bankLetter(b)}</span> {bank.name}
             </h2>
             <div className="c16-strips">
               {[0, 1, 2, 3].map((s) => (
@@ -49,7 +55,7 @@ export function C16Card() {
                   {BUTTON_ROWS.map((row) => {
                     const place = bank.buttons[row][s];
                     return (
-                      <Cell key={row} name={`${row}${s + 1}`} place={place} cc={buttonCc(b, row, s)} mode={place ? buttonMode(place.target) : 'toggle'} />
+                      <Cell key={row} name={`${row}${s + 1}`} place={place} cc={buttonCc(b, row, s)} mode={place ? buttonMode(place.target) : FREE_BUTTON_MODE} />
                     );
                   })}
                 </div>
@@ -59,8 +65,8 @@ export function C16Card() {
         ))}
       </div>
       <p className="c16-card-foot">
-        On every bank: M1 Previous Preset, M2 Next Preset, M3 Freeze, M4 Hold, S3 Snapshot. Free places stay Toggle,
-        the C16’s own setting. All on MIDI channel 1. gijom33.github.io/limpide
+        On every bank: {sharedButtons().map((s) => `${s.name} ${s.place.label}`).join(', ')}. Free places stay{' '}
+        {describeMode(FREE_BUTTON_MODE)}, the C16’s own setting. All on MIDI channel {C16_CHANNEL}. gijom33.github.io/limpide
       </p>
     </div>
   );
