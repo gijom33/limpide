@@ -1,5 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
-import { BEAD_OFF, holding, WELCOMED } from './e2e/startState';
+import { holding, USUAL } from './e2e/startState';
 
 export default defineConfig({
   testDir: 'e2e',
@@ -11,7 +11,7 @@ export default defineConfig({
     baseURL: 'http://localhost:5199',
     // Every test but a first visit's starts in a browser welcomed already, and every one with Bead switched off
     // (e2e/startState.ts).
-    storageState: holding({ ...WELCOMED, ...BEAD_OFF }),
+    storageState: holding(USUAL),
   },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },

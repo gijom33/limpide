@@ -53,4 +53,4 @@ Calls made without the owner (Claude's call, open to the owner):
 3. The letter keys and Tooltips are held as `'on'`/`'off'`, the form they are kept in and the Display switch's values, rather than as true/false.
 4. The tests were placed at the module's `recall`/`remember` and the existing store tests, the seams chosen without the owner.
 
-To try in the app: change every Display setting (Scope cycles, Timeline seconds, the axes, the Amp Tap's source, each overlay, Letter keys, Tooltips, Bead once met, Theme), reload, and find each as left; Freeze and a Snapshot are gone after the reload. A browser that saved its choices with the release before this one keeps them.
+To try in the app: change every Display setting (Scope cycles, Timeline seconds, the axes, the Amp Tap's source, each overlay, Letter keys, Tooltips, Bead once met (since [150](./150-bead-shown-by-default.md), 2026-10-31, from the first visit), Theme), reload, and find each as left; Freeze and a Snapshot are gone after the reload. A browser that saved its choices with the release before this one keeps them.

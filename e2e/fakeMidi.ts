@@ -1,5 +1,5 @@
 import { expect, type Page } from '@playwright/test';
-import { BEAD_OFF, startEmptied, WELCOMED } from './startState';
+import { startEmptied, USUAL } from './startState';
 
 type MidiWindow = { playMidi(bytes: number[]): void };
 
@@ -34,7 +34,7 @@ export const midiPermission = (page: Page, state: PermissionState) =>
  */
 export async function withFakeController(page: Page, name = 'Stand-in Controller') {
   await midiPermission(page, 'granted');
-  await startEmptied(page, { ...WELCOMED, ...BEAD_OFF }); // an empty Library, but not a first visit
+  await startEmptied(page, USUAL); // an empty Library, but not a first visit
   await page.addInitScript((name) => {
     const input = Object.assign(new EventTarget(), { id: 'fake', name, state: 'connected' });
     const access = Object.assign(new EventTarget(), { inputs: new Map([['fake', input]]) });

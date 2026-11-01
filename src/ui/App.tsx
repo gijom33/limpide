@@ -160,20 +160,21 @@ export function App() {
   // the About closes (the welcome among it), so the first thing a newcomer reads is not upstaged. B, E, A, D played by
   // hand, as in a bead of water, sends it away and calls it back; Display's switch does the same, and follows the
   // Notes. Off is remembered, for anyone who would rather not have it (the owner, 2026-10-30).
+  // Its switch is part of its rules (the Notes turn it), so it is kept here rather than by `useDisplaySetting`.
   const [bead, setBead] = useState(() => beadOnArrival(recall(storage, 'bead')));
-  const beadDoes = useCallback((event: BeadEvent) => setBead((b) => beadAfter(b, event)), []);
+  const moveBead = useCallback((event: BeadEvent) => setBead((b) => beadAfter(b, event)), []);
   useEffect(() => remember(storage, 'bead', bead.switch), [storage, bead.switch]);
   useEffect(() => {
-    if (!bead.entranceDue || bead.switch === 'off' || about) return;
-    const timer = setTimeout(() => beadDoes('entrance'), BEAD_ENTRANCE_SECONDS * 1000);
+    if (!bead.entranceDue || about) return;
+    const timer = setTimeout(() => moveBead('entrance'), BEAD_ENTRANCE_SECONDS * 1000);
     return () => clearTimeout(timer);
-  }, [bead.entranceDue, bead.switch, about, beadDoes]);
+  }, [bead.entranceDue, about, moveBead]);
   // While it is out, five more words spelled with Notes each cue a trick (issue 127).
   const [word, setWord] = useState<{ word: Word; count: number } | null>(null);
   /** A Note played by hand: `spelled`, the word it ends, if any; `called`, whether it ends the calling phrase. */
   const heard = useEffectEvent((spelled: Word | null, called: boolean) => {
     if (spelled && bead.presence === 'up') setWord((w) => ({ word: spelled, count: (w?.count ?? 0) + 1 }));
-    if (called) beadDoes('notes');
+    if (called) moveBead('notes');
   });
   useEffect(() => {
     const phrase = createCallingPhrase();
@@ -183,7 +184,7 @@ export function App() {
       heard(words.press(note, time), phrase.press(note, time));
     });
   }, [session]);
-  const beadGone = useCallback(() => beadDoes('gone'), [beadDoes]);
+  const beadGone = useCallback(() => moveBead('gone'), [moveBead]);
   const modulationContext = useMemo(() => ({ engine: session.engine, patch: () => patches.get().patch, octave: octaveRef }), [session, patches]);
   // The letter keys play Notes unless turned off in Display (issue 51); remembered.
   const [letterKeys, setLetterKeys] = useDisplaySetting(storage, 'letterKeys');
@@ -404,7 +405,7 @@ export function App() {
                       { value: 'on', label: 'On', name: 'Bead on' },
                       { value: 'off', label: 'Off', name: 'Bead off' },
                     ]}
-                    onChange={(v) => beadDoes(v === 'on' ? 'switch on' : 'switch off')}
+                    onChange={(v) => moveBead(v === 'on' ? 'switch on' : 'switch off')}
                   />
                   <BeadIcon on={bead.switch === 'on'} />
                 </div>

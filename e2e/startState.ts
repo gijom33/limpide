@@ -15,6 +15,9 @@ export const holding = (items: Record<string, string>) => ({
   origins: [{ origin: 'http://localhost:5199', localStorage: Object.entries(items).map(([name, value]) => ({ name, value })) }],
 });
 
+/** What every spec starts with but a first visit's: welcomed, Bead switched off. */
+export const USUAL = { ...WELCOMED, ...BEAD_OFF };
+
 /** A brand-new browser: no welcome closed, no Patch kept, Bead switched off. */
 export const FIRST_VISIT = holding(BEAD_OFF);
 

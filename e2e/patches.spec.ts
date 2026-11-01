@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { expect, type Page, test } from '@playwright/test';
-import { BEAD_OFF, startEmptied, WELCOMED } from './startState';
+import { startEmptied, USUAL } from './startState';
 
 const cutoff = (page: Page) => page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name: 'Cutoff' });
 const patchName = (page: Page) => page.getByRole('button', { name: /^Patch:/ });
@@ -11,7 +11,7 @@ const nudge = async (page: Page) => {
 
 // Start from an empty Library: cleared once, before the app runs, so no autosave can write back in between.
 test.beforeEach(async ({ page }) => {
-  await startEmptied(page, { ...WELCOMED, ...BEAD_OFF }); // an empty Library, but not a first visit
+  await startEmptied(page, USUAL); // an empty Library, but not a first visit
   await page.goto('/');
 });
 
