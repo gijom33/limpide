@@ -53,6 +53,8 @@ A failure prints the Patch's `#p=` Share link with its Notes and Tempo.
 
 No error value anywhere, and no Patch whose limiter sticks for want of stacked sources. Four things are answered in the test, three of them findings for the owner:
 
+2026-10-31: the three findings are fixed by issue [166](./166-the-edges-three-findings.md), on the owner's go-ahead. The sweep no longer answers them: its marks are ordinary checks, the notch's silence control takes a notch's Q below zero by hand, and `IDEAL_HARMONICS` is no longer exported.
+
 1. **Finding: an LFO on a band-pass's or notch's Resonance takes its Q below zero.**
    - The model moves the Resonance from end to end. The sound moves the Q by half the span of the swing, either side of the knob's own Q, but a band-pass's or notch's Q grows by ratios (0.5 × 40^Resonance). So near the top of the swing, its foot passes below zero.
    - Below zero, Chromium's notch passes nothing (the sweep found notches silent) and its band-pass lets everything through.
