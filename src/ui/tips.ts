@@ -312,7 +312,7 @@ export const TIPS = {
     body: 'How loud the Amp lets the sound through, after its Envelope. An LFO aimed at Volume dips it from here, for tremolo: its ring shows how far.',
   },
   lfoRate: { title: 'Rate', body: 'How fast the LFO repeats, in cycles a second (Hz): 0.05 Hz is one slow sweep every 20 seconds, 20 Hz a fast flutter.' },
-  lfoNote: { title: 'Rate', body: 'With Sync on, how often the LFO repeats, as a note value at the tempo: 1 bar, 1/4, 1/8 (D dotted, T triplet), its Hz beside it.' },
+  lfoNote: { title: 'Rate', body: 'With Sync on, how often the LFO repeats, as a note value at the tempo: 1 bar, 1/4, 1/8 (D dotted, T triplet).' },
   lfoSync: { title: 'Sync', body: 'On: the Rate is a note value at the tempo, and the LFO’s cycle lands on the beat. Off: the Rate is in Hz, as it was.' },
   tempo: { title: 'Tempo', body: 'The page’s beats per minute, which an LFO with Sync on follows. Drag it or use the arrows; double-click to type it.' },
   tap: { title: 'Tap', body: 'Tap it in time: from the second tap the tempo follows your last four, its beat where you last tapped.' },
@@ -348,6 +348,11 @@ export function lfoLineTip(destination: LfoDestination): TipContent {
   return destination === 'pitch'
     ? { title: label, body: `${colour} broken line: the pitch as the LFO moves it (vibrato), a semitone up at the top and down at the bottom, the Note’s own pitch in the middle.` }
     : { title: label, body: `${colour} broken line: the ${label} as the LFO moves it (both LFOs added together when both aim at it), on its knob’s scale, bottom to top.` };
+}
+
+/** A synced Rate's tip (issue 176): its Hz at the tempo, which its readout leaves out so its knob keeps one width. */
+export function syncedRateTip(note: string, hz: string, bpm: number): TipContent {
+  return { ...TIPS.lfoNote, body: `${TIPS.lfoNote.body} At ${bpm} BPM, ${note} is ${hz}.` };
 }
 
 /** Each Tap's two Viewers (issue 59): what the Scope and the Spectrum there show. */

@@ -154,3 +154,52 @@ test('each LFO has a Retrigger switch, off by default, kept in the Patch across 
   await page.reload();
   await expect(page.getByRole('button', { name: 'LFO 2 Retrigger' })).toHaveAttribute('aria-pressed', 'true');
 });
+
+test('a synced Rate reads its note value alone, and turning it or switching Sync moves nothing beside it (issue 176)', async ({ page }) => {
+  await page.goto('/');
+  const rate = lfo(page).getByRole('slider', { name: 'LFO 1 Rate' });
+  const readout = lfo(page).locator('.knob', { has: page.getByRole('slider', { name: 'LFO 1 Rate' }) }).locator('.knob-value > :first-child');
+  const sync = lfo(page).getByRole('button', { name: 'LFO 1 Sync' });
+  const neighbours = [
+    lfo(page).getByRole('slider', { name: 'LFO 1 Depth' }),
+    lfo(page).getByRole('button', { name: 'LFO 1 Retrigger' }),
+    sync,
+    plot(page),
+    lfo(page, 2).getByRole('slider', { name: 'LFO 2 Depth' }),
+    lfo(page, 2).getByRole('slider', { name: 'LFO 2 Rate' }),
+  ];
+  // Where each sits in the section, so a click that scrolls the page moves none of them.
+  const section = page.getByRole('region', { name: 'LFO & Envelopes' });
+  const places = async () => {
+    const origin = (await section.boundingBox())!;
+    const width = (await readout.locator('..').boundingBox())!.width; // the readout's own, kept as the knob's may not be
+    return [`readout ${Math.round(width)}`, ...(await Promise.all(neighbours.map(async (n) => {
+      const { x, y } = (await n.boundingBox())!;
+      return `${Math.round(x - origin.x)},${Math.round(y - origin.y)}`;
+    })))];
+  };
+  const before = await places();
+  await sync.click();
+  await expect(readout).toHaveText('1/4');
+  expect(await places(), 'Sync on').toEqual(before);
+  await rate.focus();
+  await page.keyboard.press('Home');
+  await expect(readout).toHaveText('4 bars D');
+  const seen = new Set<string>();
+  for (let i = 0; i < 24; i++) {
+    const text = (await readout.textContent())!;
+    expect(text, 'the note value alone').not.toMatch(/Hz/);
+    seen.add(text);
+    expect(await places(), text).toEqual(before);
+    await page.keyboard.press('ArrowUp');
+  }
+  expect(seen.size, 'every note value').toBe(24);
+  await sync.click();
+  await expect(readout).toHaveText(/Hz$/);
+  expect(await places(), 'Sync off').toEqual(before);
+  await rate.focus();
+  for (const key of ['Home', 'End']) {
+    await page.keyboard.press(key);
+    expect(await places(), `Hz at ${key}`).toEqual(before);
+  }
+});

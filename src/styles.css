@@ -719,8 +719,6 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .switch-field[data-label='beside'] .switch { margin: 0; }
 .switch[aria-pressed='true'] { color: var(--bg); background: var(--stage); border-color: var(--stage); }
 .switch-field[data-inactive] .switch { opacity: 0.3; }
-/* A synced Rate's Hz beside its note value, in small type: "1/8 · 4 Hz". */
-.knob-value-detail { font-size: 0.85em; }
 .lfo-plot {
   display: block; width: 132px; min-width: 72px; height: auto; min-height: 48px; align-self: stretch;
   background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-inner);

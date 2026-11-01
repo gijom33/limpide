@@ -1,7 +1,7 @@
 import type { SynthEngine } from '../engine/synthEngine';
 import { DESTINATIONS } from '../modulation/destinations';
 import type { LfoWaveform } from '../modulation/lfo';
-import { formatSyncedRate, WIDEST_SYNCED_HZ } from '../music/tempo';
+import { formatSyncedRate } from '../music/tempo';
 import { formatParam, LFO_KEYS, type LfoNumber, type ParamId, type Patch, rateKnob, setLfo } from '../patch/patch';
 import { DestinationPicker } from './DestinationPicker';
 import { RetriggerIcon, SyncIcon } from './icons';
@@ -12,7 +12,7 @@ import { radioGroupKeys, radioTabIndex } from './radioGroup';
 import { SubBlock } from './SubBlock';
 import { Switch } from './Switch';
 import { Tooltip } from './Tooltip';
-import { TIPS } from './tips';
+import { syncedRateTip, TIPS } from './tips';
 
 // One cycle of each LFO Waveform, in a 24×14 box.
 const SHAPES: { waveform: LfoWaveform; label: string; path: string }[] = [
@@ -27,7 +27,7 @@ interface Props {
   lfo: LfoNumber;
   engine: SynthEngine;
   patch: Patch;
-  /** The page's tempo, which a synced Rate reads its Hz at (issue 112). */
+  /** The page's tempo, at which a synced Rate's tip gives its Hz (issues 112, 176). */
   bpm: number;
   onParam(id: ParamId, value: number): void;
   onPatch(change: (patch: Patch) => Patch): void;
@@ -36,7 +36,8 @@ interface Props {
 /**
  * One LFO, in two rows: its shape and destination, then its Depth and Rate (the owner, 2026-10-28: how far first,
  * then how fast), its Retrigger and Sync switches, and a plot of it moving, dimmed while the Depth is 0. With Sync on
- * the Rate knob turns its note value, its Hz at the tempo beside it (issue 112).
+ * the Rate knob turns its note value, read alone so the knob keeps one width; its Hz at the tempo is in its tip
+ * (issues 112, 176).
  */
 export function LfoControls({ lfo, engine, patch, bpm, onParam, onPatch }: Props) {
   const keys = LFO_KEYS[lfo];
@@ -45,7 +46,8 @@ export function LfoControls({ lfo, engine, patch, bpm, onParam, onPatch }: Props
   const retrigger = patch[keys.retrigger] === 'note';
   const synced = patch[keys.sync] === 'on';
   const rate = rateKnob(patch, lfo);
-  const rateText = synced ? Object.values(formatSyncedRate(patch[keys.note], bpm)).join(' · ') : formatParam(rate, patch[rate]);
+  const syncedRate = formatSyncedRate(patch[keys.note], bpm);
+  const rateText = synced ? `${syncedRate.note} · ${syncedRate.hz}` : formatParam(rate, patch[rate]);
   return (
     <SubBlock title={`LFO ${lfo}`} tip={TIPS.lfo} group>
       <div className="lfo-rows" data-lfo={lfo}>
@@ -78,7 +80,8 @@ export function LfoControls({ lfo, engine, patch, bpm, onParam, onPatch }: Props
               id={rate}
               value={patch[rate]}
               onChange={(v) => onParam(rate, v)}
-              detail={synced ? { text: formatSyncedRate(patch[keys.note], bpm).hz, widest: WIDEST_SYNCED_HZ } : undefined}
+              spoken={synced ? syncedRate.hz : undefined}
+              tip={synced ? syncedRateTip(syncedRate.note, syncedRate.hz, bpm) : undefined}
               inactive={off && `No effect while LFO ${lfo}'s Depth is 0`}
             />
             <Switch

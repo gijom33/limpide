@@ -11,25 +11,31 @@ const WIDTH_SAMPLES = 128;
 const SHOW_VALUE_MS = 1200;
 
 /** The longest readouts a Parameter can show, so its control can reserve their width and never change size. */
-function widestReadouts(id: ParamId): string[] {
+function longestReadouts(id: ParamId): string[] {
   const def = PARAMS[id];
   const values = [def.default, ...Array.from({ length: WIDTH_SAMPLES + 1 }, (_, i) => positionToValue(def, i / WIDTH_SAMPLES))];
   const all = new Set(values.map((v) => formatParam(id, v)));
   return [...all].sort((a, b) => b.length - a.length).slice(0, 4);
 }
 
-/** A second figure beside a control's value, in small type, and the widest it can be: a synced Rate's Hz (issue 112). */
-export interface ValueDetail {
-  text: string;
-  widest: string;
-}
+/** The Parameters one control turns: itself and those turned by its knob, as an LFO's Rate turns its note value. */
+const twins = (id: ParamId): ParamId[] => {
+  const knob = PARAMS[id].knob ?? id;
+  return (Object.keys(PARAMS) as ParamId[]).filter((other) => (PARAMS[other].knob ?? other) === knob);
+};
+
+/**
+ * The longest readouts a control can show, whichever of its Parameters it turns, so it keeps one width as it turns
+ * and as it changes Parameter: a Rate keeps its width through every Hz and note value, Sync on or off (issue 176).
+ */
+const widestReadouts = (id: ParamId): string[] => [...new Set(twins(id).flatMap(longestReadouts))];
 
 /**
  * What every Parameter control shares, knob or fader: its position, the arrow keys (Shift for fine), double-click
  * to reset, MIDI Learn (as the Parameter whose knob it is, `def.knob`), the moment it changes, and the value bubble
  * above a finger that drags it.
  */
-export function useParamControl(id: ParamId, value: number, onChange: (value: number) => void, detail?: ValueDetail) {
+export function useParamControl(id: ParamId, value: number, onChange: (value: number) => void, spoken?: string) {
   const def = PARAMS[id];
   const position = valueToPosition(def, value);
   // A stepped Parameter's (Octave, Semitone) travel per step: less would round back to where it was.
@@ -40,8 +46,11 @@ export function useParamControl(id: ParamId, value: number, onChange: (value: nu
   const mathsPatch = useContext(MathsContext);
   const maths = mathsPatch ? mathsReadout(id, value, mathsPatch) : undefined;
   const readout = maths ?? formatParam(id, value);
-  const widestMaths = mathsPatch ? widestMathsReadout(id) : undefined;
-  const widest = useMemo(() => [...widestReadouts(id), ...(widestMaths ? [widestMaths] : [])], [id, widestMaths]);
+  const mathsOn = mathsPatch !== undefined;
+  const widest = useMemo(
+    () => [...widestReadouts(id), ...(mathsOn ? twins(id).flatMap((t) => widestMathsReadout(t) ?? []) : [])],
+    [id, mathsOn],
+  );
   const changing = useChanging(value);
   const [touching, setTouching] = useState(false);
 
@@ -52,7 +61,7 @@ export function useParamControl(id: ParamId, value: number, onChange: (value: nu
     'aria-valuemin': 0,
     'aria-valuemax': 100,
     'aria-valuenow': Math.round(position * 100),
-    'aria-valuetext': detail ? `${formatParam(id, value)}, ${detail.text}` : formatParam(id, value),
+    'aria-valuetext': spoken ? `${formatParam(id, value)}, ${spoken}` : formatParam(id, value),
     onDoubleClick: () => onChange(def.default),
     onKeyDown: (e: React.KeyboardEvent<HTMLElement | SVGElement>) => {
       delete (e.currentTarget as HTMLElement).dataset.pointer; // keyboard focus from now on: show the ring
@@ -92,20 +101,15 @@ export function useParamControl(id: ParamId, value: number, onChange: (value: nu
     'data-bubble': touching || undefined,
     ...learnable,
   };
-  const beside = (text: string) => <span className="knob-value-detail"> · {text}</span>;
   const text = (
     <>
       {touching && <div className="value-bubble">{readout}</div>}
       <div className="knob-label">{def.label}</div>
       <div className="knob-value">
-        <span data-maths={maths !== undefined || undefined}>
-          {readout}
-          {detail && beside(detail.text)}
-        </span>
+        <span data-maths={maths !== undefined || undefined}>{readout}</span>
         {widest.map((t) => (
           <span key={t} className="knob-value-sizer" aria-hidden="true">
             {t}
-            {detail && beside(detail.widest)}
           </span>
         ))}
       </div>

@@ -4,8 +4,8 @@ import { PARAMS, type ParamId } from '../patch/patch';
 import { valueToPosition } from '../patch/taper';
 import { useInactive } from './inactive';
 import { ModulationRing } from './modulationRing';
-import { pressed, useParamControl, usePress, useWheel, type ValueDetail } from './paramControl';
-import { Tooltip } from './Tooltip';
+import { pressed, useParamControl, usePress, useWheel } from './paramControl';
+import { type TipContent, Tooltip } from './Tooltip';
 import { PARAM_TIPS } from './tips';
 
 const DRAG_PIXELS_FOR_FULL_TRAVEL = 200;
@@ -42,8 +42,10 @@ interface Props {
   onChange(value: number): void;
   /** Why the Parameter has no audible effect right now ("No effect while Osc 2 is silent"): dimmed, still adjustable. */
   inactive?: string | false;
-  /** A second figure beside the value, in small type: a synced Rate's Hz (issue 112). */
-  detail?: ValueDetail;
+  /** Said after the value to a screen reader, never shown under the knob: a synced Rate's Hz (issue 176). */
+  spoken?: string;
+  /** The tip instead of the Parameter's own: a synced Rate's, with its Hz at the tempo (issue 176). */
+  tip?: TipContent;
 }
 
 /**
@@ -51,8 +53,8 @@ interface Props {
  * line, big for Parameters worth turning while playing and small for the others (ADR-0008). Drag vertically (Shift
  * for fine), arrow keys, double-click to reset.
  */
-export function Knob({ id, value, onChange, inactive, detail }: Props) {
-  const c = useParamControl(id, value, onChange, detail);
+export function Knob({ id, value, onChange, inactive, spoken, tip }: Props) {
+  const c = useParamControl(id, value, onChange, spoken);
   const g = GEOMETRY[PARAMS[id].control === 'play' ? 'play' : 'set'];
   const centre = g.size / 2;
   const groove = centre - 8;
@@ -66,7 +68,7 @@ export function Knob({ id, value, onChange, inactive, detail }: Props) {
   const dimmed = useInactive(inactive);
 
   return (
-    <Tooltip content={PARAM_TIPS[id]}>
+    <Tooltip content={tip ?? PARAM_TIPS[id]}>
       <div className="knob" data-size={g === GEOMETRY.play ? 'big' : 'small'} {...dimmed.props} {...c.attributes}>
         <svg
           ref={wheel}

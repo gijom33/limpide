@@ -31,16 +31,11 @@ export const noteIndex = (name: string) => NOTE_VALUES.findIndex((v) => v.name =
 /** How often a note value repeats at `bpm`, in Hz: beats a second over its beats. */
 export const noteHz = (index: number, bpm: number) => bpm / 60 / NOTE_VALUES[index].beats;
 
-/** A synced Rate's readout: its note value, and its Hz in a few figures ("1/8", "4 Hz"). */
+/** A synced Rate's note value, which its knob reads, and its Hz in a few figures, which its tip gives ("1/8", "4 Hz"). */
 export function formatSyncedRate(index: number, bpm: number): { note: string; hz: string } {
   const hz = noteHz(index, bpm);
   return { note: NOTE_VALUES[index].name, hz: `${hz >= 10 ? Math.round(hz) : Number(hz.toPrecision(2))} Hz` };
 }
-
-/** The widest Hz a synced Rate can read, at any note value and tempo, so its knob keeps one width as it turns. */
-export const WIDEST_SYNCED_HZ = NOTE_VALUES.flatMap((_, i) =>
-  Array.from({ length: TEMPO.max - TEMPO.min + 1 }, (_, b) => formatSyncedRate(i, TEMPO.min + b).hz),
-).reduce((a, b) => (b.length > a.length ? b : a));
 
 /** Taps further apart than the slowest beat start the count again. */
 const LONGEST_TAP = 60 / TEMPO.min;

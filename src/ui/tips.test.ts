@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { LFO_DESTINATIONS, PARAMS, type ParamId } from '../patch/patch';
-import { OVERLAY_TIPS, PARAM_TIPS, TIPS } from './tips';
+import { OVERLAY_TIPS, PARAM_TIPS, syncedRateTip, TIPS } from './tips';
 
 describe("every Parameter's tip (issue 78)", () => {
   it.each(Object.keys(PARAMS) as ParamId[])('%s has a tip with a title and a body, which its knob or fader shows', (id) => {
@@ -35,4 +35,12 @@ it('the Guides’ tip says they stand at what the Mixer sends, so beyond them is
   expect(body).toMatch(/level the Mixer sends/);
   expect(body).toMatch(/one beyond them has been boosted by Resonance/);
   expect(body).not.toMatch(/Oscillator’s level/);
+});
+
+it('a synced Rate’s tip gives its Hz at the tempo, which its readout leaves out (issue 176)', () => {
+  const tip = syncedRateTip('1/4', '2 Hz', 120);
+  expect(tip.title).toBe('Rate');
+  expect(tip.body).toMatch(/note value at the tempo/);
+  expect(tip.body).toMatch(/At 120 BPM, 1\/4 is 2 Hz\.$/);
+  expect(TIPS.lfoNote.body).not.toMatch(/beside/);
 });

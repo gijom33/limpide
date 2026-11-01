@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { clampBpm, formatSyncedRate, NOTE_VALUES, noteHz, noteIndex, TEMPO, tappedBpm, WIDEST_SYNCED_HZ } from './tempo';
+import { clampBpm, formatSyncedRate, NOTE_VALUES, noteHz, noteIndex, TEMPO, tappedBpm } from './tempo';
 
 describe('the note values (issue 112)', () => {
   it('go from 4 bars to 1/32, each straight, dotted and triplet, slowest first', () => {
@@ -18,13 +18,11 @@ describe('the note values (issue 112)', () => {
     expect(noteHz(noteIndex('1/32'), 240)).toBeCloseTo(32, 12);
   });
 
-  it('read as the note value with its Hz beside it: "1/8 · 4 Hz"', () => {
+  it('named by the note value, its Hz in a few figures for its tip: "1/8", "4 Hz"', () => {
     expect(formatSyncedRate(noteIndex('1/8'), 120)).toEqual({ note: '1/8', hz: '4 Hz' });
     expect(formatSyncedRate(noteIndex('1/4 D'), 120)).toEqual({ note: '1/4 D', hz: '1.3 Hz' });
     expect(formatSyncedRate(noteIndex('4 bars'), 120)).toEqual({ note: '4 bars', hz: '0.13 Hz' });
     expect(formatSyncedRate(noteIndex('1/32 T'), 240)).toEqual({ note: '1/32 T', hz: '48 Hz' });
-    // The slowest, 4 bars dotted at 40 BPM: 36 s a cycle.
-    expect(WIDEST_SYNCED_HZ).toBe('0.028 Hz');
   });
 });
 

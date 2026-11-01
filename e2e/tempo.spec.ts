@@ -75,7 +75,7 @@ test('while the Demo plays the BPM is the track’s, and the person’s comes ba
   await expect(bpm(page)).not.toHaveAttribute('aria-disabled', 'true');
 });
 
-test('Sync turns the Rate knob to note values, "1/4 · 2 Hz" at 120 BPM, and off brings back the Hz it had (issue 112)', async ({ page }) => {
+test('Sync turns the Rate knob to note values, "1/4" (2 Hz at 120 BPM, in its tip), and off brings back the Hz it had (issues 112, 176)', async ({ page }) => {
   await page.goto('/');
   const rate = lfo(page).getByRole('slider', { name: 'LFO 1 Rate' });
   const sync = lfo(page).getByRole('button', { name: 'LFO 1 Sync' });
@@ -91,7 +91,9 @@ test('Sync turns the Rate knob to note values, "1/4 · 2 Hz" at 120 BPM, and off
   await page.keyboard.press('ArrowUp');
   await page.keyboard.press('ArrowUp');
   await expect(rate).toHaveAttribute('aria-valuetext', '1/8, 4 Hz');
-  await expect(lfo(page).locator('.knob', { has: page.getByRole('slider', { name: 'LFO 1 Rate' }) }).locator('.knob-value > :first-child')).toHaveText('1/8 · 4 Hz');
+  await expect(lfo(page).locator('.knob', { has: page.getByRole('slider', { name: 'LFO 1 Rate' }) }).locator('.knob-value > :first-child')).toHaveText('1/8');
+  await rate.hover();
+  await expect(page.getByRole('tooltip')).toContainText('At 120 BPM, 1/8 is 4 Hz.');
   await sync.click();
   await expect(rate).toHaveAttribute('aria-valuetext', hz!);
   await sync.click();
