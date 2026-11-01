@@ -6,12 +6,13 @@ The cause: on a phone Bead stands on a section's top edge only with room for its
 
 **Blocked by:** none
 
-**Status:** needs-info · bug. Bead on the line built (2026-10-31, decisions 1 and 2); the owner's idea of hovering where it loses its edge waits on the owner's yes to Claude's plan below.
+**Status:** ready-for-agent · bug. Bead on the line built (2026-10-31, decisions 1 and 2); the owner said yes to Claude's plan for hovering (decision 3).
 
 ## Decisions
 
 1. **Bead stands on the line, drawn over the tabs' foot** (option B of three: hanging higher behind the tabs, or hanging clear of the line, were the others). Decided by the owner, 2026-10-31.
 2. **How far over:** as long as the edge shows under the tabs (2 px or more), so it stays on the line as the page scrolls, over the tabs by up to its height for the last pixels; once the edge has gone under them, it hangs as before. A first try allowed two thirds of its height and left a band of scroll where it hung off the line again (the owner's second screenshot). Only under the section strip: under the header (2 × 2) it still needs its whole height. An edge with room under the tabs still comes first. Claude's call, open to the owner.
+3. **Hovering where it loses ground:** Claude's plan below, as written. Decided by the owner, 2026-10-31 ("ok on all questions").
 
 ## The owner's idea: hovering where it loses ground
 
