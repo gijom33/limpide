@@ -46,7 +46,7 @@ Every knob and fader you turn, a Controller turns, the Demo or the Tour turns ge
 - **Resonance:** it shivers. Turned past three quarters, it screams for a moment: eyes wide, tail straight.
 - **FM, Ring, Noise:** a shiver. **Volume and the Mixer's levels:** a splash going up, a wince going down. **The LFOs' Rate and Depth:** a wiggle. **Glide:** it slides along without stepping.
 - **A Waveform chosen** (Osc 1's or Osc 2's): its tail becomes that wave for 3 seconds (sine, triangle, saw, square or pulse), then the logo again.
-- **Detune**, while both Oscillators are in the Mixer: Bead splits in two. The more cents, the farther apart the two drops, and the faster they wobble, as two detuned Oscillators beat. At 0 they are one again.
+- **Detune**, while both Oscillators are in the Mixer: Bead splits in two, its twin to its left below 0 cents and to its right above, whichever way Bead faces ([174](./issues/174-beads-detune-twin-on-both-sides.md)). The more cents, the farther apart the two drops, and the faster they wobble, as two detuned Oscillators beat. At 0 they are one again.
 - **The Noise heard:** pixels of static crackle around it, more as the Noise's fader goes up.
 - **Any other choice** (a Mode, a Destination): a glance. **A Preset loaded:** an excited hop.
 

@@ -480,6 +480,38 @@ test('a Waveform chosen: its tail takes that wave a moment, then is the logo aga
   await expect(mascot(page)).toHaveAttribute('data-tail', 'logo', { timeout: 5000 });
 });
 
+test("Detune splits it, its twin on the side of Detune's sign: left below 0 cents, right above (issue 174)", async ({ page, browserName }) => {
+  test.skip(browserName !== 'chromium', 'the side is drawn alike in every browser; checked in one');
+  await page.goto('/');
+  await listening(page);
+  await bringBead(page);
+  await page.getByRole('tab', { name: 'Mixer' }).click();
+  await page.getByRole('slider', { name: 'Osc 2', exact: true }).press('ArrowUp');
+  await page.getByRole('tab', { name: /Osc 2/ }).click();
+  const detune = page.getByRole('slider', { name: 'Osc 2 Detune', exact: true });
+  // Every frame for half a second, as Bead strolls and turns: where its twin stands, against itself.
+  const sides = () =>
+    page.evaluate(
+      () =>
+        new Promise<number[]>((done) => {
+          const seen: number[] = [];
+          const sample = () => {
+            const self = document.querySelector('#bead-self')!.getBoundingClientRect();
+            const twin = document.querySelector<SVGUseElement>('.mascot-twin')!;
+            const at = twin.checkVisibility() ? twin.getBoundingClientRect() : self;
+            seen.push(Math.sign(Math.round(at.left - self.left)));
+            if (seen.length < 30) requestAnimationFrame(sample);
+            else done(seen);
+          };
+          requestAnimationFrame(sample);
+        }),
+    );
+  await detune.press('Home');
+  await expect.poll(sides).toEqual(Array(30).fill(-1));
+  await detune.press('End');
+  await expect.poll(sides).toEqual(Array(30).fill(1));
+});
+
 test('dragged and let go, it is thrown, and lands on an edge', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');

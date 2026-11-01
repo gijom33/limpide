@@ -587,15 +587,16 @@ export function Mascot({
       if (shown?.tail !== pose.tail) for (const [shape, g] of tails.current) g.style.display = shape === pose.tail ? '' : 'none';
       if (shown?.hat !== pose.hat) for (const [name, g] of hats.current) g.style.display = name === pose.hat ? '' : 'none';
       if (shown?.prop !== pose.prop) for (const [name, g] of props.current) g.style.display = name === pose.prop ? '' : 'none';
-      // Its twin, Detune splitting it, off to its left by half as many squares as pixels; frozen; its static. Each
-      // written only as it changes, to keep its frames cheap.
-      const twinned = pose.twin > 0 && pose.form === 'drop';
+      // Its twin, Detune splitting it, off on the side of its sign by half as many squares as pixels, the same side on
+      // the page whichever way it faces (issue 174); frozen; its static. Each written only as it changes, to keep its
+      // frames cheap.
+      const twinned = pose.twin !== 0 && pose.form === 'drop';
       if (twinned || shown?.twin) {
         // Linked to its drawing only while shown: WebKit copies a linked drawing again at every change to it.
         if (twinned) twin.current!.setAttribute('href', '#bead-self');
         else twin.current!.removeAttribute('href');
         twin.current!.style.display = twinned ? '' : 'none';
-        if (twinned) twin.current!.setAttribute('transform', `translate(${-pose.twin / 2} 0)`);
+        if (twinned) twin.current!.setAttribute('transform', `translate(${(pose.turn < 0 ? -pose.twin : pose.twin) / 2} 0)`);
       }
       if (pose.ice > 0 || shown?.ice) {
         ice.current!.style.display = pose.ice > 0 ? '' : 'none';
