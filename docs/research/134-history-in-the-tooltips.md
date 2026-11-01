@@ -80,7 +80,7 @@ Secondary, or primary known only by its record:
 - Moog's patent: an adjustable feedback resistor from output to input makes the low-pass resonant at the cutoff; enough feedback makes the filter oscillate, "a phase shift oscillator with four voltage-variable phase-shifting sections". **A** [S1]
 - The Minimoog calls it EMPHASIS; at 10 the filter "breaks into oscillation, and produces a pure sine wave tone", a "sixth sound source" (scans 14–15). **A** [S3]
 - ARP calls the same thing resonance, written Q (PDF page 36). **A** [S5]
-- For the Maths Layer: the letter Q was first used by K. S. Johnson of Western Electric (book of 1924); "quality factor" was coined by Legg and Given at Bell Labs in 1940. **C** [S23]
+- For the Synth Geek Layer: the letter Q was first used by K. S. Johnson of Western Electric (book of 1924); "quality factor" was coined by Legg and Given at Bell Labs in 1940. **C** [S23]
 
 **Draft History:** In Moog's patent, Resonance is feedback from the Filter's output to its input; turned up far enough, the Filter rings by itself. The Minimoog called it Emphasis.
 
@@ -347,7 +347,7 @@ Secondary, or primary known only by its record:
 
 ## Tips with no History line proposed
 
-Display and app controls, with no musical past: Freeze, Snapshot, Clear Snapshot, Frequency axis, Level axis, Scope cycles, Env Timeline, the Envelope Timeline and its key entries, Viewers follow, Playing (the computer keyboard), C16 layout, Print C16 card, Demo, Song, About, Theme, Tooltips, Letter keys, the Ideal Reference, the Response Curve, the Scope guides, and the Maths Layer itself. LFO Destination, Osc 1 and Osc 2 levels and the Sub & Noise tab are covered by the LFO, Mixer, Sub and Noise lines above.
+Display and app controls, with no musical past: Freeze, Snapshot, Clear Snapshot, Frequency axis, Level axis, Scope cycles, Env Timeline, the Envelope Timeline and its key entries, Viewers follow, Playing (the computer keyboard), C16 layout, Print C16 card, Demo, Song, About, Theme, Tooltips, Letter keys, the Ideal Reference, the Response Curve, the Scope guides, and the Synth Geek Layer itself. LFO Destination, Osc 1 and Osc 2 levels and the Sub & Noise tab are covered by the LFO, Mixer, Sub and Noise lines above.
 
 ## Facts that stayed unsourced (U)
 

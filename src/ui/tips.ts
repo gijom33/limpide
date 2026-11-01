@@ -457,8 +457,8 @@ export const OVERLAY_TIPS: Record<Overlay, TipContent> = {
     title: 'Scope guides',
     body: 'Dashed lines at the level the Mixer sends, every source’s level added, so they move with its faders. A trace inside them has only lost energy; one beyond them has been boosted by Resonance.',
   },
-  maths: {
-    title: 'Maths Layer',
-    body: 'The quantities behind the sound: Resonance as the Filter’s Q, the Mixer’s levels and the Amp’s Sustain in dB, the Harmonic formula of Osc 1’s Waveform on the Oscillator Spectrum (with FM or Ring up, their rules for the knobs as they are), the Response Curve’s formula on the Filter Spectrum, and the Cutoff’s value on the Timeline.',
+  geek: {
+    title: 'Synth Geek Layer',
+    body: 'The numbers under the hood, for the synth geek: Resonance as the Filter’s Q, the Mixer’s levels and the Amp’s Sustain in dB, the Harmonic formula of Osc 1’s Waveform on the Oscillator Spectrum (with FM or Ring up, their rules for the knobs as they are), the Response Curve’s formula on the Filter Spectrum, and the Cutoff’s value on the Timeline.',
   },
 };

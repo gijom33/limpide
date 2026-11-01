@@ -9,7 +9,7 @@
 ## Agent Brief
 
 **Category:** enhancement
-**Summary:** With the Maths Layer (soon the Synth Geek Layer) on, the Envelopes and Glide write the numbers and formulas the engine computes, as 133's decisions 9 and 10 (Glide) say.
+**Summary:** With the Synth Geek Layer on, the Envelopes and Glide write the numbers and formulas the engine computes, as 133's decisions 9 and 10 (Glide) say.
 
 **Current behavior:** With the layer on, these controls show only their value; their tips say nothing of the maths.
 

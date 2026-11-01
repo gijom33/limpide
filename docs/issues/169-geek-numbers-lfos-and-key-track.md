@@ -9,7 +9,7 @@
 ## Agent Brief
 
 **Category:** enhancement
-**Summary:** With the Maths Layer (soon the Synth Geek Layer) on, the LFOs and Key Track write the numbers and formulas the engine computes, as 133's decisions 6, 8 and 10 (Key Track) say.
+**Summary:** With the Synth Geek Layer on, the LFOs and Key Track write the numbers and formulas the engine computes, as 133's decisions 6, 8 and 10 (Key Track) say.
 
 **Current behavior:** With the layer on, these controls show only their value; their tips say nothing of the maths.
 

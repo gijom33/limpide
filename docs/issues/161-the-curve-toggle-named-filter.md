@@ -12,7 +12,7 @@
 
 Claude's call, open to the owner:
 
-2. **The glossary keeps "Response Curve"** for what is drawn: the toggle's tip starts "Filter: the Response Curve, the Filter's gain at every frequency…", and its accessible name says both ("Filter's Response Curve"), so a screen reader and the Maths Layer still meet the word.
+2. **The glossary keeps "Response Curve"** for what is drawn: the toggle's tip starts "Filter: the Response Curve, the Filter's gain at every frequency…", and its accessible name says both ("Filter's Response Curve"), so a screen reader and the Synth Geek Layer still meet the word.
 3. **Every place that names the toggle follows:** the Tutorials' and the Tour's words that say "Curve" in Display, the keyboard shortcut list if it names it, the tests.
 
 ## Agent Brief
@@ -40,7 +40,7 @@ Claude's call, open to the owner:
 
 ## How it was built
 
-- **The toggle:** Display's Show row reads Harmonics, Ideal, Filter, Guides, Maths, with the dashed orange swatch as before (decision 1). Its accessible name is "Filter’s Response Curve"; its tip is titled Filter and starts "The Response Curve: the Filter’s gain at every frequency" (decision 2). CONTEXT.md's Response Curve entry says Display's Filter toggle switches it on.
+- **The toggle:** Display's Show row reads Harmonics, Ideal, Filter, Guides, Maths (Geek since [165](./165-the-synth-geek-layer.md)), with the dashed orange swatch as before (decision 1). Its accessible name is "Filter’s Response Curve"; its tip is titled Filter and starts "The Response Curve: the Filter’s gain at every frequency" (decision 2). CONTEXT.md's Response Curve entry says Display's Filter toggle switches it on.
 - **The stored setting** keeps its key, `curve`, so a visitor's choice loads as it was.
 - **The Tutorials and the Tour** (decision 3): none tells the person to turn on Curve; every "Curve" in them speaks of the drawn line, and keeps it. Nor does the keyboard shortcut list name the toggle. Nothing there changed.
 - **Tests:** the overlays spec reads the row's five words in order and finds the toggle by its accessible name; a new spec loads a setting kept from before, with the Curve off, and finds the Filter toggle off. The tooltip and viewer-control specs follow the name; a tips unit test for the toggle's tip.

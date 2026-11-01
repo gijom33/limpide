@@ -9,7 +9,7 @@
 ## Agent Brief
 
 **Category:** enhancement
-**Summary:** With the Maths Layer (soon the Synth Geek Layer) on, Osc 2's tuning and the Noise write the numbers and formulas the engine computes, as 133's decisions 6 and 7, and the Noise's formula of decision 11 say.
+**Summary:** With the Synth Geek Layer on, Osc 2's tuning and the Noise write the numbers and formulas the engine computes, as 133's decisions 6 and 7, and the Noise's formula of decision 11 say.
 
 **Current behavior:** With the layer on, these controls show only their value; their tips say nothing of the maths.
 

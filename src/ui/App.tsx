@@ -6,7 +6,7 @@ import { type AudioStatus, unlockAudio } from '../app/unlockAudio';
 import { rememberWelcome, welcomeFor } from '../app/welcome';
 import { createCallingPhrase, createWordsHeard, type Word } from '../input/callingPhrase';
 import { DEFAULT_OCTAVE, shiftOctave, startingOctave } from '../input/keyboardLayout';
-import { type Formula, oscillatorFormulas, responseFormula } from '../music/maths';
+import { type Formula, oscillatorFormulas, responseFormula } from '../music/geek';
 import { CHOICES, osc1Heard, osc2Heard, type ParamId, type Patch, setFilter, setParam, setWaveform, subNoiseHeard } from '../patch/patch';
 import { PRESETS } from '../patch/presets';
 import { TUTORIALS } from '../tutorial/tutorials';
@@ -17,6 +17,7 @@ import { DisplayMenu } from './DisplayMenu';
 import { EnvelopeTimeline } from './EnvelopeTimeline';
 import { Fader } from './Fader';
 import { FilterShape } from './FilterShape';
+import { GeekContext } from './geekContext';
 import { useDisplaySetting } from './hooks/useDisplaySetting';
 import { useHold } from './hooks/useHold';
 import { useComputerKeyboard, useSpaceFreezes } from './hooks/useKeys';
@@ -33,7 +34,6 @@ import { LfoControls } from './LfoControls';
 import { LearnContext } from './learn';
 import { BeadIcon, Mascot } from './Mascot';
 import { MidiPanel } from './MidiPanel';
-import { MathsContext } from './mathsContext';
 import { ModulationContext } from './modulationRing';
 import { OverlayToggles } from './OverlayToggles';
 import { PatchBar } from './PatchBar';
@@ -476,7 +476,7 @@ export function App() {
     <TooltipsContext.Provider value={tooltips === 'on'}>
     <LearnContext.Provider value={learnContext}>
     <ModulationContext.Provider value={modulationContext}>
-    <MathsContext.Provider value={overlays.maths ? patch : null}>
+    <GeekContext.Provider value={overlays.geek ? patch : null}>
       <main data-frozen={viewer.frozen || undefined} data-learning={learning || undefined}>
         {midi.setup ? (
           <QuickSetupPanel
@@ -517,7 +517,7 @@ export function App() {
             stage="osc"
             viewers={viewers('oscillator', 'Oscillator', {
               showIdeal: true,
-              formulas: overlays.maths ? oscillatorFormulas(patch) : undefined,
+              formulas: overlays.geek ? oscillatorFormulas(patch) : undefined,
             })}
             more={
             <div className="source-rows">
@@ -722,7 +722,7 @@ export function App() {
             viewers={viewers('filter', 'Filter', {
               showIdeal: true,
               response: session.engine.filterResponse,
-              formulas: overlays.maths ? [responseFormula(patch.filterMode, patch.filterSlope)] : undefined,
+              formulas: overlays.geek ? [responseFormula(patch.filterMode, patch.filterSlope)] : undefined,
             })}
           />
           <Block
@@ -849,7 +849,7 @@ export function App() {
           />
         )}
       </main>
-    </MathsContext.Provider>
+    </GeekContext.Provider>
     </ModulationContext.Provider>
     </LearnContext.Provider>
     </TooltipsContext.Provider>

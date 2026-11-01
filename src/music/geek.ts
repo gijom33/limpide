@@ -4,7 +4,7 @@ import { WAVEFORM_NAMES, type Waveform } from './harmonics';
 import { besselJ, osc2Ratio } from './idealReference';
 
 /**
- * The Maths Layer's content (issue 14): the quantities behind the sound, as data. The formulas are the ones the
+ * The Synth Geek Layer's content (issue 14): the quantities behind the sound, as data. The formulas are the ones the
  * Viewers already compute from (the Harmonic series of each Waveform, a biquad's gain per frequency), written out.
  */
 
@@ -31,7 +31,7 @@ export function harmonicFormula(waveform: Waveform, pulseWidth: number): Formula
 }
 
 
-/** A ratio as the Maths Layer writes it: "1", "2.38". */
+/** A ratio as the Synth Geek Layer writes it: "1", "2.38". */
 const ratioText = (r: number) => String(Number(r.toFixed(2)));
 
 /**
@@ -116,15 +116,15 @@ export function levelDb(level: number): string {
 /** The Parameters whose value is a gain: the Mixer's levels and the Amp's Sustain. */
 const GAINS: ParamId[] = ['mixOsc1', 'mixOsc2', 'mixSub', 'mixNoise', 'ampSustain', 'volume'];
 
-/** What a knob or fader reads in the Maths Layer instead of its everyday value, if anything. */
-export function mathsReadout(id: ParamId, value: number, patch: Patch): string | undefined {
+/** What a knob or fader reads in the Synth Geek Layer instead of its everyday value, if anything. */
+export function geekReadout(id: ParamId, value: number, patch: Patch): string | undefined {
   if (id === 'resonance') return qText(patch.filterMode, patch.filterSlope, value);
   if (GAINS.includes(id)) return levelDb(value);
   return undefined;
 }
 
-/** The widest readout a Parameter can show in the Maths Layer, to size its column while the layer is on. */
-export function widestMathsReadout(id: ParamId): string | undefined {
+/** The widest readout a Parameter can show in the Synth Geek Layer, to size its column while the layer is on. */
+export function widestGeekReadout(id: ParamId): string | undefined {
   if (id === 'resonance') return 'Q 15.8 ×2';
   if (GAINS.includes(id)) return '−99.9 dB';
   return undefined;

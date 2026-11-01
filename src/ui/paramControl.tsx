@@ -1,10 +1,10 @@
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { mathsReadout, widestMathsReadout } from '../music/maths';
+import { geekReadout, widestGeekReadout } from '../music/geek';
 import { type StepSize, stepParamBy } from '../patch/grid';
 import { formatParam, PARAMS, type ParamId, paramName } from '../patch/patch';
 import { positionToValue, valueToPosition } from '../patch/taper';
+import { GeekContext } from './geekContext';
 import { useLearnable } from './learn';
-import { MathsContext } from './mathsContext';
 
 /** Readouts sampled across a control's travel to find the widest it can show. */
 const WIDTH_SAMPLES = 128;
@@ -50,14 +50,14 @@ export function useParamControl(id: ParamId, value: number, onChange: (value: nu
     onChange(stepped.current);
   };
   const learnable = useLearnable({ kind: 'param', id: def.knob ?? id });
-  // In the Maths Layer some controls read the quantity behind their value instead (Q, dB): sized for it while on.
-  const mathsPatch = useContext(MathsContext);
-  const maths = mathsPatch ? mathsReadout(id, value, mathsPatch) : undefined;
-  const readout = maths ?? formatParam(id, value);
-  const mathsOn = !!mathsPatch; // the context holds null while the layer is off
+  // In the Synth Geek Layer some controls read the quantity behind their value instead (Q, dB): sized for it while on.
+  const geekPatch = useContext(GeekContext);
+  const geek = geekPatch ? geekReadout(id, value, geekPatch) : undefined;
+  const readout = geek ?? formatParam(id, value);
+  const geekOn = !!geekPatch; // the context holds null while the layer is off
   const widest = useMemo(
-    () => [...widestReadouts(id), ...(mathsOn ? twins(id).flatMap((t) => widestMathsReadout(t) ?? []) : [])],
-    [id, mathsOn],
+    () => [...widestReadouts(id), ...(geekOn ? twins(id).flatMap((t) => widestGeekReadout(t) ?? []) : [])],
+    [id, geekOn],
   );
   const changing = useChanging(value);
   const [touching, setTouching] = useState(false);
@@ -113,7 +113,7 @@ export function useParamControl(id: ParamId, value: number, onChange: (value: nu
       {touching && <div className="value-bubble">{readout}</div>}
       <div className="knob-label">{def.label}</div>
       <div className="knob-value">
-        <span data-maths={maths !== undefined || undefined}>{readout}</span>
+        <span data-geek={geek !== undefined || undefined}>{readout}</span>
         {widest.map((t) => (
           <span key={t} className="knob-value-sizer" aria-hidden="true">
             {t}

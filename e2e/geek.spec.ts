@@ -4,7 +4,7 @@ import { openDisplay, sliderName } from './helpers';
 const value = (page: Page, stage: string, name: string) =>
   page.getByRole('region', { name: stage }).locator('.knob', { has: page.getByRole('slider', { name: sliderName(name) }) }).locator('.knob-value > span').first();
 
-test('the Maths Layer is off at first; on, it shows Q, dB, the formulas and the Effective Cutoff, and is remembered', async ({ page }) => {
+test('the Synth Geek Layer is off at first; on, it shows Q, dB, the formulas and the Effective Cutoff, and is remembered', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
   const resonance = value(page, 'Filter', 'Resonance');
@@ -12,8 +12,13 @@ test('the Maths Layer is off at first; on, it shows Q, dB, the formulas and the 
   await expect(page.getByLabel('Oscillator formula')).toHaveCount(0);
 
   await openDisplay(page);
-  const toggle = page.getByRole('button', { name: 'Maths' });
+  const toggle = page.getByRole('button', { name: 'Geek' });
   await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+  // Its swatch is a pair of glasses, drawn (two round lenses), so it looks the same in every font (issue 165).
+  const lenses = await toggle.locator('.swatch').evaluate((s) =>
+    ['::before', '::after'].map((p) => getComputedStyle(s, p)).map((c) => ({ content: c.content, round: c.borderRadius === '50%' })),
+  );
+  expect(lenses).toEqual([{ content: '""', round: true }, { content: '""', round: true }]);
   await toggle.click();
   await page.keyboard.press('Escape');
 
@@ -39,9 +44,9 @@ test('the Maths Layer is off at first; on, it shows Q, dB, the formulas and the 
   await expect(value(page, 'Filter', 'Resonance')).toHaveText(/^Q /);
 });
 
-test('under FM and Ring the Maths Layer gives their rules for the knobs, and no longer the saw’s series as the sound’s (issue 109)', async ({ page }) => {
+test('under FM and Ring the Synth Geek Layer gives their rules for the knobs, and no longer the saw’s series as the sound’s (issue 109)', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.addInitScript(() => localStorage.setItem('limpide.overlays', JSON.stringify({ maths: true })));
+  await page.addInitScript(() => localStorage.setItem('limpide.overlays', JSON.stringify({ geek: true })));
   await page.goto('/');
   const formula = page.getByLabel('Oscillator formula');
   await expect(formula).toContainText('every n: each Harmonic 1/n of the first');
@@ -59,13 +64,13 @@ test('under FM and Ring the Maths Layer gives their rules for the knobs, and no 
   await expect(formula).not.toContainText('bₙ =');
 });
 
-test('the Maths Layer keeps the page inside a laptop screen and moves no knob', async ({ page }) => {
+test('the Synth Geek Layer keeps the page inside a laptop screen and moves no knob', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
   const knobs = () => page.locator('.knob').evaluateAll((all) => all.map((k) => Math.round(k.getBoundingClientRect().top)));
   const before = await knobs();
   await openDisplay(page);
-  await page.getByRole('button', { name: 'Maths' }).click();
+  await page.getByRole('button', { name: 'Geek' }).click();
   await page.keyboard.press('Escape');
   expect(await knobs()).toEqual(before);
   expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThanOrEqual(900);

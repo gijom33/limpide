@@ -96,7 +96,7 @@ _Avoid_: Frequency (ambiguous), corner, brightness
 
 **Resonance**:
 Emphasis of the frequencies right around the Cutoff.
-_Avoid_: Q (that's the maths name; shown only in the maths layer), emphasis, peak
+_Avoid_: Q (that's the maths name; shown only in the Synth Geek Layer), emphasis, peak
 
 **Effective Cutoff**:
 The Cutoff at a given instant after all modulation (Filter Envelope, LFOs, Velocity, Key Track) is applied.
@@ -252,7 +252,7 @@ _Avoid_: Expected spectrum, model curve
 
 **Response Curve**:
 The Filter's gain per frequency at the Effective Cutoff, drawn over the Spectrum. Switched on by Display's Filter toggle (issue 161), the line keeping its name.
-_Avoid_: Filter curve, transfer function (maths layer only), EQ curve
+_Avoid_: Filter curve, transfer function (Synth Geek Layer only), EQ curve
 
 **Envelope Timeline**:
 A Viewer plotting, over time with the present at its right edge, what changes the sound: the Amp Envelope always; the Filter Envelope while its Amount is set; the Effective Cutoff while the Filter Envelope or an LFO moves it; every other Destination an active LFO moves, on its knob's scale. A moved Parameter is a broken line in its stage's colour (the Cutoff dotted, what LFO 1 moves dashed, what LFO 2 alone moves dash-dotted). Its key lists what LFO 1 moves, what LFO 2 moves, the Cutoff, the Filter Envelope and the Amp Envelope, the Envelopes as Filter Env and Amp Env on screen. While an LFO is synced, faint broken lines mark the Tempo's beats, as on that LFO's plot.
@@ -266,9 +266,9 @@ _Avoid_: Pause, hold (Hold is a playing mode)
 A captured Scope and Spectrum trace, kept faint for A/B comparison against the live ones. One a Tutorial's Step took is cleared when that Tutorial ends or is left, unless the person has taken another since (issue 158).
 _Avoid_: Reference trace, pin, compare
 
-**Maths Layer**:
-An optional overlay revealing the underlying quantities behind Parameters and Viewers: Resonance as Q, levels in dB, the Harmonic formula of Osc 1's Waveform (FM's sidebands and Ring's sums and differences when they are up), the Response Curve's formula, and the Effective Cutoff's value. Switched on in the Display panel; off by default.
-_Avoid_: Advanced mode, expert mode
+**Synth Geek Layer**:
+An optional overlay revealing the underlying quantities behind Parameters and Viewers: Resonance as Q, levels in dB, the Harmonic formula of Osc 1's Waveform (FM's sidebands and Ring's sums and differences when they are up), the Response Curve's formula, and the Effective Cutoff's value. Switched on by Display's Geek toggle, a pair of glasses; off by default. Named the Maths Layer until issue 165.
+_Avoid_: Maths Layer (its old name), Advanced mode, expert mode
 
 ### Control surface
 

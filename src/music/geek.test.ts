@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { CHOICES, defaultPatch } from '../patch/patch';
 import { PRESETS } from '../patch/presets';
+import { filterQ, geekReadout, harmonicFormula, levelDb, oscillatorFormulas, qText, responseFormula } from './geek';
 import { harmonicSeries } from './harmonics';
-import { filterQ, harmonicFormula, levelDb, mathsReadout, oscillatorFormulas, qText, responseFormula } from './maths';
 
-describe('the Maths Layer: Resonance as Q', () => {
+describe('the Synth Geek Layer: Resonance as Q', () => {
   it('is a flat Butterworth (0.71) at Resonance 0 for low- and high-pass, at either Slope', () => {
     expect(filterQ('lowpass', 12, 0).q).toBeCloseTo(Math.SQRT1_2, 2);
     expect(filterQ('highpass', 12, 0).q).toBeCloseTo(Math.SQRT1_2, 2);
@@ -25,7 +25,7 @@ describe('the Maths Layer: Resonance as Q', () => {
   });
 });
 
-describe('the Maths Layer: levels in dB', () => {
+describe('the Synth Geek Layer: levels in dB', () => {
   it('reads a gain in dB, silence as −∞', () => {
     expect(levelDb(1)).toBe('0.0 dB');
     expect(levelDb(0.5)).toBe('−6.0 dB');
@@ -34,14 +34,14 @@ describe('the Maths Layer: levels in dB', () => {
 
   it('shows Q on Resonance and dB on the Mixer and the Amp’s Sustain, nothing elsewhere', () => {
     const patch = defaultPatch();
-    expect(mathsReadout('resonance', 0, patch)).toBe('Q 0.71');
-    expect(mathsReadout('mixOsc2', 0.5, patch)).toBe('−6.0 dB');
-    expect(mathsReadout('ampSustain', 1, patch)).toBe('0.0 dB');
-    expect(mathsReadout('cutoff', 1000, patch)).toBeUndefined();
+    expect(geekReadout('resonance', 0, patch)).toBe('Q 0.71');
+    expect(geekReadout('mixOsc2', 0.5, patch)).toBe('−6.0 dB');
+    expect(geekReadout('ampSustain', 1, patch)).toBe('0.0 dB');
+    expect(geekReadout('cutoff', 1000, patch)).toBeUndefined();
   });
 });
 
-describe('the Maths Layer: formulas as data', () => {
+describe('the Synth Geek Layer: formulas as data', () => {
   it('has a Harmonic formula for every Waveform, whose numbers match the Ideal Reference', () => {
     for (const w of CHOICES.waveform) expect(harmonicFormula(w, 0.3).formula.length, w).toBeGreaterThan(5);
     // The saw's 1/n and the triangle's 1/n², as the series the Viewers draw.
@@ -61,7 +61,7 @@ describe('the Maths Layer: formulas as data', () => {
   });
 });
 
-describe('the Maths Layer under FM and Ring (issue 109)', () => {
+describe('the Synth Geek Layer under FM and Ring (issue 109)', () => {
   const preset = (name: string) => PRESETS.find((p) => p.name === name)!.patch;
   const text = (lines: { formula: string; where: string }[]) => lines.map((l) => `${l.formula} | ${l.where}`).join('\n');
 

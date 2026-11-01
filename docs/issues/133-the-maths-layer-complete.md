@@ -1,4 +1,4 @@
-# 133: The Maths Layer complete
+# 133: The Synth Geek Layer complete
 
 **What to build:** From the v1 grilling ([131](./131-v1.md), decision 7, decided by the owner 2026-10-31): "I would also spend energy into making the math layer more valuable, complete." Every Section and every Viewer writes its maths, always the formula the engine computes, never a textbook stand-in. PRD story 99.
 
@@ -22,7 +22,7 @@ Claude's recommendations, each accepted ("ok"):
 10. **Key Track** shows the Cutoff at the Note played ("Cutoff here: 2.83 kHz"), the Effective Cutoff's figure; **Glide** has its curve's formula in its tip, no live number.
 11. **The Viewers:** each Scope the period and frequency of the Note in a corner ("3.82 ms · 261.6 Hz"); the Spectrum's hover readout adds the Harmonic's number ("n = 3") when on one; the Oscillator Spectrum's corner gives the Noise's slope while it is up ("pink: −3 dB/oct"), the Noise's formula under the hood.
 
-## What the Maths Layer writes today
+## What the Synth Geek Layer writes today
 
 Each Waveform's Harmonic series, FM's sidebands and Ring's sums and differences (issues 14 and 109); the Filter's response formula and its Q; the Mixer's levels and the Amp's Sustain in dB; the Effective Cutoff's value.
 

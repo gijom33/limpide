@@ -3,11 +3,11 @@ import { DEFAULT_OVERLAYS, OVERLAYS, toggleOverlay } from './overlays';
 
 describe('Viewer overlays', () => {
   it('offers Harmonic Markers, the Ideal Reference, the Response Curve and the Scope guides', () => {
-    expect(OVERLAYS).toEqual(['harmonics', 'ideal', 'curve', 'guides', 'maths']);
+    expect(OVERLAYS).toEqual(['harmonics', 'ideal', 'curve', 'guides', 'geek']);
   });
 
   it('starts with the Harmonic Markers, the Ideal Reference and the Response Curve on, the guides off', () => {
-    expect(DEFAULT_OVERLAYS).toEqual({ harmonics: true, ideal: true, curve: true, guides: false, maths: false });
+    expect(DEFAULT_OVERLAYS).toEqual({ harmonics: true, ideal: true, curve: true, guides: false, geek: false });
   });
 
   it('toggles one overlay without touching the others', () => {

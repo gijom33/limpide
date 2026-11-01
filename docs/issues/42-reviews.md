@@ -68,7 +68,7 @@ Who the PRD is for: someone who wants to understand subtractive synthesis, or a 
 
 - **Device:** laptop (1440 × 900), or a projector-sized window (1920 × 1080) for the teacher. **Time:** 30 minutes
 - **Goals:** learn what each stage does; for the teacher, plan a 15-minute lesson with it
-- **Asks:** Do the Viewers, the tooltips and the Maths Layer teach? Is the cause and effect visible (turn the Cutoff, see the Harmonics go)? Where does a newcomer get lost? Could a class follow it on a projector?
+- **Asks:** Do the Viewers, the tooltips and the Synth Geek Layer teach? Is the cause and effect visible (turn the Cutoff, see the Harmonics go)? Where does a newcomer get lost? Could a class follow it on a projector?
 - **Success:** they could explain the signal chain afterwards
 - **Runs twice:** now, and again once the tutorials are built (issue 40), to compare
 

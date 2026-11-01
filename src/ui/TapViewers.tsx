@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useRef } from 'react';
-import type { Formula } from '../music/maths';
+import type { Formula } from '../music/geek';
 import { createLevelMeter } from '../viewers/level';
 import { addToRenderLoop } from '../viewers/renderLoop';
 import { createScope } from '../viewers/scope';
@@ -22,7 +22,7 @@ interface Props {
   response?(frequencies: Float32Array<ArrayBuffer>): Float32Array;
   /** Whether the safety limiter is bending the sound: given for the Amp Tap, shown as LIMITING. */
   limiting?(): boolean;
-  /** The Maths Layer's formulas for this Tap's Spectrum, when the layer is on: each with what its letters mean. */
+  /** The Synth Geek Layer's formulas for this Tap's Spectrum, when the layer is on: each with what its letters mean. */
   formulas?: Formula[];
 }
 
@@ -73,11 +73,11 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, view, show
         />
         </Tooltip>
         {formulas && (
-          <p className="maths-formula" role="note" aria-label={`${name} formula`}>
+          <p className="geek-formula" role="note" aria-label={`${name} formula`}>
             {formulas.map((f) => (
               <Fragment key={f.formula}>
                 <span>{f.formula}</span>
-                <span className="maths-where">{f.where}</span>
+                <span className="geek-where">{f.where}</span>
               </Fragment>
             ))}
           </p>

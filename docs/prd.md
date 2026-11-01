@@ -17,7 +17,7 @@ Limpide (formerly SynthView) is a browser-based subtractive synthesizer laid out
 - **Hands-free listening:** Hold sustains the sound while you turn knobs.
 - **Playing:** from the computer keyboard, the on-screen piano, or a MIDI Controller. The Synido TempoPAD C16 is the primary target and maps itself when plugged in; Quick Setup maps any other Controller in one pass.
 - **Sounds and sharing:** Patches autosave and can be named, exported as JSON, or shared by URL.
-- **The maths:** an optional Maths Layer reveals Q, dB values and formulas for those who want it.
+- **The maths:** an optional Synth Geek Layer reveals Q, dB values and formulas for those who want it.
 
 ## User Stories
 
@@ -71,7 +71,7 @@ Limpide (formerly SynthView) is a browser-based subtractive synthesizer laid out
 42. As a learner, I want a hover readout (frequency, nearest note, level), so that I can measure what I see.
 43. As a learner, I want to take a Snapshot and see it as a faint trace against the live Spectrum, so that I can compare before and after a knob change.
 44. As a learner, I want to clear the Snapshot, so that I can start a new comparison.
-45. As a curious learner, I want a Maths Layer toggle that reveals Q, dB, Harmonic formulas and the Response Curve formula, so that I can go deeper when I'm ready.
+45. As a curious learner, I want a Synth Geek Layer toggle that reveals Q, dB, Harmonic formulas and the Response Curve formula, so that I can go deeper when I'm ready.
 46. As a learner, I want the Viewers to keep showing something useful when no note is playing (a flat line and silence, with a hint to press a key or turn on Hold), so that an empty screen doesn't look broken.
 
 ### Layout and look
@@ -141,19 +141,19 @@ Brought into scope by the grilling of [issue 40](./issues/40-preset-tutorials.md
 96. As a player, I want the Filter Envelope to move Osc 2's pitch, so that Notes can start with a zap (issue 93).
 97. As a first-time visitor who has never seen a synth, I want a Tour of the Sections in the signal's order, the synth turning each one's main controls itself while I listen and watch its Viewers, so that I know what each part is for before I build a sound; the Welcome's button for it takes the place of story 89's Tutorial button (issue 128).
 98. As a player with a keyboard that sends aftertouch, I want pressing harder on a held key to move one Destination I choose, the Cutoff by default, its move shown on the knob's ring, so that the synth answers my touch as a plugin synth would (issue 132).
-99. As a learner, I want the Maths Layer to write the formula behind every Section and Viewer, the one the engine computes, so that I can follow the sound in numbers wherever I look (issue 133).
-100. As a curious learner, I want each tooltip, with the Maths Layer on, to say where its control comes from, every fact sourced, so that I learn the instrument's history along with its maths (issue 134).
+99. As a learner, I want the Synth Geek Layer to write the formula behind every Section and Viewer, the one the engine computes, so that I can follow the sound in numbers wherever I look (issue 133).
+100. As a curious learner, I want each tooltip, with the Synth Geek Layer on, to say where its control comes from, every fact sourced, so that I learn the instrument's history along with its maths (issue 134).
 
 ## v1: the scope
 
 Framed by the owner on 2026-10-31 ([issue 131](./issues/131-v1.md), which tracks the work and holds the decisions). v1 is a 1.x version the owner deems complete; once it is framed, no new features go in, only polish, and the release that finishes it says "v1 complete".
 
 - **A sound generator,** no more: no effects, no arpeggiator, mono output.
-- **A learning layer** for people getting to know the domain: the Tutorials, the Tour, the Demo, the Maths Layer and the overlays.
+- **A learning layer** for people getting to know the domain: the Tutorials, the Tour, the Demo, the Synth Geek Layer and the overlays.
 - **Every feature the VST/AU plugin will need,** so that the plugin's spec is v1's synth: tempo sync for the LFOs (issue 112), Legato (119) and channel aftertouch (132). The engine stays on native Web Audio nodes; the port is the plugin's own project.
 - **Bead** is the last feature that is not essential.
 
-**In v1, still to do:** issues 112 (with 136 and 137), 119 and 132; the Maths Layer complete (133), History in the tooltips (134) and a Patch in plain words (123); the polish of 116, 129, 130, 47, 42, 48 and 111, and the inbox's findings; then one last full review round, finding only nitpicks.
+**In v1, still to do:** issues 112 (with 136 and 137), 119 and 132; the Synth Geek Layer complete (133), History in the tooltips (134) and a Patch in plain words (123); the polish of 116, 129, 130, 47, 42, 48 and 111, and the inbox's findings; then one last full review round, finding only nitpicks.
 
 **v2,** a list and not a commitment ("It will only depend on what the reaction is in the synth world", the owner): recording to a WAV file (120), the additive oscillator (121), Match the sound (122) and granular synthesis (135). A new idea after the frame goes there, unless it is a bug or polish of something in v1. Each v2 issue is blocked by issue 131.
 
@@ -183,7 +183,7 @@ Framed by the owner on 2026-10-31 ([issue 131](./issues/131-v1.md), which tracks
 - **Viewer renderers.** Draw Scope, Spectrum and Envelope Timeline onto canvases from display data. They hold the viewer state: Freeze, axes, Snapshot, hover.
 - **MIDI.** Parses raw MIDI bytes into typed messages. It also holds the Mapping store, the MIDI Learn state machine, Encoder Mode detection, Pickup, and the Quick Setup sequence. Its input is a `MIDIAccess`-like interface, so a fake can be injected.
 - **Persistence.** A key–value storage interface (localStorage in the app, in-memory in tests) used for autosave, the named Patch library and Mappings.
-- **UI (React).** The signal-flow layout, knobs, piano, MIDI panel, Patch browser and the Maths Layer toggle.
+- **UI (React).** The signal-flow layout, knobs, piano, MIDI panel, Patch browser and the Synth Geek Layer toggle.
 
 ## Testing Decisions
 

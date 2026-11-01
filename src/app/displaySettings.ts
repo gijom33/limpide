@@ -21,6 +21,8 @@ const ON_OFF = choice(['on', 'off'], 'on');
  * Every Display setting a new page starts from (issues 85, 87): where each is kept, and the values it may take. A
  * group is kept as one JSON object under its key, a single setting as its own text. Freeze and the Snapshot are
  * moments and are never kept. A key or its form never changes: a browser that saved under it must find it again.
+ * The one exception, decided by the owner: the Maths Layer's choice, now the Synth Geek Layer's, moved from `maths`
+ * to `geek` within the overlays (issue 165), a choice saved under the old name being let go.
  */
 const DISPLAY = {
   viewer: {

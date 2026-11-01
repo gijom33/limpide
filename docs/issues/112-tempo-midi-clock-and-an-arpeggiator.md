@@ -47,7 +47,7 @@ This reverses one thing in the PRD's Out of Scope: "LFO tempo sync: Limpide keep
 
 **Out of scope:**
 - Following a MIDI clock ([136](./136-following-midi-clock.md))
-- The tips beyond a first line each, the Maths Layer's conversion, the Tutorial Step and the Presets that get Sync ([137](./137-teaching-tempo-sync.md))
+- The tips beyond a first line each, the Synth Geek Layer's conversion, the Tutorial Step and the Presets that get Sync ([137](./137-teaching-tempo-sync.md))
 - An arpeggiator (decision 2), stereo, MPE
 
 ## Decisions (2026-10-30)
@@ -73,7 +73,7 @@ This reverses one thing in the PRD's Out of Scope: "LFO tempo sync: Limpide keep
 12. **The beat shown:** beat lines on the LFO plot, and on the Envelope Timeline, while an LFO is synced.
 13. **A MIDI clock against a player:** the player keeps its own BPM while it plays and the clock is ignored until it stops. Built in [136](./136-following-midi-clock.md).
 14. **Old Patches and links** load with Sync off; the Presets whose LFO is a rhythm get Sync on, chosen by profile 15 (in [137](./137-teaching-tempo-sync.md)).
-15. **The learning layer:** tips for Sync, the BPM and Tap; the Maths Layer writes the conversion on the Rate ("1/8 at 120 BPM: 120 ÷ 60 × 2 = 4 Hz"); a Step in the Tutorial that teaches the LFO syncs the wobble to the beat; History's line goes to [134](./134-history-in-the-tooltips.md). Built in [137](./137-teaching-tempo-sync.md).
+15. **The learning layer:** tips for Sync, the BPM and Tap; the Synth Geek Layer writes the conversion on the Rate ("1/8 at 120 BPM: 120 ÷ 60 × 2 = 4 Hz"); a Step in the Tutorial that teaches the LFO syncs the wobble to the beat; History's line goes to [134](./134-history-in-the-tooltips.md). Built in [137](./137-teaching-tempo-sync.md).
 16. **Three slices:** this issue the tempo and Sync; [136](./136-following-midi-clock.md) following MIDI clock; [137](./137-teaching-tempo-sync.md) teaching it; both blocked by this one.
 
 Claude's call, open to the owner: a player's beat count starts with the player, so its synced LFOs land on its first beat.

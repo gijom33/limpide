@@ -9,7 +9,7 @@ The rules every screen change is judged against, the way issue 15's audit judged
 - **The layout is the signal flow** (Gestalt continuity). Oscillators → Filter → Amp read left to right on wide screens and top to bottom on phones; Modulation sits below them, because it acts on them.
 - **What belongs together sits together** (Gestalt proximity and common region). A control lives in the block of the stage it changes. A control that only matters with another one sits beside it: Glide, which only acts at one Voice, sits beside Voices.
 - **One colour per stage** (Gestalt similarity). A stage's controls, value arcs and Viewers share its colour. Modulation has one colour of its own that no stage uses, so "where it is set" and "where it is now" never look alike.
-- **Show more only when asked** (progressive disclosure). The Display panel, the Maths Layer and the MIDI panel hold what a first-time visitor does not need; nothing a first-time visitor needs hides behind them.
+- **Show more only when asked** (progressive disclosure). The Display panel, the Synth Geek Layer and the MIDI panel hold what a first-time visitor does not need; nothing a first-time visitor needs hides behind them.
 
 ## Controls
 

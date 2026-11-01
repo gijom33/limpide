@@ -240,10 +240,10 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
     for (const hz of [100, 1000, 10000]) haloText(g, hz >= 1000 ? `${hz / 1000}k` : `${hz}`, width - 3, yHz(hz) - 2, background);
     g.textAlign = 'left';
 
-    // The Maths Layer: the Effective Cutoff's value now, beside its dot, on a chip of the background.
-    const maths = view().overlays.maths;
-    canvas.dataset.cutoffReadout = maths ? formatParam('cutoff', last.cutoff) : '';
-    if (maths) {
+    // The Synth Geek Layer: the Effective Cutoff's value now, beside its dot, on a chip of the background.
+    const geek = view().overlays.geek;
+    canvas.dataset.cutoffReadout = geek ? formatParam('cutoff', last.cutoff) : '';
+    if (geek) {
       const text = formatParam('cutoff', last.cutoff);
       g.font = '11px system-ui, sans-serif';
       const w = g.measureText(text).width + 8;
