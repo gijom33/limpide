@@ -96,12 +96,14 @@ const STATES: { name: string; open?(page: Page): Promise<void>; close?(page: Pag
   { name: 'Osc 2 tab', open: (page) => page.getByRole('tab', { name: 'Osc 2' }).click(), close: (page) => page.getByRole('tab', { name: 'Osc 1' }).click() },
   { name: 'Mixer tab', open: (page) => page.getByRole('tab', { name: 'Mixer' }).click(), close: (page) => page.getByRole('tab', { name: 'Osc 1' }).click() },
   { name: 'Patches panel', open: (page) => page.getByRole('button', { name: /^Patch:/ }).click(), close: (page) => page.getByRole('button', { name: /^Patch:/ }).click() },
-  // A Preset picked in the panel shows its description under the name, with its × (issue 153).
+  // A Preset picked in the panel shows its description under the name, with its × (issue 153). Picked by the keyboard,
+  // so the pointer stays on the Patch name: a click left it where the panel's Init was, over Osc 1's Square in Linux's
+  // fonts at 690 px, and the audit measured Square's hover fill (the 1.20.0 release run).
   {
     name: 'Preset’s description',
     open: async (page) => {
       await page.getByRole('button', { name: /^Patch:/ }).click();
-      await page.getByRole('dialog', { name: 'Patches' }).getByRole('button', { name: 'Init', exact: true }).click();
+      await page.getByRole('dialog', { name: 'Patches' }).getByRole('button', { name: 'Init', exact: true }).press('Enter');
       await expect(page.locator('.patch-about')).toBeVisible();
       await page.evaluate(() => Promise.all(document.querySelector('.patch-about')?.getAnimations().map((a) => a.finished) ?? [])); // faded in
     },
