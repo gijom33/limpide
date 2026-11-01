@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** needs-info · bug. Waiting on the owner for where the box goes (2026-10-31, night): no room beside or above the headings holds it at most widths; decisions 1, 2 and 4 are clear and not yet built.
+**Status:** ready-for-agent · bug. The owner's answers (2026-10-31, evening): decisions 5 to 7.
 
 ## Decisions
 
@@ -12,8 +12,14 @@ Claude's call, open to the owner, 2026-10-31 (decision 3 of 109 stands: it still
 
 1. **It says what it is:** the Preset's name leads the line, in bold ("**Init** · The plain starting point: one saw through an open low-pass Filter."), so it reads as that sound's description, not a stray tip.
 2. **It closes:** a small close button (×) at its right end, with a tip and an accessible name ("Close the Preset's description"), and Escape while it shows. The box takes the pointer for its button only; a click elsewhere on it still goes through to the controls beneath, as now.
-3. **It covers no heading:** where it would lie over a Section's heading (the Oscillators' and the Filter's at three and four across), it sits in the room beside or above the headings instead, or its width is kept to what leaves them clear; the design audit has the last word.
+3. ~~It covers no heading~~: replaced by decision 7, the owner's answer to the night's question 1.
 4. **No timer:** it does not fade by itself, since its words are read while playing ("Turn FM down and watch the rungs fold away").
+
+Decided by the owner, 2026-10-31 (evening), answering the night's question 1:
+
+5. **The Preset arrows show no box:** "I would not show the box if the preset is changed via the arrows. If user wants to know more about the preset, he can do it via the preset browser."
+6. **A load from the Patch panel shows it,** a deliberate pick, as now (with decisions 1, 2 and 4).
+7. **Over the headings' row, made wider** (the night's option (a), Claude's recommendation, taken): the box keeps its place under the Patch name and may be as wide as the Oscillators and the Filter together at three and four across, so it stays one or two lines and never reaches the Osc tabs or the Filter's Mode row; it covers the two headings while it shows.
 
 ## Agent Brief
 
@@ -30,10 +36,11 @@ Claude's call, open to the owner, 2026-10-31 (decision 3 of 109 stands: it still
 - The design audit
 
 **Acceptance criteria:**
-- [ ] Loading a Preset shows "Name · about line", the name in bold
+- [ ] Loading a Preset from the Patch panel shows "Name · about line", the name in bold
+- [ ] Changing the Preset with the arrows (‹ ›) shows no box
 - [ ] The close button and Escape take the box away; turning a knob or loading another Patch still does
 - [ ] A click on the box away from its button still reaches the control beneath
-- [ ] At 375, 700, 1100, 1440 and 2000 px the box covers no Section heading
+- [ ] At 375, 700, 1100, 1440 and 2000 px the box never reaches the Osc tabs or the Filter's Mode row; at three and four across it is at most two lines for every Preset
 - [ ] An e2e test covers closing it by button and by Escape; the design audit passes; every test passes in Linux's fonts too
 
 **Out of scope:**
