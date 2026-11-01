@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement
+**Status:** ready-for-human · enhancement. Built (2026-10-31) on night/2026-10-31, for the owner to try
 
 ## Decisions
 
@@ -34,15 +34,49 @@ The idea is the owner's; how it is done is Claude's call, open to the owner (202
 - The end-to-end tests' starting state: with Bead out by default, its pixels take the pointer, so every spec that is not about Bead starts with Bead off (one fixture), and the mascot spec starts as it needs
 
 **Acceptance criteria:**
-- [ ] A first visit (nothing stored): Bead comes in by itself once the welcome card is closed
-- [ ] A visitor with Bead switched off: no Bead after a reload; one with it on: Bead as now
-- [ ] Display's Bead switch and its tip show on a first visit
-- [ ] B, E, A, D sends Bead away and calls it back, the switch following
-- [ ] The other end-to-end specs pass unchanged, Bead kept out of their way; the mascot spec covers the default
-- [ ] Bead's frame-cost test passes as before
-- [ ] The README's line and bead.md's opening say so
+- [x] A first visit (nothing stored): Bead comes in by itself once the welcome card is closed
+- [x] A visitor with Bead switched off: no Bead after a reload; one with it on: Bead as now
+- [x] Display's Bead switch and its tip show on a first visit
+- [x] B, E, A, D sends Bead away and calls it back, the switch following
+- [x] The other end-to-end specs pass unchanged, Bead kept out of their way; the mascot spec covers the default
+- [x] Bead's frame-cost test passes as before
+- [x] The README's line and bead.md's opening say so
 - [ ] Every test passes in Linux's fonts too
 
 **Out of scope:**
 - New tricks ([127](./127-more-tricks-for-bead.md)) or Bead riding the LFOs ([141](./141-bead-rides-the-lfos.md))
 - The tips naming Bead's tricks
+
+## How it was built (2026-10-31, on night/2026-10-31)
+
+**What was built:**
+- **Bead's rules** (`src/ui/beadPresence.ts`): one pure function, `beadAfter`, takes Bead (where it is: away, up or leaving; its switch; whether its own entrance is still to come) and an event (the Notes, the switch turned on or off, its entrance, its melting done). The Notes call it when it is away and send it away when it is up, turning the switch to match; while it melts they do nothing. Its entrance brings it up only if it is on and neither the Notes nor the switch have had their say yet.
+- **The app:** Bead's entrance comes 3 s after the page opens. While About is open (the welcome among it) it waits, and its 3 s start again once About closes. The switch is remembered in `limpide.bead`, now on or off and on by default; a stored "unmet" from before reads as on. Display's Bead switch shows from the first visit, with a tip in `src/ui/tips.ts`.
+- **The words:** a "Meet Bead" line in the README; bead.md's opening and its "Calling it, and sending it away"; CONTEXT.md's Mascot; dated lines in 115 (decisions 6 and 7, and its build notes), 127 and 87.
+- **The end-to-end start state** (`e2e/startState.ts`): one place says what every spec's browser holds. The config starts every spec welcomed with Bead off. The first-visit specs (welcome, Tour, keyboard access) start with Bead off only. The specs that empty storage (Patches, LIMITING, the stand-in Controller) go through one helper that keeps Bead off. The mascot spec calls Bead with the Notes as before, and adds tests for the default: a first visit (the welcome waits, then Bead comes, and the switch and its tip show), "on" bringing it by itself again after a reload, "off" keeping it away, and the Notes turning the switch both ways.
+- **Tests:** unit, `beadPresence.test.ts` (6), the Display setting's default and the old "unmet" (`displaySettings.test.ts`), and Bead's tip (`tips.test.ts`).
+
+**Claude's calls, open to the owner:**
+1. **The Notes work whatever the switch says.** B, E, A, D sends Bead away and turns the switch off; played again, it calls Bead back and turns the switch on, even after Bead was switched off in Display. This is the only reading that fits "sends Bead away and calls it back, the switch following". It drops 115's rule that a switched-off Bead could not be called by the Notes, which was there for anyone who would hate it. Someone who switched it off could now bring it back by playing B, E, A, D in a tune, within 4 s.
+2. **3 seconds** after the page opens, or after About closes. It also waits whenever About is open, not only for the welcome.
+3. **The Tour and the Demo do not hold it back.** A newcomer who leaves the welcome by "Take the Tour" or "Play the Demo" sees Bead come 3 s later, while the Tour's first card or the Demo is on.
+4. **Once a visit.** If the Notes or the switch have had their say before it comes, it does not come by itself that visit.
+5. **Switched back on while it melts,** it comes back up once melted (before, it ended away with the switch on).
+6. **The tip:** "Bead is the little water drop living on the page, answering what you play and turn. Off sends it away, and so does playing B, E, A, D; the same Notes call it back. Your choice is remembered." The README: "A little water drop called Bead lives on the page and answers what you play. Switch it off in Display, or play `B, E, A, D` to send it away."
+
+**Tests run:**
+- `npx tsc` and `npm run lint`.
+- The whole Vitest suite: 1246 passed. The two that timed out, the edge Patches (issue 116), are not touched here and passed run alone.
+- The whole Playwright suite in Chromium once: 532 of 533 passed. The one failure was Bead's frame cost at 1.005 ms, while the unit suite loaded the machine; it passed in each run since.
+- After the review's fixes:
+  - The specs that use the start state, in Chromium: 112 of 113 passed. The 113th, issue 112's Tap tempo, a timing test, passed 3 times alone.
+  - The mascot spec in both browsers, twice: all 41 passed both times.
+- Under load (parallel runs while other work kept the machine busy), some mascot tests failed once each in WebKit: "three across" (Bead over the Demo or Song button), and "thrown, lands on an edge". Bead's frame cost failed under load in Chromium. Each passed when run again on a quiet machine. The throw test fails just as often on the code before this issue (2 in 24).
+
+**Not verified here:** "every test passes in Linux's fonts too" (GitHub's run of the branch will say). The app was not opened by hand on port 5174.
+
+**To try in the app:**
+- In a private window (nothing stored): the welcome opens, and Bead does not come while it is up. Close it, and Bead comes about 3 s later. Open Display: its Bead switch is on, and its tip says who Bead is.
+- Play B, E, A, D (J, D, H, S): Bead leaves, and Display's switch reads Off. Reload: no Bead. Play it again: Bead comes, the switch reads On, and after a reload Bead comes by itself again.
+- Switch it off in Display and reload: no Bead.
+
