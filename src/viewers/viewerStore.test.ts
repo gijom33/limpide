@@ -39,7 +39,9 @@ describe('the Viewer settings store (issue 77)', () => {
     viewers.dispatch({ type: 'toggleOverlay', overlay: 'guides' });
     viewers.dispatch({ type: 'showOverlay', overlay: 'maths' });
     viewers.dispatch({ type: 'showOverlay', overlay: 'maths' });
-    expect(viewers.get()).toMatchObject({ cycles: 4, timelineSeconds: 3, viewer: { frozen: true }, overlays: { guides: true, maths: true } });
+    viewers.dispatch({ type: 'hideOverlay', overlay: 'ideal' });
+    viewers.dispatch({ type: 'hideOverlay', overlay: 'ideal' });
+    expect(viewers.get()).toMatchObject({ cycles: 4, timelineSeconds: 3, viewer: { frozen: true }, overlays: { guides: true, maths: true, ideal: false } });
     expect(viewers.get()).not.toBe(first);
   });
 

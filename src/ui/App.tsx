@@ -215,6 +215,7 @@ export function App() {
   const tutorial = useTutorialState({
     storage, patch, patchName, patches, overlays,
     showOverlay: (overlay) => viewerStore.dispatch({ type: 'showOverlay', overlay }),
+    hideOverlay: (overlay) => viewerStore.dispatch({ type: 'hideOverlay', overlay }),
     snapshot: viewer.snapshot,
     takeSnapshot: () => viewerStore.dispatch({ type: 'takeSnapshot' }),
     onStart: () => {

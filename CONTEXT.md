@@ -177,7 +177,7 @@ A first look at the instrument for someone who has never seen a synth: a card fo
 _Avoid_: Lesson, walkthrough, onboarding, intro, Tutorial
 
 **Step**:
-One change in a Tutorial: one Parameter to a target (reached within 5 % of the control's travel, a choice exactly), or one Display option to switch on. It has an instruction, and a note on what to hear and see, shown once the change is made.
+One change in a Tutorial: one Parameter to a target (reached within 5 % of the control's travel, a choice exactly), or one Display option to switch on (one on already is switched off as its Step comes, and given back if the Tutorial is left before the person switches it on: issue 158). It has an instruction, and a note on what to hear and see, shown once the change is made.
 _Avoid_: Stage (an Envelope's), lesson
 
 **Song**:

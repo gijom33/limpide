@@ -17,7 +17,9 @@ export type ViewSettingsAction =
   | { type: 'setTimelineSeconds'; seconds: ViewSettings['timelineSeconds'] }
   | { type: 'toggleOverlay'; overlay: Overlay }
   /** A Tutorial's Display Step, done for the person: the overlay on, whatever it was. */
-  | { type: 'showOverlay'; overlay: Overlay };
+  | { type: 'showOverlay'; overlay: Overlay }
+  /** A Tutorial's Display Step coming with its overlay on: off, for the person to turn on (issue 158). */
+  | { type: 'hideOverlay'; overlay: Overlay };
 
 export type ViewerStore = ReturnType<typeof createViewerStore>;
 
@@ -66,6 +68,8 @@ function reduce(settings: ViewSettings, action: ViewSettingsAction): ViewSetting
       return { ...settings, overlays: toggleOverlay(settings.overlays, action.overlay) };
     case 'showOverlay':
       return settings.overlays[action.overlay] ? settings : { ...settings, overlays: { ...settings.overlays, [action.overlay]: true } };
+    case 'hideOverlay':
+      return settings.overlays[action.overlay] ? { ...settings, overlays: { ...settings.overlays, [action.overlay]: false } } : settings;
     default:
       return { ...settings, viewer: viewerReducer(settings.viewer, action) };
   }
