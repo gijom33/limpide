@@ -6,7 +6,7 @@ What exists already: Freeze stops every Viewer on its frame while the sound play
 
 **Blocked by:** none (the Tour, [128](./128-how-a-synth-works.md), came out in 1.18.0)
 
-**Status:** ready-for-agent · enhancement. Polish for v1 ([131](./131-v1.md)).
+**Status:** ready-for-human · enhancement. Built (2026-11-01) on night/2026-10-31, for the owner to try
 
 ## Decisions
 
@@ -34,17 +34,34 @@ Decided by the owner in a grilling, 2026-10-31 (Claude's recommendations, each a
 - The Tour's existing rule for a control the person grabs (the Tour lets go of it)
 
 **Acceptance criteria:**
-- [ ] The Amp card shows the Envelope Timeline with the Amp Scope and Spectrum, at every width the Tour supports
-- [ ] Each of the four stages is changed before a Note plays, and that Note's shape on the Timeline shows the change
-- [ ] After each changed Note fades, every Viewer freezes for about three seconds while the sound plays on, and the card names the stage; after the last, all four
-- [ ] Space during the card freezes or unfreezes as always, and the Tour freezes no more on that card
-- [ ] Leaving the card or the Tour lets go of the Tour's Freeze; a Freeze the person set is left as it is
-- [ ] The card's words pass the fact-checker (profile 13): no claim the engine does not make true
-- [ ] The Tour's e2e spec covers the freeze and the person's own; every test passes in Linux's fonts too
+- [ ] The Amp card shows the Envelope Timeline with the Amp Scope and Spectrum, at every width the Tour supports (from 2 × 2 up; on a phone, the Timeline alone: see How it was built)
+- [x] Each of the four stages is changed before a Note plays, and that Note's shape on the Timeline shows the change
+- [x] After each changed Note fades, every Viewer freezes for about three seconds while the sound plays on, and the card names the stage; after the last, all four
+- [x] Space during the card freezes or unfreezes as always, and the Tour freezes no more on that card
+- [x] Leaving the card or the Tour lets go of the Tour's Freeze; a Freeze the person set is left as it is
+- [x] The card's words pass the fact-checker (profile 13): no claim the engine does not make true
+- [ ] The Tour's e2e spec covers the freeze and the person's own; every test passes in Linux's fonts too (covered, and passing in Chromium and WebKit here; Linux's fonts are GitHub's run)
 
 **Out of scope:**
 - A Snapshot trick, or a fifth card
 - Rewriting the other cards' words ([129](./129-words-fun-to-read.md))
+
+## How it was built
+
+- **The Amp card's four passes:** at 60 BPM, one Note (C3) per stage, each pass 7 s. The synth turns the stage over the first second (Attack to 0.6 s, Decay to 1 s, Sustain to 30 %, Release to 1 s), the ring on its fader; the Note goes down half a second later and carries the change; at 3.2 s, at least 0.15 s after the Note's Release has faded, every Viewer freezes for 3 s; then the stage goes back and the next one turns. Each Note, onset to fade, fits in the 2 s the Envelope Timeline shows by default, with room before its onset. The moves, the phrase and the freezes come from one list of the four stages, so they cannot drift apart.
+- **The frozen picture:** the card's line under its words shows the Viewers' own Frozen badge and the stage ("up: Attack"); after the Release pass, all four, left to right. A screen reader hears "Frozen: up: Attack" from a live region of its own. While the picture runs, the line says "The picture freezes once each Note has faded."; every line takes the same place, so the card keeps one height. On a phone the line shows with the card folded.
+- **The person's Freeze (decision 4):** a Freeze or unfreeze the synth did not make (Space, Display's Freeze, a Controller's button), or Freeze already on as the card came up, is the person's: the synth freezes no more on that card and the line's word on what is coming goes. The synth lets go of its own Freeze when the card changes or the Tour ends, never of theirs.
+- **The words:** the card says each of the four stages in plain words (profile 16), that the synth changes one before each Note and puts it back, that the Filter has an Envelope of its own with the same four stages whose Amount sets how far it moves the Cutoff, and that the Timeline shows the shape each Note drew once it has faded. Fact-checked against the engine: the Envelope's curves (Attack 95 % by its time, Release e⁻⁶ by its), Notes held 85 % of their step, the phrase's lead-in, Init's Filter Envelope Amount (0), and that no Note sounds during a freeze (so the card does not say the sound plays on while frozen).
+- **Claude's calls, open to the owner:**
+  1. **The stages one at a time, each given back** before the next is turned (the brief's "brings each back"), rather than kept so the last Note carries all four. The Release pass's Note still shows all four stages for the last freeze, Init's Attack being a sharp rise.
+  2. **On a phone the Timeline alone is brought into view.** It is far below the Amp's Viewers there (about 670 px from the Amp Scope's top to the Timeline's foot, with about 530 px between the header and the card), so all three cannot be in view at once; the Timeline goes first, as the freeze is about it. From 2 × 2 up all three are.
+  3. **The person's Timeline length is left alone.** The passes fit the default 2 s; someone who chose 1 s sees the end of each shape only. The Tour could set it for the card and give it back, but it is a remembered Display setting.
+  4. **The Filter Envelope sentence** answers the second half of profile 16's comment (it arrives unannounced in the Bass); one sentence, no move of its own.
+  5. **The card's clock counts from the phrase's first beat** (the phrase loop's 0.3 s lead-in) on every card, so the stages and freezes fall where the Notes are; the other cards' moves start 0.3 s later than before, which no one can see.
+- **Tests:** `src/tutorial/tour.test.ts`: four Notes, the moves' cycle as long as the phrase; each stage alone changed from half a second before its Note to its fade, far enough to see; the freezes after each fade (by 0.15 s), each onset on a 2 s Timeline, about 3 s long, the picture running a second before the next Note, naming the stage and then all four; no other card freezes. `e2e/tour.spec.ts`: the Attack set before the Note, the freeze and its name, the unfreeze, the Decay next and its freeze; Space during the Tour's freeze unfreezes, and no freeze follows through the next pass; the person's Freeze outlasts the Tour's window; Next, Back and Close let go of the Tour's Freeze and leave the person's; the layouts with the Timeline on the Amp card. Red first for each.
+- **Tests run:** `npx tsc`, `npm run lint`, the tutorial, viewers and demo unit tests (219 passed); the Tour spec and the design audit in Chromium and WebKit (80 passed). Linux's fonts are GitHub's run.
+- **The code review** (Standards and Spec), fixed: the phrase written by hand beside the timings it must match (now from one stage list), a freeze 0.1 s after the Release's fade (now 0.15 s or more), "Frozen: up: Attack" with two colons (now a badge), the summary decided in two files, the line's word on what is coming left up once Freeze was the person's, a live region that only toggled visibility, the Freeze hand inside the effect (now a helper), and issue 128 not saying the Amp card changed. Noted, not changed: the Tour times its moves on the page's clock and the Notes play on the sound's, set together as the card comes up; they could drift apart only if the sound's clock paused.
+- **To try:** take the Tour (About) to the Amp card and watch the Timeline: the Attack fader moves, a slow-rising Note, then the picture freezes with "up: Attack" under the card's words, and runs again; then the Decay, the Sustain, and after the Release all four named. Press Space (not on a button) during a freeze: it unfreezes, and the Tour freezes no more on that card. Try it on a phone too.
 
 ## Questions for the owner
 
