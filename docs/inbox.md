@@ -4,8 +4,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
-- 2026-10-31, the owner's bug, with a screenshot of the phone header on the night branch (localhost:5174, the browser pane narrowed), Tutorial, Hold, Song and the BPM overlapping: "Do not allow super narrow screens where buttons overlap."
-
 ## Ideas
 
 ## Dropped
@@ -144,3 +142,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-31, the owner's idea of a wider keyboard in three and four across (triage, Claude's call, open to the owner): into [154](./issues/154-the-headers-buttons-in-order.md), decisions 3b and 6, since the expert's arrangement of the buttons decides the room the keyboard gets: it grows by whole keys into what the buttons leave, the letter keys' 17 in place.
 2026-10-31, the owner's bug of text moving as values change, which the owner named as a Spectrum's hover readout ("260 Hz · C4 +2¢ · −43 dB") (triage, Claude's call, open to the owner): to [155](./issues/155-the-spectrum-readout-stays-still.md), a bug, ready for an agent: the owner's stacking, three lines in a box of fixed size, each value right-aligned, flipping side only at the edge.
 2026-10-31, the owner's rule of shorter words over a second line (triage): into [the design principles](./design-principles.md) as "One line, shorter words", decided by the owner, and to [156](./issues/156-one-line-shorter-words.md), ready for an agent: the Timeline's key first, every label with a short and a shortest form chosen by its room, and the design audit failing on any that wraps (the forms and the audit check Claude's call, open to the owner).
+2026-10-31, the owner's bug of buttons overlapping in a very narrow window (278 px) (triage): to [157](./issues/157-no-narrower-than-a-phone.md), a bug, ready for an agent once [112](./issues/112-tempo-midi-clock-and-an-arpeggiator.md) is done: no screen so narrow that buttons overlap (decided by the owner); the page never narrower than 320 px, scrolling sideways below it, and the design audit at 320 px (Claude's call, open to the owner).
