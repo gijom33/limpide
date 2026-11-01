@@ -2352,3 +2352,96 @@ describe('a Note reaching a Voice still sounding dips first, so it does not clic
     expect(Math.abs(onset(0.3) - onset(0) - asked * SR)).toBeLessThanOrEqual(1);
   });
 });
+
+describe('Legato (issue 119)', () => {
+  // One Voice, one sine: a slow Attack and Decay, so a Note's start is plain to see in the level.
+  const slow = { cutoff: 20000, resonance: 0, waveform: 'sine', ampAttack: 0.4, ampDecay: 0.4, ampSustain: 0.3, ampRelease: 0.1 } as const;
+  // The output's level as an Envelope's: a sine at the Nominal Level, through the master's 0.45, has an RMS of 0.5 × 0.45 / √2.
+  const envelopeOf = (s: Float32Array, t: number) => (rms(s, Math.round(t * SR) - 600, Math.round(t * SR) + 600) * Math.SQRT2) / (OSCILLATOR_LEVEL * 0.45);
+
+  it('gives a second key held over the first no new Attack on the Amp Envelope; with Legato off, it starts one', async () => {
+    const line = (legato: 'on' | 'off') =>
+      render(1.4, { ...slow, ampDecay: 0.1, legato }, (e) => {
+        e.noteOn(69, 1, 0.1);
+        e.noteOn(81, 1, 1); // the first key still held, its Envelope at its Sustain
+      });
+    const [on, off] = [await line('on'), await line('off')];
+    expect(envelopeOf(on, 0.9)).toBeCloseTo(0.3, 2); // the first Note held at its Sustain
+    expect(envelopeOf(on, 1.2)).toBeCloseTo(0.3, 2); // carries on through the second
+    expect(envelopeOf(off, 1.2)).toBeGreaterThan(0.6); // a new Attack
+  });
+
+  it('keeps the model on the sound along a legato line: one Attack, one Release, whatever the Notes between', async () => {
+    let engine!: ReturnType<typeof createSynthEngine>;
+    const filterEnvelope = { filterEnvAmount: 1, filterAttack: 0.2, filterDecay: 0.3, filterSustain: 0.5, filterRelease: 0.2 };
+    const s = await render(1.6, { ...slow, ...filterEnvelope, legato: 'on' }, (e) => {
+      engine = e;
+      e.noteOn(69, 1, 0.1);
+      e.noteOn(81, 0.4, 0.3); // in the Attack: a softer key changes nothing either
+      e.noteOn(76, 1, 0.7); // in the Decay
+      e.noteOff(1.2);
+    });
+    const amp: GateEvent[] = [
+      { time: 0.1, on: true, adsr: { attack: 0.4, decay: 0.4, sustain: 0.3, release: 0.1 }, peak: 1 },
+      { time: 1.2, on: false, adsr: { attack: 0.4, decay: 0.4, sustain: 0.3, release: 0.1 }, peak: 1 },
+    ];
+    const filter: GateEvent[] = amp.map((e) => ({ ...e, adsr: { attack: 0.2, decay: 0.3, sustain: 0.5, release: 0.2 } }));
+    for (let t = 0.05; t < 1.5; t += 0.01) {
+      expect(engine.modulationAt(t).amp, `${t.toFixed(2)} s`).toBeCloseTo(envelopeLevel(amp, t), 9);
+      expect(engine.modulationAt(t).filter, `${t.toFixed(2)} s`).toBeCloseTo(envelopeLevel(filter, t), 9);
+    }
+    // The sound as the model says, and as one Note held as long sounds: the line has its Attack and its Release alone.
+    const alone = await render(1.6, { ...slow, ...filterEnvelope }, (e) => {
+      e.noteOn(69, 1, 0.1);
+      e.noteOff(1.2);
+    });
+    for (const t of [0.2, 0.35, 0.5, 0.65, 0.8, 1.0, 1.25]) {
+      expect(envelopeOf(s, t), `${t} s`).toBeCloseTo(engine.modulationAt(t).amp, 1);
+      expect(envelopeOf(s, t), `${t} s`).toBeCloseTo(envelopeOf(alone, t), 2);
+    }
+    expect(engine.modulationAt(1).struck).toBe(0.1); // the line's one Note struck
+    expect(engine.modulationAt(1).sounding?.note).toBe(76); // at the newest Note's pitch
+  });
+
+  it('does not restart a retriggered LFO on a legato Note, in the sound and the model; with Legato off, it does', async () => {
+    // A square LFO at 1 Hz on Pitch, retriggered: up for half a second from the first Note at 0.3, down for the next.
+    const lfo = { cutoff: 20000, waveform: 'sine', ampAttack: 0.001, ampSustain: 1, lfoRate: 1, lfoWaveform: 'square', lfoDestination: 'pitch', lfoAmount: 1, lfoRetrigger: 'note' } as const;
+    const line = async (legato: 'on' | 'off') => {
+      let swing = 0;
+      const s = await render(1.2, { ...lfo, legato }, (e) => {
+        e.noteOn(57, 1, 0.3);
+        e.noteOn(69, 1, 0.6);
+        swing = e.lfoSwingAt(0.95);
+      });
+      return { swing, pitch: frequencyAround(s, SR, 0.95, 0.02) };
+    };
+    const on = await line('on');
+    expect(on.swing).toBe(-1); // 0.65 s into the first Note's cycle: down
+    expect(on.pitch).toBeCloseTo(440 * 2 ** (-1 / 12), 0);
+    const off = await line('off');
+    expect(off.swing).toBe(1); // 0.35 s into the second Note's: up
+    expect(off.pitch).toBeCloseTo(440 * 2 ** (1 / 12), 0);
+  });
+
+  it('starts a Note as before when no key is held, and has no effect on several Voices', async () => {
+    const struck = async (patch: Partial<Patch>, play: (e: ReturnType<typeof createSynthEngine>) => void) => {
+      let engine!: ReturnType<typeof createSynthEngine>;
+      await render(1.2, { ...slow, legato: 'on', ...patch }, (e) => {
+        engine = e;
+        play(e);
+      });
+      return engine.modulationAt(1.1).struck;
+    };
+    // Let go, then the next key: a Note of its own, after a dip (the first still in its Release).
+    expect(await struck({}, (e) => {
+      e.noteOn(69, 1, 0.1);
+      e.noteOff(0.9);
+      e.noteOn(81, 1, 0.95);
+    })).toBeCloseTo(0.95 + DIP, 6);
+    // Two Voices: the second key takes a Voice of its own and starts there.
+    expect(await struck({ voices: 2 }, (e) => {
+      e.noteOn(69, 1, 0.1);
+      e.noteOn(81, 1, 1);
+    })).toBe(1);
+  });
+});

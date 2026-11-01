@@ -37,6 +37,7 @@ export const CHOICE_LABELS: Record<ChoiceId, string> = {
   lfoSync: 'LFO 1 Sync',
   lfo2Sync: 'LFO 2 Sync',
   voices: 'Voices',
+  legato: 'Legato',
 };
 
 /** What a Mapping drives: a Parameter, a choice, an Action, or the page's tempo, outside the Patch (issue 112). */

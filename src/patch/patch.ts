@@ -98,6 +98,11 @@ export type SubOctave = -1 | -2;
 export type SubWaveform = 'square' | 'sine';
 /** White Noise has equal energy at every frequency, pink equal energy per octave (issue 92). */
 export type NoiseColour = 'white' | 'pink';
+/**
+ * With one Voice, whether a Note played while the Gate is open (a key held, or Hold on) slides there without a new
+ * Attack: the Envelopes and the retriggered LFOs carry on (issue 119). Off, it starts both Envelopes again.
+ */
+export type Legato = 'off' | 'on';
 /** How many Notes can sound at once. 1 is monophonic (last-note priority, Glide); more play chords (ADR-0007). */
 export type Voices = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
@@ -118,6 +123,7 @@ export type Patch = Record<ParamId, number> & {
   lfoSync: LfoSync;
   lfo2Sync: LfoSync;
   voices: Voices;
+  legato: Legato;
   /**
    * The octave the computer keyboard and the on-screen piano start in when the Patch is loaded (issue 125): 2 for a
    * bass, its first key C2. Absent, they start on C4. The octave buttons move them after, and write the octave here, so
@@ -234,6 +240,8 @@ export function defaultPatch(): Patch {
     lfoSync: 'off',
     lfo2Sync: 'off',
     voices: 1,
+    // Each Note starts its Envelopes, so a Patch from before Legato (issue 119) sounds as it did.
+    legato: 'off',
   };
 }
 
@@ -268,6 +276,7 @@ export const CHOICES = {
   lfoSync: ['off', 'on'],
   lfo2Sync: ['off', 'on'],
   voices: [1, 2, 3, 4, 5, 6, 7, 8],
+  legato: ['off', 'on'],
 } as const satisfies { [K in Exclude<SoundField, ParamId>]: readonly Patch[K][] };
 
 /** A Patch setting picked from a list (a Waveform, the Filter Mode…), rather than turned like a Parameter. */

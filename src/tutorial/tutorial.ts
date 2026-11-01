@@ -143,7 +143,7 @@ export function targetText(step: Step): string {
 const CHOICE_CONTROLS: Record<ChoiceId, string> = {
   waveform: 'Osc 1 Waveform', osc2Waveform: 'Osc 2 Waveform', subOctave: 'Sub Octave', subWaveform: 'Sub Waveform', noiseColour: 'Noise Colour', filterMode: 'Filter Mode', filterSlope: 'Slope',
   lfoWaveform: 'LFO 1 Waveform', lfoDestination: 'LFO 1 Destination', lfoRetrigger: 'LFO 1 Retrigger', lfoSync: 'LFO 1 Sync',
-  lfo2Waveform: 'LFO 2 Waveform', lfo2Destination: 'LFO 2 Destination', lfo2Retrigger: 'LFO 2 Retrigger', lfo2Sync: 'LFO 2 Sync', voices: 'Voices',
+  lfo2Waveform: 'LFO 2 Waveform', lfo2Destination: 'LFO 2 Destination', lfo2Retrigger: 'LFO 2 Retrigger', lfo2Sync: 'LFO 2 Sync', voices: 'Voices', legato: 'Legato',
 };
 
 /** A control's name where it could be mistaken on its own ("Attack" is the Filter's or the Amp's). */

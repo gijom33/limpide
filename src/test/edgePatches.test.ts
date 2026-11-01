@@ -14,6 +14,7 @@ describe('the Patches at the edges (issue 116)', () => {
     expect(factor('lfoNote')).toEqual([0, 12, 23]);
     expect(factor('voices')).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
     expect(factor('lfo2Sync')).toEqual(['off', 'on']);
+    expect(factor('legato')).toEqual(['off', 'on']);
     expect(factor('bpm')).toEqual([40, 120, 240]);
     expect(EDGE_FACTORS.map((f) => f.key).sort()).toEqual([...Object.keys(PARAMS), ...Object.keys(CHOICES), 'bpm'].sort());
   });
@@ -31,13 +32,14 @@ describe('the Patches at the edges (issue 116)', () => {
     expect(missing.slice(0, 5)).toEqual([]);
   });
 
-  it('holds the hard cases: both LFOs on each Destination, FM and Ring at full, the Sub two octaves down, every Voice count', () => {
+  it('holds the hard cases: both LFOs on each Destination, FM and Ring at full, the Sub two octaves down, a legato line, every Voice count', () => {
     const names = edgeCases(116).map((c) => c.name);
     for (const d of ['pitch', 'osc2Pitch', 'detune', 'pulseWidth', 'fm', 'cutoff', 'resonance', 'volume'])
       for (const sync of ['off', 'on']) expect(names, d).toContain(`both LFOs on ${d}, Sync ${sync}`);
     expect(names).toContain('FM and Ring at full, Osc 2 on the Note');
     expect(names).toContain('the Sub two octaves under Osc 1 two octaves down');
     for (let voices = 1; voices <= 8; voices++) expect(names).toContain(`${voices} Voices, a chord on all of them`);
+    expect(names).toContain('a legato line, the Glide at its longest, both LFOs retriggered');
     const both = edgeCases(116).find((c) => c.name === 'both LFOs on fm, Sync on')!.patch;
     expect([both.lfoDestination, both.lfo2Destination, both.lfoAmount, both.lfo2Amount, both.lfoSync, both.lfo2Sync]).toEqual(['fm', 'fm', 1, 1, 'on', 'on']);
   });

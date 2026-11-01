@@ -20,6 +20,12 @@ describe('sanitizePatch: anything from outside becomes a valid Patch', () => {
     expect([patch.lfoSync, patch.lfo2Sync, patch.lfoRate, patch.lfo2Rate]).toEqual(['off', 'off', 3, 7]);
   });
 
+  it('a Patch from before Legato loads with it off (issue 119)', () => {
+    expect(sanitizePatch({ glide: 0.2 }).legato).toBe('off');
+    expect(sanitizePatch({ legato: 'yes' }).legato).toBe('off');
+    expect(sanitizePatch({ legato: 'on' }).legato).toBe('on');
+  });
+
   it('drops fields it does not know (Patches from newer versions)', () => {
     expect(sanitizePatch({ ...defaultPatch(), reverb: 0.5 })).toEqual(defaultPatch());
   });
@@ -81,6 +87,12 @@ describe('share links', () => {
     const bass = { ...custom(), keyboardOctave: 2 };
     expect(patchFromShare(patchToShare(bass))).toEqual(bass);
     expect(patchFromJSON(patchToJSON(bass))).toEqual(bass);
+  });
+
+  it('carries Legato, only when it is on (issue 119)', () => {
+    const legato = { ...defaultPatch(), legato: 'on' } as const;
+    expect(patchFromShare(patchToShare(legato))).toEqual(legato);
+    expect(JSON.parse(atob(patchToShare(legato).replace(/-/g, '+').replace(/_/g, '/')))).toEqual({ legato: 'on' });
   });
 
   it('carries Sync and the note value, and no tempo (issue 112)', () => {

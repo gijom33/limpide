@@ -1247,6 +1247,13 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       // Oscillators there would click mid-sound (issue 94, decision 2).
       const legato = voiceCount() === 1 && voice.note !== null && voice.releasedAt === null;
       follow(voice);
+      if (legato && patch?.legato === 'on') {
+        // With Legato on it changes the pitch alone (issue 119): the Envelopes and the retriggered LFOs carry on, as
+        // they do when the newest key goes up and the Note returns to one still held.
+        voice.note = note;
+        setLeadPitch(voice, note, asked);
+        return;
+      }
       // Any other Note restarts them. On a Voice still sounding (in its Release, or taken while held) it dips to silence
       // first, so the restart does not click, and the Note starts after the dip, the same way every time (issue 102).
       // Its history holds the Notes handed over ahead of the clock, so one of those dips as it will sound.

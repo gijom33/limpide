@@ -130,6 +130,10 @@ function hardCases(): EdgeCase[] {
     from('FM and Ring at full, two squares, full Resonance', { crossMod: 1, mixRing: 1, waveform: 'square', osc2Waveform: 'square', resonance: 1 }),
     from('the Sub two octaves under Osc 1 two octaves down', { osc1Octave: -2, subOctave: -2, mixSub: 1 }),
     from('the Sub two octaves down, a sine, alone', { mixOsc1: 0, subOctave: -2, subWaveform: 'sine', mixSub: 1 }),
+    // A legato line (issue 119) sliding the longest Glide under LFOs that do not restart on its second Note.
+    from('a legato line, the Glide at its longest, both LFOs retriggered', {
+      legato: 'on', glide: PARAMS.glide.max, lfoAmount: 1, lfo2Amount: 1, lfoRetrigger: 'note', lfo2Retrigger: 'note', lfo2Destination: 'cutoff',
+    }),
     ...Array.from({ length: 8 }, (_, i) => from(`${i + 1} Voices, a chord on all of them`, { voices: (i + 1) as Patch['voices'], mixOsc2: 1, osc2Semitone: 7 })),
   ];
 }
