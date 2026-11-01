@@ -6,11 +6,11 @@ Bead makes no sound and changes nothing you hear. Turning a control only changes
 
 ## Calling it, and sending it away
 
-- **It comes by itself**, 3 seconds after the page opens, in one of three ways chosen at random: up from behind its edge, falling from the top of the window like rain, or popping up with a hop. On a first visit it waits until the welcome is closed, and whenever About is open.
-- **Play B, E, A, D**, as in a bead of water, within 4 seconds, in any octave: on the computer keyboard (J, D, H, S), the on-screen piano or a MIDI keyboard. It leaps, smashes itself down into a splash, becomes a puddle, then a film that fades. Hanging or in the air, it drips away down the window instead.
-- **Play B, E, A, D again**, and it comes back. While it melts, the Notes do nothing.
+- **It comes by itself**, while Display's Bead switch is on, 3 seconds after the page opens, in one of three ways chosen at random: up from behind its edge, falling from the top of the window like rain, or popping up with a hop. On a first visit it waits until the welcome is closed, and whenever About is open.
+- **Play B, E, A, D**, as in a bead of water, within 4 seconds, in any octave: on the computer keyboard (J, D, H, S), the on-screen piano or a MIDI keyboard. It goes away for this visit: it leaps, smashes itself down into a splash, becomes a puddle, then a film that fades. Hanging or in the air, it drips away down the window instead.
+- **Play B, E, A, D again**, and it comes back. While it melts, the Notes do nothing. A reload goes back to what Display's switch says: on, Bead comes by itself again.
 - The Demo, the Song and Hold's rhythm never call it or send it away: only Notes you play yourself.
-- **Display has a Bead switch**, from the first visit. Off, Bead melts away; on brings it back. The Notes turn the switch as they send it away or call it, so a reload keeps what you chose: off, it stays away; on, it comes by itself again.
+- **Display has a Bead switch**, from the first visit, on by default: the lasting setting, remembered across visits. Off, Bead melts away and never appears again, by itself or by the Notes, which then do nothing, until the switch is turned on; on brings it back. The Notes never turn the switch.
 
 ## Where it lives
 

@@ -181,7 +181,7 @@ export const TIPS = {
   theme: { title: 'Theme', body: 'Switches between the dark and light look. Your choice is remembered.' },
   bead: {
     title: 'Bead',
-    body: 'Bead is the little water drop living on the page, answering what you play and turn. Off sends it away, and so does playing B, E, A, D; the same Notes call it back. Your choice is remembered.',
+    body: 'Bead is the little water drop living on the page, answering what you play and turn. Off keeps it away, remembered, until you switch it on again. While it is on, playing B, E, A, D sends it away for this visit, and the same Notes call it back.',
   },
   // The × of a Preset's description, under the Patch name (issue 153).
   closeDescription: {

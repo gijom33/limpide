@@ -6,11 +6,23 @@ import { holding, WELCOMED } from './startState';
 // section, and again sends it away, melting. In three and four across it lives on that section's top edge, along the
 // stretch that covers least above it: nothing, where the header has room. On a phone and in 2 × 2 it keeps in view as
 // the page scrolls: on a right-column section's top edge (over a phone's section tabs while an edge shows under them,
-// issue 142), or hanging under the header when none shows. Out by default, it comes in by itself (issue 150): these
-// tests start with it switched off, as every spec does, and call it with the Notes, except those about its default.
+// issue 142), or hanging under the header when none shows. Out by default, it comes in by itself (issue 150). With
+// Display's switch off the Notes do nothing (decision 9), so these tests start with it switched off, as every spec does,
+// and bring it with the switch; then the Notes send it away and call it back for the visit. Those about its default
+// start as they need.
 
 const mascot = (page: Page) => page.locator('.mascot');
 const listening = (page: Page) => expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);
+const beadSwitch = (page: Page) => page.getByRole('radiogroup', { name: 'Bead', exact: true });
+
+/** Brings Bead up by Display's switch, then closes Display. */
+async function bringBead(page: Page) {
+  await openDisplay(page);
+  await beadSwitch(page).getByRole('radio', { name: 'Bead on' }).click();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('region', { name: 'Viewer controls' })).toBeHidden();
+  await expect(mascot(page)).toHaveCount(1);
+}
 
 /** Plays Notes on the computer keyboard: J is B4, D E4, H A4, S D4 (B, E, A, D); A C4, F F4. */
 async function play(page: Page, keys: string) {
@@ -55,22 +67,27 @@ const covered = (page: Page, viewers: boolean) =>
       .map((c) => c.getAttribute('aria-label') ?? c.className);
   }, viewers);
 
-test('B, E, A, D brings it and again sends it away; B, E, D, A does nothing', async ({ page }) => {
+test('with the switch on, B, E, A, D sends it away and again brings it; B, E, D, A does nothing', async ({ page }) => {
   await page.goto('/');
   await listening(page);
-  await play(page, 'jdsh');
-  await expect(mascot(page)).toHaveCount(0);
-  await play(page, 'jdhs');
-  await expect(mascot(page)).toHaveCount(1);
+  await bringBead(page);
   await expect(mascot(page)).toHaveAttribute('aria-hidden', 'true');
   await expect(mascot(page)).toHaveCSS('pointer-events', 'none');
   await play(page, 'jdhs');
   await expect(mascot(page)).toHaveCount(0);
+  await play(page, 'jdsh');
+  await page.waitForTimeout(500);
+  await expect(mascot(page)).toHaveCount(0);
+  await play(page, 'jdhs');
+  await expect(mascot(page)).toHaveCount(1);
 });
 
 test('it comes in any octave, from the piano too, and the Demo never calls it', async ({ page }) => {
   await page.goto('/');
   await listening(page);
+  await bringBead(page);
+  await play(page, 'jdhs'); // sent away for the visit, the switch still on
+  await expect(mascot(page)).toHaveCount(0);
   const key = (name: string) => page.getByRole('group', { name: 'Piano' }).getByRole('button', { name, exact: true });
   for (const name of ['B4', 'E5', 'A4', 'D5']) {
     const box = (await key(name).boundingBox())!;
@@ -91,7 +108,7 @@ for (const [size, viewport, section] of [
     await page.setViewportSize(viewport);
     await page.goto('/');
     await listening(page);
-    await play(page, 'jdhs');
+    await bringBead(page);
     await expect.poll(async () => Math.abs((await footing(page, section)).below) <= 1).toBe(true); // landed and standing
     // Strolling, held awake by a Note, it stays on the edge, within the section, covering nothing.
     await page.keyboard.down('f');
@@ -149,7 +166,7 @@ for (const [size, viewport, column] of [
     await page.setViewportSize(viewport);
     await page.goto('/');
     await listening(page);
-    await play(page, 'jdhs');
+    await bringBead(page);
     const places = await scrollThrough(page, 250);
     const edges = places.filter((p) => p !== 'header' && p !== null);
     expect(edges.every((p) => (column as readonly string[]).includes(p!)), places.join(', ')).toBe(true);
@@ -162,10 +179,10 @@ for (const [size, viewport, column] of [
 
 test('in a short phone window, with no edge in view, it hangs under the header', async ({ page }) => {
   test.slow();
-  await page.setViewportSize({ width: 375, height: 560 });
   await page.goto('/');
   await listening(page);
-  await play(page, 'jdhs');
+  await bringBead(page); // before the window shrinks, which would put Display's switch out of reach
+  await page.setViewportSize({ width: 375, height: 560 });
   const places = await scrollThrough(page, 120);
   expect(places, places.join(', ')).toContain('header');
 });
@@ -173,6 +190,9 @@ test('in a short phone window, with no edge in view, it hangs under the header',
 test('it comes up from behind the Amp, and leaves jumping, then melting; with reduced motion it comes and goes at once', async ({ page }) => {
   await page.goto('/');
   await listening(page);
+  await bringBead(page);
+  await play(page, 'jdhs'); // sent away for the visit, so the Notes bring it back
+  await expect(mascot(page)).toHaveCount(0);
   await watchDrop(page);
   await play(page, 'jdhs');
   await expect.poll(async () => Math.abs((await footing(page)).below) <= 1).toBe(true);
@@ -228,39 +248,66 @@ test('it adds under a millisecond to each frame the Viewers draw (their own runs
     return page.evaluate(() => (window as unknown as { frameWork: number }).frameWork / (window as unknown as { frames: number }).frames);
   };
   const without = Math.min(await perFrame(), await perFrame());
-  await play(page, 'jdhs');
-  await expect(mascot(page)).toHaveCount(1);
+  await bringBead(page);
   const shown = Math.min(await perFrame(), await perFrame());
   expect(shown - without).toBeLessThan(1);
 });
 
-test('B, E, A, D sends it away and calls it back, Display’s switch following, remembered; the switch does the same (issue 150)', async ({ page }) => {
-  await page.goto('/');
-  await listening(page);
-  const bead = page.getByRole('radiogroup', { name: 'Bead', exact: true });
-  await play(page, 'jdhs');
-  await expect(mascot(page)).toHaveCount(1);
-  await openDisplay(page);
-  await expect(bead.getByRole('radio', { name: 'Bead on' })).toHaveAttribute('aria-checked', 'true');
-  await expect(page.locator('.bead-icon')).toHaveAttribute('data-state', 'on');
-  await page.keyboard.press('Escape');
-  await play(page, 'jdhs');
-  await expect(mascot(page)).toHaveCount(0);
-  await openDisplay(page);
-  await expect(bead.getByRole('radio', { name: 'Bead off' })).toHaveAttribute('aria-checked', 'true');
-  await page.keyboard.press('Escape');
-  await page.reload(); // sent away by the Notes, it stays away
-  await listening(page);
-  await page.waitForTimeout(4000);
-  await expect(mascot(page)).toHaveCount(0);
-  await openDisplay(page);
-  await expect(page.locator('.bead-icon')).toHaveAttribute('data-state', 'gone');
-  await bead.getByRole('radio', { name: 'Bead on' }).click();
-  await expect(mascot(page)).toHaveCount(1);
-  await expect(page.locator('.bead-icon')).toHaveAttribute('data-state', 'popping');
-  await bead.getByRole('radio', { name: 'Bead off' }).click();
-  await expect(page.locator('.bead-icon')).toHaveAttribute('data-state', 'melting');
-  await expect(mascot(page)).toHaveCount(0);
+test.describe('Display’s switch lasts, the Notes are for the visit (issue 150, decisions 7 to 9)', () => {
+  test.describe('switched on', () => {
+    test.use({ storageState: holding({ ...WELCOMED, 'limpide.bead': 'on' }) });
+
+    test('B, E, A, D sends it away and brings it back, the switch staying on; a reload brings it by itself again', async ({ page }) => {
+      await page.goto('/');
+      await listening(page);
+      await expect(mascot(page)).toHaveCount(1, { timeout: 6000 });
+      await play(page, 'jdhs');
+      await expect(mascot(page)).toHaveCount(0);
+      await openDisplay(page);
+      await expect(beadSwitch(page).getByRole('radio', { name: 'Bead on' })).toHaveAttribute('aria-checked', 'true');
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(4000); // sent away for the visit: it does not come by itself
+      await expect(mascot(page)).toHaveCount(0);
+      await page.reload();
+      await listening(page);
+      await expect(mascot(page)).toHaveCount(1, { timeout: 6000 });
+      await play(page, 'jdhs');
+      await expect(mascot(page)).toHaveCount(0);
+      await play(page, 'jdhs');
+      await expect(mascot(page)).toHaveCount(1);
+      await openDisplay(page);
+      await expect(beadSwitch(page).getByRole('radio', { name: 'Bead on' })).toHaveAttribute('aria-checked', 'true');
+    });
+  });
+
+  test('switched off, it never appears: the Notes do nothing, nor a reload, until the switch is turned on', async ({ page }) => {
+    await page.goto('/');
+    await listening(page);
+    await play(page, 'jdhs');
+    await page.waitForTimeout(4000);
+    await expect(mascot(page)).toHaveCount(0);
+    await play(page, 'jdhs'); // played again just before a reload: the Notes stored nothing either
+    await page.reload();
+    await listening(page);
+    await page.waitForTimeout(4000);
+    await expect(mascot(page)).toHaveCount(0);
+    await play(page, 'jdhs');
+    await page.waitForTimeout(500);
+    await expect(mascot(page)).toHaveCount(0);
+    await openDisplay(page);
+    await expect(beadSwitch(page).getByRole('radio', { name: 'Bead off' })).toHaveAttribute('aria-checked', 'true');
+    await expect(page.locator('.bead-icon')).toHaveAttribute('data-state', 'gone');
+    await beadSwitch(page).getByRole('radio', { name: 'Bead on' }).click();
+    await expect(mascot(page)).toHaveCount(1);
+    await expect(page.locator('.bead-icon')).toHaveAttribute('data-state', 'popping');
+    await beadSwitch(page).getByRole('radio', { name: 'Bead off' }).click();
+    await expect(page.locator('.bead-icon')).toHaveAttribute('data-state', 'melting');
+    await expect(mascot(page)).toHaveCount(0);
+    await page.keyboard.press('Escape');
+    await play(page, 'jdhs');
+    await page.waitForTimeout(500);
+    await expect(mascot(page)).toHaveCount(0);
+  });
 });
 
 test.describe('out by default (issue 150)', () => {
@@ -296,20 +343,13 @@ test.describe('out by default (issue 150)', () => {
       await expect(mascot(page)).toHaveCount(1, { timeout: 6000 });
     });
   });
-
-  test('switched off, it stays away', async ({ page }) => {
-    await page.goto('/');
-    await listening(page);
-    await page.waitForTimeout(4000);
-    await expect(mascot(page)).toHaveCount(0);
-  });
 });
 
 test('a pointer over it tickles it; a click sends tiny drops every way', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
   await listening(page);
-  await play(page, 'jdhs');
+  await bringBead(page);
   await expect.poll(async () => Math.abs((await footing(page)).below) <= 1).toBe(true);
   // Its middle, on its own pixels.
   const middle = async () => {
@@ -333,7 +373,7 @@ test('clicked again and again, it runs off', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
   await listening(page);
-  await play(page, 'jdhs');
+  await bringBead(page);
   await expect.poll(async () => Math.abs((await footing(page)).below) <= 1).toBe(true);
   const where = async () => {
     const box = (await page.locator('.mascot-drop').boundingBox())!;
@@ -357,8 +397,7 @@ test('while it is out, words spelled with Notes cue its tricks; B, E, A, D still
   await listening(page);
   await play(page, 'sdhs'); // D, E, A, D before it is out: nothing
   await expect(mascot(page)).toHaveCount(0);
-  await play(page, 'jdhs');
-  await expect(mascot(page)).toHaveCount(1);
+  await bringBead(page);
   await play(page, 'sdhs');
   await expect(mascot(page)).toHaveAttribute('data-doing', 'playDead');
   await page.waitForTimeout(3500);
@@ -372,7 +411,7 @@ test('while it is out, words spelled with Notes cue its tricks; B, E, A, D still
 test('a Waveform chosen: its tail takes that wave a moment, then is the logo again', async ({ page }) => {
   await page.goto('/');
   await listening(page);
-  await play(page, 'jdhs');
+  await bringBead(page);
   await expect(mascot(page)).toHaveAttribute('data-tail', 'logo');
   await page.getByRole('radio', { name: 'Square', exact: true }).first().click();
   await expect(mascot(page)).toHaveAttribute('data-tail', 'square');
@@ -383,7 +422,7 @@ test('dragged and let go, it is thrown, and lands on an edge', async ({ page }) 
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
   await listening(page);
-  await play(page, 'jdhs');
+  await bringBead(page);
   await expect.poll(async () => Math.abs((await footing(page)).below) <= 1).toBe(true);
   const box = (await page.locator('.mascot-drop').boundingBox())!;
   const at = { x: box.x + 9, y: box.y + box.height - 8 };
@@ -408,14 +447,14 @@ test('on 31 October it wears a ghost sheet', async ({ page }) => {
   await page.clock.setFixedTime(new Date('2026-10-31T12:00:00'));
   await page.goto('/');
   await listening(page);
-  await play(page, 'jdhs');
+  await bringBead(page);
   await expect(mascot(page)).toHaveAttribute('data-hat', 'ghost');
 });
 
 test('the theme switched: it shades its eyes once Display is closed', async ({ page }) => {
   await page.goto('/');
   await listening(page);
-  await play(page, 'jdhs');
+  await bringBead(page);
   await openDisplay(page);
   await page.getByRole('radio', { name: 'Light', exact: true }).click();
   await page.waitForTimeout(300);
@@ -428,7 +467,7 @@ test('through the Demo it conducts, then plays air guitar, then surfs an LFO sha
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
   await listening(page);
-  await play(page, 'jdhs');
+  await bringBead(page);
   await page.getByRole('button', { name: 'Demo', exact: true }).click();
   await expect(mascot(page)).toHaveAttribute('data-act', 'conduct');
   await page.getByRole('button', { name: /^Play from part 2,/ }).click();

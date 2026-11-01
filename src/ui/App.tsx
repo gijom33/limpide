@@ -158,9 +158,10 @@ export function App() {
   );
   // Bead, the mascot (issues 115, 150): out by default, coming in by itself a few seconds after the page opens, or once
   // the About closes (the welcome among it), so the first thing a newcomer reads is not upstaged. B, E, A, D played by
-  // hand, as in a bead of water, sends it away and calls it back; Display's switch does the same, and follows the
-  // Notes. Off is remembered, for anyone who would rather not have it (the owner, 2026-10-30).
-  // Its switch is part of its rules (the Notes turn it), so it is kept here rather than by `useDisplaySetting`.
+  // hand, as in a bead of water, sends it away and calls it back for this visit only. Display's switch is the lasting
+  // setting, remembered: with it off, Bead never appears and the Notes do nothing, for anyone it would annoy (the owner,
+  // 2026-10-31). Its switch is part of its rules (it brings Bead up or sends it away, and the Notes read it), so it is
+  // kept here rather than by `useDisplaySetting`.
   const [bead, setBead] = useState(() => beadOnArrival(recall(storage, 'bead')));
   const moveBead = useCallback((event: BeadEvent) => setBead((b) => beadAfter(b, event)), []);
   useEffect(() => remember(storage, 'bead', bead.switch), [storage, bead.switch]);
