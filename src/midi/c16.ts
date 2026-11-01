@@ -197,9 +197,11 @@ const ADDED_SINCE_145 = ['choice:lfoSync', 'choice:lfo2Sync', 'choice:legato'];
 /**
  * Stored Mappings with the places added to the layout since issue 145's (each LFO's Sync, issue 112; Legato, issue
  * 119), where the person's Mappings leave both the control and the target free: a C16 set up with issue 145's layout
- * gets them, and a place the person has used since stays theirs. Null when there is nothing to add.
+ * gets them, and a place the person has used since stays theirs. Null when there is nothing to add, or when none of
+ * the Mappings is the layout's: a person who removed it meant to (ADR-0009).
  */
 export function addC16Places(stored: readonly Mapping[]): Mapping[] | null {
+  if (!stored.some((m) => m.device === 'c16')) return null;
   const added = c16Layout().filter((l) => ADDED_SINCE_145.includes(targetKey(l.target)) && !stored.some((m) => clash(l, m)));
   return added.length ? [...stored, ...added] : null;
 }

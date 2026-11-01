@@ -160,4 +160,10 @@ describe('issue 145’s layout, brought to today’s (issues 112 and 119)', () =
     expect(addedSince145(addC16Places([...before, own])!).map((m) => m.target.id)).toEqual(['legato', 'lfo2Sync']);
     expect(addC16Places(c16Layout())).toBeNull();
   });
+
+  it('adds nothing where the person removed the layout (ADR-0009): none of their Mappings is the layout’s', () => {
+    const own: Mapping = { control: { kind: 'cc', channel: 1, number: 20 }, target: { kind: 'param', id: 'cutoff' }, mode: 'absolute' };
+    expect(addC16Places([])).toBeNull();
+    expect(addC16Places([own])).toBeNull();
+  });
 });
