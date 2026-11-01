@@ -4,8 +4,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
-- 2026-10-31, the owner's bug, seen on the night branch at localhost:5174 (about 2000 px wide), with a screenshot of the box "The plain starting point: one saw through an open low-pass Filter." under the Patch picker: "This info box remains a screen and I do not know where it comes from and did not figure out how to remove it."
-
 ## Ideas
 
 ## Dropped
@@ -139,3 +137,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-31, the owner's idea of Bead shown by default (triage, Claude's call, open to the owner): to [150](./issues/150-bead-shown-by-default.md), in v1 as Bead's polish, ready for an agent: Bead comes in by itself unless switched off, after the welcome card closes; B, E, A, D still sends it away and calls it; Display's switch shows from the start; the README gains a line and bead.md stops calling it hidden, turning issue 115's decision 7 around for what is now in plain view.
 2026-10-31, the owner's idea of Bead helping to focus on the right control in the Tour and the Tutorials (triage, Claude's call, open to the owner): to [151](./issues/151-bead-points-in-the-tour-and-tutorials.md), five questions for the owner, each with Claude's recommendation (v1 as Bead's polish, after [150](./issues/150-bead-shown-by-default.md); Bead goes above the ringed control and points with its tail, the ring kept, its funny turns paused meanwhile).
 2026-10-31, the owner's idea of the phone's three header rows in 2 × 2 (triage, Claude's call, open to the owner): to [152](./issues/152-the-phones-header-rows-in-2x2.md), polish for v1, ready for an agent once [112](./issues/112-tempo-midi-clock-and-an-arpeggiator.md) is done (it changes the header at these widths): the logo and Patch picker, then the buttons, then the keyboard, the top two sliding away on the way down; 2 × 2 keeps its keyboard and the buttons' words.
+2026-10-31, the owner's bug of an info box that stays under the Patch picker (triage, Claude's call, open to the owner): it is a loaded Preset's about line ([109](./issues/109-teaching-the-new-oscillator-features.md), decision 3), working as built but unlabelled, impossible to close and over the Sections' headings: to [153](./issues/153-the-about-line-says-what-it-is-and-closes.md), a bug, ready for an agent: the Preset's name leads it, a close button and Escape take it away, and it covers no heading.
