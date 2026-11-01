@@ -96,14 +96,17 @@ test('the Preset’s description closes by its × and by Escape, and a click on 
 });
 
 // Over the Sections' headings, as wide as the Oscillators and the Filter together (issue 153, decided by the owner):
-// every Preset's line, in the box as drawn, and again in wider type as Linux's fonts set it.
+// every Preset's line, in the box as drawn, and again in wider type as Linux's fonts set it. On Linux (GitHub's run)
+// the type as drawn is already Linux's, and the stand-in on top of it widened it twice: at 375 px the four longest
+// lines took six (the 1.20.0 release run), as Verdana with the stand-in on top does on a Mac.
+const SPACINGS = process.platform === 'linux' ? ['0'] : ['0', '0.04em'];
 for (const [width, height, most] of [[375, 812, 5], [700, 830, 3], [1100, 800, 3], [1440, 900, 2], [2000, 1100, 2]] as const) {
   test(`at ${width} px every Preset’s description stays clear of the Osc tabs and the Filter’s Mode row, in ${most} lines at most (issue 153)`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await pick(page, 'Init');
     await expect(description(page)).toBeVisible();
     const lines = PRESETS.map((p) => [p.name, p.about]);
-    for (const spacing of ['0', '0.04em']) {
+    for (const spacing of SPACINGS) {
       const found = await description(page).evaluate(
         (box, [lines, spacing]) => {
           const words = box.querySelector('span[aria-hidden]') as HTMLElement;
