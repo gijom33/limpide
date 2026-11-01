@@ -117,6 +117,9 @@ export function sharedButtons(banks: readonly C16Bank[] = C16_BANKS): SharedButt
   );
 }
 
+/** The shared buttons as one line: "M1 Previous Preset, M2 Next Preset, …". */
+export const describeSharedButtons = (banks?: readonly C16Bank[]) => sharedButtons(banks).map((s) => `${s.name} ${s.place.label}`).join(', ');
+
 /**
  * The C16 layout as Mappings, on channel 1, answering a C16 only (issue 145). The knobs are endless and set to the
  * editor's Relative #1 (64-centred: 65 or 66 up, 63 or 62 down); the faders send positions.

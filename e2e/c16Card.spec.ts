@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
-import { c16Layout, sharedButtons } from '../src/midi/c16';
-import { C16_CARD_MARGIN, pdfPages } from '../src/ui/c16CardPdf';
+import { C16_CARD_MARGIN, pdfPages } from '../scripts/c16CardPdf';
+import { c16Layout, describeSharedButtons } from '../src/midi/c16';
 import { midiPanel, openMidi, withFakeController } from './fakeMidi';
 
 // The C16 card (issue 145): the layout on one page to print and keep beside the C16, built from the layout's data.
@@ -31,8 +31,7 @@ test('shows every place of the C16 layout, bank by bank, each button marked Mome
     await expect(cell, place).toContainText('Toggle');
   }
   // Its foot lists the buttons the layout has the same on every bank (issue 148).
-  const shared = sharedButtons().map((s) => `${s.name} ${s.place.label}`).join(', ');
-  await expect(page.locator('.c16-card-foot')).toContainText(`On every bank: ${shared}. Free places stay Toggle,`);
+  await expect(page.locator('.c16-card-foot')).toContainText(`On every bank: ${describeSharedButtons()}. Free places stay Toggle,`);
 });
 
 test('prints on one landscape page, A4 or Letter (issue 145)', async ({ page, browserName }) => {

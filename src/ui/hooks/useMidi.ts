@@ -240,12 +240,12 @@ export function useMidi(host: Host) {
           },
           onDevices: (devices) => {
             setMidi({ kind: 'ready', devices });
-            const c16 = devices.some(isC16);
+            const c16Plugged = devices.some(isC16);
             const fresh = mappingStore.list().length === 0 && storage.getItem(C16_APPLIED) === null;
-            if (c16 && fresh) applyC16LayoutNow();
+            if (c16Plugged && fresh) applyC16LayoutNow();
             // The first layout, stored before issue 145, becomes today's, once; a person's own Mappings stay, and so
             // does anything learned later on a place the first layout had.
-            if (c16 && storage.getItem(C16_APPLIED) !== C16_LAYOUT_VERSION) {
+            if (c16Plugged && storage.getItem(C16_APPLIED) !== C16_LAYOUT_VERSION) {
               const upgraded = upgradeC16Layout(mappingStore.list());
               if (upgraded) mappingStore.restore(upgraded);
               // Issue 145's layout gains the places added since, where the person's Mappings leave them free.

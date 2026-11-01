@@ -13,7 +13,7 @@ import { holding, WELCOMED } from './startState';
 
 const mascot = (page: Page) => page.locator('.mascot');
 const listening = (page: Page) => expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);
-/** Bead's height on screen, in pixels, as the Mascot draws it. */
+/** Bead's height on screen, in pixels: the Mascot's HEIGHT. */
 const BEAD_HEIGHT = 26;
 const beadSwitch = (page: Page) => page.getByRole('radiogroup', { name: 'Bead', exact: true });
 
@@ -139,8 +139,7 @@ const seen = (page: Page) =>
       return Math.abs(r.right - right) < 4 && Math.abs(r.top - drop.bottom) < 2.5; // a stroll bobs it a pixel
     });
     return {
-      // On an edge just under a phone's section strip, its top is over the strip's foot by up to its height (issue 142):
-      // its height less the edge left showing, so its whole height at most.
+      // On an edge just under a phone's section strip, its top is over the strip's foot by up to its height (issue 142).
       inView: drop.top >= ceiling - (strip > header ? beadHeight : 0) && drop.bottom <= innerHeight + 1,
       // For a failure's message: where it was against the ceiling and the window, and how.
       at: `top ${Math.round(drop.top)}, bottom ${Math.round(drop.bottom)}, ceiling ${Math.round(ceiling)}, window ${innerHeight}, ${document.querySelector<HTMLElement>('.mascot')!.dataset.moving}`,

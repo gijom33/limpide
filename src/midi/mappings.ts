@@ -52,10 +52,8 @@ export type ButtonMode = 'trigger' | 'toggle';
 
 /**
  * A link from a Controller control to a Parameter (by Encoder Mode) or an Action. A knob whose Encoder Mode is not
- * known yet ('detect') finds it on its first turn: today only the first C16 layout's knobs (issue 34) in a visitor's
- * storage not yet brought to today's (issue 145) are detected, kept so that a stored first layout still loads and
- * plays; 'detect' and issue 144's rule may go with upgradeC16Layout, once no first layout is left to bring over
- * (Claude's call, open to the owner). A button either sends a press and a release ('trigger': it acts
+ * known yet ('detect') finds it on its first turn: only the first C16 layout's knobs (issue 34) still stored, kept so
+ * that layout loads until upgradeC16Layout replaces it, and going with it. A button either sends a press and a release ('trigger': it acts
  * on the press) or, as a toggle, one value per press, each the other ('toggle': it acts on every message). A
  * Mapping of the C16's layout answers a C16 only ('c16', issue 145); any other answers every Controller.
  */

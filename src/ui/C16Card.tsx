@@ -1,5 +1,5 @@
 import {
-  BUTTON_ROWS, bankLetter, buttonCc, buttonMode, C16_BANKS, C16_CHANNEL, type C16Place, FREE_BUTTON_MODE, faderCc, knobCc, sharedButtons,
+  BUTTON_ROWS, bankLetter, buttonCc, buttonMode, C16_BANKS, C16_CHANNEL, type C16Place, describeSharedButtons, FREE_BUTTON_MODE, faderCc, knobCc,
 } from '../midi/c16';
 import { describeMode } from '../midi/describe';
 import type { ButtonMode } from '../midi/mappings';
@@ -65,7 +65,7 @@ export function C16Card() {
         ))}
       </div>
       <p className="c16-card-foot">
-        On every bank: {sharedButtons().map((s) => `${s.name} ${s.place.label}`).join(', ')}. Free places stay{' '}
+        On every bank: {describeSharedButtons()}. Free places stay{' '}
         {describeMode(FREE_BUTTON_MODE)}, the C16’s own setting. All on MIDI channel {C16_CHANNEL}. gijom33.github.io/limpide
       </p>
     </div>

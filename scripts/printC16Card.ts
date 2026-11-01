@@ -1,7 +1,7 @@
 // The C16 card as PDFs (issue 145), A4 and Letter, from a running dev server: `npm run c16-card` while `npm run dev`
 // runs. Each must be one page; the A4 one is kept in docs/ for C16 owners to print without opening Limpide.
 import { chromium } from '@playwright/test';
-import { C16_CARD_MARGIN, pdfPages } from '../src/ui/c16CardPdf.ts';
+import { C16_CARD_MARGIN, pdfPages } from './c16CardPdf.ts';
 
 const url = process.argv[2] ?? 'http://localhost:5173/#c16-card';
 const browser = await chromium.launch();
