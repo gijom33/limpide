@@ -6,6 +6,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- 2026-11-01, from Claude's look at the night of 2026-10-31, asked for by the owner ("I am sure we have been wasteful because of inefficiencies"): most of the night's time went to tests run whole in both browsers inside each issue and again at the end, on a machine loaded by a Chrome tab, the night's dev server and side jobs, so timeouts led to reruns; triage decisions not measured led to rework (153, 158, 150); each subagent cost 80 to 100 k tokens even for a 2-minute change; two reviewers per issue; and the night's lead shared its session with the day's triage (629 k tokens of context).
+
 ## Dropped
 
 - 2026-10-30, from Claude's brainstorm, Velocity on the Volume ("a harder hit plays louder, not only brighter"): already so. The Amp Envelope's Attack rises to the Note's Velocity (PRD story 9). Claude's call, open to the owner.
