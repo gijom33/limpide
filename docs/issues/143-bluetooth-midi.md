@@ -4,9 +4,28 @@
 
 What is known before any research: the page reaches MIDI through the browser's Web MIDI, which lists the ports the operating system gives it. On a Mac, a Bluetooth MIDI device paired in Audio MIDI Setup becomes such a port, and a paired C16 plays Limpide with no change: checked with the owner on the real C16 with [34](./34-c16-bank-layout.md)'s (2026-10-31), its Bluetooth name ("Synido TempoPAD C16 BT Bluetooth") recognised as a C16. What is left to know is its latency (in [145](./145-the-c16-layout-strip-by-strip.md)'s comments, waiting on the owner's test over USB). Other systems differ (Windows, Android, ChromeOS); Safari and iOS have no Web MIDI at all.
 
-**Blocked by:** the owner's answers below
+**Blocked by:** none
 
-**Status:** needs-triage · enhancement. Claude's call, open to the owner.
+**Status:** ready-for-agent · enhancement. In v1 as a line in the MIDI panel (decision 1); the rest v2, not committed.
+
+## Decisions
+
+1. **v1 says what works; v2 the rest.** In v1 the MIDI panel says, in a line, that a Bluetooth MIDI Controller works once paired in the system (Audio MIDI Setup on a Mac), as the owner's C16 does; nothing else is built. Bluetooth on Windows, Android and ChromeOS, and its latency, are v2, not committed. Decided by the owner, 2026-10-31 ("ok on all questions"), on question 1 below.
+
+## Agent Brief
+
+**Category:** enhancement
+**Summary:** The MIDI panel says that a Bluetooth MIDI Controller works once paired in the system.
+
+**Current behavior:** A Bluetooth Controller paired on a Mac already plays Limpide (the C16 is recognised by its Bluetooth name), but nothing on the page says so.
+
+**Desired behavior:** The MIDI panel's text (and its tip) says in one line that Bluetooth Controllers work once paired in the system's MIDI settings (Audio MIDI Setup on a Mac); Safari and iOS have no Web MIDI, as the panel already says or now says.
+
+**Acceptance criteria:**
+- [ ] The MIDI panel shows the line; its spec covers it; every test passes in Linux's fonts too
+
+**Out of scope:**
+- Anything for Windows, Android or ChromeOS, and latency (v2)
 
 ## Questions for the owner
 
