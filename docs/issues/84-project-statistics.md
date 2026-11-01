@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · enhancement. Built; the first row is measured on a quiet machine: 1.16.1's run was set aside, the machine overloaded (about 40 end-to-end tests timed out), and 1.16.1 was released without it (decided by the owner, 2026-10-30). Every release so far has its exact numbers (size and build), read from its tag.
+**Status:** ready-for-human · enhancement. Built; the first row is measured on a quiet machine: 1.16.1's run was set aside, the machine overloaded (about 40 end-to-end tests timed out), and 1.16.1 was released without it (decided by the owner, 2026-10-30). 1.20.0's run (2026-11-01) was set aside too: a Safari tab at a full core and macOS's background work kept the load at 21 to 31, so its timings (the Demo at 38 frames a second for 173 % of a core) and its 12 end-to-end failures said more about the machine than the app; 1.20.0 goes without a row, decided by the owner ("Skip this time"). The next release's run measures it. Every release so far has its exact numbers (size and build), read from its tag.
 
 **Since then:** the statistics run after the push, not before the release commit ([ADR-0015](../adr/0015-ci-runs-the-end-to-end-tests-before-a-deploy.md), decided by the owner on 2026-10-30; `docs/releasing.md`, step 7).
 
