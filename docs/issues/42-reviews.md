@@ -183,6 +183,21 @@ An avid synth player who owns a desk of controllers, maps every synth and plugin
   - **Conventions:** what the C16's factory layout and other controllers' habits teach (CC 1 as the mod wheel, a sustain on CC 64, Envelopes as four faders)
 - **Success:** a table per bank, every place filled or left free with a reason, each change from today's layout with why; and the findings, one line each, for the inbox
 
+### 18. The performance expert, M1 with 8 GiB as the floor
+
+A software performance engineer who profiles web audio apps for a living and assumes the worst machine in the room. Added by the owner, 2026-11-01: "Introduce a new adversarial agent to the collection: A software performance expert that will ensure the WebApp can confidently be used on most mainstream computers, with the Apple M1 chip with 8 GiB RAM as a baseline that needs to be easily supported."
+
+- **Where:** the published site and the repository's code, in Chrome and Safari; the baseline an Apple M1 with 8 GiB of RAM (on a faster machine, CPU throttled to stand for it, and the page's memory measured against the 8 GiB a whole Mac shares with other apps and tabs); a phone as a second look. **Time:** 60 minutes
+- **Goals:** say whether Limpide runs comfortably on the baseline, where it does not, and what costs most
+- **Asks:**
+  - **Audio first:** any dropout, crackle or late Note at 8 Voices, with every Viewer drawing, the Demo playing and Bead out; the audio thread's load (the engine's nodes, the worklets if any) and how much room is left
+  - **Frames:** each Viewer's and Bead's draw time per frame, the first frame after a Patch change (the Ideal under heavy FM), long tasks over 50 ms, frames dropped below 60 a second, on the baseline and with the window at 1920 and 2560 px
+  - **Memory:** the page's heap and its growth over 10 minutes of playing, Patch changes and the Demo (leaks: buffers, listeners, canvases), and what the page holds in all
+  - **Load:** the bundle's size, the first paint and the time until a key plays, on a mid-range connection
+  - **Idle cost:** the CPU the page takes doing nothing (Viewers, Bead, the tempo's clock) with a tab in the background and in front; battery on a laptop
+  - **Where the time goes:** the hottest functions in a profile of the Demo, ranked, each with a concrete way to make it cheaper
+- **Success:** a table of measures against the baseline (audio, frames, memory, load, idle) each with a pass or a fail, and the findings, one line each, ranked by what a person would notice, for the inbox
+
 ## To do
 
 - [x] Choose the personas (owner, 2026-10-26: profiles 1 to 4 the owner's, 5 to 7 completing them)
