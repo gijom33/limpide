@@ -51,3 +51,25 @@ test('is offered in the MIDI panel while a C16 is connected, in a new tab (issue
   await expect(link).toHaveAttribute('href', '#c16-card');
   await expect(link).toHaveAttribute('target', '_blank');
 });
+
+test('a C16 plugged in with nothing mapped gets its layout, each Mapping C16 only, which its button puts back (issue 149)', async ({ page }) => {
+  await withFakeController(page, 'Synido TempoPAD C16');
+  await openMidi(page);
+  const mappings = midiPanel(page).getByRole('list', { name: 'Mappings' }).getByRole('listitem');
+  await expect(mappings).toHaveCount(c16Layout().length);
+  await expect(mappings.filter({ hasNotText: '· C16 only' })).toHaveCount(0);
+  await midiPanel(page).getByRole('button', { name: 'Remove all', exact: true }).click();
+  await expect(mappings).toHaveCount(0);
+  await midiPanel(page).getByRole('button', { name: 'C16 layout', exact: true }).click();
+  await openMidi(page);
+  await expect(mappings).toHaveCount(c16Layout().length);
+});
+
+test('another Controller gets no layout, no C16 layout button and no card (issue 149)', async ({ page }) => {
+  await withFakeController(page);
+  await openMidi(page);
+  await expect(midiPanel(page).getByRole('button', { name: 'Quick Setup', exact: true })).toBeVisible();
+  await expect(midiPanel(page).getByRole('button', { name: 'C16 layout', exact: true })).toHaveCount(0);
+  await expect(midiPanel(page).getByRole('link', { name: 'Print C16 card' })).toHaveCount(0);
+  await expect(midiPanel(page).getByRole('list', { name: 'Mappings' })).toHaveCount(0);
+});
