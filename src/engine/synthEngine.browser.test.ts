@@ -1032,6 +1032,72 @@ describe('Filter Modes and Slopes', () => {
     };
     for (const r of [0.5, 0.8]) expect(Math.abs(peak(24, r) - peak(12, r)), `Resonance ${r}`).toBeLessThan(2);
   });
+
+  /** Both Taps, the Response Curve and the model at each of `times`, a Note (A2 unless said) held from 0. */
+  async function capturedAt(patch: Partial<Patch>, times: number[], frequencies: Float32Array<ArrayBuffer>, note = 45) {
+    const ctx = new OfflineAudioContext(1, SR * (Math.max(...times) + 0.1), SR);
+    const engine = createSynthEngine(ctx);
+    engine.applyPatch({ ...defaultPatch(), ampSustain: 1, ampAttack: 0.001, ...patch });
+    engine.noteOn(note, 1, 0);
+    const read = (a: AnalyserNode) => {
+      const s = new Float32Array(a.fftSize);
+      a.getFloatTimeDomainData(s);
+      return s;
+    };
+    const frames = times.map((t) =>
+      ctx.suspend(t).then(() => {
+        const frame = { osc: read(engine.taps.oscillator), filter: read(engine.taps.filter), curve: engine.filterResponse(frequencies), modulation: engine.modulationAt(t) };
+        void ctx.resume();
+        return frame;
+      }),
+    );
+    await ctx.startRendering();
+    return Promise.all(frames);
+  }
+  /**
+   * How far the sound's Filter is from the Curve drawn, in dB, at its worst over `frequencies`: where the Curve is
+   * too deep, or the source too quiet, to measure against the analyser's floor, not counted.
+   */
+  function offTheCurve({ osc, filter, curve }: Awaited<ReturnType<typeof capturedAt>>[number], frequencies: Float32Array) {
+    let worst = 0;
+    for (let i = 0; i < frequencies.length; i++) {
+      const source = toneAmplitudeHann(osc, SR, frequencies[i]);
+      if (dB(curve[i]) < -40 || source < 1e-4) continue;
+      worst = Math.max(worst, Math.abs(dB(toneAmplitudeHann(filter, SR, frequencies[i]) / source) - dB(curve[i])));
+    }
+    return worst;
+  }
+
+  // Issue 166: the model moves the Resonance, the sound the Q along the curve that follows it. A band-pass's or
+  // notch's Q grows by ratios: on a straight line between the swing's ends its foot would pass below zero, a notch
+  // going silent and a band-pass letting everything through.
+  for (const mode of MODES) {
+    for (const slope of [12, 24] as const) {
+      it(`keeps the Q at its floor or above under an LFO on Resonance: ${mode}, ${slope} dB, the Curve it draws at the swing's top and foot (issue 166)`, async () => {
+        const patch = { cutoff: 1000, resonance: 0.5, filterMode: mode, filterSlope: slope, lfoDestination: 'resonance', lfoWaveform: 'square', lfoRate: 1, lfoAmount: 1 } as const;
+        // The square's top is the first half of its cycle, its foot the second: each captured near its end.
+        const [top, foot] = await capturedAt(patch, [0.45, 0.95], harmonics);
+        expect(top.modulation.resonance).toBeCloseTo(1, 3);
+        expect(foot.modulation.resonance).toBeCloseTo(0, 3);
+        for (const [name, frame] of [['top', top], ['foot', foot]] as const) expect(offTheCurve(frame, harmonics), name).toBeLessThan(0.5);
+      });
+    }
+  }
+
+  it('holds the Cutoff at 20 Hz and 20 kHz in the sound, where the model does: a square LFO swinging it past each end (issue 166)', async () => {
+    const swing = { lfoDestination: 'cutoff', lfoWaveform: 'square', lfoRate: 1, lfoAmount: 1, resonance: 0 } as const;
+    // A low-pass at 20 Hz swung two octaves under it: A1's first Harmonics, which 20 Hz still lets through.
+    const low = Float32Array.from({ length: 4 }, (_, i) => 55 * (i + 1));
+    const [, bottom] = await capturedAt({ ...swing, cutoff: 20 }, [0.45, 0.95], low, 33);
+    expect(bottom.modulation.cutoff).toBe(20);
+    expect(offTheCurve(bottom, low)).toBeLessThan(0.5);
+    // A high-pass at 20 kHz swung two octaves over it: A1's Harmonics either side of it, which 20 kHz lets through.
+    const high = Float32Array.from({ length: 80 }, (_, i) => 55 * (340 + i));
+    const [top] = await capturedAt({ ...swing, cutoff: 20000, filterMode: 'highpass' }, [0.45], high, 33);
+    expect(top.modulation.cutoff).toBe(20000);
+    expect(offTheCurve(top, high)).toBeLessThan(0.5);
+    expect(dB(toneAmplitudeHann(top.filter, SR, 55 * 380)), 'the sound past 20 kHz').toBeGreaterThan(-80);
+  });
 });
 
 // Issue 112: an LFO with Sync on repeats once a note value at the tempo, and with Retrigger free its cycle lands on

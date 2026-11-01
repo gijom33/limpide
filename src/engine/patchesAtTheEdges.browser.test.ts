@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { osc2Cents } from '../modulation/modulationModel';
 import type { Waveform } from '../music/harmonics';
-import { idealPartials } from '../music/idealReference';
 import { noteToFrequency } from '../music/pitch';
 import { defaultPatch, PARAMS, type Patch } from '../patch/patch';
 import type { PatchChange } from '../patch/patchStore';
@@ -14,7 +13,7 @@ import { straightenLimiter } from '../test/straightLimiter';
 import { createScope } from '../viewers/scope';
 import { createSpectrum } from '../viewers/spectrum';
 import { createTimeline } from '../viewers/timeline';
-import { createViewerStore, IDEAL_HARMONICS } from '../viewers/viewerStore';
+import { createViewerStore } from '../viewers/viewerStore';
 import { filterStages } from './filterDesign';
 import { createSynthEngine, SAFETY_KNEE, type SynthEngine } from './synthEngine';
 
@@ -45,12 +44,15 @@ const AT_ONCE = 10;
 /** The Effective Cutoff's range, where the model holds it (20 Hz to 20 kHz), a hair inside each end. */
 const [BOTTOM, TOP] = [PARAMS.cutoff.min * 1.0001, PARAMS.cutoff.max * 0.9999];
 
-/** A render of `notes` on a case's Patch at its Tempo, the limiter straight; `dcBlock: false` takes 103's filter out. */
-async function play({ patch, bpm }: EdgeCase, notes: readonly number[], { dcBlock = true, seconds = END } = {}) {
+/**
+ * A render of `notes` on a case's Patch at its Tempo, the limiter straight; `dcBlock: false` takes 103's filter out,
+ * `notchBelowZero` takes a notch's Q below zero, where it passes nothing, so the silence check has a fault to find.
+ */
+async function play({ patch, bpm }: EdgeCase, notes: readonly number[], { dcBlock = true, notchBelowZero = false, seconds = END } = {}) {
   const ctx = new OfflineAudioContext(1, Math.round(SR * seconds), SR);
   straightenLimiter(ctx);
   const biquads: BiquadFilterNode[] = [];
-  if (!dcBlock) {
+  if (!dcBlock || notchBelowZero) {
     const create = ctx.createBiquadFilter.bind(ctx);
     ctx.createBiquadFilter = () => {
       const node = create();
@@ -60,9 +62,15 @@ async function play({ patch, bpm }: EdgeCase, notes: readonly number[], { dcBloc
   }
   const engine = createSynthEngine(ctx);
   // Each Voice's offset filter is its high-pass at 1 Hz: made an all-pass, it lets the offset through, as 1.16.0 did.
-  for (const node of biquads) if (node.type === 'highpass' && node.frequency.value === 1) node.type = 'allpass';
+  if (!dcBlock) for (const node of biquads) if (node.type === 'highpass' && node.frequency.value === 1) node.type = 'allpass';
   engine.setTempo(bpm, 0);
   engine.applyPatch(patch);
+  if (notchBelowZero) {
+    const under = ctx.createConstantSource();
+    under.offset.value = -100;
+    for (const node of biquads) if (node.type === 'notch') under.connect(node.Q);
+    under.start();
+  }
   // With Legato on, one Voice plays a legato line (issue 119): a fifth under the Note, then the Note over it.
   const line = patch.legato === 'on' && patch.voices === 1;
   if (line) engine.noteOn(notes[0] - 7, 1, NOTE);
@@ -95,11 +103,10 @@ const NOISE_BAND = Array.from({ length: 31 }, (_, i) => 20 * 1000 ** (i / 30));
 const AUDIBLE = (f: number) => f >= 20 && f <= 20000;
 
 /**
- * The Effective Cutoff at an end of its range, 20 Hz or 20 kHz, where the model holds it and the sound's Filter goes
- * on past it (to the top of what the browser plays, or towards 0 Hz): a finding of issue 116, open to the owner. What
- * changes is out of hearing, but a high-pass or band-pass past the top plays nothing, and a low-pass or band-pass
- * past the bottom nothing heard, so silence is not judged there; nor an offset where it closes, or at the bottom,
- * where what it lets through under 20 Hz is not the model's.
+ * The Effective Cutoff at an end of its range, 20 Hz or 20 kHz, where the model and the sound's Filter both hold it
+ * (issue 166): a high-pass or band-pass at the top lets through only what is above hearing, and a low-pass or
+ * band-pass at the bottom what is under it, so silence is not judged there; nor an offset where it closes, or at the
+ * bottom, where what it lets through is under 20 Hz.
  */
 const closedAtAnEnd = (patch: Patch, cutoff: number) =>
   (cutoff >= TOP && (patch.filterMode === 'highpass' || patch.filterMode === 'bandpass')) ||
@@ -212,21 +219,12 @@ function faultsOf(r: ReturnType<typeof measure>): { kind: FaultKind; words: stri
  * (a chord's Voices add as power, as the master makes room for them).
  */
 const stacked = (p: Patch, notes: readonly number[]) => (p.mixOsc1 + p.mixOsc2 + p.mixRing + p.mixNoise + p.mixSub) * Math.sqrt(notes.length);
-const resonanceLfo = (p: Patch) => [p.lfoAmount > 0 && p.lfoDestination === 'resonance', p.lfo2Amount > 0 && p.lfo2Destination === 'resonance'].some(Boolean);
 
-/**
- * Faults the sweep finds that are answered, each with the reason: what a Patch does by design, or one of issue 116's
- * findings, for the owner to hear before anything is changed.
- */
+/** Faults the sweep finds that are answered, each with the reason: what a Patch does by design. */
 const ANSWERED: { reason: string; covers(kind: FaultKind, patch: Patch, notes: readonly number[]): boolean }[] = [
   {
     reason: 'the limiter is there for sources stacked to two at full or more (ADR-0006; the LIMITING spec plays every source at full)',
     covers: (kind, p, notes) => kind === 'limiter' && stacked(p, notes) >= 2,
-  },
-  {
-    reason:
-      'finding (issue 116, for the owner): an LFO on a band-pass’s or notch’s Resonance swings its Q below zero, where a notch is silent and a band-pass lets everything through (louder, so the limiter may work, an offset may pass)',
-    covers: (kind, p) => kind !== 'error' && (p.filterMode === 'notch' || p.filterMode === 'bandpass') && resonanceLfo(p),
   },
 ];
 
@@ -283,30 +281,36 @@ describe('Patches at the edges (issue 116)', () => {
     expect(ANSWERED.find((a) => a.covers(fault.kind, patch, [57]))?.reason).toMatch(/stacked/);
   });
 
-  it('finds a Note silent where the model has it sound: a notch whose Q an LFO on its Resonance takes below zero (control, the finding)', async () => {
-    const patch = { ...defaultPatch(), filterMode: 'notch' as const, resonance: 0.5, lfoDestination: 'resonance' as const, lfoAmount: 1, lfoWaveform: 'square' as const, lfoRate: 1 };
-    const { samples, engine } = await play({ name: 'notch', patch, bpm: 120 }, [60]);
-    const kinds = faultsOf(measure(samples, engine, patch, [60])).map((f) => f.kind);
-    expect(kinds).toContain('silence');
-    expect(ANSWERED.find((a) => a.covers('silence', patch, [60]))?.reason).toMatch(/finding/);
+  it('finds a Note silent where the model has it sound: a notch whose Q is taken below zero (control)', async () => {
+    const patch = { ...defaultPatch(), filterMode: 'notch' as const, resonance: 0.5 };
+    const notch: EdgeCase = { name: 'notch', patch, bpm: 120 };
+    const kinds = async (notchBelowZero: boolean) => {
+      const { samples, engine } = await play(notch, [60], { notchBelowZero });
+      return faultsOf(measure(samples, engine, patch, [60])).map((f) => f.kind);
+    };
+    expect(await kinds(true)).toContain('silence');
+    expect(ANSWERED.some((a) => a.covers('silence', patch, [60]))).toBe(false);
+    expect(await kinds(false)).toEqual([]);
   });
 
-  // The finding (issue 116, for the owner): the model moves the Resonance, the sound moves the Q by half the swing's
-  // span either side of the knob's own, and a band-pass's or notch's Q grows by ratios, so near the top of the
-  // Resonance its swing passes below zero: there a notch passes nothing and a band-pass everything. Talking Filter,
-  // LFO 2's square on its band-pass's Resonance, plays its low half unfiltered. Marked to fail until the owner has
-  // heard it changed.
-  it.fails('keeps a band-pass a band-pass with an LFO on its Resonance: Talking Filter at its LFO’s foot as at the same Resonance held (finding)', async () => {
+  it('keeps a notch sounding with an LFO swinging its Resonance end to end (issue 166)', async () => {
+    const patch = { ...defaultPatch(), filterMode: 'notch' as const, resonance: 0.5, lfoDestination: 'resonance' as const, lfoAmount: 1, lfoWaveform: 'square' as const, lfoRate: 1 };
+    const { samples, engine } = await play({ name: 'notch', patch, bpm: 120 }, [60]);
+    expect(faultsOf(measure(samples, engine, patch, [60]))).toEqual([]);
+  });
+
+  // Issue 166: the sound moves the Q as the model moves the Resonance, so a band-pass's Q never passes its floor and
+  // the band-pass stays one. Talking Filter is LFO 2's square on its band-pass's Resonance.
+  it('keeps a band-pass a band-pass with an LFO on its Resonance: Talking Filter at its LFO’s foot as at the same Resonance held (issue 166)', async () => {
     const talking = preset('Talking Filter');
     const still = { ...talking.patch, lfoAmount: 0 };
-    const [swung, held] = await Promise.all([
-      play({ ...talking, patch: { ...still } }, [60], { seconds: 2 }),
-      play({ ...talking, patch: { ...still, lfo2Amount: 0, resonance: 0.2 } }, [60], { seconds: 2 }),
-    ]);
-    // LFO 2's square at 0.7 Hz: its foot, where the model has the Resonance at 0.2, is its second half-cycle.
-    const foot = Math.round(1.2 * SR);
-    expect(swung.engine.modulationAt(1.25).resonance).toBeCloseTo(0.2, 2);
-    const top = (r: typeof swung) => energyAboveDb(r.samples, SR, 4000, foot, 4096);
+    // LFO 2's square: its foot is its second half-cycle, measured from a fifth of the way into it.
+    const foot = 1.2 / still.lfo2Rate / 2;
+    const swung = await play({ ...talking, patch: still }, [60], { seconds: foot + 0.2 });
+    const resonance = swung.engine.modulationAt(foot + 0.05).resonance;
+    expect(resonance).toBeLessThan(still.resonance);
+    const held = await play({ ...talking, patch: { ...still, lfo2Amount: 0, resonance } }, [60], { seconds: foot + 0.2 });
+    const top = (r: typeof swung) => energyAboveDb(r.samples, SR, 4000, Math.round(foot * SR), 4096);
     expect(top(swung)).toBeLessThan(top(held) + 6);
   });
 });
@@ -353,36 +357,41 @@ describe('every Viewer draws a Patch at the edges in a frame (issue 116)', () =>
     document.body.replaceChildren();
     return took;
   }
+  /**
+   * FM at full on Osc 1s richer than a Sine, whose Ideal had tens of thousands of sidebands to work out before issue
+   * 166: Osc 2 a whole number of octaves off (one cycle, Fourier-transformed), or not (each Harmonic's sidebands).
+   */
+  const fm = { ...defaultPatch(), osc2Waveform: 'sine', mixOsc2: 0, crossMod: 1 } as const;
+  const HEAVY_FM: EdgeCase[] = [
+    { name: 'heavy FM: a triangle swung by a Sine three octaves up', patch: { ...fm, waveform: 'triangle', osc2Octave: 2, osc2Semitone: 12 }, bpm: 120 },
+    { name: 'heavy FM: a pulse swung by a Sine three octaves up, detuned', patch: { ...fm, waveform: 'pulse', osc2Octave: 2, osc2Semitone: 12, osc2Detune: 50 }, bpm: 120 },
+    { name: 'heavy FM: a square swung by a Sine three octaves under it', patch: { ...fm, waveform: 'square', osc2Octave: -2, osc2Semitone: -12 }, bpm: 120 },
+    {
+      name: 'heavy FM: a square two octaves down over a Sub, swung by a Sine an octave under it, detuned',
+      patch: { ...fm, waveform: 'square', osc1Octave: -2, osc2Octave: -2, osc2Semitone: -12, osc2Detune: 50, mixSub: 0.5, subOctave: -1 },
+      bpm: 120,
+    },
+  ];
   /** The engine having played a case's Notes, for the Viewers to draw. */
   const played = async (c: EdgeCase, notes: readonly number[]) => (await play(c, notes, { seconds: 0.6 })).engine;
-
-  /**
-   * Slow frames that are answered, a finding of issue 116 for the owner: with FM on a Waveform richer than a Sine, the
-   * Ideal works out the sidebands of each of Osc 1's Harmonics, thousands of them, once for each Patch; the frames after
-   * it are as quick as any. No Preset comes near: the most partials any Preset's Ideal has is 638.
-   */
-  const SIDEBANDS_PAST_ANY_PRESET = 2000;
-  const manySidebands = (p: Patch) => idealPartials(p, IDEAL_HARMONICS).length > SIDEBANDS_PAST_ANY_PRESET;
 
   it('draws each in under three times Init’s frame and a millisecond, the bound of issue 45’s draw-cost test', async () => {
     const init: EdgeCase = { name: 'Init', patch: { ...defaultPatch(), cutoff: 2001 }, bpm: 120 };
     const initFrames: number[] = [];
     for (let i = 0; i < 5; i++) initFrames.push(viewersOf(await played(init, [60]), init.patch));
     const budget = Math.min(...initFrames) * 3 + 1;
-    // The hard cases, the pairwise set and every Preset, played at once; each frame then drawn alone.
-    const cases = [...edgeCases(SEED).filter((c) => !c.name.startsWith('at random')), ...PRESETS.map((p) => preset(p.name))];
+    // The hard cases, heavy FM, the pairwise set and every Preset, played at once; each frame then drawn alone.
+    const cases = [...edgeCases(SEED).filter((c) => !c.name.startsWith('at random')), ...HEAVY_FM, ...PRESETS.map((p) => preset(p.name))];
     const engines = new Map<EdgeCase, SynthEngine>();
     await eachAtOnce(cases, async (c) => void engines.set(c, await played(c, notesFor(c.patch)[1])));
     const slow: string[] = [];
-    const answered: string[] = [];
     for (const c of cases) {
       const notes = notesFor(c.patch)[1];
       let took = viewersOf(engines.get(c)!, c.patch);
       // A frame over the budget is drawn again, on new Viewers, twice: a slow frame is one that stays slow.
       for (let again = 0; again < 2 && took > budget; again++) took = Math.min(took, viewersOf(await played(c, notes), c.patch));
-      if (took > budget) (manySidebands(c.patch) ? answered : slow).push(`${took.toFixed(1)} ms: ${named(c, notes)}`);
+      if (took > budget) slow.push(`${took.toFixed(1)} ms: ${named(c, notes)}`);
     }
-    console.info(`Slow frames answered (an Ideal of thousands of FM sidebands, the finding): ${answered.length}`);
     expect(slow, `budget ${budget.toFixed(1)} ms (Init ${Math.min(...initFrames).toFixed(1)} ms), ${cases.length} Patches`).toEqual([]);
   }, 200_000);
 });

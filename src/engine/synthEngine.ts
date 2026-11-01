@@ -1,8 +1,8 @@
 import { type Adsr, type AutomationStep, DIP, envelopeSchedule, type GateEvent, levelAfter } from '../modulation/envelope';
 import { type Beat, createLfoClock, glideFrequency, glideFrom, glideTimeConstant, LFO_START, type LfoWaveform, lfoShape } from '../modulation/lfo';
 import {
-  destinationSwings, effectiveCutoff, effectiveResonance, effectiveVolume, KEY_TRACK_CENTRE, type Modulation, osc2Cents,
-  soundingPitch, VELOCITY_CUTOFF_OCTAVES,
+  destinationSwings, effectiveCutoff, effectiveResonance, effectiveVolume, KEY_TRACK_CENTRE, LOWEST_CUTOFF, type Modulation,
+  osc2Cents, soundingPitch, VELOCITY_CUTOFF_OCTAVES,
 } from '../modulation/modulationModel';
 import { bandwidthOctaves } from '../modulation/passBand';
 import { createCache } from '../music/cache';
@@ -11,7 +11,7 @@ import { fmDepthKept, playedTop } from '../music/idealReference';
 import { frequencyToNote, noteToFrequency } from '../music/pitch';
 import { TEMPO } from '../music/tempo';
 import { FM_INDEX, GLIDE_OFF, type Lfo, type LfoNumber, lfoHz, lfos, type NoiseColour, PARAMS, type Patch, type SubWaveform, type Voices } from '../patch/patch';
-import { filterStages, type Stage } from './filterDesign';
+import { CUTOFF_CLAMP, CUTOFF_SPAN, centsOverFloor, filterStages, qSwing, type Stage } from './filterDesign';
 
 /**
  * Which Voices the Amp Tap listens to: all of them summed (the app's default, so a chord is seen as it is heard), or
@@ -96,8 +96,8 @@ export const SAFETY_KNEE = 0.8;
 // past the curve, and this keeps even that under 1.
 const SAFETY_CEILING = 0.97;
 
-/** Linear up to the knee, then a tanh bend towards (never past) the ceiling. */
-function safetyCurve(): Float32Array<ArrayBuffer> {
+/** The safety limiter's curve, every engine's: linear up to the knee, then a tanh bend towards (never past) the ceiling. */
+export const SAFETY_CURVE = ((): Float32Array<ArrayBuffer> => {
   const curve = new Float32Array(4097);
   const bend = SAFETY_CEILING - SAFETY_KNEE;
   for (let i = 0; i < curve.length; i++) {
@@ -107,7 +107,7 @@ function safetyCurve(): Float32Array<ArrayBuffer> {
     curve[i] = Math.sign(x) * y;
   }
   return curve;
-}
+})();
 
 // Noise: a seamless loop of white noise, generated from a fixed seed so every render is repeatable.
 const NOISE_SECONDS = 2;
@@ -458,10 +458,10 @@ function createVoiceOscillator(ctx: BaseAudioContext) {
   return { source, out, direct, inverted, width, pwm, period };
 }
 
-/** Set a biquad to a stage: scheduled at `t` for the playing filter, immediately (no `t`) for a twin. */
-function setStage(node: BiquadFilterNode, stage: Stage, cutoff: number, t?: number) {
+/** Set a biquad to a stage, its Cutoff aside: scheduled at `t` for the playing filter, immediately (no `t`) for a twin. */
+function setStage(node: BiquadFilterNode, stage: Stage, t?: number) {
   node.type = stage.type;
-  for (const [param, value] of [[node.frequency, cutoff], [node.Q, stage.Q], [node.gain, stage.gain]] as const) {
+  for (const [param, value] of [[node.Q, stage.Q], [node.gain, stage.gain]] as const) {
     if (t === undefined) param.value = value;
     else param.setValueAtTime(value, t);
   }
@@ -508,8 +508,8 @@ const A4 = noteToFrequency(69);
 
 /**
  * One LFO: a real oscillator, wired to each destination through a gain set from its Depth (zero unless it is aimed
- * there): the Cutoff and the pitch in cents (through `detune`), Osc 2's tuning in cents, each Filter stage's Q, the
- * tremolo's gain.
+ * there): the Cutoff and the pitch in cents (through `detune`), Osc 2's tuning in cents, the Resonance (into the
+ * shared curve to each Filter stage's Q), the tremolo's gain.
  * Pulse Width goes through each Voice's own gains, since its swing depends on the Note. The oscillator feeds a bus
  * the rest is wired to, so a retriggering Note can swap in a new oscillator that starts its cycle at that Note; the
  * bus is the LFO's clamp, holding it within ±1.
@@ -520,13 +520,20 @@ interface LfoNodes {
   toCutoff: GainNode;
   toPitch: GainNode;
   toOsc2: GainNode;
-  toQ: [GainNode, GainNode];
+  /** Its swing of the Resonance, as a share of both LFOs' widest together, into `Shared.resonanceSwing`. */
+  toResonance: GainNode;
   toVolume: GainNode;
 }
 
 /** What every Voice shares: the LFOs, the pitch bend, the noise loop, the Oscillators' waves, and where the Voices' outputs go. */
 interface Shared {
   lfos: [LfoNodes, LfoNodes];
+  /**
+   * Where both LFOs' swings of the Resonance meet: a curve from the swing to what it adds to the first stage's Q, as
+   * the model moves the Resonance (qSwing, issue 166), then each stage's share of it, into every Voice's Filter.
+   */
+  resonanceSwing: WaveShaperNode;
+  toQ: [GainNode, GainNode];
   /** The pitch bend in cents, into every Oscillator's detune (the LFO on Pitch goes there too). */
   bend: ConstantSourceNode;
   /** The tremolo's resting gain, into every Voice's: 1 less the LFOs' total swing on Volume. */
@@ -605,6 +612,20 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   // Two stages: the second is transparent at 12 dB and doubles the Slope at 24 dB (filterStages).
   const filter = ctx.createBiquadFilter();
   const filter2 = ctx.createBiquadFilter();
+  // The Cutoff: each stage's frequency the bottom of its range, its detune the cents over it, the knob's (`cutoff`)
+  // and everything that moves it summed, then held within the range by a clamp, as the model holds the Effective
+  // Cutoff (issue 166). The sum is scaled to the clamp's curve, which takes the span as 1.
+  const cutoff = ctx.createConstantSource();
+  const cutoffSum = ctx.createGain();
+  cutoffSum.gain.value = 1 / CUTOFF_SPAN;
+  const cutoffClamp = ctx.createWaveShaper();
+  cutoffClamp.curve = CUTOFF_CLAMP;
+  cutoff.connect(cutoffSum).connect(cutoffClamp);
+  for (const node of [filter, filter2]) {
+    node.frequency.value = LOWEST_CUTOFF;
+    cutoffClamp.connect(node.detune);
+  }
+  cutoff.start();
   const amp = ctx.createGain();
   amp.gain.value = 0;
   // After the Amp, the LFOs on Volume (tremolo): its gain is the shared resting level plus each LFO's swing.
@@ -612,15 +633,14 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   tremoloGain.gain.value = 0;
   shared.tremoloRest.connect(tremoloGain.gain);
 
-  // The Filter Envelope (0–1) moves the Cutoff through `detune`, in cents: Cutoff × 2^(Amount × level),
-  // exactly the model's law. Amount is a gain after the Envelope, so changing it mid-Note acts at once.
+  // The Filter Envelope (0–1) moves the Cutoff by its cents: Cutoff × 2^(Amount × level), exactly the model's law.
+  // Amount is a gain after the Envelope, so changing it mid-Note acts at once.
   const filterEnvelope = ctx.createConstantSource();
   filterEnvelope.offset.value = 0;
   const envelopeAmount = ctx.createGain();
   envelopeAmount.gain.value = 0;
   filterEnvelope.connect(envelopeAmount);
-  envelopeAmount.connect(filter.detune);
-  envelopeAmount.connect(filter2.detune);
+  envelopeAmount.connect(cutoffSum);
   // The same Envelope on Osc 2's pitch (issue 93): its Env Amount in cents.
   const osc2EnvAmount = ctx.createGain();
   osc2EnvAmount.gain.value = 0;
@@ -633,8 +653,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   const velocityAmount = ctx.createGain();
   velocityAmount.gain.value = 0;
   noteVelocity.connect(velocityAmount);
-  velocityAmount.connect(filter.detune);
-  velocityAmount.connect(filter2.detune);
+  velocityAmount.connect(cutoffSum);
   noteVelocity.start();
 
   // Key Track, the same way: the Note (in semitones from C4, gliding as the Oscillators do) times the amount.
@@ -643,8 +662,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   const keyTrackAmount = ctx.createGain();
   keyTrackAmount.gain.value = 0;
   trackedNote.connect(keyTrackAmount);
-  keyTrackAmount.connect(filter.detune);
-  keyTrackAmount.connect(filter2.detune);
+  keyTrackAmount.connect(cutoffSum);
   trackedNote.start();
 
   dcBlock.connect(filter).connect(filter2).connect(amp).connect(tremoloGain).connect(shared.master);
@@ -652,11 +670,10 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   for (const n of noises) n.source.start(0, (index * NOISE_SECONDS) / MAX_VOICES);
 
   // The shared LFOs, wired to this Voice's destinations through the shared gains set from their Depths.
+  shared.toQ[0].connect(filter.Q);
+  shared.toQ[1].connect(filter2.Q);
   shared.lfos.forEach((l, i) => {
-    l.toCutoff.connect(filter.detune);
-    l.toCutoff.connect(filter2.detune);
-    l.toQ[0].connect(filter.Q);
-    l.toQ[1].connect(filter2.Q);
+    l.toCutoff.connect(cutoffSum);
     l.toPitch.connect(sub.detune);
     l.toOsc2.connect(osc2.detune);
     l.toVolume.connect(tremoloGain.gain);
@@ -821,10 +838,10 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
       for (const n of noises) n.gate.gain.setValueAtTime(n.colour === next.noiseColour ? 1 : 0, t);
       mixSub.gain.setValueAtTime(next.mixSub * OSCILLATOR_LEVEL, t);
       mixRing.gain.setValueAtTime(next.mixRing * OSCILLATOR_LEVEL, t);
-      // The base Cutoff; the Filter Envelope adds to it through detune.
+      // The knob's Cutoff; the Filter Envelope and the rest add to it.
       const stages = filterStages(next.filterMode, next.filterSlope, next.resonance);
-      const cutoff = effectiveCutoff(next);
-      [filter, filter2].forEach((node, i) => setStage(node, stages[i], cutoff, t));
+      [filter, filter2].forEach((node, i) => setStage(node, stages[i], t));
+      cutoff.offset.setValueAtTime(centsOverFloor(effectiveCutoff(next)), t);
       envelopeAmount.gain.setValueAtTime(next.filterEnvAmount * 1200, t);
       osc2EnvAmount.gain.setValueAtTime(next.osc2EnvAmount * 100, t);
       velocityAmount.gain.setValueAtTime(next.velocityCutoff * VELOCITY_CUTOFF_OCTAVES * 1200, t);
@@ -857,7 +874,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   // sound and a few milliseconds of lookahead delay.)
   const [safetyIn, safety, safetyOut] = [ctx.createGain(), ctx.createWaveShaper(), ctx.createGain()];
   safetyIn.gain.value = 1 / SAFETY_RANGE; // the shaper's curve covers ±1; this lets it see inputs up to ±SAFETY_RANGE
-  safety.curve = safetyCurve();
+  safety.curve = SAFETY_CURVE;
   safety.oversample = '4x';
   master.connect(safetyIn).connect(safety).connect(safetyOut).connect(ctx.destination);
   // Listens to what reaches the limiter, so the Viewers can say when it is bending the sound (a chord can reach
@@ -879,14 +896,20 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     osc.frequency.value = PARAMS.lfoRate.default;
     const bus = lfoClamp(ctx);
     osc.connect(bus);
-    const [toCutoff, toPitch, toOsc2, q1, q2, toVolume] = Array.from({ length: 6 }, () => {
+    const [toCutoff, toPitch, toOsc2, toResonance, toVolume] = Array.from({ length: 5 }, () => {
       const g = ctx.createGain();
       g.gain.value = 0;
       bus.connect(g);
       return g;
     });
-    return { takeover: createTakeover(osc, ctx.currentTime, (node) => node.disconnect()), bus, toCutoff, toPitch, toOsc2, toQ: [q1, q2], toVolume };
+    toResonance.connect(resonanceSwing);
+    return { takeover: createTakeover(osc, ctx.currentTime, (node) => node.disconnect()), bus, toCutoff, toPitch, toOsc2, toResonance, toVolume };
   };
+  const resonanceSwing = ctx.createWaveShaper();
+  const toQ = [ctx.createGain(), ctx.createGain()] as [GainNode, GainNode];
+  for (const g of toQ) resonanceSwing.connect(g);
+  // The Resonance's swing as last worked out, by what it is made from: a knob turned elsewhere keeps its curve.
+  let swing = { key: '', stages: [0, 0] as [number, number] };
   const bend = ctx.createConstantSource();
   bend.offset.value = 0;
   bend.start();
@@ -903,7 +926,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       return ctx.createPeriodicWave(real.subarray(0, harmonics + 1), imag.subarray(0, harmonics + 1), { disableNormalization: true });
     });
   const shared: Shared = {
-    lfos: [lfoNodes(), lfoNodes()], bend, tremoloRest, noise: { white, pink: pinkBuffer(ctx, white) }, wave: oscillatorWave, master,
+    lfos: [lfoNodes(), lfoNodes()], resonanceSwing, toQ, bend, tremoloRest, noise: { white, pink: pinkBuffer(ctx, white) }, wave: oscillatorWave, master,
   };
   const voices = Array.from({ length: MAX_VOICES }, (_, i) => createVoice(ctx, shared, i));
   const lfoWaves = createCache<string, PeriodicWave>(KEPT_LFO_WAVES);
@@ -1219,8 +1242,16 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       const pitchCents = destinationSwings(next, 'pitch').map((semitones) => semitones * 100);
       const detuneCents = destinationSwings(next, 'detune');
       const osc2 = destinationSwings(next, 'osc2Pitch').map((semitones, i) => semitones * 100 + detuneCents[i]);
-      // Resonance: each stage's Q moves from where the swing's low end puts it to where its high end does.
+      // Resonance: each LFO's share of the widest swing both make together, which the curve turns into each stage's Q.
       const resonances = destinationSwings(next, 'resonance', next.resonance);
+      const span = resonances[0] + resonances[1];
+      const key = `${next.filterMode} ${next.filterSlope} ${next.resonance} ${span}`;
+      if (key !== swing.key) {
+        const { curve, stages } = qSwing(next.filterMode, next.filterSlope, next.resonance, span);
+        resonanceSwing.curve = curve;
+        swing = { key, stages };
+      }
+      toQ.forEach((g, k) => g.gain.setValueAtTime(swing.stages[k], t));
       // Volume: the knob's level (issue 62), the tremolo resting its total swing below it, so the wave's top is the
       // knob's own level; each LFO's swing scaled with it.
       const volumeSwings = destinationSwings(next, 'volume').map((s) => s * next.volume);
@@ -1236,14 +1267,12 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
         nodes.toPitch.gain.setValueAtTime(pitchCents[i], t);
         nodes.toOsc2.gain.setValueAtTime(osc2[i], t);
         nodes.toVolume.gain.setValueAtTime(volumeSwings[i], t);
-        const high = filterStages(next.filterMode, next.filterSlope, next.resonance + resonances[i]);
-        const low = filterStages(next.filterMode, next.filterSlope, next.resonance - resonances[i]);
-        nodes.toQ.forEach((g, k) => g.gain.setValueAtTime((high[k].Q - low[k].Q) / 2, t));
+        nodes.toResonance.gain.setValueAtTime(span ? resonances[i] / span : 0, t);
       });
       lockToBeat(next, t);
       // The twins copy each stage for the Response Curve.
       const stages = filterStages(next.filterMode, next.filterSlope, next.resonance);
-      twins.forEach((node, i) => setStage(node, stages[i], effectiveCutoff(next)));
+      twins.forEach((node, i) => setStage(node, stages[i]));
       // Several Voices sum before the master: the listening level makes room for them (after the Amp Tap, so
       // the Viewers' scale is unchanged, ADR-0006); one Voice plays exactly as loud as before.
       master.gain.setValueAtTime(MASTER_LEVEL / Math.sqrt(next.voices), t);

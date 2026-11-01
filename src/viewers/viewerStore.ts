@@ -5,6 +5,7 @@ import { createCache } from '../music/cache';
 import { type IdealPartial, idealFmKept, idealPartials } from '../music/idealReference';
 import type { Patch } from '../patch/patch';
 import type { PatchStore } from '../patch/patchStore';
+import { SPECTRUM_TOP } from './axes';
 import { guideLevel } from './guides';
 import { type Overlay, toggleOverlay } from './overlays';
 import { INITIAL_VIEWER_STATE, type TapSource, type ViewerAction, viewerReducer } from './viewerState';
@@ -24,7 +25,7 @@ export type ViewSettingsAction =
 export type ViewerStore = ReturnType<typeof createViewerStore>;
 
 /** How many Harmonics of the Note the Ideal Reference counts. */
-export const IDEAL_HARMONICS = 256;
+const IDEAL_HARMONICS = 256;
 
 /** The Viewers' Display settings as they are kept (issue 85), besides the overlays. */
 const savedOf = (settings: ViewSettings): DisplayValue<'viewer'> => ({
@@ -41,7 +42,8 @@ const KEPT_IDEALS = 16;
 /**
  * The Ideal Reference at the Oscillator Tap's level: the same series the engine plays, scaled by the Nominal Level, at
  * the share of FM's depth the Note keeps (issue 103; to a thousandth, so a Note held reuses its Ideal every frame) and
- * whether its Gate is on, Osc 2 resting where the Filter Envelope holds it (issue 98).
+ * whether its Gate is on, Osc 2 resting where the Filter Envelope holds it (issue 98). FM and Ring are worked out up
+ * to the Harmonic the Spectrum's top reaches, and no further (issue 166): Notes whose top is the same Harmonic share it.
  */
 const idealOf = (patch: Patch): IdealAt => {
   const known = createCache<string, readonly IdealPartial[]>(KEPT_IDEALS);
@@ -50,8 +52,9 @@ const idealOf = (patch: Patch): IdealAt => {
   return (fundamental, sampleRate, gateOn = false) => {
     if (last?.fundamental === fundamental && last.sampleRate === sampleRate && last.gateOn === gateOn) return last.ideal;
     const kept = Math.round(idealFmKept(patch, fundamental, sampleRate) * 1000) / 1000;
-    const ideal = known.get(`${kept} ${gateOn}`, () =>
-      idealPartials(patch, IDEAL_HARMONICS, { fmKept: kept, gateOn }).map((p) => ({ ...p, level: p.level * OSCILLATOR_LEVEL })),
+    const top = Math.min(IDEAL_HARMONICS, Math.ceil(SPECTRUM_TOP / fundamental));
+    const ideal = known.get(`${kept} ${gateOn} ${top}`, () =>
+      idealPartials(patch, IDEAL_HARMONICS, { fmKept: kept, gateOn, top }).map((p) => ({ ...p, level: p.level * OSCILLATOR_LEVEL })),
     );
     last = { fundamental, sampleRate, gateOn, ideal };
     return ideal;

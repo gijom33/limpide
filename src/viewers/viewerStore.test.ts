@@ -135,6 +135,14 @@ describe('the Viewer settings store (issue 77)', () => {
     expect(sideband(96)).toBeLessThan(sideband(60) / 2);
   });
 
+  it('works FM’s sidebands out no higher than the Spectrum’s top, 20 kHz (issue 166)', () => {
+    const { patches, viewers } = setup();
+    patches.change((p) => ({ ...p, waveform: 'saw', osc2Waveform: 'sine', osc2Octave: 1, osc2Semitone: 10, crossMod: 1 }), 'hand');
+    const highest = (hz: number) => Math.max(...(viewers.get().ideal?.(hz, 48000) ?? []).filter((p) => p.source === 'osc1').map((p) => p.ratio * hz));
+    expect(highest(2093)).toBeLessThan(20000 + 2093); // C7: up to its Harmonic at the top
+    expect(highest(65.4)).toBeGreaterThan(16000); // C2: Harmonics up to its 256th, 16.7 kHz
+  });
+
   it('works out FM’s kept depth once for a Note however many frames and Spectra ask (the 1.16.1 review)', () => {
     const { patches, viewers } = setup();
     patches.change((p) => ({ ...p, waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, osc2Semitone: 10, crossMod: 0.3 }), 'hand');

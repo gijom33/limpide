@@ -76,8 +76,9 @@ export const VELOCITY_CUTOFF_OCTAVES = 2;
 /** Key Track is measured from C4: there the Cutoff is the knob's own value. */
 export const KEY_TRACK_CENTRE = 60;
 
-const MIN_HZ = 20;
-const MAX_HZ = 20000;
+/** The Effective Cutoff's range: the model holds it here, and so does the engine's Filter (issue 166). */
+export const LOWEST_CUTOFF = 20;
+export const HIGHEST_CUTOFF = 20000;
 
 /**
  * The Cutoff after all modulation, computed here rather than read from the audio graph (ADR-0003).
@@ -90,7 +91,7 @@ export function effectiveCutoff(patch: Patch, filterEnvelope = 0, lfo: readonly 
   const velocityOctaves = VELOCITY_CUTOFF_OCTAVES * patch.velocityCutoff * velocity;
   const keyOctaves = (patch.keyTrack * (note - KEY_TRACK_CENTRE)) / 12;
   const hz = patch.cutoff * 2 ** (patch.filterEnvAmount * filterEnvelope + lfoOctaves + velocityOctaves + keyOctaves);
-  return Math.min(MAX_HZ, Math.max(MIN_HZ, hz));
+  return Math.min(HIGHEST_CUTOFF, Math.max(LOWEST_CUTOFF, hz));
 }
 
 /**

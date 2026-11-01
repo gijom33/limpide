@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { filterStages, resonanceToQdB } from './filterDesign';
+import { effectiveCutoff } from '../modulation/modulationModel';
+import { defaultPatch } from '../patch/patch';
+import { CUTOFF_CLAMP, CUTOFF_SPAN, centsOverFloor, filterStages, qSwing, resonanceToQdB } from './filterDesign';
+
+/** What a WaveShaperNode makes of `x` through `curve`: the curve read between its points, held at its ends past ±1. */
+function shaped(curve: Float32Array, x: number) {
+  const v = ((curve.length - 1) / 2) * (Math.max(-1, Math.min(1, x)) + 1);
+  const k = Math.min(curve.length - 2, Math.floor(v));
+  return curve[k] + (curve[k + 1] - curve[k]) * (v - k);
+}
 
 describe('filterStages', () => {
   it('uses one stage at 12 dB, the second left transparent (a 0 dB shelf)', () => {
@@ -35,5 +44,39 @@ describe('resonanceToQdB', () => {
   it('starts flat (Butterworth, −3 dB at the Cutoff) and rises to a 24 dB peak', () => {
     expect(resonanceToQdB(0)).toBeCloseTo(-3.01, 2);
     expect(resonanceToQdB(1)).toBeCloseTo(24, 0);
+  });
+});
+
+describe('the Filter under modulation, as the model has it (issue 166)', () => {
+  const MODES = ['lowpass', 'highpass', 'bandpass', 'notch'] as const;
+
+  it('moves each stage’s Q as the model moves the Resonance, so it never passes its floor: a band-pass’s and notch’s by ratios', () => {
+    for (const mode of MODES)
+      for (const slope of [12, 24] as const)
+        for (const resonance of [0, 0.2, 0.5, 0.8, 1])
+          // The LFOs' widest swing together, as far as the knob leaves room either way (LFO_LAWS), or less.
+          for (const span of [0, 0.5, 1].map((share) => share * Math.min(resonance, 1 - resonance))) {
+            const { curve, stages } = qSwing(mode, slope, resonance, span);
+            const rest = filterStages(mode, slope, resonance);
+            for (let i = 0; i <= 40; i++) {
+              const x = i / 20 - 1;
+              const moved = filterStages(mode, slope, resonance + span * x);
+              for (const k of [0, 1] as const) {
+                const q = rest[k].Q + stages[k] * shaped(curve, x);
+                expect(q, `${mode} ${slope} dB, Resonance ${resonance} swung ${(span * x).toFixed(2)}, stage ${k + 1}`).toBeCloseTo(moved[k].Q, 4);
+                expect(q).toBeGreaterThanOrEqual(filterStages(mode, slope, 0)[k].Q - 1e-4);
+              }
+            }
+          }
+  });
+
+  it('holds the Cutoff within 20 Hz to 20 kHz, however far its modulation takes it, as the model does', () => {
+    const patch = defaultPatch();
+    for (const hz of [0.1, 5, 19.9, 20, 440, 5000, 20000, 20001, 80000, 1e6]) {
+      const held = 20 * 2 ** (shaped(CUTOFF_CLAMP, centsOverFloor(hz) / CUTOFF_SPAN) / 1200);
+      // The model's Cutoff for `hz`: the knob at 20 Hz, its Filter Envelope opened by as many octaves as `hz` is above it.
+      const model = effectiveCutoff({ ...patch, cutoff: 20, filterEnvAmount: Math.log2(hz / 20) }, 1);
+      expect(held / model, `${hz} Hz`).toBeCloseTo(1, 5);
+    }
   });
 });

@@ -3,6 +3,8 @@ export type LevelScale = 'db' | 'linear';
 
 const LOG_MIN = 20;
 const LOG_MAX = 20000;
+/** The highest frequency a Spectrum shows, on either scale: the top of hearing. */
+export const SPECTRUM_TOP = LOG_MAX;
 // Linear spacing only helps where Harmonics are spread out enough to see as a ladder.
 const LINEAR_MAX = 5000;
 const DB_FLOOR = -100;

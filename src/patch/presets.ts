@@ -590,8 +590,8 @@ group('Movement & Effects', [
     volume: 0.6, mixOsc1: 0, mixOsc2: 1, osc2Waveform: 'triangle', cutoff: 6000, resonance: 0.1, ampSustain: 1, lfoWaveform: 'triangle', lfoDestination: 'osc2Pitch', lfoRate: 0.4, lfoAmount: 1,
   }],
   ['Talking Filter', 'A band-pass with LFO 1 on its Cutoff and LFO 2 on its Resonance at another speed: vowels that never settle, like a robot mumbling.', {
-    volume: 0.7, filterMode: 'bandpass', cutoff: 800, resonance: 0.6, ampSustain: 1, lfoWaveform: 'triangle', lfoDestination: 'cutoff', lfoRate: 2.5, lfoAmount: 0.5,
-    lfo2Waveform: 'square', lfo2Destination: 'resonance', lfo2Rate: 0.7, lfo2Amount: 0.6,
+    volume: 0.9, filterMode: 'bandpass', cutoff: 800, resonance: 0.45, ampSustain: 1, lfoWaveform: 'triangle', lfoDestination: 'cutoff', lfoRate: 2.5, lfoAmount: 0.5,
+    lfo2Waveform: 'square', lfo2Destination: 'resonance', lfo2Rate: 0.7, lfo2Amount: 0.45,
   }],
   ['Stutter', 'A square LFO chopping the Filter, retriggered: every Note starts its stutter open, on the beat.', {
     volume: 0.2, waveform: 'square', mixSub: 0.4, cutoff: 300, resonance: 0.3, ampSustain: 1, lfoWaveform: 'square', lfoDestination: 'cutoff', lfoRate: 8, lfoAmount: 0.8, lfoRetrigger: 'note',

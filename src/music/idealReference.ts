@@ -19,6 +19,15 @@ export function idealReference(patch: Patch, count: number): Float32Array {
 /** Where the Ideal puts its marks: one per Harmonic of each Oscillator that sounds (issue 61). */
 export type IdealSource = 'osc1' | 'osc2' | 'sub' | 'ring';
 
+/** The quietest partial the Ideal keeps: 100 dB under a wave at full level, about the Spectrum's floor. */
+const QUIETEST = 1e-5;
+/**
+ * The most of FM's sidebands the Ideal keeps, the loudest (issue 166): Osc 1 richer than a Sine, swung hard, makes tens
+ * of thousands, too many to work out and draw in a frame; the Spectrum has room for a few hundred marks.
+ */
+const MOST_SIDEBANDS = 1024;
+/** How many sidebands are worked out, at most, for the loudest MOST_SIDEBANDS to be kept from. */
+const SIDEBANDS_WORKED = 4 * MOST_SIDEBANDS;
 /** How many Harmonics of each Oscillator Ring's sums and differences are drawn from: enough to read its pattern. */
 const RING_HARMONICS = 16;
 export interface IdealPartial {
@@ -39,10 +48,14 @@ export const osc2Ratio = (patch: Patch) => 2 ** (osc2Cents(patch) / 1200 - patch
  */
 export const osc2Rest = (patch: Patch, gateOn: boolean) => (gateOn ? patch.osc2EnvAmount * patch.filterSustain : 0);
 
-/** What the Ideal draws for besides the Patch: the share of FM's depth the Note keeps (fmDepthKept), and its Gate. */
+/**
+ * What the Ideal draws for besides the Patch: the share of FM's depth the Note keeps (fmDepthKept), its Gate, and the
+ * `top` worth working out FM's and Ring's partials up to, over the fundamental (the top of hearing, issue 166).
+ */
 export interface IdealNote {
   fmKept?: number;
   gateOn?: boolean;
+  top?: number;
 }
 
 /**
@@ -54,21 +67,23 @@ export interface IdealNote {
  * on, Osc 2, Ring and FM count from where the Filter Envelope holds Osc 2 (osc2Rest, issue 98); FM's depth stays the
  * knobs', so its index falls as far as Osc 2 rises.
  */
-export function idealPartials(patch: Patch, count: number, { fmKept = 1, gateOn = false }: IdealNote = {}): IdealPartial[] {
+export function idealPartials(patch: Patch, count: number, { fmKept = 1, gateOn = false, top = Infinity }: IdealNote = {}): IdealPartial[] {
   const root = osc1Pitch(patch);
+  // FM's and Ring's partials, worked out no higher than they can be heard (issue 166): none past the top is drawn.
+  const reach = Math.min(count, top);
   const lift = 2 ** (osc2Rest(patch, gateOn) / 12); // Osc 2's resting pitch over its knobs'
   const osc2 = root * osc2Ratio(patch) * lift;
   const series = (source: IdealSource, magnitudes: Float32Array, mix: number, pitch: number) =>
     mix > 0 ? Array.from({ length: count - 1 }, (_, i) => ({ ratio: (i + 1) * pitch, level: magnitudes[i + 1] * mix, source })) : [];
   return [
     // Under FM, Osc 1 as FM makes it, where that can be worked out (issue 96), at the depth the Note keeps (issue 103).
-    ...((patch.crossMod > 0 && patch.mixOsc1 > 0 && fmPartials(patch, root, osc2, count, (FM_INDEX * patch.crossMod * fmKept) / lift)) ||
+    ...((patch.crossMod > 0 && patch.mixOsc1 > 0 && fmPartials(patch, root, osc2, reach, (FM_INDEX * patch.crossMod * fmKept) / lift)) ||
       series('osc1', harmonicSeries(patch.waveform, patch.pulseWidth, count).magnitudes, patch.mixOsc1, root)),
     ...series('osc2', harmonicSeries(patch.osc2Waveform, patch.osc2PulseWidth, count).magnitudes, patch.mixOsc2, osc2),
     ...series('sub', harmonicSeries(patch.subWaveform, 0.5, count).magnitudes, patch.mixSub, 1),
-    ...ringPartials(patch, root, osc2, count),
+    ...ringPartials(patch, root, osc2, reach),
   ]
-    .filter((p) => p.level > 1e-5)
+    .filter((p) => p.level > QUIETEST)
     .sort((a, b) => a.ratio - b.ratio);
 }
 
@@ -114,10 +129,10 @@ function cyclePartials(levels: Float64Array, base: number, mix: number, source: 
 
 /** Partials whose levels add as power where several land on one frequency, as their alignment drifts. */
 function powerSum() {
-  const power = new Map<string, { ratio: number; power: number }>();
+  const power = new Map<number, { ratio: number; power: number }>();
   return {
     add(ratio: number, level: number) {
-      const key = ratio.toFixed(6);
+      const key = Math.round(ratio * 1e6);
       const entry = power.get(key) ?? power.set(key, { ratio, power: 0 }).get(key)!;
       entry.power += level * level;
     },
@@ -128,6 +143,11 @@ function powerSum() {
 
 // Samples of one cycle of the product per Harmonic drawn: enough that the jumps' aliasing stays far below them.
 const SAMPLES_PER_HARMONIC = 16;
+/**
+ * The most samples FM's cycle is worked out from, so its Fourier transform fits in a frame (issue 166): with Osc 2 far
+ * under Osc 1 and swung hard, the cycle's highest Harmonics are left out.
+ */
+const MOST_CYCLE_SAMPLES = 2 ** 15;
 // The engine's Oscillators play this many Harmonics; the Ideal scales each wave as they are scaled.
 const ENGINE_HARMONICS = 1024;
 /** How many of Ring's products and FM's cycles are kept, for the Patches asked for most recently. */
@@ -220,7 +240,9 @@ export const idealFmKept = (patch: Patch, fundamental: number, sampleRate: numbe
 function fmPartials(patch: Patch, osc1: number, osc2: number, count: number, index: number): IdealPartial[] | null {
   const base = inOctaves(osc1, osc2);
   if (base) {
-    const levels = fmCycle(patch, Math.round(osc1 / base), Math.round(osc2 / base), Math.ceil(count / base), index);
+    // As many Harmonics of the cycle as fit the most samples it is worked out from (issue 166).
+    const harmonics = Math.min(Math.ceil(count / base), Math.floor(MOST_CYCLE_SAMPLES / (SAMPLES_PER_HARMONIC * (1 + index))));
+    const levels = fmCycle(patch, Math.round(osc1 / base), Math.round(osc2 / base), harmonics, index);
     return cyclePartials(levels, base, patch.mixOsc1, 'osc1', count);
   }
   if (patch.osc2Waveform !== 'sine') return null;
@@ -229,7 +251,9 @@ function fmPartials(patch: Patch, osc1: number, osc2: number, count: number, ind
   const scale = pulse ? pulseScale(patch.pulseWidth) : 1;
   const sum = powerSum();
   const most = Math.min(ENGINE_HARMONICS - 1, Math.ceil((1.5 * count) / osc1));
-  for (let n = 1; n <= most; n++) {
+  // Osc 1's Harmonics from the loudest down, until their sidebands are several times as many as are kept (issue 166).
+  let worked = 0;
+  for (let n = 1; n <= most && worked < SIDEBANDS_WORKED; n++) {
     if (levels[n] < 1e-9) continue;
     // The sidebands that land below `count`, either side, and no further than J_k reaches.
     const reach = Math.ceil(n * index + 10 * Math.cbrt(n * index + 1) + 10);
@@ -237,6 +261,7 @@ function fmPartials(patch: Patch, osc1: number, osc2: number, count: number, ind
     const high = Math.min(reach, Math.floor((count - n * osc1) / osc2));
     if (low > high) continue;
     const j = besselJ(n * index, Math.max(Math.abs(low), Math.abs(high)));
+    worked += high - low + 1;
     for (let k = low; k <= high; k++) {
       const frequency = n * osc1 + k * osc2;
       const ratio = Math.abs(frequency);
@@ -247,7 +272,14 @@ function fmPartials(patch: Patch, osc1: number, osc2: number, count: number, ind
       if (level > 1e-7) sum.add(ratio, level);
     }
   }
-  return sum.partials('osc1', patch.mixOsc1);
+  return loudest(sum.partials('osc1', patch.mixOsc1), MOST_SIDEBANDS);
+}
+
+/** The `most` loudest of `partials`, in the order they came, or all of them where there are no more. */
+function loudest(partials: IdealPartial[], most: number): IdealPartial[] {
+  if (partials.length <= most) return partials;
+  const floor = Float64Array.from(partials, (p) => p.level).sort()[partials.length - most];
+  return partials.filter((p) => p.level >= floor).slice(0, most);
 }
 
 /**
