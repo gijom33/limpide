@@ -46,7 +46,7 @@ export function useParamControl(id: ParamId, value: number, onChange: (value: nu
   const mathsPatch = useContext(MathsContext);
   const maths = mathsPatch ? mathsReadout(id, value, mathsPatch) : undefined;
   const readout = maths ?? formatParam(id, value);
-  const mathsOn = mathsPatch !== undefined;
+  const mathsOn = !!mathsPatch; // the context holds null while the layer is off
   const widest = useMemo(
     () => [...widestReadouts(id), ...(mathsOn ? twins(id).flatMap((t) => widestMathsReadout(t) ?? []) : [])],
     [id, mathsOn],
