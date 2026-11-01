@@ -4,7 +4,7 @@
 
 **Blocked by:** [150](./150-bead-shown-by-default.md), whose rules (Display's switch lasting, the Notes for the visit, never with the switch Off) this line describes
 
-**Status:** ready-for-agent · enhancement
+**Status:** ready-for-human · enhancement. Built (2026-11-01) on night/2026-10-31, for the owner to try
 
 ## Decisions
 
@@ -35,12 +35,26 @@ Claude's call, open to the owner:
 - The repository's bead.md page
 
 **Acceptance criteria:**
-- [ ] With Bead On, About shows Bead beside the logo, larger than on the page
-- [ ] A click, Enter or a tap on it shows Bead's card; Back and Escape return to the credits
-- [ ] With Bead Off, no Bead in About
-- [ ] Reduced motion: Bead still in About
-- [ ] On a 393 × 659 phone the Demo and Tour buttons are still on the first screen
+- [x] With Bead On, About shows Bead beside the logo, larger than on the page
+- [x] A click, Enter or a tap on it shows Bead's card; Back and Escape return to the credits
+- [x] With Bead Off, no Bead in About
+- [x] Reduced motion: Bead still in About
+- [x] On a 393 × 659 phone the Demo and Tour buttons are still on the first screen
 - [ ] The About and mascot specs cover it; the design audit passes; every test passes in Linux's fonts too
 
 **Out of scope:**
 - Bead's behaviour on the page
+
+## How it was built
+
+- **Beside the logo:** while Display's switch is on, Bead stands on the logo's baseline to its right, 88 × 52 px (twice its 44 × 26 on the page), the logo still in the middle over the name. It is drawn from the page's own pixels and lives in the stylesheet alone, so it costs no frame of the render loop: it blinks, glances left and right, and now and then jiggles, wags its tail or hops; with reduced motion it stands still. It sits outside the flow, so About's height, and its first screen on a phone, are as before.
+- **The card:** Bead is a button named "Bead, Limpide’s water drop: its tricks". A click, Enter or a tap shows its card in the credits' place, scrolling there as the credits do: its name and Back, who it is, what it answers, four funny turns, how to send it away (Display's switch for good; B, E, A, D for the visit), and "All its secrets", linking to bead.md on GitHub. Back or Escape return to the credits, the focus back on Bead; a second Escape closes About, which opens on the credits next time. With the switch off, About is as before.
+- **Claude's calls, open to the owner:**
+  1. **Its idle life is a loop in the stylesheet, not the page's Bead:** the blink, the glances and three small tricks (a jiggle, a tail wag, a hop) come round on cycles of 7 to 13 seconds, rather than its whole life from the page (its strolls, its props, dozing). Cheap, and it never wanders off the logo.
+  2. **Bead again closes its card too** (the button says it is expanded while the card shows), besides Back and Escape. A phone's back gesture, which comes to the dialog as a close request, goes back to the credits first, as Escape does.
+  3. **In About whenever the switch is on**, even after B, E, A, D sent it away for the visit: decision 5 ties it to the switch alone.
+  4. **Narrower than 340 px** (About fits windows down to 280 px), the logo and Bead are centred together, as the logo alone leaves too little room for its tail.
+  5. **The card's words** (decision 4's list): "Limpide’s water drop, its tail the logo’s stroke: it lives on the page, on a section’s top edge, and makes no sound. It dances to what you play, answers every knob and fader you turn, giggles when you tickle it with the mouse and sprays droplets when clicked. Left alone a while, it does a funny turn now and then:" a glass of water, then a burp; a rain cloud and a big umbrella; a water gun, a fountain show; fishing off its edge for a ♪. "To send it away: Display’s Bead switch, for good; or play B, E, A, D (J, D, H, S on the computer keyboard) for this visit, and again to call it back." bead.md's opening and CONTEXT.md's Mascot now say About shows a few of its tricks.
+- **Tests:** `e2e/about.spec.ts` (twice its page size on the logo's baseline; it fits at 280, 320, 340 and 375 px; the card by click and Back, by Enter and Escape; a tap on a 393 × 659 phone at the welcome, Demo and Tour on the first screen with the credits or the card; animations, none with reduced motion; none with the switch off), `e2e/mascot.spec.ts` (Display's switch turns it on and off in About), and the design audit opens About with Bead's card, at every size in both themes. They pass in Chromium and WebKit on the Mac, with the welcome and keyboard-access specs; Linux's fonts are left to GitHub's run, so the last criterion stays open until then. Bead's frame-cost test failed now and then on a machine under load (1.2 to 1.9 ms against 1 ms), as often with Bead kept out of About, which adds nothing to the page's frames: About's Bead is drawn by the stylesheet, only while About is open.
+- **Found on the way:** narrower than a phone (280 px), WebKit now and then lost a click on Display's Bead switch, at the panel's foot below the window; the audit turns the switch with the keyboard. Not looked into further.
+- **To try:** open About (the ⓘ, or the logo): Bead beside the logo, blinking, now and then a hop. Click it, then Back; press Escape on the card, then again. On a phone, tap it. Turn Bead off in Display: About has no Bead. With reduced motion, it stands still.
