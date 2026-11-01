@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · bug
+**Status:** ready-for-human · bug. Built (2026-11-01) on night/2026-10-31, for the owner to try
 
 ## Decisions
 
@@ -29,6 +29,15 @@ Claude's call, open to the owner:
 - The Rate's tip
 
 **Acceptance criteria:**
-- [ ] Sync on: the Rate reads "1/4", never with Hz
-- [ ] Turning the Rate through every note value, and switching Sync, moves no neighbouring control (a layout check in the LFO spec)
+- [x] Sync on: the Rate reads "1/4", never with Hz
+- [x] Turning the Rate through every note value, and switching Sync, moves no neighbouring control (a layout check in the LFO spec)
 - [ ] The LFO spec updated; every test passes in Linux's fonts too
+
+## How it was built
+
+- **The readout:** with Sync on, the Rate knob reads the note value alone ("1/4", "4 bars D", "1/16 T"), under the knob and in the bubble over a finger on a phone. Its hidden sizers now hold the longest readouts of every Parameter the knob turns, the Hz and the note values together, so its width stays the same as it turns and as Sync switches (decision 2). The small-type detail beside a value is gone from the knobs.
+- **Where the Hz went (decision 3):** the synced Rate's tip ends with it at the tempo ("At 120 BPM, 1/4 is 2 Hz."), following the tempo as it changes. The Maths Layer's period waits for [169](./169-geek-numbers-lfos-and-key-track.md).
+- **A screen reader still hears the Hz** (Claude's call, open to the owner): the Rate's spoken value is "1/4, 2 Hz", and the LFO plot's description keeps both, as before; neither takes any room on screen.
+- **Tests:** in the LFO spec, a synced Rate reads "1/4", then turns from "4 bars D" through all 24 note values, each without Hz, and Sync switches off and on, with the Rate's Hz at both ends: the readout's width and the place of every neighbour (Depth, Retrig, Sync, the plot, LFO 2's Depth and Rate) never change (red before the fix; the width check red without the shared sizers). The tempo spec reads "1/8" and the tip's "At 120 BPM, 1/8 is 4 Hz."; a tips unit test for the synced Rate's tip.
+- **Tests run:** `npx tsc`, `npm run lint`, the tempo and tips unit tests (44 passed); in Chromium the LFO and tempo specs (19 passed) and the knob, Maths and tooltip specs (30 passed). Linux's fonts are GitHub's run; the layout check compares the page with itself, so it holds in any font.
+- **To try:** turn an LFO's Depth up, switch its Sync on and turn the Rate from end to end: the readout shows "1/4", "1/8 D" and so on, never Hz, and Depth, Retrig, Sync and the plot do not move; switch Sync off and on again, the same. Hover the Rate for its Hz at the tempo.

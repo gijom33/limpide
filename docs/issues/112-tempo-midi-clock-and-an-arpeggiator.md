@@ -78,6 +78,8 @@ This reverses one thing in the PRD's Out of Scope: "LFO tempo sync: Limpide keep
 
 Claude's call, open to the owner: a player's beat count starts with the player, so its synced LFOs land on its first beat.
 
+**Since then (2026-11-01, [issue 176](./176-a-synced-rate-shows-its-note-value-alone.md)):** decision 10's Hz beside the note value is gone: a synced Rate reads its note value alone, at one width, so the knobs no longer shift; the Hz is in the Rate's tip. Decided by the owner.
+
 ## How it was built (2026-10-31, on night/2026-10-31)
 
 **What was built:**
