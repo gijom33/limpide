@@ -24,7 +24,7 @@ import { usePlayers } from './hooks/usePlayers';
 import { usePresetAbout } from './hooks/usePresetAbout';
 import { useTourState } from './hooks/useTourState';
 import { useTutorialState } from './hooks/useTutorialState';
-import { HoldIcon, InfoIcon, NoteIcon, PlayIcon } from './icons';
+import { HoldIcon, InfoIcon, LegatoIcon, NoteIcon, PlayIcon } from './icons';
 import { Knob } from './Knob';
 import { LearnBar } from './LearnBar';
 import { LfoControls } from './LfoControls';
@@ -40,6 +40,7 @@ import { QuickSetupPanel } from './QuickSetupPanel';
 import { SectionStrip } from './SectionStrip';
 import { Segmented } from './Segmented';
 import { SubBlock } from './SubBlock';
+import { Switch } from './Switch';
 import { STACKED } from './sections';
 import { Tabs } from './Tabs';
 import { TapViewers } from './TapViewers';
@@ -730,16 +731,31 @@ export function App() {
             }
             heading={
               <div className="voices-field">
-                <Tooltip content={TIPS.voices}>
-                  <Segmented
-                    label="Voices"
-                    caption="Voices"
-                    value={patch.voices}
-                    options={CHOICES.voices.map((v) => ({ value: v, label: String(v) }))}
-                    onChange={(voices) => edit((p) => ({ ...p, voices }))}
-                    learn={{ kind: 'choice', id: 'voices' }}
+                {/* Legato under the numbers, its end by Glide: a one-Voice switch as Glide is, in the room the dial
+                    leaves below them, so the row never wraps (issue 119). */}
+                <div className="voices-choice">
+                  <Tooltip content={TIPS.voices}>
+                    <Segmented
+                      label="Voices"
+                      caption="Voices"
+                      value={patch.voices}
+                      options={CHOICES.voices.map((v) => ({ value: v, label: String(v) }))}
+                      onChange={(voices) => edit((p) => ({ ...p, voices }))}
+                      learn={{ kind: 'choice', id: 'voices' }}
+                    />
+                  </Tooltip>
+                  <Switch
+                    name="Legato"
+                    short="Legato"
+                    label="beside"
+                    on={patch.legato === 'on'}
+                    icon={<LegatoIcon />}
+                    tip={TIPS.legato}
+                    learn={{ kind: 'choice', id: 'legato' }}
+                    inactive={patch.voices > 1 && 'No effect with more than one Voice'}
+                    onToggle={() => edit((p) => ({ ...p, legato: p.legato === 'on' ? 'off' : 'on' }))}
                   />
-                </Tooltip>
+                </div>
                 {/* Beside Voices, because it only slides a single Voice: with more, each Note starts at its pitch. */}
                 <Knob id="glide" value={patch.glide} onChange={(v) => change('glide', v)} inactive={patch.voices > 1 && 'No effect with more than one Voice'} />
               </div>

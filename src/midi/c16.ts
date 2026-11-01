@@ -33,7 +33,7 @@ const FREE = [null, null, null, null];
 
 /**
  * The four banks, the page's sections in order (issue 145, decided by the owner). Bank D's R row has each LFO's
- * Retrigger and Sync side by side (issue 112); bank C's R2 is kept for Legato (issue 119).
+ * Retrigger and Sync side by side (issue 112); bank C's R2, under Glide, switches Legato (issue 119).
  */
 export const C16_BANKS: C16Bank[] = [
   {
@@ -61,7 +61,7 @@ export const C16_BANKS: C16Bank[] = [
     name: 'Amp',
     knobs: [at(choice('voices'), 'Voices'), at(param('glide'), 'Glide'), null, null, null, null, null, at(param('volume'), 'Volume')],
     faders: [at(param('ampAttack'), 'Attack'), at(param('ampDecay'), 'Decay'), at(param('ampSustain'), 'Sustain'), at(param('ampRelease'), 'Release')],
-    buttons: shared(FREE, FREE),
+    buttons: shared(FREE, [null, at(choice('legato'), 'Legato'), null, null]),
   },
   {
     name: 'LFO & Envelopes',
@@ -164,13 +164,13 @@ export function upgradeC16Layout(stored: readonly Mapping[]): Mapping[] | null {
   return [...own, ...layout];
 }
 
-/** The places today's layout has that issue 145's left free, by target: each LFO's Sync (issue 112). */
-const ADDED_SINCE_145 = ['choice:lfoSync', 'choice:lfo2Sync'];
+/** The places today's layout has that issue 145's left free, by target: each LFO's Sync (issue 112), Legato (issue 119). */
+const ADDED_SINCE_145 = ['choice:lfoSync', 'choice:lfo2Sync', 'choice:legato'];
 
 /**
- * Stored Mappings with the places added to the layout since issue 145's (each LFO's Sync, issue 112), where the
- * person's Mappings leave both the control and the target free: a C16 set up with issue 145's layout gets them, and
- * a place the person has used since stays theirs. Null when there is nothing to add.
+ * Stored Mappings with the places added to the layout since issue 145's (each LFO's Sync, issue 112; Legato, issue
+ * 119), where the person's Mappings leave both the control and the target free: a C16 set up with issue 145's layout
+ * gets them, and a place the person has used since stays theirs. Null when there is nothing to add.
  */
 export function addC16Places(stored: readonly Mapping[]): Mapping[] | null {
   const added = c16Layout().filter((l) => ADDED_SINCE_145.includes(targetKey(l.target)) && !stored.some((m) => clash(l, m)));

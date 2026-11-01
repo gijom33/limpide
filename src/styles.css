@@ -679,12 +679,16 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .filter-shape { display: flex; flex-wrap: wrap; gap: 6px; }
 /* One row always: Safari sizes a wrapping row without its gaps, so it would push the 8 onto a line of its own. */
 .voices-field .segmented { flex-wrap: nowrap; }
-/* Voices, then Glide beside it: the choice lines up with the dial's visible bottom, as pickers do beside knobs. */
+/* Voices, then Glide beside it: the choice lines up with the dial's visible bottom, as pickers do beside knobs; Legato
+   under the numbers, its end by Glide, in the room the dial's name and value leave (issue 119). */
 .voices-field { display: flex; flex-wrap: wrap; align-items: flex-start; column-gap: var(--knob-gap); row-gap: var(--knob-row-gap); }
-.voices-field > .tip-anchor:first-child { margin-top: calc(var(--dial-small) * 0.8 - var(--control-h)); }
+.voices-choice {
+  display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-2);
+  margin-top: calc(var(--dial-small) * 0.8 - var(--control-h));
+}
 /* Safari leaves the segments' gaps out of the caption-and-segments line's width, so they would spill under Glide:
    that line is a grid (caption column, then the segments at their own width), which Safari sizes in full. */
-.voices-field > .tip-anchor:first-child { flex: none; }
+.voices-choice { flex: none; }
 .voices-field .segmented-field { display: grid; grid-template-columns: var(--label-col) max-content; }
 .voices-field .segmented button[role='radio'] { min-width: 24px; padding: 0 6px; }
 
@@ -701,12 +705,18 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .lfo-play .knobs { flex: none; flex-wrap: nowrap; }
 .lfo-play > .tip-anchor { display: flex; flex: 1 1 auto; min-width: 0; }
 /* Retrigger and Sync (issue 112): icon buttons beside Depth and Rate, centred where their dials are, each name under it
-   as theirs are (and, where theirs have one, an empty value line), so all four share one label line. On, a switch is
-   filled with the LFO's colour, as a selector's chosen option is. */
-.lfo-switch-field { display: flex; flex-direction: column; align-items: center; gap: var(--knob-text-gap); }
-.lfo-switch-field::after { content: ''; height: var(--knob-value-h); }
-.lfo-switch { margin: calc((var(--dial-big) - var(--control-h)) / 2) 0; }
-.lfo-switch[aria-pressed='true'] { color: var(--bg); background: var(--stage); border-color: var(--stage); }
+   as theirs are (and, where theirs have one, an empty value line), so all four share one label line; Legato beside
+   Glide the same way, on its small dial (issue 119). On, a switch is filled with its stage's colour, as a selector's
+   chosen option is. */
+.switch-field { display: flex; flex-direction: column; align-items: center; gap: var(--knob-text-gap); }
+.switch-field::after { content: ''; height: var(--knob-value-h); }
+.switch { margin: calc((var(--dial-big) - var(--control-h)) / 2) 0; }
+/* Legato (issue 119): its name beside it, on a line of its own under the Voices numbers. */
+.switch-field[data-label='beside'] { flex-direction: row; gap: var(--space-2); }
+.switch-field[data-label='beside']::after { display: none; }
+.switch-field[data-label='beside'] .switch { margin: 0; }
+.switch[aria-pressed='true'] { color: var(--bg); background: var(--stage); border-color: var(--stage); }
+.switch-field[data-inactive] .switch { opacity: 0.3; }
 /* A synced Rate's Hz beside its note value, in small type: "1/8 · 4 Hz". */
 .knob-value-detail { font-size: 0.85em; }
 .lfo-plot {
@@ -1277,7 +1287,7 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   .block { padding: var(--space-2) var(--space-3); gap: var(--space-2); }
   /* LFO & Envelopes with the stages' margins (issue 47). */
   .chain > .timeline { padding: var(--space-2) var(--space-3); }
-  .lfo-switch-field::after { display: none; }
+  .switch-field::after { display: none; }
   /* The LFOs one under the other, each plot taking what its knobs leave, so it never runs past the section. */
   .timeline-controls { flex-direction: column; align-items: stretch; }
   .timeline-controls > .sub-block, .lfo-rows { flex: 1 1 auto; min-width: 0; }

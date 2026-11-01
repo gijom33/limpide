@@ -113,6 +113,15 @@ export const SyncIcon = () => (
   </svg>
 );
 
+/** Two Notes under a slur, played as one line: Legato (issue 119). */
+export const LegatoIcon = () => (
+  <svg {...base}>
+    <path d="M1.5 7.5C4.5 2 11.5 2 14.5 7.5" strokeLinecap="round" />
+    <ellipse cx="4" cy="12" rx="2.4" ry="1.9" fill="currentColor" stroke="none" />
+    <ellipse cx="12" cy="11" rx="2.4" ry="1.9" fill="currentColor" stroke="none" />
+  </svg>
+);
+
 /** A Tutorial: a mortarboard. */
 export const TutorialIcon = () => (
   <svg {...base}>

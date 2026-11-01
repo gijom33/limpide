@@ -10,6 +10,7 @@ import { LfoPlot } from './LfoPlot';
 import { useLearnable } from './learn';
 import { radioGroupKeys, radioTabIndex } from './radioGroup';
 import { SubBlock } from './SubBlock';
+import { Switch } from './Switch';
 import { Tooltip } from './Tooltip';
 import { TIPS } from './tips';
 
@@ -30,35 +31,6 @@ interface Props {
   bpm: number;
   onParam(id: ParamId, value: number): void;
   onPatch(change: (patch: Patch) => Patch): void;
-}
-
-/**
- * One of an LFO's switches beside its knobs, Retrigger or Sync: an icon button, its short name under it as the knobs'
- * are, learnable as its two-way choice.
- */
-function LfoSwitch({ lfo, choice, name, short, on, icon, tip, onToggle }: {
-  lfo: LfoNumber;
-  choice: (typeof LFO_KEYS)[LfoNumber]['retrigger' | 'sync'];
-  name: string;
-  short: string;
-  on: boolean;
-  icon: React.ReactNode;
-  tip: (typeof TIPS)[keyof typeof TIPS];
-  onToggle(): void;
-}) {
-  const learn = useLearnable({ kind: 'choice', id: choice });
-  return (
-    <Tooltip content={tip}>
-      <div className="lfo-switch-field">
-        <button type="button" className="tool tool-icon lfo-switch" aria-label={`LFO ${lfo} ${name}`} aria-pressed={on} onClick={onToggle} {...learn}>
-          {icon}
-        </button>
-        <div className="knob-label" aria-hidden="true">
-          {short}
-        </div>
-      </div>
-    </Tooltip>
-  );
 }
 
 /**
@@ -109,20 +81,18 @@ export function LfoControls({ lfo, engine, patch, bpm, onParam, onPatch }: Props
               detail={synced ? { text: formatSyncedRate(patch[keys.note], bpm).hz, widest: WIDEST_SYNCED_HZ } : undefined}
               inactive={off && `No effect while LFO ${lfo}'s Depth is 0`}
             />
-            <LfoSwitch
-              lfo={lfo}
-              choice={keys.retrigger}
-              name="Retrigger"
+            <Switch
+              learn={{ kind: 'choice', id: keys.retrigger }}
+              name={`LFO ${lfo} Retrigger`}
               short="Retrig"
               on={retrigger}
               icon={<RetriggerIcon />}
               tip={TIPS.lfoRetrigger}
               onToggle={() => onPatch((p) => setLfo(p, { retrigger: retrigger ? 'free' : 'note' }, lfo))}
             />
-            <LfoSwitch
-              lfo={lfo}
-              choice={keys.sync}
-              name="Sync"
+            <Switch
+              learn={{ kind: 'choice', id: keys.sync }}
+              name={`LFO ${lfo} Sync`}
               short="Sync"
               on={synced}
               icon={<SyncIcon />}

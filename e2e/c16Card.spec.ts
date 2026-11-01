@@ -18,6 +18,10 @@ test('shows every place of the C16 layout, bank by bank, each button marked Mome
   await expect(nextOnB).toContainText('Next Preset');
   await expect(nextOnB).toContainText('CC 64');
   await expect(nextOnB).toContainText('Momentary');
+  // Legato under Glide on bank C's R2, a toggle (issue 119).
+  const legato = page.getByRole('region', { name: 'Bank C: Amp' }).getByRole('listitem').filter({ hasText: /^R2 / });
+  await expect(legato).toContainText('Legato');
+  await expect(legato).toContainText('Toggle');
   // Each LFO's Sync beside its Retrigger on bank D's R row, toggles (issue 112).
   const bankD = page.getByRole('region', { name: 'Bank D: LFO & Envelopes' }).getByRole('listitem');
   for (const [place, what] of [['R1', 'LFO 1 Retrigger'], ['R2', 'LFO 1 Sync'], ['R3', 'LFO 2 Retrigger'], ['R4', 'LFO 2 Sync']]) {

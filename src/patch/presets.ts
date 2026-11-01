@@ -280,8 +280,9 @@ group('Leads', [
     volume: 0.75, osc2Detune: -6, mixOsc2: 0.6, filterSlope: 24, cutoff: 1200, resonance: 0.85, velocityCutoff: 1, keyTrack: 0.6,
     filterEnvAmount: 1.5, filterDecay: 0.5, filterSustain: 0.4, ampSustain: 0.9, glide: 0.04,
   }],
-  ['Portamento', 'A long Glide on a fifth-stacked lead: the pitch slides between Notes and Key Track drags the Filter along with it.', {
+  ['Portamento', 'A long Glide on a fifth-stacked lead, with Legato: play a key over a held one and the pitch slides there, Key Track dragging the Filter along, while the Filter Envelope’s bite comes only on the first Note. Let go of every key to strike afresh.', {
     volume: 0.85, osc2Semitone: 7, mixOsc2: 0.5, cutoff: 1500, resonance: 0.4, keyTrack: 1, glide: 0.25, ampSustain: 1, ampRelease: 0.3,
+    filterEnvAmount: 1.5, filterAttack: 0.005, filterDecay: 0.6, filterSustain: 0.3, legato: 'on',
   }],
   ['Whistle', 'A pure sine with gentle vibrato: watch the single Harmonic wobble left and right in the Spectrum.', {
     volume: 0.85, waveform: 'sine', ...OPEN, lfoDestination: 'pitch', lfoRate: 5.5, lfoAmount: 0.18, ampAttack: 0.05, ampRelease: 0.2,

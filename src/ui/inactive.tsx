@@ -1,7 +1,7 @@
 import { useCallback, useId } from 'react';
 
-/** What a control's description is read from: its slider or its radio group, inside what is greyed out. */
-const DESCRIBED = '[role="slider"], [role="radiogroup"]';
+/** What a control's description is read from: its slider, its radio group or its switch, inside what is greyed out. */
+const DESCRIBED = '[role="slider"], [role="radiogroup"], button[aria-pressed]';
 
 /**
  * Adds an element's id to a control's `aria-describedby`, first or last, beside the others there: a control's tooltip

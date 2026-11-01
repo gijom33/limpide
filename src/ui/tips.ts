@@ -172,6 +172,11 @@ export const TIPS = {
     body: 'Slides the pitch from one Note to the next instead of jumping, over this long. Off plays Notes at once. It works with one Voice only: with more, each Note starts at its own pitch.',
     how: 'Play two keys one after the other and watch the Scope stretch or squeeze as the pitch slides.',
   },
+  legato: {
+    title: 'Legato',
+    body: 'On, with one Voice: a key played while another is held only moves the pitch there. The Envelopes carry on with no new Attack, and an LFO set to Retrigger does not start again, as on a classic monosynth. Let go of every key to strike the next Note afresh.',
+    how: 'Turn Glide up, hold a key and play others over it: the pitch slides from Note to Note and the Timeline draws one Attack.',
+  },
   about: { title: 'About', body: 'The version of Limpide you are playing, who made it, and where its source lives. The logo opens it too.' },
   theme: { title: 'Theme', body: 'Switches between the dark and light look. Your choice is remembered.' },
   bendRange: {
