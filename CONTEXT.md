@@ -173,11 +173,11 @@ About as a brand-new browser (no Last session, no saved Patches) sees it, once: 
 _Avoid_: Onboarding, splash, intro
 
 **Tutorial**:
-A Preset rebuilt from Init in Steps, with the person turning each control. A card docked at the bottom of the page shows the current Step; nothing is locked, and the last card lists what differs from the Preset. Opened from the Preset's row or the Tutorials list in the Patches panel, the header's Tutorial button, or the Tour's last card.
+A Preset rebuilt from Init in Steps, with the person turning each control. A card docked at the bottom of the page shows the current Step; nothing is locked. The first card says, in the Tutorial's own words, what it teaches and what the person will hear; the last lists what differs from the Preset and names the next Tutorial (issue 129). Opened from the Preset's row or the Tutorials list in the Patches panel, the header's Tutorial button, or the Tour's last card.
 _Avoid_: Lesson, course, walkthrough, onboarding, tour
 
 **Tour**:
-A first look at the instrument for someone who has never seen a synth: a card for each Section, in the signal's order (the Oscillators with the Mixer, the Filter, the Amp, the LFOs), says what it does while the synth turns its main controls itself, on a plain Patch of its own, the person's Patch coming back when it ends. Each card waits for Next. Opened from the Welcome and the About, never from the Patches panel. Not a Tutorial: it rebuilds no Preset, and there is no Preset called Tour.
+A first look at the instrument for someone who has never seen a synth: a card for each Section, in the signal's order (the Oscillators with the Mixer, the Filter, the Amp, the LFOs), says what to watch, then what the Section does, while the synth turns its main controls itself, on a plain Patch of its own, the person's Patch coming back when it ends. Each card waits for Next. Opened from the Welcome and the About, never from the Patches panel. Not a Tutorial: it rebuilds no Preset, and there is no Preset called Tour.
 _Avoid_: Lesson, walkthrough, onboarding, intro, Tutorial
 
 **Step**:
@@ -239,8 +239,8 @@ A Viewer showing level per frequency at an instant.
 _Avoid_: FFT, frequency view, analyser
 
 **Harmonic**:
-A frequency component at an integer multiple of the Note's fundamental. The fundamental is the 1st Harmonic.
-_Avoid_: Partial, overtone (overtone numbering is off by one)
+A frequency component at an integer multiple of the Note's fundamental. The fundamental is the 1st Harmonic. To a newcomer, the stack of pitches a Note is made of; on a Spectrum, each Harmonic is a line (issue 129).
+_Avoid_: Partial, overtone (overtone numbering is off by one), rung, spike, bar
 
 **Harmonic Marker**:
 A label on the Spectrum identifying a Harmonic by number (the fundamental by its note); the hover readout adds its frequency and nearest note.

@@ -1,5 +1,6 @@
 import { type FocusEvent, type RefObject, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { inDisplay, type Step, type Tutorial, targetText } from '../tutorial/tutorial';
+import { endLine, FROM_INIT } from '../tutorial/tutorials';
 import { FoldButton, useCardPlacement } from './cardPlacement';
 import { bringClear, useDocked } from './docked';
 import { CloseIcon, NoteIcon } from './icons';
@@ -7,8 +8,6 @@ import { reveal } from './reveal';
 
 interface Props {
   tutorial: Tutorial;
-  /** The Preset's about line, for the first card. */
-  about: string;
   /** −1 for the first card, then each Step, then `steps.length` for the last card. */
   index: number;
   /** Which Steps have been made. */
@@ -123,7 +122,7 @@ export function useCardFocus(card: RefObject<HTMLElement | null>, opening: unkno
  * "Do it for me", Next, Listen and Quit. Picked, it takes the focus on its Start; the Steps never take it from the
  * control being turned. Each new text is announced.
  */
-export function TutorialCard({ tutorial, about, index, done, differs, listening, onListen, onBack, onNext, onDoIt, onMatch, onQuit }: Props) {
+export function TutorialCard({ tutorial, index, done, differs, listening, onListen, onBack, onNext, onDoIt, onMatch, onQuit }: Props) {
   const steps = tutorial.steps;
   const step = index >= 0 ? steps[index] : undefined;
   const made = step ? done[index] : false;
@@ -166,9 +165,9 @@ export function TutorialCard({ tutorial, about, index, done, differs, listening,
       <div className="tutorial-words" aria-live="polite" onClick={() => setExpanded((e) => !e)}>
         {index < 0 && (
           <>
-            <p>{about}</p>
-            {tutorial.intro && <p>{tutorial.intro}</p>}
-            <p className="tutorial-then">Build it from Init, one control at a time. Play any Note, or press Listen, to hear each change.</p>
+            {/* Its own words first, not its Preset's description (issue 129, decision 6). */}
+            <p>{tutorial.intro}</p>
+            <p className="tutorial-then">{FROM_INIT}</p>
           </>
         )}
         {step && (
@@ -185,6 +184,7 @@ export function TutorialCard({ tutorial, about, index, done, differs, listening,
             <p className="tutorial-then">
               {differs.length ? `Not quite the Preset yet: ${differs.join(', ')}. Keep your version, or match it.` : `This is the ${tutorial.preset} Preset, built by you.`}
             </p>
+            <p className="tutorial-then">{endLine(tutorial)}</p>
           </>
         )}
       </div>

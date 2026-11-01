@@ -247,7 +247,7 @@ export function App() {
     presetAbout.show();
   };
   // The Tutorials, from the Patches panel and the header's Tutorial button alike.
-  const tutorialList = TUTORIALS.map((t) => ({ preset: t.preset, finished: tutorial.finished.has(t.preset) }));
+  const tutorialList = TUTORIALS.map((t) => ({ preset: t.preset, teaches: t.teaches, finished: tutorial.finished.has(t.preset) }));
   const startTutorial = (preset: string) => tutorial.start(TUTORIALS.find((t) => t.preset === preset)!);
   const midi = useMidi({
     storage, session, pressHoldRef,
@@ -823,7 +823,6 @@ export function App() {
         {tutorial.lesson && tutorial.preset && (
           <TutorialCard
             tutorial={tutorial.lesson.tutorial}
-            about={tutorial.preset.about}
             index={tutorial.lesson.index}
             done={tutorial.lesson.done}
             differs={tutorial.differs}

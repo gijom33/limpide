@@ -1,5 +1,5 @@
 import { type RefObject, useEffect, useRef, useState } from 'react';
-import { type TourCard as Card, TOUR, type TourMove } from '../tutorial/tour';
+import { type TourCard as Card, TOUR, TOUR_END, type TourMove } from '../tutorial/tour';
 import { FoldButton, useCardPlacement } from './cardPlacement';
 import { bringClear, useDocked } from './docked';
 import { CloseIcon } from './icons';
@@ -21,13 +21,14 @@ interface Props {
   onClose(): void;
 }
 
-/** A control on the page, by what it sets: a move's, or the one a card watches. */
+/** A control on the page, by what it sets: a move's. */
 const controlOf = ({ kind, id }: Pick<TourMove, 'kind' | 'id'>) => document.querySelector(`[data-learn="${kind}:${id}"]`);
 
 /**
- * Brings the card's Section into view: its controls shown (on their tab), and its Viewers, its controls and the one it
- * watches between the header and the card, the Viewers first where not all fit, as each card speaks of them (issue
- * 128, decision 10).
+ * Brings the card's Section into view: its controls shown (on their tab), and its Viewers and its controls between the
+ * header and the card, the Viewers first where not all fit, as each card speaks of them (issue 128, decision 10). The
+ * LFO card no longer brings the Cutoff knob too: it could not share the screen with the Timeline, so its words point
+ * at the Timeline's dotted line instead (issue 158, decided by the owner).
  */
 function useSectionInView(card: Card, docked: RefObject<HTMLElement | null>) {
   useEffect(() => {
@@ -37,8 +38,7 @@ function useSectionInView(card: Card, docked: RefObject<HTMLElement | null>) {
     for (const viewer of viewers) viewer.setAttribute('data-tutorial-viewer', '');
     const bring = () => {
       const behavior = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
-      const watched = card.watch ? controlOf({ kind: 'param', id: card.watch }) : null;
-      if (docked.current) bringClear(docked.current, [...viewers, ...controls, ...(watched ? [watched] : [])], behavior);
+      if (docked.current) bringClear(docked.current, [...viewers, ...controls], behavior);
     };
     // After the tab it was on has had a frame to show, and the card its new height; then again whenever the card or the
     // page changes size while it is shown (on GitHub's Linux the last card came out 22 px taller after the scroll).
@@ -164,10 +164,12 @@ export function TourCard({ index, moving, freezing, naming, onBack, onNext, onBa
       {/* biome-ignore lint/a11y/noStaticElementInteractions: a tap on the text is the touch shortcut; the + button is the keyboard's and the screen reader's */}
       {/* biome-ignore lint/a11y/useKeyWithClickEvents: as above, + is the keyboard route */}
       <div className="tutorial-words" aria-live="polite" onClick={() => setExpanded((e) => !e)}>
+        {/* What to watch first: folded on a phone, it is all the card shows (issue 129). */}
+        <p>{tour.look}</p>
         <p>{tour.chain}</p>
         <p>{tour.does}</p>
         <p className="tutorial-then">{tour.sees}</p>
-        {last && <p className="tutorial-then">That is the whole chain. Now build a sound yourself: the Bass Tutorial goes through it one control at a time.</p>}
+        {last && <p className="tutorial-then">{TOUR_END}</p>}
       </div>
       {tour.freezes && <FrozenLine freezes={tour.freezes} freezing={freezing} naming={naming} />}
       <div className="tutorial-actions">

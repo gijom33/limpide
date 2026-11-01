@@ -1229,13 +1229,18 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .patch-actions label { cursor: pointer; }
 .patch-status { margin: 0; min-height: 16px; font-size: var(--text-md); color: var(--muted); }
 
-/* The Tutorial button and its list (issue 59): under the button, one Tutorial a row. */
+/* The Tutorial button and its list (issue 59): under the button, one Tutorial a row, its name over a short line of
+   what it teaches (issue 129), the list along the button's left or right edge, whichever keeps it on the page. */
 .tutorial-menu { position: relative; display: flex; }
 .tutorial-menu-panel {
   position: absolute; z-index: 60; top: calc(100% + 6px); left: 0; display: flex; flex-direction: column; gap: 4px; padding: var(--space-2);
   background: var(--panel); border: 1px solid var(--muted); border-radius: var(--radius-panel); box-shadow: var(--shadow-panel);
 }
-.tutorial-menu-panel .tool { justify-content: flex-start; gap: 8px; white-space: nowrap; }
+.tutorial-menu-panel[data-side='right'] { left: auto; right: 0; }
+.tutorial-menu-panel .tool { justify-content: flex-start; gap: 8px; width: 15rem; height: auto; padding-block: 5px; text-align: left; }
+.tutorial-menu-words { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.tutorial-menu-name { white-space: nowrap; }
+.tutorial-menu-teaches { color: var(--muted); font-size: var(--text-xs); line-height: 1.3; white-space: normal; }
 .tutorial-menu-done { margin-left: auto; padding-left: 12px; color: var(--accent); }
 /* The tempo (issue 112): the BPM in a box as wide as its widest, so nothing beside it moves as it changes, dragged up
    and down (a finger's drag is its own, not the page's scroll); Tap beside it. Below 861 px the BPM alone, opening a

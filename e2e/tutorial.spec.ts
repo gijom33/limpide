@@ -43,7 +43,9 @@ async function doEverything(page: Page) {
 test('a Tutorial from the Patches panel: Init loaded, the control ringed with its target, turned by hand, then its note', async ({ page }) => {
   await open(page, 'Bass');
   await expect(patchName(page)).toHaveAttribute('aria-label', 'Patch: Init');
-  await expect(card(page)).toContainText('A saw with a square an octave below');
+  // Its own first words, not the Preset's description (issue 129, decision 6).
+  await expect(card(page)).toContainText('A bass line, built one stage at a time.');
+  await expect(card(page)).not.toContainText('A saw with a square an octave below');
   await expect(progress(page)).toHaveText('15 steps');
   await action(page, 'Start').click();
   await expect(progress(page)).toHaveText('Step 1 of 15');
@@ -96,6 +98,7 @@ test('"Do it for me" to the end: the sound is the Preset, named after it, and th
   await doEverything(page);
   await expect(progress(page)).toHaveText('Done');
   await expect(card(page)).toContainText('This is the Bass Preset, built by you.');
+  await expect(card(page)).toContainText('Next: Acid, a talking bass'); // the end card points on (issue 129)
   await expect(patchName(page)).toHaveAttribute('aria-label', 'Patch: Bass');
   await expect(page.locator('.patch-changed')).toHaveCount(0);
   await action(page, 'Done').click();
@@ -285,7 +288,9 @@ test('the header’s Tutorial button lists the Tutorials, ticks the finished, an
   const button = page.getByRole('button', { name: 'Tutorial', exact: true });
   await button.click();
   const list = page.getByRole('group', { name: 'Tutorials' }).filter({ has: page.getByRole('button', { name: /^Tutorial: Bass/ }) }).last();
-  await expect(list.getByRole('button')).toHaveText(['Bass', 'Acid', 'Pluck', 'Wobble', 'FM Ladder', 'Ring Bell', 'Deep Breath']);
+  await expect(list.locator('.tutorial-menu-name')).toHaveText(['Bass', 'Acid', 'Pluck', 'Wobble', 'FM Ladder', 'Ring Bell', 'Deep Breath']);
+  // Each with a short line of what it teaches (issue 129, decision 8).
+  await expect(list.getByRole('button', { name: 'Tutorial: Wobble' })).toContainText('an LFO, a slow hand that turns a knob for you');
   await page.keyboard.press('Escape');
   await expect(list).toBeHidden();
   await expect(button).toBeFocused();
@@ -294,6 +299,22 @@ test('the header’s Tutorial button lists the Tutorials, ticks the finished, an
   await expect(card(page)).toHaveAccessibleName('Tutorial: Acid');
   await expect(button).toHaveAttribute('aria-expanded', 'false');
 });
+
+// Issue 129: with a line of what each teaches the list is wider; it opens along whichever edge of its button keeps it
+// on the page (at 861 px the button sits near the right edge).
+for (const width of [375, 860, 861, 1440]) {
+  test(`the Tutorial list stays on the page at ${width} px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Tutorial', exact: true }).click();
+    const panel = page.getByRole('group', { name: 'Tutorials' }).last();
+    await expect(panel).toBeVisible();
+    const box = (await panel.boundingBox())!;
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(width);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+  });
+}
 
 test('picking a Tutorial puts the focus on its card, and its Next keeps it there, Step after Step (issue 104)', async ({ page }) => {
   await page.goto('/');

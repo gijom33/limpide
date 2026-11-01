@@ -7,7 +7,7 @@ import { applyStep, controlName, differences, doStep, held, inDisplay, isMade, o
 const cutoff: Step = { kind: 'param', id: 'cutoff', to: 800, say: 'Turn Cutoff down.', note: 'Darker.' };
 const slope: Step = { kind: 'choice', id: 'filterSlope', to: 24, say: 'Choose 24 dB.', note: 'Steeper.' };
 const ideal: Step = { kind: 'display', overlay: 'ideal', say: 'Turn on Ideal.', note: 'Rings.' };
-const sample: Tutorial = { preset: 'Sample', bpm: 120, phrase: 'C3:1', summary: 'A test.', steps: [cutoff, slope, ideal] };
+const sample: Tutorial = { preset: 'Sample', intro: 'A test sound.', teaches: 'testing', bpm: 120, phrase: 'C3:1', summary: 'A test.', steps: [cutoff, slope, ideal] };
 
 /** The value a control shows this far along its travel from the target. */
 const off = (step: Extract<Step, { kind: 'param' }>, travel: number) =>

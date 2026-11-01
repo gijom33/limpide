@@ -264,6 +264,25 @@ test('folded, the Amp card still says what the frozen picture shows to a screen 
   await expect(heard).toBeVisible(); // in the accessibility tree: a live region under display: none is never heard
 });
 
+// Issue 129: on a phone a card shows two lines until opened, and they say what to watch, whole, not where the Section sits.
+test('on a phone, each card’s two lines say what to watch', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto('/');
+  await startFromAbout(page);
+  for (const look of ['Watch the wave change shape', 'Watch the lines on the Filter Spectrum sink', 'Watch the Envelope Timeline', 'Watch the dotted line on the Envelope Timeline']) {
+    const shown = await card(page)
+      .locator('.tutorial-words')
+      .evaluate((words) => {
+        const first = words.querySelector('p')!;
+        // The first line's whole height fits in what the folded words show: nothing of it is cut off.
+        return { text: first.textContent, whole: first.getBoundingClientRect().height <= words.getBoundingClientRect().height + 1 };
+      });
+    expect(shown.text).toContain(look);
+    expect(shown.whole, look).toBe(true);
+    if (!look.includes('dotted')) await action(page, 'Next').click();
+  }
+});
+
 test('the person’s own Freeze on the Amp card is theirs: the Tour freezes no more on that card (issue 130)', async ({ page }) => {
   test.setTimeout(60000);
   await toAmpCard(page);

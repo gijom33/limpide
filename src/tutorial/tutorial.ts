@@ -33,8 +33,13 @@ export type Step = Words &
 export interface Tutorial {
   /** The Preset it rebuilds. */
   preset: string;
-  /** What the first card says before the Steps, after the Preset's about line. */
-  intro?: string;
+  /**
+   * What the first card says before the Steps: what the Tutorial teaches and what the person will hear, in its own
+   * words rather than its Preset's description (issue 129, decision 6).
+   */
+  intro: string;
+  /** A short line of what it teaches, for the Tutorial menu and the end card of the Tutorial before it (decision 8). */
+  teaches: string;
   /** What Listen repeats, in the Demo's notation (src/demo/phrase.ts), at this tempo. */
   phrase: string;
   bpm: number;
