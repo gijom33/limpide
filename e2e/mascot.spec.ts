@@ -6,7 +6,7 @@ import { holding, WELCOMED } from './startState';
 // section, and again sends it away, melting. In three and four across it lives on that section's top edge, along the
 // stretch that covers least above it: nothing, where the header has room. On a phone and in 2 × 2 it keeps in view as
 // the page scrolls: on a right-column section's top edge (over a phone's section tabs while an edge shows under them,
-// issue 142), or hanging under the header when none shows. Out by default, it comes in by itself (issue 150). With
+// issue 142), or hovering on its tail under the header when none shows (issue 142). Out by default, it comes in by itself (issue 150). With
 // Display's switch off the Notes do nothing (decision 9), so these tests start with it switched off, as every spec does,
 // and bring it with the switch; then the Notes send it away and call it back for the visit. Those about its default
 // start as they need.
@@ -122,7 +122,10 @@ for (const [size, viewport, section] of [
   });
 }
 
-/** Where the drop is in the window: on a right-column section's top edge, hanging under the header, or in between. */
+/**
+ * Where the drop is in the window: on a right-column section's top edge, hovering a little under the header or the
+ * section tabs and never over them (issue 142), or in between.
+ */
 const seen = (page: Page) =>
   page.evaluate(() => {
     const drop = document.querySelector('.mascot-drop')!.getBoundingClientRect();
@@ -134,10 +137,13 @@ const seen = (page: Page) =>
       return Math.abs(r.right - right) < 4 && Math.abs(r.top - drop.bottom) < 2.5; // a stroll bobs it a pixel
     });
     return {
-      // Swinging from its tip under the header, its box reaches a little past the line; on an edge just under a phone's
-      // section strip, its top is over the strip's foot by up to its height (issue 142).
-      inView: drop.top >= ceiling - (strip > header ? 26 : 6) && drop.bottom <= innerHeight + 1,
-      on: edge ? edge.getAttribute('aria-label') : Math.abs(drop.top - ceiling) < 4 ? 'header' : null,
+      // On an edge just under a phone's section strip, its top is over the strip's foot by up to its height (issue 142).
+      inView: drop.top >= ceiling - (strip > header ? 26 : 0) && drop.bottom <= innerHeight + 1,
+      on: edge
+        ? edge.getAttribute('aria-label')
+        : document.querySelector<HTMLElement>('.mascot')!.dataset.moving === 'hovering' && drop.top >= ceiling && drop.top - ceiling <= 8
+          ? 'hovering'
+          : null,
     };
   });
 
@@ -168,7 +174,7 @@ for (const [size, viewport, column] of [
     await listening(page);
     await bringBead(page);
     const places = await scrollThrough(page, 250);
-    const edges = places.filter((p) => p !== 'header' && p !== null);
+    const edges = places.filter((p) => p !== 'hovering' && p !== null);
     expect(edges.every((p) => (column as readonly string[]).includes(p!)), places.join(', ')).toBe(true);
     // It moved with the page: more than one place, a later section on the way down.
     expect(new Set(places).size, places.join(', ')).toBeGreaterThan(1);
@@ -177,14 +183,66 @@ for (const [size, viewport, column] of [
   });
 }
 
-test('in a short phone window, with no edge in view, it hangs under the header', async ({ page }) => {
+/** Each frame for `seconds`: the drop's top under the ceiling (the header or the section tabs), its left, and its tail's turn. */
+const watchHover = (page: Page, seconds: number) =>
+  page.evaluate(
+    (ms) =>
+      new Promise<{ under: number; left: number; tail: string; moving: string }[]>((done) => {
+        const samples: { under: number; left: number; tail: string; moving: string }[] = [];
+        const start = performance.now();
+        const sample = () => {
+          const drop = document.querySelector('.mascot-drop')!.getBoundingClientRect();
+          const [header, strip] = ['header', '.section-strip'].map((q) => document.querySelector(q)?.getBoundingClientRect().bottom ?? 0);
+          samples.push({
+            under: drop.top - Math.max(0, header, strip),
+            left: drop.left,
+            tail: document.querySelector('#bead-self > g')!.getAttribute('transform') ?? '',
+            moving: document.querySelector<HTMLElement>('.mascot')!.dataset.moving ?? '',
+          });
+          if (performance.now() - start < ms) requestAnimationFrame(sample);
+          else done(samples);
+        };
+        requestAnimationFrame(sample);
+      }),
+    seconds * 1000,
+  );
+
+test('in a short phone window, with no edge in view, it hovers on its tail where it lost ground, under the tabs (issue 142)', async ({ page }) => {
   test.slow();
   await page.goto('/');
   await listening(page);
   await bringBead(page); // before the window shrinks, which would put Display's switch out of reach
   await page.setViewportSize({ width: 375, height: 560 });
   const places = await scrollThrough(page, 120);
-  expect(places, places.join(', ')).toContain('header');
+  expect(places, places.join(', ')).toContain('hovering');
+  // Down the page from the top, a step at a time, until its edge goes and none is left in view.
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+  await expect(mascot(page)).toHaveAttribute('data-moving', 'standing', { timeout: 5000 });
+  let lostAt: number | null = null;
+  for (let y = 60; lostAt === null; y += 60) {
+    expect(y, 'no edge ever left it').toBeLessThan(4000);
+    const before = await page.locator('.mascot-drop').evaluate((el) => el.getBoundingClientRect().left);
+    await page.evaluate((top) => window.scrollTo({ top, behavior: 'instant' }), y);
+    await page.waitForTimeout(900); // it takes off and settles, or falls to an edge and lands
+    if ((await mascot(page).getAttribute('data-moving')) === 'hovering') lostAt = before;
+  }
+  const hovering = await watchHover(page, 1.5);
+  expect(hovering.every((h) => h.moving === 'hovering')).toBe(true);
+  // A little under the tabs, never over them, bobbing.
+  const unders = hovering.map((h) => h.under);
+  expect(Math.min(...unders), unders.join(', ')).toBeGreaterThanOrEqual(0);
+  expect(Math.max(...unders), unders.join(', ')).toBeLessThanOrEqual(8);
+  expect(Math.max(...unders) - Math.min(...unders)).toBeGreaterThan(1);
+  // Near where it lost ground, across.
+  for (const h of hovering) expect(Math.abs(h.left - lostAt)).toBeLessThanOrEqual(14);
+  // Its tail whirling under it.
+  expect(new Set(hovering.map((h) => h.tail)).size).toBeGreaterThan(3);
+  // With reduced motion, it hovers still: no whirl, no bob.
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const still = await watchHover(page, 1);
+  expect(still.every((h) => h.moving === 'hovering')).toBe(true);
+  expect(new Set(still.map((h) => Math.round(h.under * 10))).size).toBe(1);
+  expect(new Set(still.map((h) => h.tail)).size).toBe(1);
 });
 
 test('it comes up from behind the Amp, and leaves jumping, then melting; with reduced motion it comes and goes at once', async ({ page }) => {
@@ -554,7 +612,7 @@ test.describe('never under a card (issue 164)', () => {
     await expect(panel).toBeVisible();
     await page.mouse.move(2, 894); // off every control, so no tip opens
     await page.waitForTimeout(300);
-    await expect(mascot(page)).toHaveAttribute('data-moving', /^(standing|hanging)$/, { timeout: 5000 });
+    await expect(mascot(page)).toHaveAttribute('data-moving', /^(standing|hovering)$/, { timeout: 5000 });
     const under = await page.evaluate(() => {
       const drop = document.querySelector('.mascot-drop svg')!.getBoundingClientRect();
       const r = document.querySelector('.display-panel')!.getBoundingClientRect();
@@ -581,8 +639,8 @@ test.describe('never under a card (issue 164)', () => {
       for (const top of [...tops, ...[...tops].reverse()]) {
         await page.evaluate((y) => window.scrollTo({ top: y, behavior: 'instant' }), top);
         await page.waitForTimeout(300);
-        // Once it has fallen or flown there and landed: standing, or hanging under the header.
-        await expect(mascot(page)).toHaveAttribute('data-moving', /^(standing|hanging)$/, { timeout: 5000 });
+        // Once it has fallen or flown there and landed: standing, or hovering under the header.
+        await expect(mascot(page)).toHaveAttribute('data-moving', /^(standing|hovering)$/, { timeout: 5000 });
         expect(await againstCards(page), `scrolled to ${top}`).toEqual({ cards: 1, under: false, inView: true });
       }
     });

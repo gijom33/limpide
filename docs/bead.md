@@ -7,7 +7,7 @@ Bead makes no sound and changes nothing you hear. Turning a control only changes
 ## Calling it, and sending it away
 
 - **It comes by itself**, while Display's Bead switch is on, 3 seconds after the page opens, in one of three ways chosen at random: up from behind its edge, falling from the top of the window like rain, or popping up with a hop. On a first visit it waits until the welcome is closed, and whenever About is open.
-- **Play B, E, A, D**, as in a bead of water, within 4 seconds, in any octave: on the computer keyboard (J, D, H, S), the on-screen piano or a MIDI keyboard. It goes away for this visit: it leaps, smashes itself down into a splash, becomes a puddle, then a film that fades. Hanging or in the air, it drips away down the window instead.
+- **Play B, E, A, D**, as in a bead of water, within 4 seconds, in any octave: on the computer keyboard (J, D, H, S), the on-screen piano or a MIDI keyboard. It goes away for this visit: it leaps, smashes itself down into a splash, becomes a puddle, then a film that fades. Hovering or in the air, it drips away down the window instead.
 - **Play B, E, A, D again**, and it comes back. While it melts, the Notes do nothing. A reload goes back to what Display's switch says: on, Bead comes by itself again.
 - The Demo, the Song and Hold's rhythm never call it or send it away: only Notes you play yourself.
 - **Display has a Bead switch**, from the first visit, on by default: the lasting setting, remembered across visits. Off, Bead melts away and never appears again, by itself or by the Notes, which then do nothing, until the switch is turned on; on brings it back. The Notes never turn the switch.
@@ -15,7 +15,7 @@ Bead makes no sound and changes nothing you hear. Turning a control only changes
 ## Where it lives
 
 - **Three or four sections across**: on the top edge of the top right section (the Amp, or LFO & Envelopes), along the stretch where it covers least. Every 15 to 40 seconds it visits another section in view for a while: falling to one below, or leaping in an arc to one beside it.
-- **On a phone and in 2 × 2**: it stays in view as you scroll, on the top edge of a right-hand section. To go down it falls like rain and splashes; to go up it turns its tail down under itself and flies on it. With no edge in view it hangs under the header, swinging from its tip.
+- **On a phone and in 2 × 2**: it stays in view as you scroll, on the top edge of a right-hand section. To go down it falls like rain and splashes; to go up it turns its tail down under itself and flies on it. With no edge in view, as when its edge goes under the tabs, it takes off on its whirling tail and hovers where it lost ground, a little under the tabs or the header, bobbing gently, until an edge comes into view to drop or fly onto ([142](./issues/142-bead-on-the-line-under-the-tabs.md)). With reduced motion it hovers still.
 - **Never under a card** ([164](./issues/164-bead-never-under-a-card.md)): it never stands where the Demo's card, a Tutorial's, the Tour's, a tip or an open panel covers it, and strolls only along what they leave clear. When one comes over its spot it goes to the nearest clear stretch of an edge in view; with every edge in view covered, it stands on the card's top edge until one is clear again. It is still drawn under them, so it never covers their words or buttons.
 
 ## Its own life

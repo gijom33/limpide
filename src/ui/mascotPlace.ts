@@ -1,15 +1,19 @@
 /**
- * A line the mascot can be on (issue 115), in the window's pixels: a section's top edge it stands on, or the header's
- * bottom it hangs from. `foot` is where the bottom of its drawing goes: on the edge, or a drop's height under the header.
+ * A line the mascot can be on (issue 115), in the window's pixels: a section's top edge it stands on, or, with none in
+ * view, a line a little under the header (or a phone's section tabs) where it hovers on its tail (issue 142). `foot` is
+ * where the bottom of its drawing goes: on the edge, or `HOVER_UNDER` lower than a drop's height under the header.
  */
 export interface Perch {
   id: string;
   foot: number;
-  hanging: boolean;
+  hovering: boolean;
 }
 
 /** How it is on its line, or between two; or in the pointer's hold, or thrown from it (issue 127). */
-export type Moving = 'standing' | 'hanging' | 'falling' | 'flying' | 'landing' | 'held' | 'thrown';
+export type Moving = 'standing' | 'hovering' | 'falling' | 'flying' | 'landing' | 'held' | 'thrown';
+
+/** Hovering, how far under the header (or the section tabs) its top is, in pixels, at the bottom of its bob (issue 142). */
+export const HOVER_UNDER = 6;
 
 /** Where along a line it may stand: its box's left, in the window's pixels. */
 export interface Span {
@@ -51,6 +55,12 @@ const HOP_OFF = 180;
 export const FASTEST_THROW = 1800;
 /** Thrown against a side of the window, it bounces back with this much of its speed. */
 const BOUNCE = 0.5;
+/** Taking off to hover, its fastest, in pixels a second, and how fast it eases onto its hover line: its way left, a second. */
+const HOVER_SPEED = 500;
+const HOVER_EASE = 8;
+/** Hovering, its bob up and back, in pixels, and how often, a second. */
+const HOVER_BOB = 3;
+const BOBS = 0.8;
 /** The speed of a landing that splashes it flattest, in pixels a second. */
 const HARD_LANDING = 1400;
 /** Landing: the splash, the squash and its wobble back. */
@@ -125,9 +135,9 @@ export interface PerchChoice {
 
 /**
  * Which line to be on, on a phone or in 2 × 2 (issue 115), where it must stay in view: a section's top edge with room
- * over it below the header, and on the window, else the header's bottom to hang from. It keeps its edge while that has
+ * over it below the header, and on the window, else a line a little under the header to hover on (issue 142). It keeps its edge while that has
  * room for the drop, or `overlap` less; moving, it takes the edge nearest to where it is. With no edge roomy enough, an
- * edge just under the ceiling, the drop over it by up to `overlap`, rather than hang just off that line (issue 142).
+ * edge just under the ceiling, the drop over it by up to `overlap`, rather than hover just off that line (issue 142).
  * An edge a card, a tip or a panel covers is never kept nor taken; with every edge in view covered, it stands on the
  * docked card's top edge until one is clear again (issue 164).
  */
@@ -135,14 +145,14 @@ export function choosePerch({ current, edges, card = null, ceiling, overlap, bot
   const fits = (e: Edge) => e.top - height >= ceiling - overlap;
   const clear = edges.filter((e) => !e.covered);
   const keep = clear.find((e) => e.id === current && fits(e) && e.top <= bottom);
-  if (keep) return { id: keep.id, foot: keep.top, hanging: false };
+  if (keep) return { id: keep.id, foot: keep.top, hovering: false };
   const roomy = clear.filter((e) => e.top - height - headroom >= ceiling && e.top <= bottom - 4);
   const close = clear.filter((e) => fits(e) && e.top <= bottom - 4);
   const nearest = (list: readonly Edge[]) => list.reduce((a, b) => (Math.abs(b.top - where) < Math.abs(a.top - where) ? b : a));
   const hidden = edges.some((e) => e.covered && fits(e) && e.top <= bottom);
   const onCard = card && !card.covered && hidden && fits(card) && card.top <= bottom ? card : null;
   const on = roomy.length ? nearest(roomy) : close.length ? nearest(close) : onCard;
-  return on ? { id: on.id, foot: on.top, hanging: false } : { id: 'ceiling', foot: ceiling + height, hanging: true };
+  return on ? { id: on.id, foot: on.top, hovering: false } : { id: 'ceiling', foot: ceiling + height + HOVER_UNDER, hovering: true };
 }
 
 /**
@@ -166,6 +176,7 @@ export function createMascotPlace({ from, random = Math.random }: { from?: numbe
   let windupFrom = -Infinity;
   let clearance = CLEARANCE;
   let landedAt = -Infinity;
+  let hoverSince = -Infinity;
   let impact = 0;
   let last: number | null = null;
   let walls: Span = { min: -Infinity, max: Infinity };
@@ -206,7 +217,7 @@ export function createMascotPlace({ from, random = Math.random }: { from?: numbe
     frame(perch: Perch, span: Span, now: number, reduced: boolean, at: number): Placed {
       const dt = last === null ? 0 : Math.min(0.05, now - last);
       last = now;
-      const settled: Moving = perch.hanging ? 'hanging' : 'standing';
+      const settled: Moving = perch.hovering ? 'hovering' : 'standing';
       if (moving === 'held') {
         on = perch.id;
         return placed();
@@ -225,8 +236,8 @@ export function createMascotPlace({ from, random = Math.random }: { from?: numbe
         if (vy > 0 && before <= perch.foot && foot >= perch.foot) {
           foot = perch.foot;
           impact = Math.min(1, vy / HARD_LANDING);
-          moving = perch.hanging ? 'hanging' : 'landing';
-          landedAt = now;
+          moving = perch.hovering ? 'hovering' : 'landing';
+          landedAt = hoverSince = now;
           vx = vy = 0;
           return placed(x);
         }
@@ -240,7 +251,7 @@ export function createMascotPlace({ from, random = Math.random }: { from?: numbe
         return placed();
       }
       if (on === null || reduced) {
-        const arriving = on === null && !reduced && from !== undefined && !perch.hanging;
+        const arriving = on === null && !reduced && from !== undefined && !perch.hovering;
         on = perch.id;
         if (arriving) {
           foot = from;
@@ -250,6 +261,7 @@ export function createMascotPlace({ from, random = Math.random }: { from?: numbe
         } else {
           foot = perch.foot;
           moving = settled;
+          hoverSince = now;
           return placed();
         }
       }
@@ -257,14 +269,20 @@ export function createMascotPlace({ from, random = Math.random }: { from?: numbe
         on = perch.id;
         x = at;
         toX = spotIn(span, at);
-        if (moving === 'hanging' && perch.hanging) foot = perch.foot;
-        else if (perch.foot > foot) {
+        if (moving === 'hovering' && perch.hovering) foot = perch.foot;
+        else if (perch.hovering) {
+          // Losing ground: it takes off at once, its tail whirling, for its hover line (issue 142).
+          windupFrom = -Infinity;
+          moving = 'flying';
+          thrust = true;
+          vx = 0;
+        } else if (perch.foot > foot) {
           // Down: a hop off its edge, the bigger the farther across it goes, or letting go of the header.
-          vy = moving === 'hanging' ? 0 : -(HOP_OFF + Math.min(420, Math.abs(toX - x) * 0.5));
+          vy = moving === 'hovering' ? 0 : -(HOP_OFF + Math.min(420, Math.abs(toX - x) * 0.5));
           moving = 'falling';
         } else {
-          // Up: its tail swung down under it, then a push. From the air, at once.
-          windupFrom = moving === 'falling' || moving === 'flying' ? -Infinity : now;
+          // Up: its tail swung down under it, then a push. From the air, or hovering, at once.
+          windupFrom = moving === 'falling' || moving === 'flying' || moving === 'hovering' ? -Infinity : now;
           // Over the edge by a little, or, going far across (a section beside it), in a higher arc.
           // Its top stays in the window: the arc goes no higher than the drop's height under its top.
           clearance = Math.max(CLEARANCE, Math.min(CLEARANCE + Math.min(160, Math.abs(toX - x) * 0.3), perch.foot - 30));
@@ -272,6 +290,24 @@ export function createMascotPlace({ from, random = Math.random }: { from?: numbe
           thrust = true;
           vy = Math.min(vy, 0);
         }
+      }
+      if (moving === 'flying' && perch.hovering) {
+        // Onto its hover line, faster the farther it is, its tail whirling, to its spot across.
+        const off = perch.foot - foot;
+        const step = Math.sign(off) * Math.min(HOVER_SPEED, HOVER_EASE * Math.abs(off)) * dt;
+        if (Math.abs(off) <= 0.5 || Math.abs(step) >= Math.abs(off)) {
+          foot = perch.foot;
+          moving = 'hovering';
+          hoverSince = now;
+          x = toX;
+          vx = vy = 0;
+          return placed(toX);
+        }
+        foot += step;
+        const across = (toX - x) * Math.min(1, HOVER_EASE * dt);
+        x += across;
+        [vx, vy] = dt > 0 ? [across / dt, step / dt] : [0, 0];
+        return placed();
       }
       if (moving === 'flying' && now - windupFrom < WINDUP_SECONDS) {
         // Still on its old line, the page's scroll aside; across, nothing yet.
@@ -287,12 +323,6 @@ export function createMascotPlace({ from, random = Math.random }: { from?: numbe
           // Enough speed to coast up to just over the line: the tail stops pushing.
           const above = foot - (goal - clearance);
           if (vy < 0 && vy * vy >= 2 * GRAVITY * Math.max(0, above)) thrust = false;
-          if (perch.hanging && foot <= goal) {
-            foot = goal;
-            moving = 'hanging';
-            vx = vy = 0;
-            return placed(toX);
-          }
         }
         // Across: at the speed that brings it over its spot when it comes down onto the line, the time till then solving
         // down = vy t + GRAVITY t² / 2 (down is positive, so rising, vy < 0, leaves it longer).
@@ -303,7 +333,7 @@ export function createMascotPlace({ from, random = Math.random }: { from?: numbe
         if (!pushing && vy > 0 && foot >= goal) {
           foot = goal;
           impact = Math.min(1, vy / HARD_LANDING);
-          moving = perch.hanging ? 'hanging' : 'landing';
+          moving = 'landing';
           landedAt = now;
           x = toX;
           vx = vy = 0;
@@ -314,6 +344,8 @@ export function createMascotPlace({ from, random = Math.random }: { from?: numbe
       foot = perch.foot;
       if (moving === 'landing' && now - landedAt >= LANDING_SECONDS) moving = settled;
       if (moving !== 'landing') moving = settled;
+      // Hovering, it bobs gently up from its line and back; with reduced motion, still.
+      if (moving === 'hovering' && !reduced) foot -= (HOVER_BOB * (1 - Math.cos(2 * Math.PI * BOBS * (now - hoverSince)))) / 2;
       return placed();
     },
   };

@@ -100,7 +100,9 @@ const HEIGHT = 26;
 const HEADROOM = 18;
 /** How far under the section strip an edge must show for it to stand there, in pixels (issue 142). */
 const EDGE_SHOWING = 2;
-/** How long it takes to come up from behind its edge, or down from under the header. */
+/** Hovering, how far either way from where it lost ground it may stray, in pixels (issue 142). */
+const HOVER_REACH = 12;
+/** How long it takes to come up from behind its edge, or down from under the header to hover. */
 export const RISE_SECONDS = 0.4;
 /** The drop's middle from its box's left, and its tail's length turned down under it, in pixels. */
 const DROP_MIDDLE = 9;
@@ -177,6 +179,15 @@ function roomOn(section: DOMRect, viewers: boolean, clear: readonly Span[], near
   return nearestSpan(runs, near)!;
 }
 
+/**
+ * Its room hovering (issue 142): along `line`, within `HOVER_REACH` of `at`, where it lost ground; arriving with no edge
+ * in view (`at` null), about a spot at random.
+ */
+function hoverRoom(line: Span, at: number | null): Room {
+  const spot = at === null ? line.min + Math.random() * (line.max - line.min) : Math.min(line.max, Math.max(line.min, at));
+  return { min: Math.max(line.min, spot - HOVER_REACH), max: Math.min(line.max, spot + HOVER_REACH) };
+}
+
 /** Its droplets on their layer: a pixel of the drawing each, fading as they end. */
 function drawDroplets(layer: SVGSVGElement, droplets: readonly { x: number; y: number; age: number; life: number }[]) {
   const dots = layer.children;
@@ -231,13 +242,14 @@ export function BeadIcon({ on }: { on: boolean }) {
  * The mascot (issue 115), out by default (issue 150) and called by B, E, A, D: a water drop trailing the Limpide logo. In
  * three and four across it lives on the top edge of the top right section; on a phone and in 2 × 2 it keeps in view as
  * the page scrolls, on the top edge of a section in the right column (over a phone's section tabs while an edge shows
- * under them, issue 142), or hanging under the header when none has room.
+ * under them, issue 142), or, when none has room, hovering on its tail a little under the header or the tabs, about where
+ * it lost ground (issue 142).
  * It comes at a spot at random, one of three ways (up from behind its edge, down from the top of the window like rain,
  * or popping up with a hop), and lives its life along its line (`createMascotMotion`): strolls, glances, funny turns
  * when nothing is played, dozing. Between lines it moves by the laws of motion (`createMascotPlace`): falling, it
  * stretches like a raindrop as it speeds up and splashes as hard as it lands; flying up, its tail spins under it. It
  * moves with what is heard, as the Viewers read it (the Modulation model), and with every control turned, by hand, a
- * Controller or the Demo (`gesturesOf`); sent away, it jumps, splashes and melts, or, hanging or in the air, drips away
+ * Controller or the Demo (`gesturesOf`); sent away, it jumps, splashes and melts, or, hovering or in the air, drips away
  * down the window. It adds nothing to the sound. No focus, no pointer, nothing for a screen reader. Drawn by the render
  * loop, outside React (ADR-0002).
  */
@@ -391,7 +403,8 @@ export function Mascot({
         themeSwitched = null;
       }
 
-      // Its line: the top right section's edge; on a phone or in 2 × 2, a right-column edge in view, or the header.
+      // Its line: the top right section's edge; on a phone or in 2 × 2, a right-column edge in view, or a line under the
+      // header to hover on.
       let on: { id: string; box: DOMRect };
       let homeId: string | null = null;
       if (!stacked.matches) {
@@ -417,13 +430,13 @@ export function Mascot({
           const nearest = sections.filter(inView).sort((a, b) => off(a) - off(b))[0];
           on = nearest ?? (card && clearOn(card.box).length ? card : on);
         }
-        perch = { id: on.id, foot: on.box.top, hanging: false };
+        perch = { id: on.id, foot: on.box.top, hovering: false };
       } else {
         const column = rightColumn(sections).sort((a, b) => a.box.top - b.box.top);
         const [header, strip] = ['header', '.section-strip'].map((q) => document.querySelector(q)?.getBoundingClientRect().bottom ?? 0);
         const ceiling = Math.max(0, header, strip);
         // Under the section strip, not the header, an edge is a line for it while it shows under the strip, the drop over
-        // the strip's foot (issue 142): hanging, its foot would be just off that line.
+        // the strip's foot (issue 142): hovering, it would be just off that line.
         const overlap = strip > header ? HEIGHT - EDGE_SHOWING : 0;
         perch = choosePerch({
           current: perch?.id ?? null,
@@ -444,7 +457,7 @@ export function Mascot({
           .sort((a, b) => a.box.top - b.box.top)[0];
         if (under) {
           on = under;
-          perch = { id: under.id, foot: under.box.top, hanging: false };
+          perch = { id: under.id, foot: under.box.top, hovering: false };
           if (homeId !== null) visit = under.id === homeId ? null : { id: under.id, until: now + between(8, 18) };
         }
       }
@@ -463,22 +476,22 @@ export function Mascot({
         // Where the plot draws the LFO under its middle: a second of it across, the newest at the right.
         const { box } = plot;
         const wave = box.top + lineAt({ engine: context.engine, lfo: plot.lfo, box, x: drawnAt.left + DROP_MIDDLE - box.left, now });
-        perch = { id: `surf ${plot.lfo}`, foot: wave, hanging: false };
+        perch = { id: `surf ${plot.lfo}`, foot: wave, hovering: false };
         surfRoom = nearestSpan(plot.clear, drawnAt.left)!;
       }
-      // Leaving: on its line it melts; hanging or in the air it drips away down the window.
+      // Leaving: on its line it melts; hovering or in the air it drips away down the window.
       if (leavingNow() && leaveBy === null) {
         leaveBy = moving === 'standing' || moving === 'landing' ? 'melt' : 'rain';
         if (leaveBy === 'melt') motion.leave(now);
       }
-      if (leaveBy === 'rain') perch = { id: 'away', foot: innerHeight + HEIGHT + HEADROOM, hanging: false };
+      if (leaveBy === 'rain') perch = { id: 'away', foot: innerHeight + HEIGHT + HEADROOM, hovering: false };
 
       // Its room along the line, found again only when the line moves against the page (the card's top, against the
       // window) or changes, or what covers it does.
       const box = on.box;
-      const clear = perch.hanging ? clearAlong({ left: box.left + 4, right: box.right - 4, top: perch.foot }, covers, WIDTH, HEIGHT) : clearOn(box);
+      const clear = perch.hovering ? clearAlong({ left: box.left + 4, right: box.right - 4, top: perch.foot }, covers, WIDTH, HEIGHT) : clearOn(box);
       const [dx, dy] = on === card ? [0, 0] : [scrollX, scrollY];
-      const key = `${perch.id} ${box.left + dx} ${perch.hanging ? 0 : box.top + dy} ${box.width} ${clear.map((c) => `${Math.round(c.min)}-${Math.round(c.max)}`)}`;
+      const key = `${perch.id} ${box.left + dx} ${perch.hovering ? 0 : box.top + dy} ${box.width} ${clear.map((c) => `${Math.round(c.min)}-${Math.round(c.max)}`)}`;
       if (surfRoom) room = { key: 'surf', room: surfRoom };
       else if (room?.key !== key) {
         const whole = { min: box.left, max: box.right - WIDTH };
@@ -486,8 +499,8 @@ export function Mascot({
         const uncovered = clear.length === 1 && clear[0].min === whole.min && clear[0].max === whole.max;
         room = {
           key,
-          room: perch.hanging
-            ? (nearestSpan(clear, drawnAt.left) ?? { min: box.left + 4, max: box.right - WIDTH - 4 })
+          room: perch.hovering
+            ? hoverRoom(nearestSpan(clear, drawnAt.left) ?? { min: box.left + 4, max: box.right - WIDTH - 4 }, shown ? drawnAt.left : null)
             : roomOn(box, !stacked.matches, clear.length ? clear : [whole], uncovered ? -Infinity : drawnAt.left),
         };
       }
@@ -528,9 +541,10 @@ export function Mascot({
         Object.assign(pose, { legs: 'tuck', splash: 'none', lift: 0, turn: 1, eyes: 'shut', stretch: 1 });
         pose.tilt = (now * 600 * (where.vx < 0 ? -1 : 1)) % 360;
         origin = '20% 60%';
-      } else if (where.moving === 'hanging') {
-        Object.assign(pose, { legs: 'stand', splash: 'none', lift: 0, tilt: still.matches ? 0 : Math.sin(now * 2.2) * 6 });
-        origin = '20% 0%'; // it swings from its tip
+      } else if (where.moving === 'hovering') {
+        // On its tail, straight down under it and whirling (issue 142); its bob is in its foot. With reduced motion, still.
+        Object.assign(pose, { legs: 'tuck', splash: 'none', lift: 0, tilt: 0, turn: 1 });
+        tailTurn = 90 + (still.matches ? 0 : Math.sin(now * 2 * Math.PI * 12) * 22);
       } else if (where.moving === 'falling') {
         // Hopping off, tucked; then a raindrop, longer the faster it falls.
         const speed = Math.max(0, where.vy);
@@ -689,7 +703,7 @@ export function Mascot({
       }
       // Coming into view: up from behind its edge (fast for a pop, then a hop), down from under the header, or, falling
       // from the top of the window, all at once.
-      comingFrom ??= perch.hanging ? 'header' : arrival === 'rain' ? 'sky' : 'edge';
+      comingFrom ??= perch.hovering ? 'header' : arrival === 'rain' ? 'sky' : 'edge';
       const wasUp = up;
       up = still.matches || comingFrom === 'sky' ? 1 : Math.min(1, up + dt / (arrival === 'pop' ? RISE_SECONDS / 2 : RISE_SECONDS));
       if (arrival === 'pop' && wasUp < 1 && up === 1) motion.gesture('new', now);
