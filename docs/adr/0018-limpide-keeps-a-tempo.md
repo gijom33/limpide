@@ -1,6 +1,6 @@
 # Limpide keeps a tempo, the page's, and an LFO can sync to it
 
-**Status:** accepted · **Date:** 2026-10-31 · **Decided by:** the owner (issue 112's grilling)
+**Status:** accepted; its restart of a synced LFO on a change superseded by [ADR-0019](./0019-a-synced-lfo-is-pulled-onto-the-beat.md) · **Date:** 2026-10-31 · **Decided by:** the owner (issue 112's grilling)
 
 Supersedes issue 53's decision 2 (2026-10-27) that Limpide keeps no tempo: "a BPM control, MIDI clock or the Hold rhythm would each bring in a concept the PRD lacks, for a feature that matters beside a sequencer". The owner asked for a tempo on 2026-10-30, for LFO sync first, and v1 is to be the spec of the VST/AU plugin Limpide will become, where an LFO synced to the host's tempo is expected ([issue 131](../issues/131-v1.md)). There is still no sequencer and no arpeggiator.
 
