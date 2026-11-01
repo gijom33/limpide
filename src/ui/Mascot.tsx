@@ -1,7 +1,7 @@
 import { useContext, useEffect, useEffectEvent, useRef, useState } from 'react';
 import type { Theme } from '../app/displaySettings';
 import type { Word } from '../input/callingPhrase';
-import { lfos } from '../patch/patch';
+import { type LfoNumber, lfos } from '../patch/patch';
 import type { PatchStore } from '../patch/patchStore';
 import { addToRenderLoop } from '../viewers/renderLoop';
 import { lineAt, lineWiderThan } from './LfoPlot';
@@ -372,7 +372,7 @@ export function Mascot({
     let room: { key: string; room: Room } | null = null;
     const between = (a: number, b: number) => a + Math.random() * (b - a);
     // Three or four across: a visit to another section now and then, or a ride on an LFO's plot (issue 141).
-    let visit: { id: string; until: number; ride?: 1 | 2 } | null = null;
+    let visit: { id: string; until: number; ride?: LfoNumber } | null = null;
     // Sent away on a ride: it jumps home first, and melts once it has landed there.
     let gettingOff = false;
     let nextVisit = context.engine.now() + between(15, 35);
@@ -439,14 +439,16 @@ export function Mascot({
       }
 
       // The plots of the LFOs that are on, in view, wide enough for it and clear of the cards (issue 164): in a Demo part,
-      // to surf; outside the Demo, those it may ride now and then (issue 141). Looked for only when there may be one.
+      // to surf; outside the Demo, those it may ride now and then (issue 141). Looked for only in a Demo part, on a ride,
+      // or with a visit due and an LFO to ride, so a frame costs no more while it stays home.
       const part = demoPartNow();
-      const rides = stacked.matches ? [] : ridesFor(lfos(context.patch()), context.engine.tempo().bpm, { demo: part !== null, reduced: still.matches });
-      const plots = part === null && !rides.length ? [] : [...document.querySelectorAll<HTMLElement>(`${LFO_PLOTS}:not([data-inactive])`)]
+      const rideLfos = stacked.matches ? [] : ridesFor(lfos(context.patch()), context.engine.tempo().bpm, { demo: part !== null, reduced: still.matches });
+      const looking = part !== null || (rideLfos.length > 0 && (visit ? visit.ride !== undefined : now >= nextVisit));
+      const plots = !looking ? [] : [...document.querySelectorAll<HTMLElement>(`${LFO_PLOTS}:not([data-inactive])`)]
         .map((el) => ({ lfo: Number(el.dataset.lfo) as 1 | 2, box: el.getBoundingClientRect() }))
         .map((p) => ({ ...p, clear: clearAlong({ left: p.box.left, right: p.box.right, top: p.box.bottom }, covers, WIDTH, HEIGHT + p.box.height) }))
         .filter(({ box, clear }) => lineWiderThan(box.width, WIDTH) && roomAbove(box) && box.bottom <= innerHeight && clear.length > 0);
-      const rideable = plots.filter((p) => rides.includes(p.lfo));
+      const rideable = plots.filter((p) => rideLfos.includes(p.lfo));
 
       // Its line: the top right section's edge; on a phone or in 2 × 2, a right-column edge in view, or a line under the
       // header to hover on.
@@ -460,10 +462,10 @@ export function Mascot({
         const inView = (s: { box: DOMRect }) => roomAbove(s.box) && s.box.top <= innerHeight - 4 && clearOn(s.box).length > 0;
         // A ride ends as its LFO stops being one to ride (its Depth, Waveform or Rate, the Demo, reduced motion), its
         // plot goes out of view, or it is picked up or sent away: it jumps home (issue 141).
-        const over = visit?.ride
+        const visitEnds = visit?.ride
           ? !rideable.some((p) => p.lfo === visit!.ride) || moving === 'held' || leavingNow()
           : !sections.some((s) => s.id === visit?.id && inView(s));
-        if (visit && (now >= visit.until || over)) {
+        if (visit && (now >= visit.until || visitEnds)) {
           if (visit.ride && leavingNow()) gettingOff = true;
           visit = null;
           nextVisit = now + between(20, 40);
