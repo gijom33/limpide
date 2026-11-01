@@ -4,6 +4,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-10-31, the owner's bug, with a screenshot of the phone header on the night branch (localhost:5174, the browser pane narrowed), Tutorial, Hold, Song and the BPM overlapping: "Do not allow super narrow screens where buttons overlap."
+
 ## Ideas
 
 ## Dropped
