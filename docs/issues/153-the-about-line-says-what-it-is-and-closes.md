@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · bug. The owner's answers (2026-10-31, evening): decisions 5 to 7.
+**Status:** ready-for-human · bug. Built (2026-10-31) on night/2026-10-31, for the owner to try
 
 ## Decisions
 
@@ -36,17 +36,41 @@ Decided by the owner, 2026-10-31 (evening), answering the night's question 1:
 - The design audit
 
 **Acceptance criteria:**
-- [ ] Loading a Preset from the Patch panel shows "Name · about line", the name in bold
-- [ ] Changing the Preset with the arrows (‹ ›) shows no box
-- [ ] The close button and Escape take the box away; turning a knob or loading another Patch still does
-- [ ] A click on the box away from its button still reaches the control beneath
+- [x] Loading a Preset from the Patch panel shows "Name · about line", the name in bold
+- [x] Changing the Preset with the arrows (‹ ›) shows no box
+- [x] The close button and Escape take the box away; turning a knob or loading another Patch still does
+- [x] A click on the box away from its button still reaches the control beneath
 - [ ] At 375, 700, 1100, 1440 and 2000 px the box never reaches the Osc tabs or the Filter's Mode row; at three and four across it is at most two lines for every Preset
+  (Its first half holds at every width. Two lines holds at 1440 and 2000 px and from 1,280 px; at 1100 px the longest eight take three lines: see call 3 below.)
 - [ ] An e2e test covers closing it by button and by Escape; the design audit passes; every test passes in Linux's fonts too
+  (The tests and the audit pass in Chromium and WebKit on macOS; Linux's wider fonts are stood in for by wider letter-spacing in the layout test. GitHub's run on Linux is the real check.)
 
 **Out of scope:**
 - When the line shows (on a load by the person) and its words
 
-## Questions for the owner
+## How it was built
+
+Built 2026-10-31, at night, on `night/2026-10-31` (two commits, `Issue 153: …`).
+
+- **The box:** a Preset picked in the Patches panel shows "**Name** · about line" under the Patch name, with a × at its right end (its tip in `tips.ts`, its name "Close the Preset’s description"). The × and Escape close it; a knob turned or another load still do. Only the × takes the pointer: a click on the words reaches what lies beneath. The words are hidden from a screen reader, which hears the line once with the name, as before; closing does not say it again.
+- **Where it sits:** over the Sections' headings (decision 7), as wide as the Oscillators and the Filter together (at three and four across; at 2 × 2 and on a phone, as wide as the Sections), set closer than before (line height 1.25, 4 px padding) so it never reaches the Osc tabs or the Filter's Mode row. An e2e test lays every Preset's line in the box at 375, 700, 1100, 1440 and 2000 px, again in wider type as Linux's fonts set it, and checks it clears both, stays within the Filter's right edge and below the Patch name. The design audit has the box as one more state.
+- **The arrows** (decision 5) load without it, and a screen reader hears the name alone.
+- Issue 109's build note has a dated line for what changed.
+
+Calls made without the owner (Claude's call, open to the owner):
+
+1. **A Controller's Preset pads and a keyboard's Program buttons show no box either**, as they are the arrows on hardware (they step through the Presets in order).
+2. **A screen reader hears the about line only when the box shows** (a pick in the panel); after the arrows, the name alone, as a sighted visitor sees it.
+3. **Three lines where the Oscillators and the Filter are narrow.** Two lines for every Preset needs about 830 px for the two Sections, which they reach at 1,280 px wide. Below that, at three across, the longest lines take three (8 Presets at 1100 px, 18 in wider type), and three Presets take four at 861 px; each still clears the Osc tabs and the Mode row. Two lines there would need the box over the Amp's heading too, or smaller type. Kept to the owner's width.
+4. **Below 375 px** (older small phones) the box's type is a size smaller (11 px), so the longest lines, six there, still clear the Osc tabs.
+5. **The × gives the focus back to the Patch name**, the button it hangs from, as the Patches panel does when it closes.
+6. **Escape closes the box only when it closes nothing else:** with a menu or panel open (the Patches panel over it, Display, MIDI, Tempo, the Tutorials, About) or a field being typed in, Escape goes to that first. A docked card's own fold and "whole text" do not count.
+7. **The ×'s target** is 24 px, with a 44 px finger pad around it on phones, and like the Patch panel's ×, no visible word on touch screens.
+8. **Save and Import** load without the box: only a pick in the panel shows it.
+
+**What to try:** at about 2000 px wide, open the Patch panel and pick Kalimba (one of the longest lines): its name in bold leads, the box spans the Oscillators and the Filter in two lines, clear of the Osc tabs and the Mode row. Close it with its ×, then pick it again and press Escape. Pick it again and turn a knob. Step with ‹ ›: no box. Try 1100 px (three lines for Kalimba) and a phone width.
+
+## The night's question (answered: decisions 5 to 7)
 
 Asked at night, 2026-10-31, before building: decision 3's rooms are not there. Measured on this branch's header (with issues 112 and 119), every Preset's line set on one line in the box's 12 px type with its name in bold is 428 px wide at the least, 783 px for the middle one and 1,425 px for the longest (Kalimba, Portamento). The room between the header and the Sections' headings is 41 px tall at three and four across (one line of the box, 31 px), 29 px at 2 × 2 (not even one line) and 66 px on a phone (two lines at the box's padding, three at a tighter one; the longest take five there, and already reach the Oscillators' heading). Beside the headings, the Oscillators' heading lies right under the box's left end, and the gap between it and the Filter's heading is 222 px at 700 px wide and 241 px at 1,100 px (four or five lines, which would reach the Osc tabs). Narrowing the box cannot leave the Oscillators' heading clear, since the heading is under its left end.
 
