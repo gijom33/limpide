@@ -8,6 +8,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- 2026-11-01, the owner's idea: "Introduce a new adversarial agent to the collection: A software performance expert that will ensure the WebApp can confidently be used on most mainstream computers, with the Apple M1 chip with 8 GiB RAM as a baseline that needs to be easily supported."
+
 - 2026-11-01, the owner, on hearing the night's Talking Filter and Portamento (issues 166 and 119): "They sound good, I think. I do not like Talking filter but that's okay"
 - 2026-11-01, from the 1.20.0 code review, a bug older than 1.19 that issues 112 and 119 widen: a button learned on a Switch (LFO Sync, Legato, Retrigger) never switches it, since Learn reads its values as a knob's Encoder Mode (a momentary 127, 0 taken for Absolute, so on then off at once; a toggle's lone 127 for Relative, −1), and the Learn bar says "keep turning…"; issue 147's press-and-release rule covers only Actions.
 - 2026-11-01, from the 1.20.0 code review, issue 163 against issue 150's decision 2: About shows Bead whenever the switch is on, so a newcomer's welcome card carries it, which 150 kept clear ("not covered or upstaged"); and it shows after B, E, A, D sent Bead away for the visit (163's call 3), not marked as a reversal of 150.
