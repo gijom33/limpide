@@ -127,7 +127,7 @@ An LFO setting: on, the LFO starts its cycle again at every Note, where its Wave
 _Avoid_: Key sync (fine in a tooltip), reset, phase reset
 
 **Sync**:
-An LFO setting: on, its Rate is a **note value** at the Tempo, from 4 bars to 1/32, straight, dotted (D) or triplet (T), read with its Hz ("1/8 · 4 Hz"), and running freely it starts its cycle on the beat; off, the Rate is in Hz again, as it was. Off by default (issue 112).
+An LFO setting: on, its Rate is a **note value** at the Tempo, from 4 bars to 1/32, straight, dotted (D) or triplet (T), read as the note value alone ("1/8"), its Hz in the tip (issue 176), and running freely it starts its cycle on the beat; off, the Rate is in Hz again, as it was. Off by default (issue 112).
 _Avoid_: Tempo sync (fine in a tooltip), BPM sync, clock sync
 
 **Glide**:
@@ -277,7 +277,7 @@ A connected MIDI hardware device, such as the Synido TempoPAD C16. A **known Con
 _Avoid_: Device, MIDI keyboard
 
 **Mapping**:
-A link from one Controller control (a channel plus CC or note) to a Parameter, a choice (a Waveform, the Filter Mode, Voices…) or an Action. A **momentary button** (127 pressed, 0 let go) acts on its press; a **toggle button** (one value per press, each the other) on every message. The C16 layout's Mappings answer a C16 only; any other answers every Controller.
+A link from one Controller control (a channel plus CC or note) to a Parameter, a choice (a Waveform, the Filter Mode, Voices…), an Action or the Tempo (issue 112). A **momentary button** (127 pressed, 0 let go) acts on its press; a **toggle button** (one value per press, each the other) on every message. The C16 layout's Mappings answer a C16 only; any other answers every Controller.
 _Avoid_: Binding, assignment
 
 **C16 layout**:
