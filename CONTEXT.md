@@ -247,7 +247,7 @@ The theoretical Harmonic levels of each Oscillator's Waveform (e.g. 1/n for saw)
 _Avoid_: Expected spectrum, model curve
 
 **Response Curve**:
-The Filter's gain per frequency at the Effective Cutoff, drawn over the Spectrum.
+The Filter's gain per frequency at the Effective Cutoff, drawn over the Spectrum. Switched on by Display's Filter toggle (issue 161), the line keeping its name.
 _Avoid_: Filter curve, transfer function (maths layer only), EQ curve
 
 **Envelope Timeline**:

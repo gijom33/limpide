@@ -1,31 +1,41 @@
 import { expect, test } from '@playwright/test';
 import { openDisplay } from './helpers';
 
-test('the Viewers start with Harmonics, Ideal and the Curve; overlays switched on or off stay so after a reload', async ({ page }) => {
+test('the Viewers start with Harmonics, Ideal and the Filter’s Response Curve; overlays switched on or off stay so after a reload', async ({ page }) => {
   await page.goto('/');
   await openDisplay(page);
   const overlays = page.getByRole('group', { name: 'Show on Viewers' });
-  for (const [name, on] of [['Harmonics', 'true'], ['Ideal', 'true'], ['Curve', 'true'], ['Guides', 'false'], ['Maths', 'false']] as const) {
+  for (const [name, on] of [['Harmonics', 'true'], ['Ideal', 'true'], ['Filter’s Response Curve', 'true'], ['Guides', 'false'], ['Maths', 'false']] as const) {
     await expect(overlays.getByRole('button', { name })).toHaveAttribute('aria-pressed', on);
   }
   await expect(overlays.getByRole('button')).toHaveCount(5); // no Ghost: it was dropped; the Maths Layer joined
+  // The Response Curve's toggle reads Filter, what the line is of (issue 161).
+  await expect(overlays.getByRole('button')).toHaveText(['Harmonics', 'Ideal', 'Filter', 'Guides', 'Maths']);
 
   await overlays.getByRole('button', { name: 'Guides' }).click();
-  await overlays.getByRole('button', { name: 'Curve' }).click();
+  await overlays.getByRole('button', { name: 'Filter’s Response Curve' }).click();
   await page.reload();
   await openDisplay(page);
 
   await expect(overlays.getByRole('button', { name: 'Guides' })).toHaveAttribute('aria-pressed', 'true');
-  await expect(overlays.getByRole('button', { name: 'Curve' })).toHaveAttribute('aria-pressed', 'false');
+  await expect(overlays.getByRole('button', { name: 'Filter’s Response Curve' })).toHaveAttribute('aria-pressed', 'false');
   await expect(overlays.getByRole('button', { name: 'Harmonics' })).toHaveAttribute('aria-pressed', 'true');
+});
+
+// Issue 161: the toggle was named Curve; its stored key stays `curve`, so a visitor's choice still loads.
+test('a visitor’s Curve choice, kept from before the toggle was named Filter, still loads', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('limpide.overlays', JSON.stringify({ harmonics: true, ideal: true, curve: false, guides: false, maths: false })));
+  await page.goto('/');
+  await openDisplay(page);
+  await expect(page.getByRole('group', { name: 'Show on Viewers' }).getByRole('button', { name: 'Filter’s Response Curve' })).toHaveAttribute('aria-pressed', 'false');
 });
 
 test('explanations live in tooltips, not as text on screen', async ({ page }) => {
   await page.goto('/');
   await openDisplay(page);
   await expect(page.getByText(/runs all the time/)).toBeHidden();
-  await page.getByRole('button', { name: 'Curve' }).hover();
-  await expect(page.getByRole('tooltip')).toContainText('gain at every frequency');
+  await page.getByRole('button', { name: 'Filter’s Response Curve' }).hover();
+  await expect(page.getByRole('tooltip')).toContainText('The Response Curve: the Filter’s gain at every frequency');
 });
 
 test('the Ideal marks show only while a sound is there to compare them with: none after a reload, before a Note (the owner, 2026-10-27)', async ({ page }) => {

@@ -443,8 +443,8 @@ export const OVERLAY_TIPS: Record<Overlay, TipContent> = {
     body: 'Marks where theory puts each Harmonic of each Oscillator, at its Mixer level: a circle for Osc 1, a square for Osc 2, a triangle for the Sub, a diamond for Ring. On the Filter Tap they show where each should land after the Filter.',
   },
   curve: {
-    title: 'Response Curve',
-    body: 'The Filter’s gain at every frequency (scale on the right). Harmonics under the slope get quieter; a bump at the Cutoff is Resonance.',
+    title: 'Filter',
+    body: 'The Response Curve: the Filter’s gain at every frequency (scale on the right). Harmonics under the slope get quieter; a bump at the Cutoff is Resonance.',
   },
   guides: {
     title: 'Scope guides',

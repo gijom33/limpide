@@ -37,6 +37,12 @@ it('the Guides’ tip says they stand at what the Mixer sends, so beyond them is
   expect(body).not.toMatch(/Oscillator’s level/);
 });
 
+it('the Filter toggle’s tip names it Filter and says it draws the Response Curve (issue 161)', () => {
+  const { title, body } = OVERLAY_TIPS.curve;
+  expect(title).toBe('Filter');
+  expect(body).toMatch(/^The Response Curve: the Filter’s gain at every frequency/);
+});
+
 it('a synced Rate’s tip gives its Hz at the tempo, which its readout leaves out (issue 176)', () => {
   const tip = syncedRateTip('1/4', '2 Hz', 120);
   expect(tip.title).toBe('Rate');

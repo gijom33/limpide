@@ -40,7 +40,7 @@ test('every toolbar control explains itself, without doubling up on native brows
   await openDisplay(page);
   const toolbar = page.getByRole('region', { name: 'Viewer controls' });
   await expect(toolbar.locator('[title]')).toHaveCount(0);
-  for (const name of ['Harmonics', 'Ideal', 'Curve', 'Guides']) {
+  for (const name of ['Harmonics', 'Ideal', 'Filter’s Response Curve', 'Guides']) {
     await toolbar.getByRole('button', { name }).hover();
     await expect(page.getByRole('tooltip'), name).toBeVisible();
   }
