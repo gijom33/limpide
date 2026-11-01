@@ -8,34 +8,39 @@
 
 ## Decisions
 
-1. **About names Bead.** Decided by the owner, 2026-10-31.
+Decided by the owner, 2026-10-31:
+
+1. **About names Bead.**
+2. **Bead stands beside About's logo, bigger than on the synth;** a click on it gives its tricks and the rest: "I thought of having Bead next to the logo, bigger than on the synth. If we click on it, you can indeed have info on its tricks, etc."
 
 Claude's call, open to the owner:
 
-2. **A line among the credits,** headed "Bead", after "Made by": Bead's picture (as Display shows it) and one sentence in the app's light voice: who it is (a water drop that lives on the page and answers what you play), and that Display's switch sends it away for good. B, E, A, D is left for people to find.
-3. **A link to Bead's page,** [bead.md](../bead.md) on GitHub, as "All its secrets", for those who want them; the tricks themselves stay off the page.
-4. **With Bead switched Off,** the line stays (About tells who Bead is either way) and says it is resting, with the way back on in Display.
-5. **About's first screen** keeps its way in (the Demo and Tour buttons) on a 393 × 659 phone: the line sits in the credits that scroll inside the card (issue 105).
+3. **Beside the logo:** Bead drawn at twice its size on the page, standing on the logo's baseline to its right, idle as it is on the synth (blinks, its tail, now and then a small trick), with reduced motion still.
+4. **A click (or Enter, or a tap)** opens Bead's card in place of About's credits: who it is in a sentence, what it answers (what you play, every knob, a tickle), its funny turns in a short list, how to send it away (Display's switch, for good; B, E, A, D, for the visit), and "All its secrets" linking to [bead.md](../bead.md) on GitHub. Back (or Escape) returns to the credits. Bead in About is a button with the name "Bead, Limpide's water drop: its tricks".
+5. **With Bead switched Off it is not there,** in About as on the page (150, decision 9: some people would be annoyed); About is then as today.
+6. **About's first screen** keeps its way in (the Demo and Tour buttons) on a 393 × 659 phone.
 
 ## Agent Brief
 
 **Category:** enhancement
-**Summary:** The About panel introduces Bead in one line with its picture, among the credits.
+**Summary:** Bead stands beside About's logo, bigger than on the synth, and a click on it shows its tricks.
 
-**Current behavior:** About lists Made by, Support, Sound, Music, License and Privacy; Bead, which now comes onto the page by itself, is not mentioned.
+**Current behavior:** About shows the logo, the name, the tagline and the credits; Bead, which now comes onto the page by itself, is not there.
 
-**Desired behavior:** The credits gain a "Bead" entry after "Made by": Bead's small picture and one sentence saying who it is and that Display's switch sends it away for good, with a link "All its secrets" to bead.md on GitHub. With the switch Off, the sentence says Bead is resting and how to bring it back. The way in (the Demo and Tour buttons) stays on About's first screen at every width.
+**Desired behavior:** With Bead's switch On, Bead stands beside About's logo at twice its page size, idle as on the synth (still with reduced motion). It is a button: a click, Enter or a tap opens Bead's card in place of the credits (who it is, what it answers, its funny turns in short, how to send it away for good or for the visit, a link to all its secrets on GitHub); Back or Escape returns to the credits. With the switch Off, About is as today. The Demo and Tour buttons stay on About's first screen at every width.
 
 **Key interfaces:**
-- The About panel's credits
-- Bead's picture as Display draws it, and its stored switch
+- The About panel's header and credits
+- Bead's drawing and idle motion, and its stored switch
 - The repository's bead.md page
 
 **Acceptance criteria:**
-- [ ] About shows the Bead entry with its picture, its sentence and the link
-- [ ] With Bead switched Off the sentence says it is resting and where to turn it on
+- [ ] With Bead On, About shows Bead beside the logo, larger than on the page
+- [ ] A click, Enter or a tap on it shows Bead's card; Back and Escape return to the credits
+- [ ] With Bead Off, no Bead in About
+- [ ] Reduced motion: Bead still in About
 - [ ] On a 393 × 659 phone the Demo and Tour buttons are still on the first screen
-- [ ] The About spec covers it; the design audit passes; every test passes in Linux's fonts too
+- [ ] The About and mascot specs cover it; the design audit passes; every test passes in Linux's fonts too
 
 **Out of scope:**
-- Bead's tricks on the page, or the Notes that call it
+- Bead's behaviour on the page
