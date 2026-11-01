@@ -133,16 +133,17 @@ const CONTROLS = 'button, [role=slider], [role=tab], [role=radio], input, .piano
 const STEP = 4;
 /**
  * What is drawn over the page, which it never stands under (issue 164): the docked cards (the Demo's, a Tutorial's, the
- * Tour's), the tips, the open panels and the Preset's description. It stays drawn under them, so it never covers their
+ * Tour's), the tips, the open panels and menus, and the Preset's description. It stays drawn under them, so it never covers their
  * words or buttons.
  */
 const DOCKED = '.docked:not([hidden])';
-const COVERS = `${DOCKED}, .tooltip:not([hidden]), .patch-about, .patch-panel, .tutorial-menu-panel, .tempo-panel, .display-panel, .midi-panel, .learn-bar, .quick-setup`;
+const COVERS = `${DOCKED}, .tooltip:not([hidden]), .patch-about, .patch-panel, .destination-menu, .tutorial-menu-panel, .tempo-panel, .display-panel, .midi-panel, .learn-bar, .quick-setup`;
 
 /**
  * Its room along a section's top edge, in the window's pixels: within the stretches `clear` of the cards, tips and panels
  * (issue 164), the spots where it covers least of what is above the edge, standing (its leaps may brush past it); of
- * those, the run of spots nearest to `near`, where it is: the whole edge in three or four across, with nothing over it.
+ * those, the run of spots nearest to `near`, where it is, or with nothing over the edge the leftmost run, as before: the
+ * whole edge in three or four across.
  * On a phone and in 2 × 2 the Viewer of the section above comes down to just over the edge all along it: there it keeps
  * clear of the controls only, and passes over the Viewer's bottom, rather than being kept to the edge's left end (the
  * owner, 2026-10-30).
@@ -480,11 +481,14 @@ export function Mascot({
       const key = `${perch.id} ${box.left + dx} ${perch.hanging ? 0 : box.top + dy} ${box.width} ${clear.map((c) => `${Math.round(c.min)}-${Math.round(c.max)}`)}`;
       if (surfRoom) room = { key: 'surf', room: surfRoom };
       else if (room?.key !== key) {
+        const whole = { min: box.left, max: box.right - WIDTH };
+        // Nothing over the edge, it keeps to the leftmost run, as before; something over it, the run nearest to it.
+        const uncovered = clear.length === 1 && clear[0].min === whole.min && clear[0].max === whole.max;
         room = {
           key,
           room: perch.hanging
             ? (nearestSpan(clear, drawnAt.left) ?? { min: box.left + 4, max: box.right - WIDTH - 4 })
-            : roomOn(box, !stacked.matches, clear.length ? clear : [{ min: box.left, max: box.right - WIDTH }], drawnAt.left),
+            : roomOn(box, !stacked.matches, clear.length ? clear : [whole], uncovered ? -Infinity : drawnAt.left),
         };
       }
 

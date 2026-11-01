@@ -16,6 +16,7 @@ Bead makes no sound and changes nothing you hear. Turning a control only changes
 
 - **Three or four sections across**: on the top edge of the top right section (the Amp, or LFO & Envelopes), along the stretch where it covers least. Every 15 to 40 seconds it visits another section in view for a while: falling to one below, or leaping in an arc to one beside it.
 - **On a phone and in 2 × 2**: it stays in view as you scroll, on the top edge of a right-hand section. To go down it falls like rain and splashes; to go up it turns its tail down under itself and flies on it. With no edge in view it hangs under the header, swinging from its tip.
+- **Never under a card** ([164](./issues/164-bead-never-under-a-card.md)): it never stands where the Demo's card, a Tutorial's, the Tour's, a tip or an open panel covers it, and strolls only along what they leave clear. When one comes over its spot it goes to the nearest clear stretch of an edge in view; with every edge in view covered, it stands on the card's top edge until one is clear again. It is still drawn under them, so it never covers their words or buttons.
 
 ## Its own life
 

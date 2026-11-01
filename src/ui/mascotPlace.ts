@@ -78,7 +78,7 @@ export interface Cover {
 export function clearAlong(line: { left: number; right: number; top: number }, covers: readonly Cover[], width: number, height: number): Span[] {
   let spans: Span[] = line.right - width >= line.left ? [{ min: line.left, max: line.right - width }] : [];
   for (const c of covers) {
-    if (c.top >= line.top || c.bottom <= line.top - height || c.right <= c.left) continue;
+    if (c.top >= line.top || c.bottom <= line.top - height) continue;
     // The lefts that would put the drop's box over the cover: from its left less the drop's width to its right.
     const [from, to] = [c.left - width, c.right];
     spans = spans.flatMap((s) => {

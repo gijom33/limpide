@@ -493,7 +493,7 @@ test('through the Demo it conducts, then plays air guitar, then surfs an LFO sha
   // The Demo's card over the plot's foot, it never surfs there (issue 164): dragged aside by its name, it does.
   await page.waitForTimeout(500);
   await expect(mascot(page)).toHaveAttribute('data-act', 'conduct');
-  const name = (await page.locator('.demo-bar-name').boundingBox())!;
+  const name = (await page.getByRole('region', { name: 'Demo', exact: true }).locator('.demo-bar-name').boundingBox())!;
   await page.mouse.move(name.x + 4, name.y + name.height / 2);
   await page.mouse.down();
   await page.mouse.move(name.x + 504, name.y + name.height / 2, { steps: 8 });
@@ -544,6 +544,25 @@ test.describe('never under a card (issue 164)', () => {
       await page.getByRole('dialog', { name: 'Limpide' }).getByRole('button', { name: 'Take the Tour' }).click();
     },
   };
+  test('three across, with Display open over its edge, it goes to an edge clear of the panel', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/');
+    await listening(page);
+    await bringBead(page);
+    await openDisplay(page);
+    const panel = page.getByRole('region', { name: 'Viewer controls' });
+    await expect(panel).toBeVisible();
+    await page.mouse.move(2, 894); // off every control, so no tip opens
+    await page.waitForTimeout(300);
+    await expect(mascot(page)).toHaveAttribute('data-moving', /^(standing|hanging)$/, { timeout: 5000 });
+    const under = await page.evaluate(() => {
+      const drop = document.querySelector('.mascot-drop svg')!.getBoundingClientRect();
+      const r = document.querySelector('.display-panel')!.getBoundingClientRect();
+      return r.left < drop.right && r.right > drop.left && r.top < drop.bottom && r.bottom > drop.top;
+    });
+    expect(under).toBe(false);
+  });
+
   for (const [name, open] of Object.entries(cards)) {
     test(`on a phone, with ${name}'s card docked, it keeps in view and out from under the card as the page scrolls`, async ({ page }) => {
       test.slow();
@@ -552,9 +571,10 @@ test.describe('never under a card (issue 164)', () => {
       await listening(page);
       await bringBead(page);
       await open(page);
-      await expect(page.locator('.docked:not([hidden])')).toHaveCount(1);
+      const card = page.getByRole('region', { name: /^(Demo|Tour|Tutorial: .+)$/ });
+      await expect(card).toBeVisible();
       // The pointer onto the card's blank edge, so no tip of what it was last over stands open.
-      const box = (await page.locator('.docked:not([hidden])').boundingBox())!;
+      const box = (await card.boundingBox())!;
       await page.mouse.move(box.x + 3, box.y + box.height / 2);
       const height = await page.evaluate(() => document.documentElement.scrollHeight - innerHeight);
       const tops = [...Array.from({ length: Math.floor(height / 200) + 1 }, (_, i) => i * 200), height];
