@@ -32,6 +32,9 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 - 2026-11-01, from the 1.20.0 code review, names: lfo.ts's Beat holds a tempo (a BPM and its origin), paramControl's `twins` already means the Response Curve's filter twins in the engine, and the control surface's `thirds` holds any fast-turn share, not only a C16's third.
 - 2026-11-01, from the 1.20.0 code review, issues 112, 130 and 158 each write "a player holds a setting until the person touches it, then gives it back" their own way (the tempo store's take and giveBack, the Tour's freezeHand, the Tutorial's giveBack and took): a shared helper, if a fourth comes.
 - 2026-11-01, from the 1.20.0 code review, the end-to-end specs write `'limpide.bead': 'on'` out four times (about and mascot) while startState has a BEAD_OFF and no BEAD_ON; and issue 142 has no acceptance-criteria checklist, only its Decisions and build notes.
+- 2026-11-01, from the 1.20.0 fact-check, the Guides' tip (issue 159) says "one beyond them has been boosted by Resonance", but a chord passes them with none: on the Amp Scope, which sums every Voice, an A major triad from A3 (3 Voices, Sustain at full, Resonance 0, the Filter open) peaks at 1.28 against Guides at 0.50.
+- 2026-11-01, from the 1.20.0 fact-check, the Guides' tip again: with Resonance 0 and the Filter open, the Filter Tap still passes them by about 5 % (a saw at A3 0.526, a square 0.531, against 0.500; Osc 1 and Osc 2 at full 1.052 against 1.000), and Pink Noise at full passes them on the Oscillator Tap itself (1.045 against Guides held at full scale, 1.000).
+- 2026-11-01, from the 1.20.0 fact-check, the Tempo tip ("Drag it or use the arrows; double-click to type it") is also the tip of the narrow layout's BPM button, which only opens the tempo panel and cannot be dragged or typed in, while the panel's own dial carries no tip.
 
 ## Dropped
 
