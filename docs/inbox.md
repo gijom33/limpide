@@ -6,8 +6,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
-- 2026-10-31, the owner's idea: "In the 3-across and 4-across scenario, it may be a good idea to extend the keyboard if there is enough room."
-
 ## Dropped
 
 - 2026-10-30, from Claude's brainstorm, Velocity on the Volume ("a harder hit plays louder, not only brighter"): already so. The Amp Envelope's Attack rises to the Note's Velocity (PRD story 9). Claude's call, open to the owner.
@@ -141,3 +139,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-31, the owner's idea of the phone's three header rows in 2 × 2 (triage, Claude's call, open to the owner): to [152](./issues/152-the-phones-header-rows-in-2x2.md), polish for v1, ready for an agent once [112](./issues/112-tempo-midi-clock-and-an-arpeggiator.md) is done (it changes the header at these widths): the logo and Patch picker, then the buttons, then the keyboard, the top two sliding away on the way down; 2 × 2 keeps its keyboard and the buttons' words.
 2026-10-31, the owner's bug of an info box that stays under the Patch picker (triage, Claude's call, open to the owner): it is a loaded Preset's about line ([109](./issues/109-teaching-the-new-oscillator-features.md), decision 3), working as built but unlabelled, impossible to close and over the Sections' headings: to [153](./issues/153-the-about-line-says-what-it-is-and-closes.md), a bug, ready for an agent: the Preset's name leads it, a close button and Escape take it away, and it covers no heading.
 2026-10-31, the owner's idea of a UI/UX expert ordering the header's buttons (triage): to [154](./issues/154-the-headers-buttons-in-order.md), polish for v1. Decided by the owner: an expert proposes, the buttons align with a visible logic, and the keyboard need not be centred (issue 82's rule no longer binds). Claude's call, open to the owner: two steps, the expert's two or three arrangements drawn as a prototype for the owner to choose, then the build from 861 px.
+2026-10-31, the owner's idea of a wider keyboard in three and four across (triage, Claude's call, open to the owner): into [154](./issues/154-the-headers-buttons-in-order.md), decisions 3b and 6, since the expert's arrangement of the buttons decides the room the keyboard gets: it grows by whole keys into what the buttons leave, the letter keys' 17 in place.
