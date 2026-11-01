@@ -13,7 +13,10 @@ test('the logo opens the About splash: version, build and credits; Close, Escape
   await expect(about).toContainText(`Version ${version}`);
   await expect(about).toContainText('Guillaume Boillet');
   await expect(about.getByRole('link', { name: 'Source on GitHub' })).toHaveAttribute('href', 'https://github.com/gijom33/limpide');
-  await expect(about.getByRole('link', { name: 'Buy me a coffee' })).toHaveAttribute('href', 'https://buymeacoffee.com/gijom33'); // issue 146
+  // Issue 172: in the tip link's place (issue 146), a share-or-star line, the star linking to the repository.
+  await expect(about).toContainText('Enjoying Limpide? Share it, or star it on GitHub');
+  await expect(about.getByRole('link', { name: 'star it on GitHub' })).toHaveAttribute('href', 'https://github.com/gijom33/limpide');
+  await expect(about.getByRole('link', { name: /coffee/i })).toHaveCount(0);
 
   await about.getByRole('button', { name: 'Close' }).click();
   await expect(about).toBeHidden();

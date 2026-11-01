@@ -6,7 +6,7 @@ Designed and directed by [Guillaume Boillet](https://www.linkedin.com/in/guillau
 
 ▶ **[Play it in your browser](https://gijom33.github.io/limpide/)**. Nothing to install.
 
-☕ Enjoying it? [Buy me a coffee](https://buymeacoffee.com/gijom33).
+Enjoying it? Share it, or [⭐ the repository](https://github.com/gijom33/limpide).
 
 [![Limpide playing its Demo: the Oscillators, Filter and Amp side by side, each with its Scope and Spectrum, and the LFOs and Envelope Timeline beside them](docs/screenshot.png)](https://gijom33.github.io/limpide/)
 

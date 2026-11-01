@@ -6,8 +6,6 @@ import { BeadIdle } from './Mascot';
 const SOURCE = 'https://github.com/gijom33/limpide';
 /** Where to reach the author (issue 48). */
 const AUTHOR = 'https://www.linkedin.com/in/guillaume-boillet-18208310';
-/** Where a visitor who enjoyed Limpide can give a little (issue 146). */
-const COFFEE = 'https://buymeacoffee.com/gijom33';
 /** Everything Bead does, written down (issue 163). */
 const BEAD_SECRETS = `${SOURCE}/blob/main/docs/bead.md`;
 
@@ -175,9 +173,10 @@ export function About({
             </dd>
             <dt>Support</dt>
             <dd>
-              Enjoying Limpide?{' '}
-              <a href={COFFEE} target="_blank" rel="noreferrer">
-                Buy me a coffee
+              {/* In the tip link's place (issue 172): what helps is a word to a friend, or a star. */}
+              Enjoying Limpide? Share it, or{' '}
+              <a href={SOURCE} target="_blank" rel="noreferrer">
+                star it on GitHub
               </a>
             </dd>
             <dt>Sound</dt>
