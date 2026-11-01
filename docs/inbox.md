@@ -4,6 +4,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-10-31, the owner's bug, seen on the night branch at localhost:5174 (about 2000 px wide), with a screenshot of the box "The plain starting point: one saw through an open low-pass Filter." under the Patch picker: "This info box remains a screen and I do not know where it comes from and did not figure out how to remove it."
+
 ## Ideas
 
 ## Dropped
