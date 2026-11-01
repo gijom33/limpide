@@ -4,11 +4,20 @@
 
 **Blocked by:** a research pass on what the Circuit Tracks sends (below); the owner's grilling on the layout; [149](./149-one-seam-for-a-controller.md) (one seam for what a Controller is), so a second known Controller is added in one place
 
-**Status:** needs-triage · enhancement. In v1, decided by the owner, 2026-10-31. The research pass is done ([the findings](../research/173-circuit-tracks.md), 2026-10-31); next, the grilling, and a check on the owner's device for what stayed unsourced.
+**Status:** needs-info · enhancement. In v1, decided by the owner, 2026-10-31. Researched and grilled (round 1); waiting on the check on the owner's device (decision 7) and round 2 (which control each knob drives).
 
 ## Decisions
 
 1. **In v1.** Decided by the owner, 2026-10-31, against the scope rule's default (a second Controller's layout would otherwise be v2: [131](./131-v1.md), decision 12).
+
+Grilling, round 1, decided by the owner, 2026-10-31 (Claude's recommendations, accepted: "OK with all question recommendations"):
+
+2. **The MIDI tracks drive Limpide,** with Novation's default template (CC 1, 2, 5, 11, 12, 13, 71, 74 on channels 3 and 4): 16 knobs, no setup in Components, and only Limpide sounds. A template Limpide ships may come later if 16 run short.
+3. **The clock sets the tempo** ([136](./136-following-midi-clock.md)); Start and Stop do not play Limpide's Song or Demo.
+4. **No Actions** from the Circuit Tracks (it has no buttons that send MIDI); they stay on the screen and the C16.
+5. **Applied as the C16's:** by itself when a Circuit Tracks is plugged in with nothing mapped; a "Circuit Tracks layout" button in the MIDI panel; a one-page card to print.
+6. **Beside a C16:** each built-in layout answers only its own device (ADR-0017), so both play together.
+7. **A check on the owner's device before building:** the owner plugs it in while Claude reads what it sends from the page (each track's knobs, a Patch change, Play and Stop), settling the research's eleven unsourced facts.
 
 ## What the research would gather
 
