@@ -13,6 +13,8 @@ import { holding, WELCOMED } from './startState';
 
 const mascot = (page: Page) => page.locator('.mascot');
 const listening = (page: Page) => expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);
+/** Bead's height on screen, in pixels, as the Mascot draws it. */
+const BEAD_HEIGHT = 26;
 const beadSwitch = (page: Page) => page.getByRole('radiogroup', { name: 'Bead', exact: true });
 
 /** Brings Bead up by Display's switch, then closes Display. */
@@ -127,7 +129,7 @@ for (const [size, viewport, section] of [
  * section tabs and never over them (issue 142), or in between.
  */
 const seen = (page: Page) =>
-  page.evaluate(() => {
+  page.evaluate((beadHeight) => {
     const drop = document.querySelector('.mascot-drop')!.getBoundingClientRect();
     const [header, strip] = ['header', '.section-strip'].map((q) => document.querySelector(q)?.getBoundingClientRect().bottom ?? 0);
     const ceiling = Math.max(0, header, strip);
@@ -137,8 +139,9 @@ const seen = (page: Page) =>
       return Math.abs(r.right - right) < 4 && Math.abs(r.top - drop.bottom) < 2.5; // a stroll bobs it a pixel
     });
     return {
-      // On an edge just under a phone's section strip, its top is over the strip's foot by up to its height (issue 142).
-      inView: drop.top >= ceiling - (strip > header ? 26 : 0) && drop.bottom <= innerHeight + 1,
+      // On an edge just under a phone's section strip, its top is over the strip's foot by up to its height (issue 142):
+      // its height less the edge left showing, so its whole height at most.
+      inView: drop.top >= ceiling - (strip > header ? beadHeight : 0) && drop.bottom <= innerHeight + 1,
       // For a failure's message: where it was against the ceiling and the window, and how.
       at: `top ${Math.round(drop.top)}, bottom ${Math.round(drop.bottom)}, ceiling ${Math.round(ceiling)}, window ${innerHeight}, ${document.querySelector<HTMLElement>('.mascot')!.dataset.moving}`,
       on: edge
@@ -147,7 +150,7 @@ const seen = (page: Page) =>
           ? 'hovering'
           : null,
     };
-  });
+  }, BEAD_HEIGHT);
 
 /** Scrolls through the page, down then up, noting where the drop is each time it has settled, and that it is in view. */
 async function scrollThrough(page: Page, step: number) {

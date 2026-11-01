@@ -113,6 +113,9 @@ export interface Edge {
   covered?: boolean;
 }
 
+/** How far over the window's bottom an edge must be for it to go there, in pixels; the edge it is on, it keeps to the bottom. */
+const TAKEN_OVER_BOTTOM = 4;
+
 /** What choosePerch weighs, in the window's pixels. */
 export interface PerchChoice {
   /** The edge it is on now, if any. */
@@ -143,16 +146,18 @@ export interface PerchChoice {
  */
 export function choosePerch({ current, edges, card = null, ceiling, overlap, bottom, height, headroom, where }: PerchChoice): Perch {
   const fits = (e: Edge) => e.top - height >= ceiling - overlap;
+  const inView = (e: Edge) => e.top <= bottom;
+  const toTake = (e: Edge) => e.top <= bottom - TAKEN_OVER_BOTTOM;
   const clear = edges.filter((e) => !e.covered);
-  const keep = clear.find((e) => e.id === current && fits(e) && e.top <= bottom);
+  const keep = clear.find((e) => e.id === current && fits(e) && inView(e));
   if (keep) return { id: keep.id, foot: keep.top, hovering: false };
-  const roomy = clear.filter((e) => e.top - height - headroom >= ceiling && e.top <= bottom - 4);
-  const close = clear.filter((e) => fits(e) && e.top <= bottom - 4);
+  const roomy = clear.filter((e) => toTake(e) && e.top - height - headroom >= ceiling);
+  const fitting = clear.filter((e) => toTake(e) && fits(e));
   const nearest = (list: readonly Edge[]) => list.reduce((a, b) => (Math.abs(b.top - where) < Math.abs(a.top - where) ? b : a));
-  const hidden = edges.some((e) => e.covered && fits(e) && e.top <= bottom);
-  const onCard = card && !card.covered && hidden && fits(card) && card.top <= bottom ? card : null;
-  const on = roomy.length ? nearest(roomy) : close.length ? nearest(close) : onCard;
-  return on ? { id: on.id, foot: on.top, hovering: false } : { id: 'ceiling', foot: ceiling + height + HOVER_UNDER, hovering: true };
+  const hidden = edges.some((e) => e.covered && fits(e) && inView(e));
+  const onCard = card && !card.covered && hidden && fits(card) && inView(card) ? card : null;
+  const chosen = roomy.length ? nearest(roomy) : fitting.length ? nearest(fitting) : onCard;
+  return chosen ? { id: chosen.id, foot: chosen.top, hovering: false } : { id: 'ceiling', foot: ceiling + height + HOVER_UNDER, hovering: true };
 }
 
 /**

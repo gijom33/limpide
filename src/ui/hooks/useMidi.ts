@@ -73,7 +73,6 @@ export function useMidi(host: Host) {
   };
   // A C16 control moved on another bank than the last: its section is brought into view (on a phone, where one
   // section shows at a time).
-  const c16Connected = useRef(false);
   const lastBank = useRef<number | undefined>(undefined);
   const [bankFollow, setBankFollow] = useState<{ name: SectionName; key: number } | null>(null);
 
@@ -241,12 +240,12 @@ export function useMidi(host: Host) {
           },
           onDevices: (devices) => {
             setMidi({ kind: 'ready', devices });
-            c16Connected.current = devices.some(isC16);
+            const c16 = devices.some(isC16);
             const fresh = mappingStore.list().length === 0 && storage.getItem(C16_APPLIED) === null;
-            if (c16Connected.current && fresh) applyC16LayoutNow();
+            if (c16 && fresh) applyC16LayoutNow();
             // The first layout, stored before issue 145, becomes today's, once; a person's own Mappings stay, and so
             // does anything learned later on a place the first layout had.
-            if (c16Connected.current && storage.getItem(C16_APPLIED) !== C16_LAYOUT_VERSION) {
+            if (c16 && storage.getItem(C16_APPLIED) !== C16_LAYOUT_VERSION) {
               const upgraded = upgradeC16Layout(mappingStore.list());
               if (upgraded) mappingStore.restore(upgraded);
               // Issue 145's layout gains the places added since, where the person's Mappings leave them free.

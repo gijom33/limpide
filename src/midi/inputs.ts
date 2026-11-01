@@ -12,6 +12,9 @@ export interface MidiAccessLike extends EventTarget {
   readonly inputs: { values(): IterableIterator<MidiInputLike> };
 }
 
+/** A Controller's name, or a stand-in for one that gives none. */
+const nameOf = (input: MidiInputLike) => input.name ?? 'MIDI device';
+
 interface Handlers {
   /** A message, with the name of the Controller it came from. */
   onMessage(message: MidiMessage, from: string): void;
@@ -34,7 +37,7 @@ export function connectMidi(access: MidiAccessLike, { onMessage, onDevices }: Ha
       for (const message of parser.feed((event as Event & { data: Uint8Array }).data)) {
         if (message.type === 'noteOn') held.set(message.note, message.channel);
         if (message.type === 'noteOff') held.delete(message.note);
-        onMessage(message, input.name ?? 'MIDI device');
+        onMessage(message, nameOf(input));
       }
     };
     input.addEventListener('midimessage', listener);
@@ -46,10 +49,10 @@ export function connectMidi(access: MidiAccessLike, { onMessage, onDevices }: Ha
     if (!entry) return;
     entry.input.removeEventListener('midimessage', entry.listener);
     attached.delete(id);
-    for (const [note, channel] of entry.held) onMessage({ type: 'noteOff', channel, note }, entry.input.name ?? 'MIDI device');
+    for (const [note, channel] of entry.held) onMessage({ type: 'noteOff', channel, note }, nameOf(entry.input));
   };
 
-  const report = () => onDevices([...attached.values()].map(({ input }) => input.name ?? 'MIDI device'));
+  const report = () => onDevices([...attached.values()].map(({ input }) => nameOf(input)));
 
   const onState = (event: Event) => {
     const port = (event as Event & { port?: MidiInputLike }).port;
