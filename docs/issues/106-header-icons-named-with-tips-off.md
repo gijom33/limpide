@@ -6,6 +6,8 @@
 
 **Status:** done (2026-10-30). With Tips off, hovering or focusing a header button shown as its icon alone (861 to 1099 px) shows its name alone where its tip would open; a button showing its word, and every other control, shows nothing.
 
+**Since then (2026-11-01, [issue 112](./112-tempo-midi-clock-and-an-arpeggiator.md)):** Hold, MIDI, Display and About are icons alone up to 1365 px, beside the tempo, so they show their names alone with Tips off up to there; Demo, Tutorial and Song up to 1099 px, as before. The rule is the same: a header button whose word is hidden.
+
 ## Question for the owner
 
 With Tips off, should an icon-only button still show its name alone (one word, "MIDI", no explanation) on hover? Claude's recommendation: yes. Tips off then means "no explanations", not "no names"; the long tips stay off. The other way is to leave it: whoever switches Tips off knows the icons.

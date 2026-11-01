@@ -91,8 +91,8 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 /* Grows with the screen up to where lines of controls stop being comfortable to scan. */
 main { max-width: 1920px; margin: 0 auto; padding: var(--space-4); }
 /* Laptop and wide windows: the header on one line (issue 44). The Wordmark and the Patch on the left, the keyboard in
-   the centre, set-up (Hold, MIDI, Display, About) and the playing buttons (Demo, Tutorial, Song) on the right, in two
-   rows up to 1919 px, set-up on top, and in one from 1920 px (the owner, 2026-10-29: the Patch beside the logo, never under it). The side columns
+   the centre, set-up (Hold, the tempo, MIDI, Display, About) and the playing buttons (Demo, Tutorial, Song) on the
+   right, in two rows up to 1919 px, set-up on top, and in one from 1920 px (the owner, 2026-10-29: the Patch beside the logo, never under it). The side columns
    are never narrower than what they hold and share the rest equally, so the keyboard sits centred when there is room;
    its column takes what they leave, up to the piano at full size. The Display panel is anchored to the
    header (not its button), so it can always use, and never exceed, the window's width. */
@@ -1386,8 +1386,8 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   .tap canvas { aspect-ratio: 3 / 1; min-height: 96px; }
 
   /* The header in three rows: logo and Patch; then the playing buttons (Demo, Tutorial, Song) on the left and set-up
-     (Hold, MIDI, Display, About) on the right; then the keyboard, its eight white keys as wide as the rest of the screen
-     allows. It edges the page's padding (see the header up to 860 px, below). */
+     (Hold, the tempo, MIDI, Display, About) on the right; then the keyboard, its eight white keys as wide as the rest
+     of the screen allows. It edges the page's padding (see the header up to 860 px, below). */
   header {
     margin: calc(-1 * var(--space-3)) calc(-1 * var(--space-2)) 0;
     padding: var(--space-3) var(--space-2) var(--space-2);

@@ -491,8 +491,8 @@ export function App() {
         ) : (
           <LearnBar state={midi.learn} />
         )}
-        {/* The Wordmark and the Patch, the keyboard, set-up (Hold, MIDI, Display, About) and playing and learning (Demo,
-            Tutorial, Song), in the order each layout shows them (issues 44 and 104). */}
+        {/* The Wordmark and the Patch, the keyboard, set-up (Hold, the tempo, MIDI, Display, About) and playing and
+            learning (Demo, Tutorial, Song), in the order each layout shows them (issues 44 and 104). */}
         <header>{narrow ? [identity, right, keyboard] : [identity, keyboard, right]}</header>
         <SectionStrip follow={players.demo === null ? midi.bankFollow : players.follow} />
         <About

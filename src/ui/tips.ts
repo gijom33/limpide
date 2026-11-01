@@ -58,7 +58,7 @@ export const TIPS = {
   midi: { title: 'MIDI', body: '' },
   quickSetup: {
     title: 'Quick Setup',
-    body: 'Maps your Controller in one pass: it asks for a control for each knob and fader played live (the big knobs and the faders), the Filter’s first, then in the page’s order from the Oscillators to the LFOs, then a button for Hold, Freeze, Snapshot and the Preset arrows. Settings made once for a sound (Octave, the Waveforms, Filter Mode, Glide, Voices…) are left to MIDI Learn.',
+    body: 'Maps your Controller in one pass: it asks for a control for each knob and fader played live (the big knobs and the faders), the Filter’s first, then in the page’s order from the Oscillators to the LFOs, then a button for Hold, Freeze, Snapshot, the Preset arrows and Tap. Settings made once for a sound (Octave, the Waveforms, Filter Mode, Glide, Voices…) are left to MIDI Learn.',
     how: 'Skip any step. Finish (or Escape) keeps what is mapped; Cancel puts back your Mappings from before.',
   },
   c16Layout: {

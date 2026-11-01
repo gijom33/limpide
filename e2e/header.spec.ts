@@ -1,11 +1,11 @@
 import { expect, type Page, test } from '@playwright/test';
 import { type AuditOptions, auditPage } from './audit';
 
-// Issue 44: one header across the layouts. Its groups the same at every width (the Wordmark and the Patch; the keyboard;
-// Hold, MIDI, Display, About; Demo, Tutorial, Song: the owner, 2026-10-29), each layout placing them in rows of its own,
-// and Tab meeting them as they stand on screen (issue 104); the octave buttons stacked beside the piano, and from 601 px
-// up the piano's 17 keys at a finger's width where there is room. In the sections 2 × 2 the header stays at the top and
-// slides its first row away, as on a phone.
+// Issue 44: one header across the layouts. Its groups the same at every width (the Wordmark and the Patch; the
+// keyboard; Hold, the tempo, MIDI, Display, About; Demo, Tutorial, Song: the owner, 2026-10-29, the tempo since issue
+// 112), each layout placing them in rows of its own, and Tab meeting them as they stand on screen (issue 104); the
+// octave buttons stacked beside the piano, and from 601 px up the piano's 17 keys at a finger's width where there is
+// room. In the sections 2 × 2 the header stays at the top and slides its first row away, as on a phone.
 
 const SIZES = {
   phone: [390, 844],
