@@ -501,6 +501,7 @@ export function App() {
           onClose={closeAbout}
           onPlay={() => players.playDemo({ shared: welcome === 'shared' })}
           onTour={tour.start}
+          bead={bead.switch === 'on'}
         />
 
         {audioStatus === 'blocked' && (

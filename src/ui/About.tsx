@@ -1,12 +1,15 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import type { Welcome } from '../app/welcome';
 import { Logo } from './Logo';
+import { BeadIdle } from './Mascot';
 
 const SOURCE = 'https://github.com/gijom33/limpide';
 /** Where to reach the author (issue 48). */
 const AUTHOR = 'https://www.linkedin.com/in/guillaume-boillet-18208310';
 /** Where a visitor who enjoyed Limpide can give a little (issue 146). */
 const COFFEE = 'https://buymeacoffee.com/gijom33';
+/** Everything Bead does, written down (issue 163). */
+const BEAD_SECRETS = `${SOURCE}/blob/main/docs/bead.md`;
 
 /** "24 Oct 2026" from "2026-10-24". */
 const day = (iso: string) =>
@@ -18,6 +21,9 @@ const day = (iso: string) =>
  *
  * A brand-new browser sees it once as a welcome, with a word on what to do first. Every time, its last row plays the
  * Demo (or, from a Share link, the shared sound), starts the Tour (issue 128), or closes it.
+ *
+ * While Bead's switch is on, Bead stands beside the logo (issue 163); a click on it shows its card of tricks in place of
+ * the credits, and Back, Escape or Bead again return to them.
  */
 export function About({
   open,
@@ -25,6 +31,7 @@ export function About({
   onClose,
   onPlay,
   onTour,
+  bead = false,
 }: {
   open: boolean;
   welcome?: Welcome | null;
@@ -33,31 +40,65 @@ export function About({
   onPlay?: () => void;
   /** The Tour: a first look at each Section (issue 128). */
   onTour?: () => void;
+  /** Whether Bead's switch in Display is on: with it off, Bead is not in About either (issue 150, decision 9). */
+  bead?: boolean;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const title = useId();
-  const credits = useRef<HTMLDListElement>(null);
-  const more = useMoreBelow(credits, open);
+  const beadTitle = useId();
+  const beadButton = useRef<HTMLButtonElement>(null);
+  // Bead's card in place of the credits (issue 163); About opens on the credits every time.
+  const [card, setCard] = useState(false);
+  const showsCard = card && bead;
+  // What scrolls in the credits' place: the credits, or Bead's card.
+  const [scroller, setScroller] = useState<HTMLElement | null>(null);
+  const more = useMoreBelow(scroller, open);
+  const back = () => {
+    setCard(false);
+    beadButton.current?.focus();
+  };
 
   useEffect(() => {
     const d = dialog.current!;
     if (open && !d.open) d.showModal();
     else if (!open && d.open) d.close();
+    if (!open) setCard(false);
   }, [open]);
 
   const { version, commit, date, counted } = __BUILD__;
   return (
-    // biome-ignore lint/a11y/useKeyWithClickEvents: a click on the backdrop; the keyboard closes it with Escape
     <dialog
       ref={dialog}
       className="about"
       aria-labelledby={title}
       onClose={onClose}
+      // Escape on Bead's card goes back to the credits; on them, it closes About.
+      onKeyDown={(e) => {
+        if (e.key !== 'Escape' || !showsCard) return;
+        e.preventDefault();
+        back();
+      }}
+      onCancel={(e) => showsCard && e.preventDefault()}
       // A click on the backdrop lands on the dialog itself; its content fills it edge to edge.
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div className="about-body">
-        <Logo size={72} />
+        {/* Bead stands on the logo's baseline, to its right, so the logo stays in the middle over the name. */}
+        <div className="about-mark">
+          <Logo size={72} />
+          {bead && (
+            <button
+              ref={beadButton}
+              type="button"
+              className="about-bead"
+              aria-label="Bead, Limpide’s water drop: its tricks"
+              aria-expanded={showsCard}
+              onClick={() => setCard((c) => !c)}
+            >
+              <BeadIdle />
+            </button>
+          )}
+        </div>
         <h2 className="about-title wordmark-text" id={title}>
           Limpide
         </h2>
@@ -87,55 +128,84 @@ export function About({
         </p>
         {/* On a short window the credits scroll inside the card, faded at the foot while more is below, so the way in
             stays on the first screen, a 393 × 659 phone's included (issue 105). */}
-        <dl ref={credits} className="about-credits" data-more={more || undefined}>
-          <dt>Made by</dt>
-          <dd>
-            Designed and directed by{' '}
-            <a href={AUTHOR} target="_blank" rel="noreferrer">
-              Guillaume Boillet
-            </a>
-            ; code written with Claude Code, Anthropic’s AI coding agent, following Matt Pocock’s{' '}
-            <a href="https://www.aihero.dev" target="_blank" rel="noreferrer">
-              AI Hero
-            </a>{' '}
-            methodology.
-          </dd>
-          <dt>Support</dt>
-          <dd>
-            Enjoying Limpide?{' '}
-            <a href={COFFEE} target="_blank" rel="noreferrer">
-              Buy me a coffee
-            </a>
-          </dd>
-          <dt>Sound</dt>
-          <dd>The Web Audio API, in your browser</dd>
-          <dt>Music</dt>
-          <dd>The Demo and the Song are originals.</dd>
-          <dt>License</dt>
-          <dd>
-            Free and open source under the MIT License: the code, the Presets, the music and the docs.{' '}
-            <a href={SOURCE} target="_blank" rel="noreferrer">
-              Source on GitHub
-            </a>
-            {' · '}
-            <a href="./third-party-notices.txt" target="_blank" rel="noreferrer">
-              Third-party notices
-            </a>
-          </dd>
-          {counted && (
-            <>
-              <dt>Privacy</dt>
-              <dd>
-                Visits are counted with{' '}
-                <a href="https://www.goatcounter.com" target="_blank" rel="noreferrer">
-                  GoatCounter
-                </a>
-                : no cookies, no personal data stored. Like any web page it receives your IP address and browser, to
-                count you once. Your sounds stay in your browser: a share link carries one after its #, which is never sent.
-              </dd>
-            </>
-          )}
-        </dl>
+        {showsCard ? (
+          <section ref={setScroller} className="about-bead-card" aria-labelledby={beadTitle} data-more={more || undefined}>
+            <div className="about-bead-head">
+              <h3 id={beadTitle}>Bead</h3>
+              <button type="button" className="tool" onClick={back}>
+                Back
+              </button>
+            </div>
+            <p>Limpide’s water drop, its tail the logo’s stroke: it lives on the page, on a section’s top edge, and makes no sound.</p>
+            <p>It dances to what you play, answers every knob and fader you turn, giggles when you tickle it with the mouse and sprays droplets when clicked.</p>
+            <p>Left alone a while, it does a funny turn now and then:</p>
+            <ul>
+              <li>a glass of water, then a burp</li>
+              <li>a rain cloud and a big umbrella</li>
+              <li>a water gun, a fountain show</li>
+              <li>fishing off its edge for a ♪</li>
+            </ul>
+            <p>
+              To send it away: Display’s Bead switch, for good; or play B, E, A, D (J, D, H, S on the computer keyboard) for
+              this visit, and again to call it back.
+            </p>
+            <p>
+              <a href={BEAD_SECRETS} target="_blank" rel="noreferrer">
+                All its secrets
+              </a>
+            </p>
+          </section>
+        ) : (
+          <dl ref={setScroller} className="about-credits" data-more={more || undefined}>
+            <dt>Made by</dt>
+            <dd>
+              Designed and directed by{' '}
+              <a href={AUTHOR} target="_blank" rel="noreferrer">
+                Guillaume Boillet
+              </a>
+              ; code written with Claude Code, Anthropic’s AI coding agent, following Matt Pocock’s{' '}
+              <a href="https://www.aihero.dev" target="_blank" rel="noreferrer">
+                AI Hero
+              </a>{' '}
+              methodology.
+            </dd>
+            <dt>Support</dt>
+            <dd>
+              Enjoying Limpide?{' '}
+              <a href={COFFEE} target="_blank" rel="noreferrer">
+                Buy me a coffee
+              </a>
+            </dd>
+            <dt>Sound</dt>
+            <dd>The Web Audio API, in your browser</dd>
+            <dt>Music</dt>
+            <dd>The Demo and the Song are originals.</dd>
+            <dt>License</dt>
+            <dd>
+              Free and open source under the MIT License: the code, the Presets, the music and the docs.{' '}
+              <a href={SOURCE} target="_blank" rel="noreferrer">
+                Source on GitHub
+              </a>
+              {' · '}
+              <a href="./third-party-notices.txt" target="_blank" rel="noreferrer">
+                Third-party notices
+              </a>
+            </dd>
+            {counted && (
+              <>
+                <dt>Privacy</dt>
+                <dd>
+                  Visits are counted with{' '}
+                  <a href="https://www.goatcounter.com" target="_blank" rel="noreferrer">
+                    GoatCounter
+                  </a>
+                  : no cookies, no personal data stored. Like any web page it receives your IP address and browser, to
+                  count you once. Your sounds stay in your browser: a share link carries one after its #, which is never sent.
+                </dd>
+              </>
+            )}
+          </dl>
+        )}
         {/* At the bottom every time, beside Close (the owner, 2026-10-27): the Demo, in the green of a key that
             plays, and the Tour (issue 128), in the accent a Tutorial's control wears. */}
         <div className="about-actions">
@@ -172,10 +242,9 @@ export function About({
 }
 
 /** Whether the element, scrolled inside, has more below what it shows: its foot fades while it has. */
-function useMoreBelow(element: React.RefObject<HTMLElement | null>, open: boolean): boolean {
+function useMoreBelow(e: HTMLElement | null, open: boolean): boolean {
   const [more, setMore] = useState(false);
   useEffect(() => {
-    const e = element.current;
     if (!open || !e) return;
     const update = () => setMore(e.scrollTop + e.clientHeight < e.scrollHeight - 1);
     update();
@@ -186,6 +255,6 @@ function useMoreBelow(element: React.RefObject<HTMLElement | null>, open: boolea
       observer.disconnect();
       e.removeEventListener('scroll', update);
     };
-  }, [element, open]);
+  }, [e, open]);
   return more;
 }

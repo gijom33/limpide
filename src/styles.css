@@ -573,8 +573,8 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
    105). The card itself scrolls only where even that cannot fit. */
 .about-body { max-height: calc(100dvh - 34px); }
 .about-body > * { flex: none; }
-.about-body > .about-credits { flex: 0 1 auto; min-height: 4.5em; overflow-y: auto; overscroll-behavior: contain; }
-.about-credits[data-more] { mask-image: linear-gradient(to bottom, #000 calc(100% - 40px), transparent); }
+.about-body > :is(.about-credits, .about-bead-card) { flex: 0 1 auto; min-height: 4.5em; overflow-y: auto; overscroll-behavior: contain; }
+:is(.about-credits, .about-bead-card)[data-more] { mask-image: linear-gradient(to bottom, #000 calc(100% - 40px), transparent); }
 .about-credits dt { color: var(--muted); }
 .about-credits dd { margin: 0; }
 /* A link's words stay together ("Source on GitHub" broke over two lines, issue 47). */
@@ -592,7 +592,52 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .wordmark .logo { flex: none; }
 .wordmark-text { color: var(--text); } /* plain, so the colours are the mark's alone */
 /* In About the name sits close under the mark, as in the header it sits close beside it. */
-.about-body > .logo + .about-title { margin-top: calc(-1 * var(--space-2)); }
+.about-body > .about-mark + .about-title { margin-top: calc(-1 * var(--space-2)); }
+/* Bead in About (issue 163): twice its size on the page, standing on the logo's baseline to its right, the logo still
+   in the middle; a button that shows its card in place of the credits. */
+.about-mark { position: relative; }
+.about-mark .logo { display: block; }
+.about-bead {
+  position: absolute; left: calc(100% + var(--space-3)); bottom: 0; display: block; padding: 0; color: inherit;
+  background: none; border: 0; border-radius: var(--radius-control); cursor: pointer;
+  --mascot-body: #6cc8f0; --mascot-shine: #e8f8ff; --mascot-eye: #14161b;
+}
+:root[data-theme='light'] .about-bead { --mascot-body: #2b8fd6; --mascot-shine: #ffffff; }
+/* Narrower than 340 px, the logo beside Bead would leave too little room for its tail: the two are centred together. */
+@media (max-width: 339px) {
+  .about-mark { display: flex; align-items: flex-end; gap: var(--space-3); }
+  .about-bead { position: static; }
+}
+.about-bead:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.about-bead svg { display: block; overflow: visible; }
+/* Its idle life, all in the stylesheet: it blinks and glances about, wags its tail, now and then jiggles or hops. */
+.bead-idle :is(.bead-idle-body, .bead-idle-tail) { transform-box: view-box; }
+.bead-idle-body { transform-origin: 4.5px 13px; animation: bead-idle-turns 13s ease-in-out infinite; }
+.bead-idle-tail { transform-origin: 9px 9px; animation: bead-idle-wag 3.4s ease-in-out infinite; }
+.bead-idle :is(.bead-idle-eyes-shut, .bead-idle-eyes-left, .bead-idle-eyes-right) { opacity: 0; }
+/* The four eyes take turns on one 7.3 s round: open, a blink, a glance left then right, open, a blink. */
+.bead-idle-eyes-open { animation: bead-eyes-open 7.3s step-end infinite; }
+.bead-idle-eyes-shut { animation: bead-eyes-shut 7.3s step-end infinite; }
+.bead-idle-eyes-left { animation: bead-eyes-left 7.3s step-end infinite; }
+.bead-idle-eyes-right { animation: bead-eyes-right 7.3s step-end infinite; }
+@keyframes bead-eyes-open { 0% { opacity: 1; } 30% { opacity: 0; } 32% { opacity: 1; } 55% { opacity: 0; } 70% { opacity: 1; } 90% { opacity: 0; } 92% { opacity: 1; } }
+@keyframes bead-eyes-shut { 0% { opacity: 0; } 30% { opacity: 1; } 32% { opacity: 0; } 90% { opacity: 1; } 92% { opacity: 0; } }
+@keyframes bead-eyes-left { 0% { opacity: 0; } 55% { opacity: 1; } 63% { opacity: 0; } }
+@keyframes bead-eyes-right { 0% { opacity: 0; } 63% { opacity: 1; } 70% { opacity: 0; } }
+@keyframes bead-idle-wag { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+@keyframes bead-idle-turns {
+  0%, 38%, 50%, 86%, 100% { transform: none; }
+  40% { transform: scale(1.06, 0.94); } 42% { transform: scale(0.95, 1.05); } 44% { transform: scale(1.04, 0.96); } 46% { transform: scale(0.98, 1.02); }
+  89% { transform: scale(1.1, 0.88); } 92% { transform: translateY(-3px) scale(0.92, 1.1); } 95% { transform: scale(1.08, 0.92); } 97% { transform: scale(0.97, 1.03); }
+}
+@media (prefers-reduced-motion: reduce) { .bead-idle * { animation: none !important; } }
+/* Bead's card, in the credits' place: its name and Back over a few lines on it, its funny turns in a short list. */
+.about-bead-card { width: 100%; margin: var(--space-1) 0; padding-top: var(--space-3); border-top: 1px solid var(--border); font-size: var(--text-lg); line-height: 1.4; text-align: left; }
+.about-bead-card p, .about-bead-card ul { margin: 0 0 var(--space-2); }
+.about-bead-card ul { padding-left: 1.2em; }
+.about-bead-card > :last-child { margin-bottom: 0; }
+.about-bead-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-2); }
+.about-bead-head h3 { margin: 0; font-size: var(--text-lg); font-weight: 600; }
 /* On both Oscillator tabs the Pulse Width knob sits to the right of the Waveform picker, so it stays put when
    switching tabs; each tab's pitch row is under its Waveform (the owner, issue 90). */
 .tab-panel .sub-block > .knobs { flex: 0 0 auto; }

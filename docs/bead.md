@@ -1,6 +1,6 @@
 # Bead's secrets
 
-Everything Bead, Limpide's water drop, can do. Bead lives on the page from a first visit, and the README and Display's tip say so ([150](./issues/150-bead-shown-by-default.md)); its tricks are left out of them on purpose, to stay a surprise ([115](./issues/115-an-easter-egg.md), decision 7), so this page is the one place they are all written down. How each thing is built is in [115](./issues/115-an-easter-egg.md), [127](./issues/127-more-tricks-for-bead.md) and [150](./issues/150-bead-shown-by-default.md).
+Everything Bead, Limpide's water drop, can do. Bead lives on the page from a first visit, and the README and Display's tip say so ([150](./issues/150-bead-shown-by-default.md)); its tricks are left out of them on purpose, to stay a surprise ([115](./issues/115-an-easter-egg.md), decision 7), so this page is the one place they are all written down. About shows a few: Bead stands beside its logo, and a click on it gives a card of its tricks that links here ([163](./issues/163-bead-in-about.md)). How each thing is built is in [115](./issues/115-an-easter-egg.md), [127](./issues/127-more-tricks-for-bead.md) and [150](./issues/150-bead-shown-by-default.md).
 
 Bead makes no sound and changes nothing you hear. Turning a control only changes how Bead looks or moves.
 
@@ -10,6 +10,7 @@ Bead makes no sound and changes nothing you hear. Turning a control only changes
 - **Play B, E, A, D**, as in a bead of water, within 4 seconds, in any octave: on the computer keyboard (J, D, H, S), the on-screen piano or a MIDI keyboard. It goes away for this visit: it leaps, smashes itself down into a splash, becomes a puddle, then a film that fades. Hovering or in the air, it drips away down the window instead.
 - **Play B, E, A, D again**, and it comes back. While it melts, the Notes do nothing. A reload goes back to what Display's switch says: on, Bead comes by itself again.
 - The Demo, the Song and Hold's rhythm never call it or send it away: only Notes you play yourself.
+- **In About**, while Display's switch is on, Bead stands beside the logo, twice its size on the page, blinking, glancing about and wagging its tail, now and then jiggling or hopping (still, with reduced motion). A click, Enter or a tap on it gives its card in place of the credits: who it is, what it answers, a few funny turns, how to send it away, and a link to this page. Back, Escape or Bead again return to the credits. With the switch off, About has no Bead ([163](./issues/163-bead-in-about.md)).
 - **Display has a Bead switch**, from the first visit, on by default: the lasting setting, remembered across visits. Off, Bead melts away and never appears again, by itself or by the Notes, which then do nothing, until the switch is turned on; on brings it back. The Notes never turn the switch.
 
 ## Where it lives

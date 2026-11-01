@@ -242,6 +242,37 @@ export function BeadIcon({ on }: { on: boolean }) {
 }
 
 /**
+ * Bead in About (issue 163), twice its size on the page, standing still on its feet: idle as on the page, it blinks,
+ * glances about, wags its tail, and now and then jiggles or hops. All in the stylesheet, so it costs no frame of the
+ * render loop, and with reduced motion it is still.
+ */
+export function BeadIdle() {
+  return (
+    <svg className="bead-idle" viewBox="0 0 22 13" width={WIDTH * 2} height={HEIGHT * 2} shapeRendering="crispEdges" aria-hidden="true">
+      <g className="bead-idle-body">
+        <g className="bead-idle-tail">
+          {(Object.keys(TAIL) as (keyof typeof TAIL)[]).map((stage) => (
+            <g key={stage} style={{ fill: `var(--stage-${stage})` }}>
+              {rects(TAIL[stage])}
+            </g>
+          ))}
+        </g>
+        <g className="mascot-body">
+          {rects(PARTS.form.drop)}
+          {rects(PARTS.legs.stand)}
+        </g>
+        <g className="mascot-shine">{rects(SHINE)}</g>
+        {(['open', 'shut', 'left', 'right'] as const).map((eyes) => (
+          <g key={eyes} className={`mascot-eyes bead-idle-eyes-${eyes}`}>
+            {rects(PARTS.eyes[eyes])}
+          </g>
+        ))}
+      </g>
+    </svg>
+  );
+}
+
+/**
  * The mascot (issue 115), out by default (issue 150) and called by B, E, A, D: a water drop trailing the Limpide logo. In
  * three and four across it lives on the top edge of the top right section; on a phone and in 2 × 2 it keeps in view as
  * the page scrolls, on the top edge of a section in the right column (over a phone's section tabs while an edge shows
