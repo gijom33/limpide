@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ChoiceId, ParamId } from '../patch/patch';
+import { type ChoiceId, PARAMS, type ParamId } from '../patch/patch';
+import { positionToValue, valueToPosition } from '../patch/taper';
 import { memoryStorage } from '../test/memoryStorage';
 import { createControlSurface, type LearnState } from './controlSurface';
 import { createMappingStore } from './mappings';
@@ -29,6 +30,14 @@ const hold = { kind: 'action', id: 'hold' } as const;
 /** What a synth stand-in leaves as it is: each control turns its own Parameter, and no tempo moves (issue 112). */
 const untouched = { turned: (id: ParamId) => id, tempoPosition: () => 0, setTempoPosition: () => {} };
 
+/** A stand-in's Parameter values, kept as positions: what a Grid's step sets (issue 160) read and written through them. */
+const valuesOf = (positions: Partial<Record<ParamId, number>>) => ({
+  value: (id: ParamId) => positionToValue(PARAMS[id], positions[id] ?? 0),
+  setValue: (id: ParamId, value: number) => void (positions[id] = valueToPosition(PARAMS[id], value)),
+});
+/** A Parameter's value in a stand-in's positions. */
+const valueAt = (positions: Partial<Record<ParamId, number>>, id: ParamId) => positionToValue(PARAMS[id], positions[id] ?? 0);
+
 /** A synth stand-in: Parameter positions (0–1), plus a record of Actions, played Notes and knob touches. */
 function rig(round = (p: number) => p) {
   const positions: Partial<Record<ParamId, number>> = { cutoff: 0.5, resonance: 0.2 };
@@ -40,6 +49,7 @@ function rig(round = (p: number) => p) {
   const store = createMappingStore(memoryStorage());
   const surface = createControlSurface({
     ...untouched,
+    ...valuesOf(positions),
     store,
     position: (id) => positions[id] ?? 0,
     setPosition: (id, p) => void (positions[id] = round(p)),
@@ -332,6 +342,27 @@ describe('Mapped controls', () => {
     expect(positions.cutoff).toBe(0.7);
   });
 
+  it('an Absolute knob’s CC 64 is exactly the centre of a control centred on zero, 0 and 127 its ends (issue 160)', () => {
+    const { store, positions, send } = rig();
+    positions.osc2Detune = 0.5;
+    store.set({ control: { kind: 'cc', channel: 1, number: 25 }, target: { kind: 'param', id: 'osc2Detune' }, mode: 'absolute' });
+    send(cc(25, 64));
+    expect(valueAt(positions, 'osc2Detune')).toBe(0);
+    send(cc(25, 32));
+    expect(valueAt(positions, 'osc2Detune')).toBe(-25); // 0 to 64 the lower half
+    send(cc(25, 0));
+    expect(valueAt(positions, 'osc2Detune')).toBe(-50);
+    send(cc(25, 127));
+    expect(valueAt(positions, 'osc2Detune')).toBe(50);
+    store.set({ control: { kind: 'cc', channel: 1, number: 26 }, target: { kind: 'param', id: 'filterEnvAmount' }, mode: 'absolute' });
+    positions.filterEnvAmount = 0.5;
+    send(cc(26, 64), cc(26, 64));
+    expect(valueAt(positions, 'filterEnvAmount')).toBe(0);
+    store.set(absoluteCutoff);
+    send(cc(20, 64)); // a control from 0 up: 64 of 127 as before
+    expect(positions.cutoff).toBeCloseTo(64 / 127, 9);
+  });
+
   it('a Relative encoder nudges the Parameter as far as it turned, in either direction, within 0–1 (a fast turn’s 3 is three steps, issue 145)', () => {
     const { store, positions, send } = rig();
     store.set({
@@ -339,10 +370,11 @@ describe('Mapped controls', () => {
       target: cutoff,
       mode: 'relative-twos',
     });
+    // A step of the Cutoff's Grid a click (issue 160): its semitones from 1 kHz, the first from 632 Hz (half way) 667 Hz.
     send(cc(21, 1), cc(21, 1), cc(21, 3)); // a fast turn packs three steps into one message: they all count
-    expect(positions.cutoff).toBeCloseTo(0.55);
+    expect(valueAt(positions, 'cutoff')).toBeCloseTo(840.9, 1);
     send(cc(21, 125));
-    expect(positions.cutoff).toBeCloseTo(0.52);
+    expect(valueAt(positions, 'cutoff')).toBeCloseTo(707.11, 2);
     store.set({
       control: { kind: 'cc', channel: 1, number: 22 },
       target: resonance,
@@ -429,6 +461,7 @@ describe('a keyboard’s own controls, while nothing is mapped to them (issue 52
     const store = createMappingStore(memoryStorage());
     const surface = createControlSurface({
       ...untouched,
+      ...valuesOf(positions),
       store,
       position: (id) => positions[id] ?? 0,
       setPosition: (id, p) => void (positions[id] = p),
@@ -505,6 +538,7 @@ describe('the C16 layout’s buttons and its own input (issue 145)', () => {
     const pedal: string[] = [];
     const surface = createControlSurface({
       ...untouched,
+      ...valuesOf(r.positions),
       store: r.store,
       position: (id) => r.positions[id] ?? 0,
       setPosition: (id, p) => void (r.positions[id] = p),
@@ -524,9 +558,9 @@ describe('the C16 layout’s buttons and its own input (issue 145)', () => {
     expect(r.positions.cutoff).toBe(0.5);
     expect(r.positions.lfoAmount).toBe(1); // the mod wheel
     surface.handle(cc(64, 127), true);
-    surface.handle(cc(1, 66), true);
+    surface.handle(cc(1, 65), true);
     expect(r.actions).toEqual(['nextPreset']);
-    expect(r.positions.cutoff).toBeGreaterThan(0.5); // a third of a step up
+    expect(r.positions.cutoff).toBeGreaterThan(0.5); // a step up
   });
 
   it('lets a Mapping learned from any Controller answer every Controller', () => {
@@ -548,6 +582,7 @@ describe('the Rate, a note value with Sync on, and the tempo (issue 112)', () =>
     const actions: string[] = [];
     const store = createMappingStore(memoryStorage());
     const surface = createControlSurface({
+      ...valuesOf(positions),
       store,
       position: (id) => positions[id] ?? 0,
       setPosition: (id, p) => void (positions[id] = id === 'lfoNote' ? Math.round(p * 23) / 23 : p),
@@ -591,12 +626,13 @@ describe('the Rate, a note value with Sync on, and the tempo (issue 112)', () =>
 });
 
 describe('the C16’s knobs: a 65 one step, a 66 a third of one (issue 145)', () => {
-  /** A C16 knob on the Cutoff, from 0. */
+  /** A C16 knob on the Resonance, from 0: a step is 1 % (issue 160). */
   const c16Knob = () => {
-    const positions: Partial<Record<ParamId, number>> = { cutoff: 0 };
+    const positions: Partial<Record<ParamId, number>> = { resonance: 0 };
     const store = createMappingStore(memoryStorage());
     const surface = createControlSurface({
       ...untouched,
+      ...valuesOf(positions),
       store,
       position: (id) => positions[id] ?? 0,
       setPosition: (id, p) => void (positions[id] = p),
@@ -606,7 +642,7 @@ describe('the C16’s knobs: a 65 one step, a 66 a third of one (issue 145)', ()
       press: () => {},
       release: () => {},
     });
-    store.set({ control: { kind: 'cc', channel: 1, number: 24 }, target: cutoff, mode: 'relative-centred', device: 'c16' });
+    store.set({ control: { kind: 'cc', channel: 1, number: 24 }, target: resonance, mode: 'relative-centred', device: 'c16' });
     const send = (value: number, times = 1) => {
       for (let i = 0; i < times; i++) surface.handle(cc(24, value), true);
     };
@@ -616,25 +652,27 @@ describe('the C16’s knobs: a 65 one step, a 66 a third of one (issue 145)', ()
   it('counts each 65 of a slow turn as a step of 1 %: one full turn, 46 messages (the owner’s log), is 46 %', () => {
     const { positions, send } = c16Knob();
     send(65, 46);
-    expect(positions.cutoff).toBeCloseTo(0.46);
+    expect(positions.resonance).toBe(0.46);
   });
 
-  it('counts a fast turn’s 66 as a third of a step, however its bursts arrive', () => {
+  it('counts a fast turn’s 66 as a third of a step, however its bursts arrive, moving by whole steps (issue 160)', () => {
     // Half a turn slow, then 11 bits fast as the owner's log sends them: 88 66s, bursts split and merged on the way.
     const { positions, send } = c16Knob();
     send(65, 23);
     send(66, 17);
     send(66, 7);
     send(66, 64);
-    expect(positions.cutoff).toBeCloseTo(0.23 + 0.88 / 3);
+    expect(positions.resonance).toBe(0.52); // 23 steps, and 29 of the 88 thirds' 29⅓
+    send(66, 2);
+    expect(positions.resonance).toBe(0.53);
   });
 
   it('turns back at once, and leaves other Controllers’ knobs as they send', () => {
     const { positions, send } = c16Knob();
     send(65, 10);
-    send(66, 8);
+    send(66, 8); // two steps, two thirds towards a third
     send(63);
-    expect(positions.cutoff).toBeCloseTo(0.09 + 0.08 / 3);
+    expect(positions.resonance).toBe(0.11); // the thirds forgotten, a step back
     const r = rig();
     r.store.set({ control: { kind: 'cc', channel: 1, number: 22 }, target: resonance, mode: 'relative-centred' });
     r.send(cc(22, 66), cc(22, 66));

@@ -36,7 +36,7 @@ test('MIDI Learn: pick a knob on screen, turn one on the Controller, and it driv
   await expect(midiButton(page)).toContainText('1'); // the Controller count is back
 
   await play(page, ...times(10, cc(74, 1)));
-  await expect(cutoff(page)).toHaveAttribute('aria-valuenow', String(before + 10));
+  await expect(cutoff(page)).toHaveAttribute('aria-valuetext', '3.56 kHz'); // ten semitones up from 2 kHz (issue 160)
   await expect(cutoff(page).locator('..')).toHaveAttribute('data-mapped', 'true');
 
   await openMidi(page);

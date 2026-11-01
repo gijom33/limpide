@@ -96,6 +96,8 @@ export function useMidi(host: Host) {
       setPosition: (id, position) => {
         patches.change((p) => setParam(p, id, positionToValue(PARAMS[id], position)), 'controller');
       },
+      value: (id) => patches.get().patch[id],
+      setValue: (id, value) => patches.change((p) => setParam(p, id, value), 'controller'),
       turned: (id) => knobTurns(patches.get().patch, id),
       tempoPosition: () => bpmPosition(session.tempo.get().bpm),
       setTempoPosition: (position) => session.tempo.set(positionBpm(position)),

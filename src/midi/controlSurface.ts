@@ -1,4 +1,5 @@
 import { BPM_STEP } from '../music/tempo';
+import { stepParamBy } from '../patch/grid';
 import { type ChoiceId, PARAMS, type ParamId } from '../patch/patch';
 import { detectEncoderMode, detectKnobMode, relativeDelta } from './encoderMode';
 import { type ActionId, type Control, controlKey, type Mapping, type MappingStore, sameControl, type Target } from './mappings';
@@ -8,14 +9,17 @@ import type { MidiMessage } from './parser';
 const LEARN_VALUES = 4;
 /** A shorter turn still completes, once the knob has been still this long. */
 const LEARN_SETTLE_MS = 500;
-/** A Relative step moves a Parameter this much of its travel, so a sweep takes a few turns of an encoder. */
+/**
+ * A stepped dial's least travel a Relative click (a Parameter with a Grid moves a step of it, issue 160), so a long
+ * list of steps still takes no more than a click each.
+ */
 const RELATIVE_STEP = 0.01;
 /** An Absolute knob landing this close to a Parameter's position picks it up: half a MIDI step either side. */
 const PICKUP_TOLERANCE = 0.5 / 127 + 1e-9;
 /** Encoder clicks per choice, so stepping through Waveforms is deliberate rather than jumpy. */
 const CLICKS_PER_CHOICE = 2;
 /**
- * A C16 knob's 66 (or 62) as a share of a step (issue 145): a bit of turning sends one 65 (or 63) turned slowly and,
+ * A C16 knob's 66 (or 62) as a share of a step of the Parameter's Grid (issues 145 and 160): a bit of turning sends one 65 (or 63) turned slowly and,
  * past a speed, a burst of eight 66s, which reach the page split and merged, so they are counted by message, not by
  * time. The C16 sends fewer bursts than bits when turned fast, so a 66 counts more than an eighth (the owner,
  * 2026-10-31).
@@ -45,6 +49,9 @@ interface Synth {
   /** A Parameter's control position (0–1), and setting it. */
   position(id: ParamId): number;
   setPosition(id: ParamId, position: number): void;
+  /** A Parameter's value, and setting it: a Relative knob steps it on its Grid (issue 160). */
+  value(id: ParamId): number;
+  setValue(id: ParamId, value: number): void;
   /** The Parameter a control mapped to `id` turns now: an LFO's Rate turns its note value while Sync is on (issue 112). */
   turned(id: ParamId): ParamId;
   /** The tempo's position (0–1, from the slowest BPM to the fastest), and setting it (issue 112). */
@@ -65,6 +72,19 @@ interface Synth {
   bend?(amount: number): void;
   pedal?(down: boolean): void;
   program?(number: number): void;
+}
+
+/** What a knob or a fader moves: a Parameter, or the tempo. */
+interface Dial {
+  /** Its position (0–1), and setting it. */
+  get(): number;
+  set(position: number): void;
+  /** Its travel per step, if it moves by whole steps (an Octave, a note value, a BPM), else 0. */
+  unit: number;
+  /** Moves it `steps` steps of its Grid, signed: a Parameter that has one (issue 160). */
+  step?(steps: number): void;
+  /** Whether its travel is centred on zero (Detune, the Filter's Amount), so CC 64 is its zero (issue 160). */
+  centred?: boolean;
 }
 
 /** Pickup per Absolute control: where its knob was, and the position it last gave the Parameter (if following). */
@@ -120,19 +140,26 @@ export function createControlSurface(synth: Synth) {
   };
 
   /**
-   * A knob or fader moving a dial (a Parameter, or the tempo): Relative by steps, Absolute with Pickup. A stepped dial
-   * (`unit`, its travel per step: an Octave, a note value, a BPM) gathers a Relative knob's steps until they make a
-   * whole one, a step for every two clicks at most, so a slow turn or a C16's thirds still move it.
+   * A knob or fader moving a dial (a Parameter, or the tempo): Relative by steps, Absolute with Pickup. A Parameter with
+   * a Grid moves a step of it a click (issue 160), a C16's thirds gathered into whole steps; a stepped dial (`unit`, its
+   * travel per step: an Octave, a note value, a BPM) gathers a Relative knob's steps until they make a whole one, a step
+   * for every two clicks at most, so a slow turn or a C16's thirds still move it.
    */
-  const moveDial = (mapping: Mapping, dial: { get(): number; set(position: number): void; unit: number }, value: number) => {
+  const moveDial = (mapping: Mapping, dial: Dial, value: number) => {
     const target = mapping.target;
     if (mapping.mode === 'trigger' || mapping.mode === 'toggle' || mapping.mode === 'detect') return;
     const current = dial.get();
     if (mapping.mode !== 'absolute') {
       const steps = relativeSteps(mapping, mapping.mode, value);
-      if (!dial.unit) dial.set(Math.min(1, Math.max(0, current + steps * RELATIVE_STEP)));
-      else {
-        const key = controlKey(mapping.control);
+      const key = controlKey(mapping.control);
+      if (dial.step) {
+        // A turn back forgets the thirds gathered the other way, so it answers at once.
+        const before = gathered.get(key) ?? 0;
+        const total = (Math.sign(before) === -Math.sign(steps) ? 0 : before) + steps;
+        const whole = Math.trunc(total + (total > 0 ? 1e-9 : -1e-9));
+        gathered.set(key, total - whole);
+        if (whole) dial.step(whole);
+      } else {
         const travel = (gathered.get(key) ?? 0) + steps * Math.max(RELATIVE_STEP, dial.unit / CLICKS_PER_CHOICE);
         const whole = Math.trunc(travel / dial.unit + (travel > 0 ? 1e-9 : -1e-9));
         gathered.set(key, travel - whole * dial.unit);
@@ -141,7 +168,9 @@ export function createControlSurface(synth: Synth) {
       synth.touched?.(target, 'moved');
       return;
     }
-    const knob = value / 127;
+    // A control centred on zero has its zero at CC 64 exactly, 0 to 64 its lower half and 64 to 127 its upper (issue
+    // 160); any other spreads the 128 values evenly.
+    const knob = dial.centred ? (value <= 64 ? value / 128 : 0.5 + (value - 64) / 126) : value / 127;
     const state = pickups.get(controlKey(mapping.control)) ?? {};
     // Changed elsewhere since this knob last set it: the knob has to catch the new value.
     if (state.following !== undefined && Math.abs(state.following - current) > 1e-9) state.following = undefined;
@@ -158,13 +187,20 @@ export function createControlSurface(synth: Synth) {
   };
 
   /** A Parameter as a dial: the one its control turns now. */
-  const paramDial = (id: ParamId) => {
+  const paramDial = (id: ParamId): Dial => {
     const turned = synth.turned(id);
-    const { step, min, max } = PARAMS[turned];
-    return { get: () => synth.position(turned), set: (p: number) => synth.setPosition(turned, p), unit: step ? step / (max - min) : 0 };
+    const def = PARAMS[turned];
+    const { step, min, max } = def;
+    return {
+      get: () => synth.position(turned),
+      set: (p: number) => synth.setPosition(turned, p),
+      unit: step ? step / (max - min) : 0,
+      step: step ? undefined : (steps) => synth.setValue(turned, stepParamBy(def, synth.value(turned), steps)),
+      centred: min === -max,
+    };
   };
   /** The tempo as a dial, a BPM a step (issue 112). */
-  const tempoDial = () => ({ get: synth.tempoPosition, set: synth.setTempoPosition, unit: BPM_STEP });
+  const tempoDial = (): Dial => ({ get: synth.tempoPosition, set: synth.setTempoPosition, unit: BPM_STEP });
 
   /** Whether a button's message is a press: its CC rising past the middle, not its release (a momentary one's 0). */
   const pressedNow = (mapping: Mapping, value: number) => {
