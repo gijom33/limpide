@@ -6,8 +6,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
-- 2026-11-01, the owner's idea, with a screenshot of About on a phone, Bead beside the logo: "Let's make Bead its real size and move it to the level of bottom of Limpide's logo."
-
 - 2026-11-01, the owner, on hearing the night's Talking Filter and Portamento (issues 166 and 119): "They sound good, I think. I do not like Talking filter but that's okay"
 - 2026-11-01, from the 1.20.0 code review, a bug older than 1.19 that issues 112 and 119 widen: a button learned on a Switch (LFO Sync, Legato, Retrigger) never switches it, since Learn reads its values as a knob's Encoder Mode (a momentary 127, 0 taken for Absolute, so on then off at once; a toggle's lone 127 for Relative, −1), and the Learn bar says "keep turning…"; issue 147's press-and-release rule covers only Actions.
 - 2026-11-01, from the 1.20.0 code review, issue 163 against issue 150's decision 2: About shows Bead whenever the switch is on, so a newcomer's welcome card carries it, which 150 kept clear ("not covered or upstaged"); and it shows after B, E, A, D sent Bead away for the visit (163's call 3), not marked as a reversal of 150.
@@ -190,3 +188,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-31, the owner's bug of a tip hiding LFO 2's Destination menu (triage): to [175](./issues/175-no-tip-over-an-open-menu.md), a bug, ready for an agent and queued tonight with the bugs: opening a menu closes the tip, and no tip shows while one is open, for every menu (Claude's call, open to the owner).
 2026-10-31, the owner's bug of a synced Rate's long readout (triage): to [176](./issues/176-a-synced-rate-shows-its-note-value-alone.md), a bug, ready for an agent and queued tonight with the bugs: the note value alone (decided by the owner, replacing 112's decision 10), at a fixed width (Claude's call, open to the owner).
 2026-11-01, Claude's findings on the night's inefficiencies (triage, the owner asking for the issue): to [177](./issues/177-a-leaner-night-shift.md), ready for an agent: the night in its own session, a quiet machine, tests by risk with one full suite at the end, small issues batched, layout decisions measured at triage, three flaky tests fixed, terser updates (Claude's call, open to the owner).
+2026-11-01, the owner's idea of Bead in About at its own size, level with the bottom of the logo's mark (triage, decided by the owner): to [178](./issues/178-bead-in-about-at-its-own-size.md), ready for an agent. A slip: the idea's inbox line went in with the fact-checker's report commit (`0e0adf2`), not alone, as two sessions committed at once; nothing to build.
