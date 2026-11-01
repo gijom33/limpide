@@ -22,8 +22,8 @@ describe('the hover readout box (issue 155)', () => {
     const widest = readoutBox([{ value: '23.99', unit: 'kHz' }, { value: 'F#10', unit: '+27¢' }, { value: '−100', unit: 'dB' }], columns, { cursor: 200, width: VIEWER });
     const narrowest = readoutBox([{ value: '1', unit: 'Hz' }, { value: 'A4', unit: '' }, { value: '−1', unit: 'dB' }], columns, { cursor: 200, width: VIEWER });
     expect(new Set(widest.texts.map((t) => t.y)).size).toBe(3);
-    const ends = (box: typeof widest) => box.texts.map(({ x, y, align }) => ({ x, y, align }));
-    expect(ends(narrowest)).toEqual(ends(widest));
+    const place = ({ x, y, width, height, texts }: typeof widest) => ({ x, y, width, height, ends: texts.map((t) => [t.x, t.y, t.align]) });
+    expect(place(narrowest)).toEqual(place(widest));
   });
 
   it('holds every value it can show inside the box', () => {
@@ -50,7 +50,7 @@ describe('the hover readout box (issue 155)', () => {
   });
 });
 
-describe('hoverReadoutLines', () => {
+describe('hoverReadoutLines (issue 155)', () => {
   it('splits each value from its unit: frequency, Note with its cents, level', () => {
     expect(hoverReadoutLines(3000, -41.6)).toEqual([
       { value: '3.00', unit: 'kHz' },

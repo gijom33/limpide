@@ -8,7 +8,7 @@ export interface ReadoutColumns {
 }
 
 /** Where a piece of the readout's text is drawn: `x` is its right end when right-aligned. */
-export interface ReadoutText {
+interface ReadoutText {
   text: string;
   x: number;
   y: number;
@@ -22,7 +22,8 @@ const UNITS = ['Hz', 'kHz', 'dB', '+dd¢', '−dd¢'];
 const DIGITS = [...'0123456789'];
 const LETTERS = [...'ABCDEFG'];
 
-// The box: 4 px either side of the text, a 10 px font's line every 11 px, below the Harmonic Markers' labels.
+// The box: 4 px either side of the text, a line every 11 px for the Spectrum's 10 px font, below the Harmonic Markers'
+// labels.
 const PAD = 4;
 const LINE = 11;
 const TOP = 20;
@@ -38,7 +39,7 @@ function widest(shape: string, measure: (text: string) => number) {
   return most;
 }
 
-/** The columns' widths, from the font `measure` measures with: measured once per font, so the box never resizes. */
+/** The columns' widths in the font `measure` measures with, whatever the values: worth measuring once per font. */
 export function readoutColumns(measure: (text: string) => number): ReadoutColumns {
   return {
     value: Math.max(...VALUES.map((shape) => widest(shape, measure))),

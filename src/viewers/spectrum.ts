@@ -107,7 +107,7 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
   let snapshotToken: number | null = null;
   let snapshotBins: Float32Array | null = null;
   // The hover readout's columns, measured once per font so its box keeps one size (issue 155).
-  let readoutColumnsOf: { font: string; columns: ReadoutColumns } | null = null;
+  let measuredColumns: { font: string; columns: ReadoutColumns } | null = null;
 
   return function draw() {
     const { overlays, viewer } = view();
@@ -286,8 +286,8 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
       const { frequency, levelDb } = interpolatedPeak(bins, binHz, fAxis.frequencyAt(col), fAxis.frequencyAt(col + 1));
       const level = Number.isFinite(levelDb) ? levelDb : peak[col];
       canvas.dataset.readout = hoverReadout(frequency, level);
-      if (readoutColumnsOf?.font !== g.font) readoutColumnsOf = { font: g.font, columns: readoutColumns((t) => g.measureText(t).width) };
-      const box = readoutBox(hoverReadoutLines(frequency, level), readoutColumnsOf.columns, { cursor: col, width });
+      if (measuredColumns?.font !== g.font) measuredColumns = { font: g.font, columns: readoutColumns((t) => g.measureText(t).width) };
+      const box = readoutBox(hoverReadoutLines(frequency, level), measuredColumns.columns, { cursor: col, width });
       g.fillStyle = cssVar(canvas, '--panel');
       g.fillRect(box.x, box.y, box.width, box.height);
       g.fillStyle = text;
