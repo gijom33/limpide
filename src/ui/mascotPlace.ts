@@ -17,6 +17,12 @@ export type Moving = 'standing' | 'hovering' | 'falling' | 'flying' | 'landing' 
 /** Hovering, how far under the header (or the section tabs) its top is, in pixels, at the bottom of its bob (issue 142). */
 export const HOVER_UNDER = 6;
 
+/**
+ * The longest step of its motion in one frame, in seconds: a frame later than that (a slow device, a tab coming back)
+ * moves it no farther, so in a window drawing fewer than 20 frames a second it moves slower than the clock.
+ */
+export const LONGEST_STEP = 0.05;
+
 /** Where along a line it may stand: its box's left, in the window's pixels. */
 export interface Span {
   min: number;
@@ -224,7 +230,7 @@ export function createMascotPlace({ from, random = Math.random }: { from?: numbe
     },
     /** This frame, on `perch` (whose span is `span`), at `at` across the window when on its line. */
     frame(perch: Perch, span: Span, now: number, reduced: boolean, at: number): Placed {
-      const dt = last === null ? 0 : Math.min(0.05, now - last);
+      const dt = last === null ? 0 : Math.min(LONGEST_STEP, now - last);
       last = now;
       const settled: Moving = perch.hovering ? 'hovering' : 'standing';
       if (moving === 'held') {
