@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** needs-triage · enhancement. First a `/research` pass gathering the facts and their sources; then a grilling with the owner on which tips get a line and how it reads.
+**Status:** needs-triage · enhancement. The `/research` pass is done (2026-10-31, [the findings](../research/134-history-in-the-tooltips.md): 31 controls, 29 draft lines, every fact graded by its source); next, a grilling with the owner on which tips get a line and how it reads, starting from the ten questions at the findings' end.
 
 ## Decided already (the owner, 2026-10-31)
 
