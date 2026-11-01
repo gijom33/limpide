@@ -6,6 +6,8 @@
 
 **Status:** done. Five fixed at once (2026-10-27); the rest decided by the owner and built (Decisions below)
 
+**Since then:** (2026-10-31, [issue 158](./158-tour-and-tutorial-slips.md)) decision 5: a Display option already on when its Step comes is turned off, so the Step waits for the person to turn it on; only a control already exactly on its target shows as done.
+
 Fixed at once:
 
 - [x] An overshooting drag ticked the Step (Cutoff dragged past 280 Hz down to 32 Hz): a Step now counts once its control rests within reach for 0.4 s, and a drag through the target does not (test in `e2e/tutorial.spec.ts`)

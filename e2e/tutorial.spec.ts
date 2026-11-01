@@ -427,7 +427,17 @@ test.describe('a Snapshot a Tutorial took (issue 158)', () => {
     expect(await snapshotShown(page)).toBe('false');
   });
 
-  test('one the person took themselves stays', async ({ page }) => {
+  test('one the person took themselves stays, even after clearing the Tutorial’s', async ({ page }) => {
+    await open(page, 'Acid');
+    await toAcidSnapshot(page);
+    // Cleared, then one of their own: numbered as the Tutorial's was, it is still theirs.
+    await page.getByRole('button', { name: 'Display' }).click();
+    await page.getByRole('button', { name: 'Clear Snapshot' }).click();
+    await page.getByRole('button', { name: 'Snapshot', exact: true }).click();
+    await page.keyboard.press('Escape');
+    await card(page).getByRole('button', { name: 'Quit the tutorial' }).click();
+    expect(await snapshotShown(page)).toBe('true');
+
     await page.goto('/');
     await page.getByRole('button', { name: 'Display' }).click();
     await page.getByRole('button', { name: 'Snapshot', exact: true }).click();
