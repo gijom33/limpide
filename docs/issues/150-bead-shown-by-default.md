@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement. Built (2026-10-31) on night/2026-10-31; the owner's correction of decision 3 (decision 7) to build on it the same night.
+**Status:** ready-for-human · enhancement. Built (2026-10-31) on night/2026-10-31, for the owner to try
 
 ## Decisions
 
@@ -29,7 +29,7 @@ Decided by the owner, 2026-10-31 (evening), on trying the night's build: "Making
 
 **Current behavior:** Bead appears only once B, E, A, D is played by hand. Its Display switch is shown only once it has been met, and its stored setting starts at "unmet". The tips and the README leave it out on purpose.
 
-**Desired behavior:** A visitor whose stored Bead setting is "unmet" or "on" sees Bead come in by itself a few seconds after the page is ready, or after the welcome card closes when it is up. "Off" keeps it away. Display's Bead switch shows from the first visit, its tip naming Bead and how to send it away. B, E, A, D still sends it away or calls it, and the switch follows. The README gains one line about Bead; bead.md stops calling it hidden.
+**Desired behavior:** A visitor whose stored Bead setting is "unmet" or "on" sees Bead come in by itself a few seconds after the page is ready, or after the welcome card closes when it is up. "Off" keeps it away. Display's Bead switch shows from the first visit, its tip naming Bead and how to send it away. B, E, A, D still sends it away or calls it, for the visit only, the switch untouched; with the switch off, the Notes do nothing (decisions 7 to 9). The README gains one line about Bead; bead.md stops calling it hidden.
 
 **Key interfaces:**
 - The Display settings module's Bead setting ("unmet", "on", "off") and what reads it
@@ -42,7 +42,7 @@ Decided by the owner, 2026-10-31 (evening), on trying the night's build: "Making
 - [x] A first visit (nothing stored): Bead comes in by itself once the welcome card is closed
 - [x] A visitor with Bead switched off: no Bead after a reload; one with it on: Bead as now
 - [x] Display's Bead switch and its tip show on a first visit
-- [x] B, E, A, D sends Bead away and calls it back, the switch following
+- [x] B, E, A, D sends Bead away and calls it back for the visit, the switch untouched; switched off, the Notes do nothing (decisions 7 to 9)
 - [x] The other end-to-end specs pass unchanged, Bead kept out of their way; the mascot spec covers the default
 - [x] Bead's frame-cost test passes as before
 - [x] The README's line and bead.md's opening say so
@@ -55,19 +55,19 @@ Decided by the owner, 2026-10-31 (evening), on trying the night's build: "Making
 ## How it was built (2026-10-31, on night/2026-10-31)
 
 **What was built:**
-- **Bead's rules** (`src/ui/beadPresence.ts`): one pure function, `beadAfter`, takes Bead (where it is: away, up or leaving; its switch; whether its own entrance is still to come) and an event (the Notes, the switch turned on or off, its entrance, its melting done). The Notes call it when it is away and send it away when it is up, turning the switch to match; while it melts they do nothing. Its entrance brings it up only if it is on and neither the Notes nor the switch have had their say yet.
+- **Bead's rules** (`src/ui/beadPresence.ts`): one pure function, `beadAfter`, takes Bead (where it is: away, up or leaving; its switch; whether its own entrance is still to come) and an event (the Notes, the switch turned on or off, its entrance, its melting done). The Notes call it when it is away and send it away when it is up, turning the switch to match; while it melts they do nothing. (Since decisions 7 to 9: the switch untouched, and nothing while it is off.) Its entrance brings it up only if it is on and neither the Notes nor the switch have had their say yet.
 - **The app:** Bead's entrance comes 3 s after the page opens. While About is open (the welcome among it) it waits, and its 3 s start again once About closes. The switch is remembered in `limpide.bead`, now on or off and on by default; a stored "unmet" from before reads as on. Display's Bead switch shows from the first visit, with a tip in `src/ui/tips.ts`.
 - **The words:** a "Meet Bead" line in the README; bead.md's opening and its "Calling it, and sending it away"; CONTEXT.md's Mascot; dated lines in 115 (decisions 6 and 7, and its build notes), 127 and 87.
 - **The end-to-end start state** (`e2e/startState.ts`): one place says what every spec's browser holds. The config starts every spec welcomed with Bead off. The first-visit specs (welcome, Tour, keyboard access) start with Bead off only. The specs that empty storage (Patches, LIMITING, the stand-in Controller) go through one helper that keeps Bead off. The mascot spec calls Bead with the Notes as before, and adds tests for the default: a first visit (the welcome waits, then Bead comes, and the switch and its tip show), "on" bringing it by itself again after a reload, "off" keeping it away, and the Notes turning the switch both ways.
 - **Tests:** unit, `beadPresence.test.ts` (6), the Display setting's default and the old "unmet" (`displaySettings.test.ts`), and Bead's tip (`tips.test.ts`).
 
 **Claude's calls, open to the owner:**
-1. **The Notes work whatever the switch says.** B, E, A, D sends Bead away and turns the switch off; played again, it calls Bead back and turns the switch on, even after Bead was switched off in Display. This is the only reading that fits "sends Bead away and calls it back, the switch following". It drops 115's rule that a switched-off Bead could not be called by the Notes, which was there for anyone who would hate it. Someone who switched it off could now bring it back by playing B, E, A, D in a tune, within 4 s.
+1. (Replaced by decisions 7 to 9, the owner's: the Notes are for the visit only, and do nothing while the switch is off.) **The Notes work whatever the switch says.** B, E, A, D sends Bead away and turns the switch off; played again, it calls Bead back and turns the switch on, even after Bead was switched off in Display. This is the only reading that fits "sends Bead away and calls it back, the switch following". It drops 115's rule that a switched-off Bead could not be called by the Notes, which was there for anyone who would hate it. Someone who switched it off could now bring it back by playing B, E, A, D in a tune, within 4 s.
 2. **3 seconds** after the page opens, or after About closes. It also waits whenever About is open, not only for the welcome.
 3. **The Tour and the Demo do not hold it back.** A newcomer who leaves the welcome by "Take the Tour" or "Play the Demo" sees Bead come 3 s later, while the Tour's first card or the Demo is on.
 4. **Once a visit.** If the Notes or the switch have had their say before it comes, it does not come by itself that visit.
 5. **Switched back on while it melts,** it comes back up once melted (before, it ended away with the switch on).
-6. **The tip:** "Bead is the little water drop living on the page, answering what you play and turn. Off sends it away, and so does playing B, E, A, D; the same Notes call it back. Your choice is remembered." The README: "A little water drop called Bead lives on the page and answers what you play. Switch it off in Display, or play `B, E, A, D` to send it away."
+6. (The tip and the README line since reworded for decisions 7 to 9, below.) **The tip:** "Bead is the little water drop living on the page, answering what you play and turn. Off sends it away, and so does playing B, E, A, D; the same Notes call it back. Your choice is remembered." The README: "A little water drop called Bead lives on the page and answers what you play. Switch it off in Display, or play `B, E, A, D` to send it away."
 
 **Tests run:**
 - `npx tsc` and `npm run lint`.
@@ -80,8 +80,17 @@ Decided by the owner, 2026-10-31 (evening), on trying the night's build: "Making
 
 **Not verified here:** "every test passes in Linux's fonts too" (GitHub's run of the branch will say). The app was not opened by hand on port 5174.
 
-**To try in the app:**
+**To try in the app:** (the first try; for decisions 7 to 9, see below)
 - In a private window (nothing stored): the welcome opens, and Bead does not come while it is up. Close it, and Bead comes about 3 s later. Open Display: its Bead switch is on, and its tip says who Bead is.
-- Play B, E, A, D (J, D, H, S): Bead leaves, and Display's switch reads Off. Reload: no Bead. Play it again: Bead comes, the switch reads On, and after a reload Bead comes by itself again.
+- (No longer so since decisions 7 to 9.) Play B, E, A, D (J, D, H, S): Bead leaves, and Display's switch reads Off. Reload: no Bead. Play it again: Bead comes, the switch reads On, and after a reload Bead comes by itself again.
 - Switch it off in Display and reload: no Bead.
 
+**The owner's correction, decisions 7 to 9 (built 2026-10-31, on night/2026-10-31):**
+- **What changed:** Display's Bead switch is the only lasting setting. `beadAfter` no longer lets the Notes turn it: with it on, B, E, A, D sends Bead away or calls it back for this visit, and the rules remember that the Notes sent it away, so it does not come back up once melted nor come by itself again that visit; with it off, the Notes do nothing, and nothing brings Bead until the switch is turned on. What is stored is only ever the switch, so a reload goes back to it.
+- **The words:** Bead's tip ("Off keeps it away, remembered, until you switch it on again. While it is on, playing B, E, A, D sends it away for this visit, and the same Notes call it back."), the README line ("Switch it off in Display to keep it away, or play `B, E, A, D` to send it away for the visit."), bead.md's "Calling it, and sending it away", CONTEXT.md's Bead, and 115's build note.
+- **The tests:** unit, `beadPresence.test.ts` (7: decisions 8 and 9 each a test) and Bead's tip. The mascot spec brings Bead with Display's switch, since the Notes do nothing while it is off, and has two new tests: switched on, the Notes send it away with the switch still on, it does not come by itself, a reload brings it, the Notes send it away and bring it back; switched off, the Notes do nothing, nor a reload, until the switch brings it and takes it away again.
+- **Tests run:** `npx tsc` and `npm run lint`. The whole Vitest suite: 1249 of 1250 on the second run, the one failure the edge Patches' timeout (issue 116, not touched here; it passed alone), while the machine was heavily loaded; the first run had 4 failures in 3 files under the same load. The mascot spec in Chromium and WebKit: 41 passed (the frame cost is Chromium only), after one fix: in the short phone window Display's switch was out of reach, so that test brings Bead before the window shrinks. Its issue 150 tests again after the review's fixes, both browsers: 10 passed.
+- **The review** (standards and spec, since `88389f6`): no path lets Bead appear while the switch is off. Fixed: a test's name now cites decision 8, a comment wrapped, and this file brought up to date.
+- **To try in the app:**
+  - With Bead on in Display, reload: Bead comes by itself. Play B, E, A, D (J, D, H, S): it leaves; Display still reads On; it does not come back by itself. Play it again: it comes back. Send it away and reload: it comes by itself again.
+  - Switch it off in Display: it melts away. Play B, E, A, D: nothing. Reload, wait, play it again: nothing. Switch it on: it comes.
