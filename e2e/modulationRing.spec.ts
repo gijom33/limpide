@@ -202,7 +202,18 @@ test('Velocity alone, no Envelope: its grey ring starts at the knob and stays wh
   const cutoff = knob(page, 'Filter', 'Cutoff');
   await expect(envelopeRing(cutoff)).toBeHidden();
   await expect(velocityRing(cutoff)).toBeVisible();
-  const reach = await velocityRing(cutoff).getAttribute('d');
+  // The ring once the render loop has drawn the last knob turn: a slow runner drew Velocity's last steps only after a
+  // first read (the 1.20.0 release run, WebKit), as with Key Track's rings below.
+  let reach = await velocityRing(cutoff).getAttribute('d');
+  await expect
+    .poll(async () => {
+      await page.waitForTimeout(100);
+      const now = await velocityRing(cutoff).getAttribute('d');
+      const still = now === reach;
+      reach = now;
+      return still;
+    })
+    .toBe(true);
   await page.keyboard.down('KeyA');
   await expect(dot(cutoff)).toBeVisible();
   await expect(velocityRing(cutoff)).toBeVisible();
