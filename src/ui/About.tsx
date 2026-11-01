@@ -45,6 +45,8 @@ export function About({
   const title = useId();
   const beadTitle = useId();
   const beadButton = useRef<HTMLButtonElement>(null);
+  // The way in, where the focus lands as About opens (showModal would take the first control, now Bead's button).
+  const demoButton = useRef<HTMLButtonElement>(null);
   // Bead's card in place of the credits (issue 163); About opens on the credits every time.
   const [showsCard, setShowsCard] = useState(false);
   // What scrolls in the credits' place: the credits, or Bead's card.
@@ -57,7 +59,10 @@ export function About({
 
   useEffect(() => {
     const d = dialog.current!;
-    if (open && !d.open) d.showModal();
+    if (open && !d.open) {
+      d.showModal();
+      demoButton.current?.focus();
+    }
     else if (!open && d.open) d.close();
     if (!open) setShowsCard(false);
   }, [open]);
@@ -214,10 +219,8 @@ export function About({
         <div className="about-actions">
           <button
             type="button"
+            ref={demoButton}
             className="tool about-demo"
-            // The way in: the dialog's first focus, not the build link above (biome: a dialog's opening focus).
-            // biome-ignore lint/a11y/noAutofocus: a modal dialog moves the focus into itself; this is where it lands
-            autoFocus
             onClick={() => {
               onClose();
               onPlay?.();

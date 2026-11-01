@@ -153,6 +153,13 @@ test.describe('Bead in About (issue 163)', () => {
       await expect(bead(page)).toBeFocused();
     });
 
+    test('opened, About puts the focus on its way in, the Demo, not on Bead, so no ring shows round Bead (Safari)', async ({ page }) => {
+      await page.goto('/');
+      await page.getByRole('button', { name: 'About', exact: true }).click();
+      await expect(about(page).getByRole('button', { name: 'Play the Demo' })).toBeFocused();
+      expect(await bead(page).evaluate((b) => b.matches(':focus-visible'))).toBe(false);
+    });
+
     test('from the keyboard: Enter shows the card, Escape returns to the credits, a second Escape closes About', async ({ page }) => {
       await page.goto('/');
       await page.getByRole('button', { name: 'About', exact: true }).click();
