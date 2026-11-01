@@ -54,6 +54,13 @@ it('the Filter toggle’s tip names it Filter and says it draws the Response Cur
   expect(body).toMatch(/^The Response Curve: the Filter’s gain at every frequency/);
 });
 
+it('the Sync tip puts the cycle on the beat only with Retrigger off: on, each Note starts it (issue 112)', () => {
+  const { body } = TIPS.lfoSync;
+  expect(body).toMatch(/note value at the tempo/);
+  expect(body).toMatch(/with Retrigger off, the LFO’s cycle lands on the beat/);
+  expect(body).toMatch(/with it on, each Note starts the cycle/);
+});
+
 it('a synced Rate’s tip gives its Hz at the tempo, which its readout leaves out (issue 176)', () => {
   const tip = syncedRateTip('1/4', '2 Hz', 120);
   expect(tip.title).toBe('Rate');

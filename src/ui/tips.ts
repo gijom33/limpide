@@ -316,7 +316,7 @@ export const TIPS = {
   },
   lfoRate: { title: 'Rate', body: 'How fast the LFO repeats, in cycles a second (Hz): 0.05 Hz is one slow sweep every 20 seconds, 20 Hz a fast flutter.' },
   lfoNote: { title: 'Rate', body: 'With Sync on, how often the LFO repeats, as a note value at the tempo: 1 bar, 1/4, 1/8 (D dotted, T triplet).' },
-  lfoSync: { title: 'Sync', body: 'On: the Rate is a note value at the tempo, and the LFO’s cycle lands on the beat. Off: the Rate is in Hz, as it was.' },
+  lfoSync: { title: 'Sync', body: 'On: the Rate is a note value at the tempo; with Retrigger off, the LFO’s cycle lands on the beat, and with it on, each Note starts the cycle. Off: the Rate is in Hz, as it was.' },
   tempo: { title: 'Tempo', body: 'The page’s beats per minute, which an LFO with Sync on follows. Drag it or use the arrows; double-click to type it.' },
   tap: { title: 'Tap', body: 'Tap it in time: from the second tap the tempo follows your last four, its beat where you last tapped.' },
   lfoDepth: {
