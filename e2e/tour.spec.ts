@@ -197,10 +197,94 @@ for (const [layout, width, height] of [['phone', 375, 812], ['short phone', 393,
     await page.setViewportSize({ width, height });
     await page.goto('/');
     await startFromAbout(page);
-    const viewers = [['Oscillator Scope', 'Oscillator Spectrum'], ['Filter Scope', 'Filter Spectrum'], ['Amp Scope', 'Amp Spectrum'], ['Envelope Timeline']];
+    // The Amp card's Timeline with its Viewers (issue 130); on a phone, far below them, the Timeline alone.
+    const amp = width < 600 ? ['Envelope Timeline'] : ['Envelope Timeline', 'Amp Scope', 'Amp Spectrum'];
+    const viewers = [['Oscillator Scope', 'Oscillator Spectrum'], ['Filter Scope', 'Filter Spectrum'], amp, ['Envelope Timeline']];
     for (const [i, names] of viewers.entries()) {
       for (const viewer of names) await expect.poll(() => standing(page, viewer), viewer).toBe('clear');
       if (i < viewers.length - 1) await action(page, 'Next').click();
     }
   });
 }
+
+// Issue 130: the Amp card turns the four stages of the Amp Envelope, one per Note, and freezes the Viewers once each
+// Note has faded, naming the stage on the frozen picture. The person's own Freeze makes Freeze theirs for that card.
+
+/** Every Viewer frozen: the Display state the Space bar and Display's Freeze set. */
+const frozen = (page: Page) => page.locator('main[data-frozen]');
+/** What the card names on the frozen picture. */
+const naming = (page: Page) => card(page).locator('.tour-frozen [data-shown]');
+
+async function toAmpCard(page: Page) {
+  await page.goto('/');
+  await startFromAbout(page);
+  await action(page, 'Next').click();
+  await action(page, 'Next').click();
+  await expect(card(page)).toContainText('The Amp takes the Filter’s sound');
+}
+
+/** Space for Freeze, as the person presses it: with the focus off the card's buttons, which Space would press. */
+async function pressSpace(page: Page) {
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+  await page.keyboard.press('Space');
+}
+
+/** Whether every Viewer was ever frozen, read again and again over `ms`. */
+async function everFrozen(page: Page, ms: number) {
+  return [...(await valuesOver(async () => String(await frozen(page).count()), ms))].includes('1');
+}
+
+test('the Amp card changes the Attack before its Note, freezes the Viewers once it has faded and names it, then runs again (issue 130)', async ({ page }) => {
+  test.setTimeout(60000);
+  await toAmpCard(page);
+  const attack = slider(page, 'Amp Attack');
+  await expect(attack).toHaveAttribute('aria-valuetext', '600 ms', { timeout: 3000 }); // set before the Note
+  await playing(page);
+  await expect(frozen(page)).toHaveCount(0);
+  await expect(frozen(page)).toHaveCount(1, { timeout: 5000 });
+  await expect(naming(page)).toHaveText('Frozen: up: Attack');
+  await expect(attack).toHaveAttribute('aria-valuetext', '600 ms'); // still the Note's, through the freeze
+  await expect(frozen(page)).toHaveCount(0, { timeout: 4000 }); // about three seconds
+  await expect(naming(page)).not.toContainText('Frozen');
+  await expect(slider(page, 'Amp Decay')).toHaveAttribute('aria-valuetext', '1.00 s', { timeout: 3000 }); // the next stage
+  await expect(attack).toHaveAttribute('aria-valuetext', '10.0 ms'); // the last given back
+  await playing(page); // the sound plays on
+  await expect(frozen(page)).toHaveCount(1, { timeout: 6000 });
+  await expect(naming(page)).toHaveText('Frozen: down to a level: Decay');
+});
+
+test('the person’s own Freeze on the Amp card is theirs: the Tour freezes no more on that card (issue 130)', async ({ page }) => {
+  test.setTimeout(60000);
+  await toAmpCard(page);
+  await expect(frozen(page)).toHaveCount(1, { timeout: 8000 }); // the Tour's
+  await pressSpace(page);
+  await expect(frozen(page)).toHaveCount(0); // Space unfreezes as always
+  await expect(naming(page)).not.toContainText('Frozen');
+  expect(await everFrozen(page, 9000)).toBe(false); // past the next Note's fade
+  await pressSpace(page);
+  await expect(frozen(page)).toHaveCount(1);
+  await page.waitForTimeout(4000); // past where the Tour would let go of its own
+  await expect(frozen(page)).toHaveCount(1);
+});
+
+test('leaving the Amp card lets go of the Tour’s Freeze, and leaves the person’s as it is (issue 130)', async ({ page }) => {
+  test.setTimeout(60000);
+  await toAmpCard(page);
+  await expect(frozen(page)).toHaveCount(1, { timeout: 8000 });
+  await action(page, 'Next').click();
+  await expect(frozen(page)).toHaveCount(0);
+
+  await action(page, 'Back').click();
+  await expect(frozen(page)).toHaveCount(1, { timeout: 8000 });
+  await card(page).getByRole('button', { name: 'Close the Tour' }).click();
+  await expect(card(page)).toBeHidden();
+  await expect(frozen(page)).toHaveCount(0);
+
+  await startFromAbout(page);
+  await action(page, 'Next').click();
+  await action(page, 'Next').click();
+  await pressSpace(page);
+  await expect(frozen(page)).toHaveCount(1);
+  await action(page, 'Back').click();
+  await expect(frozen(page)).toHaveCount(1);
+});

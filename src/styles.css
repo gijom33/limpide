@@ -1485,6 +1485,12 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   background: var(--accent); color: #08090c; font-weight: 700; line-height: 1;
 }
 .tutorial-say[data-done] { align-items: flex-start; }
+/* The Tour's line on the frozen picture (issue 130): every line it can say in one place, only the one said now shown,
+   so the card keeps the height of the longest and never jumps as the picture freezes and runs. */
+.tour-frozen { display: grid; margin: 0; font-size: var(--card-small); line-height: 1.45; }
+.tour-frozen > span { grid-area: 1 / 1; visibility: hidden; color: var(--muted); }
+.tour-frozen > span[data-shown] { visibility: visible; }
+.tour-frozen > span[data-shown]:has(strong) { color: var(--text); }
 .tutorial-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
 .tutorial-actions .tool { min-height: 36px; padding: 0 var(--space-3); gap: 6px; }
 .tutorial-actions .tool[aria-disabled='true'] { opacity: 0.45; cursor: default; }

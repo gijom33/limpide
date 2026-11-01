@@ -10,6 +10,8 @@ interface Props {
   index: number;
   /** The control the synth is turning now. */
   moving: TourMove['id'] | null;
+  /** What the card names while the synth has the Viewers frozen, or null (issue 130). */
+  naming: string | null;
   onBack(): void;
   onNext(): void;
   /** The last card's way on: the first Tutorial, Bass. */
@@ -89,12 +91,36 @@ function useRing(card: Card, moving: TourMove['id'] | null) {
 }
 
 /**
+ * On a card where the synth freezes the Viewers (issue 130), a line under its words, shown however the card is folded on
+ * a phone: what the picture shows while it is frozen, the stage changed or all four; a word on what is coming while it
+ * runs. Every line it can say takes the same place, so the card keeps one height, and a screen reader hears the names.
+ */
+function FrozenLine({ freezes, naming }: { freezes: NonNullable<Card['freezes']>; naming: string | null }) {
+  const lines = [null, ...freezes.map((f) => f.names)];
+  return (
+    <p className="tour-frozen" aria-live="polite">
+      {lines.map((names, i) => (
+        <span key={names ?? ''} data-shown={names === naming || undefined} aria-hidden={names === null || names !== naming || undefined}>
+          {names === null ? (
+            'The picture freezes once each Note has faded.'
+          ) : (
+            <>
+              <strong>{i === lines.length - 1 ? 'Frozen, left to right:' : 'Frozen:'}</strong> {names}
+            </>
+          )}
+        </span>
+      ))}
+    </p>
+  );
+}
+
+/**
  * The Tour's card (issue 128), docked where a Tutorial's card docks: one Section of the page in the signal's order,
  * where the signal comes from and goes, what the Section does and what its Viewers show, while the synth turns its
  * controls. Back and Next move between the cards; the last offers the Bass Tutorial. It takes the focus on its Next when
  * the Tour starts; turning the controls never takes it.
  */
-export function TourCard({ index, moving, onBack, onNext, onBass, onClose }: Props) {
+export function TourCard({ index, moving, naming, onBack, onNext, onBass, onClose }: Props) {
   const tour = TOUR[index];
   const last = index === TOUR.length - 1;
   const card = useRef<HTMLElement>(null);
@@ -139,6 +165,7 @@ export function TourCard({ index, moving, onBack, onNext, onBass, onClose }: Pro
         <p className="tutorial-then">{tour.sees}</p>
         {last && <p className="tutorial-then">That is the whole chain. Now build a sound yourself: the Bass Tutorial goes through it one control at a time.</p>}
       </div>
+      {tour.freezes && <FrozenLine freezes={tour.freezes} naming={naming} />}
       <div className="tutorial-actions">
         <span className="tutorial-spacer" />
         {index > 0 && (

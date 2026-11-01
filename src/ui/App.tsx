@@ -229,6 +229,7 @@ export function App() {
   // The Tour (issue 128): from the Welcome and the About, on a Patch of its own, the person's given back at its end.
   const tour = useTourState({
     patches,
+    viewers: viewerStore,
     onStart: () => {
       tutorial.end();
       players.stopAll();
@@ -804,6 +805,7 @@ export function App() {
           <TourCard
             index={tour.index}
             moving={tour.moving}
+            naming={tour.naming}
             onBack={() => tour.move(-1)}
             onNext={() => tour.move(1)}
             onBass={() => {

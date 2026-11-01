@@ -6,11 +6,11 @@ import type { ViewerName } from './tutorial';
 
 /**
  * A control the synth turns by itself on a Tour card: a knob or fader along `path`, evenly along its travel, `seconds`
- * for each leg; or the Waveform through `path`, each held `seconds`. Each starts on the Tour's Patch's value, and a
- * knob's path ends there too, so the next move, or the next pass, takes over without a jump.
+ * for each leg (or a length for each, in turn); or the Waveform through `path`, each held `seconds`. Each starts on the
+ * Tour's Patch's value, and a knob's path ends there too, so the next move, or the next pass, takes over without a jump.
  */
 export type TourMove =
-  | { kind: 'param'; id: ParamId; path: number[]; seconds: number }
+  | { kind: 'param'; id: ParamId; path: number[]; seconds: number | number[] }
   | { kind: 'choice'; id: 'waveform'; path: Waveform[]; seconds: number };
 
 /** One Section of the page, in the signal's order, said in three parts while the synth turns its controls (issue 128). */
@@ -22,7 +22,7 @@ export interface TourCard {
   does: string;
   /** What its Viewers show at that point in the chain. */
   sees: string;
-  /** The Viewers the card points at, by their accessible names. */
+  /** The Viewers the card points at, by their accessible names, the first brought into view first where not all fit. */
   viewers: ViewerName[];
   /** A control the card speaks of besides those it turns, brought into view with them where there is room. */
   watch?: ParamId;
@@ -31,10 +31,32 @@ export interface TourCard {
   bpm: number;
   /** Turned one after the other, then again from the first. */
   moves: TourMove[];
+  /**
+   * When the synth freezes the Viewers, in seconds from the start of a pass of the moves, and what the card names on
+   * the frozen picture meanwhile (issue 130).
+   */
+  freezes?: { at: number; seconds: number; names: string }[];
 }
 
 /** The Tour's own sound: Init, a saw through an open low-pass Filter (issue 128, decision 6). */
 export const TOUR_PATCH = PRESETS[0];
+
+/**
+ * One pass of the Amp card (issue 130, decisions 2 and 3), in seconds: the synth turns one stage of the Amp Envelope
+ * over the first second; its Note goes down half a second later, carrying the change, and has faded by `freeze`, when
+ * the Viewers freeze for `frozen`; then the stage goes back, by `length`. Each Note fits, onset to fade, in the 2 s the
+ * Envelope Timeline shows by default.
+ */
+const PASS = { turn: 1, freeze: 3.2, frozen: 3, length: 7 };
+
+/** What the Amp card names on each frozen pass: the stage just changed, then all four, left to right (decision 3). */
+const STAGE_NAMES = ['up: Attack', 'down to a level: Decay', 'held: Sustain', 'let go: Release'];
+
+/** One stage of the Amp Envelope taken to `to` for one pass, then given back. */
+const stagePass = (id: ParamId, to: number): TourMove => {
+  const from = TOUR_PATCH.patch[id] as number;
+  return { kind: 'param', id, path: [from, to, to, from], seconds: [PASS.turn, PASS.freeze + PASS.frozen - PASS.turn, PASS.length - PASS.freeze - PASS.frozen] };
+};
 
 /** The four cards: the Oscillators with the Mixer, the Filter, the Amp, the LFOs (issue 128, decisions 3 and 4). */
 export const TOUR: TourCard[] = [
@@ -64,15 +86,20 @@ export const TOUR: TourCard[] = [
   {
     title: 'Amp',
     chain: 'The Amp takes the Filter’s sound and sends it on to your speakers.',
-    does: 'It sets how loud each Note is over time, following the Amp Envelope: Attack is how long a Note takes to rise once a key goes down, Release how long it takes to fade once the key is let go. The synth lengthens the Attack, then the Release, and brings each back.',
-    sees: 'The Amp Scope is what you hear, its height the level: with a long Attack each Note swells in, with a long Release it fades on after the key is up. On the Amp Spectrum the Harmonics rise and fall together.',
-    viewers: ['Amp Scope', 'Amp Spectrum'],
-    phrase: 'C3:2 -:2 G3:2 -:2',
-    bpm: 100,
-    moves: [
-      { kind: 'param', id: 'ampAttack', path: [0.01, 0.8, 0.01], seconds: 4 },
-      { kind: 'param', id: 'ampRelease', path: [0.4, 2, 0.4], seconds: 4 },
-    ],
+    does: 'It sets how loud each Note is over time, following the Amp Envelope’s four stages: Attack, how long a Note takes to rise once its key goes down; Decay, how long it then takes to fall to the Sustain level, which it holds while the key stays down; Release, how long it takes to fade once the key is let go. Before each Note the synth changes one stage, and puts it back after. The Filter has an Envelope of its own, with the same four stages, whose Amount sets how far it moves the Cutoff.',
+    sees: 'Once each Note has faded, the synth freezes the Viewers for a moment: the Envelope Timeline shows the shape it drew, the newest at the right. The Amp Scope is what you hear, its height the level; on the Amp Spectrum the Harmonics rise and fall together.',
+    // The Timeline first: on a phone it is far below the Amp's Viewers, and it alone is brought into view (issue 130).
+    viewers: ['Envelope Timeline', 'Amp Scope', 'Amp Spectrum'],
+    // At 60 BPM a beat is a second: in each pass, a rest while the stage turns, the Note, a rest while it fades and the
+    // picture freezes (PASS). Held 85 % of its step, each Note is long enough to show its stage, short enough to fit.
+    phrase: '-:1.5 C3:1.3 -:4.2  -:1.5 C3:1.4 -:4.1  -:1.5 C3:1.2 -:4.3  -:1.5 C3:.7 -:4.8',
+    bpm: 60,
+    moves: [stagePass('ampAttack', 0.6), stagePass('ampDecay', 1), stagePass('ampSustain', 0.3), stagePass('ampRelease', 1)],
+    freezes: STAGE_NAMES.map((name, i) => ({
+      at: i * PASS.length + PASS.freeze,
+      seconds: PASS.frozen,
+      names: i === STAGE_NAMES.length - 1 ? STAGE_NAMES.join('; ') : name,
+    })),
   },
   {
     title: 'LFOs',
@@ -87,18 +114,25 @@ export const TOUR: TourCard[] = [
   },
 ];
 
+/** How long each leg of a move takes: a knob's from one point of its path to the next, a Waveform's held. */
+const legsOf = (move: TourMove) =>
+  typeof move.seconds === 'number' ? Array<number>(move.kind === 'param' ? move.path.length - 1 : move.path.length).fill(move.seconds) : move.seconds;
+
 /** How long a move takes once through. */
-const moveLength = (move: TourMove) => move.seconds * (move.kind === 'param' ? move.path.length - 1 : move.path.length);
+const moveLength = (move: TourMove) => legsOf(move).reduce((sum, leg) => sum + leg, 0);
 
 /** How long a card's moves take once through, before they start again. */
 export const cycleLength = (card: TourCard) => card.moves.reduce((sum, move) => sum + moveLength(move), 0);
 
 /**
- * Where the card's controls are `seconds` after it came up: the one moving now along its path, the others resting on
- * the Tour's Patch's values; and which control is moving.
+ * Where the card's controls are `seconds` after its phrase's first beat: the one moving now along its path, the others
+ * resting on the Tour's Patch's values; which control is moving; and what the card names while the synth freezes the
+ * Viewers, or null while they run.
  */
-export function tourAt(card: TourCard, seconds: number): { values: Partial<Patch>; moving: TourMove['id'] } {
+export function tourAt(card: TourCard, seconds: number): { values: Partial<Patch>; moving: TourMove['id']; frozen: string | null } {
   let t = seconds % cycleLength(card);
+  const pass = t;
+  const frozen = card.freezes?.find((f) => pass >= f.at && pass < f.at + f.seconds)?.names ?? null;
   let current = card.moves[0];
   for (const move of card.moves) {
     current = move;
@@ -106,13 +140,15 @@ export function tourAt(card: TourCard, seconds: number): { values: Partial<Patch
     t -= moveLength(move);
   }
   const values: Partial<Patch> = Object.fromEntries(card.moves.map((m) => [m.id, TOUR_PATCH.patch[m.id]]));
-  const leg = Math.min(Math.floor(t / current.seconds), current.path.length - 1);
+  const legs = legsOf(current);
+  let leg = 0;
+  for (; leg < legs.length - 1 && t >= legs[leg]; leg++) t -= legs[leg];
   if (current.kind === 'choice') values[current.id] = current.path[leg];
   else {
     const def = PARAMS[current.id];
     const [from, to] = [current.path[leg], current.path[Math.min(leg + 1, current.path.length - 1)]];
-    const progress = t / current.seconds - leg;
-    values[current.id] = progress === 0 ? from : positionToValue(def, valueToPosition(def, from) + (valueToPosition(def, to) - valueToPosition(def, from)) * progress);
+    const progress = Math.min(1, t / legs[leg]);
+    values[current.id] = progress === 0 || from === to ? from : positionToValue(def, valueToPosition(def, from) + (valueToPosition(def, to) - valueToPosition(def, from)) * progress);
   }
-  return { values, moving: current.id };
+  return { values, moving: current.id, frozen };
 }

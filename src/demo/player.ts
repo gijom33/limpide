@@ -28,8 +28,8 @@ export interface DemoHost extends ListenHost {
 // Notes are handed to the engine this far ahead of the clock: enough to be on time, little enough to stop quickly.
 const LOOKAHEAD = 0.15;
 const TICK_MS = 40;
-// A breath after pressing Demo before the first Note.
-const LEAD_IN = 0.3;
+// A breath after pressing Demo, or a phrase starting, before the first Note: the Tour counts its card's time from there.
+export const LEAD_IN = 0.3;
 // The next part's Preset loads this long before its bar line, not on the look-ahead: just enough for the engine to
 // have its first Notes, while this part's last Notes and their Release keep their own sound (issue 60).
 const SWITCH_AHEAD = 0.05;

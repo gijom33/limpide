@@ -1,7 +1,9 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
+import { LEAD_IN } from '../../demo/player';
 import { type ParamId, type Patch, setParam } from '../../patch/patch';
 import type { KeptPatch, PatchStore } from '../../patch/patchStore';
 import { TOUR, TOUR_PATCH, type TourCard, type TourMove, tourAt } from '../../tutorial/tour';
+import type { ViewerStore } from '../../viewers/viewerStore';
 
 /** How often the synth's hand moves the card's control: as often as the Demo's knobs. */
 const TICK_MS = 40;
@@ -19,6 +21,8 @@ function withValues(patch: Patch, values: Partial<Patch>): Patch {
 interface Host {
   /** Where the Tour plays: its own Patch loaded in, the person's given back. */
   patches: PatchStore;
+  /** Where Freeze is (issue 130): the Tour freezes the Viewers on a card that says when. */
+  viewers: Pick<ViewerStore, 'get' | 'dispatch' | 'subscribe'>;
   /** The Tour starts: whatever plays by itself stops, a Tutorial ends. */
   onStart(): void;
   /** A card comes up: its phrase plays, over and over. */
@@ -30,13 +34,17 @@ interface Host {
 /**
  * The Tour (issue 128): the person's Patch kept aside, the Tour's own loaded, then a card for each Section, the synth
  * turning its controls (`tourAt`) while its phrase plays. A control turned by hand or by a Controller is the person's
- * for the rest of that card: the synth leaves it where they put it. Ending or closing it, or the page closing, gives
- * the person's Patch back; a Patch the person loads meanwhile ends it and stays.
+ * for the rest of that card: the synth leaves it where they put it. So is Freeze, frozen or unfrozen by the person on
+ * a card where the synth freezes the Viewers (issue 130): the synth freezes no more on that card, and lets go of its
+ * own Freeze whenever the card changes or the Tour ends. Ending or closing it, or the page closing, gives the person's
+ * Patch back; a Patch the person loads meanwhile ends it and stays.
  */
-export function useTourState({ patches, onStart, onCard, onEnd }: Host) {
+export function useTourState({ patches, viewers, onStart, onCard, onEnd }: Host) {
   const [index, setIndex] = useState<number | null>(null);
   // The control the synth is turning now, for the card to ring.
   const [moving, setMoving] = useState<TourMove['id'] | null>(null);
+  // What the card names while the synth has the Viewers frozen.
+  const [naming, setNaming] = useState<string | null>(null);
   const kept = useRef<KeptPatch | null>(null);
 
   /** Ends the Tour, giving back the person's Patch unless `restore` is false (they loaded another). */
@@ -49,6 +57,7 @@ export function useTourState({ patches, onStart, onCard, onEnd }: Host) {
     if (restore) patches.restore(mine);
     setIndex(null);
     setMoving(null);
+    setNaming(null);
   };
   const finishNow = useEffectEvent(finish);
   const showCard = useEffectEvent((card: TourCard) => onCard(card));
@@ -73,12 +82,36 @@ export function useTourState({ patches, onStart, onCard, onEnd }: Host) {
       if (by === 'load') finishNow(false);
       else if (by === 'hand' || by === 'controller') for (const m of card.moves) if (before[m.id] !== after[m.id]) taken.add(m.id);
     });
+    // The synth's own Freeze; a change to Freeze it did not make is the person's, and Freeze is theirs from then on, as
+    // it is if they had it on when the card came up.
+    const isFrozen = () => viewers.get().viewer.frozen;
+    let mine = false;
+    let theirs = isFrozen();
+    let expected = isFrozen();
+    const unwatch = viewers.subscribe(() => {
+      if (isFrozen() === expected) return;
+      expected = isFrozen();
+      theirs = true;
+      mine = false;
+      setNaming(null);
+    });
+    const freeze = (on: boolean) => {
+      if (isFrozen() === on) return;
+      expected = on;
+      mine = on;
+      viewers.dispatch({ type: 'toggleFreeze' });
+    };
     const began = performance.now();
     const turn = () => {
       // Ended by a load between this card's last render and its cleanup: the Patch loaded is the person's.
       if (!kept.current) return;
-      const { values, moving } = tourAt(card, (performance.now() - began) / 1000);
+      // Counted from the phrase's first beat, so a stage set before a Note, and a freeze once it has faded, fall there.
+      const { values, moving, frozen } = tourAt(card, Math.max(0, (performance.now() - began) / 1000 - LEAD_IN));
       setMoving(moving);
+      if (!theirs) {
+        freeze(frozen !== null);
+        setNaming(frozen);
+      }
       const patch = patches.get().patch;
       const due = Object.fromEntries(Object.entries(values).filter(([id, value]) => !taken.has(id as keyof Patch) && patch[id as keyof Patch] !== value));
       if (Object.keys(due).length) patches.change((p) => withValues(p, due), 'tour');
@@ -91,12 +124,15 @@ export function useTourState({ patches, onStart, onCard, onEnd }: Host) {
     return () => {
       clearInterval(timer);
       unsubscribe();
+      unwatch();
+      if (mine) freeze(false);
+      setNaming(null);
       removeEventListener('pagehide', onHide);
     };
-  }, [index, patches]);
+  }, [index, patches, viewers]);
 
   // Nothing turns on after the page goes.
   useEffect(() => () => finishNow(), []);
 
-  return { index, moving, start, end: () => finish(), move };
+  return { index, moving, naming, start, end: () => finish(), move };
 }
