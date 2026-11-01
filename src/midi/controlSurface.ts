@@ -1,8 +1,11 @@
 import { BPM_STEP } from '../music/tempo';
 import { stepParamBy } from '../patch/grid';
 import { type ChoiceId, PARAMS, type ParamId } from '../patch/patch';
+import { answeredBy, answers, type KnownController } from './controller';
 import { detectEncoderMode, detectKnobMode, relativeDelta } from './encoderMode';
-import { type ActionId, type Control, controlKey, type Mapping, type MappingStore, sameControl, type Target } from './mappings';
+import {
+  type ActionId, type Control, controlKey, type Mapping, type MappingStore, PITCH_BEND, sameControl, type Target,
+} from './mappings';
 import type { MidiMessage } from './parser';
 
 /** Values gathered from a knob while learning it, enough to tell its Encoder Mode. */
@@ -18,20 +21,8 @@ const RELATIVE_STEP = 0.01;
 const PICKUP_TOLERANCE = 0.5 / 127 + 1e-9;
 /** Encoder clicks per choice, so stepping through Waveforms is deliberate rather than jumpy. */
 const CLICKS_PER_CHOICE = 2;
-/**
- * A C16 knob's 66 (or 62) as a share of a step of the Parameter's Grid (issues 145 and 160): a bit of turning sends one 65 (or 63) turned slowly and,
- * past a speed, a burst of eight 66s, which reach the page split and merged, so they are counted by message, not by
- * time. The C16 sends fewer bursts than bits when turned fast, so a 66 counts more than an eighth (the owner,
- * 2026-10-31).
- */
-const C16_BURST_STEP = 1 / 3;
 /** Values a knob of unknown Encoder Mode sends before it moves anything: enough to tell its mode. */
 const DETECT_VALUES = 3;
-/**
- * The pitch bend wheel as a control: the number after the 128 CCs, so MIDI Learn can map it like a knob (its value
- * scaled to 0–127, Absolute) (issue 52).
- */
-export const PITCH_BEND = 128;
 /** The sustain pedal and the mod wheel, by their standard CC numbers. */
 const SUSTAIN = 64;
 const MOD_WHEEL = 1;
@@ -133,11 +124,12 @@ export function createControlSurface(synth: Synth) {
   const thirds = new Map<string, number>(); // a Relative knob's share of a Grid step not yet moved (a C16's 66s), per control
   const detecting = new Map<string, number[]>(); // the first values of knobs finding their Encoder Mode
 
-  /** A Relative message's steps: as sent, or for a C16 knob one for a 65, a third for a 66. */
+  /** A Relative message's steps: as sent, or as the known Controller a layout's Mapping answers counts a fast turn's (a C16's 66 a third). */
   const relativeSteps = (mapping: Mapping, mode: 'relative-twos' | 'relative-centred', value: number) => {
     const delta = relativeDelta(mode, value);
-    if (mapping.device !== 'c16' || Math.abs(delta) <= 1) return delta;
-    return Math.sign(delta) * C16_BURST_STEP;
+    const fastTurn = answeredBy(mapping)?.fastTurnStep;
+    if (fastTurn === undefined || Math.abs(delta) <= 1) return delta;
+    return Math.sign(delta) * fastTurn;
   };
 
   /**
@@ -330,8 +322,8 @@ export function createControlSurface(synth: Synth) {
   };
 
   return {
-    /** A message from a Controller; `fromC16` when that Controller is a C16, whose layout's Mappings answer it alone. */
-    handle(incoming: MidiMessage, fromC16 = false) {
+    /** A message from a Controller: `from` is the known Controller it is (a C16), whose layout's Mappings answer it alone; left out for any other. */
+    handle(incoming: MidiMessage, from?: KnownController) {
       if (incoming.type === 'program') return synth.program?.(incoming.program);
       const message: ControlMessage =
         incoming.type === 'pitchBend'
@@ -343,7 +335,7 @@ export function createControlSurface(synth: Synth) {
           ? { kind: 'cc', channel: message.channel, number: message.controller }
           : { kind: 'note', channel: message.channel, number: message.note },
       );
-      if (mapping && (fromC16 || mapping.device !== 'c16')) return apply(mapping, message);
+      if (mapping && answers(mapping, from)) return apply(mapping, message);
       // Unmapped: a keyboard's own controls do what a synth player expects.
       if (incoming.type === 'pitchBend') return synth.bend?.(incoming.value);
       if (message.type === 'cc' && message.controller === SUSTAIN) return synth.pedal?.(message.value >= 64);

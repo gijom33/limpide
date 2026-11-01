@@ -20,6 +20,20 @@ export interface Control {
   number: number;
 }
 
+/**
+ * The pitch bend wheel as a control: the number after the 128 CCs, so MIDI Learn can map it like a knob (its value
+ * scaled to 0–127, Absolute) (issue 52).
+ */
+export const PITCH_BEND = 128;
+
+/**
+ * The known Controllers, by the tag a Mapping of a built-in layout is stored with (issue 145). Each has its facts
+ * in the Controller module (`controller.ts`), which TypeScript holds to one per tag; the list is here, with the
+ * Mapping's stored shape, so that reading stored Mappings needs nothing of a Controller's layout.
+ */
+export const CONTROLLER_IDS = ['c16'] as const;
+export type ControllerId = (typeof CONTROLLER_IDS)[number];
+
 export const CHOICE_LABELS: Record<ChoiceId, string> = {
   waveform: 'Osc 1 Waveform',
   osc2Waveform: 'Osc 2 Waveform',
@@ -55,13 +69,14 @@ export type ButtonMode = 'trigger' | 'toggle';
  * known yet ('detect') finds it on its first turn: only the first C16 layout's knobs (issue 34) still stored, kept so
  * that layout loads until upgradeC16Layout replaces it, and going with it. A button either sends a press and a release ('trigger': it acts
  * on the press) or, as a toggle, one value per press, each the other ('toggle': it acts on every message). A
- * Mapping of the C16's layout answers a C16 only ('c16', issue 145); any other answers every Controller.
+ * Mapping of a known Controller's built-in layout carries its tag and answers that Controller alone (issue 145); any
+ * other answers every Controller. Which input a Mapping answers is the Controller module's to say.
  */
 export interface Mapping {
   control: Control;
   target: Target;
   mode: EncoderMode | 'detect' | ButtonMode;
-  device?: 'c16';
+  device?: ControllerId;
 }
 
 interface KeyValueStorage {
@@ -95,7 +110,7 @@ const isMapping = (m: unknown): m is Mapping => {
       (t.kind === 'action' && Object.hasOwn(ACTIONS, t.id)) ||
       (t.kind === 'tempo' && t.id === 'bpm')) &&
     MODES.includes(mode as string) &&
-    (device === undefined || device === 'c16')
+    (device === undefined || CONTROLLER_IDS.includes(device))
   );
 };
 

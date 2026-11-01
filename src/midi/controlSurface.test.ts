@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type ChoiceId, PARAMS, type ParamId } from '../patch/patch';
 import { positionToValue, valueToPosition } from '../patch/taper';
 import { memoryStorage } from '../test/memoryStorage';
+import { C16 } from './c16';
 import { createControlSurface, type LearnState } from './controlSurface';
 import { createMappingStore } from './mappings';
 import type { MidiMessage } from './parser';
@@ -557,8 +558,8 @@ describe('the C16 layout’s buttons and its own input (issue 145)', () => {
     expect(r.actions).toEqual([]);
     expect(r.positions.cutoff).toBe(0.5);
     expect(r.positions.lfoAmount).toBe(1); // the mod wheel
-    surface.handle(cc(64, 127), true);
-    surface.handle(cc(1, 65), true);
+    surface.handle(cc(64, 127), C16);
+    surface.handle(cc(1, 65), C16);
     expect(r.actions).toEqual(['nextPreset']);
     expect(r.positions.cutoff).toBeGreaterThan(0.5); // a step up
   });
@@ -566,10 +567,10 @@ describe('the C16 layout’s buttons and its own input (issue 145)', () => {
   it('lets a Mapping learned from any Controller answer every Controller', () => {
     const r = rig();
     r.store.set({ control: { kind: 'cc', channel: 1, number: 74 }, target: cutoff, mode: 'relative-centred' });
-    r.surface.handle(cc(74, 65), true);
+    r.surface.handle(cc(74, 65), C16);
     const fromC16 = r.positions.cutoff!;
     expect(fromC16).toBeGreaterThan(0.5);
-    r.surface.handle(cc(74, 65), false);
+    r.surface.handle(cc(74, 65));
     expect(r.positions.cutoff).toBeGreaterThan(fromC16);
   });
 });
@@ -601,11 +602,11 @@ describe('the Rate, a note value with Sync on, and the tempo (issue 112)', () =>
   it('turns the note value from a control mapped to the Rate: a step for every two clicks of a Relative knob, a C16’s thirds gathered', () => {
     const r = synced();
     r.store.set({ control: { kind: 'cc', channel: 1, number: 30 }, target: { kind: 'param', id: 'lfoRate' }, mode: 'relative-centred', device: 'c16' });
-    r.surface.handle(cc(30, 65), true);
+    r.surface.handle(cc(30, 65), C16);
     expect(r.positions.lfoNote).toBeCloseTo(13 / 23, 9); // half a step: not yet
-    r.surface.handle(cc(30, 65), true);
+    r.surface.handle(cc(30, 65), C16);
     expect(r.positions.lfoNote).toBeCloseTo(14 / 23, 9);
-    for (let i = 0; i < 6; i++) r.surface.handle(cc(30, 66), true); // six thirds: two clicks, one step
+    for (let i = 0; i < 6; i++) r.surface.handle(cc(30, 66), C16); // six thirds: two clicks, one step
     expect(r.positions.lfoNote).toBeCloseTo(15 / 23, 9);
     expect(r.positions.lfoRate).toBe(0.5); // the Hz kept for when Sync goes off
   });
@@ -629,13 +630,13 @@ describe('the Rate, a note value with Sync on, and the tempo (issue 112)', () =>
       release: () => {},
     });
     store.set({ control: { kind: 'cc', channel: 1, number: 30 }, target: { kind: 'param', id: 'lfoRate' }, mode: 'relative-centred', device: 'c16' });
-    surface.handle(cc(30, 66), true);
-    surface.handle(cc(30, 66), true); // two thirds of a step on the Hz: not yet one
+    surface.handle(cc(30, 66), C16);
+    surface.handle(cc(30, 66), C16); // two thirds of a step on the Hz: not yet one
     expect(valueAt(positions, 'lfoRate')).toBeCloseTo(2, 9);
     sync = true;
-    surface.handle(cc(30, 65), true);
+    surface.handle(cc(30, 65), C16);
     expect(positions.lfoNote).toBeCloseTo(13 / 23, 9); // half a step: not yet
-    surface.handle(cc(30, 65), true);
+    surface.handle(cc(30, 65), C16);
     expect(positions.lfoNote).toBeCloseTo(14 / 23, 9); // one note value, not a jump
   });
 
@@ -673,7 +674,7 @@ describe('the C16’s knobs: a 65 one step, a 66 a third of one (issue 145)', ()
     });
     store.set({ control: { kind: 'cc', channel: 1, number: 24 }, target: resonance, mode: 'relative-centred', device: 'c16' });
     const send = (value: number, times = 1) => {
-      for (let i = 0; i < times; i++) surface.handle(cc(24, value), true);
+      for (let i = 0; i < times; i++) surface.handle(cc(24, value), C16);
     };
     return { positions, send };
   };

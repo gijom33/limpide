@@ -1,7 +1,6 @@
 import { nearestNote, noteToFrequency } from '../music/pitch';
 import { PARAMS, paramName } from '../patch/patch';
-import { PITCH_BEND } from './controlSurface';
-import { ACTIONS, CHOICE_LABELS, type Control, type Mapping, type Target } from './mappings';
+import { ACTIONS, CHOICE_LABELS, type Control, type Mapping, PITCH_BEND, type Target } from './mappings';
 import type { MidiMessage } from './parser';
 
 const noteName = (note: number) => nearestNote(noteToFrequency(note)).name;

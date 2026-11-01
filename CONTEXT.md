@@ -273,7 +273,7 @@ _Avoid_: Advanced mode, expert mode
 ### Control surface
 
 **Controller**:
-A connected MIDI hardware device, such as the Synido TempoPAD C16.
+A connected MIDI hardware device, such as the Synido TempoPAD C16. A **known Controller** is one Limpide recognises by the name it gives and has a built-in layout for: the C16, for now (issue 149).
 _Avoid_: Device, MIDI keyboard
 
 **Mapping**:

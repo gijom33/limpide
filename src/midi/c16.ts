@@ -1,4 +1,5 @@
 import { CHOICES } from '../patch/patch';
+import type { KnownController } from './controller';
 import { targetKey } from './describe';
 import { type ButtonMode, type Control, clash, type Mapping, type Target } from './mappings';
 
@@ -202,3 +203,37 @@ export function addC16Places(stored: readonly Mapping[]): Mapping[] | null {
   const added = c16Layout().filter((l) => ADDED_SINCE_145.includes(targetKey(l.target)) && !stored.some((m) => clash(l, m)));
   return added.length ? [...stored, ...added] : null;
 }
+
+/**
+ * A C16 knob's 66 (or 62) as a share of a step of the Parameter's Grid (issues 145 and 160): a bit of turning sends
+ * one 65 (or 63) turned slowly and, past a speed, a burst of eight 66s, which reach the page split and merged, so they
+ * are counted by message, not by time. The C16 sends fewer bursts than bits when turned fast, so a 66 counts more than
+ * an eighth (the owner, 2026-10-31).
+ */
+const FAST_TURN_STEP = 1 / 3;
+
+/**
+ * What is recorded once today's layout is in place, applied or brought over from an earlier one: 2 for issue 145's,
+ * 3 since each LFO's Sync (issue 112).
+ */
+const LAYOUT_VERSION = '3';
+
+/** The TempoPAD C16 as a known Controller (issue 149): the one place the rest of the MIDI code learns of it. */
+export const C16: KnownController = {
+  id: 'c16',
+  label: 'C16',
+  named: isC16,
+  layout: c16Layout,
+  // Set once the layout has come in, so it never comes in again unasked.
+  applied: { key: 'limpide.c16Layout', version: LAYOUT_VERSION },
+  // The first layout, stored before issue 145, becomes today's, a person's own Mappings kept, and so is anything
+  // learned since on a place it had; issue 145's gains the places added since, where the person's leave them free.
+  upgrade(stored, recorded) {
+    const upgraded = upgradeC16Layout(stored) ?? stored;
+    const added = recorded === '2' ? addC16Places(upgraded) : null;
+    const mappings = added ?? upgraded;
+    return mappings === stored ? null : mappings;
+  },
+  section: c16Bank,
+  fastTurnStep: FAST_TURN_STEP,
+};

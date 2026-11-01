@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
-import { isC16 } from '../midi/c16';
+import { Fragment, useEffect, useRef, useState } from 'react';
+import { answeredBy, knownAmong } from '../midi/controller';
 import { describeControl, describeMode, describeTarget } from '../midi/describe';
-import { type Control, controlKey, type Mapping } from '../midi/mappings';
+import { type Control, type ControllerId, controlKey, type Mapping } from '../midi/mappings';
 import { CloseIcon, MidiIcon } from './icons';
 import { Segmented } from './Segmented';
 import { Tooltip } from './Tooltip';
@@ -25,14 +25,20 @@ interface Props {
   onLearn(): void;
   onDone(): void;
   onQuickSetup(): void;
-  /** Puts back the C16 layout (offered while a C16 is connected). */
-  onC16Layout(): void;
+  /** Puts back a known Controller's layout (the C16's, offered while one is connected). */
+  onLayout(id: ControllerId): void;
   onRemove(control: Control): void;
   onClear(): void;
   /** How far a keyboard's bend wheel takes the pitch, in semitones each way (issue 52). */
   bendRange: number;
   onBendRange(semitones: number): void;
 }
+
+/** " · C16 only" for a Mapping of a known Controller's layout, which answers it alone; nothing for any other. */
+const onlyFor = (mapping: Mapping) => {
+  const known = answeredBy(mapping);
+  return known ? ` · ${known.label} only` : null;
+};
 
 const statusText = (state: MidiState) => {
   const devices = state.kind === 'ready' ? state.devices : [];
@@ -52,7 +58,7 @@ const statusText = (state: MidiState) => {
  * panel: what is connected, the Activity Monitor, MIDI Learn (and Done, once learning), and the Mappings.
  */
 export function MidiPanel({
-  state, onOpen, activity, mappings, learning, onLearn, onDone, onQuickSetup, onC16Layout, onRemove, onClear, bendRange, onBendRange,
+  state, onOpen, activity, mappings, learning, onLearn, onDone, onQuickSetup, onLayout, onRemove, onClear, bendRange, onBendRange,
 }: Props) {
   const [open, setOpen] = useState(false);
   const wrapper = useRef<HTMLDivElement>(null);
@@ -146,27 +152,28 @@ export function MidiPanel({
                   Quick Setup
                 </button>
               </Tooltip>
-              {devices.some(isC16) && (
-                <Tooltip content={TIPS.c16Layout}>
-                  <button
-                    type="button"
-                    className="tool"
-                    onClick={() => {
-                      setOpen(false);
-                      onC16Layout();
-                    }}
-                  >
-                    C16 layout
-                  </button>
-                </Tooltip>
-              )}
-              {devices.some(isC16) && (
-                <Tooltip content={TIPS.c16Card}>
-                  <a className="tool" href="#c16-card" target="_blank" rel="noopener">
-                    Print C16 card
-                  </a>
-                </Tooltip>
-              )}
+              {/* Each known Controller connected offers its layout and its card to print, which opens at #<id>-card. */}
+              {knownAmong(devices).map(({ id, label }) => (
+                <Fragment key={id}>
+                  <Tooltip content={TIPS[`${id}Layout`]}>
+                    <button
+                      type="button"
+                      className="tool"
+                      onClick={() => {
+                        setOpen(false);
+                        onLayout(id);
+                      }}
+                    >
+                      {label} layout
+                    </button>
+                  </Tooltip>
+                  <Tooltip content={TIPS[`${id}Card`]}>
+                    <a className="tool" href={`#${id}-card`} target="_blank" rel="noopener">
+                      Print {label} card
+                    </a>
+                  </Tooltip>
+                </Fragment>
+              ))}
             </>
           )}
           {available && (
@@ -189,7 +196,7 @@ export function MidiPanel({
                     <span className="mapping-target">{describeTarget(m.target)}</span>
                     <span className="mapping-control">
                       {describeControl(m.control)} · {describeMode(m.mode)}
-                      {m.device === 'c16' && ' · C16 only'}
+                      {onlyFor(m)}
                     </span>
                     <button
                       type="button"

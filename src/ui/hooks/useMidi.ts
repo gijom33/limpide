@@ -1,11 +1,11 @@
 import { type MutableRefObject, useEffect, useEffectEvent, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import type { AudioSession } from '../../app/session';
 import type { KeyValueStorage } from '../../app/storage';
-import { addC16Places, c16Bank, c16Layout, isC16, upgradeC16Layout } from '../../midi/c16';
+import { builtInLayout, knownController, pluggedIn } from '../../midi/controller';
 import { createControlSurface, type LearnState } from '../../midi/controlSurface';
 import { describeMessage, targetKey } from '../../midi/describe';
 import { connectMidi, type MidiAccessLike, midiSupport } from '../../midi/inputs';
-import { createMappingStore, type Mapping, type Target } from '../../midi/mappings';
+import { type ControllerId, createMappingStore, type Mapping, type Target } from '../../midi/mappings';
 import { QUICK_SETUP, type QuickSetupEvent, type QuickSetupState, quickSetupReducer, startQuickSetup, takenControls } from '../../midi/quickSetup';
 import { bpmPosition, positionBpm } from '../../music/tempo';
 import { CHOICES, type ChoiceId, knobTurns, PARAMS, setParam } from '../../patch/patch';
@@ -14,11 +14,6 @@ import type { MidiState } from '../MidiPanel';
 import { reveal } from '../reveal';
 import { SECTIONS, type SectionName } from '../sections';
 import { WAVEFORM_ORDER } from '../WaveformPicker';
-
-/** Set once the C16 layout has been applied by itself, so it is never applied again unasked. */
-const C16_APPLIED = 'limpide.c16Layout';
-/** What C16_APPLIED holds once today's layout is in place, applied or brought over from an earlier one: 2 for issue 145's, 3 since each LFO's Sync (issue 112). */
-const C16_LAYOUT_VERSION = '3';
 
 /** A choice's options in on-screen order (the Waveform pickers show them differently from the stored list). */
 const choiceOptions = (id: ChoiceId): readonly unknown[] =>
@@ -48,8 +43,9 @@ interface Host {
 
 /**
  * MIDI Controllers: their Notes join the same Note input as the keyboard and piano; their knobs, pads and encoders
- * drive what they were mapped to (MIDI Learn first, ADR-0004), or the C16's own layout (ADR-0009). Messages arrive
- * between renders, so the surface reads and changes the Patch in its store, which the sound follows at once.
+ * drive what they were mapped to (MIDI Learn first, ADR-0004), or a known Controller's own layout (the C16's,
+ * ADR-0017). Messages arrive between renders, so the surface reads and changes the Patch in its store, which the
+ * sound follows at once.
  */
 export function useMidi(host: Host) {
   const { storage, session, pressHoldRef, onNote } = host;
@@ -65,14 +61,11 @@ export function useMidi(host: Host) {
 
   const mappingStore = useMemo(() => createMappingStore(storage), [storage]);
   const mappings = useSyncExternalStore(mappingStore.subscribe, mappingStore.list);
-  // The C16 layout: applied once by itself, the first time a C16 is plugged in with nothing mapped (after that, a
-  // person who removed it meant to); the MIDI panel puts it back at any time.
-  const applyC16Layout = () => {
-    mappingStore.restore(c16Layout());
-    storage.setItem(C16_APPLIED, C16_LAYOUT_VERSION);
-  };
-  // A C16 control moved on another bank than the last: its section is brought into view (on a phone, where one
-  // section shows at a time).
+  // A known Controller's layout (the C16's): the MIDI panel puts it back at any time; it comes in by itself as the
+  // Controller is plugged in (below).
+  const applyLayout = (id: ControllerId) => mappingStore.restore(builtInLayout(id, storage));
+  // A known Controller's control moved on another bank than the last: its section is brought into view (on a phone,
+  // where one section shows at a time).
   const lastBank = useRef<number | undefined>(undefined);
   const [bankFollow, setBankFollow] = useState<{ name: SectionName; key: number } | null>(null);
 
@@ -213,7 +206,6 @@ export function useMidi(host: Host) {
     };
   }, []);
 
-  const applyC16LayoutNow = useEffectEvent(applyC16Layout);
   useEffect(() => {
     const support = midiSupport(navigator);
     if (support !== 'supported') return setMidi({ kind: 'unsupported', ios: support === 'ios' });
@@ -224,35 +216,24 @@ export function useMidi(host: Host) {
       (access) => {
         if (cancelled) return;
         dispose = connectMidi(access as unknown as MidiAccessLike, {
-          onMessage: (m, from) => {
-            const fromC16 = isC16(from);
+          onMessage: (m, name) => {
+            const from = knownController(name);
             if (m.type === 'noteOn') noteFromController();
-            if (fromC16 && m.type === 'cc' && surface.learnState().phase === 'off') {
+            if (from?.section && m.type === 'cc' && surface.learnState().phase === 'off') {
               const control = { kind: 'cc' as const, channel: m.channel, number: m.controller };
-              const bank = c16Bank(control);
+              const bank = from.section(control);
               if (bank !== undefined && bank !== lastBank.current && mappingStore.find(control)) {
                 lastBank.current = bank;
                 setBankFollow((f) => ({ name: SECTIONS[bank].name, key: (f?.key ?? 0) + 1 }));
               }
             }
-            surface.handle(m, fromC16);
+            surface.handle(m, from);
             setActivity(describeMessage(m));
           },
           onDevices: (devices) => {
             setMidi({ kind: 'ready', devices });
-            const c16Plugged = devices.some(isC16);
-            const fresh = mappingStore.list().length === 0 && storage.getItem(C16_APPLIED) === null;
-            if (c16Plugged && fresh) applyC16LayoutNow();
-            // The first layout, stored before issue 145, becomes today's, once; a person's own Mappings stay, and so
-            // does anything learned later on a place the first layout had.
-            if (c16Plugged && storage.getItem(C16_APPLIED) !== C16_LAYOUT_VERSION) {
-              const upgraded = upgradeC16Layout(mappingStore.list());
-              if (upgraded) mappingStore.restore(upgraded);
-              // Issue 145's layout gains the places added since, where the person's Mappings leave them free.
-              const added = storage.getItem(C16_APPLIED) === '2' && addC16Places(mappingStore.list());
-              if (added) mappingStore.restore(added);
-              storage.setItem(C16_APPLIED, C16_LAYOUT_VERSION);
-            }
+            const mappings = pluggedIn(devices, mappingStore.list(), storage);
+            if (mappings) mappingStore.restore(mappings);
           },
         });
       },
@@ -266,7 +247,7 @@ export function useMidi(host: Host) {
 
   return {
     midi, activity, mappings, mappingStore, learn, learning, learnContext, surface,
-    setup, setupLast, updateSetup, closeSetup, applyC16Layout,
+    setup, setupLast, updateSetup, closeSetup, applyLayout,
     bankFollow, setBankFollow, connect: () => setMidiWanted(true),
   };
 }

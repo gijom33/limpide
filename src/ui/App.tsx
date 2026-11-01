@@ -358,7 +358,7 @@ export function App() {
         onLearn={() => midi.surface.startLearn()}
         onDone={() => (midi.setup ? midi.updateSetup({ type: 'finish' }) : midi.surface.stopLearn())}
         onQuickSetup={() => midi.updateSetup({ type: 'start' })}
-        onC16Layout={midi.applyC16Layout}
+        onLayout={midi.applyLayout}
         onRemove={(control) => midi.mappingStore.remove(control)}
         onClear={() => midi.mappingStore.clear()}
         bendRange={bendRange}
