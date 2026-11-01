@@ -82,7 +82,7 @@ While Bead is out, five more words spelled with Notes, like B, E, A, D, each cue
 Through the Demo's parts, in turn, Bead:
 - conducts with a tiny baton, down on each Note;
 - plays air guitar on its tail, strummed on each Note;
-- surfs an LFO's shape: it jumps onto the plot of an LFO that is on (its Depth above 0) and rides the line, end to end, as the LFO moves it. With no LFO on, or none in view, it conducts or plays air guitar instead. Outside the Demo it rides a slow Sine or Triangle now and then (above).
+- surfs an LFO's shape: it jumps onto the plot of an LFO that is on (its Depth above 0) and rides the line, end to end, as the LFO moves it. With no LFO on, or none in view and clear of the cards ([164](./issues/164-bead-never-under-a-card.md): at 1440 × 900 the Demo's own card covers the plots' feet, until it is dragged aside), it conducts or plays air guitar instead. Outside the Demo it rides a slow Sine or Triangle now and then (above).
 
 ## With reduced motion
 
