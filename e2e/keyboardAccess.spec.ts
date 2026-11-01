@@ -58,10 +58,23 @@ test('Import file is a button the keyboard reaches', async ({ page }) => {
   await expect(importButton).toBeFocused();
 });
 
-test('the new Preset is announced after Next Preset, with its about line (issue 109)', async ({ page }) => {
+test('the new Preset is announced after Next Preset, and with its about line when picked in the panel (issues 109, 153)', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Next Preset' }).click();
-  await expect(page.locator('.patch-bar [role="status"]')).toHaveText(/^Pure Sine\. One Harmonic and nothing else/);
+  await expect(page.locator('.patch-bar [role="status"]')).toHaveText('Pure Sine');
+  await patchName(page).click();
+  await page.getByRole('dialog', { name: 'Patches' }).getByRole('button', { name: 'Init', exact: true }).click();
+  await expect(page.locator('.patch-bar [role="status"]')).toHaveText(/^Init\. The plain starting point/);
+});
+
+test('the × of a Preset’s description is next after Next Preset for the keyboard (issue 153)', async ({ page, browserName }) => {
+  test.skip(browserName === 'webkit', 'Safari tabs to buttons only when its settings ask it to');
+  await page.goto('/');
+  await patchName(page).click();
+  await page.getByRole('dialog', { name: 'Patches' }).getByRole('button', { name: 'Init', exact: true }).click();
+  await page.keyboard.press('Tab'); // from the name, back under the focus after the pick, to Next Preset
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('button', { name: 'Close the Preset’s description' })).toBeFocused();
 });
 
 test('sliders that share a label have distinct names: the Envelopes’ stages, the LFOs’ Rate and Depth', async ({ page }) => {

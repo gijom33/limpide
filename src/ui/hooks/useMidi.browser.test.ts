@@ -26,7 +26,6 @@ async function midi(name = 'Keystation 49', stored: Record<string, string> = {})
     onBend: (amount: number) => void told.push(`bend ${amount.toFixed(1)}`),
     onPedal: (down: boolean) => void told.push(`pedal ${down ? 'down' : 'up'}`),
     onProgram: (number: number) => void told.push(`program ${number}`),
-    onPresetStep: () => void told.push('preset step'),
   };
   const hook = await renderHook(useMidi, host);
   await act(async () => hook.result.current.connect());
@@ -82,7 +81,7 @@ describe('useMidi: a Controller (the 1.16.0 review)', () => {
     await m.send(0x99, 36, 100);
     await m.send(0x99, 37, 100);
     // Every Note from a Controller tells the page one came, a pad's too: the person has taken over from the Demo.
-    expect(m.told).toEqual(['note', 'hold', 'note', 'preset step']);
+    expect(m.told).toEqual(['note', 'hold', 'note']);
     expect(m.session.patches.get().name).not.toBe(before);
     expect(m.played).toEqual([]); // a mapped pad plays no Note
   });
@@ -109,7 +108,7 @@ describe('useMidi: a Controller (the 1.16.0 review)', () => {
     const before = m.session.patches.get().name;
     await m.send(0xb0, 64, 127); // bank B's M2, Next Preset
     await m.send(0xb0, 64, 0);
-    expect(m.told).toEqual(['preset step']);
+    expect(m.told).toEqual([]);
     expect(m.session.patches.get().name).not.toBe(before);
   });
 

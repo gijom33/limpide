@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { expect, type Page, test } from '@playwright/test';
+import { PRESETS } from '../src/patch/presets';
 import { startEmptied, USUAL } from './startState';
 
 const cutoff = (page: Page) => page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name: 'Cutoff' });
@@ -25,25 +26,108 @@ test('the Preset arrows step through the factory sounds', async ({ page }) => {
   await expect(patchName(page)).toContainText('Machine Chatter'); // wraps around to the last
 });
 
-test('a Preset loaded shows its about line under the name, and a knob turned, or the Demo, takes it away (issue 109)', async ({ page }) => {
-  const about = page.locator('.patch-about');
-  await expect(about).toHaveCount(0); // not for the sound the page opens on
-  await page.getByRole('button', { name: 'Next Preset' }).click();
-  await expect(about).toHaveText(/^One Harmonic and nothing else/);
-  // Said once, with the name; clicks go through it to the controls beneath.
-  await expect(page.locator('.patch-bar [role="status"]')).toHaveText(/^Pure Sine\. One Harmonic/);
-  await expect(about).toHaveCSS('pointer-events', 'none');
-  await nudge(page);
-  await expect(about).toHaveCount(0);
-  await expect(page.locator('.patch-bar [role="status"]')).toHaveText(/^Pure Sine\. One Harmonic/); // not said again
-
-  // From the Patches panel too; another load in the Demo's hands takes it away.
+/** Picks a Preset in the Patches panel, which closes as it loads. */
+const pick = async (page: Page, name: string) => {
   await patchName(page).click();
-  await page.getByRole('dialog', { name: 'Patches' }).getByRole('button', { name: 'FM Ladder', exact: true }).click();
-  await expect(about).toHaveText(/^Two sines on the same Note/);
+  await page.getByRole('dialog', { name: 'Patches' }).getByRole('button', { name, exact: true }).click();
+};
+const description = (page: Page) => page.locator('.patch-about');
+const words = (page: Page) => description(page).locator('span[aria-hidden]');
+const closeDescription = (page: Page) => page.getByRole('button', { name: 'Close the Preset’s description' });
+const status = (page: Page) => page.locator('.patch-bar [role="status"]');
+
+test('a Preset picked in the Patches panel shows its name and about line under the name, the arrows none (issues 109, 153)', async ({ page }) => {
+  await expect(description(page)).toHaveCount(0); // not for the sound the page opens on
+  // The arrows step through sounds to hear them: no box, and the name alone is said.
+  await page.getByRole('button', { name: 'Next Preset' }).click();
+  await expect(patchName(page)).toContainText('Pure Sine');
+  await expect(status(page)).toHaveText('Pure Sine');
+  await expect(description(page)).toHaveCount(0);
+
+  // A pick in the panel: the Preset's name leads, in bold, so the line reads as that sound's description.
+  await pick(page, 'FM Ladder');
+  await expect(words(page)).toHaveText(/^FM Ladder · Two sines on the same Note/);
+  await expect(words(page).locator('b')).toHaveText('FM Ladder');
+  // Said once, with the name; a knob turned takes it away, and it is not said again.
+  await expect(status(page)).toHaveText(/^FM Ladder\. Two sines on the same Note/);
+  await nudge(page);
+  await expect(description(page)).toHaveCount(0);
+  await expect(status(page)).toHaveText(/^FM Ladder\. Two sines/);
+
+  // Another load in the Demo's hands takes it away too.
+  await pick(page, 'FM Ladder');
+  await expect(description(page)).toBeVisible();
   await page.getByRole('button', { name: 'Demo' }).click();
-  await expect(about).toHaveCount(0);
+  await expect(description(page)).toHaveCount(0);
 });
+
+test('the Preset’s description closes by its × and by Escape, and a click on its words reaches the page beneath (issue 153)', async ({ page }) => {
+  await pick(page, 'FM Ladder');
+  // Only its × takes the pointer: the words let a click through to what lies beneath.
+  const at = (await words(page).boundingBox())!;
+  const onIt = await page.evaluate(([x, y]) => !!document.elementFromPoint(x, y)?.closest('.patch-about'), [at.x + 8, at.y + at.height / 2]);
+  expect(onIt, 'the words take no click').toBe(false);
+  await expect(closeDescription(page)).toHaveCSS('pointer-events', 'auto');
+
+  await closeDescription(page).click();
+  await expect(description(page)).toHaveCount(0);
+  await expect(patchName(page)).toBeFocused(); // the focus goes back to the name it hangs from
+  await expect(status(page)).toHaveText(/^FM Ladder\. Two sines/); // not said again
+
+  await pick(page, 'Kalimba');
+  await expect(description(page)).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(description(page)).toHaveCount(0);
+
+  // While the Patches panel is open over it, Escape closes the panel first.
+  await pick(page, 'Kalimba');
+  await patchName(page).click();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog', { name: 'Patches' })).toBeHidden();
+  await expect(description(page)).toBeVisible();
+});
+
+// Over the Sections' headings, as wide as the Oscillators and the Filter together (issue 153, decided by the owner):
+// every Preset's line, in the box as drawn, and again in wider type as Linux's fonts set it.
+for (const [width, height, most] of [[375, 812, 5], [700, 830, 3], [1100, 800, 3], [1440, 900, 2], [2000, 1100, 2]] as const) {
+  test(`at ${width} px every Preset’s description stays clear of the Osc tabs and the Filter’s Mode row, in ${most} lines at most (issue 153)`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await pick(page, 'Init');
+    await expect(description(page)).toBeVisible();
+    const lines = PRESETS.map((p) => [p.name, p.about]);
+    for (const spacing of ['0', '0.04em']) {
+      const found = await description(page).evaluate(
+        (box, [lines, spacing]) => {
+          const words = box.querySelector('span[aria-hidden]') as HTMLElement;
+          words.style.letterSpacing = spacing as string;
+          const top = (el: Element | null | undefined) => el!.getBoundingClientRect().top;
+          const section = (name: string) => document.querySelector(`section[aria-label="${name}"]`);
+          const tabs = top(section('Oscillators')?.querySelector('[role=tablist]'));
+          const mode = top(section('Filter')?.querySelector('.filter-modes'));
+          const filterRight = section('Filter')!.getBoundingClientRect().right;
+          const nameBottom = document.querySelector('.patch-name')!.getBoundingClientRect().bottom;
+          const problems: string[] = [];
+          let most = 0;
+          for (const [name, about] of lines as [string, string][]) {
+            const bold = document.createElement('b');
+            bold.textContent = name;
+            words.replaceChildren(bold, ` · ${about}`);
+            const b = box.getBoundingClientRect();
+            const count = new Set([...words.getClientRects()].filter((r) => r.width > 0).map((r) => Math.round(r.top))).size;
+            most = Math.max(most, count);
+            if (b.bottom > Math.min(tabs, mode)) problems.push(`${name}: reaches ${b.bottom > tabs ? 'the Osc tabs' : 'the Mode row'}`);
+            if (b.right > filterRight + 0.5) problems.push(`${name}: wider than the Oscillators and the Filter`);
+            if (b.top < nameBottom) problems.push(`${name}: over the Patch name`);
+          }
+          return { problems, most };
+        },
+        [lines, spacing] as const,
+      );
+      expect(found.problems, `letter-spacing ${spacing}`).toEqual([]);
+      expect(found.most, `letter-spacing ${spacing}: the most lines`).toBeLessThanOrEqual(most);
+    }
+  });
+}
 
 test('an edit marks the Patch as changed, and the sound comes back after a reload (autosave)', async ({ page }) => {
   await nudge(page);

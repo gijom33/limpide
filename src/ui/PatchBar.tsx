@@ -16,8 +16,12 @@ interface Props {
   library: Library;
   /** Load a Patch and make it the new baseline for "changed". */
   onLoad(name: string, patch: Patch): void;
+  /** Load a sound picked in the panel: a Preset's about line shows under the name (issue 153). */
+  onPick(name: string, patch: Patch): void;
   /** The loaded Preset's about line, under the name until the sound changes (issue 109). */
   about: PresetAbout;
+  /** The person closes the about line: its × or Escape. */
+  onCloseAbout(): void;
   /** The Presets that have a Tutorial, and whether it has been played to the end. */
   tutorials: readonly { preset: string; finished: boolean }[];
   onTutorial(preset: string): void;
@@ -27,7 +31,7 @@ interface Props {
  * The current Patch's name with Preset arrows, and a panel to save, load, delete, export, import and share. The panel's
  * search and category (`PatchSearch`) narrow what it lists, and stay until the page reloads (issue 69).
  */
-export function PatchBar({ name, changed, patch, library, onLoad, about, tutorials, onTutorial }: Props) {
+export function PatchBar({ name, changed, patch, library, onLoad, onPick, about, onCloseAbout, tutorials, onTutorial }: Props) {
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState('');
   const [link, setLink] = useState('');
@@ -71,6 +75,15 @@ export function PatchBar({ name, changed, patch, library, onLoad, about, tutoria
       document.removeEventListener('pointerdown', close);
     };
   }, [open]);
+  // Escape takes the about line away while it shows, unless the panel is open over it: then it closes the panel.
+  const closeAbout = useEffectEvent((e: KeyboardEvent) => {
+    if (e.key === 'Escape' && !open) onCloseAbout();
+  });
+  useEffect(() => {
+    if (!about.shown) return;
+    document.addEventListener('keydown', closeAbout);
+    return () => document.removeEventListener('keydown', closeAbout);
+  }, [about.shown]);
 
   // The arrows step through sounds and close the panel; picking in the open panel keeps it open, to audition.
   const step = (delta: number) => {
@@ -81,7 +94,7 @@ export function PatchBar({ name, changed, patch, library, onLoad, about, tutoria
   };
   /** Loading a sound is the end of the visit: the panel closes so the sound can be played at once. */
   const load = (next: string, patch: Patch) => {
-    onLoad(next, patch);
+    onPick(next, patch);
     closeToOpener();
   };
   const tutorial = (preset: string) => {
@@ -152,13 +165,30 @@ export function PatchBar({ name, changed, patch, library, onLoad, about, tutoria
         ›
       </button>
       {/* The sound loaded, said to a screen reader, after the arrows, a Preset picked or a Controller's pad (issue 51),
-          with its about line when one shows; the line itself under the name, over the page, so nothing moves. */}
+          with its about line when one shows. The line itself under the name, over the page, so nothing moves; led by
+          the Preset's name, so it reads as that sound's description, and with a × to close it (issue 153). Only the ×
+          takes the pointer, and the words are hidden from a screen reader, which the status has told already. */}
       <span className="visually-hidden" role="status">
         {about.text ? `${name}. ${about.text}` : name}
       </span>
       {about.shown && (
-        <p className="patch-about" aria-hidden="true">
-          {about.text}
+        <p className="patch-about">
+          <Tooltip content={{ title: 'Close', body: 'Close the Preset’s description (Escape does too). It goes by itself at the first change to the sound; every Preset’s description shows on its name in the Patches panel.' }}>
+            <button
+              type="button"
+              className="patch-about-close"
+              aria-label="Close the Preset’s description"
+              onClick={() => {
+                onCloseAbout();
+                opener.current?.focus();
+              }}
+            >
+              ×
+            </button>
+          </Tooltip>
+          <span aria-hidden="true">
+            <b>{name}</b> · {about.text}
+          </span>
         </p>
       )}
 

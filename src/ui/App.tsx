@@ -234,10 +234,12 @@ export function App() {
     onCard: players.startListen,
     onEnd: players.stopListen,
   });
-  // The person's loads show the Preset's about line under its name (issue 109).
+  // A Preset picked in the Patches panel shows its about line under its name (issues 109 and 153); the arrows, a
+  // Controller's steps and its Program buttons load without it.
   const presetAbout = usePresetAbout(patches);
-  const loadPreset = (name: string, patch: Patch) => {
-    patches.load(name, patch);
+  const load = (name: string, patch: Patch) => patches.load(name, patch);
+  const pickPreset = (name: string, patch: Patch) => {
+    load(name, patch);
     presetAbout.show();
   };
   // The Tutorials, from the Patches panel and the header's Tutorial button alike.
@@ -251,9 +253,8 @@ export function App() {
     // Program n is the n-th Preset (0 is Init), so a keyboard's Program buttons step through them.
     onProgram: (number) => {
       const preset = PRESETS[number];
-      if (preset) loadPreset(preset.name, preset.patch);
+      if (preset) load(preset.name, preset.patch);
     },
-    onPresetStep: presetAbout.show,
   });
   const { learnContext, learning } = midi;
 
@@ -300,8 +301,10 @@ export function App() {
           changed={changed}
           patch={patch}
           library={library}
-          onLoad={loadPreset}
+          onLoad={load}
+          onPick={pickPreset}
           about={presetAbout.about}
+          onCloseAbout={presetAbout.hide}
           tutorials={tutorialList}
           onTutorial={startTutorial}
         />

@@ -72,6 +72,17 @@ const STATES: { name: string; open?(page: Page): Promise<void>; close?(page: Pag
   { name: 'Osc 2 tab', open: (page) => page.getByRole('tab', { name: 'Osc 2' }).click(), close: (page) => page.getByRole('tab', { name: 'Osc 1' }).click() },
   { name: 'Mixer tab', open: (page) => page.getByRole('tab', { name: 'Mixer' }).click(), close: (page) => page.getByRole('tab', { name: 'Osc 1' }).click() },
   { name: 'Patches panel', open: (page) => page.getByRole('button', { name: /^Patch:/ }).click(), close: (page) => page.getByRole('button', { name: /^Patch:/ }).click() },
+  // A Preset picked in the panel shows its description under the name, with its × (issue 153).
+  {
+    name: 'Preset’s description',
+    open: async (page) => {
+      await page.getByRole('button', { name: /^Patch:/ }).click();
+      await page.getByRole('dialog', { name: 'Patches' }).getByRole('button', { name: 'Init', exact: true }).click();
+      await expect(page.locator('.patch-about')).toBeVisible();
+      await page.evaluate(() => Promise.all(document.querySelector('.patch-about')?.getAnimations().map((a) => a.finished) ?? [])); // faded in
+    },
+    close: (page) => page.getByRole('button', { name: 'Close the Preset’s description' }).click(),
+  },
   { name: 'Display panel', open: (page) => page.getByRole('button', { name: 'Display', exact: true }).click(), close: (page) => page.getByRole('button', { name: 'Display', exact: true }).click() },
   { name: 'MIDI panel', open: (page) => page.getByRole('button', { name: 'MIDI', exact: true }).click(), close: (page) => page.getByRole('button', { name: 'MIDI', exact: true }).click() },
   { name: 'About', open: (page) => page.getByRole('button', { name: 'About', exact: true }).click(), close: (page) => page.keyboard.press('Escape') },

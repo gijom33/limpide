@@ -1006,14 +1006,39 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
    accent colour already means a Tutorial's control. */
 .patch-name { color: var(--text); font-weight: 600; border-color: var(--muted); }
 .patch-name::after { content: '▾'; flex: none; font-size: var(--text-sm); font-weight: 400; color: var(--muted); }
-/* A loaded Preset's about line (issue 109), under the header's left end like the Patch panel, over the page so nothing
-   moves; clicks go through it to the controls beneath, and the first change to the sound takes it away. */
+/* A loaded Preset's description (issues 109 and 153): its name in bold, then its about line, under the header's left
+   end like the Patch panel, over the page so nothing moves. Only its × takes the pointer: a click on its words goes
+   through to the page beneath. It lies over the Sections' headings (decided by the owner), as wide as the Oscillators
+   and the Filter together, and set close so it never reaches the Osc tabs or the Filter's Mode row (issue 153's
+   e2e test, every Preset at five widths): two lines from 1,280 px wide, three for the longest below, four at 861 px,
+   five on a phone. */
 .patch-about {
-  position: absolute; z-index: 40; top: calc(100% + 6px); left: 0; max-width: min(560px, 100%); margin: 0; padding: 8px 12px;
-  pointer-events: none; font-size: var(--text-md); line-height: 1.4; color: var(--text);
+  --about-w: calc((100% - 2 * var(--space-4)) / 3 * 2 + var(--space-4));
+  position: absolute; z-index: 40; top: calc(100% + 4px); left: 0; max-width: var(--about-w); margin: 0; padding: 4px 6px 4px 10px;
+  pointer-events: none; font-size: var(--text-md); line-height: 1.25; color: var(--text);
   background: var(--panel); border: 1px solid var(--muted); border-radius: var(--radius-panel); box-shadow: var(--shadow-panel);
   animation: play-invite-in 0.2s ease-out;
 }
+.patch-about b { font-weight: 600; }
+/* The × at the line's right end, its corner in the box's padding; on a phone a finger-sized pad around it. */
+.patch-about > .tip-anchor { float: right; margin: -2px -2px 0 8px; pointer-events: auto; }
+.patch-about-close {
+  position: relative; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; padding: 0;
+  font: inherit; font-size: 16px; line-height: 1; color: var(--text); cursor: pointer;
+  background: none; border: 0; border-radius: var(--radius-control);
+}
+.patch-about-close:hover { background: var(--control-hover); }
+.patch-about-close:focus-visible { outline: 2px solid var(--text); outline-offset: 1px; }
+@media (min-width: 1920px) { .patch-about { --about-w: calc((100% - 3 * var(--space-4)) / 2 + var(--space-4)); } }
+/* Up to 860 px the header edges the page's padding: the box lines up with the Sections, as wide as the page's. */
+@media (min-width: 601px) and (max-width: 860px) { .patch-about { left: var(--space-4); --about-w: calc(100% - 2 * var(--space-4)); } }
+@media (max-width: 600px) {
+  .patch-about { left: var(--space-2); --about-w: calc(100% - 2 * var(--space-2)); }
+  .patch-about-close::after { content: ''; position: absolute; inset: -10px; }
+}
+/* Narrower than most phones (375 px) the longest lines take six: a size smaller and set closer, they still clear the
+   Osc tabs. */
+@media (max-width: 374px) { .patch-about { font-size: var(--text-sm); line-height: 1.2; } }
 @media (prefers-reduced-motion: reduce) { .patch-about { animation: none; } }
 /* Never taller than the window below the header: the Presets scroll, the rest of the panel stays in view. */
 /* The Patch panel is anchored to the header (like the Display and MIDI panels), spanning its full width, so the
