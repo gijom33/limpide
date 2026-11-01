@@ -4,6 +4,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-11-01, the owner's bug, with a screenshot of About in Safari, a white rounded box drawn around Bead beside the logo: "I get this weird white box around Bead on Safari."
+
 ## Ideas
 
 - 2026-11-01, the owner, on hearing the night's Talking Filter and Portamento (issues 166 and 119): "They sound good, I think. I do not like Talking filter but that's okay"
