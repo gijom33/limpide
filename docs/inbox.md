@@ -4,8 +4,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
-- 2026-10-31, the owner's bug: "Bead's ghosting effect from detune should be symmetric. Ghost on left when detune negative, ghost on right when detune positive."
-
 ## Ideas
 
 ## Dropped
@@ -156,3 +154,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-31, the owner's idea of the Demo card's caption under its name (triage): to [171](./issues/171-the-demo-cards-caption-under-its-name.md), polish for v1, ready for an agent: the caption under the name, the segments at the bottom (decided by the owner); the card's height held so the segments never jump (Claude's call, open to the owner).
 2026-10-31, the owner's idea of removing Buy Me a Coffee (decided by the owner, option 1): to [172](./issues/172-no-tip-link.md), ready for an agent: the link out of About and the README, a share-or-star line in its place (Claude's call, open to the owner); the idea to [.out-of-scope/tip-link.md](../.out-of-scope/tip-link.md).
 2026-10-31, the owner's idea of a Circuit Tracks layout (triage): to [173](./issues/173-a-circuit-tracks-layout.md), in v1 (decided by the owner): a research pass on what it sends, then a grilling, built after [149](./issues/149-one-seam-for-a-controller.md) (Claude's call, open to the owner).
+2026-10-31, the owner's bug of Bead's Detune twin always on its left (triage): to [174](./issues/174-beads-detune-twin-on-both-sides.md), a bug, ready for an agent: the twin on Detune's side (decided by the owner), all else as now; queued tonight with the bugs.
