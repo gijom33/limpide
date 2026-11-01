@@ -1,5 +1,5 @@
 import { appendFileSync } from 'node:fs';
-import { expect, type Page, test } from '@playwright/test';
+import { expect, type Locator, type Page, test } from '@playwright/test';
 import { type AuditOptions, auditPage, type Rule } from './audit';
 import { sliderName } from './helpers';
 
@@ -78,16 +78,34 @@ const SIZES = {
 
 const SIZE_NAMES = Object.keys(SIZES) as Size[];
 
-/** Turns Bead's switch in Display on or off, and closes Display. */
+/** Presses a button by the keyboard: focused, then Enter. */
+async function pressByKeyboard(page: Page, button: Locator) {
+  await button.focus();
+  await page.keyboard.press('Enter');
+}
+
+/** Turns Bead's switch in Display on or off, and closes Display, all by the keyboard. */
 async function setBead(page: Page, to: 'on' | 'off') {
-  await page.getByRole('button', { name: 'Display', exact: true }).click();
-  // By the keyboard, the arrows moving the switch's choice: narrower than a phone the switch is at the panel's foot,
-  // below the window, where WebKit lost a click on it now and then.
+  // Display too: in WebKit at load 30, a click on it just after About closed opened nothing (issue 177).
+  await pressByKeyboard(page, page.getByRole('button', { name: 'Display', exact: true }));
+  await expect(page.getByRole('region', { name: 'Viewer controls' })).toBeVisible();
+  // The arrows moving the switch's choice: narrower than a phone the switch is at the panel's foot, below the window,
+  // where WebKit lost a click on it now and then.
   await page.getByRole('radio', { name: `Bead ${to === 'on' ? 'off' : 'on'}` }).focus();
   await page.keyboard.press(to === 'on' ? 'ArrowLeft' : 'ArrowRight');
   await expect(page.getByRole('radio', { name: `Bead ${to}` })).toHaveAttribute('aria-checked', 'true');
   await page.keyboard.press('Escape');
   await expect(page.getByRole('region', { name: 'Viewer controls' })).toBeHidden();
+}
+
+/**
+ * Opens About by the keyboard. Narrower than a phone About's button stands past the window's right edge (280 to 312
+ * px in a 280 px window), and in WebKit a click on it now and then opened nothing (issue 177); focus and Enter open
+ * it every time, as the arrows move Bead's switch above.
+ */
+async function openAbout(page: Page) {
+  await pressByKeyboard(page, page.getByRole('button', { name: 'About', exact: true }));
+  await expect(page.getByRole('dialog', { name: 'Limpide' })).toBeVisible();
 }
 
 /** The states to audit, each opened from the page as loaded and closed again. */
@@ -111,20 +129,22 @@ const STATES: { name: string; open?(page: Page): Promise<void>; close?(page: Pag
   },
   { name: 'Display panel', open: (page) => page.getByRole('button', { name: 'Display', exact: true }).click(), close: (page) => page.getByRole('button', { name: 'Display', exact: true }).click() },
   { name: 'MIDI panel', open: (page) => page.getByRole('button', { name: 'MIDI', exact: true }).click(), close: (page) => page.getByRole('button', { name: 'MIDI', exact: true }).click() },
-  { name: 'About', open: (page) => page.getByRole('button', { name: 'About', exact: true }).click(), close: (page) => page.keyboard.press('Escape') },
+  { name: 'About', open: openAbout, close: (page) => page.keyboard.press('Escape') },
   // Bead beside About's logo, its card in place of the credits (issue 163): with its switch on, then off again.
   {
     name: 'Bead’s card in About',
     open: async (page) => {
       await setBead(page, 'on');
-      await page.getByRole('button', { name: 'About', exact: true }).click();
-      await expect(page.getByRole('dialog', { name: 'Limpide' })).toBeVisible();
+      await openAbout(page);
       await page.getByRole('button', { name: 'Bead, Limpide’s water drop: its tricks' }).click();
       await expect(page.getByRole('region', { name: 'Bead' })).toBeVisible();
     },
     close: async (page) => {
+      // Each Escape once the last one's work shows, so the second finds no card left to put away and closes About.
       await page.keyboard.press('Escape');
+      await expect(page.getByRole('region', { name: 'Bead' })).toBeHidden();
       await page.keyboard.press('Escape');
+      await expect(page.getByRole('dialog', { name: 'Limpide' })).toBeHidden();
       await setBead(page, 'off');
     },
   },
