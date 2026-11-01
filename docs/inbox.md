@@ -4,7 +4,22 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-10-31, from profile 16's first review, Tour card 4 says to watch the dot on the Cutoff knob, which is off screen at 1440 × 900 and on a phone.
+- 2026-10-31, from profile 16's first review, Bass Step 4 (Display, Ideal) is ticked before it is done, so Ideal is never explained.
+- 2026-10-31, from profile 16's first review, Acid's Snapshot stays on the pictures through the following Tutorials, unexplained.
+
 ## Ideas
+
+- 2026-10-31, from profile 16's first review, Harmonic, the word the Tour and Tutorials lean on most, is never explained: Tour card 1 should say what it is, and each Tutorial's first use again (129).
+- 2026-10-31, from profile 16's first review, Tour card 1 packs Waveform, cycle, pitch and timbre into one sentence, and says "only Osc 1's fader is up" while the Mixer tab is hidden (129).
+- 2026-10-31, from profile 16's first review, The Filter Envelope arrives unannounced in the Bass, and Decay and Sustain are never explained: the Tour's Amp card should name all four faders (129, 130).
+- 2026-10-31, from profile 16's first review, A Tutorial's first card leads with the Preset's description, which 129 leaves alone and which is the densest text in the app: give each Tutorial its own intro in the new voice (129).
+- 2026-10-31, from profile 16's first review, Harmonics are also called partials, rungs, spikes and bars: one word for the idea, one for the picture (129).
+- 2026-10-31, from profile 16's first review, Ring Bell and FM Ladder explain in arithmetic (sum and difference, 3.38 times the Note): rewrite as what you see and hear (129).
+- 2026-10-31, from profile 16's first review, Seven notes repeat word for word across Tutorials, and three end with the same three tidy-up Steps (129).
+- 2026-10-31, from profile 16's first review, Hz, ms, dB and Init are never explained (129).
+- 2026-10-31, from profile 16's first review, On a phone, the folded Tour card shows the chain line, not what to watch (129).
+- 2026-10-31, from profile 16's first review, The end card doesn't point to the next Tutorial, and the menu's names give no hint of what each teaches.
 
 ## Dropped
 
