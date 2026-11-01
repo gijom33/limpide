@@ -6,8 +6,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
-- 2026-10-31, the owner's idea: "Add Bead to the About screen."
-
 ## Dropped
 
 - 2026-10-30, from Claude's brainstorm, Velocity on the Volume ("a harder hit plays louder, not only brighter"): already so. The Amp Envelope's Attack rises to the Note's Velocity (PRD story 9). Claude's call, open to the owner.
@@ -149,3 +147,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-10-31, the owner's bug of a wave outside the Guides (triage, Claude's call, open to the owner): to [159](./issues/159-the-guides-follow-the-mixer.md), a bug waiting on the owner. Beyond them with Resonance is as designed; with two sources up the Mixer's sum goes beyond them and the tip's "boosted by Resonance" is untrue. One question: the Guides at the Mixer's sum (Claude's recommendation), or at one Oscillator with the tip's words made true.
 2026-10-31, the owner's idea of Display's Curve toggle named Filter (triage): to [161](./issues/161-the-curve-toggle-named-filter.md), polish for v1, ready for an agent: the toggle reads Filter (decided by the owner); the glossary keeps Response Curve for what is drawn, in its tip and accessible name (Claude's call, open to the owner).
 2026-10-31, the owner's idea of Display's Keys, Tips, Bead and Theme on one row (triage): to [162](./issues/162-displays-small-settings-on-one-row.md), polish for v1, ready for an agent: one row (decided by the owner), headings above, two and two where narrow (Claude's call, open to the owner).
+2026-10-31, the owner's idea of Bead in About (triage): to [163](./issues/163-bead-in-about.md), polish for v1, ready for an agent once [150](./issues/150-bead-shown-by-default.md) is done: About names Bead (decided by the owner); a credits line with its picture, one sentence and a link to its secrets page, its Notes left to be found (Claude's call, open to the owner).
