@@ -187,12 +187,20 @@ test('in the sections 2 × 2 the Demo brings a section out from under the header
   await expect(page.locator(':root[data-header-collapsed]')).toHaveCount(0);
   await expect.poll(() => filter.evaluate((s) => s.getBoundingClientRect().top)).toBeLessThan(tall);
   // The intro turns the Filter Envelope's Amount first: the page's first scroll lands the Filter's top under the
-  // header. (Later parts follow other sections.) Read in the page, the moment the page scrolls.
+  // header. (Later parts follow other sections.) Read in the page, the moment the page scrolls: a scroll event that
+  // moves nothing, as WebKit can send late for the wheel above, is not the Demo's.
   const landed = page.evaluate(
     () =>
-      new Promise<number>((resolve) =>
-        addEventListener('scroll', () => resolve(document.querySelector('section[aria-label="Filter"]')!.getBoundingClientRect().top - document.querySelector('header')!.getBoundingClientRect().bottom), { once: true }),
-      ),
+      new Promise<number>((resolve) => {
+        const gap = () => document.querySelector('section[aria-label="Filter"]')!.getBoundingClientRect().top - document.querySelector('header')!.getBoundingClientRect().bottom;
+        const before = gap();
+        const scrolled = () => {
+          if (Math.abs(gap() - before) < 1) return;
+          removeEventListener('scroll', scrolled);
+          resolve(gap());
+        };
+        addEventListener('scroll', scrolled);
+      }),
   );
   await demo(page).click();
   expect(await landed).toBeGreaterThanOrEqual(0);
