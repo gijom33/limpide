@@ -1,4 +1,4 @@
-import { createMidiParser, type MidiMessage } from './parser';
+import { type ClockMessage, createMidiParser, type MidiMessage } from './parser';
 
 /** The parts of a Web MIDI input this needs, so tests can stand in for real hardware. */
 export interface MidiInputLike extends EventTarget {
@@ -18,6 +18,11 @@ const nameOf = (input: MidiInputLike) => input.name ?? 'MIDI device';
 interface Handlers {
   /** A message, with the name of the Controller it came from. */
   onMessage(message: MidiMessage, from: string): void;
+  /**
+   * A MIDI clock's message (issue 136), with the name of the input it came from and when it came, in seconds on the
+   * page's clock (`performance.now()`'s).
+   */
+  onClock?(message: ClockMessage, from: string, time: number): void;
   /** The connected Controllers' names, whenever they change. */
   onDevices(names: string[]): void;
 }
@@ -26,7 +31,7 @@ interface Handlers {
  * Listens to every connected Controller, now and as they come and go. Each has its own parser (running status
  * is per device). When one is unplugged, every Note still held on it is released, so nothing is left stuck.
  */
-export function connectMidi(access: MidiAccessLike, { onMessage, onDevices }: Handlers): () => void {
+export function connectMidi(access: MidiAccessLike, { onMessage, onClock, onDevices }: Handlers): () => void {
   const attached = new Map<string, { input: MidiInputLike; listener: EventListener; held: Map<number, number> }>();
 
   const attach = (input: MidiInputLike) => {
@@ -34,7 +39,14 @@ export function connectMidi(access: MidiAccessLike, { onMessage, onDevices }: Ha
     const parser = createMidiParser();
     const held = new Map<number, number>(); // note → channel
     const listener: EventListener = (event) => {
+      // When the message came: its event's time stamp, unless a browser stamps it on another clock than the page's.
+      const now = performance.now();
+      const stamp = Math.abs(event.timeStamp - now) < 1000 ? event.timeStamp : now;
       for (const message of parser.feed((event as Event & { data: Uint8Array }).data)) {
+        if (message.type === 'clock' || message.type === 'start' || message.type === 'continue' || message.type === 'stop') {
+          onClock?.(message, nameOf(input), stamp / 1000);
+          continue;
+        }
         if (message.type === 'noteOn') held.set(message.note, message.channel);
         if (message.type === 'noteOff') held.delete(message.note);
         onMessage(message, nameOf(input));

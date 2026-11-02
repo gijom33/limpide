@@ -50,10 +50,21 @@ describe('MIDI parser', () => {
     expect(parser.feed(Uint8Array.of(74, 11))).toEqual([{ type: 'cc', channel: 1, controller: 74, value: 11 }]);
   });
 
-  it('ignores clock and keep-alive bytes, even in the middle of a message, without losing running status', () => {
-    expect(parse(0x90, 0xf8, 60, 0xfe, 100, 0xf8, 62, 90)).toEqual([
+  it('reads the clock, Start, Continue and Stop wherever they fall, without losing running status; keep-alive is skipped (issue 136)', () => {
+    expect(parse(0x90, 0xf8, 60, 0xfe, 100, 0xfa, 62, 0xfb, 90, 0xfc, 0xff, 0xf9, 0xfd)).toEqual([
+      { type: 'clock' },
       { type: 'noteOn', channel: 1, note: 60, velocity: 100 / 127 },
+      { type: 'start' },
+      { type: 'continue' },
       { type: 'noteOn', channel: 1, note: 62, velocity: 90 / 127 },
+      { type: 'stop' },
+    ]);
+  });
+
+  it('reads the clock in a system-exclusive dump, and goes on skipping the dump (issue 136)', () => {
+    expect(parse(0xf0, 0x7e, 0xf8, 0x01, 0xf7, 0x90, 60, 1)).toEqual([
+      { type: 'clock' },
+      { type: 'noteOn', channel: 1, note: 60, velocity: 1 / 127 },
     ]);
   });
 

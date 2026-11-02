@@ -236,6 +236,8 @@ export function useMidi(host: Host) {
             setActivity(describeMessage(m));
             if (m.type === 'pressure' && m.value > 0) setPressureHeard(true);
           },
+          // A clock from any input sets the tempo (issue 136); it is no Controller's control, nor shown as one.
+          onClock: (m, name, time) => session.tempo.midiClock(m.type, time, name),
           onDevices: (devices) => {
             setMidi({ kind: 'ready', devices });
             const mappings = pluggedIn(devices, mappingStore.list(), storage);
@@ -249,7 +251,7 @@ export function useMidi(host: Host) {
       cancelled = true;
       dispose();
     };
-  }, [surface, midiWanted, mappingStore, storage]);
+  }, [surface, midiWanted, mappingStore, storage, session]);
 
   return {
     midi, activity, pressureHeard, mappings, mappingStore, learn, learning, learnContext, surface,

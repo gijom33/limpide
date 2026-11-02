@@ -1288,6 +1288,9 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .tempo-bpm[aria-disabled='true'], .tempo-tap[aria-disabled='true'] { cursor: default; }
 .tempo-value { min-width: 3ch; text-align: right; color: var(--text); font-variant-numeric: tabular-nums; }
 .tempo-unit { font-size: var(--text-xs); }
+/* While a MIDI clock sets the tempo (issue 136), "MIDI" in the unit's place, in the text's colour: about as wide as
+   "BPM", so nothing beside it moves. From 861 to 1099 px, where the BPM shows its number alone, the tip says it. */
+.tempo-unit[data-midi], .tempo-open .tool-word[data-midi] { color: var(--text); }
 .tempo-typing { width: calc(3ch + 52px); text-align: center; color: var(--text); background: var(--bg); cursor: text; }
 .tempo-menu { position: relative; display: flex; }
 .tempo-panel {

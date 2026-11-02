@@ -376,6 +376,7 @@ export const TIPS = {
   },
   lfoSync: { title: 'Sync', body: 'On: the Rate is a note value at the tempo; with Retrigger off, the LFO’s cycle lands on the beat, and with it on, each Note starts the cycle. Off: the Rate is in Hz, as it was.' },
   tempo: { title: 'Tempo', body: 'The page’s beats per minute, which an LFO with Sync on follows. Drag it or use the arrows; double-click to type it.' },
+  tempoClock: { title: 'Tempo', body: 'Following a MIDI clock: the tempo is the clock’s while it runs, so it cannot be set here. When its ticks stop, its last BPM stays, yours to change.' },
   tap: { title: 'Tap', body: 'Tap it in time: from the second tap the tempo follows your last four, its beat where you last tapped.' },
   lfoDepth: {
     title: 'Depth',

@@ -1,7 +1,8 @@
 import { expect, type Page } from '@playwright/test';
 import { startEmptied, USUAL } from './startState';
 
-type MidiWindow = { playMidi(bytes: number[]): void };
+/** Plays a message from the stand-in Controller; `at` (ms, on the page's clock) stamps it as having come then. */
+type MidiWindow = { playMidi(bytes: number[], at?: number): void };
 
 /** Plays raw MIDI messages from the stand-in Controller, in order. */
 export const play = (page: Page, ...messages: number[][]) =>
@@ -39,8 +40,11 @@ export async function withFakeController(page: Page, name = 'Stand-in Controller
     const input = Object.assign(new EventTarget(), { id: 'fake', name, state: 'connected' });
     const access = Object.assign(new EventTarget(), { inputs: new Map([['fake', input]]) });
     Object.defineProperty(navigator, 'requestMIDIAccess', { value: () => Promise.resolve(access), configurable: true });
-    (window as unknown as MidiWindow).playMidi = (bytes) =>
-      input.dispatchEvent(Object.assign(new Event('midimessage'), { data: Uint8Array.from(bytes) }));
+    (window as unknown as MidiWindow).playMidi = (bytes, at) => {
+      const event = Object.assign(new Event('midimessage'), { data: Uint8Array.from(bytes) });
+      if (at !== undefined) Object.defineProperty(event, 'timeStamp', { value: at });
+      input.dispatchEvent(event);
+    };
   }, name);
   await page.goto('/');
   await expect(midiButton(page)).toContainText('1');

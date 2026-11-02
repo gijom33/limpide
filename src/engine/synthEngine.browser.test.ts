@@ -1199,6 +1199,16 @@ describe('an LFO synced to the tempo (issue 112)', () => {
     expect(gap(measured, engine, 0.21, SECONDS)).toBeLessThan(0.005);
   });
 
+  it('is pulled onto a beat count started a moment ago, as a MIDI clock’s Start counts it from its first tick (issue 136)', async () => {
+    // At 0.8 s the beats of 120 BPM are counted again from 0.63 s, a moment past: pulled onto them over two cycles of
+    // 1/2 s, from 0.8 + 1 s, so the beat at 2.13 s finds the saw at its foot.
+    const { measured, engine } = await gains({}, (e) => e.setTempo(120, 0.63));
+    noJump(engine);
+    onTheBeats(measured, engine, [2.13], 1 / 2);
+    expect(engine.tempo()).toEqual({ bpm: 120, origin: 0.63 });
+    expect(gap(measured, engine, 0.21, SECONDS)).toBeLessThan(0.005);
+  });
+
   it('follows a note value turned from where it is, pulled onto its beat over two cycles, the model on the sound', async () => {
     // A 1/8 at 120 BPM from 0.2 s, 4 Hz: on its beats from 0.8 + 0.5 s, every quarter of a second from 0.2 s.
     const { measured, engine } = await gains({}, (e, lfoAmount) => e.applyPatch({ ...defaultPatch(), ...tremolo, lfoNote: noteIndex('1/8'), lfoAmount }));
