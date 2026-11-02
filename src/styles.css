@@ -625,6 +625,11 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   display: flex; align-items: flex-end; min-height: var(--target); padding: 0; color: inherit;
   background: none; border: 0; border-radius: var(--radius-control); cursor: pointer;
 }
+/* Below 340 px (a folded phone's 280), a smaller name and gap keep Bead inside About, in Linux's wider type too. */
+@media (max-width: 339px) {
+  .about-title { font-size: 24px; }
+  .about-bead { margin-left: var(--space-2); }
+}
 .about-bead:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
 .about-bead svg { display: block; overflow: visible; }
 /* Its idle life, all in the stylesheet: it blinks and glances about; now and then it jiggles, wags its tail or hops. */
