@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · enhancement. Built (2026-11-01) on night/2026-11-01, for the owner to try
+**Status:** ready-for-agent · enhancement. Channel aftertouch built (2026-11-01) on night/2026-11-01; polyphonic aftertouch added by the owner the same evening (Decisions, at the end), queued on the night branch as a follow-up
 
 ## Agent Brief
 
@@ -15,6 +15,7 @@
 
 **Desired behavior:**
 - Channel aftertouch (one pressure for the whole keyboard, 0 to 127) moves one Destination, from none at no pressure to its full reach at full pressure. Per-Note (polyphonic) pressure stays ignored.
+  **Since then (2026-11-01, the owner's decision 1 below):** polyphonic (per-Note) pressure is read too; the highest among the Notes held moves the one Destination, as channel pressure does. Per-Voice pressure and MPE stay for v2.
 - The Destination is chosen in the MIDI panel, from the LFOs' Destinations; the Cutoff by default, so pressing harder brightens the sound. The mod wheel keeps what it does today.
 - Its reach at full pressure follows the Destination's law in the Modulation model, as an LFO's Depth does; for the Cutoff, up to two octaves up (Claude's call, open to the owner).
 - Its move adds to the knob's value and to any LFO's, and shows where an LFO's does: the Destination's modulation ring, the Envelope Timeline's line for it, and the Effective Cutoff. The Modulation model mirrors it, so the Viewers and the sound agree (ADR-0003).
@@ -34,6 +35,7 @@
 
 **Out of scope:**
 - Per-Note pressure and MPE, out of scope (decided by the owner, 2026-10-31)
+  **Since then (2026-11-01, the owner's decision 1 below):** polyphonic (per-Note) pressure is read too; the highest among the Notes held moves the one Destination, as channel pressure does. Per-Voice pressure and MPE stay for v2.
 - More than one Destination at once, or a modulation matrix
 - Aftertouch from the on-screen piano or the computer keyboard
 
@@ -72,3 +74,6 @@ Built on night/2026-11-01, test-first.
 - **Another Destination:** pick Resonance, or Pulse Width on a pulse wave, in the MIDI panel, then press again. Reload the page: the choice is kept.
 - **A keyboard without aftertouch:** nothing changes.
 
+## Decisions (the owner, 2026-11-01)
+
+1. **Polyphonic aftertouch, the highest pad,** decided by the owner (about 19:45: "Highest pad, tonight", having noted that the TempoPAD C16 sends polyphonic aftertouch). The MIDI parser also reads per-Note pressure (0xA0). The pressure used is the highest among the Notes held, a Note's pressure forgotten when it is released, and it moves the one chosen Destination for every Note, as channel pressure does. Channel and per-Note pressure feed the same pressure. Per-Voice pressure and MPE stay for v2. This reverses the out-of-scope line of 2026-10-31.
