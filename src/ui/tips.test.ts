@@ -80,7 +80,7 @@ it('a synced Rate’s tip works its Hz out under the hood, at the tempo, as it c
 it('the tempo’s, Tap’s and Sync’s tips say why a synced wobble stays on the beat when the tempo changes (issue 137)', () => {
   expect(TIPS.lfoSync.body).toMatch(/follows the tempo: double the BPM and the LFO runs twice as fast/);
   expect(TIPS.tempo.body).toMatch(/keeps to the beat/);
-  expect(TIPS.tap.body).toMatch(/synced LFO/);
+  expect(TIPS.tap.body).toMatch(/synced LFO’s speed follows it/);
 });
 
 it('an Envelope fader’s tip works out τ at its setting; the others, Glide’s too, keep their own (issue 168)', () => {

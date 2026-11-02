@@ -452,8 +452,8 @@ describe('the Demo’s Tremolo Keys at bar 6 (review 14)', () => {
   }, 60_000); // two 12-second renders of six Voices: past the default limit when the whole suite runs at once
 });
 
-// Issue 137: the Presets whose LFO is a rhythm use Sync, at the note value that sounds at 120 BPM (the engine's tempo
-// until one is set) as their Hz did. Each is rendered both ways, Sync on and off, and must sound the same.
+// Issue 137: the Presets whose LFO is a rhythm use Sync, each at the note value whose Hz at 120 BPM (the engine's tempo
+// until one is set) is the Rate it keeps for Sync off. Each is rendered both ways, Sync on and off, and sounds the same.
 describe('the Presets synced for issue 137 sound at 120 BPM as their Hz did', () => {
   /** The level in dB of each 20 ms of `s`. */
   const levels = (s: Float32Array) => {

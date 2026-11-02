@@ -384,7 +384,7 @@ export const TIPS = {
     body: 'The page’s beats per minute (BPM), which every LFO with Sync on follows: its note value is a share of a beat, so at a new tempo its speed changes with it, and a synced wobble keeps to the beat. Drag it or use the arrows; double-click to type it. Loading a Preset leaves it as it is.',
   },
   tempoClock: { title: 'Tempo', body: 'Following a MIDI clock: the tempo is the clock’s while it runs, so it cannot be set here. When its ticks stop, its last BPM stays, yours to change.' },
-  tap: { title: 'Tap', body: 'Tap it in time with the music: from the second tap the tempo follows your last four, its beat where you last tapped, and every synced LFO falls in with it.' },
+  tap: { title: 'Tap', body: 'Tap it in time with the music: from the second tap the tempo follows your last four, its beat where you last tapped, and every synced LFO’s speed follows it.' },
   lfoDepth: {
     title: 'Depth',
     body: 'How far the LFO moves its Destination. At 0 it moves nothing.',

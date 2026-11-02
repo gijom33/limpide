@@ -9,7 +9,7 @@ import {
 import { WAVEFORM_NAMES, type Waveform } from './harmonics';
 import { besselJ, osc2Ratio } from './idealReference';
 import { A4_MIDI, noteToFrequency } from './pitch';
-import { NOTE_VALUES, TEMPO } from './tempo';
+import { formatSyncedRate, NOTE_VALUES, noteHz, TEMPO } from './tempo';
 
 /**
  * The Synth Geek Layer's content (issue 14): the quantities behind the sound, as data. The formulas are the ones the
@@ -339,11 +339,11 @@ export const UNDER_THE_HOOD = {
  */
 function perBeatText(beats: number): string {
   const perBeat = 1 / beats;
-  let below = 1;
-  while (Math.abs(perBeat * below - Math.round(perBeat * below)) > 1e-9) below++;
-  const above = Math.round(perBeat * below);
-  if (below === 1) return `× ${above}`;
-  return above === 1 ? `÷ ${below}` : `× ${above}/${below}`;
+  let denominator = 1;
+  while (Math.abs(perBeat * denominator - Math.round(perBeat * denominator)) > 1e-9) denominator++;
+  const numerator = Math.round(perBeat * denominator);
+  if (denominator === 1) return `× ${numerator}`;
+  return numerator === 1 ? `÷ ${denominator}` : `× ${numerator}/${denominator}`;
 }
 
 /**
@@ -351,14 +351,14 @@ function perBeatText(beats: number): string {
  * the note values in a beat: "1/8 at 120 BPM: 120 ÷ 60 × 2 = 4 Hz".
  */
 export function syncedRateConversion(index: number, bpm: number): string {
-  const { name, beats } = NOTE_VALUES[index];
-  return `${name} at ${bpm} BPM: ${bpm} ÷ 60 ${perBeatText(beats)} = ${Number((bpm / 60 / beats).toPrecision(3))} Hz`;
+  const { note, hz } = formatSyncedRate(index, bpm);
+  return `${note} at ${bpm} BPM: ${bpm} ÷ 60 ${perBeatText(NOTE_VALUES[index].beats)} = ${hz}`;
 }
 
 /** A synced Rate's formula under the hood, worked out at the tempo: its conversion, then the period its readout shows. */
 export function syncedRateUnderTheHood(index: number, bpm: number): Formula {
   const { formula, where } = UNDER_THE_HOOD.lfoNote;
-  return { formula, where: `${syncedRateConversion(index, bpm)}, one cycle every ${periodText((NOTE_VALUES[index].beats * 60) / bpm)}. ${where}` };
+  return { formula, where: `${syncedRateConversion(index, bpm)}, one cycle every ${periodText(1 / noteHz(index, bpm))}. ${where}` };
 }
 
 // Issue 170: the Viewers' numbers (issue 133, decision 11).

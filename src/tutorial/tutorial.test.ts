@@ -36,7 +36,7 @@ describe('a Step', () => {
     expect(reached(semitone, { ...defaultPatch(), osc2Semitone: 4 }, DEFAULT_OVERLAYS)).toBe(false);
   });
 
-  it('is reached by Sync once it is on, and names its note value as the Rate shows it', () => {
+  it('is reached by Sync once it is on, and names its note value as the Rate shows it (issue 137)', () => {
     const sync: Step = { kind: 'choice', id: 'lfoSync', to: 'on', say: 'Switch on Sync.', note: 'On the beat.' };
     expect(reached(sync, defaultPatch(), DEFAULT_OVERLAYS)).toBe(false);
     expect(reached(sync, { ...defaultPatch(), lfoSync: 'on' }, DEFAULT_OVERLAYS)).toBe(true);
