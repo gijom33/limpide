@@ -278,6 +278,26 @@ test('a key that stops the Demo says so, and offers to play it again', async ({ 
   await expect(status).toBeHidden();
 });
 
+test('the card saying the Demo stopped goes at once when a Tutorial or the Tour starts, never under its card (issue 192)', async ({ page }) => {
+  for (const start of ['a Tutorial', 'the Tour']) {
+    await page.goto('/');
+    await demo(page).click();
+    await page.getByRole('group', { name: 'Piano' }).locator('[data-note]').first().click();
+    await expect(page.getByRole('status').filter({ hasText: 'The Demo stopped' })).toBeVisible();
+    if (start === 'a Tutorial') {
+      await page.getByRole('button', { name: /^Patch: / }).click();
+      await page.getByRole('dialog', { name: 'Patches' }).getByRole('group', { name: 'Tutorials' }).getByRole('button', { name: /^Tutorial: Bass/ }).click();
+      await expect(page.getByRole('region', { name: /^Tutorial: / })).toBeVisible();
+    } else {
+      await page.getByRole('button', { name: 'About' }).click();
+      await page.getByRole('dialog', { name: 'Limpide' }).getByRole('button', { name: 'Take the Tour' }).click();
+      await expect(page.getByRole('region', { name: 'Tour' })).toBeVisible();
+    }
+    // Well before its 6 s are up.
+    await expect(page.getByRole('region', { name: 'Demo' }), start).toBeHidden({ timeout: 1000 });
+  }
+});
+
 test('where the page fits its window, the Demo’s card adds no scroll bar: it sits over the bottom edge', async ({ page }) => {
   await page.setViewportSize({ width: 1920, height: 1080 });
   await page.goto('/');

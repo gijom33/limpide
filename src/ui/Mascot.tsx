@@ -1,7 +1,7 @@
 import { useContext, useEffect, useEffectEvent, useRef, useState } from 'react';
 import type { Theme } from '../app/rememberedSettings';
 import type { Word } from '../input/callingPhrase';
-import { type LfoNumber, lfos } from '../patch/patch';
+import { lfos } from '../patch/patch';
 import type { PatchStore } from '../patch/patchStore';
 import { addToRenderLoop } from '../viewers/renderLoop';
 import { lineAt, lineWiderThan } from './LfoPlot';
@@ -11,6 +11,7 @@ import { type Act, createMascotMotion, hatOn, type Pose, type Room, SCREAMING } 
 import { CATCH, CLOUD, HATS, HOOK, ICE, type Picture, PROPS, type Rect, ROD_TIP, SKY, type Stage, TAILS } from './mascotPictures';
 import {
   acrossOf, type Cover, choosePerch, clearAlong, createMascotPlace, type Drawing, drawingOf, HOVER_UNDER, type Moving, nearestSpan, type Perch, ridesFor, type Span,
+  standingCard, throwWalls, type Visit, visitEnds,
 } from './mascotPlace';
 import { createSpray, MOST_DROPLETS } from './mascotSpray';
 import { ModulationContext } from './modulationRing';
@@ -410,7 +411,7 @@ export function Mascot({
     let room: { key: string; room: Room } | null = null;
     const between = (a: number, b: number) => a + Math.random() * (b - a);
     // Three or four across: a visit to another section now and then, or a ride on an LFO's plot (issue 141).
-    let visit: { id: string; until: number; ride?: LfoNumber } | null = null;
+    let visit: Visit | null = null;
     // The page's text as last read, and when, where the page was scrolled and how big the window was (issue 181).
     let text: { at: number; x: number; y: number; width: number; height: number; boxes: Cover[] } | null = null;
     const textNow = (seconds: number) => {
@@ -422,6 +423,8 @@ export function Mascot({
       }
       return text.boxes;
     };
+    // Gone out of sight with nowhere clear to be (issue 192), to come back into view once somewhere is.
+    let hid = false;
     // Sent away on a ride: it jumps home first, and melts once it has landed there.
     let gettingOff = false;
     let nextVisit = context.engine.now() + between(15, 35);
@@ -519,7 +522,7 @@ export function Mascot({
         // Its speed over the last tenth of a second.
         const [first, last] = [moves[0], moves.at(-1)!];
         const dt = Math.max(0.016, last.t - first.t);
-        place.toss((last.x - first.x) / dt, (last.y - first.y) / dt, { min: 0, max: innerWidth - WIDTH });
+        place.toss((last.x - first.x) / dt, (last.y - first.y) / dt, throwWalls(document.body.getBoundingClientRect()));
         motion.thrown(context.engine.now());
       },
       word: (w) => motion.word(w, context.engine.now()),
@@ -547,8 +550,12 @@ export function Mascot({
       const drawing = drawingOf({ twin: twinWay });
       const standing = drawingOf({ twin: twinWay, resting: true });
       const texts = textNow(seconds);
-      const docked = document.querySelector(DOCKED)?.getBoundingClientRect();
-      const card = docked && docked.width > 0 ? { id: 'card', box: docked } : null;
+      // The card it may stand on: the topmost docked (issue 192).
+      const docked = standingCard(
+        [...document.querySelectorAll(DOCKED)].map((el) => el.getBoundingClientRect()).filter((r) => r.width > 0),
+        drawing,
+      );
+      const card = docked ? { id: 'card', box: docked } : null;
       /** Along a line, where it is under no cover; and where it stands, over no text either (issue 181). */
       const clearOf = (box: { left: number; right: number; top: number }, drawn: Drawing) => clearAlong(box, covers, drawn);
       const clearOn = (box: DOMRect) =>
@@ -586,23 +593,29 @@ export function Mascot({
       // header to hover on.
       let on: { id: string; box: DOMRect };
       let homeId: string | null = null;
+      // Now and then a visit to another section in view: down to one below, or across to one beside; then home.
+      const inView = (s: { box: DOMRect }) => roomAbove(s.box) && s.box.top <= innerHeight - 4 && clearOn(s.box).length > 0;
+      // A visit's or a ride's end (issues 141, 151); the window turning stacked ends it too (issue 192).
+      if (
+        visit &&
+        visitEnds(visit, {
+          now,
+          stacked: stacked.matches,
+          rideable: rideable.map((p) => p.lfo),
+          inView: visit.ride ? [] : sections.filter((s) => s.id === visit!.id && inView(s)).map((s) => s.id),
+          held: moving === 'held',
+          leaving: leavingNow(),
+          guided: guide !== null,
+        })
+      ) {
+        if (visit.ride && leavingNow()) gettingOff = true;
+        visit = null;
+        nextVisit = now + between(20, 40);
+      }
       if (!stacked.matches) {
         const top = Math.min(...sections.map((s) => s.box.top));
         const home = sections.filter((s) => s.box.top - top < 4).reduce((a, b) => (b.box.right > a.box.right ? b : a));
         homeId = home.id;
-        // Now and then a visit to another section in view: down to one below, or across to one beside; then home.
-        const inView = (s: { box: DOMRect }) => roomAbove(s.box) && s.box.top <= innerHeight - 4 && clearOn(s.box).length > 0;
-        // A ride ends as its LFO stops being one to ride (its Depth, Waveform or Rate, the Demo, reduced motion), its
-        // plot goes out of view, or it is picked up, sent away or a Tutorial or the Tour opens: it jumps home (issues
-        // 141, 151).
-        const visitEnds = visit?.ride
-          ? !rideable.some((p) => p.lfo === visit!.ride) || moving === 'held' || leavingNow() || guide !== null
-          : !sections.some((s) => s.id === visit?.id && inView(s));
-        if (visit && ((now >= visit.until && !guide) || visitEnds)) {
-          if (visit.ride && leavingNow()) gettingOff = true;
-          visit = null;
-          nextVisit = now + between(20, 40);
-        }
         // Not in the middle of a funny turn: it plays to its end first (the owner, 2026-10-30).
         if (!visit && now >= nextVisit && !guide && !still.matches && leaveBy === null && !leavingNow() && moving === 'standing' && !shown?.doing) {
           // A plot to ride (issue 141) is a choice beside the sections in view.
@@ -628,15 +641,18 @@ export function Mascot({
         // Under the section strip, not the header, an edge is a line for it while it shows under the strip, the drop over
         // the strip's foot (issue 142): hovering, it would be just off that line.
         const overlap = strip > header ? HEIGHT - EDGE_SHOWING : 0;
+        const span = column[0].box;
+        // Its hover line, clear of what covers it up to the top of its bob, the header's foot (issues 164 and 192).
+        const hoverLine = { left: span.left + 4, right: span.right - 4, top: ceiling + HEIGHT + HOVER_UNDER };
         perch = choosePerch({
           current: perch?.id ?? null,
           edges: column.map((s) => ({ id: s.id, top: s.box.top, covered: !clearOn(s.box).length })),
           card: card && { id: card.id, top: card.box.top, covered: !clearOn(card.box).length },
           ceiling, overlap, bottom: innerHeight,
           height: HEIGHT, headroom: HEADROOM, where: foot ?? ceiling,
+          hoverCovered: !clearOf(hoverLine, drawingOf({ twin: twinWay, above: HOVER_UNDER })).length,
         });
         const id = perch.id;
-        const span = column[0].box;
         on = column.find((s) => s.id === id) ?? (id === card?.id ? card : { id, box: new DOMRect(span.left, perch.foot, span.width, 0) });
       }
       // Thrown (issue 127): it lands on the first edge under it that it comes down onto, staying there a while.
@@ -983,10 +999,15 @@ export function Mascot({
       }
       // Coming into view: up from behind its edge (fast for a pop, then a hop), down from under the header, or, falling
       // from the top of the window, all at once.
+      // With nowhere clear to be, it goes back up out of sight under the header or the tabs, and comes down again once
+      // somewhere is (issue 192).
       comingFrom ??= perch.hovering ? 'header' : arrival === 'rain' ? 'sky' : 'edge';
+      if (perch.waiting) [comingFrom, hid] = ['header', true];
       const wasUp = up;
-      up = still.matches || comingFrom === 'sky' ? 1 : Math.min(1, up + dt / (arrival === 'pop' ? RISE_SECONDS / 2 : RISE_SECONDS));
-      if (arrival === 'pop' && wasUp < 1 && up === 1) motion.gesture('new', now);
+      const popping = arrival === 'pop' && !hid;
+      if (perch.waiting) up = still.matches ? 0 : Math.max(0, up - dt / RISE_SECONDS);
+      else up = still.matches || comingFrom === 'sky' ? 1 : Math.min(1, up + dt / (popping ? RISE_SECONDS / 2 : RISE_SECONDS));
+      if (popping && wasUp < 1 && up === 1) motion.gesture('new', now);
       const rise = up * up * (3 - 2 * up);
       const hidden = (1 - rise) * HEIGHT;
       outer.style.clipPath = up < 1 ? (comingFrom === 'header' ? `inset(${HEADROOM}px -60px -60px -60px)` : 'inset(-60px -60px 0 -60px)') : 'none';

@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { noteIndex } from '../music/tempo';
 import type { Lfo } from '../patch/patch';
-import { TWIN_PX } from './mascotCling';
+import { TURNED_PAST, TWIN_PX } from './mascotCling';
 import {
   acrossOf, boxOf, choosePerch, clearAlong, createMascotPlace, drawingOf, FASTEST_THROW, GRAVITY, HOVER_UNDER, LANDING_SECONDS, 
-  LEEWAY, type Moving, nearestSpan, type Perch,type Placed, ridesFor, type Span, SWUNG_BELOW, WINDUP_SECONDS,
+  LEEWAY, type Moving, nearestSpan, type Perch,type Placed, ridesFor, type Span, SWUNG_BELOW, standingCard, throwWalls, visitEnds, WINDUP_SECONDS,
 } from './mascotPlace';
 
 const H = 26;
@@ -84,9 +84,20 @@ describe('where along a line it is under no card, tip or panel (issue 164)', () 
   });
 });
 
-describe('its whole drawing along a line, its twin and its tail included (issue 181)', () => {
+describe('its whole drawing along a line, its twin and its tail included (issues 181 and 192)', () => {
   const line = { left: 0, right: 375, top: 600 };
   const over = (left: number, right: number) => ({ left, right, top: 500, bottom: 700 });
+
+  it('a cover beside its stretch keeps off its tail turned round, past its box’s left (issue 179)', () => {
+    expect(clearAlong(line, [over(0, 100)], boxOf(W, H))).toEqual([{ min: 100, max: 375 - W }]);
+    expect(clearAlong(line, [over(0, 100)], drawingOf())).toEqual([{ min: 100 + TURNED_PAST, max: 375 - W }]);
+  });
+
+  it('and off its Detune twin, on its side (issue 174)', () => {
+    expect(clearAlong(line, [over(0, 100)], drawingOf({ twin: -TWIN_PX }))).toEqual([{ min: 100 + TURNED_PAST + TWIN_PX, max: 375 - W }]);
+    expect(clearAlong(line, [over(300, 375)], drawingOf())).toEqual([{ min: 0, max: 300 - W }]);
+    expect(clearAlong(line, [over(300, 375)], drawingOf({ twin: TWIN_PX }))).toEqual([{ min: 0, max: 300 - W - TWIN_PX }]);
+  });
 
   it('resting, it faces as drawn: text left of its box is clear of it, a little apart, but for its twin there (issue 181)', () => {
     const label = over(0, 100);
@@ -103,6 +114,65 @@ describe('its whole drawing along a line, its twin and its tail included (issue 
     // Its tail leaves its drop 18 px from its box's left: over the heading, no spot from 20 − 44 to 52 − 18, a little apart.
     expect(clearAlong(line, [heading], drawingOf({ resting: true }))).toEqual([{ min: 52 - 18 + LEEWAY, max: 375 - W }]);
     expect(clearAlong(line, [{ ...heading, top: 600 + SWUNG_BELOW }], drawingOf({ resting: true }))).toEqual([{ min: 0, max: 375 - W }]);
+  });
+});
+
+describe('the docked card it stands on, with two docked (issue 192)', () => {
+  // The Demo's "stopped" card, and a Tutorial's over it, later in the page.
+  const demo = { left: 400, right: 1040, top: 760, bottom: 880 };
+  const tutorial = { left: 360, right: 1080, top: 700, bottom: 880 };
+
+  it('the one drawn over the others: the later one', () => {
+    expect(standingCard([demo, tutorial], drawingOf())).toBe(tutorial);
+    expect(standingCard([tutorial, demo], drawingOf())).toBe(demo);
+    expect(standingCard([demo], drawingOf())).toBe(demo);
+    expect(standingCard([], drawingOf())).toBeNull();
+  });
+
+  it('one too narrow for it, the one under, where its top is clear of the one over', () => {
+    const narrow = { left: 700, right: 720, top: 650, bottom: 880 };
+    expect(standingCard([demo, narrow], drawingOf())).toBe(demo);
+    // A card's top covered all along by the one over it is never stood on.
+    const under = { left: 705, right: 715, top: 700, bottom: 880 };
+    expect(standingCard([under, narrow], drawingOf())).toBeNull();
+  });
+});
+
+describe('a visit or a ride ending (issues 141, 151 and 192)', () => {
+  const ride = { id: 'ride 1', until: 20, ride: 1 as const };
+  const visit = { id: 'Filter', until: 20 };
+  const now = { now: 10, stacked: false, rideable: [1, 2] as (1 | 2)[], inView: ['Filter', 'Amp'], held: false, leaving: false, guided: false };
+
+  it('goes on while its time lasts and its LFO is one to ride, or its section in view', () => {
+    expect(visitEnds(ride, now)).toBe(false);
+    expect(visitEnds(visit, now)).toBe(false);
+    expect(visitEnds(ride, { ...now, now: 20 })).toBe(true);
+    expect(visitEnds(visit, { ...now, now: 20 })).toBe(true);
+  });
+
+  it('the window turning stacked ends it mid-ride, or mid-visit', () => {
+    expect(visitEnds(ride, { ...now, stacked: true })).toBe(true);
+    expect(visitEnds(visit, { ...now, stacked: true })).toBe(true);
+  });
+
+  it('a ride ends as its LFO stops being one to ride, it is picked up, sent away, or a Tutorial opens', () => {
+    expect(visitEnds(ride, { ...now, rideable: [2] })).toBe(true);
+    expect(visitEnds(ride, { ...now, held: true })).toBe(true);
+    expect(visitEnds(ride, { ...now, leaving: true })).toBe(true);
+    expect(visitEnds(ride, { ...now, guided: true })).toBe(true);
+  });
+
+  it('a visit ends as its section leaves the view; a Tutorial keeps it past its time', () => {
+    expect(visitEnds(visit, { ...now, inView: ['Amp'] })).toBe(true);
+    expect(visitEnds(visit, { ...now, now: 20, guided: true })).toBe(false);
+  });
+});
+
+describe('thrown, it bounces off the page’s sides (issue 192)', () => {
+  it('the page’s sides in the window: below 320 px wide, the page’s, not the window’s', () => {
+    expect(throwWalls({ left: 0, right: 1440 })).toEqual({ min: 0, max: 1440 - W });
+    // A window 300 px wide, the page 320 px, scrolled 20 px to its right.
+    expect(throwWalls({ left: -20, right: 300 })).toEqual({ min: -20, max: 300 - W });
   });
 });
 
@@ -132,6 +202,15 @@ describe('which line, with a card docked over the page (issue 164)', () => {
     expect(choose('Filter', [{ id: 'Filter', top: 700, covered: true }], 700, null).hovering).toBe(true);
   });
 
+  it('with its hover line covered too (a phone’s page-wide description), waits out of sight, never under it (issue 192)', () => {
+    const covered = (edges: { id: string; top: number; covered?: boolean }[], docked: typeof card | null = null) =>
+      choosePerch({ current: 'Filter', edges, card: docked, ceiling: 250, overlap: H - 2, bottom: 812, height: H, headroom: ROOM, where: 700, hoverCovered: true });
+    expect(covered([{ id: 'Filter', top: 700, covered: true }])).toEqual({ id: 'waiting', foot: 250 + H + HOVER_UNDER, hovering: true, waiting: true });
+    expect(covered([{ id: 'Filter', top: -300 }])).toMatchObject({ waiting: true });
+    // Somewhere clear comes first: an edge, or the card's top.
+    expect(covered([{ id: 'Filter', top: 700 }]).id).toBe('Filter');
+    expect(covered([{ id: 'Filter', top: 700, covered: true }], card).id).toBe('card');
+  });
 });
 
 /** Frames at 60 a second, the perch given by `at(t)`, standing at `x` when on its line. */

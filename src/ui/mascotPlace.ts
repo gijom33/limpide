@@ -1,5 +1,5 @@
 import { type Lfo, type LfoNumber, lfoHz } from '../patch/patch';
-import { HEIGHT, WIDTH } from './mascotCling';
+import { HEIGHT, TURNED_PAST, WIDTH } from './mascotCling';
 
 /**
  * A line the mascot can be on (issue 115), in the window's pixels: a section's top edge it stands on, or, with none in
@@ -15,6 +15,8 @@ export interface Perch {
    * on glass, and clings at its side, its span's one spot, following it as the page scrolls.
    */
   cling?: boolean;
+  /** With nowhere clear to be, not even its hover line: out of sight, tucked up under the header or the tabs (issue 192). */
+  waiting?: boolean;
 }
 
 /**
@@ -120,14 +122,16 @@ export const SWUNG_BELOW = 20;
 export const LEEWAY = 3;
 
 /**
- * Its drawing on a line (issue 181): its box, as high as `above` over it (a plot it surfs, under it). Over text is where
- * it rests, facing as drawn, the logo's way (179): there, `resting`, its Detune twin `twin` pixels off on its side
- * (issue 174), its tail swung down under its foot (the air guitar's strum, a wag), which a cover never meets (a card's
- * top is its line), and `LEEWAY` all round.
+ * Its whole drawing on a line (issues 181 and 192): its box, and its Detune twin `twin` pixels off on its side (issue
+ * 174), as high as `above` over its box (a plot it surfs, under it). Out of sight under a cover is out of sight however
+ * it faces, so for covers its tail turned round past its box's left too (strolling right, pointing the way, a funny
+ * turn, issue 179). Over text is where it rests, facing as drawn, the logo's way (179): there, `resting`, its tail
+ * swung down under its foot (the air guitar's strum, a wag) instead, which a cover never meets (a card's top is its
+ * line), and `LEEWAY` all round.
  */
 export function drawingOf({ twin = 0, resting = false, above = 0 }: { twin?: number; resting?: boolean; above?: number } = {}): Drawing {
   const [left, right] = [Math.min(0, twin), Math.max(0, twin)];
-  if (!resting) return [{ left: 0, right: WIDTH, top: -HEIGHT - above, bottom: 0 }];
+  if (!resting) return [{ left: left - TURNED_PAST, right: WIDTH + right, top: -HEIGHT - above, bottom: 0 }];
   return [
     { left: left - LEEWAY, right: WIDTH + right + LEEWAY, top: -HEIGHT - above - LEEWAY, bottom: 0 },
     { left: TAIL_FROM + left - LEEWAY, right: WIDTH + right + LEEWAY, top: 0, bottom: SWUNG_BELOW },
@@ -154,6 +158,19 @@ export function clearAlong(line: { left: number; right: number; top: number }, c
     }
   }
   return spans;
+}
+
+/**
+ * Of the docked cards, in the page's order (the later drawn over the earlier, as the Demo's "stopped" card under a
+ * Tutorial's), the one it stands on (issue 192): the topmost with room along its top for its `drawing`, clear of the
+ * cards over it; null for none.
+ */
+export function standingCard<C extends Cover>(cards: readonly C[], drawing: Drawing): C | null {
+  for (let i = cards.length - 1; i >= 0; i--) {
+    const c = cards[i];
+    if (clearAlong({ left: c.left, right: c.right, top: c.top }, cards.slice(i + 1), drawing).length) return c;
+  }
+  return null;
 }
 
 /** Of `spans`, the one nearest to `x` (the first of two as near), or null if there is none. */
@@ -191,6 +208,8 @@ export interface PerchChoice {
   headroom: number;
   /** Where its foot is now. */
   where: number;
+  /** A card, a tip or a panel over its hover line, all along it (issue 192). */
+  hoverCovered?: boolean;
 }
 
 /**
@@ -199,9 +218,10 @@ export interface PerchChoice {
  * room for the drop, or `overlap` less; moving, it takes the edge nearest to where it is. With no edge roomy enough, an
  * edge just under the ceiling, the drop over it by up to `overlap`, rather than hover just off that line (issue 142).
  * An edge a card, a tip or a panel covers is never kept nor taken; with every edge in view covered, it stands on the
- * docked card's top edge until one is clear again (issue 164).
+ * docked card's top edge until one is clear again (issue 164). With its hover line covered too, it waits out of sight,
+ * tucked up under the header or the tabs, rather than hover under the cover (issue 192).
  */
-export function choosePerch({ current, edges, card = null, ceiling, overlap, bottom, height, headroom, where }: PerchChoice): Perch {
+export function choosePerch({ current, edges, card = null, ceiling, overlap, bottom, height, headroom, where, hoverCovered = false }: PerchChoice): Perch {
   const fits = (e: Edge) => e.top - height >= ceiling - overlap;
   const inView = (e: Edge) => e.top <= bottom;
   const takeable = (e: Edge) => e.top <= bottom - TAKEABLE_OVER_BOTTOM;
@@ -215,7 +235,8 @@ export function choosePerch({ current, edges, card = null, ceiling, overlap, bot
   const onCard = card && !card.covered && hidden && fits(card) && inView(card) ? card : null;
   const chosen = roomy.length ? nearest(roomy) : fitting.length ? nearest(fitting) : onCard;
   if (chosen) return { id: chosen.id, foot: chosen.top, hovering: false };
-  return { id: 'ceiling', foot: ceiling + height + HOVER_UNDER, hovering: true };
+  const hover = ceiling + height + HOVER_UNDER;
+  return hoverCovered ? { id: 'waiting', foot: hover, hovering: true, waiting: true } : { id: 'ceiling', foot: hover, hovering: true };
 }
 
 /**
@@ -445,6 +466,35 @@ export function createMascotPlace({ from, random = Math.random }: { from?: numbe
       return placed();
     },
   };
+}
+
+/**
+ * Thrown, the sides it bounces off (issue 127): the page's, in the window's pixels, its box's lefts between them. Below
+ * 320 px wide the page is wider than the window, which scrolls sideways (issue 157): its walls are still the page's
+ * (issue 192).
+ */
+export const throwWalls = (page: { left: number; right: number }): Span => ({ min: page.left, max: page.right - WIDTH });
+
+/** A visit to another section, or a ride on an LFO's plot (issue 141), until `until`. */
+export interface Visit {
+  id: string;
+  until: number;
+  ride?: LfoNumber;
+}
+
+/**
+ * Whether a visit ends now: its time up, but while a Tutorial or the Tour is open (issue 151); its section out of view or
+ * covered; or a ride's LFO no longer one to ride (its Depth, Waveform or Rate, the Demo, reduced motion) or its plot out
+ * of view, or it picked up, sent away or a Tutorial or the Tour opening (issues 141, 151). The window turning to the
+ * stacked layout ends either: there it keeps to its column (issue 192).
+ */
+export function visitEnds(
+  visit: Visit,
+  now: { now: number; stacked: boolean; rideable: readonly LfoNumber[]; inView: readonly string[]; held: boolean; leaving: boolean; guided: boolean },
+): boolean {
+  if (now.stacked) return true;
+  if (now.now >= visit.until && !now.guided) return true;
+  return visit.ride ? !now.rideable.includes(visit.ride) || now.held || now.leaving || now.guided : !now.inView.includes(visit.id);
 }
 
 /** The fastest LFO it rides, in Hz (issue 141): slower, its plot draws a swell it can stand on. */
