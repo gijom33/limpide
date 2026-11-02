@@ -468,7 +468,10 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
      than squashing the Viewers to nothing. */
   main { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; gap: 12px; }
   main > * { flex: none; margin-top: 0; margin-bottom: 0; }
-  main > .chain { flex: 1 1 auto; min-height: 0; }
+  /* The sections start 36 px under the header (main's 12 px gap and this margin), room for Bead on their top edge
+     (issue 154): the header's keys and buttons reach down to its foot all along there, and Bead standing and playing
+     reaches 35 px over its edge (its 26 px stretched by the sound, and its hop at a Note). */
+  main > .chain { flex: 1 1 auto; min-height: 0; margin-top: calc(36px - 12px); }
   .block { min-height: 0; }
   .block > .tap { flex: 1 1 0; min-height: 0; margin-top: 0; display: flex; flex-direction: column; }
   .tap-canvases { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; gap: 8px; }

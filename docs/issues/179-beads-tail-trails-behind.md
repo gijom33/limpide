@@ -49,5 +49,7 @@ Claude's calls, open to the owner:
 
 Known before this: at four across Bead strolls 2 px under the header's Hold, Tap, Song and About buttons, so stretched by a held Note and bobbing it can touch them, and the mascot spec's "four across … covering nothing" fails now and then on the tip as on this branch (6 runs in 8 on the tip, alone).
 
+**Since then (2026-11-01, issue 154):** the cause was 154's buttons reaching the header's foot; from 861 px wide and 700 px tall the sections now start 36 px under the header, and the test passes 12 runs in 12. Claude's call, open to the owner.
+
 What to try in the app: watch Bead stroll along its edge: to the right its tail is behind it, on its left; to the left, and standing still, on its right, as the logo. Play a quick run of Notes: it dances along without turning. Send it to another Section (wait for a visit) and watch it leap across facing its way. Turn Osc 2's Detune as it strolls right: the twin stays on Detune's side.
 
