@@ -4,7 +4,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
-- 2026-11-02, the owner, on 1.21.0's About on an iPhone (Safari), with a screenshot of Bead beside the logo's mark and an arrow to its right: "Bead should not modify logo alignment. Move it to right."
 ## Ideas
 
 - 2026-11-02, from the 1.21.0 branch runs, issue 152: the e2e test "in the sections 2 × 2 the Demo brings a section out from under the header" failed on GitHub's Linux WebKit in two runs of three (retries too), the first scroll reading the Filter still 60 px under the header; it passes on macOS in both browsers, also in Linux-wide type, and on Linux Chromium. Skipped in WebKit for 1.21.0; is the Demo's scroll late or wrong in WebKit there, or the test?
@@ -218,3 +217,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-11-01, the owner's bug of a white box round Bead in About on Safari, fixed at once for 1.20.0 (`fcb2191`, issue 163): About's first focus fell on Bead's button, the first control since 163, and Safari ringed it; About now focuses its Demo button as it opens, as before. Claude's call, open to the owner.
 2026-11-01, the owner's idea of Bead's tail trailing as it moves (triage): to [179](./issues/179-beads-tail-trails-behind.md), polish for v1, ready for an agent: the tail trails when it moves, on its right when still (decided by the owner); a quick turn, none for small or dance steps (Claude's call, open to the owner).
 2026-11-01, the owner's note that the C16 sends polyphonic aftertouch (triage, decided by the owner, "Highest pad, tonight"): into [132](./issues/132-aftertouch.md), built on night/2026-11-01: per-Note pressure is read too, the highest among the Notes held standing as the one aftertouch, moving the same Destination for every Note; pressure per Voice stays for v2.
+2026-11-02, the owner's bug of Bead moving About's logo off centre (triage, decided by the owner): into [178](./issues/178-bead-in-about-at-its-own-size.md) as its decision 3, ready for an agent again: the mark centred over the name as without Bead, Bead to its right, its foot on the mark's lowest point.

@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · enhancement. Built (2026-11-01) on night/2026-11-01, for the owner to try
+**Status:** ready-for-agent · enhancement. Built (2026-11-01) on night/2026-11-01 and shipped in 1.21.0; the owner's bug of 2026-11-02 (decision 3) to build: the logo centred as before, Bead to its right
 
 ## Decisions
 
@@ -14,6 +14,12 @@ Claude's call, open to the owner:
 
 2. **Still beside the mark, to its right,** the mark and Bead centred together as the logo was; everything else of 163 (its idling, its button and card, hidden with the switch Off) as built.
 
+**Since then (2026-11-02, the owner's bug, inbox):** decision 3 replaces "centred together".
+
+Decided by the owner, 2026-11-02, on 1.21.0's About on an iPhone: "Bead should not modify logo alignment. Move it to right."
+
+3. **The logo keeps its own centring:** the mark centred over the name as it is with Bead away or switched off; Bead stands to the mark's right, outside that centring, its foot still on the mark's lowest point (decision 1). Where About is too narrow for it there, it may overhang the mark's right but never moves the mark.
+
 ## Agent Brief
 
 **Category:** enhancement
@@ -21,7 +27,7 @@ Claude's call, open to the owner:
 
 **Current behavior:** About shows Bead to the right of the logo at twice its page size, standing on the wordmark's baseline.
 
-**Desired behavior:** Bead at its page size, its foot level with the bottom of the logo's mark, to the mark's right; the two centred together; its button, card and idling unchanged.
+**Desired behavior:** Bead at its page size, its foot level with the bottom of the logo's mark, to the mark's right; the two centred together (since decision 3, the mark centred alone, Bead to its right); its button, card and idling unchanged.
 
 **Key interfaces:**
 - About's header (the logo's mark, the wordmark, Bead's button)
