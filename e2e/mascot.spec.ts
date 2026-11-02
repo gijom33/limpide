@@ -98,6 +98,53 @@ const covered = (page: Page, viewers: boolean) =>
       .map((c) => c.getAttribute('aria-label') ?? c.className);
   }, viewers);
 
+/**
+ * Each frame for `ms`, while it rests (standing or clinging still, not lifted off its line by a hop or a bounce, nor surfing):
+ * the page's text its drawing covers, pixel by pixel, its twin included (issue 181). Text in what is drawn over it (the
+ * cards, tips and panels) and text for screen readers alone do not count. How many frames it rested, and what it covered.
+ */
+const restsOverText = (page: Page, ms: number) =>
+  page.evaluate(
+    (ms) =>
+      new Promise<{ rests: number; over: string[] }>((done) => {
+        const over = new Set<string>();
+        let rests = 0;
+        let was: number | null = null;
+        const end = performance.now() + ms;
+        const sample = () => {
+          const bead = document.querySelector<HTMLElement>('.mascot');
+          const drop = document.querySelector<HTMLElement>('.mascot-drop');
+          const lift = Number(/translateY\((-?[\d.]+)px\)/.exec(drop?.style.transform ?? '')?.[1] ?? 0);
+          // Still along its line since the last frame: not strolling, nor walking into a new stretch of it.
+          const left = bead?.getBoundingClientRect().left ?? null;
+          const still = left !== null && was !== null && Math.abs(left - was) < 0.5;
+          was = left;
+          if (bead && still && /^(standing|clinging)$/.test(bead.dataset.moving ?? '') && bead.dataset.act !== 'surf' && lift > -0.5) {
+            rests++;
+            const self = document.querySelector('#bead-self')!;
+            const twin = document.querySelector<SVGUseElement>('.mascot-twin')!;
+            const off = twin.style.display === 'none' ? null : twin.getBoundingClientRect().left - self.getBoundingClientRect().left;
+            const pixels = [...self.querySelectorAll('rect')].map((r) => r.getBoundingClientRect()).filter((r) => r.width > 0);
+            const drawn = off === null ? pixels : [...pixels, ...pixels.map((r) => new DOMRect(r.x + off, r.y, r.width, r.height))];
+            const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+            const range = document.createRange();
+            for (let node = walk.nextNode(); node; node = walk.nextNode()) {
+              const el = node.parentElement;
+              if (!el || !/\S/.test(node.nodeValue ?? '') || el.closest('.mascot, .docked, .tooltip, .patch-about, .patch-words, .patch-panel, .display-panel, .visually-hidden')) continue;
+              range.selectNodeContents(node);
+              const lines = [...range.getClientRects()];
+              const hit = lines.some((t) => drawn.some((p) => Math.min(p.right, t.right) - Math.max(p.left, t.left) > 0.5 && Math.min(p.bottom, t.bottom) - Math.max(p.top, t.top) > 0.5));
+              if (hit && el.checkVisibility({ visibilityProperty: true, opacityProperty: true })) over.add(`"${node.nodeValue!.trim()}" (${bead.dataset.moving} at ${Math.round(left!)})`);
+            }
+          }
+          if (performance.now() < end) requestAnimationFrame(sample);
+          else done({ rests, over: [...over] });
+        };
+        requestAnimationFrame(sample);
+      }),
+    ms,
+  );
+
 test('with the switch on, B, E, A, D sends it away and again brings it; B, E, D, A does nothing (issue 150, decision 8)', async ({ page }) => {
   await page.goto('/');
   await listening(page);
@@ -900,6 +947,63 @@ test.describe('never under a card (issue 164)', () => {
   }
 });
 
+test.describe('never over text where it rests (issue 181)', () => {
+  for (const viewport of [
+    { width: 1440, height: 900 },
+    { width: 1280, height: 800 },
+  ]) {
+    test(`through the Demo at ${viewport.width} × ${viewport.height}, conducting, on air guitar, surfing: over no label, readout or heading`, async ({ page }) => {
+      test.slow();
+      await page.setViewportSize(viewport);
+      await page.goto('/');
+      await listening(page);
+      await bringBead(page);
+      await page.getByRole('button', { name: 'Demo', exact: true }).click();
+      const card = page.getByRole('region', { name: 'Demo' });
+      let rests = 0;
+      // A part each act: it conducts, plays air guitar (its tail swung down under its foot), surfs.
+      for (const part of [1, 2, 3]) {
+        await card.getByRole('button', { name: new RegExp(`^Play from part ${part},`) }).click();
+        const seen = await restsOverText(page, 8000);
+        expect(seen.over, `part ${part}`).toEqual([]);
+        rests += seen.rests;
+      }
+      expect(rests).toBeGreaterThan(60);
+    });
+  }
+
+  test('on a phone, on its edge just under the section tabs, over none of their names (issue 142)', async ({ page }) => {
+    test.slow();
+    await page.goto('/');
+    await listening(page);
+    await bringBead(page); // before the window shrinks, which would put Display's switch out of reach
+    await page.setViewportSize({ width: 375, height: 560 });
+    // Scrolled until the Oscillators' edge, the one in view, is just under the tabs: its top over them, level with
+    // their names.
+    let level = 0;
+    for (let y = 0; y <= 14; y += 2) {
+      await page.evaluate((top) => window.scrollTo({ top, behavior: 'instant' }), y);
+      await page.waitForTimeout(700);
+      await settles(page);
+      const seen = await restsOverText(page, 800);
+      expect(seen.over, `scrolled to ${y}`).toEqual([]);
+      const names = await page.evaluate(() => {
+        const top = document.querySelector('.mascot-drop svg')!.getBoundingClientRect().top;
+        const walk = document.createTreeWalker(document.querySelector('.section-strip')!, NodeFilter.SHOW_TEXT);
+        const range = document.createRange();
+        let bottom = -Infinity;
+        for (let node = walk.nextNode(); node; node = walk.nextNode()) {
+          range.selectNodeContents(node);
+          bottom = Math.max(bottom, range.getBoundingClientRect().bottom);
+        }
+        return top < bottom && document.querySelector<HTMLElement>('.mascot')!.dataset.moving === 'standing';
+      });
+      if (names) level++;
+    }
+    expect(level, 'never on the line level with the names').toBeGreaterThan(0);
+  });
+});
+
 test.describe('pointing the way in a Tutorial and the Tour (issue 151)', () => {
   const tutorialCard = (page: Page) => page.getByRole('region', { name: /^Tutorial: / });
   const tourCard = (page: Page) => page.getByRole('region', { name: 'Tour' });
@@ -924,8 +1028,8 @@ test.describe('pointing the way in a Tutorial and the Tour (issue 151)', () => {
 
   /**
    * Where it is against `selector`'s control: beside it (its drawing within a few pixels of the ring, and level with
-   * the control), over neither the ring nor the band its target text takes over the control, its tail on the control's
-   * side, and the pointer passing through it.
+   * the control, or as much lower as it goes under a label beside it, issue 181), over neither the ring nor the band
+   * its target text takes over the control, its tail on the control's side, and the pointer passing through it.
    */
   const against = (page: Page, selector: string) =>
     page.evaluate((selector) => {
@@ -942,7 +1046,7 @@ test.describe('pointing the way in a Tutorial and the Tour (issue 151)', () => {
       const hit = document.elementFromPoint((body.left + body.right) / 2, (body.top + body.bottom) / 2);
       return {
         beside: gap >= 0 && gap <= 6,
-        level: (drop.top + drop.bottom) / 2 > control.top && (drop.top + drop.bottom) / 2 < control.bottom,
+        level: (drop.top + drop.bottom) / 2 > control.top && (drop.top + drop.bottom) / 2 < control.bottom + drop.height,
         covers: over(ring) || over(target),
         towards,
         through: !!hit && !hit.closest('.mascot'),
@@ -1027,6 +1131,40 @@ test.describe('pointing the way in a Tutorial and the Tour (issue 151)', () => {
     await settles(page, /^standing$/, 8);
     await expect(mascot(page)).toHaveAttribute('data-pointing', 'no');
     expect((await footing(page)).bottom).toBe(0);
+  });
+
+  test('beside each control in the Tour and a Tutorial, over no label: a little lower under it, else along (issue 181)', async ({ page }) => {
+    test.slow();
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/');
+    await bringBead(page);
+    /** Once it has gone there and bounced on arriving, where it rests over no text. */
+    const restsClear = async (where: string) => {
+      await page.waitForTimeout(2500); // off from the last control
+      await settles(page, /^(clinging|standing)$/, 12);
+      await page.waitForTimeout(800); // its bounce
+      const seen = await restsOverText(page, 1500);
+      expect(seen.over, where).toEqual([]);
+      expect(seen.rests, where).toBeGreaterThan(0);
+    };
+    // The Tour: Osc 1's Waveform, by its name's right end; the Cutoff, by its name (the owner's, 2026-11-02).
+    await page.getByRole('button', { name: 'About' }).click();
+    await page.getByRole('dialog', { name: 'Limpide' }).getByRole('button', { name: 'Take the Tour' }).click();
+    await expect(async () => expect(await against(page, '[data-learn="choice:waveform"]')).toEqual(POINTING)).toPass({ timeout: 20000 });
+    for (let card = 1; ; card++) {
+      await restsClear(`the Tour's card ${card}`);
+      const next = tourCard(page).getByRole('button', { name: 'Next', exact: true });
+      if (!(await next.isVisible())) break;
+      await next.click();
+    }
+    await tourCard(page).getByRole('button', { name: 'Close the Tour' }).click();
+    // A Tutorial: its first Steps' controls, in two Sections and the header.
+    await openTutorial(page, 'Bass');
+    for (let step = 1; step <= 6; step++) {
+      await restsClear(`the Bass Tutorial's Step ${step}`);
+      await doIt(page);
+      await next(page);
+    }
   });
 
   test('a control on a hidden tab: it goes back to its edge and looks; shown again, it goes', async ({ page }) => {

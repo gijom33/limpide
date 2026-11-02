@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { noteIndex } from '../music/tempo';
 import type { Lfo } from '../patch/patch';
-import { acrossOf, choosePerch, clearAlong, createMascotPlace, FASTEST_THROW, GRAVITY, HOVER_UNDER, LANDING_SECONDS, type Moving, nearestSpan, type Perch, type Placed, ridesFor, type Span, WINDUP_SECONDS } from './mascotPlace';
+import { TWIN_PX } from './mascotCling';
+import {
+  acrossOf, boxOf, choosePerch, clearAlong, createMascotPlace, drawingOf, FASTEST_THROW, GRAVITY, HOVER_UNDER, LANDING_SECONDS, 
+  LEEWAY, type Moving, nearestSpan, type Perch,type Placed, ridesFor, type Span, SWUNG_BELOW, WINDUP_SECONDS,
+} from './mascotPlace';
 
 const H = 26;
 const ROOM = 18;
@@ -49,26 +53,26 @@ describe('where along a line it is under no card, tip or panel (issue 164)', () 
   const card = (top: number, left = 12, right = 363) => ({ left, right, top, bottom: top + 150 });
 
   it('with nothing over the line, the whole of it', () => {
-    expect(clearAlong(line, [], W, H)).toEqual([{ min: 0, max: 375 - W }]);
+    expect(clearAlong(line, [], boxOf(W, H))).toEqual([{ min: 0, max: 375 - W }]);
   });
 
   it('with a card over the line, along its whole width, nowhere', () => {
-    expect(clearAlong(line, [card(590)], W, H)).toEqual([]);
-    expect(clearAlong(line, [card(600 - H + 1)], W, H)).toEqual([]); // over its head by a pixel
+    expect(clearAlong(line, [card(590)], boxOf(W, H))).toEqual([]);
+    expect(clearAlong(line, [card(600 - H + 1)], boxOf(W, H))).toEqual([]); // over its head by a pixel
   });
 
   it('a card under the line, or far over it, leaves it whole', () => {
-    expect(clearAlong(line, [card(600)], W, H)).toEqual([{ min: 0, max: 375 - W }]); // its top on the line
-    expect(clearAlong(line, [{ left: 0, right: 375, top: 100, bottom: 600 - H }], W, H)).toEqual([{ min: 0, max: 375 - W }]);
+    expect(clearAlong(line, [card(600)], boxOf(W, H))).toEqual([{ min: 0, max: 375 - W }]); // its top on the line
+    expect(clearAlong(line, [{ left: 0, right: 375, top: 100, bottom: 600 - H }], boxOf(W, H))).toEqual([{ min: 0, max: 375 - W }]);
   });
 
   it('a card over part of the line leaves the stretches either side where the whole drop fits', () => {
-    expect(clearAlong({ left: 800, right: 1300, top: 600 }, [card(590, 900, 1100)], W, H)).toEqual([
+    expect(clearAlong({ left: 800, right: 1300, top: 600 }, [card(590, 900, 1100)], boxOf(W, H))).toEqual([
       { min: 800, max: 900 - W },
       { min: 1100, max: 1300 - W },
     ]);
     // A gap narrower than the drop is no room.
-    expect(clearAlong(line, [card(590, 0, 100), card(590, 130, 375)], W, H)).toEqual([]);
+    expect(clearAlong(line, [card(590, 0, 100), card(590, 130, 375)], boxOf(W, H))).toEqual([]);
   });
 
   it('of the stretches left, the one nearest to where it is', () => {
@@ -77,6 +81,28 @@ describe('where along a line it is under no card, tip or panel (issue 164)', () 
     expect(nearestSpan(spans, 250)).toEqual(spans[1]);
     expect(nearestSpan(spans, 500)).toEqual(spans[1]);
     expect(nearestSpan([], 50)).toBeNull();
+  });
+});
+
+describe('its whole drawing along a line, its twin and its tail included (issue 181)', () => {
+  const line = { left: 0, right: 375, top: 600 };
+  const over = (left: number, right: number) => ({ left, right, top: 500, bottom: 700 });
+
+  it('resting, it faces as drawn: text left of its box is clear of it, a little apart, but for its twin there (issue 181)', () => {
+    const label = over(0, 100);
+    expect(clearAlong(line, [label], drawingOf({ resting: true }))).toEqual([{ min: 100 + LEEWAY, max: 375 - W }]);
+    expect(clearAlong(line, [label], drawingOf({ resting: true, twin: -TWIN_PX }))).toEqual([{ min: 100 + TWIN_PX + LEEWAY, max: 375 - W }]);
+    // Over its head by a pixel: as if over it, its top leaving a little room.
+    expect(clearAlong(line, [{ left: 0, right: 375, top: 500, bottom: 600 - H - LEEWAY + 1 }], drawingOf({ resting: true }))).toEqual([]);
+    expect(clearAlong(line, [{ left: 0, right: 375, top: 500, bottom: 600 - H - LEEWAY }], drawingOf({ resting: true }))).toHaveLength(1);
+  });
+
+  it('resting, its tail swung down under its foot keeps off a heading just under the line, its body may stand over it (issue 181)', () => {
+    const heading = { left: 20, right: 52, top: 613, bottom: 626 };
+    expect(clearAlong(line, [heading], drawingOf())).toEqual([{ min: 0, max: 375 - W }]);
+    // Its tail leaves its drop 18 px from its box's left: over the heading, no spot from 20 − 44 to 52 − 18, a little apart.
+    expect(clearAlong(line, [heading], drawingOf({ resting: true }))).toEqual([{ min: 52 - 18 + LEEWAY, max: 375 - W }]);
+    expect(clearAlong(line, [{ ...heading, top: 600 + SWUNG_BELOW }], drawingOf({ resting: true }))).toEqual([{ min: 0, max: 375 - W }]);
   });
 });
 
@@ -105,6 +131,7 @@ describe('which line, with a card docked over the page (issue 164)', () => {
   it('with every edge covered and no card to stand on, hovers', () => {
     expect(choose('Filter', [{ id: 'Filter', top: 700, covered: true }], 700, null).hovering).toBe(true);
   });
+
 });
 
 /** Frames at 60 a second, the perch given by `at(t)`, standing at `x` when on its line. */

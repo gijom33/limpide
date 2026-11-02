@@ -1,4 +1,5 @@
 import { type Lfo, type LfoNumber, lfoHz } from '../patch/patch';
+import { HEIGHT, WIDTH } from './mascotCling';
 
 /**
  * A line the mascot can be on (issue 115), in the window's pixels: a section's top edge it stands on, or, with none in
@@ -103,21 +104,54 @@ export interface Cover {
   bottom: number;
 }
 
+/** Its drawing, as boxes against its box's left and its foot: what it covers of the page, standing there. */
+export type Drawing = readonly Cover[];
+
+/** Its box alone, `width` across and `height` up from its foot. */
+export const boxOf = (width: number, height: number): Drawing => [{ left: 0, right: width, top: -height, bottom: 0 }];
+
+/** Its tail leaves its drop this far across its box, as drawn, and swings down under its foot this far, standing (issue 181). */
+const TAIL_FROM = 18;
+export const SWUNG_BELOW = 20;
 /**
- * The stretches of a line where the drop, its foot on the line, is under none of `covers` (issue 164): its box's lefts,
- * left to right. A cover over its head by a pixel or more takes the spots under it; one whose bottom is at its head, or
- * whose top is on the line, takes none.
+ * Resting, how far its drawing may still reach past its box, in pixels: stretched taller by the Amp's level (a tenth),
+ * breathing as it dozes, leaning with the LFOs (issue 181).
  */
-export function clearAlong(line: { left: number; right: number; top: number }, covers: readonly Cover[], width: number, height: number): Span[] {
-  let spans: Span[] = line.right - width >= line.left ? [{ min: line.left, max: line.right - width }] : [];
+export const LEEWAY = 3;
+
+/**
+ * Its drawing on a line (issue 181): its box, as high as `above` over it (a plot it surfs, under it). Over text is where
+ * it rests, facing as drawn, the logo's way (179): there, `resting`, its Detune twin `twin` pixels off on its side
+ * (issue 174), its tail swung down under its foot (the air guitar's strum, a wag), which a cover never meets (a card's
+ * top is its line), and `LEEWAY` all round.
+ */
+export function drawingOf({ twin = 0, resting = false, above = 0 }: { twin?: number; resting?: boolean; above?: number } = {}): Drawing {
+  const [left, right] = [Math.min(0, twin), Math.max(0, twin)];
+  if (!resting) return [{ left: 0, right: WIDTH, top: -HEIGHT - above, bottom: 0 }];
+  return [
+    { left: left - LEEWAY, right: WIDTH + right + LEEWAY, top: -HEIGHT - above - LEEWAY, bottom: 0 },
+    { left: TAIL_FROM + left - LEEWAY, right: WIDTH + right + LEEWAY, top: 0, bottom: SWUNG_BELOW },
+  ];
+}
+
+/**
+ * The stretches of a line where the drop, its foot on the line, covers none of `covers` with its `drawing` (issues 164
+ * and 192): its box's lefts, left to right, its box on the line. A cover over its head by a pixel or more takes the
+ * spots under it; one whose bottom is at its head, or whose top is on the line (but for a drawing reaching under it),
+ * takes none.
+ */
+export function clearAlong(line: { left: number; right: number; top: number }, covers: readonly Cover[], drawing: Drawing): Span[] {
+  let spans: Span[] = line.right - WIDTH >= line.left ? [{ min: line.left, max: line.right - WIDTH }] : [];
   for (const c of covers) {
-    if (c.top >= line.top || c.bottom <= line.top - height) continue;
-    // The lefts that would put the drop's box over the cover: from its left less the drop's width to its right.
-    const [from, to] = [c.left - width, c.right];
-    spans = spans.flatMap((s) => {
-      if (to <= s.min || from >= s.max) return [s];
-      return [...(from >= s.min ? [{ min: s.min, max: from }] : []), ...(to <= s.max ? [{ min: to, max: s.max }] : [])];
-    });
+    for (const d of drawing) {
+      if (c.top >= line.top + d.bottom || c.bottom <= line.top + d.top) continue;
+      // The lefts that would put this part of its drawing over the cover.
+      const [from, to] = [c.left - d.right, c.right - d.left];
+      spans = spans.flatMap((s) => {
+        if (to <= s.min || from >= s.max) return [s];
+        return [...(from >= s.min ? [{ min: s.min, max: from }] : []), ...(to <= s.max ? [{ min: to, max: s.max }] : [])];
+      });
+    }
   }
   return spans;
 }
@@ -180,7 +214,8 @@ export function choosePerch({ current, edges, card = null, ceiling, overlap, bot
   const hidden = edges.some((e) => e.covered && fits(e) && inView(e));
   const onCard = card && !card.covered && hidden && fits(card) && inView(card) ? card : null;
   const chosen = roomy.length ? nearest(roomy) : fitting.length ? nearest(fitting) : onCard;
-  return chosen ? { id: chosen.id, foot: chosen.top, hovering: false } : { id: 'ceiling', foot: ceiling + height + HOVER_UNDER, hovering: true };
+  if (chosen) return { id: chosen.id, foot: chosen.top, hovering: false };
+  return { id: 'ceiling', foot: ceiling + height + HOVER_UNDER, hovering: true };
 }
 
 /**

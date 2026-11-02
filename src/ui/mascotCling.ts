@@ -5,6 +5,8 @@ export const HEIGHT = 26;
 const ORIGIN = WIDTH * 0.2;
 /** Turned round, how far its drawing reaches past its box's left (issue 179). */
 export const TURNED_PAST = WIDTH - 2 * ORIGIN;
+/** Detune at its most (50 cents) puts its twin this far off its box, in pixels (issue 174). */
+export const TWIN_PX = 16;
 /** Its tail's middle, from the top of its drawing: level with the control's middle as it points. */
 const TAIL_Y = 14;
 /** How far a Tutorial's ring stands out round its control: its outline's offset and width. */
@@ -48,12 +50,16 @@ export interface ClingChoice {
   card: Box | null;
   /** Where its drawing must stay: the window, under the header and the section tabs where they stay put. */
   within: Box;
+  /** The page's text, which it never covers where it clings: a label, a readout, a heading (issue 181). */
+  text?: readonly Box[];
+  /** Its Detune twin's way off, in pixels, on the side of its sign (issue 174); 0, none. */
+  twin?: number;
 }
 
-/** What it covers of the window, clinging: its drop and its tail, turned towards the control. */
-export function drawnAt({ side, left, foot }: Cling): Box {
+/** What it covers of the window, clinging: its drop and its tail, turned towards the control, and its twin (issue 192). */
+export function drawnAt({ side, left, foot }: Cling, twin = 0): Box {
   const [from, to] = side === 'left' ? [left, left + WIDTH] : [left + 2 * ORIGIN - WIDTH, left + 2 * ORIGIN];
-  return { left: from, right: to, top: foot - HEIGHT, bottom: foot };
+  return { left: from + Math.min(0, twin), right: to + Math.max(0, twin), top: foot - HEIGHT, bottom: foot };
 }
 
 /** The target text a Tutorial writes over its control: centred over it, just over its top (an estimate from its length). */
@@ -66,25 +72,51 @@ export function targetBox(control: Box, text: string): Box {
 const overlap = (a: Box, b: Box) => Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) * Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
 const inside = (a: Box, b: Box) => a.left >= b.left && a.right <= b.right && a.top >= b.top && a.bottom <= b.bottom;
 
+/** Beside a label, how much lower it may go, and failing that how much farther along its level, away from the control (issue 181). */
+const LOWEST = HEIGHT;
+const FARTHEST = WIDTH;
+
 /**
  * Where Bead clings beside a control, like a drop on glass (issue 151, decision 3): level with it, its tail's tip just
- * short of its ring, on the side covering the least of the neighbouring controls and names; the side away from the
- * docked card when both cover as little (within a pixel row of its width). Never over `keepClear`, never out of
- * `within`: with neither side free, nowhere (null), and it looks at the control from where it is.
+ * short of its ring, on the side covering the least of the neighbouring controls and names; of two sides as free
+ * (within a pixel row of its width), the one it need not move on for text (below), then the side away from the docked
+ * card. Never over `keepClear`, never out of `within`, its twin included (issue 192): with neither side free, nowhere
+ * (null), and it looks at the control from where it is. Never over `text` (issue 181): where its level place would
+ * cover a label, it goes a little lower, to the nearest place under it that is clear; with none within its height, to
+ * the nearest along its level, away from the control, within its width; with neither, not that side.
  */
-export function clingBeside({ control, keepClear, neighbours, card, within }: ClingChoice): Cling | null {
+export function clingBeside({ control, keepClear, neighbours, card, within, text = [], twin = 0 }: ClingChoice): Cling | null {
   const foot = (control.top + control.bottom) / 2 - TAIL_Y + HEIGHT;
   const sides: Cling[] = [
     { side: 'left', turn: 1, left: control.left - RING - GAP - WIDTH, foot },
     { side: 'right', turn: -1, left: control.right + RING + GAP + WIDTH - 2 * ORIGIN, foot },
   ];
-  const free = sides
-    .map((cling) => ({ cling, drawn: drawnAt(cling) }))
-    .filter(({ drawn }) => inside(drawn, within) && keepClear.every((k) => overlap(drawn, k) === 0))
-    .map(({ cling, drawn }) => ({ cling, covers: neighbours.reduce((sum, n) => sum + overlap(drawn, n), 0) }));
+  const allowed = (cling: Cling) => {
+    const drawn = drawnAt(cling, twin);
+    return inside(drawn, within) && keepClear.every((k) => overlap(drawn, k) === 0);
+  };
+  const clear = (cling: Cling) => allowed(cling) && text.every((t) => overlap(drawnAt(cling, twin), t) === 0);
+  /** Its level place, else the nearest a little lower, else the nearest farther along, clear of text. */
+  const clearOfText = (level: Cling): Cling | null => {
+    if (clear(level)) return level;
+    for (let down = 1; down <= LOWEST; down++) {
+      const lower = { ...level, foot: level.foot + down };
+      if (clear(lower)) return lower;
+    }
+    for (let off = 1; off <= FARTHEST; off++) {
+      const along = { ...level, left: level.left + (level.side === 'left' ? -off : off) };
+      if (clear(along)) return along;
+    }
+    return null;
+  };
+  const free = sides.filter(allowed).flatMap((level) => {
+    const cling = clearOfText(level);
+    return cling ? [{ cling, moved: cling !== level, covers: neighbours.reduce((sum, n) => sum + overlap(drawnAt(cling, twin), n), 0) }] : [];
+  });
   if (!free.length) return null;
   const least = Math.min(...free.map((f) => f.covers));
-  const best = free.filter((f) => f.covers <= least + WIDTH);
+  const asFree = free.filter((f) => f.covers <= least + WIDTH);
+  const best = asFree.some((f) => !f.moved) ? asFree.filter((f) => !f.moved) : asFree;
   if (best.length === 1 || !card) return best.at(-1)!.cling;
   // As free both ways: away from the card.
   const away = (card.left + card.right) / 2 < (control.left + control.right) / 2 ? 'right' : 'left';

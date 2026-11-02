@@ -5,11 +5,13 @@ import { type LfoNumber, lfos } from '../patch/patch';
 import type { PatchStore } from '../patch/patchStore';
 import { addToRenderLoop } from '../viewers/renderLoop';
 import { lineAt, lineWiderThan } from './LfoPlot';
-import { type Box, type Cling, clingBeside, type Guide, HEIGHT, RING, targetBox, WIDTH } from './mascotCling';
+import { type Box, type Cling, clingBeside, type Guide, HEIGHT, RING, TWIN_PX, targetBox, WIDTH } from './mascotCling';
 import { gesturesOf, looksOf } from './mascotGestures';
 import { type Act, createMascotMotion, hatOn, type Pose, type Room, SCREAMING } from './mascotMotion';
 import { CATCH, CLOUD, HATS, HOOK, ICE, type Picture, PROPS, type Rect, ROD_TIP, SKY, type Stage, TAILS } from './mascotPictures';
-import { acrossOf, type Cover, choosePerch, clearAlong, createMascotPlace, HOVER_UNDER, type Moving, nearestSpan, type Perch, ridesFor, type Span } from './mascotPlace';
+import {
+  acrossOf, type Cover, choosePerch, clearAlong, createMascotPlace, type Drawing, drawingOf, HOVER_UNDER, type Moving, nearestSpan, type Perch, ridesFor, type Span,
+} from './mascotPlace';
 import { createSpray, MOST_DROPLETS } from './mascotSpray';
 import { ModulationContext } from './modulationRing';
 import { SECTIONS, STACKED } from './sections';
@@ -149,6 +151,27 @@ const STEP = 4;
 const DOCKED = '.docked:not([hidden])';
 const PANELS = `${DOCKED}, .patch-about, .patch-words, .patch-panel, .destination-menu, .tutorial-menu-panel, .tempo-panel, .display-panel, .midi-panel, .learn-bar, .quick-setup`;
 const COVERS = `${PANELS}, .tooltip:not([hidden])`;
+/**
+ * The page's text, which it never stands over (issue 181): every label, readout and heading, as the boxes of its lines,
+ * but what is drawn over it anyway (the cards, tips and panels) and what only a screen reader reads.
+ */
+const NOT_TEXT = `.mascot, .visually-hidden, ${COVERS}`;
+function readText(): Cover[] {
+  const boxes: Cover[] = [];
+  const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  const range = document.createRange();
+  for (let node = walk.nextNode(); node; node = walk.nextNode()) {
+    const el = node.parentElement;
+    if (!el || !/\S/.test(node.nodeValue ?? '') || el.closest(NOT_TEXT)) continue;
+    range.selectNodeContents(node);
+    const lines = [...range.getClientRects()].filter((r) => r.width > 0 && r.height > 0);
+    if (lines.length && el.checkVisibility({ visibilityProperty: true, opacityProperty: true })) boxes.push(...lines.map(({ left, right, top, bottom }) => ({ left, right, top, bottom })));
+  }
+  return boxes;
+}
+/** The text is read again this often, in seconds, or this soon after the page scrolls (issue 181). */
+const TEXT_SECONDS = 0.5;
+const TEXT_SCROLLED = 0.1;
 /** Pointing the way (issue 151): what may stand beside a control it clings to, as little covered as can be. */
 const NEIGHBOURS = '[data-learn], canvas, [role=tab], button, h2, h3';
 /** Its tail's height over its foot, where its aim at a control is taken from. */
@@ -388,6 +411,17 @@ export function Mascot({
     const between = (a: number, b: number) => a + Math.random() * (b - a);
     // Three or four across: a visit to another section now and then, or a ride on an LFO's plot (issue 141).
     let visit: { id: string; until: number; ride?: LfoNumber } | null = null;
+    // The page's text as last read, and when, where the page was scrolled and how big the window was (issue 181).
+    let text: { at: number; x: number; y: number; width: number; height: number; boxes: Cover[] } | null = null;
+    const textNow = (seconds: number) => {
+      const since = text ? seconds - text.at : Infinity;
+      const scrolled = text && (text.x !== scrollX || text.y !== scrollY);
+      const resized = text && (text.width !== innerWidth || text.height !== innerHeight);
+      if (!text || resized || since >= TEXT_SECONDS || (scrolled && since >= TEXT_SCROLLED)) {
+        text = { at: seconds, x: scrollX, y: scrollY, width: innerWidth, height: innerHeight, boxes: readText() };
+      }
+      return text.boxes;
+    };
     // Sent away on a ride: it jumps home first, and melts once it has landed there.
     let gettingOff = false;
     let nextVisit = context.engine.now() + between(15, 35);
@@ -418,13 +452,25 @@ export function Mascot({
       if (!ids.has(el)) ids.set(el, ++lastId);
       return ids.get(el)!;
     };
-    /** Where it clings beside `el`, if it is within reach: shown, on the window under `ceiling`, under none of `blocks`. */
-    const clingFor = (el: Element, blocks: readonly Box[], ceiling: number, card: Box | null): { box: DOMRect; cling: Cling | null } => {
+    /**
+     * Where it clings beside `el`, if it is within reach: shown, on the window under `ceiling`, under none of `blocks`;
+     * its twin `twin` off on its side, over no `text` (issues 181 and 192).
+     */
+    const clingFor = (el: Element, blocks: readonly Box[], ceiling: number, card: Box | null, text: readonly Box[], twin: number): { box: DOMRect; cling: Cling | null } => {
       const box = el.getBoundingClientRect();
       const target = el.getAttribute('data-tutorial-target');
       // Shown: a tab coming into view is laid out a moment before it is visible.
       const shown = box.width > 0 && el.checkVisibility({ visibilityProperty: true });
-      const key = [shown, box.left, box.top, box.width, box.height, innerWidth, innerHeight, ceiling, target, ...blocks.flatMap((b) => [b.left, b.top, b.right, b.bottom])].join(' ');
+      // The text within its reach either side of the control: as far as it may go along or down, and its twin.
+      const reach = 2 * WIDTH + RING + TWIN_PX;
+      // Still beside it, the sound no longer stretching it (issue 151), a pixel apart is room enough.
+      const near = text
+        .filter((t) => t.right > box.left - reach && t.left < box.right + reach && t.bottom > box.top - HEIGHT && t.top < box.bottom + 2 * HEIGHT)
+        .map((t) => ({ left: t.left - 1, right: t.right + 1, top: t.top - 1, bottom: t.bottom + 1 }));
+      const key = [
+        shown, box.left, box.top, box.width, box.height, innerWidth, innerHeight, ceiling, target, twin,
+        ...[...blocks, ...near].flatMap((b) => [b.left, b.top, b.right, b.bottom].map(Math.round)),
+      ].join(' ');
       const known = clings.get(el);
       if (known?.key === key) return { box, cling: known.cling };
       const reachable = shown && box.top >= ceiling && box.bottom <= innerHeight && !blocks.some((b) => b.left < box.right && b.right > box.left && b.top < box.bottom && b.bottom > box.top);
@@ -442,6 +488,8 @@ export function Mascot({
           neighbours,
           card,
           within: { left: 0, right: document.documentElement.clientWidth, top: ceiling, bottom: innerHeight },
+          text: near,
+          twin,
         });
       }
       clings.set(el, { key, cling });
@@ -493,9 +541,18 @@ export function Mascot({
       const page = (outer.offsetParent ?? document.body).getBoundingClientRect();
       // What is over the page: it never stands under it (issue 164).
       const covers: Cover[] = [...document.querySelectorAll(COVERS)].map((el) => el.getBoundingClientRect()).filter((r) => r.width > 0 && r.height > 0);
+      // Its whole drawing, its twin on Detune's side as far as it goes (issues 174 and 192): kept clear of the covers; and
+      // standing, its tail swung down under its foot too, kept clear of the page's text (issue 181).
+      const twinWay = Math.sign(shown?.twin ?? 0) * TWIN_PX;
+      const drawing = drawingOf({ twin: twinWay });
+      const standing = drawingOf({ twin: twinWay, resting: true });
+      const texts = textNow(seconds);
       const docked = document.querySelector(DOCKED)?.getBoundingClientRect();
       const card = docked && docked.width > 0 ? { id: 'card', box: docked } : null;
-      const clearOn = (box: DOMRect) => clearAlong(box, covers, WIDTH, HEIGHT);
+      /** Along a line, where it is under no cover; and where it stands, over no text either (issue 181). */
+      const clearOf = (box: { left: number; right: number; top: number }, drawn: Drawing) => clearAlong(box, covers, drawn);
+      const clearOn = (box: DOMRect) =>
+        clearOf(box, drawing).flatMap((s) => clearAlong({ left: s.min, right: s.max + WIDTH, top: box.top }, texts, standing));
       // A Tutorial or the Tour open (issue 151): its own life paused, its visits too; closed, home it goes, its life again.
       const guide = leaveBy === null && !leavingNow() ? guideNow() : null;
       motion.guide(guide !== null);
@@ -521,7 +578,7 @@ export function Mascot({
       const looking = part !== null || (rideLfos.length > 0 && (visit ? visit.ride !== undefined : now >= nextVisit));
       const plots = !looking ? [] : [...document.querySelectorAll<HTMLElement>(`${LFO_PLOTS}:not([data-inactive])`)]
         .map((el) => ({ lfo: Number(el.dataset.lfo) as 1 | 2, box: el.getBoundingClientRect() }))
-        .map((p) => ({ ...p, clear: clearAlong({ left: p.box.left, right: p.box.right, top: p.box.bottom }, covers, WIDTH, HEIGHT + p.box.height) }))
+        .map((p) => ({ ...p, clear: clearOf({ left: p.box.left, right: p.box.right, top: p.box.bottom }, drawingOf({ twin: twinWay, above: p.box.height })) }))
         .filter(({ box, clear }) => lineWiderThan(box.width, WIDTH) && roomAbove(box) && box.bottom <= innerHeight && clear.length > 0);
       const rideable = plots.filter((p) => rideLfos.includes(p.lfo));
 
@@ -586,7 +643,8 @@ export function Mascot({
       if (moving === 'thrown') {
         const under = (stacked.matches ? rightColumn(sections) : sections)
           .filter((s) => s.box.left <= drawnAt.left + DROP_MIDDLE && s.box.right >= drawnAt.left + DROP_MIDDLE && s.box.top >= drawnAt.foot - 1)
-          .filter((s) => clearOn(s.box).some((c) => drawnAt.left >= c.min - STEP && drawnAt.left <= c.max + STEP))
+          // Clear of what covers it there: once landed, it walks off any text to stand (issue 181).
+          .filter((s) => clearOf(s.box, drawing).some((c) => drawnAt.left >= c.min - STEP && drawnAt.left <= c.max + STEP))
           .sort((a, b) => a.box.top - b.box.top)[0];
         if (under) {
           on = under;
@@ -608,14 +666,14 @@ export function Mascot({
         if (guide.standIn && !el?.checkVisibility()) el = document.querySelector(guide.standIn);
         const blocks = [...document.querySelectorAll(PANELS)].map((e) => e.getBoundingClientRect()).filter((r) => r.width > 0 && r.height > 0);
         const ceiling = stacked.matches ? Math.max(0, ...['header', '.section-strip'].map((q) => document.querySelector(q)?.getBoundingClientRect().bottom ?? 0)) : 0;
-        const found = el ? clingFor(el, blocks, ceiling, card?.box ?? null) : null;
+        const found = el ? clingFor(el, blocks, ceiling, card?.box ?? null, texts, twinWay) : null;
         // A control on a hidden tab: towards its Section.
         const seen = found && found.box.width > 0 ? found.box : el?.closest('section[aria-label]')?.getBoundingClientRect();
         if (seen) aimAt = { x: (seen.left + seen.right) / 2, y: (seen.top + seen.bottom) / 2 };
         let to = found?.cling ? { el: el!, cling: found.cling } : null;
         const sliding = moving === 'sliding' || moving === 'clinging';
         if (!to && sliding && clungTo?.isConnected) {
-          const stay = clingFor(clungTo, blocks, ceiling, card?.box ?? null).cling;
+          const stay = clingFor(clungTo, blocks, ceiling, card?.box ?? null, texts, twinWay).cling;
           if (stay) to = { el: clungTo, cling: stay };
         }
         beside = !!to && to.el === el;
@@ -672,12 +730,14 @@ export function Mascot({
       // Its room along the line, found again only when the line moves against the page (the card's top, against the
       // window) or changes, or what covers it does.
       const box = on.box;
-      // Hovering, clear of what covers it up to the top of its bob, the header's foot (issue 164).
+      // Hovering, clear of what covers it up to the top of its bob, the header's foot (issue 164): the page moves under
+      // it there, so text may. Standing, clear of text too (issue 181), or, with no such spot, of what covers it.
       const clear = perch.hovering
-        ? clearAlong({ left: box.left + 4, right: box.right - 4, top: perch.foot }, covers, WIDTH, HEIGHT + HOVER_UNDER)
+        ? clearOf({ left: box.left + 4, right: box.right - 4, top: perch.foot }, drawingOf({ twin: twinWay, above: HOVER_UNDER }))
         : clearOn(box);
+      const fallback = perch.hovering || clear.length ? [] : clearOf(box, drawing);
       const [dx, dy] = on === card ? [0, 0] : [scrollX, scrollY];
-      const key = `${perch.id} ${box.left + dx} ${perch.hovering ? 0 : box.top + dy} ${box.width} ${clear.map((c) => `${Math.round(c.min)}-${Math.round(c.max)}`)}`;
+      const key = `${perch.id} ${box.left + dx} ${perch.hovering ? 0 : box.top + dy} ${box.width} ${[...clear, ...fallback].map((c) => `${Math.round(c.min)}-${Math.round(c.max)}`)}`;
       if (surfRoom) room = { key: 'surf', room: surfRoom };
       else if (room?.key !== key) {
         const whole = { min: box.left, max: box.right - WIDTH };
@@ -687,7 +747,7 @@ export function Mascot({
           key,
           room: perch.hovering
             ? hoverRoom(nearestSpan(clear, drawnAt.left) ?? { min: box.left + 4, max: box.right - WIDTH - 4 }, shown ? drawnAt.left : null)
-            : roomOn(box, !stacked.matches, clear.length ? clear : [whole], uncovered ? -Infinity : drawnAt.left),
+            : roomOn(box, !stacked.matches, clear.length ? clear : fallback.length ? fallback : [whole], uncovered ? -Infinity : drawnAt.left),
         };
       }
 
