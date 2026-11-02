@@ -9,6 +9,7 @@
 ## Decisions
 
 1. **Bead at its own size** (as on the page), **its foot level with the bottom of the logo's mark** (the coloured wave above the word "Limpide"). Decided by the owner, 2026-11-01; replaces 163's decision 3's size and place.
+   **Since then (2026-11-02):** decision 4 puts its foot on the name's baseline instead.
 
 Claude's call, open to the owner:
 
@@ -27,18 +28,18 @@ Decided by the owner, 2026-11-02, while decision 3 was built: "Move Bead on righ
 ## Agent Brief
 
 **Category:** enhancement
-**Summary:** In About, Bead stands at its page size, its foot on the line of the bottom of the logo's mark, instead of twice as big on the wordmark's line.
+**Summary:** In About, Bead stands at its page size, its foot on the line of the bottom of the logo's mark (since decision 4, on the name's baseline, to its right), instead of twice as big on the wordmark's line.
 
 **Current behavior:** About shows Bead to the right of the logo at twice its page size, standing on the wordmark's baseline.
 
-**Desired behavior:** Bead at its page size, its foot level with the bottom of the logo's mark, to the mark's right; the two centred together (since decision 3, the mark centred alone, Bead to its right); its button, card and idling unchanged.
+**Desired behavior:** Bead at its page size, its foot level with the bottom of the logo's mark, to the mark's right; the two centred together (since decision 3, the mark centred alone, Bead to its right; since decision 4, Bead to the right of the name, its foot on the name's baseline, the mark and the name each centred as without it, adding no height); its button, card and idling unchanged.
 
 **Key interfaces:**
 - About's header (the logo's mark, the wordmark, Bead's button)
 
 **Acceptance criteria:**
 - [x] Bead's drawn size in About equals its size on the page
-- [x] Its foot is within 1 px of the bottom of the logo's mark, at a phone's width and a laptop's
+- [x] Its foot is within 1 px of the bottom of the logo's mark (since decision 4, of the name's baseline), at a phone's width and a laptop's
 - [ ] The About and mascot specs and the design audit pass; every test passes in Linux's fonts too
 
 ## How it was built
