@@ -1387,13 +1387,21 @@ describe('Velocity → Cutoff', () => {
 });
 
 describe('aftertouch (issue 132)', () => {
-  it('opens the Cutoff by the reach the model predicts at full pressure, none at no pressure, and the sound follows', async () => {
+  // The Cutoff at no pressure and full: two octaves up (Claude's call, open to the owner); the Resonance, a knob with a
+  // room, at half: 50 points up from 0.2.
+  const cases = [
+    { pressure: { destination: 'cutoff', amount: 0 }, cutoff: 300, resonance: 0 },
+    { pressure: { destination: 'cutoff', amount: 1 }, cutoff: 1200, resonance: 0 },
+    { pressure: { destination: 'resonance', amount: 0.5 }, cutoff: 300, resonance: 0.7, knob: 0.2 },
+  ] as const;
+  it('moves the Effective Cutoff and Resonance by the reach the model predicts, none at no pressure, and the sound follows', async () => {
     const harmonics = Float32Array.from({ length: 20 }, (_, i) => 110 * (i + 1));
-    for (const amount of [0, 1]) {
+    for (const { pressure, cutoff, resonance, ...rest } of cases) {
       const ctx = new OfflineAudioContext(1, SR, SR);
       const engine = createSynthEngine(ctx);
-      engine.applyPatch({ ...defaultPatch(), cutoff: 300, resonance: 0, ampSustain: 1, ampAttack: 0.001, lfoAmount: 0, lfo2Amount: 0 });
-      engine.setPressure({ destination: 'cutoff', amount });
+      const knob = 'knob' in rest ? rest.knob : 0;
+      engine.applyPatch({ ...defaultPatch(), cutoff: 300, resonance: knob, ampSustain: 1, ampAttack: 0.001, lfoAmount: 0, lfo2Amount: 0 });
+      engine.setPressure(pressure);
       engine.noteOn(45, 1, 0);
       const frame = ctx.suspend(0.5).then(() => {
         const read = (a: AnalyserNode) => {
@@ -1407,13 +1415,14 @@ describe('aftertouch (issue 132)', () => {
       });
       await ctx.startRendering();
       const { osc, filter, curve, m } = await frame;
-      // Two octaves up at full pressure (Claude's call, open to the owner); the knob's own Cutoff at none.
-      expect(m.cutoff, `pressure ${amount}`).toBeCloseTo(amount ? 1200 : 300, 3);
-      expect(m.pressure).toEqual({ destination: 'cutoff', amount });
+      const name = `${pressure.destination} at ${pressure.amount}`;
+      expect(m.cutoff, name).toBeCloseTo(cutoff, 3);
+      expect(m.resonance, name).toBeCloseTo(resonance, 6);
+      expect(m.pressure).toEqual(pressure);
       for (let i = 0; i < harmonics.length; i++) {
         if (dB(curve[i]) < -40) continue;
         const measured = dB(toneAmplitudeHann(filter, SR, harmonics[i]) / toneAmplitudeHann(osc, SR, harmonics[i]));
-        expect(Math.abs(measured - dB(curve[i])), `${harmonics[i]} Hz at pressure ${amount}`).toBeLessThan(0.5);
+        expect(Math.abs(measured - dB(curve[i])), `${harmonics[i]} Hz, ${name}`).toBeLessThan(0.5);
       }
     }
   });

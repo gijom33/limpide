@@ -46,13 +46,13 @@ describe('destinationLevel: where a moved Parameter is, 0–1 on its knob', () =
 
 describe('timelineShows: the Timeline draws only what something moves (the owner, 2026-10-28)', () => {
   it('shows the Amp Envelope alone with no Filter Envelope and no active LFO', () => {
-    expect(timelineShows(patch({ filterEnvAmount: 0, velocityCutoff: 0.7, keyTrack: 0.5 }))).toEqual({ filterEnvelope: false, cutoff: false, destinations: [] });
+    expect(timelineShows(patch({ filterEnvAmount: 0, velocityCutoff: 0.7, keyTrack: 0.5 }), null)).toEqual({ filterEnvelope: false, cutoff: false, destinations: [] });
   });
   it('shows the Filter Envelope and the Cutoff once the Envelope’s Amount is set', () => {
-    expect(timelineShows(patch({ filterEnvAmount: 2 }))).toEqual({ filterEnvelope: true, cutoff: true, destinations: [] });
+    expect(timelineShows(patch({ filterEnvAmount: 2 }), null)).toEqual({ filterEnvelope: true, cutoff: true, destinations: [] });
   });
   it('shows the Cutoff for an LFO on it, which takes no line of its own', () => {
-    expect(timelineShows(patch({ lfoDestination: 'cutoff', lfoAmount: 0.5, lfo2Destination: 'volume', lfo2Amount: 0.5 }))).toEqual({
+    expect(timelineShows(patch({ lfoDestination: 'cutoff', lfoAmount: 0.5, lfo2Destination: 'volume', lfo2Amount: 0.5 }), null)).toEqual({
       filterEnvelope: false,
       cutoff: true,
       destinations: ['volume'],
@@ -126,6 +126,7 @@ describe('aftertouch on a Destination’s knob and line (issue 132)', () => {
     // Half pressure: 50 points up, to 0.7; the LFO's 10 points at its top on top of that.
     expect(effectiveValue('resonance', p, at({ lfo: [1, 0], pressure: { destination: 'resonance', amount: 0.5 } }))).toBeCloseTo(0.8);
     expect(effectiveValue('resonance', p, at({ lfo: [1, 0], pressure: { destination: 'cutoff', amount: 0.5 } }))).toBeCloseTo(0.3);
+    expect(destinationLevel('pitch', patch({}), at({ vibrato: -0.5, pressure: { destination: 'pitch', amount: 0.5 } }))).toBe(0.5);
     expect(destinationLevel('pulseWidth', patch({ pulseWidth: 0.5 }), at({ pressure: { destination: 'pulseWidth', amount: 1 } }))).toBeCloseTo((0.9 - 0.05) / 0.9); // 40 points up
   });
 });

@@ -22,11 +22,11 @@ interface Source {
 /**
  * What the Timeline draws with the Patch as it is (the owner, 2026-10-28, issue 63): the Amp Envelope always; the
  * Filter Envelope only while its Amount moves the Cutoff; the Cutoff only while the Filter Envelope or an LFO moves
- * it; and every other Destination an active LFO moves, once however many LFOs aim at it. `pressed`, the Destination
+ * it; and every other Destination an active LFO moves, once however many LFOs aim at it. `aftertouch`, the Destination
  * aftertouch moves once a keyboard has sent it (issue 132), is drawn too, after the LFOs'. The key shows the same.
  */
-export function timelineShows(patch: Patch | undefined, pressed: LfoDestination | null = null) {
-  const moved = patch ? [...new Set([...lfoDestinations(patch), ...(pressed ? [pressed] : [])])] : [];
+export function timelineShows(patch: Patch | undefined, aftertouch: LfoDestination | null) {
+  const moved = patch ? [...new Set([...lfoDestinations(patch), ...(aftertouch ? [aftertouch] : [])])] : [];
   const filterEnvelope = !!patch && patch.filterEnvAmount !== 0;
   return { filterEnvelope, cutoff: filterEnvelope || moved.includes('cutoff'), destinations: moved.filter((d): d is LfoDestination => d !== 'cutoff') };
 }
@@ -52,7 +52,7 @@ export interface KeyEntry {
   stage?: StageId;
   pattern?: LinePattern;
   /** Aftertouch moves it (issue 132). */
-  pressed?: true;
+  aftertouch?: true;
 }
 
 /**
@@ -60,13 +60,13 @@ export interface KeyEntry {
  * moves, then what LFO 2 moves, then the Cutoff and the Filter Envelope, last the Amp Envelope. An LFO on the Cutoff
  * shows as the Cutoff. With no Filter Envelope and no LFO, the Amp Envelope alone.
  */
-export function timelineKey(patch: Patch | undefined, pressed: LfoDestination | null = null): KeyEntry[] {
-  const shows = timelineShows(patch, pressed);
+export function timelineKey(patch: Patch | undefined, aftertouch: LfoDestination | null): KeyEntry[] {
+  const shows = timelineShows(patch, aftertouch);
   return [
     ...(patch
       ? shows.destinations.map((d) => ({
           mark: `lfo-${d}`, name: DESTINATIONS[d].label, destination: d, stage: DESTINATIONS[d].stage, pattern: linePattern(patch, d),
-          ...(d === pressed ? { pressed: true as const } : {}),
+          ...(d === aftertouch ? { aftertouch: true as const } : {}),
         }))
       : []),
     ...(shows.cutoff ? [{ mark: 'cutoff', name: 'Cutoff', stage: 'filter' as const, pattern: 'dots' as const }] : []),
@@ -98,7 +98,7 @@ const DOT_WIDTH = 1.75; // times the curve's width
  * knob's own scale), computed from the Modulation model for past moments, each only while something moves it
  * (`timelineShows`). "Now" is the right edge.
  */
-export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: () => ViewSettings, pressed: () => LfoDestination | null = () => null) {
+export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: () => ViewSettings, aftertouch: () => LfoDestination | null) {
   const frozenNow = createFreezeLatch<number>();
   const dashState = createDashState();
 
@@ -170,8 +170,8 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
     // Filter Envelope: an area on the 0–1 level scale, the shape that (times Amount) pushes the Effective Cutoff.
     // Light fills, so where the two overlap they read no heavier than one Viewer's shading (16 %). Only while its
     // Amount moves the Cutoff: at zero the Envelope runs but changes nothing.
-    const shows = timelineShows(patchNow, pressed());
-    canvas.dataset.shows = timelineKey(patchNow, pressed()).map((e) => e.mark).join(' ');
+    const shows = timelineShows(patchNow, aftertouch());
+    canvas.dataset.shows = timelineKey(patchNow, aftertouch()).map((e) => e.mark).join(' ');
     if (shows.filterEnvelope) area('--stage-filter', 0.1, (m) => m.filter);
     canvas.dataset.filterEnvelope = (samples.at(-1)?.filter ?? 0).toFixed(3);
     const latest = samples.at(-1);

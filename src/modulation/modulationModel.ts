@@ -27,12 +27,12 @@ export interface Modulation {
   sounding: Sounding | null;
   /** When the newest Note started (its Gate opened), in the engine's seconds; null before any (issue 115). */
   struck: number | null;
-  /** The pitch the newest Note sounds at, in semitones (fractional through a Glide or vibrato); A4 before any. */
-  pitch: number;
   /**
-   * How far an LFO on Pitch (and aftertouch aimed at Pitch, issue 132) moves it right now, in semitones: `pitch` less
-   * the Note where the Glide has taken it, and the bend wheel.
+   * The pitch the newest Note sounds at, in semitones (fractional through a Glide, vibrato, the bend or aftertouch); A4
+   * before any.
    */
+  pitch: number;
+  /** How far an LFO on Pitch moves it right now, in semitones: `pitch` less the Note where the Glide has taken it. */
   vibrato: number;
   /** A keyboard's aftertouch at this moment, and the Destination it moves (issue 132). */
   pressure: Pressure;
@@ -183,10 +183,8 @@ export function pressed(patch: Patch, { destination, amount }: Pressure): Patch 
   if (!amount) return patch;
   const law: LfoLaw = LFO_LAWS[destination];
   const next = { ...patch };
-  for (const knob of law.knobs) {
-    if (destination === 'cutoff') next.cutoff = Math.min(HIGHEST_CUTOFF, patch.cutoff * 2 ** (law.perDepth * amount));
-    else next[knob] = Math.min(law.room ? PARAMS[knob].max : Infinity, patch[knob] + law.perDepth * amount);
-  }
+  if (destination === 'cutoff') next.cutoff = Math.min(HIGHEST_CUTOFF, patch.cutoff * 2 ** (law.perDepth * amount));
+  else for (const knob of law.knobs) next[knob] = Math.min(law.room ? PARAMS[knob].max : Infinity, patch[knob] + law.perDepth * amount);
   return next;
 }
 

@@ -99,7 +99,7 @@ Emphasis of the frequencies right around the Cutoff.
 _Avoid_: Q (that's the maths name; shown only in the Synth Geek Layer), emphasis, peak
 
 **Effective Cutoff**:
-The Cutoff at a given instant after all modulation (Filter Envelope, LFOs, Velocity, Key Track) is applied.
+The Cutoff at a given instant after all modulation (Filter Envelope, LFOs, Velocity, Key Track, Aftertouch) is applied.
 _Avoid_: Current cutoff, modulated frequency
 
 **Amp**:

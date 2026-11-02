@@ -6,6 +6,7 @@ import { type AudioStatus, unlockAudio } from '../app/unlockAudio';
 import { rememberWelcome, welcomeFor } from '../app/welcome';
 import { createCallingPhrase, createWordsHeard, type Word } from '../input/callingPhrase';
 import { DEFAULT_OCTAVE, shiftOctave, startingOctave } from '../input/keyboardLayout';
+import { NO_PRESSURE } from '../modulation/modulationModel';
 import { type Formula, oscillatorFormulas, responseFormula } from '../music/geek';
 import { CHOICES, LFO_DESTINATIONS, type LfoDestination, osc1Heard, osc2Heard, type ParamId, type Patch, setFilter, setParam, setWaveform, subNoiseHeard } from '../patch/patch';
 import { PRESETS } from '../patch/presets';
@@ -61,7 +62,7 @@ import { Wordmark } from './Wordmark';
 const BEND_RANGE = 'limpide.bendRange';
 const AFTERTOUCH = 'limpide.aftertouch';
 /** The Destination aftertouch moves as remembered, or the Cutoff (issue 132). */
-const storedAftertouch = (stored: string | null): LfoDestination => LFO_DESTINATIONS.find((d) => d.id === stored)?.id ?? 'cutoff';
+const storedAftertouch = (stored: string | null): LfoDestination => LFO_DESTINATIONS.find((d) => d.id === stored)?.id ?? NO_PRESSURE.destination;
 /** Why a greyed-out control does nothing now, for a screen reader (issue 104): what several controls share. */
 const OSC1_SILENT = 'No effect while Osc 1 is silent';
 const OSC2_SILENT = 'No effect while Osc 2 is silent';
@@ -801,7 +802,7 @@ export function App() {
             engine={session.engine}
             view={view}
             patch={patch}
-            pressed={midi.pressureHeard ? aftertouch : null}
+            aftertouch={midi.pressureHeard ? aftertouch : null}
             controls={
               <div className="timeline-controls">
                 {([1, 2] as const).map((n) => (

@@ -1,6 +1,6 @@
 import { useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from 'react';
-import { DESTINATIONS } from '../modulation/destinations';
-import { LFO_DESTINATIONS, type LfoDestination, type LfoNumber, STAGES } from '../patch/patch';
+import { DESTINATIONS, DESTINATIONS_BY_STAGE } from '../modulation/destinations';
+import { LFO_DESTINATIONS, type LfoDestination, type LfoNumber } from '../patch/patch';
 import { useLearnable } from './learn';
 import { Forms, useOneLine } from './oneLine';
 
@@ -92,12 +92,12 @@ export function DestinationPicker({ lfo, value, onChange }: Props) {
       </button>
       {open && (
         <div className="destination-menu" role="menu" aria-label={label} onKeyDown={onMenuKey}>
-          {STAGES.map((stage) => (
+          {DESTINATIONS_BY_STAGE.map(({ stage, destinations }) => (
             <div key={stage.id} role="group" aria-label={stage.name} data-stage={stage.id}>
               <span className="destination-stage" aria-hidden="true">
                 {stage.name}
               </span>
-              {LFO_DESTINATIONS.filter((d) => d.stage === stage.id).map((d) => (
+              {destinations.map((d) => (
                 <button key={d.id} type="button" role="menuitemradio" aria-checked={d.id === value} tabIndex={-1} onClick={() => pick(d.id)}>
                   {d.label}
                 </button>

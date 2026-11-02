@@ -2,7 +2,8 @@ import { Fragment, useEffect, useRef, useState } from 'react';
 import { answeredBy, knownAmong } from '../midi/controller';
 import { describeControl, describeMode, describeTarget } from '../midi/describe';
 import { type Control, type ControllerId, controlKey, type Mapping } from '../midi/mappings';
-import { LFO_DESTINATIONS, type LfoDestination, STAGES } from '../patch/patch';
+import { DESTINATIONS_BY_STAGE } from '../modulation/destinations';
+import type { LfoDestination } from '../patch/patch';
 import { CloseIcon, MidiIcon } from './icons';
 import { Segmented } from './Segmented';
 import { Tooltip } from './Tooltip';
@@ -199,9 +200,9 @@ export function MidiPanel({
               <label className="segmented-field midi-aftertouch">
                 <span className="field-caption">Aftertouch</span>
                 <select className="tool" value={aftertouch} onChange={(e) => onAftertouch(e.target.value as LfoDestination)}>
-                  {STAGES.map((stage) => (
+                  {DESTINATIONS_BY_STAGE.map(({ stage, destinations }) => (
                     <optgroup key={stage.id} label={stage.name}>
-                      {LFO_DESTINATIONS.filter((d) => d.stage === stage.id).map((d) => (
+                      {destinations.map((d) => (
                         <option key={d.id} value={d.id}>
                           {d.label}
                         </option>

@@ -58,7 +58,7 @@ describe('MIDI parser', () => {
   });
 
   it('skips system-exclusive dumps and messages it does not use', () => {
-    // Per-Note aftertouch (0xa0) is not used; channel aftertouch is, since issue 132.
+    // Per-Note aftertouch (0xa0) is not used.
     expect(parse(0xf0, 0x7e, 0x01, 0xf7, 0xa0, 60, 30, 0x90, 60, 1)).toEqual([
       { type: 'noteOn', channel: 1, note: 60, velocity: 1 / 127 },
     ]);

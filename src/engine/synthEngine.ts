@@ -1212,7 +1212,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     const latestPitch = lastAt(pitches, t);
     const note = latestPitch >= 0 ? pitches[latestPitch].note : 69;
     const gliding = frequencyToNote(glidingAt(t) || A4);
-    const vibrato = then ? soundingPitch(then, gliding, lfo) - gliding + pressurePitch(pressure) : 0;
+    const vibrato = then ? soundingPitch(then, gliding, lfo) - gliding : 0;
     const resonance = then ? effectiveResonance(then, lfo) : 0;
     return {
       amp: levelAt(ampEvents, t),
@@ -1225,7 +1225,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       volume: then ? effectiveVolume(then, lfo) : 1,
       sounding: gate?.on ? { note, velocity } : null,
       struck: opened >= 0 ? ampEvents[opened].time : null,
-      pitch: gliding + vibrato + bendAt(t) / 100,
+      pitch: gliding + vibrato + pressurePitch(pressure) + bendAt(t) / 100,
       vibrato,
       pressure,
     };
@@ -1235,7 +1235,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
    * What the sound takes from the Patch it plays, `next` (the knobs as aftertouch moved its Destination, issue 132): every
    * Voice's settings, and the gains the LFOs reach their Destinations through.
    */
-  const sound = (next: Patch, t: number) => {
+  const applyToSound = (next: Patch, t: number) => {
     for (const v of voices) v.apply(next, t);
     // The laws' swings (issue 74), in the units the nodes take: cents for the pitches and the Cutoff.
     const cutoffCents = destinationSwings(next, 'cutoff').map((octaves) => octaves * 1200);
@@ -1339,7 +1339,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
           osc.frequency.setValueAtTime(lfoRate(i, l, t), t);
         }
       });
-      sound(pressed(next, pressureAt(t)), t);
+      applyToSound(pressed(next, pressureAt(t)), t);
       lockToBeat(next, t);
       // Several Voices sum before the master: the listening level makes room for them (after the Amp Tap, so
       // the Viewers' scale is unchanged, ADR-0006); one Voice plays exactly as loud as before.
@@ -1350,7 +1350,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       const t = at(time);
       append(pressures, { time: t, pressure });
       trim(pressures, t);
-      if (patch) sound(pressed(patch, pressure), t);
+      if (patch) applyToSound(pressed(patch, pressure), t);
       bend.offset.setTargetAtTime(bendCentsAt(t), t, BEND_SMOOTHING);
     },
 

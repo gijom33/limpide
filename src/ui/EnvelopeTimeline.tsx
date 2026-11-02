@@ -9,25 +9,25 @@ import { type TipContent, Tooltip } from './Tooltip';
 import { lfoLineTip, TIPS } from './tips';
 
 /** A key entry's tooltip. */
-const tipOf = ({ mark, destination, pressed }: KeyEntry): TipContent =>
-  destination ? lfoLineTip(destination, pressed) : mark === 'cutoff' ? TIPS.timelineCutoff : mark === 'filterEnvelope' ? TIPS.timelineFilterEnvelope : TIPS.timelineAmp;
+const tipOf = ({ mark, destination, aftertouch }: KeyEntry): TipContent =>
+  destination ? lfoLineTip(destination, !!aftertouch) : mark === 'cutoff' ? TIPS.timelineCutoff : mark === 'filterEnvelope' ? TIPS.timelineFilterEnvelope : TIPS.timelineAmp;
 
 /** The LFO & Envelopes section, under the signal chain: the LFO beside the Envelope Timeline, in the modulation colour. */
 export function EnvelopeTimeline({
-  engine, view, patch, pressed, controls,
+  engine, view, patch, aftertouch, controls,
 }: {
   engine: SynthEngine;
   view(): ViewSettings;
   patch: Patch;
   /** The Destination aftertouch moves, once a keyboard has sent it (issue 132): its line is drawn too. */
-  pressed: LfoDestination | null;
+  aftertouch: LfoDestination | null;
   controls?: ReactNode;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const pressedRef = useRef(pressed);
-  pressedRef.current = pressed;
-  useEffect(() => addToRenderLoop(createTimeline(canvasRef.current!, engine, view, () => pressedRef.current)), [engine, view]);
-  const key = timelineKey(patch, pressed);
+  const aftertouchRef = useRef(aftertouch);
+  aftertouchRef.current = aftertouch;
+  useEffect(() => addToRenderLoop(createTimeline(canvasRef.current!, engine, view, () => aftertouchRef.current)), [engine, view]);
+  const key = timelineKey(patch, aftertouch);
   // One line, its names shorter where the room runs short (issue 156).
   const keyRef = useOneLine<HTMLSpanElement>(key.map((e) => e.name).join(' · '));
 

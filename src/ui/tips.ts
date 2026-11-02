@@ -193,7 +193,7 @@ export const TIPS = {
   },
   aftertouch: {
     title: 'Aftertouch',
-    body: 'Press harder on a held key and this Destination moves, as on a plugin synth: from where its knob is at a light touch to as far as an LFO at full Depth takes it at the hardest, on top of its knob and the LFOs. The Cutoff opens up to two octaves, so pressing brightens the sound. Its ring’s dot and the LFO & Envelopes line show the move.',
+    body: 'Press harder on a held key and this Destination rises, as on a plugin synth: nothing at a light touch, as far as one LFO at full Depth swings it at the hardest, on top of its knob and the LFOs. The Cutoff opens up to two octaves, so pressing brightens the sound. The dot on its knob and its LFO & Envelopes line show the move.',
     how: 'Not every keyboard sends aftertouch: press a held key harder and see whether the Last message says Aftertouch. Per-key (polyphonic) pressure is not used.',
   },
   bendRange: {
@@ -350,11 +350,11 @@ export const TIPS = {
 
 const LINE_COLOUR = { osc: 'Green', filter: 'Orange', amp: 'Violet' } as const;
 /** A Timeline key entry for a Destination an LFO moves (issue 63): its line, in its section's colour. */
-export function lfoLineTip(destination: LfoDestination, pressed = false): TipContent {
+export function lfoLineTip(destination: LfoDestination, aftertouch: boolean): TipContent {
   const { label, stage } = DESTINATIONS[destination];
   const colour = LINE_COLOUR[stage];
   // Aftertouch aimed here moves the line too (issue 132).
-  const pressure = pressed ? ' A keyboard’s aftertouch raises it too, the harder the press.' : '';
+  const pressure = aftertouch ? ' A keyboard’s aftertouch raises it too, the harder the press.' : '';
   return destination === 'pitch'
     ? { title: label, body: `${colour} broken line: the pitch as the LFO moves it (vibrato), a semitone up at the top and down at the bottom, the Note’s own pitch in the middle.${pressure}` }
     : { title: label, body: `${colour} broken line: the ${label} as the LFO moves it (both LFOs added together when both aim at it), on its knob’s scale, bottom to top.${pressure}` };
