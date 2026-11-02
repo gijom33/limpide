@@ -115,6 +115,7 @@ export const TIPS = {
     title: 'Key Track',
     body: 'How far the Cutoff follows the Note you play, from C4: at 100 % it moves an octave per octave, so high Notes keep as many Harmonics as low ones. At 0 % the Cutoff stays put, and high Notes sound duller.',
     how: 'Play C3 then C5 with a low Cutoff: watch the Response Curve move with the Harmonic Markers.',
+    underTheHood: UNDER_THE_HOOD.keyTrack,
     history: HISTORY.keyTrack,
   },
   demo: {
@@ -361,8 +362,17 @@ export const TIPS = {
     body: 'How loud the Amp lets the sound through, after its Envelope. An LFO aimed at Volume dips it from here, for tremolo: its ring shows how far.',
     history: HISTORY.amp,
   },
-  lfoRate: { title: 'Rate', body: 'How fast the LFO repeats, in cycles a second (Hz): 0.05 Hz is one slow sweep every 20 seconds, 20 Hz a fast flutter.', history: HISTORY.lfoRate },
-  lfoNote: { title: 'Rate', body: 'With Sync on, how often the LFO repeats, as a note value at the tempo: 1 bar, 1/4, 1/8 (D dotted, T triplet).' },
+  lfoRate: {
+    title: 'Rate',
+    body: 'How fast the LFO repeats, in cycles a second (Hz): 0.05 Hz is one slow sweep every 20 seconds, 20 Hz a fast flutter.',
+    underTheHood: UNDER_THE_HOOD.lfoRate,
+    history: HISTORY.lfoRate,
+  },
+  lfoNote: {
+    title: 'Rate',
+    body: 'With Sync on, how often the LFO repeats, as a note value at the tempo: 1 bar, 1/4, 1/8 (D dotted, T triplet).',
+    underTheHood: UNDER_THE_HOOD.lfoNote,
+  },
   lfoSync: { title: 'Sync', body: 'On: the Rate is a note value at the tempo; with Retrigger off, the LFO’s cycle lands on the beat, and with it on, each Note starts the cycle. Off: the Rate is in Hz, as it was.' },
   tempo: { title: 'Tempo', body: 'The page’s beats per minute, which an LFO with Sync on follows. Drag it or use the arrows; double-click to type it.' },
   tap: { title: 'Tap', body: 'Tap it in time: from the second tap the tempo follows your last four, its beat where you last tapped.' },
@@ -370,6 +380,7 @@ export const TIPS = {
     title: 'Depth',
     body: 'How far the LFO moves its Destination. At 0 it moves nothing.',
     how: 'Turn it up and watch the control it moves: a ring shows how far, a dot where it is now.',
+    underTheHood: UNDER_THE_HOOD.lfoDepth,
     history: HISTORY.lfoDepth,
   },
   timelineAmp: {

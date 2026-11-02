@@ -155,3 +155,94 @@ test('on a phone Osc 2’s numbers show in the name’s place while the control 
   await detune.press('PageUp');
   await expect(page.locator('.knob', { has: detune }).locator('.knob-value > span').first()).toHaveText('3.82 Hz', { useInnerText: true });
 });
+
+// Issue 169: the LFOs' periods and swings, and the Cutoff at the Note under Key Track.
+const lfo = (page: Page, n: 1 | 2 = 1) => page.getByRole('group', { name: `LFO ${n}`, exact: true });
+const lfoValue = (page: Page, name: string) => page.locator('.knob', { has: page.getByRole('slider', { name, exact: true }) }).locator('.knob-value > span').first();
+
+test('an LFO’s Rate reads its period, at the tempo while synced, and its Depth the swing in its Destination’s unit (issue 169)', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  await expect(lfoValue(page, 'LFO 1 Rate')).toHaveText('2.00 Hz');
+  await expect(lfoValue(page, 'LFO 1 Depth')).toHaveText('0 %');
+  await page.evaluate(() => localStorage.setItem('limpide.overlays', JSON.stringify({ geek: true })));
+  await page.reload();
+
+  await expect(lfoValue(page, 'LFO 1 Rate')).toHaveText('0.50 s');
+  await lfo(page).getByRole('button', { name: 'LFO 1 Sync' }).click();
+  await expect(lfo(page).getByRole('slider', { name: 'LFO 1 Rate' })).toHaveAttribute('aria-valuetext', '1/4, 2 Hz');
+  await expect(lfoValue(page, 'LFO 1 Rate')).toHaveText('0.50 s');
+  // At the tempo: 1/4 at 110 BPM.
+  const bpm = page.getByRole('spinbutton', { name: 'Tempo' });
+  await bpm.focus();
+  await page.keyboard.press('PageDown');
+  await expect(bpm).toHaveAttribute('aria-valuenow', '110');
+  await expect(lfoValue(page, 'LFO 1 Rate')).toHaveText('0.55 s');
+
+  // LFO 1 on the Cutoff: 40 % is ±0.80 octave; LFO 2 on Pitch, 50 % is ±0.50 semitone.
+  const depth = lfo(page).getByRole('slider', { name: 'LFO 1 Depth' });
+  await expect(lfoValue(page, 'LFO 1 Depth')).toHaveText('±0.00 oct');
+  for (let i = 0; i < 4; i++) await depth.press('PageUp');
+  await expect(lfoValue(page, 'LFO 1 Depth')).toHaveText('±0.80 oct');
+  const depth2 = lfo(page, 2).getByRole('slider', { name: 'LFO 2 Depth' });
+  for (let i = 0; i < 5; i++) await depth2.press('PageUp');
+  await expect(lfoValue(page, 'LFO 2 Depth')).toHaveText('±0.50 st');
+  // Volume dips: 40 % is −4.4 dB below the wave's top; Pulse Width in its own %.
+  const next = lfo(page).getByRole('button', { name: 'Next destination' });
+  await next.click();
+  await next.click();
+  await expect(lfo(page).getByRole('button', { name: /Destination:/ })).toHaveAccessibleName('LFO 1 Destination: Volume');
+  await expect(lfoValue(page, 'LFO 1 Depth')).toHaveText('−4.4 dB');
+  for (let i = 0; i < 4; i++) await next.click();
+  await expect(lfo(page).getByRole('button', { name: /Destination:/ })).toHaveAccessibleName('LFO 1 Destination: Pulse Width');
+  await expect(lfoValue(page, 'LFO 1 Depth')).toHaveText('±16 %');
+});
+
+test('Key Track reads the Cutoff at the Note played, A4’s before any (issue 169)', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.addInitScript(() => localStorage.setItem('limpide.overlays', JSON.stringify({ geek: true })));
+  await page.goto('/');
+  const keyTrack = page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name: 'Key Track' });
+  const readout = value(page, 'Filter', 'Key Track');
+  await expect(readout).toHaveText('2.00 kHz'); // at 0 %, the Cutoff's own
+  await keyTrack.press('End'); // 100 %: an octave per octave from C4, so A4 is 2 kHz × 2^(9/12)
+  await expect(readout).toHaveText('3.36 kHz');
+  await keyTrack.blur();
+  await page.keyboard.down('KeyA'); // C4
+  await page.keyboard.up('KeyA');
+  await expect(readout).toHaveText('2.00 kHz');
+});
+
+test('the tips of the LFOs’ Rate and Depth and of Key Track give their formulas under the hood, with the layer on (issue 169)', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.addInitScript(() => localStorage.setItem('limpide.overlays', JSON.stringify({ geek: true })));
+  await page.goto('/');
+  const tipOf = (text: string) => page.getByRole('tooltip').filter({ hasText: text });
+  await page.keyboard.press('Tab'); // the keys in use: a focus shows its tip
+  await lfo(page).getByRole('slider', { name: 'LFO 1 Rate' }).focus();
+  await expect(tipOf('How fast the LFO repeats').locator('.tooltip-hood')).toContainText('T = 1 / f');
+  await lfo(page).getByRole('slider', { name: 'LFO 1 Depth' }).focus();
+  await expect(tipOf('How far the LFO moves').locator('.tooltip-hood')).toContainText(/swing = Depth × its reach.*Cutoff ±2 oct/);
+  await page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name: 'Key Track' }).focus();
+  await expect(tipOf('How far the Cutoff follows').locator('.tooltip-hood')).toContainText('fc = Cutoff × 2^(k·(n − 60)/12)');
+  await lfo(page).getByRole('button', { name: 'LFO 1 Sync' }).click();
+  await page.keyboard.press('Tab');
+  await lfo(page).getByRole('slider', { name: 'LFO 1 Rate' }).focus();
+  await expect(tipOf('With Sync on').locator('.tooltip-hood')).toContainText('T = beats × 60 / BPM');
+});
+
+test('on a phone the LFOs’ and Key Track’s numbers show in the name’s place while the control moves (issue 169)', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.addInitScript(() => localStorage.setItem('limpide.overlays', JSON.stringify({ geek: true })));
+  await page.goto('/');
+  const depth = page.getByRole('slider', { name: 'LFO 1 Depth' });
+  const knob = page.locator('.knob', { has: depth });
+  await expect(knob.locator('.knob-value > span').first()).toBeHidden();
+  for (let i = 0; i < 4; i++) await depth.press('PageUp');
+  await expect(knob.locator('.knob-value > span').first()).toBeVisible();
+  await expect(knob.locator('.knob-value > span').first()).toHaveText('±0.80 oct');
+  await expect(knob.locator('.knob-label')).toBeHidden();
+  const keyTrack = page.getByRole('slider', { name: 'Key Track' });
+  await keyTrack.press('End');
+  await expect(page.locator('.knob', { has: keyTrack }).locator('.knob-value > span').first()).toHaveText('3.36 kHz');
+});

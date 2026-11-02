@@ -267,7 +267,7 @@ A captured Scope and Spectrum trace, kept faint for A/B comparison against the l
 _Avoid_: Reference trace, pin, compare
 
 **Synth Geek Layer**:
-An optional overlay revealing the underlying quantities behind Parameters and Viewers: Resonance as Q, levels in dB, the Harmonic formula of Osc 1's Waveform (FM's sidebands and Ring's sums and differences when they are up), the Response Curve's formula, the Effective Cutoff's value, and Osc 2's tuning as the engine plays it (the Octave's and Semitone's multiples, Detune's beats in Hz at the last Note played, A4 before any: issue 167). Switched on by Display's Geek toggle, a pair of glasses; off by default. It also adds to a control's tip its formula, under "Under the hood", and its History last. Named the Maths Layer until issue 165.
+An optional overlay revealing the underlying quantities behind Parameters and Viewers: Resonance as Q, levels in dB, the Harmonic formula of Osc 1's Waveform (FM's sidebands and Ring's sums and differences when they are up), the Response Curve's formula, the Effective Cutoff's value, and Osc 2's tuning as the engine plays it (the Octave's and Semitone's multiples, Detune's beats in Hz at the last Note played, A4 before any: issue 167), each LFO's period and its swing in its Destination's unit, and the Cutoff at the Note under Key Track (issue 169). Switched on by Display's Geek toggle, a pair of glasses; off by default. It also adds to a control's tip its formula, under "Under the hood", and its History last. Named the Maths Layer until issue 165.
 _Avoid_: Maths Layer (its old name), Advanced mode, expert mode
 
 **History**:
