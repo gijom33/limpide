@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { expect, type Page, test } from '@playwright/test';
 import { describePatch } from '../src/patch/describe';
 import { PRESETS } from '../src/patch/presets';
+import { WORDS_EVERY } from '../src/ui/hooks/usePatchWords';
 import { startEmptied, USUAL } from './startState';
 
 const cutoff = (page: Page) => page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name: 'Cutoff' });
@@ -180,11 +181,11 @@ test('the octave buttons change no sound: a Preset keeps its about line, and no 
   const up = page.getByRole('button', { name: 'Octave up' });
   await page.getByRole('button', { name: 'Next Preset' }).click();
   await up.click();
-  await page.waitForTimeout(500); // past the words' interval
+  await page.waitForTimeout(2 * WORDS_EVERY); // past the words' interval
   await expect(anyWords(page)).toHaveCount(0);
   await pick(page, 'Init');
   await up.click();
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(2 * WORDS_EVERY);
   await expect(description(page)).toBeVisible();
   await expect(anyWords(page)).toHaveCount(0);
   await nudge(page); // a change to the sound
