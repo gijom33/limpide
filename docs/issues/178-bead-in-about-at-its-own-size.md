@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · enhancement. Built (2026-11-01) on night/2026-11-01 and shipped in 1.21.0; decision 3 (the owner's bug of 2026-11-02) built the same day on main, for the owner to try: the logo centred as before, Bead to its right
+**Status:** ready-for-human · enhancement. Built (2026-11-01) on night/2026-11-01 and shipped in 1.21.0; decisions 3 and 4 (the owner's, 2026-11-02) built the same day on main, for the owner to try: the logo and the name centred as before, Bead to the right of the name, on its baseline
 
 ## Decisions
 
@@ -19,6 +19,10 @@ Claude's call, open to the owner:
 Decided by the owner, 2026-11-02, on 1.21.0's About on an iPhone: "Bead should not modify logo alignment. Move it to right."
 
 3. **The logo keeps its own centring:** the mark centred over the name as it is with Bead away or switched off; Bead stands to the mark's right, outside that centring, its foot still on the mark's lowest point (decision 1). Where About is too narrow for it there, it may overhang the mark's right but never moves the mark.
+
+Decided by the owner, 2026-11-02, while decision 3 was built: "Move Bead on right side of “Limpide” word."
+
+4. **Bead to the right of the name,** the word "Limpide", not of the mark: its foot on the name's baseline (replacing decision 1's place), the name and the mark each centred as without Bead, and Bead adding no height, so nothing moves when it is switched on or off.
 
 ## Agent Brief
 
@@ -53,7 +57,14 @@ Calls made without the owner (Claude's call, open to the owner):
 
 **What to try:** with Bead on, open About on a phone and at a laptop's size: Bead stands at the size it has on the page, its feet on the line of the wave's lowest point, the two centred over "Limpide". Tap it: its card, as before.
 
-### Decision 3, built (2026-11-02, on main)
+### Decisions 3 and 4, built (2026-11-02, on main)
+
+- **The place:** the name sits in the middle of three columns whose outer two share one width, so it is centred as without Bead; Bead's button stands in the right column, a gap of `--space-3` from the name, its bottom on the name's baseline (a button with no text of its own has its bottom as its baseline). Its 44 px height is taken back by its top margin, so the row is as tall as the name. The mark, alone in its row, is centred as before.
+- **Tests:** the About spec's Bead test checks, at 393 and 1440 px: Bead at its page size, right of the name, its foot within 1 px of the name's baseline (an empty inline block measures it), the name and the mark each centred within 1 px, and the row no taller than the name; red before the change. The About spec and the design audit pass in Chromium and WebKit (70), and the mascot spec's About test in both. Seen at 375 px: the name's middle and About's on 188 px, Bead 12 px right of the name; with Bead on or off, the name at the same place.
+- **To try:** open About on the iPhone: the wave and "Limpide" centred, Bead standing on the word's line, to its right.
+
+(Superseded the same day by decision 4, kept for the record:)
+
 
 - **The place:** the mark alone is centred over the name; Bead's button hangs to its right (absolutely placed, a gap of `--space-3` from the mark), its foot level with the mark's bottom as before, so the logo sits where it does with Bead away or switched off.
 - **Tests:** the About spec's Bead test now checks the mark centred alone within 1 px (red before the change, at 393 px), with Bead to its right at its page size and its foot on the mark's bottom; it fits from 280 px with no sideways scroll. The About spec and the design audit pass in Chromium and WebKit (70), and the mascot spec's About test in both. Seen at 375 px: the mark's middle on About's middle (188 px), Bead 12 px right of it.

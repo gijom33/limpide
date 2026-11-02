@@ -92,9 +92,14 @@ export function About({
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div className="about-body">
-        {/* Bead stands to the logo's right at its page size, its foot on the mark's bottom, the mark centred alone (issue 178). */}
         <div className="about-mark">
           <Logo size={72} />
+        </div>
+        {/* Bead stands to the name's right at its page size, its foot on the name's baseline, the name centred alone (issue 178). */}
+        <div className="about-name">
+          <h2 className="about-title wordmark-text" id={title}>
+            Limpide
+          </h2>
           {beadOn && (
             <button
               ref={beadButton}
@@ -108,9 +113,6 @@ export function About({
             </button>
           )}
         </div>
-        <h2 className="about-title wordmark-text" id={title}>
-          Limpide
-        </h2>
         <p className="about-tagline">A subtractive synthesizer that shows you what each stage does to the sound.</p>
         {welcome && (
           <div className="about-welcome">

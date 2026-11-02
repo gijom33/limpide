@@ -115,9 +115,9 @@ test.describe('Bead in About (issue 163)', () => {
   test.describe('switched on', () => {
     test.use({ storageState: holding({ ...WELCOMED, 'limpide.bead': 'on' }) });
 
-    // Issue 178: at its own size, its foot level with the bottom of the mark's stroke; the mark centred as without Bead,
-    // Bead to its right (decision 3, the owner's).
-    test('it stands at its size on the page, to the logo’s right, its foot level with the bottom of the mark', async ({ page }) => {
+    // Issue 178: at its own size, to the right of the word "Limpide", its foot on the word's baseline; the mark and the
+    // word centred as without Bead (decisions 3 and 4, the owner's).
+    test('it stands at its size on the page, to the right of the name, its foot on the name’s baseline', async ({ page }) => {
       await page.goto('/');
       await expect(page.locator('.mascot')).toHaveCount(1, { timeout: 6000 });
       const onPage = (await page.locator('.mascot-drop svg').boundingBox())!;
@@ -129,26 +129,35 @@ test.describe('Bead in About (issue 163)', () => {
         const logo = (await about(page).locator('.logo').boundingBox())!;
         const drawn = (await bead(page).locator('svg').boundingBox())!;
         const body = (await about(page).locator('.about-body').boundingBox())!;
-        // The mark's lowest point: its path's bottom and half its stroke, in the window's pixels.
-        const markBottom = await about(page)
-          .locator('.logo')
-          .evaluate((svg: SVGSVGElement) => {
-            const path = svg.querySelector('path')!;
-            const box = path.getBBox();
-            const view = svg.viewBox.baseVal;
-            const scale = svg.getBoundingClientRect().height / view.height;
-            const stroke = Number(path.getAttribute('stroke-width'));
-            return svg.getBoundingClientRect().top + (box.y + box.height + stroke / 2 - view.y) * scale;
+        // The name's words and baseline, in the window's pixels: an empty inline block sits on the baseline.
+        const name = await about(page)
+          .locator('.about-title')
+          .evaluate((h) => {
+            const range = document.createRange();
+            range.selectNodeContents(h);
+            const words = range.getBoundingClientRect();
+            const probe = document.createElement('span');
+            probe.style.display = 'inline-block';
+            h.append(probe);
+            const baseline = probe.getBoundingClientRect().bottom;
+            probe.remove();
+            return { left: words.left, right: words.right, baseline };
           });
+        const middle = body.x + body.width / 2;
         expect(drawn.width, `${width}px: its width on the page`).toBeCloseTo(onPage.width, 0);
         expect(drawn.height, `${width}px: its height on the page`).toBeCloseTo(onPage.height, 0);
-        expect(drawn.x, `${width}px: to the logo’s right`).toBeGreaterThanOrEqual(logo.x + logo.width);
-        expect(Math.abs(drawn.y + drawn.height - markBottom), `${width}px: its foot on the mark’s bottom`).toBeLessThanOrEqual(1);
-        expect(Math.abs(logo.x + logo.width / 2 - (body.x + body.width / 2)), `${width}px: the mark centred alone`).toBeLessThanOrEqual(1);
+        expect(drawn.x, `${width}px: to the name’s right`).toBeGreaterThanOrEqual(name.right);
+        expect(Math.abs(drawn.y + drawn.height - name.baseline), `${width}px: its foot on the name’s baseline`).toBeLessThanOrEqual(1);
+        expect(Math.abs((name.left + name.right) / 2 - middle), `${width}px: the name centred alone`).toBeLessThanOrEqual(1);
+        expect(Math.abs(logo.x + logo.width / 2 - middle), `${width}px: the mark centred alone`).toBeLessThanOrEqual(1);
+        // Bead adds no height: the row is as tall as the name, so the name stands where it does without Bead.
+        const row = (await about(page).locator('.about-name').boundingBox())!;
+        const title = (await about(page).locator('.about-title').boundingBox())!;
+        expect(Math.abs(row.height - title.height), `${width}px: the row as tall as the name`).toBeLessThanOrEqual(1);
       }
     });
 
-    test('it fits in About down to the narrowest window, beside the centred logo', async ({ page }) => {
+    test('it fits in About down to the narrowest window, beside the centred name', async ({ page }) => {
       for (const width of [280, 320, 340, 375]) {
         await page.setViewportSize({ width, height: 700 });
         await page.goto('/');
