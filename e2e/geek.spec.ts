@@ -284,7 +284,7 @@ test('the Envelope faders’ tips work out τ under the hood, Glide’s gives it
 test('with the layer on each Scope writes the Note’s period, the hover the Harmonic’s number, the Oscillator Spectrum the Noise’s slope (issue 170)', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
-  const scopes = page.locator('canvas.scope');
+  const scopes = page.getByRole('img', { name: /Scope$/ });
   const oscillatorSpectrum = page.getByRole('img', { name: 'Oscillator Spectrum' });
   await expect(scopes).toHaveCount(3);
   // Off, nothing is written.
@@ -323,4 +323,13 @@ test('the Scopes’ and the Spectrums’ tips give their formulas under the hood
   await expect(page.getByRole('tooltip').filter({ hasText: 'Amp Scope' }).locator('.tooltip-hood')).toContainText('T = 1 / f₀');
   await page.getByRole('img', { name: 'Oscillator Spectrum' }).hover();
   await expect(page.getByRole('tooltip').filter({ hasText: 'Oscillator Spectrum' }).locator('.tooltip-hood')).toContainText(/fₙ = n × f₀.*pink.*−3 dB per octave/);
+});
+
+test('on a phone each Scope writes the Note’s period in its corner, as wider (issue 170)', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.addInitScript(() => localStorage.setItem('limpide.overlays', JSON.stringify({ geek: true })));
+  await page.goto('/');
+  const scopes = page.getByRole('img', { name: /Scope$/ });
+  await expect(scopes).toHaveCount(3);
+  for (const scope of await scopes.all()) await expect(scope).toHaveAttribute('data-period', '2.27 ms · 440 Hz at A4');
 });

@@ -300,12 +300,12 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
       const { frequency, levelDb } = interpolatedPeak(bins, binHz, fAxis.frequencyAt(col), fAxis.frequencyAt(col + 1));
       const level = Number.isFinite(levelDb) ? levelDb : peak[col];
       // With the Synth Geek Layer on, the Harmonic's number when the peak is on one, and none on silence (issue 170).
-      const geek = { geek: overlays.geek, harmonic: overlays.geek && level > SILENT_DB ? harmonicNumber(frequency, f0, binHz) : undefined };
-      canvas.dataset.readout = hoverReadout(frequency, level, geek);
+      const harmonicLine = { geek: overlays.geek, harmonic: overlays.geek && level > SILENT_DB ? harmonicNumber(frequency, f0, binHz) : undefined };
+      canvas.dataset.readout = hoverReadout(frequency, level, harmonicLine);
       if (measuredColumns?.font !== g.font || measuredColumns.geek !== overlays.geek) {
         measuredColumns = { font: g.font, geek: overlays.geek, columns: readoutColumns((t) => g.measureText(t).width, { harmonic: overlays.geek }) };
       }
-      const box = readoutBox(hoverReadoutLines(frequency, level, geek), measuredColumns.columns, { cursor: col, width });
+      const box = readoutBox(hoverReadoutLines(frequency, level, harmonicLine), measuredColumns.columns, { cursor: col, width });
       g.fillStyle = cssVar(canvas, '--panel');
       g.fillRect(box.x, box.y, box.width, box.height);
       g.fillStyle = text;

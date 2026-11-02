@@ -278,6 +278,12 @@ const wayAfter = (n: number) => {
   return `${Number(way.toFixed(way > 99 ? 2 : 0))} %`;
 };
 
+/** A Spectrum's Harmonics (issue 170), in each Spectrum's tip under the hood. */
+const SPECTRUM: Formula = {
+  formula: 'fₙ = n × f₀',
+  where: 'n: the Harmonic’s number, which the hover readout adds when on one; f₀: the fundamental, the 1st.',
+};
+
 /**
  * The formulas in the tips, under "Under the hood" (issue 133, decision 2), shown with the Synth Geek Layer on, above
  * History: each the one the engine computes, its letters said. Keyed by what they explain; the tips name theirs.
@@ -316,13 +322,10 @@ export const UNDER_THE_HOOD = {
     formula: 'T = 1 / f₀',
     where: 'T: one cycle, the period, written top left; f₀: the fundamental the Scope holds still: the Note played at Osc 1’s Octave, the Sub’s pitch with the Sub up (A4 until a Note is played).',
   },
-  spectrum: {
-    formula: 'fₙ = n × f₀',
-    where: 'n: the Harmonic’s number, which the hover readout adds when on one; f₀: the fundamental, the 1st.',
-  },
+  spectrum: SPECTRUM,
   oscillatorSpectrum: {
-    formula: 'fₙ = n × f₀',
-    where: 'n: the Harmonic’s number, which the hover readout adds when on one; f₀: the fundamental, the 1st. With the Noise up, its slope top right: white flat, pink −3 dB per octave.',
+    formula: SPECTRUM.formula,
+    where: `${SPECTRUM.where} With the Noise up, its slope top right: white, P(f) flat; pink, P(f) ∝ 1/f, −3 dB per octave.`,
   },
   noise: {
     formula: 'white: P(f) flat;  pink: P(f) ∝ 1/f, −3 dB per octave',
@@ -362,7 +365,7 @@ export function harmonicNumber(frequency: number, fundamental: number, binHz: nu
 }
 
 /** Each Noise Colour's slope, in dB per octave: white is flat, pink falls as 1/f (UNDER_THE_HOOD.noise). */
-export const NOISE_SLOPE_DB: Record<NoiseColour, number> = { white: 0, pink: -3 };
+const NOISE_SLOPE_DB: Record<NoiseColour, number> = { white: 0, pink: -3 };
 
 /** What the Oscillator Spectrum writes in its corner while the Noise is up (issue 170): "pink: −3 dB/oct". */
 export function noiseSlope(patch: Patch): string | undefined {
