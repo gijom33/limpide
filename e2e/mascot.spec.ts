@@ -997,8 +997,8 @@ test.describe('pointing the way in a Tutorial and the Tour (issue 151)', () => {
     const body = (await page.locator('#bead-self > g.mascot-body:visible').first().boundingBox())!;
     await page.mouse.click(body.x + body.width / 2, body.y + body.height / 2);
     expect(await clicked).toBe(true);
-    // Made: a happy hop, higher than its bounce.
-    const made = highest(page, 700);
+    // Made: a happy hop, higher than its bounce (watched long enough for the click to land on a slow machine).
+    const made = highest(page, 2000);
     await doIt(page);
     expect(await made).toBeGreaterThan(8);
     // Osc 2's Waveform, in the same Section: a slide across, never back up to the edge.
