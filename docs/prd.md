@@ -98,6 +98,7 @@ Judged against [the design principles](./design-principles.md).
 82. As a sound designer, I want the LFO to reach more destinations (Resonance, Osc 2's pitch and its Detune as well as Cutoff, Pitch and Pulse Width; the Volume, for tremolo, since issue 53; FM, since issue 97), picked with arrows or from a menu like the Patch bar's, so that one LFO makes more kinds of movement.
 83. As a sound designer, I want two LFOs, each with its own Waveform, Rate, Depth and destination, so that I can make vibrato and a filter sweep at once, or two speeds of movement on one control.
 101. As a player, I want the page to keep a tempo, set by hand or by tapping, and each LFO to sync its Rate to it in note values, its cycle landing on the beat, so that a wobble or a tremolo plays in time (issue 112, [ADR-0018](./adr/0018-limpide-keeps-a-tempo.md)).
+104. As a learner, I want the tips, the Synth Geek Layer and a Step of the Wobble Tutorial to show how a synced Rate follows the tempo, its Hz worked out from the BPM, and the Presets whose LFO is a rhythm to use Sync, so that I understand why a synced wobble stays on the beat when the tempo changes (issue 137).
 
 ### MIDI and the TempoPAD C16
 50. As a C16 owner, I want Limpide to detect my Controller when plugged in, so that I know it's connected.
