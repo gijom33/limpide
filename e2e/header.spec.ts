@@ -1,12 +1,12 @@
 import { expect, type Page, test } from '@playwright/test';
 import { type AuditOptions, auditPage } from './audit';
 
-// Issue 44: one header across the layouts. Its groups the same at every width (the Wordmark and the Patch; the
-// keyboard; Hold, the tempo, MIDI, Display, About; Demo, Tutorial, Song: the owner, 2026-10-29, the tempo since issue
-// 112), each layout placing them in rows of its own, and Tab meeting them as they stand on screen (issue 104); the
-// octave buttons stacked beside the piano, and from 601 px up the piano's 17 keys at a finger's width where there is
-// room. Up to 860 px the header stays at the top and slides its rows above the keyboard away (issue 152). From 861 px
-// the buttons right of the keyboard stand in arrangement C, and the piano grows into the room they leave (issue 154).
+// Issue 44: one header across the layouts, its controls the same at every width (the Wordmark and the Patch; the
+// keyboard; Hold, the tempo, MIDI, Display, About; Demo, Tutorial, Song), and Tab meeting them as they stand on screen
+// (issue 104); the octave buttons stacked beside the piano. Up to 860 px three rows, the buttons on one, the piano's 17
+// keys at a finger's width, and the rows above the keyboard slide away on scrolling (issue 152). From 861 px one line:
+// the buttons right of the keyboard in columns of two (arrangement C), the piano growing into the room they leave
+// (issue 154).
 
 const SIZES = {
   phone: [390, 844],
@@ -102,6 +102,9 @@ for (const [width, words] of C_WIDTHS) {
     expect(h.header.height).toBeLessThanOrEqual(64);
     expect([...h.words].sort()).toEqual([...words].sort());
     expect(h.unit).toBe(width >= 1280);
+    // Each word step leaves the piano its 10 white keys at about 42 px (a little under in Linux's wider fonts).
+    if (width === 1100) expect(h.whiteKey).toBeGreaterThanOrEqual(40);
+    if (width === 861) expect(h.whiteKey).toBeGreaterThanOrEqual(30);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   });
 }
@@ -158,6 +161,18 @@ for (const [size, [width, height]] of Object.entries(SIZES).filter(([s]) => s ==
     expect(h.hold.left - h.piano.right).toBeLessThanOrEqual(12);
   });
 }
+
+test('at the top octave the piano stops at G9 and still meets Hold, its keys as wide (issue 154)', async ({ page }) => {
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await page.goto('/');
+  const before = await header(page);
+  for (let i = 0; i < 3; i++) await page.getByRole('button', { name: 'Octave up' }).click(); // C7, the highest
+  await expect(page.getByRole('group', { name: 'Piano' }).getByRole('button').last()).toHaveAccessibleName('G9');
+  const h = await header(page);
+  expect(h.whiteKeys).toBeLessThan(before.whiteKeys);
+  expect(h.whiteKey).toBeCloseTo(before.whiteKey, 1);
+  expect(h.hold.left - h.piano.right).toBeLessThanOrEqual(12);
+});
 
 test('on the narrowest laptop windows the piano takes what the header leaves, its keys still 26 px or more', async ({ page }) => {
   for (const [width, min] of [[861, 26], [1000, 30]]) {

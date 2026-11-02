@@ -1,10 +1,10 @@
 import { keyToNote } from '../input/keyboardLayout';
 
 /** The computer keyboard's range: C to the E above (17 keys, 10 of them white). */
-export const LETTER_KEYS = ['KeyA', 'KeyW', 'KeyS', 'KeyE', 'KeyD', 'KeyF', 'KeyT', 'KeyG', 'KeyY', 'KeyH', 'KeyU', 'KeyJ', 'KeyK', 'KeyO', 'KeyL', 'KeyP', 'Semicolon'];
+const LETTER_KEYS = ['KeyA', 'KeyW', 'KeyS', 'KeyE', 'KeyD', 'KeyF', 'KeyT', 'KeyG', 'KeyY', 'KeyH', 'KeyU', 'KeyJ', 'KeyK', 'KeyO', 'KeyL', 'KeyP', 'Semicolon'];
 const LETTER_WHITES = 10;
 /** A finger's target: a white key is never wider. */
-export const WHITE_KEY_MAX = 44;
+const WHITE_KEY_MAX = 44;
 const HIGHEST_NOTE = 127;
 
 export const isBlack = (note: number) => [1, 3, 6, 8, 10].includes(note % 12);
@@ -15,9 +15,9 @@ export const isBlack = (note: number) => [1, 3, 6, 8, 10].includes(note % 12);
  * the keys are never wider than 44 px and, once there are more than 10, never under 42. What is left, under one key,
  * stays empty.
  */
-export function fitPiano(room: number): { whites: number; key: number } {
+export function fitPiano(room: number): { whites: number; keyWidth: number } {
   const whites = Math.max(LETTER_WHITES, Math.round(room / WHITE_KEY_MAX));
-  return { whites, key: Math.min(WHITE_KEY_MAX, Math.floor((room / whites) * 100) / 100) };
+  return { whites, keyWidth: Math.min(WHITE_KEY_MAX, Math.floor((room / whites) * 100) / 100) };
 }
 
 /**
@@ -35,3 +35,6 @@ export function pianoNotes(octave: number, whites: number): number[] {
   if (isBlack(notes.at(-1)!)) notes.pop(); // a white key last
   return notes;
 }
+
+/** How many white keys the piano draws for `whites`: fewer near the top, where its keys stop at the highest Note. */
+export const whiteKeys = (octave: number, whites: number) => pianoNotes(octave, whites).filter((note) => !isBlack(note)).length;

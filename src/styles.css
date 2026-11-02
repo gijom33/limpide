@@ -93,7 +93,7 @@ main { max-width: 1920px; margin: 0 auto; padding: var(--space-4); }
 /* Laptop and wide windows: the header on one line (issue 44). The Wordmark and the Patch on the left, then the keyboard,
    then the buttons right of it in columns of two (issue 154, below). The piano takes what the sides leave it, by whole
    keys (usePianoFit); what is left over, under one key, opens between the Patch and the keyboard, so the keyboard
-   always meets its buttons at the same gap. The keyboard need not sit at the centre (decided by the owner, issue 154).
+   always meets its buttons at the same gap; the keyboard sits where that leaves it (decided by the owner, issue 154).
    The Display panel is anchored to the header (not its button), so it can always use, and never exceed, the window's
    width. */
 header { position: relative; display: flex; align-items: center; gap: var(--space-4); }
@@ -1070,7 +1070,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 /* The arrows keep their size; when the header is short of room, the name gives way. */
 .patch-bar > .tool { flex: none; }
 .patch-name { width: 150px; justify-content: center; gap: 6px; }
-/* Bold, with its ▾ (the owner's option A), a factory name needs more room in wider fonts: 172 px from 1200 px up. */
+/* Bold, with its ▾ (the owner's option A), a factory name needs more room in wider fonts: 172 px from 1280 px up. */
 @media (min-width: 1280px) { .patch-name { width: 172px; } }
 /* From 1100 to 1279 px, where the buttons right of the keyboard keep only the newcomer's four words (issue 154), a
    shorter Patch name, so the piano keeps its 10 white keys at 42 px. */
@@ -1079,8 +1079,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
    the right; long Preset names show an ellipsis. */
 @media (max-width: 1099px) { .patch-name { width: 104px; } }
 @media (max-width: 879px) { .patch-name { width: 86px; } }
-/* Those widths are what the name asks of the header; the piano takes what is left (issue 154, where the name no longer
-   takes its column's room to spare, issue 105's rule: the room goes to the piano's keys). */
+/* Those widths are what the name asks of the header; what is left goes to the piano's keys (issue 154). */
 .patch-name span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 /* The dot sits at the button's right, out of the flow, so the name never slides when it appears (issue 47); the
    button keeps room for it on the right. The left keeps only a gap: a short window's narrow name needs every pixel
@@ -1203,7 +1202,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
    set-up (MIDI over Display). 4 px between the columns of one use, 14 px between uses: playing (Hold and the tempo),
    listening and learning (the players and the guides), setting up. In a column both buttons are as wide as the wider,
    their icons in a line. One shape at every width: rows of 25 px, 2 px apart, up to 1099 px, where the piano can be as
-   short as 52 px; of 28 px, 4 px apart, from 1100 px, where its keys are 42 px or more and it is 63 px tall or more. */
+   short as 52 px; of 28 px, 4 px apart, from 1100 px, where its keys are about 42 px or more and it about 63 px tall. */
 @media (min-width: 861px) {
   header, .header-left, .header-identity { column-gap: 12px; }
   .header-right { --row-h: 25px; --row-gap: 2px; gap: 4px; }
@@ -1223,7 +1222,8 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 }
 /* Words while there is room (issue 154): from 861 to 1099 px icons alone (the tooltips name them) and the BPM its
    number alone; from 1100 px the newcomer's four, Demo, Song, Tutorial and About, keep their words; from 1280 px every
-   button keeps its word, the BPM its unit. Each step leaves the piano its 10 white keys at 42 px or more. */
+   button keeps its word, the BPM its unit. Each step leaves the piano its 10 white keys at about 42 px or more (a
+   little under at 1100 px in Linux's wider fonts). */
 @media (min-width: 861px) and (max-width: 1099px) {
   header :is(.demo-word, .tool-word, .tempo-unit) { display: none; }
   .header-right :where(.demo-button, .midi-status, .display-menu > .tip-anchor > .tool, .about-menu .tool) { justify-content: center; }

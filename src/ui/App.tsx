@@ -1,4 +1,4 @@
-import { type CSSProperties, useCallback, useEffect, useEffectEvent, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { recall, remember } from '../app/rememberedSettings';
 import { type AudioSession, getAudioSession } from '../app/session';
 import { safeStorage } from '../app/storage';
@@ -204,7 +204,7 @@ export function App() {
 
   useSpaceFreezes(viewerStore);
   const narrow = useMediaQuery(STACKED);
-  const pianoFit = usePianoFit(!narrow);
+  const pianoFit = usePianoFit(!narrow, octave);
   // The stylesheet reads the theme from the page's root, so the whole page follows it.
   const [theme, setTheme] = useRememberedSetting(storage, 'theme');
   useEffect(() => void (document.documentElement.dataset.theme = theme), [theme]);
@@ -339,7 +339,7 @@ export function App() {
       key="keyboard"
       ref={pianoFit.keyboard}
       className="keyboard"
-      style={pianoFit.fit ? ({ '--whites': pianoFit.fit.whites, '--piano-w': `${pianoFit.fit.whites * pianoFit.fit.key}px` } as CSSProperties) : undefined}
+      style={pianoFit.style}
     >
       <button type="button" className="tool tool-icon octave octave-up" aria-label="Octave up" {...shifted(octave - DEFAULT_OCTAVE)} onClick={() => moveOctave(1)}>
         {octave > DEFAULT_OCTAVE ? `+${octave - DEFAULT_OCTAVE}` : '+'}
@@ -350,7 +350,7 @@ export function App() {
       <Tooltip content={TIPS.keyboard} longPress={false}>
         <Piano
           octave={octave}
-          whites={pianoFit.fit?.whites}
+          whites={pianoFit.whites}
           held={players.playedNotes.length ? [...heldNotes, ...players.playedNotes] : heldNotes}
           input={session.input}
           invite={audioStatus === 'waiting'}

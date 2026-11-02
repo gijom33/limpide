@@ -143,9 +143,9 @@ function TapButton({ tempo, onTap }: Pick<Props, 'tempo' | 'onTap'>) {
 }
 
 /**
- * The page's tempo in the header's set-up row (issue 112, decided by the owner): from 861 px the BPM and Tap beside
- * it; narrower, the BPM alone, which opens a small field with the BPM and Tap in it. Escape or a press elsewhere
- * closes it.
+ * The page's tempo in the header (issue 112, decided by the owner): from 861 px the BPM over Tap, a column of the
+ * header's buttons (issue 154); narrower, the BPM alone among set-up, which opens a small field with the BPM and Tap
+ * in it. Escape or a press elsewhere closes it.
  */
 export function TempoControl(props: Props) {
   const narrow = useMediaQuery(STACKED);
