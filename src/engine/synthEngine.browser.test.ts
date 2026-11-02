@@ -2189,23 +2189,23 @@ describe('what follows an Oscillator’s pitch when something moves it (issue 98
   const pulse = { cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001, waveform: 'pulse', pulseWidth: 0.25, osc2Waveform: 'pulse', osc2PulseWidth: 0.25 } as const;
   const solo2 = { ...pulse, mixOsc1: 0, mixOsc2: 1 } as const;
   /**
-   * The share of each 50 ms window, from `from` to `to` seconds, that the wave spends above its mean, and its RMS: a
-   * 25 % pulse spends a quarter of its cycle on one side, whatever its pitch.
+   * The Pulse Width of each 50 ms window, from `from` to `to` seconds, as the share of it the wave spends on its
+   * shorter side of its mean, and its RMS: a 25 % pulse spends a quarter of its cycle on one side, whatever its pitch.
    */
-  const duties = (s: Float32Array, from: number, to: number) => {
+  const pulseWidths = (s: Float32Array, from: number, to: number) => {
     const size = Math.round(0.05 * SR);
-    const out: { at: number; duty: number; level: number }[] = [];
+    const out: { at: number; pulseWidth: number; level: number }[] = [];
     for (let start = Math.round(from * SR); start + size <= Math.round(to * SR); start += size) {
       const window = s.subarray(start, start + size);
       const mean = window.reduce((sum, v) => sum + v, 0) / size;
       const above = window.filter((v) => v > mean).length / size;
-      out.push({ at: start / SR, duty: Math.min(above, 1 - above), level: rms(window) });
+      out.push({ at: start / SR, pulseWidth: Math.min(above, 1 - above), level: rms(window) });
     }
     return out;
   };
   /** Every window of `s` from `from` to `to` seconds at `width`. */
   const expectWidth = (s: Float32Array, from: number, to: number, width = 0.25) => {
-    for (const w of duties(s, from, to)) expect(Math.abs(w.duty - width), `the width at ${w.at.toFixed(2)} s`).toBeLessThan(0.03);
+    for (const w of pulseWidths(s, from, to)) expect(Math.abs(w.pulseWidth - width), `the width at ${w.at.toFixed(2)} s`).toBeLessThan(0.03);
   };
   const steadyLevel = async () => rms((await render(0.6, solo2, (e) => e.noteOn(A3, 1, 0))).subarray(SR * 0.3));
 
@@ -2215,7 +2215,7 @@ describe('what follows an Oscillator’s pitch when something moves it (issue 98
       const s = await render(1.6, { ...solo2, osc2EnvAmount, filterAttack: 1, filterSustain: 1 }, (e) => e.noteOn(A3, 1, 0));
       const level = await steadyLevel();
       expectWidth(s, 0.05, 1.55);
-      for (const w of duties(s, 0.05, 1.55)) expect(dB(w.level / level), `the level at ${w.at.toFixed(2)} s`).toBeGreaterThan(-3);
+      for (const w of pulseWidths(s, 0.05, 1.55)) expect(dB(w.level / level), `the level at ${w.at.toFixed(2)} s`).toBeGreaterThan(-3);
     });
 
   it('keeps a pulse at 25 % under an LFO on Osc 2 Pitch, an octave each way', async () => {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parsePhrase, phraseLength } from '../demo/phrase';
 import { defaultPatch } from '../patch/patch';
-import { cycleLength, TOUR, TOUR_PATCH, type TourCard, tourAt } from './tour';
+import { cycleLength, TOUR, TOUR_PATCH, type TourSection, tourAt } from './tour';
 
 const card = (title: string) => TOUR.find((c) => c.title === title)!;
 
@@ -130,7 +130,7 @@ describe('The Tour (issue 128)', () => {
   });
 
   it('turns a knob evenly along its travel: halfway in time, halfway along a log knob', () => {
-    const sweep: TourCard = { ...card('Filter'), moves: [{ kind: 'param', id: 'cutoff', path: [2000, 200], seconds: 4 }] };
+    const sweep: TourSection = { ...card('Filter'), moves: [{ kind: 'param', id: 'cutoff', path: [2000, 200], seconds: 4 }] };
     expect(tourAt(sweep, 2).values.cutoff).toBeCloseTo(632.5, 0);
   });
 

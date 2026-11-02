@@ -1,3 +1,4 @@
+import type { PhraseAtTempo } from '../demo/phrase';
 import type { Waveform } from '../music/harmonics';
 import { PARAMS, type ParamId, type Patch } from '../patch/patch';
 import { PRESETS } from '../patch/presets';
@@ -13,8 +14,12 @@ export type TourMove =
   | { kind: 'param'; id: ParamId; path: number[]; seconds: number | number[] }
   | { kind: 'choice'; id: 'waveform'; path: Waveform[]; seconds: number };
 
-/** One Section of the page, in the signal's order, said in four parts while the synth turns its controls (issue 128). */
-export interface TourCard {
+/**
+ * One Section of the page, in the signal's order, said on its card in four parts while the synth turns its controls
+ * (issue 128). Its phrase, in the Demo's notation (src/demo/phrase.ts), at its tempo, is what the synth plays over and
+ * over while the card is shown.
+ */
+export interface TourSection extends PhraseAtTempo {
   title: string;
   /**
    * The first line: what to watch now, while the synth turns its controls. It is all a folded card shows on a phone,
@@ -29,9 +34,6 @@ export interface TourCard {
   sees: string;
   /** The Viewers the card points at, by their accessible names, the first brought into view first where not all fit. */
   viewers: ViewerName[];
-  /** What the synth plays over and over while the card is shown, in the Demo's notation (src/demo/phrase.ts). */
-  phrase: string;
-  bpm: number;
   /** Turned one after the other, then again from the first. */
   moves: TourMove[];
   /**
@@ -74,7 +76,7 @@ const stageMove = ({ id, to }: (typeof STAGES)[number]): TourMove => {
 const stagePhrase = STAGES.map(({ beats }) => `-:${PASS.note} C3:${beats} -:${+(PASS.length - PASS.note - beats).toFixed(2)}`).join(' ');
 
 /** The four cards: the Oscillators with the Mixer, the Filter, the Amp, the LFOs (issue 128, decisions 3 and 4). */
-export const TOUR: TourCard[] = [
+export const TOUR: TourSection[] = [
   {
     title: 'Oscillators and Mixer',
     look: 'Watch the wave change shape: the synth is switching Osc 1 from Saw to Square to Sine.',
@@ -142,14 +144,14 @@ const legsOf = (move: TourMove) =>
 const moveLength = (move: TourMove) => legsOf(move).reduce((sum, leg) => sum + leg, 0);
 
 /** How long a card's moves take once through, before they start again. */
-export const cycleLength = (card: TourCard) => card.moves.reduce((sum, move) => sum + moveLength(move), 0);
+export const cycleLength = (card: TourSection) => card.moves.reduce((sum, move) => sum + moveLength(move), 0);
 
 /**
  * Where the card's controls are `seconds` after its phrase's first beat: the one moving now along its path, the others
  * resting on the Tour's Patch's values; which control is moving; and what the card names while the synth freezes the
  * Viewers, or null while they run.
  */
-export function tourAt(card: TourCard, seconds: number): { values: Partial<Patch>; moving: TourMove['id']; naming: string[] | null } {
+export function tourAt(card: TourSection, seconds: number): { values: Partial<Patch>; moving: TourMove['id']; naming: string[] | null } {
   const inCycle = seconds % cycleLength(card);
   const naming = card.freezes?.find((f) => inCycle >= f.at && inCycle < f.at + f.seconds)?.names ?? null;
   let t = inCycle;

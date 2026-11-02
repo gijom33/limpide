@@ -1,5 +1,5 @@
 import { type RefObject, useEffect, useRef, useState } from 'react';
-import { type TourCard as Card, TOUR, TOUR_END, type TourMove } from '../tutorial/tour';
+import { TOUR, TOUR_END, type TourMove, type TourSection } from '../tutorial/tour';
 import { FoldButton, useCardPlacement } from './cardPlacement';
 import { bringClear, useDocked } from './docked';
 import { CloseIcon } from './icons';
@@ -35,7 +35,7 @@ export const tourGuide = (index: number): Guide => ({ selector: selectorOf(TOUR[
  * LFO card no longer brings the Cutoff knob too: it could not share the screen with the Timeline, so its words point
  * at the Timeline's dotted line instead (issue 158, decided by the owner).
  */
-function useSectionInView(card: Card, docked: RefObject<HTMLElement | null>) {
+function useSectionInView(card: TourSection, docked: RefObject<HTMLElement | null>) {
   useEffect(() => {
     const controls = card.moves.map(controlOf).filter((e) => e !== null);
     for (const control of controls) reveal(control);
@@ -64,7 +64,7 @@ function useSectionInView(card: Card, docked: RefObject<HTMLElement | null>) {
 }
 
 /** Rings the control the synth is turning, as a Tutorial rings the one to turn, and marks its section in the phone's strip. */
-function useRing(card: Card, moving: TourMove['id'] | null) {
+function useRing(card: TourSection, moving: TourMove['id'] | null) {
   useEffect(() => {
     const move = card.moves.find((m) => m.id === moving);
     if (!move) return;
@@ -103,7 +103,7 @@ function useRing(card: Card, moving: TourMove['id'] | null) {
  * the person takes Freeze. Every line it can say takes the same place, so the card keeps one height; a screen reader
  * hears the names alone.
  */
-function FrozenLine({ freezes, freezing, naming }: { freezes: NonNullable<Card['freezes']>; freezing: boolean; naming: string[] | null }) {
+function FrozenLine({ freezes, freezing, naming }: { freezes: NonNullable<TourSection['freezes']>; freezing: boolean; naming: string[] | null }) {
   const shown = naming ? 1 + freezes.findIndex((f) => f.names === naming) : freezing ? 0 : -1;
   return (
     <div className="tour-frozen">

@@ -1,5 +1,5 @@
 import { startTransport, type TransportHost } from '../play/transport';
-import { loopPhrase } from './phrase';
+import { loopPhrase, type PhraseAtTempo } from './phrase';
 
 /** What the Song needs from the app besides the Transport's clock, Notes and keys: the piano's octave. */
 export interface SongHost extends TransportHost {
@@ -21,7 +21,7 @@ const pushedStabs = (chord: string) => `${chord}:.5 -:.25 ${chord}:.5 -:.25 ${ch
  * A staccato pumping line; the beat on the low keys with chord stabs on the offbeats; a syncopated hook; the stabs
  * pushed off the beat. In every chord the top Note comes last, so on one Voice the chords still play a line.
  */
-export const SONG = {
+export const SONG: PhraseAtTempo = {
   bpm: 124,
   phrase: [
     staccato('C4 G4 C4 Eb4 C4 G4 C4 Bb4 C4 Ab4 C4 Eb4 C4 Ab4 C4 C5 Eb4 Bb4 Eb4 G4 Eb4 Bb4 Eb4 G4 D4 Bb4 D4 F4 D4 Bb4 D4 F4'),

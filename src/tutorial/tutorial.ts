@@ -1,3 +1,4 @@
+import type { PhraseAtTempo } from '../demo/phrase';
 import { WAVEFORM_NAMES } from '../music/harmonics';
 import { type ChoiceId, formatParam, LFO_DESTINATIONS, PARAMS, type ParamId, type Patch, paramName, setParam, soundFields } from '../patch/patch';
 import { PRESETS } from '../patch/presets';
@@ -29,8 +30,11 @@ export type Step = Words &
     | { kind: 'action'; id: 'snapshot' }
   );
 
-/** A Preset rebuilt from Init in Steps, the person turning each control (issue 40). */
-export interface Tutorial {
+/**
+ * A Preset rebuilt from Init in Steps, the person turning each control (issue 40). Its phrase, in the Demo's notation
+ * (src/demo/phrase.ts), at its tempo, is what Listen repeats.
+ */
+export interface Tutorial extends PhraseAtTempo {
   /** The Preset it rebuilds. */
   preset: string;
   /**
@@ -40,9 +44,6 @@ export interface Tutorial {
   intro: string;
   /** A short line of what it teaches, for the Tutorial menu and the end card of the Tutorial before it (decision 8). */
   teaches: string;
-  /** What Listen repeats, in the Demo's notation (src/demo/phrase.ts), at this tempo. */
-  phrase: string;
-  bpm: number;
   /** One sentence on what was built, for the last card. */
   summary: string;
   steps: Step[];
