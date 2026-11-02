@@ -1,5 +1,5 @@
-import { destinationSwings, osc2Cents } from '../modulation/modulationModel';
-import { FM_INDEX, type Patch } from '../patch/patch';
+import { destinationSwings, osc2Cents, osc2EnvelopeCents } from '../modulation/modulationModel';
+import { fmIndex, type Patch } from '../patch/patch';
 import { createCache } from './cache';
 import { harmonicSeries } from './harmonics';
 
@@ -43,10 +43,10 @@ const osc1Pitch = (patch: Patch) => (patch.mixSub > 0 ? 2 ** -patch.subOctave : 
 /** Osc 2's pitch over Osc 1's: Osc 2 counts from the Note played, Osc 1 from its Octave (issue 90). */
 export const osc2Ratio = (patch: Patch) => 2 ** (osc2Cents(patch) / 1200 - patch.osc1Octave);
 /**
- * Where Osc 2 rests off its knobs, in semitones: while the Note's Gate is on, its Env Amount times the Filter
- * Envelope's Sustain; once released, none (issue 98).
+ * How far Osc 2 rests off its knobs, as a ratio: while the Note's Gate is on, where the Filter Envelope's Sustain holds
+ * it (osc2EnvelopeCents); once released, nowhere (issue 98).
  */
-export const osc2Rest = (patch: Patch, gateOn: boolean) => (gateOn ? patch.osc2EnvAmount * patch.filterSustain : 0);
+const osc2Rest = (patch: Patch, gateOn: boolean) => 2 ** (osc2EnvelopeCents(patch, gateOn ? patch.filterSustain : 0) / 1200);
 
 /**
  * What the Ideal draws for besides the Patch: the share of FM's depth the Note keeps (fmDepthKept), its Gate, and the
@@ -71,13 +71,13 @@ export function idealPartials(patch: Patch, count: number, { fmKept = 1, gateOn 
   const root = osc1Pitch(patch);
   // FM's and Ring's partials, worked out no higher than they can be heard (issue 166): none past the top is drawn.
   const reach = Math.min(count, top);
-  const lift = 2 ** (osc2Rest(patch, gateOn) / 12); // Osc 2's resting pitch over its knobs'
+  const lift = osc2Rest(patch, gateOn); // Osc 2's resting pitch over its knobs'
   const osc2 = root * osc2Ratio(patch) * lift;
   const series = (source: IdealSource, magnitudes: Float32Array, mix: number, pitch: number) =>
     mix > 0 ? Array.from({ length: count - 1 }, (_, i) => ({ ratio: (i + 1) * pitch, level: magnitudes[i + 1] * mix, source })) : [];
   return [
     // Under FM, Osc 1 as FM makes it, where that can be worked out (issue 96), at the depth the Note keeps (issue 103).
-    ...((patch.crossMod > 0 && patch.mixOsc1 > 0 && fmPartials(patch, root, osc2, reach, (FM_INDEX * patch.crossMod * fmKept) / lift)) ||
+    ...((patch.crossMod > 0 && patch.mixOsc1 > 0 && fmPartials(patch, root, osc2, reach, (fmIndex(patch.crossMod) * fmKept) / lift)) ||
       series('osc1', harmonicSeries(patch.waveform, patch.pulseWidth, count).magnitudes, patch.mixOsc1, root)),
     ...series('osc2', harmonicSeries(patch.osc2Waveform, patch.osc2PulseWidth, count).magnitudes, patch.mixOsc2, osc2),
     ...series('sub', harmonicSeries(patch.subWaveform, 0.5, count).magnitudes, patch.mixSub, 1),
@@ -211,7 +211,7 @@ function shareAbove(index: number, osc1: number, osc2: number, top: number): num
  * frequency `osc1Hz`. The engine scales FM's depth by it on each Note, and the Ideal draws the same.
  */
 export function fmDepthKept(patch: Patch, osc1Hz: number, sampleRate: number): number {
-  const peak = FM_INDEX * destinationSwings(patch, 'fm', patch.crossMod).reduce((sum, swing) => sum + swing, patch.crossMod);
+  const peak = fmIndex(destinationSwings(patch, 'fm', patch.crossMod).reduce((sum, swing) => sum + swing, patch.crossMod));
   const osc2Hz = osc1Hz * osc2Ratio(patch);
   const top = playedTop(sampleRate);
   if (peak === 0 || shareAbove(peak, osc1Hz, osc2Hz, top) <= FOLD_SHARE) return 1;

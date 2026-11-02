@@ -164,12 +164,19 @@ export function effectiveVolume(patch: Patch, lfo: readonly number[] = []): numb
 }
 
 /**
+ * How far the Filter Envelope moves Osc 2 off its knobs, in cents, at the Envelope's level `filterEnvelope` (0 to 1): its
+ * Env Amount's semitones times the level (issue 93). The term's one home: osc2Cents adds it, the Ideal rests Osc 2 on
+ * it at the Sustain (issue 98), and the engine's gain on the Envelope is it at full.
+ */
+export const osc2EnvelopeCents = (patch: Patch, filterEnvelope: number) => patch.osc2EnvAmount * filterEnvelope * 100;
+
+/**
  * Osc 2's tuning against the Note played, in cents: Octave, Semitone and Detune, then the LFOs on Osc 2 Pitch and on
- * Detune, and the Filter Envelope's level times its Env Amount (issue 93).
+ * Detune, and the Filter Envelope's (osc2EnvelopeCents).
  */
 export function osc2Cents(patch: Patch, lfo: readonly number[] = [], filterEnvelope = 0): number {
   const knobs = patch.osc2Octave * 1200 + patch.osc2Semitone * 100 + patch.osc2Detune;
-  return knobs + lfoOffset(patch, 'osc2Pitch', lfo) * 100 + lfoOffset(patch, 'detune', lfo) + patch.osc2EnvAmount * filterEnvelope * 100;
+  return knobs + lfoOffset(patch, 'osc2Pitch', lfo) * 100 + lfoOffset(patch, 'detune', lfo) + osc2EnvelopeCents(patch, filterEnvelope);
 }
 
 /**

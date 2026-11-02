@@ -2,7 +2,7 @@ import { type Adsr, type AutomationStep, DIP, envelopeSchedule, type GateEvent, 
 import { type Beat, createLfoClock, glideFrequency, glideFrom, glideTimeConstant, LFO_START, type LfoWaveform, lfoShape } from '../modulation/lfo';
 import {
   destinationSwings, effectiveCutoff, effectiveResonance, effectiveVolume, KEY_TRACK_CENTRE, LOWEST_CUTOFF, type Modulation,
-  NO_PRESSURE, osc2Cents, type Pressure, pressed, pressurePitch, soundingPitch, VELOCITY_CUTOFF_OCTAVES,
+  NO_PRESSURE, osc2Cents, osc2EnvelopeCents, type Pressure, pressed, pressurePitch, soundingPitch, VELOCITY_CUTOFF_OCTAVES,
 } from '../modulation/modulationModel';
 import { bandwidthOctaves } from '../modulation/passBand';
 import { createCache } from '../music/cache';
@@ -10,7 +10,7 @@ import { harmonicSeries, type Waveform } from '../music/harmonics';
 import { fmDepthKept, playedTop } from '../music/idealReference';
 import { frequencyToNote, noteToFrequency } from '../music/pitch';
 import { TEMPO } from '../music/tempo';
-import { FM_INDEX, GLIDE_OFF, type Lfo, type LfoNumber, lfoHz, lfos, type NoiseColour, PARAMS, type Patch, type SubWaveform, type Voices } from '../patch/patch';
+import { fmIndex, GLIDE_OFF, type Lfo, type LfoNumber, lfoHz, lfos, type NoiseColour, PARAMS, type Patch, type SubWaveform, type Voices } from '../patch/patch';
 import { CUTOFF_CLAMP, CUTOFF_SPAN, centsOverFloor, filterStages, qSwing, type Stage } from './filterDesign';
 
 /**
@@ -700,7 +700,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
    * FM's gain on a Note of `frequency`: the index times Osc 2's frequency, in Hz. Osc 1's Octave scales what
    * reaches its frequency, so the gain is divided by it, keeping the index the knob's.
    */
-  const fmDepth = (frequency: number, amount = patch?.crossMod ?? 0) => (amount * FM_INDEX * frequency * pitchOverNote[1]) / pitchOverNote[0];
+  const fmDepth = (frequency: number, amount = patch?.crossMod ?? 0) => (fmIndex(amount) * frequency * pitchOverNote[1]) / pitchOverNote[0];
   /**
    * FM's gain, and each LFO's swing of it by its law (issue 97), on a Note of `frequency`: at once, or over a Glide.
    * High up, all of them shrink together as far as keeps Osc 1's sidebands under the top (issue 103).
@@ -851,7 +851,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
       [filter, filter2].forEach((node, i) => setStage(node, stages[i], t));
       cutoff.offset.setValueAtTime(centsOverFloor(effectiveCutoff(next)), t);
       envelopeAmount.gain.setValueAtTime(next.filterEnvAmount * 1200, t);
-      osc2EnvAmount.gain.setValueAtTime(next.osc2EnvAmount * 100, t);
+      osc2EnvAmount.gain.setValueAtTime(osc2EnvelopeCents(next, 1), t); // the Envelope's level, 0 to 1, in cents
       velocityAmount.gain.setValueAtTime(next.velocityCutoff * VELOCITY_CUTOFF_OCTAVES * 1200, t);
       keyTrackAmount.gain.setValueAtTime(next.keyTrack * 100, t); // cents per semitone
     },

@@ -1,5 +1,5 @@
 import { filterStages } from '../engine/filterDesign';
-import { type FilterMode, type FilterSlope, FM_INDEX, osc1Heard, type ParamId, type Patch } from '../patch/patch';
+import { type FilterMode, type FilterSlope, FM_INDEX, fmIndex, osc1Heard, type ParamId, type Patch } from '../patch/patch';
 import { WAVEFORM_NAMES, type Waveform } from './harmonics';
 import { besselJ, osc2Ratio } from './idealReference';
 
@@ -49,7 +49,7 @@ export function oscillatorFormulas(patch: Patch): Formula[] {
   const r = osc2Ratio(patch);
   const lines: Formula[] = [];
   if (fm) {
-    const index = FM_INDEX * patch.crossMod;
+    const index = fmIndex(patch.crossMod);
     const j = Array.from(besselJ(index, 3), (v) => Math.abs(v).toFixed(2)).join(' ');
     const landing = Math.abs(r - Math.round(r)) < 1e-6 && r >= 1 ? 'on the Harmonics' : 'between the Harmonics';
     const osc2 = patch.osc2Waveform === 'sine' ? '' : `; Osc 2 a ${WAVEFORM_NAMES[patch.osc2Waveform]}: its 1st Harmonic only`;
