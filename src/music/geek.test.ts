@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { CHOICES, defaultPatch } from '../patch/patch';
 import { PRESETS } from '../patch/presets';
-import { filterQ, geekReadout, harmonicFormula, levelDb, oscillatorFormulas, qText, responseFormula, widestGeekReadout } from './geek';
+import { filterQ, geekReadout, harmonicFormula, levelDb, oscillatorFormulas, qText, responseFormula, UNDER_THE_HOOD, widestGeekReadout } from './geek';
 import { harmonicSeries } from './harmonics';
+import { noteIndex } from './tempo';
 
 describe('the Synth Geek Layer: Resonance as Q', () => {
   it('is a flat Butterworth (0.71) at Resonance 0 for low- and high-pass, at either Slope', () => {
@@ -72,7 +73,88 @@ describe('the Synth Geek Layer: Osc 2’s tuning (issue 167)', () => {
   });
 
   it('sizes each for its widest', () => {
-    for (const id of ['osc2Octave', 'osc2Semitone', 'osc2Detune'] as const) expect(widestGeekReadout(id)).toBeDefined();
+    for (const id of ['osc2Octave', 'osc2Semitone', 'osc2Detune'] as const) expect(widestGeekReadout(id)).not.toHaveLength(0);
+  });
+});
+
+describe('the Synth Geek Layer: the LFOs (issue 169)', () => {
+  const patch = defaultPatch(); // LFO 1 on the Cutoff, LFO 2 on Pitch
+
+  it('reads a Rate as its period: 2 Hz is 0.50 s', () => {
+    expect(geekReadout('lfoRate', 2, patch)).toBe('0.50 s');
+    expect(geekReadout('lfo2Rate', 3, patch)).toBe('0.33 s');
+    expect(geekReadout('lfoRate', 20, patch)).toBe('0.050 s');
+    expect(geekReadout('lfoRate', 0.05, patch)).toBe('20.0 s');
+  });
+
+  it('reads a synced Rate as its period at the tempo: 1/4 at 120 BPM is 0.50 s', () => {
+    expect(geekReadout('lfoNote', noteIndex('1/4'), patch, null, 120)).toBe('0.50 s');
+    expect(geekReadout('lfo2Note', noteIndex('1/4'), patch, null, 90)).toBe('0.67 s');
+    expect(geekReadout('lfoNote', noteIndex('1 bar'), patch, null, 120)).toBe('2.00 s');
+    expect(geekReadout('lfoNote', noteIndex('4 bars D'), patch, null, 40)).toBe('36.0 s');
+    expect(geekReadout('lfoNote', noteIndex('1/32 T'), patch, null, 240)).toBe('0.021 s');
+  });
+
+  it('reads a Depth as the swing in its Destination’s own unit', () => {
+    const on = (destination: string, extra = {}) => ({ ...patch, lfoDestination: destination, ...extra }) as typeof patch;
+    expect(geekReadout('lfoAmount', 0.4, patch)).toBe('±0.80 oct');
+    expect(geekReadout('lfo2Amount', 0.5, patch)).toBe('±0.50 st');
+    expect(geekReadout('lfoAmount', 1, on('osc2Pitch'))).toBe('±12.0 st');
+    expect(geekReadout('lfoAmount', 0.5, on('detune'))).toBe('±25.0 ¢');
+    expect(geekReadout('lfoAmount', 0.3, on('pulseWidth'))).toBe('±12 %');
+    expect(geekReadout('lfoAmount', 0.5, on('resonance'))).toBe('±20 %'); // as far as the knob's 20 % leaves room
+    expect(geekReadout('lfoAmount', 0.5, on('fm', { crossMod: 0.3 }))).toBe('±30 %');
+    expect(geekReadout('lfoAmount', 0, patch)).toBe('±0.00 oct');
+  });
+
+  it('reads a Depth on Volume as the dip below the top of its wave, in dB', () => {
+    const volume = { ...patch, lfoDestination: 'volume' } as const;
+    expect(geekReadout('lfoAmount', 0.5, volume)).toBe('−6.0 dB');
+    expect(geekReadout('lfoAmount', 1, volume)).toBe('−∞ dB');
+    expect(geekReadout('lfoAmount', 0, volume)).toBe('0.0 dB');
+  });
+
+  it('a Pulse Width swing keeps within its ends, as the engine’s: a 25 % pulse swings 20 % at most', () => {
+    const pw = { ...patch, lfoDestination: 'pulseWidth' } as const;
+    expect(geekReadout('lfoAmount', 1, pw)).toBe('±20 %');
+    // Osc 1's width while it is a pulse, Osc 2's when it alone is.
+    expect(geekReadout('lfoAmount', 1, { ...pw, waveform: 'pulse', osc2Waveform: 'pulse', osc2PulseWidth: 0.5 })).toBe('±20 %');
+    expect(geekReadout('lfoAmount', 1, { ...pw, waveform: 'saw', osc2Waveform: 'pulse', osc2PulseWidth: 0.5 })).toBe('±40 %');
+    // Both LFOs on one Destination share its room.
+    expect(geekReadout('lfo2Amount', 0.5, { ...pw, lfoAmount: 0.5, lfo2Destination: 'pulseWidth' })).toBe('±10 %');
+  });
+
+  it('sizes each for its widest', () => {
+    for (const id of ['lfoRate', 'lfoNote', 'lfo2Rate', 'lfo2Note', 'lfoAmount', 'lfo2Amount'] as const) expect(widestGeekReadout(id)).not.toHaveLength(0);
+  });
+
+  it('gives the formulas of the period and the swing', () => {
+    expect(UNDER_THE_HOOD.lfoRate.formula).toBe('T = 1 / f');
+    expect(UNDER_THE_HOOD.lfoNote.formula).toBe('T = beats × 60 / BPM');
+    // The reach at full Depth from the laws the engine swings by.
+    expect(UNDER_THE_HOOD.lfoDepth.where).toContain('Pitch ±1 st');
+    expect(UNDER_THE_HOOD.lfoDepth.where).toContain('Cutoff ±2 oct');
+    expect(UNDER_THE_HOOD.lfoDepth.where).toContain('Detune ±50 ¢');
+    expect(UNDER_THE_HOOD.lfoDepth.where).toContain('Pulse Width ±40 %');
+  });
+});
+
+describe('the Synth Geek Layer: Key Track (issue 169)', () => {
+  const patch = { ...defaultPatch(), cutoff: 1000, keyTrack: 1 };
+
+  it('reads the Cutoff at the Note played, the Effective Cutoff’s figure: A4 before any', () => {
+    expect(geekReadout('keyTrack', 1, patch, 72)).toBe('2.00 kHz');
+    expect(geekReadout('keyTrack', 1, patch, 60)).toBe('1.00 kHz');
+    expect(geekReadout('keyTrack', 1, patch)).toBe('1.68 kHz'); // 1 kHz × 2^(9/12)
+    expect(geekReadout('keyTrack', 0.5, patch, 84)).toBe('2.00 kHz');
+    expect(geekReadout('keyTrack', 0, patch, 84)).toBe('1.00 kHz');
+    expect(geekReadout('keyTrack', 1, { ...patch, cutoff: 20000 }, 96)).toBe('20.00 kHz');
+    expect(geekReadout('keyTrack', 1, { ...patch, cutoff: 200 }, 24)).toBe('25 Hz'); // three octaves under C4
+  });
+
+  it('sizes it for its widest, and gives its formula', () => {
+    expect(widestGeekReadout('keyTrack')).not.toHaveLength(0);
+    expect(UNDER_THE_HOOD.keyTrack.formula).toBe('fc = Cutoff × 2^(k·(n − 60)/12)');
   });
 });
 

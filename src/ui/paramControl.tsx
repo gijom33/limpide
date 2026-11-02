@@ -3,7 +3,7 @@ import { geekReadout, geekReadoutParts, readoutText, widestGeekReadout } from '.
 import { type StepSize, stepParamBy } from '../patch/grid';
 import { formatParam, PARAMS, type ParamId, paramName } from '../patch/patch';
 import { positionToValue, valueToPosition } from '../patch/taper';
-import { GeekContext, GeekNoteContext } from './geekContext';
+import { GeekContext, GeekNoteContext, GeekTempoContext } from './geekContext';
 import { useLearnable } from './learn';
 
 /** Readouts sampled across a control's travel to find the widest it can show. */
@@ -52,15 +52,16 @@ export function useParamControl(id: ParamId, value: number, onChange: (value: nu
   const learnable = useLearnable({ kind: 'param', id: def.knob ?? id });
   // In the Synth Geek Layer some controls read the quantity behind their value instead (Q, dB): sized for it while on.
   // Some depend on the Note played (Detune's beats): followed as the Note changes, a control rendering again only when
-  // its own readout's text does.
+  // its own readout's text does. A synced Rate's period depends on the tempo.
   const geekPatch = useContext(GeekContext);
   const notes = useContext(GeekNoteContext);
-  useSyncExternalStore(notes.subscribe, () => (geekPatch ? geekReadout(id, value, geekPatch, notes.get()) : undefined));
-  const geek = geekPatch ? geekReadoutParts(id, value, geekPatch, notes.get()) : undefined;
+  const bpm = useContext(GeekTempoContext);
+  useSyncExternalStore(notes.subscribe, () => (geekPatch ? geekReadout(id, value, geekPatch, notes.get(), bpm) : undefined));
+  const geek = geekPatch ? geekReadoutParts(id, value, geekPatch, notes.get(), bpm) : undefined;
   const readout = geek ? readoutText(geek) : formatParam(id, value);
   const geekOn = !!geekPatch; // the context holds null while the layer is off
   const widest = useMemo(
-    () => [...widestReadouts(id), ...(geekOn ? twins(id).flatMap((t) => widestGeekReadout(t) ?? []) : [])],
+    () => [...widestReadouts(id), ...(geekOn ? twins(id).flatMap(widestGeekReadout) : [])],
     [id, geekOn],
   );
   const changing = useChanging(value);

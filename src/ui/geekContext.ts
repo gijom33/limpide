@@ -1,5 +1,6 @@
 import { createContext } from 'react';
 import type { GeekNote } from '../music/geek';
+import { TEMPO } from '../music/tempo';
 import type { Patch } from '../patch/patch';
 
 /** The Patch while the Synth Geek Layer is on (its readouts depend on it, e.g. Q on the Filter Mode), else null. */
@@ -16,3 +17,6 @@ export interface GeekNoteSource {
 /** No Note ever played: the numbers stay at A4. */
 const NO_NOTE: GeekNoteSource = { subscribe: () => () => {}, get: () => null };
 export const GeekNoteContext = createContext<GeekNoteSource>(NO_NOTE);
+
+/** The page's tempo, at which a synced LFO's period is worked out (issue 169). */
+export const GeekTempoContext = createContext<number>(TEMPO.default);

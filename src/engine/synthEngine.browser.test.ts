@@ -2734,3 +2734,113 @@ describe('the Synth Geek Layer’s numbers for Osc 2, held to the engine (issue 
       expect(Math.abs(beatsHz - Number.parseFloat(readout!))).toBeLessThan(0.01);
     });
 });
+
+// Issue 133, decision 4: the LFOs' and Key Track's numbers held to what the engine plays (issue 169).
+describe('the Synth Geek Layer’s numbers for the LFOs and Key Track, held to the engine (issue 169)', () => {
+  const sine = { cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001, waveform: 'sine', osc2Waveform: 'sine' } as const;
+  /** A readout's number: "±0.80 oct" is 0.8, "−6.0 dB" −6. */
+  const number = (readout: string | undefined) => Number.parseFloat(readout!.replace('±', '').replace('−', '-'));
+
+  /** How long the sound takes to repeat a square LFO's tremolo: the mean time between its swells, after the first. */
+  const tremoloPeriod = async (patch: Partial<Patch>, bpm: number) => {
+    const seconds = 4;
+    const ctx = new OfflineAudioContext(1, SR * seconds, SR);
+    const engine = createSynthEngine(ctx);
+    engine.setTempo(bpm, 0);
+    engine.applyPatch({ ...defaultPatch(), ...sine, lfoDestination: 'volume', lfoAmount: 1, lfoWaveform: 'square', ...patch });
+    engine.noteOn(69, 1, 0);
+    const s = (await ctx.startRendering()).getChannelData(0);
+    const frame = SR / 1000; // 1 ms
+    const levels: number[] = [];
+    for (let from = 0; from + frame <= s.length; from += frame) levels.push(rms(s, from, from + frame));
+    const middle = Math.max(...levels) / 2;
+    const rises: number[] = [];
+    for (let i = 1; i < levels.length; i++) if (levels[i - 1] < middle && levels[i] >= middle) rises.push(i);
+    return ((rises[rises.length - 1] - rises[1]) * frame) / SR / (rises.length - 2);
+  };
+
+  for (const [what, patch, bpm, id, value] of [
+    ['a Rate of 2 Hz', { lfoRate: 2 }, 120, 'lfoRate', 2],
+    ['a Rate of 3 Hz', { lfoRate: 3 }, 120, 'lfoRate', 3],
+    ['a synced 1/4 at 120 BPM', { lfoSync: 'on', lfoNote: noteIndex('1/4') }, 120, 'lfoNote', noteIndex('1/4')],
+    ['a synced 1/8 T at 100 BPM', { lfoSync: 'on', lfoNote: noteIndex('1/8 T') }, 100, 'lfoNote', noteIndex('1/8 T')],
+  ] as const)
+    it(`an LFO repeats as often as ${what} reads`, async () => {
+      const readout = geekReadout(id, value, { ...defaultPatch(), ...patch }, null, bpm);
+      expect(readout).toMatch(/ s$/);
+      const period = await tremoloPeriod(patch, bpm);
+      // To the readout's last figure.
+      expect(Math.abs(period - number(readout))).toBeLessThan(0.006);
+    });
+
+  // A square LFO at 1 Hz is at its top for the first half second and its foot for the second: measured in each.
+  const square = { ...sine, lfoRate: 1, lfoWaveform: 'square' } as const;
+  const up = (s: Float32Array) => frequencyAround(s, SR, 0.25, 0.2);
+  const down = (s: Float32Array) => frequencyAround(s, SR, 0.75, 0.2);
+
+  it('Pitch swings by the semitones its Depth reads', async () => {
+    const patch = { ...defaultPatch(), ...square, lfoDestination: 'pitch', lfoAmount: 0.6 } as const;
+    const s = await render(1, patch, (e) => e.noteOn(69, 1, 0));
+    expect(geekReadout('lfoAmount', 0.6, patch)).toBe('±0.60 st');
+    expect((12 * Math.log2(up(s) / down(s))) / 2).toBeCloseTo(number(geekReadout('lfoAmount', 0.6, patch)), 2);
+  });
+
+  it('Detune swings Osc 2 by the cents its Depth reads', async () => {
+    const patch = { ...defaultPatch(), ...square, mixOsc1: 0, mixOsc2: 1, lfoDestination: 'detune', lfoAmount: 0.5 } as const;
+    const s = await render(1, patch, (e) => e.noteOn(69, 1, 0));
+    expect(geekReadout('lfoAmount', 0.5, patch)).toBe('±25.0 ¢');
+    expect((1200 * Math.log2(up(s) / down(s))) / 2).toBeCloseTo(number(geekReadout('lfoAmount', 0.5, patch)), 0);
+  });
+
+  it('the Cutoff swings by the octaves its Depth reads, in the Effective Cutoff the Filter follows', async () => {
+    const patch = { ...defaultPatch(), ...square, cutoff: 1000, lfoDestination: 'cutoff', lfoAmount: 0.4 } as const;
+    let engine!: ReturnType<typeof createSynthEngine>;
+    await render(1, patch, (e) => {
+      engine = e;
+      e.noteOn(60, 1, 0);
+    });
+    expect(geekReadout('lfoAmount', 0.4, patch)).toBe('±0.80 oct');
+    expect(Math.log2(engine.modulationAt(0.25).cutoff / engine.modulationAt(0.75).cutoff) / 2).toBeCloseTo(number(geekReadout('lfoAmount', 0.4, patch)), 2);
+  });
+
+  it('Volume dips by the dB its Depth reads, below the top of its wave', async () => {
+    const patch = { ...defaultPatch(), ...square, lfoDestination: 'volume', lfoAmount: 0.5 } as const;
+    const s = await render(1, patch, (e) => e.noteOn(69, 1, 0));
+    const level = (t: number) => rms(s, Math.round((t - 0.1) * SR), Math.round((t + 0.1) * SR));
+    expect(geekReadout('lfoAmount', 0.5, patch)).toBe('−6.0 dB');
+    expect(dB(level(0.75) / level(0.25))).toBeCloseTo(number(geekReadout('lfoAmount', 0.5, patch)), 1);
+  });
+
+  it('a pulse’s width swings by the share its Depth reads', async () => {
+    const patch = { ...defaultPatch(), ...square, waveform: 'pulse', pulseWidth: 0.5, lfoDestination: 'pulseWidth', lfoAmount: 0.3 } as const;
+    const s = await render(1, patch, (e) => e.noteOn(57, 1, 0));
+    // The share of each cycle the pulse is high: the samples above the middle of its swing, over 0.2 s.
+    const high = (t: number) => {
+      const w = s.subarray(Math.round((t - 0.1) * SR), Math.round((t + 0.1) * SR));
+      const middle = (Math.max(...w) + Math.min(...w)) / 2;
+      return w.filter((x) => x > middle).length / w.length;
+    };
+    expect(geekReadout('lfoAmount', 0.3, patch)).toBe('±12 %');
+    expect((Math.abs(high(0.25) - high(0.75)) / 2) * 100).toBeCloseTo(number(geekReadout('lfoAmount', 0.3, patch)), 0);
+  });
+
+  it('Key Track reads the Effective Cutoff at the Note played, and at A4 before any', async () => {
+    const patch = { ...defaultPatch(), ...sine, cutoff: 1000, keyTrack: 0.5 };
+    let engine!: ReturnType<typeof createSynthEngine>;
+    let before = 0;
+    let note: number | null = null;
+    await render(1, patch, (e) => {
+      engine = e;
+      before = e.modulationAt(0).cutoff;
+      e.noteOn(79, 1, 0.1);
+      note = e.newestNote();
+    });
+    // "1.68 kHz" is 1680 Hz to three figures.
+    const hz = (readout: string | undefined) => number(readout) * (readout!.endsWith('kHz') ? 1000 : 1);
+    const atA4 = geekReadout('keyTrack', 0.5, patch, null);
+    expect(Math.abs(hz(atA4) / before - 1)).toBeLessThan(0.005);
+    const atNote = geekReadout('keyTrack', 0.5, patch, note);
+    expect(atNote).toBe('1.73 kHz'); // 1 kHz × 2^(0.5 × 19/12)
+    expect(Math.abs(hz(atNote) / engine.modulationAt(0.5).cutoff - 1)).toBeLessThan(0.005);
+  });
+});
