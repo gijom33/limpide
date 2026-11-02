@@ -231,8 +231,12 @@ Dashed lines on every Scope, when they are shown, at the level the Mixer sends: 
 _Avoid_: Reference lines, headroom lines
 
 **Cycle Lock**:
-The Scope behaviour that aligns the trace to the Note's period so it stands still, showing a chosen number of cycles (1, 2, 4).
+The Scope behaviour that aligns the trace to the Note's period so it stands still, showing a chosen number of cycles (1, 2, 4): it starts on a rising zero of the fundamental, following the pitch the engine plays (vibrato, Glide, the bend), draws the newest sound, and of the starts one cycle apart takes the one most like the trace before, never older (issue 180).
 _Avoid_: Trigger, sync, stabilisation
+
+**Glow**:
+A Display choice, Off by default: each Scope's trace fades over a few frames, as on an analogue oscilloscope, so what moves leaves a soft trail of the last tenth of a second (issue 180).
+_Avoid_: Phosphor, persistence, trails, averaging
 
 **Spectrum**:
 A Viewer showing level per frequency at an instant.

@@ -9,6 +9,8 @@ export type IdealAt = (fundamental: number, sampleRate: number, gateOn?: boolean
 export interface ViewSettings {
   /** Cycles of the Note shown in each Scope. */
   cycles: 1 | 2 | 4;
+  /** Each Scope's trace fades over a few frames, as on an analogue scope (issue 180, decision 5). */
+  glow: boolean;
   /** Seconds of the Envelope Timeline, "now" at its right edge (the owner, 2026-10-28: 2 by default). */
   timelineSeconds: 1 | 2 | 3 | 4;
   /**

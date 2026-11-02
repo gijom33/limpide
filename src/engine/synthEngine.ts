@@ -1,7 +1,7 @@
 import { type Adsr, type AutomationStep, DIP, envelopeSchedule, type GateEvent, levelAfter } from '../modulation/envelope';
 import { type Beat, createLfoClock, glideFrequency, glideFrom, glideTimeConstant, LFO_START, type LfoWaveform, lfoShape } from '../modulation/lfo';
 import {
-  destinationSwings, effectiveCutoff, effectiveResonance, effectiveVolume, KEY_TRACK_CENTRE, LOWEST_CUTOFF, type Modulation,
+  destinationSwings, effectiveCutoff, effectiveResonance, effectiveVolume, KEY_TRACK_CENTRE, LOWEST_CUTOFF, lfoOffset, type Modulation,
   NO_PRESSURE, osc2Cents, osc2EnvelopeCents, type Pressure, pressed, pressurePitch, soundingPitch, VELOCITY_CUTOFF_OCTAVES,
 } from '../modulation/modulationModel';
 import { bandwidthOctaves } from '../modulation/passBand';
@@ -47,8 +47,16 @@ export interface SynthEngine {
   noteOff(at?: number): void;
   /** Several Voices: the Voice playing `note` releases; the others keep sounding. */
   release(note: number, at?: number): void;
-  /** Frequency of the most recent Note (A4 before any), for Cycle Lock. */
+  /**
+   * Frequency of the most recent Note (A4 before any), at Osc 1's Octave (the Sub's with the Sub up), through its Glide
+   * and the bend: the period each Scope shows and writes, held still through vibrato.
+   */
   fundamental(): number;
+  /**
+   * The same at `time`, now or past, with the LFOs on Pitch too: the pitch the Oscillators play, which Cycle Lock
+   * follows across a Tap's buffer (issue 180).
+   */
+  fundamentalAt(time: number): number;
   /**
    * The newest Note played (a MIDI note number), a player's or a Note handed over ahead included; null before any. The
    * Note the Synth Geek Layer's numbers are worked out at (issue 133, decision 6).
@@ -1245,6 +1253,16 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     };
   };
 
+  // During a Glide, the frequency the Oscillators have reached, at Osc 1's Octave; `swung`, with the LFOs on Pitch,
+  // which move every Oscillator and the Sub alike. With the Sub sounding, the sound repeats at the Sub's pitch, one or
+  // two octaves lower: that is the fundamental.
+  const fundamentalAt = (t: number, swung: boolean) => {
+    const then = patchAt(t);
+    const vibrato = swung && then ? lfoOffset(pressed(then, pressureAt(t)), 'pitch', lfoValues(then, t)) : 0;
+    const frequency = (glidingAt(t) || A4) * 2 ** ((then?.osc1Octave ?? 0) + vibrato / 12 + bendCentsAt(t) / 1200);
+    return then?.mixSub ? frequency * 2 ** then.subOctave : frequency;
+  };
+
   /**
    * What the sound takes from the Patch it plays, `next` (the knobs as aftertouch moved its Destination, issue 132): every
    * Voice's settings, and the gains the LFOs reach their Destinations through.
@@ -1284,13 +1302,8 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
 
   return {
     taps,
-    // During a Glide, the frequency the Oscillators have reached: Cycle Lock follows the slide, at Osc 1's Octave.
-    // With the Sub sounding, the sound repeats at the Sub's pitch, one or two octaves lower: that is the fundamental.
-    fundamental: () => {
-      const then = patchAt(ctx.currentTime);
-      const frequency = (glidingAt(ctx.currentTime) || A4) * 2 ** ((then?.osc1Octave ?? 0) + bendCentsAt(ctx.currentTime) / 1200);
-      return then?.mixSub ? frequency * 2 ** then.subOctave : frequency;
-    },
+    fundamental: () => fundamentalAt(ctx.currentTime, false),
+    fundamentalAt: (time) => fundamentalAt(time, true),
     newestNote: () => newest,
     onNewestNote(listener) {
       newestListeners.add(listener);

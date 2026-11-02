@@ -12,7 +12,8 @@ describe('the settings remembered in one place (issues 87, 139)', () => {
       'limpide.theme': 'light',
       'limpide.bead': 'off',
     });
-    expect(recall(storage, 'viewer')).toEqual({ cycles: 4, timelineSeconds: 3, frequencyScale: 'linear', levelScale: 'linear', tapSource: 'newest' });
+    // Saved before Glow was a setting (issue 180): it starts Off.
+    expect(recall(storage, 'viewer')).toEqual({ cycles: 4, timelineSeconds: 3, frequencyScale: 'linear', levelScale: 'linear', tapSource: 'newest', glow: false });
     expect(recall(storage, 'overlays')).toEqual({ harmonics: false, ideal: true, curve: false, guides: true, geek: true });
     expect(recall(storage, 'letterKeys')).toBe('off');
     expect(recall(storage, 'tooltips')).toBe('off');
@@ -22,7 +23,7 @@ describe('the settings remembered in one place (issues 87, 139)', () => {
 
   it('starts a missing, garbled or unknown setting at its default, keeping the others', () => {
     const nothing = memoryStorage();
-    expect(recall(nothing, 'viewer')).toEqual({ cycles: 2, timelineSeconds: 2, frequencyScale: 'log', levelScale: 'db', tapSource: 'all' });
+    expect(recall(nothing, 'viewer')).toEqual({ cycles: 2, timelineSeconds: 2, frequencyScale: 'log', levelScale: 'db', tapSource: 'all', glow: false });
     expect(recall(nothing, 'overlays')).toEqual({ harmonics: true, ideal: true, curve: true, guides: false, geek: false });
     expect([recall(nothing, 'letterKeys'), recall(nothing, 'tooltips'), recall(nothing, 'theme'), recall(nothing, 'bead')]).toEqual(['on', 'on', 'dark', 'on']);
 
@@ -74,11 +75,11 @@ describe('the settings remembered in one place (issues 87, 139)', () => {
 
   it('keeps each setting under the same key and in the same form as before, so a reload brings it back', () => {
     const storage = memoryStorage();
-    remember(storage, 'viewer', { cycles: 1, timelineSeconds: 4, frequencyScale: 'linear', levelScale: 'db', tapSource: 'newest' });
+    remember(storage, 'viewer', { cycles: 1, timelineSeconds: 4, frequencyScale: 'linear', levelScale: 'db', tapSource: 'newest', glow: true });
     remember(storage, 'overlays', { harmonics: true, ideal: false, curve: true, guides: false, geek: true });
     remember(storage, 'tooltips', 'off');
     remember(storage, 'theme', 'light');
-    expect(JSON.parse(storage.data['limpide.viewSettings'])).toEqual({ cycles: 1, timelineSeconds: 4, frequencyScale: 'linear', levelScale: 'db', tapSource: 'newest' });
+    expect(JSON.parse(storage.data['limpide.viewSettings'])).toEqual({ cycles: 1, timelineSeconds: 4, frequencyScale: 'linear', levelScale: 'db', tapSource: 'newest', glow: true });
     expect(JSON.parse(storage.data['limpide.overlays'])).toEqual({ harmonics: true, ideal: false, curve: true, guides: false, geek: true });
     expect(storage.data['limpide.tooltips']).toBe('off');
     expect(storage.data['limpide.theme']).toBe('light');

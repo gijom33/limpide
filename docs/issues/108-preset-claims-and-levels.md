@@ -13,6 +13,8 @@
 
 **Since then:** [124](./124-where-a-retriggered-lfo-starts.md) is built (2026-10-30): a retriggered LFO starts each Waveform where it classically starts. Key Sync's words now hold (rendered: the Cutoff opens at 1.5 kHz at the Note and closes to 170 Hz over two thirds of a second). Wobble's "from the top" was corrected there (a retriggered Sine starts at the centre, rising). Zap Pluck now starts at full FM and is nearly a pure sine by 0.3 s, as its words say, but its zap comes back every third of a second, about 30 dB down, which its words leave out: that, and its level, are this issue's.
 
+**Since then:** (2026-11-02) [180](./180-steadier-scopes.md) has Cycle Lock follow an LFO on Pitch, the Glide and the bend across the Tap's buffer. Trill's words stay as they are: its LFO moves Osc 2 alone, which Cycle Lock does not follow.
+
 ## Agent Brief
 
 **Category:** bug

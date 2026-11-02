@@ -1,18 +1,29 @@
 import { describe, expect, it } from 'vitest';
-import { cycleLockOffset } from './cycleLock';
+import { createCycleLock, risingZeros } from './cycleLock';
 
 const SR = 48000;
+const BUFFER = 8192;
+/** A frame at 60 Hz, in samples. */
+const FRAME = 800;
 
-/** A periodic signal whose fundamental is sin(ωn + phase), plus Harmonics that ring through zero several times per cycle. */
-function ringingWave(freq: number, phase: number, length: number, start = 0) {
-  const w = (2 * Math.PI * freq) / SR;
-  const out = new Float32Array(length);
+/** A wave whose fundamental is sin φ, with Harmonics that ring through zero several times per cycle. */
+const ringing = (phi: number) => Math.sin(phi) + 0.6 * Math.sin(5 * phi + 2.1) + 0.45 * Math.sin(9 * phi + 0.7);
+
+/** `length` samples of `wave` along the phase that `frequency` (Hz at a sample) advances, from `phase` at sample 0. */
+function render(length: number, frequency: (i: number) => number, wave = ringing, phase = 0) {
+  const phases = new Float64Array(length);
+  let phi = phase;
   for (let i = 0; i < length; i++) {
-    const n = i + start;
-    out[i] = Math.sin(w * n + phase) + 0.6 * Math.sin(5 * (w * n + phase) + 2.1) + 0.45 * Math.sin(9 * (w * n + phase) + 0.7);
+    phases[i] = phi;
+    phi += (2 * Math.PI * frequency(i)) / SR;
   }
-  return out;
+  return { samples: Float32Array.from(phases, wave), phases };
 }
+
+/** How far a phase is from a rising zero of sin, in radians. */
+const offZero = (phi: number) => Math.abs(Math.atan2(Math.sin(phi), Math.cos(phi)));
+/** The phase at a fractional sample. */
+const phaseAt = (phases: Float64Array, x: number) => phases[Math.floor(x)] + (phases[Math.floor(x) + 1] - phases[Math.floor(x)]) * (x % 1);
 
 const countRisingZeroCrossings = (s: Float32Array, from: number, to: number) => {
   let count = 0;
@@ -20,84 +31,137 @@ const countRisingZeroCrossings = (s: Float32Array, from: number, to: number) => 
   return count;
 };
 
-describe('Cycle Lock', () => {
-  it('starts the trace where the fundamental rises through zero', () => {
-    const freq = 440;
-    const phase = 1.0;
-    const offset = cycleLockOffset(ringingWave(freq, phase, 4096), SR, freq);
-    const angle = (2 * Math.PI * freq * offset) / SR + phase;
-    const wrapped = Math.atan2(Math.sin(angle), Math.cos(angle));
-    expect(Math.abs(wrapped)).toBeLessThan(0.02);
+describe('Cycle Lock’s rising zeros', () => {
+  it('finds where the fundamental rises through zero, though the wave crosses zero several times a cycle', () => {
+    const { samples, phases } = render(BUFFER, () => 261.63, ringing, 1.0);
+    expect(countRisingZeroCrossings(samples, 0, Math.round(SR / 261.63))).toBeGreaterThan(1);
+    const zeros = risingZeros(samples, SR, () => 261.63, BUFFER - 500, 9);
+    expect(zeros).toHaveLength(9);
+    for (const z of zeros) expect(offZero(phaseAt(phases, z))).toBeLessThan(0.02);
   });
 
-  it('holds the same point of the cycle wherever the buffer happens to start', () => {
-    const freq = 261.63;
-    const period = SR / freq;
-    // The test signal really does defeat a zero-crossing trigger: several rising crossings per cycle.
-    const probe = ringingWave(freq, 0, 4096);
-    expect(countRisingZeroCrossings(probe, 0, Math.round(period))).toBeGreaterThan(1);
-
-    const reference = cycleLockOffset(ringingWave(freq, 0.3, 4096, 0), SR, freq);
-    for (const shift of [1, 37, 123, 500, 1001]) {
-      const offset = cycleLockOffset(ringingWave(freq, 0.3, 4096, shift), SR, freq);
-      // Same absolute position in the signal, modulo one period.
-      const drift = (((offset + shift - reference) % period) + period) % period;
-      expect(Math.min(drift, period - drift)).toBeLessThan(0.5);
-    }
+  it('gives them newest first, one cycle apart, none after the last allowed', () => {
+    const period = SR / 440;
+    const zeros = risingZeros(render(BUFFER, () => 440).samples, SR, () => 440, 5000.5, 5);
+    expect(zeros[0]).toBeLessThanOrEqual(5000.5);
+    expect(zeros[0]).toBeGreaterThan(5000.5 - period);
+    for (let k = 1; k < zeros.length; k++) expect(zeros[k - 1] - zeros[k]).toBeCloseTo(period, 1);
   });
 
-  it('returns a fractional offset within one period', () => {
-    const freq = 110;
-    const offset = cycleLockOffset(ringingWave(freq, 2.5, 8192), SR, freq);
-    expect(offset).toBeGreaterThanOrEqual(0);
-    expect(offset).toBeLessThan(SR / freq);
+  it('follows a vibrato the engine reports, where one pitch for the whole buffer misses (issue 180)', () => {
+    // A 2 Hz vibrato of a third of a semitone each way, as the Slow Vibrato Preset plays it.
+    const vibrato = (i: number) => 130.81 * 2 ** ((0.3 * Math.sin((2 * Math.PI * 2 * i) / SR + 0.5)) / 12);
+    const { samples, phases } = render(BUFFER, vibrato);
+    for (const z of risingZeros(samples, SR, vibrato, BUFFER - 800, 9)) expect(offZero(phaseAt(phases, z))).toBeLessThan(0.03);
+    const steady = risingZeros(samples, SR, () => 130.81, BUFFER - 800, 9);
+    expect(Math.max(...steady.map((z) => offZero(phaseAt(phases, z))))).toBeGreaterThan(0.2);
   });
 
-  it('falls back to the start of the buffer when there is no fundamental', () => {
-    expect(cycleLockOffset(new Float32Array(4096), SR, 440)).toBe(0);
-    expect(cycleLockOffset(ringingWave(440, 0, 4096), SR, 0)).toBe(0);
-  });
-});
-
-describe('Cycle Lock with Osc 2 and Noise in the mix', () => {
-  // A deterministic stand-in for Noise, so the test is repeatable.
-  function noise(length: number, amplitude: number, seed = 7) {
-    let s = seed;
-    return Float32Array.from({ length }, () => {
-      s = (s * 1664525 + 1013904223) >>> 0;
-      return ((s / 2 ** 32) * 2 - 1) * amplitude;
-    });
-  }
-  const sine = (freq: number, length: number, start = 0, phase = 0) =>
-    Float32Array.from({ length }, (_, i) => Math.sin((2 * Math.PI * freq * (i + start)) / SR + phase));
-  const add = (a: Float32Array, b: Float32Array) => a.map((v, i) => v + b[i]);
-  const lockedPhaseError = (offset: number, freq: number, phase: number) => {
-    const angle = (2 * Math.PI * freq * offset) / SR + phase;
-    return Math.abs(Math.atan2(Math.sin(angle), Math.cos(angle)));
-  };
-
-  it('follows a detuned mix smoothly from frame to frame, so beating shows as a slow drift, not a jump', () => {
-    // 12 cents is 1.5 Hz apart: far finer than an analyser window can resolve, so the lock follows the sum of
-    // both Oscillators, whose phase drifts at the beat rate. What must not happen is a jump between frames.
-    const f = 220;
-    const period = SR / f;
-    const detuned = f * 2 ** (12 / 1200);
-    const frame = (start: number) => add(sine(f, 8192, start, 0.4), sine(detuned, 8192, start, 2.0).map((v) => v * 0.8));
-    const FRAME = Math.round(SR / 60);
-    // The sum's phase moves fastest at the quietest point of the beat: Δf · a2 / (a1 − a2) cycles per second.
-    const fastestDrift = ((detuned - f) * 0.8) / (1 - 0.8) / 60; // cycles per frame ≈ 0.10
-    let previous = cycleLockOffset(frame(0), SR, f);
-    for (let n = 1; n <= 30; n++) {
-      const offset = cycleLockOffset(frame(n * FRAME), SR, f);
-      const moved = (((offset + FRAME - previous) % period) + period) % period; // same point of the signal?
-      expect(Math.min(moved, period - moved) / period, `frame ${n}`).toBeLessThan(fastestDrift * 1.15);
-      previous = offset;
-    }
+  it('follows a Glide the engine reports (issue 180)', () => {
+    const glide = (i: number) => 196 + (130.81 - 196) * Math.exp(-i / (0.08 * SR));
+    const { samples, phases } = render(BUFFER, glide);
+    for (const z of risingZeros(samples, SR, glide, BUFFER - 800, 9)) expect(offZero(phaseAt(phases, z))).toBeLessThan(0.03);
   });
 
   it('still finds the cycle with Noise mixed in at the same level', () => {
-    const f = 220;
-    const mix = add(sine(f, 8192, 0, 1.1), noise(8192, 1));
-    expect(lockedPhaseError(cycleLockOffset(mix, SR, f), f, 1.1)).toBeLessThan(0.1);
+    let seed = 7;
+    const noise = () => {
+      seed = (seed * 1664525 + 1013904223) >>> 0;
+      return (seed / 2 ** 32) * 2 - 1;
+    };
+    const { samples, phases } = render(BUFFER, () => 220, (phi) => Math.sin(phi) + noise(), 1.1);
+    for (const z of risingZeros(samples, SR, () => 220, BUFFER - 500, 3)) expect(offZero(phaseAt(phases, z))).toBeLessThan(0.1);
+  });
+
+  it('finds none in silence or without a pitch', () => {
+    expect(risingZeros(new Float32Array(BUFFER), SR, () => 440, BUFFER - 1, 9)).toEqual([]);
+    expect(risingZeros(render(BUFFER, () => 440).samples, SR, () => 0, BUFFER - 1, 9)).toEqual([]);
+  });
+});
+
+/** A stream of frames 60 times a second, as the render loop reads a Tap, each drawn by `lock`. */
+function frames(stream: Float32Array, frequency: (i: number) => number, count: number, cycles = 2, points = 600) {
+  const lock = createCycleLock();
+  return Array.from({ length: count }, (_, k) => {
+    const last = BUFFER + k * FRAME; // one past the buffer's newest sample, in the stream
+    const end = (last - 1) / SR;
+    const drawn = lock({ samples: stream.subarray(last - BUFFER, last), sampleRate: SR, end, frequencyAt: (t) => frequency(t * SR), cycles, points });
+    return { ...drawn, at: last - BUFFER + drawn.start };
+  });
+}
+/** The research's jitter: the RMS change between two consecutive traces over their RMS. */
+function jitter(a: Float32Array, b: Float32Array) {
+  let change = 0;
+  let level = 0;
+  for (let i = 0; i < a.length; i++) {
+    change += (a[i] - b[i]) ** 2;
+    level += (a[i] ** 2 + b[i] ** 2) / 2;
+  }
+  return Math.sqrt(change / level);
+}
+
+describe('Cycle Lock on a Scope (issue 180)', () => {
+  it('draws the newest sound: the trace ends at most a cycle and 20 ms before the buffer does', () => {
+    const period = SR / 130.81;
+    const stream = render(BUFFER + 40 * FRAME, () => 130.81).samples;
+    for (const { start, length } of frames(stream, () => 130.81, 40)) {
+      expect(BUFFER - 1 - (start + length)).toBeLessThanOrEqual(period + 0.02 * SR);
+      expect(start + length).toBeLessThanOrEqual(BUFFER - 1);
+    }
+  });
+
+  it('takes the newest of equally good starts, so a steady wave is drawn as it is now', () => {
+    const period = SR / 440;
+    const stream = render(BUFFER + 20 * FRAME, () => 440).samples;
+    for (const { start, length } of frames(stream, () => 440, 20)) expect(BUFFER - 1 - (start + length)).toBeLessThan(period);
+  });
+
+  it('spans the cycles asked of the pitch played, from one rising zero of the fundamental to another', () => {
+    const vibrato = (i: number) => 130.81 * 2 ** ((0.3 * Math.sin((2 * Math.PI * 2 * i) / SR)) / 12);
+    const { samples, phases } = render(BUFFER + 30 * FRAME, vibrato);
+    for (const [k, { start, length }] of frames(samples, vibrato, 30, 4).entries()) {
+      const from = phaseAt(phases, k * FRAME + start);
+      expect(offZero(from)).toBeLessThan(0.03);
+      expect(phaseAt(phases, k * FRAME + start + length) - from).toBeCloseTo(4 * 2 * Math.PI, 1);
+    }
+  });
+
+  it('never draws older sound than the frame before', () => {
+    const vibrato = (i: number) => 130.81 * 2 ** ((0.3 * Math.sin((2 * Math.PI * 8 * i) / SR)) / 12);
+    const stream = render(BUFFER + 60 * FRAME, vibrato).samples;
+    const drawn = frames(stream, vibrato, 60);
+    for (let k = 1; k < drawn.length; k++) expect(drawn[k].at).toBeGreaterThanOrEqual(drawn[k - 1].at + FRAME / 2);
+  });
+
+  it('holds a wave that repeats every two cycles on the same one, where the newest start alone flips', () => {
+    // A Perfect Fifth: the Note and 3:2 above it, which repeat together every two cycles of the Note.
+    const fifth = (phi: number) => Math.sin(phi) + 0.8 * Math.sin(1.5 * phi + 0.4);
+    const period = SR / 130.81;
+    const stream = render(BUFFER + 60 * FRAME, () => 130.81, fifth).samples;
+    const drawn = frames(stream, () => 130.81, 60);
+    for (let k = 1; k < drawn.length; k++) expect(jitter(drawn[k].trace, drawn[k - 1].trace), `frame ${k}`).toBeLessThan(0.05);
+    // The control: drawing each frame from its newest rising zero alone flips between the two cycles.
+    const newest = drawn.map((_, k) => {
+      const last = BUFFER + k * FRAME;
+      const samples = stream.subarray(last - BUFFER, last);
+      return risingZeros(samples, SR, () => 130.81, BUFFER - 1 - 2 * period, 1)[0] + last;
+    });
+    const halves = newest.map((at) => Math.round(at / period) % 2);
+    expect(new Set(halves).size).toBe(2);
+  });
+
+  it('stands still while frozen: the same buffer at the same time draws the same trace', () => {
+    const lock = createCycleLock();
+    const samples = render(BUFFER, () => 220, (phi) => Math.sin(phi) + 0.5 * Math.sin(1.5 * phi)).samples;
+    const frame = { samples, sampleRate: SR, end: 1, frequencyAt: () => 220, cycles: 2, points: 300 };
+    const first = lock(frame);
+    for (let k = 0; k < 5; k++) expect(lock(frame).start).toBe(first.start);
+  });
+
+  it('draws the newest end of a silent buffer', () => {
+    const { start, length, trace } = createCycleLock()({ samples: new Float32Array(BUFFER), sampleRate: SR, end: 1, frequencyAt: () => 440, cycles: 2, points: 300 });
+    expect(length).toBeCloseTo((2 * SR) / 440);
+    expect(start + length).toBeCloseTo(BUFFER - 1);
+    expect(trace.every((v) => v === 0)).toBe(true);
   });
 });

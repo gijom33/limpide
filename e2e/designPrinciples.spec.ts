@@ -143,6 +143,19 @@ const STATES: { name: string; open?(page: Page): Promise<void>; close?(page: Pag
     },
   },
   { name: 'Display panel', open: (page) => page.getByRole('button', { name: 'Display', exact: true }).click(), close: (page) => page.getByRole('button', { name: 'Display', exact: true }).click() },
+  {
+    // The Scopes' Glow on (issue 180): the Display panel with it chosen, every Scope drawing its fading traces.
+    name: 'Glow on',
+    open: async (page) => {
+      await page.getByRole('button', { name: 'Display', exact: true }).click();
+      await page.getByRole('radiogroup', { name: 'Glow' }).getByRole('radio', { name: 'On', exact: true }).click();
+      await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-glow', '14');
+    },
+    close: async (page) => {
+      await page.getByRole('radiogroup', { name: 'Glow' }).getByRole('radio', { name: 'Off', exact: true }).click();
+      await page.getByRole('button', { name: 'Display', exact: true }).click();
+    },
+  },
   { name: 'MIDI panel', open: (page) => page.getByRole('button', { name: 'MIDI', exact: true }).click(), close: (page) => page.getByRole('button', { name: 'MIDI', exact: true }).click() },
   { name: 'About', open: openAbout, close: (page) => page.keyboard.press('Escape') },
   // Bead right of About's name (issue 178), its card in place of the credits (issue 163): with its switch on, then off again.

@@ -44,6 +44,8 @@ const REMEMBERED = {
       frequencyScale: choice(['log', 'linear'], INITIAL_VIEWER_STATE.frequencyScale),
       levelScale: choice(['db', 'linear'], INITIAL_VIEWER_STATE.levelScale),
       tapSource: choice(['all', 'newest'], INITIAL_VIEWER_STATE.tapSource),
+      /** The Scopes' Glow (issue 180): Off by default, so a Scope shows only now unless asked. */
+      glow: choice([false, true], false),
     },
   },
   overlays: {

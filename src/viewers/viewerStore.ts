@@ -11,10 +11,11 @@ import { type Overlay, toggleOverlay } from './overlays';
 import { INITIAL_VIEWER_STATE, type TapSource, type ViewerAction, viewerReducer } from './viewerState';
 import type { IdealAt, ViewSettings } from './viewSettings';
 
-/** Every way the Viewer settings change: the reducer's, and the Scope's cycles, the Timeline's length, the overlays. */
+/** Every way the Viewer settings change: the reducer's, and the Scope's cycles and Glow, the Timeline's length, the overlays. */
 export type ViewSettingsAction =
   | ViewerAction
   | { type: 'setCycles'; cycles: ViewSettings['cycles'] }
+  | { type: 'setGlow'; glow: boolean }
   | { type: 'setTimelineSeconds'; seconds: ViewSettings['timelineSeconds'] }
   | { type: 'toggleOverlay'; overlay: Overlay }
   /** A Tutorial's Display Step, done for the person: the overlay on, whatever it was. */
@@ -31,6 +32,7 @@ const IDEAL_HARMONICS = 256;
 const savedOf = (settings: ViewSettings): RememberedValue<'viewer'> => ({
   cycles: settings.cycles,
   timelineSeconds: settings.timelineSeconds,
+  glow: settings.glow,
   frequencyScale: settings.viewer.frequencyScale,
   levelScale: settings.viewer.levelScale,
   tapSource: settings.viewer.tapSource,
@@ -67,6 +69,8 @@ function reduce(settings: ViewSettings, action: ViewSettingsAction): ViewSetting
   switch (action.type) {
     case 'setCycles':
       return { ...settings, cycles: action.cycles };
+    case 'setGlow':
+      return { ...settings, glow: action.glow };
     case 'setTimelineSeconds':
       return { ...settings, timelineSeconds: action.seconds };
     case 'toggleOverlay':
@@ -95,10 +99,11 @@ export function createViewerStore({
   patches: Pick<PatchStore, 'get' | 'subscribe'>;
   setTapSource(source: TapSource): void;
 }) {
-  const { cycles, timelineSeconds, frequencyScale, levelScale, tapSource } = recall(storage, 'viewer');
+  const { cycles, timelineSeconds, glow, frequencyScale, levelScale, tapSource } = recall(storage, 'viewer');
   let settings: ViewSettings = {
     cycles,
     timelineSeconds,
+    glow,
     ideal: idealOf(patches.get().patch),
     guideLevel: guideLevel(patches.get().patch),
     overlays: recall(storage, 'overlays'),

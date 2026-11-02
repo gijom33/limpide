@@ -130,6 +130,23 @@ test('a Snapshot keeps the waveform on every Scope as well as every Spectrum', a
   for (const scope of await scopes.all()) await expect(scope).not.toHaveAttribute('data-snapshot', 'true');
 });
 
+test('Glow is Off at first; On, every Scope draws its last traces fading under the newest, and it is remembered (issue 180)', async ({ page }) => {
+  await page.goto('/');
+  await openDisplay(page);
+  const glow = page.getByRole('group', { name: 'View', exact: true }).getByRole('radiogroup', { name: 'Glow' });
+  const scopes = page.locator('canvas.scope');
+  await expect(scopes).toHaveCount(3);
+  await expect(glow.getByRole('radio', { name: 'Off', exact: true })).toHaveAttribute('aria-checked', 'true');
+  for (const scope of await scopes.all()) await expect(scope).toHaveAttribute('data-glow', '0');
+  await glow.getByRole('radio', { name: 'On', exact: true }).click();
+  for (const scope of await scopes.all()) await expect(scope).toHaveAttribute('data-glow', '14');
+  await page.reload();
+  for (const scope of await scopes.all()) await expect(scope).toHaveAttribute('data-glow', '14');
+  await openDisplay(page);
+  await glow.getByRole('radio', { name: 'Off', exact: true }).click();
+  for (const scope of await scopes.all()) await expect(scope).toHaveAttribute('data-glow', '0');
+});
+
 test('the Env Timeline shows 2 seconds at first, and 1, 3 or 4 when chosen under Axes (the owner, 2026-10-28)', async ({ page }) => {
   await page.goto('/');
   const timeline = page.getByLabel('Envelope Timeline', { exact: true });

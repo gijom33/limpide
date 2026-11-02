@@ -12,8 +12,8 @@ interface Props {
   dispatch(action: ViewSettingsAction): void;
 }
 
-/** Freeze and Snapshot: actions on what the Viewers show. */
-export function ViewActions({ state, dispatch }: Props) {
+/** Freeze and Snapshot, actions on what the Viewers show; which Voices they follow, and the Scopes' Glow. */
+export function ViewActions({ state, glow, dispatch }: Props & { glow: boolean }) {
   const learnFreeze = useLearnable({ kind: 'action', id: 'freeze' });
   const learnSnapshot = useLearnable({ kind: 'action', id: 'snapshot' });
   return (
@@ -64,6 +64,18 @@ export function ViewActions({ state, dispatch }: Props) {
             { value: 'newest', label: 'Newest' },
           ]}
           onChange={(source) => dispatch({ type: 'setTapSource', source })}
+        />
+      </Tooltip>
+      <Tooltip content={TIPS.glow}>
+        <Segmented
+          label="Glow"
+          caption="Glow"
+          value={glow ? 'on' : 'off'}
+          options={[
+            { value: 'off', label: 'Off' },
+            { value: 'on', label: 'On' },
+          ]}
+          onChange={(choice) => dispatch({ type: 'setGlow', glow: choice === 'on' })}
         />
       </Tooltip>
     </>

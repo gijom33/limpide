@@ -340,12 +340,13 @@ describe('every Viewer draws a Patch at the edges in a frame (issue 116)', () =>
     store.dispatch({ type: 'showOverlay', overlay: 'guides' });
     const view = store.get;
     const gateOn = () => engine.modulationAt().sounding !== null;
+    const pitch = { fundamental: engine.fundamental, fundamentalAt: engine.fundamentalAt, now: engine.now };
     const draws = [
-      createScope(canvas(360, 140), engine.taps.oscillator, engine.fundamental, view),
+      createScope(canvas(360, 140), engine.taps.oscillator, view, pitch),
       createSpectrum(canvas(360, 140), engine.taps.oscillator, SR, { fundamental: engine.fundamental, view, showIdeal: true, gateOn }),
-      createScope(canvas(360, 140), engine.taps.filter, engine.fundamental, view),
+      createScope(canvas(360, 140), engine.taps.filter, view, pitch),
       createSpectrum(canvas(360, 140), engine.taps.filter, SR, { fundamental: engine.fundamental, view, showIdeal: true, gateOn, response: engine.filterResponse }),
-      createScope(canvas(360, 140), engine.taps.amp, engine.fundamental, view, { limiting: engine.limiting }),
+      createScope(canvas(360, 140), engine.taps.amp, view, { ...pitch, limiting: engine.limiting }),
       createSpectrum(canvas(360, 140), engine.taps.amp, SR, { fundamental: engine.fundamental, view }),
       createTimeline(canvas(900, 140), engine, view, () => null),
     ];

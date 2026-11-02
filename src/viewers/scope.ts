@@ -1,10 +1,9 @@
 import { type GeekNote, scopeReadout } from '../music/geek';
 import { cssVar, curveWidth, haloText, prepareCanvas } from './canvas';
-import { cycleLockOffset } from './cycleLock';
+import { createCycleLock } from './cycleLock';
 import { createFreezeLatch } from './freezeLatch';
 import { createGuideGlide } from './guides';
 import { scopeScale } from './scopeScale';
-import { scopeTrace } from './scopeTrace';
 import { scopeWindow } from './scopeWindow';
 import type { ViewSettings } from './viewSettings';
 
@@ -12,32 +11,49 @@ import type { ViewSettings } from './viewSettings';
 const LIMITING_HOLD_MS = 800;
 // Two drawn points per pixel keeps sharp corners (a saw's drop, a pulse's edges) crisp.
 const POINTS_PER_PIXEL = 2;
+// Glow (issue 180, decision 5): each trace fades by this much a frame, as on an analogue scope, so the last 70 ms or
+// so glow under the trace; drawn this many frames, the oldest at a tenth. Redrawn rather than faded on a layer, where
+// rounding leaves a haze of every trace ever drawn.
+const GLOW_DECAY = 0.85;
+const GLOW_FRAMES = 14;
 
 /**
- * A Scope of one Tap, Cycle Locked to the Note's fundamental so a steady Note stands still.
+ * A Scope of one Tap, Cycle Locked to the Note's fundamental so a steady Note stands still, drawing the newest sound.
  * Every Scope shares the same scale (scopeScale), so heights compare directly from stage to stage; peaks beyond
  * ±1 are drawn compressed into the margin, never cut flat.
  */
 export function createScope(
   canvas: HTMLCanvasElement,
   analyser: AnalyserNode,
-  fundamental: () => number,
   view: () => ViewSettings,
   {
+    fundamental,
+    fundamentalAt,
+    now,
     limiting,
     newestNote = () => null,
   }: {
+    /** The newest Note's frequency, held still through vibrato: how many samples the cycles shown take, and the period written. */
+    fundamental: () => number;
+    /** The pitch the engine plays at an audio clock time, which Cycle Lock follows across the buffer (issue 180). */
+    fundamentalAt: (time: number) => number;
+    /** The audio clock, which the Tap's newest sample was heard at. */
+    now: () => number;
     /** On the Amp Scope: whether the safety limiter is bending the sound right now (all Voices), shown as LIMITING. */
     limiting?: () => boolean;
     /** The newest Note played (null before any), for the Synth Geek Layer's period: A4's until one is (issue 170). */
     newestNote?: () => GeekNote;
-  } = {},
+  },
 ) {
   const samples = new Float32Array(analyser.fftSize);
   let limitedAt = -Infinity;
   const sampleRate = analyser.context.sampleRate;
-  // While frozen, lock to the Note the frozen samples belong to, not to a Note played since.
+  const lock = createCycleLock();
+  // While frozen, lock to the Note the frozen samples belong to, not to a Note played since, and to their moment.
   const frozenFundamental = createFreezeLatch<number>();
+  const frozenEnd = createFreezeLatch<number>();
+  // The traces drawn last, newest first, for the Glow; held while frozen, so the frozen frame keeps its glow.
+  const ghosts: Float32Array[] = [];
   let snapshotToken: number | null = null;
   let snapshotTrace: Float32Array | null = null;
   // The Guides at the Mixer's level, held while frozen like the Note, so they belong to the frozen trace.
@@ -50,12 +66,11 @@ export function createScope(
     const { g, width, height } = prepareCanvas(canvas);
     g.clearRect(0, 0, width, height);
 
-    const f = frozenFundamental(view().viewer.frozen, fundamental);
-    const { length: windowLength } = scopeWindow(samples.length, sampleRate, f, view().cycles);
-    const shown = Math.max(2, Math.floor(windowLength));
-    // Lock within the part of the buffer that leaves room for the whole trace after it.
-    const start = cycleLockOffset(samples.subarray(0, samples.length - shown - 1), sampleRate, f);
-    const trace = scopeTrace(samples, start, shown, Math.max(2, Math.min(shown, Math.ceil(width * POINTS_PER_PIXEL))));
+    const { frozen } = view().viewer;
+    const f = frozenFundamental(frozen, fundamental);
+    const { length: windowLength, cycles } = scopeWindow(samples.length, sampleRate, f, view().cycles);
+    const points = Math.max(2, Math.min(Math.floor(windowLength), Math.ceil(width * POINTS_PER_PIXEL)));
+    const { trace } = lock({ samples, sampleRate, end: frozenEnd(frozen, now), frequencyAt: fundamentalAt, cycles, points });
 
     // Snapshot: keep the Cycle Locked trace from the moment it was taken. Drawn across the same width, it
     // compares the shape per cycle even if a different Note is playing now.
@@ -130,6 +145,17 @@ export function createScope(
 
     // Shade between the trace and zero, like the Spectrums' fill: the waveform's positive and negative halves.
     const colour = cssVar(canvas, '--trace');
+    ghosts.splice(view().glow ? GLOW_FRAMES : 0);
+    g.strokeStyle = colour;
+    g.lineWidth = curveWidth(canvas);
+    for (let k = ghosts.length - 1; k >= 0; k--) {
+      g.globalAlpha = GLOW_DECAY ** (k + 1);
+      stroke(ghosts[k]);
+    }
+    g.globalAlpha = 1;
+    canvas.dataset.glow = String(ghosts.length);
+    if (view().glow && !frozen) ghosts.unshift(trace);
+
     g.fillStyle = colour;
     g.globalAlpha = 0.16;
     g.beginPath();

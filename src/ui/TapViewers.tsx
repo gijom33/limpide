@@ -13,6 +13,10 @@ interface Props {
   analyser: AnalyserNode;
   sampleRate: number;
   fundamental(): number;
+  /** The pitch the engine plays at an audio clock time, which the Scope's Cycle Lock follows (issue 180). */
+  fundamentalAt(time: number): number;
+  /** The audio clock. */
+  now(): number;
   view(): ViewSettings;
   /** Draw the Ideal Reference rings on this Tap's Spectrum. */
   showIdeal?: boolean;
@@ -34,7 +38,7 @@ interface Props {
  * Scope + Spectrum for one Tap, with no caption: the stage's panel says which it is. Canvases are mounted once and
  * drawn by the render loop. The level is measured but not shown; the Scope carries it as `data-db` (for tests).
  */
-export function TapViewers({ name, analyser, sampleRate, fundamental, view, showIdeal, gateOn, response, limiting, formulas, newestNote, noiseSlope }: Props) {
+export function TapViewers({ name, analyser, sampleRate, fundamental, fundamentalAt, now, view, showIdeal, gateOn, response, limiting, formulas, newestNote, noiseSlope }: Props) {
   const scopeRef = useRef<HTMLCanvasElement>(null);
   const spectrumRef = useRef<HTMLCanvasElement>(null);
   const hoverRef = useRef<{ x: number; y: number } | null>(null);
@@ -45,7 +49,7 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, view, show
   }, [noiseSlope]);
 
   useEffect(() => {
-    const drawScope = createScope(scopeRef.current!, analyser, fundamental, view, { limiting, newestNote });
+    const drawScope = createScope(scopeRef.current!, analyser, view, { fundamental, fundamentalAt, now, limiting, newestNote });
     const drawSpectrum = createSpectrum(spectrumRef.current!, analyser, sampleRate, {
       fundamental,
       view,
@@ -61,7 +65,7 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, view, show
       drawSpectrum();
       scopeRef.current!.dataset.db = String(level());
     });
-  }, [analyser, sampleRate, fundamental, view, showIdeal, gateOn, response, limiting, newestNote]);
+  }, [analyser, sampleRate, fundamental, fundamentalAt, now, view, showIdeal, gateOn, response, limiting, newestNote]);
 
   return (
     <figure className="tap" data-tap={name} aria-label={`${name} Tap`}>

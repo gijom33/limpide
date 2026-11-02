@@ -235,6 +235,21 @@ describe('fundamental', () => {
     engine.pitchChange(69); // now, as live playing does: fundamental() reports what is sounding at this moment
     expect(engine.fundamental()).toBeCloseTo(440);
   });
+
+  it('at a past moment, swings with an LFO on Pitch as the model and the sound do, which Cycle Lock follows (issue 180)', async () => {
+    const ctx = new OfflineAudioContext(1, SR * 2, SR);
+    const engine = createSynthEngine(ctx);
+    engine.applyPatch({ ...defaultPatch(), cutoff: 20000, waveform: 'sine', ampSustain: 1, ampAttack: 0.001, lfoDestination: 'pitch', lfoRate: 2, lfoAmount: 1 });
+    engine.noteOn(57, 1, 0); // 220 Hz
+    const s = (await ctx.startRendering()).getChannelData(0);
+    for (const t of [0.5, 0.625, 0.75, 0.875, 1, 1.125]) {
+      const model = 440 * 2 ** ((engine.modulationAt(t).pitch - 69) / 12);
+      expect(engine.fundamentalAt(t) / model, `${t} s`).toBeCloseTo(1, 4);
+      expect(frequencyAround(s, SR, t, 0.02) / engine.fundamentalAt(t), `${t} s`).toBeCloseTo(1, 2);
+    }
+    // At the swing's top the steady fundamental, which the Scope's period keeps, stays on the Note.
+    expect(Math.abs(engine.fundamentalAt(0.625) / 220 - 1)).toBeGreaterThan(0.02);
+  });
 });
 
 describe('pitch bend (issue 52)', () => {

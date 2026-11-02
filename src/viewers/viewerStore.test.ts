@@ -23,9 +23,9 @@ const setup = (storage = memoryStorage()) => {
 };
 
 describe('the Viewer settings store (issue 77)', () => {
-  it('starts as the Viewers always have: 2 cycles, 2 seconds, the overlays by default, nothing frozen', () => {
+  it('starts as the Viewers always have: 2 cycles, 2 seconds, no Glow, the overlays by default, nothing frozen', () => {
     const { viewers, sources } = setup();
-    expect(viewers.get()).toMatchObject({ cycles: 2, timelineSeconds: 2, overlays: DEFAULT_OVERLAYS, viewer: { frozen: false, snapshot: null, tapSource: 'all' } });
+    expect(viewers.get()).toMatchObject({ cycles: 2, timelineSeconds: 2, glow: false, overlays: DEFAULT_OVERLAYS, viewer: { frozen: false, snapshot: null, tapSource: 'all' } });
     expect(sources).toEqual(['all']);
   });
 
@@ -35,20 +35,22 @@ describe('the Viewer settings store (issue 77)', () => {
     expect(viewers.get()).toBe(first);
     viewers.dispatch({ type: 'setCycles', cycles: 4 });
     viewers.dispatch({ type: 'setTimelineSeconds', seconds: 3 });
+    viewers.dispatch({ type: 'setGlow', glow: true });
     viewers.dispatch({ type: 'toggleFreeze' });
     viewers.dispatch({ type: 'toggleOverlay', overlay: 'guides' });
     viewers.dispatch({ type: 'showOverlay', overlay: 'geek' });
     viewers.dispatch({ type: 'showOverlay', overlay: 'geek' });
     viewers.dispatch({ type: 'hideOverlay', overlay: 'ideal' });
     viewers.dispatch({ type: 'hideOverlay', overlay: 'ideal' });
-    expect(viewers.get()).toMatchObject({ cycles: 4, timelineSeconds: 3, viewer: { frozen: true }, overlays: { guides: true, geek: true, ideal: false } });
+    expect(viewers.get()).toMatchObject({ cycles: 4, timelineSeconds: 3, glow: true, viewer: { frozen: true }, overlays: { guides: true, geek: true, ideal: false } });
     expect(viewers.get()).not.toBe(first);
   });
 
-  it('saves every Display setting, never Freeze or the Snapshot: a new page starts from them (issue 85)', () => {
+  it('saves every Display setting, Glow included (issue 180), never Freeze or the Snapshot: a new page starts from them (issue 85)', () => {
     const { storage, viewers } = setup();
     viewers.dispatch({ type: 'toggleOverlay', overlay: 'curve' });
     viewers.dispatch({ type: 'setCycles', cycles: 4 });
+    viewers.dispatch({ type: 'setGlow', glow: true });
     viewers.dispatch({ type: 'setTimelineSeconds', seconds: 3 });
     viewers.dispatch({ type: 'setFrequencyScale', scale: 'linear' });
     viewers.dispatch({ type: 'setLevelScale', scale: 'linear' });
@@ -59,6 +61,7 @@ describe('the Viewer settings store (issue 77)', () => {
     expect(next.get()).toMatchObject({
       cycles: 4,
       timelineSeconds: 3,
+      glow: true,
       overlays: { curve: false },
       viewer: { frequencyScale: 'linear', levelScale: 'linear', tapSource: 'newest', frozen: false, snapshot: null },
     });

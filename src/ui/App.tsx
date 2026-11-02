@@ -300,6 +300,8 @@ export function App() {
         analyser={session.engine.taps[tap]}
         sampleRate={session.ctx.sampleRate}
         fundamental={session.engine.fundamental}
+        fundamentalAt={session.engine.fundamentalAt}
+        now={session.engine.now}
         view={view}
         gateOn={extra.showIdeal ? gateOn : undefined}
         newestNote={session.engine.newestNote}
@@ -402,7 +404,7 @@ export function App() {
       <section className="toolbar" aria-label="Viewer controls">
         <div className="toolbar-groups">
           <ToolGroup title="View">
-            <ViewActions state={viewer} dispatch={viewerStore.dispatch} />
+            <ViewActions state={viewer} glow={settings.glow} dispatch={viewerStore.dispatch} />
           </ToolGroup>
           <ToolGroup title="Axes">
             <AxesControls settings={settings} dispatch={viewerStore.dispatch} />

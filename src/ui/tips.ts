@@ -88,6 +88,11 @@ export const TIPS = {
     body: 'All: the Amp Tap carries every Voice at once, so a chord is seen there as it is heard. Newest: the Amp Tap shows only the Note you played last. The Oscillator and Filter Taps, the Harmonic Markers and the Timeline always follow the newest Note, so Cycle Lock stays exact there.',
     how: 'With All, the Amp Scope cannot lock to a chord. One Voice shows the same either way.',
   },
+  glow: {
+    title: 'Glow',
+    body: 'Each Scope’s trace fades over a few frames, as on an analogue oscilloscope: a wave that stands still stays sharp, one that moves (Noise, a detuned Osc 2, a chord) leaves a soft glow of the last tenth of a second. Off, the Scopes show only now. Your choice is remembered.',
+    how: 'Turn it on with some Noise in the Mixer: the flicker softens into a cloud.',
+  },
   voices: {
     title: 'Voices',
     body: 'How many Notes can sound at once. 1 is the classic monophonic synth: the newest key wins, and Glide slides between Notes. 2 to 8 play chords, each Note on its own Voice.',
