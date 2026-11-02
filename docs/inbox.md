@@ -4,7 +4,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
-- 2026-11-02, the owner, on 1.21.0 during the Demo, with a screenshot of Bead beside Osc 1's ringed Waveform buttons, its tail over the word "WAVEFORM": "During Demo, Bead’s tail is on text which should be avoided. It should go a bit lower."
 ## Ideas
 
 - 2026-11-02, from the 1.21.0 branch runs, issue 152: the e2e test "in the sections 2 × 2 the Demo brings a section out from under the header" failed on GitHub's Linux WebKit in two runs of three (retries too), the first scroll reading the Filter still 60 px under the header; it passes on macOS in both browsers, also in Linux-wide type, and on Linux Chromium. Skipped in WebKit for 1.21.0; is the Demo's scroll late or wrong in WebKit there, or the test?
@@ -220,3 +219,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-11-01, the owner's note that the C16 sends polyphonic aftertouch (triage, decided by the owner, "Highest pad, tonight"): into [132](./issues/132-aftertouch.md), built on night/2026-11-01: per-Note pressure is read too, the highest among the Notes held standing as the one aftertouch, moving the same Destination for every Note; pressure per Voice stays for v2.
 2026-11-02, the owner's bug of Bead moving About's logo off centre (triage, decided by the owner): into [178](./issues/178-bead-in-about-at-its-own-size.md) as its decision 3, ready for an agent again: the mark centred over the name as without Bead, Bead to its right, its foot on the mark's lowest point.
 2026-11-02, the owner's idea of steadier Scopes for complex waves (triage, decided by the owner: "Yes scope improvement for v1", with Display settings where tastes differ): to [180](./issues/180-steadier-scopes.md), in v1, needs-info: measure what moves today, then grill the ways (matching the last frame, persistence, averaging, chords).
+2026-11-02, the owner's bug of Bead's tail over a label in the Demo (triage): to [181](./issues/181-bead-never-over-text.md), polish for v1, ready for an agent: Bead never rests with body or tail over text, a bit lower instead (decided by the owner); everywhere it rests, not only in the Demo (Claude's call, open to the owner).
