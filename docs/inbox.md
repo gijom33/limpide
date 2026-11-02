@@ -4,6 +4,7 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-11-02, the owner, on 1.21.0's About on an iPhone (Safari), with a screenshot of Bead beside the logo's mark and an arrow to its right: "Bead should not modify logo alignment. Move it to right."
 ## Ideas
 
 - 2026-11-02, from the 1.21.0 branch runs, issue 152: the e2e test "in the sections 2 × 2 the Demo brings a section out from under the header" failed on GitHub's Linux WebKit in two runs of three (retries too), the first scroll reading the Filter still 60 px under the header; it passes on macOS in both browsers, also in Linux-wide type, and on Linux Chromium. Skipped in WebKit for 1.21.0; is the Demo's scroll late or wrong in WebKit there, or the test?
