@@ -111,6 +111,7 @@ test.describe('Bead in About (issue 163)', () => {
   const bead = (page: Page) => about(page).getByRole('button', { name: 'Bead, Limpide’s water drop: its tricks' });
   const card = (page: Page) => about(page).getByRole('region', { name: 'Bead' });
   const credits = (page: Page) => about(page).locator('.about-credits');
+  const name = (page: Page) => about(page).getByRole('heading', { name: 'Limpide', exact: true });
 
   test.describe('switched on', () => {
     test.use({ storageState: holding({ ...WELCOMED, 'limpide.bead': 'on' }) });
@@ -130,40 +131,46 @@ test.describe('Bead in About (issue 163)', () => {
         const drawn = (await bead(page).locator('svg').boundingBox())!;
         const body = (await about(page).locator('.about-body').boundingBox())!;
         // The name's words and baseline, in the window's pixels: an empty inline block sits on the baseline.
-        const name = await about(page)
-          .locator('.about-title')
-          .evaluate((h) => {
-            const range = document.createRange();
-            range.selectNodeContents(h);
-            const words = range.getBoundingClientRect();
-            const probe = document.createElement('span');
-            probe.style.display = 'inline-block';
-            h.append(probe);
-            const baseline = probe.getBoundingClientRect().bottom;
-            probe.remove();
-            return { left: words.left, right: words.right, baseline };
-          });
+        const line = await name(page).evaluate((h) => {
+          const range = document.createRange();
+          range.selectNodeContents(h);
+          const words = range.getBoundingClientRect();
+          const probe = document.createElement('span');
+          probe.style.display = 'inline-block';
+          h.append(probe);
+          const baseline = probe.getBoundingClientRect().bottom;
+          probe.remove();
+          return { left: words.left, right: words.right, baseline };
+        });
         const middle = body.x + body.width / 2;
         expect(drawn.width, `${width}px: its width on the page`).toBeCloseTo(onPage.width, 0);
         expect(drawn.height, `${width}px: its height on the page`).toBeCloseTo(onPage.height, 0);
-        expect(drawn.x, `${width}px: to the name’s right`).toBeGreaterThanOrEqual(name.right);
-        expect(Math.abs(drawn.y + drawn.height - name.baseline), `${width}px: its foot on the name’s baseline`).toBeLessThanOrEqual(1);
-        expect(Math.abs((name.left + name.right) / 2 - middle), `${width}px: the name centred alone`).toBeLessThanOrEqual(1);
+        expect(drawn.x, `${width}px: to the name’s right`).toBeGreaterThanOrEqual(line.right);
+        expect(Math.abs(drawn.y + drawn.height - line.baseline), `${width}px: its foot on the name’s baseline`).toBeLessThanOrEqual(1);
+        expect(Math.abs((line.left + line.right) / 2 - middle), `${width}px: the name centred alone`).toBeLessThanOrEqual(1);
         expect(Math.abs(logo.x + logo.width / 2 - middle), `${width}px: the mark centred alone`).toBeLessThanOrEqual(1);
         // Bead adds no height: the row is as tall as the name, so the name stands where it does without Bead.
         const row = (await about(page).locator('.about-name').boundingBox())!;
-        const title = (await about(page).locator('.about-title').boundingBox())!;
+        const title = (await name(page).boundingBox())!;
         expect(Math.abs(row.height - title.height), `${width}px: the row as tall as the name`).toBeLessThanOrEqual(1);
       }
     });
 
-    test('it fits in About down to the narrowest window, beside the centred name', async ({ page }) => {
+    test('down to the narrowest window it fits in About, the name still centred', async ({ page }) => {
       for (const width of [280, 320, 340, 375]) {
         await page.setViewportSize({ width, height: 700 });
         await page.goto('/');
         await page.getByRole('button', { name: 'About', exact: true }).click();
         const dialog = (await about(page).boundingBox())!;
         const drawn = (await bead(page).boundingBox())!;
+        const body = (await about(page).locator('.about-body').boundingBox())!;
+        const words = await name(page).evaluate((h) => {
+          const range = document.createRange();
+          range.selectNodeContents(h);
+          const box = range.getBoundingClientRect();
+          return (box.left + box.right) / 2;
+        });
+        expect(Math.abs(words - (body.x + body.width / 2)), `${width}px: the name centred`).toBeLessThanOrEqual(1);
         expect(drawn.x + drawn.width, `${width}px`).toBeLessThanOrEqual(dialog.x + dialog.width - 8);
         expect(await about(page).evaluate((d) => d.scrollWidth <= d.clientWidth), `${width}px: no sideways scroll`).toBe(true);
       }
