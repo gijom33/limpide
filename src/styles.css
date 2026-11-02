@@ -1466,7 +1466,7 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
    keyboard shows (--header-hide, measured), and any scroll up slides it back: nothing below moves, as its height never
    changes. Its groups in three rows, on a phone and in the sections 2 × 2 alike (issue 152): the logo and the Patch;
    then the playing buttons (Demo, Tutorial, Song) on the left and set-up (Hold, the tempo, MIDI, Display, About) on
-   the right; then the keyboard. Scrolling down slides the top two away. */
+   the right; then the keyboard. */
 @media (max-width: 860px) {
   header {
     position: sticky; top: calc(-1 * var(--header-hidden, 0px)); z-index: 10; transition: top 0.2s ease;

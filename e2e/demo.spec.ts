@@ -168,6 +168,36 @@ test.describe('on a phone', () => {
   });
 });
 
+// Issue 152: in 2 × 2 the header is three rows tall, as on a phone. A section the Demo follows that sits under it
+// counts as out of view, and comes out from under it.
+test('in the sections 2 × 2 the Demo brings a section out from under the header (issue 152)', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.setViewportSize({ width: 700, height: 830 });
+  await page.goto('/');
+  const filter = page.getByRole('region', { name: 'Filter', exact: true });
+  const header = page.locator('header');
+  // The Filter's top 60 px under the header's bottom: scrolled down past it, then a little back up, so the header's
+  // rows are back and the Demo's button shows.
+  const top = await filter.evaluate((s) => s.getBoundingClientRect().top + scrollY);
+  const tall = await header.evaluate((h) => h.getBoundingClientRect().height);
+  await page.evaluate((y) => scrollTo(0, y), top - tall + 120);
+  await expect(page.locator(':root[data-header-collapsed]')).toHaveCount(1);
+  await page.mouse.wheel(0, -60);
+  await expect(page.locator(':root[data-header-collapsed]')).toHaveCount(0);
+  await expect.poll(() => filter.evaluate((s) => s.getBoundingClientRect().top)).toBeLessThan(tall);
+  // The intro turns the Filter Envelope's Amount first: the page's first scroll lands the Filter's top under the
+  // header. (Later parts follow other sections.) Read in the page, the moment the page scrolls.
+  const landed = page.evaluate(
+    () =>
+      new Promise<number>((resolve) =>
+        addEventListener('scroll', () => resolve(document.querySelector('section[aria-label="Filter"]')!.getBoundingClientRect().top - document.querySelector('header')!.getBoundingClientRect().bottom), { once: true }),
+      ),
+  );
+  await demo(page).click();
+  expect(await landed).toBeGreaterThanOrEqual(0);
+  await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
+});
+
 test('the Demo never touches the Display settings', async ({ page }) => {
   await page.goto('/');
   await openDisplay(page);

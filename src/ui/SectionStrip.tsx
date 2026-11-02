@@ -140,7 +140,9 @@ export function SectionStrip({ follow }: { follow?: { name: SectionName; key: nu
     const box = target.getBoundingClientRect();
     const strip = document.querySelector('.section-strip')!.getBoundingClientRect();
     if (!strip.height) {
-      if (box.top < 0 || box.bottom > innerHeight) target.scrollIntoView({ block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+      // In 2 × 2 the header stays at the top: a section under it is out of sight too (issue 152).
+      const ceiling = Math.max(0, document.querySelector('header')!.getBoundingClientRect().bottom);
+      if (box.top < ceiling || box.bottom > innerHeight) target.scrollIntoView({ block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
       return;
     }
     // In view: all of it below the strip, or, for a section taller than what is left, its top where a jump lands it.

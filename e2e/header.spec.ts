@@ -158,9 +158,10 @@ test.describe('the sections 2 × 2', () => {
 });
 
 // Issue 152: from 601 to 860 px the phone's three rows: the logo and the Patch, its name as wide as the row allows
-// (before, 110 px at 601, 165 at 700, 240 at 860); the playing buttons on the left and set-up on the right; the
-// keyboard with its 17 keys. Scrolling down slides the top two rows away, as on a phone.
-for (const [width, before] of [[601, 110], [700, 165], [860, 240]] as const) {
+// (wider than the two-row header's, which gave it 110 px at 601, 165 at 700 and 240 at 860); the playing buttons on
+// the left and set-up on the right; the keyboard with its 17 keys. Scrolling down slides the top two rows away, as on
+// a phone.
+for (const [width, narrowest] of [[601, 110], [700, 165], [860, 240]] as const) {
   test(`at ${width} px the header has three rows, the Patch name the width of its row, and nothing lies over anything (issue 152)`, async ({ page }) => {
     await page.setViewportSize({ width, height: 830 });
     await page.goto('/');
@@ -175,10 +176,11 @@ for (const [width, before] of [[601, 110], [700, 165], [860, 240]] as const) {
         keys: [...document.querySelectorAll('.piano button:not([data-black])')].filter((k) => k.getBoundingClientRect().width > 0).length,
       };
     });
-    const [demo, about] = [h.buttons[0], h.buttons[7]];
+    const demo = h.buttons.find((b) => b.name === 'Demo')!;
+    const about = h.buttons.find((b) => b.name === 'About')!;
     // Row one: the logo and the Patch, the name reaching the row's end.
     for (const b of h.buttons) expect(b.top, b.name).toBeGreaterThanOrEqual(Math.max(h.logo.bottom, h.name.bottom));
-    expect(h.name.width).toBeGreaterThan(before);
+    expect(h.name.width).toBeGreaterThan(narrowest);
     expect(h.next.right).toBeCloseTo(h.header.right - h.padding, 0);
     // Row two: every button on one line, Demo at the row's left, About at its right, each a finger tall.
     for (const b of h.buttons) {
@@ -187,7 +189,7 @@ for (const [width, before] of [[601, 110], [700, 165], [860, 240]] as const) {
     }
     expect(demo.left).toBeCloseTo(h.logo.left, 0);
     expect(about.right).toBeCloseTo(h.next.right, 0);
-    // Row three: the keyboard, its 17 keys.
+    // Row three: the keyboard, its 17 keys (10 of them white).
     expect(h.piano.top).toBeGreaterThanOrEqual(demo.bottom);
     expect(h.keys).toBe(10);
     const overlapOnly: AuditOptions = { rules: ['overlap'], minTarget: 0, waivers: [] };
@@ -203,19 +205,20 @@ for (const [width, before] of [[601, 110], [700, 165], [860, 240]] as const) {
     const piano = page.getByRole('group', { name: 'Piano' });
     const header = page.locator('header');
     const tall = await header.evaluate((h) => h.getBoundingClientRect().height);
-    const chain = await page.locator('.chain').evaluate((c) => c.getBoundingClientRect().top + scrollY);
+    const oscillators = page.getByRole('region', { name: 'Oscillators', exact: true });
+    const oscTop = await oscillators.evaluate((s) => s.getBoundingClientRect().top + scrollY);
     for (let i = 0; i < 3; i++) await page.mouse.wheel(0, 120);
     // The page is short here: wait for the wheel's scroll to end, or the scroll back up can be lost in it.
     await expect.poll(() => page.evaluate(() => scrollY)).toBe(360);
     await expect(logo).not.toBeInViewport();
-    for (const name of ['Demo', 'About']) await expect(page.locator(`header button[aria-label="${name}"]`)).not.toBeInViewport();
+    for (const name of ['Demo', 'About']) await expect(header.getByRole('button', { name, exact: true })).not.toBeInViewport();
     await expect.poll(() => piano.boundingBox().then((b) => Math.round(b!.y))).toBeLessThanOrEqual(8);
     // Nothing below moves: the header keeps its height, the Sections their place on the page.
     expect(await header.evaluate((h) => h.getBoundingClientRect().height)).toBe(tall);
-    expect(await page.locator('.chain').evaluate((c) => c.getBoundingClientRect().top + scrollY)).toBe(chain);
+    expect(await oscillators.evaluate((s) => s.getBoundingClientRect().top + scrollY)).toBe(oscTop);
     await page.mouse.wheel(0, -60);
     await expect(logo).toBeInViewport();
-    await expect(page.locator('header button[aria-label="Demo"]')).toBeInViewport();
+    await expect(header.getByRole('button', { name: 'Demo', exact: true })).toBeInViewport();
   });
 }
 
@@ -244,7 +247,7 @@ test.describe('the Patch name', () => {
       return { cut, room };
     }, names);
 
-  // At 601 px a short name was whole beside the buttons' words (issue 105); with a row of its own, every one (issue 152).
+  // With a row of its own beside the logo, the Patch name shows every Preset's whole from 601 px (issues 105 and 152).
   for (const width of [601, 860]) {
     test(`at ${width} px every Preset's name shows whole (issues 105 and 152)`, async ({ page }) => {
       await page.setViewportSize({ width, height: 900 });
