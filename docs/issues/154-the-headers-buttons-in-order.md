@@ -4,7 +4,7 @@
 
 **Blocked by:** [112](./112-tempo-midi-clock-and-an-arpeggiator.md), whose tempo and Tap are among the buttons; the owner's choice among the expert's proposals (below)
 
-**Status:** ready-for-agent · enhancement. Step 1 done (2026-10-31); the owner chose arrangement C (decision 7), so step 2 builds it, from the prototype on the branch `prototype/154-header` (`prototypes/154-header/index.html`).
+**Status:** ready-for-human · enhancement. Built (2026-11-01) on night/2026-11-01, for the owner to try. Step 1 done (2026-10-31); the owner chose arrangement C (decision 7), built in step 2 from the prototype on the branch `prototype/154-header` (`prototypes/154-header/index.html`).
 
 ## Questions for the owner
 
@@ -56,3 +56,24 @@ Claude's call, open to the owner:
 **Out of scope:**
 - The header below 861 px ([152](./152-the-phones-header-rows-in-2x2.md))
 - New buttons or new icons
+
+## How it was built (2026-11-01, on night/2026-11-01)
+
+**Measured first** (Chromium, the header as it stood after issues 136, 152 and 123, the buttons' real widths, padded 6 px): arrangement C takes 182 px with icons alone, 267 px with the newcomer's four words and 377 px with every word. That left the piano 331 px at 861 (10 white keys at 33 px, 26 to 30 px before), 425 px at 1100 with the newcomer's four (10 at 42.5 px), 629 px at 1440 and 1109 px at 1920 with every word. C fits as the owner chose at every width from 861 px; 136's "MIDI" mark and 123's words under the Patch change nothing in it.
+
+**What was built:**
+- **Arrangement C from 861 px** (`src/ui/App.tsx`, `src/styles.css`): Hold one button as tall as both rows, against the piano, its icon over its word; then the tempo (BPM over Tap), the players (Demo over Song), the guides (Tutorial over About), set-up (MIDI over Display). 4 px between the columns of one use, 14 px between uses; in a column both buttons as wide as the wider, icon and word from the left (the BPM and Tap centred). Rows of 25 px, 2 px apart, up to 1099 px; of 28 px, 4 px apart, from 1100 px. One shape at every width: the one row from 1920 px is gone. The DOM follows the columns, top before bottom, so Tab meets Hold, the BPM, Tap, Demo, Song, Tutorial, About, MIDI, Display in that order.
+- **Words while there is room:** from 861 to 1099 px icons alone and the BPM its number (as before); from 1100 px Demo, Song, Tutorial and About keep their words; from 1280 px every button keeps its word and the BPM its unit.
+- **The piano grows by whole keys** (`src/ui/pianoKeys.ts`, `src/ui/hooks/usePianoFit.ts`, `src/ui/Piano.tsx`): from 861 px the keyboard takes the room the Patch and the buttons leave, measured as the window changes. The letter keys' 10 white keys share it up to 44 px each; one more white key is added whenever the room holds more than half of one, so once there are more than 10 they are 42 to 44 px. The keys go on upward from E5, the black keys between, ending on a white key and never past the highest MIDI Note (G9); near the top, where fewer keys are drawn, the piano is as wide as the keys it draws, its keys as wide as before. What is left, under one key, opens between the Patch and the keyboard, so the keyboard always meets Hold at the header's gap. The letter keys keep their place and letters; the keys beyond play by pointer, touch or MIDI and light for a Note from MIDI. Measured in Chromium: 17 keys at 861 to 1000 px, 18 at 1280, 25 at 1440, 44 at 1920.
+- **The old rules gone:** the piano centred (issue 82's empty column from 1200 px and its 42 px keys from 1200 to 1365 px), the two rows set-up over Demo, Tutorial and Song, and the Patch name taking its column's spare room (issue 105): the name keeps its fixed width and the room goes to the keys.
+- **Tests:** `src/ui/pianoKeys.test.ts` (red before the module): how many white keys a room holds and how wide, never wider than 44 px nor under 42 once more than 10; the Notes beyond the letter keys, following the octave and stopping at G9. `e2e/header.spec.ts`: at 861, 1100, 1440 and 1920 px the columns, each pair one over the other and as wide, their tops on one line, Hold as tall as both rows, the 4 and 14 px gaps, the header no taller than 64 px, which words show, no sideways scroll; at 1440 and 1920 px more keys than 17, each 42 to 44 px, the keyboard against Hold; at 861 and 1100 px 10 white keys of at least 30 and 40 px; the Tab test passes column by column. Run in Chromium and WebKit: the header, piano, About, toolbar, Display panel, design audit, tempo and MIDI clock specs pass, and the rest of the header's (holdRhythm, tutorial, tooltips, patches and others) in both. `e2e/song.spec.ts`'s first test fails at the tip too, before this change (the Patch reads as changed after the Song, its words showing under the name). at the top octave the piano ends on G9, its keys as wide, still against Hold (found by the review: it left a gap against Hold before). `e2e/piano.spec.ts`: at 1440 px C6, past the letter keys, plays by pointer and lights for a MIDI Note. Tests that asked for the old layout (the piano at the centre, 17 keys at 1440 and 1920, About's word from 1366 px, the name's spare room) now ask for this one.
+- **Docs:** "Since then" lines on [44](./44-header-across-layouts.md), [82](./82-top-row-centres-the-piano.md), [105](./105-header-and-panels-on-every-screen.md), [112](./112-tempo-midi-clock-and-an-arpeggiator.md) and [136](./136-following-midi-clock.md).
+
+**Claude's calls, open to the owner:**
+1. **Where the words go:** at fixed widths (1100 and 1280 px), not measured live as the prototype did, so the header does not change while it is used. From 1100 to 1279 px the newcomer's four keep their words and the Patch name keeps its 134 px; there the piano's keys are 42 px at 1100 in Chromium, a little under in Linux's wider fonts.
+2. **No cap on the keys:** from 1920 px the page grows to 2560 px, and the piano with it: 68 keys at 2560 px, up to G9. An octave up there shortens it, as the keys stop at G9.
+3. **Crossing 860 px** rebuilds the buttons' groups, so an open MIDI, Display or Tutorial menu closes there (only when a window is resized across that width).
+4. **The column widens while the BPM is typed in, or while the MIDI button shows a device count or Learning,** as the row did before; the piano may then gain or lose a key until it narrows again.
+
+**To try in the app:** the header at 861, 1000, 1100, 1280, 1440 and 1920 px (and wider): the columns line up, Hold tall against the piano, the words as above, the keyboard reaching the buttons. Play a key past E5 with the pointer and from a Controller; move the octave up and down. Tab through the header. Turn on Hold and a player, so the tall Hold and the BPM's player state show.
+
