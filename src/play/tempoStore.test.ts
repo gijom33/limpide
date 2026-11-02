@@ -162,6 +162,15 @@ describe('the tempo follows a MIDI clock (issue 136)', () => {
     expect(tempo.get().bpm).toBe(100);
   });
 
+  it('follows the input whose Start came first: another input’s ticks are ignored after it', () => {
+    const { tempo, ticks, now } = following();
+    tempo.midiClock('start', now(), 'Stand-in DAW');
+    ticks(100, 1, 'Another clock');
+    expect(tempo.get().midi).toBe(false);
+    ticks(100, 2);
+    expect(tempo.get()).toEqual({ bpm: 100, player: false, midi: true });
+  });
+
   it('leaves a player its own BPM while it plays, the clock ignored, and comes back to the clock’s after', () => {
     const { tempo, engine, ticks } = following();
     ticks(100, 4);
