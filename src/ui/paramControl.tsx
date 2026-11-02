@@ -56,8 +56,8 @@ export function useParamControl(id: ParamId, value: number, onChange: (value: nu
   const geekPatch = useContext(GeekContext);
   const notes = useContext(GeekNoteContext);
   const bpm = useContext(GeekTempoContext);
-  useSyncExternalStore(notes.subscribe, () => (geekPatch ? geekReadout(id, value, geekPatch, notes.get(), bpm) : undefined));
-  const geek = geekPatch ? geekReadoutParts(id, value, geekPatch, notes.get(), bpm) : undefined;
+  useSyncExternalStore(notes.subscribe, () => (geekPatch ? geekReadout(id, value, geekPatch, { note: notes.get(), bpm }) : undefined));
+  const geek = geekPatch ? geekReadoutParts(id, value, geekPatch, { note: notes.get(), bpm }) : undefined;
   const readout = geek ? readoutText(geek) : formatParam(id, value);
   const geekOn = !!geekPatch; // the context holds null while the layer is off
   const widest = useMemo(

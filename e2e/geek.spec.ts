@@ -242,7 +242,7 @@ test('on a phone the LFOs’ and Key Track’s numbers show in the name’s plac
   await expect(knob.locator('.knob-value > span').first()).toBeVisible();
   await expect(knob.locator('.knob-value > span').first()).toHaveText('±0.80 oct');
   await expect(knob.locator('.knob-label')).toBeHidden();
-  const keyTrack = page.getByRole('slider', { name: 'Key Track' });
+  const keyTrack = page.getByRole('slider', { name: 'Key Track', exact: true });
   await keyTrack.press('End');
   await expect(page.locator('.knob', { has: keyTrack }).locator('.knob-value > span').first()).toHaveText('3.36 kHz');
 });

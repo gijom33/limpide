@@ -64,12 +64,12 @@ describe('the Synth Geek Layer: Osc 2’s tuning (issue 167)', () => {
   it('reads Detune as its beating rate at the Note played, at A4 (said) before any', () => {
     // 440 Hz × (2^(10/1200) − 1) = 2.549 Hz; at C4 (261.6 Hz) 1.516 Hz; an octave up on Osc 2, twice A4's.
     expect(geekReadout('osc2Detune', 10, patch)).toBe('2.55 Hz at A4');
-    expect(geekReadout('osc2Detune', 10, patch, 69)).toBe('2.55 Hz beats');
-    expect(geekReadout('osc2Detune', 10, patch, 60)).toBe('1.52 Hz beats');
-    expect(geekReadout('osc2Detune', -10, patch, 69)).toBe('2.53 Hz beats');
-    expect(geekReadout('osc2Detune', 10, { ...patch, osc2Octave: 1 }, 69)).toBe('5.10 Hz beats');
-    expect(geekReadout('osc2Detune', 50, { ...patch, osc2Octave: 2, osc2Semitone: 12 }, 108)).toBe('981 Hz beats');
-    expect(geekReadout('osc2Detune', 0, patch, 69)).toBe('0.00 Hz beats');
+    expect(geekReadout('osc2Detune', 10, patch, { note: 69 })).toBe('2.55 Hz beats');
+    expect(geekReadout('osc2Detune', 10, patch, { note: 60 })).toBe('1.52 Hz beats');
+    expect(geekReadout('osc2Detune', -10, patch, { note: 69 })).toBe('2.53 Hz beats');
+    expect(geekReadout('osc2Detune', 10, { ...patch, osc2Octave: 1 }, { note: 69 })).toBe('5.10 Hz beats');
+    expect(geekReadout('osc2Detune', 50, { ...patch, osc2Octave: 2, osc2Semitone: 12 }, { note: 108 })).toBe('981 Hz beats');
+    expect(geekReadout('osc2Detune', 0, patch, { note: 69 })).toBe('0.00 Hz beats');
   });
 
   it('sizes each for its widest', () => {
@@ -88,11 +88,11 @@ describe('the Synth Geek Layer: the LFOs (issue 169)', () => {
   });
 
   it('reads a synced Rate as its period at the tempo: 1/4 at 120 BPM is 0.50 s', () => {
-    expect(geekReadout('lfoNote', noteIndex('1/4'), patch, null, 120)).toBe('0.50 s');
-    expect(geekReadout('lfo2Note', noteIndex('1/4'), patch, null, 90)).toBe('0.67 s');
-    expect(geekReadout('lfoNote', noteIndex('1 bar'), patch, null, 120)).toBe('2.00 s');
-    expect(geekReadout('lfoNote', noteIndex('4 bars D'), patch, null, 40)).toBe('36.0 s');
-    expect(geekReadout('lfoNote', noteIndex('1/32 T'), patch, null, 240)).toBe('0.021 s');
+    expect(geekReadout('lfoNote', noteIndex('1/4'), patch, { bpm: 120 })).toBe('0.50 s');
+    expect(geekReadout('lfo2Note', noteIndex('1/4'), patch, { bpm: 90 })).toBe('0.67 s');
+    expect(geekReadout('lfoNote', noteIndex('1 bar'), patch, { bpm: 120 })).toBe('2.00 s');
+    expect(geekReadout('lfoNote', noteIndex('4 bars D'), patch, { bpm: 40 })).toBe('36.0 s');
+    expect(geekReadout('lfoNote', noteIndex('1/32 T'), patch, { bpm: 240 })).toBe('0.021 s');
   });
 
   it('reads a Depth as the swing in its Destination’s own unit', () => {
@@ -143,13 +143,13 @@ describe('the Synth Geek Layer: Key Track (issue 169)', () => {
   const patch = { ...defaultPatch(), cutoff: 1000, keyTrack: 1 };
 
   it('reads the Cutoff at the Note played, the Effective Cutoff’s figure: A4 before any', () => {
-    expect(geekReadout('keyTrack', 1, patch, 72)).toBe('2.00 kHz');
-    expect(geekReadout('keyTrack', 1, patch, 60)).toBe('1.00 kHz');
+    expect(geekReadout('keyTrack', 1, patch, { note: 72 })).toBe('2.00 kHz');
+    expect(geekReadout('keyTrack', 1, patch, { note: 60 })).toBe('1.00 kHz');
     expect(geekReadout('keyTrack', 1, patch)).toBe('1.68 kHz'); // 1 kHz × 2^(9/12)
-    expect(geekReadout('keyTrack', 0.5, patch, 84)).toBe('2.00 kHz');
-    expect(geekReadout('keyTrack', 0, patch, 84)).toBe('1.00 kHz');
-    expect(geekReadout('keyTrack', 1, { ...patch, cutoff: 20000 }, 96)).toBe('20.00 kHz');
-    expect(geekReadout('keyTrack', 1, { ...patch, cutoff: 200 }, 24)).toBe('25 Hz'); // three octaves under C4
+    expect(geekReadout('keyTrack', 0.5, patch, { note: 84 })).toBe('2.00 kHz');
+    expect(geekReadout('keyTrack', 0, patch, { note: 84 })).toBe('1.00 kHz');
+    expect(geekReadout('keyTrack', 1, { ...patch, cutoff: 20000 }, { note: 96 })).toBe('20.00 kHz');
+    expect(geekReadout('keyTrack', 1, { ...patch, cutoff: 200 }, { note: 24 })).toBe('25 Hz'); // three octaves under C4
   });
 
   it('sizes it for its widest, and gives its formula', () => {

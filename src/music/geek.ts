@@ -124,9 +124,15 @@ const GAINS: ParamId[] = ['mixOsc1', 'mixOsc2', 'mixSub', 'mixNoise', 'ampSustai
 
 /**
  * The Note the layer's numbers are worked out at (issue 133, decision 6): the last Note played, as a MIDI note number;
- * before any (null), A4, and the readout says so with BEFORE_ANY_NOTE.
+ * before any (null), A4. Detune's readout says so with BEFORE_ANY_NOTE; Key Track's has no room to (issue 169), its tip
+ * says it.
  */
 export type GeekNote = number | null;
+/** Where a readout is worked out: at the Note played (A4 before any) and the page's tempo, for a synced Rate. */
+export interface GeekAt {
+  note?: GeekNote;
+  bpm?: number;
+}
 export const BEFORE_ANY_NOTE = 'at A4';
 /** The frequency of the Note the numbers use, in Hz. */
 export const geekNoteHz = (note: GeekNote) => noteToFrequency(note ?? A4_MIDI);
@@ -208,10 +214,10 @@ export interface GeekReadout {
 }
 
 /**
- * What a knob or fader reads in the Synth Geek Layer instead of its everyday value, if anything, in its parts; `note`
- * is the last Note played, for the readouts that depend on it.
+ * What a knob or fader reads in the Synth Geek Layer instead of its everyday value, if anything, in its parts; `at`
+ * the last Note played and the tempo, for the readouts that depend on them.
  */
-export function geekReadoutParts(id: ParamId, value: number, patch: Patch, note: GeekNote = null, bpm: number = TEMPO.default): GeekReadout | undefined {
+export function geekReadoutParts(id: ParamId, value: number, patch: Patch, { note = null, bpm = TEMPO.default }: GeekAt = {}): GeekReadout | undefined {
   if (id === 'resonance') return { figure: qText(patch.filterMode, patch.filterSlope, value) };
   if (GAINS.includes(id)) return { figure: levelDb(value) };
   if (id === 'osc2Octave') return { figure: multipleText(2 ** value) };
@@ -226,13 +232,12 @@ export function geekReadoutParts(id: ParamId, value: number, patch: Patch, note:
   return undefined;
 }
 
-
 /** A readout's whole text: "2.55 Hz beats". */
 export const readoutText = ({ figure, words }: GeekReadout) => (words ? `${figure} ${words}` : figure);
 
 /** What a knob or fader reads in the Synth Geek Layer, as a whole: "Q 0.71", "2.55 Hz beats". */
-export function geekReadout(id: ParamId, value: number, patch: Patch, note: GeekNote = null, bpm: number = TEMPO.default): string | undefined {
-  const parts = geekReadoutParts(id, value, patch, note, bpm);
+export function geekReadout(id: ParamId, value: number, patch: Patch, at: GeekAt = {}): string | undefined {
+  const parts = geekReadoutParts(id, value, patch, at);
   return parts && readoutText(parts);
 }
 

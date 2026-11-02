@@ -2720,7 +2720,7 @@ describe('the Synth Geek Layer’s numbers for Osc 2, held to the engine (issue 
         e.noteOn(69, 1, 0);
         note = e.newestNote();
       });
-      const readout = geekReadout('osc2Detune', 10, patch, note);
+      const readout = geekReadout('osc2Detune', 10, patch, { note });
       expect(readout).toMatch(/ Hz beats$/);
       // The level swells and fades once a beat: count its rises through the middle, 10 ms frames, after the Attack.
       const frame = SR / 100;
@@ -2766,7 +2766,7 @@ describe('the Synth Geek Layer’s numbers for the LFOs and Key Track, held to t
     ['a synced 1/8 T at 100 BPM', { lfoSync: 'on', lfoNote: noteIndex('1/8 T') }, 100, 'lfoNote', noteIndex('1/8 T')],
   ] as const)
     it(`an LFO repeats as often as ${what} reads`, async () => {
-      const readout = geekReadout(id, value, { ...defaultPatch(), ...patch }, null, bpm);
+      const readout = geekReadout(id, value, { ...defaultPatch(), ...patch }, { bpm });
       expect(readout).toMatch(/ s$/);
       const period = await tremoloPeriod(patch, bpm);
       // To the readout's last figure.
@@ -2790,6 +2790,25 @@ describe('the Synth Geek Layer’s numbers for the LFOs and Key Track, held to t
     const s = await render(1, patch, (e) => e.noteOn(69, 1, 0));
     expect(geekReadout('lfoAmount', 0.5, patch)).toBe('±25.0 ¢');
     expect((1200 * Math.log2(up(s) / down(s))) / 2).toBeCloseTo(number(geekReadout('lfoAmount', 0.5, patch)), 0);
+  });
+
+  it('Osc 2 Pitch swings Osc 2 by the semitones its Depth reads', async () => {
+    const patch = { ...defaultPatch(), ...square, mixOsc1: 0, mixOsc2: 1, lfoDestination: 'osc2Pitch', lfoAmount: 0.25 } as const;
+    const s = await render(1, patch, (e) => e.noteOn(69, 1, 0));
+    expect(geekReadout('lfoAmount', 0.25, patch)).toBe('±3.00 st');
+    expect((12 * Math.log2(up(s) / down(s))) / 2).toBeCloseTo(number(geekReadout('lfoAmount', 0.25, patch)), 2);
+  });
+
+  it('the Resonance swings by the share its Depth reads, as far as the knob leaves room, in the Resonance the Filter takes', async () => {
+    const patch = { ...defaultPatch(), ...square, resonance: 0.3, lfoDestination: 'resonance', lfoAmount: 0.5 } as const;
+    let engine!: ReturnType<typeof createSynthEngine>;
+    await render(1, patch, (e) => {
+      engine = e;
+      e.noteOn(69, 1, 0);
+    });
+    expect(geekReadout('lfoAmount', 0.5, patch)).toBe('±30 %');
+    const swing = (engine.modulationAt(0.25).resonance - engine.modulationAt(0.75).resonance) / 2;
+    expect(swing * 100).toBeCloseTo(number(geekReadout('lfoAmount', 0.5, patch)), 0);
   });
 
   it('the Cutoff swings by the octaves its Depth reads, in the Effective Cutoff the Filter follows', async () => {
@@ -2837,9 +2856,9 @@ describe('the Synth Geek Layer’s numbers for the LFOs and Key Track, held to t
     });
     // "1.68 kHz" is 1680 Hz to three figures.
     const hz = (readout: string | undefined) => number(readout) * (readout!.endsWith('kHz') ? 1000 : 1);
-    const atA4 = geekReadout('keyTrack', 0.5, patch, null);
+    const atA4 = geekReadout('keyTrack', 0.5, patch);
     expect(Math.abs(hz(atA4) / before - 1)).toBeLessThan(0.005);
-    const atNote = geekReadout('keyTrack', 0.5, patch, note);
+    const atNote = geekReadout('keyTrack', 0.5, patch, { note });
     expect(atNote).toBe('1.73 kHz'); // 1 kHz × 2^(0.5 × 19/12)
     expect(Math.abs(hz(atNote) / engine.modulationAt(0.5).cutoff - 1)).toBeLessThan(0.005);
   });
