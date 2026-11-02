@@ -6,6 +6,12 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- 2026-11-02, from the 1.21.0 ripple hunt, issue 129: CONTEXT.md now lists "rung, spike, bar" under Avoid, but 8 tips, 11 Preset descriptions and two Demo captions still use them.
+- 2026-11-02, from the 1.21.0 ripple hunt: the README's screenshot (taken 2026-10-31) shows the header from before issue 112 (one row, no BPM or Tap, a centred piano); it needs retaking.
+- 2026-11-02, from the 1.21.0 fact-check, issue 143: the MIDI panel's Bluetooth line points to the system's MIDI settings, "Audio MIDI Setup on a Mac": only a Mac has that; Windows and Linux are untried.
+- 2026-11-02, from the 1.21.0 fact-check, issue 134: the LFO Rate's History line ties ARP's "smoother vibrato" to the .03 Hz floor; the manual credits the low-frequency sine wave, not that floor.
+- 2026-11-02, from the 1.21.0 ear check: Growl passes the limiter on B2 (0.91) and from C#5 to G#5 (up to 1.22, 1.39 at 128 BPM), 4–10 ms after its square drops the resonant Filter's Cutoff; 1.20.0 does the same.
+- 2026-11-02, from the 1.21.0 ear check, issue 132: aftertouch at full on the Resonance makes Wobble self-oscillate, 8 dB louder, peaking at 0.89, past the limiter's 0.8. For the owner to hear: is that wanted? And with aftertouch on the Cutoff of Self-Oscillation or Acid, played on a real keyboard, does the singing Filter glide or step (pressure is applied unsmoothed)?
 - 2026-11-02, from the 1.21.0 code review, issue 151 against its decision 7 (the owner's): the open Display panel counts as out of reach, since Bead is drawn under the panels, so Bead never goes to a Display option; it stays beside the Display button and looks (call 2). Also calls 3 and 4: a control scrolled off the window sends Bead back to its edge (decision 6 says it stays with it), and on a phone and at 2 × 2 the Display button is out of reach. The owner's call.
 - 2026-11-02, from the 1.21.0 code review, issue 151: dancing and sound-driven hops stop for the whole of a Tutorial or the Tour, while decision 9 pauses only the tricks, visits and dozing.
 - 2026-11-02, from the 1.21.0 code review, issue 136: a Start does not start a synced free LFO's cycle on it, as its ticked box says; under ADR-0019 the LFO is pulled onto the beat over two cycles, so it lands on the DAW's beat about a second later.
