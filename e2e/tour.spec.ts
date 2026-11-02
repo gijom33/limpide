@@ -5,7 +5,7 @@ import { FIRST_VISIT } from './startState';
 
 const card = (page: Page) => page.getByRole('region', { name: 'Tour' });
 const action = (page: Page, name: string) => card(page).getByRole('button', { name, exact: true });
-const progress = (page: Page) => card(page).locator('.tutorial-progress');
+const progress = (page: Page) => card(page).locator('.card-progress');
 const patchName = (page: Page) => page.getByRole('button', { name: /^Patch: / });
 const about = (page: Page) => page.getByRole('dialog', { name: 'Limpide' });
 const slider = (page: Page, name: string) => page.getByRole('slider', { name, exact: true });
@@ -271,7 +271,7 @@ test('on a phone, each card’s two lines say what to watch', async ({ page }) =
   await startFromAbout(page);
   for (const look of ['Watch the wave change shape', 'Watch the lines on the Filter Spectrum sink', 'Watch the Envelope Timeline', 'Watch the dotted line on the Envelope Timeline']) {
     const shown = await card(page)
-      .locator('.tutorial-words')
+      .locator('.card-words')
       .evaluate((words) => {
         const first = words.querySelector('p')!;
         // The first line's whole height fits in what the folded words show: nothing of it is cut off.

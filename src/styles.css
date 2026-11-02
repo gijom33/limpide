@@ -1576,19 +1576,19 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   [data-card-handle]:active { cursor: grabbing; }
   [data-card-handle] button { cursor: pointer; }
 }
-.tutorial-top { display: flex; align-items: center; gap: var(--space-2); }
-.tutorial-name { font-weight: 600; font-size: var(--card-text); }
-.tutorial-progress { flex: 1 1 auto; color: var(--muted); font-size: var(--card-small); }
-.tutorial-top .tool-icon { flex: none; }
-.tutorial-more { display: none; }
-.tutorial-words { display: flex; flex-direction: column; gap: 4px; font-size: var(--card-text); line-height: 1.45; }
-.tutorial-words p { margin: 0; }
+.card-top { display: flex; align-items: center; gap: var(--space-2); }
+.card-name { font-weight: 600; font-size: var(--card-text); }
+.card-progress { flex: 1 1 auto; color: var(--muted); font-size: var(--card-small); }
+.card-top .tool-icon { flex: none; }
+.card-more { display: none; }
+.card-words { display: flex; flex-direction: column; gap: 4px; font-size: var(--card-text); line-height: 1.45; }
+.card-words p { margin: 0; }
 /* Once made, the instruction steps back and the note on what to hear and see leads. */
 .tutorial-say[data-done] { color: var(--muted); font-size: var(--card-small); }
 /* Its tick a filled badge, plain to see (the owner, 2026-10-27); near-black on the accent, in either theme. Folded, the
    top row carries one too. Each sits in a flex row, so its line keeps its height and its words stay where they were. */
-.tutorial-say[data-done], .tutorial-progress { display: flex; align-items: center; gap: 8px; }
-.tutorial-say[data-done]::before, .tutorial-progress[data-done]::after {
+.tutorial-say[data-done], .card-progress { display: flex; align-items: center; gap: 8px; }
+.tutorial-say[data-done]::before, .card-progress[data-done]::after {
   content: '✓'; flex: none; display: grid; place-items: center; width: 1.4em; height: 1.4em; border-radius: 50%;
   background: var(--accent); color: #08090c; font-weight: 700; line-height: 1;
 }
@@ -1604,10 +1604,10 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   display: inline-block; margin-right: 4px; padding: 0 8px; font-size: var(--text-sm); font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--bg); background: var(--text); border-radius: 999px;
 }
-.tutorial-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
-.tutorial-actions .tool { min-height: 36px; padding: 0 var(--space-3); gap: 6px; }
-.tutorial-actions .tool[aria-disabled='true'] { opacity: 0.45; cursor: default; }
-.tutorial-spacer { flex: 1 1 auto; }
+.card-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.card-actions .tool { min-height: 36px; padding: 0 var(--space-3); gap: 6px; }
+.card-actions .tool[aria-disabled='true'] { opacity: 0.45; cursor: default; }
+.card-spacer { flex: 1 1 auto; }
 /* The Step's control: a steady ring in the accent colour, and its target beside it. Its scroll margins are the room
    they take round it, kept in view with it (docked.ts brings it clear of the header and the card). */
 [data-tutorial] { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: var(--radius-control); scroll-margin: 28px 0 6px; }
@@ -1634,11 +1634,11 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 @media (max-width: 600px) {
   /* Pinned to the bottom edge: cardPlacement.tsx reads --card-pinned, so it only folds. */
   .docked { --card-pinned: 1; bottom: 0; width: 100vw; border-radius: var(--radius-panel) var(--radius-panel) 0 0; border-width: 1px 0 0; padding: var(--space-2) var(--space-3) calc(var(--space-2) + env(safe-area-inset-bottom)); gap: 6px; }
-  .tutorial-more { display: inline-flex; }
-  .tutorial-words { font-size: var(--text-md); cursor: pointer; }
-  .tutorial:not([data-expanded], [data-made]) .tutorial-words { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
-  .tutorial:not([data-expanded]) .tutorial-say[data-done], .tutorial:not([data-expanded]) .tutorial-words p + p:not(.tutorial-then) { display: none; }
-  .tutorial-actions .tool { min-height: 32px; padding: 0 var(--space-2); }
+  .card-more { display: inline-flex; }
+  .card-words { font-size: var(--text-md); cursor: pointer; }
+  .card-shell:not([data-expanded], [data-made]) .card-words { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+  .card-shell:not([data-expanded]) .tutorial-say[data-done], .card-shell:not([data-expanded]) .card-words p + p:not(.card-then) { display: none; }
+  .card-actions .tool { min-height: 32px; padding: 0 var(--space-2); }
 }
 /* The Demo's card (issue 50): the sound's name and its buttons; under them what to hear and see; then a segment per
    part along the bottom (issue 171, decided by the owner). The segments have a row of their own at every width (issue

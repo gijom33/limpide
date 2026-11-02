@@ -4,7 +4,7 @@ import { expect, type Page, test } from '@playwright/test';
 
 const card = (page: Page) => page.getByRole('region', { name: /^Tutorial: / });
 const action = (page: Page, name: string) => card(page).getByRole('button', { name, exact: true });
-const progress = (page: Page) => card(page).locator('.tutorial-progress');
+const progress = (page: Page) => card(page).locator('.card-progress');
 const patchName = (page: Page) => page.getByRole('button', { name: /^Patch: / });
 const ringed = (page: Page) => page.locator('[data-tutorial]:not(.section-strip button)');
 
@@ -65,7 +65,7 @@ test('a Tutorial from the Patches panel: Init loaded, the control ringed with it
       range.selectNodeContents(node);
       return range.getClientRects()[0].top;
     };
-    return top(e.querySelector('.tutorial-progress')!) - top(e.querySelector('.tutorial-name')!);
+    return top(e.querySelector('.card-progress')!) - top(e.querySelector('.card-name')!);
   });
   const before = await wordsTop();
   await fader.focus();
@@ -252,7 +252,7 @@ for (const [layout, width, height] of [['phone', 375, 812], ['short phone', 393,
         await doIt(page);
         await expect.poll(() => standing(page, '[data-tutorial-viewer]'), `${step}: its Viewer`).toMatch(/^(clear|none)$/);
         // Its note, which says what to hear and see, whole.
-        const words = card(page).locator('.tutorial-words');
+        const words = card(page).locator('.card-words');
         expect(await words.evaluate((w) => w.scrollHeight <= w.clientHeight + 1), `${step}: its note whole`).toBe(true);
         if ((await next.textContent()) === 'Finish') break;
         await next.click();
@@ -268,7 +268,7 @@ for (const [layout, width, height] of [['phone', 375, 812], ['short phone', 393,
 test('on a phone the card shows two lines; a tap on the text, or on +, shows it whole, and another folds it', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
   await open(page, 'Bass');
-  const words = card(page).locator('.tutorial-words');
+  const words = card(page).locator('.card-words');
   const height = () => words.evaluate((w) => Math.round(w.getBoundingClientRect().height));
   const folded = await height();
   const lineHeight = await words.evaluate((w) => Number.parseFloat(getComputedStyle(w).lineHeight));
@@ -477,7 +477,7 @@ for (const [width, text, small, cardWidth] of [[1920, '15px', '14px', 720], [102
   test(`at ${width} px the Tutorial card's text is ${text} and the card ${cardWidth} px wide (issue 59)`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await open(page, 'Bass');
-    await expect(card(page).locator('.tutorial-words')).toHaveCSS('font-size', text);
+    await expect(card(page).locator('.card-words')).toHaveCSS('font-size', text);
     await expect(progress(page)).toHaveCSS('font-size', small);
     expect((await card(page).boundingBox())!.width).toBe(cardWidth);
   });

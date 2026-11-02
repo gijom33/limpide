@@ -70,9 +70,9 @@ test('a folded Tutorial card keeps its way forward in the top row', async ({ pag
   await page.getByRole('dialog', { name: 'Patches' }).getByRole('group', { name: 'Tutorials' }).getByRole('button', { name: /^Tutorial: Bass/ }).click();
   const card = page.getByRole('region', { name: /^Tutorial: / });
   await card.getByRole('button', { name: 'Fold the card' }).click();
-  await expect(card.locator('.tutorial-words')).toHaveCSS('clip-path', 'inset(50%)'); // out of sight, still read out
+  await expect(card.locator('.card-words')).toHaveCSS('clip-path', 'inset(50%)'); // out of sight, still read out
   await card.getByRole('button', { name: 'Start', exact: true }).click();
-  await expect(card.locator('.tutorial-progress')).toHaveText('Step 1 of 15');
+  await expect(card.locator('.card-progress')).toHaveText('Step 1 of 15');
   await expect(card.getByRole('button', { name: 'Next', exact: true })).toBeVisible();
 });
 

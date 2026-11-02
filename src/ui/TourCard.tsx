@@ -1,11 +1,9 @@
-import { type RefObject, useEffect, useRef, useState } from 'react';
+import { type RefObject, useEffect, useRef } from 'react';
 import { TOUR, TOUR_END, type TourMove, type TourSection } from '../tutorial/tour';
-import { FoldButton, useCardPlacement } from './cardPlacement';
-import { bringClear, useDocked } from './docked';
-import { CloseIcon } from './icons';
+import { CardShell } from './CardShell';
+import { bringClear } from './docked';
 import type { Guide } from './mascotCling';
 import { reveal } from './reveal';
-import { useCardFocus } from './TutorialCard';
 
 interface Props {
   index: number;
@@ -133,13 +131,8 @@ export function TourCard({ index, moving, freezing, naming, onBack, onNext, onBa
   const tour = TOUR[index];
   const last = index === TOUR.length - 1;
   const card = useRef<HTMLElement>(null);
-  // On a phone the card shows two lines; a tap on them, or on +, shows the rest, as a Tutorial's does.
-  const [expanded, setExpanded] = useState(false);
-  useDocked(card);
   useSectionInView(tour, card);
   useRing(tour, moving);
-  const place = useCardPlacement(card, 'tour', null);
-  const focus = useCardFocus(card, null);
 
   const primary = last ? (
     <button type="button" className="tool tool-primary" onClick={onBass}>
@@ -150,47 +143,38 @@ export function TourCard({ index, moving, freezing, naming, onBack, onNext, onBa
       Next
     </button>
   );
+  const actions = {
+    before: index > 0 && (
+      <button type="button" className="tool" onClick={onBack}>
+        Back
+      </button>
+    ),
+    after: last && (
+      <button type="button" className="tool" onClick={onClose}>
+        Done
+      </button>
+    ),
+  };
   return (
-    <section ref={card} className="docked tutorial tour" aria-label="Tour" data-expanded={expanded || undefined} {...place.cardProps} {...focus}>
-      <div className="tutorial-top" {...place.handle}>
-        <span className="tutorial-name">{tour.title}</span>
-        <span className="tutorial-progress">
-          {index + 1} of {TOUR.length}
-        </span>
-        <button type="button" className="tool tool-icon tutorial-more" aria-expanded={expanded} aria-label="Show the whole text" onClick={() => setExpanded((e) => !e)}>
-          {expanded ? '−' : '+'}
-        </button>
-        {place.folded && primary}
-        <FoldButton folded={place.folded} onToggle={place.toggleFold} />
-        <button type="button" className="tool tool-icon" aria-label="Close the Tour" onClick={onClose}>
-          <CloseIcon />
-        </button>
-      </div>
-      {/* biome-ignore lint/a11y/noStaticElementInteractions: a tap on the text is the touch shortcut; the + button is the keyboard's and the screen reader's */}
-      {/* biome-ignore lint/a11y/useKeyWithClickEvents: as above, + is the keyboard route */}
-      <div className="tutorial-words" aria-live="polite" onClick={() => setExpanded((e) => !e)}>
-        {/* What to watch first: folded on a phone, it is all the card shows (issue 129). */}
-        <p>{tour.look}</p>
-        <p>{tour.chain}</p>
-        <p>{tour.does}</p>
-        <p className="tutorial-then">{tour.sees}</p>
-        {last && <p className="tutorial-then">{TOUR_END}</p>}
-      </div>
-      {tour.freezes && <FrozenLine freezes={tour.freezes} freezing={freezing} naming={naming} />}
-      <div className="tutorial-actions">
-        <span className="tutorial-spacer" />
-        {index > 0 && (
-          <button type="button" className="tool" onClick={onBack}>
-            Back
-          </button>
-        )}
-        {!place.folded && primary}
-        {last && (
-          <button type="button" className="tool" onClick={onClose}>
-            Done
-          </button>
-        )}
-      </div>
-    </section>
+    <CardShell
+      card={card}
+      kind="tour"
+      opening={null}
+      label="Tour"
+      name={tour.title}
+      progress={`${index + 1} of ${TOUR.length}`}
+      closeLabel="Close the Tour"
+      onClose={onClose}
+      primary={primary}
+      under={tour.freezes && <FrozenLine freezes={tour.freezes} freezing={freezing} naming={naming} />}
+      actions={actions}
+    >
+      {/* What to watch first: folded on a phone, it is all the card shows (issue 129). */}
+      <p>{tour.look}</p>
+      <p>{tour.chain}</p>
+      <p>{tour.does}</p>
+      <p className="card-then">{tour.sees}</p>
+      {last && <p className="card-then">{TOUR_END}</p>}
+    </CardShell>
   );
 }

@@ -1,9 +1,9 @@
-import { type FocusEvent, type RefObject, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { type RefObject, useEffect, useRef } from 'react';
 import { inDisplay, type Step, type Tutorial, targetText } from '../tutorial/tutorial';
 import { endLine, FROM_INIT } from '../tutorial/tutorials';
-import { FoldButton, useCardPlacement } from './cardPlacement';
-import { bringClear, useDocked } from './docked';
-import { CloseIcon, NoteIcon } from './icons';
+import { CardShell } from './CardShell';
+import { bringClear } from './docked';
+import { NoteIcon } from './icons';
 import type { Guide } from './mascotCling';
 import { reveal } from './reveal';
 
@@ -118,27 +118,6 @@ function useRing(step: Step | undefined, made: boolean, card: RefObject<HTMLElem
 }
 
 /**
- * Where the keyboard's focus goes on the card (issue 104): to its way forward (Start) when a Tutorial is picked, after
- * the Tour's card, the header's list or the panel it was picked from has put it back on their buttons; and there again when a button it was on
- * goes (Back on the first card, "Do it for me" once the Step is made, Finish at the end: Done), never to the page. The
- * Tour's card does the same (issue 128); `opening` is what was picked.
- */
-export function useCardFocus(card: RefObject<HTMLElement | null>, opening: unknown) {
-  const forward = () => card.current?.querySelector<HTMLElement>('.tool-primary')?.focus();
-  // biome-ignore lint/correctness/useExhaustiveDependencies: a new opening is the trigger; forward reads the card's ref
-  useEffect(() => {
-    const frame = requestAnimationFrame(forward);
-    return () => cancelAnimationFrame(frame);
-  }, [opening]);
-  // The last element the focus was on in the card, to tell a button that went from a click elsewhere on the page.
-  const last = useRef<Element | null>(null);
-  useLayoutEffect(() => {
-    if (last.current && !last.current.isConnected && document.activeElement === document.body) forward();
-  });
-  return { onFocus: (e: FocusEvent) => (last.current = e.target) };
-}
-
-/**
  * A Tutorial's card, docked at the bottom of the page (issue 57): what to do, then what to hear and see, with Back,
  * "Do it for me", Next, Listen and Quit. Picked, it takes the focus on its Start; the Steps never take it from the
  * control being turned. Each new text is announced.
@@ -148,13 +127,7 @@ export function TutorialCard({ tutorial, index, done, differs, listening, onList
   const step = index >= 0 ? steps[index] : undefined;
   const made = step ? done[index] : false;
   const card = useRef<HTMLElement>(null);
-  // On a phone the card shows two lines; a tap on them, or on +, shows the rest (issue 40, decision 7). A made Step's
-  // note shows whole, as it says what to hear and see (issue 105).
-  const [expanded, setExpanded] = useState(false);
   useRing(step, made, card);
-  useDocked(card);
-  const place = useCardPlacement(card, 'tutorial', tutorial.preset);
-  const focus = useCardFocus(card, tutorial);
 
   // Until the Step is made, Next says it is unavailable but keeps the focus, so pressing it leaves the keyboard there.
   const waiting = !!step && !made;
@@ -164,57 +137,15 @@ export function TutorialCard({ tutorial, index, done, differs, listening, onList
     </button>
   );
   const progress = step ? `Step ${index + 1} of ${steps.length}` : index < 0 ? `${steps.length} steps` : 'Done';
-  return (
-    <section ref={card} className="docked tutorial" aria-label={`Tutorial: ${tutorial.preset}`} data-expanded={expanded || undefined} data-made={made || undefined} {...place.cardProps} {...focus}>
-      <div className="tutorial-top" {...place.handle}>
-        <span className="tutorial-name">{tutorial.preset}</span>
-        <span className="tutorial-progress" data-done={made || undefined}>
-          {progress}
-        </span>
-        <button type="button" className="tool tool-icon tutorial-more" aria-expanded={expanded} aria-label="Show the whole text" onClick={() => setExpanded((e) => !e)}>
-          {expanded ? '−' : '+'}
-        </button>
-        {/* Folded, the card keeps its way forward in the top row. */}
-        {place.folded && primary}
-        <FoldButton folded={place.folded} onToggle={place.toggleFold} />
-        <button type="button" className="tool tool-icon" aria-label="Quit the tutorial" onClick={onQuit}>
-          <CloseIcon />
-        </button>
-      </div>
-      {/* biome-ignore lint/a11y/noStaticElementInteractions: a tap on the text is the touch shortcut; the + button is the keyboard's and the screen reader's */}
-      {/* biome-ignore lint/a11y/useKeyWithClickEvents: as above, + is the keyboard route */}
-      <div className="tutorial-words" aria-live="polite" onClick={() => setExpanded((e) => !e)}>
-        {index < 0 && (
-          <>
-            {/* Its own words first, not its Preset's description (issue 129, decision 6). */}
-            <p>{tutorial.intro}</p>
-            <p className="tutorial-then">{FROM_INIT}</p>
-          </>
-        )}
-        {step && (
-          <>
-            <p className="tutorial-say" data-done={made || undefined}>
-              {step.say}
-            </p>
-            {made && <p className="tutorial-then">{step.note}</p>}
-          </>
-        )}
-        {index >= steps.length && (
-          <>
-            <p>{tutorial.summary}</p>
-            <p className="tutorial-then">
-              {differs.length ? `Not quite the Preset yet: ${differs.join(', ')}. Keep your version, or match it.` : `This is the ${tutorial.preset} Preset, built by you.`}
-            </p>
-            <p className="tutorial-then">{endLine(tutorial)}</p>
-          </>
-        )}
-      </div>
-      <div className="tutorial-actions">
-        <button type="button" className="tool" aria-pressed={listening} onClick={onListen}>
-          <NoteIcon />
-          Listen
-        </button>
-        <span className="tutorial-spacer" />
+  const actions = {
+    start: (
+      <button type="button" className="tool" aria-pressed={listening} onClick={onListen}>
+        <NoteIcon />
+        Listen
+      </button>
+    ),
+    before: (
+      <>
         {index >= 0 && (
           <button type="button" className="tool" onClick={onBack}>
             Back
@@ -225,7 +156,10 @@ export function TutorialCard({ tutorial, index, done, differs, listening, onList
             Do it for me
           </button>
         )}
-        {!place.folded && primary}
+      </>
+    ),
+    after: (
+      <>
         {index >= steps.length && differs.length > 0 && (
           <button type="button" className="tool" onClick={onMatch}>
             Match the Preset
@@ -236,7 +170,47 @@ export function TutorialCard({ tutorial, index, done, differs, listening, onList
             Done
           </button>
         )}
-      </div>
-    </section>
+      </>
+    ),
+  };
+  return (
+    <CardShell
+      card={card}
+      kind="tutorial"
+      opening={tutorial}
+      label={`Tutorial: ${tutorial.preset}`}
+      name={tutorial.preset}
+      progress={progress}
+      made={made}
+      closeLabel="Quit the tutorial"
+      onClose={onQuit}
+      primary={primary}
+      actions={actions}
+    >
+      {index < 0 && (
+        <>
+          {/* Its own words first, not its Preset's description (issue 129, decision 6). */}
+          <p>{tutorial.intro}</p>
+          <p className="card-then">{FROM_INIT}</p>
+        </>
+      )}
+      {step && (
+        <>
+          <p className="tutorial-say" data-done={made || undefined}>
+            {step.say}
+          </p>
+          {made && <p className="card-then">{step.note}</p>}
+        </>
+      )}
+      {index >= steps.length && (
+        <>
+          <p>{tutorial.summary}</p>
+          <p className="card-then">
+            {differs.length ? `Not quite the Preset yet: ${differs.join(', ')}. Keep your version, or match it.` : `This is the ${tutorial.preset} Preset, built by you.`}
+          </p>
+          <p className="card-then">{endLine(tutorial)}</p>
+        </>
+      )}
+    </CardShell>
   );
 }
