@@ -24,7 +24,9 @@ Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.m
 
 **Key interfaces:**
 - The render loop and each Viewer's draw
-- Cycle Lock (see also issue 180, steadier Scopes)
+- Cycle Lock's skipping when its Tap is silent
+
+**Since then (2026-11-02, issue 180's decision 8, the owner's):** issue 180 rebuilds Cycle Lock, cheaper than today's, so this issue keeps only skipping a silent Scope; the window-once and recurrence work is 180's.
 - The Envelope Timeline's drawing
 - The audio context's suspend and resume
 - The theme's colours
