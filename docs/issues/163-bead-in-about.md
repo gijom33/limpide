@@ -17,6 +17,7 @@ Claude's call, open to the owner:
 
 3. **Beside the logo:** Bead drawn at twice its size on the page, standing on the logo's baseline to its right, idle as it is on the synth (blinks, its tail, now and then a small trick), with reduced motion still.
    **Since then (2026-11-01, issue 178):** Bead stands at its size on the page, its foot level with the bottom of the logo's mark, the mark and Bead centred together; decided by the owner (the size and place), the centring Claude's call.
+   **Since then (2026-11-02, issue 178's decisions 3 and 4, the owner's):** Bead stands to the right of the name "Limpide", its foot on the name's baseline; the mark and the name each centred as without Bead, which adds no height.
 4. **A click (or Enter, or a tap)** opens Bead's card in place of About's credits: who it is in a sentence, what it answers (what you play, every knob, a tickle), its funny turns in a short list, how to send it away (Display's switch, for good; B, E, A, D, for the visit), and "All its secrets" linking to [bead.md](../bead.md) on GitHub. Back (or Escape) returns to the credits. Bead in About is a button with the name "Bead, Limpide's water drop: its tricks".
 5. **With Bead switched Off it is not there,** in About as on the page (150, decision 9: some people would be annoyed); About is then as today.
 6. **About's first screen** keeps its way in (the Demo and Tour buttons) on a 393 × 659 phone.
