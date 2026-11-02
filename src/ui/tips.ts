@@ -1,7 +1,8 @@
 import { bankLetter, C16_BANKS, describeSharedButtons } from '../midi/c16';
 import { describeMode } from '../midi/describe';
 import { DESTINATIONS } from '../modulation/destinations';
-import { UNDER_THE_HOOD, underTheHoodAt } from '../music/geek';
+import { syncedRateUnderTheHood, UNDER_THE_HOOD, underTheHoodAt } from '../music/geek';
+import { formatSyncedRate } from '../music/tempo';
 import { stepWords } from '../patch/grid';
 import { LFO_DESTINATIONS, type LfoDestination, PARAMS, type ParamId } from '../patch/patch';
 import type { Overlay } from '../viewers/overlays';
@@ -371,13 +372,19 @@ export const TIPS = {
   },
   lfoNote: {
     title: 'Rate',
-    body: 'With Sync on, how often the LFO repeats, as a note value at the tempo: 1 bar, 1/4, 1/8 (D dotted, T triplet).',
+    body: 'With Sync on, how often the LFO repeats, as a note value at the tempo: 1 bar, 1/4, 1/8 (D dotted, half as long again; T triplet, three in the time of two).',
     underTheHood: UNDER_THE_HOOD.lfoNote,
   },
-  lfoSync: { title: 'Sync', body: 'On: the Rate is a note value at the tempo; with Retrigger off, the LFO’s cycle lands on the beat, and with it on, each Note starts the cycle. Off: the Rate is in Hz, as it was.' },
-  tempo: { title: 'Tempo', body: 'The page’s beats per minute, which an LFO with Sync on follows. Drag it or use the arrows; double-click to type it.' },
+  lfoSync: {
+    title: 'Sync',
+    body: 'On: the Rate is a note value at the tempo; with Retrigger off, the LFO’s cycle lands on the beat, and with it on, each Note starts the cycle. A note value is a share of a beat, so its speed follows the tempo: double the BPM and the LFO runs twice as fast, and a synced wobble keeps time with the music. Off: the Rate is in Hz, as it was.',
+  },
+  tempo: {
+    title: 'Tempo',
+    body: 'The page’s beats per minute (BPM), which every LFO with Sync on follows: its note value is a share of a beat, so at a new tempo its speed changes with it, and a synced wobble keeps to the beat. Drag it or use the arrows; double-click to type it. Loading a Preset leaves it as it is.',
+  },
   tempoClock: { title: 'Tempo', body: 'Following a MIDI clock: the tempo is the clock’s while it runs, so it cannot be set here. When its ticks stop, its last BPM stays, yours to change.' },
-  tap: { title: 'Tap', body: 'Tap it in time: from the second tap the tempo follows your last four, its beat where you last tapped.' },
+  tap: { title: 'Tap', body: 'Tap it in time with the music: from the second tap the tempo follows your last four, its beat where you last tapped, and every synced LFO falls in with it.' },
   lfoDepth: {
     title: 'Depth',
     body: 'How far the LFO moves its Destination. At 0 it moves nothing.',
@@ -425,9 +432,13 @@ export function paramTipAt(id: ParamId, value: number): TipContent {
   return underTheHood ? { ...PARAM_TIPS[id], underTheHood } : PARAM_TIPS[id];
 }
 
-/** A synced Rate's tip (issue 176): its Hz at the tempo, which its readout leaves out so its knob keeps one width. */
-export function syncedRateTip(note: string, hz: string, bpm: number): TipContent {
-  return { ...PARAM_TIPS.lfoNote, body: `${TIPS.lfoNote.body} At ${bpm} BPM, ${note} is ${hz}.` };
+/**
+ * A synced Rate's tip at note value `index` and the tempo: its Hz, which its readout leaves out so its knob keeps one
+ * width (issue 176), and under the hood the conversion worked out with the live numbers (issue 137).
+ */
+export function syncedRateTip(index: number, bpm: number): TipContent {
+  const { note, hz } = formatSyncedRate(index, bpm);
+  return { ...PARAM_TIPS.lfoNote, body: `${TIPS.lfoNote.body} At ${bpm} BPM, ${note} is ${hz}.`, underTheHood: syncedRateUnderTheHood(index, bpm) };
 }
 
 /** Each Tap's two Viewers (issue 59): what the Scope and the Spectrum there show. */

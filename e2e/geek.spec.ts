@@ -231,6 +231,31 @@ test('the tips of the LFOs’ Rate and Depth and of Key Track give their formula
   await expect(tipOf('With Sync on').locator('.tooltip-hood')).toContainText('T = beats × 60 / BPM');
 });
 
+test('a synced Rate’s tip works its Hz out at the tempo, a straight, a dotted and a triplet value, following the tempo (issue 137)', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.addInitScript(() => localStorage.setItem('limpide.overlays', JSON.stringify({ geek: true })));
+  await page.goto('/');
+  const hood = page.getByRole('tooltip').filter({ hasText: 'With Sync on' }).locator('.tooltip-hood');
+  await lfo(page).getByRole('button', { name: 'LFO 1 Sync' }).click();
+  await page.keyboard.press('Tab'); // the keys in use: a focus shows its tip
+  const rate = lfo(page).getByRole('slider', { name: 'LFO 1 Rate' });
+  await rate.focus();
+  await expect(hood).toContainText('1/4 at 120 BPM: 120 ÷ 60 × 1 = 2 Hz, one cycle every 0.50 s.');
+  await rate.press('ArrowUp'); // the next note value, faster: 1/8 D
+  await expect(hood).toContainText('1/8 D at 120 BPM: 120 ÷ 60 × 4/3 = 2.67 Hz');
+  await rate.press('ArrowUp');
+  await expect(hood).toContainText('1/4 T at 120 BPM: 120 ÷ 60 × 3/2 = 3 Hz');
+  await rate.press('ArrowUp');
+  await expect(hood).toContainText('1/8 at 120 BPM: 120 ÷ 60 × 2 = 4 Hz');
+  // The tempo changed, the numbers follow: 1/8 at 90 BPM.
+  const bpm = page.getByRole('spinbutton', { name: 'Tempo' });
+  await bpm.focus();
+  for (let i = 0; i < 3; i++) await page.keyboard.press('PageDown');
+  await expect(bpm).toHaveAttribute('aria-valuenow', '90');
+  await rate.focus();
+  await expect(hood).toContainText('1/8 at 90 BPM: 90 ÷ 60 × 2 = 3 Hz');
+});
+
 test('on a phone the LFOs’ and Key Track’s numbers show in the name’s place while the control moves (issue 169)', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
   await page.addInitScript(() => localStorage.setItem('limpide.overlays', JSON.stringify({ geek: true })));

@@ -302,7 +302,7 @@ export const UNDER_THE_HOOD = {
   lfoRate: { formula: 'T = 1 / f', where: 'T: the period, one cycle, in seconds; f: the Rate in Hz.' },
   lfoNote: {
     formula: 'T = beats × 60 / BPM',
-    where: 'T: the period, one cycle, in seconds; beats: the note value’s length (1/4 is one, D half as long again, T two thirds).',
+    where: 'T: the period, one cycle, in seconds, so the Hz is 1 / T = BPM ÷ 60 ÷ beats; BPM: the tempo, beats a minute (÷ 60, beats a second); beats: the note value’s length (1/4 is one, D half as long again, T two thirds).',
   },
   lfoDepth: {
     formula: 'swing = Depth × its reach',
@@ -332,6 +332,34 @@ export const UNDER_THE_HOOD = {
     where: 'P(f): the power at each frequency. Pink is white through Paul Kellet’s filter, −10 dB a decade, as loud overall.',
   },
 } satisfies Record<string, Formula>;
+
+/**
+ * How many note values fit in a beat, as the conversion writes it (issue 137): "× 2" for an 1/8, "÷ 4" for a bar,
+ * "× 2/3" for a dotted 1/4, "× 3/2" for a triplet one.
+ */
+function perBeatText(beats: number): string {
+  const perBeat = 1 / beats;
+  let below = 1;
+  while (Math.abs(perBeat * below - Math.round(perBeat * below)) > 1e-9) below++;
+  const above = Math.round(perBeat * below);
+  if (below === 1) return `× ${above}`;
+  return above === 1 ? `÷ ${below}` : `× ${above}/${below}`;
+}
+
+/**
+ * A synced Rate's conversion to Hz at the tempo, with the live numbers (issue 137): the beats a second, BPM ÷ 60, times
+ * the note values in a beat: "1/8 at 120 BPM: 120 ÷ 60 × 2 = 4 Hz".
+ */
+export function syncedRateConversion(index: number, bpm: number): string {
+  const { name, beats } = NOTE_VALUES[index];
+  return `${name} at ${bpm} BPM: ${bpm} ÷ 60 ${perBeatText(beats)} = ${Number((bpm / 60 / beats).toPrecision(3))} Hz`;
+}
+
+/** A synced Rate's formula under the hood, worked out at the tempo: its conversion, then the period its readout shows. */
+export function syncedRateUnderTheHood(index: number, bpm: number): Formula {
+  const { formula, where } = UNDER_THE_HOOD.lfoNote;
+  return { formula, where: `${syncedRateConversion(index, bpm)}, one cycle every ${periodText((NOTE_VALUES[index].beats * 60) / bpm)}. ${where}` };
+}
 
 // Issue 170: the Viewers' numbers (issue 133, decision 11).
 

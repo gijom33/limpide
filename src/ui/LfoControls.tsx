@@ -27,7 +27,7 @@ interface Props {
   lfo: LfoNumber;
   engine: SynthEngine;
   patch: Patch;
-  /** The page's tempo, at which a synced Rate's tip gives its Hz (issues 112, 176). */
+  /** The page's tempo, at which a synced Rate's tip gives its Hz and works it out (issues 112, 176, 137). */
   bpm: number;
   onParam(id: ParamId, value: number): void;
   onPatch(change: (patch: Patch) => Patch): void;
@@ -81,7 +81,7 @@ export function LfoControls({ lfo, engine, patch, bpm, onParam, onPatch }: Props
               value={patch[rate]}
               onChange={(v) => onParam(rate, v)}
               spoken={synced ? syncedRate.hz : undefined}
-              tip={synced ? syncedRateTip(syncedRate.note, syncedRate.hz, bpm) : undefined}
+              tip={synced ? syncedRateTip(patch[keys.note], bpm) : undefined}
               inactive={off && `No effect while LFO ${lfo}'s Depth is 0`}
             />
             <Switch

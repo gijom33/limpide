@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { CHOICES, defaultPatch } from '../patch/patch';
 import { PRESETS } from '../patch/presets';
 import {
-  filterQ, geekReadout, harmonicFormula, harmonicNumber, levelDb, noiseSlope, oscillatorFormulas, qText, responseFormula, scopeReadout, UNDER_THE_HOOD, underTheHoodAt,
-  widestGeekReadout,
+  filterQ, geekReadout, harmonicFormula, harmonicNumber, levelDb, noiseSlope, oscillatorFormulas, qText, responseFormula, scopeReadout, syncedRateConversion,
+  syncedRateUnderTheHood, UNDER_THE_HOOD, underTheHoodAt, widestGeekReadout,
 } from './geek';
 import { harmonicSeries } from './harmonics';
-import { noteIndex } from './tempo';
+import { NOTE_VALUES, noteHz, noteIndex } from './tempo';
 
 describe('the Synth Geek Layer: Resonance as Q', () => {
   it('is a flat Butterworth (0.71) at Resonance 0 for low- and high-pass, at either Slope', () => {
@@ -139,6 +139,41 @@ describe('the Synth Geek Layer: the LFOs (issue 169)', () => {
     expect(UNDER_THE_HOOD.lfoDepth.where).toContain('Cutoff ±2 oct');
     expect(UNDER_THE_HOOD.lfoDepth.where).toContain('Detune ±50 ¢');
     expect(UNDER_THE_HOOD.lfoDepth.where).toContain('Pulse Width ±40 %');
+  });
+});
+
+describe('the Synth Geek Layer: a synced Rate’s conversion, with the live numbers (issue 137)', () => {
+  it('works a straight value out at the tempo: 1/8 at 120 BPM is 4 Hz', () => {
+    expect(syncedRateConversion(noteIndex('1/8'), 120)).toBe('1/8 at 120 BPM: 120 ÷ 60 × 2 = 4 Hz');
+    expect(syncedRateConversion(noteIndex('1/4'), 120)).toBe('1/4 at 120 BPM: 120 ÷ 60 × 1 = 2 Hz');
+    expect(syncedRateConversion(noteIndex('1 bar'), 60)).toBe('1 bar at 60 BPM: 60 ÷ 60 ÷ 4 = 0.25 Hz');
+    expect(syncedRateConversion(noteIndex('1/32'), 240)).toBe('1/32 at 240 BPM: 240 ÷ 60 × 8 = 32 Hz');
+  });
+
+  it('a dotted value, half as long again, as a fraction: 1/4 D at 120 BPM is 4/3 Hz', () => {
+    expect(syncedRateConversion(noteIndex('1/4 D'), 120)).toBe('1/4 D at 120 BPM: 120 ÷ 60 × 2/3 = 1.33 Hz');
+    expect(syncedRateConversion(noteIndex('1/2 D'), 100)).toBe('1/2 D at 100 BPM: 100 ÷ 60 ÷ 3 = 0.556 Hz');
+  });
+
+  it('a triplet value, two thirds as long: 1/8 T at 90 BPM is 4.5 Hz', () => {
+    expect(syncedRateConversion(noteIndex('1/8 T'), 90)).toBe('1/8 T at 90 BPM: 90 ÷ 60 × 3 = 4.5 Hz');
+    expect(syncedRateConversion(noteIndex('1/4 T'), 120)).toBe('1/4 T at 120 BPM: 120 ÷ 60 × 3/2 = 3 Hz');
+    expect(syncedRateConversion(noteIndex('4 bars T'), 40)).toBe('4 bars T at 40 BPM: 40 ÷ 60 × 3/32 = 0.0625 Hz');
+  });
+
+  it('its Hz is the one the engine runs the LFO at, for every note value at a few tempos', () => {
+    for (const bpm of [40, 97, 120, 240])
+      for (const [index] of NOTE_VALUES.entries()) {
+        const hz = Number(syncedRateConversion(index, bpm).match(/= ([\d.]+) Hz$/)![1]);
+        expect(hz / noteHz(index, bpm), `${NOTE_VALUES[index].name} at ${bpm}`).toBeCloseTo(1, 2);
+      }
+  });
+
+  it('leads its formula under the hood, with the period the readout shows', () => {
+    const { formula, where } = syncedRateUnderTheHood(noteIndex('1/8'), 120);
+    expect(formula).toBe(UNDER_THE_HOOD.lfoNote.formula);
+    expect(where).toMatch(/^1\/8 at 120 BPM: 120 ÷ 60 × 2 = 4 Hz, one cycle every 0\.25 s\. /);
+    expect(where).toContain(UNDER_THE_HOOD.lfoNote.where);
   });
 });
 
