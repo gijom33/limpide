@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement. In v1 ([131](./131-v1.md), decision 8). Researched ([the findings](../research/134-history-in-the-tooltips.md)) and grilled with the owner, 2026-10-31.
+**Status:** ready-for-human · enhancement. Built (2026-11-01) on night/2026-11-01, for the owner to try. In v1 ([131](./131-v1.md), decision 8). Researched ([the findings](../research/134-history-in-the-tooltips.md)) and grilled with the owner, 2026-10-31.
 
 ## Decided already (the owner, 2026-10-31)
 
@@ -68,3 +68,21 @@ For each control and Section: who first built it or named it, when, on which ins
 - Which tips get a History line: every control, or the Sections and the famous ones (the Filter, the Envelopes, the LFO, Ring, FM, the Sub, Glide).
 - How long a line may be, and how it reads on a phone.
 - Where the sources live: a document in the repository, linked from the About.
+
+## How it was built
+
+- **The lines:** 34 History lines, all in one module beside the tips (the History module), so the owner and the fact-checker read them in one place; 40 tips, the three Spectrums' and the Harmonic Markers' carry one. Each is one sentence of at most 160 characters and records its sources' numbers from [the research file](../research/134-history-in-the-tooltips.md). They are the research's drafts, cut to the decisions: no "first", old labels in quotation marks ("Emphasis", "Amount of Contour", "Poly Mod", "Keyboard Control", "Range", "S-Trig"), one or two people a line.
+- **Where they show:** with the Synth Geek Layer on, last in the tip, after the keys' steps, under a thin rule and headed **History** in bold; off, the tips are as before. A screen reader hears it too, as part of the description. The Synth Geek Layer's own tip now ends by saying it adds them. Under the hood ([133](./133-the-maths-layer-complete.md)'s slices) is not in the tips yet; when it comes, it goes before History (decision 15).
+- **Which tips:** the Filter and its Cutoff, Resonance, Filter Mode, Slope, Key Track, Velocity → Cutoff and Envelope Amount; one line for Attack, Decay, Sustain and Release on both Envelopes, shared by the Amp Envelope's heading; the Filter Envelope's own; the Oscillators, Waveform, Pulse Width, both Octaves, Semitone (and Tuning, the same line), Detune, Osc 2's Env Amount, FM, Ring, the Sub (its fader and its options), Noise and Noise colour, the Mixer; the Amp and Volume (one line), Voices; the LFO, Rate and Depth; Glide, Pitch bend range, Hold, MIDI; the three Spectrums and the Harmonic Markers. None on Freeze, Snapshot, Theme, Demo, the C16's, the Scopes, Retrigger, Sync or the Timeline.
+- **The test:** a unit test reads the research file, its source list and each fact's mark with what it cites, and fails on a line citing no source, an unlisted one, or one with no fact graded A or B; it also checks the length, one sentence, no "first", FM's order, the shared stages' line, and that each line is in some tip. The research file says so, so its two forms are kept when it is edited.
+- **About:** the credits gain a History row: "The Synth Geek Layer's History lines, each fact with its source and how sure it is: History's sources", linking the research file on GitHub. [The release steps](../releasing.md) now send the fact-checker to it for a new or changed line (decision 12). CONTEXT.md has a History entry.
+- **On a phone:** at 375 px the tallest tip with a History line, FM's, is 580 px high. A tip too tall for the room above and below its control now slides down from the top of the screen, over its control, so it shows whole, where before its top ran off the screen (Claude's call, open to the owner).
+- **Calls open to the owner** (all Claude's call):
+  1. **The Minimoog's year is left out** everywhere: the research sources no date for it (its manual is undated, its accessory sheets July 1971), so "the Minimoog (1970)" of the drafts would rest on nothing.
+  2. **FM's line names the DX7** as decision 9 says, without its year (decision 14), though the DX7 itself rests on a C source; its listed sources are the A and B ones (Prophet-5, Chowning's paper, the Yamaha licence of 1975). The fact-checker may want the DX7's primary found, or the line to end at "Yamaha's from 1975".
+  3. **Lines reworded off the C facts** (decision 14): Filter Mode says Moog's low-, high- and band-pass of 1964 (no Oberheim SEM, no notch); Slope says Moog's four stages and ARP's "24Db per octave" (no SEM); Detune quotes the Minimoog's "nearly in unison" (no organ celeste); Velocity → Cutoff is the A-only alternative (no CS-80, no MIDI velocity); the stages' line is Buchla's and ARP's (no Ussachevsky); Octave drops the organ's feet; Ring keeps the two patents (no Stockhausen year, no Daleks).
+  4. **B facts that are a maker's claim are worded as theirs:** Voices quotes the Prophet-5 as "fully-programmable", in Sequential's words.
+  5. **Noise gets Buchla's White Noise Generator (1964), Noise colour the Minimoog's switch;** the Rate gets ARP's .03 Hz and the Depth the Minimoog's mod wheel, the LFO's heading the Minimoog's slowed oscillator 3 and ARP's "LFO".
+  6. **A source is as good as the best fact read in it:** the test grades a source by its facts' marks, and ARP's 3620 manual is both A (its LFO) and cited beside a U gap (Retrigger), so the best mark counts.
+- **Tests run:** `npx tsc`, `npm run lint`; the History, tips and tooltip-placement unit tests (120 passed); in Chromium the tooltips, touch-tips, About, Geek, overlays, keyboard-access and Display panel specs (76 passed). Linux's fonts are GitHub's run.
+- **To try:** turn on Display's Geek, then hover the Cutoff, Resonance, FM, Ring and the Spectrums: each tip ends with its History; hover Freeze: none. Turn Geek off: the History lines go. On a phone, hold FM: the whole tip shows, History last. Open About and follow "History's sources". Read every line (decision 17): they are all in the History module.
