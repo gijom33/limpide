@@ -413,15 +413,15 @@ export function Mascot({
     // Three or four across: a visit to another section now and then, or a ride on an LFO's plot (issue 141).
     let visit: Visit | null = null;
     // The page's text as last read, and when, where the page was scrolled and how big the window was (issue 181).
-    let text: { at: number; x: number; y: number; width: number; height: number; boxes: Cover[] } | null = null;
+    let textRead: { at: number; x: number; y: number; width: number; height: number; boxes: Cover[] } | null = null;
     const textNow = (seconds: number) => {
-      const since = text ? seconds - text.at : Infinity;
-      const scrolled = text && (text.x !== scrollX || text.y !== scrollY);
-      const resized = text && (text.width !== innerWidth || text.height !== innerHeight);
-      if (!text || resized || since >= TEXT_SECONDS || (scrolled && since >= TEXT_SCROLLED)) {
-        text = { at: seconds, x: scrollX, y: scrollY, width: innerWidth, height: innerHeight, boxes: readText() };
+      const since = textRead ? seconds - textRead.at : Infinity;
+      const scrolled = textRead && (textRead.x !== scrollX || textRead.y !== scrollY);
+      const resized = textRead && (textRead.width !== innerWidth || textRead.height !== innerHeight);
+      if (!textRead || resized || since >= TEXT_SECONDS || (scrolled && since >= TEXT_SCROLLED)) {
+        textRead = { at: seconds, x: scrollX, y: scrollY, width: innerWidth, height: innerHeight, boxes: readText() };
       }
-      return text.boxes;
+      return textRead.boxes;
     };
     // Gone out of sight with nowhere clear to be (issue 192), to come back into view once somewhere is.
     let hid = false;
@@ -465,8 +465,8 @@ export function Mascot({
       // Shown: a tab coming into view is laid out a moment before it is visible.
       const shown = box.width > 0 && el.checkVisibility({ visibilityProperty: true });
       // The text within its reach either side of the control: as far as it may go along or down, and its twin.
-      const reach = 2 * WIDTH + RING + TWIN_PX;
-      // Still beside it, the sound no longer stretching it (issue 151), a pixel apart is room enough.
+      const reach = 2 * WIDTH + RING + TWIN_PX + 4; // and its gap to the ring, with a little to spare
+      // Each a pixel bigger: clinging, the sound no longer stretches nor leans it (issue 151), so a pixel keeps it apart.
       const near = text
         .filter((t) => t.right > box.left - reach && t.left < box.right + reach && t.bottom > box.top - HEIGHT && t.top < box.bottom + 2 * HEIGHT)
         .map((t) => ({ left: t.left - 1, right: t.right + 1, top: t.top - 1, bottom: t.bottom + 1 }));
@@ -556,10 +556,13 @@ export function Mascot({
         drawing,
       );
       const card = docked ? { id: 'card', box: docked } : null;
-      /** Along a line, where it is under no cover; and where it stands, over no text either (issue 181). */
+      /**
+       * Along a line, where it is under no cover; and where it stands, over no text either (issue 181). On the docked
+       * card's top, its tail swung down is behind the card, over none of the page's text there.
+       */
       const clearOf = (box: { left: number; right: number; top: number }, drawn: Drawing) => clearAlong(box, covers, drawn);
       const clearOn = (box: DOMRect) =>
-        clearOf(box, drawing).flatMap((s) => clearAlong({ left: s.min, right: s.max + WIDTH, top: box.top }, texts, standing));
+        clearOf(box, drawing).flatMap((s) => clearAlong({ left: s.min, right: s.max + WIDTH, top: box.top }, texts, box === card?.box ? standing.slice(0, 1) : standing));
       // A Tutorial or the Tour open (issue 151): its own life paused, its visits too; closed, home it goes, its life again.
       const guide = leaveBy === null && !leavingNow() ? guideNow() : null;
       motion.guide(guide !== null);
@@ -633,7 +636,8 @@ export function Mascot({
           const nearest = sections.filter(inView).sort((a, b) => off(a) - off(b))[0];
           on = nearest ?? (card && clearOn(card.box).length ? card : on);
         }
-        perch = { id: on.id, foot: on.box.top, hovering: false };
+        // Still under a cover all along, nowhere being clear: it waits out of sight behind its edge (issue 192).
+        perch = { id: on.id, foot: on.box.top, hovering: false, ...(clearOf(on.box, drawing).length ? {} : { waiting: true }) };
       } else {
         const column = rightColumn(sections).sort((a, b) => a.box.top - b.box.top);
         const [header, strip] = ['header', '.section-strip'].map((q) => document.querySelector(q)?.getBoundingClientRect().bottom ?? 0);
@@ -999,10 +1003,10 @@ export function Mascot({
       }
       // Coming into view: up from behind its edge (fast for a pop, then a hop), down from under the header, or, falling
       // from the top of the window, all at once.
-      // With nowhere clear to be, it goes back up out of sight under the header or the tabs, and comes down again once
-      // somewhere is (issue 192).
+      // With nowhere clear to be, it goes out of sight: back up under the header or the tabs, hovering, or down behind its
+      // edge; and comes back into view once somewhere is (issue 192).
       comingFrom ??= perch.hovering ? 'header' : arrival === 'rain' ? 'sky' : 'edge';
-      if (perch.waiting) [comingFrom, hid] = ['header', true];
+      if (perch.waiting) [comingFrom, hid] = [perch.hovering ? 'header' : 'edge', true];
       const wasUp = up;
       const popping = arrival === 'pop' && !hid;
       if (perch.waiting) up = still.matches ? 0 : Math.max(0, up - dt / RISE_SECONDS);

@@ -15,7 +15,7 @@ export interface Perch {
    * on glass, and clings at its side, its span's one spot, following it as the page scrolls.
    */
   cling?: boolean;
-  /** With nowhere clear to be, not even its hover line: out of sight, tucked up under the header or the tabs (issue 192). */
+  /** With nowhere clear to be, not even its hover line: out of sight, under the header or the tabs or behind its edge (issue 192). */
   waiting?: boolean;
 }
 
@@ -109,8 +109,8 @@ export interface Cover {
 /** Its drawing, as boxes against its box's left and its foot: what it covers of the page, standing there. */
 export type Drawing = readonly Cover[];
 
-/** Its box alone, `width` across and `height` up from its foot. */
-export const boxOf = (width: number, height: number): Drawing => [{ left: 0, right: width, top: -height, bottom: 0 }];
+/** Its box alone, as wide and as high as it is drawn over its foot. */
+export const BOX: Drawing = [{ left: 0, right: WIDTH, top: -HEIGHT, bottom: 0 }];
 
 /** Its tail leaves its drop this far across its box, as drawn, and swings down under its foot this far, standing (issue 181). */
 const TAIL_FROM = 18;

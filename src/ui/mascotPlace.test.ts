@@ -3,8 +3,8 @@ import { noteIndex } from '../music/tempo';
 import type { Lfo } from '../patch/patch';
 import { TURNED_PAST, TWIN_PX } from './mascotCling';
 import {
-  acrossOf, boxOf, choosePerch, clearAlong, createMascotPlace, drawingOf, FASTEST_THROW, GRAVITY, HOVER_UNDER, LANDING_SECONDS, 
-  LEEWAY, type Moving, nearestSpan, type Perch,type Placed, ridesFor, type Span, SWUNG_BELOW, standingCard, throwWalls, visitEnds, WINDUP_SECONDS,
+  acrossOf, BOX, choosePerch, clearAlong, createMascotPlace, drawingOf, FASTEST_THROW, GRAVITY, HOVER_UNDER, LANDING_SECONDS,
+  LEEWAY, type Moving, nearestSpan, type Perch, type Placed, ridesFor, type Span, SWUNG_BELOW, standingCard, throwWalls, visitEnds, WINDUP_SECONDS,
 } from './mascotPlace';
 
 const H = 26;
@@ -53,26 +53,26 @@ describe('where along a line it is under no card, tip or panel (issue 164)', () 
   const card = (top: number, left = 12, right = 363) => ({ left, right, top, bottom: top + 150 });
 
   it('with nothing over the line, the whole of it', () => {
-    expect(clearAlong(line, [], boxOf(W, H))).toEqual([{ min: 0, max: 375 - W }]);
+    expect(clearAlong(line, [], BOX)).toEqual([{ min: 0, max: 375 - W }]);
   });
 
   it('with a card over the line, along its whole width, nowhere', () => {
-    expect(clearAlong(line, [card(590)], boxOf(W, H))).toEqual([]);
-    expect(clearAlong(line, [card(600 - H + 1)], boxOf(W, H))).toEqual([]); // over its head by a pixel
+    expect(clearAlong(line, [card(590)], BOX)).toEqual([]);
+    expect(clearAlong(line, [card(600 - H + 1)], BOX)).toEqual([]); // over its head by a pixel
   });
 
   it('a card under the line, or far over it, leaves it whole', () => {
-    expect(clearAlong(line, [card(600)], boxOf(W, H))).toEqual([{ min: 0, max: 375 - W }]); // its top on the line
-    expect(clearAlong(line, [{ left: 0, right: 375, top: 100, bottom: 600 - H }], boxOf(W, H))).toEqual([{ min: 0, max: 375 - W }]);
+    expect(clearAlong(line, [card(600)], BOX)).toEqual([{ min: 0, max: 375 - W }]); // its top on the line
+    expect(clearAlong(line, [{ left: 0, right: 375, top: 100, bottom: 600 - H }], BOX)).toEqual([{ min: 0, max: 375 - W }]);
   });
 
   it('a card over part of the line leaves the stretches either side where the whole drop fits', () => {
-    expect(clearAlong({ left: 800, right: 1300, top: 600 }, [card(590, 900, 1100)], boxOf(W, H))).toEqual([
+    expect(clearAlong({ left: 800, right: 1300, top: 600 }, [card(590, 900, 1100)], BOX)).toEqual([
       { min: 800, max: 900 - W },
       { min: 1100, max: 1300 - W },
     ]);
     // A gap narrower than the drop is no room.
-    expect(clearAlong(line, [card(590, 0, 100), card(590, 130, 375)], boxOf(W, H))).toEqual([]);
+    expect(clearAlong(line, [card(590, 0, 100), card(590, 130, 375)], BOX)).toEqual([]);
   });
 
   it('of the stretches left, the one nearest to where it is', () => {
@@ -89,7 +89,7 @@ describe('its whole drawing along a line, its twin and its tail included (issues
   const over = (left: number, right: number) => ({ left, right, top: 500, bottom: 700 });
 
   it('a cover beside its stretch keeps off its tail turned round, past its box’s left (issue 179)', () => {
-    expect(clearAlong(line, [over(0, 100)], boxOf(W, H))).toEqual([{ min: 100, max: 375 - W }]);
+    expect(clearAlong(line, [over(0, 100)], BOX)).toEqual([{ min: 100, max: 375 - W }]);
     expect(clearAlong(line, [over(0, 100)], drawingOf())).toEqual([{ min: 100 + TURNED_PAST, max: 375 - W }]);
   });
 

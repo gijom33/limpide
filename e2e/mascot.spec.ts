@@ -1028,11 +1028,11 @@ test.describe('pointing the way in a Tutorial and the Tour (issue 151)', () => {
 
   /**
    * Where it is against `selector`'s control: beside it (its drawing within a few pixels of the ring, and level with
-   * the control, or as much lower as it goes under a label beside it, issue 181), over neither the ring nor the band
+   * the control, or with a label beside it up to `lower` pixels lower, issue 181), over neither the ring nor the band
    * its target text takes over the control, its tail on the control's side, and the pointer passing through it.
    */
-  const against = (page: Page, selector: string) =>
-    page.evaluate((selector) => {
+  const against = (page: Page, selector: string, lower = 0) =>
+    page.evaluate(([selector, lower]) => {
       const control = document.querySelector(selector)!.getBoundingClientRect();
       const drop = document.querySelector('.mascot-drop svg')!.getBoundingClientRect();
       const ring = { left: control.left - 6, right: control.right + 6, top: control.top - 6, bottom: control.bottom + 6 };
@@ -1046,12 +1046,12 @@ test.describe('pointing the way in a Tutorial and the Tour (issue 151)', () => {
       const hit = document.elementFromPoint((body.left + body.right) / 2, (body.top + body.bottom) / 2);
       return {
         beside: gap >= 0 && gap <= 6,
-        level: (drop.top + drop.bottom) / 2 > control.top && (drop.top + drop.bottom) / 2 < control.bottom + drop.height,
+        level: (drop.top + drop.bottom) / 2 > control.top && (drop.top + drop.bottom) / 2 < control.bottom + lower,
         covers: over(ring) || over(target),
         towards,
         through: !!hit && !hit.closest('.mascot'),
       };
-    }, selector);
+    }, [selector, lower] as const);
   const POINTING = { beside: true, level: true, covers: false, towards: true, through: true };
 
   /** From now, each change of how it moves, in order. */
@@ -1105,19 +1105,19 @@ test.describe('pointing the way in a Tutorial and the Tour (issue 151)', () => {
     const made = highest(page, 2000);
     await doIt(page);
     expect(await made).toBeGreaterThan(8);
-    // Osc 2's Waveform, in the same Section: a slide across, never back up to the edge.
+    // Osc 2's Waveform, in the same Section: a slide across, never back up to the edge; a little lower, under its name.
     await watchMoves(page);
     await next(page);
-    await expect(async () => expect(await against(page, '[data-learn="choice:osc2Waveform"]')).toEqual(POINTING)).toPass({ timeout: 15000 });
+    await expect(async () => expect(await against(page, '[data-learn="choice:osc2Waveform"]', BEAD_HEIGHT)).toEqual(POINTING)).toPass({ timeout: 15000 });
     expect(await moves(page)).not.toContain('flying');
     expect(await moves(page)).not.toContain('falling');
     await doIt(page);
     await next(page);
     await clings(page);
     await doIt(page);
-    // The Ideal Display option: the Display button stands for it, in the header.
+    // The Ideal Display option: the Display button stands for it, in the header; a little lower, under its neighbours' names.
     await next(page);
-    await expect(async () => expect(await against(page, 'button[aria-label="Display"]')).toEqual(POINTING)).toPass({ timeout: 15000 });
+    await expect(async () => expect(await against(page, 'button[aria-label="Display"]', BEAD_HEIGHT)).toEqual(POINTING)).toPass({ timeout: 15000 });
     await doIt(page);
     // The Cutoff, in another Section: its usual move to the Filter's edge, then the slide down.
     await watchMoves(page);
@@ -1150,7 +1150,7 @@ test.describe('pointing the way in a Tutorial and the Tour (issue 151)', () => {
     // The Tour: Osc 1's Waveform, by its name's right end; the Cutoff, by its name (the owner's, 2026-11-02).
     await page.getByRole('button', { name: 'About' }).click();
     await page.getByRole('dialog', { name: 'Limpide' }).getByRole('button', { name: 'Take the Tour' }).click();
-    await expect(async () => expect(await against(page, '[data-learn="choice:waveform"]')).toEqual(POINTING)).toPass({ timeout: 20000 });
+    await expect(async () => expect(await against(page, '[data-learn="choice:waveform"]', BEAD_HEIGHT)).toEqual(POINTING)).toPass({ timeout: 20000 });
     for (let card = 1; ; card++) {
       await restsClear(`the Tour's card ${card}`);
       const next = tourCard(page).getByRole('button', { name: 'Next', exact: true });
@@ -1203,7 +1203,7 @@ test.describe('pointing the way in a Tutorial and the Tour (issue 151)', () => {
     await bringBead(page);
     await page.getByRole('button', { name: 'About' }).click();
     await page.getByRole('dialog', { name: 'Limpide' }).getByRole('button', { name: 'Take the Tour' }).click();
-    await expect(async () => expect(await against(page, '[data-learn="choice:waveform"]')).toEqual(POINTING)).toPass({ timeout: 20000 });
+    await expect(async () => expect(await against(page, '[data-learn="choice:waveform"]', BEAD_HEIGHT)).toEqual(POINTING)).toPass({ timeout: 20000 });
     await tourCard(page).getByRole('button', { name: 'Next', exact: true }).click();
     await expect(async () => expect(await against(page, '[data-learn="param:cutoff"]')).toEqual(POINTING)).toPass({ timeout: 20000 });
     await tourCard(page).getByRole('button', { name: 'Close the Tour' }).click();
