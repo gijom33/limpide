@@ -4,7 +4,7 @@
 
 **Blocked by:** none (build after night/2026-10-31 is merged where it touches the same readouts; Claude's call, open to the owner)
 
-**Status:** needs-info · enhancement. Two questions for the owner, below, found before building on night/2026-11-01; nothing built yet
+**Status:** ready-for-agent · enhancement. The owner answered the night's two questions (2026-11-01, Decisions below); queued again on night/2026-11-01
 
 ## Agent Brief
 
@@ -44,3 +44,10 @@ Found on 2026-11-01, before building, measuring the page and reading the engine.
    - (b) The engine's Attack becomes a straight rise, as on many synths. That changes the sound of every Patch (a straight Attack sounds slower to start and harder at its top), and the Envelopes' drawings would follow. It is a change of sound for its own issue.
 
    Claude's recommendation: (a). If (a), should the Attack fader show its τ too, as Decay and Release do (whatever question 1 settles)? Claude's recommendation: yes, so all three curves read the same way.
+
+## Decisions (the owner's answers, 2026-11-01)
+
+The owner answered "ok" to both recommendations above:
+
+1. **τ lives in the tip,** decided by the owner: each Envelope fader's tip works out τ live under "Under the hood" ("τ = Decay ÷ 4 = 75 ms now"); the faders' readouts are unchanged. τ drawn on the Envelope Timeline may follow with 170 later, not part of 168. This replaces the readout "300 ms · τ 65 ms" of the Desired behavior and of 133's decision 9.
+2. **Attack is a curve too,** decided by the owner: the tip says what the engine does, Attack rising with τ = Attack ÷ 3, and the Attack fader's tip shows its τ like Decay's and Release's. The criterion "Attack's straight rise said" reads, since then, "Attack's curve and its τ said".
