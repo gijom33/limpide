@@ -34,3 +34,7 @@ Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.m
 
 **Out of scope:**
 - Buttons learned on Switches (inbox, the owner's call)
+
+## Added in triage (2026-11-02)
+
+- From the 1.20.0 code review: a button learned on a Switch (LFO Sync, Legato, Retrigger) never switches it, since Learn reads its 127 and 0 as a knob's Encoder Mode, and the Learn bar says "keep turning…"; 147's press-and-release rule covers only Actions. How it should behave is [191](./191-the-owners-calls-after-1-21.md)'s question 9 (Claude's recommendation: each press flips the Switch).

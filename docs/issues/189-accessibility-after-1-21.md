@@ -38,3 +38,7 @@ Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.m
 
 **Out of scope:**
 - A real screen reader's run (a human check, later)
+
+## Added in triage (2026-11-02)
+
+- From the 1.21.0 code review: from 861 to 1279 px the BPM's "MIDI" word is hidden and only a green edge marks the clock, a mark by colour alone: a mark that does not rest on colour (an icon or the word) at every width.

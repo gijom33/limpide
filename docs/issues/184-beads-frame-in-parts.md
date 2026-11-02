@@ -35,3 +35,7 @@ Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.m
 
 **Out of scope:**
 - New tricks or places for Bead
+
+## Added in triage (2026-11-02)
+
+- From the 1.20.0 code review: issues 141, 150 and 164 each ticked "Bead's frame-cost test still passes" while it failed under them on a loaded machine (1.0 to 1.9 ms against 1 ms); measure it on a quiet machine before and after.

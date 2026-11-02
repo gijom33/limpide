@@ -35,3 +35,7 @@ Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.m
 
 **Out of scope:**
 - The header's order (issue 154)
+
+## Added in triage (2026-11-02)
+
+- From the 1.20.0 code review: issue 175 hides only the opener's own tip, so tips inside an open Display, MIDI or Patches panel still show over its rows (likelier with 162's four settings on one row); 153's × tip relies on the Patches panel's tips, so the two issues' words disagree. No tip of a control under an open panel; a panel's own controls keep theirs.
