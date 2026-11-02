@@ -17,6 +17,11 @@ test('the logo opens the About splash: version, build and credits; Close, Escape
   await expect(about).toContainText('Enjoying Limpide? Share it, or star it on GitHub');
   await expect(about.getByRole('link', { name: 'star it on GitHub' })).toHaveAttribute('href', 'https://github.com/gijom33/limpide');
   await expect(about.getByRole('link', { name: /coffee/i })).toHaveCount(0);
+  // Issue 134: where the Synth Geek Layer's History lines come from.
+  await expect(about.getByRole('link', { name: 'History’s sources' })).toHaveAttribute(
+    'href',
+    'https://github.com/gijom33/limpide/blob/main/docs/research/134-history-in-the-tooltips.md',
+  );
 
   await about.getByRole('button', { name: 'Close' }).click();
   await expect(about).toBeHidden();

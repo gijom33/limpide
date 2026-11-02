@@ -54,6 +54,28 @@ test('a knob’s and a fader’s tip say their steps for the keys (issue 160)', 
   await expect(page.getByRole('tooltip').filter({ hasText: '↑↓ 1 % · Shift 0.1 % · Page 10 %' })).toBeVisible();
 });
 
+// Issue 134: with the Synth Geek Layer on, a control with a musical past ends its tip with History; off, no tip has one.
+test('with the Synth Geek Layer on, a tip ends with its History line; off, or on Freeze, there is none (issue 134)', async ({ page }) => {
+  await page.goto('/');
+  await page.keyboard.press('Tab'); // the keys in use: a focus shows its tip
+  const cutoff = page.getByRole('slider', { name: 'Cutoff', exact: true });
+  const tip = page.getByRole('tooltip').filter({ hasText: 'Where the Filter starts' });
+  await cutoff.focus();
+  await expect(tip).toBeVisible();
+  await expect(tip.locator('.tooltip-history')).toHaveCount(0);
+
+  await page.evaluate(() => localStorage.setItem('limpide.overlays', JSON.stringify({ geek: true })));
+  await page.reload();
+  await page.keyboard.press('Tab');
+  await cutoff.focus();
+  await expect(tip.locator('.tooltip-history')).toHaveText(/^History Moog’s 1964 paper set a Filter’s frequency by a voltage/);
+  await expect(tip.locator(':scope > :last-child')).toHaveClass('tooltip-history'); // last, after the keys
+  await openDisplay(page);
+  await page.getByRole('button', { name: 'Freeze' }).hover();
+  await expect(page.getByRole('tooltip').filter({ hasText: 'Stops the pictures' })).toBeVisible();
+  await expect(page.getByRole('tooltip').filter({ hasText: 'Stops the pictures' }).locator('.tooltip-history')).toHaveCount(0);
+});
+
 test('every toolbar control explains itself, without doubling up on native browser tooltips', async ({ page }) => {
   await page.clock.install();
   await page.goto('/');

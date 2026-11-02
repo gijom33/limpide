@@ -11,6 +11,8 @@ Each fact carries a confidence mark:
 - **C**: secondary only (an encyclopaedia, a magazine, a book cited by one and not read here). Fine as background; a History line resting on a C needs the primary found first, or softer words.
 - **U**: not sourced. Kept so the grilling knows the gap is there.
 
+**Since then (2026-11-01, issue 134):** the History lines as built are in the tips' History module, each citing its sources' numbers here; a unit test reads this file, the sources as listed below ("- **[S1]**") and each fact's mark followed by what it cites ("**A** [S1]"), and fails on a line citing no source graded A or B. Keep both forms when editing. The fact-checker reads this file before a release that changes a line.
+
 The scanned manuals and the Moog paper were read by optical character recognition, page by page; "scan n" and "PDF page n" refer to the scan's own page order, not the printed page numbers.
 
 ## Sources

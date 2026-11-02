@@ -17,7 +17,7 @@ import { DisplayMenu } from './DisplayMenu';
 import { EnvelopeTimeline } from './EnvelopeTimeline';
 import { Fader } from './Fader';
 import { FilterShape } from './FilterShape';
-import { GeekContext } from './geekContext';
+import { GeekContext, GeekOnContext } from './geekContext';
 import { useHold } from './hooks/useHold';
 import { useComputerKeyboard, useSpaceFreezes } from './hooks/useKeys';
 import { useMediaQuery } from './hooks/useMediaQuery';
@@ -489,6 +489,7 @@ export function App() {
     <LearnContext.Provider value={learnContext}>
     <ModulationContext.Provider value={modulationContext}>
     <GeekContext.Provider value={overlays.geek ? patch : null}>
+    <GeekOnContext.Provider value={overlays.geek}>
       <main data-frozen={viewer.frozen || undefined} data-learning={learning || undefined}>
         {midi.setup ? (
           <QuickSetupPanel
@@ -862,6 +863,7 @@ export function App() {
           />
         )}
       </main>
+    </GeekOnContext.Provider>
     </GeekContext.Provider>
     </ModulationContext.Provider>
     </LearnContext.Provider>

@@ -388,6 +388,9 @@ main[data-frozen] .tap-canvases::before {
 /* A knob's or fader's steps for the keys (issue 160): where there is a keyboard, not on a touch screen. */
 .tooltip-keys { color: var(--muted); font-variant-numeric: tabular-nums; }
 @media (hover: none) { .tooltip-keys { display: none; } }
+/* Where the control comes from (issue 134), last, with the Synth Geek Layer on: set apart by a rule, headed History. */
+.tooltip-history { padding-top: 6px; border-top: 1px solid var(--border); }
+.tooltip-history b { font-weight: 600; }
 /* Headings that explain themselves on hover: no underline (it cluttered the panels), just the help cursor. */
 .has-tip { cursor: help; }
 

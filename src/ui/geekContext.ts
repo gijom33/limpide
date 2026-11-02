@@ -3,3 +3,6 @@ import type { Patch } from '../patch/patch';
 
 /** The Patch while the Synth Geek Layer is on (its readouts depend on it, e.g. Q on the Filter Mode), else null. */
 export const GeekContext = createContext<Patch | null>(null);
+
+/** Whether the Synth Geek Layer is on, for what needs no Patch: the tips' History lines (issue 134). */
+export const GeekOnContext = createContext(false);

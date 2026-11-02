@@ -8,6 +8,8 @@ const SOURCE = 'https://github.com/gijom33/limpide';
 const AUTHOR = 'https://www.linkedin.com/in/guillaume-boillet-18208310';
 /** Everything Bead does, written down (issue 163). */
 const BEAD_SECRETS = `${SOURCE}/blob/main/docs/bead.md`;
+/** Where the Synth Geek Layer's History lines come from, each fact with its source and how sure it is (issue 134). */
+const HISTORY_SOURCES = `${SOURCE}/blob/main/docs/research/134-history-in-the-tooltips.md`;
 
 /** "24 Oct 2026" from "2026-10-24". */
 const day = (iso: string) =>
@@ -188,6 +190,13 @@ export function About({
             <dd>The Web Audio API, in your browser</dd>
             <dt>Music</dt>
             <dd>The Demo and the Song are originals.</dd>
+            <dt>History</dt>
+            <dd>
+              The Synth Geek Layer’s History lines, each fact with its source and how sure it is:{' '}
+              <a href={HISTORY_SOURCES} target="_blank" rel="noreferrer">
+                History’s sources
+              </a>
+            </dd>
             <dt>License</dt>
             <dd>
               Free and open source under the MIT License: the code, the Presets, the music and the docs.{' '}

@@ -267,8 +267,12 @@ A captured Scope and Spectrum trace, kept faint for A/B comparison against the l
 _Avoid_: Reference trace, pin, compare
 
 **Synth Geek Layer**:
-An optional overlay revealing the underlying quantities behind Parameters and Viewers: Resonance as Q, levels in dB, the Harmonic formula of Osc 1's Waveform (FM's sidebands and Ring's sums and differences when they are up), the Response Curve's formula, and the Effective Cutoff's value. Switched on by Display's Geek toggle, a pair of glasses; off by default. Named the Maths Layer until issue 165.
+An optional overlay revealing the underlying quantities behind Parameters and Viewers: Resonance as Q, levels in dB, the Harmonic formula of Osc 1's Waveform (FM's sidebands and Ring's sums and differences when they are up), the Response Curve's formula, and the Effective Cutoff's value. Switched on by Display's Geek toggle, a pair of glasses; off by default. It also ends the tip of each control with a musical past with its History. Named the Maths Layer until issue 165.
 _Avoid_: Maths Layer (its old name), Advanced mode, expert mode
+
+**History**:
+The line a tip ends with while the Synth Geek Layer is on: where the control comes from, one sentence naming the instruments and people it came through (the Minimoog's "Emphasis" for Resonance), every fact sourced at grade A or B in issue 134's research file, which About links as "History's sources" (issue 134). Controls with no musical past (Freeze, Snapshot, Theme, Demo, the C16's) have none.
+_Avoid_: geekiness, trivia, fun facts
 
 ### Control surface
 
