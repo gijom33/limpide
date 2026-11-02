@@ -716,6 +716,8 @@ export function Mascot({
       if (pose.escaped && !stacked.matches) nextVisit = now;
       const where = place.frame(perch, span, now, still.matches, pose.x);
       if (where.landedAt !== null) motion.place(where.landedAt);
+      // Its leap across, or its hover, for its facing from the next frame (issue 179).
+      motion.between(where.leap, where.moving === 'hovering');
       // One small bounce on arriving beside a control, and at each new Step or card: once there, or looking from afar.
       const arrived = where.landedAt !== null && where.moving === 'clinging';
       if (arrived || (bounceDue && guide && (where.moving === 'clinging' || (!clinging && !guideRoom)))) {
@@ -732,7 +734,8 @@ export function Mascot({
         return;
       }
 
-      // Between lines and under the header, the line's moves take over the sound's and the controls'.
+      // Between lines and under the header, the line's moves take over the sound's and the controls'. It keeps its
+      // facing, turned its way across a leap and back as it lands (issue 179), but in the pointer's hold or thrown.
       let tailTurn = 0;
       let origin = '20% 100%';
       const across = Math.max(-15, Math.min(15, where.vx / 40)); // leaning into its way across
@@ -748,19 +751,19 @@ export function Mascot({
       } else if (where.moving === 'hovering') {
         // On its tail, straight down under it and whirling (issue 142); its bob is in its foot, and nothing stretches it
         // up over the tabs. With reduced motion, still.
-        Object.assign(pose, { legs: 'tuck', splash: 'none', lift: 0, tilt: 0, turn: 1, stretch: 1 });
+        Object.assign(pose, { legs: 'tuck', splash: 'none', lift: 0, tilt: 0, stretch: 1 });
         tailTurn = 90 + (still.matches ? 0 : Math.sin(now * 2 * Math.PI * WHIRLS) * WHIRL_DEGREES);
       } else if (where.moving === 'falling') {
         // Hopping off, tucked; then a raindrop, longer the faster it falls.
         const speed = Math.max(0, where.vy);
-        Object.assign(pose, { legs: 'tuck', splash: 'none', lift: 0, tilt: across, turn: 1, eyes: where.vy < 0 ? 'happy' : 'open' });
+        Object.assign(pose, { legs: 'tuck', splash: 'none', lift: 0, tilt: across, eyes: where.vy < 0 ? 'happy' : 'open' });
         pose.stretch = where.vy < 0 ? 0.92 : 1 + Math.min(0.35, speed / 1600);
       } else if (where.moving === 'flying' && where.windup < 1) {
         // Crouching, its tail swinging round and down under it.
-        Object.assign(pose, { legs: 'stand', splash: 'none', lift: 0, tilt: 0, turn: 1, eyes: 'happy', stretch: 1 - 0.15 * where.windup });
+        Object.assign(pose, { legs: 'stand', splash: 'none', lift: 0, tilt: 0, eyes: 'happy', stretch: 1 - 0.15 * where.windup });
         tailTurn = 90 * where.windup;
       } else if (where.moving === 'flying') {
-        Object.assign(pose, { legs: 'tuck', splash: 'none', lift: 0, tilt: across, turn: 1, eyes: where.thrust ? 'happy' : 'open' });
+        Object.assign(pose, { legs: 'tuck', splash: 'none', lift: 0, tilt: across, eyes: where.thrust ? 'happy' : 'open' });
         pose.stretch = 1 + Math.min(0.2, Math.abs(where.vy) / 2600);
         // Its tail straight down under it, whirling while it pushes, swinging back up as it coasts.
         tailTurn = where.thrust ? 90 + Math.sin(now * 2 * Math.PI * WHIRLS) * WHIRL_DEGREES : Math.max(0, Math.min(90, -where.vy / 6));
@@ -773,7 +776,7 @@ export function Mascot({
         // Squashed as hard as it hit, then a wobble that dies away, like a drop of jelly.
         const p = where.landed;
         const wobble = Math.exp(-5 * p) * Math.cos(16 * p);
-        Object.assign(pose, { legs: 'stand', lift: 0, turn: 1 });
+        Object.assign(pose, { legs: 'stand', lift: 0 });
         pose.stretch = 1 - 0.4 * where.impact * wobble;
         pose.splash = p < 0.3 ? 'wide' : 'none';
         pose.eyes = p < 0.15 ? 'shut' : where.impact > 0.5 && p < 0.55 ? 'happy' : pose.eyes;

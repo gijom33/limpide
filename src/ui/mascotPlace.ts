@@ -50,6 +50,8 @@ export interface Placed {
   /** Its speed across and down the window, in pixels a second. */
   vx: number;
   vy: number;
+  /** Falling or flying, how far across its leap goes, from where it set off to where it lands (issue 179); else 0. */
+  leap: number;
   /** Landing: how far through (0 to 1), and how hard it hit (0 to 1). */
   landed: number;
   impact: number;
@@ -197,6 +199,7 @@ export function createMascotPlace({ from, random = Math.random }: { from?: numbe
   let foot = 0;
   let x = 0;
   let toX = 0;
+  let leapFrom = 0; // where across its leap set off
   let vx = 0;
   let vy = 0;
   let moving: Moving = 'standing';
@@ -216,6 +219,7 @@ export function createMascotPlace({ from, random = Math.random }: { from?: numbe
     windup: moving === 'flying' ? Math.min(1, (last! - windupFrom) / WINDUP_SECONDS) : 1,
     vx,
     vy,
+    leap: moving === 'falling' || moving === 'flying' ? toX - leapFrom : 0,
     landed: moving === 'landing' ? Math.min(1, (last! - landedAt) / LANDING_SECONDS) : 1,
     impact,
     landedAt: landedX,
@@ -272,6 +276,7 @@ export function createMascotPlace({ from, random = Math.random }: { from?: numbe
         }
         if (vy > 0 && foot > perch.foot) {
           toX = spotIn(span, x);
+          leapFrom = x;
           windupFrom = -Infinity;
           clearance = CLEARANCE;
           moving = 'flying';
@@ -309,7 +314,7 @@ export function createMascotPlace({ from, random = Math.random }: { from?: numbe
         on = perch.id;
         if (arriving) {
           foot = from;
-          x = toX = at;
+          x = toX = leapFrom = at;
           vx = vy = 0;
           moving = 'falling';
         } else {
@@ -324,6 +329,7 @@ export function createMascotPlace({ from, random = Math.random }: { from?: numbe
         // Leaving a control's side, from where it clung.
         if (moving !== 'sliding' && moving !== 'clinging') x = at;
         toX = spotIn(span, at);
+        leapFrom = x;
         if (moving === 'hovering' && perch.hovering) foot = perch.foot;
         else if (perch.hovering) {
           // Losing ground: it takes off at once, its tail whirling, for its hover line (issue 142).

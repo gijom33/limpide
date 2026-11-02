@@ -586,3 +586,82 @@ describe('the mascot pointing the way in a Tutorial or the Tour (issue 151)', ()
     expect(poses.every((p) => p.lift === 0 && p.turn === -1 && p.wag === 15 && p.eyes === 'right')).toBe(true);
   });
 });
+
+describe('facing its way, its tail trailing behind it (issue 179)', () => {
+  /** Put down at `from`, it walks into a room whose near end is `to`. */
+  const walk = (from: number, to: number, seconds = 1.6) => {
+    const motion = createMascotMotion(() => 0.5);
+    motion.frame(playing, 0, false, wide);
+    motion.place(from);
+    return run(motion, 1 / 60, seconds, playing, from < to ? { min: to, max: to + 50 } : { min: to - 50, max: to });
+  };
+
+  it('strolling right it turns round, its tail on its left, quickly; stopped, it faces as drawn again', () => {
+    const poses = walk(0, 150);
+    const going = poses.filter((p) => p.x > 30 && p.x < 140);
+    expect(going.length).toBeGreaterThan(30);
+    expect(going.every((p) => p.turn === -1)).toBe(true);
+    // Its eyes on its way: turned round, its drawing's left.
+    expect(going.every((p) => p.eyes === 'left')).toBe(true);
+    // Its width going through zero, in under a fifth of a second, setting off and stopping.
+    const setOff = poses.filter((p) => p.x <= 30 && p.turn !== -1);
+    expect(setOff.some((p) => Math.abs(p.turn) < 0.5)).toBe(true);
+    expect(setOff.length / 60).toBeLessThan(0.2);
+    const stopped = poses.filter((p) => p.x === 150);
+    expect(stopped.filter((p) => p.turn !== 1).length / 60).toBeLessThan(0.2);
+    expect(stopped.at(-1)).toMatchObject({ turn: 1, eyes: 'open' });
+  });
+
+  it('a step shorter than its own width does not turn it, nor dance steps to the Notes, however far they take it', () => {
+    expect(walk(0, 40).every((p) => p.turn === 1)).toBe(true);
+    const motion = createMascotMotion(() => 0.5);
+    const poses: Pose[] = [];
+    // A Note every twentieth of a second: a step right on each, before the last one is done.
+    for (let t = 0; t <= 2; t += 1 / 60) poses.push(motion.frame({ amp: 0.6, sway: 0, struck: Math.floor(t / 0.05) * 0.05 }, t, false, { min: 0, max: 1000 }));
+    expect(poses.at(-1)!.x - poses[0].x).toBeGreaterThan(200);
+    expect(poses.every((p) => p.turn === 1)).toBe(true);
+  });
+
+  it('a funny turn keeps its own turning: dragging its suitcase right, the suitcase behind it, it faces as drawn', () => {
+    const motion = createMascotMotion(() => 0.5);
+    motion.frame(quiet, 0, false, wide);
+    motion.trick('suitcase', 0.1);
+    const poses = run(motion, 0.1, 3.6, quiet);
+    expect(poses.at(-1)!.x - poses[0].x).toBeGreaterThan(50);
+    expect(poses.every((p) => p.doing === 'suitcase' && p.turn === 1)).toBe(true);
+  });
+
+  it('leaping or falling between lines it faces its way, unless the leap is shorter than its width; hovering, as still', () => {
+    const motion = createMascotMotion(() => 0.5);
+    motion.frame(quiet, 0, false, spot);
+    const turnAfter = (from: number, across: number, hovers = false) => {
+      motion.between(across, hovers);
+      return run(motion, from, from + 0.3, quiet, spot).at(-1)!.turn;
+    };
+    expect(turnAfter(0, 200)).toBe(-1);
+    expect(turnAfter(0.3, 0)).toBe(1); // landed
+    expect(turnAfter(0.6, -200)).toBe(1);
+    expect(turnAfter(0.9, 30)).toBe(1);
+    // Hovering, strolling along its hover line, it faces as still.
+    motion.between(0, true);
+    motion.place(0);
+    expect(run(motion, 1.2, 2.4, quiet, { min: 150, max: 200 }).every((p) => p.turn === 1)).toBe(true);
+  });
+
+  it('sent away strolling right, it turns back as it goes, not all at once', () => {
+    const motion = createMascotMotion(() => 0.5);
+    motion.frame(playing, 0, false, wide);
+    motion.place(0);
+    expect(run(motion, 1 / 60, 0.5, playing, { min: 150, max: 200 }).at(-1)!.turn).toBe(-1);
+    motion.leave(0.5);
+    const leaving = run(motion, 0.5 + 1 / 60, 0.8, playing, { min: 150, max: 200 });
+    expect(leaving[0].turn).toBeLessThan(0);
+    expect(leaving.at(-1)!.turn).toBe(1);
+  });
+
+  it('strolling left it faces as drawn, its tail on its right', () => {
+    const poses = walk(200, 50);
+    expect(poses.at(-1)!.x).toBe(50);
+    expect(poses.every((p) => p.turn === 1)).toBe(true);
+  });
+});

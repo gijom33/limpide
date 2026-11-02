@@ -1,5 +1,6 @@
 import type { Word } from '../input/callingPhrase';
 import type { Waveform } from '../music/harmonics';
+import { WIDTH } from './mascotCling';
 import type { Gesture } from './mascotGestures';
 import type { Fling } from './mascotSpray';
 import { JOKES, PICKED_TRICKS, TRICK_MOVES, type Trick } from './mascotTricks';
@@ -155,6 +156,13 @@ const BACK_OFF_PX = 26;
 const lasting = (trick: Trick) => TRICK_MOVES[trick].seconds;
 /** How it strolls: a walk, a hop along, or a scoot; and their speeds, in pixels a second. */
 type Gait = 'walk' | 'hop' | 'scoot' | 'dance' | 'trick';
+/**
+ * Going its way (issue 179), it faces it, its tail trailing: setting off to the right it turns round, its width going
+ * through zero in this long, and back as it stops. Not for a step shorter than its own width, a dance step to a Note or
+ * a funny turn's own travel.
+ */
+export const TURN_SECONDS = 0.15;
+const FACING_GAITS: ReadonlySet<Gait | 'slide'> = new Set(['walk', 'hop', 'scoot', 'slide']);
 
 /** A Waveform changed, its tail takes that wave this long (issue 127). */
 export const WAVE_SECONDS = 3;
@@ -241,6 +249,13 @@ export function createMascotMotion(random: () => number = Math.random) {
   let hat: Hat = 'none';
   let act: Act | null = null;
   let pointer: number | null = null;
+  // Facing its way (issue 179): 1 as drawn, its tail on its right; −1 turned round; between, turning. The way it is
+  // going and where it set off that way; and between lines, how far across its leap goes, or that it hovers.
+  let face = 1;
+  let tripWay: -1 | 0 | 1 = 0;
+  let tripFrom = 0;
+  let leap = 0;
+  let hovering = false;
   // A Tutorial or the Tour open (issue 151): its own life paused; and the control it points at, if any.
   let guided = false;
   let aim: { way: -1 | 1; angle: number; still: boolean } | null = null;
@@ -456,6 +471,14 @@ export function createMascotMotion(random: () => number = Math.random) {
     pointer(dx: number | null) {
       pointer = dx;
     },
+    /**
+     * Between its lines (issue 179): how far across its leap or fall goes, in pixels, positive to the right; 0 on its
+     * line. Hovering, it faces as still.
+     */
+    between(across: number, hovers = false) {
+      leap = across;
+      hovering = hovers;
+    },
     frame(heard: Heard, now: number, reduced: boolean, room: Room): Pose {
       lastRoom = room;
       const clamp = (v: number) => Math.min(room.max, Math.max(room.min, v));
@@ -504,6 +527,9 @@ export function createMascotMotion(random: () => number = Math.random) {
 
       if (leftAt !== null) {
         let t = now - leftAt;
+        // Sent away mid-stroll, it turns back as it stops (issue 179).
+        face = Math.min(1, face + (2 * dt) / TURN_SECONDS);
+        const stopped = { ...resting, x, turn: face };
         if (reduced || t >= LEAVE_SECONDS) return { ...resting, x, form: 'film', eyes: 'none', fade: 0, gone: true };
         const phase = (Object.keys(LEAVING) as (keyof typeof LEAVING)[]).find((k) => {
           if (t < LEAVING[k]) return true;
@@ -511,18 +537,20 @@ export function createMascotMotion(random: () => number = Math.random) {
           return false;
         })!;
         const p = t / LEAVING[phase];
-        if (phase === 'crouch') return { ...resting, x, eyes: 'happy', stretch: 1 - 0.25 * Math.sin((p * Math.PI) / 2) };
-        if (phase === 'leap') return { ...resting, x, legs: 'tuck', eyes: 'happy', lift: LEAP_PX * (1 - (1 - p) ** 2), stretch: 1.12 };
-        if (phase === 'slam') return { ...resting, x, legs: 'tuck', eyes: 'shut', lift: LEAP_PX * (1 - p * p), stretch: 1.12 + 0.25 * p };
+        if (phase === 'crouch') return { ...stopped, eyes: 'happy', stretch: 1 - 0.25 * Math.sin((p * Math.PI) / 2) };
+        if (phase === 'leap') return { ...stopped, legs: 'tuck', eyes: 'happy', lift: LEAP_PX * (1 - (1 - p) ** 2), stretch: 1.12 };
+        if (phase === 'slam') return { ...stopped, legs: 'tuck', eyes: 'shut', lift: LEAP_PX * (1 - p * p), stretch: 1.12 + 0.25 * p };
         const burst = smashed ? null : { count: SMASH_DROPLETS, spread: 'up' as const };
         smashed = true;
-        if (phase === 'squashed') return { ...resting, x, form: 'squashed', eyes: 'melted', splash: 'wide', burst };
-        if (phase === 'puddle') return { ...resting, x, form: 'puddle', eyes: 'melted', splash: 'wide', burst };
-        if (phase === 'spread') return { ...resting, x, form: 'spread', eyes: 'none', stretch: 1 - 0.3 * p, burst };
-        return { ...resting, x, form: 'film', eyes: 'none', stretch: 0.7, fade: 1 - p };
+        if (phase === 'squashed') return { ...stopped, form: 'squashed', eyes: 'melted', splash: 'wide', burst };
+        if (phase === 'puddle') return { ...stopped, form: 'puddle', eyes: 'melted', splash: 'wide', burst };
+        if (phase === 'spread') return { ...stopped, form: 'spread', eyes: 'none', stretch: 1 - 0.3 * p, burst };
+        return { ...stopped, form: 'film', eyes: 'none', stretch: 0.7, fade: 1 - p };
       }
 
       if (reduced) {
+        face = 1;
+        tripWay = 0;
         // No funny turns with reduced motion: what starts one (a word, the theme, the Slope's cue) changes its pose.
         if (trick) gestureCount++;
         trick = null;
@@ -614,9 +642,18 @@ export function createMascotMotion(random: () => number = Math.random) {
           }
         } else {
           walking = away > 0 ? 1 : -1;
+          if (walking !== tripWay) [tripWay, tripFrom] = [walking, x];
           x += walking * speed * dt;
         }
       }
+      if (!walking) tripWay = 0;
+      // Its way: across between lines, or along its own, a leap or a stroll at least its own width.
+      const way = hovering ? 0 : leap ? (Math.abs(leap) >= WIDTH ? Math.sign(leap) : 0)
+        : walking && FACING_GAITS.has(gait) && Math.abs(target! - tripFrom) >= WIDTH ? walking : 0;
+      // A funny turn, or pointing the way, turns it as they do.
+      const facing = trick || aim || way <= 0 ? 1 : -1;
+      const turning = (2 * dt) / TURN_SECONDS;
+      face = facing > face ? Math.min(facing, face + turning) : Math.max(facing, face - turning);
       if (now >= nextBlink) {
         blinkUntil = now + BLINK_SECONDS;
         nextBlink = now + between(2, 6);
@@ -734,6 +771,10 @@ export function createMascotMotion(random: () => number = Math.random) {
         pose.turn = aim.way * Math.abs(pose.turn);
         pose.wag += aim.angle;
         if (pose.eyes === 'open' || pose.eyes === 'left' || pose.eyes === 'right') pose.eyes = 'right';
+      } else {
+        // Facing its way (issue 179); turned round, its eyes, set by the page's sides, are the other way in its drawing.
+        if (face < 0 && !trick && (pose.eyes === 'left' || pose.eyes === 'right')) pose.eyes = pose.eyes === 'left' ? 'right' : 'left';
+        pose.turn *= face;
       }
       if (now < blinkUntil && (pose.eyes === 'open' || pose.eyes === 'left' || pose.eyes === 'right')) pose.eyes = 'shut';
       if (frozen) {

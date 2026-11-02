@@ -591,7 +591,8 @@ test("Detune splits it, its twin on the side of Detune's sign: left below 0 cent
             const self = document.querySelector('#bead-self')!.getBoundingClientRect();
             const twin = document.querySelector<SVGUseElement>('.mascot-twin')!;
             const at = twin.checkVisibility() ? twin.getBoundingClientRect() : self;
-            seen.push(Math.sign(Math.round(at.left - self.left)));
+            // Edge-on as it turns round (issue 179), it and its twin are one line: no side to be on.
+            if (self.width > 10) seen.push(Math.sign(Math.round(at.left - self.left)));
             if (seen.length < 30) requestAnimationFrame(sample);
             else done(seen);
           };
@@ -602,6 +603,75 @@ test("Detune splits it, its twin on the side of Detune's sign: left below 0 cent
   await expect.poll(sides).toEqual(Array(30).fill(-1));
   await detune.press('End');
   await expect.poll(sides).toEqual(Array(30).fill(1));
+});
+
+test('strolling right its tail trails on its left; strolling left, a step and still, its tail is on its right (issue 179)', async ({ page, browserName }) => {
+  test.skip(browserName !== 'chromium', 'drawn alike in every browser; checked in one');
+  test.slow();
+  // Its rolls as the test sets them, once it does: low, it strolls to its line's left end, looks over, takes fright and
+  // steps back; high, it strolls far to the right.
+  await page.addInitScript(() => {
+    const own = Math.random;
+    Math.random = () => (window as { roll?: number }).roll ?? own();
+  });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  await listening(page);
+  await bringBead(page);
+  await page.mouse.move(2, 894); // off it, so its eyes and tail are its own
+  await page.keyboard.down('f'); // a Note held: it listens, and does no funny turn of its own
+  await settles(page);
+  // Every frame for `seconds` from the roll set: where it is across, which side of it its tail is, and whether it is on
+  // its own line doing nothing but strolling.
+  type Seen = { t: number; left: number; tail: number; free: boolean };
+  const sample = (roll: number, seconds: number) =>
+    page.evaluate(
+      ([roll, seconds]) =>
+        new Promise<Seen[]>((done) => {
+          (window as { roll?: number }).roll = roll;
+          const frames: Seen[] = [];
+          const frame = (t: number) => {
+            const bead = document.querySelector<HTMLElement>('.mascot')!;
+            const self = document.querySelector('#bead-self')!;
+            const [whole, tail] = [self.getBoundingClientRect(), self.firstElementChild!.getBoundingClientRect()];
+            const { moving, doing, act, pointing } = bead.dataset;
+            frames.push({
+              t: t / 1000,
+              left: bead.getBoundingClientRect().left,
+              tail: Math.sign(tail.left + tail.width / 2 - (whole.left + whole.width / 2)),
+              free: moving === 'standing' && !doing && !act && pointing === 'no',
+            });
+            if (t / 1000 - frames[0].t < seconds) requestAnimationFrame(frame);
+            else done(frames);
+          };
+          requestAnimationFrame(frame);
+        }),
+      [roll, seconds] as const,
+    );
+  const frames = [...(await sample(0.3, 7)), ...(await sample(0.9, 6))];
+  await page.keyboard.up('f');
+  // Its strolls and stops: each frame the same way along from three frames back (a frame sampled before it is drawn
+  // repeats the last), all on its own, from end to end. Past the moment it turns round, a stroll right as long as its
+  // width has its tail on its left; anything else, on its right.
+  const SETTLING = 0.25;
+  const BACK = 3;
+  const counted = { right: 0, short: 0, left: 0, still: 0 };
+  const way = (k: number) =>
+    frames.slice(k - BACK, k + 1).every((f) => f.free) ? Math.sign(Math.round(((frames[k].left - frames[k - BACK].left) * 20) / BACK)) : NaN;
+  for (let i = BACK + 1, end = i; i < frames.length - 1; i = end + 1) {
+    const w = way(i);
+    end = i;
+    while (end + 1 < frames.length && way(end + 1) === w) end++;
+    if (Number.isNaN(w) || Number.isNaN(way(i - 1)) || end + 1 >= frames.length || Number.isNaN(way(end + 1))) continue;
+    const length = frames[end].left - frames[i - BACK].left;
+    const settled = frames.slice(i, end + 1).filter((f) => f.t - frames[i].t >= SETTLING);
+    const kind = w > 0 ? (length >= 50 ? 'right' : length < 40 ? 'short' : null) : w < 0 ? 'left' : 'still';
+    if (!settled.length || !kind) continue;
+    counted[kind]++;
+    const side = kind === 'right' ? -1 : 1;
+    expect(settled.map((f) => f.tail), `${kind}, ${Math.round(length)} px, from ${frames[i].t.toFixed(2)} s`).toEqual(settled.map(() => side));
+  }
+  expect(counted.right * counted.left * counted.still, JSON.stringify(counted)).toBeGreaterThan(0);
 });
 
 test('dragged and let go, it is thrown, and lands on an edge', async ({ page }) => {

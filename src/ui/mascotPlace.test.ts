@@ -156,6 +156,16 @@ describe('the mascot between its lines, by the laws of motion (issue 115)', () =
     expect(acrossOf(frames.at(-1)!, 230)).toBe(230);
   });
 
+  it('between lines, says how far across its leap goes, for its facing; nothing on a line (issue 179)', () => {
+    const place = createMascotPlace({ random: () => 0.5 });
+    place.frame(edge('Oscillators', 300), span, 0, false, 100);
+    const frames = run(place, 1 / 60, 2, () => edge('Filter', 700), false, { min: 200, max: 260 });
+    const falling = frames.filter((f) => f.moving === 'falling');
+    expect(falling.length).toBeGreaterThan(10);
+    expect(falling.every((f) => f.leap === 130)).toBe(true);
+    expect(frames.filter((f) => f.moving !== 'falling').every((f) => f.leap === 0)).toBe(true);
+  });
+
   it('a short drop lands softly', () => {
     const place = createMascotPlace();
     place.frame(edge('Oscillators', 300), span, 0, false, 100);
