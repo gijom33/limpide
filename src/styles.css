@@ -1397,6 +1397,8 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   .knob-value { position: absolute; left: 0; right: 0; bottom: 0; height: var(--knob-label-h); line-height: var(--knob-label-h); font-size: var(--text-sm); color: var(--text); }
   .knob:not([data-changing]) .knob-value > :first-child { visibility: hidden; }
   .knob[data-changing] .knob-label { visibility: hidden; }
+  /* A Synth Geek Layer readout keeps its figure alone there, its words too wide for the name's place (issue 167). */
+  .knob-value .geek-words { display: none; }
   /* Hovered, a knob or fader shows its value in its name's place too, as turning it does (the owner, 2026-10-28). Only
      where a pointer hovers: a tap would otherwise leave the value up. */
   @media (hover: hover) {

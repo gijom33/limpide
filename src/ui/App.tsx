@@ -17,7 +17,7 @@ import { DisplayMenu } from './DisplayMenu';
 import { EnvelopeTimeline } from './EnvelopeTimeline';
 import { Fader } from './Fader';
 import { FilterShape } from './FilterShape';
-import { GeekContext, GeekOnContext } from './geekContext';
+import { GeekContext, GeekNoteContext, GeekOnContext } from './geekContext';
 import { useHold } from './hooks/useHold';
 import { useComputerKeyboard, useSpaceFreezes } from './hooks/useKeys';
 import { useMediaQuery } from './hooks/useMediaQuery';
@@ -185,6 +185,8 @@ export function App() {
     });
   }, [session]);
   const beadGone = useCallback(() => moveBead('gone'), [moveBead]);
+  // The Note the Synth Geek Layer's numbers use: the engine's newest (issue 133, decision 6).
+  const geekNotes = useMemo(() => ({ subscribe: session.engine.onNewestNote, get: session.engine.newestNote }), [session]);
   const modulationContext = useMemo(() => ({ engine: session.engine, patch: () => patches.get().patch, octave: octaveRef }), [session, patches]);
   // The letter keys play Notes unless turned off in Display (issue 51); remembered.
   const [letterKeys, setLetterKeys] = useRememberedSetting(storage, 'letterKeys');
@@ -490,6 +492,7 @@ export function App() {
     <ModulationContext.Provider value={modulationContext}>
     <GeekContext.Provider value={overlays.geek ? patch : null}>
     <GeekOnContext.Provider value={overlays.geek}>
+    <GeekNoteContext.Provider value={geekNotes}>
       <main data-frozen={viewer.frozen || undefined} data-learning={learning || undefined}>
         {midi.setup ? (
           <QuickSetupPanel
@@ -863,6 +866,7 @@ export function App() {
           />
         )}
       </main>
+    </GeekNoteContext.Provider>
     </GeekOnContext.Provider>
     </GeekContext.Provider>
     </ModulationContext.Provider>

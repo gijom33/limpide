@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DIP, envelopeLevel, type GateEvent } from '../modulation/envelope';
 import { lfoOffset, osc2Cents } from '../modulation/modulationModel';
+import { geekReadout } from '../music/geek';
 import { harmonicSeries, type Waveform } from '../music/harmonics';
 import { fmDepthKept, idealPartials, idealReference } from '../music/idealReference';
 import { noteIndex } from '../music/tempo';
@@ -2690,5 +2691,44 @@ describe('Legato (issue 119)', () => {
       e.noteOn(69, 1, 0.1);
       e.noteOn(81, 1, 1);
     })).toBe(1);
+  });
+});
+
+// Issue 133, decision 4: every live number of the Synth Geek Layer is held to what the engine plays (issue 167).
+describe('the Synth Geek Layer’s numbers for Osc 2, held to the engine (issue 167)', () => {
+  const sines = { cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001, waveform: 'sine', osc2Waveform: 'sine' } as const;
+  /** A readout's multiple as a number: "×1.498" is 1.498, "×½" 0.5. */
+  const multiple = (readout: string | undefined) => {
+    const figure = readout!.replace('×', '');
+    return ({ '½': 0.5, '¼': 0.25 } as Record<string, number>)[figure] ?? Number(figure);
+  };
+
+  for (const [id, value] of [['osc2Semitone', 7], ['osc2Octave', 1], ['osc2Octave', -1]] as const)
+    it(`Osc 2 sounds at the Note times what ${id === 'osc2Octave' ? 'Octave' : 'Semitone'} ${value > 0 ? '+' : ''}${value} reads`, async () => {
+      const patch = { ...defaultPatch(), ...sines, mixOsc1: 0, mixOsc2: 1, [id]: value };
+      const s = await render(1, patch, (e) => e.noteOn(69, 1, 0));
+      expect(frequencyAround(s, SR, 0.6, 0.5) / 440).toBeCloseTo(multiple(geekReadout(id, value, patch)), 3);
+    });
+
+  it('the summed Oscillators beat as fast as Detune 10 cents reads, at A4', async () => {
+    const patch = { ...defaultPatch(), ...sines, mixOsc1: 1, mixOsc2: 1, osc2Detune: 10 };
+    let note: number | null = null;
+    const s = await render(5, patch, (e) => {
+      expect(e.newestNote()).toBeNull();
+      e.noteOn(69, 1, 0);
+      note = e.newestNote();
+    });
+    const readout = geekReadout('osc2Detune', 10, patch, note);
+    expect(readout).toMatch(/ Hz beats$/);
+    // The level swells and fades once a beat: count its rises through the middle, 10 ms frames, after the Attack.
+    const frame = SR / 100;
+    const levels: number[] = [];
+    for (let from = SR / 4; from + frame <= s.length; from += frame / 2) levels.push(rms(s, from, from + frame));
+    const middle = (Math.max(...levels) + Math.min(...levels)) / 2;
+    const rises: number[] = [];
+    for (let i = 1; i < levels.length; i++)
+      if (levels[i - 1] < middle && levels[i] >= middle) rises.push(i - 1 + (middle - levels[i - 1]) / (levels[i] - levels[i - 1]));
+    const beatsHz = (rises.length - 1) / (((rises[rises.length - 1] - rises[0]) * frame) / 2 / SR);
+    expect(Math.abs(beatsHz - Number.parseFloat(readout!))).toBeLessThan(0.01);
   });
 });

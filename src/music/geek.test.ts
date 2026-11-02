@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CHOICES, defaultPatch } from '../patch/patch';
 import { PRESETS } from '../patch/presets';
-import { filterQ, geekReadout, harmonicFormula, levelDb, oscillatorFormulas, qText, responseFormula } from './geek';
+import { filterQ, geekReadout, harmonicFormula, levelDb, oscillatorFormulas, qText, responseFormula, widestGeekReadout } from './geek';
 import { harmonicSeries } from './harmonics';
 
 describe('the Synth Geek Layer: Resonance as Q', () => {
@@ -38,6 +38,41 @@ describe('the Synth Geek Layer: levels in dB', () => {
     expect(geekReadout('mixOsc2', 0.5, patch)).toBe('−6.0 dB');
     expect(geekReadout('ampSustain', 1, patch)).toBe('0.0 dB');
     expect(geekReadout('cutoff', 1000, patch)).toBeUndefined();
+  });
+});
+
+describe('the Synth Geek Layer: Osc 2’s tuning (issue 167)', () => {
+  const patch = defaultPatch();
+
+  it('reads the Semitone as Osc 2’s frequency ratio, whole octaves as fractions', () => {
+    expect(geekReadout('osc2Semitone', 7, patch)).toBe('×1.498');
+    expect(geekReadout('osc2Semitone', -7, patch)).toBe('×0.667');
+    expect(geekReadout('osc2Semitone', 0, patch)).toBe('×1');
+    expect(geekReadout('osc2Semitone', 12, patch)).toBe('×2');
+    expect(geekReadout('osc2Semitone', -12, patch)).toBe('×½');
+  });
+
+  it('reads the Octave as its multiple', () => {
+    expect(geekReadout('osc2Octave', 1, patch)).toBe('×2');
+    expect(geekReadout('osc2Octave', 2, patch)).toBe('×4');
+    expect(geekReadout('osc2Octave', -1, patch)).toBe('×½');
+    expect(geekReadout('osc2Octave', -2, patch)).toBe('×¼');
+    expect(geekReadout('osc2Octave', 0, patch)).toBe('×1');
+  });
+
+  it('reads Detune as its beating rate at the Note played, at A4 (said) before any', () => {
+    // 440 Hz × (2^(10/1200) − 1) = 2.549 Hz; at C4 (261.6 Hz) 1.516 Hz; an octave up on Osc 2, twice A4's.
+    expect(geekReadout('osc2Detune', 10, patch)).toBe('2.55 Hz at A4');
+    expect(geekReadout('osc2Detune', 10, patch, 69)).toBe('2.55 Hz beats');
+    expect(geekReadout('osc2Detune', 10, patch, 60)).toBe('1.52 Hz beats');
+    expect(geekReadout('osc2Detune', -10, patch, 69)).toBe('2.53 Hz beats');
+    expect(geekReadout('osc2Detune', 10, { ...patch, osc2Octave: 1 }, 69)).toBe('5.10 Hz beats');
+    expect(geekReadout('osc2Detune', 50, { ...patch, osc2Octave: 2, osc2Semitone: 12 }, 108)).toBe('981 Hz beats');
+    expect(geekReadout('osc2Detune', 0, patch, 69)).toBe('0.00 Hz beats');
+  });
+
+  it('sizes each for its widest', () => {
+    for (const id of ['osc2Octave', 'osc2Semitone', 'osc2Detune'] as const) expect(widestGeekReadout(id)).toBeDefined();
   });
 });
 

@@ -2,6 +2,7 @@ import { filterStages } from '../engine/filterDesign';
 import { type FilterMode, type FilterSlope, FM_INDEX, fmIndex, osc1Heard, type ParamId, type Patch } from '../patch/patch';
 import { WAVEFORM_NAMES, type Waveform } from './harmonics';
 import { besselJ, osc2Ratio } from './idealReference';
+import { noteToFrequency } from './pitch';
 
 /**
  * The Synth Geek Layer's content (issue 14): the quantities behind the sound, as data. The formulas are the ones the
@@ -116,16 +117,94 @@ export function levelDb(level: number): string {
 /** The Parameters whose value is a gain: the Mixer's levels and the Amp's Sustain. */
 const GAINS: ParamId[] = ['mixOsc1', 'mixOsc2', 'mixSub', 'mixNoise', 'ampSustain', 'volume'];
 
-/** What a knob or fader reads in the Synth Geek Layer instead of its everyday value, if anything. */
-export function geekReadout(id: ParamId, value: number, patch: Patch): string | undefined {
-  if (id === 'resonance') return qText(patch.filterMode, patch.filterSlope, value);
-  if (GAINS.includes(id)) return levelDb(value);
+/**
+ * The Note the layer's numbers are worked out at (issue 133, decision 6): the last Note played, as a MIDI note number;
+ * before any (null), A4, and the readout says so with BEFORE_ANY_NOTE.
+ */
+export type GeekNote = number | null;
+const A4 = 69;
+export const BEFORE_ANY_NOTE = 'at A4';
+/** The frequency of the Note the numbers use, in Hz. */
+export const geekNoteHz = (note: GeekNote) => noteToFrequency(note ?? A4);
+
+/** Whole octaves under the Note, as fractions. */
+const FRACTIONS = ['1', '½', '¼'];
+/** A frequency ratio as a multiple: whole octaves as "×2", "×½"; anything else to three places, "×1.498". */
+function multipleText(ratio: number): string {
+  const octaves = Math.log2(ratio);
+  if (Math.abs(octaves - Math.round(octaves)) > 1e-9) return `×${ratio.toFixed(3)}`;
+  const k = Math.round(octaves);
+  return `×${k >= 0 ? 2 ** k : FRACTIONS[-k]}`;
+}
+
+/**
+ * How fast Osc 2 beats against a tone at its pitch before Detune, in Hz (issue 167): Δf = f·(2^(c/1200) − 1), f the
+ * Note played moved by Osc 2's Octave and Semitone, as the engine tunes it (osc2Cents), c the cents of Detune.
+ */
+export function detuneBeatsHz(patch: Patch, cents: number, note: GeekNote): number {
+  const f = geekNoteHz(note) * 2 ** (patch.osc2Octave + patch.osc2Semitone / 12);
+  return Math.abs(f * (2 ** (cents / 1200) - 1));
+}
+/** A rate in Hz to three figures: "2.55 Hz", "25.5 Hz", "981 Hz". */
+const hzText = (hz: number) => `${hz < 10 ? hz.toFixed(2) : hz < 100 ? hz.toFixed(1) : Math.round(hz)} Hz`;
+
+/**
+ * A readout of the Synth Geek Layer: its figure, and the words after it, if any, which are left out where the readout
+ * shows in the name's place (phones, issue 83), too narrow for them: "2.55 Hz" and "beats".
+ */
+export interface GeekReadout {
+  figure: string;
+  words?: string;
+}
+
+/**
+ * What a knob or fader reads in the Synth Geek Layer instead of its everyday value, if anything, in its parts; `note`
+ * is the last Note played, for the readouts that depend on it.
+ */
+export function geekReadoutParts(id: ParamId, value: number, patch: Patch, note: GeekNote = null): GeekReadout | undefined {
+  if (id === 'resonance') return { figure: qText(patch.filterMode, patch.filterSlope, value) };
+  if (GAINS.includes(id)) return { figure: levelDb(value) };
+  if (id === 'osc2Octave') return { figure: multipleText(2 ** value) };
+  if (id === 'osc2Semitone') return { figure: multipleText(2 ** (value / 12)) };
+  if (id === 'osc2Detune') return { figure: hzText(detuneBeatsHz(patch, value, note)), words: note === null ? BEFORE_ANY_NOTE : 'beats' };
   return undefined;
+}
+
+/** A readout's whole text: "2.55 Hz beats". */
+export const readoutText = ({ figure, words }: GeekReadout) => (words ? `${figure} ${words}` : figure);
+
+/** What a knob or fader reads in the Synth Geek Layer, as a whole: "Q 0.71", "2.55 Hz beats". */
+export function geekReadout(id: ParamId, value: number, patch: Patch, note: GeekNote = null): string | undefined {
+  const parts = geekReadoutParts(id, value, patch, note);
+  return parts && readoutText(parts);
 }
 
 /** The widest readout a Parameter can show in the Synth Geek Layer, to size its column while the layer is on. */
 export function widestGeekReadout(id: ParamId): string | undefined {
   if (id === 'resonance') return 'Q 15.8 ×2';
   if (GAINS.includes(id)) return '−99.9 dB';
+  if (id === 'osc2Octave' || id === 'osc2Semitone') return '×0.000';
+  // Its widest at the top of MIDI's Notes, Osc 2 three octaves up: 2.9 kHz.
+  if (id === 'osc2Detune') return '9999 Hz beats';
   return undefined;
 }
+
+/**
+ * The formulas in the tips, under "Under the hood" (issue 133, decision 2), shown with the Synth Geek Layer on, above
+ * History: each the one the engine computes, its letters said. Keyed by what they explain; the tips name theirs.
+ */
+export const UNDER_THE_HOOD = {
+  osc2Octave: { formula: 'f₂ = f × 2^o', where: 'o: the Octave; f: the Note played. Each octave doubles the frequency: ×2 up, ×½ down.' },
+  osc2Semitone: {
+    formula: 'f₂ = f × 2^(s/12)',
+    where: 's: the Semitones; f: the Note played. Twelve equal steps to an octave, each ×1.059; +7 is ×1.498, near a fifth’s 3/2.',
+  },
+  osc2Detune: {
+    formula: 'Δf = f·(2^(c/1200) − 1)',
+    where: 'Δf: the beats per second against a tone at f; c: the cents; f: Osc 2 before Detune, on the Note played (A4 until one is).',
+  },
+  noise: {
+    formula: 'white: P(f) flat;  pink: P(f) ∝ 1/f, −3 dB per octave',
+    where: 'P(f): the power at each frequency. Pink is white through Paul Kellet’s filter, −10 dB a decade, as loud overall.',
+  },
+} satisfies Record<string, Formula>;

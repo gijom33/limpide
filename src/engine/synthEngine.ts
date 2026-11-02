@@ -49,6 +49,13 @@ export interface SynthEngine {
   release(note: number, at?: number): void;
   /** Frequency of the most recent Note (A4 before any), for Cycle Lock. */
   fundamental(): number;
+  /**
+   * The newest Note played (a MIDI note number), a player's or a Note handed over ahead included; null before any. The
+   * Note the Synth Geek Layer's numbers are worked out at (issue 133, decision 6).
+   */
+  newestNote(): number | null;
+  /** Be told each time the newest Note changes (a Note on, or a pitch change on one Voice). */
+  onNewestNote(listener: () => void): () => void;
   /** The Modulation model at `time` (default: now), from the Gate history — past times too, for the Timeline. */
   modulationAt(time?: number): Modulation;
   /**
@@ -1161,6 +1168,9 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   };
   follow(voices[0]);
 
+  // The newest Note played, and who wants to know when it changes: the Synth Geek Layer's readouts.
+  let newest: number | null = null;
+  const newestListeners = new Set<() => void>();
   const setLeadPitch = (voice: Voice, note: number, t: number) => {
     // Glide is a one-Voice behaviour: a Note slides from the previous one; with more Voices, Notes start at pitch.
     const glide = patch && pitches.length && voiceCount() === 1 && patch.glide > GLIDE_OFF * 1.001 ? patch.glide : 0;
@@ -1173,6 +1183,10 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       entry.fromNote = glideFrom(previous.fromNote, previous.note, previous.glide, t - previous.time);
     }
     trim(pitches, t);
+    if (note !== newest) {
+      newest = note;
+      for (const listener of newestListeners) listener();
+    }
   };
   // The newest Note's frequency at `t`, through its Glide (before the first Note, the first Note's; none: 0).
   const glidingAt = (t: number) => {
@@ -1276,6 +1290,11 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       const then = patchAt(ctx.currentTime);
       const frequency = (glidingAt(ctx.currentTime) || A4) * 2 ** ((then?.osc1Octave ?? 0) + bendCentsAt(ctx.currentTime) / 1200);
       return then?.mixSub ? frequency * 2 ** then.subOctave : frequency;
+    },
+    newestNote: () => newest,
+    onNewestNote(listener) {
+      newestListeners.add(listener);
+      return () => newestListeners.delete(listener);
     },
     modulationAt,
     lfoSwingAt: (time, n = 1) => {

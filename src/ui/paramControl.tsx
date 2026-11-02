@@ -1,9 +1,9 @@
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { geekReadout, widestGeekReadout } from '../music/geek';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { geekReadout, geekReadoutParts, readoutText, widestGeekReadout } from '../music/geek';
 import { type StepSize, stepParamBy } from '../patch/grid';
 import { formatParam, PARAMS, type ParamId, paramName } from '../patch/patch';
 import { positionToValue, valueToPosition } from '../patch/taper';
-import { GeekContext } from './geekContext';
+import { GeekContext, GeekNoteContext } from './geekContext';
 import { useLearnable } from './learn';
 
 /** Readouts sampled across a control's travel to find the widest it can show. */
@@ -51,9 +51,13 @@ export function useParamControl(id: ParamId, value: number, onChange: (value: nu
   };
   const learnable = useLearnable({ kind: 'param', id: def.knob ?? id });
   // In the Synth Geek Layer some controls read the quantity behind their value instead (Q, dB): sized for it while on.
+  // Some depend on the Note played (Detune's beats): followed as the Note changes, a control rendering again only when
+  // its own readout's text does.
   const geekPatch = useContext(GeekContext);
-  const geek = geekPatch ? geekReadout(id, value, geekPatch) : undefined;
-  const readout = geek ?? formatParam(id, value);
+  const notes = useContext(GeekNoteContext);
+  useSyncExternalStore(notes.subscribe, () => (geekPatch ? geekReadout(id, value, geekPatch, notes.get()) : undefined));
+  const geek = geekPatch ? geekReadoutParts(id, value, geekPatch, notes.get()) : undefined;
+  const readout = geek ? readoutText(geek) : formatParam(id, value);
   const geekOn = !!geekPatch; // the context holds null while the layer is off
   const widest = useMemo(
     () => [...widestReadouts(id), ...(geekOn ? twins(id).flatMap((t) => widestGeekReadout(t) ?? []) : [])],
@@ -113,7 +117,14 @@ export function useParamControl(id: ParamId, value: number, onChange: (value: nu
       {touching && <div className="value-bubble">{readout}</div>}
       <div className="knob-label">{def.label}</div>
       <div className="knob-value">
-        <span data-geek={geek !== undefined || undefined}>{readout}</span>
+        {geek ? (
+          <span data-geek>
+            {geek.figure}
+            {geek.words && <span className="geek-words"> {geek.words}</span>}
+          </span>
+        ) : (
+          <span>{readout}</span>
+        )}
         {widest.map((t) => (
           <span key={t} className="knob-value-sizer" aria-hidden="true">
             {t}
