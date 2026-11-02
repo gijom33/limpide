@@ -46,6 +46,7 @@
 - **While it runs,** the BPM reads "120 MIDI" ("MIDI" in the unit's place), its edge in the MIDI button's green, and cannot be dragged, stepped, typed or tapped; its tip says why. A second without a tick and the clock has stopped: its last BPM stays, remembered, the owner's to change.
 - **The players:** while the Demo, the Song, the Tour or a Tutorial plays, it keeps its own BPM and the clock is followed unseen; when it stops, the clock's tempo is back on the clock's beats (or, if the clock stopped meanwhile, its last BPM).
 - **The record:** CONTEXT.md's Tempo, a PRD story (103) and its implementation line.
+- **A slip found after the build:** the players' browser test (`usePlayers`) still expected the tempo without its new `midi` field; it now expects `midi: false` while a player holds the tempo and after it stops, as no clock runs there. The code is unchanged: the field belongs in the tempo, which the BPM's mark reads. The file passes (6 tests).
 
 **Claude's calls, open to the owner:**
 1. **The mark** is the word "MIDI" in place of "BPM" and the box's edge in the MIDI button's connected green. From 861 to 1099 px, where the BPM shows its number alone, only the edge shows: the word there took 25 px from the keyboard, the piano's keys falling from 27.6 to 24.8 px at 861 px with Verdana standing in for Linux's fonts (measured before building).
