@@ -252,13 +252,13 @@ export function BeadIcon({ on }: { on: boolean }) {
 }
 
 /**
- * Bead in About (issue 163), twice its size on the page, standing still on its feet: idle as on the page, it blinks,
- * glances about, wags its tail, and now and then jiggles or hops. All in the stylesheet, so it costs no frame of the
- * render loop, and with reduced motion it is still.
+ * Bead in About (issue 163), at its size on the page (issue 178), standing still on its feet: idle as on the page, it
+ * blinks, glances about, wags its tail, and now and then jiggles or hops. All in the stylesheet, so it costs no frame of
+ * the render loop, and with reduced motion it is still.
  */
 export function BeadIdle() {
   return (
-    <svg className="bead-idle" viewBox="0 0 22 13" width={WIDTH * 2} height={HEIGHT * 2} shapeRendering="crispEdges" aria-hidden="true">
+    <svg className="bead-idle" viewBox="0 0 22 13" width={WIDTH} height={HEIGHT} shapeRendering="crispEdges" aria-hidden="true">
       <g className="bead-idle-body">
         <g className="bead-idle-tail">
           {tailOf(TAIL)}

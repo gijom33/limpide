@@ -92,7 +92,7 @@ export function About({
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div className="about-body">
-        {/* Bead stands on the logo's baseline, to its right, so the logo stays in the middle over the name. */}
+        {/* Bead stands to the logo's right at its page size, its foot on the mark's bottom, the two centred (issue 178). */}
         <div className="about-mark">
           <Logo size={72} />
           {beadOn && (

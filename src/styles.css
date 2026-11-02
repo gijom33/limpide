@@ -612,19 +612,14 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .wordmark-text { color: var(--text); } /* plain, so the colours are the mark's alone */
 /* In About the name sits close under the mark, as in the header it sits close beside it. */
 .about-body > .about-mark + .about-title { margin-top: calc(-1 * var(--space-2)); }
-/* Bead in About (issue 163): twice its size on the page, standing on the logo's baseline to its right, the logo still
-   in the middle; a button that shows its card in place of the credits. */
-.about-mark { position: relative; }
+/* Bead in About (issues 163, 178): at its size on the page, to the logo's right, the two centred together; its foot
+   level with the bottom of the mark's stroke, which ends 0.8 of the mark's 16 units over the foot of its box (2.2 px at
+   72 px wide). A button that shows its card in place of the credits, a phone's 44 px tall with Bead at its foot. */
+.about-mark { display: flex; align-items: flex-end; gap: var(--space-3); }
 .about-mark .logo { display: block; }
 .about-bead {
-  position: absolute; left: calc(100% + var(--space-3)); bottom: 0; display: block; padding: 0; color: inherit;
+  display: flex; align-items: flex-end; min-height: 44px; padding: 0 0 calc(72px * 0.8 / 26); color: inherit;
   background: none; border: 0; border-radius: var(--radius-control); cursor: pointer;
-}
-/* Narrower than 340 px (About fits the window down to 280 px, though the page lays out at 320), the logo beside Bead
-   would leave too little room for its tail: the two are centred together. */
-@media (max-width: 339px) {
-  .about-mark { display: flex; align-items: flex-end; gap: var(--space-3); }
-  .about-bead { position: static; }
 }
 .about-bead:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
 .about-bead svg { display: block; overflow: visible; }

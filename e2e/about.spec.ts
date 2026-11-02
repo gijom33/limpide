@@ -104,8 +104,8 @@ test('About, opened any time, offers the Demo and the Tour beside Close (the own
   await expect(page.getByRole('button', { name: 'Demo', exact: true })).toHaveAttribute('aria-pressed', 'true');
 });
 
-// Issue 163: Bead, out on the page by default (issue 150), stands beside About's logo at twice its page size, and a
-// click on it shows its card of tricks in place of the credits. With its switch off, About is as before.
+// Issue 163: Bead, out on the page by default (issue 150), stands beside About's logo (at its page size, issue 178), and
+// a click on it shows its card of tricks in place of the credits. With its switch off, About is as before.
 test.describe('Bead in About (issue 163)', () => {
   const about = (page: Page) => page.getByRole('dialog', { name: 'Limpide' });
   const bead = (page: Page) => about(page).getByRole('button', { name: 'Bead, Limpide’s water drop: its tricks' });
@@ -115,21 +115,40 @@ test.describe('Bead in About (issue 163)', () => {
   test.describe('switched on', () => {
     test.use({ storageState: holding({ ...WELCOMED, 'limpide.bead': 'on' }) });
 
-    test('it stands on the logo’s baseline to its right, twice its size on the page', async ({ page }) => {
+    // Issue 178: at its own size, its foot level with the bottom of the mark's stroke, the two centred together.
+    test('it stands at its size on the page, to the logo’s right, its foot level with the bottom of the mark', async ({ page }) => {
       await page.goto('/');
       await expect(page.locator('.mascot')).toHaveCount(1, { timeout: 6000 });
       const onPage = (await page.locator('.mascot-drop svg').boundingBox())!;
-      await page.getByRole('button', { name: 'About', exact: true }).click();
-      await expect(bead(page)).toBeVisible();
-      const logo = (await about(page).locator('.logo').boundingBox())!;
-      const drawn = (await bead(page).locator('svg').boundingBox())!;
-      expect(drawn.width / onPage.width).toBeCloseTo(2, 1);
-      expect(drawn.height / onPage.height).toBeCloseTo(2, 1);
-      expect(drawn.x, 'to the logo’s right').toBeGreaterThanOrEqual(logo.x + logo.width);
-      expect(Math.abs(drawn.y + drawn.height - (logo.y + logo.height)), 'on its baseline').toBeLessThanOrEqual(1);
+      for (const [width, height] of [[393, 659], [1440, 900]] as const) {
+        await page.setViewportSize({ width, height });
+        await page.goto('/');
+        await page.getByRole('button', { name: 'About', exact: true }).click();
+        await expect(bead(page)).toBeVisible();
+        const logo = (await about(page).locator('.logo').boundingBox())!;
+        const drawn = (await bead(page).locator('svg').boundingBox())!;
+        const body = (await about(page).locator('.about-body').boundingBox())!;
+        // The mark's lowest point: its path's bottom and half its stroke, in the window's pixels.
+        const markBottom = await about(page)
+          .locator('.logo')
+          .evaluate((svg: SVGSVGElement) => {
+            const path = svg.querySelector('path')!;
+            const box = path.getBBox();
+            const view = svg.viewBox.baseVal;
+            const scale = svg.getBoundingClientRect().height / view.height;
+            const stroke = Number(path.getAttribute('stroke-width'));
+            return svg.getBoundingClientRect().top + (box.y + box.height + stroke / 2 - view.y) * scale;
+          });
+        expect(drawn.width, `${width}px: its width on the page`).toBeCloseTo(onPage.width, 0);
+        expect(drawn.height, `${width}px: its height on the page`).toBeCloseTo(onPage.height, 0);
+        expect(drawn.x, `${width}px: to the logo’s right`).toBeGreaterThanOrEqual(logo.x + logo.width);
+        expect(Math.abs(drawn.y + drawn.height - markBottom), `${width}px: its foot on the mark’s bottom`).toBeLessThanOrEqual(1);
+        const middle = (logo.x + drawn.x + drawn.width) / 2;
+        expect(Math.abs(middle - (body.x + body.width / 2)), `${width}px: the two centred together`).toBeLessThanOrEqual(1);
+      }
     });
 
-    test('it fits in About down to the narrowest window, the logo centred with it where the two need room', async ({ page }) => {
+    test('it fits in About down to the narrowest window, centred with the logo', async ({ page }) => {
       for (const width of [280, 320, 340, 375]) {
         await page.setViewportSize({ width, height: 700 });
         await page.goto('/');
