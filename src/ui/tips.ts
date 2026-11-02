@@ -1,7 +1,7 @@
 import { bankLetter, C16_BANKS, describeSharedButtons } from '../midi/c16';
 import { describeMode } from '../midi/describe';
 import { DESTINATIONS } from '../modulation/destinations';
-import { UNDER_THE_HOOD } from '../music/geek';
+import { UNDER_THE_HOOD, underTheHoodAt } from '../music/geek';
 import { stepWords } from '../patch/grid';
 import { LFO_DESTINATIONS, type LfoDestination, PARAMS, type ParamId } from '../patch/patch';
 import type { Overlay } from '../viewers/overlays';
@@ -412,6 +412,15 @@ export function lfoLineTip(destination: LfoDestination, aftertouch: boolean): Ti
   return destination === 'pitch'
     ? { title: label, body: `${colour} broken line: the pitch as the LFO moves it (vibrato), a semitone up at the top and down at the bottom, the Note’s own pitch in the middle.${pressure}` }
     : { title: label, body: `${colour} broken line: the ${label} as the LFO moves it (both LFOs added together when both aim at it), on its knob’s scale, bottom to top.${pressure}` };
+}
+
+/**
+ * A knob's or fader's tip at its setting: where its formula under the hood works out a live number (an Envelope
+ * stage's τ, Glide's: issue 168), that one; otherwise its own tip.
+ */
+export function paramTipAt(id: ParamId, value: number): TipContent {
+  const underTheHood = underTheHoodAt(id, value);
+  return underTheHood ? { ...PARAM_TIPS[id], underTheHood } : PARAM_TIPS[id];
 }
 
 /** A synced Rate's tip (issue 176): its Hz at the tempo, which its readout leaves out so its knob keeps one width. */

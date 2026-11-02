@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CHOICES, defaultPatch } from '../patch/patch';
 import { PRESETS } from '../patch/presets';
-import { filterQ, geekReadout, harmonicFormula, levelDb, oscillatorFormulas, qText, responseFormula, UNDER_THE_HOOD, widestGeekReadout } from './geek';
+import { filterQ, geekReadout, harmonicFormula, levelDb, oscillatorFormulas, qText, responseFormula, UNDER_THE_HOOD, underTheHoodAt, widestGeekReadout } from './geek';
 import { harmonicSeries } from './harmonics';
 import { noteIndex } from './tempo';
 
@@ -155,6 +155,39 @@ describe('the Synth Geek Layer: Key Track (issue 169)', () => {
   it('sizes it for its widest, and gives its formula', () => {
     expect(widestGeekReadout('keyTrack')).not.toHaveLength(0);
     expect(UNDER_THE_HOOD.keyTrack.formula).toBe('fc = Cutoff × 2^(k·(n − 60)/12)');
+  });
+});
+
+describe('the Synth Geek Layer: the Envelopes and Glide (issue 168)', () => {
+  it('works out each Envelope stage’s τ at its fader’s setting, Attack a curve too', () => {
+    expect(underTheHoodAt('ampDecay', 0.3)?.where).toMatch(/^τ = Decay ÷ 4 = 75\.0 ms now/);
+    expect(underTheHoodAt('filterDecay', 0.3)?.where).toMatch(/^τ = Decay ÷ 4 = 75\.0 ms now/);
+    expect(underTheHoodAt('ampRelease', 0.3)?.where).toMatch(/^τ = Release ÷ 6 = 50\.0 ms now/);
+    expect(underTheHoodAt('ampAttack', 0.01)?.where).toMatch(/^τ = Attack ÷ 3 = 3\.33 ms now/);
+    expect(underTheHoodAt('filterRelease', 10)?.where).toMatch(/^τ = Release ÷ 6 = 1\.67 s now/);
+    expect(underTheHoodAt('ampDecay', 0.001)?.where).toMatch(/^τ = Decay ÷ 4 = 0\.250 ms now/);
+  });
+
+  it('says how far each curve gets: 63 % in one τ, and where it is at the stage’s time', () => {
+    expect(underTheHoodAt('ampAttack', 0.01)?.where).toContain('63 %');
+    expect(underTheHoodAt('ampAttack', 0.01)?.where).toContain('95 %');
+    expect(underTheHoodAt('ampAttack', 0.01)?.where).toContain('not a straight rise');
+    expect(underTheHoodAt('ampDecay', 0.3)?.where).toContain('98 %');
+    expect(underTheHoodAt('ampRelease', 0.3)?.where).toContain('99.75 %');
+    expect(underTheHoodAt('ampAttack', 0.01)?.formula).toBe('x = 1 − (1 − x₀)·e^(−t/τ)');
+    expect(underTheHoodAt('ampDecay', 0.3)?.formula).toBe('x = S + (x₀ − S)·e^(−t/τ)');
+    expect(underTheHoodAt('ampRelease', 0.3)?.formula).toBe('x = x₀·e^(−t/τ)');
+  });
+
+  it('gives Glide’s slide curve, its τ at the knob’s setting, and Off’s jump', () => {
+    expect(underTheHoodAt('glide', 0.4)?.formula).toBe('f = f₂ + (f₁ − f₂)·e^(−t/τ)');
+    expect(underTheHoodAt('glide', 0.4)?.where).toMatch(/^τ = Glide ÷ 4 = 100 ms now/);
+    expect(underTheHoodAt('glide', 0.001)?.where).toMatch(/^Off: the pitch jumps/);
+  });
+
+  it('has none for the other controls', () => {
+    expect(underTheHoodAt('ampSustain', 0.5)).toBeUndefined();
+    expect(underTheHoodAt('cutoff', 1000)).toBeUndefined();
   });
 });
 

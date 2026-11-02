@@ -1,7 +1,9 @@
 import { filterStages } from '../engine/filterDesign';
+import { type EnvelopeStage, STAGE_SHARPNESS, stageTimeConstant } from '../modulation/envelope';
+import { GLIDE_SHARPNESS, glideTimeConstant } from '../modulation/lfo';
 import { destinationSwings, effectiveCutoff, KEY_TRACK_CENTRE, LFO_LAWS, osc2Cents } from '../modulation/modulationModel';
 import {
-  type FilterMode, type FilterSlope, FM_INDEX, fmIndex, formatParam, LFO_DESTINATIONS, LFO_KEYS, type LfoDestination, type LfoNumber, osc1Heard,
+  type FilterMode, type FilterSlope, FM_INDEX, fmIndex, formatParam, GLIDE_OFF, LFO_DESTINATIONS, LFO_KEYS, type LfoDestination, type LfoNumber, osc1Heard,
   type ParamId, type Patch,
 } from '../patch/patch';
 import { WAVEFORM_NAMES, type Waveform } from './harmonics';
@@ -303,3 +305,49 @@ export const UNDER_THE_HOOD = {
     where: 'P(f): the power at each frequency. Pink is white through Paul Kellet’s filter, −10 dB a decade, as loud overall.',
   },
 } satisfies Record<string, Formula>;
+
+/** A time constant, to three figures: "75.0 ms", "0.250 ms", "1.67 s". */
+const secondsText = (seconds: number) => (seconds >= 1 ? `${seconds.toFixed(2)} s` : `${(seconds * 1000).toPrecision(3)} ms`);
+/** How far a curve has gone after `n` time constants, in %: "95 %", "98 %", "99.75 %". */
+const wayAfter = (n: number) => {
+  const way = (1 - Math.exp(-n)) * 100;
+  return `${Number(way.toFixed(way > 99 ? 2 : 0))} %`;
+};
+
+/** Each Envelope fader's stage. */
+const STAGE_OF: Partial<Record<ParamId, EnvelopeStage>> = {
+  ampAttack: 'attack', filterAttack: 'attack', ampDecay: 'decay', filterDecay: 'decay', ampRelease: 'release', filterRelease: 'release',
+};
+const STAGE_NAMES: Record<EnvelopeStage, string> = { attack: 'Attack', decay: 'Decay', release: 'Release' };
+/** Each stage's curve, the level x as a share of the peak, t the time since the stage began; and its letters. */
+const STAGE_CURVES: Record<EnvelopeStage, Formula> = {
+  attack: { formula: 'x = 1 − (1 − x₀)·e^(−t/τ)', where: 'x₀ the level the key found (0 from silence), rising towards the peak' },
+  decay: { formula: 'x = S + (x₀ − S)·e^(−t/τ)', where: 'x₀ the level the Attack reached, falling towards S, the Sustain level' },
+  release: { formula: 'x = x₀·e^(−t/τ)', where: 'x₀ the level when the key came up, falling towards silence' },
+};
+
+/**
+ * The formulas under the hood worked out at a control's setting (issue 168), where the tip shows a live number: each
+ * Envelope stage's curve and its time constant τ as the engine sets it, and Glide's slide; undefined for the others.
+ */
+export function underTheHoodAt(id: ParamId, value: number): Formula | undefined {
+  const stage = STAGE_OF[id];
+  if (stage) {
+    const name = STAGE_NAMES[stage];
+    const sharpness = STAGE_SHARPNESS[stage];
+    const tau = `τ = ${name} ÷ ${sharpness} = ${secondsText(stageTimeConstant(stage, value))} now`;
+    const curve = stage === 'attack' ? 'A curve, not a straight rise: it' : 'It';
+    return {
+      formula: STAGE_CURVES[stage].formula,
+      where: `${tau}. x: the level, as a share of the peak; t: the time since the ${name} began; ${STAGE_CURVES[stage].where}. ${curve} goes 63 % of what is left of the way in each τ, ${wayAfter(sharpness)} by the ${name} time.`,
+    };
+  }
+  if (id === 'glide') {
+    const slide = value <= GLIDE_OFF * 1.001 ? 'Off: the pitch jumps to each Note' : `τ = Glide ÷ ${GLIDE_SHARPNESS} = ${secondsText(glideTimeConstant(value))} now`;
+    return {
+      formula: 'f = f₂ + (f₁ − f₂)·e^(−t/τ)',
+      where: `${slide}. f: the pitch in Hz, sliding from f₁, where it was, to f₂, the Note played; t: the time since that Note. 63 % of the way in each τ, ${wayAfter(GLIDE_SHARPNESS)} by the Glide time. With one Voice only.`,
+    };
+  }
+  return undefined;
+}

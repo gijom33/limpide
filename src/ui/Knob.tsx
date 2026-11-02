@@ -6,7 +6,7 @@ import { useInactive } from './inactive';
 import { ModulationRing } from './modulationRing';
 import { pressed, useParamControl, usePress, useWheel } from './paramControl';
 import { type TipContent, Tooltip } from './Tooltip';
-import { PARAM_TIPS } from './tips';
+import { paramTipAt } from './tips';
 
 const DRAG_PIXELS_FOR_FULL_TRAVEL = 200;
 /** How far a pointer may wander before a press counts as a drag rather than a click. */
@@ -68,7 +68,7 @@ export function Knob({ id, value, onChange, inactive, spoken, tip }: Props) {
   const dimmed = useInactive(inactive);
 
   return (
-    <Tooltip content={tip ?? PARAM_TIPS[id]}>
+    <Tooltip content={tip ?? paramTipAt(id, value)}>
       <div className="knob" data-size={g === GEOMETRY.play ? 'big' : 'small'} {...dimmed.props} {...c.attributes}>
         <svg
           ref={wheel}

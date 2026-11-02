@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DIP, envelopeLevel, type GateEvent } from '../modulation/envelope';
 import { lfoOffset, osc2Cents } from '../modulation/modulationModel';
-import { geekReadout } from '../music/geek';
+import { geekReadout, underTheHoodAt } from '../music/geek';
 import { harmonicSeries, type Waveform } from '../music/harmonics';
 import { fmDepthKept, idealPartials, idealReference } from '../music/idealReference';
 import { noteIndex } from '../music/tempo';
@@ -2861,5 +2861,78 @@ describe('the Synth Geek Layer’s numbers for the LFOs and Key Track, held to t
     const atNote = geekReadout('keyTrack', 0.5, patch, { note });
     expect(atNote).toBe('1.73 kHz'); // 1 kHz × 2^(0.5 × 19/12)
     expect(Math.abs(hz(atNote) / engine.modulationAt(0.5).cutoff - 1)).toBeLessThan(0.005);
+  });
+});
+
+// Issue 133, decision 4: the Envelopes' and Glide's time constants, as their tips work them out, held to the engine (issue 168).
+describe('the Synth Geek Layer’s time constants for the Envelopes and Glide, held to the engine (issue 168)', () => {
+  /** The τ a tip works out: "τ = Decay ÷ 4 = 0.500 s now" is 0.5. */
+  const tau = (id: Parameters<typeof underTheHoodAt>[0], value: number) => {
+    const [, figure, unit] = underTheHoodAt(id, value)!.where.match(/^τ = \w+ ÷ \d = ([\d.]+) (ms|s) now/)!;
+    return Number(figure) / (unit === 'ms' ? 1000 : 1);
+  };
+  /**
+   * The Amp Envelope's level at each of `times`, as the Amp Tap shows it: its last 20 ms over the Filter Tap's, the
+   * level halfway through them (an A5 sine, 17 cycles in the window).
+   */
+  const ampLevels = async (patch: Partial<Patch>, play: (e: ReturnType<typeof createSynthEngine>) => void, times: number[]) => {
+    const window = Math.round(SR * 0.02);
+    const ctx = new OfflineAudioContext(1, SR * (Math.max(...times) + 0.2), SR);
+    const engine = createSynthEngine(ctx);
+    engine.applyPatch({ ...defaultPatch(), cutoff: 20000, resonance: 0, waveform: 'sine', ...patch });
+    play(engine);
+    const tail = (a: AnalyserNode) => {
+      const s = new Float32Array(a.fftSize);
+      a.getFloatTimeDomainData(s);
+      return s.subarray(s.length - window);
+    };
+    const levels = times.map((t) =>
+      ctx.suspend(t + 0.01).then(() => {
+        const level = rms(tail(engine.taps.amp)) / rms(tail(engine.taps.filter));
+        void ctx.resume();
+        return level;
+      }),
+    );
+    await ctx.startRendering();
+    return Promise.all(levels);
+  };
+
+  it('the Attack rises 63 % of the way in the τ its tip reads: a curve, not a straight rise', async () => {
+    const t = tau('ampAttack', 3);
+    expect(t).toBe(1);
+    const [level] = await ampLevels({ ampAttack: 3, ampSustain: 1 }, (e) => e.noteOn(81, 1, 0), [t]);
+    expect(level).toBeCloseTo(1 - Math.exp(-1), 2);
+  });
+
+  it('the Decay falls 63 % of the way to the Sustain in the τ its tip reads', async () => {
+    const t = tau('ampDecay', 2);
+    expect(t).toBe(0.5);
+    // Sustain at 0: from where the Attack left it (all but the fastest Attack's last 5 %), down to silence.
+    const [start, after] = await ampLevels({ ampAttack: 0.001, ampDecay: 2, ampSustain: 0 }, (e) => e.noteOn(81, 1, 0), [0.2, 0.2 + t]);
+    expect(after / start).toBeCloseTo(Math.exp(-1), 2);
+  });
+
+  it('the Release falls 63 % of the way to silence in the τ its tip reads', async () => {
+    const t = tau('ampRelease', 3);
+    expect(t).toBe(0.5);
+    const [start, after] = await ampLevels(
+      { ampAttack: 0.001, ampSustain: 1, ampRelease: 3 },
+      (e) => {
+        e.noteOn(81, 1, 0);
+        e.noteOff(0.3);
+      },
+      [0.5, 0.5 + t],
+    );
+    expect(after / start).toBeCloseTo(Math.exp(-1), 2);
+  });
+
+  it('Glide slides 63 % of the way to the new Note in the τ its tip reads', async () => {
+    const t = tau('glide', 2);
+    expect(t).toBe(0.5);
+    const s = await render(1.5, { cutoff: 20000, waveform: 'sine', glide: 2, lfoAmount: 0, ampSustain: 1, ampAttack: 0.001 }, (e) => {
+      e.noteOn(57, 1, 0); // 220 Hz
+      e.noteOn(69, 1, 0.5); // to 440 Hz
+    });
+    expect(frequencyAround(s, SR, 0.5 + t, 0.02) / (440 + (220 - 440) * Math.exp(-1))).toBeCloseTo(1, 2);
   });
 });

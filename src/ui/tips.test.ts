@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { LFO_DESTINATIONS, PARAMS, type ParamId } from '../patch/patch';
-import { OVERLAY_TIPS, PARAM_TIPS, syncedRateTip, TIPS } from './tips';
+import { OVERLAY_TIPS, PARAM_TIPS, paramTipAt, syncedRateTip, TIPS } from './tips';
 
 describe("every Parameter's tip (issue 78)", () => {
   it.each(Object.keys(PARAMS) as ParamId[])('%s has a tip with a title and a body, which its knob or fader shows', (id) => {
@@ -67,4 +67,12 @@ it('a synced Rate’s tip gives its Hz at the tempo, which its readout leaves ou
   expect(tip.body).toMatch(/note value at the tempo/);
   expect(tip.body).toMatch(/At 120 BPM, 1\/4 is 2 Hz\.$/);
   expect(TIPS.lfoNote.body).not.toMatch(/beside/);
+});
+
+it('an Envelope fader’s and Glide’s tips work out τ at their setting; the others keep their own (issue 168)', () => {
+  expect(paramTipAt('ampDecay', 0.3).underTheHood?.where).toMatch(/^τ = Decay ÷ 4 = 75\.0 ms now/);
+  expect(paramTipAt('filterAttack', 0.03).underTheHood?.where).toMatch(/^τ = Attack ÷ 3 = 10\.0 ms now/);
+  expect(paramTipAt('glide', 0.4).underTheHood?.formula).toBe('f = f₂ + (f₁ − f₂)·e^(−t/τ)');
+  expect(paramTipAt('ampDecay', 0.3)).toMatchObject({ title: 'Decay', keys: PARAM_TIPS.ampDecay.keys, history: PARAM_TIPS.ampDecay.history });
+  expect(paramTipAt('keyTrack', 0.5)).toBe(PARAM_TIPS.keyTrack);
 });
