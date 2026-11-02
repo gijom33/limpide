@@ -1,8 +1,9 @@
 import { filterStages } from '../engine/filterDesign';
+import { osc2Cents } from '../modulation/modulationModel';
 import { type FilterMode, type FilterSlope, FM_INDEX, fmIndex, osc1Heard, type ParamId, type Patch } from '../patch/patch';
 import { WAVEFORM_NAMES, type Waveform } from './harmonics';
 import { besselJ, osc2Ratio } from './idealReference';
-import { noteToFrequency } from './pitch';
+import { A4_MIDI, noteToFrequency } from './pitch';
 
 /**
  * The Synth Geek Layer's content (issue 14): the quantities behind the sound, as data. The formulas are the ones the
@@ -122,10 +123,9 @@ const GAINS: ParamId[] = ['mixOsc1', 'mixOsc2', 'mixSub', 'mixNoise', 'ampSustai
  * before any (null), A4, and the readout says so with BEFORE_ANY_NOTE.
  */
 export type GeekNote = number | null;
-const A4 = 69;
 export const BEFORE_ANY_NOTE = 'at A4';
 /** The frequency of the Note the numbers use, in Hz. */
-export const geekNoteHz = (note: GeekNote) => noteToFrequency(note ?? A4);
+export const geekNoteHz = (note: GeekNote) => noteToFrequency(note ?? A4_MIDI);
 
 /** Whole octaves under the Note, as fractions. */
 const FRACTIONS = ['1', '½', '¼'];
@@ -139,10 +139,10 @@ function multipleText(ratio: number): string {
 
 /**
  * How fast Osc 2 beats against a tone at its pitch before Detune, in Hz (issue 167): Δf = f·(2^(c/1200) − 1), f the
- * Note played moved by Osc 2's Octave and Semitone, as the engine tunes it (osc2Cents), c the cents of Detune.
+ * Note played moved by Osc 2's Transpose as the engine tunes it (osc2Cents, the knobs alone), c the cents of Detune.
  */
 export function detuneBeatsHz(patch: Patch, cents: number, note: GeekNote): number {
-  const f = geekNoteHz(note) * 2 ** (patch.osc2Octave + patch.osc2Semitone / 12);
+  const f = geekNoteHz(note) * 2 ** (osc2Cents({ ...patch, osc2Detune: 0 }) / 1200);
   return Math.abs(f * (2 ** (cents / 1200) - 1));
 }
 /** A rate in Hz to three figures: "2.55 Hz", "25.5 Hz", "981 Hz". */

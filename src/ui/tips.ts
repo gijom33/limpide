@@ -239,7 +239,7 @@ export const TIPS = {
   detune: {
     title: 'Detune',
     body: 'Fine-tunes Osc 2 in cents (hundredths of a semitone). Two Oscillators a few cents apart drift in and out of step, so the sound swells and fades: the classic thick, chorused sound.',
-    hood: UNDER_THE_HOOD.osc2Detune,
+    underTheHood: UNDER_THE_HOOD.osc2Detune,
     history: HISTORY.detune,
   },
   mixer: {
@@ -250,7 +250,7 @@ export const TIPS = {
   noise: {
     title: 'Noise',
     body: 'An unpitched sound with energy at every frequency, a hiss in White or a softer rush in Pink (its colour, on the Sub & Noise tab): in the Spectrum it fills the gaps between Harmonics. Filter it for wind, breath or percussion.',
-    hood: UNDER_THE_HOOD.noise,
+    underTheHood: UNDER_THE_HOOD.noise,
     history: HISTORY.noise,
   },
   crossMod: {
@@ -279,7 +279,7 @@ export const TIPS = {
     title: 'Noise colour',
     body: 'White Noise has the same energy at every frequency, so it hisses. Pink has the same energy in every octave: it falls 3 dB an octave, a softer rush like rain or surf. Both are equally loud overall.',
     how: 'Raise the Noise fader and switch colours: the Spectrum’s floor tilts down to the right on Pink.',
-    hood: UNDER_THE_HOOD.noise,
+    underTheHood: UNDER_THE_HOOD.noise,
     history: HISTORY.noiseColour,
   },
   // Issue 49: the core controls and the stages, so a newcomer finds words where they look first.
@@ -332,13 +332,13 @@ export const TIPS = {
   octave: {
     title: 'Octave',
     body: 'Shifts Osc 2 up or down by whole octaves from the Note you play: 2× or ½× the pitch, the same note higher or lower.',
-    hood: UNDER_THE_HOOD.osc2Octave,
+    underTheHood: UNDER_THE_HOOD.osc2Octave,
     history: HISTORY.octave,
   },
   semitone: {
     title: 'Semitone',
     body: 'Shifts Osc 2 by semitones from the Note you play: +7 is a fifth above, +12 an octave. Two notes at once, from one key.',
-    hood: UNDER_THE_HOOD.osc2Semitone,
+    underTheHood: UNDER_THE_HOOD.osc2Semitone,
     history: HISTORY.semitone,
   },
   // Issue 59: the faders, the LFO knobs and the Timeline's key, which had none.

@@ -2710,25 +2710,27 @@ describe('the Synth Geek Layer’s numbers for Osc 2, held to the engine (issue 
       expect(frequencyAround(s, SR, 0.6, 0.5) / 440).toBeCloseTo(multiple(geekReadout(id, value, patch)), 3);
     });
 
-  it('the summed Oscillators beat as fast as Detune 10 cents reads, at A4', async () => {
-    const patch = { ...defaultPatch(), ...sines, mixOsc1: 1, mixOsc2: 1, osc2Detune: 10 };
-    let note: number | null = null;
-    const s = await render(5, patch, (e) => {
-      expect(e.newestNote()).toBeNull();
-      e.noteOn(69, 1, 0);
-      note = e.newestNote();
+  // f is Osc 2 before Detune: an octave up with Osc 1, the beats are twice as fast.
+  for (const [where, octaves] of [['at A4', { osc1Octave: 0, osc2Octave: 0 }], ['both an octave up', { osc1Octave: 1, osc2Octave: 1 }]] as const)
+    it(`the summed Oscillators beat as fast as Detune 10 cents reads, ${where}`, async () => {
+      const patch = { ...defaultPatch(), ...sines, ...octaves, mixOsc1: 1, mixOsc2: 1, osc2Detune: 10 };
+      let note: number | null = null;
+      const s = await render(5, patch, (e) => {
+        expect(e.newestNote()).toBeNull();
+        e.noteOn(69, 1, 0);
+        note = e.newestNote();
+      });
+      const readout = geekReadout('osc2Detune', 10, patch, note);
+      expect(readout).toMatch(/ Hz beats$/);
+      // The level swells and fades once a beat: count its rises through the middle, 10 ms frames, after the Attack.
+      const frame = SR / 100;
+      const levels: number[] = [];
+      for (let from = SR / 4; from + frame <= s.length; from += frame / 2) levels.push(rms(s, from, from + frame));
+      const middle = (Math.max(...levels) + Math.min(...levels)) / 2;
+      const rises: number[] = [];
+      for (let i = 1; i < levels.length; i++)
+        if (levels[i - 1] < middle && levels[i] >= middle) rises.push(i - 1 + (middle - levels[i - 1]) / (levels[i] - levels[i - 1]));
+      const beatsHz = (rises.length - 1) / (((rises[rises.length - 1] - rises[0]) * frame) / 2 / SR);
+      expect(Math.abs(beatsHz - Number.parseFloat(readout!))).toBeLessThan(0.01);
     });
-    const readout = geekReadout('osc2Detune', 10, patch, note);
-    expect(readout).toMatch(/ Hz beats$/);
-    // The level swells and fades once a beat: count its rises through the middle, 10 ms frames, after the Attack.
-    const frame = SR / 100;
-    const levels: number[] = [];
-    for (let from = SR / 4; from + frame <= s.length; from += frame / 2) levels.push(rms(s, from, from + frame));
-    const middle = (Math.max(...levels) + Math.min(...levels)) / 2;
-    const rises: number[] = [];
-    for (let i = 1; i < levels.length; i++)
-      if (levels[i - 1] < middle && levels[i] >= middle) rises.push(i - 1 + (middle - levels[i - 1]) / (levels[i] - levels[i - 1]));
-    const beatsHz = (rises.length - 1) / (((rises[rises.length - 1] - rises[0]) * frame) / 2 / SR);
-    expect(Math.abs(beatsHz - Number.parseFloat(readout!))).toBeLessThan(0.01);
-  });
 });

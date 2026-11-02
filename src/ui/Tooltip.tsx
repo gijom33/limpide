@@ -15,7 +15,7 @@ export interface TipContent {
   /** A knob's or fader's steps for the keys (issue 160): shown where there is a keyboard, not on a touch screen. */
   keys?: string;
   /** The formula behind it (issue 133, decision 2): shown with the Synth Geek Layer on, above History. */
-  hood?: Formula;
+  underTheHood?: Formula;
   /** Where the control comes from (issue 134): shown last, with the Synth Geek Layer on. */
   history?: HistoryLine;
 }
@@ -177,9 +177,9 @@ export function Tooltip({ content, children, longPress = true }: { content: TipC
           <span>{content.body}</span>
           {content.how && <span className="tooltip-how">{content.how}</span>}
           {content.keys && <span className="tooltip-keys">{content.keys}</span>}
-          {geek && content.hood && (
+          {geek && content.underTheHood && (
             <span className="tooltip-hood">
-              <b>Under the hood</b> <span className="tooltip-formula">{content.hood.formula}</span> {content.hood.where}
+              <b>Under the hood</b> <span className="tooltip-formula">{content.underTheHood.formula}</span> {content.underTheHood.where}
             </span>
           )}
           {geek && content.history && (
