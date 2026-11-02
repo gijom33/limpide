@@ -6,6 +6,7 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- 2026-11-02, the owner: "are there clever ways to make the scope waveforms more stable even with complex waves?"
 - 2026-11-02, from the 1.21.0 branch runs, issue 152: the e2e test "in the sections 2 × 2 the Demo brings a section out from under the header" failed on GitHub's Linux WebKit in two runs of three (retries too), the first scroll reading the Filter still 60 px under the header; it passes on macOS in both browsers, also in Linux-wide type, and on Linux Chromium. Skipped in WebKit for 1.21.0; is the Demo's scroll late or wrong in WebKit there, or the test?
 - 2026-11-02, from the 1.21.0 ripple hunt, issue 129: CONTEXT.md now lists "rung, spike, bar" under Avoid, but 8 tips, 11 Preset descriptions and two Demo captions still use them.
 - 2026-11-02, from the 1.21.0 ripple hunt: the README's screenshot (taken 2026-10-31) shows the header from before issue 112 (one row, no BPM or Tap, a centred piano); it needs retaking.
