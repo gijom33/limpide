@@ -37,6 +37,16 @@ describe('the hover readout box (issue 155)', () => {
     }
   });
 
+  it('with the Synth Geek Layer on, keeps one size on a Harmonic or between two, its number inside (issue 170)', () => {
+    const geek = readoutColumns(measure, { harmonic: true });
+    const on = readoutBox(hoverReadoutLines(24000, -100, { geek: true, harmonic: 872 }), geek, { cursor: 200, width: VIEWER });
+    const between = readoutBox(hoverReadoutLines(3, -120, { geek: true }), geek, { cursor: 200, width: VIEWER });
+    expect([between.width, between.height]).toEqual([on.width, on.height]);
+    for (const t of on.texts) expect(t.x - (t.align === 'right' ? measure(t.text) : 0)).toBeGreaterThanOrEqual(on.x);
+    // Off, the box is as it was.
+    expect(readoutColumns(measure)).toEqual(columns);
+  });
+
   it('sits right of the cursor line, and flips to its left only where it would not fit', () => {
     const lines = hoverReadoutLines(440, -20);
     const right = readoutBox(lines, columns, { cursor: 200, width: VIEWER });

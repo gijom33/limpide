@@ -1,11 +1,12 @@
 import { OSCILLATOR_LEVEL } from '../engine/synthEngine';
+import { harmonicNumber } from '../music/geek';
 import type { IdealPartial, IdealSource } from '../music/idealReference';
 import { frequencyAxis, levelAxis } from './axes';
 import { cssVar, curveWidth, haloText, prepareCanvas } from './canvas';
 import { createFreezeLatch } from './freezeLatch';
 import { harmonicMarkers } from './harmonicMarkers';
 import { aboveFloor, marksToDraw, spectrumOutline } from './outline';
-import { hoverReadout, hoverReadoutLines, interpolatedPeak, snapToPeak } from './readout';
+import { hoverReadout, hoverReadoutLines, interpolatedPeak, SILENT_DB, snapToPeak } from './readout';
 import { type ReadoutColumns, readoutBox, readoutColumns } from './readoutBox';
 import { amplitudeToSpectrumDb } from './spectrumScale';
 import type { ViewSettings } from './viewSettings';
@@ -38,6 +39,8 @@ interface Options {
   response?(frequencies: Float32Array<ArrayBuffer>): Float32Array;
   /** Cursor position over the canvas (CSS pixels), for the hover readout. */
   hover?(): { x: number; y: number } | null;
+  /** The Synth Geek Layer's Noise slope, while the Noise is up (issue 170): given for the Oscillator Spectrum. */
+  noiseSlope?(): string | undefined;
 }
 
 /** Per-pixel-column peak (dB), so dense Harmonics stay distinct where many bins share a column. */
@@ -94,7 +97,7 @@ function idealMark(g: CanvasRenderingContext2D, x: number, y: number, source: Id
 
 /** A Spectrum of one Tap, with Harmonic Markers and the overlays the learner has switched on. */
 export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode, sampleRate: number, options: Options) {
-  const { fundamental, view, showIdeal, gateOn, response, hover } = options;
+  const { fundamental, view, showIdeal, gateOn, response, hover, noiseSlope } = options;
   const bins = new Float32Array(analyser.frequencyBinCount).fill(-Infinity);
   const binHz = sampleRate / analyser.fftSize;
   const nyquist = sampleRate / 2;
@@ -104,10 +107,12 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
   const frozenIdeal = createFreezeLatch<readonly IdealPartial[] | undefined>();
   const frozenCurve = createFreezeLatch<{ key: string; gains: Float32Array }>();
   const frozenIdealGains = createFreezeLatch<{ key: string; gains: Float32Array }>();
+  const frozenNoiseSlope = createFreezeLatch<string | undefined>();
   let snapshotToken: number | null = null;
   let snapshotBins: Float32Array | null = null;
-  // The hover readout's columns, measured once per font so its box keeps one size (issue 155).
-  let measuredColumns: { font: string; columns: ReadoutColumns } | null = null;
+  // The hover readout's columns, measured once per font so its box keeps one size (issue 155), and again with room for
+  // the Harmonic's number while the Synth Geek Layer is on (issue 170).
+  let measuredColumns: { font: string; geek: boolean; columns: ReadoutColumns } | null = null;
 
   return function draw() {
     const { overlays, viewer } = view();
@@ -273,6 +278,15 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
     g.textAlign = 'left';
     for (const f of fAxis.gridlines) haloText(g, f >= 1000 ? `${f / 1000}k` : `${f}`, xOf(f) + 3, height - 4, background);
 
+    // The Synth Geek Layer (issue 170): the Noise's slope while it is up, top right under the Harmonic Markers' labels.
+    const slope = overlays.geek ? frozenNoiseSlope(viewer.frozen, () => noiseSlope?.()) : undefined;
+    canvas.dataset.noiseSlope = slope ?? '';
+    if (slope) {
+      g.textAlign = 'right';
+      haloText(g, slope, width - 6, MARKER_LABEL_ROW + 13, background);
+      g.textAlign = 'left';
+    }
+
     // Hover readout: frequency, nearest Note and the level of the trace under the cursor, stacked in a box of one size.
     const cursor = hover?.();
     if (!cursor) delete canvas.dataset.readout;
@@ -285,9 +299,13 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
       g.stroke();
       const { frequency, levelDb } = interpolatedPeak(bins, binHz, fAxis.frequencyAt(col), fAxis.frequencyAt(col + 1));
       const level = Number.isFinite(levelDb) ? levelDb : peak[col];
-      canvas.dataset.readout = hoverReadout(frequency, level);
-      if (measuredColumns?.font !== g.font) measuredColumns = { font: g.font, columns: readoutColumns((t) => g.measureText(t).width) };
-      const box = readoutBox(hoverReadoutLines(frequency, level), measuredColumns.columns, { cursor: col, width });
+      // With the Synth Geek Layer on, the Harmonic's number when the peak is on one, and none on silence (issue 170).
+      const geek = { geek: overlays.geek, harmonic: overlays.geek && level > SILENT_DB ? harmonicNumber(frequency, f0, binHz) : undefined };
+      canvas.dataset.readout = hoverReadout(frequency, level, geek);
+      if (measuredColumns?.font !== g.font || measuredColumns.geek !== overlays.geek) {
+        measuredColumns = { font: g.font, geek: overlays.geek, columns: readoutColumns((t) => g.measureText(t).width, { harmonic: overlays.geek }) };
+      }
+      const box = readoutBox(hoverReadoutLines(frequency, level, geek), measuredColumns.columns, { cursor: col, width });
       g.fillStyle = cssVar(canvas, '--panel');
       g.fillRect(box.x, box.y, box.width, box.height);
       g.fillStyle = text;

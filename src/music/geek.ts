@@ -3,7 +3,7 @@ import { type EnvelopeStage, STAGE_SHARPNESS, stageTimeConstant } from '../modul
 import { GLIDE_SHARPNESS } from '../modulation/lfo';
 import { destinationSwings, effectiveCutoff, KEY_TRACK_CENTRE, LFO_LAWS, osc2Cents } from '../modulation/modulationModel';
 import {
-  type FilterMode, type FilterSlope, FM_INDEX, fmIndex, formatParam, LFO_DESTINATIONS, LFO_KEYS, type LfoDestination, type LfoNumber, osc1Heard,
+  type FilterMode, type FilterSlope, FM_INDEX, fmIndex, formatParam, LFO_DESTINATIONS, LFO_KEYS, type LfoDestination, type LfoNumber, type NoiseColour, osc1Heard,
   PARAMS, type ParamId, type Patch, secondsText,
 } from '../patch/patch';
 import { WAVEFORM_NAMES, type Waveform } from './harmonics';
@@ -311,11 +311,65 @@ export const UNDER_THE_HOOD = {
     formula: 'f = f₂ + (f₁ − f₂)·e^(−t/τ)',
     where: `τ = Glide ÷ ${GLIDE_SHARPNESS}. f: the pitch in Hz, sliding from f₁, where it was, to f₂, the Note played; t: the time since that Note. 63 % of the way in each τ, ${wayAfter(GLIDE_SHARPNESS)} by the Glide time. Off, the pitch jumps; with one Voice only.`,
   },
+  // Issue 170: the Viewers.
+  scope: {
+    formula: 'T = 1 / f₀',
+    where: 'T: one cycle, the period, written top left; f₀: the fundamental the Scope holds still: the Note played at Osc 1’s Octave, the Sub’s pitch with the Sub up (A4 until a Note is played).',
+  },
+  spectrum: {
+    formula: 'fₙ = n × f₀',
+    where: 'n: the Harmonic’s number, which the hover readout adds when on one; f₀: the fundamental, the 1st.',
+  },
+  oscillatorSpectrum: {
+    formula: 'fₙ = n × f₀',
+    where: 'n: the Harmonic’s number, which the hover readout adds when on one; f₀: the fundamental, the 1st. With the Noise up, its slope top right: white flat, pink −3 dB per octave.',
+  },
   noise: {
     formula: 'white: P(f) flat;  pink: P(f) ∝ 1/f, −3 dB per octave',
     where: 'P(f): the power at each frequency. Pink is white through Paul Kellet’s filter, −10 dB a decade, as loud overall.',
   },
 } satisfies Record<string, Formula>;
+
+// Issue 170: the Viewers' numbers (issue 133, decision 11).
+
+/** A time in ms to three figures: "2.27 ms", "36.4 ms", "582 ms", "0.239 ms". */
+const msText = (ms: number) => `${ms < 1 ? ms.toFixed(3) : ms < 10 ? ms.toFixed(2) : ms < 100 ? ms.toFixed(1) : Math.round(ms)} ms`;
+
+/**
+ * What each Scope writes in its corner: the period and frequency of `fundamental`, the one it holds still on (the Note
+ * played, at Osc 1's Octave, the Sub's pitch with the Sub up, as the engine's Cycle Lock follows it): "2.27 ms ·
+ * 440 Hz"; before any Note, A4's, said.
+ */
+export function scopeReadout(fundamental: number, note: GeekNote): string {
+  const hz = Number(fundamental.toFixed(fundamental < 10 ? 2 : 1));
+  return `${msText(1000 / fundamental)} · ${hz} Hz${note === null ? ` ${BEFORE_ANY_NOTE}` : ''}`;
+}
+
+/** How close to n f₀ a peak must be to be on the nth Harmonic: a twentieth of the spacing, or half an FFT bin. */
+const ON_A_HARMONIC = 0.05;
+/** Harmonics closer than this many FFT bins are not told apart on the Spectrum: none is numbered. */
+const PARTED_BY_BINS = 4;
+
+/**
+ * The number of the Harmonic of `fundamental` a Spectrum's peak at `frequency` is on (issue 170): n where it is n f₀,
+ * within what the Spectrum's bins of `binHz` can tell; undefined between two, or where they are too close to part.
+ */
+export function harmonicNumber(frequency: number, fundamental: number, binHz: number): number | undefined {
+  if (!(fundamental >= PARTED_BY_BINS * binHz)) return undefined;
+  const n = Math.round(frequency / fundamental);
+  if (n < 1) return undefined;
+  return Math.abs(frequency - n * fundamental) <= Math.max(ON_A_HARMONIC * fundamental, binHz / 2) ? n : undefined;
+}
+
+/** Each Noise Colour's slope, in dB per octave: white is flat, pink falls as 1/f (UNDER_THE_HOOD.noise). */
+export const NOISE_SLOPE_DB: Record<NoiseColour, number> = { white: 0, pink: -3 };
+
+/** What the Oscillator Spectrum writes in its corner while the Noise is up (issue 170): "pink: −3 dB/oct". */
+export function noiseSlope(patch: Patch): string | undefined {
+  if (!(patch.mixNoise > 0)) return undefined;
+  const slope = NOISE_SLOPE_DB[patch.noiseColour];
+  return `${patch.noiseColour}: ${slope < 0 ? '−' : ''}${Math.abs(slope)} dB/oct`;
+}
 
 /** Each Envelope fader's stage. */
 const STAGE_OF: Partial<Record<ParamId, EnvelopeStage>> = {

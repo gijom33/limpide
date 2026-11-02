@@ -6,7 +6,7 @@ import { type AudioStatus, unlockAudio } from '../app/unlockAudio';
 import { rememberWelcome, welcomeFor } from '../app/welcome';
 import { createCallingPhrase, createWordsHeard, type Word } from '../input/callingPhrase';
 import { DEFAULT_OCTAVE, shiftOctave, startingOctave } from '../input/keyboardLayout';
-import { type Formula, oscillatorFormulas, responseFormula } from '../music/geek';
+import { type Formula, noiseSlope, oscillatorFormulas, responseFormula } from '../music/geek';
 import { CHOICES, osc1Heard, osc2Heard, type ParamId, type Patch, setFilter, setParam, setWaveform, subNoiseHeard } from '../patch/patch';
 import { PRESETS } from '../patch/presets';
 import { TUTORIALS } from '../tutorial/tutorials';
@@ -290,6 +290,7 @@ export function App() {
       response?(f: Float32Array<ArrayBuffer>): Float32Array;
       limiting?(): boolean;
       formulas?: Formula[];
+      noiseSlope?: string;
     } = {},
   ) => (
       <TapViewers
@@ -299,6 +300,7 @@ export function App() {
         fundamental={session.engine.fundamental}
         view={view}
         gateOn={extra.showIdeal ? gateOn : undefined}
+        newestNote={session.engine.newestNote}
         {...extra}
       />
     );
@@ -535,6 +537,7 @@ export function App() {
             viewers={viewers('oscillator', 'Oscillator', {
               showIdeal: true,
               formulas: overlays.geek ? oscillatorFormulas(patch) : undefined,
+              noiseSlope: noiseSlope(patch),
             })}
             more={
             <div className="source-rows">

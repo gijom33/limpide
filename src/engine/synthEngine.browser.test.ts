@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DIP, envelopeLevel, type GateEvent } from '../modulation/envelope';
 import { lfoOffset, osc2Cents } from '../modulation/modulationModel';
-import { geekReadout, UNDER_THE_HOOD, underTheHoodAt } from '../music/geek';
+import { geekReadout, harmonicNumber, noiseSlope, scopeReadout, UNDER_THE_HOOD, underTheHoodAt } from '../music/geek';
 import { harmonicSeries, type Waveform } from '../music/harmonics';
 import { fmDepthKept, idealPartials, idealReference } from '../music/idealReference';
 import { noteIndex } from '../music/tempo';
@@ -10,6 +10,7 @@ import { PRESETS } from '../patch/presets';
 import { betweenHarmonicsDb, dB, energyAboveDb, frequencyAround, rms, toneAmplitude, toneAmplitudeHann } from '../test/measure';
 import { straightenLimiter } from '../test/straightLimiter';
 import { guideLevel } from '../viewers/guides';
+import { hoverReadout, interpolatedPeak } from '../viewers/readout';
 import { amplitudeToSpectrumDb } from '../viewers/spectrumScale';
 import { createSynthEngine, OSCILLATOR_LEVEL } from './synthEngine';
 
@@ -2935,5 +2936,87 @@ describe('the Synth Geek Layer’s time constants for the Envelopes and Glide, h
       e.noteOn(69, 1, 0.5); // to 440 Hz
     });
     expect(frequencyAround(s, SR, 0.5 + t, 0.02) / (440 + (220 - 440) * Math.exp(-1))).toBeCloseTo(1, 2);
+  });
+});
+
+// Issue 133, decision 4: the Viewers' numbers held to what the engine plays (issue 170).
+describe('the Synth Geek Layer’s numbers on the Viewers, held to the engine (issue 170)', () => {
+  /** Renders `note` for a second; at half a second, the engine's fundamental, its newest Note and the Oscillator Tap's bins. */
+  async function played(patch: Partial<Patch>, note: number) {
+    const ctx = new OfflineAudioContext(1, SR, SR);
+    const engine = createSynthEngine(ctx);
+    engine.applyPatch({ ...defaultPatch(), ...patch });
+    engine.noteOn(note, 1, 0);
+    const bins = new Float32Array(engine.taps.oscillator.frequencyBinCount);
+    const at = ctx.suspend(0.5).then(() => {
+      engine.taps.oscillator.getFloatFrequencyData(bins);
+      const now = { fundamental: engine.fundamental(), note: engine.newestNote() };
+      void ctx.resume();
+      return now;
+    });
+    const s = (await ctx.startRendering()).getChannelData(0);
+    return { s, bins, ...(await at) };
+  }
+  /** How far the sound differs from itself `lag` seconds later, over a steady stretch, as a share of its level. */
+  const unlike = (s: Float32Array, lag: number) => {
+    const shift = lag * SR;
+    let sum = 0;
+    let n = 0;
+    for (let i = SR / 2; i < 0.9 * SR; i++) {
+      const j = i + shift;
+      const later = s[Math.floor(j)] + (j - Math.floor(j)) * (s[Math.floor(j) + 1] - s[Math.floor(j)]);
+      sum += (s[i] - later) ** 2;
+      n++;
+    }
+    return Math.sqrt(sum / n) / rms(s, SR / 2, 0.9 * SR);
+  };
+
+  for (const [what, patch, note, reads] of [
+    ['A4, the Init Patch', { ampSustain: 1 }, 69, '2.27 ms · 440 Hz'],
+    ['C4, Osc 1 an octave up, the Sub an octave under it', { ampSustain: 1, waveform: 'sine', osc1Octave: 1, mixSub: 1, subOctave: -1, subWaveform: 'sine' }, 60, '3.82 ms · 261.6 Hz'],
+  ] as const)
+    it(`each Scope’s corner reads the period the sound repeats in: ${what}`, async () => {
+      const { s, fundamental, note: newest } = await played(patch, note);
+      expect(scopeReadout(fundamental, newest)).toBe(reads);
+      const [ms, hz] = reads.split(' · ').map(Number.parseFloat);
+      expect(1000 / hz).toBeCloseTo(ms, 2);
+      // The sound is itself again after one period, and not after half of one.
+      expect(unlike(s, 1 / hz)).toBeLessThan(0.02);
+      expect(unlike(s, 0.5 / hz)).toBeGreaterThan(0.3);
+    });
+
+  it('the Spectrum’s hover readout numbers the Harmonic the Oscillator Tap’s peak is on, and none between them', async () => {
+    const { bins, fundamental } = await played({ ampSustain: 1 }, 69);
+    const binHz = SR / (2 * bins.length);
+    for (let n = 1; n <= 7; n++) {
+      const peak = interpolatedPeak(bins, binHz, 440 * n * 0.97, 440 * n * 1.03);
+      expect(harmonicNumber(peak.frequency, fundamental, binHz), `the ${n}th`).toBe(n);
+      expect(hoverReadout(peak.frequency, peak.levelDb, { geek: true, harmonic: n })).toMatch(new RegExp(` · n = ${n}$`));
+    }
+    const between = interpolatedPeak(bins, binHz, 440 * 3.4, 440 * 3.6);
+    expect(harmonicNumber(between.frequency, fundamental, binHz)).toBeUndefined();
+  });
+
+  it('the Oscillator Spectrum’s corner gives the slope the Noise falls by, an octave at a time', async () => {
+    const noiseAlone = { cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001, mixOsc1: 0, mixNoise: 1 } as const;
+    // The average level in a band a tenth of an octave wide around `f`, from many short Hann-windowed frames.
+    const bandLevel = (s: Float32Array, f: number) => {
+      let sum = 0;
+      let n = 0;
+      for (let from = SR / 2; from + 4096 <= s.length; from += 4096)
+        for (const k of [0.96, 0.98, 1, 1.02, 1.04]) {
+          sum += toneAmplitudeHann(s.subarray(from, from + 4096), SR, f * k) ** 2;
+          n++;
+        }
+      return Math.sqrt(sum / n);
+    };
+    for (const noiseColour of ['white', 'pink'] as const) {
+      const patch = { ...defaultPatch(), ...noiseAlone, noiseColour };
+      const s = await render(3, patch, (e) => e.noteOn(57, 1, 0));
+      const readout = noiseSlope(patch)!;
+      expect(readout).toMatch(new RegExp(`^${noiseColour}: `));
+      const perOctave = dB(bandLevel(s, 4000) / bandLevel(s, 500)) / 3;
+      expect(Math.abs(perOctave - Number.parseFloat(readout.split(': ')[1].replace('−', '-'))), noiseColour).toBeLessThan(0.5);
+    }
   });
 });

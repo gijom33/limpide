@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { CHOICES, defaultPatch } from '../patch/patch';
 import { PRESETS } from '../patch/presets';
-import { filterQ, geekReadout, harmonicFormula, levelDb, oscillatorFormulas, qText, responseFormula, UNDER_THE_HOOD, underTheHoodAt, widestGeekReadout } from './geek';
+import {
+  filterQ, geekReadout, harmonicFormula, harmonicNumber, levelDb, noiseSlope, oscillatorFormulas, qText, responseFormula, scopeReadout, UNDER_THE_HOOD, underTheHoodAt,
+  widestGeekReadout,
+} from './geek';
 import { harmonicSeries } from './harmonics';
 import { noteIndex } from './tempo';
 
@@ -258,5 +261,34 @@ describe('the Synth Geek Layer under FM and Ring (issue 109)', () => {
 
   it('leaves FM out while Osc 1 is not heard: it moves nothing that sounds', () => {
     expect(text(oscillatorFormulas({ ...defaultPatch(), crossMod: 0.5, mixOsc1: 0 }))).not.toContain('β');
+  });
+});
+
+// Issue 170: the Viewers' numbers (issue 133, decision 11).
+describe('the Synth Geek Layer on the Viewers (issue 170)', () => {
+  it('writes the period and frequency of the fundamental the Scope holds still on, A4 said before any Note', () => {
+    expect(scopeReadout(440, 69)).toBe('2.27 ms · 440 Hz');
+    expect(scopeReadout(261.6256, 60)).toBe('3.82 ms · 261.6 Hz');
+    expect(scopeReadout(440, null)).toBe('2.27 ms · 440 Hz at A4');
+    // Three figures for the period, from a C8 to a Sub two octaves under an A0.
+    expect(scopeReadout(4186.009, 108)).toBe('0.239 ms · 4186 Hz');
+    expect(scopeReadout(27.5, 21)).toBe('36.4 ms · 27.5 Hz');
+    expect(scopeReadout(1.71875, 21)).toBe('582 ms · 1.72 Hz');
+  });
+
+  it('numbers the Harmonic a frequency is on, and none between two or where the Spectrum cannot part them', () => {
+    const binHz = 48000 / 8192;
+    expect(harmonicNumber(1320.4, 440, binHz)).toBe(3);
+    expect(harmonicNumber(440, 440, binHz)).toBe(1);
+    expect(harmonicNumber(1540, 440, binHz)).toBeUndefined(); // 3.5 × f₀: between the 3rd and the 4th
+    expect(harmonicNumber(1386, 440, binHz)).toBeUndefined(); // 3.15 ×: a Ring product beside the 3rd, not on it
+    expect(harmonicNumber(100, 440, binHz)).toBeUndefined(); // under the fundamental
+    expect(harmonicNumber(33, 11, binHz)).toBeUndefined(); // Harmonics under 4 bins apart are not told apart
+  });
+
+  it('gives the Noise’s slope while it is up, white or pink', () => {
+    expect(noiseSlope({ ...defaultPatch(), mixNoise: 0 })).toBeUndefined();
+    expect(noiseSlope({ ...defaultPatch(), mixNoise: 0.5, noiseColour: 'pink' })).toBe('pink: −3 dB/oct');
+    expect(noiseSlope({ ...defaultPatch(), mixNoise: 0.5, noiseColour: 'white' })).toBe('white: 0 dB/oct');
   });
 });

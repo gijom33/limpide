@@ -1,4 +1,5 @@
-import { cssVar, curveWidth, prepareCanvas } from './canvas';
+import { type GeekNote, scopeReadout } from '../music/geek';
+import { cssVar, curveWidth, haloText, prepareCanvas } from './canvas';
 import { cycleLockOffset } from './cycleLock';
 import { createFreezeLatch } from './freezeLatch';
 import { createGuideGlide } from './guides';
@@ -22,8 +23,15 @@ export function createScope(
   analyser: AnalyserNode,
   fundamental: () => number,
   view: () => ViewSettings,
-  /** On the Amp Scope: whether the safety limiter is bending the sound right now (all Voices), shown as LIMITING. */
-  { limiting }: { limiting?: () => boolean } = {},
+  {
+    limiting,
+    newestNote = () => null,
+  }: {
+    /** On the Amp Scope: whether the safety limiter is bending the sound right now (all Voices), shown as LIMITING. */
+    limiting?: () => boolean;
+    /** The newest Note played (null before any), for the Synth Geek Layer's period: A4's until one is (issue 170). */
+    newestNote?: () => GeekNote;
+  } = {},
 ) {
   const samples = new Float32Array(analyser.fftSize);
   let limitedAt = -Infinity;
@@ -135,5 +143,16 @@ export function createScope(
     g.strokeStyle = colour;
     g.lineWidth = curveWidth(canvas);
     stroke(trace);
+
+    // The Synth Geek Layer (issue 170): the period and frequency of the fundamental held still, top left, over the
+    // trace on a halo; LIMITING has the top right.
+    const period = view().overlays.geek ? scopeReadout(f, newestNote()) : '';
+    canvas.dataset.period = period;
+    if (period) {
+      g.font = '10px system-ui, sans-serif';
+      g.fillStyle = cssVar(canvas, '--muted');
+      g.textAlign = 'left';
+      haloText(g, period, 6, 13, cssVar(canvas, '--bg'));
+    }
   };
 }
