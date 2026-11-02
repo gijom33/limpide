@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { NOTE_VALUES, noteHz } from '../music/tempo';
 import { memoryStorage } from '../test/memoryStorage';
 import { createLibrary } from './library';
-import { CHOICES, defaultPatch, LFO_DESTINATIONS, PARAMS, type ParamId, type Patch, setParam } from './patch';
+import { CHOICES, defaultPatch, LFO_DESTINATIONS, LFO_KEYS, PARAMS, type ParamId, type Patch, setParam } from './patch';
 import { initialPatch, PRESET_GROUPS, PRESETS, stepPreset } from './presets';
 import { patchToShare, sanitizePatch, shareHash } from './serialize';
 import { valueToPosition } from './taper';
@@ -161,3 +162,32 @@ describe('tremolo (issue 60)', () => {
   });
 });
 
+
+describe('the Presets whose LFO is a rhythm use Sync (issue 137)', () => {
+  /** The wobbles and the gates, chosen as profile 15 would, and the note value each LFO plays. */
+  const SYNCED: Record<string, { lfo1?: string; lfo2?: string }> = {
+    Wobble: { lfo1: '1/4 T' },
+    'Double Wobble': { lfo1: '1/4', lfo2: '1/16' },
+    Growl: { lfo1: '1/8' },
+    'Trance Gate': { lfo1: '1/16' },
+    Stutter: { lfo1: '1/16' },
+  };
+
+  it('sets Sync on with the note value that sounds at 120 BPM as its Hz did, which Sync off brings back', () => {
+    for (const [name, notes] of Object.entries(SYNCED)) {
+      const { patch } = PRESETS.find((p) => p.name === name)!;
+      for (const lfo of [1, 2] as const) {
+        const keys = LFO_KEYS[lfo];
+        const note = notes[`lfo${lfo}`];
+        expect(patch[keys.sync], `${name}, LFO ${lfo}`).toBe(note ? 'on' : 'off');
+        if (!note) continue;
+        expect(NOTE_VALUES[patch[keys.note]].name, `${name}, LFO ${lfo}`).toBe(note);
+        expect(noteHz(patch[keys.note], 120), `${name}, LFO ${lfo}`).toBeCloseTo(patch[keys.rate], 12);
+      }
+    }
+  });
+
+  it('leaves the others as they were, their Rates in Hz', () => {
+    for (const { name, patch } of PRESETS.filter((p) => !(p.name in SYNCED))) expect([patch.lfoSync, patch.lfo2Sync], name).toEqual(['off', 'off']);
+  });
+});
