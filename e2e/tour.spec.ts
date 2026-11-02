@@ -179,6 +179,15 @@ test('the last card’s Bass button starts the Bass Tutorial (issue 128)', async
   await expect(patchName(page)).toHaveAttribute('aria-label', 'Patch: Init');
 });
 
+test('the last card’s Bass button puts the focus on the Tutorial’s Start (issues 104, 139)', async ({ page }) => {
+  await page.goto('/');
+  await startFromAbout(page);
+  for (let i = 1; i < 4; i++) await action(page, 'Next').click();
+  await action(page, 'Build a Bass').click();
+  const tutorial = page.getByRole('region', { name: 'Tutorial: Bass' });
+  await expect(tutorial.getByRole('button', { name: 'Start', exact: true })).toBeFocused();
+});
+
 test('a card that grows while shown still leaves its Viewer clear (issue 128)', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.setViewportSize({ width: 1280, height: 800 });
