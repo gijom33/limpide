@@ -157,7 +157,7 @@ With one Voice, the rule picking which held Note sounds: last-note priority, so 
 _Avoid_: Voice stealing
 
 **Tempo**:
-The page's beats per minute, 40 to 240, 120 by default: never a Patch's, kept between visits, set by hand or with **Tap** (the BPM follows taps in time). An LFO with Sync on follows it. While the Demo, the Song, the Tour or a Tutorial plays, the Tempo is the player's own, its beats counted from its first Note, and the person's comes back when it stops (issue 112, ADR-0018).
+The page's beats per minute, 40 to 240, 120 by default: never a Patch's, kept between visits, set by hand or with **Tap** (the BPM follows taps in time). An LFO with Sync on follows it. While the Demo, the Song, the Tour or a Tutorial plays, the Tempo is the player's own, its beats counted from its first Note, and the person's comes back when it stops (issue 112, ADR-0018). While a keyboard or a DAW sends a **MIDI clock** (24 ticks a beat), the Tempo is the clock's, its BPM read off the ticks and its beats theirs, a MIDI Start counting them again; it reads "MIDI" in place of "BPM" and cannot be set by hand until the ticks stop, when the last BPM stays, the person's again. A player still keeps its own while it plays (issue 136).
 _Avoid_: BPM (the unit, fine on screen), clock, speed
 
 **Hold**:

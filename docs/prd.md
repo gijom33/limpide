@@ -112,6 +112,7 @@ Judged against [the design principles](./design-principles.md).
 59. As a user, I want an Activity Monitor showing the last MIDI message, so that I can tell whether the Controller is sending and what it sends.
 60. As a learner, I want an on-screen knob to flash when its hardware control moves it, so that I connect the hardware with the screen.
 61. As a Safari user, I want a clear notice that MIDI isn't supported in my browser while everything else still works, so that I'm not confused.
+103. As a player with a DAW or a keyboard that sends a MIDI clock, I want the page's tempo to follow it, smoothed, a MIDI Start counting the beats again, so that a synced LFO plays in time with my track as a plugin follows its host (issue 136).
 
 ### Patches
 62. As a user, I want my current Patch autosaved, so that a reload doesn't lose my sound.
@@ -168,7 +169,7 @@ Framed by the owner on 2026-10-31 ([issue 131](./issues/131-v1.md), which tracks
 - **Effective Cutoff:** computed by a pure modulation model that also produces the automation schedule ([ADR-0003](./adr/0003-modulation-model-mirrors-the-audio-graph.md)).
 - **Voices:** 1 to 8 per Patch; 1 Voice is monophonic with last-note priority, Glide and Legato (issue 119). The Oscillator and Filter Viewers and the Timeline follow the newest Note; the Amp Viewers show every Voice by default ([ADR-0007](./adr/0007-optional-polyphony-viewers-follow-the-newest-note.md)).
 - **Controls:** knob size follows the Parameter's role, play or set-and-forget ([ADR-0008](./adr/0008-knob-size-follows-the-parameter-s-role.md)); levels and envelope stages are faders. Modulation rings and the piano's pitch marker are drawn by the render loop from the Modulation model, outside React (ADR-0002, ADR-0003).
-- **The tempo:** the page's, outside the Patch; an LFO with Sync on follows it in note values, its cycle locked to the beat, and a player takes it over while it plays ([ADR-0018](./adr/0018-limpide-keeps-a-tempo.md), issue 112; LFO tempo sync was out of scope until then, issue 53).
+- **The tempo:** the page's, outside the Patch; an LFO with Sync on follows it in note values, its cycle locked to the beat, and a player takes it over while it plays ([ADR-0018](./adr/0018-limpide-keeps-a-tempo.md), issue 112; LFO tempo sync was out of scope until then, issue 53). A MIDI clock from any input sets it while it runs, fitted over its last four beats, its beats the clock's (issue 136); a player still keeps its own.
 - **MIDI:** MIDI Learn first, Encoder Mode auto-detected, and Pickup for Absolute Mappings ([ADR-0004](./adr/0004-midi-learn-first-no-hardcoded-controller-map.md)); one built-in layout, the C16's, a section per bank, each strip a column of it ([ADR-0009](./adr/0009-a-built-in-layout-for-the-c16.md), [ADR-0017](./adr/0017-the-c16-layout-strip-by-strip.md)).
 - **Tuning:** A4 = 440 Hz, equal temperament.
 
