@@ -1,3 +1,4 @@
+import { noteIndex } from '../music/tempo';
 import type { Tutorial } from './tutorial';
 
 /*
@@ -283,11 +284,11 @@ export const TUTORIALS: Tutorial[] = [
   },
   {
     preset: 'Wobble',
-    intro: 'A wobble bass, the “wub wub” of dubstep. An LFO, a slow invisible hand, opens and closes the Filter, the sound’s tone knob, three times a second, and starts over on every Note so the wobble lands on the beat.',
+    intro: 'A wobble bass, the “wub wub” of dubstep. An LFO, a slow invisible hand, opens and closes the Filter, the sound’s tone knob, three times a second; then you tie it to the beat, and it starts over on every Note.',
     teaches: 'an LFO, a slow hand that turns a knob for you',
     bpm: 120,
     phrase: 'A2:2 A2:1 C3:1 F2:2 G2:2',
-    summary: 'Your wobble: a square an octave down, a steep Filter with a peak, and an LFO sweeping it three times a second, starting over on every Note.',
+    summary: 'Your wobble: a square an octave down, a steep Filter with a peak, and an LFO sweeping it three times every two beats, tied to the tempo and starting over on every Note.',
     steps: [
       {
         kind: 'param', id: 'mixOsc2', to: 0.6,
@@ -334,10 +335,21 @@ export const TUTORIALS: Tutorial[] = [
         say: 'Set LFO 1’s Rate, how fast it swings, to 3 Hz: three times a second.',
         note: 'Faster: three wobbles a second. Watch the LFO’s plot and the Cutoff’s ring keep time.',
       },
+      // Issue 137: Sync, the wobble locked to Listen's beat, then the note value that sounds as the 3 Hz did.
+      {
+        kind: 'choice', id: 'lfoSync', to: 'on',
+        say: 'Switch on LFO 1’s Sync, the switch with a note on it. Sync ties the Rate to the tempo, the beats per minute (BPM) the music counts in.',
+        note: 'The Rate now counts in beats, not seconds: 1/4, one wobble on every beat. Press Listen: each “wub” lands on the loop’s beat, at its 120 BPM, and at another tempo it would follow.',
+      },
+      {
+        kind: 'param', id: 'lfoNote', to: noteIndex('1/4 T'),
+        say: 'Turn the Rate to 1/4 T, a triplet, three wobbles in the time of two beats.',
+        note: 'At 120 BPM that is three a second again, the speed you set by hand, but held to the beat: every second beat, a wobble starts right on it.',
+      },
       {
         kind: 'choice', id: 'lfoRetrigger', to: 'note',
         say: 'Switch on LFO 1’s Retrigger, so every Note starts the wobble over.',
-        note: 'Each wobble now starts from the same point, so it lands on the beat. Watch the Envelope Timeline, the last few seconds drawn left to right, start again at each Note.',
+        note: 'Each Note now starts its wobble from the same point, even one that comes in mid-wobble. Watch the Envelope Timeline, the last few seconds drawn left to right, start again at each Note.',
         viewer: 'Envelope Timeline',
       },
       {

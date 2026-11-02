@@ -212,6 +212,48 @@ test('Listen repeats the Tutorial’s phrase on the sound as it is, until presse
   await expect(page.getByRole('radio', { name: 'Pulse' }).first()).toHaveAttribute('aria-checked', 'true'); // what was built stays
 });
 
+test('Wobble’s Sync Step passes when Sync is switched on by hand, then the Rate turns its note value onto 1/4 T (issue 137)', async ({ page }) => {
+  await open(page, 'Wobble');
+  await expect(progress(page)).toHaveText('14 steps');
+  await action(page, 'Start').click();
+  for (let i = 0; i < 8; i++) await makeStep(page); // to LFO 1's Rate at 3 Hz
+  await expect(progress(page)).toHaveText('Step 9 of 14');
+  await expect(ringed(page)).toHaveAttribute('data-learn', 'choice:lfoSync');
+  await expect(ringed(page)).toHaveAttribute('data-tutorial-target', '→ On');
+  await expect(action(page, 'Next')).toBeDisabled();
+  const lfo = page.getByRole('group', { name: 'LFO 1', exact: true });
+  await lfo.getByRole('button', { name: 'LFO 1 Sync' }).click();
+  await expect(card(page)).toContainText('one wobble on every beat');
+  await action(page, 'Next').click();
+
+  await expect(ringed(page)).toHaveAttribute('data-learn', 'param:lfoRate'); // the Rate's knob, which turns the note value
+  await expect(ringed(page)).toHaveAttribute('data-tutorial-target', '→ 1/4 T');
+  const rate = lfo.getByRole('slider', { name: 'LFO 1 Rate' });
+  await expect(rate).toHaveAttribute('aria-valuetext', '1/4, 2 Hz');
+  await rate.focus();
+  await page.keyboard.press('ArrowUp'); // 1/8 D, the next note value: within 5 % of the travel, but not the one asked
+  await expect(rate).toHaveAttribute('aria-valuetext', /^1\/8 D/);
+  await page.waitForTimeout(600);
+  await expect(action(page, 'Next')).toBeDisabled();
+  await page.keyboard.press('ArrowUp');
+  await expect(rate).toHaveAttribute('aria-valuetext', '1/4 T, 3 Hz');
+  await expect(card(page)).toContainText('three a second again');
+  await expect(action(page, 'Next')).toBeEnabled();
+
+  // Listen plays at the Tutorial's 120 BPM, which the synced wobble follows, whatever the page's tempo was.
+  const bpm = page.getByRole('spinbutton', { name: 'Tempo' });
+  await bpm.focus();
+  for (let i = 0; i < 2; i++) await page.keyboard.press('PageDown');
+  await expect(bpm).toHaveAttribute('aria-valuenow', '100');
+  const listen = action(page, 'Listen');
+  await listen.click();
+  await expect(bpm).toHaveAttribute('aria-valuenow', '120');
+  await listen.click();
+  await expect(bpm).toHaveAttribute('aria-valuenow', '100');
+  await doEverything(page);
+  await expect(card(page)).toContainText('This is the Wobble Preset, built by you.');
+});
+
 test('the Demo ends a Tutorial (it loads its own Presets)', async ({ page }) => {
   await open(page, 'Wobble');
   await page.getByRole('button', { name: 'Demo' }).click();

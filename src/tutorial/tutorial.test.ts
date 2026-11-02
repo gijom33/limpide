@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { noteIndex } from '../music/tempo';
 import { defaultPatch, PARAMS, type Patch } from '../patch/patch';
 import { positionToValue, valueToPosition } from '../patch/taper';
 import { DEFAULT_OVERLAYS } from '../viewers/overlays';
@@ -21,6 +22,26 @@ describe('a Step', () => {
     expect(at(off(cutoff, -0.049))).toBe(true);
     expect(at(off(cutoff, 0.06))).toBe(false);
     expect(at(2000)).toBe(false);
+  });
+
+  it('is reached by a stepped knob only on its step: a note value, a Semitone (issue 137)', () => {
+    const note: Step = { kind: 'param', id: 'lfoNote', to: noteIndex('1/4 T'), say: 'Turn the Rate to 1/4 T.', note: 'Three in two.' };
+    const at = (lfoNote: number) => reached(note, { ...defaultPatch(), lfoSync: 'on', lfoNote }, DEFAULT_OVERLAYS);
+    expect(at(noteIndex('1/4 T'))).toBe(true);
+    // Its neighbours are a 23rd of its travel away, within 5 %: still not the note value asked for.
+    expect(at(noteIndex('1/4 T') - 1)).toBe(false);
+    expect(at(noteIndex('1/4 T') + 1)).toBe(false);
+    const semitone: Step = { kind: 'param', id: 'osc2Semitone', to: 3, say: 'Set +3.', note: 'Off the ladder.' };
+    expect(reached(semitone, { ...defaultPatch(), osc2Semitone: 3 }, DEFAULT_OVERLAYS)).toBe(true);
+    expect(reached(semitone, { ...defaultPatch(), osc2Semitone: 4 }, DEFAULT_OVERLAYS)).toBe(false);
+  });
+
+  it('is reached by Sync once it is on, and names its note value as the Rate shows it', () => {
+    const sync: Step = { kind: 'choice', id: 'lfoSync', to: 'on', say: 'Switch on Sync.', note: 'On the beat.' };
+    expect(reached(sync, defaultPatch(), DEFAULT_OVERLAYS)).toBe(false);
+    expect(reached(sync, { ...defaultPatch(), lfoSync: 'on' }, DEFAULT_OVERLAYS)).toBe(true);
+    expect(targetText(sync)).toBe('On');
+    expect(targetText({ kind: 'param', id: 'lfoNote', to: noteIndex('1/4 T'), say: '', note: '' })).toBe('1/4 T');
   });
 
   it('is reached by a choice only when it matches', () => {

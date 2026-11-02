@@ -50,6 +50,11 @@ const WORDS: { word: string; use: RegExp; gloss: RegExp }[] = [
   { word: 'Depth', use: /\bDepth\b/, gloss: /how far/ },
   { word: 'Rate', use: /\bRate\b/, gloss: /how fast/ },
   { word: 'Retrigger', use: /\bRetrigger\b/, gloss: /over|again/ },
+  // Issue 137: the tempo and Sync.
+  { word: 'Sync', use: /\bSync\b/, gloss: /tempo|beat/ },
+  { word: 'tempo', use: /\btempo\b/i, gloss: /beats? (per|a) minute|BPM/ },
+  { word: 'BPM', use: /\bBPM\b/, gloss: /beats per minute|beats a minute/ },
+  { word: 'triplet', use: /\btriplet\b|\d T\b/, gloss: /three .*two/ },
 ];
 
 // A Tutorial's name is a name, not a use of its words ("FM Ladder", "Ring Bell").

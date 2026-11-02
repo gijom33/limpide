@@ -1,4 +1,5 @@
 import { type RefObject, useEffect, useRef } from 'react';
+import { PARAMS } from '../patch/patch';
 import { inDisplay, type Step, type Tutorial, targetText } from '../tutorial/tutorial';
 import { endLine, FROM_INIT } from '../tutorial/tutorials';
 import { CardShell } from './CardShell';
@@ -24,8 +25,14 @@ interface Props {
   onQuit(): void;
 }
 
-/** The control a Step asks for: its Parameter's or choice's, or the Display option's (inside the Display panel). */
-const selectorOf = (step: Step) => (step.kind === 'display' ? `[data-overlay="${step.overlay}"]` : `[data-learn="${step.kind}:${step.id}"]`);
+/**
+ * The control a Step asks for: its Parameter's or choice's, or the Display option's (inside the Display panel). A note
+ * value has no knob of its own: the Rate's turns it, Learn knowing it as the Rate's (issue 137).
+ */
+function selectorOf(step: Step): string {
+  if (step.kind === 'display') return `[data-overlay="${step.overlay}"]`;
+  return `[data-learn="${step.kind}:${step.kind === 'param' ? (PARAMS[step.id].knob ?? step.id) : step.id}"]`;
+}
 /** The Display button, which stands for an option in its panel while the panel is shut. */
 const DISPLAY_BUTTON = 'button[aria-label="Display"]';
 

@@ -49,7 +49,7 @@ export interface Tutorial extends PhraseAtTempo {
   steps: Step[];
 }
 
-/** How close a knob or fader must come to its target, as a share of its travel. */
+/** How close a knob or fader must come to its target, as a share of its travel; a stepped one, onto it. */
 export const TOLERANCE = 0.05;
 
 /** Whether the Patch (and the Display options) are where the Step asks. An Action is made by its press, which only the page sees. */
@@ -57,6 +57,8 @@ export function reached(step: Step, patch: Patch, overlays: Overlays): boolean {
   switch (step.kind) {
     case 'param': {
       const def = PARAMS[step.id];
+      // A stepped knob (a note value, a Semitone) on its step: its neighbours can sit within the tolerance (issue 137).
+      if (def.step) return Math.abs(patch[step.id] - step.to) < def.step / 2;
       return Math.abs(valueToPosition(def, patch[step.id]) - valueToPosition(def, step.to)) <= TOLERANCE + 1e-9;
     }
     case 'choice':
