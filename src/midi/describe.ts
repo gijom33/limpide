@@ -32,12 +32,15 @@ const MODE_LABELS: Record<Mapping['mode'], string> = {
 };
 export const describeMode = (mode: Mapping['mode']) => MODE_LABELS[mode];
 
-/** The Activity Monitor's line, channel first: "ch 2 · CC 7 · 100", "ch 1 · Note E4 · 120", "ch 1 · Aftertouch · 50 %". */
+/** The Activity Monitor's line, channel first: "ch 2 · CC 7 · 100", "ch 1 · Note E4 · 120", "ch 1 · Aftertouch · 50 %", "ch 10 · Aftertouch C2 · 50 %". */
 export function describeMessage(message: MidiMessage): string {
   if (message.type === 'cc') return `ch ${message.channel} · CC ${message.controller} · ${message.value}`;
   if (message.type === 'pitchBend') return `ch ${message.channel} · Pitch bend · ${message.value > 0 ? '+' : ''}${Math.round(message.value * 100)} %`;
   if (message.type === 'program') return `ch ${message.channel} · Program ${message.program + 1}`;
-  if (message.type === 'pressure') return `ch ${message.channel} · Aftertouch · ${Math.round(message.value * 100)} %`;
+  if (message.type === 'pressure') {
+    const pad = message.note === undefined ? '' : ` ${noteName(message.note)}`; // a Note's own pressure names it
+    return `ch ${message.channel} · Aftertouch${pad} · ${Math.round(message.value * 100)} %`;
+  }
   const velocity = message.type === 'noteOn' ? ` · ${Math.round(message.velocity * 127)}` : ' · off';
   return `ch ${message.channel} · Note ${noteName(message.note)}${velocity}`;
 }

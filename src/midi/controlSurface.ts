@@ -63,7 +63,10 @@ interface Synth {
   bend?(amount: number): void;
   pedal?(down: boolean): void;
   program?(number: number): void;
-  /** Channel aftertouch, how hard the keys are pressed (0–1): it moves its Destination, and is never learned (issue 132). */
+  /**
+   * Aftertouch, how hard the keys are pressed (0–1): the channel's or the highest held Note's, whichever is higher. It
+   * moves its Destination, and is never learned (issue 132).
+   */
   pressure?(amount: number): void;
 }
 
@@ -125,6 +128,23 @@ export function createControlSurface(synth: Synth) {
   const gathered = new Map<string, number>(); // a Relative knob's travel towards a stepped dial's next step, per control
   const thirds = new Map<string, number>(); // a Relative knob's share of a Grid step not yet moved (a C16's 66s), per control
   const detecting = new Map<string, number[]>(); // the first values of knobs finding their Encoder Mode
+  // Aftertouch (issue 132, the owner's decision 1): the channel's, and each held Note's own until its release. The
+  // pressure is the highest of them, one for every Note.
+  let channelPressure = 0;
+  const notePressures = new Map<string, number>(); // by channel and Note
+  const pressure = () => Math.max(channelPressure, ...notePressures.values());
+  const noteKey = (channel: number, note: number) => `${channel}:${note}`;
+  const pressureMoved = (message: Extract<MidiMessage, { type: 'pressure' }>) => {
+    if (message.note === undefined) channelPressure = message.value;
+    else notePressures.set(noteKey(message.channel, message.note), message.value);
+    synth.pressure?.(pressure());
+  };
+  /** A released Note's pressure is forgotten; the pressure is told again if that changes it. */
+  const forgetPressure = (channel: number, note: number) => {
+    const before = pressure();
+    if (!notePressures.delete(noteKey(channel, note))) return;
+    if (pressure() !== before) synth.pressure?.(pressure());
+  };
 
   /**
    * A Relative message's steps, as sent; but a fast turn's message (more than a step) on a known Controller's layout
@@ -330,7 +350,8 @@ export function createControlSurface(synth: Synth) {
     /** A message from a Controller: `from` is the known Controller it is (a C16), whose layout's Mappings answer it alone; left out for any other. */
     handle(incoming: MidiMessage, from?: KnownController) {
       if (incoming.type === 'program') return synth.program?.(incoming.program);
-      if (incoming.type === 'pressure') return synth.pressure?.(incoming.value);
+      if (incoming.type === 'pressure') return pressureMoved(incoming);
+      if (incoming.type === 'noteOff') forgetPressure(incoming.channel, incoming.note);
       const message: ControlMessage =
         incoming.type === 'pitchBend'
           ? { type: 'cc', channel: incoming.channel, controller: PITCH_BEND, value: Math.round(((incoming.value + 1) / 2) * 127) }

@@ -32,8 +32,15 @@ describe('MIDI parser', () => {
     ]); // running status
   });
 
-  it('ignores per-Note (polyphonic) pressure, out of scope (issue 132)', () => {
-    expect(parse(0xa0, 60, 100, 0x90, 60, 100)).toEqual([{ type: 'noteOn', channel: 1, note: 60, velocity: 100 / 127 }]);
+  it('reads per-Note (polyphonic) pressure as a pressure from 0 to 1 on its Note (issue 132, the owner’s decision 1)', () => {
+    expect(parse(0xa0, 60, 127, 0x90, 60, 100)).toEqual([
+      { type: 'pressure', channel: 1, note: 60, value: 1 },
+      { type: 'noteOn', channel: 1, note: 60, velocity: 100 / 127 },
+    ]);
+    expect(parse(0xa9, 36, 64, 38, 0)).toEqual([
+      { type: 'pressure', channel: 10, note: 36, value: 64 / 127 },
+      { type: 'pressure', channel: 10, note: 38, value: 0 },
+    ]); // running status
   });
 
   it('follows running status: data bytes without a new status byte reuse the last one', () => {
@@ -69,8 +76,8 @@ describe('MIDI parser', () => {
   });
 
   it('skips system-exclusive dumps and messages it does not use', () => {
-    // Per-Note aftertouch (0xa0) is not used.
-    expect(parse(0xf0, 0x7e, 0x01, 0xf7, 0xa0, 60, 30, 0x90, 60, 1)).toEqual([
+    // A Song Position Pointer (0xf2) is not used.
+    expect(parse(0xf0, 0x7e, 0x01, 0xf7, 0xf2, 0x10, 0x02, 0x90, 60, 1)).toEqual([
       { type: 'noteOn', channel: 1, note: 60, velocity: 1 / 127 },
     ]);
   });

@@ -82,6 +82,17 @@ describe('useMidi: a Controller (the 1.16.0 review)', () => {
     expect(m.result.current.activity).toBe('ch 1 · Aftertouch · 100 %');
   });
 
+  it('hands per-Note aftertouch to the host too, the Activity Monitor naming its Note (issue 132)', async () => {
+    const m = await midi();
+    unmount = m.unmount;
+    await m.send(0xa9, 36, 0);
+    expect(m.result.current.pressureHeard).toBe(false);
+    await m.send(0xa9, 36, 127);
+    expect(m.told).toEqual(['pressure 0.0', 'pressure 1.0']);
+    expect(m.result.current.pressureHeard).toBe(true);
+    expect(m.result.current.activity).toBe('ch 10 · Aftertouch C2 · 100 %');
+  });
+
   it('acts on a pad mapped to an Action: Hold through the host, the next Preset in the Patch', async () => {
     const m = await midi();
     unmount = m.unmount;

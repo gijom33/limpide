@@ -6,8 +6,11 @@ export type MidiMessage =
   | { type: 'pitchBend'; channel: number; value: number }
   /** A Program Change: the program number, 0 to 127. */
   | { type: 'program'; channel: number; program: number }
-  /** Channel aftertouch: how hard the keys are pressed, one pressure for the whole keyboard, 0 to 1 (issue 132). */
-  | { type: 'pressure'; channel: number; value: number };
+  /**
+   * Aftertouch: how hard the keys are pressed, 0 to 1 (issue 132). Channel aftertouch is one pressure for the whole
+   * keyboard; per-Note (polyphonic) aftertouch, a pad's or a key's own, names its `note`.
+   */
+  | { type: 'pressure'; channel: number; value: number; note?: number };
 
 /**
  * A MIDI clock's real-time messages (issue 136): a tick, 24 to the beat, and the transport's Start (the next tick is
@@ -31,8 +34,7 @@ const DATA_BYTES: Record<number, number> = { 0x80: 2, 0x90: 2, 0xa0: 2, 0xb0: 2,
  * A streaming MIDI parser: feed it the bytes of each incoming packet. It follows running status (data bytes
  * reuse the last status), reads the clock's real-time bytes wherever they fall, even inside another message, without
  * touching running status (issue 136), skips keep-alive and system-exclusive dumps, and reports only what Limpide uses:
- * notes, control changes, pitch bend, program changes, channel aftertouch (per-Note pressure is read past and dropped,
- * issue 132) and the clock.
+ * notes, control changes, pitch bend, program changes, aftertouch, channel and per-Note (issue 132), and the clock.
  */
 export function createMidiParser() {
   let status = 0;
@@ -99,6 +101,8 @@ function toMessage(status: number, [a, b]: number[]): MidiMessage | undefined {
       return { type: 'program', channel, program: a };
     case 0xd0:
       return { type: 'pressure', channel, value: a / 127 };
+    case 0xa0:
+      return { type: 'pressure', channel, note: a, value: b / 127 };
     default:
       return undefined;
   }

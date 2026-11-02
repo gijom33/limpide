@@ -69,3 +69,32 @@ test('aftertouch moves the Cutoff’s dot, or the Destination picked in the MIDI
   await openMidi(page);
   await expect(aftertouch).toHaveValue('resonance');
 });
+
+// Issue 132, the owner's decision 1: per-Note (polyphonic) aftertouch, a TempoPAD C16's, the highest held Note's moving
+// the one Destination; a Note's pressure is forgotten on its release.
+test('per-Note aftertouch moves the Cutoff’s dot by the Note pressed hardest, and a released Note’s is forgotten', async ({ page }) => {
+  const dot = page
+    .getByRole('region', { name: 'Filter' })
+    .locator('.knob', { has: page.getByRole('slider', { name: sliderName('Cutoff') }) })
+    .locator('.knob-live');
+  await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/); // the sound is running
+
+  await play(page, [0x90, 57, 100], [0x90, 60, 100]);
+  await expect(page.getByRole('slider', { name: sliderName('Cutoff') })).toBeVisible();
+  await expect(dot).toBeHidden();
+  await play(page, [0xa0, 57, 64]); // A3 pressed halfway
+  await expect(dot).toBeVisible();
+  const halfway = await dot.getAttribute('cx');
+  await play(page, [0xa0, 60, 127]); // C4 all the way: the harder of the two
+  await expect.poll(() => dot.getAttribute('cx')).not.toBe(halfway);
+  await play(page, [0xa0, 57, 32]); // A3 lighter: C4's still holds it
+  await openMidi(page);
+  await expect(midiPanel(page)).toContainText('Aftertouch A3 · 25 %');
+  await expect.poll(() => dot.getAttribute('cx')).not.toBe(halfway);
+  const full = await dot.getAttribute('cx');
+  await play(page, [0xa0, 57, 64], [0x80, 60, 0]); // C4 released: A3's halfway is the pressure
+  await expect.poll(() => dot.getAttribute('cx')).toBe(halfway);
+  expect(halfway).not.toBe(full);
+  await play(page, [0x80, 57, 0]); // both released: no pressure
+  await expect(dot).toBeHidden();
+});

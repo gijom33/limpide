@@ -152,7 +152,7 @@ Framed by the owner on 2026-10-31 ([issue 131](./issues/131-v1.md), which tracks
 
 - **A sound generator,** no more: no effects, no arpeggiator, mono output.
 - **A learning layer** for people getting to know the domain: the Tutorials, the Tour, the Demo, the Synth Geek Layer and the overlays.
-- **Every feature the VST/AU plugin will need,** so that the plugin's spec is v1's synth: tempo sync for the LFOs (issue 112), Legato (119) and channel aftertouch (132). The engine stays on native Web Audio nodes; the port is the plugin's own project.
+- **Every feature the VST/AU plugin will need,** so that the plugin's spec is v1's synth: tempo sync for the LFOs (issue 112), Legato (119) and aftertouch (132). The engine stays on native Web Audio nodes; the port is the plugin's own project.
 - **Bead** is the last feature that is not essential.
 
 **In v1, still to do:** issues 112 (with 136 and 137), 119 and 132; the Synth Geek Layer complete (133), History in the tooltips (134) and a Patch in plain words (123); the polish of 116, 129, 130, 47, 42, 48 and 111, and the inbox's findings; then one last full review round, finding only nitpicks.
@@ -209,7 +209,7 @@ Framed by the owner on 2026-10-31 ([issue 131](./issues/131-v1.md), which tracks
 - Custom DSP or analogue-modelled filters ([ADR-0001](./adr/0001-native-web-audio-nodes-over-custom-dsp.md)).
 - A spectrogram.
 - An arpeggiator or sequencer, and MIDI output. (Recording to a WAV file came into scope on 2026-10-30, decided by the owner, [issue 120](./issues/120-recording.md), and went to v2 on 2026-10-31; a tempo, grilled on 2026-10-31, is in [issue 112](./issues/112-tempo-midi-clock-and-an-arpeggiator.md); the arpeggiator stays out, decided by the owner on 2026-10-30: it won't help people understand how synths work, and the plugin Limpide is to become will be just a synth.)
-- Stereo output and MPE (per-Note expression): Limpide stays a mono voice, like the classic synths it teaches, and takes channel aftertouch only (decided by the owner, [issue 131](./issues/131-v1.md), 2026-10-31).
+- Stereo output and MPE (per-Note expression): Limpide stays a mono voice, like the classic synths it teaches, and takes one aftertouch for every Note, the channel's or the hardest-pressed Note's (decided by the owner, [issue 131](./issues/131-v1.md), 2026-10-31, the per-Note one added in [issue 132](./issues/132-aftertouch.md), 2026-11-01).
 - Accounts and cloud sync. (Phones were out of scope until 1.1.0; they are now a first-class layout.)
 - Drawing your own LFO shapes, and graphical envelope editors.
 

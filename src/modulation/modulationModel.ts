@@ -39,8 +39,8 @@ export interface Modulation {
 }
 
 /**
- * A keyboard's channel aftertouch (issue 132): how hard the keys are pressed, 0 to 1, and the one Destination it moves,
- * chosen in the MIDI panel.
+ * A keyboard's aftertouch (issue 132), the channel's or the hardest-pressed Note's: how hard the keys are pressed, 0
+ * to 1, and the one Destination it moves, chosen in the MIDI panel.
  */
 export interface Pressure {
   destination: LfoDestination;
