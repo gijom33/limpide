@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
+import { BEND_RANGES, type BendRange } from '../app/displaySettings';
 import { answeredBy, knownAmong } from '../midi/controller';
 import { describeControl, describeMode, describeTarget } from '../midi/describe';
 import { type Control, type ControllerId, controlKey, type Mapping } from '../midi/mappings';
@@ -11,9 +12,6 @@ import { TIPS } from './tips';
 
 export type MidiState =
   { kind: 'unsupported'; ios: boolean } | { kind: 'denied' } | { kind: 'pending' } | { kind: 'ready'; devices: string[] };
-
-/** The bend wheel's ranges offered, in semitones: a whole tone (the usual), a fifth, an octave. */
-const BEND_RANGES = [2, 7, 12];
 
 interface Props {
   state: MidiState;
@@ -32,8 +30,8 @@ interface Props {
   onRemove(control: Control): void;
   onClear(): void;
   /** How far a keyboard's bend wheel takes the pitch, in semitones each way (issue 52). */
-  bendRange: number;
-  onBendRange(semitones: number): void;
+  bendRange: BendRange;
+  onBendRange(semitones: BendRange): void;
   /** The Destination a keyboard's aftertouch moves, one of the LFOs' (issue 132). */
   aftertouch: LfoDestination;
   onAftertouch(destination: LfoDestination): void;

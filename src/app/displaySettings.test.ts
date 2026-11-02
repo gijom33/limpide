@@ -51,6 +51,27 @@ describe('the Display settings remembered (issue 87)', () => {
     expect(recall(memoryStorage({ 'limpide.bead': 'on' }), 'bead')).toBe('on');
   });
 
+  it('brings back the cards’ folds, the bend range and the aftertouch kept before they moved here (issue 139)', () => {
+    const storage = memoryStorage({
+      'limpide.cardFolded.demo': '1',
+      'limpide.cardFolded.tutorial': '0',
+      'limpide.cardFolded.tour': '1',
+      'limpide.bendRange': '12',
+      'limpide.aftertouch': 'volume',
+    });
+    expect([recall(storage, 'cardFolded.demo'), recall(storage, 'cardFolded.tutorial'), recall(storage, 'cardFolded.tour')]).toEqual(['1', '0', '1']);
+    expect(recall(storage, 'bendRange')).toBe(12);
+    expect(recall(storage, 'aftertouch')).toBe('volume');
+
+    const nothing = memoryStorage({ 'limpide.bendRange': '5', 'limpide.aftertouch': 'nowhere', 'limpide.cardFolded.demo': 'yes' });
+    expect([recall(nothing, 'bendRange'), recall(nothing, 'aftertouch'), recall(nothing, 'cardFolded.demo'), recall(nothing, 'cardFolded.tour')]).toEqual([2, 'cutoff', '0', '0']);
+
+    remember(nothing, 'bendRange', 7);
+    remember(nothing, 'aftertouch', 'pitch');
+    remember(nothing, 'cardFolded.tour', '1');
+    expect([nothing.data['limpide.bendRange'], nothing.data['limpide.aftertouch'], nothing.data['limpide.cardFolded.tour']]).toEqual(['7', 'pitch', '1']);
+  });
+
   it('keeps each setting under the same key and in the same form as before, so a reload brings it back', () => {
     const storage = memoryStorage();
     remember(storage, 'viewer', { cycles: 1, timelineSeconds: 4, frequencyScale: 'linear', levelScale: 'db', tapSource: 'newest' });

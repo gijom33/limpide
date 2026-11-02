@@ -6,9 +6,8 @@ import { type AudioStatus, unlockAudio } from '../app/unlockAudio';
 import { rememberWelcome, welcomeFor } from '../app/welcome';
 import { createCallingPhrase, createWordsHeard, type Word } from '../input/callingPhrase';
 import { DEFAULT_OCTAVE, shiftOctave, startingOctave } from '../input/keyboardLayout';
-import { NO_PRESSURE } from '../modulation/modulationModel';
 import { type Formula, oscillatorFormulas, responseFormula } from '../music/geek';
-import { CHOICES, LFO_DESTINATIONS, type LfoDestination, osc1Heard, osc2Heard, type ParamId, type Patch, setFilter, setParam, setWaveform, subNoiseHeard } from '../patch/patch';
+import { CHOICES, osc1Heard, osc2Heard, type ParamId, type Patch, setFilter, setParam, setWaveform, subNoiseHeard } from '../patch/patch';
 import { PRESETS } from '../patch/presets';
 import { TUTORIALS } from '../tutorial/tutorials';
 import { About } from './About';
@@ -59,10 +58,6 @@ import { AxesControls, ViewActions } from './ViewerControls';
 import { WaveformPicker, WaveIcon } from './WaveformPicker';
 import { Wordmark } from './Wordmark';
 
-const BEND_RANGE = 'limpide.bendRange';
-const AFTERTOUCH = 'limpide.aftertouch';
-/** The Destination aftertouch moves as remembered, or the Cutoff (issue 132). */
-const storedAftertouch = (stored: string | null): LfoDestination => LFO_DESTINATIONS.find((d) => d.id === stored)?.id ?? NO_PRESSURE.destination;
 /** Why a greyed-out control does nothing now, for a screen reader (issue 104): what several controls share. */
 const OSC1_SILENT = 'No effect while Osc 1 is silent';
 const OSC2_SILENT = 'No effect while Osc 2 is silent';
@@ -198,15 +193,11 @@ export function App() {
   const [tooltips, setTooltips] = useDisplaySetting(storage, 'tooltips');
   const { hold, pressHold, pressHoldRef, heldNotes, setPedal } = useHold(session);
   // How far a keyboard's bend wheel takes the pitch, in semitones each way (issue 52); remembered.
-  const [bendRange, setBendRange] = useState(() => Number(storage.getItem(BEND_RANGE)) || 2);
-  useEffect(() => storage.setItem(BEND_RANGE, String(bendRange)), [storage, bendRange]);
+  const [bendRange, setBendRange] = useDisplaySetting(storage, 'bendRange');
   // The Destination a keyboard's aftertouch moves (issue 132), remembered with the MIDI settings, not in the Patch. A
   // new one starts from no pressure, until the keyboard sends the next.
-  const [aftertouch, setAftertouch] = useState(() => storedAftertouch(storage.getItem(AFTERTOUCH)));
-  useEffect(() => {
-    storage.setItem(AFTERTOUCH, aftertouch);
-    session.engine.setPressure({ destination: aftertouch, amount: 0 });
-  }, [storage, session, aftertouch]);
+  const [aftertouch, setAftertouch] = useDisplaySetting(storage, 'aftertouch');
+  useEffect(() => session.engine.setPressure({ destination: aftertouch, amount: 0 }), [session, aftertouch]);
 
   useSpaceFreezes(viewerStore);
   const narrow = useMediaQuery(STACKED);
