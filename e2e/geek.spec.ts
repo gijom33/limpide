@@ -279,3 +279,48 @@ test('the Envelope faders’ tips work out τ under the hood, Glide’s gives it
   await expect(glideHood).toContainText(/f = f₂ \+ \(f₁ − f₂\)·e\^\(−t\/τ\)\s*τ = Glide ÷ 4\. /);
   await expect(glideHood).not.toContainText('now');
 });
+
+// Issue 170: the Viewers' numbers (issue 133, decision 11).
+test('with the layer on each Scope writes the Note’s period, the hover the Harmonic’s number, the Oscillator Spectrum the Noise’s slope (issue 170)', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  const scopes = page.locator('canvas.scope');
+  const oscillatorSpectrum = page.getByRole('img', { name: 'Oscillator Spectrum' });
+  await expect(scopes).toHaveCount(3);
+  // Off, nothing is written.
+  for (const scope of await scopes.all()) await expect(scope).toHaveAttribute('data-period', '');
+  await page.evaluate(() => localStorage.setItem('limpide.overlays', JSON.stringify({ geek: true })));
+  await page.reload();
+
+  // Before any Note, A4's, said; A4 played, its period and frequency on every Scope.
+  for (const scope of await scopes.all()) await expect(scope).toHaveAttribute('data-period', '2.27 ms · 440 Hz at A4');
+  await page.keyboard.down('KeyH'); // A4
+  for (const scope of await scopes.all()) await expect(scope).toHaveAttribute('data-period', '2.27 ms · 440 Hz');
+
+  // Hovering the 3rd Harmonic, 1320 Hz, on the log axis from 20 Hz to 20 kHz: the readout adds its number.
+  const box = (await oscillatorSpectrum.boundingBox())!;
+  await page.mouse.move(box.x + (box.width * Math.log(1320 / 20)) / Math.log(1000), box.y + box.height / 2);
+  await expect(oscillatorSpectrum).toHaveAttribute('data-readout', /^1\.32 kHz · E6 \+\d¢ · −\d+ dB · n = 3$/);
+  await page.keyboard.up('KeyH');
+  await page.mouse.move(0, 0);
+
+  // The Noise up, then pink: its slope in the Oscillator Spectrum's corner, and nowhere else.
+  await expect(oscillatorSpectrum).toHaveAttribute('data-noise-slope', '');
+  await page.getByRole('tab', { name: 'Mixer' }).click();
+  await page.getByRole('region', { name: 'Oscillators' }).getByRole('slider', { name: 'Noise' }).press('PageUp');
+  await expect(oscillatorSpectrum).toHaveAttribute('data-noise-slope', 'white: 0 dB/oct');
+  await page.getByRole('tab', { name: 'Sub & Noise' }).click();
+  await page.getByRole('radiogroup', { name: 'Noise Colour' }).getByRole('radio', { name: 'Pink' }).click();
+  await expect(oscillatorSpectrum).toHaveAttribute('data-noise-slope', 'pink: −3 dB/oct');
+  await expect(page.getByRole('img', { name: 'Filter Spectrum' })).not.toHaveAttribute('data-noise-slope', /./);
+});
+
+test('the Scopes’ and the Spectrums’ tips give their formulas under the hood, with the layer on (issue 170)', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.addInitScript(() => localStorage.setItem('limpide.overlays', JSON.stringify({ geek: true })));
+  await page.goto('/');
+  await page.getByRole('img', { name: 'Amp Scope' }).hover();
+  await expect(page.getByRole('tooltip').filter({ hasText: 'Amp Scope' }).locator('.tooltip-hood')).toContainText('T = 1 / f₀');
+  await page.getByRole('img', { name: 'Oscillator Spectrum' }).hover();
+  await expect(page.getByRole('tooltip').filter({ hasText: 'Oscillator Spectrum' }).locator('.tooltip-hood')).toContainText(/fₙ = n × f₀.*pink.*−3 dB per octave/);
+});

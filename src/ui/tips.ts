@@ -436,11 +436,13 @@ export const VIEWER_TIPS: Record<'Oscillator' | 'Filter' | 'Amp', { scope: TipCo
       title: 'Oscillator Scope',
       body: 'The waveform leaving the Oscillators and the Mixer, before the Filter: a few repeats of it, held still on the Note’s pitch. Height is level.',
       how: 'Pick another Waveform and watch the shape change.',
+      underTheHood: UNDER_THE_HOOD.scope,
     },
     spectrum: {
       title: 'Oscillator Spectrum',
       body: 'The same sound as its Harmonics: one spike each, low to high, the fundamental first. Their heights are the recipe of the timbre.',
       how: 'Hover a spike to read its frequency and level.',
+      underTheHood: UNDER_THE_HOOD.oscillatorSpectrum,
       history: HISTORY.spectrum,
     },
   },
@@ -448,11 +450,13 @@ export const VIEWER_TIPS: Record<'Oscillator' | 'Filter' | 'Amp', { scope: TipCo
     scope: {
       title: 'Filter Scope',
       body: 'The waveform after the Filter: with the high Harmonics taken away it rounds off; Resonance adds a ringing ripple.',
+      underTheHood: UNDER_THE_HOOD.scope,
     },
     spectrum: {
       title: 'Filter Spectrum',
       body: 'The Harmonics after the Filter. The Curve over them is the Filter’s response: spikes under its slope have been turned down.',
       how: 'Turn the Cutoff and watch the slope move across the Harmonics.',
+      underTheHood: UNDER_THE_HOOD.spectrum,
       history: HISTORY.spectrum,
     },
   },
@@ -460,10 +464,12 @@ export const VIEWER_TIPS: Record<'Oscillator' | 'Filter' | 'Amp', { scope: TipCo
     scope: {
       title: 'Amp Scope',
       body: 'What you hear: the Filter’s output shaped by the Amp Envelope, growing and fading with it.',
+      underTheHood: UNDER_THE_HOOD.scope,
     },
     spectrum: {
       title: 'Amp Spectrum',
       body: 'The Harmonics of what you hear: the Filter’s, all rising and falling together with the Amp Envelope.',
+      underTheHood: UNDER_THE_HOOD.spectrum,
       history: HISTORY.spectrum,
     },
   },
