@@ -6,7 +6,7 @@ What is known before any research: the page reaches MIDI through the browser's W
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement. In v1 as a line in the MIDI panel (decision 1); the rest v2, not committed.
+**Status:** ready-for-human · enhancement. Built (2026-11-01) on night/2026-11-01, for the owner to try
 
 ## Decisions
 
@@ -32,3 +32,17 @@ What is known before any research: the page reaches MIDI through the browser's W
 1. **v1 or v2?** Under v1's scope rule ([131](./131-v1.md), decision 12) a new idea goes to v2 unless it is a bug or polish of something in v1. Claude's recommendation: v1 if it is what the first check finds (a paired C16 plays, at most its Bluetooth name to recognise and a line in the MIDI panel on pairing); v2 if it needs more than that.
 2. **Answered (2026-10-31): the paired C16 plays, its name recognised.** The first check, on the owner's Mac: pair the C16 over Bluetooth in Audio MIDI Setup, open Limpide, and Claude reads the port's name and what it sends from the page. Claude's recommendation: yes, with the C16 check of [34](./34-c16-bank-layout.md).
 3. **Then a `/research` pass** on Bluetooth MIDI in Web MIDI on each system (Mac, Windows, Android, ChromeOS), for what the MIDI panel should say. Claude's recommendation: only if the first check works on the Mac.
+
+## How it was built
+
+Built on 2026-11-01, on night/2026-11-01: v1's line only (decision 1); Bluetooth on Windows, Android and ChromeOS, and its latency, stay v2, not committed.
+
+- **The line:** with nothing connected, the MIDI panel and the MIDI button's tip (the same words) now read: "No MIDI Controller connected. Plug one in by USB and it is picked up straight away. A Bluetooth one plays once paired in the system's MIDI settings (Audio MIDI Setup on a Mac), as a TempoPAD C16 does." It takes the place of "(USB, or pair it over Bluetooth MIDI)", which did not say where to pair. Safari's and the iPhone's lines already said there is no Web MIDI there, so they stay as they were.
+- Tests: `e2e/piano.spec.ts`, beside the other MIDI status tests: with Web MIDI and nothing plugged in, the tip and the panel say it.
+
+**Calls made (Claude's call, open to the owner):**
+
+1. **Only with nothing connected:** the line is in the words shown while no Controller is connected, the moment someone looks for how to connect one. Once one is connected, the panel names it, as before.
+2. **The C16 named** ("as a TempoPAD C16 does") as the one checked, and Audio MIDI Setup as the Mac's place to pair; nothing is said of other systems, which are v2's to find out.
+
+**To try:** open the MIDI panel with nothing plugged in (and hover the MIDI button) and read the line; then pair the C16 over Bluetooth in Audio MIDI Setup and see it connect.

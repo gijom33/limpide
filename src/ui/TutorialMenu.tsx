@@ -10,13 +10,21 @@ const TIP = {
 
 /**
  * The Tutorials from the header (issue 59, the owner's decision): after the welcome, only the Patch name led to
- * them. The button opens the list; picking one starts it. Escape or a press elsewhere closes it, Escape back to
- * its button (issue 51).
+ * them. The button opens the list, each Tutorial with a short line of what it teaches (issue 129); picking one starts
+ * it. Escape or a press elsewhere closes it, Escape back to its button (issue 51).
  */
-export function TutorialMenu({ tutorials, onStart }: { tutorials: readonly { preset: string; finished: boolean }[]; onStart(preset: string): void }) {
+export function TutorialMenu({ tutorials, onStart }: { tutorials: readonly { preset: string; teaches: string; finished: boolean }[]; onStart(preset: string): void }) {
   const [open, setOpen] = useState(false);
+  // The list opens under the button, along its left edge, or along its right edge when the button sits in the right
+  // half of the window, so it never runs off the page.
+  const [side, setSide] = useState<'left' | 'right'>('left');
   const wrapper = useRef<HTMLDivElement>(null);
   const button = useRef<HTMLButtonElement>(null);
+  const toggle = () => {
+    const box = button.current?.getBoundingClientRect();
+    setSide(box && box.left + box.width / 2 > window.innerWidth / 2 ? 'right' : 'left');
+    setOpen((o) => !o);
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -37,13 +45,13 @@ export function TutorialMenu({ tutorials, onStart }: { tutorials: readonly { pre
   return (
     <div className="tutorial-menu" ref={wrapper}>
       <Tooltip content={TIP}>
-        <button ref={button} type="button" className="tool tool-mode demo-button" aria-label="Tutorial" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+        <button ref={button} type="button" className="tool tool-mode demo-button" aria-label="Tutorial" aria-expanded={open} onClick={toggle}>
           <TutorialIcon />
           <span className="demo-word">Tutorial</span>
         </button>
       </Tooltip>
       {open && (
-        <div className="tutorial-menu-panel" role="group" aria-label="Tutorials">
+        <div className="tutorial-menu-panel" role="group" aria-label="Tutorials" data-side={side}>
           {tutorials.map((t) => (
             <button
               key={t.preset}
@@ -56,7 +64,10 @@ export function TutorialMenu({ tutorials, onStart }: { tutorials: readonly { pre
               }}
             >
               <TutorialIcon />
-              {t.preset}
+              <span className="tutorial-menu-words">
+                <span className="tutorial-menu-name">{t.preset}</span>
+                <span className="tutorial-menu-teaches">{t.teaches}</span>
+              </span>
               {t.finished && <span className="tutorial-menu-done" aria-hidden="true">✓</span>}
             </button>
           ))}

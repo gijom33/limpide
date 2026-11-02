@@ -5,12 +5,12 @@ test('the Viewers start with Harmonics, Ideal and the Filter’s Response Curve;
   await page.goto('/');
   await openDisplay(page);
   const overlays = page.getByRole('group', { name: 'Show on Viewers' });
-  for (const [name, on] of [['Harmonics', 'true'], ['Ideal', 'true'], ['Filter’s Response Curve', 'true'], ['Guides', 'false'], ['Maths', 'false']] as const) {
+  for (const [name, on] of [['Harmonics', 'true'], ['Ideal', 'true'], ['Filter’s Response Curve', 'true'], ['Guides', 'false'], ['Geek', 'false']] as const) {
     await expect(overlays.getByRole('button', { name })).toHaveAttribute('aria-pressed', on);
   }
-  await expect(overlays.getByRole('button')).toHaveCount(5); // no Ghost: it was dropped; the Maths Layer joined
+  await expect(overlays.getByRole('button')).toHaveCount(5); // no Ghost: it was dropped; the Synth Geek Layer joined
   // The Response Curve's toggle reads Filter, what the line is of (issue 161).
-  await expect(overlays.getByRole('button')).toHaveText(['Harmonics', 'Ideal', 'Filter', 'Guides', 'Maths']);
+  await expect(overlays.getByRole('button')).toHaveText(['Harmonics', 'Ideal', 'Filter', 'Guides', 'Geek']);
 
   await overlays.getByRole('button', { name: 'Guides' }).click();
   await overlays.getByRole('button', { name: 'Filter’s Response Curve' }).click();
@@ -24,7 +24,7 @@ test('the Viewers start with Harmonics, Ideal and the Filter’s Response Curve;
 
 // Issue 161: the toggle was named Curve; its stored key stays `curve`, so a visitor's choice still loads.
 test('a visitor’s Curve choice, kept from before the toggle was named Filter, still loads', async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem('limpide.overlays', JSON.stringify({ harmonics: true, ideal: true, curve: false, guides: false, maths: false })));
+  await page.addInitScript(() => localStorage.setItem('limpide.overlays', JSON.stringify({ harmonics: true, ideal: true, curve: false, guides: false, geek: false })));
   await page.goto('/');
   await openDisplay(page);
   await expect(page.getByRole('group', { name: 'Show on Viewers' }).getByRole('button', { name: 'Filter’s Response Curve' })).toHaveAttribute('aria-pressed', 'false');

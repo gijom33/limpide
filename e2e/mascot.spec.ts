@@ -1,4 +1,5 @@
 import { expect, type Page, test } from '@playwright/test';
+import { LONGEST_STEP } from '../src/ui/mascotPlace';
 import { openDisplay } from './helpers';
 import { holding, WELCOMED } from './startState';
 
@@ -24,6 +25,34 @@ async function bringBead(page: Page) {
   await page.keyboard.press('Escape');
   await expect(page.getByRole('region', { name: 'Viewer controls' })).toBeHidden();
   await expect(mascot(page)).toHaveCount(1);
+}
+
+/**
+ * Waits until it stands or hovers (or is as `moving` says), giving it `seconds` of its own time. Its motion goes at
+ * most LONGEST_STEP a frame, so where frames come slower than that (WebKit on GitHub's runner, about fifteen a second;
+ * any browser on a loaded machine) a move takes longer than the clock says (issue 177). Counted frame by frame, each
+ * frame's share capped as its motion caps it, the wait holds at any frame rate.
+ */
+async function settles(page: Page, moving = /^(standing|hovering)$/, seconds = 5) {
+  // What it was doing when the wait ended: read again later, it may already be off again (the Demo startles it).
+  const seen = await page.evaluate(
+    ([limit, step, pattern]) =>
+      new Promise<string>((done) => {
+        const wanted = new RegExp(pattern);
+        let own = 0;
+        let last: number | null = null;
+        const frame = (time: number) => {
+          if (last !== null) own += Math.min(step, (time - last) / 1000);
+          last = time;
+          const now = document.querySelector<HTMLElement>('.mascot')?.dataset.moving ?? '';
+          if (wanted.test(now) || own > limit) done(now);
+          else requestAnimationFrame(frame);
+        };
+        requestAnimationFrame(frame);
+      }),
+    [seconds, LONGEST_STEP, moving.source] as const,
+  );
+  expect(seen).toMatch(moving);
 }
 
 /** Plays Notes on the computer keyboard: J is B4, D E4, H A4, S D4 (B, E, A, D); A C4, F F4. */
@@ -158,7 +187,7 @@ async function scrollThrough(page: Page, step: number) {
     await page.evaluate((top) => window.scrollTo({ top, behavior: 'instant' }), y);
     await page.waitForTimeout(1200); // it falls or flies there, lands and recovers
     // On a busy machine its flight may take longer: once it has settled, standing or hovering.
-    await expect(mascot(page)).toHaveAttribute('data-moving', /^(standing|hovering)$/, { timeout: 5000 });
+    await settles(page);
     const where = await seen(page);
     expect(where.inView, `scrolled to ${y}: ${where.at}`).toBe(true);
     places.push(where.on);
@@ -189,7 +218,7 @@ for (const [size, viewport, column] of [
   });
 }
 
-/** Each frame for `seconds`: the drop's top under the ceiling (the header or the section tabs), its left, and its tail's turn. */
+/** Each frame for `seconds`: the drop's top under the ceiling (the header or the section tabs), its box's left, and its tail's turn. */
 const watchHover = (page: Page, seconds: number) =>
   page.evaluate(
     (ms) =>
@@ -201,7 +230,8 @@ const watchHover = (page: Page, seconds: number) =>
           const [header, strip] = ['header', '.section-strip'].map((q) => document.querySelector(q)?.getBoundingClientRect().bottom ?? 0);
           samples.push({
             under: drop.top - Math.max(0, header, strip),
-            left: drop.left,
+            // Its place: its box, whichever way its drawing faces (issue 179).
+            left: document.querySelector('.mascot')!.getBoundingClientRect().left,
             tail: document.querySelector('#bead-self > g')!.getAttribute('transform') ?? '',
             moving: document.querySelector<HTMLElement>('.mascot')!.dataset.moving ?? '',
           });
@@ -227,7 +257,7 @@ test('in a short phone window, with no edge in view, it hovers on its tail where
   let lostAt: number | null = null;
   for (let y = 60; lostAt === null; y += 60) {
     expect(y, 'no edge ever left it').toBeLessThan(4000);
-    const before = await page.locator('.mascot-drop').evaluate((el) => el.getBoundingClientRect().left);
+    const before = await mascot(page).evaluate((el) => el.getBoundingClientRect().left);
     await page.evaluate((top) => window.scrollTo({ top, behavior: 'instant' }), y);
     await page.waitForTimeout(900); // it takes off and settles, or falls to an edge and lands
     if ((await mascot(page).getAttribute('data-moving')) === 'hovering') lostAt = before;
@@ -282,39 +312,60 @@ test('it comes up from behind the Amp, and leaves jumping, then melting; with re
   await expect(mascot(page)).toHaveCount(0, { timeout: 500 });
 });
 
-test('it adds under a millisecond to each frame the Viewers draw (their own runs vary by half that)', async ({ page, browserName }) => {
+test('it adds under a millisecond to each frame the Viewers draw, or under their share of a slowed one (issues 138, 177)', async ({ page, browserName }) => {
+  test.slow(); // up to three rounds
   // Measured in Chromium only (issue 138): WebKit's clock counts whole milliseconds and, on GitHub's runner, draws some
   // fifteen frames a second, so two seconds' average wanders by ±0.7 ms with Bead or without, and a 1 ms bound fails
   // on noise. In Chromium on Linux Bead adds under 0.1 ms.
   test.skip(browserName !== 'chromium', "WebKit's whole-millisecond clock cannot measure a fraction of one");
-  // Every frame callback's run time, summed: the Viewers' render loop is one of them (ADR-0002).
+  // Every frame callback's run time: the Viewers' render loop is one of them (ADR-0002).
   await page.addInitScript(() => {
-    const w = window as unknown as { frameWork: number; frames: number };
-    w.frameWork = 0;
-    w.frames = 0;
+    const w = window as unknown as { works: number[] };
+    w.works = [];
     const raf = window.requestAnimationFrame.bind(window);
     window.requestAnimationFrame = (callback) =>
       raf((time) => {
         const start = performance.now();
         callback(time);
-        w.frameWork += performance.now() - start;
-        w.frames++;
+        w.works.push(performance.now() - start);
       });
   });
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
   await listening(page);
+  // The median frame's work, not the mean: on a loaded machine a frame the system stops halfway counts its wait as
+  // work, and a few of those moved the mean by ±0.6 ms where the median moved by ±0.3 (issue 177, at load 30).
   const perFrame = async () => {
     await page.keyboard.down('f'); // F4 held, so the Viewers draw a sound
-    await page.evaluate(() => Object.assign(window, { frameWork: 0, frames: 0 }));
+    await page.evaluate(() => Object.assign(window, { works: [] }));
     await page.waitForTimeout(2000);
     await page.keyboard.up('f');
-    return page.evaluate(() => (window as unknown as { frameWork: number }).frameWork / (window as unknown as { frames: number }).frames);
+    return page.evaluate(() => {
+      const works = [...(window as unknown as { works: number[] }).works].sort((a, b) => a - b);
+      return works[works.length >> 1];
+    });
   };
-  const without = Math.min(await perFrame(), await perFrame());
-  await bringBead(page);
-  const shown = Math.min(await perFrame(), await perFrame());
-  expect(shown - without).toBeLessThan(1);
+  // The frame without Bead is the reference: a busy machine slows Bead's drawing with the Viewers', so the bound grows
+  // with that frame (Bead measured 1.0 to 1.4 ms at the night's load of 10 to 46, issue 177). On a quiet Mac the
+  // Viewers take about 3.6 ms and Bead 0.3 to 0.6 more, and 30 % of that frame is the bound's 1 ms: quiet, the bound
+  // is 1 ms. Other browsers' bursts beside it still pushed one round in six over (at load 30), so it is measured
+  // up to three times, Bead sent away between: a Bead grown dearer fails all three.
+  const rounds: string[] = [];
+  let within = false;
+  for (let round = 0; round < 3 && !within; round++) {
+    if (round) {
+      await openDisplay(page);
+      await beadSwitch(page).getByRole('radio', { name: 'Bead off' }).click();
+      await page.keyboard.press('Escape');
+      await expect(mascot(page)).toHaveCount(0, { timeout: 10_000 });
+    }
+    const without = Math.min(await perFrame(), await perFrame());
+    await bringBead(page);
+    const shown = Math.min(await perFrame(), await perFrame());
+    rounds.push(`${(shown - without).toFixed(2)} ms over ${without.toFixed(2)}`);
+    within = shown - without < Math.max(1, 0.3 * without);
+  }
+  expect(within, `Bead's cost per frame, each round: ${rounds.join('; ')}`).toBe(true);
 });
 
 test.describe('Display’s switch lasts, the Notes are for the visit (issue 150, decisions 7 to 9)', () => {
@@ -541,7 +592,8 @@ test("Detune splits it, its twin on the side of Detune's sign: left below 0 cent
             const self = document.querySelector('#bead-self')!.getBoundingClientRect();
             const twin = document.querySelector<SVGUseElement>('.mascot-twin')!;
             const at = twin.checkVisibility() ? twin.getBoundingClientRect() : self;
-            seen.push(Math.sign(Math.round(at.left - self.left)));
+            // Edge-on as it turns round (issue 179), it and its twin are one line: no side to be on.
+            if (self.width > 10) seen.push(Math.sign(Math.round(at.left - self.left)));
             if (seen.length < 30) requestAnimationFrame(sample);
             else done(seen);
           };
@@ -552,6 +604,82 @@ test("Detune splits it, its twin on the side of Detune's sign: left below 0 cent
   await expect.poll(sides).toEqual(Array(30).fill(-1));
   await detune.press('End');
   await expect.poll(sides).toEqual(Array(30).fill(1));
+});
+
+test('strolling right its tail trails on its left; strolling left, a step and still, its tail is on its right (issue 179)', async ({ page, browserName }) => {
+  test.skip(browserName !== 'chromium', 'drawn alike in every browser; checked in one');
+  test.slow();
+  // Its rolls as the test sets them, once it does: low, it strolls to its line's left end, looks over, takes fright and
+  // steps back; high, it strolls to near its right end.
+  await page.addInitScript(() => {
+    const own = Math.random;
+    Math.random = () => (window as { roll?: number }).roll ?? own();
+  });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  await listening(page);
+  await bringBead(page);
+  await page.mouse.move(2, 894); // off it, so its eyes and tail are its own
+  await page.keyboard.down('f'); // a Note held: it listens, and does no funny turn of its own
+  await settles(page);
+  // Every frame for `seconds` from the roll set: where it is across, which side of it its tail is, and whether it is on
+  // its own line doing nothing but strolling.
+  type Seen = { t: number; left: number; tail: number; free: boolean };
+  const sample = (roll: number, seconds: number) =>
+    page.evaluate(
+      ([roll, seconds]) =>
+        new Promise<Seen[]>((done) => {
+          (window as { roll?: number }).roll = roll;
+          const frames: Seen[] = [];
+          const frame = (t: number) => {
+            const bead = document.querySelector<HTMLElement>('.mascot')!;
+            const self = document.querySelector('#bead-self')!;
+            const [whole, tail] = [self.getBoundingClientRect(), self.firstElementChild!.getBoundingClientRect()];
+            const { moving, doing, act, pointing } = bead.dataset;
+            frames.push({
+              t: t / 1000,
+              left: bead.getBoundingClientRect().left,
+              tail: Math.sign(tail.left + tail.width / 2 - (whole.left + whole.width / 2)),
+              free: moving === 'standing' && !doing && !act && pointing === 'no',
+            });
+            if (t / 1000 - frames[0].t < seconds) requestAnimationFrame(frame);
+            else done(frames);
+          };
+          requestAnimationFrame(frame);
+        }),
+      [roll, seconds] as const,
+    );
+  // Wherever it came up: a stroll to near its right end, then all the way to its left end, then far to the right.
+  await sample(0.9, 5);
+  const frames = [...(await sample(0.3, 8)), ...(await sample(0.9, 6))];
+  await page.keyboard.up('f');
+  // Its strolls and stops: each frame the same way along from three frames back (a frame sampled before it is drawn
+  // repeats the last), all on its own, from where it set off. Past the moment it turns round (a quarter of a second, and its
+  // trailing tail clear of its line's left end: 45 px along at most), a stroll right longer than its width has its tail
+  // on its left; anything else, on its right.
+  const SETTLING = 0.25;
+  const CLEAR = 45;
+  const BACK = 3;
+  const counted = { right: 0, short: 0, left: 0, still: 0 };
+  const way = (k: number) =>
+    frames.slice(k - BACK, k + 1).every((f) => f.free) ? Math.sign(Math.round(((frames[k].left - frames[k - BACK].left) * 20) / BACK)) : NaN;
+  for (let i = BACK + 1, end = i; i < frames.length - 1; i = end + 1) {
+    const w = way(i);
+    end = i;
+    while (end + 1 < frames.length && way(end + 1) === w) end++;
+    if (Number.isNaN(w) || Number.isNaN(way(i - 1))) continue;
+    // Cut short (a fright at its line's end, the sample's end), a stroll right may have gone on: not a short one.
+    const cut = end + 1 >= frames.length || Number.isNaN(way(end + 1));
+    const length = frames[end].left - frames[i - BACK].left;
+    const kind = w > 0 ? (length >= 60 ? 'right' : length < 40 && !cut ? 'short' : null) : w < 0 ? 'left' : 'still';
+    const from = frames[i - BACK].left;
+    const settled = frames.slice(i, end + 1).filter((f) => f.t - frames[i].t >= SETTLING && (kind !== 'right' || f.left - from >= CLEAR));
+    if (!settled.length || !kind) continue;
+    counted[kind]++;
+    const side = kind === 'right' ? -1 : 1;
+    expect(settled.map((f) => f.tail), `${kind}, ${Math.round(length)} px, from ${frames[i].t.toFixed(2)} s`).toEqual(settled.map(() => side));
+  }
+  expect(counted.right * counted.left * counted.still, JSON.stringify(counted)).toBeGreaterThan(0);
 });
 
 test('dragged and let go, it is thrown, and lands on an edge', async ({ page }) => {
@@ -763,10 +891,212 @@ test.describe('never under a card (issue 164)', () => {
       for (const top of [...tops, ...[...tops].reverse()]) {
         await page.evaluate((y) => window.scrollTo({ top: y, behavior: 'instant' }), top);
         await page.waitForTimeout(300);
-        // Once it has fallen or flown there and landed: standing, or hovering under the header.
-        await expect(mascot(page)).toHaveAttribute('data-moving', /^(standing|hovering)$/, { timeout: 5000 });
+        // Once it has fallen or flown there and landed: standing, or hovering under the header; or, the Tour pointing
+        // the way to its card's control, clinging beside it (issue 151).
+        await settles(page, /^(standing|hovering|clinging)$/);
         expect(await againstCards(page), `scrolled to ${top}`).toEqual({ cards: 1, under: false, inView: true });
       }
     });
   }
+});
+
+test.describe('pointing the way in a Tutorial and the Tour (issue 151)', () => {
+  const tutorialCard = (page: Page) => page.getByRole('region', { name: /^Tutorial: / });
+  const tourCard = (page: Page) => page.getByRole('region', { name: 'Tour' });
+  const clings = (page: Page) => settles(page, /^clinging$/, 12);
+
+  async function openTutorial(page: Page, preset: string) {
+    await page.getByRole('button', { name: /^Patch: / }).click();
+    await page.getByRole('dialog', { name: 'Patches' }).getByRole('group', { name: 'Tutorials' }).getByRole('button', { name: new RegExp(`^Tutorial: ${preset}`) }).click();
+    await tutorialCard(page).getByRole('button', { name: 'Start', exact: true }).click();
+  }
+
+  /** The Step made with "Do it for me", as the Tutorial spec does it, however slow the machine. */
+  async function doIt(page: Page) {
+    const next = tutorialCard(page).getByRole('button', { name: /^(Next|Finish)$/ });
+    const button = tutorialCard(page).getByRole('button', { name: 'Do it for me', exact: true });
+    await expect(async () => {
+      if (await button.isVisible()) await button.click({ timeout: 2000 });
+      await expect(next).toBeEnabled({ timeout: 2000 });
+    }).toPass({ timeout: 30000 });
+  }
+  const next = (page: Page) => tutorialCard(page).getByRole('button', { name: /^(Next|Finish)$/ }).click();
+
+  /**
+   * Where it is against `selector`'s control: beside it (its drawing within a few pixels of the ring, and level with
+   * the control), over neither the ring nor the band its target text takes over the control, its tail on the control's
+   * side, and the pointer passing through it.
+   */
+  const against = (page: Page, selector: string) =>
+    page.evaluate((selector) => {
+      const control = document.querySelector(selector)!.getBoundingClientRect();
+      const drop = document.querySelector('.mascot-drop svg')!.getBoundingClientRect();
+      const ring = { left: control.left - 6, right: control.right + 6, top: control.top - 6, bottom: control.bottom + 6 };
+      const middle = (control.left + control.right) / 2;
+      const target = { left: middle - 30, right: middle + 30, top: control.top - 26, bottom: control.top - 6 };
+      const over = (r: { left: number; right: number; top: number; bottom: number }) => r.left < drop.right && r.right > drop.left && r.top < drop.bottom && r.bottom > drop.top;
+      const gap = Math.max(ring.left - drop.right, drop.left - ring.right);
+      const tail = document.querySelector('#bead-self > g')!.getBoundingClientRect();
+      const body = [...document.querySelectorAll<SVGGElement>('#bead-self > g.mascot-body')].find((g) => g.style.display !== 'none')!.getBoundingClientRect();
+      const towards = Math.sign((tail.left + tail.right) / 2 - (body.left + body.right) / 2) === Math.sign(middle - (drop.left + drop.right) / 2);
+      const hit = document.elementFromPoint((body.left + body.right) / 2, (body.top + body.bottom) / 2);
+      return {
+        beside: gap >= 0 && gap <= 6,
+        level: (drop.top + drop.bottom) / 2 > control.top && (drop.top + drop.bottom) / 2 < control.bottom,
+        covers: over(ring) || over(target),
+        towards,
+        through: !!hit && !hit.closest('.mascot'),
+      };
+    }, selector);
+  const POINTING = { beside: true, level: true, covers: false, towards: true, through: true };
+
+  /** From now, each change of how it moves, in order. */
+  const watchMoves = (page: Page) =>
+    page.evaluate(() => {
+      const w = window as unknown as { moves: string[] };
+      w.moves = [];
+      const sample = () => {
+        const now = document.querySelector<HTMLElement>('.mascot')?.dataset.moving ?? '';
+        if (now !== w.moves.at(-1)) w.moves.push(now);
+        requestAnimationFrame(sample);
+      };
+      requestAnimationFrame(sample);
+    });
+  const moves = (page: Page) => page.evaluate(() => (window as unknown as { moves: string[] }).moves);
+
+  /** Over `ms`, how high it lifts off where it clings at most, in pixels. */
+  const highest = (page: Page, ms: number) =>
+    page.evaluate(
+      (ms) =>
+        new Promise<number>((done) => {
+          let most = 0;
+          const end = performance.now() + ms;
+          const sample = () => {
+            const lift = -Number(/translateY\((-?[\d.]+)px\)/.exec(document.querySelector<HTMLElement>('.mascot-drop')!.style.transform)?.[1] ?? 0);
+            most = Math.max(most, lift);
+            if (performance.now() < end) requestAnimationFrame(sample);
+            else done(most);
+          };
+          requestAnimationFrame(sample);
+        }),
+      ms,
+    );
+
+  test('in a Tutorial it goes beside each Step’s control and points at it; a Step made, a hop; quit, home it hops', async ({ page }) => {
+    test.slow();
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/');
+    await bringBead(page);
+    await openTutorial(page, 'Bass');
+    // Osc 2's level, on the Mixer tab: its usual move to the Oscillators' edge, then a slide down.
+    await clings(page);
+    expect(await against(page, '[data-learn="param:mixOsc2"]')).toEqual(POINTING);
+    await expect(mascot(page)).toHaveAttribute('data-pointing', 'yes');
+    // A click on it reaches what is under it.
+    const clicked = page.evaluate(() => new Promise<boolean>((done) => document.addEventListener('click', (e) => done(!(e.target as Element).closest('.mascot')), { once: true, capture: true })));
+    const body = (await page.locator('#bead-self > g.mascot-body:visible').first().boundingBox())!;
+    await page.mouse.click(body.x + body.width / 2, body.y + body.height / 2);
+    expect(await clicked).toBe(true);
+    // Made: a happy hop, higher than its bounce.
+    const made = highest(page, 700);
+    await doIt(page);
+    expect(await made).toBeGreaterThan(8);
+    // Osc 2's Waveform, in the same Section: a slide across, never back up to the edge.
+    await watchMoves(page);
+    await next(page);
+    await expect(async () => expect(await against(page, '[data-learn="choice:osc2Waveform"]')).toEqual(POINTING)).toPass({ timeout: 15000 });
+    expect(await moves(page)).not.toContain('flying');
+    expect(await moves(page)).not.toContain('falling');
+    await doIt(page);
+    await next(page);
+    await clings(page);
+    await doIt(page);
+    // The Ideal Display option: the Display button stands for it, in the header.
+    await next(page);
+    await expect(async () => expect(await against(page, 'button[aria-label="Display"]')).toEqual(POINTING)).toPass({ timeout: 15000 });
+    await doIt(page);
+    // The Cutoff, in another Section: its usual move to the Filter's edge, then the slide down.
+    await watchMoves(page);
+    await next(page);
+    await expect(async () => expect(await against(page, '[data-learn="param:cutoff"]')).toEqual(POINTING)).toPass({ timeout: 15000 });
+    const way = await moves(page);
+    expect(way.some((m) => m === 'flying' || m === 'falling')).toBe(true);
+    expect(way.slice(way.findIndex((m) => m === 'flying' || m === 'falling'))).toContain('sliding');
+    // Quit: a hop back up to its edge, where it takes the pointer again.
+    await tutorialCard(page).getByRole('button', { name: 'Quit the tutorial' }).click();
+    await settles(page, /^standing$/, 8);
+    await expect(mascot(page)).toHaveAttribute('data-pointing', 'no');
+    expect((await footing(page)).bottom).toBe(0);
+  });
+
+  test('a control on a hidden tab: it goes back to its edge and looks; shown again, it goes', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/');
+    await bringBead(page);
+    await openTutorial(page, 'Bass');
+    await clings(page);
+    // The Mixer's tab hidden behind Osc 1's.
+    await page.getByRole('tab', { name: /^Osc 1/ }).click();
+    await settles(page, /^standing$/, 8);
+    // Its tail towards the Oscillators, on its left.
+    await expect(page.locator('.mascot-drop')).toHaveAttribute('style', /scale\(-/);
+    await page.getByRole('tab', { name: 'Mixer' }).click();
+    await clings(page);
+    expect(await against(page, '[data-learn="param:mixOsc2"]')).toEqual(POINTING);
+  });
+
+  test('a Tutorial finished: the fountain', async ({ page }) => {
+    test.slow();
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/');
+    await bringBead(page);
+    await openTutorial(page, 'FM Ladder');
+    while (await tutorialCard(page).getByRole('button', { name: /^(Next|Finish)$/ }).isVisible()) {
+      await doIt(page);
+      await next(page);
+    }
+    await expect(mascot(page)).toHaveAttribute('data-doing', 'fountain', { timeout: 5000 });
+  });
+
+  test('the Tour: one control a card, its first move’s; closed, home it hops', async ({ page }) => {
+    test.slow();
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/');
+    await bringBead(page);
+    await page.getByRole('button', { name: 'About' }).click();
+    await page.getByRole('dialog', { name: 'Limpide' }).getByRole('button', { name: 'Take the Tour' }).click();
+    await expect(async () => expect(await against(page, '[data-learn="choice:waveform"]')).toEqual(POINTING)).toPass({ timeout: 20000 });
+    await tourCard(page).getByRole('button', { name: 'Next', exact: true }).click();
+    await expect(async () => expect(await against(page, '[data-learn="param:cutoff"]')).toEqual(POINTING)).toPass({ timeout: 20000 });
+    await tourCard(page).getByRole('button', { name: 'Close the Tour' }).click();
+    await settles(page, /^standing$/, 8);
+    await expect(mascot(page)).toHaveAttribute('data-pointing', 'no');
+  });
+
+  test('with reduced motion it stays on its edge, only turning its eyes and tail towards the control', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/');
+    await bringBead(page);
+    await openTutorial(page, 'Bass');
+    // Osc 2's level is far to its left: it faces it, turned round, where it stands, and stays there.
+    await expect(page.locator('.mascot-drop')).toHaveAttribute('style', /scale\(-1, 1\)/);
+    await watchMoves(page);
+    expect(await highest(page, 1000)).toBe(0);
+    expect(await moves(page)).toEqual(['standing']);
+    expect((await footing(page)).bottom).toBe(0);
+  });
+
+  test('on a phone it clings beside the Step’s control, under the section tabs and over the card', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto('/');
+    await bringBead(page);
+    await openTutorial(page, 'Bass');
+    await clings(page);
+    expect(await against(page, '[data-learn="param:mixOsc2"]')).toEqual(POINTING);
+    expect(await againstCards(page)).toEqual({ cards: 1, under: false, inView: true });
+    const top = await page.evaluate(() => document.querySelector('.mascot-drop svg')!.getBoundingClientRect().top);
+    const tabs = await page.evaluate(() => document.querySelector('.section-strip')!.getBoundingClientRect().bottom);
+    expect(top).toBeGreaterThanOrEqual(tabs);
+  });
 });

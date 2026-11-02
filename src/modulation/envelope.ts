@@ -29,20 +29,26 @@ export type AutomationStep =
   | { kind: 'linearRamp'; time: number; target: number }
   | { kind: 'setTarget'; time: number; target: number; timeConstant: number };
 
-// Analogue-style (RC) curves: 95% of the way there at the end of Attack (e^−3), and Decay/Release
-// time constants chosen so each stage has visibly finished by its nominal time.
-const ATTACK_SHARPNESS = 3;
-const DECAY_SHARPNESS = 4;
-const RELEASE_SHARPNESS = 6;
+/** The Envelope's stages that take a time. */
+export type EnvelopeStage = 'attack' | 'decay' | 'release';
+
+/**
+ * Analogue-style (RC) curves, each stage's time over its time constant τ: 95% of the way there at the end of Attack
+ * (e^−3), and Decay/Release time constants chosen so each stage has visibly finished by its nominal time.
+ */
+export const STAGE_SHARPNESS: Record<EnvelopeStage, number> = { attack: 3, decay: 4, release: 6 };
+
+/** A stage's time constant τ for its `time` in seconds: the time it takes to go 63 % (1 − e^−1) of its way. */
+export const stageTimeConstant = (stage: EnvelopeStage, time: number) => time / STAGE_SHARPNESS[stage];
 
 function levelWithin(e: GateEvent, start: number, elapsed: number): number {
   const { attack, decay, sustain, release } = e.adsr;
   if (!e.on && e.dip) return start * Math.max(0, 1 - elapsed / DIP);
-  if (!e.on) return start * Math.exp((-elapsed * RELEASE_SHARPNESS) / release);
+  if (!e.on) return start * Math.exp(-elapsed / stageTimeConstant('release', release));
   const approach = (from: number, to: number, t: number, tau: number) => to + (from - to) * Math.exp(-t / tau);
-  if (elapsed <= attack) return approach(start, e.peak, elapsed, attack / ATTACK_SHARPNESS);
-  const afterAttack = approach(start, e.peak, attack, attack / ATTACK_SHARPNESS);
-  return approach(afterAttack, sustain * e.peak, elapsed - attack, decay / DECAY_SHARPNESS);
+  if (elapsed <= attack) return approach(start, e.peak, elapsed, stageTimeConstant('attack', attack));
+  const afterAttack = approach(start, e.peak, attack, stageTimeConstant('attack', attack));
+  return approach(afterAttack, sustain * e.peak, elapsed - attack, stageTimeConstant('decay', decay));
 }
 
 /** The level at `time`, a Gate event having started from `start`, while it is the latest event. */
@@ -68,10 +74,10 @@ export function envelopeSchedule(e: GateEvent, start = 0): AutomationStep[] {
   const { attack, decay, sustain, release } = e.adsr;
   const hold: AutomationStep = { kind: 'cancelAndHold', time: e.time };
   if (!e.on && e.dip) return [{ kind: 'cancelAndSet', time: e.time, value: start }, { kind: 'linearRamp', time: e.time + DIP, target: 0 }];
-  if (!e.on) return [hold, { kind: 'setTarget', time: e.time, target: 0, timeConstant: release / RELEASE_SHARPNESS }];
+  if (!e.on) return [hold, { kind: 'setTarget', time: e.time, target: 0, timeConstant: stageTimeConstant('release', release) }];
   return [
     hold,
-    { kind: 'setTarget', time: e.time, target: e.peak, timeConstant: attack / ATTACK_SHARPNESS },
-    { kind: 'setTarget', time: e.time + attack, target: sustain * e.peak, timeConstant: decay / DECAY_SHARPNESS },
+    { kind: 'setTarget', time: e.time, target: e.peak, timeConstant: stageTimeConstant('attack', attack) },
+    { kind: 'setTarget', time: e.time + attack, target: sustain * e.peak, timeConstant: stageTimeConstant('decay', decay) },
   ];
 }

@@ -1,4 +1,4 @@
-import { type FilterMode, type LfoDestination, lfos, type ParamId, type Patch } from '../patch/patch';
+import { type FilterMode, type LfoDestination, lfos, PARAMS, type ParamId, type Patch } from '../patch/patch';
 
 /** The Note sounding, whose Velocity and key are fixed for as long as it sounds. */
 export interface Sounding {
@@ -27,11 +27,27 @@ export interface Modulation {
   sounding: Sounding | null;
   /** When the newest Note started (its Gate opened), in the engine's seconds; null before any (issue 115). */
   struck: number | null;
-  /** The pitch the newest Note sounds at, in semitones (fractional through a Glide or vibrato); A4 before any. */
+  /**
+   * The pitch the newest Note sounds at, in semitones (fractional through a Glide, vibrato, the bend or aftertouch); A4
+   * before any.
+   */
   pitch: number;
   /** How far an LFO on Pitch moves it right now, in semitones: `pitch` less the Note where the Glide has taken it. */
   vibrato: number;
+  /** A keyboard's aftertouch at this moment, and the Destination it moves (issue 132). */
+  pressure: Pressure;
 }
+
+/**
+ * A keyboard's aftertouch (issue 132), the channel's or the hardest-pressed Note's: how hard the keys are pressed, 0
+ * to 1, and the one Destination it moves, chosen in the MIDI panel.
+ */
+export interface Pressure {
+  destination: LfoDestination;
+  amount: number;
+}
+/** No pressure, on the Destination it moves by default. */
+export const NO_PRESSURE: Pressure = { destination: 'cutoff', amount: 0 };
 
 /** The narrowest and widest pulse the Oscillators make, however far the LFO swings them. */
 const MIN_PULSE = 0.05;
@@ -148,10 +164,36 @@ export function effectiveVolume(patch: Patch, lfo: readonly number[] = []): numb
 }
 
 /**
+ * How far the Filter Envelope moves Osc 2 off its knobs, in cents, at the Envelope's level `filterEnvelope` (0 to 1): its
+ * Env Amount's semitones times the level (issue 93). The term's one home: osc2Cents adds it, the Ideal rests Osc 2 on
+ * it at the Sustain (issue 98), and the engine's gain on the Envelope is it at full.
+ */
+export const osc2EnvelopeCents = (patch: Patch, filterEnvelope: number) => patch.osc2EnvAmount * filterEnvelope * 100;
+
+/**
  * Osc 2's tuning against the Note played, in cents: Octave, Semitone and Detune, then the LFOs on Osc 2 Pitch and on
- * Detune, and the Filter Envelope's level times its Env Amount (issue 93).
+ * Detune, and the Filter Envelope's (osc2EnvelopeCents).
  */
 export function osc2Cents(patch: Patch, lfo: readonly number[] = [], filterEnvelope = 0): number {
   const knobs = patch.osc2Octave * 1200 + patch.osc2Semitone * 100 + patch.osc2Detune;
-  return knobs + lfoOffset(patch, 'osc2Pitch', lfo) * 100 + lfoOffset(patch, 'detune', lfo) + patch.osc2EnvAmount * filterEnvelope * 100;
+  return knobs + lfoOffset(patch, 'osc2Pitch', lfo) * 100 + lfoOffset(patch, 'detune', lfo) + osc2EnvelopeCents(patch, filterEnvelope);
 }
+
+/**
+ * The Patch as aftertouch moves its Destination (issue 132): up from the knob's value by its law's `perDepth` times the
+ * pressure, as far as one LFO at full Depth swings it, so nothing at no pressure and the whole reach at full. The
+ * Cutoff opens by up to two octaves, within what the Filter reaches; a knob whose law has a room is kept within the
+ * knob's top (Volume, louder up to full); Osc 2 Pitch and Detune go as far as an LFO takes them. The LFOs then swing
+ * around the pressed value, so the pressure adds to the knob's value and to theirs. Pitch has no knob: `pressurePitch`.
+ */
+export function pressed(patch: Patch, { destination, amount }: Pressure): Patch {
+  if (!amount) return patch;
+  const law: LfoLaw = LFO_LAWS[destination];
+  const next = { ...patch };
+  if (destination === 'cutoff') next.cutoff = Math.min(HIGHEST_CUTOFF, patch.cutoff * 2 ** (law.perDepth * amount));
+  else for (const knob of law.knobs) next[knob] = Math.min(law.room ? PARAMS[knob].max : Infinity, patch[knob] + law.perDepth * amount);
+  return next;
+}
+
+/** How far aftertouch on Pitch raises it, in semitones: a semitone at full pressure; none on any other Destination. */
+export const pressurePitch = ({ destination, amount }: Pressure) => (destination === 'pitch' ? LFO_LAWS.pitch.perDepth * amount : 0);

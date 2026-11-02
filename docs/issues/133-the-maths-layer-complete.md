@@ -1,4 +1,4 @@
-# 133: The Maths Layer complete
+# 133: The Synth Geek Layer complete
 
 **What to build:** From the v1 grilling ([131](./131-v1.md), decision 7, decided by the owner 2026-10-31): "I would also spend energy into making the math layer more valuable, complete." Every Section and every Viewer writes its maths, always the formula the engine computes, never a textbook stand-in. PRD story 99.
 
@@ -19,10 +19,11 @@ Claude's recommendations, each accepted ("ok"):
 7. **Osc 2's tuning:** Semitone shows its ratio ("×1.498" at +7), Octave ×2, ×4, ½; Detune its beating rate at the Note ("2.1 Hz beats"); the formulas 2^(s/12) and Δf = f·(2^(c/1200) − 1) under the hood.
 8. **The LFOs:** under Rate its period ("0.50 s"); under Depth the swing in the Destination's own unit ("±1.2 st" on Pitch, "±0.8 oct" on the Cutoff, "±6 dB" on Volume, "±12 %" on Pulse Width); a synced Rate its period at the tempo.
 9. **The Envelopes:** Attack a straight rise; Decay and Release curves with a time constant τ (the time to go 63 % of the way), the faders' readouts gaining it ("300 ms · τ 65 ms"); the tip explains τ and the curve.
+   **Since then (2026-11-01, issue 168):** Attack is a curve in the engine (τ = Attack ÷ 3), and the tip says so; τ is worked out in each Envelope fader's tip, not added to its readout. Decided by the owner.
 10. **Key Track** shows the Cutoff at the Note played ("Cutoff here: 2.83 kHz"), the Effective Cutoff's figure; **Glide** has its curve's formula in its tip, no live number.
 11. **The Viewers:** each Scope the period and frequency of the Note in a corner ("3.82 ms · 261.6 Hz"); the Spectrum's hover readout adds the Harmonic's number ("n = 3") when on one; the Oscillator Spectrum's corner gives the Noise's slope while it is up ("pink: −3 dB/oct"), the Noise's formula under the hood.
 
-## What the Maths Layer writes today
+## What the Synth Geek Layer writes today
 
 Each Waveform's Harmonic series, FM's sidebands and Ring's sums and differences (issues 14 and 109); the Filter's response formula and its Q; the Mixer's levels and the Amp's Sustain in dB; the Effective Cutoff's value.
 

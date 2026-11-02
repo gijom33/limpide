@@ -2,7 +2,7 @@ import { type Adsr, type AutomationStep, DIP, envelopeSchedule, type GateEvent, 
 import { type Beat, createLfoClock, glideFrequency, glideFrom, glideTimeConstant, LFO_START, type LfoWaveform, lfoShape } from '../modulation/lfo';
 import {
   destinationSwings, effectiveCutoff, effectiveResonance, effectiveVolume, KEY_TRACK_CENTRE, LOWEST_CUTOFF, type Modulation,
-  osc2Cents, soundingPitch, VELOCITY_CUTOFF_OCTAVES,
+  NO_PRESSURE, osc2Cents, osc2EnvelopeCents, type Pressure, pressed, pressurePitch, soundingPitch, VELOCITY_CUTOFF_OCTAVES,
 } from '../modulation/modulationModel';
 import { bandwidthOctaves } from '../modulation/passBand';
 import { createCache } from '../music/cache';
@@ -10,7 +10,7 @@ import { harmonicSeries, type Waveform } from '../music/harmonics';
 import { fmDepthKept, playedTop } from '../music/idealReference';
 import { frequencyToNote, noteToFrequency } from '../music/pitch';
 import { TEMPO } from '../music/tempo';
-import { FM_INDEX, GLIDE_OFF, type Lfo, type LfoNumber, lfoHz, lfos, type NoiseColour, PARAMS, type Patch, type SubWaveform, type Voices } from '../patch/patch';
+import { fmIndex, GLIDE_OFF, type Lfo, type LfoNumber, lfoHz, lfos, type NoiseColour, PARAMS, type Patch, type SubWaveform, type Voices } from '../patch/patch';
 import { CUTOFF_CLAMP, CUTOFF_SPAN, centsOverFloor, filterStages, qSwing, type Stage } from './filterDesign';
 
 /**
@@ -38,12 +38,24 @@ export interface SynthEngine {
   pitchChange(note: number, at?: number): void;
   /** A keyboard's bend wheel: every Voice's pitch moves by `cents` from `at` on, until the next bend (issue 52). */
   setBend(cents: number, at?: number): void;
+  /**
+   * A keyboard's aftertouch (issue 132): from `at` on, its Destination moves as the model's `pressed` says, every Voice
+   * alike, until the next. The Patch in force stays the knobs'.
+   */
+  setPressure(pressure: Pressure, at?: number): void;
   /** The Gate closes: every Voice releases, a Note handed over to start or end later included (issue 101). */
   noteOff(at?: number): void;
   /** Several Voices: the Voice playing `note` releases; the others keep sounding. */
   release(note: number, at?: number): void;
   /** Frequency of the most recent Note (A4 before any), for Cycle Lock. */
   fundamental(): number;
+  /**
+   * The newest Note played (a MIDI note number), a player's or a Note handed over ahead included; null before any. The
+   * Note the Synth Geek Layer's numbers are worked out at (issue 133, decision 6).
+   */
+  newestNote(): number | null;
+  /** Be told each time the newest Note changes (a Note on, or a pitch change on one Voice). */
+  onNewestNote(listener: () => void): () => void;
   /** The Modulation model at `time` (default: now), from the Gate history — past times too, for the Timeline. */
   modulationAt(time?: number): Modulation;
   /**
@@ -537,7 +549,7 @@ interface Shared {
    */
   resonanceSwing: WaveShaperNode;
   toQ: [GainNode, GainNode];
-  /** The pitch bend in cents, into every Oscillator's detune (the LFO on Pitch goes there too). */
+  /** The pitch bend in cents, aftertouch on Pitch added (issue 132), into every Oscillator's detune (the LFO on Pitch goes there too). */
   bend: ConstantSourceNode;
   /** The tremolo's resting gain, into every Voice's: 1 less the LFOs' total swing on Volume. */
   tremoloRest: ConstantSourceNode;
@@ -695,7 +707,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
    * FM's gain on a Note of `frequency`: the index times Osc 2's frequency, in Hz. Osc 1's Octave scales what
    * reaches its frequency, so the gain is divided by it, keeping the index the knob's.
    */
-  const fmDepth = (frequency: number, amount = patch?.crossMod ?? 0) => (amount * FM_INDEX * frequency * pitchOverNote[1]) / pitchOverNote[0];
+  const fmDepth = (frequency: number, amount = patch?.crossMod ?? 0) => (fmIndex(amount) * frequency * pitchOverNote[1]) / pitchOverNote[0];
   /**
    * FM's gain, and each LFO's swing of it by its law (issue 97), on a Note of `frequency`: at once, or over a Glide.
    * High up, all of them shrink together as far as keeps Osc 1's sidebands under the top (issue 103).
@@ -846,7 +858,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
       [filter, filter2].forEach((node, i) => setStage(node, stages[i], t));
       cutoff.offset.setValueAtTime(centsOverFloor(effectiveCutoff(next)), t);
       envelopeAmount.gain.setValueAtTime(next.filterEnvAmount * 1200, t);
-      osc2EnvAmount.gain.setValueAtTime(next.osc2EnvAmount * 100, t);
+      osc2EnvAmount.gain.setValueAtTime(osc2EnvelopeCents(next, 1), t); // the Envelope's level, 0 to 1, in cents
       velocityAmount.gain.setValueAtTime(next.velocityCutoff * VELOCITY_CUTOFF_OCTAVES * 1200, t);
       keyTrackAmount.gain.setValueAtTime(next.keyTrack * 100, t); // cents per semitone
     },
@@ -1063,6 +1075,14 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     const i = lastAt(bends, t);
     return i >= 0 ? bends[i].cents : 0;
   };
+  // Aftertouch over time (issue 132), for the model as for the sound.
+  const pressures: { time: number; pressure: Pressure }[] = [];
+  const pressureAt = (t: number) => {
+    const i = lastAt(pressures, t);
+    return i >= 0 ? pressures[i].pressure : NO_PRESSURE;
+  };
+  /** The bend node's cents at `t`: the wheel's, and aftertouch on Pitch. */
+  const bendCentsAt = (t: number) => bendAt(t) + pressurePitch(pressureAt(t)) * 100;
   /** The Voice of the newest Note: the Taps listen to it (or to every Voice, when asked). */
   let lead: Voice | null = null;
   let tapSource: TapSource = 'newest';
@@ -1148,6 +1168,9 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   };
   follow(voices[0]);
 
+  // The newest Note played, and who wants to know when it changes: the Synth Geek Layer's readouts.
+  let newest: number | null = null;
+  const newestListeners = new Set<() => void>();
   const setLeadPitch = (voice: Voice, note: number, t: number) => {
     // Glide is a one-Voice behaviour: a Note slides from the previous one; with more Voices, Notes start at pitch.
     const glide = patch && pitches.length && voiceCount() === 1 && patch.glide > GLIDE_OFF * 1.001 ? patch.glide : 0;
@@ -1160,6 +1183,10 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       entry.fromNote = glideFrom(previous.fromNote, previous.note, previous.glide, t - previous.time);
     }
     trim(pitches, t);
+    if (note !== newest) {
+      newest = note;
+      for (const listener of newestListeners) listener();
+    }
   };
   // The newest Note's frequency at `t`, through its Glide (before the first Note, the first Note's; none: 0).
   const glidingAt = (t: number) => {
@@ -1184,8 +1211,11 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   const modulationAt = (time?: number): Modulation => {
     const t = at(time);
     const filterLevel = levelAt(filterEvents, t);
-    const then = patchAt(t);
-    const lfo: [number, number] = then ? lfoValues(then, t) : [0, 0];
+    const knobs = patchAt(t);
+    const lfo: [number, number] = knobs ? lfoValues(knobs, t) : [0, 0];
+    // The sound's Patch then: the knobs as aftertouch moved its Destination.
+    const pressure = pressureAt(t);
+    const then = knobs && pressed(knobs, pressure);
     // The newest Note, while its Gate is open (the latest Gate event at or before `t`), at its own key.
     const latest = lastAt(ampEvents, t);
     const gate = ampEvents[latest];
@@ -1209,9 +1239,47 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       volume: then ? effectiveVolume(then, lfo) : 1,
       sounding: gate?.on ? { note, velocity } : null,
       struck: opened >= 0 ? ampEvents[opened].time : null,
-      pitch: gliding + vibrato + bendAt(t) / 100,
+      pitch: gliding + vibrato + pressurePitch(pressure) + bendAt(t) / 100,
       vibrato,
+      pressure,
     };
+  };
+
+  /**
+   * What the sound takes from the Patch it plays, `next` (the knobs as aftertouch moved its Destination, issue 132): every
+   * Voice's settings, and the gains the LFOs reach their Destinations through.
+   */
+  const applyToSound = (next: Patch, t: number) => {
+    for (const v of voices) v.apply(next, t);
+    // The laws' swings (issue 74), in the units the nodes take: cents for the pitches and the Cutoff.
+    const cutoffCents = destinationSwings(next, 'cutoff').map((octaves) => octaves * 1200);
+    const pitchCents = destinationSwings(next, 'pitch').map((semitones) => semitones * 100);
+    const detuneCents = destinationSwings(next, 'detune');
+    const osc2 = destinationSwings(next, 'osc2Pitch').map((semitones, i) => semitones * 100 + detuneCents[i]);
+    // Resonance: each LFO's share of the widest swing both make together, which the curve turns into each stage's Q.
+    const resonances = destinationSwings(next, 'resonance', next.resonance);
+    const span = resonances[0] + resonances[1];
+    const key = `${next.filterMode} ${next.filterSlope} ${next.resonance} ${span}`;
+    if (key !== swing.key) {
+      const { curve, stages } = qSwing(next.filterMode, next.filterSlope, next.resonance, span);
+      resonanceSwing.curve = curve;
+      swing = { key, stages };
+    }
+    toQ.forEach((g, k) => g.gain.setValueAtTime(swing.stages[k], t));
+    // Volume: the knob's level (issue 62), the tremolo resting its total swing below it, so the wave's top is the
+    // knob's own level; each LFO's swing scaled with it.
+    const volumeSwings = destinationSwings(next, 'volume').map((s) => s * next.volume);
+    tremoloRest.offset.setValueAtTime(next.volume - volumeSwings[0] - volumeSwings[1], t);
+    shared.lfos.forEach((nodes, i) => {
+      nodes.toCutoff.gain.setValueAtTime(cutoffCents[i], t);
+      nodes.toPitch.gain.setValueAtTime(pitchCents[i], t);
+      nodes.toOsc2.gain.setValueAtTime(osc2[i], t);
+      nodes.toVolume.gain.setValueAtTime(volumeSwings[i], t);
+      nodes.toResonance.gain.setValueAtTime(span ? resonances[i] / span : 0, t);
+    });
+    // The twins copy each stage for the Response Curve.
+    const stages = filterStages(next.filterMode, next.filterSlope, next.resonance);
+    twins.forEach((node, i) => setStage(node, stages[i]));
   };
 
   return {
@@ -1220,8 +1288,13 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     // With the Sub sounding, the sound repeats at the Sub's pitch, one or two octaves lower: that is the fundamental.
     fundamental: () => {
       const then = patchAt(ctx.currentTime);
-      const frequency = (glidingAt(ctx.currentTime) || A4) * 2 ** ((then?.osc1Octave ?? 0) + bendAt(ctx.currentTime) / 1200);
+      const frequency = (glidingAt(ctx.currentTime) || A4) * 2 ** ((then?.osc1Octave ?? 0) + bendCentsAt(ctx.currentTime) / 1200);
       return then?.mixSub ? frequency * 2 ** then.subOctave : frequency;
+    },
+    newestNote: () => newest,
+    onNewestNote(listener) {
+      newestListeners.add(listener);
+      return () => newestListeners.delete(listener);
     },
     modulationAt,
     lfoSwingAt: (time, n = 1) => {
@@ -1279,47 +1352,25 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       lfos(next).forEach((l, i) => {
         lfoClocks[i].setRate(t, lfoRate(i, l, t));
         lfoClocks[i].forgetBefore(t - MODEL_SECONDS);
-      });
-      for (const v of voices) v.apply(next, t);
-      // The laws' swings (issue 74), in the units the nodes take: cents for the pitches and the Cutoff.
-      const cutoffCents = destinationSwings(next, 'cutoff').map((octaves) => octaves * 1200);
-      const pitchCents = destinationSwings(next, 'pitch').map((semitones) => semitones * 100);
-      const detuneCents = destinationSwings(next, 'detune');
-      const osc2 = destinationSwings(next, 'osc2Pitch').map((semitones, i) => semitones * 100 + detuneCents[i]);
-      // Resonance: each LFO's share of the widest swing both make together, which the curve turns into each stage's Q.
-      const resonances = destinationSwings(next, 'resonance', next.resonance);
-      const span = resonances[0] + resonances[1];
-      const key = `${next.filterMode} ${next.filterSlope} ${next.resonance} ${span}`;
-      if (key !== swing.key) {
-        const { curve, stages } = qSwing(next.filterMode, next.filterSlope, next.resonance, span);
-        resonanceSwing.curve = curve;
-        swing = { key, stages };
-      }
-      toQ.forEach((g, k) => g.gain.setValueAtTime(swing.stages[k], t));
-      // Volume: the knob's level (issue 62), the tremolo resting its total swing below it, so the wave's top is the
-      // knob's own level; each LFO's swing scaled with it.
-      const volumeSwings = destinationSwings(next, 'volume').map((s) => s * next.volume);
-      tremoloRest.offset.setValueAtTime(next.volume - volumeSwings[0] - volumeSwings[1], t);
-      lfos(next).forEach((l, i) => {
-        const nodes = shared.lfos[i];
         // A restart handed over ahead of now leaves the old oscillator running until then: it follows too.
-        for (const osc of nodes.takeover.nodes()) {
+        for (const osc of shared.lfos[i].takeover.nodes()) {
           setLfoWave(osc, l.waveform);
           osc.frequency.setValueAtTime(lfoRate(i, l, t), t);
         }
-        nodes.toCutoff.gain.setValueAtTime(cutoffCents[i], t);
-        nodes.toPitch.gain.setValueAtTime(pitchCents[i], t);
-        nodes.toOsc2.gain.setValueAtTime(osc2[i], t);
-        nodes.toVolume.gain.setValueAtTime(volumeSwings[i], t);
-        nodes.toResonance.gain.setValueAtTime(span ? resonances[i] / span : 0, t);
       });
+      applyToSound(pressed(next, pressureAt(t)), t);
       lockToBeat(next, t);
-      // The twins copy each stage for the Response Curve.
-      const stages = filterStages(next.filterMode, next.filterSlope, next.resonance);
-      twins.forEach((node, i) => setStage(node, stages[i]));
       // Several Voices sum before the master: the listening level makes room for them (after the Amp Tap, so
       // the Viewers' scale is unchanged, ADR-0006); one Voice plays exactly as loud as before.
       master.gain.setValueAtTime(MASTER_LEVEL / Math.sqrt(next.voices), t);
+    },
+
+    setPressure(pressure, time) {
+      const t = at(time);
+      append(pressures, { time: t, pressure });
+      trim(pressures, t);
+      if (patch) applyToSound(pressed(patch, pressure), t);
+      bend.offset.setTargetAtTime(bendCentsAt(t), t, BEND_SMOOTHING);
     },
 
     noteOn(note, velocity, time, { afresh = false } = {}) {
@@ -1354,10 +1405,10 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
 
     setBend(cents, time) {
       const t = at(time);
-      // A few milliseconds of smoothing, so a wheel's steps do not click.
-      bend.offset.setTargetAtTime(cents, t, BEND_SMOOTHING);
       append(bends, { time: t, cents });
       trim(bends, t);
+      // A few milliseconds of smoothing, so a wheel's steps do not click; aftertouch on Pitch adds to it.
+      bend.offset.setTargetAtTime(bendCentsAt(t), t, BEND_SMOOTHING);
     },
 
     noteOff(time) {

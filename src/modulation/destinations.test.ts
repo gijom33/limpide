@@ -3,12 +3,12 @@ import { CHOICES, defaultPatch, LFO_DESTINATIONS, PARAMS, type Patch, STAGES } f
 import { targetText } from '../tutorial/tutorial';
 import { linePattern, timelineShows } from '../viewers/timeline';
 import { DESTINATIONS, destinationLevel, effectiveValue, lfoDestinations, MODULATED } from './destinations';
-import { destinationSwings, LFO_LAWS, type LfoLaw, type Modulation } from './modulationModel';
+import { destinationSwings, LFO_LAWS, type LfoLaw, type Modulation, NO_PRESSURE } from './modulationModel';
 import { evenReach } from './reach';
 
 const patch = (change: Partial<Patch>): Patch => ({ ...defaultPatch(), lfoAmount: 0, lfo2Amount: 0, ...change });
 const at = (change: Partial<Modulation>): Modulation => ({
-  amp: 1, filter: 0, cutoff: 1000, lfo: [0, 0], mode: 'lowpass', resonance: 0.2, bandwidth: 1, volume: 1, sounding: null, struck: null, pitch: 69, vibrato: 0,
+  amp: 1, filter: 0, cutoff: 1000, lfo: [0, 0], mode: 'lowpass', resonance: 0.2, bandwidth: 1, volume: 1, sounding: null, struck: null, pitch: 69, vibrato: 0, pressure: NO_PRESSURE,
   ...change,
 });
 
@@ -46,13 +46,13 @@ describe('destinationLevel: where a moved Parameter is, 0–1 on its knob', () =
 
 describe('timelineShows: the Timeline draws only what something moves (the owner, 2026-10-28)', () => {
   it('shows the Amp Envelope alone with no Filter Envelope and no active LFO', () => {
-    expect(timelineShows(patch({ filterEnvAmount: 0, velocityCutoff: 0.7, keyTrack: 0.5 }))).toEqual({ filterEnvelope: false, cutoff: false, destinations: [] });
+    expect(timelineShows(patch({ filterEnvAmount: 0, velocityCutoff: 0.7, keyTrack: 0.5 }), null)).toEqual({ filterEnvelope: false, cutoff: false, destinations: [] });
   });
   it('shows the Filter Envelope and the Cutoff once the Envelope’s Amount is set', () => {
-    expect(timelineShows(patch({ filterEnvAmount: 2 }))).toEqual({ filterEnvelope: true, cutoff: true, destinations: [] });
+    expect(timelineShows(patch({ filterEnvAmount: 2 }), null)).toEqual({ filterEnvelope: true, cutoff: true, destinations: [] });
   });
   it('shows the Cutoff for an LFO on it, which takes no line of its own', () => {
-    expect(timelineShows(patch({ lfoDestination: 'cutoff', lfoAmount: 0.5, lfo2Destination: 'volume', lfo2Amount: 0.5 }))).toEqual({
+    expect(timelineShows(patch({ lfoDestination: 'cutoff', lfoAmount: 0.5, lfo2Destination: 'volume', lfo2Amount: 0.5 }), null)).toEqual({
       filterEnvelope: false,
       cutoff: true,
       destinations: ['volume'],
@@ -117,5 +117,16 @@ describe('the LFOs swing each even Destination by its law (issue 74)', () => {
   });
   it('rings every knob a law names, and only those: Pulse Width on both Oscillators', () => {
     expect([...MODULATED].sort()).toEqual(['crossMod', 'cutoff', 'osc2Detune', 'osc2PulseWidth', 'osc2Semitone', 'pulseWidth', 'resonance', 'volume']);
+  });
+});
+
+describe('aftertouch on a Destination’s knob and line (issue 132)', () => {
+  it('moves the knob’s Effective value up from the knob, and an LFO swings around where it took it', () => {
+    const p = patch({ resonance: 0.2, lfoDestination: 'resonance', lfoAmount: 0.1 });
+    // Half pressure: 50 points up, to 0.7; the LFO's 10 points at its top on top of that.
+    expect(effectiveValue('resonance', p, at({ lfo: [1, 0], pressure: { destination: 'resonance', amount: 0.5 } }))).toBeCloseTo(0.8);
+    expect(effectiveValue('resonance', p, at({ lfo: [1, 0], pressure: { destination: 'cutoff', amount: 0.5 } }))).toBeCloseTo(0.3);
+    expect(destinationLevel('pitch', patch({}), at({ vibrato: -0.5, pressure: { destination: 'pitch', amount: 0.5 } }))).toBe(0.5);
+    expect(destinationLevel('pulseWidth', patch({ pulseWidth: 0.5 }), at({ pressure: { destination: 'pulseWidth', amount: 1 } }))).toBeCloseTo((0.9 - 0.05) / 0.9); // 40 points up
   });
 });

@@ -57,3 +57,53 @@ test('holding a piano key plays it and shows no explanation', async ({ page }) =
   await expect(page.getByRole('tooltip').filter({ hasText: 'Your computer keyboard is a piano' })).toBeHidden();
   await finger.up();
 });
+
+// Issue 134: with the Synth Geek Layer on, the History line shows whole in the touch-and-hold tip on a 375 px phone,
+// FM's too, the tallest tip with one.
+test.describe('on a 375 px phone', () => {
+  test.use({ viewport: { width: 375, height: 667 } });
+
+  test('a held control’s History line shows whole, last in its tip', async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem('limpide.overlays', JSON.stringify({ geek: true })));
+    await page.goto('/');
+    const finger = await touch(page);
+    for (const [name, words] of [['Cutoff', 'Cutoff Frequency'], ['FM', 'Poly Mod']] as const) {
+      const control = page.getByRole('slider', { name, exact: true });
+      await control.scrollIntoViewIfNeeded();
+      await finger.down(control);
+      await page.waitForTimeout(800);
+      await finger.up();
+      const history = page.getByRole('tooltip').locator('visible=true').locator('.tooltip-history');
+      await expect(history, name).toContainText(words);
+      await expect(history.locator('xpath=following-sibling::*')).toHaveCount(0);
+      const box = (await history.boundingBox())!;
+      expect(box.x, name).toBeGreaterThanOrEqual(0);
+      expect(box.y, name).toBeGreaterThanOrEqual(0);
+      expect(box.x + box.width, name).toBeLessThanOrEqual(375);
+      expect(box.y + box.height, name).toBeLessThanOrEqual(667);
+      await finger.down(page.getByRole('heading', { name: 'Filter', level: 2 }));
+      await finger.up();
+      await expect(history).toBeHidden();
+    }
+  });
+
+  // Issue 168: a fader's τ, worked out at its setting, shows in its touch-and-hold tip, whole, its readout as it was.
+  test('a held Envelope fader’s tip works out its τ under the hood, whole on the screen', async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem('limpide.overlays', JSON.stringify({ geek: true })));
+    await page.goto('/');
+    const finger = await touch(page);
+    const decay = page.getByRole('slider', { name: 'Amp Decay', exact: true });
+    await decay.scrollIntoViewIfNeeded();
+    await finger.down(decay);
+    await page.waitForTimeout(800);
+    await finger.up();
+    const tip = page.getByRole('tooltip').locator('visible=true');
+    await expect(tip.locator('.tooltip-hood')).toContainText('τ = Decay ÷ 4 = 75.0 ms now');
+    const box = (await tip.boundingBox())!;
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.y).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(375);
+    expect(box.y + box.height).toBeLessThanOrEqual(667);
+    await expect(page.locator('.knob', { has: decay }).locator('.knob-value > span').first()).toHaveText('300 ms');
+  });
+});

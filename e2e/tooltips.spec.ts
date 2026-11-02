@@ -1,6 +1,13 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
 import { openDisplay } from './helpers';
 
+/**
+ * Brings the page's clock past a tip's hover delay (the Tooltip's 350 ms) at once, firing its timer: a test that waits
+ * the delay out by the wall clock checks too soon on a loaded machine, where the timer fires late, and spends seconds
+ * on every hover (issue 177). Needs `page.clock.install()` before the page loads.
+ */
+const pastTheHoverDelay = (page: Page) => page.clock.runFor(400);
+
 test('hovering Freeze explains what it does, and how to use it', async ({ page }) => {
   await page.goto('/');
   await openDisplay(page);
@@ -47,17 +54,42 @@ test('a knob’s and a fader’s tip say their steps for the keys (issue 160)', 
   await expect(page.getByRole('tooltip').filter({ hasText: '↑↓ 1 % · Shift 0.1 % · Page 10 %' })).toBeVisible();
 });
 
+// Issue 134: with the Synth Geek Layer on, a control with a musical past ends its tip with History; off, no tip has one.
+test('with the Synth Geek Layer on, a tip ends with its History line; off, or on Freeze, there is none (issue 134)', async ({ page }) => {
+  await page.goto('/');
+  await page.keyboard.press('Tab'); // the keys in use: a focus shows its tip
+  const cutoff = page.getByRole('slider', { name: 'Cutoff', exact: true });
+  const tip = page.getByRole('tooltip').filter({ hasText: 'Where the Filter starts' });
+  await cutoff.focus();
+  await expect(tip).toBeVisible();
+  await expect(tip.locator('.tooltip-history')).toHaveCount(0);
+
+  await page.evaluate(() => localStorage.setItem('limpide.overlays', JSON.stringify({ geek: true })));
+  await page.reload();
+  await page.keyboard.press('Tab');
+  await cutoff.focus();
+  await expect(tip.locator('.tooltip-history')).toHaveText(/^History Moog’s 1964 paper set a Filter’s frequency by a voltage/);
+  await expect(tip.locator(':scope > :last-child')).toHaveClass('tooltip-history'); // last, after the keys
+  await openDisplay(page);
+  await page.getByRole('button', { name: 'Freeze' }).hover();
+  await expect(page.getByRole('tooltip').filter({ hasText: 'Stops the pictures' })).toBeVisible();
+  await expect(page.getByRole('tooltip').filter({ hasText: 'Stops the pictures' }).locator('.tooltip-history')).toHaveCount(0);
+});
+
 test('every toolbar control explains itself, without doubling up on native browser tooltips', async ({ page }) => {
+  await page.clock.install();
   await page.goto('/');
   await openDisplay(page);
   const toolbar = page.getByRole('region', { name: 'Viewer controls' });
   await expect(toolbar.locator('[title]')).toHaveCount(0);
   for (const name of ['Harmonics', 'Ideal', 'Filter’s Response Curve', 'Guides']) {
     await toolbar.getByRole('button', { name }).hover();
+    await pastTheHoverDelay(page);
     await expect(page.getByRole('tooltip'), name).toBeVisible();
   }
   for (const name of ['Frequency axis', 'Level axis', 'Scope cycles', 'Env Timeline length']) {
     await toolbar.getByRole('radiogroup', { name }).hover();
+    await pastTheHoverDelay(page);
     await expect(page.getByRole('tooltip'), name).toBeVisible();
   }
 });
@@ -74,7 +106,8 @@ test('headings with an explanation are plain text, with no dotted underline, and
 
 // Issue 59: the Viewers, every fader, the LFO knobs and the Timeline's key explain themselves too.
 test('every Viewer, fader and the Timeline key explain themselves, the tooltip beside what it explains', async ({ page }) => {
-  test.slow(); // twenty-odd hovers, each waiting out the hover delay
+  test.slow(); // twenty-odd hovers
+  await page.clock.install();
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
   const tip = page.getByRole('tooltip').locator('visible=true');
@@ -82,6 +115,7 @@ test('every Viewer, fader and the Timeline key explain themselves, the tooltip b
     await expect(async () => {
       await page.mouse.move(0, 0);
       await target.hover({ timeout: 2000 });
+      await pastTheHoverDelay(page);
       await expect(tip.locator('strong'), title).toHaveText(title, { timeout: 2000 });
       // Placed by what it explains, not at the page's corner (a Viewer's anchor has no box of its own).
       const [t, b] = [(await tip.boundingBox({ timeout: 1000 }))!, (await target.boundingBox())!];
@@ -116,6 +150,7 @@ test('every Viewer, fader and the Timeline key explain themselves, the tooltip b
 
 // Issue 175: a tip stayed up over the menu its control opens (LFO 2's Destination first), hiding choices.
 test.describe('no tip over an open menu (issue 175)', () => {
+  test.beforeEach(({ page }) => page.clock.install());
   const tip = (page: Page) => page.getByRole('tooltip').locator('visible=true');
   /** Nothing drawn over any of them: each is what the pointer would find at its centre. */
   const allSeen = async (items: Locator) => {
@@ -130,6 +165,7 @@ test.describe('no tip over an open menu (issue 175)', () => {
   /** Hovered until its tip shows, then clicked. */
   const hoverThenClick = async (page: Page, control: Locator) => {
     await control.hover();
+    await pastTheHoverDelay(page);
     await expect(tip(page)).toBeVisible();
     await control.click();
   };
@@ -156,12 +192,12 @@ test.describe('no tip over an open menu (issue 175)', () => {
       await page.mouse.move(x, y1, { steps: Math.ceil(Math.abs(y1 - y0)) });
       for (const item of [nearest, ...(await items.all())]) {
         await item.hover();
-        await page.waitForTimeout(400);
+        await pastTheHoverDelay(page);
         await expect(tip(page)).toHaveCount(0);
         await allSeen(items);
       }
       await name.hover();
-      await page.waitForTimeout(400);
+      await pastTheHoverDelay(page);
       await expect(tip(page)).toHaveCount(0);
       await menu.getByRole('menuitemradio', { name: 'Resonance' }).click();
       await expect(menu).toBeHidden();
@@ -169,6 +205,7 @@ test.describe('no tip over an open menu (issue 175)', () => {
       // The next hover shows it again.
       await page.mouse.move(0, 0);
       await name.hover();
+      await pastTheHoverDelay(page);
       await expect(tip(page)).toBeVisible();
     });
   }
@@ -210,12 +247,13 @@ test.describe('no tip over an open menu (issue 175)', () => {
       // Back over the control while it is open, past the hover delay: still none.
       await page.mouse.move(0, 0);
       await control.hover();
-      await page.waitForTimeout(600);
+      await pastTheHoverDelay(page);
       await expect(tip(page)).toHaveCount(0);
       await page.keyboard.press('Escape');
       await expect(opened).toBeHidden();
       await page.mouse.move(0, 0);
       await control.hover();
+      await pastTheHoverDelay(page);
       await expect(tip(page)).toBeVisible();
     }
   });
@@ -231,7 +269,7 @@ test.describe('no tip over an open menu (issue 175)', () => {
       await expect(tip(page)).toHaveCount(0);
       await page.mouse.move(0, 0);
       await open.hover();
-      await page.waitForTimeout(600);
+      await pastTheHoverDelay(page);
       await expect(tip(page)).toHaveCount(0);
     });
   });

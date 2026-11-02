@@ -9,7 +9,7 @@ The rules every screen change is judged against, the way issue 15's audit judged
 - **The layout is the signal flow** (Gestalt continuity). Oscillators → Filter → Amp read left to right on wide screens and top to bottom on phones; Modulation sits below them, because it acts on them.
 - **What belongs together sits together** (Gestalt proximity and common region). A control lives in the block of the stage it changes. A control that only matters with another one sits beside it: Glide, which only acts at one Voice, sits beside Voices.
 - **One colour per stage** (Gestalt similarity). A stage's controls, value arcs and Viewers share its colour. Modulation has one colour of its own that no stage uses, so "where it is set" and "where it is now" never look alike.
-- **Show more only when asked** (progressive disclosure). The Display panel, the Maths Layer and the MIDI panel hold what a first-time visitor does not need; nothing a first-time visitor needs hides behind them.
+- **Show more only when asked** (progressive disclosure). The Display panel, the Synth Geek Layer and the MIDI panel hold what a first-time visitor does not need; nothing a first-time visitor needs hides behind them.
 
 ## Controls
 
@@ -37,7 +37,7 @@ The rules every screen change is judged against, the way issue 15's audit judged
 - **Every control works from the keyboard** (2.1.1), with a visible focus ring (2.4.7): a plain ring, shown for keyboard focus only, never after a click or a drag.
 - **Colour is never the only signal** (1.4.1): the modulation ring also differs from the value arc by its position, outside the dial.
 
-Contrast, target sizes, overlapping controls and the keyboard are checked on every screen state by `e2e/designPrinciples.spec.ts`, from the narrowest phone (320 px) to a wide screen.
+Contrast, target sizes, overlapping controls, labels on a second line and the keyboard are checked on every screen state by `e2e/designPrinciples.spec.ts`, from the narrowest phone (320 px) to a wide screen.
 
 **Waivers.** Look B departs from two of these rules on purpose (the owner's decision, 2026-10-25, issues 27 and 28): its edges stay quiet, and its controls stay compact. Each departure is a waiver in the spec, with the elements it covers and a floor just under what it measured that day, so nothing waived can get worse unseen:
 

@@ -1,5 +1,8 @@
 import { createContext, type ReactNode, useContext, useEffect, useEffectEvent, useId, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import type { Formula } from '../music/geek';
+import { GeekOnContext } from './geekContext';
+import type { HistoryLine } from './history';
 import { addDescription, removeDescription } from './inactive';
 import { placeTooltip } from './placeTooltip';
 
@@ -11,6 +14,10 @@ export interface TipContent {
   how?: string;
   /** A knob's or fader's steps for the keys (issue 160): shown where there is a keyboard, not on a touch screen. */
   keys?: string;
+  /** The formula behind it (issue 133, decision 2): shown with the Synth Geek Layer on, above History. */
+  underTheHood?: Formula;
+  /** Where the control comes from (issue 134): shown last, with the Synth Geek Layer on. */
+  history?: HistoryLine;
 }
 
 /**
@@ -40,6 +47,7 @@ const EXPANDED = '[aria-expanded="true"]';
 export function Tooltip({ content, children, longPress = true }: { content: TipContent; children: ReactNode; longPress?: boolean }) {
   const id = useId();
   const enabled = useContext(TooltipsContext);
+  const geek = useContext(GeekOnContext);
   const wrapperRef = useRef<HTMLSpanElement>(null);
   const tipRef = useRef<HTMLDivElement>(null);
   const nameRef = useRef<HTMLDivElement>(null);
@@ -169,6 +177,16 @@ export function Tooltip({ content, children, longPress = true }: { content: TipC
           <span>{content.body}</span>
           {content.how && <span className="tooltip-how">{content.how}</span>}
           {content.keys && <span className="tooltip-keys">{content.keys}</span>}
+          {geek && content.underTheHood && (
+            <span className="tooltip-hood">
+              <b>Under the hood</b> <span className="tooltip-formula">{content.underTheHood.formula}</span> {content.underTheHood.where}
+            </span>
+          )}
+          {geek && content.history && (
+            <span className="tooltip-history">
+              <b>History</b> {content.history.line}
+            </span>
+          )}
         </div>,
         document.body,
       )}

@@ -4,7 +4,7 @@ import { expect, type Page, test } from '@playwright/test';
 
 const card = (page: Page) => page.getByRole('region', { name: /^Tutorial: / });
 const action = (page: Page, name: string) => card(page).getByRole('button', { name, exact: true });
-const progress = (page: Page) => card(page).locator('.tutorial-progress');
+const progress = (page: Page) => card(page).locator('.card-progress');
 const patchName = (page: Page) => page.getByRole('button', { name: /^Patch: / });
 const ringed = (page: Page) => page.locator('[data-tutorial]:not(.section-strip button)');
 
@@ -43,7 +43,9 @@ async function doEverything(page: Page) {
 test('a Tutorial from the Patches panel: Init loaded, the control ringed with its target, turned by hand, then its note', async ({ page }) => {
   await open(page, 'Bass');
   await expect(patchName(page)).toHaveAttribute('aria-label', 'Patch: Init');
-  await expect(card(page)).toContainText('A saw with a square an octave below');
+  // Its own first words, not the Preset's description (issue 129, decision 6).
+  await expect(card(page)).toContainText('A bass line, built one stage at a time.');
+  await expect(card(page)).not.toContainText('A saw with a square an octave below');
   await expect(progress(page)).toHaveText('15 steps');
   await action(page, 'Start').click();
   await expect(progress(page)).toHaveText('Step 1 of 15');
@@ -63,7 +65,7 @@ test('a Tutorial from the Patches panel: Init loaded, the control ringed with it
       range.selectNodeContents(node);
       return range.getClientRects()[0].top;
     };
-    return top(e.querySelector('.tutorial-progress')!) - top(e.querySelector('.tutorial-name')!);
+    return top(e.querySelector('.card-progress')!) - top(e.querySelector('.card-name')!);
   });
   const before = await wordsTop();
   await fader.focus();
@@ -96,6 +98,7 @@ test('"Do it for me" to the end: the sound is the Preset, named after it, and th
   await doEverything(page);
   await expect(progress(page)).toHaveText('Done');
   await expect(card(page)).toContainText('This is the Bass Preset, built by you.');
+  await expect(card(page)).toContainText('Next: Acid, a talking bass'); // the end card points on (issue 129)
   await expect(patchName(page)).toHaveAttribute('aria-label', 'Patch: Bass');
   await expect(page.locator('.patch-changed')).toHaveCount(0);
   await action(page, 'Done').click();
@@ -209,6 +212,48 @@ test('Listen repeats the Tutorial’s phrase on the sound as it is, until presse
   await expect(page.getByRole('radio', { name: 'Pulse' }).first()).toHaveAttribute('aria-checked', 'true'); // what was built stays
 });
 
+test('Wobble’s Sync Step passes when Sync is switched on by hand, then the Rate turns its note value onto 1/4 T (issue 137)', async ({ page }) => {
+  await open(page, 'Wobble');
+  await expect(progress(page)).toHaveText('14 steps');
+  await action(page, 'Start').click();
+  for (let i = 0; i < 8; i++) await makeStep(page); // to LFO 1's Rate at 3 Hz
+  await expect(progress(page)).toHaveText('Step 9 of 14');
+  await expect(ringed(page)).toHaveAttribute('data-learn', 'choice:lfoSync');
+  await expect(ringed(page)).toHaveAttribute('data-tutorial-target', '→ On');
+  await expect(action(page, 'Next')).toBeDisabled();
+  const lfo = page.getByRole('group', { name: 'LFO 1', exact: true });
+  await lfo.getByRole('button', { name: 'LFO 1 Sync' }).click();
+  await expect(card(page)).toContainText('one wobble on every beat');
+  await action(page, 'Next').click();
+
+  await expect(ringed(page)).toHaveAttribute('data-learn', 'param:lfoRate'); // the Rate's knob, which turns the note value
+  await expect(ringed(page)).toHaveAttribute('data-tutorial-target', '→ 1/4 T');
+  const rate = lfo.getByRole('slider', { name: 'LFO 1 Rate' });
+  await expect(rate).toHaveAttribute('aria-valuetext', '1/4, 2 Hz');
+  await rate.focus();
+  await page.keyboard.press('ArrowUp'); // 1/8 D, the next note value: within 5 % of the travel, but not the one asked
+  await expect(rate).toHaveAttribute('aria-valuetext', /^1\/8 D/);
+  await page.waitForTimeout(600);
+  await expect(action(page, 'Next')).toBeDisabled();
+  await page.keyboard.press('ArrowUp');
+  await expect(rate).toHaveAttribute('aria-valuetext', '1/4 T, 3 Hz');
+  await expect(card(page)).toContainText('three a second again');
+  await expect(action(page, 'Next')).toBeEnabled();
+
+  // Listen plays at the Tutorial's 120 BPM, which the synced wobble follows, whatever the page's tempo was.
+  const bpm = page.getByRole('spinbutton', { name: 'Tempo' });
+  await bpm.focus();
+  for (let i = 0; i < 2; i++) await page.keyboard.press('PageDown');
+  await expect(bpm).toHaveAttribute('aria-valuenow', '100');
+  const listen = action(page, 'Listen');
+  await listen.click();
+  await expect(bpm).toHaveAttribute('aria-valuenow', '120');
+  await listen.click();
+  await expect(bpm).toHaveAttribute('aria-valuenow', '100');
+  await doEverything(page);
+  await expect(card(page)).toContainText('This is the Wobble Preset, built by you.');
+});
+
 test('the Demo ends a Tutorial (it loads its own Presets)', async ({ page }) => {
   await open(page, 'Wobble');
   await page.getByRole('button', { name: 'Demo' }).click();
@@ -249,7 +294,7 @@ for (const [layout, width, height] of [['phone', 375, 812], ['short phone', 393,
         await doIt(page);
         await expect.poll(() => standing(page, '[data-tutorial-viewer]'), `${step}: its Viewer`).toMatch(/^(clear|none)$/);
         // Its note, which says what to hear and see, whole.
-        const words = card(page).locator('.tutorial-words');
+        const words = card(page).locator('.card-words');
         expect(await words.evaluate((w) => w.scrollHeight <= w.clientHeight + 1), `${step}: its note whole`).toBe(true);
         if ((await next.textContent()) === 'Finish') break;
         await next.click();
@@ -265,7 +310,7 @@ for (const [layout, width, height] of [['phone', 375, 812], ['short phone', 393,
 test('on a phone the card shows two lines; a tap on the text, or on +, shows it whole, and another folds it', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
   await open(page, 'Bass');
-  const words = card(page).locator('.tutorial-words');
+  const words = card(page).locator('.card-words');
   const height = () => words.evaluate((w) => Math.round(w.getBoundingClientRect().height));
   const folded = await height();
   const lineHeight = await words.evaluate((w) => Number.parseFloat(getComputedStyle(w).lineHeight));
@@ -285,7 +330,9 @@ test('the header’s Tutorial button lists the Tutorials, ticks the finished, an
   const button = page.getByRole('button', { name: 'Tutorial', exact: true });
   await button.click();
   const list = page.getByRole('group', { name: 'Tutorials' }).filter({ has: page.getByRole('button', { name: /^Tutorial: Bass/ }) }).last();
-  await expect(list.getByRole('button')).toHaveText(['Bass', 'Acid', 'Pluck', 'Wobble', 'FM Ladder', 'Ring Bell', 'Deep Breath']);
+  await expect(list.locator('.tutorial-menu-name')).toHaveText(['Bass', 'Acid', 'Pluck', 'Wobble', 'FM Ladder', 'Ring Bell', 'Deep Breath']);
+  // Each with a short line of what it teaches (issue 129, decision 8).
+  await expect(list.getByRole('button', { name: 'Tutorial: Wobble' })).toContainText('an LFO, a slow hand that turns a knob for you');
   await page.keyboard.press('Escape');
   await expect(list).toBeHidden();
   await expect(button).toBeFocused();
@@ -294,6 +341,22 @@ test('the header’s Tutorial button lists the Tutorials, ticks the finished, an
   await expect(card(page)).toHaveAccessibleName('Tutorial: Acid');
   await expect(button).toHaveAttribute('aria-expanded', 'false');
 });
+
+// Issue 129: with a line of what each teaches the list is wider; it opens along whichever edge of its button keeps it
+// on the page (at 861 px the button sits near the right edge).
+for (const width of [375, 860, 861, 1440]) {
+  test(`the Tutorial list stays on the page at ${width} px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Tutorial', exact: true }).click();
+    const panel = page.getByRole('group', { name: 'Tutorials' }).last();
+    await expect(panel).toBeVisible();
+    const box = (await panel.boundingBox())!;
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(width);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+  });
+}
 
 test('picking a Tutorial puts the focus on its card, and its Next keeps it there, Step after Step (issue 104)', async ({ page }) => {
   await page.goto('/');
@@ -456,7 +519,7 @@ for (const [width, text, small, cardWidth] of [[1920, '15px', '14px', 720], [102
   test(`at ${width} px the Tutorial card's text is ${text} and the card ${cardWidth} px wide (issue 59)`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await open(page, 'Bass');
-    await expect(card(page).locator('.tutorial-words')).toHaveCSS('font-size', text);
+    await expect(card(page).locator('.card-words')).toHaveCSS('font-size', text);
     await expect(progress(page)).toHaveCSS('font-size', small);
     expect((await card(page).boundingBox())!.width).toBe(cardWidth);
   });

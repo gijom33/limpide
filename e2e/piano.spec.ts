@@ -1,5 +1,5 @@
 import { expect, type Page, test } from '@playwright/test';
-import { midiPermission } from './fakeMidi';
+import { midiPermission, play, withFakeController } from './fakeMidi';
 import { openDisplay } from './helpers';
 
 const db = (page: Page) => page.getByLabel('Amp Scope', { exact: true }).getAttribute('data-db').then((v) => (v === null ? NaN : Number(v)));
@@ -9,7 +9,8 @@ test('the on-screen piano plays, and lights the key while it sounds', async ({ p
   await page.goto('/');
   await ready(page);
   const piano = page.getByRole('group', { name: 'Piano' });
-  await expect(piano.getByRole('button')).toHaveCount(17);
+  // The letter keys' 17, C4 to E5, and from 861 px any the header has room for beyond them (issue 154).
+  await expect(piano.getByRole('button').nth(16)).toHaveAccessibleName('E5');
   const c4 = piano.getByRole('button', { name: 'C4' });
   await c4.scrollIntoViewIfNeeded(); // the piano sits at the bottom, below the fold of a small test window
   const box = (await c4.boundingBox())!;
@@ -19,6 +20,29 @@ test('the on-screen piano plays, and lights the key while it sounds', async ({ p
   await expect(c4).toHaveAttribute('aria-pressed', 'true');
   await page.mouse.up();
   await expect(c4).toHaveAttribute('aria-pressed', 'false');
+});
+
+// Issue 154 (decision 6): from 861 px the piano grows by whole keys into the room the header's buttons leave it, to the
+// right; the letter keys' 17 keep their place, and the keys beyond them play by pointer and light for a MIDI Note.
+test('at 1440 px the piano has keys beyond the letter keys: one plays by pointer, and lights for a MIDI Note', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await withFakeController(page); // opens the page
+  await ready(page);
+  const piano = page.getByRole('group', { name: 'Piano' });
+  expect(await piano.getByRole('button').count()).toBeGreaterThan(17);
+  await expect(piano.getByRole('button').first()).toHaveAccessibleName('C4');
+  const c6 = piano.getByRole('button', { name: 'C6' }); // past the letter keys' E5
+  const box = (await c6.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height * 0.8);
+  await page.mouse.down();
+  await expect.poll(() => db(page), { timeout: 10000 }).toBeGreaterThan(-40);
+  await expect(c6).toHaveAttribute('aria-pressed', 'true');
+  await page.mouse.up();
+  await expect(c6).toHaveAttribute('aria-pressed', 'false');
+  await play(page, [0x90, 84, 100]); // C6 from the Controller
+  await expect(c6).toHaveAttribute('aria-pressed', 'true');
+  await play(page, [0x80, 84, 0]);
+  await expect(c6).toHaveAttribute('aria-pressed', 'false');
 });
 
 test('with Hold on, a key pressed again lets its Note go: the sound stops and the key goes dark (the owner, 2026-10-27)', async ({ page }) => {
@@ -188,6 +212,20 @@ test('with Web MIDI working but nothing plugged in, the indicator is not marked 
   await page.getByRole('button', { name: 'MIDI', exact: true }).hover();
   await expect(page.getByRole('tooltip')).toContainText(/no midi controller/i);
   await expect(page.getByRole('button', { name: 'MIDI', exact: true })).not.toHaveAttribute('data-unavailable');
+});
+
+test('with nothing plugged in, the MIDI panel and its tip say a Bluetooth Controller plays once paired in the system (issue 143)', async ({ page }) => {
+  await midiPermission(page, 'granted');
+  await page.addInitScript(() => {
+    const access = Object.assign(new EventTarget(), { inputs: new Map() });
+    Object.defineProperty(navigator, 'requestMIDIAccess', { value: () => Promise.resolve(access), configurable: true });
+  });
+  await page.goto('/');
+  const line = /A Bluetooth one plays once paired in the system’s MIDI settings \(Audio MIDI Setup on a Mac\)/;
+  await page.getByRole('button', { name: 'MIDI', exact: true }).hover();
+  await expect(page.getByRole('tooltip')).toContainText(line);
+  await page.getByRole('button', { name: 'MIDI', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: 'MIDI' }).locator('.midi-connection')).toContainText(line);
 });
 
 test('the MIDI icon carries the status: yellow with nothing plugged in, green with a device, struck through when unavailable', async ({ browser }) => {

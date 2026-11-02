@@ -88,12 +88,16 @@ export default defineConfig({
   // Relative asset URLs, so the build works under GitHub Pages' /limpide/ as well as at a root.
   base: './',
   test: {
+    // Time limits for a loaded machine (issue 177). Alone, the slowest unit tests take 0.1 to 0.3 s and the engine's
+    // mostly under 2 s; in the night of 2026-10-31's suite (load 16 to 25, beside Playwright) seven ran 15 to 170 times
+    // slower, past the defaults (5 s; 15 s in a browser). Heavier tests set their own. A hung test still fails.
     projects: [
       {
         extends: true,
         test: {
           name: 'unit',
           environment: 'node',
+          testTimeout: 30_000,
           include: ['src/**/*.test.ts', 'scripts/**/*.test.ts'],
           exclude: ['src/**/*.browser.test.ts'],
         },
@@ -106,6 +110,7 @@ export default defineConfig({
         test: {
           name: 'engine',
           include: ['src/**/*.browser.test.ts'],
+          testTimeout: 60_000,
           browser: {
             enabled: true,
             headless: true,

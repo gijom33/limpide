@@ -1,10 +1,9 @@
-import { type RefObject, useEffect, useRef, useState } from 'react';
-import { type TourCard as Card, TOUR, type TourMove } from '../tutorial/tour';
-import { FoldButton, useCardPlacement } from './cardPlacement';
-import { bringClear, useDocked } from './docked';
-import { CloseIcon } from './icons';
+import { type RefObject, useEffect, useRef } from 'react';
+import { TOUR, TOUR_END, type TourMove, type TourSection } from '../tutorial/tour';
+import { CardShell } from './CardShell';
+import { bringClear } from './docked';
+import type { Guide } from './mascotCling';
 import { reveal } from './reveal';
-import { useCardFocus } from './TutorialCard';
 
 interface Props {
   index: number;
@@ -21,15 +20,20 @@ interface Props {
   onClose(): void;
 }
 
-/** A control on the page, by what it sets: a move's, or the one a card watches. */
-const controlOf = ({ kind, id }: Pick<TourMove, 'kind' | 'id'>) => document.querySelector(`[data-learn="${kind}:${id}"]`);
+/** A control on the page, by what it sets: a move's. */
+const selectorOf = ({ kind, id }: Pick<TourMove, 'kind' | 'id'>) => `[data-learn="${kind}:${id}"]`;
+const controlOf = (move: Pick<TourMove, 'kind' | 'id'>) => document.querySelector(selectorOf(move));
+
+/** What Bead points the way to on a Tour card (issue 151, decision 2): one control a card, its first move's. */
+export const tourGuide = (index: number): Guide => ({ selector: selectorOf(TOUR[index].moves[0]), standIn: null, step: `tour ${index}`, made: false, finished: false });
 
 /**
- * Brings the card's Section into view: its controls shown (on their tab), and its Viewers, its controls and the one it
- * watches between the header and the card, the Viewers first where not all fit, as each card speaks of them (issue
- * 128, decision 10).
+ * Brings the card's Section into view: its controls shown (on their tab), and its Viewers and its controls between the
+ * header and the card, the Viewers first where not all fit, as each card speaks of them (issue 128, decision 10). The
+ * LFO card no longer brings the Cutoff knob too: it could not share the screen with the Timeline, so its words point
+ * at the Timeline's dotted line instead (issue 158, decided by the owner).
  */
-function useSectionInView(card: Card, docked: RefObject<HTMLElement | null>) {
+function useSectionInView(card: TourSection, docked: RefObject<HTMLElement | null>) {
   useEffect(() => {
     const controls = card.moves.map(controlOf).filter((e) => e !== null);
     for (const control of controls) reveal(control);
@@ -37,8 +41,7 @@ function useSectionInView(card: Card, docked: RefObject<HTMLElement | null>) {
     for (const viewer of viewers) viewer.setAttribute('data-tutorial-viewer', '');
     const bring = () => {
       const behavior = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
-      const watched = card.watch ? controlOf({ kind: 'param', id: card.watch }) : null;
-      if (docked.current) bringClear(docked.current, [...viewers, ...controls, ...(watched ? [watched] : [])], behavior);
+      if (docked.current) bringClear(docked.current, [...viewers, ...controls], behavior);
     };
     // After the tab it was on has had a frame to show, and the card its new height; then again whenever the card or the
     // page changes size while it is shown (on GitHub's Linux the last card came out 22 px taller after the scroll).
@@ -59,7 +62,7 @@ function useSectionInView(card: Card, docked: RefObject<HTMLElement | null>) {
 }
 
 /** Rings the control the synth is turning, as a Tutorial rings the one to turn, and marks its section in the phone's strip. */
-function useRing(card: Card, moving: TourMove['id'] | null) {
+function useRing(card: TourSection, moving: TourMove['id'] | null) {
   useEffect(() => {
     const move = card.moves.find((m) => m.id === moving);
     if (!move) return;
@@ -98,7 +101,7 @@ function useRing(card: Card, moving: TourMove['id'] | null) {
  * the person takes Freeze. Every line it can say takes the same place, so the card keeps one height; a screen reader
  * hears the names alone.
  */
-function FrozenLine({ freezes, freezing, naming }: { freezes: NonNullable<Card['freezes']>; freezing: boolean; naming: string[] | null }) {
+function FrozenLine({ freezes, freezing, naming }: { freezes: NonNullable<TourSection['freezes']>; freezing: boolean; naming: string[] | null }) {
   const shown = naming ? 1 + freezes.findIndex((f) => f.names === naming) : freezing ? 0 : -1;
   return (
     <div className="tour-frozen">
@@ -128,13 +131,8 @@ export function TourCard({ index, moving, freezing, naming, onBack, onNext, onBa
   const tour = TOUR[index];
   const last = index === TOUR.length - 1;
   const card = useRef<HTMLElement>(null);
-  // On a phone the card shows two lines; a tap on them, or on +, shows the rest, as a Tutorial's does.
-  const [expanded, setExpanded] = useState(false);
-  useDocked(card);
   useSectionInView(tour, card);
   useRing(tour, moving);
-  const place = useCardPlacement(card, 'tour', null);
-  const focus = useCardFocus(card, null);
 
   const primary = last ? (
     <button type="button" className="tool tool-primary" onClick={onBass}>
@@ -145,45 +143,38 @@ export function TourCard({ index, moving, freezing, naming, onBack, onNext, onBa
       Next
     </button>
   );
+  const actions = {
+    before: index > 0 && (
+      <button type="button" className="tool" onClick={onBack}>
+        Back
+      </button>
+    ),
+    after: last && (
+      <button type="button" className="tool" onClick={onClose}>
+        Done
+      </button>
+    ),
+  };
   return (
-    <section ref={card} className="docked tutorial tour" aria-label="Tour" data-expanded={expanded || undefined} {...place.cardProps} {...focus}>
-      <div className="tutorial-top" {...place.handle}>
-        <span className="tutorial-name">{tour.title}</span>
-        <span className="tutorial-progress">
-          {index + 1} of {TOUR.length}
-        </span>
-        <button type="button" className="tool tool-icon tutorial-more" aria-expanded={expanded} aria-label="Show the whole text" onClick={() => setExpanded((e) => !e)}>
-          {expanded ? '−' : '+'}
-        </button>
-        {place.folded && primary}
-        <FoldButton folded={place.folded} onToggle={place.toggleFold} />
-        <button type="button" className="tool tool-icon" aria-label="Close the Tour" onClick={onClose}>
-          <CloseIcon />
-        </button>
-      </div>
-      {/* biome-ignore lint/a11y/noStaticElementInteractions: a tap on the text is the touch shortcut; the + button is the keyboard's and the screen reader's */}
-      {/* biome-ignore lint/a11y/useKeyWithClickEvents: as above, + is the keyboard route */}
-      <div className="tutorial-words" aria-live="polite" onClick={() => setExpanded((e) => !e)}>
-        <p>{tour.chain}</p>
-        <p>{tour.does}</p>
-        <p className="tutorial-then">{tour.sees}</p>
-        {last && <p className="tutorial-then">That is the whole chain. Now build a sound yourself: the Bass Tutorial goes through it one control at a time.</p>}
-      </div>
-      {tour.freezes && <FrozenLine freezes={tour.freezes} freezing={freezing} naming={naming} />}
-      <div className="tutorial-actions">
-        <span className="tutorial-spacer" />
-        {index > 0 && (
-          <button type="button" className="tool" onClick={onBack}>
-            Back
-          </button>
-        )}
-        {!place.folded && primary}
-        {last && (
-          <button type="button" className="tool" onClick={onClose}>
-            Done
-          </button>
-        )}
-      </div>
-    </section>
+    <CardShell
+      card={card}
+      kind="tour"
+      opening={null}
+      label="Tour"
+      name={tour.title}
+      progress={`${index + 1} of ${TOUR.length}`}
+      closeLabel="Close the Tour"
+      onClose={onClose}
+      primary={primary}
+      under={tour.freezes && <FrozenLine freezes={tour.freezes} freezing={freezing} naming={naming} />}
+      actions={actions}
+    >
+      {/* What to watch first: folded on a phone, it is all the card shows (issue 129). */}
+      <p>{tour.look}</p>
+      <p>{tour.chain}</p>
+      <p>{tour.does}</p>
+      <p className="card-then">{tour.sees}</p>
+      {last && <p className="card-then">{TOUR_END}</p>}
+    </CardShell>
   );
 }

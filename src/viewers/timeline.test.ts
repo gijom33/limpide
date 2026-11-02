@@ -7,22 +7,22 @@ const patch = (change: Partial<Patch>): Patch => ({ ...defaultPatch(), lfoAmount
 
 describe("the Timeline's key, in the owner's order (issue 76)", () => {
   it('names the Amp Envelope alone with no Filter Envelope and no active LFO', () => {
-    expect(timelineKey(patch({}))).toEqual([{ mark: 'amp', name: 'Amp Envelope' }]);
+    expect(timelineKey(patch({}), null)).toEqual([{ mark: 'amp', name: 'Amp Envelope' }]);
   });
 
   it('adds the Cutoff, then the Filter Envelope, once its Amount is set', () => {
-    expect(timelineKey(patch({ filterEnvAmount: 2 })).map((e) => e.mark)).toEqual(['cutoff', 'filterEnvelope', 'amp']);
+    expect(timelineKey(patch({ filterEnvAmount: 2 }), null).map((e) => e.mark)).toEqual(['cutoff', 'filterEnvelope', 'amp']);
   });
 
   it('names an LFO on the Cutoff as the Cutoff, dotted in the Filter’s colour', () => {
-    expect(timelineKey(patch({ lfoDestination: 'cutoff', lfoAmount: 0.5 }))).toEqual([
+    expect(timelineKey(patch({ lfoDestination: 'cutoff', lfoAmount: 0.5 }), null)).toEqual([
       { mark: 'cutoff', name: 'Cutoff', stage: 'filter', pattern: 'dots' },
       { mark: 'amp', name: 'Amp Envelope' },
     ]);
   });
 
   it("puts what LFO 1 moves first, then what LFO 2 moves, each in its stage's colour and its LFO's pattern", () => {
-    const key = timelineKey(patch({ lfoDestination: 'volume', lfoAmount: 1, lfo2Destination: 'pulseWidth', lfo2Amount: 1, filterEnvAmount: -1 }));
+    const key = timelineKey(patch({ lfoDestination: 'volume', lfoAmount: 1, lfo2Destination: 'pulseWidth', lfo2Amount: 1, filterEnvAmount: -1 }), null);
     expect(key).toEqual([
       { mark: 'lfo-volume', name: 'Volume', destination: 'volume', stage: 'amp', pattern: 'dashes' },
       { mark: 'lfo-pulseWidth', name: 'Pulse Width', destination: 'pulseWidth', stage: 'osc', pattern: 'dashDot' },
@@ -32,8 +32,22 @@ describe("the Timeline's key, in the owner's order (issue 76)", () => {
     ]);
   });
 
+  it('adds what aftertouch moves once a keyboard sends it, after the LFOs’ (issue 132)', () => {
+    expect(timelineKey(patch({}), 'cutoff').map((e) => e.mark)).toEqual(['cutoff', 'amp']);
+    expect(timelineKey(patch({ lfoDestination: 'volume', lfoAmount: 1 }), 'resonance')).toEqual([
+      { mark: 'lfo-volume', name: 'Volume', destination: 'volume', stage: 'amp', pattern: 'dashes' },
+      { mark: 'lfo-resonance', name: 'Resonance', destination: 'resonance', stage: 'filter', pattern: 'dashes', aftertouch: true },
+      { mark: 'amp', name: 'Amp Envelope' },
+    ]);
+    // On a Destination an LFO already moves: its line, once.
+    expect(timelineKey(patch({ lfo2Destination: 'volume', lfo2Amount: 1 }), 'volume')).toEqual([
+      { mark: 'lfo-volume', name: 'Volume', destination: 'volume', stage: 'amp', pattern: 'dashDot', aftertouch: true },
+      { mark: 'amp', name: 'Amp Envelope' },
+    ]);
+  });
+
   it('names nothing but the Amp Envelope before any Patch is known', () => {
-    expect(timelineKey(undefined)).toEqual([{ mark: 'amp', name: 'Amp Envelope' }]);
+    expect(timelineKey(undefined, null)).toEqual([{ mark: 'amp', name: 'Amp Envelope' }]);
   });
 });
 

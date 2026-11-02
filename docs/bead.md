@@ -10,7 +10,7 @@ Bead makes no sound and changes nothing you hear. Turning a control only changes
 - **Play B, E, A, D**, as in a bead of water, within 4 seconds, in any octave: on the computer keyboard (J, D, H, S), the on-screen piano or a MIDI keyboard. It goes away for this visit: it leaps, smashes itself down into a splash, becomes a puddle, then a film that fades. Hovering or in the air, it drips away down the window instead.
 - **Play B, E, A, D again**, and it comes back. While it melts, the Notes do nothing. A reload goes back to what Display's switch says: on, Bead comes by itself again.
 - The Demo, the Song and Hold's rhythm never call it or send it away: only Notes you play yourself.
-- **In About**, while Display's switch is on, Bead stands beside the logo, twice its size on the page, blinking, glancing about and wagging its tail, now and then jiggling or hopping (still, with reduced motion). A click, Enter or a tap on it gives its card in place of the credits: who it is, what it answers, a few funny turns, how to send it away, and a link to this page. Back, Escape or Bead again return to the credits. With the switch off, About has no Bead ([163](./issues/163-bead-in-about.md)).
+- **In About**, while Display's switch is on, Bead stands beside the logo at its size on the page, its foot level with the bottom of the mark ([178](./issues/178-bead-in-about-at-its-own-size.md)), blinking, glancing about and wagging its tail, now and then jiggling or hopping (still, with reduced motion). A click, Enter or a tap on it gives its card in place of the credits: who it is, what it answers, a few funny turns, how to send it away, and a link to this page. Back, Escape or Bead again return to the credits. With the switch off, About has no Bead ([163](./issues/163-bead-in-about.md)).
 - **Display has a Bead switch**, from the first visit, on by default: the lasting setting, remembered across visits. Off, Bead melts away and never appears again, by itself or by the Notes, which then do nothing, until the switch is turned on; on brings it back. The Notes never turn the switch.
 
 ## Where it lives
@@ -23,6 +23,7 @@ Bead makes no sound and changes nothing you hear. Turning a control only changes
 ## Its own life
 
 - It strolls (walking, hopping along or scooting), glances about and blinks.
+- **It faces its way** ([179](./issues/179-beads-tail-trails-behind.md)): strolling, riding or leaping to the right it turns round quickly, its tail trailing on its left; to the left, and standing still, its tail is on its right, as in the logo. A step shorter than itself, a dance step to a Note or a funny turn does not turn it; hovering, it faces as still.
 - With music it **dances**: a step at each Note, a hop as each Note starts, a lean with the LFOs, a stretch with the Amp's level, a splash when loud.
 - At an end of its edge it sometimes looks over, takes fright and scoots back.
 - After 20 seconds with nothing heard or turned it **dozes**, breathing, waking now and then with a yawn.
@@ -77,6 +78,17 @@ While Bead is out, five more words spelled with Notes, like B, E, A, D, each cue
 - **Switching the theme** in Display: for the dark theme it puts on a nightcap and yawns; for the light one it squints and shades its eyes. It reacts once Display is closed, so you can see it.
 - **On your date:** a ghost sheet on 31 October, a Christmas hat from 24 to 26 December, and a party hat on 24 October, the day Limpide went on GitHub.
 
+## In a Tutorial and the Tour
+
+While a Tutorial or the Tour is open, Bead points the way ([151](./issues/151-bead-points-in-the-tour-and-tutorials.md)), adding to the ring round the control, never in its place:
+- **It goes to the control**: in a Tutorial, the Step's (the Display button while a Step's option is in its shut panel); in the Tour, the first control each card turns. It makes its usual move to that control's Section, a leap or a fall to its top edge, then slides down the panel like a drop on glass and clings at the control's side, level with it. To another control of the same Section it slides across. It stays with the control as the page scrolls.
+- **Where it clings**: on the side where it covers least of the neighbouring controls and names, the side away from the card when both are as free, never over the ring or the target written above the control.
+- **It points**: it faces the control, looks at it and aims its tail at it, with one small bounce on arriving and at each new Step or card; otherwise it stays still but for blinking. The pointer passes through it there, to whatever is under it.
+- **Out of reach** (in the open Display panel, under the card, on a hidden tab, off the window), it stays where it is and looks towards it: beside the last control while that is still in reach, else on its edge. It goes once the control is shown.
+- **A Step made**: a happy hop. **A Tutorial finished**: a little fountain.
+- **Meanwhile** its funny turns, its visits and rides, its dancing and dozing pause. It still answers the controls, the words and the theme.
+- **Closed**, it hops back up to its edge and its own life comes back.
+
 ## During the Demo
 
 Through the Demo's parts, in turn, Bead:
@@ -86,4 +98,4 @@ Through the Demo's parts, in turn, Bead:
 
 ## With reduced motion
 
-With reduced motion asked for by the system, Bead comes and goes at once and never moves. It changes only its pose (its eyes on each Note or control turned, its tail, the ice, its twin, its costume). It cannot be picked up.
+With reduced motion asked for by the system, Bead comes and goes at once and never moves. It changes only its pose (its eyes on each Note or control turned, its tail, the ice, its twin, its costume). It cannot be picked up. In a Tutorial or the Tour it stays on its edge and turns its eyes and tail towards the control, without the hops.

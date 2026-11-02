@@ -121,7 +121,7 @@ export function createLfoClock(start: number, rate: number) {
 }
 
 // The slide approaches its target like setTargetAtTime: 98% of the way there (e^−4) at the Glide time.
-const GLIDE_SHARPNESS = 4;
+export const GLIDE_SHARPNESS = 4;
 
 /** Where a slide from `from` towards `target` has reached `elapsed` after it began (no Glide: there at once). */
 export const glideFrom = (from: number, target: number, glide: number, elapsed: number) =>

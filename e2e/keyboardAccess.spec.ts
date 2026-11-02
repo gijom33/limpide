@@ -70,7 +70,7 @@ test('the arrows step each knob and fader in its own unit, Shift finer and Page 
 });
 
 test('the Mixer’s faders step by dB, to −∞ below the lowest step (issue 160)', async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem('limpide.overlays', JSON.stringify({ maths: true })));
+  await page.addInitScript(() => localStorage.setItem('limpide.overlays', JSON.stringify({ geek: true })));
   await page.goto('/');
   await page.getByRole('tab', { name: 'Mixer' }).click();
   const readout = (name: string) =>

@@ -52,11 +52,11 @@ describe('usePlayers: the Demo, the Song and Listen (the 1.16.0 review)', () => 
     unmount = p.unmount;
     p.session.tempo.set(100);
     await act(async () => p.result.current.playDemo());
-    expect(p.session.tempo.get()).toEqual({ bpm: TRACK.bpm, player: true });
+    expect(p.session.tempo.get()).toEqual({ bpm: TRACK.bpm, player: true, midi: false });
     await act(async () => p.result.current.stopDemo());
-    expect(p.session.tempo.get()).toEqual({ bpm: 100, player: false });
+    expect(p.session.tempo.get()).toEqual({ bpm: 100, player: false, midi: false });
     await act(async () => p.result.current.toggleSong());
-    expect(p.session.tempo.get()).toEqual({ bpm: SONG.bpm, player: true });
+    expect(p.session.tempo.get()).toEqual({ bpm: SONG.bpm, player: true, midi: false });
     await act(async () => p.result.current.toggleSong());
     expect(p.session.tempo.get().bpm).toBe(100);
     await act(async () => p.result.current.startListen({ phrase: 'C4:1', bpm: 90 }));

@@ -1,4 +1,5 @@
 import { type CSSProperties, type MouseEvent, type PointerEvent, type RefObject, useEffect, useMemo, useRef, useState } from 'react';
+import { recall, remember } from '../app/rememberedSettings';
 import { safeStorage } from '../app/storage';
 import { ChevronIcon } from './icons';
 
@@ -13,8 +14,8 @@ const pinned = (card: HTMLElement | null) => !!card && getComputedStyle(card).ge
  */
 export function useCardPlacement(card: RefObject<HTMLElement | null>, kind: 'demo' | 'tutorial' | 'tour', opening: unknown) {
   const storage = useMemo(safeStorage, []);
-  const key = `limpide.cardFolded.${kind}`;
-  const [folded, setFolded] = useState(() => storage.getItem(key) === '1');
+  const setting = `cardFolded.${kind}` as const;
+  const [folded, setFolded] = useState(() => recall(storage, setting) === '1');
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const drag = useRef<{ x: number; y: number; from: { x: number; y: number } } | null>(null);
   // A card opening anew (Play again, another Tutorial) starts at the bottom, wherever the last one was left.
@@ -78,7 +79,7 @@ export function useCardPlacement(card: RefObject<HTMLElement | null>, kind: 'dem
   return {
     folded,
     toggleFold: () => {
-      storage.setItem(key, folded ? '0' : '1');
+      remember(storage, setting, folded ? '0' : '1');
       setFolded(!folded);
     },
     /** On the card: where it has been moved to, and whether it is folded. */

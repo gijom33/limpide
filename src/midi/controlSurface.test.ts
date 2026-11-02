@@ -474,9 +474,79 @@ describe('a keyboard’s own controls, while nothing is mapped to them (issue 52
       bend: (amount) => void heard.push(`bend ${amount}`),
       pedal: (down) => void heard.push(`pedal ${down ? 'down' : 'up'}`),
       program: (n) => void heard.push(`program ${n}`),
+      pressure: (amount) => void heard.push(`pressure ${amount}`),
     });
     return { surface, positions, heard, store };
   }
+
+  it('channel aftertouch reaches the synth as a pressure, even while MIDI Learn listens (issue 132)', () => {
+    const { surface, heard } = keyboardRig();
+    surface.handle({ type: 'pressure', channel: 1, value: 0.5 });
+    surface.startLearn();
+    surface.select(cutoff);
+    surface.handle({ type: 'pressure', channel: 1, value: 1 });
+    expect(heard).toEqual(['pressure 0.5', 'pressure 1']);
+    expect(surface.learnState()).toEqual({ phase: 'armed', target: cutoff });
+  });
+
+  // The owner's decision 1 (2026-11-01): per-Note pressure too, the highest among the Notes held, one pressure for all.
+  const notePressure = (note: number, value: number, channel = 1) => ({ type: 'pressure' as const, channel, note, value });
+  const noteOn = (note: number) => ({ type: 'noteOn' as const, channel: 1, note, velocity: 1 });
+  const noteOff = (note: number) => ({ type: 'noteOff' as const, channel: 1, note });
+
+  it('per-Note aftertouch reaches the synth as one pressure, the highest among the Notes held (issue 132)', () => {
+    const { surface, heard } = keyboardRig();
+    surface.handle(noteOn(60));
+    surface.handle(notePressure(60, 0.5));
+    surface.handle(noteOn(64));
+    surface.handle(notePressure(64, 0.8));
+    surface.handle(notePressure(64, 0.25)); // the Note held harder is still 60's
+    surface.handle(notePressure(60, 0.75));
+    expect(heard).toEqual(['pressure 0.5', 'pressure 0.8', 'pressure 0.5', 'pressure 0.75']);
+  });
+
+  it('a released Note’s pressure is forgotten, and what is left of the others is the pressure (issue 132)', () => {
+    const { surface, heard } = keyboardRig();
+    surface.handle(noteOn(60));
+    surface.handle(noteOn(64));
+    surface.handle(notePressure(60, 0.5));
+    surface.handle(notePressure(64, 0.25));
+    surface.handle(noteOff(60));
+    surface.handle(noteOff(64));
+    surface.handle(noteOff(67)); // a Note never pressed changes nothing
+    expect(heard).toEqual(['pressure 0.5', 'pressure 0.5', 'pressure 0.25', 'pressure 0']);
+  });
+
+  it('a Note is known by its channel too: the same Note on another channel is another pad (issue 132)', () => {
+    const { surface, heard } = keyboardRig();
+    surface.handle(notePressure(36, 0.5, 10));
+    surface.handle(notePressure(36, 0.25, 1));
+    surface.handle({ type: 'noteOff', channel: 10, note: 36 });
+    expect(heard).toEqual(['pressure 0.5', 'pressure 0.5', 'pressure 0.25']);
+  });
+
+  it('channel and per-Note aftertouch feed the same pressure, the higher of the two (issue 132)', () => {
+    const { surface, heard } = keyboardRig();
+    surface.handle(noteOn(60));
+    surface.handle({ type: 'pressure', channel: 1, value: 0.25 });
+    surface.handle(notePressure(60, 0.5));
+    surface.handle({ type: 'pressure', channel: 1, value: 0.75 });
+    surface.handle({ type: 'pressure', channel: 1, value: 0 });
+    surface.handle(noteOff(60));
+    expect(heard).toEqual(['pressure 0.25', 'pressure 0.5', 'pressure 0.75', 'pressure 0.5', 'pressure 0']);
+  });
+
+  it('per-Note aftertouch is never learned, and a mapped Note’s release still forgets its pressure (issue 132)', () => {
+    const { surface, heard, store } = keyboardRig();
+    store.set({ control: { kind: 'note', channel: 1, number: 60 }, target: hold, mode: 'trigger' });
+    surface.handle(notePressure(60, 0.5));
+    surface.handle(noteOff(60));
+    surface.startLearn();
+    surface.select(cutoff);
+    surface.handle(notePressure(62, 1));
+    expect(heard).toEqual(['pressure 0.5', 'pressure 0', 'pressure 1']);
+    expect(surface.learnState()).toEqual({ phase: 'armed', target: cutoff });
+  });
 
   it('the bend wheel bends, the sustain pedal holds, a Program Change loads, the mod wheel turns LFO 1’s Depth', () => {
     const { surface, positions, heard } = keyboardRig();

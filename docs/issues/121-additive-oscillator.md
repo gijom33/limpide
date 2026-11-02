@@ -10,6 +10,6 @@
 
 - Where it lives: a fifth Waveform for Osc 1 (and Osc 2?) whose drawbars appear when chosen, or a source of its own in the Mixer.
 - How many drawbars (an organ's nine, the first 8 or 16 Harmonics), their range, and their look on a phone.
-- What the Ideal and the Maths Layer show: the drawbars' levels are the Ideal, exactly.
+- What the Ideal and the Synth Geek Layer show: the drawbars' levels are the Ideal, exactly.
 - Presets and a Tutorial: rebuilding a saw and a square by hand from their Harmonics.
 - How FM, Ring and the Sub treat it.

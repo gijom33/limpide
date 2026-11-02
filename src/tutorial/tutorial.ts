@@ -1,3 +1,4 @@
+import type { PhraseAtTempo } from '../demo/phrase';
 import { WAVEFORM_NAMES } from '../music/harmonics';
 import { type ChoiceId, formatParam, LFO_DESTINATIONS, PARAMS, type ParamId, type Patch, paramName, setParam, soundFields } from '../patch/patch';
 import { PRESETS } from '../patch/presets';
@@ -29,21 +30,26 @@ export type Step = Words &
     | { kind: 'action'; id: 'snapshot' }
   );
 
-/** A Preset rebuilt from Init in Steps, the person turning each control (issue 40). */
-export interface Tutorial {
+/**
+ * A Preset rebuilt from Init in Steps, the person turning each control (issue 40). Its phrase, in the Demo's notation
+ * (src/demo/phrase.ts), at its tempo, is what Listen repeats.
+ */
+export interface Tutorial extends PhraseAtTempo {
   /** The Preset it rebuilds. */
   preset: string;
-  /** What the first card says before the Steps, after the Preset's about line. */
-  intro?: string;
-  /** What Listen repeats, in the Demo's notation (src/demo/phrase.ts), at this tempo. */
-  phrase: string;
-  bpm: number;
+  /**
+   * What the first card says before the Steps: what the Tutorial teaches and what the person will hear, in its own
+   * words rather than its Preset's description (issue 129, decision 6).
+   */
+  intro: string;
+  /** A short line of what it teaches, for the Tutorial menu and the end card of the Tutorial before it (decision 8). */
+  teaches: string;
   /** One sentence on what was built, for the last card. */
   summary: string;
   steps: Step[];
 }
 
-/** How close a knob or fader must come to its target, as a share of its travel. */
+/** How close a knob or fader must come to its target, as a share of its travel; a stepped one, onto it. */
 export const TOLERANCE = 0.05;
 
 /** Whether the Patch (and the Display options) are where the Step asks. An Action is made by its press, which only the page sees. */
@@ -51,6 +57,8 @@ export function reached(step: Step, patch: Patch, overlays: Overlays): boolean {
   switch (step.kind) {
     case 'param': {
       const def = PARAMS[step.id];
+      // A stepped knob (a note value, a Semitone) on its step: its neighbours can sit within the tolerance (issue 137).
+      if (def.step) return Math.abs(patch[step.id] - step.to) < def.step / 2;
       return Math.abs(valueToPosition(def, patch[step.id]) - valueToPosition(def, step.to)) <= TOLERANCE + 1e-9;
     }
     case 'choice':

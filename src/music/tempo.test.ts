@@ -20,8 +20,8 @@ describe('the note values (issue 112)', () => {
 
   it('named by the note value, its Hz in a few figures for its tip: "1/8", "4 Hz"', () => {
     expect(formatSyncedRate(noteIndex('1/8'), 120)).toEqual({ note: '1/8', hz: '4 Hz' });
-    expect(formatSyncedRate(noteIndex('1/4 D'), 120)).toEqual({ note: '1/4 D', hz: '1.3 Hz' });
-    expect(formatSyncedRate(noteIndex('4 bars'), 120)).toEqual({ note: '4 bars', hz: '0.13 Hz' });
+    expect(formatSyncedRate(noteIndex('1/4 D'), 120)).toEqual({ note: '1/4 D', hz: '1.33 Hz' });
+    expect(formatSyncedRate(noteIndex('4 bars'), 120)).toEqual({ note: '4 bars', hz: '0.125 Hz' });
     expect(formatSyncedRate(noteIndex('1/32 T'), 240)).toEqual({ note: '1/32 T', hz: '48 Hz' });
   });
 });

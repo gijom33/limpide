@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState, useSyncExternalStore } from 'react';
-import { recall, remember } from '../app/displaySettings';
+import { recall, remember } from '../app/rememberedSettings';
 import { type AudioSession, getAudioSession } from '../app/session';
 import { safeStorage } from '../app/storage';
 import { type AudioStatus, unlockAudio } from '../app/unlockAudio';
 import { rememberWelcome, welcomeFor } from '../app/welcome';
 import { createCallingPhrase, createWordsHeard, type Word } from '../input/callingPhrase';
 import { DEFAULT_OCTAVE, shiftOctave, startingOctave } from '../input/keyboardLayout';
-import { type Formula, oscillatorFormulas, responseFormula } from '../music/maths';
+import { type Formula, noiseSlope, oscillatorFormulas, responseFormula } from '../music/geek';
 import { CHOICES, osc1Heard, osc2Heard, type ParamId, type Patch, setFilter, setParam, setWaveform, subNoiseHeard } from '../patch/patch';
 import { PRESETS } from '../patch/presets';
 import { TUTORIALS } from '../tutorial/tutorials';
@@ -17,13 +17,15 @@ import { DisplayMenu } from './DisplayMenu';
 import { EnvelopeTimeline } from './EnvelopeTimeline';
 import { Fader } from './Fader';
 import { FilterShape } from './FilterShape';
-import { useDisplaySetting } from './hooks/useDisplaySetting';
+import { GeekContext, GeekNoteContext, GeekOnContext, GeekTempoContext } from './geekContext';
 import { useHold } from './hooks/useHold';
 import { useComputerKeyboard, useSpaceFreezes } from './hooks/useKeys';
 import { useMediaQuery } from './hooks/useMediaQuery';
 import { useMidi } from './hooks/useMidi';
+import { usePianoFit } from './hooks/usePianoFit';
 import { usePlayers } from './hooks/usePlayers';
 import { usePresetAbout } from './hooks/usePresetAbout';
+import { useRememberedSetting } from './hooks/useRememberedSetting';
 import { useTourState } from './hooks/useTourState';
 import { useTutorialState } from './hooks/useTutorialState';
 import { HoldIcon, InfoIcon, LegatoIcon, NoteIcon, PlayIcon } from './icons';
@@ -33,7 +35,6 @@ import { LfoControls } from './LfoControls';
 import { LearnContext } from './learn';
 import { BeadIcon, Mascot } from './Mascot';
 import { MidiPanel } from './MidiPanel';
-import { MathsContext } from './mathsContext';
 import { ModulationContext } from './modulationRing';
 import { OverlayToggles } from './OverlayToggles';
 import { PatchBar } from './PatchBar';
@@ -49,8 +50,8 @@ import { TapViewers } from './TapViewers';
 import { TempoControl } from './TempoControl';
 import { ToolGroup } from './ToolGroup';
 import { type TipContent, Tooltip, TooltipsContext } from './Tooltip';
-import { TourCard } from './TourCard';
-import { TutorialCard } from './TutorialCard';
+import { TourCard, tourGuide } from './TourCard';
+import { TutorialCard, tutorialGuide } from './TutorialCard';
 import { TutorialMenu } from './TutorialMenu';
 import { TIPS, type VIEWER_TIPS } from './tips';
 
@@ -58,7 +59,6 @@ import { AxesControls, ViewActions } from './ViewerControls';
 import { WaveformPicker, WaveIcon } from './WaveformPicker';
 import { Wordmark } from './Wordmark';
 
-const BEND_RANGE = 'limpide.bendRange';
 /** Why a greyed-out control does nothing now, for a screen reader (issue 104): what several controls share. */
 const OSC1_SILENT = 'No effect while Osc 1 is silent';
 const OSC2_SILENT = 'No effect while Osc 2 is silent';
@@ -161,7 +161,7 @@ export function App() {
   // hand, as in a bead of water, sends it away and calls it back for this visit only. Display's switch is the lasting
   // setting, remembered: with it off, Bead never appears and the Notes do nothing, for anyone it would annoy (the owner,
   // 2026-10-31). Its switch is part of its rules (it brings Bead up or sends it away, and the Notes read it), so it is
-  // kept here rather than by `useDisplaySetting`.
+  // kept here rather than by `useRememberedSetting`.
   const [bead, setBead] = useState(() => beadOnArrival(recall(storage, 'bead')));
   const moveBead = useCallback((event: BeadEvent) => setBead((b) => beadAfter(b, event)), []);
   useEffect(() => remember(storage, 'bead', bead.switch), [storage, bead.switch]);
@@ -186,21 +186,27 @@ export function App() {
     });
   }, [session]);
   const beadGone = useCallback(() => moveBead('gone'), [moveBead]);
+  // The Note the Synth Geek Layer's numbers use: the engine's newest (issue 133, decision 6).
+  const geekNotes = useMemo(() => ({ subscribe: session.engine.onNewestNote, get: session.engine.newestNote }), [session]);
   const modulationContext = useMemo(() => ({ engine: session.engine, patch: () => patches.get().patch, octave: octaveRef }), [session, patches]);
   // The letter keys play Notes unless turned off in Display (issue 51); remembered.
-  const [letterKeys, setLetterKeys] = useDisplaySetting(storage, 'letterKeys');
+  const [letterKeys, setLetterKeys] = useRememberedSetting(storage, 'letterKeys');
   useComputerKeyboard(session, octaveRef, moveOctave, letterKeys === 'on');
   // Tooltips open unless turned off in Display (issue 81); remembered.
-  const [tooltips, setTooltips] = useDisplaySetting(storage, 'tooltips');
+  const [tooltips, setTooltips] = useRememberedSetting(storage, 'tooltips');
   const { hold, pressHold, pressHoldRef, heldNotes, setPedal } = useHold(session);
   // How far a keyboard's bend wheel takes the pitch, in semitones each way (issue 52); remembered.
-  const [bendRange, setBendRange] = useState(() => Number(storage.getItem(BEND_RANGE)) || 2);
-  useEffect(() => storage.setItem(BEND_RANGE, String(bendRange)), [storage, bendRange]);
+  const [bendRange, setBendRange] = useRememberedSetting(storage, 'bendRange');
+  // The Destination a keyboard's aftertouch moves (issue 132), remembered with the MIDI settings, not in the Patch. A
+  // new one starts from no pressure, until the keyboard sends the next.
+  const [aftertouch, setAftertouch] = useRememberedSetting(storage, 'aftertouch');
+  useEffect(() => session.engine.setPressure({ destination: aftertouch, amount: 0 }), [session, aftertouch]);
 
   useSpaceFreezes(viewerStore);
   const narrow = useMediaQuery(STACKED);
+  const pianoFit = usePianoFit(!narrow, octave);
   // The stylesheet reads the theme from the page's root, so the whole page follows it.
-  const [theme, setTheme] = useDisplaySetting(storage, 'theme');
+  const [theme, setTheme] = useRememberedSetting(storage, 'theme');
   useEffect(() => void (document.documentElement.dataset.theme = theme), [theme]);
 
   const players = usePlayers({
@@ -238,6 +244,12 @@ export function App() {
     onCard: players.startListen,
     onEnd: players.stopListen,
   });
+  // What Bead points the way to while a Tutorial or the Tour is open (issue 151).
+  const lesson = tutorial.lesson;
+  const guide = useMemo(
+    () => (lesson ? tutorialGuide(lesson.tutorial, lesson.index, lesson.done) : tour.index !== null ? tourGuide(tour.index) : null),
+    [lesson, tour.index],
+  );
   // A Preset picked in the Patches panel shows its about line under its name (issues 109 and 153); the arrows, a
   // Controller's steps and its Program buttons load without it.
   const presetAbout = usePresetAbout(patches);
@@ -247,12 +259,13 @@ export function App() {
     presetAbout.show();
   };
   // The Tutorials, from the Patches panel and the header's Tutorial button alike.
-  const tutorialList = TUTORIALS.map((t) => ({ preset: t.preset, finished: tutorial.finished.has(t.preset) }));
+  const tutorialList = TUTORIALS.map((t) => ({ preset: t.preset, teaches: t.teaches, finished: tutorial.finished.has(t.preset) }));
   const startTutorial = (preset: string) => tutorial.start(TUTORIALS.find((t) => t.preset === preset)!);
   const midi = useMidi({
     storage, session, pressHoldRef,
     onNote: () => players.stopDemo(true),
     onBend: (amount) => session.engine.setBend(amount * bendRange * 100),
+    onPressure: (amount) => session.engine.setPressure({ destination: aftertouch, amount }),
     onPedal: setPedal,
     // Program n is the n-th Preset (0 is Init), so a keyboard's Program buttons step through them.
     onProgram: (number) => {
@@ -279,6 +292,7 @@ export function App() {
       response?(f: Float32Array<ArrayBuffer>): Float32Array;
       limiting?(): boolean;
       formulas?: Formula[];
+      noiseSlope?: string;
     } = {},
   ) => (
       <TapViewers
@@ -288,14 +302,16 @@ export function App() {
         fundamental={session.engine.fundamental}
         view={view}
         gateOn={extra.showIdeal ? gateOn : undefined}
+        newestNote={session.engine.newestNote}
         {...extra}
       />
     );
 
   // The header's groups: Tab meets them as they stand on screen (issue 104). Up to 860 px (phones, and the sections
   // 2 × 2) the playing buttons come before set-up and the keyboard after both, on a row of its own; wider, the
-  // keyboard comes before the buttons right of it, set-up on top. The CSS places the groups; this puts them in that
-  // order, so the focus follows. React moves them, keyed, when the window crosses 860 px: nothing in them restarts.
+  // keyboard comes before the buttons right of it, in columns of two read outward from the keys (issue 154). The CSS
+  // places the groups; this puts them in that order, so the focus follows. React moves the identity, the keyboard and
+  // the buttons, keyed, when the window crosses 860 px; the buttons' groups change there, so their menus start closed.
   const identity = (
     <div key="identity" className="header-left">
       <div className="header-identity">
@@ -304,6 +320,7 @@ export function App() {
           name={patchName}
           changed={changed}
           patch={patch}
+          bpm={tempo.bpm}
           library={library}
           onLoad={load}
           onPick={pickPreset}
@@ -315,9 +332,15 @@ export function App() {
       </div>
     </div>
   );
-  // Up before down, as they stand on screen, so Tab meets them in that order (issue 47).
+  // Up before down, as they stand on screen, so Tab meets them in that order (issue 47). From 861 px the piano takes
+  // what the header leaves it, by whole keys (issue 154).
   const keyboard = (
-    <div key="keyboard" className="keyboard">
+    <div
+      key="keyboard"
+      ref={pianoFit.keyboard}
+      className="keyboard"
+      style={pianoFit.style}
+    >
       <button type="button" className="tool tool-icon octave octave-up" aria-label="Octave up" {...shifted(octave - DEFAULT_OCTAVE)} onClick={() => moveOctave(1)}>
         {octave > DEFAULT_OCTAVE ? `+${octave - DEFAULT_OCTAVE}` : '+'}
       </button>
@@ -325,150 +348,182 @@ export function App() {
         {octave < DEFAULT_OCTAVE ? `−${DEFAULT_OCTAVE - octave}` : '−'}
       </button>
       <Tooltip content={TIPS.keyboard} longPress={false}>
-        <Piano octave={octave} held={players.playedNotes.length ? [...heldNotes, ...players.playedNotes] : heldNotes} input={session.input} invite={audioStatus === 'waiting'} />
+        <Piano
+          octave={octave}
+          whites={pianoFit.whites}
+          held={players.playedNotes.length ? [...heldNotes, ...players.playedNotes] : heldNotes}
+          input={session.input}
+          invite={audioStatus === 'waiting'}
+        />
       </Tooltip>
     </div>
   );
-  // Hold first among the set-up buttons (the owner, 2026-10-27).
-  const setUp = (
-    <div key="set" className="header-set">
-      <Tooltip content={TIPS.hold}>
-        <button
-          type="button"
-          className="tool hold-button"
-          aria-pressed={hold}
-          data-learn="action:hold"
-          data-mapped={learnContext.mapped.has('action:hold') || undefined}
-          data-learn-selected={learnContext.selected === 'action:hold' || undefined}
-          aria-label="Hold"
-          onClick={pressHold}
-        >
-          <HoldIcon />
-          <span className="tool-word">Hold</span>
+  const holdButton = (
+    <Tooltip key="hold" content={TIPS.hold}>
+      <button
+        type="button"
+        className="tool hold-button"
+        aria-pressed={hold}
+        data-learn="action:hold"
+        data-mapped={learnContext.mapped.has('action:hold') || undefined}
+        data-learn-selected={learnContext.selected === 'action:hold' || undefined}
+        aria-label="Hold"
+        onClick={pressHold}
+      >
+        <HoldIcon />
+        <span className="tool-word">Hold</span>
+      </button>
+    </Tooltip>
+  );
+  // The page's tempo beside Hold (issue 112): the BPM, and Tap from 861 px.
+  const tempoControl = <TempoControl key="tempo" tempo={tempo} onSet={session.tempo.set} onTap={() => session.tempo.tap()} />;
+  const midiPanel = (
+    <MidiPanel
+      key="midi"
+      state={midi.midi}
+      onOpen={midi.connect}
+      activity={midi.activity}
+      mappings={midi.mappings}
+      learning={learning}
+      onLearn={() => midi.surface.startLearn()}
+      onDone={() => (midi.setup ? midi.updateSetup({ type: 'finish' }) : midi.surface.stopLearn())}
+      onQuickSetup={() => midi.updateSetup({ type: 'start' })}
+      onLayout={midi.applyLayout}
+      onRemove={(control) => midi.mappingStore.remove(control)}
+      onClear={() => midi.mappingStore.clear()}
+      bendRange={bendRange}
+      onBendRange={setBendRange}
+      aftertouch={aftertouch}
+      onAftertouch={setAftertouch}
+    />
+  );
+  const displayMenu = (
+    <DisplayMenu key="display" active={viewer.frozen || viewer.snapshot !== null}>
+      <section className="toolbar" aria-label="Viewer controls">
+        <div className="toolbar-groups">
+          <ToolGroup title="View">
+            <ViewActions state={viewer} dispatch={viewerStore.dispatch} />
+          </ToolGroup>
+          <ToolGroup title="Axes">
+            <AxesControls settings={settings} dispatch={viewerStore.dispatch} />
+          </ToolGroup>
+          <ToolGroup title="Show">
+            <OverlayToggles value={overlays} onToggle={(overlay) => viewerStore.dispatch({ type: 'toggleOverlay', overlay })} />
+          </ToolGroup>
+          {/* Two choices each: they share one row, and wrap together (issue 162). */}
+          <div className="small-settings">
+            <ToolGroup title="Keys">
+              <Tooltip content={TIPS.letterKeys}>
+                <Segmented
+                  label="Letter keys"
+                  value={letterKeys}
+                  options={[
+                    { value: 'on', label: 'Play', name: 'Letter keys play Notes' },
+                    { value: 'off', label: 'Off', name: 'Letter keys off' },
+                  ]}
+                  onChange={setLetterKeys}
+                />
+              </Tooltip>
+            </ToolGroup>
+            <ToolGroup title="Tips">
+              <Tooltip content={TIPS.tooltips}>
+                <Segmented
+                  label="Tooltips"
+                  value={tooltips}
+                  options={[
+                    { value: 'on', label: 'On' },
+                    { value: 'off', label: 'Off' },
+                  ]}
+                  onChange={setTooltips}
+                />
+              </Tooltip>
+            </ToolGroup>
+            <ToolGroup title="Bead">
+              <Tooltip content={TIPS.bead}>
+                <div className="bead-switch">
+                  <Segmented
+                    label="Bead"
+                    value={bead.switch}
+                    options={[
+                      { value: 'on', label: 'On', name: 'Bead on' },
+                      { value: 'off', label: 'Off', name: 'Bead off' },
+                    ]}
+                    onChange={(v) => moveBead(v === 'on' ? 'switch on' : 'switch off')}
+                  />
+                  <BeadIcon on={bead.switch === 'on'} />
+                </div>
+              </Tooltip>
+            </ToolGroup>
+            <ToolGroup title="Theme">
+              <Tooltip content={TIPS.theme}>
+                <Segmented
+                  label="Theme"
+                  value={theme}
+                  options={[
+                    { value: 'dark', label: 'Dark' },
+                    { value: 'light', label: 'Light' },
+                  ]}
+                  onChange={setTheme}
+                />
+              </Tooltip>
+            </ToolGroup>
+          </div>
+        </div>
+      </section>
+    </DisplayMenu>
+  );
+  const aboutButton = (
+    <div key="about" className="about-menu">
+      <Tooltip content={TIPS.about}>
+        <button type="button" className="tool" aria-label="About" aria-haspopup="dialog" onClick={() => setAbout(true)}>
+          <InfoIcon />
+          <span className="tool-word">About</span>
         </button>
       </Tooltip>
-      {/* The page's tempo beside Hold (issue 112): the BPM, and Tap from 861 px. */}
-      <TempoControl tempo={tempo} onSet={session.tempo.set} onTap={() => session.tempo.tap()} />
-      <MidiPanel
-        state={midi.midi}
-        onOpen={midi.connect}
-        activity={midi.activity}
-        mappings={midi.mappings}
-        learning={learning}
-        onLearn={() => midi.surface.startLearn()}
-        onDone={() => (midi.setup ? midi.updateSetup({ type: 'finish' }) : midi.surface.stopLearn())}
-        onQuickSetup={() => midi.updateSetup({ type: 'start' })}
-        onLayout={midi.applyLayout}
-        onRemove={(control) => midi.mappingStore.remove(control)}
-        onClear={() => midi.mappingStore.clear()}
-        bendRange={bendRange}
-        onBendRange={setBendRange}
-      />
-      <DisplayMenu active={viewer.frozen || viewer.snapshot !== null}>
-        <section className="toolbar" aria-label="Viewer controls">
-          <div className="toolbar-groups">
-            <ToolGroup title="View">
-              <ViewActions state={viewer} dispatch={viewerStore.dispatch} />
-            </ToolGroup>
-            <ToolGroup title="Axes">
-              <AxesControls settings={settings} dispatch={viewerStore.dispatch} />
-            </ToolGroup>
-            <ToolGroup title="Show">
-              <OverlayToggles value={overlays} onToggle={(overlay) => viewerStore.dispatch({ type: 'toggleOverlay', overlay })} />
-            </ToolGroup>
-            {/* Two choices each: they share one row, and wrap together (issue 162). */}
-            <div className="small-settings">
-              <ToolGroup title="Keys">
-                <Tooltip content={TIPS.letterKeys}>
-                  <Segmented
-                    label="Letter keys"
-                    value={letterKeys}
-                    options={[
-                      { value: 'on', label: 'Play', name: 'Letter keys play Notes' },
-                      { value: 'off', label: 'Off', name: 'Letter keys off' },
-                    ]}
-                    onChange={setLetterKeys}
-                  />
-                </Tooltip>
-              </ToolGroup>
-              <ToolGroup title="Tips">
-                <Tooltip content={TIPS.tooltips}>
-                  <Segmented
-                    label="Tooltips"
-                    value={tooltips}
-                    options={[
-                      { value: 'on', label: 'On' },
-                      { value: 'off', label: 'Off' },
-                    ]}
-                    onChange={setTooltips}
-                  />
-                </Tooltip>
-              </ToolGroup>
-              <ToolGroup title="Bead">
-                <Tooltip content={TIPS.bead}>
-                  <div className="bead-switch">
-                    <Segmented
-                      label="Bead"
-                      value={bead.switch}
-                      options={[
-                        { value: 'on', label: 'On', name: 'Bead on' },
-                        { value: 'off', label: 'Off', name: 'Bead off' },
-                      ]}
-                      onChange={(v) => moveBead(v === 'on' ? 'switch on' : 'switch off')}
-                    />
-                    <BeadIcon on={bead.switch === 'on'} />
-                  </div>
-                </Tooltip>
-              </ToolGroup>
-              <ToolGroup title="Theme">
-                <Tooltip content={TIPS.theme}>
-                  <Segmented
-                    label="Theme"
-                    value={theme}
-                    options={[
-                      { value: 'dark', label: 'Dark' },
-                      { value: 'light', label: 'Light' },
-                    ]}
-                    onChange={setTheme}
-                  />
-                </Tooltip>
-              </ToolGroup>
-            </div>
-          </div>
-        </section>
-      </DisplayMenu>
-      <div className="about-menu">
-        <Tooltip content={TIPS.about}>
-          <button type="button" className="tool" aria-label="About" aria-haspopup="dialog" onClick={() => setAbout(true)}>
-            <InfoIcon />
-            <span className="tool-word">About</span>
-          </button>
-        </Tooltip>
+    </div>
+  );
+  const demoButton = (
+    <Tooltip key="demo" content={TIPS.demo}>
+      <button type="button" className="tool tool-mode demo-button" aria-label="Demo" aria-pressed={players.demo !== null} data-demo onClick={players.toggleDemo}>
+        <PlayIcon />
+        <span className="demo-word">Demo</span>
+      </button>
+    </Tooltip>
+  );
+  const tutorialMenu = <TutorialMenu key="tutorial" tutorials={tutorialList} onStart={startTutorial} />;
+  const songButton = (
+    <Tooltip key="song" content={TIPS.song}>
+      <button type="button" className="tool tool-mode demo-button" aria-label="Song" aria-pressed={players.song} data-demo onClick={players.toggleSong}>
+        <NoteIcon />
+        <span className="demo-word">Song</span>
+      </button>
+    </Tooltip>
+  );
+  // Up to 860 px, two groups on one row: playing and learning (Demo, Tutorial, Song) on the left, set-up (Hold first,
+  // the owner, 2026-10-27; the tempo, MIDI, Display, About) on the right. From 861 px, arrangement C (decided by the
+  // owner, issue 154): Hold one tall button against the piano, then columns of two, top before bottom: the tempo (BPM
+  // over Tap), the players (Demo over Song), the guides (Tutorial over About), set-up (MIDI over Display).
+  const right = narrow ? (
+    <div key="right" className="header-right">
+      <div key="play" className="header-play" role="group" aria-label="Play">
+        {[demoButton, tutorialMenu, songButton]}
+      </div>
+      <div key="set" className="header-set">
+        {[holdButton, tempoControl, midiPanel, displayMenu, aboutButton]}
       </div>
     </div>
-  );
-  const play = (
-    <div key="play" className="header-play" role="group" aria-label="Play">
-      <Tooltip content={TIPS.demo}>
-        <button type="button" className="tool tool-mode demo-button" aria-label="Demo" aria-pressed={players.demo !== null} data-demo onClick={players.toggleDemo}>
-          <PlayIcon />
-          <span className="demo-word">Demo</span>
-        </button>
-      </Tooltip>
-      <TutorialMenu tutorials={tutorialList} onStart={startTutorial} />
-      <Tooltip content={TIPS.song}>
-        <button type="button" className="tool tool-mode demo-button" aria-label="Song" aria-pressed={players.song} data-demo onClick={players.toggleSong}>
-          <NoteIcon />
-          <span className="demo-word">Song</span>
-        </button>
-      </Tooltip>
-    </div>
-  );
-  // Set-up and playing and learning, right of the keyboard (the owner, 2026-10-29), so the Patch picker sits beside the
-  // logo; set-up first there, so Hold stays first on the right (the owner, 2026-10-27).
-  const right = (
+  ) : (
     <div key="right" className="header-right">
-      {narrow ? [play, setUp] : [setUp, play]}
+      {[holdButton, tempoControl]}
+      <div key="players" className="header-column header-use" role="group" aria-label="Play">
+        {[demoButton, songButton]}
+      </div>
+      <div key="guides" className="header-column">
+        {[tutorialMenu, aboutButton]}
+      </div>
+      <div key="setup" className="header-column header-use">
+        {[midiPanel, displayMenu]}
+      </div>
     </div>
   );
 
@@ -476,7 +531,10 @@ export function App() {
     <TooltipsContext.Provider value={tooltips === 'on'}>
     <LearnContext.Provider value={learnContext}>
     <ModulationContext.Provider value={modulationContext}>
-    <MathsContext.Provider value={overlays.maths ? patch : null}>
+    <GeekContext.Provider value={overlays.geek ? patch : null}>
+    <GeekOnContext.Provider value={overlays.geek}>
+    <GeekNoteContext.Provider value={geekNotes}>
+    <GeekTempoContext.Provider value={tempo.bpm}>
       <main data-frozen={viewer.frozen || undefined} data-learning={learning || undefined}>
         {midi.setup ? (
           <QuickSetupPanel
@@ -517,7 +575,8 @@ export function App() {
             stage="osc"
             viewers={viewers('oscillator', 'Oscillator', {
               showIdeal: true,
-              formulas: overlays.maths ? oscillatorFormulas(patch) : undefined,
+              formulas: overlays.geek ? oscillatorFormulas(patch) : undefined,
+              noiseSlope: noiseSlope(patch),
             })}
             more={
             <div className="source-rows">
@@ -722,7 +781,7 @@ export function App() {
             viewers={viewers('filter', 'Filter', {
               showIdeal: true,
               response: session.engine.filterResponse,
-              formulas: overlays.maths ? [responseFormula(patch.filterMode, patch.filterSlope)] : undefined,
+              formulas: overlays.geek ? [responseFormula(patch.filterMode, patch.filterSlope)] : undefined,
             })}
           />
           <Block
@@ -782,6 +841,7 @@ export function App() {
             engine={session.engine}
             view={view}
             patch={patch}
+            aftertouch={midi.pressureHeard ? aftertouch : null}
             controls={
               <div className="timeline-controls">
                 {([1, 2] as const).map((n) => (
@@ -823,7 +883,6 @@ export function App() {
         {tutorial.lesson && tutorial.preset && (
           <TutorialCard
             tutorial={tutorial.lesson.tutorial}
-            about={tutorial.preset.about}
             index={tutorial.lesson.index}
             done={tutorial.lesson.done}
             differs={tutorial.differs}
@@ -846,10 +905,14 @@ export function App() {
             theme={theme}
             demoPart={players.demo}
             word={word}
+            guide={guide}
           />
         )}
       </main>
-    </MathsContext.Provider>
+    </GeekTempoContext.Provider>
+    </GeekNoteContext.Provider>
+    </GeekOnContext.Provider>
+    </GeekContext.Provider>
     </ModulationContext.Provider>
     </LearnContext.Provider>
     </TooltipsContext.Provider>

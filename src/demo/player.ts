@@ -1,7 +1,7 @@
 import { PARAMS, type ParamId, type Patch } from '../patch/patch';
 import { positionToValue, valueToPosition } from '../patch/taper';
 import { type Played, type Source, startTransport, type TransportHost } from '../play/transport';
-import { loopPhrase, parsePhrase, phraseLength } from './phrase';
+import { loopPhrase, type PhraseAtTempo, parsePhrase, phraseLength } from './phrase';
 import { type Part, TRACK, type Track } from './track';
 
 /** What Listen needs from the app: the Transport's clock, Notes and keys, and the piano's octave. */
@@ -147,7 +147,7 @@ export function startDemo(host: DemoHost, track: Track = TRACK, from = 0): () =>
  * A Tutorial's Listen: its phrase over and over on the Patch as it is, from a breath after pressing it, each pass
  * letting go a breath before its end as the Demo's parts do, with the piano on the phrase's octave.
  */
-export function startPhraseLoop(host: ListenHost, { phrase, bpm }: { phrase: string; bpm: number }): () => void {
+export function startPhraseLoop(host: ListenHost, { phrase, bpm }: PhraseAtTempo): () => void {
   host.showOctave(octaveShowing(parsePhrase(phrase, bpm).map((e) => e.note)));
   const first = host.now() + LEAD_IN;
   host.onTempo?.(bpm, first);

@@ -271,15 +271,20 @@ test('the tempo learns a knob and Tap a pad; a knob on an LFO’s Rate turns its
   await expect(rate).toHaveAttribute('aria-valuetext', /^1\/8 D, /);
   await page.getByRole('button', { name: 'LFO 1 Sync' }).click();
   await expect(rate).toHaveAttribute('aria-valuetext', /Hz$/);
-  // The pad mapped to Tap, twice half a second apart (timed inside the page): the tempo follows, at about 120.
-  await page.evaluate(async () => {
+  // The pad mapped to Tap, twice about half a second apart: the tempo follows the taps as they came. The page's
+  // clock times them as Tap does, since a busy machine wakes a 500 ms timer late (60 ms late is 107 BPM, issue
+  // 177): the BPM is checked against the gap that was played, not the one asked for.
+  const gap = await page.evaluate(async () => {
     const { playMidi } = window as unknown as { playMidi(bytes: number[]): void };
+    const at: number[] = [];
     for (let i = 0; i < 2; i++) {
+      at.push(performance.now());
       playMidi([0x99, 38, 100]);
       playMidi([0x89, 38, 0]);
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      if (i === 0) await new Promise((resolve) => setTimeout(resolve, 500));
     }
+    return (at[1] - at[0]) / 1000;
   });
-  const tapped = Number(await bpm.getAttribute('aria-valuenow'));
-  expect(Math.abs(tapped - 120)).toBeLessThanOrEqual(4);
+  // Polled, since the page may draw the new tempo a frame after the second tap.
+  await expect.poll(async () => Math.abs(Number(await bpm.getAttribute('aria-valuenow')) - 60 / gap), `${gap} s apart`).toBeLessThanOrEqual(1);
 });

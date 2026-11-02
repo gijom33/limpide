@@ -18,6 +18,8 @@ interface ReadoutText {
 // The shapes every value and unit can take ('d' any digit, 'L' a Note's letter): from "3 Hz" on the linear axis to
 // "23.99 kHz" at the top of the Spectrum, "F#-3" to "F#10", "−100 dB" to "silent".
 const VALUES = ['ddd', 'dd.dd', 'L#-d', 'L#dd', '−ddd', 'silent'];
+// With the Synth Geek Layer on, the Harmonic's number (issue 170): up to the 872nd, 24 kHz over 27.5 Hz.
+const HARMONIC = 'n = ddd';
 const UNITS = ['Hz', 'kHz', 'dB', '+dd¢', '−dd¢'];
 const DIGITS = [...'0123456789'];
 const LETTERS = [...'ABCDEFG'];
@@ -39,10 +41,13 @@ function widest(shape: string, measure: (text: string) => number) {
   return most;
 }
 
-/** The columns' widths in the font `measure` measures with, whatever the values: worth measuring once per font. */
-export function readoutColumns(measure: (text: string) => number): ReadoutColumns {
+/**
+ * The columns' widths in the font `measure` measures with, whatever the values: worth measuring once per font; with
+ * room for the Harmonic's number where it is shown (`harmonic`).
+ */
+export function readoutColumns(measure: (text: string) => number, { harmonic = false } = {}): ReadoutColumns {
   return {
-    value: Math.max(...VALUES.map((shape) => widest(shape, measure))),
+    value: Math.max(...[...VALUES, ...(harmonic ? [HARMONIC] : [])].map((shape) => widest(shape, measure))),
     unit: Math.max(...UNITS.map((shape) => widest(shape, measure))),
     gap: measure(' '),
   };

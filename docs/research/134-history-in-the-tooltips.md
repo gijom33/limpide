@@ -11,6 +11,8 @@ Each fact carries a confidence mark:
 - **C**: secondary only (an encyclopaedia, a magazine, a book cited by one and not read here). Fine as background; a History line resting on a C needs the primary found first, or softer words.
 - **U**: not sourced. Kept so the grilling knows the gap is there.
 
+**Since then (2026-11-01, issue 134):** the History lines as built are in the tips' History module, each citing its sources' numbers here; a unit test reads this file, the sources as listed below ("- **[S1]**") and each fact's mark followed by what it cites ("**A** [S1]"), and fails on a line citing no source graded A or B. Keep both forms when editing. The fact-checker reads this file before a release that changes a line.
+
 The scanned manuals and the Moog paper were read by optical character recognition, page by page; "scan n" and "PDF page n" refer to the scan's own page order, not the printed page numbers.
 
 ## Sources
@@ -80,7 +82,7 @@ Secondary, or primary known only by its record:
 - Moog's patent: an adjustable feedback resistor from output to input makes the low-pass resonant at the cutoff; enough feedback makes the filter oscillate, "a phase shift oscillator with four voltage-variable phase-shifting sections". **A** [S1]
 - The Minimoog calls it EMPHASIS; at 10 the filter "breaks into oscillation, and produces a pure sine wave tone", a "sixth sound source" (scans 14–15). **A** [S3]
 - ARP calls the same thing resonance, written Q (PDF page 36). **A** [S5]
-- For the Maths Layer: the letter Q was first used by K. S. Johnson of Western Electric (book of 1924); "quality factor" was coined by Legg and Given at Bell Labs in 1940. **C** [S23]
+- For the Synth Geek Layer: the letter Q was first used by K. S. Johnson of Western Electric (book of 1924); "quality factor" was coined by Legg and Given at Bell Labs in 1940. **C** [S23]
 
 **Draft History:** In Moog's patent, Resonance is feedback from the Filter's output to its input; turned up far enough, the Filter rings by itself. The Minimoog called it Emphasis.
 
@@ -347,7 +349,7 @@ Secondary, or primary known only by its record:
 
 ## Tips with no History line proposed
 
-Display and app controls, with no musical past: Freeze, Snapshot, Clear Snapshot, Frequency axis, Level axis, Scope cycles, Env Timeline, the Envelope Timeline and its key entries, Viewers follow, Playing (the computer keyboard), C16 layout, Print C16 card, Demo, Song, About, Theme, Tooltips, Letter keys, the Ideal Reference, the Response Curve, the Scope guides, and the Maths Layer itself. LFO Destination, Osc 1 and Osc 2 levels and the Sub & Noise tab are covered by the LFO, Mixer, Sub and Noise lines above.
+Display and app controls, with no musical past: Freeze, Snapshot, Clear Snapshot, Frequency axis, Level axis, Scope cycles, Env Timeline, the Envelope Timeline and its key entries, Viewers follow, Playing (the computer keyboard), C16 layout, Print C16 card, Demo, Song, About, Theme, Tooltips, Letter keys, the Ideal Reference, the Response Curve, the Scope guides, and the Synth Geek Layer itself. LFO Destination, Osc 1 and Osc 2 levels and the Sub & Noise tab are covered by the LFO, Mixer, Sub and Noise lines above.
 
 ## Facts that stayed unsourced (U)
 

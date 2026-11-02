@@ -90,19 +90,17 @@ body { min-width: 320px; }
 input, textarea { -webkit-user-select: text; user-select: text; }
 /* Grows with the screen up to where lines of controls stop being comfortable to scan. */
 main { max-width: 1920px; margin: 0 auto; padding: var(--space-4); }
-/* Laptop and wide windows: the header on one line (issue 44). The Wordmark and the Patch on the left, the keyboard in
-   the centre, set-up (Hold, the tempo, MIDI, Display, About) and the playing buttons (Demo, Tutorial, Song) on the
-   right, in two rows up to 1919 px, set-up on top, and in one from 1920 px (the owner, 2026-10-29: the Patch beside the logo, never under it). The side columns
-   are never narrower than what they hold and share the rest equally, so the keyboard sits centred when there is room;
-   its column takes what they leave, up to the piano at full size. The Display panel is anchored to the
-   header (not its button), so it can always use, and never exceed, the window's width. */
-header {
-  position: relative; display: grid; grid-template-columns: minmax(max-content, 1fr) minmax(0, var(--keyboard-w)) minmax(max-content, 1fr);
-  align-items: center; gap: var(--space-4);
-}
+/* Laptop and wide windows: the header on one line (issue 44). The Wordmark and the Patch on the left, then the keyboard,
+   then the buttons right of it in columns of two (issue 154, below). The piano takes what the sides leave it, by whole
+   keys (usePianoFit); what is left over, under one key, opens between the Patch and the keyboard, so the keyboard
+   always meets its buttons at the same gap; the keyboard sits where that leaves it (decided by the owner, issue 154).
+   The Display panel is anchored to the header (not its button), so it can always use, and never exceed, the window's
+   width. */
+header { position: relative; display: flex; align-items: center; gap: var(--space-4); }
 .header-left, .header-identity { display: flex; align-items: center; gap: var(--space-4); min-width: 0; }
+.header-left { flex: none; }
 .header-play, .header-set { display: flex; align-items: center; gap: var(--space-2); }
-.header-right { justify-self: end; display: flex; align-items: center; gap: var(--space-2); }
+.header-right { flex: none; display: flex; align-items: center; }
 /* Hold wears its icon like the buttons around it; the words give way first where room is short. */
 header .tool-glyph { display: block; }
 header h1 { margin: 0; }
@@ -254,16 +252,25 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 [data-overlay='ideal'] .swatch { width: 6px; height: 6px; border: 1px solid var(--text); border-radius: 50%; }
 [data-overlay='curve'] .swatch { width: 14px; border-top: 1.5px dashed var(--cutoff-line); }
 [data-overlay='guides'] .swatch { width: 14px; border-top: 1px dashed var(--muted); }
-[data-overlay='maths'] .swatch::before { content: 'Σ'; font-size: 11px; line-height: 1; }
-[data-overlay='maths'] .swatch { display: inline-flex; align-items: center; }
-/* The Maths Layer's formula, in the Spectrum's bottom-left corner over the plot (above its frequency labels), on a
+/* The Synth Geek Layer's swatch: a pair of glasses, two round lenses and a bridge, drawn so every font shows it alike. */
+[data-overlay='geek'] .swatch {
+  position: relative; width: 15px; height: 6px;
+  background: linear-gradient(var(--text), var(--text)) center 2px / 3px 1px no-repeat;
+}
+[data-overlay='geek'] .swatch::before, [data-overlay='geek'] .swatch::after {
+  content: ''; position: absolute; top: 0; width: 6px; height: 6px; box-sizing: border-box;
+  border: 1px solid var(--text); border-radius: 50%;
+}
+[data-overlay='geek'] .swatch::before { left: 0; }
+[data-overlay='geek'] .swatch::after { right: 0; }
+/* The Synth Geek Layer's formula, in the Spectrum's bottom-left corner over the plot (above its frequency labels), on a
    chip of the page's background so it reads over the trace. */
-.maths-formula {
+.geek-formula {
   position: absolute; left: 6px; bottom: 18px; margin: 0; max-width: calc(100% - 12px); padding: 3px 6px; pointer-events: none;
   display: flex; flex-direction: column; gap: 1px; font-size: var(--text-sm); line-height: 1.3; color: var(--text);
   background: color-mix(in srgb, var(--bg) 85%, transparent); border-radius: 4px; font-variant-numeric: tabular-nums;
 }
-.maths-where { color: var(--muted); font-size: var(--text-xs); }
+.geek-where { color: var(--muted); font-size: var(--text-xs); }
 
 /* Toolbar: one panel, three captioned groups (View, Axes, Show), separated by hairlines. */
 /* The toolbar sits in the header line when there is room, and wraps below the title when not. */
@@ -379,6 +386,13 @@ main[data-frozen] .tap-canvases::before {
 /* A knob's or fader's steps for the keys (issue 160): where there is a keyboard, not on a touch screen. */
 .tooltip-keys { color: var(--muted); font-variant-numeric: tabular-nums; }
 @media (hover: none) { .tooltip-keys { display: none; } }
+/* Where the control comes from (issue 134), last, with the Synth Geek Layer on: set apart by a rule, headed History. */
+.tooltip-history { padding-top: 6px; border-top: 1px solid var(--border); }
+.tooltip-history b { font-weight: 600; }
+/* The formula behind it (issue 133), above History, set apart the same way: headed, the formula on a line of its own. */
+.tooltip-hood { padding-top: 6px; border-top: 1px solid var(--border); }
+.tooltip-hood b { font-weight: 600; }
+.tooltip-formula { display: block; font-variant-numeric: tabular-nums; }
 /* Headings that explain themselves on hover: no underline (it cluttered the panels), just the help cursor. */
 .has-tip { cursor: help; }
 
@@ -407,9 +421,14 @@ main[data-frozen] .tap-canvases::before {
    where the controls sit above it, a height of its own). The canvas fills the box and never sizes it. */
 .timeline-plot { position: relative; min-width: 0; height: clamp(120px, 9vw, 200px); }
 .timeline canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; background: var(--bg); border-radius: var(--radius-inner); }
-/* Wraps rather than running past the section's edge where the plot column is narrow (861–879 px, issue 47). */
+/* One line: where the plot column is narrow its names take shorter forms (issue 156); it wraps rather than running
+   past the section's edge (861–879 px, issue 47) only where even its shortest have no room. */
 .timeline-key { display: flex; flex-wrap: wrap; justify-content: flex-end; min-width: 0; gap: 4px 14px; font-size: var(--text-sm); color: var(--muted); font-weight: 500; text-transform: none; letter-spacing: 0; }
-.timeline-key [data-mark] { display: inline-flex; align-items: center; gap: 5px; }
+.timeline-key [data-mark] { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+/* At its shortest, the key's gaps and line samples tighten too: the five names still fit the 212 px it has at 861 px. */
+.timeline-key[data-shortest] { column-gap: 8px; }
+.timeline-key[data-shortest] [data-mark] { gap: 3px; }
+.timeline-key[data-shortest] [data-pattern]::before { width: 10px; }
 .timeline-key [data-mark]:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; border-radius: 3px; }
 .timeline-key [data-mark]::before { content: ''; width: 12px; height: 8px; border-radius: 2px; }
 .timeline-key [data-mark='amp']::before { background: color-mix(in srgb, var(--stage-amp) 45%, transparent); border-top: 1.5px solid var(--stage-amp); }
@@ -449,7 +468,10 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
      than squashing the Viewers to nothing. */
   main { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; gap: 12px; }
   main > * { flex: none; margin-top: 0; margin-bottom: 0; }
-  main > .chain { flex: 1 1 auto; min-height: 0; }
+  /* The sections start 36 px under the header (main's 12 px gap and this margin), room for Bead on their top edge
+     (issue 154): the header's keys and buttons reach down to its foot all along there, and Bead standing and playing
+     reaches 35 px over its edge (its 26 px stretched by the sound, and its hop at a Note). */
+  main > .chain { flex: 1 1 auto; min-height: 0; margin-top: calc(36px - 12px); }
   .block { min-height: 0; }
   .block > .tap { flex: 1 1 0; min-height: 0; margin-top: 0; display: flex; flex-direction: column; }
   .tap-canvases { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
@@ -593,19 +615,14 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .wordmark-text { color: var(--text); } /* plain, so the colours are the mark's alone */
 /* In About the name sits close under the mark, as in the header it sits close beside it. */
 .about-body > .about-mark + .about-title { margin-top: calc(-1 * var(--space-2)); }
-/* Bead in About (issue 163): twice its size on the page, standing on the logo's baseline to its right, the logo still
-   in the middle; a button that shows its card in place of the credits. */
-.about-mark { position: relative; }
+/* Bead in About (issues 163, 178): at its size on the page, to the logo's right, the two centred together; its foot
+   level with the bottom of the mark's stroke, which ends 0.8 of the mark's 16 units over the foot of its box (2.2 px at
+   72 px wide). A button that shows its card in place of the credits, a phone's 44 px tall with Bead at its foot. */
+.about-mark { display: flex; align-items: flex-end; gap: var(--space-3); }
 .about-mark .logo { display: block; }
 .about-bead {
-  position: absolute; left: calc(100% + var(--space-3)); bottom: 0; display: block; padding: 0; color: inherit;
+  display: flex; align-items: flex-end; min-height: 44px; padding: 0 0 calc(72px * 0.8 / 26); color: inherit;
   background: none; border: 0; border-radius: var(--radius-control); cursor: pointer;
-}
-/* Narrower than 340 px (About fits the window down to 280 px, though the page lays out at 320), the logo beside Bead
-   would leave too little room for its tail: the two are centred together. */
-@media (max-width: 339px) {
-  .about-mark { display: flex; align-items: flex-end; gap: var(--space-3); }
-  .about-bead { position: static; }
 }
 .about-bead:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
 .about-bead svg { display: block; overflow: visible; }
@@ -801,6 +818,8 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 /* An LFO's destination, picked like a Patch: ‹ name ›, the name opening a menu grouped by stage. */
 .destination-picker { position: relative; display: flex; align-items: center; gap: 2px; }
 .destination-name { width: 112px; justify-content: center; gap: 6px; color: var(--text); }
+/* The name's room is what the button leaves it: past it, a shorter form (issue 156). */
+.destination-label { min-width: 0; }
 .destination-name::before, .destination-menu [role='menuitemradio']::before {
   content: ''; flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--dest);
 }
@@ -834,13 +853,19 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 }
 
 /* The keyboard, the same at every width: the octave buttons stacked (up over down) beside the piano. The piano is the
-   computer keyboard's 17 keys (10 white), lit while sounding; its white keys share what the layout gives it, up to
-   44 px (a finger's target), and grow taller as they widen. Black keys are 0.6 of a white key's width, as on a real
-   piano. */
-:root { --white-key-max: 44px; --keyboard-w: calc(var(--control-h) + 4px + 10 * var(--white-key-max)); }
+   computer keyboard's 17 keys (10 white), and from 861 px the keys beyond them the header has room for (issue 154),
+   lit while sounding; its white keys share what the layout gives it, up to 44 px (a finger's target), and grow taller
+   as they widen. Black keys are 0.6 of a white key's width, as on a real piano. */
+:root { --white-key-max: 44px; }
 .keyboard {
   display: grid; grid-template-columns: var(--control-h) minmax(0, calc(10 * var(--white-key-max)));
   grid-template-areas: 'up piano' 'down piano'; gap: 4px; justify-content: center;
+}
+/* From 861 px the keyboard takes what the header leaves (its own width never hangs on its keys), and the piano as many
+   whole white keys as that holds (issue 154): usePianoFit counts them (--whites) and sizes the piano (--piano-w), the
+   keyboard at the room's right, against the buttons. */
+@media (min-width: 861px) {
+  .keyboard { flex: 1 1 0; min-width: 0; grid-template-columns: var(--control-h) var(--piano-w, minmax(0, calc(10 * var(--white-key-max)))); justify-content: end; }
 }
 .keyboard > .octave-up { grid-area: up; }
 .keyboard > .octave-down { grid-area: down; }
@@ -848,7 +873,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 /* Each octave button half the piano's height. */
 .keyboard > .tool-icon { width: auto; height: auto; align-self: stretch; }
 .piano {
-  --white-key: calc(100cqw / 10);
+  --white-key: calc(100cqw / var(--whites, 10));
   position: relative; display: flex; height: clamp(52px, 1.5 * var(--white-key), 64px); touch-action: none; user-select: none; -webkit-user-select: none;
 }
 .piano button {
@@ -885,6 +910,8 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .mascot-drop { position: absolute; bottom: 0; left: 0; transform-origin: 20% 100%; }
 /* Its own pixels take the pointer, to be tickled and poked; the box around them lets it through. */
 .mascot-drop rect { pointer-events: visiblePainted; }
+/* Pointing the way beside a control (issue 151), the pointer passes through it to the control. */
+.mascot[data-pointing='yes'] .mascot-drop rect { pointer-events: none; }
 /* Its droplets, in the page's pixels. */
 .mascot-spray { position: absolute; left: 0; top: 0; width: 1px; height: 1px; overflow: visible; z-index: 9; pointer-events: none; fill: var(--mascot-body); }
 :root .mascot-spray { --mascot-body: #6cc8f0; }
@@ -1041,23 +1068,16 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 /* The arrows keep their size; when the header is short of room, the name gives way. */
 .patch-bar > .tool { flex: none; }
 .patch-name { width: 150px; justify-content: center; gap: 6px; }
-/* Bold, with its ▾ (the owner's option A), a factory name needs more room in wider fonts: 172 px from 1200 px up. */
+/* Bold, with its ▾ (the owner's option A), a factory name needs more room in wider fonts: 172 px from 1280 px up. */
 @media (min-width: 1280px) { .patch-name { width: 172px; } }
-/* Where the buttons right of the keyboard show their words in two rows (1100 to 1279 px), the Patch name as wide as
-   leaves the two sides alike, so the piano stays at the centre. */
+/* From 1100 to 1279 px, where the buttons right of the keyboard keep only the newcomer's four words (issue 154), a
+   shorter Patch name, so the piano keeps its 10 white keys at 42 px. */
 @media (min-width: 1100px) and (max-width: 1279px) { .patch-name { width: 134px; } }
 /* Narrow windows (one-row header, down to 861 px): a shorter fixed width, so the Display button keeps its place on
    the right; long Preset names show an ellipsis. */
 @media (max-width: 1099px) { .patch-name { width: 104px; } }
 @media (max-width: 879px) { .patch-name { width: 86px; } }
-/* Those widths are what the name asks of the header, so they alone place the keyboard. Where its own column has room
-   to spare (the column is wider than what it holds), the name takes it, up to the widest Preset's: nothing else moves,
-   and a name is cut only where the header has no room left for it (issue 105). */
-@media (min-width: 861px) {
-  .header-identity, .patch-bar { flex: 1 1 auto; }
-  .patch-bar > .tip-anchor { flex: 1 0 auto; max-width: 172px; }
-  .patch-name { flex: 1 0 auto; }
-}
+/* Those widths are what the name asks of the header; what is left goes to the piano's keys (issue 154). */
 .patch-name span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 /* The dot sits at the button's right, out of the flow, so the name never slides when it appears (issue 47); the
    button keeps room for it on the right. The left keeps only a gap: a short window's narrow name needs every pixel
@@ -1075,8 +1095,9 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
    and the Filter together, and set close so it never reaches the Osc tabs or the Filter's Mode row (issue 153's
    e2e test, every Preset at five widths): two lines from 1,280 px wide, three for the longest below, four at 861 px,
    five on a phone. */
+/* Its width, shared with the Patch's plain words below (issue 123). */
+.patch-about, .patch-words { --about-w: calc((100% - 2 * var(--space-4)) / 3 * 2 + var(--space-4)); }
 .patch-about {
-  --about-w: calc((100% - 2 * var(--space-4)) / 3 * 2 + var(--space-4));
   position: absolute; z-index: 40; top: calc(100% + 4px); left: 0; max-width: var(--about-w); margin: 0; padding: 4px 6px 4px 10px;
   pointer-events: none; font-size: var(--text-md); line-height: 1.25; color: var(--text);
   background: var(--panel); border: 1px solid var(--muted); border-radius: var(--radius-panel); box-shadow: var(--shadow-panel);
@@ -1090,7 +1111,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   font: inherit; font-size: 16px; line-height: 1; color: var(--text); cursor: pointer;
   background: none; border: 0; border-radius: var(--radius-control);
 }
-@media (min-width: 1920px) { .patch-about { --about-w: calc((100% - 3 * var(--space-4)) / 2 + var(--space-4)); } }
+@media (min-width: 1920px) { .patch-about, .patch-words { --about-w: calc((100% - 3 * var(--space-4)) / 2 + var(--space-4)); } }
 /* Up to 860 px the header edges the page's padding: the box lines up with the Sections, as wide as the page's. */
 @media (min-width: 601px) and (max-width: 860px) { .patch-about { left: var(--space-4); --about-w: calc(100% - 2 * var(--space-4)); } }
 @media (max-width: 600px) {
@@ -1101,6 +1122,26 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
    Osc tabs. */
 @media (max-width: 374px) { .patch-about { font-size: var(--text-sm); line-height: 1.2; } }
 @media (prefers-reduced-motion: reduce) { .patch-about { animation: none; } }
+/* The Patch in plain words (issue 123), once it is not a Preset as loaded: one line where a Preset's about line shows,
+   its words where the about line's words start, as wide as the Oscillators and the Filter, in the room between the
+   header and the Sections (41 px from 861 px wide: the line takes 20). Cut with an ellipsis where it runs out of room;
+   the page beneath takes the pointer. */
+.patch-words {
+  position: absolute; top: calc(100% + 4px); left: 0; max-width: var(--about-w); margin: 0; padding: 5px 0 0 11px; pointer-events: none;
+  font-size: var(--text-md); line-height: 1.25; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* Up to 860 px the header is sticky and the Sections or their strip start right under it: the words are the Patch
+   name's second line instead, small as the header buttons' words there, cut with an ellipsis within the name's width. */
+.patch-name-words { display: none; }
+@media (max-width: 860px) {
+  .patch-words { display: none; }
+  .patch-name[data-words] { flex-wrap: wrap; align-content: center; row-gap: 0; }
+  .patch-name[data-words] > span:first-child { line-height: 14px; }
+  .patch-name-words {
+    display: block; order: 1; flex: 0 0 100%; min-width: 0; overflow: hidden; text-overflow: ellipsis;
+    font-size: 9px; line-height: 10px; font-weight: 400; text-align: center;
+  }
+}
 /* Never taller than the window below the header: the Presets scroll, the rest of the panel stays in view. */
 /* The Patch panel is anchored to the header (like the Display and MIDI panels), spanning its full width, so the
    Presets lay out in wide rows and the whole list is on screen at once; it scrolls only on short windows. */
@@ -1135,8 +1176,8 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .patch-search-all { margin-left: 8px; min-height: 24px; padding: 0 4px; font: inherit; color: var(--text); text-decoration: underline; cursor: pointer; background: none; border: none; }
 .patch-group { display: grid; grid-template-columns: 76px minmax(0, 1fr); column-gap: 10px; align-items: start; }
 .patch-panel > section:not(.patch-presets) { flex: none; }
-/* A narrow label column: the long names (Keys & Organs, Movement & Effects) take two lines or more, the first level with the
-   row's first Preset. */
+/* A narrow label column, level with the row's first Preset: the long names (Keys & Organs, Movement & Effects) take
+   a shorter form there, on one line (issue 156). */
 .patch-group-name {
   margin: 0; padding-top: calc((var(--control-h) - 1.25em) / 2); line-height: 1.25;
   font-size: var(--text-sm); font-weight: 500; color: var(--muted);
@@ -1153,60 +1194,49 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .patch-delete, .patch-search-clear { height: var(--control-h); min-width: var(--control-h); padding: 0 6px; font: inherit; font-size: var(--text-md); color: var(--muted); cursor: pointer; background: none; border: 1px solid var(--border); border-radius: var(--radius-control); }
 .patch-delete-confirm { color: var(--danger); border-color: var(--danger); }
 .patch-empty { margin: 0; font-size: var(--text-md); color: var(--muted); }
-/* The one-line header gives the keyboard what its sides leave: from 861 to 1099 px its buttons show their icons and
-   drop their words (the tooltips name them); from 1100 px, two rows high, they keep them, but for the set-up row's
-   beside the tempo, which keep theirs from 1366 px (issue 112). Below 920 px the header's zones sit closer together. */
-/* With the Tutorial button (issue 59), one more in the row: the zones sit 12 px apart and, without their words, the
-   buttons pad 6 px, so the piano keeps 44 px keys at 1440 and 26 px or more at 861. */
+/* The buttons right of the keyboard, from 861 px: arrangement C (decided by the owner, issue 154). Hold one tall button
+   against the piano, as the octave buttons stand against its other side; then columns of two, each one thing, read
+   outward from the keys: the tempo (BPM over Tap), the players (Demo over Song), the guides (Tutorial over About),
+   set-up (MIDI over Display). 4 px between the columns of one use, 14 px between uses: playing (Hold and the tempo),
+   listening and learning (the players and the guides), setting up. In a column both buttons are as wide as the wider,
+   their icons in a line. One shape at every width: rows of 25 px, 2 px apart, up to 1099 px, where the piano can be as
+   short as 52 px; of 28 px, 4 px apart, from 1100 px, where its keys are about 42 px or more and it about 63 px tall. */
 @media (min-width: 861px) {
   header, .header-left, .header-identity { column-gap: 12px; }
+  .header-right { --row-h: 25px; --row-gap: 2px; gap: 4px; }
+  .header-right > .header-use { margin-left: 10px; }
+  .header-column { display: flex; }
+  .header-column, .header-right > .tempo { flex-direction: column; align-items: stretch; gap: var(--row-gap); }
+  /* Each button fills its column: its wrappers stretch, and it fills them. */
+  :is(.header-column, .header-right > .tempo) > *, .header-column > * > .tip-anchor { display: flex; flex: 1 1 auto; }
+  .header-right :where(.demo-button, .hold-button, .midi-status, .display-menu > .tip-anchor > .tool, .about-menu .tool, .tempo-bpm, .tempo-tap, .tempo-typing) {
+    flex: 1 1 auto; height: var(--row-h); min-height: 0; padding: 0 6px; justify-content: flex-start;
+  }
+  .header-right .hold-button { height: calc(2 * var(--row-h) + var(--row-gap)); flex-direction: column; justify-content: center; gap: 3px; }
+  .header-right :is(.tempo-bpm, .tempo-tap) { justify-content: center; }
 }
-/* From 1280 px, where the Patch picker widens to show every name, the header's buttons pad 6 px and sit 6 px apart,
-   its zones 8 px: Linux's wider fonts left the piano 2 px short of its 44 px keys at 1440 (the 1.12.2 deploy), and the
-   logo and picker 13 px past their side at 1280 (the 1.16.0 deploy). Measured with Verdana, wider still. */
-@media (min-width: 1280px) {
-  header, .header-left, .header-identity { column-gap: 8px; }
-  .header-play, .header-set, .header-right { gap: 6px; }
-  header :is(.demo-button, .hold-button, .midi-status, .display-menu > .tip-anchor > .tool, .about-menu .tool) { padding: 0 6px; }
+@media (min-width: 1100px) {
+  .header-right { --row-h: 28px; --row-gap: 4px; }
 }
-/* From 1100 px the buttons right of the keyboard, two rows high, keep their words (the set-up row's from 1366 px, issue
-   112): about as wide as the logo and the Patch on the left, so the piano stays at the centre (the owner, 2026-10-29). */
+/* Words while there is room (issue 154): from 861 to 1099 px icons alone (the tooltips name them) and the BPM its
+   number alone; from 1100 px the newcomer's four, Demo, Song, Tutorial and About, keep their words; from 1280 px every
+   button keeps its word, the BPM its unit. Each step leaves the piano its 10 white keys at about 42 px or more (a
+   little under at 1100 px in Linux's wider fonts). */
 @media (min-width: 861px) and (max-width: 1099px) {
-  header :is(.demo-word, .tool-word) { display: none; }
-  /* The BPM its number alone, as the buttons beside it their icons (issue 112); its tooltip and name say BPM. */
-  .tempo-unit { display: none; }
-  header :is(.demo-button, .hold-button, .midi-status, .display-menu > .tip-anchor > .tool, .about-menu .tool) { padding: 0 6px; }
+  header :is(.demo-word, .tool-word, .tempo-unit) { display: none; }
+  .header-right :where(.demo-button, .midi-status, .display-menu > .tip-anchor > .tool, .about-menu .tool) { justify-content: center; }
 }
+@media (min-width: 1100px) and (max-width: 1279px) {
+  header :is(.hold-button, .midi-status, .display-menu > .tip-anchor > .tool) .tool-word, header .tempo-unit { display: none; }
+  .header-right :where(.midi-status, .display-menu > .tip-anchor > .tool) { justify-content: center; }
+}
+/* Below 920 px the header's zones sit closer together; from 1280 px too, where the Patch picker widens to show every
+   name. */
 @media (min-width: 861px) and (max-width: 919px) {
   header, .header-left, .header-identity { column-gap: var(--space-2); }
 }
-/* The tempo beside Hold (issue 112) leaves the set-up row no room for its buttons' words up to 1365 px: there Hold,
-   MIDI, Display and About show their icons alone (their tooltips name them), so the piano stays at the centre with its
-   keys; Demo, Tutorial and Song keep theirs from 1100 px. Claude's call, open to the owner. */
-@media (min-width: 1100px) and (max-width: 1365px) {
-  .header-set .tool-word { display: none; }
-  .header-set :is(.hold-button, .midi-status, .display-menu > .tip-anchor > .tool, .about-menu .tool) { padding: 0 6px; }
-}
-/* Three across (issue 82, the owner: "stack buttons in the top row… we could recenter the keyboard"): the buttons right
-   of the keyboard in two rows, two high as the octave buttons are, set-up over Demo, Tutorial and Song, so the Patch
-   picker can sit beside the logo (the owner, 2026-10-29). */
-@media (min-width: 861px) and (max-width: 1919px) {
-  /* Two rows of 25 px and their 2 px gap: 52 px, the piano's least height, so the header is never taller than it. */
-  .header-right { flex-direction: column; align-items: flex-end; row-gap: 2px; }
-  .header-right .tool { height: 25px; min-height: 0; }
-}
-/* From 1200 px, where the sides leave the piano its full size, the keyboard balances its octave buttons with an empty
-   column as wide on the other side, so the piano itself, not the keyboard, is at the centre (issue 82). Below, that
-   column would take width from the piano's keys. */
-/* From 1200 to 1365 px the piano's keys are 42 px, so the logo and the Patch picker beside it keep room for Linux's
-   wider fonts and the piano stays at the centre (the 1.16.0 deploy): the set-up row, its buttons' words hidden beside
-   the tempo (issue 112), leaves the right side narrower than the left, so the left alone sets where the piano sits. */
-@media (min-width: 1200px) and (max-width: 1365px) {
-  :root { --white-key-max: 42px; }
-}
-@media (min-width: 1200px) and (max-width: 1919px) {
-  :root { --keyboard-w: calc(2 * (var(--control-h) + 4px) + 10 * var(--white-key-max)); }
-  .keyboard { grid-template-columns: var(--control-h) minmax(0, calc(10 * var(--white-key-max))) var(--control-h); grid-template-areas: 'up piano .' 'down piano .'; }
+@media (min-width: 1280px) {
+  header, .header-left, .header-identity { column-gap: 8px; }
 }
 .about-menu { display: flex; }
 .patch-save { display: flex; gap: 6px; margin-top: 8px; max-width: 440px; }
@@ -1220,13 +1250,18 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .patch-actions label { cursor: pointer; }
 .patch-status { margin: 0; min-height: 16px; font-size: var(--text-md); color: var(--muted); }
 
-/* The Tutorial button and its list (issue 59): under the button, one Tutorial a row. */
+/* The Tutorial button and its list (issue 59): under the button, one Tutorial a row, its name over a short line of
+   what it teaches (issue 129), the list along the button's left or right edge, whichever keeps it on the page. */
 .tutorial-menu { position: relative; display: flex; }
 .tutorial-menu-panel {
   position: absolute; z-index: 60; top: calc(100% + 6px); left: 0; display: flex; flex-direction: column; gap: 4px; padding: var(--space-2);
   background: var(--panel); border: 1px solid var(--muted); border-radius: var(--radius-panel); box-shadow: var(--shadow-panel);
 }
-.tutorial-menu-panel .tool { justify-content: flex-start; gap: 8px; white-space: nowrap; }
+.tutorial-menu-panel[data-side='right'] { left: auto; right: 0; }
+.tutorial-menu-panel .tool { justify-content: flex-start; gap: 8px; width: 15rem; height: auto; padding-block: 5px; text-align: left; }
+.tutorial-menu-words { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.tutorial-menu-name { white-space: nowrap; }
+.tutorial-menu-teaches { color: var(--muted); font-size: var(--text-xs); line-height: 1.3; white-space: normal; }
 .tutorial-menu-done { margin-left: auto; padding-left: 12px; color: var(--accent); }
 /* The tempo (issue 112): the BPM in a box as wide as its widest, so nothing beside it moves as it changes, dragged up
    and down (a finger's drag is its own, not the page's scroll); Tap beside it. Below 861 px the BPM alone, opening a
@@ -1237,6 +1272,11 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .tempo-bpm[aria-disabled='true'], .tempo-tap[aria-disabled='true'] { cursor: default; }
 .tempo-value { min-width: 3ch; text-align: right; color: var(--text); font-variant-numeric: tabular-nums; }
 .tempo-unit { font-size: var(--text-xs); }
+/* While a MIDI clock sets the tempo (issue 136), "MIDI" in the unit's place, in the text's colour: about as wide as
+   "BPM", so nothing beside it moves. The box's edge takes the MIDI button's connected green, so the mark shows from 861
+   to 1099 px too, where the BPM shows its number alone (the word there took 3 px from each of the piano's keys). */
+.tempo-unit[data-clock], .tempo-open .tool-word[data-clock] { color: var(--text); }
+.tool[data-clock]:is(.tempo-bpm, .tempo-open) { border-color: var(--stage-osc); }
 .tempo-typing { width: calc(3ch + 52px); text-align: center; color: var(--text); background: var(--bg); cursor: text; }
 .tempo-menu { position: relative; display: flex; }
 .tempo-panel {
@@ -1275,6 +1315,8 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .midi-heading { font-size: var(--text-sm); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 .midi-activity { display: flex; flex-direction: column; gap: 3px; }
 .midi-activity [role='status'] { font-variant-numeric: tabular-nums; font-family: ui-monospace, monospace; }
+/* Aftertouch's Destination (issue 132): the browser's own list, shaped as a tool button, its word in the text colour. */
+.midi-aftertouch select { color: var(--text); padding: 0 6px; }
 /* A whole layout (the C16's is 58 Mappings) scrolls inside the panel rather than running down the page. */
 .midi-mappings {
   list-style: none; margin: 0; padding: 0; width: 100%; display: flex; flex-direction: column; gap: 4px;
@@ -1348,6 +1390,8 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   .knob-value { position: absolute; left: 0; right: 0; bottom: 0; height: var(--knob-label-h); line-height: var(--knob-label-h); font-size: var(--text-sm); color: var(--text); }
   .knob:not([data-changing]) .knob-value > :first-child { visibility: hidden; }
   .knob[data-changing] .knob-label { visibility: hidden; }
+  /* A Synth Geek Layer readout keeps its figure alone there, its words too wide for the name's place (issue 167). */
+  .knob-value .geek-words { display: none; }
   /* Hovered, a knob or fader shows its value in its name's place too, as turning it does (the owner, 2026-10-28). Only
      where a pointer hovers: a tap would otherwise leave the value up. */
   @media (hover: hover) {
@@ -1385,14 +1429,11 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   /* Viewers: wider than tall, a little lower than elsewhere. */
   .tap canvas { aspect-ratio: 3 / 1; min-height: 96px; }
 
-  /* The header in three rows: logo and Patch; then the playing buttons (Demo, Tutorial, Song) on the left and set-up
-     (Hold, the tempo, MIDI, Display, About) on the right; then the keyboard, its eight white keys as wide as the rest
-     of the screen allows. It edges the page's padding (see the header up to 860 px, below). */
+  /* The header in three rows (see the header up to 860 px, below), the keyboard's eight white keys as wide as the rest
+     of the screen allows. It edges the page's padding. */
   header {
     margin: calc(-1 * var(--space-3)) calc(-1 * var(--space-2)) 0;
     padding: var(--space-3) var(--space-2) var(--space-2);
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas: 'identity identity' 'play set' 'keys keys';
   }
   /* One octave, C to C; the octave buttons reach the rest. The keys share what the octave buttons leave of the row. */
   .keyboard { grid-template-columns: 36px minmax(0, 1fr); }
@@ -1407,11 +1448,15 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
    under whichever section is in view (issues 29 and 44). It runs edge to edge over the page's padding, on the page's
    background, so nothing shows through it. Scrolling down slides it up under the screen's top edge until only the
    keyboard shows (--header-hide, measured), and any scroll up slides it back: nothing below moves, as its height never
-   changes. Each layout places the header's groups in rows of its own. */
+   changes. Its groups in three rows, on a phone and in the sections 2 × 2 alike (issue 152): the logo and the Patch;
+   then the playing buttons (Demo, Tutorial, Song) on the left and set-up (Hold, the tempo, MIDI, Display, About) on
+   the right; then the keyboard. */
 @media (max-width: 860px) {
   header {
-    position: sticky; top: calc(-1 * var(--header-hidden, 0px)); z-index: 10; transition: top 0.2s ease;
+    display: grid; position: sticky; top: calc(-1 * var(--header-hidden, 0px)); z-index: 10; transition: top 0.2s ease;
     background: var(--bg); border-bottom: 1px solid var(--border); gap: var(--space-2) var(--space-1);
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: 'identity identity' 'play set' 'keys keys';
   }
   :root[data-header-collapsed] { --header-hidden: var(--header-hide, 0px); }
   .header-left { display: contents; }
@@ -1438,33 +1483,27 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   }
 }
 @media (max-width: 860px) and (prefers-reduced-motion: reduce) { header { transition: none; } }
-/* The sections 2 × 2: two rows, the Patch and the buttons beside each other (there is room), then the keyboard,
-   its 17 keys at a finger's width. The header edges the page's padding. A section the Demo brings into view lands
-   below the header. Its groups and the logo sit 8 px apart and the buttons pad 4 px, so beside the buttons' words a
-   short Preset name (Init, Kick) shows whole at 601 px, in Linux's wider fonts too (issue 105: every name read "I…"). */
+/* The sections 2 × 2: the phone's three rows (issue 152), the keyboard's 17 keys at a finger's width. The header edges
+   the page's padding. The Patch name takes the whole row beside the logo, and the buttons, with a row of their own,
+   keep the phone's padding. A section the Demo brings into view lands below the header. */
 @media (min-width: 601px) and (max-width: 860px) {
   header {
     margin: calc(-1 * var(--space-4)) calc(-1 * var(--space-4)) 0;
     padding: var(--space-3) var(--space-4) var(--space-2);
-    grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: 'identity play set' 'keys keys keys';
-    column-gap: var(--space-2);
   }
-  .header-identity { column-gap: var(--space-2); }
-  header :is(.demo-button, .hold-button, .midi-status, .display-menu .tool, .about-menu .tool, .tempo-open) { padding-inline: 4px; }
+  .patch-bar > .tip-anchor { flex: 1 1 auto; }
   .chain > * { scroll-margin-top: calc(var(--header-h, 0px) + var(--space-2)); }
 }
-/* With the tempo in set-up (issue 112), the narrowest 2 × 2 windows pad the buttons 2 px and set them 2 px apart, so
-   the row fits and a short Preset name still shows whole at 601 px. So do windows narrower than most phones (375 px),
-   down to the narrowest (320 px, issue 157), so the playing and set-up row fits without one button over another, in
-   Linux's wider fonts too; the two groups stay 4 px apart. Display's button is named as the phone's own padding rule
-   names it, which raises the whole list to that rule's weight, so this one wins over it. */
-@media (min-width: 601px) and (max-width: 680px), (max-width: 374px) {
-  .header-play, .header-set { gap: 2px; }
-  header :is(.demo-button, .hold-button, .midi-status, .display-menu > .tip-anchor > .tool, .about-menu .tool, .tempo-open) { padding-inline: 2px; }
-}
-/* There, each at least 32 px wide, and never narrower than its word. */
+/* Windows narrower than most phones (375 px), down to the narrowest (320 px, issue 157), pad the buttons 2 px and set
+   them 2 px apart, so the playing and set-up row fits without one button over another, in Linux's wider fonts too; the
+   two groups stay 4 px apart. Display's button is named as the phone's own padding rule names it, which raises the
+   whole list to that rule's weight, so this one wins over it. */
 @media (max-width: 374px) {
-  header :is(.demo-button, .hold-button, .midi-status, .display-menu > .tip-anchor > .tool, .about-menu .tool, .tempo-open) { min-width: 32px; flex-shrink: 0; }
+  .header-play, .header-set { gap: 2px; }
+  /* Each at least 32 px wide, and never narrower than its word. */
+  header :is(.demo-button, .hold-button, .midi-status, .display-menu > .tip-anchor > .tool, .about-menu .tool, .tempo-open) {
+    padding-inline: 2px; min-width: 32px; flex-shrink: 0;
+  }
 }
 
 /* The sections strip (phones): equal tabs under the header, each underlined in its section's colour when it is the
@@ -1530,19 +1569,19 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   [data-card-handle]:active { cursor: grabbing; }
   [data-card-handle] button { cursor: pointer; }
 }
-.tutorial-top { display: flex; align-items: center; gap: var(--space-2); }
-.tutorial-name { font-weight: 600; font-size: var(--card-text); }
-.tutorial-progress { flex: 1 1 auto; color: var(--muted); font-size: var(--card-small); }
-.tutorial-top .tool-icon { flex: none; }
-.tutorial-more { display: none; }
-.tutorial-words { display: flex; flex-direction: column; gap: 4px; font-size: var(--card-text); line-height: 1.45; }
-.tutorial-words p { margin: 0; }
+.card-top { display: flex; align-items: center; gap: var(--space-2); }
+.card-name { font-weight: 600; font-size: var(--card-text); }
+.card-progress { flex: 1 1 auto; color: var(--muted); font-size: var(--card-small); }
+.card-top .tool-icon { flex: none; }
+.card-more { display: none; }
+.card-words { display: flex; flex-direction: column; gap: 4px; font-size: var(--card-text); line-height: 1.45; }
+.card-words p { margin: 0; }
 /* Once made, the instruction steps back and the note on what to hear and see leads. */
 .tutorial-say[data-done] { color: var(--muted); font-size: var(--card-small); }
 /* Its tick a filled badge, plain to see (the owner, 2026-10-27); near-black on the accent, in either theme. Folded, the
    top row carries one too. Each sits in a flex row, so its line keeps its height and its words stay where they were. */
-.tutorial-say[data-done], .tutorial-progress { display: flex; align-items: center; gap: 8px; }
-.tutorial-say[data-done]::before, .tutorial-progress[data-done]::after {
+.tutorial-say[data-done], .card-progress { display: flex; align-items: center; gap: 8px; }
+.tutorial-say[data-done]::before, .card-progress[data-done]::after {
   content: '✓'; flex: none; display: grid; place-items: center; width: 1.4em; height: 1.4em; border-radius: 50%;
   background: var(--accent); color: #08090c; font-weight: 700; line-height: 1;
 }
@@ -1558,10 +1597,10 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   display: inline-block; margin-right: 4px; padding: 0 8px; font-size: var(--text-sm); font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--bg); background: var(--text); border-radius: 999px;
 }
-.tutorial-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
-.tutorial-actions .tool { min-height: 36px; padding: 0 var(--space-3); gap: 6px; }
-.tutorial-actions .tool[aria-disabled='true'] { opacity: 0.45; cursor: default; }
-.tutorial-spacer { flex: 1 1 auto; }
+.card-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.card-actions .tool { min-height: 36px; padding: 0 var(--space-3); gap: 6px; }
+.card-actions .tool[aria-disabled='true'] { opacity: 0.45; cursor: default; }
+.card-spacer { flex: 1 1 auto; }
 /* The Step's control: a steady ring in the accent colour, and its target beside it. Its scroll margins are the room
    they take round it, kept in view with it (docked.ts brings it clear of the header and the card). */
 [data-tutorial] { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: var(--radius-control); scroll-margin: 28px 0 6px; }
@@ -1588,11 +1627,11 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 @media (max-width: 600px) {
   /* Pinned to the bottom edge: cardPlacement.tsx reads --card-pinned, so it only folds. */
   .docked { --card-pinned: 1; bottom: 0; width: 100vw; border-radius: var(--radius-panel) var(--radius-panel) 0 0; border-width: 1px 0 0; padding: var(--space-2) var(--space-3) calc(var(--space-2) + env(safe-area-inset-bottom)); gap: 6px; }
-  .tutorial-more { display: inline-flex; }
-  .tutorial-words { font-size: var(--text-md); cursor: pointer; }
-  .tutorial:not([data-expanded], [data-made]) .tutorial-words { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
-  .tutorial:not([data-expanded]) .tutorial-say[data-done], .tutorial:not([data-expanded]) .tutorial-words p + p:not(.tutorial-then) { display: none; }
-  .tutorial-actions .tool { min-height: 32px; padding: 0 var(--space-2); }
+  .card-more { display: inline-flex; }
+  .card-words { font-size: var(--text-md); cursor: pointer; }
+  .card-shell:not([data-expanded], [data-made]) .card-words { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+  .card-shell:not([data-expanded]) .tutorial-say[data-done], .card-shell:not([data-expanded]) .card-words p + p:not(.card-then) { display: none; }
+  .card-actions .tool { min-height: 32px; padding: 0 var(--space-2); }
 }
 /* The Demo's card (issue 50): the sound's name and its buttons; under them what to hear and see; then a segment per
    part along the bottom (issue 171, decided by the owner). The segments have a row of their own at every width (issue

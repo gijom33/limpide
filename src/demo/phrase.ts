@@ -18,6 +18,12 @@ export interface PhraseEvent {
   velocity: number;
 }
 
+/** A phrase and the tempo it is played at: what Listen loops (a Tutorial's, a Tour card's) and the Song. */
+export interface PhraseAtTempo {
+  phrase: string;
+  bpm: number;
+}
+
 const SEMITONES: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
 
 /** "C4" → 60, "F#2" → 42, "Bb3" → 58. */

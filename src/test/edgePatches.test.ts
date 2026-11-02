@@ -53,8 +53,8 @@ describe('the Patches at the edges (issue 116)', () => {
     const cases = edgeCases(116);
     expect(cases.length).toBeGreaterThanOrEqual(1000);
     for (const { patch } of cases) expect(patchFromShare(patchToShare(patch))).toEqual(patch);
-    // A thousand round trips take about 2 s alone, and ran past the default 5 s on a loaded machine.
-  }, 20_000);
+    // A thousand round trips: 0.2 s alone, 27 s in a loaded night's suite, within the unit tests' limit (vite.config.ts).
+  });
 });
 
 const valueIn = (c: ReturnType<typeof edgeCases>[number], key: string) => (key === 'bpm' ? c.bpm : (c.patch as Record<string, unknown>)[key]);

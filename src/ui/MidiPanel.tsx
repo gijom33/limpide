@@ -1,7 +1,10 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
+import { BEND_RANGES, type BendRange } from '../app/rememberedSettings';
 import { answeredBy, knownAmong } from '../midi/controller';
 import { describeControl, describeMode, describeTarget } from '../midi/describe';
 import { type Control, type ControllerId, controlKey, type Mapping } from '../midi/mappings';
+import { DESTINATIONS_BY_STAGE } from '../modulation/destinations';
+import type { LfoDestination } from '../patch/patch';
 import { CloseIcon, MidiIcon } from './icons';
 import { Segmented } from './Segmented';
 import { Tooltip } from './Tooltip';
@@ -9,9 +12,6 @@ import { TIPS } from './tips';
 
 export type MidiState =
   { kind: 'unsupported'; ios: boolean } | { kind: 'denied' } | { kind: 'pending' } | { kind: 'ready'; devices: string[] };
-
-/** The bend wheel's ranges offered, in semitones: a whole tone (the usual), a fifth, an octave. */
-const BEND_RANGES = [2, 7, 12];
 
 interface Props {
   state: MidiState;
@@ -30,8 +30,11 @@ interface Props {
   onRemove(control: Control): void;
   onClear(): void;
   /** How far a keyboard's bend wheel takes the pitch, in semitones each way (issue 52). */
-  bendRange: number;
-  onBendRange(semitones: number): void;
+  bendRange: BendRange;
+  onBendRange(semitones: BendRange): void;
+  /** The Destination a keyboard's aftertouch moves, one of the LFOs' (issue 132). */
+  aftertouch: LfoDestination;
+  onAftertouch(destination: LfoDestination): void;
 }
 
 /** " · C16 only" for a Mapping of a known Controller's layout, which answers it alone; nothing for any other. */
@@ -50,7 +53,8 @@ const statusText = (state: MidiState) => {
         ? 'MIDI access was not allowed, so Controllers cannot be heard. Allow MIDI in the browser’s site settings, or open Limpide in Chrome or Edge (some built-in browsers never allow it).'
         : devices.length
           ? `Connected: ${devices.join(', ')}. Its keys and pads play the synth, with Velocity.`
-          : 'No MIDI Controller connected. Plug one in (USB, or pair it over Bluetooth MIDI) and it is picked up straight away.';
+          : // A Bluetooth Controller is a port like any other once the system has paired it, as the owner's C16 is (issue 143).
+            'No MIDI Controller connected. Plug one in by USB and it is picked up straight away. A Bluetooth one plays once paired in the system’s MIDI settings (Audio MIDI Setup on a Mac), as a TempoPAD C16 does.';
 };
 
 /**
@@ -59,6 +63,7 @@ const statusText = (state: MidiState) => {
  */
 export function MidiPanel({
   state, onOpen, activity, mappings, learning, onLearn, onDone, onQuickSetup, onLayout, onRemove, onClear, bendRange, onBendRange,
+  aftertouch, onAftertouch,
 }: Props) {
   const [open, setOpen] = useState(false);
   const wrapper = useRef<HTMLDivElement>(null);
@@ -185,6 +190,25 @@ export function MidiPanel({
                 options={BEND_RANGES.map((n) => ({ value: n, label: `${n}`, name: `${n} semitones` }))}
                 onChange={onBendRange}
               />
+            </Tooltip>
+          )}
+          {available && (
+            <Tooltip content={TIPS.aftertouch}>
+              {/* Grouped by stage, as the LFOs' Destination menu is. */}
+              <label className="segmented-field midi-aftertouch">
+                <span className="field-caption">Aftertouch</span>
+                <select className="tool" value={aftertouch} onChange={(e) => onAftertouch(e.target.value as LfoDestination)}>
+                  {DESTINATIONS_BY_STAGE.map(({ stage, destinations }) => (
+                    <optgroup key={stage.id} label={stage.name}>
+                      {destinations.map((d) => (
+                        <option key={d.id} value={d.id}>
+                          {d.label}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+              </label>
             </Tooltip>
           )}
           {mappings.length > 0 && (

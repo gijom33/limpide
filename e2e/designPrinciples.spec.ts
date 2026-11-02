@@ -1,5 +1,5 @@
 import { appendFileSync } from 'node:fs';
-import { expect, type Page, test } from '@playwright/test';
+import { expect, type Locator, type Page, test } from '@playwright/test';
 import { type AuditOptions, auditPage, type Rule } from './audit';
 import { sliderName } from './helpers';
 
@@ -78,16 +78,34 @@ const SIZES = {
 
 const SIZE_NAMES = Object.keys(SIZES) as Size[];
 
-/** Turns Bead's switch in Display on or off, and closes Display. */
+/** Presses a button by the keyboard: focused, then Enter. */
+async function pressByKeyboard(page: Page, button: Locator) {
+  await button.focus();
+  await page.keyboard.press('Enter');
+}
+
+/** Turns Bead's switch in Display on or off, and closes Display, all by the keyboard. */
 async function setBead(page: Page, to: 'on' | 'off') {
-  await page.getByRole('button', { name: 'Display', exact: true }).click();
-  // By the keyboard, the arrows moving the switch's choice: narrower than a phone the switch is at the panel's foot,
-  // below the window, where WebKit lost a click on it now and then.
+  // Display too: in WebKit at load 30, a click on it just after About closed opened nothing (issue 177).
+  await pressByKeyboard(page, page.getByRole('button', { name: 'Display', exact: true }));
+  await expect(page.getByRole('region', { name: 'Viewer controls' })).toBeVisible();
+  // The arrows moving the switch's choice: narrower than a phone the switch is at the panel's foot, below the window,
+  // where WebKit lost a click on it now and then.
   await page.getByRole('radio', { name: `Bead ${to === 'on' ? 'off' : 'on'}` }).focus();
   await page.keyboard.press(to === 'on' ? 'ArrowLeft' : 'ArrowRight');
   await expect(page.getByRole('radio', { name: `Bead ${to}` })).toHaveAttribute('aria-checked', 'true');
   await page.keyboard.press('Escape');
   await expect(page.getByRole('region', { name: 'Viewer controls' })).toBeHidden();
+}
+
+/**
+ * Opens About by the keyboard. Narrower than a phone About's button stands past the window's right edge (280 to 312
+ * px in a 280 px window), and in WebKit a click on it now and then opened nothing (issue 177); focus and Enter open
+ * it every time, as the arrows move Bead's switch above.
+ */
+async function openAbout(page: Page) {
+  await pressByKeyboard(page, page.getByRole('button', { name: 'About', exact: true }));
+  await expect(page.getByRole('dialog', { name: 'Limpide' })).toBeVisible();
 }
 
 /** The states to audit, each opened from the page as loaded and closed again. */
@@ -109,22 +127,39 @@ const STATES: { name: string; open?(page: Page): Promise<void>; close?(page: Pag
     },
     close: (page) => page.getByRole('button', { name: 'Close the Preset’s description' }).click(),
   },
+  // A knob turned: the Patch in plain words, under the header or in the Patch name (issue 123). Init picked again, by
+  // the keyboard as above, and its description closed, to leave the page as it was.
+  {
+    name: 'Patch’s plain words',
+    open: async (page) => {
+      await page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name: 'Cutoff' }).press('ArrowDown');
+      await expect(page.locator('.patch-words, .patch-name-words').locator('visible=true')).toBeVisible();
+    },
+    close: async (page) => {
+      await page.getByRole('button', { name: /^Patch:/ }).click();
+      await page.getByRole('dialog', { name: 'Patches' }).getByRole('button', { name: 'Init', exact: true }).press('Enter');
+      await page.getByRole('button', { name: 'Close the Preset’s description' }).click();
+      await expect(page.locator('.patch-words, .patch-name-words')).toHaveCount(0);
+    },
+  },
   { name: 'Display panel', open: (page) => page.getByRole('button', { name: 'Display', exact: true }).click(), close: (page) => page.getByRole('button', { name: 'Display', exact: true }).click() },
   { name: 'MIDI panel', open: (page) => page.getByRole('button', { name: 'MIDI', exact: true }).click(), close: (page) => page.getByRole('button', { name: 'MIDI', exact: true }).click() },
-  { name: 'About', open: (page) => page.getByRole('button', { name: 'About', exact: true }).click(), close: (page) => page.keyboard.press('Escape') },
+  { name: 'About', open: openAbout, close: (page) => page.keyboard.press('Escape') },
   // Bead beside About's logo, its card in place of the credits (issue 163): with its switch on, then off again.
   {
     name: 'Bead’s card in About',
     open: async (page) => {
       await setBead(page, 'on');
-      await page.getByRole('button', { name: 'About', exact: true }).click();
-      await expect(page.getByRole('dialog', { name: 'Limpide' })).toBeVisible();
+      await openAbout(page);
       await page.getByRole('button', { name: 'Bead, Limpide’s water drop: its tricks' }).click();
       await expect(page.getByRole('region', { name: 'Bead' })).toBeVisible();
     },
     close: async (page) => {
+      // Each Escape once the last one's work shows, so the second finds no card left to put away and closes About.
       await page.keyboard.press('Escape');
+      await expect(page.getByRole('region', { name: 'Bead' })).toBeHidden();
       await page.keyboard.press('Escape');
+      await expect(page.getByRole('dialog', { name: 'Limpide' })).toBeHidden();
       await setBead(page, 'off');
     },
   },
@@ -175,8 +210,8 @@ for (const theme of ['dark', 'light'] as const) {
 }
 
 for (const size of SIZE_NAMES) {
-  test(`targets, ${size}: at least ${SIZES[size].minTarget} × ${SIZES[size].minTarget} px, no two controls over each other`, async ({ page }) => {
-    const { unexpected, unused } = await audit(page, size, 'dark', ['target', 'overlap']);
+  test(`targets, ${size}: at least ${SIZES[size].minTarget} × ${SIZES[size].minTarget} px, no two controls over each other, no label on two lines`, async ({ page }) => {
+    const { unexpected, unused } = await audit(page, size, 'dark', ['target', 'overlap', 'wrap']);
     expect(unexpected, 'failures no waiver covers (or below its floor)').toEqual([]);
     expect(unused, 'waivers nothing needs any more: take them off the list').toEqual([]);
   });
@@ -191,6 +226,22 @@ test('the overlap check fails on two controls over each other on the same layer,
   const options: AuditOptions = { rules: ['overlap'], minTarget: 0, waivers: [] };
   const { unexpected } = await page.evaluate(auditPage, options);
   expect(unexpected.map((f) => f.what)).toEqual(['div.row > button.one "One"']);
+});
+
+test('the one-line check fails on a label or a key that runs to a second line, not on a sentence (issue 156)', async ({ page }) => {
+  await page.setContent(`
+    <main style="font: 14px sans-serif">
+      <button class="fits">Cutoff</button>
+      <button class="wraps" style="width: 40px">Filter Envelope</button>
+      <span class="label" style="display: inline-block; width: 40px">Pulse Width</span>
+      <span class="key" data-one-line style="display: flex; flex-wrap: wrap; width: 120px"><span>Pulse Width</span><span>Osc 2 Pitch</span></span>
+      <span class="short-key" data-one-line style="display: flex; width: 300px"><span>PW</span><span>O2P</span></span>
+      <p style="width: 60px">A sentence wraps as text does.</p>
+      <div role="tooltip" style="width: 60px">A tip wraps too.</div>
+    </main>`);
+  const options: AuditOptions = { rules: ['wrap'], minTarget: 0, waivers: [] };
+  const { unexpected } = await page.evaluate(auditPage, options);
+  expect(unexpected.map((f) => f.what)).toEqual(['button.wraps "Filter Envelope"', 'span.label "Pulse Width"', 'span.key "Pulse WidthOsc 2 Pitch"']);
 });
 
 test('every knob and fader works from the keyboard, with a focus ring for the keyboard only', async ({ page }) => {

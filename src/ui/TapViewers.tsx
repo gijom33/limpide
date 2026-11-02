@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useRef } from 'react';
-import type { Formula } from '../music/maths';
+import type { Formula, GeekNote } from '../music/geek';
 import { createLevelMeter } from '../viewers/level';
 import { addToRenderLoop } from '../viewers/renderLoop';
 import { createScope } from '../viewers/scope';
@@ -22,21 +22,30 @@ interface Props {
   response?(frequencies: Float32Array<ArrayBuffer>): Float32Array;
   /** Whether the safety limiter is bending the sound: given for the Amp Tap, shown as LIMITING. */
   limiting?(): boolean;
-  /** The Maths Layer's formulas for this Tap's Spectrum, when the layer is on: each with what its letters mean. */
+  /** The Synth Geek Layer's formulas for this Tap's Spectrum, when the layer is on: each with what its letters mean. */
   formulas?: Formula[];
+  /** The newest Note played (null before any): the Scope's period says A4 until one is (issue 170). */
+  newestNote?(): GeekNote;
+  /** The Noise's slope while it is up, for the Oscillator Spectrum's corner with the Synth Geek Layer on (issue 170). */
+  noiseSlope?: string;
 }
 
 /**
  * Scope + Spectrum for one Tap, with no caption: the stage's panel says which it is. Canvases are mounted once and
  * drawn by the render loop. The level is measured but not shown; the Scope carries it as `data-db` (for tests).
  */
-export function TapViewers({ name, analyser, sampleRate, fundamental, view, showIdeal, gateOn, response, limiting, formulas }: Props) {
+export function TapViewers({ name, analyser, sampleRate, fundamental, view, showIdeal, gateOn, response, limiting, formulas, newestNote, noiseSlope }: Props) {
   const scopeRef = useRef<HTMLCanvasElement>(null);
   const spectrumRef = useRef<HTMLCanvasElement>(null);
   const hoverRef = useRef<{ x: number; y: number } | null>(null);
+  // Read by the render loop each frame, so a Patch change needs no new Viewers.
+  const noiseSlopeRef = useRef(noiseSlope);
+  useEffect(() => {
+    noiseSlopeRef.current = noiseSlope;
+  }, [noiseSlope]);
 
   useEffect(() => {
-    const drawScope = createScope(scopeRef.current!, analyser, fundamental, view, { limiting });
+    const drawScope = createScope(scopeRef.current!, analyser, fundamental, view, { limiting, newestNote });
     const drawSpectrum = createSpectrum(spectrumRef.current!, analyser, sampleRate, {
       fundamental,
       view,
@@ -44,6 +53,7 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, view, show
       gateOn,
       response,
       hover: () => hoverRef.current,
+      noiseSlope: () => noiseSlopeRef.current,
     });
     const level = createLevelMeter(analyser, () => view().viewer.frozen);
     return addToRenderLoop(() => {
@@ -51,7 +61,7 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, view, show
       drawSpectrum();
       scopeRef.current!.dataset.db = String(level());
     });
-  }, [analyser, sampleRate, fundamental, view, showIdeal, gateOn, response, limiting]);
+  }, [analyser, sampleRate, fundamental, view, showIdeal, gateOn, response, limiting, newestNote]);
 
   return (
     <figure className="tap" data-tap={name} aria-label={`${name} Tap`}>
@@ -73,11 +83,11 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, view, show
         />
         </Tooltip>
         {formulas && (
-          <p className="maths-formula" role="note" aria-label={`${name} formula`}>
+          <p className="geek-formula" role="note" aria-label={`${name} formula`}>
             {formulas.map((f) => (
               <Fragment key={f.formula}>
                 <span>{f.formula}</span>
-                <span className="maths-where">{f.where}</span>
+                <span className="geek-where">{f.where}</span>
               </Fragment>
             ))}
           </p>

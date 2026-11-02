@@ -3,7 +3,7 @@ import type { ParamId } from '../patch/patch';
 import { useInactive } from './inactive';
 import { pressed, useParamControl, usePress, useWheel } from './paramControl';
 import { Tooltip } from './Tooltip';
-import { PARAM_TIPS } from './tips';
+import { paramTipAt } from './tips';
 
 /** How far a pointer may wander before a press on the track counts as a drag (a scroll, on touch screens). */
 const TAP_SLOP = 4;
@@ -36,7 +36,7 @@ export function Fader({ id, value, onChange, inactive }: Props) {
   };
 
   return (
-    <Tooltip content={PARAM_TIPS[id]}>
+    <Tooltip content={paramTipAt(id, value)}>
       <div className="knob" data-kind="fader" {...dimmed.props} {...c.attributes}>
         <div
           ref={wheel}

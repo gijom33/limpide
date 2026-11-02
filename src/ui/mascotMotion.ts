@@ -1,5 +1,6 @@
 import type { Word } from '../input/callingPhrase';
 import type { Waveform } from '../music/harmonics';
+import { TURNED_PAST, WIDTH } from './mascotCling';
 import type { Gesture } from './mascotGestures';
 import type { Fling } from './mascotSpray';
 import { JOKES, PICKED_TRICKS, TRICK_MOVES, type Trick } from './mascotTricks';
@@ -150,11 +151,24 @@ const FORGIVE = 0.25;
 /** Having run off, it will not be tickled for this long. */
 const AWAY_SECONDS = 4;
 
+/**
+ * Scooting, it leans into it this much, in degrees; less with its tail trailing (issue 179), whose tip, 35 px behind where
+ * it leans about, would rise sin(lean) × 35: 3° keeps it within the 2 px its line leaves under what is over it.
+ */
+const SCOOT_LEAN = 8;
+const SCOOT_LEAN_TRAILING = 3;
 /** Frightened at an end of its room, it scoots back this far. */
 const BACK_OFF_PX = 26;
 const lasting = (trick: Trick) => TRICK_MOVES[trick].seconds;
 /** How it strolls: a walk, a hop along, or a scoot; and their speeds, in pixels a second. */
 type Gait = 'walk' | 'hop' | 'scoot' | 'dance' | 'trick';
+/**
+ * Going its way (issue 179), it faces it, its tail trailing: setting off to the right it turns round, its width going
+ * through zero in this long, and back as it stops. Not for a step shorter than its own width, a dance step to a Note or
+ * a funny turn's own travel.
+ */
+const TURN_SECONDS = 0.15;
+const FACING_GAITS: ReadonlySet<Gait | 'slide'> = new Set(['walk', 'hop', 'scoot', 'slide']);
 
 /** A Waveform changed, its tail takes that wave this long (issue 127). */
 export const WAVE_SECONDS = 3;
@@ -241,6 +255,21 @@ export function createMascotMotion(random: () => number = Math.random) {
   let hat: Hat = 'none';
   let act: Act | null = null;
   let pointer: number | null = null;
+  // Facing its way (issue 179): 1 as drawn, its tail on its right; −1 turned round; between, turning. The way it is
+  // going and where it set off that way; and between lines, how far across its leap goes, or that it hovers.
+  let face = 1;
+  let tripWay: -1 | 0 | 1 = 0;
+  let tripFrom = 0;
+  let leap = 0;
+  let hovering = false;
+  /** Its facing a frame further on its turn towards `to` (1 as drawn, −1 turned round). */
+  const turnTowards = (to: number, dt: number) => {
+    const step = (2 * dt) / TURN_SECONDS;
+    face = to > face ? Math.min(to, face + step) : Math.max(to, face - step);
+  };
+  // A Tutorial or the Tour open (issue 151): its own life paused; and the control it points at, if any.
+  let guided = false;
+  let aim: { way: -1 | 1; angle: number; still: boolean } | null = null;
   // A word's or the theme's turn asked for during another: it comes next.
   // Words and the theme's reactions that came during a funny turn, in order, each after the one before.
   const queued: Trick[] = [];
@@ -300,8 +329,8 @@ export function createMascotMotion(random: () => number = Math.random) {
     started.set(gesture, { at: now, side: side() });
     gestureCount++;
     if (gesture === 'perform') {
-      // With nothing played for a while, a funny turn on cue; with music, a glance.
-      if (now - busySince >= LISTENING_SECONDS && leftAt === null) {
+      // With nothing played for a while, a funny turn on cue; with music, or guiding the way, a glance.
+      if (now - busySince >= LISTENING_SECONDS && leftAt === null && !guided) {
         perform(deal(), now);
         return;
       }
@@ -414,6 +443,34 @@ export function createMascotMotion(random: () => number = Math.random) {
     dress(costume: Hat) {
       hat = costume;
     },
+    /** A funny turn for a reason (issue 151: the fountain, a Tutorial finished): at once, or after the one under way. */
+    trick(name: Trick, now: number) {
+      if (leftAt !== null) return;
+      gestureCount++;
+      if (trick) queued.push(name);
+      else perform(name, now);
+    },
+    /**
+     * A Tutorial or the Tour open, or closed (issue 151): while open, no funny turn of its own, no stroll, no dance and
+     * no doze; it still answers the controls, the words and the theme. Closed, its life comes back, fresh from now.
+     */
+    guide(on: boolean) {
+      if (on === guided) return;
+      guided = on;
+      if (!on) {
+        aim = null;
+        busySince = last ?? 0;
+        nextIdea = (last ?? 0) + between(0.8, 2.5);
+      } else target = null;
+    },
+    /**
+     * Facing the control it points at, `way` across the window, its tail aimed `angle` degrees down from level, its eyes
+     * on it; `still` beside it, where the sound no longer moves it (but for blinking), else looking from afar. Null:
+     * nothing to point at.
+     */
+    point(at: { way: -1 | 1; angle: number } | null, still = false) {
+      aim = at && { ...at, still };
+    },
     /** What it does through a Demo part, or null: its own life. */
     act(doing: Act | null) {
       if (doing === act) return;
@@ -424,6 +481,14 @@ export function createMascotMotion(random: () => number = Math.random) {
     /** How far the pointer is across from its middle, in pixels, while near; null when it is not. */
     pointer(dx: number | null) {
       pointer = dx;
+    },
+    /**
+     * Between its lines (issue 179): how far across its leap or fall goes, in pixels, positive to the right; 0 on its
+     * line. Hovering, it faces as still.
+     */
+    leaping(across: number, hovers: boolean) {
+      leap = across;
+      hovering = hovers;
     },
     frame(heard: Heard, now: number, reduced: boolean, room: Room): Pose {
       lastRoom = room;
@@ -454,7 +519,7 @@ export function createMascotMotion(random: () => number = Math.random) {
       if (reduced) ice = closed ? 1 : 0;
       const frozen = ice > 0.5;
       const idle = now - busySince >= LISTENING_SECONDS;
-      let dozing = now - busySince >= DOZE_SECONDS && now >= wakeUntil && !trick;
+      let dozing = now - busySince >= DOZE_SECONDS && now >= wakeUntil && !trick && !guided;
       if (dozing && nextWake === Infinity) {
         // Dropping off: where it is, as it is.
         nextWake = now + between(8, 15);
@@ -473,6 +538,9 @@ export function createMascotMotion(random: () => number = Math.random) {
 
       if (leftAt !== null) {
         let t = now - leftAt;
+        // Sent away mid-stroll, it turns back as it stops (issue 179).
+        turnTowards(1, dt);
+        const stopped = { ...resting, x, turn: face };
         if (reduced || t >= LEAVE_SECONDS) return { ...resting, x, form: 'film', eyes: 'none', fade: 0, gone: true };
         const phase = (Object.keys(LEAVING) as (keyof typeof LEAVING)[]).find((k) => {
           if (t < LEAVING[k]) return true;
@@ -480,18 +548,20 @@ export function createMascotMotion(random: () => number = Math.random) {
           return false;
         })!;
         const p = t / LEAVING[phase];
-        if (phase === 'crouch') return { ...resting, x, eyes: 'happy', stretch: 1 - 0.25 * Math.sin((p * Math.PI) / 2) };
-        if (phase === 'leap') return { ...resting, x, legs: 'tuck', eyes: 'happy', lift: LEAP_PX * (1 - (1 - p) ** 2), stretch: 1.12 };
-        if (phase === 'slam') return { ...resting, x, legs: 'tuck', eyes: 'shut', lift: LEAP_PX * (1 - p * p), stretch: 1.12 + 0.25 * p };
+        if (phase === 'crouch') return { ...stopped, eyes: 'happy', stretch: 1 - 0.25 * Math.sin((p * Math.PI) / 2) };
+        if (phase === 'leap') return { ...stopped, legs: 'tuck', eyes: 'happy', lift: LEAP_PX * (1 - (1 - p) ** 2), stretch: 1.12 };
+        if (phase === 'slam') return { ...stopped, legs: 'tuck', eyes: 'shut', lift: LEAP_PX * (1 - p * p), stretch: 1.12 + 0.25 * p };
         const burst = smashed ? null : { count: SMASH_DROPLETS, spread: 'up' as const };
         smashed = true;
-        if (phase === 'squashed') return { ...resting, x, form: 'squashed', eyes: 'melted', splash: 'wide', burst };
-        if (phase === 'puddle') return { ...resting, x, form: 'puddle', eyes: 'melted', splash: 'wide', burst };
-        if (phase === 'spread') return { ...resting, x, form: 'spread', eyes: 'none', stretch: 1 - 0.3 * p, burst };
-        return { ...resting, x, form: 'film', eyes: 'none', stretch: 0.7, fade: 1 - p };
+        if (phase === 'squashed') return { ...stopped, form: 'squashed', eyes: 'melted', splash: 'wide', burst };
+        if (phase === 'puddle') return { ...stopped, form: 'puddle', eyes: 'melted', splash: 'wide', burst };
+        if (phase === 'spread') return { ...stopped, form: 'spread', eyes: 'none', stretch: 1 - 0.3 * p, burst };
+        return { ...stopped, form: 'film', eyes: 'none', stretch: 0.7, fade: 1 - p };
       }
 
       if (reduced) {
+        face = 1;
+        tripWay = 0;
         // No funny turns with reduced motion: what starts one (a word, the theme, the Slope's cue) changes its pose.
         if (trick) gestureCount++;
         trick = null;
@@ -500,6 +570,8 @@ export function createMascotMotion(random: () => number = Math.random) {
         if (struck || gestureCount !== seenGestures) still = { ...resting, eyes: STILL_EYES[stillCount++ % STILL_EYES.length] };
         seenGestures = gestureCount;
         const held: Pose = { ...(now < tickledUntil ? { ...still, eyes: 'happy' } : dozing ? { ...still, eyes: 'shut' } : still), x };
+        // Pointing the way, only its eyes and tail turn towards the control (issue 151).
+        if (aim) Object.assign(held, { turn: aim.way, eyes: 'right', wag: aim.angle });
         return dressed(held, heard, now, true);
       }
 
@@ -536,7 +608,7 @@ export function createMascotMotion(random: () => number = Math.random) {
         gait = 'slide';
       }
       const buzzing = now < caffeineUntil;
-      if (target === null && trick === null && !dozing && !frozen && !act && now >= nextIdea) {
+      if (target === null && trick === null && !dozing && !frozen && !act && !guided && now >= nextIdea) {
         const roll = random();
         if (idle && roll < 0.35) {
           perform(deal(), now);
@@ -553,7 +625,7 @@ export function createMascotMotion(random: () => number = Math.random) {
         }
       }
       // Dancing: with each Note a step along, one way, turning back at an end or now and then.
-      if (struck && !silent && !frozen && !trick && (target === null || gait === 'dance')) {
+      if (struck && !silent && !frozen && !trick && !guided && (target === null || gait === 'dance')) {
         if (random() < 0.2) danceWay = danceWay > 0 ? -1 : 1;
         let step = danceWay * between(...DANCE_STEP);
         if (clamp(x + step) !== x + step) {
@@ -575,15 +647,24 @@ export function createMascotMotion(random: () => number = Math.random) {
           nextIdea = now + between(1, 3.5) / (buzzing ? 2 : 1);
           // At an end of its room, now and then it looks over the edge and takes fright.
           const end = x - room.min < 2 ? -1 : room.max - x < 2 ? 1 : 0;
-          if (end && gait !== 'dance' && gait !== 'scoot' && gait !== 'trick' && gait !== 'slide' && room.max - room.min > 30 && random() < 0.5) {
+          if (end && !guided && gait !== 'dance' && gait !== 'scoot' && gait !== 'trick' && gait !== 'slide' && room.max - room.min > 30 && random() < 0.5) {
             trick = { name: 'scared', at: now, side: end, sprayed: new Map() };
             nextIdea = now + lasting('scared') + between(1, 2.5);
           }
         } else {
           walking = away > 0 ? 1 : -1;
+          if (walking !== tripWay) [tripWay, tripFrom] = [walking, x];
           x += walking * speed * dt;
         }
       }
+      if (!walking) tripWay = 0;
+      // Its way: across between lines, or along its own, a leap or a stroll at least its own width. Turned round, its
+      // tail trails past its box's left: on its line, it turns only once that is clear of the line's left end.
+      const tailClear = x < room.min || x - room.min >= TURNED_PAST;
+      const way = hovering ? 0 : leap ? (Math.abs(leap) >= WIDTH ? Math.sign(leap) : 0)
+        : walking && FACING_GAITS.has(gait) && Math.abs(target! - tripFrom) >= WIDTH && tailClear ? walking : 0;
+      // A funny turn, or pointing the way, turns it as they do.
+      turnTowards(trick || aim || way <= 0 ? 1 : -1, dt);
       if (now >= nextBlink) {
         blinkUntil = now + BLINK_SECONDS;
         nextBlink = now + between(2, 6);
@@ -591,7 +672,8 @@ export function createMascotMotion(random: () => number = Math.random) {
 
       const pose: Pose = { ...resting, x, eyes: dozing ? 'shut' : 'open' };
       if (dozing) pose.stretch = 1 + 0.03 * Math.sin(now * 2 * Math.PI * 0.3); // breathing
-      if (!silent) {
+      // Beside the control it points at, the sound no longer moves it (issue 151, decision 4).
+      if (!silent && !aim?.still) {
         const since = heard.struck === null ? Infinity : now - heard.struck;
         pose.lift = since < HOP_SECONDS && !trick ? Math.sin((since / HOP_SECONDS) * Math.PI) * HOP_PX : 0;
         const happy = pose.lift > 0 || heard.amp > LOUD;
@@ -612,7 +694,7 @@ export function createMascotMotion(random: () => number = Math.random) {
           const second = Math.floor(now / steps) % 2 === 1;
           pose.legs = second ? 'walkB' : 'walkA';
           pose.lift += second ? 1 : 0; // a bob on every other step
-          if (gait === 'scoot') pose.tilt += walking * 8; // leaning into it
+          if (gait === 'scoot') pose.tilt += walking * (walking * face < 0 ? SCOOT_LEAN_TRAILING : SCOOT_LEAN); // leaning into it
         }
         if (pose.eyes !== 'happy') pose.eyes = walking > 0 ? 'right' : 'left';
       }
@@ -678,12 +760,13 @@ export function createMascotMotion(random: () => number = Math.random) {
           continue;
         }
         const arc = Math.sin(p * Math.PI);
-        if (gesture === 'higher' || gesture === 'new') {
-          pose.lift += arc * (gesture === 'new' ? 8 : 10);
+        if (gesture === 'higher' || gesture === 'new' || gesture === 'hop') {
+          pose.lift += arc * (gesture === 'new' ? 8 : gesture === 'hop' ? 12 : 10);
           pose.legs = 'tuck';
           pose.eyes = 'happy';
-          if (gesture === 'new') pose.splash = 'up';
-        } else if (gesture === 'lower') pose.stretch *= 1 - 0.22 * arc;
+          if (gesture !== 'higher') pose.splash = 'up';
+        } else if (gesture === 'bounce') pose.lift += arc * 5;
+        else if (gesture === 'lower') pose.stretch *= 1 - 0.22 * arc;
         else if (gesture === 'taller') pose.stretch *= 1 + 0.15 * arc;
         else if (gesture === 'shorter') pose.stretch *= 1 - 0.15 * arc;
         else if (gesture === 'rougher') pose.x += Math.sin(now * 2 * Math.PI * 22) * 1.5 * (1 - p);
@@ -693,6 +776,18 @@ export function createMascotMotion(random: () => number = Math.random) {
         } else if (gesture === 'quieter') pose.eyes = 'shut';
         else if (gesture === 'twirl') pose.tilt += Math.sin(p * 4 * Math.PI) * 12 * (1 - p);
         else if (gesture === 'look' && pose.eyes !== 'happy') pose.eyes = side > 0 ? 'right' : 'left';
+      }
+      // Pointing the way (issue 151): facing the control, its tail aimed at it, its eyes on it when they are free.
+      if (aim) {
+        pose.turn = aim.way * Math.abs(pose.turn);
+        pose.wag += aim.angle;
+        if (pose.eyes === 'open' || pose.eyes === 'left' || pose.eyes === 'right') pose.eyes = 'right';
+      } else {
+        // Facing its way (issue 179): from turned round (face −1) to its own turn, as drawn or a funny turn's (face 1).
+        // Its eyes are set for its own turn: shown the other way round, they swap in its drawing.
+        const own = pose.turn;
+        pose.turn = (own * (1 + face) - (1 - face)) / 2;
+        if (pose.turn * own < 0 && (pose.eyes === 'left' || pose.eyes === 'right')) pose.eyes = pose.eyes === 'left' ? 'right' : 'left';
       }
       if (now < blinkUntil && (pose.eyes === 'open' || pose.eyes === 'left' || pose.eyes === 'right')) pose.eyes = 'shut';
       if (frozen) {

@@ -5,7 +5,7 @@ import { FIRST_VISIT } from './startState';
 
 const card = (page: Page) => page.getByRole('region', { name: 'Tour' });
 const action = (page: Page, name: string) => card(page).getByRole('button', { name, exact: true });
-const progress = (page: Page) => card(page).locator('.tutorial-progress');
+const progress = (page: Page) => card(page).locator('.card-progress');
 const patchName = (page: Page) => page.getByRole('button', { name: /^Patch: / });
 const about = (page: Page) => page.getByRole('dialog', { name: 'Limpide' });
 const slider = (page: Page, name: string) => page.getByRole('slider', { name, exact: true });
@@ -179,6 +179,15 @@ test('the last card’s Bass button starts the Bass Tutorial (issue 128)', async
   await expect(patchName(page)).toHaveAttribute('aria-label', 'Patch: Init');
 });
 
+test('the last card’s Bass button puts the focus on the Tutorial’s Start (issues 104, 139)', async ({ page }) => {
+  await page.goto('/');
+  await startFromAbout(page);
+  for (let i = 1; i < 4; i++) await action(page, 'Next').click();
+  await action(page, 'Build a Bass').click();
+  const tutorial = page.getByRole('region', { name: 'Tutorial: Bass' });
+  await expect(tutorial.getByRole('button', { name: 'Start', exact: true })).toBeFocused();
+});
+
 test('a card that grows while shown still leaves its Viewer clear (issue 128)', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.setViewportSize({ width: 1280, height: 800 });
@@ -262,6 +271,25 @@ test('folded, the Amp card still says what the frozen picture shows to a screen 
   const heard = card(page).locator('.tour-frozen [aria-live]');
   await expect(heard).toHaveText('Frozen: up: Attack');
   await expect(heard).toBeVisible(); // in the accessibility tree: a live region under display: none is never heard
+});
+
+// Issue 129: on a phone a card shows two lines until opened, and they say what to watch, whole, not where the Section sits.
+test('on a phone, each card’s two lines say what to watch', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto('/');
+  await startFromAbout(page);
+  for (const look of ['Watch the wave change shape', 'Watch the lines on the Filter Spectrum sink', 'Watch the Envelope Timeline', 'Watch the dotted line on the Envelope Timeline']) {
+    const shown = await card(page)
+      .locator('.card-words')
+      .evaluate((words) => {
+        const first = words.querySelector('p')!;
+        // The first line's whole height fits in what the folded words show: nothing of it is cut off.
+        return { text: first.textContent, whole: first.getBoundingClientRect().height <= words.getBoundingClientRect().height + 1 };
+      });
+    expect(shown.text).toContain(look);
+    expect(shown.whole, look).toBe(true);
+    if (!look.includes('dotted')) await action(page, 'Next').click();
+  }
 });
 
 test('the person’s own Freeze on the Amp card is theirs: the Tour freezes no more on that card (issue 130)', async ({ page }) => {

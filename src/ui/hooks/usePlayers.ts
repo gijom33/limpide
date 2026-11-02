@@ -1,6 +1,7 @@
 import { type Dispatch, type MutableRefObject, type SetStateAction, useEffect, useEffectEvent, useRef, useState } from 'react';
 import type { AudioSession } from '../../app/session';
 import { createDemoKnobs } from '../../demo/demoKnobs';
+import type { PhraseAtTempo } from '../../demo/phrase';
 import { startDemo, startPhraseLoop } from '../../demo/player';
 import { startSong } from '../../demo/song';
 import { demoStop, type Touched } from '../../demo/stopRule';
@@ -152,7 +153,7 @@ export function usePlayers({ session, octaveRef, setOctave, heldNotes, onDemoSta
 
   // Listen: a Tutorial's phrase, or a Tour card's, played over and over on the Patch as it is now, so both hands are free.
   const stopListen = () => stop('listen');
-  const startListen = (phrase: { phrase: string; bpm: number }) => play('listen', () => startPhraseLoop({ ...transport, showOctave }, phrase));
+  const startListen = (phrase: PhraseAtTempo) => play('listen', () => startPhraseLoop({ ...transport, showOctave }, phrase));
 
   const demo = playing === 'demo' ? part : null;
 

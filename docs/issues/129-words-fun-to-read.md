@@ -6,7 +6,7 @@ What exists already: each Tutorial Step has a `say` (what to do) and a `note` (t
 
 **Blocked by:** [130](./130-the-tour-freezes-to-show-adsr.md), which rewrites the Tour's Amp card first (Claude's call, open to the owner)
 
-**Status:** ready-for-agent · enhancement. Polish for v1 ([131](./131-v1.md)). Profile 16's first review is in ([report](../reviews/2026-10-31/16-synth-neophyte.md)).
+**Status:** ready-for-human · enhancement. Built (2026-11-01) on night/2026-11-01, for the owner to try. Polish for v1 ([131](./131-v1.md)). Profile 16's first review is in ([report](../reviews/2026-10-31/16-synth-neophyte.md)).
 
 ## Decisions
 
@@ -40,11 +40,11 @@ Claude's call, open to the owner, from profile 16's review (2026-10-31):
 - CONTEXT.md's words; the Presets' descriptions are left as they are
 
 **Acceptance criteria:**
-- [ ] Each of the report's 15 findings answered, or the reason it is not written in the issue
-- [ ] Harmonic, Hz, ms, dB, Init, Decay, Sustain and the Filter Envelope explained where first used, in each Tutorial and the Tour
-- [ ] No synth word in a Step or card that its Tutorial has not explained first (a unit test over the Tutorials' text against a list of the words that need explaining)
-- [ ] Each Tutorial has its own first card; its end card names the next
-- [ ] The Tutorial and Tour specs pass; a Step's target and a Tutorial's sound do not change
+- [x] Each of the report's 15 findings answered, or the reason it is not written in the issue
+- [x] Harmonic, Hz, ms, dB, Init, Decay, Sustain and the Filter Envelope explained where first used, in each Tutorial and the Tour
+- [x] No synth word in a Step or card that its Tutorial has not explained first (a unit test over the Tutorials' text against a list of the words that need explaining)
+- [x] Each Tutorial has its own first card; its end card names the next
+- [x] The Tutorial and Tour specs pass; a Step's target and a Tutorial's sound do not change
 - [ ] The owner reads the words before the release (decision 5)
 
 **Out of scope:**
@@ -58,3 +58,50 @@ Claude's call, open to the owner, from profile 16's review (2026-10-31):
 3. **Which words?** Claude's recommendation: every Tutorial's `say` and `note`, and the Tour's cards. The tips, the Presets' about lines and the About panel are left: they are references, read on demand.
 4. **When?** Claude's recommendation: after the synth neophyte's first review, so the rewrite answers the places a real neophyte got lost or bored. That review runs on the published site, so it waits until the Tour is released.
 5. **Decision 14 of issue 40:** this would replace its "voice of the Presets' about lines" for the Tutorials. Claude's recommendation: yes, with the owner still reviewing the words before the release.
+
+## How it was built
+
+Every Tutorial's `say` and `note`, every first and last card, the Tutorial menu and the Tour's four cards are rewritten in decisions 1 and 2's voice. The Steps, their targets and the sounds are as they were: each Tutorial still rebuilds its Preset exactly (its unit test).
+
+- **The words test** (decision 2's criterion): a unit test reads each Tutorial as a person does (its first card, each Step's instruction then its note, its last card), and the Tour card by card, and checks that the first text using each of 42 synth words (Init, Oscillator, Waveform, Harmonic, Scope, Spectrum, the Timeline, Mixer, Filter, low-pass, Cutoff, Resonance, Slope, Amp, Envelope, the Filter Envelope, Attack, Decay, Sustain, Release, Amount, octave, Semitone, Hz, kHz, ms, dB, Ideal, Snapshot, Velocity, Glide, Pulse Width, FM, Ring, Sub, Noise, White, Pink, LFO, Depth, Rate, Retrigger) says what it is in the same sentence. It also checks that no text says partial, rung, spike or bar. Each word has one plain gloss, used wherever a Tutorial first needs it: Harmonics are "the stack of pitches a Note is made of", the Spectrum "draws each as a line", the Filter is "the sound's tone knob", the Cutoff "where the Filter starts to cut", Hz "vibrations a second", ms "thousandths of a second", dB "decibels, how loudness is counted", Init "the plain sound every Tutorial begins with".
+- **The first card** (decision 6) leads with the Tutorial's own words, what it teaches and what you will hear ("A wobble bass, the “wub wub” of dubstep. An LFO, a slow invisible hand, opens and closes the Filter…"), then how a Tutorial goes. The Preset's description no longer shows on it; it stays in the Patches panel. On a phone the two folded lines are now these words.
+- **The last card and the menu** (decision 8): each Tutorial has a short line of what it teaches. The menu shows it under each name, and the end card adds "Next: Acid, a talking bass, with a peak that sweeps and Notes that slide. It is under Tutorial, at the top." Deep Breath, the last, says so and hands the synth over. With the wider rows, the list now opens along the button's right edge when the button is in the right half of the window. Before, at 861 px it ran 55 px off the page.
+- **The Tour** (decisions 2 and 9): each card now starts with a line saying what to watch ("Watch the wave change shape: the synth is switching Osc 1 from Saw to Square to Sine."), then where the Section sits, what it does and what its pictures show. Folded on a 375 px phone, those two lines are what to watch, whole (measured, and now a spec). The LFO card points at the Timeline's dotted line and no longer brings the Cutoff knob into view ([158](./158-tour-and-tutorial-slips.md), decision 1).
+- **CONTEXT.md:** the Harmonic's entry gains its plain words and its picture (a line), with rung, spike and bar under Avoid; the Tutorial's and the Tour's entries say what their first and last cards hold.
+
+### The report's 15 findings
+
+1. **Harmonic never explained:** Tour card 1 and the first use in every Tutorial say "the stack of pitches every Note is made of"; the test holds it.
+2. **Tour card 1's dense sentence and the hidden fader:** rewritten as two short sentences on shape and pitch; it no longer speaks of a fader on a hidden tab, only that the Mixer, on its own tab, sets how loud each Oscillator is.
+3. **The Filter Envelope unannounced; Decay and Sustain never explained:** the Tour's Amp card names all four stages in plain words and says the Filter has an Envelope of its own. Each Tutorial's first Filter Envelope Step says "The Filter has an Envelope too, a shape over time that opens and closes it on every Note", and each stage's first Step says what the stage is before its number.
+4. **The first card's dense description:** each Tutorial has its own intro (decision 6).
+5. **Tour 4 points at a knob off screen:** it points at the Timeline's dotted line (decision 9).
+6. **Five names for one thing:** Harmonics for the idea, the Spectrum's lines for the picture (decision 7). Partials, rungs, spikes and bars are gone, and the test keeps them out.
+7. **Ring Bell and FM Ladder in arithmetic:** FM is "frequency modulation, Osc 2 bending Osc 1's pitch", too fast to hear as a wobble, so it turns into tone. Ring "multiplies the two waves", giving two new pitches that slide off the neat row of Harmonics, "what makes metal sound like metal". The 3.38 and 1.38 are gone, and so is the minor third (now "+3, three piano keys up").
+8. **Bass Step 4 ticked before it was done:** the tick was fixed in [158](./158-tour-and-tutorial-slips.md). The instruction now says what Ideal is ("small marks for where each wave's Harmonics should land").
+9. **Repeated notes and the Envelope drill:** no note is shared any more. The shared Steps (the Bass's and Wobble's first three, the four 24 dB Slopes, the three wide-open endings) each have their own line for that sound. Each drill Step now gives the reason before the number ("Its Decay is how fast it closes back down. Make it short, about 180 ms."). The tidy-up Steps themselves stay, since every Step sets a control its Preset needs and the sounds must not change.
+10. **Units:** Hz, kHz, ms, dB and octaves are explained where first used, and Semitone as "piano keys".
+11. **Init:** "Start from Init, the plain sound every Tutorial begins with…", on every first card.
+12. **The phone's folded Tour card:** it shows what to watch.
+13. **The end card and the menu:** both point on (decision 8).
+14. **Acid's Snapshot staying through later Tutorials:** fixed in [158](./158-tour-and-tutorial-slips.md) (a Tutorial's Snapshot is cleared when it ends), so no words were needed.
+15. **Next does nothing until a Step is made, and says not why:** not answered here. It is the card's behaviour, not its words, so it falls under this issue's Out of scope (the review's bugs apart from words). It is a line for the inbox if the owner wants it.
+
+### Calls made (Claude's call, open to the owner)
+
+- **The Preset's description is gone from the first card,** not just moved after the intro: it is the densest text in the app, and the test would fail on it. It still shows in the Patches panel.
+- **The Tour card's first line is a new "what to watch" line** on every screen, not only on a phone, so the card reads the same everywhere.
+- **The everyday images** are Claude's: the clarinet, the thick blanket, the slow invisible hand, the "wub wub" of dubstep, acid house, metal sounding like metal, wind and distant surf. Each is for the owner's ear.
+- **Every claim was checked against what the old notes said and the engine's rules** (a square's odd Harmonics, a 25 % pulse missing every fourth, 24 dB twice as steep as 12, Ring's sum and difference, Pink's tilt). The fact-checker (profile 13) and profile 16's second read have not run on the new words: they should, before the release (decision 5, with the owner's read).
+
+### Tests run
+
+`npx tsc`, `npm run lint`; the Tutorial and UI unit tests (248 passed, the new words test among them); in Chromium the Tutorial and Tour specs (66 passed, with the new phone and menu checks), and the About, docked-cards, mascot, patch-search, tooltips and welcome specs (76 passed).
+
+### To try
+
+- Take the Tour on a phone and read each folded card's two lines; then open them.
+- Open the Tutorial menu at the top and read its lines; at a laptop width the list now opens leftward.
+- Start each Tutorial and read its first card. Make a few Steps and read the notes, then press "Do it for me" to the end and read the last card's "Next".
+- Read every Step's words once, as decision 5 asks, before the release: [src/tutorial/tutorials.ts](../../src/tutorial/tutorials.ts) holds them all in order, and the Tour's are in [src/tutorial/tour.ts](../../src/tutorial/tour.ts).
+

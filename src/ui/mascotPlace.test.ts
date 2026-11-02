@@ -156,6 +156,16 @@ describe('the mascot between its lines, by the laws of motion (issue 115)', () =
     expect(acrossOf(frames.at(-1)!, 230)).toBe(230);
   });
 
+  it('between lines, says how far across its leap goes, for its facing; nothing on a line (issue 179)', () => {
+    const place = createMascotPlace({ random: () => 0.5 });
+    place.frame(edge('Oscillators', 300), span, 0, false, 100);
+    const frames = run(place, 1 / 60, 2, () => edge('Filter', 700), false, { min: 200, max: 260 });
+    const falling = frames.filter((f) => f.moving === 'falling');
+    expect(falling.length).toBeGreaterThan(10);
+    expect(falling.every((f) => f.leap === 130)).toBe(true);
+    expect(frames.filter((f) => f.moving !== 'falling').every((f) => f.leap === 0)).toBe(true);
+  });
+
   it('a short drop lands softly', () => {
     const place = createMascotPlace();
     place.frame(edge('Oscillators', 300), span, 0, false, 100);
@@ -400,5 +410,56 @@ describe('which LFOs it may ride, now and then, outside the Demo (issue 141)', (
   it('never while the Demo plays, nor under reduced motion', () => {
     expect(ridesFor([lfo(), lfo()], 120, { demo: true, reduced: false })).toEqual([]);
     expect(ridesFor([lfo(), lfo()], 120, { demo: false, reduced: true })).toEqual([]);
+  });
+});
+
+describe('sliding down onto the panel and clinging beside a control (issue 151)', () => {
+  const cling = (id: string, foot: number): Perch => ({ id: `cling ${id}`, foot, hovering: false, cling: true });
+
+  it('from its edge, slides down the panel to the control’s side, without falling, and clings there', () => {
+    const place = createMascotPlace();
+    place.frame(edge('Filter', 300), span, 0, false, 100);
+    const frames = run(place, 1 / 60, 3, () => cling('cutoff', 450), false, { min: 160, max: 160 });
+    expect(changes(frames)).toEqual(['sliding', 'clinging']);
+    const sliding = frames.filter((f) => f.moving === 'sliding');
+    // From where it stood, down and across, never past its spot, never back up.
+    expect(Math.abs(sliding[0].x! - 100)).toBeLessThan(5);
+    for (let i = 1; i < sliding.length; i++) {
+      expect(sliding[i].foot).toBeGreaterThanOrEqual(sliding[i - 1].foot);
+      expect(sliding[i].x!).toBeGreaterThanOrEqual(sliding[i - 1].x!);
+    }
+    expect(Math.max(...sliding.map((f) => f.foot))).toBeLessThanOrEqual(450);
+    // The frame it arrives says where, once.
+    expect(frames.filter((f) => f.landedAt !== null).map((f) => f.landedAt)).toEqual([160]);
+    expect(frames.at(-1)).toMatchObject({ moving: 'clinging', foot: 450, x: 160 });
+  });
+
+  it('clinging, it stays with the control as the page scrolls or the layout moves it', () => {
+    const place = createMascotPlace();
+    place.frame(cling('cutoff', 450), { min: 160, max: 160 }, 0, false, 160);
+    run(place, 1 / 60, 2, () => cling('cutoff', 450), false, { min: 160, max: 160 });
+    const moved = place.frame(cling('cutoff', 380), { min: 175, max: 175 }, 2.1, false, 0);
+    expect(moved).toMatchObject({ moving: 'clinging', foot: 380, x: 175 });
+  });
+
+  it('from one control to another, slides across from where it clings, not from where its stroll was', () => {
+    const place = createMascotPlace();
+    place.frame(edge('Filter', 300), span, 0, false, 100);
+    run(place, 1 / 60, 3, () => cling('cutoff', 450), false, { min: 160, max: 160 });
+    const frames = run(place, 3 + 1 / 60, 6, () => cling('resonance', 450), false, { min: 260, max: 260 }, 0);
+    expect(changes(frames)).toEqual(['sliding', 'clinging']);
+    expect(frames[0].x).toBeGreaterThanOrEqual(160);
+    expect(frames.every((f) => f.foot === 450)).toBe(true);
+    expect(frames.at(-1)!.x).toBe(260);
+  });
+
+  it('let go, it hops back up to its edge from where it clung, and lands there', () => {
+    const place = createMascotPlace();
+    place.frame(cling('cutoff', 450), { min: 160, max: 160 }, 0, false, 160);
+    run(place, 1 / 60, 1, () => cling('cutoff', 450), false, { min: 160, max: 160 });
+    const frames = run(place, 1 + 1 / 60, 4, () => edge('Amp', 300), false, { min: 150, max: 170 }, 0);
+    expect(changes(frames)).toEqual(['flying', 'landing', 'standing']);
+    expect(frames[0].x).toBeCloseTo(160, 0);
+    expect(frames.at(-1)!.foot).toBe(300);
   });
 });

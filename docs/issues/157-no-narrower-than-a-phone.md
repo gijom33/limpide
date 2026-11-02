@@ -52,6 +52,8 @@ Claude's call, open to the owner:
 3. **The cards and dialogs fit the window, not the 320 px page,** in a window under 320 px: they stay on screen rather than run off its edge.
 4. **A side effect at 601 to 680 px:** the Display panel's own buttons (Freeze, Snapshot) pad 4 px there, not the 2 px the row's rule gave them before by a broader selector; the row itself is unchanged.
 
+   **Since then (2026-11-01, [issue 152](./152-the-phones-header-rows-in-2x2.md)):** the 2 × 2 header's buttons pad as on a phone, the Display panel's own buttons with them; the narrow rule is for windows under 375 px alone. Claude's call, open to the owner.
+
 **Tests run:**
 - Red first: the audit at 320 px failed on Song over Hold; the header spec failed at 280, 320 and 340 px (Song → Hold) and passed at 375.
 - `npx tsc`, `npm run lint`; `npx vitest run`: 1287 passed, 1 timed out under load (two different ones over two runs, `filterDesign` and `edgePatches`, neither touched here); both pass alone: load flakes.

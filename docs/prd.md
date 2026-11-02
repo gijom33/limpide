@@ -17,7 +17,7 @@ Limpide (formerly SynthView) is a browser-based subtractive synthesizer laid out
 - **Hands-free listening:** Hold sustains the sound while you turn knobs.
 - **Playing:** from the computer keyboard, the on-screen piano, or a MIDI Controller. The Synido TempoPAD C16 is the primary target and maps itself when plugged in; Quick Setup maps any other Controller in one pass.
 - **Sounds and sharing:** Patches autosave and can be named, exported as JSON, or shared by URL.
-- **The maths:** an optional Maths Layer reveals Q, dB values and formulas for those who want it.
+- **The maths:** an optional Synth Geek Layer reveals Q, dB values and formulas for those who want it.
 
 ## User Stories
 
@@ -71,7 +71,7 @@ Limpide (formerly SynthView) is a browser-based subtractive synthesizer laid out
 42. As a learner, I want a hover readout (frequency, nearest note, level), so that I can measure what I see.
 43. As a learner, I want to take a Snapshot and see it as a faint trace against the live Spectrum, so that I can compare before and after a knob change.
 44. As a learner, I want to clear the Snapshot, so that I can start a new comparison.
-45. As a curious learner, I want a Maths Layer toggle that reveals Q, dB, Harmonic formulas and the Response Curve formula, so that I can go deeper when I'm ready.
+45. As a curious learner, I want a Synth Geek Layer toggle that reveals Q, dB, Harmonic formulas and the Response Curve formula, so that I can go deeper when I'm ready.
 46. As a learner, I want the Viewers to keep showing something useful when no note is playing (a flat line and silence, with a hint to press a key or turn on Hold), so that an empty screen doesn't look broken.
 
 ### Layout and look
@@ -98,6 +98,7 @@ Judged against [the design principles](./design-principles.md).
 82. As a sound designer, I want the LFO to reach more destinations (Resonance, Osc 2's pitch and its Detune as well as Cutoff, Pitch and Pulse Width; the Volume, for tremolo, since issue 53; FM, since issue 97), picked with arrows or from a menu like the Patch bar's, so that one LFO makes more kinds of movement.
 83. As a sound designer, I want two LFOs, each with its own Waveform, Rate, Depth and destination, so that I can make vibrato and a filter sweep at once, or two speeds of movement on one control.
 101. As a player, I want the page to keep a tempo, set by hand or by tapping, and each LFO to sync its Rate to it in note values, its cycle landing on the beat, so that a wobble or a tremolo plays in time (issue 112, [ADR-0018](./adr/0018-limpide-keeps-a-tempo.md)).
+104. As a learner, I want the tips, the Synth Geek Layer and a Step of the Wobble Tutorial to show how a synced Rate follows the tempo, its Hz worked out from the BPM, and the Presets whose LFO is a rhythm to use Sync, so that I understand why a synced wobble stays on the beat when the tempo changes (issue 137).
 
 ### MIDI and the TempoPAD C16
 50. As a C16 owner, I want Limpide to detect my Controller when plugged in, so that I know it's connected.
@@ -112,6 +113,7 @@ Judged against [the design principles](./design-principles.md).
 59. As a user, I want an Activity Monitor showing the last MIDI message, so that I can tell whether the Controller is sending and what it sends.
 60. As a learner, I want an on-screen knob to flash when its hardware control moves it, so that I connect the hardware with the screen.
 61. As a Safari user, I want a clear notice that MIDI isn't supported in my browser while everything else still works, so that I'm not confused.
+103. As a player with a DAW or a keyboard that sends a MIDI clock, I want the page's tempo to follow it, smoothed, a MIDI Start counting the beats again, so that a synced LFO plays in time with my track as a plugin follows its host (issue 136).
 
 ### Patches
 62. As a user, I want my current Patch autosaved, so that a reload doesn't lose my sound.
@@ -141,19 +143,19 @@ Brought into scope by the grilling of [issue 40](./issues/40-preset-tutorials.md
 96. As a player, I want the Filter Envelope to move Osc 2's pitch, so that Notes can start with a zap (issue 93).
 97. As a first-time visitor who has never seen a synth, I want a Tour of the Sections in the signal's order, the synth turning each one's main controls itself while I listen and watch its Viewers, so that I know what each part is for before I build a sound; the Welcome's button for it takes the place of story 89's Tutorial button (issue 128).
 98. As a player with a keyboard that sends aftertouch, I want pressing harder on a held key to move one Destination I choose, the Cutoff by default, its move shown on the knob's ring, so that the synth answers my touch as a plugin synth would (issue 132).
-99. As a learner, I want the Maths Layer to write the formula behind every Section and Viewer, the one the engine computes, so that I can follow the sound in numbers wherever I look (issue 133).
-100. As a curious learner, I want each tooltip, with the Maths Layer on, to say where its control comes from, every fact sourced, so that I learn the instrument's history along with its maths (issue 134).
+99. As a learner, I want the Synth Geek Layer to write the formula behind every Section and Viewer, the one the engine computes, so that I can follow the sound in numbers wherever I look (issue 133).
+100. As a curious learner, I want each tooltip, with the Synth Geek Layer on, to say where its control comes from, every fact sourced, so that I learn the instrument's history along with its maths (issue 134).
 
 ## v1: the scope
 
 Framed by the owner on 2026-10-31 ([issue 131](./issues/131-v1.md), which tracks the work and holds the decisions). v1 is a 1.x version the owner deems complete; once it is framed, no new features go in, only polish, and the release that finishes it says "v1 complete".
 
 - **A sound generator,** no more: no effects, no arpeggiator, mono output.
-- **A learning layer** for people getting to know the domain: the Tutorials, the Tour, the Demo, the Maths Layer and the overlays.
-- **Every feature the VST/AU plugin will need,** so that the plugin's spec is v1's synth: tempo sync for the LFOs (issue 112), Legato (119) and channel aftertouch (132). The engine stays on native Web Audio nodes; the port is the plugin's own project.
+- **A learning layer** for people getting to know the domain: the Tutorials, the Tour, the Demo, the Synth Geek Layer and the overlays.
+- **Every feature the VST/AU plugin will need,** so that the plugin's spec is v1's synth: tempo sync for the LFOs (issue 112), Legato (119) and aftertouch (132). The engine stays on native Web Audio nodes; the port is the plugin's own project.
 - **Bead** is the last feature that is not essential.
 
-**In v1, still to do:** issues 112 (with 136 and 137), 119 and 132; the Maths Layer complete (133), History in the tooltips (134) and a Patch in plain words (123); the polish of 116, 129, 130, 47, 42, 48 and 111, and the inbox's findings; then one last full review round, finding only nitpicks.
+**In v1, still to do:** issues 112 (with 136 and 137), 119 and 132; the Synth Geek Layer complete (133), History in the tooltips (134) and a Patch in plain words (123); the polish of 116, 129, 130, 47, 42, 48 and 111, and the inbox's findings; then one last full review round, finding only nitpicks.
 
 **v2,** a list and not a commitment ("It will only depend on what the reaction is in the synth world", the owner): recording to a WAV file (120), the additive oscillator (121), Match the sound (122) and granular synthesis (135). A new idea after the frame goes there, unless it is a bug or polish of something in v1. Each v2 issue is blocked by issue 131.
 
@@ -168,7 +170,7 @@ Framed by the owner on 2026-10-31 ([issue 131](./issues/131-v1.md), which tracks
 - **Effective Cutoff:** computed by a pure modulation model that also produces the automation schedule ([ADR-0003](./adr/0003-modulation-model-mirrors-the-audio-graph.md)).
 - **Voices:** 1 to 8 per Patch; 1 Voice is monophonic with last-note priority, Glide and Legato (issue 119). The Oscillator and Filter Viewers and the Timeline follow the newest Note; the Amp Viewers show every Voice by default ([ADR-0007](./adr/0007-optional-polyphony-viewers-follow-the-newest-note.md)).
 - **Controls:** knob size follows the Parameter's role, play or set-and-forget ([ADR-0008](./adr/0008-knob-size-follows-the-parameter-s-role.md)); levels and envelope stages are faders. Modulation rings and the piano's pitch marker are drawn by the render loop from the Modulation model, outside React (ADR-0002, ADR-0003).
-- **The tempo:** the page's, outside the Patch; an LFO with Sync on follows it in note values, its cycle locked to the beat, and a player takes it over while it plays ([ADR-0018](./adr/0018-limpide-keeps-a-tempo.md), issue 112; LFO tempo sync was out of scope until then, issue 53).
+- **The tempo:** the page's, outside the Patch; an LFO with Sync on follows it in note values, its cycle locked to the beat, and a player takes it over while it plays ([ADR-0018](./adr/0018-limpide-keeps-a-tempo.md), issue 112; LFO tempo sync was out of scope until then, issue 53). A MIDI clock from any input sets it while it runs, fitted over its last four beats, its beats the clock's (issue 136); a player still keeps its own.
 - **MIDI:** MIDI Learn first, Encoder Mode auto-detected, and Pickup for Absolute Mappings ([ADR-0004](./adr/0004-midi-learn-first-no-hardcoded-controller-map.md)); one built-in layout, the C16's, a section per bank, each strip a column of it ([ADR-0009](./adr/0009-a-built-in-layout-for-the-c16.md), [ADR-0017](./adr/0017-the-c16-layout-strip-by-strip.md)).
 - **Tuning:** A4 = 440 Hz, equal temperament.
 
@@ -183,7 +185,7 @@ Framed by the owner on 2026-10-31 ([issue 131](./issues/131-v1.md), which tracks
 - **Viewer renderers.** Draw Scope, Spectrum and Envelope Timeline onto canvases from display data. They hold the viewer state: Freeze, axes, Snapshot, hover.
 - **MIDI.** Parses raw MIDI bytes into typed messages. It also holds the Mapping store, the MIDI Learn state machine, Encoder Mode detection, Pickup, and the Quick Setup sequence. Its input is a `MIDIAccess`-like interface, so a fake can be injected.
 - **Persistence.** A key–value storage interface (localStorage in the app, in-memory in tests) used for autosave, the named Patch library and Mappings.
-- **UI (React).** The signal-flow layout, knobs, piano, MIDI panel, Patch browser and the Maths Layer toggle.
+- **UI (React).** The signal-flow layout, knobs, piano, MIDI panel, Patch browser and the Synth Geek Layer toggle.
 
 ## Testing Decisions
 
@@ -207,7 +209,7 @@ Framed by the owner on 2026-10-31 ([issue 131](./issues/131-v1.md), which tracks
 - Custom DSP or analogue-modelled filters ([ADR-0001](./adr/0001-native-web-audio-nodes-over-custom-dsp.md)).
 - A spectrogram.
 - An arpeggiator or sequencer, and MIDI output. (Recording to a WAV file came into scope on 2026-10-30, decided by the owner, [issue 120](./issues/120-recording.md), and went to v2 on 2026-10-31; a tempo, grilled on 2026-10-31, is in [issue 112](./issues/112-tempo-midi-clock-and-an-arpeggiator.md); the arpeggiator stays out, decided by the owner on 2026-10-30: it won't help people understand how synths work, and the plugin Limpide is to become will be just a synth.)
-- Stereo output and MPE (per-Note expression): Limpide stays a mono voice, like the classic synths it teaches, and takes channel aftertouch only (decided by the owner, [issue 131](./issues/131-v1.md), 2026-10-31).
+- Stereo output and MPE (per-Note expression): Limpide stays a mono voice, like the classic synths it teaches, and takes one aftertouch for every Note, the channel's or the hardest-pressed Note's (decided by the owner, [issue 131](./issues/131-v1.md), 2026-10-31, the per-Note one added in [issue 132](./issues/132-aftertouch.md), 2026-11-01).
 - Accounts and cloud sync. (Phones were out of scope until 1.1.0; they are now a first-class layout.)
 - Drawing your own LFO shapes, and graphical envelope editors.
 

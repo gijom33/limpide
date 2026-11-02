@@ -190,6 +190,8 @@ const noteValue = (id: ParamId, knob: ParamId): ParamDef => ({
 
 /** FM at full: Osc 2 swings Osc 1's frequency by four times its own (a modulation index of 4, issue 89). */
 export const FM_INDEX = 4;
+/** FM's modulation index at an FM of `fm` (0 to 1, the knob's or an LFO's swing of it), worked out here alone. */
+export const fmIndex = (fm: number) => FM_INDEX * fm;
 
 export const PARAMS: Record<ParamId, ParamDef> = {
   pulseWidth: { id: 'pulseWidth', label: 'Pulse Width', unit: '%', min: 0.05, max: 0.95, taper: 'linear', default: 0.25, control: 'set', grid: PERCENT },
@@ -401,6 +403,15 @@ export function paramName(id: ParamId): string {
   return label;
 }
 
+/**
+ * A time to three figures: "12.3 ms", "300 ms", "1.67 s". One that rounds to 1000 ms is written as the second it is
+ * (issue 168): "1.00 s", never "1.00e+3 ms".
+ */
+export function secondsText(seconds: number): string {
+  const ms = (seconds * 1000).toPrecision(3);
+  return Number(ms) >= 1000 ? `${seconds.toFixed(2)} s` : `${ms} ms`;
+}
+
 /** A Parameter value in real units, e.g. "2.50 kHz", "12.3 ms", "70 %". */
 export function formatParam(id: ParamId, value: number): string {
   switch (PARAMS[id].unit) {
@@ -409,7 +420,7 @@ export function formatParam(id: ParamId, value: number): string {
       return value < 10 ? `${value.toFixed(2)} Hz` : `${Math.round(value)} Hz`;
     case 's':
       if (id === 'glide' && value <= GLIDE_OFF * 1.001) return 'Off';
-      return value >= 1 ? `${value.toFixed(2)} s` : `${(value * 1000).toPrecision(3)} ms`;
+      return secondsText(value);
     case '%':
       return `${Math.round(value * 100)} %`;
     case 'oct':

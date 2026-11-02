@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { hoverReadout, interpolatedPeak, snapToPeak } from './readout';
+import { hoverReadout, hoverReadoutLines, interpolatedPeak, snapToPeak } from './readout';
 
 describe('hover readout', () => {
   it('reads frequency, nearest note and level', () => {
@@ -13,6 +13,13 @@ describe('hover readout', () => {
   it('says silent below the floor instead of quoting a meaningless level', () => {
     expect(hoverReadout(440, -Infinity)).toBe('440 Hz · A4 · silent');
     expect(hoverReadout(440, -120)).toBe('440 Hz · A4 · silent');
+  });
+
+  it('adds the Harmonic’s number with the Synth Geek Layer on, when on one (issue 170)', () => {
+    expect(hoverReadout(1320, -30.2, { geek: true, harmonic: 3 })).toBe('1.32 kHz · E6 +2¢ · −30 dB · n = 3');
+    expect(hoverReadout(1540, -30.2, { geek: true })).toBe('1.54 kHz · G6 −31¢ · −30 dB');
+    expect(hoverReadoutLines(1540, -30.2, { geek: true })).toHaveLength(4); // a line kept for it, so the box keeps its size
+    expect(hoverReadoutLines(1320, -30.2)).toHaveLength(3);
   });
 });
 

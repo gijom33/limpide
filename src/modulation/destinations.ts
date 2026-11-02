@@ -1,6 +1,6 @@
-import { LFO_DESTINATIONS, type LfoDestination, lfos, PARAMS, type ParamId, type Patch } from '../patch/patch';
+import { LFO_DESTINATIONS, type LfoDestination, lfos, PARAMS, type ParamId, type Patch, STAGES } from '../patch/patch';
 import { valueToPosition } from '../patch/taper';
-import { LFO_LAWS, lfoOffset, type Modulation } from './modulationModel';
+import { LFO_LAWS, lfoOffset, type Modulation, pressed, pressurePitch } from './modulationModel';
 
 type Destination = (typeof LFO_DESTINATIONS)[number] & (typeof LFO_LAWS)[LfoDestination];
 
@@ -9,6 +9,9 @@ type Destination = (typeof LFO_DESTINATIONS)[number] & (typeof LFO_LAWS)[LfoDest
  * from its law how far it swings, its room and the knobs whose ring shows it.
  */
 export const DESTINATIONS = Object.fromEntries(LFO_DESTINATIONS.map((d) => [d.id, { ...d, ...LFO_LAWS[d.id] }])) as Record<LfoDestination, Destination>;
+
+/** The Destinations by stage, in the page's order: how the LFOs' Destination menu and the MIDI panel's Aftertouch list them. */
+export const DESTINATIONS_BY_STAGE = STAGES.map((stage) => ({ stage, destinations: LFO_DESTINATIONS.filter((d) => d.stage === stage.id) }));
 
 /** The Destination an LFO moves a knob by, if any. */
 const DESTINATION_OF = new Map<ParamId, LfoDestination>(
@@ -30,15 +33,17 @@ export const lfoDestinations = (patch: Patch): LfoDestination[] => [
 
 /**
  * A modulated Parameter's Effective value at a moment, from the Modulation model: the knob's value as the Filter
- * Envelope and the LFOs move it (both LFOs added together when both aim at it), as the sound does. The Cutoff and the
- * Volume are the model's own; an LFO swings the others evenly around the knob, by their law. A knob nothing moves is
- * its own value.
+ * Envelope, aftertouch and the LFOs move it (both LFOs added together when both aim at it), as the sound does. The
+ * Cutoff and the Volume are the model's own; aftertouch raises the others from the knob (issue 132), and an LFO swings
+ * them evenly around where it took them, by their law. A knob nothing moves is its own value.
  */
 export function effectiveValue(param: ParamId, patch: Patch, m: Modulation): number {
   if (param === 'cutoff') return m.cutoff;
   if (param === 'volume') return m.volume;
   const destination = destinationOf(param);
-  return destination ? patch[param] + lfoOffset(patch, destination, m.lfo, patch[param]) : patch[param];
+  if (!destination) return patch[param];
+  const sounding = pressed(patch, m.pressure);
+  return sounding[param] + lfoOffset(sounding, destination, m.lfo, sounding[param]);
 }
 
 /** A value's place on its knob, 0–1 along the knob's own scale (its taper), kept within it. */
@@ -49,10 +54,11 @@ const onKnob = (param: ParamId, value: number) => {
 
 /**
  * Where a Destination is at a moment, 0–1 on its knob's scale: its Effective value. Pitch is the Note's own pitch in
- * the middle and one LFO's full swing (a semitone each way) at the edges, both LFOs together kept within them.
+ * the middle and one LFO's full swing (a semitone each way) at the edges, the LFOs and aftertouch together kept within
+ * them.
  */
 export function destinationLevel(destination: LfoDestination, patch: Patch, m: Modulation): number {
   const { param } = DESTINATIONS[destination];
   if (param) return onKnob(param, effectiveValue(param, patch, m));
-  return Math.min(1, Math.max(0, 0.5 + m.vibrato / (2 * LFO_LAWS.pitch.perDepth)));
+  return Math.min(1, Math.max(0, 0.5 + (m.vibrato + pressurePitch(m.pressure)) / (2 * LFO_LAWS.pitch.perDepth)));
 }

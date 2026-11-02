@@ -47,7 +47,7 @@ This reverses one thing in the PRD's Out of Scope: "LFO tempo sync: Limpide keep
 
 **Out of scope:**
 - Following a MIDI clock ([136](./136-following-midi-clock.md))
-- The tips beyond a first line each, the Maths Layer's conversion, the Tutorial Step and the Presets that get Sync ([137](./137-teaching-tempo-sync.md))
+- The tips beyond a first line each, the Synth Geek Layer's conversion, the Tutorial Step and the Presets that get Sync ([137](./137-teaching-tempo-sync.md))
 - An arpeggiator (decision 2), stereo, MPE
 
 ## Decisions (2026-10-30)
@@ -73,7 +73,7 @@ This reverses one thing in the PRD's Out of Scope: "LFO tempo sync: Limpide keep
 12. **The beat shown:** beat lines on the LFO plot, and on the Envelope Timeline, while an LFO is synced.
 13. **A MIDI clock against a player:** the player keeps its own BPM while it plays and the clock is ignored until it stops. Built in [136](./136-following-midi-clock.md).
 14. **Old Patches and links** load with Sync off; the Presets whose LFO is a rhythm get Sync on, chosen by profile 15 (in [137](./137-teaching-tempo-sync.md)).
-15. **The learning layer:** tips for Sync, the BPM and Tap; the Maths Layer writes the conversion on the Rate ("1/8 at 120 BPM: 120 ÷ 60 × 2 = 4 Hz"); a Step in the Tutorial that teaches the LFO syncs the wobble to the beat; History's line goes to [134](./134-history-in-the-tooltips.md). Built in [137](./137-teaching-tempo-sync.md).
+15. **The learning layer:** tips for Sync, the BPM and Tap; the Synth Geek Layer writes the conversion on the Rate ("1/8 at 120 BPM: 120 ÷ 60 × 2 = 4 Hz"); a Step in the Tutorial that teaches the LFO syncs the wobble to the beat; History's line goes to [134](./134-history-in-the-tooltips.md). Built in [137](./137-teaching-tempo-sync.md).
 16. **Three slices:** this issue the tempo and Sync; [136](./136-following-midi-clock.md) following MIDI clock; [137](./137-teaching-tempo-sync.md) teaching it; both blocked by this one.
 
 Claude's call, open to the owner: a player's beat count starts with the player, so its synced LFOs land on its first beat.
@@ -96,6 +96,10 @@ Claude's call, open to the owner: a player's beat count starts with the player, 
 
 **Claude's calls, open to the owner:**
 1. **The header's room.** The set-up row had none to spare from 861 to 1365 px: there Hold, MIDI, Display and About show their icons alone (their tooltips name them; they keep their words from 1366 px, Demo, Tutorial and Song from 1100 px as before); from 861 to 1099 px the BPM shows its number alone; from 1200 to 1365 px the piano's keys are 42 px, so the piano stays at the centre in Linux's wider fonts (measured with Verdana standing in for them). In 2 × 2 each LFO's plot takes what its knobs leave, as on a phone, and the narrowest 2 × 2 windows (601 to 680 px) pad the header's buttons 2 px.
+
+   **Since then (2026-11-01, [issue 152](./152-the-phones-header-rows-in-2x2.md)):** in 2 × 2 the playing and set-up buttons have a row of their own, as on a phone, and pad as on a phone again: the 2 px from 601 to 680 px is gone. Claude's call, open to the owner.
+
+   **Since then (2026-11-01, [issue 154](./154-the-headers-buttons-in-order.md)):** from 861 px the tempo is a column of its own beside Hold, the BPM over Tap, in arrangement C (decided by the owner). Hold, MIDI and Display keep their words from 1280 px, About with Demo, Tutorial and Song from 1100 px; the BPM its unit from 1280 px. The piano's 42 px keys from 1200 to 1365 px are gone: its keys are 42 to 44 px wherever it has more than 10 white keys.
 2. **The small field below 861 px** is on tablets (2 × 2) as well as phones, since Tap is beside the BPM from 861 px only.
 3. **A drag sets the tempo where it is let go,** the BPM shown as it goes: setting the tempo starts the beat count again, so set at every pixel it restarted a synced LFO's cycle at every pixel. The arrows and a knob mapped to the BPM still set it at each step, each restarting the beat.
 4. **The Demo's sweeps stay in Hz** (the Strings' shimmer, the riser's tremble): they pass through the Hz between note values. Tremolo Keys' LFO, free, now lands on the beat; its Hz is as before.

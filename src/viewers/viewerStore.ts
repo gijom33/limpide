@@ -1,8 +1,8 @@
-import { type DisplayValue, recall, remember } from '../app/displaySettings';
+import { type RememberedValue, recall, remember } from '../app/rememberedSettings';
 import type { KeyValueStorage } from '../app/storage';
 import { OSCILLATOR_LEVEL } from '../engine/synthEngine';
 import { createCache } from '../music/cache';
-import { type IdealPartial, idealFmKept, idealPartials } from '../music/idealReference';
+import { type IdealNote, type IdealPartial, idealFmKept, idealPartials } from '../music/idealReference';
 import type { Patch } from '../patch/patch';
 import type { PatchStore } from '../patch/patchStore';
 import { SPECTRUM_TOP } from './axes';
@@ -28,7 +28,7 @@ export type ViewerStore = ReturnType<typeof createViewerStore>;
 const IDEAL_HARMONICS = 256;
 
 /** The Viewers' Display settings as they are kept (issue 85), besides the overlays. */
-const savedOf = (settings: ViewSettings): DisplayValue<'viewer'> => ({
+const savedOf = (settings: ViewSettings): RememberedValue<'viewer'> => ({
   cycles: settings.cycles,
   timelineSeconds: settings.timelineSeconds,
   frequencyScale: settings.viewer.frequencyScale,
@@ -38,6 +38,9 @@ const savedOf = (settings: ViewSettings): DisplayValue<'viewer'> => ({
 
 /** Ideals kept per Patch, by the share of FM's depth their Note keeps and its Gate: a few Notes' worth. */
 const KEPT_IDEALS = 16;
+/** What an Ideal is kept by, for one Patch: its Note's share of FM's depth kept, its Gate and the top worked out to. */
+type IdealKey = `${number} ${boolean} ${number}`;
+const idealKey = ({ fmKept, gateOn, top }: Required<IdealNote>): IdealKey => `${fmKept} ${gateOn} ${top}`;
 
 /**
  * The Ideal Reference at the Oscillator Tap's level: the same series the engine plays, scaled by the Nominal Level, at
@@ -46,16 +49,15 @@ const KEPT_IDEALS = 16;
  * to the Harmonic the Spectrum's top reaches, and no further (issue 166): Notes whose top is the same Harmonic share it.
  */
 const idealOf = (patch: Patch): IdealAt => {
-  const known = createCache<string, readonly IdealPartial[]>(KEPT_IDEALS);
+  const known = createCache<IdealKey, readonly IdealPartial[]>(KEPT_IDEALS);
   // The last Note's answer: every Spectrum asks every frame, and the kept depth is a search (fmDepthKept).
   let last: { fundamental: number; sampleRate: number; gateOn: boolean; ideal: readonly IdealPartial[] } | undefined;
   return (fundamental, sampleRate, gateOn = false) => {
     if (last?.fundamental === fundamental && last.sampleRate === sampleRate && last.gateOn === gateOn) return last.ideal;
     const kept = Math.round(idealFmKept(patch, fundamental, sampleRate) * 1000) / 1000;
     const top = Math.min(IDEAL_HARMONICS, Math.ceil(SPECTRUM_TOP / fundamental));
-    const ideal = known.get(`${kept} ${gateOn} ${top}`, () =>
-      idealPartials(patch, IDEAL_HARMONICS, { fmKept: kept, gateOn, top }).map((p) => ({ ...p, level: p.level * OSCILLATOR_LEVEL })),
-    );
+    const note = { fmKept: kept, gateOn, top };
+    const ideal = known.get(idealKey(note), () => idealPartials(patch, IDEAL_HARMONICS, note).map((p) => ({ ...p, level: p.level * OSCILLATOR_LEVEL })));
     last = { fundamental, sampleRate, gateOn, ideal };
     return ideal;
   };

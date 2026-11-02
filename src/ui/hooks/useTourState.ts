@@ -2,7 +2,7 @@ import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { LEAD_IN } from '../../demo/player';
 import { type ParamId, type Patch, setParam } from '../../patch/patch';
 import type { KeptPatch, PatchStore } from '../../patch/patchStore';
-import { TOUR, TOUR_PATCH, type TourCard, type TourMove, tourAt } from '../../tutorial/tour';
+import { TOUR, TOUR_PATCH, type TourMove, type TourSection, tourAt } from '../../tutorial/tour';
 import type { ViewerStore } from '../../viewers/viewerStore';
 
 /** How often the synth's hand moves the card's control: as often as the Demo's knobs. */
@@ -61,7 +61,7 @@ interface Host {
   /** The Tour starts: whatever plays by itself stops, a Tutorial ends. */
   onStart(): void;
   /** A card comes up: its phrase plays, over and over. */
-  onCard(card: TourCard): void;
+  onCard(card: TourSection): void;
   /** The Tour ends: its phrase stops. */
   onEnd(): void;
 }
@@ -97,7 +97,7 @@ export function useTourState({ patches, viewers, onStart, onCard, onEnd }: Host)
     setNaming(null);
   };
   const finishNow = useEffectEvent(finish);
-  const showCard = useEffectEvent((card: TourCard) => onCard(card));
+  const showCard = useEffectEvent((card: TourSection) => onCard(card));
 
   /** Starts the Tour; started again while it runs, back to its first card. */
   const start = () => {

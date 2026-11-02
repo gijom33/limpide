@@ -5,7 +5,7 @@ import { OVERLAY_TIPS } from './tips';
 // Each toggle shows a swatch of the mark it controls, so the row doubles as the legend. The Response Curve's toggle
 // reads "Filter", what the line is of (the owner, issue 161); its accessible name still says what is drawn. Its stored
 // key stays `curve`, so a visitor's choice still loads.
-const LABELS: Record<Overlay, string> = { harmonics: 'Harmonics', ideal: 'Ideal', curve: 'Filter', guides: 'Guides', maths: 'Maths' };
+const LABELS: Record<Overlay, string> = { harmonics: 'Harmonics', ideal: 'Ideal', curve: 'Filter', guides: 'Guides', geek: 'Geek' };
 const NAMES: Partial<Record<Overlay, string>> = { curve: 'Filter’s Response Curve' };
 
 interface Props {

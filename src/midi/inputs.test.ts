@@ -30,7 +30,7 @@ function setup(...initial: FakeInput[]) {
   for (const i of initial) access.map.set(i.id, i);
   const onMessage = vi.fn();
   const onDevices = vi.fn();
-  const dispose = connectMidi(access, { onMessage, onDevices });
+  const dispose = connectMidi(access, { onMessage, onClock: () => {}, onDevices });
   return { access, onMessage, onDevices, dispose };
 }
 
@@ -45,6 +45,25 @@ describe('connectMidi', () => {
     const { onMessage } = setup(pad);
     pad.send(0x90, 60, 127);
     expect(onMessage).toHaveBeenCalledWith({ type: 'noteOn', channel: 1, note: 60, velocity: 1 }, 'Synido TempoPAD C16');
+  });
+
+  it('hands a clock’s messages apart, with the input’s name and when they came on the page’s clock (issue 136)', () => {
+    const daw = new FakeInput('d', 'Stand-in DAW');
+    const access = new FakeAccess();
+    access.map.set('d', daw);
+    const onMessage = vi.fn();
+    const onClock = vi.fn();
+    connectMidi(access, { onMessage, onClock, onDevices: () => {} });
+    const before = performance.now() / 1000;
+    daw.send(0xfa, 0xf8, 0x90, 60, 127);
+    expect(onClock.mock.calls.map(([message, from]) => [message, from])).toEqual([
+      [{ type: 'start' }, 'Stand-in DAW'],
+      [{ type: 'clock' }, 'Stand-in DAW'],
+    ]);
+    const time = onClock.mock.calls[1][2];
+    expect(time).toBeGreaterThanOrEqual(before - 0.001);
+    expect(time).toBeLessThanOrEqual(performance.now() / 1000);
+    expect(onMessage).toHaveBeenCalledTimes(1);
   });
 
   it('starts listening to a Controller plugged in later', () => {

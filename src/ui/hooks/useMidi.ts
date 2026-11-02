@@ -39,6 +39,8 @@ interface Host {
   onBend(amount: number): void;
   onPedal(down: boolean): void;
   onProgram(number: number): void;
+  /** Channel aftertouch, how hard the keys are pressed (0–1, issue 132). */
+  onPressure(amount: number): void;
 }
 
 /**
@@ -56,6 +58,8 @@ export function useMidi(host: Host) {
   keyboard.current = host;
   const [midi, setMidi] = useState<MidiState>({ kind: 'pending' });
   const [activity, setActivity] = useState<string | null>(null);
+  // Whether a keyboard has sent aftertouch this visit: from then on the Timeline draws what it moves (issue 132).
+  const [pressureHeard, setPressureHeard] = useState(false);
   const [learn, setLearn] = useState<LearnState>({ phase: 'off' });
   const noteFromController = useEffectEvent(() => onNote());
 
@@ -114,6 +118,7 @@ export function useMidi(host: Host) {
       bend: (amount) => keyboard.current.onBend(amount),
       pedal: (down) => keyboard.current.onPedal(down),
       program: (number) => keyboard.current.onProgram(number),
+      pressure: (amount) => keyboard.current.onPressure(amount),
       learnChanged: (state) => {
         setLearn(state);
         if (state.phase === 'armed' && state.learned) onLearned.current(state.learned);
@@ -229,7 +234,10 @@ export function useMidi(host: Host) {
             }
             surface.handle(m, from);
             setActivity(describeMessage(m));
+            if (m.type === 'pressure' && m.value > 0) setPressureHeard(true);
           },
+          // A clock from any input sets the tempo (issue 136); it is no Controller's control, nor shown as one.
+          onClock: (m, name, time) => session.tempo.midiClock(m.type, time, name),
           onDevices: (devices) => {
             setMidi({ kind: 'ready', devices });
             const mappings = pluggedIn(devices, mappingStore.list(), storage);
@@ -243,10 +251,10 @@ export function useMidi(host: Host) {
       cancelled = true;
       dispose();
     };
-  }, [surface, midiWanted, mappingStore, storage]);
+  }, [surface, midiWanted, mappingStore, storage, session]);
 
   return {
-    midi, activity, mappings, mappingStore, learn, learning, learnContext, surface,
+    midi, activity, pressureHeard, mappings, mappingStore, learn, learning, learnContext, surface,
     setup, setupLast, updateSetup, closeSetup, applyLayout,
     bankFollow, setBankFollow, connect: () => setMidiWanted(true),
   };

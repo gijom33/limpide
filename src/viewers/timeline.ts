@@ -22,22 +22,27 @@ interface Source {
 /**
  * What the Timeline draws with the Patch as it is (the owner, 2026-10-28, issue 63): the Amp Envelope always; the
  * Filter Envelope only while its Amount moves the Cutoff; the Cutoff only while the Filter Envelope or an LFO moves
- * it; and every other Destination an active LFO moves, once however many LFOs aim at it. The key shows the same.
+ * it; and every other Destination an active LFO moves, once however many LFOs aim at it. `aftertouch`, the Destination
+ * aftertouch moves once a keyboard has sent it (issue 132), is drawn too, after the LFOs'. The key shows the same.
  */
-export function timelineShows(patch: Patch | undefined) {
-  const moved = patch ? lfoDestinations(patch) : [];
+export function timelineShows(patch: Patch | undefined, aftertouch: LfoDestination | null) {
+  const moved = patch ? [...new Set([...lfoDestinations(patch), ...(aftertouch ? [aftertouch] : [])])] : [];
   const filterEnvelope = !!patch && patch.filterEnvAmount !== 0;
   return { filterEnvelope, cutoff: filterEnvelope || moved.includes('cutoff'), destinations: moved.filter((d): d is LfoDestination => d !== 'cutoff') };
 }
 
 /**
  * Each moved Parameter's line, told apart by its pattern as well as its colour (the owner, 2026-10-28): the Cutoff
- * dots, what LFO 1 moves short dashes, what LFO 2 alone moves dash-dots. The key draws the same. The dots are drawn
- * with a thicker pen (`DOT_WIDTH`), so each reads as a round dot rather than a speck (the owner, 2026-10-28).
+ * dots, what LFO 2 alone moves dash-dots, anything else short dashes (what LFO 1 moves, what aftertouch alone moves).
+ * The key draws the same. The dots are drawn with a thicker pen (`DOT_WIDTH`), so each reads as a round dot rather
+ * than a speck (the owner, 2026-10-28).
  */
 export type LinePattern = 'dots' | 'dashes' | 'dashDot';
-export const linePattern = (patch: Patch, moved: LfoDestination | 'cutoff'): LinePattern =>
-  moved === 'cutoff' ? 'dots' : patch.lfoAmount > 0 && patch.lfoDestination === moved ? 'dashes' : 'dashDot';
+export const linePattern = (patch: Patch, moved: LfoDestination | 'cutoff'): LinePattern => {
+  if (moved === 'cutoff') return 'dots';
+  const aims = (amount: number, destination: LfoDestination) => amount > 0 && destination === moved;
+  return aims(patch.lfo2Amount, patch.lfo2Destination) && !aims(patch.lfoAmount, patch.lfoDestination) ? 'dashDot' : 'dashes';
+};
 
 /** A key entry: what it marks and names, and for a moved Parameter its line's stage colour and pattern. */
 export interface KeyEntry {
@@ -46,6 +51,8 @@ export interface KeyEntry {
   destination?: LfoDestination;
   stage?: StageId;
   pattern?: LinePattern;
+  /** Aftertouch moves it (issue 132). */
+  aftertouch?: true;
 }
 
 /**
@@ -53,11 +60,14 @@ export interface KeyEntry {
  * moves, then what LFO 2 moves, then the Cutoff and the Filter Envelope, last the Amp Envelope. An LFO on the Cutoff
  * shows as the Cutoff. With no Filter Envelope and no LFO, the Amp Envelope alone.
  */
-export function timelineKey(patch: Patch | undefined): KeyEntry[] {
-  const shows = timelineShows(patch);
+export function timelineKey(patch: Patch | undefined, aftertouch: LfoDestination | null): KeyEntry[] {
+  const shows = timelineShows(patch, aftertouch);
   return [
     ...(patch
-      ? shows.destinations.map((d) => ({ mark: `lfo-${d}`, name: DESTINATIONS[d].label, destination: d, stage: DESTINATIONS[d].stage, pattern: linePattern(patch, d) }))
+      ? shows.destinations.map((d) => ({
+          mark: `lfo-${d}`, name: DESTINATIONS[d].label, destination: d, stage: DESTINATIONS[d].stage, pattern: linePattern(patch, d),
+          ...(d === aftertouch ? { aftertouch: true as const } : {}),
+        }))
       : []),
     ...(shows.cutoff ? [{ mark: 'cutoff', name: 'Cutoff', stage: 'filter' as const, pattern: 'dots' as const }] : []),
     ...(shows.filterEnvelope ? [{ mark: 'filterEnvelope', name: 'Filter Envelope' }] : []),
@@ -88,7 +98,7 @@ const DOT_WIDTH = 1.75; // times the curve's width
  * knob's own scale), computed from the Modulation model for past moments, each only while something moves it
  * (`timelineShows`). "Now" is the right edge.
  */
-export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: () => ViewSettings) {
+export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: () => ViewSettings, aftertouch: () => LfoDestination | null) {
   const frozenNow = createFreezeLatch<number>();
   const dashState = createDashState();
 
@@ -160,8 +170,8 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
     // Filter Envelope: an area on the 0–1 level scale, the shape that (times Amount) pushes the Effective Cutoff.
     // Light fills, so where the two overlap they read no heavier than one Viewer's shading (16 %). Only while its
     // Amount moves the Cutoff: at zero the Envelope runs but changes nothing.
-    const shows = timelineShows(patchNow);
-    canvas.dataset.shows = timelineKey(patchNow).map((e) => e.mark).join(' ');
+    const shows = timelineShows(patchNow, aftertouch());
+    canvas.dataset.shows = timelineKey(patchNow, aftertouch()).map((e) => e.mark).join(' ');
     if (shows.filterEnvelope) area('--stage-filter', 0.1, (m) => m.filter);
     canvas.dataset.filterEnvelope = (samples.at(-1)?.filter ?? 0).toFixed(3);
     const latest = samples.at(-1);
@@ -240,10 +250,10 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
     for (const hz of [100, 1000, 10000]) haloText(g, hz >= 1000 ? `${hz / 1000}k` : `${hz}`, width - 3, yHz(hz) - 2, background);
     g.textAlign = 'left';
 
-    // The Maths Layer: the Effective Cutoff's value now, beside its dot, on a chip of the background.
-    const maths = view().overlays.maths;
-    canvas.dataset.cutoffReadout = maths ? formatParam('cutoff', last.cutoff) : '';
-    if (maths) {
+    // The Synth Geek Layer: the Effective Cutoff's value now, beside its dot, on a chip of the background.
+    const geek = view().overlays.geek;
+    canvas.dataset.cutoffReadout = geek ? formatParam('cutoff', last.cutoff) : '';
+    if (geek) {
       const text = formatParam('cutoff', last.cutoff);
       g.font = '11px system-ui, sans-serif';
       const w = g.measureText(text).width + 8;

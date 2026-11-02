@@ -77,13 +77,13 @@ for (const [width, rows] of [[1920, 1], [1440, 1], [872, 1], [690, 1], [375, 2],
   });
 }
 
-test('the keyboard sits at the top centre', async ({ page }) => {
+// Since issue 154 the keyboard need not be centred (decided by the owner): it takes the header's room, by whole keys.
+test('the keyboard sits at the top', async ({ page }) => {
   await page.setViewportSize({ width: 1710, height: 1060 });
   await page.goto('/');
   const piano = (await page.getByRole('group', { name: 'Piano' }).boundingBox())!;
   const header = (await page.locator('header').boundingBox())!;
   expect(piano.y + piano.height).toBeLessThanOrEqual(header.y + header.height + 1);
-  expect(Math.abs(piano.x + piano.width / 2 - 1710 / 2)).toBeLessThan(60);
 });
 
 test('the theme is chosen in the Display panel, and remembered', async ({ page }) => {

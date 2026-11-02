@@ -1,10 +1,11 @@
 import { useContext, useEffect, useEffectEvent, useRef, useState } from 'react';
-import type { Theme } from '../app/displaySettings';
+import type { Theme } from '../app/rememberedSettings';
 import type { Word } from '../input/callingPhrase';
 import { type LfoNumber, lfos } from '../patch/patch';
 import type { PatchStore } from '../patch/patchStore';
 import { addToRenderLoop } from '../viewers/renderLoop';
 import { lineAt, lineWiderThan } from './LfoPlot';
+import { type Box, type Cling, clingBeside, type Guide, HEIGHT, RING, targetBox, WIDTH } from './mascotCling';
 import { gesturesOf, looksOf } from './mascotGestures';
 import { type Act, createMascotMotion, hatOn, type Pose, type Room, SCREAMING } from './mascotMotion';
 import { CATCH, CLOUD, HATS, HOOK, ICE, type Picture, PROPS, type Rect, ROD_TIP, SKY, type Stage, TAILS } from './mascotPictures';
@@ -93,9 +94,6 @@ const TURNED_OVER = 100;
 /** Its mouth's height on the drawing: the poured water ends there, just under the rim. */
 const MOUTH_Y = 12.5;
 
-/** Its size on screen: 2 px a square of the grid. */
-const WIDTH = 44;
-const HEIGHT = 26;
 /** Room over its head for its leaps and the splash. */
 const HEADROOM = 18;
 /** How far under the section strip an edge must show for it to stand there, in pixels (issue 142). */
@@ -145,11 +143,20 @@ const CONTROLS = 'button, [role=slider], [role=tab], [role=radio], input, .piano
 const STEP = 4;
 /**
  * What is drawn over the page, which it never stands under (issue 164): the docked cards (the Demo's, a Tutorial's, the
- * Tour's), the tips, the open panels and menus, and the Preset's description. It stays drawn under them, so it never covers their
- * words or buttons.
+ * Tour's), the tips, the open panels and menus, the Preset's description and the Patch's plain words (issue 123). It
+ * stays drawn under them, so it never covers their words or buttons.
  */
 const DOCKED = '.docked:not([hidden])';
-const COVERS = `${DOCKED}, .tooltip:not([hidden]), .patch-about, .patch-panel, .destination-menu, .tutorial-menu-panel, .tempo-panel, .display-panel, .midi-panel, .learn-bar, .quick-setup`;
+const PANELS = `${DOCKED}, .patch-about, .patch-words, .patch-panel, .destination-menu, .tutorial-menu-panel, .tempo-panel, .display-panel, .midi-panel, .learn-bar, .quick-setup`;
+const COVERS = `${PANELS}, .tooltip:not([hidden])`;
+/** Pointing the way (issue 151): what may stand beside a control it clings to, as little covered as can be. */
+const NEIGHBOURS = '[data-learn], canvas, [role=tab], button, h2, h3';
+/** Its tail's height over its foot, where its aim at a control is taken from. */
+const TAIL_HEIGHT = 12;
+/** The steepest it aims its tail, up or down, in degrees. */
+const STEEPEST_AIM = 60;
+/** Sliding down the panel, a drip left behind it this often, in seconds. */
+const SLIDE_DRIPS = 0.09;
 
 /**
  * Its room along a section's top edge, in the window's pixels: within the stretches `clear` of the cards, tips and panels
@@ -245,13 +252,13 @@ export function BeadIcon({ on }: { on: boolean }) {
 }
 
 /**
- * Bead in About (issue 163), twice its size on the page, standing still on its feet: idle as on the page, it blinks,
- * glances about, wags its tail, and now and then jiggles or hops. All in the stylesheet, so it costs no frame of the
- * render loop, and with reduced motion it is still.
+ * Bead in About (issue 163), at its size on the page (issue 178), standing still on its feet: idle as on the page, it
+ * blinks, glances about, wags its tail, and now and then jiggles or hops. All in the stylesheet, so it costs no frame of
+ * the render loop, and with reduced motion it is still.
  */
 export function BeadIdle() {
   return (
-    <svg className="bead-idle" viewBox="0 0 22 13" width={WIDTH * 2} height={HEIGHT * 2} shapeRendering="crispEdges" aria-hidden="true">
+    <svg className="bead-idle" viewBox="0 0 22 13" width={WIDTH} height={HEIGHT} shapeRendering="crispEdges" aria-hidden="true">
       <g className="bead-idle-body">
         <g className="bead-idle-tail">
           {tailOf(TAIL)}
@@ -293,6 +300,7 @@ export function Mascot({
   theme,
   demoPart,
   word,
+  guide,
 }: {
   patches: PatchStore;
   leaving: boolean;
@@ -303,6 +311,8 @@ export function Mascot({
   demoPart: number | null;
   /** The last word spelled with Notes while it is out, `count` telling one from the next. */
   word: { word: Word; count: number } | null;
+  /** A Tutorial or the Tour open: the control it points the way to, its Step, and the Step made (issue 151). */
+  guide: Guide | null;
 }) {
   const context = useContext(ModulationContext);
   const frame = useRef<HTMLDivElement>(null);
@@ -333,11 +343,16 @@ export function Mascot({
     letGo(): void;
     word(word: Word): void;
     theme(theme: Theme): void;
+    /** A new Step or Tour card (a bounce, once beside its control), a Step made (a hop), a Tutorial finished (the fountain). */
+    step(): void;
+    made(): void;
+    finished(): void;
   } | null>(null);
   const press = useRef<{ x: number; y: number; picked: boolean } | null>(null);
   // What the loop and its handlers read of the props, as they are now.
   const demoPartNow = useEffectEvent(() => demoPart);
   const leavingNow = useEffectEvent(() => leaving);
+  const guideNow = useEffectEvent(() => guide);
   const gone = useEffectEvent(onGone);
 
   useEffect(() => {
@@ -387,6 +402,51 @@ export function Mascot({
     let moves: { t: number; x: number; y: number }[] = [];
     // A theme switched in Display: it reacts once the panel is closed, where it can be seen.
     let themeSwitched: Theme | null = null;
+    // Pointing the way (issue 151): a new Step's bounce, due once beside its control; the Section it is clinging in, or
+    // on its way down to a control in; the control it last clung to, where it stays while the next is out of reach;
+    // where it clings beside each control, worked out again only as the control or what covers the page moves.
+    let bounceDue = false;
+    let wasGuided = false;
+    let clungIn: string | null = null;
+    let clungTo: Element | null = null;
+    let lastDrip = -Infinity;
+    const clings = new WeakMap<Element, { key: string; cling: Cling | null }>();
+    // Each control it clings to, told from the next.
+    const ids = new WeakMap<Element, number>();
+    let lastId = 0;
+    const idOf = (el: Element) => {
+      if (!ids.has(el)) ids.set(el, ++lastId);
+      return ids.get(el)!;
+    };
+    /** Where it clings beside `el`, if it is within reach: shown, on the window under `ceiling`, under none of `blocks`. */
+    const clingFor = (el: Element, blocks: readonly Box[], ceiling: number, card: Box | null): { box: DOMRect; cling: Cling | null } => {
+      const box = el.getBoundingClientRect();
+      const target = el.getAttribute('data-tutorial-target');
+      // Shown: a tab coming into view is laid out a moment before it is visible.
+      const shown = box.width > 0 && el.checkVisibility({ visibilityProperty: true });
+      const key = [shown, box.left, box.top, box.width, box.height, innerWidth, innerHeight, ceiling, target, ...blocks.flatMap((b) => [b.left, b.top, b.right, b.bottom])].join(' ');
+      const known = clings.get(el);
+      if (known?.key === key) return { box, cling: known.cling };
+      const reachable = shown && box.top >= ceiling && box.bottom <= innerHeight && !blocks.some((b) => b.left < box.right && b.right > box.left && b.top < box.bottom && b.bottom > box.top);
+      let cling: Cling | null = null;
+      if (reachable) {
+        const scope = el.closest('section[aria-label], header') ?? document.body;
+        const neighbours = [...scope.querySelectorAll(NEIGHBOURS)]
+          .filter((n) => n !== el && !n.contains(el) && !el.contains(n) && !n.closest('.mascot'))
+          .map((n) => n.getBoundingClientRect())
+          .filter((r) => r.width > 0 && r.height > 0);
+        const ring = { left: box.left - RING, right: box.right + RING, top: box.top - RING, bottom: box.bottom + RING };
+        cling = clingBeside({
+          control: box,
+          keepClear: [ring, ...(target ? [targetBox(box, target)] : []), ...blocks],
+          neighbours,
+          card,
+          within: { left: 0, right: document.documentElement.clientWidth, top: ceiling, bottom: innerHeight },
+        });
+      }
+      clings.set(el, { key, cling });
+      return { box, cling };
+    };
     touched.current = {
       tickle: () => motion.tickle(context.engine.now()),
       poke: () => {
@@ -416,6 +476,9 @@ export function Mascot({
       },
       word: (w) => motion.word(w, context.engine.now()),
       theme: (t) => void (themeSwitched = t),
+      step: () => void (bounceDue = true),
+      made: () => motion.gesture('hop', context.engine.now()),
+      finished: () => motion.trick('fountain', context.engine.now()),
     };
     const stopDrawing = addToRenderLoop(() => {
       const outer = frame.current!;
@@ -433,6 +496,18 @@ export function Mascot({
       const docked = document.querySelector(DOCKED)?.getBoundingClientRect();
       const card = docked && docked.width > 0 ? { id: 'card', box: docked } : null;
       const clearOn = (box: DOMRect) => clearAlong(box, covers, WIDTH, HEIGHT);
+      // A Tutorial or the Tour open (issue 151): its own life paused, its visits too; closed, home it goes, its life again.
+      const guide = leaveBy === null && !leavingNow() ? guideNow() : null;
+      motion.guide(guide !== null);
+      if (wasGuided && !guide) {
+        visit = null;
+        nextVisit = now + between(15, 35);
+        motion.point(null);
+        clungIn = clungTo = null;
+        bounceDue = false;
+      }
+      wasGuided = guide !== null;
+      const perchBefore = perch?.id ?? null;
       if (themeSwitched && !document.querySelector('.display-panel, [role=dialog]')) {
         motion.theme(themeSwitched, now);
         themeSwitched = null;
@@ -461,17 +536,18 @@ export function Mascot({
         // Now and then a visit to another section in view: down to one below, or across to one beside; then home.
         const inView = (s: { box: DOMRect }) => roomAbove(s.box) && s.box.top <= innerHeight - 4 && clearOn(s.box).length > 0;
         // A ride ends as its LFO stops being one to ride (its Depth, Waveform or Rate, the Demo, reduced motion), its
-        // plot goes out of view, or it is picked up or sent away: it jumps home (issue 141).
+        // plot goes out of view, or it is picked up, sent away or a Tutorial or the Tour opens: it jumps home (issues
+        // 141, 151).
         const visitEnds = visit?.ride
-          ? !rideable.some((p) => p.lfo === visit!.ride) || moving === 'held' || leavingNow()
+          ? !rideable.some((p) => p.lfo === visit!.ride) || moving === 'held' || leavingNow() || guide !== null
           : !sections.some((s) => s.id === visit?.id && inView(s));
-        if (visit && (now >= visit.until || visitEnds)) {
+        if (visit && ((now >= visit.until && !guide) || visitEnds)) {
           if (visit.ride && leavingNow()) gettingOff = true;
           visit = null;
           nextVisit = now + between(20, 40);
         }
         // Not in the middle of a funny turn: it plays to its end first (the owner, 2026-10-30).
-        if (!visit && now >= nextVisit && !still.matches && leaveBy === null && !leavingNow() && moving === 'standing' && !shown?.doing) {
+        if (!visit && now >= nextVisit && !guide && !still.matches && leaveBy === null && !leavingNow() && moving === 'standing' && !shown?.doing) {
           // A plot to ride (issue 141) is a choice beside the sections in view.
           const choices = [
             ...rideable.map((p) => ({ id: `ride ${p.lfo}`, ride: p.lfo })),
@@ -516,6 +592,58 @@ export function Mascot({
           on = under;
           perch = { id: under.id, foot: under.box.top, hovering: false };
           if (homeId !== null) visit = under.id === homeId ? null : { id: under.id, until: now + between(8, 18) };
+        }
+      }
+      // Pointing the way (issue 151): to the Step's or the card's control, by its usual move to the control's Section's
+      // edge, then a slide down the panel to its side, where it clings; from beside another control of that Section, a
+      // slide across. Out of reach (in a panel, under the card, on a hidden tab, off the window), it stays beside the
+      // last control while that is still in reach, else on its edge, and looks at it. With reduced motion it only looks.
+      let guideRoom: Room | null = null;
+      let aimAt: { x: number; y: number } | null = null;
+      let clinging: Cling | null = null;
+      // Beside the control it is pointing the way to, rather than the last one, staying while that is out of reach.
+      let beside = false;
+      if (guide && moving !== 'held' && moving !== 'thrown') {
+        let el = guide.selector ? document.querySelector(guide.selector) : null;
+        if (guide.standIn && !el?.checkVisibility()) el = document.querySelector(guide.standIn);
+        const blocks = [...document.querySelectorAll(PANELS)].map((e) => e.getBoundingClientRect()).filter((r) => r.width > 0 && r.height > 0);
+        const ceiling = stacked.matches ? Math.max(0, ...['header', '.section-strip'].map((q) => document.querySelector(q)?.getBoundingClientRect().bottom ?? 0)) : 0;
+        const found = el ? clingFor(el, blocks, ceiling, card?.box ?? null) : null;
+        // A control on a hidden tab: towards its Section.
+        const seen = found && found.box.width > 0 ? found.box : el?.closest('section[aria-label]')?.getBoundingClientRect();
+        if (seen) aimAt = { x: (seen.left + seen.right) / 2, y: (seen.top + seen.bottom) / 2 };
+        let to = found?.cling ? { el: el!, cling: found.cling } : null;
+        const sliding = moving === 'sliding' || moving === 'clinging';
+        if (!to && sliding && clungTo?.isConnected) {
+          const stay = clingFor(clungTo, blocks, ceiling, card?.box ?? null).cling;
+          if (stay) to = { el: clungTo, cling: stay };
+        }
+        beside = !!to && to.el === el;
+        if (to && !still.matches) {
+          // Its Section's edge; for a control outside the Sections (the Display button), the edge just under it.
+          const own = to.el.closest('section[aria-label]')?.getAttribute('aria-label');
+          const [middle, high] = [to.cling.left + DROP_MIDDLE, to.cling.foot];
+          const edge = own
+            ? sections.find((s) => s.id === own)
+            : sections.filter((s) => s.box.left <= middle && s.box.right >= middle && s.box.top >= high).sort((a, b) => a.box.top - b.box.top)[0];
+          const section = edge?.id ?? null;
+          const edgeClear = edge && edge.box.top - HEIGHT - HEADROOM >= ceiling && edge.box.top <= innerHeight - 4 ? clearOn(edge.box) : [];
+          const along = nearestSpan(edgeClear, to.cling.left);
+          const spot = along && Math.min(along.max, Math.max(along.min, to.cling.left));
+          const settled = moving === 'standing' || moving === 'hovering' || moving === 'landing';
+          const atSpot = spot !== null && perchBefore === section && moving === 'standing' && Math.abs(drawnAt.left - spot) < 1.5;
+          if ((sliding && (clungIn === section || to.el === clungTo)) || atSpot || (spot === null && (settled || sliding))) {
+            perch = { id: `cling ${idOf(to.el)}`, foot: to.cling.foot, hovering: false, cling: true };
+            guideRoom = { min: to.cling.left, max: to.cling.left };
+            clungIn = section;
+            clungTo = to.el;
+            clinging = to.cling;
+          } else if (spot !== null && edge) {
+            // First its usual move to the Section's edge, over the control.
+            on = edge;
+            perch = { id: edge.id, foot: edge.box.top, hovering: false };
+            guideRoom = { min: spot, max: spot };
+          }
         }
       }
       // Through a Demo part, one of its acts in turn; surfing, its line is an LFO's shape as its plot draws it: the
@@ -563,6 +691,15 @@ export function Mascot({
         };
       }
 
+      const span = guideRoom ?? room.room;
+      // Facing the control, its tail aimed at it: level beside it, else from where it is (issue 151).
+      if (!guide) motion.point(null);
+      else if (clinging && beside && moving === 'clinging') motion.point({ way: clinging.turn, angle: 0 }, true);
+      else if (aimAt) {
+        const [ax, ay] = [aimAt.x - drawnAt.left - DROP_MIDDLE, aimAt.y - drawnAt.foot + TAIL_HEIGHT];
+        const angle = Math.max(-STEEPEST_AIM, Math.min(STEEPEST_AIM, (Math.atan2(ay, Math.abs(ax)) * 180) / Math.PI));
+        motion.point({ way: ax < 0 ? -1 : 1, angle }, clinging !== null);
+      } else motion.point(null);
       const m = context.engine.modulationAt();
       const heard = lfos(context.patch()).flatMap((l, i) => (l.amount > 0 ? [m.lfo[i]] : []));
       const amp = m.amp * m.volume;
@@ -573,12 +710,20 @@ export function Mascot({
         { amp, sway: heard.length ? heard.reduce((a, b) => a + b, 0) / heard.length : 0, struck: m.struck, ...looksOf(context.patch(), amp) },
         now,
         still.matches,
-        room.room,
+        span,
       );
       // Run off: on a large screen, to another section.
       if (pose.escaped && !stacked.matches) nextVisit = now;
-      const where = place.frame(perch, room.room, now, still.matches, pose.x);
+      const where = place.frame(perch, span, now, still.matches, pose.x);
       if (where.landedAt !== null) motion.place(where.landedAt);
+      // Its leap across, or its hover, for its facing from the next frame (issue 179).
+      motion.leaping(where.leap, where.moving === 'hovering');
+      // One small bounce on arriving beside a control, and at each new Step or card: once there, or looking from afar.
+      const arrived = where.landedAt !== null && where.moving === 'clinging';
+      if (arrived || (bounceDue && guide && (where.moving === 'clinging' || (!clinging && !guideRoom)))) {
+        motion.gesture('bounce', now);
+        bounceDue = false;
+      }
       // Caught on its hover line after a throw, it hovers about where it was caught: its room found there again.
       if (where.landedAt !== null && where.moving === 'hovering') room = null;
       foot = where.foot;
@@ -589,7 +734,8 @@ export function Mascot({
         return;
       }
 
-      // Between lines and under the header, the line's moves take over the sound's and the controls'.
+      // Between lines and under the header, the line's moves take over the sound's and the controls'. It keeps its
+      // facing, turned its way across a leap and back as it lands (issue 179), but in the pointer's hold or thrown.
       let tailTurn = 0;
       let origin = '20% 100%';
       const across = Math.max(-15, Math.min(15, where.vx / 40)); // leaning into its way across
@@ -605,27 +751,32 @@ export function Mascot({
       } else if (where.moving === 'hovering') {
         // On its tail, straight down under it and whirling (issue 142); its bob is in its foot, and nothing stretches it
         // up over the tabs. With reduced motion, still.
-        Object.assign(pose, { legs: 'tuck', splash: 'none', lift: 0, tilt: 0, turn: 1, stretch: 1 });
+        Object.assign(pose, { legs: 'tuck', splash: 'none', lift: 0, tilt: 0, stretch: 1 });
         tailTurn = 90 + (still.matches ? 0 : Math.sin(now * 2 * Math.PI * WHIRLS) * WHIRL_DEGREES);
       } else if (where.moving === 'falling') {
         // Hopping off, tucked; then a raindrop, longer the faster it falls.
         const speed = Math.max(0, where.vy);
-        Object.assign(pose, { legs: 'tuck', splash: 'none', lift: 0, tilt: across, turn: 1, eyes: where.vy < 0 ? 'happy' : 'open' });
+        Object.assign(pose, { legs: 'tuck', splash: 'none', lift: 0, tilt: across, eyes: where.vy < 0 ? 'happy' : 'open' });
         pose.stretch = where.vy < 0 ? 0.92 : 1 + Math.min(0.35, speed / 1600);
       } else if (where.moving === 'flying' && where.windup < 1) {
         // Crouching, its tail swinging round and down under it.
-        Object.assign(pose, { legs: 'stand', splash: 'none', lift: 0, tilt: 0, turn: 1, eyes: 'happy', stretch: 1 - 0.15 * where.windup });
+        Object.assign(pose, { legs: 'stand', splash: 'none', lift: 0, tilt: 0, eyes: 'happy', stretch: 1 - 0.15 * where.windup });
         tailTurn = 90 * where.windup;
       } else if (where.moving === 'flying') {
-        Object.assign(pose, { legs: 'tuck', splash: 'none', lift: 0, tilt: across, turn: 1, eyes: where.thrust ? 'happy' : 'open' });
+        Object.assign(pose, { legs: 'tuck', splash: 'none', lift: 0, tilt: across, eyes: where.thrust ? 'happy' : 'open' });
         pose.stretch = 1 + Math.min(0.2, Math.abs(where.vy) / 2600);
         // Its tail straight down under it, whirling while it pushes, swinging back up as it coasts.
         tailTurn = where.thrust ? 90 + Math.sin(now * 2 * Math.PI * WHIRLS) * WHIRL_DEGREES : Math.max(0, Math.min(90, -where.vy / 6));
+      } else if (where.moving === 'sliding') {
+        // Running down the panel like a drop on glass, a little long, leaving drips behind (issue 151).
+        Object.assign(pose, { legs: 'tuck', splash: 'none', lift: 0, tilt: 0, stretch: 1.08 });
+      } else if (where.moving === 'clinging') {
+        pose.legs = 'tuck';
       } else if (where.moving === 'landing' && leaveBy !== 'melt') {
         // Squashed as hard as it hit, then a wobble that dies away, like a drop of jelly.
         const p = where.landed;
         const wobble = Math.exp(-5 * p) * Math.cos(16 * p);
-        Object.assign(pose, { legs: 'stand', lift: 0, turn: 1 });
+        Object.assign(pose, { legs: 'stand', lift: 0 });
         pose.stretch = 1 - 0.4 * where.impact * wobble;
         pose.splash = p < 0.3 ? 'wide' : 'none';
         pose.eyes = p < 0.15 ? 'shut' : where.impact > 0.5 && p < 0.55 ? 'happy' : pose.eyes;
@@ -672,8 +823,10 @@ export function Mascot({
       const turnTail = tailTurn + pose.wag;
       tail.current!.setAttribute('transform', turnTail ? `translate(${-4.5 * under} ${3 * under}) rotate(${turnTail} 9 9)` : '');
       shown = pose;
-      // What it is doing, for the tests (issue 127).
-      const marks = { act: act ?? '', ride: ride ? String(ride.lfo) : '', tail: pose.tail, hat: pose.hat, doing: pose.doing ?? '', prop: pose.prop, moving: where.moving };
+      // What it is doing, for the tests (issue 127); pointing the way, for the stylesheet too (issue 151).
+      // Beside a control, or sliding there, the pointer passes through it to what is under it (issue 151).
+      const pointing = where.moving === 'sliding' || where.moving === 'clinging' ? 'yes' : 'no';
+      const marks = { act: act ?? '', ride: ride ? String(ride.lfo) : '', tail: pose.tail, hat: pose.hat, doing: pose.doing ?? '', prop: pose.prop, moving: where.moving, pointing };
       for (const [mark, value] of Object.entries(marks)) if (outer.dataset[mark] !== value) outer.dataset[mark] = value;
 
       drawnAt = { left: acrossOf(where, pose.x), foot: where.foot };
@@ -732,6 +885,10 @@ export function Mascot({
       );
       const level = pose.sip > 0.5 && (pose.prop === 'glassHalf' || pose.prop === 'glassLow') ? `${pose.prop}Over` : pose.prop;
       for (const [name, g] of water.current) g.style.display = name === level ? '' : 'none';
+      if (where.moving === 'sliding' && now - lastDrip > SLIDE_DRIPS) {
+        droplets.fling(1, base.x, base.y - 2, 'drip');
+        lastDrip = now;
+      }
       if (where.moving === 'flying' && where.thrust && now - lastExhaust > 0.035) {
         droplets.fling(1, base.x, ground + TAIL_LENGTH, 'down');
         lastExhaust = now;
@@ -798,6 +955,17 @@ export function Mascot({
     themeSeen.current = theme;
     touched.current?.theme(theme);
   }, [theme]);
+
+  // A Tutorial's or the Tour's new Step or card, a Step made, a Tutorial finished (issue 151): each once, as it comes.
+  const guideSeen = useRef<Guide | null>(null);
+  useEffect(() => {
+    const was = guideSeen.current;
+    guideSeen.current = guide;
+    if (!guide) return;
+    if (guide.step !== was?.step) touched.current?.step();
+    if (guide.made && !was?.made && guide.step === was?.step) touched.current?.made();
+    if (guide.finished && !was?.finished) touched.current?.finished();
+  }, [guide]);
 
   const part = (part: Part) =>
     Object.entries(PARTS[part]).map(([variant, list]) => (

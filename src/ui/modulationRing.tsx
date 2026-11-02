@@ -1,7 +1,7 @@
 import { createContext, type RefObject, useContext, useEffect, useEffectEvent, useRef } from 'react';
 import type { SynthEngine } from '../engine/synthEngine';
 import { keyToNote } from '../input/keyboardLayout';
-import { effectiveValue } from '../modulation/destinations';
+import { destinationOf, effectiveValue } from '../modulation/destinations';
 import { cutoffReach, evenReach, keyTrackOctaves, lfoCutoffReach, type Reach, volumeReach } from '../modulation/reach';
 import { PARAMS, type ParamId, type Patch } from '../patch/patch';
 import { valueToPosition } from '../patch/taper';
@@ -31,11 +31,13 @@ interface Modulated {
  * while Notes play (the owner, 2026-10-28): the LFOs' reach (both together when both aim at it); on the Cutoff, the
  * Filter Envelope's sweep, then, greyed and beyond it, all Velocity can add, soft to hard, and all Key Track can
  * add or take away over the on-screen piano's keys and an octave either side. The dot (the Effective Cutoff) runs along them whatever the
- * Note.
+ * Note. Aftertouch on a knob's Destination moves its dot, ring or none (issue 132).
  */
 function modulated(id: ParamId, patch: Patch, engine: SynthEngine, octave: number): Modulated | null {
   const m = engine.modulationAt();
   const now = m.amp > AUDIBLE ? effectiveValue(id, patch, m) : null;
+  // Aftertouch pressing on this knob's Destination (issue 132): its dot shows the move, with no ring of its own.
+  const pressing = m.pressure.amount > 0 && destinationOf(id) === m.pressure.destination;
   if (id === 'cutoff') {
     const lfos = lfoCutoffReach(patch);
     const sweep = cutoffReach(patch);
@@ -46,7 +48,7 @@ function modulated(id: ParamId, patch: Patch, engine: SynthEngine, octave: numbe
     // Demo moves the piano to show most of a part's Notes, not all (Poly Pluck's arpeggio dips below its C4).
     const [down, up] = keyTrackOctaves(patch, keyToNote('KeyA', octave)! - 12, keyToNote('Semicolon', octave)! + 12);
     const keyTrack: Range[] = [...(down < 0 ? [[lo * 2 ** down, lo] as Range] : []), ...(up > 0 ? [[hi, hi * 2 ** up] as Range] : [])];
-    if (!lfos && !sweep && !keyTrack.length) return null;
+    if (!lfos && !sweep && !keyTrack.length && !pressing) return null;
     return {
       reach: lfos,
       envelope: env,
@@ -55,9 +57,10 @@ function modulated(id: ParamId, patch: Patch, engine: SynthEngine, octave: numbe
       now,
     };
   }
-  // The other ring-carrying knobs: the LFOs swing them evenly around the knob's own value (Volume, down from it).
+  // The other ring-carrying knobs: the LFOs swing them evenly around the knob's own value (Volume, down from it), and
+  // aftertouch raises them.
   const reach = id === 'volume' ? volumeReach(patch) : evenReach(patch, id);
-  return reach ? { reach, now } : null;
+  return reach || pressing ? { reach, now } : null;
 }
 
 // A control of the Filter Envelope that a pointer is over, or that has the keyboard focus: its ring is the white one,

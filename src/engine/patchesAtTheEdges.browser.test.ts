@@ -347,7 +347,7 @@ describe('every Viewer draws a Patch at the edges in a frame (issue 116)', () =>
       createSpectrum(canvas(360, 140), engine.taps.filter, SR, { fundamental: engine.fundamental, view, showIdeal: true, gateOn, response: engine.filterResponse }),
       createScope(canvas(360, 140), engine.taps.amp, engine.fundamental, view, { limiting: engine.limiting }),
       createSpectrum(canvas(360, 140), engine.taps.amp, SR, { fundamental: engine.fundamental, view }),
-      createTimeline(canvas(900, 140), engine, view),
+      createTimeline(canvas(900, 140), engine, view, () => null),
     ];
     for (let i = 0; i < 2; i++) for (const draw of draws) draw();
     for (const listener of listeners) listener({ before: defaultPatch(), after: patch, by: 'hand' });

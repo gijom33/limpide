@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DIP, envelopeLevel, type GateEvent } from '../modulation/envelope';
 import { lfoOffset, osc2Cents } from '../modulation/modulationModel';
+import { geekReadout, harmonicNumber, noiseSlope, scopeReadout, UNDER_THE_HOOD, underTheHoodAt } from '../music/geek';
 import { harmonicSeries, type Waveform } from '../music/harmonics';
 import { fmDepthKept, idealPartials, idealReference } from '../music/idealReference';
 import { noteIndex } from '../music/tempo';
@@ -9,6 +10,7 @@ import { PRESETS } from '../patch/presets';
 import { betweenHarmonicsDb, dB, energyAboveDb, frequencyAround, rms, toneAmplitude, toneAmplitudeHann } from '../test/measure';
 import { straightenLimiter } from '../test/straightLimiter';
 import { guideLevel } from '../viewers/guides';
+import { hoverReadout, interpolatedPeak } from '../viewers/readout';
 import { amplitudeToSpectrumDb } from '../viewers/spectrumScale';
 import { createSynthEngine, OSCILLATOR_LEVEL } from './synthEngine';
 
@@ -292,7 +294,7 @@ describe('headroom', () => {
       }
     }
     expect(worst).toBeLessThan(1);
-  }, 60_000); // 72 renders: past the default limit when the whole suite runs at once
+  }, 120_000); // 72 renders, 4.6 s alone: past 60 s in a loaded night's suite (issue 177)
 });
 
 describe('Waveforms match their Ideal Reference', () => {
@@ -1197,6 +1199,16 @@ describe('an LFO synced to the tempo (issue 112)', () => {
     expect(gap(measured, engine, 0.21, SECONDS)).toBeLessThan(0.005);
   });
 
+  it('is pulled onto a beat count started a moment ago, as a MIDI clock’s Start counts it from its first tick (issue 136)', async () => {
+    // At 0.8 s the beats of 120 BPM are counted again from 0.63 s, a moment past: pulled onto them over two cycles of
+    // 1/2 s, from 0.8 + 1 s, so the beat at 2.13 s finds the saw at its foot.
+    const { measured, engine } = await gains({}, (e) => e.setTempo(120, 0.63));
+    noJump(engine);
+    onTheBeats(measured, engine, [2.13], 1 / 2);
+    expect(engine.tempo()).toEqual({ bpm: 120, origin: 0.63 });
+    expect(gap(measured, engine, 0.21, SECONDS)).toBeLessThan(0.005);
+  });
+
   it('follows a note value turned from where it is, pulled onto its beat over two cycles, the model on the sound', async () => {
     // A 1/8 at 120 BPM from 0.2 s, 4 Hz: on its beats from 0.8 + 0.5 s, every quarter of a second from 0.2 s.
     const { measured, engine } = await gains({}, (e, lfoAmount) => e.applyPatch({ ...defaultPatch(), ...tremolo, lfoNote: noteIndex('1/8'), lfoAmount }));
@@ -1383,6 +1395,65 @@ describe('Velocity → Cutoff', () => {
         expect(Math.abs(measured - dB(curve[i])), `${harmonics[i]} Hz at velocity ${velocity}`).toBeLessThan(0.5);
       }
     }
+  });
+});
+
+describe('aftertouch (issue 132)', () => {
+  // The Cutoff at no pressure and full: two octaves up (Claude's call, open to the owner); the Resonance, a knob with a
+  // room, at half: 50 points up from 0.2.
+  const cases = [
+    { pressure: { destination: 'cutoff', amount: 0 }, cutoff: 300, resonance: 0 },
+    { pressure: { destination: 'cutoff', amount: 1 }, cutoff: 1200, resonance: 0 },
+    { pressure: { destination: 'resonance', amount: 0.5 }, cutoff: 300, resonance: 0.7, knob: 0.2 },
+  ] as const;
+  it('moves the Effective Cutoff and Resonance by the reach the model predicts, none at no pressure, and the sound follows', async () => {
+    const harmonics = Float32Array.from({ length: 20 }, (_, i) => 110 * (i + 1));
+    for (const { pressure, cutoff, resonance, ...rest } of cases) {
+      const ctx = new OfflineAudioContext(1, SR, SR);
+      const engine = createSynthEngine(ctx);
+      const knob = 'knob' in rest ? rest.knob : 0;
+      engine.applyPatch({ ...defaultPatch(), cutoff: 300, resonance: knob, ampSustain: 1, ampAttack: 0.001, lfoAmount: 0, lfo2Amount: 0 });
+      engine.setPressure(pressure);
+      engine.noteOn(45, 1, 0);
+      const frame = ctx.suspend(0.5).then(() => {
+        const read = (a: AnalyserNode) => {
+          const s = new Float32Array(a.fftSize);
+          a.getFloatTimeDomainData(s);
+          return s;
+        };
+        const out = { osc: read(engine.taps.oscillator), filter: read(engine.taps.filter), curve: engine.filterResponse(harmonics), m: engine.modulationAt(0.5) };
+        void ctx.resume();
+        return out;
+      });
+      await ctx.startRendering();
+      const { osc, filter, curve, m } = await frame;
+      const name = `${pressure.destination} at ${pressure.amount}`;
+      expect(m.cutoff, name).toBeCloseTo(cutoff, 3);
+      expect(m.resonance, name).toBeCloseTo(resonance, 6);
+      expect(m.pressure).toEqual(pressure);
+      for (let i = 0; i < harmonics.length; i++) {
+        if (dB(curve[i]) < -40) continue;
+        const measured = dB(toneAmplitudeHann(filter, SR, harmonics[i]) / toneAmplitudeHann(osc, SR, harmonics[i]));
+        expect(Math.abs(measured - dB(curve[i])), `${harmonics[i]} Hz, ${name}`).toBeLessThan(0.5);
+      }
+    }
+  });
+
+  it('on Pitch, raises the sound by up to a semitone, the model and Cycle Lock with it, and leaves the knobs as they are', async () => {
+    const A2 = 45; // 110 Hz
+    let engine!: ReturnType<typeof createSynthEngine>;
+    const s = await render(1, { resonance: 0, ampAttack: 0.001, ampSustain: 1, cutoff: 20000, lfoAmount: 0, lfo2Amount: 0 }, (e) => {
+      engine = e;
+      e.noteOn(A2, 1, 0);
+      e.setPressure({ destination: 'pitch', amount: 1 }, 0.2);
+    });
+    const last = [s.length - SR / 2, s.length] as const;
+    const raised = 110 * 2 ** (1 / 12);
+    expect(dB(toneAmplitude(s, SR, raised, ...last) / toneAmplitude(s, SR, 110, ...last))).toBeGreaterThan(20);
+    expect(engine.modulationAt(0.8).pitch).toBeCloseTo(A2 + 1, 6);
+    expect(engine.modulationAt(0.1).pitch).toBeCloseTo(A2, 6); // the Timeline's past keeps its own pressure
+    expect(engine.fundamental()).toBeCloseTo(raised, 1);
+    expect(engine.patchAt(0.8)?.cutoff).toBe(20000);
   });
 });
 
@@ -2130,23 +2201,23 @@ describe('what follows an Oscillator’s pitch when something moves it (issue 98
   const pulse = { cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001, waveform: 'pulse', pulseWidth: 0.25, osc2Waveform: 'pulse', osc2PulseWidth: 0.25 } as const;
   const solo2 = { ...pulse, mixOsc1: 0, mixOsc2: 1 } as const;
   /**
-   * The share of each 50 ms window, from `from` to `to` seconds, that the wave spends above its mean, and its RMS: a
-   * 25 % pulse spends a quarter of its cycle on one side, whatever its pitch.
+   * The Pulse Width of each 50 ms window, from `from` to `to` seconds, as the share of it the wave spends on its
+   * shorter side of its mean, and its RMS: a 25 % pulse spends a quarter of its cycle on one side, whatever its pitch.
    */
-  const duties = (s: Float32Array, from: number, to: number) => {
+  const pulseWidths = (s: Float32Array, from: number, to: number) => {
     const size = Math.round(0.05 * SR);
-    const out: { at: number; duty: number; level: number }[] = [];
+    const out: { at: number; pulseWidth: number; level: number }[] = [];
     for (let start = Math.round(from * SR); start + size <= Math.round(to * SR); start += size) {
       const window = s.subarray(start, start + size);
       const mean = window.reduce((sum, v) => sum + v, 0) / size;
       const above = window.filter((v) => v > mean).length / size;
-      out.push({ at: start / SR, duty: Math.min(above, 1 - above), level: rms(window) });
+      out.push({ at: start / SR, pulseWidth: Math.min(above, 1 - above), level: rms(window) });
     }
     return out;
   };
   /** Every window of `s` from `from` to `to` seconds at `width`. */
   const expectWidth = (s: Float32Array, from: number, to: number, width = 0.25) => {
-    for (const w of duties(s, from, to)) expect(Math.abs(w.duty - width), `the width at ${w.at.toFixed(2)} s`).toBeLessThan(0.03);
+    for (const w of pulseWidths(s, from, to)) expect(Math.abs(w.pulseWidth - width), `the width at ${w.at.toFixed(2)} s`).toBeLessThan(0.03);
   };
   const steadyLevel = async () => rms((await render(0.6, solo2, (e) => e.noteOn(A3, 1, 0))).subarray(SR * 0.3));
 
@@ -2156,7 +2227,7 @@ describe('what follows an Oscillator’s pitch when something moves it (issue 98
       const s = await render(1.6, { ...solo2, osc2EnvAmount, filterAttack: 1, filterSustain: 1 }, (e) => e.noteOn(A3, 1, 0));
       const level = await steadyLevel();
       expectWidth(s, 0.05, 1.55);
-      for (const w of duties(s, 0.05, 1.55)) expect(dB(w.level / level), `the level at ${w.at.toFixed(2)} s`).toBeGreaterThan(-3);
+      for (const w of pulseWidths(s, 0.05, 1.55)) expect(dB(w.level / level), `the level at ${w.at.toFixed(2)} s`).toBeGreaterThan(-3);
     });
 
   it('keeps a pulse at 25 % under an LFO on Osc 2 Pitch, an octave each way', async () => {
@@ -2631,5 +2702,331 @@ describe('Legato (issue 119)', () => {
       e.noteOn(69, 1, 0.1);
       e.noteOn(81, 1, 1);
     })).toBe(1);
+  });
+});
+
+// Issue 133, decision 4: every live number of the Synth Geek Layer is held to what the engine plays (issue 167).
+describe('the Synth Geek Layer’s numbers for Osc 2, held to the engine (issue 167)', () => {
+  const sines = { cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001, waveform: 'sine', osc2Waveform: 'sine' } as const;
+  /** A readout's multiple as a number: "×1.498" is 1.498, "×½" 0.5. */
+  const multiple = (readout: string | undefined) => {
+    const figure = readout!.replace('×', '');
+    return ({ '½': 0.5, '¼': 0.25 } as Record<string, number>)[figure] ?? Number(figure);
+  };
+
+  for (const [id, value] of [['osc2Semitone', 7], ['osc2Octave', 1], ['osc2Octave', -1]] as const)
+    it(`Osc 2 sounds at the Note times what ${id === 'osc2Octave' ? 'Octave' : 'Semitone'} ${value > 0 ? '+' : ''}${value} reads`, async () => {
+      const patch = { ...defaultPatch(), ...sines, mixOsc1: 0, mixOsc2: 1, [id]: value };
+      const s = await render(1, patch, (e) => e.noteOn(69, 1, 0));
+      expect(frequencyAround(s, SR, 0.6, 0.5) / 440).toBeCloseTo(multiple(geekReadout(id, value, patch)), 3);
+    });
+
+  // f is Osc 2 before Detune: an octave up with Osc 1, the beats are twice as fast.
+  for (const [where, octaves] of [['at A4', { osc1Octave: 0, osc2Octave: 0 }], ['both an octave up', { osc1Octave: 1, osc2Octave: 1 }]] as const)
+    it(`the summed Oscillators beat as fast as Detune 10 cents reads, ${where}`, async () => {
+      const patch = { ...defaultPatch(), ...sines, ...octaves, mixOsc1: 1, mixOsc2: 1, osc2Detune: 10 };
+      let note: number | null = null;
+      const s = await render(5, patch, (e) => {
+        expect(e.newestNote()).toBeNull();
+        e.noteOn(69, 1, 0);
+        note = e.newestNote();
+      });
+      const readout = geekReadout('osc2Detune', 10, patch, { note });
+      expect(readout).toMatch(/ Hz beats$/);
+      // The level swells and fades once a beat: count its rises through the middle, 10 ms frames, after the Attack.
+      const frame = SR / 100;
+      const levels: number[] = [];
+      for (let from = SR / 4; from + frame <= s.length; from += frame / 2) levels.push(rms(s, from, from + frame));
+      const middle = (Math.max(...levels) + Math.min(...levels)) / 2;
+      const rises: number[] = [];
+      for (let i = 1; i < levels.length; i++)
+        if (levels[i - 1] < middle && levels[i] >= middle) rises.push(i - 1 + (middle - levels[i - 1]) / (levels[i] - levels[i - 1]));
+      const beatsHz = (rises.length - 1) / (((rises[rises.length - 1] - rises[0]) * frame) / 2 / SR);
+      expect(Math.abs(beatsHz - Number.parseFloat(readout!))).toBeLessThan(0.01);
+    });
+});
+
+// Issue 133, decision 4: the LFOs' and Key Track's numbers held to what the engine plays (issue 169).
+describe('the Synth Geek Layer’s numbers for the LFOs and Key Track, held to the engine (issue 169)', () => {
+  const sine = { cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001, waveform: 'sine', osc2Waveform: 'sine' } as const;
+  /** A readout's number: "±0.80 oct" is 0.8, "−6.0 dB" −6. */
+  const number = (readout: string | undefined) => Number.parseFloat(readout!.replace('±', '').replace('−', '-'));
+
+  /** How long the sound takes to repeat a square LFO's tremolo: the mean time between its swells, after the first. */
+  const tremoloPeriod = async (patch: Partial<Patch>, bpm: number) => {
+    const seconds = 4;
+    const ctx = new OfflineAudioContext(1, SR * seconds, SR);
+    const engine = createSynthEngine(ctx);
+    engine.setTempo(bpm, 0);
+    engine.applyPatch({ ...defaultPatch(), ...sine, lfoDestination: 'volume', lfoAmount: 1, lfoWaveform: 'square', ...patch });
+    engine.noteOn(69, 1, 0);
+    const s = (await ctx.startRendering()).getChannelData(0);
+    const frame = SR / 1000; // 1 ms
+    const levels: number[] = [];
+    for (let from = 0; from + frame <= s.length; from += frame) levels.push(rms(s, from, from + frame));
+    const middle = Math.max(...levels) / 2;
+    const rises: number[] = [];
+    for (let i = 1; i < levels.length; i++) if (levels[i - 1] < middle && levels[i] >= middle) rises.push(i);
+    return ((rises[rises.length - 1] - rises[1]) * frame) / SR / (rises.length - 2);
+  };
+
+  for (const [what, patch, bpm, id, value] of [
+    ['a Rate of 2 Hz', { lfoRate: 2 }, 120, 'lfoRate', 2],
+    ['a Rate of 3 Hz', { lfoRate: 3 }, 120, 'lfoRate', 3],
+    ['a synced 1/4 at 120 BPM', { lfoSync: 'on', lfoNote: noteIndex('1/4') }, 120, 'lfoNote', noteIndex('1/4')],
+    ['a synced 1/8 T at 100 BPM', { lfoSync: 'on', lfoNote: noteIndex('1/8 T') }, 100, 'lfoNote', noteIndex('1/8 T')],
+  ] as const)
+    it(`an LFO repeats as often as ${what} reads`, async () => {
+      const readout = geekReadout(id, value, { ...defaultPatch(), ...patch }, { bpm });
+      expect(readout).toMatch(/ s$/);
+      const period = await tremoloPeriod(patch, bpm);
+      // To the readout's last figure.
+      expect(Math.abs(period - number(readout))).toBeLessThan(0.006);
+    });
+
+  // A square LFO at 1 Hz is at its top for the first half second and its foot for the second: measured in each.
+  const square = { ...sine, lfoRate: 1, lfoWaveform: 'square' } as const;
+  const up = (s: Float32Array) => frequencyAround(s, SR, 0.25, 0.2);
+  const down = (s: Float32Array) => frequencyAround(s, SR, 0.75, 0.2);
+
+  it('Pitch swings by the semitones its Depth reads', async () => {
+    const patch = { ...defaultPatch(), ...square, lfoDestination: 'pitch', lfoAmount: 0.6 } as const;
+    const s = await render(1, patch, (e) => e.noteOn(69, 1, 0));
+    expect(geekReadout('lfoAmount', 0.6, patch)).toBe('±0.60 st');
+    expect((12 * Math.log2(up(s) / down(s))) / 2).toBeCloseTo(number(geekReadout('lfoAmount', 0.6, patch)), 2);
+  });
+
+  it('Detune swings Osc 2 by the cents its Depth reads', async () => {
+    const patch = { ...defaultPatch(), ...square, mixOsc1: 0, mixOsc2: 1, lfoDestination: 'detune', lfoAmount: 0.5 } as const;
+    const s = await render(1, patch, (e) => e.noteOn(69, 1, 0));
+    expect(geekReadout('lfoAmount', 0.5, patch)).toBe('±25.0 ¢');
+    expect((1200 * Math.log2(up(s) / down(s))) / 2).toBeCloseTo(number(geekReadout('lfoAmount', 0.5, patch)), 0);
+  });
+
+  it('Osc 2 Pitch swings Osc 2 by the semitones its Depth reads', async () => {
+    const patch = { ...defaultPatch(), ...square, mixOsc1: 0, mixOsc2: 1, lfoDestination: 'osc2Pitch', lfoAmount: 0.25 } as const;
+    const s = await render(1, patch, (e) => e.noteOn(69, 1, 0));
+    expect(geekReadout('lfoAmount', 0.25, patch)).toBe('±3.00 st');
+    expect((12 * Math.log2(up(s) / down(s))) / 2).toBeCloseTo(number(geekReadout('lfoAmount', 0.25, patch)), 2);
+  });
+
+  it('the Resonance swings by the share its Depth reads, as far as the knob leaves room, in the Resonance the Filter takes', async () => {
+    const patch = { ...defaultPatch(), ...square, resonance: 0.3, lfoDestination: 'resonance', lfoAmount: 0.5 } as const;
+    let engine!: ReturnType<typeof createSynthEngine>;
+    await render(1, patch, (e) => {
+      engine = e;
+      e.noteOn(69, 1, 0);
+    });
+    expect(geekReadout('lfoAmount', 0.5, patch)).toBe('±30 %');
+    const swing = (engine.modulationAt(0.25).resonance - engine.modulationAt(0.75).resonance) / 2;
+    expect(swing * 100).toBeCloseTo(number(geekReadout('lfoAmount', 0.5, patch)), 0);
+  });
+
+  it('the Cutoff swings by the octaves its Depth reads, in the Effective Cutoff the Filter follows', async () => {
+    const patch = { ...defaultPatch(), ...square, cutoff: 1000, lfoDestination: 'cutoff', lfoAmount: 0.4 } as const;
+    let engine!: ReturnType<typeof createSynthEngine>;
+    await render(1, patch, (e) => {
+      engine = e;
+      e.noteOn(60, 1, 0);
+    });
+    expect(geekReadout('lfoAmount', 0.4, patch)).toBe('±0.80 oct');
+    expect(Math.log2(engine.modulationAt(0.25).cutoff / engine.modulationAt(0.75).cutoff) / 2).toBeCloseTo(number(geekReadout('lfoAmount', 0.4, patch)), 2);
+  });
+
+  it('Volume dips by the dB its Depth reads, below the top of its wave', async () => {
+    const patch = { ...defaultPatch(), ...square, lfoDestination: 'volume', lfoAmount: 0.5 } as const;
+    const s = await render(1, patch, (e) => e.noteOn(69, 1, 0));
+    const level = (t: number) => rms(s, Math.round((t - 0.1) * SR), Math.round((t + 0.1) * SR));
+    expect(geekReadout('lfoAmount', 0.5, patch)).toBe('−6.0 dB');
+    expect(dB(level(0.75) / level(0.25))).toBeCloseTo(number(geekReadout('lfoAmount', 0.5, patch)), 1);
+  });
+
+  it('a pulse’s width swings by the share its Depth reads', async () => {
+    const patch = { ...defaultPatch(), ...square, waveform: 'pulse', pulseWidth: 0.5, lfoDestination: 'pulseWidth', lfoAmount: 0.3 } as const;
+    const s = await render(1, patch, (e) => e.noteOn(57, 1, 0));
+    // The share of each cycle the pulse is high: the samples above the middle of its swing, over 0.2 s.
+    const high = (t: number) => {
+      const w = s.subarray(Math.round((t - 0.1) * SR), Math.round((t + 0.1) * SR));
+      const middle = (Math.max(...w) + Math.min(...w)) / 2;
+      return w.filter((x) => x > middle).length / w.length;
+    };
+    expect(geekReadout('lfoAmount', 0.3, patch)).toBe('±12 %');
+    expect((Math.abs(high(0.25) - high(0.75)) / 2) * 100).toBeCloseTo(number(geekReadout('lfoAmount', 0.3, patch)), 0);
+  });
+
+  it('Key Track reads the Effective Cutoff at the Note played, and at A4 before any', async () => {
+    const patch = { ...defaultPatch(), ...sine, cutoff: 1000, keyTrack: 0.5 };
+    let engine!: ReturnType<typeof createSynthEngine>;
+    let before = 0;
+    let note: number | null = null;
+    await render(1, patch, (e) => {
+      engine = e;
+      before = e.modulationAt(0).cutoff;
+      e.noteOn(79, 1, 0.1);
+      note = e.newestNote();
+    });
+    // "1.68 kHz" is 1680 Hz to three figures.
+    const hz = (readout: string | undefined) => number(readout) * (readout!.endsWith('kHz') ? 1000 : 1);
+    const atA4 = geekReadout('keyTrack', 0.5, patch);
+    expect(Math.abs(hz(atA4) / before - 1)).toBeLessThan(0.005);
+    const atNote = geekReadout('keyTrack', 0.5, patch, { note });
+    expect(atNote).toBe('1.73 kHz'); // 1 kHz × 2^(0.5 × 19/12)
+    expect(Math.abs(hz(atNote) / engine.modulationAt(0.5).cutoff - 1)).toBeLessThan(0.005);
+  });
+});
+
+// Issue 133, decision 4: the Envelopes' and Glide's time constants, as their tips give them, held to the engine (issue 168).
+describe('the Synth Geek Layer’s time constants for the Envelopes and Glide, held to the engine (issue 168)', () => {
+  /** The τ a tip works out: "τ = Decay ÷ 4 = 0.500 s now" is 0.5. */
+  const tau = (id: Parameters<typeof underTheHoodAt>[0], value: number) => {
+    const [, figure, unit] = underTheHoodAt(id, value)!.where.match(/^τ = \w+ ÷ \d = ([\d.]+) (ms|s) now/)!;
+    return Number(figure) / (unit === 'ms' ? 1000 : 1);
+  };
+  /**
+   * The Amp Envelope's level at each of `times`, as the Amp Tap shows it: its last 20 ms over the Filter Tap's, the
+   * level halfway through them (an A5 sine, 17 cycles in the window).
+   */
+  const ampLevels = async (patch: Partial<Patch>, play: (e: ReturnType<typeof createSynthEngine>) => void, times: number[]) => {
+    const window = Math.round(SR * 0.02);
+    const ctx = new OfflineAudioContext(1, SR * (Math.max(...times) + 0.2), SR);
+    const engine = createSynthEngine(ctx);
+    engine.applyPatch({ ...defaultPatch(), cutoff: 20000, resonance: 0, waveform: 'sine', ...patch });
+    play(engine);
+    const tail = (a: AnalyserNode) => {
+      const s = new Float32Array(a.fftSize);
+      a.getFloatTimeDomainData(s);
+      return s.subarray(s.length - window);
+    };
+    const levels = times.map((t) =>
+      ctx.suspend(t + 0.01).then(() => {
+        const level = rms(tail(engine.taps.amp)) / rms(tail(engine.taps.filter));
+        void ctx.resume();
+        return level;
+      }),
+    );
+    await ctx.startRendering();
+    return Promise.all(levels);
+  };
+
+  it('the Attack rises 63 % of the way in the τ its tip reads: a curve, not a straight rise', async () => {
+    const t = tau('ampAttack', 3);
+    expect(t).toBe(1);
+    const [level] = await ampLevels({ ampAttack: 3, ampSustain: 1 }, (e) => e.noteOn(81, 1, 0), [t]);
+    expect(level).toBeCloseTo(1 - Math.exp(-1), 2);
+  });
+
+  it('the Decay falls 63 % of the way to the Sustain in the τ its tip reads', async () => {
+    const t = tau('ampDecay', 2);
+    expect(t).toBe(0.5);
+    // Sustain at 0: from where the Attack left it (all but the fastest Attack's last 5 %), down to silence.
+    const [start, after] = await ampLevels({ ampAttack: 0.001, ampDecay: 2, ampSustain: 0 }, (e) => e.noteOn(81, 1, 0), [0.2, 0.2 + t]);
+    expect(after / start).toBeCloseTo(Math.exp(-1), 2);
+  });
+
+  it('the Release falls 63 % of the way to silence in the τ its tip reads', async () => {
+    const t = tau('ampRelease', 3);
+    expect(t).toBe(0.5);
+    const [start, after] = await ampLevels(
+      { ampAttack: 0.001, ampSustain: 1, ampRelease: 3 },
+      (e) => {
+        e.noteOn(81, 1, 0);
+        e.noteOff(0.3);
+      },
+      [0.5, 0.5 + t],
+    );
+    expect(after / start).toBeCloseTo(Math.exp(-1), 2);
+  });
+
+  it('Glide slides 63 % of the way to the new Note in the τ its tip gives', async () => {
+    // "τ = Glide ÷ 4": its tip gives the rule, with no live number (issue 133, decision 10).
+    const t = 2 / Number(UNDER_THE_HOOD.glide.where.match(/^τ = Glide ÷ (\d+)\./)![1]);
+    expect(t).toBe(0.5);
+    const s = await render(1.5, { cutoff: 20000, waveform: 'sine', glide: 2, lfoAmount: 0, ampSustain: 1, ampAttack: 0.001 }, (e) => {
+      e.noteOn(57, 1, 0); // 220 Hz
+      e.noteOn(69, 1, 0.5); // to 440 Hz
+    });
+    expect(frequencyAround(s, SR, 0.5 + t, 0.02) / (440 + (220 - 440) * Math.exp(-1))).toBeCloseTo(1, 2);
+  });
+});
+
+// Issue 133, decision 4: the Viewers' numbers held to what the engine plays (issue 170).
+describe('the Synth Geek Layer’s numbers on the Viewers, held to the engine (issue 170)', () => {
+  /** Renders `note` for a second; at half a second, the engine's fundamental, its newest Note and the Oscillator Tap's bins. */
+  async function played(patch: Partial<Patch>, note: number) {
+    const ctx = new OfflineAudioContext(1, SR, SR);
+    const engine = createSynthEngine(ctx);
+    engine.applyPatch({ ...defaultPatch(), ...patch });
+    engine.noteOn(note, 1, 0);
+    const bins = new Float32Array(engine.taps.oscillator.frequencyBinCount);
+    const at = ctx.suspend(0.5).then(() => {
+      engine.taps.oscillator.getFloatFrequencyData(bins);
+      const now = { fundamental: engine.fundamental(), note: engine.newestNote() };
+      void ctx.resume();
+      return now;
+    });
+    const s = (await ctx.startRendering()).getChannelData(0);
+    return { s, bins, ...(await at) };
+  }
+  /** How far the sound differs from itself `lag` seconds later, over a steady stretch, as a share of its level. */
+  const unlike = (s: Float32Array, lag: number) => {
+    const shift = lag * SR;
+    let sum = 0;
+    let n = 0;
+    for (let i = SR / 2; i < 0.9 * SR; i++) {
+      const j = i + shift;
+      const later = s[Math.floor(j)] + (j - Math.floor(j)) * (s[Math.floor(j) + 1] - s[Math.floor(j)]);
+      sum += (s[i] - later) ** 2;
+      n++;
+    }
+    return Math.sqrt(sum / n) / rms(s, SR / 2, 0.9 * SR);
+  };
+
+  for (const [what, patch, note, reads] of [
+    ['A4, the Init Patch', { ampSustain: 1 }, 69, '2.27 ms · 440 Hz'],
+    ['C4, Osc 1 an octave up, the Sub an octave under it', { ampSustain: 1, waveform: 'sine', osc1Octave: 1, mixSub: 1, subOctave: -1, subWaveform: 'sine' }, 60, '3.82 ms · 261.6 Hz'],
+  ] as const)
+    it(`each Scope’s corner reads the period the sound repeats in: ${what}`, async () => {
+      const { s, fundamental, note: newest } = await played(patch, note);
+      expect(scopeReadout(fundamental, newest)).toBe(reads);
+      const [ms, hz] = reads.split(' · ').map(Number.parseFloat);
+      expect(1000 / hz).toBeCloseTo(ms, 2);
+      // The sound is itself again after one period, and not after half of one.
+      expect(unlike(s, 1 / hz)).toBeLessThan(0.02);
+      expect(unlike(s, 0.5 / hz)).toBeGreaterThan(0.3);
+    });
+
+  it('the Spectrum’s hover readout numbers the Harmonic the Oscillator Tap’s peak is on, and none between them', async () => {
+    const { bins, fundamental } = await played({ ampSustain: 1 }, 69);
+    const binHz = SR / (2 * bins.length);
+    for (let n = 1; n <= 7; n++) {
+      const peak = interpolatedPeak(bins, binHz, 440 * n * 0.97, 440 * n * 1.03);
+      expect(harmonicNumber(peak.frequency, fundamental, binHz), `the ${n}th`).toBe(n);
+      expect(hoverReadout(peak.frequency, peak.levelDb, { geek: true, harmonic: n })).toMatch(new RegExp(` · n = ${n}$`));
+    }
+    const between = interpolatedPeak(bins, binHz, 440 * 3.4, 440 * 3.6);
+    expect(harmonicNumber(between.frequency, fundamental, binHz)).toBeUndefined();
+  });
+
+  it('the Oscillator Spectrum’s corner gives the slope the Noise falls by, an octave at a time', async () => {
+    const noiseAlone = { cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001, mixOsc1: 0, mixNoise: 1 } as const;
+    // The average level in a band a tenth of an octave wide around `f`, from many short Hann-windowed frames.
+    const bandLevel = (s: Float32Array, f: number) => {
+      let sum = 0;
+      let n = 0;
+      for (let from = SR / 2; from + 4096 <= s.length; from += 4096)
+        for (const k of [0.96, 0.98, 1, 1.02, 1.04]) {
+          sum += toneAmplitudeHann(s.subarray(from, from + 4096), SR, f * k) ** 2;
+          n++;
+        }
+      return Math.sqrt(sum / n);
+    };
+    for (const noiseColour of ['white', 'pink'] as const) {
+      const patch = { ...defaultPatch(), ...noiseAlone, noiseColour };
+      const s = await render(3, patch, (e) => e.noteOn(57, 1, 0));
+      const readout = noiseSlope(patch)!;
+      expect(readout).toMatch(new RegExp(`^${noiseColour}: `));
+      const perOctave = dB(bandLevel(s, 4000) / bandLevel(s, 500)) / 3;
+      expect(Math.abs(perOctave - Number.parseFloat(readout.split(': ')[1].replace('−', '-'))), noiseColour).toBeLessThan(0.5);
+    }
   });
 });

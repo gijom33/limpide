@@ -21,6 +21,28 @@ describe('MIDI parser', () => {
     expect(parse(0xb0, 74, 100)).toEqual([{ type: 'cc', channel: 1, controller: 74, value: 100 }]);
   });
 
+  it('reads channel aftertouch (one pressure for the whole keyboard) as a pressure from 0 to 1 (issue 132)', () => {
+    expect(parse(0xd0, 0, 0xd0, 127)).toEqual([
+      { type: 'pressure', channel: 1, value: 0 },
+      { type: 'pressure', channel: 1, value: 1 },
+    ]);
+    expect(parse(0xd2, 64, 32)).toEqual([
+      { type: 'pressure', channel: 3, value: 64 / 127 },
+      { type: 'pressure', channel: 3, value: 32 / 127 },
+    ]); // running status
+  });
+
+  it('reads per-Note (polyphonic) pressure as a pressure from 0 to 1 on its Note (issue 132, the owner’s decision 1)', () => {
+    expect(parse(0xa0, 60, 127, 0x90, 60, 100)).toEqual([
+      { type: 'pressure', channel: 1, note: 60, value: 1 },
+      { type: 'noteOn', channel: 1, note: 60, velocity: 100 / 127 },
+    ]);
+    expect(parse(0xa9, 36, 64, 38, 0)).toEqual([
+      { type: 'pressure', channel: 10, note: 36, value: 64 / 127 },
+      { type: 'pressure', channel: 10, note: 38, value: 0 },
+    ]); // running status
+  });
+
   it('follows running status: data bytes without a new status byte reuse the last one', () => {
     expect(parse(0x90, 60, 100, 64, 100, 60, 0)).toEqual([
       { type: 'noteOn', channel: 1, note: 60, velocity: 100 / 127 },
@@ -35,16 +57,27 @@ describe('MIDI parser', () => {
     expect(parser.feed(Uint8Array.of(74, 11))).toEqual([{ type: 'cc', channel: 1, controller: 74, value: 11 }]);
   });
 
-  it('ignores clock and keep-alive bytes, even in the middle of a message, without losing running status', () => {
-    expect(parse(0x90, 0xf8, 60, 0xfe, 100, 0xf8, 62, 90)).toEqual([
+  it('reads the clock, Start, Continue and Stop wherever they fall, without losing running status; keep-alive is skipped (issue 136)', () => {
+    expect(parse(0x90, 0xf8, 60, 0xfe, 100, 0xfa, 62, 0xfb, 90, 0xfc, 0xff, 0xf9, 0xfd)).toEqual([
+      { type: 'clock' },
       { type: 'noteOn', channel: 1, note: 60, velocity: 100 / 127 },
+      { type: 'start' },
+      { type: 'continue' },
       { type: 'noteOn', channel: 1, note: 62, velocity: 90 / 127 },
+      { type: 'stop' },
+    ]);
+  });
+
+  it('reads the clock in a system-exclusive dump, and goes on skipping the dump (issue 136)', () => {
+    expect(parse(0xf0, 0x7e, 0xf8, 0x01, 0xf7, 0x90, 60, 1)).toEqual([
+      { type: 'clock' },
+      { type: 'noteOn', channel: 1, note: 60, velocity: 1 / 127 },
     ]);
   });
 
   it('skips system-exclusive dumps and messages it does not use', () => {
-    // Aftertouch, channel (0xd0) and per Note (0xa0), is not used.
-    expect(parse(0xf0, 0x7e, 0x01, 0xf7, 0xd0, 64, 0xa0, 60, 30, 0x90, 60, 1)).toEqual([
+    // A Song Position Pointer (0xf2) is not used.
+    expect(parse(0xf0, 0x7e, 0x01, 0xf7, 0xf2, 0x10, 0x02, 0x90, 60, 1)).toEqual([
       { type: 'noteOn', channel: 1, note: 60, velocity: 1 / 127 },
     ]);
   });

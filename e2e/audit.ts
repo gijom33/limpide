@@ -1,10 +1,11 @@
 /**
  * The design principles' measurable rules (docs/design-principles.md), checked on the page as drawn: text contrast,
  * the contrast of what draws a control (its border or fill, a knob's groove and arc, a fader's track and fill), the
- * size of what a pointer can hit, and that no two controls lie over each other (issue 157). Runs inside the page
- * (Playwright's evaluate), so it is one self-contained function.
+ * size of what a pointer can hit, that no two controls lie over each other (issue 157), and that no label, key or
+ * button's word runs to a second line (issue 156). Runs inside the page (Playwright's evaluate), so it is one
+ * self-contained function.
  */
-export type Rule = 'text' | 'boundary' | 'target' | 'overlap';
+export type Rule = 'text' | 'boundary' | 'target' | 'overlap' | 'wrap';
 
 export interface Finding {
   rule: Rule;
@@ -20,8 +21,8 @@ export interface AuditOptions {
   minTarget: number;
   /**
    * Deliberate exceptions: a finding on an element matching one is accepted as long as it measures at least the
-   * waiver's floor (a contrast ratio, or a target's shorter side in px), so it can never get worse unseen. Overlaps
-   * have no waivers.
+   * waiver's floor (a contrast ratio, or a target's shorter side in px), so it can never get worse unseen. Overlaps and
+   * second lines have no waivers.
    */
   waivers: { rule: Rule; selector: string; floor: number }[];
 }
@@ -205,5 +206,32 @@ export function auditPage({ rules, minTarget, waivers }: AuditOptions): AuditRes
       if (across > 0.5 && down > 0.5) fail('overlap', a.el, across, `over ${where(b.el)} "${name(b.el)}" by ${Math.round(across)}×${Math.round(down)}`);
     }),
   );
+
+  // One line (issue 156): a label, a key or a button's word never runs to a second line; where its room runs short
+  // it takes a shorter form. Its own text on one line, and a group read as one line (`[data-one-line]`, the Timeline's
+  // key) all its text on one. Sentences wrap as text does: a paragraph, a list's items, a tip, a card's words.
+  const sentence = 'p, li, dd, [role=tooltip]';
+  const lines = (texts: Node[], fontSize: number) => {
+    const tops: number[] = [];
+    for (const t of texts) {
+      const range = document.createRange();
+      range.selectNodeContents(t);
+      for (const r of range.getClientRects()) if (r.width > 0 && !tops.some((top) => Math.abs(top - r.top) < fontSize / 2)) tops.push(r.top);
+    }
+    return tops.length;
+  };
+  const textsIn = (el: Element) => {
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    const texts: Node[] = [];
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) if (n.textContent!.trim()) texts.push(n);
+    return texts;
+  };
+  for (const el of rules.includes('wrap') ? all : []) {
+    if (el.closest('svg, canvas') || el.closest(sentence) || !shown(el)) continue;
+    const texts = el.matches('[data-one-line]') ? textsIn(el) : [...el.childNodes].filter((n) => n.nodeType === Node.TEXT_NODE && n.textContent!.trim());
+    if (!texts.length) continue;
+    const count = lines(texts, parseFloat(getComputedStyle(el).fontSize));
+    if (count > 1) fail('wrap', el, count, `${count} lines`);
+  }
   return { unexpected, matched: [...matched] };
 }

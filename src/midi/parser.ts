@@ -5,15 +5,36 @@ export type MidiMessage =
   /** The pitch bend wheel, −1 (all the way down) to 1, 0 at rest (issue 52). */
   | { type: 'pitchBend'; channel: number; value: number }
   /** A Program Change: the program number, 0 to 127. */
-  | { type: 'program'; channel: number; program: number };
+  | { type: 'program'; channel: number; program: number }
+  /**
+   * Aftertouch: how hard the keys are pressed, 0 to 1 (issue 132). Channel aftertouch is one pressure for the whole
+   * keyboard; per-Note (polyphonic) aftertouch, a pad's or a key's own, names its `note`.
+   */
+  | { type: 'pressure'; channel: number; value: number; note?: number };
+
+/**
+ * A MIDI clock's real-time messages (issue 136): a tick, 24 to the beat, and the transport's Start (the next tick is
+ * the first beat), Continue (from where it stopped) and Stop. A keyboard's or a DAW's, whichever channel it plays on.
+ */
+export type ClockMessage = { type: 'clock' } | { type: 'start' } | { type: 'continue' } | { type: 'stop' };
+
+/** The real-time bytes Limpide reads; the rest (keep-alive, reset, the undefined two) are skipped. */
+const CLOCK_BYTES: Record<number, ClockMessage> = {
+  0xf8: { type: 'clock' }, 0xfa: { type: 'start' }, 0xfb: { type: 'continue' }, 0xfc: { type: 'stop' },
+};
+const CLOCK_TYPES = new Set<string>(Object.values(CLOCK_BYTES).map((m) => m.type));
+
+/** Whether a message is the clock's, rather than a channel's. */
+export const isClockMessage = (message: MidiMessage | ClockMessage): message is ClockMessage => CLOCK_TYPES.has(message.type);
 
 /** Data bytes each channel message carries, by its high nibble. */
 const DATA_BYTES: Record<number, number> = { 0x80: 2, 0x90: 2, 0xa0: 2, 0xb0: 2, 0xc0: 1, 0xd0: 1, 0xe0: 2 };
 
 /**
  * A streaming MIDI parser: feed it the bytes of each incoming packet. It follows running status (data bytes
- * reuse the last status), ignores real-time bytes (clock, keep-alive) wherever they fall, skips system-exclusive
- * dumps, and reports only what Limpide uses: notes, control changes, pitch bend and program changes.
+ * reuse the last status), reads the clock's real-time bytes wherever they fall, even inside another message, without
+ * touching running status (issue 136), skips keep-alive and system-exclusive dumps, and reports only what Limpide uses:
+ * notes, control changes, pitch bend, program changes, aftertouch, channel and per-Note (issue 132), and the clock.
  */
 export function createMidiParser() {
   let status = 0;
@@ -22,10 +43,14 @@ export function createMidiParser() {
   let systemBytesToSkip = 0;
 
   return {
-    feed(bytes: Uint8Array): MidiMessage[] {
-      const out: MidiMessage[] = [];
+    feed(bytes: Uint8Array): (MidiMessage | ClockMessage)[] {
+      const out: (MidiMessage | ClockMessage)[] = [];
       for (const byte of bytes) {
-        if (byte >= 0xf8) continue; // real-time: may appear anywhere, never affects running status
+        if (byte >= 0xf8) {
+          // Real-time: may appear anywhere, never affects running status.
+          if (CLOCK_BYTES[byte]) out.push({ ...CLOCK_BYTES[byte] });
+          continue;
+        }
         if (byte >= 0x80) {
           data = [];
           if (byte === 0xf0) {
@@ -74,6 +99,10 @@ function toMessage(status: number, [a, b]: number[]): MidiMessage | undefined {
     }
     case 0xc0:
       return { type: 'program', channel, program: a };
+    case 0xd0:
+      return { type: 'pressure', channel, value: a / 127 };
+    case 0xa0:
+      return { type: 'pressure', channel, note: a, value: b / 127 };
     default:
       return undefined;
   }

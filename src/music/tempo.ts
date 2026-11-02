@@ -31,10 +31,12 @@ export const noteIndex = (name: string) => NOTE_VALUES.findIndex((v) => v.name =
 /** How often a note value repeats at `bpm`, in Hz: beats a second over its beats. */
 export const noteHz = (index: number, bpm: number) => bpm / 60 / NOTE_VALUES[index].beats;
 
-/** A synced Rate's note value, which its knob reads, and its Hz in a few figures, which its tip gives ("1/8", "4 Hz"). */
+/**
+ * A synced Rate's note value, which its knob reads, and its Hz to three figures, which its tip gives and the Synth Geek
+ * Layer works out ("1/8", "4 Hz", "1.33 Hz").
+ */
 export function formatSyncedRate(index: number, bpm: number): { note: string; hz: string } {
-  const hz = noteHz(index, bpm);
-  return { note: NOTE_VALUES[index].name, hz: `${hz >= 10 ? Math.round(hz) : Number(hz.toPrecision(2))} Hz` };
+  return { note: NOTE_VALUES[index].name, hz: `${Number(noteHz(index, bpm).toPrecision(3))} Hz` };
 }
 
 /** Taps further apart than the slowest beat start the count again. */

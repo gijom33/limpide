@@ -1,4 +1,4 @@
-import type { DisplayValue } from '../app/displaySettings';
+import type { RememberedValue } from '../app/rememberedSettings';
 
 /** How long after the page opens, or the About closes (the welcome among it), Bead comes in by itself (issue 150). */
 export const BEAD_ENTRANCE_SECONDS = 3;
@@ -10,7 +10,7 @@ export const BEAD_ENTRANCE_SECONDS = 3;
  */
 export interface Bead {
   presence: 'away' | 'up' | 'leaving';
-  switch: DisplayValue<'bead'>;
+  switch: RememberedValue<'bead'>;
   entranceDue: boolean;
   sentAway: boolean;
   /** How often it came back up once melted this visit (switched on again as it left), so the page draws it afresh. */
@@ -24,7 +24,7 @@ export interface Bead {
 export type BeadEvent = 'notes' | 'switch on' | 'switch off' | 'entrance' | 'gone';
 
 /** A visit starts with Bead away, to come in by itself unless it was switched off. */
-export const beadOnArrival = (stored: DisplayValue<'bead'>): Bead => ({
+export const beadOnArrival = (stored: RememberedValue<'bead'>): Bead => ({
   presence: 'away',
   switch: stored,
   entranceDue: true,

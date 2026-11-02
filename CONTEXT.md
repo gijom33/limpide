@@ -96,10 +96,10 @@ _Avoid_: Frequency (ambiguous), corner, brightness
 
 **Resonance**:
 Emphasis of the frequencies right around the Cutoff.
-_Avoid_: Q (that's the maths name; shown only in the maths layer), emphasis, peak
+_Avoid_: Q (that's the maths name; shown only in the Synth Geek Layer), emphasis, peak
 
 **Effective Cutoff**:
-The Cutoff at a given instant after all modulation (Filter Envelope, LFOs, Velocity, Key Track) is applied.
+The Cutoff at a given instant after all modulation (Filter Envelope, LFOs, Velocity, Key Track, Aftertouch) is applied.
 _Avoid_: Current cutoff, modulated frequency
 
 **Amp**:
@@ -157,7 +157,7 @@ With one Voice, the rule picking which held Note sounds: last-note priority, so 
 _Avoid_: Voice stealing
 
 **Tempo**:
-The page's beats per minute, 40 to 240, 120 by default: never a Patch's, kept between visits, set by hand or with **Tap** (the BPM follows taps in time). An LFO with Sync on follows it. While the Demo, the Song, the Tour or a Tutorial plays, the Tempo is the player's own, its beats counted from its first Note, and the person's comes back when it stops (issue 112, ADR-0018).
+The page's beats per minute, 40 to 240, 120 by default: never a Patch's, kept between visits, set by hand or with **Tap** (the BPM follows taps in time). An LFO with Sync on follows it. While the Demo, the Song, the Tour or a Tutorial plays, the Tempo is the player's own, its beats counted from its first Note, and the person's comes back when it stops (issue 112, ADR-0018). While a keyboard or a DAW sends a **MIDI clock** (24 ticks a beat), the Tempo is the clock's, its BPM read off the ticks and its beats theirs, a MIDI Start counting them again; it reads "MIDI" in place of "BPM" and cannot be set by hand until the ticks stop, when the last BPM stays, the person's again. A player still keeps its own while it plays (issue 136).
 _Avoid_: BPM (the unit, fine on screen), clock, speed
 
 **Hold**:
@@ -173,15 +173,15 @@ About as a brand-new browser (no Last session, no saved Patches) sees it, once: 
 _Avoid_: Onboarding, splash, intro
 
 **Tutorial**:
-A Preset rebuilt from Init in Steps, with the person turning each control. A card docked at the bottom of the page shows the current Step; nothing is locked, and the last card lists what differs from the Preset. Opened from the Preset's row or the Tutorials list in the Patches panel, the header's Tutorial button, or the Tour's last card.
+A Preset rebuilt from Init in Steps, with the person turning each control. A card docked at the bottom of the page shows the current Step; nothing is locked. The first card says, in the Tutorial's own words, what it teaches and what the person will hear; the last lists what differs from the Preset and names the next Tutorial (issue 129). Opened from the Preset's row or the Tutorials list in the Patches panel, the header's Tutorial button, or the Tour's last card.
 _Avoid_: Lesson, course, walkthrough, onboarding, tour
 
 **Tour**:
-A first look at the instrument for someone who has never seen a synth: a card for each Section, in the signal's order (the Oscillators with the Mixer, the Filter, the Amp, the LFOs), says what it does while the synth turns its main controls itself, on a plain Patch of its own, the person's Patch coming back when it ends. Each card waits for Next. Opened from the Welcome and the About, never from the Patches panel. Not a Tutorial: it rebuilds no Preset, and there is no Preset called Tour.
+A first look at the instrument for someone who has never seen a synth: a card for each Section, in the signal's order (the Oscillators with the Mixer, the Filter, the Amp, the LFOs), says what to watch, then what the Section does, while the synth turns its main controls itself, on a plain Patch of its own, the person's Patch coming back when it ends. Each card waits for Next. Opened from the Welcome and the About, never from the Patches panel. Not a Tutorial: it rebuilds no Preset, and there is no Preset called Tour.
 _Avoid_: Lesson, walkthrough, onboarding, intro, Tutorial
 
 **Step**:
-One change in a Tutorial: one Parameter to a target (reached within 5 % of the control's travel, a choice exactly), or one Display option to switch on (one on already is switched off as its Step comes, and given back if the Tutorial is left before the person switches it on: issue 158). It has an instruction, and a note on what to hear and see, shown once the change is made.
+One change in a Tutorial: one Parameter to a target (reached within 5 % of the control's travel, a stepped one such as a note value on its step: issue 137; a choice exactly), or one Display option to switch on (one on already is switched off as its Step comes, and given back if the Tutorial is left before the person switches it on: issue 158). It has an instruction, and a note on what to hear and see, shown once the change is made.
 _Avoid_: Stage (an Envelope's), lesson
 
 **Song**:
@@ -239,8 +239,8 @@ A Viewer showing level per frequency at an instant.
 _Avoid_: FFT, frequency view, analyser
 
 **Harmonic**:
-A frequency component at an integer multiple of the Note's fundamental. The fundamental is the 1st Harmonic.
-_Avoid_: Partial, overtone (overtone numbering is off by one)
+A frequency component at an integer multiple of the Note's fundamental. The fundamental is the 1st Harmonic. To a newcomer, the stack of pitches a Note is made of; on a Spectrum, each Harmonic is a line (issue 129).
+_Avoid_: Partial, overtone (overtone numbering is off by one), rung, spike, bar
 
 **Harmonic Marker**:
 A label on the Spectrum identifying a Harmonic by number (the fundamental by its note); the hover readout adds its frequency and nearest note.
@@ -252,10 +252,10 @@ _Avoid_: Expected spectrum, model curve
 
 **Response Curve**:
 The Filter's gain per frequency at the Effective Cutoff, drawn over the Spectrum. Switched on by Display's Filter toggle (issue 161), the line keeping its name.
-_Avoid_: Filter curve, transfer function (maths layer only), EQ curve
+_Avoid_: Filter curve, transfer function (Synth Geek Layer only), EQ curve
 
 **Envelope Timeline**:
-A Viewer plotting, over time with the present at its right edge, what changes the sound: the Amp Envelope always; the Filter Envelope while its Amount is set; the Effective Cutoff while the Filter Envelope or an LFO moves it; every other Destination an active LFO moves, on its knob's scale. A moved Parameter is a broken line in its stage's colour (the Cutoff dotted, what LFO 1 moves dashed, what LFO 2 alone moves dash-dotted). Its key lists what LFO 1 moves, what LFO 2 moves, the Cutoff, the Filter Envelope and the Amp Envelope, the Envelopes as Filter Env and Amp Env on screen. While an LFO is synced, faint broken lines mark the Tempo's beats, as on that LFO's plot.
+A Viewer plotting, over time with the present at its right edge, what changes the sound: the Amp Envelope always; the Filter Envelope while its Amount is set; the Effective Cutoff while the Filter Envelope or an LFO moves it; every other Destination an active LFO moves, on its knob's scale. A moved Parameter is a broken line in its stage's colour (the Cutoff dotted, what LFO 1 moves dashed, what LFO 2 alone moves dash-dotted). Its key lists what LFO 1 moves, what LFO 2 moves, the Cutoff, the Filter Envelope and the Amp Envelope, the Envelopes as Filter Env and Amp Env on screen, each name shorter still where the key's room runs short (Short forms, below). While an LFO is synced, faint broken lines mark the Tempo's beats, as on that LFO's plot.
 _Avoid_: ADSR display
 
 **Freeze**:
@@ -266,9 +266,13 @@ _Avoid_: Pause, hold (Hold is a playing mode)
 A captured Scope and Spectrum trace, kept faint for A/B comparison against the live ones. One a Tutorial's Step took is cleared when that Tutorial ends or is left, unless the person has taken another since (issue 158).
 _Avoid_: Reference trace, pin, compare
 
-**Maths Layer**:
-An optional overlay revealing the underlying quantities behind Parameters and Viewers: Resonance as Q, levels in dB, the Harmonic formula of Osc 1's Waveform (FM's sidebands and Ring's sums and differences when they are up), the Response Curve's formula, and the Effective Cutoff's value. Switched on in the Display panel; off by default.
-_Avoid_: Advanced mode, expert mode
+**Synth Geek Layer**:
+An optional overlay revealing the underlying quantities behind Parameters and Viewers: Resonance as Q, levels in dB, the Harmonic formula of Osc 1's Waveform (FM's sidebands and Ring's sums and differences when they are up), the Response Curve's formula, the Effective Cutoff's value, and Osc 2's tuning as the engine plays it (the Octave's and Semitone's multiples, Detune's beats in Hz at the last Note played, A4 before any: issue 167), each LFO's period and its swing in its Destination's unit, the Cutoff at the Note under Key Track (issue 169), and on the Viewers each Scope's period and frequency, the Harmonic's number in a Spectrum's hover readout and the Noise's slope on the Oscillator Spectrum (issue 170). Switched on by Display's Geek toggle, a pair of glasses; off by default. It also adds to a control's tip its formula, under "Under the hood", and its History last; an Envelope fader's and Glide's work out their curve's time constant τ at their setting (issue 168). Named the Maths Layer until issue 165.
+_Avoid_: Maths Layer (its old name), Advanced mode, expert mode
+
+**History**:
+The line a tip ends with while the Synth Geek Layer is on: where the control comes from, one sentence naming the instruments and people it came through (the Minimoog's "Emphasis" for Resonance), every fact sourced at grade A or B in issue 134's research file, which About links as "History's sources" (issue 134). Controls with no musical past (Freeze, Snapshot, Theme, Demo, the C16's) have none.
+_Avoid_: geekiness, trivia, fun facts
 
 ### Control surface
 
@@ -307,3 +311,28 @@ _Avoid_: Soft takeover, catch
 **Activity Monitor**:
 A small display of the most recent incoming MIDI message.
 _Avoid_: MIDI log, MIDI console
+
+**Aftertouch**:
+A keyboard's pressure on its held keys (0 to 1), one for the whole keyboard: pressing a held key harder raises one Destination, chosen in the MIDI panel (the Cutoff by default), from its knob's value at no pressure to as far as one LFO at full Depth takes it at full, on top of the knob and the LFOs (issue 132). Kept with the MIDI settings, not in the Patch. A keyboard sends it for all its keys at once (channel aftertouch) or for each key or pad (polyphonic, or per-Note, aftertouch): the pressure used is the hardest-pressed held Note's, or the channel's if higher, a Note's forgotten on its release, and it moves the one Destination for every Note (the owner, 2026-11-01). Per-Voice pressure and MPE are not used.
+_Avoid_: Pressure (fine in code), channel pressure
+
+### Short forms
+
+A label, a key or a button's word that would take a second line shows a shorter form instead, chosen by the room it has: an abbreviation, at worst a few letters (the design principles' "One line, shorter words", issue 156). The full name above stays its tooltip and what a screen reader hears; sentences wrap as text does.
+
+| Name | Shorter forms, by step |
+| --- | --- |
+| Filter Envelope | Filter Env, F Env, FE |
+| Amp Envelope | Amp Env, A Env, AE |
+| Osc 2 Pitch | O2 Pitch, O2P |
+| Pulse Width | PW |
+| Detune | Det |
+| Cutoff | Cut |
+| Resonance | Res |
+| Volume | Vol |
+| Keys & Organs | Keys & Org, Keys |
+| Plucks & Mallets | Plucks |
+| Strings, Brass & Choir | Str & Brass, Strings |
+| Movement & Effects | Move & FX, FX |
+
+The Envelopes are Filter Env and Amp Env on screen wherever they fit (the owner, 2026-10-28). A form shows only where a shorter label is needed: the Timeline's key, an LFO's Destination picker, the Patches panel's group names.

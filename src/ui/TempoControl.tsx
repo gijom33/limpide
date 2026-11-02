@@ -20,9 +20,19 @@ interface Props {
 }
 
 
+/** Whether the tempo cannot be set here: a player holds it, or a MIDI clock sets it (issue 136). */
+const heldOff = (tempo: TempoState) => tempo.player || tempo.midi;
+
+/** The BPM's unit, or the "MIDI" mark in its place while a MIDI clock sets the tempo (issue 136). */
+const unit = (tempo: TempoState) => (tempo.midi ? 'MIDI' : 'BPM');
+
+/** The BPM's tip: while a MIDI clock sets the tempo, why it cannot be set (issue 136). */
+const tempoTip = (tempo: TempoState) => (tempo.midi ? TIPS.tempoClock : TIPS.tempo);
+
 /**
  * The BPM (issue 112): a spin button reading "120 BPM", dragged up and down or stepped with the arrows, a
- * double-click typing it. While a player holds the tempo it shows the player's and cannot be set. A drag sets the
+ * double-click typing it. While a player holds the tempo it shows the player's and cannot be set; while a MIDI clock
+ * sets it, it reads "120 MIDI" and cannot be set either (issue 136). A drag sets the
  * tempo where it is let go, the BPM it reaches shown meanwhile: each tempo set starts the beat count again, so set at
  * every step it would restart a synced LFO's cycle at every pixel (Claude's call, open to the owner).
  */
@@ -32,7 +42,7 @@ function TempoDial({ tempo, onSet }: Pick<Props, 'tempo' | 'onSet'>) {
   const bpm = dragged ?? tempo.bpm;
   const drag = useRef<{ y: number; bpm: number } | null>(null);
   const learn = useLearnable({ kind: 'tempo', id: 'bpm' });
-  const held = tempo.player;
+  const held = heldOff(tempo);
   // The field takes the focus as it opens, its text chosen, so typing replaces it.
   const typeHere = useCallback((field: HTMLInputElement | null) => {
     field?.focus();
@@ -69,8 +79,9 @@ function TempoDial({ tempo, onSet }: Pick<Props, 'tempo' | 'onSet'>) {
       aria-valuemin={TEMPO.min}
       aria-valuemax={TEMPO.max}
       aria-valuenow={bpm}
-      aria-valuetext={held ? `${bpm} BPM, the player’s while it plays` : `${bpm} BPM`}
+      aria-valuetext={tempo.player ? `${bpm} BPM, the player’s while it plays` : tempo.midi ? `${bpm} BPM, from a MIDI clock` : `${bpm} BPM`}
       aria-disabled={held || undefined}
+      data-clock={tempo.midi || undefined}
       {...learn}
       onKeyDown={(e) => {
         const big = e.shiftKey ? BIG_STEP : 1;
@@ -104,7 +115,7 @@ function TempoDial({ tempo, onSet }: Pick<Props, 'tempo' | 'onSet'>) {
       }}
     >
       <span className="tempo-value">{bpm}</span>
-      <span className="tempo-unit">BPM</span>
+      <span className="tempo-unit" data-clock={tempo.midi || undefined}>{unit(tempo)}</span>
     </div>
   );
 }
@@ -112,7 +123,7 @@ function TempoDial({ tempo, onSet }: Pick<Props, 'tempo' | 'onSet'>) {
 /** Tap: the BPM follows the taps (issue 112), Hold's tapped rhythm apart. */
 function TapButton({ tempo, onTap }: Pick<Props, 'tempo' | 'onTap'>) {
   const learn = useLearnable({ kind: 'action', id: 'tap' });
-  const held = tempo.player;
+  const held = heldOff(tempo);
   return (
     <Tooltip content={TIPS.tap}>
       <button
@@ -132,9 +143,9 @@ function TapButton({ tempo, onTap }: Pick<Props, 'tempo' | 'onTap'>) {
 }
 
 /**
- * The page's tempo in the header's set-up row (issue 112, decided by the owner): from 861 px the BPM and Tap beside
- * it; narrower, the BPM alone, which opens a small field with the BPM and Tap in it. Escape or a press elsewhere
- * closes it.
+ * The page's tempo in the header (issue 112, decided by the owner): from 861 px the BPM over Tap, a column of the
+ * header's buttons (issue 154); narrower, the BPM alone among set-up, which opens a small field with the BPM and Tap
+ * in it. Escape or a press elsewhere closes it.
  */
 export function TempoControl(props: Props) {
   const narrow = useMediaQuery(STACKED);
@@ -159,7 +170,7 @@ export function TempoControl(props: Props) {
   if (!narrow)
     return (
       <div className="tempo" role="group" aria-label="Tempo">
-        <Tooltip content={TIPS.tempo}>
+        <Tooltip content={tempoTip(props.tempo)}>
           <TempoDial {...props} />
         </Tooltip>
         <TapButton {...props} />
@@ -167,10 +178,10 @@ export function TempoControl(props: Props) {
     );
   return (
     <div className="tempo-menu" ref={wrapper}>
-      <Tooltip content={TIPS.tempo}>
-        <button ref={button} type="button" className="tool tempo-open" aria-label="Tempo" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+      <Tooltip content={tempoTip(props.tempo)}>
+        <button ref={button} type="button" className="tool tempo-open" aria-label="Tempo" aria-expanded={open} data-clock={props.tempo.midi || undefined} onClick={() => setOpen((o) => !o)}>
           <span className="tempo-value">{props.tempo.bpm}</span>
-          <span className="tool-word">BPM</span>
+          <span className="tool-word" data-clock={props.tempo.midi || undefined}>{unit(props.tempo)}</span>
         </button>
       </Tooltip>
       {open && (

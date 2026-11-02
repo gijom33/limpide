@@ -1,3 +1,4 @@
+import { noteIndex } from '../music/tempo';
 import type { Library } from './library';
 import { defaultPatch, type Patch } from './patch';
 import { readShareHash } from './serialize';
@@ -229,27 +230,27 @@ group('Bass', [
     filterEnvAmount: 2.5, filterAttack: 0.002, filterDecay: 0.25, filterSustain: 0.2, lfoDestination: 'pulseWidth', lfoRate: 0.8, lfoAmount: 0.8,
     ampAttack: 0.002, ampSustain: 0.9, ampRelease: 0.12,
   }],
-  ['Wobble', 'The LFO sweeping a resonant 24 dB low-pass, retriggered: every Note starts its wobble at the Cutoff and opens from there, so it lands on the beat. Watch the Timeline restart.', {
+  ['Wobble', 'The LFO sweeping a resonant 24 dB low-pass, synced (1/4 T) and retriggered: every Note starts its wobble at the Cutoff, so it lands on the beat. Watch the Timeline restart.', {
     volume: 0.45, osc2Waveform: 'square', osc2Octave: -1, mixOsc2: 0.6,
     filterSlope: 24, cutoff: 300, resonance: 0.65,
-    lfoRate: 3, lfoAmount: 0.7, lfoRetrigger: 'note', ampSustain: 1, ampRelease: 0.2,
+    lfoRate: 3, lfoSync: 'on', lfoNote: noteIndex('1/4 T'), lfoAmount: 0.7, lfoRetrigger: 'note', ampSustain: 1, ampRelease: 0.2,
   }],
-  ['Double Wobble', 'Both LFOs on the Cutoff, both retriggered: LFO 1 a slow wobble, LFO 2 a quick square flutter riding it. The Cutoff’s blue ring spans the two together; the Timeline draws their sum.', {
+  ['Double Wobble', 'Both LFOs on the Cutoff, synced and retriggered: LFO 1 a wobble a beat, LFO 2 a square flutter a sixteenth. The Cutoff’s blue ring spans the two; the Timeline draws their sum.', {
     volume: 0.45, osc2Waveform: 'square', osc2Octave: -1, mixOsc2: 0.6,
     filterSlope: 24, cutoff: 300, resonance: 0.6,
-    lfoRate: 2, lfoAmount: 0.6, lfoRetrigger: 'note',
-    lfo2Waveform: 'square', lfo2Destination: 'cutoff', lfo2Rate: 8, lfo2Amount: 0.25, lfo2Retrigger: 'note',
+    lfoRate: 2, lfoSync: 'on', lfoNote: noteIndex('1/4'), lfoAmount: 0.6, lfoRetrigger: 'note',
+    lfo2Waveform: 'square', lfo2Destination: 'cutoff', lfo2Rate: 8, lfo2Sync: 'on', lfo2Note: noteIndex('1/16'), lfo2Amount: 0.25, lfo2Retrigger: 'note',
     ampSustain: 1, ampRelease: 0.2,
   }],
-  ['Growl', 'A square LFO jumping the Filter between two places over a Sub: a stepped, talking bass.', {
+  ['Growl', 'A square LFO jumping the Filter between two places over a Sub, there and back each eighth (Sync): a stepped, talking bass.', {
     volume: 0.45, mixOsc2: 0.6, osc2Detune: -8, mixSub: 0.7, filterSlope: 24, cutoff: 350, resonance: 0.6,
-    lfoWaveform: 'square', lfoRate: 4, lfoAmount: 0.5, ampSustain: 1, ampRelease: 0.15,
+    lfoWaveform: 'square', lfoRate: 4, lfoSync: 'on', lfoNote: noteIndex('1/8'), lfoAmount: 0.5, ampSustain: 1, ampRelease: 0.15,
   }],
   ['Split Octave Bass', 'Osc 1 dropped an octave by its own Octave, Osc 2 left on the Note and a few cents off: a wide bass, the Scope repeating at Osc 1’s slower cycle.', {
     osc1Octave: -1, osc2Waveform: 'square', osc2Detune: 7, mixOsc2: 0.5,
     filterSlope: 24, cutoff: 500, resonance: 0.3, filterEnvAmount: 2, filterAttack: 0.002, filterDecay: 0.2, filterSustain: 0.1, ampSustain: 1, ampRelease: 0.15,
   }],
-  ['FM Bass', 'A sine swung by a sine on the same Note (FM), over a sine Sub. The Filter Envelope throws Osc 2 an octave up at each strike (Env Amount), so the sidebands jump wide and settle back: a rubbery, punchy attack.', {
+  ['FM Bass', 'A sine swung by a sine on the same Note (FM), over a sine Sub. The Filter Envelope throws Osc 2 an octave up at each strike (Env Amount), where FM is thinnest, a few sidebands spaced wide; as Osc 2 falls back they close in and fill every Harmonic.', {
     waveform: 'sine', osc2Waveform: 'sine', crossMod: 0.35, osc2EnvAmount: 12, mixSub: 0.6, subWaveform: 'sine',
     filterSlope: 24, cutoff: 1800, resonance: 0.15, filterEnvAmount: 1.5, filterAttack: 0.001, filterDecay: 0.18, filterSustain: 0,
     ampAttack: 0.002, ampDecay: 0.6, ampSustain: 0.6, ampRelease: 0.15,
@@ -300,7 +301,7 @@ group('Leads', [
     filterSlope: 24, cutoff: 2200, resonance: 0.3, keyTrack: 0.5, glide: 0.06, ampSustain: 0.9, ampRelease: 0.3,
     lfoDestination: 'cutoff', lfoRate: 0.2, lfoAmount: 0.3, lfo2Destination: 'pitch', lfo2Rate: 5.5, lfo2Amount: 0.3, lfo2Retrigger: 'note',
   }],
-  ['Poly Mod Zap', 'The Filter Envelope throws Osc 2 two octaves up and lets it fall as it opens the Filter, while Osc 2 swings Osc 1 (FM): each Note starts with a laser zap.', {
+  ['Poly Mod Zap', 'The Filter Envelope throws Osc 2 two octaves up at each strike and lets it fall as the Filter closes: that dive, heard in the Mixer, is the laser zap. Osc 2 also swings Osc 1 a little (FM), least at the strike, brightening the held Note.', {
     osc2EnvAmount: 24, mixOsc2: 0.5, crossMod: 0.15,
     cutoff: 1200, resonance: 0.35, filterEnvAmount: 2, filterAttack: 0.002, filterDecay: 0.25, filterSustain: 0, ampSustain: 0.8,
   }],
@@ -453,9 +454,9 @@ group('Pads', [
     lfoWaveform: 'triangle', lfoDestination: 'resonance', lfoRate: 0.17, lfoAmount: 0.5, lfo2Waveform: 'triangle', lfo2Destination: 'cutoff', lfo2Rate: 0.11, lfo2Amount: 0.5,
     ampAttack: 1.2, ampSustain: 1, ampRelease: 2.5,
   }],
-  ['Trance Gate', 'A held chord chopped by a Square LFO on Volume at full Depth: on, off, on, off, sixteen times a bar, the gated pad of trance, on eight Voices.', {
+  ['Trance Gate', 'A held chord chopped by a Square LFO on Volume at full Depth: on, off, sixteen times a bar at any tempo (Sync), the gated pad of trance, on eight Voices.', {
     voices: 8, osc2Detune: 9, mixOsc2: 0.9, cutoff: 1800, resonance: 0.2, ampAttack: 0.01, ampSustain: 1, ampRelease: 0.3,
-    lfoWaveform: 'square', lfoDestination: 'volume', lfoRate: 8, lfoAmount: 1, lfoRetrigger: 'note',
+    lfoWaveform: 'square', lfoDestination: 'volume', lfoRate: 8, lfoSync: 'on', lfoNote: noteIndex('1/16'), lfoAmount: 1, lfoRetrigger: 'note',
   }],
   ['Phase Pad', 'A notch swept slowly through two detuned saws, LFO 2 drifting their Detune: the phaser you can make without effects, on eight Voices. Watch the hole travel along the Spectrum.', {
     voices: 8, osc2Detune: 8, mixOsc2: 0.9, filterMode: 'notch', cutoff: 1200, resonance: 0.55, lfoWaveform: 'triangle', lfoDestination: 'cutoff', lfoRate: 0.15, lfoAmount: 0.8,
@@ -593,8 +594,8 @@ group('Movement & Effects', [
     volume: 0.9, filterMode: 'bandpass', cutoff: 800, resonance: 0.45, ampSustain: 1, lfoWaveform: 'triangle', lfoDestination: 'cutoff', lfoRate: 2.5, lfoAmount: 0.5,
     lfo2Waveform: 'square', lfo2Destination: 'resonance', lfo2Rate: 0.7, lfo2Amount: 0.45,
   }],
-  ['Stutter', 'A square LFO chopping the Filter, retriggered: every Note starts its stutter open, on the beat.', {
-    volume: 0.2, waveform: 'square', mixSub: 0.4, cutoff: 300, resonance: 0.3, ampSustain: 1, lfoWaveform: 'square', lfoDestination: 'cutoff', lfoRate: 8, lfoAmount: 0.8, lfoRetrigger: 'note',
+  ['Stutter', 'A square LFO chopping the Filter each sixteenth (Sync), retriggered: every Note starts its stutter open, on the beat.', {
+    volume: 0.2, waveform: 'square', mixSub: 0.4, cutoff: 300, resonance: 0.3, ampSustain: 1, lfoWaveform: 'square', lfoDestination: 'cutoff', lfoRate: 8, lfoSync: 'on', lfoNote: noteIndex('1/16'), lfoAmount: 0.8, lfoRetrigger: 'note',
   }],
   ['Pink Surf', 'Pink Noise alone, a slow LFO sweeping the Filter: waves rolling in. Switch the Noise to White and hear the hiss come back, and the Spectrum’s floor level out.', {
     volume: 0.5, mixOsc1: 0, mixNoise: 1, noiseColour: 'pink', cutoff: 1200, resonance: 0.2,
