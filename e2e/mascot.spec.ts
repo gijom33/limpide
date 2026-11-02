@@ -444,7 +444,7 @@ test.describe('Display’s switch lasts, the Notes are for the visit (issue 150,
   });
 });
 
-test('About shows it beside the logo while the switch is on, and not once it is off (issue 163)', async ({ page }) => {
+test('About shows it beside the name while the switch is on, and not once it is off (issue 163)', async ({ page }) => {
   const about = page.getByRole('dialog', { name: 'Limpide' });
   const inAbout = about.getByRole('button', { name: 'Bead, Limpide’s water drop: its tricks' });
   const openAbout = () => page.getByRole('button', { name: 'About', exact: true }).click();

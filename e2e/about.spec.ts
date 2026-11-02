@@ -104,8 +104,8 @@ test('About, opened any time, offers the Demo and the Tour beside Close (the own
   await expect(page.getByRole('button', { name: 'Demo', exact: true })).toHaveAttribute('aria-pressed', 'true');
 });
 
-// Issue 163: Bead, out on the page by default (issue 150), stands beside About's logo (at its page size, issue 178), and
-// a click on it shows its card of tricks in place of the credits. With its switch off, About is as before.
+// Issue 163: Bead, out on the page by default (issue 150), stands in About right of the name (at its page size, issue 178),
+// and a click on it shows its card of tricks in place of the credits. With its switch off, About is as before.
 test.describe('Bead in About (issue 163)', () => {
   const about = (page: Page) => page.getByRole('dialog', { name: 'Limpide' });
   const bead = (page: Page) => about(page).getByRole('button', { name: 'Bead, Limpide’s water drop: its tricks' });

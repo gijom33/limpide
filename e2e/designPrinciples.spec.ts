@@ -145,7 +145,7 @@ const STATES: { name: string; open?(page: Page): Promise<void>; close?(page: Pag
   { name: 'Display panel', open: (page) => page.getByRole('button', { name: 'Display', exact: true }).click(), close: (page) => page.getByRole('button', { name: 'Display', exact: true }).click() },
   { name: 'MIDI panel', open: (page) => page.getByRole('button', { name: 'MIDI', exact: true }).click(), close: (page) => page.getByRole('button', { name: 'MIDI', exact: true }).click() },
   { name: 'About', open: openAbout, close: (page) => page.keyboard.press('Escape') },
-  // Bead beside About's logo, its card in place of the credits (issue 163): with its switch on, then off again.
+  // Bead right of About's name (issue 178), its card in place of the credits (issue 163): with its switch on, then off again.
   {
     name: 'Bead’s card in About',
     open: async (page) => {
