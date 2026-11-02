@@ -1,4 +1,4 @@
-import { type DisplayValue, recall, remember } from '../app/displaySettings';
+import { type RememberedValue, recall, remember } from '../app/rememberedSettings';
 import type { KeyValueStorage } from '../app/storage';
 import { OSCILLATOR_LEVEL } from '../engine/synthEngine';
 import { createCache } from '../music/cache';
@@ -28,7 +28,7 @@ export type ViewerStore = ReturnType<typeof createViewerStore>;
 const IDEAL_HARMONICS = 256;
 
 /** The Viewers' Display settings as they are kept (issue 85), besides the overlays. */
-const savedOf = (settings: ViewSettings): DisplayValue<'viewer'> => ({
+const savedOf = (settings: ViewSettings): RememberedValue<'viewer'> => ({
   cycles: settings.cycles,
   timelineSeconds: settings.timelineSeconds,
   frequencyScale: settings.viewer.frequencyScale,

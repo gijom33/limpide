@@ -1,5 +1,5 @@
 import { useContext, useEffect, useEffectEvent, useRef, useState } from 'react';
-import type { Theme } from '../app/displaySettings';
+import type { Theme } from '../app/rememberedSettings';
 import type { Word } from '../input/callingPhrase';
 import { type LfoNumber, lfos } from '../patch/patch';
 import type { PatchStore } from '../patch/patchStore';

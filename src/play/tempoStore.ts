@@ -1,4 +1,4 @@
-import { recall, remember } from '../app/displaySettings';
+import { recall, remember } from '../app/rememberedSettings';
 import type { KeyValueStorage } from '../app/storage';
 import type { SynthEngine } from '../engine/synthEngine';
 import { clampBpm, TAPS, tappedBpm } from '../music/tempo';

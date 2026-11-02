@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
-import { BEND_RANGES, type BendRange } from '../app/displaySettings';
+import { BEND_RANGES, type BendRange } from '../app/rememberedSettings';
 import { answeredBy, knownAmong } from '../midi/controller';
 import { describeControl, describeMode, describeTarget } from '../midi/describe';
 import { type Control, type ControllerId, controlKey, type Mapping } from '../midi/mappings';

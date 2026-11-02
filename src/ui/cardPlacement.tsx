@@ -1,5 +1,5 @@
 import { type CSSProperties, type MouseEvent, type PointerEvent, type RefObject, useEffect, useMemo, useRef, useState } from 'react';
-import { recall, remember } from '../app/displaySettings';
+import { recall, remember } from '../app/rememberedSettings';
 import { safeStorage } from '../app/storage';
 import { ChevronIcon } from './icons';
 

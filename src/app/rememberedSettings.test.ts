@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { memoryStorage } from '../test/memoryStorage';
-import { recall, remember } from './displaySettings';
+import { recall, remember } from './rememberedSettings';
 
-describe('the Display settings remembered (issue 87)', () => {
+describe('the settings remembered in one place (issues 87, 139)', () => {
   it('brings back what a browser saved before, under the same keys and in the same form', () => {
     const storage = memoryStorage({
       'limpide.viewSettings': JSON.stringify({ cycles: 4, timelineSeconds: 3, frequencyScale: 'linear', levelScale: 'linear', tapSource: 'newest' }),
@@ -51,7 +51,7 @@ describe('the Display settings remembered (issue 87)', () => {
     expect(recall(memoryStorage({ 'limpide.bead': 'on' }), 'bead')).toBe('on');
   });
 
-  it('brings back the cards’ folds, the bend range and the aftertouch kept before they moved here (issue 139)', () => {
+  it('brings back the cards’ folds, the bend range and the aftertouch under their keys and in their forms (issue 139)', () => {
     const storage = memoryStorage({
       'limpide.cardFolded.demo': '1',
       'limpide.cardFolded.tutorial': '0',

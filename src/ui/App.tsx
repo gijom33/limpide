@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState, useSyncExternalStore } from 'react';
-import { recall, remember } from '../app/displaySettings';
+import { recall, remember } from '../app/rememberedSettings';
 import { type AudioSession, getAudioSession } from '../app/session';
 import { safeStorage } from '../app/storage';
 import { type AudioStatus, unlockAudio } from '../app/unlockAudio';
@@ -18,13 +18,13 @@ import { EnvelopeTimeline } from './EnvelopeTimeline';
 import { Fader } from './Fader';
 import { FilterShape } from './FilterShape';
 import { GeekContext } from './geekContext';
-import { useDisplaySetting } from './hooks/useDisplaySetting';
 import { useHold } from './hooks/useHold';
 import { useComputerKeyboard, useSpaceFreezes } from './hooks/useKeys';
 import { useMediaQuery } from './hooks/useMediaQuery';
 import { useMidi } from './hooks/useMidi';
 import { usePlayers } from './hooks/usePlayers';
 import { usePresetAbout } from './hooks/usePresetAbout';
+import { useRememberedSetting } from './hooks/useRememberedSetting';
 import { useTourState } from './hooks/useTourState';
 import { useTutorialState } from './hooks/useTutorialState';
 import { HoldIcon, InfoIcon, LegatoIcon, NoteIcon, PlayIcon } from './icons';
@@ -160,7 +160,7 @@ export function App() {
   // hand, as in a bead of water, sends it away and calls it back for this visit only. Display's switch is the lasting
   // setting, remembered: with it off, Bead never appears and the Notes do nothing, for anyone it would annoy (the owner,
   // 2026-10-31). Its switch is part of its rules (it brings Bead up or sends it away, and the Notes read it), so it is
-  // kept here rather than by `useDisplaySetting`.
+  // kept here rather than by `useRememberedSetting`.
   const [bead, setBead] = useState(() => beadOnArrival(recall(storage, 'bead')));
   const moveBead = useCallback((event: BeadEvent) => setBead((b) => beadAfter(b, event)), []);
   useEffect(() => remember(storage, 'bead', bead.switch), [storage, bead.switch]);
@@ -187,22 +187,22 @@ export function App() {
   const beadGone = useCallback(() => moveBead('gone'), [moveBead]);
   const modulationContext = useMemo(() => ({ engine: session.engine, patch: () => patches.get().patch, octave: octaveRef }), [session, patches]);
   // The letter keys play Notes unless turned off in Display (issue 51); remembered.
-  const [letterKeys, setLetterKeys] = useDisplaySetting(storage, 'letterKeys');
+  const [letterKeys, setLetterKeys] = useRememberedSetting(storage, 'letterKeys');
   useComputerKeyboard(session, octaveRef, moveOctave, letterKeys === 'on');
   // Tooltips open unless turned off in Display (issue 81); remembered.
-  const [tooltips, setTooltips] = useDisplaySetting(storage, 'tooltips');
+  const [tooltips, setTooltips] = useRememberedSetting(storage, 'tooltips');
   const { hold, pressHold, pressHoldRef, heldNotes, setPedal } = useHold(session);
   // How far a keyboard's bend wheel takes the pitch, in semitones each way (issue 52); remembered.
-  const [bendRange, setBendRange] = useDisplaySetting(storage, 'bendRange');
+  const [bendRange, setBendRange] = useRememberedSetting(storage, 'bendRange');
   // The Destination a keyboard's aftertouch moves (issue 132), remembered with the MIDI settings, not in the Patch. A
   // new one starts from no pressure, until the keyboard sends the next.
-  const [aftertouch, setAftertouch] = useDisplaySetting(storage, 'aftertouch');
+  const [aftertouch, setAftertouch] = useRememberedSetting(storage, 'aftertouch');
   useEffect(() => session.engine.setPressure({ destination: aftertouch, amount: 0 }), [session, aftertouch]);
 
   useSpaceFreezes(viewerStore);
   const narrow = useMediaQuery(STACKED);
   // The stylesheet reads the theme from the page's root, so the whole page follows it.
-  const [theme, setTheme] = useDisplaySetting(storage, 'theme');
+  const [theme, setTheme] = useRememberedSetting(storage, 'theme');
   useEffect(() => void (document.documentElement.dataset.theme = theme), [theme]);
 
   const players = usePlayers({

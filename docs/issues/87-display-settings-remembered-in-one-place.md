@@ -41,6 +41,8 @@
 Built at night (2026-10-30) on `night/2026-10-30`, test-first.
 
 - `src/app/displaySettings.ts` is the one list of the Display settings a new page starts from: the Viewers' five (`limpide.viewSettings`), the overlays (`limpide.overlays`), the letter keys, Tooltips, the theme and the Bead's switch, each under the key and in the form it had, with the values it may take and its default. `recall` reads one back through one check (kept if allowed, else the default; a garbled JSON object counts as nothing saved); `remember` keeps it.
+
+  **Since then (2026-11-01, issue 139):** the module is `src/app/rememberedSettings.ts` (`RememberedSetting`, `useRememberedSetting`), as it now also keeps the docked cards' folds and the MIDI keyboard's bend range and aftertouch, under their old keys and forms. Claude's call, open to the owner.
 - The Viewer settings store reads and writes through it (still writing only when a setting changes, not at every turn of a knob); the overlays' own load and save and the store's copied parse code are gone.
 - The app's letter keys, Tooltips, theme and Bead use one hook, `useDisplaySetting`, in place of a state and an effect each; `src/ui/theme.ts` is gone (the theme now goes through the same never-throwing storage as the rest).
 - Tests: `src/app/displaySettings.test.ts` (settings saved under today's keys come back; missing or garbled ones start at their defaults; each is kept under the same key and in the same form). The Viewer settings store's tests are unchanged; no Playwright test changed.

@@ -13,14 +13,14 @@ interface Choice<T> {
 
 const choice = <const T>(allowed: readonly T[], fallback: NoInfer<T>): Choice<T> => ({ allowed, fallback });
 
-/** The one read-back check: a saved value is kept if the setting may take it, else the setting starts at its default. */
+/** The read-back check: a saved value is kept if the setting may take it, else the setting starts at its default. */
 const checked = <T>(saved: unknown, { allowed, fallback }: Choice<T>): T =>
   (allowed as readonly unknown[]).includes(saved) ? (saved as T) : fallback;
-/** The same for a single setting, kept as its own text: a number is kept as its digits. */
+/** The same check for a single setting, read from its own text: a number is kept as its digits. */
 const checkedText = <T>(text: string | null, { allowed, fallback }: Choice<T>): T => allowed.find((value) => String(value) === text) ?? fallback;
 
 const ON_OFF = choice(['on', 'off'], 'on');
-/** A docked card's fold (issue 59): '1' folded to its top row, '0' open, as it has always been kept. */
+/** A docked card's fold (issue 59): '1' folded to its top row, '0' open. */
 const FOLD = choice(['0', '1'], '0');
 
 /** How far a keyboard's bend wheel may take the pitch, in semitones each way: a whole tone (the usual), a fifth, an octave. */
@@ -28,14 +28,14 @@ export const BEND_RANGES = [2, 7, 12] as const;
 export type BendRange = (typeof BEND_RANGES)[number];
 
 /**
- * Every Display setting a new page starts from (issues 85, 87), and the page's other remembered settings, each docked
- * card's fold and the MIDI keyboard's bend range and aftertouch (issue 139): where each is kept, and the values it may
- * take. A group is kept as one JSON object under its key, a single setting as its own text. Freeze and the Snapshot are
+ * Every setting a new page starts from, as an earlier visit left it, in one place (issues 85, 87, 139): the Display's,
+ * Bead's switch, the tempo, each docked card's fold, and the MIDI keyboard's bend range and aftertouch. Where each is
+ * kept, and the values it may take. A group is kept as one JSON object under its key, a single setting as its own text. Freeze and the Snapshot are
  * moments and are never kept. A key or its form never changes: a browser that saved under it must find it again.
  * The one exception, decided by the owner: the Maths Layer's choice, now the Synth Geek Layer's, moved from `maths`
  * to `geek` within the overlays (issue 165), a choice saved under the old name being let go.
  */
-const DISPLAY = {
+const REMEMBERED = {
   viewer: {
     key: 'limpide.viewSettings',
     fields: {
@@ -73,7 +73,7 @@ const DISPLAY = {
   aftertouch: { key: 'limpide.aftertouch', value: choice(LFO_DESTINATIONS.map((d) => d.id), NO_PRESSURE.destination) },
 } as const;
 
-type Display = typeof DISPLAY;
+type Remembered = typeof REMEMBERED;
 type Fields = Record<string, Choice<unknown>>;
 type ValueOf<S> = S extends { fields: infer F extends Fields }
   ? { -readonly [K in keyof F]: F[K] extends Choice<infer T> ? T : never }
@@ -81,10 +81,10 @@ type ValueOf<S> = S extends { fields: infer F extends Fields }
     ? T
     : never;
 
-/** A remembered Display setting, by name. */
-export type DisplaySetting = keyof Display;
-export type DisplayValue<K extends DisplaySetting> = ValueOf<Display[K]>;
-export type Theme = DisplayValue<'theme'>;
+/** A remembered setting, by name. */
+export type RememberedSetting = keyof Remembered;
+export type RememberedValue<K extends RememberedSetting> = ValueOf<Remembered[K]>;
+export type Theme = RememberedValue<'theme'>;
 
 /** A saved JSON object, or nothing if the text is missing or garbled. */
 function savedObject(text: string | null): Record<string, unknown> {
@@ -96,18 +96,18 @@ function savedObject(text: string | null): Record<string, unknown> {
   }
 }
 
-/** What an earlier visit saved for a Display setting, each value checked: a missing or garbled one starts at its default. */
-export function recall<K extends DisplaySetting>(storage: KeyValueStorage, name: K): DisplayValue<K> {
-  const setting: { key: string; fields: Fields } | { key: string; value: Choice<unknown> } = DISPLAY[name];
+/** What an earlier visit saved for a setting, each value checked: a missing or garbled one starts at its default. */
+export function recall<K extends RememberedSetting>(storage: KeyValueStorage, name: K): RememberedValue<K> {
+  const setting: { key: string; fields: Fields } | { key: string; value: Choice<unknown> } = REMEMBERED[name];
   const text = storage.getItem(setting.key);
-  if ('value' in setting) return checkedText(text, setting.value) as DisplayValue<K>;
+  if ('value' in setting) return checkedText(text, setting.value) as RememberedValue<K>;
   const saved = savedObject(text);
   const fields = Object.entries(setting.fields).map(([field, allowed]) => [field, checked(saved[field], allowed)]);
-  return Object.fromEntries(fields) as DisplayValue<K>;
+  return Object.fromEntries(fields) as RememberedValue<K>;
 }
 
-/** Keeps a Display setting for the next visit. */
-export function remember<K extends DisplaySetting>(storage: KeyValueStorage, name: K, value: DisplayValue<K>): void {
-  const setting = DISPLAY[name];
+/** Keeps a setting for the next visit. */
+export function remember<K extends RememberedSetting>(storage: KeyValueStorage, name: K, value: RememberedValue<K>): void {
+  const setting = REMEMBERED[name];
   storage.setItem(setting.key, 'value' in setting ? String(value) : JSON.stringify(value));
 }

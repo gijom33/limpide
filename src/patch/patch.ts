@@ -190,7 +190,7 @@ const noteValue = (id: ParamId, knob: ParamId): ParamDef => ({
 
 /** FM at full: Osc 2 swings Osc 1's frequency by four times its own (a modulation index of 4, issue 89). */
 export const FM_INDEX = 4;
-/** FM's modulation index at an FM of `fm` (0 to 1, the knob's or an LFO's swing of it): the one home of the sum. */
+/** FM's modulation index at an FM of `fm` (0 to 1, the knob's or an LFO's swing of it), worked out here alone. */
 export const fmIndex = (fm: number) => FM_INDEX * fm;
 
 export const PARAMS: Record<ParamId, ParamDef> = {
