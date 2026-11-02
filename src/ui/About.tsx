@@ -22,8 +22,8 @@ const day = (iso: string) =>
  * A brand-new browser sees it once as a welcome, with a word on what to do first. Every time, its last row plays the
  * Demo (or, from a Share link, the shared sound), starts the Tour (issue 128), or closes it.
  *
- * While Bead's switch is on, Bead stands beside the logo (issue 163); a click on it shows its card of tricks in place of
- * the credits, and Back, Escape or Bead again return to them.
+ * While Bead's switch is on, Bead stands to the right of the name (issues 163 and 178); a click on it shows its card of
+ * tricks in place of the credits, and Back, Escape or Bead again return to them.
  */
 export function About({
   open,
