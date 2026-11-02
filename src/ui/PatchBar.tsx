@@ -18,6 +18,8 @@ interface Props {
   name: string;
   changed: boolean;
   patch: Patch;
+  /** The page's tempo: a synced LFO's speed, for the Patch's plain words (issue 123). */
+  bpm: number;
   library: Library;
   /** Load a Patch and make it the new baseline for "changed". */
   onLoad(name: string, patch: Patch): void;
@@ -36,7 +38,7 @@ interface Props {
  * The current Patch's name with Preset arrows, and a panel to save, load, delete, export, import and share. The panel's
  * search and category (`PatchSearch`) narrow what it lists, and stay until the page reloads (issue 69).
  */
-export function PatchBar({ name, changed, patch, library, onLoad, onPick, about, onCloseAbout, tutorials, onTutorial }: Props) {
+export function PatchBar({ name, changed, patch, bpm, library, onLoad, onPick, about, onCloseAbout, tutorials, onTutorial }: Props) {
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState('');
   const [link, setLink] = useState('');
@@ -52,7 +54,7 @@ export function PatchBar({ name, changed, patch, library, onLoad, onPick, about,
   const fileInput = useRef<HTMLInputElement>(null);
   const searchBox = useRef<HTMLInputElement>(null);
   // The Patch in plain words (issue 123), where a Preset's own about line is not showing.
-  const patchWords = usePatchWords(name, patch);
+  const patchWords = usePatchWords(name, patch, bpm);
   const words = about.shown ? '' : patchWords;
   /** The panel closes, and the focus goes back to the button that opened it, not to the page (issue 51). */
   const closeToOpener = () => {

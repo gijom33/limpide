@@ -11,9 +11,9 @@ export const WORDS_EVERY = 250;
  * sound, or for a saved, imported or shared Patch or the last session. A Preset as loaded shows none: its own about
  * line says it (issue 153). Following the knobs, but not more often than `WORDS_EVERY`; gone at once on a load.
  */
-export function usePatchWords(name: string, patch: Patch): string {
+export function usePatchWords(name: string, patch: Patch, bpm: number): string {
   const preset = PRESETS.find((p) => p.name === name);
-  const target = preset && samePatch(preset.patch, patch) ? '' : describePatch(patch);
+  const target = preset && samePatch(preset.patch, patch) ? '' : describePatch(patch, bpm);
   const [shown, setShown] = useState(target);
   const last = useRef(0);
   useEffect(() => {

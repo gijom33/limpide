@@ -141,18 +141,22 @@ for (const [width, height, most] of [[375, 812, 5], [700, 830, 3], [1100, 800, 3
   });
 }
 
-/** The Patch in plain words (issue 123): the line under the header from 861 px, the name's second line below. */
-const plainWords = (page: Page) => page.locator('.patch-words, .patch-name-words').locator('visible=true');
+/**
+ * The Patch in plain words (issue 123): the line under the header from 861 px, the name's second line below. Found by
+ * its class, as it is hidden from a screen reader (the name and the knobs are what it hears).
+ */
+const anyWords = (page: Page) => page.locator('.patch-words, .patch-name-words');
+const plainWords = (page: Page) => anyWords(page).locator('visible=true');
 
 test('once the sound changes, the line under the Patch name says it in plain words, and follows the knobs (issue 123)', async ({ page }) => {
-  await expect(page.locator('.patch-words, .patch-name-words')).toHaveCount(0); // Init as loaded
+  await expect(anyWords(page)).toHaveCount(0); // Init as loaded
   await page.getByRole('button', { name: 'Next Preset' }).click();
-  await expect(page.locator('.patch-words, .patch-name-words')).toHaveCount(0); // a Preset as loaded, by the arrows
+  await expect(anyWords(page)).toHaveCount(0); // a Preset as loaded, by the arrows
 
   // A Preset picked in the panel shows its own about line, the plain words none, until a knob is turned.
   await pick(page, 'Init');
   await expect(description(page)).toBeVisible();
-  await expect(page.locator('.patch-words, .patch-name-words')).toHaveCount(0);
+  await expect(anyWords(page)).toHaveCount(0);
   await nudge(page);
   await expect(description(page)).toHaveCount(0);
   await expect(plainWords(page)).toHaveText('a saw, softly filtered, sustained');
@@ -169,7 +173,7 @@ test('once the sound changes, the line under the Patch name says it in plain wor
   await expect(patchName(page)).not.toHaveAttribute('data-changed', 'true');
   await expect(plainWords(page)).toHaveText('a bright saw, sustained');
   await page.getByRole('button', { name: 'Next Preset' }).click();
-  await expect(page.locator('.patch-words, .patch-name-words')).toHaveCount(0);
+  await expect(anyWords(page)).toHaveCount(0);
 });
 
 // Every Preset's phrase, as drawn and in wider type (Linux's fonts), on one line in its place: clear of the Sections

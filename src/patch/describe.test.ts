@@ -74,9 +74,33 @@ describe('A Patch in plain words (issue 123)', () => {
     // The Pulse Width moved on a saw changes nothing heard; on a pulse it does.
     const pwm: Patch = { ...defaultPatch(), lfoDestination: 'pulseWidth', lfoAmount: 0.8 };
     expect(describePatch(pwm)).toBe('a saw, softly filtered, sustained');
-    expect(describePatch({ ...pwm, waveform: 'pulse', pulseWidth: 0.5 })).toBe('a pulse, softly filtered, sustained, with a moving pulse width');
+    expect(describePatch({ ...pwm, waveform: 'pulse', pulseWidth: 0.5 })).toBe('a pulse, softly filtered, sustained, with a moving Pulse Width');
     // An LFO on FM with FM at 0 has no room to swing it.
     expect(describePatch({ ...defaultPatch(), lfoDestination: 'fm', lfoAmount: 1 })).toBe('a saw, softly filtered, sustained');
+    // A high-pass swung an octave each way from 20 Hz stays under a 392 Hz fundamental: it shapes nothing.
+    const swung: Patch = { ...defaultPatch(), lfoDestination: 'cutoff', lfoAmount: 0.5 };
+    expect(describePatch({ ...swung, filterMode: 'highpass', cutoff: 20 })).toBe('a saw, sustained');
+    expect(describePatch({ ...swung, filterMode: 'highpass', cutoff: 800 })).toBe('a saw, thinned by a high-pass, sustained, with a wobble');
+    // Detune moved on an Osc 2 heard only through FM beats against nothing.
+    const fm: Patch = { ...defaultPatch(), waveform: 'sine', osc2Waveform: 'sine', crossMod: 0.5, cutoff: 20000 };
+    expect(describePatch({ ...fm, lfoDestination: 'detune', lfoAmount: 0.5 })).toBe('a sine with FM, sustained');
+  });
+
+  it('names FM only on the Oscillator it moves, Osc 1, when that is named', () => {
+    // Osc 1 below a level heard beside Osc 2: the saw heard is Osc 2's, which FM leaves alone.
+    const quietOne: Patch = { ...defaultPatch(), mixOsc1: 0.05, mixOsc2: 1, crossMod: 0.5 };
+    expect(describePatch(quietOne)).toBe('a saw, softly filtered, sustained');
+    expect(describePatch({ ...defaultPatch(), crossMod: 0.01 })).toBe('a saw, softly filtered, sustained');
+  });
+
+  it('names a square Sub’s Harmonics: no pure sine above it, and a Filter that shapes it', () => {
+    expect(describePatch(preset('Rubber'))).toBe('a sine with a Sub, softly filtered, opening on each Note, accented');
+  });
+
+  it('names what sounds when every source is quiet, not a Noise that is down', () => {
+    expect(describePatch({ ...defaultPatch(), mixOsc1: 0.08 })).toBe('a saw, softly filtered, sustained');
+    // The Sub an octave under G4: about ten of its Harmonics under 2 kHz, the Filter not named.
+    expect(describePatch({ ...defaultPatch(), mixOsc1: 0, mixSub: 0.05 })).toBe('a square Sub, sustained');
   });
 
   it('says so when nothing sounds', () => {

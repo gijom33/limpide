@@ -322,6 +322,7 @@ export function App() {
           name={patchName}
           changed={changed}
           patch={patch}
+          bpm={tempo.bpm}
           library={library}
           onLoad={load}
           onPick={pickPreset}
