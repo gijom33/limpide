@@ -33,8 +33,9 @@ const tempoTip = (tempo: TempoState) => (tempo.midi ? TIPS.tempoClock : TIPS.tem
  * The BPM (issue 112): a spin button reading "120 BPM", dragged up and down or stepped with the arrows, a
  * double-click typing it. While a player holds the tempo it shows the player's and cannot be set; while a MIDI clock
  * sets it, it reads "120 MIDI" and cannot be set either (issue 136). A drag sets the
- * tempo where it is let go, the BPM it reaches shown meanwhile: each tempo set starts the beat count again, so set at
- * every step it would restart a synced LFO's cycle at every pixel (Claude's call, open to the owner).
+ * tempo where it is let go, the BPM it reaches shown meanwhile: each tempo set starts the beat count again and pulls a
+ * synced LFO onto the new beat over two cycles (ADR-0019), so set at every step the pulls would pile up, one a pixel
+ * (Claude's call, open to the owner).
  */
 function TempoDial({ tempo, onSet }: Pick<Props, 'tempo' | 'onSet'>) {
   const [typing, setTyping] = useState<string | null>(null);
