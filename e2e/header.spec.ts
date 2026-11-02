@@ -45,7 +45,7 @@ async function header(page: Page) {
 }
 
 for (const [size, [width, height]] of Object.entries(SIZES)) {
-  test(`at ${width}×${height} (${size}) Demo, Tutorial, Song and Hold, MIDI, Display, About each read left to right, placed for the layout; the octave buttons stacked left of the piano`, async ({ page }) => {
+  test(`at ${width}×${height} (${size}) the header's buttons placed for the layout (up to 860 px Demo, Tutorial, Song and Hold, MIDI, Display, About each read left to right; wider, Hold against the piano, then the tempo); the octave buttons stacked left of the piano`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await page.goto('/');
     const h = await header(page);
