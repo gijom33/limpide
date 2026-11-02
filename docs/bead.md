@@ -23,6 +23,7 @@ Bead makes no sound and changes nothing you hear. Turning a control only changes
 ## Its own life
 
 - It strolls (walking, hopping along or scooting), glances about and blinks.
+- **It faces its way** ([179](./issues/179-beads-tail-trails-behind.md)): strolling, riding or leaping to the right it turns round quickly, its tail trailing on its left; to the left, and standing still, its tail is on its right, as in the logo. A step shorter than itself, a dance step to a Note or a funny turn does not turn it; hovering, it faces as still.
 - With music it **dances**: a step at each Note, a hop as each Note starts, a lean with the LFOs, a stretch with the Amp's level, a splash when loud.
 - At an end of its edge it sometimes looks over, takes fright and scoots back.
 - After 20 seconds with nothing heard or turned it **dozes**, breathing, waking now and then with a yawn.

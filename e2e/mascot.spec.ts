@@ -218,7 +218,7 @@ for (const [size, viewport, column] of [
   });
 }
 
-/** Each frame for `seconds`: the drop's top under the ceiling (the header or the section tabs), its left, and its tail's turn. */
+/** Each frame for `seconds`: the drop's top under the ceiling (the header or the section tabs), its box's left, and its tail's turn. */
 const watchHover = (page: Page, seconds: number) =>
   page.evaluate(
     (ms) =>
@@ -230,7 +230,8 @@ const watchHover = (page: Page, seconds: number) =>
           const [header, strip] = ['header', '.section-strip'].map((q) => document.querySelector(q)?.getBoundingClientRect().bottom ?? 0);
           samples.push({
             under: drop.top - Math.max(0, header, strip),
-            left: drop.left,
+            // Its place: its box, whichever way its drawing faces (issue 179).
+            left: document.querySelector('.mascot')!.getBoundingClientRect().left,
             tail: document.querySelector('#bead-self > g')!.getAttribute('transform') ?? '',
             moving: document.querySelector<HTMLElement>('.mascot')!.dataset.moving ?? '',
           });
@@ -256,7 +257,7 @@ test('in a short phone window, with no edge in view, it hovers on its tail where
   let lostAt: number | null = null;
   for (let y = 60; lostAt === null; y += 60) {
     expect(y, 'no edge ever left it').toBeLessThan(4000);
-    const before = await page.locator('.mascot-drop').evaluate((el) => el.getBoundingClientRect().left);
+    const before = await mascot(page).evaluate((el) => el.getBoundingClientRect().left);
     await page.evaluate((top) => window.scrollTo({ top, behavior: 'instant' }), y);
     await page.waitForTimeout(900); // it takes off and settles, or falls to an edge and lands
     if ((await mascot(page).getAttribute('data-moving')) === 'hovering') lostAt = before;
@@ -609,7 +610,7 @@ test('strolling right its tail trails on its left; strolling left, a step and st
   test.skip(browserName !== 'chromium', 'drawn alike in every browser; checked in one');
   test.slow();
   // Its rolls as the test sets them, once it does: low, it strolls to its line's left end, looks over, takes fright and
-  // steps back; high, it strolls far to the right.
+  // steps back; high, it strolls to near its right end.
   await page.addInitScript(() => {
     const own = Math.random;
     Math.random = () => (window as { roll?: number }).roll ?? own();
@@ -648,12 +649,16 @@ test('strolling right its tail trails on its left; strolling left, a step and st
         }),
       [roll, seconds] as const,
     );
-  const frames = [...(await sample(0.3, 7)), ...(await sample(0.9, 6))];
+  // Wherever it came up: a stroll to near its right end, then all the way to its left end, then far to the right.
+  await sample(0.9, 5);
+  const frames = [...(await sample(0.3, 8)), ...(await sample(0.9, 6))];
   await page.keyboard.up('f');
   // Its strolls and stops: each frame the same way along from three frames back (a frame sampled before it is drawn
-  // repeats the last), all on its own, from end to end. Past the moment it turns round, a stroll right as long as its
-  // width has its tail on its left; anything else, on its right.
+  // repeats the last), all on its own, from where it set off. Past the moment it turns round (a quarter of a second, and its
+  // trailing tail clear of its line's left end: 45 px along at most), a stroll right longer than its width has its tail
+  // on its left; anything else, on its right.
   const SETTLING = 0.25;
+  const CLEAR = 45;
   const BACK = 3;
   const counted = { right: 0, short: 0, left: 0, still: 0 };
   const way = (k: number) =>
@@ -662,10 +667,13 @@ test('strolling right its tail trails on its left; strolling left, a step and st
     const w = way(i);
     end = i;
     while (end + 1 < frames.length && way(end + 1) === w) end++;
-    if (Number.isNaN(w) || Number.isNaN(way(i - 1)) || end + 1 >= frames.length || Number.isNaN(way(end + 1))) continue;
+    if (Number.isNaN(w) || Number.isNaN(way(i - 1))) continue;
+    // Cut short (a fright at its line's end, the sample's end), a stroll right may have gone on: not a short one.
+    const cut = end + 1 >= frames.length || Number.isNaN(way(end + 1));
     const length = frames[end].left - frames[i - BACK].left;
-    const settled = frames.slice(i, end + 1).filter((f) => f.t - frames[i].t >= SETTLING);
-    const kind = w > 0 ? (length >= 50 ? 'right' : length < 40 ? 'short' : null) : w < 0 ? 'left' : 'still';
+    const kind = w > 0 ? (length >= 60 ? 'right' : length < 40 && !cut ? 'short' : null) : w < 0 ? 'left' : 'still';
+    const from = frames[i - BACK].left;
+    const settled = frames.slice(i, end + 1).filter((f) => f.t - frames[i].t >= SETTLING && (kind !== 'right' || f.left - from >= CLEAR));
     if (!settled.length || !kind) continue;
     counted[kind]++;
     const side = kind === 'right' ? -1 : 1;

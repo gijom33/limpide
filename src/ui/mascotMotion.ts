@@ -1,6 +1,6 @@
 import type { Word } from '../input/callingPhrase';
 import type { Waveform } from '../music/harmonics';
-import { WIDTH } from './mascotCling';
+import { TURNED_PAST, WIDTH } from './mascotCling';
 import type { Gesture } from './mascotGestures';
 import type { Fling } from './mascotSpray';
 import { JOKES, PICKED_TRICKS, TRICK_MOVES, type Trick } from './mascotTricks';
@@ -151,6 +151,12 @@ const FORGIVE = 0.25;
 /** Having run off, it will not be tickled for this long. */
 const AWAY_SECONDS = 4;
 
+/**
+ * Scooting, it leans into it this much, in degrees; less with its tail trailing (issue 179), whose tip, 35 px behind where
+ * it leans about, would rise sin(lean) × 35: 3° keeps it within the 2 px its line leaves under what is over it.
+ */
+const SCOOT_LEAN = 8;
+const SCOOT_LEAN_TRAILING = 3;
 /** Frightened at an end of its room, it scoots back this far. */
 const BACK_OFF_PX = 26;
 const lasting = (trick: Trick) => TRICK_MOVES[trick].seconds;
@@ -161,7 +167,7 @@ type Gait = 'walk' | 'hop' | 'scoot' | 'dance' | 'trick';
  * through zero in this long, and back as it stops. Not for a step shorter than its own width, a dance step to a Note or
  * a funny turn's own travel.
  */
-export const TURN_SECONDS = 0.15;
+const TURN_SECONDS = 0.15;
 const FACING_GAITS: ReadonlySet<Gait | 'slide'> = new Set(['walk', 'hop', 'scoot', 'slide']);
 
 /** A Waveform changed, its tail takes that wave this long (issue 127). */
@@ -256,6 +262,11 @@ export function createMascotMotion(random: () => number = Math.random) {
   let tripFrom = 0;
   let leap = 0;
   let hovering = false;
+  /** Its facing a frame further on its turn towards `to` (1 as drawn, −1 turned round). */
+  const turnTowards = (to: number, dt: number) => {
+    const step = (2 * dt) / TURN_SECONDS;
+    face = to > face ? Math.min(to, face + step) : Math.max(to, face - step);
+  };
   // A Tutorial or the Tour open (issue 151): its own life paused; and the control it points at, if any.
   let guided = false;
   let aim: { way: -1 | 1; angle: number; still: boolean } | null = null;
@@ -475,7 +486,7 @@ export function createMascotMotion(random: () => number = Math.random) {
      * Between its lines (issue 179): how far across its leap or fall goes, in pixels, positive to the right; 0 on its
      * line. Hovering, it faces as still.
      */
-    between(across: number, hovers = false) {
+    leaping(across: number, hovers: boolean) {
       leap = across;
       hovering = hovers;
     },
@@ -528,7 +539,7 @@ export function createMascotMotion(random: () => number = Math.random) {
       if (leftAt !== null) {
         let t = now - leftAt;
         // Sent away mid-stroll, it turns back as it stops (issue 179).
-        face = Math.min(1, face + (2 * dt) / TURN_SECONDS);
+        turnTowards(1, dt);
         const stopped = { ...resting, x, turn: face };
         if (reduced || t >= LEAVE_SECONDS) return { ...resting, x, form: 'film', eyes: 'none', fade: 0, gone: true };
         const phase = (Object.keys(LEAVING) as (keyof typeof LEAVING)[]).find((k) => {
@@ -647,13 +658,13 @@ export function createMascotMotion(random: () => number = Math.random) {
         }
       }
       if (!walking) tripWay = 0;
-      // Its way: across between lines, or along its own, a leap or a stroll at least its own width.
+      // Its way: across between lines, or along its own, a leap or a stroll at least its own width. Turned round, its
+      // tail trails past its box's left: on its line, it turns only once that is clear of the line's left end.
+      const tailClear = x < room.min || x - room.min >= TURNED_PAST;
       const way = hovering ? 0 : leap ? (Math.abs(leap) >= WIDTH ? Math.sign(leap) : 0)
-        : walking && FACING_GAITS.has(gait) && Math.abs(target! - tripFrom) >= WIDTH ? walking : 0;
+        : walking && FACING_GAITS.has(gait) && Math.abs(target! - tripFrom) >= WIDTH && tailClear ? walking : 0;
       // A funny turn, or pointing the way, turns it as they do.
-      const facing = trick || aim || way <= 0 ? 1 : -1;
-      const turning = (2 * dt) / TURN_SECONDS;
-      face = facing > face ? Math.min(facing, face + turning) : Math.max(facing, face - turning);
+      turnTowards(trick || aim || way <= 0 ? 1 : -1, dt);
       if (now >= nextBlink) {
         blinkUntil = now + BLINK_SECONDS;
         nextBlink = now + between(2, 6);
@@ -683,7 +694,7 @@ export function createMascotMotion(random: () => number = Math.random) {
           const second = Math.floor(now / steps) % 2 === 1;
           pose.legs = second ? 'walkB' : 'walkA';
           pose.lift += second ? 1 : 0; // a bob on every other step
-          if (gait === 'scoot') pose.tilt += walking * 8; // leaning into it
+          if (gait === 'scoot') pose.tilt += walking * (walking * face < 0 ? SCOOT_LEAN_TRAILING : SCOOT_LEAN); // leaning into it
         }
         if (pose.eyes !== 'happy') pose.eyes = walking > 0 ? 'right' : 'left';
       }
@@ -772,9 +783,11 @@ export function createMascotMotion(random: () => number = Math.random) {
         pose.wag += aim.angle;
         if (pose.eyes === 'open' || pose.eyes === 'left' || pose.eyes === 'right') pose.eyes = 'right';
       } else {
-        // Facing its way (issue 179); turned round, its eyes, set by the page's sides, are the other way in its drawing.
-        if (face < 0 && !trick && (pose.eyes === 'left' || pose.eyes === 'right')) pose.eyes = pose.eyes === 'left' ? 'right' : 'left';
-        pose.turn *= face;
+        // Facing its way (issue 179): from turned round (face −1) to its own turn, as drawn or a funny turn's (face 1).
+        // Its eyes are set for its own turn: shown the other way round, they swap in its drawing.
+        const own = pose.turn;
+        pose.turn = (own * (1 + face) - (1 - face)) / 2;
+        if (pose.turn * own < 0 && (pose.eyes === 'left' || pose.eyes === 'right')) pose.eyes = pose.eyes === 'left' ? 'right' : 'left';
       }
       if (now < blinkUntil && (pose.eyes === 'open' || pose.eyes === 'left' || pose.eyes === 'right')) pose.eyes = 'shut';
       if (frozen) {

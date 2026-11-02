@@ -3,6 +3,8 @@ export const WIDTH = 44;
 export const HEIGHT = 26;
 /** Where its drawing turns round about, from its box's left: 20 % of its width, as the stylesheet's transform origin. */
 const ORIGIN = WIDTH * 0.2;
+/** Turned round, how far its drawing reaches past its box's left (issue 179). */
+export const TURNED_PAST = WIDTH - 2 * ORIGIN;
 /** Its tail's middle, from the top of its drawing: level with the control's middle as it points. */
 const TAIL_Y = 14;
 /** How far a Tutorial's ring stands out round its control: its outline's offset and width. */

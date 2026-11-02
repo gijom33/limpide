@@ -635,7 +635,7 @@ describe('facing its way, its tail trailing behind it (issue 179)', () => {
     const motion = createMascotMotion(() => 0.5);
     motion.frame(quiet, 0, false, spot);
     const turnAfter = (from: number, across: number, hovers = false) => {
-      motion.between(across, hovers);
+      motion.leaping(across, hovers);
       return run(motion, from, from + 0.3, quiet, spot).at(-1)!.turn;
     };
     expect(turnAfter(0, 200)).toBe(-1);
@@ -643,7 +643,7 @@ describe('facing its way, its tail trailing behind it (issue 179)', () => {
     expect(turnAfter(0.6, -200)).toBe(1);
     expect(turnAfter(0.9, 30)).toBe(1);
     // Hovering, strolling along its hover line, it faces as still.
-    motion.between(0, true);
+    motion.leaping(0, true);
     motion.place(0);
     expect(run(motion, 1.2, 2.4, quiet, { min: 150, max: 200 }).every((p) => p.turn === 1)).toBe(true);
   });
@@ -657,6 +657,51 @@ describe('facing its way, its tail trailing behind it (issue 179)', () => {
     const leaving = run(motion, 0.5 + 1 / 60, 0.8, playing, { min: 150, max: 200 });
     expect(leaving[0].turn).toBeLessThan(0);
     expect(leaving.at(-1)!.turn).toBe(1);
+  });
+
+  it('a funny turn begun while it is turned round: facing that way already, it stays; else it turns to it, not at once', () => {
+    const turnedRound = () => {
+      const motion = createMascotMotion(() => 0.5);
+      motion.frame(playing, 0, false, wide);
+      motion.place(0);
+      expect(run(motion, 1 / 60, 0.5, playing, { min: 150, max: 200 }).at(-1)!.turn).toBe(-1);
+      return motion;
+    };
+    // The water gun, fired to the right, is drawn on its left: turned round already, it stays turned round.
+    const gun = turnedRound();
+    gun.trick('waterGun', 0.5);
+    const firing = run(gun, 0.5, 0.8, playing, { min: 150, max: 200 });
+    expect(firing.every((p) => p.doing === 'waterGun' && p.turn === -1)).toBe(true);
+    // Dragging the suitcase right, it faces as drawn: it turns there, its width through zero.
+    const bag = turnedRound();
+    bag.trick('suitcase', 0.5);
+    const dragging = run(bag, 0.5, 0.8, playing, { min: 0, max: 400 });
+    expect(dragging.some((p) => Math.abs(p.turn) < 0.5)).toBe(true);
+    expect(dragging.filter((p) => p.turn !== 1).length / 60).toBeLessThan(0.2);
+    expect(dragging.at(-1)!.turn).toBe(1);
+  });
+
+  it("setting off right from its line's left end, it turns once its trailing tail is clear of that end", () => {
+    // Surfing end to end: first to the left end, then right from it.
+    const motion = createMascotMotion(() => 0.5);
+    motion.frame(playing, 0, false, wide);
+    motion.act('surf');
+    const right = run(motion, 1 / 60, 5).filter((p, i, all) => i > 0 && p.x > all[i - 1].x);
+    // Turned round, its drawing reaches 26.4 px left of its box (it turns about a fifth of its 44 px).
+    expect(right.filter((p) => p.x < 26.4).every((p) => p.turn === 1)).toBe(true);
+    expect(right.filter((p) => p.x > 40 && p.x < 200).every((p) => p.turn === -1)).toBe(true); // till it stops
+  });
+
+  it('scooting with its tail trailing, it leans in less, so its tail tip stays near its line', () => {
+    // Clicked again and again, it runs off right, scooting, turned round.
+    const motion = createMascotMotion(() => 0.5);
+    motion.frame(quiet, 0, false, wide);
+    for (const t of [0.1, 0.2, 0.3, 0.4, 0.5]) motion.poke(t);
+    const running = run(motion, 0.6, 2, quiet).filter((p, i, all) => i > 0 && p.x > all[i - 1].x && p.turn === -1);
+    expect(running.length).toBeGreaterThan(10);
+    // Its tail 35 px behind where it leans about: 3° lifts the tip under 2 px, where 8° would lift it 5.
+    expect(Math.max(...running.map((p) => Math.abs(p.tilt)))).toBeGreaterThan(0);
+    expect(Math.max(...running.map((p) => Math.abs(p.tilt)))).toBeLessThanOrEqual(3);
   });
 
   it('strolling left it faces as drawn, its tail on its right', () => {

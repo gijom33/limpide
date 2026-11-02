@@ -717,7 +717,7 @@ export function Mascot({
       const where = place.frame(perch, span, now, still.matches, pose.x);
       if (where.landedAt !== null) motion.place(where.landedAt);
       // Its leap across, or its hover, for its facing from the next frame (issue 179).
-      motion.between(where.leap, where.moving === 'hovering');
+      motion.leaping(where.leap, where.moving === 'hovering');
       // One small bounce on arriving beside a control, and at each new Step or card: once there, or looking from afar.
       const arrived = where.landedAt !== null && where.moving === 'clinging';
       if (arrived || (bounceDue && guide && (where.moving === 'clinging' || (!clinging && !guideRoom)))) {
