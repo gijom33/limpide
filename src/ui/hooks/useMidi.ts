@@ -39,7 +39,7 @@ interface Host {
   onBend(amount: number): void;
   onPedal(down: boolean): void;
   onProgram(number: number): void;
-  /** Channel aftertouch, how hard the keys are pressed (0–1, issue 132). */
+  /** Aftertouch, how hard the keys are pressed (0–1, issue 132): the channel's, or the hardest-pressed held Note's. */
   onPressure(amount: number): void;
 }
 

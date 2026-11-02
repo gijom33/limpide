@@ -386,12 +386,10 @@ main[data-frozen] .tap-canvases::before {
 /* A knob's or fader's steps for the keys (issue 160): where there is a keyboard, not on a touch screen. */
 .tooltip-keys { color: var(--muted); font-variant-numeric: tabular-nums; }
 @media (hover: none) { .tooltip-keys { display: none; } }
-/* Where the control comes from (issue 134), last, with the Synth Geek Layer on: set apart by a rule, headed History. */
-.tooltip-history { padding-top: 6px; border-top: 1px solid var(--border); }
-.tooltip-history b { font-weight: 600; }
-/* The formula behind it (issue 133), above History, set apart the same way: headed, the formula on a line of its own. */
-.tooltip-hood { padding-top: 6px; border-top: 1px solid var(--border); }
-.tooltip-hood b { font-weight: 600; }
+/* With the Synth Geek Layer on, the formula behind the control (issue 133), then where it comes from (issue 134), last:
+   each set apart by a rule, under its heading. */
+.tooltip-hood, .tooltip-history { padding-top: 6px; border-top: 1px solid var(--border); }
+.tooltip-hood b, .tooltip-history b { font-weight: 600; }
 .tooltip-formula { display: block; font-variant-numeric: tabular-nums; }
 /* Headings that explain themselves on hover: no underline (it cluttered the panels), just the help cursor. */
 .has-tip { cursor: help; }

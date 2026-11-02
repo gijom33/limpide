@@ -30,8 +30,8 @@ export const tourGuide = (index: number): Guide => ({ selector: selectorOf(TOUR[
 /**
  * Brings the card's Section into view: its controls shown (on their tab), and its Viewers and its controls between the
  * header and the card, the Viewers first where not all fit, as each card speaks of them (issue 128, decision 10). The
- * LFO card no longer brings the Cutoff knob too: it could not share the screen with the Timeline, so its words point
- * at the Timeline's dotted line instead (issue 158, decided by the owner).
+ * LFO card brings the Timeline alone, as the Cutoff knob could not share the screen with it; its words point at the
+ * Timeline's dotted line instead (issue 158, decided by the owner).
  */
 function useSectionInView(card: TourSection, docked: RefObject<HTMLElement | null>) {
   useEffect(() => {
