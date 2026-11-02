@@ -1119,6 +1119,28 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
    Osc tabs. */
 @media (max-width: 374px) { .patch-about { font-size: var(--text-sm); line-height: 1.2; } }
 @media (prefers-reduced-motion: reduce) { .patch-about { animation: none; } }
+/* The Patch in plain words (issue 123), once it is not a Preset as loaded: one line where a Preset's about line shows,
+   its words where the about line's words start, as wide as the Oscillators and the Filter, in the room between the
+   header and the Sections (41 px from 861 px wide: the line takes 20). Cut with an ellipsis where it runs out of room;
+   the page beneath takes the pointer. */
+.patch-words {
+  position: absolute; top: calc(100% + 4px); left: 0; max-width: calc((100% - 2 * var(--space-4)) / 3 * 2 + var(--space-4));
+  margin: 0; padding: 5px 0 0 11px; pointer-events: none;
+  font-size: var(--text-md); line-height: 1.25; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+@media (min-width: 1920px) { .patch-words { max-width: calc((100% - 3 * var(--space-4)) / 2 + var(--space-4)); } }
+/* Up to 860 px the header is sticky and the Sections or their strip start right under it: the words are the Patch
+   name's second line instead, small as the header buttons' words there, cut with an ellipsis within the name's width. */
+.patch-name-words { display: none; }
+@media (max-width: 860px) {
+  .patch-words { display: none; }
+  .patch-name[data-words] { flex-wrap: wrap; align-content: center; row-gap: 0; }
+  .patch-name[data-words] > span:first-child { line-height: 14px; }
+  .patch-name-words {
+    display: block; order: 1; flex: 0 0 100%; min-width: 0; overflow: hidden; text-overflow: ellipsis;
+    font-size: 9px; line-height: 10px; font-weight: 400; text-align: center;
+  }
+}
 /* Never taller than the window below the header: the Presets scroll, the rest of the panel stays in view. */
 /* The Patch panel is anchored to the header (like the Display and MIDI panels), spanning its full width, so the
    Presets lay out in wide rows and the whole list is on screen at once; it scrolls only on short windows. */

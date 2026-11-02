@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { expect, type Page, test } from '@playwright/test';
+import { describePatch } from '../src/patch/describe';
 import { PRESETS } from '../src/patch/presets';
 import { startEmptied, USUAL } from './startState';
 
@@ -136,6 +137,85 @@ for (const [width, height, most] of [[375, 812, 5], [700, 830, 3], [1100, 800, 3
       );
       expect(found.problems, `letter-spacing ${spacing}`).toEqual([]);
       expect(found.most, `letter-spacing ${spacing}: the most lines`).toBeLessThanOrEqual(most);
+    }
+  });
+}
+
+/** The Patch in plain words (issue 123): the line under the header from 861 px, the name's second line below. */
+const plainWords = (page: Page) => page.locator('.patch-words, .patch-name-words').locator('visible=true');
+
+test('once the sound changes, the line under the Patch name says it in plain words, and follows the knobs (issue 123)', async ({ page }) => {
+  await expect(page.locator('.patch-words, .patch-name-words')).toHaveCount(0); // Init as loaded
+  await page.getByRole('button', { name: 'Next Preset' }).click();
+  await expect(page.locator('.patch-words, .patch-name-words')).toHaveCount(0); // a Preset as loaded, by the arrows
+
+  // A Preset picked in the panel shows its own about line, the plain words none, until a knob is turned.
+  await pick(page, 'Init');
+  await expect(description(page)).toBeVisible();
+  await expect(page.locator('.patch-words, .patch-name-words')).toHaveCount(0);
+  await nudge(page);
+  await expect(description(page)).toHaveCount(0);
+  await expect(plainWords(page)).toHaveText('a saw, softly filtered, sustained');
+  // The Cutoff wide open: within a moment the line says so.
+  await cutoff(page).press('End');
+  await expect(plainWords(page)).toHaveText('a bright saw, sustained', { timeout: 1000 });
+
+  // A saved Patch keeps its words; a Preset loaded takes them away.
+  await patchName(page).click();
+  const menu = page.getByRole('dialog', { name: 'Patches' });
+  await menu.getByRole('textbox', { name: 'Patch name' }).fill('Open saw');
+  await menu.getByRole('button', { name: 'Save', exact: true }).click();
+  await patchName(page).click(); // closed
+  await expect(patchName(page)).not.toHaveAttribute('data-changed', 'true');
+  await expect(plainWords(page)).toHaveText('a bright saw, sustained');
+  await page.getByRole('button', { name: 'Next Preset' }).click();
+  await expect(page.locator('.patch-words, .patch-name-words')).toHaveCount(0);
+});
+
+// Every Preset's phrase, as drawn and in wider type (Linux's fonts), on one line in its place: clear of the Sections
+// and within the Oscillators and the Filter from 861 px, inside the Patch name below; the header never moves.
+for (const [width, height] of [[320, 640], [375, 812], [700, 830], [861, 800], [1100, 800], [1440, 900], [2000, 1100]] as const) {
+  test(`at ${width} px the Patch’s plain words fit on one line or end in an ellipsis, and never move the header (issue 123)`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    // Sizes, not places: on a phone the focus on the Cutoff scrolls the page, and the header slides up as it does.
+    const sizes = () =>
+      page.evaluate(() => ['header', '.patch-name'].map((s) => (({ width, height }) => ({ width, height }))(document.querySelector(s)!.getBoundingClientRect())));
+    const before = await sizes();
+    await nudge(page);
+    await expect(plainWords(page)).toBeVisible();
+    expect(await sizes()).toEqual(before);
+    const phrases = PRESETS.map((p) => describePatch(p.patch));
+    for (const spacing of SPACINGS) {
+      const problems = await plainWords(page).evaluate(
+        (line, [phrases, spacing]) => {
+          line.style.letterSpacing = spacing as string;
+          const rect = (el: Element | null) => el!.getBoundingClientRect();
+          const section = (name: string) => document.querySelector(`section[aria-label="${name}"]`);
+          const button = document.querySelector('.patch-name')!;
+          const name = button.querySelector('span')!;
+          const inButton = line.classList.contains('patch-name-words');
+          const found: string[] = [];
+          for (const phrase of [...(phrases as string[]), 'a phrase far longer than any Patch’s, to see it cut short at the end with an ellipsis']) {
+            line.textContent = phrase;
+            const b = rect(line);
+            const tops = new Set([...line.getClientRects()].map((r) => Math.round(r.top)));
+            if (tops.size > 1 || b.height > parseFloat(getComputedStyle(line).lineHeight) * 1.5) found.push(`${phrase}: more than one line`);
+            if (line.scrollWidth > line.clientWidth + 1 && getComputedStyle(line).textOverflow !== 'ellipsis') found.push(`${phrase}: cut without an ellipsis`);
+            if (inButton) {
+              const box = rect(button);
+              if (b.top < box.top || b.bottom > box.bottom + 0.5 || b.left < box.left || b.right > box.right + 0.5) found.push(`${phrase}: out of the Patch name`);
+              if (rect(name).bottom > b.top + 0.5) found.push(`${phrase}: over the name`);
+            } else {
+              if (b.top < rect(document.querySelector('header')).bottom) found.push(`${phrase}: in the header`);
+              if (b.bottom > rect(section('Oscillators')).top) found.push(`${phrase}: reaches the Sections`);
+              if (b.right > rect(section('Filter')).right + 0.5) found.push(`${phrase}: wider than the Oscillators and the Filter`);
+            }
+          }
+          return found;
+        },
+        [phrases, spacing] as const,
+      );
+      expect(problems, `letter-spacing ${spacing}`).toEqual([]);
     }
   });
 }

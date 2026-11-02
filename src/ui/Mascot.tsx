@@ -143,11 +143,11 @@ const CONTROLS = 'button, [role=slider], [role=tab], [role=radio], input, .piano
 const STEP = 4;
 /**
  * What is drawn over the page, which it never stands under (issue 164): the docked cards (the Demo's, a Tutorial's, the
- * Tour's), the tips, the open panels and menus, and the Preset's description. It stays drawn under them, so it never covers their
- * words or buttons.
+ * Tour's), the tips, the open panels and menus, the Preset's description and the Patch's plain words (issue 123). It
+ * stays drawn under them, so it never covers their words or buttons.
  */
 const DOCKED = '.docked:not([hidden])';
-const PANELS = `${DOCKED}, .patch-about, .patch-panel, .destination-menu, .tutorial-menu-panel, .tempo-panel, .display-panel, .midi-panel, .learn-bar, .quick-setup`;
+const PANELS = `${DOCKED}, .patch-about, .patch-words, .patch-panel, .destination-menu, .tutorial-menu-panel, .tempo-panel, .display-panel, .midi-panel, .learn-bar, .quick-setup`;
 const COVERS = `${PANELS}, .tooltip:not([hidden])`;
 /** Pointing the way (issue 151): what may stand beside a control it clings to, as little covered as can be. */
 const NEIGHBOURS = '[data-learn], canvas, [role=tab], button, h2, h3';

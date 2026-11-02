@@ -4,6 +4,7 @@ import type { Patch } from '../patch/patch';
 import { type Category, categoryLists, isSearch, matchesWords } from '../patch/presetSearch';
 import { PRESETS, presetAfter, SHARED_NAME } from '../patch/presets';
 import { patchFromJSON, patchToJSON, shareHash } from '../patch/serialize';
+import { usePatchWords } from './hooks/usePatchWords';
 import type { PresetAbout } from './hooks/usePresetAbout';
 import { useLearnable } from './learn';
 import { PatchSearch } from './PatchSearch';
@@ -50,6 +51,9 @@ export function PatchBar({ name, changed, patch, library, onLoad, onPick, about,
   const opener = useRef<HTMLButtonElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const searchBox = useRef<HTMLInputElement>(null);
+  // The Patch in plain words (issue 123), where a Preset's own about line is not showing.
+  const patchWords = usePatchWords(name, patch);
+  const words = about.shown ? '' : patchWords;
   /** The panel closes, and the focus goes back to the button that opened it, not to the page (issue 51). */
   const closeToOpener = () => {
     setOpen(false);
@@ -163,9 +167,24 @@ export function PatchBar({ name, changed, patch, library, onLoad, onPick, about,
         ‹
       </button>
       <Tooltip content={{ title: 'Patch', body: 'The sound you are playing. Open to save, load, export or share it. A dot means it has changed since it was loaded or saved; it is kept automatically either way.' }}>
-        <button ref={opener} type="button" className="tool patch-name" aria-label={`Patch: ${name}`} aria-expanded={open} data-changed={changed || undefined} onClick={toggle}>
+        <button
+          ref={opener}
+          type="button"
+          className="tool patch-name"
+          aria-label={`Patch: ${name}`}
+          aria-expanded={open}
+          data-changed={changed || undefined}
+          data-words={words ? true : undefined}
+          onClick={toggle}
+        >
           <span>{name}</span>
           {changed && <span className="patch-changed" aria-hidden="true" />}
+          {/* Up to 860 px, where no room lies under the header, the words are the name's second line (issue 123). */}
+          {words && (
+            <span className="patch-name-words" aria-hidden="true">
+              {words}
+            </span>
+          )}
         </button>
       </Tooltip>
       <button type="button" className="tool tool-icon" aria-label="Next Preset" {...learnNext} onClick={() => step(1)}>
@@ -178,6 +197,13 @@ export function PatchBar({ name, changed, patch, library, onLoad, onPick, about,
       <span className="visually-hidden" role="status">
         {about.text ? `${name}. ${about.text}` : name}
       </span>
+      {/* The Patch in plain words, wider, where a Preset's about line shows (issue 123): one line, cut short with an
+          ellipsis where it runs out of room. Seen, not said: the name and the knobs are what a screen reader hears. */}
+      {words && (
+        <p className="patch-words" aria-hidden="true">
+          {words}
+        </p>
+      )}
       {about.shown && (
         <p className="patch-about">
           <Tooltip content={TIPS.closeDescription}>

@@ -127,6 +127,21 @@ const STATES: { name: string; open?(page: Page): Promise<void>; close?(page: Pag
     },
     close: (page) => page.getByRole('button', { name: 'Close the Preset’s description' }).click(),
   },
+  // A knob turned: the Patch in plain words, under the header or in the Patch name (issue 123). Init picked again, by
+  // the keyboard as above, and its description closed, to leave the page as it was.
+  {
+    name: 'Patch’s plain words',
+    open: async (page) => {
+      await page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name: 'Cutoff' }).press('ArrowDown');
+      await expect(page.locator('.patch-words, .patch-name-words').locator('visible=true')).toBeVisible();
+    },
+    close: async (page) => {
+      await page.getByRole('button', { name: /^Patch:/ }).click();
+      await page.getByRole('dialog', { name: 'Patches' }).getByRole('button', { name: 'Init', exact: true }).press('Enter');
+      await page.getByRole('button', { name: 'Close the Preset’s description' }).click();
+      await expect(page.locator('.patch-words, .patch-name-words')).toHaveCount(0);
+    },
+  },
   { name: 'Display panel', open: (page) => page.getByRole('button', { name: 'Display', exact: true }).click(), close: (page) => page.getByRole('button', { name: 'Display', exact: true }).click() },
   { name: 'MIDI panel', open: (page) => page.getByRole('button', { name: 'MIDI', exact: true }).click(), close: (page) => page.getByRole('button', { name: 'MIDI', exact: true }).click() },
   { name: 'About', open: openAbout, close: (page) => page.keyboard.press('Escape') },
