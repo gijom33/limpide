@@ -118,33 +118,15 @@ for (const [width, height] of [[345, 800], [360, 800], [601, 900], [861, 800], [
   });
 }
 
-// Issue 82 (the owner's idea, 2026-10-28): in three across, the top row stacks what it can two high so the piano sits at
-// the page's centre, wherever that leaves it its full size; the row grows no taller.
-const pianoPlace = (page: import('@playwright/test').Page) =>
-  page.evaluate(() => {
-    const piano = document.querySelector('.piano')!.getBoundingClientRect();
-    const header = document.querySelector('header')!.getBoundingClientRect();
-    return { offset: Math.round((piano.left + piano.right) / 2 - (header.left + header.right) / 2), headerHeight: Math.round(header.height) };
-  });
-// Since issue 154 (decision 3, decided by the owner: "it's okay if the keyboard is not centered") the piano need not
-// sit at the centre from 1200 px, so the test no longer asks it (Linux's fonts left it 5 px off at 1200 px, the 1.20.0
-// release run); the top row still grows no taller.
-for (const width of [1200, 1280, 1366, 1440, 1600, 1800, 1900]) {
+// Issue 82 (the owner's idea, 2026-10-28): in three across, the top row stacks what it can two high; the row grows no
+// taller than the piano. Since issue 154 (decision 3, decided by the owner: "it's okay if the keyboard is not centered")
+// the piano need not sit at the centre, so the tests no longer ask it (Linux's fonts left it 5 px off at 1200 px, the
+// 1.20.0 release run); the buttons right of it stand in columns of two at every width from 861 px.
+for (const width of [861, 880, 1000, 1100, 1200, 1280, 1366, 1440, 1600, 1800, 1900]) {
   test(`the top row no taller with the piano in it (${width}px, issue 82)`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/');
-    const { headerHeight } = await pianoPlace(page);
-    expect(headerHeight).toBeLessThanOrEqual(64);
-  });
-}
-// Below 1100 px the Patch picker beside the logo (the owner, 2026-10-29) makes the left side wider than the icons on the
-// right, and their words would take the piano's keys under 26 px: it keeps its size, up to 100 px right of the centre.
-for (const width of [861, 880, 1000, 1100]) {
-  test(`the piano keeps its size and comes nearer the centre where centring would shrink it (${width}px, issue 82)`, async ({ page }) => {
-    await page.setViewportSize({ width, height: 900 });
-    await page.goto('/');
-    const { offset, headerHeight } = await pianoPlace(page);
-    expect(Math.abs(offset)).toBeLessThanOrEqual(100);
-    expect(headerHeight).toBeLessThanOrEqual(64);
+    await page.locator('.piano button').first().waitFor();
+    expect(await page.evaluate(() => Math.round(document.querySelector('header')!.getBoundingClientRect().height))).toBeLessThanOrEqual(64);
   });
 }

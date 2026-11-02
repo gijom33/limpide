@@ -5,7 +5,8 @@ import { type AuditOptions, auditPage } from './audit';
 // keyboard; Hold, the tempo, MIDI, Display, About; Demo, Tutorial, Song: the owner, 2026-10-29, the tempo since issue
 // 112), each layout placing them in rows of its own, and Tab meeting them as they stand on screen (issue 104); the
 // octave buttons stacked beside the piano, and from 601 px up the piano's 17 keys at a finger's width where there is
-// room. Up to 860 px the header stays at the top and slides its rows above the keyboard away (issue 152).
+// room. Up to 860 px the header stays at the top and slides its rows above the keyboard away (issue 152). From 861 px
+// the buttons right of the keyboard stand in arrangement C, and the piano grows into the room they leave (issue 154).
 
 const SIZES = {
   phone: [390, 844],
@@ -20,15 +21,23 @@ async function header(page: Page) {
   return page.evaluate(() => {
     const box = (el: Element) => {
       const r = el.getBoundingClientRect();
-      return { left: Math.round(r.left), right: Math.round(r.right), top: Math.round(r.top), bottom: Math.round(r.bottom), height: Math.round(r.height) };
+      return { left: Math.round(r.left), right: Math.round(r.right), top: Math.round(r.top), bottom: Math.round(r.bottom), width: Math.round(r.width), height: Math.round(r.height) };
     };
     const button = (name: string) => box(document.querySelector(`header button[aria-label="${name}"]`)!);
     const white = [...document.querySelectorAll<HTMLElement>('.piano button:not([data-black])')].filter((k) => k.getBoundingClientRect().width > 0);
+    const shown = (el: Element | null) => !!el && (el as HTMLElement).offsetWidth > 0;
     return {
       demo: button('Demo'), tutorial: button('Tutorial'), song: button('Song'), hold: button('Hold'),
       midi: button('MIDI'), display: button('Display'), about: button('About'),
       up: button('Octave up'), down: button('Octave down'),
+      bpm: box(document.querySelector('header [role="spinbutton"][aria-label="Tempo"], header button[aria-label="Tempo"]')!),
+      tap: document.querySelector('header [aria-label="Tap"]') ? button('Tap') : null,
+      header: box(document.querySelector('header')!),
       piano: box(document.querySelector('.piano')!),
+      words: ['Hold', 'MIDI', 'Display', 'About', 'Demo', 'Tutorial', 'Song'].filter((name) =>
+        shown(document.querySelector(`header button[aria-label="${name}"] :is(.tool-word, .demo-word)`)),
+      ),
+      unit: shown(document.querySelector('header .tempo-unit')),
       whiteKeys: white.length,
       whiteKey: white[0].getBoundingClientRect().width,
     };
@@ -40,28 +49,60 @@ for (const [size, [width, height]] of Object.entries(SIZES)) {
     await page.setViewportSize({ width, height });
     await page.goto('/');
     const h = await header(page);
-    expect(h.demo.right).toBeLessThanOrEqual(h.tutorial.left);
-    expect(h.tutorial.right).toBeLessThanOrEqual(h.song.left);
-    expect(h.hold.right).toBeLessThanOrEqual(h.midi.left);
-    expect(h.midi.right).toBeLessThanOrEqual(h.display.left);
-    expect(h.display.right).toBeLessThanOrEqual(h.about.left);
     expect(h.up.bottom).toBeLessThanOrEqual(h.down.top + 1);
     expect(h.up.right).toBeLessThanOrEqual(h.piano.left);
-    if (size === 'laptop') {
-      // Right of the keyboard, two rows: set-up over Demo, Tutorial and Song, so the Patch sits beside the logo (the owner,
-      // 2026-10-29), Hold first on the right (the owner, 2026-10-27).
-      expect(h.piano.right).toBeLessThanOrEqual(Math.min(h.hold.left, h.demo.left));
-      expect(h.demo.top).toBeGreaterThanOrEqual(h.about.bottom);
-    } else if (size === 'wide') {
-      // One row right of the keyboard: Hold first, then the rest of set-up, then Demo, Tutorial and Song.
+    if (size === 'laptop' || size === 'wide') {
+      // Right of the keyboard, arrangement C (issue 154): Hold against the piano, then the columns, checked below.
       expect(h.piano.right).toBeLessThanOrEqual(h.hold.left);
-      expect(h.about.right).toBeLessThanOrEqual(h.demo.left);
-      for (const b of [h.demo, h.about]) expect(b.top).toBeGreaterThanOrEqual(h.piano.top);
+      expect(h.hold.right).toBeLessThanOrEqual(h.bpm.left);
     } else {
-      // The buttons on a row of their own, the keyboard under them.
+      // The buttons on a row of their own, each group left to right, the keyboard under them.
+      expect(h.demo.right).toBeLessThanOrEqual(h.tutorial.left);
+      expect(h.tutorial.right).toBeLessThanOrEqual(h.song.left);
+      expect(h.hold.right).toBeLessThanOrEqual(h.midi.left);
+      expect(h.midi.right).toBeLessThanOrEqual(h.display.left);
+      expect(h.display.right).toBeLessThanOrEqual(h.about.left);
       expect(h.piano.top).toBeGreaterThanOrEqual(h.demo.bottom);
       expect(h.demo.top).toBe(h.about.top);
     }
+  });
+}
+
+// Issue 154, arrangement C (decided by the owner): from 861 px, Hold one tall button against the piano, then columns of
+// two read outward from the keys, top before bottom: BPM over Tap, Demo over Song, Tutorial over About, MIDI over
+// Display; 4 px between the columns of one use, 14 px between uses; in a column both buttons as wide; one shape at
+// every width, the words kept while there is room (the newcomer's four from 1100 px, every one from 1280 px).
+const C_WIDTHS = [
+  [861, []],
+  [1100, ['About', 'Demo', 'Tutorial', 'Song']],
+  [1440, ['Hold', 'MIDI', 'Display', 'About', 'Demo', 'Tutorial', 'Song']],
+  [1920, ['Hold', 'MIDI', 'Display', 'About', 'Demo', 'Tutorial', 'Song']],
+] as const;
+for (const [width, words] of C_WIDTHS) {
+  test(`at ${width} px the buttons right of the keyboard stand in columns of two, Hold one tall button against the piano (issue 154)`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/');
+    const h = await header(page);
+    const tap = h.tap!;
+    expect(h.piano.right).toBeLessThanOrEqual(h.hold.left);
+    // Hold as tall as both rows.
+    expect(Math.abs(h.hold.top - h.bpm.top)).toBeLessThanOrEqual(1);
+    expect(Math.abs(h.hold.bottom - tap.bottom)).toBeLessThanOrEqual(1);
+    // Each column one thing, its two buttons one over the other and as wide, the tops on one line.
+    for (const [top, bottom] of [[h.bpm, tap], [h.demo, h.song], [h.tutorial, h.about], [h.midi, h.display]]) {
+      expect(Math.abs(top.left - bottom.left)).toBeLessThanOrEqual(1);
+      expect(Math.abs(top.width - bottom.width)).toBeLessThanOrEqual(1);
+      expect(bottom.top).toBeGreaterThanOrEqual(top.bottom);
+      expect(Math.abs(top.top - h.bpm.top)).toBeLessThanOrEqual(1);
+    }
+    // 4 px within a use, 14 between uses.
+    const gaps = [h.bpm.left - h.hold.right, h.demo.left - h.bpm.right, h.tutorial.left - h.demo.right, h.midi.left - h.tutorial.right];
+    for (const [i, gap] of [4, 14, 4, 14].entries()) expect(Math.abs(gaps[i] - gap), `gap ${i + 1}: ${gaps.join(', ')}`).toBeLessThanOrEqual(1);
+    expect(h.midi.right).toBeLessThanOrEqual(h.header.right);
+    expect(h.header.height).toBeLessThanOrEqual(64);
+    expect([...h.words].sort()).toEqual([...words].sort());
+    expect(h.unit).toBe(width >= 1280);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   });
 }
 
@@ -93,14 +134,28 @@ for (const [size, [width, height]] of Object.entries(SIZES)) {
   });
 }
 
-for (const [size, [width, height]] of Object.entries(SIZES).filter(([s]) => s !== 'phone')) {
-  test(`the piano's 17 keys at a finger's width at ${width}×${height} (${size})`, async ({ page }) => {
+test(`the piano's 17 keys at a finger's width in the sections 2 × 2`, async ({ page }) => {
+  await page.setViewportSize({ width: 690, height: 830 });
+  await page.goto('/');
+  const h = await header(page);
+  expect(h.whiteKeys).toBe(10);
+  expect(h.whiteKey).toBeCloseTo(44, 0);
+  expect(h.piano.height).toBe(64);
+});
+
+// Issue 154 (decision 6): from 861 px the piano grows by whole keys, to the right, into the room the buttons leave it:
+// its white keys at most 44 px, and never under 42 once it has more than the letter keys' 10.
+for (const [size, [width, height]] of Object.entries(SIZES).filter(([s]) => s === 'laptop' || s === 'wide')) {
+  test(`at ${width}×${height} (${size}) the piano has more keys than the letter keys' 17, each a finger's width (issue 154)`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await page.goto('/');
     const h = await header(page);
-    expect(h.whiteKeys).toBe(10);
-    expect(h.whiteKey).toBeCloseTo(44, 0);
+    expect(h.whiteKeys).toBeGreaterThan(size === 'wide' ? 20 : 12);
+    expect(h.whiteKey).toBeGreaterThanOrEqual(42);
+    expect(h.whiteKey).toBeLessThanOrEqual(44);
     expect(h.piano.height).toBe(64);
+    // What is left over, under one key, opens between the Patch and the keyboard: the keyboard meets Hold 12 px away.
+    expect(h.hold.left - h.piano.right).toBeLessThanOrEqual(12);
   });
 }
 
@@ -258,19 +313,14 @@ test.describe('the Patch name', () => {
   }
 
   for (const width of [861, 900, 1000, 1100, 1279]) {
-    test(`at ${width} px a name is cut only where the header has no room left for it (issue 105)`, async ({ page }) => {
+    test(`at ${width} px a name is cut only where its box has no room left for it (issue 105)`, async ({ page }) => {
       await page.setViewportSize({ width, height: 900 });
       await page.goto('/');
       const names = await presetNames(page);
       const { cut, room } = await cutNames(page, names);
       test.info().annotations.push({ type: 'cut', description: `${room} px: ${cut.map((c) => c.name).join(', ') || 'none'}` });
       for (const c of cut) expect(c.width, c.name).toBeGreaterThan(room);
-      // Its column has nothing more to give: the name takes the column's spare room, up to the widest Preset's.
-      const spare = await page.evaluate(() => {
-        const column = document.querySelector('.header-left')!.getBoundingClientRect();
-        return column.right - document.querySelector('header [aria-label="Next Preset"]')!.getBoundingClientRect().right;
-      });
-      if (cut.length) expect(spare).toBeLessThanOrEqual(1);
+      // Since issue 154 the name keeps its fixed width there: the room the header has left goes to the piano's keys.
     });
   }
 });

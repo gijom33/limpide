@@ -37,11 +37,11 @@ test('the logo opens the About splash: version, build and credits; Close, Escape
   await expect(about).toBeVisible();
 });
 
-// From 1100 px Demo, Tutorial and Song keep their words; About, in the set-up row beside the tempo, from 1366 px (issue 112).
-test('an ⓘ button opens About at every width, with the word About from 1366 px up and under its icon in the 2 × 2 layout', async ({ page }) => {
+// From 1100 px About keeps its word, one of the newcomer's four with Demo, Tutorial and Song, under Tutorial (issue 154).
+test('an ⓘ button opens About at every width, with the word About from 1100 px up and under its icon in the 2 × 2 layout', async ({ page }) => {
   const about = page.getByRole('dialog', { name: 'Limpide' });
   const button = page.getByRole('button', { name: 'About' });
-  for (const [width, height, word] of [[1440, 900, true], [1366, 900, true], [1365, 900, false], [1100, 900, false], [1099, 900, false], [1000, 800, false], [861, 800, false], [700, 800, true]] as const) {
+  for (const [width, height, word] of [[1440, 900, true], [1366, 900, true], [1100, 900, true], [1099, 900, false], [1000, 800, false], [861, 800, false], [700, 800, true]] as const) {
     await page.setViewportSize({ width, height });
     await page.goto('/');
     await expect(button, `${width}px`).toBeVisible();

@@ -50,6 +50,8 @@
 
 **Claude's calls, open to the owner:**
 1. **The mark** is the word "MIDI" in place of "BPM" and the box's edge in the MIDI button's connected green. From 861 to 1099 px, where the BPM shows its number alone, only the edge shows: the word there took 25 px from the keyboard, the piano's keys falling from 27.6 to 24.8 px at 861 px with Verdana standing in for Linux's fonts (measured before building).
+
+   **Since then (2026-11-01, [issue 154](./154-the-headers-buttons-in-order.md)):** the BPM shows its number alone up to 1279 px, where Hold, MIDI and Display show their icons alone too; there only the edge marks the clock.
 2. **The BPM stays whole** while a clock sets it, as the page's always is; the beat count is set again on the clock's beats, so the LFOs keep to the clock rather than to the rounded BPM.
 3. **Four beats** of ticks for the fit, a first BPM after one; three quarters of a BPM before the readout moves.
 4. **A second without a tick** is a stopped clock (at 40 BPM a tick comes every 63 ms); a Stop alone does not end it, since many clocks tick on while stopped.

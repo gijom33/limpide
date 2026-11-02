@@ -1,16 +1,15 @@
 import { useRef } from 'react';
-import { keyToNote } from '../input/keyboardLayout';
 import type { NoteInput } from '../input/noteInput';
 import { nearestNote, noteToFrequency } from '../music/pitch';
 import { PitchMarker } from './PitchMarker';
+import { isBlack, pianoNotes } from './pianoKeys';
 
-// The computer-keyboard range: C to the E above (17 keys).
-const KEYS = ['KeyA', 'KeyW', 'KeyS', 'KeyE', 'KeyD', 'KeyF', 'KeyT', 'KeyG', 'KeyY', 'KeyH', 'KeyU', 'KeyJ', 'KeyK', 'KeyO', 'KeyL', 'KeyP', 'Semicolon'];
-const isBlack = (semitone: number) => [1, 3, 6, 8, 10].includes(semitone % 12);
 const noteName = (note: number) => nearestNote(noteToFrequency(note)).name;
 
 interface Props {
   octave: number;
+  /** Its white keys: the letter keys' 10, or more where the header leaves room (issue 154). */
+  whites?: number;
   held: number[];
   input: NoteInput;
   /** Sound has not started yet (the browser waits for the page to be used): the piano invites a first Note. */
@@ -18,11 +17,12 @@ interface Props {
 }
 
 /**
- * The on-screen piano: the computer keyboard's range, each C named with its octave (C3, C4…), lit while a Note
+ * The on-screen piano: the computer keyboard's range, and from 861 px the keys beyond it the header has room for
+ * (issue 154), played by pointer, touch or MIDI; each C named with its octave (C3, C4…), lit while a Note
  * sounds from any source. Press lower on a key to play harder (Velocity); drag across keys to slide from Note
  * to Note. Each finger on a touch screen plays its own Note, as each key of the computer keyboard does (issue 39).
  */
-export function Piano({ octave, held, input, invite }: Props) {
+export function Piano({ octave, whites = 10, held, input, invite }: Props) {
   // The Note each pointer plays. Two fingers on one key both hold it: the Note input counts its holders.
   const playing = useRef(new Map<number, number>());
 
@@ -56,22 +56,19 @@ export function Piano({ octave, held, input, invite }: Props) {
       onPointerUp={(e) => play(e.pointerId, null)}
       onPointerCancel={(e) => play(e.pointerId, null)}
     >
-      {KEYS.map((code) => {
-        const note = keyToNote(code, octave)!;
-        return (
-          <button
-            key={code}
-            type="button"
-            tabIndex={-1}
-            data-note={note}
-            data-black={isBlack(note) || undefined}
-            aria-label={noteName(note)}
-            aria-pressed={held.includes(note)}
-          >
-            {note % 12 === 0 && <span aria-hidden="true">{noteName(note)}</span>}
-          </button>
-        );
-      })}
+      {pianoNotes(octave, whites).map((note) => (
+        <button
+          key={note}
+          type="button"
+          tabIndex={-1}
+          data-note={note}
+          data-black={isBlack(note) || undefined}
+          aria-label={noteName(note)}
+          aria-pressed={held.includes(note)}
+        >
+          {note % 12 === 0 && <span aria-hidden="true">{noteName(note)}</span>}
+        </button>
+      ))}
       <PitchMarker />
       {invite && (
         <p className="play-invite" role="status">

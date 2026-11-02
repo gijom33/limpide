@@ -10,6 +10,8 @@
 
 **Since then:** the header of 2026-10-29 (the owner's ask, no issue) replaced this look before 1.16.0 went out. The Patch picker sits beside the logo, not under it, and Demo, Tutorial and Song moved right of the keyboard, under set-up, in two rows from 861 to 1919 px; decision 4 and the stacking in How it was built no longer hold. The piano is still centred from 1200 px; from 861 to 1100 px it keeps its size up to 100 px right of the centre, where the acceptance criteria say 80. The header and brand tests named below are gone; the centring tests stay, at the new bound, beside one for the Patch picker beside the logo. Closed by [issue 107](./107-words-1-16-made-untrue.md).
 
+**Since then (2026-11-01, [issue 154](./154-the-headers-buttons-in-order.md)):** the piano is no longer centred at any width. From 861 px the buttons right of the keyboard stand in columns of two (arrangement C, decided by the owner) and the piano takes the room they and the Patch leave it, by whole keys, its keyboard against Hold; the empty column right of the piano from 1200 px is gone. The centring tests are gone; the top row's height test stays.
+
 ## Agent Brief
 
 **Category:** enhancement
