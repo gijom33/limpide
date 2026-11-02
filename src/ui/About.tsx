@@ -92,7 +92,7 @@ export function About({
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div className="about-body">
-        {/* Bead stands to the logo's right at its page size, its foot on the mark's bottom, the two centred (issue 178). */}
+        {/* Bead stands to the logo's right at its page size, its foot on the mark's bottom, the mark centred alone (issue 178). */}
         <div className="about-mark">
           <Logo size={72} />
           {beadOn && (

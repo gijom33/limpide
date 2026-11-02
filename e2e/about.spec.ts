@@ -115,7 +115,8 @@ test.describe('Bead in About (issue 163)', () => {
   test.describe('switched on', () => {
     test.use({ storageState: holding({ ...WELCOMED, 'limpide.bead': 'on' }) });
 
-    // Issue 178: at its own size, its foot level with the bottom of the mark's stroke, the two centred together.
+    // Issue 178: at its own size, its foot level with the bottom of the mark's stroke; the mark centred as without Bead,
+    // Bead to its right (decision 3, the owner's).
     test('it stands at its size on the page, to the logo’s right, its foot level with the bottom of the mark', async ({ page }) => {
       await page.goto('/');
       await expect(page.locator('.mascot')).toHaveCount(1, { timeout: 6000 });
@@ -143,12 +144,11 @@ test.describe('Bead in About (issue 163)', () => {
         expect(drawn.height, `${width}px: its height on the page`).toBeCloseTo(onPage.height, 0);
         expect(drawn.x, `${width}px: to the logo’s right`).toBeGreaterThanOrEqual(logo.x + logo.width);
         expect(Math.abs(drawn.y + drawn.height - markBottom), `${width}px: its foot on the mark’s bottom`).toBeLessThanOrEqual(1);
-        const middle = (logo.x + drawn.x + drawn.width) / 2;
-        expect(Math.abs(middle - (body.x + body.width / 2)), `${width}px: the two centred together`).toBeLessThanOrEqual(1);
+        expect(Math.abs(logo.x + logo.width / 2 - (body.x + body.width / 2)), `${width}px: the mark centred alone`).toBeLessThanOrEqual(1);
       }
     });
 
-    test('it fits in About down to the narrowest window, centred with the logo', async ({ page }) => {
+    test('it fits in About down to the narrowest window, beside the centred logo', async ({ page }) => {
       for (const width of [280, 320, 340, 375]) {
         await page.setViewportSize({ width, height: 700 });
         await page.goto('/');

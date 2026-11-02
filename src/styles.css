@@ -613,12 +613,14 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .wordmark-text { color: var(--text); } /* plain, so the colours are the mark's alone */
 /* In About the name sits close under the mark, as in the header it sits close beside it. */
 .about-body > .about-mark + .about-title { margin-top: calc(-1 * var(--space-2)); }
-/* Bead in About (issues 163, 178): at its size on the page, to the logo's right, the two centred together; its foot
-   level with the bottom of the mark's stroke, which ends 0.8 of the mark's 16 units over the foot of its box (2.2 px at
-   72 px wide). A button that shows its card in place of the credits, a phone's 44 px tall with Bead at its foot. */
-.about-mark { display: flex; align-items: flex-end; gap: var(--space-3); }
+/* Bead in About (issues 163, 178): at its size on the page, to the logo's right, outside its centring, so the mark sits
+   over the name's middle as without Bead (178, decision 3, the owner's); its foot level with the bottom of the mark's
+   stroke, which ends 0.8 of the mark's 16 units over the foot of its box (2.2 px at 72 px wide). A button that shows its
+   card in place of the credits, a phone's 44 px tall with Bead at its foot. */
+.about-mark { position: relative; }
 .about-mark .logo { display: block; }
 .about-bead {
+  position: absolute; left: calc(100% + var(--space-3)); bottom: 0;
   display: flex; align-items: flex-end; min-height: 44px; padding: 0 0 calc(72px * 0.8 / 26); color: inherit;
   background: none; border: 0; border-radius: var(--radius-control); cursor: pointer;
 }

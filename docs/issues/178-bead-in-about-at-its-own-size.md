@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement. Built (2026-11-01) on night/2026-11-01 and shipped in 1.21.0; the owner's bug of 2026-11-02 (decision 3) to build: the logo centred as before, Bead to its right
+**Status:** ready-for-human · enhancement. Built (2026-11-01) on night/2026-11-01 and shipped in 1.21.0; decision 3 (the owner's bug of 2026-11-02) built the same day on main, for the owner to try: the logo centred as before, Bead to its right
 
 ## Decisions
 
@@ -52,3 +52,9 @@ Calls made without the owner (Claude's call, open to the owner):
 2. **The button's height:** 44 px, taller than the drawn Bead, as a phone's touch target; the room is above Bead, so its focus ring is taller than it.
 
 **What to try:** with Bead on, open About on a phone and at a laptop's size: Bead stands at the size it has on the page, its feet on the line of the wave's lowest point, the two centred over "Limpide". Tap it: its card, as before.
+
+### Decision 3, built (2026-11-02, on main)
+
+- **The place:** the mark alone is centred over the name; Bead's button hangs to its right (absolutely placed, a gap of `--space-3` from the mark), its foot level with the mark's bottom as before, so the logo sits where it does with Bead away or switched off.
+- **Tests:** the About spec's Bead test now checks the mark centred alone within 1 px (red before the change, at 393 px), with Bead to its right at its page size and its foot on the mark's bottom; it fits from 280 px with no sideways scroll. The About spec and the design audit pass in Chromium and WebKit (70), and the mascot spec's About test in both. Seen at 375 px: the mark's middle on About's middle (188 px), Bead 12 px right of it.
+- **To try:** open About on the iPhone: the wave over "Limpide" is centred, Bead beside it on the right.
