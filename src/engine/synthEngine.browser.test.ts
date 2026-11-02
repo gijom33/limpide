@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DIP, envelopeLevel, type GateEvent } from '../modulation/envelope';
 import { lfoOffset, osc2Cents } from '../modulation/modulationModel';
-import { geekReadout, underTheHoodAt } from '../music/geek';
+import { geekReadout, UNDER_THE_HOOD, underTheHoodAt } from '../music/geek';
 import { harmonicSeries, type Waveform } from '../music/harmonics';
 import { fmDepthKept, idealPartials, idealReference } from '../music/idealReference';
 import { noteIndex } from '../music/tempo';
@@ -2864,7 +2864,7 @@ describe('the Synth Geek Layer’s numbers for the LFOs and Key Track, held to t
   });
 });
 
-// Issue 133, decision 4: the Envelopes' and Glide's time constants, as their tips work them out, held to the engine (issue 168).
+// Issue 133, decision 4: the Envelopes' and Glide's time constants, as their tips give them, held to the engine (issue 168).
 describe('the Synth Geek Layer’s time constants for the Envelopes and Glide, held to the engine (issue 168)', () => {
   /** The τ a tip works out: "τ = Decay ÷ 4 = 0.500 s now" is 0.5. */
   const tau = (id: Parameters<typeof underTheHoodAt>[0], value: number) => {
@@ -2926,8 +2926,9 @@ describe('the Synth Geek Layer’s time constants for the Envelopes and Glide, h
     expect(after / start).toBeCloseTo(Math.exp(-1), 2);
   });
 
-  it('Glide slides 63 % of the way to the new Note in the τ its tip reads', async () => {
-    const t = tau('glide', 2);
+  it('Glide slides 63 % of the way to the new Note in the τ its tip gives', async () => {
+    // "τ = Glide ÷ 4": its tip gives the rule, with no live number (issue 133, decision 10).
+    const t = 2 / Number(UNDER_THE_HOOD.glide.where.match(/^τ = Glide ÷ (\d+)\./)![1]);
     expect(t).toBe(0.5);
     const s = await render(1.5, { cutoff: 20000, waveform: 'sine', glide: 2, lfoAmount: 0, ampSustain: 1, ampAttack: 0.001 }, (e) => {
       e.noteOn(57, 1, 0); // 220 Hz

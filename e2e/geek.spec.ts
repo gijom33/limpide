@@ -247,7 +247,7 @@ test('on a phone the LFOs’ and Key Track’s numbers show in the name’s plac
   await expect(page.locator('.knob', { has: keyTrack }).locator('.knob-value > span').first()).toHaveText('3.36 kHz');
 });
 
-test('the Envelope faders’ and Glide’s tips work out τ under the hood, with the layer on only; the readouts stay (issue 168)', async ({ page }) => {
+test('the Envelope faders’ tips work out τ under the hood, Glide’s gives its curve, with the layer on only; the readouts stay (issue 168)', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
   const amp = page.getByRole('region', { name: 'Amp' });
@@ -275,7 +275,7 @@ test('the Envelope faders’ and Glide’s tips work out τ under the hood, with
   const glide = page.getByRole('slider', { name: 'Glide', exact: true });
   await glide.focus();
   const glideHood = tipOf('Slides the pitch').locator('.tooltip-hood');
-  await expect(glideHood).toContainText(/f = f₂ \+ \(f₁ − f₂\)·e\^\(−t\/τ\)\s*Off: the pitch jumps/);
-  await glide.press('End');
-  await expect(glideHood).toContainText('τ = Glide ÷ 4 = 500 ms now');
+  // Glide's curve and its τ's rule, with no live number (issue 133, decision 10).
+  await expect(glideHood).toContainText(/f = f₂ \+ \(f₁ − f₂\)·e\^\(−t\/τ\)\s*τ = Glide ÷ 4\. /);
+  await expect(glideHood).not.toContainText('now');
 });

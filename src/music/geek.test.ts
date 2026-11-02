@@ -179,10 +179,15 @@ describe('the Synth Geek Layer: the Envelopes and Glide (issue 168)', () => {
     expect(underTheHoodAt('ampRelease', 0.3)?.formula).toBe('x = x₀·e^(−t/τ)');
   });
 
-  it('gives Glide’s slide curve, its τ at the knob’s setting, and Off’s jump', () => {
-    expect(underTheHoodAt('glide', 0.4)?.formula).toBe('f = f₂ + (f₁ − f₂)·e^(−t/τ)');
-    expect(underTheHoodAt('glide', 0.4)?.where).toMatch(/^τ = Glide ÷ 4 = 100 ms now/);
-    expect(underTheHoodAt('glide', 0.001)?.where).toMatch(/^Off: the pitch jumps/);
+  it('writes a τ a hair under a second as the second it rounds to', () => {
+    expect(underTheHoodAt('ampDecay', 3.9984)?.where).toMatch(/^τ = Decay ÷ 4 = 1\.00 s now/);
+  });
+
+  it('gives Glide’s slide curve and its τ, with no live number (issue 133, decision 10)', () => {
+    expect(UNDER_THE_HOOD.glide.formula).toBe('f = f₂ + (f₁ − f₂)·e^(−t/τ)');
+    expect(UNDER_THE_HOOD.glide.where).toMatch(/^τ = Glide ÷ 4\. /);
+    expect(UNDER_THE_HOOD.glide.where).not.toContain('now');
+    expect(underTheHoodAt('glide', 0.4)).toBeUndefined();
   });
 
   it('has none for the other controls', () => {

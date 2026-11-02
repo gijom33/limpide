@@ -190,6 +190,7 @@ export const TIPS = {
     title: 'Glide',
     body: 'Slides the pitch from one Note to the next instead of jumping, over this long. Off plays Notes at once. It works with one Voice only: with more, each Note starts at its own pitch.',
     how: 'Play two keys one after the other and watch the Scope stretch or squeeze as the pitch slides.',
+    underTheHood: UNDER_THE_HOOD.glide,
     history: HISTORY.glide,
   },
   legato: {

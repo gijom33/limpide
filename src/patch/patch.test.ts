@@ -84,6 +84,9 @@ describe('Osc 2 and the Mixer', () => {
     expect(formatParam('osc2Semitone', -5)).toBe('−5 st');
     expect(formatParam('osc2Detune', 7.4)).toBe('+7 ¢');
     expect(formatParam('osc2Detune', 0)).toBe('0 ¢');
+    // A time a hair under a second rounds up to it, in seconds (issue 168).
+    expect(formatParam('ampDecay', 0.9996)).toBe('1.00 s');
+    expect(formatParam('ampDecay', 0.9994)).toBe('999 ms');
   });
 
   it('gives Osc 2 its own Pulse Width, starting where Osc 1’s does', () => {

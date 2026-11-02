@@ -69,10 +69,11 @@ it('a synced Rate’s tip gives its Hz at the tempo, which its readout leaves ou
   expect(TIPS.lfoNote.body).not.toMatch(/beside/);
 });
 
-it('an Envelope fader’s and Glide’s tips work out τ at their setting; the others keep their own (issue 168)', () => {
+it('an Envelope fader’s tip works out τ at its setting; the others, Glide’s too, keep their own (issue 168)', () => {
   expect(paramTipAt('ampDecay', 0.3).underTheHood?.where).toMatch(/^τ = Decay ÷ 4 = 75\.0 ms now/);
   expect(paramTipAt('filterAttack', 0.03).underTheHood?.where).toMatch(/^τ = Attack ÷ 3 = 10\.0 ms now/);
   expect(paramTipAt('glide', 0.4).underTheHood?.formula).toBe('f = f₂ + (f₁ − f₂)·e^(−t/τ)');
+  expect(paramTipAt('glide', 0.4)).toBe(PARAM_TIPS.glide);
   expect(paramTipAt('ampDecay', 0.3)).toMatchObject({ title: 'Decay', keys: PARAM_TIPS.ampDecay.keys, history: PARAM_TIPS.ampDecay.history });
   expect(paramTipAt('keyTrack', 0.5)).toBe(PARAM_TIPS.keyTrack);
 });
