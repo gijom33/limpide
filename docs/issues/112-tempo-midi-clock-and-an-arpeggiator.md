@@ -96,6 +96,8 @@ Claude's call, open to the owner: a player's beat count starts with the player, 
 
 **Claude's calls, open to the owner:**
 1. **The header's room.** The set-up row had none to spare from 861 to 1365 px: there Hold, MIDI, Display and About show their icons alone (their tooltips name them; they keep their words from 1366 px, Demo, Tutorial and Song from 1100 px as before); from 861 to 1099 px the BPM shows its number alone; from 1200 to 1365 px the piano's keys are 42 px, so the piano stays at the centre in Linux's wider fonts (measured with Verdana standing in for them). In 2 × 2 each LFO's plot takes what its knobs leave, as on a phone, and the narrowest 2 × 2 windows (601 to 680 px) pad the header's buttons 2 px.
+
+   **Since then (2026-11-01, [issue 152](./152-the-phones-header-rows-in-2x2.md)):** in 2 × 2 the playing and set-up buttons have a row of their own, as on a phone, and pad as on a phone again: the 2 px from 601 to 680 px is gone. Claude's call, open to the owner.
 2. **The small field below 861 px** is on tablets (2 × 2) as well as phones, since Tap is beside the BPM from 861 px only.
 3. **A drag sets the tempo where it is let go,** the BPM shown as it goes: setting the tempo starts the beat count again, so set at every pixel it restarted a synced LFO's cycle at every pixel. The arrows and a knob mapped to the BPM still set it at each step, each restarting the beat.
 4. **The Demo's sweeps stay in Hz** (the Strings' shimmer, the riser's tremble): they pass through the Hz between note values. Tremolo Keys' LFO, free, now lands on the beat; its Hz is as before.

@@ -5,7 +5,7 @@ import { type AuditOptions, auditPage } from './audit';
 // keyboard; Hold, the tempo, MIDI, Display, About; Demo, Tutorial, Song: the owner, 2026-10-29, the tempo since issue
 // 112), each layout placing them in rows of its own, and Tab meeting them as they stand on screen (issue 104); the
 // octave buttons stacked beside the piano, and from 601 px up the piano's 17 keys at a finger's width where there is
-// room. In the sections 2 × 2 the header stays at the top and slides its first row away, as on a phone.
+// room. Up to 860 px the header stays at the top and slides its rows above the keyboard away (issue 152).
 
 const SIZES = {
   phone: [390, 844],
@@ -155,23 +155,69 @@ test.describe('the sections 2 × 2', () => {
       await expect(button.getByText(name, { exact: true }), name).toBeVisible();
     }
   });
+});
 
-  test('scrolling down slides the header up until only the keyboard shows; scrolling up brings it back', async ({ page }) => {
+// Issue 152: from 601 to 860 px the phone's three rows: the logo and the Patch, its name as wide as the row allows
+// (before, 110 px at 601, 165 at 700, 240 at 860); the playing buttons on the left and set-up on the right; the
+// keyboard with its 17 keys. Scrolling down slides the top two rows away, as on a phone.
+for (const [width, before] of [[601, 110], [700, 165], [860, 240]] as const) {
+  test(`at ${width} px the header has three rows, the Patch name the width of its row, and nothing lies over anything (issue 152)`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 830 });
+    await page.goto('/');
+    await page.locator('.piano button').first().waitFor();
+    const h = await page.evaluate(() => {
+      const box = (selector: string) => document.querySelector(selector)!.getBoundingClientRect();
+      const names = ['Demo', 'Tutorial', 'Song', 'Hold', 'Tempo', 'MIDI', 'Display', 'About'];
+      return {
+        header: box('header'), logo: box('header h1'), name: box('.patch-name'), next: box('header [aria-label="Next Preset"]'),
+        buttons: names.map((name) => ({ name, ...box(`header [aria-label="${name}"]`).toJSON() })),
+        piano: box('.piano'), padding: parseFloat(getComputedStyle(document.querySelector('header')!).paddingRight),
+        keys: [...document.querySelectorAll('.piano button:not([data-black])')].filter((k) => k.getBoundingClientRect().width > 0).length,
+      };
+    });
+    const [demo, about] = [h.buttons[0], h.buttons[7]];
+    // Row one: the logo and the Patch, the name reaching the row's end.
+    for (const b of h.buttons) expect(b.top, b.name).toBeGreaterThanOrEqual(Math.max(h.logo.bottom, h.name.bottom));
+    expect(h.name.width).toBeGreaterThan(before);
+    expect(h.next.right).toBeCloseTo(h.header.right - h.padding, 0);
+    // Row two: every button on one line, Demo at the row's left, About at its right, each a finger tall.
+    for (const b of h.buttons) {
+      expect(b.top, b.name).toBeCloseTo(demo.top, 0);
+      expect(b.height, b.name).toBeGreaterThanOrEqual(44);
+    }
+    expect(demo.left).toBeCloseTo(h.logo.left, 0);
+    expect(about.right).toBeCloseTo(h.next.right, 0);
+    // Row three: the keyboard, its 17 keys.
+    expect(h.piano.top).toBeGreaterThanOrEqual(demo.bottom);
+    expect(h.keys).toBe(10);
+    const overlapOnly: AuditOptions = { rules: ['overlap'], minTarget: 0, waivers: [] };
+    const { unexpected } = await page.evaluate(auditPage, overlapOnly);
+    expect(unexpected).toEqual([]);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+  });
+
+  test(`at ${width} px scrolling down slides the header's top two rows away until only the keyboard shows; scrolling up brings them back (issue 152)`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 830 });
     await page.goto('/');
     const logo = page.getByRole('heading', { level: 1, name: 'Limpide' });
     const piano = page.getByRole('group', { name: 'Piano' });
-    const tall = await page.locator('header').evaluate((h) => h.getBoundingClientRect().height);
+    const header = page.locator('header');
+    const tall = await header.evaluate((h) => h.getBoundingClientRect().height);
+    const chain = await page.locator('.chain').evaluate((c) => c.getBoundingClientRect().top + scrollY);
     for (let i = 0; i < 3; i++) await page.mouse.wheel(0, 120);
     // The page is short here: wait for the wheel's scroll to end, or the scroll back up can be lost in it.
     await expect.poll(() => page.evaluate(() => scrollY)).toBe(360);
     await expect(logo).not.toBeInViewport();
-    await expect(page.locator('header button[aria-label="Demo"]')).not.toBeInViewport();
+    for (const name of ['Demo', 'About']) await expect(page.locator(`header button[aria-label="${name}"]`)).not.toBeInViewport();
     await expect.poll(() => piano.boundingBox().then((b) => Math.round(b!.y))).toBeLessThanOrEqual(8);
-    expect(await page.locator('header').evaluate((h) => h.getBoundingClientRect().height)).toBe(tall);
+    // Nothing below moves: the header keeps its height, the Sections their place on the page.
+    expect(await header.evaluate((h) => h.getBoundingClientRect().height)).toBe(tall);
+    expect(await page.locator('.chain').evaluate((c) => c.getBoundingClientRect().top + scrollY)).toBe(chain);
     await page.mouse.wheel(0, -60);
     await expect(logo).toBeInViewport();
+    await expect(page.locator('header button[aria-label="Demo"]')).toBeInViewport();
   });
-});
+}
 
 // Issue 105 (the 1.16.0 review): at 601 px the Patch name had a 17 px text box, every Preset read "I…"; at 861 to
 // 1100 px longer names were cut where the header had room for more.
@@ -198,12 +244,15 @@ test.describe('the Patch name', () => {
       return { cut, room };
     }, names);
 
-  test('at 601 px a short name shows whole: Init, Kick (issue 105)', async ({ page }) => {
-    await page.setViewportSize({ width: 601, height: 900 });
-    await page.goto('/');
-    const { cut } = await cutNames(page, ['Init', 'Kick', 'Bass', 'Acid']);
-    expect(cut).toEqual([]);
-  });
+  // At 601 px a short name was whole beside the buttons' words (issue 105); with a row of its own, every one (issue 152).
+  for (const width of [601, 860]) {
+    test(`at ${width} px every Preset's name shows whole (issues 105 and 152)`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto('/');
+      const { cut } = await cutNames(page, await presetNames(page));
+      expect(cut).toEqual([]);
+    });
+  }
 
   for (const width of [861, 900, 1000, 1100, 1279]) {
     test(`at ${width} px a name is cut only where the header has no room left for it (issue 105)`, async ({ page }) => {
