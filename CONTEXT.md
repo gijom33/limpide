@@ -235,7 +235,7 @@ The Scope behaviour that aligns the trace to the Note's period so it stands stil
 _Avoid_: Trigger, sync, stabilisation
 
 **Glow**:
-A Display choice, Off by default: each Scope's trace fades over a few frames, as on an analogue oscilloscope, so what moves leaves a soft trail of the last tenth of a second (issue 180).
+A Display choice, Off by default: each Scope's trace fades over a few frames, as on an analogue oscilloscope, so what moves leaves a soft trail of the last quarter of a second, halving every 70 ms or so (issue 180).
 _Avoid_: Phosphor, persistence, trails, averaging
 
 **Spectrum**:

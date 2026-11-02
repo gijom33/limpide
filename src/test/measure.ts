@@ -125,3 +125,17 @@ export function energyAboveDb(samples: Float32Array, sampleRate: number, frequen
   }
   return 10 * Math.log10(above / below);
 }
+
+/**
+ * How much a Scope's trace changed from one frame to the next (issue 180's research): the RMS of the difference
+ * between two traces over their RMS, 0 for the same trace, about 1.41 for two unrelated ones.
+ */
+export function traceJitter(a: Float32Array, b: Float32Array): number {
+  let change = 0;
+  let level = 0;
+  for (let i = 0; i < a.length; i++) {
+    change += (a[i] - b[i]) ** 2;
+    level += (a[i] ** 2 + b[i] ** 2) / 2;
+  }
+  return level > 0 ? Math.sqrt(change / level) : 0;
+}

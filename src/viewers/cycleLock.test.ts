@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { traceJitter } from '../test/measure';
 import { createCycleLock, risingZeros } from './cycleLock';
 
 const SR = 48000;
@@ -31,7 +32,7 @@ const countRisingZeroCrossings = (s: Float32Array, from: number, to: number) => 
   return count;
 };
 
-describe('Cycle Lock’s rising zeros', () => {
+describe('Cycle Lock’s rising zeros (issues 03 and 180)', () => {
   it('finds where the fundamental rises through zero, though the wave crosses zero several times a cycle', () => {
     const { samples, phases } = render(BUFFER, () => 261.63, ringing, 1.0);
     expect(countRisingZeroCrossings(samples, 0, Math.round(SR / 261.63))).toBeGreaterThan(1);
@@ -89,16 +90,6 @@ function frames(stream: Float32Array, frequency: (i: number) => number, count: n
     return { ...drawn, at: last - BUFFER + drawn.start };
   });
 }
-/** The research's jitter: the RMS change between two consecutive traces over their RMS. */
-function jitter(a: Float32Array, b: Float32Array) {
-  let change = 0;
-  let level = 0;
-  for (let i = 0; i < a.length; i++) {
-    change += (a[i] - b[i]) ** 2;
-    level += (a[i] ** 2 + b[i] ** 2) / 2;
-  }
-  return Math.sqrt(change / level);
-}
 
 describe('Cycle Lock on a Scope (issue 180)', () => {
   it('draws the newest sound: the trace ends at most a cycle and 20 ms before the buffer does', () => {
@@ -139,7 +130,7 @@ describe('Cycle Lock on a Scope (issue 180)', () => {
     const period = SR / 130.81;
     const stream = render(BUFFER + 60 * FRAME, () => 130.81, fifth).samples;
     const drawn = frames(stream, () => 130.81, 60);
-    for (let k = 1; k < drawn.length; k++) expect(jitter(drawn[k].trace, drawn[k - 1].trace), `frame ${k}`).toBeLessThan(0.05);
+    for (let k = 1; k < drawn.length; k++) expect(traceJitter(drawn[k].trace, drawn[k - 1].trace), `frame ${k}`).toBeLessThan(0.05);
     // The control: drawing each frame from its newest rising zero alone flips between the two cycles.
     const newest = drawn.map((_, k) => {
       const last = BUFFER + k * FRAME;
@@ -150,12 +141,20 @@ describe('Cycle Lock on a Scope (issue 180)', () => {
     expect(new Set(halves).size).toBe(2);
   });
 
-  it('stands still while frozen: the same buffer at the same time draws the same trace', () => {
+  it('stands still while frozen: the same buffer at the same time draws the same trace, whatever the clock reads', () => {
+    // A detuned pair, which changes a little each cycle, so the lock may hold an older start than the newest; ten
+    // minutes into the page, where the audio clock's samples are large numbers (the 2026-11-02 review).
+    const detuned = (phi: number) => Math.sin(phi) + 0.8 * Math.sin(phi * 2 ** (6 / 1200) + 1);
+    const stream = render(BUFFER + 30 * FRAME, () => 220, detuned).samples;
     const lock = createCycleLock();
-    const samples = render(BUFFER, () => 220, (phi) => Math.sin(phi) + 0.5 * Math.sin(1.5 * phi)).samples;
-    const frame = { samples, sampleRate: SR, end: 1, frequencyAt: () => 220, cycles: 2, points: 300 };
-    const first = lock(frame);
-    for (let k = 0; k < 5; k++) expect(lock(frame).start).toBe(first.start);
+    let frame = { samples: stream, sampleRate: SR, end: 0, frequencyAt: () => 220, cycles: 2, points: 600 };
+    for (let k = 0; k < 30; k++) {
+      const last = BUFFER + k * FRAME;
+      frame = { ...frame, samples: stream.subarray(last - BUFFER, last), end: 600.123 + (last - 1) / SR };
+      lock(frame);
+    }
+    const frozen = lock(frame);
+    for (let k = 0; k < 10; k++) expect(lock(frame).start, `frame ${k}`).toBe(frozen.start);
   });
 
   it('draws the newest end of a silent buffer', () => {

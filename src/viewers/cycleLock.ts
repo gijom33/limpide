@@ -6,11 +6,17 @@ import { scopeTrace } from './scopeTrace';
  * A zero-crossing trigger fails once filtering or Resonance makes the waveform ring through zero several times per
  * cycle. The fundamental's phase is unique per cycle whatever the Harmonics do, so we measure it: a windowed
  * correlation over the whole buffer with the fundamental as the engine plays it, its pitch followed through vibrato,
- * Glide and the bend (issue 180), so that a moving pitch no longer slides the trace.
+ * Glide and the bend (issue 180), so that a moving pitch keeps the trace in place.
  */
 
 /** Samples between two readings of the pitch: a 20 Hz LFO, the fastest, is read nine times a cycle at 48 kHz. */
 const PITCH_EVERY = 256;
+/**
+ * Where the pitch halfway between two readings is off their straight line by more than this share, it jumped there (a
+ * new Note without Glide): the readings are halved down to the sample it jumped at. A vibrato or a Glide's curve stays
+ * within it, so it costs no more readings.
+ */
+const JUMPED = 0.005;
 /** At most this many rising zeros, newest first, are weighed as the trace's start. */
 const CANDIDATES = 9;
 /** No candidate older than the newest by more than this, in seconds: the trace stays within a cycle and 20 ms of now. */
@@ -18,6 +24,11 @@ const OLDER_AT_MOST = 0.02;
 /** A candidate matching the last trace within this share of its RMS of the best counts as good as the best. */
 const AS_GOOD = 0.05;
 
+// The pitch's readings (the sample, and the phase it advances a sample there, ω) and the phase at each, kept between
+// frames: the lock runs on three Scopes 60 times a second.
+const at: number[] = [];
+const omega: number[] = [];
+const phase: number[] = [];
 const hanns = new Map<number, Float32Array>();
 /** The Hann window over `n` samples, worked out once per length (review 18). */
 function hann(n: number): Float32Array {
@@ -29,10 +40,39 @@ function hann(n: number): Float32Array {
   return window;
 }
 
+/** Reads the pitch along `n` samples into `at` and `omega`: false where there is none. */
+function readPitch(n: number, sampleRate: number, frequencyAt: (i: number) => number): boolean {
+  at.length = 0;
+  omega.length = 0;
+  const read = (i: number) => {
+    const f = frequencyAt(i);
+    at.push(i);
+    omega.push((2 * Math.PI * f) / sampleRate);
+    return f > 0;
+  };
+  // Between readings at `a` and `b` (frequencies fa, fb), the readings a jump needs, in order.
+  const between = (a: number, fa: number, b: number, fb: number): boolean => {
+    if (b - a < 2 || Math.abs(fb - fa) <= JUMPED * fa) return true;
+    const m = Math.floor((a + b) / 2);
+    const fm = frequencyAt(m);
+    if (Math.abs(fm - (fa + fb) / 2) <= JUMPED * fa) return true;
+    return between(a, fa, m, fm) && read(m) && between(m, fm, b, fb);
+  };
+  if (!read(0)) return false;
+  for (let a = 0; a < n - 1; a += PITCH_EVERY) {
+    const b = Math.min(a + PITCH_EVERY, n - 1);
+    const fa = (omega[omega.length - 1] * sampleRate) / (2 * Math.PI);
+    const fb = frequencyAt(b);
+    if (!between(a, fa, b, fb) || !read(b)) return false;
+  }
+  return true;
+}
+
 /**
  * The fundamental's rising zeros in `samples`, newest first: at most `count`, none after `last` (a fractional index).
- * `frequencyAt(i)` is the fundamental's frequency in Hz at sample `i`, read every PITCH_EVERY samples and taken as
- * changing in a straight line between. None when there is no fundamental to lock to (silence, or no pitch).
+ * `frequencyAt(i)` is the fundamental's frequency in Hz at sample `i`, read every PITCH_EVERY samples (more closely
+ * where it jumps) and taken as changing in a straight line between. None when there is no fundamental to lock to
+ * (silence, or no pitch).
  */
 export function risingZeros(
   samples: Float32Array,
@@ -42,28 +82,21 @@ export function risingZeros(
   count: number,
 ): number[] {
   const n = samples.length;
-  if (n < 2) return [];
-  // The pitch along the buffer, as the phase it advances a sample (ω), at grid points `at`, the last one the last sample.
-  const segments = Math.ceil((n - 1) / PITCH_EVERY);
-  const at = (k: number) => Math.min(k * PITCH_EVERY, n - 1);
-  const omega = new Float64Array(segments + 1);
-  for (let k = 0; k <= segments; k++) {
-    const f = frequencyAt(at(k));
-    if (!(f > 0)) return [];
-    omega[k] = (2 * Math.PI * f) / sampleRate;
-  }
-  // The phase φ at each grid point, and the correlation with sin φ and cos φ: within a segment ω grows by a step a
+  if (n < 2 || !readPitch(n, sampleRate, frequencyAt)) return [];
+  const segments = at.length - 1;
+  // The phase φ at each reading, and the correlation with sin φ and cos φ: within a segment ω grows by a step a
   // sample, so sin and cos follow by two rotations rather than trigonometry per sample.
   const window = hann(n);
-  const phase = new Float64Array(segments + 1);
+  const stepOf = (k: number) => (omega[k + 1] - omega[k]) / (at[k + 1] - at[k]);
+  phase.length = 0;
   let s = 0; // ∝ A·cos θ for x = A·sin(φ + θ)
   let c = 0; // ∝ A·sin θ
   let phi = 0;
   for (let k = 0; k < segments; k++) {
-    phase[k] = phi;
-    const from = at(k);
-    const to = k === segments - 1 ? n : at(k + 1);
-    const step = (omega[k + 1] - omega[k]) / (at(k + 1) - from);
+    phase.push(phi);
+    const from = at[k];
+    const to = k === segments - 1 ? n : at[k + 1];
+    const step = stepOf(k);
     let sin = Math.sin(phi);
     let cos = Math.cos(phi);
     let rs = Math.sin(omega[k]);
@@ -81,32 +114,28 @@ export function risingZeros(
       rc = rc * dc - rs * ds;
       rs = nextRs;
     }
-    const length = at(k + 1) - from;
+    const length = at[k + 1] - from;
     phi += omega[k] * length + (step * length * (length - 1)) / 2;
   }
-  phase[segments] = phi;
+  phase.push(phi);
   if (Math.hypot(s, c) < 1e-6 * n) return [];
 
   // Within segment k the phase at u samples in is φk + ωk·u + step·u(u − 1)/2; a rising zero is where φ + θ = 2πm.
   const theta = Math.atan2(c, s);
-  const segmentOf = (x: number) => Math.min(segments - 1, Math.floor(x / PITCH_EVERY));
-  const phaseAt = (x: number) => {
-    const k = segmentOf(x);
-    const u = x - at(k);
-    const step = (omega[k + 1] - omega[k]) / (at(k + 1) - at(k));
-    return phase[k] + omega[k] * u + (step * u * (u - 1)) / 2;
-  };
+  const until = Math.max(0, Math.min(last, n - 1));
+  let k = segments - 1;
+  while (k > 0 && at[k] > until) k--;
+  const u0 = until - at[k];
   const zeros: number[] = [];
-  let k = segmentOf(Math.max(0, Math.min(last, n - 1)));
-  for (let m = Math.floor((phaseAt(Math.max(0, Math.min(last, n - 1))) + theta) / (2 * Math.PI)); zeros.length < count; m--) {
+  for (let m = Math.floor((phase[k] + omega[k] * u0 + (stepOf(k) * u0 * (u0 - 1)) / 2 + theta) / (2 * Math.PI)); zeros.length < count; m--) {
     const target = 2 * Math.PI * m - theta;
     if (target < 0) break;
     while (k > 0 && phase[k] > target) k--;
-    const step = (omega[k + 1] - omega[k]) / (at(k + 1) - at(k));
+    const step = stepOf(k);
     // Solve step/2·u² + (ωk − step/2)·u = target − φk, in the form that stays exact as the step goes to 0.
     const rise = target - phase[k];
     const b = omega[k] - step / 2;
-    zeros.push(at(k) + (2 * rise) / (b + Math.sqrt(Math.max(0, b * b + 2 * step * rise))));
+    zeros.push(at[k] + (2 * rise) / (b + Math.sqrt(Math.max(0, b * b + 2 * step * rise))));
   }
   return zeros;
 }
@@ -132,7 +161,7 @@ export interface LockedTrace {
   trace: Float32Array;
 }
 
-/** The last trace drawn, where it started and where the buffer ended then, in samples of the audio clock. */
+/** The last trace drawn: where it started in its buffer, and the audio clock in samples at that buffer's end. */
 interface Drawn {
   trace: Float32Array;
   start: number;
@@ -144,8 +173,8 @@ interface Drawn {
  * zero of the fundamental to another, at the buffer's newest end: the newest sound, at most a cycle and 20 ms old. Of
  * the starts one cycle apart there, it takes the one whose trace best matches the last drawn, the newest of those as
  * good, and never one that would draw sound older than the last: where a wave repeats every two cycles (a Perfect
- * Fifth, FM at 3:2) or never exactly (a chord), the trace no longer flips between starts. It never averages or alters
- * a sample: what changes is drawn.
+ * Fifth, FM at 3:2) or never exactly (a chord), the trace keeps to one of its starts. It never averages or alters a
+ * sample: what changes is drawn.
  */
 export function createCycleLock() {
   let last: Drawn | null = null;
@@ -156,8 +185,11 @@ export function createCycleLock() {
     const n = samples.length;
     const advance = previous ? clockEnd - previous.end : -1;
     if (!previous || previous.trace.length !== points || advance < 0 || advance >= n) return spans[0];
+    // The same buffer at the same moment (Freeze): the same start, so the frozen trace never creeps forward.
+    const same = advance === 0 && spans.find(({ start }) => start === previous.start);
+    if (same) return same;
     // Forward: later than the last trace by at least half the time since its frame, so the Scope moves on.
-    const earliest = previous.start + advance / 2 - (clockEnd - (n - 1));
+    const earliest = previous.start - advance / 2;
     const ahead = spans.filter(({ start }) => start >= earliest);
     if (ahead.length < 2) return ahead[0] ?? spans[0];
     if (candidate.length !== points) candidate = new Float32Array(points);
@@ -184,7 +216,7 @@ export function createCycleLock() {
       .map((z, j) => ({ start: zeros[j + cycles], length: z - zeros[j + cycles] }));
     const chosen = spans.length ? matching(samples, points, spans, last, clockEnd) : newestEnd(n, cycles * (sampleRate / frequencyAt(end)));
     const trace = scopeTrace(samples, chosen.start, chosen.length, points);
-    last = { trace, start: clockEnd - (n - 1 - chosen.start), end: clockEnd };
+    last = { trace, start: chosen.start, end: clockEnd };
     return { ...chosen, trace };
   };
 }

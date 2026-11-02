@@ -11,11 +11,13 @@ import type { ViewSettings } from './viewSettings';
 const LIMITING_HOLD_MS = 800;
 // Two drawn points per pixel keeps sharp corners (a saw's drop, a pulse's edges) crisp.
 const POINTS_PER_PIXEL = 2;
-// Glow (issue 180, decision 5): each trace fades by this much a frame, as on an analogue scope, so the last 70 ms or
-// so glow under the trace; drawn this many frames, the oldest at a tenth. Redrawn rather than faded on a layer, where
+// Glow (issue 180, decision 5): each trace fades as on an analogue scope, by 0.85 every 60th of a second whatever
+// the screen's rate (halving in about 70 ms), and is dropped a quarter of a second old, at under a tenth. One trace
+// is kept per 60th of a second, so a 120 Hz screen draws no more. Redrawn rather than faded on a layer, where
 // rounding leaves a haze of every trace ever drawn.
 const GLOW_DECAY = 0.85;
-const GLOW_FRAMES = 14;
+const GLOW_STEP_MS = 1000 / 60;
+const GLOW_MS = 250;
 
 /**
  * A Scope of one Tap, Cycle Locked to the Note's fundamental so a steady Note stands still, drawing the newest sound.
@@ -52,8 +54,9 @@ export function createScope(
   // While frozen, lock to the Note the frozen samples belong to, not to a Note played since, and to their moment.
   const frozenFundamental = createFreezeLatch<number>();
   const frozenEnd = createFreezeLatch<number>();
-  // The traces drawn last, newest first, for the Glow; held while frozen, so the frozen frame keeps its glow.
-  const ghosts: Float32Array[] = [];
+  // The traces drawn last, newest first, with when, for the Glow; held while frozen, so the frozen frame keeps its glow.
+  const ghosts: { trace: Float32Array; at: number }[] = [];
+  const frozenTime = createFreezeLatch<number>();
   let snapshotToken: number | null = null;
   let snapshotTrace: Float32Array | null = null;
   // The Guides at the Mixer's level, held while frozen like the Note, so they belong to the frozen trace.
@@ -143,19 +146,21 @@ export function createScope(
       g.globalAlpha = 1;
     }
 
-    // Shade between the trace and zero, like the Spectrums' fill: the waveform's positive and negative halves.
     const colour = cssVar(canvas, '--trace');
-    ghosts.splice(view().glow ? GLOW_FRAMES : 0);
+    const time = frozenTime(frozen, () => performance.now());
+    const kept = view().glow ? ghosts.findIndex(({ at }) => time - at > GLOW_MS) : 0;
+    if (kept >= 0) ghosts.splice(kept);
     g.strokeStyle = colour;
     g.lineWidth = curveWidth(canvas);
     for (let k = ghosts.length - 1; k >= 0; k--) {
-      g.globalAlpha = GLOW_DECAY ** (k + 1);
-      stroke(ghosts[k]);
+      g.globalAlpha = GLOW_DECAY ** ((time - ghosts[k].at) / GLOW_STEP_MS);
+      stroke(ghosts[k].trace);
     }
     g.globalAlpha = 1;
     canvas.dataset.glow = String(ghosts.length);
-    if (view().glow && !frozen) ghosts.unshift(trace);
+    if (view().glow && !frozen && (!ghosts.length || time - ghosts[0].at >= GLOW_STEP_MS * 0.9)) ghosts.unshift({ trace, at: time });
 
+    // Shade between the trace and zero, like the Spectrums' fill: the waveform's positive and negative halves.
     g.fillStyle = colour;
     g.globalAlpha = 0.16;
     g.beginPath();

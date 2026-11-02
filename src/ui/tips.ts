@@ -90,7 +90,7 @@ export const TIPS = {
   },
   glow: {
     title: 'Glow',
-    body: 'Each Scope’s trace fades over a few frames, as on an analogue oscilloscope: a wave that stands still stays sharp, one that moves (Noise, a detuned Osc 2, a chord) leaves a soft glow of the last tenth of a second. Off, the Scopes show only now. Your choice is remembered.',
+    body: 'Each Scope’s trace fades over a few frames, as on an analogue oscilloscope: a wave that stands still stays sharp, one that moves (Noise, a detuned Osc 2, a chord) leaves a soft glow of the last quarter of a second, fading by half every 70 ms or so. Off, the Scopes show only now. Your choice is remembered.',
     how: 'Turn it on with some Noise in the Mixer: the flicker softens into a cloud.',
   },
   voices: {

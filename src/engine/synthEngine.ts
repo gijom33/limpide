@@ -1253,10 +1253,10 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     };
   };
 
-  // During a Glide, the frequency the Oscillators have reached, at Osc 1's Octave; `swung`, with the LFOs on Pitch,
-  // which move every Oscillator and the Sub alike. With the Sub sounding, the sound repeats at the Sub's pitch, one or
-  // two octaves lower: that is the fundamental.
-  const fundamentalAt = (t: number, swung: boolean) => {
+  // During a Glide, the frequency the Oscillators have reached, at Osc 1's Octave; with `vibrato`, the LFOs on Pitch
+  // too, which move every Oscillator and the Sub alike. With the Sub sounding, the sound repeats at the Sub's pitch, one
+  // or two octaves lower: that is the fundamental.
+  const fundamentalOf = (t: number, { vibrato: swung }: { vibrato: boolean }) => {
     const then = patchAt(t);
     const vibrato = swung && then ? lfoOffset(pressed(then, pressureAt(t)), 'pitch', lfoValues(then, t)) : 0;
     const frequency = (glidingAt(t) || A4) * 2 ** ((then?.osc1Octave ?? 0) + vibrato / 12 + bendCentsAt(t) / 1200);
@@ -1302,8 +1302,8 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
 
   return {
     taps,
-    fundamental: () => fundamentalAt(ctx.currentTime, false),
-    fundamentalAt: (time) => fundamentalAt(time, true),
+    fundamental: () => fundamentalOf(ctx.currentTime, { vibrato: false }),
+    fundamentalAt: (time) => fundamentalOf(time, { vibrato: true }),
     newestNote: () => newest,
     onNewestNote(listener) {
       newestListeners.add(listener);

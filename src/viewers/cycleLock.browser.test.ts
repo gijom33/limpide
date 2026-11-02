@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createSynthEngine } from '../engine/synthEngine';
 import { defaultPatch, type Patch } from '../patch/patch';
 import { PRESETS } from '../patch/presets';
+import { traceJitter } from '../test/measure';
 import { createCycleLock, type LockedTrace } from './cycleLock';
 import { scopeTrace } from './scopeTrace';
 import { scopeWindow } from './scopeWindow';
@@ -53,16 +54,6 @@ function drawn(frames: Frame[]): LockedTrace[] {
   return frames.map((frame) => lock({ ...frame, sampleRate: SR, cycles: scopeWindow(frame.samples.length, SR, frame.f, CYCLES).cycles, points: POINTS }));
 }
 
-/** The research's jitter: the RMS change between two traces over their RMS. */
-function jitter(a: Float32Array, b: Float32Array) {
-  let change = 0;
-  let level = 0;
-  for (let i = 0; i < a.length; i++) {
-    change += (a[i] - b[i]) ** 2;
-    level += (a[i] ** 2 + b[i] ** 2) / 2;
-  }
-  return level > 0 ? Math.sqrt(change / level) : 0;
-}
 const quantile = (xs: number[], q: number) => [...xs].sort((a, b) => a - b)[Math.min(xs.length - 1, Math.floor(q * (xs.length - 1) + 0.5))];
 const percent = (x: number) => Math.round(x * 1000) / 10;
 const loud = (trace: Float32Array) => Math.hypot(...trace) / Math.sqrt(trace.length) >= 1e-3;
@@ -70,7 +61,7 @@ const loud = (trace: Float32Array) => Math.hypot(...trace) / Math.sqrt(trace.len
 /** The jitter's median and 95th percentile, in %, over the frames where both traces sound. */
 function steadiness(traces: Float32Array[]) {
   const js: number[] = [];
-  for (let k = 1; k < traces.length; k++) if (loud(traces[k]) && loud(traces[k - 1])) js.push(jitter(traces[k], traces[k - 1]));
+  for (let k = 1; k < traces.length; k++) if (loud(traces[k]) && loud(traces[k - 1])) js.push(traceJitter(traces[k], traces[k - 1]));
   return { median: percent(quantile(js, 0.5)), p95: percent(quantile(js, 0.95)) };
 }
 
@@ -95,7 +86,7 @@ function floor(frames: Frame[], traces: LockedTrace[]) {
       if (miss < bestMiss) [best, bestMiss] = [c, miss];
     }
     let fine = Infinity;
-    for (let c = Math.max(first, best - 1); c <= Math.min(last, best + 1); c += 1 / 16) fine = Math.min(fine, jitter(scopeTrace(samples, c, length, POINTS), previous));
+    for (let c = Math.max(first, best - 1); c <= Math.min(last, best + 1); c += 1 / 16) fine = Math.min(fine, traceJitter(scopeTrace(samples, c, length, POINTS), previous));
     js.push(fine);
   }
   return percent(quantile(js, 0.5));
@@ -197,6 +188,24 @@ describe('the Scopes on the engine’s sound (issue 180)', () => {
       const frames = await framesOf(name);
       const traces = drawn(frames);
       expect(Math.abs(steadiness(traces.map((t) => t.trace)).median - floor(frames, traces)), name).toBeLessThan(3);
+    }
+  });
+
+  it('settle on a new Note played without Glide at once, rather than sliding as the old one leaves the buffer (the 2026-11-02 review)', async () => {
+    for (const patch of [init, preset('Resonant Ring')]) {
+      const frames = await capture(
+        patch,
+        (e) => {
+          e.noteOn(C3, 1, 0);
+          e.noteOn(C3 + 7, 1, 1.2);
+        },
+        'amp',
+        1.8,
+      );
+      const traces = drawn(frames).map((t) => t.trace);
+      // From the third frame after the Note, while the old Note still fills most of the buffer.
+      const after = Math.round((1.2 - FROM) * FPS) + 3;
+      for (let k = after; k < after + 12; k++) expect(traceJitter(traces[k], traces[k - 1]), `frame ${k}`).toBeLessThan(0.1);
     }
   });
 
