@@ -26,7 +26,8 @@ export interface TipContent {
  */
 export const TooltipsContext = createContext(true);
 
-// A header button's word, which it drops where the header is short of room (861 to 1099 px).
+// A header button's word, which it drops where the header is short of room (861 to 1099 px; Hold's, MIDI's and
+// Display's up to 1279 px, issue 154).
 const WORD = '.tool-word, .demo-word';
 
 const HOVER_DELAY_MS = 350;

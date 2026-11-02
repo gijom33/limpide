@@ -83,7 +83,7 @@ test('while the Demo plays, a running clock does not change its tempo; after, th
 });
 
 // The mark takes the unit's place, about as wide, and the box's edge turns green: nothing in the header overlaps or
-// wraps while it shows, at the header's layouts (the BPM its number alone from 861 to 1099 px, a button opening a
+// wraps while it shows, at the header's layouts (the BPM its number alone from 861 to 1279 px, a button opening a
 // field on a phone), and the edge is seen at each.
 for (const [width, height] of [[390, 844], [861, 900], [1100, 900], [1366, 900], [1920, 1080]]) {
   test(`the MIDI mark fits the header at ${width} px: nothing overlaps or wraps, the box’s edge marked (issue 136)`, async ({ page }) => {

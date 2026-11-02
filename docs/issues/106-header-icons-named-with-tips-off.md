@@ -8,6 +8,8 @@
 
 **Since then (2026-11-01, [issue 112](./112-tempo-midi-clock-and-an-arpeggiator.md)):** Hold, MIDI, Display and About are icons alone up to 1365 px, beside the tempo, so they show their names alone with Tips off up to there; Demo, Tutorial and Song up to 1099 px, as before. The rule is the same: a header button whose word is hidden.
 
+**Since then (2026-11-01, [issue 154](./154-the-headers-buttons-in-order.md)):** in arrangement C every header button is an icon alone from 861 to 1099 px; Hold, MIDI and Display stay so up to 1279 px, About keeping its word from 1100 px with Demo, Tutorial and Song. With Tips off, Hold, MIDI and Display show their names alone up to 1279 px, the others up to 1099 px.
+
 ## Question for the owner
 
 With Tips off, should an icon-only button still show its name alone (one word, "MIDI", no explanation) on hover? Claude's recommendation: yes. Tips off then means "no explanations", not "no names"; the long tips stay off. The other way is to leave it: whoever switches Tips off knows the icons.

@@ -1272,7 +1272,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .tempo-unit { font-size: var(--text-xs); }
 /* While a MIDI clock sets the tempo (issue 136), "MIDI" in the unit's place, in the text's colour: about as wide as
    "BPM", so nothing beside it moves. The box's edge takes the MIDI button's connected green, so the mark shows from 861
-   to 1099 px too, where the BPM shows its number alone (the word there took 3 px from each of the piano's keys). */
+   to 1279 px too (issue 154), where the BPM shows its number alone (the word there took 3 px from each of the piano's keys). */
 .tempo-unit[data-clock], .tempo-open .tool-word[data-clock] { color: var(--text); }
 .tool[data-clock]:is(.tempo-bpm, .tempo-open) { border-color: var(--stage-osc); }
 .tempo-typing { width: calc(3ch + 52px); text-align: center; color: var(--text); background: var(--bg); cursor: text; }
