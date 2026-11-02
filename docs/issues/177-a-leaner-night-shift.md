@@ -45,7 +45,7 @@ The owner asked for the issue (2026-11-01); the rules below are Claude's call, o
 - [x] The skill and the doc state the tiers, the end-of-night suite, batching, the quiet machine, the session rule and the update rule, and a fresh agent reading them can say which tier a given issue is
 - [x] Triage's description asks for a measurement before a layout decision
 - [x] The three flaky tests pass five runs in a row under load (the whole suite in both browsers at once), and alone as before (the load simulated with CPU burners at 15 to 30, not the whole suite)
-- [ ] The next night's report shows its load at the start and its tiers per issue
+- [x] The next night's report shows its load at the start and its tiers per issue (the night of 2026-11-01's)
 
 **Out of scope:**
 - Parallel lanes (the brainstorm of 2026-10-31): a later step once one quiet lane is lean
