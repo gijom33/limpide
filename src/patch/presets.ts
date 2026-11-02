@@ -250,7 +250,7 @@ group('Bass', [
     osc1Octave: -1, osc2Waveform: 'square', osc2Detune: 7, mixOsc2: 0.5,
     filterSlope: 24, cutoff: 500, resonance: 0.3, filterEnvAmount: 2, filterAttack: 0.002, filterDecay: 0.2, filterSustain: 0.1, ampSustain: 1, ampRelease: 0.15,
   }],
-  ['FM Bass', 'A sine swung by a sine on the same Note (FM), over a sine Sub. The Filter Envelope throws Osc 2 an octave up at each strike (Env Amount), where FM is at its thinnest, a few sidebands spaced wide; as Osc 2 falls back onto the Note they close in and fill every Harmonic: a rubbery, punchy attack.', {
+  ['FM Bass', 'A sine swung by a sine on the same Note (FM), over a sine Sub. The Filter Envelope throws Osc 2 an octave up at each strike (Env Amount), where FM is thinnest, a few sidebands spaced wide; as Osc 2 falls back they close in and fill every Harmonic.', {
     waveform: 'sine', osc2Waveform: 'sine', crossMod: 0.35, osc2EnvAmount: 12, mixSub: 0.6, subWaveform: 'sine',
     filterSlope: 24, cutoff: 1800, resonance: 0.15, filterEnvAmount: 1.5, filterAttack: 0.001, filterDecay: 0.18, filterSustain: 0,
     ampAttack: 0.002, ampDecay: 0.6, ampSustain: 0.6, ampRelease: 0.15,
@@ -301,7 +301,7 @@ group('Leads', [
     filterSlope: 24, cutoff: 2200, resonance: 0.3, keyTrack: 0.5, glide: 0.06, ampSustain: 0.9, ampRelease: 0.3,
     lfoDestination: 'cutoff', lfoRate: 0.2, lfoAmount: 0.3, lfo2Destination: 'pitch', lfo2Rate: 5.5, lfo2Amount: 0.3, lfo2Retrigger: 'note',
   }],
-  ['Poly Mod Zap', 'The Filter Envelope throws Osc 2 two octaves up at each strike and lets it fall as the Filter closes: that dive, Osc 2’s own in the Mixer, is the laser zap each Note starts with. Osc 2 also swings Osc 1 a little (FM), least at the strike, brightening the held Note.', {
+  ['Poly Mod Zap', 'The Filter Envelope throws Osc 2 two octaves up at each strike and lets it fall as the Filter closes: that dive, heard in the Mixer, is the laser zap. Osc 2 also swings Osc 1 a little (FM), least at the strike, brightening the held Note.', {
     osc2EnvAmount: 24, mixOsc2: 0.5, crossMod: 0.15,
     cutoff: 1200, resonance: 0.35, filterEnvAmount: 2, filterAttack: 0.002, filterDecay: 0.25, filterSustain: 0, ampSustain: 0.8,
   }],
