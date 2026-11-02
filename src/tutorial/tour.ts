@@ -106,8 +106,8 @@ export const TOUR: TourSection[] = [
     title: 'Amp',
     look: 'Watch the Envelope Timeline: before each Note the synth changes one stage, and the picture freezes to show its shape.',
     chain: 'The Amp takes the Filter’s sound and sends it on to your speakers.',
-    does: 'The Amp sets how loud each Note is, moment by moment, with its Envelope, a shape over time: a Note’s life story in four stages. Attack, how fast it rises once the key goes down. Decay, how fast it then falls back to a steady level. Sustain, that level, held while the key stays down. Release, how long it fades once you let go. The Filter has an Envelope of its own too, the same four stages opening and closing the Filter instead of changing the loudness.',
-    sees: 'Once each Note has faded, the pictures freeze for a moment: the Envelope Timeline, the last few seconds drawn left to right, shows the shape the Note took. The Amp Scope is what you hear, its height the loudness; on the Amp Spectrum all the lines rise and fall together.',
+    does: 'The Amp sets how loud each Note is, moment by moment, with its Envelope, a shape over time: a Note’s life story in four stages. Attack, how fast it rises once the key goes down. Decay, how fast it then falls back to a steady level. Sustain, that level, held while the key stays down. Release, how long it fades once you let go. The Filter has an Envelope of its own too, opening and closing it the same way.',
+    sees: 'Once each Note has faded, the pictures freeze for a moment: the Envelope Timeline, the last few seconds, shows the shape the Note took. The Amp Scope is what you hear, its height the loudness; on the Amp Spectrum all the lines rise and fall together.',
     // The Timeline first: on a phone it is far below the Amp's Viewers, and it alone is brought into view (issue 130).
     viewers: ['Envelope Timeline', 'Amp Scope', 'Amp Spectrum'],
     phrase: stagePhrase,
