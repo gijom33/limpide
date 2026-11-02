@@ -31,18 +31,20 @@ test('at 1440 px the piano has keys beyond the letter keys: one plays by pointer
   const piano = page.getByRole('group', { name: 'Piano' });
   expect(await piano.getByRole('button').count()).toBeGreaterThan(17);
   await expect(piano.getByRole('button').first()).toHaveAccessibleName('C4');
-  const c6 = piano.getByRole('button', { name: 'C6' }); // past the letter keys' E5
-  const box = (await c6.boundingBox())!;
+  // The first key past the letter keys' E5: how many more fit depends on the fonts the header's words are set in.
+  const f5 = piano.getByRole('button').nth(17);
+  await expect(f5).toHaveAccessibleName('F5');
+  const box = (await f5.boundingBox())!;
   await page.mouse.move(box.x + box.width / 2, box.y + box.height * 0.8);
   await page.mouse.down();
   await expect.poll(() => db(page), { timeout: 10000 }).toBeGreaterThan(-40);
-  await expect(c6).toHaveAttribute('aria-pressed', 'true');
+  await expect(f5).toHaveAttribute('aria-pressed', 'true');
   await page.mouse.up();
-  await expect(c6).toHaveAttribute('aria-pressed', 'false');
-  await play(page, [0x90, 84, 100]); // C6 from the Controller
-  await expect(c6).toHaveAttribute('aria-pressed', 'true');
-  await play(page, [0x80, 84, 0]);
-  await expect(c6).toHaveAttribute('aria-pressed', 'false');
+  await expect(f5).toHaveAttribute('aria-pressed', 'false');
+  await play(page, [0x90, 77, 100]); // F5 from the Controller
+  await expect(f5).toHaveAttribute('aria-pressed', 'true');
+  await play(page, [0x80, 77, 0]);
+  await expect(f5).toHaveAttribute('aria-pressed', 'false');
 });
 
 test('with Hold on, a key pressed again lets its Note go: the sound stops and the key goes dark (the owner, 2026-10-27)', async ({ page }) => {
