@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { defaultPatch, setParam } from '../patch/patch';
-import { destinationSwings, effectiveCutoff, effectiveResonance, effectiveVolume, osc2Cents, soundingPitch, tremolo } from './modulationModel';
+import {
+  destinationSwings, effectiveCutoff, effectiveResonance, effectiveVolume, osc2Cents, pressed, pressurePitch, soundingPitch, tremolo,
+} from './modulationModel';
 
 describe('Modulation model: Effective Cutoff', () => {
   it('is the Cutoff itself while nothing modulates the Filter', () => {
@@ -169,3 +171,35 @@ describe('the Volume knob (issue 62)', () => {
   });
 });
 
+
+describe('aftertouch moves its Destination up, from none at no pressure to its reach at full (issue 132)', () => {
+  const knobs = { ...defaultPatch(), cutoff: 500, lfoAmount: 0, lfo2Amount: 0 };
+  it('leaves the Patch as it is at no pressure', () => {
+    expect(pressed(knobs, { destination: 'cutoff', amount: 0 })).toEqual(knobs);
+  });
+  it('opens the Cutoff by up to two octaves, within what the Filter reaches', () => {
+    expect(pressed(knobs, { destination: 'cutoff', amount: 1 }).cutoff).toBeCloseTo(2000);
+    expect(pressed(knobs, { destination: 'cutoff', amount: 0.5 }).cutoff).toBeCloseTo(1000);
+    expect(pressed({ ...knobs, cutoff: 10000 }, { destination: 'cutoff', amount: 1 }).cutoff).toBe(20000);
+  });
+  it('raises a knob with room by its law, never past the knob’s top', () => {
+    expect(pressed({ ...knobs, resonance: 0.2 }, { destination: 'resonance', amount: 0.5 }).resonance).toBeCloseTo(0.7);
+    expect(pressed({ ...knobs, resonance: 0.8 }, { destination: 'resonance', amount: 1 }).resonance).toBe(1);
+    const widths = pressed({ ...knobs, pulseWidth: 0.25, osc2PulseWidth: 0.7 }, { destination: 'pulseWidth', amount: 1 });
+    expect([widths.pulseWidth, widths.osc2PulseWidth]).toEqual([0.65, 0.95]);
+    expect(pressed({ ...knobs, volume: 0.4 }, { destination: 'volume', amount: 1 }).volume).toBeCloseTo(0.9);
+  });
+  it('tunes Osc 2 up by an octave, or Detune by 50 cents, at full pressure, as an LFO would', () => {
+    expect(pressed({ ...knobs, osc2Semitone: 7 }, { destination: 'osc2Pitch', amount: 1 }).osc2Semitone).toBe(19);
+    expect(pressed({ ...knobs, osc2Detune: 20 }, { destination: 'detune', amount: 0.5 }).osc2Detune).toBe(45);
+  });
+  it('moves nothing else, and Pitch (no knob) by a semitone up at full pressure', () => {
+    expect(pressed(knobs, { destination: 'pitch', amount: 1 })).toEqual(knobs);
+    expect(pressurePitch({ destination: 'pitch', amount: 1 })).toBe(1);
+    expect(pressurePitch({ destination: 'cutoff', amount: 1 })).toBe(0);
+  });
+  it('adds to the knob’s value and an LFO’s: the Effective Cutoff of a pressed Patch', () => {
+    const lfo = { ...knobs, lfoDestination: 'cutoff' as const, lfoAmount: 0.5 }; // an octave each way
+    expect(effectiveCutoff(pressed(lfo, { destination: 'cutoff', amount: 1 }), 0, [1, 0])).toBeCloseTo(4000);
+  });
+});

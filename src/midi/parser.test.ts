@@ -21,6 +21,21 @@ describe('MIDI parser', () => {
     expect(parse(0xb0, 74, 100)).toEqual([{ type: 'cc', channel: 1, controller: 74, value: 100 }]);
   });
 
+  it('reads channel aftertouch (one pressure for the whole keyboard) as a pressure from 0 to 1 (issue 132)', () => {
+    expect(parse(0xd0, 0, 0xd0, 127)).toEqual([
+      { type: 'pressure', channel: 1, value: 0 },
+      { type: 'pressure', channel: 1, value: 1 },
+    ]);
+    expect(parse(0xd2, 64, 32)).toEqual([
+      { type: 'pressure', channel: 3, value: 64 / 127 },
+      { type: 'pressure', channel: 3, value: 32 / 127 },
+    ]); // running status
+  });
+
+  it('ignores per-Note (polyphonic) pressure, out of scope (issue 132)', () => {
+    expect(parse(0xa0, 60, 100, 0x90, 60, 100)).toEqual([{ type: 'noteOn', channel: 1, note: 60, velocity: 100 / 127 }]);
+  });
+
   it('follows running status: data bytes without a new status byte reuse the last one', () => {
     expect(parse(0x90, 60, 100, 64, 100, 60, 0)).toEqual([
       { type: 'noteOn', channel: 1, note: 60, velocity: 100 / 127 },
@@ -43,8 +58,8 @@ describe('MIDI parser', () => {
   });
 
   it('skips system-exclusive dumps and messages it does not use', () => {
-    // Aftertouch, channel (0xd0) and per Note (0xa0), is not used.
-    expect(parse(0xf0, 0x7e, 0x01, 0xf7, 0xd0, 64, 0xa0, 60, 30, 0x90, 60, 1)).toEqual([
+    // Per-Note aftertouch (0xa0) is not used; channel aftertouch is, since issue 132.
+    expect(parse(0xf0, 0x7e, 0x01, 0xf7, 0xa0, 60, 30, 0x90, 60, 1)).toEqual([
       { type: 'noteOn', channel: 1, note: 60, velocity: 1 / 127 },
     ]);
   });

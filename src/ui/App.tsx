@@ -7,7 +7,7 @@ import { rememberWelcome, welcomeFor } from '../app/welcome';
 import { createCallingPhrase, createWordsHeard, type Word } from '../input/callingPhrase';
 import { DEFAULT_OCTAVE, shiftOctave, startingOctave } from '../input/keyboardLayout';
 import { type Formula, oscillatorFormulas, responseFormula } from '../music/geek';
-import { CHOICES, osc1Heard, osc2Heard, type ParamId, type Patch, setFilter, setParam, setWaveform, subNoiseHeard } from '../patch/patch';
+import { CHOICES, LFO_DESTINATIONS, type LfoDestination, osc1Heard, osc2Heard, type ParamId, type Patch, setFilter, setParam, setWaveform, subNoiseHeard } from '../patch/patch';
 import { PRESETS } from '../patch/presets';
 import { TUTORIALS } from '../tutorial/tutorials';
 import { About } from './About';
@@ -59,6 +59,9 @@ import { WaveformPicker, WaveIcon } from './WaveformPicker';
 import { Wordmark } from './Wordmark';
 
 const BEND_RANGE = 'limpide.bendRange';
+const AFTERTOUCH = 'limpide.aftertouch';
+/** The Destination aftertouch moves as remembered, or the Cutoff (issue 132). */
+const storedAftertouch = (stored: string | null): LfoDestination => LFO_DESTINATIONS.find((d) => d.id === stored)?.id ?? 'cutoff';
 /** Why a greyed-out control does nothing now, for a screen reader (issue 104): what several controls share. */
 const OSC1_SILENT = 'No effect while Osc 1 is silent';
 const OSC2_SILENT = 'No effect while Osc 2 is silent';
@@ -196,6 +199,13 @@ export function App() {
   // How far a keyboard's bend wheel takes the pitch, in semitones each way (issue 52); remembered.
   const [bendRange, setBendRange] = useState(() => Number(storage.getItem(BEND_RANGE)) || 2);
   useEffect(() => storage.setItem(BEND_RANGE, String(bendRange)), [storage, bendRange]);
+  // The Destination a keyboard's aftertouch moves (issue 132), remembered with the MIDI settings, not in the Patch. A
+  // new one starts from no pressure, until the keyboard sends the next.
+  const [aftertouch, setAftertouch] = useState(() => storedAftertouch(storage.getItem(AFTERTOUCH)));
+  useEffect(() => {
+    storage.setItem(AFTERTOUCH, aftertouch);
+    session.engine.setPressure({ destination: aftertouch, amount: 0 });
+  }, [storage, session, aftertouch]);
 
   useSpaceFreezes(viewerStore);
   const narrow = useMediaQuery(STACKED);
@@ -259,6 +269,7 @@ export function App() {
     storage, session, pressHoldRef,
     onNote: () => players.stopDemo(true),
     onBend: (amount) => session.engine.setBend(amount * bendRange * 100),
+    onPressure: (amount) => session.engine.setPressure({ destination: aftertouch, amount }),
     onPedal: setPedal,
     // Program n is the n-th Preset (0 is Init), so a keyboard's Program buttons step through them.
     onProgram: (number) => {
@@ -369,6 +380,8 @@ export function App() {
         onClear={() => midi.mappingStore.clear()}
         bendRange={bendRange}
         onBendRange={setBendRange}
+        aftertouch={aftertouch}
+        onAftertouch={setAftertouch}
       />
       <DisplayMenu active={viewer.frozen || viewer.snapshot !== null}>
         <section className="toolbar" aria-label="Viewer controls">
@@ -788,6 +801,7 @@ export function App() {
             engine={session.engine}
             view={view}
             patch={patch}
+            pressed={midi.pressureHeard ? aftertouch : null}
             controls={
               <div className="timeline-controls">
                 {([1, 2] as const).map((n) => (

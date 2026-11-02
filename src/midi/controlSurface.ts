@@ -27,8 +27,8 @@ const DETECT_VALUES = 3;
 const SUSTAIN = 64;
 const MOD_WHEEL = 1;
 
-/** What MIDI Learn and the Mappings see: Notes and control changes, the bend wheel among them. */
-type ControlMessage = Exclude<MidiMessage, { type: 'pitchBend' } | { type: 'program' }>;
+/** What MIDI Learn and the Mappings see: Notes and control changes, the bend wheel among them (never aftertouch). */
+type ControlMessage = Exclude<MidiMessage, { type: 'pitchBend' } | { type: 'program' } | { type: 'pressure' }>;
 
 export type LearnState =
   | { phase: 'off' }
@@ -63,6 +63,8 @@ interface Synth {
   bend?(amount: number): void;
   pedal?(down: boolean): void;
   program?(number: number): void;
+  /** Channel aftertouch, how hard the keys are pressed (0–1): it moves its Destination, and is never learned (issue 132). */
+  pressure?(amount: number): void;
 }
 
 /** What a knob or a fader moves: a Parameter, or the tempo. */
@@ -328,6 +330,7 @@ export function createControlSurface(synth: Synth) {
     /** A message from a Controller: `from` is the known Controller it is (a C16), whose layout's Mappings answer it alone; left out for any other. */
     handle(incoming: MidiMessage, from?: KnownController) {
       if (incoming.type === 'program') return synth.program?.(incoming.program);
+      if (incoming.type === 'pressure') return synth.pressure?.(incoming.value);
       const message: ControlMessage =
         incoming.type === 'pitchBend'
           ? { type: 'cc', channel: incoming.channel, controller: PITCH_BEND, value: Math.round(((incoming.value + 1) / 2) * 127) }

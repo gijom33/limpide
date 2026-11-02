@@ -5,7 +5,9 @@ export type MidiMessage =
   /** The pitch bend wheel, −1 (all the way down) to 1, 0 at rest (issue 52). */
   | { type: 'pitchBend'; channel: number; value: number }
   /** A Program Change: the program number, 0 to 127. */
-  | { type: 'program'; channel: number; program: number };
+  | { type: 'program'; channel: number; program: number }
+  /** Channel aftertouch: how hard the keys are pressed, one pressure for the whole keyboard, 0 to 1 (issue 132). */
+  | { type: 'pressure'; channel: number; value: number };
 
 /** Data bytes each channel message carries, by its high nibble. */
 const DATA_BYTES: Record<number, number> = { 0x80: 2, 0x90: 2, 0xa0: 2, 0xb0: 2, 0xc0: 1, 0xd0: 1, 0xe0: 2 };
@@ -13,7 +15,8 @@ const DATA_BYTES: Record<number, number> = { 0x80: 2, 0x90: 2, 0xa0: 2, 0xb0: 2,
 /**
  * A streaming MIDI parser: feed it the bytes of each incoming packet. It follows running status (data bytes
  * reuse the last status), ignores real-time bytes (clock, keep-alive) wherever they fall, skips system-exclusive
- * dumps, and reports only what Limpide uses: notes, control changes, pitch bend and program changes.
+ * dumps, and reports only what Limpide uses: notes, control changes, pitch bend, program changes and channel aftertouch
+ * (per-Note pressure is read past and dropped, issue 132).
  */
 export function createMidiParser() {
   let status = 0;
@@ -74,6 +77,8 @@ function toMessage(status: number, [a, b]: number[]): MidiMessage | undefined {
     }
     case 0xc0:
       return { type: 'program', channel, program: a };
+    case 0xd0:
+      return { type: 'pressure', channel, value: a / 127 };
     default:
       return undefined;
   }

@@ -39,6 +39,8 @@ interface Host {
   onBend(amount: number): void;
   onPedal(down: boolean): void;
   onProgram(number: number): void;
+  /** Channel aftertouch, how hard the keys are pressed (0–1, issue 132). */
+  onPressure(amount: number): void;
 }
 
 /**
@@ -56,6 +58,8 @@ export function useMidi(host: Host) {
   keyboard.current = host;
   const [midi, setMidi] = useState<MidiState>({ kind: 'pending' });
   const [activity, setActivity] = useState<string | null>(null);
+  // Whether a keyboard has sent aftertouch this visit: from then on the Timeline draws what it moves (issue 132).
+  const [pressureHeard, setPressureHeard] = useState(false);
   const [learn, setLearn] = useState<LearnState>({ phase: 'off' });
   const noteFromController = useEffectEvent(() => onNote());
 
@@ -114,6 +118,7 @@ export function useMidi(host: Host) {
       bend: (amount) => keyboard.current.onBend(amount),
       pedal: (down) => keyboard.current.onPedal(down),
       program: (number) => keyboard.current.onProgram(number),
+      pressure: (amount) => keyboard.current.onPressure(amount),
       learnChanged: (state) => {
         setLearn(state);
         if (state.phase === 'armed' && state.learned) onLearned.current(state.learned);
@@ -229,6 +234,7 @@ export function useMidi(host: Host) {
             }
             surface.handle(m, from);
             setActivity(describeMessage(m));
+            if (m.type === 'pressure' && m.value > 0) setPressureHeard(true);
           },
           onDevices: (devices) => {
             setMidi({ kind: 'ready', devices });
@@ -246,7 +252,7 @@ export function useMidi(host: Host) {
   }, [surface, midiWanted, mappingStore, storage]);
 
   return {
-    midi, activity, mappings, mappingStore, learn, learning, learnContext, surface,
+    midi, activity, pressureHeard, mappings, mappingStore, learn, learning, learnContext, surface,
     setup, setupLast, updateSetup, closeSetup, applyLayout,
     bankFollow, setBankFollow, connect: () => setMidiWanted(true),
   };

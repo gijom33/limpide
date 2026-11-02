@@ -308,6 +308,10 @@ _Avoid_: Soft takeover, catch
 A small display of the most recent incoming MIDI message.
 _Avoid_: MIDI log, MIDI console
 
+**Aftertouch**:
+A keyboard's channel pressure, one for the whole keyboard (0 to 1): pressing a held key harder raises one Destination, chosen in the MIDI panel (the Cutoff by default), from its knob's value at no pressure to as far as one LFO at full Depth takes it at full, on top of the knob and the LFOs (issue 132). Kept with the MIDI settings, not in the Patch. Per-Note (polyphonic) pressure is not used.
+_Avoid_: Pressure (fine in code), channel pressure
+
 ### Short forms
 
 A label, a key or a button's word that would take a second line shows a shorter form instead, chosen by the room it has: an abbreviation, at worst a few letters (the design principles' "One line, shorter words", issue 156). The full name above stays its tooltip and what a screen reader hears; sentences wrap as text does.

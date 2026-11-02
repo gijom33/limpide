@@ -474,9 +474,20 @@ describe('a keyboard’s own controls, while nothing is mapped to them (issue 52
       bend: (amount) => void heard.push(`bend ${amount}`),
       pedal: (down) => void heard.push(`pedal ${down ? 'down' : 'up'}`),
       program: (n) => void heard.push(`program ${n}`),
+      pressure: (amount) => void heard.push(`pressure ${amount}`),
     });
     return { surface, positions, heard, store };
   }
+
+  it('channel aftertouch reaches the synth as a pressure, even while MIDI Learn listens (issue 132)', () => {
+    const { surface, heard } = keyboardRig();
+    surface.handle({ type: 'pressure', channel: 1, value: 0.5 });
+    surface.startLearn();
+    surface.select(cutoff);
+    surface.handle({ type: 'pressure', channel: 1, value: 1 });
+    expect(heard).toEqual(['pressure 0.5', 'pressure 1']);
+    expect(surface.learnState()).toEqual({ phase: 'armed', target: cutoff });
+  });
 
   it('the bend wheel bends, the sustain pedal holds, a Program Change loads, the mod wheel turns LFO 1’s Depth', () => {
     const { surface, positions, heard } = keyboardRig();

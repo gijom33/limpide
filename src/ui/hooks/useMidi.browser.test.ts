@@ -26,6 +26,7 @@ async function midi(name = 'Keystation 49', stored: Record<string, string> = {})
     onBend: (amount: number) => void told.push(`bend ${amount.toFixed(1)}`),
     onPedal: (down: boolean) => void told.push(`pedal ${down ? 'down' : 'up'}`),
     onProgram: (number: number) => void told.push(`program ${number}`),
+    onPressure: (amount: number) => void told.push(`pressure ${amount.toFixed(1)}`),
   };
   const hook = await renderHook(useMidi, host);
   await act(async () => hook.result.current.connect());
@@ -68,6 +69,17 @@ describe('useMidi: a Controller (the 1.16.0 review)', () => {
     await m.send(0xb0, 1, 127);
     expect(m.told).toEqual(['pedal down', 'program 5']);
     expect(m.session.patches.get().patch.lfoAmount).toBe(1);
+  });
+
+  it('hands channel aftertouch to the host, and says once a keyboard has pressed (issue 132)', async () => {
+    const m = await midi();
+    unmount = m.unmount;
+    await m.send(0xd0, 0);
+    expect(m.result.current.pressureHeard).toBe(false); // a keyboard at rest says nothing of what it can send
+    await m.send(0xd0, 127);
+    expect(m.told).toEqual(['pressure 0.0', 'pressure 1.0']);
+    expect(m.result.current.pressureHeard).toBe(true);
+    expect(m.result.current.activity).toBe('ch 1 · Aftertouch · 100 %');
   });
 
   it('acts on a pad mapped to an Action: Hold through the host, the next Preset in the Patch', async () => {

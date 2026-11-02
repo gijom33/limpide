@@ -32,6 +32,20 @@ describe("the Timeline's key, in the owner's order (issue 76)", () => {
     ]);
   });
 
+  it('adds what aftertouch moves once a keyboard sends it, after the LFOs’ (issue 132)', () => {
+    expect(timelineKey(patch({}), 'cutoff').map((e) => e.mark)).toEqual(['cutoff', 'amp']);
+    expect(timelineKey(patch({ lfoDestination: 'volume', lfoAmount: 1 }), 'resonance')).toEqual([
+      { mark: 'lfo-volume', name: 'Volume', destination: 'volume', stage: 'amp', pattern: 'dashes' },
+      { mark: 'lfo-resonance', name: 'Resonance', destination: 'resonance', stage: 'filter', pattern: 'dashes', pressed: true },
+      { mark: 'amp', name: 'Amp Envelope' },
+    ]);
+    // On a Destination an LFO already moves: its line, once.
+    expect(timelineKey(patch({ lfo2Destination: 'volume', lfo2Amount: 1 }), 'volume')).toEqual([
+      { mark: 'lfo-volume', name: 'Volume', destination: 'volume', stage: 'amp', pattern: 'dashDot', pressed: true },
+      { mark: 'amp', name: 'Amp Envelope' },
+    ]);
+  });
+
   it('names nothing but the Amp Envelope before any Patch is known', () => {
     expect(timelineKey(undefined)).toEqual([{ mark: 'amp', name: 'Amp Envelope' }]);
   });

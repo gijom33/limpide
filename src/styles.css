@@ -1298,6 +1298,8 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .midi-heading { font-size: var(--text-sm); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 .midi-activity { display: flex; flex-direction: column; gap: 3px; }
 .midi-activity [role='status'] { font-variant-numeric: tabular-nums; font-family: ui-monospace, monospace; }
+/* Aftertouch's Destination (issue 132): a list as the page's other choices are drawn, its word in the text colour. */
+.midi-aftertouch select { color: var(--text); padding: 0 6px; }
 /* A whole layout (the C16's is 58 Mappings) scrolls inside the panel rather than running down the page. */
 .midi-mappings {
   list-style: none; margin: 0; padding: 0; width: 100%; display: flex; flex-direction: column; gap: 4px;

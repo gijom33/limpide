@@ -2,6 +2,7 @@ import { Fragment, useEffect, useRef, useState } from 'react';
 import { answeredBy, knownAmong } from '../midi/controller';
 import { describeControl, describeMode, describeTarget } from '../midi/describe';
 import { type Control, type ControllerId, controlKey, type Mapping } from '../midi/mappings';
+import { LFO_DESTINATIONS, type LfoDestination, STAGES } from '../patch/patch';
 import { CloseIcon, MidiIcon } from './icons';
 import { Segmented } from './Segmented';
 import { Tooltip } from './Tooltip';
@@ -32,6 +33,9 @@ interface Props {
   /** How far a keyboard's bend wheel takes the pitch, in semitones each way (issue 52). */
   bendRange: number;
   onBendRange(semitones: number): void;
+  /** The Destination a keyboard's aftertouch moves, one of the LFOs' (issue 132). */
+  aftertouch: LfoDestination;
+  onAftertouch(destination: LfoDestination): void;
 }
 
 /** " · C16 only" for a Mapping of a known Controller's layout, which answers it alone; nothing for any other. */
@@ -60,6 +64,7 @@ const statusText = (state: MidiState) => {
  */
 export function MidiPanel({
   state, onOpen, activity, mappings, learning, onLearn, onDone, onQuickSetup, onLayout, onRemove, onClear, bendRange, onBendRange,
+  aftertouch, onAftertouch,
 }: Props) {
   const [open, setOpen] = useState(false);
   const wrapper = useRef<HTMLDivElement>(null);
@@ -186,6 +191,25 @@ export function MidiPanel({
                 options={BEND_RANGES.map((n) => ({ value: n, label: `${n}`, name: `${n} semitones` }))}
                 onChange={onBendRange}
               />
+            </Tooltip>
+          )}
+          {available && (
+            <Tooltip content={TIPS.aftertouch}>
+              {/* Grouped by stage, as the LFOs' Destination menu is. */}
+              <label className="segmented-field midi-aftertouch">
+                <span className="field-caption">Aftertouch</span>
+                <select className="tool" value={aftertouch} onChange={(e) => onAftertouch(e.target.value as LfoDestination)}>
+                  {STAGES.map((stage) => (
+                    <optgroup key={stage.id} label={stage.name}>
+                      {LFO_DESTINATIONS.filter((d) => d.stage === stage.id).map((d) => (
+                        <option key={d.id} value={d.id}>
+                          {d.label}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+              </label>
             </Tooltip>
           )}
           {mappings.length > 0 && (

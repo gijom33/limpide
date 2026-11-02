@@ -191,6 +191,11 @@ export const TIPS = {
     title: 'Close',
     body: 'Closes the Preset’s description; Escape does too. It goes by itself at the first change to the sound. Every Preset’s description shows on its name in the Patches panel.',
   },
+  aftertouch: {
+    title: 'Aftertouch',
+    body: 'Press harder on a held key and this Destination moves, as on a plugin synth: from where its knob is at a light touch to as far as an LFO at full Depth takes it at the hardest, on top of its knob and the LFOs. The Cutoff opens up to two octaves, so pressing brightens the sound. Its ring’s dot and the LFO & Envelopes line show the move.',
+    how: 'Not every keyboard sends aftertouch: press a held key harder and see whether the Last message says Aftertouch. Per-key (polyphonic) pressure is not used.',
+  },
   bendRange: {
     title: 'Pitch bend range',
     body: 'How far a keyboard’s bend wheel takes the pitch, up or down, in semitones: 2 is a whole tone, as on most synths. The sustain pedal holds Notes as Hold does, the mod wheel turns LFO 1’s Depth, and a Program Change loads that Preset, each until you map the control to something else.',
@@ -334,7 +339,7 @@ export const TIPS = {
   },
   timelineCutoff: {
     title: 'Cutoff',
-    body: 'Orange dotted line: where the Filter’s Cutoff really is, after the Filter Envelope, the LFOs, Velocity and Key Track, on the frequency scale at the right.',
+    body: 'Orange dotted line: where the Filter’s Cutoff really is, after the Filter Envelope, the LFOs, Velocity, Key Track and a keyboard’s aftertouch, on the frequency scale at the right.',
   },
   envelopeTimeline: {
     title: 'Envelope Timeline',
@@ -345,12 +350,14 @@ export const TIPS = {
 
 const LINE_COLOUR = { osc: 'Green', filter: 'Orange', amp: 'Violet' } as const;
 /** A Timeline key entry for a Destination an LFO moves (issue 63): its line, in its section's colour. */
-export function lfoLineTip(destination: LfoDestination): TipContent {
+export function lfoLineTip(destination: LfoDestination, pressed = false): TipContent {
   const { label, stage } = DESTINATIONS[destination];
   const colour = LINE_COLOUR[stage];
+  // Aftertouch aimed here moves the line too (issue 132).
+  const pressure = pressed ? ' A keyboard’s aftertouch raises it too, the harder the press.' : '';
   return destination === 'pitch'
-    ? { title: label, body: `${colour} broken line: the pitch as the LFO moves it (vibrato), a semitone up at the top and down at the bottom, the Note’s own pitch in the middle.` }
-    : { title: label, body: `${colour} broken line: the ${label} as the LFO moves it (both LFOs added together when both aim at it), on its knob’s scale, bottom to top.` };
+    ? { title: label, body: `${colour} broken line: the pitch as the LFO moves it (vibrato), a semitone up at the top and down at the bottom, the Note’s own pitch in the middle.${pressure}` }
+    : { title: label, body: `${colour} broken line: the ${label} as the LFO moves it (both LFOs added together when both aim at it), on its knob’s scale, bottom to top.${pressure}` };
 }
 
 /** A synced Rate's tip (issue 176): its Hz at the tempo, which its readout leaves out so its knob keeps one width. */

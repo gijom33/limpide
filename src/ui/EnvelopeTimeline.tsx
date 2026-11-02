@@ -1,6 +1,6 @@
 import { type ReactNode, useEffect, useRef } from 'react';
 import type { SynthEngine } from '../engine/synthEngine';
-import type { Patch } from '../patch/patch';
+import type { LfoDestination, Patch } from '../patch/patch';
 import { addToRenderLoop } from '../viewers/renderLoop';
 import { createTimeline, type KeyEntry, timelineKey } from '../viewers/timeline';
 import type { ViewSettings } from '../viewers/viewSettings';
@@ -9,14 +9,25 @@ import { type TipContent, Tooltip } from './Tooltip';
 import { lfoLineTip, TIPS } from './tips';
 
 /** A key entry's tooltip. */
-const tipOf = ({ mark, destination }: KeyEntry): TipContent =>
-  destination ? lfoLineTip(destination) : mark === 'cutoff' ? TIPS.timelineCutoff : mark === 'filterEnvelope' ? TIPS.timelineFilterEnvelope : TIPS.timelineAmp;
+const tipOf = ({ mark, destination, pressed }: KeyEntry): TipContent =>
+  destination ? lfoLineTip(destination, pressed) : mark === 'cutoff' ? TIPS.timelineCutoff : mark === 'filterEnvelope' ? TIPS.timelineFilterEnvelope : TIPS.timelineAmp;
 
 /** The LFO & Envelopes section, under the signal chain: the LFO beside the Envelope Timeline, in the modulation colour. */
-export function EnvelopeTimeline({ engine, view, patch, controls }: { engine: SynthEngine; view(): ViewSettings; patch: Patch; controls?: ReactNode }) {
+export function EnvelopeTimeline({
+  engine, view, patch, pressed, controls,
+}: {
+  engine: SynthEngine;
+  view(): ViewSettings;
+  patch: Patch;
+  /** The Destination aftertouch moves, once a keyboard has sent it (issue 132): its line is drawn too. */
+  pressed: LfoDestination | null;
+  controls?: ReactNode;
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  useEffect(() => addToRenderLoop(createTimeline(canvasRef.current!, engine, view)), [engine, view]);
-  const key = timelineKey(patch);
+  const pressedRef = useRef(pressed);
+  pressedRef.current = pressed;
+  useEffect(() => addToRenderLoop(createTimeline(canvasRef.current!, engine, view, () => pressedRef.current)), [engine, view]);
+  const key = timelineKey(patch, pressed);
   // One line, its names shorter where the room runs short (issue 156).
   const keyRef = useOneLine<HTMLSpanElement>(key.map((e) => e.name).join(' · '));
 

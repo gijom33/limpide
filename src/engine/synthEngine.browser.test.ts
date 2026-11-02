@@ -1386,6 +1386,56 @@ describe('Velocity → Cutoff', () => {
   });
 });
 
+describe('aftertouch (issue 132)', () => {
+  it('opens the Cutoff by the reach the model predicts at full pressure, none at no pressure, and the sound follows', async () => {
+    const harmonics = Float32Array.from({ length: 20 }, (_, i) => 110 * (i + 1));
+    for (const amount of [0, 1]) {
+      const ctx = new OfflineAudioContext(1, SR, SR);
+      const engine = createSynthEngine(ctx);
+      engine.applyPatch({ ...defaultPatch(), cutoff: 300, resonance: 0, ampSustain: 1, ampAttack: 0.001, lfoAmount: 0, lfo2Amount: 0 });
+      engine.setPressure({ destination: 'cutoff', amount });
+      engine.noteOn(45, 1, 0);
+      const frame = ctx.suspend(0.5).then(() => {
+        const read = (a: AnalyserNode) => {
+          const s = new Float32Array(a.fftSize);
+          a.getFloatTimeDomainData(s);
+          return s;
+        };
+        const out = { osc: read(engine.taps.oscillator), filter: read(engine.taps.filter), curve: engine.filterResponse(harmonics), m: engine.modulationAt(0.5) };
+        void ctx.resume();
+        return out;
+      });
+      await ctx.startRendering();
+      const { osc, filter, curve, m } = await frame;
+      // Two octaves up at full pressure (Claude's call, open to the owner); the knob's own Cutoff at none.
+      expect(m.cutoff, `pressure ${amount}`).toBeCloseTo(amount ? 1200 : 300, 3);
+      expect(m.pressure).toEqual({ destination: 'cutoff', amount });
+      for (let i = 0; i < harmonics.length; i++) {
+        if (dB(curve[i]) < -40) continue;
+        const measured = dB(toneAmplitudeHann(filter, SR, harmonics[i]) / toneAmplitudeHann(osc, SR, harmonics[i]));
+        expect(Math.abs(measured - dB(curve[i])), `${harmonics[i]} Hz at pressure ${amount}`).toBeLessThan(0.5);
+      }
+    }
+  });
+
+  it('on Pitch, raises the sound by up to a semitone, the model and Cycle Lock with it, and leaves the knobs as they are', async () => {
+    const A2 = 45; // 110 Hz
+    let engine!: ReturnType<typeof createSynthEngine>;
+    const s = await render(1, { resonance: 0, ampAttack: 0.001, ampSustain: 1, cutoff: 20000, lfoAmount: 0, lfo2Amount: 0 }, (e) => {
+      engine = e;
+      e.noteOn(A2, 1, 0);
+      e.setPressure({ destination: 'pitch', amount: 1 }, 0.2);
+    });
+    const last = [s.length - SR / 2, s.length] as const;
+    const raised = 110 * 2 ** (1 / 12);
+    expect(dB(toneAmplitude(s, SR, raised, ...last) / toneAmplitude(s, SR, 110, ...last))).toBeGreaterThan(20);
+    expect(engine.modulationAt(0.8).pitch).toBeCloseTo(A2 + 1, 6);
+    expect(engine.modulationAt(0.1).pitch).toBeCloseTo(A2, 6); // the Timeline's past keeps its own pressure
+    expect(engine.fundamental()).toBeCloseTo(raised, 1);
+    expect(engine.patchAt(0.8)?.cutoff).toBe(20000);
+  });
+});
+
 describe('Key Track', () => {
   /** Renders a Note and reads both Taps, the Response Curve and the model at `when`. */
   async function measureAt(patch: Partial<Patch>, play: (e: ReturnType<typeof createSynthEngine>) => void, when: number, harmonics: Float32Array<ArrayBuffer>) {
