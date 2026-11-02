@@ -75,3 +75,83 @@ test('the Synth Geek Layer keeps the page inside a laptop screen and moves no kn
   expect(await knobs()).toEqual(before);
   expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThanOrEqual(900);
 });
+
+// Issue 167: Osc 2's tuning in the numbers the engine plays, Detune's beats at the Note played (A4 before any, said).
+test('Osc 2’s Octave and Semitone read their multiples, Detune its beats at the Note played (issue 167)', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.addInitScript(() => localStorage.setItem('limpide.overlays', JSON.stringify({ geek: true })));
+  await page.goto('/');
+  await page.getByRole('tab', { name: 'Osc 2' }).click();
+  const osc2 = (name: string) => value(page, 'Oscillators', name);
+  await expect(osc2('Semitone')).toHaveText('×1');
+  await expect(osc2('Detune')).toHaveText('0.00 Hz at A4');
+
+  const detune = page.getByRole('region', { name: 'Oscillators' }).getByRole('slider', { name: sliderName('Detune') });
+  await detune.press('PageUp'); // 10 cents
+  await expect(detune).toHaveAttribute('aria-valuetext', '+10 ¢');
+  await expect(osc2('Detune')).toHaveText('2.55 Hz at A4');
+  // A Note played: its beats, no longer A4's.
+  await detune.blur();
+  await page.keyboard.down('KeyA');
+  await page.keyboard.up('KeyA');
+  await expect(osc2('Detune')).toHaveText(/^\d\.\d\d Hz beats$/);
+
+  const semitone = page.getByRole('region', { name: 'Oscillators' }).getByRole('slider', { name: sliderName('Semitone') });
+  for (let i = 0; i < 7; i++) await semitone.press('ArrowUp');
+  await expect(osc2('Semitone')).toHaveText('×1.498');
+  const octave = page.getByRole('slider', { name: 'Osc 2 Octave' });
+  const octaveValue = page.locator('.knob', { has: octave }).locator('.knob-value > span').first();
+  await expect(octaveValue).toHaveText('×1');
+  await octave.press('ArrowUp');
+  await expect(octaveValue).toHaveText('×2');
+  await octave.press('ArrowDown');
+  await octave.press('ArrowDown');
+  await expect(octaveValue).toHaveText('×½');
+});
+
+test('the tips of Osc 2’s tuning and the Noise give their formulas under the hood, with the layer on only (issue 167)', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  await page.getByRole('tab', { name: 'Osc 2' }).click();
+  const region = page.getByRole('region', { name: 'Oscillators' });
+  const tipOf = (text: string) => page.getByRole('tooltip').filter({ hasText: text });
+  await page.keyboard.press('Tab'); // the keys in use: a focus shows its tip
+  await region.getByRole('slider', { name: sliderName('Detune') }).focus();
+  await expect(tipOf('Fine-tunes Osc 2')).toBeVisible();
+  await expect(tipOf('Fine-tunes Osc 2').locator('.tooltip-hood')).toHaveCount(0);
+  await expect(value(page, 'Oscillators', 'Detune')).toHaveText(/¢$/);
+
+  await page.evaluate(() => localStorage.setItem('limpide.overlays', JSON.stringify({ geek: true })));
+  await page.reload();
+  await page.getByRole('tab', { name: 'Osc 2' }).click();
+  await page.keyboard.press('Tab');
+  await region.getByRole('slider', { name: sliderName('Detune') }).focus();
+  const detune = tipOf('Fine-tunes Osc 2');
+  await expect(detune.locator('.tooltip-hood')).toContainText(/^Under the hood\s*Δf = f·\(2\^\(c\/1200\) − 1\)/);
+  // Above the History line, which stays last.
+  await expect(detune.locator('.tooltip-hood + .tooltip-history')).toHaveCount(1);
+  await region.getByRole('slider', { name: sliderName('Semitone') }).focus();
+  await expect(tipOf('Shifts Osc 2 by semitones').locator('.tooltip-hood')).toContainText('2^(s/12)');
+  await page.getByRole('tab', { name: 'Mixer' }).click();
+  await page.keyboard.press('Tab'); // the keys in use again, after the click
+  await region.getByRole('slider', { name: 'Noise' }).focus();
+  await expect(tipOf('An unpitched sound').locator('.tooltip-hood')).toContainText(/white.*flat.*pink.*−3 dB per octave/);
+});
+
+test('on a phone Osc 2’s numbers show in the name’s place while the control moves (issue 167)', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.addInitScript(() => localStorage.setItem('limpide.overlays', JSON.stringify({ geek: true })));
+  await page.goto('/');
+  await page.getByRole('tab', { name: 'Osc 2' }).click();
+  const semitone = page.getByRole('slider', { name: 'Osc 2 Semitone' });
+  const knob = page.locator('.knob', { has: semitone });
+  await expect(knob.locator('.knob-value > span').first()).toBeHidden();
+  for (let i = 0; i < 7; i++) await semitone.press('ArrowUp');
+  await expect(knob.locator('.knob-value > span').first()).toBeVisible();
+  await expect(knob.locator('.knob-value > span').first()).toHaveText('×1.498');
+  await expect(knob.locator('.knob-label')).toBeHidden();
+  // Detune's figure alone there, its words too wide for the name's place: 440 Hz × 1.498 × (2^(10/1200) − 1).
+  const detune = page.getByRole('slider', { name: 'Osc 2 Detune' });
+  await detune.press('PageUp');
+  await expect(page.locator('.knob', { has: detune }).locator('.knob-value > span').first()).toHaveText('3.82 Hz', { useInnerText: true });
+});
