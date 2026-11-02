@@ -82,19 +82,39 @@ test('while the Demo plays, a running clock does not change its tempo; after, th
   await stopClock(page);
 });
 
-// The mark takes the unit's place, about as wide: nothing in the header overlaps or wraps while it shows, at the
-// header's layouts (the BPM its number alone from 861 to 1099 px, a button opening a field on a phone).
+// The mark takes the unit's place, about as wide, and the box's edge turns green: nothing in the header overlaps or
+// wraps while it shows, at the header's layouts (the BPM its number alone from 861 to 1099 px, a button opening a
+// field on a phone), and the edge is seen at each.
 for (const [width, height] of [[390, 844], [861, 900], [1100, 900], [1366, 900], [1920, 1080]]) {
-  test(`the MIDI mark fits the header at ${width} px: nothing overlaps or wraps (issue 136)`, async ({ page }) => {
+  test(`the MIDI mark fits the header at ${width} px: nothing overlaps or wraps, the box’s edge marked (issue 136)`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await withFakeController(page);
+    const box = width < 861 ? page.locator('header').getByRole('button', { name: 'Tempo' }) : bpm(page);
+    const edge = () => box.evaluate((el) => getComputedStyle(el).borderTopColor);
+    const unmarked = await edge();
     await startClock(page, 120);
-    const header = page.locator('header');
-    if (width < 861) await expect(header.getByRole('button', { name: 'Tempo' })).toContainText('MIDI');
+    if (width < 861) await expect(box).toContainText('MIDI');
     else await expect(bpm(page)).toHaveAttribute('aria-valuetext', '120 BPM, from a MIDI clock');
+    expect(await edge()).not.toBe(unmarked);
     const options: AuditOptions = { rules: ['overlap', 'wrap'], minTarget: 0, waivers: [] };
     const { unexpected } = await page.evaluate(auditPage, options);
     expect(unexpected.filter((f) => /header|tempo/.test(f.what))).toEqual([]);
+    await stopClock(page);
+  });
+}
+
+// The design audit's contrast rules on the mark: its word as text (4.5:1), its edge as what draws a control (3:1).
+for (const theme of ['dark', 'light'] as const) {
+  test(`the MIDI mark meets the design audit’s contrast in the ${theme} theme (issue 136)`, async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await withFakeController(page);
+    await page.evaluate((t) => localStorage.setItem('limpide.theme', t), theme);
+    await page.reload();
+    await startClock(page, 120);
+    await expect(bpm(page)).toHaveText(/120\s*MIDI/);
+    const options: AuditOptions = { rules: ['text', 'boundary'], minTarget: 0, waivers: [] };
+    const { unexpected } = await page.evaluate(auditPage, options);
+    expect(unexpected.filter((f) => /tempo-bpm|tempo-unit/.test(f.what))).toEqual([]);
     await stopClock(page);
   });
 }

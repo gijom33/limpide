@@ -72,11 +72,35 @@ describe('following a MIDI clock (issue 136)', () => {
     // The tick after the Start is the first beat, handed at once.
     expect(started.handed[0]).toMatchObject({ tick: 0, bpm: 120 });
     expect(started.handed[0].origin).toBeCloseTo(end + 0.01, 6);
-    // Stopped for three seconds, then a Continue: the beats go on from where they were.
-    follower.lost();
-    const resumed = play(follower, 120, 4, started.end + 3, () => 0);
+    // A Stop, the clock silent for half a second, then a Continue: the beats go on from where they were.
+    follower.stop();
+    follower.resume();
+    const resumed = play(follower, 120, 4, started.end + 0.5, () => 0);
     expect(resumed.handed[0].bpm).toBe(120);
-    expect(resumed.handed[0].origin).toBeCloseTo(end + 0.01 + 3, 6);
+    expect(resumed.handed[0].origin).toBeCloseTo(end + 0.01 + 0.5, 6);
+  });
+
+  it('counts no beats between a Stop and a Continue while the clock goes on ticking, as many keep theirs running', () => {
+    const follower = createClockFollower();
+    const { end } = play(follower, 120, 4, 10, () => 0);
+    follower.stop();
+    // Stopped for a beat and a quarter, the ticks coming on: nothing handed, the place in the track standing still.
+    const stopped = play(follower, 120, 1.25, end, () => 0);
+    expect(stopped.handed).toEqual([]);
+    follower.resume();
+    const resumed = play(follower, 120, 2, stopped.end, () => 0);
+    // Four beats played, then 0.625 s stopped: the beats come later by that.
+    expect(resumed.handed[0].origin).toBeCloseTo(10.625, 6);
+  });
+
+  it('reads a clock heard after one that stopped afresh: its first ticks do not bring back the old BPM', () => {
+    const follower = createClockFollower();
+    const { end } = play(follower, 140, 4, 0, () => 0);
+    follower.lost();
+    follower.start();
+    const { handed } = play(follower, 90, 4, end + 5, () => 0);
+    expect(handed.map((h) => h.bpm)).not.toContain(140);
+    expect(handed[0].bpm).toBe(90);
   });
 
   it('starts over after a pause in the ticks, rather than read the pause as a slower tempo', () => {

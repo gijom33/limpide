@@ -116,12 +116,13 @@ export function createTempoStore({
     /**
      * A MIDI clock's message from the input `from`, at `time` on the page's clock (issue 136). The first input to tick
      * is followed until its ticks stop; another's are ignored meanwhile. A Start counts the beats again from the next
-     * tick; a Stop or a Continue leaves the count as it is.
+     * tick; between a Stop and a Continue the count stands still, the clock's place in its track with it.
      */
     midiClock(type: ClockMessage['type'], time: number, from: string) {
       if (source !== null && from !== source) return;
       if (type === 'start') return follower.start();
-      if (type !== 'clock') return follower.lost();
+      if (type === 'stop') return follower.stop();
+      if (type === 'continue') return follower.resume();
       source = from;
       lastTick = time;
       if (watch === undefined) watch = setTimeout(watchClock, CLOCK_TIMEOUT * 1000);

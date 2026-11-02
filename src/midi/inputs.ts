@@ -1,4 +1,4 @@
-import { type ClockMessage, createMidiParser, type MidiMessage } from './parser';
+import { type ClockMessage, createMidiParser, isClockMessage, type MidiMessage } from './parser';
 
 /** The parts of a Web MIDI input this needs, so tests can stand in for real hardware. */
 export interface MidiInputLike extends EventTarget {
@@ -22,7 +22,7 @@ interface Handlers {
    * A MIDI clock's message (issue 136), with the name of the input it came from and when it came, in seconds on the
    * page's clock (`performance.now()`'s).
    */
-  onClock?(message: ClockMessage, from: string, time: number): void;
+  onClock(message: ClockMessage, from: string, time: number): void;
   /** The connected Controllers' names, whenever they change. */
   onDevices(names: string[]): void;
 }
@@ -43,8 +43,8 @@ export function connectMidi(access: MidiAccessLike, { onMessage, onClock, onDevi
       const now = performance.now();
       const stamp = Math.abs(event.timeStamp - now) < 1000 ? event.timeStamp : now;
       for (const message of parser.feed((event as Event & { data: Uint8Array }).data)) {
-        if (message.type === 'clock' || message.type === 'start' || message.type === 'continue' || message.type === 'stop') {
-          onClock?.(message, nameOf(input), stamp / 1000);
+        if (isClockMessage(message)) {
+          onClock(message, nameOf(input), stamp / 1000);
           continue;
         }
         if (message.type === 'noteOn') held.set(message.note, message.channel);

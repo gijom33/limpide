@@ -81,6 +81,7 @@ function TempoDial({ tempo, onSet }: Pick<Props, 'tempo' | 'onSet'>) {
       aria-valuenow={bpm}
       aria-valuetext={tempo.player ? `${bpm} BPM, the player’s while it plays` : tempo.midi ? `${bpm} BPM, from a MIDI clock` : `${bpm} BPM`}
       aria-disabled={held || undefined}
+      data-clock={tempo.midi || undefined}
       {...learn}
       onKeyDown={(e) => {
         const big = e.shiftKey ? BIG_STEP : 1;
@@ -114,7 +115,7 @@ function TempoDial({ tempo, onSet }: Pick<Props, 'tempo' | 'onSet'>) {
       }}
     >
       <span className="tempo-value">{bpm}</span>
-      <span className="tempo-unit" data-midi={tempo.midi || undefined}>{unit(tempo)}</span>
+      <span className="tempo-unit" data-clock={tempo.midi || undefined}>{unit(tempo)}</span>
     </div>
   );
 }
@@ -178,9 +179,9 @@ export function TempoControl(props: Props) {
   return (
     <div className="tempo-menu" ref={wrapper}>
       <Tooltip content={tempoTip(props.tempo)}>
-        <button ref={button} type="button" className="tool tempo-open" aria-label="Tempo" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+        <button ref={button} type="button" className="tool tempo-open" aria-label="Tempo" aria-expanded={open} data-clock={props.tempo.midi || undefined} onClick={() => setOpen((o) => !o)}>
           <span className="tempo-value">{props.tempo.bpm}</span>
-          <span className="tool-word" data-midi={props.tempo.midi || undefined}>{unit(props.tempo)}</span>
+          <span className="tool-word" data-clock={props.tempo.midi || undefined}>{unit(props.tempo)}</span>
         </button>
       </Tooltip>
       {open && (

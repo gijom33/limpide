@@ -30,7 +30,7 @@ function setup(...initial: FakeInput[]) {
   for (const i of initial) access.map.set(i.id, i);
   const onMessage = vi.fn();
   const onDevices = vi.fn();
-  const dispose = connectMidi(access, { onMessage, onDevices });
+  const dispose = connectMidi(access, { onMessage, onClock: () => {}, onDevices });
   return { access, onMessage, onDevices, dispose };
 }
 

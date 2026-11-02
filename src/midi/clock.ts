@@ -30,6 +30,10 @@ export function createClockFollower() {
   // Ticks since the first beat; -1 until the first tick, or after a Start, when the next tick is the first beat.
   let ticks = -1;
   let bpm: number | undefined;
+  // Between a Stop and a Continue.
+  let stopped = false;
+  /** How long a tick lasts at `bpm`, in seconds. */
+  const tickLength = (at: number) => 60 / at / TICKS_PER_BEAT;
 
   /** The fitted time of a tick (seconds) and the line's time a tick, or undefined with less than a beat in. */
   const fitLine = () => {
@@ -50,29 +54,44 @@ export function createClockFollower() {
   };
 
   return {
-    /** A tick at `time` (seconds). On each of the clock's beats, once the BPM is known, the tempo in force. */
+    /**
+     * A tick at `time` (seconds). On each of the clock's beats, once the BPM is known, the tempo in force. Between a
+     * Stop and a Continue the clock's place in its track stands still: its ticks give the BPM but count no beats.
+     */
     tick(time: number): ClockTempo | undefined {
-      const before = fitLine()?.tick ?? (bpm && 60 / bpm / TICKS_PER_BEAT);
+      const before = fitLine()?.tick ?? (bpm && tickLength(bpm));
       if (before && times.length && time - times[times.length - 1] > PAUSE_TICKS * before) times = [];
       times = [...times.slice(-WINDOW), time];
-      ticks++;
       const line = fitLine();
       if (line) {
         const heard = 60 / line.tick / TICKS_PER_BEAT;
         if (bpm === undefined || Math.abs(heard - bpm) > HYSTERESIS) bpm = clampBpm(heard);
       }
+      if (stopped) return undefined;
+      ticks++;
       if (bpm === undefined || ticks % TICKS_PER_BEAT !== 0) return undefined;
       const at = line?.last ?? time;
-      return { bpm, origin: at - ((ticks / TICKS_PER_BEAT) * 60) / bpm };
+      return { bpm, origin: at - ticks * tickLength(bpm) };
     },
     /** A Start: the next tick is the first beat, the clock's ticks starting afresh. */
     start() {
       ticks = -1;
       times = [];
+      stopped = false;
     },
-    /** The ticks broke off (the clock stopped, or a Stop or a Continue): the next are fitted afresh, the beats counted on. */
+    /** A Stop: the beats stand still until a Continue or a Start. */
+    stop() {
+      stopped = true;
+    },
+    /** A Continue: the beats go on from where they stood, the ticks fitted afresh (the clock may start them anew). */
+    resume() {
+      stopped = false;
+      times = [];
+    },
+    /** The ticks stopped coming: the next clock is a new one, its BPM read afresh, its beats counted on. */
     lost() {
       times = [];
+      bpm = undefined;
     },
   };
 }

@@ -19,6 +19,10 @@ export type ClockMessage = { type: 'clock' } | { type: 'start' } | { type: 'cont
 const CLOCK_BYTES: Record<number, ClockMessage> = {
   0xf8: { type: 'clock' }, 0xfa: { type: 'start' }, 0xfb: { type: 'continue' }, 0xfc: { type: 'stop' },
 };
+const CLOCK_TYPES = new Set<string>(Object.values(CLOCK_BYTES).map((m) => m.type));
+
+/** Whether a message is the clock's, rather than a channel's. */
+export const isClockMessage = (message: MidiMessage | ClockMessage): message is ClockMessage => CLOCK_TYPES.has(message.type);
 
 /** Data bytes each channel message carries, by its high nibble. */
 const DATA_BYTES: Record<number, number> = { 0x80: 2, 0x90: 2, 0xa0: 2, 0xb0: 2, 0xc0: 1, 0xd0: 1, 0xe0: 2 };
