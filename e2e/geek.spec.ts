@@ -246,3 +246,36 @@ test('on a phone the LFOs’ and Key Track’s numbers show in the name’s plac
   await keyTrack.press('End');
   await expect(page.locator('.knob', { has: keyTrack }).locator('.knob-value > span').first()).toHaveText('3.36 kHz');
 });
+
+test('the Envelope faders’ and Glide’s tips work out τ under the hood, with the layer on only; the readouts stay (issue 168)', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  const amp = page.getByRole('region', { name: 'Amp' });
+  const decay = amp.getByRole('slider', { name: sliderName('Decay') });
+  const tipOf = (text: string) => page.getByRole('tooltip').filter({ hasText: text });
+  await page.keyboard.press('Tab'); // the keys in use: a focus shows its tip
+  await decay.focus();
+  await expect(tipOf('How long the Envelope then takes to fall')).toBeVisible();
+  await expect(tipOf('How long the Envelope then takes to fall').locator('.tooltip-hood')).toHaveCount(0);
+
+  await page.evaluate(() => localStorage.setItem('limpide.overlays', JSON.stringify({ geek: true })));
+  await page.reload();
+  await page.keyboard.press('Tab');
+  await decay.focus();
+  const hood = tipOf('How long the Envelope then takes to fall').locator('.tooltip-hood');
+  // Init's 300 ms Decay: τ a quarter of it, worked out live as the fader moves.
+  await expect(hood).toContainText(/x = S \+ \(x₀ − S\)·e\^\(−t\/τ\)\s*τ = Decay ÷ 4 = 75\.0 ms now/);
+  await expect(value(page, 'Amp', 'Decay')).toHaveText('300 ms');
+  await decay.press('End');
+  await expect(hood).toContainText('τ = Decay ÷ 4 = 2.50 s now');
+  await amp.getByRole('slider', { name: sliderName('Attack') }).focus();
+  await expect(tipOf('How long the Envelope takes to rise').locator('.tooltip-hood')).toContainText(/τ = Attack ÷ 3 = .* now.*not a straight rise/);
+  await amp.getByRole('slider', { name: sliderName('Release') }).focus();
+  await expect(tipOf('How long the Envelope takes to fall back').locator('.tooltip-hood')).toContainText(/x = x₀·e\^\(−t\/τ\)\s*τ = Release ÷ 6 = .* now/);
+  const glide = page.getByRole('slider', { name: 'Glide', exact: true });
+  await glide.focus();
+  const glideHood = tipOf('Slides the pitch').locator('.tooltip-hood');
+  await expect(glideHood).toContainText(/f = f₂ \+ \(f₁ − f₂\)·e\^\(−t\/τ\)\s*Off: the pitch jumps/);
+  await glide.press('End');
+  await expect(glideHood).toContainText('τ = Glide ÷ 4 = 500 ms now');
+});
