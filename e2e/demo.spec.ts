@@ -17,9 +17,10 @@ test('the Demo plays its track, one Preset after another, making sound, and stop
   await page.keyboard.press('a');
   await expect(demo(page)).toHaveAttribute('aria-pressed', 'false');
   await page.keyboard.up('a');
-  const name = await patchName(page).textContent();
+  // The name alone: the Patch's plain words under it follow the Demo's last knob a moment after (issue 123).
+  const name = await patchName(page).getAttribute('aria-label');
   await page.waitForTimeout(1500);
-  expect(await patchName(page).textContent()).toBe(name); // the track has stopped moving
+  expect(await patchName(page).getAttribute('aria-label')).toBe(name); // the track has stopped moving
 });
 
 test('turning a knob keeps the Demo playing, and the Demo leaves that knob where it was put', async ({ page }) => {

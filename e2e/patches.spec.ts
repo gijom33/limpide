@@ -176,6 +176,22 @@ test('once the sound changes, the line under the Patch name says it in plain wor
   await expect(anyWords(page)).toHaveCount(0);
 });
 
+test('the octave buttons change no sound: a Preset keeps its about line, and no plain words come (issues 123, 126)', async ({ page }) => {
+  const up = page.getByRole('button', { name: 'Octave up' });
+  await page.getByRole('button', { name: 'Next Preset' }).click();
+  await up.click();
+  await page.waitForTimeout(500); // past the words' interval
+  await expect(anyWords(page)).toHaveCount(0);
+  await pick(page, 'Init');
+  await up.click();
+  await page.waitForTimeout(500);
+  await expect(description(page)).toBeVisible();
+  await expect(anyWords(page)).toHaveCount(0);
+  await nudge(page); // a change to the sound
+  await expect(description(page)).toHaveCount(0);
+  await expect(plainWords(page)).toBeVisible();
+});
+
 // Every Preset's phrase, as drawn and in wider type (Linux's fonts), on one line in its place: clear of the Sections
 // and within the Oscillators and the Filter from 861 px, inside the Patch name below; the header never moves.
 for (const [width, height] of [[320, 640], [375, 812], [700, 830], [861, 800], [1100, 800], [1440, 900], [2000, 1100]] as const) {
