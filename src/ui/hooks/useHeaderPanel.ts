@@ -1,7 +1,5 @@
 import { useEffect, useRef } from 'react';
-
-/** Whether the focus is moving from inside the element to somewhere else on the page (not to the page itself). */
-export const focusLeaves = (element: Element, e: FocusEvent) => e.relatedTarget instanceof Node && !element.contains(e.relatedTarget);
+import { focusLeaves } from '../focusBack';
 
 /**
  * How a header panel closes (Display, MIDI, the Tutorials, a narrow screen's Tempo): Escape, wherever the focus is in

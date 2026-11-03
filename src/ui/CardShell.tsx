@@ -36,7 +36,11 @@ const OPENERS = { tutorial: 'button[aria-label="Tutorial"]', tour: 'button[aria-
 let opener: HTMLElement | null = null;
 function noteOpener() {
   const pressed = document.activeElement;
-  if (!(pressed instanceof HTMLElement) || pressed === document.body || pressed.closest('.card-shell')) return;
+  if (pressed?.closest('.card-shell')) return;
+  if (!(pressed instanceof HTMLElement) || pressed === document.body) {
+    opener = null; // opened with nothing focused: the card's kind says where the focus goes back
+    return;
+  }
   const panel = pressed.closest('[data-panel]');
   opener = panel ? (panel.parentElement?.querySelector<HTMLElement>('button[aria-expanded]') ?? null) : pressed;
 }
@@ -46,7 +50,12 @@ function noteOpener() {
  * and shown; else to the header's button for the card's kind (About for the Tour, opened from the welcome or About).
  */
 function useFocusToOpener(card: RefObject<HTMLElement | null>, kind: Props['kind']) {
-  useState(noteOpener); // once, as the card first renders
+  // Once, as the card first renders, before the focus moves into it.
+  const noted = useRef(false);
+  if (!noted.current) {
+    noted.current = true;
+    noteOpener();
+  }
   return useFocusBack(card, () => {
     // A card that takes the place of this one takes the focus itself.
     if (document.querySelector('.card-shell')) return null;

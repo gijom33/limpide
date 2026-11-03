@@ -243,7 +243,7 @@ const HEADER_PANELS: { name: string; button: (page: Page) => Locator; panel: (pa
   { name: 'Display', button: (page) => page.getByRole('button', { name: 'Display', exact: true }), panel: (page) => page.locator('.display-panel') },
   { name: 'MIDI', button: (page) => page.getByRole('button', { name: 'MIDI', exact: true }), panel: (page) => page.getByRole('dialog', { name: 'MIDI' }) },
   { name: 'Tutorial', button: (page) => page.getByRole('button', { name: 'Tutorial', exact: true }), panel: (page) => page.getByRole('group', { name: 'Tutorials' }) },
-  { name: 'Tempo', button: (page) => page.locator('header .tempo-open'), panel: (page) => page.getByRole('group', { name: 'Tempo' }) },
+  { name: 'Tempo', button: (page) => page.locator('header').getByRole('button', { name: /^Tempo: / }), panel: (page) => page.getByRole('group', { name: 'Tempo' }) },
 ];
 for (const size of SIZE_NAMES) {
   test(`header panels, ${size}: each opens under the header (issue 188)`, async ({ page }) => {

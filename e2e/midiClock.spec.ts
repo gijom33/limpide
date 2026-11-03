@@ -82,6 +82,14 @@ test('while the Demo plays, a running clock does not change its tempo; after, th
   await stopClock(page);
 });
 
+test('a MIDI clock’s tempo is announced once it settles (issue 189)', async ({ page }) => {
+  await withFakeController(page);
+  await startClock(page, 126);
+  await expect(bpm(page)).toHaveAttribute('aria-valuenow', '126');
+  await expect(page.getByRole('status').filter({ hasText: /BPM/ })).toHaveText('Tempo 126 BPM');
+  await stopClock(page);
+});
+
 // The mark takes the unit's place, about as wide, and the box's edge turns green: nothing in the header overlaps or
 // wraps while it shows, at the header's layouts (the BPM its number alone from 861 to 1279 px, a button opening a
 // field on a phone), and the edge is seen at each.

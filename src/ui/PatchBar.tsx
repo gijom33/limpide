@@ -4,7 +4,7 @@ import type { Patch } from '../patch/patch';
 import { type Category, categoryLists, isSearch, matchesWords } from '../patch/presetSearch';
 import { PRESETS, presetAfter, SHARED_NAME } from '../patch/presets';
 import { patchFromJSON, patchToJSON, shareHash } from '../patch/serialize';
-import { focusLeaves } from './hooks/useHeaderPanel';
+import { focusLeaves } from './focusBack';
 import { usePatchWords } from './hooks/usePatchWords';
 import type { PresetAbout } from './hooks/usePresetAbout';
 import { useLearnable } from './learn';

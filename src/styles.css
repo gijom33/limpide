@@ -62,7 +62,7 @@
   --panel: #eef0f3;
   --border: #d9dce3;
   --text: #1b1e25;
-  /* 4.5:1 on the page and on the panels (issue 189); #646b7a was 4.36:1 on the page. */
+  /* 4.5:1 on the page and on the panels (issue 189). */
   --muted: #5c6372;
   --accent: #d96a0b;
   --trace: #0a7bbd;

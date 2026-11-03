@@ -269,12 +269,24 @@ test.describe('closing gives the focus back to what opened it (issue 189)', () =
 
   test('Close on the Tour’s card, to About’s button', async ({ page }) => {
     await page.goto('/');
-    const about = page.getByRole('button', { name: 'About' });
+    const about = page.getByRole('button', { name: 'About', exact: true });
     await about.click();
     await page.getByRole('button', { name: 'Take the Tour' }).click();
     const card = page.getByRole('region', { name: 'Tour' });
     await expect(card.getByRole('button', { name: 'Next' })).toBeFocused();
     await card.getByRole('button', { name: 'Close the Tour' }).press('Enter');
+    await expect(card).toBeHidden();
+    await expect(about).toBeFocused();
+  });
+
+  test('Done on the Tour’s last card, to About’s button', async ({ page }) => {
+    await page.goto('/');
+    const about = page.getByRole('button', { name: 'About', exact: true });
+    await about.click();
+    await page.getByRole('button', { name: 'Take the Tour' }).click();
+    const card = page.getByRole('region', { name: 'Tour' });
+    while (await card.getByRole('button', { name: 'Next' }).isVisible()) await card.getByRole('button', { name: 'Next' }).press('Enter');
+    await card.getByRole('button', { name: 'Done' }).press('Enter');
     await expect(card).toBeHidden();
     await expect(about).toBeFocused();
   });
@@ -381,7 +393,7 @@ test.describe('on a phone', () => {
   test.use({ viewport: { width: 393, height: 852 } });
   test('the tempo button’s name holds the BPM it shows (issue 189)', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('header .tempo-open')).toHaveAccessibleName('Tempo: 120 BPM');
+    await expect(page.locator('header').getByRole('button', { name: /^Tempo/ })).toHaveAccessibleName('Tempo: 120 BPM');
   });
 });
 
