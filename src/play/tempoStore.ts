@@ -35,7 +35,7 @@ export function createTempoStore({
   clock = () => performance.now() / 1000,
 }: {
   storage: KeyValueStorage;
-  engine: Pick<SynthEngine, 'setTempo' | 'now'>;
+  engine: Pick<SynthEngine, 'setTempo' | 'heardAt'>;
   /**
    * The page's clock, in seconds, which times the taps and a MIDI clock's ticks: the audio clock stands still until
    * sound is allowed.
@@ -95,13 +95,13 @@ export function createTempoStore({
     },
     /**
      * A tap on Tap, timed by the page's clock: from the second on, the BPM follows the taps, and the beats are counted
-     * from the last, on the engine's clock, so a synced LFO lands where the person tapped.
+     * from the last, on the engine's clock where it is heard (issue 185), so a synced LFO lands where the person tapped.
      */
     tap() {
       if (state.player || heard) return;
       taps = [...taps.slice(1 - TAPS), clock()];
       const bpm = tappedBpm(taps);
-      if (bpm !== undefined) setOwn(bpm, engine.now());
+      if (bpm !== undefined) setOwn(bpm, engine.heardAt(taps[taps.length - 1]));
     },
     /** A player starts: its BPM is in force, its beats counted from `origin` (its first, on the engine's clock). */
     take(bpm: number, origin: number) {
@@ -128,7 +128,8 @@ export function createTempoStore({
       if (type === 'continue') return follower.resume();
       const beat = follower.tick(time);
       if (!beat) return;
-      const origin = engine.now() - (clock() - beat.origin);
+      // Where the engine's sound is heard at the clock's beat, so a synced LFO is heard on it (issue 185).
+      const origin = engine.heardAt(beat.origin);
       if (heard && heard.bpm === beat.bpm && Math.abs(heard.origin - origin) < CLOCK_SLACK) return;
       heard = { bpm: beat.bpm, origin };
       if (!state.player) update({ bpm: heard.bpm, player: false, midi: true }, origin);

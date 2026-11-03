@@ -3,12 +3,18 @@ import { TICKS_PER_BEAT } from '../midi/clock';
 import { memoryStorage } from '../test/memoryStorage';
 import { createTempoStore } from './tempoStore';
 
-/** An engine that only keeps the tempo it is handed, on a clock the test moves. */
+/**
+ * An engine that only keeps the tempo it is handed, on a clock the test moves; the context's time heard at a moment of
+ * the page's clock is that moment `ahead` (issue 185).
+ */
 const fakeEngine = () => {
-  const engine = { time: 5, handed: [] as { bpm: number; origin: number }[] };
+  const engine = { time: 5, ahead: 0, handed: [] as { bpm: number; origin: number }[] };
   return {
     engine,
-    host: { now: () => engine.time, setTempo: (bpm: number, origin = engine.time) => void engine.handed.push({ bpm, origin }) },
+    host: {
+      heardAt: (pageTime: number) => pageTime + engine.ahead,
+      setTempo: (bpm: number, origin = engine.time) => void engine.handed.push({ bpm, origin }),
+    },
   };
 };
 
@@ -39,9 +45,9 @@ describe('the tempo (issue 112)', () => {
     const { engine, host } = fakeEngine();
     let now = 0;
     const tempo = createTempoStore({ storage: memoryStorage(), engine: host, clock: () => now });
+    engine.ahead = 100;
     for (const t of [10, 10.6, 11.2, 11.8]) {
       now = t;
-      engine.time = t + 100;
       tempo.tap();
     }
     expect(tempo.get().bpm).toBe(100);
@@ -78,14 +84,14 @@ describe('the tempo follows a MIDI clock (issue 136)', () => {
   afterEach(() => vi.useRealTimers());
 
   /**
-   * A store whose page clock the test moves, the engine's running 100 s ahead of it, and a clock to tick it: `beats`
+   * A store whose page clock the test moves, the engine's heard 100 s ahead of it, and a clock to tick it: `beats`
    * at `bpm`, each tick timed on the page's clock, the timers moved along with it.
    */
   const following = (storage = memoryStorage()) => {
     const { engine, host } = fakeEngine();
     let now = 50;
     const clock = () => now;
-    host.now = () => now + 100;
+    engine.ahead = 100;
     const tempo = createTempoStore({ storage, engine: host, clock });
     const ticks = (bpm: number, beats: number, from = 'Stand-in DAW') => {
       for (let i = 0; i < beats * TICKS_PER_BEAT; i++) {
@@ -108,6 +114,15 @@ describe('the tempo follows a MIDI clock (issue 136)', () => {
     // The beats counted from the first tick, at 50 s on the page's clock: 150 s on the engine's.
     expect(engine.handed.at(-1)!.bpm).toBe(126);
     expect(engine.handed.at(-1)!.origin).toBeCloseTo(150, 6);
+  });
+
+  it('places the clock’s beats where the engine’s sound is heard as they come, not where it is made (issue 185)', () => {
+    const { tempo, engine, ticks } = following();
+    // 40 ms of output latency: the context time heard at 50 s on the page's clock is 149.96 s.
+    engine.ahead = 99.96;
+    ticks(126, 4);
+    expect(tempo.get().bpm).toBe(126);
+    expect(engine.handed.at(-1)!.origin).toBeCloseTo(149.96, 6);
   });
 
   it('hands the engine a steady clock once, not on every beat', () => {

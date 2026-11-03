@@ -12,6 +12,7 @@ import { frequencyToNote, noteToFrequency } from '../music/pitch';
 import { TEMPO } from '../music/tempo';
 import { fmIndex, GLIDE_OFF, type Lfo, type LfoNumber, lfoHz, lfos, type NoiseColour, PARAMS, type Patch, type SubWaveform, type Voices } from '../patch/patch';
 import { CUTOFF_CLAMP, CUTOFF_SPAN, centsOverFloor, filterStages, qSwing, type Stage } from './filterDesign';
+import { heardAt, type OutputClockContext } from './outputClock';
 
 /**
  * Which Voices the Amp Tap listens to: all of them summed (the app's default, so a chord is seen as it is heard), or
@@ -86,6 +87,11 @@ export interface SynthEngine {
   /** The tempo in force, and where its beats are counted from. */
   tempo(): Beat;
   now(): number;
+  /**
+   * The engine's time whose sound is heard at `pageTime`, in seconds on the page's clock (`performance.now()`'s): where
+   * a MIDI clock's beat or a Tap is placed, so a synced LFO is heard on it, the output's latency allowed for (issue 185).
+   */
+  heardAt(pageTime: number): number;
   /**
    * The Response Curve: gain (linear) at each frequency from the Oscillator Tap to the Filter Tap, at the
    * Effective Cutoff of the moment the Spectrum shows (the middle of its window, about 85 ms ago), so a sweeping
@@ -1341,6 +1347,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     },
     tempo: () => tempo,
     now: () => ctx.currentTime,
+    heardAt: (pageTime) => heardAt(ctx as OutputClockContext, pageTime, performance.now() / 1000),
     setTapSource(source) {
       if (source === tapSource) return;
       tapSource = source;

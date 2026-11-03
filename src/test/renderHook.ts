@@ -58,7 +58,7 @@ export function testSession() {
     release: (note: number) => void played.push(`let go ${note}`),
     setHold: () => {},
   };
-  const tempo = createTempoStore({ storage, engine: { now: engine.now, setTempo: () => {} } });
+  const tempo = createTempoStore({ storage, engine: { heardAt: (pageTime) => pageTime, setTempo: () => {} } });
   const session = {
     engine, input, patches, viewers, library, tempo, shared: false,
     onHeld: () => () => {},
