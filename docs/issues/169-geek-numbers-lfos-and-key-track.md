@@ -4,7 +4,7 @@
 
 **Blocked by:** none (build after night/2026-10-31 is merged where it touches the same readouts; Claude's call, open to the owner)
 
-**Status:** ready-for-human · enhancement. Built (2026-11-01) on night/2026-11-01, for the owner to try
+**Status:** ready-for-human · enhancement. Built (2026-11-01) on night/2026-11-01, for the owner to try; the Rate's period readout is replaced by [202](./202-the-geek-layers-rate-reads-as-without-it.md) (the owner, 2026-11-02), so it is not to judge here
 
 ## Agent Brief
 
@@ -31,6 +31,7 @@
 
 ## How it was built
 
+- **Since then (2026-11-02, issue [202](./202-the-geek-layers-rate-reads-as-without-it.md)):** the Rate reads as without the Synth Geek Layer, Hz or a note value, decided by the owner; the period stays in its tip.
 - **The readouts:** with the Synth Geek Layer on, each LFO's Rate reads its period, "0.50 s" at 2 Hz (from "0.050 s" at 20 Hz to "20.0 s" at 0.05 Hz); with Sync on, the period of its note value at the page's tempo, "0.50 s" for 1/4 at 120 BPM, following the tempo as it changes. Depth reads the swing in its Destination's unit, as the engine swings it: "±0.80 oct" on the Cutoff at 40 %, "±0.50 st" on Pitch at 50 %, "±12.0 st" on Osc 2 Pitch at full, "±25.0 ¢" on Detune, "±16 %" on Pulse Width, FM and Resonance in their knobs' %, each kept within its room as the engine keeps it (a 25 % pulse swings 20 % at most; two LFOs on one Destination share it). Key Track reads the Cutoff at the Note played, A4's before any: "3.36 kHz" at 100 % before a Note, "2.00 kHz" after C4. They show where the value shows, as Q and dB do.
 - **Held to the engine** (133, decision 4): engine tests measure, on what the engine plays, the period of a square LFO's tremolo at 2 Hz, 3 Hz, a synced 1/4 at 120 BPM and 1/8 T at 100 BPM; the swing of the pitch on Pitch, on Osc 2 Pitch and on Detune, of the level on Volume (in dB) and of a pulse's width (its share of each cycle high), and the swing of the Effective Cutoff and of the Resonance in the engine's Modulation model (which earlier tests hold the Filter's sound to); each against the readout's number. FM's swing has no engine test, only the unit test of its law: its index cannot be read from the engine without one of its own. Key Track's figure is checked against the engine's Effective Cutoff at the Note and before any Note (A4). A test made the readouts wrong on purpose and saw the tests fail.
 - **Under the hood:** Rate T = 1 / f; a synced Rate T = beats × 60 / BPM; Depth "swing = Depth × its reach", with each Destination's reach at full Depth written from the laws the engine swings by, so the two cannot drift; Key Track fc = Cutoff × 2^(k·(n − 60)/12), its letters said.
