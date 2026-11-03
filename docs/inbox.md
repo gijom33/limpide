@@ -4,6 +4,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-11-02, the owner, trying issue 166: "Talking filter alternate a voicy sound and a bip: That's wrong."
+
 ## Ideas
 
 ## Dropped
