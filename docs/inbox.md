@@ -6,6 +6,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- 2026-11-02, the owner, trying issues 167 to 170: "I am not sure to follow everything. Let's keep it like this now but I think we should create an agent who would indeed be a geek who would asses the value of the overlay for everything beyond the history. Maybe we only want to keep the history bits and / or add geeky math in tooltips." And: "we will revisit the geek overlay via an agent later."
+
 ## Dropped
 
 - 2026-10-30, from Claude's brainstorm, Velocity on the Volume ("a harder hit plays louder, not only brighter"): already so. The Amp Envelope's Attack rises to the Note's Velocity (PRD story 9). Claude's call, open to the owner.
