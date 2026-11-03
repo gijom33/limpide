@@ -25,7 +25,10 @@ export function EnvelopeTimeline({
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const aftertouchRef = useRef(aftertouch);
-  aftertouchRef.current = aftertouch;
+  // Kept for the render loop after each render, not while rendering (issue 196).
+  useEffect(() => {
+    aftertouchRef.current = aftertouch;
+  }, [aftertouch]);
   useEffect(() => addToRenderLoop(createTimeline(canvasRef.current!, engine, view, () => aftertouchRef.current)), [engine, view]);
   const key = timelineKey(patch, aftertouch);
   // One line, its names shorter where the room runs short (issue 156).

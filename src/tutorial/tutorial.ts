@@ -1,4 +1,5 @@
 import type { PhraseAtTempo } from '../demo/phrase';
+import { CHOICE_LABELS } from '../midi/mappings';
 import { WAVEFORM_NAMES } from '../music/harmonics';
 import {
   type ChoiceId, formatParam, LFO_DESTINATIONS, LFO_KEYS, PARAMS, type ParamId, type Patch, paramName, setLfo, setParam, soundFields,
@@ -188,15 +189,10 @@ export function targetText(step: Step): string {
   return CHOICE_NAMES[String(step.to)] ?? String(step.to);
 }
 
-const CHOICE_CONTROLS: Record<ChoiceId, string> = {
-  waveform: 'Osc 1 Waveform', osc2Waveform: 'Osc 2 Waveform', subOctave: 'Sub Octave', subWaveform: 'Sub Waveform', noiseColour: 'Noise Colour', filterMode: 'Filter Mode', filterSlope: 'Slope',
-  lfoWaveform: 'LFO 1 Waveform', lfoDestination: 'LFO 1 Destination', lfoRetrigger: 'LFO 1 Retrigger', lfoSync: 'LFO 1 Sync',
-  lfo2Waveform: 'LFO 2 Waveform', lfo2Destination: 'LFO 2 Destination', lfo2Retrigger: 'LFO 2 Retrigger', lfo2Sync: 'LFO 2 Sync', voices: 'Voices', legato: 'Legato',
-};
-
 /** A control's name where it could be mistaken on its own ("Attack" is the Filter's or the Amp's). */
 export function controlName(key: keyof Patch): string {
-  if (key in CHOICE_CONTROLS) return CHOICE_CONTROLS[key as ChoiceId];
+  // A choice by the name its Mapping gives it (issue 196: one table, the Mappings').
+  if (key in CHOICE_LABELS) return CHOICE_LABELS[key as ChoiceId];
   // The Mixer's faders are named after their sources: "Osc 2" alone could be the tab.
   if (key.startsWith('mix')) return `${PARAMS[key as ParamId].label} level`;
   return paramName(key as ParamId);
