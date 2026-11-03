@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement. Polish for v1
+**Status:** ready-for-human · enhancement. Built (2026-11-02) on night/2026-11-02, for the owner to try
 
 ## Decisions
 
@@ -41,14 +41,29 @@ Claude's calls, open to the owner:
 - The fader's tip (its steps line) and the glossary's Grid entry
 
 **Acceptance criteria:**
-- [ ] Geek off: Osc 1's fader at 100 %, ↓ reads 99 %, Page ↓ 90 %, Shift ↓ 99.9 % (the sound moving accordingly)
-- [ ] Geek on: at 0.0 dB, ↓ reads −0.5 dB; at −40 dB, ↓ −∞ (as 160)
-- [ ] Switching Geek on and off with a fader at any value moves neither the fader nor the sound
-- [ ] Ring steps 1 % with Geek on and off
-- [ ] A wheel notch and a C16 tick step the same as a press, in both
-- [ ] The tip's steps line reads % outside the Synth Geek Layer and dB inside it
-- [ ] 160's other Grids unchanged
+- [x] Geek off: Osc 1's fader at 100 %, ↓ reads 99 %, Page ↓ 90 %, Shift ↓ 99.9 % (the sound moving accordingly)
+- [x] Geek on: at 0.0 dB, ↓ reads −0.5 dB; at −40 dB, ↓ −∞ (as 160)
+- [x] Switching Geek on and off with a fader at any value moves neither the fader nor the sound
+- [x] Ring steps 1 % with Geek on and off
+- [x] A wheel notch and a C16 tick step the same as a press, in both
+- [x] The tip's steps line reads % outside the Synth Geek Layer and dB inside it
+- [x] 160's other Grids unchanged
 
 **Out of scope:**
 - The Mixer reading dB outside the Synth Geek Layer
 - The other controls' Grids (160)
+
+## How it was built
+
+- **Two Grids for a Mixer fader** (`src/patch/patch.ts`): a Parameter may declare a `geekGrid`, its Grid while the Synth Geek Layer is on. The Osc 1, Osc 2, Noise and Sub faders step on the percent Grid (1 %, Shift 0.1 %, Page 10 %) and carry 160's dB Grid as their `geekGrid`; Ring has the percent Grid alone. `inUnitShown(def, geek)` gives the Parameter with the Grid in use. Only the steps change with the layer, never the value: switching it moves no fader and changes no sound, and the next press lands on the new Grid, as after a drag.
+- **Keys and wheel** (`src/ui/paramControl.tsx`): the arrows, Shift, Page and a wheel's notch step on the Grid of the layer's state.
+- **MIDI** (`src/midi/controlSurface.ts`, `src/ui/hooks/useMidi.ts`): a Relative knob's click (a C16's thirds too) asks the surface whether the layer is on. An Absolute knob still sets a position.
+- **The tips** (`src/ui/tips.ts`, `src/ui/Tooltip.tsx`): a fader's tip has a second steps line for the layer, shown while it is on.
+- **Docs:** the glossary's Grid entry; a dated line in 160.
+- **Tests:** the Grid's unit tests (% off, dB on, Ring in both, the other Grids alike on and off); the control surface's (a C16 click on Osc 1 and Ring, the layer off then on); the tips' (both steps lines, none for Ring in dB); in the browser, the keyboard-access spec (presses, Page and a wheel notch off and on, the layer switched twice with the fader and its value unmoved, Ring by the %), the tooltip spec (the steps line off and on), the MIDI Learn spec (a Relative click off and on, the switch moving nothing). The Tutorial spec's Bass Step now reaches 47 % by Page and presses. `npx tsc`, `npm run lint`, the unit tests of the files touched, and the keyboard-access, tooltip, MIDI Learn, Tutorial, knob, Synth Geek Layer and oscillator specs in Chromium and WebKit, all passing. Then the code review (standards and spec); its points fixed (160's dated line, a test's name, the wheel tested in the layer too).
+- **Claude's calls, open to the owner:**
+  1. Decisions 4 to 7 as written: Shift and Page follow the unit shown, Ring steps in % in both, the wheel, a Relative click and the tip follow the same choice, an Absolute knob unchanged.
+  2. **Shift ↓ from 100 % stores 99.9 % but reads "100 %":** every percent readout shows whole percents, as every percent control's Shift has since 160. The criterion's 99.9 % is met in the value (and the sound), not in the readout; showing a tenth of a percent is a change for every percent control, left out.
+  3. **Gathered thirds kept across a switch:** a C16's fast thirds gathered towards a step before the layer is switched count towards a step of the new Grid; a third is a third of whichever step.
+  4. **Amp Sustain and Volume** also read dB in the Synth Geek Layer but still step 1 % there, as 160 set; out of this issue's scope ("the other controls' Grids"). The same choice for them would be a new issue, if the owner wants it.
+- **To try:** on the Mixer tab with the Synth Geek Layer off, Osc 1 from 100 % with ↓, Page ↓ and the wheel (99 %, 90 %…); switch the layer on in Display and see the fader stay put while its readout turns to dB, then ↓ (the half-dB steps, −∞ below −40 dB); Ring by 1 % in both; a fader's tip in both; a C16 knob on Osc 1 in both.
