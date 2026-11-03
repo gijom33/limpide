@@ -211,6 +211,19 @@ Someone who reads DSP papers for fun, knows the maths behind a filter, an envelo
   - **The History lines:** kept as they are (the owner likes them); only whether they sit well beside the rest
 - **Success:** a table of every item the layer adds, each with keep, move to the tip, or drop, and why; and the findings, one line each, for the inbox
 
+### 20. The curious kid
+
+A child of about ten who likes buttons and sounds, reads a little, and asks "why?" about everything. Added by the owner, 2026-11-03: "Let's introduce a new agent reviewer that would be a curious kid."
+
+- **Where:** the published site on a tablet or a phone, touch only, no MIDI. **Time:** 20 minutes, the attention span
+- **Goals:** have fun making sounds, find Bead's tricks, and come away knowing one thing about how a sound is made
+- **Asks:**
+  - **First minute:** what they tap first, whether a sound comes, whether they stay
+  - **Words:** each word they do not understand, in the tips, the Tour and the Tutorials
+  - **Fun:** what makes them laugh or play on (Bead, the Demo, the Presets), what bores them
+  - **Questions:** the "why?"s the page answers, and those it leaves open
+- **Success:** what they did, minute by minute; the words that lost them; what kept them; the findings, one line each, for the inbox
+
 ## To do
 
 - [x] Choose the personas (owner, 2026-10-26: profiles 1 to 4 the owner's, 5 to 7 completing them)
@@ -223,6 +236,7 @@ Someone who reads DSP papers for fun, knows the maths behind a filter, an envelo
 - [x] Profile 16's review (the synth neophyte), added by the owner 2026-10-31: once the Tour is released, on the Tour and every Tutorial; its findings to the inbox and to [129](./129-words-fun-to-read.md). First run 2026-10-31 on 1.19.0: [report](../reviews/2026-10-31/16-synth-neophyte.md)
 - [x] Profile 17's review (the MIDI mapping geek), added by the owner 2026-10-31, ran the same day with the owner's C16 facts (its panel, its knobs sending positions, its buttons set to toggle): [report](../reviews/2026-10-31/17-midi-mapping-geek.md), a proposed layout per bank and 14 findings, for the owner to decide
 - [x] Profile 18's first review (the performance expert), added by the owner 2026-11-01, ran on 1.21.1 on 2026-11-02 with profiles 3, 6, 9, 16 and 17 again (the owner chose these six over a full round, which waits for v1's last issues): [the reports](../reviews/2026-11-02/), 30 findings to the inbox. Its verdict: comfortable on the floor, costly at idle, thin below it
+- [ ] Profile 20's review (the curious kid), added by the owner 2026-11-03: when the owner asks; its findings to the inbox
 - [ ] Profile 19's review (the synth geek), added by the owner 2026-11-02: once the owner asks ("we will revisit the geek overlay via an agent later"), on the Synth Geek Layer; its table and findings to the inbox, for the owner to decide what the layer keeps
 
 **Since then (2026-10-28, the retro of issues 73 to 79; recorded 2026-10-30 by [issue 110](./110-checks-before-a-push.md)):** the code review is no longer for minor versions only; which releases get it, [the release steps](../releasing.md) say ([ADR-0016](../adr/0016-the-release-steps-are-the-one-home-of-the-release-rules.md)). Decided by the owner.

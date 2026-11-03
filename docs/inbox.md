@@ -4,23 +4,11 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
-- 2026-11-03, the owner, iPhone: "I noticed I can scroll the screen behind the about splash screen. That doesn't make sense. So I'm scrolling with my fingers on the splash screen and it's scrolling the things behind."
-
 - 2026-11-02, from the 1.22.0 ripple hunt and fact-check, left for triage (the rest fixed in the release): (1) ADR-0007 still says the Amp Scope "cannot Cycle Lock during a chord", where a chord now locks to its newest Note (180, decision 7): an accepted ADR, so a new one supersedes it if the owner agrees; (2) Perfect Fifth's description, "Set the Scope to 2 or 4 cycles to see it lock", while 1 cycle now holds too, showing half the pattern; (3) five engine test names say Cycle Lock but test the held fundamental, which Cycle Lock no longer reads; (4) a mascot spec's name says Bead is over no label while surfing, where bead.md lets it pass over text and the test checks only where it rests; (5) the PRD's list of the renderers' state lacks Glow's kept traces; (6) Glow's tip says it fades "over a few frames", 15 at 60 Hz; (7) the Display tooltip's View group leaves out Viewers follow (before 1.22.0).
 
 - 2026-11-02, from the 1.22.0 code review (standards and spec, since v1.21.1), none holding the release: (1) 180's first box is ticked though FM, Ring, the triad and the Amp Tap stay at 124–136 % against its 10 % (call 1, merged at the owner's word); (2) 181's Demo check samples parts 1 to 3 only; (3) 181's call 5, Bead switching sides when the other side is clear, is not in decision 3's order and changes 151's side rule; (4) the text boxes Bead avoids are read again only every 0.5 s, on a page scroll or a resize, so a panel opening or a scroll inside one can leave it over text for half a second; (5) the e2e text sampler's covers list lacks the Destination menu, the Tutorial menu, the tempo, MIDI, Learn and Quick Setup panels that the app's list has; (6) after waiting out of sight under the header, Bead rises as from the header even onto an edge (cosmetic, not seen in a browser); (7) Glow's old traces drawn at a new width after a cycles or Note change, untested; (8) standards: six positional arguments to the cling, timing steps in the mascot spec as round trips, a comment in Cycle Lock calling scratch arrays kept between frames, About found without exact; (9) smells: fundamental, fundamentalAt and now travelling together, the hover drawing written twice, `vibrato` meaning a flag and a number, Glow's buffer inline in the Scope's draw.
 
 ## Ideas
-
-- 2026-11-03, the owner: "Let's introduce a new agent reviewer that would be a curious kid."
-
-- 2026-11-03, the owner: "I was playing with some knobs and selector during the demo. A lot of them don't disturb the demo, but I noticed some do. I think, for instance, when you change the voice number, it stops the demo. I'm not sure. You can double check. And if it's the case, try to modify the demo in such a way that you can still touch basically all the settings and they behave the right way."
-
-- 2026-11-03, the owner (Bit is Bead): "When playing the demo, the screen is being scrolled automatically, but I think it's scrolling way too fast because Bit doesn't have the time to show its animation. I would slow down a little bit so that we see whether Bit falling or Bit flying back up."
-
-- 2026-11-03, the owner: "I think the tool should also explain all the other layers, the history, the geek layer, and also the fact that you can build your own tutorial preset, right? Rebuild your own tutorial preset."
-
-- 2026-11-03, the owner: "The other thing is to close the splash screen, the about screen, I would rather have a cross like in the other UI than a close button. It would also make it nicer at the bottom."
 
 ## Dropped
 
@@ -200,3 +188,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-11-02, the owner's idea of measuring what the tests miss (triage): to [208](./issues/208-what-the-tests-miss.md), v2, not committed (Claude's call, open to the owner): the statistics already give coverage as a whole; by file, the bugs that got through, and mutation testing on the engine to grill.
 2026-11-03, the owner's Bead throw bug, seen with a colleague: the test's failures were the test's own, fixed at once (`8354f1b`). Recorded frame by frame, Bead landed on its edge in every run; it then walks off the text it landed on (issue 181), and the test read its leaning drawing's box as off the edge. What the owner saw with the colleague is not known yet: asked, and a new line once described.
 2026-11-03, the owner's frozen Bead and silent keys on an iPhone: done at once (`e818eb1`). Safari stops the page's sound when another app comes in front and the page resumed it only on its first gesture; Bead ran on the sound's clock, so it froze with it. The sound now starts again on any tap or key (the finger lifting too) and is tried again on coming back to the page; Bead runs on its own clock while the sound is stopped. Not tried on a real iPhone: the owner's check.
+2026-11-03, later: the page scrolling behind About and a × to close it went to [209](./issues/209-about-holds-the-page-and-closes-with-a-cross.md); the Tour telling of the layers and the Tutorials to [210](./issues/210-the-tour-tells-of-the-layers-and-the-tutorials.md) (needs-info: "the tool" read as the Tour, asked); the Demo's slower scroll to [211](./issues/211-the-demo-scrolls-slower-so-bead-is-seen.md); the curious kid to profile 20 in [42](./issues/42-reviews.md). Touching settings during the Demo: done at once (`32407f9`): Voices did not stop it, but Legato beside it and each LFO's Retrigger and Sync did; they now leave it playing.
