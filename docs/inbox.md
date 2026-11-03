@@ -10,8 +10,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
-- 2026-11-02, the owner, asking how to be confident the test suite is sufficient, to Claude's proposal (read the statistics' coverage file by file, note for each bug found whether a test should have caught it, mutation testing on the engine): "Sure. Also wondering if the stats I generate overlaps a bit since it reports coverage."
-
 ## Dropped
 
 - 2026-10-30, from Claude's brainstorm, Velocity on the Volume ("a harder hit plays louder, not only brighter"): already so. The Amp Envelope's Attack rises to the Note's Velocity (PRD story 9). Claude's call, open to the owner.
@@ -187,3 +185,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-11-02, the owner's idea of the Tour showing both the control and the Viewer on a small screen, found trying 130 (triage): to [206](./issues/206-the-tour-shows-the-control-and-the-viewer.md), polish for v1, ready for an agent: together where they fit, else in turn by scrolling (decided by the owner); every card, the person's own scroll winning (Claude's calls, open to the owner).
 2026-11-02, from 1.22.0's deploy run, issue 179's tail test failing on Linux (triage): done at once, its cause found. A visit to another section that interrupted a stroll left Bead with no next idea, so it stood still from then on, since 2026-10-30 (issue 115); a stroll stopped on the way (a visit, a throw, a pick-up, a tickle) now gives it a new idea a moment later. The test samples again when a visit takes a stroll.
 2026-11-02, the owner's idea of a phase for Osc 2 (triage): to [203](./issues/203-a-phase-for-osc-2.md), v2, not committed (decided by the owner), to grill before anything is built.
+2026-11-02, the owner's idea of measuring what the tests miss (triage): to [208](./issues/208-what-the-tests-miss.md), v2, not committed (Claude's call, open to the owner): the statistics already give coverage as a whole; by file, the bugs that got through, and mutation testing on the engine to grill.
