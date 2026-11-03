@@ -555,7 +555,7 @@ export function App() {
         {/* The Wordmark and the Patch, the keyboard and the buttons (up to 860 px the buttons' row before the
             keyboard), in the order each layout shows them (issues 44, 104 and 154). */}
         <header>{narrow ? [identity, right, keyboard] : [identity, keyboard, right]}</header>
-        <SectionStrip follow={players.demo === null ? midi.bankFollow : players.follow} />
+        <SectionStrip follow={players.demo === null ? midi.bankFollow : players.follow} slow={players.demo !== null} />
         <About
           open={about}
           welcome={welcome}

@@ -147,6 +147,63 @@ test('with Display open, a computer-keyboard piano key ends the Demo (issue 71)'
   await expect(page.getByRole('status').filter({ hasText: 'The Demo stopped: you are playing now.' })).toBeVisible();
 });
 
+/**
+ * From now, frame by frame: the page's first scroll, once it has been still for half a second. How long it moved, from
+ * the first frame it had moved to the last, in milliseconds, and from where to where.
+ */
+const firstScroll = (page: import('@playwright/test').Page) =>
+  page.evaluate(
+    () =>
+      new Promise<{ ms: number; from: number; to: number }>((done) => {
+        const from = scrollY;
+        let [first, last, at] = [0, 0, from];
+        const frame = (now: number) => {
+          if (Math.abs(scrollY - at) >= 1) [first, last, at] = [first || now, now, scrollY];
+          if (first && now - last > 500) done({ ms: Math.round(last - first), from, to: Math.round(at) });
+          else requestAnimationFrame(frame);
+        };
+        requestAnimationFrame(frame);
+      }),
+  );
+
+test.describe('on a 375 px phone (issue 211)', () => {
+  test.use({ viewport: { width: 375, height: 812 } });
+
+  // Bead's fall or flight between two sections took up to about 1.25 s, measured (issue 211): the Demo's scroll to a
+  // part's section lasts as long, and no longer than a second and a half, so the part's change is still seen.
+  test('the Demo scrolls to a part’s section slowly enough to see Bead move, within a second and a half', async ({ page }) => {
+    await page.goto('/');
+    const scroll = firstScroll(page);
+    await demo(page).click();
+    const { ms, from, to } = await scroll;
+    expect(to - from).toBeGreaterThan(300); // the Filter, well down the page
+    expect(ms).toBeGreaterThanOrEqual(1200);
+    expect(ms).toBeLessThanOrEqual(1500);
+  });
+
+  test('with reduced motion, the Demo moves the page at once', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/');
+    const scroll = firstScroll(page);
+    await demo(page).click();
+    const { ms, from, to } = await scroll;
+    expect(to - from).toBeGreaterThan(300);
+    expect(ms).toBe(0); // one frame
+  });
+
+  test('a scroll of the person’s own stops the Demo’s scroll at once', async ({ page }) => {
+    await page.goto('/');
+    await demo(page).click();
+    await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(20); // under way
+    await page.evaluate(() => {
+      document.body.dispatchEvent(new WheelEvent('wheel', { deltaY: -100, bubbles: true }));
+      scrollTo({ top: 0, behavior: 'instant' });
+    });
+    await page.waitForTimeout(1500); // past where the Demo's scroll would have ended
+    expect(await page.evaluate(() => scrollY)).toBe(0);
+  });
+});
+
 test.describe('on a phone', () => {
   test.use({ viewport: { width: 393, height: 852 } });
 
@@ -165,7 +222,7 @@ test.describe('on a phone', () => {
   test('a scroll of the person’s own stops the following until the next part', async ({ page }) => {
     await page.goto('/');
     await demo(page).click();
-    await page.waitForTimeout(1500); // the Filter's jump has landed
+    await page.waitForTimeout(2000); // the Filter's slow scroll has landed (issue 211)
     await page.evaluate(() => {
       document.body.dispatchEvent(new WheelEvent('wheel', { deltaY: -2000, bubbles: true }));
       scrollTo({ top: 0, behavior: 'instant' });

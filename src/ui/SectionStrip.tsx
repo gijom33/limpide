@@ -1,4 +1,5 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
+import { DEMO_SCROLL_MS, glideTo } from './glide';
 import { SECTIONS, type SectionName } from './sections';
 
 /** The gap left between the strip and a section it jumps to. */
@@ -33,14 +34,44 @@ export function headerBottomAt(y: number): number {
  * under the header. It shows which section is in view (the one a third of the way down what the header and strip
  * leave visible) and jumps to a section when tapped, landing its top just under the strip.
  *
- * `follow` (the Demo's moving knob) brings its section into view when it is out of sight: on a phone with the same
- * jump as a tap, elsewhere with the least scroll that shows the whole section.
+ * `follow` (the Demo's moving knob, a Controller's bank) brings its section into view when it is out of sight: on a
+ * phone with the same jump as a tap, elsewhere with the least scroll that shows the whole section. With `slow` (the
+ * Demo's), the scroll lasts long enough to see Bead fall or fly to its new edge (issue 211); with reduced motion it
+ * moves the page at once.
  */
-export function SectionStrip({ follow }: { follow?: { name: SectionName; key: number } | null }) {
+/**
+ * Where the page scrolls to show a section the least, as the browser's `scrollIntoView({ block: 'nearest' })` would:
+ * its top just below the page's scroll padding (the header, issue 189), or its bottom at the window's foot.
+ */
+function nearest(box: DOMRect): number {
+  const padding = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
+  const room = innerHeight - padding;
+  const above = box.top < padding;
+  const below = box.bottom > innerHeight;
+  if (above && below) return scrollY;
+  const toTop = (above && box.height <= room) || (below && box.height > room);
+  return scrollY + (toTop ? box.top - padding : box.bottom - innerHeight);
+}
+
+export function SectionStrip({ follow, slow = false }: { follow?: { name: SectionName; key: number } | null; slow?: boolean }) {
   const [current, setCurrent] = useState<string>(SECTIONS[0].name);
   // While a tapped jump scrolls, the header keeps the state the jump gave it, until the page arrives where the jump
   // was going (or stops short of it): a pause or a pixel's settle mid-way must not read as a scroll back up.
   const jumping = useRef<number | null>(null);
+  // The Demo's slow scroll under way, if one is: its stop.
+  const gliding = useRef<(() => void) | null>(null);
+
+  /** Scrolls the page to `top`: at once with reduced motion, else smoothly, or with `slow` over DEMO_SCROLL_MS. */
+  const scrollPage = (top: number, slow: boolean) => {
+    gliding.current?.();
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) scrollTo({ top, behavior: 'auto' });
+    else if (!slow) scrollTo({ top, behavior: 'smooth' });
+    else {
+      const stop = glideTo(top, DEMO_SCROLL_MS, () => gliding.current === stop && (gliding.current = null));
+      gliding.current = stop;
+    }
+  };
+  useEffect(() => () => gliding.current?.(), []);
 
   // The header's height, so the strip sits right under it (the header is sticky too), and how much of it slides away
   // while the page scrolls down: everything above the piano, but for a sliver of the header's padding.
@@ -79,7 +110,8 @@ export function SectionStrip({ follow }: { follow?: { name: SectionName; key: nu
       collapseHeader(scrollY > last && scrollY > TOP);
       last = scrollY;
     };
-    const onScrollEnd = () => jumping.current !== null && arrive();
+    // The Demo's slow scroll moves the page a frame at a time, each ending a scroll of its own.
+    const onScrollEnd = () => jumping.current !== null && !gliding.current && arrive();
     addEventListener('scroll', onScroll, { passive: true });
     addEventListener('scrollend', onScrollEnd);
     return () => {
@@ -110,7 +142,7 @@ export function SectionStrip({ follow }: { follow?: { name: SectionName; key: nu
     };
   }, []);
 
-  const jump = (name: string) => {
+  const jump = (name: string, slow = false) => {
     const target = section(name);
     if (!target) return;
     // Going down slides the header's rows away; a jump never brings them back (only a scroll of the person's own
@@ -126,13 +158,13 @@ export function SectionStrip({ follow }: { follow?: { name: SectionName; key: nu
     const header = document.querySelector('header')!.getBoundingClientRect().height - hide;
     const strip = document.querySelector('.section-strip')!.getBoundingClientRect().height;
     const top = target.getBoundingClientRect().top + scrollY - (header - 1 + strip) - LANDING_GAP;
-    const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
     jumping.current = Math.round(Math.min(Math.max(0, top), document.documentElement.scrollHeight - innerHeight));
-    scrollTo({ top: Math.max(0, top), behavior: still ? 'auto' : 'smooth' });
+    scrollPage(Math.max(0, top), slow);
     setCurrent(name);
   };
 
-  const jumpNow = useEffectEvent(jump);
+  const jumpNow = useEffectEvent((name: string) => jump(name, slow));
+  const scrollNow = useEffectEvent((top: number) => scrollPage(top, slow));
   // Only a new follow moves the page.
   useEffect(() => {
     const target = follow && section(follow.name);
@@ -142,7 +174,7 @@ export function SectionStrip({ follow }: { follow?: { name: SectionName; key: nu
     if (!strip.height) {
       // In 2 × 2 the header stays at the top: a section under it is out of sight too (issue 152).
       const ceiling = Math.max(0, document.querySelector('header')!.getBoundingClientRect().bottom);
-      if (box.top < ceiling || box.bottom > innerHeight) target.scrollIntoView({ block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+      if (box.top < ceiling || box.bottom > innerHeight) scrollNow(nearest(box));
       return;
     }
     // In view: all of it below the strip, or, for a section taller than what is left, its top where a jump lands it.

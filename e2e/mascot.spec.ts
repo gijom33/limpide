@@ -916,6 +916,64 @@ test('through the Demo it conducts, then plays air guitar, then surfs an LFO sha
     .toBe(true);
 });
 
+// Issue 211: the Demo's scroll to a part's section lasts long enough to see Bead fall or fly to its new edge. Its move
+// starts once the scroll carries its edge away, and lands, in view all along, before the page stops.
+for (const [size, viewport] of [
+  ['a 375 px phone', { width: 375, height: 812 }],
+  ['2 × 2', { width: 700, height: 830 }],
+] as const) {
+  test(`${size}: through the Demo's scroll to a part's section, it falls or flies in view, landing before the page stops (issue 211)`, async ({ page }) => {
+    await page.setViewportSize(viewport);
+    await page.goto('/');
+    await listening(page);
+    await bringBead(page);
+    await settles(page);
+    // Each frame for 6 s from the Demo's start (its second part's knob, in another section, about 4 s in): the page's
+    // scroll, what Bead is doing, and whether its drop is in the window.
+    const frames = page.evaluate(
+      () =>
+        new Promise<{ t: number; y: number; moving: string; inView: boolean }[]>((done) => {
+          const out: { t: number; y: number; moving: string; inView: boolean }[] = [];
+          const start = performance.now();
+          const frame = (now: number) => {
+            const drop = document.querySelector('.mascot-drop')?.getBoundingClientRect();
+            const moving = document.querySelector<HTMLElement>('.mascot')?.dataset.moving ?? '';
+            out.push({ t: now, y: scrollY, moving, inView: !!drop && drop.top >= 0 && drop.bottom <= innerHeight + 1 });
+            if (now - start < 6000) requestAnimationFrame(frame);
+            else done(out);
+          };
+          requestAnimationFrame(frame);
+        }),
+    );
+    await page.getByRole('button', { name: 'Demo', exact: true }).click();
+    const seen = await frames;
+    // The scrolls: from the frame before the page moves to the last it moved in.
+    const scrolls: { from: number; to: number }[] = [];
+    for (let i = 1; i < seen.length; i++) {
+      if (Math.abs(seen[i].y - seen[i - 1].y) < 0.5) continue;
+      const last = scrolls.at(-1);
+      if (last && seen[i].t - last.to < 150) last.to = seen[i].t;
+      else scrolls.push({ from: seen[i - 1].t, to: seen[i].t });
+    }
+    // Its falls and flights that start while the page scrolls, each to the frame it lands.
+    const moves: { scroll: { from: number; to: number }; from: number; to: number; inView: boolean }[] = [];
+    const airborne = (m: string) => m === 'falling' || m === 'flying';
+    for (let i = 1; i < seen.length; i++) {
+      if (!airborne(seen[i].moving) || airborne(seen[i - 1].moving)) continue;
+      const scroll = scrolls.find((s) => seen[i].t >= s.from && seen[i].t <= s.to);
+      const end = seen.findIndex((f, j) => j > i && !airborne(f.moving));
+      if (!scroll || end < 0) continue;
+      moves.push({ scroll, from: seen[i].t, to: seen[end].t, inView: seen.slice(i, end).every((f) => f.inView) });
+    }
+    const told = JSON.stringify({ scrolls, moves });
+    expect(moves.length, told).toBeGreaterThan(0);
+    for (const move of moves) {
+      expect(move.inView, told).toBe(true);
+      expect(move.to, told).toBeLessThanOrEqual(move.scroll.to);
+    }
+  });
+}
+
 /** Where its foot is against LFO `lfo`'s plot: how far over or under the line the plot draws under its middle, in pixels. */
 const offTheLine = (page: Page, lfo: number) =>
   mascot(page).evaluate((el, n) => {
