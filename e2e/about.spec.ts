@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { expect, type Page, test } from '@playwright/test';
-import { holding, WELCOMED } from './startState';
+import { BEAD_ON, holding, WELCOMED } from './startState';
 
 const { version } = JSON.parse(readFileSync('package.json', 'utf8'));
 
@@ -114,7 +114,7 @@ test.describe('Bead in About (issue 163)', () => {
   const name = (page: Page) => about(page).getByRole('heading', { name: 'Limpide', exact: true });
 
   test.describe('switched on', () => {
-    test.use({ storageState: holding({ ...WELCOMED, 'limpide.bead': 'on' }) });
+    test.use({ storageState: holding({ ...WELCOMED, ...BEAD_ON }) });
 
     // Issue 178: at its own size, to the right of the word "Limpide", its foot on the word's baseline; the mark and the
     // word centred as without Bead (decisions 3 and 4, the owner's).
@@ -231,7 +231,7 @@ test.describe('Bead in About (issue 163)', () => {
   });
 
   test.describe('on a short phone, switched on', () => {
-    test.use({ storageState: holding({ 'limpide.bead': 'on' }), viewport: { width: 393, height: 659 }, hasTouch: true });
+    test.use({ storageState: holding(BEAD_ON), viewport: { width: 393, height: 659 }, hasTouch: true });
 
     test('a tap shows its card; the welcome’s Demo and Tour stay on the first screen, with the credits or the card', async ({ page }) => {
       await page.goto('/');

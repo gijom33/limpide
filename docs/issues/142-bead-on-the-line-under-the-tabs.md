@@ -15,6 +15,16 @@ The cause: on a phone Bead stands on a section's top edge only with room for its
 3. **Hovering where it loses ground:** Claude's plan below, as written. Decided by the owner, 2026-10-31 ("ok on all questions").
    **Since then (2026-11-02, issue [192](./192-beads-cover-checks-complete.md)):** with the hover line itself covered, Bead waits out of sight under the header or the tabs, and comes back into view once somewhere is clear. Decided by the owner (192).
 
+## Acceptance criteria
+
+Written after it was built (issue 196: it had none), from the decisions and the tests run below.
+
+- [x] On a phone, Bead stands on the first section's top edge under the tabs, drawn over their foot, while 2 px or more of the edge shows (decisions 1 and 2)
+- [x] Under the header in 2 × 2 it still needs its whole height
+- [x] With no edge in view it hovers under the tabs or the header, its top 3 to 6 px below them, bobbing, near where it lost ground, still with reduced motion (decision 3)
+- [x] An edge coming into view below, it drops onto it; one coming in above, it flies up onto it; thrown with none in view, it catches itself on the hover line
+- [x] The mascot unit tests and the mascot spec in Chromium and WebKit pass
+
 ## The owner's idea: hovering where it loses ground
 
 The owner, 2026-10-31 (inbox): "If Bead has nowehere to go, maybe we can make it fly with its tail and stay local to where it lost ground." Claude's plan, for the owner's yes:

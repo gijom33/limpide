@@ -1,7 +1,7 @@
 import { expect, type Page, test } from '@playwright/test';
 import { LONGEST_STEP } from '../src/ui/mascotPlace';
 import { openDisplay } from './helpers';
-import { holding, WELCOMED } from './startState';
+import { BEAD_ON, holding, WELCOMED } from './startState';
 
 // The mascot (issue 115): B, E, A, D played by hand, as in a bead of water, calls it up from behind the top right
 // section, and again sends it away, melting. In three and four across it lives on that section's top edge, along the
@@ -468,7 +468,7 @@ test('it adds under a millisecond to each frame the Viewers draw, or under their
 
 test.describe('Display’s switch lasts, the Notes are for the visit (issue 150, decisions 7 to 9)', () => {
   test.describe('switched on', () => {
-    test.use({ storageState: holding({ ...WELCOMED, 'limpide.bead': 'on' }) });
+    test.use({ storageState: holding({ ...WELCOMED, ...BEAD_ON }) });
 
     test('switched off and on again while it leaves, it comes back up whole, in the window, once gone', async ({ page }) => {
       await page.goto('/');
@@ -585,7 +585,7 @@ test.describe('out by default (issue 150)', () => {
   });
 
   test.describe('switched on', () => {
-    test.use({ storageState: holding({ ...WELCOMED, 'limpide.bead': 'on' }) });
+    test.use({ storageState: holding({ ...WELCOMED, ...BEAD_ON }) });
 
     test('it comes in by itself a few seconds after the page opens, and again after a reload', async ({ page }) => {
       await page.goto('/');

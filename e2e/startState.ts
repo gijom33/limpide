@@ -7,6 +7,8 @@ import type { Page } from '@playwright/test';
  * visit's specs start welcomed already, so About's welcome never stands over the page.
  */
 export const BEAD_OFF = { 'limpide.bead': 'off' };
+/** Bead switched on, for the specs that need it out by itself. */
+export const BEAD_ON = { 'limpide.bead': 'on' };
 export const WELCOMED = { 'limpide.welcomed': '1' };
 
 /** A browser holding `items` in the page's storage, as a Playwright `storageState`. */
