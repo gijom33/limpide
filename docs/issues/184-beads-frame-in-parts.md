@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement. Polish for v1; [181](./181-bead-never-over-text.md), which changed where Bead rests, shipped in 1.22.0
+**Status:** needs-info · enhancement. Polish for v1; [181](./181-bead-never-over-text.md), which changed where Bead rests, shipped in 1.22.0
 
 ## Decisions
 
@@ -39,3 +39,10 @@ Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.m
 ## Added in triage (2026-11-02)
 
 - From the 1.20.0 code review: issues 141, 150 and 164 each ticked "Bead's frame-cost test still passes" while it failed under them on a loaded machine (1.0 to 1.9 ms against 1 ms); measure it on a quiet machine before and after.
+
+## Questions for the owner
+
+The night of 2026-11-02: its builder read the issue, Bead's frame and review 18 and stopped before writing code. Since 192, 197 and 200, Bead's frame is about 520 lines in a 1,306-line file, its decisions woven through its page reads; the read-before-write phase belongs in the shared render loop, which touches every Viewer; and review 18's measuring scripts were not kept.
+
+1. **One issue or three.** Claude's recommendation: split it. (a) Bead's covers kept by a MutationObserver and their boxes re-read only on scroll or resize, its frame cost measured before and after on a quiet machine. (b) A read phase in the render loop, every layout read before any write, Bead's or the Viewers', with a measuring script kept in the repo (review 18's finding 5, the Viewers' colours read each frame, could join it; see 182's question 2); blocked by (a). (c) Bead's perch, visit, ride, landing and cling choices as pure functions with unit tests, the mascot spec unchanged in both browsers; best after (a).
+
