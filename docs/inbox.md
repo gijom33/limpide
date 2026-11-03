@@ -4,6 +4,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-11-02, the owner: "When webpage loses focus, the sound is not fully processed and some of it is skipped. Can we force this not to happen?"
+
 ## Ideas
 
 ## Dropped
