@@ -538,7 +538,7 @@ export function App() {
     <GeekOnContext.Provider value={overlays.geek}>
     <GeekNoteContext.Provider value={geekNotes}>
     <GeekTempoContext.Provider value={tempo.bpm}>
-      <main data-frozen={viewer.frozen || undefined} data-learning={learning || undefined}>
+      <main data-frozen={viewer.frozen || undefined} data-learning={learning || undefined} data-geek={overlays.geek || undefined}>
         {midi.setup ? (
           <QuickSetupPanel
             state={midi.setup}

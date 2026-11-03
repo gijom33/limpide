@@ -36,6 +36,9 @@ const LONG_PRESS_MS = 500;
 const LONG_PRESS_SLOP = 8;
 // A control whose menu, list or panel is open (the LFOs' Destinations, Patch, Display, MIDI, Tutorial, Tempo).
 const EXPANDED = '[aria-expanded="true"]';
+// A panel open from the header (Patches, Display, MIDI, Tutorial, Tempo): while one is, only its own controls show
+// their tips, so no other tip lies over its rows (issue 188).
+const PANEL = '[data-panel]';
 
 /**
  * Explains the control it wraps: after a short pause on hover, at once on keyboard focus, and on a touch screen
@@ -43,7 +46,8 @@ const EXPANDED = '[aria-expanded="true"]';
  * Linked to the control with aria-describedby so screen readers announce it too. `longPress` off where holding
  * is how the control is played (the piano). With Tooltips off, only a header button showing its icon alone opens one,
  * on hover or focus, with its name alone. None opens while the control's menu, list or panel is open, and opening it
- * puts away the one shown, so a tip never hides a choice (issue 175); the next hover or focus shows it again.
+ * puts away the one shown, so a tip never hides a choice (issue 175); the next hover or focus shows it again. While a
+ * header panel is open, only its own controls' tips open (issue 188).
  */
 export function Tooltip({ content, children, longPress = true }: { content: TipContent; children: ReactNode; longPress?: boolean }) {
   const id = useId();
@@ -73,6 +77,11 @@ export function Tooltip({ content, children, longPress = true }: { content: TipC
   }, [id]);
 
   const expanded = () => !!wrapperRef.current?.querySelector(EXPANDED);
+  const outsideOpenPanel = () => {
+    const panels = [...document.querySelectorAll(PANEL)];
+    return panels.length > 0 && !panels.some((panel) => panel.contains(wrapperRef.current));
+  };
+  const blocked = () => expanded() || outsideOpenPanel();
   const show = (delay: number) => {
     const word = wrapperRef.current?.querySelector(WORD);
     const iconAlone = !!word && word.getClientRects().length === 0;
@@ -80,7 +89,7 @@ export function Tooltip({ content, children, longPress = true }: { content: TipC
     setNamed(!enabled);
     window.clearTimeout(timer.current);
     // Asked again when the delay is out: a click in between may have opened the control's menu.
-    timer.current = window.setTimeout(() => !expanded() && setOpen(true), delay);
+    timer.current = window.setTimeout(() => !blocked() && setOpen(true), delay);
   };
   const hide = () => {
     window.clearTimeout(timer.current);
@@ -139,7 +148,7 @@ export function Tooltip({ content, children, longPress = true }: { content: TipC
         if (e.pointerType !== 'touch' || !longPress || !enabled) return;
         press.current = { x: e.clientX, y: e.clientY };
         timer.current = window.setTimeout(() => {
-          if (expanded()) return;
+          if (blocked()) return;
           pinned.current = true;
           swallowClick.current = true;
           setOpen(true);

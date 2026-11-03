@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useUnderHeader } from './hooks/useUnderHeader';
 import { TutorialIcon } from './icons';
 import { Tooltip } from './Tooltip';
 
@@ -15,11 +16,12 @@ const TIP = {
  */
 export function TutorialMenu({ tutorials, onStart }: { tutorials: readonly { preset: string; teaches: string; finished: boolean }[]; onStart(preset: string): void }) {
   const [open, setOpen] = useState(false);
-  // The list opens under the button, along its left edge, or along its right edge when the button sits in the right
+  // The list opens under the header (issue 188), along its button's left edge, or along its right edge when the button sits in the right
   // half of the window, so it never runs off the page.
   const [side, setSide] = useState<'left' | 'right'>('left');
   const wrapper = useRef<HTMLDivElement>(null);
   const button = useRef<HTMLButtonElement>(null);
+  const panel = useUnderHeader<HTMLDivElement>(open);
   const toggle = () => {
     const box = button.current?.getBoundingClientRect();
     setSide(box && box.left + box.width / 2 > window.innerWidth / 2 ? 'right' : 'left');
@@ -51,7 +53,7 @@ export function TutorialMenu({ tutorials, onStart }: { tutorials: readonly { pre
         </button>
       </Tooltip>
       {open && (
-        <div className="tutorial-menu-panel" role="group" aria-label="Tutorials" data-side={side}>
+        <div ref={panel} className="tutorial-menu-panel" data-panel role="group" aria-label="Tutorials" data-side={side}>
           {tutorials.map((t) => (
             <button
               key={t.preset}

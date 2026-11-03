@@ -52,7 +52,7 @@ export function DisplayMenu({ active, children }: { active: boolean; children: R
           {active && <span className="display-dot" aria-hidden="true" />}
         </button>
       </Tooltip>
-      {open && <div className="display-panel">{children}</div>}
+      {open && <div className="display-panel" data-panel>{children}</div>}
     </div>
   );
 }

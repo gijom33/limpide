@@ -1,7 +1,7 @@
 import { appendFileSync } from 'node:fs';
 import { expect, type Locator, type Page, test } from '@playwright/test';
 import { type AuditOptions, auditPage, type Rule } from './audit';
-import { sliderName } from './helpers';
+import { openDisplay, sliderName } from './helpers';
 
 /**
  * The design principles' measurable rules (docs/design-principles.md, issue 17), on every screen state a visitor
@@ -233,6 +233,70 @@ for (const size of SIZE_NAMES) {
     const { unexpected, unused } = await audit(page, size, 'dark', ['target', 'overlap', 'wrap']);
     expect(unexpected, 'failures no waiver covers (or below its floor)').toEqual([]);
     expect(unused, 'waivers nothing needs any more: take them off the list').toEqual([]);
+  });
+}
+
+// Issue 188 (decision 1): one rule for where a header panel opens, under the header, as Display's does. The MIDI panel
+// and the Tutorial menu opened from the header's top row, over its bottom row and the last keys, from 861 px; a narrow
+// screen's Tempo over the keyboard.
+const HEADER_PANELS: { name: string; button: (page: Page) => Locator; panel: (page: Page) => Locator }[] = [
+  { name: 'Patches', button: (page) => page.getByRole('button', { name: /^Patch:/ }), panel: (page) => page.getByRole('dialog', { name: 'Patches' }) },
+  { name: 'Display', button: (page) => page.getByRole('button', { name: 'Display', exact: true }), panel: (page) => page.locator('.display-panel') },
+  { name: 'MIDI', button: (page) => page.getByRole('button', { name: 'MIDI', exact: true }), panel: (page) => page.getByRole('dialog', { name: 'MIDI' }) },
+  { name: 'Tutorial', button: (page) => page.getByRole('button', { name: 'Tutorial', exact: true }), panel: (page) => page.getByRole('group', { name: 'Tutorials' }) },
+  { name: 'Tempo', button: (page) => page.locator('header button[aria-label="Tempo"][aria-expanded]'), panel: (page) => page.getByRole('group', { name: 'Tempo' }) },
+];
+for (const size of SIZE_NAMES) {
+  test(`header panels, ${size}: each opens under the header (issue 188)`, async ({ page }) => {
+    const { width, height } = SIZES[size];
+    await page.setViewportSize({ width, height });
+    await page.goto('/');
+    await page.locator('.piano button').first().waitFor();
+    const opened: string[] = [];
+    for (const { name, button, panel } of HEADER_PANELS) {
+      if (!(await button(page).isVisible())) continue; // the Tempo opens a panel up to 860 px only
+      await button(page).click();
+      await expect(panel(page)).toBeVisible();
+      const [top, headerBottom] = await Promise.all([
+        panel(page).evaluate((el) => el.getBoundingClientRect().top),
+        page.locator('header').evaluate((el) => el.getBoundingClientRect().bottom),
+      ]);
+      expect(top, name).toBeGreaterThanOrEqual(headerBottom);
+      expect(top - headerBottom, name).toBeLessThanOrEqual(8);
+      opened.push(name);
+      await page.keyboard.press('Escape');
+      await expect(panel(page)).toBeHidden();
+    }
+    expect(opened.length).toBeGreaterThanOrEqual(4);
+  });
+}
+
+// Issue 188 (decision 2): formulas never over data. The Synth Geek Layer's formulas lay over the Spectrums' corner,
+// across the Harmonic bars and the Response Curve (at 375 px over A4's, the 2nd's and the 3rd's); each now has its own
+// room under its Viewer, clear of every bar and trace drawn.
+for (const size of SIZE_NAMES) {
+  test(`Synth Geek formulas, ${size}: each clear of its Viewers' plots (issue 188)`, async ({ page }) => {
+    const { width, height } = SIZES[size];
+    await page.setViewportSize({ width, height });
+    await page.goto('/');
+    await openDisplay(page);
+    await page.getByRole('button', { name: 'Geek' }).click();
+    await page.keyboard.press('Escape');
+    for (const name of ['Oscillator', 'Filter']) {
+      const formula = page.getByLabel(`${name} formula`);
+      await expect(formula).toBeVisible();
+      const crossed = await formula.evaluate((f) => {
+        const a = f.getBoundingClientRect();
+        return [...f.closest('.block')!.querySelectorAll('canvas')]
+          .map((c) => c.getBoundingClientRect())
+          .filter((b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom).length;
+      });
+      expect(crossed, name).toBe(0);
+    }
+    // The Viewers keep one size across the stages, a formula under them or not.
+    const heights = await page.locator('.block .tap canvas').evaluateAll((all) => all.map((c) => Math.round(c.getBoundingClientRect().height)));
+    expect(new Set(heights).size, heights.join(', ')).toBe(1);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(Math.max(width, 320));
   });
 }
 

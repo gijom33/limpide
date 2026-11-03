@@ -258,6 +258,41 @@ test.describe('no tip over an open menu (issue 175)', () => {
     }
   });
 
+  // Issue 188 (added in triage): no tip of a control outside an open panel, where it would lie over the panel's rows;
+  // the panel's own controls keep theirs (decided by the owner in issue 175: "Keep it as is").
+  test('while a header panel is open, only its own controls show their tips (issue 188)', async ({ page }) => {
+    await page.goto('/');
+    const header = page.locator('header');
+    for (const [control, opened, own] of [
+      [header.getByRole('button', { name: 'Display' }), page.getByRole('region', { name: 'Viewer controls' }), page.getByRole('button', { name: 'Freeze' })],
+      [header.getByRole('button', { name: 'MIDI', exact: true }), page.getByRole('dialog', { name: 'MIDI' }), null],
+      [header.getByRole('button', { name: 'Tutorial', exact: true }), page.getByRole('group', { name: 'Tutorials' }), null],
+      [page.getByRole('button', { name: /^Patch:/ }), page.getByRole('dialog', { name: 'Patches' }), null],
+    ] as const) {
+      await control.click();
+      await expect(opened).toBeVisible();
+      for (const outside of [header.getByRole('button', { name: 'About' }), header.getByRole('button', { name: 'Song' })]) {
+        await page.mouse.move(0, 0);
+        await outside.hover();
+        await pastTheHoverDelay(page);
+        await expect(tip(page)).toHaveCount(0);
+      }
+      if (own) {
+        await own.hover();
+        await pastTheHoverDelay(page);
+        await expect(tip(page)).toBeVisible();
+      }
+      await page.keyboard.press('Escape');
+      await expect(opened).toBeHidden();
+    }
+    // Every panel closed: the tips are back (the focus, back on the Patch's button, taken off it first).
+    await page.evaluate(() => (document.activeElement as HTMLElement).blur());
+    await page.mouse.move(0, 0);
+    await header.getByRole('button', { name: 'About' }).hover();
+    await pastTheHoverDelay(page);
+    await expect(tip(page)).toBeVisible();
+  });
+
   test.describe('on a narrow screen', () => {
     test.use({ viewport: { width: 800, height: 900 } });
 

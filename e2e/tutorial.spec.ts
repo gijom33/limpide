@@ -342,6 +342,22 @@ test('the header’s Tutorial button lists the Tutorials, ticks the finished, an
   await expect(button).toHaveAttribute('aria-expanded', 'false');
 });
 
+// Issue 188 (review 3, finding 5): a long line of what a Tutorial teaches squashed its mortarboard (9.7 px for Acid, 14
+// for Bass), so the names started 4.3 px apart. Each icon keeps its size, and the names one start.
+for (const width of [375, 1440]) {
+  test(`at ${width} px the Tutorial list's icons are one size and its names start on one line (issue 188)`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Tutorial', exact: true }).click();
+    const panel = page.getByRole('group', { name: 'Tutorials' }).last();
+    const icons = await panel.locator('button > svg').evaluateAll((all) => all.map((i) => Math.round(i.getBoundingClientRect().width * 10) / 10));
+    const starts = await panel.locator('.tutorial-menu-name').evaluateAll((all) => all.map((n) => Math.round(n.getBoundingClientRect().left * 10) / 10));
+    expect(icons).toHaveLength(7);
+    expect(new Set(icons).size, icons.join(', ')).toBe(1);
+    expect(new Set(starts).size, starts.join(', ')).toBe(1);
+  });
+}
+
 // Issue 129: with a line of what each teaches the list is wider; it opens along whichever edge of its button keeps it
 // on the page (at 861 px the button sits near the right edge).
 for (const width of [375, 860, 861, 1440]) {

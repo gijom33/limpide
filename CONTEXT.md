@@ -338,5 +338,6 @@ A label, a key or a button's word that would take a second line shows a shorter 
 | Plucks & Mallets | Plucks |
 | Strings, Brass & Choir | Str & Brass, Strings |
 | Movement & Effects | Move & FX, FX |
+| Learning (the MIDI button's word during MIDI Learn) | Learn, Lrn |
 
 The Envelopes are Filter Env and Amp Env on screen wherever they fit (the owner, 2026-10-28). A form shows only where a shorter label is needed: the Timeline's key, an LFO's Destination picker, the Patches panel's group names.

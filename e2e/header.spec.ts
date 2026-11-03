@@ -1,5 +1,6 @@
 import { expect, type Page, test } from '@playwright/test';
 import { type AuditOptions, auditPage } from './audit';
+import { midiButton, midiPanel, openMidi, withFakeController } from './fakeMidi';
 
 // Issue 44: one header across the layouts, its controls the same at every width (the Wordmark and the Patch; the
 // keyboard; Hold, the tempo, MIDI, Display, About; Demo, Tutorial, Song), and Tab meeting them as they stand on screen
@@ -108,6 +109,24 @@ for (const [width, words] of C_WIDTHS) {
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   });
 }
+
+// Issue 188 (review 3, finding 4): the buttons right of the keyboard drifted against the keys (16 → 22 px from 900 to
+// 1099 px, 2 px inside them from 1100), and the keyboard met Hold 12 px away from 926 to 1277 px, 8 elsewhere. Now
+// their top and bottom are the keys', and the gap one at every width.
+test('from 861 px the buttons right of the keyboard stand as tall as the keys, 8 px from them, at every width (issue 188)', async ({ page }) => {
+  const off: string[] = [];
+  for (const width of [861, 900, 913, 926, 1000, 1099, 1100, 1225, 1238, 1277, 1280, 1290, 1440, 1920]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/');
+    const h = await header(page);
+    const tops = [h.hold, h.bpm, h.demo, h.tutorial, h.midi].map((b) => b.top);
+    const bottoms = [h.hold, h.tap!, h.song, h.about, h.display].map((b) => b.bottom);
+    if (tops.some((t) => Math.abs(t - h.piano.top) > 1)) off.push(`${width}: tops ${tops.join(' ')} against the keys' ${h.piano.top}`);
+    if (bottoms.some((b) => Math.abs(b - h.piano.bottom) > 1)) off.push(`${width}: bottoms ${bottoms.join(' ')} against the keys' ${h.piano.bottom}`);
+    if (Math.abs(h.hold.left - h.piano.right - 8) > 1) off.push(`${width}: ${h.hold.left - h.piano.right} px from the keys to Hold`);
+  }
+  expect(off).toEqual([]);
+});
 
 for (const [size, [width, height]] of Object.entries(SIZES)) {
   test(`at ${width}×${height} (${size}) Tab meets the header's controls as they stand on screen: each one right of the last, or on a row below it (issue 104)`, async ({ page, browserName }) => {
@@ -336,6 +355,47 @@ test.describe('the Patch name', () => {
       test.info().annotations.push({ type: 'cut', description: `${room} px: ${cut.map((c) => c.name).join(', ') || 'none'}` });
       for (const c of cut) expect(c.width, c.name).toBeGreaterThan(room);
       // Since issue 154 the name keeps its fixed width there: the room the header has left goes to the piano's keys.
+    });
+  }
+});
+
+// Issue 188 (review 3, finding 1): MIDI Learn's "Learning" widened the MIDI button, 28 → 85 px at 861 and 34 → 65 at
+// 375, pushing Hold over Song on a phone and dropping a key from the piano on a laptop. The word now takes the MIDI
+// word's room, in a shorter form where that is short (issue 156): nothing in the header moves or overlaps.
+test.describe('MIDI Learn on', () => {
+  test.beforeEach(({ page }) => withFakeController(page));
+
+  for (const width of [320, 375, 393, 601, 861, 1000, 1100, 1280, 1440, 1920]) {
+    test(`at ${width} px the header's buttons and keys stay where they were, nothing over anything (issue 188)`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto('/');
+      await page.locator('.piano button').first().waitFor();
+      const placed = () =>
+        page.evaluate(() =>
+          [...document.querySelectorAll('header button, header [role="spinbutton"]')]
+            .filter((el) => el.getBoundingClientRect().width > 0)
+            .map((el) => {
+              const r = el.getBoundingClientRect();
+              return `${el.getAttribute('aria-label') ?? el.textContent} ${Math.round(r.left)} ${Math.round(r.top)} ${Math.round(r.width)} ${Math.round(r.height)}`;
+            }),
+        );
+      // The piano fits its keys again once the Controller's count shows beside MIDI, a frame or two later.
+      await expect(midiButton(page)).toContainText('1');
+      await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
+      const before = await placed();
+      await openMidi(page);
+      await midiPanel(page).getByRole('button', { name: 'MIDI Learn' }).click();
+      await expect(midiButton(page)).toHaveAttribute('data-learning', 'true');
+      expect(await placed()).toEqual(before);
+      const overlapOnly: AuditOptions = { rules: ['overlap'], minTarget: 0, waivers: [] };
+      const { unexpected } = await page.evaluate(auditPage, overlapOnly);
+      expect(unexpected).toEqual([]);
+      // The word shows where the MIDI word does (phones, the sections 2 × 2, and from 1280 px), on one line in its room.
+      const word = midiButton(page).locator('.midi-learning');
+      if (width <= 860 || width >= 1280) {
+        await expect(word).toBeVisible();
+        expect(await word.evaluate((el) => el.scrollWidth <= el.clientWidth + 0.5)).toBe(true);
+      } else await expect(word).toBeHidden();
     });
   }
 });

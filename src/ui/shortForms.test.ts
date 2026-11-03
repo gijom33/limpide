@@ -11,6 +11,10 @@ describe('a label’s shorter forms (issue 156)', () => {
     expect(screenForms('Resonance')).toEqual(['Resonance', 'Res']);
   });
 
+  it('gives the MIDI button’s word during MIDI Learn its shorter forms, so it never widens the button (issue 188)', () => {
+    expect(screenForms('Learning')).toEqual(['Learning', 'Learn', 'Lrn']);
+  });
+
   it.each([...LFO_DESTINATIONS.map((d) => d.label), 'Filter Envelope', 'Amp Envelope'])('%s: each form no longer than the one before, the last at most 5 letters', (name) => {
     const forms = screenForms(name);
     for (const [i, form] of forms.entries()) if (i) expect(form.length).toBeLessThan(forms[i - 1].length);

@@ -5,7 +5,9 @@ import { describeControl, describeMode, describeTarget } from '../midi/describe'
 import { type Control, type ControllerId, controlKey, type KnobMode, knobModeOf, type Mapping } from '../midi/mappings';
 import { DESTINATIONS_BY_STAGE } from '../modulation/destinations';
 import type { LfoDestination } from '../patch/patch';
+import { useUnderHeader } from './hooks/useUnderHeader';
 import { CloseIcon, MidiIcon } from './icons';
+import { Forms, useOneLine } from './oneLine';
 import { Segmented } from './Segmented';
 import { Tooltip } from './Tooltip';
 import { TIPS } from './tips';
@@ -66,7 +68,7 @@ const statusText = (state: MidiState) => {
 };
 
 /**
- * The MIDI button: a dot and the number of Controllers, or "Learning" while MIDI Learn is on. It opens the MIDI
+ * The MIDI button: a dot and the number of Controllers, and "Learning" in its word's place while MIDI Learn is on. It opens the MIDI
  * panel: what is connected, the Activity Monitor, MIDI Learn (and Done, once learning), and the Mappings.
  */
 export function MidiPanel({
@@ -75,8 +77,10 @@ export function MidiPanel({
 }: Props) {
   const [open, setOpen] = useState(false);
   const wrapper = useRef<HTMLDivElement>(null);
+  const panel = useUnderHeader<HTMLDivElement>(open);
   const devices = state.kind === 'ready' ? state.devices : [];
   const available = state.kind === 'ready' || state.kind === 'pending';
+  const learningWord = useOneLine<HTMLSpanElement>(learning ? 'learning' : '');
 
   useEffect(() => {
     if (!open) return;
@@ -109,16 +113,21 @@ export function MidiPanel({
           }}
         >
           <MidiIcon />
-          <span className="tool-word">MIDI</span>
-          {learning ? (
-            <span className="midi-learning">Learning</span>
-          ) : (
-            devices.length > 0 && <span className="midi-count">{devices.length}</span>
-          )}
+          {/* While learning, the word says so in the room of the MIDI word and the count, in a shorter form where that
+              is short, and they keep their places unseen: the button never widens (issue 188). */}
+          <span className="midi-words">
+            <span className="tool-word">MIDI</span>
+            {devices.length > 0 && <span className="midi-count">{devices.length}</span>}
+            {learning && (
+              <span className="tool-word midi-learning" ref={learningWord}>
+                <Forms name="Learning" />
+              </span>
+            )}
+          </span>
         </button>
       </Tooltip>
       {open && (
-        <div className="midi-panel" role="dialog" aria-label="MIDI">
+        <div ref={panel} className="midi-panel" data-panel role="dialog" aria-label="MIDI">
           <p className="midi-connection">{statusText(state)}</p>
           <div className="midi-activity">
             <span className="midi-heading">Last message</span>

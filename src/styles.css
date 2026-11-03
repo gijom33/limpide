@@ -263,12 +263,12 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 }
 [data-overlay='geek'] .swatch::before { left: 0; }
 [data-overlay='geek'] .swatch::after { right: 0; }
-/* The Synth Geek Layer's formula, in the Spectrum's bottom-left corner over the plot (above its frequency labels), on a
-   chip of the page's background so it reads over the trace. */
+/* The Synth Geek Layer's formula, in its own room under the Viewers (issue 188, decision 2: never over data). Laid over
+   the Spectrum's corner it crossed the Harmonic bars and the Response Curve, wherever the Note put them. It is a third
+   row of the stage's (the stages' rows below), so the Viewers give it the room alike and still line up across them. */
 .geek-formula {
-  position: absolute; left: 6px; bottom: 18px; margin: 0; max-width: calc(100% - 12px); padding: 3px 6px; pointer-events: none;
-  display: flex; flex-direction: column; gap: 1px; font-size: var(--text-sm); line-height: 1.3; color: var(--text);
-  background: color-mix(in srgb, var(--bg) 85%, transparent); border-radius: 4px; font-variant-numeric: tabular-nums;
+  margin: 0; padding: 0 6px; display: flex; flex-direction: column; gap: 1px;
+  font-size: var(--text-sm); line-height: 1.3; color: var(--text); font-variant-numeric: tabular-nums;
 }
 .geek-where { color: var(--muted); font-size: var(--text-xs); }
 
@@ -485,6 +485,9 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .block-controls { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
 .block-controls > * { flex-shrink: 0; }
 .block > .tap { margin-top: 0; min-width: 0; }
+/* With the Synth Geek Layer on, a third row under the Viewers for the formulas (issue 188), in every stage, a formula
+   or not, so the Viewers keep one size. */
+main[data-geek] .block { grid-row: span 3; }
 @media (max-width: 860px) {
   .chain { row-gap: var(--space-4); }
 }
@@ -497,6 +500,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   .chain { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   /* One column, as on a phone: the compact windows' rule further down would give the LFOs a 200 px column. */
   .chain > .timeline { grid-column: auto; grid-row: span 2; grid-template-columns: minmax(0, 1fr); }
+  main[data-geek] .chain > .timeline { grid-row: span 3; }
   /* Its plot takes the height the Amp beside it leaves, as in four across: the heading stays at the top, level with
      the other sections'. */
   .chain > .timeline { grid-template-rows: auto auto auto minmax(120px, 1fr); }
@@ -516,10 +520,12 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   .chain { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   /* In one column, as on a phone; its plot takes the height the LFOs leave, down to the Viewers' bottom. */
   .chain > .timeline { grid-column: auto; grid-row: span 2; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto minmax(100px, 1fr); }
+  main[data-geek] .chain > .timeline { grid-row: span 3; }
 }
 @media (min-width: 861px) and (min-height: 700px) {
   /* The Viewers' row never collapses below a caption and two 90 pt Viewers. */
   main > .chain { grid-template-rows: auto minmax(210px, 1fr); }
+  main[data-geek] > .chain { grid-template-rows: auto minmax(210px, 1fr) auto; }
 }
 
 /* Short large screens (e.g. 1440×900): slightly smaller floors so the whole instrument still fits. */
@@ -528,6 +534,7 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   .tap canvas { min-height: 78px; }
   /* Two 78 pt Viewers, their caption and gaps. */
   main > .chain { grid-template-rows: auto minmax(176px, 1fr); }
+  main[data-geek] > .chain { grid-template-rows: auto minmax(176px, 1fr) auto; }
 }
 
 /* Oscillator tabs: one Oscillator at a time; the Mixer stays visible below. */
@@ -1205,24 +1212,30 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
    outward from the keys: the tempo (BPM over Tap), the players (Demo over Song), the guides (Tutorial over About),
    set-up (MIDI over Display). 4 px between the columns of one use, 14 px between uses: playing (Hold and the tempo),
    listening and learning (the players and the guides), setting up. In a column both buttons are as wide as the wider,
-   their icons in a line. One shape at every width: rows of 25 px, 2 px apart, up to 1099 px, where the piano can be as
-   short as 52 px; of 28 px, 4 px apart, from 1100 px, where its keys are about 42 px or more and it about 63 px tall. */
+   their icons in a line. One shape at every width: two rows sharing the piano's height, their tops and bottoms the
+   keys' (issue 188: they had rows of a fixed height, which drifted 6 px down the growing piano from 900 to 1099 px and
+   sat 2 px inside it from 1100), 2 px apart up to 1099 px, where the piano can be as short as 52 px (rows of 25 px),
+   and 4 px apart from 1100 px. The keyboard meets Hold 8 px away at every width (issue 188: 12 px from 920 to 1279),
+   whatever the gap between the header's other zones. */
 @media (min-width: 861px) {
-  header, .header-left, .header-identity { column-gap: 12px; }
-  .header-right { --row-h: 25px; --row-gap: 2px; gap: 4px; }
+  header { --zone-gap: 12px; }
+  header, .header-left, .header-identity { column-gap: var(--zone-gap); }
+  header > .keyboard + .header-right { margin-left: calc(8px - var(--zone-gap)); }
+  .header-right { --row-gap: 2px; gap: 4px; align-self: stretch; align-items: stretch; }
   .header-right > .header-use { margin-left: 10px; }
   .header-column { display: flex; }
   .header-column, .header-right > .tempo { flex-direction: column; align-items: stretch; gap: var(--row-gap); }
-  /* Each button fills its column: its wrappers stretch, and it fills them. */
-  :is(.header-column, .header-right > .tempo) > *, .header-column > * > .tip-anchor { display: flex; flex: 1 1 auto; }
+  /* Each button fills its column, both rows alike: its wrappers stretch, and it fills them. Hold fills its own. */
+  :is(.header-column, .header-right > .tempo) > * { display: flex; flex: 1 1 0; min-height: 0; }
+  .header-column > * > .tip-anchor, .header-right > .tip-anchor { display: flex; flex: 1 1 auto; }
   .header-right :where(.demo-button, .hold-button, .midi-status, .display-menu > .tip-anchor > .tool, .about-menu .tool, .tempo-bpm, .tempo-tap, .tempo-typing) {
-    flex: 1 1 auto; height: var(--row-h); min-height: 0; padding: 0 6px; justify-content: flex-start;
+    flex: 1 1 auto; height: auto; min-height: 0; padding: 0 6px; justify-content: flex-start;
   }
-  .header-right .hold-button { height: calc(2 * var(--row-h) + var(--row-gap)); flex-direction: column; justify-content: center; gap: 3px; }
+  .header-right .hold-button { flex-direction: column; justify-content: center; gap: 3px; }
   .header-right :is(.tempo-bpm, .tempo-tap) { justify-content: center; }
 }
 @media (min-width: 1100px) {
-  .header-right { --row-h: 28px; --row-gap: 4px; }
+  .header-right { --row-gap: 4px; }
 }
 /* Words while there is room (issue 154): from 861 to 1099 px icons alone (the tooltips name them) and the BPM its
    number alone; from 1100 px the newcomer's four, Demo, Song, Tutorial and About, keep their words; from 1280 px every
@@ -1239,10 +1252,10 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 /* Below 920 px the header's zones sit closer together; from 1280 px too, where the Patch picker widens to show every
    name. */
 @media (min-width: 861px) and (max-width: 919px) {
-  header, .header-left, .header-identity { column-gap: var(--space-2); }
+  header { --zone-gap: var(--space-2); }
 }
 @media (min-width: 1280px) {
-  header, .header-left, .header-identity { column-gap: 8px; }
+  header { --zone-gap: 8px; }
 }
 .about-menu { display: flex; }
 .patch-save { display: flex; gap: 6px; margin-top: 8px; max-width: 440px; }
@@ -1265,6 +1278,8 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 }
 .tutorial-menu-panel[data-side='right'] { left: auto; right: 0; }
 .tutorial-menu-panel .tool { justify-content: flex-start; gap: 8px; width: 15rem; height: auto; padding-block: 5px; text-align: left; }
+/* The mortarboard keeps its size beside a long line, so the names start on one line (issue 188). */
+.tutorial-menu-panel .tool > svg { flex: none; }
 .tutorial-menu-words { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .tutorial-menu-name { white-space: nowrap; }
 .tutorial-menu-teaches { color: var(--muted); font-size: var(--text-xs); line-height: 1.3; white-space: normal; }
@@ -1383,7 +1398,20 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
    it is where Learn was started, and where Done now is. */
 .midi-status[data-learning] { color: var(--accent); border-color: var(--accent); }
 .midi-status[data-learning] .midi-icon { color: var(--accent); animation: midi-pulse 1.2s ease-in-out infinite; }
-.midi-learning { font-weight: 600; }
+/* Its word in the room of the MIDI word and the count (issue 188): they keep their places unseen, so the button never
+   widens, and "Learning" lies over them, in the longest of its forms that fits (Learn, Lrn: issue 156). That room takes
+   what the button has spare: from 1280 px, where the button fills its column; up to 860 px, the button's width under
+   the icon. Where the button shows its icon alone (861 to 1279 px), the word is hidden as MIDI's is, and the pulsing
+   icon says it. */
+.midi-words { display: contents; }
+@media (max-width: 860px), (min-width: 1280px) {
+  .midi-status[data-learning] .midi-words { position: relative; display: inline-flex; align-items: center; gap: inherit; }
+}
+@media (min-width: 1280px) { .midi-status[data-learning] .midi-words { flex: 1 1 auto; } }
+@media (max-width: 860px) { .midi-status[data-learning] .midi-words { align-self: stretch; justify-content: center; } }
+.midi-status[data-learning] .midi-words > :not(.midi-learning) { visibility: hidden; }
+.midi-learning { position: absolute; inset: 0; overflow: hidden; white-space: nowrap; font-weight: 600; }
+@media (max-width: 860px) { .midi-learning { text-align: center; } }
 @keyframes midi-pulse { 50% { opacity: 0.2; } }
 @media (prefers-reduced-motion: reduce) { .midi-status[data-learning] .midi-icon { animation: none; } }
 /* The one primary action in a panel: filled in the accent. */

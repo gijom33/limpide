@@ -228,7 +228,7 @@ export function PatchBar({ name, changed, patch, bpm, library, onLoad, onPick, a
       )}
 
       {open && (
-        <div className="patch-panel" role="dialog" aria-label="Patches">
+        <div className="patch-panel" data-panel role="dialog" aria-label="Patches">
           <PatchSearch
             name={name}
             query={query}

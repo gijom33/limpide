@@ -15,6 +15,8 @@ const FORMS: Record<string, readonly string[]> = {
   Cutoff: ['Cutoff', 'Cut'],
   Resonance: ['Resonance', 'Res'],
   Volume: ['Volume', 'Vol'],
+  // The MIDI button's word while MIDI Learn is on, in the MIDI word's room, so the button never widens (issue 188).
+  Learning: ['Learning', 'Learn', 'Lrn'],
   // The Preset groups' names, in the Patches panel's narrow column (whole in the category pills above it).
   'Keys & Organs': ['Keys & Organs', 'Keys & Org', 'Keys'],
   'Plucks & Mallets': ['Plucks & Mallets', 'Plucks'],

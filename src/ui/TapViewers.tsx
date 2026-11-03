@@ -68,6 +68,7 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, fundamenta
   }, [analyser, sampleRate, fundamental, fundamentalAt, now, view, showIdeal, gateOn, response, limiting, newestNote]);
 
   return (
+    <>
     <figure className="tap" data-tap={name} aria-label={`${name} Tap`}>
       <div className="tap-canvases">
         <Tooltip content={VIEWER_TIPS[name].scope}>
@@ -86,17 +87,19 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, fundamenta
           onPointerLeave={() => (hoverRef.current = null)}
         />
         </Tooltip>
-        {formulas && (
-          <p className="geek-formula" role="note" aria-label={`${name} formula`}>
-            {formulas.map((f) => (
-              <Fragment key={f.formula}>
-                <span>{f.formula}</span>
-                <span className="geek-where">{f.where}</span>
-              </Fragment>
-            ))}
-          </p>
-        )}
       </div>
     </figure>
+    {/* Under the Viewers, in a row of the stage's own (issue 188): never over the bars and traces. */}
+    {formulas && (
+      <p className="geek-formula" role="note" aria-label={`${name} formula`}>
+        {formulas.map((f) => (
+          <Fragment key={f.formula}>
+            <span>{f.formula}</span>
+            <span className="geek-where">{f.where}</span>
+          </Fragment>
+        ))}
+      </p>
+    )}
+    </>
   );
 }

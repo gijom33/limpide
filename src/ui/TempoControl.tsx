@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { clampBpm, TEMPO } from '../music/tempo';
 import type { TempoState } from '../play/tempoStore';
 import { useMediaQuery } from './hooks/useMediaQuery';
+import { useUnderHeader } from './hooks/useUnderHeader';
 import { useLearnable } from './learn';
 import { pressed } from './paramControl';
 import { STACKED } from './sections';
@@ -153,6 +154,7 @@ export function TempoControl(props: Props) {
   const [open, setOpen] = useState(false);
   const wrapper = useRef<HTMLDivElement>(null);
   const button = useRef<HTMLButtonElement>(null);
+  const panel = useUnderHeader<HTMLDivElement>(open);
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -186,7 +188,7 @@ export function TempoControl(props: Props) {
         </button>
       </Tooltip>
       {open && (
-        <div className="tempo-panel" role="group" aria-label="Tempo">
+        <div ref={panel} className="tempo-panel" data-panel role="group" aria-label="Tempo">
           <TempoDial {...props} />
           <TapButton {...props} />
         </div>
