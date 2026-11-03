@@ -264,14 +264,14 @@ test.describe('no tip over an open menu (issue 175)', () => {
     await page.goto('/');
     const header = page.locator('header');
     for (const [control, opened, own] of [
-      [header.getByRole('button', { name: 'Display' }), page.getByRole('region', { name: 'Viewer controls' }), page.getByRole('button', { name: 'Freeze' })],
+      [header.getByRole('button', { name: 'Display', exact: true }), page.getByRole('region', { name: 'Viewer controls' }), page.getByRole('button', { name: 'Freeze', exact: true })],
       [header.getByRole('button', { name: 'MIDI', exact: true }), page.getByRole('dialog', { name: 'MIDI' }), null],
       [header.getByRole('button', { name: 'Tutorial', exact: true }), page.getByRole('group', { name: 'Tutorials' }), null],
       [page.getByRole('button', { name: /^Patch:/ }), page.getByRole('dialog', { name: 'Patches' }), null],
     ] as const) {
       await control.click();
       await expect(opened).toBeVisible();
-      for (const outside of [header.getByRole('button', { name: 'About' }), header.getByRole('button', { name: 'Song' })]) {
+      for (const outside of [header.getByRole('button', { name: 'About', exact: true }), header.getByRole('button', { name: 'Song', exact: true })]) {
         await page.mouse.move(0, 0);
         await outside.hover();
         await pastTheHoverDelay(page);
@@ -288,7 +288,7 @@ test.describe('no tip over an open menu (issue 175)', () => {
     // Every panel closed: the tips are back (the focus, back on the Patch's button, taken off it first).
     await page.evaluate(() => (document.activeElement as HTMLElement).blur());
     await page.mouse.move(0, 0);
-    await header.getByRole('button', { name: 'About' }).hover();
+    await header.getByRole('button', { name: 'About', exact: true }).hover();
     await pastTheHoverDelay(page);
     await expect(tip(page)).toBeVisible();
   });

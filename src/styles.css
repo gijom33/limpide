@@ -263,9 +263,9 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 }
 [data-overlay='geek'] .swatch::before { left: 0; }
 [data-overlay='geek'] .swatch::after { right: 0; }
-/* The Synth Geek Layer's formula, in its own room under the Viewers (issue 188, decision 2: never over data). Laid over
-   the Spectrum's corner it crossed the Harmonic bars and the Response Curve, wherever the Note put them. It is a third
-   row of the stage's (the stages' rows below), so the Viewers give it the room alike and still line up across them. */
+/* The Synth Geek Layer's formula, in its own room under the Viewers (issue 188, decision 2: never over data), wherever
+   the Note puts the Harmonic bars and the Response Curve. It is a third row of the stage's (the stages' rows below), so
+   the Viewers give it the room alike and still line up across them. */
 .geek-formula {
   margin: 0; padding: 0 6px; display: flex; flex-direction: column; gap: 1px;
   font-size: var(--text-sm); line-height: 1.3; color: var(--text); font-variant-numeric: tabular-nums;
@@ -1213,10 +1213,9 @@ main[data-geek] .block { grid-row: span 3; }
    set-up (MIDI over Display). 4 px between the columns of one use, 14 px between uses: playing (Hold and the tempo),
    listening and learning (the players and the guides), setting up. In a column both buttons are as wide as the wider,
    their icons in a line. One shape at every width: two rows sharing the piano's height, their tops and bottoms the
-   keys' (issue 188: they had rows of a fixed height, which drifted 6 px down the growing piano from 900 to 1099 px and
-   sat 2 px inside it from 1100), 2 px apart up to 1099 px, where the piano can be as short as 52 px (rows of 25 px),
-   and 4 px apart from 1100 px. The keyboard meets Hold 8 px away at every width (issue 188: 12 px from 920 to 1279),
-   whatever the gap between the header's other zones. */
+   keys' (issue 188), 2 px apart up to 1099 px, where the piano can be as short as 52 px (rows of 25 px), and 4 px apart
+   from 1100 px. The keyboard meets Hold 8 px away at every width (issue 188), whatever the gap between the header's
+   other zones. */
 @media (min-width: 861px) {
   header { --zone-gap: 12px; }
   header, .header-left, .header-identity { column-gap: var(--zone-gap); }
@@ -1402,7 +1401,7 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
    widens, and "Learning" lies over them, in the longest of its forms that fits (Learn, Lrn: issue 156). That room takes
    what the button has spare: from 1280 px, where the button fills its column; up to 860 px, the button's width under
    the icon. Where the button shows its icon alone (861 to 1279 px), the word is hidden as MIDI's is, and the pulsing
-   icon says it. */
+   icon says it. The word is placed against its room only where it shows: elsewhere the room is no box (contents). */
 .midi-words { display: contents; }
 @media (max-width: 860px), (min-width: 1280px) {
   .midi-status[data-learning] .midi-words { position: relative; display: inline-flex; align-items: center; gap: inherit; }

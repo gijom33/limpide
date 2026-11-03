@@ -8,6 +8,8 @@
 
 **Since then (2026-11-01, [issue 165](./165-the-synth-geek-layer.md)):** the Maths Layer is the Synth Geek Layer: the toggle reads "Geek", with a pair of glasses, and the choice is kept under `geek` (one saved under `maths` is let go). Issues [133](./133-the-maths-layer-complete.md) and [134](./134-history-in-the-tooltips.md) added the live numbers, the formulas under the hood and History.
 
+**Since then (2026-11-02, [issue 188](./188-ui-after-review-3.md)):** the Spectrums' formulas are no longer in a corner chip over the plot: each has a row of its own under its stage's Viewers, clear of the bars and the curve.
+
 - [x] Resonance → Q mapping exposed and tested
 - [x] Formula content defined as data per Waveform and Filter Mode
 - [x] Toggle remembered across sessions
