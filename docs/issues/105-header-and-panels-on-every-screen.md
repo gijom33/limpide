@@ -12,7 +12,7 @@
 
 **Status:** done (2026-10-30). The MIDI panel is its content's width from 601 px up; the Patch name shows short names whole at 601 px and takes its column's spare room from 861 px; the welcome's buttons stay on a short phone's first screen, the credits scrolling above them; a Tutorial Step brings the Viewer its note names clear of the card, its note whole on a phone; a wheel notch moves an Octave or a Semitone one step.
 
-**Since then:** (2026-10-31, [issue 128](./128-how-a-synth-works.md)) the Welcome's buttons are Play the Demo, Take the Tour and Close.
+**Since then:** (2026-10-31, [issue 128](./128-how-a-synth-works.md)) the Welcome's buttons are Play the Demo, Take the Tour and Close. (2026-11-03, [issue 209](./209-about-holds-the-page-and-closes-with-a-cross.md)) Close is a × in About's top corner; the bottom row holds Play the Demo and Take the Tour.
 
 ## Agent Brief
 

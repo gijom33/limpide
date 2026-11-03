@@ -23,7 +23,7 @@ test('the logo opens the About splash: version, build and credits; its ×, Escap
     'https://github.com/gijom33/limpide/blob/main/docs/research/134-history-in-the-tooltips.md',
   );
 
-  // Issue 209: a × in its top corner, as the Demo's card closes, in place of a Close button.
+  // Issue 209: a × in its top corner closes it, as the Demo's card closes; there is no Close button.
   const cross = about.getByRole('button', { name: 'Close About' });
   const [crossBox, aboutBox] = [(await cross.boundingBox())!, (await about.boundingBox())!];
   expect(crossBox.y - aboutBox.y, 'at the top').toBeLessThan(20);
@@ -357,7 +357,7 @@ test.describe('About holds the page still (issue 209)', () => {
 });
 
 // Issue 209, decision 3 (Claude's call, open to the owner): About's × the size of the Demo card's.
-test('About’s × is the Demo card’s ×, on a computer and a phone', async ({ page }) => {
+test('About’s × is the Demo card’s ×, on a computer and a phone (issue 209)', async ({ page }) => {
   for (const [width, height] of [[1440, 900], [393, 659]] as const) {
     await page.setViewportSize({ width, height });
     await page.goto('/');

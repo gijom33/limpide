@@ -582,14 +582,16 @@ main[data-geek] .block { grid-row: span 3; }
 .about {
   width: min(440px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); margin: auto; padding: 0; overflow: auto;
   color: var(--text); background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-panel);
-  box-shadow: var(--shadow-panel);
+  box-shadow: var(--shadow-panel); overscroll-behavior: contain;
 }
 .about::backdrop { background: rgba(0, 0, 0, 0.55); }
-/* While it is open, nothing scrolls the page behind it: not a finger on it (an iPhone's did), nor the wheel, nor a key
-   (issue 209). The page keeps its place, and is there as it was once About closes; About's own credits still scroll. */
+/* While it is open, nothing scrolls the page behind it: not a finger on it, nor the wheel, nor a key (issue 209). The
+   page keeps its place, and is there as it was once About closes; About's own credits still scroll. */
 html:has(dialog.about[open]) { overflow: hidden; }
-.about { overscroll-behavior: contain; }
 .about-body { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); padding: 28px var(--space-4) var(--space-4); text-align: center; }
+/* Its × in the top corner, the Demo card's own (issue 209; its phone height with the card's, below): out of the
+   column's flow, over the corner the centred mark leaves free. */
+.about-close { position: absolute; top: var(--space-2); right: var(--space-2); }
 .about-title { margin: 0; font-size: 30px; font-weight: 700; letter-spacing: -0.01em; text-transform: none; }
 .about-tagline { margin: 0; max-width: 32ch; font-size: 14px; line-height: 1.4; }
 /* On a touch screen the welcome says how to reach the explanations: a long press (issue 49). */
@@ -607,10 +609,6 @@ html:has(dialog.about[open]) { overflow: hidden; }
 .about-body > * { flex: none; }
 .about-body > :is(.about-credits, .about-bead-card) { flex: 0 1 auto; min-height: 4.5em; overflow-y: auto; overscroll-behavior: contain; }
 :is(.about-credits, .about-bead-card)[data-more] { mask-image: linear-gradient(to bottom, #000 calc(100% - 40px), transparent); }
-/* Its × in the top corner, the Demo card's own (issue 209): out of the column's flow, over the corner the centred mark
-   leaves free. */
-.about-close { position: absolute; top: var(--space-2); right: var(--space-2); }
-@media (max-width: 600px) { .about-close { min-height: 32px; } }
 .about-credits dt { color: var(--muted); }
 .about-credits dd { margin: 0; }
 /* A link's words stay together ("Source on GitHub" broke over two lines, issue 47). */
@@ -1757,7 +1755,7 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 .demo-bar .tool-icon { padding: 0; }
 @media (max-width: 600px) {
   .demo-bar-caption, .demo-bar-room { font-size: var(--text-md); }
-  .demo-bar .tool { min-height: 32px; }
+  :is(.demo-bar .tool, .about-close) { min-height: 32px; }
 }
 
 /* Read by screen readers, not shown (a status said aloud, issue 51). */

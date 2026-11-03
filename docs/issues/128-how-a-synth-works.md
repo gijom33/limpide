@@ -88,3 +88,5 @@ Made while building it (2026-10-30), each Claude's call, open to the owner:
 **The owner's answers (2026-10-31, decided by the owner):** having tried the Tour, "it's good enough for now". So both are left as built: the Tour's Patch stays Init with one Voice (a Note played by hand takes the phrase's Voice while held, which decision 9 had not foreseen), and the timings, depths and phrases stay as they are.
 
 **Changed since (2026-11-01, [130](./130-the-tour-freezes-to-show-adsr.md)):** the Amp card no longer turns the Attack, then the Release, as decisions 4 and 17 and the brief above say. It turns all four stages of the Amp Envelope, Attack, Decay, Sustain and Release, one per Note at 60 BPM, each set before its Note and given back after, and freezes the Viewers for three seconds once each Note has faded. Its Viewers are the Envelope Timeline, the Amp Scope and the Amp Spectrum.
+
+**Changed since (2026-11-03, [209](./209-about-holds-the-page-and-closes-with-a-cross.md)):** About has no Close button: a × in its top corner closes it, and "Take the Tour" sits beside "Play the Demo" alone (decision 14).
