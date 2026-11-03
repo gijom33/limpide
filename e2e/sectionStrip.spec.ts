@@ -30,7 +30,10 @@ test.describe('on a phone', () => {
     await page.goto('/');
     await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);
     for (const name of ['Filter', 'LFO & Envelopes', 'Amp', 'Oscillators', 'Filter']) {
-      await tab(page, name).click();
+      // Pressed where it stands, as a finger does: in WebKit Playwright's pre-click scroll ignores the strip's scroll
+      // margin under the page's scroll padding (issue 189) and brings the header's rows back itself.
+      const box = (await tab(page, name).boundingBox())!;
+      await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
       if (name === 'LFO & Envelopes') {
         // The last section: the page ends before its top reaches the strip, so it scrolls to the end, all of it in view.
         await expect.poll(() => page.evaluate(() => Math.round(innerHeight + scrollY - document.documentElement.scrollHeight))).toBe(0);
