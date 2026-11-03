@@ -1,5 +1,7 @@
+import { startingOctave } from '../input/keyboardLayout';
 import { destinationSwings, effectiveCutoff } from '../modulation/modulationModel';
 import type { Waveform } from '../music/harmonics';
+import { noteToFrequency } from '../music/pitch';
 import { TEMPO } from '../music/tempo';
 import { type Lfo, lfoHz, lfos, osc2Heard, type Patch } from './patch';
 
@@ -69,8 +71,8 @@ interface Sound {
  * The Note the rules hear: the G in the middle of the keys the Patch opens on (its keyboard octave, C4 by default), so a
  * bass is heard where it is played. Key Track moves the Cutoff from it as the engine does.
  */
-const referenceNote = (patch: Patch) => 12 * ((patch.keyboardOctave ?? 4) + 1) + 7;
-const hz = (note: number) => 440 * 2 ** ((note - 69) / 12);
+const referenceNote = (patch: Patch) => 12 * (startingOctave(patch) + 1) + 7;
+const hz = noteToFrequency;
 
 function soundOf(patch: Patch): Sound {
   // Where every source is quieter than heard beside others, the ones up are what is heard.
