@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement. Polish for v1
+**Status:** needs-info · enhancement. Polish for v1
 
 ## Decisions
 
@@ -42,3 +42,11 @@ Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.m
 - What the Viewers show
 - Bead's cost (issue 184)
 - The Demo's Patch writes (issue 183)
+
+## Questions for the owner
+
+The night of 2026-11-02: its builder read the issue and the code and stopped before writing any, since it is five changes, each measured before and after with review 18's method rebuilt, and could not be finished well in the night's last 90 minutes.
+
+1. **The LFO plot never rests.** It draws against the engine's clock every frame, so it scrolls in silence and the page is never at rest; the modulation rings, the Pitch Marker and Bead may do the same. Stopping it changes what a Viewer shows, which this issue puts out of scope. Claude's recommendation: at rest (no Voice sounding, no player, no Hold), the LFO plot and the rings hold their last frame and move again with the next Note.
+2. **One issue or four.** Claude's recommendation: split it, each part small enough to build and measure alone: (a) the theme's colours read once (and on a theme change) and Cycle Lock skipped on a silent Tap; (b) the render loop at rest, once question 1 is answered; (c) the Envelope Timeline drawing only its new columns; (d) the AudioContext suspended after a silence and resumed on the next Note, with its engine test.
+
