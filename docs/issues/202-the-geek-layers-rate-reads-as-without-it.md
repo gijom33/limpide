@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement. Polish for v1
+**Status:** ready-for-human · enhancement. Built (2026-11-02) on night/2026-11-02, for the owner to try
 
 ## Decisions
 
@@ -46,3 +46,14 @@ Claude's calls, open to the owner:
 **Out of scope:**
 - The other Synth Geek Layer readouts (167, 168, 170)
 - What the Rate reads with the layer off
+
+## How it was built
+
+With the Synth Geek Layer on, each LFO's Rate now reads as with it off: "2.00 Hz" free, "1/4" synced, and the tempo no longer moves the synced readout. The layer's readouts of Depth (the swing) and Key Track (the Cutoff at the Note) are unchanged. The period stays in the Rate's tip, under the hood: a synced Rate's keeps 137's conversion, ending in the period at the live tempo ("1/4 at 120 BPM: 120 ÷ 60 × 1 = 2 Hz, one cycle every 0.50 s."), and a free Rate's tip now works the period out at the Rate, "T = 1 / 2.00 Hz = 0.50 s now.", before its letters. 169's engine tests, which measure how often a square tremolo repeats, now check those tips' periods instead of the readout's. The glossary's entry for the Synth Geek Layer and the layer's own tip in Display say the period is in the tip.
+
+Claude's calls, open to the owner:
+
+1. **A free Rate's tip works its period out live**, as the Envelope faders' tips work out τ (168): without it the free Rate's period, which its readout showed, would have been in no number on the page, only in its formula; and decision 4 holds the tip's numbers to the engine.
+2. **The tempo the readouts were worked out at is gone from them** (the only readout that needed it was the synced Rate's); the synced Rate's tip takes the tempo as before.
+
+**To try:** switch the Geek toggle on in Display. Each LFO's Rate reads "2.00 Hz"; turn it, and focus or hover it: the tip's Under the hood gives "T = 1 / … = … s now." following the Rate. Switch Sync on: the Rate reads "1/4", and stays "1/4" as you change the tempo, while its tip works out the Hz and the period at the new tempo. Turn up a Depth: it still reads its swing ("±0.80 oct").
