@@ -4,6 +4,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-11-02, the owner, trying issue 142: "Some animations are still partly hidden below the top rows. It is the case when Bead is on top and does the Las Vegas fountain animation for instance."
+
 ## Ideas
 
 ## Dropped
