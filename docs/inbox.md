@@ -6,8 +6,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
-- 2026-11-02, the owner, trying issues 167 to 170: "I am not sure to follow everything. Let's keep it like this now but I think we should create an agent who would indeed be a geek who would asses the value of the overlay for everything beyond the history. Maybe we only want to keep the history bits and / or add geeky math in tooltips." And: "we will revisit the geek overlay via an agent later."
-
 ## Dropped
 
 - 2026-10-30, from Claude's brainstorm, Velocity on the Volume ("a harder hit plays louder, not only brighter"): already so. The Amp Envelope's Attack rises to the Note's Velocity (PRD story 9). Claude's call, open to the owner.
@@ -176,4 +174,5 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-11-02, the owner's bug of Bead's tricks hidden under the top rows, found trying 142 (triage): to [200](./issues/200-beads-tricks-above-the-top-rows.md), polish for v1, ready for an agent: reproduce first with every rising trick; the trick fits under the header, which stays on top (Claude's calls, open to the owner).
 2026-11-02, the owner's idea of the Rate reading as without the Synth Geek Layer, found trying 137 (triage): to [202](./issues/202-the-geek-layers-rate-reads-as-without-it.md), polish for v1, ready for an agent: replaces 169's period readout; the period stays in the Rate's tip (Claude's call, open to the owner).
 2026-11-02, the owner's bug of Detune's number running into Env Amount, found trying 167 (triage): to [203](./issues/203-detunes-number-clear-of-env-amount.md), polish for v1, ready for an agent: reproduced at 700 px; every value shown in a name's place measured, 320 to 860 px (Claude's calls, open to the owner).
+2026-11-02, the owner's idea of a geek reviewer for the Synth Geek Layer, found trying 167 to 170 (triage): to [42](./issues/42-reviews.md), profile 19, the synth geek, its review run when the owner asks: every item the layer adds beyond History, kept, moved to the tip or dropped, for the owner to decide. The layer stays as it is until then (decided by the owner).
 2026-11-02, the owner's idea of a phase for Osc 2 (triage): to [203](./issues/203-a-phase-for-osc-2.md), v2, not committed (decided by the owner), to grill before anything is built.

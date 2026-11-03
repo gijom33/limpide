@@ -198,6 +198,19 @@ A software performance engineer who profiles web audio apps for a living and ass
   - **Where the time goes:** the hottest functions in a profile of the Demo, ranked, each with a concrete way to make it cheaper
 - **Success:** a table of measures against the baseline (audio, frames, memory, load, idle) each with a pass or a fail, and the findings, one line each, ranked by what a person would notice, for the inbox
 
+### 19. The synth geek, on the Synth Geek Layer
+
+Someone who reads DSP papers for fun, knows the maths behind a filter, an envelope and FM, and would switch the Synth Geek Layer on first. Added by the owner, 2026-11-02: "we should create an agent who would indeed be a geek who would asses the value of the overlay for everything beyond the history. Maybe we only want to keep the history bits and / or add geeky math in tooltips."
+
+- **Where:** the published site, on a laptop (1440 px) and a phone (375 px), the Synth Geek Layer on; the repository's History and formulas where the profile wants a source. **Time:** 45 minutes
+- **Goals:** judge, item by item, what the Synth Geek Layer adds beyond its History lines, and say what to keep on the controls and Viewers, what to move into the tooltips, and what to drop
+- **Asks:**
+  - **Each item:** every readout, formula and line the layer adds (Osc 2's ratios and beats, the Noise's slope, the Envelopes' τ, the LFOs' swing and Key Track's Cutoff, Resonance's Q, the Mixer in dB, the Scopes' period, the Spectrums' formulas and Harmonic numbers): is it right, is it worth reading where it is, does a geek learn something from it
+  - **Where it lives:** on the control, in the Viewer, or only in the tip's Under the hood; what is noise on a small screen
+  - **What is missing:** the maths a geek would look for in a tip and does not find
+  - **The History lines:** kept as they are (the owner likes them); only whether they sit well beside the rest
+- **Success:** a table of every item the layer adds, each with keep, move to the tip, or drop, and why; and the findings, one line each, for the inbox
+
 ## To do
 
 - [x] Choose the personas (owner, 2026-10-26: profiles 1 to 4 the owner's, 5 to 7 completing them)
@@ -210,5 +223,6 @@ A software performance engineer who profiles web audio apps for a living and ass
 - [x] Profile 16's review (the synth neophyte), added by the owner 2026-10-31: once the Tour is released, on the Tour and every Tutorial; its findings to the inbox and to [129](./129-words-fun-to-read.md). First run 2026-10-31 on 1.19.0: [report](../reviews/2026-10-31/16-synth-neophyte.md)
 - [x] Profile 17's review (the MIDI mapping geek), added by the owner 2026-10-31, ran the same day with the owner's C16 facts (its panel, its knobs sending positions, its buttons set to toggle): [report](../reviews/2026-10-31/17-midi-mapping-geek.md), a proposed layout per bank and 14 findings, for the owner to decide
 - [x] Profile 18's first review (the performance expert), added by the owner 2026-11-01, ran on 1.21.1 on 2026-11-02 with profiles 3, 6, 9, 16 and 17 again (the owner chose these six over a full round, which waits for v1's last issues): [the reports](../reviews/2026-11-02/), 30 findings to the inbox. Its verdict: comfortable on the floor, costly at idle, thin below it
+- [ ] Profile 19's review (the synth geek), added by the owner 2026-11-02: once the owner asks ("we will revisit the geek overlay via an agent later"), on the Synth Geek Layer; its table and findings to the inbox, for the owner to decide what the layer keeps
 
 **Since then (2026-10-28, the retro of issues 73 to 79; recorded 2026-10-30 by [issue 110](./110-checks-before-a-push.md)):** the code review is no longer for minor versions only; which releases get it, [the release steps](../releasing.md) say ([ADR-0016](../adr/0016-the-release-steps-are-the-one-home-of-the-release-rules.md)). Decided by the owner.
