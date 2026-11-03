@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { effectiveCutoff } from '../modulation/modulationModel';
 import { defaultPatch } from '../patch/patch';
-import { CUTOFF_CLAMP, CUTOFF_SPAN, centsOverFloor, filterLevel, filterStages, filterStagesAt, qSwing, resonanceToQdB, TOP_DIP, topFade } from './filterDesign';
+import { CUTOFF_CLAMP, CUTOFF_SPAN, centsOverFloor, filterLevel, filterStages, filterStagesAt, LEVEL_DIP, qSwing, RESONANCE_DIP, resonanceToQdB, topFade } from './filterDesign';
 
 /** What a WaveShaperNode makes of `x` through `curve`: the curve read between its points, held at its ends past ±1. */
 function shaped(curve: Float32Array, x: number) {
@@ -107,15 +107,18 @@ describe('the Filter at the top of its range (issue 195)', () => {
       }
   });
 
-  it('lets a high-pass fall silent at 20 kHz as its Resonance fades, and every other Mode through', () => {
+  it('lets a high-pass fall silent over the last semitone under 20 kHz, and every other Mode through', () => {
     expect(filterLevel('highpass', 20000)).toBe(0);
-    expect(filterLevel('highpass', 20000 / 2 ** 0.25)).toBeCloseTo(0.5, 9);
+    expect(filterLevel('highpass', 20000 / 2 ** (1 / 24))).toBeCloseTo(0.5, 9);
+    expect(filterLevel('highpass', 20000 / 2 ** (1 / 12))).toBe(1);
     expect(filterLevel('highpass', 10000)).toBe(1);
     for (const mode of ['lowpass', 'bandpass', 'notch'] as const) expect(filterLevel(mode, 20000)).toBe(1);
   });
 
-  it('gives the sound the fade the model has, read from the clamped Cutoff in cents over the span', () => {
-    for (const hz of [20, 1000, 14000, 14142, 15000, 16818, 18000, 19500, 20000])
-      expect(1 - shaped(TOP_DIP, centsOverFloor(hz) / CUTOFF_SPAN), `${hz} Hz`).toBeCloseTo(topFade(hz), 4);
+  it('gives the sound the fades the model has, read from the clamped Cutoff in cents over the span', () => {
+    for (const hz of [20, 1000, 14000, 14142, 15000, 16818, 18000, 18877, 19200, 19500, 19800, 20000]) {
+      expect(1 - shaped(RESONANCE_DIP, centsOverFloor(hz) / CUTOFF_SPAN), `${hz} Hz`).toBeCloseTo(topFade(hz), 4);
+      expect(1 - shaped(LEVEL_DIP, centsOverFloor(hz) / CUTOFF_SPAN), `${hz} Hz`).toBeCloseTo(filterLevel('highpass', hz), 3);
+    }
   });
 });

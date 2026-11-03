@@ -66,19 +66,24 @@ export const centsOverFloor = (hz: number) => 1200 * Math.log2(hz / LOWEST_CUTOF
  */
 export const CUTOFF_CLAMP = Float32Array.of(0, 0, CUTOFF_SPAN);
 
-/** How far under the top of its range the Filter starts to fade, in cents: half an octave (issue 195). */
-const FADE_CENTS = 600;
-/** How far a Cutoff (in cents over the floor) is into the top's fade, from 0 (under it) to 1 (at 20 kHz): a raised cosine. */
-function intoTheTop(cents: number) {
-  const into = (cents - (CUTOFF_SPAN - FADE_CENTS)) / FADE_CENTS;
+/** How far under the top of its range the Resonance starts to fade, in cents: half an octave (issue 195). */
+const RESONANCE_FADE = 600;
+/** How far under the top a high-pass starts to fall silent, in cents: a semitone, where it passes little that is heard. */
+const LEVEL_FADE = 100;
+/**
+ * How far a Cutoff (in cents over the floor) is into a fade `width` cents wide under the top, from 0 (under it) to 1
+ * (at 20 kHz): a raised cosine.
+ */
+function intoTheTop(cents: number, width: number) {
+  const into = (cents - (CUTOFF_SPAN - width)) / width;
   return into <= 0 ? 0 : into >= 1 ? 1 : 0.5 - 0.5 * Math.cos(Math.PI * into);
 }
 /**
  * How much of its Resonance a low- or high-pass keeps at a Cutoff (issue 195): all of it up to half an octave under
  * 20 kHz, none at 20 kHz, as an analogue Filter's fades past its range. Without the fade the Cutoff held at 20 kHz
- * (issue 166) would ring there, where the low-pass past Nyquist never did; a high-pass fades out with it.
+ * (issue 166) would ring there, where the low-pass past Nyquist never did.
  */
-export const topFade = (cutoff: number) => 1 - intoTheTop(centsOverFloor(cutoff));
+export const topFade = (cutoff: number) => 1 - intoTheTop(centsOverFloor(cutoff), RESONANCE_FADE);
 
 /** The two biquads at a Cutoff: a low- or high-pass's Q taken toward its flat one as the Resonance fades at the top. */
 export function filterStagesAt(mode: FilterMode, slope: FilterSlope, resonance: number, cutoff: number): [Stage, Stage] {
@@ -89,13 +94,17 @@ export function filterStagesAt(mode: FilterMode, slope: FilterSlope, resonance: 
   return [0, 1].map((k) => ({ ...stages[k], Q: flat[k].Q + (stages[k].Q - flat[k].Q) * fade })) as [Stage, Stage];
 }
 
-/** What passes the Filter at a Cutoff at all: a high-pass falls silent at the top as its Resonance fades (issue 195). */
-export const filterLevel = (mode: FilterMode, cutoff: number) => (fadesOutAtTheTop(mode) ? topFade(cutoff) : 1);
-
-/** Points in the top's fade curve: read between them, the fade is within a hundred-thousandth of its own. */
-const DIP_POINTS = 8193;
 /**
- * The top's fade for the sound, a WaveShaper's curve over the clamped Cutoff's cents over the floor divided by the
- * span: what it takes off (1 less `topFade`), nothing under the fade.
+ * What passes the Filter at a Cutoff at all (issue 195): a high-pass falls silent over the last semitone under 20 kHz,
+ * as it did past Nyquist, instead of passing only what is above hearing; every other Mode passes.
  */
-export const TOP_DIP = Float32Array.from({ length: DIP_POINTS }, (_, i) => intoTheTop(CUTOFF_SPAN * ((2 * i) / (DIP_POINTS - 1) - 1)));
+export const filterLevel = (mode: FilterMode, cutoff: number) => (fadesOutAtTheTop(mode) ? 1 - intoTheTop(centsOverFloor(cutoff), LEVEL_FADE) : 1);
+
+/** Points in the top's fade curves: read between them, a fade is within a ten-thousandth of its own. */
+const DIP_POINTS = 16385;
+/** A fade's curve for the sound, over the clamped Cutoff's cents over the floor divided by the span: what it takes off. */
+const dipCurve = (width: number) => Float32Array.from({ length: DIP_POINTS }, (_, i) => intoTheTop(CUTOFF_SPAN * ((2 * i) / (DIP_POINTS - 1) - 1), width));
+/** The Resonance's fade at the top, as a WaveShaper's curve: 1 less `topFade`. */
+export const RESONANCE_DIP = dipCurve(RESONANCE_FADE);
+/** A high-pass's fall to silence at the top, as a WaveShaper's curve: 1 less its `filterLevel`. */
+export const LEVEL_DIP = dipCurve(LEVEL_FADE);

@@ -11,7 +11,7 @@ import { fmDepthKept, playedTop } from '../music/idealReference';
 import { frequencyToNote, noteToFrequency } from '../music/pitch';
 import { TEMPO } from '../music/tempo';
 import { fmIndex, GLIDE_OFF, type Lfo, type LfoNumber, lfoHz, lfos, type NoiseColour, PARAMS, type Patch, type SubWaveform, type Voices } from '../patch/patch';
-import { CUTOFF_CLAMP, CUTOFF_SPAN, centsOverFloor, fadesOutAtTheTop, filterLevel, filterStages, filterStagesAt, isPeaked, qSwing, type Stage, TOP_DIP } from './filterDesign';
+import { CUTOFF_CLAMP, CUTOFF_SPAN, centsOverFloor, fadesOutAtTheTop, filterLevel, filterStages, filterStagesAt, isPeaked, LEVEL_DIP, qSwing, RESONANCE_DIP, type Stage } from './filterDesign';
 import { heardAt, type OutputClockContext } from './outputClock';
 
 /**
@@ -660,20 +660,21 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
     cutoffClamp.connect(node.detune);
   }
   cutoff.start();
-  // Near the top the Resonance fades, and a high-pass's output with it (issue 195), as `filterStagesAt` and
-  // `filterLevel` have it: the clamped Cutoff, through the top's dip, takes its share off each stage's Q over its flat
-  // one (the knob's, `resonanceOverFlat`, and the LFOs' swing), and off what a high-pass lets through. Each dip's gain is −1
-  // in the Modes it fades, 0 in the others.
+  // Near the top the Resonance fades, and a high-pass falls silent (issue 195), as `filterStagesAt` and `filterLevel`
+  // have it: the clamped Cutoff, through each fade's curve, takes its share off each stage's Q over its flat one (the
+  // knob's, `resonanceOverFlat`, and the LFOs' swing), and off what a high-pass lets through. Each dip's gain is −1 in
+  // the Modes it fades, 0 in the others.
   const toDip = ctx.createGain();
   toDip.gain.value = 1 / CUTOFF_SPAN;
-  const topDip = ctx.createWaveShaper();
-  topDip.curve = TOP_DIP;
-  cutoffClamp.connect(toDip).connect(topDip);
-  const [resonanceDip, levelDip] = [ctx.createGain(), ctx.createGain()];
-  for (const dip of [resonanceDip, levelDip]) {
+  cutoffClamp.connect(toDip);
+  const [resonanceDip, levelDip] = [RESONANCE_DIP, LEVEL_DIP].map((curve) => {
+    const shaper = ctx.createWaveShaper();
+    shaper.curve = curve;
+    const dip = ctx.createGain();
     dip.gain.value = 0;
-    topDip.connect(dip);
-  }
+    toDip.connect(shaper).connect(dip);
+    return dip;
+  });
   const overFlat = [filter, filter2].map((node) => {
     const kept = ctx.createGain();
     resonanceDip.connect(kept.gain);
