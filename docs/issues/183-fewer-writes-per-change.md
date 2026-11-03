@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement. Polish for v1
+**Status:** needs-info · enhancement. Polish for v1
 
 ## Decisions
 
@@ -37,3 +37,11 @@ Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.m
 **Out of scope:**
 - How far aftertouch reaches (issue 132)
 - The Viewers' cost (issue 182)
+
+## Questions for the owner
+
+The night of 2026-11-02: its builder read the issue and the code and stopped before writing any, since it is three changes, each with its own design and tests, and could not be finished well, tested and reviewed, before 07:00.
+
+1. **Which smoothing for aftertouch.** The brief asks for "the same short smoothing as a knob turned from a Controller", but the engine has none: every knob write is immediate, and the only smoothing is the bend wheel's 4 ms. Claude's recommendation: aftertouch uses the bend wheel's 4 ms, and Controller knobs keep their immediate writes (a separate issue if they step audibly).
+2. **One issue or three.** Claude's recommendation: split it. (a) The MIDI Activity line in its own store, read in the MIDI panel, with a test that a stream of messages does not re-render the page (light). (b) A Patch change writes only the parameters that changed, with an engine test counting writes on a Demo knob tick; whether writes are gathered into one a frame, in the engine or in the session, settled first (full). (c) Aftertouch smoothed in the sound and the model alike (ADR-0003), the Resonance curve not rebuilt per message, with the inharmonic-energy test at 100 messages a second; exact only where the pressure maps linearly (Cutoff, Pitch, Osc 2's cents), so the model and the sound differ slightly for Resonance's Q while the smoothing runs (full).
+
