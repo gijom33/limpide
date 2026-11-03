@@ -4,8 +4,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
-- 2026-11-02, the owner, trying issue 166: "Talking filter alternate a voicy sound and a bip: That's wrong."
-
 ## Ideas
 
 ## Dropped
@@ -179,4 +177,5 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-11-02, the owner's idea of a geek reviewer for the Synth Geek Layer, found trying 167 to 170 (triage): to [42](./issues/42-reviews.md), profile 19, the synth geek, its review run when the owner asks: every item the layer adds beyond History, kept, moved to the tip or dropped, for the owner to decide. The layer stays as it is until then (decided by the owner).
 2026-11-02, the owner's bug of BAGGAGE, the air guitar and the surfing unseen, found trying 127 (triage): to [204](./issues/204-baggage-air-guitar-and-surfing-seen.md), polish for v1, ready for an agent: reproduce first, a cause per trick; surfing built with or after [197](./issues/197-bead-rides-everywhere.md) (Claude's calls, open to the owner).
 2026-11-02, the owner's idea of a simpler Privacy entry in About (triage): done at once, the owner's pick of two wordings: "Visits are counted with GoatCounter: no cookies, nothing stored about you. Your sounds never leave your browser." The README keeps the details the legal review asked for (the IP address and browser received, the share link's sound after its #).
+2026-11-02, the owner's bug of Talking Filter's beep, found trying 166 (triage): to [205](./issues/205-talking-filter-talks.md), polish for v1, ready for an agent: retuned so every moment is vowel-like, the narrow end about Q 4 to 6 and LFO 2 gliding (Claude's calls, open to the owner).
 2026-11-02, the owner's idea of a phase for Osc 2 (triage): to [203](./issues/203-a-phase-for-osc-2.md), v2, not committed (decided by the owner), to grill before anything is built.
