@@ -1,6 +1,6 @@
 # MIDI Learn first; no hard-coded Controller map
 
-**Status:** accepted; superseded in part by [ADR-0009](./0009-a-built-in-layout-for-the-c16.md) · **Date:** 2026-10-21 · **Decided by:** Claude, accepted by the owner
+**Status:** accepted; superseded in part by [ADR-0009](./0009-a-built-in-layout-for-the-c16.md) and [ADR-0020](./0020-midi-learn-reads-a-knobs-mode-from-its-whole-turn.md) · **Date:** 2026-10-21 · **Decided by:** Claude, accepted by the owner
 
 The C16 now has a built-in layout: [ADR-0009](./0009-a-built-in-layout-for-the-c16.md) supersedes the "no hard-coded CC table" rule for it alone.
 
