@@ -22,11 +22,12 @@ Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.m
 
 **Desired behavior:** While every Tap is silent and nothing moves, the Viewers are drawn once and frames are skipped until a Note, a knob, Bead or a Display change; after a while of silence the audio context is suspended and resumed on the next Note without a click or a late first Note. Cycle Lock computes its window once, uses a sin/cos recurrence and is skipped on a silent Tap. The Timeline scrolls its drawn canvas and computes only the new columns. Theme colours are read once and again on a theme change.
 
+**Since then (2026-11-02, issue 180's decision 8, the owner's):** 180 rebuilt Cycle Lock (shipped in 1.22.0), the window computed once and the trig replaced by rotations, so its part above is done; this issue keeps only skipping a silent Scope.
+
 **Key interfaces:**
 - The render loop and each Viewer's draw
 - Cycle Lock's skipping when its Tap is silent
 
-**Since then (2026-11-02, issue 180's decision 8, the owner's):** issue 180 rebuilds Cycle Lock, cheaper than today's, so this issue keeps only skipping a silent Scope; the window-once and recurrence work is 180's.
 - The Envelope Timeline's drawing
 - The audio context's suspend and resume
 - The theme's colours

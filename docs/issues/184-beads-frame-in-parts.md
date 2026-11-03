@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement. Polish for v1; best after [181](./181-bead-never-over-text.md), which changes where Bead rests
+**Status:** ready-for-agent · enhancement. Polish for v1; [181](./181-bead-never-over-text.md), which changed where Bead rests, shipped in 1.22.0
 
 ## Decisions
 
@@ -18,7 +18,7 @@ Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.m
 **Category:** enhancement
 **Summary:** Bead's per-frame logic is one large effect that queries the whole page every frame and forces an extra style recalculation.
 
-**Current behavior:** Mascot's render effect (about 588 lines, 25 lets) decides perches, visits, rides and the cling inline; each frame it runs querySelectorAll over panels and tooltips and reads layout after the Viewers have written.
+**Current behavior:** Mascot's render effect (about 650 lines since 181 and 192, which also added a query of the docked panels each frame) decides perches, visits, rides and the cling inline; each frame it runs querySelectorAll over panels and tooltips and reads layout after the Viewers have written.
 
 **Desired behavior:** The covering elements are kept by a MutationObserver and their boxes read only on scroll, resize or a layout change; all layout reads of a frame come before any write (the Viewers' and Bead's); the perch, visit, ride and cling decisions are pure functions with unit tests, the effect only wiring them.
 

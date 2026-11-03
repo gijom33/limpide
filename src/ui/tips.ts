@@ -86,7 +86,7 @@ export const TIPS = {
   tapSource: {
     title: 'Viewers follow',
     body: 'All: the Amp Tap carries every Voice at once, so a chord is seen there as it is heard. Newest: the Amp Tap shows only the Note you played last. The Oscillator and Filter Taps, the Harmonic Markers and the Timeline always follow the newest Note, so Cycle Lock stays exact there.',
-    how: 'With All, the Amp Scope cannot lock to a chord. One Voice shows the same either way.',
+    how: 'With All, the Amp Scope locks to the newest Note, so the chord\'s other Notes still move across it. One Voice shows the same either way.',
   },
   glow: {
     title: 'Glow',
@@ -195,7 +195,7 @@ export const TIPS = {
   glide: {
     title: 'Glide',
     body: 'Slides the pitch from one Note to the next instead of jumping, over this long. Off plays Notes at once. It works with one Voice only: with more, each Note starts at its own pitch.',
-    how: 'Play two keys one after the other and watch the Scope stretch or squeeze as the pitch slides.',
+    how: 'Play two keys one after the other: the Scope\'s wave holds still as Cycle Lock follows the slide, and the Spectrum\'s Harmonics glide to the new Note.',
     underTheHood: UNDER_THE_HOOD.glide,
     history: HISTORY.glide,
   },

@@ -367,9 +367,9 @@ export function syncedRateUnderTheHood(index: number, bpm: number): Formula {
 const msText = (ms: number) => `${ms < 1 ? ms.toFixed(3) : ms < 10 ? ms.toFixed(2) : ms < 100 ? ms.toFixed(1) : Math.round(ms)} ms`;
 
 /**
- * What each Scope writes in its corner: the period and frequency of `fundamental`, the one it holds still on (the Note
- * played, at Osc 1's Octave, the Sub's pitch with the Sub up, as the engine's Cycle Lock follows it): "2.27 ms ·
- * 440 Hz"; before any Note, A4's, said.
+ * What each Scope writes in its corner: the period and frequency of `fundamental` (the Note played, at Osc 1's Octave,
+ * the Sub's pitch with the Sub up), held still through a vibrato, where Cycle Lock follows the pitch as played (issue
+ * 180): "2.27 ms · 440 Hz"; before any Note, A4's, said.
  */
 export function scopeReadout(fundamental: number, note: GeekNote): string {
   const hz = Number(fundamental.toFixed(fundamental < 10 ? 2 : 1));
