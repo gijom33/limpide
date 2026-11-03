@@ -301,12 +301,12 @@ describe('Patches at the edges (issue 116)', () => {
   });
 
   // Issue 166: the sound moves the Q as the model moves the Resonance, so a band-pass's Q never passes its floor and
-  // the band-pass stays one. Talking Filter is LFO 2's square on its band-pass's Resonance.
+  // the band-pass stays one. Talking Filter is LFO 2's triangle on its band-pass's Resonance (issue 205).
   it('keeps a band-pass a band-pass with an LFO on its Resonance: Talking Filter at its LFO’s foot as at the same Resonance held (issue 166)', async () => {
     const talking = preset('Talking Filter');
     const still = { ...talking.patch, lfoAmount: 0 };
-    // LFO 2's square: its foot is its second half-cycle, measured from a fifth of the way into it.
-    const foot = 1.2 / still.lfo2Rate / 2;
+    // LFO 2's triangle, rising from its centre at the start: its foot is three quarters of the way through its cycle.
+    const foot = 0.75 / still.lfo2Rate;
     const swung = await play({ ...talking, patch: still }, [60], { seconds: foot + 0.2 });
     const resonance = swung.engine.modulationAt(foot + 0.05).resonance;
     expect(resonance).toBeLessThan(still.resonance);

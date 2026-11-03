@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { TRACK } from '../demo/track';
+import { filterStages } from '../engine/filterDesign';
 import { createSynthEngine } from '../engine/synthEngine';
 import { noteHz } from '../music/tempo';
 import { dB, energyAboveDb, frequencyAround, toneAmplitude, toneAmplitudeHann } from '../test/measure';
@@ -215,42 +216,42 @@ describe('the Presets do what their words say (issue 108, reviews 13 and 15)', (
     for (const [i, semitones] of heard.entries()) expect(semitones, heard.map((h) => h.toFixed(2)).join(' ')).toBeCloseTo(i % 2 ? 2 : 0, 1);
   });
 
-  it('Talking Filter talks: two band-passes, one wide and one narrow, by turns, each sweeping with LFO 1 (issue 166)', async () => {
+  it('Talking Filter talks: a band-pass gliding between vowels, never as narrow as a whistle (issues 166, 205)', async () => {
     const patch = preset('Talking Filter');
-    const ctx = new OfflineAudioContext(1, SR * 3, SR);
+    const seconds = 4;
+    const ctx = new OfflineAudioContext(1, SR * seconds, SR);
     straightenLimiter(ctx);
     const engine = createSynthEngine(ctx);
     engine.applyPatch(patch);
     engine.noteOn(C4, 1, NOTE);
     const s = (await ctx.startRendering()).getChannelData(0);
-    /** A 40 ms window's centroid over C4's first 30 Harmonics, in Hz, and its level, in dB. */
+    // LFO 2 glides the band from vowel to vowel: a Sine or a Triangle, not a Square's flip (the owner, issue 205).
+    expect(['sine', 'triangle']).toContain(patch.lfo2Waveform);
+    // At every moment the band is a vowel's formant at its narrowest, no whistle: its Q, as the engine plays it, at or
+    // under 6, and its width moving across most of that (LFO 2) as LFO 1 sweeps it.
+    const qs = Array.from({ length: 300 }, (_, i) => filterStages(patch.filterMode, patch.filterSlope, engine.modulationAt(NOTE + i * 0.01).resonance)[0].Q);
+    expect(Math.max(...qs)).toBeLessThanOrEqual(6);
+    expect(Math.max(...qs) / Math.min(...qs)).toBeGreaterThan(4);
+    /** A 40 ms window over C4's first 30 Harmonics: its centroid, in Hz, and the strongest Harmonic's share of it. */
     const windowAt = (t: number) => {
       const [a, b] = [Math.round(t * SR), Math.round((t + 0.04) * SR)];
       const power = Array.from({ length: 30 }, (_, n) => toneAmplitude(s, SR, hz(C4) * (n + 1), a, b) ** 2);
       const total = power.reduce((sum, p) => sum + p, 0);
-      return { centroid: (power.reduce((sum, p, n) => sum + p * (n + 1), 0) / total) * hz(C4), level: 10 * Math.log10(total) };
+      return { centroid: (power.reduce((sum, p, n) => sum + p * (n + 1), 0) / total) * hz(C4), loneShare: Math.max(...power) / total };
     };
-    // LFO 2's square at 0.7 Hz runs from the engine's start: narrow for its first half-cycle, wide for its second.
-    const half = 1 / patch.lfo2Rate / 2;
-    const halves = [half * 2, half * 3].map((from) => {
-      // The band's top and foot in this half, by the model's Cutoff (LFO 1), clear of the square's jumps.
-      const times = Array.from({ length: 50 }, (_, i) => from + 0.05 + (i / 50) * (half - 0.15));
-      const cutoffs = times.map((t) => engine.modulationAt(t + 0.02).cutoff);
-      const [high, low] = [times[cutoffs.indexOf(Math.max(...cutoffs))], times[cutoffs.indexOf(Math.min(...cutoffs))]];
-      const level = times.reduce((sum, t) => sum + windowAt(t).level, 0) / times.length;
-      return { resonance: engine.modulationAt(from + half / 2).resonance, sweep: windowAt(high).centroid / windowAt(low).centroid, level };
-    });
-    const [narrow, wide] = halves;
-    expect(narrow.resonance).toBeCloseTo(0.9, 2);
-    expect(wide.resonance).toBeCloseTo(0, 2);
-    // Each band follows LFO 1 an octave either way: its centroid moves by more than half that.
-    for (const { sweep } of halves) expect(sweep).toBeGreaterThan(2);
-    // The two vowels: the narrow band lets less through.
-    expect(wide.level - narrow.level).toBeGreaterThan(6);
-    // The wide band is still a band-pass: well short of the open saw above 4 kHz.
-    const open = await play({ ...patch, filterMode: 'lowpass', cutoff: 20000, lfoAmount: 0, lfo2Amount: 0 }, [C4], 3, 3);
-    const top = (samples: Float32Array) => energyAboveDb(samples, SR, 4000, Math.round(half * 3.2 * SR), 4096);
+    const windows = Array.from({ length: 90 }, (_, i) => windowAt(NOTE + 0.05 + i * 0.04));
+    // A beep is one Harmonic nearly alone (the Square's narrow half reached 89 %): a vowel always keeps its neighbours.
+    for (const [i, { loneShare }] of windows.entries()) expect(loneShare, `window ${i}`).toBeLessThan(0.85);
+    // LFO 1 sweeps the band an octave either way: its centroid moves by more than a factor of 2.5.
+    const centroids = windows.map((w) => w.centroid);
+    expect(Math.max(...centroids) / Math.min(...centroids)).toBeGreaterThan(2.5);
+    // Still a band-pass: well short of the open saw above 4 kHz, at the widest the band gets.
+    const open = await play({ ...patch, filterMode: 'lowpass', cutoff: 20000, lfoAmount: 0, lfo2Amount: 0 }, [C4], seconds, seconds);
+    const widest = NOTE + qs.indexOf(Math.min(...qs)) * 0.01;
+    const top = (samples: Float32Array) => energyAboveDb(samples, SR, 4000, Math.round(widest * SR), 4096);
     expect(top(s)).toBeLessThan(top(open) - 6);
+    // Its level kept: its loudest 100 ms within 1 dB of 1.20.0's, −21.7 dBFS (review 14, 2026-11-01).
+    expect(Math.abs(loudestDb(s) + 21.7)).toBeLessThanOrEqual(1);
   });
 
   it('Square Lead starts each Note’s vibrato in tune, at the centre of the swing', async () => {
