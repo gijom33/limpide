@@ -2,7 +2,7 @@
 
 **What to build:** The owner's idea (inbox, 2026-11-02): "I never saw Bead ride an LFO yet. Let make it happen even on phone and 2x2. Also if Bead is dragged and dropped near a slow sine or triangle LFO, force it to ride." It builds on [141](./141-bead-rides-the-lfos.md), where a ride is one of Bead's visits, made only three and four across. Polish of v1's Bead ([131](./131-v1.md)).
 
-**Blocked by:** [181](./181-bead-never-over-text.md) and [192](./192-beads-cover-checks-complete.md) merged: built on their own branch, not yet merged, they change where Bead rests and when a visit or ride ends, the code this builds on
+**Blocked by:** none (181 and 192, which change the code this builds on, were merged into main on 2026-11-02)
 
 **Status:** ready-for-agent · enhancement. Polish for v1
 

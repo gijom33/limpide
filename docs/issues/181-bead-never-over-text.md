@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · bug. Built (2026-11-02) on its own branch, worktree-agent-a908b6eb2871e644b, with [192](./192-beads-cover-checks-complete.md), for the owner to try; not merged or released
+**Status:** done (2026-11-02). Built on its own branch with [192](./192-beads-cover-checks-complete.md), tried and approved by the owner: "181 and 192 look ok, you can merge"; merged into main the same day, ships with the next release
 
 ## Decisions
 
