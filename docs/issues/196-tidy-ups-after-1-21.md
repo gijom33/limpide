@@ -48,15 +48,26 @@ Done, each its own commit; nothing visible changes but the plain words' shared s
 - **React:** the Timeline's aftertouch ref is written in an effect.
 - **Tests:** `BEAD_ON` in startState, used by the four specs that wrote it out; issue 142 gets an acceptance checklist, drawn from its decisions and tests.
 
+Done later the same night (the coordinator lifted the time limit), each its own commit:
+
+- **The engine's `setTempo`:** it and `applyPatch` share one per-LFO loop (`followRate`), the rate worked out once.
+- **The beat marks:** built once, by `markedBeats` beside `followsTheBeat`, for the LFO plots and the Timeline.
+- **The Geek readouts (167–170):** one table, `GEEK_CONTROLS`, gives each control its readout and its widest side by side; the Destinations' units and where their room is measured from move into the LFO laws (`unit`, `roomFrom`).
+- **Bead:** its tail's height over its foot is worked out from its height and the tail's place in the drawing (`TAIL_HEIGHT`, mascotCling), and the page's "two boxes cross" test is `crosses`, beside the cling's overlap.
+- **The Controller seam (149):** the C16's tag is written once (`C16_ID`) in c16.ts; the MIDI panel finds a Controller's tips in `CONTROLLER_TIPS`, typed by its id, not by `${id}Layout`.
+- **The e2e tests:** read as the tests 129, 132, 154 and 156 added that name no issue, in a describe or their title (found from each issue's commits): nine, each title now ending with its issue.
+
 Answered, not done (Claude's calls, open to the owner):
 
 - **The Escape-or-press-outside effect:** Display, MIDI, the Tutorials and the Tempo already share `useHeaderPanel` (since 189); the Patch bar's stays its own, as its Escape clears the search first. Folding it in means the hook taking an Escape handler: left for a later tidy-up.
 - **"A panel is open" written twice:** the Tooltip's `[data-panel]`/`[aria-expanded]` and the Patch bar's `OPEN_ELSEWHERE` ask different questions (a header panel, against anything open but a card); not merged.
 - **The Geek readout worked out twice a render:** the first, in `useSyncExternalStore`'s snapshot, is what re-renders a control only when its text changes; computing the parts there would need a cache. Left, as the cost is one small function per render.
 - **The `banks` argument:** kept, as the test's seam for how the shared buttons are found (the other way tests only today's layout).
-- **Not reached tonight:** the Geek readouts' twin cascades and contexts (167–170), Bead's tail height and box overlap, the beat marks built twice, the engine's `setTempo` loop (an engine change, for a night with the engine's browser tests), the Controller seam (149), the e2e tests outside a describe naming their issue (the finding's tests not pinned down from the issue's words), and the 2 × 2 Demo test's WebKit cause (needs GitHub's Linux WebKit). Still open in this issue's list.
+- **The four Geek contexts:** kept apart. Merged into one, every control would re-render on any of them changing (a Note played re-renders the whole panel's knobs, not only those whose readout uses it): a change of behaviour in cost, beyond a tidy-up.
+- **tips.ts still imports midi/c16** for the C16 layout tip's words (its banks and shared buttons): they are the C16's own facts, and passing them through the Controller record would put the tip's words in it. Its tips are no longer found by name (below).
+- **Still open:** the 2 × 2 Demo test's WebKit cause: it needs GitHub's Linux WebKit to find.
 - **Later, not now:** the shared "a player holds a setting" helper, as the issue says.
 
-**Tests:** tsc, the lint; the describe, Presets, shortForms, History, lfo, Viewers, control surface, Tutorials, piano keys, input, patch and hooks unit tests; the about, mascot, piano and midiKeyboard specs in Chromium. Linux's fonts not tried (nothing here measures a width).
+**Tests:** tsc, the lint; the describe, Presets, shortForms, History, lfo, Viewers, control surface, Tutorials, piano keys, input, patch and hooks unit tests; the about, mascot, piano and midiKeyboard specs in Chromium. Later: the music, modulation, midi and mascot unit tests; the engine's browser tests in Chromium and WebKit (377 each); the tempo spec in Chromium; the mascot spec in Chromium and WebKit (85 passed, 3 skipped by the spec, none failed); the piano, MIDI Learn, C16 card and Geek specs in Chromium (61 passed). Linux's fonts not tried (nothing here measures a width).
 
 **To try:** nothing should look different. A Patch with both LFOs on one Destination at a low knob (Resonance 10 %, both Depths 10 %) no longer says "a swelling resonance" under its name.
