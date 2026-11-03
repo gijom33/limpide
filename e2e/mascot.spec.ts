@@ -752,11 +752,24 @@ test('dragged and let go, it is thrown, and lands on an edge', async ({ page }) 
   await listening(page);
   await bringBead(page);
   await expect.poll(async () => Math.abs((await footing(page)).below) <= 1).toBe(true);
-  const box = (await page.locator('.mascot-drop').boundingBox())!;
-  const at = { x: box.x + 9, y: box.y + box.height - 8 };
-  await page.mouse.move(at.x, at.y);
-  await page.mouse.down();
-  for (let i = 1; i <= 8; i++) await page.mouse.move(at.x - i * 25, at.y - i * 12);
+  // Picked up where it is now: it may stroll on between where it is read and the press, on a slow runner (1.22.0's
+  // deploy run), so a press that misses it is let go and tried again.
+  let box = (await page.locator('.mascot-drop').boundingBox())!;
+  let at = { x: 0, y: 0 };
+  await expect(async () => {
+    box = (await page.locator('.mascot-drop').boundingBox())!;
+    at = { x: box.x + 9, y: box.y + box.height - 8 };
+    await page.mouse.move(at.x, at.y);
+    await page.mouse.down();
+    await page.mouse.move(at.x - 25, at.y - 12);
+    try {
+      await expect(mascot(page)).toHaveAttribute('data-moving', 'held', { timeout: 1000 });
+    } catch (missed) {
+      await page.mouse.up();
+      throw missed;
+    }
+  }).toPass({ timeout: 15_000 });
+  for (let i = 2; i <= 8; i++) await page.mouse.move(at.x - i * 25, at.y - i * 12);
   await expect(mascot(page)).toHaveAttribute('data-moving', 'held');
   await page.mouse.up();
   await expect(mascot(page)).toHaveAttribute('data-moving', 'thrown');
