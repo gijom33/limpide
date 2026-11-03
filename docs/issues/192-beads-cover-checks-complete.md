@@ -41,7 +41,7 @@ Built with [181](./181-bead-never-over-text.md) on the branch worktree-agent-a90
 - **Nowhere clear:** the hover line is checked as the edges are. With every edge covered, no card to stand on and the hover line covered (a phone's page-wide description), it goes up out of sight under the tabs or the header, the way it comes; three or four across, with its edge covered all along and nowhere else clear, down out of sight behind its edge. It comes back into view once somewhere is clear.
 - **Two docked cards:** it stands on the topmost with room on its top: the later in the page, drawn over the other.
 - **The "Demo stopped" card:** it already went when a Tutorial or the Tour started (their start resets it, since issue 128). A new test in the Demo spec holds it, from a Note that stops the Demo to a Tutorial's and to the Tour's start.
-- **A layout change mid-ride:** a visit's or a ride's end is one rule, `visitEnds`, and the window turning to the stacked layout ends either.
+- **A layout change mid-ride:** a visit's or a ride's end is one rule, `visitEnds`, and the window turning to the stacked layout ends either. Since [197](./197-bead-rides-everywhere.md) (2026-11-02), it ends a visit only: Bead rides on a phone and in 2 × 2 too, so a ride goes on.
 - **The throw's walls:** the page's sides (its body's), so below 320 px it bounces off the page's edge, not the window's.
 - **Tests:** unit tests for each case (the hover line covered, the twin and the turned tail under a cover, beside a control too, two docked cards, a layout change mid-ride, a throw below 320 px) and the Demo spec's new test. Checked in the browser with a stand-in cover over the whole window of a phone: Bead went out of sight, and came back once it was gone.
 - **Tests run:** as in 181. The mascot and Demo specs pass in Chromium and WebKit but for 179's stroll test, which fails one run in eight on main's code too; the Linux fonts' stand-in (letter-spacing 0.04em and 0.12em) on the mascot spec's 164, 151 and 181 tests passed.
@@ -60,5 +60,5 @@ On the branch, with a dev server at http://localhost:5181:
 - Turn Osc 2's Detune down to −50 with both Oscillators in the Mixer, then open Display over Bead's edge: the twin does not sit under the panel.
 - On a phone, scroll so that Bead's only edge in view is under an open description (a Preset picked in the Patches panel): Bead goes up out of sight under the tabs, and comes back once the description closes.
 - Play the Demo, play a Note to stop it, then start a Tutorial at once: the "Demo stopped" card goes, and Bead stands on the Tutorial's card where it must.
-- Three across, wait for Bead to ride a slow Sine LFO (LFO 1 on, its Depth up, 0.5 Hz), then narrow the window to a phone's: it leaves the ride for the right column.
+- Three across, wait for Bead to ride a slow Sine LFO (LFO 1 on, its Depth up, 0.5 Hz), then narrow the window to a phone's: it leaves the ride for the right column. (Since 197, 2026-11-02: it rides on, while the plot is in view under the tabs.)
 - In a window under 320 px wide, throw Bead to the right: it bounces off the page's right side.

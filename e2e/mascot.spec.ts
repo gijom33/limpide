@@ -947,6 +947,97 @@ test('now and then it rides a slow Sine on an LFO plot, along its line, and goes
   await page.keyboard.up('f');
 });
 
+/** A patch in a Share link: LFO 1 a Sine at half a hertz, half on, and what `more` sets. */
+const slowLfo = (more: Record<string, unknown> = {}) => `/#p=${Buffer.from(JSON.stringify({ lfoAmount: 0.5, lfoRate: 0.5, ...more })).toString('base64url')}`;
+
+for (const [size, viewport, edge] of [
+  ['on a phone', { width: 375, height: 812 }, 'LFO & Envelopes'],
+  ['in 2 × 2', { width: 690, height: 640 }, 'LFO & Envelopes'],
+] as const) {
+  test(`${size}, now and then it rides a slow Sine on LFO 1's plot in view, on its line, and goes back to its edge after (issue 197)`, async ({ page }) => {
+    test.slow();
+    // Its every roll its lowest: its first ride is due soonest, 15 seconds in, and lasts the least, 8 seconds.
+    await page.addInitScript(() => {
+      Math.random = () => 0;
+    });
+    await page.setViewportSize(viewport);
+    await page.goto(slowLfo());
+    await listening(page);
+    await bringBead(page);
+    // LFO 1's plot in view, a little under its section's top edge, which is clear of the header and the tabs.
+    await page.evaluate(() => {
+      const plot = document.querySelector('.lfo-plot[data-lfo="1"]')!.getBoundingClientRect();
+      window.scrollTo({ top: scrollY + plot.top - 400, behavior: 'instant' });
+    });
+    await settles(page);
+    expect(Math.abs((await footing(page, edge)).bottom)).toBeLessThanOrEqual(1);
+    await page.mouse.move(2, viewport.height - 6); // off every control, so no tip stands over the plot
+    await page.keyboard.down('f'); // a Note held: it listens, and does no funny turn
+    await expect(mascot(page)).toHaveAttribute('data-ride', '1', { timeout: 40_000 });
+    await expect(mascot(page)).toHaveAttribute('data-moving', 'standing', { timeout: 5000 });
+    const feet: number[] = [];
+    for (let i = 0; i < 10; i++) {
+      const { off, foot, moving } = await offTheLine(page, 1);
+      expect(moving).toBe('standing');
+      expect(Math.abs(off), `off the line by ${off}`).toBeLessThanOrEqual(4);
+      feet.push(foot);
+      await page.waitForTimeout(150);
+    }
+    expect(Math.max(...feet) - Math.min(...feet), feet.join(', ')).toBeGreaterThan(4);
+    // Its ride over, back to its edge.
+    await expect(mascot(page)).toHaveAttribute('data-ride', '', { timeout: 15_000 });
+    await settles(page);
+    // Its box on the edge: the LFO's sway may tilt the drop a few pixels past it.
+    expect(Math.abs((await footing(page, edge)).bottom)).toBeLessThanOrEqual(1);
+    await page.keyboard.up('f');
+  });
+}
+
+/** Picks it up where it is, drags it to `to` in a few moves, and lets it go there. */
+async function dropAt(page: Page, to: { x: number; y: number }) {
+  // It may stroll on between where it is read and the press, on a slow runner: a press that misses is tried again.
+  let at = { x: 0, y: 0 };
+  await expect(async () => {
+    const box = (await page.locator('.mascot-drop').boundingBox())!;
+    at = { x: box.x + 9, y: box.y + box.height - 8 };
+    await page.mouse.move(at.x, at.y);
+    await page.mouse.down();
+    await page.mouse.move(at.x + (to.x - at.x) / 8, at.y + (to.y - at.y) / 8);
+    try {
+      await expect(mascot(page)).toHaveAttribute('data-moving', 'held', { timeout: 1000 });
+    } catch (missed) {
+      await page.mouse.up();
+      throw missed;
+    }
+  }).toPass({ timeout: 15_000 });
+  for (let i = 2; i <= 8; i++) await page.mouse.move(at.x + ((to.x - at.x) * i) / 8, at.y + ((to.y - at.y) * i) / 8);
+  await page.mouse.up();
+}
+
+test("three across, dropped on LFO 1's plot, a slow Triangle, it rides it; dropped on a Saw's, it lands as anywhere (issue 197)", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  // LFO 1 a slow Triangle; LFO 2 a Saw as slow, on too.
+  await page.goto(slowLfo({ lfoWaveform: 'triangle', lfo2Amount: 0.5, lfo2Rate: 0.5, lfo2Waveform: 'saw' }));
+  await listening(page);
+  await bringBead(page);
+  await expect.poll(async () => Math.abs((await footing(page)).below) <= 1).toBe(true);
+  const plot = async (lfo: number) => (await page.locator(`.lfo-plot[data-lfo="${lfo}"]`).boundingBox())!;
+  const one = await plot(1);
+  await dropAt(page, { x: one.x + one.width / 2, y: one.y + one.height / 2 });
+  await expect(mascot(page)).toHaveAttribute('data-ride', '1');
+  await expect(mascot(page)).toHaveAttribute('data-moving', 'standing', { timeout: 5000 });
+  const { off } = await offTheLine(page, 1);
+  expect(Math.abs(off), `off the line by ${off}`).toBeLessThanOrEqual(6);
+  // Picked up again and dropped on the Saw's plot: thrown, it lands on the edge under it, with no ride.
+  await page.mouse.move(2, 894);
+  const two = await plot(2);
+  await dropAt(page, { x: two.x + two.width / 2, y: two.y + two.height / 2 });
+  await expect(mascot(page)).toHaveAttribute('data-ride', '');
+  await settles(page);
+  await expect(mascot(page)).toHaveAttribute('data-ride', '');
+  expect(Math.abs((await footing(page)).below)).toBeLessThanOrEqual(1); // home, on the Amp's edge
+});
+
 /**
  * Where the drop is against the docked cards (the Demo's, a Tutorial's, the Tour's): whether any part of its drawing is
  * under one, and whether it is in the window, below the header (issue 164).

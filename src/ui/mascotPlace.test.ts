@@ -3,8 +3,8 @@ import { noteIndex } from '../music/tempo';
 import type { Lfo } from '../patch/patch';
 import { TURNED_PAST, TWIN_PX } from './mascotCling';
 import {
-  acrossOf, BOX, choosePerch, clearAlong, createMascotPlace, drawingOf, FASTEST_THROW, GRAVITY, HOVER_UNDER, LANDING_SECONDS,
-  LEEWAY, type Moving, nearestSpan, type Perch, type Placed, ridesFor, type Span, SWUNG_BELOW, standingCard, throwWalls, visitEnds, WINDUP_SECONDS,
+  acrossOf, BOX, choosePerch, chooseVisit, clearAlong, createMascotPlace, drawingOf, FASTEST_THROW, GRAVITY, HOVER_UNDER, LANDING_SECONDS,
+  LEEWAY, type Moving, nearestSpan, type Perch, type Placed, rideOnDrop, ridesFor, type Span, SWUNG_BELOW, standingCard, throwWalls, visitEnds, WINDUP_SECONDS,
 } from './mascotPlace';
 
 const H = 26;
@@ -150,8 +150,8 @@ describe('a visit or a ride ending (issues 141, 151 and 192)', () => {
     expect(visitEnds(visit, { ...now, now: 20 })).toBe(true);
   });
 
-  it('the window turning stacked ends it mid-ride, or mid-visit', () => {
-    expect(visitEnds(ride, { ...now, stacked: true })).toBe(true);
+  it('the window turning stacked ends a visit, not a ride: on a phone and in 2 × 2 it rides too (issues 192, 197)', () => {
+    expect(visitEnds(ride, { ...now, stacked: true })).toBe(false);
     expect(visitEnds(visit, { ...now, stacked: true })).toBe(true);
   });
 
@@ -417,6 +417,59 @@ describe('the mascot between its lines, by the laws of motion (issue 115)', () =
   });
 });
 
+describe('a visit due: a ride comes first (issue 197)', () => {
+  const always = (r: number) => () => r;
+
+  it('with an LFO to ride, the ride, however the draw goes', () => {
+    for (const r of [0, 0.5, 0.99]) expect(chooseVisit([1], ['Filter', 'Oscillators'], always(r))).toEqual({ id: 'ride 1', ride: 1 });
+  });
+
+  it('with two to ride, one of them at random', () => {
+    expect(chooseVisit([1, 2], ['Filter'], always(0))).toEqual({ id: 'ride 1', ride: 1 });
+    expect(chooseVisit([1, 2], ['Filter'], always(0.99))).toEqual({ id: 'ride 2', ride: 2 });
+  });
+
+  it('with none to ride, a section in view at random; with none at all, nothing', () => {
+    expect(chooseVisit([], ['Filter', 'Oscillators'], always(0.99))).toEqual({ id: 'Oscillators' });
+    expect(chooseVisit([], [], always(0))).toBeNull();
+  });
+});
+
+describe('dropped near an LFO plot it may ride, it rides it (issue 197)', () => {
+  // LFO 1's plot, and LFO 2's under it; its box 44 × 26, its foot at `foot`.
+  const plots = [
+    { lfo: 1 as const, box: { left: 100, right: 300, top: 200, bottom: 260 } },
+    { lfo: 2 as const, box: { left: 100, right: 300, top: 400, bottom: 460 } },
+  ];
+  const bead = (left: number, foot: number) => ({ left, right: left + 44, top: foot - 26, bottom: foot });
+
+  it('its box over the plot: that LFO', () => {
+    expect(rideOnDrop(bead(150, 240), plots, [1, 2])).toBe(1);
+    expect(rideOnDrop(bead(150, 430), plots, [1, 2])).toBe(2);
+  });
+
+  it('within 44 px of the plot, over it, under it or beside it: that LFO', () => {
+    expect(rideOnDrop(bead(150, 200 - 44), plots, [1])).toBe(1); // its foot 44 px over the plot
+    expect(rideOnDrop(bead(300 + 44, 230), plots, [1])).toBe(1); // 44 px right of it
+    expect(rideOnDrop(bead(100 - 44 - 44, 230), plots, [1])).toBe(1); // its right 44 px left of it
+  });
+
+  it('farther than 44 px: none', () => {
+    expect(rideOnDrop(bead(150, 200 - 45), plots, [1, 2])).toBeNull();
+    expect(rideOnDrop(bead(300 + 45, 230), plots, [1, 2])).toBeNull();
+    expect(rideOnDrop(bead(300 + 40, 200 - 40), plots, [1, 2])).toBeNull(); // off a corner by 56 px
+  });
+
+  it('near an LFO it may not ride (a Saw, a Square, too fast, at Depth 0): none, it lands as anywhere', () => {
+    expect(rideOnDrop(bead(150, 240), plots, [2])).toBeNull();
+    expect(rideOnDrop(bead(150, 240), plots, [])).toBeNull();
+  });
+
+  it('near both, the nearer', () => {
+    expect(rideOnDrop(bead(150, 380), plots, [1, 2])).toBe(2);
+  });
+});
+
 describe('picked up and thrown (issue 127)', () => {
   const edge: Perch = { id: 'Amp', foot: 400, hovering: false };
   const walls: Span = { min: 0, max: 1000 };
@@ -476,6 +529,23 @@ describe('picked up and thrown (issue 127)', () => {
     under.toss(0, 0, walls);
     const back = run(under, 0.1, 3, () => hover);
     expect(changes(back)).toEqual(['flying', 'hovering']); // under its line from the first frame
+  });
+
+  it('let go near a plot to ride, it drops onto the line with no throw, at its nearest spot along it (issue 197)', () => {
+    const plot: Perch = { id: 'surf 1', foot: 400, hovering: false };
+    const over = held();
+    over.hold(350, 300);
+    over.dropOntoLine();
+    const falls = run(over, 0.1, 2, () => plot, false, { min: 0, max: 300 }, 100);
+    expect(falls[0]).toMatchObject({ moving: 'falling', vy: expect.any(Number) });
+    expect(Math.min(...falls.map((f) => f.foot))).toBeGreaterThanOrEqual(300); // no hop up first
+    expect(falls.find((f) => f.landedAt !== null)).toMatchObject({ moving: 'landing', foot: 400, landedAt: 300 });
+    const under = held();
+    under.hold(150, 500);
+    under.dropOntoLine();
+    const flies = run(under, 0.1, 3, () => plot, false, { min: 0, max: 300 }, 100);
+    expect(changes(flies)[0]).toBe('flying');
+    expect(flies.find((f) => f.landedAt !== null)).toMatchObject({ foot: 400, landedAt: 150 });
   });
 
   it('never thrown faster than its fastest', () => {

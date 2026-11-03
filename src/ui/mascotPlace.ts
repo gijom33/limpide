@@ -267,6 +267,8 @@ export function createMascotPlace({ from, random = Math.random }: { from?: numbe
   let impact = 0;
   let last: number | null = null;
   let walls: Span = { min: -Infinity, max: Infinity };
+  // Let go near a plot it rides (issue 197): it drops from the pointer's hold, its throw given up, onto the line.
+  let droppedOntoLine = false;
   const placed = (landedX: number | null = null): Placed => ({
     foot,
     x: moving === 'falling' || moving === 'flying' || moving === 'held' || moving === 'thrown' || moving === 'sliding' || moving === 'clinging' ? x : null,
@@ -300,6 +302,17 @@ export function createMascotPlace({ from, random = Math.random }: { from?: numbe
       vy = speedDown * scale;
       walls = between;
       moving = 'thrown';
+    },
+    /**
+     * Let go near an LFO plot it rides (issue 197): its throw given up, it drops from where it is held onto the line, at
+     * its nearest spot along it; held under the line, it flies up onto it at once, its tail already under it.
+     */
+    dropOntoLine() {
+      if (moving !== 'held') return;
+      vx = vy = 0;
+      moving = 'falling';
+      droppedOntoLine = true;
+      on = '';
     },
     /** This frame, on `perch` (whose span is `span`), at `at` across the window when on its line. */
     frame(perch: Perch, span: Span, now: number, reduced: boolean, at: number): Placed {
@@ -382,11 +395,21 @@ export function createMascotPlace({ from, random = Math.random }: { from?: numbe
       }
       if (perch.id !== on) {
         on = perch.id;
-        // Leaving a control's side, from where it clung.
-        if (moving !== 'sliding' && moving !== 'clinging') x = at;
-        toX = spotIn(span, at);
+        const dropped = droppedOntoLine;
+        droppedOntoLine = false;
+        // Leaving a control's side, from where it clung; let go near a plot, from where it was held.
+        if (moving !== 'sliding' && moving !== 'clinging' && !dropped) x = at;
+        toX = dropped ? Math.min(span.max, Math.max(span.min, x)) : spotIn(span, at);
         leapFrom = x;
-        if (moving === 'hovering' && perch.hovering) foot = perch.foot;
+        if (dropped && !perch.hovering) {
+          // Dropped onto its line, or flying up onto it from under it.
+          if (perch.foot < foot) {
+            windupFrom = -Infinity;
+            clearance = CLEARANCE;
+            moving = 'flying';
+            thrust = true;
+          }
+        } else if (moving === 'hovering' && perch.hovering) foot = perch.foot;
         else if (perch.hovering) {
           // Losing ground: it takes off at once, its tail whirling, for its hover line (issue 142).
           windupFrom = -Infinity;
@@ -486,15 +509,43 @@ export interface Visit {
  * Whether a visit ends now: its time up, but while a Tutorial or the Tour is open (issue 151); its section out of view or
  * covered; or a ride's LFO no longer one to ride (its Depth, Waveform or Rate, the Demo, reduced motion) or its plot out
  * of view, or it picked up, sent away or a Tutorial or the Tour opening (issues 141, 151). The window turning to the
- * stacked layout ends either: there it keeps to its column (issue 192).
+ * stacked layout ends a visit: there it keeps to its column (issue 192); but not a ride, which it makes there too (issue
+ * 197).
  */
 export function visitEnds(
   visit: Visit,
   now: { now: number; stacked: boolean; rideable: readonly LfoNumber[]; inView: readonly string[]; held: boolean; leaving: boolean; guided: boolean },
 ): boolean {
-  if (now.stacked) return true;
+  if (now.stacked && !visit.ride) return true;
   if (now.now >= visit.until && !now.guided) return true;
   return visit.ride ? !now.rideable.includes(visit.ride) || now.held || now.leaving || now.guided : !now.inView.includes(visit.id);
+}
+
+/** A ride on LFO `lfo`'s plot, as a visit (issue 141). */
+export const rideOf = (lfo: LfoNumber): Omit<Visit, 'until'> => ({ id: `ride ${lfo}`, ride: lfo });
+
+/**
+ * Where it goes when a visit is due (issue 197): a ride first, on one of the LFOs `rides` at random, as rides come
+ * seldom; with none, one of the sections `inView` at random (issue 141); with neither, nowhere.
+ */
+export function chooseVisit(rides: readonly LfoNumber[], inView: readonly string[], random = Math.random): Omit<Visit, 'until'> | null {
+  if (rides.length) return rideOf(rides[Math.floor(random() * rides.length)]);
+  return inView.length ? { id: inView[Math.floor(random() * inView.length)] } : null;
+}
+
+/** Dropped this near an LFO's plot, in pixels, it rides it (issue 197): its own width. */
+const NEAR_PLOT = WIDTH;
+
+/**
+ * Dropped from the pointer's hold with its box at `bead` (issue 197): the LFO of `rideable` whose plot its box is over
+ * or within `NEAR_PLOT` of, the nearest, which it rides; null near none, or only near a plot it may not ride (a Saw, a
+ * Square, too fast, at Depth 0), when it lands as anywhere.
+ */
+export function rideOnDrop(bead: Cover, plots: readonly { lfo: LfoNumber; box: Cover }[], rideable: readonly LfoNumber[]): LfoNumber | null {
+  const off = ({ box }: { box: Cover }) =>
+    Math.hypot(Math.max(0, box.left - bead.right, bead.left - box.right), Math.max(0, box.top - bead.bottom, bead.top - box.bottom));
+  const near = plots.filter((p) => rideable.includes(p.lfo) && off(p) <= NEAR_PLOT).sort((a, b) => off(a) - off(b));
+  return near[0]?.lfo ?? null;
 }
 
 /** The fastest LFO it rides, in Hz (issue 141): slower, its plot draws a swell it can stand on. */
