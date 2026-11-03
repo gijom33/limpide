@@ -4,7 +4,7 @@ import type { Patch } from '../../patch/patch';
 import type { PatchStore } from '../../patch/patchStore';
 import { PRESETS } from '../../patch/presets';
 import { loadFinished, saveFinished } from '../../tutorial/progress';
-import { applyStep, controlName, differences, doStep, type Held, held, isMade, onTarget, type Tutorial } from '../../tutorial/tutorial';
+import { applyStep, controlName, differences, doStep, type Held, held, isMade, onTarget, readyFor, type Tutorial } from '../../tutorial/tutorial';
 import type { Overlay, Overlays } from '../../viewers/overlays';
 
 /** How long a control must rest within reach of its target for the Step to count. */
@@ -90,6 +90,9 @@ export function useTutorialState({ storage, patch, patchName, patches, overlays,
     const next = lesson.tutorial.steps[index];
     const off = next?.kind === 'display' && !lesson.done[index] && overlays[next.overlay];
     if (off) hideOverlay(next.overlay);
+    // A Rate Step not yet made starts with its knob turning what it asks: Sync switched to suit (issue 193).
+    const ready = next && !lesson.done[index] ? readyFor(next, patch) : patch;
+    if (ready !== patch) patches.change(() => ready, 'tutorial');
     setLesson((l) => l && { ...l, index, since: held(next, scene), turnedOff: off && !l.turnedOff.includes(index) ? [...l.turnedOff, index] : l.turnedOff });
   };
   const matchPreset = () => preset && patches.load(preset.name, preset.patch);

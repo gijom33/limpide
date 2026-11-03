@@ -66,7 +66,7 @@ it('a synced Rate’s tip gives its Hz at the tempo, which its readout leaves ou
   const tip = syncedRateTip(noteIndex('1/4'), 120);
   expect(tip.title).toBe('Rate');
   expect(tip.body).toMatch(/note value at the tempo/);
-  expect(tip.body).toMatch(/At 120 BPM, 1\/4 is 2 Hz\.$/);
+  expect(tip.body).toMatch(/At 120 BPM, 1\/4 is 2.00 Hz\.$/); // read as the Rate in Hz reads it (issue 193)
   expect(TIPS.lfoNote.body).not.toMatch(/beside/);
 });
 

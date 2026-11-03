@@ -284,8 +284,8 @@ test('the tempo learns a knob and Tap a pad; a knob on an LFO’s Rate turns its
   await expect(learnBar(page)).toContainText(/LFO 1 Rate.*CC 31/);
   await page.keyboard.press('Escape');
 
-  await play(page, ...times(5, cc(30, 1))); // two BPM a click
-  await expect(bpm).toHaveAttribute('aria-valuenow', '130');
+  await play(page, ...times(5, cc(30, 1))); // a BPM a click (issue 193)
+  await expect(bpm).toHaveAttribute('aria-valuenow', '125');
   await page.getByRole('button', { name: 'LFO 1 Sync' }).click();
   await expect(rate).toHaveAttribute('aria-valuetext', /^1\/4, /);
   await play(page, ...times(2, cc(31, 1))); // a note value for every two clicks

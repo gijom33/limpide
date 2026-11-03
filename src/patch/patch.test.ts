@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { noteIndex } from '../music/tempo';
-import { CHOICES, defaultPatch, formatParam, knobTurns, lfoHz, lfos, PARAMS, rateKnob, samePatch, sameSound, setFilter, setLfo, setParam, setWaveform } from './patch';
+import { CHOICES, defaultPatch, followsTheBeat, formatParam, knobTurns, lfoHz, lfos, PARAMS, rateKnob, samePatch, sameSound, setFilter, setLfo, setParam, setWaveform } from './patch';
 
 describe('defaultPatch', () => {
   it('starts every Parameter at its declared default', () => {
@@ -162,6 +162,17 @@ describe('Sync (issue 112)', () => {
     expect(setParam(defaultPatch(), 'lfoNote', 3.4).lfoNote).toBe(3);
     expect(setParam(defaultPatch(), 'lfoNote', 99).lfoNote).toBe(23);
     expect(formatParam('lfoNote', 23)).toBe('1/32 T');
+  });
+});
+
+describe('the beat (issue 193)', () => {
+  it('an LFO follows it only synced and free: with Retrigger on, each Note starts its cycle', () => {
+    const p = defaultPatch();
+    expect(followsTheBeat(p, 1)).toBe(false);
+    expect(followsTheBeat(setLfo(p, { sync: 'on' }, 1), 1)).toBe(true);
+    expect(followsTheBeat(setLfo(p, { sync: 'on', retrigger: 'note' }, 1), 1)).toBe(false);
+    expect(followsTheBeat(setLfo(p, { sync: 'on' }, 2), 1)).toBe(false);
+    expect(followsTheBeat(setLfo(p, { sync: 'on' }, 2), 2)).toBe(true);
   });
 });
 

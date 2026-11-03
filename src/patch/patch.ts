@@ -1,5 +1,6 @@
 import type { LfoWaveform } from '../modulation/lfo';
 import type { Waveform } from '../music/harmonics';
+import { hzText } from '../music/pitch';
 import { NOTE_VALUES, noteHz, noteIndex } from '../music/tempo';
 import { decibelGrid, type Grid, linearGrid, pitchGrid, seriesGrid, steppedGrid } from './grid';
 import type { Range } from './taper';
@@ -360,6 +361,12 @@ export const rateKnob = (patch: Patch, lfo: LfoNumber): ParamId => {
   return patch[k.sync] === 'on' ? k.note : k.rate;
 };
 
+/**
+ * Whether an LFO's cycle follows the beat, so its beats are marked on its plot and the Timeline: Sync on with Retrigger
+ * off. With Retrigger on, each Note starts its cycle, which the beat does not (issue 193).
+ */
+export const followsTheBeat = (patch: Patch, lfo: LfoNumber) => patch[LFO_KEYS[lfo].sync] === 'on' && patch[LFO_KEYS[lfo].retrigger] === 'free';
+
 /** The Parameter a control mapped to `id` turns now: an LFO's Rate turns its note value while Sync is on. */
 export const knobTurns = (patch: Patch, id: ParamId): ParamId => (id === 'lfoRate' ? rateKnob(patch, 1) : id === 'lfo2Rate' ? rateKnob(patch, 2) : id);
 
@@ -416,8 +423,7 @@ export function secondsText(seconds: number): string {
 export function formatParam(id: ParamId, value: number): string {
   switch (PARAMS[id].unit) {
     case 'Hz':
-      if (value >= 1000) return `${(value / 1000).toFixed(2)} kHz`;
-      return value < 10 ? `${value.toFixed(2)} Hz` : `${Math.round(value)} Hz`;
+      return hzText(value);
     case 's':
       if (id === 'glide' && value <= GLIDE_OFF * 1.001) return 'Off';
       return secondsText(value);

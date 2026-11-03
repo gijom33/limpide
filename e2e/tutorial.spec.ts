@@ -229,14 +229,14 @@ test('Wobble’s Sync Step passes when Sync is switched on by hand, then the Rat
   await expect(ringed(page)).toHaveAttribute('data-learn', 'param:lfoRate'); // the Rate's knob, which turns the note value
   await expect(ringed(page)).toHaveAttribute('data-tutorial-target', '→ 1/4 T');
   const rate = lfo.getByRole('slider', { name: 'LFO 1 Rate' });
-  await expect(rate).toHaveAttribute('aria-valuetext', '1/4, 2 Hz');
+  await expect(rate).toHaveAttribute('aria-valuetext', '1/4, 2.00 Hz');
   await rate.focus();
   await page.keyboard.press('ArrowUp'); // 1/8 D, the next note value: within 5 % of the travel, but not the one asked
   await expect(rate).toHaveAttribute('aria-valuetext', /^1\/8 D/);
   await page.waitForTimeout(600);
   await expect(action(page, 'Next')).toBeDisabled();
   await page.keyboard.press('ArrowUp');
-  await expect(rate).toHaveAttribute('aria-valuetext', '1/4 T, 3 Hz');
+  await expect(rate).toHaveAttribute('aria-valuetext', '1/4 T, 3.00 Hz');
   await expect(card(page)).toContainText('three a second again');
   await expect(action(page, 'Next')).toBeEnabled();
 
@@ -252,6 +252,24 @@ test('Wobble’s Sync Step passes when Sync is switched on by hand, then the Rat
   await expect(bpm).toHaveAttribute('aria-valuenow', '100');
   await doEverything(page);
   await expect(card(page)).toContainText('This is the Wobble Preset, built by you.');
+});
+
+test('Wobble’s 3 Hz Step, with Sync switched on early, switches it off so the Rate knob turns the Hz (issue 193)', async ({ page }) => {
+  await open(page, 'Wobble');
+  await action(page, 'Start').click();
+  for (let i = 0; i < 6; i++) await makeStep(page); // to LFO 1's Depth
+  const lfo = page.getByRole('group', { name: 'LFO 1', exact: true });
+  const sync = lfo.getByRole('button', { name: 'LFO 1 Sync' });
+  await sync.click();
+  await expect(sync).toHaveAttribute('aria-pressed', 'true');
+  await makeStep(page);
+  await expect(ringed(page)).toHaveAttribute('data-tutorial-target', '→ 3.00 Hz');
+  await expect(sync).toHaveAttribute('aria-pressed', 'false');
+  const rate = lfo.getByRole('slider', { name: 'LFO 1 Rate' });
+  await expect(rate).toHaveAttribute('aria-valuetext', '2.00 Hz');
+  await rate.focus();
+  await page.keyboard.press('ArrowUp');
+  await expect(rate).toHaveAttribute('aria-valuetext', /^[\d.]+ Hz$/); // the Hz, not a note value
 });
 
 test('the Demo ends a Tutorial (it loads its own Presets)', async ({ page }) => {

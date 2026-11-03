@@ -85,28 +85,28 @@ test('Sync turns the Rate knob to note values, "1/4" (2 Hz at 120 BPM, in its ti
   expect(hz).toMatch(/Hz$/);
   await sync.click();
   await expect(sync).toHaveAttribute('aria-pressed', 'true');
-  await expect(rate).toHaveAttribute('aria-valuetext', '1/4, 2 Hz');
+  await expect(rate).toHaveAttribute('aria-valuetext', '1/4, 2.00 Hz');
   await rate.focus();
   await page.keyboard.press('ArrowUp');
   await page.keyboard.press('ArrowUp');
   await page.keyboard.press('ArrowUp');
-  await expect(rate).toHaveAttribute('aria-valuetext', '1/8, 4 Hz');
+  await expect(rate).toHaveAttribute('aria-valuetext', '1/8, 4.00 Hz');
   await expect(lfo(page).locator('.knob', { has: page.getByRole('slider', { name: 'LFO 1 Rate' }) }).locator('.knob-value > :first-child')).toHaveText('1/8');
   await rate.hover();
-  await expect(page.getByRole('tooltip')).toContainText('At 120 BPM, 1/8 is 4 Hz.');
+  await expect(page.getByRole('tooltip')).toContainText('At 120 BPM, 1/8 is 4.00 Hz.');
   await sync.click();
   await expect(rate).toHaveAttribute('aria-valuetext', hz!);
   await sync.click();
-  await expect(rate).toHaveAttribute('aria-valuetext', '1/8, 4 Hz');
+  await expect(rate).toHaveAttribute('aria-valuetext', '1/8, 4.00 Hz');
   // The synced Rate follows the tempo at once.
   await bpm(page).focus();
   await page.keyboard.press('PageDown');
   await page.keyboard.press('PageDown');
   await page.keyboard.press('PageDown');
-  await expect(rate).toHaveAttribute('aria-valuetext', '1/8, 3 Hz');
+  await expect(rate).toHaveAttribute('aria-valuetext', '1/8, 3.00 Hz');
 });
 
-test('the beats show on the LFO plot and the Timeline only while Sync is on (issue 112)', async ({ page }) => {
+test('the beats show on the LFO plot and the Timeline only while Sync is on, Retrigger off (issues 112, 193)', async ({ page }) => {
   await page.goto('/');
   const plot = page.getByRole('img', { name: /^LFO 1:/ });
   const timeline = page.getByRole('img', { name: 'Envelope Timeline' });
@@ -118,6 +118,13 @@ test('the beats show on the LFO plot and the Timeline only while Sync is on (iss
   // A second of the plot holds two beats of 120 BPM; the Timeline's two seconds, four.
   await expect(plot).toHaveAttribute('data-beats', /^[23]$/);
   await expect(timeline).toHaveAttribute('data-beats', /^[45]$/);
+  // With Retrigger on, each Note starts the cycle, which the beat does not.
+  const retrigger = lfo(page).getByRole('button', { name: 'LFO 1 Retrigger' });
+  await retrigger.click();
+  await expect(plot).toHaveAttribute('data-beats', '0');
+  await expect(timeline).toHaveAttribute('data-beats', '0');
+  await retrigger.click();
+  await expect(plot).toHaveAttribute('data-beats', /^[23]$/);
   await lfo(page).getByRole('button', { name: 'LFO 1 Sync' }).click();
   await expect(plot).toHaveAttribute('data-beats', '0');
   await expect(timeline).toHaveAttribute('data-beats', '0');

@@ -1,7 +1,7 @@
-import { BPM_STEP } from '../music/tempo';
+import { BPM_STEP, bpmPosition, clampBpm, positionBpm } from '../music/tempo';
 import { stepParamBy } from '../patch/grid';
 import { type ChoiceId, PARAMS, type ParamId } from '../patch/patch';
-import { answeredBy, answers, type KnownController } from './controller';
+import { answers, type KnownController } from './controller';
 import { detectEncoderMode, detectKnobMode, relativeDelta, relativeModeOf } from './encoderMode';
 import {
   type ActionId, type Control, controlKey, type KnobMode, knobModeOf, type Mapping, type MappingStore, PITCH_BEND, sameControl,
@@ -87,7 +87,7 @@ interface Dial {
   set(position: number): void;
   /** Its travel per step, if it moves by whole steps (an Octave, a note value, a BPM), else 0. */
   unit: number;
-  /** Moves it `steps` steps of its Grid, signed: a Parameter that has one (issue 160). */
+  /** Moves it `steps` steps, signed: a Parameter's of its Grid (issue 160), the tempo's of a BPM (issue 193). */
   step?(steps: number): void;
   /** Whether its travel is centred on zero (Detune, the Filter's Amount), so CC 64 is its zero (issue 160). */
   centred?: boolean;
@@ -181,28 +181,29 @@ export function createControlSurface(synth: Synth) {
   };
 
   /**
-   * A Relative message's steps, as sent; but a fast turn's message (more than a step) on a known Controller's layout
-   * counts as that Controller says: a C16's 66 a third of a step.
+   * A Relative message's steps, as sent; but a fast turn's message (more than a step) from a known Controller counts as
+   * that Controller says, whatever made the Mapping (its layout, Learn, Quick Setup): a C16's 66 a third of a step (issue
+   * 193).
    */
-  const relativeSteps = (mapping: Mapping, mode: 'relative-twos' | 'relative-centred', value: number) => {
+  const relativeSteps = (from: KnownController | undefined, mode: 'relative-twos' | 'relative-centred', value: number) => {
     const delta = relativeDelta(mode, value);
-    const fastTurn = answeredBy(mapping)?.fastTurnStep;
+    const fastTurn = from?.fastTurnStep;
     if (fastTurn === undefined || Math.abs(delta) <= 1) return delta;
     return Math.sign(delta) * fastTurn;
   };
 
   /**
    * A knob or fader moving a dial (a Parameter, or the tempo): Relative by steps, Absolute with Pickup. A Parameter with
-   * a Grid moves a step of it a click (issue 160), a C16's thirds gathered into whole steps; a stepped dial (`unit`, its
-   * travel per step: an Octave, a note value, a BPM) gathers a Relative knob's steps until they make a whole one, a step
+   * a Grid moves a step of it a click (issue 160), and the tempo a BPM (issue 193), a C16's thirds gathered into whole
+   * steps; a stepped dial (`unit`, its travel per step: an Octave, a note value) gathers a Relative knob's steps until they make a whole one, a step
    * for every two clicks at most, so a slow turn or a C16's thirds still move it.
    */
-  const moveDial = (mapping: Mapping, dial: Dial, value: number) => {
+  const moveDial = (mapping: Mapping, dial: Dial, value: number, from: KnownController | undefined) => {
     const target = mapping.target;
     if (mapping.mode === 'trigger' || mapping.mode === 'toggle' || mapping.mode === 'detect') return;
     const current = dial.get();
     if (mapping.mode !== 'absolute') {
-      const steps = relativeSteps(mapping, mapping.mode, value);
+      const steps = relativeSteps(from, mapping.mode, value);
       const key = controlKey(mapping.control);
       if (dial.step) {
         // A turn back forgets the thirds gathered the other way, so it answers at once.
@@ -251,8 +252,13 @@ export function createControlSurface(synth: Synth) {
       centred: min === -max,
     };
   };
-  /** The tempo as a dial, a BPM a step (issue 112). */
-  const tempoDial = (): Dial => ({ get: synth.tempoPosition, set: synth.setTempoPosition, unit: BPM_STEP });
+  /** The tempo as a dial (issue 112): a Relative click a BPM, a C16's thirds gathered (issue 193). */
+  const tempoDial = (): Dial => ({
+    get: synth.tempoPosition,
+    set: synth.setTempoPosition,
+    unit: BPM_STEP,
+    step: (steps) => synth.setTempoPosition(bpmPosition(clampBpm(positionBpm(synth.tempoPosition()) + steps))),
+  });
 
   /** Whether a button's message is a press: its CC rising past the middle, not its release (a momentary one's 0). */
   const pressedNow = (mapping: Mapping, value: number) => {
@@ -262,7 +268,7 @@ export function createControlSurface(synth: Synth) {
     return down && !wasDown;
   };
 
-  const moveChoice = (mapping: Mapping, id: ChoiceId, value: number) => {
+  const moveChoice = (mapping: Mapping, id: ChoiceId, value: number, from: KnownController | undefined) => {
     if (mapping.mode === 'detect') return;
     if (mapping.mode === 'trigger' && !pressedNow(mapping, value)) return;
     const { index, count } = synth.choice(id);
@@ -272,7 +278,7 @@ export function createControlSurface(synth: Synth) {
     } else if (mapping.mode === 'absolute') {
       next = Math.min(count - 1, Math.floor((value / 128) * count));
     } else {
-      const total = (clicks.get(controlKey(mapping.control)) ?? 0) + relativeSteps(mapping, mapping.mode, value);
+      const total = (clicks.get(controlKey(mapping.control)) ?? 0) + relativeSteps(from, mapping.mode, value);
       const steps = Math.trunc(total / CLICKS_PER_CHOICE);
       next = Math.min(count - 1, Math.max(0, index + steps));
       // Turns past either end are dropped, so turning back responds at once.
@@ -282,7 +288,7 @@ export function createControlSurface(synth: Synth) {
     synth.touched?.(mapping.target, 'moved');
   };
 
-  const apply = (mapping: Mapping, message: ControlMessage) => {
+  const apply = (mapping: Mapping, message: ControlMessage, from: KnownController | undefined) => {
     const { target } = mapping;
     if (mapping.mode === 'detect') {
       if (message.type !== 'cc') return;
@@ -292,13 +298,13 @@ export function createControlSurface(synth: Synth) {
       detecting.delete(controlKey(mapping.control));
       const found: Mapping = { ...mapping, mode: detectKnobMode(values) };
       store.replace(found);
-      return apply(found, message);
+      return apply(found, message, from);
     }
     if (target.kind === 'param' || target.kind === 'choice' || target.kind === 'tempo') {
       if (message.type !== 'cc') return;
-      if (target.kind === 'param') moveDial(mapping, paramDial(target.id), message.value);
-      else if (target.kind === 'tempo') moveDial(mapping, tempoDial(), message.value);
-      else moveChoice(mapping, target.id, message.value);
+      if (target.kind === 'param') moveDial(mapping, paramDial(target.id), message.value, from);
+      else if (target.kind === 'tempo') moveDial(mapping, tempoDial(), message.value, from);
+      else moveChoice(mapping, target.id, message.value, from);
       return;
     }
     // An Action fires on each press: a note-on, a toggle button's every message, or a button's CC rising past the
@@ -399,7 +405,7 @@ export function createControlSurface(synth: Synth) {
           ? { kind: 'cc', channel: message.channel, number: message.controller }
           : { kind: 'note', channel: message.channel, number: message.note },
       );
-      if (mapping && answers(mapping, from)) return apply(mapping, message);
+      if (mapping && answers(mapping, from)) return apply(mapping, message, from);
       // Unmapped: a keyboard's own controls do what a synth player expects.
       if (incoming.type === 'pitchBend') return synth.bend?.(incoming.value);
       if (message.type === 'cc' && message.controller === SUSTAIN) return synth.pedal?.(message.value >= 64);
@@ -442,6 +448,16 @@ export function createControlSurface(synth: Synth) {
       const key = controlKey(control);
       for (const state of [pickups, clicks, gathered, thirds, detecting]) state.delete(key);
       store.replace({ ...mapping, mode: mode === 'absolute' ? 'absolute' : relativeModeOf(lastValues.get(key)) });
+    },
+    /**
+     * What the knobs mapped to `target` have gathered towards a step starts afresh: what they turn has changed (an LFO's
+     * Sync switched, the Rate knob turning the Hz or the note value), so a share of a step gathered on one is not
+     * carried to the other (issue 193).
+     */
+    restartSteps(target: Target) {
+      for (const mapping of store.list())
+        if (mapping.target.kind === target.kind && mapping.target.id === target.id)
+          for (const state of [clicks, gathered, thirds]) state.delete(controlKey(mapping.control));
     },
     stopLearn() {
       clearTimeout(settle);

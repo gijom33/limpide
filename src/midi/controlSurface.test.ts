@@ -753,17 +753,64 @@ describe('the Rate, a note value with Sync on, and the tempo (issue 112)', () =>
     r.store.set({ control: { kind: 'cc', channel: 1, number: 31 }, target: { kind: 'tempo', id: 'bpm' }, mode: 'relative-twos' });
     r.store.set({ control: { kind: 'cc', channel: 1, number: 32 }, target: { kind: 'action', id: 'tap' }, mode: 'trigger' });
     r.surface.handle(cc(31, 1));
+    expect(r.tempo()).toBe(121); // a BPM a click, so an odd BPM is reached from an even one (issue 193)
     r.surface.handle(cc(31, 1));
-    expect(r.tempo()).toBe(124);
-    r.surface.handle(cc(31, 127));
     expect(r.tempo()).toBe(122);
+    r.surface.handle(cc(31, 127));
+    expect(r.tempo()).toBe(121);
     r.surface.handle(cc(32, 127));
     r.surface.handle(cc(32, 0));
     expect(r.actions).toEqual(['tap']);
   });
+
+  it('counts a third of a BPM for a C16’s 66 on the tempo (issue 193)', () => {
+    const r = synced();
+    r.store.set({ control: { kind: 'cc', channel: 1, number: 31 }, target: { kind: 'tempo', id: 'bpm' }, mode: 'relative-centred', device: 'c16' });
+    for (let i = 0; i < 2; i++) r.surface.handle(cc(31, 66), C16);
+    expect(r.tempo()).toBe(120);
+    r.surface.handle(cc(31, 66), C16);
+    expect(r.tempo()).toBe(121);
+  });
 });
 
 describe('the C16’s knobs: a 65 one step, a 66 a third of one (issue 145)', () => {
+  it('counts a 66 as a third whatever made its Mapping: Learn’s or Quick Setup’s, from the C16 it came from (issue 193)', () => {
+    const r = rig();
+    r.store.set({ control: { kind: 'cc', channel: 1, number: 24 }, target: resonance, mode: 'relative-centred' }); // learned: no tag
+    for (let i = 0; i < 3; i++) r.surface.handle(cc(24, 66), C16);
+    expect(r.positions.resonance).toBeCloseTo(0.21, 9); // three thirds, one step
+  });
+
+  it('forgets the thirds gathered on the Hz when Sync changes, so its first 66 back moves no step (issue 193)', () => {
+    const positions: Partial<Record<ParamId, number>> = { lfoRate: valueToPosition(PARAMS.lfoRate, 2), lfoNote: 13 / 23 };
+    let sync = false;
+    const store = createMappingStore(memoryStorage());
+    const surface = createControlSurface({
+      ...valuesOf(positions),
+      store,
+      position: (id) => positions[id] ?? 0,
+      setPosition: (id, p) => void (positions[id] = p),
+      turned: (id) => (id === 'lfoRate' && sync ? 'lfoNote' : id),
+      tempoPosition: () => 0,
+      setTempoPosition: () => {},
+      action: () => {},
+      choice: () => ({ index: 0, count: 5 }),
+      setChoice: () => {},
+      press: () => {},
+      release: () => {},
+    });
+    const rate = { kind: 'param', id: 'lfoRate' } as const;
+    store.set({ control: { kind: 'cc', channel: 1, number: 30 }, target: rate, mode: 'relative-centred', device: 'c16' });
+    surface.handle(cc(30, 66), C16);
+    surface.handle(cc(30, 66), C16); // two thirds on the Hz
+    sync = true;
+    surface.restartSteps(rate);
+    sync = false;
+    surface.restartSteps(rate);
+    surface.handle(cc(30, 66), C16);
+    expect(valueAt(positions, 'lfoRate')).toBeCloseTo(2, 9); // a third: not yet a step
+  });
+
   /** A C16 knob on the Resonance, from 0: a step is 1 % (issue 160). */
   const c16Knob = () => {
     const positions: Partial<Record<ParamId, number>> = { resonance: 0 };

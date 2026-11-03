@@ -1,4 +1,13 @@
 export const A4_MIDI = 69;
+
+/**
+ * A frequency as a knob reads it: "2.00 Hz", "300 Hz", "2.50 kHz". A synced Rate's Hz reads the same as the Rate in Hz
+ * (issue 193).
+ */
+export function hzText(hz: number): string {
+  if (hz >= 1000) return `${(hz / 1000).toFixed(2)} kHz`;
+  return hz < 10 ? `${hz.toFixed(2)} Hz` : `${Math.round(hz)} Hz`;
+}
 const A4_HZ = 440;
 
 /** Equal-tempered frequency of a MIDI note number, tuned to A4 = 440 Hz. */

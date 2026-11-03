@@ -3,7 +3,7 @@ import { noteIndex } from '../music/tempo';
 import { defaultPatch, PARAMS, type Patch } from '../patch/patch';
 import { positionToValue, valueToPosition } from '../patch/taper';
 import { DEFAULT_OVERLAYS } from '../viewers/overlays';
-import { applyStep, controlName, differences, doStep, held, inDisplay, isMade, onTarget, reached, rebuild, type Step, type Tutorial, targetText } from './tutorial';
+import { applyStep, controlName, differences, doStep, held, inDisplay, isMade, onTarget, reached, readyFor, rebuild, type Step, type Tutorial, targetText } from './tutorial';
 
 const cutoff: Step = { kind: 'param', id: 'cutoff', to: 800, say: 'Turn Cutoff down.', note: 'Darker.' };
 const slope: Step = { kind: 'choice', id: 'filterSlope', to: 24, say: 'Choose 24 dB.', note: 'Steeper.' };
@@ -58,6 +58,20 @@ describe('a Step', () => {
     expect(applyStep(defaultPatch(), cutoff).cutoff).toBe(800);
     expect(applyStep(defaultPatch(), slope).filterSlope).toBe(24);
     expect(applyStep(defaultPatch(), ideal)).toEqual(defaultPatch());
+  });
+
+  it('on an LFO’s Rate, has its knob turn what it asks: Sync off for the Hz, on for a note value (issue 193)', () => {
+    const hz: Step = { kind: 'param', id: 'lfoRate', to: 3, say: 'Set the Rate to 3 Hz.', note: 'Faster.' };
+    const note: Step = { kind: 'param', id: 'lfoNote', to: noteIndex('1/4 T'), say: 'Turn the Rate to 1/4 T.', note: 'Three in two.' };
+    const synced = { ...defaultPatch(), lfoSync: 'on' } as const;
+    expect(readyFor(hz, synced).lfoSync).toBe('off');
+    expect(readyFor(note, defaultPatch()).lfoSync).toBe('on');
+    const unsynced = defaultPatch();
+    expect(readyFor(hz, unsynced)).toBe(unsynced); // nothing to change
+    expect(readyFor(cutoff, synced)).toBe(synced);
+    expect(readyFor({ ...hz, id: 'lfo2Rate' }, { ...synced, lfo2Sync: 'on' })).toEqual({ ...synced, lfo2Sync: 'off' });
+    // "Do it for me" with Sync switched on meanwhile: the Hz set, and turned by its knob again.
+    expect(applyStep(synced, hz)).toMatchObject({ lfoRate: 3, lfoSync: 'off' });
   });
 
   it('names its target as the control shows it', () => {

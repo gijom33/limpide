@@ -1,3 +1,5 @@
+import { hzText } from './pitch';
+
 /**
  * The tempo (issue 112): the page's, not the Patch's, a whole BPM; an LFO with Sync on repeats once a note value at
  * it. The note values go from 4 bars to 1/32, each straight, dotted (half as long again) and triplet (two thirds as
@@ -32,11 +34,11 @@ export const noteIndex = (name: string) => NOTE_VALUES.findIndex((v) => v.name =
 export const noteHz = (index: number, bpm: number) => bpm / 60 / NOTE_VALUES[index].beats;
 
 /**
- * A synced Rate's note value, which its knob reads, and its Hz to three figures, which its tip gives and the Synth Geek
- * Layer works out ("1/8", "4 Hz", "1.33 Hz").
+ * A synced Rate's note value, which its knob reads, and its Hz, which its tip, its spoken value and the LFO's plot give,
+ * read as the Rate in Hz reads it ("1/8", "4.00 Hz", "1.33 Hz", issue 193).
  */
 export function formatSyncedRate(index: number, bpm: number): { note: string; hz: string } {
-  return { note: NOTE_VALUES[index].name, hz: `${Number(noteHz(index, bpm).toPrecision(3))} Hz` };
+  return { note: NOTE_VALUES[index].name, hz: hzText(noteHz(index, bpm)) };
 }
 
 /** Taps further apart than the slowest beat start the count again. */

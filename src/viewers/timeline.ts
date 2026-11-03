@@ -1,7 +1,7 @@
 import { DESTINATIONS, destinationLevel, lfoDestinations } from '../modulation/destinations';
 import { type Beat, beatsBetween } from '../modulation/lfo';
 import type { Modulation } from '../modulation/modulationModel';
-import { formatParam, type LfoDestination, type Patch, type StageId } from '../patch/patch';
+import { followsTheBeat, formatParam, type LfoDestination, type Patch, type StageId } from '../patch/patch';
 import { cssVar, curveWidth, haloText, prepareCanvas } from './canvas';
 import { createDashState } from './dashState';
 import { createFreezeLatch } from './freezeLatch';
@@ -15,7 +15,7 @@ interface Source {
   now(): number;
   /** The Patch in force at a moment: whether the Filter Envelope and the LFOs move anything, and what. */
   patchAt(time: number): Patch | undefined;
-  /** The tempo, whose beats are marked while an LFO is synced (issue 112). */
+  /** The tempo, whose beats are marked while an LFO's cycle follows them (issues 112, 193). */
   tempo(): Beat;
 }
 
@@ -131,10 +131,11 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
     const columns = Math.ceil(width);
     const pixelsPerSecond = width / seconds;
 
-    // The tempo's beats, broken lines between the seconds' (issue 112), while either LFO is synced.
+    // The tempo's beats, broken lines between the seconds' (issue 112), while either LFO's cycle follows them (synced,
+    // Retrigger off: issue 193).
     const patchNow = source.patchAt(now);
-    const synced = patchNow?.lfoSync === 'on' || patchNow?.lfo2Sync === 'on';
-    const beats = synced ? beatsBetween(source.tempo(), now - seconds, now) : [];
+    const onTheBeat = !!patchNow && (followsTheBeat(patchNow, 1) || followsTheBeat(patchNow, 2));
+    const beats = onTheBeat ? beatsBetween(source.tempo(), now - seconds, now) : [];
     canvas.dataset.beats = String(beats.length);
     g.setLineDash([2, 3]);
     for (const t of beats) {

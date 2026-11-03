@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { formatParam } from '../patch/patch';
 import { clampBpm, formatSyncedRate, NOTE_VALUES, noteHz, noteIndex, TEMPO, tappedBpm } from './tempo';
 
 describe('the note values (issue 112)', () => {
@@ -18,10 +19,11 @@ describe('the note values (issue 112)', () => {
     expect(noteHz(noteIndex('1/32'), 240)).toBeCloseTo(32, 12);
   });
 
-  it('named by the note value, its Hz in a few figures for its tip: "1/8", "4 Hz"', () => {
-    expect(formatSyncedRate(noteIndex('1/8'), 120)).toEqual({ note: '1/8', hz: '4 Hz' });
+  it('named by the note value, its Hz read as the Rate in Hz reads it, for its tip: "1/8", "4.00 Hz" (issue 193)', () => {
+    expect(formatSyncedRate(noteIndex('1/8'), 120)).toEqual({ note: '1/8', hz: '4.00 Hz' });
+    expect(formatSyncedRate(noteIndex('1/4'), 120)).toEqual({ note: '1/4', hz: formatParam('lfoRate', 2) });
     expect(formatSyncedRate(noteIndex('1/4 D'), 120)).toEqual({ note: '1/4 D', hz: '1.33 Hz' });
-    expect(formatSyncedRate(noteIndex('4 bars'), 120)).toEqual({ note: '4 bars', hz: '0.125 Hz' });
+    expect(formatSyncedRate(noteIndex('4 bars'), 120)).toEqual({ note: '4 bars', hz: '0.13 Hz' });
     expect(formatSyncedRate(noteIndex('1/32 T'), 240)).toEqual({ note: '1/32 T', hz: '48 Hz' });
   });
 });

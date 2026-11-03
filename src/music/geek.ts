@@ -9,7 +9,7 @@ import {
 import { WAVEFORM_NAMES, type Waveform } from './harmonics';
 import { besselJ, osc2Ratio } from './idealReference';
 import { A4_MIDI, noteToFrequency } from './pitch';
-import { formatSyncedRate, NOTE_VALUES, noteHz, TEMPO } from './tempo';
+import { NOTE_VALUES, noteHz, TEMPO } from './tempo';
 
 /**
  * The Synth Geek Layer's content (issue 14): the quantities behind the sound, as data. The formulas are the ones the
@@ -351,8 +351,9 @@ function perBeatText(beats: number): string {
  * the note values in a beat: "1/8 at 120 BPM: 120 ÷ 60 × 2 = 4 Hz".
  */
 export function syncedRateConversion(index: number, bpm: number): string {
-  const { note, hz } = formatSyncedRate(index, bpm);
-  return `${note} at ${bpm} BPM: ${bpm} ÷ 60 ${perBeatText(NOTE_VALUES[index].beats)} = ${hz}`;
+  // Worked out to three figures, as a calculation is, where the readout rounds to the Rate's ("0.0625 Hz", "0.06 Hz").
+  const hz = `${Number(noteHz(index, bpm).toPrecision(3))} Hz`;
+  return `${NOTE_VALUES[index].name} at ${bpm} BPM: ${bpm} ÷ 60 ${perBeatText(NOTE_VALUES[index].beats)} = ${hz}`;
 }
 
 /** A synced Rate's formula under the hood, worked out at the tempo: its conversion, then the period its readout shows. */

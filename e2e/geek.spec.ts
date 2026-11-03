@@ -170,7 +170,7 @@ test('an LFO’s Rate reads its period, at the tempo while synced, and its Depth
 
   await expect(lfoValue(page, 'LFO 1 Rate')).toHaveText('0.50 s');
   await lfo(page).getByRole('button', { name: 'LFO 1 Sync' }).click();
-  await expect(lfo(page).getByRole('slider', { name: 'LFO 1 Rate' })).toHaveAttribute('aria-valuetext', '1/4, 2 Hz');
+  await expect(lfo(page).getByRole('slider', { name: 'LFO 1 Rate' })).toHaveAttribute('aria-valuetext', '1/4, 2.00 Hz');
   await expect(lfoValue(page, 'LFO 1 Rate')).toHaveText('0.50 s');
   // At the tempo: 1/4 at 110 BPM.
   const bpm = page.getByRole('spinbutton', { name: 'Tempo' });

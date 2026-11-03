@@ -8,7 +8,7 @@ import { connectMidi, type MidiAccessLike, midiSupport } from '../../midi/inputs
 import { type ControllerId, createMappingStore, type Mapping, type Target } from '../../midi/mappings';
 import { QUICK_SETUP, type QuickSetupEvent, type QuickSetupState, quickSetupReducer, startQuickSetup, takenControls } from '../../midi/quickSetup';
 import { bpmPosition, positionBpm } from '../../music/tempo';
-import { CHOICES, type ChoiceId, knobTurns, PARAMS, setParam } from '../../patch/patch';
+import { CHOICES, type ChoiceId, knobTurns, LFO_KEYS, PARAMS, setParam } from '../../patch/patch';
 import { positionToValue, valueToPosition } from '../../patch/taper';
 import type { MidiState } from '../MidiPanel';
 import { reveal } from '../reveal';
@@ -127,6 +127,17 @@ export function useMidi(host: Host) {
       },
     });
   }, [mappingStore, session, patches, viewers, pressHoldRef]);
+
+  // An LFO's Sync switched, however: the Rate knob turns the other of its Hz and its note value, so what a Relative knob
+  // had gathered towards a step of one is forgotten (issue 193).
+  useEffect(
+    () =>
+      patches.subscribe(({ before, after }) => {
+        for (const lfo of [1, 2] as const)
+          if (before[LFO_KEYS[lfo].sync] !== after[LFO_KEYS[lfo].sync]) surface.restartSteps({ kind: 'param', id: LFO_KEYS[lfo].rate });
+      }),
+    [patches, surface],
+  );
 
   // Quick Setup: a sequence of Learn steps. Each Mapping learned moves it on to the next step's target.
   const [setup, setSetup] = useState<QuickSetupState | null>(null);
