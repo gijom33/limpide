@@ -243,8 +243,8 @@ group('Bass', [
     ampSustain: 1, ampRelease: 0.2,
   }],
   ['Growl', 'A square LFO jumping the Filter between two places over a Sub, there and back each eighth (Sync): a stepped, talking bass.', {
-    volume: 0.45, mixOsc2: 0.6, osc2Detune: -8, mixSub: 0.7, filterSlope: 24, cutoff: 350, resonance: 0.6,
-    lfoWaveform: 'square', lfoRate: 4, lfoSync: 'on', lfoNote: noteIndex('1/8'), lfoAmount: 0.5, ampSustain: 1, ampRelease: 0.15,
+    volume: 0.42, mixOsc2: 0.6, osc2Detune: -8, mixSub: 0.7, filterSlope: 24, cutoff: 350, resonance: 0.5,
+    lfoWaveform: 'square', lfoRate: 4, lfoSync: 'on', lfoNote: noteIndex('1/8'), lfoAmount: 0.4, ampSustain: 1, ampRelease: 0.15,
   }],
   ['Split Octave Bass', 'Osc 1 dropped an octave by its own Octave, Osc 2 left on the Note and a few cents off: a wide bass, the Scope repeating at Osc 1’s slower cycle.', {
     osc1Octave: -1, osc2Waveform: 'square', osc2Detune: 7, mixOsc2: 0.5,

@@ -484,3 +484,42 @@ describe('the Presets synced for issue 137 sound at 120 BPM as their Hz did', ()
     for (const [i, level] of a.entries()) if (level > -60) expect(Math.abs(level - b[i]), `${name} at ${i * 20} ms`).toBeLessThan(0.1);
   }, 60_000);
 });
+
+// Issue 195: the ear checks of 1.20.0 and 1.21.0. Held at 20 kHz (issue 166), a resonant low-pass rang there and a
+// high-pass let ultrasound through; before 166 both passed Nyquist, the low-pass flat and the high-pass silent. Growl's
+// square dropped its resonant Cutoff into the limiter.
+describe('the sound at the top edge (issue 195)', () => {
+  const C7 = 96;
+  /**
+   * The same Patch with its Filter flat and wide open, Resonance 0 at 20 kHz, which passes a top Harmonic no more than
+   * the Filter past Nyquist did before issue 166. (None of the three has an LFO on the Filter.)
+   */
+  const flatOpen = (patch: Patch): Patch => ({ ...patch, cutoff: 20000, resonance: 0, filterEnvAmount: 0, velocityCutoff: 0, keyTrack: 0 });
+
+  it.each(['Screamer', 'Analog Drift Lead', 'Glide Slide'])('%s on C7: its top Harmonics, in the attack and held, no louder than through a flat Filter wide open', async (name) => {
+    const patch = preset(name);
+    const [s, flat] = await Promise.all([play(patch, [C7], 1.2, 1.3), play(flatOpen(patch), [C7], 1.2, 1.3)]);
+    // The Harmonics from 15 kHz to 20 kHz: the 8th and 9th on C7 (16.7 and 18.8 kHz).
+    // (Those a source plays: under −80 dB against the Note, there is none, as a triangle has no even ones.)
+    for (const n of [8, 9])
+      for (const from of [0, 0.05, 1]) {
+        const open = partialDb(flat, C7, n, from);
+        if (open > -80) expect(partialDb(s, C7, n, from), `Harmonic ${n} at ${from} s`).toBeLessThanOrEqual(open + 0.5);
+      }
+  });
+
+  it('Riser on C7: silent once its high-pass reaches the top, its last four seconds held', async () => {
+    const s = await play(preset('Riser'), [C7], 7.5, 7.6);
+    let sum = 0;
+    const [from, to] = [Math.round(3.5 * SR), Math.round(7.5 * SR)];
+    for (let i = from; i < to; i++) sum += s[i] * s[i];
+    expect(10 * Math.log10(sum / (to - from))).toBeLessThan(-60);
+  });
+
+  it('Growl stays under the limiter’s knee on every Note from A1 to C7 at 120 BPM, its square dropping the resonant Cutoff', async () => {
+    const notes = Array.from({ length: 64 }, (_, i) => 33 + i);
+    const peaks = await Promise.all(notes.map((note) => play(preset('Growl'), [note], 1.5, 1.6).then(peak)));
+    const over = notes.flatMap((note, i) => (peaks[i] >= 0.8 ? [`MIDI ${note}: ${peaks[i].toFixed(2)}`] : []));
+    expect(over, `loudest ${Math.max(...peaks).toFixed(2)}`).toEqual([]);
+  }, 120_000);
+});

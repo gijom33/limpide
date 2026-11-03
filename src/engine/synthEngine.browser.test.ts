@@ -1147,12 +1147,43 @@ describe('Filter Modes and Slopes', () => {
     const [, bottom] = await capturedAt({ ...swing, cutoff: 20 }, [0.45, 0.95], low, 33);
     expect(bottom.modulation.cutoff).toBe(20);
     expect(offTheCurve(bottom, low)).toBeLessThan(0.5);
-    // A high-pass at 20 kHz swung two octaves over it: A1's Harmonics either side of it, which 20 kHz lets through.
+    // A low-pass at 20 kHz swung two octaves over it: A1's Harmonics either side of it, which 20 kHz takes some off.
     const high = Float32Array.from({ length: 80 }, (_, i) => 55 * (340 + i));
-    const [top] = await capturedAt({ ...swing, cutoff: 20000, filterMode: 'highpass' }, [0.45], high, 33);
+    const [top] = await capturedAt({ ...swing, cutoff: 20000 }, [0.45], high, 33);
     expect(top.modulation.cutoff).toBe(20000);
     expect(offTheCurve(top, high)).toBeLessThan(0.5);
-    expect(dB(toneAmplitudeHann(top.filter, SR, 55 * 380)), 'the sound past 20 kHz').toBeGreaterThan(-80);
+    expect(dB(toneAmplitudeHann(top.filter, SR, 55 * 380) / toneAmplitudeHann(top.osc, SR, 55 * 380)), 'the sound past 20 kHz').toBeLessThan(-3);
+  });
+
+  // Issue 195: held at 20 kHz, a resonant low-pass rang there, where the low-pass past Nyquist never did, and a
+  // high-pass let ultrasound through. The Resonance now fades over the top half octave, a high-pass's output with it.
+  for (const mode of ['lowpass', 'highpass'] as const)
+    for (const slope of [12, 24] as const)
+      it(`fades the Resonance near 20 kHz, the sound as the Curve draws it: ${mode}, ${slope} dB, at full Resonance (issue 195)`, async () => {
+        // A1's Harmonics from 13 kHz to past 20 kHz.
+        const top = Float32Array.from({ length: 146 }, (_, i) => 55 * (236 + i));
+        for (const cutoff of [14000, 17000, 20000]) {
+          const [frame] = await capturedAt({ cutoff, resonance: 1, filterMode: mode, filterSlope: slope }, [0.3], top, 33);
+          expect(frame.modulation.cutoff).toBeCloseTo(cutoff, 6);
+          expect(offTheCurve(frame, top), `${cutoff} Hz`).toBeLessThan(0.5);
+        }
+        const engine = createSynthEngine(new OfflineAudioContext(1, SR, SR));
+        const peakDb = (cutoff: number) => {
+          engine.applyPatch({ ...defaultPatch(), cutoff, resonance: 1, filterMode: mode, filterSlope: slope });
+          return dB(Math.max(...engine.filterResponse(top)));
+        };
+        // Its peak: all of it half an octave under the top, about half of it (in dB) a quarter-octave under, a high-pass
+        // there at half its level too, none at the top.
+        expect(peakDb(14000)).toBeGreaterThan(20);
+        expect(peakDb(16818)).toBeGreaterThan(mode === 'lowpass' ? 8 : 2);
+        expect(peakDb(16818)).toBeLessThan(16);
+        if (mode === 'lowpass') expect(peakDb(20000)).toBeLessThan(1);
+        else expect(peakDb(20000)).toBe(-Infinity);
+      });
+
+  it('lets nothing through a high-pass at 20 kHz, however far past the top its Envelope takes it (issue 195)', async () => {
+    const [frame] = await capturedAt({ cutoff: 20000, filterMode: 'highpass', filterEnvAmount: 3, filterSustain: 1, mixNoise: 1 }, [0.3], Float32Array.of(1000), 33);
+    expect(rms(frame.filter)).toBe(0);
   });
 });
 

@@ -14,7 +14,7 @@ import { createScope } from '../viewers/scope';
 import { createSpectrum } from '../viewers/spectrum';
 import { createTimeline } from '../viewers/timeline';
 import { createViewerStore } from '../viewers/viewerStore';
-import { filterStages } from './filterDesign';
+import { filterLevel, filterStagesAt } from './filterDesign';
 import { createSynthEngine, SAFETY_KNEE, type SynthEngine } from './synthEngine';
 
 // Patches at the edges (issue 116): each of the sweep's Patches (`edgeCases`) rendered offline on a low, a middle and
@@ -83,9 +83,10 @@ const twinContext = new OfflineAudioContext(1, 128, SR);
 const twins = [twinContext.createBiquadFilter(), twinContext.createBiquadFilter()];
 function filterGains(patch: Patch, cutoff: number, resonance: number, frequencies: readonly number[]) {
   const at = Float32Array.from(frequencies);
-  const total = new Float32Array(at.length).fill(1);
+  // Near the top the Resonance fades, and a high-pass's output with it (issue 195).
+  const total = new Float32Array(at.length).fill(filterLevel(patch.filterMode, cutoff));
   const [gain, phase] = [new Float32Array(at.length), new Float32Array(at.length)];
-  filterStages(patch.filterMode, patch.filterSlope, resonance).forEach((stage, i) => {
+  filterStagesAt(patch.filterMode, patch.filterSlope, resonance, cutoff).forEach((stage, i) => {
     twins[i].type = stage.type;
     twins[i].frequency.value = cutoff;
     twins[i].Q.value = stage.Q;

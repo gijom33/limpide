@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { effectiveCutoff } from '../modulation/modulationModel';
 import { defaultPatch } from '../patch/patch';
-import { CUTOFF_CLAMP, CUTOFF_SPAN, centsOverFloor, filterStages, qSwing, resonanceToQdB } from './filterDesign';
+import { CUTOFF_CLAMP, CUTOFF_SPAN, centsOverFloor, filterLevel, filterStages, filterStagesAt, qSwing, resonanceToQdB, TOP_DIP, topFade } from './filterDesign';
 
 /** What a WaveShaperNode makes of `x` through `curve`: the curve read between its points, held at its ends past ±1. */
 function shaped(curve: Float32Array, x: number) {
@@ -78,5 +78,44 @@ describe('the Filter under modulation, as the model has it (issue 166)', () => {
       const model = effectiveCutoff({ ...patch, cutoff: 20, filterEnvAmount: Math.log2(hz / 20) }, 1);
       expect(held / model, `${hz} Hz`).toBeCloseTo(1, 5);
     }
+  });
+});
+
+describe('the Filter at the top of its range (issue 195)', () => {
+  it('keeps all its Resonance up to half an octave under 20 kHz, then fades it smoothly to none at 20 kHz', () => {
+    expect(topFade(1000)).toBe(1);
+    expect(topFade(20000 / Math.SQRT2)).toBe(1);
+    expect(topFade(20000 / 2 ** 0.25)).toBeCloseTo(0.5, 9);
+    expect(topFade(20000)).toBe(0);
+    for (let hz = 14000; hz < 20000; hz += 250) expect(topFade(hz + 250)).toBeLessThanOrEqual(topFade(hz));
+  });
+
+  it('takes a low- or high-pass’s Q toward its flat one as the Resonance fades, and leaves a band-pass’s or notch’s', () => {
+    for (const slope of [12, 24] as const)
+      for (const resonance of [0, 0.5, 1]) {
+        for (const mode of ['lowpass', 'highpass'] as const) {
+          const [flat, full] = [filterStages(mode, slope, 0), filterStages(mode, slope, resonance)];
+          expect(filterStagesAt(mode, slope, resonance, 5000)).toEqual(full);
+          const top = filterStagesAt(mode, slope, resonance, 20000);
+          const between = filterStagesAt(mode, slope, resonance, 20000 / 2 ** 0.25);
+          for (const k of [0, 1]) {
+            expect(top[k].Q).toBeCloseTo(flat[k].Q, 9);
+            expect(between[k].Q).toBeCloseTo((flat[k].Q + full[k].Q) / 2, 9);
+          }
+        }
+        for (const mode of ['bandpass', 'notch'] as const) expect(filterStagesAt(mode, slope, resonance, 20000)).toEqual(filterStages(mode, slope, resonance));
+      }
+  });
+
+  it('lets a high-pass fall silent at 20 kHz as its Resonance fades, and every other Mode through', () => {
+    expect(filterLevel('highpass', 20000)).toBe(0);
+    expect(filterLevel('highpass', 20000 / 2 ** 0.25)).toBeCloseTo(0.5, 9);
+    expect(filterLevel('highpass', 10000)).toBe(1);
+    for (const mode of ['lowpass', 'bandpass', 'notch'] as const) expect(filterLevel(mode, 20000)).toBe(1);
+  });
+
+  it('gives the sound the fade the model has, read from the clamped Cutoff in cents over the span', () => {
+    for (const hz of [20, 1000, 14000, 14142, 15000, 16818, 18000, 19500, 20000])
+      expect(1 - shaped(TOP_DIP, centsOverFloor(hz) / CUTOFF_SPAN), `${hz} Hz`).toBeCloseTo(topFade(hz), 4);
   });
 });

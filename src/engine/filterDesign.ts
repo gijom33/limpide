@@ -60,3 +60,37 @@ export const centsOverFloor = (hz: number) => 1200 * Math.log2(hz / LOWEST_CUTOF
  * Its corners fall on its points, so between them it is exact.
  */
 export const CUTOFF_CLAMP = Float32Array.of(0, 0, CUTOFF_SPAN);
+
+/** How far under the top of its range the Filter starts to fade, in cents: half an octave (issue 195). */
+const FADE_CENTS = 600;
+/** How far a Cutoff is into the top's fade, from 0 (under it) to 1 (at 20 kHz): a raised cosine over the cents. */
+function intoTheTop(cents: number) {
+  const into = (cents - (CUTOFF_SPAN - FADE_CENTS)) / FADE_CENTS;
+  return into <= 0 ? 0 : into >= 1 ? 1 : 0.5 - 0.5 * Math.cos(Math.PI * into);
+}
+/**
+ * How much of its Resonance a low- or high-pass keeps at a Cutoff (issue 195): all of it up to half an octave under
+ * 20 kHz, none at 20 kHz, as an analogue Filter's fades past its range. Without the fade the Cutoff held at 20 kHz
+ * (issue 166) would ring there, where the low-pass past Nyquist never did; a high-pass fades out with it.
+ */
+export const topFade = (cutoff: number) => 1 - intoTheTop(centsOverFloor(cutoff));
+
+/** The two biquads at a Cutoff: a low- or high-pass's Q taken toward its flat one as the Resonance fades at the top. */
+export function filterStagesAt(mode: FilterMode, slope: FilterSlope, resonance: number, cutoff: number): [Stage, Stage] {
+  const stages = filterStages(mode, slope, resonance);
+  if (mode !== 'lowpass' && mode !== 'highpass') return stages;
+  const fade = topFade(cutoff);
+  const flat = filterStages(mode, slope, 0);
+  return [0, 1].map((k) => ({ ...stages[k], Q: flat[k].Q + (stages[k].Q - flat[k].Q) * fade })) as [Stage, Stage];
+}
+
+/** What passes the Filter at a Cutoff at all: a high-pass falls silent at the top as its Resonance fades (issue 195). */
+export const filterLevel = (mode: FilterMode, cutoff: number) => (mode === 'highpass' ? topFade(cutoff) : 1);
+
+/** Points in the top's fade curve: read between them, the fade is within a hundred-thousandth of its own. */
+const DIP_POINTS = 8193;
+/**
+ * The top's fade for the sound, a WaveShaper's curve over the clamped Cutoff's cents over the floor divided by the
+ * span: what it takes off (1 less `topFade`), nothing under the fade.
+ */
+export const TOP_DIP = Float32Array.from({ length: DIP_POINTS }, (_, i) => intoTheTop(CUTOFF_SPAN * ((2 * i) / (DIP_POINTS - 1) - 1)));

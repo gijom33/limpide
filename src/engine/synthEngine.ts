@@ -11,7 +11,7 @@ import { fmDepthKept, playedTop } from '../music/idealReference';
 import { frequencyToNote, noteToFrequency } from '../music/pitch';
 import { TEMPO } from '../music/tempo';
 import { fmIndex, GLIDE_OFF, type Lfo, type LfoNumber, lfoHz, lfos, type NoiseColour, PARAMS, type Patch, type SubWaveform, type Voices } from '../patch/patch';
-import { CUTOFF_CLAMP, CUTOFF_SPAN, centsOverFloor, filterStages, qSwing, type Stage } from './filterDesign';
+import { CUTOFF_CLAMP, CUTOFF_SPAN, centsOverFloor, filterLevel, filterStages, filterStagesAt, qSwing, type Stage, TOP_DIP } from './filterDesign';
 import { heardAt, type OutputClockContext } from './outputClock';
 
 /**
@@ -660,6 +660,35 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
     cutoffClamp.connect(node.detune);
   }
   cutoff.start();
+  // Near the top the Resonance fades, and a high-pass's output with it (issue 195), as `filterStagesAt` and
+  // `filterLevel` have it: the clamped Cutoff, through the top's dip, takes its share off each stage's Q over its flat
+  // one (the knob's, `overFlatRest`, and the LFOs' swing), and off what a high-pass lets through. Each dip's gain is −1
+  // in the Modes it fades, 0 in the others.
+  const toDip = ctx.createGain();
+  toDip.gain.value = 1 / CUTOFF_SPAN;
+  const topDip = ctx.createWaveShaper();
+  topDip.curve = TOP_DIP;
+  cutoffClamp.connect(toDip).connect(topDip);
+  const [resonanceDip, levelDip] = [ctx.createGain(), ctx.createGain()];
+  for (const dip of [resonanceDip, levelDip]) {
+    dip.gain.value = 0;
+    topDip.connect(dip);
+  }
+  const overFlat = [filter, filter2].map((node) => {
+    const kept = ctx.createGain();
+    resonanceDip.connect(kept.gain);
+    kept.connect(node.Q);
+    return kept;
+  });
+  const overFlatRest = overFlat.map((kept) => {
+    const rest = ctx.createConstantSource();
+    rest.offset.value = 0;
+    rest.connect(kept);
+    rest.start();
+    return rest;
+  });
+  const topLevel = ctx.createGain();
+  levelDip.connect(topLevel.gain);
   const amp = ctx.createGain();
   amp.gain.value = 0;
   // After the Amp, the LFOs on Volume (tremolo): its gain is the shared resting level plus each LFO's swing.
@@ -699,13 +728,12 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   keyTrackAmount.connect(cutoffSum);
   trackedNote.start();
 
-  dcBlock.connect(filter).connect(filter2).connect(amp).connect(tremoloGain).connect(shared.master);
+  dcBlock.connect(filter).connect(filter2).connect(topLevel).connect(amp).connect(tremoloGain).connect(shared.master);
   // Every Voice's noise starts at a different point of the loop, so a chord's noise is not one noise, louder.
   for (const n of noises) n.source.start(0, (index * NOISE_SECONDS) / MAX_VOICES);
 
   // The shared LFOs, wired to this Voice's destinations through the shared gains set from their Depths.
-  shared.toQ[0].connect(filter.Q);
-  shared.toQ[1].connect(filter2.Q);
+  shared.toQ.forEach((g, k) => g.connect(overFlat[k]));
   shared.lfos.forEach((l, i) => {
     l.toCutoff.connect(cutoffSum);
     l.toPitch.connect(sub.detune);
@@ -879,8 +907,16 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
       mixSub.gain.setValueAtTime(next.mixSub * OSCILLATOR_LEVEL, t);
       mixRing.gain.setValueAtTime(next.mixRing * OSCILLATOR_LEVEL, t);
       // The knob's Cutoff; the Filter Envelope and the rest add to it.
+      // Each stage at its flat Q, the knob's Resonance over it faded at the top with the LFOs' swing (issue 195).
       const stages = filterStages(next.filterMode, next.filterSlope, next.resonance);
-      [filter, filter2].forEach((node, i) => setStage(node, stages[i], t));
+      const flat = filterStages(next.filterMode, next.filterSlope, 0);
+      [filter, filter2].forEach((node, i) => {
+        setStage(node, { ...stages[i], Q: flat[i].Q }, t);
+        overFlatRest[i].offset.setValueAtTime(stages[i].Q - flat[i].Q, t);
+      });
+      const peaked = next.filterMode === 'lowpass' || next.filterMode === 'highpass';
+      resonanceDip.gain.setValueAtTime(peaked ? -1 : 0, t);
+      levelDip.gain.setValueAtTime(next.filterMode === 'highpass' ? -1 : 0, t);
       cutoff.offset.setValueAtTime(centsOverFloor(effectiveCutoff(next)), t);
       envelopeAmount.gain.setValueAtTime(next.filterEnvAmount * 1200, t);
       osc2EnvAmount.gain.setValueAtTime(osc2EnvelopeCents(next, 1), t); // the Envelope's level, 0 to 1, in cents
@@ -890,10 +926,10 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
 
     /** A Tap listens to this Voice's stage: a side branch, so observing never alters the sound. */
     attach(taps: Taps, tap: TapName) {
-      ({ oscillator: dcBlock, filter: filter2, amp: tremoloGain } as const)[tap].connect(taps[tap]);
+      ({ oscillator: dcBlock, filter: topLevel, amp: tremoloGain } as const)[tap].connect(taps[tap]);
     },
     detach(taps: Taps, tap: TapName) {
-      ({ oscillator: dcBlock, filter: filter2, amp: tremoloGain } as const)[tap].disconnect(taps[tap]);
+      ({ oscillator: dcBlock, filter: topLevel, amp: tremoloGain } as const)[tap].disconnect(taps[tap]);
     },
   };
   return voice;
@@ -1365,9 +1401,9 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
 
     filterResponse(frequencies) {
       const { cutoff, resonance } = modulationAt(ctx.currentTime - TAP_WINDOW / 2 / ctx.sampleRate);
-      // An LFO on Resonance moves the twins' Q with it.
-      if (patch) filterStages(patch.filterMode, patch.filterSlope, resonance).forEach((stage, i) => (twins[i].Q.value = stage.Q));
-      const total = new Float32Array(frequencies.length).fill(1);
+      // An LFO on Resonance moves the twins' Q with it; near the top the Resonance fades, a high-pass with it (issue 195).
+      if (patch) filterStagesAt(patch.filterMode, patch.filterSlope, resonance, cutoff).forEach((stage, i) => (twins[i].Q.value = stage.Q));
+      const total = new Float32Array(frequencies.length).fill(patch ? filterLevel(patch.filterMode, cutoff) : 1);
       const stage = new Float32Array(frequencies.length);
       const phase = new Float32Array(frequencies.length);
       for (const twin of twins) {
