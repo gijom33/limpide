@@ -6,6 +6,9 @@ const SEMITONE_BY_CODE: Record<string, number> = {
   KeyY: 8, KeyH: 9, KeyU: 10, KeyJ: 11, KeyK: 12, KeyO: 13, KeyL: 14, KeyP: 15, Semicolon: 16,
 };
 
+/** The letter keys that play, low to high: C to the E above, 17 keys (issue 196: written once, here). */
+export const LETTER_KEYS: readonly string[] = Object.keys(SEMITONE_BY_CODE).sort((a, b) => SEMITONE_BY_CODE[a] - SEMITONE_BY_CODE[b]);
+
 /** MIDI note for a `KeyboardEvent.code`, with KeyA as C of `octave` (C4 = 60). */
 export function keyToNote(code: string, octave: number): number | undefined {
   const semitone = SEMITONE_BY_CODE[code];

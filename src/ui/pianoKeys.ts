@@ -1,13 +1,11 @@
-import { keyToNote } from '../input/keyboardLayout';
+import { keyToNote, LETTER_KEYS } from '../input/keyboardLayout';
 
-/** The computer keyboard's range: C to the E above (17 keys, 10 of them white). */
-const LETTER_KEYS = ['KeyA', 'KeyW', 'KeyS', 'KeyE', 'KeyD', 'KeyF', 'KeyT', 'KeyG', 'KeyY', 'KeyH', 'KeyU', 'KeyJ', 'KeyK', 'KeyO', 'KeyL', 'KeyP', 'Semicolon'];
-const LETTER_WHITES = 10;
+export const isBlack = (note: number) => [1, 3, 6, 8, 10].includes(note % 12);
+/** The letter keys' white keys: 10, from C to the E above. */
+export const LETTER_WHITES = LETTER_KEYS.filter((code) => !isBlack(keyToNote(code, 0)!)).length;
 /** A finger's target: a white key is never wider. */
 const WHITE_KEY_MAX = 44;
 const HIGHEST_NOTE = 127;
-
-export const isBlack = (note: number) => [1, 3, 6, 8, 10].includes(note % 12);
 
 /**
  * How many white keys the piano has in `room` pixels, and how wide each is (issue 154, decision 6): the letter keys'

@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import type { NoteInput } from '../input/noteInput';
 import { nearestNote, noteToFrequency } from '../music/pitch';
 import { PitchMarker } from './PitchMarker';
-import { isBlack, pianoNotes } from './pianoKeys';
+import { isBlack, LETTER_WHITES, pianoNotes } from './pianoKeys';
 
 const noteName = (note: number) => nearestNote(noteToFrequency(note)).name;
 
@@ -22,7 +22,7 @@ interface Props {
  * sounds from any source. Press lower on a key to play harder (Velocity); drag across keys to slide from Note
  * to Note. Each finger on a touch screen plays its own Note, as each key of the computer keyboard does (issue 39).
  */
-export function Piano({ octave, whites = 10, held, input, invite }: Props) {
+export function Piano({ octave, whites = LETTER_WHITES, held, input, invite }: Props) {
   // The Note each pointer plays. Two fingers on one key both hold it: the Note input counts its holders.
   const playing = useRef(new Map<number, number>());
 
