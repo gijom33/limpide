@@ -4,26 +4,27 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · bug. Polish for v1. Which browser, and which sound (the Demo, the Song, Hold's rhythm, or Notes played by hand or from the C16), is asked of the owner; the brief covers each
+**Status:** ready-for-agent · bug. Polish for v1. Heard by the owner while the Demo or the Song played (2026-11-02); the browser was not said, so the brief covers Chromium and WebKit
 
 ## Decisions
 
 Decided by the owner, 2026-11-02:
 
 1. **Sound is not skipped** when the page loses focus or goes to the background ("Can we force this not to happen?").
+2. **Heard with the Demo or the Song playing** (the owner, asked what was playing: "Demo or Song"), which fits the cause below: both are players on the Transport.
 
 Claude's calls, open to the owner:
 
-2. **The likely cause, to confirm first:** the players (the Demo, the Song, Hold's rhythm) hand their Notes to the engine from the page's main thread, 100 to 150 ms ahead of the audio clock, on a timer every few tens of milliseconds. A browser slows a background page's timers to about once a second (Safari also an unfocused or covered window), so Notes come late, bunched, or are lost. The sound itself runs on the audio thread and is not slowed; Notes played by hand or from MIDI should not be touched, which the reproduction checks.
-3. **The fix keeps the look-ahead short in front:** the players' tick comes from a clock the browser does not slow (a timer in a worker, or the audio thread's own), and while the page is hidden the look-ahead widens (to about 2 s) so a slowed tick still finds its Notes handed over. In front again, it narrows, so a Stop or a change of Preset is still heard at once.
-4. **What can't be forced:** a browser may still suspend a page it freezes (a phone's locked screen, an old background tab). That is the browser's, not Limpide's; the page then resumes cleanly, with no burst of late Notes.
+3. **The likely cause, to confirm first:** the players (the Demo, the Song, Hold's rhythm) hand their Notes to the engine from the page's main thread, 100 to 150 ms ahead of the audio clock, on a timer every few tens of milliseconds. A browser slows a background page's timers to about once a second (Safari also an unfocused or covered window), so Notes come late, bunched, or are lost. The sound itself runs on the audio thread and is not slowed; Notes played by hand or from MIDI should not be touched, which the reproduction checks.
+4. **The fix keeps the look-ahead short in front:** the players' tick comes from a clock the browser does not slow (a timer in a worker, or the audio thread's own), and while the page is hidden the look-ahead widens (to about 2 s) so a slowed tick still finds its Notes handed over. In front again, it narrows, so a Stop or a change of Preset is still heard at once.
+5. **What can't be forced:** a browser may still suspend a page it freezes (a phone's locked screen, an old background tab). That is the browser's, not Limpide's; the page then resumes cleanly, with no burst of late Notes.
 
 ## Agent Brief
 
 **Category:** bug
 **Summary:** With the page unfocused or in the background, the players' Notes are skipped or late, though the sound keeps running.
 
-**Current behavior:** The owner (2026-11-02): when the page loses focus, part of the sound is skipped. The players schedule their Notes from the page's main thread a short look-ahead ahead, on a timer that browsers slow in the background, so Notes due between two slowed ticks may come late or be lost.
+**Current behavior:** The owner (2026-11-02): when the page loses focus while the Demo or the Song plays, part of the sound is skipped. The players schedule their Notes from the page's main thread a short look-ahead ahead, on a timer that browsers slow in the background, so Notes due between two slowed ticks may come late or be lost.
 
 **Desired behavior:**
 - First, reproduce: the Demo, the Song and Hold's rhythm, in Chromium and WebKit, with the page hidden (another tab) and unfocused (another window in front), recording which Notes start and when on the audio clock. Notes played by hand or by MIDI too. Record what is found in this issue.
@@ -44,5 +45,5 @@ Claude's calls, open to the owner:
 - [ ] Stop, a Preset change and a tempo change in front are as quick as before; every test passes in Linux's fonts too
 
 **Out of scope:**
-- A page the browser freezes or suspends (decision 4)
+- A page the browser freezes or suspends (decision 5)
 - The Viewers, which need not draw while hidden
