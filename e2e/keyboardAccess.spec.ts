@@ -242,7 +242,7 @@ test.describe('a first visit', () => {
   test.use({ storageState: FIRST_VISIT });
   test('closing the welcome puts the focus on the Demo button, not the page', async ({ page }) => {
     await page.goto('/');
-    await page.getByRole('dialog', { name: 'Limpide' }).getByRole('button', { name: 'Close' }).click();
+    await page.getByRole('dialog', { name: 'Limpide' }).getByRole('button', { name: 'Close About' }).click();
     await expect(page.getByRole('button', { name: 'Demo', exact: true })).toBeFocused();
   });
 });

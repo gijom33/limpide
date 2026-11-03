@@ -12,8 +12,8 @@ const db = (page: Page) =>
 test('a first visit opens on the welcome; Play the Demo starts it, sound and all; a second visit opens on the synth', async ({ page }) => {
   await page.goto('/');
   await expect(about(page)).toBeVisible();
-  // The three ways out, at the bottom (the owner, 2026-10-27): the Demo, the Tour (issue 128), Close.
-  await expect(about(page).locator('.about-actions').getByRole('button')).toHaveText(['Play the Demo', 'Take the Tour', 'Close']);
+  // The ways in, at the bottom (the owner, 2026-10-27): the Demo, the Tour (issue 128); a × in the corner closes it (issue 209).
+  await expect(about(page).locator('.about-actions').getByRole('button')).toHaveText(['Play the Demo', 'Take the Tour']);
   await about(page).getByRole('button', { name: 'Play the Demo' }).click();
   await expect(about(page)).toBeHidden();
   await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
@@ -25,13 +25,13 @@ test('a first visit opens on the welcome; Play the Demo starts it, sound and all
   await expect(about(page)).toBeHidden();
 });
 
-test('the welcome is remembered however it closes: Close, Escape or a click outside', async ({ browser }) => {
-  for (const close of ['Close', 'Escape', 'outside'] as const) {
+test('the welcome is remembered however it closes: its ×, Escape or a click outside', async ({ browser }) => {
+  for (const close of ['×', 'Escape', 'outside'] as const) {
     const context = await browser.newContext({ storageState: FIRST_VISIT });
     const page = await context.newPage();
     await page.goto('/');
     await expect(about(page), close).toBeVisible();
-    if (close === 'Close') await about(page).getByRole('button', { name: 'Close' }).click();
+    if (close === '×') await about(page).getByRole('button', { name: 'Close About' }).click();
     else if (close === 'Escape') await page.keyboard.press('Escape');
     else await page.mouse.click(5, 5);
     await expect(about(page), close).toBeHidden();
@@ -65,10 +65,10 @@ test('opened from a Share link, the welcome says a sound was shared and plays th
 test.describe('on a short phone', () => {
   test.use({ hasTouch: true });
   for (const height of [659, 540]) {
-    test(`at 393 × ${height} the welcome's three buttons are on the first screen, the credits scrolling above them (issue 105)`, async ({ page }) => {
+    test(`at 393 × ${height} the welcome's buttons and its × are on the first screen, the credits scrolling above them (issue 105)`, async ({ page }) => {
       await page.setViewportSize({ width: 393, height });
       await page.goto('/');
-      for (const name of ['Play the Demo', 'Take the Tour', 'Close']) {
+      for (const name of ['Play the Demo', 'Take the Tour', 'Close About']) {
         await expect(about(page).getByRole('button', { name, exact: true }), name).toBeInViewport({ ratio: 1 });
       }
       const credits = about(page).locator('.about-credits');

@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import type { Welcome } from '../app/welcome';
+import { CloseIcon } from './icons';
 import { Logo } from './Logo';
 import { BeadIdle } from './Mascot';
 
@@ -17,10 +18,10 @@ const day = (iso: string) =>
 
 /**
  * The About splash: the mark large, the version and the build it came from, and the credits. The logo opens it,
- * and so does the ⓘ button. It closes with its button, Escape, or a click outside it.
+ * and so does the ⓘ button. It closes with its ×, Escape, or a click outside it (issue 209).
  *
  * A brand-new browser sees it once as a welcome, with a word on what to do first. Every time, its last row plays the
- * Demo (or, from a Share link, the shared sound), starts the Tour (issue 128), or closes it.
+ * Demo (or, from a Share link, the shared sound) or starts the Tour (issue 128).
  *
  * While Bead's switch is on, Bead stands to the right of the name (issues 163 and 178); a click on it shows its card of
  * tricks in place of the credits, and Back, Escape or Bead again return to them.
@@ -224,8 +225,8 @@ export function About({
             )}
           </dl>
         )}
-        {/* At the bottom every time, beside Close (the owner, 2026-10-27): the Demo, in the green of a key that
-            plays, and the Tour (issue 128), in the accent a Tutorial's control wears. */}
+        {/* At the bottom every time (the owner, 2026-10-27): the Demo, in the green of a key that plays, and the Tour
+            (issue 128), in the accent a Tutorial's control wears. */}
         <div className="about-actions">
           <button
             type="button"
@@ -248,10 +249,12 @@ export function About({
           >
             Take the Tour
           </button>
-          <button type="button" className="tool" onClick={onClose}>
-            Close
-          </button>
         </div>
+        {/* A × in the top corner, as the Demo's card closes (issue 209, decided by the owner); last in the DOM, so Tab
+            goes from the Demo to the Tour to it (Claude's call, open to the owner). */}
+        <button type="button" className="tool tool-icon about-close" aria-label="Close About" onClick={onClose}>
+          <CloseIcon />
+        </button>
       </div>
     </dialog>
   );

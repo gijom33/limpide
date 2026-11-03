@@ -52,7 +52,7 @@ test.describe('a first visit', () => {
 
   test('the welcome offers the Demo and the Tour, no Tutorial; the Tour starts on Init and takes the focus (issue 128)', async ({ page }) => {
     await page.goto('/');
-    await expect(about(page).locator('.about-actions').getByRole('button')).toHaveText(['Play the Demo', 'Take the Tour', 'Close']);
+    await expect(about(page).locator('.about-actions').getByRole('button')).toHaveText(['Play the Demo', 'Take the Tour']);
     await about(page).getByRole('button', { name: 'Take the Tour' }).click();
     await expect(about(page)).toBeHidden();
     await expect(card(page)).toBeVisible();

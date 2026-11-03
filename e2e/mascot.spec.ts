@@ -573,7 +573,7 @@ test.describe('out by default (issue 150)', () => {
       await expect(welcome).toBeVisible();
       await page.waitForTimeout(4000);
       await expect(mascot(page)).toHaveCount(0);
-      await welcome.getByRole('button', { name: 'Close' }).click();
+      await welcome.getByRole('button', { name: 'Close About' }).click();
       await expect(mascot(page)).toHaveCount(1, { timeout: 6000 });
       await openDisplay(page);
       const bead = page.getByRole('radiogroup', { name: 'Bead', exact: true });

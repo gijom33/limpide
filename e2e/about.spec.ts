@@ -4,7 +4,7 @@ import { BEAD_ON, holding, WELCOMED } from './startState';
 
 const { version } = JSON.parse(readFileSync('package.json', 'utf8'));
 
-test('the logo opens the About splash: version, build and credits; Close, Escape or a click outside close it', async ({ page }) => {
+test('the logo opens the About splash: version, build and credits; its ×, Escape or a click outside close it (issue 209)', async ({ page }) => {
   await page.goto('/');
   const about = page.getByRole('dialog', { name: 'Limpide' });
   await expect(about).toBeHidden();
@@ -23,7 +23,13 @@ test('the logo opens the About splash: version, build and credits; Close, Escape
     'https://github.com/gijom33/limpide/blob/main/docs/research/134-history-in-the-tooltips.md',
   );
 
-  await about.getByRole('button', { name: 'Close' }).click();
+  // Issue 209: a × in its top corner, as the Demo's card closes, in place of a Close button.
+  const cross = about.getByRole('button', { name: 'Close About' });
+  const [crossBox, aboutBox] = [(await cross.boundingBox())!, (await about.boundingBox())!];
+  expect(crossBox.y - aboutBox.y, 'at the top').toBeLessThan(20);
+  expect(aboutBox.x + aboutBox.width - (crossBox.x + crossBox.width), 'in the right corner').toBeLessThan(20);
+  await expect(about.getByRole('button', { name: 'Close', exact: true })).toHaveCount(0);
+  await cross.click();
   await expect(about).toBeHidden();
 
   await page.getByRole('button', { name: 'Limpide' }).click();
@@ -48,7 +54,7 @@ test('an ⓘ button opens About at every width, with the word About from 1100 px
     await expect(button.getByText('About'), `${width}px`).toBeVisible({ visible: word });
     await button.click();
     await expect(about, `${width}px`).toContainText(`Version ${version}`);
-    await about.getByRole('button', { name: 'Close' }).click();
+    await about.getByRole('button', { name: 'Close About' }).click();
     await expect(about).toBeHidden();
   }
 });
@@ -94,11 +100,11 @@ test('a build without a counter address counts no visits, and About makes no cla
   expect(counted).toEqual([]);
 });
 
-test('About, opened any time, offers the Demo and the Tour beside Close (the owner, 2026-10-27; issue 128)', async ({ page }) => {
+test('About, opened any time, offers the Demo and the Tour at its foot (the owner, 2026-10-27; issues 128, 209)', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'About' }).click();
   const about = page.getByRole('dialog', { name: 'Limpide' });
-  await expect(about.locator('.about-actions').getByRole('button')).toHaveText(['Play the Demo', 'Take the Tour', 'Close']);
+  await expect(about.locator('.about-actions').getByRole('button')).toHaveText(['Play the Demo', 'Take the Tour']);
   await about.getByRole('button', { name: 'Play the Demo' }).click();
   await expect(about).toBeHidden();
   await expect(page.getByRole('button', { name: 'Demo', exact: true })).toHaveAttribute('aria-pressed', 'true');
@@ -253,6 +259,112 @@ test.describe('Bead in About (issue 163)', () => {
     await page.getByRole('button', { name: 'About', exact: true }).click();
     await expect(credits(page)).toBeVisible();
     await expect(about(page).getByRole('button', { name: /Bead/ })).toHaveCount(0);
-    await expect(about(page).locator('svg')).toHaveCount(1); // the logo alone
+    await expect(about(page).locator(':not(.about-close) > svg')).toHaveCount(1); // the logo alone, beside its × (issue 209)
   });
+});
+
+// Issue 209: a finger, the wheel or a key on About scrolls nothing behind it; About's own credits still scroll inside it;
+// and closing it leaves the page where it was (decisions 1 and 4).
+test.describe('About holds the page still (issue 209)', () => {
+  const about = (page: Page) => page.getByRole('dialog', { name: 'Limpide' });
+  /** The page scrolled halfway down, then About opened from its ⓘ button without scrolling to it: where the page is. */
+  const openScrolled = async (page: Page) => {
+    await page.goto('/');
+    const y = await page.evaluate(() => Math.round((document.documentElement.scrollHeight - innerHeight) / 2));
+    expect(y, 'the page scrolls').toBeGreaterThan(100);
+    await page.evaluate((y) => window.scrollTo(0, y), y);
+    await expect.poll(() => page.evaluate(() => scrollY)).toBe(y);
+    await page.getByRole('button', { name: 'About', exact: true }).dispatchEvent('click');
+    await expect(about(page)).toBeVisible();
+    expect(await page.evaluate(() => scrollY), 'opening scrolls nothing').toBe(y);
+    return y;
+  };
+  const centre = async (locator: ReturnType<Page['locator']>) => {
+    const box = (await locator.boundingBox())!;
+    return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  };
+
+  test('on a computer, the wheel over About or a key in it leaves the page where it is; its × leaves it there too', async ({ page }) => {
+    await page.setViewportSize({ width: 1000, height: 600 });
+    const y = await openScrolled(page);
+    for (const part of [about(page).locator('.about-mark'), about(page).locator('.about-credits'), about(page).locator('.about-actions')]) {
+      const at = await centre(part);
+      await page.mouse.move(at.x, at.y);
+      for (const dy of [600, -200, 600]) await page.mouse.wheel(0, dy);
+      await page.waitForTimeout(300);
+      expect(await page.evaluate(() => scrollY), 'the wheel').toBe(y);
+    }
+    for (const key of ['PageDown', 'ArrowDown', 'End']) await page.keyboard.press(key);
+    await page.waitForTimeout(300);
+    expect(await page.evaluate(() => scrollY), 'the keys').toBe(y);
+    await about(page).getByRole('button', { name: 'Close About' }).click();
+    await expect(about(page)).toBeHidden();
+    expect(await page.evaluate(() => scrollY), 'closed').toBe(y);
+  });
+
+  test('Escape and a click outside leave the page where it was', async ({ page }) => {
+    await page.setViewportSize({ width: 1000, height: 600 });
+    for (const close of ['Escape', 'a click outside'] as const) {
+      const y = await openScrolled(page);
+      if (close === 'Escape') await page.keyboard.press('Escape');
+      else await page.mouse.click(5, 5);
+      await expect(about(page)).toBeHidden();
+      expect(await page.evaluate(() => scrollY), close).toBe(y);
+    }
+  });
+
+  test.describe('on a short phone', () => {
+    test.use({ viewport: { width: 393, height: 540 }, hasTouch: true, isMobile: true });
+    test.skip(({ browserName }) => browserName !== 'chromium', 'drives a real finger through the Chrome DevTools Protocol');
+
+    /** A real finger dragged up the screen by `by` pixels from `from`. */
+    const drag = async (page: Page, from: { x: number; y: number }, by: number) => {
+      const cdp = await page.context().newCDPSession(page);
+      const touch = (type: 'touchStart' | 'touchMove' | 'touchEnd', y: number) =>
+        cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x: from.x, y }] });
+      await touch('touchStart', from.y);
+      for (let i = 1; i <= 10; i++) await touch('touchMove', from.y - (by * i) / 10);
+      await touch('touchEnd', from.y - by);
+      await page.waitForTimeout(400); // any fling done
+    };
+
+    test('a finger dragged on About scrolls nothing behind it; the credits scroll inside it; its × leaves the page there', async ({ page }) => {
+      const y = await openScrolled(page);
+      const credits = about(page).locator('.about-credits');
+      expect(await credits.evaluate((dl) => dl.scrollHeight > dl.clientHeight), 'the credits are taller than their room').toBe(true);
+
+      // Outside the credits: the mark, the version, the buttons' row.
+      for (const part of ['.about-mark', '.about-version', '.about-actions']) {
+        await drag(page, await centre(about(page).locator(part)), 150);
+        expect(await page.evaluate(() => scrollY), part).toBe(y);
+      }
+      // On the credits: they scroll inside About, the page behind does not, nor when they are at their end.
+      await drag(page, await centre(credits), 120);
+      expect(await credits.evaluate((dl) => dl.scrollTop), 'the credits scrolled').toBeGreaterThan(20);
+      expect(await page.evaluate(() => scrollY), 'the credits').toBe(y);
+      for (let i = 0; i < 3; i++) await drag(page, await centre(credits), 200);
+      expect(await page.evaluate(() => scrollY), 'the credits at their end').toBe(y);
+      // And back down past their top.
+      for (let i = 0; i < 3; i++) await drag(page, await centre(credits), -200);
+      expect(await credits.evaluate((dl) => dl.scrollTop), 'the credits back at their top').toBe(0);
+      expect(await page.evaluate(() => scrollY), 'the credits at their top').toBe(y);
+
+      await about(page).getByRole('button', { name: 'Close About' }).tap();
+      await expect(about(page)).toBeHidden();
+      expect(await page.evaluate(() => scrollY), 'closed').toBe(y);
+    });
+  });
+});
+
+// Issue 209, decision 3 (Claude's call, open to the owner): About's × the size of the Demo card's.
+test('About’s × is the Demo card’s ×, on a computer and a phone', async ({ page }) => {
+  for (const [width, height] of [[1440, 900], [393, 659]] as const) {
+    await page.setViewportSize({ width, height });
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Demo', exact: true }).click();
+    const demoCross = (await page.getByRole('region', { name: 'Demo' }).getByRole('button', { name: 'Close the card' }).boundingBox())!;
+    await page.getByRole('button', { name: 'About', exact: true }).click();
+    const cross = (await page.getByRole('dialog', { name: 'Limpide' }).getByRole('button', { name: 'Close About' }).boundingBox())!;
+    expect([cross.width, cross.height], `${width}px`).toEqual([demoCross.width, demoCross.height]);
+  }
 });
