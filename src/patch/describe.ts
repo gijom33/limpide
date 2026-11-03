@@ -1,4 +1,4 @@
-import { effectiveCutoff, LFO_LAWS } from '../modulation/modulationModel';
+import { destinationSwings, effectiveCutoff } from '../modulation/modulationModel';
 import type { Waveform } from '../music/harmonics';
 import { TEMPO } from '../music/tempo';
 import { type Lfo, lfoHz, lfos, osc2Heard, type Patch } from './patch';
@@ -15,7 +15,13 @@ export function describePatch(patch: Patch, bpm: number = TEMPO.default): string
   if (silent) return silent;
   const sound = soundOf(patch);
   const parts = [...filterParts(patch, sound), ...envelopeParts(patch), ...motionParts(patch, sound, bpm)].sort((a, b) => a.order - b.order);
-  return withinWords(sourceForms(patch, sound), parts).reduce((phrase, part) => `${phrase}${part.startsWith('and ') ? ' ' : ', '}${part}`);
+  const [source, ...kept] = withinWords(sourceForms(patch, sound), parts);
+  // The first LFO heard reads "with …" after a comma, any other "and …" after a space.
+  let motions = 0;
+  return kept.reduce((phrase, part) => {
+    if (!part.lfo) return `${phrase}, ${part.words}`;
+    return motions++ === 0 ? `${phrase}, with ${part.words}` : `${phrase} and ${part.words}`;
+  }, source);
 }
 
 /** The most words the phrase takes. */
@@ -26,6 +32,8 @@ interface Part {
   words: string;
   order: number;
   rank: number;
+  /** An LFO's motion, its words read after "with" or "and" (issue 196: told apart by this, not by its text). */
+  lfo?: true;
 }
 
 /** The least a Mixer level must be for its source to be named: −20 dB, heard beside the others. */
@@ -250,12 +258,14 @@ function envelopeParts(patch: Patch): Part[] {
 
 // ---- The LFOs ----
 
-/** What one LFO does that is heard, in a few words, or null. */
-function motion(patch: Patch, sound: Sound, lfo: Lfo, bpm: number): string | null {
+/**
+ * What one LFO (`index` 0 or 1) does that is heard, in a few words, or null. Its swing is the Modulation model's, so
+ * two LFOs on one Destination share its room, as in the sound (issue 196).
+ */
+function motion(patch: Patch, sound: Sound, lfo: Lfo, index: number, bpm: number): string | null {
   if (lfo.amount <= 0) return null;
   const rate = lfoHz(lfo, bpm);
-  const law = LFO_LAWS[lfo.destination];
-  const swingOf = (value: number) => Math.min(law.perDepth * lfo.amount, 'room' in law ? law.room(value) : Infinity);
+  const swingOf = (value: number) => destinationSwings(patch, lfo.destination, value)[index];
   switch (lfo.destination) {
     case 'pitch': {
       const cents = 100 * swingOf(0);
@@ -309,25 +319,26 @@ function motion(patch: Patch, sound: Sound, lfo: Lfo, bpm: number): string | nul
 }
 
 function motionParts(patch: Patch, sound: Sound, bpm: number): Part[] {
-  const heard = [...new Set(lfos(patch).map((lfo) => motion(patch, sound, lfo, bpm)))].filter((m): m is string => !!m);
-  return heard.map((words, i) => ({ words: `${i === 0 ? 'with' : 'and'} ${words}`, order: 5 + i * 0.1, rank: i === 0 ? 1 : 3 }));
+  const heard = [...new Set(lfos(patch).map((lfo, i) => motion(patch, sound, lfo, i, bpm)))].filter((m): m is string => !!m);
+  return heard.map((words, i) => ({ words, order: 5 + i * 0.1, rank: i === 0 ? 1 : 3, lfo: true }));
 }
 
 // ---- Fitting ----
 
-const count = (words: string) => words.split(' ').length;
+/** A part's words, an LFO's "with" or "and" counted. */
+const count = (part: Part) => part.words.split(' ').length + (part.lfo ? 1 : 0);
 
 /**
  * The phrase within `MAX_WORDS`: the fullest source form that leaves room for the telling parts (rank 1 and 2), the
  * other parts by rank as they fit, in reading order.
  */
-function withinWords(sources: string[], parts: Part[]): string[] {
+function withinWords(sources: string[], parts: Part[]): [string, ...Part[]] {
   const byRank = [...parts].sort((a, b) => a.rank - b.rank || a.order - b.order);
   const fill = (source: string) => {
-    let room = MAX_WORDS - count(source);
+    let room = MAX_WORDS - source.split(' ').length;
     const kept = byRank.filter((p) => {
-      if (count(p.words) > room) return false;
-      room -= count(p.words);
+      if (count(p) > room) return false;
+      room -= count(p);
       return true;
     });
     return { source, kept };
@@ -335,9 +346,5 @@ function withinWords(sources: string[], parts: Part[]): string[] {
   const tries = sources.map(fill);
   const telling = parts.filter((p) => p.rank <= 2).length;
   const best = tries.find((t) => t.kept.filter((p) => p.rank <= 2).length === telling) ?? tries[tries.length - 1];
-  // A second LFO reads "and …" only after the first.
-  const kept = best.kept.sort((a, b) => a.order - b.order).map((p) => p.words);
-  const firstMotion = kept.findIndex((w) => w.startsWith('and '));
-  if (firstMotion >= 0 && !kept.some((w) => w.startsWith('with ') && !w.startsWith('with a long'))) kept[firstMotion] = kept[firstMotion].replace(/^and /, 'with ');
-  return [best.source, ...kept];
+  return [best.source, ...best.kept.sort((a, b) => a.order - b.order)];
 }

@@ -108,3 +108,16 @@ describe('A Patch in plain words (issue 123)', () => {
     expect(describePatch({ ...defaultPatch(), volume: 0 })).toBe('silent: the Volume is down');
   });
 });
+
+describe('two LFOs sharing a Destination’s room (issue 196)', () => {
+  // Resonance at 0.1 leaves 0.1 each way: one LFO at Depth 0.1 swings it all of that, two share it, 0.05 each.
+  const resonant: Patch = { ...defaultPatch(), resonance: 0.1, lfoDestination: 'resonance', lfoAmount: 0.1 };
+
+  it('says what one LFO swings', () => {
+    expect(describePatch(resonant)).toContain('a swelling resonance');
+  });
+
+  it('says no more than each one’s share when both sweep the same room', () => {
+    expect(describePatch({ ...resonant, lfo2Destination: 'resonance', lfo2Amount: 0.1 })).not.toContain('a swelling resonance');
+  });
+});
