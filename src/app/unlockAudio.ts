@@ -6,41 +6,48 @@ export interface UnlockableContext extends EventTarget {
   resume(): Promise<void>;
 }
 
-const GESTURES = ['keydown', 'pointerdown'] as const;
+// Safari on an iPhone lets sound start only as a finger lifts (touchend, pointerup, click), not as it lands.
+const GESTURES = ['keydown', 'pointerdown', 'pointerup', 'touchend', 'click'] as const;
+// Back on the page: worth a try at once, though a browser may still want a gesture first.
+const RETURNS = ['visibilitychange', 'pageshow', 'focus'] as const;
 // The options form: Node's EventTarget (used in tests) ignores a boolean capture flag on removal.
 const CAPTURE = { capture: true };
 
 /**
- * Browsers keep audio suspended until the page is interacted with (autoplay policy). This resumes it on the
- * first key press, click or drag — synchronously inside that gesture, which Safari requires — and reports
- * 'blocked' if the browser still refuses, so the page can ask for a click. Returns a teardown function.
+ * Browsers keep audio suspended until the page is interacted with (autoplay policy), and may stop it again later:
+ * Safari on an iPhone does when another app comes in front (its 'interrupted'), and leaves it stopped on return. This
+ * resumes it on a key press, click, touch or drag whenever it is not running — synchronously inside that gesture,
+ * which Safari requires — and, once it has run, tries at once on coming back to the page. It reports 'waiting' while it is not running,
+ * and 'blocked' if a gesture did not start it, so the page can ask for a click. Returns a teardown function.
  */
 export function unlockAudio(ctx: UnlockableContext, page: EventTarget, onChange: (status: AudioStatus) => void): () => void {
-  const stop = () => {
-    for (const g of GESTURES) page.removeEventListener(g, onGesture, CAPTURE);
-    ctx.removeEventListener('statechange', onState);
-  };
+  const running = () => ctx.state === 'running';
+  // Before the sound first runs, only a gesture can start it: a try without one is refused, with a warning in the console.
+  let ran = running();
   const onState = () => {
-    if (ctx.state === 'running') {
-      onChange('running');
-      stop();
-    }
+    ran ||= running();
+    onChange(running() ? 'running' : 'waiting');
   };
   function onGesture() {
+    if (running()) return;
     ctx.resume().then(
-      () => ctx.state !== 'running' && onChange('blocked'),
+      () => !running() && onChange('blocked'),
       () => onChange('blocked'),
     );
   }
-
-  if (ctx.state === 'running') {
-    onChange('running');
-    return () => {};
+  function onReturn() {
+    if (ran && !running()) ctx.resume().catch(() => {});
   }
-  onChange('waiting');
+
+  onChange(running() ? 'running' : 'waiting');
   for (const g of GESTURES) page.addEventListener(g, onGesture, CAPTURE);
+  for (const r of RETURNS) page.addEventListener(r, onReturn);
   ctx.addEventListener('statechange', onState);
-  return stop;
+  return () => {
+    for (const g of GESTURES) page.removeEventListener(g, onGesture, CAPTURE);
+    for (const r of RETURNS) page.removeEventListener(r, onReturn);
+    ctx.removeEventListener('statechange', onState);
+  };
 }
 
 /**

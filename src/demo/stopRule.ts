@@ -2,8 +2,8 @@ import { ARROW_STEPS } from '../input/arrowKeys';
 
 /**
  * What a key press or a touch was on, for the Demo: a control that shapes the sound (knobs, faders, the stages'
- * switches, an LFO's Destination, the section strip, the tabs), Display, the piano, the Demo's own card and button,
- * elsewhere on the page, or outside it.
+ * choices and on-off switches, an LFO's Destination, the section strip, the tabs), Display, the piano, the Demo's own
+ * card and button, elsewhere on the page, or outside it.
  */
 export type Touched = 'sound' | 'display' | 'piano' | 'demo' | 'page' | 'outside';
 

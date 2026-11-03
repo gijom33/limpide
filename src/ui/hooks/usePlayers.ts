@@ -19,7 +19,8 @@ function touchedBy(target: EventTarget | null): Touched {
   if (!(target instanceof Element)) return 'outside';
   if (target.closest('[data-demo]')) return 'demo';
   if (target.closest('.display-menu')) return 'display';
-  if (target.closest('.knob, .block-controls [role="radio"], .timeline-controls [role="radio"], .destination-picker, .section-strip, [role="tab"]')) return 'sound';
+  // The on-off switches (Legato, an LFO's Retrigger and Sync) shape the sound as a knob does (the owner, 2026-11-03).
+  if (target.closest('.knob, .switch, .block-controls [role="radio"], .timeline-controls [role="radio"], .destination-picker, .section-strip, [role="tab"]')) return 'sound';
   if (!target.closest('main')) return 'outside';
   if (target.closest('.piano')) return 'piano';
   return 'page';

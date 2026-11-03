@@ -1,6 +1,6 @@
 import { expect, type Page, test } from '@playwright/test';
 import { LONGEST_STEP } from '../src/ui/mascotPlace';
-import { openDisplay } from './helpers';
+import { openDisplay, reachAudio, stopSound } from './helpers';
 import { BEAD_ON, holding, WELCOMED } from './startState';
 
 // The mascot (issue 115): B, E, A, D played by hand, as in a bead of water, calls it up from behind the top right
@@ -598,6 +598,20 @@ test.describe('out by default (issue 150)', () => {
   });
 });
 
+test('with the sound stopped by the browser (an iPhone, back from another app), it moves on all the same', async ({ page }) => {
+  await reachAudio(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  await listening(page);
+  await bringBead(page);
+  await settles(page);
+  await stopSound(page);
+  // Its own time goes on: within a few seconds it strolls, as it does with the sound running.
+  const x = () => mascot(page).evaluate((el) => el.getBoundingClientRect().left);
+  const from = await x();
+  await expect.poll(async () => Math.abs((await x()) - from), { timeout: 20_000 }).toBeGreaterThan(10);
+});
+
 test('a pointer over it tickles it; a click sends tiny drops every way', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
@@ -797,7 +811,8 @@ test('dragged and let go, it is thrown, and lands on an edge', async ({ page }) 
   await page.goto('/');
   await listening(page);
   await bringBead(page);
-  await expect.poll(async () => Math.abs((await footing(page)).below) <= 1).toBe(true);
+  // Up on the Amp's edge: a visit elsewhere can keep it away 8 to 18 s (1 run in 120 in WebKit waited longer than 5 s).
+  await expect.poll(async () => Math.abs((await footing(page)).below) <= 1, { timeout: 20_000 }).toBe(true);
   // Picked up where it is now: it may stroll on between where it is read and the press, on a slow runner (1.22.0's
   // deploy run), so a press that misses it is let go and tried again.
   let box = (await page.locator('.mascot-drop').boundingBox())!;
@@ -820,11 +835,13 @@ test('dragged and let go, it is thrown, and lands on an edge', async ({ page }) 
   await page.mouse.up();
   await expect(mascot(page)).toHaveAttribute('data-moving', 'thrown');
   await expect(mascot(page)).toHaveAttribute('data-moving', 'standing', { timeout: 5000 });
-  // Somewhere along to the left, on a section's top edge.
-  const landed = await page.locator('.mascot-drop').evaluate((el) => {
-    const drop = el.getBoundingClientRect();
+  // Somewhere along to the left, on a section's top edge. Its foot is read where it is placed, not from its drawing's box:
+  // landed over text it walks off at once (issue 181), leaning into its steps, and a leaning drop's box reaches past its
+  // foot (2 to 4 runs in 20 read it off the edge that way, 1.22.0's statistics).
+  const landed = await mascot(page).evaluate((el: HTMLElement) => {
+    const at = el.getBoundingClientRect();
     const tops = [...document.querySelectorAll('section[aria-label]')].map((s) => s.getBoundingClientRect().top);
-    return { left: drop.left, onEdge: tops.some((top) => Math.abs(drop.bottom - top) <= 2) };
+    return { left: at.left, onEdge: tops.some((top) => Math.abs(at.bottom - top) <= 2) };
   });
   expect(landed.left).toBeLessThan(box.x - 50);
   expect(landed.onEdge).toBe(true);

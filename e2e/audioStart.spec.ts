@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { reachAudio, stopSound } from './helpers';
 
 // The app is listening once the Viewers are drawing (a key pressed in the first few milliseconds after
 // the load event, before React attaches its listeners, is not something a person can do).
@@ -117,3 +118,20 @@ test('where the browser allows sound from the start, the invitation never shows,
   const seen = await page.evaluate(() => (window as unknown as { inviteSeen?: boolean }).inviteSeen ?? false);
   expect(seen).toBe(false);
 });
+
+test('stopped by the browser after it ran (an iPhone, back from another app), the next key sounds again', async ({ page }) => {
+  await reachAudio(page);
+  await page.goto('/');
+  await ready(page);
+  await page.keyboard.down('KeyA');
+  await expect.poll(() => db(page), { timeout: 10000 }).toBeGreaterThan(-40);
+  await page.keyboard.up('KeyA');
+  await expect.poll(() => db(page), { timeout: 10000 }).toBeLessThan(-60);
+  await stopSound(page);
+  await expect(invite(page).getByText('Play to start the sound')).toBeVisible();
+  await page.keyboard.down('KeyA');
+  await expect.poll(() => db(page), { timeout: 10000 }).toBeGreaterThan(-40);
+  await page.keyboard.up('KeyA');
+  await expect(invite(page)).toHaveCount(0);
+});
+
