@@ -5,7 +5,7 @@ import { type LfoNumber, lfos } from '../patch/patch';
 import type { PatchStore } from '../patch/patchStore';
 import { addToRenderLoop } from '../viewers/renderLoop';
 import { lineAt, lineWiderThan } from './LfoPlot';
-import { type Box, type Cling, clingBeside, type Guide, HEIGHT, RING, TWIN_PX, targetBox, WIDTH } from './mascotCling';
+import { type Box, type Cling, clingBeside, crosses, type Guide, HEIGHT, RING, TAIL_HEIGHT, TWIN_PX, targetBox, WIDTH } from './mascotCling';
 import { gesturesOf, looksOf } from './mascotGestures';
 import { type Act, createMascotMotion, hatOn, type Pose, type Room, SCREAMING } from './mascotMotion';
 import { CATCH, CLOUD, HATS, HOOK, ICE, type Picture, PROPS, type Rect, ROD_TIP, SKY, type Stage, TAILS } from './mascotPictures';
@@ -213,8 +213,6 @@ const TEXT_SECONDS = 0.5;
 const TEXT_SCROLLED = 0.1;
 /** Pointing the way (issue 151): what may stand beside a control it clings to, as little covered as can be. */
 const NEIGHBOURS = '[data-learn], canvas, [role=tab], button, h2, h3';
-/** Its tail's height over its foot, where its aim at a control is taken from. */
-const TAIL_HEIGHT = 12;
 /** The steepest it aims its tail, up or down, in degrees. */
 const STEEPEST_AIM = 60;
 /** Sliding down the panel, a drip left behind it this often, in seconds. */
@@ -541,7 +539,7 @@ export function Mascot({
       ].join(' ');
       const known = clings.get(el);
       if (known?.key === key) return { box, cling: known.cling };
-      const reachable = shown && box.top >= ceiling && box.bottom <= innerHeight && !blocks.some((b) => b.left < box.right && b.right > box.left && b.top < box.bottom && b.bottom > box.top);
+      const reachable = shown && box.top >= ceiling && box.bottom <= innerHeight && !blocks.some((b) => crosses(b, box));
       let cling: Cling | null = null;
       if (reachable) {
         const scope = el.closest('section[aria-label], header') ?? document.body;

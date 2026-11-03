@@ -9,6 +9,8 @@ export const TURNED_PAST = WIDTH - 2 * ORIGIN;
 export const TWIN_PX = 16;
 /** Its tail's middle, from the top of its drawing: level with the control's middle as it points. */
 const TAIL_Y = 14;
+/** The same, over its foot: where its aim at a control is taken from (issue 196: one fact, here). */
+export const TAIL_HEIGHT = HEIGHT - TAIL_Y;
 /** How far a Tutorial's ring stands out round its control: its outline's offset and width. */
 export const RING = 6;
 /** Its tail's tip stops this short of the ring. */
@@ -68,6 +70,9 @@ export function targetBox(control: Box, text: string): Box {
   const half = (text.length * TARGET_LETTER + TARGET_PADDING) / 2;
   return { left: middle - half, right: middle + half, top: control.top - TARGET_GAP - TARGET_HEIGHT, bottom: control.top - TARGET_GAP };
 }
+
+/** Whether two boxes cross, more than touching (issue 196: the cling's and the page's one test). */
+export const crosses = (a: Box, b: Box) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
 
 const overlap = (a: Box, b: Box) => Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) * Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
 const inside = (a: Box, b: Box) => a.left >= b.left && a.right <= b.right && a.top >= b.top && a.bottom <= b.bottom;
