@@ -148,6 +148,33 @@ test('Glow is Off at first; On, every Scope draws its last traces fading under t
   for (const scope of await scopes.all()) await expect(scope).toHaveAttribute('data-glow', '0');
 });
 
+test('Glow reaches the Spectrums: a Filter swept by its Envelope leaves its past outlines, and frozen they stay (issue 199)', async ({ page }) => {
+  await page.goto('/');
+  const spectrums = page.locator('canvas.spectrum');
+  await expect(spectrums).toHaveCount(3);
+  for (const spectrum of await spectrums.all()) await expect(spectrum).toHaveAttribute('data-glow', '0');
+  await page.getByRole('slider', { name: 'Filter Envelope Amount' }).press('PageUp');
+  await openDisplay(page);
+  await page.getByRole('group', { name: 'View', exact: true }).getByRole('radiogroup', { name: 'Glow' }).getByRole('radio', { name: 'On', exact: true }).click();
+  await page.keyboard.press('Escape');
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur()); // Space on a button presses it
+
+  // A quarter of a second of outlines, one per 60th of a second at most: 15, fewer on a loaded machine.
+  const filter = page.getByLabel('Filter Spectrum', { exact: true });
+  await page.keyboard.down('KeyA'); // the Filter Envelope sweeps the Cutoff as the Note starts
+  for (const spectrum of await spectrums.all()) await expect(spectrum).toHaveAttribute('data-glow', /^([2-9]|1[0-9])$/);
+  await page.keyboard.press('Space');
+  await expect(page.locator('main')).toHaveAttribute('data-frozen', 'true');
+  await page.waitForTimeout(100); // the first frozen frame drawn
+  const frozen = await filter.getAttribute('data-glow');
+  await page.keyboard.up('KeyA');
+  await page.waitForTimeout(500); // twice the Glow's length: frozen, nothing fades or goes
+  await expect(filter).toHaveAttribute('data-glow', frozen!);
+  expect(Number(frozen)).toBeGreaterThanOrEqual(2);
+  await page.keyboard.press('Space');
+  await expect(page.locator('main')).not.toHaveAttribute('data-frozen', 'true');
+});
+
 test('the Env Timeline shows 2 seconds at first, and 1, 3 or 4 when chosen under Axes (the owner, 2026-10-28)', async ({ page }) => {
   await page.goto('/');
   const timeline = page.getByLabel('Envelope Timeline', { exact: true });

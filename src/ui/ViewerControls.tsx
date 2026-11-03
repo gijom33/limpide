@@ -12,7 +12,7 @@ interface Props {
   dispatch(action: ViewSettingsAction): void;
 }
 
-/** Freeze and Snapshot, actions on what the Viewers show; which Voices they follow, and the Scopes' Glow. */
+/** Freeze and Snapshot, actions on what the Viewers show; which Voices they follow, and the Glow of the Scopes and Spectrums. */
 export function ViewActions({ state, glow, dispatch }: Props & { glow: boolean }) {
   const learnFreeze = useLearnable({ kind: 'action', id: 'freeze' });
   const learnSnapshot = useLearnable({ kind: 'action', id: 'snapshot' });

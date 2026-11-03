@@ -143,7 +143,7 @@ const STATES: { name: string; open?(page: Page): Promise<void>; close?(page: Pag
   },
   { name: 'Display panel', open: (page) => page.getByRole('button', { name: 'Display', exact: true }).click(), close: (page) => page.getByRole('button', { name: 'Display', exact: true }).click() },
   {
-    // The Scopes' Glow on (issue 180): the Display panel with it chosen, every Scope drawing its fading traces.
+    // Glow on (issues 180, 199): the Display panel with it chosen, every Scope and Spectrum drawing its fading traces.
     name: 'Glow on',
     // Chosen by the keyboard and then left, as the panel is seen at rest: no segment hovered or focused.
     open: async (page) => {
@@ -154,6 +154,7 @@ const STATES: { name: string; open?(page: Page): Promise<void>; close?(page: Pag
       await expect(glow.getByRole('radio', { name: 'On', exact: true })).toHaveAttribute('aria-checked', 'true');
       await page.evaluate(() => (document.activeElement as HTMLElement).blur());
       await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-glow', /^([2-9]|1[0-9])$/);
+      await expect(page.getByLabel('Amp Spectrum', { exact: true })).toHaveAttribute('data-glow', /^([2-9]|1[0-9])$/);
       await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished)));
     },
     close: async (page) => {

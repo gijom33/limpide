@@ -1,0 +1,28 @@
+import { createFreezeLatch } from './freezeLatch';
+
+// Glow (issue 180, decision 5; the Spectrums since issue 199): each trace fades as on an analogue scope, by 0.85 every
+// 60th of a second whatever the screen's rate (halving in about 70 ms), and is dropped a quarter of a second old, at
+// under a tenth. One trace is kept per 60th of a second, so a 120 Hz screen draws no more. Redrawn rather than faded
+// on a layer, where rounding leaves a haze of every trace ever drawn.
+const GLOW_DECAY = 0.85;
+const GLOW_STEP_MS = 1000 / 60;
+const GLOW_MS = 250;
+
+/**
+ * A Viewer's Glow: called once a frame with its newest trace, it returns the past traces to draw under it, oldest
+ * first, each with the opacity its age gives it. Off, it keeps none; frozen, it keeps the ones it had at the moment
+ * of freezing, faded as they were then, so the frozen frame keeps its glow.
+ */
+export function createGlow<T>() {
+  // Newest first, with when.
+  const ghosts: { value: T; at: number }[] = [];
+  const frozenTime = createFreezeLatch<number>();
+  return function glow({ on, frozen, now, newest }: { on: boolean; frozen: boolean; now: () => number; newest: T }) {
+    const time = frozenTime(frozen, now);
+    const stale = on ? ghosts.findIndex(({ at }) => time - at > GLOW_MS) : 0;
+    if (stale >= 0) ghosts.splice(stale);
+    const past = ghosts.map(({ value, at }) => ({ value, alpha: GLOW_DECAY ** ((time - at) / GLOW_STEP_MS) })).reverse();
+    if (on && !frozen && (!ghosts.length || time - ghosts[0].at >= GLOW_STEP_MS * 0.9)) ghosts.unshift({ value: newest, at: time });
+    return past;
+  };
+}

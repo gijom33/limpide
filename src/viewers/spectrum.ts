@@ -4,6 +4,7 @@ import type { IdealPartial, IdealSource } from '../music/idealReference';
 import { frequencyAxis, levelAxis } from './axes';
 import { cssVar, curveWidth, haloText, prepareCanvas } from './canvas';
 import { createFreezeLatch } from './freezeLatch';
+import { createGlow } from './glow';
 import { harmonicMarkers } from './harmonicMarkers';
 import { aboveFloor, marksToDraw, spectrumOutline } from './outline';
 import { hoverReadout, hoverReadoutLines, interpolatedPeak, SILENT_DB, snapToPeak } from './readout';
@@ -108,6 +109,8 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
   const frozenCurve = createFreezeLatch<{ key: string; gains: Float32Array }>();
   const frozenIdealGains = createFreezeLatch<{ key: string; gains: Float32Array }>();
   const frozenNoiseSlope = createFreezeLatch<string | undefined>();
+  // The outlines drawn last, for the Glow (issue 199), each with the axis and width it was drawn for.
+  const glow = createGlow<{ outline: Float32Array; key: string }>();
   let snapshotToken: number | null = null;
   let snapshotBins: Float32Array | null = null;
   // The hover readout's columns, measured once per font so its box keeps one size (issue 155), and again with room for
@@ -177,6 +180,24 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
     // The live trace: an outline of the Harmonics, lightly filled underneath.
     const outline = spectrumOutline(bins, binHz, fAxis, width, ratio);
     const trace = cssVar(canvas, '--trace');
+    // 1.5 device pixels, not the curve width the other Viewers share: thin enough that spikes three device pixels
+    // apart keep a dark gap between them.
+    const outlineWidth = 1.5 / ratio;
+
+    // Glow (issue 199): the outlines of the last quarter of a second, fading under the newest; only the outline, so
+    // the fill, the Curve and the marks read as now. One drawn on another axis or width is passed over.
+    const key = `${viewer.frequencyScale}:${outline.length}`;
+    const past = glow({ on: view().glow, frozen: viewer.frozen, now: () => performance.now(), newest: { outline, key } })
+      .filter(({ value }) => value.key === key);
+    g.strokeStyle = trace;
+    g.lineWidth = outlineWidth;
+    for (const { value, alpha } of past) {
+      g.globalAlpha = alpha;
+      strokeColumns(g, value.outline, yOf, ratio);
+    }
+    g.globalAlpha = 1;
+    canvas.dataset.glow = String(past.length);
+
     g.fillStyle = trace;
     g.globalAlpha = 0.16;
     g.beginPath();
@@ -187,9 +208,7 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
     g.fill();
     g.globalAlpha = 1;
     g.strokeStyle = trace;
-    // 1.5 device pixels, not the curve width the other Viewers share: thin enough that spikes three device pixels
-    // apart keep a dark gap between them.
-    g.lineWidth = 1.5 / ratio;
+    g.lineWidth = outlineWidth;
     strokeColumns(g, outline, yOf, ratio);
 
     if (overlays.curve && response) {

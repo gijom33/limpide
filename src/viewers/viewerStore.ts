@@ -11,7 +11,7 @@ import { type Overlay, toggleOverlay } from './overlays';
 import { INITIAL_VIEWER_STATE, type TapSource, type ViewerAction, viewerReducer } from './viewerState';
 import type { IdealAt, ViewSettings } from './viewSettings';
 
-/** Every way the Viewer settings change: the reducer's, and the Scope's cycles and Glow, the Timeline's length, the overlays. */
+/** Every way the Viewer settings change: the reducer's, the Scope's cycles, the Glow, the Timeline's length, the overlays. */
 export type ViewSettingsAction =
   | ViewerAction
   | { type: 'setCycles'; cycles: ViewSettings['cycles'] }
