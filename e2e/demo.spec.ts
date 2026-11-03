@@ -42,7 +42,7 @@ test('turning a knob keeps the Demo playing, and the Demo leaves that knob where
   await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /^-?[0-5]?\d(\.\d+)?$/); // still sounding
 });
 
-test('the Waveform, Filter and Voices switches keep the Demo playing, and it plays on with the choice', async ({ page }) => {
+test('the Waveform, Filter and Voices choices and the on-off switches keep the Demo playing, and it plays on with the choice', async ({ page }) => {
   await page.goto('/');
   await demo(page).click();
   await expect(patchName(page)).toContainText('Kick');
@@ -55,7 +55,14 @@ test('the Waveform, Filter and Voices switches keep the Demo playing, and it pla
   await choose('Filter Mode', 'Band-pass');
   await choose('Voices', '4');
   await choose('LFO 1 Waveform', 'Square');
-  await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
+  // The on-off switches too: Legato beside Voices, an LFO's Retrigger and Sync (the owner, 2026-11-03).
+  for (const name of ['Legato', 'LFO 1 Retrigger', 'LFO 1 Sync']) {
+    const button = page.getByRole('button', { name, exact: true });
+    const was = await button.getAttribute('aria-pressed');
+    await button.click();
+    await expect(button).not.toHaveAttribute('aria-pressed', was!);
+    await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
+  }
   await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /^-?[0-5]?\d(\.\d+)?$/); // still sounding
   await page.getByRole('button', { name: 'Next Preset' }).click(); // a control that is not part of the sound: it takes over
   await expect(demo(page)).toHaveAttribute('aria-pressed', 'false');
