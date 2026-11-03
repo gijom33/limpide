@@ -1,4 +1,4 @@
-import { filterStages } from '../engine/filterDesign';
+import { filterStages, isPeaked } from '../engine/filterDesign';
 import { type EnvelopeStage, STAGE_SHARPNESS, stageTimeConstant } from '../modulation/envelope';
 import { GLIDE_SHARPNESS } from '../modulation/lfo';
 import { destinationSwings, effectiveCutoff, KEY_TRACK_CENTRE, LFO_LAWS, osc2Cents } from '../modulation/modulationModel';
@@ -102,8 +102,7 @@ export function responseFormula(mode: FilterMode, slope: FilterSlope): Formula {
  */
 export function filterQ(mode: FilterMode, slope: FilterSlope, resonance: number): { q: number; stages: 1 | 2 } {
   const [stage] = filterStages(mode, slope, resonance);
-  const peaked = mode === 'lowpass' || mode === 'highpass';
-  return { q: peaked ? 10 ** (stage.Q / 20) : stage.Q, stages: slope === 12 ? 1 : 2 };
+  return { q: isPeaked(mode) ? 10 ** (stage.Q / 20) : stage.Q, stages: slope === 12 ? 1 : 2 };
 }
 
 const twoPlaces = (v: number) => (v < 10 ? v.toFixed(2) : v.toFixed(1));

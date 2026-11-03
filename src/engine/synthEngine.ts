@@ -11,7 +11,7 @@ import { fmDepthKept, playedTop } from '../music/idealReference';
 import { frequencyToNote, noteToFrequency } from '../music/pitch';
 import { TEMPO } from '../music/tempo';
 import { fmIndex, GLIDE_OFF, type Lfo, type LfoNumber, lfoHz, lfos, type NoiseColour, PARAMS, type Patch, type SubWaveform, type Voices } from '../patch/patch';
-import { CUTOFF_CLAMP, CUTOFF_SPAN, centsOverFloor, filterLevel, filterStages, filterStagesAt, qSwing, type Stage, TOP_DIP } from './filterDesign';
+import { CUTOFF_CLAMP, CUTOFF_SPAN, centsOverFloor, fadesOutAtTheTop, filterLevel, filterStages, filterStagesAt, isPeaked, qSwing, type Stage, TOP_DIP } from './filterDesign';
 import { heardAt, type OutputClockContext } from './outputClock';
 
 /**
@@ -662,7 +662,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   cutoff.start();
   // Near the top the Resonance fades, and a high-pass's output with it (issue 195), as `filterStagesAt` and
   // `filterLevel` have it: the clamped Cutoff, through the top's dip, takes its share off each stage's Q over its flat
-  // one (the knob's, `overFlatRest`, and the LFOs' swing), and off what a high-pass lets through. Each dip's gain is −1
+  // one (the knob's, `resonanceOverFlat`, and the LFOs' swing), and off what a high-pass lets through. Each dip's gain is −1
   // in the Modes it fades, 0 in the others.
   const toDip = ctx.createGain();
   toDip.gain.value = 1 / CUTOFF_SPAN;
@@ -680,7 +680,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
     kept.connect(node.Q);
     return kept;
   });
-  const overFlatRest = overFlat.map((kept) => {
+  const resonanceOverFlat = overFlat.map((kept) => {
     const rest = ctx.createConstantSource();
     rest.offset.value = 0;
     rest.connect(kept);
@@ -906,17 +906,16 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
       for (const n of noises) n.gate.gain.setValueAtTime(n.colour === next.noiseColour ? 1 : 0, t);
       mixSub.gain.setValueAtTime(next.mixSub * OSCILLATOR_LEVEL, t);
       mixRing.gain.setValueAtTime(next.mixRing * OSCILLATOR_LEVEL, t);
-      // The knob's Cutoff; the Filter Envelope and the rest add to it.
       // Each stage at its flat Q, the knob's Resonance over it faded at the top with the LFOs' swing (issue 195).
       const stages = filterStages(next.filterMode, next.filterSlope, next.resonance);
       const flat = filterStages(next.filterMode, next.filterSlope, 0);
       [filter, filter2].forEach((node, i) => {
         setStage(node, { ...stages[i], Q: flat[i].Q }, t);
-        overFlatRest[i].offset.setValueAtTime(stages[i].Q - flat[i].Q, t);
+        resonanceOverFlat[i].offset.setValueAtTime(stages[i].Q - flat[i].Q, t);
       });
-      const peaked = next.filterMode === 'lowpass' || next.filterMode === 'highpass';
-      resonanceDip.gain.setValueAtTime(peaked ? -1 : 0, t);
-      levelDip.gain.setValueAtTime(next.filterMode === 'highpass' ? -1 : 0, t);
+      resonanceDip.gain.setValueAtTime(isPeaked(next.filterMode) ? -1 : 0, t);
+      levelDip.gain.setValueAtTime(fadesOutAtTheTop(next.filterMode) ? -1 : 0, t);
+      // The knob's Cutoff; the Filter Envelope and the rest add to it.
       cutoff.offset.setValueAtTime(centsOverFloor(effectiveCutoff(next)), t);
       envelopeAmount.gain.setValueAtTime(next.filterEnvAmount * 1200, t);
       osc2EnvAmount.gain.setValueAtTime(osc2EnvelopeCents(next, 1), t); // the Envelope's level, 0 to 1, in cents

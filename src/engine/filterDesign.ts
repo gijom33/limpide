@@ -1,6 +1,11 @@
 import { HIGHEST_CUTOFF, LOWEST_CUTOFF } from '../modulation/modulationModel';
 import type { FilterMode, FilterSlope } from '../patch/patch';
 
+/** Whether a Mode's Resonance is a peak at the Cutoff (its Q in dB): a low- or high-pass's, not a band-pass's or notch's. */
+export const isPeaked = (mode: FilterMode) => mode === 'lowpass' || mode === 'highpass';
+/** Whether a Mode's output fades with its Resonance at the top of the range: a high-pass's (issue 195). */
+export const fadesOutAtTheTop = (mode: FilterMode) => mode === 'highpass';
+
 /** One biquad's settings. */
 export interface Stage {
   type: BiquadFilterType;
@@ -21,7 +26,7 @@ const TRANSPARENT: Stage = { type: 'lowshelf', Q: 1, gain: 0 };
  * half the resonant peak (in dB), because cascading adds dB, so Resonance sounds equally strong at both Slopes.
  */
 export function filterStages(mode: FilterMode, slope: FilterSlope, resonance: number): [Stage, Stage] {
-  const peaked = mode === 'lowpass' || mode === 'highpass';
+  const peaked = isPeaked(mode);
   const q = peaked ? resonanceToQdB(resonance) : resonanceToQ(resonance);
   if (slope === 12) return [{ type: mode, Q: q, gain: 0 }, TRANSPARENT];
   const perStage = peaked ? q / 2 : q;
@@ -63,7 +68,7 @@ export const CUTOFF_CLAMP = Float32Array.of(0, 0, CUTOFF_SPAN);
 
 /** How far under the top of its range the Filter starts to fade, in cents: half an octave (issue 195). */
 const FADE_CENTS = 600;
-/** How far a Cutoff is into the top's fade, from 0 (under it) to 1 (at 20 kHz): a raised cosine over the cents. */
+/** How far a Cutoff (in cents over the floor) is into the top's fade, from 0 (under it) to 1 (at 20 kHz): a raised cosine. */
 function intoTheTop(cents: number) {
   const into = (cents - (CUTOFF_SPAN - FADE_CENTS)) / FADE_CENTS;
   return into <= 0 ? 0 : into >= 1 ? 1 : 0.5 - 0.5 * Math.cos(Math.PI * into);
@@ -78,14 +83,14 @@ export const topFade = (cutoff: number) => 1 - intoTheTop(centsOverFloor(cutoff)
 /** The two biquads at a Cutoff: a low- or high-pass's Q taken toward its flat one as the Resonance fades at the top. */
 export function filterStagesAt(mode: FilterMode, slope: FilterSlope, resonance: number, cutoff: number): [Stage, Stage] {
   const stages = filterStages(mode, slope, resonance);
-  if (mode !== 'lowpass' && mode !== 'highpass') return stages;
+  if (!isPeaked(mode)) return stages;
   const fade = topFade(cutoff);
   const flat = filterStages(mode, slope, 0);
   return [0, 1].map((k) => ({ ...stages[k], Q: flat[k].Q + (stages[k].Q - flat[k].Q) * fade })) as [Stage, Stage];
 }
 
 /** What passes the Filter at a Cutoff at all: a high-pass falls silent at the top as its Resonance fades (issue 195). */
-export const filterLevel = (mode: FilterMode, cutoff: number) => (mode === 'highpass' ? topFade(cutoff) : 1);
+export const filterLevel = (mode: FilterMode, cutoff: number) => (fadesOutAtTheTop(mode) ? topFade(cutoff) : 1);
 
 /** Points in the top's fade curve: read between them, the fade is within a hundred-thousandth of its own. */
 const DIP_POINTS = 8193;

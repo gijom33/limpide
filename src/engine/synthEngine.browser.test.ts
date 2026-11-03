@@ -1155,8 +1155,8 @@ describe('Filter Modes and Slopes', () => {
     expect(dB(toneAmplitudeHann(top.filter, SR, 55 * 380) / toneAmplitudeHann(top.osc, SR, 55 * 380)), 'the sound past 20 kHz').toBeLessThan(-3);
   });
 
-  // Issue 195: held at 20 kHz, a resonant low-pass rang there, where the low-pass past Nyquist never did, and a
-  // high-pass let ultrasound through. The Resonance now fades over the top half octave, a high-pass's output with it.
+  // Issue 195: the Resonance fades over the top half octave of the Cutoff's range, a high-pass's output with it, so a
+  // low-pass held at 20 kHz does not ring there and a high-pass there passes nothing, as past Nyquist.
   for (const mode of ['lowpass', 'highpass'] as const)
     for (const slope of [12, 24] as const)
       it(`fades the Resonance near 20 kHz, the sound as the Curve draws it: ${mode}, ${slope} dB, at full Resonance (issue 195)`, async () => {
