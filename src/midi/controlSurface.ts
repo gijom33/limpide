@@ -26,6 +26,13 @@ const DETECT_VALUES = 3;
 /** The sustain pedal and the mod wheel, by their standard CC numbers. */
 const SUSTAIN = 64;
 const MOD_WHEEL = 1;
+/**
+ * The channel mode messages a keyboard's or a DAW's panic sends (issue 185): All Sound Off, Reset All Controllers and
+ * All Notes Off, by their CC numbers. They are never a control: never learned, never taken by a Mapping.
+ */
+const ALL_SOUND_OFF = 120;
+const RESET_ALL_CONTROLLERS = 121;
+const ALL_NOTES_OFF = 123;
 
 /** What MIDI Learn and the Mappings see: Notes and control changes, the bend wheel among them (never aftertouch). */
 type ControlMessage = Exclude<MidiMessage, { type: 'pitchBend' } | { type: 'program' } | { type: 'pressure' }>;
@@ -68,6 +75,8 @@ interface Synth {
    * moves its Destination, and is never learned (issue 132).
    */
   pressure?(amount: number): void;
+  /** All Sound Off (issue 185): every Voice falls silent at once, its Release cut short, the pedal's Notes too. */
+  silence?(): void;
 }
 
 /** What a knob or a fader moves: a Parameter, or the tempo. */
@@ -138,6 +147,29 @@ export function createControlSurface(synth: Synth) {
     if (message.note === undefined) channelPressure = message.value;
     else notePressures.set(noteKey(message.channel, message.note), message.value);
     synth.pressure?.(pressure());
+  };
+  // The Notes a Controller holds down, by channel and Note, so a panic can release them (issue 185).
+  const sounding = new Map<string, number>();
+  /**
+   * A panic (issue 185): All Notes Off releases every Note a Controller holds, whichever channel it came on (Limpide
+   * plays every channel as one instrument), the pedal still holding them as MIDI says; All Sound Off silences at once;
+   * Reset All Controllers lifts the pedal, centres the bend and forgets every pressure.
+   */
+  const channelMode = (controller: number) => {
+    if (controller === RESET_ALL_CONTROLLERS) {
+      synth.pedal?.(false);
+      synth.bend?.(0);
+      channelPressure = 0;
+      notePressures.clear();
+      synth.pressure?.(0);
+      return;
+    }
+    for (const note of sounding.values()) synth.release(note);
+    sounding.clear();
+    const before = pressure();
+    notePressures.clear();
+    if (pressure() !== before) synth.pressure?.(pressure());
+    if (controller === ALL_SOUND_OFF) synth.silence?.();
   };
   /** A released Note's pressure is forgotten; the pressure is told again if that changes it. */
   const forgetPressure = (channel: number, note: number) => {
@@ -352,6 +384,8 @@ export function createControlSurface(synth: Synth) {
       if (incoming.type === 'program') return synth.program?.(incoming.program);
       if (incoming.type === 'pressure') return pressureMoved(incoming);
       if (incoming.type === 'noteOff') forgetPressure(incoming.channel, incoming.note);
+      if (incoming.type === 'cc' && [ALL_SOUND_OFF, RESET_ALL_CONTROLLERS, ALL_NOTES_OFF].includes(incoming.controller))
+        return channelMode(incoming.controller);
       const message: ControlMessage =
         incoming.type === 'pitchBend'
           ? { type: 'cc', channel: incoming.channel, controller: PITCH_BEND, value: Math.round(((incoming.value + 1) / 2) * 127) }
@@ -371,8 +405,11 @@ export function createControlSurface(synth: Synth) {
         synth.touched?.({ kind: 'param', id: 'lfoAmount' }, 'moved');
         return;
       }
-      if (message.type === 'noteOn') synth.press(message.note, message.velocity);
-      else if (message.type === 'noteOff') synth.release(message.note);
+      const key = message.type === 'cc' ? '' : noteKey(message.channel, message.note);
+      if (message.type === 'noteOn') {
+        sounding.set(key, message.note);
+        synth.press(message.note, message.velocity);
+      } else if (message.type === 'noteOff' && sounding.delete(key)) synth.release(message.note);
     },
     startLearn() {
       if (learn.phase === 'off') setLearn({ phase: 'armed', target: null });

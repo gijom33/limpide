@@ -122,6 +122,44 @@ describe('Amp Envelope', () => {
   });
 });
 
+describe('All Sound Off (issue 185)', () => {
+  const at = (t: number) => Math.round(t * SR);
+  const patch = { cutoff: 20000, ampAttack: 0.001, ampDecay: 0.01, ampRelease: 10 };
+
+  it('silences every Voice at once, a long Release and a Note still held alike, without a click', async () => {
+    const s = await render(1, { ...patch, voices: 2 }, (e) => {
+      e.noteOn(57, 1, 0.05);
+      e.noteOn(64, 1, 0.05);
+      e.release(57, 0.3); // in its 10 s Release
+      e.silence(0.5);
+    });
+    const before = rms(s, at(0.4), at(0.5));
+    expect(before).toBeGreaterThan(0.01);
+    expect(rms(s, at(0.52), at(1))).toBeLessThan(before * 1e-4);
+    // Not a step to zero: no sample-to-sample jump past the wave's own.
+    expect(steepestStep(s, 0.49, 0.52)).toBeLessThanOrEqual(steepestStep(s, 0.4, 0.49) * 1.5);
+  });
+
+  it('records the cut in the model, so the Timeline shows the level gone', async () => {
+    const ctx = new OfflineAudioContext(1, SR, SR);
+    const engine = createSynthEngine(ctx);
+    engine.applyPatch({ ...defaultPatch(), ...patch });
+    engine.noteOn(57, 1, 0.05);
+    engine.silence(0.5);
+    expect(engine.modulationAt(0.45).amp).toBeGreaterThan(0.5);
+    expect(engine.modulationAt(0.52).amp).toBe(0);
+  });
+
+  it('leaves the next Note to play as usual', async () => {
+    const s = await render(1, patch, (e) => {
+      e.noteOn(57, 1, 0.05);
+      e.silence(0.3);
+      e.noteOn(60, 1, 0.6);
+    });
+    expect(rms(s, at(0.7), at(0.9))).toBeGreaterThan(0.01);
+  });
+});
+
 /** Renders until `at` seconds, then returns what each Tap's analyser holds at that moment. */
 async function tapsAt(at: number, patch: Partial<Patch>, note = 45) {
   const ctx = new OfflineAudioContext(1, SR * (at + 0.1), SR);

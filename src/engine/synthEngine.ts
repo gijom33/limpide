@@ -48,6 +48,11 @@ export interface SynthEngine {
   /** Several Voices: the Voice playing `note` releases; the others keep sounding. */
   release(note: number, at?: number): void;
   /**
+   * All Sound Off (issue 185): every Voice still sounding, held or in its Release, falls silent at `at` over a dip of
+   * a few milliseconds (no click), recorded in the model as the Amp Envelope plays it.
+   */
+  silence(at?: number): void;
+  /**
    * Frequency of the most recent Note (A4 before any), at Osc 1's Octave (the Sub's with the Sub up), through its Glide
    * and the bend: the period each Scope shows and writes, held still through vibrato.
    */
@@ -834,6 +839,12 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
       play(filterEnvelope.offset, envelopeSchedule(filterEvent));
     },
 
+    /** All Sound Off (issue 185): the Amp Envelope falls from where it is to silence over a dip, whatever its Release. */
+    cut(ampRecord: GateRecord, filterEvent: GateEvent) {
+      play(amp.gain, envelopeSchedule(ampRecord, ampRecord.start));
+      play(filterEnvelope.offset, envelopeSchedule(filterEvent));
+    },
+
     apply(next: Patch, t: number) {
       patch = next;
       const osc2Tuning = osc2Cents(next);
@@ -1438,6 +1449,28 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     release(note, time) {
       const t = at(time);
       for (const v of voices) if (v.note === note && v.releasedAt === null) gate(v, false, t, 0);
+    },
+
+    silence(time) {
+      if (!patch) return;
+      const t = at(time);
+      for (const v of voices.slice(0, voiceCount())) {
+        if (v.freeAt <= t) continue;
+        const cut: GateEvent = { time: t, on: false, adsr: ampAdsr(patch), peak: 0, dip: true };
+        const filterEvent: GateEvent = { time: t, on: false, adsr: filterAdsr(patch), peak: 1 };
+        const entry = record(v.amps, cut);
+        if (v === lead) {
+          record(ampEvents, cut);
+          record(filterEvents, filterEvent);
+        }
+        v.cut(entry, filterEvent);
+        if (v.startedAt > t) {
+          v.cancelRestarts(t);
+          cancelLfoRestarts(t);
+        }
+        if (v.releasedAt === null || v.releasedAt > t) v.releasedAt = t;
+        v.freeAt = t + DIP;
+      }
     },
   };
 }

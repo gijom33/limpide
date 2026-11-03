@@ -119,6 +119,8 @@ export function useMidi(host: Host) {
       pedal: (down) => keyboard.current.onPedal(down),
       program: (number) => keyboard.current.onProgram(number),
       pressure: (amount) => keyboard.current.onPressure(amount),
+      // All Sound Off (issue 185): every Voice silent at once, the Notes the Controller held released first.
+      silence: () => session.engine.silence(),
       learnChanged: (state) => {
         setLearn(state);
         if (state.phase === 'armed' && state.learned) onLearned.current(state.learned);

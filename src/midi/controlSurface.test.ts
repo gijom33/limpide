@@ -779,3 +779,80 @@ describe('the C16’s knobs: a 65 one step, a 66 a third of one (issue 145)', ()
     expect(r.positions.resonance).toBeCloseTo(0.24); // two steps a message, as it sends them
   });
 });
+
+describe('a keyboard’s or a DAW’s panic, and Reset All Controllers (issue 185)', () => {
+  function panicRig() {
+    const heard: string[] = [];
+    const store = createMappingStore(memoryStorage());
+    const surface = createControlSurface({
+      ...untouched,
+      ...valuesOf({}),
+      store,
+      position: () => 0,
+      setPosition: () => {},
+      action: () => {},
+      choice: () => ({ index: 0, count: 2 }),
+      setChoice: () => {},
+      press: (note) => void heard.push(`on ${note}`),
+      release: (note) => void heard.push(`off ${note}`),
+      bend: (amount) => void heard.push(`bend ${amount}`),
+      pedal: (down) => void heard.push(`pedal ${down ? 'down' : 'up'}`),
+      pressure: (amount) => void heard.push(`pressure ${amount}`),
+      silence: () => void heard.push('silence'),
+    });
+    return { surface, heard, store };
+  }
+
+  it('All Notes Off (CC 123) releases every Note a Controller holds, whichever channel, once each', () => {
+    const { surface, heard } = panicRig();
+    surface.handle(noteOn(60, 1));
+    surface.handle(noteOn(64, 2));
+    surface.handle(cc(123, 0, 1));
+    // The keys coming up later find nothing more to release.
+    surface.handle(noteOff(60, 1));
+    surface.handle(noteOff(64, 2));
+    expect(heard).toEqual(['on 60', 'on 64', 'off 60', 'off 64']);
+  });
+
+  it('All Notes Off leaves the pedal down: the Notes it holds go on (the Note input keeps them), as MIDI says', () => {
+    const { surface, heard } = panicRig();
+    surface.handle(noteOn(60, 1));
+    surface.handle(cc(64, 127));
+    surface.handle(cc(123, 0));
+    expect(heard).toEqual(['on 60', 'pedal down', 'off 60']);
+  });
+
+  it('All Sound Off (CC 120) releases every Note and silences at once, even what the pedal holds', () => {
+    const { surface, heard } = panicRig();
+    surface.handle(noteOn(60, 1));
+    surface.handle(cc(64, 127));
+    surface.handle(cc(120, 0));
+    expect(heard).toEqual(['on 60', 'pedal down', 'off 60', 'silence']);
+  });
+
+  it('Reset All Controllers (CC 121) lifts the pedal, centres the bend and forgets every pressure', () => {
+    const { surface, heard } = panicRig();
+    surface.handle(noteOn(60, 1));
+    surface.handle({ type: 'pressure', channel: 1, note: 60, value: 0.5 });
+    surface.handle({ type: 'pressure', channel: 1, value: 0.75 });
+    surface.handle({ type: 'pitchBend', channel: 1, value: 0.5 });
+    surface.handle(cc(64, 127));
+    heard.length = 0;
+    surface.handle(cc(121, 0));
+    expect(heard).toEqual(['pedal up', 'bend 0', 'pressure 0']);
+    // The Note is still held by its key: it is not released.
+    surface.handle({ type: 'pressure', channel: 1, value: 0.25 });
+    expect(heard.at(-1)).toBe('pressure 0.25');
+  });
+
+  it('is never learned, nor taken by a Mapping: a panic always does what MIDI says', () => {
+    const { surface, heard, store } = panicRig();
+    store.set({ control: { kind: 'cc', channel: 1, number: 123 }, target: hold, mode: 'trigger' });
+    surface.handle(noteOn(60, 1));
+    surface.startLearn();
+    surface.select(cutoff);
+    surface.handle(cc(123, 0));
+    expect(heard).toEqual(['on 60', 'off 60']);
+    expect(surface.learnState()).toEqual({ phase: 'armed', target: cutoff });
+  });
+});
