@@ -65,7 +65,7 @@ const statusText = (state: MidiState) => {
         : devices.length
           ? `Connected: ${devices.join(', ')}. Its keys and pads play the synth, with Velocity.${doubledPortsText(devices)}`
           : // A Bluetooth Controller is a port like any other once the system has paired it, as the owner's C16 is (issue 143).
-            'No MIDI Controller connected. Plug one in by USB and it is picked up straight away. A Bluetooth one plays once paired in the system’s MIDI settings (Audio MIDI Setup on a Mac), as a TempoPAD C16 does.';
+            'No MIDI Controller connected. Plug one in by USB and it is picked up straight away. A Bluetooth one plays once the system pairs it as a MIDI device (on a Mac, in Audio MIDI Setup; on Windows and Linux, untried), as a TempoPAD C16 does on a Mac.';
 };
 
 /**

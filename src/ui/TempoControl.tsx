@@ -31,8 +31,11 @@ const heldOff = (tempo: TempoState) => tempo.player || tempo.midi;
 /** The BPM's unit, or the "MIDI" mark in its place while a MIDI clock sets the tempo (issue 136). */
 const unit = (tempo: TempoState) => (tempo.midi ? 'MIDI' : 'BPM');
 
-/** The BPM's tip: while a MIDI clock sets the tempo, why it cannot be set (issue 136). */
-const tempoTip = (tempo: TempoState) => (tempo.midi ? TIPS.tempoClock : TIPS.tempo);
+/**
+ * The BPM's tip: while a MIDI clock sets the tempo, why it cannot be set (issue 136). The narrow layout's button only
+ * opens the field, so its tip says so, the BPM in the field keeping the drag and the arrows (issue 194).
+ */
+const tempoTip = (tempo: TempoState, opener = false) => (tempo.midi ? TIPS.tempoClock : opener ? TIPS.tempoOpen : TIPS.tempo);
 
 /**
  * The BPM (issue 112): a spin button reading "120 BPM", dragged up and down or stepped with the arrows, a
@@ -222,7 +225,7 @@ export function TempoControl(props: Props) {
   return (
     <div className="tempo-menu" ref={wrapper}>
       {news}
-      <Tooltip content={tempoTip(props.tempo)}>
+      <Tooltip content={tempoTip(props.tempo, true)}>
         {/* Named with what it shows, "120 BPM" (WCAG 2.5.3, issue 189). */}
         <button ref={button} type="button" className="tool tempo-open" aria-label={`Tempo: ${props.tempo.bpm} ${unit(props.tempo)}`} aria-expanded={open} data-clock={props.tempo.midi || undefined} onClick={() => setOpen((o) => !o)}>
           <span className="tempo-value">{props.tempo.bpm}</span>
@@ -231,7 +234,9 @@ export function TempoControl(props: Props) {
       </Tooltip>
       {open && (
         <div ref={panel} className="tempo-panel" data-panel role="group" aria-label="Tempo">
-          <TempoDial {...props} />
+          <Tooltip content={tempoTip(props.tempo)}>
+            <TempoDial {...props} />
+          </Tooltip>
           <TapButton {...props} />
         </div>
       )}

@@ -136,12 +136,12 @@ export const TRACK: Track = {
       moves: [{ id: 'resonance', from: 0.5, to: 0.65 }] },
     // The break's second half: the chords go on as an organ three octaves wide (Osc 1 an octave up, the Sub two
     // octaves under it), the Sub swelling in.
-    { preset: 'Cathedral', caption: 'An organ high, middle and low at once, the low end swelling in: Osc 1 an octave up, Osc 2 on the Note, the Sub an octave under it. Three families of spikes.',
+    { preset: 'Cathedral', caption: 'An organ high, middle and low at once, the low end swelling in: Osc 1 an octave up, Osc 2 on the Note, the Sub an octave under it. Three families of Harmonics.',
       phrase: 'C3+G3+C4+E4:8 G2+D3+G3+B3:8',
       moves: [{ id: 'mixSub', from: 0.2, to: 0.9 }] },
     // Bells over the chords: an FM bell rings out each chord's Notes, FM growing until they clang like struck metal;
     // then the melody (the owner, 2026-10-29: bells before the lead build better).
-    { preset: 'FM Bell', caption: 'Bells on each chord’s Notes, turning to clanging metal: the spikes between the Harmonic Markers grow as FM, a sine swung by another 3.56 times higher, turns up.',
+    { preset: 'FM Bell', caption: 'Bells on each chord’s Notes, turning to clanging metal: the lines between the Harmonic Markers grow as FM, a sine swung by another 3.56 times higher, turns up.',
       phrase: 'A4:1@.9 C5:1@.6 E5:1@.8 A5:1@.7 F4:1@.9 A4:1@.6 C5:1@.8 F5:1@.7 E4:1@.9 G4:1@.6 C5:1@.8 E5:1@.7 D4:1@.9 G4:1@.6 B4:1@.8 D5:1@.7',
       moves: [{ id: 'crossMod', from: 0.15, to: 0.5 }] },
     // A melody over the chords (the owner, 2026-10-28): one Voice, so each Note glides from the last, with LFO 2's

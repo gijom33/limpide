@@ -108,13 +108,13 @@ export const TIPS = {
   sub: {
     title: 'Sub-oscillator',
     body: 'A square or sine an octave below Osc 1 (or two), for weight; its octave and shape are on the Sub & Noise tab, its level on the Mixer. The sound now repeats at the Sub’s pitch, so the Harmonics are counted from it: an octave down, a square Sub fills the odd ones and Osc 1 the even ones.',
-    how: 'Turn it up on Hollow Square or Init and watch every other rung of the Harmonic ladder fill in.',
+    how: 'Turn it up on Hollow Square or Init and watch new Harmonics fill in between the old ones.',
     history: HISTORY.sub,
   },
   subOptions: {
     title: 'Sub',
     body: 'Where the Sub sits, one or two octaves below Osc 1, and its shape: a square for buzz, a sine for a clean, round weight. Two octaves down, the Harmonics count from the Sub and Osc 1 lands on every fourth one.',
-    how: 'Raise the Sub fader, pick −2 and Sine, and watch a single low spike appear far left in the Spectrum.',
+    how: 'Raise the Sub fader, pick −2 and Sine, and watch a single low line appear far left in the Spectrum.',
     history: HISTORY.sub,
   },
   keyTrack: {
@@ -263,7 +263,7 @@ export const TIPS = {
   },
   crossMod: {
     title: 'FM',
-    body: 'To see it clearly, set Osc 1 and Osc 2 to Sine and turn FM up: from a single spike, a ladder of new partials grows. On Init’s two saws no new spikes appear: the new partials land on the Harmonics already there and only change their heights. FM is Osc 2 swinging Osc 1’s pitch at Osc 2’s own frequency, whatever Osc 2’s own fader: too fast to hear as vibrato, it becomes tone, from a growl to a clang. With Osc 2 in tune or whole octaves away, the partials land on the Harmonics, changing their levels; anywhere else, between them. FM’s depth, how far Osc 1 swings, is set by the knobs (FM and Osc 2’s tuning), not by Env Amount: as the Envelope takes Osc 2 up, the swing stays the same and FM thins, as on an analogue synth. High up, FM holds itself back so they stay under the top of what the browser can play.',
+    body: 'To see it clearly, set Osc 1 and Osc 2 to Sine and turn FM up: from a single line, a ladder of new partials grows. On Init’s two saws no new lines appear: the new partials land on the Harmonics already there and only change their heights. FM is Osc 2 swinging Osc 1’s pitch at Osc 2’s own frequency, whatever Osc 2’s own fader: too fast to hear as vibrato, it becomes tone, from a growl to a clang. With Osc 2 in tune or whole octaves away, the partials land on the Harmonics, changing their levels; anywhere else, between them. FM’s depth, how far Osc 1 swings, is set by the knobs (FM and Osc 2’s tuning), not by Env Amount: as the Envelope takes Osc 2 up, the swing stays the same and FM thins, as on an analogue synth. High up, FM holds itself back so they stay under the top of what the browser can play.',
     how: 'Then move Osc 2’s Semitone: the partials leave the Harmonic ladder. The Ideal’s circles follow them while Osc 2 is a Sine, or whole octaves from Osc 1; otherwise they mark plain Osc 1. An LFO aimed at FM swings it too: raise FM first, since the swing goes only as far below the knob as above it.',
     history: HISTORY.fm,
   },
@@ -276,7 +276,7 @@ export const TIPS = {
   ring: {
     title: 'Ring',
     body: 'Osc 1 multiplied by Osc 2, whatever their own faders: in place of the two pitches you hear their sum and their difference, for bells, gongs and metallic clangs. Detune or Semitone on Osc 2 changes which. With the two in tune, both waves jump at the same instant, and their product dips for that instant: a faint click once a cycle, at every Harmonic, that the Ideal leaves out.',
-    how: 'Pick Sine on both, Ring up and the others down, Osc 2 a fifth up: the Spectrum shows two spikes, neither at the Note.',
+    how: 'Pick Sine on both, Ring up and the others down, Osc 2 a fifth up: the Spectrum shows two lines, neither at the Note.',
     history: HISTORY.ring,
   },
   subNoise: {
@@ -312,7 +312,7 @@ export const TIPS = {
   waveform: {
     title: 'Waveform',
     body: 'The Oscillator’s shape, which sets its Harmonics. Sine: the fundamental alone, pure. Triangle: soft, odd Harmonics fading fast. Saw: bright, every Harmonic. Square: hollow, odd ones only. Pulse: a square of any width, set by Pulse Width.',
-    how: 'Switch shapes and compare the Spectrum: the spikes are the Harmonics.',
+    how: 'Switch shapes and compare the Spectrum: each line is a Harmonic.',
     history: HISTORY.waveform,
   },
   cutoff: {
@@ -334,7 +334,7 @@ export const TIPS = {
   osc1Octave: {
     title: 'Octave',
     body: 'Shifts Osc 1 by whole octaves from the Note you play, and the Sub with it: −1 for a bass an octave down. Osc 2 stays on the Note, so the two sit as far apart as Osc 2’s Octave less Osc 1’s: an octave, with this at −1 and Osc 2’s at 0.',
-    how: 'Set it to −1 and watch the Spectrum: the spikes and the Harmonic Markers move an octave down. The Scope looks the same: Cycle Lock follows Osc 1 and fits the same number of cycles across its width, each now twice as long.',
+    how: 'Set it to −1 and watch the Spectrum: the Harmonics and their Markers move an octave down. The Scope looks the same: Cycle Lock follows Osc 1 and fits the same number of cycles across its width, each now twice as long.',
     history: HISTORY.octave,
   },
   octave: {
@@ -387,6 +387,10 @@ export const TIPS = {
   tempo: {
     title: 'Tempo',
     body: 'The page’s beats per minute (BPM), which every LFO with Sync on follows: its note value is a share of a beat, so at a new tempo its speed changes with it, and a synced wobble keeps to the beat. Drag it or use the arrows; double-click or Enter to type it. Loading a Preset leaves it as it is.',
+  },
+  tempoOpen: {
+    title: 'Tempo',
+    body: 'The page’s beats per minute (BPM), which every LFO with Sync on follows. Press it to set it: the BPM and Tap open below it. Loading a Preset leaves it as it is.',
   },
   tempoClock: { title: 'Tempo', body: 'Following a MIDI clock: the tempo is the clock’s while it runs, so it cannot be set here. When its ticks stop, its last BPM stays, yours to change.' },
   tap: { title: 'Tap', body: 'Tap it in time with the music: from the second tap the tempo follows your last four, its beat where you last tapped, and every synced LFO’s speed follows it.' },
@@ -457,8 +461,8 @@ export const VIEWER_TIPS: Record<'Oscillator' | 'Filter' | 'Amp', { scope: TipCo
     },
     spectrum: {
       title: 'Oscillator Spectrum',
-      body: 'The same sound as its Harmonics: one spike each, low to high, the fundamental first. Their heights are the recipe of the timbre.',
-      how: 'Hover a spike to read its frequency and level.',
+      body: 'The same sound as its Harmonics: one line each, low to high, the fundamental first. Their heights are the recipe of the timbre.',
+      how: 'Hover a Harmonic to read its frequency and level.',
       underTheHood: UNDER_THE_HOOD.oscillatorSpectrum,
       history: HISTORY.spectrum,
     },
@@ -471,7 +475,7 @@ export const VIEWER_TIPS: Record<'Oscillator' | 'Filter' | 'Amp', { scope: TipCo
     },
     spectrum: {
       title: 'Filter Spectrum',
-      body: 'The Harmonics after the Filter. The Curve over them is the Filter’s response: spikes under its slope have been turned down.',
+      body: 'The Harmonics after the Filter. The Curve over them is the Filter’s response: Harmonics under its slope have been turned down.',
       how: 'Turn the Cutoff and watch the slope move across the Harmonics.',
       underTheHood: UNDER_THE_HOOD.spectrum,
       history: HISTORY.spectrum,
@@ -553,7 +557,7 @@ export const OVERLAY_TIPS: Record<Overlay, TipContent> = {
   },
   guides: {
     title: 'Scope guides',
-    body: 'Dashed lines at the level the Mixer sends, every source’s level added, so they move with its faders. A trace inside them has only lost energy; one beyond them has been boosted by Resonance.',
+    body: 'Dashed lines at the level the Mixer sends, every source’s level added, so they move with its faders: where one Note peaks. Resonance takes a trace beyond them, and so do several Notes at once and the Noise, their peaks piling up; the Filter alone can nudge one a little past.',
   },
   geek: {
     title: 'Synth Geek Layer',

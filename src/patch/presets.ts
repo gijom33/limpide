@@ -47,20 +47,20 @@ const OPEN = { cutoff: 20000, resonance: 0, ampSustain: 1 } as const;
 group('Start', [['Init', 'The plain starting point: one saw through an open low-pass Filter.', {}]]);
 
 group('Shapes', [
-  ['Pure Sine', 'One Harmonic and nothing else: a single spike in the Spectrum, and the smoothest curve the Scope can draw.', { waveform: 'sine', ...OPEN }],
+  ['Pure Sine', 'One Harmonic and nothing else: a single line in the Spectrum, and the smoothest curve the Scope can draw.', { waveform: 'sine', ...OPEN }],
   ['Soft Triangle', 'Odd Harmonics only, falling fast (1/n²): a triangle in the Scope, and a spectrum that thins out quickly.', { waveform: 'triangle', ...OPEN }],
-  ['Hollow Square', 'Odd Harmonics only, falling as 1/n: every second rung of the ladder is missing. Turn the Cutoff down to round its corners.', { waveform: 'square', ...OPEN }],
-  ['Thin Pulse', 'A 10 % pulse: a spike in the Scope, and in the Spectrum every tenth Harmonic vanishes. Turn Pulse Width to move the gaps. It plays quieter than a square: so narrow a pulse carries little energy.', { waveform: 'pulse', pulseWidth: 0.1, ...OPEN }],
+  ['Hollow Square', 'Odd Harmonics only, falling as 1/n: every even Harmonic is missing. Turn the Cutoff down to round its corners.', { waveform: 'square', ...OPEN }],
+  ['Thin Pulse', 'A 10 % pulse: a narrow blip in the Scope, and in the Spectrum every tenth Harmonic vanishes. Turn Pulse Width to move the gaps. It plays quieter than a square: so narrow a pulse carries little energy.', { waveform: 'pulse', pulseWidth: 0.1, ...OPEN }],
   ['PWM Morph', 'The LFO sweeps the Pulse Width: the Scope breathes between square and needle, and the Spectrum’s gaps slide along the ladder.', {
     waveform: 'pulse', pulseWidth: 0.5, cutoff: 6000, resonance: 0.1, lfoDestination: 'pulseWidth', lfoRate: 0.4, lfoAmount: 0.9, ampSustain: 1, ampRelease: 0.6,
   }],
-  ['Sub Ladder', 'A square an octave below a saw: the Sub fills the odd rungs of a ladder that now starts an octave lower, Osc 1 the even ones.', { mixSub: 0.7, ...OPEN }],
+  ['Sub Ladder', 'A square an octave below a saw: the Sub fills the odd Harmonics of a ladder that now starts an octave lower, Osc 1 the even ones.', { mixSub: 0.7, ...OPEN }],
   ['Square on Square', 'Two squares an octave apart, through the Sub: a staircase in the Scope, every Harmonic of the lower one present.', { volume: 0.7, waveform: 'square', mixSub: 1, ...OPEN }],
-  ['Sub Two Down', 'A sine Sub two octaves under a saw: one clean spike far left in the Spectrum, the ladder counted from it, Osc 1 on every fourth rung.', {
+  ['Sub Two Down', 'A sine Sub two octaves under a saw: one clean line far left in the Spectrum, the ladder counted from it, Osc 1 on every fourth Harmonic.', {
     mixSub: 0.8, subOctave: -2, subWaveform: 'sine', ...OPEN,
   }],
   // Issue 109: the Sub's choices and the Noise's colour in one Tutorial.
-  ['Deep Breath', 'Sub Two Down with a breath of Pink Noise: the Sub’s spike far left, the saw’s ladder above it, and the Noise filling the gaps, its floor tilting down to the right. Switch the Noise to White and the floor levels out, the hiss brighter.', {
+  ['Deep Breath', 'Sub Two Down with a breath of Pink Noise: the Sub’s line far left, the saw’s ladder above it, and the Noise filling the gaps, its floor tilting down to the right. Switch the Noise to White and the floor levels out, the hiss brighter.', {
     mixSub: 0.8, subOctave: -2, subWaveform: 'sine', mixNoise: 0.3, noiseColour: 'pink', ...OPEN,
   }],
 ]);
@@ -92,7 +92,7 @@ group('Intervals', [
   ['Ring Octave', 'A square times a square an octave up, through Ring alone: the product is a square again, at the Note’s pitch. The Ideal’s diamonds sit on its odd Harmonics only.', {
     waveform: 'square', osc2Waveform: 'square', osc2Octave: 1, mixOsc1: 0, mixRing: 1, ...OPEN,
   }],
-  ['FM Ladder', 'Two sines on the same Note, Osc 2 silent but swinging Osc 1 hard (FM): one Harmonic becomes a whole ladder of them, a buzz grown from pure tones. Turn FM down and watch the rungs fold away.', {
+  ['FM Ladder', 'Two sines on the same Note, Osc 2 silent but swinging Osc 1 hard (FM): one Harmonic becomes a whole ladder of them, a buzz grown from pure tones. Turn FM down and watch the Harmonics fold away.', {
     waveform: 'sine', osc2Waveform: 'sine', crossMod: 0.5, ...OPEN,
   }],
 ]);
@@ -131,7 +131,7 @@ group('Envelope', [
   ['Gate', 'No shape at all: on with the key and off with it, a rectangle on the Timeline.', {
     ...SAW, ampAttack: 0.001, ampDecay: 0.001, ampSustain: 1, ampRelease: 0.01,
   }],
-  ['Pluck Shape', 'Attack at once, then Decay to nothing: a spike on the Timeline that fades whether or not the key stays down.', {
+  ['Pluck Shape', 'Attack at once, then Decay to nothing: a sharp peak on the Timeline that fades whether or not the key stays down.', {
     ...SAW, ampAttack: 0.001, ampDecay: 0.7, ampSustain: 0, ampRelease: 0.2,
   }],
   ['Pluck', 'A pulse into a resonant 24 dB Filter that the Envelope snaps open and shut: see the Harmonics flash and vanish.', {
@@ -193,7 +193,7 @@ group('LFO', [
     cutoff: 900, resonance: 0.4, ampSustain: 1, lfoDestination: 'cutoff', lfoRate: 0.25, lfoAmount: 0.7,
     lfo2Destination: 'pitch', lfo2Rate: 6, lfo2Amount: 0.25,
   }],
-  ['Key Sync', 'A falling saw on the Cutoff, retriggered: every Note opens bright and closes the same way, however you time it. Turn Retrigger off to hear each Note catch it anywhere.', {
+  ['Key Sync', 'A falling saw on the Cutoff, retriggered (key sync, not the LFO’s Sync: its Rate stays in Hz): every Note opens bright and closes the same way, however you time it. Turn Retrigger off to hear each Note catch it anywhere.', {
     volume: 0.6, cutoff: 500, resonance: 0.5, ampSustain: 1, lfoWaveform: 'sawDown', lfoDestination: 'cutoff', lfoRate: 1.5, lfoAmount: 0.8, lfoRetrigger: 'note',
   }],
 ]);
@@ -230,7 +230,7 @@ group('Bass', [
     filterEnvAmount: 2.5, filterAttack: 0.002, filterDecay: 0.25, filterSustain: 0.2, lfoDestination: 'pulseWidth', lfoRate: 0.8, lfoAmount: 0.8,
     ampAttack: 0.002, ampSustain: 0.9, ampRelease: 0.12,
   }],
-  ['Wobble', 'The LFO sweeping a resonant 24 dB low-pass, synced (1/4 T) and retriggered: every Note starts its wobble at the Cutoff, so it lands on the beat. Watch the Timeline restart.', {
+  ['Wobble', 'The LFO sweeping a resonant 24 dB low-pass, synced (1/4 T) and retriggered: Sync keeps the wobble’s speed to the beat at any tempo, Retrigger starts it at the Cutoff on every Note. Watch the Timeline restart.', {
     volume: 0.45, osc2Waveform: 'square', osc2Octave: -1, mixOsc2: 0.6,
     filterSlope: 24, cutoff: 300, resonance: 0.65,
     lfoRate: 3, lfoSync: 'on', lfoNote: noteIndex('1/4 T'), lfoAmount: 0.7, lfoRetrigger: 'note', ampSustain: 1, ampRelease: 0.2,
@@ -255,7 +255,7 @@ group('Bass', [
     filterSlope: 24, cutoff: 1800, resonance: 0.15, filterEnvAmount: 1.5, filterAttack: 0.001, filterDecay: 0.18, filterSustain: 0,
     ampAttack: 0.002, ampDecay: 0.6, ampSustain: 0.6, ampRelease: 0.15,
   }],
-  ['808 Boom', 'Osc 2 alone, a sine the Filter Envelope throws two octaves up and drops in a flash (Env Amount), over a long sine Sub: the click and dive of an 808 kick, then its boom. Watch the spike fall in the Spectrum.', {
+  ['808 Boom', 'Osc 2 alone, a sine the Filter Envelope throws two octaves up and drops in a flash (Env Amount), over a long sine Sub: the click and dive of an 808 kick, then its boom. Watch its line fall in the Spectrum.', {
     waveform: 'sine', mixOsc1: 0, osc2Waveform: 'sine', mixOsc2: 0.8, osc2EnvAmount: 24, mixSub: 1, subWaveform: 'sine',
     cutoff: 20000, resonance: 0, filterAttack: 0.001, filterDecay: 0.06, filterSustain: 0, ampAttack: 0.001, ampDecay: 1.2, ampSustain: 0, ampRelease: 0.3,
   }],
@@ -337,7 +337,7 @@ group('Keys & Organs', [
     voices: 8, waveform: 'pulse', pulseWidth: 0.15, osc2Waveform: 'pulse', osc2PulseWidth: 0.15, osc2Detune: 5, mixOsc2: 0.8, filterMode: 'highpass', cutoff: 300, resonance: 0.3, velocityCutoff: 0.6,
     ampAttack: 0.001, ampDecay: 0.25, ampSustain: 0.2, ampRelease: 0.08,
   }],
-  ['Organ', 'A sine, a sine an octave up and a sine Sub, like drawbars: no Envelope shape at all, just on and off, and three clean rungs in the Spectrum, on eight Voices.', {
+  ['Organ', 'A sine, a sine an octave up and a sine Sub, like drawbars: no Envelope shape at all, just on and off, and three clean Harmonics in the Spectrum, on eight Voices.', {
     volume: 0.65, voices: 8, waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, mixOsc2: 0.6, mixSub: 0.5, subWaveform: 'sine', ...OPEN, ampAttack: 0.005, ampRelease: 0.03,
   }],
   ['House Organ', 'A square, a sine an octave up and a sine Sub, with a Filter Envelope that brightens each strike and a level that falls back: the percussive organ of house, on eight Voices.', {
@@ -562,7 +562,7 @@ group('Movement & Effects', [
     filterEnvAmount: 5, filterAttack: 6, filterDecay: 0.5, filterSustain: 1, filterRelease: 0.5, ampAttack: 3, ampSustain: 1, ampRelease: 0.8,
     lfoWaveform: 'saw', lfoDestination: 'volume', lfoRate: 6, lfoAmount: 0.3,
   }],
-  ['Sub Drop', 'Osc 2 alone, a sine the Filter Envelope throws two octaves up and lets fall over its 1.8 s Decay (Env Amount), over a sine Sub: 808 Boom slowed into a long dive. Watch the spike slide down the Spectrum.', {
+  ['Sub Drop', 'Osc 2 alone, a sine the Filter Envelope throws two octaves up and lets fall over its 1.8 s Decay (Env Amount), over a sine Sub: 808 Boom slowed into a long dive. Watch its line slide down the Spectrum.', {
     volume: 0.5, waveform: 'sine', mixOsc1: 0, osc2Waveform: 'sine', mixOsc2: 1, osc2Octave: 1, osc2EnvAmount: 24, mixSub: 0.6, subWaveform: 'sine', cutoff: 20000, resonance: 0,
     filterAttack: 0.001, filterDecay: 1.8, filterSustain: 0, ampAttack: 0.002, ampDecay: 2.5, ampSustain: 0, ampRelease: 1,
   }],
@@ -594,7 +594,7 @@ group('Movement & Effects', [
     volume: 1, filterMode: 'bandpass', cutoff: 800, resonance: 0.35, ampSustain: 1, lfoWaveform: 'triangle', lfoDestination: 'cutoff', lfoRate: 2.5, lfoAmount: 0.5,
     lfo2Waveform: 'triangle', lfo2Destination: 'resonance', lfo2Rate: 0.7, lfo2Amount: 0.25,
   }],
-  ['Stutter', 'A square LFO chopping the Filter each sixteenth (Sync), retriggered: every Note starts its stutter open, on the beat.', {
+  ['Stutter', 'A square LFO chopping the Filter each sixteenth (Sync, so at any tempo), retriggered: every Note starts its stutter open, wherever it falls.', {
     volume: 0.2, waveform: 'square', mixSub: 0.4, cutoff: 300, resonance: 0.3, ampSustain: 1, lfoWaveform: 'square', lfoDestination: 'cutoff', lfoRate: 8, lfoSync: 'on', lfoNote: noteIndex('1/16'), lfoAmount: 0.8, lfoRetrigger: 'note',
   }],
   ['Pink Surf', 'Pink Noise alone, a slow LFO sweeping the Filter: waves rolling in. Switch the Noise to White and hear the hiss come back, and the Spectrum’s floor level out.', {

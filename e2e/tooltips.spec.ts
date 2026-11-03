@@ -307,5 +307,19 @@ test.describe('no tip over an open menu (issue 175)', () => {
       await pastTheHoverDelay(page);
       await expect(tip(page)).toHaveCount(0);
     });
+
+    test('the Tempo button’s tip says it opens the BPM, and the BPM in the field has its own (issue 194)', async ({ page }) => {
+      await page.goto('/');
+      const open = page.locator('header').getByRole('button', { name: 'Tempo' });
+      await open.hover();
+      await pastTheHoverDelay(page);
+      await expect(tip(page)).toContainText('Press it');
+      await expect(tip(page)).not.toContainText('Drag');
+      await page.mouse.move(0, 0);
+      await open.click();
+      await page.getByRole('spinbutton', { name: 'Tempo' }).hover();
+      await pastTheHoverDelay(page);
+      await expect(tip(page)).toContainText('Drag it');
+    });
   });
 });

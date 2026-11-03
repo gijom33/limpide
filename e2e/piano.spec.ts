@@ -223,7 +223,7 @@ test('with nothing plugged in, the MIDI panel and its tip say a Bluetooth Contro
     Object.defineProperty(navigator, 'requestMIDIAccess', { value: () => Promise.resolve(access), configurable: true });
   });
   await page.goto('/');
-  const line = /A Bluetooth one plays once paired in the system’s MIDI settings \(Audio MIDI Setup on a Mac\)/;
+  const line = /A Bluetooth one plays once the system pairs it as a MIDI device \(on a Mac, in Audio MIDI Setup; on Windows and Linux, untried\)/;
   await page.getByRole('button', { name: 'MIDI', exact: true }).hover();
   await expect(page.getByRole('tooltip')).toContainText(line);
   await page.getByRole('button', { name: 'MIDI', exact: true }).click();

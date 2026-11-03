@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { TRACK } from '../demo/track';
+import { PRESETS } from '../patch/presets';
+import { OVERLAY_TIPS, PARAM_TIPS, TIPS, VIEWER_TIPS } from '../ui/tips';
 import { TOUR, TOUR_END } from './tour';
 import { endLine, FROM_INIT, TUTORIALS } from './tutorials';
 
@@ -91,6 +94,18 @@ describe('every synth word explained where first used (issue 129)', () => {
   it('says Harmonics, not partials, rungs, spikes or bars (decision 7)', () => {
     const all = [...TUTORIALS.flatMap((t) => [t.intro, t.teaches, t.summary, ...t.steps.flatMap((s) => [s.say, s.note])]), ...TOUR.flatMap((c) => [c.look, c.chain, c.does, c.sees])];
     expect(all.filter((t) => /\b(partials?|rungs?|spikes?|bars)\b/i.test(t))).toEqual([]);
+  });
+
+  it('and so do the tips, the Presets’ descriptions and the Demo’s captions (issue 194)', () => {
+    const strings = (o: unknown): string[] =>
+      typeof o === 'string' ? [o] : o && typeof o === 'object' ? Object.values(o).flatMap(strings) : [];
+    const all = [
+      ...strings([TIPS, VIEWER_TIPS, OVERLAY_TIPS, PARAM_TIPS]),
+      ...PRESETS.map((p) => p.about),
+      ...TRACK.parts.flatMap((p) => (p.caption ? [p.caption] : [])),
+    ];
+    // Partials stay where they are not Harmonics (FM's, Ring's); a bar is the music's, not a Harmonic's.
+    expect(all.filter((t) => /\b(rungs?|spikes?)\b|Harmonic bars?/i.test(t))).toEqual([]);
   });
 });
 

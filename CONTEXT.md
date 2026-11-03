@@ -227,7 +227,7 @@ A Viewer showing amplitude over time.
 _Avoid_: Oscilloscope (fine in prose), waveform view
 
 **Guides**:
-Dashed lines on every Scope, when they are shown, at the level the Mixer sends: its sources' levels added, up to full scale (the Nominal Level with one Oscillator at full). A trace inside them has only lost energy; one beyond them has been boosted by Resonance.
+Dashed lines on every Scope, when they are shown, at the level the Mixer sends: its sources' levels added, up to full scale (the Nominal Level with one Oscillator at full). Where one Note peaks: Resonance takes a trace beyond them, and so do several Notes at once, the Noise and, a little, the Filter alone (issue 194).
 _Avoid_: Reference lines, headroom lines
 
 **Cycle Lock**:

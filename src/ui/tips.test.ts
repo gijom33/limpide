@@ -42,10 +42,14 @@ it('Bead’s tip says who Bead is, the switch to keep it away, and the Notes to 
   expect(body).toMatch(/B, E, A, D sends it away for this visit/);
 });
 
-it('the Guides’ tip says they stand at what the Mixer sends, so beyond them is Resonance (issue 159)', () => {
+it('the Guides’ tip says they stand at what the Mixer sends, and what passes them (issues 159 and 194)', () => {
   const { body } = OVERLAY_TIPS.guides;
   expect(body).toMatch(/level the Mixer sends/);
-  expect(body).toMatch(/one beyond them has been boosted by Resonance/);
+  // Not Resonance alone: a chord, Pink Noise and the Filter at Resonance 0 pass them too (issue 194).
+  expect(body).toMatch(/Resonance/);
+  expect(body).toMatch(/several Notes/);
+  expect(body).toMatch(/Noise/);
+  expect(body).not.toMatch(/has been boosted by Resonance/);
   expect(body).not.toMatch(/Oscillator’s level/);
 });
 

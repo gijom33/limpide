@@ -54,6 +54,7 @@ Secondary, or primary known only by its record:
 - **[S30]** Wikipedia, *Envelope (music)*, citing [S8]: <https://en.wikipedia.org/wiki/Envelope_(music)>
 - **[S31]** Wikipedia, *Yamaha DX7*: <https://en.wikipedia.org/wiki/Yamaha_DX7>
 - **[S32]** Wikipedia, *Mixtur*: <https://en.wikipedia.org/wiki/Mixtur>
+- **[S33]** Yamaha, *Discovering Digital FM: John Chowning Remembers* (Yamaha's own Hub, read 2026-11-03, issue 194): <https://hub.yamaha.com/discovering-digital-fm-john-chowning-remembers/>
 
 ---
 
@@ -204,6 +205,7 @@ Secondary, or primary known only by its record:
 - John Chowning, *J. Audio Eng. Soc.*, September 1973: "a surprising control of audio spectra" from frequency modulation at audio rate. **A** (record and abstract) [S13]
 - Stanford's patent, filed 1975, granted 1977. **A** [S14] Stanford and Yamaha signed an FM licence on 19 March 1975. **A** (the archive's dated list) [S15]
 - The Yamaha DX7 (1983) took FM to the mass market. **C** [S31]
+- Yamaha's own account: "the release of the Yamaha DX7 in 1983", and Chowning: "The DX7 used my underlying principles and research". **B** (the maker's own page, quoting Chowning) [S33] Found for issue 194 (issue 191, question 6); Yamaha's corporate history pages refused the fetch. The page also dates the licence seven years before a 1981 product, against the archive's 1975 [S15]: the line keeps 1975.
 - Analogue cross-modulation, as Limpide does it: the Prophet-5's Poly Mod sends Osc B to Osc A's frequency (destinations listed, [S16], **A**); the Minimoog's Osc 3 could modulate the other oscillators' pitch through the Modulation Mix (scan 8, [S3], **A**).
 
 **Draft History:** John Chowning found in 1973, at Stanford, that one sine swinging another at audio rate makes whole families of partials; Yamaha licensed it in 1975 and built the DX7 (1983) on it.
