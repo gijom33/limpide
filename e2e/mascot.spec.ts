@@ -1037,7 +1037,8 @@ test("three across, dropped on LFO 1's plot, a slow Triangle, it rides it; dropp
   await page.goto(slowLfo({ lfoWaveform: 'triangle', lfo2Amount: 0.5, lfo2Rate: 0.5, lfo2Waveform: 'saw' }));
   await listening(page);
   await bringBead(page);
-  await expect.poll(async () => Math.abs((await footing(page)).below) <= 1).toBe(true);
+  // Up on the Amp's edge: a visit elsewhere can keep it away 8 to 18 s.
+  await expect.poll(async () => Math.abs((await footing(page)).below) <= 1, { timeout: 20_000 }).toBe(true);
   const plot = async (lfo: number) => (await page.locator(`.lfo-plot[data-lfo="${lfo}"]`).boundingBox())!;
   const one = await plot(1);
   await dropAt(page, { x: one.x + one.width / 2, y: one.y + one.height / 2 });
@@ -1052,7 +1053,9 @@ test("three across, dropped on LFO 1's plot, a slow Triangle, it rides it; dropp
   await expect(mascot(page)).toHaveAttribute('data-ride', '');
   await settles(page);
   await expect(mascot(page)).toHaveAttribute('data-ride', '');
-  expect(Math.abs((await footing(page)).below)).toBeLessThanOrEqual(1); // home, on the Amp's edge
+  // Home, on the Amp's edge: read where it is placed, not from its drawing, whose box reaches past its foot as it leans
+  // into a step or hops (4 runs in 12 in WebKit read it off the edge that way; the throw test's fix, 2026-11-03).
+  expect(Math.abs((await footing(page)).bottom)).toBeLessThanOrEqual(1);
 });
 
 /**
