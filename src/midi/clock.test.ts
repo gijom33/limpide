@@ -115,16 +115,18 @@ describe('following a MIDI clock (issue 136)', () => {
   });
 });
 
-/** Ticks at `bpm` from `from`, jittered, played through `fault` (which may drop a tick or play it twice). */
+/** Ticks at `bpm` from `from` (10 s), jittered by `wobble`, played through `fault` (which may drop a tick or play it twice). */
 function playWith(
   follower: ReturnType<typeof createClockFollower>,
-  bpm: number,
-  beats: number,
-  fault: (i: number) => 'lost' | 'doubled' | undefined,
-  from = 10,
-  wobble = jitter(),
+  { bpm, beats, fault = () => undefined, from = 10, wobble = jitter() }: {
+    bpm: number;
+    beats: number;
+    fault?: (i: number) => 'lost' | 'doubled' | undefined;
+    from?: number;
+    wobble?: () => number;
+  },
 ) {
-  const handed: (ClockTempo & { at: number })[] = [];
+  const handed: ClockTempo[] = [];
   const tick = 60 / bpm / TICKS_PER_BEAT;
   for (let i = 0; i < beats * TICKS_PER_BEAT; i++) {
     const at = from + i * tick + wobble();
@@ -132,7 +134,7 @@ function playWith(
     if (what === 'lost') continue;
     for (const t of what === 'doubled' ? [at, at + 0.0005] : [at]) {
       const tempo = follower.tick(t);
-      if (tempo) handed.push({ ...tempo, at: t });
+      if (tempo) handed.push(tempo);
     }
   }
   return handed;
@@ -140,14 +142,14 @@ function playWith(
 
 describe('a MIDI clock with a fault (issue 185)', () => {
   it('reads a lost tick as one missed, not a slower tempo: the BPM holds and the beats stay on the clock’s', () => {
-    const handed = playWith(createClockFollower(), 120, 40, (i) => (i % 300 === 150 ? 'lost' : undefined));
+    const handed = playWith(createClockFollower(), { bpm: 120, beats: 40, fault: (i) => (i % 300 === 150 ? 'lost' : undefined) });
     for (const h of handed) expect(h.bpm).toBe(120);
     // Every beat it hands is counted from the clock's first, to a couple of milliseconds: the count is not a tick late.
     for (const h of handed.slice(-10)) expect(Math.abs(h.origin - 10)).toBeLessThan(0.002);
   });
 
   it('reads a doubled tick as one too many: the BPM holds and the beats stay on the clock’s', () => {
-    const handed = playWith(createClockFollower(), 128, 40, (i) => (i % 300 === 150 ? 'doubled' : undefined));
+    const handed = playWith(createClockFollower(), { bpm: 128, beats: 40, fault: (i) => (i % 300 === 150 ? 'doubled' : undefined) });
     for (const h of handed) expect(h.bpm).toBe(128);
     for (const h of handed.slice(-10)) expect(Math.abs(h.origin - 10)).toBeLessThan(0.002);
   });
@@ -158,12 +160,9 @@ describe('a MIDI clock with a fault (issue 185)', () => {
       return (i: number) => Math.ceil((i * tick) / 0.015) * 0.015 - i * tick;
     };
     for (const bpm of [120, 174]) {
-      const follower = createClockFollower();
-      const handed = playWith(follower, bpm, 30, () => undefined, 0, (() => {
-        let i = 0;
-        const late = bunched(bpm);
-        return () => late(i++);
-      })());
+      let i = 0;
+      const late = bunched(bpm);
+      const handed = playWith(createClockFollower(), { bpm, beats: 30, from: 0, wobble: () => late(i++) });
       // Its first few beats are read over less than the four beats fitted: they may be a little off.
       expect(new Set(handed.slice(4).map((h) => h.bpm)), `${bpm} BPM`).toEqual(new Set([bpm]));
     }

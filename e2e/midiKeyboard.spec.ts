@@ -16,7 +16,7 @@ test('the sustain pedal holds a released Note until it lifts', async ({ page }) 
   await expect(piano(page).locator('[data-note="60"]')).toHaveAttribute('aria-pressed', 'false');
 });
 
-test('a panic lets every Note go: All Notes Off under the pedal, which still holds them, then All Sound Off (issue 185)', async ({ page }) => {
+test('a panic lets every Note go: All Notes Off, the pedal still holding them, until Reset All Controllers lifts it (issue 185)', async ({ page }) => {
   const key = (note: number) => piano(page).locator(`[data-note="${note}"]`);
   await play(page, [0x90, 60, 100], [0x91, 64, 100], cc(123, 0));
   await expect(key(60)).toHaveAttribute('aria-pressed', 'false');

@@ -803,15 +803,14 @@ describe('a keyboard’s or a DAW’s panic, and Reset All Controllers (issue 18
     return { surface, heard, store };
   }
 
-  it('All Notes Off (CC 123) releases every Note a Controller holds, whichever channel, once each', () => {
+  it('All Notes Off (CC 123) releases every Note a Controller holds, whichever channel, those let go already apart', () => {
     const { surface, heard } = panicRig();
     surface.handle(noteOn(60, 1));
     surface.handle(noteOn(64, 2));
+    surface.handle(noteOn(67, 1));
+    surface.handle(noteOff(67, 1));
     surface.handle(cc(123, 0, 1));
-    // The keys coming up later find nothing more to release.
-    surface.handle(noteOff(60, 1));
-    surface.handle(noteOff(64, 2));
-    expect(heard).toEqual(['on 60', 'on 64', 'off 60', 'off 64']);
+    expect(heard).toEqual(['on 60', 'on 64', 'on 67', 'off 67', 'off 60', 'off 64']);
   });
 
   it('All Notes Off leaves the pedal down: the Notes it holds go on (the Note input keeps them), as MIDI says', () => {

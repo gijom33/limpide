@@ -405,11 +405,13 @@ export function createControlSurface(synth: Synth) {
         synth.touched?.({ kind: 'param', id: 'lfoAmount' }, 'moved');
         return;
       }
-      const key = message.type === 'cc' ? '' : noteKey(message.channel, message.note);
       if (message.type === 'noteOn') {
-        sounding.set(key, message.note);
+        sounding.set(noteKey(message.channel, message.note), message.note);
         synth.press(message.note, message.velocity);
-      } else if (message.type === 'noteOff' && sounding.delete(key)) synth.release(message.note);
+      } else if (message.type === 'noteOff') {
+        sounding.delete(noteKey(message.channel, message.note));
+        synth.release(message.note);
+      }
     },
     startLearn() {
       if (learn.phase === 'off') setLearn({ phase: 'armed', target: null });

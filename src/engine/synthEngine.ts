@@ -1140,6 +1140,15 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     return i < 0 ? 0 : levelAfter(events[i], events[i].start, t);
   };
   /**
+   * A Gate off before its Note has started (one handed over, then stopped; a key let go within the dip) calls off the
+   * Note's restart of the Oscillators and of the retriggered LFOs, which would come inside the Release (issue 102).
+   */
+  const callOffRestarts = (voice: Voice, t: number) => {
+    if (voice.startedAt <= t) return;
+    voice.cancelRestarts(t);
+    cancelLfoRestarts(t);
+  };
+  /**
    * A Gate change on a Voice, recorded in its own history, and in the model's when it is the newest Note's. A Gate on
    * after a dip from `dipFrom` (issue 102) records the dip first, as the Amp Envelope plays it.
    */
@@ -1162,12 +1171,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       voice.releasedAt = null;
       voice.freeAt = Infinity;
     } else {
-      // A Gate off before its Note has started (one handed over, then stopped; a key let go within the dip) calls off
-      // the Note's restart of the Oscillators and of the retriggered LFOs, which would come inside the Release (issue 102).
-      if (voice.startedAt > t) {
-        voice.cancelRestarts(t);
-        cancelLfoRestarts(t);
-      }
+      callOffRestarts(voice, t);
       voice.releasedAt = t;
       voice.freeAt = t + patch.ampRelease * RELEASE_TAIL;
     }
@@ -1471,10 +1475,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
           record(filterEvents, filterEvent);
         }
         v.cut(entry, filterEvent);
-        if (v.startedAt > t) {
-          v.cancelRestarts(t);
-          cancelLfoRestarts(t);
-        }
+        callOffRestarts(v, t);
         if (v.releasedAt === null || v.releasedAt > t) v.releasedAt = t;
         v.freeAt = t + DIP;
       }

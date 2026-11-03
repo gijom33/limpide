@@ -79,7 +79,7 @@ test('a C16 on USB and on Bluetooth at once is heard on the first port alone, an
   const { control } = c16Layout().find((m) => m.target.kind === 'choice' && m.target.id === 'lfoSync')!;
   // Bank D's R2, a toggle: one press, which comes on both ports, switches LFO 1's Sync on, not on and back off.
   await play(page, cc(control.number, 127, control.channel));
-  await expect(page.getByRole('button', { name: 'LFO 1 Sync' }).first()).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('group', { name: 'LFO 1', exact: true }).getByRole('button', { name: 'LFO 1 Sync' })).toHaveAttribute('aria-pressed', 'true');
   await openMidi(page);
   await expect(midiPanel(page)).toContainText(
     'The C16 is connected twice (by USB and Bluetooth, say): Limpide follows Synido TempoPAD C16 alone, so each press counts once.',
