@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · bug. Polish for v1
+**Status:** ready-for-human · bug. Built (2026-11-02) on night/2026-11-02, for the owner to try
 
 ## Decisions
 
@@ -45,3 +45,20 @@ Claude's calls, open to the owner:
 **Out of scope:**
 - Where Bead rests or hovers (181, 142)
 - New tricks, or a trick's look away from the top
+
+## How it was built
+
+Reproduced first in a browser at 375 px, 800 px (2 × 2) and 1440 px, every rising trick cued in turn. On a phone, Bead on an edge just under the tabs, the fountain show's jets went 40 px behind the header, the puddle's splash over 100 px; Bead hovering under the header in 2 × 2 had only a few pixels over its head. On a wide window the page's top was the limit and the tricks stayed under the window's top.
+
+- **The droplets** (the fountain, the fountain show's arcs, the puddle's and a landing's splash, the burp, the bubble's pop, steam) keep under what is over the page: the header's foot on a phone and in 2 × 2, the window's top elsewhere. A droplet that would go higher is flung slower the same way, so the fountain near the top is lower and smaller, its shape kept. The umbrella's rain starts under the header too.
+- **The drawing:** where the room over Bead is short, its hops and lifts go lower; a trick whose drawing is still too tall there (the umbrella, the bubble, the evaporating cloud) is drawn smaller about its foot while it plays. Its droplets and the fishing line leave from where the smaller drawing is.
+- **Lower in the page** nothing changes: the room is ample, so none of this applies. Reduced motion is as before (no tricks).
+- A browser test at 375 px scrolls Bead's edge up under the tabs (the header slid away), cues the fountain show and the fountain, and checks every frame that nothing of Bead or its droplets is above the header's foot. The tests' own build gains a cue for a trick, as the players' Note log of 198.
+
+Claude's calls, open to the owner:
+
+1. **Lower and smaller, not stepping down:** the trick fits the room where Bead is; Bead never moves away to play it, since where it rests and hovers is out of scope (181, 142). The cost: hovering a few pixels under the header in 2 × 2, a fountain is only a little spurt.
+2. **The header is the limit on a phone, not the section tabs:** Bead is drawn over the tabs (142), so a trick may rise over them; only the header hides it.
+3. **Droplets already in the air** when the header slides back down may pass behind it for a moment: the limit is taken as each droplet leaves.
+
+To try, on a phone or a window under 860 px: scroll until Bead's edge is just under the tabs (or the header in 2 × 2), and wait for its tricks, the fountain show above all, or finish a Tutorial for the fountain. Then scroll up so the header comes back, and try the same lower in the page, where the tricks should look as they did.
