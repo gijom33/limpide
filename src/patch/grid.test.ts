@@ -132,7 +132,7 @@ describe('Ring reads % and steps 1 % in and out of the Synth Geek Layer (issue 2
 });
 
 describe('the other Grids do not depend on the Synth Geek Layer (issue 201)', () => {
-  it('steps the Cutoff and Sustain alike, on or off', () => {
+  it('steps Sustain and the Octave alike, on or off', () => {
     for (const geek of [true, false]) {
       expect(step('ampSustain', 0.7, 1, 'unit', geek)).toBe(0.71);
       expect(step('osc1Octave', 0, 1, 'unit', geek)).toBe(1);

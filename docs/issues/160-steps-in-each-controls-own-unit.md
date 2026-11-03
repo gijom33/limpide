@@ -81,3 +81,4 @@ Claude's calls, accepted by the owner with the summary ("It matches what I had i
   8. The steps line hides where the screen has no hover (`hover: none`), so a touch laptop with a mouse shows it.
 - **To try:** the Cutoff with ↑, Shift ↑ and Page Up from 2 kHz, then a drag and a press; an Attack from 10 ms; Sustain; the Mixer faders with the Synth Geek Layer on and off (call 1); the wheel and a trackpad over a knob; a C16 knob slow and fast on the Cutoff and an Envelope stage; an Absolute knob or fader on Detune at the middle; a tip on a computer.
 
+**Since then (2026-11-02):** [201](./201-the-mixer-steps-in-what-it-shows.md) replaced call 1 and narrowed decision 15: outside the Synth Geek Layer a Mixer fader steps 1 % a press (Shift 0.1 %, Page 10 %) as it reads, and the dB Grid above is its Grid inside the layer only; Ring steps in % in both. The tip's steps line follows the layer.

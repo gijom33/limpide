@@ -123,6 +123,9 @@ test('the Mixer’s faders step in the unit they read: % outside the Synth Geek 
   // The next press lands on the half-dB Grid; Ring still steps by the percent.
   await osc1.press('ArrowUp');
   await expect(readout('Osc 1')).toHaveText('−0.5 dB');
+  await osc1.evaluate((dial) => dial.dispatchEvent(new WheelEvent('wheel', { deltaY: 100, bubbles: true, cancelable: true })));
+  await expect(readout('Osc 1')).toHaveText('−1.0 dB'); // a wheel's notch as a press
+  await osc1.press('ArrowUp');
   await ring.press('ArrowUp');
   await expect(ring).toHaveAttribute('aria-valuetext', '2 %');
 
