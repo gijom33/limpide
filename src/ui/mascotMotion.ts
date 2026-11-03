@@ -607,6 +607,9 @@ export function createMascotMotion(random: () => number = Math.random) {
         gait = 'slide';
       }
       const buzzing = now < caffeineUntil;
+      // A stroll waits for no idea until it ends; one stopped on the way (put down after a visit or a throw, picked up,
+      // tickled) leaves none due, so one comes a moment from now.
+      if (target === null && nextIdea === Infinity) nextIdea = now + between(0.8, 2.5);
       if (target === null && trick === null && !dozing && !frozen && !act && !guided && now >= nextIdea) {
         const roll = random();
         if (idle && roll < 0.35) {

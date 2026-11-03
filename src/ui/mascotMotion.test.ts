@@ -73,6 +73,21 @@ describe("the mascot's own life (issue 115)", () => {
     expect(pauses).toBeGreaterThan(poses.length / 4);
   });
 
+  it('put down mid-stroll (back from a visit, a throw), or picked up or tickled, it strolls again a moment later', () => {
+    for (const stop of ['place', 'pickUp', 'tickle'] as const) {
+      const motion = createMascotMotion(seeded());
+      // Frame by frame until it is mid-stroll, moving from one frame to the next; stopped there.
+      let t = 0;
+      let was = motion.frame(playing, t, false, wide).x;
+      for (let x = was; x === was && t < 30; ) [was, x] = [x, motion.frame(playing, (t += 1 / 60), false, wide).x];
+      expect(t).toBeLessThan(30);
+      if (stop === 'place') motion.place(was);
+      else motion[stop](t);
+      const after = run(motion, t + 1 / 60, t + 15).map((p) => p.x);
+      expect(Math.max(...after) - Math.min(...after), stop).toBeGreaterThan(20);
+    }
+  });
+
   it('blinks now and then', () => {
     const poses = run(createMascotMotion(seeded(7)), 0, 8, playing, spot);
     expect(poses.some((p) => p.eyes === 'shut')).toBe(true);

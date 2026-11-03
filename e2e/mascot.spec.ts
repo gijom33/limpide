@@ -701,11 +701,6 @@ test('strolling right its tail trails on its left; strolling left, a step and st
         }),
       [roll, seconds] as const,
     );
-  // Wherever it came up: a stroll to near its right end, then all the way to its left end, then far to the right. Each
-  // given 12 s: on GitHub's Linux it may set off 2 s late and take 9 s over its whole line (1.22.0's deploy run).
-  await sample(0.9, 5);
-  const frames = [...(await sample(0.3, 12)), ...(await sample(0.9, 12))];
-  await page.keyboard.up('f');
   // Its strolls and stops: each frame the same way along from three frames back (a frame sampled before it is drawn
   // repeats the last), all on its own, from where it set off. Past the moment it turns round (a quarter of a second, and its
   // trailing tail clear of its line's left end: 45 px along at most), a stroll right longer than its width has its tail
@@ -713,25 +708,41 @@ test('strolling right its tail trails on its left; strolling left, a step and st
   const SETTLING = 0.25;
   const CLEAR = 45;
   const BACK = 3;
-  const counted = { right: 0, short: 0, left: 0, still: 0 };
-  const way = (k: number) =>
-    frames.slice(k - BACK, k + 1).every((f) => f.free) ? Math.sign(Math.round(((frames[k].left - frames[k - BACK].left) * 20) / BACK)) : NaN;
-  for (let i = BACK + 1, end = i; i < frames.length - 1; i = end + 1) {
-    const w = way(i);
-    end = i;
-    while (end + 1 < frames.length && way(end + 1) === w) end++;
-    if (Number.isNaN(w) || Number.isNaN(way(i - 1))) continue;
-    // Cut short (a fright at its line's end, the sample's end), a stroll right may have gone on: not a short one.
-    const cut = end + 1 >= frames.length || Number.isNaN(way(end + 1));
-    const length = frames[end].left - frames[i - BACK].left;
-    const kind = w > 0 ? (length >= 60 ? 'right' : length < 40 && !cut ? 'short' : null) : w < 0 ? 'left' : 'still';
-    const from = frames[i - BACK].left;
-    const settled = frames.slice(i, end + 1).filter((f) => f.t - frames[i].t >= SETTLING && (kind !== 'right' || f.left - from >= CLEAR));
-    if (!settled.length || !kind) continue;
-    counted[kind]++;
-    const side = kind === 'right' ? -1 : 1;
-    expect(settled.map((f) => f.tail), `${kind}, ${Math.round(length)} px, from ${frames[i].t.toFixed(2)} s`).toEqual(settled.map(() => side));
+  type Stroll = { kind: 'right' | 'short' | 'left' | 'still'; tails: number[]; side: number; said: string };
+  const strollsIn = (frames: Seen[]) => {
+    const strolls: Stroll[] = [];
+    const way = (k: number) =>
+      frames.slice(k - BACK, k + 1).every((f) => f.free) ? Math.sign(Math.round(((frames[k].left - frames[k - BACK].left) * 20) / BACK)) : NaN;
+    for (let i = BACK + 1, end = i; i < frames.length - 1; i = end + 1) {
+      const w = way(i);
+      end = i;
+      while (end + 1 < frames.length && way(end + 1) === w) end++;
+      if (Number.isNaN(w) || Number.isNaN(way(i - 1))) continue;
+      // Cut short (a fright at its line's end, the sample's end), a stroll right may have gone on: not a short one.
+      const cut = end + 1 >= frames.length || Number.isNaN(way(end + 1));
+      const length = frames[end].left - frames[i - BACK].left;
+      const kind = w > 0 ? (length >= 60 ? 'right' : length < 40 && !cut ? 'short' : null) : w < 0 ? 'left' : 'still';
+      const from = frames[i - BACK].left;
+      const settled = frames.slice(i, end + 1).filter((f) => f.t - frames[i].t >= SETTLING && (kind !== 'right' || f.left - from >= CLEAR));
+      if (!settled.length || !kind) continue;
+      const tails = settled.map((f) => f.tail);
+      strolls.push({ kind, tails, side: kind === 'right' ? -1 : 1, said: `${kind}, ${Math.round(length)} px, from ${frames[i].t.toFixed(2)} s` });
+    }
+    return strolls;
+  };
+  // Wherever it came up: a stroll to near its right end, then all the way to its left end, then far to the right, each
+  // given 12 s (on GitHub's Linux it may set off 2 s late and take 9 s over its whole line). A visit to another section,
+  // 15 to 35 s after it came, may take one of them, so again until each kind is seen, three times at most (1.22.0's
+  // deploy run).
+  await sample(0.9, 5);
+  const strolls: Stroll[] = [];
+  const seen = (kind: Stroll['kind']) => strolls.some((s) => s.kind === kind);
+  for (let round = 0; round < 3 && !(seen('right') && seen('left') && seen('still')); round++) {
+    strolls.push(...strollsIn([...(await sample(0.3, 12)), ...(await sample(0.9, 12))]));
   }
+  await page.keyboard.up('f');
+  for (const { tails, side, said } of strolls) expect(tails, said).toEqual(tails.map(() => side));
+  const counted = Object.fromEntries((['right', 'short', 'left', 'still'] as const).map((k) => [k, strolls.filter((s) => s.kind === k).length]));
   expect(counted.right * counted.left * counted.still, JSON.stringify(counted)).toBeGreaterThan(0);
 });
 
