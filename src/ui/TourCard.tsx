@@ -31,25 +31,35 @@ export const tourGuide = (index: number): Guide => ({ selector: selectorOf(TOUR[
 
 /** The keys that scroll the page, unless a control takes them. */
 const SCROLL_KEYS = new Set(['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End']);
-const TAKES_KEYS = 'input, textarea, select, [contenteditable], [role="slider"], [role="radiogroup"], [role="radio"], [role="listbox"], [role="menu"]';
+/** What takes a key, a wheel or a finger for itself, so the page does not scroll: a control, a field. */
+const CONTROLS = 'input, textarea, select, [contenteditable], [data-learn], [role="slider"], [role="radiogroup"], [role="radio"], [role="listbox"], [role="menu"]';
+const onControl = (e: Event) => e.target instanceof Element && !!e.target.closest(CONTROLS);
 
 /**
  * Calls `onScroll` when the person scrolls the page themselves (the wheel, a finger, the keys, the scroll bar), never
- * for the page's own scrolling, which fires the same scroll events.
+ * for the page's own scrolling, which fires the same scroll events, nor for a control turned by its wheel, a finger
+ * or a key (issue 206, decision 5).
  */
 function watchPersonScroll(onScroll: () => void) {
-  const onKey = (e: KeyboardEvent) => {
-    if (SCROLL_KEYS.has(e.key) && !e.defaultPrevented && !(e.target instanceof Element && e.target.closest(TAKES_KEYS))) onScroll();
+  // A knob's wheel is turned in its own listener, which keeps the page from scrolling: it has run by now.
+  const onWheel = (e: WheelEvent) => e.defaultPrevented || onScroll();
+  let touchedControl = false;
+  const onTouchStart = (e: TouchEvent) => {
+    touchedControl = onControl(e);
   };
+  const onTouchMove = () => touchedControl || onScroll();
+  const onKey = (e: KeyboardEvent) => SCROLL_KEYS.has(e.key) && !e.defaultPrevented && !onControl(e) && onScroll();
   // Pressed on the page's scroll bar: on the root itself, which no content covers.
   const onPointer = (e: PointerEvent) => e.target === document.documentElement && onScroll();
-  addEventListener('wheel', onScroll, { passive: true });
-  addEventListener('touchmove', onScroll, { passive: true });
+  addEventListener('wheel', onWheel, { passive: true });
+  addEventListener('touchstart', onTouchStart, { passive: true });
+  addEventListener('touchmove', onTouchMove, { passive: true });
   addEventListener('keydown', onKey);
   addEventListener('pointerdown', onPointer);
   return () => {
-    removeEventListener('wheel', onScroll);
-    removeEventListener('touchmove', onScroll);
+    removeEventListener('wheel', onWheel);
+    removeEventListener('touchstart', onTouchStart);
+    removeEventListener('touchmove', onTouchMove);
     removeEventListener('keydown', onKey);
     removeEventListener('pointerdown', onPointer);
   };
@@ -65,9 +75,10 @@ function watchPersonScroll(onScroll: () => void) {
  * with it, or in turn.
  */
 function useSectionInView(card: TourSection, docked: RefObject<HTMLElement | null>, moving: TourMove['id'] | null, looking: Looking) {
-  const bring = useRef<(moving: TourMove['id'] | null, looking: Looking) => void>(() => {});
+  // What the card's clock says now, read by each scroll; and the scroll, set up for the card shown.
   const now = useRef({ moving, looking });
   now.current = { moving, looking };
+  const bring = useRef(() => {});
   useEffect(() => {
     const controls = card.moves.map((move) => ({ id: move.id, element: controlOf(move) }));
     for (const { element } of controls) if (element) reveal(element);
@@ -79,23 +90,23 @@ function useSectionInView(card: TourSection, docked: RefObject<HTMLElement | nul
     const unwatch = watchPersonScroll(() => {
       theirs = true;
     });
-    bring.current = (moving, looking) => {
+    bring.current = () => {
       if (!shown || theirs || !docked.current) return;
-      const first = controls.filter((c) => c.id === moving);
-      const ordered = [...first, ...controls.filter((c) => c.id !== moving)].map((c) => c.element).filter((e) => e !== null);
-      const elements = looking === 'control' && first.length ? [ordered[0], ...viewers, ...ordered.slice(1)] : [...viewers, ...ordered];
+      const { moving, looking } = now.current;
+      const elementsOf = (wanted: (id: TourMove['id']) => boolean) => controls.filter((c) => wanted(c.id) && c.element).map((c) => c.element!);
+      const [mover, others] = [elementsOf((id) => id === moving), elementsOf((id) => id !== moving)];
+      const elements = looking === 'control' ? [...mover, ...viewers, ...others] : [...viewers, ...mover, ...others];
       const behavior = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
       bringClear(docked.current, elements, behavior);
     };
-    const again = () => bring.current(now.current.moving, now.current.looking);
     // After the tab it was on has had a frame to show, and the card its new height; then again whenever the card or the
     // page changes size while it is shown (on GitHub's Linux the last card came out 22 px taller after the scroll).
-    const resized = new ResizeObserver(again);
+    const resized = new ResizeObserver(() => bring.current());
     if (docked.current) resized.observe(docked.current, { box: 'border-box' });
     resized.observe(document.querySelector('main')!);
     const scroll = setTimeout(() => {
       shown = true;
-      again();
+      bring.current();
     }, 50);
     return () => {
       clearTimeout(scroll);
@@ -105,8 +116,9 @@ function useSectionInView(card: TourSection, docked: RefObject<HTMLElement | nul
       for (const viewer of viewers) viewer.removeAttribute('data-tutorial-viewer');
     };
   }, [card, docked]);
-  // The card's clock turns from the control to the Viewers and back, or to the next control.
-  useEffect(() => bring.current(moving, looking), [moving, looking]);
+  // The card's clock turns from the control to the Viewers and back, or on to the next control.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: they are the trigger; the scroll reads them from now
+  useEffect(() => bring.current(), [moving, looking]);
 }
 
 /** Rings the control the synth is turning, as a Tutorial rings the one to turn, and marks its section in the phone's strip. */
