@@ -38,7 +38,8 @@ test('Home, End, Page Up and Page Down on a knob', async ({ page }) => {
   await expect(resonance).toHaveAttribute('aria-valuenow', '0');
 });
 
-// Issue 160: a press is a step in the control's own unit, landing on round values: a semitone, a time step, 1 %, 0.5 dB.
+// Issue 160: a press is a step in the control's own unit, landing on round values: a semitone, a time step, 1 %, 0.5 dB
+// (a Mixer fader's in the Synth Geek Layer, issue 201).
 test('the arrows step each knob and fader in its own unit, Shift finer and Page coarser (issue 160)', async ({ page }) => {
   await page.goto('/');
   const cutoff = page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name: 'Cutoff' });
@@ -70,7 +71,7 @@ test('the arrows step each knob and fader in its own unit, Shift finer and Page 
   await expect(sustain).toHaveAttribute('aria-valuetext', '80 %');
 });
 
-test('the Mixer’s faders step by dB, to −∞ below the lowest step (issue 160)', async ({ page }) => {
+test('in the Synth Geek Layer the Mixer’s faders step by dB, to −∞ below the lowest step (issue 160)', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('limpide.overlays', JSON.stringify({ geek: true })));
   await page.goto('/');
   await page.getByRole('tab', { name: 'Mixer' }).click();
@@ -90,6 +91,48 @@ test('the Mixer’s faders step by dB, to −∞ below the lowest step (issue 16
   await osc2.press('ArrowDown');
   await osc2.press('ArrowDown');
   await expect(readout('Osc 2')).toHaveText('−∞ dB');
+});
+
+// Issue 201: outside the Synth Geek Layer a Mixer fader reads % and steps by it; switching the layer moves nothing.
+test('the Mixer’s faders step in the unit they read: % outside the Synth Geek Layer, dB inside it (issue 201)', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('tab', { name: 'Mixer' }).click();
+  const fader = (name: string) => page.getByRole('slider', { name, exact: true });
+  const readout = (name: string) => page.locator('.knob', { has: fader(name) }).locator('.knob-value > span').first();
+  const osc1 = fader('Osc 1');
+  await expect(osc1).toHaveAttribute('aria-valuetext', '100 %');
+  await osc1.press('ArrowDown');
+  await expect(osc1).toHaveAttribute('aria-valuetext', '99 %');
+  await expect(osc1).toHaveAttribute('aria-valuenow', '99'); // the fader, and the sound, at 99 %
+  await osc1.press('PageDown');
+  await expect(osc1).toHaveAttribute('aria-valuetext', '90 %'); // a round 10 %
+  // A wheel's notch steps as a press does.
+  await osc1.evaluate((dial) => dial.dispatchEvent(new WheelEvent('wheel', { deltaY: -100, bubbles: true, cancelable: true })));
+  await expect(osc1).toHaveAttribute('aria-valuetext', '91 %');
+  const ring = fader('Ring');
+  await ring.press('ArrowUp');
+  await expect(ring).toHaveAttribute('aria-valuetext', '1 %');
+
+  // The layer switched on: the readout turns to dB, the fader and the sound stay where they were.
+  await openDisplay(page);
+  await page.getByRole('button', { name: 'Geek' }).click();
+  await page.keyboard.press('Escape');
+  await expect(readout('Osc 1')).toHaveText('−0.8 dB'); // 91 %
+  await expect(osc1).toHaveAttribute('aria-valuetext', '91 %');
+  await expect(osc1).toHaveAttribute('aria-valuenow', '91');
+  // The next press lands on the half-dB Grid; Ring still steps by the percent.
+  await osc1.press('ArrowUp');
+  await expect(readout('Osc 1')).toHaveText('−0.5 dB');
+  await ring.press('ArrowUp');
+  await expect(ring).toHaveAttribute('aria-valuetext', '2 %');
+
+  // Off again: the readout back in %, nothing moved, and the next press a whole percent.
+  await openDisplay(page);
+  await page.getByRole('button', { name: 'Geek' }).click();
+  await page.keyboard.press('Escape');
+  await expect(readout('Osc 1')).toHaveText('94 %'); // −0.5 dB is 94.4 %
+  await osc1.press('ArrowUp');
+  await expect(osc1).toHaveAttribute('aria-valuetext', '95 %');
 });
 
 test('closing a panel puts the focus back on the button that opened it', async ({ page }) => {

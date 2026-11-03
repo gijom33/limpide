@@ -134,7 +134,7 @@ const toDb = (level: number) => 20 * Math.log10(level);
 const fromDb = (db: number) => clean(10 ** (db / 20));
 
 /**
- * A level by its dB (the Mixer's faders, issue 160): 0.5 dB a press, Shift 0.1 dB, Page 6 dB, down to `floor` dB, the
+ * A level by its dB (the Mixer's faders in the Synth Geek Layer, issues 160 and 201): 0.5 dB a press, Shift 0.1 dB, Page 6 dB, down to `floor` dB, the
  * lowest step; one below it is silence (−∞), and one up from silence the lowest step again.
  */
 export function decibelGrid(floor: number, words: Grid['words']): Grid {

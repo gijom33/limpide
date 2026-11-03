@@ -14,7 +14,12 @@ describe("every Parameter's tip (issue 78)", () => {
     expect(PARAM_TIPS.cutoff.keys).toBe('↑↓ a semitone · Shift 10 cents · Page an octave');
     expect(PARAM_TIPS.osc2Detune.keys).toBe('↑↓ 1 cent · Shift 0.1 cent · Page 10 cents');
     expect(PARAM_TIPS.ampSustain.keys).toBe('↑↓ 1 % · Shift 0.1 % · Page 10 %');
-    expect(PARAM_TIPS.mixOsc1.keys).toBe('↑↓ 0.5 dB · Shift 0.1 dB · Page 6 dB');
+    // A Mixer fader's in the unit it reads: % outside the Synth Geek Layer, dB inside it; Ring's % in both (issue 201).
+    expect(PARAM_TIPS.mixOsc1.keys).toBe('↑↓ 1 % · Shift 0.1 % · Page 10 %');
+    expect(PARAM_TIPS.mixOsc1.geekKeys).toBe('↑↓ 0.5 dB · Shift 0.1 dB · Page 6 dB');
+    expect(PARAM_TIPS.mixRing.keys).toBe('↑↓ 1 % · Shift 0.1 % · Page 10 %');
+    expect(PARAM_TIPS.mixRing.geekKeys).toBeUndefined();
+    expect(PARAM_TIPS.ampSustain.geekKeys).toBeUndefined();
     expect(PARAM_TIPS.ampAttack.keys).toBe('↑↓ the next round time · Shift 1 % · Page double or half');
     expect(PARAM_TIPS.osc1Octave.keys).toBe('↑↓ an octave');
     expect(syncedRateTip(noteIndex('1/4'), 120).keys).toBe('↑↓ a note value · Page 2 note values');

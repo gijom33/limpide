@@ -1,9 +1,9 @@
 import { useCallback, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { type GeekReadout, geekReadout, geekReadoutParts, readoutText, widestGeekReadout } from '../music/geek';
 import { type StepSize, stepParamBy } from '../patch/grid';
-import { formatParam, PARAMS, type ParamId, paramName } from '../patch/patch';
+import { formatParam, inUnitShown, PARAMS, type ParamId, paramName } from '../patch/patch';
 import { positionToValue, valueToPosition } from '../patch/taper';
-import { GeekContext, GeekNoteContext, GeekTempoContext } from './geekContext';
+import { GeekContext, GeekNoteContext, GeekOnContext, GeekTempoContext } from './geekContext';
 import { addDescription, removeDescription } from './inactive';
 import { useLearnable } from './learn';
 
@@ -45,9 +45,11 @@ export function useParamControl(id: ParamId, value: number, onChange: (value: nu
   // go on from the one before.
   const stepped = useRef(value);
   stepped.current = value;
+  // The Grid of the unit it reads: a Mixer fader's % outside the Synth Geek Layer, its dB inside it (issue 201).
+  const stepping = inUnitShown(def, useContext(GeekOnContext));
   /** Moves `steps` steps of `size` along the Parameter's Grid (issue 160), signed. */
   const nudge = (steps: number, size: StepSize) => {
-    stepped.current = stepParamBy(def, stepped.current, steps, size);
+    stepped.current = stepParamBy(stepping, stepped.current, steps, size);
     onChange(stepped.current);
   };
   const learnable = useLearnable({ kind: 'param', id: def.knob ?? id });

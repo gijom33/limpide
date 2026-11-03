@@ -14,6 +14,8 @@ export interface TipContent {
   how?: string;
   /** A knob's or fader's steps for the keys (issue 160): shown where there is a keyboard, not on a touch screen. */
   keys?: string;
+  /** Its steps while the Synth Geek Layer is on, where it reads another unit there: a Mixer fader's dB (issue 201). */
+  geekKeys?: string;
   /** The formula behind it (issue 133, decision 2): shown with the Synth Geek Layer on, above History. */
   underTheHood?: Formula;
   /** Where the control comes from (issue 134): shown last, with the Synth Geek Layer on. */
@@ -136,6 +138,8 @@ export function Tooltip({ content, children, longPress = true }: { content: TipC
   }, [open, named]);
 
   const place = position ? { left: position.left, top: position.top } : { left: -9999, top: 0 };
+  // The steps in the unit the control reads: a Mixer fader's dB in the Synth Geek Layer (issue 201).
+  const keys = (geek && content.geekKeys) || content.keys;
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: it listens to what bubbles up from the control it wraps
     <span
@@ -186,7 +190,7 @@ export function Tooltip({ content, children, longPress = true }: { content: TipC
           <strong>{content.title}</strong>
           <span>{content.body}</span>
           {content.how && <span className="tooltip-how">{content.how}</span>}
-          {content.keys && <span className="tooltip-keys">{content.keys}</span>}
+          {keys && <span className="tooltip-keys">{keys}</span>}
           {geek && content.underTheHood && (
             <span className="tooltip-hood">
               <b>Under the hood</b> <span className="tooltip-formula">{content.underTheHood.formula}</span> {content.underTheHood.where}

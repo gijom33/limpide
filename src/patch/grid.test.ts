@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { type StepSize, stepParam, stepParamBy } from './grid';
-import { PARAMS, type ParamId } from './patch';
+import { inUnitShown, PARAMS, type ParamId } from './patch';
 
-/** Where one press of `size` takes Parameter `id` from `value`. */
-const step = (id: ParamId, value: number, direction: 1 | -1, size: StepSize = 'unit') => stepParam(PARAMS[id], value, direction, size);
+/** Where one press of `size` takes Parameter `id` from `value`, the Synth Geek Layer on or not (issue 201). */
+const step = (id: ParamId, value: number, direction: 1 | -1, size: StepSize = 'unit', geek = true) =>
+  stepParam(inUnitShown(PARAMS[id], geek), value, direction, size);
 /** The values `presses` presses go through, each from where the last one left it. */
 const presses = (id: ParamId, from: number, count: number, size: StepSize = 'unit') =>
   Array.from({ length: Math.abs(count) }, (_, i) => stepParamBy(PARAMS[id], from, Math.sign(count) * (i + 1), size));
@@ -107,7 +108,39 @@ describe('times and the free Rate: a round series of about 20 a decade, Page dou
   });
 });
 
-describe('the Mixer’s faders: 0.5 dB a press, Shift 0.1 dB, Page 6 dB, then −∞ below the lowest step', () => {
+describe('the Mixer’s faders outside the Synth Geek Layer: 1 % a press, as they read (issue 201)', () => {
+  const off = (id: ParamId, value: number, direction: 1 | -1, size: StepSize = 'unit') => step(id, value, direction, size, false);
+  it('steps Osc 1’s fader down from 100 %', () => {
+    expect(off('mixOsc1', 1, -1)).toBe(0.99);
+    expect(off('mixOsc1', 1, -1, 'coarse')).toBe(0.9);
+    expect(off('mixOsc1', 1, -1, 'fine')).toBe(0.999);
+    expect(off('mixSub', 0.01, -1)).toBe(0); // no dB floor: 1 % then 0 %
+  });
+
+  it('lands a dragged fader on a round percent', () => {
+    expect(off('mixNoise', 0.504, 1)).toBe(0.51);
+    expect(off('mixNoise', 0.504, -1)).toBe(0.5);
+  });
+});
+
+describe('Ring reads % and steps 1 % in and out of the Synth Geek Layer (issue 201)', () => {
+  it('steps by the percent', () => {
+    expect(step('mixRing', 0.5, 1, 'unit', true)).toBe(0.51);
+    expect(step('mixRing', 0.5, 1, 'unit', false)).toBe(0.51);
+    expect(step('mixRing', 0.5, -1, 'coarse', true)).toBe(0.4);
+  });
+});
+
+describe('the other Grids do not depend on the Synth Geek Layer (issue 201)', () => {
+  it('steps the Cutoff and Sustain alike, on or off', () => {
+    for (const geek of [true, false]) {
+      expect(step('ampSustain', 0.7, 1, 'unit', geek)).toBe(0.71);
+      expect(step('osc1Octave', 0, 1, 'unit', geek)).toBe(1);
+    }
+  });
+});
+
+describe('the Mixer’s faders in the Synth Geek Layer: 0.5 dB a press, Shift 0.1 dB, Page 6 dB, then −∞ below the lowest step', () => {
   const db = (level: number) => 20 * Math.log10(level);
   it('steps Osc 1’s fader down from 0 dB', () => {
     expect(db(step('mixOsc1', 1, -1))).toBeCloseTo(-0.5, 9);

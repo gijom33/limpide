@@ -811,6 +811,38 @@ describe('the C16’s knobs: a 65 one step, a 66 a third of one (issue 145)', ()
     expect(valueAt(positions, 'lfoRate')).toBeCloseTo(2, 9); // a third: not yet a step
   });
 
+  it('steps a Mixer fader in the unit it reads: 1 % outside the Synth Geek Layer, 0.5 dB inside it (issue 201)', () => {
+    const positions: Partial<Record<ParamId, number>> = { mixOsc1: 1, mixRing: 0.5 };
+    let geek = false;
+    const store = createMappingStore(memoryStorage());
+    const surface = createControlSurface({
+      ...untouched,
+      ...valuesOf(positions),
+      store,
+      geek: () => geek,
+      position: (id) => positions[id] ?? 0,
+      setPosition: (id, p) => void (positions[id] = p),
+      action: () => {},
+      choice: () => ({ index: 0, count: 5 }),
+      setChoice: () => {},
+      press: () => {},
+      release: () => {},
+    });
+    store.set({ control: { kind: 'cc', channel: 1, number: 31 }, target: { kind: 'param', id: 'mixOsc1' }, mode: 'relative-centred', device: 'c16' });
+    store.set({ control: { kind: 'cc', channel: 1, number: 32 }, target: { kind: 'param', id: 'mixRing' }, mode: 'relative-centred', device: 'c16' });
+    surface.handle(cc(31, 63), C16); // a slow tick down
+    expect(valueAt(positions, 'mixOsc1')).toBe(0.99);
+    surface.handle(cc(32, 65), C16);
+    expect(valueAt(positions, 'mixRing')).toBe(0.51);
+    geek = true;
+    surface.handle(cc(31, 65), C16); // up from 99 % (−0.09 dB): the half-dB Grid's 0 dB
+    expect(valueAt(positions, 'mixOsc1')).toBe(1);
+    surface.handle(cc(31, 63), C16);
+    expect(20 * Math.log10(valueAt(positions, 'mixOsc1'))).toBeCloseTo(-0.5, 9);
+    surface.handle(cc(32, 65), C16); // Ring reads % in the layer too
+    expect(valueAt(positions, 'mixRing')).toBe(0.52);
+  });
+
   /** A C16 knob on the Resonance, from 0: a step is 1 % (issue 160). */
   const c16Knob = () => {
     const positions: Partial<Record<ParamId, number>> = { resonance: 0 };

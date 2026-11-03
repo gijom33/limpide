@@ -70,11 +70,10 @@ test('a Tutorial from the Patches panel: Init loaded, the control ringed with it
   const before = await wordsTop();
   await fader.focus();
   const note = card(page).getByText('Louder, not different');
-  // Up to −6.5 dB (47 %), within reach: once it rests there a moment, the Step counts and the fader snaps to the target.
-  // A press from silence is its lowest step, −40 dB; six Pages −6 dB; a press down −6.5 dB (issue 160).
-  await page.keyboard.press('ArrowUp');
-  for (let i = 0; i < 6; i++) await page.keyboard.press('PageUp');
-  await page.keyboard.press('ArrowDown');
+  // Up to 47 %, within reach: once it rests there a moment, the Step counts and the fader snaps to the target.
+  // Five Pages 50 %, three presses down 47 % (outside the Synth Geek Layer a Mixer fader steps by the %, issue 201).
+  for (let i = 0; i < 5; i++) await page.keyboard.press('PageUp');
+  for (let i = 0; i < 3; i++) await page.keyboard.press('ArrowDown');
   await expect(fader).toHaveAttribute('aria-valuetext', '47 %');
   await expect(note).toBeVisible();
   await expect(progress(page)).toHaveAttribute('data-done'); // its tick, in the top row too, which leaves the words put

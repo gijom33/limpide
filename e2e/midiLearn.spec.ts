@@ -1,5 +1,6 @@
 import { expect, type Page, test } from '@playwright/test';
 import { cc, midiButton, midiPanel, openMidi, play, times, withFakeController } from './fakeMidi';
+import { openDisplay } from './helpers';
 
 const cutoff = (page: Page) => page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name: 'Cutoff' });
 const learnBar = (page: Page) => page.getByRole('status', { name: 'MIDI Learn' });
@@ -226,6 +227,26 @@ test('a Controller moving a knob on a hidden tab brings that tab into view', asy
   await expect(page.getByRole('group', { name: 'Osc 2' }).getByRole('slider', { name: 'Pulse Width' })).toBeVisible();
   await play(page, cc(9, 1)); // and back, for an Osc 1 knob
   await expect(tabs.getByRole('tab', { name: 'Osc 1' })).toHaveAttribute('aria-selected', 'true');
+});
+
+// Issue 201: a Relative knob's click steps a Mixer fader as a press does, in the unit it reads.
+test('a Relative knob steps a Mixer fader by 1 % outside the Synth Geek Layer, by 0.5 dB inside it (issue 201)', async ({ page }) => {
+  const mapping = { control: { kind: 'cc', channel: 1, number: 6 }, target: { kind: 'param', id: 'mixOsc1' }, mode: 'relative-twos' };
+  await page.evaluate((m) => localStorage.setItem('limpide.mappings', JSON.stringify([m])), mapping);
+  await page.reload();
+  await expect(midiButton(page)).toContainText('1'); // connected again: a message sent before is lost
+  await page.getByRole('tab', { name: 'Mixer' }).click();
+  const osc1 = page.getByRole('slider', { name: 'Osc 1', exact: true });
+  await play(page, cc(6, 127));
+  await expect(osc1).toHaveAttribute('aria-valuetext', '99 %');
+  await openDisplay(page);
+  await page.getByRole('button', { name: 'Geek' }).click();
+  await page.keyboard.press('Escape');
+  await expect(osc1).toHaveAttribute('aria-valuetext', '99 %'); // the layer moves nothing
+  await play(page, cc(6, 1));
+  await expect(osc1).toHaveAttribute('aria-valuetext', '100 %'); // 0 dB, the half-dB Grid's next
+  await play(page, cc(6, 127));
+  await expect(osc1).toHaveAttribute('aria-valuetext', '94 %'); // −0.5 dB
 });
 
 test('each Action does its own job from its own pad: Next and Previous Preset, Freeze, Snapshot, Hold (none swapped)', async ({ page }) => {

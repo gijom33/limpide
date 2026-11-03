@@ -54,6 +54,25 @@ test('a knob’s and a fader’s tip say their steps for the keys (issue 160)', 
   await expect(page.getByRole('tooltip').filter({ hasText: '↑↓ 1 % · Shift 0.1 % · Page 10 %' })).toBeVisible();
 });
 
+// Issue 201: a Mixer fader's steps in the unit it reads, % outside the Synth Geek Layer and dB inside it; Ring's in %.
+test('a Mixer fader’s tip says its steps in the unit it reads (issue 201)', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('tab', { name: 'Mixer' }).click();
+  await page.keyboard.press('Tab'); // the keys in use: a focus shows its tip
+  const keysOf = async (name: string) => {
+    await page.getByRole('slider', { name, exact: true }).focus();
+    return page.getByRole('tooltip').locator('.tooltip-keys');
+  };
+  await expect(await keysOf('Osc 1')).toHaveText('↑↓ 1 % · Shift 0.1 % · Page 10 %');
+
+  await page.evaluate(() => localStorage.setItem('limpide.overlays', JSON.stringify({ geek: true })));
+  await page.reload();
+  await page.getByRole('tab', { name: 'Mixer' }).click();
+  await page.keyboard.press('Tab');
+  await expect(await keysOf('Osc 1')).toHaveText('↑↓ 0.5 dB · Shift 0.1 dB · Page 6 dB');
+  await expect(await keysOf('Ring')).toHaveText('↑↓ 1 % · Shift 0.1 % · Page 10 %');
+});
+
 // Issue 134: with the Synth Geek Layer on, a control with a musical past ends its tip with History; off, no tip has one.
 test('with the Synth Geek Layer on, a tip ends with its History line; off, or on Freeze, there is none (issue 134)', async ({ page }) => {
   await page.goto('/');

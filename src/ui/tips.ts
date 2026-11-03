@@ -547,7 +547,10 @@ const PARAM_EXPLAINED: Record<ParamId, TipContent> = {
   lfo2Note: TIPS.lfoNote,
 };
 export const PARAM_TIPS = Object.fromEntries(
-  (Object.keys(PARAM_EXPLAINED) as ParamId[]).map((id) => [id, { ...PARAM_EXPLAINED[id], keys: stepWords(PARAMS[id].grid) }]),
+  (Object.keys(PARAM_EXPLAINED) as ParamId[]).map((id) => {
+    const { grid, geekGrid } = PARAMS[id];
+    return [id, { ...PARAM_EXPLAINED[id], keys: stepWords(grid), geekKeys: geekGrid && stepWords(geekGrid) }];
+  }),
 ) as Record<ParamId, TipContent>;
 
 export const OVERLAY_TIPS: Record<Overlay, TipContent> = {

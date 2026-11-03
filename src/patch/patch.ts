@@ -22,6 +22,11 @@ export interface ParamDef extends Range {
   /** The round values a press, a wheel's notch or an encoder's tick lands on, in the control's own unit (issue 160). */
   grid: Grid;
   /**
+   * Its Grid while the Synth Geek Layer is on, where the control reads another unit there: a Mixer fader's dB (issue
+   * 201). Only the steps change with it, never the value.
+   */
+  geekGrid?: Grid;
+  /**
    * The Parameter whose knob turns this one, where it has none of its own: an LFO's note value is turned by its Rate
    * knob while Sync is on (issue 112), so MIDI Learn and Quick Setup know the Rate alone.
    */
@@ -169,12 +174,20 @@ const LOWEST_DB = -40;
 const RATES = seriesGrid({ unit: 'the next round rate', fine: '1 %', coarse: 'double or half' });
 /** An Octave: a whole octave a press. */
 const OCTAVES = steppedGrid(1, 1, { unit: 'an octave' });
-/** The Mixer's faders, by their dB (issue 160). */
-const MIXER = decibelGrid(LOWEST_DB, { unit: '0.5 dB', fine: '0.1 dB', coarse: '6 dB' });
+/** The Mixer's faders in the Synth Geek Layer, by the dB they read there (issues 160 and 201). */
+const MIXER_DB = decibelGrid(LOWEST_DB, { unit: '0.5 dB', fine: '0.1 dB', coarse: '6 dB' });
 
-const level = (id: ParamId, label: string, dflt: number, control: Control, grid = PERCENT): ParamDef => ({
-  id, label, unit: '%', min: 0, max: 1, taper: 'linear', default: dflt, control, grid,
+const level = (id: ParamId, label: string, dflt: number, control: Control): ParamDef => ({
+  id, label, unit: '%', min: 0, max: 1, taper: 'linear', default: dflt, control, grid: PERCENT,
 });
+/** A Mixer fader: 1 % a press as it reads, and in the Synth Geek Layer, where it reads dB, 0.5 dB (issue 201). */
+const mixerLevel = (id: ParamId, label: string, dflt: number): ParamDef => ({ ...level(id, label, dflt, 'fader'), geekGrid: MIXER_DB });
+
+/**
+ * A Parameter as its control steps it, the Synth Geek Layer on (`geek`) or off: on its Grid in the unit it reads
+ * (issue 201), a Mixer fader by the % outside the layer and by the dB inside it.
+ */
+export const inUnitShown = (def: ParamDef, geek: boolean): ParamDef => (geek && def.geekGrid ? { ...def, grid: def.geekGrid } : def);
 
 const time = (id: ParamId, label: string, dflt: number, control: Control): ParamDef => ({
   id, label, unit: 's', min: 0.001, max: 10, taper: 'log', default: dflt, control, grid: TIMES,
@@ -216,12 +229,12 @@ export const PARAMS: Record<ParamId, ParamDef> = {
     id: 'osc2EnvAmount', label: 'Env Amount', unit: 'st', min: -24, max: 24, taper: 'linear', default: 0, control: 'set',
     grid: linearGrid(1, 0.1, 12, SEMITONE_WORDS),
   },
-  mixOsc1: level('mixOsc1', 'Osc 1', 1, 'fader', MIXER),
-  mixOsc2: level('mixOsc2', 'Osc 2', 0, 'fader', MIXER),
-  // Osc 1 times Osc 2 (issue 88), whatever their own levels.
-  mixRing: level('mixRing', 'Ring', 0, 'fader', MIXER),
-  mixNoise: level('mixNoise', 'Noise', 0, 'fader', MIXER),
-  mixSub: level('mixSub', 'Sub', 0, 'fader', MIXER),
+  mixOsc1: mixerLevel('mixOsc1', 'Osc 1', 1),
+  mixOsc2: mixerLevel('mixOsc2', 'Osc 2', 0),
+  // Osc 1 times Osc 2 (issue 88), whatever their own levels; it reads % even in the Synth Geek Layer, and steps by it.
+  mixRing: level('mixRing', 'Ring', 0, 'fader'),
+  mixNoise: mixerLevel('mixNoise', 'Noise', 0),
+  mixSub: mixerLevel('mixSub', 'Sub', 0),
   lfoRate: { id: 'lfoRate', label: 'Rate', unit: 'Hz', min: 0.05, max: 20, taper: 'log', default: 2, control: 'play', grid: RATES },
   lfoAmount: level('lfoAmount', 'Depth', 0, 'play'),
   lfoNote: noteValue('lfoNote', 'lfoRate'),

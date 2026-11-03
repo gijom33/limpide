@@ -1,6 +1,6 @@
 import { BPM_STEP, bpmPosition, clampBpm, positionBpm } from '../music/tempo';
 import { stepParamBy } from '../patch/grid';
-import { type ChoiceId, PARAMS, type ParamId } from '../patch/patch';
+import { type ChoiceId, inUnitShown, PARAMS, type ParamId } from '../patch/patch';
 import { answers, type KnownController } from './controller';
 import { detectEncoderMode, detectKnobMode, relativeDelta, relativeModeOf } from './encoderMode';
 import {
@@ -53,6 +53,8 @@ interface Synth {
   setValue(id: ParamId, value: number): void;
   /** The Parameter a control mapped to `id` turns now: an LFO's Rate turns its note value while Sync is on (issue 112). */
   turned(id: ParamId): ParamId;
+  /** Whether the Synth Geek Layer is on: a Mixer fader steps in the dB it reads there, else in % (issue 201). */
+  geek?(): boolean;
   /** The tempo's position (0–1, from the slowest BPM to the fastest), and setting it (issue 112). */
   tempoPosition(): number;
   setTempoPosition(position: number): void;
@@ -248,7 +250,9 @@ export function createControlSurface(synth: Synth) {
       get: () => synth.position(turned),
       set: (p: number) => synth.setPosition(turned, p),
       unit: step ? step / (max - min) : 0,
-      step: step ? undefined : (steps) => synth.setValue(turned, stepParamBy(def, synth.value(turned), steps)),
+      step: step
+        ? undefined
+        : (steps) => synth.setValue(turned, stepParamBy(inUnitShown(def, synth.geek?.() ?? false), synth.value(turned), steps)),
       centred: min === -max,
     };
   };
