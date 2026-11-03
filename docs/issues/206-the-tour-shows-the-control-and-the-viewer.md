@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · enhancement. Built (2026-11-02) on night/2026-11-02, for the owner to try
+**Status:** needs-info · enhancement. Built (2026-11-02) on night/2026-11-02, by fit at every width; one question for the owner before it is tried as done
 
 ## Decisions
 
@@ -74,3 +74,10 @@ Claude's calls, open to the owner:
 - **Tests run:** `npx tsc`, `npm run lint`, the tutorial unit tests (all passed); the Tour spec and the Tour's tests in the About, Demo, keyboard and Bead specs, in Chromium and WebKit (41 passed each).
 - **The code review** (Standards and Spec), fixed: a wheel or finger turning a control counted as the person's scroll; the faders found by a data attribute in the browser test (now by name); a moving control not on the page could put another before the Viewers; the scroll's arguments passed beside a ref holding them. The Spec's points on the fit rule, the sweep's first second and the faders' return are calls 1 to 4 above.
 - **To try:** on a phone (or a window about 375 px wide), take the Tour (About) to the Amp card: the page shows the Attack fader rising, then glides to the Timeline for the Note and the freeze, back to the faders, the Decay, and so on. Scroll yourself during the card: the page stays where you put it until the next card. Try the Filter and LFO cards on a 320 px phone, and a 2 × 2 or laptop window about 800 px tall, where the Amp card now moves between its faders and the Timeline too.
+
+## Questions for the owner
+
+Written by the night's lead, 2026-11-02 (Claude's call, open to the owner: the code is kept on the night branch rather than set back, since the other answer is a one-line change and the owner is away all day).
+
+1. **By fit at every width, or on phones alone?** The measurement found "from 2 × 2 up everything fits" true only on tall windows: about 800 px tall, the Amp card does not fit at 2 × 2 or on a 1280 × 800 laptop, nor the LFO and Oscillators cards at 2 × 2. As built, the Tour scrolls between control and Viewer wherever they do not fit, which changes those short 2 × 2 and laptop windows against the criterion "from 2 × 2 up, unchanged". Claude's recommendation: keep it by fit, since a card whose Viewer is out of view on a laptop shows nothing of its effect; or limit it to phones (one line), leaving short laptops as they were.
+
