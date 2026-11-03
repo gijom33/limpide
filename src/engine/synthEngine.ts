@@ -1027,6 +1027,19 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     const pull = pulls[i];
     return pull && t < pull.until ? pull.rate : hz(l);
   };
+  /**
+   * LFO `i` at its Rate from `t`, in the clock and in its oscillators (a restart handed over ahead of now leaves the
+   * old one running until then: it follows too), its Waveform too when `wave` (issue 196: applyPatch's and setTempo's
+   * one loop).
+   */
+  const followRate = (i: number, l: Lfo, t: number, wave = false) => {
+    const rate = lfoRate(i, l, t);
+    lfoClocks[i].setRate(t, rate);
+    for (const osc of shared.lfos[i].takeover.nodes()) {
+      if (wave) setLfoWave(osc, l.waveform);
+      osc.frequency.setValueAtTime(rate, t);
+    }
+  };
   /** A new oscillator for LFO `i`, its cycle starting at phase `start` of its Waveform, wired to the LFO's bus. */
   const lfoOscillator = (i: number, l: Lfo, start: number) => () => {
     const next = ctx.createOscillator();
@@ -1378,11 +1391,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       tempo = { bpm, origin };
       if (!patch) return;
       const t = ctx.currentTime;
-      lfos(patch).forEach((l, i) => {
-        if (l.sync !== 'on') return;
-        lfoClocks[i].setRate(t, lfoRate(i, l, t));
-        for (const osc of shared.lfos[i].takeover.nodes()) osc.frequency.setValueAtTime(lfoRate(i, l, t), t);
-      });
+      lfos(patch).forEach((l, i) => l.sync === 'on' && followRate(i, l, t));
       lockToBeat(patch, t);
     },
     tempo: () => tempo,
@@ -1421,13 +1430,8 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       patches.push({ time: t, patch: next });
       trim(patches, t);
       lfos(next).forEach((l, i) => {
-        lfoClocks[i].setRate(t, lfoRate(i, l, t));
+        followRate(i, l, t, true);
         lfoClocks[i].forgetBefore(t - MODEL_SECONDS);
-        // A restart handed over ahead of now leaves the old oscillator running until then: it follows too.
-        for (const osc of shared.lfos[i].takeover.nodes()) {
-          setLfoWave(osc, l.waveform);
-          osc.frequency.setValueAtTime(lfoRate(i, l, t), t);
-        }
       });
       applyToSound(pressed(next, pressureAt(t)), t);
       lockToBeat(next, t);
