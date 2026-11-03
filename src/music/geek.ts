@@ -1,9 +1,9 @@
 import { filterStages, isPeaked } from '../engine/filterDesign';
 import { type EnvelopeStage, STAGE_SHARPNESS, stageTimeConstant } from '../modulation/envelope';
 import { GLIDE_SHARPNESS } from '../modulation/lfo';
-import { destinationSwings, effectiveCutoff, KEY_TRACK_CENTRE, LFO_LAWS, osc2Cents } from '../modulation/modulationModel';
+import { destinationSwings, effectiveCutoff, KEY_TRACK_CENTRE, LFO_LAWS, type LfoLaw, osc2Cents } from '../modulation/modulationModel';
 import {
-  type FilterMode, type FilterSlope, FM_INDEX, fmIndex, formatParam, LFO_DESTINATIONS, LFO_KEYS, type LfoDestination, type LfoNumber, type NoiseColour, osc1Heard,
+  type FilterMode, type FilterSlope, FM_INDEX, fmIndex, formatParam, LFO_DESTINATIONS, LFO_KEYS, type LfoNumber, type NoiseColour, osc1Heard,
   PARAMS, type ParamId, type Patch, secondsText,
 } from '../patch/patch';
 import { WAVEFORM_NAMES, type Waveform } from './harmonics';
@@ -162,29 +162,8 @@ const hzText = (hz: number) => `${hz < 10 ? hz.toFixed(2) : hz < 100 ? hz.toFixe
 /** A period in seconds, to two or three figures: "0.50 s", "0.050 s", "20.0 s". */
 const periodText = (seconds: number) => `${seconds < 0.1 ? seconds.toFixed(3) : twoPlaces(seconds)} s`;
 
-/** The Parameters of each LFO's knobs, by the LFO: its Rate in Hz, its note value (Sync on) and its Depth. */
-const LFO_OF = new Map<ParamId, { lfo: LfoNumber; knob: 'rate' | 'note' | 'amount' }>(
-  ([1, 2] as const).flatMap((lfo) => (['rate', 'note', 'amount'] as const).map((knob): [ParamId, { lfo: LfoNumber; knob: typeof knob }] => [LFO_KEYS[lfo][knob], { lfo, knob }])),
-);
-
-/**
- * Where an LFO on the Pulse Width measures its room (issue 74's law): Osc 1's width, or Osc 2's while it alone is a
- * pulse. Each Oscillator's swing is kept within its own width's room in the engine.
- */
-const pulseWidthOf = (patch: Patch) => (patch.waveform !== 'pulse' && patch.osc2Waveform === 'pulse' ? patch.osc2PulseWidth : patch.pulseWidth);
-/** The knob's value an LFO's room on `destination` is measured from, as the engine measures it. */
-const ROOM_FROM: Partial<Record<LfoDestination, (patch: Patch) => number>> = {
-  pulseWidth: pulseWidthOf,
-  fm: (patch) => patch.crossMod,
-  resonance: (patch) => patch.resonance,
-};
-
 /** A swing each way in a unit: "±0.80 oct", "±12.0 st"; a share of a knob's travel in %, "±12 %". */
 const swingText = (swing: number, unit: string) => (unit === '%' ? `±${Math.round(swing * 100)} %` : `±${twoPlaces(swing)} ${unit}`);
-/** Each Destination's unit, its knob's (Pitch's semitones, the Cutoff's octaves). */
-const UNITS: Record<Exclude<LfoDestination, 'volume'>, string> = {
-  pitch: 'st', osc2Pitch: 'st', detune: '¢', pulseWidth: '%', fm: '%', cutoff: 'oct', resonance: '%',
-};
 
 /**
  * How far LFO `lfo` swings its Destination at a Depth of `depth` (issue 169), in the Destination's own unit, as the
@@ -194,9 +173,10 @@ const UNITS: Record<Exclude<LfoDestination, 'volume'>, string> = {
 function depthSwingText(patch: Patch, lfo: LfoNumber, depth: number): string {
   const keys = LFO_KEYS[lfo];
   const destination = patch[keys.destination];
+  const law: LfoLaw = LFO_LAWS[destination];
   const swung = { ...patch, [keys.amount]: depth };
-  const swing = destinationSwings(swung, destination, ROOM_FROM[destination]?.(patch))[lfo - 1];
-  return destination === 'volume' ? levelDb(1 - 2 * swing) : swingText(swing, UNITS[destination]);
+  const swing = destinationSwings(swung, destination, law.roomFrom?.(patch))[lfo - 1];
+  return destination === 'volume' ? levelDb(1 - 2 * swing) : swingText(swing, law.unit);
 }
 
 /**
@@ -214,23 +194,52 @@ export interface GeekReadout {
   words?: string;
 }
 
+/** Where a readout is worked out, its defaults filled in. */
+type At = Required<GeekAt>;
+
+/**
+ * One control of the Synth Geek Layer: what it reads instead of its everyday value, in its parts, and the widest it can
+ * read, to size its column while the layer is on (several where which is widest depends on the font; in their parts,
+ * as where the name's place shows the figure alone, the figure's width is the one it must fit, issue 207). One table,
+ * so a readout and its widest are written side by side (issue 196).
+ */
+interface GeekControl {
+  read(value: number, patch: Patch, at: At): GeekReadout;
+  widest: readonly GeekReadout[];
+}
+
+const figures = (...all: string[]): GeekReadout[] => all.map((figure) => ({ figure }));
+const gain: GeekControl = { read: (value) => ({ figure: levelDb(value) }), widest: figures('−99.9 dB') };
+const multiple = (ratio: (value: number) => number): GeekControl => ({ read: (value) => ({ figure: multipleText(ratio(value)) }), widest: figures('×0.000') });
+// Issue 169: an LFO's period, at the tempo while synced, and its swing.
+const PERIOD = figures('0.000 s', '00.0 s');
+const lfoControls = (lfo: LfoNumber): [ParamId, GeekControl][] => [
+  [LFO_KEYS[lfo].rate, { read: (value) => ({ figure: periodText(1 / value) }), widest: PERIOD }],
+  [LFO_KEYS[lfo].note, { read: (value, _, { bpm }) => ({ figure: periodText((NOTE_VALUES[Math.round(value)].beats * 60) / bpm) }), widest: PERIOD }],
+  [LFO_KEYS[lfo].amount, { read: (value, patch) => ({ figure: depthSwingText(patch, lfo, value) }), widest: figures('±12.0 st', '±2.00 oct', '±50.0 ¢', '±40 %', '−99.9 dB') }],
+];
+
+const GEEK_CONTROLS: Partial<Record<ParamId, GeekControl>> = {
+  resonance: { read: (value, patch) => ({ figure: qText(patch.filterMode, patch.filterSlope, value) }), widest: figures('Q 15.8 ×2') },
+  ...Object.fromEntries(GAINS.map((id) => [id, gain])),
+  osc2Octave: multiple((value) => 2 ** value),
+  osc2Semitone: multiple((value) => 2 ** (value / 12)),
+  // Its widest at the top of MIDI's Notes, Osc 2 three octaves up: 2.9 kHz.
+  osc2Detune: {
+    read: (value, patch, { note }) => ({ figure: hzText(detuneBeatsHz(patch, value, note)), words: note === null ? BEFORE_ANY_NOTE : 'beats' }),
+    widest: [{ figure: '9999 Hz', words: 'beats' }],
+  },
+  ...Object.fromEntries([...lfoControls(1), ...lfoControls(2)]),
+  // Issue 169: the Cutoff at the Note under Key Track.
+  keyTrack: { read: (value, patch, { note }) => ({ figure: formatParam('cutoff', keyTrackedCutoff({ ...patch, keyTrack: value }, note)) }), widest: figures('20.00 kHz') },
+};
+
 /**
  * What a knob or fader reads in the Synth Geek Layer instead of its everyday value, if anything, in its parts; `at`
  * the last Note played and the tempo, for the readouts that depend on them.
  */
 export function geekReadoutParts(id: ParamId, value: number, patch: Patch, { note = null, bpm = TEMPO.default }: GeekAt = {}): GeekReadout | undefined {
-  if (id === 'resonance') return { figure: qText(patch.filterMode, patch.filterSlope, value) };
-  if (GAINS.includes(id)) return { figure: levelDb(value) };
-  if (id === 'osc2Octave') return { figure: multipleText(2 ** value) };
-  if (id === 'osc2Semitone') return { figure: multipleText(2 ** (value / 12)) };
-  if (id === 'osc2Detune') return { figure: hzText(detuneBeatsHz(patch, value, note)), words: note === null ? BEFORE_ANY_NOTE : 'beats' };
-  // Issue 169: an LFO's period, at the tempo while synced, and its swing; the Cutoff at the Note under Key Track.
-  const lfo = LFO_OF.get(id);
-  if (lfo?.knob === 'rate') return { figure: periodText(1 / value) };
-  if (lfo?.knob === 'note') return { figure: periodText((NOTE_VALUES[Math.round(value)].beats * 60) / bpm) };
-  if (lfo?.knob === 'amount') return { figure: depthSwingText(patch, lfo.lfo, value) };
-  if (id === 'keyTrack') return { figure: formatParam('cutoff', keyTrackedCutoff({ ...patch, keyTrack: value }, note)) };
-  return undefined;
+  return GEEK_CONTROLS[id]?.read(value, patch, { note, bpm });
 }
 
 /** A readout's whole text: "2.55 Hz beats". */
@@ -242,24 +251,8 @@ export function geekReadout(id: ParamId, value: number, patch: Patch, at: GeekAt
   return parts && readoutText(parts);
 }
 
-/**
- * The widest readouts a Parameter can show in the Synth Geek Layer, to size its column while the layer is on: several
- * where which is widest depends on the font. In their parts, as the readouts are: where the name's place shows the
- * figure alone, the figure's width is the one it must fit (issue 207).
- */
-export function widestGeekReadout(id: ParamId): GeekReadout[] {
-  const figures = (...all: string[]) => all.map((figure) => ({ figure }));
-  if (id === 'resonance') return figures('Q 15.8 ×2');
-  if (GAINS.includes(id)) return figures('−99.9 dB');
-  if (id === 'osc2Octave' || id === 'osc2Semitone') return figures('×0.000');
-  // Its widest at the top of MIDI's Notes, Osc 2 three octaves up: 2.9 kHz.
-  if (id === 'osc2Detune') return [{ figure: '9999 Hz', words: 'beats' }];
-  const lfo = LFO_OF.get(id);
-  if (lfo?.knob === 'rate' || lfo?.knob === 'note') return figures('0.000 s', '00.0 s');
-  if (lfo?.knob === 'amount') return figures('±12.0 st', '±2.00 oct', '±50.0 ¢', '±40 %', '−99.9 dB');
-  if (id === 'keyTrack') return figures('20.00 kHz');
-  return [];
-}
+/** The widest readouts a Parameter can show in the Synth Geek Layer: see `GeekControl`. */
+export const widestGeekReadout = (id: ParamId): readonly GeekReadout[] => GEEK_CONTROLS[id]?.widest ?? [];
 
 /**
  * Each Destination's reach at full Depth, by its law: "Pitch ±1 st", "Pulse Width ±40 %"; those whose reach is their
@@ -267,8 +260,7 @@ export function widestGeekReadout(id: ParamId): GeekReadout[] {
  */
 const REACH = LFO_DESTINATIONS.flatMap(({ id, label }) => {
   if (id === 'volume') return [];
-  const unit = UNITS[id];
-  const reach = LFO_LAWS[id].perDepth;
+  const { unit, perDepth: reach }: LfoLaw = LFO_LAWS[id];
   if (unit === '%' && reach === 1) return [];
   return [`${label} ±${unit === '%' ? Math.round(reach * 100) : reach} ${unit}`];
 }).join(', ');

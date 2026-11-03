@@ -57,6 +57,10 @@ const MAX_PULSE = 0.95;
 export interface LfoLaw {
   perDepth: number;
   room?(value: number): number;
+  /** The knob's value in `patch` its room is measured from, as the engine measures it (issue 196: beside the room). */
+  roomFrom?(patch: Patch): number;
+  /** Its unit, its knob's: Pitch's semitones, the Cutoff's octaves, a share of a knob's travel in %; Volume's dip in dB. */
+  unit: string;
   knobs: readonly ParamId[];
 }
 
@@ -67,24 +71,32 @@ export interface LfoLaw {
  */
 export const LFO_LAWS = {
   /** A semitone each way; Pitch has no knob. */
-  pitch: { perDepth: 1, knobs: [] },
+  pitch: { perDepth: 1, unit: 'st', knobs: [] },
   /** An octave each way, on the Semitone knob. */
-  osc2Pitch: { perDepth: 12, knobs: ['osc2Semitone'] },
+  osc2Pitch: { perDepth: 12, unit: 'st', knobs: ['osc2Semitone'] },
   /** 50 cents each way, the Detune knob's range. */
-  detune: { perDepth: 50, knobs: ['osc2Detune'] },
+  detune: { perDepth: 50, unit: '¢', knobs: ['osc2Detune'] },
   /** 40 points each way, on both Oscillators' Pulse Width, never past the narrowest or widest pulse. */
-  pulseWidth: { perDepth: 0.4, room: (width: number) => Math.min(width - MIN_PULSE, MAX_PULSE - width), knobs: ['pulseWidth', 'osc2PulseWidth'] },
+  // Its room measured on Osc 1's width, or Osc 2's while it alone is a pulse; each Oscillator's swing is kept within
+  // its own width's room in the engine.
+  pulseWidth: {
+    perDepth: 0.4,
+    room: (width: number) => Math.min(width - MIN_PULSE, MAX_PULSE - width),
+    roomFrom: (patch: Patch) => (patch.waveform !== 'pulse' && patch.osc2Waveform === 'pulse' ? patch.osc2PulseWidth : patch.pulseWidth),
+    unit: '%',
+    knobs: ['pulseWidth', 'osc2PulseWidth'],
+  },
   /** Its whole range (0–1), as far as the FM knob leaves room each way: none at 0 (issue 97). */
-  fm: { perDepth: 1, room: (fm: number) => Math.min(fm, 1 - fm), knobs: ['crossMod'] },
+  fm: { perDepth: 1, room: (fm: number) => Math.min(fm, 1 - fm), roomFrom: (patch: Patch) => patch.crossMod, unit: '%', knobs: ['crossMod'] },
   /** Two octaves each way. */
-  cutoff: { perDepth: 2, knobs: ['cutoff'] },
+  cutoff: { perDepth: 2, unit: 'oct', knobs: ['cutoff'] },
   /** Its whole range (0–1), as far as the knob's value leaves room each way. */
-  resonance: { perDepth: 1, room: (resonance: number) => Math.min(resonance, 1 - resonance), knobs: ['resonance'] },
+  resonance: { perDepth: 1, room: (resonance: number) => Math.min(resonance, 1 - resonance), roomFrom: (patch: Patch) => patch.resonance, unit: '%', knobs: ['resonance'] },
   /**
    * Volume (tremolo) dips at most to silence: each LFO's swing is half its Depth, around a level that falls by the
    * total swing, so the wave's top is the Envelope's own level and its foot full Depth below it (issue 53).
    */
-  volume: { perDepth: 0.5, room: () => 0.5, knobs: ['volume'] },
+  volume: { perDepth: 0.5, room: () => 0.5, unit: 'dB', knobs: ['volume'] },
 } as const satisfies Record<LfoDestination, LfoLaw>;
 /** How far the hardest hit opens the Filter at full Velocity amount. */
 export const VELOCITY_CUTOFF_OCTAVES = 2;
