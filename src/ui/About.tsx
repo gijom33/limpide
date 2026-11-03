@@ -218,7 +218,7 @@ export function About({
                   <a href="https://www.goatcounter.com" target="_blank" rel="noreferrer">
                     GoatCounter
                   </a>
-                  : no cookies, nothing stored about you. Your sounds never leave your browser.
+                  : no cookies, nothing that identifies you. Your sounds never leave your browser.
                 </dd>
               </>
             )}
