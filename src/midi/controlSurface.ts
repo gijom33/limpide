@@ -2,7 +2,7 @@ import { BPM_STEP } from '../music/tempo';
 import { stepParamBy } from '../patch/grid';
 import { type ChoiceId, PARAMS, type ParamId } from '../patch/patch';
 import { answeredBy, answers, type KnownController } from './controller';
-import { detectEncoderMode, detectKnobMode, relativeDelta } from './encoderMode';
+import { detectEncoderMode, detectKnobMode, relativeDelta, relativeModeOf } from './encoderMode';
 import {
   type ActionId, type Control, controlKey, type Mapping, type MappingStore, PITCH_BEND, sameControl, type Target,
 } from './mappings';
@@ -137,6 +137,7 @@ export function createControlSurface(synth: Synth) {
   const gathered = new Map<string, number>(); // a Relative knob's travel towards a stepped dial's next step, per control
   const thirds = new Map<string, number>(); // a Relative knob's share of a Grid step not yet moved (a C16's 66s), per control
   const detecting = new Map<string, number[]>(); // the first values of knobs finding their Encoder Mode
+  const lastValues = new Map<string, number>(); // the last value each CC sent, for a Mapping switched to Relative by hand
   // Aftertouch (issue 132, the owner's decision 1): the channel's, and each held Note's own until its release. The
   // pressure is the highest of them, one for every Note.
   let channelPressure = 0;
@@ -390,6 +391,7 @@ export function createControlSurface(synth: Synth) {
         incoming.type === 'pitchBend'
           ? { type: 'cc', channel: incoming.channel, controller: PITCH_BEND, value: Math.round(((incoming.value + 1) / 2) * 127) }
           : incoming;
+      if (message.type === 'cc') lastValues.set(controlKey({ kind: 'cc', channel: message.channel, number: message.controller }), message.value);
       if (learnFrom(message)) return;
       const mapping = store.find(
         message.type === 'cc'
@@ -426,6 +428,17 @@ export function createControlSurface(synth: Synth) {
       } else finishListening();
       avoiding = avoid;
       setLearn({ phase: 'armed', target });
+    },
+    /**
+     * A knob's Mapping switched by hand between Absolute and Relative, where Learn guessed wrong (issue 186): Relative
+     * takes the kind the knob's last value says. What the knob had gathered towards a step, or Pickup, starts afresh.
+     */
+    setMode(control: Control, mode: 'absolute' | 'relative') {
+      const mapping = store.find(control);
+      if (!mapping || mapping.mode === 'trigger' || mapping.mode === 'toggle') return;
+      const key = controlKey(control);
+      for (const state of [pickups, clicks, gathered, thirds, detecting]) state.delete(key);
+      store.replace({ ...mapping, mode: mode === 'absolute' ? 'absolute' : relativeModeOf(lastValues.get(key)) });
     },
     stopLearn() {
       clearTimeout(settle);

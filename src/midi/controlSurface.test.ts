@@ -105,6 +105,39 @@ describe('MIDI Learn', () => {
     expect(store.find({ kind: 'cc', channel: 1, number: 20 })?.mode).toBe('absolute');
   });
 
+  it('learns a brisk turn of an accelerated encoder as Relative, and a fader nudged off the bottom as Absolute (issue 186)', () => {
+    const { surface, store, send } = rig();
+    surface.startLearn();
+    surface.select(cutoff);
+    send(cc(74, 66), cc(74, 69), cc(74, 71), cc(74, 67));
+    expect(store.find({ kind: 'cc', channel: 1, number: 74 })?.mode).toBe('relative-centred');
+    surface.select(resonance);
+    send(cc(7, 1));
+    vi.advanceTimersByTime(600);
+    expect(store.find({ kind: 'cc', channel: 1, number: 7 })?.mode).toBe('absolute');
+  });
+
+  it('a Mapping’s mode changed by hand: Relative takes the kind its knob sends, and the knob then answers (issue 186)', () => {
+    const { surface, store, positions, send } = rig();
+    const knob = { kind: 'cc', channel: 1, number: 74 } as const;
+    store.set({ control: knob, target: cutoff, mode: 'absolute' });
+    send(cc(74, 66), cc(74, 67)); // far from the Cutoff's position: Pickup waits
+    expect(positions.cutoff).toBe(0.5);
+    surface.setMode(knob, 'relative');
+    expect(store.find(knob)?.mode).toBe('relative-centred');
+    send(cc(74, 65));
+    expect(positions.cutoff).toBeGreaterThan(0.5);
+    const other = { kind: 'cc', channel: 1, number: 75 } as const;
+    store.set({ control: other, target: resonance, mode: 'absolute' });
+    send(cc(75, 127));
+    surface.setMode(other, 'relative');
+    expect(store.find(other)?.mode).toBe('relative-twos');
+    surface.setMode(other, 'absolute');
+    expect(store.find(other)?.mode).toBe('absolute');
+    send(cc(75, 25)); // within half a step of the Resonance's 0.2: picked up
+    expect(positions.resonance).toBeCloseTo(25 / 127, 9);
+  });
+
   it('does not move the Parameter while learning it', () => {
     const { surface, positions, send } = rig();
     surface.startLearn();

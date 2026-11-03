@@ -21,6 +21,24 @@ describe('Encoder Mode detection', () => {
     expect(detectEncoderMode([65, 63])).toBe('relative-centred');
   });
 
+  it('reads a brisk turn of an accelerated encoder as Relative, its values all a few steps from 64 or from 0 (issue 186)', () => {
+    expect(detectEncoderMode([66, 69, 71, 67])).toBe('relative-centred');
+    expect(detectEncoderMode([62, 59, 57, 61])).toBe('relative-centred');
+    expect(detectEncoderMode([2, 5, 7, 3])).toBe('relative-twos');
+    expect(detectEncoderMode([126, 123, 121, 125])).toBe('relative-twos');
+    expect(detectEncoderMode([65])).toBe('relative-centred'); // a slow turn's one click
+    expect(detectEncoderMode([127])).toBe('relative-twos');
+  });
+
+  it('reads a fader nudged off either end as Absolute, and a value far from 0 and 64 too (issue 186)', () => {
+    expect(detectEncoderMode([1])).toBe('absolute'); // nudged once from the bottom
+    expect(detectEncoderMode([1, 2])).toBe('absolute');
+    expect(detectEncoderMode([126])).toBe('absolute'); // nudged once from the top
+    expect(detectEncoderMode([126, 125, 124])).toBe('absolute');
+    expect(detectEncoderMode([66, 90])).toBe('absolute');
+    expect(detectEncoderMode([0])).toBe('absolute');
+  });
+
   it("reads a first-layout C16 knob's first turn: Relative when it repeats or varies its step, Absolute when it steps through positions (issue 144)", () => {
     // A quick turn of an endless encoder: its steps vary, all near 0 or near 64.
     expect(detectKnobMode([3, 2, 4])).toBe('relative-twos');
