@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement. Polish for v1
+**Status:** ready-for-human · enhancement. Built (2026-11-02) on night/2026-11-02, for the owner to try
 
 ## Decisions
 
@@ -40,13 +40,37 @@ Claude's calls, open to the owner:
 - 130's freezes, which the scroll waits for
 
 **Acceptance criteria:**
-- [ ] At 375 px, on the Amp card, each fader is in view while it moves and the Timeline while it freezes
-- [ ] At 320, 375, 601 and 860 px, every card's controls and Viewer are in view together where they fit, and in turn where they do not
-- [ ] A scroll by the person stops the Tour's scrolling for that card
-- [ ] With reduced motion, the page jumps rather than glides
-- [ ] From 2 × 2 up, unchanged
-- [ ] A browser test at 375 px checks the Amp card's fader and Timeline each come into view
+- [x] At 375 px, on the Amp card, each fader is in view while it moves and the Timeline while it freezes
+- [x] At 320, 375, 601 and 860 px, every card's controls and Viewer are in view together where they fit, and in turn where they do not
+- [x] A scroll by the person stops the Tour's scrolling for that card
+- [x] With reduced motion, the page jumps rather than glides
+- [ ] From 2 × 2 up, unchanged (where everything fits, as at 601 × 960 and 860 × 1100; on windows about 800 px tall it does not, and the rule above applies: see How it was built, call 1)
+- [x] A browser test at 375 px checks the Amp card's fader and Timeline each come into view
 
 **Out of scope:**
 - The Tutorials (a Tutorial's step already points at its control)
 - What each card says
+
+## How it was built
+
+- **Measured first** (Chromium, reduced motion; room between the header and the card, the span of the control and the card's first Viewer):
+
+  | Card | 320 × 568 | 375 × 812 | 601 × 800 | 601 × 960 | 860 × 800 | 860 × 1100 | 1280 × 800 |
+  |---|---|---|---|---|---|---|---|
+  | Oscillators | fit (in turn once the header comes back on the way up) | fit | in turn | fit | in turn | fit | fit |
+  | Filter | in turn (by 14 px) | fit | fit | fit | fit | fit | fit |
+  | Amp | in turn (faders about 700 px above the Timeline) | in turn | in turn | fit | in turn | fit | in turn |
+  | LFOs | in turn | fit | in turn | fit | in turn | fit | fit |
+
+- **What the page looks at:** each card's clock (`tourAt`) now also says whether the page shows the moving control or the Viewers. The control for its first second whenever it starts from rest (a knob's move, or its leg after a hold; each new Waveform), else the Viewers. On the Amp card that is the fader through its 1 s turn and its 0.8 s return after the freeze (the next fader's turn follows on the same row), and the Timeline from the Note's onset through its freeze. In the control's turn the page brings the control and as many Viewers as fit with it; in the Viewers' turn the Viewers and the control if it fits. So where both fit the two turns are the same scroll and the page holds still.
+- **Smooth, or a jump** with reduced motion, as before; the card stays where it is.
+- **The person's scroll** (the wheel, a finger, the scroll keys, the scroll bar) stops the Tour's scrolling, and its re-scroll when the card changes size, for the rest of that card. A wheel or finger turning a control, or a key a control takes, is not a scroll.
+- **Claude's calls, open to the owner:**
+  1. **The rule goes by fit, at every width,** not by the phone's breakpoint. The brief said everything fits from 2 × 2 up; it does on tall windows (601 × 960, 860 × 1100, where the page now holds still as before), but not on windows about 800 px tall: there the Amp card (2 × 2 and a 1280 × 800 laptop), the LFO card and the Oscillators card (2 × 2) now show the control and the Viewer in turn. That follows decisions 1 and 2 and the criterion naming 601 and 860 px; it changes the Tour on short 2 × 2 and laptop windows, against "from 2 × 2 up, unchanged". Keeping it to phones would be a one-line change.
+  2. **A sweep shows its control for its first second only,** then the Viewers for the rest (the Filter's Cutoff falls over 4 s and comes back over 4 s; the page goes to the Viewers after 1 s and stays for the climb back). Holding the control through the whole sweep would keep the Viewers, where the card's words point, out of view for most of the card.
+  3. **The control's turn starts as the move does,** not before: the smooth scroll takes part of that first second. On the Amp card the fader's turn starts as the freeze ends, so the freeze is always seen whole.
+  4. **The Amp's faders return in view:** after each freeze the page goes back to the faders while the stage is given back, then the next stage turns there; one scroll per stage each way.
+- **Tests:** `src/tutorial/tour.test.ts`: the Amp's faders while they turn and go back, the Viewers through every freeze; a sweep's control first, then the Viewers; every card mostly on its Viewers. `e2e/tour.spec.ts`: at 375 px the Attack fader in view as it turns, the Timeline (and not the fader) through the freeze, then the Decay fader and its freeze; the person's wheel stops the Tour's scrolling; a wheel turning a fader does not; the scrolls glide, and jump with reduced motion; at 860 × 1100 the page holds still through an Amp pass. Red first for each.
+- **Tests run:** `npx tsc`, `npm run lint`, the tutorial unit tests (all passed); the Tour spec and the Tour's tests in the About, Demo, keyboard and Bead specs, in Chromium and WebKit (41 passed each).
+- **The code review** (Standards and Spec), fixed: a wheel or finger turning a control counted as the person's scroll; the faders found by a data attribute in the browser test (now by name); a moving control not on the page could put another before the Viewers; the scroll's arguments passed beside a ref holding them. The Spec's points on the fit rule, the sweep's first second and the faders' return are calls 1 to 4 above.
+- **To try:** on a phone (or a window about 375 px wide), take the Tour (About) to the Amp card: the page shows the Attack fader rising, then glides to the Timeline for the Note and the freeze, back to the faders, the Decay, and so on. Scroll yourself during the card: the page stays where you put it until the next card. Try the Filter and LFO cards on a 320 px phone, and a 2 × 2 or laptop window about 800 px tall, where the Amp card now moves between its faders and the Timeline too.
