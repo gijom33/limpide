@@ -6,6 +6,11 @@ export type EncoderMode = 'absolute' | 'relative-twos' | 'relative-centred';
 
 /** How far a value is from a centre (0 or 64), round the 128 values: 127 is 1 from 0. */
 const distance = (centre: number, v: number) => Math.abs(((v - centre + 192) % 128) - 64);
+/** A Relative step's value: a few either side of its centre, never the centre itself (no movement). */
+const isStep = (centre: number, v: number) => v !== centre && distance(centre, v) <= 15;
+/** Values all steps around 0 or all around 64 are that Relative; anything else is Absolute. */
+const byCentre = (values: number[]): EncoderMode =>
+  values.every((v) => isStep(0, v)) ? 'relative-twos' : values.every((v) => isStep(64, v)) ? 'relative-centred' : 'absolute';
 
 /**
  * Guesses the Encoder Mode from the values one control sent while being learned (issue 186). A Relative encoder
@@ -19,9 +24,7 @@ export function detectEncoderMode(values: number[]): EncoderMode {
   const steps = values.slice(1).map((v, i) => v - values[i]);
   const run = steps.length > 0 && (steps.every((d) => d === 1) || steps.every((d) => d === -1));
   const offAnEnd = values.length === 1 && (values[0] === 1 || values[0] === 126);
-  if (values.length === 0 || run || offAnEnd) return 'absolute';
-  const near = (centre: number) => values.every((v) => v !== centre && distance(centre, v) <= 15);
-  return near(0) ? 'relative-twos' : near(64) ? 'relative-centred' : 'absolute';
+  return values.length === 0 || run || offAnEnd ? 'absolute' : byCentre(values);
 }
 
 /**
@@ -34,9 +37,7 @@ export function detectEncoderMode(values: number[]): EncoderMode {
 export function detectKnobMode(values: number[]): EncoderMode {
   const steps = values.slice(1).map((v, i) => v - values[i]);
   const steady = steps.length > 0 && (steps.every((d) => d > 0) || steps.every((d) => d < 0));
-  if (steady) return 'absolute';
-  const near = (centre: number) => values.every((v) => v !== centre && distance(centre, v) <= 15);
-  return near(0) ? 'relative-twos' : near(64) ? 'relative-centred' : 'absolute';
+  return steady ? 'absolute' : byCentre(values);
 }
 
 /**
@@ -44,7 +45,7 @@ export function detectKnobMode(values: number[]): EncoderMode {
  * near 0 (1 up, 127 down) is two's-complement; anything else, or nothing heard yet, 64-centred.
  */
 export function relativeModeOf(value: number | undefined): Exclude<EncoderMode, 'absolute'> {
-  return value !== undefined && value !== 0 && distance(0, value) <= 15 ? 'relative-twos' : 'relative-centred';
+  return value !== undefined && isStep(0, value) ? 'relative-twos' : 'relative-centred';
 }
 
 /** A Relative value as a signed number of steps. */

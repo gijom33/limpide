@@ -2,7 +2,7 @@ import { Fragment, useEffect, useRef, useState } from 'react';
 import { BEND_RANGES, type BendRange } from '../app/rememberedSettings';
 import { answeredBy, doubledPorts, knownAmong } from '../midi/controller';
 import { describeControl, describeMode, describeTarget } from '../midi/describe';
-import { type Control, type ControllerId, controlKey, type Mapping } from '../midi/mappings';
+import { type Control, type ControllerId, controlKey, type KnobMode, knobModeOf, type Mapping } from '../midi/mappings';
 import { DESTINATIONS_BY_STAGE } from '../modulation/destinations';
 import type { LfoDestination } from '../patch/patch';
 import { CloseIcon, MidiIcon } from './icons';
@@ -40,11 +40,6 @@ interface Props {
 }
 
 /** " · C16 only" for a Mapping of a known Controller's layout, which answers it alone; nothing for any other. */
-type KnobMode = 'absolute' | 'relative';
-/** A knob's Mapping, Absolute or Relative, which the panel can switch; null for a button's, or one still to be turned. */
-const knobMode = (mode: Mapping['mode']): KnobMode | null =>
-  mode === 'absolute' ? 'absolute' : mode === 'relative-twos' || mode === 'relative-centred' ? 'relative' : null;
-
 const onlyFor = (mapping: Mapping) => {
   const known = answeredBy(mapping);
   return known ? ` · ${known.label} only` : null;
@@ -229,7 +224,7 @@ export function MidiPanel({
               <span className="midi-heading">Mappings</span>
               <ul className="midi-mappings" aria-label="Mappings">
                 {mappings.map((m) => {
-                  const mode = knobMode(m.mode);
+                  const mode = knobModeOf(m.mode);
                   return (
                     <li key={controlKey(m.control)}>
                       <span className="mapping-target">{describeTarget(m.target)}</span>

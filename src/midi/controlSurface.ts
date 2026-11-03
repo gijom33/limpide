@@ -4,7 +4,8 @@ import { type ChoiceId, PARAMS, type ParamId } from '../patch/patch';
 import { answeredBy, answers, type KnownController } from './controller';
 import { detectEncoderMode, detectKnobMode, relativeDelta, relativeModeOf } from './encoderMode';
 import {
-  type ActionId, type Control, controlKey, type Mapping, type MappingStore, PITCH_BEND, sameControl, type Target,
+  type ActionId, type Control, controlKey, type KnobMode, knobModeOf, type Mapping, type MappingStore, PITCH_BEND, sameControl,
+  type Target,
 } from './mappings';
 import type { MidiMessage } from './parser';
 
@@ -431,11 +432,13 @@ export function createControlSurface(synth: Synth) {
     },
     /**
      * A knob's Mapping switched by hand between Absolute and Relative, where Learn guessed wrong (issue 186): Relative
-     * takes the kind the knob's last value says. What the knob had gathered towards a step, or Pickup, starts afresh.
+     * takes the kind the knob's last value says. What the knob had gathered towards a step, or Pickup, starts afresh. The
+     * mode it has already changes nothing, so a Relative Mapping keeps its kind.
      */
-    setMode(control: Control, mode: 'absolute' | 'relative') {
+    setMode(control: Control, mode: KnobMode) {
       const mapping = store.find(control);
-      if (!mapping || mapping.mode === 'trigger' || mapping.mode === 'toggle') return;
+      const current = mapping && knobModeOf(mapping.mode);
+      if (!mapping || !current || current === mode) return;
       const key = controlKey(control);
       for (const state of [pickups, clicks, gathered, thirds, detecting]) state.delete(key);
       store.replace({ ...mapping, mode: mode === 'absolute' ? 'absolute' : relativeModeOf(lastValues.get(key)) });

@@ -134,6 +134,11 @@ describe('MIDI Learn', () => {
     expect(store.find(other)?.mode).toBe('relative-twos');
     surface.setMode(other, 'absolute');
     expect(store.find(other)?.mode).toBe('absolute');
+    // Relative chosen again where it is already: its kind stays, whatever was heard last.
+    const third = { kind: 'cc', channel: 1, number: 76 } as const;
+    store.set({ control: third, target: { kind: 'param', id: 'ampAttack' }, mode: 'relative-twos' });
+    surface.setMode(third, 'relative');
+    expect(store.find(third)?.mode).toBe('relative-twos');
     send(cc(75, 25)); // within half a step of the Resonance's 0.2: picked up
     expect(positions.resonance).toBeCloseTo(25 / 127, 9);
   });
