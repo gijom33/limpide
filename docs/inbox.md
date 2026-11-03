@@ -6,8 +6,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
-- 2026-11-02, the owner: "Should we be able to change the phase of OSC 2?" Then: "Yes add to inbox for v2."
-
 ## Dropped
 
 - 2026-10-30, from Claude's brainstorm, Velocity on the Volume ("a harder hit plays louder, not only brighter"): already so. The Amp Envelope's Attack rises to the Note's Velocity (PRD story 9). Claude's call, open to the owner.
@@ -175,3 +173,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-11-02, the owner's idea of Glow on the Spectrum too (triage): to [199](./issues/199-glow-on-the-spectrum.md), polish for v1, ready for an agent: Display's Glow reaches the Spectrums (decided by the owner); one Glow for both, only the live outline glows (Claude's calls, open to the owner).
 2026-11-02, the owner's bug of Bead's tricks hidden under the top rows, found trying 142 (triage): to [200](./issues/200-beads-tricks-above-the-top-rows.md), polish for v1, ready for an agent: reproduce first with every rising trick; the trick fits under the header, which stays on top (Claude's calls, open to the owner).
 2026-11-02, the owner's idea of the Rate reading as without the Synth Geek Layer, found trying 137 (triage): to [202](./issues/202-the-geek-layers-rate-reads-as-without-it.md), polish for v1, ready for an agent: replaces 169's period readout; the period stays in the Rate's tip (Claude's call, open to the owner).
+2026-11-02, the owner's idea of a phase for Osc 2 (triage): to [203](./issues/203-a-phase-for-osc-2.md), v2, not committed (decided by the owner), to grill before anything is built.
