@@ -1,4 +1,4 @@
-import type { LfoWaveform } from '../modulation/lfo';
+import { type BeatGrid, beatsBetween, type LfoWaveform } from '../modulation/lfo';
 import type { Waveform } from '../music/harmonics';
 import { frequencyText } from '../music/pitch';
 import { NOTE_VALUES, noteHz, noteIndex } from '../music/tempo';
@@ -366,6 +366,13 @@ export const rateKnob = (patch: Patch, lfo: LfoNumber): ParamId => {
  * off. With Retrigger on, each Note starts its cycle, which the beat does not (issue 193).
  */
 export const followsTheBeat = (patch: Patch, lfo: LfoNumber) => patch[LFO_KEYS[lfo].sync] === 'on' && patch[LFO_KEYS[lfo].retrigger] === 'free';
+
+/**
+ * The beats marked between two moments (engine seconds) while any of `which` LFOs follows the beat in `patch`, none
+ * otherwise: the LFO plots' and the Envelope Timeline's broken lines, built once (issues 112, 193 and 196).
+ */
+export const markedBeats = (patch: Patch | undefined, which: readonly LfoNumber[], tempo: BeatGrid, from: number, to: number): number[] =>
+  patch && which.some((lfo) => followsTheBeat(patch, lfo)) ? beatsBetween(tempo, from, to) : [];
 
 /** The Parameter a control mapped to `id` turns now: an LFO's Rate turns its note value while Sync is on. */
 export const knobTurns = (patch: Patch, id: ParamId): ParamId => {

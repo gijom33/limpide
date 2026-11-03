@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { SynthEngine } from '../engine/synthEngine';
-import { beatsBetween } from '../modulation/lfo';
-import { followsTheBeat, type LfoNumber } from '../patch/patch';
+import { type LfoNumber, markedBeats } from '../patch/patch';
 import { addToRenderLoop } from '../viewers/renderLoop';
 
 // The plot draws in its own CSS pixels, whatever shape the layout gives it, so full Depth spans its whole height
@@ -73,8 +72,7 @@ export function LfoPlot({ engine, lfo, label, inactive }: { engine: SynthEngine;
       }
       line.current?.setAttribute('d', `M${points.join(' L')}`);
       dot.current?.setAttribute('cy', y(engine.lfoSwingAt(now, lfo)));
-      const patch = engine.patchAt(now);
-      const marks = patch && followsTheBeat(patch, lfo) ? beatsBetween(engine.tempo(), timeAt(0, now), now) : [];
+      const marks = markedBeats(engine.patchAt(now), [lfo], engine.tempo(), timeAt(0, now), now);
       const xOf = (t: number) => (PAD + ((t - timeAt(0, now)) / SPAN) * (w - 2 * PAD)).toFixed(1);
       beats.current?.setAttribute('d', marks.map((t) => `M${xOf(t)} 0 V${h}`).join(' '));
       if (box.current) box.current.dataset.beats = String(marks.length);
