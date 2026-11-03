@@ -1,4 +1,5 @@
 import { type Lfo, type LfoNumber, lfoHz } from '../patch/patch';
+import { HEIGHT, TURNED_PAST, WIDTH } from './mascotCling';
 
 /**
  * A line the mascot can be on (issue 115), in the window's pixels: a section's top edge it stands on, or, with none in
@@ -14,6 +15,8 @@ export interface Perch {
    * on glass, and clings at its side, its span's one spot, following it as the page scrolls.
    */
   cling?: boolean;
+  /** With nowhere clear to be, not even its hover line: out of sight, under the header or the tabs or behind its edge (issue 192). */
+  waiting?: boolean;
 }
 
 /**
@@ -103,23 +106,71 @@ export interface Cover {
   bottom: number;
 }
 
+/** Its drawing, as boxes against its box's left and its foot: what it covers of the page, standing there. */
+export type Drawing = readonly Cover[];
+
+/** Its box alone, as wide and as high as it is drawn over its foot. */
+export const BOX: Drawing = [{ left: 0, right: WIDTH, top: -HEIGHT, bottom: 0 }];
+
+/** Its tail leaves its drop this far across its box, as drawn, and swings down under its foot this far, standing (issue 181). */
+const TAIL_FROM = 18;
+export const SWUNG_BELOW = 20;
 /**
- * The stretches of a line where the drop, its foot on the line, is under none of `covers` (issue 164): its box's lefts,
- * left to right. A cover over its head by a pixel or more takes the spots under it; one whose bottom is at its head, or
- * whose top is on the line, takes none.
+ * Resting, how far its drawing may still reach past its box, in pixels: stretched taller by the Amp's level (a tenth),
+ * breathing as it dozes, leaning with the LFOs (issue 181).
  */
-export function clearAlong(line: { left: number; right: number; top: number }, covers: readonly Cover[], width: number, height: number): Span[] {
-  let spans: Span[] = line.right - width >= line.left ? [{ min: line.left, max: line.right - width }] : [];
+export const LEEWAY = 3;
+
+/**
+ * Its whole drawing on a line (issues 181 and 192): its box, and its Detune twin `twin` pixels off on its side (issue
+ * 174), as high as `above` over its box (a plot it surfs, under it). Out of sight under a cover is out of sight however
+ * it faces, so for covers its tail turned round past its box's left too (strolling right, pointing the way, a funny
+ * turn, issue 179). Over text is where it rests, facing as drawn, the logo's way (179): there, `resting`, its tail
+ * swung down under its foot (the air guitar's strum, a wag) instead, which a cover never meets (a card's top is its
+ * line), and `LEEWAY` all round.
+ */
+export function drawingOf({ twin = 0, resting = false, above = 0 }: { twin?: number; resting?: boolean; above?: number } = {}): Drawing {
+  const [left, right] = [Math.min(0, twin), Math.max(0, twin)];
+  if (!resting) return [{ left: left - TURNED_PAST, right: WIDTH + right, top: -HEIGHT - above, bottom: 0 }];
+  return [
+    { left: left - LEEWAY, right: WIDTH + right + LEEWAY, top: -HEIGHT - above - LEEWAY, bottom: 0 },
+    { left: TAIL_FROM + left - LEEWAY, right: WIDTH + right + LEEWAY, top: 0, bottom: SWUNG_BELOW },
+  ];
+}
+
+/**
+ * The stretches of a line where the drop, its foot on the line, covers none of `covers` with its `drawing` (issues 164
+ * and 192): its box's lefts, left to right, its box on the line. A cover over its head by a pixel or more takes the
+ * spots under it; one whose bottom is at its head, or whose top is on the line (but for a drawing reaching under it),
+ * takes none.
+ */
+export function clearAlong(line: { left: number; right: number; top: number }, covers: readonly Cover[], drawing: Drawing): Span[] {
+  let spans: Span[] = line.right - WIDTH >= line.left ? [{ min: line.left, max: line.right - WIDTH }] : [];
   for (const c of covers) {
-    if (c.top >= line.top || c.bottom <= line.top - height) continue;
-    // The lefts that would put the drop's box over the cover: from its left less the drop's width to its right.
-    const [from, to] = [c.left - width, c.right];
-    spans = spans.flatMap((s) => {
-      if (to <= s.min || from >= s.max) return [s];
-      return [...(from >= s.min ? [{ min: s.min, max: from }] : []), ...(to <= s.max ? [{ min: to, max: s.max }] : [])];
-    });
+    for (const d of drawing) {
+      if (c.top >= line.top + d.bottom || c.bottom <= line.top + d.top) continue;
+      // The lefts that would put this part of its drawing over the cover.
+      const [from, to] = [c.left - d.right, c.right - d.left];
+      spans = spans.flatMap((s) => {
+        if (to <= s.min || from >= s.max) return [s];
+        return [...(from >= s.min ? [{ min: s.min, max: from }] : []), ...(to <= s.max ? [{ min: to, max: s.max }] : [])];
+      });
+    }
   }
   return spans;
+}
+
+/**
+ * Of the docked cards, in the page's order (the later drawn over the earlier, as the Demo's "stopped" card under a
+ * Tutorial's), the one it stands on (issue 192): the topmost with room along its top for its `drawing`, clear of the
+ * cards over it; null for none.
+ */
+export function standingCard<C extends Cover>(cards: readonly C[], drawing: Drawing): C | null {
+  for (let i = cards.length - 1; i >= 0; i--) {
+    const c = cards[i];
+    if (clearAlong({ left: c.left, right: c.right, top: c.top }, cards.slice(i + 1), drawing).length) return c;
+  }
+  return null;
 }
 
 /** Of `spans`, the one nearest to `x` (the first of two as near), or null if there is none. */
@@ -157,6 +208,8 @@ export interface PerchChoice {
   headroom: number;
   /** Where its foot is now. */
   where: number;
+  /** A card, a tip or a panel over its hover line, all along it (issue 192). */
+  hoverCovered?: boolean;
 }
 
 /**
@@ -165,9 +218,10 @@ export interface PerchChoice {
  * room for the drop, or `overlap` less; moving, it takes the edge nearest to where it is. With no edge roomy enough, an
  * edge just under the ceiling, the drop over it by up to `overlap`, rather than hover just off that line (issue 142).
  * An edge a card, a tip or a panel covers is never kept nor taken; with every edge in view covered, it stands on the
- * docked card's top edge until one is clear again (issue 164).
+ * docked card's top edge until one is clear again (issue 164). With its hover line covered too, it waits out of sight,
+ * tucked up under the header or the tabs, rather than hover under the cover (issue 192).
  */
-export function choosePerch({ current, edges, card = null, ceiling, overlap, bottom, height, headroom, where }: PerchChoice): Perch {
+export function choosePerch({ current, edges, card = null, ceiling, overlap, bottom, height, headroom, where, hoverCovered = false }: PerchChoice): Perch {
   const fits = (e: Edge) => e.top - height >= ceiling - overlap;
   const inView = (e: Edge) => e.top <= bottom;
   const takeable = (e: Edge) => e.top <= bottom - TAKEABLE_OVER_BOTTOM;
@@ -180,7 +234,9 @@ export function choosePerch({ current, edges, card = null, ceiling, overlap, bot
   const hidden = edges.some((e) => e.covered && fits(e) && inView(e));
   const onCard = card && !card.covered && hidden && fits(card) && inView(card) ? card : null;
   const chosen = roomy.length ? nearest(roomy) : fitting.length ? nearest(fitting) : onCard;
-  return chosen ? { id: chosen.id, foot: chosen.top, hovering: false } : { id: 'ceiling', foot: ceiling + height + HOVER_UNDER, hovering: true };
+  if (chosen) return { id: chosen.id, foot: chosen.top, hovering: false };
+  const hover = ceiling + height + HOVER_UNDER;
+  return hoverCovered ? { id: 'waiting', foot: hover, hovering: true, waiting: true } : { id: 'ceiling', foot: hover, hovering: true };
 }
 
 /**
@@ -410,6 +466,35 @@ export function createMascotPlace({ from, random = Math.random }: { from?: numbe
       return placed();
     },
   };
+}
+
+/**
+ * Thrown, the sides it bounces off (issue 127): the page's, in the window's pixels, its box's lefts between them. Below
+ * 320 px wide the page is wider than the window, which scrolls sideways (issue 157): its walls are still the page's
+ * (issue 192).
+ */
+export const throwWalls = (page: { left: number; right: number }): Span => ({ min: page.left, max: page.right - WIDTH });
+
+/** A visit to another section, or a ride on an LFO's plot (issue 141), until `until`. */
+export interface Visit {
+  id: string;
+  until: number;
+  ride?: LfoNumber;
+}
+
+/**
+ * Whether a visit ends now: its time up, but while a Tutorial or the Tour is open (issue 151); its section out of view or
+ * covered; or a ride's LFO no longer one to ride (its Depth, Waveform or Rate, the Demo, reduced motion) or its plot out
+ * of view, or it picked up, sent away or a Tutorial or the Tour opening (issues 141, 151). The window turning to the
+ * stacked layout ends either: there it keeps to its column (issue 192).
+ */
+export function visitEnds(
+  visit: Visit,
+  now: { now: number; stacked: boolean; rideable: readonly LfoNumber[]; inView: readonly string[]; held: boolean; leaving: boolean; guided: boolean },
+): boolean {
+  if (now.stacked) return true;
+  if (now.now >= visit.until && !now.guided) return true;
+  return visit.ride ? !now.rideable.includes(visit.ride) || now.held || now.leaving || now.guided : !now.inView.includes(visit.id);
 }
 
 /** The fastest LFO it rides, in Hz (issue 141): slower, its plot draws a swell it can stand on. */

@@ -60,6 +60,52 @@ describe('where Bead clings beside a control (issue 151)', () => {
     expect(clingBeside({ control: high, keepClear: [ring(high)], neighbours: [], card: null, within: { ...window, top: 50 } })).toBeNull();
   });
 
+  it('beside a label, a little lower, just under it (issue 181)', () => {
+    // A name on its left: at its level on the knob's right, its drawing from 568 to 612 across, its top at 326.
+    const leftName: Box = { left: 440, right: 494, top: 320, bottom: 360 };
+    const level = choose({ neighbours: [leftName] })!;
+    expect(level).toMatchObject({ side: 'right', foot: 352 });
+    const label: Box = { left: 570, right: 610, top: 320, bottom: 340 };
+    const lower = choose({ neighbours: [leftName], text: [label] })!;
+    expect(lower).toEqual({ ...level, foot: 340 + 26 });
+    expect(overlaps(drawnAt(lower), label)).toBe(false);
+  });
+
+  it('with nothing clear below, along its line, away from the control; else the other side', () => {
+    const leftName: Box = { left: 440, right: 494, top: 320, bottom: 360 };
+    const tall: Box = { left: 570, right: 590, top: 300, bottom: 420 };
+    const along = choose({ neighbours: [leftName], text: [tall] })!;
+    expect(along.side).toBe('right');
+    expect(along.foot).toBe(352);
+    expect(drawnAt(along).left).toBeGreaterThanOrEqual(590);
+    expect(drawnAt(along).left).toBeLessThan(592);
+    // A label to the right as far as it may go: the other side, though it covers a name there.
+    const wide: Box = { left: 570, right: 700, top: 300, bottom: 420 };
+    expect(choose({ neighbours: [leftName], text: [wide] })!.side).toBe('left');
+  });
+
+  it('of two sides as free, the one it need not move on', () => {
+    const label: Box = { left: 570, right: 610, top: 320, bottom: 340 };
+    expect(choose({ text: [label] })!).toMatchObject({ side: 'left', foot: 352 });
+    // Before the side away from the card.
+    expect(choose({ text: [label], card: { left: 0, right: 400, top: 700, bottom: 880 } })!).toMatchObject({ side: 'left', foot: 352 });
+  });
+
+  it('its Detune twin beside it counts as its drawing (issue 192)', () => {
+    // Off the side it trails away from the control, never over the ring.
+    expect(choose()!.side).toBe('right');
+    expect(choose({ twin: -16 })!.side).toBe('left');
+    expect(choose({ card: { left: 0, right: 400, top: 700, bottom: 880 } })!.side).toBe('right');
+    expect(choose({ card: { left: 0, right: 400, top: 700, bottom: 880 }, twin: 16 })!.side).toBe('right');
+    expect(choose({ card: { left: 700, right: 1100, top: 700, bottom: 880 }, twin: 16 })!.side).toBe('right');
+    // Something to keep clear just past where the twin reaches: neither side.
+    const block: Box = { left: 430, right: 440, top: 300, bottom: 380 };
+    expect(choose({ keepClear: [ring(knob), block] })!.side).toBe('right');
+    expect(choose({ keepClear: [ring(knob), block], twin: -16 })).toBeNull();
+    expect(drawnAt({ side: 'left', turn: 1, left: 448, foot: 352 }, -16)).toMatchObject({ left: 432, right: 492 });
+    expect(drawnAt({ side: 'left', turn: 1, left: 448, foot: 352 }, 16)).toMatchObject({ left: 448, right: 508 });
+  });
+
   it('the target text sits centred above the control, a little over its ring', () => {
     const text = targetBox(knob, '→ 800 Hz');
     expect(text.bottom).toBeLessThanOrEqual(knob.top);

@@ -1,6 +1,6 @@
 import type { Word } from '../input/callingPhrase';
 import type { Waveform } from '../music/harmonics';
-import { TURNED_PAST, WIDTH } from './mascotCling';
+import { TURNED_PAST, TWIN_PX, WIDTH } from './mascotCling';
 import type { Gesture } from './mascotGestures';
 import type { Fling } from './mascotSpray';
 import { JOKES, PICKED_TRICKS, TRICK_MOVES, type Trick } from './mascotTricks';
@@ -174,8 +174,7 @@ const FACING_GAITS: ReadonlySet<Gait | 'slide'> = new Set(['walk', 'hop', 'scoot
 export const WAVE_SECONDS = 3;
 /** Resonance turned past this screams a moment, as long as a Waveform's tail: eyes wide, tail straight. */
 export const SCREAMING = 0.75;
-/** Detune at its most (50 cents) puts its twin this far off, in pixels, wobbling at most this fast (Hz), as they beat. */
-const TWIN_PX = 16;
+/** Detune at its most (50 cents) puts its twin `TWIN_PX` off, wobbling at most this fast (Hz), as they beat. */
 const TWIN_BEAT = 3;
 /** How long it takes to freeze into an ice cube, and to melt out of one. */
 const FREEZE_SECONDS = 0.4;
