@@ -31,7 +31,7 @@ let shared: Timers | undefined;
  * (Safari also an unfocused window's), but not a worker's, nor the messages a worker sends: so they wait in a worker.
  * Where a worker cannot be made, the page's timers.
  */
-export function backgroundTimers(): Timers {
+export function workerTimers(): Timers {
   if (shared) return shared;
   shared = pageTimers;
   if (typeof Worker === 'undefined' || typeof Blob === 'undefined' || typeof URL.createObjectURL !== 'function') return shared;

@@ -100,4 +100,16 @@ describe('the Song', () => {
     expect(calls.length).toBe(before);
     vi.useRealTimers();
   });
+
+  it('while the page is hidden, hands its Notes over two seconds ahead, all known in advance (issue 198)', () => {
+    vi.stubGlobal('document', { visibilityState: 'hidden' });
+    try {
+      const { host, calls } = fakeHost();
+      const stop = startSong(host);
+      expect(Math.max(...ons(calls).map((c) => c.at))).toBeGreaterThan(1.8);
+      stop();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
 });

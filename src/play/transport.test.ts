@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { loopPhrase } from '../demo/phrase';
-import { type Played, type Source, startTransport, type Timers, type TransportHost } from './transport';
+import { BACKGROUND_LOOKAHEAD, type Played, type Source, startTransport, type Timers, type TransportHost } from './transport';
 
 function fakeHost({ keys = true } = {}) {
   let clock = 0;
@@ -144,7 +144,7 @@ describe('the Transport in the background (issue 198)', () => {
       noteOff: () => {},
     };
     const { timers, fire } = handTimers();
-    startTransport(host, loopPhrase(phrase, 120, 0.2), { lookahead: 0.15, tick: 40, timers, hidden: () => true });
+    startTransport(host, loopPhrase(phrase, 120, 0.2), { lookahead: 0.15, tick: 40, background: BACKGROUND_LOOKAHEAD, timers, hidden: () => true });
     for (let s = 0; s < 8; s++) {
       clock += 1;
       fire();
@@ -161,7 +161,7 @@ describe('the Transport in the background (issue 198)', () => {
     const handed: number[] = [];
     const host: TransportHost = { now: () => clock, noteOn: (_n, _v, on) => handed.push(on), release: () => {}, noteOff: () => {} };
     const { timers, fire } = handTimers();
-    startTransport(host, loopPhrase(phrase, 120, 0.2), { lookahead: 0.15, tick: 40, timers, hidden: () => hidden });
+    startTransport(host, loopPhrase(phrase, 120, 0.2), { lookahead: 0.15, tick: 40, background: BACKGROUND_LOOKAHEAD, timers, hidden: () => hidden });
     expect(Math.max(...handed)).toBeGreaterThan(1.5); // hidden: about two seconds ahead
     hidden = false;
     clock = 3;

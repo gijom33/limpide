@@ -16,10 +16,10 @@ const TRACK_STARTS = (() => {
 // Issue 198. A headless browser never slows a page it runs (its pages stay visible, their timers on time), so the test
 // does what a browser does to a page in the background: the page says it is hidden, and its own timers fire only on
 // the next whole second. The engine writes down every Note it is asked to start (the tests' build only).
-test('the Demo, with the page hidden for five seconds, starts every Note of those seconds on time', async ({ page }) => {
+test('the Demo, with the page hidden for five seconds, starts every Note of those seconds on time (issue 198)', async ({ page }) => {
   test.slow();
   await page.goto('/');
-  await page.getByRole('button', { name: 'Demo' }).click();
+  await page.getByRole('button', { name: 'Demo', exact: true }).click();
   await expect.poll(() => page.evaluate(() => window.__limpideNotes?.length ?? 0)).toBeGreaterThan(0);
   const [from, to] = await page.evaluate(async () => {
     const audioNow = () => {

@@ -1,4 +1,4 @@
-import { startTransport, type TransportHost } from '../play/transport';
+import { BACKGROUND_LOOKAHEAD, startTransport, type TransportHost } from '../play/transport';
 import { loopPhrase, type PhraseAtTempo } from './phrase';
 
 /** What the Song needs from the app besides the Transport's clock, Notes and keys: the piano's octave. */
@@ -53,5 +53,5 @@ export function startSong(host: SongHost): () => void {
   const first = host.now() + LEAD_IN;
   host.onTempo?.(SONG.bpm, first);
   const source = loopPhrase(SONG.phrase, SONG.bpm, first, { transpose: () => 12 * (host.octave() - WRITTEN_OCTAVE) });
-  return startTransport(host, source, { lookahead: LOOKAHEAD, tick: TICK_MS });
+  return startTransport(host, source, { lookahead: LOOKAHEAD, tick: TICK_MS, background: BACKGROUND_LOOKAHEAD });
 }

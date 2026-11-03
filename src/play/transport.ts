@@ -1,4 +1,4 @@
-import { backgroundTimers } from './ticker';
+import { workerTimers } from './workerTimers';
 
 /** A Note a player plays: when it starts and ends on the audio clock, in seconds. */
 export interface Played {
@@ -30,8 +30,9 @@ export interface Timers {
 }
 
 /**
- * While the page is hidden, Notes are handed over this far ahead (seconds): a browser may still wake a background page
- * only about once a second, and every Note due before the next wake must already be with the engine (issue 198).
+ * While the page is hidden, a player whose Notes are all known ahead (the Song, Listen) hands them over this far ahead
+ * (seconds): should a browser slow even the worker's ticks to about once a second, every Note due before the next must
+ * already be with the engine (issue 198).
  */
 export const BACKGROUND_LOOKAHEAD = 2;
 
@@ -48,14 +49,20 @@ export type Source = (horizon: number, now: number, play: (notes: readonly Playe
  * look-ahead, its start and then its end, a chord's starts before any of its ends, so the model's history stays in
  * time order. The keys of the Notes sounding are lit. Returns the stop function, which silences everything at once,
  * including what was already handed over.
- * Its ticks come from timers the browser does not slow in the background (issue 198); while the page is hidden the
- * look-ahead widens to `BACKGROUND_LOOKAHEAD`, in case they are slowed all the same, and narrows again in front, so a
- * Stop or a change of Preset is still heard at once.
+ * Its ticks come from timers the browser does not slow in the background (issue 198). While the page is hidden the
+ * look-ahead may widen to `background`, in case they are slowed all the same, and narrows again in front, so a Stop or
+ * a change of Preset is still heard at once.
  */
 export function startTransport(
   host: TransportHost,
   source: Source,
-  { lookahead, tick, timers = backgroundTimers(), hidden = pageHidden }: { lookahead: number; tick: number; timers?: Timers; hidden?: () => boolean },
+  {
+    lookahead,
+    tick,
+    background = lookahead,
+    timers = workerTimers(),
+    hidden = pageHidden,
+  }: { lookahead: number; tick: number; background?: number; timers?: Timers; hidden?: () => boolean },
 ): () => void {
   let cancel: (() => void) | undefined;
   let sounding: Played[] = [];
@@ -88,7 +95,7 @@ export function startTransport(
 
   const step = () => {
     now = host.now();
-    const next = source(now + (hidden() ? BACKGROUND_LOOKAHEAD : lookahead), now, play);
+    const next = source(now + (hidden() ? background : lookahead), now, play);
     if (next === 'end') {
       cancel = undefined;
       host.onNotes?.([]);

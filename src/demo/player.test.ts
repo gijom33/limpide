@@ -151,13 +151,12 @@ describe('the Demo player', () => {
     expect(calls.at(-1)).toBe('keys -');
   });
 
-  it('in the background, hands its Notes over further ahead, but turns its knobs no further ahead than in front (issue 198)', () => {
+  it('in the background, keeps its short look-ahead, so its Notes take the knobs turned before them (issue 198)', () => {
     vi.stubGlobal('document', { visibilityState: 'hidden' });
     try {
       const { host, calls } = fakeHost({ Sweep: 1 });
       startDemo(host, { bpm: 120, parts: [{ preset: 'Sweep', phrase: 'C3:1 C3:1 C3:1 C3:1', moves: [{ id: 'cutoff', from: 200, to: 3200 }] }] });
-      expect(calls).toContain('on 48 @1.800'); // two seconds ahead
-      expect(calls.filter((c) => c.startsWith('cutoff='))).toEqual([]); // its move starts with the part, at 0.3 s: not yet
+      expect(calls.filter((c) => c.startsWith('on'))).toEqual([]); // the first Note, at 0.3 s, is not near yet
     } finally {
       vi.unstubAllGlobals();
     }

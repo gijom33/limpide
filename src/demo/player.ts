@@ -1,6 +1,6 @@
 import { PARAMS, type ParamId, type Patch } from '../patch/patch';
 import { positionToValue, valueToPosition } from '../patch/taper';
-import { type Played, type Source, startTransport, type TransportHost } from '../play/transport';
+import { BACKGROUND_LOOKAHEAD, type Played, type Source, startTransport, type TransportHost } from '../play/transport';
 import { loopPhrase, type PhraseAtTempo, parsePhrase, phraseLength } from './phrase';
 import { type Part, TRACK, type Track } from './track';
 
@@ -126,8 +126,7 @@ export function startDemo(host: DemoHost, track: Track = TRACK, from = 0): () =>
       return 'end';
     }
     for (;;) {
-      // The knobs turn at once, so they keep to the short look-ahead even when the Notes go further (issue 198).
-      turnKnobs(Math.min(horizon, now + LOOKAHEAD));
+      turnKnobs(horizon);
       const boundary = index + 1 < track.parts.length ? starts[index + 1] : Infinity;
       let last = queued;
       while (last < notes.length && notes[last].on < Math.min(horizon, boundary)) last++;
@@ -141,6 +140,8 @@ export function startDemo(host: DemoHost, track: Track = TRACK, from = 0): () =>
   };
 
   enter(from);
+  // Hidden, it keeps its short look-ahead, on the worker's ticks: a knob turns at once, and a Note takes its Envelopes
+  // from the Patch when handed over, so Notes handed further ahead would miss the moves before them (issue 198).
   return startTransport(host, source, { lookahead: LOOKAHEAD, tick: TICK_MS });
 }
 
@@ -152,5 +153,5 @@ export function startPhraseLoop(host: ListenHost, { phrase, bpm }: PhraseAtTempo
   host.showOctave(octaveShowing(parsePhrase(phrase, bpm).map((e) => e.note)));
   const first = host.now() + LEAD_IN;
   host.onTempo?.(bpm, first);
-  return startTransport(host, loopPhrase(phrase, bpm, first, { breath: BREATH }), { lookahead: LOOKAHEAD, tick: TICK_MS });
+  return startTransport(host, loopPhrase(phrase, bpm, first, { breath: BREATH }), { lookahead: LOOKAHEAD, tick: TICK_MS, background: BACKGROUND_LOOKAHEAD });
 }

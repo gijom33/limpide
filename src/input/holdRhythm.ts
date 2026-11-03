@@ -103,5 +103,7 @@ export function startRhythm(host: RhythmHost, { gaps, beat }: Rhythm): () => voi
     }
   };
 
+  // Hidden, it keeps its short look-ahead, on the worker's ticks: its taps follow the Notes held, which a MIDI keyboard
+  // may change while the page is in the background (issue 198).
   return startTransport(host, source, { lookahead: LOOKAHEAD, tick: TICK_MS });
 }
