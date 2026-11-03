@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { memoryStorage } from '../test/memoryStorage';
 import { c16Layout } from './c16';
-import { answeredBy, answers, knownAmong, knownController, pluggedIn, takeLayout } from './controller';
+import { answeredBy, answers, doubledPorts, knownAmong, knownController, pluggedIn, setAside, takeLayout } from './controller';
 import type { Mapping } from './mappings';
 
 // The seam for what a Controller is (issue 149): the rest of the MIDI code asks this module whether an input is a C16
@@ -91,5 +91,26 @@ describe('a known Controller plugged in (ADR-0009, issue 149)', () => {
     expect(pluggedIn([KEYSTEP], [], storage)).toBeNull();
     expect(pluggedIn([KEYSTEP], [firstLayoutHold], storage)).toBeNull();
     expect(storage.data).toEqual({});
+  });
+});
+
+describe('a known Controller on two ports at once (issue 185)', () => {
+  it('is followed on the first connected: the other port’s messages are set aside, and why is told', () => {
+    expect(doubledPorts([C16_BLUETOOTH, KEYSTEP, C16_USB])).toEqual([
+      { known: expect.objectContaining({ id: 'c16' }), followed: C16_BLUETOOTH, aside: [C16_USB] },
+    ]);
+  });
+
+  it('sets nothing aside on one port, or for a Controller Limpide does not know, whatever its names', () => {
+    expect(doubledPorts([C16_USB, KEYSTEP])).toEqual([]);
+    expect(doubledPorts([KEYSTEP, KEYSTEP])).toEqual([]);
+    // Two ports under one name cannot be told apart by it: both are heard, rather than neither.
+    expect(setAside([C16_USB, C16_USB])).toEqual(new Set());
+  });
+
+  it('follows the other port once the first goes', () => {
+    expect(doubledPorts([C16_USB])).toEqual([]);
+    expect(setAside([C16_USB, C16_BLUETOOTH])).toEqual(new Set([C16_BLUETOOTH]));
+    expect(setAside([C16_BLUETOOTH])).toEqual(new Set());
   });
 });

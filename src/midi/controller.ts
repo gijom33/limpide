@@ -35,6 +35,29 @@ export const knownController = (name: string): KnownController | undefined =>
 export const knownAmong = (names: readonly string[]): KnownController[] =>
   Object.values(KNOWN).filter((known) => names.some((name) => known.named(name)));
 
+/**
+ * A known Controller seen on more than one port at once (issue 185): a C16 on USB and on Bluetooth, each message
+ * arriving on both. It is followed on the first connected (`names` in the order they connected); the others are set
+ * aside, so a toggle does not flip on and back off, nor a knob move double.
+ */
+export interface DoubledPorts {
+  known: KnownController;
+  followed: string;
+  aside: string[];
+}
+
+/** The known Controllers connected on more than one port, by the inputs' names in the order they connected. */
+export const doubledPorts = (names: readonly string[]): DoubledPorts[] =>
+  knownAmong(names).flatMap((known) => {
+    const [followed, ...others] = names.filter((name) => known.named(name));
+    // Two ports giving one name cannot be told apart by it: neither is set aside.
+    const aside = others.filter((name) => name !== followed);
+    return aside.length ? [{ known, followed, aside }] : [];
+  });
+
+/** The inputs whose messages are set aside: a known Controller's ports other than the one followed. */
+export const setAside = (names: readonly string[]): Set<string> => new Set(doubledPorts(names).flatMap((d) => d.aside));
+
 /** The known Controller a Mapping answers alone (its layout's); undefined when it answers every Controller. */
 export const answeredBy = (mapping: Mapping): KnownController | undefined => (mapping.device ? KNOWN[mapping.device] : undefined);
 

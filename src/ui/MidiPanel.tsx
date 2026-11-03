@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { BEND_RANGES, type BendRange } from '../app/rememberedSettings';
-import { answeredBy, knownAmong } from '../midi/controller';
+import { answeredBy, doubledPorts, knownAmong } from '../midi/controller';
 import { describeControl, describeMode, describeTarget } from '../midi/describe';
 import { type Control, type ControllerId, controlKey, type Mapping } from '../midi/mappings';
 import { DESTINATIONS_BY_STAGE } from '../modulation/destinations';
@@ -43,6 +43,12 @@ const onlyFor = (mapping: Mapping) => {
   return known ? ` · ${known.label} only` : null;
 };
 
+/** A known Controller connected on two ports at once (issue 185): which one Limpide follows, and why. */
+const twice = (devices: readonly string[]) =>
+  doubledPorts(devices)
+    .map(({ known, followed }) => ` The ${known.label} is connected twice (by USB and Bluetooth, say): Limpide follows ${followed} alone, so each press counts once.`)
+    .join('');
+
 const statusText = (state: MidiState) => {
   const devices = state.kind === 'ready' ? state.devices : [];
   return state.kind === 'unsupported' && state.ios
@@ -52,7 +58,7 @@ const statusText = (state: MidiState) => {
       : state.kind === 'denied'
         ? 'MIDI access was not allowed, so Controllers cannot be heard. Allow MIDI in the browser’s site settings, or open Limpide in Chrome or Edge (some built-in browsers never allow it).'
         : devices.length
-          ? `Connected: ${devices.join(', ')}. Its keys and pads play the synth, with Velocity.`
+          ? `Connected: ${devices.join(', ')}. Its keys and pads play the synth, with Velocity.${twice(devices)}`
           : // A Bluetooth Controller is a port like any other once the system has paired it, as the owner's C16 is (issue 143).
             'No MIDI Controller connected. Plug one in by USB and it is picked up straight away. A Bluetooth one plays once paired in the system’s MIDI settings (Audio MIDI Setup on a Mac), as a TempoPAD C16 does.';
 };

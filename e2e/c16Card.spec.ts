@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { C16_CARD_MARGIN, pdfPages } from '../scripts/c16CardPdf';
 import { c16Layout, describeSharedButtons } from '../src/midi/c16';
-import { midiPanel, openMidi, withFakeController } from './fakeMidi';
+import { cc, midiPanel, openMidi, play, withFakeController } from './fakeMidi';
 
 // The C16 card (issue 145): the layout on one page to print and keep beside the C16, built from the layout's data.
 
@@ -72,4 +72,16 @@ test('another Controller gets no layout, no C16 layout button and no card (issue
   await expect(midiPanel(page).getByRole('button', { name: 'C16 layout', exact: true })).toHaveCount(0);
   await expect(midiPanel(page).getByRole('link', { name: 'Print C16 card' })).toHaveCount(0);
   await expect(midiPanel(page).getByRole('list', { name: 'Mappings' })).toHaveCount(0);
+});
+
+test('a C16 on USB and on Bluetooth at once is heard on the first port alone, and the MIDI panel says so (issue 185)', async ({ page }) => {
+  await withFakeController(page, ['Synido TempoPAD C16', 'Synido TempoPAD C16 BT Bluetooth']);
+  const { control } = c16Layout().find((m) => m.target.kind === 'choice' && m.target.id === 'lfoSync')!;
+  // Bank D's R2, a toggle: one press, which comes on both ports, switches LFO 1's Sync on, not on and back off.
+  await play(page, cc(control.number, 127, control.channel));
+  await expect(page.getByRole('button', { name: 'LFO 1 Sync' }).first()).toHaveAttribute('aria-pressed', 'true');
+  await openMidi(page);
+  await expect(midiPanel(page)).toContainText(
+    'The C16 is connected twice (by USB and Bluetooth, say): Limpide follows Synido TempoPAD C16 alone, so each press counts once.',
+  );
 });

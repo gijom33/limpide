@@ -1,7 +1,7 @@
 import { type MutableRefObject, useEffect, useEffectEvent, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import type { AudioSession } from '../../app/session';
 import type { KeyValueStorage } from '../../app/storage';
-import { knownController, pluggedIn, takeLayout } from '../../midi/controller';
+import { knownController, pluggedIn, setAside, takeLayout } from '../../midi/controller';
 import { createControlSurface, type LearnState } from '../../midi/controlSurface';
 import { describeMessage, targetKey } from '../../midi/describe';
 import { connectMidi, type MidiAccessLike, midiSupport } from '../../midi/inputs';
@@ -219,11 +219,15 @@ export function useMidi(host: Host) {
     if (!midiWanted) return;
     let dispose = () => {};
     let cancelled = false;
+    // A known Controller on two ports at once (a C16 on USB and Bluetooth) is heard on the first connected alone,
+    // so each press counts once (issue 185).
+    let aside = new Set<string>();
     navigator.requestMIDIAccess().then(
       (access) => {
         if (cancelled) return;
         dispose = connectMidi(access as unknown as MidiAccessLike, {
           onMessage: (m, name) => {
+            if (aside.has(name)) return;
             const from = knownController(name);
             if (m.type === 'noteOn') noteFromController();
             if (from && m.type === 'cc' && surface.learnState().phase === 'off') {
@@ -241,6 +245,7 @@ export function useMidi(host: Host) {
           // A clock from any input sets the tempo (issue 136); it is no Controller's control, nor shown as one.
           onClock: (m, name, time) => session.tempo.midiClock(m.type, time, name),
           onDevices: (devices) => {
+            aside = setAside(devices);
             setMidi({ kind: 'ready', devices });
             const mappings = pluggedIn(devices, mappingStore.list(), storage);
             if (mappings) mappingStore.restore(mappings);

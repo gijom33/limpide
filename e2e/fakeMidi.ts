@@ -32,20 +32,24 @@ export const midiPermission = (page: Page, state: PermissionState) =>
 /**
  * Opens Limpide with a stand-in Controller: Web MIDI with one input the test can play. Storage starts empty,
  * once, so reloads keep what the test saved. It is not a C16 (which would get its own layout) unless named one.
+ * Several names are one Controller on several ports at once (a C16 on USB and Bluetooth): each message comes on all.
  */
-export async function withFakeController(page: Page, name = 'Stand-in Controller') {
+export async function withFakeController(page: Page, name: string | readonly string[] = 'Stand-in Controller') {
+  const names = typeof name === 'string' ? [name] : [...name];
   await midiPermission(page, 'granted');
   await startEmptied(page, USUAL); // an empty Library, but not a first visit
-  await page.addInitScript((name) => {
-    const input = Object.assign(new EventTarget(), { id: 'fake', name, state: 'connected' });
-    const access = Object.assign(new EventTarget(), { inputs: new Map([['fake', input]]) });
+  await page.addInitScript((names) => {
+    const inputs = names.map((name, i) => Object.assign(new EventTarget(), { id: `fake${i || ''}`, name, state: 'connected' }));
+    const access = Object.assign(new EventTarget(), { inputs: new Map(inputs.map((input) => [input.id, input])) });
     Object.defineProperty(navigator, 'requestMIDIAccess', { value: () => Promise.resolve(access), configurable: true });
     (window as unknown as MidiWindow).playMidi = (bytes, at) => {
-      const event = Object.assign(new Event('midimessage'), { data: Uint8Array.from(bytes) });
-      if (at !== undefined) Object.defineProperty(event, 'timeStamp', { value: at });
-      input.dispatchEvent(event);
+      for (const input of inputs) {
+        const event = Object.assign(new Event('midimessage'), { data: Uint8Array.from(bytes) });
+        if (at !== undefined) Object.defineProperty(event, 'timeStamp', { value: at });
+        input.dispatchEvent(event);
+      }
     };
-  }, name);
+  }, names);
   await page.goto('/');
-  await expect(midiButton(page)).toContainText('1');
+  await expect(midiButton(page)).toContainText(String(names.length));
 }

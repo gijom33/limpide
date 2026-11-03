@@ -3,18 +3,23 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { renderHook, testSession } from '../../test/renderHook';
 import { useMidi } from './useMidi';
 
-/** A Controller plugged in, as Web MIDI shows it: its messages are sent with `send`. */
-function controller(name: string) {
-  const input = Object.assign(new EventTarget(), { id: name, name, state: 'connected' as const });
-  const access = Object.assign(new EventTarget(), { inputs: { values: () => [input].values() } });
+/**
+ * A Controller plugged in, as Web MIDI shows it, on one port or more (a C16 on USB and Bluetooth at once): its messages
+ * are sent with `send`, on every port, as such a Controller sends them.
+ */
+function controller(names: readonly string[]) {
+  const inputs = names.map((name) => Object.assign(new EventTarget(), { id: name, name, state: 'connected' as const }));
+  const access = Object.assign(new EventTarget(), { inputs: { values: () => inputs.values() } });
   const send = (...bytes: number[]) =>
-    act(async () => void input.dispatchEvent(Object.assign(new Event('midimessage'), { data: Uint8Array.from(bytes) })));
+    act(async () => {
+      for (const input of inputs) input.dispatchEvent(Object.assign(new Event('midimessage'), { data: Uint8Array.from(bytes) }));
+    });
   return { access, send };
 }
 
 /** useMidi with a session that writes down what it plays, and a host that writes down what it is told. */
-async function midi(name = 'Keystation 49', stored: Record<string, string> = {}) {
-  const device = controller(name);
+async function midi(name: string | readonly string[] = 'Keystation 49', stored: Record<string, string> = {}) {
+  const device = controller(typeof name === 'string' ? [name] : name);
   vi.spyOn(navigator, 'requestMIDIAccess').mockResolvedValue(device.access as unknown as MIDIAccess);
   const { session, storage, played } = testSession();
   for (const [key, value] of Object.entries(stored)) storage.setItem(key, value);
@@ -146,6 +151,15 @@ describe('useMidi: a Controller (the 1.16.0 review)', () => {
     });
     await act(async () => void m.access.dispatchEvent(new Event('statechange'))); // the C16 connects again
     expect(at(8)?.target).toEqual({ kind: 'param', id: 'glide' });
+  });
+
+  it('hears a C16 on USB and on Bluetooth at once on the first port alone: a press counts once (issue 185)', async () => {
+    const m = await midi(['Synido TempoPAD C16', 'Synido TempoPAD C16 BT Bluetooth']);
+    unmount = m.unmount;
+    expect(m.result.current.midi).toEqual({ kind: 'ready', devices: ['Synido TempoPAD C16', 'Synido TempoPAD C16 BT Bluetooth'] });
+    await m.send(0xc0, 5);
+    await m.send(0x90, 60, 100);
+    expect(m.told).toEqual(['program 5', 'note']);
   });
 
   it('leaves a keyboard with nothing mapped as it is', async () => {
