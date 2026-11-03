@@ -244,18 +244,20 @@ export function geekReadout(id: ParamId, value: number, patch: Patch, at: GeekAt
 
 /**
  * The widest readouts a Parameter can show in the Synth Geek Layer, to size its column while the layer is on: several
- * where which is widest depends on the font.
+ * where which is widest depends on the font. In their parts, as the readouts are: where the name's place shows the
+ * figure alone, the figure's width is the one it must fit (issue 207).
  */
-export function widestGeekReadout(id: ParamId): string[] {
-  if (id === 'resonance') return ['Q 15.8 ×2'];
-  if (GAINS.includes(id)) return ['−99.9 dB'];
-  if (id === 'osc2Octave' || id === 'osc2Semitone') return ['×0.000'];
+export function widestGeekReadout(id: ParamId): GeekReadout[] {
+  const figures = (...all: string[]) => all.map((figure) => ({ figure }));
+  if (id === 'resonance') return figures('Q 15.8 ×2');
+  if (GAINS.includes(id)) return figures('−99.9 dB');
+  if (id === 'osc2Octave' || id === 'osc2Semitone') return figures('×0.000');
   // Its widest at the top of MIDI's Notes, Osc 2 three octaves up: 2.9 kHz.
-  if (id === 'osc2Detune') return ['9999 Hz beats'];
+  if (id === 'osc2Detune') return [{ figure: '9999 Hz', words: 'beats' }];
   const lfo = LFO_OF.get(id);
-  if (lfo?.knob === 'rate' || lfo?.knob === 'note') return ['0.000 s', '00.0 s'];
-  if (lfo?.knob === 'amount') return ['±12.0 st', '±2.00 oct', '±50.0 ¢', '±40 %', '−99.9 dB'];
-  if (id === 'keyTrack') return ['20.00 kHz'];
+  if (lfo?.knob === 'rate' || lfo?.knob === 'note') return figures('0.000 s', '00.0 s');
+  if (lfo?.knob === 'amount') return figures('±12.0 st', '±2.00 oct', '±50.0 ¢', '±40 %', '−99.9 dB');
+  if (id === 'keyTrack') return figures('20.00 kHz');
   return [];
 }
 

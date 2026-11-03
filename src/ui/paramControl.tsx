@@ -1,5 +1,5 @@
-import { useCallback, useContext, useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from 'react';
-import { geekReadout, geekReadoutParts, readoutText, widestGeekReadout } from '../music/geek';
+import { useCallback, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { type GeekReadout, geekReadout, geekReadoutParts, readoutText, widestGeekReadout } from '../music/geek';
 import { type StepSize, stepParamBy } from '../patch/grid';
 import { formatParam, PARAMS, type ParamId, paramName } from '../patch/patch';
 import { positionToValue, valueToPosition } from '../patch/taper';
@@ -61,10 +61,11 @@ export function useParamControl(id: ParamId, value: number, onChange: (value: nu
   const geek = geekPatch ? geekReadoutParts(id, value, geekPatch, { note: notes.get(), bpm }) : undefined;
   const readout = geek ? readoutText(geek) : formatParam(id, value);
   const geekOn = !!geekPatch; // the context holds null while the layer is off
-  const widest = useMemo(
-    () => [...widestReadouts(id), ...(geekOn ? twins(id).flatMap(widestGeekReadout) : [])],
+  const widest = useMemo<GeekReadout[]>(
+    () => [...widestReadouts(id).map((figure) => ({ figure })), ...(geekOn ? twins(id).flatMap(widestGeekReadout) : [])],
     [id, geekOn],
   );
+  const fit = useValueFit(widest);
   const changing = useChanging(value);
   const [touching, setTouching] = useState(false);
   // The Synth Geek Layer's readout ("Q 1.32") is part of the slider's description, so a screen reader hears it on the
@@ -130,7 +131,7 @@ export function useParamControl(id: ParamId, value: number, onChange: (value: nu
     <>
       {touching && <div className="value-bubble">{readout}</div>}
       <div className="knob-label">{def.label}</div>
-      <div className="knob-value">
+      <div className="knob-value" ref={fit}>
         {geek ? (
           <span data-geek id={geekId} ref={describe}>
             {geek.figure}
@@ -140,14 +141,42 @@ export function useParamControl(id: ParamId, value: number, onChange: (value: nu
           <span>{readout}</span>
         )}
         {widest.map((t) => (
-          <span key={t} className="knob-value-sizer" aria-hidden="true">
-            {t}
+          <span key={readoutText(t)} className="knob-value-sizer" aria-hidden="true">
+            {t.figure}
+            {t.words && <span className="geek-words"> {t.words}</span>}
           </span>
         ))}
       </div>
     </>
   );
   return { def, position, setPosition, nudge, slider, grab, focusByPointer, release, attributes, text };
+}
+
+/**
+ * Where a control's value shows in its name's place (up to 860 px), how much smaller it is drawn so the widest it can
+ * show there fits the control's own column (issue 207): its readout's size times `--value-fit`, at most 1, set on the
+ * readout's box. The box is the column's width there, and its copies of the widest lie out of the flow, measured at the
+ * readout's own size; both are watched, as the window and the fonts change. Elsewhere the copies size the box, and the
+ * fit is 1.
+ */
+function useValueFit(widest: readonly GeekReadout[]) {
+  const [box, setBox] = useState<HTMLElement | null>(null);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: new widest readouts (the layer switched) are new copies to watch
+  useLayoutEffect(() => {
+    if (!box) return;
+    const sizers = [...box.querySelectorAll<HTMLElement>('.knob-value-sizer')];
+    const measure = () => {
+      const room = box.getBoundingClientRect().width;
+      const need = Math.max(0, ...sizers.map((s) => s.getBoundingClientRect().width));
+      const fit = need > room && room > 0 ? Math.floor((room / need) * 1000) / 1000 : 1;
+      box.style.setProperty('--value-fit', String(fit));
+    };
+    measure();
+    const watch = new ResizeObserver(measure);
+    for (const el of [box, ...sizers]) watch.observe(el);
+    return () => watch.disconnect();
+  }, [box, widest]);
+  return setBox;
 }
 
 /**

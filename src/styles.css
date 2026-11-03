@@ -1434,7 +1434,16 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 @media (max-width: 860px) {
   :root { --knob-value-h: 0px; }
   .knob { position: relative; }
-  .knob-value { position: absolute; left: 0; right: 0; bottom: 0; height: var(--knob-label-h); line-height: var(--knob-label-h); font-size: var(--text-sm); color: var(--text); }
+  /* There the value reserves no width (the knob's column is its dial's and name's): its copies of the widest lie out
+     of the flow, so the value is centred on the column itself, and drawn smaller where the widest it can show there
+     is wider than the column (--value-fit, from useValueFit): it stays inside, clear of its neighbours' names, at one
+     size whatever it reads (issue 207). */
+  .knob-value {
+    position: absolute; left: 0; right: 0; bottom: 0; height: var(--knob-label-h); line-height: var(--knob-label-h); font-size: var(--text-sm); color: var(--text);
+    display: flex; justify-content: center;
+  }
+  .knob-value-sizer { position: absolute; }
+  .knob-value > :first-child { font-size: calc(var(--text-sm) * var(--value-fit, 1)); }
   .knob:not([data-changing]) .knob-value > :first-child { visibility: hidden; }
   .knob[data-changing] .knob-label { visibility: hidden; }
   /* A Synth Geek Layer readout keeps its figure alone there, its words too wide for the name's place (issue 167). */

@@ -156,6 +156,39 @@ test('on a phone Osc 2’s numbers show in the name’s place while the control 
   await expect(page.locator('.knob', { has: detune }).locator('.knob-value > span').first()).toHaveText('3.82 Hz', { useInnerText: true });
 });
 
+// Issue 207: in the name's place a value is centred on its own column, clear of the next name ("12.9 HzEnv Amount").
+test('Detune’s beats in its name’s place stay clear of Env Amount’s name, and no knob moves (issue 207)', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('limpide.overlays', JSON.stringify({ geek: true })));
+  const textBox = (el: Element) => {
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const { left, right } = range.getBoundingClientRect();
+    return { left, right };
+  };
+  for (const width of [320, 375, 601, 700, 860]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/');
+    await page.getByRole('tab', { name: 'Osc 2' }).click();
+    const detune = page.getByRole('slider', { name: 'Osc 2 Detune' });
+    const knob = page.locator('.knob', { has: detune });
+    const knobs = page.locator('.knob', { has: page.getByRole('slider', { name: /^Osc 2 / }) });
+    const places = () => knobs.evaluateAll((ks) => ks.map((k) => k.getBoundingClientRect().left));
+    const before = await places();
+    await detune.press('End');
+    // Pointed at, it keeps its value up past the moment a change shows it, however slowly the page runs.
+    await detune.hover();
+    const shown = knob.locator('.knob-value > span').first();
+    await expect(shown).toHaveText('12.9 Hz', { useInnerText: true });
+    const value = await shown.evaluate(textBox);
+    const column = await knob.evaluate((k) => k.getBoundingClientRect());
+    const name = await page.locator('.knob', { has: page.getByRole('slider', { name: 'Osc 2 Env Amount' }) }).locator('.knob-label').evaluate(textBox);
+    expect(name.left - value.right, `${width} px`).toBeGreaterThanOrEqual(6);
+    expect(value.left, `${width} px`).toBeGreaterThanOrEqual(column.left);
+    expect(value.right, `${width} px`).toBeLessThanOrEqual(column.right);
+    expect(await places()).toEqual(before);
+  }
+});
+
 // Issue 169: the LFOs' periods and swings, and the Cutoff at the Note under Key Track.
 const lfo = (page: Page, n: 1 | 2 = 1) => page.getByRole('group', { name: `LFO ${n}`, exact: true });
 const lfoValue = (page: Page, name: string) => page.locator('.knob', { has: page.getByRole('slider', { name, exact: true }) }).locator('.knob-value > span').first();

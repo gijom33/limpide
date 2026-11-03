@@ -78,6 +78,10 @@ describe('the Synth Geek Layer: Osc 2’s tuning (issue 167)', () => {
   it('sizes each for its widest', () => {
     for (const id of ['osc2Octave', 'osc2Semitone', 'osc2Detune'] as const) expect(widestGeekReadout(id)).not.toHaveLength(0);
   });
+
+  it('gives Detune’s widest in its parts, the figure the name’s place shows apart from its words (issue 207)', () => {
+    expect(widestGeekReadout('osc2Detune')).toEqual([{ figure: '9999 Hz', words: 'beats' }]);
+  });
 });
 
 describe('the Synth Geek Layer: the LFOs (issue 169)', () => {
