@@ -1,5 +1,5 @@
-import { type RefObject, useEffect, useRef } from 'react';
-import { PARAMS } from '../patch/patch';
+import { type RefObject, useEffect, useRef, useState } from 'react';
+import { formatParam, PARAMS, type ParamId } from '../patch/patch';
 import { inDisplay, type Step, type Tutorial, targetText } from '../tutorial/tutorial';
 import { endLine, FROM_INIT } from '../tutorial/tutorials';
 import { CardShell } from './CardShell';
@@ -16,22 +16,39 @@ interface Props {
   done: readonly boolean[];
   /** At the last card: the controls that differ from the Preset, by name. */
   differs: readonly string[];
+  /** The Tutorial after this one, which the last card's way forward starts (issue 190, decision 1); none after the last. */
+  next?: Tutorial;
   listening: boolean;
   onListen(): void;
   onBack(): void;
   onNext(): void;
   onDoIt(): void;
   onMatch(): void;
+  onStartNext(): void;
   onQuit(): void;
 }
+
+/** What Next before the Step is made says, the first time in a Tutorial (issue 190, decision 2). */
+export const NEXT_HINT = 'Turn the ringed control first, or press Do it for me.';
 
 /**
  * The control a Step asks for: its Parameter's or choice's, or the Display option's (inside the Display panel). A note
  * value has no knob of its own: the Rate's turns it, Learn knowing it as the Rate's (issue 137).
  */
 function selectorOf(step: Step): string {
-  if (step.kind === 'display') return `[data-overlay="${step.overlay}"]`;
-  return `[data-learn="${step.kind}:${step.kind === 'param' ? (PARAMS[step.id].knob ?? step.id) : step.id}"]`;
+  return controlsOf(step)[0].selector;
+}
+const knobOf = (id: ParamId) => `[data-learn="param:${PARAMS[id].knob ?? id}"]`;
+
+/**
+ * Each control a Step asks for, the first leading, with the target it shows above it ("→ 800 Hz"): one, or a Step's
+ * several faders (issue 190, decision 3), whose targets go without the arrow so that four side by side stay apart.
+ */
+function controlsOf(step: Step): { selector: string; target?: string }[] {
+  if (step.kind === 'params') return step.faders.map(({ id, to }) => ({ selector: knobOf(id), target: formatParam(id, to) }));
+  if (step.kind === 'display') return [{ selector: `[data-overlay="${step.overlay}"]` }];
+  if (step.kind === 'action') return [{ selector: `[data-learn="action:${step.id}"]` }];
+  return [{ selector: step.kind === 'param' ? knobOf(step.id) : `[data-learn="choice:${step.id}"]`, target: `→ ${targetText(step)}` }];
 }
 /** The Display button, which stands for an option in its panel while the panel is shut. */
 const DISPLAY_BUTTON = 'button[aria-label="Display"]';
@@ -121,24 +138,29 @@ function useRing(step: Step | undefined, made: boolean, card: RefObject<HTMLElem
     };
     const mark = () => {
       clear();
-      if (!live) return null;
-      let element = document.querySelector(selectorOf(step));
-      // Until the Display option is on (or the Snapshot taken), the Display button stands for it while its panel is shut;
-      // once made, nothing.
-      if (inDisplay(step) && !element?.checkVisibility()) element = made ? null : document.querySelector(DISPLAY_BUTTON);
-      if (!element) return null;
-      element.setAttribute('data-tutorial', '');
-      if (step.kind === 'param' || step.kind === 'choice') element.setAttribute('data-tutorial-target', `→ ${targetText(step)}`);
-      marked.push(element);
-      const section = element.closest('section[aria-label]')?.getAttribute('aria-label');
+      if (!live) return [];
+      const elements: Element[] = [];
+      for (const { selector, target } of controlsOf(step)) {
+        let element = document.querySelector(selector);
+        // Until the Display option is on (or the Snapshot taken), the Display button stands for it while its panel is
+        // shut; once made, nothing.
+        if (inDisplay(step) && !element?.checkVisibility()) element = made ? null : document.querySelector(DISPLAY_BUTTON);
+        if (!element) continue;
+        element.setAttribute('data-tutorial', '');
+        if (target) element.setAttribute('data-tutorial-target', target);
+        marked.push(element);
+        elements.push(element);
+      }
+      const section = elements[0]?.closest('section[aria-label]')?.getAttribute('aria-label');
       const strip = section && document.querySelector(`.section-strip [data-section="${section}"]`);
       if (strip) {
         strip.setAttribute('data-tutorial', '');
         marked.push(strip);
       }
-      return element;
+      return elements;
     };
-    const element = mark();
+    const elements = mark();
+    const element = elements[0] ?? null;
     const viewer = step.viewer ? document.querySelector(`[aria-label="${step.viewer}"]`) : null;
     viewer?.setAttribute('data-tutorial-viewer', '');
     if (element) reveal(element);
@@ -148,7 +170,7 @@ function useRing(step: Step | undefined, made: boolean, card: RefObject<HTMLElem
       // The Display button, standing for an option in its panel, is in the header: the header comes back for it.
       if (element?.closest('header')) element.scrollIntoView({ block: 'nearest', behavior });
       else if (card.current) {
-        const both = [element, viewer].filter((e) => e !== null);
+        const both = [...elements, viewer].filter((e) => e !== null);
         bringClear(card.current, made ? both.reverse() : both, behavior);
       }
     }, 50);
@@ -175,7 +197,7 @@ function useRing(step: Step | undefined, made: boolean, card: RefObject<HTMLElem
  * "Do it for me", Next, Listen and Quit. Picked, it takes the focus on its Start; the Steps never take it from the
  * control being turned. Each new text is announced.
  */
-export function TutorialCard({ tutorial, index, done, differs, listening, onListen, onBack, onNext, onDoIt, onMatch, onQuit }: Props) {
+export function TutorialCard({ tutorial, index, done, differs, next, listening, onListen, onBack, onNext, onDoIt, onMatch, onStartNext, onQuit }: Props) {
   const steps = tutorial.steps;
   const step = index >= 0 ? steps[index] : undefined;
   const made = step ? done[index] : false;
@@ -184,11 +206,26 @@ export function TutorialCard({ tutorial, index, done, differs, listening, onList
   const goToControl = useWayToControl(step, card);
 
   // Until the Step is made, Next says it is unavailable but keeps the focus, so pressing it leaves the keyboard there.
+  // Pressed then, the first time in the Tutorial, it says why under the words, until the Step is made (issue 190).
   const waiting = !!step && !made;
-  const primary = index < steps.length && (
-    <button type="button" className="tool tool-primary" aria-disabled={waiting || undefined} onClick={() => !waiting && onNext()}>
+  const [hint, setHint] = useState<{ tutorial: Tutorial; index: number } | null>(null);
+  const hinting = waiting && hint?.tutorial === tutorial && hint.index === index;
+  const pressNext = () => {
+    if (!waiting) onNext();
+    else if (hint?.tutorial !== tutorial) setHint({ tutorial, index });
+  };
+  const atEnd = index >= steps.length;
+  const primary = !atEnd ? (
+    <button type="button" className="tool tool-primary" aria-disabled={waiting || undefined} onClick={pressNext}>
       {index < 0 ? 'Start' : index === steps.length - 1 ? 'Finish' : 'Next'}
     </button>
+  ) : (
+    // The last card's way forward is the next Tutorial, on every width (issue 190, decision 1); after the last, Done.
+    next && (
+      <button type="button" className="tool tool-primary" onClick={onStartNext}>
+        Next: {next.preset}
+      </button>
+    )
   );
   const progress = step ? `Step ${index + 1} of ${steps.length}` : index < 0 ? `${steps.length} steps` : 'Done';
   const actions = {
@@ -215,21 +252,17 @@ export function TutorialCard({ tutorial, index, done, differs, listening, onList
             Do it for me
           </button>
         )}
-      </>
-    ),
-    after: (
-      <>
-        {index >= steps.length && differs.length > 0 && (
+        {atEnd && differs.length > 0 && (
           <button type="button" className="tool" onClick={onMatch}>
             Match the Preset
           </button>
         )}
-        {index >= steps.length && (
-          <button type="button" className="tool tool-primary" onClick={onQuit}>
-            Done
-          </button>
-        )}
       </>
+    ),
+    after: atEnd && (
+      <button type="button" className={next ? 'tool' : 'tool tool-primary'} onClick={onQuit}>
+        Done
+      </button>
     ),
   };
   return (
@@ -244,6 +277,12 @@ export function TutorialCard({ tutorial, index, done, differs, listening, onList
       closeLabel="Quit the tutorial"
       onClose={onQuit}
       primary={primary}
+      under={
+        // Always on the page, so a screen reader hears it come; empty, it takes no room.
+        <p className="card-hint" aria-live="polite">
+          {hinting && NEXT_HINT}
+        </p>
+      }
       actions={actions}
     >
       {index < 0 && (

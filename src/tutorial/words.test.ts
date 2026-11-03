@@ -55,6 +55,8 @@ const WORDS: { word: string; use: RegExp; gloss: RegExp }[] = [
   { word: 'tempo', use: /\btempo\b/i, gloss: /beats? (per|a) minute|BPM/ },
   { word: 'BPM', use: /\bBPM\b/, gloss: /beats per minute|beats a minute/ },
   { word: 'triplet', use: /\btriplet\b|\d T\b/, gloss: /three .*two/ },
+  // Issue 190 (review 16, finding 2): the small numbers along a Spectrum's top, the places each Harmonic belongs.
+  { word: 'a Spectrum’s numbered places', use: /\bplaces?\b|\bnumbers along\b/, gloss: /numbers along .*where each Harmonic belongs/ },
 ];
 
 // A Tutorial's name is a name, not a use of its words ("FM Ladder", "Ring Bell").
@@ -100,8 +102,9 @@ describe('each Tutorial’s first and last card (issue 129, decisions 6 and 8)',
     }
   });
 
-  it('ends naming the next Tutorial and what it teaches; the last says it was the last', () => {
-    expect(endLine(TUTORIALS[0])).toBe(`Next: Acid, ${TUTORIALS[1].teaches}. It is under Tutorial, at the top.`);
+  it('ends naming the next Tutorial and what it teaches; the last says it was the last (issue 190)', () => {
+    // Its button starts it (issue 190, decision 1), so the line names it without pointing to the menu.
+    expect(endLine(TUTORIALS[0])).toBe(`Next comes Acid: ${TUTORIALS[1].teaches}.`);
     expect(endLine(TUTORIALS[TUTORIALS.length - 1])).toMatch(/^That was the last Tutorial/);
   });
 });

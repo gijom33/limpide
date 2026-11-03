@@ -1661,17 +1661,20 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   display: inline-block; margin-right: 4px; padding: 0 8px; font-size: var(--text-sm); font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--bg); background: var(--text); border-radius: 999px;
 }
+/* What Next before the Step is made says (issue 190); empty, it is hidden as .visually-hidden is, taking no room. */
+.card-hint { margin: 0; font-size: var(--card-small); font-weight: 600; line-height: 1.45; }
 .card-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
 .card-actions .tool { min-height: 36px; padding: 0 var(--space-3); gap: 6px; }
 .card-actions .tool[aria-disabled='true'] { opacity: 0.45; cursor: default; }
 .card-spacer { flex: 1 1 auto; }
-/* The Step's control: a steady ring in the accent colour, and its target beside it. Its scroll margins are the room
+/* The Step's control: a steady ring in the accent colour, and its target beside it, narrow enough that four faders'
+   side by side stay apart, down to the 2 × 2 layout (issue 190). Its scroll margins are the room
    they take round it, kept in view with it (docked.ts brings it clear of the header and the card). */
 [data-tutorial] { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: var(--radius-control); scroll-margin: 28px 0 6px; }
 [data-tutorial-target] { position: relative; }
 [data-tutorial-target]::after {
   content: attr(data-tutorial-target); position: absolute; z-index: 5; left: 50%; bottom: calc(100% + 6px); transform: translateX(-50%);
-  padding: 1px 6px; white-space: nowrap; font-size: var(--text-sm); font-weight: 600; color: var(--bg); background: var(--accent); border-radius: 4px; pointer-events: none;
+  padding: 1px 4px; white-space: nowrap; font-size: var(--text-sm); font-weight: 600; color: var(--bg); background: var(--accent); border-radius: 4px; pointer-events: none;
 }
 .section-strip button[data-tutorial] { outline-offset: -3px; }
 /* The Patches panel's Tutorials, and the cap beside a Preset that has one. */
@@ -1750,7 +1753,7 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 }
 
 /* Read by screen readers, not shown (a status said aloud, issue 51). */
-.visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.visually-hidden, .card-hint:empty { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 
 /* The C16 card (issue 145): one landscape sheet to print, light whatever the theme, fitting A4 and Letter alike
    (259 × 186 mm inside 10 mm margins). On screen, the same sheet on grey, with a Print button. */

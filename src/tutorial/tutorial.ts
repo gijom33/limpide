@@ -20,13 +20,21 @@ interface Words {
   viewer?: ViewerName;
 }
 
+/** A knob or fader and its target. */
+export interface ParamTarget {
+  id: ParamId;
+  to: number;
+}
+
 /**
  * One change in a Tutorial: a Parameter to a target, a choice to an option, a Display option switched on (which
- * shows the sound differently without changing it), or an Action pressed (a Snapshot, to compare against).
+ * shows the sound differently without changing it), or an Action pressed (a Snapshot, to compare against). Or several
+ * faders at once, in the order they stand: a drill met in an earlier Tutorial, in one Step (issue 190, decision 3).
  */
 export type Step = Words &
   (
-    | { kind: 'param'; id: ParamId; to: number }
+    | ({ kind: 'param' } & ParamTarget)
+    | { kind: 'params'; faders: ParamTarget[] }
     | { [C in ChoiceId]: { kind: 'choice'; id: C; to: Patch[C] } }[ChoiceId]
     | { kind: 'display'; overlay: Overlay }
     | { kind: 'action'; id: 'snapshot' }
@@ -54,15 +62,21 @@ export interface Tutorial extends PhraseAtTempo {
 /** How close a knob or fader must come to its target, as a share of its travel; a stepped one, onto it. */
 export const TOLERANCE = 0.05;
 
+/** Whether a knob or fader is within reach of its target. */
+function withinReach(patch: Patch, { id, to }: ParamTarget): boolean {
+  const def = PARAMS[id];
+  // A stepped knob (a note value, a Semitone) on its step: its neighbours can sit within the tolerance (issue 137).
+  if (def.step) return Math.abs(patch[id] - to) < def.step / 2;
+  return Math.abs(valueToPosition(def, patch[id]) - valueToPosition(def, to)) <= TOLERANCE + 1e-9;
+}
+
 /** Whether the Patch (and the Display options) are where the Step asks. An Action is made by its press, which only the page sees. */
 export function reached(step: Step, patch: Patch, overlays: Overlays): boolean {
   switch (step.kind) {
-    case 'param': {
-      const def = PARAMS[step.id];
-      // A stepped knob (a note value, a Semitone) on its step: its neighbours can sit within the tolerance (issue 137).
-      if (def.step) return Math.abs(patch[step.id] - step.to) < def.step / 2;
-      return Math.abs(valueToPosition(def, patch[step.id]) - valueToPosition(def, step.to)) <= TOLERANCE + 1e-9;
-    }
+    case 'param':
+      return withinReach(patch, step);
+    case 'params':
+      return step.faders.every((target) => withinReach(patch, target));
     case 'choice':
       return patch[step.id] === step.to;
     case 'display':
@@ -79,10 +93,14 @@ export interface Scene {
   snapshot: number | null;
 }
 
-/** What a Step's control holds: a knob's or fader's value, the Snapshot's number for an Action, nothing for the rest. */
-export type Held = number | null | undefined;
+/**
+ * What a Step's control holds: a knob's or fader's value (each one's, for several), the Snapshot's number for an Action,
+ * nothing for the rest.
+ */
+export type Held = number | readonly number[] | null | undefined;
 export function held(step: Step | undefined, { patch, snapshot }: Scene): Held {
   if (step?.kind === 'param') return patch[step.id];
+  if (step?.kind === 'params') return step.faders.map(({ id }) => patch[id]);
   if (step?.kind === 'action') return snapshot;
   return undefined;
 }
@@ -95,11 +113,14 @@ export function held(step: Step | undefined, { patch, snapshot }: Scene): Held {
 export function isMade(step: Step, scene: Scene, since: Held): boolean {
   if (step.kind === 'action') return scene.snapshot !== null && scene.snapshot !== since;
   if (!reached(step, scene.patch, scene.overlays)) return false;
+  // Several faders: any one touched since, or all on their targets.
+  if (step.kind === 'params') return onTarget(step, scene.patch) || step.faders.some(({ id }, i) => !Array.isArray(since) || scene.patch[id] !== since[i]);
   return step.kind !== 'param' || scene.patch[step.id] !== since || scene.patch[step.id] === step.to;
 }
 
 /** Whether the Patch holds the Step's exact target, as a made Step's knob is snapped to; a Display or Action Step sets none. */
 export function onTarget(step: Step, patch: Patch): boolean {
+  if (step.kind === 'params') return step.faders.every(({ id, to }) => patch[id] === to);
   return step.kind === 'param' || step.kind === 'choice' ? patch[step.id] === step.to : true;
 }
 
@@ -131,6 +152,7 @@ export function readyFor(step: Step, patch: Patch): Patch {
 /** The Patch with the Step's change made exactly, a Rate's knob turning it (`readyFor`). */
 export function applyStep(patch: Patch, step: Step): Patch {
   if (step.kind === 'param') return setParam(readyFor(step, patch), step.id, step.to);
+  if (step.kind === 'params') return step.faders.reduce((p, { id, to }) => setParam(p, id, to), patch);
   if (step.kind === 'choice') return { ...patch, [step.id]: step.to };
   return patch;
 }
@@ -158,6 +180,7 @@ const CHOICE_NAMES: Record<string, string> = {
 /** The target as its control shows it: "800 Hz", "24 dB", "Square", or "On" for a switch or a Display option ("Press" for an Action). */
 export function targetText(step: Step): string {
   if (step.kind === 'param') return formatParam(step.id, step.to);
+  if (step.kind === 'params') return step.faders.map(({ id, to }) => formatParam(id, to)).join(', ');
   if (step.kind === 'display') return 'On';
   if (step.kind === 'action') return 'Press';
   if (step.id === 'filterSlope') return `${step.to} dB`;

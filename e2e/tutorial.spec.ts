@@ -98,7 +98,7 @@ test('"Do it for me" to the end: the sound is the Preset, named after it, and th
   await doEverything(page);
   await expect(progress(page)).toHaveText('Done');
   await expect(card(page)).toContainText('This is the Bass Preset, built by you.');
-  await expect(card(page)).toContainText('Next: Acid, a talking bass'); // the end card points on (issue 129)
+  await expect(card(page)).toContainText('Next comes Acid: a talking bass'); // the end card points on (issue 129)
   await expect(patchName(page)).toHaveAttribute('aria-label', 'Patch: Bass');
   await expect(page.locator('.patch-changed')).toHaveCount(0);
   await action(page, 'Done').click();
@@ -270,6 +270,75 @@ test('Wobble’s 3 Hz Step, with Sync switched on early, switches it off so the 
   await rate.focus();
   await page.keyboard.press('ArrowUp');
   await expect(rate).toHaveAttribute('aria-valuetext', /^[\d.]+ Hz$/); // the Hz, not a note value
+});
+
+// Issue 190 (review 16, finding 1): the end card named the next Tutorial with no way there, and on a phone that line was
+// folded away.
+for (const [layout, width, height] of [['laptop', 1440, 900], ['phone', 393, 659]] as const) {
+  test(`on a ${layout}, an end card's "Next: …" starts the next Tutorial; the last has only Done (issue 190)`, async ({ page, browserName }) => {
+    // Safari leaves the focus off a clicked button, so Finish gone hands it on in Chromium alone (issue 104's test goes by keys).
+    const clickFocuses = browserName !== 'webkit';
+    await page.setViewportSize({ width, height });
+    await open(page, 'FM Ladder'); // six Steps
+    await action(page, 'Start').click();
+    await doEverything(page);
+    await expect(progress(page)).toHaveText('Done');
+    const next = action(page, 'Next: Ring Bell');
+    await expect(next).toBeInViewport({ ratio: 1 });
+    await expect(next).toHaveClass(/tool-primary/);
+    if (clickFocuses) await expect(next).toBeFocused(); // the way forward, as Start and Next are
+    await expect(action(page, 'Done')).toBeVisible();
+    await next.click();
+    await expect(card(page)).toHaveAccessibleName('Tutorial: Ring Bell');
+    await expect(progress(page)).toHaveText('11 steps');
+    await expect(patchName(page)).toHaveAttribute('aria-label', 'Patch: Init');
+    await expect(action(page, 'Start')).toBeFocused();
+
+    await open(page, 'Deep Breath');
+    await action(page, 'Start').click();
+    await doEverything(page);
+    await expect(card(page)).toContainText('That was the last Tutorial.');
+    await expect(card(page).getByRole('button', { name: /^Next/ })).toHaveCount(0);
+    if (clickFocuses) await expect(action(page, 'Done')).toBeFocused();
+  });
+}
+
+// Issue 190 (review 16, finding 4): Next before the Step was made only dimmed, with no word why.
+test('Next before a Step is made says what to do, the first time only (issue 190)', async ({ page }) => {
+  await open(page, 'Bass');
+  await action(page, 'Start').click();
+  const hint = card(page).getByText('Turn the ringed control first, or press Do it for me.');
+  await expect(hint).toHaveCount(0);
+  // Said unavailable, it still takes a press (Playwright waits on aria-disabled: forced).
+  await action(page, 'Next').click({ force: true });
+  await expect(hint).toBeVisible();
+  await expect(progress(page)).toHaveText('Step 1 of 15');
+  await doIt(page);
+  await expect(hint).toHaveCount(0);
+  await action(page, 'Next').click();
+  await expect(progress(page)).toHaveText('Step 2 of 15');
+  await action(page, 'Next').click({ force: true });
+  await page.waitForTimeout(300);
+  await expect(hint).toHaveCount(0); // once is enough
+  await expect(progress(page)).toHaveText('Step 2 of 15');
+});
+
+// Issue 190, decision 3: from Acid on, the Filter Envelope's four faders in one Step.
+test('Acid’s Envelope Step rings its four faders, each with its target, and counts once all four are there (issue 190)', async ({ page }) => {
+  await open(page, 'Acid');
+  await action(page, 'Start').click();
+  for (let i = 0; i < 5; i++) await makeStep(page);
+  await expect(progress(page)).toHaveText('Step 6 of 12');
+  await expect(ringed(page)).toHaveCount(4);
+  const fader = (id: string) => page.locator(`[data-learn="param:${id}"]`);
+  // Four side by side, without the arrow, each clear of the next (measured at 375, 393, 690 and 1440 px).
+  for (const [id, target] of [['filterAttack', '1.00 ms'], ['filterDecay', '150 ms'], ['filterSustain', '5 %'], ['filterRelease', '100 ms']]) {
+    await expect(fader(id)).toHaveAttribute('data-tutorial-target', target);
+  }
+  await action(page, 'Do it for me').click();
+  await expect(card(page)).toContainText('a single, snappy “yow”');
+  await expect(ringed(page)).toHaveCount(4);
+  await expect(fader('filterSustain').getByRole('slider')).toHaveAttribute('aria-valuetext', '5 %');
 });
 
 test('the Demo ends a Tutorial (it loads its own Presets)', async ({ page }) => {
@@ -485,7 +554,7 @@ test('a Snapshot Step rings the Display button, then Snapshot, and counts a new 
   await action(page, 'Start').click();
   await action(page, 'Do it for me').click();
   await action(page, 'Next').click();
-  await expect(progress(page)).toHaveText('Step 2 of 15');
+  await expect(progress(page)).toHaveText('Step 2 of 12');
   await expect(ringed(page)).toHaveAttribute('aria-label', 'Display');
   await page.getByRole('button', { name: 'Display' }).click();
   const snapshot = page.getByRole('button', { name: 'Snapshot', exact: true });

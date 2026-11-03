@@ -143,25 +143,11 @@ export const TUTORIALS: Tutorial[] = [
         note: 'Each Note now sweeps the peak up and back down: a “yow” on every Note. Watch it run along the Filter Spectrum.',
         viewer: 'Filter Spectrum',
       },
+      // Issue 190, decision 3: the Envelope's four faders in one Step, the drill met in Bass.
       {
-        kind: 'param', id: 'filterAttack', to: 0.001,
-        say: 'Its Attack is how fast it opens. Pull it all the way down.',
-        note: 'The sweep starts at the top, straight away: a sharp start to each Note.',
-      },
-      {
-        kind: 'param', id: 'filterDecay', to: 0.15,
-        say: 'Its Decay is how fast it closes back down. Set it to about 150 ms, thousandths of a second.',
-        note: 'The peak drops back quickly: short, snappy Notes.',
-      },
-      {
-        kind: 'param', id: 'filterSustain', to: 0.05,
-        say: 'Its Sustain is where it settles while you hold a Note. Lower it almost to nothing, about 5 %.',
-        note: 'Held Notes settle with the Filter nearly shut: each one is a single “yow”.',
-      },
-      {
-        kind: 'param', id: 'filterRelease', to: 0.1,
-        say: 'Its Release is how long it takes to close once you let go. Shorten it to about 100 ms.',
-        note: 'Letting go closes the Filter quickly too.',
+        kind: 'params', faders: [{ id: 'filterAttack', to: 0.001 }, { id: 'filterDecay', to: 0.15 }, { id: 'filterSustain', to: 0.05 }, { id: 'filterRelease', to: 0.1 }],
+        say: 'Now its Envelope’s four faders, in one Step. Attack, how fast it opens: all the way down. Decay, how fast it closes back: about 150 ms, thousandths of a second. Sustain, where it settles while you hold a Note: about 5 %. Release, once you let go: about 100 ms.',
+        note: 'A sharp start, a quick drop, the Filter nearly shut while held: each Note is a single, snappy “yow”, and letting go closes it quickly too.',
       },
       {
         kind: 'param', id: 'velocityCutoff', to: 0.5,
@@ -260,25 +246,11 @@ export const TUTORIALS: Tutorial[] = [
         note: 'Each Note now flashes bright, then darkens: on the Filter Spectrum the lines flash up and vanish.',
         viewer: 'Filter Spectrum',
       },
+      // Issue 190, decision 3: the Envelope's four faders in one Step, the drill met in Bass.
       {
-        kind: 'param', id: 'filterAttack', to: 0.001,
-        say: 'Pull the Filter Envelope’s Attack all the way down.',
-        note: 'The flash comes at the very start of the Note.',
-      },
-      {
-        kind: 'param', id: 'filterDecay', to: 0.22,
-        say: 'Set its Decay, how fast it closes back, to about 220 ms.',
-        note: 'The brightness fades faster than the loudness: the Note darkens as it dies, like a real string.',
-      },
-      {
-        kind: 'param', id: 'filterSustain', to: 0,
-        say: 'Pull its Sustain all the way down.',
-        note: 'On a held Note, the Filter closes completely.',
-      },
-      {
-        kind: 'param', id: 'filterRelease', to: 0.2,
-        say: 'Shorten its Release to about 200 ms.',
-        note: 'Letting go closes the Filter quickly, too.',
+        kind: 'params', faders: [{ id: 'filterAttack', to: 0.001 }, { id: 'filterDecay', to: 0.22 }, { id: 'filterSustain', to: 0 }, { id: 'filterRelease', to: 0.2 }],
+        say: 'Now the Filter Envelope’s four faders, in one Step. Attack, how fast it opens: all the way down. Decay, how fast it closes back: about 220 ms. Sustain, where it settles while you hold a Note: all the way down. Release, once you let go: about 200 ms.',
+        note: 'The flash comes at the very start, then fades faster than the loudness, shut on a held Note: the Note darkens as it dies, like a real string.',
       },
     ],
   },
@@ -446,7 +418,7 @@ export const TUTORIALS: Tutorial[] = [
       {
         kind: 'param', id: 'osc2Semitone', to: 3,
         say: 'Move Osc 2’s Semitone to +3, three piano keys up.',
-        note: 'The two new pitches slide off the neat row of Harmonics and land between its lines. That is what makes metal sound like metal: the tone turns into a bell.',
+        note: 'The small numbers along the Oscillator Spectrum’s top mark where each Harmonic belongs: 2 at twice the Note’s pitch, 3 at three times. The two new pitches slide off them and land in between. That is what makes metal sound like metal: the tone turns into a bell.',
         viewer: 'Oscillator Spectrum',
       },
       {
@@ -501,7 +473,7 @@ export const TUTORIALS: Tutorial[] = [
       {
         kind: 'choice', id: 'subOctave', to: -2,
         say: 'On the Sub & Noise tab, set the Sub’s Octave to −2: two octaves down, a quarter of the pitch.',
-        note: 'Deeper still. The row of lines now counts from the Sub’s much lower pitch: in the Oscillator Spectrum the Sub’s square fills every other place, Osc 1 every fourth, and some places stay empty.',
+        note: 'Deeper still. The Oscillator Spectrum now counts from the Sub’s much lower pitch: the small numbers along its top mark where each Harmonic belongs, 2 at twice that pitch, 3 at three times. The Sub’s square fills every other place, Osc 1 every fourth, and some places stay empty.',
         viewer: 'Oscillator Spectrum',
       },
       {
@@ -542,11 +514,14 @@ export const TUTORIALS: Tutorial[] = [
   },
 ];
 
+/** The Tutorial after this one in the menu's order, which its end card's button starts (issue 190, decision 1). */
+export const nextTutorial = (tutorial: Tutorial): Tutorial | undefined => TUTORIALS[TUTORIALS.indexOf(tutorial) + 1];
+
 /** The end card's last line: the next Tutorial and what it teaches, or that this one was the last (decision 8). */
 export function endLine(tutorial: Tutorial): string {
-  const next = TUTORIALS[TUTORIALS.indexOf(tutorial) + 1];
+  const next = nextTutorial(tutorial);
   return next
-    ? `Next: ${next.preset}, ${next.teaches}. It is under Tutorial, at the top.`
+    ? `Next comes ${next.preset}: ${next.teaches}.`
     : 'That was the last Tutorial. The synth is yours now: start from Init and make a sound of your own.';
 }
 

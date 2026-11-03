@@ -9,7 +9,7 @@ import { DEFAULT_OCTAVE, shiftOctave, startingOctave } from '../input/keyboardLa
 import { type Formula, noiseSlope, oscillatorFormulas, responseFormula } from '../music/geek';
 import { CHOICES, osc1Heard, osc2Heard, type ParamId, type Patch, setFilter, setParam, setWaveform, subNoiseHeard } from '../patch/patch';
 import { PRESETS } from '../patch/presets';
-import { TUTORIALS } from '../tutorial/tutorials';
+import { nextTutorial, TUTORIALS } from '../tutorial/tutorials';
 import { About } from './About';
 import { BEAD_ENTRANCE_SECONDS, type BeadEvent, beadAfter, beadOnArrival } from './beadPresence';
 import { DemoBar } from './DemoBar';
@@ -889,12 +889,17 @@ export function App() {
             index={tutorial.lesson.index}
             done={tutorial.lesson.done}
             differs={tutorial.differs}
+            next={nextTutorial(tutorial.lesson.tutorial)}
             listening={players.listening}
             onListen={() => (players.listening ? players.stopListen() : players.startListen(tutorial.lesson!.tutorial))}
             onBack={() => tutorial.move(-1)}
             onNext={() => tutorial.move(1)}
             onDoIt={tutorial.doIt}
             onMatch={tutorial.matchPreset}
+            onStartNext={() => {
+              const next = nextTutorial(tutorial.lesson!.tutorial);
+              if (next) tutorial.start(next);
+            }}
             onQuit={tutorial.end}
           />
         )}

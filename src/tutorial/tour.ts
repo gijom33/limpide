@@ -57,13 +57,14 @@ const PASS = { bpm: 60, turn: 1, note: 1.5, freeze: 3.2, frozen: 3, length: 7 };
 /**
  * The Amp card's passes, one per stage: where the synth takes it, how many beats its Note's step lasts (held 85 % of
  * it: long enough to show the stage, short enough to fade before the freeze), and what the card names on the frozen
- * picture, the stage just changed (decision 3).
+ * picture, the stage just changed (decision 3): its name first, then what it is, as the card says it (issue 190).
  */
-const STAGES: { id: ParamId; to: number; beats: number; name: string }[] = [
-  { id: 'ampAttack', to: 0.6, beats: 1.3, name: 'up: Attack' },
-  { id: 'ampDecay', to: 1, beats: 1.3, name: 'down to a level: Decay' },
-  { id: 'ampSustain', to: 0.3, beats: 1.2, name: 'held: Sustain' },
-  { id: 'ampRelease', to: 1, beats: 0.6, name: 'let go: Release' },
+const STAGES: { id: ParamId; to: number; beats: number; name: string; gloss?: string }[] = [
+  { id: 'ampAttack', to: 0.6, beats: 1.3, name: 'Attack', gloss: 'the rise' },
+  { id: 'ampDecay', to: 1, beats: 1.3, name: 'Decay', gloss: 'the fall to a steady level' },
+  { id: 'ampSustain', to: 0.3, beats: 1.2, name: 'Sustain', gloss: 'that level held' },
+  // The last pass names all four by name alone.
+  { id: 'ampRelease', to: 1, beats: 0.6, name: 'Release' },
 ];
 
 /** One stage of the Amp Envelope taken to `to` for its pass, then given back. */
@@ -107,17 +108,17 @@ export const TOUR: TourSection[] = [
     look: 'Watch the Envelope Timeline: before each Note the synth changes one stage, and the picture freezes to show its shape.',
     chain: 'The Amp takes the Filter’s sound and sends it on to your speakers.',
     does: 'The Amp sets how loud each Note is, moment by moment, with its Envelope, a shape over time: a Note’s life story in four stages. Attack, how fast it rises once the key goes down. Decay, how fast it then falls back to a steady level. Sustain, that level, held while the key stays down. Release, how long it fades once you let go. The Filter has an Envelope of its own too, opening and closing it the same way.',
-    sees: 'Once each Note has faded, the pictures freeze for a moment: the Envelope Timeline, the last few seconds, shows the shape the Note took. The Amp Scope is what you hear, its height the loudness; on the Amp Spectrum all the lines rise and fall together.',
+    sees: 'Once each Note has faded, the pictures freeze for a moment: the Envelope Timeline, the last few seconds, shows the shape the Note took. On the Amp Spectrum, all the lines rise and fall together.',
     // The Timeline first: on a phone it is far below the Amp's Viewers, and it alone is brought into view (issue 130).
     viewers: ['Envelope Timeline', 'Amp Scope', 'Amp Spectrum'],
     phrase: stagePhrase,
     bpm: PASS.bpm,
     moves: STAGES.map(stageMove),
-    // After the last, all four, left to right.
+    // After the last, all four by name, left to right.
     freezes: STAGES.map((stage, i) => ({
       at: i * PASS.length + PASS.freeze,
       seconds: PASS.frozen,
-      names: i === STAGES.length - 1 ? STAGES.map((s) => s.name) : [stage.name],
+      names: i === STAGES.length - 1 ? STAGES.map((s) => s.name) : [`${stage.name}, ${stage.gloss}`],
     })),
   },
   {

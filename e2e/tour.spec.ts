@@ -251,8 +251,8 @@ test('the Amp card changes the Attack before its Note, freezes the Viewers once 
   await playing(page);
   await expect(frozen(page)).toHaveCount(0);
   await expect(frozen(page)).toHaveCount(1, { timeout: 5000 });
-  await expect(naming(page)).toHaveText('Frozen up: Attack');
-  await expect(card(page).locator('[aria-live]').last()).toHaveText('Frozen: up: Attack'); // what a screen reader hears
+  await expect(naming(page)).toHaveText('Frozen Attack, the rise'); // the name first (issue 190)
+  await expect(card(page).locator('[aria-live]').last()).toHaveText('Frozen: Attack, the rise'); // what a screen reader hears
   await expect(attack).toHaveAttribute('aria-valuetext', '600 ms'); // still the Note's, through the freeze
   await expect(frozen(page)).toHaveCount(0, { timeout: 4000 }); // about three seconds
   await expect(naming(page)).not.toContainText('Frozen');
@@ -260,7 +260,7 @@ test('the Amp card changes the Attack before its Note, freezes the Viewers once 
   await expect(attack).toHaveAttribute('aria-valuetext', '10.0 ms'); // the last given back
   await playing(page); // the sound plays on
   await expect(frozen(page)).toHaveCount(1, { timeout: 6000 });
-  await expect(naming(page)).toHaveText('Frozen down to a level: Decay');
+  await expect(naming(page)).toHaveText('Frozen Decay, the fall to a steady level');
 });
 
 test('folded, the Amp card still says what the frozen picture shows to a screen reader (issue 130)', async ({ page }) => {
@@ -269,7 +269,7 @@ test('folded, the Amp card still says what the frozen picture shows to a screen 
   await card(page).getByRole('button', { name: 'Fold the card' }).click();
   await expect(frozen(page)).toHaveCount(1, { timeout: 8000 });
   const heard = card(page).locator('.tour-frozen [aria-live]');
-  await expect(heard).toHaveText('Frozen: up: Attack');
+  await expect(heard).toHaveText('Frozen: Attack, the rise');
   await expect(heard).toBeVisible(); // in the accessibility tree: a live region under display: none is never heard
 });
 

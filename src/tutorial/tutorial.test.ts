@@ -144,3 +144,39 @@ describe('whether a Step is made (issue 70: asked of the Step, whatever its kind
     expect(inDisplay(press) && !inDisplay(knob)).toBe(true);
   });
 });
+
+// Issue 190, decision 3: from the second Tutorial with the drill, the Filter Envelope's four faders in one Step.
+describe('a Step of several faders (issue 190)', () => {
+  const shape: Step = {
+    kind: 'params', faders: [{ id: 'filterAttack', to: 0.001 }, { id: 'filterDecay', to: 0.15 }, { id: 'filterSustain', to: 0.05 }, { id: 'filterRelease', to: 0.1 }],
+    say: 'Shape it.', note: 'Shaped.',
+  };
+  const all = { filterAttack: 0.001, filterDecay: 0.15, filterSustain: 0.05, filterRelease: 0.1 };
+  const scene = (changes: Partial<Patch>) => ({ patch: { ...defaultPatch(), ...changes }, overlays: DEFAULT_OVERLAYS, snapshot: null });
+
+  it('is reached once every one of them is within reach, not before', () => {
+    expect(reached(shape, { ...defaultPatch(), ...all }, DEFAULT_OVERLAYS)).toBe(true);
+    expect(reached(shape, { ...defaultPatch(), ...all, filterSustain: 0.09 }, DEFAULT_OVERLAYS)).toBe(true); // 4 % off
+    expect(reached(shape, { ...defaultPatch(), ...all, filterSustain: 0.2 }, DEFAULT_OVERLAYS)).toBe(false);
+    expect(reached(shape, { ...defaultPatch(), ...all, filterRelease: 0.4 }, DEFAULT_OVERLAYS)).toBe(false);
+  });
+
+  it('applied, or done for the person, sets each to its exact target; on target only when all are', () => {
+    expect(applyStep(defaultPatch(), shape)).toEqual({ ...defaultPatch(), ...all });
+    expect(onTarget(shape, { ...defaultPatch(), ...all })).toBe(true);
+    expect(onTarget(shape, { ...defaultPatch(), ...all, filterDecay: 0.16 })).toBe(false);
+  });
+
+  it('found within reach waits for a touch of any of them, as a single knob does', () => {
+    const near = { ...all, filterDecay: 0.155 };
+    const since = held(shape, scene(near));
+    expect(isMade(shape, scene(near), since)).toBe(false);
+    expect(isMade(shape, scene({ ...near, filterDecay: 0.152 }), since)).toBe(true);
+    expect(isMade(shape, scene(all), held(shape, scene(all)))).toBe(true);
+    expect(isMade(shape, scene(near), held(shape, scene({})))).toBe(true);
+  });
+
+  it('names each fader’s target as it shows it', () => {
+    expect(targetText(shape)).toBe('1.00 ms, 150 ms, 5 %, 100 ms');
+  });
+});

@@ -365,7 +365,7 @@ describe('issue 109’s Tutorials say what the engine plays, at the Step that sa
   /** The Patch a Tutorial has built once the Step on `control` is made. */
   const atStep = (preset: string, control: string) => {
     const steps = tutorialFor(preset)!.steps;
-    const index = steps.findIndex((s) => s.kind !== 'display' && s.id === control);
+    const index = steps.findIndex((s) => s.kind !== 'display' && s.kind !== 'params' && s.id === control);
     expect(index, control).toBeGreaterThanOrEqual(0);
     return steps.slice(0, index + 1).reduce(applyStep, PRESETS[0].patch);
   };

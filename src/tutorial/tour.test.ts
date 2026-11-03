@@ -94,7 +94,8 @@ describe('The Tour (issue 128)', () => {
         if (frozen && last?.frozen === frozen && t - last.to < 0.06) last.to = t;
         else if (frozen) spans.push({ from: t, to: t, frozen });
       }
-      expect(spans.map((s) => s.frozen)).toEqual(['up: Attack', 'down to a level: Decay', 'held: Sustain', 'up: Attack; down to a level: Decay; held: Sustain; let go: Release']);
+      // The stage's name first, then what it is, as the card says it (issue 190, review 16's finding 3).
+      expect(spans.map((s) => s.frozen)).toEqual(['Attack, the rise', 'Decay, the fall to a steady level', 'Sustain, that level held', 'Attack; Decay; Sustain; Release']);
       spans.forEach((span, i) => {
         const note = notes[i];
         const fade = note.time + note.duration + tourAt(amp, note.time + note.duration).values.ampRelease!;

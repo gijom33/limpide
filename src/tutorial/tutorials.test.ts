@@ -10,6 +10,21 @@ describe('the Tutorials', () => {
     expect(TUTORIALS.map((t) => t.preset)).toEqual(['Bass', 'Acid', 'Pluck', 'Wobble', 'FM Ladder', 'Ring Bell', 'Deep Breath']);
   });
 
+  // Issue 190, decision 3 (review 16, finding 5): the Filter Envelope's four faders, a Step each in Bass alone.
+  it('drill the Filter Envelope’s four faders a Step each only the first time; after, in one Step', () => {
+    const ENVELOPE = ['filterAttack', 'filterDecay', 'filterSustain', 'filterRelease'];
+    const shapes = TUTORIALS.flatMap((t) => {
+      const one = t.steps.filter((s) => s.kind === 'param' && ENVELOPE.includes(s.id)).length;
+      const together = t.steps.find((s) => s.kind === 'params');
+      return one || together ? [{ preset: t.preset, one, together: together?.kind === 'params' ? together.faders.map((s) => s.id) : [] }] : [];
+    });
+    expect(shapes).toEqual([
+      { preset: 'Bass', one: 4, together: [] },
+      { preset: 'Acid', one: 0, together: ENVELOPE },
+      { preset: 'Pluck', one: 0, together: ENVELOPE },
+    ]);
+  });
+
   for (const tutorial of TUTORIALS) {
     describe(tutorial.preset, () => {
       it('rebuilds its Preset exactly, from Init', () => {
@@ -23,7 +38,7 @@ describe('the Tutorials', () => {
 
       it('asks for something new at every Step, one control each', () => {
         let patch = PRESETS[0].patch;
-        const controls = tutorial.steps.map((s) => (s.kind === 'display' ? s.overlay : s.id));
+        const controls = tutorial.steps.flatMap((s) => (s.kind === 'display' ? s.overlay : s.kind === 'params' ? s.faders.map((t) => t.id) : s.id));
         expect(new Set(controls).size).toBe(controls.length);
         for (const step of tutorial.steps) {
           // Something to change when it comes; an Action, a press. A knob already within reach waits for a touch, then

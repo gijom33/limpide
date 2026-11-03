@@ -104,4 +104,4 @@ Every Tutorial's `say` and `note`, every first and last card, the Tutorial menu 
 - Open the Tutorial menu at the top and read its lines; at a laptop width the list now opens leftward.
 - Start each Tutorial and read its first card. Make a few Steps and read the notes, then press "Do it for me" to the end and read the last card's "Next".
 - Read every Step's words once, as decision 5 asks, before the release: [src/tutorial/tutorials.ts](../../src/tutorial/tutorials.ts) holds them all in order, and the Tour's are in [src/tutorial/tour.ts](../../src/tutorial/tour.ts).
-
+- 2026-11-02, since ([190](./190-tutorials-after-review-16-again.md)): the end card's line reads "Next comes Acid: a talking bass…", and a "Next: Acid" button beside Done starts it; it no longer says "It is under Tutorial, at the top". Acid and Pluck set the Filter Envelope's four faders in one Step.
