@@ -6,8 +6,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
-- 2026-11-02, the owner, trying issue 130 (the Tour freezing the Viewers to show the Envelope): "Yes but on small screen, we shoukd show both the settings and viewer. If it cannot fit screen we should show each in turn by scrolling."
-
 ## Dropped
 
 - 2026-10-30, from Claude's brainstorm, Velocity on the Volume ("a harder hit plays louder, not only brighter"): already so. The Amp Envelope's Attack rises to the Note's Velocity (PRD story 9). Claude's call, open to the owner.
@@ -180,4 +178,5 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-11-02, the owner's bug of BAGGAGE, the air guitar and the surfing unseen, found trying 127 (triage): to [204](./issues/204-baggage-air-guitar-and-surfing-seen.md), polish for v1, ready for an agent: reproduce first, a cause per trick; surfing built with or after [197](./issues/197-bead-rides-everywhere.md) (Claude's calls, open to the owner).
 2026-11-02, the owner's idea of a simpler Privacy entry in About (triage): done at once, the owner's pick of two wordings: "Visits are counted with GoatCounter: no cookies, nothing stored about you. Your sounds never leave your browser." The README keeps the details the legal review asked for (the IP address and browser received, the share link's sound after its #).
 2026-11-02, the owner's bug of Talking Filter's beep, found trying 166 (triage): to [205](./issues/205-talking-filter-talks.md), polish for v1, ready for an agent: retuned so every moment is vowel-like, the narrow end about Q 4 to 6 and LFO 2 gliding (Claude's calls, open to the owner).
+2026-11-02, the owner's idea of the Tour showing both the control and the Viewer on a small screen, found trying 130 (triage): to [206](./issues/206-the-tour-shows-the-control-and-the-viewer.md), polish for v1, ready for an agent: together where they fit, else in turn by scrolling (decided by the owner); every card, the person's own scroll winning (Claude's calls, open to the owner).
 2026-11-02, the owner's idea of a phase for Osc 2 (triage): to [203](./issues/203-a-phase-for-osc-2.md), v2, not committed (decided by the owner), to grill before anything is built.
