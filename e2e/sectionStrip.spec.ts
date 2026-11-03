@@ -116,9 +116,10 @@ test.describe('on a phone', () => {
           (b) => b.getAttribute('aria-label') === name || b.textContent?.trim() === name,
         );
         if (!button?.checkVisibility()) return `${name}: not shown`;
-        const word = [...button.querySelectorAll<HTMLElement>('span')].find((s) => s.textContent?.trim() === name);
+        // The MIDI word sits in a wrapper of its own (issue 188), laid out as its contents: any span of the word shown.
+        const shown = [...button.querySelectorAll<HTMLElement>('span')].some((s) => s.textContent?.trim() === name && s.checkVisibility());
         const r = button.getBoundingClientRect();
-        return `${name}: word ${word?.checkVisibility() ? 'shown' : 'hidden'} top ${Math.round(r.top)}`;
+        return `${name}: word ${shown ? 'shown' : 'hidden'} top ${Math.round(r.top)}`;
       }),
     );
     expect(row.every((r) => r.includes('word shown')), row.join('; ')).toBe(true);
