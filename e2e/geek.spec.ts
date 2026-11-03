@@ -189,11 +189,11 @@ test('Detune’s beats in its name’s place stay clear of Env Amount’s name, 
   }
 });
 
-// Issue 169: the LFOs' periods and swings, and the Cutoff at the Note under Key Track.
+// Issue 169: the LFOs' swings, and the Cutoff at the Note under Key Track. Issue 202: the Rate reads as without the layer.
 const lfo = (page: Page, n: 1 | 2 = 1) => page.getByRole('group', { name: `LFO ${n}`, exact: true });
 const lfoValue = (page: Page, name: string) => page.locator('.knob', { has: page.getByRole('slider', { name, exact: true }) }).locator('.knob-value > span').first();
 
-test('an LFO’s Rate reads its period, at the tempo while synced, and its Depth the swing in its Destination’s unit (issue 169)', async ({ page }) => {
+test('an LFO’s Rate reads as without the layer, free or synced, and its Depth the swing in its Destination’s unit (issues 169, 202)', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
   await expect(lfoValue(page, 'LFO 1 Rate')).toHaveText('2.00 Hz');
@@ -201,16 +201,16 @@ test('an LFO’s Rate reads its period, at the tempo while synced, and its Depth
   await page.evaluate(() => localStorage.setItem('limpide.overlays', JSON.stringify({ geek: true })));
   await page.reload();
 
-  await expect(lfoValue(page, 'LFO 1 Rate')).toHaveText('0.50 s');
+  await expect(lfoValue(page, 'LFO 1 Rate')).toHaveText('2.00 Hz');
   await lfo(page).getByRole('button', { name: 'LFO 1 Sync' }).click();
   await expect(lfo(page).getByRole('slider', { name: 'LFO 1 Rate' })).toHaveAttribute('aria-valuetext', '1/4, 2.00 Hz');
-  await expect(lfoValue(page, 'LFO 1 Rate')).toHaveText('0.50 s');
-  // At the tempo: 1/4 at 110 BPM.
+  await expect(lfoValue(page, 'LFO 1 Rate')).toHaveText('1/4');
+  // The tempo moves, the note value stays: 1/4 at 110 BPM.
   const bpm = page.getByRole('spinbutton', { name: 'Tempo' });
   await bpm.focus();
   await page.keyboard.press('PageDown');
   await expect(bpm).toHaveAttribute('aria-valuenow', '110');
-  await expect(lfoValue(page, 'LFO 1 Rate')).toHaveText('0.55 s');
+  await expect(lfoValue(page, 'LFO 1 Rate')).toHaveText('1/4');
 
   // LFO 1 on the Cutoff: 40 % is ±0.80 octave; LFO 2 on Pitch, 50 % is ±0.50 semitone.
   const depth = lfo(page).getByRole('slider', { name: 'LFO 1 Depth' });
@@ -254,6 +254,8 @@ test('the tips of the LFOs’ Rate and Depth and of Key Track give their formula
   await page.keyboard.press('Tab'); // the keys in use: a focus shows its tip
   await lfo(page).getByRole('slider', { name: 'LFO 1 Rate' }).focus();
   await expect(tipOf('How fast the LFO repeats').locator('.tooltip-hood')).toContainText('T = 1 / f');
+  // Its period, worked out at the Rate (issue 202): the default 2 Hz.
+  await expect(tipOf('How fast the LFO repeats').locator('.tooltip-hood')).toContainText('T = 1 / 2.00 Hz = 0.50 s now.');
   await lfo(page).getByRole('slider', { name: 'LFO 1 Depth' }).focus();
   await expect(tipOf('How far the LFO moves').locator('.tooltip-hood')).toContainText(/swing = Depth × its reach.*Cutoff ±2 oct/);
   await page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name: 'Key Track' }).focus();

@@ -3,7 +3,7 @@ import { type GeekReadout, geekReadout, geekReadoutParts, readoutText, widestGee
 import { type StepSize, stepParamBy } from '../patch/grid';
 import { formatParam, inUnitShown, PARAMS, type ParamId, paramName } from '../patch/patch';
 import { positionToValue, valueToPosition } from '../patch/taper';
-import { GeekContext, GeekNoteContext, GeekOnContext, GeekTempoContext } from './geekContext';
+import { GeekContext, GeekNoteContext, GeekOnContext } from './geekContext';
 import { addDescription, removeDescription } from './inactive';
 import { useLearnable } from './learn';
 
@@ -55,12 +55,11 @@ export function useParamControl(id: ParamId, value: number, onChange: (value: nu
   const learnable = useLearnable({ kind: 'param', id: def.knob ?? id });
   // In the Synth Geek Layer some controls read the quantity behind their value instead (Q, dB): sized for it while on.
   // Some depend on the Note played (Detune's beats): followed as the Note changes, a control rendering again only when
-  // its own readout's text does. A synced Rate's period depends on the tempo.
+  // its own readout's text does.
   const geekPatch = useContext(GeekContext);
   const notes = useContext(GeekNoteContext);
-  const bpm = useContext(GeekTempoContext);
-  useSyncExternalStore(notes.subscribe, () => (geekPatch ? geekReadout(id, value, geekPatch, { note: notes.get(), bpm }) : undefined));
-  const geek = geekPatch ? geekReadoutParts(id, value, geekPatch, { note: notes.get(), bpm }) : undefined;
+  useSyncExternalStore(notes.subscribe, () => (geekPatch ? geekReadout(id, value, geekPatch, { note: notes.get() }) : undefined));
+  const geek = geekPatch ? geekReadoutParts(id, value, geekPatch, { note: notes.get() }) : undefined;
   const readout = geek ? readoutText(geek) : formatParam(id, value);
   const geekOn = !!geekPatch; // the context holds null while the layer is off
   const widest = useMemo<GeekReadout[]>(

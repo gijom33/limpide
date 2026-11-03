@@ -573,6 +573,6 @@ export const OVERLAY_TIPS: Record<Overlay, TipContent> = {
   },
   geek: {
     title: 'Synth Geek Layer',
-    body: 'The numbers under the hood, for the synth geek: Resonance as the Filter’s Q, the Mixer’s levels and the Amp’s Sustain in dB, Osc 2’s tuning as multiples and Detune as beats, each LFO’s period and swing, the Cutoff at the Note under Key Track, each Scope’s period and frequency, the Harmonic formula of Osc 1’s Waveform under the Oscillator Spectrum (with FM or Ring up, their rules for the knobs as they are), the Response Curve’s formula under the Filter Spectrum, the Cutoff’s value on the Timeline; and, in the tips, a control’s formula under the hood and, for one with a musical past, its History: where it comes from.',
+    body: 'The numbers under the hood, for the synth geek: Resonance as the Filter’s Q, the Mixer’s levels and the Amp’s Sustain in dB, Osc 2’s tuning as multiples and Detune as beats, each LFO’s swing, the Cutoff at the Note under Key Track, each Scope’s period and frequency, the Harmonic formula of Osc 1’s Waveform under the Oscillator Spectrum (with FM or Ring up, their rules for the knobs as they are), the Response Curve’s formula under the Filter Spectrum, the Cutoff’s value on the Timeline; and, in the tips, a control’s formula under the hood (an LFO Rate’s period among them) and, for one with a musical past, its History: where it comes from.',
   },
 };

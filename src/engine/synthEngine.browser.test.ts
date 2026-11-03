@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DIP, envelopeLevel, type GateEvent } from '../modulation/envelope';
 import { lfoOffset, osc2Cents } from '../modulation/modulationModel';
-import { geekReadout, harmonicNumber, noiseSlope, scopeReadout, UNDER_THE_HOOD, underTheHoodAt } from '../music/geek';
+import { geekReadout, harmonicNumber, noiseSlope, scopeReadout, syncedRateUnderTheHood, UNDER_THE_HOOD, underTheHoodAt } from '../music/geek';
 import { harmonicSeries, type Waveform } from '../music/harmonics';
 import { fmDepthKept, idealPartials, idealReference } from '../music/idealReference';
 import { noteIndex } from '../music/tempo';
@@ -2853,18 +2853,18 @@ describe('the Synth Geek Layer’s numbers for the LFOs and Key Track, held to t
     return ((rises[rises.length - 1] - rises[1]) * frame) / SR / (rises.length - 2);
   };
 
-  for (const [what, patch, bpm, id, value] of [
-    ['a Rate of 2 Hz', { lfoRate: 2 }, 120, 'lfoRate', 2],
-    ['a Rate of 3 Hz', { lfoRate: 3 }, 120, 'lfoRate', 3],
-    ['a synced 1/4 at 120 BPM', { lfoSync: 'on', lfoNote: noteIndex('1/4') }, 120, 'lfoNote', noteIndex('1/4')],
-    ['a synced 1/8 T at 100 BPM', { lfoSync: 'on', lfoNote: noteIndex('1/8 T') }, 100, 'lfoNote', noteIndex('1/8 T')],
+  // The period the Rate's tip works out (issue 202: the readout stays in Hz or a note value).
+  const tipPeriod = (where: string) => Number(where.match(/(?:= |one cycle every )([\d.]+) s(?: now)?\./)![1]);
+  for (const [what, patch, bpm, where] of [
+    ['a Rate of 2 Hz', { lfoRate: 2 }, 120, underTheHoodAt('lfoRate', 2)!.where],
+    ['a Rate of 3 Hz', { lfoRate: 3 }, 120, underTheHoodAt('lfoRate', 3)!.where],
+    ['a synced 1/4 at 120 BPM', { lfoSync: 'on', lfoNote: noteIndex('1/4') }, 120, syncedRateUnderTheHood(noteIndex('1/4'), 120).where],
+    ['a synced 1/8 T at 100 BPM', { lfoSync: 'on', lfoNote: noteIndex('1/8 T') }, 100, syncedRateUnderTheHood(noteIndex('1/8 T'), 100).where],
   ] as const)
-    it(`an LFO repeats as often as ${what} reads`, async () => {
-      const readout = geekReadout(id, value, { ...defaultPatch(), ...patch }, { bpm });
-      expect(readout).toMatch(/ s$/);
+    it(`an LFO repeats as often as ${what}’s tip works out`, async () => {
       const period = await tremoloPeriod(patch, bpm);
-      // To the readout's last figure.
-      expect(Math.abs(period - number(readout))).toBeLessThan(0.006);
+      // To the period's last figure.
+      expect(Math.abs(period - tipPeriod(where))).toBeLessThan(0.006);
     });
 
   // A square LFO at 1 Hz is at its top for the first half second and its foot for the second: measured in each.

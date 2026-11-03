@@ -8,8 +8,8 @@ import {
 } from '../patch/patch';
 import { WAVEFORM_NAMES, type Waveform } from './harmonics';
 import { besselJ, osc2Ratio } from './idealReference';
-import { A4_MIDI, noteToFrequency } from './pitch';
-import { NOTE_VALUES, noteHz, TEMPO } from './tempo';
+import { A4_MIDI, frequencyText, noteToFrequency } from './pitch';
+import { NOTE_VALUES, noteHz } from './tempo';
 
 /**
  * The Synth Geek Layer's content (issue 14): the quantities behind the sound, as data. The formulas are the ones the
@@ -129,10 +129,9 @@ const GAINS: ParamId[] = ['mixOsc1', 'mixOsc2', 'mixSub', 'mixNoise', 'ampSustai
  * says it.
  */
 export type GeekNote = number | null;
-/** Where a readout is worked out: at the Note played (A4 before any) and the page's tempo, for a synced Rate. */
+/** Where a readout is worked out: at the Note played (A4 before any). */
 export interface GeekAt {
   note?: GeekNote;
-  bpm?: number;
 }
 export const BEFORE_ANY_NOTE = 'at A4';
 /** The frequency of the Note the numbers use, in Hz. */
@@ -211,11 +210,8 @@ interface GeekControl {
 const figures = (...all: string[]): GeekReadout[] => all.map((figure) => ({ figure }));
 const gain: GeekControl = { read: (value) => ({ figure: levelDb(value) }), widest: figures('−99.9 dB') };
 const multiple = (ratio: (value: number) => number): GeekControl => ({ read: (value) => ({ figure: multipleText(ratio(value)) }), widest: figures('×0.000') });
-// Issue 169: an LFO's period, at the tempo while synced, and its swing.
-const PERIOD = figures('0.000 s', '00.0 s');
+// Issue 169: an LFO's swing. Its Rate reads as without the layer, its period in its tip (issue 202).
 const lfoControls = (lfo: LfoNumber): [ParamId, GeekControl][] => [
-  [LFO_KEYS[lfo].rate, { read: (value) => ({ figure: periodText(1 / value) }), widest: PERIOD }],
-  [LFO_KEYS[lfo].note, { read: (value, _, { bpm }) => ({ figure: periodText((NOTE_VALUES[Math.round(value)].beats * 60) / bpm) }), widest: PERIOD }],
   [LFO_KEYS[lfo].amount, { read: (value, patch) => ({ figure: depthSwingText(patch, lfo, value) }), widest: figures('±12.0 st', '±2.00 oct', '±50.0 ¢', '±40 %', '−99.9 dB') }],
 ];
 
@@ -236,10 +232,10 @@ const GEEK_CONTROLS: Partial<Record<ParamId, GeekControl>> = {
 
 /**
  * What a knob or fader reads in the Synth Geek Layer instead of its everyday value, if anything, in its parts; `at`
- * the last Note played and the tempo, for the readouts that depend on them.
+ * the last Note played, for the readouts that depend on it.
  */
-export function geekReadoutParts(id: ParamId, value: number, patch: Patch, { note = null, bpm = TEMPO.default }: GeekAt = {}): GeekReadout | undefined {
-  return GEEK_CONTROLS[id]?.read(value, patch, { note, bpm });
+export function geekReadoutParts(id: ParamId, value: number, patch: Patch, { note = null }: GeekAt = {}): GeekReadout | undefined {
+  return GEEK_CONTROLS[id]?.read(value, patch, { note });
 }
 
 /** A readout's whole text: "2.55 Hz beats". */
@@ -349,7 +345,7 @@ export function syncedRateConversion(index: number, bpm: number): string {
   return `${NOTE_VALUES[index].name} at ${bpm} BPM: ${bpm} ÷ 60 ${perBeatText(NOTE_VALUES[index].beats)} = ${hz}`;
 }
 
-/** A synced Rate's formula under the hood, worked out at the tempo: its conversion, then the period its readout shows. */
+/** A synced Rate's formula under the hood, worked out at the tempo: its conversion, then its period (issue 202). */
 export function syncedRateUnderTheHood(index: number, bpm: number): Formula {
   const { formula, where } = UNDER_THE_HOOD.lfoNote;
   return { formula, where: `${syncedRateConversion(index, bpm)}, one cycle every ${periodText(1 / noteHz(index, bpm))}. ${where}` };
@@ -407,11 +403,19 @@ const STAGE_CURVES: Record<EnvelopeStage, Formula> = {
   release: { formula: 'x = x₀·e^(−t/τ)', where: 'x₀ the level when the key came up, falling towards silence. It' },
 };
 
+/** Each LFO's free Rate, whose tip works its period out at the Rate (issue 202). */
+const RATES: ParamId[] = [LFO_KEYS[1].rate, LFO_KEYS[2].rate];
+
 /**
  * The formulas under the hood worked out at a control's setting (issue 168), where the tip shows a live number: each
- * Envelope stage's curve and its time constant τ as the engine sets it; undefined for the others.
+ * Envelope stage's curve and its time constant τ as the engine sets it, a free Rate's period (issue 202); undefined for
+ * the others.
  */
 export function underTheHoodAt(id: ParamId, value: number): Formula | undefined {
+  if (RATES.includes(id)) {
+    const { formula, where } = UNDER_THE_HOOD.lfoRate;
+    return { formula, where: `T = 1 / ${frequencyText(value)} = ${periodText(1 / value)} now. ${where}` };
+  }
   const stage = STAGE_OF[id];
   if (!stage) return undefined;
   const { label } = PARAMS[id];

@@ -87,19 +87,30 @@ describe('the Synth Geek Layer: Osc 2’s tuning (issue 167)', () => {
 describe('the Synth Geek Layer: the LFOs (issue 169)', () => {
   const patch = defaultPatch(); // LFO 1 on the Cutoff, LFO 2 on Pitch
 
-  it('reads a Rate as its period: 2 Hz is 0.50 s', () => {
-    expect(geekReadout('lfoRate', 2, patch)).toBe('0.50 s');
-    expect(geekReadout('lfo2Rate', 3, patch)).toBe('0.33 s');
-    expect(geekReadout('lfoRate', 20, patch)).toBe('0.050 s');
-    expect(geekReadout('lfoRate', 0.05, patch)).toBe('20.0 s');
+  // Issue 202: the Rate reads as without the layer, in Hz or its note value; its period is in its tip, under the hood.
+  it('leaves a Rate’s readout as without the layer, free or synced', () => {
+    expect(geekReadout('lfoRate', 2, patch)).toBeUndefined();
+    expect(geekReadout('lfo2Rate', 3, patch)).toBeUndefined();
+    expect(geekReadout('lfoNote', noteIndex('1/4'), patch)).toBeUndefined();
+    expect(geekReadout('lfo2Note', noteIndex('1/4'), patch)).toBeUndefined();
   });
 
-  it('reads a synced Rate as its period at the tempo: 1/4 at 120 BPM is 0.50 s', () => {
-    expect(geekReadout('lfoNote', noteIndex('1/4'), patch, { bpm: 120 })).toBe('0.50 s');
-    expect(geekReadout('lfo2Note', noteIndex('1/4'), patch, { bpm: 90 })).toBe('0.67 s');
-    expect(geekReadout('lfoNote', noteIndex('1 bar'), patch, { bpm: 120 })).toBe('2.00 s');
-    expect(geekReadout('lfoNote', noteIndex('4 bars D'), patch, { bpm: 40 })).toBe('36.0 s');
-    expect(geekReadout('lfoNote', noteIndex('1/32 T'), patch, { bpm: 240 })).toBe('0.021 s');
+  it('works a Rate’s period out in its tip: 2 Hz is 0.50 s', () => {
+    expect(underTheHoodAt('lfoRate', 2)?.where).toMatch(/^T = 1 \/ 2\.00 Hz = 0\.50 s now\. /);
+    expect(underTheHoodAt('lfo2Rate', 3)?.where).toMatch(/^T = 1 \/ 3\.00 Hz = 0\.33 s now\. /);
+    expect(underTheHoodAt('lfoRate', 20)?.where).toMatch(/^T = 1 \/ 20 Hz = 0\.050 s now\. /);
+    expect(underTheHoodAt('lfoRate', 0.05)?.where).toMatch(/^T = 1 \/ 0\.05 Hz = 20\.0 s now\. /);
+    expect(underTheHoodAt('lfoRate', 2)?.formula).toBe(UNDER_THE_HOOD.lfoRate.formula);
+    expect(underTheHoodAt('lfoRate', 2)?.where).toContain(UNDER_THE_HOOD.lfoRate.where);
+  });
+
+  it('works a synced Rate’s period out in its tip at the tempo: 1/4 at 120 BPM is 0.50 s', () => {
+    const period = (note: string, bpm: number) => syncedRateUnderTheHood(noteIndex(note), bpm).where.match(/one cycle every ([\d.]+ s)\./)?.[1];
+    expect(period('1/4', 120)).toBe('0.50 s');
+    expect(period('1/4', 90)).toBe('0.67 s');
+    expect(period('1 bar', 120)).toBe('2.00 s');
+    expect(period('4 bars D', 40)).toBe('36.0 s');
+    expect(period('1/32 T', 240)).toBe('0.021 s');
   });
 
   it('reads a Depth as the swing in its Destination’s own unit', () => {
@@ -131,8 +142,9 @@ describe('the Synth Geek Layer: the LFOs (issue 169)', () => {
     expect(geekReadout('lfo2Amount', 0.5, { ...pw, lfoAmount: 0.5, lfo2Destination: 'pulseWidth' })).toBe('±10 %');
   });
 
-  it('sizes each for its widest', () => {
-    for (const id of ['lfoRate', 'lfoNote', 'lfo2Rate', 'lfo2Note', 'lfoAmount', 'lfo2Amount'] as const) expect(widestGeekReadout(id)).not.toHaveLength(0);
+  it('sizes each Depth for its widest, and a Rate for its own readout alone', () => {
+    for (const id of ['lfoAmount', 'lfo2Amount'] as const) expect(widestGeekReadout(id)).not.toHaveLength(0);
+    for (const id of ['lfoRate', 'lfoNote', 'lfo2Rate', 'lfo2Note'] as const) expect(widestGeekReadout(id)).toHaveLength(0);
   });
 
   it('gives the formulas of the period and the swing', () => {
@@ -173,7 +185,7 @@ describe('the Synth Geek Layer: a synced Rate’s conversion, with the live numb
       }
   });
 
-  it('leads its formula under the hood, with the period the readout shows', () => {
+  it('leads its formula under the hood, with the period', () => {
     const { formula, where } = syncedRateUnderTheHood(noteIndex('1/8'), 120);
     expect(formula).toBe(UNDER_THE_HOOD.lfoNote.formula);
     expect(where).toMatch(/^1\/8 at 120 BPM: 120 ÷ 60 × 2 = 4 Hz, one cycle every 0\.25 s\. /);
