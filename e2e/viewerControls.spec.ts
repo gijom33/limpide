@@ -36,10 +36,10 @@ test('Space presses the focused button, as buttons do, and Freezes only from els
   await page.keyboard.press('Space');
   await expect(snapshot).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByRole('button', { name: 'Freeze' })).toHaveAttribute('aria-pressed', 'false');
-  // On a knob, Space still Freezes.
+  // On a knob, Space still Freezes. Focus leaving Display closes it (issue 189), so the page says it.
   await page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name: 'Cutoff' }).focus();
   await page.keyboard.press('Space');
-  await expect(page.getByRole('button', { name: 'Freeze' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('main')).toHaveAttribute('data-frozen', 'true');
 });
 
 test('a Snapshot can be taken and cleared', async ({ page }) => {
