@@ -28,6 +28,8 @@ interface Props {
   /** Puts back a known Controller's layout (the C16's, offered while one is connected). */
   onLayout(id: ControllerId): void;
   onRemove(control: Control): void;
+  /** A knob's Mapping switched by hand between Absolute and Relative, where Learn guessed wrong (issue 186). */
+  onMode(control: Control, mode: KnobMode): void;
   onClear(): void;
   /** How far a keyboard's bend wheel takes the pitch, in semitones each way (issue 52). */
   bendRange: BendRange;
@@ -38,6 +40,11 @@ interface Props {
 }
 
 /** " · C16 only" for a Mapping of a known Controller's layout, which answers it alone; nothing for any other. */
+type KnobMode = 'absolute' | 'relative';
+/** A knob's Mapping, Absolute or Relative, which the panel can switch; null for a button's, or one still to be turned. */
+const knobMode = (mode: Mapping['mode']): KnobMode | null =>
+  mode === 'absolute' ? 'absolute' : mode === 'relative-twos' || mode === 'relative-centred' ? 'relative' : null;
+
 const onlyFor = (mapping: Mapping) => {
   const known = answeredBy(mapping);
   return known ? ` · ${known.label} only` : null;
@@ -68,7 +75,7 @@ const statusText = (state: MidiState) => {
  * panel: what is connected, the Activity Monitor, MIDI Learn (and Done, once learning), and the Mappings.
  */
 export function MidiPanel({
-  state, onOpen, activity, mappings, learning, onLearn, onDone, onQuickSetup, onLayout, onRemove, onClear, bendRange, onBendRange,
+  state, onOpen, activity, mappings, learning, onLearn, onDone, onQuickSetup, onLayout, onRemove, onMode, onClear, bendRange, onBendRange,
   aftertouch, onAftertouch,
 }: Props) {
   const [open, setOpen] = useState(false);
@@ -221,23 +228,38 @@ export function MidiPanel({
             <>
               <span className="midi-heading">Mappings</span>
               <ul className="midi-mappings" aria-label="Mappings">
-                {mappings.map((m) => (
-                  <li key={controlKey(m.control)}>
-                    <span className="mapping-target">{describeTarget(m.target)}</span>
-                    <span className="mapping-control">
-                      {describeControl(m.control)} · {describeMode(m.mode)}
-                      {onlyFor(m)}
-                    </span>
-                    <button
-                      type="button"
-                      className="tool tool-icon"
-                      aria-label={`Remove ${describeTarget(m.target)} Mapping`}
-                      onClick={() => onRemove(m.control)}
-                    >
-                      <CloseIcon />
-                    </button>
-                  </li>
-                ))}
+                {mappings.map((m) => {
+                  const mode = knobMode(m.mode);
+                  return (
+                    <li key={controlKey(m.control)}>
+                      <span className="mapping-target">{describeTarget(m.target)}</span>
+                      <span className="mapping-control">
+                        {describeControl(m.control)}
+                        {mode ? null : ` · ${describeMode(m.mode)}`}
+                        {onlyFor(m)}
+                      </span>
+                      {mode && (
+                        <Segmented
+                          label={`${describeTarget(m.target)} mode`}
+                          value={mode}
+                          options={[
+                            { value: 'absolute', label: 'Absolute', name: describeMode('absolute') },
+                            { value: 'relative', label: 'Relative' },
+                          ]}
+                          onChange={(next) => onMode(m.control, next)}
+                        />
+                      )}
+                      <button
+                        type="button"
+                        className="tool tool-icon"
+                        aria-label={`Remove ${describeTarget(m.target)} Mapping`}
+                        onClick={() => onRemove(m.control)}
+                      >
+                        <CloseIcon />
+                      </button>
+                    </li>
+                  );
+                })}
               </ul>
               <button type="button" className="tool midi-clear" onClick={onClear}>
                 Remove all

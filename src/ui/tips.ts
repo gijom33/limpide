@@ -75,7 +75,7 @@ export const TIPS = {
   },
   midiLearn: {
     title: 'MIDI Learn',
-    body: 'Map your Controller: click a knob or button here, then move a knob, fader or pad there. Endless encoders and normal knobs are told apart by what they send.',
+    body: 'Map your Controller: click a knob or button here, then move a knob, fader or pad there. Endless encoders and normal knobs are told apart by what they send; a wrong guess is put right in the MIDI panel, Absolute or Relative.',
     how: 'Normal knobs use Pickup: the Parameter waits until the knob passes its value, so nothing jumps. Finish with Escape, or Done in the MIDI panel.',
   },
   tuning: {

@@ -305,7 +305,7 @@ A guided sequence of MIDI Learn steps for any Controller: the Parameters played 
 _Avoid_: Wizard (fine in UI copy), onboarding
 
 **Encoder Mode**:
-How a Controller knob reports movement. **Absolute** sends a position (0–127): on a Parameter centred on zero (Detune, the Filter's Amount), 64 is exactly zero, 0 to 64 its lower half and 64 to 127 its upper. **Relative** sends increments, each a step of the Parameter's Grid (a C16's fast 66 a third of one). Detected during MIDI Learn; the C16 layout's knobs are declared Relative (ADR-0017).
+How a Controller knob reports movement. **Absolute** sends a position (0–127): on a Parameter centred on zero (Detune, the Filter's Amount), 64 is exactly zero, 0 to 64 its lower half and 64 to 127 its upper. **Relative** sends increments, each a step of the Parameter's Grid (a C16's fast 66 a third of one). Detected during MIDI Learn, and changed by hand in the MIDI panel where the guess is wrong (issue 186); the C16 layout's knobs are declared Relative (ADR-0017).
 _Avoid_: Knob type
 
 **Pickup**:

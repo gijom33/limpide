@@ -1331,7 +1331,9 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .midi-mappings li { display: grid; grid-template-columns: 1fr auto; align-items: center; column-gap: 8px; }
 .mapping-target { font-weight: 600; }
 .mapping-control { grid-column: 1; color: var(--muted); }
-.midi-mappings li > button { grid-column: 2; grid-row: 1 / span 2; }
+.midi-mappings li > button { grid-column: 2; grid-row: 1 / -1; }
+/* A knob's mode under its control, switched by hand where Learn guessed wrong (issue 186). */
+.midi-mappings li > .segmented-field { grid-column: 1; margin-top: 2px; }
 
 /* MIDI Learn: a bar floating at the bottom centre says what to do (over the page, so nothing moves, and clear of
    the header's and the Timeline's learnable controls); learnable controls are outlined, the selected one strongly. */

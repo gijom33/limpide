@@ -392,6 +392,7 @@ export function App() {
       onQuickSetup={() => midi.updateSetup({ type: 'start' })}
       onLayout={midi.applyLayout}
       onRemove={(control) => midi.mappingStore.remove(control)}
+      onMode={(control, mode) => midi.surface.setMode(control, mode)}
       onClear={() => midi.mappingStore.clear()}
       bendRange={bendRange}
       onBendRange={setBendRange}

@@ -46,6 +46,27 @@ test('MIDI Learn: pick a knob on screen, turn one on the Controller, and it driv
   await expect(midiPanel(page).getByRole('list', { name: 'Mappings' })).toContainText(/Cutoff.*CC 74/); // kept
 });
 
+test('a Mapping learned with the wrong mode is changed in the MIDI panel, and the knob then answers (issue 186)', async ({ page }) => {
+  await startLearn(page);
+  await cutoff(page).click();
+  await play(page, cc(74, 1)); // one click of an encoder, read as a fader nudged off the bottom
+  await expect(learnBar(page)).toContainText(/Cutoff.*CC 74/);
+  await page.keyboard.press('Escape');
+  await openMidi(page);
+  const mode = midiPanel(page).getByRole('radiogroup', { name: 'Cutoff mode' });
+  await expect(mode.getByRole('radio', { name: 'Absolute, with Pickup' })).toHaveAttribute('aria-checked', 'true');
+  await play(page, ...times(10, cc(74, 1)));
+  await page.waitForTimeout(200);
+  await expect(cutoff(page)).toHaveAttribute('aria-valuetext', '2.00 kHz'); // Absolute at 1 of 127: Pickup waits
+  await mode.getByRole('radio', { name: 'Relative' }).click();
+  await expect(mode.getByRole('radio', { name: 'Relative' })).toHaveAttribute('aria-checked', 'true');
+  await play(page, ...times(10, cc(74, 1)));
+  await expect(cutoff(page)).toHaveAttribute('aria-valuetext', '3.56 kHz'); // ten semitones up from 2 kHz
+  await page.reload();
+  await openMidi(page);
+  await expect(midiPanel(page).getByRole('radiogroup', { name: 'Cutoff mode' }).getByRole('radio', { name: 'Relative' })).toHaveAttribute('aria-checked', 'true');
+});
+
 test('a removed Mapping stops driving its Parameter', async ({ page }) => {
   await startLearn(page);
   await cutoff(page).click();
