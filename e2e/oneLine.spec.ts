@@ -21,7 +21,7 @@ const noSecondLine = (page: Page) => page.evaluate(auditPage, { rules: ['wrap'],
 
 // The issue's widths, the audit's, and the narrowest plot column beside the controls (861 px).
 for (const [width, height] of [[375, 812], [430, 932], [690, 830], [1440, 900], [280, 568], [320, 568], [861, 900], [1024, 768], [1920, 1080]]) {
-  test(`the Timeline key is one line at ${width} px, both LFOs on and both Envelopes shown`, async ({ page }) => {
+  test(`the Timeline key is one line at ${width} px, both LFOs on and both Envelopes shown (issue 156)`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await page.goto('/');
     await longestKey(page);
@@ -35,7 +35,7 @@ for (const [width, height] of [[375, 812], [430, 932], [690, 830], [1440, 900], 
   });
 }
 
-test('a shortened key entry keeps its whole name for screen readers and in its tip', async ({ page }) => {
+test('a shortened key entry keeps its whole name for screen readers and in its tip (issue 156)', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto('/');
   await longestKey(page);
@@ -50,7 +50,7 @@ test('a shortened key entry keeps its whole name for screen readers and in its t
   await expect(page.locator('.timeline-key [data-mark="filterEnvelope"]')).toHaveText('Filter Env', { useInnerText: true });
 });
 
-test('an LFO’s Destination name fits its picker on one line, its whole name in the button’s name', async ({ page }) => {
+test('an LFO’s Destination name fits its picker on one line, its whole name in the button’s name (issue 156)', async ({ page }) => {
   for (const [width, height] of [[1440, 900], [1024, 768], [375, 812]]) {
     await page.setViewportSize({ width, height });
     await page.goto('/');

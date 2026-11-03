@@ -43,7 +43,7 @@ test('the bend wheel shows in the Activity Monitor, its range two semitones unti
 });
 
 // Issue 132: channel aftertouch moves one Destination, the Cutoff by default, chosen in the MIDI panel and remembered.
-test('aftertouch moves the Cutoff’s dot, or the Destination picked in the MIDI panel instead, and the choice is kept', async ({ page }) => {
+test('aftertouch moves the Cutoff’s dot, or the Destination picked in the MIDI panel instead, and the choice is kept (issue 132)', async ({ page }) => {
   const knob = (name: string) => page.getByRole('region', { name: 'Filter' }).locator('.knob', { has: page.getByRole('slider', { name: sliderName(name) }) });
   const dot = (name: string) => knob(name).locator('.knob-live');
   const timeline = page.getByRole('img', { name: 'Envelope Timeline' });
@@ -83,7 +83,7 @@ test('aftertouch moves the Cutoff’s dot, or the Destination picked in the MIDI
 
 // Issue 132, the owner's decision 1: per-Note (polyphonic) aftertouch, a TempoPAD C16's, the highest held Note's moving
 // the one Destination; a Note's pressure is forgotten on its release.
-test('per-Note aftertouch moves the Cutoff’s dot by the Note pressed hardest, and a released Note’s is forgotten', async ({ page }) => {
+test('per-Note aftertouch moves the Cutoff’s dot by the Note pressed hardest, and a released Note’s is forgotten (issue 132)', async ({ page }) => {
   const dot = page
     .getByRole('region', { name: 'Filter' })
     .locator('.knob', { has: page.getByRole('slider', { name: sliderName('Cutoff') }) })

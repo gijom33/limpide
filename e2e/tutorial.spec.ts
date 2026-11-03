@@ -448,7 +448,7 @@ for (const width of [375, 1440]) {
 // Issue 129: with a line of what each teaches the list is wider; it opens along whichever edge of its button keeps it
 // on the page (at 861 px the button sits near the right edge).
 for (const width of [375, 860, 861, 1440]) {
-  test(`the Tutorial list stays on the page at ${width} px`, async ({ page }) => {
+  test(`the Tutorial list stays on the page at ${width} px (issue 129)`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/');
     await page.getByRole('button', { name: 'Tutorial', exact: true }).click();

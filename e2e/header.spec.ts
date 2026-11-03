@@ -156,7 +156,7 @@ for (const [size, [width, height]] of Object.entries(SIZES)) {
   });
 }
 
-test(`the piano's 17 keys at a finger's width in the sections 2 × 2`, async ({ page }) => {
+test(`the piano's 17 keys at a finger's width in the sections 2 × 2 (issue 154)`, async ({ page }) => {
   await page.setViewportSize({ width: 690, height: 830 });
   await page.goto('/');
   const h = await header(page);

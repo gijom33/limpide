@@ -274,7 +274,7 @@ test('folded, the Amp card still says what the frozen picture shows to a screen 
 });
 
 // Issue 129: on a phone a card shows two lines until opened, and they say what to watch, whole, not where the Section sits.
-test('on a phone, each card’s two lines say what to watch', async ({ page }) => {
+test('on a phone, each card’s two lines say what to watch (issue 129)', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto('/');
   await startFromAbout(page);

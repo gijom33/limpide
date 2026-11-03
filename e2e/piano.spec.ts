@@ -24,7 +24,7 @@ test('the on-screen piano plays, and lights the key while it sounds', async ({ p
 
 // Issue 154 (decision 6): from 861 px the piano grows by whole keys into the room the header's buttons leave it, to the
 // right; the letter keys' 17 keep their place, and the keys beyond them play by pointer and light for a MIDI Note.
-test('at 1440 px the piano has keys beyond the letter keys: one plays by pointer, and lights for a MIDI Note', async ({ page }) => {
+test('at 1440 px the piano has keys beyond the letter keys: one plays by pointer, and lights for a MIDI Note (issue 154)', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await withFakeController(page); // opens the page
   await ready(page);
