@@ -240,7 +240,7 @@ describe('the Presets do what their words say (issue 108, reviews 13 and 15)', (
       return { centroid: (power.reduce((sum, p, n) => sum + p * (n + 1), 0) / total) * hz(C4), loneShare: Math.max(...power) / total };
     };
     const windows = Array.from({ length: 90 }, (_, i) => windowAt(NOTE + 0.05 + i * 0.04));
-    // A beep is one Harmonic nearly alone (the Square's narrow half reached 89 %): a vowel always keeps its neighbours.
+    // A beep is one Harmonic nearly alone: a vowel always keeps its neighbours.
     for (const [i, { loneShare }] of windows.entries()) expect(loneShare, `window ${i}`).toBeLessThan(0.85);
     // LFO 1 sweeps the band an octave either way: its centroid moves by more than a factor of 2.5.
     const centroids = windows.map((w) => w.centroid);
