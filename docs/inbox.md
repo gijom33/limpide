@@ -4,6 +4,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-11-02, from the 1.22.0 code review (standards and spec, since v1.21.1), none holding the release: (1) 180's first box is ticked though FM, Ring, the triad and the Amp Tap stay at 124–136 % against its 10 % (call 1, merged at the owner's word); (2) 181's Demo check samples parts 1 to 3 only; (3) 181's call 5, Bead switching sides when the other side is clear, is not in decision 3's order and changes 151's side rule; (4) the text boxes Bead avoids are read again only every 0.5 s, on a page scroll or a resize, so a panel opening or a scroll inside one can leave it over text for half a second; (5) the e2e text sampler's covers list lacks the Destination menu, the Tutorial menu, the tempo, MIDI, Learn and Quick Setup panels that the app's list has; (6) after waiting out of sight under the header, Bead rises as from the header even onto an edge (cosmetic, not seen in a browser); (7) Glow's old traces drawn at a new width after a cycles or Note change, untested; (8) standards: six positional arguments to the cling, timing steps in the mascot spec as round trips, a comment in Cycle Lock calling scratch arrays kept between frames, About found without exact; (9) smells: fundamental, fundamentalAt and now travelling together, the hover drawing written twice, `vibrato` meaning a flag and a number, Glow's buffer inline in the Scope's draw.
+
 ## Ideas
 
 ## Dropped
