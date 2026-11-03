@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · bug. Polish for v1
+**Status:** ready-for-human · bug. Built (2026-11-02) on night/2026-11-02, for the owner to try
 
 ## Decisions
 
@@ -43,3 +43,18 @@ Claude's calls, open to the owner:
 **Out of scope:**
 - What the values say (the Synth Geek Layer's review will look at that)
 - Wide windows, where the value shows under the name
+
+## How it was built
+
+**The cause.** Where a value shows in the name's place (860 px and narrower), its hidden copies of the widest it can show (kept so a knob never changes width on wide windows) were still in its box: Detune's, "9999 Hz beats", widened the box past the knob's column, and the value, centred on that wider box, sat to the right, against the next name. The value was not too wide: it was off centre.
+
+**The fix.** There, the copies lie out of the flow and the value is centred on the knob's own column. A value whose widest is still wider than its column is drawn a little smaller, the whole control at one size whatever it reads, so nothing moves as it turns; the size is measured as the window and the fonts change. Detune's widest copy now keeps its words ("beats") apart from its figure, so the size is worked out from the figure the name's place shows. Above 860 px nothing changes.
+
+**Measured first, then after,** every control at 320, 340, 375, 414, 480, 540, 600, 601, 640, 700, 760, 820 and 860 px, Geek on and off, each with the widest values it can show, against its neighbours' names. Before: Detune touched Env Amount from 601 px up (0.4 px, the screenshot's "HzEnv"), and Amp Sustain's dB ran into Release at 601 px; a dozen controls' widest values overran their columns by up to 9 px (the Mixer's and Sustain's dB, the times in ms, Cutoff and Key Track in kHz). After: every value inside its own column, at least 6 px from the next name. A browser test measures Detune at its top against Env Amount at 320, 375, 601, 700 and 860 px.
+
+Claude's calls, open to the owner:
+
+1. **Drawn smaller rather than shortened.** Shorter forms would change what the values say, left to the Synth Geek Layer's review; drawing smaller keeps every figure and unit.
+2. **How small:** the most a value shrinks is to about 9 px from 11 (the Mixer's and Amp Sustain's dB with Geek on, "−40.0 dB", at 320 to 375 px and at 601 px); the times in ms go to about 10 px at 601 px, Cutoff and Key Track to about 10.5 px. If 9 px reads too small, the dB could drop its decimal below −10 dB in the name's place ("−40 dB"), which keeps them at 10.5 px or more.
+
+**To try:** at 700 px (or a phone), the Synth Geek Layer on, Osc 2's tab: turn Detune to its top; "12.9 Hz" sits under Detune's dial, clear of "Env Amount". Then the Mixer's faders near the bottom with Geek on, and the Envelopes' times, at 601 px and on a phone: each value stays under its own control, readable.
