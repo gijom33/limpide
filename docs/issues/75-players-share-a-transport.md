@@ -69,3 +69,5 @@ Claude's calls, open to the owner:
 - **What plays** (`usePlayers`): one `playing` value ('demo', 'song', 'listen' or none) and one stop; `play(kind, start)` stops what plays first. A Tutorial calls `stopAll`.
 
 Since then (2026-10-28, the code review of issues 73 to 79): decision 9, Listen looping without end, kept by the owner.
+
+Since then (issue 198, 2026-11-02): the Transport's ticks come from a worker's timers, which a browser does not slow in the background; a Note past its start when handed over is dropped, not played late; and while the page is hidden the Song and Listen hand their Notes over 2 s ahead (`background`), the Demo and Hold's rhythm keeping their short look-ahead.

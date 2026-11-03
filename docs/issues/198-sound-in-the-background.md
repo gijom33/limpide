@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · bug. Polish for v1. Heard by the owner while the Demo or the Song played (2026-11-02); the browser was not said, so the brief covers Chromium and WebKit
+**Status:** ready-for-human · bug. Built (2026-11-02) on night/2026-11-02, for the owner to try
 
 ## Decisions
 
@@ -47,3 +47,40 @@ Claude's calls, open to the owner:
 **Out of scope:**
 - A page the browser freezes or suspends (decision 5)
 - The Viewers, which need not draw while hidden
+
+## The reproduction
+
+A headless browser never slows a page it runs: its pages stay visible, even behind another tab, and their timers keep time (126 ticks of 20 ms in 3 s, hidden by another tab or not, in both browsers). So the reproduction does what a browser does to a page in the background: the page says it is hidden (or not: unfocused), and its own timers fire only on the next whole second. Each player ran 5 s so, then 1.5 s in front again; the tests' build writes down every Note the engine is asked to start, with when it was handed over, on the audio clock. "Late" is a Note handed over after its start, which the engine then plays at once.
+
+| Browser | Player | Page | Without the fix: Notes late of those started (worst) | With the fix |
+| --- | --- | --- | --- | --- |
+| Chromium | Demo | hidden | 8 of 10 (0.78 s) | 0 late |
+| Chromium | Demo | unfocused | 8 of 9 (0.77 s) | 0 late |
+| Chromium | Song | hidden | 14 of 17 (0.79 s) | 0 late |
+| Chromium | Song | unfocused | 13 of 19 (0.73 s) | 0 late |
+| Chromium | Hold's rhythm | hidden | 10 of 12 (0.74 s) | 0 late |
+| Chromium | Hold's rhythm | unfocused | 10 of 12 (0.73 s) | 0 late |
+| WebKit | Demo | hidden | 8 of 10 (0.71 s) | 0 late |
+| WebKit | Demo | unfocused | 8 of 10 (0.72 s) | 0 late |
+| WebKit | Song | hidden | 15 of 18 (0.83 s) | 0 late |
+| WebKit | Song | unfocused | 14 of 18 (0.84 s) | 0 late |
+| WebKit | Hold's rhythm | hidden | 10 of 12 (0.76 s) | 0 late |
+| WebKit | Hold's rhythm | unfocused | 10 of 12 (0.75 s) | 0 late |
+
+Without the fix, the late Notes came in bursts on each slowed tick, and the first second back in front still had 1 to 3 late. With it, none late in either browser, hidden or not, nor back in front: unfocused, the Notes were handed over no further ahead than in front (0.15 s; Hold 0.1 s), so the worker's ticks alone keep time. (Measured with the Demo and Hold's rhythm still widening to 2 s while hidden; the review then kept their short look-ahead, which the unfocused rows measure.) Notes played by hand, the page hidden and its timers slowed: each started the moment it was played, in both browsers; they never wait on a timer, nor do a MIDI keyboard's.
+
+## How it was built
+
+- **The players' ticks** come from timers in a worker (`src/play/workerTimers.ts`), which a browser does not slow in the background; where a worker cannot be made or fails to start, the page's own timers, as before. The Transport (`src/play/transport.ts`) takes them by default.
+- **A Note past its start** when handed over is dropped, its key not lit, rather than played late in a burst (a page the browser froze resumes cleanly, decision 5).
+- **The look-ahead in front** is as short as before (0.15 s; Hold's rhythm 0.1 s), so Stop, Freeze, a Preset change and a tempo change are heard as quickly as before.
+- **The tests' build** writes down every Note the engine is asked to start (`src/app/notesInTests.ts`, like `silentInTests`, absent from the published site), for the e2e test.
+- **Tests:** in `transport.test.ts`, ticks slowed to once a second with the page hidden hand every Note over before its start, once; a Note past its start is dropped; back in front the look-ahead narrows. `player.test.ts` and `song.test.ts` pin which players widen. `e2e/background.spec.ts`, in Chromium and WebKit: the Demo with the page hidden and its timers slowed for 5 s starts every Note of the track due in those seconds, on its beat, none handed over late.
+
+Claude's calls, open to the owner:
+
+6. **Only the Song and Listen widen** their look-ahead to 2 s while the page is hidden, the hedge of decision 4, in case a browser slows even a worker. The Demo and Hold's rhythm keep their short one and rely on the worker's ticks: the Demo turns its knobs at once and a Note takes its Envelopes and Glide when handed over, so Notes handed 2 s ahead would miss the moves before them (its Decay and Glide moves heard late, or its Cutoff moves early); Hold's rhythm follows the Notes held, which a MIDI keyboard may change while the page is hidden, and would play 2 s of the old ones. Should a browser slow the worker too, those two would drop Notes in the background rather than play them late.
+7. **The reproduction is simulated** (above): a real background tab could not be had headless, and the night opens no browser window. Whether a real Safari slows a worker's timers in the background is not measured.
+
+What to try: play the Demo, then the Song, then a Hold rhythm, and each time switch to another tab or another window for half a minute, in Chrome and in Safari: nothing should be skipped or bunched, and coming back plays on smoothly. Then, in front, Stop and change Preset while each plays: as quick as before.
+
