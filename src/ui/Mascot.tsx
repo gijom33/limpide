@@ -887,9 +887,9 @@ export function Mascot({
       }
 
       // A trick seen whole under what is over the page (issue 200): where the room over it is short, it hops lower, and
-      // if its drawing is still too tall (an umbrella, a cloud), it is drawn smaller about its foot. Elsewhere, as it was.
+      // if its drawing is still too tall (an umbrella, a cloud), it is drawn smaller about its foot. With room, untouched.
       let shrink = 1;
-      if (where.moving === 'standing' || where.moving === 'hovering' || where.moving === 'landing') {
+      if (/^(standing|hovering|landing|clinging)$/.test(where.moving)) {
         const grid = HEIGHT / 13;
         const room = where.foot - overPage - 1;
         const drawnTop = Math.min(PROP_TOP[pose.prop] ?? 0, HAT_TOP[pose.hat] ?? 0, pose.ice > 0 ? topOf(ICE) : 0);
@@ -951,9 +951,13 @@ export function Mascot({
       const ground = where.foot - page.top;
       outer.style.transform = `translate(${left}px, ${ground - HEIGHT - HEADROOM}px)${shrink < 1 ? ` scale(${shrink})` : ''}`;
       // Its droplets kept under what is over the page, a droplet's size under it (issue 200).
-      droplets.under(overPage - page.top + 2);
+      const ceiling = overPage - page.top + 2;
+      droplets.under(ceiling);
       // Its droplets, in the page: a splash as it lands (harder, more), its smash, its shake, its tail's spray.
       const base = { x: left + DROP_MIDDLE, y: ground };
+      // A point of its drawing as drawn, smaller about its foot where it is (issue 200).
+      const drawnX = (x: number) => base.x + (x - base.x) * shrink;
+      const drawnY = (y: number) => ground - (ground - y) * shrink;
       middle = { x: base.x, y: ground - HEIGHT / 2 - pose.lift };
       if (where.landedAt !== null && where.moving === 'landing') droplets.fling(5 + Math.round(9 * where.impact), base.x, base.y, 'up', where.impact);
       if (pose.burst) {
@@ -964,28 +968,28 @@ export function Mascot({
           for (let i = 0; i < count; i++) {
             const at = base.x + (Math.random() * 2 - 1) * RAIN_WIDE;
             const onUmbrella = pose.prop === 'umbrella' && at >= left + CANOPY.from * grid && at <= left + CANOPY.to * grid;
-            droplets.fling(1, at, ground - Math.min(RAIN_HIGH, ground - (overPage - page.top) - 2), 'rain', 0.5, onUmbrella ? ground - HEIGHT + CANOPY.top * grid - pose.lift : ground);
+            droplets.fling(1, at, ground - Math.min(RAIN_HIGH, ground - ceiling), 'rain', 0.5, onUmbrella ? drawnY(ground - HEIGHT + CANOPY.top * grid - pose.lift) : ground);
           }
         } else {
           if (fling === 'arc') {
             // Up from its head, in an arc back down to its edge.
-            droplets.fling(count, base.x, ground - HEIGHT - pose.lift, 'arc', pose.burst.aim ?? 0, ground);
+            droplets.fling(count, base.x, drawnY(ground - HEIGHT - pose.lift), 'arc', pose.burst.aim ?? 0, ground);
           } else if (fling === 'pour') {
             // From the glass's rim, falling into its mouth.
             const grid = HEIGHT / 13;
-            droplets.fling(count, left + POURING_AT.x * grid, ground - HEIGHT + POURING_AT.y * grid, 'pour', 1, ground - HEIGHT + MOUTH_Y * grid);
+            droplets.fling(count, drawnX(left + POURING_AT.x * grid), drawnY(ground - HEIGHT + POURING_AT.y * grid), 'pour', 1, drawnY(ground - HEIGHT + MOUTH_Y * grid));
           } else if (fling === 'jet') {
             // From the muzzle, turned with it: the gun is drawn on its left.
             const facing = pose.turn < 0 ? -1 : 1;
-            droplets.fling(count, left + DROP_MIDDLE + facing * (MUZZLE.x - DROP_MIDDLE), ground - HEIGHT - pose.lift + MUZZLE.y, 'jet', -facing);
+            droplets.fling(count, drawnX(left + DROP_MIDDLE + facing * (MUZZLE.x - DROP_MIDDLE)), drawnY(ground - HEIGHT - pose.lift + MUZZLE.y), 'jet', -facing);
           } else if (fling === 'shower') {
             // From under its cloud, down onto it.
             const grid = HEIGHT / 13;
             const at = left + (CLOUD.from + Math.random() * (CLOUD.to - CLOUD.from)) * grid;
-            droplets.fling(count, at, ground - HEIGHT + CLOUD.bottom * grid, 'shower', 0.5, ground);
+            droplets.fling(count, drawnX(at), drawnY(ground - HEIGHT + CLOUD.bottom * grid), 'shower', 0.5, ground);
           } else {
-            const top = ground - HEIGHT * pose.size - pose.lift;
-            const from = fling === 'up' || fling === 'drip' ? base.y : fling === 'spout' || fling === 'steam' ? top : middle.y;
+            const top = drawnY(ground - HEIGHT * pose.size - pose.lift);
+            const from = fling === 'up' || fling === 'drip' ? base.y : fling === 'spout' || fling === 'steam' ? top : drawnY(middle.y);
             droplets.fling(count, base.x, from, fling, 1);
           }
         }
@@ -1027,8 +1031,8 @@ export function Mascot({
         const dx = (tip.x * grid - ox) * (2 - pose.stretch) * pose.turn * pose.size;
         const dy = (tip.y * grid - oy) * pose.stretch * pose.size;
         const a = (pose.tilt * Math.PI) / 180;
-        const x = left + ox + dx * Math.cos(a) - dy * Math.sin(a);
-        const y = ground - pose.lift + dx * Math.sin(a) + dy * Math.cos(a);
+        const x = drawnX(left + ox + dx * Math.cos(a) - dy * Math.sin(a));
+        const y = drawnY(ground - pose.lift + dx * Math.sin(a) + dy * Math.cos(a));
         const bottom = innerHeight - page.top + 30;
         const hookY = y + pose.hook * Math.max(0, bottom - y);
         const [line, hook, caught] = fish.children as unknown as [SVGLineElement, SVGGElement, SVGGElement];

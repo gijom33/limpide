@@ -117,7 +117,7 @@ describe('under a ceiling (issue 200)', () => {
     }
   });
 
-  it('with room enough, droplets fly as before', () => {
+  it('with room enough, droplets fly untouched', () => {
     const free = createSpray(seeded(31));
     free.fling(20, 100, 500, 'spout', 1);
     const roomy = createSpray(seeded(31));

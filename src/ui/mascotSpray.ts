@@ -40,7 +40,7 @@ export function createSpray(random: () => number = Math.random) {
   const between = (a: number, b: number) => a + random() * (b - a);
   const either = () => (random() < 0.5 ? -1 : 1);
   return {
-    /** From now, droplets flung keep under `y`: lower and smaller where the room is short, as before where it is not. */
+    /** From now, droplets flung keep under `y`: lower and smaller where the room is short, untouched where there is room. */
     under(y: number) {
       ceiling = y;
     },

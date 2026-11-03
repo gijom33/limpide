@@ -352,7 +352,7 @@ test('on a phone, on an edge just under the tabs, its fountains are seen whole u
   // Each frame through the Las Vegas show and the fountain after it: the highest of its drawing and its droplets,
   // against the header's foot.
   const over = await page.evaluate(
-    () =>
+    (BEAD_HEIGHT) =>
       new Promise<{ under: number; head: number }>((done) => {
         let under = Infinity;
         let head = Infinity;
@@ -365,12 +365,13 @@ test('on a phone, on an edge just under the tabs, its fountains are seen whole u
             const b = r.getBoundingClientRect();
             if (b.width > 0) under = Math.min(under, b.top - header);
           }
-          head = Math.min(head, document.querySelector('.mascot-drop')!.getBoundingClientRect().bottom - 26 - header);
+          head = Math.min(head, document.querySelector('.mascot-drop')!.getBoundingClientRect().bottom - BEAD_HEIGHT - header);
           if (performance.now() < end) requestAnimationFrame(sample);
           else done({ under, head });
         };
         requestAnimationFrame(sample);
       }),
+    BEAD_HEIGHT,
   );
   // Its head close under the header, the room short for a fountain; nothing of it behind the header.
   expect(over.head).toBeLessThan(40);
