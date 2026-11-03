@@ -2,7 +2,7 @@ import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { LEAD_IN } from '../../demo/player';
 import { type ParamId, type Patch, setParam } from '../../patch/patch';
 import type { KeptPatch, PatchStore } from '../../patch/patchStore';
-import { TOUR, TOUR_PATCH, type TourMove, type TourSection, tourAt } from '../../tutorial/tour';
+import { type Looking, TOUR, TOUR_PATCH, type TourMove, type TourSection, tourAt } from '../../tutorial/tour';
 import type { ViewerStore } from '../../viewers/viewerStore';
 
 /** How often the synth's hand moves the card's control: as often as the Demo's knobs. */
@@ -78,6 +78,8 @@ export function useTourState({ patches, viewers, onStart, onCard, onEnd }: Host)
   const [index, setIndex] = useState<number | null>(null);
   // The control the synth is turning now, for the card to ring.
   const [moving, setMoving] = useState<TourMove['id'] | null>(null);
+  // What the page shows where the control and the Viewers do not fit together (issue 206).
+  const [looking, setLooking] = useState<Looking>('control');
   // Whether the synth still freezes the Viewers on this card, and what the card names while it has them frozen.
   const [freezing, setFreezing] = useState(false);
   const [naming, setNaming] = useState<string[] | null>(null);
@@ -93,6 +95,7 @@ export function useTourState({ patches, viewers, onStart, onCard, onEnd }: Host)
     if (restore) patches.restore(mine);
     setIndex(null);
     setMoving(null);
+    setLooking('control');
     setFreezing(false);
     setNaming(null);
   };
@@ -125,8 +128,9 @@ export function useTourState({ patches, viewers, onStart, onCard, onEnd }: Host)
       // Ended by a load between this card's last render and its cleanup: the Patch loaded is the person's.
       if (!kept.current) return;
       // Counted from the phrase's first beat, so a stage set before a Note, and a freeze once it has faded, fall there.
-      const { values, moving, naming } = tourAt(card, Math.max(0, (performance.now() - began) / 1000 - LEAD_IN));
+      const { values, moving, naming, looking } = tourAt(card, Math.max(0, (performance.now() - began) / 1000 - LEAD_IN));
       setMoving(moving);
+      setLooking(looking);
       const holding = hand.follow(naming !== null);
       setFreezing(holding && card.freezes !== undefined);
       setNaming(holding ? naming : null);
@@ -152,5 +156,5 @@ export function useTourState({ patches, viewers, onStart, onCard, onEnd }: Host)
   // Nothing turns on after the page goes.
   useEffect(() => () => finishNow(), []);
 
-  return { index, moving, freezing, naming, start, end: () => finish(), move };
+  return { index, moving, looking, freezing, naming, start, end: () => finish(), move };
 }

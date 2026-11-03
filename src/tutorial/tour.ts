@@ -32,7 +32,10 @@ export interface TourSection extends PhraseAtTempo {
   does: string;
   /** What its Viewers show at that point in the chain. */
   sees: string;
-  /** The Viewers the card points at, by their accessible names, the first brought into view first where not all fit. */
+  /**
+   * The Viewers the card points at, by their accessible names, the first brought into view first where not all fit;
+   * where they and the control moving do not fit together, the page shows each in turn (`tourAt`'s `looking`, issue 206).
+   */
   viewers: ViewerName[];
   /** Turned one after the other, then again from the first. */
   moves: TourMove[];
@@ -42,6 +45,9 @@ export interface TourSection extends PhraseAtTempo {
    */
   freezes?: { at: number; seconds: number; names: string[] }[];
 }
+
+/** What the page shows where a card's moving control and its Viewers do not fit on screen together (issue 206). */
+export type Looking = 'control' | 'viewer';
 
 /** The Tour's own sound: Init, a saw through an open low-pass Filter (issue 128, decision 6). */
 export const TOUR_PATCH = PRESETS[0];
@@ -109,7 +115,8 @@ export const TOUR: TourSection[] = [
     chain: 'The Amp takes the Filter’s sound and sends it on to your speakers.',
     does: 'The Amp sets how loud each Note is, moment by moment, with its Envelope, a shape over time: a Note’s life story in four stages. Attack, how fast it rises once the key goes down. Decay, how fast it then falls back to a steady level. Sustain, that level, held while the key stays down. Release, how long it fades once you let go. The Filter has an Envelope of its own too, opening and closing it the same way.',
     sees: 'Once each Note has faded, the pictures freeze for a moment: the Envelope Timeline, the last few seconds, shows the shape the Note took. On the Amp Spectrum, all the lines rise and fall together.',
-    // The Timeline first: on a phone it is far below the Amp's Viewers, and it alone is brought into view (issue 130).
+    // The Timeline first: on a phone it is far below the Amp's Viewers and faders, and it alone is brought into view while
+    // the picture shows the Note's shape and freezes (issues 130 and 206).
     viewers: ['Envelope Timeline', 'Amp Scope', 'Amp Spectrum'],
     phrase: stagePhrase,
     bpm: PASS.bpm,
@@ -137,6 +144,12 @@ export const TOUR: TourSection[] = [
 /** What the last card says after its own words, pointing on to the first Tutorial. */
 export const TOUR_END = 'That is the whole chain. Now build a sound yourself: the Bass Tutorial goes through it one control at a time.';
 
+/**
+ * How long the page looks at a control as it starts to move, from rest, before it looks at the card's Viewers, where
+ * the two do not fit on screen together (issue 206): long enough to see it go, and the whole of the Amp's turn.
+ */
+const CONTROL_SHOWN = 1;
+
 /** How long each leg of a move takes: a knob's from one point of its path to the next, a Waveform's held. */
 const legsOf = (move: TourMove) =>
   typeof move.seconds === 'number' ? Array<number>(move.kind === 'param' ? move.path.length - 1 : move.path.length).fill(move.seconds) : move.seconds;
@@ -149,10 +162,16 @@ export const cycleLength = (card: TourSection) => card.moves.reduce((sum, move) 
 
 /**
  * Where the card's controls are `seconds` after its phrase's first beat: the one moving now along its path, the others
- * resting on the Tour's Patch's values; which control is moving; and what the card names while the synth freezes the
- * Viewers, or null while they run.
+ * resting on the Tour's Patch's values; which control is moving; what the card names while the synth freezes the
+ * Viewers, or null while they run; and what the page looks at where the moving control and the Viewers do not fit on
+ * screen together (issue 206, decisions 2 and 4): the control for its first second whenever it starts from rest (a
+ * knob's move or its leg after a hold, each new Waveform), else the Viewers, so they show what the move did and every
+ * freeze.
  */
-export function tourAt(card: TourSection, seconds: number): { values: Partial<Patch>; moving: TourMove['id']; naming: string[] | null } {
+export function tourAt(
+  card: TourSection,
+  seconds: number,
+): { values: Partial<Patch>; moving: TourMove['id']; naming: string[] | null; looking: Looking } {
   const inCycle = seconds % cycleLength(card);
   const naming = card.freezes?.find((f) => inCycle >= f.at && inCycle < f.at + f.seconds)?.names ?? null;
   let t = inCycle;
@@ -166,6 +185,9 @@ export function tourAt(card: TourSection, seconds: number): { values: Partial<Pa
   const legs = legsOf(current);
   let leg = 0;
   for (; leg < legs.length - 1 && t >= legs[leg]; leg++) t -= legs[leg];
+  const { path } = current;
+  const fromRest = current.kind === 'choice' || (path[leg] !== path[leg + 1] && (leg === 0 || path[leg - 1] === path[leg]));
+  const looking = fromRest && t < Math.min(CONTROL_SHOWN, legs[leg]) ? 'control' : 'viewer';
   if (current.kind === 'choice') values[current.id] = current.path[leg];
   else {
     const def = PARAMS[current.id];
@@ -173,5 +195,5 @@ export function tourAt(card: TourSection, seconds: number): { values: Partial<Pa
     const progress = Math.min(1, t / legs[leg]);
     values[current.id] = progress === 0 || from === to ? from : positionToValue(def, valueToPosition(def, from) + (valueToPosition(def, to) - valueToPosition(def, from)) * progress);
   }
-  return { values, moving: current.id, naming };
+  return { values, moving: current.id, naming, looking };
 }

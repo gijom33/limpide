@@ -1,5 +1,5 @@
 import { type RefObject, useEffect, useRef } from 'react';
-import { TOUR, TOUR_END, type TourMove, type TourSection } from '../tutorial/tour';
+import { type Looking, TOUR, TOUR_END, type TourMove, type TourSection } from '../tutorial/tour';
 import { CardShell } from './CardShell';
 import { bringClear } from './docked';
 import type { Guide } from './mascotCling';
@@ -9,6 +9,8 @@ interface Props {
   index: number;
   /** The control the synth is turning now. */
   moving: TourMove['id'] | null;
+  /** What the page shows where that control and the card's Viewers do not fit together (issue 206). */
+  looking: Looking;
   /** Whether the synth still freezes the Viewers on this card: not once the person has taken Freeze (issue 130). */
   freezing: boolean;
   /** What the card names while the synth has the Viewers frozen, left to right, or null. */
@@ -27,38 +29,84 @@ const controlOf = (move: Pick<TourMove, 'kind' | 'id'>) => document.querySelecto
 /** What Bead points the way to on a Tour card (issue 151, decision 2): one control a card, its first move's. */
 export const tourGuide = (index: number): Guide => ({ selector: selectorOf(TOUR[index].moves[0]), standIn: null, step: `tour ${index}`, made: false, finished: false });
 
+/** The keys that scroll the page, unless a control takes them. */
+const SCROLL_KEYS = new Set(['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End']);
+const TAKES_KEYS = 'input, textarea, select, [contenteditable], [role="slider"], [role="radiogroup"], [role="radio"], [role="listbox"], [role="menu"]';
+
+/**
+ * Calls `onScroll` when the person scrolls the page themselves (the wheel, a finger, the keys, the scroll bar), never
+ * for the page's own scrolling, which fires the same scroll events.
+ */
+function watchPersonScroll(onScroll: () => void) {
+  const onKey = (e: KeyboardEvent) => {
+    if (SCROLL_KEYS.has(e.key) && !e.defaultPrevented && !(e.target instanceof Element && e.target.closest(TAKES_KEYS))) onScroll();
+  };
+  // Pressed on the page's scroll bar: on the root itself, which no content covers.
+  const onPointer = (e: PointerEvent) => e.target === document.documentElement && onScroll();
+  addEventListener('wheel', onScroll, { passive: true });
+  addEventListener('touchmove', onScroll, { passive: true });
+  addEventListener('keydown', onKey);
+  addEventListener('pointerdown', onPointer);
+  return () => {
+    removeEventListener('wheel', onScroll);
+    removeEventListener('touchmove', onScroll);
+    removeEventListener('keydown', onKey);
+    removeEventListener('pointerdown', onPointer);
+  };
+}
+
 /**
  * Brings the card's Section into view: its controls shown (on their tab), and its Viewers and its controls between the
- * header and the card, the Viewers first where not all fit, as each card speaks of them (issue 128, decision 10). The
- * LFO card brings the Timeline alone, as the Cutoff knob could not share the screen with it; its words point at the
- * Timeline's dotted line instead (issue 158, decided by the owner).
+ * header and the card, together where they fit (issue 128, decision 10). Where the control moving and the Viewers do
+ * not fit together, the page shows each in turn, as the card's clock says (`looking`, issue 206): the control as it
+ * starts to move, with as many Viewers as fit beside it, then the Viewers, with the control if it fits; so where all
+ * fit the page holds still. It glides, or jumps with reduced motion. The person's own scroll stops it for the rest of
+ * the card (decision 5). The LFO card points at the Timeline (issue 158, decided by the owner): its Depth knob shows
+ * with it, or in turn.
  */
-function useSectionInView(card: TourSection, docked: RefObject<HTMLElement | null>) {
+function useSectionInView(card: TourSection, docked: RefObject<HTMLElement | null>, moving: TourMove['id'] | null, looking: Looking) {
+  const bring = useRef<(moving: TourMove['id'] | null, looking: Looking) => void>(() => {});
+  const now = useRef({ moving, looking });
+  now.current = { moving, looking };
   useEffect(() => {
-    const controls = card.moves.map(controlOf).filter((e) => e !== null);
-    for (const control of controls) reveal(control);
+    const controls = card.moves.map((move) => ({ id: move.id, element: controlOf(move) }));
+    for (const { element } of controls) if (element) reveal(element);
     const viewers = card.viewers.map((name) => document.querySelector(`[aria-label="${name}"]`)).filter((e) => e !== null);
     for (const viewer of viewers) viewer.setAttribute('data-tutorial-viewer', '');
-    const bring = () => {
+    // The person scrolled: the page is theirs for the rest of this card.
+    let theirs = false;
+    let shown = false;
+    const unwatch = watchPersonScroll(() => {
+      theirs = true;
+    });
+    bring.current = (moving, looking) => {
+      if (!shown || theirs || !docked.current) return;
+      const first = controls.filter((c) => c.id === moving);
+      const ordered = [...first, ...controls.filter((c) => c.id !== moving)].map((c) => c.element).filter((e) => e !== null);
+      const elements = looking === 'control' && first.length ? [ordered[0], ...viewers, ...ordered.slice(1)] : [...viewers, ...ordered];
       const behavior = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
-      if (docked.current) bringClear(docked.current, [...viewers, ...controls], behavior);
+      bringClear(docked.current, elements, behavior);
     };
+    const again = () => bring.current(now.current.moving, now.current.looking);
     // After the tab it was on has had a frame to show, and the card its new height; then again whenever the card or the
     // page changes size while it is shown (on GitHub's Linux the last card came out 22 px taller after the scroll).
-    let shown = false;
-    const resized = new ResizeObserver(() => shown && bring());
+    const resized = new ResizeObserver(again);
     if (docked.current) resized.observe(docked.current, { box: 'border-box' });
     resized.observe(document.querySelector('main')!);
     const scroll = setTimeout(() => {
       shown = true;
-      bring();
+      again();
     }, 50);
     return () => {
       clearTimeout(scroll);
       resized.disconnect();
+      unwatch();
+      bring.current = () => {};
       for (const viewer of viewers) viewer.removeAttribute('data-tutorial-viewer');
     };
   }, [card, docked]);
+  // The card's clock turns from the control to the Viewers and back, or to the next control.
+  useEffect(() => bring.current(moving, looking), [moving, looking]);
 }
 
 /** Rings the control the synth is turning, as a Tutorial rings the one to turn, and marks its section in the phone's strip. */
@@ -127,11 +175,11 @@ function FrozenLine({ freezes, freezing, naming }: { freezes: NonNullable<TourSe
  * controls. Back and Next move between the cards; the last offers the Bass Tutorial. It takes the focus on its Next when
  * the Tour starts; turning the controls never takes it.
  */
-export function TourCard({ index, moving, freezing, naming, onBack, onNext, onBass, onClose }: Props) {
+export function TourCard({ index, moving, looking, freezing, naming, onBack, onNext, onBass, onClose }: Props) {
   const tour = TOUR[index];
   const last = index === TOUR.length - 1;
   const card = useRef<HTMLElement>(null);
-  useSectionInView(tour, card);
+  useSectionInView(tour, card, moving, looking);
   useRing(tour, moving);
 
   const primary = last ? (

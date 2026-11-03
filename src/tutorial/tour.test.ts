@@ -139,3 +139,39 @@ describe('The Tour (issue 128)', () => {
     for (const c of TOUR) expect(parsePhrase(c.phrase, c.bpm).length, c.title).toBeGreaterThan(1);
   });
 });
+
+// Issue 206: where a card's control and its Viewer do not fit on screen together, the page shows each in turn: the
+// control as it starts to move, then the Viewer for what it shows.
+describe('What the Tour looks at, in turn (issue 206)', () => {
+  /** What the card looks at, every tenth of a second through its cycle. */
+  const looks = (c: TourSection) => Array.from({ length: Math.round(cycleLength(c) * 10) }, (_, i) => ({ t: i / 10, ...tourAt(c, i / 10) }));
+
+  it('on the Amp card, each fader while it turns and goes back, the Viewers through each freeze', () => {
+    const amp = card('Amp');
+    for (const [i, id] of (['ampAttack', 'ampDecay', 'ampSustain', 'ampRelease'] as const).entries()) {
+      const pass = i * 7;
+      // The stage turns over the pass's first second, and goes back over its last 0.8 s.
+      for (const t of [0, 0.5, 0.9, 6.3, 6.9]) expect(tourAt(amp, pass + t), `${id} at ${t}`).toMatchObject({ moving: id, looking: 'control' });
+      // The Note, its fade and the freeze: the Viewers.
+      for (const t of [1.1, 2, 3.2, 4.5, 6.1]) expect(tourAt(amp, pass + t), `${id} at ${t}`).toMatchObject({ moving: id, looking: 'viewer' });
+    }
+    for (const { t, naming, looking } of looks(amp)) if (naming) expect(looking, `frozen at ${t}`).toBe('viewer');
+  });
+
+  it('on a card that sweeps, the control as each move starts, then the Viewers', () => {
+    const filter = card('Filter');
+    expect(tourAt(filter, 0.5)).toMatchObject({ moving: 'cutoff', looking: 'control' });
+    expect(tourAt(filter, 2)).toMatchObject({ moving: 'cutoff', looking: 'viewer' });
+    expect(tourAt(filter, 5)).toMatchObject({ moving: 'cutoff', looking: 'viewer' }); // on its way back up: still the Viewers
+    expect(tourAt(filter, 8.5)).toMatchObject({ moving: 'resonance', looking: 'control' });
+    expect(tourAt(filter, 11)).toMatchObject({ moving: 'resonance', looking: 'viewer' });
+  });
+
+  it('on every card, the Viewers most of the time: they show what the card speaks of', () => {
+    for (const c of TOUR) {
+      const all = looks(c);
+      expect(all.filter((l) => l.looking === 'viewer').length, c.title).toBeGreaterThan(all.length / 2);
+      expect(all.some((l) => l.looking === 'control'), c.title).toBe(true);
+    }
+  });
+});

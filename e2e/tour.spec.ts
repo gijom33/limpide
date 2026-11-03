@@ -35,9 +35,11 @@ const playing = (page: Page) => expect(page.getByRole('group', { name: 'Piano' }
  * Where an element stands: "clear" between the header (and the phone's strip) and the card, as a Tutorial's control
  * must (tutorial.spec.ts).
  */
-const standing = (page: Page, name: string) =>
-  page.evaluate((name) => {
-    const element = document.querySelector(`[aria-label="${name}"]`);
+const standing = (page: Page, name: string) => standingAt(page, `[aria-label="${name}"]`);
+/** Where the element `selector` finds stands, as `standing` says. */
+const standingAt = (page: Page, selector: string) =>
+  page.evaluate((selector) => {
+    const element = document.querySelector(selector);
     if (!element) return 'none';
     const box = element.getBoundingClientRect();
     const card = document.querySelector('.docked')!.getBoundingClientRect();
@@ -45,7 +47,7 @@ const standing = (page: Page, name: string) =>
     const strip = document.querySelector('.section-strip')?.getBoundingClientRect();
     const top = Math.max(header.bottom, strip?.height ? strip.bottom : 0);
     return box.bottom <= card.top + 1 && box.top >= top - 1 ? 'clear' : `hidden: ${Math.round(box.top)} to ${Math.round(box.bottom)} between ${Math.round(top)} and ${Math.round(card.top)}`;
-  }, name);
+  }, selector);
 
 test.describe('a first visit', () => {
   test.use({ storageState: FIRST_VISIT });
@@ -326,4 +328,75 @@ test('leaving the Amp card lets go of the Tour’s Freeze, and leaves the person
   await expect(frozen(page)).toHaveCount(1);
   await action(page, 'Back').click();
   await expect(frozen(page)).toHaveCount(1);
+});
+
+// Issue 206: where a card's control and its Viewer do not fit on screen together, the page shows each in turn: the
+// control as it starts to move, then the Viewer for what it shows. The person's own scroll stops it for that card.
+
+/** A fader or knob of the page, by what it sets, as the Tour finds it. */
+const control = (id: string) => `[data-learn="param:${id}"]`;
+const scrollTop = (page: Page) => page.evaluate(() => Math.round(scrollY));
+
+test('on a phone, the Amp card shows each fader while it moves and the Timeline while it freezes (issue 206)', async ({ page }) => {
+  test.setTimeout(60000);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.setViewportSize({ width: 375, height: 812 });
+  await toAmpCard(page);
+  await expect.poll(() => standingAt(page, control('ampAttack')), { timeout: 2000 }).toBe('clear'); // as it turns
+  await expect(frozen(page)).toHaveCount(1, { timeout: 6000 });
+  expect(await standing(page, 'Envelope Timeline')).toBe('clear'); // through the freeze
+  expect(await standingAt(page, control('ampAttack'))).not.toBe('clear'); // they do not fit together here
+  await expect(frozen(page)).toHaveCount(0, { timeout: 4000 });
+  await expect.poll(() => standingAt(page, control('ampDecay')), { timeout: 2000 }).toBe('clear'); // the next stage
+  await expect(frozen(page)).toHaveCount(1, { timeout: 6000 });
+  expect(await standing(page, 'Envelope Timeline')).toBe('clear');
+});
+
+test('the person’s own scroll stops the Tour’s scrolling for that card (issue 206)', async ({ page }) => {
+  test.setTimeout(60000);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.setViewportSize({ width: 375, height: 812 });
+  await toAmpCard(page);
+  await expect.poll(() => standingAt(page, control('ampAttack')), { timeout: 2000 }).toBe('clear');
+  await page.mouse.move(187, 300);
+  await page.mouse.wheel(0, 120);
+  await expect.poll(() => scrollTop(page)).not.toBe(0);
+  await page.waitForTimeout(300);
+  const mine = await scrollTop(page);
+  await expect(frozen(page)).toHaveCount(1, { timeout: 6000 }); // where the Tour would have gone to the Timeline
+  expect(await scrollTop(page)).toBe(mine);
+});
+
+test('the Tour’s page glides to what it shows, and jumps with reduced motion (issue 206)', async ({ page }) => {
+  test.setTimeout(60000);
+  await page.addInitScript(() => {
+    const scrolls: unknown[] = [];
+    (window as unknown as { scrolls: unknown[] }).scrolls = scrolls;
+    const scrollTo = window.scrollTo.bind(window);
+    window.scrollTo = ((...args: [ScrollToOptions]) => {
+      scrolls.push(args[0]?.behavior);
+      scrollTo(...args);
+    }) as typeof window.scrollTo;
+  });
+  await page.setViewportSize({ width: 375, height: 812 });
+  for (const reduced of [false, true]) {
+    await page.emulateMedia({ reducedMotion: reduced ? 'reduce' : 'no-preference' });
+    await toAmpCard(page);
+    await page.evaluate(() => ((window as unknown as { scrolls: unknown[] }).scrolls.length = 0));
+    await expect(frozen(page)).toHaveCount(1, { timeout: 8000 }); // past a fader, to the Timeline
+    const made = await page.evaluate(() => (window as unknown as { scrolls: unknown[] }).scrolls);
+    expect(made.length, `reduced: ${reduced}`).toBeGreaterThan(0);
+    expect(new Set(made), `reduced: ${reduced}`).toEqual(new Set([reduced ? 'auto' : 'smooth']));
+  }
+});
+
+test('from 2 × 2 up, where a card’s controls and Viewers all fit, the page holds still through the card (issue 206)', async ({ page }) => {
+  test.setTimeout(60000);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.setViewportSize({ width: 860, height: 1100 });
+  await toAmpCard(page);
+  await expect.poll(() => standing(page, 'Envelope Timeline')).toBe('clear');
+  const held = await scrollTop(page);
+  expect([...(await valuesOver(() => scrollTop(page).then(String), 8000))]).toEqual([String(held)]); // a pass and more
+  expect(await standingAt(page, control('ampAttack'))).toBe('clear');
 });

@@ -871,6 +871,7 @@ export function App() {
           <TourCard
             index={tour.index}
             moving={tour.moving}
+            looking={tour.looking}
             freezing={tour.freezing}
             naming={tour.naming}
             onBack={() => tour.move(-1)}
