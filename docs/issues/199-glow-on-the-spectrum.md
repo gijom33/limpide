@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement. Polish for v1
+**Status:** ready-for-human · enhancement. Built (2026-11-02) on night/2026-11-02, for the owner to try
 
 ## Decisions
 
@@ -46,3 +46,21 @@ Claude's calls, open to the owner:
 **Out of scope:**
 - The Envelope Timeline
 - Changing Glow's length or decay (180's)
+
+## How it was built
+
+Built 2026-11-02 on `night/2026-11-02`, test-first.
+
+- **One Glow, kept in one place:** the Scope's keeping and fading of its past traces became a module of its own, which the Scopes and now the Spectrums both use; the Scopes draw exactly as before. A unit test covers it: at most a quarter of a second kept, oldest first, each faded by 0.85 per 60th of a second of age, one per 60th of a second on a 120 Hz screen, none while Off, and frozen the ones it had, faded as they were.
+- **The Spectrum:** with Glow on, each Spectrum strokes its past outlines, faded, under the newest outline and its fill; the fill, the Response Curve, the Harmonic Markers, the Ideal Reference and the readout draw only now (decision 3). Frozen, it keeps its glow (decision 5). The Spectrum's own averaging is untouched (decision 4).
+- **Words:** Glow's tip, the Display panel's description and the glossary's entry now say the Scopes and the Spectrums, the tip naming a Filter Envelope's sweep among what glows.
+- **Tests:** an e2e test turns the Filter Envelope's Amount up, turns Glow on and plays a Note: every Spectrum holds past outlines, and frozen, the Filter Spectrum keeps them past twice the Glow's length. The design audit's "Glow on" state now waits for the Amp Spectrum's glow too.
+- **Frame cost**, measured at 1440 × 900 in Chromium with a Note held (the median frame, three rounds): Glow On 3.4 ms a frame against 3.1 to 3.2 ms before; Off unchanged at 3.6 to 3.7 ms.
+
+Claude's calls, open to the owner:
+
+- **An outline drawn on another axis or width is passed over:** switching the frequency axis between log and linear, or resizing, would otherwise leave a quarter of a second of outlines in the wrong place.
+- **Each past outline is drawn at the live outline's width** (1.5 device pixels), so a moving Harmonic's trail stays as fine as the Harmonic.
+
+**To try in the app:** open Display, turn Glow On, turn the Filter Envelope's Amount up and play a few Notes: the Filter and Amp Spectrums leave a soft trail of the Harmonics as the Cutoff sweeps; a held Note settles sharp. Add some Noise or detune Osc 2 and the outline softens. Press Space to freeze: the glow stays.
+
