@@ -16,6 +16,17 @@ test('the sustain pedal holds a released Note until it lifts', async ({ page }) 
   await expect(piano(page).locator('[data-note="60"]')).toHaveAttribute('aria-pressed', 'false');
 });
 
+test('a panic lets every Note go: All Notes Off under the pedal, which still holds them, then All Sound Off (issue 185)', async ({ page }) => {
+  const key = (note: number) => piano(page).locator(`[data-note="${note}"]`);
+  await play(page, [0x90, 60, 100], [0x91, 64, 100], cc(123, 0));
+  await expect(key(60)).toHaveAttribute('aria-pressed', 'false');
+  await expect(key(64)).toHaveAttribute('aria-pressed', 'false');
+  await play(page, [0x90, 60, 100], cc(64, 127), cc(123, 0));
+  await expect(key(60)).toHaveAttribute('aria-pressed', 'true'); // the pedal holds it, as MIDI says
+  await play(page, cc(121, 0)); // Reset All Controllers lifts the pedal
+  await expect(key(60)).toHaveAttribute('aria-pressed', 'false');
+});
+
 test('a Program Change loads that Preset, the mod wheel turns LFO 1’s Depth', async ({ page }) => {
   await play(page, [0xc0, 1]);
   await expect(page.getByRole('button', { name: /^Patch: / })).toHaveAttribute('aria-label', 'Patch: Pure Sine');
