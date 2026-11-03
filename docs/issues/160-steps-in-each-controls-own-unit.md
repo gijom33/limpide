@@ -4,7 +4,7 @@
 
 **Blocked by:** none. Relative encoders and the C16's tuning live in the MIDI code that issues 112 and 147 changed on night/2026-10-31; build it on `main` once that night is merged (Claude's call, open to the owner).
 
-**Status:** ready-for-human · enhancement. Built (2026-11-01) on night/2026-10-31, for the owner to try; the Mixer's steps outside the Synth Geek Layer change in [201](./201-the-mixer-steps-in-what-it-shows.md) (the owner's answer to call 1), so they are not to judge here
+**Status:** done (2026-11-02). Built (2026-11-01) on night/2026-10-31 and released; tried by the owner: "I trust you." Its Mixer steps went to [201](./201-the-mixer-steps-in-what-it-shows.md)
 
 ## Decisions
 

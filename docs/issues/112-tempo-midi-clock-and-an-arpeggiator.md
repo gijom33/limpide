@@ -6,7 +6,7 @@ This reverses one thing in the PRD's Out of Scope: "LFO tempo sync: Limpide keep
 
 **Blocked by:** none
 
-**Status:** ready-for-human · enhancement. Built (2026-10-31) on night/2026-10-31, for the owner to try. In v1 ([131](./131-v1.md), decision 5, the owner, 2026-10-31). Grilled with the owner on 2026-10-31 and cut in three: this issue the tempo and Sync; following MIDI clock in [136](./136-following-midi-clock.md), teaching it in [137](./137-teaching-tempo-sync.md), both blocked by this one.
+**Status:** done (2026-11-02). Built (2026-10-31) on night/2026-10-31 and released; tried by the owner: "I trust you. Hard to follow."
 
 ## Agent Brief
 
