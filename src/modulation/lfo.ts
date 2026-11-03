@@ -142,13 +142,13 @@ export function glideFrequency(history: readonly { time: number; frequency: numb
 export const glideTimeConstant = (glide: number) => glide / GLIDE_SHARPNESS;
 
 /** A tempo's beats (issue 112): `bpm`, counted from `origin`, in the engine's seconds. */
-export interface Beat {
+export interface BeatGrid {
   bpm: number;
   origin: number;
 }
 
 /** The beats of a tempo between two moments (engine seconds). */
-export function beatsBetween({ bpm, origin }: Beat, from: number, to: number): number[] {
+export function beatsBetween({ bpm, origin }: BeatGrid, from: number, to: number): number[] {
   const beat = 60 / bpm;
   const beats: number[] = [];
   for (let k = Math.ceil((from - origin) / beat); origin + k * beat <= to; k++) beats.push(origin + k * beat);

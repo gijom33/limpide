@@ -21,7 +21,7 @@ function longestReadouts(id: ParamId): string[] {
 }
 
 /** The Parameters one control turns: itself and those turned by its knob, as an LFO's Rate turns its note value. */
-const twins = (id: ParamId): ParamId[] => {
+const turnedTogether = (id: ParamId): ParamId[] => {
   const knob = PARAMS[id].knob ?? id;
   return (Object.keys(PARAMS) as ParamId[]).filter((other) => (PARAMS[other].knob ?? other) === knob);
 };
@@ -30,7 +30,7 @@ const twins = (id: ParamId): ParamId[] => {
  * The longest readouts a control can show, whichever of its Parameters it turns, so it keeps one width as it turns
  * and as it changes Parameter: a Rate keeps its width through every Hz and note value, Sync on or off (issue 176).
  */
-const widestReadouts = (id: ParamId): string[] => [...new Set(twins(id).flatMap(longestReadouts))];
+const widestReadouts = (id: ParamId): string[] => [...new Set(turnedTogether(id).flatMap(longestReadouts))];
 
 /**
  * What every Parameter control shares, knob or fader: its position, the arrow keys (steps on its Grid, Shift fine and
@@ -62,7 +62,7 @@ export function useParamControl(id: ParamId, value: number, onChange: (value: nu
   const readout = geek ? readoutText(geek) : formatParam(id, value);
   const geekOn = !!geekPatch; // the context holds null while the layer is off
   const widest = useMemo<GeekReadout[]>(
-    () => [...widestReadouts(id).map((figure) => ({ figure })), ...(geekOn ? twins(id).flatMap(widestGeekReadout) : [])],
+    () => [...widestReadouts(id).map((figure) => ({ figure })), ...(geekOn ? turnedTogether(id).flatMap(widestGeekReadout) : [])],
     [id, geekOn],
   );
   const fit = useValueFit(widest);

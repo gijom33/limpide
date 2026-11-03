@@ -136,7 +136,7 @@ export function createControlSurface(synth: Synth) {
   const pressed = new Map<string, boolean>();
   const clicks = new Map<string, number>(); // encoder clicks towards the next choice, per control
   const gathered = new Map<string, number>(); // a Relative knob's travel towards a stepped dial's next step, per control
-  const thirds = new Map<string, number>(); // a Relative knob's share of a Grid step not yet moved (a C16's 66s), per control
+  const partSteps = new Map<string, number>(); // a Relative knob's share of a Grid step not yet moved (a C16's 66s), per control
   const detecting = new Map<string, number[]>(); // the first values of knobs finding their Encoder Mode
   const lastValues = new Map<string, number>(); // the last value each CC sent, for a Mapping switched to Relative by hand
   // Aftertouch (issue 132, the owner's decision 1): the channel's, and each held Note's own until its release. The
@@ -206,11 +206,11 @@ export function createControlSurface(synth: Synth) {
       const steps = relativeSteps(from, mapping.mode, value);
       const key = controlKey(mapping.control);
       if (dial.step) {
-        // A turn back forgets the thirds gathered the other way, so it answers at once.
-        const before = thirds.get(key) ?? 0;
+        // A turn back forgets the share gathered the other way, so it answers at once.
+        const before = partSteps.get(key) ?? 0;
         const total = (Math.sign(before) === -Math.sign(steps) ? 0 : before) + steps;
         const whole = Math.trunc(total + (total > 0 ? 1e-9 : -1e-9));
-        thirds.set(key, total - whole);
+        partSteps.set(key, total - whole);
         if (whole) dial.step(whole);
       } else {
         const travel = (gathered.get(key) ?? 0) + steps * Math.max(RELATIVE_STEP, dial.unit / CLICKS_PER_CHOICE);
@@ -446,7 +446,7 @@ export function createControlSurface(synth: Synth) {
       const current = mapping && knobModeOf(mapping.mode);
       if (!mapping || !current || current === mode) return;
       const key = controlKey(control);
-      for (const state of [pickups, clicks, gathered, thirds, detecting]) state.delete(key);
+      for (const state of [pickups, clicks, gathered, partSteps, detecting]) state.delete(key);
       store.replace({ ...mapping, mode: mode === 'absolute' ? 'absolute' : relativeModeOf(lastValues.get(key)) });
     },
     /**
@@ -457,7 +457,7 @@ export function createControlSurface(synth: Synth) {
     restartSteps(target: Target) {
       for (const mapping of store.list())
         if (mapping.target.kind === target.kind && mapping.target.id === target.id)
-          for (const state of [clicks, gathered, thirds]) state.delete(controlKey(mapping.control));
+          for (const state of [clicks, gathered, partSteps]) state.delete(controlKey(mapping.control));
     },
     stopLearn() {
       clearTimeout(settle);

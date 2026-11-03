@@ -24,14 +24,5 @@ const FORMS: Record<string, readonly string[]> = {
   'Movement & Effects': ['Movement & Effects', 'Move & FX', 'FX'],
 };
 
-/** How many steps of shortening a label can take: its longest form, then each shorter one. */
-export const SHORTENING_STEPS = Math.max(...Object.values(FORMS).map((forms) => forms.length));
-
 /** A name's forms on screen, longest first. */
 export const screenForms = (name: string): readonly string[] => FORMS[name] ?? [name];
-
-/** A name's form at a step of shortening, 0 its longest; past its shortest, its shortest. */
-export const formAt = (name: string, step: number): string => {
-  const forms = screenForms(name);
-  return forms[Math.min(step, forms.length - 1)];
-};

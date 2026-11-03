@@ -10,7 +10,7 @@ export interface HistoryLine {
 }
 
 /** Attack, Decay, Sustain and Release share one line, on the four stages (decision 13), and the Amp Envelope with them. */
-const STAGES: HistoryLine = {
+const ENVELOPE_STAGES: HistoryLine = {
   line: 'Buchla’s 1964 Dual Attack Generator had an attack, a duration and a decay; ARP’s 2600 manual (1971) named four stages “Attack-Decay-Sustain-Release”.',
   sources: ['S7', 'S5'],
 };
@@ -50,7 +50,7 @@ export const HISTORY = {
     sources: ['S3'],
   },
   // The Envelopes.
-  stages: STAGES,
+  stages: ENVELOPE_STAGES,
   filterEnvelope: {
     line: 'The Minimoog gave its Filter a contour generator of its own beside the loudness one: the same shape, moving the brightness instead of the level.',
     sources: ['S3'],

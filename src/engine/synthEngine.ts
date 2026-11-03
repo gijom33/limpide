@@ -1,5 +1,5 @@
 import { type Adsr, type AutomationStep, DIP, envelopeSchedule, type GateEvent, levelAfter } from '../modulation/envelope';
-import { type Beat, createLfoClock, glideFrequency, glideFrom, glideTimeConstant, LFO_START, type LfoWaveform, lfoShape } from '../modulation/lfo';
+import { type BeatGrid, createLfoClock, glideFrequency, glideFrom, glideTimeConstant, LFO_START, type LfoWaveform, lfoShape } from '../modulation/lfo';
 import {
   destinationSwings, effectiveCutoff, effectiveResonance, effectiveVolume, KEY_TRACK_CENTRE, LOWEST_CUTOFF, lfoOffset, type Modulation,
   NO_PRESSURE, osc2Cents, osc2EnvelopeCents, type Pressure, pressed, pressurePitch, soundingPitch, VELOCITY_CUTOFF_OCTAVES,
@@ -85,7 +85,7 @@ export interface SynthEngine {
    */
   setTempo(bpm: number, origin?: number): void;
   /** The tempo in force, and where its beats are counted from. */
-  tempo(): Beat;
+  tempo(): BeatGrid;
   now(): number;
   /**
    * The engine's time whose sound is heard at `pageTime`, in seconds on the page's clock (`performance.now()`'s): where
@@ -1017,7 +1017,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   // The chord each LFO last restarted for: when its Notes were asked for, and when it restarted.
   const lfoChords: ({ asked: number; t: number } | null)[] = [null, null];
   // The tempo synced LFOs follow (issue 112), and what each synced free LFO was last locked to the beat with.
-  let tempo: Beat = { bpm: TEMPO.default, origin: lfoStart };
+  let tempo: BeatGrid = { bpm: TEMPO.default, origin: lfoStart };
   const locks: (string | null)[] = [null, null];
   // A synced free LFO being pulled onto the beat: the Rate it runs at until then (review 14).
   const pulls: ({ rate: number; until: number } | null)[] = [null, null];
