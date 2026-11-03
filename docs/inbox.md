@@ -4,8 +4,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
-- 2026-11-02, the owner, trying issue 142: "Some animations are still partly hidden below the top rows. It is the case when Bead is on top and does the Las Vegas fountain animation for instance."
-
 ## Ideas
 
 ## Dropped
@@ -173,3 +171,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-11-02, the owner's idea of Bead riding the LFOs everywhere (triage): to [197](./issues/197-bead-rides-everywhere.md), polish for v1, ready for an agent once 181 and 192 are merged: rides on a phone and in 2 × 2, and on a drop near a slow Sine or Triangle (decided by the owner); a ride first when a visit is due, "near" within 44 px, 141's bound for "slow" (Claude's calls, open to the owner).
 2026-11-02, the owner's bug of sound skipped when the page loses focus (triage): to [198](./issues/198-sound-in-the-background.md), polish for v1, ready for an agent: reproduce first; the likely cause is the players' Notes handed over on the page's timer, which browsers slow in the background; a clock the browser does not slow, and a wider look-ahead while hidden (Claude's calls, open to the owner).
 2026-11-02, the owner's idea of Glow on the Spectrum too (triage): to [199](./issues/199-glow-on-the-spectrum.md), polish for v1, ready for an agent: Display's Glow reaches the Spectrums (decided by the owner); one Glow for both, only the live outline glows (Claude's calls, open to the owner).
+2026-11-02, the owner's bug of Bead's tricks hidden under the top rows, found trying 142 (triage): to [200](./issues/200-beads-tricks-above-the-top-rows.md), polish for v1, ready for an agent: reproduce first with every rising trick; the trick fits under the header, which stays on top (Claude's calls, open to the owner).
