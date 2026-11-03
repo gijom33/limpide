@@ -12,6 +12,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- 2026-11-03, the owner: "I was playing with some knobs and selector during the demo. A lot of them don't disturb the demo, but I noticed some do. I think, for instance, when you change the voice number, it stops the demo. I'm not sure. You can double check. And if it's the case, try to modify the demo in such a way that you can still touch basically all the settings and they behave the right way."
+
 - 2026-11-03, the owner (Bit is Bead): "When playing the demo, the screen is being scrolled automatically, but I think it's scrolling way too fast because Bit doesn't have the time to show its animation. I would slow down a little bit so that we see whether Bit falling or Bit flying back up."
 
 - 2026-11-03, the owner: "I think the tool should also explain all the other layers, the history, the geek layer, and also the fact that you can build your own tutorial preset, right? Rebuild your own tutorial preset."
