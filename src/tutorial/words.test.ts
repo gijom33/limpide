@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { TRACK } from '../demo/track';
 import { PRESETS } from '../patch/presets';
 import { OVERLAY_TIPS, PARAM_TIPS, TIPS, VIEWER_TIPS } from '../ui/tips';
-import { TOUR, TOUR_END } from './tour';
+import { TOUR, TOUR_FINDS } from './tour';
 import { endLine, FROM_INIT, TUTORIALS } from './tutorials';
 
 /**
@@ -86,13 +86,13 @@ describe('every synth word explained where first used (issue 129)', () => {
     });
   }
 
-  it('in the Tour, card by card', () => {
-    const texts = [...TOUR.map((c) => [c.look, c.chain, c.does, c.sees].join(' ')), TOUR_END];
+  it('in the Tour, card by card, to what else there is to find (issue 210)', () => {
+    const texts = [...TOUR.map((c) => [c.look, c.chain, c.does, c.sees].join(' ')), ...TOUR_FINDS.map((c) => [c.look, ...c.says].join(' '))];
     expect(unexplained(texts)).toEqual([]);
   });
 
   it('says Harmonics, not partials, rungs, spikes or bars (decision 7)', () => {
-    const all = [...TUTORIALS.flatMap((t) => [t.intro, t.teaches, t.summary, ...t.steps.flatMap((s) => [s.say, s.note])]), ...TOUR.flatMap((c) => [c.look, c.chain, c.does, c.sees])];
+    const all = [...TUTORIALS.flatMap((t) => [t.intro, t.teaches, t.summary, ...t.steps.flatMap((s) => [s.say, s.note])]), ...TOUR.flatMap((c) => [c.look, c.chain, c.does, c.sees]), ...TOUR_FINDS.flatMap((c) => [c.look, ...c.says])];
     expect(all.filter((t) => /\b(partials?|rungs?|spikes?|bars)\b/i.test(t))).toEqual([]);
   });
 

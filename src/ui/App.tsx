@@ -241,7 +241,8 @@ export function App() {
       players.stopAll();
       players.setTookOver(false);
     },
-    onCard: players.startListen,
+    // After the Sections, nothing plays (issue 210).
+    onCard: (card) => (card ? players.startListen(card) : players.stopListen()),
     onEnd: players.stopListen,
   });
   // What Bead points the way to while a Tutorial or the Tour is open (issue 151).

@@ -1,5 +1,5 @@
 import { type RefObject, useEffect, useRef } from 'react';
-import { type Looking, TOUR, TOUR_END, type TourMove, type TourSection } from '../tutorial/tour';
+import { type Looking, TOUR, TOUR_FINDS, TOUR_LENGTH, type TourFind, type TourMove, type TourSection } from '../tutorial/tour';
 import { CardShell } from './CardShell';
 import { bringClear } from './docked';
 import type { Guide } from './mascotCling';
@@ -17,7 +17,7 @@ interface Props {
   naming: string[] | null;
   onBack(): void;
   onNext(): void;
-  /** The last card's way on: the first Tutorial, Bass. */
+  /** The last card's way on: the first Tutorial, Bass (issue 210: the Tutorials' card). */
   onBass(): void;
   onClose(): void;
 }
@@ -26,8 +26,26 @@ interface Props {
 const selectorOf = ({ kind, id }: Pick<TourMove, 'kind' | 'id'>) => `[data-learn="${kind}:${id}"]`;
 const controlOf = (move: Pick<TourMove, 'kind' | 'id'>) => document.querySelector(selectorOf(move));
 
-/** What Bead points the way to on a Tour card (issue 151, decision 2): one control a card, its first move's. */
-export const tourGuide = (index: number): Guide => ({ selector: selectorOf(TOUR[index].moves[0]), standIn: null, step: `tour ${index}`, made: false, finished: false });
+/** The Display button, which stands for an option in its panel while the panel is shut. */
+const DISPLAY_BUTTON = 'button[aria-label="Display"]';
+
+/** The control a card after the Sections shows (issue 210): an option in Display's panel, or a button in the header. */
+const findSelectorOf = ({ shows }: TourFind) => (shows.kind === 'display' ? `[data-overlay="${shows.overlay}"]` : `header button[aria-label="${shows.name}"]`);
+/** That control as the page shows it now: its own, or the Display button standing for an option in its shut panel. */
+function findControlOf(find: TourFind) {
+  const element = document.querySelector(findSelectorOf(find));
+  return find.shows.kind === 'display' && !element?.checkVisibility() ? document.querySelector(DISPLAY_BUTTON) : element;
+}
+
+/**
+ * What Bead points the way to on a Tour card (issue 151, decision 2): one control a card, a Section's first move's;
+ * after the Sections, the control the card shows, the Display button standing for an option in its shut panel (issue 210).
+ */
+export function tourGuide(index: number): Guide {
+  const find = TOUR_FINDS[index - TOUR.length];
+  const [selector, standIn] = find ? [findSelectorOf(find), find.shows.kind === 'display' ? DISPLAY_BUTTON : null] : [selectorOf(TOUR[index].moves[0]), null];
+  return { selector, standIn, step: `tour ${index}`, made: false, finished: false };
+}
 
 /** The keys that scroll the page, unless a control takes them. */
 const SCROLL_KEYS = new Set(['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End']);
@@ -74,12 +92,13 @@ function watchPersonScroll(onScroll: () => void) {
  * the card (decision 5). The LFO card points at the Timeline (issue 158, decided by the owner): its Depth knob shows
  * with it, or in turn.
  */
-function useSectionInView(card: TourSection, docked: RefObject<HTMLElement | null>, moving: TourMove['id'] | null, looking: Looking) {
+function useSectionInView(card: TourSection | undefined, docked: RefObject<HTMLElement | null>, moving: TourMove['id'] | null, looking: Looking) {
   // What the card's clock says now, read by each scroll; and the scroll, set up for the card shown.
   const now = useRef({ moving, looking });
   now.current = { moving, looking };
   const bring = useRef(() => {});
   useEffect(() => {
+    if (!card) return;
     const controls = card.moves.map((move) => ({ id: move.id, element: controlOf(move) }));
     for (const { element } of controls) if (element) reveal(element);
     const viewers = card.viewers.map((name) => document.querySelector(`[aria-label="${name}"]`)).filter((e) => e !== null);
@@ -122,9 +141,9 @@ function useSectionInView(card: TourSection, docked: RefObject<HTMLElement | nul
 }
 
 /** Rings the control the synth is turning, as a Tutorial rings the one to turn, and marks its section in the phone's strip. */
-function useRing(card: TourSection, moving: TourMove['id'] | null) {
+function useRing(card: TourSection | undefined, moving: TourMove['id'] | null) {
   useEffect(() => {
-    const move = card.moves.find((m) => m.id === moving);
+    const move = card?.moves.find((m) => m.id === moving);
     if (!move) return;
     let marked: Element[] = [];
     const clear = () => {
@@ -156,6 +175,44 @@ function useRing(card: TourSection, moving: TourMove['id'] | null) {
 }
 
 /**
+ * On a card after the Sections (issue 210), rings the control it names and brings it into view, the header's rows back
+ * for it: the Display button for an option in its shut panel, the option itself once the person opens it (the ring
+ * follows a click or a key, as a Tutorial's does). Nothing is pressed or switched on for the person.
+ */
+function useFindShown(find: TourFind | undefined) {
+  useEffect(() => {
+    if (!find) return;
+    let marked: Element | null = null;
+    const mark = () => {
+      marked?.removeAttribute('data-tutorial');
+      marked = findControlOf(find);
+      marked?.setAttribute('data-tutorial', '');
+    };
+    mark();
+    // After the card has had a frame to take its new height.
+    const scroll = setTimeout(() => {
+      const behavior = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+      marked?.scrollIntoView({ block: 'nearest', behavior });
+    }, 50);
+    // Display's panel opened or shut by the person: the ring follows its option.
+    let again: ReturnType<typeof setTimeout> | undefined;
+    const follow = () => {
+      clearTimeout(again);
+      again = setTimeout(mark, 0);
+    };
+    document.addEventListener('click', follow);
+    document.addEventListener('keyup', follow);
+    return () => {
+      clearTimeout(scroll);
+      clearTimeout(again);
+      document.removeEventListener('click', follow);
+      document.removeEventListener('keyup', follow);
+      marked?.removeAttribute('data-tutorial');
+    };
+  }, [find]);
+}
+
+/**
  * On a card where the synth freezes the Viewers (issue 130), a line under its words, shown however the card is folded on
  * a phone: what the frozen picture shows, the stage changed or all four; while it runs, a word on what is coming, until
  * the person takes Freeze. Every line it can say takes the same place, so the card keeps one height; a screen reader
@@ -184,15 +241,18 @@ function FrozenLine({ freezes, freezing, naming }: { freezes: NonNullable<TourSe
 /**
  * The Tour's card (issue 128), docked where a Tutorial's card docks: one Section of the page in the signal's order,
  * where the signal comes from and goes, what the Section does and what its Viewers show, while the synth turns its
- * controls. Back and Next move between the cards; the last offers the Bass Tutorial. It takes the focus on its Next when
- * the Tour starts; turning the controls never takes it.
+ * controls; after the Sections, what else there is to find, and where (issue 210). Back and Next move between the
+ * cards; the last offers the Bass Tutorial. It takes the focus on its Next when the Tour starts; turning the controls
+ * never takes it.
  */
 export function TourCard({ index, moving, looking, freezing, naming, onBack, onNext, onBass, onClose }: Props) {
-  const tour = TOUR[index];
-  const last = index === TOUR.length - 1;
+  const section: TourSection | undefined = TOUR[index];
+  const find = TOUR_FINDS[index - TOUR.length];
+  const last = index === TOUR_LENGTH - 1;
   const card = useRef<HTMLElement>(null);
-  useSectionInView(tour, card, moving, looking);
-  useRing(tour, moving);
+  useSectionInView(section, card, moving, looking);
+  useRing(section, moving);
+  useFindShown(find);
 
   const primary = last ? (
     <button type="button" className="tool tool-primary" onClick={onBass}>
@@ -221,20 +281,32 @@ export function TourCard({ index, moving, looking, freezing, naming, onBack, onN
       kind="tour"
       opening={null}
       label="Tour"
-      name={tour.title}
-      progress={`${index + 1} of ${TOUR.length}`}
+      name={section?.title ?? find.title}
+      progress={`${index + 1} of ${TOUR_LENGTH}`}
       closeLabel="Close the Tour"
       onClose={onClose}
       primary={primary}
-      under={tour.freezes && <FrozenLine freezes={tour.freezes} freezing={freezing} naming={naming} />}
+      under={section?.freezes && <FrozenLine freezes={section.freezes} freezing={freezing} naming={naming} />}
       actions={actions}
     >
       {/* What to watch first: folded on a phone, it is all the card shows (issue 129). */}
-      <p>{tour.look}</p>
-      <p>{tour.chain}</p>
-      <p>{tour.does}</p>
-      <p className="card-then">{tour.sees}</p>
-      {last && <p className="card-then">{TOUR_END}</p>}
+      {section ? (
+        <>
+          <p>{section.look}</p>
+          <p>{section.chain}</p>
+          <p>{section.does}</p>
+          <p className="card-then">{section.sees}</p>
+        </>
+      ) : (
+        <>
+          <p>{find.look}</p>
+          {find.says.map((line, i) => (
+            <p key={line} className={i === find.says.length - 1 ? 'card-then' : undefined}>
+              {line}
+            </p>
+          ))}
+        </>
+      )}
     </CardShell>
   );
 }

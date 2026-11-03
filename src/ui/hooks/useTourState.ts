@@ -2,7 +2,7 @@ import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { LEAD_IN } from '../../demo/player';
 import { type ParamId, type Patch, setParam } from '../../patch/patch';
 import type { KeptPatch, PatchStore } from '../../patch/patchStore';
-import { type Looking, TOUR, TOUR_PATCH, type TourMove, type TourSection, tourAt } from '../../tutorial/tour';
+import { type Looking, TOUR, TOUR_LENGTH, TOUR_PATCH, type TourMove, type TourSection, tourAt } from '../../tutorial/tour';
 import type { ViewerStore } from '../../viewers/viewerStore';
 
 /** How often the synth's hand moves the card's control: as often as the Demo's knobs. */
@@ -60,8 +60,8 @@ interface Host {
   viewers: Pick<ViewerStore, 'get' | 'dispatch' | 'subscribe'>;
   /** The Tour starts: whatever plays by itself stops, a Tutorial ends. */
   onStart(): void;
-  /** A card comes up: its phrase plays, over and over. */
-  onCard(card: TourSection): void;
+  /** A card comes up: a Section's phrase plays, over and over; after the Sections (null), nothing plays (issue 210). */
+  onCard(card: TourSection | null): void;
   /** The Tour ends: its phrase stops. */
   onEnd(): void;
 }
@@ -71,7 +71,8 @@ interface Host {
  * turning its controls (`tourAt`) while its phrase plays. A control turned by hand or by a Controller is the person's
  * for the rest of that card: the synth leaves it where they put it. So is Freeze, frozen or unfrozen by the person on
  * a card where the synth freezes the Viewers (issue 130): the synth freezes no more on that card, and lets go of its
- * own Freeze whenever the card changes or the Tour ends. Ending or closing it, or the page closing, gives the person's
+ * own Freeze whenever the card changes or the Tour ends. The cards after the Sections (issue 210) turn nothing and play
+ * nothing, the Tour's Patch at rest. Ending or closing it, or the page closing, gives the person's
  * Patch back; a Patch the person loads meanwhile ends it and stays.
  */
 export function useTourState({ patches, viewers, onStart, onCard, onEnd }: Host) {
@@ -100,7 +101,7 @@ export function useTourState({ patches, viewers, onStart, onCard, onEnd }: Host)
     setNaming(null);
   };
   const finishNow = useEffectEvent(finish);
-  const showCard = useEffectEvent((card: TourSection) => onCard(card));
+  const showCard = useEffectEvent((card: TourSection | null) => onCard(card));
 
   /** Starts the Tour; started again while it runs, back to its first card. */
   const start = () => {
@@ -110,36 +111,41 @@ export function useTourState({ patches, viewers, onStart, onCard, onEnd }: Host)
     patches.load(TOUR_PATCH.name, TOUR_PATCH.patch);
     setIndex(0);
   };
-  const move = (delta: number) => setIndex((i) => (i === null ? i : Math.min(TOUR.length - 1, Math.max(0, i + delta))));
+  const move = (delta: number) => setIndex((i) => (i === null ? i : Math.min(TOUR_LENGTH - 1, Math.max(0, i + delta))));
 
   useEffect(() => {
     if (index === null) return;
-    const card = TOUR[index];
+    // A Section's card, or none after them (issue 210).
+    const card: TourSection | undefined = TOUR[index];
     patches.change((p) => withValues(p, Object.fromEntries(TURNED.map((id) => [id, TOUR_PATCH.patch[id]]))), 'tour');
-    showCard(card);
+    showCard(card ?? null);
     const taken = new Set<keyof Patch>();
     const unsubscribe = patches.subscribe(({ before, after, by }) => {
       if (by === 'load') finishNow(false);
-      else if (by === 'hand' || by === 'controller') for (const m of card.moves) if (before[m.id] !== after[m.id]) taken.add(m.id);
+      else if (by === 'hand' || by === 'controller') for (const m of card?.moves ?? []) if (before[m.id] !== after[m.id]) taken.add(m.id);
     });
     const hand = freezeHand(viewers);
     const began = performance.now();
-    const turn = () => {
-      // Ended by a load between this card's last render and its cleanup: the Patch loaded is the person's.
-      if (!kept.current) return;
-      // Counted from the phrase's first beat, so a stage set before a Note, and a freeze once it has faded, fall there.
-      const { values, moving, naming, looking } = tourAt(card, Math.max(0, (performance.now() - began) / 1000 - LEAD_IN));
-      setMoving(moving);
-      setLooking(looking);
-      const holding = hand.follow(naming !== null);
-      setFreezing(holding && card.freezes !== undefined);
-      setNaming(holding ? naming : null);
-      const patch = patches.get().patch;
-      const due = Object.fromEntries(Object.entries(values).filter(([id, value]) => !taken.has(id as keyof Patch) && patch[id as keyof Patch] !== value));
-      if (Object.keys(due).length) patches.change((p) => withValues(p, due), 'tour');
-    };
-    turn();
-    const timer = setInterval(turn, TICK_MS);
+    let timer: ReturnType<typeof setInterval> | undefined;
+    if (!card) setMoving(null);
+    else {
+      const turn = () => {
+        // Ended by a load between this card's last render and its cleanup: the Patch loaded is the person's.
+        if (!kept.current) return;
+        // Counted from the phrase's first beat, so a stage set before a Note, and a freeze once it has faded, fall there.
+        const { values, moving, naming, looking } = tourAt(card, Math.max(0, (performance.now() - began) / 1000 - LEAD_IN));
+        setMoving(moving);
+        setLooking(looking);
+        const holding = hand.follow(naming !== null);
+        setFreezing(holding && card.freezes !== undefined);
+        setNaming(holding ? naming : null);
+        const patch = patches.get().patch;
+        const due = Object.fromEntries(Object.entries(values).filter(([id, value]) => !taken.has(id as keyof Patch) && patch[id as keyof Patch] !== value));
+        if (Object.keys(due).length) patches.change((p) => withValues(p, due), 'tour');
+      };
+      turn();
+      timer = setInterval(turn, TICK_MS);
+    }
     // A page closed or reloaded mid-Tour keeps the person's Patch as its Last session, not the Tour's.
     const onHide = () => finishNow();
     addEventListener('pagehide', onHide);

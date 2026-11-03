@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parsePhrase, phraseLength } from '../demo/phrase';
 import { defaultPatch } from '../patch/patch';
-import { cycleLength, TOUR, TOUR_PATCH, type TourSection, tourAt } from './tour';
+import { cycleLength, TOUR, TOUR_FINDS, TOUR_LENGTH, TOUR_PATCH, type TourSection, tourAt } from './tour';
 
 const card = (title: string) => TOUR.find((c) => c.title === title)!;
 
@@ -172,6 +172,44 @@ describe('What the Tour looks at, in turn (issue 206)', () => {
       const all = looks(c);
       expect(all.filter((l) => l.looking === 'viewer').length, c.title).toBeGreaterThan(all.length / 2);
       expect(all.some((l) => l.looking === 'control'), c.title).toBe(true);
+    }
+  });
+});
+
+// Issue 210: after the Sections, the Tour tells what else there is to find, and shows where.
+describe('After the Sections, what else there is to find (issue 210)', () => {
+  const [geek, tutorials] = TOUR_FINDS;
+  const words = (c: (typeof TOUR_FINDS)[number]) => [c.look, ...c.says].join(' ');
+
+  it('a card for the Synth Geek Layer and its History, then the last, for the Tutorials', () => {
+    expect(TOUR_FINDS.map((c) => c.title)).toEqual(['Synth Geek Layer', 'Tutorials']);
+    expect(TOUR_LENGTH).toBe(6);
+  });
+
+  it('says what the Synth Geek Layer adds, that Display’s Geek switch turns it on, and that History ends the tips with it on', () => {
+    expect(geek.look).toMatch(/Display.*Geek.*Synth Geek Layer/);
+    expect(words(geek)).toMatch(/numbers/);
+    expect(words(geek)).toMatch(/tip.*History|History.*tip/);
+    expect(words(geek)).toMatch(/off until you switch it on/); // the Tour switches nothing on (decision 4)
+  });
+
+  it('says each Tutorial has you rebuild a Preset yourself, step by step from Init, from the Tutorial button', () => {
+    expect(tutorials.look).toMatch(/Tutorial button.*Preset.*yourself/);
+    expect(words(tutorials)).toMatch(/Init.*step by step/);
+    expect(words(tutorials)).toMatch(/Bass/); // the way on, its button's
+  });
+
+  it('shows the control each names: Display’s Geek switch, the header’s Tutorial button', () => {
+    expect(TOUR_FINDS.map((c) => c.shows)).toEqual([
+      { kind: 'display', overlay: 'geek' },
+      { kind: 'header', name: 'Tutorial' },
+    ]);
+  });
+
+  it('is short: a look line a folded phone card shows, and a few lines more', () => {
+    for (const c of TOUR_FINDS) {
+      expect(c.look.length, c.title).toBeLessThanOrEqual(100);
+      expect(words(c).length, c.title).toBeLessThan(TOUR.reduce((least, s) => Math.min(least, [s.look, s.chain, s.does, s.sees].join(' ').length), Infinity));
     }
   });
 });

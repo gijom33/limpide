@@ -67,7 +67,7 @@ test('About offers the Tour every time; the Patches panel lists no Tour (issue 1
   await expect(page.getByRole('dialog', { name: 'Patches' })).not.toContainText(/\bTour\b/);
   await page.keyboard.press('Escape');
   await startFromAbout(page);
-  await expect(progress(page)).toHaveText('1 of 4');
+  await expect(progress(page)).toHaveText('1 of 6');
 });
 
 test('the Tour stops the Demo and the Song when it starts (issue 128)', async ({ page }) => {
@@ -92,7 +92,7 @@ test('each card turns its control by itself and plays the phrase; Next and Back 
   expect((await valuesOver(() => waveform(page).getAttribute('aria-label'), 5500)).size).toBeGreaterThan(1);
 
   await action(page, 'Next').click();
-  await expect(progress(page)).toHaveText('2 of 4');
+  await expect(progress(page)).toHaveText('2 of 6');
   await expect(card(page)).toContainText('The Filter takes what the Oscillators make');
   expect((await valuesOver(() => slider(page, 'Cutoff').getAttribute('aria-valuetext'), 1500)).size).toBeGreaterThan(2);
   await expect(waveform(page)).toHaveAttribute('aria-label', 'Saw'); // each card starts on the Tour's own Patch
@@ -106,10 +106,10 @@ test('each card turns its control by itself and plays the phrase; Next and Back 
   await expect(card(page)).toContainText('The LFOs send no sound down the chain');
   expect((await valuesOver(() => slider(page, 'LFO 1 Depth').getAttribute('aria-valuetext'), 1500)).size).toBeGreaterThan(2);
   await playing(page);
-  await expect(action(page, 'Next')).toBeHidden();
+  await expect(progress(page)).toHaveText('4 of 6'); // what else there is to find comes after (issue 210)
 
   await action(page, 'Back').click();
-  await expect(progress(page)).toHaveText('3 of 4');
+  await expect(progress(page)).toHaveText('3 of 6');
 });
 
 test('grabbing the control being turned takes it over: it stops moving for that card (issue 128)', async ({ page }) => {
@@ -129,18 +129,18 @@ test('Next, Back and Close work from the keyboard (issue 128)', async ({ page })
   await startFromAbout(page);
   await expect(action(page, 'Next')).toBeFocused();
   await page.keyboard.press('Enter');
-  await expect(progress(page)).toHaveText('2 of 4');
+  await expect(progress(page)).toHaveText('2 of 6');
   await expect(action(page, 'Next')).toBeFocused();
   await action(page, 'Back').focus(); // Safari tabs to buttons only when its settings ask it to
   await page.keyboard.press('Enter');
-  await expect(progress(page)).toHaveText('1 of 4');
+  await expect(progress(page)).toHaveText('1 of 6');
   await expect(action(page, 'Next')).toBeFocused(); // Back went with the second card: the way forward has the focus
   await card(page).getByRole('button', { name: 'Close the Tour' }).focus();
   await page.keyboard.press('Enter');
   await expect(card(page)).toBeHidden();
 });
 
-for (const at of [1, 2, 3, 4]) {
+for (const at of [1, 2, 3, 4, 5, 6]) {
   test(`closed at card ${at}, the Tour gives back the Patch the person had, value for value (issue 128)`, async ({ page }) => {
     await page.goto('/');
     await patchName(page).click();
@@ -159,7 +159,7 @@ for (const at of [1, 2, 3, 4]) {
     await expect(patchName(page)).toHaveAttribute('aria-label', 'Patch: Init');
     for (let i = 1; i < at; i++) await action(page, 'Next').click();
     await page.waitForTimeout(500); // the synth turning its controls
-    await card(page).getByRole('button', { name: at === 4 ? 'Done' : 'Close the Tour' }).click();
+    await card(page).getByRole('button', { name: at === 6 ? 'Done' : 'Close the Tour' }).click();
     await expect(card(page)).toBeHidden();
     await expect(patchName(page)).toHaveAttribute('aria-label', 'Patch: Acid');
     await expect(patchName(page)).toHaveAttribute('data-changed');
@@ -172,7 +172,7 @@ for (const at of [1, 2, 3, 4]) {
 test('the last card’s Bass button starts the Bass Tutorial (issue 128)', async ({ page }) => {
   await page.goto('/');
   await startFromAbout(page);
-  for (let i = 1; i < 4; i++) await action(page, 'Next').click();
+  for (let i = 1; i < 6; i++) await action(page, 'Next').click();
   await action(page, 'Build a Bass').click();
   await expect(card(page)).toBeHidden();
   await expect(page.getByRole('region', { name: 'Tutorial: Bass' })).toBeVisible();
@@ -182,7 +182,7 @@ test('the last card’s Bass button starts the Bass Tutorial (issue 128)', async
 test('the last card’s Bass button puts the focus on the Tutorial’s Start (issues 104, 139)', async ({ page }) => {
   await page.goto('/');
   await startFromAbout(page);
-  for (let i = 1; i < 4; i++) await action(page, 'Next').click();
+  for (let i = 1; i < 6; i++) await action(page, 'Next').click();
   await action(page, 'Build a Bass').click();
   const tutorial = page.getByRole('region', { name: 'Tutorial: Bass' });
   await expect(tutorial.getByRole('button', { name: 'Start', exact: true })).toBeFocused();
@@ -410,3 +410,74 @@ test('from 2 × 2 up, where a card’s controls and Viewers all fit, the page ho
   expect([...(await valuesOver(() => scrollTop(page).then(String), 8000))]).toEqual([String(held)]); // a pass and more
   expect(await standingOf(fader(page, 'Attack'))).toBe('clear');
 });
+
+// Issue 210: after the Sections, the Tour tells of the Synth Geek Layer and its History, then the Tutorials, each card
+// ringing the control where it is found; it switches nothing on, and plays nothing over its words.
+
+/** Whether the element `locator` finds is on screen, above the card and uncovered: the header's rows back for it. */
+const shownAbove = (locator: Locator) =>
+  locator.evaluate((element) => {
+    const box = element.getBoundingClientRect();
+    const card = document.querySelector('.docked')!.getBoundingClientRect();
+    const hit = document.elementFromPoint((box.left + box.right) / 2, (box.top + box.bottom) / 2);
+    const clear = box.top >= -1 && box.bottom <= card.top + 1 && !!hit && element.contains(hit);
+    return clear ? 'shown' : `hidden: ${Math.round(box.top)} to ${Math.round(box.bottom)} above ${Math.round(card.top)}, under ${hit?.tagName}`;
+  });
+
+const geekOn = (page: Page) => page.locator('main[data-geek]');
+
+test('after the Sections, a card for the Synth Geek Layer and its History, then the Tutorials, each ringing where it is (issue 210)', async ({ page }) => {
+  test.setTimeout(60000);
+  await page.goto('/');
+  await startFromAbout(page);
+  for (let i = 1; i < 5; i++) await action(page, 'Next').click();
+  await expect(progress(page)).toHaveText('5 of 6');
+  await expect(card(page)).toContainText('Geek switch');
+  await expect(card(page)).toContainText('History');
+  const display = page.getByRole('button', { name: 'Display', exact: true });
+  await expect(display).toHaveAttribute('data-tutorial', '');
+  // The person opens Display: the ring goes to the Geek switch, still off.
+  await display.click();
+  const geek = page.locator('[data-overlay="geek"]');
+  await expect(geek).toHaveAttribute('data-tutorial', '');
+  await expect(geek).toHaveAttribute('aria-pressed', 'false');
+  await display.click();
+  await expect(display).toHaveAttribute('data-tutorial', '');
+  // Nothing plays over its words.
+  await expect(page.getByRole('group', { name: 'Piano' }).locator('[aria-pressed="true"]')).toHaveCount(0, { timeout: 8000 });
+
+  await action(page, 'Next').click();
+  await expect(progress(page)).toHaveText('6 of 6');
+  await expect(card(page)).toContainText('rebuild one of the Presets yourself');
+  await expect(page.getByRole('button', { name: 'Tutorial', exact: true })).toHaveAttribute('data-tutorial', '');
+  await expect(page.locator('[data-tutorial]')).toHaveCount(1); // Display's ring gone with its card
+  await expect(action(page, 'Next')).toBeHidden();
+  await expect(action(page, 'Build a Bass')).toBeVisible();
+
+  await action(page, 'Back').click();
+  await expect(progress(page)).toHaveText('5 of 6');
+  await action(page, 'Back').click();
+  await expect(progress(page)).toHaveText('4 of 6');
+  await playing(page); // the LFO card plays again
+  await action(page, 'Next').click();
+  await action(page, 'Next').click();
+  await action(page, 'Done').click();
+  await expect(card(page)).toBeHidden();
+  await expect(geekOn(page)).toHaveCount(0); // off after the Tour, as before it
+  await expect(page.locator('[data-tutorial]')).toHaveCount(0);
+});
+
+for (const [layout, width, height] of [['small phone', 320, 568], ['phone', 375, 812], ['laptop', 1280, 800]] as const) {
+  test(`on a ${layout}, the last cards show the control each names, the header back for it (issue 210)`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.setViewportSize({ width, height });
+    await page.goto('/');
+    await startFromAbout(page);
+    for (let i = 1; i < 4; i++) await action(page, 'Next').click();
+    await expect.poll(() => standing(page, 'Envelope Timeline')).toBe('clear'); // the page down at the LFO card's Viewer
+    await action(page, 'Next').click();
+    await expect.poll(() => shownAbove(page.getByRole('button', { name: 'Display', exact: true }))).toBe('shown');
+    await action(page, 'Next').click();
+    await expect.poll(() => shownAbove(page.getByRole('button', { name: 'Tutorial', exact: true }))).toBe('shown');
+  });
+}

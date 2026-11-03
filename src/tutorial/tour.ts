@@ -3,6 +3,7 @@ import type { Waveform } from '../music/harmonics';
 import { PARAMS, type ParamId, type Patch } from '../patch/patch';
 import { PRESETS } from '../patch/presets';
 import { positionToValue, valueToPosition } from '../patch/taper';
+import type { Overlay } from '../viewers/overlays';
 import type { ViewerName } from './tutorial';
 
 /**
@@ -141,8 +142,48 @@ export const TOUR: TourSection[] = [
   },
 ];
 
-/** What the last card says after its own words, pointing on to the first Tutorial. */
-export const TOUR_END = 'That is the whole chain. Now build a sound yourself: the Bass Tutorial goes through it one control at a time.';
+/**
+ * A card after the Sections (issue 210): something else there is to find, said in a few lines, and the control on the
+ * page where it is found, which the card shows and the synth leaves as it is: an option in Display's panel (its button
+ * standing for it while the panel is shut), or a button in the header.
+ */
+export interface TourFind {
+  title: string;
+  /** The first line, all a folded card shows on a phone: what to look at (issue 129). */
+  look: string;
+  /** What it is, and how to use it. */
+  says: string[];
+  /** The control it shows. */
+  shows: { kind: 'display'; overlay: Overlay } | { kind: 'header'; name: 'Tutorial' };
+}
+
+/**
+ * The Tour's last cards, after the Sections (issue 210, decided by the owner): the Synth Geek Layer with its History
+ * lines, then the Tutorials, the last card, whose way on is the first Tutorial, Bass.
+ */
+export const TOUR_FINDS: TourFind[] = [
+  {
+    title: 'Synth Geek Layer',
+    look: 'Find the ringed Display button: its Geek switch, a pair of glasses, turns on the Synth Geek Layer.',
+    says: [
+      'The Synth Geek Layer shows the numbers under the hood, for the curious: levels in decibels, the formula behind a wave’s Harmonics, how many times a second each Scope’s wave repeats. It stays off until you switch it on.',
+      'With it on, the tips grow too: rest on a control, or hold it with a finger, and its tip ends with its History, where the control comes from, the instruments and people it came through.',
+    ],
+    shows: { kind: 'display', overlay: 'geek' },
+  },
+  {
+    title: 'Tutorials',
+    look: 'Find the ringed Tutorial button: each Tutorial in it has you rebuild one of the Presets yourself.',
+    says: [
+      'The Presets are Limpide’s ready-made sounds. A Tutorial starts from Init, a plain sound, and has you build one back step by step: you turn each control, and hear and see what it does.',
+      'That is the whole Tour. Now build a sound yourself: Bass goes through the whole chain, one control at a time.',
+    ],
+    shows: { kind: 'header', name: 'Tutorial' },
+  },
+];
+
+/** How many cards the Tour has: a Section's each, then what else there is to find. */
+export const TOUR_LENGTH = TOUR.length + TOUR_FINDS.length;
 
 /**
  * How long the page looks at a control as it starts to move, from rest, before it looks at the card's Viewers, where
