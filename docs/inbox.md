@@ -4,6 +4,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-11-02, the owner, trying issue 127: "I do not see BAGGAGE and the surfing, nor air guitar."
+
 ## Ideas
 
 ## Dropped
