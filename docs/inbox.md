@@ -6,6 +6,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- 2026-11-02, the owner, trying issue 130 (the Tour freezing the Viewers to show the Envelope): "Yes but on small screen, we shoukd show both the settings and viewer. If it cannot fit screen we should show each in turn by scrolling."
+
 ## Dropped
 
 - 2026-10-30, from Claude's brainstorm, Velocity on the Volume ("a harder hit plays louder, not only brighter"): already so. The Amp Envelope's Attack rises to the Note's Velocity (PRD story 9). Claude's call, open to the owner.
