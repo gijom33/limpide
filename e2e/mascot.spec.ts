@@ -1,6 +1,6 @@
 import { expect, type Page, test } from '@playwright/test';
 import { LONGEST_STEP } from '../src/ui/mascotPlace';
-import { openDisplay } from './helpers';
+import { openDisplay, reachAudio, stopSound } from './helpers';
 import { holding, WELCOMED } from './startState';
 
 // The mascot (issue 115): B, E, A, D played by hand, as in a bead of water, calls it up from behind the top right
@@ -550,6 +550,20 @@ test.describe('out by default (issue 150)', () => {
       await expect(mascot(page)).toHaveCount(1, { timeout: 6000 });
     });
   });
+});
+
+test('with the sound stopped by the browser (an iPhone, back from another app), it moves on all the same', async ({ page }) => {
+  await reachAudio(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  await listening(page);
+  await bringBead(page);
+  await settles(page);
+  await stopSound(page);
+  // Its own time goes on: within a few seconds it strolls, as it does with the sound running.
+  const x = () => mascot(page).evaluate((el) => el.getBoundingClientRect().left);
+  const from = await x();
+  await expect.poll(async () => Math.abs((await x()) - from), { timeout: 20_000 }).toBeGreaterThan(10);
 });
 
 test('a pointer over it tickles it; a click sends tiny drops every way', async ({ page }) => {

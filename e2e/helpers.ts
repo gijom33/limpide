@@ -12,3 +12,23 @@ export async function openDisplay(page: Page) {
  * 51), so look it up inside its section or LFO.
  */
 export const sliderName = (label: string) => new RegExp(`(^| )${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`);
+
+/**
+ * Keeps the page's AudioContext within reach as `window.audioContext`, so a test can stop the sound as a browser does
+ * (an iPhone, back from another app). Call before the page loads.
+ */
+export const reachAudio = (page: Page) =>
+  page.addInitScript(() => {
+    const Original = window.AudioContext;
+    window.AudioContext = class extends Original {
+      constructor(options?: AudioContextOptions) {
+        super(options);
+        (window as unknown as { audioContext: AudioContext }).audioContext = this;
+      }
+    };
+  });
+
+/** Stops the page's sound as the browser does when it takes it away (needs `reachAudio`). */
+export const stopSound = (page: Page) =>
+  page.evaluate(() => (window as unknown as { audioContext: AudioContext }).audioContext.suspend());
+

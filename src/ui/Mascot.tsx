@@ -6,6 +6,7 @@ import type { PatchStore } from '../patch/patchStore';
 import { addToRenderLoop } from '../viewers/renderLoop';
 import { lineAt, lineWiderThan } from './LfoPlot';
 import { type Box, type Cling, clingBeside, type Guide, HEIGHT, RING, TWIN_PX, targetBox, WIDTH } from './mascotCling';
+import { mascotClock } from './mascotClock';
 import { gesturesOf, looksOf } from './mascotGestures';
 import { type Act, createMascotMotion, hatOn, type Pose, type Room, SCREAMING } from './mascotMotion';
 import { CATCH, CLOUD, HATS, HOOK, ICE, type Picture, PROPS, type Rect, ROD_TIP, SKY, type Stage, TAILS } from './mascotPictures';
@@ -385,16 +386,19 @@ export function Mascot({
     // Phones and the sections 2 × 2: it keeps in view as the page scrolls.
     const stacked = matchMedia(STACKED);
     const motion = createMascotMotion();
+    // Its own time: the sound's while it runs, the page's while the browser holds the sound stopped (an iPhone, back from
+    // another app), so it never stands frozen.
+    const clock = mascotClock(() => context.engine.now(), () => performance.now() / 1000);
     const arrival = (['rise', 'rain', 'pop'] as const)[Math.floor(Math.random() * 3)];
     const place = createMascotPlace(arrival === 'rain' ? { from: -HEADROOM } : {});
     motion.dress(hatOn(new Date()));
     const stopListening = patches.subscribe(({ before, after, by }) => {
-      for (const gesture of gesturesOf(before, after, by)) motion.gesture(gesture, context.engine.now());
+      for (const gesture of gesturesOf(before, after, by)) motion.gesture(gesture, clock());
       // Resonance turned past three quarters: it screams a moment (issue 127).
-      if (by !== 'load' && after.resonance !== before.resonance && after.resonance > SCREAMING) motion.scream(context.engine.now());
+      if (by !== 'load' && after.resonance !== before.resonance && after.resonance > SCREAMING) motion.scream(clock());
       // A Waveform chosen: its tail takes that wave a moment (issue 127).
-      if (by !== 'load' && after.waveform !== before.waveform) motion.wave(after.waveform, context.engine.now());
-      else if (by !== 'load' && after.osc2Waveform !== before.osc2Waveform) motion.wave(after.osc2Waveform, context.engine.now());
+      if (by !== 'load' && after.waveform !== before.waveform) motion.wave(after.waveform, clock());
+      else if (by !== 'load' && after.osc2Waveform !== before.osc2Waveform) motion.wave(after.osc2Waveform, clock());
     });
     // Where the pointer is in the window, for its eyes.
     let pointer: { x: number; y: number } | null = null;
@@ -427,7 +431,7 @@ export function Mascot({
     let hid = false;
     // Sent away on a ride: it jumps home first, and melts once it has landed there.
     let gettingOff = false;
-    let nextVisit = context.engine.now() + between(15, 35);
+    let nextVisit = clock() + between(15, 35);
     const droplets = createSpray();
     let lastExhaust = -Infinity;
     // Where its middle is in the page, for droplets flung by a click.
@@ -499,17 +503,17 @@ export function Mascot({
       return { box, cling };
     };
     touched.current = {
-      tickle: () => motion.tickle(context.engine.now()),
+      tickle: () => motion.tickle(clock()),
       poke: () => {
-        motion.poke(context.engine.now());
-        motion.gesture('louder', context.engine.now());
+        motion.poke(clock());
+        motion.gesture('louder', clock());
         droplets.fling(9, middle.x, middle.y, 'all');
       },
       pick: (x, y) => {
         if (still.matches || leaveBy !== null || leavingNow()) return false;
         grip = { x: x - drawnAt.left, y: y - drawnAt.foot };
         moves = [{ t: performance.now() / 1000, x, y }];
-        motion.pickUp(context.engine.now());
+        motion.pickUp(clock());
         place.hold(drawnAt.left, drawnAt.foot);
         return true;
       },
@@ -523,20 +527,20 @@ export function Mascot({
         const [first, last] = [moves[0], moves.at(-1)!];
         const dt = Math.max(0.016, last.t - first.t);
         place.toss((last.x - first.x) / dt, (last.y - first.y) / dt, throwWalls(document.body.getBoundingClientRect()));
-        motion.thrown(context.engine.now());
+        motion.thrown(clock());
       },
-      word: (w) => motion.word(w, context.engine.now()),
+      word: (w) => motion.word(w, clock()),
       theme: (t) => void (themeSwitched = t),
       step: () => void (bounceDue = true),
-      made: () => motion.gesture('hop', context.engine.now()),
-      finished: () => motion.trick('fountain', context.engine.now()),
+      made: () => motion.gesture('hop', clock()),
+      finished: () => motion.trick('fountain', clock()),
     };
     const stopDrawing = addToRenderLoop(() => {
       const outer = frame.current!;
       const seconds = performance.now() / 1000;
       const dt = Math.min(0.1, seconds - last);
       last = seconds;
-      const now = context.engine.now();
+      const now = clock();
       // Every layout read first, before this frame writes anything: a read after a write would make the browser work
       // out the page's styles again in the middle of the frame.
       const sections = sectionBoxes();
@@ -736,7 +740,7 @@ export function Mascot({
       if (plot && !still.matches && moving !== 'held' && moving !== 'thrown' && (ride || !shown?.doing)) {
         // Where the plot draws the LFO under its middle: a second of it across, the newest at the right.
         const { box } = plot;
-        const wave = box.top + lineAt({ engine: context.engine, lfo: plot.lfo, box, x: drawnAt.left + DROP_MIDDLE - box.left, now });
+        const wave = box.top + lineAt({ engine: context.engine, lfo: plot.lfo, box, x: drawnAt.left + DROP_MIDDLE - box.left, now: context.engine.now() });
         perch = { id: `surf ${plot.lfo}`, foot: wave, hovering: false };
         surfRoom = nearestSpan(plot.clear, drawnAt.left)!;
       }

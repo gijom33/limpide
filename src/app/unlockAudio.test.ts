@@ -65,11 +65,74 @@ describe('unlockAudio', () => {
     expect(onRunning).toHaveBeenCalledWith('running');
   });
 
+  for (const gesture of ['pointerup', 'touchend', 'click'] as const) {
+    it(`resumes audio on a ${gesture} too: Safari on an iPhone lets sound start when the finger lifts, not as it lands`, async () => {
+      const page = new EventTarget();
+      const ctx = fakeContext({ allowed: true });
+      const onChange = vi.fn();
+      unlockAudio(ctx, page, onChange);
+      page.dispatchEvent(new Event(gesture));
+      expect(ctx.resume).toHaveBeenCalledTimes(1);
+      await flush();
+      expect(onChange).toHaveBeenLastCalledWith('running');
+    });
+  }
+
+  it('stopped by the browser after it ran (an iPhone back from another app), it waits again and the next gesture resumes it', async () => {
+    const page = new EventTarget();
+    const ctx = fakeContext({ allowed: true });
+    const onChange = vi.fn();
+    unlockAudio(ctx, page, onChange);
+    page.dispatchEvent(new Event('keydown'));
+    await flush();
+    expect(onChange).toHaveBeenLastCalledWith('running');
+
+    // Safari's 'interrupted', or 'suspended': either way not running.
+    ctx.state = 'interrupted' as AudioContextState;
+    ctx.dispatchEvent(new Event('statechange'));
+    expect(onChange).toHaveBeenLastCalledWith('waiting');
+    page.dispatchEvent(new Event('pointerdown'));
+    expect(ctx.resume).toHaveBeenCalledTimes(2);
+    await flush();
+    expect(onChange).toHaveBeenLastCalledWith('running');
+  });
+
+  it('back on the page after it ran, it tries to resume at once, saying nothing if the browser wants a gesture first', async () => {
+    const page = new EventTarget();
+    const ctx = fakeContext({ allowed: false });
+    ctx.state = 'running';
+    const onChange = vi.fn();
+    unlockAudio(ctx, page, onChange);
+    ctx.state = 'suspended';
+    ctx.dispatchEvent(new Event('statechange'));
+    for (const back of ['visibilitychange', 'pageshow', 'focus']) page.dispatchEvent(new Event(back));
+    expect(ctx.resume).toHaveBeenCalledTimes(3);
+    await flush();
+    expect(onChange).toHaveBeenLastCalledWith('waiting');
+  });
+
+  it('before the sound first runs, coming back to the page tries nothing: only a gesture can start it', () => {
+    const page = new EventTarget();
+    const ctx = fakeContext({ allowed: false });
+    unlockAudio(ctx, page, () => {});
+    for (const back of ['visibilitychange', 'pageshow', 'focus']) page.dispatchEvent(new Event(back));
+    expect(ctx.resume).not.toHaveBeenCalled();
+  });
+
+  it('running, a gesture leaves it be', async () => {
+    const page = new EventTarget();
+    const ctx = fakeContext({ allowed: true });
+    ctx.state = 'running';
+    unlockAudio(ctx, page, () => {});
+    for (const g of ['keydown', 'pointerdown', 'touchend', 'visibilitychange']) page.dispatchEvent(new Event(g));
+    expect(ctx.resume).not.toHaveBeenCalled();
+  });
+
   it('can be torn down', () => {
     const page = new EventTarget();
     const ctx = fakeContext({ allowed: true });
     unlockAudio(ctx, page, () => {})();
-    page.dispatchEvent(new Event('keydown'));
+    for (const g of ['keydown', 'touchend', 'visibilitychange']) page.dispatchEvent(new Event(g));
     expect(ctx.resume).not.toHaveBeenCalled();
   });
 });
