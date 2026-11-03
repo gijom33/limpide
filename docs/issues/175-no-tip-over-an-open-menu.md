@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · bug. Built (2026-11-01) on night/2026-10-31, for the owner to try; its call on the Presets' tips answered (keep them)
+**Status:** done (2026-11-02). Built (2026-11-01) on night/2026-10-31 and released; tried by the owner: "Fine by me."
 
 ## Decisions
 

@@ -6,7 +6,7 @@ What exists already: each Tutorial Step has a `say` (what to do) and a `note` (t
 
 **Blocked by:** [130](./130-the-tour-freezes-to-show-adsr.md), which rewrites the Tour's Amp card first (Claude's call, open to the owner)
 
-**Status:** ready-for-human · enhancement. Built (2026-11-01) on night/2026-11-01, for the owner to try. Polish for v1 ([131](./131-v1.md)). Profile 16's first review is in ([report](../reviews/2026-10-31/16-synth-neophyte.md)).
+**Status:** done (2026-11-02). Built (2026-11-01) on night/2026-11-01 and released; tried by the owner, having read the words (decision 5): "Okay."
 
 ## Decisions
 

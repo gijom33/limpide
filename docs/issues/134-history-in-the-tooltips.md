@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · enhancement. Built (2026-11-01) on night/2026-11-01, for the owner to try. In v1 ([131](./131-v1.md), decision 8). Researched ([the findings](../research/134-history-in-the-tooltips.md)) and grilled with the owner, 2026-10-31.
+**Status:** done (2026-11-02). Built (2026-11-01) on night/2026-11-01 and released; tried by the owner, the History lines read (decision 17): "Love it!"
 
 ## Decided already (the owner, 2026-10-31)
 

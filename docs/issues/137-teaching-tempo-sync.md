@@ -4,7 +4,7 @@
 
 **Blocked by:** [112](./112-tempo-midi-clock-and-an-arpeggiator.md)
 
-**Status:** ready-for-human · enhancement. Built (2026-11-01) on night/2026-11-01, for the owner to try. In v1 ([131](./131-v1.md)).
+**Status:** done (2026-11-02). Built (2026-11-01) on night/2026-11-01 and released; tried by the owner: the seconds are the Synth Geek Layer's Rate readout (169), changed in [202](./202-the-geek-layers-rate-reads-as-without-it.md): "I actually see values in seconds, not Hz. I would keep showing the same values as without geek layer."
 
 ## Agent Brief
 
