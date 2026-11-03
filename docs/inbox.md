@@ -12,6 +12,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- 2026-11-03, the owner: "I think the tool should also explain all the other layers, the history, the geek layer, and also the fact that you can build your own tutorial preset, right? Rebuild your own tutorial preset."
+
 - 2026-11-03, the owner: "The other thing is to close the splash screen, the about screen, I would rather have a cross like in the other UI than a close button. It would also make it nicer at the bottom."
 
 ## Dropped
