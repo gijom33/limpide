@@ -125,9 +125,12 @@ export const describeSharedButtons = (banks?: readonly C16Bank[]) => sharedButto
  * The C16 layout as Mappings, on channel 1, answering a C16 only (issue 145). The knobs are endless and set to the
  * editor's Relative #1 (64-centred: 65 or 66 up, 63 or 62 down); the faders send positions.
  */
+/** The C16's tag on its Mappings, its record's id: written once (issue 196). */
+const C16_ID = 'c16' as const;
+
 export function c16Layout(): Mapping[] {
   const cc = (number: number): Control => ({ kind: 'cc', channel: C16_CHANNEL, number });
-  const device = 'c16' as const;
+  const device = C16_ID;
   return C16_BANKS.flatMap((bank, b) => [
     ...bank.knobs.flatMap((p, i) => (p ? [{ control: cc(knobCc(b, i)), target: p.target, mode: 'relative-centred' as const, device }] : [])),
     ...bank.faders.flatMap((p, i) => (p ? [{ control: cc(faderCc(b, i)), target: p.target, mode: 'absolute' as const, device }] : [])),
@@ -201,7 +204,7 @@ const ADDED_SINCE_145 = ['choice:lfoSync', 'choice:lfo2Sync', 'choice:legato'];
  * the Mappings is the layout's: a person who removed it meant to (ADR-0009).
  */
 export function addC16Places(stored: readonly Mapping[]): Mapping[] | null {
-  if (!stored.some((m) => m.device === 'c16')) return null;
+  if (!stored.some((m) => m.device === C16_ID)) return null;
   const added = c16Layout().filter((l) => ADDED_SINCE_145.includes(targetKey(l.target)) && !stored.some((m) => clash(l, m)));
   return added.length ? [...stored, ...added] : null;
 }
@@ -222,7 +225,7 @@ const LAYOUT_VERSION = '3';
 
 /** The TempoPAD C16 as a known Controller (issue 149): the one place the rest of the MIDI code learns of it. */
 export const C16: KnownController = {
-  id: 'c16',
+  id: C16_ID,
   label: 'C16',
   named: isC16,
   layout: c16Layout,

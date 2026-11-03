@@ -11,7 +11,7 @@ import { CloseIcon, MidiIcon } from './icons';
 import { Forms, useOneLine } from './oneLine';
 import { Segmented } from './Segmented';
 import { Tooltip } from './Tooltip';
-import { TIPS } from './tips';
+import { CONTROLLER_TIPS, TIPS } from './tips';
 
 export type MidiState =
   { kind: 'unsupported'; ios: boolean } | { kind: 'denied' } | { kind: 'pending' } | { kind: 'ready'; devices: string[] };
@@ -168,7 +168,7 @@ export function MidiPanel({
               {/* Each known Controller connected offers its layout and its card to print, which opens at #<id>-card. */}
               {knownAmong(devices).map(({ id, label }) => (
                 <Fragment key={id}>
-                  <Tooltip content={TIPS[`${id}Layout`]}>
+                  <Tooltip content={CONTROLLER_TIPS[id].layout}>
                     <button
                       type="button"
                       className="tool"
@@ -180,7 +180,7 @@ export function MidiPanel({
                       {label} layout
                     </button>
                   </Tooltip>
-                  <Tooltip content={TIPS[`${id}Card`]}>
+                  <Tooltip content={CONTROLLER_TIPS[id].card}>
                     <a className="tool" href={`#${id}-card`} target="_blank" rel="noopener">
                       Print {label} card
                     </a>

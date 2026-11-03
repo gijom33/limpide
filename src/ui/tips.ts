@@ -1,5 +1,6 @@
 import { bankLetter, C16_BANKS, describeSharedButtons } from '../midi/c16';
 import { describeMode } from '../midi/describe';
+import type { ControllerId } from '../midi/mappings';
 import { DESTINATIONS } from '../modulation/destinations';
 import { syncedRateUnderTheHood, UNDER_THE_HOOD, underTheHoodAt } from '../music/geek';
 import { formatSyncedRate } from '../music/tempo';
@@ -422,6 +423,14 @@ export const TIPS = {
 
 const LINE_COLOUR = { osc: 'Green', filter: 'Orange', amp: 'Violet' } as const;
 /** A Timeline key entry for a Destination an LFO moves (issue 63): its line, in its section's colour. */
+/**
+ * Each known Controller's tips in the MIDI panel, its layout's and its card's, by its id: a Controller added to the
+ * list without them does not compile (issue 196, rather than finding them by name).
+ */
+export const CONTROLLER_TIPS: Record<ControllerId, { layout: TipContent; card: TipContent }> = {
+  c16: { layout: TIPS.c16Layout, card: TIPS.c16Card },
+};
+
 export function lfoLineTip(destination: LfoDestination, aftertouch: boolean): TipContent {
   const { label, stage } = DESTINATIONS[destination];
   const colour = LINE_COLOUR[stage];
