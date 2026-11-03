@@ -4,7 +4,7 @@
 
 **Blocked by:** none (build after night/2026-10-31 is merged where it touches the same readouts; Claude's call, open to the owner)
 
-**Status:** ready-for-human · enhancement. Built (2026-11-01) on night/2026-11-01, for the owner to try
+**Status:** done (2026-11-02). Built (2026-11-01) on night/2026-11-01 and released; tried by the owner: "Let's keep it like this now"; Detune's number running into Env Amount went to [203](./203-detunes-number-clear-of-env-amount.md); what the layer keeps beyond History is for profile 19's review, later ([42](./42-reviews.md))
 
 ## Agent Brief
 

@@ -4,7 +4,7 @@
 
 **Blocked by:** its four slices, [167](./167-geek-numbers-osc2-and-noise.md), [168](./168-geek-numbers-envelopes-and-glide.md), [169](./169-geek-numbers-lfos-and-key-track.md) and [170](./170-geek-numbers-viewers.md)
 
-**Status:** ready-for-human · enhancement. Grilled with the owner, 2026-10-31; built in four slices (decision 5), each ready for an agent. Done when the four are. The layer is renamed the Synth Geek Layer by [165](./165-the-synth-geek-layer.md).
+**Status:** done (2026-11-02). Its four slices, [167](./167-geek-numbers-osc2-and-noise.md) to [170](./170-geek-numbers-viewers.md), tried by the owner and done ("Ok for now"); what the layer keeps is for profile 19's review, later ([42](./42-reviews.md)). Was: Grilled with the owner, 2026-10-31; built in four slices (decision 5), each ready for an agent. Done when the four are. The layer is renamed the Synth Geek Layer by [165](./165-the-synth-geek-layer.md).
 
 ## Decisions (grilling, 2026-10-31, decided by the owner)
 

@@ -4,7 +4,7 @@
 
 **Blocked by:** none. Built after night/2026-10-31 is merged, since its issue 161 renames a toggle on the same Display row (Claude's call, open to the owner)
 
-**Status:** ready-for-human · enhancement. Built (2026-11-01) on night/2026-11-01, for the owner to try
+**Status:** done (2026-11-02). Built (2026-11-01) on night/2026-11-01 and released; tried by the owner: "Looks fine for now."
 
 ## Decisions
 
