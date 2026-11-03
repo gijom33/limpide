@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · enhancement. Built (2026-11-01) on night/2026-11-01 and shipped in 1.21.0; decisions 3 and 4 (the owner's, 2026-11-02) built the same day on main, for the owner to try: the logo and the name centred as before, Bead to the right of the name, on its baseline
+**Status:** done (2026-11-02). Built on night/2026-11-01 and shipped in 1.21.0, decisions 3 and 4 built on main and released in 1.21.1; tried by the owner: "Good."
 
 ## Decisions
 

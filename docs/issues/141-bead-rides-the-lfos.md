@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · enhancement. Built (2026-11-01) on night/2026-10-31, for the owner to try. In v1 as Bead's polish, decided by the owner, 2026-10-31 ([131](./131-v1.md), decision 12). The details below are Claude's calls, open to the owner.
+**Status:** superseded (2026-11-02) by [197](./197-bead-rides-everywhere.md). Built (2026-11-01) on night/2026-10-31 and released; tried by the owner: "I never see Bead surf anymore. I filed another issue for that." 197 makes the rides happen, on a phone and in 2 × 2 too.
 
 ## Agent Brief
 

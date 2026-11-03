@@ -37,7 +37,7 @@ Water drop gags, among the funny turns when nothing is played:
 
 **Blocked by:** none
 
-**Status:** ready-for-human · enhancement. Built (2026-10-30): every decision below, with the owner's changes from trying it (15 to 22); for the owner to try before the release.
+**Status:** done (2026-11-02). Built (2026-10-30) and released; tried by the owner: "I do not see BAGGAGE and the surfing, nor air guitar." Those three went to [204](./204-baggage-air-guitar-and-surfing-seen.md); the rest stands.
 
 ## Questions for the owner
 

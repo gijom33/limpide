@@ -4,7 +4,7 @@
 
 **Blocked by:** [150](./150-bead-shown-by-default.md) (Bead shown by default), since otherwise most people taking the Tour have not met Bead
 
-**Status:** ready-for-human · enhancement. Built (2026-11-01) on night/2026-11-01, for the owner to try. In v1 as Bead's polish, decided by the owner (2026-10-31).
+**Status:** done (2026-11-02). Built (2026-11-01) on night/2026-11-01 and released; tried by the owner: "Fine."
 
 ## Decisions
 
