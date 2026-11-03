@@ -195,8 +195,8 @@ export function createControlSurface(synth: Synth) {
   /**
    * A knob or fader moving a dial (a Parameter, or the tempo): Relative by steps, Absolute with Pickup. A Parameter with
    * a Grid moves a step of it a click (issue 160), and the tempo a BPM (issue 193), a C16's thirds gathered into whole
-   * steps; a stepped dial (`unit`, its travel per step: an Octave, a note value) gathers a Relative knob's steps until they make a whole one, a step
-   * for every two clicks at most, so a slow turn or a C16's thirds still move it.
+   * steps; a stepped dial (`unit`, its travel per step: an Octave, a note value) gathers a Relative knob's steps until
+   * they make a whole one, a step for every two clicks at most, so a slow turn or a C16's thirds still move it.
    */
   const moveDial = (mapping: Mapping, dial: Dial, value: number, from: KnownController | undefined) => {
     const target = mapping.target;

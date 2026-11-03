@@ -1,7 +1,7 @@
 import type { PhraseAtTempo } from '../demo/phrase';
 import { WAVEFORM_NAMES } from '../music/harmonics';
 import {
-  type ChoiceId, formatParam, LFO_DESTINATIONS, LFO_KEYS, type LfoNumber, type LfoSync, PARAMS, type ParamId, type Patch, paramName, setLfo, setParam, soundFields,
+  type ChoiceId, formatParam, LFO_DESTINATIONS, LFO_KEYS, PARAMS, type ParamId, type Patch, paramName, setLfo, setParam, soundFields,
 } from '../patch/patch';
 import { PRESETS } from '../patch/presets';
 import { valueToPosition } from '../patch/taper';
@@ -113,19 +113,19 @@ export function doStep(step: Step, page: { setPatch(change: (patch: Patch) => Pa
   else page.setPatch((patch) => applyStep(patch, step));
 }
 
-/** The LFO a Rate Step turns, and whether Sync is on for it: its Hz with Sync off, its note value with Sync on. */
-const RATE_STEPS: Partial<Record<ParamId, { lfo: LfoNumber; sync: LfoSync }>> = {
-  lfoRate: { lfo: 1, sync: 'off' }, lfoNote: { lfo: 1, sync: 'on' }, lfo2Rate: { lfo: 2, sync: 'off' }, lfo2Note: { lfo: 2, sync: 'on' },
-};
-
 /**
  * The Patch a Step's card starts from (issue 193): on an LFO's Rate, Sync is switched so the Rate knob turns what the
  * Step asks, its Hz or its note value (the Wobble's 3 Hz, once Sync was switched on early). Any other Step, or Sync
  * already right, leaves the Patch as it is.
  */
 export function readyFor(step: Step, patch: Patch): Patch {
-  const rate = step.kind === 'param' ? RATE_STEPS[step.id] : undefined;
-  return rate && patch[LFO_KEYS[rate.lfo].sync] !== rate.sync ? setLfo(patch, { sync: rate.sync }, rate.lfo) : patch;
+  if (step.kind !== 'param') return patch;
+  for (const lfo of [1, 2] as const) {
+    const keys = LFO_KEYS[lfo];
+    const sync = step.id === keys.rate ? 'off' : step.id === keys.note ? 'on' : undefined;
+    if (sync && patch[keys.sync] !== sync) return setLfo(patch, { sync }, lfo);
+  }
+  return patch;
 }
 
 /** The Patch with the Step's change made exactly, a Rate's knob turning it (`readyFor`). */

@@ -1,6 +1,6 @@
 import type { LfoWaveform } from '../modulation/lfo';
 import type { Waveform } from '../music/harmonics';
-import { hzText } from '../music/pitch';
+import { frequencyText } from '../music/pitch';
 import { NOTE_VALUES, noteHz, noteIndex } from '../music/tempo';
 import { decibelGrid, type Grid, linearGrid, pitchGrid, seriesGrid, steppedGrid } from './grid';
 import type { Range } from './taper';
@@ -423,7 +423,7 @@ export function secondsText(seconds: number): string {
 export function formatParam(id: ParamId, value: number): string {
   switch (PARAMS[id].unit) {
     case 'Hz':
-      return hzText(value);
+      return frequencyText(value);
     case 's':
       if (id === 'glide' && value <= GLIDE_OFF * 1.001) return 'Off';
       return secondsText(value);

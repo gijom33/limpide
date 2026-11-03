@@ -91,8 +91,7 @@ export function useTutorialState({ storage, patch, patchName, patches, overlays,
     const off = next?.kind === 'display' && !lesson.done[index] && overlays[next.overlay];
     if (off) hideOverlay(next.overlay);
     // A Rate Step not yet made starts with its knob turning what it asks: Sync switched to suit (issue 193).
-    const ready = next && !lesson.done[index] ? readyFor(next, patch) : patch;
-    if (ready !== patch) patches.change(() => ready, 'tutorial');
+    if (next && !lesson.done[index] && readyFor(next, patch) !== patch) patches.change((p) => readyFor(next, p), 'tutorial');
     setLesson((l) => l && { ...l, index, since: held(next, scene), turnedOff: off && !l.turnedOff.includes(index) ? [...l.turnedOff, index] : l.turnedOff });
   };
   const matchPreset = () => preset && patches.load(preset.name, preset.patch);

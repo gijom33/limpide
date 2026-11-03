@@ -1,4 +1,4 @@
-import { hzText } from './pitch';
+import { frequencyText } from './pitch';
 
 /**
  * The tempo (issue 112): the page's, not the Patch's, a whole BPM; an LFO with Sync on repeats once a note value at
@@ -38,7 +38,7 @@ export const noteHz = (index: number, bpm: number) => bpm / 60 / NOTE_VALUES[ind
  * read as the Rate in Hz reads it ("1/8", "4.00 Hz", "1.33 Hz", issue 193).
  */
 export function formatSyncedRate(index: number, bpm: number): { note: string; hz: string } {
-  return { note: NOTE_VALUES[index].name, hz: hzText(noteHz(index, bpm)) };
+  return { note: NOTE_VALUES[index].name, hz: frequencyText(noteHz(index, bpm)) };
 }
 
 /** Taps further apart than the slowest beat start the count again. */
