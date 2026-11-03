@@ -37,7 +37,7 @@ describe('following a MIDI clock (issue 136)', () => {
     for (const h of handed) expect(Math.abs(h.origin - 10)).toBeLessThan(0.001);
   });
 
-  it('follows a change to 90 within a few beats, the readout passing straight from one to the other, and holds it', () => {
+  it('follows a jump to 90 within a few beats, the readout passing straight from one to the other, and holds it', () => {
     const follower = createClockFollower();
     const { end } = play(follower, 120, 8, 10);
     const { handed } = play(follower, 90, 12, end);
@@ -45,9 +45,8 @@ describe('following a MIDI clock (issue 136)', () => {
     expect(settled).toBeGreaterThanOrEqual(0);
     expect(handed[settled].tick).toBeLessThanOrEqual(4 * TICKS_PER_BEAT);
     for (const h of handed.slice(settled)) expect(h.bpm).toBe(90);
-    // On the way, it only falls: no flicker back up.
-    const way = handed.slice(0, settled).map((h) => h.bpm);
-    expect([...way].sort((a, b) => b - a)).toEqual(way);
+    // On the way, nothing in between (issue 185): 120 until it reads 90.
+    expect(new Set(handed.slice(0, settled).map((h) => h.bpm))).toEqual(new Set([120]));
   });
 
   it('does not flicker between two whole BPMs on a clock half way between them', () => {
@@ -113,5 +112,80 @@ describe('following a MIDI clock (issue 136)', () => {
   it('keeps between 40 and 240 BPM, as the tempo does', () => {
     expect(play(createClockFollower(), 300, 4, 0).handed.at(-1)?.bpm).toBe(240);
     expect(play(createClockFollower(), 30, 4, 0).handed.at(-1)?.bpm).toBe(40);
+  });
+});
+
+/** Ticks at `bpm` from `from`, jittered, played through `fault` (which may drop a tick or play it twice). */
+function playWith(
+  follower: ReturnType<typeof createClockFollower>,
+  bpm: number,
+  beats: number,
+  fault: (i: number) => 'lost' | 'doubled' | undefined,
+  from = 10,
+  wobble = jitter(),
+) {
+  const handed: (ClockTempo & { at: number })[] = [];
+  const tick = 60 / bpm / TICKS_PER_BEAT;
+  for (let i = 0; i < beats * TICKS_PER_BEAT; i++) {
+    const at = from + i * tick + wobble();
+    const what = fault(i);
+    if (what === 'lost') continue;
+    for (const t of what === 'doubled' ? [at, at + 0.0005] : [at]) {
+      const tempo = follower.tick(t);
+      if (tempo) handed.push({ ...tempo, at: t });
+    }
+  }
+  return handed;
+}
+
+describe('a MIDI clock with a fault (issue 185)', () => {
+  it('reads a lost tick as one missed, not a slower tempo: the BPM holds and the beats stay on the clock’s', () => {
+    const handed = playWith(createClockFollower(), 120, 40, (i) => (i % 300 === 150 ? 'lost' : undefined));
+    for (const h of handed) expect(h.bpm).toBe(120);
+    // Every beat it hands is counted from the clock's first, to a couple of milliseconds: the count is not a tick late.
+    for (const h of handed.slice(-10)) expect(Math.abs(h.origin - 10)).toBeLessThan(0.002);
+  });
+
+  it('reads a doubled tick as one too many: the BPM holds and the beats stay on the clock’s', () => {
+    const handed = playWith(createClockFollower(), 128, 40, (i) => (i % 300 === 150 ? 'doubled' : undefined));
+    for (const h of handed) expect(h.bpm).toBe(128);
+    for (const h of handed.slice(-10)) expect(Math.abs(h.origin - 10)).toBeLessThan(0.002);
+  });
+
+  it('still settles on a Bluetooth clock delivered in 15 ms bunches, each tick stamped when its bunch came, and holds it', () => {
+    const bunched = (bpm: number) => {
+      const tick = 60 / bpm / TICKS_PER_BEAT;
+      return (i: number) => Math.ceil((i * tick) / 0.015) * 0.015 - i * tick;
+    };
+    for (const bpm of [120, 174]) {
+      const follower = createClockFollower();
+      const handed = playWith(follower, bpm, 30, () => undefined, 0, (() => {
+        let i = 0;
+        const late = bunched(bpm);
+        return () => late(i++);
+      })());
+      // Its first few beats are read over less than the four beats fitted: they may be a little off.
+      expect(new Set(handed.slice(4).map((h) => h.bpm)), `${bpm} BPM`).toEqual(new Set([bpm]));
+    }
+  });
+
+  it('follows a ramp from 100 to 140 over 12 s a BPM or two at a time, ending at 140', () => {
+    const follower = createClockFollower();
+    const wobble = jitter();
+    const readings: number[] = [];
+    let t = 0;
+    while (t < 12) {
+      const bpm = 100 + (40 * t) / 12;
+      t += 60 / bpm / TICKS_PER_BEAT;
+      const tempo = follower.tick(t + wobble());
+      if (tempo) readings.push(tempo.bpm);
+    }
+    for (let i = 0; i < 4 * TICKS_PER_BEAT; i++) {
+      t += 60 / 140 / TICKS_PER_BEAT;
+      const tempo = follower.tick(t + wobble());
+      if (tempo) readings.push(tempo.bpm);
+    }
+    readings.slice(1).forEach((r, i) => expect(Math.abs(r - readings[i])).toBeLessThanOrEqual(2));
+    expect(readings.at(-1)).toBe(140);
   });
 });
