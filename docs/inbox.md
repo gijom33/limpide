@@ -4,6 +4,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-11-02, the owner, trying issue 167, with a screenshot of Osc 2's Tuning row (Octave, Semitone, Detune, Env Amount) where Detune's name reads "9.82 Hz" and runs into "Env Amount": "see how text is badly aligned on image".
+
 ## Ideas
 
 ## Dropped
