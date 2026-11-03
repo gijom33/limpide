@@ -6,7 +6,7 @@ What the Guides are: dashed lines at the Nominal Level, one Oscillator's peak (0
 
 **Blocked by:** none
 
-**Status:** ready-for-human · bug. Built (2026-10-31) on night/2026-10-31, for the owner to try
+**Status:** done (2026-11-02). Built (2026-10-31) on night/2026-10-31 and released; tried by the owner: "Looks good."
 
 ## Decisions
 

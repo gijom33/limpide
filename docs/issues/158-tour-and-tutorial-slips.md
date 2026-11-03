@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · bug. Built (2026-10-31) on night/2026-10-31, for the owner to try: two slips; the third answered by the owner (the LFO card's words go to 129).
+**Status:** done (2026-11-02). Built (2026-10-31) on night/2026-10-31 and released; tried by the owner: "I trust you."
 
 ## Agent Brief
 

@@ -6,7 +6,7 @@ What exists already: Freeze stops every Viewer on its frame while the sound play
 
 **Blocked by:** none (the Tour, [128](./128-how-a-synth-works.md), came out in 1.18.0)
 
-**Status:** ready-for-human · enhancement. Built (2026-11-01) on night/2026-10-31, for the owner to try
+**Status:** done (2026-11-02). Built (2026-11-01) on night/2026-10-31 and released; tried by the owner: "Yes but on small screen, we shoukd show both the settings and viewer. If it cannot fit screen we should show each in turn by scrolling." That went to [206](./206-the-tour-shows-the-control-and-the-viewer.md)
 
 ## Decisions
 

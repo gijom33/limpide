@@ -4,7 +4,7 @@
 
 **Blocked by:** [116](./116-patches-at-the-edges.md), whose sweep marks these faults and turns green when they are fixed
 
-**Status:** ready-for-human · bug. Built (2026-10-31) on night/2026-10-31, for the owner to try
+**Status:** done (2026-11-02). Built (2026-10-31) on night/2026-10-31 and released; tried by the owner: "Talking filter alternate a voicy sound and a bip: That's wrong." Talking Filter's sound went to [205](./205-talking-filter-talks.md); its other two findings (the Cutoff's ends, the first frame under FM) stand
 
 ## Decisions
 

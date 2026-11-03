@@ -6,7 +6,7 @@ Why it moves: the readout is drawn on the canvas in the page's proportional font
 
 **Blocked by:** none
 
-**Status:** ready-for-human · bug. Built (2026-10-31) on night/2026-10-31, for the owner to try
+**Status:** done (2026-11-02). Built (2026-10-31) on night/2026-10-31 and released; tried by the owner: "Perfect."
 
 ## Decisions
 
