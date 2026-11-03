@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { type Played, type Source, startTransport, type TransportHost } from './transport';
+import { loopPhrase } from '../demo/phrase';
+import { type Played, type Source, startTransport, type Timers, type TransportHost } from './transport';
 
 function fakeHost({ keys = true } = {}) {
   let clock = 0;
@@ -109,3 +110,81 @@ describe('the Transport (issue 75)', () => {
     expect(calls.length).toBe(before);
   });
 });
+
+/** Timers the test fires by hand: a background page's, which the browser wakes when it likes (issue 198). */
+function handTimers() {
+  let due: (() => void) | null = null;
+  const timers: Timers = {
+    after(_ms, fn) {
+      due = fn;
+      return () => (due = null);
+    },
+  };
+  return {
+    timers,
+    fire() {
+      const fn = due;
+      due = null;
+      fn?.();
+    },
+  };
+}
+
+describe('the Transport in the background (issue 198)', () => {
+  // A phrase of eighths at 120 BPM: a Note every quarter of a second, 32 of them over 8 s.
+  const phrase = Array(32).fill('C4:.5').join(' ');
+
+  it('with its ticks slowed to once a second while the page is hidden, hands every Note over before its start, once', () => {
+    let clock = 0;
+    const handed: { on: number; at: number }[] = [];
+    const host: TransportHost = {
+      now: () => clock,
+      noteOn: (_n, _v, on) => handed.push({ on, at: clock }),
+      release: () => {},
+      noteOff: () => {},
+    };
+    const { timers, fire } = handTimers();
+    startTransport(host, loopPhrase(phrase, 120, 0.2), { lookahead: 0.15, tick: 40, timers, hidden: () => true });
+    for (let s = 0; s < 8; s++) {
+      clock += 1;
+      fire();
+    }
+    const starts = handed.map((h) => h.on).filter((on) => on < 8);
+    expect(starts).toEqual(Array.from({ length: starts.length }, (_, i) => 0.2 + i * 0.25)); // every one, none twice
+    expect(starts.length).toBe(32);
+    expect(handed.every((h) => h.at <= h.on)).toBe(true); // none after its start
+  });
+
+  it('in front, keeps the look-ahead as short as ever, and narrows it again once the page is back', () => {
+    let clock = 0;
+    let hidden = true;
+    const handed: number[] = [];
+    const host: TransportHost = { now: () => clock, noteOn: (_n, _v, on) => handed.push(on), release: () => {}, noteOff: () => {} };
+    const { timers, fire } = handTimers();
+    startTransport(host, loopPhrase(phrase, 120, 0.2), { lookahead: 0.15, tick: 40, timers, hidden: () => hidden });
+    expect(Math.max(...handed)).toBeGreaterThan(1.5); // hidden: about two seconds ahead
+    hidden = false;
+    clock = 3;
+    fire();
+    expect(Math.max(...handed)).toBeLessThan(3.15); // back in front: no further than the short look-ahead
+    expect(new Set(handed).size).toBe(handed.length);
+  });
+
+  it('drops a Note whose start has passed by the time it is handed over, rather than playing it late', () => {
+    let clock = 0;
+    const calls: string[] = [];
+    const host: TransportHost = {
+      now: () => clock,
+      noteOn: (note, _v, on) => calls.push(`on ${note} @${on.toFixed(2)}`),
+      release: (note, at) => calls.push(`release ${note} @${at.toFixed(2)}`),
+      noteOff: () => {},
+      onNotes: (notes) => calls.push(`keys ${notes.join('+') || '-'}`),
+    };
+    const { timers, fire } = handTimers();
+    startTransport(host, once([note(60, 0.1, 0.3), note(62, 0.4, 0.9), note(64, 1.2, 1.5)]), { lookahead: 0.15, tick: 40, timers, hidden: () => false });
+    clock = 1.1; // the page stalled: C4 and D4 are past their start
+    fire();
+    expect(calls).toEqual(['on 60 @0.10', 'release 60 @0.30', 'on 64 @1.20', 'release 64 @1.50']);
+  });
+});
+

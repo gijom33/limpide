@@ -4,6 +4,7 @@ import { createLibrary, type Library } from '../patch/library';
 import { createPatchStore, type PatchStore } from '../patch/patchStore';
 import { createTempoStore, type TempoStore } from '../play/tempoStore';
 import { createViewerStore, type ViewerStore } from '../viewers/viewerStore';
+import { notesInTests } from './notesInTests';
 import type { KeyValueStorage } from './storage';
 import { playThroughSilentMode } from './unlockAudio';
 
@@ -43,6 +44,7 @@ export function getAudioSession(storage: KeyValueStorage): AudioSession {
   playThroughSilentMode(navigator);
   const ctx = new AudioContext({ latencyHint: 'interactive' });
   const engine = createSynthEngine(ctx);
+  notesInTests(engine);
   const library = createLibrary(storage);
   const listeners = new Set<(notes: number[]) => void>();
   const pressListeners = new Set<(note: number) => void>();

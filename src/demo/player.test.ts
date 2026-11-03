@@ -58,7 +58,8 @@ describe('the Demo player', () => {
     expect(calls.filter((c) => c.startsWith('on'))).toEqual([]); // nothing is handed over until it is near
     advance(0.2);
     expect(calls.filter((c) => c.startsWith('on') || c.startsWith('release'))).toEqual(['on 48 @0.300', 'release 48 @0.725']);
-    advance(0.9); // 1.1 s: the chord at 1.3 s is not near yet
+    advance(0.5); // 0.7 s: E3 is near
+    advance(0.4); // 1.1 s: the chord at 1.3 s is not near yet
     expect(calls).toContain('on 52 @0.800');
     expect(calls).not.toContain('load Poly');
     // 1.2 s: the chord is within the look-ahead, but its Preset waits for the bar line, so E3's Release still plays
@@ -141,11 +142,24 @@ describe('the Demo player', () => {
     const stop = startDemo(host, track);
     expect(calls).toContain('octave 3'); // C3 is MIDI 48: the piano's C is C3
     const keys = () => calls.filter((c) => c.startsWith('keys')).at(-1);
-    advance(0.35); // C3 has started (at 0.3 s)
+    advance(0.2); // C3 is handed over…
+    advance(0.15); // …and has started (at 0.3 s)
     expect(keys()).toBe('keys 48');
     advance(0.4); // C3 has ended (0.725 s), E3 not yet (0.8 s)
     expect(keys()).toBe('keys -');
     stop();
     expect(calls.at(-1)).toBe('keys -');
+  });
+
+  it('in the background, hands its Notes over further ahead, but turns its knobs no further ahead than in front (issue 198)', () => {
+    vi.stubGlobal('document', { visibilityState: 'hidden' });
+    try {
+      const { host, calls } = fakeHost({ Sweep: 1 });
+      startDemo(host, { bpm: 120, parts: [{ preset: 'Sweep', phrase: 'C3:1 C3:1 C3:1 C3:1', moves: [{ id: 'cutoff', from: 200, to: 3200 }] }] });
+      expect(calls).toContain('on 48 @1.800'); // two seconds ahead
+      expect(calls.filter((c) => c.startsWith('cutoff='))).toEqual([]); // its move starts with the part, at 0.3 s: not yet
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });

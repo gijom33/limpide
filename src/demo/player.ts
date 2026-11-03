@@ -126,7 +126,8 @@ export function startDemo(host: DemoHost, track: Track = TRACK, from = 0): () =>
       return 'end';
     }
     for (;;) {
-      turnKnobs(horizon);
+      // The knobs turn at once, so they keep to the short look-ahead even when the Notes go further (issue 198).
+      turnKnobs(Math.min(horizon, now + LOOKAHEAD));
       const boundary = index + 1 < track.parts.length ? starts[index + 1] : Infinity;
       let last = queued;
       while (last < notes.length && notes[last].on < Math.min(horizon, boundary)) last++;
