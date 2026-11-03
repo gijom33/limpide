@@ -368,7 +368,10 @@ export const rateKnob = (patch: Patch, lfo: LfoNumber): ParamId => {
 export const followsTheBeat = (patch: Patch, lfo: LfoNumber) => patch[LFO_KEYS[lfo].sync] === 'on' && patch[LFO_KEYS[lfo].retrigger] === 'free';
 
 /** The Parameter a control mapped to `id` turns now: an LFO's Rate turns its note value while Sync is on. */
-export const knobTurns = (patch: Patch, id: ParamId): ParamId => (id === 'lfoRate' ? rateKnob(patch, 1) : id === 'lfo2Rate' ? rateKnob(patch, 2) : id);
+export const knobTurns = (patch: Patch, id: ParamId): ParamId => {
+  const lfo = ([1, 2] as const).find((n) => LFO_KEYS[n].rate === id);
+  return lfo ? rateKnob(patch, lfo) : id;
+};
 
 export function setLfo(
   patch: Patch,
