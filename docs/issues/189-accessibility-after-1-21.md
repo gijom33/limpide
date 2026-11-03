@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · bug. Polish for v1
+**Status:** ready-for-human · bug. Built (2026-11-02) on night/2026-11-02, for the owner to try
 
 ## Decisions
 
@@ -42,3 +42,35 @@ Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.m
 ## Added in triage (2026-11-02)
 
 - From the 1.21.0 code review: from 861 to 1279 px the BPM's "MIDI" word is hidden and only a green edge marks the clock, a mark by colour alone: a mark that does not rest on colour (an icon or the word) at every width.
+
+## How it was built
+
+**What was built**
+
+- **Focus back to what opened** (decision 1): Escape anywhere in the MIDI panel goes back to MIDI; Quit and Done on a Tutorial's card to the Tutorial button (or the Patch button when picked from the Patches panel); Close and Done on the Tour to About; Stop, or Escape on the Demo's parts, to Demo; Enter or Escape in the typed BPM to the BPM.
+- **Header panels close when the focus leaves them** (Display, MIDI, the Tutorials, the narrow Tempo, Patches), so none stays open over what it covers, and a later Escape no longer pulls the focus back to Display.
+- **Scroll padding:** up to 860 px the page's top scroll padding is the header's full height (plus the strip's on a phone), so Shift+Tab never leaves the focus under the header as it slides back. The header's and the strip's own controls are exempt, being always in view.
+- **Light theme:** the muted grey darkened to #5c6372 (4.5:1 on the page), and the phone strip's Oscillators tab, as text, darkened towards the text; its underline stays green. The design audit's light-theme waiver for muted text is gone.
+- **Tutorial card:** "Go to the control" puts the focus on the Step's control (its tab shown, clear of the header and the card); Escape there brings it back to Next (decision 2).
+- **Tempo:** announced politely ("Tempo 126 BPM") once it settles after Tap, a MIDI clock or a Controller's knob; the narrow button is named "Tempo: 120 BPM"; the BPM's tip says Enter types it too.
+- **The clock's mark from 861 to 1279 px:** a small MIDI socket on the BPM box's top corner, beside the green edge (from the triage note).
+- **Geek readouts** ("Q 1.32") are part of their slider's description.
+- Tests: the keyboard access spec covers each close (but a Tutorial's Done, the same path as Quit), Shift+Tab on a phone and at 200 % zoom (Chromium; Safari tabs only to fields by default), the card's way to the control and back, the BPM announced and the narrow button's name; the clock spec checks the announcement and the mark at each width.
+
+**Calls made (Claude's call, open to the owner)**
+
+1. The Oscillators heading keeps its green at 3.4:1 in the light theme: decision 3 holds headings to 3:1.
+2. The greyed-out values stay as dim as they are (1.79:1 light, 2.14:1 dark): they belong to controls with no effect now, which WCAG 1.4.3 and the design audit leave out. Raising them to 4.5:1 would take away the greying.
+3. The Tour's Close goes back to About's button whichever way it started (the welcome has no button of its own).
+4. Escape on the control goes back to the card's Next, not to "Go to the control": the next thing after turning the control.
+5. The clock's mark where the unit is hidden is a 10 px MIDI socket over the box's corner, so the box keeps its width and the piano its keys.
+6. The tempo is announced after 0.6 s of rest, so a run of taps or a clock's drift is said once; the Demo's tempo is not announced.
+
+**What to try**
+
+- Keyboard only: open MIDI, Tab into it, Escape; open a Tutorial and Quit; take the Tour from About and close it; play the Demo, Tab to its parts, Escape. The focus lands on the button each time.
+- On a phone, or the browser zoomed to 200 %: Tab down to LFO 2, then Shift+Tab back up; nothing hides under the header.
+- A Tutorial: "Go to the control", turn it with the arrows, Escape, Enter on Next.
+- Light theme: the header's words and the Oscillators heading.
+- With VoiceOver: Tap four times; on a knob with the Synth Geek Layer on.
+
