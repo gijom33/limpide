@@ -85,8 +85,11 @@ test.describe('on a phone', () => {
     await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(500);
     await page.waitForTimeout(1000); // well after the page has stopped
     await expect(logo).not.toBeInViewport();
-    // Nor does a jump back up: only a scroll of one's own brings the rows back.
-    await page.getByRole('navigation', { name: 'Sections' }).getByRole('button', { name: 'Filter' }).click();
+    // Nor does a jump back up: only a scroll of one's own brings the rows back. Pressed where it stands, as a finger
+    // does: Playwright's click first scrolls the tab into view, and in WebKit that scroll ignores the strip's own scroll
+    // margin under the page's scroll padding (issue 189), so it scrolls up and brings the rows back itself.
+    const filterTab = (await page.getByRole('navigation', { name: 'Sections' }).getByRole('button', { name: 'Filter' }).boundingBox())!;
+    await page.mouse.click(filterTab.x + filterTab.width / 2, filterTab.y + filterTab.height / 2);
     await page.waitForTimeout(1000);
     await expect(logo).not.toBeInViewport();
     const filter = (await page.getByRole('region', { name: 'Filter' }).boundingBox())!;

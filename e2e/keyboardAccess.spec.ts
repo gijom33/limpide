@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { midiButton, midiPanel, openMidi, withFakeController } from './fakeMidi';
 import { openDisplay } from './helpers';
 import { FIRST_VISIT } from './startState';
 
@@ -241,4 +242,152 @@ test('a greyed-out control tells a screen reader why it does nothing now, and st
   await page.getByRole('tab', { name: /Osc 2/ }).click();
   await expect(detune).not.toHaveAccessibleDescription(why);
   await expect(page.getByRole('radiogroup', { name: 'Osc 2 Waveform' })).not.toHaveAccessibleDescription(why);
+});
+
+// Issue 189 (review 6): whatever closes gives the focus back to what opened it, never to the page.
+test.describe('closing gives the focus back to what opened it (issue 189)', () => {
+  test('Escape from inside the MIDI panel', async ({ page }) => {
+    await withFakeController(page);
+    await openMidi(page);
+    await midiPanel(page).getByRole('combobox', { name: 'Aftertouch' }).focus();
+    await page.keyboard.press('Escape');
+    await expect(midiPanel(page)).toBeHidden();
+    await expect(midiButton(page)).toBeFocused();
+  });
+
+  test('Quit on a Tutorial’s card, to the Tutorial button', async ({ page }) => {
+    await page.goto('/');
+    const tutorialButton = page.getByRole('button', { name: 'Tutorial', exact: true });
+    await tutorialButton.click();
+    await page.getByRole('group', { name: 'Tutorials' }).getByRole('button', { name: /^Tutorial: Bass/ }).click();
+    const card = page.getByRole('region', { name: /^Tutorial: / });
+    await expect(card.getByRole('button', { name: 'Start' })).toBeFocused();
+    await card.getByRole('button', { name: 'Quit the tutorial' }).press('Enter');
+    await expect(card).toBeHidden();
+    await expect(tutorialButton).toBeFocused();
+  });
+
+  test('Close on the Tour’s card, to About’s button', async ({ page }) => {
+    await page.goto('/');
+    const about = page.getByRole('button', { name: 'About' });
+    await about.click();
+    await page.getByRole('button', { name: 'Take the Tour' }).click();
+    const card = page.getByRole('region', { name: 'Tour' });
+    await expect(card.getByRole('button', { name: 'Next' })).toBeFocused();
+    await card.getByRole('button', { name: 'Close the Tour' }).press('Enter');
+    await expect(card).toBeHidden();
+    await expect(about).toBeFocused();
+  });
+
+  test('Escape on the Demo’s parts, to the Demo button', async ({ page }) => {
+    await page.goto('/');
+    const demo = page.getByRole('button', { name: 'Demo', exact: true });
+    await demo.focus();
+    await page.keyboard.press('Enter');
+    const bar = page.getByRole('region', { name: 'Demo', exact: true });
+    await bar.getByRole('button', { name: /^Play from part 1,/ }).focus();
+    await page.keyboard.press('Escape');
+    await expect(demo).toHaveAttribute('aria-pressed', 'false');
+    await expect(demo).toBeFocused();
+  });
+
+  test('Enter after typing a BPM, to the BPM', async ({ page }) => {
+    await page.goto('/');
+    const bpm = page.getByRole('spinbutton', { name: 'Tempo' });
+    await bpm.focus();
+    await page.keyboard.press('Enter');
+    await page.keyboard.type('96');
+    await page.keyboard.press('Enter');
+    await expect(bpm).toHaveAttribute('aria-valuenow', '96');
+    await expect(bpm).toBeFocused();
+  });
+});
+
+test('a header panel closes once the focus leaves it (issue 189)', async ({ page }) => {
+  await page.goto('/');
+  await openDisplay(page);
+  await page.getByRole('region', { name: 'Viewer controls' }).getByRole('button').first().focus();
+  await patchName(page).focus();
+  await expect(page.getByRole('region', { name: 'Viewer controls' })).toBeHidden();
+  await page.keyboard.press('Escape');
+  await expect(patchName(page)).toBeFocused(); // Escape later no longer pulls the focus back to Display
+});
+
+// Walking the page backwards, each stop is checked clear of the sticky header (and the phone's strip), which slides
+// back in as the page scrolls up: a phone, and a laptop's window at 200 % zoom (720 × 450 CSS px).
+for (const [where, viewport] of [
+  ['a phone', { width: 393, height: 852 }],
+  ['200 % zoom', { width: 720, height: 450 }],
+] as const) {
+  test.describe(`Shift+Tab on ${where} (issue 189)`, () => {
+    test.use({ viewport, reducedMotion: 'reduce' });
+    test('never leaves the focus under the header', async ({ page, browserName }) => {
+      test.skip(browserName === 'webkit', 'Safari tabs to buttons only when its settings ask it to');
+      await page.goto('/');
+      await page.getByRole('button', { name: 'LFO 2 Sync' }).focus();
+      const covered: string[] = [];
+      for (let i = 0; i < 80; i++) {
+        await page.keyboard.press('Shift+Tab');
+        const stop = await page.evaluate(async () => {
+          const frame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+          await frame();
+          await frame();
+          await frame();
+          const focused = document.activeElement as HTMLElement;
+          if (focused.closest('header, .section-strip')) return null;
+          const box = focused.getBoundingClientRect();
+          const at = document.elementFromPoint(box.left + box.width / 2, box.top + Math.min(box.height / 2, 8));
+          const name = focused.getAttribute('aria-label') ?? focused.textContent?.trim() ?? focused.tagName;
+          return { name, under: !!at?.closest('header, .section-strip') };
+        });
+        if (!stop) break;
+        if (stop.under) covered.push(stop.name);
+      }
+      expect(covered).toEqual([]);
+    });
+  });
+}
+
+test('a Tutorial’s card goes to its Step’s control, and Escape there comes back to the card (issue 189)', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Tutorial', exact: true }).click();
+  await page.getByRole('group', { name: 'Tutorials' }).getByRole('button', { name: /^Tutorial: Bass/ }).click();
+  const card = page.getByRole('region', { name: /^Tutorial: / });
+  await card.getByRole('button', { name: 'Start' }).click();
+  await card.getByRole('button', { name: 'Go to the control' }).click();
+  const ringed = page.locator('[data-tutorial]:not(.section-strip button)');
+  await expect.poll(() => ringed.evaluate((e) => e.contains(document.activeElement))).toBe(true);
+  await page.keyboard.press('ArrowUp');
+  await page.keyboard.press('Escape');
+  await expect(card.getByRole('button', { name: 'Next' })).toBeFocused();
+});
+
+test('Tap’s tempo is announced (issue 189)', async ({ page }) => {
+  await page.goto('/');
+  const tap = page.getByRole('button', { name: 'Tap', exact: true });
+  await tap.focus();
+  await tap.evaluate(async (button) => {
+    for (let i = 0; i < 4; i++) {
+      button.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0, pointerType: 'mouse' }));
+      await new Promise((resolve) => setTimeout(resolve, 400));
+    }
+  });
+  const bpm = await page.getByRole('spinbutton', { name: 'Tempo' }).getAttribute('aria-valuenow');
+  expect(bpm).not.toBe('120');
+  await expect(page.getByRole('status').filter({ hasText: /BPM/ })).toHaveText(`Tempo ${bpm} BPM`);
+});
+
+test.describe('on a phone', () => {
+  test.use({ viewport: { width: 393, height: 852 } });
+  test('the tempo button’s name holds the BPM it shows (issue 189)', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.locator('header .tempo-open')).toHaveAccessibleName('Tempo: 120 BPM');
+  });
+});
+
+test('with the Synth Geek Layer on, a knob’s readout is part of its description (issue 189)', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('limpide.overlays', JSON.stringify({ geek: true })));
+  await page.goto('/');
+  const resonance = page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name: 'Resonance' });
+  await expect(resonance).toHaveAccessibleDescription(/Q \d+\.\d\d/);
 });

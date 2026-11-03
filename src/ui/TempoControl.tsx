@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { clampBpm, TEMPO } from '../music/tempo';
 import type { TempoState } from '../play/tempoStore';
+import { useHeaderPanel } from './hooks/useHeaderPanel';
 import { useMediaQuery } from './hooks/useMediaQuery';
 import { useUnderHeader } from './hooks/useUnderHeader';
+import { MidiIcon } from './icons';
 import { useLearnable } from './learn';
 import { pressed } from './paramControl';
 import { STACKED } from './sections';
@@ -13,6 +15,8 @@ import { TIPS } from './tips';
 const DRAG_PIXELS = 1;
 /** What Page Up and Down (and Shift with an arrow) step by. */
 const BIG_STEP = 10;
+/** A tempo settles this long before it is announced, so a clock's drift or a run of taps is said once. */
+const SETTLE_MS = 600;
 
 interface Props {
   tempo: TempoState;
@@ -50,6 +54,14 @@ function TempoDial({ tempo, onSet }: Pick<Props, 'tempo' | 'onSet'>) {
     field?.focus();
     field?.select();
   }, []);
+  // Enter or Escape in the field gives the focus back to the BPM, not to the page (issue 189); a press elsewhere leaves
+  // it where the press went.
+  const back = useRef(false);
+  const refocus = useCallback((dial: HTMLDivElement | null) => {
+    if (!dial || !back.current) return;
+    back.current = false;
+    dial.focus();
+  }, []);
   const set = (next: number) => !held && onSet(clampBpm(next));
   const commit = () => {
     if (typing !== null && Number.isFinite(Number(typing)) && typing.trim() !== '') set(Number(typing));
@@ -67,13 +79,19 @@ function TempoDial({ tempo, onSet }: Pick<Props, 'tempo' | 'onSet'>) {
         onBlur={commit}
         onKeyDown={(e) => {
           e.stopPropagation(); // the letter and number keys type here, never play
-          if (e.key === 'Enter') commit();
-          else if (e.key === 'Escape') setTyping(null);
+          if (e.key === 'Enter') {
+            back.current = true;
+            commit();
+          } else if (e.key === 'Escape') {
+            back.current = true;
+            setTyping(null);
+          }
         }}
       />
     );
   return (
     <div
+      ref={refocus}
       className="tool tempo-bpm"
       role="spinbutton"
       tabIndex={0}
@@ -118,6 +136,12 @@ function TempoDial({ tempo, onSet }: Pick<Props, 'tempo' | 'onSet'>) {
     >
       <span className="tempo-value">{bpm}</span>
       <span className="tempo-unit" data-clock={tempo.midi || undefined}>{unit(tempo)}</span>
+      {/* Where the unit is hidden (861 to 1279 px), the MIDI clock's mark: a shape, not the edge's colour alone (issue 189). */}
+      {tempo.midi && (
+        <span className="tempo-clock" aria-hidden="true">
+          <MidiIcon />
+        </span>
+      )}
     </div>
   );
 }
@@ -145,31 +169,46 @@ function TapButton({ tempo, onTap }: Pick<Props, 'tempo' | 'onTap'>) {
 }
 
 /**
+ * The tempo said to a screen reader once it settles, when something other than the BPM itself changed it: Tap, a MIDI
+ * clock, a Controller's knob (issue 189). The BPM in focus says its own value; the Demo's tempo, and the person's
+ * coming back as it stops, are the player's, not news.
+ */
+function TempoNews({ tempo }: { tempo: TempoState }) {
+  const [news, setNews] = useState('');
+  const player = useRef(tempo.player);
+  const said = useRef(tempo.bpm);
+  useEffect(() => {
+    const handover = player.current !== tempo.player;
+    player.current = tempo.player;
+    if (handover || tempo.player || document.activeElement?.closest('.tempo-bpm')) {
+      said.current = tempo.bpm;
+      return;
+    }
+    if (tempo.bpm === said.current) return;
+    const timer = setTimeout(() => {
+      said.current = tempo.bpm;
+      setNews(`Tempo ${tempo.bpm} BPM`);
+    }, SETTLE_MS);
+    return () => clearTimeout(timer);
+  }, [tempo.bpm, tempo.player]);
+  return (
+    <span className="visually-hidden" role="status">
+      {news}
+    </span>
+  );
+}
+
+/**
  * The page's tempo in the header (issue 112, decided by the owner): from 861 px the BPM over Tap, a column of the
  * header's buttons (issue 154); narrower, the BPM alone among set-up, which opens a small field with the BPM and Tap
- * in it. Escape or a press elsewhere closes it.
+ * in it. Escape, a press elsewhere or Tab out of it closes it.
  */
 export function TempoControl(props: Props) {
   const narrow = useMediaQuery(STACKED);
   const [open, setOpen] = useState(false);
-  const wrapper = useRef<HTMLDivElement>(null);
-  const button = useRef<HTMLButtonElement>(null);
+  const { wrapper, button } = useHeaderPanel(open, setOpen);
   const panel = useUnderHeader<HTMLDivElement>(open);
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
-      setOpen(false);
-      button.current?.focus();
-    };
-    const onPointer = (e: PointerEvent) => !wrapper.current?.contains(e.target as Node) && setOpen(false);
-    document.addEventListener('keydown', onKey);
-    document.addEventListener('pointerdown', onPointer);
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      document.removeEventListener('pointerdown', onPointer);
-    };
-  }, [open]);
+  const news = <TempoNews tempo={props.tempo} />;
   if (!narrow)
     return (
       <div className="tempo" role="group" aria-label="Tempo">
@@ -177,12 +216,15 @@ export function TempoControl(props: Props) {
           <TempoDial {...props} />
         </Tooltip>
         <TapButton {...props} />
+        {news}
       </div>
     );
   return (
     <div className="tempo-menu" ref={wrapper}>
+      {news}
       <Tooltip content={tempoTip(props.tempo)}>
-        <button ref={button} type="button" className="tool tempo-open" aria-label="Tempo" aria-expanded={open} data-clock={props.tempo.midi || undefined} onClick={() => setOpen((o) => !o)}>
+        {/* Named with what it shows, "120 BPM" (WCAG 2.5.3, issue 189). */}
+        <button ref={button} type="button" className="tool tempo-open" aria-label={`Tempo: ${props.tempo.bpm} ${unit(props.tempo)}`} aria-expanded={open} data-clock={props.tempo.midi || undefined} onClick={() => setOpen((o) => !o)}>
           <span className="tempo-value">{props.tempo.bpm}</span>
           <span className="tool-word" data-clock={props.tempo.midi || undefined}>{unit(props.tempo)}</span>
         </button>

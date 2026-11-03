@@ -1,10 +1,11 @@
-import { Fragment, useEffect, useRef, useState } from 'react';
+import { Fragment, useState } from 'react';
 import { BEND_RANGES, type BendRange } from '../app/rememberedSettings';
 import { answeredBy, doubledPorts, knownAmong } from '../midi/controller';
 import { describeControl, describeMode, describeTarget } from '../midi/describe';
 import { type Control, type ControllerId, controlKey, type KnobMode, knobModeOf, type Mapping } from '../midi/mappings';
 import { DESTINATIONS_BY_STAGE } from '../modulation/destinations';
 import type { LfoDestination } from '../patch/patch';
+import { useHeaderPanel } from './hooks/useHeaderPanel';
 import { useUnderHeader } from './hooks/useUnderHeader';
 import { CloseIcon, MidiIcon } from './icons';
 import { Forms, useOneLine } from './oneLine';
@@ -69,35 +70,25 @@ const statusText = (state: MidiState) => {
 
 /**
  * The MIDI button: a dot and the number of Controllers, and "Learning" in its word's place while MIDI Learn is on. It opens the MIDI
- * panel: what is connected, the Activity Monitor, MIDI Learn (and Done, once learning), and the Mappings.
+ * panel: what is connected, the Activity Monitor, MIDI Learn (and Done, once learning), and the Mappings. Escape from
+ * anywhere in it closes it back to the button (issue 189).
  */
 export function MidiPanel({
   state, onOpen, activity, mappings, learning, onLearn, onDone, onQuickSetup, onLayout, onRemove, onMode, onClear, bendRange, onBendRange,
   aftertouch, onAftertouch,
 }: Props) {
   const [open, setOpen] = useState(false);
-  const wrapper = useRef<HTMLDivElement>(null);
+  const { wrapper, button } = useHeaderPanel(open, setOpen);
   const panel = useUnderHeader<HTMLDivElement>(open);
   const devices = state.kind === 'ready' ? state.devices : [];
   const available = state.kind === 'ready' || state.kind === 'pending';
   const learningWord = useOneLine<HTMLSpanElement>(learning ? 'learning' : '');
 
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
-    const onPointer = (e: PointerEvent) => !wrapper.current?.contains(e.target as Node) && setOpen(false);
-    document.addEventListener('keydown', onKey);
-    document.addEventListener('pointerdown', onPointer);
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      document.removeEventListener('pointerdown', onPointer);
-    };
-  }, [open]);
-
   return (
     <div className="midi-menu" ref={wrapper}>
       <Tooltip content={{ ...TIPS.midi, body: statusText(state) }}>
         <button
+          ref={button}
           type="button"
           className="tool midi-status"
           aria-label="MIDI"

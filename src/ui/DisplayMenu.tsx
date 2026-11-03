@@ -1,33 +1,16 @@
-import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { type ReactNode, useState } from 'react';
+import { useHeaderPanel } from './hooks/useHeaderPanel';
 import { SlidersIcon } from './icons';
 import { Tooltip } from './Tooltip';
 
 /**
  * The display settings (Freeze, Snapshot, axes, overlays) behind one button, so they take no room while you
- * play. The panel stays open while you change several things; Escape or a click elsewhere closes it. A dot on
+ * play. The panel stays open while you change several things; Escape, a click elsewhere or Tab out of it closes it. A dot on
  * the button shows when something is held (Freeze or a Snapshot), so a hidden setting is never a mystery.
  */
 export function DisplayMenu({ active, children }: { active: boolean; children: ReactNode }) {
   const [open, setOpen] = useState(false);
-  const wrapper = useRef<HTMLDivElement>(null);
-  const button = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    // Escape closes it back to its button, not to the page (issue 51).
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
-      setOpen(false);
-      button.current?.focus();
-    };
-    const onPointer = (e: PointerEvent) => !wrapper.current?.contains(e.target as Node) && setOpen(false);
-    document.addEventListener('keydown', onKey);
-    document.addEventListener('pointerdown', onPointer);
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      document.removeEventListener('pointerdown', onPointer);
-    };
-  }, [open]);
+  const { wrapper, button } = useHeaderPanel(open, setOpen);
 
   return (
     <div className="display-menu" ref={wrapper}>

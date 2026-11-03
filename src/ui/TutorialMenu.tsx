@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
+import { useHeaderPanel } from './hooks/useHeaderPanel';
 import { useUnderHeader } from './hooks/useUnderHeader';
 import { TutorialIcon } from './icons';
 import { Tooltip } from './Tooltip';
@@ -12,37 +13,20 @@ const TIP = {
 /**
  * The Tutorials from the header (issue 59, the owner's decision): after the welcome, only the Patch name led to
  * them. The button opens the list, each Tutorial with a short line of what it teaches (issue 129); picking one starts
- * it. Escape or a press elsewhere closes it, Escape back to its button (issue 51).
+ * it. Escape, a press elsewhere or Tab out of it closes it, Escape back to its button (issues 51 and 189).
  */
 export function TutorialMenu({ tutorials, onStart }: { tutorials: readonly { preset: string; teaches: string; finished: boolean }[]; onStart(preset: string): void }) {
   const [open, setOpen] = useState(false);
   // The list opens under the header (issue 188), along its button's left edge, or along its right edge when the button sits in the right
   // half of the window, so it never runs off the page.
   const [side, setSide] = useState<'left' | 'right'>('left');
-  const wrapper = useRef<HTMLDivElement>(null);
-  const button = useRef<HTMLButtonElement>(null);
+  const { wrapper, button } = useHeaderPanel(open, setOpen);
   const panel = useUnderHeader<HTMLDivElement>(open);
   const toggle = () => {
     const box = button.current?.getBoundingClientRect();
     setSide(box && box.left + box.width / 2 > window.innerWidth / 2 ? 'right' : 'left');
     setOpen((o) => !o);
   };
-
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
-      setOpen(false);
-      button.current?.focus();
-    };
-    const onPointer = (e: PointerEvent) => !wrapper.current?.contains(e.target as Node) && setOpen(false);
-    document.addEventListener('keydown', onKey);
-    document.addEventListener('pointerdown', onPointer);
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      document.removeEventListener('pointerdown', onPointer);
-    };
-  }, [open]);
 
   return (
     <div className="tutorial-menu" ref={wrapper}>

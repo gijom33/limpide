@@ -96,6 +96,11 @@ for (const [width, height] of [[390, 844], [861, 900], [1100, 900], [1366, 900],
     if (width < 861) await expect(box).toContainText('MIDI');
     else await expect(bpm(page)).toHaveAttribute('aria-valuetext', '120 BPM, from a MIDI clock');
     expect(await edge()).not.toBe(unmarked);
+    // Not by the edge's colour alone (issue 189, WCAG 1.4.1): the word, or where it is hidden a MIDI socket.
+    const marks = await box.locator('.tempo-unit[data-clock], .tool-word[data-clock], .tempo-clock').evaluateAll((all) =>
+      all.filter((e) => e.checkVisibility()).map((e) => e.textContent || e.className),
+    );
+    expect(marks).toEqual([width >= 861 && width < 1280 ? 'tempo-clock' : 'MIDI']);
     const options: AuditOptions = { rules: ['overlap', 'wrap'], minTarget: 0, waivers: [] };
     const { unexpected } = await page.evaluate(auditPage, options);
     expect(unexpected.filter((f) => /header|tempo/.test(f.what))).toEqual([]);

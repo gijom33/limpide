@@ -1,9 +1,10 @@
-import { useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { useCallback, useContext, useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { geekReadout, geekReadoutParts, readoutText, widestGeekReadout } from '../music/geek';
 import { type StepSize, stepParamBy } from '../patch/grid';
 import { formatParam, PARAMS, type ParamId, paramName } from '../patch/patch';
 import { positionToValue, valueToPosition } from '../patch/taper';
 import { GeekContext, GeekNoteContext, GeekTempoContext } from './geekContext';
+import { addDescription, removeDescription } from './inactive';
 import { useLearnable } from './learn';
 
 /** Readouts sampled across a control's travel to find the widest it can show. */
@@ -66,6 +67,18 @@ export function useParamControl(id: ParamId, value: number, onChange: (value: nu
   );
   const changing = useChanging(value);
   const [touching, setTouching] = useState(false);
+  // The Synth Geek Layer's readout ("Q 1.32") is part of the slider's description, so a screen reader hears it on the
+  // knob, not as loose text beside it (issue 189); near the start, before its tooltip.
+  const geekId = useId();
+  const describe = useCallback(
+    (readout: HTMLElement | null) => {
+      const control = readout?.closest('.knob')?.querySelector('[role="slider"]');
+      if (!control) return;
+      addDescription(control, geekId, 'first');
+      return () => removeDescription(control, geekId);
+    },
+    [geekId],
+  );
 
   const slider = {
     role: 'slider',
@@ -119,7 +132,7 @@ export function useParamControl(id: ParamId, value: number, onChange: (value: nu
       <div className="knob-label">{def.label}</div>
       <div className="knob-value">
         {geek ? (
-          <span data-geek>
+          <span data-geek id={geekId} ref={describe}>
             {geek.figure}
             {geek.words && <span className="geek-words"> {geek.words}</span>}
           </span>

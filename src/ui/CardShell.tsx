@@ -1,6 +1,7 @@
 import { type FocusEvent, type ReactNode, type RefObject, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { FoldButton, useCardPlacement } from './cardPlacement';
 import { useDocked } from './docked';
+import { useFocusBack } from './focusBack';
 import { CloseIcon } from './icons';
 
 /**
@@ -22,6 +23,35 @@ function useCardFocus(card: RefObject<HTMLElement | null>, opening: unknown) {
     if (last.current && !last.current.isConnected && document.activeElement === document.body) forward();
   });
   return { onFocus: (e: FocusEvent) => (last.current = e.target) };
+}
+
+/** What a card gives the focus back to as it closes when what opened it has gone: the header's button for its kind. */
+const OPENERS = { tutorial: 'button[aria-label="Tutorial"]', tour: 'button[aria-label="About"]' } as const;
+
+/**
+ * What opened the card (issue 189, decision 1), read as it first shows, before the focus moves into it: the button
+ * pressed, or for one in a header panel the panel's own button. A card opened from another (the Tour's "Build a Bass")
+ * keeps the first one's.
+ */
+let opener: HTMLElement | null = null;
+function noteOpener() {
+  const pressed = document.activeElement;
+  if (!(pressed instanceof HTMLElement) || pressed === document.body || pressed.closest('.card-shell')) return;
+  const panel = pressed.closest('[data-panel]');
+  opener = panel ? (panel.parentElement?.querySelector<HTMLElement>('button[aria-expanded]') ?? null) : pressed;
+}
+
+/**
+ * Where the focus goes as the card closes (Quit, Done, its ×): back to what opened it, while it is still on the page
+ * and shown; else to the header's button for the card's kind (About for the Tour, opened from the welcome or About).
+ */
+function useFocusToOpener(card: RefObject<HTMLElement | null>, kind: Props['kind']) {
+  useState(noteOpener); // once, as the card first renders
+  return useFocusBack(card, () => {
+    // A card that takes the place of this one takes the focus itself.
+    if (document.querySelector('.card-shell')) return null;
+    return opener?.isConnected && opener.checkVisibility() ? opener : document.querySelector<HTMLElement>(OPENERS[kind]);
+  });
 }
 
 interface Props {
@@ -57,8 +87,15 @@ export function CardShell({ card, kind, opening, label, name, progress, made, cl
   useDocked(card);
   const place = useCardPlacement(card, kind, opening);
   const focus = useCardFocus(card, opening);
+  const back = useFocusToOpener(card, kind);
   return (
-    <section ref={card} className={`docked card-shell ${kind}`} aria-label={label} data-expanded={expanded || undefined} data-made={made || undefined} {...place.cardProps} {...focus}>
+    <section ref={card} className={`docked card-shell ${kind}`} aria-label={label} data-expanded={expanded || undefined} data-made={made || undefined} {...place.cardProps}
+      onFocus={(e) => {
+        focus.onFocus(e);
+        back.onFocus(e);
+      }}
+      onBlur={back.onBlur}
+    >
       <div className="card-top" {...place.handle}>
         <span className="card-name">{name}</span>
         <span className="card-progress" data-done={made || undefined}>

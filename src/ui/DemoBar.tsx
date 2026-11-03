@@ -3,6 +3,7 @@ import { phraseLength } from '../demo/phrase';
 import type { Track } from '../demo/track';
 import { FoldButton, useCardPlacement } from './cardPlacement';
 import { useDocked } from './docked';
+import { useFocusBack } from './focusBack';
 import { CloseIcon } from './icons';
 import { arrowTarget } from './radioGroup';
 
@@ -30,6 +31,9 @@ export function DemoBar({ playing, tookOver, onStop, onJump, onPlayAgain, onDism
   useDocked(card, 'when-scrolling');
   const place = useCardPlacement(card, 'demo', playing ? 'playing' : 'stopped');
   const [closed, setClosed] = useState(false);
+  // Stop, or Escape on the parts (which stops the Demo), takes away the button the focus was on: it goes back to the
+  // Demo button, not to the page (issue 189).
+  const focusBack = useFocusBack(card, () => document.querySelector<HTMLElement>('button[aria-label="Demo"]'));
   // The segment the keyboard is on, while it is on one: the parts' one Tab stop follows it.
   const [focused, setFocused] = useState<number | null>(null);
   const running = playing !== null;
@@ -41,7 +45,7 @@ export function DemoBar({ playing, tookOver, onStop, onJump, onPlayAgain, onDism
   }, [running]);
   return (
     // data-demo: a tap on the card is not the person taking over.
-    <section ref={card} className="docked demo-bar" aria-label="Demo" data-demo hidden={(running && closed) || undefined} {...place.cardProps}>
+    <section ref={card} className="docked demo-bar" aria-label="Demo" data-demo hidden={(running && closed) || undefined} {...place.cardProps} {...focusBack}>
       {playing ? (
         <div className="demo-bar-top" {...place.handle}>
           <span className="demo-bar-name">{part.preset}</span>

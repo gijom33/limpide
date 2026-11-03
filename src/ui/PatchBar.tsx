@@ -4,6 +4,7 @@ import type { Patch } from '../patch/patch';
 import { type Category, categoryLists, isSearch, matchesWords } from '../patch/presetSearch';
 import { PRESETS, presetAfter, SHARED_NAME } from '../patch/presets';
 import { patchFromJSON, patchToJSON, shareHash } from '../patch/serialize';
+import { focusLeaves } from './hooks/useHeaderPanel';
 import { usePatchWords } from './hooks/usePatchWords';
 import type { PresetAbout } from './hooks/usePresetAbout';
 import { useLearnable } from './learn';
@@ -77,12 +78,17 @@ export function PatchBar({ name, changed, patch, bpm, library, onLoad, onPick, a
     } else if (!wrapper.current?.contains(e.target as Node)) setOpen(false);
   });
   useEffect(() => {
-    if (!open) return;
+    const element = wrapper.current;
+    if (!open || !element) return;
+    // Tab out of it closes it too, so it never stays open over what it covers (issue 189).
+    const onFocusOut = (e: FocusEvent) => focusLeaves(element, e) && setOpen(false);
     document.addEventListener('keydown', close);
     document.addEventListener('pointerdown', close);
+    element.addEventListener('focusout', onFocusOut);
     return () => {
       document.removeEventListener('keydown', close);
       document.removeEventListener('pointerdown', close);
+      element.removeEventListener('focusout', onFocusOut);
     };
   }, [open]);
   // Escape takes the about line away while it shows, unless it is closing something else: a panel or menu open (the

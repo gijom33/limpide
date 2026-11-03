@@ -62,7 +62,8 @@
   --panel: #eef0f3;
   --border: #d9dce3;
   --text: #1b1e25;
-  --muted: #646b7a;
+  /* 4.5:1 on the page and on the panels (issue 189); #646b7a was 4.36:1 on the page. */
+  --muted: #5c6372;
   --accent: #d96a0b;
   --trace: #0a7bbd;
   --grid: #e3e6ec;
@@ -1297,6 +1298,17 @@ main[data-geek] .block { grid-row: span 3; }
    to 1279 px too (issue 154), where the BPM shows its number alone (the word there took 3 px from each of the piano's keys). */
 .tempo-unit[data-clock], .tempo-open .tool-word[data-clock] { color: var(--text); }
 .tool[data-clock]:is(.tempo-bpm, .tempo-open) { border-color: var(--stage-osc); }
+/* Where the unit is hidden (861 to 1279 px), a MIDI socket on the box's top corner marks the clock as well as its
+   edge's colour (issue 189, WCAG 1.4.1), over the edge, so the box keeps its width. */
+.tempo-bpm { position: relative; }
+.tempo-clock { display: none; }
+@media (min-width: 861px) and (max-width: 1279px) {
+  .tempo-clock {
+    display: flex; position: absolute; top: -5px; right: -5px; padding: 1px; border-radius: 50%;
+    color: var(--stage-osc); background: var(--bg);
+  }
+  .tempo-clock svg { width: 10px; height: 10px; }
+}
 .tempo-typing { width: calc(3ch + 52px); text-align: center; color: var(--text); background: var(--bg); cursor: text; }
 .tempo-menu { position: relative; display: flex; }
 .tempo-panel {
@@ -1487,6 +1499,11 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
    then the playing buttons (Demo, Tutorial, Song) on the left and set-up (Hold, the tempo, MIDI, Display, About) on
    the right; then the keyboard. */
 @media (max-width: 860px) {
+  /* What the browser scrolls into view (the keyboard's focus, a section the Demo follows) lands below the header as it
+     comes back on the way up, its whole height, never under it (issue 189, WCAG 2.4.11). */
+  :root { --scroll-top: calc(var(--header-h, 0px) + var(--space-2)); scroll-padding-top: var(--scroll-top); }
+  /* The header's and the strip's own controls are always in view, sticky: the padding must not scroll the page for them. */
+  header *, .section-strip * { scroll-margin-top: calc(-1 * var(--scroll-top)); }
   header {
     display: grid; position: sticky; top: calc(-1 * var(--header-hidden, 0px)); z-index: 10; transition: top 0.2s ease;
     background: var(--bg); border-bottom: 1px solid var(--border); gap: var(--space-2) var(--space-1);
@@ -1527,7 +1544,6 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
     padding: var(--space-3) var(--space-4) var(--space-2);
   }
   .patch-bar > .tip-anchor { flex: 1 1 auto; }
-  .chain > * { scroll-margin-top: calc(var(--header-h, 0px) + var(--space-2)); }
 }
 /* Windows narrower than most phones (375 px), down to the narrowest (320 px, issue 157), pad the buttons 2 px and set
    them 2 px apart, so the playing and set-up row fits without one button over another, in Linux's wider fonts too; the
@@ -1545,6 +1561,8 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
    one in view. Hidden where every section is on screen at once. */
 .section-strip { display: none; }
 @media (max-width: 600px) {
+  /* And below the strip too: its 44 px and its edge. */
+  :root { --scroll-top: calc(var(--header-h, 0px) + 45px + var(--space-2)); }
   .section-strip {
     display: flex; position: sticky; top: calc(var(--header-h, 0px) - var(--header-hidden, 0px) - 1px); z-index: 9; transition: top 0.2s ease;
     margin: 0 calc(-1 * var(--space-2)); padding: 0 var(--space-2); background: var(--bg); border-bottom: 1px solid var(--border);
@@ -1559,6 +1577,8 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   .section-strip [data-section='Amp'] { --c: var(--stage-amp); }
   .section-strip [data-section='LFO & Envelopes'] { --c: var(--stage-mod); }
   .section-strip [aria-current] { color: var(--c); border-bottom-color: var(--c); }
+  /* The light theme's green, as small text, darkened towards the text to 4.5:1 (issue 189); its underline stays green. */
+  :root[data-theme='light'] .section-strip [data-section='Oscillators'][aria-current] { color: color-mix(in srgb, var(--c) 72%, var(--text)); }
   .section-strip button:focus-visible { outline: 2px solid var(--c); outline-offset: -2px; }
 }
 @media (max-width: 600px) and (prefers-reduced-motion: reduce) { .section-strip { transition: none; } }

@@ -36,6 +36,52 @@ function selectorOf(step: Step): string {
 /** The Display button, which stands for an option in its panel while the panel is shut. */
 const DISPLAY_BUTTON = 'button[aria-label="Display"]';
 
+/** What the keyboard can rest on: the element itself, or the first in it the Tab key reaches. */
+const FOCUSABLE = '[tabindex="0"], button:not([disabled]), input, select';
+const focusableIn = (element: Element) =>
+  (element.matches(FOCUSABLE) ? element : element.querySelector(FOCUSABLE)) as HTMLElement | SVGElement | null;
+
+/** The Step's control on the page as it is shown now: its own, or the Display button standing for it. */
+function controlOf(step: Step): Element | null {
+  const element = document.querySelector(selectorOf(step));
+  return inDisplay(step) && !element?.checkVisibility() ? document.querySelector(DISPLAY_BUTTON) : element;
+}
+
+/**
+ * The keyboard's short way between the card and the Step's control (issue 189, decision 2): "Go to the control" puts
+ * the focus on it, shown between the header and the card, and Escape there brings it back to the card's way forward,
+ * instead of some 30 to 50 Tabs each way. Escape closes the Display panel as it leaves it, the focus no longer in it.
+ */
+function useWayToControl(step: Step | undefined, card: RefObject<HTMLElement | null>) {
+  useEffect(() => {
+    if (!step) return;
+    const onKey = (e: KeyboardEvent) => {
+      const control = controlOf(step);
+      const target = e.target as Element;
+      // MIDI Learn's Escape is its own, and so is a menu's or a field's inside the control.
+      if (e.key !== 'Escape' || !control?.contains(target) || target.closest('[role="menu"], [role="listbox"], input, select')) return;
+      if (document.querySelector('main[data-learning]')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      card.current?.querySelector<HTMLElement>('.tool-primary')?.focus();
+    };
+    // Before the Display panel's own Escape, which would take the focus to its button.
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [step, card]);
+  return () => {
+    const control = step && controlOf(step);
+    if (!control || !card.current) return;
+    reveal(control); // its tab shown first
+    const target = focusableIn(control);
+    if (!target) return;
+    // The Display button, standing for an option in its shut panel, is in the header: the header comes back for it.
+    if (target.closest('header')) return target.focus();
+    target.focus({ preventScroll: true });
+    bringClear(card.current, [target], matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth');
+  };
+}
+
 /**
  * What Bead points the way to through a Tutorial (issue 151): the Step's ringed control, the Display button standing
  * for an option in its shut panel until the Step is made; nothing on the first card; on the last, the last Step's
@@ -135,6 +181,7 @@ export function TutorialCard({ tutorial, index, done, differs, listening, onList
   const made = step ? done[index] : false;
   const card = useRef<HTMLElement>(null);
   useRing(step, made, card);
+  const goToControl = useWayToControl(step, card);
 
   // Until the Step is made, Next says it is unavailable but keeps the focus, so pressing it leaves the keyboard there.
   const waiting = !!step && !made;
@@ -156,6 +203,11 @@ export function TutorialCard({ tutorial, index, done, differs, listening, onList
         {index >= 0 && (
           <button type="button" className="tool" onClick={onBack}>
             Back
+          </button>
+        )}
+        {step && (
+          <button type="button" className="tool" onClick={goToControl}>
+            Go to the control
           </button>
         )}
         {step && !made && (

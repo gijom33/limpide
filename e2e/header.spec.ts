@@ -31,7 +31,7 @@ async function header(page: Page) {
       demo: button('Demo'), tutorial: button('Tutorial'), song: button('Song'), hold: button('Hold'),
       midi: button('MIDI'), display: button('Display'), about: button('About'),
       up: button('Octave up'), down: button('Octave down'),
-      bpm: box(document.querySelector('header [role="spinbutton"][aria-label="Tempo"], header button[aria-label="Tempo"]')!),
+      bpm: box(document.querySelector('header [role="spinbutton"][aria-label="Tempo"], header .tempo-open')!),
       tap: document.querySelector('header [aria-label="Tap"]') ? button('Tap') : null,
       header: box(document.querySelector('header')!),
       piano: box(document.querySelector('.piano')!),
@@ -214,7 +214,9 @@ for (const width of [280, 320, 340, 375]) {
     await page.locator('.piano button').first().waitFor();
     const names = ['Demo', 'Tutorial', 'Song', 'Hold', 'Tempo', 'MIDI', 'Display', 'About'];
     const row = page.locator('header');
-    const boxes = await Promise.all(names.map(async (name) => (await row.getByRole('button', { name, exact: true }).boundingBox())!));
+    // The tempo's button is named with what it shows, "Tempo: 120 BPM" (issue 189).
+    const button = (name: string) => (name === 'Tempo' ? row.locator('.tempo-open') : row.getByRole('button', { name, exact: true }));
+    const boxes = await Promise.all(names.map(async (name) => (await button(name).boundingBox())!));
     for (let i = 0; i < names.length; i++) {
       expect(boxes[i].height, names[i]).toBeGreaterThanOrEqual(44);
       expect(boxes[i].width, names[i]).toBeGreaterThanOrEqual(32);
@@ -260,7 +262,7 @@ for (const [width, narrowest] of [[601, 110], [700, 165], [860, 240]] as const) 
       const names = ['Demo', 'Tutorial', 'Song', 'Hold', 'Tempo', 'MIDI', 'Display', 'About'];
       return {
         header: box('header'), logo: box('header h1'), name: box('.patch-name'), next: box('header [aria-label="Next Preset"]'),
-        buttons: names.map((name) => ({ name, ...box(`header [aria-label="${name}"]`).toJSON() })),
+        buttons: names.map((name) => ({ name, ...box(name === 'Tempo' ? 'header .tempo-open' : `header [aria-label="${name}"]`).toJSON() })),
         piano: box('.piano'), padding: parseFloat(getComputedStyle(document.querySelector('header')!).paddingRight),
         keys: [...document.querySelectorAll('.piano button:not([data-black])')].filter((k) => k.getBoundingClientRect().width > 0).length,
       };
