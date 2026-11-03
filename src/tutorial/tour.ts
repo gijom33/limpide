@@ -83,7 +83,10 @@ const stageMove = ({ id, to }: (typeof STAGES)[number]): TourMove => {
 /** Each pass's Note, a rest before it while the stage turns and one after while it fades and the picture freezes. */
 const stagePhrase = STAGES.map(({ beats }) => `-:${PASS.note} C3:${beats} -:${+(PASS.length - PASS.note - beats).toFixed(2)}`).join(' ');
 
-/** The four cards: the Oscillators with the Mixer, the Filter, the Amp, the LFOs (issue 128, decisions 3 and 4). */
+/**
+ * The four Sections' cards: the Oscillators with the Mixer, the Filter, the Amp, the LFOs (issue 128, decisions 3 and 4);
+ * the Tour's last cards follow them (`TOUR_FINDS`, issue 210).
+ */
 export const TOUR: TourSection[] = [
   {
     title: 'Oscillators and Mixer',
@@ -164,10 +167,10 @@ export interface TourFind {
 export const TOUR_FINDS: TourFind[] = [
   {
     title: 'Synth Geek Layer',
-    look: 'Find the ringed Display button: its Geek switch, a pair of glasses, turns on the Synth Geek Layer.',
+    look: 'Find the ringed Display button: its Geek toggle, a pair of glasses, turns on the Synth Geek Layer.',
     says: [
       'The Synth Geek Layer shows the numbers under the hood, for the curious: levels in decibels, the formula behind a wave’s Harmonics, how many times a second each Scope’s wave repeats. It stays off until you switch it on.',
-      'With it on, the tips grow too: rest on a control, or hold it with a finger, and its tip ends with its History, where the control comes from, the instruments and people it came through.',
+      'With it on, the tips grow too: rest on a control, or hold it with a finger, and most tips end with a History, where the control comes from, the instruments and people it came through.',
     ],
     shows: { kind: 'display', overlay: 'geek' },
   },
@@ -184,6 +187,10 @@ export const TOUR_FINDS: TourFind[] = [
 
 /** How many cards the Tour has: a Section's each, then what else there is to find. */
 export const TOUR_LENGTH = TOUR.length + TOUR_FINDS.length;
+
+/** The Tour's card at `index`: a Section's, then, after the Sections, what else there is to find. */
+export const tourCardAt = (index: number): { kind: 'section'; section: TourSection } | { kind: 'find'; find: TourFind } =>
+  index < TOUR.length ? { kind: 'section', section: TOUR[index] } : { kind: 'find', find: TOUR_FINDS[index - TOUR.length] };
 
 /**
  * How long the page looks at a control as it starts to move, from rest, before it looks at the card's Viewers, where

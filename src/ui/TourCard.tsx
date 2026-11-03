@@ -1,6 +1,7 @@
 import { type RefObject, useEffect, useRef } from 'react';
-import { type Looking, TOUR, TOUR_FINDS, TOUR_LENGTH, type TourFind, type TourMove, type TourSection } from '../tutorial/tour';
+import { type Looking, TOUR_LENGTH, type TourFind, type TourMove, type TourSection, tourCardAt } from '../tutorial/tour';
 import { CardShell } from './CardShell';
+import { DISPLAY_BUTTON, optionOrDisplay, overlaySelector } from './displayOption';
 import { bringClear } from './docked';
 import type { Guide } from './mascotCling';
 import { reveal } from './reveal';
@@ -26,15 +27,18 @@ interface Props {
 const selectorOf = ({ kind, id }: Pick<TourMove, 'kind' | 'id'>) => `[data-learn="${kind}:${id}"]`;
 const controlOf = (move: Pick<TourMove, 'kind' | 'id'>) => document.querySelector(selectorOf(move));
 
-/** The Display button, which stands for an option in its panel while the panel is shut. */
-const DISPLAY_BUTTON = 'button[aria-label="Display"]';
-
-/** The control a card after the Sections shows (issue 210): an option in Display's panel, or a button in the header. */
-const findSelectorOf = ({ shows }: TourFind) => (shows.kind === 'display' ? `[data-overlay="${shows.overlay}"]` : `header button[aria-label="${shows.name}"]`);
+/**
+ * The control a card after the Sections shows (issue 210), as the page finds it: an option in Display's panel, the
+ * Display button standing for it while the panel is shut; or a button in the header.
+ */
+function findControl({ shows }: TourFind): { selector: string; standIn: string | null } {
+  return shows.kind === 'display' ? { selector: overlaySelector(shows.overlay), standIn: DISPLAY_BUTTON } : { selector: `header button[aria-label="${shows.name}"]`, standIn: null };
+}
 /** That control as the page shows it now: its own, or the Display button standing for an option in its shut panel. */
 function findControlOf(find: TourFind) {
-  const element = document.querySelector(findSelectorOf(find));
-  return find.shows.kind === 'display' && !element?.checkVisibility() ? document.querySelector(DISPLAY_BUTTON) : element;
+  const { selector, standIn } = findControl(find);
+  const element = document.querySelector(selector);
+  return standIn ? optionOrDisplay(element) : element;
 }
 
 /**
@@ -42,9 +46,9 @@ function findControlOf(find: TourFind) {
  * after the Sections, the control the card shows, the Display button standing for an option in its shut panel (issue 210).
  */
 export function tourGuide(index: number): Guide {
-  const find = TOUR_FINDS[index - TOUR.length];
-  const [selector, standIn] = find ? [findSelectorOf(find), find.shows.kind === 'display' ? DISPLAY_BUTTON : null] : [selectorOf(TOUR[index].moves[0]), null];
-  return { selector, standIn, step: `tour ${index}`, made: false, finished: false };
+  const card = tourCardAt(index);
+  const shown = card.kind === 'find' ? findControl(card.find) : { selector: selectorOf(card.section.moves[0]), standIn: null };
+  return { ...shown, step: `tour ${index}`, made: false, finished: false };
 }
 
 /** The keys that scroll the page, unless a control takes them. */
@@ -246,13 +250,13 @@ function FrozenLine({ freezes, freezing, naming }: { freezes: NonNullable<TourSe
  * never takes it.
  */
 export function TourCard({ index, moving, looking, freezing, naming, onBack, onNext, onBass, onClose }: Props) {
-  const section: TourSection | undefined = TOUR[index];
-  const find = TOUR_FINDS[index - TOUR.length];
+  const shown = tourCardAt(index);
+  const section = shown.kind === 'section' ? shown.section : undefined;
   const last = index === TOUR_LENGTH - 1;
   const card = useRef<HTMLElement>(null);
   useSectionInView(section, card, moving, looking);
   useRing(section, moving);
-  useFindShown(find);
+  useFindShown(shown.kind === 'find' ? shown.find : undefined);
 
   const primary = last ? (
     <button type="button" className="tool tool-primary" onClick={onBass}>
@@ -281,7 +285,7 @@ export function TourCard({ index, moving, looking, freezing, naming, onBack, onN
       kind="tour"
       opening={null}
       label="Tour"
-      name={section?.title ?? find.title}
+      name={shown.kind === 'section' ? shown.section.title : shown.find.title}
       progress={`${index + 1} of ${TOUR_LENGTH}`}
       closeLabel="Close the Tour"
       onClose={onClose}
@@ -290,18 +294,18 @@ export function TourCard({ index, moving, looking, freezing, naming, onBack, onN
       actions={actions}
     >
       {/* What to watch first: folded on a phone, it is all the card shows (issue 129). */}
-      {section ? (
+      {shown.kind === 'section' ? (
         <>
-          <p>{section.look}</p>
-          <p>{section.chain}</p>
-          <p>{section.does}</p>
-          <p className="card-then">{section.sees}</p>
+          <p>{shown.section.look}</p>
+          <p>{shown.section.chain}</p>
+          <p>{shown.section.does}</p>
+          <p className="card-then">{shown.section.sees}</p>
         </>
       ) : (
         <>
-          <p>{find.look}</p>
-          {find.says.map((line, i) => (
-            <p key={line} className={i === find.says.length - 1 ? 'card-then' : undefined}>
+          <p>{shown.find.look}</p>
+          {shown.find.says.map((line, i, says) => (
+            <p key={line} className={i === says.length - 1 ? 'card-then' : undefined}>
               {line}
             </p>
           ))}

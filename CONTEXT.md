@@ -177,7 +177,7 @@ A Preset rebuilt from Init in Steps, with the person turning each control. A car
 _Avoid_: Lesson, course, walkthrough, onboarding, tour
 
 **Tour**:
-A first look at the instrument for someone who has never seen a synth: a card for each Section, in the signal's order (the Oscillators with the Mixer, the Filter, the Amp, the LFOs), says what to watch, then what the Section does, while the synth turns its main controls itself, on a plain Patch of its own, the person's Patch coming back when it ends. Each card waits for Next. Opened from the Welcome and the About, never from the Patches panel. Not a Tutorial: it rebuilds no Preset, and there is no Preset called Tour.
+A first look at the instrument for someone who has never seen a synth: a card for each Section, in the signal's order (the Oscillators with the Mixer, the Filter, the Amp, the LFOs), says what to watch, then what the Section does, while the synth turns its main controls itself, on a plain Patch of its own, the person's Patch coming back when it ends; then two cards on what else there is to find, each ringing where it is, nothing moving or playing: the Synth Geek Layer with its History, and the Tutorials, the last (issue 210). Each card waits for Next. Opened from the Welcome and the About, never from the Patches panel. Not a Tutorial: it rebuilds no Preset, and there is no Preset called Tour.
 _Avoid_: Lesson, walkthrough, onboarding, intro, Tutorial
 
 **Step**:

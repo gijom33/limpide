@@ -791,10 +791,11 @@ export function Mascot({
         const sliding = moving === 'sliding' || moving === 'clinging';
         if (!to && sliding && clungTo?.isConnected) {
           const stay = clingFor(clungTo, blocks, ceiling, card?.box ?? null, texts, twinWay).cling;
-          // Only where it need not turn round to look at the control: turned, its drawing would reach past the place
-          // found clear of text for its facing (issue 210: from the Display button, the Tutorial button's over About).
-          const way = aimAt && stay ? (aimAt.x < stay.left + DROP_MIDDLE ? -1 : 1) : null;
-          if (stay && (way === null || way === stay.turn)) to = { el: clungTo, cling: stay };
+          // Only where it need not turn round to look at the control: its place was found clear of text for its facing
+          // alone, and turned and aiming, its drawing may reach over it (issue 210: beside the Display button, turned
+          // to the Tutorial button, over About).
+          const turned = stay && aimAt && (aimAt.x < stay.left + DROP_MIDDLE ? -1 : 1) !== stay.turn;
+          if (stay && !turned) to = { el: clungTo, cling: stay };
         }
         beside = !!to && to.el === el;
         if (to && !still.matches) {

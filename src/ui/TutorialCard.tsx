@@ -3,6 +3,7 @@ import { formatParam, PARAMS, type ParamId } from '../patch/patch';
 import { inDisplay, type Step, type Tutorial, targetText } from '../tutorial/tutorial';
 import { endLine, FROM_INIT } from '../tutorial/tutorials';
 import { CardShell } from './CardShell';
+import { DISPLAY_BUTTON, optionOrDisplay, overlaySelector } from './displayOption';
 import { bringClear } from './docked';
 import { NoteIcon } from './icons';
 import type { Guide } from './mascotCling';
@@ -46,13 +47,10 @@ const knobOf = (id: ParamId) => `[data-learn="param:${PARAMS[id].knob ?? id}"]`;
  */
 function controlsOf(step: Step): { selector: string; target?: string }[] {
   if (step.kind === 'params') return step.faders.map(({ id, to }) => ({ selector: knobOf(id), target: formatParam(id, to) }));
-  if (step.kind === 'display') return [{ selector: `[data-overlay="${step.overlay}"]` }];
+  if (step.kind === 'display') return [{ selector: overlaySelector(step.overlay) }];
   if (step.kind === 'action') return [{ selector: `[data-learn="action:${step.id}"]` }];
   return [{ selector: step.kind === 'param' ? knobOf(step.id) : `[data-learn="choice:${step.id}"]`, target: `→ ${targetText(step)}` }];
 }
-/** The Display button, which stands for an option in its panel while the panel is shut. */
-const DISPLAY_BUTTON = 'button[aria-label="Display"]';
-
 /** What the keyboard can rest on: the element itself, or the first in it the Tab key reaches. */
 const FOCUSABLE = '[tabindex="0"], button:not([disabled]), input, select';
 const focusableIn = (element: Element) =>
@@ -61,7 +59,7 @@ const focusableIn = (element: Element) =>
 /** The Step's control on the page as it is shown now: its own, or the Display button standing for it. */
 function controlOf(step: Step): Element | null {
   const element = document.querySelector(selectorOf(step));
-  return inDisplay(step) && !element?.checkVisibility() ? document.querySelector(DISPLAY_BUTTON) : element;
+  return inDisplay(step) ? optionOrDisplay(element) : element;
 }
 
 /**

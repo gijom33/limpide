@@ -432,13 +432,13 @@ test('after the Sections, a card for the Synth Geek Layer and its History, then 
   await startFromAbout(page);
   for (let i = 1; i < 5; i++) await action(page, 'Next').click();
   await expect(progress(page)).toHaveText('5 of 6');
-  await expect(card(page)).toContainText('Geek switch');
+  await expect(card(page)).toContainText('Geek toggle');
   await expect(card(page)).toContainText('History');
   const display = page.getByRole('button', { name: 'Display', exact: true });
   await expect(display).toHaveAttribute('data-tutorial', '');
-  // The person opens Display: the ring goes to the Geek switch, still off.
+  // The person opens Display: the ring goes to the Geek toggle, still off.
   await display.click();
-  const geek = page.locator('[data-overlay="geek"]');
+  const geek = page.getByRole('button', { name: 'Geek', exact: true });
   await expect(geek).toHaveAttribute('data-tutorial', '');
   await expect(geek).toHaveAttribute('aria-pressed', 'false');
   await display.click();

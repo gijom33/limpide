@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parsePhrase, phraseLength } from '../demo/phrase';
 import { defaultPatch } from '../patch/patch';
-import { cycleLength, TOUR, TOUR_FINDS, TOUR_LENGTH, TOUR_PATCH, type TourSection, tourAt } from './tour';
+import { cycleLength, TOUR, TOUR_FINDS, TOUR_LENGTH, TOUR_PATCH, type TourSection, tourAt, tourCardAt } from './tour';
 
 const card = (title: string) => TOUR.find((c) => c.title === title)!;
 
@@ -184,6 +184,11 @@ describe('After the Sections, what else there is to find (issue 210)', () => {
   it('a card for the Synth Geek Layer and its History, then the last, for the Tutorials', () => {
     expect(TOUR_FINDS.map((c) => c.title)).toEqual(['Synth Geek Layer', 'Tutorials']);
     expect(TOUR_LENGTH).toBe(6);
+    expect([3, 4, 5].map((i) => tourCardAt(i))).toMatchObject([
+      { kind: 'section', section: { title: 'LFOs' } },
+      { kind: 'find', find: { title: 'Synth Geek Layer' } },
+      { kind: 'find', find: { title: 'Tutorials' } },
+    ]);
   });
 
   it('says what the Synth Geek Layer adds, that Display’s Geek switch turns it on, and that History ends the tips with it on', () => {

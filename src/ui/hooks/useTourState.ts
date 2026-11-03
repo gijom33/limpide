@@ -2,7 +2,7 @@ import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { LEAD_IN } from '../../demo/player';
 import { type ParamId, type Patch, setParam } from '../../patch/patch';
 import type { KeptPatch, PatchStore } from '../../patch/patchStore';
-import { type Looking, TOUR, TOUR_LENGTH, TOUR_PATCH, type TourMove, type TourSection, tourAt } from '../../tutorial/tour';
+import { type Looking, TOUR, TOUR_LENGTH, TOUR_PATCH, type TourMove, type TourSection, tourAt, tourCardAt } from '../../tutorial/tour';
 import type { ViewerStore } from '../../viewers/viewerStore';
 
 /** How often the synth's hand moves the card's control: as often as the Demo's knobs. */
@@ -116,7 +116,8 @@ export function useTourState({ patches, viewers, onStart, onCard, onEnd }: Host)
   useEffect(() => {
     if (index === null) return;
     // A Section's card, or none after them (issue 210).
-    const card: TourSection | undefined = TOUR[index];
+    const shown = tourCardAt(index);
+    const card = shown.kind === 'section' ? shown.section : undefined;
     patches.change((p) => withValues(p, Object.fromEntries(TURNED.map((id) => [id, TOUR_PATCH.patch[id]]))), 'tour');
     showCard(card ?? null);
     const taken = new Set<keyof Patch>();
