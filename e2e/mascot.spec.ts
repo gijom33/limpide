@@ -333,6 +333,51 @@ test('in a short phone window, with no edge in view, it hovers on its tail where
   expect(new Set(still.map((h) => h.tail)).size).toBe(1);
 });
 
+test('on a phone, on an edge just under the tabs, its fountains are seen whole under the header (issue 200)', async ({ page }) => {
+  test.slow();
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto('/');
+  await bringBead(page);
+  await settles(page, /^standing$/);
+  // Its edge scrolled up to just under the section tabs, the header slid away: as high as it keeps standing there.
+  await page.evaluate(async () => {
+    for (let i = 0; i < 4; i++) {
+      const foot = document.querySelector('.mascot-drop')!.getBoundingClientRect().bottom;
+      const tabs = document.querySelector('.section-strip')!.getBoundingClientRect().bottom;
+      window.scrollBy({ top: foot - tabs - 4, behavior: 'instant' });
+      await new Promise((r) => setTimeout(r, 600));
+    }
+  });
+  await settles(page, /^standing$/);
+  // Each frame through the Las Vegas show and the fountain after it: the highest of its drawing and its droplets,
+  // against the header's foot.
+  const over = await page.evaluate(
+    () =>
+      new Promise<{ under: number; head: number }>((done) => {
+        let under = Infinity;
+        let head = Infinity;
+        const end = performance.now() + 6000;
+        window.__limpideTrick!('fountainShow');
+        window.__limpideTrick!('fountain');
+        const sample = () => {
+          const header = document.querySelector('header')!.getBoundingClientRect().bottom;
+          for (const r of document.querySelectorAll('.mascot-spray rect, .mascot rect')) {
+            const b = r.getBoundingClientRect();
+            if (b.width > 0) under = Math.min(under, b.top - header);
+          }
+          head = Math.min(head, document.querySelector('.mascot-drop')!.getBoundingClientRect().bottom - 26 - header);
+          if (performance.now() < end) requestAnimationFrame(sample);
+          else done({ under, head });
+        };
+        requestAnimationFrame(sample);
+      }),
+  );
+  // Its head close under the header, the room short for a fountain; nothing of it behind the header.
+  expect(over.head).toBeLessThan(40);
+  expect(over.under).toBeGreaterThanOrEqual(0);
+  await expect(mascot(page)).toHaveAttribute('data-moving', 'standing');
+});
+
 test('it comes up from behind the Amp, and leaves jumping, then melting; with reduced motion it comes and goes at once', async ({ page }) => {
   await page.goto('/');
   await listening(page);

@@ -91,3 +91,38 @@ describe('steam (issue 127)', () => {
   });
 });
 
+
+describe('under a ceiling (issue 200)', () => {
+  /** The highest any of its droplets goes, frame by frame, over its life. */
+  const highest = (spray: ReturnType<typeof createSpray>) => {
+    let top = Infinity;
+    for (let i = 0; i < 120; i++) for (const d of spray.step(1 / 120)) top = Math.min(top, d.y);
+    return top;
+  };
+
+  it('a fountain spouting 30 px under the header keeps its droplets under it, still going up', () => {
+    const spray = createSpray(seeded(23));
+    spray.under(70);
+    spray.fling(20, 100, 100, 'spout', 1);
+    expect(spray.step(0).every((d) => d.vy < 0)).toBe(true);
+    expect(highest(spray)).toBeGreaterThanOrEqual(70);
+  });
+
+  it("a fountain show's arcs and a hard landing's splash, the same", () => {
+    for (const [fling, strength] of [['arc', 0.4], ['up', 1], ['all', 1], ['steam', 1]] as const) {
+      const spray = createSpray(seeded(29));
+      spray.under(60);
+      spray.fling(20, 100, 100, fling, strength);
+      expect(highest(spray)).toBeGreaterThanOrEqual(60);
+    }
+  });
+
+  it('with room enough, droplets fly as before', () => {
+    const free = createSpray(seeded(31));
+    free.fling(20, 100, 500, 'spout', 1);
+    const roomy = createSpray(seeded(31));
+    roomy.under(0);
+    roomy.fling(20, 100, 500, 'spout', 1);
+    expect(roomy.step(0)).toEqual(free.step(0));
+  });
+});

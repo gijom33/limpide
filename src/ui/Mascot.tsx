@@ -14,8 +14,16 @@ import {
   standingCard, throwWalls, type Visit, visitEnds,
 } from './mascotPlace';
 import { createSpray, MOST_DROPLETS } from './mascotSpray';
+import type { Trick } from './mascotTricks';
 import { ModulationContext } from './modulationRing';
 import { SECTIONS, STACKED } from './sections';
+
+declare global {
+  interface Window {
+    /** In the end-to-end tests' build only, while Bead is out: plays a trick at once, or after the one under way (issue 200). */
+    __limpideTrick?: (name: Trick) => void;
+  }
+}
 
 /**
  * The drawing, on a 22 × 13 grid: a water drop, its tail the Limpide logo's stroke (a saw tooth softening into a sine)
@@ -96,6 +104,17 @@ const POURING_AT = { x: 4, y: 10.5 };
 const TURNED_OVER = 100;
 /** Its mouth's height on the drawing: the poured water ends there, just under the rim. */
 const MOUTH_Y = 12.5;
+
+/** The highest row of a picture on the grid: 0 is the drop's top, negative over it. */
+const topOf = (picture: Picture) => Math.min(0, ...picture.flatMap(([, list]) => list.map(([, y]) => y)));
+/** How high each hat and prop drawn with the drop goes over the drop's top, on the grid; and those that stay put. */
+const HAT_TOP: Partial<Record<Pose['hat'], number>> = Object.fromEntries(Object.entries(HATS).map(([hat, p]) => [hat, topOf(p)]));
+const PROP_TOP: Partial<Record<Pose['prop'], number>> = {
+  ...Object.fromEntries(Object.entries(PROPS).map(([prop, p]) => [prop, topOf(p)])),
+  umbrella: topOf([['', UMBRELLA.canopy]]),
+  umbrellaShut: topOf([['', UMBRELLA.shut]]),
+};
+const SKY_TOP: Partial<Record<Pose['prop'], number>> = Object.fromEntries(Object.entries(SKY).map(([prop, p]) => [prop, topOf(p)]));
 
 /** Room over its head for its leaps and the splash. */
 const HEADROOM = 18;
@@ -531,6 +550,8 @@ export function Mascot({
       made: () => motion.gesture('hop', context.engine.now()),
       finished: () => motion.trick('fountain', context.engine.now()),
     };
+    // In the end-to-end tests' build only: a trick played on cue, so a test can watch one where it likes (issue 200).
+    if (import.meta.env.MODE === 'e2e') window.__limpideTrick = (name) => motion.trick(name, context.engine.now());
     const stopDrawing = addToRenderLoop(() => {
       const outer = frame.current!;
       const seconds = performance.now() / 1000;
@@ -550,6 +571,9 @@ export function Mascot({
       const drawing = drawingOf({ twin: twinWay });
       const standing = drawingOf({ twin: twinWay, resting: true });
       const texts = textNow(seconds);
+      // What is over the page above it, hiding what goes higher (issue 200): on a phone and in 2 × 2 the header's foot,
+      // the section strip being under it; else nothing, but the window's top.
+      const overPage = stacked.matches ? Math.max(0, document.querySelector('header')?.getBoundingClientRect().bottom ?? 0) : 0;
       // The card it may stand on: the topmost docked (issue 192).
       const docked = standingCard(
         [...document.querySelectorAll(DOCKED)].map((el) => el.getBoundingClientRect()).filter((r) => r.width > 0),
@@ -862,6 +886,19 @@ export function Mascot({
         pose.eyes = p < 0.15 ? 'shut' : where.impact > 0.5 && p < 0.55 ? 'happy' : pose.eyes;
       }
 
+      // A trick seen whole under what is over the page (issue 200): where the room over it is short, it hops lower, and
+      // if its drawing is still too tall (an umbrella, a cloud), it is drawn smaller about its foot. Elsewhere, as it was.
+      let shrink = 1;
+      if (where.moving === 'standing' || where.moving === 'hovering' || where.moving === 'landing') {
+        const grid = HEIGHT / 13;
+        const room = where.foot - overPage - 1;
+        const drawnTop = Math.min(PROP_TOP[pose.prop] ?? 0, HAT_TOP[pose.hat] ?? 0, pose.ice > 0 ? topOf(ICE) : 0);
+        const body = (13 - drawnTop) * grid * pose.stretch * pose.size;
+        pose.lift = Math.min(pose.lift, Math.max(0, room - body));
+        const reach = Math.max(body + Math.max(0, pose.lift), (13 - (SKY_TOP[pose.prop] ?? 13)) * grid);
+        if (pose.doing && reach > room) shrink = Math.max(0, room) / reach;
+      }
+
       for (const part of Object.keys(PARTS) as Part[]) {
         if (shown?.[part] === pose[part]) continue;
         if (shown) parts.current.get(`${part} ${shown[part]}`)!.style.display = 'none';
@@ -912,7 +949,9 @@ export function Mascot({
       drawnAt = { left: acrossOf(where, pose.x), foot: where.foot };
       const left = acrossOf(where, pose.x) - page.left + (pose.fuzz ? (Math.random() * 2 - 1) * pose.fuzz : 0);
       const ground = where.foot - page.top;
-      outer.style.transform = `translate(${left}px, ${ground - HEIGHT - HEADROOM}px)`;
+      outer.style.transform = `translate(${left}px, ${ground - HEIGHT - HEADROOM}px)${shrink < 1 ? ` scale(${shrink})` : ''}`;
+      // Its droplets kept under what is over the page, a droplet's size under it (issue 200).
+      droplets.under(overPage - page.top + 2);
       // Its droplets, in the page: a splash as it lands (harder, more), its smash, its shake, its tail's spray.
       const base = { x: left + DROP_MIDDLE, y: ground };
       middle = { x: base.x, y: ground - HEIGHT / 2 - pose.lift };
@@ -925,7 +964,7 @@ export function Mascot({
           for (let i = 0; i < count; i++) {
             const at = base.x + (Math.random() * 2 - 1) * RAIN_WIDE;
             const onUmbrella = pose.prop === 'umbrella' && at >= left + CANOPY.from * grid && at <= left + CANOPY.to * grid;
-            droplets.fling(1, at, ground - RAIN_HIGH, 'rain', 0.5, onUmbrella ? ground - HEIGHT + CANOPY.top * grid - pose.lift : ground);
+            droplets.fling(1, at, ground - Math.min(RAIN_HIGH, ground - (overPage - page.top) - 2), 'rain', 0.5, onUmbrella ? ground - HEIGHT + CANOPY.top * grid - pose.lift : ground);
           }
         } else {
           if (fling === 'arc') {
@@ -1024,6 +1063,7 @@ export function Mascot({
       stopListening();
       stopDrawing();
       removeEventListener('pointermove', follow);
+      if (import.meta.env.MODE === 'e2e') delete window.__limpideTrick;
     };
   }, [context, patches]);
 
@@ -1080,7 +1120,7 @@ export function Mascot({
       <g className="mascot-hook">{rects(HOOK)}</g>
       <g className="mascot-note">{rects(CATCH)}</g>
     </svg>
-    <div ref={frame} className="mascot" aria-hidden="true" style={{ width: WIDTH, height: HEIGHT + HEADROOM }}>
+    <div ref={frame} className="mascot" aria-hidden="true" style={{ width: WIDTH, height: HEIGHT + HEADROOM, transformOrigin: `${DROP_MIDDLE}px 100%` }}>
       <div
         ref={drop}
         className="mascot-drop"

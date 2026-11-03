@@ -35,9 +35,15 @@ export const MOST_DROPLETS = 60;
  */
 export function createSpray(random: () => number = Math.random) {
   let droplets: Droplet[] = [];
+  // How high a droplet may go, in the page's pixels: what is over the page there would hide it (issue 200).
+  let ceiling = -Infinity;
   const between = (a: number, b: number) => a + random() * (b - a);
   const either = () => (random() < 0.5 ? -1 : 1);
   return {
+    /** From now, droplets flung keep under `y`: lower and smaller where the room is short, as before where it is not. */
+    under(y: number) {
+      ceiling = y;
+    },
     fling(count: number, x: number, y: number, fling: Fling, strength = 0.5, until = Infinity) {
       for (let i = 0; i < count; i++) {
         let vx: number;
@@ -79,9 +85,18 @@ export function createSpray(random: () => number = Math.random) {
           vx = Math.cos(angle) * speed;
           vy = Math.sin(angle) * speed - 60;
         }
+        // Its highest point under the ceiling: thrown slower, the same way, so its arc is smaller (issue 200).
+        const gravity = fling === 'steam' ? STEAM_GRAVITY : DROPLET_GRAVITY;
+        const rise = vy < 0 ? (vy * vy) / (2 * gravity) : 0;
+        const room = Math.max(0, y - ceiling);
+        if (rise > room) {
+          const k = Math.sqrt(room / rise);
+          vx *= k;
+          vy *= k;
+        }
         const spread = fling === 'shower' ? between(-10, 10) : fling === 'rain' || fling === 'pour' || fling === 'arc' ? 0 : between(-3, 3);
         const life = fling === 'rain' || fling === 'shower' || fling === 'arc' ? 2 : fling === 'steam' ? between(0.6, 0.9) : between(0.45, 0.85);
-        droplets.push({ x: x + spread, y, vx, vy, age: 0, life, until, gravity: fling === 'steam' ? STEAM_GRAVITY : DROPLET_GRAVITY });
+        droplets.push({ x: x + spread, y, vx, vy, age: 0, life, until, gravity });
       }
       if (droplets.length > MOST_DROPLETS) droplets = droplets.slice(-MOST_DROPLETS);
     },
