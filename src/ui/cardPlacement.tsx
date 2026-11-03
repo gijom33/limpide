@@ -26,9 +26,11 @@ export function useCardPlacement(card: RefObject<HTMLElement | null>, kind: 'dem
   const within = (wanted: { x: number; y: number }, current: { x: number; y: number }) => {
     const box = card.current?.getBoundingClientRect();
     if (!box) return wanted;
-    const [left, top] = [box.left - current.x, box.top - current.y]; // where it sits unmoved
     // The document's width, not the window's: a scroll bar is not room for the card.
     const { clientWidth, clientHeight } = document.documentElement;
+    // Where it sits unmoved. Its top from its fixed bottom, not its box: while the page shrinks under a scroll (the card
+    // shrinking, its room with it), WebKit reports a fixed box off by the scroll's change (issue 210).
+    const [left, top] = [box.left - current.x, clientHeight - parseFloat(getComputedStyle(card.current!).bottom) - box.height];
     return {
       x: Math.min(clientWidth - box.width - left, Math.max(-left, wanted.x)),
       y: Math.min(clientHeight - box.height - top, Math.max(-top, wanted.y)),
