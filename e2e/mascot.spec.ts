@@ -701,9 +701,10 @@ test('strolling right its tail trails on its left; strolling left, a step and st
         }),
       [roll, seconds] as const,
     );
-  // Wherever it came up: a stroll to near its right end, then all the way to its left end, then far to the right.
+  // Wherever it came up: a stroll to near its right end, then all the way to its left end, then far to the right. Each
+  // given 12 s: on GitHub's Linux it may set off 2 s late and take 9 s over its whole line (1.22.0's deploy run).
   await sample(0.9, 5);
-  const frames = [...(await sample(0.3, 8)), ...(await sample(0.9, 6))];
+  const frames = [...(await sample(0.3, 12)), ...(await sample(0.9, 12))];
   await page.keyboard.up('f');
   // Its strolls and stops: each frame the same way along from three frames back (a frame sampled before it is drawn
   // repeats the last), all on its own, from where it set off. Past the moment it turns round (a quarter of a second, and its
