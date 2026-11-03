@@ -11,7 +11,7 @@ Claude's recommendations for reviews next time, in the inbox's Ideas at the owne
 
 **Blocked by:** none
 
-**Status:** ready-for-human · enhancement. Built (2026-10-30) on night/2026-10-30, for the owner to try
+**Status:** done (2026-11-02). Built (2026-10-30) on night/2026-10-30 and released; approved by the owner: "Okay, I trust you."
 
 ## Questions for the owner
 

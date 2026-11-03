@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · enhancement. Built (2026-11-01) on night/2026-11-01, for the owner to try
+**Status:** done (2026-11-02). Built (2026-11-01) on night/2026-11-01 and released; approved by the owner: "Looks okay, seemed faster last time I ran it."
 
 ## What the night showed (2026-10-31)
 

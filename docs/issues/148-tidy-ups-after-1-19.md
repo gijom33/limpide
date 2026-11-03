@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · enhancement. Built (2026-11-01) on night/2026-10-31, for the owner to try
+**Status:** done (2026-11-02). Built (2026-11-01) on night/2026-10-31 and released; approved by the owner: "Okay, I trust you."
 
 ## Agent Brief
 

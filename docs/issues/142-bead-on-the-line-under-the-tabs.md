@@ -6,7 +6,7 @@ The cause: on a phone Bead stands on a section's top edge only with room for its
 
 **Blocked by:** none
 
-**Status:** ready-for-human · bug. Built (2026-11-01) on night/2026-10-31, for the owner to try
+**Status:** done (2026-11-02). Built (2026-11-01) on night/2026-10-31 and released; approved by the owner: "okay", Bead hovering wholly under the tabs as built (call 1); the tricks still cut off by the top rows went to [200](./200-beads-tricks-above-the-top-rows.md)
 
 ## Decisions
 
