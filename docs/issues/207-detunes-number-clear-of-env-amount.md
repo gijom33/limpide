@@ -1,4 +1,4 @@
-# 203: Detune's number clear of Env Amount
+# 207: Detune's number clear of Env Amount
 
 **What to build:** The owner's bug (inbox, 2026-11-02), found trying [167](./167-geek-numbers-osc2-and-noise.md), with a screenshot of Osc 2's Tuning row: "see how text is badly aligned on image". Where a control's value shows in its name's place (860 px and narrower), Detune's number with the Synth Geek Layer on, its beating rate ("9.82 Hz"), is wider than the name "Detune" and runs into the next knob's name: "9.82 HzEnv Amount". Reproduced at 700 px ("12.9 HzEnv Amount"). Polish for v1 ([131](./131-v1.md)).
 
