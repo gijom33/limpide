@@ -4,7 +4,7 @@
 
 **Blocked by:** none. Issue 150 (night/2026-10-31) shows Bead's switch from the first visit; build on the night branch or after it is merged (Claude's call, open to the owner).
 
-**Status:** ready-for-human · enhancement. Built (2026-11-01) on night/2026-10-31, for the owner to try
+**Status:** done (2026-11-02). Built (2026-11-01) on night/2026-10-31 and released; tried by the owner: "Cool."
 
 ## Decisions
 

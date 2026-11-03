@@ -4,7 +4,7 @@
 
 **Blocked by:** [112](./112-tempo-midi-clock-and-an-arpeggiator.md), whose BPM is in the row that overlaps
 
-**Status:** ready-for-human · bug. Built (2026-11-01) on night/2026-10-31, for the owner to try
+**Status:** done (2026-11-02). Built (2026-11-01) on night/2026-10-31 and released; tried by the owner: "OK."
 
 ## Decisions
 

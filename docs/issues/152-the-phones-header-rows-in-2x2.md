@@ -6,7 +6,7 @@ What is there today: up to 860 px the header is sticky, and scrolling down slide
 
 **Blocked by:** [112](./112-tempo-midi-clock-and-an-arpeggiator.md), which changes the header at these widths
 
-**Status:** ready-for-human · enhancement. Built (2026-11-01) on night/2026-11-01, for the owner to try. Polish for v1.
+**Status:** done (2026-11-02). Built (2026-11-01) on night/2026-11-01 and released; tried by the owner: "Great."
 
 ## Decisions
 

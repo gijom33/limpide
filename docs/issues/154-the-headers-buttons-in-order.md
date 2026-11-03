@@ -4,7 +4,7 @@
 
 **Blocked by:** [112](./112-tempo-midi-clock-and-an-arpeggiator.md), whose tempo and Tap are among the buttons; the owner's choice among the expert's proposals (below)
 
-**Status:** ready-for-human · enhancement. Built (2026-11-01) on night/2026-11-01, for the owner to try. Step 1 done (2026-10-31); the owner chose arrangement C (decision 7), built in step 2 from the prototype on the branch `prototype/154-header` (`prototypes/154-header/index.html`).
+**Status:** done (2026-11-02). Built (2026-11-01) on night/2026-11-01 and released; tried by the owner: "Great." Its prototype branch, prototype/154-header, was deleted the same day, at the owner's word
 
 ## Questions for the owner
 
