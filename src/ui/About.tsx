@@ -218,8 +218,7 @@ export function About({
                   <a href="https://www.goatcounter.com" target="_blank" rel="noreferrer">
                     GoatCounter
                   </a>
-                  : no cookies, no personal data stored. Like any web page it receives your IP address and browser, to
-                  count you once. Your sounds stay in your browser: a share link carries one after its #, which is never sent.
+                  : no cookies, nothing stored about you. Your sounds never leave your browser.
                 </dd>
               </>
             )}
