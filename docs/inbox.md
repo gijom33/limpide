@@ -10,6 +10,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- 2026-11-02, the owner, asking how to be confident the test suite is sufficient, to Claude's proposal (read the statistics' coverage file by file, note for each bug found whether a test should have caught it, mutation testing on the engine): "Sure. Also wondering if the stats I generate overlaps a bit since it reports coverage."
+
 ## Dropped
 
 - 2026-10-30, from Claude's brainstorm, Velocity on the Volume ("a harder hit plays louder, not only brighter"): already so. The Amp Envelope's Attack rises to the Note's Velocity (PRD story 9). Claude's call, open to the owner.
