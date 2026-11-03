@@ -771,7 +771,8 @@ export function Mascot({
       // Pointing the way (issue 151): to the Step's or the card's control, by its usual move to the control's Section's
       // edge, then a slide down the panel to its side, where it clings; from beside another control of that Section, a
       // slide across. Out of reach (in a panel, under the card, on a hidden tab, off the window), it stays beside the
-      // last control while that is still in reach, else on its edge, and looks at it. With reduced motion it only looks.
+      // last control while that is still in reach and it need not turn round, else on its edge, and looks at it. With
+      // reduced motion it only looks.
       let guideRoom: Room | null = null;
       let aimAt: { x: number; y: number } | null = null;
       let clinging: Cling | null = null;
@@ -790,7 +791,10 @@ export function Mascot({
         const sliding = moving === 'sliding' || moving === 'clinging';
         if (!to && sliding && clungTo?.isConnected) {
           const stay = clingFor(clungTo, blocks, ceiling, card?.box ?? null, texts, twinWay).cling;
-          if (stay) to = { el: clungTo, cling: stay };
+          // Only where it need not turn round to look at the control: turned, its drawing would reach past the place
+          // found clear of text for its facing (issue 210: from the Display button, the Tutorial button's over About).
+          const way = aimAt && stay ? (aimAt.x < stay.left + DROP_MIDDLE ? -1 : 1) : null;
+          if (stay && (way === null || way === stay.turn)) to = { el: clungTo, cling: stay };
         }
         beside = !!to && to.el === el;
         if (to && !still.matches) {
