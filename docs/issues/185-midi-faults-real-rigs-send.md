@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · bug. Polish for v1
+**Status:** ready-for-human · bug. Built (2026-11-02) on night/2026-11-02, for the owner to try
 
 ## Decisions
 
@@ -32,3 +32,27 @@ Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.m
 **Out of scope:**
 - Song Position Pointer (issue 187)
 - MIDI Learn's modes (issue 186)
+
+## How it was built (2026-11-02, on night/2026-11-02)
+
+**What was built:**
+- **Panic.** All Notes Off (CC 123) releases every Note a Controller holds; the sustain pedal still holds them, as MIDI says. All Sound Off (CC 120) also silences every Voice at once, a long Release and the pedal's Notes included, over a 3 ms dip so it does not click; the Envelope Timeline shows the drop. Reset All Controllers (CC 121) lifts the pedal, centres the bend and forgets every aftertouch. These three are never learned and never taken by a Mapping.
+- **A C16 on two ports.** A known Controller listed on more than one port (the C16 on USB and on Bluetooth) is heard on the first one connected; the others' messages are set aside. The MIDI panel's Connected line adds: "The C16 is connected twice (by USB and Bluetooth, say): Limpide follows … alone, so each press counts once."
+- **The clock follower.** The last half beat of ticks is checked against where the two beats before were heading, on a curve so that a DAW's ramp is not taken for a fault. A run of ticks one tick late is a lost tick, one tick early a doubled one: the count is mended, the BPM holds and the beats stay on the clock's. Ticks further and further off are a jump: the new tempo is read from its own ticks, so 120 to 90 reads 120, then 90 a beat or two later. The readout waits for the newest three ticks, so a fault is mended before it can move it (about 60 ms).
+- **Latency.** A clock's beats and a Tap's are placed on the context time heard at that moment, read from the output timestamp, so a synced LFO is heard on the beat rather than 10–40 ms (or a Bluetooth headset's much more) behind it.
+- **Tests:** unit tests for CC 120, 121 and 123, the two ports, a lost and a doubled tick, the 120 → 90 jump, a Bluetooth-bunched clock and a ramp; an engine test of All Sound Off; unit tests of the output-timestamp mapping and of the store placing a beat by it; a `useMidi` test of the two ports; end-to-end tests of a panic (midiKeyboard) and of the two ports with the panel's line (c16Card). The end-to-end stand-in Controller can now sit on several ports.
+- **The record:** issue 136's build notes say what its clock follower does since.
+
+**Claude's calls, open to the owner:**
+1. **Every channel is one instrument:** a panic on any channel acts on the Notes of all of them, since Limpide plays every channel alike.
+2. **Reset All Controllers leaves the mod wheel's knob** (LFO 1's Depth) where it is: MIDI's recommendation zeroes the mod wheel, but here it turns a knob of the Patch, and a panic should not change the sound's settings.
+3. **All Sound Off under the pedal:** the sound stops, but the piano keeps the pedal's Notes lit until the pedal lifts, as the pedal is still down.
+4. **Two ports under one name** are both heard: they cannot be told apart by name, and hearing a press twice is better than not at all. "First connected" is the order the browser lists the ports when the page opens.
+5. **A rough clock is left as it was:** where the ticks stray by half a tick or more (Bluetooth's bunching, or 4 ms of jitter at 174 BPM and above), a single lost tick cannot be told from the bunching, so none is mended and the readout may still move a BPM or two. A jump is still read straight there. A clean clock (a DAW, USB) gets the mending.
+6. **Small jumps** (under a tenth of the tempo, 120 to 110 say) are read the old way, through the fit, as they move the ticks less than a tick in half a beat.
+
+**What to try:**
+- With a keyboard or a DAW: hold some Notes and send its panic (or the DAW's "All Notes Off"); they should stop. With a long Release (a pad), All Sound Off should cut it at once.
+- The C16 on USB and Bluetooth at once: the MIDI panel should say it follows one; bank D's R2 (LFO 1 Sync) should switch on with one press, and bank B's K1 should move the Cutoff a semitone a click, not two.
+- A DAW's clock at 120 into a synced LFO at 1/4 on Volume, beside the DAW's metronome: the LFO's dips should land with the clicks, built-in output and a Bluetooth headset alike. Jump the DAW from 120 to 90: the readout should go straight to 90.
+
