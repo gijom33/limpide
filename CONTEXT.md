@@ -157,8 +157,12 @@ With one Voice, the rule picking which held Note sounds: last-note priority, so 
 _Avoid_: Voice stealing
 
 **Tempo**:
-The page's beats per minute, 40 to 240, 120 by default: never a Patch's, kept between visits, set by hand to a tenth (its keys as a knob's: the arrows 1 BPM, Shift a tenth, Page Up and Down 10, issue 223) or with **Tap** (the BPM follows taps in time, a whole BPM, as a Controller's knob and a MIDI clock set it). An LFO with Sync on follows it. While the Demo, the Song, the Tour or a Tutorial plays, the Tempo is the player's own, its beats counted from its first Note, and the person's comes back when it stops (issue 112, ADR-0018). While a keyboard or a DAW sends a **MIDI clock** (24 ticks a beat), the Tempo is the clock's, its BPM read off the ticks and its beats theirs, a MIDI Start counting them again; it reads "MIDI" in place of "BPM" and cannot be set by hand until the ticks stop, when the last BPM stays, the person's again. A player still keeps its own while it plays (issue 136).
+The page's beats per minute, 40 to 240, 120 by default: never a Patch's, kept between visits, set by hand to a tenth (its keys as a knob's: the arrows 1 BPM, Shift a tenth, Page Up and Down 10, issue 223) or with **Tap Tempo** (the BPM follows taps in time, a whole BPM, as a Controller's knob and a MIDI clock set it). An LFO with Sync on follows it. While the Demo, the Song, the Tour or a Tutorial plays, the Tempo is the player's own, its beats counted from its first Note, and the person's comes back when it stops (issue 112, ADR-0018). While a keyboard or a DAW sends a **MIDI clock** (24 ticks a beat), the Tempo is the clock's, its BPM read off the ticks and its beats theirs, a MIDI Start counting them again; it reads "MIDI" in place of "BPM" and cannot be set by hand until the ticks stop, when the last BPM stays, the person's again. A player still keeps its own while it plays (issue 136).
 _Avoid_: BPM (the unit, fine on screen), clock, speed
+
+**Tap Tempo**:
+The Tempo's button: tapped in time, the BPM follows the last four taps, its beat where the last one fell (issue 112). It reads "Tap" on screen, where it sits beside the BPM; everywhere else, its tip, its accessible name, a Mapping and the code, it is Tap Tempo, so it is never taken for a **Tap**, a listening point (issue 223).
+_Avoid_: Tap (the listening points), tap button
 
 **Hold**:
 A mode that keeps Notes sounding after their keys are released, so the sound sustains while you adjust Parameters: with one Voice until a new key or Hold off, with more until Hold off, one Note per Voice at most (a Note beyond them lets the oldest go). Pressing the key of a Note Hold keeps lets that Note go; Hold stays on. The piano keeps their keys lit. Quick clicks on Hold after switching it on, before a Note is held, tap a rhythm: the held Notes then repeat on it, looping (on several Voices, the whole rhythm once as single Notes in turn, then once as the chord).
@@ -211,7 +215,7 @@ One of the page's four parts: the Voice's three stages, Oscillators (with the Mi
 _Avoid_: Block, module
 
 **Tap**:
-A listening point in the Voice where the signal is observed: the **Oscillator Tap** (the Mixer's output), the **Filter Tap**, and the **Amp Tap** (before the master volume and the output's safety clipper).
+A listening point in the Voice where the signal is observed: the **Oscillator Tap** (the Mixer's output), the **Filter Tap**, and the **Amp Tap** (before the master volume and the output's safety clipper). The Tempo's button, though it reads "Tap" on screen, is **Tap Tempo**.
 _Avoid_: Probe, monitor, stage output
 
 **Nominal Level**:
@@ -293,7 +297,7 @@ The one built-in set of Mappings, for the TempoPAD C16: each of its 4 banks play
 _Avoid_: Preset (a Preset is a sound), default mapping
 
 **Action**:
-A momentary command that is not a Parameter: toggle Hold, Freeze, take a Snapshot, previous or next Preset, Tap.
+A momentary command that is not a Parameter: toggle Hold, Freeze, take a Snapshot, previous or next Preset, Tap Tempo.
 _Avoid_: Command, shortcut
 
 **MIDI Learn**:

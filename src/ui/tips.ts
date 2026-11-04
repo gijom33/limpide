@@ -62,7 +62,7 @@ export const TIPS = {
   midi: { title: 'MIDI', body: '', history: HISTORY.midi },
   quickSetup: {
     title: 'Quick Setup',
-    body: 'Maps your Controller in one pass: it asks for a control for each knob and fader played live (the big knobs and the faders), the Filter’s first, then in the page’s order from the Oscillators to the LFOs, then a button for Hold, Freeze, Snapshot, the Preset arrows and Tap. Settings made once for a sound (Octave, the Waveforms, Filter Mode, Glide, Voices…) are left to MIDI Learn.',
+    body: 'Maps your Controller in one pass: it asks for a control for each knob and fader played live (the big knobs and the faders), the Filter’s first, then in the page’s order from the Oscillators to the LFOs, then a button for Hold, Freeze, Snapshot, the Preset arrows and Tap Tempo. Settings made once for a sound (Octave, the Waveforms, Filter Mode, Glide, Voices…) are left to MIDI Learn.',
     how: 'Skip any step. Finish (or Escape) keeps what is mapped; Cancel puts back your Mappings from before.',
   },
   c16Layout: {
@@ -393,10 +393,10 @@ export const TIPS = {
   },
   tempoOpen: {
     title: 'Tempo',
-    body: 'The page’s beats per minute (BPM), which every LFO with Sync on follows. Press it to set it: the BPM and Tap open below it. Loading a Preset leaves it as it is.',
+    body: 'The page’s beats per minute (BPM), which every LFO with Sync on follows. Press it to set it: the BPM and Tap Tempo open below it. Loading a Preset leaves it as it is.',
   },
   tempoClock: { title: 'Tempo', body: 'Following a MIDI clock: the tempo is the clock’s while it runs, so it cannot be set here. When its ticks stop, its last BPM stays, yours to change.' },
-  tap: { title: 'Tap', body: 'Tap it in time with the music: from the second tap the tempo follows your last four, its beat where you last tapped, and every synced LFO’s speed follows it.' },
+  tapTempo: { title: 'Tap Tempo', body: 'Tap it in time with the music: from the second tap the tempo follows your last four, its beat where you last tapped, and every synced LFO’s speed follows it.' },
   lfoDepth: {
     title: 'Depth',
     body: 'How far the LFO moves its Destination. At 0 it moves nothing.',

@@ -43,7 +43,7 @@ test('Quick Setup walks through every control played live, the Filter’s first 
   for (let n = 5; n <= 8; n++) await play(page, ...knob(n)); // the LFOs
   await expect(prompt(page)).toContainText('Press a button → Hold');
   for (let n = 1; n <= 5; n++) await play(page, ...button(n));
-  await expect(prompt(page)).toContainText('Press a button → Tap'); // the tempo's (issue 112)
+  await expect(prompt(page)).toContainText('Press a button → Tap Tempo'); // the tempo's (issue 112)
   await play(page, ...button(6));
 
   await expect(setup(page)).toContainText(`${STEPS} of ${STEPS} mapped`);

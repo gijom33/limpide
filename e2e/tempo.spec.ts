@@ -70,9 +70,18 @@ test('a double-click types the BPM; Enter sets it, kept between 40 and 240 (issu
   await expect(bpm(page)).toHaveAttribute('aria-valuenow', '240');
 });
 
-test('Tap sets the tempo from four taps (issue 112)', async ({ page }) => {
+test('Tap Tempo reads Tap on screen, Tap Tempo to a screen reader and in its tip (issue 223)', async ({ page }) => {
   await page.goto('/');
-  const tap = page.getByRole('button', { name: 'Tap', exact: true });
+  const button = page.getByRole('button', { name: 'Tap Tempo', exact: true });
+  await expect(button).toHaveText('Tap');
+  await page.keyboard.press('Tab'); // the keys in use: a focus shows its tip
+  await button.focus();
+  await expect(page.getByRole('tooltip').locator('visible=true').locator('strong')).toHaveText('Tap Tempo');
+});
+
+test('Tap Tempo sets the tempo from four taps (issue 112)', async ({ page }) => {
+  await page.goto('/');
+  const tap = page.getByRole('button', { name: 'Tap Tempo', exact: true });
   await tap.waitFor();
   // Four taps half a second apart, timed inside the page (CODING_STANDARDS: timing-sensitive steps in one evaluate).
   await tap.evaluate(async (button) => {
@@ -158,14 +167,14 @@ test('the beats show on the LFO plot and the Timeline only while Sync is on, Ret
 test.describe('on a phone', () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
-  test('the BPM opens a small field with the BPM and Tap in it (issue 112)', async ({ page }) => {
+  test('the BPM opens a small field with the BPM and Tap Tempo in it (issue 112)', async ({ page }) => {
     await page.goto('/');
-    const open = page.locator('header').getByRole('button', { name: 'Tempo' });
+    const open = page.locator('header').getByRole('button', { name: /^Tempo: / });
     await expect(open).toContainText('120');
-    await expect(page.getByRole('button', { name: 'Tap', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Tap Tempo', exact: true })).toHaveCount(0);
     await open.click();
     await expect(bpm(page)).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Tap', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Tap Tempo', exact: true })).toBeVisible();
     await bpm(page).focus();
     await page.keyboard.press('ArrowDown');
     await expect(open).toContainText('119');

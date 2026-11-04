@@ -748,10 +748,10 @@ describe('the Rate, a note value with Sync on, and the tempo (issue 112)', () =>
     expect(positions.lfoNote).toBeCloseTo(14 / 23, 9); // one note value, not a jump
   });
 
-  it('maps the tempo to a knob, a BPM a step, and Tap to a button', () => {
+  it('maps the tempo to a knob, a BPM a step, and Tap Tempo to a button', () => {
     const r = synced();
     r.store.set({ control: { kind: 'cc', channel: 1, number: 31 }, target: { kind: 'tempo', id: 'bpm' }, mode: 'relative-twos' });
-    r.store.set({ control: { kind: 'cc', channel: 1, number: 32 }, target: { kind: 'action', id: 'tap' }, mode: 'trigger' });
+    r.store.set({ control: { kind: 'cc', channel: 1, number: 32 }, target: { kind: 'action', id: 'tapTempo' }, mode: 'trigger' });
     r.surface.handle(cc(31, 1));
     expect(r.tempo()).toBe(121); // a BPM a click, so an odd BPM is reached from an even one (issue 193)
     r.surface.handle(cc(31, 1));
@@ -760,7 +760,7 @@ describe('the Rate, a note value with Sync on, and the tempo (issue 112)', () =>
     expect(r.tempo()).toBe(121);
     r.surface.handle(cc(32, 127));
     r.surface.handle(cc(32, 0));
-    expect(r.actions).toEqual(['tap']);
+    expect(r.actions).toEqual(['tapTempo']);
   });
 
   it('counts a third of a BPM for a C16’s 66 on the tempo (issue 193)', () => {

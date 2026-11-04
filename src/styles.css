@@ -1219,7 +1219,7 @@ html:has(dialog.about[open]) { overflow: hidden; }
 .patch-empty { margin: 0; font-size: var(--text-md); color: var(--muted); }
 /* The buttons right of the keyboard, from 861 px: arrangement C (decided by the owner, issue 154). Hold one tall button
    against the piano, as the octave buttons stand against its other side; then columns of two, each one thing, read
-   outward from the keys: the tempo (BPM over Tap), the players (Demo over Song), the guides (Tutorial over About),
+   outward from the keys: the tempo (BPM over Tap Tempo), the players (Demo over Song), the guides (Tutorial over About),
    set-up (MIDI over Display). 4 px between the columns of one use, 14 px between uses: playing (Hold and the tempo),
    listening and learning (the players and the guides), setting up. In a column both buttons are as wide as the wider,
    their icons in a line. One shape at every width: two rows sharing the piano's height, their tops and bottoms the
@@ -1237,11 +1237,11 @@ html:has(dialog.about[open]) { overflow: hidden; }
   /* Each button fills its column, both rows alike: its wrappers stretch, and it fills them. Hold fills its own. */
   :is(.header-column, .header-right > .tempo) > * { display: flex; flex: 1 1 0; min-height: 0; }
   .header-column > * > .tip-anchor, .header-right > .tip-anchor { display: flex; flex: 1 1 auto; }
-  .header-right :where(.demo-button, .hold-button, .midi-status, .display-menu > .tip-anchor > .tool, .about-menu .tool, .tempo-bpm, .tempo-tap, .tempo-typing) {
+  .header-right :where(.demo-button, .hold-button, .midi-status, .display-menu > .tip-anchor > .tool, .about-menu .tool, .tempo-bpm, .tap-tempo, .tempo-typing) {
     flex: 1 1 auto; height: auto; min-height: 0; padding: 0 6px; justify-content: flex-start;
   }
   .header-right .hold-button { flex-direction: column; justify-content: center; gap: 3px; }
-  .header-right :is(.tempo-bpm, .tempo-tap) { justify-content: center; }
+  .header-right :is(.tempo-bpm, .tap-tempo) { justify-content: center; }
 }
 @media (min-width: 1100px) {
   .header-right { --row-gap: 4px; }
@@ -1294,12 +1294,12 @@ html:has(dialog.about[open]) { overflow: hidden; }
 .tutorial-menu-teaches { color: var(--muted); font-size: var(--text-xs); line-height: 1.3; white-space: normal; }
 .tutorial-menu-done { margin-left: auto; padding-left: 12px; color: var(--accent); }
 /* The tempo (issue 112): the BPM in a box as wide as its widest, so nothing beside it moves as it changes, dragged up
-   and down (a finger's drag is its own, not the page's scroll); Tap beside it. Below 861 px the BPM alone, opening a
-   small field with the BPM and Tap under it, its right edge on the button's. */
+   and down (a finger's drag is its own, not the page's scroll); Tap Tempo beside it. Below 861 px the BPM alone, opening a
+   small field with the BPM and Tap Tempo under it, its right edge on the button's. */
 .tempo { display: flex; align-items: center; gap: 4px; }
 .tempo-bpm { justify-content: center; gap: 3px; padding: 0 6px; cursor: ns-resize; touch-action: none; font-variant-numeric: tabular-nums; }
-.tempo-tap { padding: 0 8px; }
-.tempo-bpm[aria-disabled='true'], .tempo-tap[aria-disabled='true'] { cursor: default; }
+.tap-tempo { padding: 0 8px; }
+.tempo-bpm[aria-disabled='true'], .tap-tempo[aria-disabled='true'] { cursor: default; }
 .tempo-value { min-width: 3ch; text-align: right; color: var(--text); font-variant-numeric: tabular-nums; }
 .tempo-unit { font-size: var(--text-xs); }
 /* While a MIDI clock sets the tempo (issue 136), "MIDI" in the unit's place, in the text's colour: about as wide as

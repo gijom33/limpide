@@ -139,7 +139,7 @@ export function useMidi(host: Host) {
         if (id === 'hold') pressHoldRef.current();
         else if (id === 'freeze') viewers.dispatch({ type: 'toggleFreeze' });
         else if (id === 'snapshot') viewers.dispatch({ type: 'takeSnapshot' });
-        else if (id === 'tap') session.tempo.tap();
+        else if (id === 'tapTempo') session.tempo.tapTempo();
         else patches.step(id === 'nextPreset' ? 1 : -1);
       },
       press: (note, velocity) => session.input.press(note, velocity),

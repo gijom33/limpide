@@ -20,7 +20,7 @@ const SETTLE_MS = 600;
 interface Props {
   tempo: TempoState;
   onSet(bpm: number): void;
-  onTap(): void;
+  onTapTempo(): void;
 }
 
 
@@ -151,20 +151,23 @@ function TempoDial({ tempo, onSet }: Pick<Props, 'tempo' | 'onSet'>) {
   );
 }
 
-/** Tap: the BPM follows the taps (issue 112), Hold's tapped rhythm apart. */
-function TapButton({ tempo, onTap }: Pick<Props, 'tempo' | 'onTap'>) {
-  const learn = useLearnable({ kind: 'action', id: 'tap' });
+/**
+ * Tap Tempo: the BPM follows the taps (issue 112), Hold's tapped rhythm apart. "Tap" on screen; Tap Tempo to a screen
+ * reader and in its tip, never taken for a Tap's listening point (issue 223).
+ */
+function TapTempoButton({ tempo, onTapTempo }: Pick<Props, 'tempo' | 'onTapTempo'>) {
+  const learn = useLearnable({ kind: 'action', id: 'tapTempo' });
   const held = heldOff(tempo);
   return (
-    <Tooltip content={TIPS.tap}>
+    <Tooltip content={TIPS.tapTempo}>
       <button
         type="button"
-        className="tool tempo-tap"
-        aria-label="Tap"
+        className="tool tap-tempo"
+        aria-label="Tap Tempo"
         aria-disabled={held || undefined}
         // On the press, not the release, so a tap lands where the finger does.
-        onPointerDown={(e) => pressed(e) && !held && onTap()}
-        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && !e.repeat && !held && onTap()}
+        onPointerDown={(e) => pressed(e) && !held && onTapTempo()}
+        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && !e.repeat && !held && onTapTempo()}
         {...learn}
       >
         Tap
@@ -174,10 +177,10 @@ function TapButton({ tempo, onTap }: Pick<Props, 'tempo' | 'onTap'>) {
 }
 
 /**
- * The tempo said to a screen reader once it settles, when something other than the BPM itself changed it: Tap, a MIDI
+ * The tempo said to a screen reader once it settles, when something other than the BPM itself changed it: Tap Tempo, a MIDI
  * clock, a Controller's knob (issue 189). The BPM in focus says its own value; the Demo's tempo, and the person's
  * coming back as it stops, are the player's, not news. Each announcement is a new node in the status, so a BPM said
- * before (Tap to 126, 120 typed, Tap to 126 again) is said again: the same words in the same node change nothing a
+ * before (Tap Tempo to 126, 120 typed, Tap Tempo to 126 again) is said again: the same words in the same node change nothing a
  * screen reader hears.
  */
 function TempoNews({ tempo }: { tempo: TempoState }) {
@@ -206,8 +209,8 @@ function TempoNews({ tempo }: { tempo: TempoState }) {
 }
 
 /**
- * The page's tempo in the header (issue 112, decided by the owner): from 861 px the BPM over Tap, a column of the
- * header's buttons (issue 154); narrower, the BPM alone among set-up, which opens a small field with the BPM and Tap
+ * The page's tempo in the header (issue 112, decided by the owner): from 861 px the BPM over Tap Tempo, a column of the
+ * header's buttons (issue 154); narrower, the BPM alone among set-up, which opens a small field with the BPM and Tap Tempo
  * in it. Escape, a press elsewhere or Tab out of it closes it.
  */
 export function TempoControl(props: Props) {
@@ -222,7 +225,7 @@ export function TempoControl(props: Props) {
         <Tooltip content={tempoTip(props.tempo)}>
           <TempoDial {...props} />
         </Tooltip>
-        <TapButton {...props} />
+        <TapTempoButton {...props} />
         {news}
       </div>
     );
@@ -241,7 +244,7 @@ export function TempoControl(props: Props) {
           <Tooltip content={tempoTip(props.tempo)}>
             <TempoDial {...props} />
           </Tooltip>
-          <TapButton {...props} />
+          <TapTempoButton {...props} />
         </div>
       )}
     </div>

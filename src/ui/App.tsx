@@ -380,8 +380,8 @@ export function App() {
       </button>
     </Tooltip>
   );
-  // The page's tempo beside Hold (issue 112): the BPM, and Tap from 861 px.
-  const tempoControl = <TempoControl key="tempo" tempo={tempo} onSet={session.tempo.set} onTap={() => session.tempo.tap()} />;
+  // The page's tempo beside Hold (issue 112): the BPM, and Tap Tempo from 861 px.
+  const tempoControl = <TempoControl key="tempo" tempo={tempo} onSet={session.tempo.set} onTapTempo={() => session.tempo.tapTempo()} />;
   const midiPanel = (
     <MidiPanel
       key="midi"
@@ -508,7 +508,7 @@ export function App() {
   // Up to 860 px, two groups on one row: playing and learning (Demo, Tutorial, Song) on the left, set-up (Hold first,
   // the owner, 2026-10-27; the tempo, MIDI, Display, About) on the right. From 861 px, arrangement C (decided by the
   // owner, issue 154): Hold one tall button against the piano, then columns of two, top before bottom: the tempo (BPM
-  // over Tap), the players (Demo over Song), the guides (Tutorial over About), set-up (MIDI over Display).
+  // over Tap Tempo), the players (Demo over Song), the guides (Tutorial over About), set-up (MIDI over Display).
   const right = narrow ? (
     <div key="right" className="header-right">
       <div key="play" className="header-play" role="group" aria-label="Play">

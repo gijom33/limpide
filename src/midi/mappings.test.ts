@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { brokenStorage, memoryStorage } from '../test/memoryStorage';
-import { createMappingStore, type Mapping } from './mappings';
+import { ACTIONS, createMappingStore, type Mapping } from './mappings';
 
 const cutoffOnKnob: Mapping = {
   control: { kind: 'cc', channel: 1, number: 74 },
@@ -107,5 +107,17 @@ describe('Mapping store', () => {
     store.subscribe(() => (seen = store.list().length));
     store.set(cutoffOnKnob);
     expect(seen).toBe(1);
+  });
+});
+
+describe('Tap Tempo (issue 223)', () => {
+  it('is the tempo’s Action, named Tap Tempo off screen', () => {
+    expect(ACTIONS.tapTempo).toBe('Tap Tempo');
+  });
+
+  it('a Mapping stored on the Action’s old name, tap, loads on Tap Tempo', () => {
+    const old = { control: { kind: 'cc', channel: 1, number: 60 }, target: { kind: 'action', id: 'tap' }, mode: 'trigger' };
+    const store = createMappingStore(memoryStorage({ 'limpide.mappings': JSON.stringify([old]) }));
+    expect(store.list()).toEqual([{ ...old, target: { kind: 'action', id: 'tapTempo' } }]);
   });
 });

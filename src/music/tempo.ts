@@ -57,7 +57,7 @@ export function formatSyncedRate(index: number, bpm: number): { note: string; hz
 /** Taps further apart than the slowest beat start the count again. */
 const LONGEST_TAP = 60 / TEMPO.min;
 /** How many of the last taps the tempo is taken from. */
-export const TAPS = 4;
+export const TEMPO_TAPS = 4;
 
 /**
  * The BPM the taps give (their times in seconds, oldest first): the mean time between the last four, from the second
@@ -65,7 +65,7 @@ export const TAPS = 4;
  */
 export function tappedBpm(times: readonly number[]): number | undefined {
   let first = times.length - 1;
-  while (first > 0 && first > times.length - TAPS && times[first] - times[first - 1] <= LONGEST_TAP) first--;
+  while (first > 0 && first > times.length - TEMPO_TAPS && times[first] - times[first - 1] <= LONGEST_TAP) first--;
   const taps = times.slice(first);
   if (taps.length < 2) return undefined;
   return wholeBpm((60 * (taps.length - 1)) / (taps[taps.length - 1] - taps[0]));
