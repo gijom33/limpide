@@ -69,8 +69,8 @@ export function getAudioSession(storage: KeyValueStorage): AudioSession {
   const patches = createPatchStore({
     hash: location.hash,
     library,
-    apply: (patch) => {
-      engine.applyPatch(patch);
+    apply: (patch, whole) => {
+      engine.applyPatch(patch, { whole });
       input.setVoices(patch.voices);
     },
   });

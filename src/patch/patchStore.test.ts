@@ -10,18 +10,20 @@ import { shareHash } from './serialize';
 const setup = ({ hash = '', lastSession }: { hash?: string; lastSession?: Patch } = {}) => {
   const heard: string[] = [];
   const applied: Patch[] = [];
+  const wholes: boolean[] = [];
   const library = createLibrary(memoryStorage());
   if (lastSession) library.saveCurrent(lastSession);
   const store = createPatchStore({
     hash,
     library,
-    apply: (patch) => {
+    apply: (patch, whole) => {
       applied.push(patch);
+      wholes.push(whole);
       heard.push('engine');
     },
   });
   store.subscribe(() => heard.push('subscriber'));
-  return { store, applied, heard, library };
+  return { store, applied, wholes, heard, library };
 };
 
 describe('The Patch store (issue 73)', () => {
@@ -143,6 +145,18 @@ describe('The Patch store (issue 73)', () => {
     // What it is compared with came back too: turned back to the Preset's value, it is unchanged again.
     store.change((p) => setParam(p, 'cutoff', PRESETS[4].patch.cutoff), 'hand');
     expect(store.get()).toMatchObject({ name: PRESETS[4].name, changed: false });
+  });
+
+  it("hands the engine a whole new Patch as whole: the first, a load, a Tutorial's Step; a knob's change as a change (issue 218)", () => {
+    const { store, wholes } = setup();
+    store.change((p) => setParam(p, 'cutoff', 500), 'hand');
+    store.change((p) => setParam(p, 'resonance', 0.5), 'controller');
+    store.change((p) => setParam(p, 'cutoff', 600), 'demo');
+    store.change((p) => setParam(p, 'cutoff', 700), 'tour');
+    store.change((p) => setParam(p, 'osc2Detune', 7), 'tutorial');
+    store.load(PRESETS[1].name, PRESETS[1].patch);
+    store.restore(store.keep());
+    expect(wholes).toEqual([true, false, false, false, false, true, true, true]);
   });
 
   it('stops telling a subscriber that unsubscribed', () => {

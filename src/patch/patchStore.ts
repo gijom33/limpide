@@ -32,9 +32,10 @@ const AUTOSAVE_MS = 300;
  * The Patch being played, outside React (ADR-0013). Every change goes to `apply` (the engine and the Note input) at
  * once, before any subscriber hears of it, so a Controller's move or the Demo's reaches the sound without waiting for a
  * render. It starts on the Share link's Patch in `hash`, else the Last session, else Init. The Last session is autosaved
- * a moment after the start and after each run of changes.
+ * a moment after the start and after each run of changes. A whole new Patch (the first, a load, a Tutorial's Step) is
+ * handed on as `whole`, for the engine to write whole; a knob's change, for it to write only what changed (issue 218).
  */
-export function createPatchStore({ hash, library, apply }: { hash: string; library: Library; apply(patch: Patch): void }) {
+export function createPatchStore({ hash, library, apply }: { hash: string; library: Library; apply(patch: Patch, whole: boolean): void }) {
   const start = initialPatch(hash, library);
   let baseline = start.patch;
   let now: PatchNow = { patch: start.patch, name: start.name, changed: false };
@@ -47,7 +48,7 @@ export function createPatchStore({ hash, library, apply }: { hash: string; libra
 
   const set = (after: Patch, name: string, by: ChangeBy) => {
     const before = now.patch;
-    apply(after);
+    apply(after, by === 'load' || by === 'tutorial');
     // Changed once its sound is not the one loaded: the keyboard octave the octave buttons write is not (issue 126).
     now = { patch: after, name, changed: !sameSound(after, baseline) };
     saveSoon();
@@ -58,7 +59,7 @@ export function createPatchStore({ hash, library, apply }: { hash: string; libra
     set(patch, name, 'load');
   };
 
-  apply(start.patch);
+  apply(start.patch, true);
   saveSoon();
 
   return {
