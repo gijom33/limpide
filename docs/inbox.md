@@ -4,6 +4,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-11-03, from the 1.23.0 deploy run: on GitHub's Linux WebKit, the Tutorial test "on a laptop, an end card's 'Next: …' starts the next Tutorial; the last has only Done (issue 190)" timed out at 30 s on both tries, having passed in the branch run on the same commit; the job's re-run passed and deployed.
+
 - 2026-11-03, from the 1.23.0 branch run, two new tests skipped in WebKit, which failed only on GitHub's Linux WebKit (both pass on the Mac's WebKit, 5 of 5): (1) 198's Demo hidden for five seconds: the same Note, at 3.581 s, handed over past its start and dropped by design, on both tries, perhaps a part's Preset load holding the page (issue 218's fewer writes may mend it); (2) 211's 2 × 2 glide: Bead made no fall or flight during the scroll there, at about 15 frames a second. Bead's four-across test now reads it only while it stands on its edge, a visit falling due within the test there.
 
 - 2026-11-03, from the 1.23.0 ear check, nothing holding the release (no clipping, nothing at the limiter): (1) Talking Filter on C5 still pulses between a near-sine and a vowel, the fundamental over 90 % in a third of its windows, as in 1.22.0: Key Track about 0.5 on its band-pass, or a Cutoff near 1 kHz, would keep its dip above the fundamental; (2) Riser with Key Track 1, held on C6, its rising high-pass reaches 20 kHz and falls silent after about 5 s (C7 2.5 s) under issue 195's fade, where 1.22.0 left inaudible energy there: Key Track 0.5, or its words saying it is best played low.
