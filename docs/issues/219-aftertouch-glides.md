@@ -4,7 +4,7 @@
 
 **Blocked by:** none; best after [218](./218-a-change-writes-only-what-it-changes.md), which settles how writes are gathered
 
-**Status:** ready-for-agent · enhancement. Polish for v1
+**Status:** needs-info · enhancement. Polish for v1; stopped the night of 2026-11-03 on question 1 below
 
 ## Decisions
 
@@ -47,3 +47,36 @@ Decided by the owner, 2026-11-03 ([191](./191-the-owners-calls-after-1-21.md), q
 **Out of scope:**
 - How far aftertouch reaches (issue 132), but for the Resonance's half (decision 4)
 - A Controller's knobs' smoothing
+
+## Questions for the owner
+
+The night of 2026-11-03: its builder wrote the first test (aftertouch on the Cutoff and the Resonance, 100 messages a second, inharmonic energy under −70 dB) and the first slice (every write a pressure message makes glides with `setTargetAtTime`, the bend wheel's way), then stopped: decision 2's 4 ms and the first acceptance criterion cannot both hold. The code was set back; nothing of it is committed.
+
+**What was measured.** One Voice, a saw on A2 (110 Hz), Cutoff 500 Hz, Resonance 0.2. The pressure goes from none to full over 2 s, a message every 10 ms. The figure is everything between the Harmonics against the Harmonics, over the last 1.4 s, in the real engine offline in Chromium (`betweenHarmonicsDb`). With no pressure it is −92 dB.
+
+| Glide's time constant | Cutoff, 7-bit (a keyboard's 127 steps) | Cutoff, unquantised | Resonance, 7-bit | Volume, 7-bit |
+|---|---|---|---|---|
+| none (today) | −52.5 dB | −57.5 dB | −51.3 dB | −55.2 dB |
+| 4 ms (decision 2) | −55.8 dB | −67.8 dB | −54.5 dB | −58.7 dB |
+| 8 ms | −58.7 dB | −73.2 dB | −57.7 dB | −61.6 dB |
+| 16 ms | −62.5 dB | −78.7 dB | −61.8 dB | −65.4 dB |
+| 32 ms | −67.3 dB | −83.4 dB | −66.5 dB | −70.1 dB |
+| 64 ms | −72.8 dB | −86.4 dB | −71.7 dB | −75.6 dB |
+
+- A keyboard's pressure comes in 127 steps, one every 16 ms on this press. A 4 ms glide finishes each step long before the next one, so the steps are still there, only rounded: 3 dB better than today.
+- Review 9's −76 dB was not a glide: it was 4,000 unquantised steps, nearly smooth. The criterion's −70 dB came from that figure.
+- At Resonance 0.7 (review 9's Cutoff case) this measure reads about −40 dB even for a near-smooth sweep: the Filter's peak sweeping through the Harmonics spreads them. So the test sits at Resonance 0.2. This is Claude's call, open to the owner.
+
+1. **How long aftertouch glides, and what the test asks.** Today, 4 ms takes a real keyboard's stream from −52 to −56 dB; −70 dB needs a time constant of about 64 ms. At 64 ms, a quick stab of pressure takes about 0.2 s to arrive, which you would feel as lag. Options:
+   - (a) keep 4 ms, and the test asks only that the glide beats the steps;
+   - (b) a longer glide for aftertouch alone, with the bend wheel kept at 4 ms;
+   - (c) 64 ms, and the criterion as written.
+
+   Claude's recommendation: (b) at **16 ms**, the bend wheel kept at 4 ms. It is 10 dB under today on a real keyboard (−62.5 dB) and −79 dB on a smooth stream, and it arrives in about 50 ms, so a stab still feels immediate. The criterion would become: under −60 dB for a 7-bit stream, and under −70 dB for an unquantised one, on the Cutoff and the Resonance. Best judged by ear: a resonant bass held, pressed slowly harder, at 4, 16 and 32 ms.
+
+The rest of the brief does not depend on the answer, and is ready to build once it is in. The time constant is one number in the engine and in the model:
+- writes only the Destination's AudioParams, gliding;
+- the Resonance's curve made once per Mode and Slope, over the Resonance itself rather than around the knob. For a low- or high-pass, the Q in dB is a straight line in the Resonance, so it is not rebuilt when the pressure moves it and the model stays exact;
+- the model gliding the pressure as the sound does;
+- the Resonance's half reach (decision 4), with the Wobble test.
+
