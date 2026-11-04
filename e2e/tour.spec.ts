@@ -385,7 +385,7 @@ test('a finger slid across the piano is no scroll: the Tour still shows the Time
   await toAmpCard(page);
   await expect.poll(() => standingOf(fader(page, 'Attack')), { timeout: 2000 }).toBe('clear');
   // The events a finger sends, where it lands and as it slides.
-  await page.locator('.piano').first().evaluate((element) => {
+  await page.getByRole('group', { name: 'Piano' }).evaluate((element) => {
     element.dispatchEvent(new Event('touchstart', { bubbles: true }));
     for (let i = 0; i < 5; i++) element.dispatchEvent(new Event('touchmove', { bubbles: true }));
     element.dispatchEvent(new Event('touchend', { bubbles: true }));

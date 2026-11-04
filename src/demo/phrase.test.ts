@@ -63,3 +63,23 @@ describe('loopPhrase (issue 75)', () => {
     expect(due(source, 0.6)[0].note).toBe(76);
   });
 });
+
+describe('loopPhrase rewound (issue 227)', () => {
+  it('hands again every Note from the time it is rewound to, at any pass boundary, none missed', () => {
+    // At 124 BPM a pass's length is not a round number: passes added up and taken off again may drift by a rounding.
+    const phrase = 'C4:.25 -:.25 E4:.5 G4:.75';
+    const first: Played[] = [];
+    const source = loopPhrase(phrase, 124, 0.2);
+    source(40, 0, (notes) => first.push(...notes));
+    for (const from of first.map((n) => n.on).filter((on) => on > 20)) {
+      const again: Played[] = [];
+      const rewound = loopPhrase(phrase, 124, 0.2);
+      rewound(40, 0, () => {});
+      rewound.rewind!(from);
+      rewound(40, 0, (notes) => again.push(...notes));
+      const expected = first.filter((n) => n.on >= from - 1e-9);
+      expect(again.length).toBe(expected.length);
+      again.forEach((n, i) => expect(n.on).toBeCloseTo(expected[i].on, 9));
+    }
+  });
+});

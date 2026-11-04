@@ -21,7 +21,7 @@ describe('the context’s time heard at a moment of the page’s clock (issue 18
     expect(heardAt(suspended, 7, 7)).toBeCloseTo(9.96, 9);
   });
 
-  it('leaves out a stamp it cannot place, as a zero one: a time of 0, or a context time ahead of the context’s', () => {
+  it('leaves out a stamp it cannot place, as a zero one: a time of 0, or a context time ahead of the context’s (issue 227)', () => {
     const latencies = { state: 'running' as const, currentTime: 10, baseLatency: 0.01, outputLatency: 0.03 };
     const stamped = (contextTime: number, performanceTime: number) => ({ ...latencies, getOutputTimestamp: () => ({ contextTime, performanceTime }) });
     // Each falls back on the latencies: 40 ms behind what is being made.

@@ -1,6 +1,6 @@
 # MIDI Learn reads a knob's mode from its whole turn, and the panel can change it
 
-**Status:** accepted · **Date:** 2026-11-02 · **Decided by:** Claude's call, open to the owner ([issue 186](../issues/186-midi-learn-reads-modes-right.md))
+**Status:** accepted; superseded in part by [ADR-0021](./0021-a-fader-leaves-an-end-by-any-small-rise.md) · **Date:** 2026-11-02 · **Decided by:** Claude's call, open to the owner ([issue 186](../issues/186-midi-learn-reads-modes-right.md))
 
 Supersedes the detection rule of [ADR-0004](./0004-midi-learn-first-no-hardcoded-controller-map.md): "values near 0 or 64 that repeat or step by one are Relative". Review 17 found it learned an accelerated encoder turned briskly (66, 69, 71, 67) as Absolute with Pickup, after which the knob moved nothing, and a fader nudged once off the bottom (1) as Relative.
 

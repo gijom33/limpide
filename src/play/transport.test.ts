@@ -170,23 +170,26 @@ describe('the Transport in the background (issue 198)', () => {
     expect(new Set(handed).size).toBe(handed.length);
   });
 
-  it('back in front, takes back the Notes handed ahead and makes them again as they fall due, in the octave of then (issue 227)', () => {
+  it('back in front, takes back the Notes handed ahead and makes them again as they fall due, on the Preset and octave of then (issue 227)', () => {
     let clock = 0;
     let hidden = true;
     let octave = 0;
-    const calls: { call: string; at: number }[] = [];
+    // The Preset loaded: a Note takes the engine's Patch when it is handed over.
+    let preset = 'Init';
+    const calls: { call: string; at: number; preset: string }[] = [];
     const host: TransportHost = {
       now: () => clock,
-      noteOn: (note, _v, on) => calls.push({ call: `on ${note} @${on.toFixed(2)}`, at: clock }),
+      noteOn: (note, _v, on) => calls.push({ call: `on ${note} @${on.toFixed(2)}`, at: clock, preset }),
       release: () => {},
-      noteOff: (at) => calls.push({ call: `off @${at.toFixed(2)}`, at: clock }),
+      noteOff: (at) => calls.push({ call: `off @${at.toFixed(2)}`, at: clock, preset }),
     };
     const { timers, fire } = handTimers();
     startTransport(host, loopPhrase(phrase, 120, 0.2, { transpose: () => octave }), { lookahead: 0.15, tick: 40, background: BACKGROUND_LOOKAHEAD, timers, hidden: () => hidden });
     expect(calls.map((c) => c.call)).toContain('on 60 @1.95'); // hidden: about two seconds ahead
-    // Back in front at 0.5 s, the octave moved at once: the Notes from 0.7 s on are taken back.
+    // Back in front at 0.5 s, the Preset and the octave changed at once: the Notes from 0.7 s on are taken back.
     hidden = false;
     octave = 12;
+    preset = 'Acid';
     clock = 0.5;
     fire();
     expect(calls.at(-1)?.call).toBe('off @0.70');
@@ -199,6 +202,7 @@ describe('the Transport in the background (issue 198)', () => {
     // Made again one by one, on the short look-ahead, in the octave of now.
     expect(remade.map((c) => c.call)).toEqual(['on 72 @0.70', 'on 72 @0.95', 'on 72 @1.20', 'on 72 @1.45', 'on 72 @1.70', 'on 72 @1.95']);
     expect(remade.every((c) => Number(c.call.split('@')[1]) - c.at <= 0.15 + 1e-9)).toBe(true);
+    expect(remade.every((c) => c.preset === 'Acid')).toBe(true);
   });
 
   it('drops a Note whose start has passed by the time it is handed over, rather than playing it late', () => {

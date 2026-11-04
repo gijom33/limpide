@@ -55,3 +55,5 @@ Claude's calls, open to the owner:
 4. **Switching resets Pickup** and any step a Relative knob had gathered, for that control.
 
 To try in the app: MIDI Learn on the Cutoff, then turn an endless encoder quickly: the MIDI panel shows its Mapping as Relative and the knob turns the Cutoff. Learn the Resonance from a fader moved a little off the bottom: Absolute. Then click the other mode on either Mapping: the knob answers the new way at once, and still does after a reload.
+
+**2026-11-03, from the 1.23.0 code review ([issue 227](./227-small-slips-in-the-new-features.md), [ADR-0021](../adr/0021-a-fader-leaves-an-end-by-any-small-rise.md)):** a fader nudged off an end by any small rise, without a repeat or a turn back (2, or 1, 3, 6, 10; 125, 122), now learns as Absolute, not only a lone 1 or 126.

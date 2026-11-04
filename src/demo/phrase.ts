@@ -92,10 +92,12 @@ export function loopPhrase(
     }
     play(due);
   };
+  // A pass's start, added up pass by pass and taken off again, may come back a rounding away from where it was.
+  const EPSILON = 1e-9;
   source.rewind = (from) => {
     for (;;) {
       const [before, at] = next === 0 ? [pass - length, events.length - 1] : [pass, next - 1];
-      if (before < start || before + events[at].time < from) return;
+      if (before < start - EPSILON || before + events[at].time < from - EPSILON) return;
       [pass, next] = [before, at];
     }
   };

@@ -9,7 +9,7 @@ import { SHARED_RIFF, TRACK, type Track } from '../../demo/track';
 import { shiftOctave } from '../../input/keyboardLayout';
 import { PRESETS } from '../../patch/presets';
 import type { TransportHost } from '../../play/transport';
-import { watchPersonScroll } from '../personScroll';
+import { takesTouches, watchPersonScroll } from '../personScroll';
 import { SECTION_OF, type SectionName } from '../sections';
 import { freezesOnSpace } from './useKeys';
 
@@ -178,7 +178,7 @@ export function usePlayers({ session, octaveRef, setOctave, heldNotes, onDemoSta
         touched: touchedBy(target),
         displayOpen: displayOpen(),
         mouse: e.pointerType === 'mouse',
-        takesTouches: getComputedStyle(target).touchAction === 'none',
+        takesTouches: takesTouches(target),
       });
       if (decision === 'stop') tookOverNow();
       else if (decision === 'onLift') tap = e.pointerId;

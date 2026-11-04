@@ -4,7 +4,7 @@ const SCROLL_KEYS = new Set(['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home
 const CONTROLS = 'input, textarea, select, [contenteditable], [data-learn], [role="slider"], [role="radiogroup"], [role="radio"], [role="listbox"], [role="menu"]';
 const onControl = (e: Event) => e.target instanceof Element && !!e.target.closest(CONTROLS);
 /** What takes a finger for itself, so it does not scroll the page: the piano, Bead, a card's handle, a knob (issue 227). */
-function takesTouches(target: EventTarget | null) {
+export function takesTouches(target: EventTarget | null) {
   for (let element = target instanceof Element ? target : null; element; element = element.parentElement)
     if (getComputedStyle(element).touchAction === 'none') return true;
   return false;
