@@ -4,14 +4,14 @@
 
 **Blocked by:** none; best after [218](./218-a-change-writes-only-what-it-changes.md), which settles how writes are gathered
 
-**Status:** needs-info · enhancement. Polish for v1; stopped the night of 2026-11-03 on question 1 below
+**Status:** ready-for-agent · enhancement. Polish for v1; the owner answered question 1 on 2026-11-04 (decision 5)
 
 ## Decisions
 
 From 183:
 
 1. **Aftertouch is smoothed,** so pressure glides; its reach stays as issue 132 set it (Claude's call, open to the owner, 2026-11-02).
-2. **Over the bend wheel's 4 ms,** decided by the owner ("Yes, 4 ms", 2026-11-03). Knobs turned from a Controller keep their immediate writes; if they step audibly, that is an issue of its own.
+2. **Over the bend wheel's 4 ms** (superseded for aftertouch by decision 5), decided by the owner ("Yes, 4 ms", 2026-11-03). Knobs turned from a Controller keep their immediate writes; if they step audibly, that is an issue of its own.
 
 Claude's call, open to the owner (2026-11-02):
 
@@ -20,6 +20,10 @@ Claude's call, open to the owner (2026-11-02):
 Decided by the owner, 2026-11-03 ([191](./191-the-owners-calls-after-1-21.md), question 13):
 
 4. **On the Resonance, aftertouch reaches half the knob's range** ("Half the range"), so full pressure on Wobble does not self-oscillate past the limiter's knee.
+
+Decided by the owner, 2026-11-04, answering question 1 below (relayed to the night by the owner's day session):
+
+5. **Aftertouch alone glides with a 16 ms time constant; the bend wheel keeps its 4 ms** ("b should be fine"). The first criterion becomes: inharmonic energy under −60 dB for a keyboard's 7-bit stream and under −70 dB for an unquantised one, on the Cutoff and on the Resonance, the test at Resonance 0.2.
 
 ## Agent Brief
 
