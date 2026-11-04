@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · bug. Polish for v1; the owner answered question 1 on 2026-11-03 (decision 6)
+**Status:** ready-for-human · bug. Built (2026-11-03) on night/2026-11-03, for the owner to try
 
 ## Decisions
 
@@ -67,3 +67,25 @@ Folding or moving the card uncovers them (decision 4), but the Tour is the newco
 
    Recommended: (a). It fixes what you met (the Demo), keeps the Tour and Tutorials showing what they talk about, and is the smallest change; (c) can come later if their scroll bothers you too.
 
+## How it was built
+
+- **The Demo's room.** The Demo's card keeps room under the page only on a phone and in 2 × 2, and there only where the page is taller than its window, as before. In three and four across it keeps none: the card lies over the page's bottom edge, and the page scrolls only as much as it would with no card open, whether it fits the window or is a little taller than it (decisions 1, 5, 6). The option that asks for this kind of room is now named "when stacked", what it means.
+- **The Tour's and a Tutorial's cards** keep room at every width, as before (decision 6), so the page still scrolls what they point at clear of them.
+- **Tests** (dockedCards): in three across (1440 × 900) and four across (1920 × 1080), on a window the page fits, the Demo leaves the page unscrollable; at 1440 × 800, a window a little shorter than the page, the Demo adds nothing to the scroll (this one failed before the fix); in three and four across the page still keeps room for the Tutorial's and the Tour's cards; on a 375 px phone and in 2 × 2 it keeps room for all three cards. A Tutorial's Steps brought clear of the card (issues 104, 105) are unchanged and their tests pass.
+
+## Claude's calls, open to the owner
+
+1. **The line is the 2 × 2 layout's own breakpoint:** from the first width that shows three across, the Demo keeps no room; up to it, as before. A window resized across the line takes the new rule at once.
+2. **A tall tablet in 2 × 2 that the page fits** still gets no room for the Demo, as before: the card then sits over the bottom edge there too.
+
+## Review (`/code-review` since 71ffeff, 2026-11-03)
+
+Fixed: the room option's name, which no longer said what it means; the new tests' repeated steps put in one helper and one list of the wide layouts; the card's top and the page's bottom read in one step in the page; About opened by its exact name; decision 1 marked as narrowed by decision 6.
+
+Noted, not changed: the "a little shorter" case is tested in three across only (four across takes the same rule); the issue's title still says "a card", kept so its name matches the inbox's.
+
+## What to try
+
+- In three or four across (a laptop or desktop window), play the Demo: no scroll bar appears for its card, on a window the page fits or one a little shorter; the card sits over the page's bottom edge.
+- Open the Tour or a Tutorial on the same window: the page still lets you scroll the last section clear of the card.
+- On a phone or in 2 × 2, all three cards still leave room under the last section.
