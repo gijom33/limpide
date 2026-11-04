@@ -1127,21 +1127,8 @@ const alongTheLine = (page: Page, lfo: number, n: number, ms = 150) =>
     [lfo, n, ms] as const,
   );
 
-/**
- * Where its foot is against LFO `lfo`'s plot, now, read at once rather than through `alongTheLine`'s promise: the drop
- * test's pick-up after it missed a riding Bead for 15 s in 3 runs of about 15 that way in WebKit, never in 40 this way
- * (issue 224, not yet understood).
- */
-const offTheLine = (page: Page, lfo: number) =>
-  mascot(page).evaluate((el, n): OnTheLine => {
-    const box = el.getBoundingClientRect(); // its box's bottom is its foot
-    const plot = document.querySelector(`.lfo-plot[data-lfo="${n}"]`)!;
-    const at = plot.getBoundingClientRect();
-    const points = [...plot.querySelector('.lfo-plot-line')!.getAttribute('d')!.matchAll(/[ML](\S+) (\S+)/g)].map((m) => ({ x: Number(m[1]), y: Number(m[2]) }));
-    const middle = box.left + 9 - at.left; // the drop's middle, the Mascot's DROP_MIDDLE
-    const under = points.reduce((a, b) => (Math.abs(b.x - middle) < Math.abs(a.x - middle) ? b : a));
-    return { off: box.bottom - (at.top + under.y), foot: box.bottom, moving: (el as HTMLElement).dataset.moving };
-  }, lfo);
+/** Where its foot is against LFO `lfo`'s plot, now. */
+const offTheLine = async (page: Page, lfo: number) => (await alongTheLine(page, lfo, 1))[0];
 
 test('now and then it rides a slow Sine on an LFO plot, along its line, and goes home once the Depth is 0 (issue 141)', async ({ page }) => {
   test.slow();
@@ -1224,13 +1211,30 @@ for (const [size, viewport, edge] of [
   });
 }
 
+/**
+ * A point on its own pixels, near its middle low down, where a press picks it up. Not from its box alone: riding, its
+ * board (which takes no press) deepens the box under its foot, and a press 8 px over the box's foot went through to the
+ * LFO plot under it once the board was out (issue 224).
+ */
+const onItsPixels = (page: Page) =>
+  page.evaluate(() => {
+    const drop = document.querySelector('.mascot-drop')!;
+    const r = drop.getBoundingClientRect();
+    for (let y = r.bottom - 8; y > r.top; y -= 2)
+      for (let dx = 0; dx <= 8; dx += 2)
+        for (const x of [r.left + 9 - dx, r.left + 9 + dx]) {
+          const hit = document.elementFromPoint(x, y);
+          if (hit && drop.contains(hit) && !hit.closest('.mascot-prop')) return { x, y };
+        }
+    return { x: r.left + 9, y: r.bottom - 8 };
+  });
+
 /** Picks it up where it is, drags it to `to` in a few moves, and lets it go there. */
 async function dropAt(page: Page, to: { x: number; y: number }) {
   // It may stroll on between where it is read and the press, on a slow runner: a press that misses is tried again.
   let at = { x: 0, y: 0 };
   await expect(async () => {
-    const box = (await page.locator('.mascot-drop').boundingBox())!;
-    at = { x: box.x + 9, y: box.y + box.height - 8 };
+    at = await onItsPixels(page);
     await page.mouse.move(at.x, at.y);
     await page.mouse.down();
     await page.mouse.move(at.x + (to.x - at.x) / 8, at.y + (to.y - at.y) / 8);
