@@ -1,6 +1,6 @@
 # A synced LFO is pulled onto the beat, not restarted on it
 
-**Status:** accepted · **Date:** 2026-11-01 · **Decided by:** Claude's call, open to the owner (the 1.20.0 ear check)
+**Status:** accepted · **Date:** 2026-11-01 · **Decided by:** Claude's call (the 1.20.0 ear check), accepted by the owner on 2026-11-03 (issue 191, decision 3)
 
 Supersedes one consequence of [ADR-0018](./0018-limpide-keeps-a-tempo.md): that the engine "restarts its oscillator where the beat puts it whenever what it is locked with changes". The 1.20.0 ear check ([review 14](../reviews/2026-11-01/14-ear-stand-in.md)) heard that restart click on the Volume: the Demo's Tremolo Keys dropped 11 dB in 6 ms at bar 6, and turning a synced Rate or tapping the tempo bent the sound up to 121 times more than 1.19.0's free LFO did.
 
