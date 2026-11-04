@@ -264,7 +264,7 @@ describe('shared scale across Taps', () => {
 });
 
 describe('fundamental', () => {
-  it('reports the sounding Note’s frequency for Cycle Lock, starting at A4 because the Oscillator runs from the start', () => {
+  it('reports the sounding Note’s held fundamental, starting at A4 because the Oscillator runs from the start', () => {
     const engine = createSynthEngine(new OfflineAudioContext(1, SR, SR));
     engine.applyPatch(defaultPatch());
     expect(engine.fundamental()).toBeCloseTo(440);
@@ -291,7 +291,7 @@ describe('fundamental', () => {
 });
 
 describe('pitch bend (issue 52)', () => {
-  it('moves the sound by its cents, and the model and Cycle Lock with it', async () => {
+  it('moves the sound by its cents, and the model and the held fundamental with it', async () => {
     const A2 = 45; // 110 Hz
     const steady = { resonance: 0, ampAttack: 0.001, ampSustain: 1, cutoff: 20000 };
     let engine!: ReturnType<typeof createSynthEngine>;
@@ -1423,7 +1423,7 @@ describe('LFO (model-driven, ADR-0003)', () => {
 });
 
 describe('Glide', () => {
-  it('slides the pitch to the new Note over the Glide time, as the model says, and Cycle Lock follows it', async () => {
+  it('slides the pitch to the new Note over the Glide time, as the model says, and the held fundamental follows it', async () => {
     const ctx = new OfflineAudioContext(1, SR, SR);
     const engine = createSynthEngine(ctx);
     engine.applyPatch({ ...defaultPatch(), cutoff: 20000, waveform: 'sine', glide: 0.4, ampSustain: 1, ampAttack: 0.001 });
@@ -1619,7 +1619,7 @@ describe('aftertouch (issue 132)', () => {
     }
   });
 
-  it('on Pitch, raises the sound by up to a semitone, the model and Cycle Lock with it, and leaves the knobs as they are', async () => {
+  it('on Pitch, raises the sound by up to a semitone, the model and the held fundamental with it, and leaves the knobs as they are', async () => {
     const A2 = 45; // 110 Hz
     let engine!: ReturnType<typeof createSynthEngine>;
     const s = await render(1, { resonance: 0, ampAttack: 0.001, ampSustain: 1, cutoff: 20000, lfoAmount: 0, lfo2Amount: 0 }, (e) => {
@@ -1728,7 +1728,7 @@ describe('Sub-oscillator', () => {
     expect(fundamental).toBeCloseTo(220);
   });
 
-  it('moves Cycle Lock and the Harmonic Markers to its own pitch, where the sound now repeats', async () => {
+  it('moves the held fundamental, and the Harmonic Markers with it, to its own pitch, where the sound now repeats', async () => {
     const { fundamental } = await oscillatorTap({ mixSub: 0.5 }, 57);
     expect(fundamental).toBeCloseTo(110);
   });
@@ -1944,7 +1944,7 @@ describe('Osc 1 Octave (issue 90)', () => {
     expect(dB(toneAmplitude(s, SR, 220) / toneAmplitude(s, SR, 110))).toBeLessThan(-60);
   });
 
-  it('counts Cycle Lock from Osc 1, and from the Sub below it', () => {
+  it('counts the held fundamental from Osc 1, and from the Sub below it', () => {
     const engine = createSynthEngine(new OfflineAudioContext(1, SR, SR));
     engine.applyPatch({ ...defaultPatch(), osc1Octave: -1 });
     engine.noteOn(57, 1, 0);
@@ -1981,7 +1981,7 @@ describe('the Sub’s Octave and Waveform (issue 91)', () => {
     expect(dB(toneAmplitude(s, SR, 165) / toneAmplitude(s, SR, 55))).toBeLessThan(-60);
   });
 
-  it('counts Cycle Lock from the Sub, two octaves down', () => {
+  it('counts the held fundamental from the Sub, two octaves down', () => {
     const engine = createSynthEngine(new OfflineAudioContext(1, SR, SR));
     engine.applyPatch({ ...defaultPatch(), mixSub: 1, subOctave: -2 });
     engine.noteOn(57, 1, 0);

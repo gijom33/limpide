@@ -59,7 +59,7 @@ Measured 2026-11-02: [the research](../research/180-steadier-scopes.md), 20 soun
 - The Slow Vibrato Preset's words
 
 **Acceptance criteria:**
-- [x] Unit tests on rendered signals, the research's method: vibrato and Glide jitter at most 10 % and 15 %; FM at 1.414, Ring at 2.38, a major triad and the Amp Tap's 95th percentile under 10 %; a saw, detune, PWM and Noise within a few points of their floor (no hiding real change). Met except FM at 1.414, Ring at 2.38 and the triad, which cannot be: see call 1 under "How it was built"
+- [x] Unit tests on rendered signals, the research's method: vibrato and Glide jitter at most 10 % and 15 %; FM at 1.414, Ring at 2.38, a major triad and the Amp Tap's 95th percentile under 10 %; a saw, detune, PWM and Noise within a few points of their floor (no hiding real change). Met except FM at 1.414, Ring at 2.38 and the triad, which cannot be: on the Amp Tap their 95th percentile stays at 136 %, 130 % and 67 % against the 10 % (call 1 under "How it was built", merged at the owner's word; issue 225)
 - [x] The trace is at most one cycle plus 20 ms old
 - [x] Cycle Lock's cost per Scope and frame no more than today's (review 18's method)
 - [x] Glow in Display, Off by default, remembered; the design audit covers it on

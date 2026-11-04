@@ -1434,7 +1434,7 @@ test.describe('never over text where it rests (issue 181)', () => {
     { width: 1440, height: 900 },
     { width: 1280, height: 800 },
   ]) {
-    test(`through the Demo at ${viewport.width} × ${viewport.height}, conducting, on air guitar, surfing: over no label, readout or heading`, async ({ page }) => {
+    test(`through the Demo at ${viewport.width} × ${viewport.height}, conducting, on air guitar, surfing: where it rests, over no label, readout or heading (surfing may pass over text)`, async ({ page }) => {
       // Every part, 6 s each: its acts in turn (it conducts, plays air guitar with its tail up across it, surfs where a
       // plot is clear) in each part's own sections (issue 224).
       test.setTimeout(TRACK.parts.length * 6000 + 60_000);
