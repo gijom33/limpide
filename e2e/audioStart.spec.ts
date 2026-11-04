@@ -119,7 +119,7 @@ test('where the browser allows sound from the start, the invitation never shows,
   expect(seen).toBe(false);
 });
 
-test('stopped by the browser after it ran (an iPhone, back from another app), the next key sounds again', async ({ page }) => {
+test('stopped by the browser after it ran (an iPhone, back from another app), the next key sounds again (the owner, 2026-11-03)', async ({ page }) => {
   await reachAudio(page);
   await page.goto('/');
   await ready(page);

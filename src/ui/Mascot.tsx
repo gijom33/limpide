@@ -686,7 +686,7 @@ export function Mascot({
       let homeId: string | null = null;
       // Now and then a visit to another section in view: down to one below, or across to one beside; then home.
       const inView = (s: { box: DOMRect }) => roomAbove(s.box) && s.box.top <= innerHeight - 4 && clearOn(s.box).length > 0;
-      // A visit's or a ride's end (issues 141, 151); the window turning stacked ends it too (issue 192).
+      // A visit's or a ride's end (issues 141, 151); the window turning stacked ends a visit too (issue 192).
       if (
         visit &&
         visitEnds(visit, {

@@ -523,7 +523,7 @@ test('a drag that passes through the target on its way past does not count: the 
   const fader = page.getByRole('slider', { name: 'Osc 2', exact: true });
   await expect(fader).toBeVisible();
   await fader.focus();
-  // Through 50 % to full in quick presses (−40 dB, then up 6 dB a Page): never at rest within reach.
+  // Through 50 % in quick presses (1 % a press, then 10 % a Page, issue 201): never at rest within reach.
   await page.keyboard.press('ArrowUp');
   for (let i = 0; i < 7; i++) await page.keyboard.press('PageUp');
   await page.waitForTimeout(800);

@@ -31,7 +31,7 @@ describe('unlockAudio', () => {
     });
   }
 
-  it('stops listening once audio runs', async () => {
+  it('ignores a gesture once audio runs, without resuming it again', async () => {
     const page = new EventTarget();
     const ctx = fakeContext({ allowed: true });
     unlockAudio(ctx, page, () => {});
@@ -66,7 +66,7 @@ describe('unlockAudio', () => {
   });
 
   for (const gesture of ['pointerup', 'touchend', 'click'] as const) {
-    it(`resumes audio on a ${gesture} too: Safari on an iPhone lets sound start when the finger lifts, not as it lands`, async () => {
+    it(`resumes audio on a ${gesture} too: Safari on an iPhone lets sound start when the finger lifts, not as it lands (the owner, 2026-11-03)`, async () => {
       const page = new EventTarget();
       const ctx = fakeContext({ allowed: true });
       const onChange = vi.fn();
@@ -78,7 +78,7 @@ describe('unlockAudio', () => {
     });
   }
 
-  it('stopped by the browser after it ran (an iPhone back from another app), it waits again and the next gesture resumes it', async () => {
+  it('stopped by the browser after it ran (an iPhone back from another app), it waits again and the next gesture resumes it (the owner, 2026-11-03)', async () => {
     const page = new EventTarget();
     const ctx = fakeContext({ allowed: true });
     const onChange = vi.fn();
@@ -97,7 +97,7 @@ describe('unlockAudio', () => {
     expect(onChange).toHaveBeenLastCalledWith('running');
   });
 
-  it('back on the page after it ran, it tries to resume at once, saying nothing if the browser wants a gesture first', async () => {
+  it('back on the page after it ran, it tries to resume at once, saying nothing if the browser wants a gesture first (the owner, 2026-11-03)', async () => {
     const page = new EventTarget();
     const ctx = fakeContext({ allowed: false });
     ctx.state = 'running';

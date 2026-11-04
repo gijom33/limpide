@@ -598,7 +598,7 @@ test.describe('out by default (issue 150)', () => {
   });
 });
 
-test('with the sound stopped by the browser (an iPhone, back from another app), it moves on all the same', async ({ page }) => {
+test('with the sound stopped by the browser (an iPhone, back from another app), it moves on all the same (the owner, 2026-11-03)', async ({ page }) => {
   await reachAudio(page);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');

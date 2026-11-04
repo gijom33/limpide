@@ -19,7 +19,7 @@ function clocks() {
   return { at, clock, pass };
 }
 
-describe('mascotClock', () => {
+describe('mascotClock, Bead moving while the browser holds the sound stopped (the owner, 2026-11-03)', () => {
   it("is the audio clock while the sound runs, so Bead moves with what is heard", () => {
     const { clock, pass } = clocks();
     const start = clock();

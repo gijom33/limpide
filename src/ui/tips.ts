@@ -422,7 +422,6 @@ export const TIPS = {
 } satisfies Record<string, TipContent>;
 
 const LINE_COLOUR = { osc: 'Green', filter: 'Orange', amp: 'Violet' } as const;
-/** A Timeline key entry for a Destination an LFO moves (issue 63): its line, in its section's colour. */
 /**
  * Each known Controller's tips in the MIDI panel, its layout's and its card's, by its id: a Controller added to the
  * list without them does not compile (issue 196, rather than finding them by name).
@@ -431,6 +430,7 @@ export const CONTROLLER_TIPS: Record<ControllerId, { layout: TipContent; card: T
   c16: { layout: TIPS.c16Layout, card: TIPS.c16Card },
 };
 
+/** A Timeline key entry for a Destination an LFO moves (issue 63): its line, in its section's colour. */
 export function lfoLineTip(destination: LfoDestination, aftertouch: boolean): TipContent {
   const { label, stage } = DESTINATIONS[destination];
   const colour = LINE_COLOUR[stage];
