@@ -128,6 +128,36 @@ test('an Action learns a toggle button as Toggle and a momentary one as Momentar
   await expect(patchName).toHaveAttribute('aria-label', 'Patch: Pure Sine'); // one step, not two
 });
 
+test('a toggle and a momentary button learned on LFO 1 Sync each flip it once a press (issue 223)', async ({ page }) => {
+  const sync = page.getByRole('button', { name: 'LFO 1 Sync', exact: true });
+  const retrigger = page.getByRole('button', { name: 'LFO 1 Retrigger', exact: true });
+  const mappings = midiPanel(page).getByRole('list', { name: 'Mappings' });
+  await expect(sync).toHaveAttribute('aria-pressed', 'false');
+  await startLearn(page);
+  await sync.click();
+  await play(page, cc(51, 127)); // a toggle: one message a press
+  await expect(learnBar(page)).toContainText(/LFO 1 Sync.*CC 51/);
+  await retrigger.click();
+  await play(page, cc(52, 127), cc(52, 0)); // a momentary button: pressed, let go
+  await expect(learnBar(page)).toContainText(/LFO 1 Retrigger.*CC 52/);
+  await page.keyboard.press('Escape');
+  await expect(sync).toHaveAttribute('aria-pressed', 'false'); // learning switched nothing
+  const retriggered = await retrigger.getAttribute('aria-pressed');
+
+  await openMidi(page);
+  await expect(mappings).toContainText(/LFO 1 Sync.*CC 51 · Toggle/);
+  await expect(mappings).toContainText(/LFO 1 Retrigger.*CC 52 · Momentary/);
+  await play(page, cc(51, 0)); // the toggle's next press, its light going off
+  await expect(sync).toHaveAttribute('aria-pressed', 'true');
+  await play(page, cc(51, 127));
+  await expect(sync).toHaveAttribute('aria-pressed', 'false');
+  // Learned from LFO 1 Retrigger's Switch: a press flips it, its release leaves it.
+  await play(page, cc(52, 127), cc(52, 0));
+  await expect(retrigger).not.toHaveAttribute('aria-pressed', retriggered!);
+  await play(page, cc(52, 127), cc(52, 0));
+  await expect(retrigger).toHaveAttribute('aria-pressed', retriggered!);
+});
+
 test('the Activity Monitor shows the last message received', async ({ page }) => {
   await openMidi(page);
   const monitor = midiPanel(page).getByRole('status', { name: 'MIDI activity' });

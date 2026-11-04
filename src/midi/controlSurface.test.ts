@@ -972,3 +972,49 @@ describe('a keyboard’s or a DAW’s panic, and Reset All Controllers (issue 18
     expect(surface.learnState()).toEqual({ phase: 'armed', target: cutoff });
   });
 });
+
+describe('A button learned on a Switch flips it on each press (issue 223)', () => {
+  const button = { kind: 'cc', channel: 1, number: 49 } as const;
+  const sync = { kind: 'choice', id: 'lfoSync' } as const;
+
+  it('a momentary button: each press flips it, its release doing nothing', () => {
+    const { surface, store, choices, send } = rig();
+    surface.startLearn();
+    surface.select(sync);
+    send(cc(49, 127));
+    vi.advanceTimersByTime(150);
+    send(cc(49, 0));
+    expect(store.find(button)?.mode).toBe('trigger');
+    expect(choices.lfoSync ?? 0).toBe(0); // learning it switched nothing
+    surface.stopLearn();
+    send(cc(49, 127));
+    expect(choices.lfoSync).toBe(1);
+    send(cc(49, 0));
+    expect(choices.lfoSync).toBe(1);
+    send(cc(49, 127), cc(49, 0));
+    expect(choices.lfoSync).toBe(0);
+  });
+
+  it('a toggle button: each of its messages flips it once', () => {
+    const { surface, store, choices, send } = rig();
+    surface.startLearn();
+    surface.select(sync);
+    send(cc(49, 127));
+    vi.advanceTimersByTime(600);
+    expect(store.find(button)?.mode).toBe('toggle');
+    expect(choices.lfoSync ?? 0).toBe(0);
+    surface.stopLearn();
+    send(cc(49, 0));
+    expect(choices.lfoSync).toBe(1);
+    send(cc(49, 127));
+    expect(choices.lfoSync).toBe(0);
+  });
+
+  it('a knob learned on a choice of more than two still learns its Encoder Mode', () => {
+    const { surface, store, send } = rig();
+    surface.startLearn();
+    surface.select({ kind: 'choice', id: 'waveform' });
+    send(cc(20, 30), cc(20, 31), cc(20, 32), cc(20, 33));
+    expect(store.find({ kind: 'cc', channel: 1, number: 20 })?.mode).toBe('absolute');
+  });
+});
