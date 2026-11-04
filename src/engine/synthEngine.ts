@@ -502,6 +502,9 @@ function createVoiceOscillator(ctx: BaseAudioContext) {
   return { source, out, direct, inverted, width, pwm, period };
 }
 
+/** Every one of FM's gains: its own, then each LFO's swing of it. */
+const ALL_FM = [true, true, true];
+
 /**
  * Set a biquad to a stage, its Cutoff aside: scheduled at `t` through `writes` for the playing filter, immediately
  * (without them) for a twin.
@@ -796,19 +799,19 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   /**
    * FM's gain, and each LFO's swing of it by its law (issue 97), on a Note of `frequency`: at once, or over a Glide.
    * High up, all of them shrink together as far as keeps Osc 1's sidebands under the top (issue 103). Only the gains
-   * `tuned` says, when told (issue 218).
+   * `retuned` says (FM's own, then each LFO's), when told (issue 218).
    */
-  const tuneFm = (frequency: number, t: number, timeConstant?: number, tuned = [true, true, true]) => {
+  const tuneFm = (frequency: number, t: number, { timeConstant, retuned = ALL_FM }: { timeConstant?: number; retuned?: boolean[] } = {}) => {
     const swings = patch ? destinationSwings(patch, 'fm', patch.crossMod) : [0, 0];
     const kept = patch ? fmDepthKept(patch, frequency * pitchOverNote[0], ctx.sampleRate) : 1;
     [fm, ...fmLfos].forEach((node, i) => {
-      if (tuned[i]) moveTo(node.gain, fmDepth(frequency, i ? swings[i - 1] : undefined) * kept, t, timeConstant);
+      if (retuned[i]) moveTo(node.gain, fmDepth(frequency, i ? swings[i - 1] : undefined) * kept, t, timeConstant);
     });
   };
   /** FM's depth from `t` on, for a Note of `frequency` that starts there: at once, or over its `glide`. */
-  const fmTo = (frequency: number, t: number, glide: number, tuned = [true, true, true]) => {
-    [fm, ...fmLfos].forEach((node, i) => tuned[i] && holdAt(node.gain, t));
-    tuneFm(frequency, t, glide ? glideTimeConstant(glide) : undefined, tuned);
+  const fmTo = (frequency: number, t: number, glide: number, retuned = ALL_FM) => {
+    [fm, ...fmLfos].forEach((node, i) => retuned[i] && holdAt(node.gain, t));
+    tuneFm(frequency, t, { timeConstant: glide ? glideTimeConstant(glide) : undefined, retuned });
   };
   const pitches: { time: number; frequency: number; note: number; glide: number }[] = [];
   let patch: Patch | undefined;
@@ -935,13 +938,13 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
       // worked out from as it was leave it as each Note set it; one at nothing stays at nothing.
       const fmSwings = destinationSwings(next, 'fm', next.crossMod);
       const fmNow = [next.crossMod, ...fmSwings].map((amount) => (amount ? `${amount} ${next.crossMod} ${fmSwings} ${pitchOverNote}` : 'off'));
-      const tuned = fmNow.map((now, i) => whole || now !== fmFrom[i]);
+      const retuned = fmNow.map((now, i) => whole || now !== fmFrom[i]);
       fmFrom = fmNow;
-      if (tuned.some(Boolean)) {
-        tuneFm(frequencyAt(t), t, undefined, tuned);
+      if (retuned.some(Boolean)) {
+        tuneFm(frequencyAt(t), t, { retuned });
         const sliding = pitches[lastAt(pitches, t)];
-        if (sliding?.glide) tuneFm(sliding.frequency, t, glideTimeConstant(sliding.glide), tuned);
-        for (const later of pitches) if (later.time > t) fmTo(later.frequency, later.time, later.glide, tuned);
+        if (sliding?.glide) tuneFm(sliding.frequency, t, { timeConstant: glideTimeConstant(sliding.glide), retuned });
+        for (const later of pitches) if (later.time > t) fmTo(later.frequency, later.time, later.glide, retuned);
       }
       // Osc 1's Octave moves it and the Sub; Osc 2's offsets count from the Note.
       write(osc.detune, next.osc1Octave * 1200, t);
@@ -1036,7 +1039,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   for (const g of toQ) resonanceSwing.connect(g);
   // The Resonance's swing as last worked out, by what it is made from: a knob turned elsewhere keeps its curve.
   let swing = { key: '', stages: [0, 0] as [number, number] };
-  // What the twins' stages were last set from.
+  // What the twins' stages were last set from: a knob that leaves them as they are does not set them again (issue 218).
   let twinsFrom = '';
   const bend = ctx.createConstantSource();
   bend.offset.value = 0;
