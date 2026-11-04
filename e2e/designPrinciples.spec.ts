@@ -272,18 +272,22 @@ for (const size of SIZE_NAMES) {
 }
 
 // Issue 188 (decision 1), from the 1.23.0 code review: on an iPad, the Tempo opened in portrait, turned to landscape
-// (the BPM and Tap in the header, no panel) and back, opened again under its button, over the keys, and Tab out of it
-// no longer closed it.
-test('a narrow Tempo left open through a tablet’s turn and back still opens under the header, and Tab out closes it (issue 188)', async ({ page }) => {
+// (the BPM and Tap in the header, no panel) and back, was feared to open under its button, over the keys, and Tab out
+// of it no longer to close it. The turn closes it (the header draws the Tempo anew); opened again, it is under the
+// header and Tab out closes it.
+test('a narrow Tempo through a tablet’s turn and back: closed, then opened again under the header, and Tab out closes it (issue 188)', async ({ page }) => {
   await page.setViewportSize({ width: 820, height: 1180 });
   await page.goto('/');
   await page.locator('.piano button').first().waitFor();
   const panel = page.getByRole('group', { name: 'Tempo' });
-  await page.locator('header').getByRole('button', { name: /^Tempo: / }).click();
+  const open = page.locator('header').getByRole('button', { name: /^Tempo: / });
+  await open.click();
   await expect(panel).toBeVisible();
   await page.setViewportSize({ width: 1180, height: 820 });
   await expect(page.locator('.tempo-panel')).toHaveCount(0);
   await page.setViewportSize({ width: 820, height: 1180 });
+  await expect(open).toHaveAttribute('aria-expanded', 'false');
+  await open.click();
   await expect(panel).toBeVisible();
   const [top, headerBottom] = await Promise.all([
     panel.evaluate((el) => el.getBoundingClientRect().top),
