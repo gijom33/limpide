@@ -4,7 +4,7 @@
 
 **Blocked by:** none. Surfing shares its ride with [197](./197-bead-rides-everywhere.md) (Bead riding the LFOs, which the owner has not seen either, [141](./141-bead-rides-the-lfos.md)); build after 197 or alongside it, so the two do not fix the same code twice (Claude's call, open to the owner).
 
-**Status:** needs-info · bug. Polish for v1; reproduced 2026-11-02 on night/2026-11-02, waiting on the questions below
+**Status:** ready-for-agent · bug. Polish for v1; reproduced 2026-11-02 on night/2026-11-02; the owner answered the four questions on 2026-11-03 (decisions 5 to 7 and 9)
 
 ## What reproducing found (2026-11-02)
 
@@ -41,6 +41,7 @@ Decided by the owner, 2026-11-03, answering the questions above:
 6. **Question 2, the turn of the acts: as recommended** ("Yes"). Each part takes the next act in the order conducting, the air guitar, surfing, skipping surfing when no LFO plot is clear and its LFO on; through the Demo, conducting at part 1, the air guitar at 2, surfing first at part 5 (Tremolo Keys), then at 8 and 13, where a plot is clear.
 7. **Question 3, the air guitar's look: as recommended** ("Yes"). Its tail raised across its front like a guitar's neck, pointing up and out about 30° above level, strummed with a quick shake on each Note; eyes shut, rocking, a little hop on the loud Notes; the act lasting the whole part.
 8. **Surfing on a surfboard, leaning with the wave** (the owner's idea, inbox 2026-11-03: "Let's have Bead use a surfboard and lean with the wave"). Claude's calls, open to the owner: a small pixel board under its foot, lying along the line's slope where it stands; Bead leans with it, forward going down the wave and back going up, its tail out behind for balance; the same board on its rides outside the Demo ([197](./197-bead-rides-everywhere.md)), which draw as the surf does.
+9. **Question 4, BAGGAGE's time: a second a Note** ("Yes, 7s is easier"). Each word has as many seconds as it has Notes from its first Note to its last: 4 s for B, E, A, D and the four-Note words, as now; 7 s for BAGGAGE.
 
 ## Agent Brief
 
@@ -50,19 +51,19 @@ Decided by the owner, 2026-11-03, answering the questions above:
 **Current behavior:** The owner sees no word trick for B, A, G, G, A, G, E. The owner did not say whether the other words (DEAD, FADE, CAFE, DEAF) and conducting show; check them too. During the Demo, the owner sees neither the air guitar on its tail nor Bead surfing an LFO's plot.
 
 **Desired behavior:**
-- B, A, G, G, A, G, E within 4 s, from the computer keys, the piano or a Controller, plays BAGGAGE's trick, the repeated Notes counted.
+- B, A, G, G, A, G, E within 7 s (a second a Note), from the computer keys, the piano or a Controller, plays BAGGAGE's trick, the repeated Notes counted.
 - During the Demo, each part has one act in turn: conducting, the air guitar, surfing. Surfing goes on the first LFO plot in view whose LFO is on, its Depth above 0; with none, the part is conducting or the air guitar instead.
 - A person watching one Demo through sees each act that can play.
 - Surfing, and riding a plot outside the Demo, show Bead on a surfboard along the line's slope, leaning with the wave.
 
 **Key interfaces:**
-- Bead's words (the Notes heard and the 4 s window)
+- Bead's words (the Notes heard and each word's window, a second a Note)
 - Bead's Demo acts and their turn
 - The LFO plots, and whether one is in view and its LFO on
 
 **Acceptance criteria:**
 - [ ] The cause of each trick not showing is found and written in the issue
-- [ ] BAGGAGE plays its trick from the computer keys and the piano, fast and slow within 4 s
+- [ ] BAGGAGE plays its trick from the computer keys and the piano, fast and slow within 7 s; a four-Note word still within 4 s
 - [ ] In one Demo at three across with an LFO on, Bead conducts, plays the air guitar and surfs, each at least once
 - [ ] With no LFO on, the parts are conducting and the air guitar
 - [ ] Surfing and riding show the board along the line's slope, Bead leaning forward going down and back going up
