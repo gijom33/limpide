@@ -71,12 +71,16 @@ export function LfoPlot({ engine, lfo, label, inactive }: { engine: SynthEngine;
         const t = timeAt(i / SAMPLES, now);
         points.push(`${(PAD + (i / SAMPLES) * (w - 2 * PAD)).toFixed(1)} ${y(engine.lfoSwingAt(t, lfo))}`);
       }
-      line.current?.setAttribute('d', `M${points.join(' L')}`);
-      dot.current?.setAttribute('cy', y(engine.lfoSwingAt(now, lfo)));
+      const cy = y(engine.lfoSwingAt(now, lfo));
       const marks = markedBeats(engine.patchAt(now), [lfo], engine.tempo(), timeAt(0, now), now);
       const xOf = (t: number) => (PAD + ((t - timeAt(0, now)) / SPAN) * (w - 2 * PAD)).toFixed(1);
-      beats.current?.setAttribute('d', marks.map((t) => `M${xOf(t)} 0 V${h}`).join(' '));
-      if (box.current) box.current.dataset.beats = String(marks.length);
+      // Written once every Viewer has read the page (issue 221).
+      return () => {
+        line.current?.setAttribute('d', `M${points.join(' L')}`);
+        dot.current?.setAttribute('cy', cy);
+        beats.current?.setAttribute('d', marks.map((t) => `M${xOf(t)} 0 V${h}`).join(' '));
+        if (box.current) box.current.dataset.beats = String(marks.length);
+      };
     });
     return () => {
       observer.disconnect();

@@ -922,241 +922,245 @@ export function Mascot({
         return;
       }
 
-      // Between lines and under the header, the line's moves take over the sound's and the controls'. It keeps its
-      // facing, turned its way across a leap and back as it lands (issue 179), but in the pointer's hold or thrown.
-      let tailTurn = 0;
-      let origin = '20% 100%';
-      const across = Math.max(-15, Math.min(15, where.vx / 40)); // leaning into its way across
-      if (where.moving === 'held') {
-        // Dangling from the pointer, wriggling, eyes wide.
-        Object.assign(pose, { legs: 'tuck', splash: 'none', lift: 0, turn: 1, eyes: 'wide', stretch: 1.12, tilt: Math.sin(now * 2 * Math.PI * 3) * 10 });
-        origin = '20% 0%';
-      } else if (where.moving === 'thrown') {
-        // Tumbling through the air.
-        Object.assign(pose, { legs: 'tuck', splash: 'none', lift: 0, turn: 1, eyes: 'shut', stretch: 1 });
-        pose.tilt = (now * 600 * (where.vx < 0 ? -1 : 1)) % 360;
-        origin = '20% 60%';
-      } else if (where.moving === 'hovering') {
-        // On its tail, straight down under it and whirling (issue 142); its bob is in its foot, and nothing stretches it
-        // up over the tabs. With reduced motion, still.
-        Object.assign(pose, { legs: 'tuck', splash: 'none', lift: 0, tilt: 0, stretch: 1 });
-        tailTurn = 90 + (still.matches ? 0 : Math.sin(now * 2 * Math.PI * WHIRLS) * WHIRL_DEGREES);
-      } else if (where.moving === 'falling') {
-        // Hopping off, tucked; then a raindrop, longer the faster it falls.
-        const speed = Math.max(0, where.vy);
-        Object.assign(pose, { legs: 'tuck', splash: 'none', lift: 0, tilt: across, eyes: where.vy < 0 ? 'happy' : 'open' });
-        pose.stretch = where.vy < 0 ? 0.92 : 1 + Math.min(0.35, speed / 1600);
-      } else if (where.moving === 'flying' && where.windup < 1) {
-        // Crouching, its tail swinging round and down under it.
-        Object.assign(pose, { legs: 'stand', splash: 'none', lift: 0, tilt: 0, eyes: 'happy', stretch: 1 - 0.15 * where.windup });
-        tailTurn = 90 * where.windup;
-      } else if (where.moving === 'flying') {
-        Object.assign(pose, { legs: 'tuck', splash: 'none', lift: 0, tilt: across, eyes: where.thrust ? 'happy' : 'open' });
-        pose.stretch = 1 + Math.min(0.2, Math.abs(where.vy) / 2600);
-        // Its tail straight down under it, whirling while it pushes, swinging back up as it coasts.
-        tailTurn = where.thrust ? 90 + Math.sin(now * 2 * Math.PI * WHIRLS) * WHIRL_DEGREES : Math.max(0, Math.min(90, -where.vy / 6));
-      } else if (where.moving === 'sliding') {
-        // Running down the panel like a drop on glass, a little long, leaving drips behind (issue 151).
-        Object.assign(pose, { legs: 'tuck', splash: 'none', lift: 0, tilt: 0, stretch: 1.08 });
-      } else if (where.moving === 'clinging') {
-        pose.legs = 'tuck';
-      } else if (where.moving === 'landing' && leaveBy !== 'melt') {
-        // Squashed as hard as it hit, then a wobble that dies away, like a drop of jelly.
-        const p = where.landed;
-        const wobble = Math.exp(-5 * p) * Math.cos(16 * p);
-        Object.assign(pose, { legs: 'stand', lift: 0 });
-        pose.stretch = 1 - 0.4 * where.impact * wobble;
-        pose.splash = p < 0.3 ? 'wide' : 'none';
-        pose.eyes = p < 0.15 ? 'shut' : where.impact > 0.5 && p < 0.55 ? 'happy' : pose.eyes;
-      }
-      // Surfing in the Demo or riding a plot (issue 204): on its board along the line under it, leaning with the wave,
-      // forward going down it and back going up; but for a funny turn, which plays there as it would anywhere.
-      const onBoard = !!plot && perch.id === `surf ${plot.lfo}` && !pose.doing && (where.moving === 'standing' || where.moving === 'landing');
-      if (onBoard) {
-        const middle = drawnAt.left + DROP_MIDDLE - plot.box.left;
-        const lineAtX = (x: number) => lineAt({ engine: context.engine, lfo: plot.lfo, box: plot.box, x, now: context.engine.shownNow() });
-        pose.tilt = surfLean(lineAtX(middle - SURF_SPAN / 2), lineAtX(middle + SURF_SPAN / 2), SURF_SPAN);
-        pose.legs = 'tuck';
-        pose.wag = -BALANCING; // its tail out behind, raised for balance
-      }
-      if (onBoard !== (board.current!.style.display === '')) board.current!.style.display = onBoard ? '' : 'none';
-
-      // A trick seen whole under what is over the page (issue 200): where the room over it is short, it hops lower, and
-      // if its drawing is still too tall (an umbrella, a cloud), it is drawn smaller about its foot. With room, untouched.
-      let shrink = 1;
-      if (/^(standing|hovering|landing|clinging)$/.test(where.moving)) {
-        const grid = HEIGHT / 13;
-        const room = where.foot - overPage - 1;
-        const drawnTop = Math.min(PROP_TOP[pose.prop] ?? 0, HAT_TOP[pose.hat] ?? 0, pose.ice > 0 ? topOf(ICE) : 0);
-        const body = (13 - drawnTop) * grid * pose.stretch * pose.size;
-        pose.lift = Math.min(pose.lift, Math.max(0, room - body));
-        const reach = Math.max(body + Math.max(0, pose.lift), (13 - (SKY_TOP[pose.prop] ?? 13)) * grid);
-        if (pose.doing && reach > room) shrink = Math.max(0, room) / reach;
-      }
-
-      for (const part of Object.keys(PARTS) as Part[]) {
-        if (shown?.[part] === pose[part]) continue;
-        if (shown) parts.current.get(`${part} ${shown[part]}`)!.style.display = 'none';
-        parts.current.get(`${part} ${pose[part]}`)!.style.display = '';
-      }
-      if (shown?.form !== pose.form) tail.current!.style.display = pose.form === 'drop' ? '' : 'none';
-      if (shown?.tail !== pose.tail) for (const [shape, g] of tails.current) g.style.display = shape === pose.tail ? '' : 'none';
-      if (shown?.hat !== pose.hat) for (const [name, g] of hats.current) g.style.display = name === pose.hat ? '' : 'none';
-      if (shown?.prop !== pose.prop) for (const [name, g] of props.current) g.style.display = name === pose.prop ? '' : 'none';
-      // Its twin, Detune splitting it, off on the side of its sign by half as many squares as pixels, the same side on
-      // the page whichever way it faces (issue 174); frozen; its static. Each written only as it changes, to keep its
-      // frames cheap.
-      const twinned = pose.twin !== 0 && pose.form === 'drop';
-      if (twinned || shown?.twin) {
-        // Linked to its drawing only while shown: WebKit copies a linked drawing again at every change to it.
-        if (twinned) twin.current!.setAttribute('href', '#bead-self');
-        else twin.current!.removeAttribute('href');
-        twin.current!.style.display = twinned ? '' : 'none';
-        if (twinned) twin.current!.setAttribute('transform', `translate(${(pose.turn < 0 ? -pose.twin : pose.twin) / 2} 0)`);
-      }
-      if (pose.ice > 0 || shown?.ice) {
-        ice.current!.style.display = pose.ice > 0 ? '' : 'none';
-        ice.current!.style.opacity = String(pose.ice);
-      }
-      if (pose.fuzz > 0 || shown?.fuzz) {
-        const dots = fuzz.current!.children;
-        for (let i = 0; i < dots.length; i++) {
-          const dot = dots[i] as SVGRectElement;
-          const on = Math.random() < pose.fuzz * 0.7;
-          dot.style.display = on ? '' : 'none';
-          if (on) {
-            dot.setAttribute('x', String(Math.floor(Math.random() * 9)));
-            dot.setAttribute('y', String(1 + Math.floor(Math.random() * 11)));
-          }
+      // Its drawing, written once every Viewer has read the page (issue 221): what is above only reads it.
+      const perched = perch;
+      return () => {
+        // Between lines and under the header, the line's moves take over the sound's and the controls'. It keeps its
+        // facing, turned its way across a leap and back as it lands (issue 179), but in the pointer's hold or thrown.
+        let tailTurn = 0;
+        let origin = '20% 100%';
+        const across = Math.max(-15, Math.min(15, where.vx / 40)); // leaning into its way across
+        if (where.moving === 'held') {
+          // Dangling from the pointer, wriggling, eyes wide.
+          Object.assign(pose, { legs: 'tuck', splash: 'none', lift: 0, turn: 1, eyes: 'wide', stretch: 1.12, tilt: Math.sin(now * 2 * Math.PI * 3) * 10 });
+          origin = '20% 0%';
+        } else if (where.moving === 'thrown') {
+          // Tumbling through the air.
+          Object.assign(pose, { legs: 'tuck', splash: 'none', lift: 0, turn: 1, eyes: 'shut', stretch: 1 });
+          pose.tilt = (now * 600 * (where.vx < 0 ? -1 : 1)) % 360;
+          origin = '20% 60%';
+        } else if (where.moving === 'hovering') {
+          // On its tail, straight down under it and whirling (issue 142); its bob is in its foot, and nothing stretches it
+          // up over the tabs. With reduced motion, still.
+          Object.assign(pose, { legs: 'tuck', splash: 'none', lift: 0, tilt: 0, stretch: 1 });
+          tailTurn = 90 + (still.matches ? 0 : Math.sin(now * 2 * Math.PI * WHIRLS) * WHIRL_DEGREES);
+        } else if (where.moving === 'falling') {
+          // Hopping off, tucked; then a raindrop, longer the faster it falls.
+          const speed = Math.max(0, where.vy);
+          Object.assign(pose, { legs: 'tuck', splash: 'none', lift: 0, tilt: across, eyes: where.vy < 0 ? 'happy' : 'open' });
+          pose.stretch = where.vy < 0 ? 0.92 : 1 + Math.min(0.35, speed / 1600);
+        } else if (where.moving === 'flying' && where.windup < 1) {
+          // Crouching, its tail swinging round and down under it.
+          Object.assign(pose, { legs: 'stand', splash: 'none', lift: 0, tilt: 0, eyes: 'happy', stretch: 1 - 0.15 * where.windup });
+          tailTurn = 90 * where.windup;
+        } else if (where.moving === 'flying') {
+          Object.assign(pose, { legs: 'tuck', splash: 'none', lift: 0, tilt: across, eyes: where.thrust ? 'happy' : 'open' });
+          pose.stretch = 1 + Math.min(0.2, Math.abs(where.vy) / 2600);
+          // Its tail straight down under it, whirling while it pushes, swinging back up as it coasts.
+          tailTurn = where.thrust ? 90 + Math.sin(now * 2 * Math.PI * WHIRLS) * WHIRL_DEGREES : Math.max(0, Math.min(90, -where.vy / 6));
+        } else if (where.moving === 'sliding') {
+          // Running down the panel like a drop on glass, a little long, leaving drips behind (issue 151).
+          Object.assign(pose, { legs: 'tuck', splash: 'none', lift: 0, tilt: 0, stretch: 1.08 });
+        } else if (where.moving === 'clinging') {
+          pose.legs = 'tuck';
+        } else if (where.moving === 'landing' && leaveBy !== 'melt') {
+          // Squashed as hard as it hit, then a wobble that dies away, like a drop of jelly.
+          const p = where.landed;
+          const wobble = Math.exp(-5 * p) * Math.cos(16 * p);
+          Object.assign(pose, { legs: 'stand', lift: 0 });
+          pose.stretch = 1 - 0.4 * where.impact * wobble;
+          pose.splash = p < 0.3 ? 'wide' : 'none';
+          pose.eyes = p < 0.15 ? 'shut' : where.impact > 0.5 && p < 0.55 ? 'happy' : pose.eyes;
         }
-      }
-      // Turned down, the tail leaves from under the drop's middle rather than its side.
-      const under = Math.min(1, tailTurn / 90);
-      const turnTail = tailTurn + pose.wag;
-      tail.current!.setAttribute('transform', turnTail ? `translate(${-4.5 * under} ${3 * under}) rotate(${turnTail} 9 9)` : '');
-      shown = pose;
-      // What it is doing, for the tests (issue 127); pointing the way, for the stylesheet too (issue 151).
-      // Beside a control, or sliding there, the pointer passes through it to what is under it (issue 151).
-      const pointing = where.moving === 'sliding' || where.moving === 'clinging' ? 'yes' : 'no';
-      const marks = { act: act ?? '', ride: ride ? String(ride.lfo) : '', board: onBoard ? 'on' : '', tail: pose.tail, hat: pose.hat, doing: pose.doing ?? '', prop: pose.prop, moving: where.moving, pointing };
-      for (const [mark, value] of Object.entries(marks)) if (outer.dataset[mark] !== value) outer.dataset[mark] = value;
+        // Surfing in the Demo or riding a plot (issue 204): on its board along the line under it, leaning with the wave,
+        // forward going down it and back going up; but for a funny turn, which plays there as it would anywhere.
+        const onBoard = !!plot && perched.id === `surf ${plot.lfo}` && !pose.doing && (where.moving === 'standing' || where.moving === 'landing');
+        if (onBoard) {
+          const middle = drawnAt.left + DROP_MIDDLE - plot.box.left;
+          const lineAtX = (x: number) => lineAt({ engine: context.engine, lfo: plot.lfo, box: plot.box, x, now: context.engine.shownNow() });
+          pose.tilt = surfLean(lineAtX(middle - SURF_SPAN / 2), lineAtX(middle + SURF_SPAN / 2), SURF_SPAN);
+          pose.legs = 'tuck';
+          pose.wag = -BALANCING; // its tail out behind, raised for balance
+        }
+        if (onBoard !== (board.current!.style.display === '')) board.current!.style.display = onBoard ? '' : 'none';
 
-      drawnAt = { left: acrossOf(where, pose.x), foot: where.foot };
-      const left = acrossOf(where, pose.x) - page.left + (pose.fuzz ? (Math.random() * 2 - 1) * pose.fuzz : 0);
-      const ground = where.foot - page.top;
-      outer.style.transform = `translate(${left}px, ${ground - HEIGHT - HEADROOM}px)${shrink < 1 ? ` scale(${shrink})` : ''}`;
-      // Its droplets kept under what is over the page, a droplet's size under it (issue 200).
-      const ceiling = overPage - page.top + 2;
-      droplets.under(ceiling);
-      // Its droplets, in the page: a splash as it lands (harder, more), its smash, its shake, its tail's spray.
-      const base = { x: left + DROP_MIDDLE, y: ground };
-      // A point of its drawing as drawn, smaller about its foot where it is (issue 200).
-      const drawnX = (x: number) => base.x + (x - base.x) * shrink;
-      const drawnY = (y: number) => ground - (ground - y) * shrink;
-      middle = { x: base.x, y: ground - HEIGHT / 2 - pose.lift };
-      if (where.landedAt !== null && where.moving === 'landing') droplets.fling(5 + Math.round(9 * where.impact), base.x, base.y, 'up', where.impact);
-      if (pose.burst) {
-        const { count, spread: fling } = pose.burst;
-        if (fling === 'rain') {
-          // From the sky all around; on the umbrella, if it is open and the drop falls on it, else down to the edge.
+        // A trick seen whole under what is over the page (issue 200): where the room over it is short, it hops lower, and
+        // if its drawing is still too tall (an umbrella, a cloud), it is drawn smaller about its foot. With room, untouched.
+        let shrink = 1;
+        if (/^(standing|hovering|landing|clinging)$/.test(where.moving)) {
           const grid = HEIGHT / 13;
-          for (let i = 0; i < count; i++) {
-            const at = base.x + (Math.random() * 2 - 1) * RAIN_WIDE;
-            const onUmbrella = pose.prop === 'umbrella' && at >= left + CANOPY.from * grid && at <= left + CANOPY.to * grid;
-            droplets.fling(1, at, ground - Math.min(RAIN_HIGH, ground - ceiling), 'rain', 0.5, onUmbrella ? drawnY(ground - HEIGHT + CANOPY.top * grid - pose.lift) : ground);
-          }
-        } else {
-          if (fling === 'arc') {
-            // Up from its head, in an arc back down to its edge.
-            droplets.fling(count, base.x, drawnY(ground - HEIGHT - pose.lift), 'arc', pose.burst.aim ?? 0, ground);
-          } else if (fling === 'pour') {
-            // From the glass's rim, falling into its mouth.
-            const grid = HEIGHT / 13;
-            droplets.fling(count, drawnX(left + POURING_AT.x * grid), drawnY(ground - HEIGHT + POURING_AT.y * grid), 'pour', 1, drawnY(ground - HEIGHT + MOUTH_Y * grid));
-          } else if (fling === 'jet') {
-            // From the muzzle, turned with it: the gun is drawn on its left.
-            const facing = pose.turn < 0 ? -1 : 1;
-            droplets.fling(count, drawnX(left + DROP_MIDDLE + facing * (MUZZLE.x - DROP_MIDDLE)), drawnY(ground - HEIGHT - pose.lift + MUZZLE.y), 'jet', -facing);
-          } else if (fling === 'shower') {
-            // From under its cloud, down onto it.
-            const grid = HEIGHT / 13;
-            const at = left + (CLOUD.from + Math.random() * (CLOUD.to - CLOUD.from)) * grid;
-            droplets.fling(count, drawnX(at), drawnY(ground - HEIGHT + CLOUD.bottom * grid), 'shower', 0.5, ground);
-          } else {
-            const top = drawnY(ground - HEIGHT * pose.size - pose.lift);
-            const from = fling === 'up' || fling === 'drip' ? base.y : fling === 'spout' || fling === 'steam' ? top : drawnY(middle.y);
-            droplets.fling(count, base.x, from, fling, 1);
+          const room = where.foot - overPage - 1;
+          const drawnTop = Math.min(PROP_TOP[pose.prop] ?? 0, HAT_TOP[pose.hat] ?? 0, pose.ice > 0 ? topOf(ICE) : 0);
+          const body = (13 - drawnTop) * grid * pose.stretch * pose.size;
+          pose.lift = Math.min(pose.lift, Math.max(0, room - body));
+          const reach = Math.max(body + Math.max(0, pose.lift), (13 - (SKY_TOP[pose.prop] ?? 13)) * grid);
+          if (pose.doing && reach > room) shrink = Math.max(0, room) / reach;
+        }
+
+        for (const part of Object.keys(PARTS) as Part[]) {
+          if (shown?.[part] === pose[part]) continue;
+          if (shown) parts.current.get(`${part} ${shown[part]}`)!.style.display = 'none';
+          parts.current.get(`${part} ${pose[part]}`)!.style.display = '';
+        }
+        if (shown?.form !== pose.form) tail.current!.style.display = pose.form === 'drop' ? '' : 'none';
+        if (shown?.tail !== pose.tail) for (const [shape, g] of tails.current) g.style.display = shape === pose.tail ? '' : 'none';
+        if (shown?.hat !== pose.hat) for (const [name, g] of hats.current) g.style.display = name === pose.hat ? '' : 'none';
+        if (shown?.prop !== pose.prop) for (const [name, g] of props.current) g.style.display = name === pose.prop ? '' : 'none';
+        // Its twin, Detune splitting it, off on the side of its sign by half as many squares as pixels, the same side on
+        // the page whichever way it faces (issue 174); frozen; its static. Each written only as it changes, to keep its
+        // frames cheap.
+        const twinned = pose.twin !== 0 && pose.form === 'drop';
+        if (twinned || shown?.twin) {
+          // Linked to its drawing only while shown: WebKit copies a linked drawing again at every change to it.
+          if (twinned) twin.current!.setAttribute('href', '#bead-self');
+          else twin.current!.removeAttribute('href');
+          twin.current!.style.display = twinned ? '' : 'none';
+          if (twinned) twin.current!.setAttribute('transform', `translate(${(pose.turn < 0 ? -pose.twin : pose.twin) / 2} 0)`);
+        }
+        if (pose.ice > 0 || shown?.ice) {
+          ice.current!.style.display = pose.ice > 0 ? '' : 'none';
+          ice.current!.style.opacity = String(pose.ice);
+        }
+        if (pose.fuzz > 0 || shown?.fuzz) {
+          const dots = fuzz.current!.children;
+          for (let i = 0; i < dots.length; i++) {
+            const dot = dots[i] as SVGRectElement;
+            const on = Math.random() < pose.fuzz * 0.7;
+            dot.style.display = on ? '' : 'none';
+            if (on) {
+              dot.setAttribute('x', String(Math.floor(Math.random() * 9)));
+              dot.setAttribute('y', String(1 + Math.floor(Math.random() * 11)));
+            }
           }
         }
-      }
-      // Its props: shown as the trick has them.
-      umbrella.current!.style.display = pose.prop === 'umbrella' ? '' : 'none';
-      shutUmbrella.current!.style.display = pose.prop === 'umbrellaShut' ? '' : 'none';
-      gun.current!.style.display = pose.prop === 'gun' ? '' : 'none';
-      const glassy = pose.prop.startsWith('glass');
-      glass.current!.style.display = glassy ? '' : 'none';
-      // Lifted beside its mouth and turned over, about its rim, the open end toward its mouth.
-      const s = pose.sip;
-      glass.current!.setAttribute(
-        'transform',
-        s ? `translate(${(POURING_AT.x - RIM.x) * s} ${(POURING_AT.y - RIM.y) * s}) rotate(${TURNED_OVER * s} ${RIM.x} ${RIM.y})` : '',
-      );
-      const level = pose.sip > 0.5 && (pose.prop === 'glassHalf' || pose.prop === 'glassLow') ? `${pose.prop}Over` : pose.prop;
-      for (const [name, g] of water.current) g.style.display = name === level ? '' : 'none';
-      if (where.moving === 'sliding' && now - lastDrip > SLIDE_DRIPS) {
-        droplets.fling(1, base.x, base.y - 2, 'drip');
-        lastDrip = now;
-      }
-      if (where.moving === 'flying' && where.thrust && now - lastExhaust > 0.035) {
-        droplets.fling(1, base.x, ground + TAIL_LENGTH, 'down');
-        lastExhaust = now;
-      }
-      drawDroplets(spray.current!, droplets.step(dt));
-      // Fishing: the line hangs straight down from the rod's tip, wherever its lean and turn put the tip, to the hook,
-      // down past the window's bottom or on the way back up with its catch (the owner, 2026-10-30).
-      const fish = fishing.current!;
-      if (pose.hook === null || pose.form !== 'drop') {
-        if (fish.style.display !== 'none') fish.style.display = 'none';
-      } else {
-        fish.style.display = '';
-        const grid = HEIGHT / 13;
-        const tip = ROD_TIP[pose.prop === 'rodBite' ? 'rodBite' : 'rod'];
-        // The tip as the drop's transform puts it: scaled, then turned, about its foot, then lifted.
-        const [ox, oy] = [WIDTH * 0.2, HEIGHT];
-        const dx = (tip.x * grid - ox) * (2 - pose.stretch) * pose.turn * pose.size;
-        const dy = (tip.y * grid - oy) * pose.stretch * pose.size;
-        const a = (pose.tilt * Math.PI) / 180;
-        const x = drawnX(left + ox + dx * Math.cos(a) - dy * Math.sin(a));
-        const y = drawnY(ground - pose.lift + dx * Math.sin(a) + dy * Math.cos(a));
-        const bottom = innerHeight - page.top + 30;
-        const hookY = y + pose.hook * Math.max(0, bottom - y);
-        const [line, hook, caught] = fish.children as unknown as [SVGLineElement, SVGGElement, SVGGElement];
-        line.setAttribute('x1', String(x));
-        line.setAttribute('y1', String(y));
-        line.setAttribute('x2', String(x));
-        line.setAttribute('y2', String(hookY));
-        hook.setAttribute('transform', `translate(${x} ${hookY})`);
-        caught.setAttribute('transform', `translate(${x} ${hookY})`);
-        caught.style.display = pose.caught ? '' : 'none';
-      }
-      // Coming into view: up from behind its edge (fast for a pop, then a hop), down from under the header, or, falling
-      // from the top of the window, all at once.
-      // With nowhere clear to be, it goes out of sight: back up under the header or the tabs, hovering, or down behind its
-      // edge; and comes back into view once somewhere is (issue 192).
-      comingFrom ??= perch.hovering ? 'header' : arrival === 'rain' ? 'sky' : 'edge';
-      if (perch.waiting) [comingFrom, hid] = [perch.hovering ? 'header' : 'edge', true];
-      const wasUp = up;
-      const popping = arrival === 'pop' && !hid;
-      if (perch.waiting) up = still.matches ? 0 : Math.max(0, up - dt / RISE_SECONDS);
-      else up = still.matches || comingFrom === 'sky' ? 1 : Math.min(1, up + dt / (popping ? RISE_SECONDS / 2 : RISE_SECONDS));
-      if (popping && wasUp < 1 && up === 1) motion.gesture('new', now);
-      const rise = up * up * (3 - 2 * up);
-      const hidden = (1 - rise) * HEIGHT;
-      outer.style.clipPath = up < 1 ? (comingFrom === 'header' ? `inset(${HEADROOM}px -60px -60px -60px)` : 'inset(-60px -60px 0 -60px)') : 'none';
-      const el = drop.current!;
-      el.style.opacity = String(pose.fade);
-      el.style.transformOrigin = origin;
-      el.style.transform = `translateY(${(comingFrom === 'header' ? -hidden : hidden) - pose.lift}px) rotate(${pose.tilt}deg) scale(${(2 - pose.stretch) * pose.turn * pose.size}, ${pose.stretch * pose.size})`;
+        // Turned down, the tail leaves from under the drop's middle rather than its side.
+        const under = Math.min(1, tailTurn / 90);
+        const turnTail = tailTurn + pose.wag;
+        tail.current!.setAttribute('transform', turnTail ? `translate(${-4.5 * under} ${3 * under}) rotate(${turnTail} 9 9)` : '');
+        shown = pose;
+        // What it is doing, for the tests (issue 127); pointing the way, for the stylesheet too (issue 151).
+        // Beside a control, or sliding there, the pointer passes through it to what is under it (issue 151).
+        const pointing = where.moving === 'sliding' || where.moving === 'clinging' ? 'yes' : 'no';
+        const marks = { act: act ?? '', ride: ride ? String(ride.lfo) : '', board: onBoard ? 'on' : '', tail: pose.tail, hat: pose.hat, doing: pose.doing ?? '', prop: pose.prop, moving: where.moving, pointing };
+        for (const [mark, value] of Object.entries(marks)) if (outer.dataset[mark] !== value) outer.dataset[mark] = value;
+
+        drawnAt = { left: acrossOf(where, pose.x), foot: where.foot };
+        const left = acrossOf(where, pose.x) - page.left + (pose.fuzz ? (Math.random() * 2 - 1) * pose.fuzz : 0);
+        const ground = where.foot - page.top;
+        outer.style.transform = `translate(${left}px, ${ground - HEIGHT - HEADROOM}px)${shrink < 1 ? ` scale(${shrink})` : ''}`;
+        // Its droplets kept under what is over the page, a droplet's size under it (issue 200).
+        const ceiling = overPage - page.top + 2;
+        droplets.under(ceiling);
+        // Its droplets, in the page: a splash as it lands (harder, more), its smash, its shake, its tail's spray.
+        const base = { x: left + DROP_MIDDLE, y: ground };
+        // A point of its drawing as drawn, smaller about its foot where it is (issue 200).
+        const drawnX = (x: number) => base.x + (x - base.x) * shrink;
+        const drawnY = (y: number) => ground - (ground - y) * shrink;
+        middle = { x: base.x, y: ground - HEIGHT / 2 - pose.lift };
+        if (where.landedAt !== null && where.moving === 'landing') droplets.fling(5 + Math.round(9 * where.impact), base.x, base.y, 'up', where.impact);
+        if (pose.burst) {
+          const { count, spread: fling } = pose.burst;
+          if (fling === 'rain') {
+            // From the sky all around; on the umbrella, if it is open and the drop falls on it, else down to the edge.
+            const grid = HEIGHT / 13;
+            for (let i = 0; i < count; i++) {
+              const at = base.x + (Math.random() * 2 - 1) * RAIN_WIDE;
+              const onUmbrella = pose.prop === 'umbrella' && at >= left + CANOPY.from * grid && at <= left + CANOPY.to * grid;
+              droplets.fling(1, at, ground - Math.min(RAIN_HIGH, ground - ceiling), 'rain', 0.5, onUmbrella ? drawnY(ground - HEIGHT + CANOPY.top * grid - pose.lift) : ground);
+            }
+          } else {
+            if (fling === 'arc') {
+              // Up from its head, in an arc back down to its edge.
+              droplets.fling(count, base.x, drawnY(ground - HEIGHT - pose.lift), 'arc', pose.burst.aim ?? 0, ground);
+            } else if (fling === 'pour') {
+              // From the glass's rim, falling into its mouth.
+              const grid = HEIGHT / 13;
+              droplets.fling(count, drawnX(left + POURING_AT.x * grid), drawnY(ground - HEIGHT + POURING_AT.y * grid), 'pour', 1, drawnY(ground - HEIGHT + MOUTH_Y * grid));
+            } else if (fling === 'jet') {
+              // From the muzzle, turned with it: the gun is drawn on its left.
+              const facing = pose.turn < 0 ? -1 : 1;
+              droplets.fling(count, drawnX(left + DROP_MIDDLE + facing * (MUZZLE.x - DROP_MIDDLE)), drawnY(ground - HEIGHT - pose.lift + MUZZLE.y), 'jet', -facing);
+            } else if (fling === 'shower') {
+              // From under its cloud, down onto it.
+              const grid = HEIGHT / 13;
+              const at = left + (CLOUD.from + Math.random() * (CLOUD.to - CLOUD.from)) * grid;
+              droplets.fling(count, drawnX(at), drawnY(ground - HEIGHT + CLOUD.bottom * grid), 'shower', 0.5, ground);
+            } else {
+              const top = drawnY(ground - HEIGHT * pose.size - pose.lift);
+              const from = fling === 'up' || fling === 'drip' ? base.y : fling === 'spout' || fling === 'steam' ? top : drawnY(middle.y);
+              droplets.fling(count, base.x, from, fling, 1);
+            }
+          }
+        }
+        // Its props: shown as the trick has them.
+        umbrella.current!.style.display = pose.prop === 'umbrella' ? '' : 'none';
+        shutUmbrella.current!.style.display = pose.prop === 'umbrellaShut' ? '' : 'none';
+        gun.current!.style.display = pose.prop === 'gun' ? '' : 'none';
+        const glassy = pose.prop.startsWith('glass');
+        glass.current!.style.display = glassy ? '' : 'none';
+        // Lifted beside its mouth and turned over, about its rim, the open end toward its mouth.
+        const s = pose.sip;
+        glass.current!.setAttribute(
+          'transform',
+          s ? `translate(${(POURING_AT.x - RIM.x) * s} ${(POURING_AT.y - RIM.y) * s}) rotate(${TURNED_OVER * s} ${RIM.x} ${RIM.y})` : '',
+        );
+        const level = pose.sip > 0.5 && (pose.prop === 'glassHalf' || pose.prop === 'glassLow') ? `${pose.prop}Over` : pose.prop;
+        for (const [name, g] of water.current) g.style.display = name === level ? '' : 'none';
+        if (where.moving === 'sliding' && now - lastDrip > SLIDE_DRIPS) {
+          droplets.fling(1, base.x, base.y - 2, 'drip');
+          lastDrip = now;
+        }
+        if (where.moving === 'flying' && where.thrust && now - lastExhaust > 0.035) {
+          droplets.fling(1, base.x, ground + TAIL_LENGTH, 'down');
+          lastExhaust = now;
+        }
+        drawDroplets(spray.current!, droplets.step(dt));
+        // Fishing: the line hangs straight down from the rod's tip, wherever its lean and turn put the tip, to the hook,
+        // down past the window's bottom or on the way back up with its catch (the owner, 2026-10-30).
+        const fish = fishing.current!;
+        if (pose.hook === null || pose.form !== 'drop') {
+          if (fish.style.display !== 'none') fish.style.display = 'none';
+        } else {
+          fish.style.display = '';
+          const grid = HEIGHT / 13;
+          const tip = ROD_TIP[pose.prop === 'rodBite' ? 'rodBite' : 'rod'];
+          // The tip as the drop's transform puts it: scaled, then turned, about its foot, then lifted.
+          const [ox, oy] = [WIDTH * 0.2, HEIGHT];
+          const dx = (tip.x * grid - ox) * (2 - pose.stretch) * pose.turn * pose.size;
+          const dy = (tip.y * grid - oy) * pose.stretch * pose.size;
+          const a = (pose.tilt * Math.PI) / 180;
+          const x = drawnX(left + ox + dx * Math.cos(a) - dy * Math.sin(a));
+          const y = drawnY(ground - pose.lift + dx * Math.sin(a) + dy * Math.cos(a));
+          const bottom = innerHeight - page.top + 30;
+          const hookY = y + pose.hook * Math.max(0, bottom - y);
+          const [line, hook, caught] = fish.children as unknown as [SVGLineElement, SVGGElement, SVGGElement];
+          line.setAttribute('x1', String(x));
+          line.setAttribute('y1', String(y));
+          line.setAttribute('x2', String(x));
+          line.setAttribute('y2', String(hookY));
+          hook.setAttribute('transform', `translate(${x} ${hookY})`);
+          caught.setAttribute('transform', `translate(${x} ${hookY})`);
+          caught.style.display = pose.caught ? '' : 'none';
+        }
+        // Coming into view: up from behind its edge (fast for a pop, then a hop), down from under the header, or, falling
+        // from the top of the window, all at once.
+        // With nowhere clear to be, it goes out of sight: back up under the header or the tabs, hovering, or down behind its
+        // edge; and comes back into view once somewhere is (issue 192).
+        comingFrom ??= perched.hovering ? 'header' : arrival === 'rain' ? 'sky' : 'edge';
+        if (perched.waiting) [comingFrom, hid] = [perched.hovering ? 'header' : 'edge', true];
+        const wasUp = up;
+        const popping = arrival === 'pop' && !hid;
+        if (perched.waiting) up = still.matches ? 0 : Math.max(0, up - dt / RISE_SECONDS);
+        else up = still.matches || comingFrom === 'sky' ? 1 : Math.min(1, up + dt / (popping ? RISE_SECONDS / 2 : RISE_SECONDS));
+        if (popping && wasUp < 1 && up === 1) motion.gesture('new', now);
+        const rise = up * up * (3 - 2 * up);
+        const hidden = (1 - rise) * HEIGHT;
+        outer.style.clipPath = up < 1 ? (comingFrom === 'header' ? `inset(${HEADROOM}px -60px -60px -60px)` : 'inset(-60px -60px 0 -60px)') : 'none';
+        const el = drop.current!;
+        el.style.opacity = String(pose.fade);
+        el.style.transformOrigin = origin;
+        el.style.transform = `translateY(${(comingFrom === 'header' ? -hidden : hidden) - pose.lift}px) rotate(${pose.tilt}deg) scale(${(2 - pose.stretch) * pose.turn * pose.size}, ${pose.stretch * pose.size})`;
+      };
     });
     return () => {
       stopListening();

@@ -76,7 +76,10 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, fundamenta
       const settled = silence((silent || paused()) && glowSame, performance.now()) > GLOW_MS;
       drawScope(settled);
       drawSpectrum(settled);
-      if (scopeRef.current!.dataset.db !== String(db)) scopeRef.current!.dataset.db = String(db);
+      // Written once every Viewer has read the page (issue 221).
+      return () => {
+        if (scopeRef.current!.dataset.db !== String(db)) scopeRef.current!.dataset.db = String(db);
+      };
     });
   }, [analyser, sampleRate, fundamental, fundamentalAt, now, paused, view, showIdeal, gateOn, response, limiting, newestNote]);
 

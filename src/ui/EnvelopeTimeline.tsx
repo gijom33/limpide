@@ -29,7 +29,13 @@ export function EnvelopeTimeline({
   useEffect(() => {
     aftertouchRef.current = aftertouch;
   }, [aftertouch]);
-  useEffect(() => addToRenderLoop(createTimeline(canvasRef.current!, engine, view, () => aftertouchRef.current)), [engine, view]);
+  useEffect(() => {
+    const draw = createTimeline(canvasRef.current!, engine, view, () => aftertouchRef.current);
+    // It reads its canvas's size and draws on it: nothing to write to the page (issue 221).
+    return addToRenderLoop(() => {
+      draw();
+    });
+  }, [engine, view]);
   const key = timelineKey(patch, aftertouch);
   // One line, its names shorter where the room runs short (issue 156).
   const keyRef = useOneLine<HTMLSpanElement>(key.map((e) => e.name).join(' · '));
