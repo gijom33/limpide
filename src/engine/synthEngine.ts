@@ -12,7 +12,7 @@ import { fmDepthKept, playedTop } from '../music/idealReference';
 import { frequencyToNote, noteToFrequency } from '../music/pitch';
 import { TEMPO } from '../music/tempo';
 import { fmIndex, GLIDE_OFF, type Lfo, type LfoNumber, lfoHz, lfos, type NoiseColour, PARAMS, type Patch, type SubWaveform, type Voices } from '../patch/patch';
-import { CUTOFF_CLAMP, CUTOFF_SPAN, centsOverFloor, fadesOutAtTheTop, filterLevel, filterStages, filterStagesAt, isPeaked, LEVEL_DIP, qSwing, RESONANCE_DIP, type Stage } from './filterDesign';
+import { CUTOFF_CLAMP, CUTOFF_SPAN, centsOverFloor, fadesOutAtTheTop, filterLevel, filterStages, filterStagesAt, isPeaked, LEVEL_DIP, RESONANCE_DIP, resonanceCurve, type Stage } from './filterDesign';
 import { heardAt, type OutputClockContext } from './outputClock';
 
 /**
@@ -606,7 +606,7 @@ interface LfoNodes {
   toCutoff: GainNode;
   toPitch: GainNode;
   toOsc2: GainNode;
-  /** Its swing of the Resonance, as a share of both LFOs' widest together, into `Shared.resonanceSwing`. */
+  /** Its swing of the Resonance, into `Shared.resonanceQ` (which takes the Resonance's 0 to 1 as −1 to 1). */
   toResonance: GainNode;
   toVolume: GainNode;
 }
@@ -615,10 +615,15 @@ interface LfoNodes {
 interface Shared {
   lfos: [LfoNodes, LfoNodes];
   /**
-   * Where both LFOs' swings of the Resonance meet: a curve from the swing to what it adds to the first stage's Q, as
-   * the model moves the Resonance (qSwing, issue 166), then each stage's share of it, into every Voice's Filter.
+   * The Resonance as the knob and aftertouch set it, into `resonanceQ`, where both LFOs' swings of it meet it (issue
+   * 219): one write moves every Voice's.
    */
-  resonanceSwing: WaveShaperNode;
+  resonanceIn: ConstantSourceNode;
+  /**
+   * A curve from the Resonance to what it adds to the first stage's Q over its flat one, as the model moves the
+   * Resonance (resonanceCurve, issues 166 and 219), then each stage's share of it, into every Voice's Filter.
+   */
+  resonanceQ: WaveShaperNode;
   toQ: [GainNode, GainNode];
   /** The pitch bend in cents, into every Oscillator's detune (the LFO on Pitch goes there too). */
   bend: ConstantSourceNode;
@@ -718,7 +723,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   cutoff.start();
   // Near the top the Resonance fades, and a high-pass falls silent (issue 195), as `filterStagesAt` and `filterLevel`
   // have it: the clamped Cutoff, through each fade's curve, takes its share off each stage's Q over its flat one (the
-  // knob's, `resonanceOverFlat`, and the LFOs' swing), and off what a high-pass lets through. Each dip's gain is −1 in
+  // shared `toQ`), and off what a high-pass lets through. Each dip's gain is −1 in
   // the Modes it fades, 0 in the others.
   const toDip = ctx.createGain();
   toDip.gain.value = 1 / CUTOFF_SPAN;
@@ -736,13 +741,6 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
     resonanceDip.connect(kept.gain);
     kept.connect(node.Q);
     return kept;
-  });
-  const resonanceOverFlat = overFlat.map((kept) => {
-    const rest = ctx.createConstantSource();
-    rest.offset.value = 0;
-    rest.connect(kept);
-    rest.start();
-    return rest;
   });
   const topLevel = ctx.createGain();
   levelDip.connect(topLevel.gain);
@@ -978,13 +976,9 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
       for (const n of noises) write(n.gate.gain, n.colour === next.noiseColour ? 1 : 0, t);
       write(mixSub.gain, next.mixSub * OSCILLATOR_LEVEL, t);
       write(mixRing.gain, next.mixRing * OSCILLATOR_LEVEL, t);
-      // Each stage at its flat Q, the knob's Resonance over it faded at the top with the LFOs' swing (issue 195).
-      const stages = filterStages(next.filterMode, next.filterSlope, next.resonance);
+      // Each stage at its flat Q; the Resonance over it comes through the shared `toQ`, faded at the top (issue 195).
       const flat = filterStages(next.filterMode, next.filterSlope, 0);
-      [filter, filter2].forEach((node, i) => {
-        setStage(node, { ...stages[i], Q: flat[i].Q }, { writes: shared.writes, t });
-        write(resonanceOverFlat[i].offset, stages[i].Q - flat[i].Q, t);
-      });
+      [filter, filter2].forEach((node, i) => setStage(node, flat[i], { writes: shared.writes, t }));
       write(resonanceDip.gain, isPeaked(next.filterMode) ? -1 : 0, t);
       write(levelDip.gain, fadesOutAtTheTop(next.filterMode) ? -1 : 0, t);
       // The knob's Cutoff; the Filter Envelope and the rest add to it.
@@ -1049,14 +1043,18 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       bus.connect(g);
       return g;
     });
-    toResonance.connect(resonanceSwing);
+    toResonance.connect(resonanceQ);
     return { takeover: createTakeover(osc, ctx.currentTime, (node) => node.disconnect()), bus, toCutoff, toPitch, toOsc2, toResonance, toVolume };
   };
-  const resonanceSwing = ctx.createWaveShaper();
+  const resonanceIn = ctx.createConstantSource();
+  resonanceIn.offset.value = -1;
+  const resonanceQ = ctx.createWaveShaper();
+  resonanceIn.connect(resonanceQ);
+  resonanceIn.start();
   const toQ = [ctx.createGain(), ctx.createGain()] as [GainNode, GainNode];
-  for (const g of toQ) resonanceSwing.connect(g);
-  // The Resonance's swing as last worked out, by what it is made from: a knob turned elsewhere keeps its curve.
-  let swing = { key: '', stages: [0, 0] as [number, number] };
+  for (const g of toQ) resonanceQ.connect(g);
+  // The Mode and Slope the Resonance's curve was made for: only they make it again (issue 219).
+  let curveFor = { key: '', stages: [0, 0] as [number, number] };
   // What the twins' stages were last set from: a knob that leaves them as they are does not set them again (issue 218).
   let twinsFrom = '';
   const [bend, pressing] = [ctx.createConstantSource(), ctx.createConstantSource()];
@@ -1077,7 +1075,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       return ctx.createPeriodicWave(real.subarray(0, harmonics + 1), imag.subarray(0, harmonics + 1), { disableNormalization: true });
     });
   const shared: Shared = {
-    lfos: [lfoNodes(), lfoNodes()], resonanceSwing, toQ, bend, pressing, tremoloRest, noise: { white, pink: pinkBuffer(ctx, white) }, wave: oscillatorWave, master,
+    lfos: [lfoNodes(), lfoNodes()], resonanceIn, resonanceQ, toQ, bend, pressing, tremoloRest, noise: { white, pink: pinkBuffer(ctx, white) }, wave: oscillatorWave, master,
     writes: createWrites(),
   };
   const write = shared.writes.set;
@@ -1252,6 +1250,8 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     const i = lastAt(pressures, t);
     return i >= 0 ? pressures[i].pressure : NO_PRESSURE;
   };
+  // What aftertouch on Pitch last moved its node to, in cents: a message on another Destination leaves it be.
+  let pressingCents = 0;
   /** The pitch in cents at `t` over the Note's: the wheel's, and aftertouch on Pitch. */
   const bendCentsAt = (t: number) => bendAt(t) + pressurePitch(pressureAt(t)) * 100;
   /** The Voice of the newest Note: the Taps listen to it (or to every Voice, when asked). */
@@ -1442,16 +1442,17 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     const pitchCents = destinationSwings(next, 'pitch').map((semitones) => semitones * 100);
     const detuneCents = destinationSwings(next, 'detune');
     const osc2 = destinationSwings(next, 'osc2Pitch').map((semitones, i) => semitones * 100 + detuneCents[i]);
-    // Resonance: each LFO's share of the widest swing both make together, which the curve turns into each stage's Q.
+    // Resonance: the knob's (aftertouch's with it) and each LFO's swing, which the curve turns into each stage's Q. The
+    // curve takes the Resonance's 0 to 1 as −1 to 1.
     const resonances = destinationSwings(next, 'resonance', next.resonance);
-    const span = resonances[0] + resonances[1];
-    const key = `${next.filterMode} ${next.filterSlope} ${next.resonance} ${span}`;
-    if (key !== swing.key) {
-      const { curve, stages } = qSwing(next.filterMode, next.filterSlope, next.resonance, span);
-      resonanceSwing.curve = curve;
-      swing = { key, stages };
+    const key = `${next.filterMode} ${next.filterSlope}`;
+    if (key !== curveFor.key) {
+      const { curve, stages } = resonanceCurve(next.filterMode, next.filterSlope);
+      resonanceQ.curve = curve;
+      curveFor = { key, stages };
     }
-    toQ.forEach((g, k) => write(g.gain, swing.stages[k], t));
+    toQ.forEach((g, k) => write(g.gain, curveFor.stages[k], t));
+    write(resonanceIn.offset, 2 * next.resonance - 1, t);
     // Volume: the knob's level (issue 62), the tremolo resting its total swing below it, so the wave's top is the
     // knob's own level; each LFO's swing scaled with it.
     const volumeSwings = destinationSwings(next, 'volume').map((s) => s * next.volume);
@@ -1461,7 +1462,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       write(nodes.toPitch.gain, pitchCents[i], t);
       write(nodes.toOsc2.gain, osc2[i], t);
       write(nodes.toVolume.gain, volumeSwings[i], t);
-      write(nodes.toResonance.gain, span ? resonances[i] / span : 0, t);
+      write(nodes.toResonance.gain, 2 * resonances[i], t);
     });
     // The twins copy each stage for the Response Curve, when the stages change.
     const twinned = `${next.filterMode} ${next.filterSlope} ${next.resonance}`;
@@ -1561,7 +1562,9 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       const knobs = patch;
       if (knobs && glide) shared.writes.gliding(glide, () => applyToSound(pressed(knobs, pressure), t));
       else if (knobs) applyToSound(pressed(knobs, pressure), t);
-      moveTo(pressing.offset, pressurePitch(pressure) * 100, t, glide);
+      const cents = pressurePitch(pressure) * 100;
+      if (cents !== pressingCents) moveTo(pressing.offset, cents, t, glide);
+      pressingCents = cents;
     },
 
     noteOn(note, velocity, time, { afresh = false } = {}) {

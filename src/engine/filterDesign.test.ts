@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { effectiveCutoff } from '../modulation/modulationModel';
 import { defaultPatch } from '../patch/patch';
-import { CUTOFF_CLAMP, CUTOFF_SPAN, centsOverFloor, filterLevel, filterStages, filterStagesAt, LEVEL_DIP, qSwing, RESONANCE_DIP, resonanceToQdB, topFade } from './filterDesign';
+import { CUTOFF_CLAMP, CUTOFF_SPAN, centsOverFloor, filterLevel, filterStages, filterStagesAt, LEVEL_DIP, RESONANCE_DIP, resonanceCurve, resonanceToQdB, topFade } from './filterDesign';
 
 /** What a WaveShaperNode makes of `x` through `curve`: the curve read between its points, held at its ends past ±1. */
 function shaped(curve: Float32Array, x: number) {
@@ -52,22 +52,20 @@ describe('the Filter under modulation, as the model has it (issue 166)', () => {
 
   it('moves each stage’s Q as the model moves the Resonance, so it never passes its floor: a band-pass’s and notch’s by ratios', () => {
     for (const mode of MODES)
-      for (const slope of [12, 24] as const)
-        for (const resonance of [0, 0.2, 0.5, 0.8, 1])
-          // The LFOs' widest swing together, as far as the knob leaves room either way (LFO_LAWS), or less.
-          for (const span of [0, 0.5, 1].map((share) => share * Math.min(resonance, 1 - resonance))) {
-            const { curve, stages } = qSwing(mode, slope, resonance, span);
-            const rest = filterStages(mode, slope, resonance);
-            for (let i = 0; i <= 40; i++) {
-              const x = i / 20 - 1;
-              const moved = filterStages(mode, slope, resonance + span * x);
-              for (const k of [0, 1] as const) {
-                const q = rest[k].Q + stages[k] * shaped(curve, x);
-                expect(q, `${mode} ${slope} dB, Resonance ${resonance} swung ${(span * x).toFixed(2)}, stage ${k + 1}`).toBeCloseTo(moved[k].Q, 4);
-                expect(q).toBeGreaterThanOrEqual(filterStages(mode, slope, 0)[k].Q - 1e-4);
-              }
-            }
+      for (const slope of [12, 24] as const) {
+        // One curve for the Mode and Slope, over the Resonance itself, whatever moves it (issue 219).
+        const { curve, stages } = resonanceCurve(mode, slope);
+        const flat = filterStages(mode, slope, 0);
+        for (let i = 0; i <= 40; i++) {
+          const resonance = i / 40;
+          const moved = filterStages(mode, slope, resonance);
+          for (const k of [0, 1] as const) {
+            const q = flat[k].Q + stages[k] * shaped(curve, 2 * resonance - 1);
+            expect(q, `${mode} ${slope} dB, Resonance ${resonance}, stage ${k + 1}`).toBeCloseTo(moved[k].Q, 4);
+            expect(q).toBeGreaterThanOrEqual(flat[k].Q - 1e-4);
           }
+        }
+      }
   });
 
   it('holds the Cutoff within 20 Hz to 20 kHz, however far its modulation takes it, as the model does', () => {

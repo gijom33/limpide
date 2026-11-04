@@ -22,9 +22,12 @@ interface Write {
  * and the value each AudioParam was last set to before them.
  */
 let writes: Write[] = [];
+/** How many curves the WaveShapers have been given: a Resonance curve is 4,097 points worked out. */
+let curves = 0;
 let restore: (() => void)[] = [];
 beforeEach(() => {
   writes = [];
+  curves = 0;
   const params = AudioParam.prototype as unknown as Record<string, (...args: unknown[]) => unknown>;
   for (const method of METHODS) {
     const original = params[method];
@@ -42,6 +45,15 @@ beforeEach(() => {
     return setPeriodicWave.call(this, wave);
   };
   restore.push(() => (oscillators.setPeriodicWave = setPeriodicWave));
+  const curve = Object.getOwnPropertyDescriptor(WaveShaperNode.prototype, 'curve')!;
+  Object.defineProperty(WaveShaperNode.prototype, 'curve', {
+    ...curve,
+    set(this: WaveShaperNode, c: Float32Array<ArrayBuffer> | null) {
+      curves++;
+      curve.set!.call(this, c);
+    },
+  });
+  restore.push(() => Object.defineProperty(WaveShaperNode.prototype, 'curve', curve));
 });
 afterEach(() => {
   for (const undo of restore) undo();
@@ -55,11 +67,11 @@ afterEach(() => {
 function writesOf(act: () => void) {
   const before = new Map<Write['param'], number | undefined>();
   for (const w of writes) if (w.method === 'setValueAtTime') before.set(w.param, w.value);
-  const from = writes.length;
+  const [from, curvesFrom] = [writes.length, curves];
   act();
   const made = writes.slice(from);
   for (const w of made) if (w.method.startsWith('cancel')) before.delete(w.param);
-  return { made, before };
+  return { made, before, curves: curves - curvesFrom };
 }
 
 const preset = (name: string) => PRESETS.find((p) => p.name === name)!.patch;
@@ -142,5 +154,21 @@ describe('a change writes only what it changes (issue 218)', () => {
     const tenth = (s: Float32Array, from: number) => toneAmplitude(s, SR, 110 * 10, from * SR, from * SR + SR / 4);
     expect(tenth(turned, 0.6)).toBeGreaterThan(tenth(stayed, 0.6) * 4); // away, the Filter open
     expect(tenth(turned, 1.2)).toBeCloseTo(tenth(stayed, 1.2), 5); // back, as if it had stayed
+  });
+});
+
+describe('an aftertouch message writes only its Destination (issue 219)', () => {
+  const init = { ...preset('Init'), voices: MAX_VOICES } as const;
+
+  it("glides each Voice's Cutoff, and nothing else", async () => {
+    const { made } = await playing(init, (engine) => engine.setPressure({ destination: 'cutoff', amount: 0.5 }));
+    expect(made.map((w) => w.method)).toEqual(Array(MAX_VOICES).fill('setTargetAtTime'));
+  });
+
+  it('glides the Resonance with one write for every Voice, and works out no curve, an LFO swinging it too', async () => {
+    const swung: Patch = { ...init, resonance: 0.3, lfoDestination: 'resonance', lfoAmount: 0.1 };
+    const { made, curves: worked } = await playing(swung, (engine) => engine.setPressure({ destination: 'resonance', amount: 0.5 }));
+    expect(made.map((w) => w.method)).toEqual(['setTargetAtTime']);
+    expect(worked).toBe(0);
   });
 });
