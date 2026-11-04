@@ -40,6 +40,18 @@ function hann(n: number): Float32Array {
   return window;
 }
 
+/** Below this, no sample can lift the correlation below to a fundamental: see `silent`. */
+const QUIET = 1e-6 / Math.SQRT2;
+/**
+ * Whether a buffer is too quiet for the correlation below ever to find a fundamental: the correlation is at most √2·n
+ * times the loudest sample, and under 1e-6·n finds none. A silent Tap skips the search (review 18, issue 213); the
+ * first buffer with sound in it is searched as ever. Indexed, as `for…of` over the samples cost more than the search.
+ */
+function silent(samples: Float32Array): boolean {
+  for (let i = 0; i < samples.length; i++) if (samples[i] >= QUIET || samples[i] <= -QUIET) return false;
+  return true;
+}
+
 /** Reads the pitch along `n` samples into `at` and `omega`: false where there is none. */
 function readPitch(n: number, sampleRate: number, frequencyAt: (i: number) => number): boolean {
   at.length = 0;
@@ -82,7 +94,7 @@ export function risingZeros(
   count: number,
 ): number[] {
   const n = samples.length;
-  if (n < 2 || !readPitch(n, sampleRate, frequencyAt)) return [];
+  if (n < 2 || silent(samples) || !readPitch(n, sampleRate, frequencyAt)) return [];
   const segments = at.length - 1;
   // The phase φ at each reading, and the correlation with sin φ and cos φ: within a segment ω grows by a step a
   // sample, so sin and cos follow by two rotations rather than trigonometry per sample.
