@@ -245,13 +245,13 @@ describe('the Presets do what their words say (issue 108, reviews 13 and 15)', (
     // LFO 1 sweeps the band an octave either way: its centroid moves by more than a factor of 2.5.
     const centroids = windows.map((w) => w.centroid);
     expect(Math.max(...centroids) / Math.min(...centroids)).toBeGreaterThan(2.5);
-    // Still a band-pass: well short of the open saw above 4 kHz, at the widest the band gets.
+    // Still a band-pass: short of the open saw above 4 kHz, at the widest the band gets (6.3 dB short with the band
+    // at 800 Hz, 3.4 dB at 1 kHz, where issue 226 moved it so C5 keeps its vowels).
     const open = await play({ ...patch, filterMode: 'lowpass', cutoff: 20000, lfoAmount: 0, lfo2Amount: 0 }, [C4], seconds, seconds);
     const widest = NOTE + qs.indexOf(Math.min(...qs)) * 0.01;
     const top = (samples: Float32Array) => energyAboveDb(samples, SR, 4000, Math.round(widest * SR), 4096);
-    expect(top(s)).toBeLessThan(top(open) - 6);
-    // Its level kept: its loudest 100 ms within 1 dB of 1.20.0's, −21.7 dBFS (review 14, 2026-11-01).
-    expect(Math.abs(loudestDb(s) + 21.7)).toBeLessThanOrEqual(1);
+    expect(top(s)).toBeLessThan(top(open) - 3);
+    // Its level: issue 226's test below holds it on C3 and C4.
   });
 
   it('Square Lead starts each Note’s vibrato in tune, at the centre of the swing', async () => {
@@ -516,8 +516,9 @@ describe('the sound at the top edge (issue 195)', () => {
     }
   });
 
-  it('Riser on C7: silent once its high-pass reaches the top, its last four seconds held', async () => {
-    const s = await play(preset('Riser'), [C7], 7.5, 7.6);
+  // Riser at Key Track 1, as it was until issue 226 set it to 0.5: on C7 its high-pass reaches the top.
+  it('Riser at Key Track 1 on C7: silent once its high-pass reaches the top, its last four seconds held', async () => {
+    const s = await play({ ...preset('Riser'), keyTrack: 1 }, [C7], 7.5, 7.6);
     let sum = 0;
     const [from, to] = [Math.round(3.5 * SR), Math.round(7.5 * SR)];
     for (let i = from; i < to; i++) sum += s[i] * s[i];
@@ -532,4 +533,56 @@ describe('the sound at the top edge (issue 195)', () => {
       expect(over, `${bpm} BPM, loudest ${Math.max(...peaks).toFixed(2)}`).toEqual([]);
     }
   }, 180_000);
+});
+
+// Issue 226, from the 1.23.0 ear check: Talking Filter pulsed between a near-sine and a vowel on C5, and Riser held on
+// C6 fell silent before its Attack ended.
+describe('two Presets high up (issue 226)', () => {
+  /** The level over 50 ms from `at` seconds, in dBFS. */
+  const levelAt = (s: Float32Array, at: number) => {
+    const [a, b] = [Math.round(at * SR), Math.round((at + 0.05) * SR)];
+    let sum = 0;
+    for (let i = a; i < b; i++) sum += s[i] * s[i];
+    return 10 * Math.log10(sum / (b - a) + 1e-20);
+  };
+
+  it('Talking Filter talks on C3 and C5 as on C4: no Harmonic holds over 80 % for more than 60 ms, C3 and C4 at their 1.23.0 levels', async () => {
+    const patch = preset('Talking Filter');
+    // Their loudest 100 ms in 1.23.0, before the band followed the Note (the ear check of 2026-11-03).
+    const before = new Map([
+      [48, -24.2],
+      [C4, -21.9],
+    ]);
+    for (const note of [48, C4, 72]) {
+      const s = await play(patch, [note], 4, 4);
+      // 40 ms windows every 20 ms, as the ear check measured: the strongest of the first 30 Harmonics' share of each.
+      const shares: number[] = [];
+      for (let t = NOTE + 0.05; t + 0.04 < 4; t += 0.02) {
+        const [a, b] = [Math.round(t * SR), Math.round((t + 0.04) * SR)];
+        const power = Array.from({ length: 30 }, (_, n) => toneAmplitude(s, SR, hz(note) * (n + 1), a, b) ** 2);
+        shares.push(Math.max(...power) / power.reduce((sum, p) => sum + p, 0));
+      }
+      // The longest run of windows with one Harmonic over 80 %, in ms: k windows in a row span 40 + 20 (k − 1).
+      let [run, longest] = [0, 0];
+      for (const share of shares) {
+        run = share > 0.8 ? run + 1 : 0;
+        longest = Math.max(longest, run);
+      }
+      expect(longest ? 40 + 20 * (longest - 1) : 0, `MIDI ${note}, at most ${(Math.max(...shares) * 100).toFixed(0)} %`).toBeLessThanOrEqual(60);
+      const was = before.get(note);
+      if (was !== undefined) expect(Math.abs(loudestDb(s) - was), `MIDI ${note}: ${loudestDb(s).toFixed(2)} dBFS`).toBeLessThanOrEqual(1);
+    }
+  }, 60_000);
+
+  it('Riser held through its Attack never falls silent before its release on C6 or C7, and its C2 and C4 sound as in 1.23.0', async () => {
+    const patch = preset('Riser');
+    const release = NOTE + patch.filterAttack + 1;
+    const [c2, c4, c6, c7] = await Promise.all([36, C4, 84, 96].map((note) => play(patch, [note], release, release + 0.05)));
+    for (const [name, s] of [['C6', c6], ['C7', c7]] as const)
+      for (let at = NOTE + 0.5; at + 0.05 <= release; at += 0.05) expect(levelAt(s, at), `${name} at ${at.toFixed(2)} s`).toBeGreaterThan(-40);
+    // Their loudest 100 ms in 1.23.0 (the ear check of 2026-11-03): C4 is Key Track's centre, so it is unchanged.
+    expect(Math.abs(loudestDb(c2) + 22.0), `C2: ${loudestDb(c2).toFixed(2)} dBFS`).toBeLessThanOrEqual(1);
+    expect(Math.abs(loudestDb(c4) + 21.5), `C4: ${loudestDb(c4).toFixed(2)} dBFS`).toBeLessThanOrEqual(0.1);
+    for (const s of [c2, c4, c6, c7]) expect(peak(s)).toBeLessThan(0.8);
+  }, 60_000);
 });
