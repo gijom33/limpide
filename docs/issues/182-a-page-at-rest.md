@@ -13,6 +13,10 @@ Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.m
 1. **Measured before and after,** as review 18 measured (idle, the Demo, an 8-Voice chord, at 1×, 1.25× and 4× throttling), each change kept only if it shows.
 2. **What the person sees does not change:** a Viewer still answers the first Note, knob or Bead move within a frame.
 
+Decided by the owner, 2026-11-03, answering the questions below:
+
+3. **Question 1, the LFO plot in silence: it keeps moving** ("Keep it moving"). The LFO plots and the modulation rings go on with the LFOs' clock with nothing playing, as now, so the page is never wholly at rest while they are on screen; the rest of the page (the silent Viewers, the Timeline, the colours) is what rests.
+
 ## Agent Brief
 
 **Category:** enhancement
