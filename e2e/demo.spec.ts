@@ -42,7 +42,7 @@ test('turning a knob keeps the Demo playing, and the Demo leaves that knob where
   await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /^-?[0-5]?\d(\.\d+)?$/); // still sounding
 });
 
-test('the Waveform, Filter and Voices choices and the on-off switches keep the Demo playing, and it plays on with the choice', async ({ page }) => {
+test('the Waveform, Filter and Voices choices and the on-off switches keep the Demo playing, by click or by keys, and it plays on with the choice', async ({ page }) => {
   await page.goto('/');
   await demo(page).click();
   await expect(patchName(page)).toContainText('Kick');
@@ -62,6 +62,23 @@ test('the Waveform, Filter and Voices choices and the on-off switches keep the D
     await button.click();
     await expect(button).not.toHaveAttribute('aria-pressed', was!);
     await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
+  }
+  // From the keyboard as by a click: Space on the switches, an arrow along a choice, a knob's keys (the owner, 2026-11-03).
+  for (const name of ['Legato', 'LFO 1 Retrigger', 'LFO 1 Sync']) {
+    const button = page.getByRole('button', { name, exact: true });
+    const was = await button.getAttribute('aria-pressed');
+    await button.press(' ');
+    await expect(button).not.toHaveAttribute('aria-pressed', was!);
+    await expect(demo(page), `Space on ${name}`).toHaveAttribute('aria-pressed', 'true');
+  }
+  const bandPass = page.getByRole('radiogroup', { name: 'Filter Mode' }).getByRole('radio', { name: 'Band-pass', exact: true });
+  await bandPass.press('ArrowRight');
+  await expect(bandPass).toHaveAttribute('aria-checked', 'false');
+  await expect(demo(page), 'an arrow along the Filter Mode').toHaveAttribute('aria-pressed', 'true');
+  const cutoff = page.getByRole('region', { name: 'Filter' }).getByRole('slider', { name: 'Cutoff' });
+  for (const key of ['ArrowUp', 'ArrowLeft', 'PageUp', 'PageDown', 'Home', 'End']) {
+    await cutoff.press(key);
+    await expect(demo(page), `${key} on the Cutoff`).toHaveAttribute('aria-pressed', 'true');
   }
   await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /^-?[0-5]?\d(\.\d+)?$/); // still sounding
   await page.getByRole('button', { name: 'Next Preset' }).click(); // a control that is not part of the sound: it takes over

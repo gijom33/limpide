@@ -33,19 +33,25 @@ export type DemoEvent =
 const DEMO_KEYS = new Set(['Enter', ' ', ...Object.keys(ARROW_STEPS)]);
 
 /**
+ * The keys a control that shapes the sound uses itself: Enter and Space press a switch or a choice, the arrows, Home
+ * and End move along the choices and turn a knob, as Page Up and Down do. None of them plays a Note.
+ */
+const SOUND_KEYS = new Set([...DEMO_KEYS, 'PageUp', 'PageDown']);
+
+/**
  * Whether a key press or a touch ends the Demo (issue 79): playing anything, or touching a control that does not
  * shape the sound, means the person has taken over. Knobs, faders and the stages' switches can be changed while it
  * plays; moving around the page leaves it playing; so does Display, which shows the sound without changing it (issue
  * 64): opening it, its settings, Space's Freeze, and the click or Escape that closes it, unless that click is on the
- * piano, which plays (issue 71). On the Demo's own card and button, Enter and Space press them and the arrows, Home
- * and End move along its parts (issue 104). A finger elsewhere on the page may only be scrolling: it stops the Demo
- * when it lifts.
+ * piano, which plays (issue 71). On a control that shapes the sound, its own keys change it as a click does (the
+ * owner, 2026-11-03). On the Demo's own card and button, Enter and Space press them and the arrows, Home and End move
+ * along its parts (issue 104). A finger elsewhere on the page may only be scrolling: it stops the Demo when it lifts.
  */
 export function demoStop(event: DemoEvent): 'stop' | 'onLift' | 'playOn' {
   if (event.kind === 'key') {
     const { key, touched } = event;
     if (event.freezes || (key === 'Escape' && event.displayOpen)) return 'playOn';
-    if (key === 'Enter' && touched === 'sound') return 'playOn';
+    if (touched === 'sound' && SOUND_KEYS.has(key)) return 'playOn';
     if ((key === 'Enter' || key === ' ') && touched === 'display') return 'playOn';
     if (touched === 'demo' && DEMO_KEYS.has(key)) return 'playOn';
     return event.modifier || key === 'Shift' || key === 'Tab' ? 'playOn' : 'stop';
