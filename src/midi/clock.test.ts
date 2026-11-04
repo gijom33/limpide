@@ -2,8 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { type ClockTempo, createClockFollower, TICKS_PER_BEAT } from './clock';
 
 /** A little jitter, the same on every run: up to ±2 ms on each tick, as a USB keyboard's or a DAW's clock arrives. */
-function jitter() {
-  let seed = 7;
+function jitter(seed = 7) {
   return () => {
     seed = (seed * 16807) % 2147483647;
     return (seed / 2147483647 - 0.5) * 0.004;
@@ -165,6 +164,26 @@ describe('a MIDI clock with a fault (issue 185)', () => {
       const handed = playWith(createClockFollower(), { bpm, beats: 30, from: 0, wobble: () => late(i++) });
       // Its first few beats are read over less than the four beats fitted: they may be a little off.
       expect(new Set(handed.slice(4).map((h) => h.bpm)), `${bpm} BPM`).toEqual(new Set([bpm]));
+    }
+  });
+
+  it('keeps the beats on the clock’s through a jump mid-beat, either way: its first ticks are not mended as a lost or doubled one', () => {
+    // The jump anywhere in a beat, on many runs of jitter: the beat count after it is a clean clock's.
+    for (const [from, to] of [[120, 90], [90, 120]]) {
+      for (let seed = 1; seed <= 48; seed++) {
+        const follower = createClockFollower();
+        const wobble = jitter(seed);
+        const jumpAt = 8 * TICKS_PER_BEAT + (seed % TICKS_PER_BEAT);
+        const beats: number[] = [];
+        let t = 10;
+        for (let i = 0; i < 20 * TICKS_PER_BEAT; i++) {
+          if (follower.tick(t + wobble())) beats.push(i);
+          t += 60 / (i < jumpAt ? from : to) / TICKS_PER_BEAT;
+        }
+        const after = beats.filter((i) => i > jumpAt);
+        expect(after.length, `${from} → ${to}, seed ${seed}`).toBeGreaterThan(8);
+        for (const i of after) expect(i % TICKS_PER_BEAT, `${from} → ${to}, seed ${seed}, tick ${i}`).toBe(0);
+      }
     }
   });
 

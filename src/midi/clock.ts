@@ -93,7 +93,8 @@ type Fault = { kind: 'lost' | 'doubled' | 'jump'; from: number } | null;
 /**
  * What explains the recent ticks best, against where the ticks before them were heading (issue 185), if anything does
  * clearly: from the `from`-th of them, every tick a tick late (one was lost), a tick early (one came twice), or later
- * and later, or earlier and earlier, by a tick at least by now (the tempo jumped).
+ * and later, or earlier and earlier, by a tick at least by now (the tempo jumped). Ticks a jump explains as well as a
+ * lost or doubled tick are not read as one, so a jump's first ticks do not move the count.
  */
 function findFault(recent: readonly number[], spread: number): Fault {
   // `recent`: each tick's distance from where the ticks were heading, in ticks.
@@ -129,7 +130,12 @@ function findFault(recent: readonly number[], spread: number): Fault {
     const { off, sum } = jump(from);
     if (Math.abs(off) >= Math.max(1, 1.5 * spread) && sum < best) [best, fault] = [sum, { kind: 'jump', from }];
   }
-  if (fault?.kind !== 'jump') return fault;
+  if (fault?.kind !== 'jump') {
+    // A jump's first ticks are a tick off by the time a lost or doubled one could show, but later and later rather than
+    // all by one: where a jump explains them as well, the count is left for the next ticks to tell, not mended.
+    if (fault) for (let k = 0; k < n - 1; k++) if (jump(k).sum <= best) return null;
+    return fault;
+  }
   // Where it jumped: the place that explains the ticks best, the newest ones included.
   let from = fault.from;
   for (let k = from + 1; k < n - 1; k++) if (jump(k).sum < jump(from).sum) from = k;
