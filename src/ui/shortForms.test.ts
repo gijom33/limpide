@@ -11,6 +11,11 @@ describe('a label’s shorter forms (issue 156)', () => {
     expect(screenForms('Resonance')).toEqual(['Resonance', 'Res']);
   });
 
+  it('gives Key Track and Velocity theirs, Key and Vel (issue 223)', () => {
+    expect(screenForms('Key Track')).toEqual(['Key Track', 'Key']);
+    expect(screenForms('Velocity')).toEqual(['Velocity', 'Vel']);
+  });
+
   it('gives the MIDI button’s word during MIDI Learn its shorter forms, so it never widens the button (issue 188)', () => {
     expect(screenForms('Learning')).toEqual(['Learning', 'Learn', 'Lrn']);
   });

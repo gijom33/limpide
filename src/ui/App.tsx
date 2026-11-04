@@ -37,6 +37,7 @@ import { BeadIcon, Mascot } from './Mascot';
 import { MidiPanel } from './MidiPanel';
 import { ModulationContext } from './modulationRing';
 import { OverlayToggles } from './OverlayToggles';
+import { KnobRow } from './oneLine';
 import { PatchBar } from './PatchBar';
 import { Piano } from './Piano';
 import { QuickSetupPanel } from './QuickSetupPanel';
@@ -96,7 +97,7 @@ function Block({ title, stage, children, more, heading, viewers, tip }: BlockPro
         )}
         <div className="rows">
           {heading}
-          {children && <div className="knobs">{children}</div>}
+          {children && <KnobRow>{children}</KnobRow>}
           {more}
         </div>
       </div>
@@ -605,23 +606,23 @@ export function App() {
                               inactive={!osc1Heard(patch) && OSC1_SILENT}
                             />
                           </Tooltip>
-                          <div className="knobs">
+                          <KnobRow>
                             <Knob
                               id="pulseWidth"
                               value={patch.pulseWidth}
                               onChange={(v) => change('pulseWidth', v)}
                               inactive={(!osc1Heard(patch) && OSC1_SILENT) || (patch.waveform !== 'pulse' && "No effect unless Osc 1's Waveform is Pulse")}
                             />
-                          </div>
+                          </KnobRow>
                         </SubBlock>
                         {/* Each Oscillator's pitch under its Waveform, on its own tab (the owner, issue 90): Osc 1's
                             Octave, and FM, Osc 2 swinging Osc 1's pitch whatever Osc 2's own fader (issue 89). */}
                         <SubBlock title="Osc 1 Pitch" label="Pitch" tip={TIPS.osc1Pitch} group className="osc1-pitch">
-                          <div className="knobs">
+                          <KnobRow>
                             {/* Greyed out while Osc 1 is not heard (the owner); its Octave also moves the Sub. */}
                             <Knob id="osc1Octave" value={patch.osc1Octave} onChange={(v) => change('osc1Octave', v)} inactive={!osc1Heard(patch) && patch.mixSub === 0 && 'No effect while Osc 1 and the Sub are silent'} />
                             <Knob id="crossMod" value={patch.crossMod} onChange={(v) => change('crossMod', v)} inactive={!osc1Heard(patch) && OSC1_SILENT} />
-                          </div>
+                          </KnobRow>
                         </SubBlock>
                       </>
                     ),
@@ -644,7 +645,7 @@ export function App() {
                               inactive={!osc2Heard(patch) && OSC2_SILENT}
                             />
                           </Tooltip>
-                          <div className="knobs">
+                          <KnobRow>
                             {/* Pulse Width where Osc 1 has it, so it stays put when switching tabs. */}
                             <Knob
                               id="osc2PulseWidth"
@@ -652,16 +653,16 @@ export function App() {
                               onChange={(v) => change('osc2PulseWidth', v)}
                               inactive={(!osc2Heard(patch) && OSC2_SILENT) || (patch.osc2Waveform !== 'pulse' && "No effect unless Osc 2's Waveform is Pulse")}
                             />
-                          </div>
+                          </KnobRow>
                         </SubBlock>
                         {/* Osc 2's offsets from the Note, then the Filter Envelope on its pitch (issue 93); greyed out
                             while Osc 2 is not heard. */}
                         <SubBlock title="Tuning" tip={TIPS.tuning} group>
-                          <div className="knobs">
+                          <KnobRow>
                             {(['osc2Octave', 'osc2Semitone', 'osc2Detune', 'osc2EnvAmount'] as const).map((id) => (
                               <Knob key={id} id={id} value={patch[id]} onChange={(v) => change(id, v)} inactive={!osc2Heard(patch) && OSC2_SILENT} />
                             ))}
-                          </div>
+                          </KnobRow>
                         </SubBlock>
                       </>
                     ),
@@ -736,13 +737,13 @@ export function App() {
                           <h3 className="has-tip">Levels</h3>
                         </Tooltip>
                       </div>
-                      <div className="knobs">
+                      <KnobRow>
                         <Fader id="mixOsc1" value={patch.mixOsc1} onChange={(v) => change('mixOsc1', v)} />
                         <Fader id="mixOsc2" value={patch.mixOsc2} onChange={(v) => change('mixOsc2', v)} />
                         <Fader id="mixRing" value={patch.mixRing} onChange={(v) => change('mixRing', v)} />
                         <Fader id="mixNoise" value={patch.mixNoise} onChange={(v) => change('mixNoise', v)} />
                         <Fader id="mixSub" value={patch.mixSub} onChange={(v) => change('mixSub', v)} />
-                      </div>
+                      </KnobRow>
                     </SubBlock>
                     ),
                   },
@@ -763,21 +764,21 @@ export function App() {
             more={
               <>
               <SubBlock title="Cutoff">
-                <div className="knobs">
+                <KnobRow>
                   <Knob id="cutoff" value={patch.cutoff} onChange={(v) => change('cutoff', v)} />
                   <Knob id="resonance" value={patch.resonance} onChange={(v) => change('resonance', v)} />
                   <Knob id="velocityCutoff" value={patch.velocityCutoff} onChange={(v) => change('velocityCutoff', v)} />
                   <Knob id="keyTrack" value={patch.keyTrack} onChange={(v) => change('keyTrack', v)} />
-                </div>
+                </KnobRow>
               </SubBlock>
               <SubBlock title="Filter Envelope" label="Envelope" tip={TIPS.filterEnvelope}>
                 <div className="envelope-knobs">
-                  <div className="knobs knobs-envelope">
+                  <KnobRow className="knobs-envelope">
                     <Knob id="filterEnvAmount" value={patch.filterEnvAmount} onChange={(v) => change('filterEnvAmount', v)} />
                     {(['filterAttack', 'filterDecay', 'filterSustain', 'filterRelease'] as const).map((id) => (
                       <Fader key={id} id={id} value={patch[id]} onChange={(v) => change(id, v)} inactive={patch.filterEnvAmount === 0 && patch.osc2EnvAmount === 0 && FILTER_ENVELOPE_IDLE} />
                     ))}
-                  </div>
+                  </KnobRow>
                 </div>
               </SubBlock>
               </>
@@ -796,13 +797,13 @@ export function App() {
               <SubBlock title="Amp Envelope" label="Envelope" tip={TIPS.ampEnvelope}>
                 {/* Four faders and a big knob, laid out as the Filter Envelope's row, its name placed alike (issue 80). */}
                 <div className="envelope-knobs">
-                  <div className="knobs knobs-envelope">
+                  <KnobRow className="knobs-envelope">
                     {(['ampAttack', 'ampDecay', 'ampSustain', 'ampRelease'] as const).map((id) => (
                       <Fader key={id} id={id} value={patch[id]} onChange={(v) => change(id, v)} />
                     ))}
                     {/* The Amp's level, right of its Envelope (the owner, issue 62): an LFO on Volume rings it. */}
                     <Knob id="volume" value={patch.volume} onChange={(v) => change('volume', v)} />
-                  </div>
+                  </KnobRow>
                 </div>
               </SubBlock>
             }

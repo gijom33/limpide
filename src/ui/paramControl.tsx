@@ -6,6 +6,7 @@ import { positionToValue, valueToPosition } from '../patch/taper';
 import { GeekContext, GeekNoteContext, GeekOnContext } from './geekContext';
 import { addDescription, removeDescription } from './inactive';
 import { useLearnable } from './learn';
+import { Forms } from './oneLine';
 
 /** Readouts sampled across a control's travel to find the widest it can show. */
 const WIDTH_SAMPLES = 128;
@@ -131,7 +132,9 @@ export function useParamControl(id: ParamId, value: number, onChange: (value: nu
   const text = (
     <>
       {touching && <div className="value-bubble">{readout}</div>}
-      <div className="knob-label">{def.label}</div>
+      <div className="knob-label">
+        <Forms name={def.label} />
+      </div>
       <div className="knob-value" ref={fit}>
         {geek ? (
           <span data-geek id={geekId} ref={describe}>

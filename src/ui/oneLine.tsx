@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef } from 'react';
+import { type ReactNode, useLayoutEffect, useRef } from 'react';
 import { screenForms } from './shortForms';
 
 /**
@@ -36,9 +36,9 @@ export function Forms({ name }: { name: string }) {
   ));
 }
 
-/** Shows each `Forms` in an element at a step of shortening: its form there, or its shortest. */
-function showStep(el: HTMLElement, step: number) {
-  const groups = new Set([...el.querySelectorAll('[data-form]')].map((form) => form.parentElement!));
+/** Shows each `Forms` in an element (those `within` a selector, if given) at a step of shortening: its form there, or its shortest. */
+function showStep(el: HTMLElement, step: number, within = '') {
+  const groups = new Set([...el.querySelectorAll(`${within} [data-form]`)].map((form) => form.parentElement!));
   for (const group of groups) {
     const forms = [...group.children].filter((c): c is HTMLElement => c instanceof HTMLElement && 'form' in c.dataset);
     forms.forEach((form, i) => {
@@ -79,4 +79,58 @@ export function useOneLine<T extends HTMLElement>(holds: string) {
     };
   }, [holds]);
   return ref;
+}
+
+/** The knobs' and faders' names in a row, the step they shorten together. */
+const ROW_NAMES = '.knob-label';
+
+/**
+ * Whether a row's controls sit on one line, their names inside it: every name's top the same (a control wrapped to a
+ * second line sits lower), none running past the row's edges (a row kept from wrapping runs past them instead).
+ */
+function rowOnOneLine(row: HTMLElement): boolean {
+  const box = row.getBoundingClientRect();
+  const names = [...row.querySelectorAll<HTMLElement>(ROW_NAMES)].map((n) => n.getBoundingClientRect()).filter((r) => r.width);
+  const tops = names.map((r) => r.top);
+  if (!tops.length) return true;
+  return Math.max(...tops) - Math.min(...tops) < 2 && names.every((r) => r.left >= box.left - 0.5 && r.right <= box.right + 0.5);
+}
+
+/**
+ * A row of knobs and faders whose names take shorter forms where the row runs short (issue 223): a knob's column is as
+ * wide as its name, so a name runs short when its row would wrap a control to a second line, as a wider font (Linux's,
+ * a larger text setting) can make it. Every name in the row steps down together, as the Timeline's key does, the
+ * longest forms that keep the row on one line; at worst their shortest. Measured again as the row's size, its
+ * controls or the fonts change.
+ */
+export function KnobRow({ className, children }: { className?: string; children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const row = ref.current;
+    if (!row) return;
+    const shorten = () => {
+      const steps = Math.max(1, ...[...row.querySelectorAll(`${ROW_NAMES} [data-form]`)].map((f) => Number((f as HTMLElement).dataset.form) + 1));
+      for (let step = 0; step < steps; step++) {
+        showStep(row, step, ROW_NAMES);
+        if (rowOnOneLine(row)) break;
+      }
+    };
+    shorten();
+    let live = true;
+    document.fonts?.ready.then(() => live && shorten());
+    const sized = new ResizeObserver(shorten);
+    sized.observe(row);
+    const changed = new MutationObserver(shorten);
+    changed.observe(row, { childList: true });
+    return () => {
+      live = false;
+      sized.disconnect();
+      changed.disconnect();
+    };
+  }, []);
+  return (
+    <div ref={ref} className={className ? `knobs ${className}` : 'knobs'}>
+      {children}
+    </div>
+  );
 }

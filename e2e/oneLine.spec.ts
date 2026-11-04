@@ -1,4 +1,4 @@
-import { expect, type Page, test } from '@playwright/test';
+import { expect, type Locator, type Page, test } from '@playwright/test';
 import { type AuditOptions, auditPage } from './audit';
 
 /**
@@ -65,5 +65,30 @@ test('an LFO’s Destination name fits its picker on one line, its whole name in
     });
     expect(fits, `${width} px`).toBe(true);
     expect((await noSecondLine(page)).unexpected, `${width} px`).toEqual([]);
+  }
+});
+
+/** The Filter's row of knobs: Cutoff, Resonance, Velocity and Key Track. */
+const filterRow = (page: Page) => page.locator('.knobs', { has: page.getByRole('slider', { name: 'Key Track', exact: true }) });
+const knobName = (page: Page, name: string) => page.locator('.knob', { has: page.getByRole('slider', { name, exact: true }) }).locator('.knob-label');
+/** How many lines a row's knobs sit on: their names' tops. */
+const lines = (row: Locator) =>
+  row.locator('.knob-label').evaluateAll((names) => new Set(names.map((n) => Math.round(n.getBoundingClientRect().top))).size);
+
+test('Key Track and Velocity read Key and Vel where their row runs short, whole where it does not (issue 223)', async ({ page }) => {
+  for (const [width, height] of [[320, 568], [861, 900], [1024, 768]]) {
+    await page.setViewportSize({ width, height });
+    await page.goto('/');
+    // Mac's fonts: the row has room for the whole names.
+    await expect(knobName(page, 'Key Track')).toHaveText('Key Track', { useInnerText: true });
+    await expect(knobName(page, 'Velocity')).toHaveText('Velocity', { useInnerText: true });
+    // A wider font (Linux's, or a larger text setting) leaves the row short: the names step down before a knob wraps.
+    await page.addStyleTag({ content: '.knob-label { letter-spacing: 0.3em; }' });
+    await expect(knobName(page, 'Key Track'), `${width} px`).toHaveText('Key', { useInnerText: true });
+    await expect(knobName(page, 'Velocity'), `${width} px`).toHaveText('Vel', { useInnerText: true });
+    expect(await lines(filterRow(page)), `${width} px`).toBe(1);
+    // The whole names stay what a screen reader hears.
+    await expect(page.getByRole('slider', { name: 'Key Track', exact: true })).toBeVisible();
+    await expect(page.getByRole('slider', { name: 'Velocity', exact: true })).toBeVisible();
   }
 });
