@@ -1,3 +1,5 @@
+import { watchPersonScroll } from './personScroll';
+
 /**
  * How long the Demo's scroll to a part's section lasts, in milliseconds (issue 211): long enough that Bead's fall or
  * flight between two sections, measured at up to about 1.25 s and starting once the scroll has carried its edge away,
@@ -10,42 +12,36 @@ export const DEMO_SCROLL_MS = 1400;
 const ease = (t: number) => 0.5 - Math.cos(Math.PI * t) / 2;
 
 /**
- * Scrolls the page to `top` over `ms`, frame by frame. A scroll of anyone else's (the person's wheel, a finger that may
- * scroll, the keys, another scroll of the page's own) stops it at once, where it is. `onEnd` is called once it stops,
- * arrived or not. Returns a stop of its own.
+ * Scrolls the page to `top` over `ms`, frame by frame. The person's own scroll (`watchPersonScroll`), or any other
+ * scroll of the page meanwhile, stops it at once, where it is. `onEnd` is called once it stops, arrived or not. Returns
+ * a stop of its own.
  */
 export function glideTo(top: number, ms: number, onEnd: () => void): () => void {
   const from = scrollY;
   let start: number | null = null;
-  let set = from;
+  // Where it last put the page, as the browser rounded it.
+  let written = from;
   let frame = 0;
   let over = false;
   const stop = () => {
     if (over) return;
     over = true;
     cancelAnimationFrame(frame);
-    removeEventListener('wheel', stop);
-    removeEventListener('touchstart', onTouch);
+    unwatch();
     onEnd();
   };
-  // A finger on a knob (which takes touches itself) scrolls nothing: the page goes on.
-  const onTouch = (e: TouchEvent) => {
-    if (!(e.target instanceof Element) || getComputedStyle(e.target).touchAction !== 'none') stop();
-  };
+  const unwatch = watchPersonScroll(stop);
   const step = (now: number) => {
     // Scrolled meanwhile by something else: it gives way.
-    if (Math.abs(scrollY - set) > 2) return stop();
+    if (Math.abs(scrollY - written) > 2) return stop();
     start ??= now;
     const t = Math.min(1, (now - start) / ms);
     const end = Math.max(0, Math.min(top, document.documentElement.scrollHeight - innerHeight));
-    set = from + (end - from) * ease(t);
-    scrollTo({ top: set, behavior: 'instant' });
-    set = scrollY; // as the browser rounded it
+    scrollTo({ top: from + (end - from) * ease(t), behavior: 'instant' });
+    written = scrollY;
     if (t >= 1) stop();
     else frame = requestAnimationFrame(step);
   };
-  addEventListener('wheel', stop, { passive: true });
-  addEventListener('touchstart', onTouch, { passive: true });
   frame = requestAnimationFrame(step);
   return stop;
 }

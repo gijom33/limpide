@@ -30,6 +30,20 @@ export function headerBottomAt(y: number): number {
 }
 
 /**
+ * Where the page's top scrolls to, to show a section the least, as the browser's `scrollIntoView({ block: 'nearest' })`
+ * would: its top just below the page's scroll padding (the header, issue 189), or its bottom at the window's foot.
+ */
+function nearestTop(box: DOMRect): number {
+  const padding = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
+  const room = innerHeight - padding;
+  const above = box.top < padding;
+  const below = box.bottom > innerHeight;
+  if (above === below) return scrollY; // in view, or over all of the window
+  const toTop = (above && box.height <= room) || (below && box.height > room);
+  return scrollY + (toTop ? box.top - padding : box.bottom - innerHeight);
+}
+
+/**
  * Phones only (CSS hides it elsewhere, where every section is on screen at once): a strip of the sections, sticky
  * under the header. It shows which section is in view (the one a third of the way down what the header and strip
  * leave visible) and jumps to a section when tapped, landing its top just under the strip.
@@ -39,20 +53,6 @@ export function headerBottomAt(y: number): number {
  * Demo's), the scroll lasts long enough to see Bead fall or fly to its new edge (issue 211); with reduced motion it
  * moves the page at once.
  */
-/**
- * Where the page scrolls to show a section the least, as the browser's `scrollIntoView({ block: 'nearest' })` would:
- * its top just below the page's scroll padding (the header, issue 189), or its bottom at the window's foot.
- */
-function nearest(box: DOMRect): number {
-  const padding = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
-  const room = innerHeight - padding;
-  const above = box.top < padding;
-  const below = box.bottom > innerHeight;
-  if (above && below) return scrollY;
-  const toTop = (above && box.height <= room) || (below && box.height > room);
-  return scrollY + (toTop ? box.top - padding : box.bottom - innerHeight);
-}
-
 export function SectionStrip({ follow, slow = false }: { follow?: { name: SectionName; key: number } | null; slow?: boolean }) {
   const [current, setCurrent] = useState<string>(SECTIONS[0].name);
   // While a tapped jump scrolls, the header keeps the state the jump gave it, until the page arrives where the jump
@@ -61,11 +61,11 @@ export function SectionStrip({ follow, slow = false }: { follow?: { name: Sectio
   // The Demo's slow scroll under way, if one is: its stop.
   const gliding = useRef<(() => void) | null>(null);
 
-  /** Scrolls the page to `top`: at once with reduced motion, else smoothly, or with `slow` over DEMO_SCROLL_MS. */
-  const scrollPage = (top: number, slow: boolean) => {
+  /** Scrolls the page to `top`: at once with reduced motion, else smoothly, or with `slowly` over DEMO_SCROLL_MS. */
+  const scrollPage = (top: number, slowly: boolean) => {
     gliding.current?.();
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) scrollTo({ top, behavior: 'auto' });
-    else if (!slow) scrollTo({ top, behavior: 'smooth' });
+    else if (!slowly) scrollTo({ top, behavior: 'smooth' });
     else {
       const stop = glideTo(top, DEMO_SCROLL_MS, () => gliding.current === stop && (gliding.current = null));
       gliding.current = stop;
@@ -142,7 +142,7 @@ export function SectionStrip({ follow, slow = false }: { follow?: { name: Sectio
     };
   }, []);
 
-  const jump = (name: string, slow = false) => {
+  const jump = (name: string, slowly = false) => {
     const target = section(name);
     if (!target) return;
     // Going down slides the header's rows away; a jump never brings them back (only a scroll of the person's own
@@ -159,7 +159,7 @@ export function SectionStrip({ follow, slow = false }: { follow?: { name: Sectio
     const strip = document.querySelector('.section-strip')!.getBoundingClientRect().height;
     const top = target.getBoundingClientRect().top + scrollY - (header - 1 + strip) - LANDING_GAP;
     jumping.current = Math.round(Math.min(Math.max(0, top), document.documentElement.scrollHeight - innerHeight));
-    scrollPage(Math.max(0, top), slow);
+    scrollPage(Math.max(0, top), slowly);
     setCurrent(name);
   };
 
@@ -174,7 +174,7 @@ export function SectionStrip({ follow, slow = false }: { follow?: { name: Sectio
     if (!strip.height) {
       // In 2 × 2 the header stays at the top: a section under it is out of sight too (issue 152).
       const ceiling = Math.max(0, document.querySelector('header')!.getBoundingClientRect().bottom);
-      if (box.top < ceiling || box.bottom > innerHeight) scrollNow(nearest(box));
+      if (box.top < ceiling || box.bottom > innerHeight) scrollNow(nearestTop(box));
       return;
     }
     // In view: all of it below the strip, or, for a section taller than what is left, its top where a jump lands it.

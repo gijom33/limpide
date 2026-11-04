@@ -1514,8 +1514,9 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
    then the playing buttons (Demo, Tutorial, Song) on the left and set-up (Hold, the tempo, MIDI, Display, About) on
    the right; then the keyboard. */
 @media (max-width: 860px) {
-  /* What the browser scrolls into view (the keyboard's focus, a section the Demo follows) lands below the header as it
-     comes back on the way up, its whole height, never under it (issue 189, WCAG 2.4.11). */
+  /* What the browser scrolls into view (the keyboard's focus), and a section the Demo follows (its scroll reads this
+     padding, issue 211), lands below the header as it comes back on the way up, its whole height, never under it
+     (issue 189, WCAG 2.4.11). */
   :root { --scroll-top: calc(var(--header-h, 0px) + var(--space-2)); scroll-padding-top: var(--scroll-top); }
   /* The header's and the strip's own controls are always in view, sticky: the padding must not scroll the page for them. */
   header *, .section-strip * { scroll-margin-top: calc(-1 * var(--scroll-top)); }

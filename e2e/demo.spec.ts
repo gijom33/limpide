@@ -202,6 +202,19 @@ test.describe('on a 375 px phone (issue 211)', () => {
     await page.waitForTimeout(1500); // past where the Demo's scroll would have ended
     expect(await page.evaluate(() => scrollY)).toBe(0);
   });
+
+  test('a knob turned by its wheel meanwhile leaves the Demo’s scroll going', async ({ page }) => {
+    await page.goto('/');
+    const scroll = firstScroll(page);
+    await demo(page).click();
+    await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(20); // under way
+    // The knob takes the wheel for itself, so the page does not scroll.
+    await page.getByRole('region', { name: 'Oscillators' }).getByRole('slider').first().dispatchEvent('wheel', { deltaY: -100, bubbles: true, cancelable: true });
+    const { ms } = await scroll;
+    expect(ms).toBeGreaterThanOrEqual(1200); // the whole way
+    const gap = await page.evaluate(() => document.querySelector('section[aria-label="Filter"]')!.getBoundingClientRect().top - document.querySelector('.section-strip')!.getBoundingClientRect().bottom);
+    expect(gap).toBeLessThan(20);
+  });
 });
 
 test.describe('on a phone', () => {
@@ -222,7 +235,10 @@ test.describe('on a phone', () => {
   test('a scroll of the person’s own stops the following until the next part', async ({ page }) => {
     await page.goto('/');
     await demo(page).click();
-    await page.waitForTimeout(2000); // the Filter's slow scroll has landed (issue 211)
+    // The Filter's slow scroll has landed (issue 211): its top just under the section strip.
+    const gap = () =>
+      page.evaluate(() => document.querySelector('section[aria-label="Filter"]')!.getBoundingClientRect().top - document.querySelector('.section-strip')!.getBoundingClientRect().bottom);
+    await expect.poll(gap, { timeout: 5000 }).toBeLessThan(20);
     await page.evaluate(() => {
       document.body.dispatchEvent(new WheelEvent('wheel', { deltaY: -2000, bubbles: true }));
       scrollTo({ top: 0, behavior: 'instant' });
