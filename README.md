@@ -52,6 +52,7 @@ Then open the address it prints (usually http://localhost:5173).
 | `npm run test:engine` | Audio engine tests in headless Chromium |
 | `npm run test:e2e` | End-to-end tests with Playwright |
 | `npm run stats` | Measure the project for [the statistics page](docs/statistics.md), after a release |
+| `npm run perf` | Measure what a frame costs, idle, in the Demo and in a chord, before and after a change |
 
 The browser tests need Playwright's browsers once: `npx playwright install chromium webkit`.
 
