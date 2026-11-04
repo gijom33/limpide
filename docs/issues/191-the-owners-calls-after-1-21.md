@@ -18,6 +18,7 @@ Decided by the owner, 2026-11-03, one question at a time (each carried into the 
 6. **The DX7 in FM's History line: kept, its source found** ("Keep, find source"). The line stays (134, decision 9); the primary source, Yamaha's own DX7 documents, is found in [194](./194-words-that-lag-the-code.md), to meet 134's decision 5.
 7. **Short forms: "Key" and "Vel" added** ("Add Key and Vel"). Key Track and Velocity take them where 156 measures the room short; the header keeps 154's fixed widths, its own rule. To build.
 8. **The calls beyond the Briefs: all accepted** ("Accept all"): 154's lower Sections and 8 px shorter Viewers for Bead; 137's Step counted only on a stepped knob's exact target, its Presets picked by Claude and its Step made two; 139's card placed again on a new Tutorial and a stored bend range outside 2, 7 and 12 loaded as 2.
+9. **A button learned on a Switch: each press flips it** ("Each press flips"), a momentary button or a toggle alike, for LFO Sync, Legato and Retrigger. Not built in 186 (out of its scope there); to build.
 
 ## Questions
 
