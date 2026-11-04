@@ -5,8 +5,10 @@ const pitchClasses = (letters: string) => [...letters].map((l) => PITCH_CLASS[l 
 /** B, E, A, D, as in a bead of water: the mascot's Notes. */
 const BEAD = pitchClasses('BEAD');
 
-/** The longest B, E, A, D may take, from its first Note to its last, in seconds: a second a Note (issue 204). */
-export const CALLING_SECONDS = 4;
+/** How long a phrase may take, from its first Note to its last: a second a Note (the owner, issue 204). */
+const SECONDS_A_NOTE = 1;
+/** The longest B, E, A, D may take, in seconds. */
+export const CALLING_SECONDS = BEAD.length * SECONDS_A_NOTE;
 
 /**
  * The Notes that call the mascot and send it away (issue 115): B, E, A, D in that order, in any octave, within
@@ -41,7 +43,7 @@ export type Word = keyof typeof WORDS;
  * for the four-Note words, 7 s for BAGGAGE (the owner, issue 204).
  */
 export function createWordsHeard() {
-  const phrases = (Object.keys(WORDS) as Word[]).map((word) => ({ word, phrase: createCallingPhrase(pitchClasses(WORDS[word]), WORDS[word].length) }));
+  const phrases = (Object.keys(WORDS) as Word[]).map((word) => ({ word, phrase: createCallingPhrase(pitchClasses(WORDS[word]), WORDS[word].length * SECONDS_A_NOTE) }));
   return {
     press(note: number, time: number): Word | null {
       let done: Word | null = null;

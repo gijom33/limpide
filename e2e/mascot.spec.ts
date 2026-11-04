@@ -688,17 +688,26 @@ test('B, A, G, G, A, G, E gives the suitcase: fast and a second a Note on the co
   };
   await play(page, 'jhgghgd'); // fast
   await suitcase();
-  // Slow: a Note a second, 6 s from the first to the last, past the 4 s B, E, A, D has.
-  for (const [i, key] of [...'jhgghgd'].entries()) {
-    if (i) await page.waitForTimeout(1000);
-    await page.keyboard.press(key);
-  }
+  // Slow: a Note a second, 6 s from the first to the last, past the 4 s B, E, A, D has; timed in the page, so a loaded
+  // machine does not stretch it past the 7 s.
+  await page.evaluate(
+    () =>
+      new Promise<void>((done) => {
+        const keys = ['KeyJ', 'KeyH', 'KeyG', 'KeyG', 'KeyH', 'KeyG', 'KeyD'];
+        keys.forEach((code, i) =>
+          setTimeout(() => {
+            dispatchEvent(new KeyboardEvent('keydown', { code }));
+            dispatchEvent(new KeyboardEvent('keyup', { code }));
+            if (i === keys.length - 1) done();
+          }, i * 1000),
+        );
+      }),
+  );
   await suitcase();
   const piano = (name: string) => page.getByRole('group', { name: 'Piano' }).getByRole('button', { name, exact: true });
   for (const name of ['B4', 'A4', 'G4', 'G4', 'A4', 'G4', 'E5']) {
     const box = (await piano(name).boundingBox())!;
     await page.mouse.click(box.x + box.width / 2, box.y + box.height * 0.8);
-    await page.waitForTimeout(300);
   }
   await suitcase();
 });
@@ -956,10 +965,10 @@ const onTheBoard = (page: Page, lfo: number, ms: number) =>
           if (bead?.dataset.board === 'on') {
             const lean = Number(/rotate\((\S+)deg\)/.exec(bead.querySelector<HTMLElement>('.mascot-drop')!.style.transform)?.[1] ?? 0);
             const plot = document.querySelector(`.lfo-plot[data-lfo="${n}"]`)!;
-            const middle = bead.getBoundingClientRect().left + 9 - plot.getBoundingClientRect().left; // the drop's middle
+            const middle = bead.getBoundingClientRect().left + 9 - plot.getBoundingClientRect().left; // the drop's middle, the Mascot's DROP_MIDDLE
             const points = [...plot.querySelector('.lfo-plot-line')!.getAttribute('d')!.matchAll(/[ML](\S+) (\S+)/g)].map((m) => ({ x: Number(m[1]), y: Number(m[2]) }));
             const near = (x: number) => points.reduce((a, b) => (Math.abs(b.x - x) < Math.abs(a.x - x) ? b : a));
-            const [a, b] = [near(middle - 4), near(middle + 4)];
+            const [a, b] = [near(middle - 4), near(middle + 4)]; // the Mascot's SURF_SPAN across
             if (b.x > a.x) out.push({ lean, slope: (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI });
           }
           if (now - start < ms) requestAnimationFrame(frame);
@@ -993,7 +1002,7 @@ test('three across, wide enough for the LFO plots clear of the card, each act in
   await part(2);
   await expect(mascot(page)).toHaveAttribute('data-act', 'airGuitar');
   await expect(mascot(page)).toHaveAttribute('data-tail', 'straight'); // its tail up across it, a guitar's neck
-  // Part 3, Self-Oscillation: no LFO on, so surfing's turn is skipped: it conducts.
+  // Part 3, Poly Pluck: no LFO on, so surfing's turn is skipped: it conducts.
   await part(3);
   await page.waitForTimeout(1500);
   await expect(mascot(page)).toHaveAttribute('data-act', 'conduct');

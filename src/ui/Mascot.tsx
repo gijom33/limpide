@@ -116,8 +116,9 @@ const BOARD = {
   deck: [[-2, 12, 13, 1], [-3, 11, 1, 1]],
   stripe: [[0, 12, 1, 1], [4, 12, 1, 1], [8, 12, 1, 1]],
 } satisfies Record<string, Rect[]>;
-/** On its board, the line's slope is read this many pixels across under its middle. */
+/** On its board, the line's slope is read this many pixels across under its middle; its tail raised this many degrees. */
 const SURF_SPAN = 8;
+const BALANCING = 15;
 
 /** The highest row of a picture on the grid: 0 is the drop's top, negative over it. */
 const topOf = (picture: Picture) => Math.min(0, ...picture.flatMap(([, list]) => list.map(([, y]) => y)));
@@ -982,6 +983,7 @@ export function Mascot({
         const lineAtX = (x: number) => lineAt({ engine: context.engine, lfo: plot.lfo, box: plot.box, x, now: context.engine.now() });
         pose.tilt = surfLean(lineAtX(middle - SURF_SPAN / 2), lineAtX(middle + SURF_SPAN / 2), SURF_SPAN);
         pose.legs = 'tuck';
+        pose.wag = -BALANCING; // its tail out behind, raised for balance
       }
       if (onBoard !== (board.current!.style.display === '')) board.current!.style.display = onBoard ? '' : 'none';
 

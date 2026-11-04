@@ -19,7 +19,7 @@ Bead makes no sound and changes nothing you hear. Turning a control only changes
 - **It rides the LFOs** ([141](./issues/141-bead-rides-the-lfos.md), [197](./issues/197-bead-rides-everywhere.md)): while an LFO is on (its Depth above 0), a Sine or a Triangle at 1 Hz or slower (with Sync, the Hz its note value gives), its plot in view and clear of the cards, Bead rides its line, as in the Demo's surf, for 8 to 18 seconds, then goes back to its edge. Three or four across, a ride comes first whenever a visit is due; on a phone and in 2 × 2, one comes every 15 to 40 seconds, Bead falling onto the plot like rain or flying up to it on its tail, and going back the same way. **Dropped near the plot** of an LFO it may ride (its box over the plot or within its own width of it), it lands on the line and rides it for 8 to 18 seconds; near a Saw's, a Square's, a fast one's or one at Depth 0, it lands as anywhere. The plot's own tip, opened by a pointer resting on it, does not keep it off the line. It goes back sooner when the LFO stops being one to ride or its plot goes out of view or under a card (on a phone or in 2 × 2, its plot gone under the tabs, it goes to an edge in view, or hovers, as when its edge goes under them); picked up, it lets go of the line; sent away, it jumps home and melts there. Never while the Demo plays or with reduced motion, a drop included.
 - **On a phone and in 2 × 2**: it stays in view as you scroll, on the top edge of a right-hand section. To go down it falls like rain and splashes; to go up it turns its tail down under itself and flies on it. With no edge in view, as when its edge goes under the tabs, it takes off on its whirling tail and hovers where it lost ground, a little under the tabs or the header, bobbing gently, until an edge comes into view to drop or fly onto ([142](./issues/142-bead-on-the-line-under-the-tabs.md)). With reduced motion it hovers still.
 - **Never under a card** ([164](./issues/164-bead-never-under-a-card.md)): it never stands where the Demo's card, a Tutorial's, the Tour's, a tip or an open panel covers it, and strolls only along what they leave clear. When one comes over its spot it goes to the nearest clear stretch of an edge in view; with every edge in view covered, it stands on the card's top edge until one is clear again: the topmost card's, when two are docked. Its whole drawing counts, its Detune twin and its tail turned round included. With nowhere clear at all, not even its hover line on a phone (under a page-wide description), it goes out of sight, up under the tabs or down behind its edge, and comes back once somewhere is clear ([192](./issues/192-beads-cover-checks-complete.md)). It is still drawn under them, so it never covers their words or buttons.
-- **Never over text where it rests** ([181](./issues/181-bead-never-over-text.md)): wherever it stands still, on an edge, on a phone's tab line or on the card's top, its drop, its tail (swung down too, as on the air guitar) and its Detune twin cover no label, readout, heading or tab name; it strolls only along the stretches clear of them, a few pixels apart. On its way, hovering under the tabs (the page moving under it), surfing or riding, it may pass over text.
+- **Never over text where it rests** ([181](./issues/181-bead-never-over-text.md)): wherever it stands still, on an edge, on a phone's tab line or on the card's top, its drop, its tail (swung down too, as when pointing the way) and its Detune twin cover no label, readout, heading or tab name; it strolls only along the stretches clear of them, a few pixels apart. On its way, hovering under the tabs (the page moving under it), surfing or riding, it may pass over text.
 
 ## Its own life
 
@@ -56,7 +56,7 @@ Every knob and fader you turn, a Controller turns, the Demo or the Tour turns ge
 
 ## Words spelled with Notes
 
-While Bead is out, five more words spelled with Notes, like B, E, A, D, each cue a trick. Each word must be played within 4 seconds, in any octave. One Note can end one word and start the next.
+While Bead is out, five more words spelled with Notes, like B, E, A, D, each cue a trick. Each word must be played within a second a Note, from its first Note to its last: 4 seconds for the four-Note words, 7 for BAGGAGE ([204](./issues/204-baggage-air-guitar-and-surfing-seen.md)), in any octave. One Note can end one word and start the next.
 
 | Notes | On the computer keyboard | Bead |
 | --- | --- | --- |
@@ -92,10 +92,10 @@ While a Tutorial or the Tour is open, Bead points the way ([151](./issues/151-be
 
 ## During the Demo
 
-Through the Demo's parts, in turn, Bead:
+Each Demo part takes the next of three acts after the last part's ([204](./issues/204-baggage-air-guitar-and-surfing-seen.md)), a Demo begun starting with the first:
 - conducts with a tiny baton, down on each Note;
-- plays air guitar on its tail, strummed on each Note;
-- surfs an LFO's shape: it jumps onto the plot of an LFO that is on (its Depth above 0) and rides the line, end to end, as the LFO moves it. With no LFO on, or none in view and clear of the cards ([164](./issues/164-bead-never-under-a-card.md): at 1440 × 900 the Demo's own card covers the plots' feet, until it is dragged aside), it conducts or plays air guitar instead. Outside the Demo it rides a slow Sine or Triangle now and then (above).
+- plays air guitar: its tail straight, up across it like a guitar's neck, shaken on each Note; eyes shut, rocking, a little hop on the loud Notes;
+- surfs an LFO's shape: it jumps onto the plot of an LFO that is on (its Depth above 0) and rides the line on a surfboard, end to end, as the LFO moves it, the board along the line and Bead leaning with it, forward going down the wave and back going up, its tail out behind. With no LFO on, or none in view and clear of the cards ([164](./issues/164-bead-never-under-a-card.md): three across, the Demo's own card covers the plots below about 1470 px wide, until it is dragged aside), it conducts instead, and the next part plays air guitar. Played from part 1, it surfs first at part 5, then at 8 and 13, where a plot is clear. Outside the Demo it rides a slow Sine or Triangle now and then (above), on the same board.
 
 ## With reduced motion
 
