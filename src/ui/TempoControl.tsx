@@ -212,7 +212,7 @@ export function TempoControl(props: Props) {
   const narrow = useMediaQuery(STACKED);
   const [open, setOpen] = useState(false);
   const { wrapper, button } = useHeaderPanel(open, setOpen);
-  const panel = useUnderHeader<HTMLDivElement>(open);
+  const panel = useUnderHeader<HTMLDivElement>();
   const news = <TempoNews tempo={props.tempo} />;
   if (!narrow)
     return (

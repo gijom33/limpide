@@ -271,6 +271,31 @@ for (const size of SIZE_NAMES) {
   });
 }
 
+// Issue 188 (decision 1), from the 1.23.0 code review: on an iPad, the Tempo opened in portrait, turned to landscape
+// (the BPM and Tap in the header, no panel) and back, opened again under its button, over the keys, and Tab out of it
+// no longer closed it.
+test('a narrow Tempo left open through a tablet’s turn and back still opens under the header, and Tab out closes it (issue 188)', async ({ page }) => {
+  await page.setViewportSize({ width: 820, height: 1180 });
+  await page.goto('/');
+  await page.locator('.piano button').first().waitFor();
+  const panel = page.getByRole('group', { name: 'Tempo' });
+  await page.locator('header').getByRole('button', { name: /^Tempo: / }).click();
+  await expect(panel).toBeVisible();
+  await page.setViewportSize({ width: 1180, height: 820 });
+  await expect(page.locator('.tempo-panel')).toHaveCount(0);
+  await page.setViewportSize({ width: 820, height: 1180 });
+  await expect(panel).toBeVisible();
+  const [top, headerBottom] = await Promise.all([
+    panel.evaluate((el) => el.getBoundingClientRect().top),
+    page.locator('header').evaluate((el) => el.getBoundingClientRect().bottom),
+  ]);
+  expect(top).toBeGreaterThanOrEqual(headerBottom);
+  expect(top - headerBottom).toBeLessThanOrEqual(8);
+  await panel.getByRole('button', { name: 'Tap', exact: true }).focus();
+  await page.keyboard.press('Tab');
+  await expect(panel).toBeHidden();
+});
+
 // Issue 188 (decision 2): formulas never over data. The Synth Geek Layer's formulas lay over the Spectrums' corner,
 // across the Harmonic bars and the Response Curve (at 375 px over A4's, the 2nd's and the 3rd's); each now has its own
 // room under its Viewer, clear of every bar and trace drawn.

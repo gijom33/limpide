@@ -21,7 +21,7 @@ export function TutorialMenu({ tutorials, onStart }: { tutorials: readonly { pre
   // half of the window, so it never runs off the page.
   const [side, setSide] = useState<'left' | 'right'>('left');
   const { wrapper, button } = useHeaderPanel(open, setOpen);
-  const panel = useUnderHeader<HTMLDivElement>(open);
+  const panel = useUnderHeader<HTMLDivElement>();
   const toggle = () => {
     const box = button.current?.getBoundingClientRect();
     setSide(box && box.left + box.width / 2 > window.innerWidth / 2 ? 'right' : 'left');

@@ -79,7 +79,7 @@ export function MidiPanel({
 }: Props) {
   const [open, setOpen] = useState(false);
   const { wrapper, button } = useHeaderPanel(open, setOpen);
-  const panel = useUnderHeader<HTMLDivElement>(open);
+  const panel = useUnderHeader<HTMLDivElement>();
   const devices = state.kind === 'ready' ? state.devices : [];
   const available = state.kind === 'ready' || state.kind === 'pending';
   const learningWord = useOneLine<HTMLSpanElement>(learning ? 'learning' : '');
