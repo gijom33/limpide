@@ -94,7 +94,7 @@ export function timelineGrid(now: number, seconds: number, pixelsPerSecond: numb
 
 /**
  * The Timeline's samples, one per moment of its grid (`timelineGrid`), kept from frame to frame (issue 215): the model's
- * history is kept by age and only added to, from now on, so a past moment's Modulation stays as it was and each frame
+ * history is kept by age and only ever added to at or after now, so a past moment's Modulation stays as it was and each frame
  * works out only the columns new since the last. Worked out again every frame: the last frame's newest, since a Note or
  * a knob can come at the very moment it was drawn at (the clock stands still until the sound starts); and the moments
  * before `settled`, the model's `settledFrom`, where the first Patch or Note stands in for what came before and can
@@ -102,13 +102,13 @@ export function timelineGrid(now: number, seconds: number, pixelsPerSecond: numb
  */
 export function createColumnSamples<T>(sample: (time: number) => T) {
   let kept: T[] = [];
-  let first = 0;
+  let keptFirst = 0;
   let scale = Number.NaN;
-  return ({ first: from, times }: { first: number; times: readonly number[] }, pixelsPerSecond: number, settled: number): T[] => {
-    // The kept columns from `from` on, short of the last frame's newest.
-    const reuse = scale === pixelsPerSecond && from >= first ? kept.slice(from - first, -1) : [];
+  return ({ first, times }: { first: number; times: readonly number[] }, pixelsPerSecond: number, settled: number): T[] => {
+    // The kept columns from this frame's first on, short of the last frame's newest.
+    const reuse = scale === pixelsPerSecond && first >= keptFirst ? kept.slice(first - keptFirst, -1) : [];
     kept = times.map((time, i) => (i < reuse.length && time >= settled ? reuse[i] : sample(time)));
-    first = from;
+    keptFirst = first;
     scale = pixelsPerSecond;
     return kept;
   };

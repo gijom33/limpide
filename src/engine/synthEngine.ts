@@ -80,7 +80,7 @@ export interface SynthEngine {
   /** The Patch in force at `time` (none before the first): what the Timeline draws at that moment. */
   patchAt(time: number): Patch | undefined;
   /**
-   * From when the model's past stays as it is (issue 215): its history is only added to from now on, but before the
+   * From when the model's past stays as it is (issue 215): its history is only ever added to at or after now, but before the
    * first Patch and the first Note they stand in for what came before (the first Note's key for the Key Track's), and
    * the first Patch is replaced while the clock stands still. Infinity before either.
    */
