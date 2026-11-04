@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** needs-info · enhancement. Polish for v1
+**Status:** superseded · enhancement. Split by the owner on 2026-11-03 into [217](./217-a-midi-message-redraws-only-the-midi-panel.md) (the MIDI Activity line), [218](./218-a-change-writes-only-what-it-changes.md) (only what changed written) and [219](./219-aftertouch-glides.md) (aftertouch over 4 ms), each ready for an agent
 
 ## Decisions
 
@@ -16,6 +16,7 @@ Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.m
 Decided by the owner, 2026-11-03, answering the questions below:
 
 3. **Question 1, aftertouch's smoothing: the bend wheel's 4 ms** ("Yes, 4 ms"). Knobs turned from a Controller keep their immediate writes; if they step audibly, that is an issue of its own.
+4. **Question 2, one issue or three: split in three** ("Split in three"), as recommended, into 217 to 219.
 
 ## Agent Brief
 
