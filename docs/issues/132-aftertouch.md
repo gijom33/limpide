@@ -101,3 +101,8 @@ To try in the app:
 ## Decisions (the owner, 2026-11-01)
 
 1. **Polyphonic aftertouch, the highest pad,** decided by the owner (about 19:45: "Highest pad, tonight", having noted that the TempoPAD C16 sends polyphonic aftertouch). The MIDI parser also reads per-Note pressure (0xA0). The pressure used is the highest among the Notes held, a Note's pressure forgotten when it is released, and it moves the one chosen Destination for every Note, as channel pressure does. Channel and per-Note pressure feed the same pressure. Per-Voice pressure and MPE stay for v2. This reverses the out-of-scope line of 2026-10-31.
+
+## Since then
+
+- **The dot alone on the ring** (the owner, 2026-11-03, answering [191](./191-the-owners-calls-after-1-21.md)): call 2 kept, no arc of its own.
+- **The Resonance reached half way** (the owner, 2026-11-03, answering [191](./191-the-owners-calls-after-1-21.md)), built in [219](./219-aftertouch-glides.md).

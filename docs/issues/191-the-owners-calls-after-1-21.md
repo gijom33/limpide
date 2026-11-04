@@ -4,11 +4,11 @@
 
 **Blocked by:** none
 
-**Status:** needs-info · enhancement. Waiting on the owner's answers
+**Status:** done (2026-11-03). Every question answered by the owner; each answer carried into the issue it names, the changes to build into [223](./223-the-owners-calls-after-1-21-built.md) and [219](./219-aftertouch-glides.md)
 
 ## Decisions
 
-Decided by the owner, 2026-11-03, one question at a time (each carried into the issue it names once all are answered):
+Decided by the owner, 2026-11-03, one question at a time (each carried into the issue it names: 151, 136, 132, 169, 134, 154, 137, 139 and 163; to build in 223 and 219):
 
 1. **Bead and the Display panel: kept as built** ("Keep"). Calls 2, 3 and 4 of 151 stand as the owner's change to its decisions 6 and 7.
 2. **Bead in a Tutorial or the Tour: kept still** ("Keep it still"). Its dancing and sound-driven hops pause too, for the whole Tutorial or Tour, beyond 151's decision 9, so its movement there means "look here".

@@ -29,7 +29,7 @@
 - [x] A unit test: ticks at 120 BPM with a little jitter give a steady 120; a change to 90 is followed within a few beats
 - [x] The parser yields clock, Start, Continue and Stop without breaking running status
 - [x] While a clock runs, the BPM cannot be changed by hand and shows the mark; after it stops, it can
-- [x] A Start resets the beat count; a synced free LFO starts its cycle on it
+- [x] A Start resets the beat count; a synced free LFO is pulled onto its beat over two cycles (ADR-0019), with no click on a held Note (the owner, 2026-11-03, answering [191](./191-the-owners-calls-after-1-21.md))
   **Since then (2026-11-02, issue [194](./194-words-that-lag-the-code.md)):** under [ADR-0019](../adr/0019-a-synced-lfo-is-pulled-onto-the-beat.md) a synced free LFO is pulled onto the new beat over two cycles, not started on it; the box's rewording waits on the owner's answer to question 3 of [191](./191-the-owners-calls-after-1-21.md).
 - [x] While the Demo plays, a running clock does not change its tempo
 - [ ] Every test passes in Linux's fonts too

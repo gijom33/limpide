@@ -25,8 +25,8 @@
 
 **Acceptance criteria:**
 - [x] Rate 2 Hz reads 0.50 s; synced 1/4 at 120 BPM reads 0.50 s
-- [x] Depth on Pitch, Cutoff, Volume and Pulse Width reads ±st, ±oct, ±dB and ±% matching the engine's swing (engine tests)
-  **Since then (2026-11-02, issue [194](./194-words-that-lag-the-code.md)):** Volume's Depth reads a one-sided dip ("−6.0 dB"), not ±dB, since Volume only goes down from its knob; the box's rewording waits on the owner's answer to question 5 of [191](./191-the-owners-calls-after-1-21.md).
+- [x] Depth on Pitch, Cutoff, Volume and Pulse Width reads ±st, ±oct, a dip in dB ("−6.0 dB": Volume only goes down from its knob) and ±% matching the engine's swing (engine tests)
+  **Since then (2026-11-02, issue [194](./194-words-that-lag-the-code.md)):** Volume's Depth reads a one-sided dip ("−6.0 dB"), not ±dB, since Volume only goes down from its knob; the box is reworded so, the owner keeping the dip ("Keep the dip", 2026-11-03, [191](./191-the-owners-calls-after-1-21.md) question 5).
 - [x] Key Track's figure equals the Effective Cutoff's at the Note
 - [x] With the layer off nothing changes; every test passes in Linux's fonts too
 

@@ -63,3 +63,6 @@
 - Load Wobble, Double Wobble, Growl, Trance Gate and Stutter at 120 BPM: they should sound as before; change the tempo and they follow it.
 - Hover Sync, the BPM and Tap for their tips.
 
+## Since then
+
+- **The calls beyond the Brief accepted** (the owner, 2026-11-03, answering [191](./191-the-owners-calls-after-1-21.md)): a stepped knob's Step counted only on its exact target, the Presets picked by Claude rather than profile 15, and its Tutorial Step made two.

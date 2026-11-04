@@ -79,3 +79,6 @@ Claude's call, open to the owner:
 
 **To try in the app:** the header at 861, 1000, 1100, 1280, 1440 and 1920 px (and wider): the columns line up, Hold tall against the piano, the words as above, the keyboard reaching the buttons. Play a key past E5 with the pointer and from a Controller; move the octave up and down. Tab through the header. Turn on Hold and a player, so the tall Hold and the BPM's player state show.
 
+## Since then
+
+- **The calls beyond the Brief accepted** (the owner, 2026-11-03, answering [191](./191-the-owners-calls-after-1-21.md)): the Sections lowered and the Viewers 8 px shorter from 861 px wide and 700 px tall, for Bead.

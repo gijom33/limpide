@@ -78,3 +78,7 @@ Built on 2026-11-01, on night/2026-11-01.
 
 **To try in the app:** with Bead out, open the Bass Tutorial at a laptop's size and press Start: Bead leaps to the Oscillators, slides down to Osc 2's level on the Mixer tab and points at it. Press "Do it for me" (a hop), then Next: it slides across to Osc 2's Waveform. Switch to Osc 1's tab: it goes back to its edge and looks; back to the Mixer, it returns. Go on to the Ideal step (beside the Display button) and the Cutoff (a leap to the Filter, then the slide). Quit: it hops home. Then the Tour from About, a Tutorial on a phone, the end of a short Tutorial (FM Ladder, the fountain), and reduced motion.
 
+## Since then
+
+- **Calls 2, 3 and 4 kept** (the owner, 2026-11-03, answering [191](./191-the-owners-calls-after-1-21.md)): with Display open Bead stays beside its button, a control scrolled off sends it back to its edge, and on a phone and at 2 × 2 the Display button is out of its reach; they stand as the owner's change to decisions 6 and 7.
+- **Bead still through a Tutorial or the Tour** (the owner, 2026-11-03, answering [191](./191-the-owners-calls-after-1-21.md)): its dancing and sound-driven hops pause too, beyond decision 9, so its movement there means "look here".

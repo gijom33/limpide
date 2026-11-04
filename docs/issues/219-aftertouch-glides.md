@@ -17,6 +17,10 @@ Claude's call, open to the owner (2026-11-02):
 
 3. **The model and the sound smoothed alike** (ADR-0003): exact where the pressure maps linearly (Cutoff, Pitch, Osc 2's cents); for Resonance's Q the model and the sound may differ slightly while the 4 ms run, written in the issue.
 
+Decided by the owner, 2026-11-03 ([191](./191-the-owners-calls-after-1-21.md), question 13):
+
+4. **On the Resonance, aftertouch reaches half the knob's range** ("Half the range"), so full pressure on Wobble does not self-oscillate past the limiter's knee.
+
 ## Agent Brief
 
 **Category:** enhancement
@@ -37,8 +41,9 @@ Claude's call, open to the owner (2026-11-02):
 **Acceptance criteria:**
 - [ ] An engine test: aftertouch on the Cutoff and on the Resonance at 100 messages a second keeps inharmonic energy below −70 dB
 - [ ] The Modulation model matches the sound in the engine tests, Resonance's small gap during the glide written
+- [ ] Full pressure on the Resonance reaches half its knob's range; Wobble at full pressure stays under the limiter's knee (an engine test)
 - [ ] The MIDI keyboard tests pass unchanged
 
 **Out of scope:**
-- How far aftertouch reaches (issue 132)
+- How far aftertouch reaches (issue 132), but for the Resonance's half (decision 4)
 - A Controller's knobs' smoothing

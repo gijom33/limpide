@@ -86,3 +86,7 @@ For each control and Section: who first built it or named it, when, on which ins
   6. **A source is as good as the best fact read in it:** the test grades a source by its facts' marks, and ARP's 3620 manual is both A (its LFO) and cited beside a U gap (Retrigger), so the best mark counts.
 - **Tests run:** `npx tsc`, `npm run lint`; the History, tips and tooltip-placement unit tests (120 passed); in Chromium the tooltips, touch-tips, About, Geek, overlays, keyboard-access and Display panel specs (76 passed). Linux's fonts are GitHub's run.
 - **To try:** turn on Display's Geek, then hover the Cutoff, Resonance, FM, Ring and the Spectrums: each tip ends with its History; hover Freeze: none. Turn Geek off: the History lines go. On a phone, hold FM: the whole tip shows, History last. Open About and follow "History's sources". Read every line (decision 17): they are all in the History module.
+
+## Since then
+
+- **The DX7 kept in FM's line** (the owner, 2026-11-03, answering [191](./191-the-owners-calls-after-1-21.md)); its primary source, Yamaha's own documents, to be found in [223](./223-the-owners-calls-after-1-21-built.md), to meet decision 5.

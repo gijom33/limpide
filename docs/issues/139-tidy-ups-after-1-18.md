@@ -62,3 +62,7 @@ Calls made without the owner (Claude's call, open to the owner):
 Tests: `npx tsc` and `npm run lint` clean. Vitest, the unit tests of every folder touched, 772 passed, and the engine's browser tests (`synthEngine`, `patchesAtTheEdges`, `presets`, `usePlayers`), 440 passed. Playwright ran `tour`, `tutorial`, `dockedCards`, `demo`, `midiKeyboard`, `designPrinciples` (the design audit), `patchSearch` and `mascot`. Chromium passed 170 of 170 (`dockedCards`, `midiKeyboard` and `tour` ran again after the review's renames, 31 of 31). WebKit passed 165, with 5 skipped because they run in Chromium only. None of this ran in Linux's fonts here: GitHub's run checks that criterion. No class change moves a layout: each rule moved with its class.
 
 What to try in the app: nothing should look or sound different. Worth a pass: a Tutorial's card and the Tour's (fold them, drag them, reload and see the fold kept; on a phone, tap the words and +; the Tour's last card, "Build a Bass", then Enter starts the Bass Tutorial); the MIDI panel's Bend and Aftertouch, kept over a reload; FM Bass and Poly Mod Zap, and their new words in the Patches panel.
+
+## Since then
+
+- **The calls beyond the Brief accepted** (the owner, 2026-11-03, answering [191](./191-the-owners-calls-after-1-21.md)): a Tutorial card placed again when its Tutorial changes, and a stored bend range outside 2, 7 and 12 loaded as 2.
