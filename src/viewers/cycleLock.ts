@@ -40,12 +40,13 @@ function hann(n: number): Float32Array {
   return window;
 }
 
-/** Below this, no sample can lift the correlation below to a fundamental: see `silent`. */
-const QUIET = 1e-6 / Math.SQRT2;
+/** The correlation with the fundamental, per sample, under which a buffer has none to lock to. */
+const NO_FUNDAMENTAL = 1e-6;
+/** The correlation is at most √2·n times the loudest sample, so a buffer quieter than this has no fundamental. */
+const QUIET = NO_FUNDAMENTAL / Math.SQRT2;
 /**
- * Whether a buffer is too quiet for the correlation below ever to find a fundamental: the correlation is at most √2·n
- * times the loudest sample, and under 1e-6·n finds none. A silent Tap skips the search (review 18, issue 213); the
- * first buffer with sound in it is searched as ever. Indexed, as `for…of` over the samples cost more than the search.
+ * Whether every sample is too quiet for a fundamental to be found: a silent Tap skips the search (review 18, issue
+ * 213), and a buffer with sound in it is searched. Indexed, as `for…of` over the samples costs more than the search.
  */
 function silent(samples: Float32Array): boolean {
   for (let i = 0; i < samples.length; i++) if (samples[i] >= QUIET || samples[i] <= -QUIET) return false;
@@ -130,7 +131,7 @@ export function risingZeros(
     phi += omega[k] * length + (step * length * (length - 1)) / 2;
   }
   phase.push(phi);
-  if (Math.hypot(s, c) < 1e-6 * n) return [];
+  if (Math.hypot(s, c) < NO_FUNDAMENTAL * n) return [];
 
   // Within segment k the phase at u samples in is φk + ωk·u + step·u(u − 1)/2; a rising zero is where φ + θ = 2πm.
   const theta = Math.atan2(c, s);
