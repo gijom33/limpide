@@ -8,6 +8,7 @@ import { createDemoActs } from './demoActs';
 import { lineAt, lineWiderThan } from './LfoPlot';
 import { type Box, type Cling, clingBeside, crosses, type Guide, HEIGHT, RING, TAIL_HEIGHT, TWIN_PX, targetBox, WIDTH } from './mascotCling';
 import { mascotClock } from './mascotClock';
+import { COVERS, DOCKED, NOT_TEXT, PANELS } from './mascotCovers';
 import { gesturesOf, looksOf } from './mascotGestures';
 import { type Act, createMascotMotion, hatOn, type Pose, type Room, SCREAMING } from './mascotMotion';
 import { CATCH, CLOUD, HATS, HOOK, ICE, type Picture, PROPS, type Rect, ROD_TIP, SKY, type Stage, TAILS } from './mascotPictures';
@@ -195,19 +196,6 @@ const headerAndTabs = () => ['header', '.section-strip'].map((q) => document.que
 const CONTROLS = 'button, [role=slider], [role=tab], [role=radio], input, .piano, .knob-value, .fader';
 /** The spots tried along an edge, this many pixels apart. */
 const STEP = 4;
-/**
- * What is drawn over the page, which it never stands under (issue 164): the docked cards (the Demo's, a Tutorial's, the
- * Tour's), the tips, the open panels and menus, the Preset's description and the Patch's plain words (issue 123). It
- * stays drawn under them, so it never covers their words or buttons.
- */
-const DOCKED = '.docked:not([hidden])';
-const PANELS = `${DOCKED}, .patch-about, .patch-words, .patch-panel, .destination-menu, .tutorial-menu-panel, .tempo-panel, .display-panel, .midi-panel, .learn-bar, .quick-setup`;
-const COVERS = `${PANELS}, .tooltip:not([hidden])`;
-/**
- * The page's text, which it never stands over (issue 181): every label, readout and heading, as the boxes of its lines,
- * but what is drawn over it anyway (the cards, tips and panels) and what only a screen reader reads.
- */
-const NOT_TEXT = `.mascot, .visually-hidden, ${COVERS}`;
 function readText(): Cover[] {
   const boxes: Cover[] = [];
   const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);

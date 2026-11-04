@@ -1,4 +1,6 @@
 import { expect, type Page, test } from '@playwright/test';
+import { TRACK } from '../src/demo/track';
+import { NOT_TEXT } from '../src/ui/mascotCovers';
 import { LONGEST_STEP } from '../src/ui/mascotPlace';
 import { openDisplay, reachAudio, stopSound } from './helpers';
 import { BEAD_ON, holding, WELCOMED } from './startState';
@@ -110,7 +112,7 @@ const covered = (page: Page, viewers: boolean) =>
  */
 const restsOverText = (page: Page, ms: number) =>
   page.evaluate(
-    (ms) =>
+    ([ms, notText]) =>
       new Promise<{ rests: number; over: string[] }>((done) => {
         const over = new Set<string>();
         let rests = 0;
@@ -135,7 +137,7 @@ const restsOverText = (page: Page, ms: number) =>
             const range = document.createRange();
             for (let node = walk.nextNode(); node; node = walk.nextNode()) {
               const el = node.parentElement;
-              if (!el || !/\S/.test(node.nodeValue ?? '') || el.closest('.mascot, .docked, .tooltip, .patch-about, .patch-words, .patch-panel, .display-panel, .visually-hidden')) continue;
+              if (!el || !/\S/.test(node.nodeValue ?? '') || el.closest(notText)) continue;
               range.selectNodeContents(node);
               const lines = [...range.getClientRects()];
               const hit = lines.some((t) => drawn.some((p) => Math.min(p.right, t.right) - Math.max(p.left, t.left) > 0.5 && Math.min(p.bottom, t.bottom) - Math.max(p.top, t.top) > 0.5));
@@ -147,7 +149,7 @@ const restsOverText = (page: Page, ms: number) =>
         };
         requestAnimationFrame(sample);
       }),
-    ms,
+    [ms, NOT_TEXT] as const,
   );
 
 test('with the switch on, B, E, A, D sends it away and again brings it; B, E, D, A does nothing (issue 150, decision 8)', async ({ page }) => {
@@ -313,7 +315,9 @@ test('in a short phone window, with no edge in view, it hovers on its tail where
     expect(y, 'no edge ever left it').toBeLessThan(4000);
     const before = await mascot(page).evaluate((el) => el.getBoundingClientRect().left);
     await page.evaluate((top) => window.scrollTo({ top, behavior: 'instant' }), y);
-    await page.waitForTimeout(900); // it takes off and settles, or falls to an edge and lands
+    await page.waitForTimeout(900); // it takes off, or falls to an edge
+    // Then settles, hovering or standing, counted in its own frames: a fixed wait read it mid-flight on a slow machine.
+    await settles(page);
     if ((await mascot(page).getAttribute('data-moving')) === 'hovering') lostAt = before;
   }
   const hovering = await watchHover(page, 1.5);
@@ -477,9 +481,14 @@ test.describe('Display’s switch lasts, the Notes are for the visit (issue 150,
       await listening(page);
       await expect(mascot(page)).toHaveCount(1, { timeout: 6000 });
       await openDisplay(page);
-      await beadSwitch(page).getByRole('radio', { name: 'Bead off' }).click();
-      await page.waitForTimeout(400); // melting, or dripping away down the window
-      await beadSwitch(page).getByRole('radio', { name: 'Bead on' }).click();
+      // On again 0.4 s after off, while it melts or drips away down the window: timed in the page, as a loaded machine
+      // stretched the round trips (issue 224).
+      await page.evaluate(async () => {
+        const radio = (name: string) => document.querySelector<HTMLElement>(`[role="radio"][aria-label="${name}"]`)!;
+        radio('Bead off').click();
+        await new Promise((done) => setTimeout(done, 400));
+        radio('Bead on').click();
+      });
       await page.keyboard.press('Escape');
       await page.waitForTimeout(3000); // gone, and come up again
       await expect(mascot(page)).toHaveCount(1);
@@ -625,13 +634,25 @@ test('a pointer over it tickles it; a click sends tiny drops every way', async (
     const box = (await page.locator('.mascot-drop').boundingBox())!;
     return { x: box.x + 9, y: box.y + box.height - 8 };
   };
+  // The pointer moved over it 12 times, 40 ms apart, its tilt read each time: timed in the page, as a loaded machine
+  // stretched the round trips (issue 224).
   const at = await middle();
-  const tilts: number[] = [];
-  for (let i = 0; i < 12; i++) {
-    await page.mouse.move(at.x + (i % 2), at.y);
-    tilts.push(await page.locator('.mascot-drop').evaluate((el) => Number(el.style.transform.match(/rotate\(([-\d.]+)deg/)![1])));
-    await page.waitForTimeout(40);
-  }
+  const tilts = await page.locator('.mascot-drop').evaluate(
+    (el, at) =>
+      new Promise<number[]>((done) => {
+        const tilts: number[] = [];
+        const move = () => {
+          const i = tilts.length;
+          const to = { clientX: at.x + (i % 2), clientY: at.y, pointerType: 'mouse', bubbles: true };
+          for (const type of ['pointerover', 'pointerenter', 'pointermove']) el.dispatchEvent(new PointerEvent(type, to));
+          tilts.push(Number((el as HTMLElement).style.transform.match(/rotate\(([-\d.]+)deg/)![1]));
+          if (tilts.length < 12) setTimeout(move, 40);
+          else done(tilts);
+        };
+        move();
+      }),
+    at,
+  );
   expect(Math.max(...tilts) - Math.min(...tilts)).toBeGreaterThan(4); // squirming
   const now = await middle();
   await page.mouse.click(now.x, now.y);
@@ -1026,17 +1047,16 @@ for (const [size, viewport] of [
   ['2 × 2', { width: 700, height: 830 }],
 ] as const) {
   test(`${size}: through the Demo's scroll to a part's section, it falls or flies in view, landing before the page stops (issue 211)`, async ({ page }) => {
-    // GitHub's Linux WebKit draws about 15 frames a second, and there Bead made no move during the scroll in 2 × 2:
-    // inbox, 2026-11-03 (the 1.23.0 branch run).
-    test.skip(test.info().project.name === 'webkit', 'no move seen during the scroll on GitHub’s Linux WebKit: inbox, 2026-11-03');
     await page.setViewportSize(viewport);
     await page.goto('/');
     await listening(page);
     await bringBead(page);
     await settles(page);
-    // Each frame for 6 s from the Demo's start (its second part's knob, in another section, about 4 s in): the page's
-    // scroll, what Bead is doing, and whether its drop is in the window.
-    const frames = page.evaluate(
+    // Each frame for 8 s from the Demo's start, pressed in the page (its second part's knob, in another section, is
+    // about 4 s in): the page's scroll, what Bead is doing, and whether its drop is in the window. Watched from the
+    // test's own press, a round trip later, on GitHub's slow Linux WebKit the scroll began 4.7 s into a 6 s watch and
+    // Bead was still flying at its end, so no move was counted (issue 224).
+    const seen = await page.evaluate(
       () =>
         new Promise<{ t: number; y: number; moving: string; inView: boolean }[]>((done) => {
           const out: { t: number; y: number; moving: string; inView: boolean }[] = [];
@@ -1045,14 +1065,13 @@ for (const [size, viewport] of [
             const drop = document.querySelector('.mascot-drop')?.getBoundingClientRect();
             const moving = document.querySelector<HTMLElement>('.mascot')?.dataset.moving ?? '';
             out.push({ t: now, y: scrollY, moving, inView: !!drop && drop.top >= 0 && drop.bottom <= innerHeight + 1 });
-            if (now - start < 6000) requestAnimationFrame(frame);
+            if (now - start < 8000) requestAnimationFrame(frame);
             else done(out);
           };
+          document.querySelector<HTMLElement>('button[aria-label="Demo"]')!.click();
           requestAnimationFrame(frame);
         }),
     );
-    await page.getByRole('button', { name: 'Demo', exact: true }).click();
-    const seen = await frames;
     // The scrolls: from the frame before the page moves to the last it moved in.
     const scrolls: { from: number; to: number }[] = [];
     for (let i = 1; i < seen.length; i++) {
@@ -1092,6 +1111,32 @@ const offTheLine = (page: Page, lfo: number) =>
     return { off: box.bottom - (at.top + under.y), foot: box.bottom, moving: (el as HTMLElement).dataset.moving };
   }, lfo);
 
+/**
+ * Where its foot is against LFO `lfo`'s plot, as `offTheLine` says, `n` times `ms` apart, timed in the page: in round
+ * trips with waits, a loaded machine stretched the gaps (issue 224).
+ */
+const alongTheLine = (page: Page, lfo: number, n: number, ms = 150) =>
+  page.evaluate(
+    ([lfo, n, ms]) =>
+      new Promise<{ off: number; foot: number; moving: string | undefined }[]>((done) => {
+        const out: { off: number; foot: number; moving: string | undefined }[] = [];
+        const read = () => {
+          const el = document.querySelector<HTMLElement>('.mascot')!;
+          const box = el.getBoundingClientRect(); // its box's bottom is its foot
+          const plot = document.querySelector(`.lfo-plot[data-lfo="${lfo}"]`)!;
+          const at = plot.getBoundingClientRect();
+          const points = [...plot.querySelector('.lfo-plot-line')!.getAttribute('d')!.matchAll(/[ML](\S+) (\S+)/g)].map((m) => ({ x: Number(m[1]), y: Number(m[2]) }));
+          const middle = box.left + 9 - at.left; // the drop's middle, the Mascot's DROP_MIDDLE
+          const under = points.reduce((a, b) => (Math.abs(b.x - middle) < Math.abs(a.x - middle) ? b : a));
+          out.push({ off: box.bottom - (at.top + under.y), foot: box.bottom, moving: el.dataset.moving });
+          if (out.length < n) setTimeout(read, ms);
+          else done(out);
+        };
+        read();
+      }),
+    [lfo, n, ms] as const,
+  );
+
 test('now and then it rides a slow Sine on an LFO plot, along its line, and goes home once the Depth is 0 (issue 141)', async ({ page }) => {
   test.slow();
   // Its every roll its lowest: its first visit is due soonest, 15 seconds in, and goes to the first choice, a ride.
@@ -1111,16 +1156,14 @@ test('now and then it rides a slow Sine on an LFO plot, along its line, and goes
   await expect(mascot(page)).toHaveAttribute('data-board', 'on');
   await leansWithTheWave(page, 1);
   // On the line, each moment, as it rises and falls.
-  const feet: number[] = [];
-  for (let i = 0; i < 10; i++) {
-    const { off, foot, moving } = await offTheLine(page, 1);
+  const along = await alongTheLine(page, 1, 10);
+  for (const { off, moving } of along) {
     expect(moving).toBe('standing');
     // It follows the plot a frame behind, so the slower the frames the further it trails: within 2 px at about fifteen a
     // second in WebKit on Linux, 4.4 on GitHub's slower runner (1.22.0's branch run).
     expect(Math.abs(off), `off the line by ${off}`).toBeLessThanOrEqual(6);
-    feet.push(foot);
-    await page.waitForTimeout(150);
   }
+  const feet = along.map((a) => a.foot);
   expect(Math.max(...feet) - Math.min(...feet), feet.join(', ')).toBeGreaterThan(4);
   // Its Depth to 0 (a double-click puts it back to its 0): off with a jump home, onto the Amp's edge.
   const depth = (await page.getByRole('slider', { name: 'LFO 1 Depth', exact: true }).boundingBox())!;
@@ -1159,14 +1202,12 @@ for (const [size, viewport, edge] of [
     await page.keyboard.down('f'); // a Note held: it listens, and does no funny turn
     await expect(mascot(page)).toHaveAttribute('data-ride', '1', { timeout: 40_000 });
     await expect(mascot(page)).toHaveAttribute('data-moving', 'standing', { timeout: 5000 });
-    const feet: number[] = [];
-    for (let i = 0; i < 10; i++) {
-      const { off, foot, moving } = await offTheLine(page, 1);
+    const along = await alongTheLine(page, 1, 10);
+    for (const { off, moving } of along) {
       expect(moving).toBe('standing');
       expect(Math.abs(off), `off the line by ${off}`).toBeLessThanOrEqual(4);
-      feet.push(foot);
-      await page.waitForTimeout(150);
     }
+    const feet = along.map((a) => a.foot);
     expect(Math.max(...feet) - Math.min(...feet), feet.join(', ')).toBeGreaterThan(4);
     // Its ride over, back to its edge.
     await expect(mascot(page)).toHaveAttribute('data-ride', '', { timeout: 15_000 });
@@ -1309,7 +1350,9 @@ test.describe('never over text where it rests (issue 181)', () => {
     { width: 1280, height: 800 },
   ]) {
     test(`through the Demo at ${viewport.width} × ${viewport.height}, conducting, on air guitar, surfing: over no label, readout or heading`, async ({ page }) => {
-      test.slow();
+      // Every part, 6 s each: its acts in turn (it conducts, plays air guitar with its tail up across it, surfs where a
+      // plot is clear) in each part's own sections (issue 224).
+      test.setTimeout(TRACK.parts.length * 6000 + 60_000);
       await page.setViewportSize(viewport);
       await page.goto('/');
       await listening(page);
@@ -1317,15 +1360,14 @@ test.describe('never over text where it rests (issue 181)', () => {
       await page.getByRole('button', { name: 'Demo', exact: true }).click();
       const card = page.getByRole('region', { name: 'Demo' });
       let rests = 0;
-      // A part each act: it conducts, plays air guitar (its tail up across it), surfs where a plot is clear.
-      for (const part of [1, 2, 3]) {
+      for (let part = 1; part <= TRACK.parts.length; part++) {
         await card.getByRole('button', { name: new RegExp(`^Play from part ${part},`) }).click();
-        const seen = await restsOverText(page, 8000);
+        const seen = await restsOverText(page, 6000);
         expect(seen.over, `part ${part}`).toEqual([]);
         rests += seen.rests;
       }
       // Some rests seen, so the check meant something: counted in frames, and WebKit on GitHub's runner draws about
-      // fifteen a second, where it rests as few as 4 frames over the three parts (issue 177).
+      // fifteen a second, where it rested as few as 4 frames over three parts of 8 s (issue 177).
       expect(rests).toBeGreaterThan(0);
     });
   }
