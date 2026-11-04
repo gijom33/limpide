@@ -71,7 +71,11 @@ export function SectionStrip({ follow, slow = false }: { follow?: { name: Sectio
       gliding.current = stop;
     }
   };
-  useEffect(() => () => gliding.current?.(), []);
+  // The slow scroll is the Demo's: it stops with the Demo (its Stop, the ×, a Note, its end), where the page is, and as
+  // the strip goes (issue 211).
+  useEffect(() => {
+    if (slow) return () => gliding.current?.();
+  }, [slow]);
 
   // The header's height, so the strip sits right under it (the header is sticky too), and how much of it slides away
   // while the page scrolls down: everything above the piano, but for a sliver of the header's padding.

@@ -220,6 +220,33 @@ test.describe('on a 375 px phone (issue 211)', () => {
     expect(await page.evaluate(() => scrollY)).toBe(0);
   });
 
+  test('stopping the Demo mid-scroll stops its scroll at once, where the page is', async ({ page }) => {
+    await page.goto('/');
+    await demo(page).click();
+    // Once the scroll is under way, Stop; then how far the page still moves over the next 0.8 s.
+    const { moved, playing, gap } = await demo(page).evaluate(
+      (button) =>
+        new Promise<{ moved: number; playing: string | null; gap: number }>((done) => {
+          let at: number | null = null;
+          let stoppedAt = 0;
+          let moved = 0;
+          const frame = (now: number) => {
+            if (at === null && scrollY > 20) {
+              (button as HTMLElement).click();
+              [at, stoppedAt] = [scrollY, now];
+            } else if (at !== null) moved = Math.max(moved, Math.abs(scrollY - at));
+            if (at === null || now - stoppedAt < 800) return requestAnimationFrame(frame);
+            const filter = document.querySelector('section[aria-label="Filter"]')!.getBoundingClientRect().top;
+            done({ moved, playing: button.getAttribute('aria-pressed'), gap: filter - document.querySelector('.section-strip')!.getBoundingClientRect().bottom });
+          };
+          requestAnimationFrame(frame);
+        }),
+    );
+    expect(playing).toBe('false');
+    expect(moved).toBeLessThanOrEqual(1);
+    expect(gap).toBeGreaterThan(20); // short of the Filter, where it was going
+  });
+
   test('a knob turned by its wheel meanwhile leaves the Demo’s scroll going', async ({ page }) => {
     await page.goto('/');
     const scroll = firstScroll(page);

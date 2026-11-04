@@ -74,3 +74,5 @@ Built on 2026-11-03, on night/2026-11-02.
 - Scroll yourself while the page glides: it stops at once and leaves the page to you until the next part.
 - With reduced motion on, the page still jumps.
 - In 2 × 2 (a window 601 to 860 px wide), the same.
+
+**2026-11-03, from the 1.23.0 code review:** the glide outlived the Demo. Stopped mid-glide (its Stop, the ×, a Note), the page kept moving for up to about 1.2 s, as only a scroll of the person's own or the strip going stopped it. The glide now stops with the Demo, however it ends, where the page is. Tests: the strip's unit test (`SectionStrip.browser.test.ts`, red before: the page went on from 83 to 1320 px); `e2e/demo.spec.ts` on a 375 px phone, Stop mid-scroll leaving the page still.
