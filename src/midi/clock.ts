@@ -4,7 +4,8 @@ import { clampBpm } from '../music/tempo';
 export const TICKS_PER_BEAT = 24;
 /** A clock silent this long (seconds) has stopped: at 40 BPM a tick comes every 63 ms. */
 export const CLOCK_TIMEOUT = 1;
-/** Ticks the tempo is fitted over: four beats, so the readout holds still and a new tempo is followed in four. */
+/** Ticks the tempo is fitted over: four beats, so the readout holds still and a gradual change is followed in four (a jump
+ * of a tenth or more is read straight, issue 185). */
 const WINDOW = 4 * TICKS_PER_BEAT;
 /** The readout moves to a new whole BPM only once the clock is this far from it, so a clock between two holds one. */
 const HYSTERESIS = 0.75;
