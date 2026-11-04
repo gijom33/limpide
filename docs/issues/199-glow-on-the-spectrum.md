@@ -14,7 +14,7 @@ Decided by the owner, 2026-11-02:
 
 Claude's calls, open to the owner:
 
-2. **One Glow for both:** Display's one Glow choice turns it on for the Scopes and the Spectrums together, Off by default and remembered as now. Its tip says both.
+2. **One Glow for both:** Display's one Glow choice turns it on for the Scopes and the Spectrums together, Off by default and remembered as now. Its tip says both. Since 2026-11-04 ([229](./229-three-glow-choices.md), decided by the owner): Glow has three choices, Off, Scopes and All, the Spectrums glowing under All alone.
 3. **Only the live outline glows:** the Spectrum's past outlines fade under the newest, by 0.85 every 60th of a second for a quarter of a second, as on the Scopes. Its fill underneath, the Response Curve, the Harmonic Markers, the Ideal Reference and the hover readout draw only now, so the marks still read clearly.
 4. **Where it shows:** a Filter Envelope's sweep leaves a trail of the moving Harmonics, Noise and detune soften, a held steady Note stays sharp. The Spectrum's own averaging between frames stays as it is.
 5. **Frozen,** a Spectrum keeps its glow, as a frozen Scope does.

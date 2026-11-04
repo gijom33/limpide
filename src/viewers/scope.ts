@@ -75,9 +75,10 @@ export function createScope(
     const period = view().overlays.geek ? scopeReadout(f, newestNote()) : '';
     // A silent Scope rests once drawn, until something it draws changes (issue 214): the trace is flat whatever the Note.
     const settings = view();
+    const glowing = glows(settings.glow, 'scope');
     const inputs = [
       ...canvasInputs(canvas, COLOURS),
-      settings.cycles, glows(settings.glow, 'scope'), settings.overlays.guides, settings.viewer.snapshot, frozen, guideLevel, limited, period,
+      settings.cycles, glowing, settings.overlays.guides, settings.viewer.snapshot, frozen, guideLevel, limited, period,
     ];
     if (rest(silent, inputs)) return;
 
@@ -155,7 +156,7 @@ export function createScope(
     }
 
     const colour = cssVar(canvas, '--trace');
-    const past = glow({ on: glows(view().glow, 'scope'), frozen, now: () => performance.now(), newest: trace });
+    const past = glow({ on: glowing, frozen, now: () => performance.now(), newest: trace });
     g.strokeStyle = colour;
     g.lineWidth = curveWidth(canvas);
     for (const { value, alpha } of past) {

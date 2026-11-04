@@ -124,7 +124,8 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
 
   /** `silent`: the Tap has been silent long enough for the Glow's traces of sound to fade (issue 214). */
   return function draw(silent: boolean) {
-    const { overlays, viewer } = view();
+    const { overlays, viewer, glow: chosen } = view();
+    const glowing = glows(chosen, 'spectrum');
     const width = canvas.clientWidth;
     const columns = Math.ceil(width);
     const fAxis = frequencyAxis(viewer.frequencyScale, width);
@@ -146,7 +147,7 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
     // Markers or Ideal marks, and the Curve is compared by its gains, which an LFO on the Cutoff moves.
     const inputs = [
       ...canvasInputs(canvas, COLOURS),
-      viewer.frequencyScale, viewer.levelScale, viewer.snapshot, viewer.frozen, glows(view().glow, 'spectrum'), curveGains, slope,
+      viewer.frequencyScale, viewer.levelScale, viewer.snapshot, viewer.frozen, glowing, curveGains, slope,
     ];
     if (rest(silent && !cursor, inputs)) return;
 
@@ -216,7 +217,7 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
     // Glow (issue 199), under All (issue 229): the outlines of the last quarter of a second, fading under the newest; only the outline, so
     // the fill, the Curve and the marks read as now. One drawn on another axis or width is passed over.
     const key = `${viewer.frequencyScale}:${outline.length}`;
-    const past = glow({ on: glows(view().glow, 'spectrum'), frozen: viewer.frozen, now: () => performance.now(), newest: { outline, key } })
+    const past = glow({ on: glowing, frozen: viewer.frozen, now: () => performance.now(), newest: { outline, key } })
       .filter(({ value }) => value.key === key);
     g.strokeStyle = trace;
     g.lineWidth = outlineWidth;

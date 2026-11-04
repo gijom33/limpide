@@ -52,8 +52,8 @@ const REMEMBERED = {
       levelScale: choice(['db', 'linear'], INITIAL_VIEWER_STATE.levelScale),
       tapSource: choice(['all', 'newest'], INITIAL_VIEWER_STATE.tapSource),
       /**
-       * The Glow (issues 180, 199): Off by default, so the Viewers show only now unless asked. Its On and Off of
-       * before three choices are read as All, what On drew, and Off (issue 229).
+       * The Glow (issues 180, 199, 229): Off by default, so the Viewers show only now unless asked. A true or false
+       * saved by an older page, when Glow was On or Off, is read as All (what On drew) or Off.
        */
       glow: choice(GLOWS, 'off', new Map([[true, 'all'], [false, 'off']])),
     },

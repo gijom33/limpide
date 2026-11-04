@@ -25,7 +25,7 @@ The rules every screen change is judged against, the way issue 15's audit judged
 ## Motion
 
 - **Motion shows the sound, never decorates it.** Something moves on screen only when something moves in the sound: a modulated value, a playhead, a Glide.
-- **No glow.** No control glows, while dragging or when selected; emphasis comes from size, colour and contrast. Glow (issues 180 and 199) is not decoration: a Display choice, Off by default, that shows the sound's last quarter of a second fading under each Scope's trace and each Spectrum's outline.
+- **No glow.** No control glows, while dragging or when selected; emphasis comes from size, colour and contrast. Glow (issues 180 and 199) is not decoration: a Display choice, Off by default, that shows the sound's last quarter of a second fading under each Scope's trace (Scopes) or each Scope's trace and each Spectrum's outline (All, issue 229).
 - **Reduced motion is respected** (`prefers-reduced-motion`, WCAG 2.3.3). Live dots and rings stand still at their range; Viewers keep drawing, because they are the content.
 
 ## Accessibility (WCAG 2.2 AA unless noted)
