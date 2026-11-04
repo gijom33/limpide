@@ -4,7 +4,7 @@
 
 **Blocked by:** none. Surfing shares its ride with [197](./197-bead-rides-everywhere.md) (Bead riding the LFOs, which the owner has not seen either, [141](./141-bead-rides-the-lfos.md)); build after 197 or alongside it, so the two do not fix the same code twice (Claude's call, open to the owner).
 
-**Status:** ready-for-agent · bug. Polish for v1; reproduced 2026-11-02 on night/2026-11-02; the owner answered the four questions on 2026-11-03 (decisions 5 to 7 and 9)
+**Status:** ready-for-human · bug. Built (2026-11-03) on night/2026-11-03, for the owner to try
 
 ## What reproducing found (2026-11-02)
 
@@ -72,3 +72,23 @@ Decided by the owner, 2026-11-03, answering the questions above:
 **Out of scope:**
 - Bead's rides outside the Demo ([197](./197-bead-rides-everywhere.md)), but for the board and the lean, which they share
 - New tricks or words
+
+## How it was built
+
+Built 2026-11-03 on night/2026-11-03, test-first. The causes, as reproducing found them: **BAGGAGE** had the same 4 s as B, E, A, D for seven Notes, twice the pace; **the air guitar** was drawn as the tail swung 40° down below the foot, which read as a droop, not a guitar; **surfing** fell on the parts by number (3, 6, 9, 12, 15), of which only part 6 has an LFO on, and three across below about 1470 px wide the Demo's card covers the plots.
+
+- **The words** (decision 9): each word has a second a Note from its first Note to its last: 7 s for BAGGAGE, 4 s for D, E, A, D and the other four-Note words, and B, E, A, D's own 4 s, all from one named rule.
+- **The turn of the acts** (decision 6): each new Demo part takes the next act after the last part's, conducting, the air guitar, surfing; a Demo begun starts conducting. A part on surfing's turn surfs whenever an LFO plot is clear and its LFO on, and conducts while none is; a part that never surfed counts as conducting, so the next plays the air guitar. Played from part 1: conducting at 1, the air guitar at 2, surfing first at 5 (Tremolo Keys), then at 8 and 13 where a plot is clear. The card stays as it is (decision 5).
+- **The air guitar** (decision 7): its tail straight (drawn rising 30° from level), up across it like a guitar's neck, shaken a few degrees for 0.2 s on each Note; eyes shut, rocking, and the hop on the loud Notes only.
+- **The surfboard** (decision 8): a 13-pixel board in the Filter's colour with the Oscillator's stripe, under its foot in place of its legs, its nose turned up on the side it faces as drawn. On the wave the whole drawing turns with the line's slope under its middle (read 8 px across, never steeper than 35°), so it leans forward going down and back going up whichever way it goes; its tail raised 15° out behind. The same on its rides outside the Demo. During a funny turn on the wave the board is put away, and the turn plays as anywhere.
+- **Docs:** `docs/bead.md` and a dated line in [127](./127-more-tricks-for-bead.md).
+- **Tests:** unit tests for the words' windows, the turn of the acts (with and without an LFO, a surfing turn waiting for a clear plot), the air guitar's pose and the board's lean; browser tests for BAGGAGE (fast and a Note a second on the computer keys, and from the piano), for the acts in turn at 1728 × 1117 with surfing on its board leaning with the wave at part 5, and for the board on a ride outside the Demo. Not tested: BAGGAGE from a Controller, which goes through the same Notes as the piano.
+
+Claude's calls, open to the owner:
+
+1. A part on surfing's turn **changes act within the part** if a plot comes clear or goes under the card (scrolled, or the card dragged): it conducts until it can surf, and conducts again once it cannot.
+2. A part **played from its button** takes the next act after the last part's, as the Demo going on would; only a Demo begun again starts with conducting.
+3. **The neck** is the straight tail Resonance already draws, on Bead's usual side rather than drawn across its front; its strum is a shake of ±8° fading over 0.2 s.
+4. **The board's look:** the Filter's colour with the Oscillator's stripe, 13 pixels long, nose up; its tail raised 15° on it; the lean at most 35°.
+
+**To try in the app:** with Bead out, play J, H, G, G, H, G, D slowly, about a Note a second: the suitcase. Then, on a window at least about 1470 px wide three across (or four across), play the Demo from part 1 and watch parts 1 to 5: the baton, the air guitar with its tail up like a neck, the baton again at part 3 (no LFO), the air guitar at 4, and at part 5 Bead on its surfboard on the LFO's plot, leaning down the wave and back up it. Outside the Demo, set LFO 1 to a slow Sine (0.5 Hz, some Depth) and drop Bead on its plot: the same board.
