@@ -23,6 +23,8 @@ describe('what stops the Demo (issue 79)', () => {
   it.each([
     ['a letter that plays a Note', key('a'), 'stop'],
     ['an arrow on the page', key('ArrowUp'), 'stop'],
+    ['Page Down on the page, scrolling it (issue 227)', key('PageDown'), 'playOn'],
+    ['Page Up, from the Demo’s card (issue 227)', key('PageUp', 'demo'), 'playOn'],
     ['Shift', key('Shift'), 'playOn'],
     ['Tab, moving the focus', key('Tab'), 'playOn'],
     ['a shortcut with Cmd, Ctrl or Alt', key('r', 'page', { modifier: true }), 'playOn'],
