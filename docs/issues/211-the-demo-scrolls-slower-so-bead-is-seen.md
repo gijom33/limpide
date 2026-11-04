@@ -35,10 +35,10 @@ Claude's calls, open to the owner:
 - Bead's fall and flight between Sections
 
 **Acceptance criteria:**
-- [ ] On a 375 px phone, a part change that moves to another Section scrolls over a measured time long enough for Bead's move, at most about 1.5 s
-- [ ] Bead's fall or flight is on screen during the scroll
-- [ ] The section strip's taps scroll as before
-- [ ] With reduced motion, the page jumps
+- [x] On a 375 px phone, a part change that moves to another Section scrolls over a measured time long enough for Bead's move, at most about 1.5 s
+- [x] Bead's fall or flight is on screen during the scroll
+- [x] The section strip's taps scroll as before
+- [x] With reduced motion, the page jumps
 
 ## How it was built
 

@@ -36,10 +36,10 @@ Claude's calls, open to the owner:
 - Display's Synth Geek Layer switch, the Tutorial menu
 
 **Acceptance criteria:**
-- [ ] The Tour, after its Section cards, names the Synth Geek Layer, its History lines and the Tutorials, and says where each is
-- [ ] Each of those cards shows the control it names, on a phone and a laptop
-- [ ] The Synth Geek Layer is off after the Tour if it was off before
-- [ ] The Tour's keyboard steps and its end work as before
+- [x] The Tour, after its Section cards, names the Synth Geek Layer, its History lines and the Tutorials, and says where each is
+- [x] Each of those cards shows the control it names, on a phone and a laptop
+- [x] The Synth Geek Layer is off after the Tour if it was off before
+- [x] The Tour's keyboard steps and its end work as before
 
 ## How it was built
 
