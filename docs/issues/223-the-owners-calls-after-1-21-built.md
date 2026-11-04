@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement. Polish for v1
+**Status:** ready-for-human · enhancement. Built (2026-11-03) on night/2026-11-03, for the owner to try
 
 ## Decisions
 
@@ -43,11 +43,40 @@ Decided by the owner, 2026-11-03 (191's numbers):
 - The History research and FM's line
 
 **Acceptance criteria:**
-- [ ] At the widths where 156 shortens, Key Track and Velocity read "Key" and "Vel" (browser test)
-- [ ] A momentary and a toggle button learned on LFO 1 Sync each flip it once a press (unit and browser tests)
-- [ ] The tempo's keys move 1, 0.1 and 10 BPM; its tip has the steps line (browser test)
-- [ ] No "Tap" for the tempo left in the glossary, the tips or the code's names; the button still reads "Tap"
-- [ ] The DX7's source cited, its grade raised, or the owner told none was found
+- [x] At the widths where 156 shortens, Key Track and Velocity read "Key" and "Vel" (browser test): where their row runs short, which in Mac fonts it never does (How it was built, call 1)
+- [x] A momentary and a toggle button learned on LFO 1 Sync each flip it once a press (unit and browser tests)
+- [x] The tempo's keys move 1, 0.1 and 10 BPM; its tip has the steps line (browser test)
+- [x] No "Tap" for the tempo left in the glossary, the tips or the code's names; the button still reads "Tap"
+- [ ] The DX7's source cited, its grade raised, or the owner told none was found: found, not yet read (call 6)
 
 **Out of scope:**
 - The header's words (154's rule)
+
+## How it was built
+
+Built on 2026-11-03, on night/2026-11-03, a commit each.
+
+- **"Key" and "Vel"** (decision 1): Key Track → Key and Velocity → Vel join the short forms, in the code and CONTEXT.md. A knob's column is as wide as its name, so a knob's name runs short only when its row would wrap a control to a second line. Each row of knobs and faders now measures that and steps all its names down together, as the Timeline's key does, so a wider font (Linux's, a larger text setting) shortens them before a knob wraps. Tests: `shortForms.test.ts`; `e2e/oneLine.spec.ts`, the Filter's row in a wider font at 320, 861 and 1024 px reads Key and Vel on one line, whole in Mac fonts.
+- **A button on a Switch** (decision 2): MIDI Learn hears a control on LFO Sync, Retrigger or Legato as a button, as on an Action. A release within half a second makes it momentary (each press flips the Switch, the release does nothing); one message alone makes it a toggle (each message flips it); a pad's Note flips it on each hit. Tests: `controlSurface.test.ts`; `e2e/midiLearn.spec.ts`, a toggle and then a momentary button learned on LFO 1 Sync.
+- **The BPM's keys** (decision 3): the arrows 1 BPM, Shift+arrow 0.1, Page Up and Down 10, and the tip's steps line, "↑↓ 1 BPM · Shift 0.1 BPM · Page 10 BPM". The tempo is now kept, remembered and shown to a tenth, and its box is as wide as "238.8" at every BPM, so the header doesn't move. Tests: `tempo.test.ts`, `tempoStore.test.ts`, `controlSurface.test.ts`; `e2e/tempo.spec.ts`.
+- **Tap Tempo** (decision 4): the button still reads "Tap". Its accessible name, its tip, its Action (the MIDI panel, the Learn bar, Quick Setup), the glossary (a new Tap Tempo entry; Tap is the listening points only), the code's names and comments all say Tap Tempo. A Mapping stored under the old Action id `tap` loads as `tapTempo`. Tests: `mappings.test.ts`; `e2e/tempo.spec.ts`, plus the specs that found the button by name.
+- **The DX7's primary source** (decision 5): Yamaha's own manual library lists the *DX7 Operating Manual*, as a scan and as a text version. It is recorded in the History research as S34, but it has not been read (call 6). FM's line is unchanged and still rests on Yamaha's own Hub page (S33, graded B, from 194).
+- Review: the code review found that the BPM box widened with a tenth, that a Controller knob jumped 1.5 BPM from a tenth, that a pad's Notes were not learned on a Switch, and that the shortening loop was duplicated. All are fixed in "the review's fixes".
+
+Claude's calls, open to the owner:
+
+1. **Key and Vel show whole today.** At every width in Mac fonts, a knob's column grows to fit its name, so no row runs short and Key Track and Velocity read whole, as an LFO's Destination did in 156. They shorten only where a row would wrap: in a wider font, or a larger text setting. To see Key and Vel on a phone, the knob columns would have to be capped below their names, which is a layout change 156 did not make.
+2. **Every knob's and fader's name shortens the same way.** Cutoff → Cut, Resonance → Res, Detune → Det and Volume → Vol take their 156 forms on their knobs too, but only where a row runs short (never today).
+3. **The keys step to the next value on their grid**, as a knob's do: from 120.3, ↑ gives 121, not 121.3, and from 123, Page Up gives 130. So the first test's ↑ then Page Up now gives 130, where it gave 131.
+4. **A tenth comes only from the keys and from typing.** A drag still moves a whole BPM per pixel from where it started. Tap Tempo, a MIDI clock and a Controller's knob set whole BPMs; a Relative knob on 120.3 goes to 121 or 120.
+5. **The accessible name is "Tap Tempo"**, the tip's title too, while the button reads "Tap" (as a short form keeps its whole name for screen readers). The button's CSS class became `tap-tempo`.
+6. **The DX7 manual is found but not read.** Yamaha's server refuses the fetching tool, as its history pages did for 194. Reading the file means downloading it from yamaha.com (the scan is 5.3 MB, the text version a 43 KB zip), and a download needs the owner's go-ahead. With that go-ahead, the fact can be read and graded A, and the line can cite it.
+7. **Which choices are Switches** is a list beside the Mappings (LFO 1 and 2 Sync and Retrigger, Legato). The code review would rather keep it on the choices' own definitions; Claude left it as a list for now.
+
+What to try in the app:
+
+- Tempo: focus the BPM, press Shift+↑ a few times (120.1, 120.2…), then ↑ (121) and Page Up (130). Hover the BPM for its steps line, and check the header doesn't move.
+- Tempo: hover Tap. Its tip says Tap Tempo; with VoiceOver it is "Tap Tempo, button".
+- MIDI Learn: press LFO 1 Sync on screen, then a button or a pad on the Controller. Each press switches Sync on and off, whether the button is momentary or a toggle (the MIDI panel says which). Try the same on Legato.
+- Tell Claude whether to download the DX7 manual from Yamaha's library, and whether Key and Vel should show on phones (a narrower knob column).
+
