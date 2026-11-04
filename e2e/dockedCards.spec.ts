@@ -89,3 +89,86 @@ test.describe('on a phone', () => {
     await expect(demoCard(page).locator('.demo-bar-caption')).toHaveCSS('clip-path', 'inset(50%)'); // out of sight, still read out
   });
 });
+
+// Issue 212, decided by the owner: three and four across are meant to show everything, so there the Demo's card lies
+// over the page's bottom edge and never adds to the scroll. The Tour's and a Tutorial's cards point at Viewers and
+// controls, some at the page's bottom, so they keep room there, as on a phone and in 2 × 2, which scroll anyway.
+const cards = {
+  Demo: async (page: Page) => {
+    await startDemo(page);
+    return demoCard(page);
+  },
+  Tutorial: async (page: Page) => {
+    await page.getByRole('button', { name: /^Patch: / }).click();
+    await page.getByRole('dialog', { name: 'Patches' }).getByRole('group', { name: 'Tutorials' }).getByRole('button', { name: /^Tutorial: Bass/ }).click();
+    return page.getByRole('region', { name: /^Tutorial: / });
+  },
+  Tour: async (page: Page) => {
+    await page.getByRole('button', { name: 'About' }).click();
+    await page.getByRole('dialog', { name: 'Limpide' }).getByRole('button', { name: 'Take the Tour' }).click();
+    return page.getByRole('region', { name: 'Tour' });
+  },
+};
+
+/** How far the page scrolls, once the layout has settled. */
+async function scrollRange(page: Page) {
+  await page.waitForTimeout(300);
+  return page.evaluate(() => document.documentElement.scrollHeight - innerHeight);
+}
+
+/** Scrolled to its end, the page shows its last section whole above the card. */
+async function expectRoomFor(page: Page, card: ReturnType<Page['locator']>) {
+  await page.waitForTimeout(300);
+  await page.evaluate(() => scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
+  await expect
+    .poll(async () => {
+      const top = (await card.boundingBox())!.y;
+      return page.evaluate((cardTop) => document.querySelector('main')!.getBoundingClientRect().bottom <= cardTop + 1, top);
+    }, 'the last section clear above the card')
+    .toBe(true);
+}
+
+for (const [layout, width, height] of [['three across', 1440, 900], ['four across', 1920, 1080]] as const) {
+  test(`in ${layout} on a window the page fits, the Demo's card leaves the page unscrollable (issue 212)`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await page.goto('/');
+    expect(await scrollRange(page), 'before the card').toBeLessThanOrEqual(0);
+    await expect(await cards.Demo(page)).toBeVisible();
+    expect(await scrollRange(page)).toBeLessThanOrEqual(0);
+  });
+}
+
+test(`in three across on a window a little shorter than the page, the Demo's card adds nothing to the scroll (issue 212)`, async ({ page }) => {
+  // The page fills its window down to the height its sections need, about 845 px at 1440 px wide.
+  await page.setViewportSize({ width: 1440, height: 800 });
+  await page.goto('/');
+  const without = await scrollRange(page);
+  expect(without, 'the page scrolls a little').toBeGreaterThan(0);
+  expect(without, 'the page scrolls a little').toBeLessThan(200);
+  await expect(await cards.Demo(page)).toBeVisible();
+  expect(await scrollRange(page)).toBe(without);
+});
+
+for (const [layout, width, height] of [['three across', 1440, 900], ['four across', 1920, 1080]] as const) {
+  for (const name of ['Tutorial', 'Tour'] as const) {
+    test(`in ${layout}, the page still keeps room for the ${name}'s card under its last section (issue 212)`, async ({ page }) => {
+      await page.setViewportSize({ width, height });
+      await page.goto('/');
+      const card = await cards[name](page);
+      await expect(card).toBeVisible();
+      await expectRoomFor(page, card);
+    });
+  }
+}
+
+for (const [layout, width, height] of [['375 px phone', 375, 812], ['2 × 2', 768, 1024]] as const) {
+  for (const [name, open] of Object.entries(cards)) {
+    test(`on a ${layout}, the page keeps room for the ${name}'s card under its last section (issue 212)`, async ({ page }) => {
+      await page.setViewportSize({ width, height });
+      await page.goto('/');
+      const card = await open(page);
+      await expect(card).toBeVisible();
+      await expectRoomFor(page, card);
+    });
+  }
+}

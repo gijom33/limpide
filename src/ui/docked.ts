@@ -1,13 +1,16 @@
 import { type RefObject, useEffect } from 'react';
 import { headerBottomAt } from './SectionStrip';
+import { STACKED } from './sections';
 
 /**
- * A card docked at the bottom of the page (a Tutorial's, the Demo's). Its height is `--docked-h`, so a control
- * brought into view lands above it. With `room: 'always'` the page keeps room for it below its last section; with
- * `'when-scrolling'` only where the page scrolls anyway (a phone), so a page that fits its window (a laptop) gets no
- * scroll bar just for the card, which then sits over the page's bottom edge. A control the keyboard reaches under
- * the card is scrolled clear above it, where the page can scroll (issue 104, WCAG 2.4.11): the browser only scrolls
- * to what is off screen, and the card is on screen, over it.
+ * A card docked at the bottom of the page (a Tutorial's, the Tour's, the Demo's). Its height is `--docked-h`, so a
+ * control brought into view lands above it. With `room: 'always'` the page keeps room for it below its last section,
+ * so the page scrolls what the card points at clear of it; with `'when-scrolling'` (the Demo's, which points at
+ * nothing) only on a phone and in 2 × 2, where the page is taller than its window: in three and four across, meant to
+ * show everything (issue 212, decided by the owner), the card sits over the page's bottom edge and the page scrolls
+ * only as it would without it. A control the keyboard reaches under the card is scrolled clear above it, where the
+ * page can scroll (issue 104, WCAG 2.4.11): the browser only scrolls to what is off screen, and the card is on screen,
+ * over it; where it cannot, the card folds or moves off it.
  */
 export function useDocked(card: RefObject<HTMLElement | null>, room: 'always' | 'when-scrolling' = 'always') {
   useEffect(() => {
@@ -16,7 +19,8 @@ export function useDocked(card: RefObject<HTMLElement | null>, room: 'always' | 
     const update = () => {
       root.style.setProperty('--docked-h', `${card.current!.offsetHeight}px`);
       // The page's own height, without the room (a margin, which offsetHeight leaves out).
-      root.toggleAttribute('data-docked', room === 'always' || main.offsetTop + main.offsetHeight > innerHeight);
+      const tall = main.offsetTop + main.offsetHeight > innerHeight;
+      root.toggleAttribute('data-docked', room === 'always' || (matchMedia(STACKED).matches && tall));
     };
     const observer = new ResizeObserver(update);
     observer.observe(card.current!, { box: 'border-box' }); // its offsetHeight, padding and border included

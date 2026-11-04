@@ -1618,7 +1618,8 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 .start-failure .start-failure-detail { color: var(--muted); font-family: ui-monospace, monospace; font-size: var(--text-md); }
 
 /* A card docked at the bottom of the page (a Tutorial's, issue 57; the Demo's, issue 50), under the panels and
-   tooltips, the page keeping room for it below its last section. */
+   tooltips, the page keeping room for it below its last section (the Demo's only on a phone and in 2 × 2: docked.ts,
+   issue 212). */
 .docked {
   position: fixed; z-index: 40; left: 50%; bottom: var(--space-3); transform: translate(calc(-50% + var(--card-dx, 0px)), var(--card-dy, 0px));
   width: min(var(--card-w, 640px), calc(100vw - 2 * var(--space-3))); box-sizing: border-box;
