@@ -1,4 +1,4 @@
-import { Fragment, useState } from 'react';
+import { Fragment, useState, useSyncExternalStore } from 'react';
 import { BEND_RANGES, type BendRange } from '../app/rememberedSettings';
 import { answeredBy, doubledPorts, knownAmong } from '../midi/controller';
 import { describeControl, describeMode, describeTarget } from '../midi/describe';
@@ -6,6 +6,7 @@ import { type Control, type ControllerId, controlKey, type KnobMode, knobModeOf,
 import { DESTINATIONS_BY_STAGE } from '../modulation/destinations';
 import type { LfoDestination } from '../patch/patch';
 import { useHeaderPanel } from './hooks/useHeaderPanel';
+import type { MidiActivity } from './hooks/useMidi';
 import { useUnderHeader } from './hooks/useUnderHeader';
 import { CloseIcon, MidiIcon } from './icons';
 import { Forms, useOneLine } from './oneLine';
@@ -20,8 +21,8 @@ interface Props {
   state: MidiState;
   /** The panel opens: the moment to ask the browser for MIDI. */
   onOpen(): void;
-  /** The Activity Monitor: the last message received, described. */
-  activity: string | null;
+  /** The Activity Monitor: the last message received, described, read by its line alone (issue 217). */
+  activity: MidiActivity;
   mappings: readonly Mapping[];
   /** MIDI Learn (or Quick Setup) is on: the button says so, and the panel offers Done where Learn was started. */
   learning: boolean;
@@ -67,6 +68,16 @@ const statusText = (state: MidiState) => {
           : // A Bluetooth Controller is a port like any other once the system has paired it, as the owner's C16 is (issue 143).
             'No MIDI Controller connected. Plug one in by USB and it is picked up straight away. A Bluetooth one plays once the system pairs it as a MIDI device (on a Mac, in Audio MIDI Setup; on Windows and Linux, untried), as a TempoPAD C16 does on a Mac.';
 };
+
+/** The last message received: each message redraws this line alone, not the panel nor the page (issue 217). */
+function ActivityLine({ activity }: { activity: MidiActivity }) {
+  const line = useSyncExternalStore(activity.subscribe, activity.get);
+  return (
+    <span role="status" aria-label="MIDI activity">
+      {line ?? 'Nothing received yet'}
+    </span>
+  );
+}
 
 /**
  * The MIDI button: a dot and the number of Controllers, and "Learning" in its word's place while MIDI Learn is on. It opens the MIDI
@@ -127,9 +138,7 @@ export function MidiPanel({
           <p className="midi-connection">{statusText(state)}</p>
           <div className="midi-activity">
             <span className="midi-heading">Last message</span>
-            <span role="status" aria-label="MIDI activity">
-              {activity ?? 'Nothing received yet'}
-            </span>
+            <ActivityLine activity={activity} />
           </div>
           {learning ? (
             <button

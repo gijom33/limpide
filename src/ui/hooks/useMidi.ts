@@ -28,6 +28,32 @@ async function midiPermission(): Promise<PermissionState> {
   }
 }
 
+/**
+ * The Activity Monitor's line, the last message heard, kept apart from the page's state: a stream of aftertouch or a
+ * clock's ticks redraw that line alone, not the page (issue 217).
+ */
+export interface MidiActivity {
+  get(): string | null;
+  subscribe(listener: () => void): () => void;
+}
+
+function createActivity() {
+  let line: string | null = null;
+  const listeners = new Set<() => void>();
+  return {
+    get: () => line,
+    set(next: string) {
+      if (next === line) return;
+      line = next;
+      for (const listener of listeners) listener();
+    },
+    subscribe(listener: () => void) {
+      listeners.add(listener);
+      return () => void listeners.delete(listener);
+    },
+  };
+}
+
 interface Host {
   storage: KeyValueStorage;
   session: AudioSession;
@@ -57,9 +83,10 @@ export function useMidi(host: Host) {
   const keyboard = useRef(host);
   keyboard.current = host;
   const [midi, setMidi] = useState<MidiState>({ kind: 'pending' });
-  const [activity, setActivity] = useState<string | null>(null);
+  const activity = useMemo(createActivity, []);
   // Whether a keyboard has sent aftertouch this visit: from then on the Timeline draws what it moves (issue 132).
   const [pressureHeard, setPressureHeard] = useState(false);
+  const heard = useRef(false);
   const [learn, setLearn] = useState<LearnState>({ phase: 'off' });
   const noteFromController = useEffectEvent(() => onNote());
 
@@ -251,8 +278,12 @@ export function useMidi(host: Host) {
               }
             }
             surface.handle(m, from);
-            setActivity(describeMessage(m));
-            if (m.type === 'pressure' && m.value > 0) setPressureHeard(true);
+            activity.set(describeMessage(m));
+            // Set once: a same-value setState can still render the page once before React bails out.
+            if (m.type === 'pressure' && m.value > 0 && !heard.current) {
+              heard.current = true;
+              setPressureHeard(true);
+            }
           },
           // A clock from any input sets the tempo (issue 136); it is no Controller's control, nor shown as one.
           onClock: (m, name, time) => session.tempo.midiClock(m.type, time, name),
@@ -270,10 +301,10 @@ export function useMidi(host: Host) {
       cancelled = true;
       dispose();
     };
-  }, [surface, midiWanted, mappingStore, storage, session]);
+  }, [surface, midiWanted, mappingStore, storage, session, activity]);
 
   return {
-    midi, activity, pressureHeard, mappings, mappingStore, learn, learning, learnContext, surface,
+    midi, activity: activity as MidiActivity, pressureHeard, mappings, mappingStore, learn, learning, learnContext, surface,
     setup, setupLast, updateSetup, closeSetup, applyLayout,
     bankFollow, setBankFollow, connect: () => setMidiWanted(true),
   };
