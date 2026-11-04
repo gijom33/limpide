@@ -13,6 +13,7 @@ Decided by the owner, 2026-11-03, one question at a time (each carried into the 
 1. **Bead and the Display panel: kept as built** ("Keep"). Calls 2, 3 and 4 of 151 stand as the owner's change to its decisions 6 and 7.
 2. **Bead in a Tutorial or the Tour: kept still** ("Keep it still"). Its dancing and sound-driven hops pause too, for the whole Tutorial or Tour, beyond 151's decision 9, so its movement there means "look here".
 3. **A MIDI Start and a synced LFO: the pull accepted** ("Accept the pull"). A synced free LFO is pulled onto the beat over two cycles (ADR-0019), with no click on a held Note; 136's box is reworded to say so.
+4. **Aftertouch on the ring: the dot alone** ("Keep the dot"), as 132's call 2 built it; no arc of its own.
 
 ## Questions
 
