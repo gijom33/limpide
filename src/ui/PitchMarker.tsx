@@ -78,7 +78,7 @@ export function PitchMarker() {
           if (other !== Math.round(gliding) && spots.length < DOTS) spots.push(place(piano, origin, other, shift));
         }
       }
-      // Written once every Viewer has read the page (issue 221).
+      // Written once every draw of the frame has read the page (issue 221).
       return () =>
         els.forEach((el, i) => {
           const at = spots[i];

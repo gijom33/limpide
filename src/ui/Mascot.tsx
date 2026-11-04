@@ -922,8 +922,9 @@ export function Mascot({
         return;
       }
 
-      // Its drawing, written once every Viewer has read the page (issue 221): what is above only reads it.
-      const perched = perch;
+      // Where it is perched this frame and the window's height, for the writes below: read here, with the rest.
+      const [perched, windowHeight] = [perch, innerHeight];
+      // Its drawing, written once every draw of the frame has read the page (issue 221): what is above only reads it.
       return () => {
         // Between lines and under the header, the line's moves take over the sound's and the controls'. It keeps its
         // facing, turned its way across a leap and back as it lands (issue 179), but in the pointer's hold or thrown.
@@ -1131,7 +1132,7 @@ export function Mascot({
           const a = (pose.tilt * Math.PI) / 180;
           const x = drawnX(left + ox + dx * Math.cos(a) - dy * Math.sin(a));
           const y = drawnY(ground - pose.lift + dx * Math.sin(a) + dy * Math.cos(a));
-          const bottom = innerHeight - page.top + 30;
+          const bottom = windowHeight - page.top + 30;
           const hookY = y + pose.hook * Math.max(0, bottom - y);
           const [line, hook, caught] = fish.children as unknown as [SVGLineElement, SVGGElement, SVGGElement];
           line.setAttribute('x1', String(x));

@@ -74,7 +74,7 @@ export function LfoPlot({ engine, lfo, label, inactive }: { engine: SynthEngine;
       const cy = y(engine.lfoSwingAt(now, lfo));
       const marks = markedBeats(engine.patchAt(now), [lfo], engine.tempo(), timeAt(0, now), now);
       const xOf = (t: number) => (PAD + ((t - timeAt(0, now)) / SPAN) * (w - 2 * PAD)).toFixed(1);
-      // Written once every Viewer has read the page (issue 221).
+      // Written once every draw of the frame has read the page (issue 221).
       return () => {
         line.current?.setAttribute('d', `M${points.join(' L')}`);
         dot.current?.setAttribute('cy', cy);

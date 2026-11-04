@@ -140,7 +140,7 @@ export function ModulationRing({ id, centre, radius, trackRadius, dotRadius, arc
       // Always on the knob's own track, where its value arc and the white rings are, whatever moves it (the owner,
       // 2026-10-28): the rings say how far each source reaches, the dot where the value is.
       const at = live === null ? null : pointNow(position(live), trackRadius);
-      // Written once every Viewer has read the page (issue 221).
+      // Written once every draw of the frame has read the page (issue 221).
       return () => {
         arcs.forEach((drawn, i) => {
           const path = paths[i]!;

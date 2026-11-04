@@ -76,7 +76,7 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, fundamenta
       const settled = silence((silent || paused()) && glowSame, performance.now()) > GLOW_MS;
       drawScope(settled);
       drawSpectrum(settled);
-      // Written once every Viewer has read the page (issue 221).
+      // Written once every draw of the frame has read the page (issue 221).
       return () => {
         if (scopeRef.current!.dataset.db !== String(db)) scopeRef.current!.dataset.db = String(db);
       };

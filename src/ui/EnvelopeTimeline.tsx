@@ -31,7 +31,8 @@ export function EnvelopeTimeline({
   }, [aftertouch]);
   useEffect(() => {
     const draw = createTimeline(canvasRef.current!, engine, view, () => aftertouchRef.current);
-    // It reads its canvas's size and draws on it: nothing to write to the page (issue 221).
+    // It reads its canvas's size and colours and draws on it. Its marks for the tests (`data-`) stay in its draw, as the
+    // Scope's and Spectrum's do: no style names them, so they leave the page's styles as they were (issue 221).
     return addToRenderLoop(() => {
       draw();
     });
