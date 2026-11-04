@@ -301,6 +301,29 @@ test.describe('closing gives the focus back to what opened it (issue 189)', () =
     await expect(midiButton(page)).toBeFocused();
   });
 
+  test('MIDI Learn, Done and a Controller’s layout in the MIDI panel, to the MIDI button', async ({ page }) => {
+    await withFakeController(page, 'Synido TempoPAD C16');
+    for (const name of ['MIDI Learn', 'Done', 'C16 layout']) {
+      await openMidi(page);
+      await midiPanel(page).getByRole('button', { name, exact: true }).press('Enter');
+      await expect(midiPanel(page)).toBeHidden();
+      await expect(midiButton(page)).toBeFocused();
+    }
+  });
+
+  test('Quick Setup in the MIDI panel, to its card, and its Close to the MIDI button', async ({ page }) => {
+    await withFakeController(page);
+    await openMidi(page);
+    await midiPanel(page).getByRole('button', { name: 'Quick Setup', exact: true }).press('Enter');
+    const setup = page.getByRole('region', { name: 'Quick Setup' });
+    await expect(setup.getByRole('button', { name: 'Skip' })).toBeFocused();
+    await page.keyboard.press('Escape'); // finishes: Skip goes, and the summary's Close takes the focus
+    await expect(setup.getByRole('button', { name: 'Close' })).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(setup).toBeHidden();
+    await expect(midiButton(page)).toBeFocused();
+  });
+
   test('Quit on a Tutorial’s card, to the Tutorial button', async ({ page }) => {
     await page.goto('/');
     const tutorialButton = page.getByRole('button', { name: 'Tutorial', exact: true });

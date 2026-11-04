@@ -71,7 +71,7 @@ const statusText = (state: MidiState) => {
 /**
  * The MIDI button: a dot and the number of Controllers, and "Learning" in its word's place while MIDI Learn is on. It opens the MIDI
  * panel: what is connected, the Activity Monitor, MIDI Learn (and Done, once learning), and the Mappings. Escape from
- * anywhere in it closes it back to the button (issue 189).
+ * anywhere in it, MIDI Learn, Done and a layout close it back to the button; Quick Setup, to its card (issue 189).
  */
 export function MidiPanel({
   state, onOpen, activity, mappings, learning, onLearn, onDone, onQuickSetup, onLayout, onRemove, onMode, onClear, bendRange, onBendRange,
@@ -79,6 +79,11 @@ export function MidiPanel({
 }: Props) {
   const [open, setOpen] = useState(false);
   const { wrapper, button } = useHeaderPanel(open, setOpen);
+  /** The panel closes as a button in it acts, and the focus goes back to the MIDI button, not to the page (issue 189). */
+  const closeToButton = () => {
+    button.current?.focus();
+    setOpen(false);
+  };
   const panel = useUnderHeader<HTMLDivElement>();
   const devices = state.kind === 'ready' ? state.devices : [];
   const available = state.kind === 'ready' || state.kind === 'pending';
@@ -131,7 +136,7 @@ export function MidiPanel({
               type="button"
               className="tool tool-primary"
               onClick={() => {
-                setOpen(false);
+                closeToButton();
                 onDone();
               }}
             >
@@ -145,13 +150,14 @@ export function MidiPanel({
                   className="tool"
                   disabled={!available}
                   onClick={() => {
-                    setOpen(false);
+                    closeToButton();
                     onLearn();
                   }}
                 >
                   MIDI Learn
                 </button>
               </Tooltip>
+              {/* Quick Setup's card takes the focus, as a Tutorial picked from its list does. */}
               <Tooltip content={TIPS.quickSetup}>
                 <button
                   type="button"
@@ -173,7 +179,7 @@ export function MidiPanel({
                       type="button"
                       className="tool"
                       onClick={() => {
-                        setOpen(false);
+                        closeToButton();
                         onLayout(id);
                       }}
                     >
