@@ -677,6 +677,32 @@ test('while it is out, words spelled with Notes cue its tricks; B, E, A, D still
   await expect(mascot(page)).toHaveCount(0);
 });
 
+test('B, A, G, G, A, G, E gives the suitcase: fast and a second a Note on the computer keys, and from the piano (issue 204)', async ({ page }) => {
+  test.slow();
+  await page.goto('/');
+  await listening(page);
+  await bringBead(page);
+  const suitcase = async () => {
+    await expect(mascot(page)).toHaveAttribute('data-doing', 'suitcase');
+    await expect(mascot(page)).not.toHaveAttribute('data-doing', 'suitcase', { timeout: 6000 });
+  };
+  await play(page, 'jhgghgd'); // fast
+  await suitcase();
+  // Slow: a Note a second, 6 s from the first to the last, past the 4 s B, E, A, D has.
+  for (const [i, key] of [...'jhgghgd'].entries()) {
+    if (i) await page.waitForTimeout(1000);
+    await page.keyboard.press(key);
+  }
+  await suitcase();
+  const piano = (name: string) => page.getByRole('group', { name: 'Piano' }).getByRole('button', { name, exact: true });
+  for (const name of ['B4', 'A4', 'G4', 'G4', 'A4', 'G4', 'E5']) {
+    const box = (await piano(name).boundingBox())!;
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height * 0.8);
+    await page.waitForTimeout(300);
+  }
+  await suitcase();
+});
+
 test('a Waveform chosen: its tail takes that wave a moment, then is the logo again', async ({ page }) => {
   await page.goto('/');
   await listening(page);
@@ -918,6 +944,72 @@ test('through the Demo it conducts, then plays air guitar, then surfs an LFO sha
     .toBe(true);
 });
 
+/** Its lean and the slope of LFO `lfo`'s line under its middle, in degrees, each frame for `ms` that it is on its board. */
+const onTheBoard = (page: Page, lfo: number, ms: number) =>
+  page.evaluate(
+    ([n, ms]) =>
+      new Promise<{ lean: number; slope: number }[]>((done) => {
+        const out: { lean: number; slope: number }[] = [];
+        const start = performance.now();
+        const frame = (now: number) => {
+          const bead = document.querySelector<HTMLElement>('.mascot');
+          if (bead?.dataset.board === 'on') {
+            const lean = Number(/rotate\((\S+)deg\)/.exec(bead.querySelector<HTMLElement>('.mascot-drop')!.style.transform)?.[1] ?? 0);
+            const plot = document.querySelector(`.lfo-plot[data-lfo="${n}"]`)!;
+            const middle = bead.getBoundingClientRect().left + 9 - plot.getBoundingClientRect().left; // the drop's middle
+            const points = [...plot.querySelector('.lfo-plot-line')!.getAttribute('d')!.matchAll(/[ML](\S+) (\S+)/g)].map((m) => ({ x: Number(m[1]), y: Number(m[2]) }));
+            const near = (x: number) => points.reduce((a, b) => (Math.abs(b.x - x) < Math.abs(a.x - x) ? b : a));
+            const [a, b] = [near(middle - 4), near(middle + 4)];
+            if (b.x > a.x) out.push({ lean, slope: (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI });
+          }
+          if (now - start < ms) requestAnimationFrame(frame);
+          else done(out);
+        };
+        requestAnimationFrame(frame);
+      }),
+    [lfo, ms] as const,
+  );
+
+/** On its board, it leans with the line under it: forward going down, back going up (issue 204). */
+async function leansWithTheWave(page: Page, lfo: number) {
+  const seen = await onTheBoard(page, lfo, 2000);
+  const told = JSON.stringify(seen.slice(0, 40));
+  expect(seen.length, told).toBeGreaterThan(0);
+  const steep = seen.filter((f) => Math.abs(f.slope) > 4);
+  expect(steep.length, told).toBeGreaterThan(0);
+  // The wave moves on between the frame it is drawn and the one read here: most frames, not all.
+  expect(steep.filter((f) => Math.sign(f.lean) === Math.sign(f.slope)).length / steep.length, told).toBeGreaterThan(0.8);
+}
+
+test('three across, wide enough for the LFO plots clear of the card, each act in turn: conducting, the air guitar, then surfing where an LFO is on (issue 204)', async ({ page }) => {
+  await page.setViewportSize({ width: 1728, height: 1117 });
+  await page.goto('/');
+  await listening(page);
+  await bringBead(page);
+  await page.getByRole('button', { name: 'Demo', exact: true }).click();
+  const card = page.getByRole('region', { name: 'Demo' });
+  const part = (n: number) => card.getByRole('button', { name: new RegExp(`^Play from part ${n},`) }).click();
+  await expect(mascot(page)).toHaveAttribute('data-act', 'conduct');
+  await part(2);
+  await expect(mascot(page)).toHaveAttribute('data-act', 'airGuitar');
+  await expect(mascot(page)).toHaveAttribute('data-tail', 'straight'); // its tail up across it, a guitar's neck
+  // Part 3, Self-Oscillation: no LFO on, so surfing's turn is skipped: it conducts.
+  await part(3);
+  await page.waitForTimeout(1500);
+  await expect(mascot(page)).toHaveAttribute('data-act', 'conduct');
+  await part(4);
+  await expect(mascot(page)).toHaveAttribute('data-act', 'airGuitar');
+  // Part 5, Tremolo Keys, an LFO on: it surfs, on its board, leaning with the wave.
+  await part(5);
+  await expect(mascot(page)).toHaveAttribute('data-act', 'surf', { timeout: 8000 });
+  await expect(mascot(page)).toHaveAttribute('data-board', 'on', { timeout: 5000 });
+  const lfo = Number(await page.locator('.lfo-plot[data-lfo]:not([data-inactive])').first().getAttribute('data-lfo'));
+  await leansWithTheWave(page, lfo);
+  await part(6);
+  await expect(mascot(page)).toHaveAttribute('data-act', 'conduct');
+  await expect(mascot(page)).toHaveAttribute('data-board', '');
+});
+
 // Issue 211: the Demo's scroll to a part's section lasts long enough to see Bead fall or fly to its new edge. Its move
 // starts once the scroll carries its edge away, and lands, in view all along, before the page stops.
 for (const [size, viewport] of [
@@ -1006,6 +1098,9 @@ test('now and then it rides a slow Sine on an LFO plot, along its line, and goes
   await page.keyboard.down('f'); // a Note held: it listens, and does no funny turn
   await expect(mascot(page)).toHaveAttribute('data-ride', '1', { timeout: 40_000 });
   await expect(mascot(page)).toHaveAttribute('data-moving', 'standing', { timeout: 5000 });
+  // On its board, leaning with the wave (issue 204).
+  await expect(mascot(page)).toHaveAttribute('data-board', 'on');
+  await leansWithTheWave(page, 1);
   // On the line, each moment, as it rises and falls.
   const feet: number[] = [];
   for (let i = 0; i < 10; i++) {
@@ -1213,7 +1308,7 @@ test.describe('never over text where it rests (issue 181)', () => {
       await page.getByRole('button', { name: 'Demo', exact: true }).click();
       const card = page.getByRole('region', { name: 'Demo' });
       let rests = 0;
-      // A part each act: it conducts, plays air guitar (its tail swung down under its foot), surfs.
+      // A part each act: it conducts, plays air guitar (its tail up across it), surfs where a plot is clear.
       for (const part of [1, 2, 3]) {
         await card.getByRole('button', { name: new RegExp(`^Play from part ${part},`) }).click();
         const seen = await restsOverText(page, 8000);

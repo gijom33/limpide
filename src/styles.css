@@ -945,6 +945,9 @@ html:has(dialog.about[open]) { overflow: hidden; }
 .mascot-umbrella { fill: var(--stage-amp); }
 .mascot-handle { fill: var(--muted); }
 .mascot-gun { fill: var(--stage-filter); }
+/* Its surfboard (issue 204), in the Filter's colour with the Oscillator's stripe. */
+.mascot-board { fill: var(--stage-filter); }
+.mascot-board-stripe { fill: var(--stage-osc); }
 /* Issue 127: its twin as Detune splits it, an ice cube, its static with the Noise, its costumes and its new props.
    Picked up by a finger, it is dragged rather than the page scrolled; its props take no pointer. */
 .mascot-drop { touch-action: none; }

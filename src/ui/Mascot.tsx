@@ -4,6 +4,7 @@ import type { Word } from '../input/callingPhrase';
 import { type LfoNumber, lfos } from '../patch/patch';
 import type { PatchStore } from '../patch/patchStore';
 import { addToRenderLoop } from '../viewers/renderLoop';
+import { createDemoActs } from './demoActs';
 import { lineAt, lineWiderThan } from './LfoPlot';
 import { type Box, type Cling, clingBeside, crosses, type Guide, HEIGHT, RING, TAIL_HEIGHT, TWIN_PX, targetBox, WIDTH } from './mascotCling';
 import { mascotClock } from './mascotClock';
@@ -12,7 +13,7 @@ import { type Act, createMascotMotion, hatOn, type Pose, type Room, SCREAMING } 
 import { CATCH, CLOUD, HATS, HOOK, ICE, type Picture, PROPS, type Rect, ROD_TIP, SKY, type Stage, TAILS } from './mascotPictures';
 import {
   acrossOf, type Cover, choosePerch, chooseVisit, clearAlong, createMascotPlace, type Drawing, drawingOf, HOVER_UNDER, type Moving, nearestSpan, type Perch, rideOf, rideOnDrop, ridesFor, type Span,
-  standingCard, throwWalls, type Visit, visitEnds,
+  standingCard, surfLean, throwWalls, type Visit, visitEnds,
 } from './mascotPlace';
 import { createSpray, MOST_DROPLETS } from './mascotSpray';
 import type { Trick } from './mascotTricks';
@@ -107,6 +108,17 @@ const TURNED_OVER = 100;
 /** Its mouth's height on the drawing, never drawn: just under its eyes. The poured water ends there. */
 const MOUTH_Y = 10;
 
+/**
+ * Its surfboard (issue 204), under its foot in place of its legs: a long deck, its nose turned up on the side it faces
+ * as drawn, a stripe along it.
+ */
+const BOARD = {
+  deck: [[-2, 12, 13, 1], [-3, 11, 1, 1]],
+  stripe: [[0, 12, 1, 1], [4, 12, 1, 1], [8, 12, 1, 1]],
+} satisfies Record<string, Rect[]>;
+/** On its board, the line's slope is read this many pixels across under its middle. */
+const SURF_SPAN = 8;
+
 /** The highest row of a picture on the grid: 0 is the drop's top, negative over it. */
 const topOf = (picture: Picture) => Math.min(0, ...picture.flatMap(([, list]) => list.map(([, y]) => y)));
 /** How high each hat and prop drawn with the drop goes over the drop's top, on the grid; and those that stay put. */
@@ -157,8 +169,6 @@ const PICK_UP_PX = 6;
 const EYES_ON_PX = 150;
 /** The pixels of its static with the Noise. */
 const STATIC_DOTS = 10;
-/** The Demo's acts, one per part in turn; surfing an LFO's shape only where one is in view (the owner, 2026-10-30). */
-const ACTS: readonly Act[] = ['conduct', 'airGuitar', 'surf'];
 const LFO_PLOTS = '.lfo-plot[data-lfo]';
 /**
  * The LFO plots drawing an LFO that is on, in the window, each with its own tip: shown, it is over the plot while the
@@ -387,6 +397,7 @@ export function Mascot({
   const glass = useRef<SVGGElement>(null);
   const water = useRef(new Map<string, SVGGElement>());
   const gun = useRef<SVGGElement>(null);
+  const board = useRef<SVGGElement>(null);
   const twin = useRef<SVGUseElement>(null);
   const ice = useRef<SVGGElement>(null);
   const fuzz = useRef<SVGGElement>(null);
@@ -423,6 +434,7 @@ export function Mascot({
     // Phones and the sections 2 × 2: it keeps in view as the page scrolls.
     const stacked = matchMedia(STACKED);
     const motion = createMascotMotion();
+    const demoActs = createDemoActs();
     // Its own time: the sound's while it runs, the page's while the browser holds the sound stopped (an iPhone, back from
     // another app), so it never stands frozen.
     const clock = mascotClock(() => context.engine.now(), () => performance.now() / 1000);
@@ -826,12 +838,11 @@ export function Mascot({
           }
         }
       }
-      // Through a Demo part, one of its acts in turn; surfing, its line is an LFO's shape as its plot draws it: the
-      // first in view of an LFO that is on, its Depth above 0 (the owner, 2026-10-30). With none, another act.
+      // Through a Demo part, one of its acts in turn (issue 204); surfing, its line is an LFO's shape as its plot draws
+      // it: the first in view of an LFO that is on, its Depth above 0 (the owner, 2026-10-30). With none, it conducts.
       // Riding outside the Demo (issue 141), the same, on the plot it chose; a funny turn begun meanwhile plays there.
       const ride = visit?.ride ? rideable.find((p) => p.lfo === visit!.ride) : undefined;
-      let act: Act | null = part === null || leaveBy !== null ? null : ACTS[part % ACTS.length];
-      if (act === 'surf' && !plots.length) act = part! % 2 ? 'airGuitar' : 'conduct';
+      const act: Act | null = demoActs.act(leaveBy === null ? part : null, plots.length > 0);
       motion.act(act ?? (ride ? 'surf' : null));
       const plot = act === 'surf' ? plots[0] : ride;
       let surfRoom: Room | null = null;
@@ -963,6 +974,16 @@ export function Mascot({
         pose.splash = p < 0.3 ? 'wide' : 'none';
         pose.eyes = p < 0.15 ? 'shut' : where.impact > 0.5 && p < 0.55 ? 'happy' : pose.eyes;
       }
+      // Surfing in the Demo or riding a plot (issue 204): on its board along the line under it, leaning with the wave,
+      // forward going down it and back going up; but for a funny turn, which plays there as it would anywhere.
+      const onBoard = !!plot && perch.id === `surf ${plot.lfo}` && !pose.doing && (where.moving === 'standing' || where.moving === 'landing');
+      if (onBoard) {
+        const middle = drawnAt.left + DROP_MIDDLE - plot.box.left;
+        const lineAtX = (x: number) => lineAt({ engine: context.engine, lfo: plot.lfo, box: plot.box, x, now: context.engine.now() });
+        pose.tilt = surfLean(lineAtX(middle - SURF_SPAN / 2), lineAtX(middle + SURF_SPAN / 2), SURF_SPAN);
+        pose.legs = 'tuck';
+      }
+      if (onBoard !== (board.current!.style.display === '')) board.current!.style.display = onBoard ? '' : 'none';
 
       // A trick seen whole under what is over the page (issue 200): where the room over it is short, it hops lower, and
       // if its drawing is still too tall (an umbrella, a cloud), it is drawn smaller about its foot. With room, untouched.
@@ -1021,7 +1042,7 @@ export function Mascot({
       // What it is doing, for the tests (issue 127); pointing the way, for the stylesheet too (issue 151).
       // Beside a control, or sliding there, the pointer passes through it to what is under it (issue 151).
       const pointing = where.moving === 'sliding' || where.moving === 'clinging' ? 'yes' : 'no';
-      const marks = { act: act ?? '', ride: ride ? String(ride.lfo) : '', tail: pose.tail, hat: pose.hat, doing: pose.doing ?? '', prop: pose.prop, moving: where.moving, pointing };
+      const marks = { act: act ?? '', ride: ride ? String(ride.lfo) : '', board: onBoard ? 'on' : '', tail: pose.tail, hat: pose.hat, doing: pose.doing ?? '', prop: pose.prop, moving: where.moving, pointing };
       for (const [mark, value] of Object.entries(marks)) if (outer.dataset[mark] !== value) outer.dataset[mark] = value;
 
       drawnAt = { left: acrossOf(where, pose.x), foot: where.foot };
@@ -1285,6 +1306,10 @@ export function Mascot({
           <g ref={umbrella} style={{ display: 'none' }}>
             <g className="mascot-umbrella">{rects(UMBRELLA.canopy)}</g>
             <g className="mascot-handle">{rects(UMBRELLA.handle)}</g>
+          </g>
+          <g ref={board} className="mascot-prop" style={{ display: 'none' }}>
+            <g className="mascot-board">{rects(BOARD.deck)}</g>
+            <g className="mascot-board-stripe">{rects(BOARD.stripe)}</g>
           </g>
         </svg>
       </div>

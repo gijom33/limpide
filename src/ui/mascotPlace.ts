@@ -563,3 +563,16 @@ export function ridesFor(lfos: readonly Lfo[], bpm: number, { demo, reduced }: {
     lfo.amount > 0 && (lfo.waveform === 'sine' || lfo.waveform === 'triangle') && lfoHz(lfo, bpm) <= RIDE_HZ + 1e-9 ? [(i + 1) as LfoNumber] : [],
   );
 }
+
+/** The steepest it leans on its surfboard, in degrees (issue 204). */
+const STEEPEST_SURF = 35;
+
+/**
+ * On its surfboard (issue 204): its lean, in degrees, positive to the right, with its board along the line under it,
+ * which is at `before` and `after` px down the window `across` px apart. Going down the wave it so leans forward, and
+ * going up it leans back, whichever way it goes; never steeper than `STEEPEST_SURF`.
+ */
+export function surfLean(before: number, after: number, across: number): number {
+  const degrees = (Math.atan2(after - before, across) * 180) / Math.PI;
+  return Math.max(-STEEPEST_SURF, Math.min(STEEPEST_SURF, degrees)) || 0;
+}

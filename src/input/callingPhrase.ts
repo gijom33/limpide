@@ -5,21 +5,21 @@ const pitchClasses = (letters: string) => [...letters].map((l) => PITCH_CLASS[l 
 /** B, E, A, D, as in a bead of water: the mascot's Notes. */
 const BEAD = pitchClasses('BEAD');
 
-/** The longest a phrase may take, from its first Note to its last, in seconds. */
+/** The longest B, E, A, D may take, from its first Note to its last, in seconds: a second a Note (issue 204). */
 export const CALLING_SECONDS = 4;
 
 /**
  * The Notes that call the mascot and send it away (issue 115): B, E, A, D in that order, in any octave, within
- * `CALLING_SECONDS`; or another phrase of pitch classes. `press` hears each Note the player presses, at `time` in
+ * `CALLING_SECONDS`; or another phrase of pitch classes, within `seconds`. `press` hears each Note the player presses, at `time` in
  * seconds; true when it completes the phrase. A Note out of order starts it over (its first Note, from there).
  */
-export function createCallingPhrase(phrase: readonly number[] = BEAD) {
+export function createCallingPhrase(phrase: readonly number[] = BEAD, seconds = CALLING_SECONDS) {
   let heard = 0; // how many of the phrase's Notes have come in order
   let startedAt = 0;
   return {
     press(note: number, time: number): boolean {
       const pitchClass = ((note % 12) + 12) % 12;
-      if (heard > 0 && pitchClass === phrase[heard] && time - startedAt <= CALLING_SECONDS) heard++;
+      if (heard > 0 && pitchClass === phrase[heard] && time - startedAt <= seconds) heard++;
       else if (pitchClass === phrase[0]) {
         heard = 1;
         startedAt = time;
@@ -37,10 +37,11 @@ export type Word = keyof typeof WORDS;
 
 /**
  * Hears the words (issue 127), each on its own, so a Note may count towards several: `press` gives the word a Note
- * completes, if any, by the same rules as B, E, A, D's.
+ * completes, if any, by the same rules as B, E, A, D's, each word within a second a Note from its first to its last: 4 s
+ * for the four-Note words, 7 s for BAGGAGE (the owner, issue 204).
  */
 export function createWordsHeard() {
-  const phrases = (Object.keys(WORDS) as Word[]).map((word) => ({ word, phrase: createCallingPhrase(pitchClasses(WORDS[word])) }));
+  const phrases = (Object.keys(WORDS) as Word[]).map((word) => ({ word, phrase: createCallingPhrase(pitchClasses(WORDS[word]), WORDS[word].length) }));
   return {
     press(note: number, time: number): Word | null {
       let done: Word | null = null;
