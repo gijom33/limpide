@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** needs-info · enhancement. Polish for v1; [181](./181-bead-never-over-text.md), which changed where Bead rests, shipped in 1.22.0
+**Status:** superseded · enhancement. Split by the owner on 2026-11-03 into [220](./220-bead-keeps-its-covers-as-the-page-changes.md) (its covers kept as the page changes), [221](./221-the-frame-reads-the-page-before-it-writes.md) (reads before writes, a measuring script) and [222](./222-beads-choices-as-functions-with-tests.md) (its choices as functions), each ready for an agent
 
 ## Decisions
 
@@ -12,6 +12,10 @@ Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.m
 
 1. **Nothing Bead does changes:** a refactor and a speed-up, its behaviour held by the mascot spec as it is.
 2. **The decisions as pure functions** with unit tests, beside the cling and place modules that already are.
+
+Decided by the owner, 2026-11-03:
+
+3. **Question 1, one issue or three: split in three** ("Split in three"), as recommended, into 220 to 222.
 
 ## Agent Brief
 
