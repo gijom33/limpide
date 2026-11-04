@@ -55,6 +55,7 @@ Secondary, or primary known only by its record:
 - **[S31]** Wikipedia, *Yamaha DX7*: <https://en.wikipedia.org/wiki/Yamaha_DX7>
 - **[S32]** Wikipedia, *Mixtur*: <https://en.wikipedia.org/wiki/Mixtur>
 - **[S33]** Yamaha, *Discovering Digital FM: John Chowning Remembers* (Yamaha's own Hub, read 2026-11-03, issue 194): <https://hub.yamaha.com/discovering-digital-fm-john-chowning-remembers/>
+- **[S34]** Yamaha, *DX7 Operating Manual*, in Yamaha's own manual library (listed 2026-11-04, issue 223; not read): the scan <https://usa.yamaha.com/files/download/other_assets/9/333979/DX7E1.pdf> and a text version <https://usa.yamaha.com/files/download/other_assets/5/1197065/dx7e.zip>, listed at <https://usa.yamaha.com/products/contents/proaudio/downloads/manuals/index.html?l=en&p=86>
 
 ---
 
@@ -206,6 +207,7 @@ Secondary, or primary known only by its record:
 - Stanford's patent, filed 1975, granted 1977. **A** [S14] Stanford and Yamaha signed an FM licence on 19 March 1975. **A** (the archive's dated list) [S15]
 - The Yamaha DX7 (1983) took FM to the mass market. **C** [S31]
 - Yamaha's own account: "the release of the Yamaha DX7 in 1983", and Chowning: "The DX7 used my underlying principles and research". **B** (the maker's own page, quoting Chowning) [S33] Found for issue 194 (issue 191, question 6); Yamaha's corporate history pages refused the fetch. The page also dates the licence seven years before a 1981 product, against the archive's 1975 [S15]: the line keeps 1975.
+- Yamaha's own DX7 documents (issue 223, the owner's decision 5): the DX7's Operating Manual, as a scan and a text version, is in Yamaha's manual library [S34], the primary source decision 5 asks for. Not read on 2026-11-04: Yamaha's server refuses the fetching tool, as its history pages did for issue 194, and a download waits on the owner's go-ahead. Until it is read, the line rests on the maker's own page, graded B [S33], and names no fact the manual alone would carry.
 - Analogue cross-modulation, as Limpide does it: the Prophet-5's Poly Mod sends Osc B to Osc A's frequency (destinations listed, [S16], **A**); the Minimoog's Osc 3 could modulate the other oscillators' pitch through the Modulation Mix (scan 8, [S3], **A**).
 
 **Draft History:** John Chowning found in 1973, at Stanford, that one sine swinging another at audio rate makes whole families of partials; Yamaha licensed it in 1975 and built the DX7 (1983) on it.
@@ -362,7 +364,7 @@ Display and app controls, with no musical past: Freeze, Snapshot, Clear Snapshot
 5. The piano damper pedal as Hold's ancestor.
 6. The oscilloscope's origin (Braun, 1897).
 
-Resting on secondary sources only (C), to be checked before a line uses them: Ussachevsky's part in the envelope (Pinch and Trocco p. 59), the Oberheim SEM's year and notch, the Yamaha CS-80's velocity, the DX7's year, the Minimoog as the first pitch wheel, the 2-semitone MIDI bend default, Bode's ring modulators and the Daleks, *Mixtur*'s year, the organ celeste, Johnson's noise papers and the origin of Q.
+Resting on secondary sources only (C), to be checked before a line uses them: Ussachevsky's part in the envelope (Pinch and Trocco p. 59), the Oberheim SEM's year and notch, the Yamaha CS-80's velocity, the DX7's year (since issue 194, Yamaha's own page gives it, B [S33]; its manual found, unread, for issue 223 [S34]), the Minimoog as the first pitch wheel, the 2-semitone MIDI bend default, Bode's ring modulators and the Daleks, *Mixtur*'s year, the organ celeste, Johnson's noise papers and the origin of Q.
 
 ## What the grilling should settle
 
