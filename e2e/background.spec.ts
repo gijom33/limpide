@@ -55,3 +55,36 @@ test('the Demo, with the page hidden for five seconds, starts every Note of thos
   // Each handed to the engine before its start, none late.
   expect(started.filter((n) => n.handed > n.at)).toEqual([]);
 });
+
+// Issue 227. Hidden, the Song hands its Notes about 2 s ahead; back in front, those not yet due are taken back and made
+// again as they fall due, so an octave changed at once is heard at once, not after up to 2 s of the old one.
+test('the Song, hidden then shown and its octave moved at once, plays the next Notes in the new octave (issue 227)', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Song', exact: true }).click();
+  await expect.poll(() => page.evaluate(() => window.__limpideNotes?.length ?? 0)).toBeGreaterThan(0);
+  const before = await page.evaluate(async () => {
+    Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' });
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
+    document.dispatchEvent(new Event('visibilitychange'));
+    await new Promise((done) => setTimeout(done, 1000));
+    delete (document as { visibilityState?: unknown }).visibilityState;
+    delete (document as { hidden?: unknown }).hidden;
+    document.dispatchEvent(new Event('visibilitychange'));
+    (document.querySelector('[aria-label="Octave up"]') as HTMLButtonElement).click();
+    return window.__limpideNotes!.length;
+  });
+  await page.waitForTimeout(2500);
+  const notes = await page.evaluate(() => window.__limpideNotes!);
+  const [handedHidden, handedAfter] = [notes.slice(0, before), notes.slice(before)];
+  const shownAt = handedHidden[handedHidden.length - 1].handed;
+  // Hidden, Notes were handed well ahead; each of those due a moment after the change is made again, an octave up
+  // (the Song's C4 to C5, now C5 to C6).
+  const farAhead = handedHidden.filter((n) => n.at > shownAt + 0.5);
+  expect(farAhead.length).toBeGreaterThan(2);
+  expect(farAhead.every((n) => n.note <= 72)).toBe(true);
+  for (const { at } of farAhead) {
+    const remade = handedAfter.filter((n) => Math.abs(n.at - at) < 1e-6);
+    expect(remade.length, `the Note at ${at.toFixed(3)} made again`).toBeGreaterThan(0);
+    expect(remade.every((n) => n.note >= 72)).toBe(true);
+  }
+});

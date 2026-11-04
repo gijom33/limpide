@@ -40,9 +40,12 @@ const pageHidden = () => typeof document !== 'undefined' && document.visibilityS
 
 /**
  * A player, asked on every tick: it hands `play` the Notes that start before `horizon`, in time order, and returns
- * 'end' once it is over, or how soon (in ms) to be asked again when that is sooner than the next tick.
+ * 'end' once it is over, or how soon (in ms) to be asked again when that is sooner than the next tick. One that widens
+ * its look-ahead in the background can be rewound: it then hands again the Notes from `from` on (issue 227).
  */
-export type Source = (horizon: number, now: number, play: (notes: readonly Played[]) => void) => 'end' | number | undefined;
+export type Source = ((horizon: number, now: number, play: (notes: readonly Played[]) => void) => 'end' | number | undefined) & {
+  rewind?(from: number): void;
+};
 
 /**
  * Plays a source's Notes on the audio clock (issue 75): each Note is handed to the engine once it is within the
@@ -51,7 +54,9 @@ export type Source = (horizon: number, now: number, play: (notes: readonly Playe
  * including what was already handed over.
  * Its ticks come from timers the browser does not slow in the background (issue 198). While the page is hidden the
  * look-ahead may widen to `background`, in case they are slowed all the same, and narrows again in front, so a Stop or
- * a change of Preset is still heard at once.
+ * a change of Preset is still heard at once: back in front, the Notes handed further ahead than the short look-ahead
+ * are taken back (the Gate closed at the first one's start, which ends a Note still sounding then too) and made again
+ * as they fall due, with the Patch and octave of then (issue 227).
  */
 export function startTransport(
   host: TransportHost,
@@ -68,6 +73,8 @@ export function startTransport(
   let sounding: Played[] = [];
   let shown = '';
   let now = host.now();
+  // The starts of the Notes handed over that have not started yet.
+  let ahead: number[] = [];
 
   const play = (handed: readonly Played[]) => {
     // A Note already past its start is dropped: played now, it would come late, with others in a burst (issue 198).
@@ -79,7 +86,21 @@ export function startTransport(
       for (let k = i; k < last; k++) host.release(notes[k].note, notes[k].off);
       i = last;
     }
+    ahead.push(...notes.map((n) => n.on));
     if (host.onNotes) sounding.push(...notes);
+  };
+
+  /** In front, the Notes handed over beyond the short look-ahead (while the page was hidden) are taken back. */
+  const takeBack = () => {
+    ahead = ahead.filter((on) => on >= now);
+    if (hidden() || !source.rewind) return;
+    const later = ahead.filter((on) => on >= now + lookahead);
+    if (!later.length) return;
+    const from = Math.min(...later);
+    host.noteOff(from);
+    source.rewind(from);
+    ahead = ahead.filter((on) => on < from);
+    sounding = sounding.filter((n) => n.on < from);
   };
 
   const light = () => {
@@ -95,6 +116,7 @@ export function startTransport(
 
   const step = () => {
     now = host.now();
+    takeBack();
     const next = source(now + (hidden() ? background : lookahead), now, play);
     if (next === 'end') {
       cancel = undefined;
