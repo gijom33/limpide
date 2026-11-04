@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** needs-info · enhancement. Polish for v1
+**Status:** superseded · enhancement. Split by the owner on 2026-11-03 into [213](./213-viewer-colours-read-once-and-a-silent-scope-skipped.md) (the colours and a silent Scope), [214](./214-the-silent-viewers-rest.md) (the silent Viewers rest), [215](./215-the-envelope-timeline-draws-only-new-columns.md) (the Timeline's new columns) and [216](./216-the-sound-engine-pauses-in-a-long-silence.md) (the engine's pause), each ready for an agent
 
 ## Decisions
 
@@ -16,6 +16,7 @@ Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.m
 Decided by the owner, 2026-11-03, answering the questions below:
 
 3. **Question 1, the LFO plot in silence: it keeps moving** ("Keep it moving"). The LFO plots and the modulation rings go on with the LFOs' clock with nothing playing, as now, so the page is never wholly at rest while they are on screen; the rest of the page (the silent Viewers, the Timeline, the colours) is what rests.
+4. **Question 2, one issue or four: split in four** ("Split in four"), as recommended, into 213 to 216.
 
 ## Agent Brief
 
