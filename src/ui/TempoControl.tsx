@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { clampBpm, TEMPO, TEMPO_STEPS } from '../music/tempo';
-import { stepParam } from '../patch/grid';
+import { type StepSize, stepParam } from '../patch/grid';
 import type { TempoState } from '../play/tempoStore';
 import { useHeaderPanel } from './hooks/useHeaderPanel';
 import { useMediaQuery } from './hooks/useMediaQuery';
@@ -107,9 +107,9 @@ function TempoDial({ tempo, onSet }: Pick<Props, 'tempo' | 'onSet'>) {
       {...learn}
       onKeyDown={(e) => {
         // As every knob's (issue 223): the arrows 1 BPM, Shift a tenth, Page Up and Down 10, to the next on each grid.
-        const fine = e.shiftKey ? 'fine' : 'unit';
-        const steps: Record<string, [1 | -1, 'unit' | 'fine' | 'coarse']> = {
-          ArrowUp: [1, fine], ArrowRight: [1, fine], ArrowDown: [-1, fine], ArrowLeft: [-1, fine], PageUp: [1, 'coarse'], PageDown: [-1, 'coarse'],
+        const arrow: StepSize = e.shiftKey ? 'fine' : 'unit';
+        const steps: Record<string, [1 | -1, StepSize]> = {
+          ArrowUp: [1, arrow], ArrowRight: [1, arrow], ArrowDown: [-1, arrow], ArrowLeft: [-1, arrow], PageUp: [1, 'coarse'], PageDown: [-1, 'coarse'],
         };
         if (e.key in steps) set(stepParam(TEMPO_STEPS, bpm, ...steps[e.key]));
         else if (e.key === 'Home') set(TEMPO.min);

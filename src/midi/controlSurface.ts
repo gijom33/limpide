@@ -1,4 +1,4 @@
-import { BPM_STEP, bpmPosition, clampBpm, positionBpm } from '../music/tempo';
+import { BPM_STEP, bpmPosition, positionBpm, wholeBpm } from '../music/tempo';
 import { stepParamBy } from '../patch/grid';
 import { type ChoiceId, inUnitShown, PARAMS, type ParamId } from '../patch/patch';
 import { answers, type KnownController } from './controller';
@@ -256,12 +256,19 @@ export function createControlSurface(synth: Synth) {
       centred: min === -max,
     };
   };
-  /** The tempo as a dial (issue 112): a Relative click a BPM, a C16's thirds gathered (issue 193). */
+  /**
+   * The tempo as a dial (issue 112): a Relative click a whole BPM, a C16's thirds gathered (issue 193); from a tempo set
+   * to a tenth by the keys (issue 223), the first click goes to the next whole BPM its way.
+   */
   const tempoDial = (): Dial => ({
     get: synth.tempoPosition,
     set: synth.setTempoPosition,
     unit: BPM_STEP,
-    step: (steps) => synth.setTempoPosition(bpmPosition(clampBpm(positionBpm(synth.tempoPosition()) + steps))),
+    step: (steps) => {
+      const bpm = positionBpm(synth.tempoPosition());
+      const from = steps > 0 ? Math.floor(bpm + 1e-9) : Math.ceil(bpm - 1e-9);
+      synth.setTempoPosition(bpmPosition(wholeBpm(from + steps)));
+    },
   });
 
   /** Whether a button's message is a press: its CC rising past the middle, not its release (a momentary one's 0). */
@@ -303,6 +310,13 @@ export function createControlSurface(synth: Synth) {
       const found: Mapping = { ...mapping, mode: detectKnobMode(values) };
       store.replace(found);
       return apply(found, message, from);
+    }
+    if (target.kind === 'choice' && message.type === 'noteOn') {
+      // A pad learned on a Switch: each hit flips it (issue 223).
+      const { index, count } = synth.choice(target.id);
+      synth.setChoice(target.id, (index + 1) % count);
+      synth.touched?.(target, 'moved');
+      return;
     }
     if (target.kind === 'param' || target.kind === 'choice' || target.kind === 'tempo') {
       if (message.type !== 'cc') return;
@@ -377,7 +391,7 @@ export function createControlSurface(synth: Synth) {
       learnFrom(message);
       return true;
     }
-    if (message.type === 'noteOn' && target.kind === 'action') {
+    if (message.type === 'noteOn' && learnsAsButton(target)) {
       learned({
         control: {
           kind: 'note',

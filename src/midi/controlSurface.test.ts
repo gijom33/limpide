@@ -704,7 +704,7 @@ describe('the Rate, a note value with Sync on, and the tempo (issue 112)', () =>
       press: () => {},
       release: () => {},
     });
-    return { positions, store, surface, actions, tempo: () => 40 + tempo * 200 };
+    return { positions, store, surface, actions, tempo: () => 40 + tempo * 200, setTempo: (bpm: number) => void (tempo = (bpm - 40) / 200) };
   };
 
   it('turns the note value from a control mapped to the Rate: a step for every two clicks of a Relative knob, a C16’s thirds gathered', () => {
@@ -761,6 +761,17 @@ describe('the Rate, a note value with Sync on, and the tempo (issue 112)', () =>
     r.surface.handle(cc(32, 127));
     r.surface.handle(cc(32, 0));
     expect(r.actions).toEqual(['tapTempo']);
+  });
+
+  it('moves a tempo set to a tenth to the next whole BPM a click, either way (issue 223)', () => {
+    const r = synced();
+    r.store.set({ control: { kind: 'cc', channel: 1, number: 31 }, target: { kind: 'tempo', id: 'bpm' }, mode: 'relative-twos' });
+    r.setTempo(120.5);
+    r.surface.handle(cc(31, 1));
+    expect(r.tempo()).toBe(121);
+    r.setTempo(120.5);
+    r.surface.handle(cc(31, 127));
+    expect(r.tempo()).toBe(120);
   });
 
   it('counts a third of a BPM for a C16’s 66 on the tempo (issue 193)', () => {
@@ -1007,6 +1018,20 @@ describe('A button learned on a Switch flips it on each press (issue 223)', () =
     send(cc(49, 0));
     expect(choices.lfoSync).toBe(1);
     send(cc(49, 127));
+    expect(choices.lfoSync).toBe(0);
+  });
+
+  it('a pad sending Notes: each hit flips it, its Note-off doing nothing', () => {
+    const { surface, store, choices, send } = rig();
+    surface.startLearn();
+    surface.select(sync);
+    send(noteOn(36));
+    expect(store.find({ kind: 'note', channel: 10, number: 36 })?.mode).toBe('trigger');
+    expect(choices.lfoSync ?? 0).toBe(0);
+    surface.stopLearn();
+    send(noteOn(36), noteOff(36));
+    expect(choices.lfoSync).toBe(1);
+    send(noteOn(36), noteOff(36));
     expect(choices.lfoSync).toBe(0);
   });
 

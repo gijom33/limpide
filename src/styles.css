@@ -1300,7 +1300,8 @@ html:has(dialog.about[open]) { overflow: hidden; }
 .tempo-bpm { justify-content: center; gap: 3px; padding: 0 6px; cursor: ns-resize; touch-action: none; font-variant-numeric: tabular-nums; }
 .tap-tempo { padding: 0 8px; }
 .tempo-bpm[aria-disabled='true'], .tap-tempo[aria-disabled='true'] { cursor: default; }
-.tempo-value { min-width: 3ch; text-align: right; color: var(--text); font-variant-numeric: tabular-nums; }
+/* As wide as its widest, a BPM to a tenth ("238.8", issue 223), so the box keeps one width as it changes. */
+.tempo-value { min-width: 4.5ch; text-align: right; color: var(--text); font-variant-numeric: tabular-nums; }
 .tempo-unit { font-size: var(--text-xs); }
 /* While a MIDI clock sets the tempo (issue 136), "MIDI" in the unit's place, in the text's colour: about as wide as
    "BPM", so nothing beside it moves. The box's edge takes the MIDI button's connected green, so the mark shows from 861

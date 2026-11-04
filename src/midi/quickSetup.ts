@@ -29,7 +29,7 @@ export const QUICK_SETUP: SetupStep[] = [
   ...params('Amp', 'volume'),
   ...params('LFO 1', 'lfoRate', 'lfoAmount'),
   ...params('LFO 2', 'lfo2Rate', 'lfo2Amount'),
-  // Tap, the tempo's (issue 112), after the Patch's own Actions.
+  // Tap Tempo (issue 112), after the Patch's own Actions.
   ...actions('hold', 'freeze', 'snapshot', 'previousPreset', 'nextPreset', 'tapTempo'),
 ];
 

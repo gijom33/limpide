@@ -388,7 +388,6 @@ export const TIPS = {
   tempo: {
     title: 'Tempo',
     body: 'The page’s beats per minute (BPM), which every LFO with Sync on follows: its note value is a share of a beat, so at a new tempo its speed changes with it, and a synced wobble keeps to the beat. Drag it or use the arrows; double-click or Enter to type it. Loading a Preset leaves it as it is.',
-
     keys: stepWords(TEMPO_STEPS.grid),
   },
   tempoOpen: {

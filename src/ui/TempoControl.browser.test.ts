@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import '../test/renderHook'; // tells React it runs in a test
 import { TempoControl } from './TempoControl';
 
-/** The header's tempo in the page, at a BPM set from outside (Tap, a clock), and its screen reader's status. */
+/** The header's tempo in the page, at a BPM set from outside (Tap Tempo, a clock), and its screen reader's status. */
 async function tempoControl(bpm: number) {
   const container = document.body.appendChild(document.createElement('div'));
   const root = createRoot(container);
