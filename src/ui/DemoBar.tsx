@@ -28,7 +28,7 @@ interface Props {
  */
 export function DemoBar({ playing, tookOver, onStop, onJump, onPlayAgain, onDismiss }: Props) {
   const card = useRef<HTMLElement>(null);
-  useDocked(card, 'when-scrolling');
+  useDocked(card, 'when-stacked');
   const place = useCardPlacement(card, 'demo', playing ? 'playing' : 'stopped');
   const [closed, setClosed] = useState(false);
   // Stop, or Escape on the parts (which stops the Demo), takes away the button the focus was on: it goes back to the

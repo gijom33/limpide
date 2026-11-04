@@ -10,7 +10,7 @@
 
 Decided by the owner, 2026-11-03:
 
-1. **In three and four across, a docked card never makes the page scroll.** It sits over the page's bottom edge instead, as it already does on a window the page fits.
+1. **In three and four across, a docked card never makes the page scroll** (narrowed to the Demo's card by decision 6). It sits over the page's bottom edge instead, as it already does on a window the page fits.
 
 Claude's calls, open to the owner:
 
