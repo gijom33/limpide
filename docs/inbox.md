@@ -6,8 +6,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
-- 2026-11-04, the owner: "Regarding the glow settings in the display menu, I think we should have three options: no glow at all, glow only for the scope, or glow for both scope and spectrum."
-
 ## Dropped
 
 - 2026-11-02, from the 1.22.0 code review, 181's call 5 (Bead switching sides when the other side is clear) not in decision 3's order and changing 151's side rule: kept as built; 181 shipped in 1.22.0 and the owner has seen Bead beside the controls since without remark. Claude's call, open to the owner.
@@ -193,3 +191,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-11-03, evening: Bead's surfboard, leaning with the wave, went to [204](./issues/204-baggage-air-guitar-and-surfing-seen.md) (decision 8), with the owner's answers to its first three questions.
 2026-11-03, evening: Bead's glass still too low: done at once (`df3b828`), its rim while Bead drinks 0.8 of a row higher, a tenth of the glass's 8 rows; then, the owner: "Should be even higher than that. Bottom edge of glass at level of imaginary mouth" (`1b426ec`), the mouth taken as just under the eyes.
 2026-11-03, late: the 1.22.0 and 1.23.0 release checks' leftovers. Tests failing on GitHub's WebKit and the reviews' timing notes went to [224](./issues/224-tests-steady-on-githubs-webkit.md); the words, docs, test names, ADR-0007's chord line, the slow Rate's figure and FM's History year to [225](./issues/225-words-and-docs-after-1-22-and-1-23.md); Talking Filter on C5 and Riser held high to [226](./issues/226-two-presets-high-up.md); the four slips in 1.23's new features (198's Notes handed ahead, 185's clock stamps, 186's nudged fader, who scrolled) to [227](./issues/227-small-slips-in-the-new-features.md); the standards and smells to [228](./issues/228-tidy-ups-after-1-23.md); the text Bead avoids read again only every 0.5 s to [220](./issues/220-bead-keeps-its-covers-as-the-page-changes.md); 181's side rule kept and Bead's rise from the header dropped (above).
+2026-11-04: three Glow choices in Display went to [229](./issues/229-three-glow-choices.md).
