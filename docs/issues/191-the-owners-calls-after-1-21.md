@@ -16,6 +16,7 @@ Decided by the owner, 2026-11-03, one question at a time (each carried into the 
 4. **Aftertouch on the ring: the dot alone** ("Keep the dot"), as 132's call 2 built it; no arc of its own.
 5. **Volume's Depth readout: the one-sided dip** ("Keep the dip"), as "−6.0 dB"; 169's box is reworded from ±dB.
 6. **The DX7 in FM's History line: kept, its source found** ("Keep, find source"). The line stays (134, decision 9); the primary source, Yamaha's own DX7 documents, is found in [194](./194-words-that-lag-the-code.md), to meet 134's decision 5.
+7. **Short forms: "Key" and "Vel" added** ("Add Key and Vel"). Key Track and Velocity take them where 156 measures the room short; the header keeps 154's fixed widths, its own rule. To build.
 
 ## Questions
 
