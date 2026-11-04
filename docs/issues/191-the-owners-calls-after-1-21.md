@@ -14,6 +14,7 @@ Decided by the owner, 2026-11-03, one question at a time (each carried into the 
 2. **Bead in a Tutorial or the Tour: kept still** ("Keep it still"). Its dancing and sound-driven hops pause too, for the whole Tutorial or Tour, beyond 151's decision 9, so its movement there means "look here".
 3. **A MIDI Start and a synced LFO: the pull accepted** ("Accept the pull"). A synced free LFO is pulled onto the beat over two cycles (ADR-0019), with no click on a held Note; 136's box is reworded to say so.
 4. **Aftertouch on the ring: the dot alone** ("Keep the dot"), as 132's call 2 built it; no arc of its own.
+5. **Volume's Depth readout: the one-sided dip** ("Keep the dip"), as "−6.0 dB"; 169's box is reworded from ±dB.
 
 ## Questions
 
