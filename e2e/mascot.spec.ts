@@ -1354,6 +1354,81 @@ test.describe('never under a card (issue 164)', () => {
   }
 });
 
+/**
+ * A box of the page's that scrolls, over its drawing (issue 220): a line of text in it, three of its heights below the
+ * drawing until it scrolls up under it.
+ */
+const scrollerOver = (page: Page) =>
+  page.evaluate(() => {
+    const drop = document.querySelector('.mascot-drop svg')!.getBoundingClientRect();
+    const scroller = document.body.appendChild(document.createElement('div'));
+    scroller.className = 'e2e-scroller';
+    Object.assign(scroller.style, {
+      position: 'fixed', left: `${drop.left - 8}px`, top: `${drop.top}px`, width: `${drop.width + 16}px`, height: `${drop.height}px`,
+      overflow: 'hidden', pointerEvents: 'none',
+    });
+    scroller.appendChild(document.createElement('div')).style.height = `${3 * drop.height}px`;
+    const line = scroller.appendChild(document.createElement('p'));
+    line.textContent = 'WWWWWWWW';
+    Object.assign(line.style, { margin: '0', height: `${drop.height}px`, font: `${Math.round(drop.height)}px/1 sans-serif`, whiteSpace: 'nowrap' });
+  });
+
+/**
+ * Standing at home, the frames from a change made in the page until it sets off, no longer standing where it stood
+ * (issue 220): Display opened over its edge, or the scroller over it scrolled to bring its text under it. Made in the
+ * page, so no round trip is counted; 60 at most.
+ */
+const framesToSetOff = (page: Page, change: 'display' | 'scroll') =>
+  page.evaluate(
+    (change) =>
+      new Promise<number>((done) => {
+        const bead = document.querySelector<HTMLElement>('.mascot')!;
+        const left = bead.getBoundingClientRect().left;
+        if (change === 'display') document.querySelector<HTMLElement>('button[aria-label="Display"]')!.click();
+        else {
+          const scroller = document.querySelector<HTMLElement>('.e2e-scroller')!;
+          scroller.scrollTop = scroller.scrollHeight;
+        }
+        let frames = 0;
+        const frame = () => {
+          frames++;
+          if (bead.dataset.moving !== 'standing' || Math.abs(bead.getBoundingClientRect().left - left) > 0.5 || frames >= 60) done(frames);
+          else requestAnimationFrame(frame);
+        };
+        requestAnimationFrame(frame);
+      }),
+    change,
+  );
+
+test.describe('off what comes over it at once (issue 220)', () => {
+  test('three across, Display opened over its edge, it sets off within a frame or two', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/');
+    await listening(page);
+    await bringBead(page);
+    await settles(page, /^standing$/);
+    expect(await framesToSetOff(page, 'display'), 'frames before it set off').toBeLessThanOrEqual(3);
+    await expect(page.getByRole('region', { name: 'Viewer controls' })).toBeVisible();
+  });
+
+  // The text it keeps off was read again only every 0.5 s, or on a scroll of the window or a resize (the 1.22.0 code
+  // review): text a scroll inside the page brought under it waited up to 30 frames. Now within a tenth of a second of
+  // the scroll, 6 frames, with some to spare. Four times, so a read due by chance cannot pass it (1 run in 80).
+  test('three across, text scrolled under it inside the page, it sets off within a tenth of a second, each of four times', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/');
+    await listening(page);
+    await bringBead(page);
+    for (let time = 1; time <= 4; time++) {
+      await settles(page, /^standing$/);
+      await scrollerOver(page);
+      await page.waitForTimeout(600); // the text read again since, by the clock
+      expect(await framesToSetOff(page, 'scroll'), `time ${time}: frames before it set off`).toBeLessThanOrEqual(10);
+      await page.evaluate(() => document.querySelector('.e2e-scroller')?.remove());
+    }
+  });
+});
+
 test.describe('never over text where it rests (issue 181)', () => {
   for (const viewport of [
     { width: 1440, height: 900 },

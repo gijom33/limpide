@@ -8,7 +8,7 @@ import { createDemoActs } from './demoActs';
 import { lineAt, lineWiderThan } from './LfoPlot';
 import { type Box, type Cling, clingBeside, crosses, type Guide, HEIGHT, RING, TAIL_HEIGHT, TWIN_PX, targetBox, WIDTH } from './mascotCling';
 import { mascotClock } from './mascotClock';
-import { COVERS, DOCKED, NOT_TEXT, PANELS } from './mascotCovers';
+import { NOT_TEXT, watchCovers } from './mascotCovers';
 import { gesturesOf, looksOf } from './mascotGestures';
 import { type Act, createMascotMotion, hatOn, type Pose, type Room, SCREAMING } from './mascotMotion';
 import { CATCH, CLOUD, HATS, HOOK, ICE, type Picture, PROPS, type Rect, ROD_TIP, SKY, type Stage, TAILS } from './mascotPictures';
@@ -198,18 +198,24 @@ const CONTROLS = 'button, [role=slider], [role=tab], [role=radio], input, .piano
 const STEP = 4;
 function readText(): Cover[] {
   const boxes: Cover[] = [];
-  const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  // What is not text is passed over whole, rather than each line of it looked up from (issue 220).
+  const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, (node) =>
+    node instanceof Element ? (node.matches(NOT_TEXT) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_SKIP) : NodeFilter.FILTER_ACCEPT,
+  );
   const range = document.createRange();
   for (let node = walk.nextNode(); node; node = walk.nextNode()) {
     const el = node.parentElement;
-    if (!el || !/\S/.test(node.nodeValue ?? '') || el.closest(NOT_TEXT)) continue;
+    if (!el || !/\S/.test(node.nodeValue ?? '')) continue;
     range.selectNodeContents(node);
     const lines = [...range.getClientRects()].filter((r) => r.width > 0 && r.height > 0);
     if (lines.length && el.checkVisibility({ visibilityProperty: true, opacityProperty: true })) boxes.push(...lines.map(({ left, right, top, bottom }) => ({ left, right, top, bottom })));
   }
   return boxes;
 }
-/** The text is read again this often, in seconds, or this soon after the page scrolls (issue 181). */
+/**
+ * The text is read again this often, in seconds; at once as a cover opens, closes or moves, or the window resizes (issue
+ * 220); or this soon after the window or anything in the page scrolls (issues 181 and 220).
+ */
 const TEXT_SECONDS = 0.5;
 const TEXT_SCROLLED = 0.1;
 /** Pointing the way (issue 151): what may stand beside a control it clings to, as little covered as can be. */
@@ -472,8 +478,9 @@ export function Mascot({
         }))
         .filter(({ box, clear }) => lineWiderThan(box.width, WIDTH) && box.top - HEIGHT - HEADROOM >= under && box.bottom <= innerHeight && clear.length > 0);
     };
-    /** What is drawn over the page (issue 164), each with its box. */
-    const coveringsNow = () => [...document.querySelectorAll(COVERS)].map((el) => ({ el, box: el.getBoundingClientRect() })).filter(({ box: r }) => r.width > 0 && r.height > 0);
+    /** What is drawn over the page (issue 164), each with its box: kept up to date as the page changes (issue 220). */
+    const covering = watchCovers();
+    const coveringsNow = covering.covers;
     /** A ride on LFO `lfo` from `now`, for as long as a visit lasts. */
     const rideOn = (lfo: LfoNumber, now: number): Visit => ({ ...rideOf(lfo), until: now + between(...VISIT_SECONDS) });
     // Three or four across: a visit to another section now and then, or a ride on an LFO's plot (issue 141); on a phone
@@ -481,14 +488,14 @@ export function Mascot({
     let visit: Visit | null = null;
     // On a phone and in 2 × 2, the edge it left for a ride, to go back to (issue 197).
     let rodeFrom: string | null = null;
-    // The page's text as last read, and when, where the page was scrolled and how big the window was (issue 181).
-    let textRead: { at: number; x: number; y: number; width: number; height: number; boxes: Cover[] } | null = null;
+    // The page's text as last read, and when, with the counts of the covers' moves and the page's scrolls by then
+    // (issues 181 and 220).
+    let textRead: { at: number; moved: number; scrolls: number; boxes: Cover[] } | null = null;
     const textNow = (seconds: number) => {
+      const [moved, scrolls] = [covering.moved(), covering.scrolls()];
       const since = textRead ? seconds - textRead.at : Infinity;
-      const scrolled = textRead && (textRead.x !== scrollX || textRead.y !== scrollY);
-      const resized = textRead && (textRead.width !== innerWidth || textRead.height !== innerHeight);
-      if (!textRead || resized || since >= TEXT_SECONDS || (scrolled && since >= TEXT_SCROLLED)) {
-        textRead = { at: seconds, x: scrollX, y: scrollY, width: innerWidth, height: innerHeight, boxes: readText() };
+      if (!textRead || textRead.moved !== moved || since >= TEXT_SECONDS || (textRead.scrolls !== scrolls && since >= TEXT_SCROLLED)) {
+        textRead = { at: seconds, moved, scrolls, boxes: readText() };
       }
       return textRead.boxes;
     };
@@ -643,7 +650,7 @@ export function Mascot({
       const overPage = stacked.matches ? Math.max(0, document.querySelector('header')?.getBoundingClientRect().bottom ?? 0) : 0;
       // The card it may stand on: the topmost docked (issue 192).
       const docked = standingCard(
-        [...document.querySelectorAll(DOCKED)].map((el) => el.getBoundingClientRect()).filter((r) => r.width > 0),
+        covering.docked(),
         drawing,
       );
       const card = docked ? { id: 'card', box: docked } : null;
@@ -783,7 +790,7 @@ export function Mascot({
       if (guide && moving !== 'held' && moving !== 'thrown') {
         let el = guide.selector ? document.querySelector(guide.selector) : null;
         if (guide.standIn && !el?.checkVisibility()) el = document.querySelector(guide.standIn);
-        const blocks = [...document.querySelectorAll(PANELS)].map((e) => e.getBoundingClientRect()).filter((r) => r.width > 0 && r.height > 0);
+        const blocks = covering.panels();
         const ceiling = stacked.matches ? Math.max(0, ...headerAndTabs()) : 0;
         const found = el ? clingFor(el, blocks, ceiling, card?.box ?? null, texts, twinWay) : null;
         // A control on a hidden tab: towards its Section.
@@ -1155,6 +1162,7 @@ export function Mascot({
     return () => {
       stopListening();
       stopDrawing();
+      covering.stop();
       removeEventListener('pointermove', follow);
       if (import.meta.env.MODE === 'e2e') delete window.__limpideTrick;
     };
