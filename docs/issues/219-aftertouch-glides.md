@@ -4,7 +4,7 @@
 
 **Blocked by:** none; best after [218](./218-a-change-writes-only-what-it-changes.md), which settles how writes are gathered
 
-**Status:** ready-for-agent · enhancement. Polish for v1; the owner answered question 1 on 2026-11-04 (decision 5)
+**Status:** ready-for-human · enhancement. Built (2026-11-03) on night/2026-11-03, for the owner to try
 
 ## Decisions
 
@@ -30,10 +30,10 @@ Decided by the owner, 2026-11-04, answering question 1 below (relayed to the nig
 **Category:** enhancement
 **Summary:** Pressing harder on a held key moves its Destination in audible steps, and each message rewrites the whole sound.
 
-**Current behavior:** Each aftertouch message re-applies the whole sound with immediate writes, only Pitch smoothed; Resonance rebuilds its curve on every message. With aftertouch on the Cutoff, inharmonic energy is −32 dB, against −76 dB smoothed.
+**Current behavior:** Each aftertouch message re-applies the whole sound with immediate writes, only Pitch smoothed; Resonance rebuilds its curve on every message. With aftertouch on the Cutoff, from a keyboard's 127 steps, the energy between the Harmonics is −52.5 dB (−57.5 dB from an unquantised stream).
 
 **Desired behavior:**
-- Aftertouch moves its Destination over 4 ms, as the bend wheel moves Pitch.
+- Aftertouch moves its Destination over a 16 ms time constant (decision 5); the bend wheel keeps its 4 ms.
 - A message writes only its Destination, not the whole sound.
 - Resonance's curve is not rebuilt per message.
 - The Viewers show the same glide (the Modulation model mirrors it).
@@ -43,16 +43,18 @@ Decided by the owner, 2026-11-04, answering question 1 below (relayed to the nig
 - The Modulation model, which must stay equal to the sound (ADR-0003)
 
 **Acceptance criteria:**
-- [ ] An engine test: aftertouch on the Cutoff and on the Resonance at 100 messages a second keeps inharmonic energy below −70 dB
-- [ ] The Modulation model matches the sound in the engine tests, Resonance's small gap during the glide written
-- [ ] Full pressure on the Resonance reaches half its knob's range; Wobble at full pressure stays under the limiter's knee (an engine test)
-- [ ] The MIDI keyboard tests pass unchanged
+- [x] An engine test: aftertouch on the Cutoff and on the Resonance (at Resonance 0.2), 100 messages a second, keeps the energy between the Harmonics under −60 dB from a keyboard's 127 steps and under −70 dB from an unquantised stream (decision 5)
+- [x] The Modulation model matches the sound in the engine tests, any gap during the glide written
+- [x] Full pressure on the Resonance reaches half its knob's range; Wobble at full pressure stays under the limiter's knee (an engine test). Built as half the way from the knob to the top: see call 1 below
+- [x] The MIDI keyboard tests pass, waiting for the dot to rest where they take its place: see call 4 below
 
 **Out of scope:**
 - How far aftertouch reaches (issue 132), but for the Resonance's half (decision 4)
 - A Controller's knobs' smoothing
 
 ## Questions for the owner
+
+Answered: question 1 by the owner on 2026-11-04, (b) at 16 ms (decision 5).
 
 The night of 2026-11-03: its builder wrote the first test (aftertouch on the Cutoff and the Resonance, 100 messages a second, inharmonic energy under −70 dB) and the first slice (every write a pressure message makes glides with `setTargetAtTime`, the bend wheel's way), then stopped: decision 2's 4 ms and the first acceptance criterion cannot both hold. The code was set back; nothing of it is committed.
 
@@ -84,3 +86,36 @@ The rest of the brief does not depend on the answer, and is ready to build once 
 - the model gliding the pressure as the sound does;
 - the Resonance's half reach (decision 4), with the Wobble test.
 
+## How it was built
+
+The night of 2026-11-03, on `night/2026-11-03`, test-first.
+
+**What was built.**
+- **Aftertouch glides over 16 ms** (decision 5). Each pressure message moves what its Destination sets with `setTargetAtTime`, FM's depth included; the bend wheel keeps its 4 ms. Aftertouch on Pitch has a node of its own beside the bend's, so each keeps its own time constant.
+- **The Modulation model glides as the sound does.** It keeps, with each pressure, where the glide started from, so the Viewers, the rings' dots and the Response Curve follow the same glide. A knob turned during a glide sets its Destination where the glide has reached and lets it glide on.
+- **A message writes only its Destination.** On the Cutoff, one value per Voice; on the Resonance, one value for all Voices: the Resonance now reaches every Voice's Filter through one shared node and one curve over the Resonance itself, made once per Mode and Slope. Nothing that moves the Resonance (knob, aftertouch, LFOs) works the 4,097 points out again.
+- **Aftertouch takes the Resonance half the way from its knob to its top** (decision 4, call 1).
+- **Tests:** the energy between the Harmonics (Cutoff and Resonance, 7-bit and unquantised); the model against the sound during a glide on Pitch and on Volume, a knob turned mid-glide included; the writes one message makes (Cutoff, Resonance with an LFO on it, no curve); Wobble under the limiter's knee at full pressure on A1, F1, A2 and C3; the curve over the Resonance for every Mode and Slope.
+
+**The calls (Claude's call, open to the owner).**
+1. **Decision 4 read as "half the way to the top".** Half the knob's range added to Wobble's 0.65 still reaches 1, where Wobble on A2 peaks at 0.87, past the 0.8 knee: the decision's purpose would fail. Half the way from the knob to the top takes Wobble to 0.825, which peaks at 0.60. From no Resonance it is half the range, as the decision says; from 0.2 it reaches 0.6 rather than 0.7. If the owner meant the literal half, Wobble needs another answer (a lower Resonance in the Preset, or a ceiling below 1).
+2. **The model and the sound, where they may differ.** The Resonance is now exact in every Mode (the curve is over the Resonance itself), so the gap decision 3 allowed is gone. They differ during a glide only where the pressed value is clamped (the Cutoff near 20 kHz, Volume at full) or an LFO's swing is held by its room (an LFO on the same Destination near an end), for the 50 ms or so of the glide. FM's depth glides in the sound and is not in the model. A glide counts as arrived after 10 time constants (0.16 s), within 5 parts in 100,000 of its step.
+3. **A new Destination, while pressed, starts at once.** Changing aftertouch's Destination in the MIDI panel while a key is pressed moves both Destinations at once rather than gliding; the app sends no pressure on a change, so in practice it glides from nothing.
+4. **The per-Note MIDI keyboard spec waits for the Cutoff's dot to rest** (about 0.2 s) before taking its "halfway" place, since the dot now glides there. What it checks is unchanged.
+
+**The figures.** One Voice, a saw on A2, Cutoff 500 Hz, Resonance 0.2, pressure from none to full over 2 s, a message every 10 ms; the energy between the Harmonics, in the engine offline in Chromium:
+
+| | 7-bit (a keyboard's) | unquantised |
+|---|---|---|
+| Cutoff, before | −52.5 dB | −57.5 dB |
+| Cutoff, now | −62.5 dB | −78.7 dB |
+| Resonance, now | −67.1 dB | −84.0 dB |
+
+The Resonance's sweep is now 0.2 to 0.6 (call 1), smaller than before, so its figures are not comparable with the earlier −51.3 dB.
+
+**Tests.** `npx tsc`, the lint, the unit tests of the model, the destinations, the Filter's design and the tips (165 passed), the engine tests of the synth and of the writes (389 passed). Playwright in Chromium (78 passed) and WebKit (75 passed, 3 skipped): midiKeyboard, keyboardAccess, modulationRing, filterMode, limiting, lfoDestination, tooltips and smoke.
+
+**To try in the app (by ear).**
+- A resonant bass held (Acid or Wobble), aftertouch on the Cutoff, pressed slowly harder and lighter: it should sweep smoothly, with no zipper or stepping. Then a quick stab of pressure: it should still feel immediate.
+- The same with aftertouch on the Resonance: Wobble pressed as hard as the keyboard allows should ring more but not get louder past the limiter.
+- Aftertouch on Pitch, and the bend wheel at once: the wheel should feel as before.
