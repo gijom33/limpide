@@ -127,7 +127,9 @@ test.describe('Bead in About (issue 163)', () => {
     test('it stands at its size on the page, to the right of the name, its foot on the name’s baseline', async ({ page }) => {
       await page.goto('/');
       await expect(page.locator('.mascot')).toHaveCount(1, { timeout: 6000 });
-      const onPage = (await page.locator('.mascot-drop svg').boundingBox())!;
+      // Its size on the page as drawn, not its box on screen: a stretch, a turn or a lean in its pose changes the box
+      // (2 runs in 12 in WebKit read a pose's 53 px for its 44).
+      const onPage = await page.locator('.mascot-drop svg').evaluate((svg) => ({ width: svg.clientWidth, height: svg.clientHeight }));
       for (const [width, height] of [[393, 659], [1440, 900]] as const) {
         await page.setViewportSize({ width, height });
         await page.goto('/');
