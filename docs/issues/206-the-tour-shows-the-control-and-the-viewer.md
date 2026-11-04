@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · enhancement. Built (2026-11-02) on night/2026-11-02, by fit at every width, as the owner answered on 2026-11-03 (decision 7); for the owner to try
+**Status:** done (2026-11-03). Built (2026-11-02) on night/2026-11-02, merged into main, not yet released; tried by the owner: "All good."
 
 ## Decisions
 
