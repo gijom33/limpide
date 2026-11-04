@@ -6,6 +6,12 @@
 
 **Status:** needs-info · enhancement. Waiting on the owner's answers
 
+## Decisions
+
+Decided by the owner, 2026-11-03, one question at a time (each carried into the issue it names once all are answered):
+
+1. **Bead and the Display panel: kept as built** ("Keep"). Calls 2, 3 and 4 of 151 stand as the owner's change to its decisions 6 and 7.
+
 ## Questions
 
 1. **Bead and the Display panel (151, decision 7, the owner's).** Bead is drawn under the panels, so with Display open it stays beside the Display button and looks at the option, never going to it (call 2); a control scrolled off the window sends it back to its edge, against decision 6 (call 3); on a phone and at 2 × 2 the Display button is out of reach (call 4). Recommendation: keep all three as built, recorded as the owner's change to decisions 6 and 7.
