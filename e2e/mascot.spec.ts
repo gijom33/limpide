@@ -1411,9 +1411,9 @@ test.describe('off what comes over it at once (issue 220)', () => {
     await expect(page.getByRole('region', { name: 'Viewer controls' })).toBeVisible();
   });
 
-  // The text it keeps off was read again only every 0.5 s, or on a scroll of the window or a resize (the 1.22.0 code
-  // review): text a scroll inside the page brought under it waited up to 30 frames. Now within a tenth of a second of
-  // the scroll, 6 frames, with some to spare. Four times, so a read due by chance cannot pass it (1 run in 80).
+  // The text it keeps off is read again within a tenth of a second of a scroll, inside the page as of the window: 6
+  // frames, with some to spare, against the 30 of its twice-a-second read. Four times, so that read, due by chance,
+  // cannot pass it (1 run in 80).
   test('three across, text scrolled under it inside the page, it sets off within a tenth of a second, each of four times', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/');

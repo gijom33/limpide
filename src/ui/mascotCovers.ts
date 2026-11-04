@@ -23,10 +23,13 @@ export interface CoverWatch {
   docked(): readonly DOMRect[];
   /** The boxes of the cards and panels shown: the covers but the tips. */
   panels(): readonly DOMRect[];
-  /** A count that changes whenever a cover opens, closes or moves, or the window resizes. */
+  /** A count that changes whenever a cover opens or closes, the page changes under one so it moves, or the window resizes. */
   moved(): number;
-  /** How many times the window, or anything in the page, has scrolled. */
-  scrolls(): number;
+  /**
+   * A count that changes whenever the window or anything in the page scrolls, or a cover moves with no change to the page:
+   * in a transition or an animation, or as the page's layout settles.
+   */
+  shifted(): number;
   stop(): void;
 }
 
@@ -55,9 +58,10 @@ function styledAttributes(): Set<string> {
 const sameBox = (a: DOMRect, b: DOMRect) => a.left === b.left && a.top === b.top && a.width === b.width && a.height === b.height;
 
 /**
- * What covers the page, kept up to date as the page changes rather than looked for each frame (review 18's finding 4,
- * issue 220): the list as covers are put in, taken out, shown and hidden; their boxes read again only once the page has
- * changed, scrolled or resized, or while one of them, or what holds it, is in a transition or an animation.
+ * What covers the page, kept up to date as the page changes (review 18's finding 4, issue 220): the list as covers are put
+ * in, taken out, shown and hidden; their boxes read again only once the page has changed, scrolled or resized, or while
+ * one of them, or what holds it, is in a transition or an animation.
+ * The style rules are read once, as it starts: the page loads no stylesheet later.
  */
 export function watchCovers(): CoverWatch {
   const styled = styledAttributes();
@@ -67,29 +71,33 @@ export function watchCovers(): CoverWatch {
   let docked: DOMRect[] = [];
   let panels: DOMRect[] = [];
   let stale = true; // the boxes
+  let changed = false; // the page, since the boxes were read
   let listChanged = true;
   let moved = 0;
-  let scrolls = 0;
+  let shifted = 0;
   // The covers and what holds them, in a transition or an animation.
   const moving = new Set<Element>();
   const sizes = new ResizeObserver(() => void (stale = true));
   sizes.observe(document.documentElement);
 
+  const drop = (el: Element) => {
+    els.delete(el);
+    sizes.unobserve(el);
+    listChanged = true;
+  };
   const consider = (el: Element) => {
     const is = el.matches(COVERS);
     if (is === els.has(el)) return;
-    if (is) {
-      els.add(el);
-      sizes.observe(el);
-    } else {
-      els.delete(el);
-      sizes.unobserve(el);
-    }
+    if (!is) return drop(el);
+    els.add(el);
+    sizes.observe(el);
     listChanged = true;
   };
+  // Put in: new covers, or covers moved elsewhere in the page, whose order is found again.
   const considerAll = (root: Element) => {
-    consider(root);
-    for (const el of root.querySelectorAll(COVERS)) consider(el);
+    const found = [...(root.matches(COVERS) ? [root] : []), ...root.querySelectorAll(COVERS)];
+    for (const el of found) consider(el);
+    if (found.length) listChanged = true;
   };
   const ours = (el: Element) => !!el.closest(BEAD_OWN);
   const take = (records: MutationRecord[]) => {
@@ -105,15 +113,9 @@ export function watchCovers(): CoverWatch {
         if (r.attributeName === 'class' || r.attributeName === 'hidden') consider(el);
       } else if (r.type === 'childList') {
         for (const n of r.addedNodes) if (n instanceof Element) considerAll(n);
-        if (r.removedNodes.length) {
-          for (const gone of [...els].filter((c) => !c.isConnected)) {
-            els.delete(gone);
-            sizes.unobserve(gone);
-            listChanged = true;
-          }
-        }
+        if (r.removedNodes.length) for (const gone of [...els].filter((c) => !c.isConnected)) drop(gone);
       }
-      stale = true;
+      stale = changed = true;
     }
   };
   const observer = new MutationObserver(take);
@@ -122,10 +124,10 @@ export function watchCovers(): CoverWatch {
 
   const onScroll = () => {
     stale = true;
-    scrolls++;
+    shifted++;
   };
   const onResize = () => {
-    stale = true;
+    stale = changed = true;
     moved++;
   };
   const started = (e: Event) => {
@@ -153,13 +155,16 @@ export function watchCovers(): CoverWatch {
     if (listChanged) {
       ordered = [...els].sort((a, b) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1));
       listChanged = false;
-      stale = true;
+      stale = changed = true;
     }
     if (!stale && !moving.size) return;
-    stale = false;
     const before = read;
     read = ordered.map((el) => ({ el, box: el.getBoundingClientRect() })).filter(({ box: r }) => r.width > 0 && r.height > 0);
-    if (read.length !== before.length || read.some((c, i) => c.el !== before[i].el || !sameBox(c.box, before[i].box))) moved++;
+    if (read.length !== before.length || read.some((c, i) => c.el !== before[i].el || !sameBox(c.box, before[i].box))) {
+      if (changed) moved++;
+      else shifted++;
+    }
+    stale = changed = false;
     docked = read.filter((c) => c.el.matches(DOCKED)).map((c) => c.box);
     panels = read.filter((c) => c.el.matches(PANELS)).map((c) => c.box);
   };
@@ -180,7 +185,10 @@ export function watchCovers(): CoverWatch {
       update();
       return moved;
     },
-    scrolls: () => scrolls,
+    shifted: () => {
+      update();
+      return shifted;
+    },
     stop: () => {
       observer.disconnect();
       sizes.disconnect();

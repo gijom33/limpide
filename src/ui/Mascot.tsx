@@ -198,7 +198,7 @@ const CONTROLS = 'button, [role=slider], [role=tab], [role=radio], input, .piano
 const STEP = 4;
 function readText(): Cover[] {
   const boxes: Cover[] = [];
-  // What is not text is passed over whole, rather than each line of it looked up from (issue 220).
+  // What is not text is passed over whole (issue 220).
   const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, (node) =>
     node instanceof Element ? (node.matches(NOT_TEXT) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_SKIP) : NodeFilter.FILTER_ACCEPT,
   );
@@ -213,8 +213,9 @@ function readText(): Cover[] {
   return boxes;
 }
 /**
- * The text is read again this often, in seconds; at once as a cover opens, closes or moves, or the window resizes (issue
- * 220); or this soon after the window or anything in the page scrolls (issues 181 and 220).
+ * The text is read again this often, in seconds; at once as a cover opens, closes or moves with the page, or the window
+ * resizes (issue 220); or this soon after the window or anything in the page scrolls, or a cover slides (issues 181 and
+ * 220).
  */
 const TEXT_SECONDS = 0.5;
 const TEXT_SCROLLED = 0.1;
@@ -480,7 +481,6 @@ export function Mascot({
     };
     /** What is drawn over the page (issue 164), each with its box: kept up to date as the page changes (issue 220). */
     const covering = watchCovers();
-    const coveringsNow = covering.covers;
     /** A ride on LFO `lfo` from `now`, for as long as a visit lasts. */
     const rideOn = (lfo: LfoNumber, now: number): Visit => ({ ...rideOf(lfo), until: now + between(...VISIT_SECONDS) });
     // Three or four across: a visit to another section now and then, or a ride on an LFO's plot (issue 141); on a phone
@@ -488,14 +488,13 @@ export function Mascot({
     let visit: Visit | null = null;
     // On a phone and in 2 × 2, the edge it left for a ride, to go back to (issue 197).
     let rodeFrom: string | null = null;
-    // The page's text as last read, and when, with the counts of the covers' moves and the page's scrolls by then
-    // (issues 181 and 220).
-    let textRead: { at: number; moved: number; scrolls: number; boxes: Cover[] } | null = null;
+    // The page's text as last read, and when, with the watch's counts by then (issues 181 and 220).
+    let textRead: { at: number; moved: number; shifted: number; boxes: Cover[] } | null = null;
     const textNow = (seconds: number) => {
-      const [moved, scrolls] = [covering.moved(), covering.scrolls()];
+      const [moved, shifted] = [covering.moved(), covering.shifted()];
       const since = textRead ? seconds - textRead.at : Infinity;
-      if (!textRead || textRead.moved !== moved || since >= TEXT_SECONDS || (textRead.scrolls !== scrolls && since >= TEXT_SCROLLED)) {
-        textRead = { at: seconds, moved, scrolls, boxes: readText() };
+      if (!textRead || textRead.moved !== moved || since >= TEXT_SECONDS || (textRead.shifted !== shifted && since >= TEXT_SCROLLED)) {
+        textRead = { at: seconds, moved, shifted, boxes: readText() };
       }
       return textRead.boxes;
     };
@@ -602,7 +601,7 @@ export function Mascot({
         const held = moves.at(-1)!;
         const [left, foot] = [held.x - grip.x, held.y - grip.y];
         const bead = { left, right: left + WIDTH, top: foot - HEIGHT, bottom: foot };
-        const lfo = rides.length ? rideOnDrop(bead, plotsInView(coveringsNow(), Math.sign(shown?.twin ?? 0) * TWIN_PX), rides) : null;
+        const lfo = rides.length ? rideOnDrop(bead, plotsInView(covering.covers(), Math.sign(shown?.twin ?? 0) * TWIN_PX), rides) : null;
         if (lfo !== null) {
           if (stacked.matches) rodeFrom = perch?.id ?? null;
           place.dropOntoLine();
@@ -637,7 +636,7 @@ export function Mascot({
       if (!sections.length) return;
       const page = (outer.offsetParent ?? document.body).getBoundingClientRect();
       // What is over the page: it never stands under it (issue 164).
-      const coverings = coveringsNow();
+      const coverings = covering.covers();
       const covers: Cover[] = coverings.map((c) => c.box);
       // Its whole drawing, its twin on Detune's side as far as it goes (issues 174 and 192): kept clear of the covers; and
       // standing, its tail swung down under its foot too, kept clear of the page's text (issue 181).

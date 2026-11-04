@@ -54,6 +54,14 @@ describe('watchCovers: what Bead keeps clear of, kept up to date as the page cha
     expect(watch.covers().map((c) => c.el)).toEqual([tip]);
   });
 
+  it('keeps the page’s order as a cover is moved elsewhere in it', () => {
+    const first = box('docked', 0, 100, page);
+    const second = box('docked', 0, 200, page);
+    expect(watch.covers().map((c) => c.el)).toEqual([first, second]);
+    page.appendChild(first);
+    expect(watch.covers().map((c) => c.el)).toEqual([second, first]);
+  });
+
   it('reads a card again where it is dragged to', () => {
     const card = box('docked', 200, 300, page);
     expect(watch.docked()[0].left).toBe(200);
@@ -128,10 +136,19 @@ describe('watchCovers: what Bead keeps clear of, kept up to date as the page cha
     Object.assign(scroller.style, { height: '100px', overflow: 'auto' });
     scroller.appendChild(document.createElement('div')).style.height = '1000px';
     await aFrame();
-    const [moved, scrolls] = [watch.moved(), watch.scrolls()];
+    const [moved, shifted] = [watch.moved(), watch.shifted()];
     scroller.scrollTop = 50;
     await aFrame();
-    expect(watch.scrolls()).toBe(scrolls + 1);
+    expect(watch.shifted()).toBe(shifted + 1);
     expect(watch.moved()).toBe(moved);
+    // A panel in it, carried along: shifted, not moved.
+    const panel = scroller.appendChild(document.createElement('div'));
+    panel.className = 'patch-panel';
+    panel.style.height = '20px';
+    const opened = watch.moved();
+    scroller.scrollTop = 0;
+    await aFrame();
+    expect(watch.moved()).toBe(opened);
+    expect(watch.shifted()).toBe(shifted + 3); // the scroll, and the panel's new box
   });
 });
