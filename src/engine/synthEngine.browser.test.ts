@@ -1603,9 +1603,9 @@ describe('aftertouch (issue 132)', () => {
     for (const { s, m } of reads.slice(1)) expect(peak(s) / peak(reads[0].s)).toBeCloseTo(m.volume / 0.4, 1);
   });
 
-  // Decision 4: on the Resonance, aftertouch reaches half the knob's range, so Wobble pressed hard does not ring past
-  // the limiter's knee (at the whole range it self-oscillated, 8 dB louder).
-  it("reaches half the Resonance's range, so Wobble at full pressure stays under the limiter's knee (issue 219)", async () => {
+  // Decision 4: on the Resonance, aftertouch goes half the way from the knob to its top (half its range from none), so
+  // Wobble pressed hard does not ring past the limiter's knee: half the range added to its 0.65 reached the top, 0.87.
+  it("takes the Resonance half the way to its top, so Wobble at full pressure stays under the limiter's knee (issue 219)", async () => {
     const wobble = PRESETS.find((p) => p.name === 'Wobble')!.patch;
     for (const note of [33, 41, 45, 48]) {
       const ctx = new OfflineAudioContext(1, SR * 2, SR);

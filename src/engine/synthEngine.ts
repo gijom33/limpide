@@ -723,8 +723,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   cutoff.start();
   // Near the top the Resonance fades, and a high-pass falls silent (issue 195), as `filterStagesAt` and `filterLevel`
   // have it: the clamped Cutoff, through each fade's curve, takes its share off each stage's Q over its flat one (the
-  // shared `toQ`), and off what a high-pass lets through. Each dip's gain is −1 in
-  // the Modes it fades, 0 in the others.
+  // shared `toQ`), and off what a high-pass lets through. Each dip's gain is −1 in the Modes it fades, 0 in the others.
   const toDip = ctx.createGain();
   toDip.gain.value = 1 / CUTOFF_SPAN;
   cutoffClamp.connect(toDip);
@@ -1560,8 +1559,9 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       append(pressures, { time: t, pressure, from: glide ? was.amount : pressure.amount });
       trim(pressures, t);
       const knobs = patch;
-      if (knobs && glide) shared.writes.gliding(glide, () => applyToSound(pressed(knobs, pressure), t));
-      else if (knobs) applyToSound(pressed(knobs, pressure), t);
+      const move = () => knobs && applyToSound(pressed(knobs, pressure), t);
+      if (glide) shared.writes.gliding(glide, move);
+      else move();
       const cents = pressurePitch(pressure) * 100;
       if (cents !== pressingCents) moveTo(pressing.offset, cents, t, glide);
       pressingCents = cents;
