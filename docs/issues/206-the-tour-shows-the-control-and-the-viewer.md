@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** needs-info · enhancement. Built (2026-11-02) on night/2026-11-02, by fit at every width; one question for the owner before it is tried as done
+**Status:** ready-for-human · enhancement. Built (2026-11-02) on night/2026-11-02, by fit at every width, as the owner answered on 2026-11-03 (decision 7); for the owner to try
 
 ## Decisions
 
@@ -19,6 +19,10 @@ Claude's calls, open to the owner:
 4. **The scroll is smooth and timed to the action:** the page scrolls to the control just before it moves, holds while it moves, then scrolls to the Viewer and holds through what the card shows there (on the Amp card, each freeze); the card stays where it is. With reduced motion, the page jumps instead of gliding.
 5. **The person's own scroll wins:** a scroll by the person stops the Tour's scrolling for that card, as Space stops its freezes.
 6. **Measured first,** at 320, 375, 601 and 860 px, for each card: whether control and Viewer fit together between the header and the card.
+
+Decided by the owner, 2026-11-03, answering the question below:
+
+7. **By fit at every width, alternating where they do not fit** ("You could alternate between the two views"). On a short 2 × 2 or laptop window as on a phone, a card whose control and Viewer do not fit together takes them in turn, the control as it moves, then the Viewer, as built. The criterion "From 2 × 2 up, unchanged" gives way to it.
 
 ## Agent Brief
 
@@ -44,7 +48,7 @@ Claude's calls, open to the owner:
 - [x] At 320, 375, 601 and 860 px, every card's controls and Viewer are in view together where they fit, and in turn where they do not
 - [x] A scroll by the person stops the Tour's scrolling for that card
 - [x] With reduced motion, the page jumps rather than glides
-- [ ] From 2 × 2 up, unchanged (where everything fits, as at 601 × 960 and 860 × 1100; on windows about 800 px tall it does not, and the rule above applies: see How it was built, call 1)
+- [x] From 2 × 2 up, unchanged where everything fits; where it does not, in turn, as decision 7 has it (where everything fits, as at 601 × 960 and 860 × 1100; on windows about 800 px tall it does not, and the rule above applies: see How it was built, call 1)
 - [x] A browser test at 375 px checks the Amp card's fader and Timeline each come into view
 
 **Out of scope:**
