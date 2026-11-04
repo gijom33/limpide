@@ -3113,3 +3113,28 @@ describe('the Synth Geek Layer’s numbers on the Viewers, held to the engine (i
     }
   });
 });
+
+describe("the model's settled past, which the Timeline keeps from frame to frame (issue 215)", () => {
+  it('is settled from the first Patch and the first Note: before them, they stand in for what came before', async () => {
+    const ctx = new OfflineAudioContext(1, SR, SR);
+    const engine = createSynthEngine(ctx);
+    expect(engine.settledFrom()).toBe(Infinity);
+    engine.applyPatch({ ...defaultPatch(), keyTrack: 1, lfoAmount: 0, lfo2Amount: 0 });
+    expect(engine.settledFrom()).toBe(Infinity); // no Note yet: the first one's key will stand in for the Key Track's
+    const before = engine.modulationAt(0.1).cutoff;
+    engine.noteOn(84, 0.9, 0.3);
+    expect(engine.settledFrom()).toBe(0.3);
+    expect(engine.modulationAt(0.1).cutoff).not.toBe(before); // the moment before it changed
+    const settled = engine.modulationAt(0.35);
+    // Once the clock has passed it, a moment after it stays as it was, whatever comes next.
+    const later = ctx.suspend(0.4).then(() => {
+      engine.noteOn(48, 0.9);
+      engine.applyPatch({ ...defaultPatch(), keyTrack: 0.5, lfoRate: 7 });
+      expect(engine.settledFrom()).toBe(0.3);
+      expect(engine.modulationAt(0.35)).toEqual(settled);
+      return ctx.resume();
+    });
+    await ctx.startRendering();
+    await later;
+  });
+});

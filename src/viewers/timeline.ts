@@ -18,6 +18,8 @@ interface Source {
   patchAt(time: number): Patch | undefined;
   /** The tempo, whose beats are marked while an LFO's cycle follows them (issues 112, 193). */
   tempo(): BeatGrid;
+  /** From when the model's past stays as it is (issue 215): the Timeline works out the moments before it every frame. */
+  settledFrom(): number;
 }
 
 /**
@@ -87,7 +89,29 @@ export function timelineGrid(now: number, seconds: number, pixelsPerSecond: numb
   const first = Math.ceil(left);
   const count = Math.floor(now * pixelsPerSecond) - first + 1;
   const ks = Array.from({ length: Math.max(count, 0) }, (_, i) => first + i);
-  return { times: ks.map((k) => k / pixelsPerSecond), xs: ks.map((k) => k - left) };
+  return { first, times: ks.map((k) => k / pixelsPerSecond), xs: ks.map((k) => k - left) };
+}
+
+/**
+ * The Timeline's samples, one per moment of its grid (`timelineGrid`), kept from frame to frame (issue 215): the model's
+ * history is kept by age and only added to, from now on, so a past moment's Modulation stays as it was and each frame
+ * works out only the columns new since the last. Worked out again every frame: the last frame's newest, since a Note or
+ * a knob can come at the very moment it was drawn at (the clock stands still until the sound starts); and the moments
+ * before `settled`, the model's `settledFrom`, where the first Patch or Note stands in for what came before and can
+ * still change. A new scale (a resize, another time span) starts afresh.
+ */
+export function createColumnSamples<T>(sample: (time: number) => T) {
+  let kept: T[] = [];
+  let first = 0;
+  let scale = Number.NaN;
+  return ({ first: from, times }: { first: number; times: readonly number[] }, pixelsPerSecond: number, settled: number): T[] => {
+    // The kept columns from `from` on, short of the last frame's newest.
+    const reuse = scale === pixelsPerSecond && from >= first ? kept.slice(from - first, -1) : [];
+    kept = times.map((time, i) => (i < reuse.length && time >= settled ? reuse[i] : sample(time)));
+    first = from;
+    scale = pixelsPerSecond;
+    return kept;
+  };
 }
 
 const DASHES: Record<LinePattern, number[]> = { dots: [0.5, 5.5], dashes: [5, 3], dashDot: [7, 3, 0.5, 3] };
@@ -112,6 +136,8 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
 
   const rest = createRest();
   const silence = createSilence();
+  // Each column's Modulation and the Patch then, worked out once (issue 215).
+  const columnSamples = createColumnSamples((time) => ({ modulation: source.modulationAt(time), patch: source.patchAt(time) }));
   let struck: number | null = null;
 
   const DOT_RADIUS = 3.5;
@@ -174,8 +200,10 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
       g.stroke();
     }
     g.setLineDash([]);
-    const { times, xs } = timelineGrid(now, seconds, pixelsPerSecond);
-    const samples = times.map((time) => source.modulationAt(time));
+    const grid = timelineGrid(now, seconds, pixelsPerSecond);
+    const { times, xs } = grid;
+    const sampled = columnSamples(grid, pixelsPerSecond, source.settledFrom());
+    const samples = sampled.map((c) => c.modulation);
 
     // An Envelope as a filled area with its outline, on the 0–1 level scale.
     const area = (colourVar: string, alpha: number, level: (m: Modulation) => number) => {
@@ -235,8 +263,7 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
 
     // What else the LFOs move, each the same way on its knob's own scale (bottom to top) in its stage's colour: where
     // it is now, in its pattern; the key names them.
-    const patches = shows.destinations.length ? times.map((time) => source.patchAt(time)) : [];
-    const levels = shows.destinations.map((d) => samples.map((m, i) => (patches[i] ? destinationLevel(d, patches[i], m) : 0)));
+    const levels = shows.destinations.map((d) => sampled.map(({ modulation, patch }) => (patch ? destinationLevel(d, patch, modulation) : 0)));
     shows.destinations.forEach((d, i) => {
       line({
         name: d,

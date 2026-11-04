@@ -80,6 +80,12 @@ export interface SynthEngine {
   /** The Patch in force at `time` (none before the first): what the Timeline draws at that moment. */
   patchAt(time: number): Patch | undefined;
   /**
+   * From when the model's past stays as it is (issue 215): its history is only added to from now on, but before the
+   * first Patch and the first Note they stand in for what came before (the first Note's key for the Key Track's), and
+   * the first Patch is replaced while the clock stands still. Infinity before either.
+   */
+  settledFrom(): number;
+  /**
    * The tempo an LFO with Sync on follows (issue 112): `bpm`, its beats counted from `origin` (by default now), where a
    * synced LFO running freely starts a cycle. Its Rate follows at once.
    */
@@ -1387,6 +1393,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       return l.amount * lfoShape(l.waveform, lfoClocks[n - 1].phaseAt(time));
     },
     patchAt,
+    settledFrom: () => (patches.length && pitches.length ? Math.max(patches[0].time, pitches[0].time) : Infinity),
     setTempo(bpm, origin = ctx.currentTime) {
       tempo = { bpm, origin };
       if (!patch) return;
