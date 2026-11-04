@@ -10,6 +10,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- 2026-11-03, the owner, on a screenshot of Bead riding LFO 1's plot at a phone's width: "Let's have Bead use a surfboard and lean with the wave."
+
 ## Dropped
 
 - 2026-10-30, from Claude's brainstorm, Velocity on the Volume ("a harder hit plays louder, not only brighter"): already so. The Amp Envelope's Attack rises to the Note's Velocity (PRD story 9). Claude's call, open to the owner.
