@@ -3,7 +3,8 @@ import { describeMode } from '../midi/describe';
 import type { ControllerId } from '../midi/mappings';
 import { DESTINATIONS } from '../modulation/destinations';
 import { syncedRateUnderTheHood, UNDER_THE_HOOD, underTheHoodAt } from '../music/geek';
-import { formatSyncedRate, TEMPO_STEPS } from '../music/tempo';
+import { preciseFrequencyText } from '../music/pitch';
+import { formatSyncedRate, noteHz, TEMPO_STEPS } from '../music/tempo';
 import { stepWords } from '../patch/grid';
 import { LFO_DESTINATIONS, type LfoDestination, PARAMS, type ParamId } from '../patch/patch';
 import type { Overlay } from '../viewers/overlays';
@@ -456,7 +457,8 @@ export function paramTipAt(id: ParamId, value: number): TipContent {
  * width (issue 176), and under the hood the conversion worked out with the live numbers (issue 137).
  */
 export function syncedRateTip(index: number, bpm: number): TipContent {
-  const { note, hz } = formatSyncedRate(index, bpm);
+  const { note } = formatSyncedRate(index, bpm);
+  const hz = preciseFrequencyText(noteHz(index, bpm)); // to three figures where slow (issue 225)
   return { ...PARAM_TIPS.lfoNote, body: `${TIPS.lfoNote.body} At ${bpm} BPM, ${note} is ${hz}.`, underTheHood: syncedRateUnderTheHood(index, bpm) };
 }
 

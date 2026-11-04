@@ -100,6 +100,8 @@ describe('the Synth Geek Layer: the LFOs (issue 169)', () => {
     expect(underTheHoodAt('lfo2Rate', 3)?.where).toMatch(/^T = 1 \/ 3\.00 Hz = 0\.33 s now\. /);
     expect(underTheHoodAt('lfoRate', 20)?.where).toMatch(/^T = 1 \/ 20 Hz = 0\.050 s now\. /);
     expect(underTheHoodAt('lfoRate', 0.05)?.where).toMatch(/^T = 1 \/ 0\.05 Hz = 20\.0 s now\. /);
+    // Under 0.1 Hz, to three figures, so the period reads from the figure shown (issue 225).
+    expect(underTheHoodAt('lfoRate', 0.0537)?.where).toMatch(/^T = 1 \/ 0\.0537 Hz = 18\.6 s now\. /);
     expect(underTheHoodAt('lfoRate', 2)?.formula).toBe(UNDER_THE_HOOD.lfoRate.formula);
     expect(underTheHoodAt('lfoRate', 2)?.where).toContain(UNDER_THE_HOOD.lfoRate.where);
   });

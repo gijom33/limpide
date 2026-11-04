@@ -8,7 +8,7 @@ import {
 } from '../patch/patch';
 import { WAVEFORM_NAMES, type Waveform } from './harmonics';
 import { besselJ, osc2Ratio } from './idealReference';
-import { A4_MIDI, frequencyText, noteToFrequency } from './pitch';
+import { A4_MIDI, noteToFrequency, preciseFrequencyText } from './pitch';
 import { NOTE_VALUES, noteHz } from './tempo';
 
 /**
@@ -414,7 +414,7 @@ const RATES: ParamId[] = [LFO_KEYS[1].rate, LFO_KEYS[2].rate];
 export function underTheHoodAt(id: ParamId, value: number): Formula | undefined {
   if (RATES.includes(id)) {
     const { formula, where } = UNDER_THE_HOOD.lfoRate;
-    return { formula, where: `T = 1 / ${frequencyText(value)} = ${periodText(1 / value)} now. ${where}` };
+    return { formula, where: `T = 1 / ${preciseFrequencyText(value)} = ${periodText(1 / value)} now. ${where}` };
   }
   const stage = STAGE_OF[id];
   if (!stage) return undefined;
