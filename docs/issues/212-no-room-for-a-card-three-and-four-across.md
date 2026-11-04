@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** needs-info · bug. Polish for v1; waiting on the owner's answers below (2026-11-03)
+**Status:** ready-for-agent · bug. Polish for v1; the owner answered question 1 on 2026-11-03 (decision 6)
 
 ## Decisions
 
@@ -14,10 +14,14 @@ Decided by the owner, 2026-11-03:
 
 Claude's calls, open to the owner:
 
-2. **Every docked card, not the Demo's alone:** a Tutorial's and the Tour's keep room at every width today, so they make three and four across scroll too.
+2. **Every docked card, not the Demo's alone** (superseded by decision 6): a Tutorial's and the Tour's keep room at every width today, so they make three and four across scroll too.
 3. **A phone and 2 × 2 keep the room as now:** those pages scroll anyway, and the room lets the last section come out from under the card.
 4. **A control the keyboard reaches under the card still comes clear of it** where the page can scroll; where it cannot, the card can be folded or moved, as now.
 5. **A window too short for three or four across,** where the page scrolls without any card, is not changed by this issue: it scrolls as much as it must, and no more for the card.
+
+Decided by the owner, 2026-11-03, answering question 1 below (relayed to the night by the owner's day session):
+
+6. **The Demo's card alone** ("Yes, Demo only"): in three and four across only the Demo's card stops keeping room; the Tour's and a Tutorial's cards keep room as now, so the page scrolls to what they point at.
 
 ## Agent Brief
 
