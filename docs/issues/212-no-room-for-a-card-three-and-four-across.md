@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · bug. Polish for v1
+**Status:** needs-info · bug. Polish for v1; waiting on the owner's answers below (2026-11-03)
 
 ## Decisions
 
@@ -44,3 +44,21 @@ Claude's calls, open to the owner:
 
 **Out of scope:**
 - Where the card sits, its size, folding and moving
+
+## Questions for the owner
+
+Tried on the night of 2026-11-03: no room under the page for any docked card in three and four across (the windows wider than 2 × 2). The Demo's card then behaves as asked. But the Tour's and a Tutorial's cards point at Viewers and controls, and in three and four across some of these sit at the page's bottom, under the card; with no room, the page cannot scroll them clear:
+
+- 1280 × 800: the Tour's LFO card covers the Envelope Timeline it talks about, wholly (the card is tall), and its first card covers the bottom of the Oscillator Scope by 16 px.
+- 1920 × 1080: the Tour's first card covers the bottom of the Oscillator Scope by 5 px.
+- 1440 × 900: with a Tutorial open, the keyboard's focus on the LFO 1 Destination stays under the card (issue 104 had it brought clear).
+
+Folding or moving the card uncovers them (decision 4), but the Tour is the newcomer's first look, and it would hide what it shows. The Demo's card points at nothing, so it has no such trouble.
+
+1. **In three and four across, should the Tour's and a Tutorial's cards still keep room, so the page scrolls to show what they point at?**
+   - (a) Yes, as now: only the Demo's card stops keeping room there (decision 2 narrowed to the Demo).
+   - (b) No: no card keeps room; the Tour and Tutorials may cover what they point at, the person folds or moves the card.
+   - (c) Room only while what the card points at is under it: the page scrolls just enough for that card or Step, and not at all for the others.
+
+   Recommended: (a). It fixes what you met (the Demo), keeps the Tour and Tutorials showing what they talk about, and is the smallest change; (c) can come later if their scroll bothers you too.
+
