@@ -250,7 +250,7 @@ export const TUTORIALS: Tutorial[] = [
       {
         kind: 'params', faders: [{ id: 'filterAttack', to: 0.001 }, { id: 'filterDecay', to: 0.22 }, { id: 'filterSustain', to: 0 }, { id: 'filterRelease', to: 0.2 }],
         say: 'Now the Filter Envelope’s four faders, in one Step. Attack, how fast it opens: all the way down. Decay, how fast it closes back: about 220 ms. Sustain, where it settles while you hold a Note: all the way down. Release, once you let go: about 200 ms.',
-        note: 'The flash comes at the very start, then fades faster than the loudness, shut on a held Note: the Note darkens as it dies, like a real string.',
+        note: 'The flash comes at the very start, then fades faster than the loudness, nearly shut on a held Note: the Note darkens as it dies, like a real string.',
       },
     ],
   },

@@ -569,7 +569,7 @@ export const OVERLAY_TIPS: Record<Overlay, TipContent> = {
   },
   guides: {
     title: 'Scope guides',
-    body: 'Dashed lines at the level the Mixer sends, every source’s level added, so they move with its faders: where one Note peaks. Resonance takes a trace beyond them, and so do several Notes at once and the Noise, their peaks piling up; the Filter alone can nudge one a little past.',
+    body: 'Dashed lines at the level the Mixer sends, every source’s level added, so they move with its faders: where one Note peaks. Resonance takes a trace beyond them; the Filter can nudge one a little past, and white Noise well past with the Cutoff near the top; on the Amp Scope, so do several Notes at once, their peaks piling up.',
   },
   geek: {
     title: 'Synth Geek Layer',
