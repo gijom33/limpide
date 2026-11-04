@@ -1556,10 +1556,7 @@ export function createSynthEngine(
     },
     tempo: () => tempo,
     now: () => ctx.currentTime,
-    quietFrom: () => {
-      const free = voices.map((v) => v.freeAt);
-      return Math.max(...free);
-    },
+    quietFrom: () => Math.max(...voices.map((v) => v.freeAt)),
     pause() {
       pausedAt ??= wall();
     },

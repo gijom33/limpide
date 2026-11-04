@@ -45,17 +45,17 @@ export function pauseInSilence({
   after?: number;
   wall?: () => number;
 }): () => void {
-  let may = allowed;
+  let pausable = allowed;
   // When something last sounded, played or woke it, on the page's clock.
-  let last = wall();
+  let lastHeard = wall();
   const refused = () => {
-    may = false;
+    pausable = false;
     ctx.dispatchEvent(new Event('statechange'));
   };
   const wake = () => {
     if (!engine.paused()) return;
     engine.wake();
-    last = wall();
+    lastHeard = wall();
     ctx.resume().then(() => ctx.state !== 'running' && refused(), refused);
   };
   for (const name of CHANGES) {
@@ -65,18 +65,22 @@ export function pauseInSilence({
       change(...args);
     };
   }
-  const look = () => {
+  const lookForSilence = () => {
     if (engine.paused()) return;
-    const quiet = may && ctx.state === 'running' && !busy() && engine.now() >= engine.quietFrom();
-    if (!quiet) last = wall();
-    else if (wall() - last >= after) {
+    const quiet = pausable && ctx.state === 'running' && !busy() && engine.now() >= engine.quietFrom();
+    if (!quiet) lastHeard = wall();
+    else if (wall() - lastHeard >= after) {
       engine.pause();
-      ctx.suspend().catch(() => {});
+      // A suspend refused leaves the sound running: the engine's clock is the one to draw from again, never paused.
+      ctx.suspend().catch(() => {
+        pausable = false;
+        engine.wake();
+      });
     }
   };
   // Started again by another hand (the browser, a tap): the engine's clock runs again, so it is woken.
   const onState = () => ctx.state === 'running' && wake();
-  const timer = setInterval(look, LOOK_EVERY);
+  const timer = setInterval(lookForSilence, LOOK_EVERY);
   for (const g of GESTURES) page.addEventListener(g, wake);
   ctx.addEventListener('statechange', onState);
   return () => {
