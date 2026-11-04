@@ -317,7 +317,7 @@ A small display of the most recent incoming MIDI message.
 _Avoid_: MIDI log, MIDI console
 
 **Aftertouch**:
-A keyboard's pressure on its held keys (0 to 1), one for the whole keyboard: pressing a held key harder raises one Destination, chosen in the MIDI panel (the Cutoff by default), from its knob's value at no pressure to as far as one LFO at full Depth takes it at full, on top of the knob and the LFOs (issue 132). Kept with the MIDI settings, not in the Patch. A keyboard sends it for all its keys at once (channel aftertouch) or for each key or pad (polyphonic, or per-Note, aftertouch): the pressure used is the hardest-pressed held Note's, or the channel's if higher, a Note's forgotten on its release, and it moves the one Destination for every Note (the owner, 2026-11-01). Per-Voice pressure and MPE are not used.
+A keyboard's pressure on its held keys (0 to 1), one for the whole keyboard: pressing a held key harder raises one Destination, chosen in the MIDI panel (the Cutoff by default), from its knob's value at no pressure to as far as one LFO at full Depth takes it at full (the Resonance only half the way to its top), on top of the knob and the LFOs (issue 132). It glides to each new pressure over 16 ms, so a keyboard's steps do not step the sound (issue 219). Kept with the MIDI settings, not in the Patch. A keyboard sends it for all its keys at once (channel aftertouch) or for each key or pad (polyphonic, or per-Note, aftertouch): the pressure used is the hardest-pressed held Note's, or the channel's if higher, a Note's forgotten on its release, and it moves the one Destination for every Note (the owner, 2026-11-01). Per-Voice pressure and MPE are not used.
 _Avoid_: Pressure (fine in code), channel pressure
 
 ### Short forms

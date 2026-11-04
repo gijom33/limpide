@@ -183,8 +183,11 @@ describe('aftertouch moves its Destination up, from none at no pressure to its r
     expect(pressed({ ...knobs, cutoff: 10000 }, { destination: 'cutoff', amount: 1 }).cutoff).toBe(20000);
   });
   it('raises a knob with room by its law, never past the knob’s top', () => {
-    expect(pressed({ ...knobs, resonance: 0.2 }, { destination: 'resonance', amount: 0.5 }).resonance).toBeCloseTo(0.7);
-    expect(pressed({ ...knobs, resonance: 0.8 }, { destination: 'resonance', amount: 1 }).resonance).toBe(1);
+    // On the Resonance, half the way from the knob to its top at full pressure: half its range from none (issue 219).
+    expect(pressed({ ...knobs, resonance: 0 }, { destination: 'resonance', amount: 1 }).resonance).toBeCloseTo(0.5);
+    expect(pressed({ ...knobs, resonance: 0.2 }, { destination: 'resonance', amount: 1 }).resonance).toBeCloseTo(0.6);
+    expect(pressed({ ...knobs, resonance: 0.2 }, { destination: 'resonance', amount: 0.5 }).resonance).toBeCloseTo(0.4);
+    expect(pressed({ ...knobs, resonance: 0.8 }, { destination: 'resonance', amount: 1 }).resonance).toBeCloseTo(0.9);
     const widths = pressed({ ...knobs, pulseWidth: 0.25, osc2PulseWidth: 0.7 }, { destination: 'pulseWidth', amount: 1 });
     expect([widths.pulseWidth, widths.osc2PulseWidth]).toEqual([0.65, 0.95]);
     expect(pressed({ ...knobs, volume: 0.4 }, { destination: 'volume', amount: 1 }).volume).toBeCloseTo(0.9);

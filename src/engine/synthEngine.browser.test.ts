@@ -12,7 +12,7 @@ import { straightenLimiter } from '../test/straightLimiter';
 import { guideLevel } from '../viewers/guides';
 import { hoverReadout, interpolatedPeak } from '../viewers/readout';
 import { amplitudeToSpectrumDb } from '../viewers/spectrumScale';
-import { createSynthEngine, OSCILLATOR_LEVEL } from './synthEngine';
+import { createSynthEngine, OSCILLATOR_LEVEL, SAFETY_KNEE } from './synthEngine';
 
 const SR = 48000;
 
@@ -1482,12 +1482,12 @@ describe('Velocity → Cutoff', () => {
 });
 
 describe('aftertouch (issue 132)', () => {
-  // The Cutoff at no pressure and full: two octaves up (Claude's call, open to the owner); the Resonance, a knob with a
-  // room, at half: 50 points up from 0.2.
+  // The Cutoff at no pressure and full: two octaves up (Claude's call, open to the owner); the Resonance at half: a
+  // quarter of the way from 0.2 to its top (issue 219), to 0.4.
   const cases = [
     { pressure: { destination: 'cutoff', amount: 0 }, cutoff: 300, resonance: 0 },
     { pressure: { destination: 'cutoff', amount: 1 }, cutoff: 1200, resonance: 0 },
-    { pressure: { destination: 'resonance', amount: 0.5 }, cutoff: 300, resonance: 0.7, knob: 0.2 },
+    { pressure: { destination: 'resonance', amount: 0.5 }, cutoff: 300, resonance: 0.4, knob: 0.2 },
   ] as const;
   it('moves the Effective Cutoff and Resonance by the reach the model predicts, none at no pressure, and the sound follows', async () => {
     const harmonics = Float32Array.from({ length: 20 }, (_, i) => 110 * (i + 1));
@@ -1601,6 +1601,22 @@ describe('aftertouch (issue 132)', () => {
     const peak = (s: Float32Array) => s.reduce((m, v) => Math.max(m, Math.abs(v)), 0);
     expect(reads[1].m.volume).toBeCloseTo(0.4 + 0.5 * glided(block(82) - read / 2 - step), 6);
     for (const { s, m } of reads.slice(1)) expect(peak(s) / peak(reads[0].s)).toBeCloseTo(m.volume / 0.4, 1);
+  });
+
+  // Decision 4: on the Resonance, aftertouch reaches half the knob's range, so Wobble pressed hard does not ring past
+  // the limiter's knee (at the whole range it self-oscillated, 8 dB louder).
+  it("reaches half the Resonance's range, so Wobble at full pressure stays under the limiter's knee (issue 219)", async () => {
+    const wobble = PRESETS.find((p) => p.name === 'Wobble')!.patch;
+    for (const note of [33, 41, 45, 48]) {
+      const ctx = new OfflineAudioContext(1, SR * 2, SR);
+      straightenLimiter(ctx);
+      const engine = createSynthEngine(ctx);
+      engine.applyPatch(wobble);
+      engine.setPressure({ destination: 'resonance', amount: 1 });
+      engine.noteOn(note, 1, 0);
+      const s = (await ctx.startRendering()).getChannelData(0);
+      expect(s.reduce((m, v) => Math.max(m, Math.abs(v)), 0), `${note}`).toBeLessThan(SAFETY_KNEE);
+    }
   });
 
   it('on Pitch, raises the sound by up to a semitone, the model and Cycle Lock with it, and leaves the knobs as they are', async () => {

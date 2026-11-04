@@ -218,7 +218,7 @@ export const TIPS = {
   },
   aftertouch: {
     title: 'Aftertouch',
-    body: 'Press harder on a held key and this Destination rises, as on a plugin synth: nothing at a light touch, as far as one LFO at full Depth swings it at the hardest, on top of its knob and the LFOs. The Cutoff opens up to two octaves, so pressing brightens the sound. The dot on its knob and its LFO & Envelopes line show the move.',
+    body: 'Press harder on a held key and this Destination rises, as on a plugin synth: nothing at a light touch, as far as one LFO at full Depth swings it at the hardest, on top of its knob and the LFOs. The Cutoff opens up to two octaves, so pressing brightens the sound; the Resonance rises half the way to its top. The dot on its knob and its LFO & Envelopes line show the move.',
     how: 'Not every keyboard sends aftertouch: press a held key harder and see whether the Last message says Aftertouch. A keyboard or pad that senses each key’s pressure (polyphonic) moves it by the key pressed hardest.',
   },
   bendRange: {
