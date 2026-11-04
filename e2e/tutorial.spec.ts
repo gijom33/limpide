@@ -275,8 +275,8 @@ test('Wobble’s 3 Hz Step, with Sync switched on early, switches it off so the 
 // folded away.
 for (const [layout, width, height] of [['laptop', 1440, 900], ['phone', 393, 659]] as const) {
   test(`on a ${layout}, an end card's "Next: …" starts the next Tutorial; the last has only Done (issue 190)`, async ({ page, browserName }) => {
-    // Two Tutorials, 14 Steps, each made and moved on from by "Do it for me" and Next: held as slow as GitHub's Linux
-    // WebKit, about 2.3 s a Step, so past the usual 30 s there (the 1.23.0 deploy run; issue 224). No Step was stuck.
+    // Two Tutorials, 14 Steps, each made by "Do it for me" and left by Next: about 2.3 s a Step on a page as slow as
+    // GitHub's Linux WebKit, past the usual 30 s (issue 224).
     test.slow();
     // Safari leaves the focus off a clicked button, so Finish gone hands it on in Chromium alone (issue 104's test goes by keys).
     const clickFocuses = browserName !== 'webkit';

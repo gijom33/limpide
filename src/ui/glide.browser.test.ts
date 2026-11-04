@@ -20,9 +20,9 @@ describe('glideTo: the Demo’s slow scroll', () => {
     scrollTo({ top: 0, behavior: 'instant' });
   });
 
-  // Issue 224: Bead's motion goes at most LONGEST_STEP a frame, so on a device drawing fewer than 20 frames a second the
-  // page arrived before Bead's flight across it had landed (GitHub's Linux WebKit, about 15 a second).
-  it('on frames slower than Bead’s longest step, slows as Bead does, so it is still under way after its time', async () => {
+  // Bead's motion goes at most LONGEST_STEP a frame, so on a device drawing fewer than 20 frames a second a scroll on the
+  // clock would stop before Bead's flight across it lands (GitHub's Linux WebKit draws about 15 a second).
+  it('on frames slower than Bead’s longest step, slows as Bead does, so it is still under way after its time (issue 224)', async () => {
     page = document.body.appendChild(document.createElement('div'));
     page.style.height = '5000px';
     scrollTo({ top: 0, behavior: 'instant' });

@@ -634,8 +634,8 @@ test('a pointer over it tickles it; a click sends tiny drops every way', async (
     const box = (await page.locator('.mascot-drop').boundingBox())!;
     return { x: box.x + 9, y: box.y + box.height - 8 };
   };
-  // The pointer moved over it 12 times, 40 ms apart, its tilt read each time: timed in the page, as a loaded machine
-  // stretched the round trips (issue 224).
+  // The pointer moved over it 12 times, 40 ms apart, its tilt read each time: timed in the page, so a loaded machine
+  // cannot stretch the gaps (issue 224). Its handler is what is timed; the mouse reaches it in the click below.
   const at = await middle();
   const tilts = await page.locator('.mascot-drop').evaluate(
     (el, at) =>
@@ -644,7 +644,7 @@ test('a pointer over it tickles it; a click sends tiny drops every way', async (
         const move = () => {
           const i = tilts.length;
           const to = { clientX: at.x + (i % 2), clientY: at.y, pointerType: 'mouse', bubbles: true };
-          for (const type of ['pointerover', 'pointerenter', 'pointermove']) el.dispatchEvent(new PointerEvent(type, to));
+          el.dispatchEvent(new PointerEvent('pointermove', to));
           tilts.push(Number((el as HTMLElement).style.transform.match(/rotate\(([-\d.]+)deg/)![1]));
           if (tilts.length < 12) setTimeout(move, 40);
           else done(tilts);
@@ -673,8 +673,8 @@ test('clicked again and again, it runs off', async ({ page }) => {
   for (let i = 0; i < 7; i++) {
     const at = await where();
     if (Math.abs(at.x - start.x) > 30) break;
+    // As fast as the test can click, with no wait between: each click counts for more than a second forgives.
     await page.mouse.click(at.x, at.y);
-    await page.waitForTimeout(120);
   }
   await expect.poll(async () => Math.abs((await where()).x - start.x), { timeout: 4000 }).toBeGreaterThan(40);
 });
@@ -1052,10 +1052,9 @@ for (const [size, viewport] of [
     await listening(page);
     await bringBead(page);
     await settles(page);
-    // Each frame for 8 s from the Demo's start, pressed in the page (its second part's knob, in another section, is
-    // about 4 s in): the page's scroll, what Bead is doing, and whether its drop is in the window. Watched from the
-    // test's own press, a round trip later, on GitHub's slow Linux WebKit the scroll began 4.7 s into a 6 s watch and
-    // Bead was still flying at its end, so no move was counted (issue 224).
+    // Each frame for 8 s from the Demo's start (its second part's knob, in another section, about 4 s in): the page's
+    // scroll, what Bead is doing, and whether its drop is in the window. Demo is pressed in the page, so the watch starts
+    // with it however slow the round trips, and lasts past a scroll and flight that slow frames stretch (issue 224).
     const seen = await page.evaluate(
       () =>
         new Promise<{ t: number; y: number; moving: string; inView: boolean }[]>((done) => {
@@ -1099,9 +1098,42 @@ for (const [size, viewport] of [
   });
 }
 
-/** Where its foot is against LFO `lfo`'s plot: how far over or under the line the plot draws under its middle, in pixels. */
+/** Where its foot is against an LFO's plot: how far over or under the line the plot draws under its middle, in pixels. */
+interface OnTheLine {
+  off: number;
+  foot: number;
+  moving: string | undefined;
+}
+
+/** Where its foot is against LFO `lfo`'s plot, `n` times `ms` apart, timed in the page so a loaded machine cannot stretch the gaps. */
+const alongTheLine = (page: Page, lfo: number, n: number, ms = 150) =>
+  mascot(page).evaluate(
+    (el, [lfo, n, ms]) =>
+      new Promise<OnTheLine[]>((done) => {
+        const out: OnTheLine[] = [];
+        const read = () => {
+          const box = el.getBoundingClientRect(); // its box's bottom is its foot
+          const plot = document.querySelector(`.lfo-plot[data-lfo="${lfo}"]`)!;
+          const at = plot.getBoundingClientRect();
+          const points = [...plot.querySelector('.lfo-plot-line')!.getAttribute('d')!.matchAll(/[ML](\S+) (\S+)/g)].map((m) => ({ x: Number(m[1]), y: Number(m[2]) }));
+          const middle = box.left + 9 - at.left; // the drop's middle, the Mascot's DROP_MIDDLE
+          const under = points.reduce((a, b) => (Math.abs(b.x - middle) < Math.abs(a.x - middle) ? b : a));
+          out.push({ off: box.bottom - (at.top + under.y), foot: box.bottom, moving: (el as HTMLElement).dataset.moving });
+          if (out.length < n) setTimeout(read, ms);
+          else done(out);
+        };
+        read();
+      }),
+    [lfo, n, ms] as const,
+  );
+
+/**
+ * Where its foot is against LFO `lfo`'s plot, now, read at once rather than through `alongTheLine`'s promise: the drop
+ * test's pick-up after it missed a riding Bead for 15 s in 3 runs of about 15 that way in WebKit, never in 40 this way
+ * (issue 224, not yet understood).
+ */
 const offTheLine = (page: Page, lfo: number) =>
-  mascot(page).evaluate((el, n) => {
+  mascot(page).evaluate((el, n): OnTheLine => {
     const box = el.getBoundingClientRect(); // its box's bottom is its foot
     const plot = document.querySelector(`.lfo-plot[data-lfo="${n}"]`)!;
     const at = plot.getBoundingClientRect();
@@ -1110,32 +1142,6 @@ const offTheLine = (page: Page, lfo: number) =>
     const under = points.reduce((a, b) => (Math.abs(b.x - middle) < Math.abs(a.x - middle) ? b : a));
     return { off: box.bottom - (at.top + under.y), foot: box.bottom, moving: (el as HTMLElement).dataset.moving };
   }, lfo);
-
-/**
- * Where its foot is against LFO `lfo`'s plot, as `offTheLine` says, `n` times `ms` apart, timed in the page: in round
- * trips with waits, a loaded machine stretched the gaps (issue 224).
- */
-const alongTheLine = (page: Page, lfo: number, n: number, ms = 150) =>
-  page.evaluate(
-    ([lfo, n, ms]) =>
-      new Promise<{ off: number; foot: number; moving: string | undefined }[]>((done) => {
-        const out: { off: number; foot: number; moving: string | undefined }[] = [];
-        const read = () => {
-          const el = document.querySelector<HTMLElement>('.mascot')!;
-          const box = el.getBoundingClientRect(); // its box's bottom is its foot
-          const plot = document.querySelector(`.lfo-plot[data-lfo="${lfo}"]`)!;
-          const at = plot.getBoundingClientRect();
-          const points = [...plot.querySelector('.lfo-plot-line')!.getAttribute('d')!.matchAll(/[ML](\S+) (\S+)/g)].map((m) => ({ x: Number(m[1]), y: Number(m[2]) }));
-          const middle = box.left + 9 - at.left; // the drop's middle, the Mascot's DROP_MIDDLE
-          const under = points.reduce((a, b) => (Math.abs(b.x - middle) < Math.abs(a.x - middle) ? b : a));
-          out.push({ off: box.bottom - (at.top + under.y), foot: box.bottom, moving: el.dataset.moving });
-          if (out.length < n) setTimeout(read, ms);
-          else done(out);
-        };
-        read();
-      }),
-    [lfo, n, ms] as const,
-  );
 
 test('now and then it rides a slow Sine on an LFO plot, along its line, and goes home once the Depth is 0 (issue 141)', async ({ page }) => {
   test.slow();
@@ -1366,8 +1372,8 @@ test.describe('never over text where it rests (issue 181)', () => {
         expect(seen.over, `part ${part}`).toEqual([]);
         rests += seen.rests;
       }
-      // Some rests seen, so the check meant something: counted in frames, and WebKit on GitHub's runner draws about
-      // fifteen a second, where it rested as few as 4 frames over three parts of 8 s (issue 177).
+      // Some rests seen, so the check meant something: counted in frames, of which WebKit on GitHub's runner draws only
+      // about fifteen a second (issue 177).
       expect(rests).toBeGreaterThan(0);
     });
   }

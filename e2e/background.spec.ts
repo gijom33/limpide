@@ -15,10 +15,9 @@ const TRACK_STARTS = (() => {
 
 // Issue 198. A headless browser never slows a page it runs (its pages stay visible, their timers on time), so the test
 // does what a browser does to a page in the background: the page says it is hidden, its own timers fire only on the
-// next whole second, and it draws no frame. The engine writes down every Note it is asked to start (the tests' build
-// only). Drawing on while "hidden" was the test's own slip (issue 224): on GitHub's Linux WebKit, about 15 frames a
-// second, a frame now and then held the page past the Demo's 0.15 s look-ahead, so a Note was handed over past its
-// start and dropped by design; a page really hidden draws nothing.
+// next whole second, and it draws no frame (issue 224: drawing on, a slow frame on GitHub's Linux WebKit held the page
+// past the Demo's 0.15 s look-ahead, and a Note handed over past its start is dropped by design). The engine writes
+// down every Note it is asked to start (the tests' build only).
 test('the Demo, with the page hidden for five seconds, starts every Note of those seconds on time (issue 198)', async ({ page }) => {
   test.slow();
   await page.goto('/');
