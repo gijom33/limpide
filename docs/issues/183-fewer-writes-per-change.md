@@ -13,6 +13,10 @@ Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.m
 1. **Aftertouch is smoothed** like a knob's own moves, so pressure glides; its reach stays as issue 132 set it.
 2. **One write per parameter and frame** at most, and only of what changed.
 
+Decided by the owner, 2026-11-03, answering the questions below:
+
+3. **Question 1, aftertouch's smoothing: the bend wheel's 4 ms** ("Yes, 4 ms"). Knobs turned from a Controller keep their immediate writes; if they step audibly, that is an issue of its own.
+
 ## Agent Brief
 
 **Category:** enhancement
