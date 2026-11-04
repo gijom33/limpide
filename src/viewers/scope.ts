@@ -1,5 +1,5 @@
 import { type GeekNote, scopeReadout } from '../music/geek';
-import { cssVar, cssVars, curveWidth, haloText, prepareCanvas } from './canvas';
+import { canvasInputs, cssVar, curveWidth, haloText, prepareCanvas } from './canvas';
 import { createCycleLock } from './cycleLock';
 import { createFreezeLatch } from './freezeLatch';
 import { createGlow } from './glow';
@@ -76,7 +76,7 @@ export function createScope(
     // A silent Scope rests once drawn, until something it draws changes (issue 214): the trace is flat whatever the Note.
     const settings = view();
     const inputs = [
-      canvas.clientWidth, canvas.clientHeight, window.devicePixelRatio, cssVars(canvas, COLOURS),
+      ...canvasInputs(canvas, COLOURS),
       settings.cycles, settings.glow, settings.overlays.guides, settings.viewer.snapshot, frozen, guideLevel, limited, period,
     ];
     if (rest(silent, inputs)) return;

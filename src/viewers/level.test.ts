@@ -6,7 +6,7 @@ const tap = (samples: Float32Array) =>
   ({ fftSize: samples.length, getFloatTimeDomainData: (into: Float32Array) => into.set(samples) }) as unknown as AnalyserNode;
 
 describe('a Tap’s level meter', () => {
-  it('reads the level in dBFS, and silence as −Infinity', () => {
+  it('reads the level in dBFS, and silence as −Infinity, as it did before issue 214', () => {
     expect(createLevelMeter(tap(new Float32Array(4).fill(0.5)))().db).toBeCloseTo(-6.02, 2);
     expect(createLevelMeter(tap(new Float32Array(4)))().db).toBe(-Infinity);
   });

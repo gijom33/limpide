@@ -2,7 +2,7 @@ import { OSCILLATOR_LEVEL } from '../engine/synthEngine';
 import { harmonicNumber } from '../music/geek';
 import type { IdealPartial, IdealSource } from '../music/idealReference';
 import { frequencyAxis, levelAxis } from './axes';
-import { cssVar, cssVars, curveWidth, haloText, prepareCanvas } from './canvas';
+import { canvasInputs, cssVar, curveWidth, haloText, prepareCanvas } from './canvas';
 import { createFreezeLatch } from './freezeLatch';
 import { createGlow } from './glow';
 import { harmonicMarkers } from './harmonicMarkers';
@@ -145,7 +145,7 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
     // A silent Spectrum rests once drawn, until something it draws changes (issue 214): with no Harmonics there are no
     // Markers or Ideal marks, and the Curve is compared by its gains, which an LFO on the Cutoff moves.
     const inputs = [
-      width, canvas.clientHeight, window.devicePixelRatio, cssVars(canvas, COLOURS),
+      ...canvasInputs(canvas, COLOURS),
       viewer.frequencyScale, viewer.levelScale, viewer.snapshot, viewer.frozen, view().glow, curveGains, slope,
     ];
     if (rest(silent && !cursor, inputs)) return;
@@ -241,14 +241,13 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
     strokeColumns(g, outline, yOf, ratio);
 
     if (curveGains) {
-      const gains = curveGains;
       // The Filter's colour, lightened: this is the Filter's shape at that Cutoff.
       g.strokeStyle = cssVar(canvas, '--cutoff-line');
       g.globalAlpha = 0.85;
       g.lineWidth = curveWidth(canvas);
       g.setLineDash([6, 3]);
       // Where the gain is below the Spectrum's floor the curve stops at the bottom edge rather than lying along it.
-      const ys = Array.from(gains, (v) => yOf(zero + 20 * Math.log10(Math.max(1e-6, v))));
+      const ys = Array.from(curveGains, (v) => yOf(zero + 20 * Math.log10(Math.max(1e-6, v))));
       g.beginPath();
       for (const [first, last] of aboveFloor(ys, height - 0.5)) {
         g.moveTo(first, ys[first]);

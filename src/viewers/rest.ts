@@ -1,6 +1,6 @@
-// A Viewer at rest (issue 214, review 18): with nothing playing, the Scopes, Spectrums and the Envelope Timeline drew
-// the same silent picture sixty times a second. Each now draws a still picture once and skips the frames that would
-// draw it again, until something it draws from changes.
+// A Viewer at rest (issue 214, review 18): with nothing playing, a Scope, Spectrum or the Envelope Timeline draws its
+// still picture once and skips the frames that would draw it again, until something it draws from changes, rather
+// than keep a laptop's main thread busy drawing silence.
 
 const same = (a: unknown, b: unknown) =>
   a instanceof Float32Array && b instanceof Float32Array ? a.length === b.length && a.every((v, i) => Object.is(v, b[i])) : Object.is(a, b);

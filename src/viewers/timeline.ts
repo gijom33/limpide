@@ -2,7 +2,7 @@ import { DESTINATIONS, destinationLevel, lfoDestinations } from '../modulation/d
 import type { BeatGrid } from '../modulation/lfo';
 import type { Modulation } from '../modulation/modulationModel';
 import { formatParam, type LfoDestination, markedBeats, type Patch, type StageId } from '../patch/patch';
-import { cssVar, cssVars, curveWidth, haloText, prepareCanvas } from './canvas';
+import { canvasInputs, cssVar, curveWidth, haloText, prepareCanvas } from './canvas';
 import { createDashState } from './dashState';
 import { createFreezeLatch } from './freezeLatch';
 import { createRest, createSilence } from './rest';
@@ -121,10 +121,13 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
     // The Timeline rests (issue 214) while nothing on it moves: both Envelopes at rest and no Note struck since its
     // left edge, no broken line (their marks scroll) and no beats. What it then draws is the same whatever the Patch.
     const seconds = view().timelineSeconds;
-    const latest = source.modulationAt(now);
-    const quiet = latest.amp < AT_REST && latest.filter < AT_REST && latest.struck === struck;
-    struck = latest.struck;
     const patchNow = source.patchAt(now);
+    const atNow = source.modulationAt(now);
+    const quiet = atNow.amp < AT_REST && atNow.filter < AT_REST && atNow.struck === struck;
+    struck = atNow.struck;
+    // The tempo's beats, broken lines between the seconds' (issue 112), while either LFO's cycle follows them (synced,
+    // Retrigger off: issue 193).
+    const beats = markedBeats(patchNow, [1, 2], source.tempo(), now - seconds, now);
     const shows = timelineShows(patchNow, aftertouch());
     const still =
       !frozen &&
@@ -132,8 +135,8 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
       silence(quiet, performance.now() / 1000) > seconds + REST_MARGIN &&
       !shows.cutoff &&
       !shows.destinations.length &&
-      !markedBeats(patchNow, [1, 2], source.tempo(), now - seconds, now).length;
-    const inputs = [canvas.clientWidth, canvas.clientHeight, window.devicePixelRatio, cssVars(canvas, COLOURS), seconds];
+      !beats.length;
+    const inputs = [...canvasInputs(canvas, COLOURS), seconds];
     if (rest(still, inputs)) return;
 
     dashState.nextFrame();
@@ -161,9 +164,6 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
     const columns = Math.ceil(width);
     const pixelsPerSecond = width / seconds;
 
-    // The tempo's beats, broken lines between the seconds' (issue 112), while either LFO's cycle follows them (synced,
-    // Retrigger off: issue 193).
-    const beats = markedBeats(patchNow, [1, 2], source.tempo(), now - seconds, now);
     canvas.dataset.beats = String(beats.length);
     g.setLineDash([2, 3]);
     for (const t of beats) {
@@ -202,7 +202,8 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
     canvas.dataset.shows = timelineKey(patchNow, aftertouch()).map((e) => e.mark).join(' ');
     if (shows.filterEnvelope) area('--stage-filter', 0.1, (m) => m.filter);
     canvas.dataset.filterEnvelope = (samples.at(-1)?.filter ?? 0).toFixed(3);
-    canvas.dataset.ampLevel = (samples.at(-1)?.amp ?? 0).toFixed(3);
+    const latest = samples.at(-1);
+    canvas.dataset.ampLevel = (latest?.amp ?? 0).toFixed(3);
 
     // Amp Envelope, drawn over it: the one the ear follows first. The Envelope alone: an LFO on Volume (tremolo)
     // leaves it still (the owner, 2026-10-28): its dip is the Volume's own line, below.
