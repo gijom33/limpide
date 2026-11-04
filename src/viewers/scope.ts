@@ -1,9 +1,10 @@
 import { type GeekNote, scopeReadout } from '../music/geek';
-import { cssVar, curveWidth, haloText, prepareCanvas } from './canvas';
+import { cssVar, cssVars, curveWidth, haloText, prepareCanvas } from './canvas';
 import { createCycleLock } from './cycleLock';
 import { createFreezeLatch } from './freezeLatch';
 import { createGlow } from './glow';
 import { createGuideGlide } from './guides';
+import { createRest } from './rest';
 import { scopeScale } from './scopeScale';
 import { scopeWindow } from './scopeWindow';
 import type { ViewSettings } from './viewSettings';
@@ -12,6 +13,8 @@ import type { ViewSettings } from './viewSettings';
 const LIMITING_HOLD_MS = 800;
 // Two drawn points per pixel keeps sharp corners (a saw's drop, a pulse's edges) crisp.
 const POINTS_PER_PIXEL = 2;
+// The colours a Scope draws in, compared at rest.
+const COLOURS = ['--grid', '--muted', '--danger', '--text', '--trace', '--bg', '--curve-w'];
 
 /**
  * A Scope of one Tap, Cycle Locked to the Note's fundamental so a steady Note stands still, drawing the newest sound.
@@ -56,14 +59,32 @@ export function createScope(
   const frozenGuides = createFreezeLatch<number>();
   const guideGlide = createGuideGlide();
   const still = matchMedia('(prefers-reduced-motion: reduce)');
+  const rest = createRest();
 
-  return function draw() {
-    if (!view().viewer.frozen) analyser.getFloatTimeDomainData(samples);
+  /** `silent`: the Tap has been silent long enough for the Glow's traces of sound to fade (issue 214). */
+  return function draw(silent: boolean) {
+    const { frozen } = view().viewer;
+    const f = frozenFundamental(frozen, fundamental);
+    // Guides at the level the Mixer sends (issue 159), on every Scope: inside them the Filter only removed energy;
+    // beyond them (faintly shaded) Resonance added a peak. They glide as the Mixer's faders move.
+    const guideLevel = guideGlide(frozenGuides(frozen, () => view().guideLevel), performance.now(), still.matches);
+    // LIMITING: only where the limiter sits (after the Amp), only while it is actually bending the sound.
+    if (limiting && !frozen && limiting()) limitedAt = performance.now();
+    const limited = !!limiting && performance.now() - limitedAt < LIMITING_HOLD_MS;
+    // The Synth Geek Layer (issue 170): the period and frequency of the fundamental held still.
+    const period = view().overlays.geek ? scopeReadout(f, newestNote()) : '';
+    // A silent Scope rests once drawn, until something it draws changes (issue 214): the trace is flat whatever the Note.
+    const settings = view();
+    const inputs = [
+      canvas.clientWidth, canvas.clientHeight, window.devicePixelRatio, cssVars(canvas, COLOURS),
+      settings.cycles, settings.glow, settings.overlays.guides, settings.viewer.snapshot, frozen, guideLevel, limited, period,
+    ];
+    if (rest(silent, inputs)) return;
+
+    if (!frozen) analyser.getFloatTimeDomainData(samples);
     const { g, width, height } = prepareCanvas(canvas);
     g.clearRect(0, 0, width, height);
 
-    const { frozen } = view().viewer;
-    const f = frozenFundamental(frozen, fundamental);
     const { length: windowLength, cycles } = scopeWindow(samples.length, sampleRate, f, view().cycles);
     const points = Math.max(2, Math.min(Math.floor(windowLength), Math.ceil(width * POINTS_PER_PIXEL)));
     const { trace } = lock({ samples, sampleRate, end: frozenEnd(frozen, now), frequencyAt: fundamentalAt, cycles, points });
@@ -86,9 +107,6 @@ export function createScope(
     g.lineTo(width, height / 2);
     g.stroke();
 
-    // Guides at the level the Mixer sends (issue 159), on every Scope: inside them the Filter only removed energy;
-    // beyond them (faintly shaded) Resonance added a peak. They glide as the Mixer's faders move.
-    const guideLevel = guideGlide(frozenGuides(view().viewer.frozen, () => view().guideLevel), performance.now(), still.matches);
     canvas.dataset.guides = guideLevel.toFixed(3);
     if (view().overlays.guides) {
       g.fillStyle = cssVar(canvas, '--muted');
@@ -107,12 +125,9 @@ export function createScope(
       g.setLineDash([]);
     }
 
-    // LIMITING: only where the limiter sits (after the Amp), only while it is actually bending the sound.
     if (limiting) {
-      if (!view().viewer.frozen && limiting()) limitedAt = performance.now();
-      const shown = performance.now() - limitedAt < LIMITING_HOLD_MS;
-      canvas.dataset.limiting = String(shown);
-      if (shown) {
+      canvas.dataset.limiting = String(limited);
+      if (limited) {
         g.font = '600 10px system-ui, sans-serif';
         g.fillStyle = cssVar(canvas, '--danger');
         g.textAlign = 'right';
@@ -165,9 +180,7 @@ export function createScope(
     g.lineWidth = curveWidth(canvas);
     stroke(trace);
 
-    // The Synth Geek Layer (issue 170): the period and frequency of the fundamental held still, top left, over the
-    // trace on a halo; LIMITING has the top right.
-    const period = view().overlays.geek ? scopeReadout(f, newestNote()) : '';
+    // The Synth Geek Layer's period, top left, over the trace on a halo; LIMITING has the top right.
     canvas.dataset.period = period;
     if (period) {
       g.font = '10px system-ui, sans-serif';

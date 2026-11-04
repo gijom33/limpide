@@ -6,7 +6,8 @@ import { createFreezeLatch } from './freezeLatch';
 // on a layer, where rounding leaves a haze of every trace ever drawn.
 const GLOW_DECAY = 0.85;
 const GLOW_STEP_MS = 1000 / 60;
-const GLOW_MS = 250;
+/** How long a trace glows: a Viewer silent for longer shows no trace of the sound before (issue 214). */
+export const GLOW_MS = 250;
 
 /**
  * A Viewer's Glow: called once a frame with its newest trace, it returns the past traces to draw under it, oldest

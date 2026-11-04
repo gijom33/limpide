@@ -351,10 +351,11 @@ describe('every Viewer draws a Patch at the edges in a frame (issue 116)', () =>
       createSpectrum(canvas(360, 140), engine.taps.amp, SR, { fundamental: engine.fundamental, view }),
       createTimeline(canvas(900, 140), engine, view, () => null),
     ];
-    for (let i = 0; i < 2; i++) for (const draw of draws) draw();
+    // Drawn as with sound (`false`): a Viewer at rest skips its frame (issue 214).
+    for (let i = 0; i < 2; i++) for (const draw of draws) draw(false);
     for (const listener of listeners) listener({ before: defaultPatch(), after: patch, by: 'hand' });
     const start = performance.now();
-    for (const draw of draws) draw();
+    for (const draw of draws) draw(false);
     const took = performance.now() - start;
     document.body.replaceChildren();
     return took;

@@ -15,6 +15,12 @@ export function prepareCanvas(canvas: HTMLCanvasElement): { g: CanvasRenderingCo
 /** Reads a CSS custom property from the canvas, so Viewers follow the theme. */
 export const cssVar = (el: Element, name: string) => getComputedStyle(el).getPropertyValue(name).trim();
 
+/** The CSS custom properties `names` as read from the canvas, in one string: what a Viewer at rest compares (issue 214). */
+export function cssVars(el: Element, names: readonly string[]): string {
+  const style = getComputedStyle(el);
+  return names.map((name) => style.getPropertyValue(name).trim()).join(' ');
+}
+
 /** The width of every Viewer's main curve, in CSS pixels, from the theme (`--curve-w`). */
 export const curveWidth = (el: Element) => parseFloat(cssVar(el, '--curve-w')) || 1.75;
 

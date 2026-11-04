@@ -1,7 +1,9 @@
 import { Fragment, useEffect, useRef } from 'react';
 import type { Formula, GeekNote } from '../music/geek';
+import { GLOW_MS } from '../viewers/glow';
 import { createLevelMeter } from '../viewers/level';
 import { addToRenderLoop } from '../viewers/renderLoop';
+import { createSilence } from '../viewers/rest';
 import { createScope } from '../viewers/scope';
 import { createSpectrum } from '../viewers/spectrum';
 import type { ViewSettings } from '../viewers/viewSettings';
@@ -60,10 +62,18 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, fundamenta
       noiseSlope: () => noiseSlopeRef.current,
     });
     const level = createLevelMeter(analyser, () => view().viewer.frozen);
+    const silence = createSilence();
+    let glow = view().glow;
     return addToRenderLoop(() => {
-      drawScope();
-      drawSpectrum();
-      scopeRef.current!.dataset.db = String(level());
+      const { db, silent } = level();
+      // Silent for as long as the Glow keeps a trace: then the Scope and Spectrum may rest (issue 214). The Glow
+      // switched on or off starts the wait again, as its traces of the silence fill or empty over that time.
+      const glowSame = view().glow === glow;
+      glow = view().glow;
+      const settled = silence(silent && glowSame, performance.now()) > GLOW_MS;
+      drawScope(settled);
+      drawSpectrum(settled);
+      if (scopeRef.current!.dataset.db !== String(db)) scopeRef.current!.dataset.db = String(db);
     });
   }, [analyser, sampleRate, fundamental, fundamentalAt, now, view, showIdeal, gateOn, response, limiting, newestNote]);
 

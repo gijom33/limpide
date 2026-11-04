@@ -2,9 +2,10 @@ import { DESTINATIONS, destinationLevel, lfoDestinations } from '../modulation/d
 import type { BeatGrid } from '../modulation/lfo';
 import type { Modulation } from '../modulation/modulationModel';
 import { formatParam, type LfoDestination, markedBeats, type Patch, type StageId } from '../patch/patch';
-import { cssVar, curveWidth, haloText, prepareCanvas } from './canvas';
+import { cssVar, cssVars, curveWidth, haloText, prepareCanvas } from './canvas';
 import { createDashState } from './dashState';
 import { createFreezeLatch } from './freezeLatch';
+import { createRest, createSilence } from './rest';
 import type { ViewSettings } from './viewSettings';
 
 const F_MIN = 20;
@@ -91,6 +92,13 @@ export function timelineGrid(now: number, seconds: number, pixelsPerSecond: numb
 
 const DASHES: Record<LinePattern, number[]> = { dots: [0.5, 5.5], dashes: [5, 3], dashDot: [7, 3, 0.5, 3] };
 const DOT_WIDTH = 1.75; // times the curve's width
+// The colours the Timeline draws in, compared at rest.
+const COLOURS = ['--grid', '--muted', '--bg', '--stage-amp', '--stage-filter', '--curve-w'];
+// Under this an Envelope's level is a hundredth of a pixel or less on the plot: drawn as silence (issue 214).
+const AT_REST = 1e-4;
+// The Timeline rests once its last sound has scrolled this far past its left edge, in seconds: a Note too short to be
+// seen between two frames is still inside the frame after it.
+const REST_MARGIN = 0.1;
 
 /**
  * The Envelope Timeline: the last few seconds of the Amp and Filter Envelopes (areas, 0–1 on a shared scale), the
@@ -102,15 +110,37 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
   const frozenNow = createFreezeLatch<number>();
   const dashState = createDashState();
 
+  const rest = createRest();
+  const silence = createSilence();
+  let struck: number | null = null;
+
   const DOT_RADIUS = 3.5;
   return function draw() {
-    const now = frozenNow(view().viewer.frozen, source.now);
+    const { frozen } = view().viewer;
+    const now = frozenNow(frozen, source.now);
+    // The Timeline rests (issue 214) while nothing on it moves: both Envelopes at rest and no Note struck since its
+    // left edge, no broken line (their marks scroll) and no beats. What it then draws is the same whatever the Patch.
+    const seconds = view().timelineSeconds;
+    const latest = source.modulationAt(now);
+    const quiet = latest.amp < AT_REST && latest.filter < AT_REST && latest.struck === struck;
+    struck = latest.struck;
+    const patchNow = source.patchAt(now);
+    const shows = timelineShows(patchNow, aftertouch());
+    const still =
+      !frozen &&
+      // On the page's clock, which runs before the audio's has started.
+      silence(quiet, performance.now() / 1000) > seconds + REST_MARGIN &&
+      !shows.cutoff &&
+      !shows.destinations.length &&
+      !markedBeats(patchNow, [1, 2], source.tempo(), now - seconds, now).length;
+    const inputs = [canvas.clientWidth, canvas.clientHeight, window.devicePixelRatio, cssVars(canvas, COLOURS), seconds];
+    if (rest(still, inputs)) return;
+
     dashState.nextFrame();
     const { g, width, height } = prepareCanvas(canvas);
     g.clearRect(0, 0, width, height);
     const pad = 4;
     const plot = height - 2 * pad; // a grid line every second, unlabelled: "now" is the right edge
-    const seconds = view().timelineSeconds;
     canvas.dataset.seconds = String(seconds);
     const yLevel = (level: number) => pad + (1 - level) * plot;
     const yHz = (hz: number) => pad + (1 - Math.log(hz / F_MIN) / Math.log(F_MAX / F_MIN)) * plot;
@@ -133,7 +163,6 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
 
     // The tempo's beats, broken lines between the seconds' (issue 112), while either LFO's cycle follows them (synced,
     // Retrigger off: issue 193).
-    const patchNow = source.patchAt(now);
     const beats = markedBeats(patchNow, [1, 2], source.tempo(), now - seconds, now);
     canvas.dataset.beats = String(beats.length);
     g.setLineDash([2, 3]);
@@ -170,12 +199,10 @@ export function createTimeline(canvas: HTMLCanvasElement, source: Source, view: 
     // Filter Envelope: an area on the 0–1 level scale, the shape that (times Amount) pushes the Effective Cutoff.
     // Light fills, so where the two overlap they read no heavier than one Viewer's shading (16 %). Only while its
     // Amount moves the Cutoff: at zero the Envelope runs but changes nothing.
-    const shows = timelineShows(patchNow, aftertouch());
     canvas.dataset.shows = timelineKey(patchNow, aftertouch()).map((e) => e.mark).join(' ');
     if (shows.filterEnvelope) area('--stage-filter', 0.1, (m) => m.filter);
     canvas.dataset.filterEnvelope = (samples.at(-1)?.filter ?? 0).toFixed(3);
-    const latest = samples.at(-1);
-    canvas.dataset.ampLevel = (latest?.amp ?? 0).toFixed(3);
+    canvas.dataset.ampLevel = (samples.at(-1)?.amp ?? 0).toFixed(3);
 
     // Amp Envelope, drawn over it: the one the ear follows first. The Envelope alone: an LFO on Volume (tremolo)
     // leaves it still (the owner, 2026-10-28): its dip is the Volume's own line, below.

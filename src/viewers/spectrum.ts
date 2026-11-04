@@ -2,13 +2,14 @@ import { OSCILLATOR_LEVEL } from '../engine/synthEngine';
 import { harmonicNumber } from '../music/geek';
 import type { IdealPartial, IdealSource } from '../music/idealReference';
 import { frequencyAxis, levelAxis } from './axes';
-import { cssVar, curveWidth, haloText, prepareCanvas } from './canvas';
+import { cssVar, cssVars, curveWidth, haloText, prepareCanvas } from './canvas';
 import { createFreezeLatch } from './freezeLatch';
 import { createGlow } from './glow';
 import { harmonicMarkers } from './harmonicMarkers';
 import { aboveFloor, marksToDraw, spectrumOutline } from './outline';
 import { hoverReadout, hoverReadoutLines, interpolatedPeak, SILENT_DB, snapToPeak } from './readout';
 import { type ReadoutColumns, readoutBox, readoutColumns } from './readoutBox';
+import { createRest } from './rest';
 import { amplitudeToSpectrumDb } from './spectrumScale';
 import type { ViewSettings } from './viewSettings';
 
@@ -28,6 +29,8 @@ const LABELLED_HARMONICS = 7;
 const HOVER_SNAP = 12;
 // On the linear level axis a sine at the Oscillator's level fills the height.
 const LINEAR_TOP_DB = amplitudeToSpectrumDb(OSCILLATOR_LEVEL);
+// The colours a Spectrum draws in, compared at rest.
+const COLOURS = ['--muted', '--text', '--bg', '--grid', '--trace', '--cutoff-line', '--panel', '--curve-w'];
 
 interface Options {
   fundamental(): number;
@@ -117,8 +120,36 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
   // the Harmonic's number while the Synth Geek Layer is on (issue 170).
   let measuredColumns: { font: string; geek: boolean; columns: ReadoutColumns } | null = null;
 
-  return function draw() {
+  const rest = createRest();
+
+  /** `silent`: the Tap has been silent long enough for the Glow's traces of sound to fade (issue 214). */
+  return function draw(silent: boolean) {
     const { overlays, viewer } = view();
+    const width = canvas.clientWidth;
+    const columns = Math.ceil(width);
+    const fAxis = frequencyAxis(viewer.frequencyScale, width);
+    // The Response Curve's gains: recomputed if the axis or size changes while frozen; otherwise the Curve from the
+    // moment of freezing.
+    let curveGains: Float32Array | undefined;
+    if (overlays.curve && response) {
+      const key = `${viewer.frequencyScale}:${columns}`;
+      const live = () => ({
+        key,
+        gains: response(Float32Array.from({ length: columns }, (_, c) => Math.max(1, fAxis.frequencyAt(c + 0.5)))),
+      });
+      const held = frozenCurve(viewer.frozen, live);
+      curveGains = (held.key === key ? held : frozenCurve(false, live)).gains;
+    }
+    const slope = overlays.geek ? frozenNoiseSlope(viewer.frozen, () => noiseSlope?.()) : undefined;
+    const cursor = hover?.();
+    // A silent Spectrum rests once drawn, until something it draws changes (issue 214): with no Harmonics there are no
+    // Markers or Ideal marks, and the Curve is compared by its gains, which an LFO on the Cutoff moves.
+    const inputs = [
+      width, canvas.clientHeight, window.devicePixelRatio, cssVars(canvas, COLOURS),
+      viewer.frequencyScale, viewer.levelScale, viewer.snapshot, viewer.frozen, view().glow, curveGains, slope,
+    ];
+    if (rest(silent && !cursor, inputs)) return;
+
     if (!viewer.frozen) {
       analyser.getFloatFrequencyData(bins);
     }
@@ -128,11 +159,9 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
       snapshotBins = snapshotToken === null ? null : bins.slice();
     }
 
-    const { g, width, height } = prepareCanvas(canvas);
-    const columns = Math.ceil(width);
+    const { g, height } = prepareCanvas(canvas);
     // The trace is drawn per device pixel (up to 3×), so Harmonics stay distinct as long as the screen can show it.
     const ratio = Math.min(3, Math.max(1, Math.round(window.devicePixelRatio || 1)));
-    const fAxis = frequencyAxis(viewer.frequencyScale, width);
     const lAxis = levelAxis(viewer.levelScale, height, { topDb: viewer.levelScale === 'db' ? 0 : LINEAR_TOP_DB });
     const { xOf } = fAxis;
     const { yOf } = lAxis;
@@ -211,15 +240,8 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
     g.lineWidth = outlineWidth;
     strokeColumns(g, outline, yOf, ratio);
 
-    if (overlays.curve && response) {
-      // Recomputed if the axis or size changes while frozen; otherwise the Curve from the moment of freezing.
-      const key = `${viewer.frequencyScale}:${columns}`;
-      const live = () => ({
-        key,
-        gains: response(Float32Array.from({ length: columns }, (_, c) => Math.max(1, fAxis.frequencyAt(c + 0.5)))),
-      });
-      const held = frozenCurve(viewer.frozen, live);
-      const { gains } = held.key === key ? held : frozenCurve(false, live);
+    if (curveGains) {
+      const gains = curveGains;
       // The Filter's colour, lightened: this is the Filter's shape at that Cutoff.
       g.strokeStyle = cssVar(canvas, '--cutoff-line');
       g.globalAlpha = 0.85;
@@ -298,7 +320,6 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
     for (const f of fAxis.gridlines) haloText(g, f >= 1000 ? `${f / 1000}k` : `${f}`, xOf(f) + 3, height - 4, background);
 
     // The Synth Geek Layer (issue 170): the Noise's slope while it is up, top right under the Harmonic Markers' labels.
-    const slope = overlays.geek ? frozenNoiseSlope(viewer.frozen, () => noiseSlope?.()) : undefined;
     canvas.dataset.noiseSlope = slope ?? '';
     if (slope) {
       g.textAlign = 'right';
@@ -307,7 +328,6 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
     }
 
     // Hover readout: frequency, nearest Note and the level of the trace under the cursor, stacked in a box of one size.
-    const cursor = hover?.();
     if (!cursor) delete canvas.dataset.readout;
     if (cursor) {
       const col = snapToPeak(peak, Math.max(0, Math.min(columns - 1, Math.floor(cursor.x))), HOVER_SNAP);
