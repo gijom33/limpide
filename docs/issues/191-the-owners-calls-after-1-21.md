@@ -22,6 +22,7 @@ Decided by the owner, 2026-11-03, one question at a time (each carried into the 
 10. **Bead in About: always shown while its switch is on** ("Always show it"), as built: on a newcomer's welcome, and after B, E, A, D sent it away for the visit. 163 stands over 150's decision 2 there.
 11. **The BPM's keys: as every knob's** ("Yes"). The arrows move 1 BPM, Shift+arrow a tenth, Page Up and Down 10; the tempo's tip gets the steps line every knob has. To build.
 12. **"Tap" with two meanings: "Tap Tempo" off screen** ("Yes"). The button keeps its word "Tap" on screen; in the glossary, the code and the tips it is "Tap Tempo", the Taps staying the listening points. To build.
+13. **Aftertouch on the Resonance: half the knob's range** ("Half the range"), so full pressure on Wobble does not self-oscillate past the limiter's knee; the stepping is [219](./219-aftertouch-glides.md)'s. To build.
 
 ## Questions
 
