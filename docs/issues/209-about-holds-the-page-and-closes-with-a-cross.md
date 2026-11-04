@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · bug. Built (2026-11-03) on night/2026-11-02, for the owner to try
+**Status:** done (2026-11-03). Built (2026-11-03) on night/2026-11-02, merged into main, not yet released; tried by the owner: "All good."
 
 ## Decisions
 
