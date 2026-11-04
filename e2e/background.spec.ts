@@ -14,12 +14,12 @@ const TRACK_STARTS = (() => {
 })();
 
 // Issue 198. A headless browser never slows a page it runs (its pages stay visible, their timers on time), so the test
-// does what a browser does to a page in the background: the page says it is hidden, and its own timers fire only on
-// the next whole second. The engine writes down every Note it is asked to start (the tests' build only).
+// does what a browser does to a page in the background: the page says it is hidden, its own timers fire only on the
+// next whole second, and it draws no frame. The engine writes down every Note it is asked to start (the tests' build
+// only). Drawing on while "hidden" was the test's own slip (issue 224): on GitHub's Linux WebKit, about 15 frames a
+// second, a frame now and then held the page past the Demo's 0.15 s look-ahead, so a Note was handed over past its
+// start and dropped by design; a page really hidden draws nothing.
 test('the Demo, with the page hidden for five seconds, starts every Note of those seconds on time (issue 198)', async ({ page }) => {
-  // On GitHub's Linux WebKit the page is slow enough that a Note is handed over past its start, and dropped by design,
-  // at the same place each run: inbox, 2026-11-03 (the 1.23.0 branch run).
-  test.skip(test.info().project.name === 'webkit', 'a Note handed over late on GitHub’s Linux WebKit: inbox, 2026-11-03');
   test.slow();
   await page.goto('/');
   await page.getByRole('button', { name: 'Demo', exact: true }).click();
@@ -30,14 +30,25 @@ test('the Demo, with the page hidden for five seconds, starts every Note of thos
       return notes[notes.length - 1].handed;
     };
     const pageTimeout = window.setTimeout;
+    const [pageFrame, pageCancel] = [window.requestAnimationFrame, window.cancelAnimationFrame];
+    const frames = new Map<number, FrameRequestCallback>();
     Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' });
     Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
     document.dispatchEvent(new Event('visibilitychange'));
     window.setTimeout = ((fn: () => void, ms = 0) => pageTimeout(fn, Math.max(ms, 1000 - (performance.now() % 1000)))) as typeof setTimeout;
+    // The frames asked for wait until the page is shown again.
+    let held = 1e9;
+    window.requestAnimationFrame = (fn) => {
+      frames.set(++held, fn);
+      return held;
+    };
+    window.cancelAnimationFrame = (id) => (frames.delete(id) ? undefined : pageCancel(id));
     const from = audioNow();
     await new Promise((done) => pageTimeout(done, 5000));
     const to = audioNow();
     window.setTimeout = pageTimeout;
+    [window.requestAnimationFrame, window.cancelAnimationFrame] = [pageFrame, pageCancel];
+    for (const fn of frames.values()) pageFrame(fn);
     delete (document as { visibilityState?: unknown }).visibilityState;
     delete (document as { hidden?: unknown }).hidden;
     document.dispatchEvent(new Event('visibilitychange'));
