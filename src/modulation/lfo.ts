@@ -108,6 +108,13 @@ export function createLfoClock(start: number, rate: number) {
       const cycles = m.cycles + m.rate * (time - m.time);
       return cycles - Math.floor(cycles);
     },
+    /**
+     * The whole history moves `by` seconds later on the clock (earlier when negative): the phase at `t` is then what it
+     * was at `t − by`. A pause carries an LFO on by its length so (issue 216).
+     */
+    shift(by: number) {
+      for (const mark of marks) mark.time += by;
+    },
     /** Forget marks no longer needed before `time`, keeping the one in force then. */
     forgetBefore(time: number) {
       let drop = 0;

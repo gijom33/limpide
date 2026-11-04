@@ -64,7 +64,8 @@ export function LfoPlot({ engine, lfo, label, inactive }: { engine: SynthEngine;
     const y = (value: number) => yOf(value, h).toFixed(1);
     const stop = addToRenderLoop(() => {
       if (!w || !h) return;
-      const now = engine.now();
+      // The clock shown: through the page's pause the plot goes on moving (issue 216, the owner).
+      const now = engine.shownNow();
       const points: string[] = [];
       for (let i = 0; i <= SAMPLES; i++) {
         const t = timeAt(i / SAMPLES, now);

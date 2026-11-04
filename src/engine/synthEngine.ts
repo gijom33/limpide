@@ -75,7 +75,7 @@ export interface SynthEngine {
   newestNote(): number | null;
   /** Be told each time the newest Note changes (a Note on, or a pitch change on one Voice). */
   onNewestNote(listener: () => void): () => void;
-  /** The Modulation model at `time` (default: now), from the Gate history — past times too, for the Timeline. */
+  /** The Modulation model at `time` (default: the clock shown, `shownNow`), from the Gate history — past times too, for the Timeline. */
   modulationAt(time?: number): Modulation;
   /**
    * The LFO's value times the Depth in force at `time` (−1 to 1): how far it moves its destination, as the plot draws
@@ -98,6 +98,28 @@ export interface SynthEngine {
   /** The tempo in force, and where its beats are counted from. */
   tempo(): BeatGrid;
   now(): number;
+  /**
+   * From when no Voice sounds, on the engine's clock (issue 216): Infinity while a key is held or a Note is handed over
+   * ahead, else when the last Release has faded; −Infinity before any Note.
+   */
+  quietFrom(): number;
+  /**
+   * The page pauses the sound in a long silence (issue 216): the engine's clock stands still from here, and what is
+   * drawn from it runs on by the page's clock (`shownNow`). The page stops the AudioContext itself.
+   */
+  pause(): void;
+  /**
+   * Back from a pause, before anything is played: the LFOs and the beat are carried on by the time paused, in the sound
+   * as in the model, so they go on from where they were shown and the clock drawn from is the engine's again.
+   */
+  wake(): void;
+  /** Whether the page has paused the sound. */
+  paused(): boolean;
+  /**
+   * The time to draw at: the engine's clock, carried on by the page's while paused, so the LFO plots, the rings and the
+   * Response Curve go on moving (issue 216, the owner).
+   */
+  shownNow(): number;
   /**
    * The engine's time whose sound is heard at `pageTime`, in seconds on the page's clock (`performance.now()`'s): where
    * a MIDI clock's beat or a Tap is placed, so a synced LFO is heard on it, the output's latency allowed for (issue 185).
@@ -1005,7 +1027,15 @@ type Voice = ReturnType<typeof createVoice>;
  * stage, with one LFO shared. The Taps, the Modulation model and Cycle Lock follow the Voice of the newest Note,
  * so the Viewers always show one Note as if it were played alone (ADR-0007).
  */
-export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
+export function createSynthEngine(
+  ctx: BaseAudioContext,
+  {
+    wall = () => performance.now() / 1000,
+  }: {
+    /** The page's clock, in seconds, which carries the clock drawn from on while paused (issue 216). */
+    wall?: () => number;
+  } = {},
+): SynthEngine {
   const master = ctx.createGain();
   master.gain.value = MASTER_LEVEL;
   // Protects the listener when several full-level sources and Resonance stack up. It sits after the Amp Tap,
@@ -1216,6 +1246,31 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       if ((lfoChords[i]?.t ?? -Infinity) > t) lfoChords[i] = null;
     });
   };
+  // When the page paused the sound, on the page's clock (issue 216), and from when the model's past was last carried on.
+  let pausedAt: number | null = null;
+  let carriedAt = -Infinity;
+  const shownNow = () => ctx.currentTime + (pausedAt === null ? 0 : Math.max(0, wall() - pausedAt));
+  /**
+   * Back from a pause of `seconds`: each LFO's history moves back by it, so its phase now is the one shown at the end
+   * of the pause and its last second, drawn on the plot, is the one drawn then; its oscillator starts again here at that
+   * phase. The beat moves with it, so a synced LFO stays on it. Nothing sounded through the pause (a long silence),
+   * so only what runs on by itself is carried: the Envelopes, Notes and Patches stood still, and stay where they were.
+   */
+  const carryOn = (seconds: number) => {
+    const t = ctx.currentTime;
+    if (!(seconds > 0) || !patch) return;
+    const then = patch;
+    tempo = { bpm: tempo.bpm, origin: tempo.origin - seconds };
+    lfos(then).forEach((l, i) => {
+      endPull(i, l, t);
+      lfoClocks[i].shift(-seconds);
+      lfoChords[i] = null;
+      if (locks[i] !== null) locks[i] = `${tempo.bpm} ${tempo.origin} ${l.note} ${l.waveform}`;
+      shared.lfos[i].takeover.restart(t, lfoOscillator(i, l, lfoClocks[i].phaseAt(t)), true);
+    });
+    carriedAt = t;
+  };
+
   /** Both LFOs' values at `t`, under the Patch then in force. */
   const lfoValues = (then: Patch, t: number): [number, number] => {
     const [one, two] = lfos(then);
@@ -1481,7 +1536,8 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       newestListeners.add(listener);
       return () => newestListeners.delete(listener);
     },
-    modulationAt,
+    // Drawn at the clock shown: through a pause, the rings and the Pitch marker go on moving (issue 216).
+    modulationAt: (time) => modulationAt(time ?? shownNow()),
     lfoSwingAt: (time, n = 1) => {
       const then = patchAt(time);
       if (!then) return 0;
@@ -1489,7 +1545,8 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       return l.amount * lfoShape(l.waveform, lfoClocks[n - 1].phaseAt(time));
     },
     patchAt,
-    settledFrom: () => (patches.length && pitches.length ? Math.max(patches[0].time, pitches[0].time) : Infinity),
+    // A pause carried the LFOs' past on (issue 216): from there only.
+    settledFrom: () => (patches.length && pitches.length ? Math.max(patches[0].time, pitches[0].time, carriedAt) : Infinity),
     setTempo(bpm, origin = ctx.currentTime) {
       tempo = { bpm, origin };
       if (!patch) return;
@@ -1499,6 +1556,21 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     },
     tempo: () => tempo,
     now: () => ctx.currentTime,
+    quietFrom: () => {
+      const free = voices.map((v) => v.freeAt);
+      return Math.max(...free);
+    },
+    pause() {
+      pausedAt ??= wall();
+    },
+    wake() {
+      if (pausedAt === null) return;
+      const seconds = wall() - pausedAt;
+      pausedAt = null;
+      carryOn(seconds);
+    },
+    paused: () => pausedAt !== null,
+    shownNow,
     heardAt: (pageTime) => heardAt(ctx as OutputClockContext, pageTime, performance.now() / 1000),
     setTapSource(source) {
       if (source === tapSource) return;
@@ -1512,7 +1584,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     },
 
     filterResponse(frequencies) {
-      const { cutoff, resonance } = modulationAt(ctx.currentTime - TAP_WINDOW / 2 / ctx.sampleRate);
+      const { cutoff, resonance } = modulationAt(shownNow() - TAP_WINDOW / 2 / ctx.sampleRate);
       // An LFO on Resonance moves the twins' Q with it; near the top the Resonance fades, a high-pass with it (issue 195).
       if (patch) filterStagesAt(patch.filterMode, patch.filterSlope, resonance, cutoff).forEach((stage, i) => (twins[i].Q.value = stage.Q));
       const total = new Float32Array(frequencies.length).fill(patch ? filterLevel(patch.filterMode, cutoff) : 1);

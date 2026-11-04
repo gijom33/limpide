@@ -5,8 +5,16 @@ import { createPatchStore, type PatchStore } from '../patch/patchStore';
 import { createTempoStore, type TempoStore } from '../play/tempoStore';
 import { createViewerStore, type ViewerStore } from '../viewers/viewerStore';
 import { notesInTests } from './notesInTests';
+import { PAUSE_AFTER, pauseInSilence } from './pauseInSilence';
 import type { KeyValueStorage } from './storage';
-import { playThroughSilentMode } from './unlockAudio';
+import { needsATapToResume, playThroughSilentMode } from './unlockAudio';
+
+declare global {
+  interface Window {
+    /** In the end-to-end tests' build only: how long a silence pauses the sound after, in seconds (issue 216). */
+    __limpidePauseAfter?: number;
+  }
+}
 
 export interface AudioSession {
   ctx: AudioContext;
@@ -76,6 +84,15 @@ export function getAudioSession(storage: KeyValueStorage): AudioSession {
   });
   const viewers = createViewerStore({ storage, patches, setTapSource: (source) => engine.setTapSource(source) });
   const tempo = createTempoStore({ storage, engine });
+  // In a long silence the sound pauses (issue 216), while nothing plays by itself and no Controller's clock is followed.
+  pauseInSilence({
+    ctx,
+    engine,
+    page: window,
+    busy: () => tempo.get().player || tempo.get().midi,
+    allowed: !needsATapToResume(navigator),
+    after: (import.meta.env.MODE === 'e2e' && window.__limpidePauseAfter) || PAUSE_AFTER,
+  });
   session = {
     ctx,
     engine,

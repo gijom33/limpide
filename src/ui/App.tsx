@@ -138,7 +138,7 @@ export function App() {
   const [audioStatus, setAudioStatus] = useState<AudioStatus>('waiting');
   // Sound starts on the first key press, click or drag, and again on any after the browser stops it; there is no button
   // to press first.
-  useEffect(() => unlockAudio(session.ctx, window, setAudioStatus), [session]);
+  useEffect(() => unlockAudio(session.ctx, window, setAudioStatus, session.engine.paused), [session]);
 
   const [octave, setOctave] = useState(() => startingOctave(patches.get().patch));
   // The octave between renders too: the computer keyboard, the Song and the rings read it as a key moves it.
@@ -305,6 +305,7 @@ export function App() {
         fundamental={session.engine.fundamental}
         fundamentalAt={session.engine.fundamentalAt}
         now={session.engine.now}
+        paused={session.engine.paused}
         view={view}
         gateOn={extra.showIdeal ? gateOn : undefined}
         newestNote={session.engine.newestNote}

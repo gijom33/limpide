@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { playThroughSilentMode, type UnlockableContext, unlockAudio } from './unlockAudio';
+import { needsATapToResume, playThroughSilentMode, type UnlockableContext, unlockAudio } from './unlockAudio';
 
 /** A stand-in AudioContext: starts suspended; resume() either succeeds or is refused (autoplay policy). */
 function fakeContext({ allowed }: { allowed: boolean }) {
@@ -128,6 +128,25 @@ describe('unlockAudio', () => {
     expect(ctx.resume).not.toHaveBeenCalled();
   });
 
+  it('paused by the page itself in a long silence, it says the sound runs and leaves it paused on a return to the page (issue 216)', () => {
+    const page = new EventTarget();
+    const ctx = fakeContext({ allowed: true });
+    ctx.state = 'running';
+    let paused = false;
+    const onChange = vi.fn();
+    unlockAudio(ctx, page, onChange, () => paused);
+    paused = true;
+    ctx.state = 'suspended';
+    ctx.dispatchEvent(new Event('statechange'));
+    expect(onChange).toHaveBeenLastCalledWith('running');
+    for (const back of ['visibilitychange', 'pageshow', 'focus', 'keydown']) page.dispatchEvent(new Event(back));
+    expect(ctx.resume).not.toHaveBeenCalled();
+    // The browser stopping it is still the browser's: once the page's pause is over, it waits again.
+    paused = false;
+    ctx.dispatchEvent(new Event('statechange'));
+    expect(onChange).toHaveBeenLastCalledWith('waiting');
+  });
+
   it('can be torn down', () => {
     const page = new EventTarget();
     const ctx = fakeContext({ allowed: true });
@@ -146,5 +165,15 @@ describe('playThroughSilentMode', () => {
 
   it('does nothing in browsers without an audio session (all but Safari)', () => {
     expect(() => playThroughSilentMode({})).not.toThrow();
+  });
+});
+
+describe('needsATapToResume (issue 216)', () => {
+  it('is an iPhone’s or an iPad’s browser, whatever it calls itself, and no other', () => {
+    expect(needsATapToResume({ userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15', platform: 'iPhone', maxTouchPoints: 5 })).toBe(true);
+    // An iPad asks for the desktop site: a Mac with a touch screen.
+    expect(needsATapToResume({ userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15', platform: 'MacIntel', maxTouchPoints: 5 })).toBe(true);
+    expect(needsATapToResume({ userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15', platform: 'MacIntel', maxTouchPoints: 0 })).toBe(false);
+    expect(needsATapToResume({ userAgent: 'Mozilla/5.0 (Linux; Android 15) Chrome/140.0', platform: 'Linux armv8l', maxTouchPoints: 5 })).toBe(false);
   });
 });

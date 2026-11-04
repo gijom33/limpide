@@ -844,7 +844,7 @@ export function Mascot({
       if (plot && !still.matches && moving !== 'held' && moving !== 'thrown' && (ride || !shown?.doing)) {
         // Where the plot draws the LFO under its middle: a second of it across, the newest at the right.
         const { box } = plot;
-        const wave = box.top + lineAt({ engine: context.engine, lfo: plot.lfo, box, x: drawnAt.left + DROP_MIDDLE - box.left, now: context.engine.now() });
+        const wave = box.top + lineAt({ engine: context.engine, lfo: plot.lfo, box, x: drawnAt.left + DROP_MIDDLE - box.left, now: context.engine.shownNow() });
         perch = { id: `surf ${plot.lfo}`, foot: wave, hovering: false };
         surfRoom = nearestSpan(plot.clear, drawnAt.left)!;
       }
@@ -974,7 +974,7 @@ export function Mascot({
       const onBoard = !!plot && perch.id === `surf ${plot.lfo}` && !pose.doing && (where.moving === 'standing' || where.moving === 'landing');
       if (onBoard) {
         const middle = drawnAt.left + DROP_MIDDLE - plot.box.left;
-        const lineAtX = (x: number) => lineAt({ engine: context.engine, lfo: plot.lfo, box: plot.box, x, now: context.engine.now() });
+        const lineAtX = (x: number) => lineAt({ engine: context.engine, lfo: plot.lfo, box: plot.box, x, now: context.engine.shownNow() });
         pose.tilt = surfLean(lineAtX(middle - SURF_SPAN / 2), lineAtX(middle + SURF_SPAN / 2), SURF_SPAN);
         pose.legs = 'tuck';
         pose.wag = -BALANCING; // its tail out behind, raised for balance

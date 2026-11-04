@@ -19,6 +19,8 @@ interface Props {
   fundamentalAt(time: number): number;
   /** The audio clock. */
   now(): number;
+  /** Whether the page has paused the sound (issue 216): the Tap then holds its last picture, which may rest. */
+  paused(): boolean;
   view(): ViewSettings;
   /** Draw the Ideal Reference rings on this Tap's Spectrum. */
   showIdeal?: boolean;
@@ -40,7 +42,7 @@ interface Props {
  * Scope + Spectrum for one Tap, with no caption: the stage's panel says which it is. Canvases are mounted once and
  * drawn by the render loop. The level is measured but not shown; the Scope carries it as `data-db` (for tests).
  */
-export function TapViewers({ name, analyser, sampleRate, fundamental, fundamentalAt, now, view, showIdeal, gateOn, response, limiting, formulas, newestNote, noiseSlope }: Props) {
+export function TapViewers({ name, analyser, sampleRate, fundamental, fundamentalAt, now, paused, view, showIdeal, gateOn, response, limiting, formulas, newestNote, noiseSlope }: Props) {
   const scopeRef = useRef<HTMLCanvasElement>(null);
   const spectrumRef = useRef<HTMLCanvasElement>(null);
   const hoverRef = useRef<{ x: number; y: number } | null>(null);
@@ -67,15 +69,16 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, fundamenta
     return addToRenderLoop(() => {
       const { db, silent } = level();
       // Silent for as long as the Glow keeps a trace: then the Scope and Spectrum may rest (issue 214). The Glow
-      // switched on or off starts the wait again, as its traces of the silence fill or empty over that time.
+      // switched on or off starts the wait again, as its traces of the silence fill or empty over that time. A Tap the
+      // page's pause holds still (issue 216) rests the same way, on its last picture.
       const glowSame = view().glow === glow;
       glow = view().glow;
-      const settled = silence(silent && glowSame, performance.now()) > GLOW_MS;
+      const settled = silence((silent || paused()) && glowSame, performance.now()) > GLOW_MS;
       drawScope(settled);
       drawSpectrum(settled);
       if (scopeRef.current!.dataset.db !== String(db)) scopeRef.current!.dataset.db = String(db);
     });
-  }, [analyser, sampleRate, fundamental, fundamentalAt, now, view, showIdeal, gateOn, response, limiting, newestNote]);
+  }, [analyser, sampleRate, fundamental, fundamentalAt, now, paused, view, showIdeal, gateOn, response, limiting, newestNote]);
 
   return (
     <>
