@@ -24,6 +24,7 @@ From 184 (Claude's calls, open to the owner, 2026-11-02):
 - Bead keeps its list of what covers the page up to date as panels, tips and cards open and close, rather than searching each frame.
 - Their boxes are read again only on a scroll, a resize or a change to the page's layout, not every frame.
 - Bead stays clear of them exactly as now, the moment one opens.
+- The text boxes it avoids are read again as the page changes too, not only every 0.5 s, on a page scroll or a resize: a panel opening, or a scroll inside one, no longer leaves it over text for half a second (the 1.22.0 code review, inbox, triaged 2026-11-03).
 
 **Key interfaces:**
 - What Bead must keep clear of (panels, tips, docked cards, text)
@@ -33,6 +34,7 @@ From 184 (Claude's calls, open to the owner, 2026-11-02):
 - [ ] Bead's frame cost measured idle and in the Demo, before and after, on a quiet machine, the figures in the issue; under 0.3 ms idle
 - [ ] A panel, a tip or a card opening moves Bead off what it covers as before (the mascot spec, unchanged, in both browsers)
 - [ ] Bead's frame-cost test passes on a quiet machine
+- [ ] A panel opened over Bead's resting text moves it within a frame or two, not half a second (a browser test)
 
 **Out of scope:**
 - The render loop's order of reads and writes ([221](./221-the-frame-reads-the-page-before-it-writes.md))
