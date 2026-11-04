@@ -97,15 +97,15 @@ const WATER = {
   glassEmpty: [],
 } satisfies Record<string, Rect[]>;
 /**
- * Drinking: the glass's rim (its middle, on the glass) goes to here, turned this far: over its mouth, under its eyes,
- * the glass running off to the left just under its left eye (the owner, 2026-10-30: over the mouth, then a bit higher;
- * 2026-11-03: higher by a tenth of the glass's 8 rows, to its mouth).
+ * Drinking: the glass's rim (its middle, on the glass) goes to here, turned this far: over its mouth, the glass running
+ * off to the left across its left eye, its bottom edge at the rim on the mouth's level (the owner, 2026-11-03: "Bottom
+ * edge of glass at level of imaginary mouth"). Turned over, that edge is 2.95 rows under the rim.
  */
 const RIM = { x: -5, y: 5 };
-const POURING_AT = { x: 4, y: 9.7 };
+const POURING_AT = { x: 4, y: 7 };
 const TURNED_OVER = 100;
-/** Its mouth's height on the drawing: the poured water ends there, just under the rim. */
-const MOUTH_Y = 12.5;
+/** Its mouth's height on the drawing, never drawn: just under its eyes. The poured water ends there. */
+const MOUTH_Y = 10;
 
 /** The highest row of a picture on the grid: 0 is the drop's top, negative over it. */
 const topOf = (picture: Picture) => Math.min(0, ...picture.flatMap(([, list]) => list.map(([, y]) => y)));
