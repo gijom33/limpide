@@ -174,10 +174,12 @@ function TapButton({ tempo, onTap }: Pick<Props, 'tempo' | 'onTap'>) {
 /**
  * The tempo said to a screen reader once it settles, when something other than the BPM itself changed it: Tap, a MIDI
  * clock, a Controller's knob (issue 189). The BPM in focus says its own value; the Demo's tempo, and the person's
- * coming back as it stops, are the player's, not news.
+ * coming back as it stops, are the player's, not news. Each announcement is a new node in the status, so a BPM said
+ * before (Tap to 126, 120 typed, Tap to 126 again) is said again: the same words in the same node change nothing a
+ * screen reader hears.
  */
 function TempoNews({ tempo }: { tempo: TempoState }) {
-  const [news, setNews] = useState('');
+  const [news, setNews] = useState({ words: '', count: 0 });
   const player = useRef(tempo.player);
   const said = useRef(tempo.bpm);
   useEffect(() => {
@@ -190,13 +192,13 @@ function TempoNews({ tempo }: { tempo: TempoState }) {
     if (tempo.bpm === said.current) return;
     const timer = setTimeout(() => {
       said.current = tempo.bpm;
-      setNews(`Tempo ${tempo.bpm} BPM`);
+      setNews((n) => ({ words: `Tempo ${tempo.bpm} BPM`, count: n.count + 1 }));
     }, SETTLE_MS);
     return () => clearTimeout(timer);
   }, [tempo.bpm, tempo.player]);
   return (
     <span className="visually-hidden" role="status">
-      {news}
+      <span key={news.count}>{news.words}</span>
     </span>
   );
 }
