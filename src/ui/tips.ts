@@ -3,7 +3,7 @@ import { describeMode } from '../midi/describe';
 import type { ControllerId } from '../midi/mappings';
 import { DESTINATIONS } from '../modulation/destinations';
 import { syncedRateUnderTheHood, UNDER_THE_HOOD, underTheHoodAt } from '../music/geek';
-import { formatSyncedRate } from '../music/tempo';
+import { formatSyncedRate, TEMPO_STEPS } from '../music/tempo';
 import { stepWords } from '../patch/grid';
 import { LFO_DESTINATIONS, type LfoDestination, PARAMS, type ParamId } from '../patch/patch';
 import type { Overlay } from '../viewers/overlays';
@@ -388,6 +388,8 @@ export const TIPS = {
   tempo: {
     title: 'Tempo',
     body: 'The page’s beats per minute (BPM), which every LFO with Sync on follows: its note value is a share of a beat, so at a new tempo its speed changes with it, and a synced wobble keeps to the beat. Drag it or use the arrows; double-click or Enter to type it. Loading a Preset leaves it as it is.',
+
+    keys: stepWords(TEMPO_STEPS.grid),
   },
   tempoOpen: {
     title: 'Tempo',

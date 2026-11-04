@@ -26,10 +26,10 @@ describe('the tempo (issue 112)', () => {
     expect(tempo.get()).toEqual({ bpm: 120, player: false, midi: false });
     expect(engine.handed).toEqual([{ bpm: 120, origin: 5 }]);
     engine.time = 7;
-    tempo.set(97.4);
-    expect(tempo.get().bpm).toBe(97);
-    expect(engine.handed.at(-1)).toEqual({ bpm: 97, origin: 7 });
-    expect(createTempoStore({ storage, engine: fakeEngine().host }).get().bpm).toBe(97);
+    tempo.set(97.44); // kept to a tenth (issue 223)
+    expect(tempo.get().bpm).toBe(97.4);
+    expect(engine.handed.at(-1)).toEqual({ bpm: 97.4, origin: 7 });
+    expect(createTempoStore({ storage, engine: fakeEngine().host }).get().bpm).toBe(97.4);
   });
 
   it('keeps between 40 and 240, and starts at 120 when what was kept is garbled', () => {

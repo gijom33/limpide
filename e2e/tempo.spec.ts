@@ -12,10 +12,35 @@ test('the tempo starts at 120 BPM, steps with the arrows and is remembered after
   await expect(bpm(page)).toHaveText(/120\s*BPM/);
   await bpm(page).focus();
   await page.keyboard.press('ArrowUp');
-  await page.keyboard.press('PageUp');
-  await expect(bpm(page)).toHaveAttribute('aria-valuenow', '131');
+  await page.keyboard.press('PageUp'); // to the next ten, as a knob's Page goes (issue 223)
+  await expect(bpm(page)).toHaveAttribute('aria-valuenow', '130');
   await page.reload();
-  await expect(bpm(page)).toHaveAttribute('aria-valuenow', '131');
+  await expect(bpm(page)).toHaveAttribute('aria-valuenow', '130');
+});
+
+test('the BPM’s keys are every knob’s: the arrows 1 BPM, Shift a tenth, Page Up and Down 10, said in its tip (issue 223)', async ({ page }) => {
+  await page.goto('/');
+  await page.keyboard.press('Tab'); // the keys in use: a focus shows the tip's steps
+  await bpm(page).focus();
+  await expect(page.getByRole('tooltip').locator('.tooltip-keys')).toHaveText('↑↓ 1 BPM · Shift 0.1 BPM · Page 10 BPM');
+  await page.keyboard.press('Shift+ArrowUp');
+  await page.keyboard.press('Shift+ArrowUp');
+  await page.keyboard.press('Shift+ArrowUp');
+  await expect(bpm(page)).toHaveAttribute('aria-valuenow', '120.3');
+  await expect(bpm(page)).toHaveText(/120\.3\s*BPM/);
+  await page.keyboard.press('ArrowUp'); // to the next whole BPM, as a knob steps to its Grid
+  await expect(bpm(page)).toHaveAttribute('aria-valuenow', '121');
+  await page.keyboard.press('Shift+ArrowLeft');
+  await expect(bpm(page)).toHaveAttribute('aria-valuenow', '120.9');
+  await page.keyboard.press('PageUp');
+  await expect(bpm(page)).toHaveAttribute('aria-valuenow', '130');
+  await page.keyboard.press('PageDown');
+  await page.keyboard.press('ArrowDown');
+  await expect(bpm(page)).toHaveAttribute('aria-valuenow', '119');
+  await page.keyboard.press('Shift+ArrowDown');
+  await expect(bpm(page)).toHaveAttribute('aria-valuenow', '118.9');
+  await page.reload();
+  await expect(bpm(page)).toHaveAttribute('aria-valuenow', '118.9'); // a tenth is remembered too
 });
 
 test('a drag up sets the BPM where it is let go, a BPM a pixel (issue 112)', async ({ page }) => {

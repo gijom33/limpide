@@ -7,7 +7,7 @@ import { describeMessage, targetKey } from '../../midi/describe';
 import { connectMidi, type MidiAccessLike, midiSupport } from '../../midi/inputs';
 import { type ControllerId, createMappingStore, type Mapping, type Target } from '../../midi/mappings';
 import { QUICK_SETUP, type QuickSetupEvent, type QuickSetupState, quickSetupReducer, startQuickSetup, takenControls } from '../../midi/quickSetup';
-import { bpmPosition, positionBpm } from '../../music/tempo';
+import { bpmPosition, positionBpm, wholeBpm } from '../../music/tempo';
 import { CHOICES, type ChoiceId, knobTurns, LFO_KEYS, PARAMS, setParam } from '../../patch/patch';
 import { positionToValue, valueToPosition } from '../../patch/taper';
 import type { MidiState } from '../MidiPanel';
@@ -126,7 +126,7 @@ export function useMidi(host: Host) {
       turned: (id) => knobTurns(patches.get().patch, id),
       geek: () => viewers.get().overlays.geek,
       tempoPosition: () => bpmPosition(session.tempo.get().bpm),
-      setTempoPosition: (position) => session.tempo.set(positionBpm(position)),
+      setTempoPosition: (position) => session.tempo.set(wholeBpm(positionBpm(position))), // a Controller's knob: whole BPMs
       choice: (id) => {
         const options = choiceOptions(id);
         return { index: options.indexOf(patches.get().patch[id] as never), count: options.length };

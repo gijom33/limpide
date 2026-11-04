@@ -60,10 +60,10 @@ const REMEMBERED = {
    * (such as "unmet") reads as on.
    */
   bead: { key: 'limpide.bead', value: ON_OFF },
-  /** The tempo (issue 112): the page's, never a Patch's, kept as the Display is; a whole BPM. */
+  /** The tempo (issue 112): the page's, never a Patch's, kept as the Display is; a BPM to a tenth (issue 223). */
   tempo: {
     key: 'limpide.tempo',
-    fields: { bpm: choice(Array.from({ length: TEMPO.max - TEMPO.min + 1 }, (_, i) => TEMPO.min + i), TEMPO.default) },
+    fields: { bpm: choice(Array.from({ length: (TEMPO.max - TEMPO.min) * 10 + 1 }, (_, i) => (TEMPO.min * 10 + i) / 10), TEMPO.default) },
   },
   /** Folded or not, for each kind of docked card; where it was dragged is never kept (issue 59). */
   'cardFolded.demo': { key: 'limpide.cardFolded.demo', value: FOLD },

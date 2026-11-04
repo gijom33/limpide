@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { clampBpm, TEMPO } from '../music/tempo';
+import { clampBpm, TEMPO, TEMPO_STEPS } from '../music/tempo';
+import { stepParam } from '../patch/grid';
 import type { TempoState } from '../play/tempoStore';
 import { useHeaderPanel } from './hooks/useHeaderPanel';
 import { useMediaQuery } from './hooks/useMediaQuery';
@@ -13,8 +14,6 @@ import { TIPS } from './tips';
 
 /** Pixels of drag per BPM: a 200 px drag crosses the whole range. */
 const DRAG_PIXELS = 1;
-/** What Page Up and Down (and Shift with an arrow) step by. */
-const BIG_STEP = 10;
 /** A tempo settles this long before it is announced, so a clock's drift or a run of taps is said once. */
 const SETTLE_MS = 600;
 
@@ -107,9 +106,12 @@ function TempoDial({ tempo, onSet }: Pick<Props, 'tempo' | 'onSet'>) {
       data-clock={tempo.midi || undefined}
       {...learn}
       onKeyDown={(e) => {
-        const big = e.shiftKey ? BIG_STEP : 1;
-        const steps: Record<string, number> = { ArrowUp: big, ArrowRight: big, ArrowDown: -big, ArrowLeft: -big, PageUp: BIG_STEP, PageDown: -BIG_STEP };
-        if (e.key in steps) set(bpm + steps[e.key]);
+        // As every knob's (issue 223): the arrows 1 BPM, Shift a tenth, Page Up and Down 10, to the next on each grid.
+        const fine = e.shiftKey ? 'fine' : 'unit';
+        const steps: Record<string, [1 | -1, 'unit' | 'fine' | 'coarse']> = {
+          ArrowUp: [1, fine], ArrowRight: [1, fine], ArrowDown: [-1, fine], ArrowLeft: [-1, fine], PageUp: [1, 'coarse'], PageDown: [-1, 'coarse'],
+        };
+        if (e.key in steps) set(stepParam(TEMPO_STEPS, bpm, ...steps[e.key]));
         else if (e.key === 'Home') set(TEMPO.min);
         else if (e.key === 'End') set(TEMPO.max);
         else if (e.key === 'Enter' && !held) setTyping(String(bpm));

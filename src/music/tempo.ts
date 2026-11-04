@@ -1,14 +1,27 @@
+import { linearGrid } from '../patch/grid';
 import { frequencyText } from './pitch';
 
 /**
- * The tempo (issue 112): the page's, not the Patch's, a whole BPM; an LFO with Sync on repeats once a note value at
+ * The tempo (issue 112): the page's, not the Patch's, a BPM to a tenth (issue 223); an LFO with Sync on repeats once a note value at
  * it. The note values go from 4 bars to 1/32, each straight, dotted (half as long again) and triplet (two thirds as
  * long), slowest first, so the Rate knob turns them faster clockwise as it turns the Hz.
  */
 export const TEMPO = { min: 40, max: 240, default: 120 } as const;
 
-/** A BPM the tempo can be: whole, from 40 to 240. */
-export const clampBpm = (bpm: number) => Math.min(TEMPO.max, Math.max(TEMPO.min, Math.round(bpm)));
+/** A BPM the tempo can be: to a tenth, the keys' fine step (issue 223), from 40 to 240. */
+export const clampBpm = (bpm: number) => Math.min(TEMPO.max, Math.max(TEMPO.min, Math.round(bpm * 10) / 10));
+/** A whole BPM within the range: what a Controller's knob, a MIDI clock and the taps set. */
+export const wholeBpm = (bpm: number) => clampBpm(Math.round(bpm));
+
+/**
+ * The BPM's steps for the keys, as every knob's (the owner, issue 223): the arrows 1 BPM, Shift a tenth, Page Up and
+ * Down 10, each to the next on its grid.
+ */
+export const TEMPO_STEPS = {
+  min: TEMPO.min,
+  max: TEMPO.max,
+  grid: linearGrid(1, 0.1, 10, { unit: '1 BPM', fine: '0.1 BPM', coarse: '10 BPM' }),
+};
 
 /** The tempo as a control's position (0–1, slowest to fastest), as a knob mapped to it turns it, and back. */
 export const bpmPosition = (bpm: number) => (bpm - TEMPO.min) / (TEMPO.max - TEMPO.min);
@@ -55,5 +68,5 @@ export function tappedBpm(times: readonly number[]): number | undefined {
   while (first > 0 && first > times.length - TAPS && times[first] - times[first - 1] <= LONGEST_TAP) first--;
   const taps = times.slice(first);
   if (taps.length < 2) return undefined;
-  return clampBpm((60 * (taps.length - 1)) / (taps[taps.length - 1] - taps[0]));
+  return wholeBpm((60 * (taps.length - 1)) / (taps[taps.length - 1] - taps[0]));
 }
