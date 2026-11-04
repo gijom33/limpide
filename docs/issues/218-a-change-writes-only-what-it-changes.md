@@ -16,6 +16,11 @@ Claude's call, open to the owner (2026-11-03):
 
 2. **Where the writes are gathered into one a frame,** in the engine or before it, is settled first, written in the issue with the reason, before the rest is built.
 
+Settled the night of 2026-11-03, before the rest was built (Claude's call, open to the owner):
+
+3. **In the engine, with no frame gate before it.** Applying a Patch remembers what each AudioParam was last given and skips a write that would leave it as it is; a change that does alter it is written at once, as now. The engine is the one place that knows which AudioParams a knob reaches: one knob reaches several (the Volume scales each LFO's swing of it), several knobs reach one (the Effective Cutoff), so a diff of the Patch's fields made before the engine would still have to be mapped onto its writes there. A gate before it (one write a `requestAnimationFrame`) would hold the sound and the Modulation model a frame behind the Patch store, which hands every change on at once (ADR-0013), and would stop in a hidden tab, where the Demo plays on. The sources already come at most once a frame: the Demo's tick every 40 ms, a hand's drag one pointer event a frame. A Controller's knob keeps its immediate writes (183, decision 3): one sending faster than the frames writes its own parameter at each message, and nothing else.
+4. **A whole new Patch (a Preset, Init, a Tutorial's Step, the Tour's restore) forgets what was written** and writes every parameter again, as before: a load is where the engine starts from nothing.
+
 ## Agent Brief
 
 **Category:** enhancement
