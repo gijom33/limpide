@@ -29,15 +29,15 @@ async function midiPermission(): Promise<PermissionState> {
 }
 
 /**
- * The Activity Monitor's line, the last message heard, kept apart from the page's state: a stream of aftertouch or a
- * clock's ticks redraw that line alone, not the page (issue 217).
+ * The Activity Monitor's line, the last message heard, kept apart from the page's state: a stream of aftertouch or of a
+ * knob's CCs redraws that line alone, not the page (issue 217).
  */
 export interface MidiActivity {
   get(): string | null;
   subscribe(listener: () => void): () => void;
 }
 
-function createActivity() {
+function createActivity(): MidiActivity & { set(line: string): void } {
   let line: string | null = null;
   const listeners = new Set<() => void>();
   return {
@@ -83,10 +83,12 @@ export function useMidi(host: Host) {
   const keyboard = useRef(host);
   keyboard.current = host;
   const [midi, setMidi] = useState<MidiState>({ kind: 'pending' });
-  const activity = useMemo(createActivity, []);
+  // Kept in state, not a memo React may drop: a new store would reconnect MIDI.
+  const [activity] = useState(createActivity);
+  const readActivity: MidiActivity = activity; // its line is set here alone
   // Whether a keyboard has sent aftertouch this visit: from then on the Timeline draws what it moves (issue 132).
   const [pressureHeard, setPressureHeard] = useState(false);
-  const heard = useRef(false);
+  const pressureHeardRef = useRef(false);
   const [learn, setLearn] = useState<LearnState>({ phase: 'off' });
   const noteFromController = useEffectEvent(() => onNote());
 
@@ -280,8 +282,8 @@ export function useMidi(host: Host) {
             surface.handle(m, from);
             activity.set(describeMessage(m));
             // Set once: a same-value setState can still render the page once before React bails out.
-            if (m.type === 'pressure' && m.value > 0 && !heard.current) {
-              heard.current = true;
+            if (m.type === 'pressure' && m.value > 0 && !pressureHeardRef.current) {
+              pressureHeardRef.current = true;
               setPressureHeard(true);
             }
           },
@@ -304,7 +306,7 @@ export function useMidi(host: Host) {
   }, [surface, midiWanted, mappingStore, storage, session, activity]);
 
   return {
-    midi, activity: activity as MidiActivity, pressureHeard, mappings, mappingStore, learn, learning, learnContext, surface,
+    midi, activity: readActivity, pressureHeard, mappings, mappingStore, learn, learning, learnContext, surface,
     setup, setupLast, updateSetup, closeSetup, applyLayout,
     bankFollow, setBankFollow, connect: () => setMidiWanted(true),
   };
