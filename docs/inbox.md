@@ -10,8 +10,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
-- 2026-11-03, the owner, on a screenshot of Bead riding LFO 1's plot at a phone's width: "Let's have Bead use a surfboard and lean with the wave."
-
 ## Dropped
 
 - 2026-10-30, from Claude's brainstorm, Velocity on the Volume ("a harder hit plays louder, not only brighter"): already so. The Amp Envelope's Attack rises to the Note's Velocity (PRD story 9). Claude's call, open to the owner.
@@ -192,3 +190,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-11-03, the owner's frozen Bead and silent keys on an iPhone: done at once (`e818eb1`). Safari stops the page's sound when another app comes in front and the page resumed it only on its first gesture; Bead ran on the sound's clock, so it froze with it. The sound now starts again on any tap or key (the finger lifting too) and is tried again on coming back to the page; Bead runs on its own clock while the sound is stopped. Not tried on a real iPhone: the owner's check.
 2026-11-03, later: the page scrolling behind About and a × to close it went to [209](./issues/209-about-holds-the-page-and-closes-with-a-cross.md); the Tour telling of the layers and the Tutorials to [210](./issues/210-the-tour-tells-of-the-layers-and-the-tutorials.md) (needs-info: "the tool" read as the Tour, asked); the Demo's slower scroll to [211](./issues/211-the-demo-scrolls-slower-so-bead-is-seen.md); the curious kid to profile 20 in [42](./issues/42-reviews.md). Touching settings during the Demo: done at once (`32407f9`): Voices did not stop it, but Legato beside it and each LFO's Retrigger and Sync did; they now leave it playing.
 2026-11-03, evening: the docked card's room making three and four across scroll went to [212](./issues/212-no-room-for-a-card-three-and-four-across.md).
+2026-11-03, evening: Bead's surfboard, leaning with the wave, went to [204](./issues/204-baggage-air-guitar-and-surfing-seen.md) (decision 8), with the owner's answers to its first three questions.
