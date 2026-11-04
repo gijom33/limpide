@@ -87,7 +87,7 @@ test('steps can be skipped and gone back to', async ({ page }) => {
   await expect(prompt(page)).toContainText('Mixer · Osc 2');
 });
 
-test('the MIDI button shows Learning during Quick Setup, and Done in its panel finishes the Setup', async ({ page }) => {
+test('the MIDI button shows it is learning during Quick Setup, and Done in its panel finishes the Setup', async ({ page }) => {
   await startSetup(page);
   await expect(midiButton(page)).toHaveAttribute('data-learning', 'true');
   await play(page, ...knob(1));

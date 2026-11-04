@@ -23,9 +23,10 @@ test('MIDI Learn: pick a knob on screen, turn one on the Controller, and it driv
   await play(page, ...times(4, cc(74, 1))); // an endless encoder, two's-complement steps
   await expect(learnBar(page)).toContainText(/Cutoff.*CC 74/);
   await expect(cutoff(page)).toHaveAttribute('aria-valuenow', String(before)); // learning does not move it
-  // Learn ends where it began: the MIDI button says Learning, and its panel offers Done in place of MIDI Learn.
+  // Learn ends where it began: the MIDI button shows it learning (Learning, Learn or Lrn, whichever fits: issue 188),
+  // and its panel offers Done in place of MIDI Learn.
   await expect(midiButton(page)).toHaveAttribute('data-learning', 'true');
-  await expect(midiButton(page)).toContainText('Learning');
+  await expect(midiButton(page).locator('[data-form]:not([hidden])')).toHaveText(/^(Learning|Learn|Lrn)$/);
   await expect(learnBar(page)).toContainText(/Esc.*MIDI.*Done/);
   await expect(learnBar(page).getByRole('button')).toHaveCount(0);
   await openMidi(page);
