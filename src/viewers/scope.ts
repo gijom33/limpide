@@ -2,7 +2,7 @@ import { type GeekNote, scopeReadout } from '../music/geek';
 import { canvasInputs, cssVar, curveWidth, haloText, prepareCanvas } from './canvas';
 import { createCycleLock } from './cycleLock';
 import { createFreezeLatch } from './freezeLatch';
-import { createGlow } from './glow';
+import { createGlow, glows } from './glow';
 import { createGuideGlide } from './guides';
 import { createRest } from './rest';
 import { scopeScale } from './scopeScale';
@@ -77,7 +77,7 @@ export function createScope(
     const settings = view();
     const inputs = [
       ...canvasInputs(canvas, COLOURS),
-      settings.cycles, settings.glow, settings.overlays.guides, settings.viewer.snapshot, frozen, guideLevel, limited, period,
+      settings.cycles, glows(settings.glow, 'scope'), settings.overlays.guides, settings.viewer.snapshot, frozen, guideLevel, limited, period,
     ];
     if (rest(silent, inputs)) return;
 
@@ -155,7 +155,7 @@ export function createScope(
     }
 
     const colour = cssVar(canvas, '--trace');
-    const past = glow({ on: view().glow, frozen, now: () => performance.now(), newest: trace });
+    const past = glow({ on: glows(view().glow, 'scope'), frozen, now: () => performance.now(), newest: trace });
     g.strokeStyle = colour;
     g.lineWidth = curveWidth(canvas);
     for (const { value, alpha } of past) {

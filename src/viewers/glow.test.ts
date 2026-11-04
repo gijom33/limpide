@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createGlow } from './glow';
+import { createGlow, glows } from './glow';
 
 /** Draws one frame at `time` (ms) with the newest outline `value`, and returns the past ones it draws under it. */
 function frames(glow: ReturnType<typeof createGlow<string>>, times: number[], { on = true, frozen = false } = {}) {
@@ -9,6 +9,11 @@ function frames(glow: ReturnType<typeof createGlow<string>>, times: number[], { 
 }
 
 describe('Glow (issues 180, 199)', () => {
+  it('glows nothing Off, the Scopes alone under Scopes, the Scopes and the Spectrums under All (issue 229)', () => {
+    expect([glows('off', 'scope'), glows('scopes', 'scope'), glows('all', 'scope')]).toEqual([false, true, true]);
+    expect([glows('off', 'spectrum'), glows('scopes', 'spectrum'), glows('all', 'spectrum')]).toEqual([false, false, true]);
+  });
+
   it('keeps at most a quarter of a second of past outlines, oldest first, each faded by 0.85 per 60th of a second of age', () => {
     const glow = createGlow<string>();
     const step = 1000 / 60;

@@ -1,6 +1,7 @@
 import { NO_PRESSURE } from '../modulation/modulationModel';
 import { TEMPO } from '../music/tempo';
 import { LFO_DESTINATIONS } from '../patch/patch';
+import { GLOWS } from '../viewers/glow';
 import { DEFAULT_OVERLAYS, OVERLAYS, type Overlay } from '../viewers/overlays';
 import { INITIAL_VIEWER_STATE } from '../viewers/viewerState';
 import type { KeyValueStorage } from './storage';
@@ -9,13 +10,18 @@ import type { KeyValueStorage } from './storage';
 interface Choice<T> {
   allowed: readonly T[];
   fallback: T;
+  /** Values an older page saved, each read as the one it now stands for. */
+  was?: ReadonlyMap<unknown, T>;
 }
 
-const choice = <const T>(allowed: readonly T[], fallback: NoInfer<T>): Choice<T> => ({ allowed, fallback });
+const choice = <const T>(allowed: readonly T[], fallback: NoInfer<T>, was?: ReadonlyMap<unknown, NoInfer<T>>): Choice<T> => ({ allowed, fallback, was });
 
-/** The read-back check: a saved value is kept if the setting may take it, else the setting starts at its default. */
-const checked = <T>(saved: unknown, { allowed, fallback }: Choice<T>): T =>
-  (allowed as readonly unknown[]).includes(saved) ? (saved as T) : fallback;
+/**
+ * The read-back check: a saved value is kept if the setting may take it, one an older page saved is read as what it
+ * now stands for, else the setting starts at its default.
+ */
+const checked = <T>(saved: unknown, { allowed, fallback, was }: Choice<T>): T =>
+  (allowed as readonly unknown[]).includes(saved) ? (saved as T) : (was?.get(saved) ?? fallback);
 /** The same check for a single setting, read from its own text: a number is kept as its digits. */
 const checkedText = <T>(text: string | null, { allowed, fallback }: Choice<T>): T => allowed.find((value) => String(value) === text) ?? fallback;
 
@@ -33,7 +39,8 @@ export type BendRange = (typeof BEND_RANGES)[number];
  * kept, and the values it may take. A group is kept as one JSON object under its key, a single setting as its own text. Freeze and the Snapshot are
  * moments and are never kept. A key or its form never changes: a browser that saved under it must find it again.
  * The one exception, decided by the owner: the Maths Layer's choice, now the Synth Geek Layer's, moved from `maths`
- * to `geek` within the overlays (issue 165), a choice saved under the old name being let go.
+ * to `geek` within the overlays (issue 165), a choice saved under the old name being let go. A value may change its
+ * form when an old one is still read as what it stands for: the Glow's true and false (issue 229).
  */
 const REMEMBERED = {
   viewer: {
@@ -44,8 +51,11 @@ const REMEMBERED = {
       frequencyScale: choice(['log', 'linear'], INITIAL_VIEWER_STATE.frequencyScale),
       levelScale: choice(['db', 'linear'], INITIAL_VIEWER_STATE.levelScale),
       tapSource: choice(['all', 'newest'], INITIAL_VIEWER_STATE.tapSource),
-      /** The Glow of the Scopes and the Spectrums (issues 180, 199): Off by default, so they show only now unless asked. */
-      glow: choice([false, true], false),
+      /**
+       * The Glow (issues 180, 199): Off by default, so the Viewers show only now unless asked. Its On and Off of
+       * before three choices are read as All, what On drew, and Off (issue 229).
+       */
+      glow: choice(GLOWS, 'off', new Map([[true, 'all'], [false, 'off']])),
     },
   },
   overlays: {

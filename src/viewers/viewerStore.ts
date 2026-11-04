@@ -15,7 +15,7 @@ import type { IdealAt, ViewSettings } from './viewSettings';
 export type ViewSettingsAction =
   | ViewerAction
   | { type: 'setCycles'; cycles: ViewSettings['cycles'] }
-  | { type: 'setGlow'; glow: boolean }
+  | { type: 'setGlow'; glow: ViewSettings['glow'] }
   | { type: 'setTimelineSeconds'; seconds: ViewSettings['timelineSeconds'] }
   | { type: 'toggleOverlay'; overlay: Overlay }
   /** A Tutorial's Display Step, done for the person: the overlay on, whatever it was. */

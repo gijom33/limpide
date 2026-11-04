@@ -1,4 +1,5 @@
 import type { IdealPartial } from '../music/idealReference';
+import type { Glow } from './glow';
 import type { Overlays } from './overlays';
 import type { ViewerState } from './viewerState';
 
@@ -9,8 +10,11 @@ export type IdealAt = (fundamental: number, sampleRate: number, gateOn?: boolean
 export interface ViewSettings {
   /** Cycles of the Note shown in each Scope. */
   cycles: 1 | 2 | 4;
-  /** Each Scope's trace and Spectrum's outline fade over a quarter of a second, as on an analogue scope (issue 180, decision 5). */
-  glow: boolean;
+  /**
+   * Past traces fade over a quarter of a second, as on an analogue scope (issue 180, decision 5): none Off, each
+   * Scope's under Scopes, each Scope's and each Spectrum's outline under All (issues 199, 229).
+   */
+  glow: Glow;
   /** Seconds of the Envelope Timeline, "now" at its right edge (the owner, 2026-10-28: 2 by default). */
   timelineSeconds: 1 | 2 | 3 | 4;
   /**

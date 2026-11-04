@@ -239,7 +239,7 @@ The Scope behaviour that aligns the trace to the Note's period so it stands stil
 _Avoid_: Trigger, sync, stabilisation
 
 **Glow**:
-A Display choice, Off by default: each Scope's trace and each Spectrum's outline fade over a quarter of a second (15 frames at 60 a second), as on an analogue oscilloscope, so what moves leaves a soft glow, halving every 70 ms or so (issue 180; the Spectrums since issue 199). Only the live trace glows: the Spectrum's fill and the marks over it show only now.
+A Display choice of Off (the default), Scopes or All: past traces fade over a quarter of a second (15 frames at 60 a second), as on an analogue oscilloscope, so what moves leaves a soft glow, halving every 70 ms or so (issue 180). Scopes glows each Scope's trace; All each Scope's trace and each Spectrum's outline (issues 199, 229). Only the live trace glows: the Spectrum's fill and the marks over it show only now.
 _Avoid_: Phosphor, persistence, trails, averaging
 
 **Spectrum**:
