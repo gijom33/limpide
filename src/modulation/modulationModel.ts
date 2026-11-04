@@ -34,7 +34,7 @@ export interface Modulation {
   pitch: number;
   /** How far an LFO on Pitch moves it right now, in semitones: `pitch` less the Note where the Glide has taken it. */
   vibrato: number;
-  /** A keyboard's aftertouch at this moment, and the Destination it moves (issue 132). */
+  /** A keyboard's aftertouch at this moment, where its glide has reached (issue 219), and the Destination it moves (issue 132). */
   pressure: Pressure;
 }
 
@@ -205,6 +205,21 @@ export function pressed(patch: Patch, { destination, amount }: Pressure): Patch 
   if (destination === 'cutoff') next.cutoff = Math.min(HIGHEST_CUTOFF, patch.cutoff * 2 ** (law.perDepth * amount));
   else for (const knob of law.knobs) next[knob] = Math.min(law.room ? PARAMS[knob].max : Infinity, patch[knob] + law.perDepth * amount);
   return next;
+}
+
+/**
+ * Aftertouch's glide (issue 219, decision 5): its Destination moves to each new pressure over this time constant, in
+ * seconds, the sound and the model alike. Longer than the bend wheel's 4 ms, so a keyboard's 127 steps blur into one
+ * sweep; a stab of pressure still arrives in about 50 ms.
+ */
+export const PRESSURE_GLIDE = 0.016;
+/** After this long a glide counts as arrived: within 5 parts in 100,000 of its step (10 time constants). */
+const GLIDE_ARRIVED = 10 * PRESSURE_GLIDE;
+
+/** Where aftertouch's glide has reached `elapsed` seconds after `to` came, from an amount of `from` then. */
+export function glidedPressure(from: number, to: Pressure, elapsed: number): Pressure {
+  if (elapsed >= GLIDE_ARRIVED) return to;
+  return { destination: to.destination, amount: to.amount + (from - to.amount) * Math.exp(-elapsed / PRESSURE_GLIDE) };
 }
 
 /** How far aftertouch on Pitch raises it, in semitones: a semitone at full pressure; none on any other Destination. */

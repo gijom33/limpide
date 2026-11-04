@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DIP, envelopeLevel, type GateEvent } from '../modulation/envelope';
-import { lfoOffset, osc2Cents } from '../modulation/modulationModel';
+import { lfoOffset, osc2Cents, type Pressure } from '../modulation/modulationModel';
 import { geekReadout, harmonicNumber, noiseSlope, scopeReadout, syncedRateUnderTheHood, UNDER_THE_HOOD, underTheHoodAt } from '../music/geek';
 import { harmonicSeries, type Waveform } from '../music/harmonics';
 import { fmDepthKept, idealPartials, idealReference } from '../music/idealReference';
@@ -1520,6 +1520,87 @@ describe('aftertouch (issue 132)', () => {
         expect(Math.abs(measured - dB(curve[i])), `${harmonics[i]} Hz, ${name}`).toBeLessThan(0.5);
       }
     }
+  });
+
+  /**
+   * Pressing harder and harder on `destination`, a message every 10 ms from none to full over two seconds: as a MIDI
+   * keyboard sends it, in 127ths (`steps`), or unquantised.
+   */
+  const pressHarder = (e: ReturnType<typeof createSynthEngine>, destination: Pressure['destination'], steps?: number) => {
+    for (let i = 0; i < 200; i++) e.setPressure({ destination, amount: steps ? Math.round((steps * i) / 200) / steps : i / 200 }, i / 100);
+  };
+
+  // Decision 5: under −60 dB from a keyboard's 127 steps, under −70 dB from a smooth stream. Steps made at once read
+  // about −52 and −57 dB. At Resonance 0.2: at 0.7 the Filter's peak sweeping through the Harmonics spreads them, and
+  // this measure reads about −40 dB however smooth the sweep.
+  it('glides its Destination, so pressing harder on the Cutoff or the Resonance adds next to nothing between the Harmonics (issue 219)', async () => {
+    for (const destination of ['cutoff', 'resonance'] as const) {
+      for (const [steps, under] of [[127, -60], [undefined, -70]] as const) {
+        const s = await render(2, { cutoff: 500, resonance: 0.2, ampAttack: 0.001, ampSustain: 1, lfoAmount: 0, lfo2Amount: 0 }, (e) => {
+          e.noteOn(45, 1, 0);
+          pressHarder(e, destination, steps);
+        });
+        expect(betweenHarmonicsDb(s, SR, 110, 65536), `${destination}, ${steps ?? 'unquantised'}`).toBeLessThan(under);
+      }
+    }
+  });
+
+  // Decision 5: aftertouch glides over a time constant of 16 ms: `elapsed` seconds after a step, this share of the way.
+  const glided = (elapsed: number) => 1 - Math.exp(-elapsed / 0.016);
+  const A6 = 93; // 1760 Hz: a sine's crossings measure its pitch within a few milliseconds
+  const sine: Partial<Patch> = { waveform: 'sine', cutoff: 20000, resonance: 0, volume: 0.4, ampAttack: 0.001, ampSustain: 1, lfoAmount: 0, lfo2Amount: 0 };
+  /** The time at the end of the `n`th 128-sample block, where a render can stop. */
+  const block = (n: number) => (n * 128) / SR;
+  /**
+   * A6 held, `act` on the engine; the Amp Tap's last `read` seconds before each of `times`, and the model at the middle
+   * of them. The Tap, not the output: the limiter's oversampling delays the output a few milliseconds.
+   */
+  const heldAndRead = async (times: number[], read: number, act: (e: ReturnType<typeof createSynthEngine>, ctx: OfflineAudioContext) => void) => {
+    const ctx = new OfflineAudioContext(1, SR * (Math.max(...times) + 0.1), SR);
+    const engine = createSynthEngine(ctx);
+    engine.applyPatch({ ...defaultPatch(), ...sine });
+    engine.noteOn(A6, 1, 0);
+    act(engine, ctx);
+    const reads = times.map((time) =>
+      ctx.suspend(time).then(() => {
+        const s = new Float32Array(engine.taps.amp.fftSize);
+        engine.taps.amp.getFloatTimeDomainData(s);
+        void ctx.resume();
+        return { s: s.subarray(s.length - read * SR), m: engine.modulationAt(time - read / 2) };
+      }),
+    );
+    await ctx.startRendering();
+    return Promise.all(reads);
+  };
+
+  it('glides in the model as in the sound: on Pitch, two thirds of a step 16 ms on, and all of it soon after (issue 219)', async () => {
+    const step = block(75);
+    const read = 0.004;
+    // From 15 to 19 ms after the step, around one time constant on; and long after.
+    const reads = await heldAndRead([block(82), block(300)], read, (e) => e.setPressure({ destination: 'pitch', amount: 1 }, step));
+    const semitones = (s: Float32Array) => 12 * Math.log2(frequencyAround(s, SR, read / 2, read) / 1760);
+    expect(reads[0].m.pitch - A6).toBeCloseTo(glided(block(82) - read / 2 - step), 6);
+    expect(reads[0].m.pressure.amount).toBeCloseTo(glided(block(82) - read / 2 - step), 6);
+    expect(semitones(reads[0].s)).toBeCloseTo(reads[0].m.pitch - A6, 2);
+    expect(reads[1].m.pitch - A6).toBeCloseTo(1, 6);
+    expect(semitones(reads[1].s)).toBeCloseTo(1, 2);
+  });
+
+  it('glides on Volume as the model does, a knob turned during the glide included (issue 219)', async () => {
+    const step = block(75);
+    const read = 0.001;
+    const times = [block(70), block(82), block(88), block(94), block(300)];
+    const reads = await heldAndRead(times, read, (e, ctx) => {
+      e.setPressure({ destination: 'volume', amount: 1 }, step);
+      // A knob that has nothing to do with the Volume, turned 8 ms into the glide: the glide carries on.
+      void ctx.suspend(block(78)).then(() => {
+        e.applyPatch({ ...defaultPatch(), ...sine, cutoff: 15000 });
+        return ctx.resume();
+      });
+    });
+    const peak = (s: Float32Array) => s.reduce((m, v) => Math.max(m, Math.abs(v)), 0);
+    expect(reads[1].m.volume).toBeCloseTo(0.4 + 0.5 * glided(block(82) - read / 2 - step), 6);
+    for (const { s, m } of reads.slice(1)) expect(peak(s) / peak(reads[0].s)).toBeCloseTo(m.volume / 0.4, 1);
   });
 
   it('on Pitch, raises the sound by up to a semitone, the model and Cycle Lock with it, and leaves the knobs as they are', async () => {

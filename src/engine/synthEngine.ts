@@ -1,8 +1,9 @@
 import { type Adsr, type AutomationStep, DIP, envelopeSchedule, type GateEvent, levelAfter } from '../modulation/envelope';
 import { type BeatGrid, createLfoClock, glideFrequency, glideFrom, glideTimeConstant, LFO_START, type LfoWaveform, lfoShape } from '../modulation/lfo';
 import {
-  destinationSwings, effectiveCutoff, effectiveResonance, effectiveVolume, KEY_TRACK_CENTRE, LOWEST_CUTOFF, lfoOffset, type Modulation,
-  NO_PRESSURE, osc2Cents, osc2EnvelopeCents, type Pressure, pressed, pressurePitch, soundingPitch, VELOCITY_CUTOFF_OCTAVES,
+  destinationSwings, effectiveCutoff, effectiveResonance, effectiveVolume, glidedPressure, KEY_TRACK_CENTRE, LOWEST_CUTOFF, lfoOffset,
+  type Modulation, NO_PRESSURE, osc2Cents, osc2EnvelopeCents, PRESSURE_GLIDE, type Pressure, pressed, pressurePitch, soundingPitch,
+  VELOCITY_CUTOFF_OCTAVES,
 } from '../modulation/modulationModel';
 import { bandwidthOctaves } from '../modulation/passBand';
 import { createCache } from '../music/cache';
@@ -525,13 +526,26 @@ function setStage(node: BiquadFilterNode, stage: Stage, scheduled?: { writes: Wr
  */
 function createWrites() {
   let last = new WeakMap<AudioParam, { value: number; time: number }>();
+  // While aftertouch is written, its time constant: each write glides there (issue 219).
+  let glide: number | undefined;
   return {
     set(param: AudioParam, value: number, t: number) {
       const was = last.get(param);
       if (was && was.value === value && t >= was.time) return;
-      param.setValueAtTime(value, t);
+      moveTo(param, value, t, glide);
       if (!was || t >= was.time) last.set(param, { value, time: t });
     },
+    /** Make the writes `act` makes glide over `timeConstant` rather than step: aftertouch's (issue 219). */
+    gliding(timeConstant: number, act: () => void) {
+      glide = timeConstant;
+      try {
+        act();
+      } finally {
+        glide = undefined;
+      }
+    },
+    /** The time constant the writes now glide over, if any: for what is moved other than through `set`. */
+    glide: () => glide,
     forget() {
       last = new WeakMap();
     },
@@ -606,8 +620,10 @@ interface Shared {
    */
   resonanceSwing: WaveShaperNode;
   toQ: [GainNode, GainNode];
-  /** The pitch bend in cents, aftertouch on Pitch added (issue 132), into every Oscillator's detune (the LFO on Pitch goes there too). */
+  /** The pitch bend in cents, into every Oscillator's detune (the LFO on Pitch goes there too). */
   bend: ConstantSourceNode;
+  /** Aftertouch on Pitch in cents (issue 132), beside the bend: it glides over its own time constant (issue 219). */
+  pressing: ConstantSourceNode;
   /** The tremolo's resting gain, into every Voice's: 1 less the LFOs' total swing on Volume. */
   tremoloRest: ConstantSourceNode;
   noise: Record<NoiseColour, AudioBuffer>;
@@ -786,8 +802,10 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
     }
     l.bus.connect(fmLfos[i]);
   });
-  shared.bend.connect(sub.detune);
-  for (const o of oscillators) shared.bend.connect(o.source.detune);
+  for (const pitch of [shared.bend, shared.pressing]) {
+    pitch.connect(sub.detune);
+    for (const o of oscillators) pitch.connect(o.source.detune);
+  }
 
   // Each Oscillator's pitch over the Note's, from its knobs: FM's depth and the Harmonics Ring keeps count from them.
   const pitchOverNote = [1, 1];
@@ -941,7 +959,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
       const retuned = fmNow.map((now, i) => whole || now !== fmFrom[i]);
       fmFrom = fmNow;
       if (retuned.some(Boolean)) {
-        tuneFm(frequencyAt(t), t, { retuned });
+        tuneFm(frequencyAt(t), t, { timeConstant: shared.writes.glide(), retuned });
         const sliding = pitches[lastAt(pitches, t)];
         if (sliding?.glide) tuneFm(sliding.frequency, t, { timeConstant: glideTimeConstant(sliding.glide), retuned });
         for (const later of pitches) if (later.time > t) fmTo(later.frequency, later.time, later.glide, retuned);
@@ -1041,9 +1059,11 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
   let swing = { key: '', stages: [0, 0] as [number, number] };
   // What the twins' stages were last set from: a knob that leaves them as they are does not set them again (issue 218).
   let twinsFrom = '';
-  const bend = ctx.createConstantSource();
-  bend.offset.value = 0;
-  bend.start();
+  const [bend, pressing] = [ctx.createConstantSource(), ctx.createConstantSource()];
+  for (const cents of [bend, pressing]) {
+    cents.offset.value = 0;
+    cents.start();
+  }
   const tremoloRest = ctx.createConstantSource();
   tremoloRest.offset.value = 1;
   tremoloRest.start();
@@ -1057,7 +1077,7 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       return ctx.createPeriodicWave(real.subarray(0, harmonics + 1), imag.subarray(0, harmonics + 1), { disableNormalization: true });
     });
   const shared: Shared = {
-    lfos: [lfoNodes(), lfoNodes()], resonanceSwing, toQ, bend, tremoloRest, noise: { white, pink: pinkBuffer(ctx, white) }, wave: oscillatorWave, master,
+    lfos: [lfoNodes(), lfoNodes()], resonanceSwing, toQ, bend, pressing, tremoloRest, noise: { white, pink: pinkBuffer(ctx, white) }, wave: oscillatorWave, master,
     writes: createWrites(),
   };
   const write = shared.writes.set;
@@ -1220,13 +1240,19 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
     const i = lastAt(bends, t);
     return i >= 0 ? bends[i].cents : 0;
   };
-  // Aftertouch over time (issue 132), for the model as for the sound.
-  const pressures: { time: number; pressure: Pressure }[] = [];
+  // Aftertouch over time (issue 132): each pressure as it came, and the amount its glide started from (issue 219).
+  const pressures: { time: number; pressure: Pressure; from: number }[] = [];
+  /** Where aftertouch's glide has reached at `t`, for the model as for the sound. */
   const pressureAt = (t: number) => {
+    const i = lastAt(pressures, t);
+    return i >= 0 ? glidedPressure(pressures[i].from, pressures[i].pressure, t - pressures[i].time) : NO_PRESSURE;
+  };
+  /** The pressure last sent at or before `t`, where its glide is going. */
+  const pressureTo = (t: number) => {
     const i = lastAt(pressures, t);
     return i >= 0 ? pressures[i].pressure : NO_PRESSURE;
   };
-  /** The bend node's cents at `t`: the wheel's, and aftertouch on Pitch. */
+  /** The pitch in cents at `t` over the Note's: the wheel's, and aftertouch on Pitch. */
   const bendCentsAt = (t: number) => bendAt(t) + pressurePitch(pressureAt(t)) * 100;
   /** The Voice of the newest Note: the Taps listen to it (or to every Voice, when asked). */
   let lead: Voice | null = null;
@@ -1514,7 +1540,10 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
         if (!following(i, l, t)) followRate(i, l, t, true);
         lfoClocks[i].forgetBefore(t - MODEL_SECONDS);
       });
-      applyToSound(pressed(next, pressureAt(t)), t, whole);
+      // Aftertouch's Destination from where its glide has reached, then gliding on to where it is going (issue 219).
+      const [now, to] = [pressureAt(t), pressureTo(t)];
+      applyToSound(pressed(next, now), t, whole);
+      if (now.amount !== to.amount) shared.writes.gliding(PRESSURE_GLIDE, () => applyToSound(pressed(next, to), t));
       lockToBeat(next, t);
       // Several Voices sum before the master: the listening level makes room for them (after the Amp Tap, so
       // the Viewers' scale is unchanged, ADR-0006); one Voice plays exactly as loud as before.
@@ -1523,10 +1552,16 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
 
     setPressure(pressure, time) {
       const t = at(time);
-      append(pressures, { time: t, pressure });
+      // It glides from where it has reached, as the bend wheel moves Pitch, so pressing harder does not step (issue
+      // 219). Moved to another Destination while pressed, it starts there at once and the last one is let go at once.
+      const was = pressureAt(t);
+      const glide = pressure.destination === was.destination || !was.amount ? PRESSURE_GLIDE : undefined;
+      append(pressures, { time: t, pressure, from: glide ? was.amount : pressure.amount });
       trim(pressures, t);
-      if (patch) applyToSound(pressed(patch, pressure), t);
-      bend.offset.setTargetAtTime(bendCentsAt(t), t, BEND_SMOOTHING);
+      const knobs = patch;
+      if (knobs && glide) shared.writes.gliding(glide, () => applyToSound(pressed(knobs, pressure), t));
+      else if (knobs) applyToSound(pressed(knobs, pressure), t);
+      moveTo(pressing.offset, pressurePitch(pressure) * 100, t, glide);
     },
 
     noteOn(note, velocity, time, { afresh = false } = {}) {
@@ -1563,8 +1598,8 @@ export function createSynthEngine(ctx: BaseAudioContext): SynthEngine {
       const t = at(time);
       append(bends, { time: t, cents });
       trim(bends, t);
-      // A few milliseconds of smoothing, so a wheel's steps do not click; aftertouch on Pitch adds to it.
-      bend.offset.setTargetAtTime(bendCentsAt(t), t, BEND_SMOOTHING);
+      // A few milliseconds of smoothing, so a wheel's steps do not click.
+      bend.offset.setTargetAtTime(bendAt(t), t, BEND_SMOOTHING);
     },
 
     noteOff(time) {
