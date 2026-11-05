@@ -79,7 +79,7 @@ describe("the mascot's droplets (issue 115)", () => {
       while (spray.step(1 / 240).length > 0) t += 1 / 240;
       return t;
     };
-    // From 120 px, as before: about 0.29 s at 160 to 220 px a second under gravity.
+    // From 120 px: about 0.29 s at 160 to 220 px a second under gravity.
     expect(landing(120)).toBeGreaterThan(0.25);
     expect(landing(120)).toBeLessThan(0.33);
     // From 700 px and from 120, about as long, so no more drops are in the air at once.
@@ -126,7 +126,7 @@ describe('steam (issue 127)', () => {
     }
   });
 
-  it('never rises less than it would without the sun', () => {
+  it('never rises less than it would without the sun (issue 237)', () => {
     const highest = (until?: number) => {
       const spray = createSpray(() => 0.5);
       spray.fling(1, 100, 100, 'steam', 1, until);
@@ -164,7 +164,7 @@ describe('under a ceiling (issue 200)', () => {
     }
   });
 
-  it('steam with the sun low beside it keeps under the ceiling as before', () => {
+  it('steam with the sun low beside it keeps under the ceiling (issue 237)', () => {
     const spray = createSpray(seeded(29));
     spray.under(90);
     spray.fling(20, 100, 100, 'steam', 1, 98);

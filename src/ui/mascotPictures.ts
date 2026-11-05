@@ -140,6 +140,10 @@ export const SKY: Partial<Record<Pose['prop'], Picture>> = {
 export const CLOUD = { bottom: 0, from: -2, to: 11 };
 export const SUN = { middle: 1.5 };
 
+/** The highest row of a picture on the grid: 0 is the drop's top, negative over it. */
+export const topOf = (picture: Picture) => Math.min(0, ...picture.flatMap(([, list]) => list.map(([, y]) => y)));
+/** The sun's and the cloud's highest rows. */
+export const SKY_TOP: Partial<Record<Pose['prop'], number>> = Object.fromEntries(Object.entries(SKY).map(([prop, p]) => [prop, topOf(p)]));
 /** How far the sun and the cloud go up from where SKY draws them, with room: Bead's height, twice as far over its foot. */
 const SKY_LIFT = 13;
 
@@ -149,8 +153,6 @@ const SKY_LIFT = 13;
  * top) is short, as far as fits under it; with none, where SKY has it. Nothing else goes up.
  */
 export function skyLift(prop: Pose['prop'], room: number): number {
-  const picture = SKY[prop];
-  if (!picture) return 0;
-  const top = Math.min(...picture.flatMap(([, rects]) => rects.map(([, y]) => y)));
-  return Math.max(0, Math.min(SKY_LIFT, Math.floor(room - (13 - top))));
+  const top = SKY_TOP[prop];
+  return top === undefined ? 0 : Math.max(0, Math.min(SKY_LIFT, Math.floor(room - (13 - top))));
 }

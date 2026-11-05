@@ -12,7 +12,7 @@ import { mascotClock } from './mascotClock';
 import { NOT_TEXT, watchCovers } from './mascotCovers';
 import { gesturesOf, looksOf } from './mascotGestures';
 import { type Act, createMascotMotion, hatOn, type Pose, type Room, SCREAMING } from './mascotMotion';
-import { CATCH, CLOUD, HATS, HOOK, ICE, type Picture, PROPS, type Rect, ROD_TIP, SKY, type Stage, SUN, skyLift, TAILS } from './mascotPictures';
+import { CATCH, CLOUD, HATS, HOOK, ICE, type Picture, PROPS, type Rect, ROD_TIP, SKY, SKY_TOP, type Stage, SUN, skyLift, TAILS, topOf } from './mascotPictures';
 import {
   acrossOf, type Cover, choosePerch, chooseVisit, clearAlong, createMascotPlace, type Drawing, drawingOf, HOVER_UNDER, type Moving, nearestSpan, type Perch, rideOf, rideOnDrop, ridesFor, type Span,
   standingCard, surfLean, throwWalls, type Visit, visitEnds,
@@ -121,8 +121,6 @@ const BOARD = {
 const SURF_SPAN = 8;
 const BALANCING = 15;
 
-/** The highest row of a picture on the grid: 0 is the drop's top, negative over it. */
-const topOf = (picture: Picture) => Math.min(0, ...picture.flatMap(([, list]) => list.map(([, y]) => y)));
 /** How high each hat and prop drawn with the drop goes over the drop's top, on the grid; and those that stay put. */
 const HAT_TOP: Partial<Record<Pose['hat'], number>> = Object.fromEntries(Object.entries(HATS).map(([hat, p]) => [hat, topOf(p)]));
 const PROP_TOP: Partial<Record<Pose['prop'], number>> = {
@@ -130,7 +128,6 @@ const PROP_TOP: Partial<Record<Pose['prop'], number>> = {
   umbrella: topOf([['', UMBRELLA.canopy]]),
   umbrellaShut: topOf([['', UMBRELLA.shut]]),
 };
-const SKY_TOP: Partial<Record<Pose['prop'], number>> = Object.fromEntries(Object.entries(SKY).map(([prop, p]) => [prop, topOf(p)]));
 
 /** Room over its head for its leaps and the splash. */
 const HEADROOM = 18;
@@ -972,9 +969,9 @@ export function Mascot({
         // if its drawing is still too tall (an umbrella, a cloud), it is drawn smaller about its foot. With room, untouched.
         // Its sun and cloud, twice as far above it, or as far as fits under the header or the window's top (issue 237).
         let shrink = 1;
-        const skyRows = skyLift(pose.prop, (where.foot - headerFoot - 1) / (HEIGHT / 13));
+        const grid = HEIGHT / 13;
+        const skyRows = skyLift(pose.prop, (where.foot - headerFoot - 1) / grid);
         if (/^(standing|hovering|landing|clinging)$/.test(where.moving)) {
-          const grid = HEIGHT / 13;
           const room = where.foot - overPage - 1;
           const drawnTop = Math.min(PROP_TOP[pose.prop] ?? 0, HAT_TOP[pose.hat] ?? 0, pose.ice > 0 ? topOf(ICE) : 0);
           const body = (13 - drawnTop) * grid * pose.stretch * pose.size;
@@ -1053,7 +1050,6 @@ export function Mascot({
           if (fling === 'rain') {
             // From the top of the window all around, behind the header where it stays on top (issue 237); on the
             // umbrella, if it is open and the drop falls on it, else down to the edge.
-            const grid = HEIGHT / 13;
             for (let i = 0; i < count; i++) {
               const at = base.x + (Math.random() * 2 - 1) * RAIN_WIDE;
               const onUmbrella = pose.prop === 'umbrella' && at >= left + CANOPY.from * grid && at <= left + CANOPY.to * grid;
@@ -1065,7 +1061,6 @@ export function Mascot({
               droplets.fling(count, base.x, drawnY(ground - HEIGHT - pose.lift), 'arc', pose.burst.aim ?? 0, ground);
             } else if (fling === 'pour') {
               // From the glass's rim, falling into its mouth.
-              const grid = HEIGHT / 13;
               droplets.fling(count, drawnX(left + POURING_AT.x * grid), drawnY(ground - HEIGHT + POURING_AT.y * grid), 'pour', 1, drawnY(ground - HEIGHT + MOUTH_Y * grid));
             } else if (fling === 'jet') {
               // From the muzzle, turned with it: the gun is drawn on its left.
@@ -1073,12 +1068,10 @@ export function Mascot({
               droplets.fling(count, drawnX(left + DROP_MIDDLE + facing * (MUZZLE.x - DROP_MIDDLE)), drawnY(ground - HEIGHT - pose.lift + MUZZLE.y), 'jet', -facing);
             } else if (fling === 'shower') {
               // From under its cloud, wherever it is drawn, down onto it.
-              const grid = HEIGHT / 13;
               const at = left + (CLOUD.from + Math.random() * (CLOUD.to - CLOUD.from)) * grid;
               droplets.fling(count, drawnX(at), drawnY(ground - HEIGHT + (CLOUD.bottom - skyRows) * grid), 'shower', 0.5, ground);
             } else if (fling === 'steam') {
               // Up from its head to the sun's height (issue 237).
-              const grid = HEIGHT / 13;
               const sun = drawnY(ground - HEIGHT + (SUN.middle - skyRows) * grid);
               droplets.fling(count, base.x, drawnY(ground - HEIGHT * pose.size - pose.lift), 'steam', 1, sun);
             } else {
@@ -1118,7 +1111,6 @@ export function Mascot({
           if (fish.style.display !== 'none') fish.style.display = 'none';
         } else {
           fish.style.display = '';
-          const grid = HEIGHT / 13;
           const tip = ROD_TIP[pose.prop === 'rodBite' ? 'rodBite' : 'rod'];
           // The tip as the drop's transform puts it: scaled, then turned, about its foot, then lifted.
           const [ox, oy] = [WIDTH * 0.2, HEIGHT];

@@ -417,7 +417,7 @@ test("on a phone, the umbrella's rain starts at the window's top, behind the hea
   // Bead stands far down the window, under the header; the first drops are seen within a frame or two of the top.
   expect(rain.foot - rain.header).toBeGreaterThan(200);
   expect(rain.top).toBeLessThan(60);
-  expect(rain.across).toBeLessThan(100); // 80 px either side of it, as before
+  expect(rain.across).toBeLessThan(100); // RAIN_WIDE, 80 px either side of it
 });
 
 /**
@@ -449,7 +449,7 @@ const skyOverBead = (page: Page) =>
 
 test('evaporating, its sun and cloud sit about twice as far above it, in the window and clear of the header (issue 237)', async ({ page }) => {
   test.slow();
-  // On a phone, far under the header: their middles were 23 and 30 px over its foot.
+  // On a phone, far under the header: SKY draws their middles 23 and 30 px over its foot, before they go up.
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto('/');
   await bringBead(page);
@@ -458,11 +458,13 @@ test('evaporating, its sun and cloud sit about twice as far above it, in the win
   expect(roomy.sun).toBeGreaterThan(44);
   expect(roomy.cloud).toBeGreaterThan(52);
   expect(roomy.underHeader).toBeGreaterThanOrEqual(0);
-  // Three across, at home just under the header: as far as fits, under it.
+  // Three across, at home just under the header: as far as fits under it, never lower than SKY draws them (nor
+  // drawn smaller).
   await page.setViewportSize({ width: 1440, height: 900 });
   await settles(page, /^standing$/);
   const near = await skyOverBead(page);
-  expect(near.sun).toBeGreaterThan(0);
+  expect(near.sun).toBeGreaterThanOrEqual(22.5);
+  expect(near.cloud).toBeGreaterThanOrEqual(29.5);
   expect(near.underHeader).toBeGreaterThanOrEqual(0);
 });
 

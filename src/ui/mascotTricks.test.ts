@@ -61,7 +61,7 @@ describe("the mascot's funny turns (issue 115)", () => {
     expect(props).toEqual(['none', 'umbrellaShut', 'umbrella', 'none']);
     expect(poses.findIndex((p) => p.prop === 'umbrella') / 60 - wince).toBeLessThan(0.45); // open within a moment
     expect(sprays.filter((f) => f === 'rain').length).toBeGreaterThan(40);
-    expect(TRICK_MOVES.umbrella.seconds).toBe(3.6); // as long as before
+    expect(TRICK_MOVES.umbrella.seconds).toBe(3.6); // decision 4: the rain's longer fall leaves its length
   });
 
   it('a glass appears; it turns it over beside its mouth and the water pours out as it drinks, then burps', () => {

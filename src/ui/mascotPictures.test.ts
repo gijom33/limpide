@@ -32,7 +32,7 @@ describe('the sun and the cloud, farther above it (issue 237)', () => {
     return 13 - (top + bottom) / 2;
   };
 
-  it('with room, about twice as far above its foot as before', () => {
+  it('with room, about twice as far above its foot as SKY draws them (issue 237)', () => {
     for (const prop of ['sun', 'cloud'] as const) {
       const ratio = (over(prop) + skyLift(prop, 100)) / over(prop);
       expect(ratio, prop).toBeGreaterThan(1.8);
@@ -40,7 +40,7 @@ describe('the sun and the cloud, farther above it (issue 237)', () => {
     }
   });
 
-  it('near the top, as far as fits under it, in whole squares; with no room, where it was', () => {
+  it('near the top, as far as fits under it, in whole squares; with no room, where SKY draws them (issue 237)', () => {
     // The sun's top is 15 squares over its foot, the cloud's 17.
     expect(skyLift('sun', 20)).toBe(5);
     expect(skyLift('cloud', 20)).toBe(3);
@@ -49,7 +49,7 @@ describe('the sun and the cloud, farther above it (issue 237)', () => {
     expect(skyLift('cloud', 30)).toBe(skyLift('cloud', 100));
   });
 
-  it('nothing else is lifted', () => {
+  it('nothing else is lifted (issue 237)', () => {
     expect(skyLift('umbrella', 100)).toBe(0);
     expect(skyLift('none', 100)).toBe(0);
   });
