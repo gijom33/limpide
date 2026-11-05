@@ -574,7 +574,8 @@ describe('two Presets high up (issue 226)', () => {
       for (let from = 0.5; NOTE + from + 0.05 <= release; from += 0.05) expect(levelDb(s, from, 0.05), `${name}, ${from.toFixed(2)} s after the Note`).toBeGreaterThan(-40);
     // Their loudest 100 ms in 1.23.0 (the ear check of 2026-11-03): C4 is Key Track's centre, so it is unchanged.
     expect(Math.abs(loudestDb(c2) + 22.0), `C2: ${loudestDb(c2).toFixed(2)} dBFS`).toBeLessThanOrEqual(1);
-    expect(Math.abs(loudestDb(c4) + 21.5), `C4: ${loudestDb(c4).toFixed(2)} dBFS`).toBeLessThanOrEqual(0.1);
+    // Within half a dB, nothing heard: Chromium on GitHub's Linux renders it at −21.33, the Mac's at −21.5 (2026-11-04).
+    expect(Math.abs(loudestDb(c4) + 21.5), `C4: ${loudestDb(c4).toFixed(2)} dBFS`).toBeLessThanOrEqual(0.5);
     for (const s of [c2, c4, c6, c7]) expect(peak(s)).toBeLessThan(0.8);
   }, 60_000);
 });

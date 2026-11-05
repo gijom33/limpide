@@ -103,8 +103,9 @@ for (const [width, words] of C_WIDTHS) {
     expect(h.header.height).toBeLessThanOrEqual(64);
     expect([...h.words].sort()).toEqual([...words].sort());
     expect(h.unit).toBe(width >= 1280);
-    // Each word step leaves the piano its 10 white keys at about 42 px (a little under in Linux's wider fonts).
-    if (width === 1100) expect(h.whiteKey).toBeGreaterThanOrEqual(40);
+    // Each word step leaves the piano its 10 white keys at about 42 px (a little under in Linux's wider fonts): 41.7 on
+    // the Mac and 39.6 on GitHub's Linux since the BPM keeps room for a tenth (issue 223).
+    if (width === 1100) expect(h.whiteKey).toBeGreaterThanOrEqual(39);
     if (width === 861) expect(h.whiteKey).toBeGreaterThanOrEqual(30);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   });
