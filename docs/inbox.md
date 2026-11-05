@@ -4,8 +4,9 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
-## Ideas
+- 2026-11-05, from 1.24.0's branch run and its re-run on GitHub (issue 232): on GitHub's Linux WebKit, one test worker to a job, the Demo on a phone lands the Filter 54 px below the section strip (once 168 px) instead of just under it, in three tests (the page following the knob, a person's scroll, Page Down), every attempt; they passed in the last probe. Perhaps the header's slide on a phone ending late at 8 to 25 frames a second, with nothing aiming again after it.
 
+## Ideas
 
 ## Dropped
 
