@@ -6,8 +6,8 @@ import { applyStep, differences, reached } from './tutorial';
 import { TUTORIALS } from './tutorials';
 
 describe('the Tutorials', () => {
-  it('start with Sub Ladder, the one the Tour’s last card opens, then Bass, Acid, Pluck and Wobble, then issue 109’s three', () => {
-    expect(TUTORIALS.map((t) => t.preset)).toEqual(['Sub Ladder', 'Bass', 'Acid', 'Pluck', 'Wobble', 'FM Ladder', 'Ring Bell', 'Deep Breath']);
+  it('start with Sub Ladder, the one the Tour’s last card opens, then Bass, Acid, Pluck, Wobble and PWM Bass, then issue 109’s three', () => {
+    expect(TUTORIALS.map((t) => t.preset)).toEqual(['Sub Ladder', 'Bass', 'Acid', 'Pluck', 'Wobble', 'PWM Bass', 'FM Ladder', 'Ring Bell', 'Deep Breath']);
   });
 
   // Issue 233: each Waveform in turn on Osc 1, every Harmonic in sight, then a saw and a square an octave apart.
@@ -35,6 +35,18 @@ describe('the Tutorials', () => {
       { preset: 'Bass', one: 4, together: [] },
       { preset: 'Acid', one: 0, together: ENVELOPE },
       { preset: 'Pluck', one: 0, together: ENVELOPE },
+      { preset: 'PWM Bass', one: 0, together: ['filterAttack', 'filterDecay', 'filterSustain'] }, // its Release stays as Init has it
+    ]);
+  });
+
+  // Issue 234: Pulse Width by hand, then LFO 1 sweeping it, then a detuned Osc 2 brought in and taken out again.
+  it('turn Pulse Width by hand in PWM Bass, then aim LFO 1 at it, then compare a detuned Osc 2 and take it out', () => {
+    const steps = TUTORIALS.find((t) => t.preset === 'PWM Bass')!.steps;
+    const targets = steps.flatMap((s) => (s.kind === 'param' || s.kind === 'choice' ? [`${s.id} ${s.to}`] : []));
+    expect(targets.slice(0, 10)).toEqual([
+      'waveform pulse', 'pulseWidth 0.1', 'pulseWidth 0.5',
+      'lfoDestination pulseWidth', 'lfoAmount 0.8', 'lfoRate 0.8',
+      'mixOsc2 0.6', 'osc2Detune 7', 'osc2Detune 0', 'mixOsc2 0',
     ]);
   });
 

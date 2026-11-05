@@ -17,7 +17,7 @@ Ordinary synths give you a sound and a row of knobs, and the cause and effect st
 ## What you can do
 
 - **Take the Tour.** A first look for anyone who has never seen a synth: a card for each Section in the signal’s order, while the synth turns its controls itself and plays. Your own Patch comes back when it ends.
-- **Learn by building.** Tutorials rebuild a Preset from Init one Step at a time: you turn each knob, or a set of faders together, then hear and see what it changed. Eight so far: Sub Ladder, each wave’s Harmonics side by side, then Bass, Acid, Pluck and Wobble, then FM Ladder, Ring Bell and Deep Breath for FM, Ring, the Sub and the Noise’s colour.
+- **Learn by building.** Tutorials rebuild a Preset from Init one Step at a time: you turn each knob, or a set of faders together, then hear and see what it changed. Nine so far: Sub Ladder, each wave’s Harmonics side by side, then Bass, Acid, Pluck and Wobble, PWM Bass for pulse width modulation, then FM Ladder, Ring Bell and Deep Breath for FM, Ring, the Sub and the Noise’s colour.
 - **See the subtraction.** Each stage has a cycle-locked Scope and a Spectrum. The Filter's real Response Curve is drawn over the Spectrum.
 - **Check Harmonics against theory.** Markers name each Harmonic, and an Ideal Reference shows what theory predicts for the Waveform.
 - **Watch modulation over time.** The Envelope Timeline draws both Envelopes, the LFO and the Effective Cutoff as they move.

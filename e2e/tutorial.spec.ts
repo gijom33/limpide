@@ -369,7 +369,7 @@ const standing = (page: Page, selector: string) =>
 // Issue 105 (the 1.16.0 review): on a 393 × 659 phone the Bass Tutorial's Ideal Step spoke of circles and squares on the
 // Oscillator Spectrum, under the card, its note cut short with "…".
 for (const [layout, width, height] of [['phone', 375, 812], ['short phone', 393, 659], ['2 × 2', 690, 830]] as const) {
-  for (const preset of ['Sub Ladder', 'Bass', 'Acid', 'Pluck', 'Wobble', 'FM Ladder', 'Ring Bell', 'Deep Breath']) {
+  for (const preset of ['Sub Ladder', 'Bass', 'Acid', 'Pluck', 'Wobble', 'PWM Bass', 'FM Ladder', 'Ring Bell', 'Deep Breath']) {
     test(`on a ${layout}, each Step of ${preset} brings its control, then the Viewer its note names, clear of the header and the card`, async ({ page }) => {
       test.setTimeout(90000); // fifteen Steps, each made and checked twice
       await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -419,7 +419,7 @@ test('the header’s Tutorial button lists the Tutorials, ticks the finished, an
   const button = page.getByRole('button', { name: 'Tutorial', exact: true });
   await button.click();
   const list = page.getByRole('group', { name: 'Tutorials' }).filter({ has: page.getByRole('button', { name: /^Tutorial: Bass/ }) }).last();
-  await expect(list.locator('.tutorial-menu-name')).toHaveText(['Sub Ladder', 'Bass', 'Acid', 'Pluck', 'Wobble', 'FM Ladder', 'Ring Bell', 'Deep Breath']);
+  await expect(list.locator('.tutorial-menu-name')).toHaveText(['Sub Ladder', 'Bass', 'Acid', 'Pluck', 'Wobble', 'PWM Bass', 'FM Ladder', 'Ring Bell', 'Deep Breath']);
   // Each with a short line of what it teaches (issue 129, decision 8).
   await expect(list.getByRole('button', { name: 'Tutorial: Wobble' })).toContainText('an LFO, a slow hand that turns a knob for you');
   await page.keyboard.press('Escape');
@@ -441,7 +441,7 @@ for (const width of [375, 1440]) {
     const panel = page.getByRole('group', { name: 'Tutorials' }).last();
     const icons = await panel.locator('button > svg').evaluateAll((all) => all.map((i) => Math.round(i.getBoundingClientRect().width * 10) / 10));
     const starts = await panel.locator('.tutorial-menu-name').evaluateAll((all) => all.map((n) => Math.round(n.getBoundingClientRect().left * 10) / 10));
-    expect(icons).toHaveLength(8);
+    expect(icons).toHaveLength(9);
     expect(new Set(icons).size, icons.join(', ')).toBe(1);
     expect(new Set(starts).size, starts.join(', ')).toBe(1);
   });

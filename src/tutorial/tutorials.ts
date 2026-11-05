@@ -413,6 +413,121 @@ export const TUTORIALS: Tutorial[] = [
       },
     ],
   },
+  // Issue 234: a pulse's width by hand, then LFO 1 on it, heard beside a detuned Osc 2, to PWM Bass's thump.
+  {
+    preset: 'PWM Bass',
+    intro: 'A bass that moves by itself, the sound of the Juno and other synths of the 1980s. One Oscillator, the part that makes the sound, plays a pulse whose width an LFO, a slow invisible hand, keeps sweeping: a shimmer you would otherwise need two Oscillators for.',
+    teaches: 'a pulse whose width an LFO sweeps',
+    bpm: 100,
+    phrase: 'A2:1.5 A2:.5@0.5 C3:1 A2:1 F2:1.5 F2:.5@0.5 G2:1 E2:1',
+    summary: 'Your PWM bass: a pulse whose width LFO 1 sweeps, over a square Sub, through a dark, steep Filter that thumps on every Note, harder Notes opening it further.',
+    steps: [
+      {
+        kind: 'choice', id: 'waveform', to: 'pulse',
+        say: 'Osc 1 is the Oscillator that makes the sound. Make it a Pulse.',
+        note: 'A Note is a stack of pitches, its Harmonics, and the Oscillator Spectrum draws each as a line. This pulse leaves gaps: every fourth line is missing.',
+        viewer: 'Oscillator Spectrum',
+      },
+      {
+        kind: 'param', id: 'pulseWidth', to: 0.1,
+        say: 'Turn Pulse Width, how long each pulse stays up, down to 10 %.',
+        note: 'On the Oscillator Scope, the picture of the wave, the pulse thins to a needle, and the gaps move apart: every tenth line is missing now. Thin, nasal and quieter.',
+        viewer: 'Oscillator Scope',
+      },
+      {
+        kind: 'param', id: 'pulseWidth', to: 0.5,
+        say: 'Now turn Pulse Width up to 50 %: up half the time, down the other half.',
+        note: 'A square: every other line is missing, and the sound goes hollow. As you turned, the gaps slid along the row of Harmonics.',
+        viewer: 'Oscillator Spectrum',
+      },
+      {
+        kind: 'choice', id: 'lfoDestination', to: 'pulseWidth',
+        say: 'An LFO is a slow hand that turns a knob by itself. Set LFO 1’s Destination, the knob it turns, to Pulse Width.',
+        note: 'Nothing moves yet: its Depth, how far it swings, is still at 0.',
+      },
+      {
+        kind: 'param', id: 'lfoAmount', to: 0.8,
+        say: 'Raise LFO 1’s Depth to 80 %.',
+        note: 'The pulse now widens and narrows by itself, and its gaps slide up and down the row on the Oscillator Spectrum. You hear a shimmer.',
+        viewer: 'Oscillator Spectrum',
+      },
+      {
+        kind: 'param', id: 'lfoRate', to: 0.8,
+        say: 'Slow LFO 1’s Rate, how fast it swings, to 0.8 Hz, 0.8 times a second.',
+        note: 'A slower, gentler sweep: one Oscillator, moving as if it were two. That is PWM, pulse width modulation.',
+      },
+      {
+        kind: 'param', id: 'mixOsc2', to: 0.6,
+        say: 'To compare, bring in Osc 2, a saw on the same Note. In the Mixer, where each one gets its level, raise it to 60 %.',
+        note: 'Fuller, but the saw itself holds still: two Oscillators on exactly the same pitch do not move.',
+      },
+      {
+        kind: 'param', id: 'osc2Detune', to: 7,
+        say: 'Turn Osc 2’s Detune, a fine tuning in cents, hundredths of a piano key, to +7 cents.',
+        note: 'The two now drift slowly in and out of step: a shimmer much like the one the LFO gives the pulse. Listen for the likeness.',
+      },
+      {
+        kind: 'param', id: 'osc2Detune', to: 0,
+        say: 'Turn Osc 2’s Detune back to 0.',
+        note: 'The saw’s drift stops: it came from the two being slightly apart. The pulse still shimmers on its own.',
+      },
+      {
+        kind: 'param', id: 'mixOsc2', to: 0,
+        say: 'Pull Osc 2 back down to 0 in the Mixer.',
+        note: 'One Oscillator again, and still moving: PWM gives the movement of two Oscillators from one.',
+      },
+      {
+        kind: 'param', id: 'mixSub', to: 0.7,
+        say: 'The Sub is an extra wave below Osc 1, a square an octave down, at half the pitch. In the Mixer, raise it to 70 %.',
+        note: 'Weight under the shimmer: the Sub holds still while the pulse moves above it.',
+      },
+      {
+        kind: 'choice', id: 'filterSlope', to: 24,
+        say: 'Now the Filter, the sound’s tone knob. Choose its 24 dB Slope, the steeper one. (dB, decibels, is how loudness is counted.)',
+        note: 'Steeper: the Filter now cuts the highs twice as fast.',
+        viewer: 'Filter Spectrum',
+      },
+      {
+        kind: 'param', id: 'cutoff', to: 350,
+        say: 'Turn the Cutoff down to about 350 Hz. The Cutoff is where the Filter starts to cut; Hz counts vibrations a second, so 350 is low.',
+        note: 'Dark: only the lowest Harmonics get through, and the shimmer turns into a soft, moving hum. On the Filter Spectrum, the high lines are gone.',
+        viewer: 'Filter Spectrum',
+      },
+      {
+        kind: 'param', id: 'resonance', to: 0.25,
+        say: 'Raise Resonance, a lift right at the Cutoff, to 25 %.',
+        note: 'A small bump at the Cutoff gives the bass a little bite.',
+        viewer: 'Filter Spectrum',
+      },
+      {
+        kind: 'param', id: 'keyTrack', to: 0.5,
+        say: 'Set Key Track to 50 %. Key Track moves the Cutoff with the Note you play.',
+        note: 'Higher Notes now open the Filter a little more, so they do not come out duller than the low ones.',
+      },
+      {
+        kind: 'param', id: 'velocityCutoff', to: 0.5,
+        say: 'Raise the Filter’s Velocity to 50 %. Velocity is how hard you play a Note.',
+        note: 'Harder Notes now open the Filter further. Listen plays some Notes softer: those come out darker.',
+      },
+      {
+        kind: 'param', id: 'filterEnvAmount', to: 2.5,
+        say: 'The Filter has an Envelope too, a shape over time that opens and closes it on every Note. Set its Amount, how far it opens, to +2.5 octaves (an octave doubles the pitch).',
+        note: 'Each Note now kicks the Filter open, then lets it fall back. Watch the dashed line jump on the Filter Spectrum.',
+        viewer: 'Filter Spectrum',
+      },
+      // Issue 190, decision 3: the Envelope's faders in one Step, the drill met in Bass; its Release stays as Init has it.
+      {
+        kind: 'params', faders: [{ id: 'filterAttack', to: 0.002 }, { id: 'filterDecay', to: 0.25 }, { id: 'filterSustain', to: 0.2 }],
+        say: 'Now three of its Envelope’s faders, in one Step. Attack, how fast it opens: about 2 ms, two thousandths of a second. Decay, how fast it closes back: about 250 ms. Sustain, where it settles while you hold a Note: about 20 %.',
+        note: 'A thump on every Note: bright at once, then quickly darker, the shimmer going on underneath.',
+      },
+      {
+        kind: 'params', faders: [{ id: 'ampAttack', to: 0.002 }, { id: 'ampSustain', to: 0.9 }, { id: 'ampRelease', to: 0.12 }],
+        say: 'Last, the Amp, the stage that sets how loud, has an Envelope of its own. Its Attack: about 2 ms. Its Sustain: 90 %. Its Release, how long a Note fades once you let go: about 120 ms.',
+        note: 'Each Note starts at full level, right on the thump, holds its weight, and stops soon after you let go: tight, as a bass line needs.',
+      },
+    ],
+  },
   // Issue 109: FM, Ring, the Sub's choices and the Noise's colour, each on the Preset that shows it off.
   {
     preset: 'FM Ladder',
