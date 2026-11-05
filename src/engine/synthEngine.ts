@@ -122,7 +122,7 @@ export interface SynthEngine {
   shownNow(): number;
   /**
    * The engine's time whose sound is heard at `pageTime`, in seconds on the page's clock (`performance.now()`'s): where
-   * a MIDI clock's beat or a Tap is placed, so a synced LFO is heard on it, the output's latency allowed for (issue 185).
+   * a MIDI clock's beat or a Tap Tempo tap is placed, so a synced LFO is heard on it, the output's latency allowed for (issue 185).
    */
   heardAt(pageTime: number): number;
   /**

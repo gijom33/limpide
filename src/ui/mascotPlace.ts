@@ -126,7 +126,7 @@ export const LEEWAY = 3;
  * 174), as high as `above` over its box (a plot it surfs, under it). Out of sight under a cover is out of sight however
  * it faces, so for covers its tail turned round past its box's left too (strolling right, pointing the way, a funny
  * turn, issue 179). Over text is where it rests, facing as drawn, the logo's way (179): there, `resting`, its tail
- * swung down under its foot (the air guitar's strum, a wag) instead, which a cover never meets (a card's top is its
+ * swung down under its foot (a wag) instead, which a cover never meets (a card's top is its
  * line), and `LEEWAY` all round.
  */
 export function drawingOf({ twin = 0, resting = false, above = 0 }: { twin?: number; resting?: boolean; above?: number } = {}): Drawing {

@@ -69,6 +69,7 @@ Built on night/2026-11-01, test-first.
 4. **Changing the Destination** starts the new one at no pressure, until the keyboard sends its next pressure. The old one goes back to its knob at once.
 5. **The list is the browser's own `<select>`.** It is the page's only one, and it is grouped by stage like the LFOs' Destination menu. The ‹ › picker belongs to the LFOs and to MIDI Learn.
 6. **No smoothing.** Each pressure message applies the pressed Patch at once, as a knob turned from a Controller does. Pitch is the exception: it rides the bend wheel's few milliseconds of smoothing. At high Resonance the Cutoff could step audibly, which is worth listening for.
+   **Since then (2026-11-04, [219](./219-aftertouch-glides.md)):** aftertouch glides, with a 16 ms time constant, decided by the owner; the bend wheel keeps its 4 ms.
 
 ### To try in the app
 

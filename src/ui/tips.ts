@@ -129,7 +129,7 @@ export const TIPS = {
   demo: {
     title: 'Demo',
     body: 'A track of about three minutes, played by Limpide alone: a kick, an acid line, an arpeggio, strings, tremolo keys, a riser, a wobble bass, the wobble doubled by a second LFO, a wide octave bass, a sweeping pad, an organ three octaves wide, FM bells, a gliding, singing lead, the arpeggio again and brass stabs, a Preset each, knobs turning as it builds and drops; then it returns to Init and stops. The page follows the knob being turned; the piano shows the Notes.',
-    how: 'Turn a knob or flip a switch while it plays and hear the change; the Demo leaves a knob you turned alone until its next Preset. Scroll yourself and the page stops following until then. Play a Note, or press any other key or control away from the Demo’s card, to take over; the Demo stops at once. It never changes the Display settings.',
+    how: 'Turn a knob or flip a switch while it plays and hear the change; the Demo leaves a knob you turned alone until its next Preset. Scroll yourself and the page stops following until then. Play a Note, or press any other key or control away from the Demo’s card (Page Up and Down aside), to take over; the Demo stops at once. It never changes the Display settings.',
   },
   song: {
     title: 'Song',
@@ -219,7 +219,7 @@ export const TIPS = {
   },
   aftertouch: {
     title: 'Aftertouch',
-    body: 'Press harder on a held key and this Destination rises, as on a plugin synth: nothing at a light touch, as far as one LFO at full Depth swings it at the hardest, on top of its knob and the LFOs. The Cutoff opens up to two octaves, so pressing brightens the sound; the Resonance rises half the way to its top. The dot on its knob and its LFO & Envelopes line show the move.',
+    body: 'Press harder on a held key and this Destination rises, as on a plugin synth: nothing at a light touch and, at the hardest, as far as one LFO at full Depth swings it, on top of its knob and the LFOs; the Resonance only half the way to its top. The Cutoff opens up to two octaves, so pressing brightens the sound. The dot on its knob and its LFO & Envelopes line show the move.',
     how: 'Not every keyboard sends aftertouch: press a held key harder and see whether the Last message says Aftertouch. A keyboard or pad that senses each key’s pressure (polyphonic) moves it by the key pressed hardest.',
   },
   bendRange: {

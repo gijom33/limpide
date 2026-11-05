@@ -7,6 +7,7 @@
 **Status:** done (2026-10-28). One pure function decides from a plain description of each key press and touch; the selectors are in one step that names what was touched; a node table test covers every rule. Nothing visible changed: the Playwright suite passes untouched.
 
 **Since then:** (2026-10-30, [issue 104](./104-keyboard-and-screen-readers-after-1-16.md)) on the Demo's own card and button, Enter, Space, the arrows, Home and End play on too, so its parts work from the keyboard.
+**Since then:** (2026-11-04, [227](./227-small-slips-in-the-new-features.md)) Page Up and Page Down play on wherever they are pressed, and a knob's wheel leaves the Demo playing; since 1.23.0 (its code review's fix, `5fe2234`), the keys a sound control uses itself play on too.
 
 ## Agent Brief
 

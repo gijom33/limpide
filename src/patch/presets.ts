@@ -69,10 +69,10 @@ group('Intervals', [
   ['Octave Stack', 'A sine an octave above a saw: each ramp of the saw carries two bumps, and the second Harmonic stands out in the Spectrum.', {
     osc2Waveform: 'sine', osc2Octave: 1, mixOsc2: 0.8, ...OPEN,
   }],
-  ['Perfect Fifth', 'Two sines a fifth apart (3:2): a pattern that repeats every two cycles. The Scope holds it still at any cycles: 1 shows half the pattern, 2 or 4 show it whole.', {
+  ['Perfect Fifth', 'Two sines a fifth apart (nearly 3:2): a pattern that repeats every two cycles, rolling once every two or three seconds, as equal temperament is 2 cents short of 3:2. On the Scope 1 cycle shows half the pattern, 2 or 4 show it whole.', {
     volume: 0.75, waveform: 'sine', osc2Waveform: 'sine', osc2Semitone: 7, mixOsc2: 1, ...OPEN,
   }],
-  ['Major Third', 'Two sines a major third apart (nearly 5:4): a longer pattern than the fifth, and it slowly rolls, because equal temperament is not quite 5:4.', {
+  ['Major Third', 'Two sines a major third apart (nearly 5:4): a longer pattern than the fifth, and it rolls faster, because equal temperament is 14 cents wide of 5:4.', {
     volume: 0.75, waveform: 'sine', osc2Waveform: 'sine', osc2Semitone: 4, mixOsc2: 1, ...OPEN,
   }],
   ['Tritone Knot', 'Two saws a tritone apart: a ratio that never quite repeats, so the Scope draws a tangled, restless knot.', { osc2Semitone: 6, mixOsc2: 0.9, cutoff: 5000, resonance: 0.1, ampSustain: 1 }],

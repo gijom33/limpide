@@ -133,7 +133,7 @@ describe('the tempo follows a MIDI clock (issue 136)', () => {
     expect(engine.handed.length).toBe(handed);
   });
 
-  it('cannot be set by hand or by Tap while the clock runs; when it stops, its last BPM stays, remembered, the person’s to change', () => {
+  it('cannot be set by hand or by Tap Tempo while the clock runs; when it stops, its last BPM stays, remembered, the person’s to change', () => {
     const { tempo, engine, ticks, wait, storage } = following();
     ticks(90, 4);
     tempo.set(140);

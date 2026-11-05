@@ -92,3 +92,5 @@ Claude's calls, open to the owner:
 4. **The board's look:** the Filter's colour with the Oscillator's stripe, 13 pixels long, nose up; its tail raised 15° on it; the lean at most 35°.
 
 **To try in the app:** with Bead out, play J, H, G, G, H, G, D slowly, about a Note a second: the suitcase. Then, on a window at least about 1470 px wide three across (or four across), play the Demo from part 1 and watch parts 1 to 5: the baton, the air guitar with its tail up like a neck, the baton again at part 3 (no LFO), the air guitar at 4, and at part 5 Bead on its surfboard on the LFO's plot, leaning down the wave and back up it. Outside the Demo, set LFO 1 to a slow Sine (0.5 Hz, some Depth) and drop Bead on its plot: the same board.
+
+**Since then (2026-11-04):** the air guitar's neck is drawn on Bead's usual side (call 3), not across its front as "How it was built" says; `docs/bead.md` and the code's comment say so.

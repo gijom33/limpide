@@ -23,7 +23,7 @@ Ordinary synths give you a sound and a row of knobs, and the cause and effect st
 - **Watch modulation over time.** The Envelope Timeline draws both Envelopes, the LFO and the Effective Cutoff as they move.
 - **Study a moment.** Freeze, A/B Snapshots, axis toggles and a hover readout. Hold keeps a note sounding while you turn knobs.
 - **Play however you like.** Use the computer keyboard (`A W S E D F T G…`, with `Z`/`X` to change octave), the on-screen piano, or any MIDI controller via MIDI Learn. Patches can have one to eight Voices.
-- **Play in time.** A tempo in the header, set by hand, by Tap or by a MIDI clock; an LFO's Rate can Sync to it as a note value (1/4, 1/16, triplets…), so a wobble keeps to the beat. Legato for one-Voice lines, and a keyboard's aftertouch moves the Destination you pick.
+- **Play in time.** A tempo in the header, set by hand, by Tap Tempo or by a MIDI clock; an LFO's Rate can Sync to it as a note value (1/4, 1/16, triplets…), so a wobble keeps to the beat. Legato for one-Voice lines, and a keyboard's aftertouch moves the Destination you pick.
 - **Keep and share sounds.** Presets to start from, autosave, a named Patch library, JSON export, and share links that carry the whole Patch in the URL.
 - **Meet Bead.** A little water drop called Bead lives on the page and answers what you play. Switch it off in Display to keep it away, or play `B, E, A, D` to send it away for the visit.
 
