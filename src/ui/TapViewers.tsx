@@ -82,7 +82,6 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, fundamenta
   }, [analyser, sampleRate, fundamental, fundamentalAt, now, paused, view, showIdeal, gateOn, response, limiting, newestNote]);
 
   return (
-    <>
     <figure className="tap" data-tap={name} aria-label={`${name} Tap`}>
       <div className="tap-canvases">
         <Tooltip content={VIEWER_TIPS[name].scope}>
@@ -103,6 +102,5 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, fundamenta
         </Tooltip>
       </div>
     </figure>
-    </>
   );
 }
