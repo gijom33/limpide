@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** needs-info · bug. Diagnose on GitHub's runs (232's method) before anything is built.
+**Status:** done (2026-11-05) · bug, in the tests, not the app: fixed in main, not yet released; the three tests run again on GitHub's WebKit. Diagnosed and fixed by day at the owner's word ("Yes for 1 and 2").
 
 ## Hypotheses, ranked
 
@@ -14,3 +14,17 @@
 ## How to test them
 
 A throwaway branch `release/probe-N` whose workflow runs only `e2e/demo.spec.ts` in WebKit with one worker, the skips taken off, logging the strip's and the Filter's tops each frame; deleted after.
+
+## What was found (2026-11-05)
+
+Five probes on GitHub (7 to 11), each a throwaway branch deleted after.
+
+- **Not the header's slide (hypothesis 1, refuted), nor the layout moving (2, refuted).** Logged every frame (probe 7): the header slides away during the Demo's first scroll and the Filter lands 8 px under the strip, as on the Mac.
+- **The Demo's scroll slows on purpose below 20 frames a second.** Its time counts at most 50 ms a frame, as Bead's motion does, so the two slow together and Bead still lands before the page stops ([224](./224-tests-steady-on-githubs-webkit.md)). At GitHub's 8 to 10 frames a second, after 2.4 s with no frame at all, the 1.4 s scroll lands 3 to 6 s after the Demo starts. The knob test gave it 5 s and read it 54 px short, still moving.
+- **The tests' fixed waits ran into the Demo's next part.** Logging why each of the Demo's scrolls starts and stops (probe 9): after a person's scroll or Page Down, the following did stop; 7.6 s in, the next part began and followed its knob, as it should. The tests waited a fixed 4 to 4.5 s they took to be "still in the intro", which on the slow machine was not. The page never moved within the part.
+
+## The fix
+
+In the tests only (`e2e/demo.spec.ts`, "on a phone"): the landing is given 12 s and read every 100 ms (on a slow device the next part's scroll can leave soon after); "the page stays put" is checked while the part playing at the person's scroll plays on, up to the same 4 to 4.5 s, read from the Demo card's "Part N of M". Proved on GitHub (probe 11): the three tests, four times each, green in WebKit and in Chromium.
+
+**A lead for 232's seven skips** (Claude's call, open to the owner, not built): most of them time Bead or the Demo's scroll in milliseconds, which the same deliberate slowing stretches; read against the frame rate or the Demo's parts, as here, several may run again on GitHub.

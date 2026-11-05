@@ -265,47 +265,54 @@ test.describe('on a 375 px phone (issue 211)', () => {
 
 test.describe('on a phone', () => {
   test.use({ viewport: { width: 393, height: 852 } });
+  // Below 20 frames a second the Demo's scroll slows with Bead (issue 224): on GitHub's Linux WebKit, 8 to 10 frames a
+  // second and none for the first 2.4 s, it lands after 5 or 6 s, not 2 (issue 240).
+  const LANDING_MS = 12000;
+  /** The page stays at `y` while the Demo's part playing now plays on, for up to `ms`: the following waits for the
+   *  next part, whenever a slow device reaches it (issue 240). */
+  const staysWhileThePartPlays = async (page: import('@playwright/test').Page, y: number, ms: number) => {
+    const part = () => page.getByRole('region', { name: 'Demo', exact: true }).locator('[aria-label^="Part "]').first().getAttribute('aria-label');
+    const playing = await part();
+    const end = Date.now() + ms;
+    while (Date.now() < end && (await part()) === playing) {
+      expect(await page.evaluate(() => scrollY)).toBe(y);
+      await page.waitForTimeout(250);
+    }
+  };
 
   test('the page follows the knob the Demo turns', async ({ page }) => {
-    // On GitHub's Linux WebKit the Filter lands 54 px low here, every attempt, the Mac's WebKit right (issue 240).
-    test.skip(!!process.env.CI && test.info().project.name === 'webkit', 'the Filter 54 px low on GitHub’s Linux WebKit: issue 240');
     await page.goto('/');
     await demo(page).click();
     // The intro turns the Filter Envelope's Amount: the Filter's top lands just under the section strip.
     const gap = () =>
       page.evaluate(() => document.querySelector('section[aria-label="Filter"]')!.getBoundingClientRect().top - document.querySelector('.section-strip')!.getBoundingClientRect().bottom);
-    await expect.poll(gap, { timeout: 5000 }).toBeLessThan(20);
-    expect(await gap()).toBeGreaterThanOrEqual(0);
+    // Read often: on a slow device the next part's scroll can leave soon after the landing.
+    await expect.poll(async () => { const g = await gap(); return g >= 0 && g < 20; }, { timeout: LANDING_MS, intervals: [100] }).toBe(true);
     await expect(page.getByRole('navigation', { name: 'Sections' }).getByRole('button', { name: 'Filter' })).toHaveAttribute('aria-current', 'true');
     await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
   });
 
   test('a scroll of the person’s own stops the following until the next part', async ({ page }) => {
-    // On GitHub's Linux WebKit the Filter lands 54 px low here, every attempt, the Mac's WebKit right (issue 240).
-    test.skip(!!process.env.CI && test.info().project.name === 'webkit', 'the Filter 54 px low on GitHub’s Linux WebKit: issue 240');
     await page.goto('/');
     await demo(page).click();
     // The Filter's slow scroll has landed (issue 211): its top just under the section strip.
     const gap = () =>
       page.evaluate(() => document.querySelector('section[aria-label="Filter"]')!.getBoundingClientRect().top - document.querySelector('.section-strip')!.getBoundingClientRect().bottom);
-    await expect.poll(gap, { timeout: 5000 }).toBeLessThan(20);
+    await expect.poll(gap, { timeout: LANDING_MS, intervals: [100] }).toBeLessThan(20);
     await page.evaluate(() => {
       document.body.dispatchEvent(new WheelEvent('wheel', { deltaY: -2000, bubbles: true }));
       scrollTo({ top: 0, behavior: 'instant' });
     });
-    await page.waitForTimeout(4500); // past the Amp's Decay starting to move, still in the intro
-    expect(await page.evaluate(() => scrollY)).toBe(0);
+    await staysWhileThePartPlays(page, 0, 4500); // past the Amp's Decay starting to move, in the intro
     await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
   });
 
   test('Page Down is a scroll of the person’s own: the Demo plays on and stops following until the next part (issue 227)', async ({ page }) => {
-    // On GitHub's Linux WebKit the Filter lands 54 px low here, every attempt, the Mac's WebKit right (issue 240).
-    test.skip(!!process.env.CI && test.info().project.name === 'webkit', 'the Filter 54 px low on GitHub’s Linux WebKit: issue 240');
     await page.goto('/');
     await demo(page).click();
     const gap = () =>
       page.evaluate(() => document.querySelector('section[aria-label="Filter"]')!.getBoundingClientRect().top - document.querySelector('.section-strip')!.getBoundingClientRect().bottom);
-    await expect.poll(gap, { timeout: 5000 }).toBeLessThan(20);
+    await expect.poll(gap, { timeout: LANDING_MS, intervals: [100] }).toBeLessThan(20);
     await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur()); // the page has the keys
     const before = await page.evaluate(() => scrollY);
     await page.keyboard.press('PageDown');
@@ -319,8 +326,7 @@ test.describe('on a phone', () => {
         return mine === was;
       }, { intervals: [300], timeout: 5000 })
       .toBe(true);
-    await page.waitForTimeout(4000); // past the Amp's Decay starting to move, still in the intro
-    expect(await page.evaluate(() => scrollY)).toBe(mine);
+    await staysWhileThePartPlays(page, mine, 4000); // past the Amp's Decay starting to move, in the intro
     await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
   });
 });
