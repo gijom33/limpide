@@ -41,11 +41,11 @@ Decided by the owner, 2026-11-03, answering question 1 below (relayed to the nig
 - The layouts' widths (phone, 2 × 2, three across, four across)
 
 **Acceptance criteria:**
-- [ ] In three and four across, on a window the page fits, opening the Demo leaves the page unscrollable
-- [ ] On a window a little shorter than the page, opening the Demo does not add to the scroll
-- [ ] In three and four across, the room under the last section is still kept for a Tutorial's and the Tour's cards
-- [ ] On a 375 px phone and in 2 × 2, the room under the last section is kept for each card
-- [ ] A Tutorial's Steps still show their control and Viewer above the card where the page can scroll
+- [x] In three and four across, on a window the page fits, opening the Demo leaves the page unscrollable
+- [x] On a window a little shorter than the page, opening the Demo does not add to the scroll
+- [x] In three and four across, the room under the last section is still kept for a Tutorial's and the Tour's cards
+- [x] On a 375 px phone and in 2 × 2, the room under the last section is kept for each card
+- [x] A Tutorial's Steps still show their control and Viewer above the card where the page can scroll
 
 **Out of scope:**
 - Where the card sits, its size, folding and moving

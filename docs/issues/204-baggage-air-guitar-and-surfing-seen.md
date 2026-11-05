@@ -62,12 +62,12 @@ Decided by the owner, 2026-11-03, answering the questions above:
 - The LFO plots, and whether one is in view and its LFO on
 
 **Acceptance criteria:**
-- [ ] The cause of each trick not showing is found and written in the issue
-- [ ] BAGGAGE plays its trick from the computer keys and the piano, fast and slow within 7 s; a four-Note word still within 4 s
-- [ ] In one Demo at three across with an LFO on, Bead conducts, plays the air guitar and surfs, each at least once
-- [ ] With no LFO on, the parts are conducting and the air guitar
-- [ ] Surfing and riding show the board along the line's slope, Bead leaning forward going down and back going up
-- [ ] Browser tests for BAGGAGE and for the three acts in a Demo
+- [x] The cause of each trick not showing is found and written in the issue
+- [x] BAGGAGE plays its trick from the computer keys and the piano, fast and slow within 7 s; a four-Note word still within 4 s
+- [x] In one Demo at three across with an LFO on, Bead conducts, plays the air guitar and surfs, each at least once
+- [x] With no LFO on, the parts are conducting and the air guitar
+- [x] Surfing and riding show the board along the line's slope, Bead leaning forward going down and back going up
+- [x] Browser tests for BAGGAGE and for the three acts in a Demo
 
 **Out of scope:**
 - Bead's rides outside the Demo ([197](./197-bead-rides-everywhere.md)), but for the board and the lean, which they share
