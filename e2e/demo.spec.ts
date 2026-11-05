@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { openDisplay } from './helpers';
+import { openDisplay, wholeDemoCard } from './helpers';
 
 const demo = (page: import('@playwright/test').Page) => page.getByRole('button', { name: 'Demo' });
 const patchName = (page: import('@playwright/test').Page) => page.getByRole('button', { name: /^Patch:/ });
@@ -469,6 +469,7 @@ test('a segment on the Demo’s card plays on from its part, and the Demo keeps 
   await demo(page).click();
   const card = page.getByRole('region', { name: 'Demo' });
   await expect(card).toContainText('Kick');
+  await wholeDemoCard(page);
   await card.getByRole('button', { name: 'Play from part 7, Wobble' }).click();
   await expect(card).toContainText('Wobble');
   await expect(card.getByRole('group', { name: 'Part 7 of 15' })).toBeVisible();
@@ -486,6 +487,7 @@ test('from the keyboard alone, Enter and Space on a part play from it and keep t
   await page.keyboard.press('Enter');
   const card = page.getByRole('region', { name: 'Demo', exact: true });
   await expect(card).toContainText('Kick');
+  await wholeDemoCard(page);
   const part = (n: number) => card.getByRole('button', { name: new RegExp(`^Play from part ${n},`) });
   // The parts are one Tab stop, on the part playing (the arrows move along them).
   await expect(card.getByRole('group', { name: /^Part / }).locator('button[tabindex="0"]')).toHaveCount(1);
@@ -529,6 +531,7 @@ for (const width of [375, 393, 1100, 1440, 1920]) {
         return [Math.round(b.left - c.left), Math.round(b.top - c.top)];
       });
     await expect(card).toContainText('Kick');
+    await wholeDemoCard(page);
     const before = await firstSegment();
     // The shortest caption, then one of the longest, under the longest name.
     for (const [n, name] of [[4, 'Strings'], [6, 'Self-Oscillation']] as const) {
@@ -551,6 +554,7 @@ test('each part is a segment as wide as it is long, the playing one filling over
   await demo(page).click();
   const card = page.getByRole('region', { name: 'Demo' });
   await expect(card).toContainText('Kick');
+  await wholeDemoCard(page);
   const width = (n: number) => card.getByRole('button', { name: new RegExp(`^Play from part ${n},`) }).evaluate((el) => el.getBoundingClientRect().width);
   // Acid plays 8 bars, the Kick 4: twice as wide, give or take the gaps between segments.
   expect(Math.abs((await width(2)) - 2 * (await width(1)))).toBeLessThanOrEqual(4);
@@ -578,6 +582,7 @@ for (const width of [601, 690, 1440]) {
     await demo(page).click();
     const card = page.getByRole('region', { name: 'Demo', exact: true });
     await expect(card).toContainText('Kick');
+    await wholeDemoCard(page);
     const boxes = await segments(card);
     expect(boxes).toHaveLength(15);
     for (const [i, b] of boxes.entries()) {

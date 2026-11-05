@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { midiButton, midiPanel, openMidi, withFakeController } from './fakeMidi';
-import { openDisplay } from './helpers';
+import { openDisplay, wholeDemoCard } from './helpers';
 import { FIRST_VISIT } from './startState';
 
 // Issue 51: a sound made and changed without the mouse, and every control named for a screen reader.
@@ -366,6 +366,7 @@ test.describe('closing gives the focus back to what opened it (issue 189)', () =
     await demo.focus();
     await page.keyboard.press('Enter');
     const bar = page.getByRole('region', { name: 'Demo', exact: true });
+    await wholeDemoCard(page);
     await bar.getByRole('button', { name: /^Play from part 1,/ }).focus();
     await page.keyboard.press('Escape');
     await expect(demo).toHaveAttribute('aria-pressed', 'false');
