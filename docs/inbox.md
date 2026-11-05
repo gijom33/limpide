@@ -6,6 +6,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- 2026-11-04, the owner, on a screenshot of the Demo's card over LFO 2 at about 1000 px wide (three across): "In 3-across and maybe 4-across, let's collapse the info box and place it in the bottom right corner. It's a way not to hide too many things."
+
 ## Dropped
 
 - 2026-11-02, from the 1.22.0 code review, 181's call 5 (Bead switching sides when the other side is clear) not in decision 3's order and changing 151's side rule: kept as built; 181 shipped in 1.22.0 and the owner has seen Bead beside the controls since without remark. Claude's call, open to the owner.
