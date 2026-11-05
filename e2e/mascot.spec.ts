@@ -2,7 +2,7 @@ import { expect, type Page, test } from '@playwright/test';
 import { TRACK } from '../src/demo/track';
 import { NOT_TEXT } from '../src/ui/mascotCovers';
 import { LONGEST_STEP } from '../src/ui/mascotPlace';
-import { openDisplay, reachAudio, stopSound } from './helpers';
+import { openDisplay, reachAudio, stopSound, wholeDemoCard } from './helpers';
 import { BEAD_ON, holding, WELCOMED } from './startState';
 
 // The mascot (issue 115): B, E, A, D played by hand, as in a bead of water, calls it up from behind the top right
@@ -931,6 +931,7 @@ test('through the Demo it conducts, then plays air guitar, then surfs an LFO sha
   await listening(page);
   await bringBead(page);
   await page.getByRole('button', { name: 'Demo', exact: true }).click();
+  await wholeDemoCard(page);
   await expect(mascot(page)).toHaveAttribute('data-act', 'conduct');
   await page.getByRole('button', { name: /^Play from part 2,/ }).click();
   await expect(mascot(page)).toHaveAttribute('data-act', 'airGuitar');
@@ -952,15 +953,21 @@ test('through the Demo it conducts, then plays air guitar, then surfs an LFO sha
   await page.mouse.down();
   await page.mouse.move(at.x, at.y - 120, { steps: 8 });
   await page.mouse.up();
-  // The Demo's card over the plot's foot, it never surfs there (issue 164): dragged aside by its name, it does.
-  await page.waitForTimeout(500);
-  await expect(mascot(page)).toHaveAttribute('data-act', 'conduct');
-  const name = (await page.getByRole('region', { name: 'Demo', exact: true }).locator('.demo-bar-name').boundingBox())!;
-  await page.mouse.move(name.x + 4, name.y + name.height / 2);
+  // The Demo's card in the corner, clear of the plot (issue 230): it surfs. Dragged by its name over the plot's foot,
+  // it never surfs there (issue 164); put back in the corner by a double-click, it does again.
+  await expect(mascot(page)).toHaveAttribute('data-act', 'surf', { timeout: 8000 });
+  const name = page.getByRole('region', { name: 'Demo', exact: true }).locator('.demo-bar-name');
+  const from = (await name.boundingBox())!;
+  const [plot, card] = await Promise.all([
+    page.locator('.lfo-plot[data-lfo="1"]').boundingBox(),
+    page.getByRole('region', { name: 'Demo', exact: true }).boundingBox(),
+  ]);
+  await page.mouse.move(from.x + 4, from.y + from.height / 2);
   await page.mouse.down();
-  await page.mouse.move(name.x + 504, name.y + name.height / 2, { steps: 8 });
+  await page.mouse.move(from.x + 4 + plot!.x - card!.x, from.y + from.height / 2 + plot!.y + plot!.height - 12 - card!.y, { steps: 8 });
   await page.mouse.up();
-  await expect(mascot(page)).toHaveAttribute('data-act', 'surf');
+  await expect(mascot(page)).not.toHaveAttribute('data-act', 'surf', { timeout: 8000 });
+  await name.dblclick();
   await expect
     .poll(
       () =>
@@ -1019,6 +1026,7 @@ test('three across, wide enough for the LFO plots clear of the card, each act in
   await listening(page);
   await bringBead(page);
   await page.getByRole('button', { name: 'Demo', exact: true }).click();
+  await wholeDemoCard(page);
   const card = page.getByRole('region', { name: 'Demo' });
   const part = (n: number) => card.getByRole('button', { name: new RegExp(`^Play from part ${n},`) }).click();
   await expect(mascot(page)).toHaveAttribute('data-act', 'conduct');
@@ -1449,6 +1457,7 @@ test.describe('never over text where it rests (issue 181)', () => {
       await listening(page);
       await bringBead(page);
       await page.getByRole('button', { name: 'Demo', exact: true }).click();
+      await wholeDemoCard(page);
       const card = page.getByRole('region', { name: 'Demo' });
       let rests = 0;
       for (let part = 1; part <= TRACK.parts.length; part++) {

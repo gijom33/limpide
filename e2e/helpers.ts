@@ -32,3 +32,15 @@ export const reachAudio = (page: Page) =>
 export const stopSound = (page: Page) =>
   page.evaluate(() => (window as unknown as { audioContext: AudioContext }).audioContext.suspend());
 
+
+/**
+ * Unfolds the Demo's card, which opens small and folded in three and four across (issue 230), so its parts' segments
+ * are there to press; on a phone and in 2 × 2 it opens whole already.
+ */
+export async function wholeDemoCard(page: Page) {
+  const card = page.getByRole('region', { name: 'Demo', exact: true });
+  await expect(card.getByRole('button', { name: 'Stop', exact: true })).toBeVisible();
+  const unfold = card.getByRole('button', { name: 'Unfold the card' });
+  if (await unfold.isVisible()) await unfold.click();
+  await expect(card.getByRole('button', { name: 'Fold the card' })).toBeVisible();
+}

@@ -1,11 +1,12 @@
 import { useContext, useEffect, useEffectEvent, useRef, useState } from 'react';
 import type { Theme } from '../app/rememberedSettings';
 import type { Word } from '../input/callingPhrase';
-import { type LfoNumber, lfos } from '../patch/patch';
+import { lfos } from '../patch/patch';
 import type { PatchStore } from '../patch/patchStore';
 import { addToRenderLoop } from '../viewers/renderLoop';
 import { createDemoActs } from './demoActs';
 import { lineAt, lineWiderThan } from './LfoPlot';
+import { clingMove, DROP_MIDDLE, homeEdge, landingEdge, looksForPlots, nextVisitAt, perchAcross, ridePlot, STEP, staysBeside, visitDue, visitFor } from './mascotChoices';
 import { type Box, type Cling, clingBeside, crosses, type Guide, HEIGHT, RING, TAIL_HEIGHT, TWIN_PX, targetBox, WIDTH } from './mascotCling';
 import { mascotClock } from './mascotClock';
 import { NOT_TEXT, watchCovers } from './mascotCovers';
@@ -140,8 +141,7 @@ const EDGE_SHOWING = 2;
 const HOVER_REACH = 12;
 /** How long it takes to come up from behind its edge, or down from under the header to hover. */
 export const RISE_SECONDS = 0.4;
-/** The drop's middle from its box's left, and its tail's length turned down under it, in pixels. */
-const DROP_MIDDLE = 9;
+/** Its tail's length turned down under it, in pixels. */
 const TAIL_LENGTH = 26;
 /** Its tail whirling under it, flying up or hovering: how many times a second, and how far either way, in degrees. */
 const WHIRLS = 12;
@@ -185,17 +185,11 @@ const lfoPlots = () =>
       return tip ? [tip] : [];
     }),
   }));
-/** On a phone and in 2 × 2, a ride now and then, this many seconds apart, from the last one's end (issue 197). */
-const STACKED_RIDES = [15, 40] as const;
-/** How long a visit or a ride lasts, in seconds (issue 141). */
-const VISIT_SECONDS = [8, 18] as const;
 /** The bottoms of the header and of a phone's section tabs, in the window: nothing above them is in view there. */
 const headerAndTabs = () => ['header', '.section-strip'].map((q) => document.querySelector(q)?.getBoundingClientRect().bottom ?? 0);
 
 /** What it must keep clear of, above its edge: the controls, and (in three and four across) the Viewers. */
 const CONTROLS = 'button, [role=slider], [role=tab], [role=radio], input, .piano, .knob-value, .fader';
-/** The spots tried along an edge, this many pixels apart. */
-const STEP = 4;
 function readText(): Cover[] {
   const boxes: Cover[] = [];
   // What is not text is passed over whole (issue 220).
@@ -458,7 +452,6 @@ export function Mascot({
     let moving: Moving = 'standing';
     let leaveBy: 'melt' | 'rain' | null = null;
     let room: { key: string; room: Room } | null = null;
-    const between = (a: number, b: number) => a + Math.random() * (b - a);
     /** The LFOs it may ride now (issue 141). */
     const ridesNow = () => ridesFor(lfos(context.patch()), context.engine.tempo().bpm, { demo: demoPartNow() !== null, reduced: still.matches });
     /**
@@ -481,8 +474,6 @@ export function Mascot({
     };
     /** What is drawn over the page (issue 164), each with its box: kept up to date as the page changes (issue 220). */
     const covering = watchCovers();
-    /** A ride on LFO `lfo` from `now`, for as long as a visit lasts. */
-    const rideOn = (lfo: LfoNumber, now: number): Visit => ({ ...rideOf(lfo), until: now + between(...VISIT_SECONDS) });
     // Three or four across: a visit to another section now and then, or a ride on an LFO's plot (issue 141); on a phone
     // and in 2 × 2, a ride only (issue 197).
     let visit: Visit | null = null;
@@ -502,7 +493,7 @@ export function Mascot({
     let hid = false;
     // Sent away on a ride: it jumps home first, and melts once it has landed there.
     let gettingOff = false;
-    let nextVisit = clock() + between(15, 35);
+    let nextVisit = nextVisitAt(clock(), 'first', stacked.matches);
     const droplets = createSpray();
     let lastExhaust = -Infinity;
     // Where its middle is in the page, for droplets flung by a click.
@@ -606,7 +597,7 @@ export function Mascot({
           if (stacked.matches) rodeFrom = perch?.id ?? null;
           place.dropOntoLine();
           moving = 'falling';
-          visit = rideOn(lfo, clock());
+          visit = visitFor(rideOf(lfo), clock());
           motion.thrown(clock());
           return;
         }
@@ -665,7 +656,7 @@ export function Mascot({
       motion.guide(guide !== null);
       if (wasGuided && !guide) {
         visit = null;
-        nextVisit = now + between(15, 35);
+        nextVisit = nextVisitAt(now, 'first', stacked.matches);
         motion.point(null);
         clungIn = clungTo = null;
         bounceDue = false;
@@ -683,7 +674,7 @@ export function Mascot({
       // home. On a phone and in 2 × 2, in view is under the header and the section tabs, with room for it over the plot.
       const part = demoPartNow();
       const rideLfos = ridesNow();
-      const looking = part !== null || (rideLfos.length > 0 && (visit ? visit.ride !== undefined : now >= nextVisit));
+      const looking = looksForPlots({ demo: part !== null, rides: rideLfos.length, visit, now, next: nextVisit });
       const plots = looking ? plotsInView(coverings, twinWay) : [];
       const rideable = plots.filter((p) => rideLfos.includes(p.lfo));
 
@@ -692,7 +683,9 @@ export function Mascot({
       let on: { id: string; box: DOMRect };
       let homeId: string | null = null;
       // Now and then a visit to another section in view: down to one below, or across to one beside; then home.
-      const inView = (s: { box: DOMRect }) => roomAbove(s.box) && s.box.top <= innerHeight - 4 && clearOn(s.box).length > 0;
+      const onScreen = (s: { box: DOMRect }) => roomAbove(s.box) && s.box.top <= innerHeight - 4;
+      const clearAt = (s: { box: DOMRect }) => clearOn(s.box).length > 0;
+      const inView = (s: { box: DOMRect }) => onScreen(s) && clearAt(s);
       // A visit's or a ride's end (issues 141, 151); the window turning stacked ends a visit too (issue 192).
       if (
         visit &&
@@ -708,40 +701,36 @@ export function Mascot({
       ) {
         if (visit.ride && leavingNow()) gettingOff = true;
         visit = null;
-        nextVisit = now + (stacked.matches ? between(...STACKED_RIDES) : between(20, 40));
+        nextVisit = nextVisitAt(now, 'after', stacked.matches);
       }
-      // A visit or a ride due, and nothing in its way: not in the middle of a funny turn, which plays to its end first
-      // (the owner, 2026-10-30).
-      const visitDue = !visit && now >= nextVisit && !guide && !still.matches && leaveBy === null && !leavingNow() && !shown?.doing;
+      // A visit or a ride due, and nothing in its way.
+      const due = visitDue({
+        visit: visit !== null, now, next: nextVisit, guided: guide !== null, reduced: still.matches, leaving: leaveBy !== null || leavingNow(),
+        doing: !!shown?.doing, moving, stacked: stacked.matches,
+      });
       if (!stacked.matches) {
-        const top = Math.min(...sections.map((s) => s.box.top));
-        const home = sections.filter((s) => s.box.top - top < 4).reduce((a, b) => (b.box.right > a.box.right ? b : a));
+        const home = homeEdge(sections);
         homeId = home.id;
-        if (visitDue && moving === 'standing') {
+        if (due) {
           // A plot to ride (issue 141) comes first (issue 197); else a section in view.
           const choice = chooseVisit(
             rideable.map((p) => p.lfo),
             sections.filter((s) => s.id !== home.id && inView(s)).map((s) => s.id),
           );
-          if (choice) visit = { ...choice, until: now + between(...VISIT_SECONDS) };
-          else nextVisit = now + between(10, 20);
+          if (choice) visit = visitFor(choice, now);
+          else nextVisit = nextVisitAt(now, 'nowhere', false);
         }
-        on = sections.find((s) => s.id === visit?.id) ?? home;
-        // Its edge covered (issue 164): the nearest edge in view clear of it, else the docked card's top.
-        if (!clearOn(on.box).length) {
-          const off = (s: { box: DOMRect }) => Math.hypot(Math.max(0, s.box.left - drawnAt.left, drawnAt.left - s.box.right), s.box.top - drawnAt.foot);
-          const nearest = sections.filter(inView).sort((a, b) => off(a) - off(b))[0];
-          on = nearest ?? (card && clearOn(card.box).length ? card : on);
-        }
-        // Still under a cover all along, nowhere being clear: it waits out of sight behind its edge (issue 192).
-        perch = { id: on.id, foot: on.box.top, hovering: false, ...(clearOf(on.box, drawing).length ? {} : { waiting: true }) };
+        ({ on, perch } = perchAcross({
+          edges: sections, home, visit: visit?.id ?? null, card, at: drawnAt,
+          onScreen, clear: clearAt, seen: (s) => clearOf(s.box, drawing).length > 0,
+        }));
       } else {
         // A ride now and then, on a plot in view (issue 197): onto it from its edge, falling or flying on its tail.
         // After it, back to the edge it left, while that is still in view (decision 6).
-        if (visitDue && (moving === 'standing' || moving === 'hovering')) {
+        if (due) {
           const choice = chooseVisit(rideable.map((p) => p.lfo), []);
-          if (choice) [visit, rodeFrom] = [{ ...choice, until: now + between(...VISIT_SECONDS) }, perch?.id ?? null];
-          else nextVisit = now + between(...STACKED_RIDES);
+          if (choice) [visit, rodeFrom] = [visitFor(choice, now), perch?.id ?? null];
+          else nextVisit = nextVisitAt(now, 'nowhere', true);
         }
         const column = rightColumn(sections).sort((a, b) => a.box.top - b.box.top);
         const [header, strip] = headerAndTabs();
@@ -765,15 +754,11 @@ export function Mascot({
       }
       // Thrown (issue 127): it lands on the first edge under it that it comes down onto, staying there a while.
       if (moving === 'thrown') {
-        const under = (stacked.matches ? rightColumn(sections) : sections)
-          .filter((s) => s.box.left <= drawnAt.left + DROP_MIDDLE && s.box.right >= drawnAt.left + DROP_MIDDLE && s.box.top >= drawnAt.foot - 1)
-          // Clear of what covers it there: once landed, it walks off any text to stand (issue 181).
-          .filter((s) => clearOf(s.box, drawing).some((c) => drawnAt.left >= c.min - STEP && drawnAt.left <= c.max + STEP))
-          .sort((a, b) => a.box.top - b.box.top)[0];
+        const under = landingEdge(stacked.matches ? rightColumn(sections) : sections, drawnAt, (s) => clearOf(s.box, drawing));
         if (under) {
           on = under;
           perch = { id: under.id, foot: under.box.top, hovering: false };
-          if (homeId !== null) visit = under.id === homeId ? null : { id: under.id, until: now + between(...VISIT_SECONDS) };
+          if (homeId !== null) visit = under.id === homeId ? null : visitFor({ id: under.id }, now);
         }
       }
       // Pointing the way (issue 151): to the Step's or the card's control, by its usual move to the control's Section's
@@ -799,11 +784,7 @@ export function Mascot({
         const sliding = moving === 'sliding' || moving === 'clinging';
         if (!to && sliding && clungTo?.isConnected) {
           const stay = clingFor(clungTo, blocks, ceiling, card?.box ?? null, texts, twinWay).cling;
-          // Only where it need not turn round to look at the control: its place was found clear of text for its facing
-          // alone, and turned and aiming, its drawing may reach over it (issue 210: beside the Display button, turned
-          // to the Tutorial button, over About).
-          const turned = stay && aimAt && (aimAt.x < stay.left + DROP_MIDDLE ? -1 : 1) !== stay.turn;
-          if (stay && !turned) to = { el: clungTo, cling: stay };
+          if (stay && staysBeside(stay, aimAt?.x ?? null)) to = { el: clungTo, cling: stay };
         }
         beside = !!to && to.el === el;
         if (to && !still.matches) {
@@ -815,33 +796,31 @@ export function Mascot({
             : sections.filter((s) => s.box.left <= middle && s.box.right >= middle && s.box.top >= high).sort((a, b) => a.box.top - b.box.top)[0];
           const section = edge?.id ?? null;
           const edgeClear = edge && edge.box.top - HEIGHT - HEADROOM >= ceiling && edge.box.top <= innerHeight - 4 ? clearOn(edge.box) : [];
-          const along = nearestSpan(edgeClear, to.cling.left);
-          const spot = along && Math.min(along.max, Math.max(along.min, to.cling.left));
-          const settled = moving === 'standing' || moving === 'hovering' || moving === 'landing';
-          const atSpot = spot !== null && perchBefore === section && moving === 'standing' && Math.abs(drawnAt.left - spot) < 1.5;
-          if ((sliding && (clungIn === section || to.el === clungTo)) || atSpot || (spot === null && (settled || sliding))) {
+          const next = clingMove({
+            cling: to.cling, edge: edgeClear, moving, sameSection: clungIn === section, sameControl: to.el === clungTo, onSection: perchBefore === section, left: drawnAt.left,
+          });
+          if (next === 'cling') {
             perch = { id: `cling ${idOf(to.el)}`, foot: to.cling.foot, hovering: false, cling: true };
             guideRoom = { min: to.cling.left, max: to.cling.left };
             clungIn = section;
             clungTo = to.el;
             clinging = to.cling;
-          } else if (spot !== null && edge) {
+          } else if (next && edge) {
             // First its usual move to the Section's edge, over the control.
             on = edge;
             perch = { id: edge.id, foot: edge.box.top, hovering: false };
-            guideRoom = { min: spot, max: spot };
+            guideRoom = { min: next.edge, max: next.edge };
           }
         }
       }
       // Through a Demo part, one of its acts in turn (issue 204); surfing, its line is an LFO's shape as its plot draws
       // it: the first in view of an LFO that is on, its Depth above 0 (the owner, 2026-10-30). With none, it conducts.
       // Riding outside the Demo (issue 141), the same, on the plot it chose; a funny turn begun meanwhile plays there.
-      const ride = visit?.ride ? rideable.find((p) => p.lfo === visit!.ride) : undefined;
       const act: Act | null = demoActs.act(leaveBy === null ? part : null, plots.length > 0);
+      const { ride, plot, surfing } = ridePlot({ visit, rideable, plots, act, reduced: still.matches, moving, doing: !!shown?.doing });
       motion.act(act ?? (ride ? 'surf' : null));
-      const plot = act === 'surf' ? plots[0] : ride;
       let surfRoom: Room | null = null;
-      if (plot && !still.matches && moving !== 'held' && moving !== 'thrown' && (ride || !shown?.doing)) {
+      if (plot && surfing) {
         // Where the plot draws the LFO under its middle: a second of it across, the newest at the right.
         const { box } = plot;
         const wave = box.top + lineAt({ engine: context.engine, lfo: plot.lfo, box, x: drawnAt.left + DROP_MIDDLE - box.left, now: context.engine.shownNow() });

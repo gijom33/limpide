@@ -94,3 +94,5 @@ Claude's calls, open to the owner:
 **To try in the app:** with Bead out, play J, H, G, G, H, G, D slowly, about a Note a second: the suitcase. Then, on a window at least about 1470 px wide three across (or four across), play the Demo from part 1 and watch parts 1 to 5: the baton, the air guitar with its tail up like a neck, the baton again at part 3 (no LFO), the air guitar at 4, and at part 5 Bead on its surfboard on the LFO's plot, leaning down the wave and back up it. Outside the Demo, set LFO 1 to a slow Sine (0.5 Hz, some Depth) and drop Bead on its plot: the same board.
 
 **Since then (2026-11-04):** the air guitar's neck is drawn on Bead's usual side (call 3), not across its front as "How it was built" says; `docs/bead.md` and the code's comment say so.
+
+**Since then (2026-11-04, issue [230](./230-the-demos-card-small-in-the-corner.md)):** in three and four across the Demo's card sits in the window's bottom right corner, opening folded and small there; at 1440 × 900 Bead surfs LFO 1's plot, the card even unfolded, and a card moved over a plot still keeps Bead off it.
