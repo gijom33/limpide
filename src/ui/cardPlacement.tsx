@@ -1,4 +1,4 @@
-import { type CSSProperties, type MouseEvent, type PointerEvent, type RefObject, useEffect, useMemo, useRef, useState } from 'react';
+import { type CSSProperties, type MouseEvent, type PointerEvent, type RefObject, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { recall, remember } from '../app/rememberedSettings';
 import { safeStorage } from '../app/storage';
 import { ChevronIcon } from './icons';
@@ -9,11 +9,13 @@ const pinned = (card: HTMLElement | null) => !!card && getComputedStyle(card).ge
 /**
  * A docked card (the Demo's, a Tutorial's, the Tour's) the person can fold to its top row and, from the 2 × 2 layout up, drag
  * by that row to see what it covers (the owner's decisions, issue 59, 2026-10-27). The fold is remembered for each
- * kind of card; the place is not: the card opens at the bottom each time. A double-click on the top row puts it back.
- * On a phone the card spans the bottom edge and only folds.
+ * kind of card; the place is not: the card opens where the stylesheet docks it each time (the bottom's middle; the
+ * Demo's, from three across, the bottom right corner: issue 230). A double-click on the top row puts it back. On a
+ * phone the card spans the bottom edge and only folds.
  *
  * With `opensFolded` (the Demo's card in three and four across, issue 230) the card opens folded each time, whatever
- * fold is remembered, and a fold made then is not remembered: it is the layout's, not the person's.
+ * fold is remembered, and a fold made then is not remembered: it is the layout's, not the person's. A window resized
+ * out of it brings back the remembered fold, and into it folds the card; either way the card goes back to its place.
  */
 export function useCardPlacement(card: RefObject<HTMLElement | null>, kind: 'demo' | 'tutorial' | 'tour', opening: unknown, { opensFolded = false } = {}) {
   const storage = useMemo(safeStorage, []);
@@ -21,13 +23,13 @@ export function useCardPlacement(card: RefObject<HTMLElement | null>, kind: 'dem
   const [folded, setFolded] = useState(() => opensFolded || recall(storage, setting) === '1');
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const drag = useRef<{ x: number; y: number; from: { x: number; y: number } } | null>(null);
-  // A card opening anew (Play again, another Tutorial) starts at the bottom, wherever the last one was left; folded,
-  // where it opens folded.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: opening is the trigger; opensFolded is read as it opens
-  useEffect(() => {
+  // A card opening anew (Play again, another Tutorial) starts in its place, wherever the last one was left, and with
+  // its fold: before it is drawn, so the Demo's whole card never shows for a frame in the corner.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: opening is the trigger; storage and setting never change
+  useLayoutEffect(() => {
     setOffset({ x: 0, y: 0 });
-    if (opensFolded) setFolded(true);
-  }, [opening]);
+    setFolded(opensFolded || recall(storage, setting) === '1');
+  }, [opening, opensFolded]);
 
   /** The offset moved as far as the window allows: the card stays whole on screen. */
   const within = (wanted: { x: number; y: number }, current: { x: number; y: number }) => {

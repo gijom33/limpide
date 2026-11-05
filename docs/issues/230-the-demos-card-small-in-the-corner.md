@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement. Polish for v1
+**Status:** ready-for-human · enhancement. Built (2026-11-04) on night/2026-11-04, for the owner to try
 
 ## Decisions
 
@@ -42,13 +42,31 @@ Measured before writing (2026-11-04, the welcome closed, Chromium): a 340 × 60 
 - The layouts' widths (phone, 2 × 2, three across, four across)
 
 **Acceptance criteria:**
-- [ ] At 1440 × 900 and 1920 × 1080, the Demo's card opens folded in the bottom right corner, about 340 × 60, and covers no control (a browser test asks what lies under it)
-- [ ] Unfolding shows the whole card inside the window; folding brings it back to the corner
-- [ ] At 1000 × 737 and 1280 × 800 (three across on smaller windows) the same holds, the page scrolling no more for the card than without it (212's test still passes)
-- [ ] In 2 × 2 and on a 375 px phone the Demo's card is as before (the existing card tests pass unchanged)
-- [ ] The design audit's state with the Demo playing passes in three and four across
-- [ ] The words test passes
+- [x] At 1440 × 900 and 1920 × 1080, the Demo's card opens folded in the bottom right corner, about 340 × 60, and covers no control (a browser test asks what lies under it)
+- [x] Unfolding shows the whole card inside the window; folding brings it back to the corner
+- [x] At 1000 × 737 and 1280 × 800 (three across on smaller windows) the same holds, the page scrolling no more for the card than without it (212's test still passes)
+- [x] In 2 × 2 and on a 375 px phone the Demo's card is as before (the existing card tests pass unchanged)
+- [x] The design audit's state with the Demo playing passes in three and four across
+- [x] The words test passes
 
 **Out of scope:**
 - The Tour's and a Tutorial's cards
 - What the Demo plays, and the card's words when unfolded
+
+## How it was built
+
+- **The corner.** From three across (861 px wide, the 2 × 2 layout's own line), the Demo's card is docked in the window's bottom right corner, 12 px from its edges, whether folded or not; unfolded it is the whole card as before (640 px, 720 px from 1280 px), grown up and to the left from the corner. On a phone and in 2 × 2 it sits at the bottom's middle as before.
+- **The small card.** In three and four across the card opens folded each time the Demo starts (Play again too), whatever fold is remembered: 340 px wide and under 64 px tall, its top row (the part's name, ⌃, Stop, ×) and the parts as a thin line under it, each part as long as it plays, the playing one filling (decisions 1 to 4). Every part's name fits its row whole. ⌃ gives the whole card, ⌄ brings it back into the corner. It still moves by its top row and stays where it is put until the Demo is closed; a double-click puts it back (decision 6).
+- **What it covers,** measured by the new test: no control at 1280 × 800, 1440 × 900 and 1920 × 1080; at 1000 × 737 only the Envelope Timeline's right end (a Viewer).
+- **Tests:** in `dockedCards`, the card's place, size, names and what lies under it at the four windows; unfolding and folding back; a window resized from three across to 2 × 2 and back; the fold not remembered. The test of the remembered fold, at 1440 px before, now runs in 2 × 2 (768 × 1024), where the fold is still remembered; the 2 × 2 and phone tests are otherwise unchanged and pass. The design audit opens the Demo's card a second time, unfolded, so the whole card in the corner is checked too. The tests that press the segments in a wide window (Demo, keyboard, Bead's) unfold the card first; Bead's issue-164 check now drags the card over LFO 1's plot, which the card in the corner leaves clear.
+- **Docs:** `docs/bead.md` (the card no longer covers the plots), and a dated line in issues 59, 99, 171 and 204.
+
+## Claude's calls, open to the owner
+
+1. **On the small card the parts are a line that only shows them, not fifteen segments to press:** in 340 px fifteen segments come to about 18 px each, under the design principles' 24 px targets, and a waiver felt wrong for a card the person can unfold. So the line cannot be clicked or reached by Tab; ⌃ gives back the segments. Screen readers hear it as "Part 3 of 15", and the caption is still read out as it changes.
+2. **A fold made in the corner is not remembered:** the card opens folded there every time anyway, and remembering it would change how the card opens in 2 × 2 and on a phone, where the remembered fold stays the person's.
+3. **The card is 340 px wide whatever the part,** not as wide as each name: a card that grew and shrank with the parts would jump under the pointer. The longest name, Split Octave Bass, fits; a longer one would end in "…", as now.
+4. **A window resized across the 2 × 2 line while the Demo plays** takes that layout's card: into three across the card folds into the corner; back to 2 × 2 it takes the remembered fold, at the bottom's middle. Either way a moved card goes back to its place.
+5. **The "Demo stopped: you are playing now" card** sits in the same corner in three and four across, at the whole card's width, so it reads on one line and Play again is where the Demo's card was.
+
+**To try:** on a laptop window (three across) and a wide one (four across), play the Demo: the small card in the bottom right corner, over no knob. Watch the line fill part by part; press ⌃ for the whole card, click a segment, ⌄ to send it back to the corner. Drag it by its name, double-click it home. Narrow the window to 2 × 2 while it plays, then widen it again. Play a Note during the Demo: the "you are playing now" card, in the corner.

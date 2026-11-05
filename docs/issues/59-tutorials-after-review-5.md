@@ -50,3 +50,5 @@ Numbered on from the docked cards' four.
 Built in `src/ui/hooks/useTutorialState.ts`, `src/ui/TutorialCard.tsx`, `src/tutorial/tutorials.ts` and `src/styles.css`; tested in `e2e/tutorial.spec.ts`.
 
 After trying it (the owner, 2026-10-27): a made Step's tick is a filled badge in the accent colour, on the instruction and beside "Step n of m" (so a folded card shows it too); the target back above its control; no Maths Step.
+
+**Since then (2026-11-04, issue [230](./230-the-demos-card-small-in-the-corner.md)):** in three and four across the Demo's card opens folded each time, small in the window's bottom right corner, whatever fold is remembered, and a fold made there is not remembered; on a phone and in 2 × 2 the Demo's fold is remembered as above. It still moves by its top row.

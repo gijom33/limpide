@@ -46,3 +46,5 @@ Claude's call, open to the owner:
 - The Demo spec's test of the segments staying put now checks the order and that the first segment holds across and down, at 375, 393, 1100, 1440 and 1920 px.
 
 **To try:** start the Demo at a phone's width and on a wide window; let it run, or click a segment to jump from a short caption (Strings) to a long one (Self-Oscillation): the segments stay put. Fold the card: the name and the segments.
+
+**Since then (2026-11-04, issue [230](./230-the-demos-card-small-in-the-corner.md)):** folded in three and four across, the card is small in the window's bottom right corner and its parts are a thin line, not segments to press; unfolded it reads name, caption, segments as above.

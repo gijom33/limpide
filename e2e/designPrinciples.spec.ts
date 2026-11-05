@@ -1,7 +1,7 @@
 import { appendFileSync } from 'node:fs';
 import { expect, type Locator, type Page, test } from '@playwright/test';
 import { type AuditOptions, auditPage, type Rule } from './audit';
-import { openDisplay, sliderName } from './helpers';
+import { openDisplay, sliderName, wholeDemoCard } from './helpers';
 
 /**
  * The design principles' measurable rules (docs/design-principles.md, issue 17), on every screen state a visitor
@@ -184,11 +184,22 @@ const STATES: { name: string; open?(page: Page): Promise<void>; close?(page: Pag
       await setBead(page, 'off');
     },
   },
-  // Last, since the Demo loads its Presets (issue 99).
+  // Last, since the Demo loads its Presets (issue 99): small in the corner in three and four across (issue 230).
   {
     name: 'Demo card',
     open: async (page) => {
       await page.getByRole('button', { name: 'Demo', exact: true }).click();
+      await expect(page.getByRole('region', { name: 'Demo', exact: true }).locator('.demo-bar-caption')).toBeVisible();
+    },
+    close: (page) => page.getByRole('region', { name: 'Demo', exact: true }).getByRole('button', { name: 'Stop', exact: true }).click(),
+  },
+  // In three and four across the card above opens small in the corner (issue 230); unfolded, the whole card there.
+  {
+    name: 'Demo card, unfolded',
+    open: async (page) => {
+      // By the keyboard: in WebKit at 320 px a click on Demo just after Stop now and then started nothing.
+      await pressByKeyboard(page, page.getByRole('button', { name: 'Demo', exact: true }));
+      await wholeDemoCard(page);
       await expect(page.getByRole('region', { name: 'Demo', exact: true }).locator('.demo-bar-caption')).toBeVisible();
     },
     close: (page) => page.getByRole('region', { name: 'Demo', exact: true }).getByRole('button', { name: 'Stop', exact: true }).click(),

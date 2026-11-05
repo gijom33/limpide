@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
+import { TRACK } from '../src/demo/track';
 
 // Issue 59, the owner's decisions (2026-10-27): the Demo's and a Tutorial's cards fold to their top row (the fold
 // remembered for each kind of card), and from the 2 × 2 layout up move by that row, inside the window; a double-click
@@ -131,9 +132,14 @@ for (const [layout, width, height] of CORNERED) {
     expect(small.width).toBeGreaterThan(300);
     expect(small.width).toBeLessThan(380);
     expect(small.height).toBeLessThanOrEqual(64);
-    // The part's name on its one line, whole.
-    const name = card.locator('.demo-bar-name');
-    expect(await name.evaluate((n) => n.scrollWidth <= n.clientWidth)).toBe(true);
+    // Every part's name on its one line, whole: measured in the name's own font, against the room its row leaves it.
+    const names = [...new Set(TRACK.parts.map((p) => p.preset))];
+    const tooLong = await card.locator('.demo-bar-name').evaluate((n, all) => {
+      const context = document.createElement('canvas').getContext('2d')!;
+      context.font = getComputedStyle(n).font;
+      return all.filter((name) => context.measureText(name).width > n.clientWidth);
+    }, names);
+    expect(tooLong).toEqual([]);
     // At 1000 × 737 the card lies over the Envelope Timeline's right end: a Viewer, not a control (the issue's own
     // measurement).
     const allowed = width === 1000 ? ['Envelope Timeline'] : [];
@@ -165,6 +171,26 @@ test('in three across the small card unfolds to the whole card, inside the windo
   await page.waitForTimeout(300);
   const back = await box(page);
   expect([back.x, back.y, back.width, back.height].map(Math.round)).toEqual([small.x, small.y, small.width, small.height].map(Math.round));
+});
+
+test(`a window resized from three across to 2 × 2 and back, the Demo playing, takes each layout's card (issue 230)`, async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  await startDemo(page);
+  await expect(demoCard(page).getByRole('button', { name: 'Unfold the card' })).toBeVisible();
+  await page.setViewportSize({ width: 768, height: 1024 });
+  // 2 × 2's own fold, whole as remembered, at the bottom's middle.
+  await expect(demoCard(page).getByRole('button', { name: 'Fold the card' })).toBeVisible();
+  await expect(demoCard(page).getByRole('button', { name: /^Play from part 1,/ })).toBeVisible();
+  await expect
+    .poll(async () => {
+      const b = await box(page);
+      return Math.round(b.x + b.width / 2);
+    })
+    .toBe(Math.round((await page.evaluate(() => document.documentElement.clientWidth)) / 2));
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(demoCard(page).getByRole('button', { name: 'Unfold the card' })).toBeVisible();
+  await expect.poll(async () => Math.round((await box(page)).width)).toBe(340);
 });
 
 test('the Demo opens small in the corner each time in three across, whatever fold 2 × 2 remembers, and 2 × 2 keeps its own (issue 230)', async ({ page }) => {
