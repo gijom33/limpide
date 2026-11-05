@@ -715,7 +715,7 @@ export function createMascotMotion(random: () => number = Math.random) {
         pose.tilt += since < 0.15 ? 4 : -2;
         if (pose.eyes === 'open') pose.eyes = 'happy';
       } else if (act === 'airGuitar') {
-        // Its tail straight, up across its front like a guitar's neck (drawn rising 30° from level), shaken as each Note
+        // Its tail straight, raised on its usual side like a guitar's neck (drawn rising 30° from level), shaken as each Note
         // is strummed; eyes shut, rocking, a little hop on the loud Notes only (the owner, issue 204).
         const since = heard.struck === null ? Infinity : now - heard.struck;
         pose.tail = 'straight';
