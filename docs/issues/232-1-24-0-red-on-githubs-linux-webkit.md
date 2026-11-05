@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** done (2026-11-05) · bug, shipped with 1.24.0: WebKit on GitHub runs one test worker to a job, in eight jobs, and seven animation tests are skipped there alone (decided by the owner: "Yes"). The page itself is no slower than 1.23.0's.
+**Status:** done (2026-11-05) · bug, shipped with 1.24.0: WebKit on GitHub runs one test worker to a job, in eight jobs, and seven animation tests are skipped there alone (decided by the owner: "Yes"), then three Demo tests on a phone more, to diagnose in [240](./240-the-demo-54-px-off-on-a-slow-phone.md) (decided by the owner: "Skip and ship"). The page itself is no slower than 1.23.0's.
 
 ## What is known
 
@@ -42,5 +42,7 @@ Six more probes on GitHub, each a throwaway branch deleted after.
 - **The resume never refused** (hypothesis 2, refuted). Logged in the page: the context starts "interrupted", the first gesture resumes it, the pause suspends it and the next resume runs it. The test read the state before its 1 s pause had passed; it now pauses after 3 s (`6ed4d8d`). Safari's users are not touched.
 - **Page Down's test** read the page while WebKit's smooth scroll still moved; it now waits for the scroll to stop (`6ed4d8d`).
 - **Seven tests too tight for the frame rate**, failing with one worker too: the Demo's scroll within 1.5 s on a phone (failing on v1.23.0's code alone as well); Bead's three-across acts (204); its Demo scroll in 2 × 2 and on a phone (211, hypothesis 4); its LFO rides on a phone and in 2 × 2 (197); its place beside each control in the Tour and a Tutorial (181); the phone header's slide. Each is skipped when `CI` is set in WebKit only, so the Mac's WebKit and GitHub's Chromium still run them.
+
+**Then (2026-11-05):** the branch run with these, and its re-run, failed three Demo tests on a phone on every attempt (the Filter 54 px low), though they passed in the last probe: skipped there too, to diagnose in [240](./240-the-demo-54-px-off-on-a-slow-phone.md).
 
 Left for later: the seven skips come off if GitHub's WebKit draws faster, or if their timing is measured in frames rather than milliseconds.

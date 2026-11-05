@@ -4,8 +4,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
-- 2026-11-05, from 1.24.0's branch run and its re-run on GitHub (issue 232): on GitHub's Linux WebKit, one test worker to a job, the Demo on a phone lands the Filter 54 px below the section strip (once 168 px) instead of just under it, in three tests (the page following the knob, a person's scroll, Page Down), every attempt; they passed in the last probe. Perhaps the header's slide on a phone ending late at 8 to 25 frames a second, with nothing aiming again after it.
-
 ## Ideas
 
 ## Dropped
@@ -205,3 +203,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-11-05: Limpide presented by what it shows went to [236](./issues/236-limpide-presented-by-what-it-shows.md), in v1, with three draft lines for the owner to pick from.
 2026-11-05: Bead's rain from the top of the screen, and its sun and cloud farther off, went to [237](./issues/237-beads-weather-from-farther-off.md), polish for v1, ready for an agent, with Claude's calls open to the owner.
 2026-11-05: the 1.24.0 code review's and word checks' leftovers (triage, Claude's calls open to the owner): the code's tidy-ups, Riser's words and the Status lines left "not yet released" to [238](./issues/238-tidy-ups-after-1-24.md); the three sounds (Talking Filter on C6 and C7, Riser high and low, Stutter's aftertouch on Volume) to the owner's ear in [239](./issues/239-three-sounds-to-hear-after-1-24.md); 227's commit order dropped (already committed); 204's and 212's boxes ticked at once.
+2026-11-05: the Demo 54 px off on a phone in GitHub's Linux WebKit went to [240](./issues/240-the-demo-54-px-off-on-a-slow-phone.md), to diagnose; its three tests skipped there to ship 1.24.0 (decided by the owner: "Skip and ship").
