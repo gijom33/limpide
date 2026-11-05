@@ -201,7 +201,7 @@ describe('After the Sections, what else there is to find (issue 210)', () => {
   it('says each Tutorial has you rebuild a Preset yourself, step by step from Init, from the Tutorial button', () => {
     expect(tutorials.look).toMatch(/Tutorial button.*Preset.*yourself/);
     expect(words(tutorials)).toMatch(/Init.*step by step/);
-    expect(words(tutorials)).toMatch(/Bass/); // the way on, its button's
+    expect(words(tutorials)).toMatch(/Sub Ladder/); // the way on, its button's, the first Tutorial (issue 233)
   });
 
   it('shows the control each names: Display’s Geek switch, the header’s Tutorial button', () => {

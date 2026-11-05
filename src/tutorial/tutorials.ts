@@ -10,8 +10,80 @@ import type { Tutorial } from './tutorial';
 /** How every Tutorial goes, on its first card after its own words. */
 export const FROM_INIT = 'Start from Init, the plain sound every Tutorial begins with, and change one control at a time. Play any Note, or press Listen, to hear each change.';
 
-/** The four first Tutorials (issue 58), then the lessons of issue 109; the Tour's last card opens the first (issue 128). */
+/**
+ * Sub Ladder, each wave's Harmonics side by side (issue 233), then the four first Tutorials (issue 58), then the lessons
+ * of issue 109; the Tour's last card opens the first (issue 128).
+ */
 export const TUTORIALS: Tutorial[] = [
+  // Issue 233: one wave a Step on Osc 1, every Harmonic in sight, then a saw and a square an octave apart, Bass's start.
+  {
+    preset: 'Sub Ladder',
+    intro: 'Every wave has a sound of its own, and you can see why. A Note is a stack of pitches, its Harmonics, and each wave keeps its own: which ones, and how loud. You will play five waves in turn and watch their Harmonics, then hear two waves add up.',
+    teaches: 'each wave’s own Harmonics, side by side',
+    bpm: 90,
+    phrase: 'C3:2 E3:1 G3:1 C4:2 G3:2',
+    summary: 'Your ladder: a saw with every Harmonic, over a square Sub an octave down whose odd Harmonics fill the gaps between them, through a wide-open Filter.',
+    steps: [
+      {
+        kind: 'param', id: 'cutoff', to: 20000,
+        say: 'The Filter, the sound’s tone knob, hides the high Harmonics. Turn its Cutoff, the point where it starts to cut, all the way up: 20 kHz, 20,000 vibrations a second.',
+        note: 'Wide open: the Filter lets every Harmonic through, and the Filter Spectrum, a line for each, now shows them all.',
+        viewer: 'Filter Spectrum',
+      },
+      {
+        kind: 'param', id: 'resonance', to: 0,
+        say: 'Pull Resonance, the lift at the Cutoff, all the way down.',
+        note: 'Nothing is lifted any more: each Harmonic comes through as the wave made it.',
+      },
+      {
+        kind: 'param', id: 'ampSustain', to: 1,
+        say: 'In the Amp, the stage that sets how loud, raise Sustain, the level a held Note keeps, all the way.',
+        note: 'Held Notes stay at full level, so the lines hold still to read.',
+      },
+      {
+        kind: 'display', overlay: 'ideal',
+        say: 'Open Display and turn on Ideal, small marks for where each wave’s Harmonics should land.',
+        note: 'A circle sits on each Harmonic of Osc 1, the Oscillator that makes the sound: where theory puts it. The circles will follow each wave you choose.',
+        viewer: 'Oscillator Spectrum',
+      },
+      {
+        kind: 'choice', id: 'waveform', to: 'sine',
+        say: 'Make Osc 1 a Sine, the purest wave.',
+        note: 'On the Oscillator Spectrum, one line alone: the first Harmonic, the Note’s own pitch, and nothing above it. Pure and plain, like a whistle or a flute.',
+        viewer: 'Oscillator Spectrum',
+      },
+      {
+        kind: 'choice', id: 'waveform', to: 'triangle',
+        say: 'Make Osc 1 a Triangle.',
+        note: 'Lines come back, the odd Harmonics only: the 3rd, the 5th, the 7th. They fall away fast, the 3rd a ninth as strong as the first. Soft and round, like a recorder.',
+        viewer: 'Oscillator Spectrum',
+      },
+      {
+        kind: 'choice', id: 'waveform', to: 'square',
+        say: 'Make Osc 1 a Square.',
+        note: 'The same odd Harmonics, but they fall slower, the 3rd a third as strong as the first, so more of them reach up high. Hollow, like a clarinet.',
+        viewer: 'Oscillator Spectrum',
+      },
+      {
+        kind: 'choice', id: 'waveform', to: 'pulse',
+        say: 'Make Osc 1 a Pulse.',
+        note: 'The even Harmonics are back, but not all: this pulse stays up a quarter of the time, so every fourth line is missing, the 4th, the 8th, the 12th. Nasal and thin, like an oboe.',
+        viewer: 'Oscillator Spectrum',
+      },
+      {
+        kind: 'choice', id: 'waveform', to: 'saw',
+        say: 'Make Osc 1 a Saw again, the wave it started on.',
+        note: 'Every Harmonic, odd and even, each a little weaker than the last: the 2nd half as strong as the first, the 3rd a third. Bright and buzzy, like brass or strings.',
+        viewer: 'Oscillator Spectrum',
+      },
+      {
+        kind: 'param', id: 'mixSub', to: 0.7,
+        say: 'The Sub is an extra wave below Osc 1, a square an octave down, at half the pitch. In the Mixer, where each one gets its level, raise it to 70 %.',
+        note: 'A saw and a square, an octave apart, heard as one Note. On the Oscillator Spectrum the row now starts an octave lower: the Sub’s triangles on its odd lines, the saw’s circles on the even ones.',
+        viewer: 'Oscillator Spectrum',
+      },
+    ],
+  },
   {
     preset: 'Bass',
     intro: 'A bass line, built one stage at a time. The sound flows left to right: the Oscillators make it, the Filter, a tone knob, takes the brightness away, and the Amp sets how loud it is over time. You will hear a buzzy saw turn into a dark, punchy bass.',
@@ -28,7 +100,7 @@ export const TUTORIALS: Tutorial[] = [
       {
         kind: 'choice', id: 'osc2Waveform', to: 'square',
         say: 'Make Osc 2 a Square.',
-        note: 'Hollower, like a clarinet: a square keeps only every other Harmonic. The Oscillator Scope, the picture of the wave, changes shape; the pitch does not.',
+        note: 'Hollower, like a clarinet: a square keeps only every other Harmonic, as in Sub Ladder. The Oscillator Scope, the picture of the wave, changes shape; the pitch does not.',
         viewer: 'Oscillator Scope',
       },
       {
@@ -270,7 +342,7 @@ export const TUTORIALS: Tutorial[] = [
       {
         kind: 'choice', id: 'osc2Waveform', to: 'square',
         say: 'Make Osc 2 a Square.',
-        note: 'Hollower: a square keeps only every other Harmonic. The Oscillator Scope, the picture of the wave, shows its new shape.',
+        note: 'Hollower: a square keeps only every other Harmonic, as in Sub Ladder. The Oscillator Scope, the picture of the wave, shows its new shape.',
         viewer: 'Oscillator Scope',
       },
       {

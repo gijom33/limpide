@@ -30,7 +30,7 @@ const OPENERS = { tutorial: 'button[aria-label="Tutorial"]', tour: 'button[aria-
 
 /**
  * What opened the card (issue 189, decision 1), read as it first shows, before the focus moves into it: the button
- * pressed, or for one in a header panel the panel's own button. A card opened from another (the Tour's "Build a Bass")
+ * pressed, or for one in a header panel the panel's own button. A card opened from another (the Tour's "Build a Sub Ladder")
  * keeps the first one's.
  */
 let opener: HTMLElement | null = null;

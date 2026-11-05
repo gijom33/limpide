@@ -880,7 +880,7 @@ export function App() {
             naming={tour.naming}
             onBack={() => tour.move(-1)}
             onNext={() => tour.move(1)}
-            onBass={() => {
+            onFirstTutorial={() => {
               tour.end();
               tutorial.start(TUTORIALS[0]);
             }}

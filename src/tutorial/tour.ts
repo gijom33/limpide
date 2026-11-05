@@ -162,7 +162,7 @@ export interface TourFind {
 
 /**
  * The Tour's last cards, after the Sections (issue 210, decided by the owner): the Synth Geek Layer with its History
- * lines, then the Tutorials, the last card, whose way on is the first Tutorial, Bass.
+ * lines, then the Tutorials, the last card, whose way on is the first Tutorial, Sub Ladder (issue 233).
  */
 export const TOUR_FINDS: TourFind[] = [
   {
@@ -179,7 +179,7 @@ export const TOUR_FINDS: TourFind[] = [
     look: 'Find the ringed Tutorial button: each Tutorial in it has you rebuild one of the Presets yourself.',
     says: [
       'The Presets are Limpide’s ready-made sounds. A Tutorial starts from Init, a plain sound, and has you build one back step by step: you turn each control, and hear and see what it does.',
-      'That is the whole Tour. Now build a sound yourself: Bass goes through the whole chain, one control at a time.',
+      'That is the whole Tour. Now build a sound yourself: Sub Ladder plays each wave in turn and shows its own Harmonics.',
     ],
     shows: { kind: 'header', name: 'Tutorial' },
   },

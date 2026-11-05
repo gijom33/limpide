@@ -6,8 +6,21 @@ import { applyStep, differences, reached } from './tutorial';
 import { TUTORIALS } from './tutorials';
 
 describe('the Tutorials', () => {
-  it('start with Bass, the one the Tour’s last card opens, then Acid, Pluck and Wobble, then issue 109’s three', () => {
-    expect(TUTORIALS.map((t) => t.preset)).toEqual(['Bass', 'Acid', 'Pluck', 'Wobble', 'FM Ladder', 'Ring Bell', 'Deep Breath']);
+  it('start with Sub Ladder, the one the Tour’s last card opens, then Bass, Acid, Pluck and Wobble, then issue 109’s three', () => {
+    expect(TUTORIALS.map((t) => t.preset)).toEqual(['Sub Ladder', 'Bass', 'Acid', 'Pluck', 'Wobble', 'FM Ladder', 'Ring Bell', 'Deep Breath']);
+  });
+
+  // Issue 233: each Waveform in turn on Osc 1, every Harmonic in sight, then a saw and a square an octave apart.
+  it('play each Waveform in turn in Sub Ladder, the Filter open and Ideal on first, and end on the square Sub under the saw', () => {
+    const steps = TUTORIALS.find((t) => t.preset === 'Sub Ladder')!.steps;
+    const waves = steps.flatMap((s) => (s.kind === 'choice' && s.id === 'waveform' ? [s.to] : []));
+    expect(waves).toEqual(['sine', 'triangle', 'square', 'pulse', 'saw']);
+    const firstWave = steps.findIndex((s) => s.kind === 'choice' && s.id === 'waveform');
+    const before = steps.slice(0, firstWave);
+    expect(before).toContainEqual(expect.objectContaining({ kind: 'param', id: 'cutoff', to: 20000 }));
+    expect(before).toContainEqual(expect.objectContaining({ kind: 'display', overlay: 'ideal' }));
+    expect(steps.at(-1)).toMatchObject({ kind: 'param', id: 'mixSub' });
+    for (const step of steps.filter((s) => s.kind === 'choice')) expect(step.viewer, step.say).toBe('Oscillator Spectrum');
   });
 
   // Issue 190, decision 3 (review 16, finding 5): the Filter Envelope's four faders, a Step each in Bass alone.
@@ -36,9 +49,12 @@ describe('the Tutorials', () => {
         expect({ ...patch, keyboardOctave: preset.patch.keyboardOctave }).toEqual(preset.patch);
       });
 
+      // A control may come back with another target (issue 233: each Waveform in turn), never with the same one.
       it('asks for something new at every Step, one control each', () => {
         let patch = PRESETS[0].patch;
-        const controls = tutorial.steps.flatMap((s) => (s.kind === 'display' ? s.overlay : s.kind === 'params' ? s.faders.map((t) => t.id) : s.id));
+        const controls = tutorial.steps.flatMap((s) =>
+          s.kind === 'display' ? s.overlay : s.kind === 'params' ? s.faders.map((t) => `${t.id} ${t.to}`) : s.kind === 'action' ? s.id : `${s.id} ${s.to}`,
+        );
         expect(new Set(controls).size).toBe(controls.length);
         for (const step of tutorial.steps) {
           // Something to change when it comes; an Action, a press. A knob already within reach waits for a touch, then

@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement. The three questions answered by the owner, 2026-11-05, as recommended: "233 and 234 recommendations are okay."
+**Status:** ready-for-human · enhancement. Built (2026-11-05) on night/2026-11-05, for the owner to try
 
 ## What each wave shows
 
@@ -42,3 +42,17 @@ Decided by the owner, 2026-11-05, Claude's recommendations accepted ("233 and 23
 - The words follow the Tutorials' word rules and their tests, and the Tutorial plays on a phone as the others do.
 
 **Out of scope:** new Waveforms, a change to the Oscillator Spectrum, other Tutorials' Steps beyond a few words recalling this one.
+
+## How it was built
+
+Built on 2026-11-05, test-first. A new Tutorial, first in the order, rebuilds the **Sub Ladder** Preset from Init in ten Steps: the Filter opened (Cutoff to 20 kHz, Resonance down), the Amp's Sustain all the way up so the lines hold still, Ideal turned on, then Osc 1 as a sine, a triangle, a square, a pulse and a saw again, each Step's note saying which Harmonics the Oscillator Spectrum shows, how fast they fall and what it sounds like (the table above). The last Step raises the Sub, a square an octave below the saw: the two profiles heard adding up, the Sub's triangles on the odd lines, the saw's circles on the even ones. Its end card leads to Bass; the Tour's last card now says Sub Ladder and its button reads "Build a Sub Ladder". Bass's and Wobble's square Steps add "as in Sub Ladder".
+
+Claude's calls, open to the owner:
+
+1. **It rebuilds Sub Ladder, an existing Preset of the Shapes group**, rather than a new Preset: its sound is exactly the decision's end, a saw and a square an octave apart, the Filter open, and its description already says the Sub fills the odd Harmonics, Osc 1 the even ones. The square comes from the Sub rather than from Osc 2 as in Bass; the sound and the picture are the same. So the Tutorial is called Sub Ladder in the menu, with "each wave's own Harmonics, side by side" under it.
+2. **Ten Steps, not five or six:** six are the waves (five on Osc 1, then the Sub), and four set the stage, since Sub Ladder's Preset has the Filter open, no Resonance and full Sustain, and Ideal is turned on as in Bass.
+3. **The order is sine, triangle, square, pulse, saw**, the saw last rather than the pulse, so the saw is still sounding when the Sub comes in; the pulse, between the square and the saw, shows the even Harmonics coming back, every fourth one missing at the Pulse's starting width (25 %).
+4. **A Step may now come back to a control with a new target** (Osc 1's Waveform five times): the test that each Step asks for something new now checks a control and its target together, never the same pair twice.
+5. The Tour's button is named after the first Tutorial ("Build a Sub Ladder"), as it was after Bass.
+
+**To try in the app:** take the Tour to its last card and press Build a Sub Ladder (or pick Sub Ladder in the Tutorial menu); play a held Note at each wave Step and watch the Oscillator Spectrum and Ideal's circles; at the last Step, hear the saw and the square as one Note; the end card should offer Bass next. On a phone, check each note reads whole.
