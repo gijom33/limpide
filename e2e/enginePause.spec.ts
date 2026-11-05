@@ -4,7 +4,8 @@ import { openDisplay, reachAudio, sliderName } from './helpers';
 // The sound pauses in a long silence (issue 216): with nothing sounding for a while the page suspends its
 // AudioContext, so the browser's audio thread stops and the Viewers rest on their last picture. Any Note wakes it and
 // sounds; the LFO plots go on moving through the pause; and the page never asks for a tap for its own pause. The wait
-// is 30 s on the site, a second here.
+// is 30 s on the site, three seconds here: on GitHub's Linux WebKit a second's wait paused the sound before the test
+// saw it running (2026-11-04, issue 232).
 
 const state = (page: Page) => page.evaluate(() => (window as unknown as { audioContext: AudioContext }).audioContext.state);
 const db = (page: Page) => page.getByLabel('Amp Scope', { exact: true }).getAttribute('data-db').then((v) => (v === null ? NaN : Number(v)));
@@ -41,7 +42,7 @@ async function paused(page: Page) {
 test.beforeEach(async ({ page }) => {
   await reachAudio(page);
   await countDraws(page);
-  await page.addInitScript(() => (window.__limpidePauseAfter = 1));
+  await page.addInitScript(() => (window.__limpidePauseAfter = 3));
   await page.goto('/');
   await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-db', /.+/);
   await openDisplay(page); // a click: the sound starts

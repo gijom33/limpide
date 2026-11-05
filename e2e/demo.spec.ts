@@ -302,8 +302,15 @@ test.describe('on a phone', () => {
     const before = await page.evaluate(() => scrollY);
     await page.keyboard.press('PageDown');
     await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(before + 100);
-    await page.waitForTimeout(800); // the page's own smooth scroll lands
-    const mine = await page.evaluate(() => scrollY);
+    // The page's own smooth scroll lands: on GitHub's Linux WebKit it was still moving after 0.8 s (issue 232).
+    let mine = -1;
+    await expect
+      .poll(async () => {
+        const was = mine;
+        mine = await page.evaluate(() => scrollY);
+        return mine === was;
+      }, { intervals: [300], timeout: 5000 })
+      .toBe(true);
     await page.waitForTimeout(4000); // past the Amp's Decay starting to move, still in the intro
     expect(await page.evaluate(() => scrollY)).toBe(mine);
     await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
