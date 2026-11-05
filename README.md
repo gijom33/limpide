@@ -1,6 +1,6 @@
 # Limpide
 
-**A subtractive synthesizer that shows you what each stage does to the sound.**
+**A synthesizer you can see through: the wave and its Harmonics after every stage, as you play.**
 
 Designed and directed by [Guillaume Boillet](https://www.linkedin.com/in/guillaume-boillet-18208310); code written with [Claude Code](https://claude.com/claude-code), Anthropic's AI coding agent.
 
@@ -10,9 +10,9 @@ Enjoying it? Share it, or [⭐ the repository](https://github.com/gijom33/limpid
 
 [![Limpide playing its Demo: the Oscillators, Filter and Amp side by side, each with its Scope and Spectrum, and the LFOs and Envelope Timeline beside them](docs/screenshot.png)](https://gijom33.github.io/limpide/)
 
-Every picture on the page moves with the sound you hear.
+*Limpide* is French for clear, see-through. Under each stage of the sound, the Oscillators, the Filter and the Amp, a Scope draws the wave in time and a Spectrum its Harmonics in frequency, both live as you play. Turn the Cutoff and you see which Harmonics the Filter takes away, and the wave's corners round off with them.
 
-Ordinary synths give you a sound and a row of knobs, and the cause and effect stays hidden in the signal. Limpide is laid out as its own signal-flow diagram: Oscillators → Mixer → Filter → Amp, left to right, with live Viewers under every stage. Turn the Cutoff and you can see which Harmonics the Filter takes away.
+The sounds themselves are not new: Limpide is a classic subtractive synth, laid out as its own signal-flow diagram, Oscillators → Mixer → Filter → Amp, left to right. Ordinary synths give you a sound and a row of knobs, and the cause and effect stays hidden in the signal; here every picture moves with the sound you hear.
 
 ## What you can do
 
@@ -24,7 +24,7 @@ Ordinary synths give you a sound and a row of knobs, and the cause and effect st
 - **Study a moment.** Freeze, A/B Snapshots, axis toggles and a hover readout. Hold keeps a note sounding while you turn knobs.
 - **Play however you like.** Use the computer keyboard (`A W S E D F T G…`, with `Z`/`X` to change octave), the on-screen piano, or any MIDI controller via MIDI Learn. Patches can have one to eight Voices.
 - **Play in time.** A tempo in the header, set by hand, by Tap Tempo or by a MIDI clock; an LFO's Rate can Sync to it as a note value (1/4, 1/16, triplets…), so a wobble keeps to the beat. Legato for one-Voice lines, and a keyboard's aftertouch moves the Destination you pick.
-- **Keep and share sounds.** Presets to start from, autosave, a named Patch library, JSON export, and share links that carry the whole Patch in the URL.
+- **Keep and share sounds.** Presets to start from, the classic subtractive sounds chosen to teach, each saying what to watch; autosave, a named Patch library, JSON export, and share links that carry the whole Patch in the URL.
 - **Meet Bead.** A little water drop called Bead lives on the page and answers what you play. Switch it off in Display to keep it away, or play `B, E, A, D` to send it away for the visit.
 
 Works best in **Chrome or Edge**. Safari has no Web MIDI, so MIDI controllers don't work there; everything else does. The same goes for every browser on iPhone and iPad, Chrome included, since Apple makes them all run on Safari's engine.

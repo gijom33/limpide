@@ -114,7 +114,7 @@ export function About({
             </button>
           )}
         </div>
-        <p className="about-tagline">A subtractive synthesizer that shows you what each stage does to the sound.</p>
+        <p className="about-tagline">A synthesizer you can see through: the wave and its Harmonics after every stage, as you play.</p>
         {welcome && (
           <div className="about-welcome">
             <p>

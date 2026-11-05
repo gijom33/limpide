@@ -370,3 +370,16 @@ test('About’s × is the Demo card’s ×, on a computer and a phone (issue 209
     expect([cross.width, cross.height], `${width}px`).toEqual([demoCross.width, demoCross.height]);
   }
 });
+
+// Issue 236: Limpide said by what it shows, the owner's line, in About and in the page's description for a shared
+// link's preview; the title unchanged.
+test('About and the page’s description say what Limpide shows, the title still Limpide (issue 236)', async ({ page }) => {
+  const line = 'A synthesizer you can see through: the wave and its Harmonics after every stage, as you play.';
+  await page.goto('/');
+  await expect(page).toHaveTitle('Limpide');
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', line);
+  await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', 'Limpide');
+  await expect(page.locator('meta[property="og:description"]')).toHaveAttribute('content', line);
+  await page.getByRole('heading', { level: 1 }).getByRole('button', { name: 'Limpide' }).click();
+  await expect(page.getByRole('dialog', { name: 'Limpide' }).locator('.about-tagline')).toHaveText(line);
+});
