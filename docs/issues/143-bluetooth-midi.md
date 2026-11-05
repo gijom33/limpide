@@ -6,7 +6,7 @@ What is known before any research: the page reaches MIDI through the browser's W
 
 **Blocked by:** none
 
-**Status:** ready-for-human · enhancement. Built (2026-11-01) on night/2026-11-01, for the owner to try
+**Status:** done (2026-11-04). Built (2026-11-01) on night/2026-11-01, released in 1.19.0; accepted by the owner, tried in part and the rest trusted: "All issues waiting on my feedback look fine, I tested some, others trust you."
 
 ## Decisions
 

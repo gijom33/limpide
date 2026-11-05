@@ -4,7 +4,7 @@
 
 **Blocked by:** none; best after [213](./213-viewer-colours-read-once-and-a-silent-scope-skipped.md), so each is measured alone
 
-**Status:** ready-for-human · enhancement. Built (2026-11-03) on night/2026-11-03, for the owner to try
+**Status:** done (2026-11-04). Built (2026-11-03) on night/2026-11-03, merged into main, not yet released; accepted by the owner, tried in part and the rest trusted: "All issues waiting on my feedback look fine, I tested some, others trust you."
 
 ## Decisions
 

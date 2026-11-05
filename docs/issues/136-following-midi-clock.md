@@ -4,7 +4,7 @@
 
 **Blocked by:** [112](./112-tempo-midi-clock-and-an-arpeggiator.md)
 
-**Status:** ready-for-human · enhancement. Built (2026-11-01) on night/2026-11-01, for the owner to try. In v1 ([131](./131-v1.md)).
+**Status:** done (2026-11-04). Built (2026-11-01) on night/2026-11-01, released in 1.21.0; accepted by the owner, tried in part and the rest trusted: "All issues waiting on my feedback look fine, I tested some, others trust you."
 
 ## Agent Brief
 

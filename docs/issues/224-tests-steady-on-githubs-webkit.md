@@ -4,7 +4,7 @@
 
 **Blocked by:** none; best after [218](./218-a-change-writes-only-what-it-changes.md), which may mend the first
 
-**Status:** ready-for-human · bug. Built (2026-11-03) on night/2026-11-03, for the owner to try; GitHub's three branch runs wait for the owner's push. Polish for v1
+**Status:** done (2026-11-04). Built (2026-11-03) on night/2026-11-03, merged into main, not yet released; accepted by the owner, tried in part and the rest trusted: "All issues waiting on my feedback look fine, I tested some, others trust you." GitHub's three branch runs come with the next push.
 
 ## Decisions
 
