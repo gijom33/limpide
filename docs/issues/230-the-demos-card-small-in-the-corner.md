@@ -12,7 +12,7 @@ Decided by the owner, 2026-11-04:
 
 1. **In three across, the Demo's card is collapsed and sits in the bottom right corner,** so it hides as little as it can.
 
-Claude's calls, open to the owner:
+Claude's calls, accepted by the owner, 2026-11-04 ("Yes, tonight"):
 
 2. **Four across too** (the owner's "maybe"): it is the same layout question as three across, and 212 treats the two alike.
 3. **Collapsed is the card's fold, made small:** folded in three and four across, the Demo's card is only as wide as its top row needs (the Demo's part name, ⌃, Stop and ×), the parts' segments a thin line under them, about 340 × 60 px, 12 px from the window's bottom and right edges, as the docked cards keep from the edges now.
