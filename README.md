@@ -75,7 +75,7 @@ The owner decides what Limpide is, what it looks like, and what ships; those dec
 Every push to `main` is tested and deployed to GitHub Pages by [a workflow](.github/workflows/deploy.yml). The project's size, quality and performance are measured at each release (`npm run stats`):
 
 <!-- statistics -->
-At 1.23.0 (2026-11-04): 24,192 lines of app code, 3,245 of 3,247 tests passing, 66.0% of the app code’s lines run by the unit and engine tests, 281.9 kB of JavaScript gzipped, the page drawn in 328 ms, the Demo at 55 frames a second for 120.8% of a processor core. Every number, release by release, is on [the statistics page](docs/statistics.md).
+At 1.24.0 (2026-11-05): 25,223 lines of app code, 3,401 of 3,406 tests passing, 67.1% of the app code’s lines run by the unit and engine tests, 286.9 kB of JavaScript gzipped, the page drawn in 308 ms, the Demo at 56 frames a second for 107.5% of a processor core. Every number, release by release, is on [the statistics page](docs/statistics.md).
 <!-- /statistics -->
 
 ## License
