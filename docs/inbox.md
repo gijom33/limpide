@@ -4,6 +4,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-11-05, from 1.24.0's branch run and its probes on GitHub (issue 232): seven animation tests fail on GitHub's Linux WebKit, which draws 8 to 25 frames a second there, even with one test worker to a job: the Demo's scroll within 1.5 s on a phone; Bead's three-across acts; its Demo scroll in 2 × 2 (and on a phone, in earlier runs); its LFO rides on a phone and in 2 × 2; its place beside each control in the Tour and a Tutorial; the phone header's slide. The Mac's WebKit passes them all.
+
 ## Ideas
 
 - 2026-11-04, the owner: "I would like if, for Bead's umbrella animation, the rain comes from top of screen. Similarly, with the sun melting and clous animations, would be great if there are farther from Bead."
