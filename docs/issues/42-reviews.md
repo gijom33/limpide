@@ -168,6 +168,7 @@ Someone who has never touched a synth and opens Limpide to have fun and learn so
 - **Goals:** take the Tour, then the Tutorials in the order the page offers them; say what they learnt, and whether they had fun
 - **Asks:** Is each Step and card understood on one reading, without looking anything up? Which words are never explained? Where is it dull, too long or too dense, and where is it fun? Do they hear and see what the words say they will? Do they want to do the next Tutorial?
 - **Success:** they can say in their own words what the Oscillators, the Filter, the Amp and an LFO do, and they finished at least two Tutorials because they wanted to
+- **On the phone, the card unfolded:** every Step of every Tutorial and every Tour card, with the card's text open in full, screen by screen: what the screen shows, what the card hides (the control the Step names, the Viewer it points at, Bead), and what has to be scrolled to. On a phone the room is so small that what is on the screen has to be chosen with care. Added by the owner, 2026-11-05: "we need to make sure at least one of the agents reviewer looks at the tutorial on a phone with the text expanded."
 - **Runs again:** whenever a release changes the Tutorials' or the Tour's words, with the fact-checker (13), so the words stay both clear and true (Claude's call, open to the owner). Its findings feed [129](./129-words-fun-to-read.md).
 
 ### 17. The MIDI mapping geek
