@@ -87,7 +87,7 @@ export const HISTORY = {
   // What Limpide does first, the famous story second (decision 9).
   fm: {
     line: 'One Oscillator bends another’s pitch here, as the Prophet-5’s “Poly Mod” did (1978); John Chowning’s digital FM (1973), Yamaha’s from 1975, made the DX7.',
-    sources: ['S16', 'S17', 'S13', 'S15', 'S33'],
+    sources: ['S16', 'S17', 'S13', 'S15', 'S33', 'S34'],
   },
   ring: {
     line: 'Ring Modulation was built for telephones: four rectifiers, in Clyde Keith’s Bell Labs patent (filed 1929) and Frank Cowan’s for AT&T (1934).',

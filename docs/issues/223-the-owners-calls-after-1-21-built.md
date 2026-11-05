@@ -80,3 +80,4 @@ What to try in the app:
 - MIDI Learn: press LFO 1 Sync on screen, then a button or a pad on the Controller. Each press switches Sync on and off, whether the button is momentary or a toggle (the MIDI panel says which). Try the same on Legato.
 - Tell Claude whether to download the DX7 manual from Yamaha's library, and whether Key and Vel should show on phones (a narrower knob column).
 
+**Since then (2026-11-04):** the DX7 manual read (call 6), its text version downloaded at the owner's word ("Yes, download it"). It says the DX7 employs "an entirely new FM digital tone generation system" and lists "FM Tone Generator: 6 operators, 32 algorithms": graded A in the History research [S34], and FM's History line now cites it. It names no year and neither Stanford nor Chowning, so the line's words are unchanged and its other facts keep their sources.
