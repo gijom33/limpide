@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** needs-info · enhancement. The owner picks the line (below); the rest follows from it.
+**Status:** ready-for-agent · enhancement. The line picked by the owner, 2026-11-05: (a).
 
 ## Where Limpide says what it is
 
@@ -14,11 +14,30 @@
 - the page's `<title>`, and a description for a shared link's preview (none today);
 - the welcome card and the Tour's first card, where they say what Limpide is for.
 
-## Questions
+## Decisions
 
-1. **The line.** Claude's drafts, open to the owner:
-   - (a) "A synthesizer you can see through: the wave and its Harmonics after every stage, as you play." (Recommended: *limpide* is French for clear, see-through.)
-   - (b) "Learn synthesis by watching it: Limpide draws the sound in time and in frequency at every stage."
-   - (c) "See inside a synthesizer: each stage's Scope and Spectrum, live, as you play."
-2. **The sounds:** say plainly that the sounds are the classic subtractive ones, chosen to teach, and let the Presets' words point at what to watch rather than how new they sound. Recommended: yes, in the README's paragraph on the Presets.
-3. **The screenshot:** keep the Demo playing with every Viewer drawn, the picture that already says it. Recommended: keep.
+Decided by the owner, 2026-11-05: "Line a for Limpide's description works better."
+
+1. **The line:** "A synthesizer you can see through: the wave and its Harmonics after every stage, as you play." (*Limpide* is French for clear, see-through.)
+
+Claude's calls, open to the owner:
+
+2. **The sounds said plainly:** the README's paragraph on the Presets says they are the classic subtractive sounds, chosen to teach, each pointing at what to watch.
+3. **The screenshot kept:** the Demo playing with every Viewer drawn already says it.
+4. **The repository's description on GitHub** takes the line too; it is changed by hand with the release that ships the rest, as it shows to visitors at once.
+
+## Agent Brief
+
+**Category:** enhancement
+**Summary:** Limpide says what it is by what it shows: the owner's line, wherever the page and the README say what Limpide is.
+
+**Current behavior:** The README, About and the repository's description say "A subtractive synthesizer that shows you what each stage does to the sound." The page's title is "Limpide" with no description for a shared link's preview.
+
+**Desired behavior:**
+- The README's tagline and About's tagline read: "A synthesizer you can see through: the wave and its Harmonics after every stage, as you play."
+- The page carries the line as its description (and as a shared link's preview text), its title unchanged.
+- The README's first paragraphs lead with what the Viewers show (a Scope and a Spectrum after the Oscillators, the Filter and the Amp, in time and in frequency); its words on the Presets say they are the classic subtractive sounds, chosen to teach.
+- The welcome card and the Tour's first card, where they say what Limpide is for, agree with the line, in the Tutorials' plain words.
+- Tests that read the old tagline read the new one.
+
+**Out of scope:** the screenshot, the Presets themselves, the repository's description (changed by hand at the release).
