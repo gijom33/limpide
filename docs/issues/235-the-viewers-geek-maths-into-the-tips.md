@@ -4,11 +4,33 @@
 
 **Blocked by:** none
 
-**Status:** needs-info · enhancement. The owner challenges each item in a grilling; what moves to a tip is written once it is decided.
+**Status:** ready-for-agent · enhancement. Narrowed by the owner, 2026-11-05: only the formulas move to the tips.
 
-## To settle in the grilling
+## Decisions
 
-1. **Each item, kept on the Viewer, moved to the tip, or dropped:** the Scope's period and frequency, the Harmonic number, the Noise slope. Claude's lean, open to the owner: all three into the Viewers' tips' Under the hood, the Scope's tip saying how the period and the pitch are one number, the Spectrum's how a Harmonic's number is its frequency over the Note's.
-2. **"A better explanation":** what each tip says, in the Tutorials' plain words first, then the formula.
-3. **Profile 19's review first, or the grilling alone?** Claude's lean: the grilling alone for the Viewers, since the owner has already judged them; profile 19 later for the rest of the layer (the controls' readouts).
-4. **What the Synth Geek Layer then means on the Viewers:** nothing at all, or only History; and whether the Display switch still names the Viewers.
+Decided by the owner, 2026-11-05: "For 235, the only thing Insuggested to transfer in tips is the extra mathematical formula which is added in geek mode, not the rest."
+
+1. **Only the formulas move:** the Synth Geek Layer's formulas drawn on the Oscillator Spectrum (each Waveform's Harmonic series, FM's sidebands, Ring's sums and differences) and on the Filter Spectrum (the Filter's response) leave the Viewers for the tips.
+2. **The rest stays as it is:** the Scopes' period and frequency, the Harmonic's number in the Spectrum's readout, the Noise's slope.
+
+Claude's calls, open to the owner:
+
+3. **Each formula goes to the tip of the control it belongs to:** the Harmonic series to the Waveform's tip (Osc 1's and Osc 2's), FM's to FM's, Ring's to Ring's, the response to the Filter's Mode and Slope, in Under the hood, which shows as every Under the hood does today.
+4. **A better explanation:** each formula comes after a plain sentence of what it says, and every letter in it is named ("n, the Harmonic's number; bₙ, its level against the first").
+5. **The formula follows the settings,** as on the Viewer today: the tip gives the Waveform, Filter Mode and Slope picked now.
+
+## Agent Brief
+
+**Category:** enhancement
+**Summary:** With the Synth Geek Layer on, the formulas leave the Oscillator and Filter Spectrums and go into their controls' tips, each after a plain sentence and with every letter named.
+
+**Current behavior:** With the Synth Geek Layer on, the Oscillator Spectrum draws the formulas for the Waveforms heard (and FM's and Ring's when on), and the Filter Spectrum the Filter's response formula. The Scopes' period, the Harmonic's number and the Noise slope are drawn too.
+
+**Desired behavior:**
+- No formula is drawn on any Viewer, whatever the layers.
+- The Waveform's tip (each Oscillator's) gives the picked Waveform's Harmonic series in Under the hood; FM's and Ring's tips their own; the Filter's Mode and Slope tips the response for the Mode and Slope picked.
+- Each such formula comes after a plain sentence saying what it means, and names each letter.
+- The Scopes' period and frequency, the Spectrum readout's Harmonic number and the Noise slope are unchanged.
+- The tests that read the formulas on the Viewers read them in the tips instead.
+
+**Out of scope:** the controls' own geek readouts, History, profile 19's review of the rest of the layer.
