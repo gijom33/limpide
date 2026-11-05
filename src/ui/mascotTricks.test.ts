@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Pose } from './mascotMotion';
-import type { Fling } from './mascotSpray';
+import { type Fling, RAIN_SECONDS } from './mascotSpray';
 import { PICKED_TRICKS, TRICK_MOVES, type Trick } from './mascotTricks';
 
 const resting: Pose = {
@@ -52,11 +52,16 @@ describe("the mascot's funny turns (issue 115)", () => {
 
   it('rain comes, it winces, quickly pops a folded umbrella up and opens it; the rain stops and it goes', () => {
     const { poses, sprays } = play('umbrella');
-    expect(poses[0].eyes === 'shut' && poses[0].prop === 'none').toBe(true);
+    expect(sprays[0]).toBe('rain');
+    // The rain falls from the top of the window: it winces as the first drops land (issue 237).
+    const wince = poses.findIndex((p) => p.eyes === 'shut') / 60;
+    expect(Math.abs(wince - RAIN_SECONDS)).toBeLessThan(2 / 60);
+    expect(poses[Math.round(wince * 60)].prop).toBe('none');
     const props = poses.map((p) => p.prop).filter((g, i, all) => g !== all[i - 1]);
     expect(props).toEqual(['none', 'umbrellaShut', 'umbrella', 'none']);
-    expect(poses.findIndex((p) => p.prop === 'umbrella') / 60).toBeLessThan(0.45); // open within a moment
+    expect(poses.findIndex((p) => p.prop === 'umbrella') / 60 - wince).toBeLessThan(0.45); // open within a moment
     expect(sprays.filter((f) => f === 'rain').length).toBeGreaterThan(40);
+    expect(TRICK_MOVES.umbrella.seconds).toBe(3.6); // as long as before
   });
 
   it('a glass appears; it turns it over beside its mouth and the water pours out as it drinks, then burps', () => {
