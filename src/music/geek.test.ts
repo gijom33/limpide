@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { CHOICES, defaultPatch } from '../patch/patch';
 import { PRESETS } from '../patch/presets';
-import {
-  filterQ, geekReadout, harmonicFormula, harmonicNumber, levelDb, noiseSlope, oscillatorFormulas, qText, responseFormula, scopeReadout, syncedRateConversion,
+import {type Formula, 
+  filterQ, fmFormula, geekReadout, harmonicFormula, harmonicNumber, levelDb, noiseSlope, qText, responseFormula, ringFormula, scopeReadout, syncedRateConversion,
   syncedRateUnderTheHood, UNDER_THE_HOOD, underTheHoodAt, widestGeekReadout,
 } from './geek';
 import { harmonicSeries } from './harmonics';
@@ -272,48 +272,66 @@ describe('the Synth Geek Layer: formulas as data', () => {
   });
 });
 
-describe('the Synth Geek Layer under FM and Ring (issue 109)', () => {
+// Issue 235: the formulas leave the Viewers for the tips, each after a plain sentence, its letters named.
+describe('the Synth Geek Layer’s formulas, explained for the tips (issue 235)', () => {
   const preset = (name: string) => PRESETS.find((p) => p.name === name)!.patch;
-  const text = (lines: { formula: string; where: string }[]) => lines.map((l) => `${l.formula} | ${l.where}`).join('\n');
+  const letters = (f: Formula) => f.where;
 
-  it('gives Osc 1’s series alone while neither is up', () => {
-    expect(oscillatorFormulas(defaultPatch())).toEqual([harmonicFormula('saw', 0.25)]);
-  });
-
-  it('Osc 1 silent (its fader down, Ring off): its series marked as not the sound, FM up or not', () => {
-    for (const fm of [0, 0.5]) {
-      const [line, ...rest] = oscillatorFormulas({ ...defaultPatch(), mixOsc1: 0, mixRing: 0, crossMod: fm });
-      expect(rest).toEqual([]);
-      expect(line.where).toContain('Osc 1 is silent: not the sound now');
+  it('says in plain words what each Waveform’s series means before it, and names n and bₙ', () => {
+    for (const w of CHOICES.waveform) {
+      const f = harmonicFormula(w, 0.3);
+      expect(f.says, w).toMatch(/\.$/);
+      expect(letters(f), w).toMatch(/n: the Harmonic’s number/);
     }
+    expect(harmonicFormula('saw', 0.5).says).toMatch(/every Harmonic/);
+    expect(harmonicFormula('square', 0.5).says).toMatch(/odd Harmonics only/);
+    expect(harmonicFormula('saw', 0.5).where).toMatch(/bₙ: its amplitude/);
+    expect(harmonicFormula('triangle', 0.5).where).toMatch(/π/);
   });
 
-  it('with FM at 50 %: the sideband rule, β = 2 and its Bessel sizes, and the saw’s series no longer the sound’s', () => {
-    const lines = oscillatorFormulas({ ...defaultPatch(), crossMod: 0.5 });
-    expect(lines[0].formula).toBe('n f₁ + k f₂:  bₙ |Jₖ(n β)|,  β = 4 × FM = 2.00');
+  it('works a Pulse’s gaps out at its width: every 4th Harmonic missing at 25 %, every 2nd at 50 %', () => {
+    expect(harmonicFormula('pulse', 0.25).where).toMatch(/d: the Pulse Width, 25 % now: every 4th Harmonic missing/);
+    expect(harmonicFormula('pulse', 0.5).where).toMatch(/50 % now: every 2nd Harmonic missing/);
+    expect(harmonicFormula('pulse', 0.2).where).toMatch(/every 5th Harmonic missing/);
+    // At 33 % the first gap is the 100th: past what the Spectrum shows, so none is said.
+    expect(harmonicFormula('pulse', 0.33).where).toMatch(/33 % now\. aₙ is 0 wherever n d is whole\.$/);
+  });
+
+  it('gives FM’s rule with the figures for the knobs, its letters named', () => {
+    const f = fmFormula({ ...defaultPatch(), crossMod: 0.5 });
+    expect(f.formula).toBe('n f₁ + k f₂:  bₙ |Jₖ(n β)|,  β = 4 × FM = 2.00');
+    expect(f.says).toMatch(/partials/);
     // J₀ to J₃ of 2, and Osc 2 in tune: on the Harmonics.
-    expect(lines[0].where).toBe('f₂ / f₁ = 1: on the Harmonics; |J₀…J₃(β)| 0.22 0.58 0.35 0.13; Osc 2 a Saw: its 1st Harmonic only');
-    expect(lines[1]).toEqual({ formula: 'bₙ = 2 / (π n)', where: 'bₙ: Osc 1 before FM, not the sound now' });
-    expect(text(lines)).not.toContain('every n: each Harmonic 1/n of the first');
+    expect(f.where).toContain('|J₀…J₃(β)| 0.22 0.58 0.35 0.13 now');
+    expect(f.where).toContain('f₂ / f₁ = 1 now: on the Harmonics');
+    expect(f.where).toMatch(/k: .*; Jₖ: .*; β: /);
+    expect(fmFormula({ ...preset('FM Ladder'), osc2Semitone: 3 }).where).toContain('f₂ / f₁ = 1.19 now: between the Harmonics');
+    // Osc 2 a Saw: only its 1st Harmonic swings Osc 1; FM Ladder's Sine says nothing of it.
+    expect(fmFormula({ ...defaultPatch(), crossMod: 0.5 }).where).toContain('Osc 2 a Saw: its 1st Harmonic only');
+    expect(fmFormula(preset('FM Ladder')).where).not.toContain('Osc 2 a');
+    // FM at 0: β = 0, nothing added.
+    expect(fmFormula(defaultPatch()).formula).toContain('β = 4 × FM = 0.00');
   });
 
-  it('with FM off the ladder: between the Harmonics; FM Ladder’s two Sines say nothing of Osc 2’s Waveform', () => {
-    expect(oscillatorFormulas({ ...preset('FM Ladder'), osc2Semitone: 3 })[0].where).toMatch(/^f₂ \/ f₁ = 1\.19: between the Harmonics; /);
-    expect(oscillatorFormulas(preset('FM Ladder'))[0].where).not.toContain('Osc 2');
-  });
-
-  it('with Ring at 100 %: the sum and the difference for the knobs, the series only as Osc 1’s own', () => {
-    const both = oscillatorFormulas({ ...defaultPatch(), mixRing: 1, osc2Octave: 1, osc2Semitone: 3 });
-    expect(both[0].where).toBe('every n: each Harmonic 1/n of the first; Osc 1’s own, Ring adds the rest');
-    expect(both[1].where).toBe('sums and differences (cₘ: Osc 2’s series); the first pair 1.38 and 3.38 × f₁');
-    // Ring Bell: Osc 1 heard through Ring alone, so no series of its own.
-    expect(oscillatorFormulas(preset('Ring Bell')).map((l) => l.formula)).toEqual(['Ring, Osc 1 × Osc 2:  n f₁ ± m f₂,  ½ bₙ cₘ']);
+  it('gives Ring’s sums and differences, its first pair worked out at the knobs', () => {
+    const f = ringFormula({ ...defaultPatch(), osc2Octave: 1, osc2Semitone: 3 });
+    expect(f.formula).toBe('n f₁ ± m f₂,  ½ bₙ cₘ');
+    expect(f.says).toMatch(/sum and .*difference/);
+    expect(f.where).toMatch(/cₘ: /);
+    expect(f.where).toContain('The first pair, n = m = 1, at 1.38 and 3.38 × f₁ now');
     // In tune, the difference is 0 Hz: an offset the engine takes out.
-    expect(oscillatorFormulas({ ...defaultPatch(), mixRing: 1 })[1].where).toContain('the first pair 0 (taken out) and 2 × f₁');
+    expect(ringFormula(defaultPatch()).where).toContain('at 0 (taken out) and 2 × f₁ now');
   });
 
-  it('leaves FM out while Osc 1 is not heard: it moves nothing that sounds', () => {
-    expect(text(oscillatorFormulas({ ...defaultPatch(), crossMod: 0.5, mixOsc1: 0 }))).not.toContain('β');
+  it('says what the Filter’s response means for each Mode before it, and names x, fc and Q', () => {
+    for (const mode of CHOICES.filterMode) {
+      const f = responseFormula(mode, 12);
+      expect(f.says, mode).toMatch(/\.$/);
+      expect(f.where, mode).toMatch(/x = f \/ fc.*fc: the Cutoff.*Q: /);
+    }
+    expect(responseFormula('notch', 12).says).toMatch(/Notch/);
+    expect(responseFormula('lowpass', 24).says).toMatch(/two .* in a row/);
+    expect(responseFormula('lowpass', 12).says).not.toMatch(/in a row/);
   });
 });
 

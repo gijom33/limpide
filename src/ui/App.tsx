@@ -6,7 +6,7 @@ import { type AudioStatus, unlockAudio } from '../app/unlockAudio';
 import { rememberWelcome, welcomeFor } from '../app/welcome';
 import { createCallingPhrase, createWordsHeard, type Word } from '../input/callingPhrase';
 import { DEFAULT_OCTAVE, shiftOctave, startingOctave } from '../input/keyboardLayout';
-import { type Formula, noiseSlope, oscillatorFormulas, responseFormula } from '../music/geek';
+import { noiseSlope } from '../music/geek';
 import { CHOICES, osc1Heard, osc2Heard, type ParamId, type Patch, setFilter, setParam, setWaveform, subNoiseHeard } from '../patch/patch';
 import { PRESETS } from '../patch/presets';
 import { nextTutorial, TUTORIALS } from '../tutorial/tutorials';
@@ -54,7 +54,7 @@ import { type TipContent, Tooltip, TooltipsContext } from './Tooltip';
 import { TourCard, tourGuide } from './TourCard';
 import { TutorialCard, tutorialGuide } from './TutorialCard';
 import { TutorialMenu } from './TutorialMenu';
-import { TIPS, type VIEWER_TIPS } from './tips';
+import { osc1PitchTip, ringTip, TIPS, type VIEWER_TIPS, waveformTip } from './tips';
 
 import { AxesControls, ViewActions } from './ViewerControls';
 import { WaveformPicker, WaveIcon } from './WaveformPicker';
@@ -294,7 +294,6 @@ export function App() {
       showIdeal?: boolean;
       response?(f: Float32Array<ArrayBuffer>): Float32Array;
       limiting?(): boolean;
-      formulas?: Formula[];
       noiseSlope?: string;
     } = {},
   ) => (
@@ -579,11 +578,7 @@ export function App() {
             title="Oscillators"
             tip={TIPS.oscillators}
             stage="osc"
-            viewers={viewers('oscillator', 'Oscillator', {
-              showIdeal: true,
-              formulas: overlays.geek ? oscillatorFormulas(patch) : undefined,
-              noiseSlope: noiseSlope(patch),
-            })}
+            viewers={viewers('oscillator', 'Oscillator', { showIdeal: true, noiseSlope: noiseSlope(patch) })}
             more={
             <div className="source-rows">
               <Tabs
@@ -598,7 +593,7 @@ export function App() {
                     content: (
                       <>
                         <SubBlock title="Osc 1" label="Waveform" group>
-                          <Tooltip content={TIPS.waveform}>
+                          <Tooltip content={waveformTip(patch.waveform, patch.pulseWidth)}>
                             <WaveformPicker
                               label="Osc 1 Waveform"
                               choice="waveform"
@@ -618,7 +613,7 @@ export function App() {
                         </SubBlock>
                         {/* Each Oscillator's pitch under its Waveform, on its own tab (the owner, issue 90): Osc 1's
                             Octave, and FM, Osc 2 swinging Osc 1's pitch whatever Osc 2's own fader (issue 89). */}
-                        <SubBlock title="Osc 1 Pitch" label="Pitch" tip={TIPS.osc1Pitch} group className="osc1-pitch">
+                        <SubBlock title="Osc 1 Pitch" label="Pitch" tip={osc1PitchTip(patch)} group className="osc1-pitch">
                           <KnobRow>
                             {/* Greyed out while Osc 1 is not heard (the owner); its Octave also moves the Sub. */}
                             <Knob id="osc1Octave" value={patch.osc1Octave} onChange={(v) => change('osc1Octave', v)} inactive={!osc1Heard(patch) && patch.mixSub === 0 && 'No effect while Osc 1 and the Sub are silent'} />
@@ -637,7 +632,7 @@ export function App() {
                     content: (
                       <>
                         <SubBlock title="Osc 2" label="Waveform" group>
-                          <Tooltip content={TIPS.waveform}>
+                          <Tooltip content={waveformTip(patch.osc2Waveform, patch.osc2PulseWidth)}>
                             <WaveformPicker
                               label="Osc 2 Waveform"
                               choice="osc2Waveform"
@@ -741,7 +736,7 @@ export function App() {
                       <KnobRow>
                         <Fader id="mixOsc1" value={patch.mixOsc1} onChange={(v) => change('mixOsc1', v)} />
                         <Fader id="mixOsc2" value={patch.mixOsc2} onChange={(v) => change('mixOsc2', v)} />
-                        <Fader id="mixRing" value={patch.mixRing} onChange={(v) => change('mixRing', v)} />
+                        <Fader id="mixRing" value={patch.mixRing} onChange={(v) => change('mixRing', v)} tip={ringTip(patch)} />
                         <Fader id="mixNoise" value={patch.mixNoise} onChange={(v) => change('mixNoise', v)} />
                         <Fader id="mixSub" value={patch.mixSub} onChange={(v) => change('mixSub', v)} />
                       </KnobRow>
@@ -787,7 +782,6 @@ export function App() {
             viewers={viewers('filter', 'Filter', {
               showIdeal: true,
               response: session.engine.filterResponse,
-              formulas: overlays.geek ? [responseFormula(patch.filterMode, patch.filterSlope)] : undefined,
             })}
           />
           <Block

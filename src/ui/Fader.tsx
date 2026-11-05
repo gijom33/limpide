@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import type { ParamId } from '../patch/patch';
 import { useInactive } from './inactive';
 import { pressed, useParamControl, usePress, useWheel } from './paramControl';
-import { Tooltip } from './Tooltip';
+import { type TipContent, Tooltip } from './Tooltip';
 import { paramTipAt } from './tips';
 
 /** How far a pointer may wander before a press on the track counts as a drag (a scroll, on touch screens). */
@@ -14,6 +14,8 @@ interface Props {
   onChange(value: number): void;
   /** Why the Parameter has no audible effect right now ("No effect while Osc 2 is silent"): dimmed, still adjustable. */
   inactive?: string | false;
+  /** The tip instead of the Parameter's own: Ring's, with its rule at the knobs (issue 235). */
+  tip?: TipContent;
 }
 
 /**
@@ -21,7 +23,7 @@ interface Props {
  * without dragging to set the value there; arrow keys, double-click to reset. A drag that starts on the track is
  * the page's scroll on touch screens, so a finger crossing a fader never changes the sound.
  */
-export function Fader({ id, value, onChange, inactive }: Props) {
+export function Fader({ id, value, onChange, inactive, tip }: Props) {
   const c = useParamControl(id, value, onChange);
   const cap = useRef<HTMLDivElement>(null);
   const press = usePress<{ y: number; position: number; onCap: boolean; moved: boolean }>(c);
@@ -36,7 +38,7 @@ export function Fader({ id, value, onChange, inactive }: Props) {
   };
 
   return (
-    <Tooltip content={paramTipAt(id, value)}>
+    <Tooltip content={tip ?? paramTipAt(id, value)}>
       <div className="knob" data-kind="fader" {...dimmed.props} {...c.attributes}>
         <div
           ref={wheel}

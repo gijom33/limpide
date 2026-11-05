@@ -3,7 +3,7 @@ import { type EnvelopeStage, STAGE_SHARPNESS, stageTimeConstant } from '../modul
 import { GLIDE_SHARPNESS } from '../modulation/lfo';
 import { destinationSwings, effectiveCutoff, KEY_TRACK_CENTRE, LFO_LAWS, type LfoLaw, osc2Cents } from '../modulation/modulationModel';
 import {
-  type FilterMode, type FilterSlope, FM_INDEX, fmIndex, formatParam, LFO_DESTINATIONS, LFO_KEYS, type LfoNumber, type NoiseColour, osc1Heard,
+  type FilterMode, type FilterSlope, FM_INDEX, fmIndex, formatParam, LFO_DESTINATIONS, LFO_KEYS, type LfoNumber, type NoiseColour,
   PARAMS, type ParamId, type Patch, secondsText,
 } from '../patch/patch';
 import { WAVEFORM_NAMES, type Waveform } from './harmonics';
@@ -16,67 +16,94 @@ import { NOTE_VALUES, noteHz } from './tempo';
  * Viewers already compute from (the Harmonic series of each Waveform, a biquad's gain per frequency), written out.
  */
 
-/** A formula, and what its letters mean. */
+/**
+ * A formula, and what its letters mean; in a tip, with what it says in plain words before it where it needs saying
+ * (issue 235).
+ */
 export interface Formula {
+  says?: string;
   formula: string;
   where: string;
 }
 
-/** The Harmonic series of each Waveform, as the Ideal Reference draws it (n is the Harmonic's number). */
+/** "2nd", "3rd", "4th", "21st". */
+const ordinal = (n: number) => `${n}${n % 10 === 1 && n !== 11 ? 'st' : n % 10 === 2 && n !== 12 ? 'nd' : n % 10 === 3 && n !== 13 ? 'rd' : 'th'}`;
+const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
+/** The Harmonics a Pulse's gaps are said up to: the first ones the Spectrum shows apart. */
+const PULSE_GAPS_SAID = 20;
+
+/** The letters every Harmonic series shares. */
+const N_IS = 'n: the Harmonic’s number, 1 the fundamental';
+const B_IS = 'bₙ: its amplitude, the wave’s peak being 1';
+
+/**
+ * The Harmonic series of a Waveform, as the Ideal Reference draws it, for its tip (issue 235): what it says, then the
+ * formula, its letters named; a Pulse's gaps worked out at its width.
+ */
 export function harmonicFormula(waveform: Waveform, pulseWidth: number): Formula {
   switch (waveform) {
     case 'sine':
-      return { formula: 'b₁ = 1,  bₙ = 0 for n > 1', where: 'one Harmonic only' };
+      return { says: 'A Sine is its fundamental alone: no other Harmonic.', formula: 'b₁ = 1,  bₙ = 0 for n > 1', where: `${N_IS}; ${B_IS}.` };
     case 'saw':
-      return { formula: 'bₙ = 2 / (π n)', where: 'every n: each Harmonic 1/n of the first' };
+      return {
+        says: 'A Saw has every Harmonic, each its number times quieter than the first: the 2nd at half, the 3rd at a third.',
+        formula: 'bₙ = 2 / (π n)',
+        where: `${N_IS}; ${B_IS}; π: 3.14…`,
+      };
     case 'square':
-      return { formula: 'bₙ = 4 / (π n),  odd n only', where: 'the even Harmonics are missing' };
+      return {
+        says: 'A Square has the odd Harmonics only, each its number times quieter than the first: the 3rd at a third, the 5th at a fifth.',
+        formula: 'bₙ = 4 / (π n),  odd n only',
+        where: `${N_IS}; ${B_IS}; π: 3.14…`,
+      };
     case 'triangle':
-      return { formula: 'bₙ = 8 / (π² n²),  odd n only', where: 'falling as 1/n², signs alternating' };
-    case 'pulse':
-      return { formula: 'aₙ = 4 sin(π n d) / (π n)', where: `d = ${Math.round(pulseWidth * 100)} %: zero wherever n d is whole` };
+      return {
+        says: 'A Triangle has the odd Harmonics only, falling by the square of their number: the 3rd at a ninth, the 5th at a twenty-fifth, every other one upside down.',
+        formula: 'bₙ = 8 / (π² n²),  odd n only',
+        where: `${N_IS}; ${B_IS}; π: 3.14…`,
+      };
+    case 'pulse': {
+      const percent = Math.round(pulseWidth * 100);
+      const every = 100 / gcd(percent, 100);
+      const gaps = every <= PULSE_GAPS_SAID ? `: every ${ordinal(every)} Harmonic missing` : '';
+      return {
+        says: 'A Pulse’s Harmonics follow its width: one is missing wherever a whole number of its cycles fits the high part exactly. At 50 % it is a Square.',
+        formula: 'aₙ = 4 sin(π n d) / (π n)',
+        where: `${N_IS}; aₙ: its amplitude, the wave’s peak being 1; d: the Pulse Width, ${percent} % now${gaps}. aₙ is 0 wherever n d is whole.`,
+      };
+    }
   }
 }
-
 
 /** A ratio as the Synth Geek Layer writes it: "1", "2.38". */
 const ratioText = (r: number) => String(Number(r.toFixed(2)));
 
 /**
- * The Oscillator Spectrum's lines (issue 109): Osc 1's Harmonic series while it is what sounds; under FM, FM's rule with
- * the figures for the knobs, Osc 1's series marked as what FM starts from; with Ring up, the sum and the difference.
- * Its own series is left out where Osc 1 is heard through Ring alone. The Sub, Osc 2's own fader and the Noise are not
- * written (the Ideal draws them).
+ * FM's rule, for its tip (issue 109, moved there by issue 235): the partials it adds around each of Osc 1's
+ * Harmonics, with the figures for the knobs as they are: β, J₀ to J₃ of it, and where the partials land.
  */
-export function oscillatorFormulas(patch: Patch): Formula[] {
-  const series = harmonicFormula(patch.waveform, patch.pulseWidth);
-  const fm = patch.crossMod > 0 && osc1Heard(patch);
-  const ring = patch.mixRing > 0;
-  // Osc 1 silent (its fader down, Ring off): its series, but not what sounds, FM or not.
-  if (!fm && !ring) return [osc1Heard(patch) ? series : { formula: series.formula, where: `${series.where}; Osc 1 is silent: not the sound now` }];
+export function fmFormula(patch: Patch): Formula {
   const r = osc2Ratio(patch);
-  const lines: Formula[] = [];
-  if (fm) {
-    const index = fmIndex(patch.crossMod);
-    const j = Array.from(besselJ(index, 3), (v) => Math.abs(v).toFixed(2)).join(' ');
-    const landing = Math.abs(r - Math.round(r)) < 1e-6 && r >= 1 ? 'on the Harmonics' : 'between the Harmonics';
-    const osc2 = patch.osc2Waveform === 'sine' ? '' : `; Osc 2 a ${WAVEFORM_NAMES[patch.osc2Waveform]}: its 1st Harmonic only`;
-    lines.push({
-      formula: `n f₁ + k f₂:  bₙ |Jₖ(n β)|,  β = ${FM_INDEX} × FM = ${index.toFixed(2)}`,
-      where: `f₂ / f₁ = ${ratioText(r)}: ${landing}; |J₀…J₃(β)| ${j}${osc2}`,
-    });
-    lines.push({ formula: series.formula, where: 'bₙ: Osc 1 before FM, not the sound now' });
-  } else if (patch.mixOsc1 > 0) {
-    lines.push({ formula: series.formula, where: `${series.where}; Osc 1’s own, Ring adds the rest` });
-  }
-  if (ring) {
-    const difference = Math.abs(r - 1);
-    lines.push({
-      formula: 'Ring, Osc 1 × Osc 2:  n f₁ ± m f₂,  ½ bₙ cₘ',
-      where: `sums and differences (cₘ: Osc 2’s series); the first pair ${difference < 1e-6 ? '0 (taken out)' : ratioText(difference)} and ${ratioText(r + 1)} × f₁`,
-    });
-  }
-  return lines;
+  const index = fmIndex(patch.crossMod);
+  const j = Array.from(besselJ(index, 3), (v) => Math.abs(v).toFixed(2)).join(' ');
+  const landing = Math.abs(r - Math.round(r)) < 1e-6 && r >= 1 ? 'on the Harmonics' : 'between the Harmonics';
+  const osc2 = patch.osc2Waveform === 'sine' ? '' : ` Osc 2 a ${WAVEFORM_NAMES[patch.osc2Waveform]}: its 1st Harmonic only swings Osc 1.`;
+  return {
+    says: 'FM adds partials on each side of each of Osc 1’s Harmonics, a step of Osc 2’s frequency apart; how loud each is follows a Bessel function of how far FM swings the pitch.',
+    formula: `n f₁ + k f₂:  bₙ |Jₖ(n β)|,  β = ${FM_INDEX} × FM = ${index.toFixed(2)}`,
+    where: `n: Osc 1’s Harmonic’s number; f₁, f₂: Osc 1’s and Osc 2’s frequencies, f₂ / f₁ = ${ratioText(r)} now: ${landing}; bₙ: the Harmonic’s amplitude before FM; k: how many steps of f₂ from the Harmonic, either side (0 the Harmonic itself); Jₖ: the Bessel function of order k, |J₀…J₃(β)| ${j} now; β: the modulation index, how far FM swings the pitch, over f₂.${osc2}`,
+  };
+}
+
+/** Ring's sums and differences, for its tip (issue 109, moved there by issue 235), its first pair at the knobs. */
+export function ringFormula(patch: Patch): Formula {
+  const r = osc2Ratio(patch);
+  const difference = Math.abs(r - 1);
+  return {
+    says: 'Ring multiplies the two waves: each pair of Harmonics, one of Osc 1’s and one of Osc 2’s, becomes two partials, at their sum and at their difference, in place of the pitches themselves.',
+    formula: 'n f₁ ± m f₂,  ½ bₙ cₘ',
+    where: `n, m: Osc 1’s and Osc 2’s Harmonics’ numbers; f₁, f₂: their frequencies; bₙ, cₘ: those Harmonics’ amplitudes, so each partial is half their product. The first pair, n = m = 1, at ${difference < 1e-6 ? '0 (taken out)' : ratioText(difference)} and ${ratioText(r + 1)} × f₁ now.`,
+  };
 }
 
 /** The 12 dB core of each Filter Mode's gain, over x = f / fc. */
@@ -87,13 +114,24 @@ const CORE: Record<FilterMode, string> = {
   notch: '|1 − x²|',
 };
 
-/** The Response Curve's gain per frequency for a Filter Mode and Slope: one biquad, or two in a row at 24 dB. */
+/** What each Filter Mode's response says, in plain words (issue 235). */
+const RESPONSE_SAYS: Record<FilterMode, string> = {
+  lowpass: 'Low-pass: the gain is 1 well below the Cutoff, so those Harmonics pass unchanged, and falls ever further above it; the higher Q, the higher a peak at the Cutoff.',
+  highpass: 'High-pass, low-pass turned around: the gain is 1 well above the Cutoff and falls ever further below it; the higher Q, the higher a peak at the Cutoff.',
+  bandpass: 'Band-pass: the gain is 1 right at the Cutoff and falls either side of it; the higher Q, the narrower the band.',
+  notch: 'Notch: the gain is 0 right at the Cutoff, where 1 − x² is, and 1 away from it; the higher Q, the narrower the gap.',
+};
+
+/**
+ * The Response Curve's gain per frequency for a Filter Mode and Slope: one biquad, or two in a row at 24 dB; for the
+ * Mode's and the Slope's tips (issue 235), what it says before it.
+ */
 export function responseFormula(mode: FilterMode, slope: FilterSlope): Formula {
   const one = `${CORE[mode]} / √((1 − x²)² + (x / Q)²)`;
-  return {
-    formula: slope === 12 ? `|H| = ${one}` : `|H| = (${one})²`,
-    where: slope === 12 ? 'x = f / fc' : 'x = f / fc; two stages in a row, so squared',
-  };
+  const where = 'x = f / fc, 1 at the Cutoff; |H|: the gain at the frequency f, 1 unchanged, 0 silent; fc: the Cutoff; Q: the Resonance as the Filter’s Q, which its knob reads in this layer.';
+  return slope === 12
+    ? { says: RESPONSE_SAYS[mode], formula: `|H| = ${one}`, where }
+    : { says: `${RESPONSE_SAYS[mode]} At 24 dB, two of these Filters in a row: the gain squared, falling twice as fast.`, formula: `|H| = (${one})²`, where };
 }
 
 /**

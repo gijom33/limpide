@@ -3,7 +3,7 @@ import { useLearnable } from './learn';
 import { radioGroupKeys } from './radioGroup';
 import { Segmented } from './Segmented';
 import { Tooltip } from './Tooltip';
-import { TIPS } from './tips';
+import { filterTips } from './tips';
 
 // Each Mode's response shape, drawn in a 24×14 box: what it keeps, at a glance.
 const MODES: { mode: FilterMode; label: string; path: string }[] = [
@@ -22,9 +22,11 @@ interface Props {
 /** Filter Mode (icon picker) and Slope, on the Filter heading line. */
 export function FilterShape({ mode, slope, onChange }: Props) {
   const learnMode = useLearnable({ kind: 'choice', id: 'filterMode' });
+  // Under the hood, the response for the Mode and Slope picked (issue 235).
+  const tips = filterTips(mode, slope);
   return (
     <div className="filter-shape">
-      <Tooltip content={TIPS.filterMode}>
+      <Tooltip content={tips.mode}>
         <div className="segmented icon-picker filter-modes" role="radiogroup" aria-label="Filter Mode" onKeyDown={radioGroupKeys} {...learnMode}>
           {MODES.map((m) => (
             <button key={m.mode} type="button" role="radio" aria-checked={m.mode === mode} tabIndex={m.mode === mode ? 0 : -1} aria-label={m.label} onClick={() => onChange({ mode: m.mode })}>
@@ -35,7 +37,7 @@ export function FilterShape({ mode, slope, onChange }: Props) {
           ))}
         </div>
       </Tooltip>
-      <Tooltip content={TIPS.slope}>
+      <Tooltip content={tips.slope}>
         <Segmented
           label="Slope"
           value={slope}
