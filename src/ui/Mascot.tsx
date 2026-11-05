@@ -722,7 +722,7 @@ export function Mascot({
         }
         ({ on, perch } = perchAcross({
           edges: sections, home, visit: visit?.id ?? null, card, at: drawnAt,
-          inView: onScreen, clear: clearAt, seen: (s) => clearOf(s.box, drawing).length > 0,
+          onScreen, clear: clearAt, seen: (s) => clearOf(s.box, drawing).length > 0,
         }));
       } else {
         // A ride now and then, on a plot in view (issue 197): onto it from its edge, falling or flying on its tail.

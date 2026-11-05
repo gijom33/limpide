@@ -46,8 +46,8 @@ export interface PerchAcross<E extends Line> {
   card: E | null;
   /** Its box's left and its foot, where it was drawn last. */
   at: { left: number; foot: number };
-  /** An edge with room above it in the window for it and its leaps, on the window. */
-  inView: (edge: E) => boolean;
+  /** An edge on the window, with room above it there for the drop and its leaps. */
+  onScreen: (edge: E) => boolean;
   /** An edge with somewhere along it clear of what covers the page and of its text, to stand (issues 164 and 181). */
   clear: (edge: E) => boolean;
   /** An edge with somewhere along it clear of what covers the page, text or not: somewhere it is seen (issue 192). */
@@ -56,14 +56,14 @@ export interface PerchAcross<E extends Line> {
 
 /**
  * Which edge it is on in three and four across (issue 115): its home's, or the section's it visits (issue 141). That
- * edge covered (issue 164), the nearest edge in view and clear, from where it is; with none, the docked card's top if
+ * edge covered (issue 164), the nearest edge on screen and clear, from where it is; with none, the docked card's top if
  * that is clear; else its edge all the same, where with nowhere it is seen it waits out of sight behind it (issue 192).
  */
-export function perchAcross<E extends Line>({ edges, home, visit, card, at, inView, clear, seen }: PerchAcross<E>): { on: E; perch: Perch } {
+export function perchAcross<E extends Line>({ edges, home, visit, card, at, onScreen, clear, seen }: PerchAcross<E>): { on: E; perch: Perch } {
   let on = edges.find((e) => e.id === visit) ?? home;
   if (!clear(on)) {
     const off = ({ box }: E) => Math.hypot(Math.max(0, box.left - at.left, at.left - box.right), box.top - at.foot);
-    const nearest = edges.filter((e) => inView(e) && clear(e)).sort((a, b) => off(a) - off(b))[0];
+    const nearest = edges.filter((e) => onScreen(e) && clear(e)).sort((a, b) => off(a) - off(b))[0];
     on = nearest ?? (card && clear(card) ? card : on);
   }
   return { on, perch: { id: on.id, foot: on.box.top, hovering: false, ...(seen(on) ? {} : { waiting: true }) } };

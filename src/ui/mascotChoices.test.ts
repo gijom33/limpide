@@ -43,7 +43,7 @@ describe('which edge it is on, in three and four across (issues 115, 141, 164 an
   const ids = (list: readonly string[]) => (e: { id: string }) => list.includes(e.id);
   const everywhere = () => true;
   const choose = (over: Partial<Parameters<typeof perchAcross>[0]>) =>
-    perchAcross({ edges: stacked, home: stacked[1], visit: null, card: null, at: { left: 700, foot: 100 }, inView: everywhere, clear: everywhere, seen: everywhere, ...over });
+    perchAcross({ edges: stacked, home: stacked[1], visit: null, card: null, at: { left: 700, foot: 100 }, onScreen: everywhere, clear: everywhere, seen: everywhere, ...over });
 
   it('its home: the top right section, its top row within 4 px', () => {
     expect(homeEdge(across).id).toBe('LFOs');
@@ -58,23 +58,23 @@ describe('which edge it is on, in three and four across (issues 115, 141, 164 an
     expect(choose({ visit: 'Amp' }).perch).toEqual({ id: 'Amp', foot: 500, hovering: false });
   });
 
-  it('its edge covered, the nearest edge in view and clear, from where it is (issue 164)', () => {
+  it('its edge covered, the nearest edge on screen and clear, from where it is (issue 164)', () => {
     const clear = ids(['Oscillators', 'Amp', 'LFOs']);
     expect(choose({ clear }).perch.id).toBe('Oscillators');
     expect(choose({ clear, at: { left: 1000, foot: 450 } }).perch.id).toBe('LFOs');
-    expect(choose({ clear, inView: ids(['Amp']) }).perch.id).toBe('Amp');
+    expect(choose({ clear, onScreen: ids(['Amp']) }).perch.id).toBe('Amp');
   });
 
   it('with every edge covered, the docked card’s top, if it is clear (issue 164)', () => {
     const card = edge('card', 200, 800, 300);
-    expect(choose({ card, clear: ids(['card']), inView: () => false }).perch).toEqual({ id: 'card', foot: 300, hovering: false });
-    expect(choose({ card, clear: () => false, inView: () => false }).perch.id).toBe('Filter');
+    expect(choose({ card, clear: ids(['card']), onScreen: () => false }).perch).toEqual({ id: 'card', foot: 300, hovering: false });
+    expect(choose({ card, clear: () => false, onScreen: () => false }).perch.id).toBe('Filter');
   });
 
   it('nowhere clear, under a cover all along its edge, it waits out of sight behind it (issue 192)', () => {
-    expect(choose({ clear: () => false, inView: () => false, seen: () => false }).perch).toEqual({ id: 'Filter', foot: 100, hovering: false, waiting: true });
+    expect(choose({ clear: () => false, onScreen: () => false, seen: () => false }).perch).toEqual({ id: 'Filter', foot: 100, hovering: false, waiting: true });
     // Only text over its edge: it stands there all the same.
-    expect(choose({ clear: () => false, inView: () => false }).perch).toEqual({ id: 'Filter', foot: 100, hovering: false });
+    expect(choose({ clear: () => false, onScreen: () => false }).perch).toEqual({ id: 'Filter', foot: 100, hovering: false });
   });
 });
 
