@@ -1012,6 +1012,8 @@ async function leansWithTheWave(page: Page, lfo: number) {
 }
 
 test('three across, wide enough for the LFO plots clear of the card, each act in turn: conducting, the air guitar, then surfing where an LFO is on (issue 204)', async ({ page }) => {
+  // GitHub's Linux WebKit draws 8 to 25 frames a second, too few for this timing; the Mac's WebKit runs it (issue 232).
+  test.skip(!!process.env.CI && test.info().project.name === 'webkit', 'too few frames on GitHub’s Linux WebKit: issue 232');
   await page.setViewportSize({ width: 1728, height: 1117 });
   await page.goto('/');
   await listening(page);
@@ -1047,6 +1049,8 @@ for (const [size, viewport] of [
   ['2 × 2', { width: 700, height: 830 }],
 ] as const) {
   test(`${size}: through the Demo's scroll to a part's section, it falls or flies in view, landing before the page stops (issue 211)`, async ({ page }) => {
+    // GitHub's Linux WebKit draws 8 to 25 frames a second, too few for this timing; the Mac's WebKit runs it (issue 232).
+    test.skip(!!process.env.CI && test.info().project.name === 'webkit', 'too few frames on GitHub’s Linux WebKit: issue 232');
     await page.setViewportSize(viewport);
     await page.goto('/');
     await listening(page);
@@ -1175,6 +1179,8 @@ for (const [size, viewport, edge] of [
   ['in 2 × 2', { width: 690, height: 640 }, 'LFO & Envelopes'],
 ] as const) {
   test(`${size}, now and then it rides a slow Sine on LFO 1's plot in view, on its line, and goes back to its edge after (issue 197)`, async ({ page }) => {
+    // GitHub's Linux WebKit draws 8 to 25 frames a second, too few for this timing; the Mac's WebKit runs it (issue 232).
+    test.skip(!!process.env.CI && test.info().project.name === 'webkit', 'too few frames on GitHub’s Linux WebKit: issue 232');
     test.slow();
     // Its every roll its lowest: its first ride is due soonest, 15 seconds in, and lasts the least, 8 seconds.
     await page.addInitScript(() => {
@@ -1619,6 +1625,8 @@ test.describe('pointing the way in a Tutorial and the Tour (issue 151)', () => {
   });
 
   test('beside each control in the Tour and a Tutorial, over no label: a little lower under it, else along (issue 181)', async ({ page }) => {
+    // GitHub's Linux WebKit draws 8 to 25 frames a second, too few for this timing; the Mac's WebKit runs it (issue 232).
+    test.skip(!!process.env.CI && test.info().project.name === 'webkit', 'too few frames on GitHub’s Linux WebKit: issue 232');
     test.slow();
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/');

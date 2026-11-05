@@ -4,8 +4,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
-- 2026-11-05, from 1.24.0's branch run and its probes on GitHub (issue 232): seven animation tests fail on GitHub's Linux WebKit, which draws 8 to 25 frames a second there, even with one test worker to a job: the Demo's scroll within 1.5 s on a phone; Bead's three-across acts; its Demo scroll in 2 × 2 (and on a phone, in earlier runs); its LFO rides on a phone and in 2 × 2; its place beside each control in the Tour and a Tutorial; the phone header's slide. The Mac's WebKit passes them all.
-
 ## Ideas
 
 - 2026-11-04, the owner: "I would like if, for Bead's umbrella animation, the rain comes from top of screen. Similarly, with the sun melting and clous animations, would be great if there are farther from Bead."
@@ -201,3 +199,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-11-04, evening: the browser tests' coverage, measured once, went to [208](./issues/208-what-the-tests-miss.md) (its question 4, kept for v2 at the owner's word).
 2026-11-04, evening: the Demo's card collapsed in the bottom right corner, three and four across, went to [230](./issues/230-the-demos-card-small-in-the-corner.md), with Claude's calls open to the owner.
 2026-11-04, late: a band-pass not so much quieter went to [231](./issues/231-a-band-pass-not-so-much-quieter.md), measured, with three questions for the owner.
+2026-11-05: seven animation tests too slow on GitHub's Linux WebKit went to [232](./issues/232-1-24-0-red-on-githubs-linux-webkit.md): skipped on GitHub's WebKit alone, which now runs one test worker to a job in eight jobs (decided by the owner: "Yes").

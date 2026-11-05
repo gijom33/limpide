@@ -60,6 +60,8 @@ test.describe('on a phone', () => {
   });
 
   test('scrolling down slides the header up until only the piano shows; scrolling up brings it back; nothing below moves', async ({ page }) => {
+    // GitHub's Linux WebKit draws 8 to 25 frames a second, too few for this timing; the Mac's WebKit runs it (issue 232).
+    test.skip(!!process.env.CI && test.info().project.name === 'webkit', 'too few frames on GitHub’s Linux WebKit: issue 232');
     await page.goto('/');
     const logo = page.getByRole('heading', { level: 1, name: 'Limpide' });
     const demo = page.getByRole('button', { name: 'Demo' });

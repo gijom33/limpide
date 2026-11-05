@@ -189,6 +189,8 @@ test.describe('on a 375 px phone (issue 211)', () => {
   // Bead's fall or flight between two sections took up to about 1.25 s, measured (issue 211): the Demo's scroll to a
   // part's section lasts as long, and no longer than a second and a half, so the part's change is still seen.
   test('the Demo scrolls to a part’s section slowly enough to see Bead move, within a second and a half', async ({ page }) => {
+    // GitHub's Linux WebKit draws 8 to 25 frames a second, too few for this timing; the Mac's WebKit runs it (issue 232).
+    test.skip(!!process.env.CI && test.info().project.name === 'webkit', 'too few frames on GitHub’s Linux WebKit: issue 232');
     await page.goto('/');
     const scroll = firstScroll(page);
     await demo(page).click();

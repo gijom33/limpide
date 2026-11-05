@@ -21,7 +21,9 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 # The checks run side by side, and the site deploys only once all are green. The end-to-end tests, three quarters of
-# the time when they ran in one job (23 of 28 minutes for 1.16.1), are split over eight: each browser in four shards.
+# the time when they ran in one job (23 of 28 minutes for 1.16.1), are split over twelve: Chromium in four shards,
+# WebKit in eight of one worker each. GitHub's Linux WebKit draws 8 to 25 frames a second, and two of its workers
+# side by side starved each other's animations (1.24.0's branch run, issue 232).
 jobs:
   # The types, the lint (Biome: React hooks rules, imports organised), the unit tests, and the site as published.
   checks:
@@ -57,10 +59,14 @@ jobs:
           - { name: e2e chromium 2/4, browser: chromium, shard: 2/4 }
           - { name: e2e chromium 3/4, browser: chromium, shard: 3/4 }
           - { name: e2e chromium 4/4, browser: chromium, shard: 4/4 }
-          - { name: e2e webkit 1/4, browser: webkit, shard: 1/4 }
-          - { name: e2e webkit 2/4, browser: webkit, shard: 2/4 }
-          - { name: e2e webkit 3/4, browser: webkit, shard: 3/4 }
-          - { name: e2e webkit 4/4, browser: webkit, shard: 4/4 }
+          - { name: e2e webkit 1/8, browser: webkit, shard: 1/8 }
+          - { name: e2e webkit 2/8, browser: webkit, shard: 2/8 }
+          - { name: e2e webkit 3/8, browser: webkit, shard: 3/8 }
+          - { name: e2e webkit 4/8, browser: webkit, shard: 4/8 }
+          - { name: e2e webkit 5/8, browser: webkit, shard: 5/8 }
+          - { name: e2e webkit 6/8, browser: webkit, shard: 6/8 }
+          - { name: e2e webkit 7/8, browser: webkit, shard: 7/8 }
+          - { name: e2e webkit 8/8, browser: webkit, shard: 8/8 }
     name: ${{ matrix.name }}
     steps:
       - uses: actions/checkout@v7
@@ -87,7 +93,7 @@ jobs:
       - if: matrix.name == 'engine'
         run: npm run test:engine
       - if: matrix.shard
-        run: npx playwright test --project=${{ matrix.browser }} --shard=${{ matrix.shard }}
+        run: npx playwright test --project=${{ matrix.browser }} --shard=${{ matrix.shard }} ${{ matrix.browser == 'webkit' && '--workers=1' || '' }}
       - if: failure() && matrix.shard
         uses: actions/upload-artifact@v7
         with:

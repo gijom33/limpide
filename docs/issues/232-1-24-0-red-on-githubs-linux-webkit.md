@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** needs-triage · bug. Diagnosed in part on 2026-11-04 (below); the release waits on it.
+**Status:** done (2026-11-05) · bug, shipped with 1.24.0: WebKit on GitHub runs one test worker to a job, in eight jobs, and seven animation tests are skipped there alone (decided by the owner: "Yes"). The page itself is no slower than 1.23.0's.
 
 ## What is known
 
@@ -33,3 +33,14 @@ Chromium on the same machine draws at 60 in both. WebKit's AudioContext starts t
 ## How to test them
 
 GitHub's runs: a throwaway branch `release/probe-N` whose workflow runs only the specs in question (`--project=webkit`), about 4 minutes a round, deleted after; nothing deploys from `release/**`. Docker Desktop (Playwright's Linux image) would make the loop local, but it answered every request with an error on 2026-11-04.
+
+## What was found (2026-11-05)
+
+Six more probes on GitHub, each a throwaway branch deleted after.
+
+- **Two workers starving each other.** Each WebKit job ran two test workers side by side; with WebKit drawing 8 to 25 frames a second there, a heavy neighbour (Bead's spec) starved the other further. In eight jobs of one worker each, Glow's two tests, the Demo following the knob, a person's scroll and Page Down stopping the following, the 2 × 2 Tutorial Step and the dark wide contrast all pass. Hypotheses 1 and 3 were this, not the code.
+- **The resume never refused** (hypothesis 2, refuted). Logged in the page: the context starts "interrupted", the first gesture resumes it, the pause suspends it and the next resume runs it. The test read the state before its 1 s pause had passed; it now pauses after 3 s (`6ed4d8d`). Safari's users are not touched.
+- **Page Down's test** read the page while WebKit's smooth scroll still moved; it now waits for the scroll to stop (`6ed4d8d`).
+- **Seven tests too tight for the frame rate**, failing with one worker too: the Demo's scroll within 1.5 s on a phone (failing on v1.23.0's code alone as well); Bead's three-across acts (204); its Demo scroll in 2 × 2 and on a phone (211, hypothesis 4); its LFO rides on a phone and in 2 × 2 (197); its place beside each control in the Tour and a Tutorial (181); the phone header's slide. Each is skipped when `CI` is set in WebKit only, so the Mac's WebKit and GitHub's Chromium still run them.
+
+Left for later: the seven skips come off if GitHub's WebKit draws faster, or if their timing is measured in frames rather than milliseconds.
