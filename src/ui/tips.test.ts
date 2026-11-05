@@ -79,6 +79,11 @@ it('a synced Rate’s tip gives its Hz at the tempo, which its readout leaves ou
   expect(TIPS.lfoNote.body).not.toMatch(/beside/);
 });
 
+it('a slow synced Rate’s tip reads its Hz to three figures, a readout keeping two (issue 225)', () => {
+  expect(syncedRateTip(noteIndex('4 bars'), 40).body).toMatch(/At 40 BPM, 4 bars is 0\.0417 Hz\.$/); // a cycle every 24.0 s
+  expect(syncedRateTip(noteIndex('4 bars'), 120).body).toMatch(/At 120 BPM, 4 bars is 0\.13 Hz\.$/);
+});
+
 it('a synced Rate’s tip works its Hz out under the hood, at the tempo, as it changes (issue 137)', () => {
   expect(syncedRateTip(noteIndex('1/8'), 120).underTheHood?.where).toMatch(/^1\/8 at 120 BPM: 120 ÷ 60 × 2 = 4 Hz,/);
   expect(syncedRateTip(noteIndex('1/8 D'), 90).underTheHood?.where).toMatch(/^1\/8 D at 90 BPM: 90 ÷ 60 × 4\/3 = 2 Hz,/);
@@ -86,10 +91,10 @@ it('a synced Rate’s tip works its Hz out under the hood, at the tempo, as it c
   expect(syncedRateTip(noteIndex('1/16 T'), 120).body).toMatch(/At 120 BPM, 1\/16 T is 12 Hz\.$/);
 });
 
-it('the tempo’s, Tap’s and Sync’s tips say why a synced wobble stays on the beat when the tempo changes (issue 137)', () => {
+it('the tempo’s, Tap Tempo’s and Sync’s tips say why a synced wobble stays on the beat when the tempo changes (issue 137)', () => {
   expect(TIPS.lfoSync.body).toMatch(/follows the tempo: double the BPM and the LFO runs twice as fast/);
   expect(TIPS.tempo.body).toMatch(/keeps to the beat/);
-  expect(TIPS.tap.body).toMatch(/synced LFO’s speed follows it/);
+  expect(TIPS.tapTempo.body).toMatch(/synced LFO’s speed follows it/);
 });
 
 it('an Envelope fader’s tip works out τ at its setting; the others, Glide’s too, keep their own (issue 168)', () => {

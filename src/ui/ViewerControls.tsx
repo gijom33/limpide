@@ -13,7 +13,7 @@ interface Props {
 }
 
 /** Freeze and Snapshot, actions on what the Viewers show; which Voices they follow, and the Glow of the Scopes and Spectrums. */
-export function ViewActions({ state, glow, dispatch }: Props & { glow: boolean }) {
+export function ViewActions({ state, glow, dispatch }: Props & { glow: ViewSettings['glow'] }) {
   const learnFreeze = useLearnable({ kind: 'action', id: 'freeze' });
   const learnSnapshot = useLearnable({ kind: 'action', id: 'snapshot' });
   return (
@@ -70,17 +70,20 @@ export function ViewActions({ state, glow, dispatch }: Props & { glow: boolean }
         <Segmented
           label="Glow"
           caption="Glow"
-          value={glow ? 'on' : 'off'}
-          options={[
-            { value: 'off', label: 'Off' },
-            { value: 'on', label: 'On' },
-          ]}
-          onChange={(choice) => dispatch({ type: 'setGlow', glow: choice === 'on' })}
+          value={glow}
+          options={GLOW_CHOICES}
+          onChange={(choice) => dispatch({ type: 'setGlow', glow: choice })}
         />
       </Tooltip>
     </>
   );
 }
+
+const GLOW_CHOICES = [
+  { value: 'off', label: 'Off' },
+  { value: 'scopes', label: 'Scopes' },
+  { value: 'all', label: 'All' },
+] as const;
 
 const CYCLES = [
   { value: 1, label: '1' },

@@ -945,6 +945,9 @@ html:has(dialog.about[open]) { overflow: hidden; }
 .mascot-umbrella { fill: var(--stage-amp); }
 .mascot-handle { fill: var(--muted); }
 .mascot-gun { fill: var(--stage-filter); }
+/* Its surfboard (issue 204), in the Filter's colour with the Oscillator's stripe. */
+.mascot-board { fill: var(--stage-filter); }
+.mascot-board-stripe { fill: var(--stage-osc); }
 /* Issue 127: its twin as Detune splits it, an ice cube, its static with the Noise, its costumes and its new props.
    Picked up by a finger, it is dragged rather than the page scrolled; its props take no pointer. */
 .mascot-drop { touch-action: none; }
@@ -1216,7 +1219,7 @@ html:has(dialog.about[open]) { overflow: hidden; }
 .patch-empty { margin: 0; font-size: var(--text-md); color: var(--muted); }
 /* The buttons right of the keyboard, from 861 px: arrangement C (decided by the owner, issue 154). Hold one tall button
    against the piano, as the octave buttons stand against its other side; then columns of two, each one thing, read
-   outward from the keys: the tempo (BPM over Tap), the players (Demo over Song), the guides (Tutorial over About),
+   outward from the keys: the tempo (BPM over Tap Tempo), the players (Demo over Song), the guides (Tutorial over About),
    set-up (MIDI over Display). 4 px between the columns of one use, 14 px between uses: playing (Hold and the tempo),
    listening and learning (the players and the guides), setting up. In a column both buttons are as wide as the wider,
    their icons in a line. One shape at every width: two rows sharing the piano's height, their tops and bottoms the
@@ -1234,11 +1237,11 @@ html:has(dialog.about[open]) { overflow: hidden; }
   /* Each button fills its column, both rows alike: its wrappers stretch, and it fills them. Hold fills its own. */
   :is(.header-column, .header-right > .tempo) > * { display: flex; flex: 1 1 0; min-height: 0; }
   .header-column > * > .tip-anchor, .header-right > .tip-anchor { display: flex; flex: 1 1 auto; }
-  .header-right :where(.demo-button, .hold-button, .midi-status, .display-menu > .tip-anchor > .tool, .about-menu .tool, .tempo-bpm, .tempo-tap, .tempo-typing) {
+  .header-right :where(.demo-button, .hold-button, .midi-status, .display-menu > .tip-anchor > .tool, .about-menu .tool, .tempo-bpm, .tap-tempo, .tempo-typing) {
     flex: 1 1 auto; height: auto; min-height: 0; padding: 0 6px; justify-content: flex-start;
   }
   .header-right .hold-button { flex-direction: column; justify-content: center; gap: 3px; }
-  .header-right :is(.tempo-bpm, .tempo-tap) { justify-content: center; }
+  .header-right :is(.tempo-bpm, .tap-tempo) { justify-content: center; }
 }
 @media (min-width: 1100px) {
   .header-right { --row-gap: 4px; }
@@ -1291,13 +1294,14 @@ html:has(dialog.about[open]) { overflow: hidden; }
 .tutorial-menu-teaches { color: var(--muted); font-size: var(--text-xs); line-height: 1.3; white-space: normal; }
 .tutorial-menu-done { margin-left: auto; padding-left: 12px; color: var(--accent); }
 /* The tempo (issue 112): the BPM in a box as wide as its widest, so nothing beside it moves as it changes, dragged up
-   and down (a finger's drag is its own, not the page's scroll); Tap beside it. Below 861 px the BPM alone, opening a
-   small field with the BPM and Tap under it, its right edge on the button's. */
+   and down (a finger's drag is its own, not the page's scroll); Tap Tempo beside it. Below 861 px the BPM alone, opening a
+   small field with the BPM and Tap Tempo under it, its right edge on the button's. */
 .tempo { display: flex; align-items: center; gap: 4px; }
 .tempo-bpm { justify-content: center; gap: 3px; padding: 0 6px; cursor: ns-resize; touch-action: none; font-variant-numeric: tabular-nums; }
-.tempo-tap { padding: 0 8px; }
-.tempo-bpm[aria-disabled='true'], .tempo-tap[aria-disabled='true'] { cursor: default; }
-.tempo-value { min-width: 3ch; text-align: right; color: var(--text); font-variant-numeric: tabular-nums; }
+.tap-tempo { padding: 0 8px; }
+.tempo-bpm[aria-disabled='true'], .tap-tempo[aria-disabled='true'] { cursor: default; }
+/* As wide as its widest, a BPM to a tenth ("238.8", issue 223), so the box keeps one width as it changes. */
+.tempo-value { min-width: 4.5ch; text-align: right; color: var(--text); font-variant-numeric: tabular-nums; }
 .tempo-unit { font-size: var(--text-xs); }
 /* While a MIDI clock sets the tempo (issue 136), "MIDI" in the unit's place, in the text's colour: about as wide as
    "BPM", so nothing beside it moves. The box's edge takes the MIDI button's connected green, so the mark shows from 861
@@ -1615,7 +1619,8 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 .start-failure .start-failure-detail { color: var(--muted); font-family: ui-monospace, monospace; font-size: var(--text-md); }
 
 /* A card docked at the bottom of the page (a Tutorial's, issue 57; the Demo's, issue 50), under the panels and
-   tooltips, the page keeping room for it below its last section. */
+   tooltips, the page keeping room for it below its last section (the Demo's only on a phone and in 2 × 2: docked.ts,
+   issue 212). */
 .docked {
   position: fixed; z-index: 40; left: 50%; bottom: var(--space-3); transform: translate(calc(-50% + var(--card-dx, 0px)), var(--card-dy, 0px));
   width: min(var(--card-w, 640px), calc(100vw - 2 * var(--space-3))); box-sizing: border-box;

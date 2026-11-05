@@ -13,7 +13,7 @@ describe('the settings remembered in one place (issues 87, 139)', () => {
       'limpide.bead': 'off',
     });
     // Saved before Glow was a setting (issue 180): it starts Off.
-    expect(recall(storage, 'viewer')).toEqual({ cycles: 4, timelineSeconds: 3, frequencyScale: 'linear', levelScale: 'linear', tapSource: 'newest', glow: false });
+    expect(recall(storage, 'viewer')).toEqual({ cycles: 4, timelineSeconds: 3, frequencyScale: 'linear', levelScale: 'linear', tapSource: 'newest', glow: 'off' });
     expect(recall(storage, 'overlays')).toEqual({ harmonics: false, ideal: true, curve: false, guides: true, geek: true });
     expect(recall(storage, 'letterKeys')).toBe('off');
     expect(recall(storage, 'tooltips')).toBe('off');
@@ -23,7 +23,7 @@ describe('the settings remembered in one place (issues 87, 139)', () => {
 
   it('starts a missing, garbled or unknown setting at its default, keeping the others', () => {
     const nothing = memoryStorage();
-    expect(recall(nothing, 'viewer')).toEqual({ cycles: 2, timelineSeconds: 2, frequencyScale: 'log', levelScale: 'db', tapSource: 'all', glow: false });
+    expect(recall(nothing, 'viewer')).toEqual({ cycles: 2, timelineSeconds: 2, frequencyScale: 'log', levelScale: 'db', tapSource: 'all', glow: 'off' });
     expect(recall(nothing, 'overlays')).toEqual({ harmonics: true, ideal: true, curve: true, guides: false, geek: false });
     expect([recall(nothing, 'letterKeys'), recall(nothing, 'tooltips'), recall(nothing, 'theme'), recall(nothing, 'bead')]).toEqual(['on', 'on', 'dark', 'on']);
 
@@ -45,6 +45,11 @@ describe('the settings remembered in one place (issues 87, 139)', () => {
   it('keeps the Synth Geek Layer under `geek`; a choice saved under its old name, `maths`, is let go (issue 165)', () => {
     expect(recall(memoryStorage({ 'limpide.overlays': JSON.stringify({ maths: true }) }), 'overlays').geek).toBe(false);
     expect(recall(memoryStorage({ 'limpide.overlays': JSON.stringify({ geek: true }) }), 'overlays').geek).toBe(true);
+  });
+
+  it('reads the Glow of three choices; one remembered as On, from before, comes back as All, Off as Off (issue 229)', () => {
+    const glowOf = (glow: unknown) => recall(memoryStorage({ 'limpide.viewSettings': JSON.stringify({ glow }) }), 'viewer').glow;
+    expect([glowOf(true), glowOf(false), glowOf('off'), glowOf('scopes'), glowOf('all'), glowOf('bright')]).toEqual(['all', 'off', 'off', 'scopes', 'all', 'off']);
   });
 
   it('treats a browser that never met Bead, under its old "unmet", as on: Bead is out by default (issue 150)', () => {
@@ -75,11 +80,11 @@ describe('the settings remembered in one place (issues 87, 139)', () => {
 
   it('keeps each setting under the same key and in the same form as before, so a reload brings it back', () => {
     const storage = memoryStorage();
-    remember(storage, 'viewer', { cycles: 1, timelineSeconds: 4, frequencyScale: 'linear', levelScale: 'db', tapSource: 'newest', glow: true });
+    remember(storage, 'viewer', { cycles: 1, timelineSeconds: 4, frequencyScale: 'linear', levelScale: 'db', tapSource: 'newest', glow: 'scopes' });
     remember(storage, 'overlays', { harmonics: true, ideal: false, curve: true, guides: false, geek: true });
     remember(storage, 'tooltips', 'off');
     remember(storage, 'theme', 'light');
-    expect(JSON.parse(storage.data['limpide.viewSettings'])).toEqual({ cycles: 1, timelineSeconds: 4, frequencyScale: 'linear', levelScale: 'db', tapSource: 'newest', glow: true });
+    expect(JSON.parse(storage.data['limpide.viewSettings'])).toEqual({ cycles: 1, timelineSeconds: 4, frequencyScale: 'linear', levelScale: 'db', tapSource: 'newest', glow: 'scopes' });
     expect(JSON.parse(storage.data['limpide.overlays'])).toEqual({ harmonics: true, ideal: false, curve: true, guides: false, geek: true });
     expect(storage.data['limpide.tooltips']).toBe('off');
     expect(storage.data['limpide.theme']).toBe('light');

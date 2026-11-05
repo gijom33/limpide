@@ -3,7 +3,7 @@ import type { KeyValueStorage } from '../app/storage';
 import type { SynthEngine } from '../engine/synthEngine';
 import { CLOCK_TIMEOUT, type ClockTempo, createClockFollower } from '../midi/clock';
 import type { ClockMessage } from '../midi/parser';
-import { clampBpm, TAPS, tappedBpm } from '../music/tempo';
+import { clampBpm, TEMPO_TAPS, tappedBpm } from '../music/tempo';
 
 /**
  * The tempo in force: the BPM, whether a player holds it (the Demo, the Song, the Tour or a Tutorial), and whether a
@@ -94,12 +94,12 @@ export function createTempoStore({
       setOwn(bpm);
     },
     /**
-     * A tap on Tap, timed by the page's clock: from the second on, the BPM follows the taps, and the beats are counted
+     * A tap on Tap Tempo, timed by the page's clock: from the second on, the BPM follows the taps, and the beats are counted
      * from the last, on the engine's clock where it is heard (issue 185), so a synced LFO lands where the person tapped.
      */
-    tap() {
+    tapTempo() {
       if (state.player || heard) return;
-      taps = [...taps.slice(1 - TAPS), clock()];
+      taps = [...taps.slice(1 - TEMPO_TAPS), clock()];
       const bpm = tappedBpm(taps);
       if (bpm !== undefined) setOwn(bpm, engine.heardAt(taps[taps.length - 1]));
     },

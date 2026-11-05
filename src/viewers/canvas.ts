@@ -15,6 +15,15 @@ export function prepareCanvas(canvas: HTMLCanvasElement): { g: CanvasRenderingCo
 /** Reads a CSS custom property from the canvas, so Viewers follow the theme. */
 export const cssVar = (el: Element, name: string) => getComputedStyle(el).getPropertyValue(name).trim();
 
+/**
+ * What every Viewer's picture is drawn from on its canvas, for a Viewer at rest to compare (issue 214): the canvas's
+ * size, the pixel ratio, and the colours (CSS custom properties) `colours` it draws in, which a theme changes.
+ */
+export function canvasInputs(canvas: HTMLCanvasElement, colours: readonly string[]): unknown[] {
+  const style = getComputedStyle(canvas);
+  return [canvas.clientWidth, canvas.clientHeight, window.devicePixelRatio, colours.map((name) => style.getPropertyValue(name).trim()).join(' ')];
+}
+
 /** The width of every Viewer's main curve, in CSS pixels, from the theme (`--curve-w`). */
 export const curveWidth = (el: Element) => parseFloat(cssVar(el, '--curve-w')) || 1.75;
 

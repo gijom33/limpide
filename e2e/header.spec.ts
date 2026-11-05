@@ -32,7 +32,7 @@ async function header(page: Page) {
       midi: button('MIDI'), display: button('Display'), about: button('About'),
       up: button('Octave up'), down: button('Octave down'),
       bpm: box(document.querySelector('header [role="spinbutton"][aria-label="Tempo"], header [aria-label^="Tempo:"]')!),
-      tap: document.querySelector('header [aria-label="Tap"]') ? button('Tap') : null,
+      tap: document.querySelector('header [aria-label="Tap Tempo"]') ? button('Tap Tempo') : null,
       header: box(document.querySelector('header')!),
       piano: box(document.querySelector('.piano')!),
       words: ['Hold', 'MIDI', 'Display', 'About', 'Demo', 'Tutorial', 'Song'].filter((name) =>
@@ -70,7 +70,7 @@ for (const [size, [width, height]] of Object.entries(SIZES)) {
 }
 
 // Issue 154, arrangement C (decided by the owner): from 861 px, Hold one tall button against the piano, then columns of
-// two read outward from the keys, top before bottom: BPM over Tap, Demo over Song, Tutorial over About, MIDI over
+// two read outward from the keys, top before bottom: BPM over Tap Tempo, Demo over Song, Tutorial over About, MIDI over
 // Display; 4 px between the columns of one use, 14 px between uses; in a column both buttons as wide; one shape at
 // every width, the words kept while there is room (the newcomer's four from 1100 px, every one from 1280 px).
 const C_WIDTHS = [

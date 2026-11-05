@@ -377,6 +377,23 @@ test('a wheel that turns a fader is no scroll: the Tour still shows the Timeline
   await expect.poll(() => standing(page, 'Envelope Timeline')).toBe('clear');
 });
 
+// Issue 227: what takes a finger for itself (the piano, as Bead and a card's handle) is no scroll of the person's own.
+test('a finger slid across the piano is no scroll: the Tour still shows the Timeline (issue 227)', async ({ page }) => {
+  test.setTimeout(60000);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.setViewportSize({ width: 375, height: 812 });
+  await toAmpCard(page);
+  await expect.poll(() => standingOf(fader(page, 'Attack')), { timeout: 2000 }).toBe('clear');
+  // The events a finger sends, where it lands and as it slides.
+  await page.getByRole('group', { name: 'Piano' }).evaluate((element) => {
+    element.dispatchEvent(new Event('touchstart', { bubbles: true }));
+    for (let i = 0; i < 5; i++) element.dispatchEvent(new Event('touchmove', { bubbles: true }));
+    element.dispatchEvent(new Event('touchend', { bubbles: true }));
+  });
+  await expect(frozen(page)).toHaveCount(1, { timeout: 6000 });
+  await expect.poll(() => standing(page, 'Envelope Timeline')).toBe('clear');
+});
+
 test('the Tour’s page glides to what it shows, and jumps with reduced motion (issue 206)', async ({ page }) => {
   test.setTimeout(60000);
   await page.addInitScript(() => {

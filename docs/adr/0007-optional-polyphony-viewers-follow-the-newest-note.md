@@ -1,6 +1,6 @@
 # Optional polyphony; the Viewers follow the newest Note
 
-**Status:** accepted · **Date:** 2026-10-22 · **Decided by:** the owner
+**Status:** accepted; superseded in part by [ADR-0022](./0022-a-chord-locks-to-its-newest-note-at-the-amp-tap.md) · **Date:** 2026-10-22 · **Decided by:** the owner
 
 Supersedes [ADR-0005](./0005-monophonic-by-design.md).
 

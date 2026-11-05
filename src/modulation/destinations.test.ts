@@ -123,8 +123,8 @@ describe('the LFOs swing each even Destination by its law (issue 74)', () => {
 describe('aftertouch on a Destination’s knob and line (issue 132)', () => {
   it('moves the knob’s Effective value up from the knob, and an LFO swings around where it took it', () => {
     const p = patch({ resonance: 0.2, lfoDestination: 'resonance', lfoAmount: 0.1 });
-    // Half pressure: 50 points up, to 0.7; the LFO's 10 points at its top on top of that.
-    expect(effectiveValue('resonance', p, at({ lfo: [1, 0], pressure: { destination: 'resonance', amount: 0.5 } }))).toBeCloseTo(0.8);
+    // Half pressure: a quarter of the way to the top (issue 219), 20 points up to 0.4; the LFO's 10 points at its top on top of that.
+    expect(effectiveValue('resonance', p, at({ lfo: [1, 0], pressure: { destination: 'resonance', amount: 0.5 } }))).toBeCloseTo(0.5);
     expect(effectiveValue('resonance', p, at({ lfo: [1, 0], pressure: { destination: 'cutoff', amount: 0.5 } }))).toBeCloseTo(0.3);
     expect(destinationLevel('pitch', patch({}), at({ vibrato: -0.5, pressure: { destination: 'pitch', amount: 0.5 } }))).toBe(0.5);
     expect(destinationLevel('pulseWidth', patch({ pulseWidth: 0.5 }), at({ pressure: { destination: 'pulseWidth', amount: 1 } }))).toBeCloseTo((0.9 - 0.05) / 0.9); // 40 points up

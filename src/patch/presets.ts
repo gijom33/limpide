@@ -69,7 +69,7 @@ group('Intervals', [
   ['Octave Stack', 'A sine an octave above a saw: each ramp of the saw carries two bumps, and the second Harmonic stands out in the Spectrum.', {
     osc2Waveform: 'sine', osc2Octave: 1, mixOsc2: 0.8, ...OPEN,
   }],
-  ['Perfect Fifth', 'Two sines a fifth apart (3:2): a pattern that repeats every two cycles. Set the Scope to 2 or 4 cycles to see it lock.', {
+  ['Perfect Fifth', 'Two sines a fifth apart (3:2): a pattern that repeats every two cycles. The Scope holds it still at any cycles: 1 shows half the pattern, 2 or 4 show it whole.', {
     volume: 0.75, waveform: 'sine', osc2Waveform: 'sine', osc2Semitone: 7, mixOsc2: 1, ...OPEN,
   }],
   ['Major Third', 'Two sines a major third apart (nearly 5:4): a longer pattern than the fifth, and it slowly rolls, because equal temperament is not quite 5:4.', {
@@ -558,7 +558,7 @@ group('Movement & Effects', [
     filterSustain: 0, ampAttack: 0.001, ampDecay: 0.3, ampSustain: 0, ampRelease: 0.1,
   }],
   ['Riser', 'Hold a Note: the Filter Envelope’s six-second Attack lifts a high-pass from 200 Hz past 5 kHz and Osc 2 almost two octaves (Env Amount), together, over Noise, while a saw LFO ripples the Volume. Watch the Cutoff climb on the Timeline.', {
-    mixOsc1: 0.5, mixOsc2: 0.6, osc2Detune: 12, osc2EnvAmount: 24, mixNoise: 0.5, filterMode: 'highpass', cutoff: 200, resonance: 0.4, keyTrack: 1,
+    mixOsc1: 0.5, mixOsc2: 0.6, osc2Detune: 12, osc2EnvAmount: 24, mixNoise: 0.5, filterMode: 'highpass', cutoff: 200, resonance: 0.4, keyTrack: 0.5,
     filterEnvAmount: 5, filterAttack: 6, filterDecay: 0.5, filterSustain: 1, filterRelease: 0.5, ampAttack: 3, ampSustain: 1, ampRelease: 0.8,
     lfoWaveform: 'saw', lfoDestination: 'volume', lfoRate: 6, lfoAmount: 0.3,
   }],
@@ -591,7 +591,7 @@ group('Movement & Effects', [
     volume: 0.6, mixOsc1: 0, mixOsc2: 1, osc2Waveform: 'triangle', cutoff: 6000, resonance: 0.1, ampSustain: 1, lfoWaveform: 'triangle', lfoDestination: 'osc2Pitch', lfoRate: 0.4, lfoAmount: 1,
   }],
   ['Talking Filter', 'A band-pass with LFO 1 on its Cutoff and LFO 2 on its Resonance at another speed: vowels that never settle, like a robot mumbling.', {
-    volume: 1, filterMode: 'bandpass', cutoff: 800, resonance: 0.35, ampSustain: 1, lfoWaveform: 'triangle', lfoDestination: 'cutoff', lfoRate: 2.5, lfoAmount: 0.5,
+    volume: 1, filterMode: 'bandpass', cutoff: 1000, resonance: 0.35, keyTrack: 0.5, ampSustain: 1, lfoWaveform: 'triangle', lfoDestination: 'cutoff', lfoRate: 2.5, lfoAmount: 0.5,
     lfo2Waveform: 'triangle', lfo2Destination: 'resonance', lfo2Rate: 0.7, lfo2Amount: 0.25,
   }],
   ['Stutter', 'A square LFO chopping the Filter each sixteenth (Sync, so at any tempo), retriggered: every Note starts its stutter open, wherever it falls.', {

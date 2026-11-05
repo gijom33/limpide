@@ -4,7 +4,7 @@ import type { Lfo } from '../patch/patch';
 import { TURNED_PAST, TWIN_PX } from './mascotCling';
 import {
   acrossOf, BOX, choosePerch, chooseVisit, clearAlong, createMascotPlace, drawingOf, FASTEST_THROW, GRAVITY, HOVER_UNDER, LANDING_SECONDS,
-  LEEWAY, type Moving, nearestSpan, type Perch, type Placed, rideOnDrop, ridesFor, type Span, SWUNG_BELOW, standingCard, throwWalls, visitEnds, WINDUP_SECONDS,
+  LEEWAY, type Moving, nearestSpan, type Perch, type Placed, rideOnDrop, ridesFor, type Span, SWUNG_BELOW, standingCard, surfLean, throwWalls, visitEnds, WINDUP_SECONDS,
 } from './mascotPlace';
 
 const H = 26;
@@ -637,5 +637,19 @@ describe('sliding down onto the panel and clinging beside a control (issue 151)'
     expect(changes(frames)).toEqual(['flying', 'landing', 'standing']);
     expect(frames[0].x).toBeCloseTo(160, 0);
     expect(frames.at(-1)!.foot).toBe(300);
+  });
+});
+
+describe('on its surfboard, leaning with the wave (issue 204)', () => {
+  it('its board along the line under it: leaning right where the line falls to the right, left where it rises; level on a flat line', () => {
+    // The line 3 px lower 6 px further right: about 27° clockwise; 3 px higher: about 27° back.
+    expect(surfLean(10, 13, 6)).toBeCloseTo(26.6, 1);
+    expect(surfLean(10, 7, 6)).toBeCloseTo(-26.6, 1);
+    expect(surfLean(10, 10, 6)).toBe(0);
+  });
+
+  it('never steeper than 35°, so it stays on its board on a sharp edge', () => {
+    expect(surfLean(0, 40, 6)).toBe(35);
+    expect(surfLean(40, 0, 6)).toBe(-35);
   });
 });

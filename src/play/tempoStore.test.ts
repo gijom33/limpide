@@ -26,10 +26,10 @@ describe('the tempo (issue 112)', () => {
     expect(tempo.get()).toEqual({ bpm: 120, player: false, midi: false });
     expect(engine.handed).toEqual([{ bpm: 120, origin: 5 }]);
     engine.time = 7;
-    tempo.set(97.4);
-    expect(tempo.get().bpm).toBe(97);
-    expect(engine.handed.at(-1)).toEqual({ bpm: 97, origin: 7 });
-    expect(createTempoStore({ storage, engine: fakeEngine().host }).get().bpm).toBe(97);
+    tempo.set(97.44); // kept to a tenth (issue 223)
+    expect(tempo.get().bpm).toBe(97.4);
+    expect(engine.handed.at(-1)).toEqual({ bpm: 97.4, origin: 7 });
+    expect(createTempoStore({ storage, engine: fakeEngine().host }).get().bpm).toBe(97.4);
   });
 
   it('keeps between 40 and 240, and starts at 120 when what was kept is garbled', () => {
@@ -48,7 +48,7 @@ describe('the tempo (issue 112)', () => {
     engine.ahead = 100;
     for (const t of [10, 10.6, 11.2, 11.8]) {
       now = t;
-      tempo.tap();
+      tempo.tapTempo();
     }
     expect(tempo.get().bpm).toBe(100);
     expect(engine.handed.at(-1)).toEqual({ bpm: 100, origin: 111.8 });
@@ -65,8 +65,8 @@ describe('the tempo (issue 112)', () => {
     expect(engine.handed.at(-1)).toEqual({ bpm: 128, origin: 5.3 });
     // Set by hand meanwhile: nothing changes until the player stops.
     tempo.set(150);
-    tempo.tap();
-    tempo.tap();
+    tempo.tapTempo();
+    tempo.tapTempo();
     expect(tempo.get().bpm).toBe(128);
     engine.time = 9;
     tempo.giveBack();
@@ -137,8 +137,8 @@ describe('the tempo follows a MIDI clock (issue 136)', () => {
     const { tempo, engine, ticks, wait, storage } = following();
     ticks(90, 4);
     tempo.set(140);
-    tempo.tap();
-    tempo.tap();
+    tempo.tapTempo();
+    tempo.tapTempo();
     expect(tempo.get().bpm).toBe(90);
     const handed = engine.handed.length;
     wait(0.5);

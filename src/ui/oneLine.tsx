@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef } from 'react';
+import { type ReactNode, useLayoutEffect, useRef } from 'react';
 import { screenForms } from './shortForms';
 
 /**
@@ -36,15 +36,48 @@ export function Forms({ name }: { name: string }) {
   ));
 }
 
-/** Shows each `Forms` in an element at a step of shortening: its form there, or its shortest. */
-function showStep(el: HTMLElement, step: number) {
-  const groups = new Set([...el.querySelectorAll('[data-form]')].map((form) => form.parentElement!));
+/** Shows each `Forms` in an element (those `within` a selector, if given) at a step of shortening: its form there, or its shortest. */
+function showStep(el: HTMLElement, step: number, within = '') {
+  const groups = new Set([...el.querySelectorAll(`${within} [data-form]`)].map((form) => form.parentElement!));
   for (const group of groups) {
     const forms = [...group.children].filter((c): c is HTMLElement => c instanceof HTMLElement && 'form' in c.dataset);
     forms.forEach((form, i) => {
       form.hidden = i !== Math.min(step, forms.length - 1);
     });
   }
+}
+
+/**
+ * Steps the `Forms` in `el` (those `within` a selector, if given) down together until `fits` says the element holds
+ * them, at worst their shortest (`step` told each step tried), and does so again whenever its size changes, the fonts
+ * arrive, or (with `watchContent`) the names in it change. Gives back what stops the watching.
+ */
+function keepShortening(
+  el: HTMLElement,
+  { within = '', fits, step: onStep, watchContent = false }: { within?: string; fits(el: HTMLElement): boolean; step?(step: number, last: boolean): void; watchContent?: boolean },
+) {
+  const shorten = () => {
+    const steps = Math.max(1, ...[...el.querySelectorAll(`${within} [data-form]`)].map((f) => Number((f as HTMLElement).dataset.form) + 1));
+    for (let step = 0; step < steps; step++) {
+      onStep?.(step, step === steps - 1);
+      showStep(el, step, within);
+      if (fits(el)) break;
+    }
+  };
+  shorten();
+  let live = true;
+  document.fonts?.ready.then(() => live && shorten());
+  const sized = new ResizeObserver(shorten);
+  sized.observe(el);
+  // Controls or names added, taken away or swapped: not the forms shown or hidden here (attributes), nor a value's text
+  // changing as it turns (characters), which would measure the row at every turn.
+  const changed = new MutationObserver(shorten);
+  if (watchContent) changed.observe(el, { childList: true, subtree: true });
+  return () => {
+    live = false;
+    sized.disconnect();
+    changed.disconnect();
+  };
 }
 
 /**
@@ -59,24 +92,47 @@ export function useOneLine<T extends HTMLElement>(holds: string) {
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const steps = Math.max(1, ...[...el.querySelectorAll('[data-form]')].map((f) => Number((f as HTMLElement).dataset.form) + 1));
-    const shorten = () => {
-      for (let step = 0; step < steps; step++) {
+    return keepShortening(el, {
+      fits: onOneLine,
+      step: (step, last) => {
         el.dataset.step = String(step);
-        el.toggleAttribute('data-shortest', step === steps - 1); // its styles may tighten there too
-        showStep(el, step);
-        if (onOneLine(el)) break;
-      }
-    };
-    shorten();
-    let live = true;
-    document.fonts?.ready.then(() => live && shorten());
-    const observer = new ResizeObserver(shorten);
-    observer.observe(el);
-    return () => {
-      live = false;
-      observer.disconnect();
-    };
+        el.toggleAttribute('data-shortest', last); // its styles may tighten there too
+      },
+    });
   }, [holds]);
   return ref;
+}
+
+/** The knobs' and faders' names in a row, the step they shorten together. */
+const ROW_NAMES = '.knob-label';
+
+/**
+ * Whether a row's controls sit on one line, their names inside it: every name's top the same (a control wrapped to a
+ * second line sits lower), none running past the row's edges (a row kept from wrapping runs past them instead).
+ */
+function rowOnOneLine(row: HTMLElement): boolean {
+  const box = row.getBoundingClientRect();
+  const names = [...row.querySelectorAll<HTMLElement>(ROW_NAMES)].map((n) => n.getBoundingClientRect()).filter((r) => r.width);
+  const tops = names.map((r) => r.top);
+  if (!tops.length) return true;
+  return Math.max(...tops) - Math.min(...tops) < 2 && names.every((r) => r.left >= box.left - 0.5 && r.right <= box.right + 0.5);
+}
+
+/**
+ * A row of knobs and faders whose names take shorter forms where the row runs short (issue 223): a knob's column is as
+ * wide as its name, so a name runs short when its row would wrap a control to a second line, as a wider font (Linux's,
+ * a larger text setting) can make it. Every name in the row steps down together, as the Timeline's key does, the
+ * longest forms that keep the row on one line; at worst their shortest. Measured again as the row's size, its
+ * controls, their names or the fonts change.
+ */
+export function KnobRow({ className, children }: { className?: string; children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    if (ref.current) return keepShortening(ref.current, { within: ROW_NAMES, fits: rowOnOneLine, watchContent: true });
+  }, []);
+  return (
+    <div ref={ref} className={className ? `knobs ${className}` : 'knobs'}>
+      {children}
+    </div>
+  );
 }

@@ -10,6 +10,14 @@ export function frequencyText(hz: number): string {
   return hz < 10 ? `${hz.toFixed(2)} Hz` : `${Math.round(hz)} Hz`;
 }
 
+/**
+ * A frequency as a tip reads it: as a knob does, but under 0.1 Hz to three figures, where two decimals would hide it
+ * ("0.0417 Hz", not "0.04 Hz"; "0.05 Hz" stays), so a period worked out beside it reads true (issue 225).
+ */
+export function preciseFrequencyText(hz: number): string {
+  return hz < 0.1 ? `${Number(hz.toPrecision(3))} Hz` : frequencyText(hz);
+}
+
 /** Equal-tempered frequency of a MIDI note number, tuned to A4 = 440 Hz. */
 export function noteToFrequency(midiNote: number): number {
   return A4_HZ * 2 ** ((midiNote - A4_MIDI) / 12);

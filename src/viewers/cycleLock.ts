@@ -40,6 +40,19 @@ function hann(n: number): Float32Array {
   return window;
 }
 
+/** The correlation with the fundamental, per sample, under which a buffer has none to lock to. */
+const NO_FUNDAMENTAL = 1e-6;
+/** The correlation is at most √2·n times the loudest sample, so a buffer quieter than this has no fundamental. */
+const QUIET = NO_FUNDAMENTAL / Math.SQRT2;
+/**
+ * Whether every sample is too quiet for a fundamental to be found: a silent Tap skips the search (review 18, issue
+ * 213), and a buffer with sound in it is searched. Indexed, as `for…of` over the samples costs more than the search.
+ */
+function silent(samples: Float32Array): boolean {
+  for (let i = 0; i < samples.length; i++) if (samples[i] >= QUIET || samples[i] <= -QUIET) return false;
+  return true;
+}
+
 /** Reads the pitch along `n` samples into `at` and `omega`: false where there is none. */
 function readPitch(n: number, sampleRate: number, frequencyAt: (i: number) => number): boolean {
   at.length = 0;
@@ -82,7 +95,7 @@ export function risingZeros(
   count: number,
 ): number[] {
   const n = samples.length;
-  if (n < 2 || !readPitch(n, sampleRate, frequencyAt)) return [];
+  if (n < 2 || silent(samples) || !readPitch(n, sampleRate, frequencyAt)) return [];
   const segments = at.length - 1;
   // The phase φ at each reading, and the correlation with sin φ and cos φ: within a segment ω grows by a step a
   // sample, so sin and cos follow by two rotations rather than trigonometry per sample.
@@ -118,7 +131,7 @@ export function risingZeros(
     phi += omega[k] * length + (step * length * (length - 1)) / 2;
   }
   phase.push(phi);
-  if (Math.hypot(s, c) < 1e-6 * n) return [];
+  if (Math.hypot(s, c) < NO_FUNDAMENTAL * n) return [];
 
   // Within segment k the phase at u samples in is φk + ωk·u + step·u(u − 1)/2; a rising zero is where φ + θ = 2πm.
   const theta = Math.atan2(c, s);

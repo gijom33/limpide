@@ -84,3 +84,5 @@ Claude's calls, open to the owner:
 
 What to try: play the Demo, then the Song, then a Hold rhythm, and each time switch to another tab or another window for half a minute, in Chrome and in Safari: nothing should be skipped or bunched, and coming back plays on smoothly. Then, in front, Stop and change Preset while each plays: as quick as before.
 
+
+**2026-11-03, from the 1.23.0 code review ([issue 227](./227-small-slips-in-the-new-features.md)):** back in front, the Notes the Song or Listen handed ahead while hidden kept the old Preset and octave for up to 2 s. Now the first tick in front takes them back and makes them again as they fall due.

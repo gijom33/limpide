@@ -9,6 +9,7 @@ import { SHARED_RIFF, TRACK, type Track } from '../../demo/track';
 import { shiftOctave } from '../../input/keyboardLayout';
 import { PRESETS } from '../../patch/presets';
 import type { TransportHost } from '../../play/transport';
+import { takesTouches, watchPersonScroll } from '../personScroll';
 import { SECTION_OF, type SectionName } from '../sections';
 import { freezesOnSpace } from './useKeys';
 
@@ -177,7 +178,7 @@ export function usePlayers({ session, octaveRef, setOctave, heldNotes, onDemoSta
         touched: touchedBy(target),
         displayOpen: displayOpen(),
         mouse: e.pointerType === 'mouse',
-        takesTouches: getComputedStyle(target).touchAction === 'none',
+        takesTouches: takesTouches(target),
       });
       if (decision === 'stop') tookOverNow();
       else if (decision === 'onLift') tap = e.pointerId;
@@ -186,23 +187,17 @@ export function usePlayers({ session, octaveRef, setOctave, heldNotes, onDemoSta
       if (e.pointerId === tap) tookOverNow();
     };
     const onCancel = () => (tap = null);
-    // The person scrolling: the page stops following the Demo's knobs until its next part. A finger on a knob or the
-    // piano (which take touches themselves) is not scrolling.
-    const onWheel = () => (followPaused.current = true);
-    const onTouchMove = (e: TouchEvent) => {
-      if (e.target instanceof Element && getComputedStyle(e.target).touchAction !== 'none') followPaused.current = true;
-    };
+    // The person scrolling, as the Tour reads it (issue 227): the page stops following the Demo's knobs until its next
+    // part.
+    const unwatch = watchPersonScroll(() => (followPaused.current = true));
     // In the capture phase, before Display's own Escape or outside click closes it.
     window.addEventListener('keydown', onKey, true);
-    window.addEventListener('wheel', onWheel, { passive: true });
-    window.addEventListener('touchmove', onTouchMove, { passive: true });
     window.addEventListener('pointerdown', onPointer, true);
     document.addEventListener('pointerup', onLift);
     document.addEventListener('pointercancel', onCancel);
     return () => {
       window.removeEventListener('keydown', onKey, true);
-      window.removeEventListener('wheel', onWheel);
-      window.removeEventListener('touchmove', onTouchMove);
+      unwatch();
       window.removeEventListener('pointerdown', onPointer, true);
       document.removeEventListener('pointerup', onLift);
       document.removeEventListener('pointercancel', onCancel);

@@ -39,6 +39,17 @@ describe('Encoder Mode detection', () => {
     expect(detectEncoderMode([0])).toBe('absolute');
   });
 
+  it('reads a fader nudged off an end by any small rise as Absolute, not only by single steps (issue 227)', () => {
+    expect(detectEncoderMode([2])).toBe('absolute'); // a lone 2, nudged from the bottom
+    expect(detectEncoderMode([1, 3, 6, 10])).toBe('absolute'); // pushed up faster and faster
+    expect(detectEncoderMode([125])).toBe('absolute'); // nudged from the top
+    expect(detectEncoderMode([125, 122, 118])).toBe('absolute');
+    // An encoder's turn still reads as Relative: it goes back on itself, repeats, or starts at 127.
+    expect(detectEncoderMode([2, 5, 7, 3])).toBe('relative-twos');
+    expect(detectEncoderMode([1, 1, 2])).toBe('relative-twos');
+    expect(detectEncoderMode([127, 125, 122])).toBe('relative-twos');
+  });
+
   it("reads a first-layout C16 knob's first turn: Relative when it repeats or varies its step, Absolute when it steps through positions (issue 144)", () => {
     // A quick turn of an endless encoder: its steps vary, all near 0 or near 64.
     expect(detectKnobMode([3, 2, 4])).toBe('relative-twos');

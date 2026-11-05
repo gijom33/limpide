@@ -1,3 +1,4 @@
+import { LONGEST_STEP } from './mascotPlace';
 import { watchPersonScroll } from './personScroll';
 
 /**
@@ -14,11 +15,13 @@ const ease = (t: number) => 0.5 - Math.cos(Math.PI * t) / 2;
 /**
  * Scrolls the page to `top` over `ms`, frame by frame. The person's own scroll (`watchPersonScroll`), or any other
  * scroll of the page meanwhile, stops it at once, where it is. `onEnd` is called once it stops, arrived or not. Returns
- * a stop of its own.
+ * a stop of its own. Its time goes as Bead's motion does, at most LONGEST_STEP a frame: on a device drawing fewer than
+ * 20 frames a second both slow together, so Bead's fall or flight still lands before the page stops (issue 224).
  */
 export function glideTo(top: number, ms: number, onEnd: () => void): () => void {
   const from = scrollY;
-  let start: number | null = null;
+  let last: number | null = null;
+  let elapsed = 0;
   // Where it last put the page, as the browser rounded it.
   let written = from;
   let frame = 0;
@@ -34,8 +37,9 @@ export function glideTo(top: number, ms: number, onEnd: () => void): () => void 
   const step = (now: number) => {
     // Scrolled meanwhile by something else: it gives way.
     if (Math.abs(scrollY - written) > 2) return stop();
-    start ??= now;
-    const t = Math.min(1, (now - start) / ms);
+    elapsed += last === null ? 0 : Math.min(LONGEST_STEP * 1000, now - last);
+    last = now;
+    const t = Math.min(1, elapsed / ms);
     const end = Math.max(0, Math.min(top, document.documentElement.scrollHeight - innerHeight));
     scrollTo({ top: from + (end - from) * ease(t), behavior: 'instant' });
     written = scrollY;

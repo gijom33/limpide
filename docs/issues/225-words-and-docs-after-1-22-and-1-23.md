@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement. Polish for v1
+**Status:** ready-for-human · enhancement. Built (2026-11-03) on night/2026-11-03, for the owner to try
 
 ## Decisions
 
@@ -39,10 +39,34 @@ Claude's calls, open to the owner (2026-11-03, triage):
 - The frequency formatter
 
 **Acceptance criteria:**
-- [ ] A new ADR supersedes ADR-0007's chord line, ADR-0007's Status line pointing to it
-- [ ] Each item above reworded, renamed or mended
-- [ ] The slow Rate's tip reads its figure to three significant digits, a test with 40 BPM and 4 bars
-- [ ] The words test and every renamed test pass
+- [x] A new ADR supersedes ADR-0007's chord line, ADR-0007's Status line pointing to it
+- [x] Each item above reworded, renamed or mended
+- [x] The slow Rate's tip reads its figure to three significant digits, a test with 40 BPM and 4 bars
+- [x] The words test and every renamed test pass
 
 **Out of scope:**
 - New words or tips
+
+## How it was built
+
+On the night branch, each item checked against the code as it stands there:
+
+- **ADR-0022** supersedes ADR-0007's line that the Amp Scope cannot Cycle Lock during a chord: it locks to the newest Note, as 180's decision 7 says. ADR-0007's Status line reads "accepted; superseded in part by ADR-0022".
+- **The slow Rate's figure:** a tip now reads a frequency under 0.1 Hz to three significant figures, trailing zeros dropped: at 40 BPM, "4 bars is 0.0417 Hz" (a test, with 120 BPM's "0.13 Hz" kept). The free Rate's tip under the hood used the same formatter and read "T = 1 / 0.05 Hz = 18.6 s" at 0.0537 Hz; it now reads "0.0537 Hz" (a test). The knob readouts, the Rate's "spoken" value and the synced readout keep two decimals; 0.05 Hz still reads "0.05 Hz".
+- **Perfect Fifth:** "The Scope holds it still at any cycles: 1 shows half the pattern, 2 or 4 show it whole."
+- **Glow:** "fade over a quarter of a second (15 frames at 60 a second)", in the tip, `CONTEXT.md` and the setting's comment.
+- **The Display tooltip** lists "which Voices the Viewers follow" after Snapshot, in the panel's order.
+- **The PRD's renderers' state** names Glow's kept traces.
+- **Test names:** seven engine tests, not five, said Cycle Lock while testing `fundamental()`, the held fundamental the Scope's window, its period readout and the Harmonic Markers read; all seven now say "the held fundamental". The one that tests `fundamentalAt()`, which Cycle Lock reads, keeps its name. The mascot Demo test now says it checks where Bead rests, surfing free to pass over text.
+- **180's first box** stays ticked and now gives the figures: FM at 1.414, Ring at 2.38 and the triad at 136 %, 130 % and 67 % on the Amp Tap against the 10 %, merged at the owner's word.
+- **FM's History** keeps 1975 (decision 3: the stronger source's year): the archive's dated list of the signing (S15, A) against Yamaha's remembrance counting back "seven years" (S33, B). The research notes say why; the line still cites S33 for the DX7.
+
+Claude's calls, open to the owner:
+
+1. The three-figure reading also applies to the free Rate's period tip, as decision 2 asks "wherever the same formatter would else read wrong"; trailing zeros dropped, so 0.05 Hz stays "0.05 Hz" and not "0.0500 Hz".
+2. Seven test names renamed where the inbox counted five: the two more (Glide, the Sub's Mix) tested the held fundamental too.
+3. ADR-0022 is credited to the owner's decision in 180, its recording to Claude.
+
+To look at: the Rate's tip with Sync on at 40 BPM and 4 bars; Perfect Fifth's description; the Glow and Display tips; ADR-0022.
+
+Tests: `npx tsc`, `npm run lint`, the words, tips, music, Presets and engine unit tests (549 passed, the seven renamed among them), and in Chromium the mascot and Display panel specs touched (32 passed, the renamed Demo test among them).

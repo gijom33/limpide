@@ -291,6 +291,23 @@ test.describe('on a phone', () => {
     expect(await page.evaluate(() => scrollY)).toBe(0);
     await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
   });
+
+  test('Page Down is a scroll of the person’s own: the Demo plays on and stops following until the next part (issue 227)', async ({ page }) => {
+    await page.goto('/');
+    await demo(page).click();
+    const gap = () =>
+      page.evaluate(() => document.querySelector('section[aria-label="Filter"]')!.getBoundingClientRect().top - document.querySelector('.section-strip')!.getBoundingClientRect().bottom);
+    await expect.poll(gap, { timeout: 5000 }).toBeLessThan(20);
+    await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur()); // the page has the keys
+    const before = await page.evaluate(() => scrollY);
+    await page.keyboard.press('PageDown');
+    await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(before + 100);
+    await page.waitForTimeout(800); // the page's own smooth scroll lands
+    const mine = await page.evaluate(() => scrollY);
+    await page.waitForTimeout(4000); // past the Amp's Decay starting to move, still in the intro
+    expect(await page.evaluate(() => scrollY)).toBe(mine);
+    await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
+  });
 });
 
 // Issue 152: in 2 × 2 the header is three rows tall, as on a phone. A section the Demo follows that sits under it

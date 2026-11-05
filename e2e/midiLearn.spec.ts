@@ -128,6 +128,41 @@ test('an Action learns a toggle button as Toggle and a momentary one as Momentar
   await expect(patchName).toHaveAttribute('aria-label', 'Patch: Pure Sine'); // one step, not two
 });
 
+test('a toggle and a momentary button learned on LFO 1 Sync each flip it once a press (issue 223)', async ({ page }) => {
+  const sync = page.getByRole('button', { name: 'LFO 1 Sync', exact: true });
+  const mappings = midiPanel(page).getByRole('list', { name: 'Mappings' });
+  await expect(sync).toHaveAttribute('aria-pressed', 'false');
+  // A toggle: one message a press.
+  await startLearn(page);
+  await sync.click();
+  await play(page, cc(51, 127));
+  await expect(learnBar(page)).toContainText(/LFO 1 Sync.*CC 51/);
+  await page.keyboard.press('Escape');
+  await expect(sync).toHaveAttribute('aria-pressed', 'false'); // learning switched nothing
+  await openMidi(page);
+  await expect(mappings).toContainText(/LFO 1 Sync.*CC 51 · Toggle/);
+  await play(page, cc(51, 0)); // the toggle's next press, its light going off
+  await expect(sync).toHaveAttribute('aria-pressed', 'true');
+  await play(page, cc(51, 127));
+  await expect(sync).toHaveAttribute('aria-pressed', 'false');
+  await page.keyboard.press('Escape');
+
+  // A momentary button learned in its place: pressed, let go.
+  await startLearn(page);
+  await sync.click();
+  await play(page, cc(52, 127), cc(52, 0));
+  await expect(learnBar(page)).toContainText(/LFO 1 Sync.*CC 52/);
+  await page.keyboard.press('Escape');
+  await expect(sync).toHaveAttribute('aria-pressed', 'false');
+  await openMidi(page);
+  await expect(mappings).toContainText(/LFO 1 Sync.*CC 52 · Momentary/);
+  await play(page, cc(52, 127));
+  await expect(sync).toHaveAttribute('aria-pressed', 'true');
+  await play(page, cc(52, 0)); // its release leaves it
+  await play(page, cc(52, 127), cc(52, 0));
+  await expect(sync).toHaveAttribute('aria-pressed', 'false');
+});
+
 test('the Activity Monitor shows the last message received', async ({ page }) => {
   await openMidi(page);
   const monitor = midiPanel(page).getByRole('status', { name: 'MIDI activity' });
@@ -290,7 +325,7 @@ test('each Action does its own job from its own pad: Next and Previous Preset, F
   await expect(page.getByRole('button', { name: 'Hold' })).toHaveAttribute('aria-pressed', 'true');
 });
 
-test('the tempo learns a knob and Tap a pad; a knob on an LFO’s Rate turns its note value while Sync is on (issue 112)', async ({ page }) => {
+test('the tempo learns a knob and Tap Tempo a pad; a knob on an LFO’s Rate turns its note value while Sync is on (issue 112)', async ({ page }) => {
   const bpm = page.getByRole('spinbutton', { name: 'Tempo' });
   const rate = page.getByRole('slider', { name: 'LFO 1 Rate' });
   await startLearn(page);
@@ -298,9 +333,9 @@ test('the tempo learns a knob and Tap a pad; a knob on an LFO’s Rate turns its
   await expect(learnBar(page)).toContainText(/Tempo/);
   await play(page, ...times(4, cc(30, 1)));
   await expect(learnBar(page)).toContainText(/Tempo.*CC 30/);
-  await page.getByRole('button', { name: 'Tap', exact: true }).click();
+  await page.getByRole('button', { name: 'Tap Tempo', exact: true }).click();
   await play(page, [0x99, 38, 100], [0x89, 38, 0]);
-  await expect(learnBar(page)).toContainText(/Tap.*Note D2/);
+  await expect(learnBar(page)).toContainText(/Tap Tempo.*Note D2/);
   await rate.click();
   await play(page, ...times(4, cc(31, 1)));
   await expect(learnBar(page)).toContainText(/LFO 1 Rate.*CC 31/);
@@ -314,8 +349,8 @@ test('the tempo learns a knob and Tap a pad; a knob on an LFO’s Rate turns its
   await expect(rate).toHaveAttribute('aria-valuetext', /^1\/8 D, /);
   await page.getByRole('button', { name: 'LFO 1 Sync' }).click();
   await expect(rate).toHaveAttribute('aria-valuetext', /Hz$/);
-  // The pad mapped to Tap, twice about half a second apart: the tempo follows the taps as they came. The page's
-  // clock times them as Tap does, since a busy machine wakes a 500 ms timer late (60 ms late is 107 BPM, issue
+  // The pad mapped to Tap Tempo, twice about half a second apart: the tempo follows the taps as they came. The page's
+  // clock times them as Tap Tempo does, since a busy machine wakes a 500 ms timer late (60 ms late is 107 BPM, issue
   // 177): the BPM is checked against the gap that was played, not the one asked for.
   const gap = await page.evaluate(async () => {
     const { playMidi } = window as unknown as { playMidi(bytes: number[]): void };

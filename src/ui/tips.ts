@@ -3,7 +3,8 @@ import { describeMode } from '../midi/describe';
 import type { ControllerId } from '../midi/mappings';
 import { DESTINATIONS } from '../modulation/destinations';
 import { syncedRateUnderTheHood, UNDER_THE_HOOD, underTheHoodAt } from '../music/geek';
-import { formatSyncedRate } from '../music/tempo';
+import { preciseFrequencyText } from '../music/pitch';
+import { formatSyncedRate, noteHz, TEMPO_STEPS } from '../music/tempo';
 import { stepWords } from '../patch/grid';
 import { LFO_DESTINATIONS, type LfoDestination, PARAMS, type ParamId } from '../patch/patch';
 import type { Overlay } from '../viewers/overlays';
@@ -62,7 +63,7 @@ export const TIPS = {
   midi: { title: 'MIDI', body: '', history: HISTORY.midi },
   quickSetup: {
     title: 'Quick Setup',
-    body: 'Maps your Controller in one pass: it asks for a control for each knob and fader played live (the big knobs and the faders), the Filter’s first, then in the page’s order from the Oscillators to the LFOs, then a button for Hold, Freeze, Snapshot, the Preset arrows and Tap. Settings made once for a sound (Octave, the Waveforms, Filter Mode, Glide, Voices…) are left to MIDI Learn.',
+    body: 'Maps your Controller in one pass: it asks for a control for each knob and fader played live (the big knobs and the faders), the Filter’s first, then in the page’s order from the Oscillators to the LFOs, then a button for Hold, Freeze, Snapshot, the Preset arrows and Tap Tempo. Settings made once for a sound (Octave, the Waveforms, Filter Mode, Glide, Voices…) are left to MIDI Learn.',
     how: 'Skip any step. Finish (or Escape) keeps what is mapped; Cancel puts back your Mappings from before.',
   },
   c16Layout: {
@@ -91,8 +92,8 @@ export const TIPS = {
   },
   glow: {
     title: 'Glow',
-    body: 'Each Scope’s trace and each Spectrum’s outline fade over a few frames, as on an analogue oscilloscope: a sound that stands still stays sharp, one that moves (Noise, a detuned Osc 2, a chord, a Filter Envelope’s sweep) leaves a soft glow of the last quarter of a second, fading by half every 70 ms or so. Off, the Scopes and Spectrums show only now. Your choice is remembered.',
-    how: 'Turn it on with some Noise in the Mixer: the flicker softens into a cloud.',
+    body: 'Past traces fade over a quarter of a second (15 frames at 60 a second), as on an analogue oscilloscope: a sound that stands still stays sharp, one that moves (Noise, a detuned Osc 2, a chord, a Filter Envelope’s sweep) leaves a soft glow, fading by half every 70 ms or so. Off: the Scopes and Spectrums show only now. Scopes: the Scopes’ traces glow. All: the Scopes’ traces and the Spectrums’ outlines. Your choice is remembered.',
+    how: 'Choose Scopes or All with some Noise in the Mixer: the flicker softens into a cloud.',
   },
   voices: {
     title: 'Voices',
@@ -218,7 +219,7 @@ export const TIPS = {
   },
   aftertouch: {
     title: 'Aftertouch',
-    body: 'Press harder on a held key and this Destination rises, as on a plugin synth: nothing at a light touch, as far as one LFO at full Depth swings it at the hardest, on top of its knob and the LFOs. The Cutoff opens up to two octaves, so pressing brightens the sound. The dot on its knob and its LFO & Envelopes line show the move.',
+    body: 'Press harder on a held key and this Destination rises, as on a plugin synth: nothing at a light touch, as far as one LFO at full Depth swings it at the hardest, on top of its knob and the LFOs. The Cutoff opens up to two octaves, so pressing brightens the sound; the Resonance rises half the way to its top. The dot on its knob and its LFO & Envelopes line show the move.',
     how: 'Not every keyboard sends aftertouch: press a held key harder and see whether the Last message says Aftertouch. A keyboard or pad that senses each key’s pressure (polyphonic) moves it by the key pressed hardest.',
   },
   bendRange: {
@@ -388,13 +389,14 @@ export const TIPS = {
   tempo: {
     title: 'Tempo',
     body: 'The page’s beats per minute (BPM), which every LFO with Sync on follows: its note value is a share of a beat, so at a new tempo its speed changes with it, and a synced wobble keeps to the beat. Drag it or use the arrows; double-click or Enter to type it. Loading a Preset leaves it as it is.',
+    keys: stepWords(TEMPO_STEPS.grid),
   },
   tempoOpen: {
     title: 'Tempo',
-    body: 'The page’s beats per minute (BPM), which every LFO with Sync on follows. Press it to set it: the BPM and Tap open below it. Loading a Preset leaves it as it is.',
+    body: 'The page’s beats per minute (BPM), which every LFO with Sync on follows. Press it to set it: the BPM and Tap Tempo open below it. Loading a Preset leaves it as it is.',
   },
   tempoClock: { title: 'Tempo', body: 'Following a MIDI clock: the tempo is the clock’s while it runs, so it cannot be set here. When its ticks stop, its last BPM stays, yours to change.' },
-  tap: { title: 'Tap', body: 'Tap it in time with the music: from the second tap the tempo follows your last four, its beat where you last tapped, and every synced LFO’s speed follows it.' },
+  tapTempo: { title: 'Tap Tempo', body: 'Tap it in time with the music: from the second tap the tempo follows your last four, its beat where you last tapped, and every synced LFO’s speed follows it.' },
   lfoDepth: {
     title: 'Depth',
     body: 'How far the LFO moves its Destination. At 0 it moves nothing.',
@@ -455,7 +457,8 @@ export function paramTipAt(id: ParamId, value: number): TipContent {
  * width (issue 176), and under the hood the conversion worked out with the live numbers (issue 137).
  */
 export function syncedRateTip(index: number, bpm: number): TipContent {
-  const { note, hz } = formatSyncedRate(index, bpm);
+  const { note } = formatSyncedRate(index, bpm);
+  const hz = preciseFrequencyText(noteHz(index, bpm)); // to three figures where slow (issue 225)
   return { ...PARAM_TIPS.lfoNote, body: `${TIPS.lfoNote.body} At ${bpm} BPM, ${note} is ${hz}.`, underTheHood: syncedRateUnderTheHood(index, bpm) };
 }
 

@@ -33,10 +33,14 @@ async function midi(name: string | readonly string[] = 'Keystation 49', stored: 
     onProgram: (number: number) => void told.push(`program ${number}`),
     onPressure: (amount: number) => void told.push(`pressure ${amount.toFixed(1)}`),
   };
-  const hook = await renderHook(useMidi, host);
+  let renders = 0;
+  const hook = await renderHook((h: typeof host) => {
+    renders++;
+    return useMidi(h);
+  }, host);
   await act(async () => hook.result.current.connect());
   await vi.waitFor(() => expect(hook.result.current.midi.kind).toBe('ready'));
-  return { ...hook, ...device, session, played, told, host };
+  return { ...hook, ...device, session, played, told, host, renders: () => renders };
 }
 
 describe('useMidi: a Controller (the 1.16.0 review)', () => {
@@ -84,7 +88,18 @@ describe('useMidi: a Controller (the 1.16.0 review)', () => {
     await m.send(0xd0, 127);
     expect(m.told).toEqual(['pressure 0.0', 'pressure 1.0']);
     expect(m.result.current.pressureHeard).toBe(true);
-    expect(m.result.current.activity).toBe('ch 1 · Aftertouch · 100 %');
+    expect(m.result.current.activity.get()).toBe('ch 1 · Aftertouch · 100 %');
+  });
+
+  it('shows each message in the Activity line without rendering the page again (issue 217)', async () => {
+    const m = await midi();
+    unmount = m.unmount;
+    await m.send(0xd0, 127); // the first press is heard once: the Timeline starts drawing what it moves
+    const before = m.renders();
+    for (let value = 0; value < 50; value++) await m.send(0xd0, value);
+    await m.send(0xb0, 1, 64);
+    expect(m.renders()).toBe(before);
+    expect(m.result.current.activity.get()).toBe('ch 1 · CC 1 · 64');
   });
 
   it('hands per-Note aftertouch to the host too, the Activity Monitor naming its Note (issue 132)', async () => {
@@ -95,7 +110,7 @@ describe('useMidi: a Controller (the 1.16.0 review)', () => {
     await m.send(0xa9, 36, 127);
     expect(m.told).toEqual(['pressure 0.0', 'pressure 1.0']);
     expect(m.result.current.pressureHeard).toBe(true);
-    expect(m.result.current.activity).toBe('ch 10 · Aftertouch C2 · 100 %');
+    expect(m.result.current.activity.get()).toBe('ch 10 · Aftertouch C2 · 100 %');
   });
 
   it('acts on a pad mapped to an Action: Hold through the host, the next Preset in the Patch', async () => {

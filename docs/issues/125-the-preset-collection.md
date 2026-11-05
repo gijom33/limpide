@@ -63,7 +63,7 @@
 
 | Preset (family) | C2 / C4 / C6 | Changed from the report |
 |---|---|---|
-| Riser (Movement & Effects) | −22.0 / −21.6 / −21.9 | Key Track 100 % (C6 was 5 dB over the family) |
+| Riser (Movement & Effects) | −22.0 / −21.6 / −21.9 | Key Track 100 % (C6 was 5 dB over the family) *(2026-11-03: 50 % since [226](./226-two-presets-high-up.md), so it no longer falls silent high up; C6 −19.6, 2.5 dB over its family)* |
 | Sub Drop (Movement & Effects) | −21.9 / −21.8 / −21.8 | Volume 50 % |
 | Phase Pad (Pads) | −26.7 / −24.4 / −25.0 | none |
 | Flute (Leads) | −18.7 / −18.7 / −18.8 | none |

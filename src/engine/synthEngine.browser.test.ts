@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DIP, envelopeLevel, type GateEvent } from '../modulation/envelope';
-import { lfoOffset, osc2Cents } from '../modulation/modulationModel';
+import { lfoOffset, osc2Cents, type Pressure } from '../modulation/modulationModel';
 import { geekReadout, harmonicNumber, noiseSlope, scopeReadout, syncedRateUnderTheHood, UNDER_THE_HOOD, underTheHoodAt } from '../music/geek';
 import { harmonicSeries, type Waveform } from '../music/harmonics';
 import { fmDepthKept, idealPartials, idealReference } from '../music/idealReference';
@@ -12,7 +12,7 @@ import { straightenLimiter } from '../test/straightLimiter';
 import { guideLevel } from '../viewers/guides';
 import { hoverReadout, interpolatedPeak } from '../viewers/readout';
 import { amplitudeToSpectrumDb } from '../viewers/spectrumScale';
-import { createSynthEngine, OSCILLATOR_LEVEL } from './synthEngine';
+import { createSynthEngine, OSCILLATOR_LEVEL, SAFETY_KNEE } from './synthEngine';
 
 const SR = 48000;
 
@@ -264,7 +264,7 @@ describe('shared scale across Taps', () => {
 });
 
 describe('fundamental', () => {
-  it('reports the sounding Note’s frequency for Cycle Lock, starting at A4 because the Oscillator runs from the start', () => {
+  it('reports the sounding Note’s held fundamental, starting at A4 because the Oscillator runs from the start', () => {
     const engine = createSynthEngine(new OfflineAudioContext(1, SR, SR));
     engine.applyPatch(defaultPatch());
     expect(engine.fundamental()).toBeCloseTo(440);
@@ -291,7 +291,7 @@ describe('fundamental', () => {
 });
 
 describe('pitch bend (issue 52)', () => {
-  it('moves the sound by its cents, and the model and Cycle Lock with it', async () => {
+  it('moves the sound by its cents, and the model and the held fundamental with it', async () => {
     const A2 = 45; // 110 Hz
     const steady = { resonance: 0, ampAttack: 0.001, ampSustain: 1, cutoff: 20000 };
     let engine!: ReturnType<typeof createSynthEngine>;
@@ -1423,7 +1423,7 @@ describe('LFO (model-driven, ADR-0003)', () => {
 });
 
 describe('Glide', () => {
-  it('slides the pitch to the new Note over the Glide time, as the model says, and Cycle Lock follows it', async () => {
+  it('slides the pitch to the new Note over the Glide time, as the model says, and the held fundamental follows it', async () => {
     const ctx = new OfflineAudioContext(1, SR, SR);
     const engine = createSynthEngine(ctx);
     engine.applyPatch({ ...defaultPatch(), cutoff: 20000, waveform: 'sine', glide: 0.4, ampSustain: 1, ampAttack: 0.001 });
@@ -1482,12 +1482,12 @@ describe('Velocity → Cutoff', () => {
 });
 
 describe('aftertouch (issue 132)', () => {
-  // The Cutoff at no pressure and full: two octaves up (Claude's call, open to the owner); the Resonance, a knob with a
-  // room, at half: 50 points up from 0.2.
+  // The Cutoff at no pressure and full: two octaves up (Claude's call, open to the owner); the Resonance at half: a
+  // quarter of the way from 0.2 to its top (issue 219), to 0.4.
   const cases = [
     { pressure: { destination: 'cutoff', amount: 0 }, cutoff: 300, resonance: 0 },
     { pressure: { destination: 'cutoff', amount: 1 }, cutoff: 1200, resonance: 0 },
-    { pressure: { destination: 'resonance', amount: 0.5 }, cutoff: 300, resonance: 0.7, knob: 0.2 },
+    { pressure: { destination: 'resonance', amount: 0.5 }, cutoff: 300, resonance: 0.4, knob: 0.2 },
   ] as const;
   it('moves the Effective Cutoff and Resonance by the reach the model predicts, none at no pressure, and the sound follows', async () => {
     const harmonics = Float32Array.from({ length: 20 }, (_, i) => 110 * (i + 1));
@@ -1522,7 +1522,104 @@ describe('aftertouch (issue 132)', () => {
     }
   });
 
-  it('on Pitch, raises the sound by up to a semitone, the model and Cycle Lock with it, and leaves the knobs as they are', async () => {
+  /**
+   * Pressing harder and harder on `destination`, a message every 10 ms from none to full over two seconds: as a MIDI
+   * keyboard sends it, in 127ths (`steps`), or unquantised.
+   */
+  const pressHarder = (e: ReturnType<typeof createSynthEngine>, destination: Pressure['destination'], steps?: number) => {
+    for (let i = 0; i < 200; i++) e.setPressure({ destination, amount: steps ? Math.round((steps * i) / 200) / steps : i / 200 }, i / 100);
+  };
+
+  // Decision 5: under −60 dB from a keyboard's 127 steps, under −70 dB from a smooth stream. Steps made at once read
+  // about −52 and −57 dB. At Resonance 0.2: at 0.7 the Filter's peak sweeping through the Harmonics spreads them, and
+  // this measure reads about −40 dB however smooth the sweep.
+  it('glides its Destination, so pressing harder on the Cutoff or the Resonance adds next to nothing between the Harmonics (issue 219)', async () => {
+    for (const destination of ['cutoff', 'resonance'] as const) {
+      for (const [steps, under] of [[127, -60], [undefined, -70]] as const) {
+        const s = await render(2, { cutoff: 500, resonance: 0.2, ampAttack: 0.001, ampSustain: 1, lfoAmount: 0, lfo2Amount: 0 }, (e) => {
+          e.noteOn(45, 1, 0);
+          pressHarder(e, destination, steps);
+        });
+        expect(betweenHarmonicsDb(s, SR, 110, 65536), `${destination}, ${steps ?? 'unquantised'}`).toBeLessThan(under);
+      }
+    }
+  });
+
+  // Decision 5: aftertouch glides over a time constant of 16 ms: `elapsed` seconds after a step, this share of the way.
+  const glided = (elapsed: number) => 1 - Math.exp(-elapsed / 0.016);
+  const A6 = 93; // 1760 Hz: a sine's crossings measure its pitch within a few milliseconds
+  const sine: Partial<Patch> = { waveform: 'sine', cutoff: 20000, resonance: 0, volume: 0.4, ampAttack: 0.001, ampSustain: 1, lfoAmount: 0, lfo2Amount: 0 };
+  /** The time at the end of the `n`th 128-sample block, where a render can stop. */
+  const block = (n: number) => (n * 128) / SR;
+  /**
+   * A6 held, `act` on the engine; the Amp Tap's last `read` seconds before each of `times`, and the model at the middle
+   * of them. The Tap, not the output: the limiter's oversampling delays the output a few milliseconds.
+   */
+  const heldAndRead = async (times: number[], read: number, act: (e: ReturnType<typeof createSynthEngine>, ctx: OfflineAudioContext) => void) => {
+    const ctx = new OfflineAudioContext(1, SR * (Math.max(...times) + 0.1), SR);
+    const engine = createSynthEngine(ctx);
+    engine.applyPatch({ ...defaultPatch(), ...sine });
+    engine.noteOn(A6, 1, 0);
+    act(engine, ctx);
+    const reads = times.map((time) =>
+      ctx.suspend(time).then(() => {
+        const s = new Float32Array(engine.taps.amp.fftSize);
+        engine.taps.amp.getFloatTimeDomainData(s);
+        void ctx.resume();
+        return { s: s.subarray(s.length - read * SR), m: engine.modulationAt(time - read / 2) };
+      }),
+    );
+    await ctx.startRendering();
+    return Promise.all(reads);
+  };
+
+  it('glides in the model as in the sound: on Pitch, two thirds of a step 16 ms on, and all of it soon after (issue 219)', async () => {
+    const step = block(75);
+    const read = 0.004;
+    // From 15 to 19 ms after the step, around one time constant on; and long after.
+    const reads = await heldAndRead([block(82), block(300)], read, (e) => e.setPressure({ destination: 'pitch', amount: 1 }, step));
+    const semitones = (s: Float32Array) => 12 * Math.log2(frequencyAround(s, SR, read / 2, read) / 1760);
+    expect(reads[0].m.pitch - A6).toBeCloseTo(glided(block(82) - read / 2 - step), 6);
+    expect(reads[0].m.pressure.amount).toBeCloseTo(glided(block(82) - read / 2 - step), 6);
+    expect(semitones(reads[0].s)).toBeCloseTo(reads[0].m.pitch - A6, 2);
+    expect(reads[1].m.pitch - A6).toBeCloseTo(1, 6);
+    expect(semitones(reads[1].s)).toBeCloseTo(1, 2);
+  });
+
+  it('glides on Volume as the model does, a knob turned during the glide included (issue 219)', async () => {
+    const step = block(75);
+    const read = 0.001;
+    const times = [block(70), block(82), block(88), block(94), block(300)];
+    const reads = await heldAndRead(times, read, (e, ctx) => {
+      e.setPressure({ destination: 'volume', amount: 1 }, step);
+      // A knob that has nothing to do with the Volume, turned 8 ms into the glide: the glide carries on.
+      void ctx.suspend(block(78)).then(() => {
+        e.applyPatch({ ...defaultPatch(), ...sine, cutoff: 15000 });
+        return ctx.resume();
+      });
+    });
+    const peak = (s: Float32Array) => s.reduce((m, v) => Math.max(m, Math.abs(v)), 0);
+    expect(reads[1].m.volume).toBeCloseTo(0.4 + 0.5 * glided(block(82) - read / 2 - step), 6);
+    for (const { s, m } of reads.slice(1)) expect(peak(s) / peak(reads[0].s)).toBeCloseTo(m.volume / 0.4, 1);
+  });
+
+  // Decision 4: on the Resonance, aftertouch goes half the way from the knob to its top (half its range from none), so
+  // Wobble pressed hard does not ring past the limiter's knee: half the range added to its 0.65 reached the top, 0.87.
+  it("takes the Resonance half the way to its top, so Wobble at full pressure stays under the limiter's knee (issue 219)", async () => {
+    const wobble = PRESETS.find((p) => p.name === 'Wobble')!.patch;
+    for (const note of [33, 41, 45, 48]) {
+      const ctx = new OfflineAudioContext(1, SR * 2, SR);
+      straightenLimiter(ctx);
+      const engine = createSynthEngine(ctx);
+      engine.applyPatch(wobble);
+      engine.setPressure({ destination: 'resonance', amount: 1 });
+      engine.noteOn(note, 1, 0);
+      const s = (await ctx.startRendering()).getChannelData(0);
+      expect(s.reduce((m, v) => Math.max(m, Math.abs(v)), 0), `${note}`).toBeLessThan(SAFETY_KNEE);
+    }
+  });
+
+  it('on Pitch, raises the sound by up to a semitone, the model and the held fundamental with it, and leaves the knobs as they are', async () => {
     const A2 = 45; // 110 Hz
     let engine!: ReturnType<typeof createSynthEngine>;
     const s = await render(1, { resonance: 0, ampAttack: 0.001, ampSustain: 1, cutoff: 20000, lfoAmount: 0, lfo2Amount: 0 }, (e) => {
@@ -1631,7 +1728,7 @@ describe('Sub-oscillator', () => {
     expect(fundamental).toBeCloseTo(220);
   });
 
-  it('moves Cycle Lock and the Harmonic Markers to its own pitch, where the sound now repeats', async () => {
+  it('moves the held fundamental, and the Harmonic Markers with it, to its own pitch, where the sound now repeats', async () => {
     const { fundamental } = await oscillatorTap({ mixSub: 0.5 }, 57);
     expect(fundamental).toBeCloseTo(110);
   });
@@ -1847,7 +1944,7 @@ describe('Osc 1 Octave (issue 90)', () => {
     expect(dB(toneAmplitude(s, SR, 220) / toneAmplitude(s, SR, 110))).toBeLessThan(-60);
   });
 
-  it('counts Cycle Lock from Osc 1, and from the Sub below it', () => {
+  it('counts the held fundamental from Osc 1, and from the Sub below it', () => {
     const engine = createSynthEngine(new OfflineAudioContext(1, SR, SR));
     engine.applyPatch({ ...defaultPatch(), osc1Octave: -1 });
     engine.noteOn(57, 1, 0);
@@ -1884,7 +1981,7 @@ describe('the Sub’s Octave and Waveform (issue 91)', () => {
     expect(dB(toneAmplitude(s, SR, 165) / toneAmplitude(s, SR, 55))).toBeLessThan(-60);
   });
 
-  it('counts Cycle Lock from the Sub, two octaves down', () => {
+  it('counts the held fundamental from the Sub, two octaves down', () => {
     const engine = createSynthEngine(new OfflineAudioContext(1, SR, SR));
     engine.applyPatch({ ...defaultPatch(), mixSub: 1, subOctave: -2 });
     engine.noteOn(57, 1, 0);
@@ -3111,5 +3208,30 @@ describe('the Synth Geek Layer’s numbers on the Viewers, held to the engine (i
       const perOctave = dB(bandLevel(s, 4000) / bandLevel(s, 500)) / 3;
       expect(Math.abs(perOctave - Number.parseFloat(readout.split(': ')[1].replace('−', '-'))), noiseColour).toBeLessThan(0.5);
     }
+  });
+});
+
+describe("the model's settled past, which the Timeline keeps from frame to frame (issue 215)", () => {
+  it('is settled from the first Patch and the first Note: before them, they stand in for what came before', async () => {
+    const ctx = new OfflineAudioContext(1, SR, SR);
+    const engine = createSynthEngine(ctx);
+    expect(engine.settledFrom()).toBe(Infinity);
+    engine.applyPatch({ ...defaultPatch(), keyTrack: 1, lfoAmount: 0, lfo2Amount: 0 });
+    expect(engine.settledFrom()).toBe(Infinity); // no Note yet: the first one's key will stand in for the Key Track's
+    const before = engine.modulationAt(0.1).cutoff;
+    engine.noteOn(84, 0.9, 0.3);
+    expect(engine.settledFrom()).toBe(0.3);
+    expect(engine.modulationAt(0.1).cutoff).not.toBe(before); // the moment before it changed
+    const settled = engine.modulationAt(0.35);
+    // Once the clock has passed it, a moment after it stays as it was, whatever comes next.
+    const later = ctx.suspend(0.4).then(() => {
+      engine.noteOn(48, 0.9);
+      engine.applyPatch({ ...defaultPatch(), keyTrack: 0.5, lfoRate: 7 });
+      expect(engine.settledFrom()).toBe(0.3);
+      expect(engine.modulationAt(0.35)).toEqual(settled);
+      return ctx.resume();
+    });
+    await ctx.startRendering();
+    await later;
   });
 });

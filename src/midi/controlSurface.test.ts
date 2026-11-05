@@ -704,7 +704,7 @@ describe('the Rate, a note value with Sync on, and the tempo (issue 112)', () =>
       press: () => {},
       release: () => {},
     });
-    return { positions, store, surface, actions, tempo: () => 40 + tempo * 200 };
+    return { positions, store, surface, actions, tempo: () => 40 + tempo * 200, setTempo: (bpm: number) => void (tempo = (bpm - 40) / 200) };
   };
 
   it('turns the note value from a control mapped to the Rate: a step for every two clicks of a Relative knob, a C16’s thirds gathered', () => {
@@ -748,10 +748,10 @@ describe('the Rate, a note value with Sync on, and the tempo (issue 112)', () =>
     expect(positions.lfoNote).toBeCloseTo(14 / 23, 9); // one note value, not a jump
   });
 
-  it('maps the tempo to a knob, a BPM a step, and Tap to a button', () => {
+  it('maps the tempo to a knob, a BPM a step, and Tap Tempo to a button', () => {
     const r = synced();
     r.store.set({ control: { kind: 'cc', channel: 1, number: 31 }, target: { kind: 'tempo', id: 'bpm' }, mode: 'relative-twos' });
-    r.store.set({ control: { kind: 'cc', channel: 1, number: 32 }, target: { kind: 'action', id: 'tap' }, mode: 'trigger' });
+    r.store.set({ control: { kind: 'cc', channel: 1, number: 32 }, target: { kind: 'action', id: 'tapTempo' }, mode: 'trigger' });
     r.surface.handle(cc(31, 1));
     expect(r.tempo()).toBe(121); // a BPM a click, so an odd BPM is reached from an even one (issue 193)
     r.surface.handle(cc(31, 1));
@@ -760,7 +760,18 @@ describe('the Rate, a note value with Sync on, and the tempo (issue 112)', () =>
     expect(r.tempo()).toBe(121);
     r.surface.handle(cc(32, 127));
     r.surface.handle(cc(32, 0));
-    expect(r.actions).toEqual(['tap']);
+    expect(r.actions).toEqual(['tapTempo']);
+  });
+
+  it('moves a tempo set to a tenth to the next whole BPM a click, either way (issue 223)', () => {
+    const r = synced();
+    r.store.set({ control: { kind: 'cc', channel: 1, number: 31 }, target: { kind: 'tempo', id: 'bpm' }, mode: 'relative-twos' });
+    r.setTempo(120.5);
+    r.surface.handle(cc(31, 1));
+    expect(r.tempo()).toBe(121);
+    r.setTempo(120.5);
+    r.surface.handle(cc(31, 127));
+    expect(r.tempo()).toBe(120);
   });
 
   it('counts a third of a BPM for a C16’s 66 on the tempo (issue 193)', () => {
@@ -970,5 +981,65 @@ describe('a keyboard’s or a DAW’s panic, and Reset All Controllers (issue 18
     surface.handle(cc(123, 0));
     expect(heard).toEqual(['on 60', 'off 60']);
     expect(surface.learnState()).toEqual({ phase: 'armed', target: cutoff });
+  });
+});
+
+describe('A button learned on a Switch flips it on each press (issue 223)', () => {
+  const button = { kind: 'cc', channel: 1, number: 49 } as const;
+  const sync = { kind: 'choice', id: 'lfoSync' } as const;
+
+  it('a momentary button: each press flips it, its release doing nothing', () => {
+    const { surface, store, choices, send } = rig();
+    surface.startLearn();
+    surface.select(sync);
+    send(cc(49, 127));
+    vi.advanceTimersByTime(150);
+    send(cc(49, 0));
+    expect(store.find(button)?.mode).toBe('trigger');
+    expect(choices.lfoSync ?? 0).toBe(0); // learning it switched nothing
+    surface.stopLearn();
+    send(cc(49, 127));
+    expect(choices.lfoSync).toBe(1);
+    send(cc(49, 0));
+    expect(choices.lfoSync).toBe(1);
+    send(cc(49, 127), cc(49, 0));
+    expect(choices.lfoSync).toBe(0);
+  });
+
+  it('a toggle button: each of its messages flips it once', () => {
+    const { surface, store, choices, send } = rig();
+    surface.startLearn();
+    surface.select(sync);
+    send(cc(49, 127));
+    vi.advanceTimersByTime(600);
+    expect(store.find(button)?.mode).toBe('toggle');
+    expect(choices.lfoSync ?? 0).toBe(0);
+    surface.stopLearn();
+    send(cc(49, 0));
+    expect(choices.lfoSync).toBe(1);
+    send(cc(49, 127));
+    expect(choices.lfoSync).toBe(0);
+  });
+
+  it('a pad sending Notes: each hit flips it, its Note-off doing nothing', () => {
+    const { surface, store, choices, send } = rig();
+    surface.startLearn();
+    surface.select(sync);
+    send(noteOn(36));
+    expect(store.find({ kind: 'note', channel: 10, number: 36 })?.mode).toBe('trigger');
+    expect(choices.lfoSync ?? 0).toBe(0);
+    surface.stopLearn();
+    send(noteOn(36), noteOff(36));
+    expect(choices.lfoSync).toBe(1);
+    send(noteOn(36), noteOff(36));
+    expect(choices.lfoSync).toBe(0);
+  });
+
+  it('a knob learned on a choice of more than two still learns its Encoder Mode', () => {
+    const { surface, store, send } = rig();
+    surface.startLearn();
+    surface.select({ kind: 'choice', id: 'waveform' });
+    send(cc(20, 30), cc(20, 31), cc(20, 32), cc(20, 33));
+    expect(store.find({ kind: 'cc', channel: 1, number: 20 })?.mode).toBe('absolute');
   });
 });

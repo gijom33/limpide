@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { clampBpm, TEMPO } from '../music/tempo';
+import { clampBpm, TEMPO, TEMPO_STEPS } from '../music/tempo';
+import { type StepSize, stepParam } from '../patch/grid';
 import type { TempoState } from '../play/tempoStore';
 import { useHeaderPanel } from './hooks/useHeaderPanel';
 import { useMediaQuery } from './hooks/useMediaQuery';
@@ -13,15 +14,13 @@ import { TIPS } from './tips';
 
 /** Pixels of drag per BPM: a 200 px drag crosses the whole range. */
 const DRAG_PIXELS = 1;
-/** What Page Up and Down (and Shift with an arrow) step by. */
-const BIG_STEP = 10;
 /** A tempo settles this long before it is announced, so a clock's drift or a run of taps is said once. */
 const SETTLE_MS = 600;
 
 interface Props {
   tempo: TempoState;
   onSet(bpm: number): void;
-  onTap(): void;
+  onTapTempo(): void;
 }
 
 
@@ -107,9 +106,12 @@ function TempoDial({ tempo, onSet }: Pick<Props, 'tempo' | 'onSet'>) {
       data-clock={tempo.midi || undefined}
       {...learn}
       onKeyDown={(e) => {
-        const big = e.shiftKey ? BIG_STEP : 1;
-        const steps: Record<string, number> = { ArrowUp: big, ArrowRight: big, ArrowDown: -big, ArrowLeft: -big, PageUp: BIG_STEP, PageDown: -BIG_STEP };
-        if (e.key in steps) set(bpm + steps[e.key]);
+        // As every knob's (issue 223): the arrows 1 BPM, Shift a tenth, Page Up and Down 10, to the next on each grid.
+        const arrow: StepSize = e.shiftKey ? 'fine' : 'unit';
+        const steps: Record<string, [1 | -1, StepSize]> = {
+          ArrowUp: [1, arrow], ArrowRight: [1, arrow], ArrowDown: [-1, arrow], ArrowLeft: [-1, arrow], PageUp: [1, 'coarse'], PageDown: [-1, 'coarse'],
+        };
+        if (e.key in steps) set(stepParam(TEMPO_STEPS, bpm, ...steps[e.key]));
         else if (e.key === 'Home') set(TEMPO.min);
         else if (e.key === 'End') set(TEMPO.max);
         else if (e.key === 'Enter' && !held) setTyping(String(bpm));
@@ -149,20 +151,23 @@ function TempoDial({ tempo, onSet }: Pick<Props, 'tempo' | 'onSet'>) {
   );
 }
 
-/** Tap: the BPM follows the taps (issue 112), Hold's tapped rhythm apart. */
-function TapButton({ tempo, onTap }: Pick<Props, 'tempo' | 'onTap'>) {
-  const learn = useLearnable({ kind: 'action', id: 'tap' });
+/**
+ * Tap Tempo: the BPM follows the taps (issue 112), Hold's tapped rhythm apart. "Tap" on screen; Tap Tempo to a screen
+ * reader and in its tip, never taken for a Tap's listening point (issue 223).
+ */
+function TapTempoButton({ tempo, onTapTempo }: Pick<Props, 'tempo' | 'onTapTempo'>) {
+  const learn = useLearnable({ kind: 'action', id: 'tapTempo' });
   const held = heldOff(tempo);
   return (
-    <Tooltip content={TIPS.tap}>
+    <Tooltip content={TIPS.tapTempo}>
       <button
         type="button"
-        className="tool tempo-tap"
-        aria-label="Tap"
+        className="tool tap-tempo"
+        aria-label="Tap Tempo"
         aria-disabled={held || undefined}
         // On the press, not the release, so a tap lands where the finger does.
-        onPointerDown={(e) => pressed(e) && !held && onTap()}
-        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && !e.repeat && !held && onTap()}
+        onPointerDown={(e) => pressed(e) && !held && onTapTempo()}
+        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && !e.repeat && !held && onTapTempo()}
         {...learn}
       >
         Tap
@@ -172,10 +177,10 @@ function TapButton({ tempo, onTap }: Pick<Props, 'tempo' | 'onTap'>) {
 }
 
 /**
- * The tempo said to a screen reader once it settles, when something other than the BPM itself changed it: Tap, a MIDI
+ * The tempo said to a screen reader once it settles, when something other than the BPM itself changed it: Tap Tempo, a MIDI
  * clock, a Controller's knob (issue 189). The BPM in focus says its own value; the Demo's tempo, and the person's
  * coming back as it stops, are the player's, not news. Each announcement is a new node in the status, so a BPM said
- * before (Tap to 126, 120 typed, Tap to 126 again) is said again: the same words in the same node change nothing a
+ * before (Tap Tempo to 126, 120 typed, Tap Tempo to 126 again) is said again: the same words in the same node change nothing a
  * screen reader hears.
  */
 function TempoNews({ tempo }: { tempo: TempoState }) {
@@ -204,8 +209,8 @@ function TempoNews({ tempo }: { tempo: TempoState }) {
 }
 
 /**
- * The page's tempo in the header (issue 112, decided by the owner): from 861 px the BPM over Tap, a column of the
- * header's buttons (issue 154); narrower, the BPM alone among set-up, which opens a small field with the BPM and Tap
+ * The page's tempo in the header (issue 112, decided by the owner): from 861 px the BPM over Tap Tempo, a column of the
+ * header's buttons (issue 154); narrower, the BPM alone among set-up, which opens a small field with the BPM and Tap Tempo
  * in it. Escape, a press elsewhere or Tab out of it closes it.
  */
 export function TempoControl(props: Props) {
@@ -220,7 +225,7 @@ export function TempoControl(props: Props) {
         <Tooltip content={tempoTip(props.tempo)}>
           <TempoDial {...props} />
         </Tooltip>
-        <TapButton {...props} />
+        <TapTempoButton {...props} />
         {news}
       </div>
     );
@@ -239,7 +244,7 @@ export function TempoControl(props: Props) {
           <Tooltip content={tempoTip(props.tempo)}>
             <TempoDial {...props} />
           </Tooltip>
-          <TapButton {...props} />
+          <TapTempoButton {...props} />
         </div>
       )}
     </div>

@@ -16,14 +16,17 @@ const byCentre = (values: number[]): EncoderMode =>
  * Guesses the Encoder Mode from the values one control sent while being learned (issue 186). A Relative encoder
  * sends steps, a few either side of 0 (two's-complement: 1 up, 127 down) or of 64 (65 up, 63 down), however briskly it
  * turns: an accelerated one's 66, 69, 71, 67 stays near 64. A fader or a knob sending positions moves one value at a
- * time, never repeating: a steady run of single steps is one, wherever it is, and so is a lone value just off an end
- * (1, or 126), a fader nudged from the bottom or the top. Anything far from 0 and 64 is Absolute. What it still gets
- * wrong, the MIDI panel changes by hand.
+ * time, never repeating: a steady run of single steps is one, wherever it is. A fader nudged off an end sends a few
+ * values rising from the bottom (2, or 1, 3, 6, 10) or falling from the top (125, 122), never repeating or turning
+ * back, never 0 or 127: that is Absolute too (issue 227). Anything far from 0 and 64 is Absolute. What it still gets
+ * wrong (an encoder's lone click up, or a turn up speeding at each click), the MIDI panel changes by hand.
  */
 export function detectEncoderMode(values: number[]): EncoderMode {
   const steps = values.slice(1).map((v, i) => v - values[i]);
   const run = steps.length > 0 && (steps.every((d) => d === 1) || steps.every((d) => d === -1));
-  const offAnEnd = values.length === 1 && (values[0] === 1 || values[0] === 126);
+  const rising = steps.every((d) => d > 0) && values.every((v) => isStep(0, v) && v < 64);
+  const falling = steps.every((d) => d < 0) && values.every((v) => isStep(0, v) && v > 64 && v < 127);
+  const offAnEnd = values.length > 0 && (rising || falling);
   return values.length === 0 || run || offAnEnd ? 'absolute' : byCentre(values);
 }
 

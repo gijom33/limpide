@@ -1,10 +1,10 @@
-import { BPM_STEP, bpmPosition, clampBpm, positionBpm } from '../music/tempo';
+import { BPM_STEP, bpmPosition, positionBpm, wholeBpm } from '../music/tempo';
 import { stepParamBy } from '../patch/grid';
 import { type ChoiceId, inUnitShown, PARAMS, type ParamId } from '../patch/patch';
 import { answers, type KnownController } from './controller';
 import { detectEncoderMode, detectKnobMode, relativeDelta, relativeModeOf } from './encoderMode';
 import {
-  type ActionId, type Control, controlKey, type KnobMode, knobModeOf, type Mapping, type MappingStore, PITCH_BEND, sameControl,
+  type ActionId, type Control, controlKey, type KnobMode, knobModeOf, learnsAsButton, type Mapping, type MappingStore, PITCH_BEND, sameControl,
   type Target,
 } from './mappings';
 import type { MidiMessage } from './parser';
@@ -256,12 +256,19 @@ export function createControlSurface(synth: Synth) {
       centred: min === -max,
     };
   };
-  /** The tempo as a dial (issue 112): a Relative click a BPM, a C16's thirds gathered (issue 193). */
+  /**
+   * The tempo as a dial (issue 112): a Relative click a whole BPM, a C16's thirds gathered (issue 193); from a tempo set
+   * to a tenth by the keys (issue 223), the first click goes to the next whole BPM its way.
+   */
   const tempoDial = (): Dial => ({
     get: synth.tempoPosition,
     set: synth.setTempoPosition,
     unit: BPM_STEP,
-    step: (steps) => synth.setTempoPosition(bpmPosition(clampBpm(positionBpm(synth.tempoPosition()) + steps))),
+    step: (steps) => {
+      const bpm = positionBpm(synth.tempoPosition());
+      const from = steps > 0 ? Math.floor(bpm + 1e-9) : Math.ceil(bpm - 1e-9);
+      synth.setTempoPosition(bpmPosition(wholeBpm(from + steps)));
+    },
   });
 
   /** Whether a button's message is a press: its CC rising past the middle, not its release (a momentary one's 0). */
@@ -304,6 +311,13 @@ export function createControlSurface(synth: Synth) {
       store.replace(found);
       return apply(found, message, from);
     }
+    if (target.kind === 'choice' && message.type === 'noteOn') {
+      // A pad learned on a Switch: each hit flips it (issue 223).
+      const { index, count } = synth.choice(target.id);
+      synth.setChoice(target.id, (index + 1) % count);
+      synth.touched?.(target, 'moved');
+      return;
+    }
     if (target.kind === 'param' || target.kind === 'choice' || target.kind === 'tempo') {
       if (message.type !== 'cc') return;
       if (target.kind === 'param') moveDial(mapping, paramDial(target.id), message.value, from);
@@ -326,8 +340,9 @@ export function createControlSurface(synth: Synth) {
     learned({
       control: learn.control,
       target: learn.target,
-      // On an Action, one message alone is a toggle's press; a second (a release, or a knob's turn) is momentary.
-      mode: learn.target.kind === 'action' ? (values.length > 1 ? 'trigger' : 'toggle') : detectEncoderMode(values),
+      // On an Action or a Switch, one message alone is a toggle's press; a second (a release, or a knob's turn) is
+      // momentary.
+      mode: learnsAsButton(learn.target) ? (values.length > 1 ? 'trigger' : 'toggle') : detectEncoderMode(values),
     });
   };
 
@@ -345,8 +360,9 @@ export function createControlSurface(synth: Synth) {
         return false;
       values.push(message.value);
       clearTimeout(settle);
-      // A second message on an Action ends Learn at once, a knob once it has sent enough to tell its Encoder Mode.
-      if (values.length >= (learn.target.kind === 'action' ? 2 : LEARN_VALUES)) finishListening();
+      // A second message on an Action or a Switch ends Learn at once, a knob once it has sent enough to tell its
+      // Encoder Mode.
+      if (values.length >= (learnsAsButton(learn.target) ? 2 : LEARN_VALUES)) finishListening();
       else settle = setTimeout(finishListening, LEARN_SETTLE_MS);
       return true;
     }
@@ -367,7 +383,7 @@ export function createControlSurface(synth: Synth) {
         channel: message.channel,
         number: message.controller,
       };
-      // Heard out until it has been still a moment: a knob for its Encoder Mode, a button on an Action for whether
+      // Heard out until it has been still a moment: a knob for its Encoder Mode, a button on an Action or a Switch for whether
       // a release follows its press (momentary) or not (a toggle, whatever its value: a lit one sends 0) (issue 147).
       // Its messages meanwhile are used up by Learn, the release among them, so they fire nothing.
       setLearn({ phase: 'listening', target, control });
@@ -375,7 +391,7 @@ export function createControlSurface(synth: Synth) {
       learnFrom(message);
       return true;
     }
-    if (message.type === 'noteOn' && target.kind === 'action') {
+    if (message.type === 'noteOn' && learnsAsButton(target)) {
       learned({
         control: {
           kind: 'note',

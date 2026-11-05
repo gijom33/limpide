@@ -29,7 +29,14 @@ export function EnvelopeTimeline({
   useEffect(() => {
     aftertouchRef.current = aftertouch;
   }, [aftertouch]);
-  useEffect(() => addToRenderLoop(createTimeline(canvasRef.current!, engine, view, () => aftertouchRef.current)), [engine, view]);
+  useEffect(() => {
+    const draw = createTimeline(canvasRef.current!, engine, view, () => aftertouchRef.current);
+    // It reads its canvas's size and colours and draws on it. Its marks for the tests (`data-`) stay in its draw, as the
+    // Scope's and Spectrum's do: no style names them, so they leave the page's styles as they were (issue 221).
+    return addToRenderLoop(() => {
+      draw();
+    });
+  }, [engine, view]);
   const key = timelineKey(patch, aftertouch);
   // One line, its names shorter where the room runs short (issue 156).
   const keyRef = useOneLine<HTMLSpanElement>(key.map((e) => e.name).join(' · '));

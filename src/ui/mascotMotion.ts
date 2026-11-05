@@ -185,6 +185,8 @@ const CAFFEINE_SECONDS = 12;
 /** The trick each word cues (issue 127); and surfing an LFO's shape, its speed along it, in pixels a second. */
 const WORD_TRICKS: Record<Word, Trick> = { dead: 'playDead', fade: 'ghost', cafe: 'coffee', deaf: 'earsCovered', baggage: 'suitcase' };
 const SURF_SPEED = 70;
+/** On the air guitar, its tail shaken this long on each Note strummed (issue 204). */
+const STRUM_SECONDS = 0.2;
 
 /** The eyes it shows in turn on each Note or gesture with reduced motion asked for. */
 const STILL_EYES: Pose['eyes'][] = ['left', 'open', 'right', 'happy'];
@@ -713,10 +715,13 @@ export function createMascotMotion(random: () => number = Math.random) {
         pose.tilt += since < 0.15 ? 4 : -2;
         if (pose.eyes === 'open') pose.eyes = 'happy';
       } else if (act === 'airGuitar') {
-        // Its tail held across it like a guitar, strummed on each Note, eyes shut, rocking.
+        // Its tail straight, up across its front like a guitar's neck (drawn rising 30° from level), shaken as each Note
+        // is strummed; eyes shut, rocking, a little hop on the loud Notes only (the owner, issue 204).
         const since = heard.struck === null ? Infinity : now - heard.struck;
-        pose.wag = 40 + (since < 0.2 ? 18 * (1 - since / 0.2) : 0);
+        pose.tail = 'straight';
+        pose.wag = (since < STRUM_SECONDS ? Math.sin(since * 2 * Math.PI * 15) * 8 * (1 - since / STRUM_SECONDS) : 0);
         pose.tilt += Math.sin(now * 2 * Math.PI * 1.5) * 6;
+        if (heard.amp <= LOUD) Object.assign(pose, { lift: 0, legs: 'stand', splash: 'none' });
         pose.eyes = 'shut';
       } else if (act === 'surf') {
         pose.legs = 'stand';

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { traceJitter } from '../test/measure';
 import { createCycleLock, risingZeros } from './cycleLock';
 
@@ -162,5 +162,36 @@ describe('Cycle Lock on a Scope (issue 180)', () => {
     expect(length).toBeCloseTo((2 * SR) / 440);
     expect(start + length).toBeCloseTo(BUFFER - 1);
     expect(trace.every((v) => v === 0)).toBe(true);
+  });
+
+  it('skips its search while the Tap is silent: the pitch is asked only for the span of silence drawn (issue 213)', () => {
+    const frequencyAt = vi.fn(() => 440);
+    const lock = createCycleLock();
+    lock({ samples: new Float32Array(BUFFER), sampleRate: SR, end: 1, frequencyAt, cycles: 2, points: 300 });
+    expect(frequencyAt).toHaveBeenCalledTimes(1);
+  });
+
+  it('locks a Note after silence from its first cycles (issue 213)', () => {
+    // Silence, then a ringing Note from a sample in the middle of the fourth frame on.
+    const onset = BUFFER + 3 * FRAME + 400;
+    const note = render(BUFFER + 20 * FRAME, () => 130.81, ringing);
+    const stream = note.samples.map((v, i) => (i < onset ? 0 : v));
+    const cycles = 2;
+    const period = SR / 130.81;
+    for (const [k, { start, length, at }] of frames(stream, () => 130.81, 20, cycles).entries()) {
+      // Once two cycles of the Note are in the buffer (and the 20 ms the lock may draw behind), the trace spans them from a
+      // rising zero of its fundamental, within 1 % of a cycle: the window weighs the buffer's newest end least.
+      if (BUFFER + k * FRAME - onset < cycles * period + 0.02 * SR + period) continue;
+      expect(offZero(phaseAt(note.phases, at)), `frame ${k}`).toBeLessThan(0.05);
+      expect(length).toBeCloseTo(cycles * period, 0);
+      expect(start).toBeGreaterThan(0);
+    }
+  });
+
+  it('still locks a Note as quiet as a ten-thousandth of full scale: only silence skips the search (issue 213)', () => {
+    const { samples, phases } = render(BUFFER, () => 261.63, (phi) => 1e-4 * ringing(phi), 1.0);
+    const zeros = risingZeros(samples, SR, () => 261.63, BUFFER - 500, 9);
+    expect(zeros).toHaveLength(9);
+    for (const z of zeros) expect(offZero(phaseAt(phases, z))).toBeLessThan(0.02);
   });
 });

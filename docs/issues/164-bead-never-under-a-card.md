@@ -6,6 +6,8 @@
 
 **Status:** done (2026-11-02). Built (2026-10-31) on night/2026-10-31 and released; tried by the owner: "I think it is fixed."
 
+**Since then:** what covers the page is no longer looked for each frame: Bead keeps the list up to date as covers open and close, and reads their boxes again only once the page changes, scrolls or resizes, or while one is in a transition or an animation (issue [220](./220-bead-keeps-its-covers-as-the-page-changes.md), 2026-11-03).
+
 ## Decisions
 
 1. **Bead is never hidden by a card.** Decided by the owner, 2026-10-31.

@@ -157,8 +157,12 @@ With one Voice, the rule picking which held Note sounds: last-note priority, so 
 _Avoid_: Voice stealing
 
 **Tempo**:
-The page's beats per minute, 40 to 240, 120 by default: never a Patch's, kept between visits, set by hand or with **Tap** (the BPM follows taps in time). An LFO with Sync on follows it. While the Demo, the Song, the Tour or a Tutorial plays, the Tempo is the player's own, its beats counted from its first Note, and the person's comes back when it stops (issue 112, ADR-0018). While a keyboard or a DAW sends a **MIDI clock** (24 ticks a beat), the Tempo is the clock's, its BPM read off the ticks and its beats theirs, a MIDI Start counting them again; it reads "MIDI" in place of "BPM" and cannot be set by hand until the ticks stop, when the last BPM stays, the person's again. A player still keeps its own while it plays (issue 136).
+The page's beats per minute, 40 to 240, 120 by default: never a Patch's, kept between visits, set by hand to a tenth (its keys as a knob's: the arrows 1 BPM, Shift a tenth, Page Up and Down 10, issue 223) or with **Tap Tempo** (the BPM follows taps in time, a whole BPM, as a Controller's knob and a MIDI clock set it). An LFO with Sync on follows it. While the Demo, the Song, the Tour or a Tutorial plays, the Tempo is the player's own, its beats counted from its first Note, and the person's comes back when it stops (issue 112, ADR-0018). While a keyboard or a DAW sends a **MIDI clock** (24 ticks a beat), the Tempo is the clock's, its BPM read off the ticks and its beats theirs, a MIDI Start counting them again; it reads "MIDI" in place of "BPM" and cannot be set by hand until the ticks stop, when the last BPM stays, the person's again. A player still keeps its own while it plays (issue 136).
 _Avoid_: BPM (the unit, fine on screen), clock, speed
+
+**Tap Tempo**:
+The Tempo's button: tapped in time, the BPM follows the last four taps, its beat where the last one fell (issue 112). It reads "Tap" on screen, where it sits beside the BPM; everywhere else, its tip, its accessible name, a Mapping and the code, it is Tap Tempo, so it is never taken for a **Tap**, a listening point (issue 223).
+_Avoid_: Tap (the listening points), tap button
 
 **Hold**:
 A mode that keeps Notes sounding after their keys are released, so the sound sustains while you adjust Parameters: with one Voice until a new key or Hold off, with more until Hold off, one Note per Voice at most (a Note beyond them lets the oldest go). Pressing the key of a Note Hold keeps lets that Note go; Hold stays on. The piano keeps their keys lit. Quick clicks on Hold after switching it on, before a Note is held, tap a rhythm: the held Notes then repeat on it, looping (on several Voices, the whole rhythm once as single Notes in turn, then once as the chord).
@@ -211,7 +215,7 @@ One of the page's four parts: the Voice's three stages, Oscillators (with the Mi
 _Avoid_: Block, module
 
 **Tap**:
-A listening point in the Voice where the signal is observed: the **Oscillator Tap** (the Mixer's output), the **Filter Tap**, and the **Amp Tap** (before the master volume and the output's safety clipper).
+A listening point in the Voice where the signal is observed: the **Oscillator Tap** (the Mixer's output), the **Filter Tap**, and the **Amp Tap** (before the master volume and the output's safety clipper). The Tempo's button, though it reads "Tap" on screen, is **Tap Tempo**.
 _Avoid_: Probe, monitor, stage output
 
 **Nominal Level**:
@@ -235,7 +239,7 @@ The Scope behaviour that aligns the trace to the Note's period so it stands stil
 _Avoid_: Trigger, sync, stabilisation
 
 **Glow**:
-A Display choice, Off by default: each Scope's trace and each Spectrum's outline fade over a few frames, as on an analogue oscilloscope, so what moves leaves a soft glow of the last quarter of a second, halving every 70 ms or so (issue 180; the Spectrums since issue 199). Only the live trace glows: the Spectrum's fill and the marks over it show only now.
+A Display choice of Off (the default), Scopes or All: past traces fade over a quarter of a second (15 frames at 60 a second), as on an analogue oscilloscope, so what moves leaves a soft glow, halving every 70 ms or so (issue 180). Scopes glows each Scope's trace; All each Scope's trace and each Spectrum's outline (issues 199, 229). Only the live trace glows: the Spectrum's fill and the marks over it show only now.
 _Avoid_: Phosphor, persistence, trails, averaging
 
 **Spectrum**:
@@ -293,11 +297,11 @@ The one built-in set of Mappings, for the TempoPAD C16: each of its 4 banks play
 _Avoid_: Preset (a Preset is a sound), default mapping
 
 **Action**:
-A momentary command that is not a Parameter: toggle Hold, Freeze, take a Snapshot, previous or next Preset, Tap.
+A momentary command that is not a Parameter: toggle Hold, Freeze, take a Snapshot, previous or next Preset, Tap Tempo.
 _Avoid_: Command, shortcut
 
 **MIDI Learn**:
-The mode in which the next Controller message received becomes the Mapping for the selected Parameter, choice or Action. A button learned on an Action is heard out for half a second: a second message in that time (its release) makes it momentary; one message alone, whatever its value, a toggle (issue 147).
+The mode in which the next Controller message received becomes the Mapping for the selected Parameter, choice or Action. A button learned on an Action or a Switch (LFO Sync, Retrigger, Legato) is heard out for half a second: a second message in that time (its release) makes it momentary; one message alone, whatever its value, a toggle (issue 147). On a Switch, each press then flips it, a pad's Note too (issue 223).
 _Avoid_: Auto-map
 
 **Quick Setup**:
@@ -317,7 +321,7 @@ A small display of the most recent incoming MIDI message.
 _Avoid_: MIDI log, MIDI console
 
 **Aftertouch**:
-A keyboard's pressure on its held keys (0 to 1), one for the whole keyboard: pressing a held key harder raises one Destination, chosen in the MIDI panel (the Cutoff by default), from its knob's value at no pressure to as far as one LFO at full Depth takes it at full, on top of the knob and the LFOs (issue 132). Kept with the MIDI settings, not in the Patch. A keyboard sends it for all its keys at once (channel aftertouch) or for each key or pad (polyphonic, or per-Note, aftertouch): the pressure used is the hardest-pressed held Note's, or the channel's if higher, a Note's forgotten on its release, and it moves the one Destination for every Note (the owner, 2026-11-01). Per-Voice pressure and MPE are not used.
+A keyboard's pressure on its held keys (0 to 1), one for the whole keyboard: pressing a held key harder raises one Destination, chosen in the MIDI panel (the Cutoff by default), from its knob's value at no pressure to as far as one LFO at full Depth takes it at full (the Resonance only half the way to its top), on top of the knob and the LFOs (issue 132). It glides to each new pressure over 16 ms, so a keyboard's steps do not step the sound (issue 219). Kept with the MIDI settings, not in the Patch. A keyboard sends it for all its keys at once (channel aftertouch) or for each key or pad (polyphonic, or per-Note, aftertouch): the pressure used is the hardest-pressed held Note's, or the channel's if higher, a Note's forgotten on its release, and it moves the one Destination for every Note (the owner, 2026-11-01). Per-Voice pressure and MPE are not used.
 _Avoid_: Pressure (fine in code), channel pressure
 
 ### Short forms
@@ -334,10 +338,12 @@ A label, a key or a button's word that would take a second line shows a shorter 
 | Cutoff | Cut |
 | Resonance | Res |
 | Volume | Vol |
+| Key Track | Key |
+| Velocity | Vel |
 | Keys & Organs | Keys & Org, Keys |
 | Plucks & Mallets | Plucks |
 | Strings, Brass & Choir | Str & Brass, Strings |
 | Movement & Effects | Move & FX, FX |
 | Learning (the MIDI button's word during MIDI Learn) | Learn, Lrn |
 
-The Envelopes are Filter Env and Amp Env on screen wherever they fit (the owner, 2026-10-28). A form shows only where a shorter label is needed: the Timeline's key, an LFO's Destination picker, the Patches panel's group names.
+The Envelopes are Filter Env and Amp Env on screen wherever they fit (the owner, 2026-10-28). A form shows only where a shorter label is needed: the Timeline's key, an LFO's Destination picker, the Patches panel's group names, and a row of knobs and faders whose names would wrap a control to a second line (issue 223).

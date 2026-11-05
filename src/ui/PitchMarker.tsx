@@ -78,13 +78,15 @@ export function PitchMarker() {
           if (other !== Math.round(gliding) && spots.length < DOTS) spots.push(place(piano, origin, other, shift));
         }
       }
-      els.forEach((el, i) => {
-        const at = spots[i];
-        el!.style.display = at ? '' : 'none';
-        if (!at) return;
-        el!.style.transform = `translate(${at.x}px, ${at.y}px)`;
-        el!.toggleAttribute('data-on-black', at.onBlack);
-      });
+      // Written once every draw of the frame has read the page (issue 221).
+      return () =>
+        els.forEach((el, i) => {
+          const at = spots[i];
+          el!.style.display = at ? '' : 'none';
+          if (!at) return;
+          el!.style.transform = `translate(${at.x}px, ${at.y}px)`;
+          el!.toggleAttribute('data-on-black', at.onBlack);
+        });
     });
   }, [context]);
 

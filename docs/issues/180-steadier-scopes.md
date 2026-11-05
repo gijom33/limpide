@@ -17,7 +17,7 @@ Grilled with the owner, 2026-11-02, on the measurements in [180-steadier-scopes.
 
 3. **Lock to the pitch played, and draw the newest sound:** Cycle Lock follows the phase along the pitch the engine plays (vibrato and Glide included), and the trace shows the newest end of the buffer, not the oldest (today 94 to 165 ms old). Always on, no setting: it removes an error. Measured: vibrato's jitter from 46–61 % to 2–8 %, Glide's from 79 % to 13 %, at 0.097 ms a frame against today's 0.166.
 4. **Match the last frame, moving forward only:** of the start points one cycle apart, the one closest to the previous trace, never one that would redraw older sound. Always on. Measured: the flips of FM and Ring at inexact ratios, chords and the Amp Tap from 141–167 % to 3–6 %.
-5. **Glow, a Display choice, Off by default:** each trace fades over a few frames, as on an analogue scope (decay about 0.85): Noise's flicker to a third, detune's down a third, at the cost of ghosts. Decision 2's choice where tastes differ.
+5. **Glow, a Display choice, Off by default:** each trace fades over a few frames, as on an analogue scope (decay about 0.85): Noise's flicker to a third, detune's down a third, at the cost of ghosts. Decision 2's choice where tastes differ. Since 2026-11-04 ([229](./229-three-glow-choices.md), decided by the owner): Off, Scopes or All, the Scopes glowing under both.
 6. **No averaging of cycles:** it lies where it looks steadiest (a Perfect Fifth standing still as a wave 82 % off the real one; Noise erased). Out of scope: [.out-of-scope/scope-averaging.md](../../.out-of-scope/scope-averaging.md).
 7. **Chords lock to the newest Note,** as now, steadied by decision 4; no lock to the chord's shared period (it freezes, then jumps).
 8. **Issue 180 owns Cycle Lock's cost:** the new lock is cheaper than today's, so issue [182](./182-a-page-at-rest.md) keeps only skipping a silent Scope.
@@ -59,7 +59,7 @@ Measured 2026-11-02: [the research](../research/180-steadier-scopes.md), 20 soun
 - The Slow Vibrato Preset's words
 
 **Acceptance criteria:**
-- [x] Unit tests on rendered signals, the research's method: vibrato and Glide jitter at most 10 % and 15 %; FM at 1.414, Ring at 2.38, a major triad and the Amp Tap's 95th percentile under 10 %; a saw, detune, PWM and Noise within a few points of their floor (no hiding real change). Met except FM at 1.414, Ring at 2.38 and the triad, which cannot be: see call 1 under "How it was built"
+- [x] Unit tests on rendered signals, the research's method: vibrato and Glide jitter at most 10 % and 15 %; FM at 1.414, Ring at 2.38, a major triad and the Amp Tap's 95th percentile under 10 %; a saw, detune, PWM and Noise within a few points of their floor (no hiding real change). Met except FM at 1.414, Ring at 2.38 and the triad, which cannot be: on the Amp Tap their 95th percentile stays at 136 %, 130 % and 67 % against the 10 % (call 1 under "How it was built", merged at the owner's word; issue 225)
 - [x] The trace is at most one cycle plus 20 ms old
 - [x] Cycle Lock's cost per Scope and frame no more than today's (review 18's method)
 - [x] Glow in Display, Off by default, remembered; the design audit covers it on

@@ -1,4 +1,4 @@
-import { clampBpm } from '../music/tempo';
+import { wholeBpm } from '../music/tempo';
 
 /** A MIDI clock ticks 24 times a beat. */
 export const TICKS_PER_BEAT = 24;
@@ -212,7 +212,7 @@ export function createClockFollower() {
       const fitted = line();
       if (fitted) {
         const heard = 60 / fitted.tick / TICKS_PER_BEAT;
-        if (bpm === undefined || Math.abs(heard - bpm) > HYSTERESIS) bpm = clampBpm(heard);
+        if (bpm === undefined || Math.abs(heard - bpm) > HYSTERESIS) bpm = wholeBpm(heard);
       }
       if (stopped) return undefined;
       ticks += 1 + shift;

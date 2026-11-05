@@ -143,7 +143,8 @@ const STATES: { name: string; open?(page: Page): Promise<void>; close?(page: Pag
   },
   { name: 'Display panel', open: (page) => page.getByRole('button', { name: 'Display', exact: true }).click(), close: (page) => page.getByRole('button', { name: 'Display', exact: true }).click() },
   {
-    // Glow on (issues 180, 199): the Display panel with it chosen, every Scope and Spectrum drawing its fading traces.
+    // Glow on (issues 180, 199), as All (issue 229): the Display panel with it chosen, every Scope and Spectrum drawing
+    // its fading traces.
     name: 'Glow on',
     // Chosen by the keyboard and then left, as the panel is seen at rest: no segment hovered or focused.
     open: async (page) => {
@@ -151,7 +152,8 @@ const STATES: { name: string; open?(page: Page): Promise<void>; close?(page: Pag
       const glow = page.getByRole('radiogroup', { name: 'Glow' });
       await glow.getByRole('radio', { name: 'Off', exact: true }).focus();
       await page.keyboard.press('ArrowRight');
-      await expect(glow.getByRole('radio', { name: 'On', exact: true })).toHaveAttribute('aria-checked', 'true');
+      await page.keyboard.press('ArrowRight');
+      await expect(glow.getByRole('radio', { name: 'All', exact: true })).toHaveAttribute('aria-checked', 'true');
       await page.evaluate(() => (document.activeElement as HTMLElement).blur());
       await expect(page.getByLabel('Amp Scope', { exact: true })).toHaveAttribute('data-glow', /^([2-9]|1[0-9])$/);
       await expect(page.getByLabel('Amp Spectrum', { exact: true })).toHaveAttribute('data-glow', /^([2-9]|1[0-9])$/);
@@ -272,7 +274,7 @@ for (const size of SIZE_NAMES) {
 }
 
 // Issue 188 (decision 1), from the 1.23.0 code review: on an iPad, the Tempo opened in portrait, turned to landscape
-// (the BPM and Tap in the header, no panel) and back, was feared to open under its button, over the keys, and Tab out
+// (the BPM and Tap Tempo in the header, no panel) and back, was feared to open under its button, over the keys, and Tab out
 // of it no longer to close it. The turn closes it (the header draws the Tempo anew); opened again, it is under the
 // header and Tab out closes it.
 test('a narrow Tempo through a tablet’s turn and back: closed, then opened again under the header, and Tab out closes it (issue 188)', async ({ page }) => {
@@ -295,7 +297,7 @@ test('a narrow Tempo through a tablet’s turn and back: closed, then opened aga
   ]);
   expect(top).toBeGreaterThanOrEqual(headerBottom);
   expect(top - headerBottom).toBeLessThanOrEqual(8);
-  await panel.getByRole('button', { name: 'Tap', exact: true }).focus();
+  await panel.getByRole('button', { name: 'Tap Tempo', exact: true }).focus();
   await page.keyboard.press('Tab');
   await expect(panel).toBeHidden();
 });

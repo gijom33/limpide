@@ -34,7 +34,7 @@ export interface Modulation {
   pitch: number;
   /** How far an LFO on Pitch moves it right now, in semitones: `pitch` less the Note where the Glide has taken it. */
   vibrato: number;
-  /** A keyboard's aftertouch at this moment, and the Destination it moves (issue 132). */
+  /** A keyboard's aftertouch at this moment, where its glide has reached (issue 219), and the Destination it moves (issue 132). */
   pressure: Pressure;
 }
 
@@ -195,16 +195,37 @@ export function osc2Cents(patch: Patch, lfo: readonly number[] = [], filterEnvel
  * The Patch as aftertouch moves its Destination (issue 132): up from the knob's value by its law's `perDepth` times the
  * pressure, as far as one LFO at full Depth swings it, so nothing at no pressure and the whole reach at full. The
  * Cutoff opens by up to two octaves, within what the Filter reaches; a knob whose law has a room is kept within the
- * knob's top (Volume, louder up to full); Osc 2 Pitch and Detune go as far as an LFO takes them. The LFOs then swing
- * around the pressed value, so the pressure adds to the knob's value and to theirs. Pitch has no knob: `pressurePitch`.
+ * knob's top (Volume, louder up to full); Osc 2 Pitch and Detune go as far as an LFO takes them. The Resonance goes
+ * half the way from the knob to its top (issue 219, decision 4), so a resonant Patch pressed hard (Wobble) does not
+ * ring past the limiter's knee: from no Resonance, half its range. The LFOs then swing around the pressed value, so
+ * the pressure adds to the knob's value and to theirs. Pitch has no knob: `pressurePitch`.
  */
 export function pressed(patch: Patch, { destination, amount }: Pressure): Patch {
   if (!amount) return patch;
   const law: LfoLaw = LFO_LAWS[destination];
   const next = { ...patch };
   if (destination === 'cutoff') next.cutoff = Math.min(HIGHEST_CUTOFF, patch.cutoff * 2 ** (law.perDepth * amount));
+  else if (destination === 'resonance') next.resonance = patch.resonance + (PARAMS.resonance.max - patch.resonance) * RESONANCE_REACH * amount;
   else for (const knob of law.knobs) next[knob] = Math.min(law.room ? PARAMS[knob].max : Infinity, patch[knob] + law.perDepth * amount);
   return next;
+}
+
+/** How far full pressure takes the Resonance: this share of the way from the knob to its top (issue 219, decision 4). */
+const RESONANCE_REACH = 0.5;
+
+/**
+ * Aftertouch's glide (issue 219, decision 5): its Destination moves to each new pressure over this time constant, in
+ * seconds, the sound and the model alike. Longer than the bend wheel's 4 ms, so a keyboard's 127 steps blur into one
+ * sweep; a stab of pressure still arrives in about 50 ms.
+ */
+export const PRESSURE_GLIDE = 0.016;
+/** After this long a glide counts as arrived: within 5 parts in 100,000 of its step (10 time constants). */
+const GLIDE_ARRIVED = 10 * PRESSURE_GLIDE;
+
+/** Where aftertouch's glide has reached `elapsed` seconds after `to` came, from an amount of `from` then. */
+export function glidedPressure(from: number, to: Pressure, elapsed: number): Pressure {
+  if (elapsed >= GLIDE_ARRIVED) return to;
+  return { destination: to.destination, amount: to.amount + (from - to.amount) * Math.exp(-elapsed / PRESSURE_GLIDE) };
 }
 
 /** How far aftertouch on Pitch raises it, in semitones: a semitone at full pressure; none on any other Destination. */

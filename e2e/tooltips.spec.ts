@@ -317,7 +317,7 @@ test.describe('no tip over an open menu (issue 175)', () => {
 
     test('the Tempo button: no tip of its over the field it opens', async ({ page }) => {
       await page.goto('/');
-      const open = page.locator('header').getByRole('button', { name: 'Tempo' });
+      const open = page.locator('header').getByRole('button', { name: /^Tempo: / });
       await hoverThenClick(page, open);
       await expect(page.getByRole('spinbutton', { name: 'Tempo' })).toBeVisible();
       await expect(tip(page)).toHaveCount(0);
@@ -329,7 +329,7 @@ test.describe('no tip over an open menu (issue 175)', () => {
 
     test('the Tempo button’s tip says it opens the BPM, and the BPM in the field has its own (issue 194)', async ({ page }) => {
       await page.goto('/');
-      const open = page.locator('header').getByRole('button', { name: 'Tempo' });
+      const open = page.locator('header').getByRole('button', { name: /^Tempo: / });
       await open.hover();
       await pastTheHoverDelay(page);
       await expect(tip(page)).toContainText('Press it');

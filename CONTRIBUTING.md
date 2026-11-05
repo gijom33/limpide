@@ -26,6 +26,7 @@ npm run dev
 | `npm run test:engine` | The audio engine in headless Chromium |
 | `npm run test:e2e` | The built site in Chromium and WebKit, with Playwright (`npx playwright install chromium webkit` once) |
 | `npm run stats` | The release's row on [the statistics page](docs/statistics.md): the whole suite, the build, the page load and the running app (`-- --quick` to check the command, `-- --history` for the release tags' exact numbers) |
+| `npm run perf` | What a frame costs, measured as [review 18](docs/reviews/2026-11-02/18-performance-expert.md) did: idle, the Demo and an 8-Voice chord, at 1×, 1.25× and 4× CPU throttling, with Bead out and off, in headless Chromium; a table of the frames per second, the main thread's share and the style recalculations a frame, nothing written (`-- --states idle --throttle 1,4 --bead on --runs 3` for some of them, `-- --quick` to check the command). On a quiet machine, before and after a change to what a frame does |
 
 Every push to `main` runs all of these before it deploys.
 

@@ -50,7 +50,7 @@ export function steppedGrid(step: number, page: number, words: Grid['words']): G
  * Where a press moves a Parameter (issue 160): to the next value of its Grid in `direction`, kept within its range,
  * whose ends are always reached.
  */
-export function stepParam(def: Range & { grid: Grid }, value: number, direction: 1 | -1, size: StepSize): number {
+export function stepParam(def: Pick<Range, 'min' | 'max'> & { grid: Grid }, value: number, direction: 1 | -1, size: StepSize): number {
   return Math.min(def.max, Math.max(def.min, def.grid.next(value, direction, size)));
 }
 

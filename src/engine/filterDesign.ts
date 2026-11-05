@@ -36,22 +36,21 @@ export function filterStages(mode: FilterMode, slope: FilterSlope, resonance: nu
   ];
 }
 
-/** Points in the curve of the Resonance's swing: read between them, a Q is within a millionth of its own. */
-const SWING_POINTS = 4097;
+/** Points in the Resonance's curve: read between them, a Q is within a millionth of its own. */
+const CURVE_POINTS = 4097;
 
 /**
- * What the LFOs' swing of the Resonance adds to each stage's Q, as the model moves the Resonance (issue 166): a
- * WaveShaper's `curve` over the swing as a share of `span`, the most the LFOs together swing it either way from the
- * knob's `resonance` (−1 to 1), the first stage's Q there less its own; and the share of it each stage takes. A
- * band-pass's or notch's Q grows by ratios, so a straight line through the swing's ends would take its foot below zero
- * (a notch silent, a band-pass letting everything through): along the curve the Q never passes its floor, as the
- * Resonance never passes 0 or 1. A second stage at 24 dB has the first's Q; at 12 dB it is the transparent shelf,
- * which no swing moves.
+ * The Resonance's curve (issues 166 and 219): a WaveShaper's `curve` from the Resonance itself (0 to 1, taken as −1 to
+ * 1) to what it adds to the first stage's Q over its flat one, at no Resonance; and the share of it each stage takes.
+ * The knob, aftertouch and the LFOs all move the Resonance into it, so it is made once per Mode and Slope and nothing
+ * that moves the Resonance makes it again. A band-pass's or notch's Q grows by ratios: along the curve it never passes
+ * its floor, as the Resonance never passes 0 or 1. A second stage at 24 dB has the first's Q; at 12 dB it is the
+ * transparent shelf, which no Resonance moves.
  */
-export function qSwing(mode: FilterMode, slope: FilterSlope, resonance: number, span: number): { curve: Float32Array<ArrayBuffer>; stages: [number, number] } {
+export function resonanceCurve(mode: FilterMode, slope: FilterSlope): { curve: Float32Array<ArrayBuffer>; stages: [number, number] } {
   const q = (r: number) => filterStages(mode, slope, r)[0].Q;
-  const rest = q(resonance);
-  const curve = Float32Array.from({ length: SWING_POINTS }, (_, i) => q(resonance + span * ((2 * i) / (SWING_POINTS - 1) - 1)) - rest);
+  const flat = q(0);
+  const curve = Float32Array.from({ length: CURVE_POINTS }, (_, i) => q(i / (CURVE_POINTS - 1)) - flat);
   return { curve, stages: [1, slope === 24 ? 1 : 0] };
 }
 

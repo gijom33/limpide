@@ -156,7 +156,7 @@ describe('issue 145’s layout, brought to today’s (issues 112 and 119)', () =
   });
 
   it('leaves a place the person has used since to them, and adds nothing to today’s layout', () => {
-    const own: Mapping = { control: { kind: 'cc', channel: 1, number: buttonCc(3, 'R', 1) }, target: { kind: 'action', id: 'tap' }, mode: 'trigger' };
+    const own: Mapping = { control: { kind: 'cc', channel: 1, number: buttonCc(3, 'R', 1) }, target: { kind: 'action', id: 'tapTempo' }, mode: 'trigger' };
     expect(addedSince145(addC16Places([...before, own])!).map((m) => m.target.id)).toEqual(['legato', 'lfo2Sync']);
     expect(addC16Places(c16Layout())).toBeNull();
   });

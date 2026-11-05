@@ -470,13 +470,31 @@ describe('what the controls, the words, the page and the Demo make of it (issue 
     expect(motion.frame({ ...playing, struck: 1 }, 1.5, false, wide).prop).toBe('baton');
     motion.act('airGuitar');
     const strum = motion.frame({ ...playing, struck: 2 }, 2.02, false, wide);
-    expect(strum.wag).toBeGreaterThan(50);
     expect(strum.eyes).toBe('shut');
     motion.act('surf');
     const ride = run(motion, 3, 12, playing, wide);
     expect(Math.min(...ride.map((p) => p.x))).toBe(0);
     expect(Math.max(...ride.map((p) => p.x))).toBe(200);
     expect(ride.every((p) => p.doing === null)).toBe(true);
+  });
+
+  it('on the air guitar: its tail straight up across its front like a neck, shaken on each Note; a hop on the loud ones only (issue 204)', () => {
+    const motion = createMascotMotion(() => 0.5);
+    motion.frame(playing, 0, false, spot);
+    motion.act('airGuitar');
+    // Between Notes: its tail straight (drawn rising 30° from level), unturned, eyes shut.
+    const held = motion.frame({ ...playing, struck: 1 }, 2, false, spot);
+    expect(held.tail).toBe('straight');
+    expect(held.wag).toBe(0);
+    expect(held.eyes).toBe('shut');
+    // A Note strummed: the neck shakes a few degrees either way, staying well above level.
+    const strum = run(motion, 3, 3.2, { ...playing, struck: 3 }, spot).map((p) => p.wag);
+    expect(Math.max(...strum) - Math.min(...strum)).toBeGreaterThan(8);
+    expect(Math.max(...strum.map(Math.abs))).toBeLessThanOrEqual(8);
+    // A quiet Note: no hop; a loud one: a little hop.
+    expect(Math.max(...run(motion, 4, 4.3, { amp: 0.5, sway: 0, struck: 4 }, spot).map((p) => p.lift))).toBe(0);
+    const loud = Math.max(...run(motion, 5, 5.3, { amp: 0.95, sway: 0, struck: 5 }, spot).map((p) => p.lift));
+    expect(loud).toBeGreaterThan(2);
   });
 
   it('a funny turn plays to its end: a control turned or a Note meanwhile neither stops nor moves it (the owner)', () => {

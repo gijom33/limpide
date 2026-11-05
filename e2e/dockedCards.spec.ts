@@ -1,4 +1,4 @@
-import { expect, type Page, test } from '@playwright/test';
+import { expect, type Locator, type Page, test } from '@playwright/test';
 
 // Issue 59, the owner's decisions (2026-10-27): the Demo's and a Tutorial's cards fold to their top row (the fold
 // remembered for each kind of card), and from the 2 × 2 layout up move by that row, inside the window; a double-click
@@ -89,3 +89,81 @@ test.describe('on a phone', () => {
     await expect(demoCard(page).locator('.demo-bar-caption')).toHaveCSS('clip-path', 'inset(50%)'); // out of sight, still read out
   });
 });
+
+// Issue 212, decided by the owner: three and four across are meant to show everything, so there the Demo's card lies
+// over the page's bottom edge and never adds to the scroll. The Tour's and a Tutorial's cards point at Viewers and
+// controls, some at the page's bottom, so they keep room there, as on a phone and in 2 × 2, which scroll anyway.
+const cards = {
+  Demo: async (page: Page) => {
+    await startDemo(page);
+    return demoCard(page);
+  },
+  Tutorial: async (page: Page) => {
+    await page.getByRole('button', { name: /^Patch: / }).click();
+    await page.getByRole('dialog', { name: 'Patches' }).getByRole('group', { name: 'Tutorials' }).getByRole('button', { name: /^Tutorial: Bass/ }).click();
+    return page.getByRole('region', { name: /^Tutorial: / });
+  },
+  Tour: async (page: Page) => {
+    await page.getByRole('button', { name: 'About', exact: true }).click();
+    await page.getByRole('dialog', { name: 'Limpide' }).getByRole('button', { name: 'Take the Tour' }).click();
+    return page.getByRole('region', { name: 'Tour' });
+  },
+};
+
+/** How far the page scrolls, once the layout has settled. */
+async function scrollRange(page: Page) {
+  await page.waitForTimeout(300);
+  return page.evaluate(() => document.documentElement.scrollHeight - innerHeight);
+}
+
+/** Opens the card on a window of that size and checks that, scrolled to its end, the page shows its last section whole above the card. */
+async function expectRoomFor(page: Page, size: { width: number; height: number }, open: (page: Page) => Promise<Locator>) {
+  await page.setViewportSize(size);
+  await page.goto('/');
+  const card = await open(page);
+  await expect(card).toBeVisible();
+  await page.waitForTimeout(300);
+  await page.evaluate(() => scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
+  await expect // the card's top and the last section's bottom read together, in the page
+    .poll(() => card.evaluate((c) => document.querySelector('main')!.getBoundingClientRect().bottom <= c.getBoundingClientRect().top + 1), 'the last section clear above the card')
+    .toBe(true);
+}
+
+const WIDE = [['three across', 1440, 900], ['four across', 1920, 1080]] as const;
+
+for (const [layout, width, height] of WIDE) {
+  test(`in ${layout} on a window the page fits, the Demo's card leaves the page unscrollable (issue 212)`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await page.goto('/');
+    expect(await scrollRange(page), 'before the card').toBeLessThanOrEqual(0);
+    await expect(await cards.Demo(page)).toBeVisible();
+    expect(await scrollRange(page)).toBeLessThanOrEqual(0);
+  });
+}
+
+test(`in three across on a window a little shorter than the page, the Demo's card adds nothing to the scroll (issue 212)`, async ({ page }) => {
+  // The page fills its window down to the height its sections need, about 845 px at 1440 px wide.
+  await page.setViewportSize({ width: 1440, height: 800 });
+  await page.goto('/');
+  const without = await scrollRange(page);
+  expect(without, 'the page scrolls a little').toBeGreaterThan(0);
+  expect(without, 'the page scrolls a little').toBeLessThan(200);
+  await expect(await cards.Demo(page)).toBeVisible();
+  expect(await scrollRange(page)).toBe(without);
+});
+
+for (const [layout, width, height] of WIDE) {
+  for (const name of ['Tutorial', 'Tour'] as const) {
+    test(`in ${layout}, the page still keeps room for the ${name}'s card under its last section (issue 212)`, async ({ page }) => {
+      await expectRoomFor(page, { width, height }, cards[name]);
+    });
+  }
+}
+
+for (const [layout, width, height] of [['375 px phone', 375, 812], ['2 × 2', 768, 1024]] as const) {
+  for (const [name, open] of Object.entries(cards)) {
+    test(`on a ${layout}, the page keeps room for the ${name}'s card under its last section (issue 212)`, async ({ page }) => {
+      await expectRoomFor(page, { width, height }, open);
+    });
+  }
+}

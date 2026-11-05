@@ -443,9 +443,9 @@ test('a Tutorial’s card goes to its Step’s control, and Escape there comes b
   await expect(card.getByRole('button', { name: 'Next' })).toBeFocused();
 });
 
-test('Tap’s tempo is announced (issue 189)', async ({ page }) => {
+test('Tap Tempo’s tempo is announced (issue 189)', async ({ page }) => {
   await page.goto('/');
-  const tap = page.getByRole('button', { name: 'Tap', exact: true });
+  const tap = page.getByRole('button', { name: 'Tap Tempo', exact: true });
   await tap.focus();
   await tap.evaluate(async (button) => {
     for (let i = 0; i < 4; i++) {

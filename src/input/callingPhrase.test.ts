@@ -67,7 +67,12 @@ describe('the words Bead answers to (issue 127)', () => {
     expect(hear([B, E, A, D])).toEqual([]);
   });
 
-  it('within the same time as B, E, A, D', () => {
-    expect(hear([B, A, G, G, A, G, E], CALLING_SECONDS / 6 + 0.01)).toEqual([]);
+  it('each within a second a Note, from its first Note to its last: BAGGAGE in 7 s, the four-Note words in 4 s (issue 204)', () => {
+    // BAGGAGE's seven Notes, the last 6.9 s after the first: heard; 7.2 s: not.
+    expect(hear([B, A, G, G, A, G, E], 1.15)).toEqual(['baggage']);
+    expect(hear([B, A, G, G, A, G, E], 1.2)).toEqual([]);
+    // DEAD within 4 s, as B, E, A, D: 3.9 s heard, 4.2 s not.
+    expect(hear([D, E, A, D], 1.3)).toEqual(['dead']);
+    expect(hear([D, E, A, D], 1.4)).toEqual([]);
   });
 });

@@ -46,7 +46,7 @@ test('a MIDI clock sets the BPM, marked MIDI, which cannot be set by hand meanwh
   // Pressed though they say they cannot be (Playwright waits for a control to be usable otherwise).
   await bpm(page).dblclick({ force: true });
   await expect(page.getByRole('textbox', { name: 'Tempo in BPM' })).toHaveCount(0);
-  const tap = page.getByRole('button', { name: 'Tap', exact: true });
+  const tap = page.getByRole('button', { name: 'Tap Tempo', exact: true });
   await expect(tap).toHaveAttribute('aria-disabled', 'true');
   for (let i = 0; i < 3; i++) await tap.click({ force: true });
   await expect(bpm(page)).toHaveAttribute('aria-valuenow', '126');
@@ -97,7 +97,7 @@ for (const [width, height] of [[390, 844], [861, 900], [1100, 900], [1366, 900],
   test(`the MIDI mark fits the header at ${width} px: nothing overlaps or wraps, the box’s edge marked (issue 136)`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await withFakeController(page);
-    const box = width < 861 ? page.locator('header').getByRole('button', { name: 'Tempo' }) : bpm(page);
+    const box = width < 861 ? page.locator('header').getByRole('button', { name: /^Tempo: / }) : bpm(page);
     const edge = () => box.evaluate((el) => getComputedStyle(el).borderTopColor);
     const unmarked = await edge();
     await startClock(page, 120);

@@ -36,7 +36,7 @@ Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.m
 
 **The Resonance fades at the top.** A low- or high-pass keeps all its Resonance up to half an octave under 20 kHz (14.1 kHz), then loses it along a smooth curve to none at 20 kHz, where its Q is the flat one. The sound does it per Voice: the clamped Cutoff (issue 166) runs through a curve that takes its share off each Filter stage's Q over its flat Q, the knob's Resonance and the LFOs' swing of it alike. The Response Curve draws the same fade (ADR-0003). A band-pass's and a notch's Resonance is a width, not a peak, and does not fade.
 
-**A high-pass at the top falls silent.** Over the last semitone under 20 kHz (18.9 to 20 kHz) a high-pass's output fades to nothing, as it did when its Cutoff passed Nyquist before 166, and the Curve draws it so. Riser on C7 is silent once its Envelope takes the high-pass to the top.
+**A high-pass at the top falls silent.** Over the last semitone under 20 kHz (18.9 to 20 kHz) a high-pass's output fades to nothing, as it did when its Cutoff passed Nyquist before 166, and the Curve draws it so. Riser on C7 is silent once its Envelope takes the high-pass to the top. *(2026-11-03: [226](./226-two-presets-high-up.md) set Riser's Key Track to 0.5, so its high-pass stops short of the top on C6 and C7 and it no longer falls silent; the test plays Riser at Key Track 1 to hold the fade.)*
 
 **Growl, retuned:** Resonance 0.6 → 0.5, LFO Depth 0.5 → 0.4, Volume 0.45 → 0.42. Its square still jumps the Filter between two places, a little closer together and a little less resonant, so the ring after each drop stays under the limiter's knee. Its loudest 100 ms on C4 is about −16.0 dBFS (−14.6 before).
 
@@ -59,7 +59,7 @@ Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.m
 ### What to try and hear
 
 - **Screamer on C6 and C7, played hard:** the top should no longer fizz at the edge of hearing in the attack; the bite lower down is unchanged.
-- **Riser on C7, held through its six seconds:** it should thin out and fall silent as the high-pass reaches the top, as it did before 1.20.0; on C5 it rises as before.
+- **Riser on C7, held through its six seconds:** it should thin out and fall silent as the high-pass reaches the top, as it did before 1.20.0; on C5 it rises as before. *(2026-11-03: no longer, since [226](./226-two-presets-high-up.md): at Key Track 0.5 it rises through its Attack on C7 too.)*
 - **Growl from C2 to G#5, at 120 and 128 BPM:** the limiter light should not come on; listen to whether it still talks enough.
 - **A low-pass at full Resonance, the Cutoff swept up past 14 kHz:** the Response Curve's peak should flatten as it reaches the top, and the sound with it.
 

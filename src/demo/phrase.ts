@@ -65,7 +65,8 @@ export function phraseLength(text: string, bpm: number): number {
 /**
  * A phrase on a loop for the Transport (the Song, a Tutorial's Listen), from `start` on the audio clock, each pass
  * straight after the last. A Note still sounding `breath` beats before a pass ends is let go then; `transpose`, in
- * semitones, is read as each Note falls due (the Song follows the piano's octave from the next Note).
+ * semitones, is read as each Note falls due (the Song follows the piano's octave from the next Note). Rewound, it
+ * hands again the Notes from that time on (issue 227).
  */
 export function loopPhrase(
   phrase: string,
@@ -78,7 +79,7 @@ export function loopPhrase(
   const letGo = length - breath * (60 / bpm);
   let pass = start;
   let next = 0;
-  return (horizon, _now, play) => {
+  const source: Source = (horizon, _now, play) => {
     const due: Played[] = [];
     while (pass + events[next].time < horizon) {
       const e = events[next];
@@ -91,4 +92,14 @@ export function loopPhrase(
     }
     play(due);
   };
+  // A pass's start, added up pass by pass and taken off again, may come back a rounding away from where it was.
+  const EPSILON = 1e-9;
+  source.rewind = (from) => {
+    for (;;) {
+      const [before, at] = next === 0 ? [pass - length, events.length - 1] : [pass, next - 1];
+      if (before < start - EPSILON || before + events[at].time < from - EPSILON) return;
+      [pass, next] = [before, at];
+    }
+  };
+  return source;
 }

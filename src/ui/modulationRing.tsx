@@ -131,23 +131,29 @@ export function ModulationRing({ id, centre, radius, trackRadius, dotRadius, arc
       const [paths, d] = [rings.current, dot.current];
       if (RINGS.some((_, i) => !paths[i]) || !d) return;
       const now = modulated(id, context.patch(), context.engine, context.octave.current);
-      RINGS.forEach((ring, i) => {
-        const path = paths[i]!;
+      const arcs = RINGS.map((ring) => {
         // A range pinned past the dial's end draws nothing (an arc is never shorter than half a degree).
         const seen = (now ? ring.ranges(now) : undefined)?.filter(([from, to]) => Math.abs(position(to) - position(from)) > 0.001);
-        path.style.display = seen?.length ? '' : 'none';
-        if (seen?.length) path.setAttribute('d', seen.map(([from, to]) => arcNow(position(from), position(to), ring.onTrack ? trackRadius : radius)).join(' '));
+        return seen?.length ? seen.map(([from, to]) => arcNow(position(from), position(to), ring.onTrack ? trackRadius : radius)).join(' ') : null;
       });
-      paths[BLUE]!.toggleAttribute('data-dim', attention.pointed || attention.focused);
       const live = now?.now ?? null;
-      d.style.display = live === null || still.matches ? 'none' : '';
-      if (live !== null) {
-        // Always on the knob's own track, where its value arc and the white rings are, whatever moves it (the owner,
-        // 2026-10-28): the rings say how far each source reaches, the dot where the value is.
-        const [x, y] = pointNow(position(live), trackRadius);
-        d.setAttribute('cx', x.toFixed(2));
-        d.setAttribute('cy', y.toFixed(2));
-      }
+      // Always on the knob's own track, where its value arc and the white rings are, whatever moves it (the owner,
+      // 2026-10-28): the rings say how far each source reaches, the dot where the value is.
+      const at = live === null ? null : pointNow(position(live), trackRadius);
+      // Written once every draw of the frame has read the page (issue 221).
+      return () => {
+        arcs.forEach((drawn, i) => {
+          const path = paths[i]!;
+          path.style.display = drawn ? '' : 'none';
+          if (drawn) path.setAttribute('d', drawn);
+        });
+        paths[BLUE]!.toggleAttribute('data-dim', attention.pointed || attention.focused);
+        d.style.display = at === null || still.matches ? 'none' : '';
+        if (at) {
+          d.setAttribute('cx', at[0].toFixed(2));
+          d.setAttribute('cy', at[1].toFixed(2));
+        }
+      };
     });
   }, [context, id, radius, trackRadius]);
 

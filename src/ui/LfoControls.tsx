@@ -8,6 +8,7 @@ import { RetriggerIcon, SyncIcon } from './icons';
 import { Knob } from './Knob';
 import { LfoPlot } from './LfoPlot';
 import { useLearnable } from './learn';
+import { KnobRow } from './oneLine';
 import { radioGroupKeys, radioTabIndex } from './radioGroup';
 import { SubBlock } from './SubBlock';
 import { Switch } from './Switch';
@@ -74,7 +75,7 @@ export function LfoControls({ lfo, engine, patch, bpm, onParam, onPatch }: Props
           </Tooltip>
         </div>
         <div className="lfo-play">
-          <div className="knobs">
+          <KnobRow>
             <Knob id={keys.amount} value={patch[keys.amount]} onChange={(v) => onParam(keys.amount, v)} />
             <Knob
               id={rate}
@@ -102,7 +103,7 @@ export function LfoControls({ lfo, engine, patch, bpm, onParam, onPatch }: Props
               tip={TIPS.lfoSync}
               onToggle={() => onPatch((p) => setLfo(p, { sync: synced ? 'off' : 'on' }, lfo))}
             />
-          </div>
+          </KnobRow>
           <Tooltip content={TIPS.lfoWaveform}>
             <LfoPlot
               engine={engine}

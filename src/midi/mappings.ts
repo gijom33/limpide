@@ -2,15 +2,15 @@ import { CHOICES, type ChoiceId, PARAMS, type ParamId } from '../patch/patch';
 import type { EncoderMode } from './encoderMode';
 
 /** A momentary command that is not a Parameter. */
-export type ActionId = 'hold' | 'freeze' | 'snapshot' | 'nextPreset' | 'previousPreset' | 'tap';
+export type ActionId = 'hold' | 'freeze' | 'snapshot' | 'nextPreset' | 'previousPreset' | 'tapTempo';
 export const ACTIONS: Record<ActionId, string> = {
   hold: 'Hold',
   freeze: 'Freeze',
   snapshot: 'Snapshot',
   nextPreset: 'Next Preset',
   previousPreset: 'Previous Preset',
-  // The tempo's Tap (issue 112).
-  tap: 'Tap',
+  // The tempo's button (issue 112), "Tap" on screen; Tap Tempo, not to be taken for a Tap's listening point (issue 223).
+  tapTempo: 'Tap Tempo',
 };
 
 /** One control on a Controller: a channel plus a CC or note number. */
@@ -61,6 +61,15 @@ export type Target =
   | { kind: 'action'; id: ActionId }
   | { kind: 'tempo'; id: 'bpm' };
 
+/**
+ * The choices shown as a Switch, on or off (LFO Sync, Retrigger, Legato): a button learned on one flips it on each
+ * press, as one on an Action fires it, momentary or toggle (the owner, issue 223), where a knob's turn would read as a
+ * knob's.
+ */
+export const SWITCHES: ReadonlySet<ChoiceId> = new Set(['lfoSync', 'lfo2Sync', 'lfoRetrigger', 'lfo2Retrigger', 'legato']);
+/** Whether MIDI Learn hears a control on this target as a button (an Action, a Switch), not a knob. */
+export const learnsAsButton = (target: Target) => target.kind === 'action' || (target.kind === 'choice' && SWITCHES.has(target.id));
+
 /** A button's mode: momentary ('trigger') or toggle, as a Mapping says below. */
 export type ButtonMode = 'trigger' | 'toggle';
 
@@ -101,6 +110,12 @@ export const sameTarget = (a: Target, b: Target) => a.kind === b.kind && a.id ==
 /** Whether two Mappings would take one place: the same control, or the same target (one each, issue 34). */
 export const clash = (a: Mapping, b: Mapping) => sameControl(a.control, b.control) || sameTarget(a.target, b.target);
 
+/** A Mapping stored before Tap Tempo's Action was renamed from `tap` (issue 223), on its new name; any other as it is. */
+const renamed = (m: unknown): unknown => {
+  const t = (m as Partial<Mapping> | null)?.target as { kind?: unknown; id?: unknown } | undefined;
+  return t?.kind === 'action' && t.id === 'tap' ? { ...(m as Mapping), target: { kind: 'action', id: 'tapTempo' } } : m;
+};
+
 const isMapping = (m: unknown): m is Mapping => {
   const { control: c, target: t, mode, device } = (m ?? {}) as Partial<Mapping>;
   const byte = (n: unknown, min: number, max: number) =>
@@ -129,7 +144,7 @@ export function createMappingStore(storage: KeyValueStorage) {
   let mappings: Mapping[] = [];
   try {
     const stored: unknown = JSON.parse(storage.getItem(KEY) ?? '[]');
-    if (Array.isArray(stored)) mappings = stored.filter(isMapping);
+    if (Array.isArray(stored)) mappings = stored.map(renamed).filter(isMapping);
   } catch {
     // Garbled or unavailable: start empty.
   }

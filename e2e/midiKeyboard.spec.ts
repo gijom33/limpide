@@ -8,6 +8,24 @@ test.beforeEach(({ page }) => withFakeController(page));
 
 const piano = (page: import('@playwright/test').Page) => page.getByRole('group', { name: 'Piano' });
 
+/** Where a dot comes to rest once aftertouch’s glide there has arrived, in about 0.2 s (issue 219): two reads 0.3 s apart agree. */
+async function restingCx(dot: import('@playwright/test').Locator) {
+  // The poll's first read is at once: it has nothing to agree with yet.
+  let last: string | null | undefined;
+  await expect
+    .poll(
+      async () => {
+        const now = await dot.getAttribute('cx');
+        const resting = now === last;
+        last = now;
+        return resting;
+      },
+      { intervals: [300] },
+    )
+    .toBe(true);
+  return last;
+}
+
 test('the sustain pedal holds a released Note until it lifts', async ({ page }) => {
   await play(page, [0x90, 60, 100], cc(64, 127), [0x80, 60, 0]);
   await expect(piano(page).locator('[data-note="60"]')).toHaveAttribute('aria-pressed', 'true');
@@ -95,7 +113,7 @@ test('per-Note aftertouch moves the Cutoff’s dot by the Note pressed hardest, 
   await expect(dot).toBeHidden();
   await play(page, [0xa0, 57, 64]); // A3 pressed halfway
   await expect(dot).toBeVisible();
-  const halfway = await dot.getAttribute('cx');
+  const halfway = await restingCx(dot);
   await play(page, [0xa0, 60, 127]); // C4 all the way: the harder of the two
   await expect.poll(() => dot.getAttribute('cx')).not.toBe(halfway);
   await play(page, [0xa0, 57, 32]); // A3 lighter: C4's still holds it
