@@ -1405,7 +1405,7 @@ test.describe('never under a card (issue 164)', () => {
       await tutorials.getByRole('button', { name: /^Tutorial: Bass/ }).click();
     },
     'the Tour': async (page: Page) => {
-      await page.getByRole('button', { name: 'About' }).click();
+      await page.getByRole('button', { name: 'About', exact: true }).click();
       await page.getByRole('dialog', { name: 'Limpide' }).getByRole('button', { name: 'Take the Tour' }).click();
     },
   };
@@ -1737,7 +1737,7 @@ test.describe('pointing the way in a Tutorial and the Tour (issue 151)', () => {
       expect(seen.rests, where).toBeGreaterThan(0);
     };
     // The Tour: Osc 1's Waveform, by its name's right end; the Cutoff, by its name (the owner's, 2026-11-02).
-    await page.getByRole('button', { name: 'About' }).click();
+    await page.getByRole('button', { name: 'About', exact: true }).click();
     await page.getByRole('dialog', { name: 'Limpide' }).getByRole('button', { name: 'Take the Tour' }).click();
     await expect(async () => expect(await against(page, '[data-learn="choice:waveform"]', BEAD_HEIGHT)).toEqual(POINTING)).toPass({ timeout: 20000 });
     for (let card = 1; ; card++) {
@@ -1790,7 +1790,7 @@ test.describe('pointing the way in a Tutorial and the Tour (issue 151)', () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/');
     await bringBead(page);
-    await page.getByRole('button', { name: 'About' }).click();
+    await page.getByRole('button', { name: 'About', exact: true }).click();
     await page.getByRole('dialog', { name: 'Limpide' }).getByRole('button', { name: 'Take the Tour' }).click();
     await expect(async () => expect(await against(page, '[data-learn="choice:waveform"]', BEAD_HEIGHT)).toEqual(POINTING)).toPass({ timeout: 20000 });
     await tourCard(page).getByRole('button', { name: 'Next', exact: true }).click();

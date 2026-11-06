@@ -12,7 +12,7 @@ const slider = (page: Page, name: string) => page.getByRole('slider', { name, ex
 const waveform = (page: Page) => page.getByRole('radiogroup', { name: 'Osc 1 Waveform' }).locator('[aria-checked="true"]');
 
 async function startFromAbout(page: Page) {
-  await page.getByRole('button', { name: 'About' }).click();
+  await page.getByRole('button', { name: 'About', exact: true }).click();
   await about(page).getByRole('button', { name: 'Take the Tour' }).click();
   await expect(card(page)).toBeVisible();
 }

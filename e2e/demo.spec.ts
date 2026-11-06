@@ -452,7 +452,7 @@ test('the card saying the Demo stopped goes at once when a Tutorial or the Tour 
       await page.getByRole('dialog', { name: 'Patches' }).getByRole('group', { name: 'Tutorials' }).getByRole('button', { name: /^Tutorial: Bass/ }).click();
       await expect(page.getByRole('region', { name: /^Tutorial: / })).toBeVisible();
     } else {
-      await page.getByRole('button', { name: 'About' }).click();
+      await page.getByRole('button', { name: 'About', exact: true }).click();
       await page.getByRole('dialog', { name: 'Limpide' }).getByRole('button', { name: 'Take the Tour' }).click();
       await expect(page.getByRole('region', { name: 'Tour' })).toBeVisible();
     }
