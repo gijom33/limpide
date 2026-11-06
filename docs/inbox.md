@@ -4,6 +4,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-11-05, from the 1.25.0 code review and ripple hunter, the leftovers not fixed before the release: the Demo's phone test reads the page every 250 ms in round trips; CSS locators where a role would do (one, the Demo's parts); `nextVisitAt`'s bare boolean; in Bead's choices, the grid's 13 rows bare, `DROP_MIDDLE` and `STEP` away from Bead's size, `{ left, foot }` typed twice, the same `moving` checks in three choices, `rides` a count, `clearAt` beside `onScreen` and `inView`, `until` both falling and rising; the geek tips' `where` written three times; 230's fold read again from storage at each card (reset in a private window), and the "you are playing now" card taking a fold made in 2 × 2 into the corner; the mascot test name "wide enough for the LFO plots clear of the card"; 222's frame still deciding a few things inline (as its calls 2 and 3 say).
+
 ## Ideas
 
 ## Dropped
