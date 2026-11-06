@@ -6,6 +6,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
+- 2026-11-05, the owner: "I would like to capitalize the GitHub project from limpide to Limpide. Is that even possible?"
+
 ## Dropped
 
 - 2026-11-02, from the 1.22.0 code review, 181's call 5 (Bead switching sides when the other side is clear) not in decision 3's order and changing 151's side rule: kept as built; 181 shipped in 1.22.0 and the owner has seen Bead beside the controls since without remark. Claude's call, open to the owner.
