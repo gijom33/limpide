@@ -380,7 +380,7 @@ function createTakeover(first: OscillatorNode, start: number, cut: (node: Oscill
      * A node from `make` takes over at `t`; a second restart at the same moment is the same one (false), unless it is
      * `again`, which replaces it (a beat-locked LFO locked again, issue 112).
      */
-    restart(t: number, make: () => OscillatorNode, again = false) {
+    restart(t: number, make: () => OscillatorNode, { again = false } = {}) {
       if (t === restartAt && !again) return false;
       restartAt = t;
       for (const [node, span] of running) {
@@ -963,7 +963,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
     },
 
     /** Take on `next` from `t`, writing only what it changes; `whole`, everything (issue 218). */
-    apply(next: Patch, t: number, whole = false) {
+    apply(next: Patch, t: number, { whole = false } = {}) {
       patch = next;
       const osc2Tuning = osc2Cents(next);
       pitchOverNote[0] = 2 ** next.osc1Octave;
@@ -1133,17 +1133,17 @@ export function createSynthEngine(
   };
   /**
    * LFO `i` at its Rate from `t`, in the clock and in its oscillators (a restart handed over ahead of now leaves the
-   * old one running until then: it follows too), its Waveform too when `wave` (issue 196: applyPatch's and setTempo's
-   * one loop).
+   * old one running until then: it follows too), its Waveform too with `withWaveform` (issue 196: applyPatch's and
+   * setTempo's one loop).
    */
-  const followRate = (i: number, l: Lfo, t: number, wave = false) => {
+  const followRate = (i: number, l: Lfo, t: number, { withWaveform = false } = {}) => {
     const rate = lfoRate(i, l, t);
     lfoClocks[i].setRate(t, rate);
     for (const osc of shared.lfos[i].takeover.nodes()) {
       const was = follows.get(osc);
-      if (wave && was?.waveform !== l.waveform) setLfoWave(osc, l.waveform);
+      if (withWaveform && was?.waveform !== l.waveform) setLfoWave(osc, l.waveform);
       if (was?.rate !== rate) osc.frequency.setValueAtTime(rate, t);
-      follows.set(osc, { rate, waveform: wave ? l.waveform : was?.waveform });
+      follows.set(osc, { rate, waveform: withWaveform ? l.waveform : was?.waveform });
     }
   };
   /**
@@ -1216,7 +1216,7 @@ export function createSynthEngine(
       const rate = hz(l);
       if (tempo.origin > t) {
         const start = LFO_START[l.waveform];
-        nodes.takeover.restart(tempo.origin, lfoOscillator(i, l, start), true);
+        nodes.takeover.restart(tempo.origin, lfoOscillator(i, l, start), { again: true });
         lfoClocks[i].restart(tempo.origin, start);
         return;
       }
@@ -1266,7 +1266,7 @@ export function createSynthEngine(
       lfoClocks[i].shift(-seconds);
       lfoChords[i] = null;
       if (locks[i] !== null) locks[i] = `${tempo.bpm} ${tempo.origin} ${l.note} ${l.waveform}`;
-      shared.lfos[i].takeover.restart(t, lfoOscillator(i, l, lfoClocks[i].phaseAt(t)), true);
+      shared.lfos[i].takeover.restart(t, lfoOscillator(i, l, lfoClocks[i].phaseAt(t)), { again: true });
     });
     carriedAt = t;
   };
@@ -1489,8 +1489,8 @@ export function createSynthEngine(
    * Voice's settings, and the gains the LFOs reach their Destinations through: only those it changes, or with `whole`
    * every one (issue 218).
    */
-  const applyToSound = (next: Patch, t: number, whole = false) => {
-    for (const v of voices) v.apply(next, t, whole);
+  const applyToSound = (next: Patch, t: number, { whole = false } = {}) => {
+    for (const v of voices) v.apply(next, t, { whole });
     // The laws' swings (issue 74), in the units the nodes take: cents for the pitches and the Cutoff.
     const cutoffCents = destinationSwings(next, 'cutoff').map((octaves) => octaves * 1200);
     const pitchCents = destinationSwings(next, 'pitch').map((semitones) => semitones * 100);
@@ -1606,12 +1606,12 @@ export function createSynthEngine(
       patches.push({ time: t, patch: next });
       trim(patches, t);
       lfos(next).forEach((l, i) => {
-        if (!following(i, l, t)) followRate(i, l, t, true);
+        if (!following(i, l, t)) followRate(i, l, t, { withWaveform: true });
         lfoClocks[i].forgetBefore(t - MODEL_SECONDS);
       });
       // Aftertouch's Destination from where its glide has reached, then gliding on to where it is going (issue 219).
       const [now, to] = [pressureAt(t), pressureTo(t)];
-      applyToSound(pressed(next, now), t, whole);
+      applyToSound(pressed(next, now), t, { whole });
       if (now.amount !== to.amount) shared.writes.gliding(PRESSURE_GLIDE, () => applyToSound(pressed(next, to), t));
       lockToBeat(next, t);
       // Several Voices sum before the master: the listening level makes room for them (after the Amp Tap, so
