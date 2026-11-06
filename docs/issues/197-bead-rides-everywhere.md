@@ -4,7 +4,7 @@
 
 **Blocked by:** none (181 and 192, which change the code this builds on, were merged into main on 2026-11-02)
 
-**Status:** done (2026-11-03). Built (2026-11-02) on night/2026-11-02, merged into main, not yet released; tried by the owner: "All good."
+**Status:** done (2026-11-03). Built (2026-11-02) on night/2026-11-02, merged into main, released in 1.23.0; tried by the owner: "All good."
 
 ## Decisions
 

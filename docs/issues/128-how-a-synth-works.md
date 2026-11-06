@@ -6,7 +6,7 @@ What exists already: Bass, the Tutorial the Welcome opens today ([58](./58-first
 
 **Blocked by:** none
 
-**Status:** done (2026-10-31). Built on the branch `claude/tour-128-3e1430`: every decision below, with Claude's calls 14 to 24. Tried by the owner, "good enough for now", so both questions under Built are answered as built; not yet released.
+**Status:** done (2026-10-31). Built on the branch `claude/tour-128-3e1430`: every decision below, with Claude's calls 14 to 24. Tried by the owner, "good enough for now", so both questions under Built are answered as built; released in 1.18.0.
 
 ## Decisions
 

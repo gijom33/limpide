@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** done (2026-11-05) · bug, in the tests, not the app: fixed in main, not yet released; the three tests run again on GitHub's WebKit. Diagnosed and fixed by day at the owner's word ("Yes for 1 and 2").
+**Status:** done (2026-11-05) · bug, in the tests, not the app: fixed in main, released in 1.25.0; the three tests run again on GitHub's WebKit. Diagnosed and fixed by day at the owner's word ("Yes for 1 and 2").
 
 ## Hypotheses, ranked
 

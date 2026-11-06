@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** done (2026-11-03). Built (2026-11-03) on night/2026-11-02, merged into main, not yet released; tried by the owner: "All good."
+**Status:** done (2026-11-03). Built (2026-11-03) on night/2026-11-02, merged into main, released in 1.23.0; tried by the owner: "All good."
 
 ## Decisions
 
