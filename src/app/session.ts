@@ -90,7 +90,7 @@ export function getAudioSession(storage: KeyValueStorage): AudioSession {
   const viewers = createViewerStore({ storage, patches, setTapSource: (source) => engine.setTapSource(source) });
   const tempo = createTempoStore({ storage, engine });
   // In a long silence the sound pauses (issue 216), while nothing plays by itself and no Controller's clock is followed.
-  const pause = pauseInSilence({
+  const silencePause = pauseInSilence({
     ctx,
     engine,
     page: window,
@@ -118,7 +118,7 @@ export function getAudioSession(storage: KeyValueStorage): AudioSession {
     muteInput(on) {
       muted = on;
     },
-    wake: pause.wake,
+    wake: silencePause.wake,
   };
   return session;
 }

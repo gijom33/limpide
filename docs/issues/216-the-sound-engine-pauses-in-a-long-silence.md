@@ -88,3 +88,5 @@ What to try in the app, on the laptop:
 - Then play a key without touching the mouse. It should sound at once and not feel late. Try a piano click and the Demo too, and a Controller if one is to hand.
 - With an LFO on Volume or Cutoff, check the plot carries straight on as the first Note comes in.
 - Play the Demo and leave it running: it never pauses.
+
+**Since then (2026-11-05, [238](./238-tidy-ups-after-1-24.md)):** a Controller's every message wakes the sound too, as the page's keys and pointer do, ahead of the Note it may bring; and a paused Spectrum is drawn again when Harmonics, Ideal or the Synth Geek Layer is turned. Claude's call, open to the owner.

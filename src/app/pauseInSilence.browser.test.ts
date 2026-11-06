@@ -3,9 +3,10 @@ import { createSynthEngine, type SynthEngine } from '../engine/synthEngine';
 import { defaultPatch } from '../patch/patch';
 import { WAKES } from './pauseInSilence';
 
-// Issue 216 wakes the paused engine from every one of its methods that makes sound; issue 238 makes that list hard to
-// get wrong: each of a real engine's methods is called in turn, and those that schedule anything in the sound must be
-// the ones that wake it, and only they.
+// The paused engine wakes from every one of its methods that makes sound (issues 216 and 238): each of a real engine's
+// methods is called in turn, and those that schedule anything in the sound must be the ones that wake it, and only
+// they. What it counts is scheduling: a method changing the sound only by setting a value, a curve or a connection
+// would pass unseen (the engine's do so only for what is never heard: the Response Curve's twins, the Taps).
 
 /** The AudioParam and node methods that schedule what is heard, wrapped to count their calls. */
 function countSchedules() {
