@@ -6,7 +6,7 @@ export interface Droplet {
   vy: number;
   age: number;
   life: number;
-  /** Where it ends as it falls, if somewhere: an umbrella, the edge (steam rises to its `until` instead). */
+  /** Where it ends as it falls, if somewhere: an umbrella, the edge. */
   until: number;
   /** Its gravity, in pixels a second squared: steam's rises. */
   gravity: number;
@@ -24,15 +24,17 @@ export type Fling = 'up' | 'side' | 'down' | 'all' | 'drip' | 'spout' | 'rain' |
 
 /** Gravity on a droplet, in pixels a second squared (lighter than on the drop itself, for a slower, prettier arc). */
 export const DROPLET_GRAVITY = 1500;
-/**
- * How high over its edge a raindrop starts, in pixels: each from its own height, not all from one line (issue 237),
- * the highest where it fell from before.
- */
+/** How high over its edge a raindrop starts, in pixels: each from its own height, not all from one line (issue 237). */
 export const RAIN_HIGH = { lowest: 60, highest: 120 };
 
-/** Where a raindrop starts, over `edge` and under `ceiling` (what is over the page there), `random` 0 to 1. */
-export const rainFrom = (edge: number, ceiling: number, random: number) =>
-  edge - Math.min(RAIN_HIGH.lowest + random * (RAIN_HIGH.highest - RAIN_HIGH.lowest), edge - ceiling);
+/**
+ * Where a raindrop starts, over `edge` and under `ceiling` (what is over the page there), `random` 0 to 1. With less
+ * room than RAIN_HIGH, the heights shrink into it, the same share of it apart, so they never meet on one line.
+ */
+export const rainFrom = (edge: number, ceiling: number, random: number) => {
+  const scale = Math.min(1, Math.max(0, edge - ceiling) / RAIN_HIGH.highest);
+  return edge - scale * (RAIN_HIGH.lowest + random * (RAIN_HIGH.highest - RAIN_HIGH.lowest));
+};
 /** Steam rises, slowing as it goes. */
 const STEAM_GRAVITY = 30;
 /** The most droplets in the air at once; older ones make way. */

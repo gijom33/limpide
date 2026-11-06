@@ -464,7 +464,7 @@ export function syncedRateTip(index: number, bpm: number): TipContent {
 }
 
 /**
- * The tips whose formula under the hood follows the settings picked (issue 235, from the Viewers): an Oscillator's
+ * The tips whose formula under the hood follows the settings picked (issue 235): an Oscillator's
  * Waveform its Harmonic series, at its Pulse Width; FM's and Ring's their rules at the knobs; the Filter Mode's and
  * Slope's the response for both. FM's goes to the tip of Osc 1's Pitch, over Octave and FM: FM's own, the tallest tip,
  * has no room left for it on a phone.

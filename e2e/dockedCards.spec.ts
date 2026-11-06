@@ -2,7 +2,8 @@ import { expect, type Locator, type Page, test } from '@playwright/test';
 import { TRACK } from '../src/demo/track';
 
 // Issue 59, the owner's decisions (2026-10-27): the Demo's and a Tutorial's cards fold to their top row (the fold
-// remembered for each kind of card), and from the 2 × 2 layout up move by that row, inside the window; a double-click
+// remembered for each kind of card, but for the Demo's, which opens folded three and four across: issue 230), and from
+// the 2 × 2 layout up move by that row, inside the window; a double-click
 // on it puts the card back. On a phone they only fold.
 
 const demoCard = (page: Page) => page.getByRole('region', { name: 'Demo', exact: true });
@@ -44,7 +45,7 @@ test('on a laptop the Demo card moves by its top row, stays in the window, and a
   expect([Math.round(back.x), Math.round(back.y)]).toEqual([Math.round(home.x), Math.round(home.y)]);
 });
 
-test('in 2 × 2 the Demo card folds to its top row, and stays folded the next time', async ({ page }) => {
+test('in 2 × 2 the Demo card folds to its top row, and stays folded the next time (issue 230)', async ({ page }) => {
   await page.setViewportSize({ width: 768, height: 1024 });
   await page.goto('/');
   await startDemo(page);

@@ -294,7 +294,7 @@ describe('the Synth Geek Layer’s formulas, explained for the tips (issue 235)'
     expect(harmonicFormula('pulse', 0.5).where).toMatch(/50 % now: every 2nd Harmonic missing/);
     expect(harmonicFormula('pulse', 0.2).where).toMatch(/every 5th Harmonic missing/);
     // At 33 % the first gap is the 100th: past what the Spectrum shows, so none is said.
-    expect(harmonicFormula('pulse', 0.33).where).toMatch(/33 % now\. aₙ is 0 wherever n d is whole\.$/);
+    expect(harmonicFormula('pulse', 0.33).where).toMatch(/33 % now; π: 3\.14…\. aₙ is 0 wherever n d is whole\.$/);
   });
 
   it('gives FM’s rule with the figures for the knobs, its letters named', () => {

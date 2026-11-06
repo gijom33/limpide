@@ -4,7 +4,7 @@ import { openDisplay, sliderName } from './helpers';
 const value = (page: Page, stage: string, name: string) =>
   page.getByRole('region', { name: stage }).locator('.knob', { has: page.getByRole('slider', { name: sliderName(name) }) }).locator('.knob-value > span').first();
 
-test('the Synth Geek Layer is off at first; on, it shows Q, dB, the formulas in the tips and the Effective Cutoff, and is remembered', async ({ page }) => {
+test('the Synth Geek Layer is off at first; on, it shows Q, dB, the formulas in the tips (issue 235) and the Effective Cutoff, and is remembered', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
   const resonance = value(page, 'Filter', 'Resonance');
@@ -53,7 +53,7 @@ test('the Synth Geek Layer is off at first; on, it shows Q, dB, the formulas in 
   await expect(value(page, 'Filter', 'Resonance')).toHaveText(/^Q /);
 });
 
-test('FM’s and Ring’s tips give their rules with the figures for the knobs, with the layer on (issues 109, 235)', async ({ page }) => {
+test('Osc 1 Pitch’s tip gives FM’s rule and Ring’s its own, with the figures for the knobs, with the layer on (issues 109, 235)', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.addInitScript(() => localStorage.setItem('limpide.overlays', JSON.stringify({ geek: true })));
   await page.goto('/');

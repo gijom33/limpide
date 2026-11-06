@@ -69,7 +69,7 @@ export function harmonicFormula(waveform: Waveform, pulseWidth: number): Formula
       return {
         says: 'A Pulse’s Harmonics follow its width: one is missing wherever a whole number of its cycles fits the high part exactly. At 50 % it is a Square.',
         formula: 'aₙ = 4 sin(π n d) / (π n)',
-        where: `${N_IS}; aₙ: its amplitude, the wave’s peak being 1; d: the Pulse Width, ${percent} % now${gaps}. aₙ is 0 wherever n d is whole.`,
+        where: `${N_IS}; aₙ: its amplitude, the wave’s peak being 1; d: the Pulse Width, ${percent} % now${gaps}; π: 3.14…. aₙ is 0 wherever n d is whole.`,
       };
     }
   }
@@ -79,7 +79,7 @@ export function harmonicFormula(waveform: Waveform, pulseWidth: number): Formula
 const ratioText = (r: number) => String(Number(r.toFixed(2)));
 
 /**
- * FM's rule, for its tip (issue 109, moved there by issue 235): the partials it adds around each of Osc 1's
+ * FM's rule, for its tip (issues 109 and 235): the partials it adds around each of Osc 1's
  * Harmonics, with the figures for the knobs as they are: β, J₀ to J₃ of it, and where the partials land.
  */
 export function fmFormula(patch: Patch): Formula {
@@ -95,7 +95,7 @@ export function fmFormula(patch: Patch): Formula {
   };
 }
 
-/** Ring's sums and differences, for its tip (issue 109, moved there by issue 235), its first pair at the knobs. */
+/** Ring's sums and differences, for its tip (issues 109 and 235), its first pair at the knobs. */
 export function ringFormula(patch: Patch): Formula {
   const r = osc2Ratio(patch);
   const difference = Math.abs(r - 1);

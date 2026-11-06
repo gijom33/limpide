@@ -274,10 +274,11 @@ test.describe('on a phone', () => {
     const part = () => page.getByRole('region', { name: 'Demo', exact: true }).locator('[aria-label^="Part "]').first().getAttribute('aria-label');
     const playing = await part();
     const end = Date.now() + ms;
-    while (Date.now() < end && (await part()) === playing) {
+    // At least once, even if the next part comes before the second look.
+    do {
       expect(await page.evaluate(() => scrollY)).toBe(y);
       await page.waitForTimeout(250);
-    }
+    } while (Date.now() < end && (await part()) === playing);
   };
 
   test('the page follows the knob the Demo turns', async ({ page }) => {

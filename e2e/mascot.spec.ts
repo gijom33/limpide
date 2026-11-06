@@ -421,15 +421,17 @@ test("on a phone, the umbrella's rain falls around it, each drop from its own he
 });
 
 /**
- * Each frame through the evaporating trick: the sun's and the cloud's middles over its foot at their highest, and their
- * tops against the header's foot and the window's top at their lowest.
+ * Each frame through the evaporating trick, to its end by its own clock (on a loaded machine longer than the clock's
+ * 4.5 s): the sun's and the cloud's middles over its foot at their highest, and their tops against the header's foot
+ * and the window's top at their lowest.
  */
 const skyOverBead = (page: Page) =>
   page.evaluate(
     () =>
       new Promise<{ sun: number; cloud: number; underHeader: number }>((done) => {
         const seen = { sun: 0, cloud: 0, underHeader: Infinity };
-        const end = performance.now() + 4500;
+        const end = performance.now() + 20000;
+        let begun = false;
         window.__limpideTrick!('evaporate');
         const sample = () => {
           const foot = document.querySelector('.mascot')!.getBoundingClientRect().bottom;
@@ -440,7 +442,9 @@ const skyOverBead = (page: Page) =>
             seen[name] = Math.max(seen[name], foot - (b.top + b.bottom) / 2);
             seen.underHeader = Math.min(seen.underHeader, b.top - header);
           }
-          if (performance.now() < end) requestAnimationFrame(sample);
+          const doing = document.querySelector<HTMLElement>('.mascot')!.dataset.doing;
+          if (doing === 'evaporate') begun = true;
+          if ((!begun || doing === 'evaporate') && performance.now() < end) requestAnimationFrame(sample);
           else done(seen);
         };
         requestAnimationFrame(sample);

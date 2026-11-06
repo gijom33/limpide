@@ -70,13 +70,17 @@ describe("the mascot's droplets (issue 115)", () => {
     expect(spray.step(0.3)).toHaveLength(0);
   });
 
-  it('each raindrop starts from its own height, 60 to 120 px over its edge, under what is over the page (issue 237)', () => {
+  it('each raindrop starts from its own height, 60 to 120 px over its edge, shrunk under what is over the page (issue 237)', () => {
     const heights = Array.from({ length: 50 }, (_, i) => 500 - rainFrom(500, 0, i / 49));
     expect(Math.min(...heights)).toBe(RAIN_HIGH.lowest);
     expect(Math.max(...heights)).toBe(RAIN_HIGH.highest);
     expect(new Set(heights.map(Math.round)).size).toBeGreaterThan(40);
-    // Under the header's foot, 80 px over its edge: none starts higher.
-    expect(Math.max(...Array.from({ length: 50 }, (_, i) => 500 - rainFrom(500, 420, i / 49)))).toBe(80);
+    // Under the header's foot, 80 px over its edge: none starts higher, and they still start apart, 40 to 80 px.
+    const under = Array.from({ length: 50 }, (_, i) => 500 - rainFrom(500, 420, i / 49));
+    expect(Math.max(...under)).toBeCloseTo(80, 6);
+    expect(Math.min(...under)).toBeCloseTo(40, 6);
+    // With no room at all, at its edge.
+    expect(rainFrom(500, 500, 0.5)).toBe(500);
   });
 
   it('droplets are gone after their life, and no more than the most are in the air', () => {

@@ -11,7 +11,7 @@ describe('the Tutorials', () => {
   });
 
   // Issue 233: each Waveform in turn on Osc 1, every Harmonic in sight, then a saw and a square an octave apart.
-  it('play each Waveform in turn in Sub Ladder, the Filter open and Ideal on first, and end on the square Sub under the saw', () => {
+  it('play each Waveform in turn in Sub Ladder, the Filter open and Ideal on first, and end on the square Sub under the saw (issue 233)', () => {
     const steps = TUTORIALS.find((t) => t.preset === 'Sub Ladder')!.steps;
     const waves = steps.flatMap((s) => (s.kind === 'choice' && s.id === 'waveform' ? [s.to] : []));
     expect(waves).toEqual(['sine', 'triangle', 'square', 'pulse', 'saw']);
@@ -40,7 +40,7 @@ describe('the Tutorials', () => {
   });
 
   // Issue 234: Pulse Width by hand, then LFO 1 sweeping it, then a detuned Osc 2 brought in and taken out again.
-  it('turn Pulse Width by hand in PWM Bass, then aim LFO 1 at it, then compare a detuned Osc 2 and take it out', () => {
+  it('turn Pulse Width by hand in PWM Bass, then aim LFO 1 at it, then compare a detuned Osc 2 and take it out (issue 234)', () => {
     const steps = TUTORIALS.find((t) => t.preset === 'PWM Bass')!.steps;
     const targets = steps.flatMap((s) => (s.kind === 'param' || s.kind === 'choice' ? [`${s.id} ${s.to}`] : []));
     expect(targets.slice(0, 10)).toEqual([

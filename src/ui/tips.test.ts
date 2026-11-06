@@ -106,7 +106,7 @@ it('an Envelope fader’s tip works out τ at its setting; the others, Glide’s
   expect(paramTipAt('keyTrack', 0.5)).toBe(PARAM_TIPS.keyTrack);
 });
 
-it('the Waveform’s, FM’s, Ring’s and the Filter’s tips give their formulas under the hood, at the settings picked (issue 235)', () => {
+it('the Waveform’s, Osc 1 Pitch’s (FM’s rule), Ring’s and the Filter’s tips give their formulas under the hood, at the settings picked (issue 235)', () => {
   // Each Oscillator's Waveform its own series: a Square's odd Harmonics, a Pulse's gaps at its width.
   expect(waveformTip('square', 0.25)).toMatchObject({ title: 'Waveform', history: TIPS.waveform.history });
   expect(waveformTip('square', 0.25).underTheHood?.formula).toBe('bₙ = 4 / (π n),  odd n only');
