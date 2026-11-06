@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { effectiveCutoff } from '../modulation/modulationModel';
 import { defaultPatch } from '../patch/patch';
-import { CUTOFF_CLAMP, CUTOFF_SPAN, centsOverFloor, filterLevel, filterStages, filterStagesAt, LEVEL_DIP, RESONANCE_DIP, resonanceCurve, resonanceToQdB, topFade } from './filterDesign';
+import { CUTOFF_CLAMP, CUTOFF_SPAN, centsOverFloor, filterLevel, filterStages, filterStagesAt, LEVEL_FADE_CURVE, RESONANCE_FADE_CURVE, resonanceCurve, resonanceToQdB, topFade } from './filterDesign';
 
 /** What a WaveShaperNode makes of `x` through `curve`: the curve read between its points, held at its ends past ±1. */
 function shaped(curve: Float32Array, x: number) {
@@ -115,8 +115,8 @@ describe('the Filter at the top of its range (issue 195)', () => {
 
   it('gives the sound the fades the model has, read from the clamped Cutoff in cents over the span', () => {
     for (const hz of [20, 1000, 14000, 14142, 15000, 16818, 18000, 18877, 19200, 19500, 19800, 20000]) {
-      expect(1 - shaped(RESONANCE_DIP, centsOverFloor(hz) / CUTOFF_SPAN), `${hz} Hz`).toBeCloseTo(topFade(hz), 4);
-      expect(1 - shaped(LEVEL_DIP, centsOverFloor(hz) / CUTOFF_SPAN), `${hz} Hz`).toBeCloseTo(filterLevel('highpass', hz), 3);
+      expect(1 - shaped(RESONANCE_FADE_CURVE, centsOverFloor(hz) / CUTOFF_SPAN), `${hz} Hz`).toBeCloseTo(topFade(hz), 4);
+      expect(1 - shaped(LEVEL_FADE_CURVE, centsOverFloor(hz) / CUTOFF_SPAN), `${hz} Hz`).toBeCloseTo(filterLevel('highpass', hz), 3);
     }
   });
 });

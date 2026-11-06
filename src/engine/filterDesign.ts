@@ -100,10 +100,10 @@ export function filterStagesAt(mode: FilterMode, slope: FilterSlope, resonance: 
 export const filterLevel = (mode: FilterMode, cutoff: number) => (fadesOutAtTheTop(mode) ? 1 - intoTheTop(centsOverFloor(cutoff), LEVEL_FADE) : 1);
 
 /** Points in the top's fade curves: read between them, a fade is within a ten-thousandth of its own. */
-const DIP_POINTS = 16385;
+const FADE_POINTS = 16385;
 /** A fade's curve for the sound, over the clamped Cutoff's cents over the floor divided by the span: what it takes off. */
-const dipCurve = (width: number) => Float32Array.from({ length: DIP_POINTS }, (_, i) => intoTheTop(CUTOFF_SPAN * ((2 * i) / (DIP_POINTS - 1) - 1), width));
+const fadeCurve = (width: number) => Float32Array.from({ length: FADE_POINTS }, (_, i) => intoTheTop(CUTOFF_SPAN * ((2 * i) / (FADE_POINTS - 1) - 1), width));
 /** The Resonance's fade at the top, as a WaveShaper's curve: 1 less `topFade`. */
-export const RESONANCE_DIP = dipCurve(RESONANCE_FADE);
+export const RESONANCE_FADE_CURVE = fadeCurve(RESONANCE_FADE);
 /** A high-pass's fall to silence at the top, as a WaveShaper's curve: 1 less its `filterLevel`. */
-export const LEVEL_DIP = dipCurve(LEVEL_FADE);
+export const LEVEL_FADE_CURVE = fadeCurve(LEVEL_FADE);

@@ -12,7 +12,7 @@ import { fmDepthKept, playedTop } from '../music/idealReference';
 import { frequencyToNote, noteToFrequency } from '../music/pitch';
 import { TEMPO } from '../music/tempo';
 import { fmIndex, GLIDE_OFF, type Lfo, type LfoNumber, lfoHz, lfos, type NoiseColour, PARAMS, type Patch, type SubWaveform, type Voices } from '../patch/patch';
-import { CUTOFF_CLAMP, CUTOFF_SPAN, centsOverFloor, fadesOutAtTheTop, filterLevel, filterStages, filterStagesAt, isPeaked, LEVEL_DIP, RESONANCE_DIP, resonanceCurve, type Stage } from './filterDesign';
+import { CUTOFF_CLAMP, CUTOFF_SPAN, centsOverFloor, fadesOutAtTheTop, filterLevel, filterStages, filterStagesAt, isPeaked, LEVEL_FADE_CURVE, RESONANCE_FADE_CURVE, resonanceCurve, type Stage } from './filterDesign';
 import { heardAt, type OutputClockContext } from './outputClock';
 
 /**
@@ -745,26 +745,26 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   cutoff.start();
   // Near the top the Resonance fades, and a high-pass falls silent (issue 195), as `filterStagesAt` and `filterLevel`
   // have it: the clamped Cutoff, through each fade's curve, takes its share off each stage's Q over its flat one (the
-  // shared `toQ`), and off what a high-pass lets through. Each dip's gain is −1 in the Modes it fades, 0 in the others.
-  const toDip = ctx.createGain();
-  toDip.gain.value = 1 / CUTOFF_SPAN;
-  cutoffClamp.connect(toDip);
-  const [resonanceDip, levelDip] = [RESONANCE_DIP, LEVEL_DIP].map((curve) => {
+  // shared `toQ`), and off what a high-pass lets through. Each fade's gain is −1 in the Modes it fades, 0 in the others.
+  const toFade = ctx.createGain();
+  toFade.gain.value = 1 / CUTOFF_SPAN;
+  cutoffClamp.connect(toFade);
+  const [resonanceFade, levelFade] = [RESONANCE_FADE_CURVE, LEVEL_FADE_CURVE].map((curve) => {
     const shaper = ctx.createWaveShaper();
     shaper.curve = curve;
-    const dip = ctx.createGain();
-    dip.gain.value = 0;
-    toDip.connect(shaper).connect(dip);
-    return dip;
+    const fade = ctx.createGain();
+    fade.gain.value = 0;
+    toFade.connect(shaper).connect(fade);
+    return fade;
   });
   const overFlat = [filter, filter2].map((node) => {
     const kept = ctx.createGain();
-    resonanceDip.connect(kept.gain);
+    resonanceFade.connect(kept.gain);
     kept.connect(node.Q);
     return kept;
   });
   const topLevel = ctx.createGain();
-  levelDip.connect(topLevel.gain);
+  levelFade.connect(topLevel.gain);
   const amp = ctx.createGain();
   amp.gain.value = 0;
   // After the Amp, the LFOs on Volume (tremolo): its gain is the shared resting level plus each LFO's swing.
@@ -1000,8 +1000,8 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
       // Each stage at its flat Q; the Resonance over it comes through the shared `toQ`, faded at the top (issue 195).
       const flat = filterStages(next.filterMode, next.filterSlope, 0);
       [filter, filter2].forEach((node, i) => setStage(node, flat[i], { writes: shared.writes, t }));
-      write(resonanceDip.gain, isPeaked(next.filterMode) ? -1 : 0, t);
-      write(levelDip.gain, fadesOutAtTheTop(next.filterMode) ? -1 : 0, t);
+      write(resonanceFade.gain, isPeaked(next.filterMode) ? -1 : 0, t);
+      write(levelFade.gain, fadesOutAtTheTop(next.filterMode) ? -1 : 0, t);
       // The knob's Cutoff; the Filter Envelope and the rest add to it.
       write(cutoff.offset, centsOverFloor(effectiveCutoff(next)), t);
       write(envelopeAmount.gain, next.filterEnvAmount * 1200, t);
@@ -1474,12 +1474,12 @@ export function createSynthEngine(
     };
   };
 
-  // During a Glide, the frequency the Oscillators have reached, at Osc 1's Octave; with `vibrato`, the LFOs on Pitch
+  // During a Glide, the frequency the Oscillators have reached, at Osc 1's Octave; with `withVibrato`, the LFOs on Pitch
   // too, which move every Oscillator and the Sub alike. With the Sub sounding, the sound repeats at the Sub's pitch, one
   // or two octaves lower: that is the fundamental.
-  const fundamentalOf = (t: number, { vibrato: swung }: { vibrato: boolean }) => {
+  const fundamentalOf = (t: number, { withVibrato }: { withVibrato: boolean }) => {
     const then = patchAt(t);
-    const vibrato = swung && then ? lfoOffset(pressed(then, pressureAt(t)), 'pitch', lfoValues(then, t)) : 0;
+    const vibrato = withVibrato && then ? lfoOffset(pressed(then, pressureAt(t)), 'pitch', lfoValues(then, t)) : 0;
     const frequency = (glidingAt(t) || A4) * 2 ** ((then?.osc1Octave ?? 0) + vibrato / 12 + bendCentsAt(t) / 1200);
     return then?.mixSub ? frequency * 2 ** then.subOctave : frequency;
   };
@@ -1529,8 +1529,8 @@ export function createSynthEngine(
 
   return {
     taps,
-    fundamental: () => fundamentalOf(ctx.currentTime, { vibrato: false }),
-    fundamentalAt: (time) => fundamentalOf(time, { vibrato: true }),
+    fundamental: () => fundamentalOf(ctx.currentTime, { withVibrato: false }),
+    fundamentalAt: (time) => fundamentalOf(time, { withVibrato: true }),
     newestNote: () => newest,
     onNewestNote(listener) {
       newestListeners.add(listener);
