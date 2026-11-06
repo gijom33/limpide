@@ -2,7 +2,7 @@ import type { PhraseAtTempo } from '../demo/phrase';
 import { CHOICE_LABELS } from '../midi/mappings';
 import { WAVEFORM_NAMES } from '../music/harmonics';
 import {
-  type ChoiceId, formatParam, LFO_DESTINATIONS, LFO_KEYS, PARAMS, type ParamId, type Patch, paramName, setLfo, setParam, soundFields,
+  type ChoiceId, formatParam, LFO_DESTINATIONS, LFO_KEYS, PARAMS, type ParamId, type Patch, paramName, rateOf, setLfo, setParam, soundFields,
 } from '../patch/patch';
 import { PRESETS } from '../patch/presets';
 import { valueToPosition } from '../patch/taper';
@@ -141,13 +141,8 @@ export function doStep(step: Step, page: { setPatch(change: (patch: Patch) => Pa
  * already right, leaves the Patch as it is.
  */
 export function readyFor(step: Step, patch: Patch): Patch {
-  if (step.kind !== 'param') return patch;
-  for (const lfo of [1, 2] as const) {
-    const keys = LFO_KEYS[lfo];
-    const sync = step.id === keys.rate ? 'off' : step.id === keys.note ? 'on' : undefined;
-    if (sync && patch[keys.sync] !== sync) return setLfo(patch, { sync }, lfo);
-  }
-  return patch;
+  const rate = step.kind === 'param' ? rateOf(step.id) : undefined;
+  return rate && patch[LFO_KEYS[rate.lfo].sync] !== rate.sync ? setLfo(patch, { sync: rate.sync }, rate.lfo) : patch;
 }
 
 /** The Patch with the Step's change made exactly, a Rate's knob turning it (`readyFor`). */

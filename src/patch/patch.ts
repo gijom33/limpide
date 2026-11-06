@@ -387,10 +387,22 @@ export const followsTheBeat = (patch: Patch, lfo: LfoNumber) => patch[LFO_KEYS[l
 export const markedBeats = (patch: Patch | undefined, which: readonly LfoNumber[], tempo: BeatGrid, from: number, to: number): number[] =>
   patch && which.some((lfo) => followsTheBeat(patch, lfo)) ? beatsBetween(tempo, from, to) : [];
 
+/**
+ * Which LFO's Rate knob turns `id`, and with which Sync: its Hz with Sync off, its note value with Sync on; undefined for
+ * any other Parameter. The one place a Rate's LFO is worked out (issue 228).
+ */
+export const rateOf = (id: ParamId): { lfo: LfoNumber; sync: LfoSync } | undefined => {
+  for (const lfo of [1, 2] as const) {
+    if (LFO_KEYS[lfo].rate === id) return { lfo, sync: 'off' };
+    if (LFO_KEYS[lfo].note === id) return { lfo, sync: 'on' };
+  }
+  return undefined;
+};
+
 /** The Parameter a control mapped to `id` turns now: an LFO's Rate turns its note value while Sync is on. */
 export const knobTurns = (patch: Patch, id: ParamId): ParamId => {
-  const lfo = ([1, 2] as const).find((n) => LFO_KEYS[n].rate === id);
-  return lfo ? rateKnob(patch, lfo) : id;
+  const rate = rateOf(id);
+  return rate?.sync === 'off' ? rateKnob(patch, rate.lfo) : id;
 };
 
 export function setLfo(

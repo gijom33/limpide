@@ -4,7 +4,7 @@ import { GLIDE_SHARPNESS } from '../modulation/lfo';
 import { destinationSwings, effectiveCutoff, KEY_TRACK_CENTRE, LFO_LAWS, type LfoLaw, osc2Cents } from '../modulation/modulationModel';
 import {
   type FilterMode, type FilterSlope, FM_INDEX, fmIndex, formatParam, LFO_DESTINATIONS, LFO_KEYS, type LfoNumber, type NoiseColour,
-  PARAMS, type ParamId, type Patch, secondsText,
+  PARAMS, type ParamId, type Patch, rateOf, secondsText,
 } from '../patch/patch';
 import { WAVEFORM_NAMES, type Waveform } from './harmonics';
 import { besselJ, osc2Ratio } from './idealReference';
@@ -234,9 +234,6 @@ export interface GeekReadout {
   words?: string;
 }
 
-/** Where a readout is worked out, its defaults filled in. */
-type At = Required<GeekAt>;
-
 /**
  * One control of the Synth Geek Layer: what it reads instead of its everyday value, in its parts, and the widest it can
  * read, to size its column while the layer is on (several where which is widest depends on the font; in their parts,
@@ -244,7 +241,8 @@ type At = Required<GeekAt>;
  * so a readout and its widest are written side by side (issue 196).
  */
 interface GeekControl {
-  read(value: number, patch: Patch, at: At): GeekReadout;
+  /** `at` with its defaults filled in. */
+  read(value: number, patch: Patch, at: Required<GeekAt>): GeekReadout;
   widest: readonly GeekReadout[];
 }
 
@@ -444,16 +442,13 @@ const STAGE_CURVES: Record<EnvelopeStage, Formula> = {
   release: { formula: 'x = x₀·e^(−t/τ)', where: 'x₀ the level when the key came up, falling towards silence. It' },
 };
 
-/** Each LFO's free Rate, whose tip works its period out at the Rate (issue 202). */
-const RATES: ParamId[] = [LFO_KEYS[1].rate, LFO_KEYS[2].rate];
-
 /**
  * The formulas under the hood worked out at a control's setting (issue 168), where the tip shows a live number: each
  * Envelope stage's curve and its time constant τ as the engine sets it, a free Rate's period (issue 202); undefined for
  * the others.
  */
 export function underTheHoodAt(id: ParamId, value: number): Formula | undefined {
-  if (RATES.includes(id)) {
+  if (rateOf(id)?.sync === 'off') {
     const { formula, where } = UNDER_THE_HOOD.lfoRate;
     return { formula, where: `T = 1 / ${preciseFrequencyText(value)} = ${periodText(1 / value)} now. ${where}` };
   }
