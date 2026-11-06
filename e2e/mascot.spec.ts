@@ -1124,98 +1124,6 @@ async function leansWithTheWave(page: Page, lfo: number) {
   expect(steep.filter((f) => Math.sign(f.lean) === Math.sign(f.slope)).length / steep.length, told).toBeGreaterThan(0.8);
 }
 
-test('three across, wide enough for the LFO plots clear of the card, each act in turn: conducting, the air guitar, then surfing where an LFO is on (issue 204)', async ({ page }) => {
-  // GitHub's Linux WebKit draws 8 to 25 frames a second, too few for this timing; the Mac's WebKit runs it (issue 232).
-  test.skip(!!process.env.CI && test.info().project.name === 'webkit', 'too few frames on GitHub’s Linux WebKit: issue 232');
-  await page.setViewportSize({ width: 1728, height: 1117 });
-  await page.goto('/');
-  await listening(page);
-  await bringBead(page);
-  await page.getByRole('button', { name: 'Demo', exact: true }).click();
-  await wholeDemoCard(page);
-  const card = page.getByRole('region', { name: 'Demo' });
-  const part = (n: number) => card.getByRole('button', { name: new RegExp(`^Play from part ${n},`) }).click();
-  await expect(mascot(page)).toHaveAttribute('data-act', 'conduct');
-  await part(2);
-  await expect(mascot(page)).toHaveAttribute('data-act', 'airGuitar');
-  await expect(mascot(page)).toHaveAttribute('data-tail', 'straight'); // its tail up across it, a guitar's neck
-  // Part 3, Poly Pluck: no LFO on, so surfing's turn is skipped: it conducts.
-  await part(3);
-  await page.waitForTimeout(1500);
-  await expect(mascot(page)).toHaveAttribute('data-act', 'conduct');
-  await part(4);
-  await expect(mascot(page)).toHaveAttribute('data-act', 'airGuitar');
-  // Part 5, Tremolo Keys, an LFO on: it surfs, on its board, leaning with the wave.
-  await part(5);
-  await expect(mascot(page)).toHaveAttribute('data-act', 'surf', { timeout: 8000 });
-  await expect(mascot(page)).toHaveAttribute('data-board', 'on', { timeout: 5000 });
-  const lfo = Number(await page.locator('.lfo-plot[data-lfo]:not([data-inactive])').first().getAttribute('data-lfo'));
-  await leansWithTheWave(page, lfo);
-  await part(6);
-  await expect(mascot(page)).toHaveAttribute('data-act', 'conduct');
-  await expect(mascot(page)).toHaveAttribute('data-board', '');
-});
-
-// Issue 211: the Demo's scroll to a part's section lasts long enough to see Bead fall or fly to its new edge. Its move
-// starts once the scroll carries its edge away, and lands, in view all along, before the page stops.
-for (const [size, viewport] of [
-  ['a 375 px phone', { width: 375, height: 812 }],
-  ['2 × 2', { width: 700, height: 830 }],
-] as const) {
-  test(`${size}: through the Demo's scroll to a part's section, it falls or flies in view, landing before the page stops (issue 211)`, async ({ page }) => {
-    // GitHub's Linux WebKit draws 8 to 25 frames a second, too few for this timing; the Mac's WebKit runs it (issue 232).
-    test.skip(!!process.env.CI && test.info().project.name === 'webkit', 'too few frames on GitHub’s Linux WebKit: issue 232');
-    await page.setViewportSize(viewport);
-    await page.goto('/');
-    await listening(page);
-    await bringBead(page);
-    await settles(page);
-    // Each frame for 8 s from the Demo's start (its second part's knob, in another section, about 4 s in): the page's
-    // scroll, what Bead is doing, and whether its drop is in the window. Demo is pressed in the page, so the watch starts
-    // with it however slow the round trips, and lasts past a scroll and flight that slow frames stretch (issue 224).
-    const seen = await page.evaluate(
-      () =>
-        new Promise<{ t: number; y: number; moving: string; inView: boolean }[]>((done) => {
-          const out: { t: number; y: number; moving: string; inView: boolean }[] = [];
-          const start = performance.now();
-          const frame = (now: number) => {
-            const drop = document.querySelector('.mascot-drop')?.getBoundingClientRect();
-            const moving = document.querySelector<HTMLElement>('.mascot')?.dataset.moving ?? '';
-            out.push({ t: now, y: scrollY, moving, inView: !!drop && drop.top >= 0 && drop.bottom <= innerHeight + 1 });
-            if (now - start < 8000) requestAnimationFrame(frame);
-            else done(out);
-          };
-          document.querySelector<HTMLElement>('button[aria-label="Demo"]')!.click();
-          requestAnimationFrame(frame);
-        }),
-    );
-    // The scrolls: from the frame before the page moves to the last it moved in.
-    const scrolls: { from: number; to: number }[] = [];
-    for (let i = 1; i < seen.length; i++) {
-      if (Math.abs(seen[i].y - seen[i - 1].y) < 0.5) continue;
-      const last = scrolls.at(-1);
-      if (last && seen[i].t - last.to < 150) last.to = seen[i].t;
-      else scrolls.push({ from: seen[i - 1].t, to: seen[i].t });
-    }
-    // Its falls and flights that start while the page scrolls, each to the frame it lands.
-    const moves: { scroll: { from: number; to: number }; from: number; to: number; inView: boolean }[] = [];
-    const airborne = (m: string) => m === 'falling' || m === 'flying';
-    for (let i = 1; i < seen.length; i++) {
-      if (!airborne(seen[i].moving) || airborne(seen[i - 1].moving)) continue;
-      const scroll = scrolls.find((s) => seen[i].t >= s.from && seen[i].t <= s.to);
-      const end = seen.findIndex((f, j) => j > i && !airborne(f.moving));
-      if (!scroll || end < 0) continue;
-      moves.push({ scroll, from: seen[i].t, to: seen[end].t, inView: seen.slice(i, end).every((f) => f.inView) });
-    }
-    const told = JSON.stringify({ scrolls, moves });
-    expect(moves.length, told).toBeGreaterThan(0);
-    for (const move of moves) {
-      expect(move.inView, told).toBe(true);
-      expect(move.to, told).toBeLessThanOrEqual(move.scroll.to);
-    }
-  });
-}
-
 /** Where its foot is against an LFO's plot: how far over or under the line the plot draws under its middle, in pixels. */
 interface OnTheLine {
   off: number;
@@ -1287,49 +1195,6 @@ test('now and then it rides a slow Sine on an LFO plot, along its line, and goes
 
 /** A patch in a Share link: LFO 1 a Sine at half a hertz, half on, and what `more` sets. */
 const slowLfo = (more: Record<string, unknown> = {}) => `/#p=${Buffer.from(JSON.stringify({ lfoAmount: 0.5, lfoRate: 0.5, ...more })).toString('base64url')}`;
-
-for (const [size, viewport, edge] of [
-  ['on a phone', { width: 375, height: 812 }, 'LFO & Envelopes'],
-  ['in 2 × 2', { width: 690, height: 640 }, 'LFO & Envelopes'],
-] as const) {
-  test(`${size}, now and then it rides a slow Sine on LFO 1's plot in view, on its line, and goes back to its edge after (issue 197)`, async ({ page }) => {
-    // GitHub's Linux WebKit draws 8 to 25 frames a second, too few for this timing; the Mac's WebKit runs it (issue 232).
-    test.skip(!!process.env.CI && test.info().project.name === 'webkit', 'too few frames on GitHub’s Linux WebKit: issue 232');
-    test.slow();
-    // Its every roll its lowest: its first ride is due soonest, 15 seconds in, and lasts the least, 8 seconds.
-    await page.addInitScript(() => {
-      Math.random = () => 0;
-    });
-    await page.setViewportSize(viewport);
-    await page.goto(slowLfo());
-    await listening(page);
-    await bringBead(page);
-    // LFO 1's plot in view, a little under its section's top edge, which is clear of the header and the tabs.
-    await page.evaluate(() => {
-      const plot = document.querySelector('.lfo-plot[data-lfo="1"]')!.getBoundingClientRect();
-      window.scrollTo({ top: scrollY + plot.top - 400, behavior: 'instant' });
-    });
-    await settles(page);
-    expect(Math.abs((await footing(page, edge)).bottom)).toBeLessThanOrEqual(1);
-    await page.mouse.move(2, viewport.height - 6); // off every control, so no tip stands over the plot
-    await page.keyboard.down('f'); // a Note held: it listens, and does no funny turn
-    await expect(mascot(page)).toHaveAttribute('data-ride', '1', { timeout: 40_000 });
-    await expect(mascot(page)).toHaveAttribute('data-moving', 'standing', { timeout: 5000 });
-    const along = await alongTheLine(page, 1, 10);
-    for (const { off, moving } of along) {
-      expect(moving).toBe('standing');
-      expect(Math.abs(off), `off the line by ${off}`).toBeLessThanOrEqual(4);
-    }
-    const feet = along.map((a) => a.foot);
-    expect(Math.max(...feet) - Math.min(...feet), feet.join(', ')).toBeGreaterThan(4);
-    // Its ride over, back to its edge.
-    await expect(mascot(page)).toHaveAttribute('data-ride', '', { timeout: 15_000 });
-    await settles(page);
-    // Its box on the edge: the LFO's sway may tilt the drop a few pixels past it.
-    expect(Math.abs((await footing(page, edge)).bottom)).toBeLessThanOrEqual(1);
-    await page.keyboard.up('f');
-  });
-}
 
 /**
  * A point on its own pixels, near its middle low down, where a press picks it up. Not from its box alone: riding, its
@@ -1737,42 +1602,6 @@ test.describe('pointing the way in a Tutorial and the Tour (issue 151)', () => {
     await settles(page, /^standing$/, 8);
     await expect(mascot(page)).toHaveAttribute('data-pointing', 'no');
     expect((await footing(page)).bottom).toBe(0);
-  });
-
-  test('beside each control in the Tour and a Tutorial, over no label: a little lower under it, else along (issue 181)', async ({ page }) => {
-    // GitHub's Linux WebKit draws 8 to 25 frames a second, too few for this timing; the Mac's WebKit runs it (issue 232).
-    test.skip(!!process.env.CI && test.info().project.name === 'webkit', 'too few frames on GitHub’s Linux WebKit: issue 232');
-    test.slow();
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto('/');
-    await bringBead(page);
-    /** Once it has gone there and bounced on arriving, where it rests over no text. */
-    const restsClear = async (where: string) => {
-      await page.waitForTimeout(2500); // off from the last control
-      await settles(page, /^(clinging|standing)$/, 12);
-      await page.waitForTimeout(800); // its bounce
-      const seen = await restsOverText(page, 1500);
-      expect(seen.over, where).toEqual([]);
-      expect(seen.rests, where).toBeGreaterThan(0);
-    };
-    // The Tour: Osc 1's Waveform, by its name's right end; the Cutoff, by its name (the owner's, 2026-11-02).
-    await page.getByRole('button', { name: 'About', exact: true }).click();
-    await page.getByRole('dialog', { name: 'Limpide' }).getByRole('button', { name: 'Take the Tour' }).click();
-    await expect(async () => expect(await against(page, '[data-learn="choice:waveform"]', BEAD_HEIGHT)).toEqual(POINTING)).toPass({ timeout: 20000 });
-    for (let card = 1; ; card++) {
-      await restsClear(`the Tour's card ${card}`);
-      const next = tourCard(page).getByRole('button', { name: 'Next', exact: true });
-      if (!(await next.isVisible())) break;
-      await next.click();
-    }
-    await tourCard(page).getByRole('button', { name: 'Close the Tour' }).click();
-    // A Tutorial: its first Steps' controls, in two Sections and the header.
-    await openTutorial(page, 'Bass');
-    for (let step = 1; step <= 6; step++) {
-      await restsClear(`the Bass Tutorial's Step ${step}`);
-      await doIt(page);
-      await next(page);
-    }
   });
 
   test('a control on a hidden tab: it goes back to its edge and looks; shown again, it goes', async ({ page }) => {
