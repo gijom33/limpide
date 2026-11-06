@@ -16,13 +16,13 @@ import {
 import type { Trick } from './mascotTricks';
 
 /**
- * Bead's frame in three steps (issue 245): the page is read into a `Reading` (`readPage`, or a script in the tests), a
+ * Bead's frame in three steps (issue 245): the page is read into a `Reading` (`pageReader`, or a script in the tests), a
  * frame decides from Bead's state, that reading and the time what it does (`createBeadFrame`'s `step`, touching no
  * page), and the Mascot draws what was decided.
  */
 
 /** A box in the window's pixels, with its size. */
-export interface Rect extends Box {
+export interface Sized extends Box {
   width: number;
   height: number;
 }
@@ -30,19 +30,19 @@ export interface Rect extends Box {
 /** A section shown on the page, by name, and its box. */
 export interface Section {
   id: string;
-  box: Rect;
+  box: Sized;
 }
 
 /** An LFO plot drawing an LFO that is on, with its own tips (issue 197): shown, they are over the plot while the pointer is. */
 export interface Plot {
   lfo: LfoNumber;
-  box: Rect;
+  box: Sized;
   tips: readonly unknown[];
 }
 
 /** A control Bead points the way to, or clung to last (issue 151), as the page shows it now. */
 export interface Control {
-  box: Rect;
+  box: Sized;
   /** Shown: a tab coming into view is laid out a moment before it is visible. */
   shown: boolean;
   /** Still in the page. */
@@ -51,12 +51,12 @@ export interface Control {
   target: string | null;
   /** The Section holding it, by name, and that Section's box; null outside the Sections (the Display button). */
   section: string | null;
-  sectionBox: Rect | null;
+  sectionBox: Sized | null;
   /** What may stand beside it, as little covered as can be: in its Section, or the header. */
   neighbours(): readonly Box[];
 }
 
-/** The page as a frame reads it, in plain values: from the page itself (`readPage`), or from a script in the tests. */
+/** The page as a frame reads it, in plain values: from the page itself (`pageReader`), or from a script in the tests. */
 export interface Reading {
   /** The four sections, where shown. */
   sections: readonly Section[];
@@ -69,10 +69,9 @@ export interface Reading {
   /** The bottoms of the header and of a phone's section tabs, in the window; 0 for none. */
   header: number;
   strip: number;
-  /** What is drawn over the page (issue 164), each with its box; the cards and panels of those; the docked cards. */
+  /** What is drawn over the page (issue 164), each with its box; the docked cards. */
   coverings: readonly { el: unknown; box: Cover }[];
-  panels: readonly Box[];
-  docked: readonly Rect[];
+  docked: readonly Sized[];
   /** The page's text, as the boxes of its lines (issue 181). */
   text: readonly Cover[];
   /** Where the pointer is, a mouse's, for its eyes. */
@@ -92,6 +91,8 @@ export interface Reading {
   // The rest are read only as a frame needs them, so a frame costs no more while it stays home.
   /** A panel or dialog open, which hides it. */
   dialogOpen(): boolean;
+  /** The cards and panels shown: the covers but the tips. */
+  panels(): readonly Box[];
   /** The plots of the LFOs that are on. */
   plots(): readonly Plot[];
   /** The page's box, for the sides a throw bounces off. */
@@ -177,7 +178,7 @@ function rightColumn<S extends { box: Box }>(sections: readonly S[]): S[] {
  * clear of the controls only, and passes over the Viewer's bottom, rather than being kept to the edge's left end (the
  * owner, 2026-10-30).
  */
-function roomOn(reading: Reading, section: Rect, viewers: boolean, clear: readonly Span[], near: number): Room {
+function roomOn(reading: Reading, section: Sized, viewers: boolean, clear: readonly Span[], near: number): Room {
   const box = { top: section.top - HEIGHT - 2, bottom: section.top };
   const above = reading.controlsIn({ left: section.left, right: section.right, ...box }, viewers);
   const covers = (x: number) =>
@@ -207,8 +208,8 @@ function roomOn(reading: Reading, section: Rect, viewers: boolean, clear: readon
  * Its room hovering (issue 142): along `line`, within `HOVER_REACH` of `at`, where it lost ground; arriving with no edge
  * in view (`at` null), about a spot at random.
  */
-function hoverRoom(line: Span, at: number | null, random: () => number): Room {
-  const spot = at === null ? line.min + random() * (line.max - line.min) : Math.min(line.max, Math.max(line.min, at));
+function hoverRoom(line: Span, at: number | null): Room {
+  const spot = at === null ? line.min + Math.random() * (line.max - line.min) : Math.min(line.max, Math.max(line.min, at));
   return { min: Math.max(line.min, spot - HOVER_REACH), max: Math.min(line.max, spot + HOVER_REACH) };
 }
 
@@ -233,9 +234,6 @@ export interface BeadStart {
   seconds: () => number;
   /** Stacked as it comes. */
   stacked: boolean;
-  random?: () => number;
-  /** The day it comes, for its hat. */
-  date?: Date;
 }
 
 /**
@@ -243,12 +241,12 @@ export interface BeadStart {
  * time, and returns what to draw, 'gone' once it has left, or null with no section shown to be on; it touches no page.
  * The rest are what reaches it between frames: the pointer, the words, the theme, a Tutorial's Steps, the patch.
  */
-export function createBeadFrame({ clock, seconds: pageSeconds, stacked: stackedAtStart, random = Math.random, date = new Date() }: BeadStart) {
-  const motion = createMascotMotion(random);
+export function createBeadFrame({ clock, seconds: pageSeconds, stacked: stackedAtStart }: BeadStart) {
+  const motion = createMascotMotion();
   const demoActs = createDemoActs();
-  const arrival = (['rise', 'rain', 'pop'] as const)[Math.floor(random() * 3)];
-  const place = createMascotPlace(arrival === 'rain' ? { from: -HEADROOM, random } : { random });
-  motion.dress(hatOn(date));
+  const arrival = (['rise', 'rain', 'pop'] as const)[Math.floor(Math.random() * 3)];
+  const place = createMascotPlace(arrival === 'rain' ? { from: -HEADROOM } : {});
+  motion.dress(hatOn(new Date()));
   let shown: Pose | null = null;
   let up = 0; // how far it has come into view, 0 to 1
   let comingFrom: 'edge' | 'header' | 'sky' | null = null;
@@ -288,7 +286,7 @@ export function createBeadFrame({ clock, seconds: pageSeconds, stacked: stackedA
   let hid = false;
   // Sent away on a ride: it jumps home first, and melts once it has landed there.
   let gettingOff = false;
-  let nextVisit = nextVisitAt(clock(), 'first', stackedAtStart, random);
+  let nextVisit = nextVisitAt(clock(), 'first', stackedAtStart);
   // Where it was drawn last, in the window: its box's left and its foot.
   let drawnAt = { left: 0, foot: 0 };
   // Held by the pointer: where it took hold of it, from its box's left and its foot, and its last moves, for the throw.
@@ -386,7 +384,7 @@ export function createBeadFrame({ clock, seconds: pageSeconds, stacked: stackedA
     motion.guide(guide !== null);
     if (wasGuided && !guide) {
       visit = null;
-      nextVisit = nextVisitAt(now, 'first', stacked, random);
+      nextVisit = nextVisitAt(now, 'first', stacked);
       motion.point(null);
       clungIn = clungTo = null;
       bounceDue = false;
@@ -410,7 +408,7 @@ export function createBeadFrame({ clock, seconds: pageSeconds, stacked: stackedA
 
     // Its line: the top right section's edge; on a phone or in 2 × 2, a right-column edge in view, or a line under the
     // header to hover on.
-    let on: { id: string; box: Rect };
+    let on: { id: string; box: Sized };
     let homeId: string | null = null;
     // Now and then a visit to another section in view: down to one below, or across to one beside; then home.
     const onScreen = (s: { box: Box }) => roomAbove(s.box) && s.box.top <= innerHeight - 4;
@@ -431,7 +429,7 @@ export function createBeadFrame({ clock, seconds: pageSeconds, stacked: stackedA
     ) {
       if (visit.ride && asked.leaving) gettingOff = true;
       visit = null;
-      nextVisit = nextVisitAt(now, 'after', stacked, random);
+      nextVisit = nextVisitAt(now, 'after', stacked);
     }
     // A visit or a ride due, and nothing in its way.
     const due = visitDue({
@@ -446,10 +444,9 @@ export function createBeadFrame({ clock, seconds: pageSeconds, stacked: stackedA
         const choice = chooseVisit(
           rideable.map((p) => p.lfo),
           sections.filter((s) => s.id !== home.id && inView(s)).map((s) => s.id),
-          random,
         );
-        if (choice) visit = visitFor(choice, now, random);
-        else nextVisit = nextVisitAt(now, 'nowhere', false, random);
+        if (choice) visit = visitFor(choice, now);
+        else nextVisit = nextVisitAt(now, 'nowhere', false);
       }
       ({ on, perch } = perchAcross({
         edges: sections, home, visit: visit?.id ?? null, card, at: drawnAt,
@@ -459,9 +456,9 @@ export function createBeadFrame({ clock, seconds: pageSeconds, stacked: stackedA
       // A ride now and then, on a plot in view (issue 197): onto it from its edge, falling or flying on its tail.
       // After it, back to the edge it left, while that is still in view (decision 6).
       if (due) {
-        const choice = chooseVisit(rideable.map((p) => p.lfo), [], random);
-        if (choice) [visit, rodeFrom] = [visitFor(choice, now, random), perch?.id ?? null];
-        else nextVisit = nextVisitAt(now, 'nowhere', true, random);
+        const choice = chooseVisit(rideable.map((p) => p.lfo), []);
+        if (choice) [visit, rodeFrom] = [visitFor(choice, now), perch?.id ?? null];
+        else nextVisit = nextVisitAt(now, 'nowhere', true);
       }
       const column = rightColumn(sections).sort((a, b) => a.box.top - b.box.top);
       const { header, strip } = reading;
@@ -490,7 +487,7 @@ export function createBeadFrame({ clock, seconds: pageSeconds, stacked: stackedA
       if (under) {
         on = under;
         perch = { id: under.id, foot: under.box.top, hovering: false };
-        if (homeId !== null) visit = under.id === homeId ? null : visitFor({ id: under.id }, now, random);
+        if (homeId !== null) visit = under.id === homeId ? null : visitFor({ id: under.id }, now);
       }
     }
     // Pointing the way (issue 151): to the Step's or the card's control, by its usual move to the control's Section's
@@ -506,7 +503,7 @@ export function createBeadFrame({ clock, seconds: pageSeconds, stacked: stackedA
     if (guide && moving !== 'held' && moving !== 'thrown') {
       const el = reading.guided(guide);
       const ceiling = stacked ? Math.max(0, reading.header, reading.strip) : 0;
-      const around: ClingAround = { blocks: reading.panels, ceiling, card: card?.box ?? null, text: texts, twin: twinWay };
+      const around: ClingAround = { blocks: reading.panels(), ceiling, card: card?.box ?? null, text: texts, twin: twinWay };
       const found = el ? clingFor(reading, el, around) : null;
       // A control on a hidden tab: towards its Section.
       const seen = found && found.control.box.width > 0 ? found.control.box : found?.control.sectionBox;
@@ -584,7 +581,7 @@ export function createBeadFrame({ clock, seconds: pageSeconds, stacked: stackedA
       room = {
         key,
         room: perch.hovering
-          ? hoverRoom(nearestSpan(clear, drawnAt.left) ?? { min: box.left + 4, max: box.right - WIDTH - 4 }, shown ? drawnAt.left : null, random)
+          ? hoverRoom(nearestSpan(clear, drawnAt.left) ?? { min: box.left + 4, max: box.right - WIDTH - 4 }, shown ? drawnAt.left : null)
           : roomOn(reading, box, !stacked, clear.length ? clear : fallback.length ? fallback : [whole], uncovered ? -Infinity : drawnAt.left),
       };
     }
@@ -764,7 +761,7 @@ export function createBeadFrame({ clock, seconds: pageSeconds, stacked: stackedA
         if (reading.stacked) rodeFrom = perch?.id ?? null;
         place.dropOntoLine();
         moving = 'falling';
-        visit = visitFor(rideOf(lfo), clock(), random);
+        visit = visitFor(rideOf(lfo), clock());
         motion.thrown(clock());
         return;
       }

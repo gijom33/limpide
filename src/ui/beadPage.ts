@@ -74,10 +74,13 @@ export function pageReader({ engine, patch, covering, holder, asked }: {
   };
   const bottomOf = (q: string) => document.querySelector(q)?.getBoundingClientRect().bottom ?? 0;
 
-  /** The page now, at `seconds` of the page's time. With no section shown, none is read but the sections. */
-  function read(seconds: number): Reading {
+  /**
+   * The page now, at `seconds` of the page's time; with `text` false, without the page's text, as a throw needs none
+   * (its reads are kept to their own time). With no section shown, none of what covers it.
+   */
+  function read(seconds: number, { text = true } = {}): Reading {
     const sections = sectionBoxes();
-    const window = { width: innerWidth, height: innerHeight, clientWidth: document.documentElement.clientWidth, scrollX, scrollY };
+    const view = { width: innerWidth, height: innerHeight, clientWidth: document.documentElement.clientWidth, scrollX, scrollY };
     // A control's reading, once a frame.
     const controls = new Map<object, Control>();
     const control = (handle: object): Control => {
@@ -107,15 +110,14 @@ export function pageReader({ engine, patch, covering, holder, asked }: {
     return {
       sections,
       page: (holder().offsetParent ?? document.body).getBoundingClientRect(),
-      window,
+      window: view,
       stacked: stacked.matches,
       reduced: still.matches,
       header: bottomOf('header'),
       strip: bottomOf('.section-strip'),
       coverings: empty ? [] : covering.covers(),
-      panels: empty ? [] : covering.panels(),
+      text: empty || !text ? [] : textNow(seconds),
       docked: empty ? [] : covering.docked(),
-      text: empty ? [] : textNow(seconds),
       pointer,
       sound: {
         patch: patch(),
@@ -127,6 +129,7 @@ export function pageReader({ engine, patch, covering, holder, asked }: {
         wave: (lfo, box, x) => lineAt({ engine, lfo, box, x, now: engine.shownNow() }),
       },
       asked: asked(),
+      panels: () => covering.panels(),
       dialogOpen: () => !!document.querySelector('.display-panel, [role=dialog]'),
       plots: () =>
         // The LFO plots drawing an LFO that is on, in the window, each with its own tip: shown, it is over the plot while

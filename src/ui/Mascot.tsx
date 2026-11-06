@@ -299,7 +299,7 @@ export function Mascot({
       },
       pick: (x, y) => bead.pick(x, y, { reduced: matchMedia('(prefers-reduced-motion: reduce)').matches, leaving: askedNow().leaving }),
       drag: bead.drag,
-      letGo: () => bead.letGo(reader.read(pageSeconds())),
+      letGo: () => bead.letGo(reader.read(pageSeconds(), { text: false })),
       word: bead.word,
       theme: bead.theme,
       step: bead.newStep,

@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { defaultPatch, type LfoNumber, type Patch } from '../patch/patch';
-import { createBeadFrame, type Drawn, type Plot, type Reading, type Rect } from './beadFrame';
+import { createBeadFrame, type Drawn, type Plot, type Reading, type Sized as Rect } from './beadFrame';
 import { type Edges, PHONE, THREE_ACROSS, TWO_BY_TWO } from './beadFrame.fixture';
 import { lineAt } from './LfoPlot';
 import { DROP_MIDDLE } from './mascotChoices';
@@ -13,6 +13,17 @@ import { type Box, crosses, type Guide, HEIGHT, RING, WIDTH } from './mascotClin
 const rect = ([left, top, right, bottom]: Edges): Rect => ({ left, top, right, bottom, width: right - left, height: bottom - top });
 const scrolled = (r: Rect, y: number): Rect => ({ ...r, top: r.top - y, bottom: r.bottom - y });
 const FRAME = 1 / 60;
+
+// Every roll its lowest; a day with no hat.
+beforeAll(() => {
+  vi.spyOn(Math, 'random').mockReturnValue(0);
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date(2026, 5, 1));
+});
+afterAll(() => {
+  vi.restoreAllMocks();
+  vi.useRealTimers();
+});
 /** Where the header folds away on a phone and in 2 × 2, scrolled down past the page's top. */
 const FOLDS_PAST = 8;
 
@@ -49,7 +60,7 @@ function scripted(layout: Script) {
     if (!handles.has(selector)) handles.set(selector, { selector });
     return handles.get(selector)!;
   };
-  const bead = createBeadFrame({ clock: () => t, seconds: () => t, stacked: script.stacked, random: () => 0, date: new Date(2026, 5, 1) });
+  const bead = createBeadFrame({ clock: () => t, seconds: () => t, stacked: script.stacked });
   const reading = (): Reading => {
     const sections = script.sections.map((s) => ({ id: s.id, box: scrolled(rect(s.box), scrollY) }));
     const folded = scrollY > FOLDS_PAST;
@@ -62,7 +73,7 @@ function scripted(layout: Script) {
       header: folded ? script.header.scrolled : script.header.top,
       strip: folded ? script.strip.scrolled : script.strip.top,
       coverings: [],
-      panels: [],
+      panels: () => [],
       docked: [],
       text: (script.text ?? []).map((b) => scrolled(rect(b), scrollY)),
       pointer: null,
@@ -170,6 +181,15 @@ describe("Bead's frame, three across", () => {
         const along = b.run(1).drawn;
         expect(along.every((d) => d.marks.board === 'on')).toBe(true);
         for (const d of along) expect(Math.abs(offTheLine(d, plot))).toBeLessThanOrEqual(2);
+        // Leaning with the wave: forward going down it, back going up, where it is steep.
+        const slope = (d: Drawn) => {
+          const y = (x: number) => lineAt({ engine: ENGINE, lfo: 1, box: plot, x, now: d.now });
+          const middle = d.left + DROP_MIDDLE - plot.left;
+          return y(middle + 4) - y(middle - 4);
+        };
+        const steep = along.filter((d) => Math.abs(slope(d)) > 1);
+        expect(steep.length).toBeGreaterThan(10);
+        for (const d of steep) expect(Math.sign(d.pose.tilt)).toBe(Math.sign(slope(d)));
       }
     }
     // Part 3, no LFO on: surfing's turn is skipped, it conducts; the next part plays the air guitar.
