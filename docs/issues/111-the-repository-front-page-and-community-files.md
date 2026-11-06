@@ -12,7 +12,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · enhancement. Built (2026-10-30) on night/2026-10-30, for the owner to try. Still waiting on the owner's own steps: the old Releases renamed (step 3), and private reporting switched on (step 2), after which SECURITY.md is written.
+**Status:** ready-for-human · enhancement. Built (2026-10-30) on night/2026-10-30, for the owner to try. Still waiting on the owner's own step 3, the old Releases renamed. Step 2 done (2026-11-05): private reporting switched on by the owner ("OK I switched it", read as on through GitHub's API), and SECURITY.md written.
 
 ## For the owner alone
 
@@ -52,7 +52,7 @@
 - [ ] Every Release's title has the one form
 - [x] A pull request's run cannot cancel a main deploy (the workflow's groups say so)
 - [x] The built notices end with the MIT licence
-- [ ] SECURITY.md points to private reporting, which is on
+- [x] SECURITY.md points to private reporting, which is on
 
 **Out of scope:**
 - The copyright line's wording (a lawyer's)
@@ -67,7 +67,7 @@ Built at night on 2026-10-30, on the branch night/2026-10-30, for the owner to t
 - **README:** a new screenshot; a credit line under the tagline ("Designed and directed by Guillaume Boillet; code written with Claude Code, Anthropic's AI coding agent", the name linked to the same LinkedIn page as About); "How it's built" and "How this was built" merged into one section under the second name (CONTRIBUTING links it), with the statistics' summary at its end. The License line now says the notices end with Limpide's own licence; its copyright wording is unchanged (Decision 4).
 - **Releases:** the release steps create each Release with `--title "Limpide X.Y.Z"`. The old titles are left for the owner to rename (step 3), since the night shift changes nothing on GitHub.
 - **CONTRIBUTING:** one sentence asks for AI help to be marked with a `Co-Authored-By` line naming the tool.
-- **SECURITY.md:** not written. Private vulnerability reporting was still off on 2026-10-31 (read through GitHub's API), and SECURITY.md waits on it.
+- **SECURITY.md:** not written. Private vulnerability reporting was still off on 2026-10-31 (read through GitHub's API), and SECURITY.md waits on it. **Since then (2026-11-05):** written by day once the owner had switched reporting on: the live site and latest release supported; what Limpide reads from outside (a shared link's Patch, MIDI, the browser's storage) and what counts as a vulnerability; reports through the Security tab, no email address. Claude's calls, open to the owner: credit to the reporter if they wish, and "allow a few days for a first answer".
 
 Calls made without the owner (Claude's call, open to the owner):
 
