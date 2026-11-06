@@ -5,6 +5,7 @@ import { endLine, FROM_INIT } from '../tutorial/tutorials';
 import { CardShell } from './CardShell';
 import { DISPLAY_BUTTON, optionOrDisplay, overlaySelector } from './displayOption';
 import { bringClear } from './docked';
+import { scrollBehavior } from './glide';
 import { NoteIcon } from './icons';
 import type { Guide } from './mascotCling';
 import { reveal } from './reveal';
@@ -25,7 +26,7 @@ interface Props {
   onNext(): void;
   onDoIt(): void;
   onMatch(): void;
-  onStartNext(): void;
+  onStartNext(next: Tutorial): void;
   onQuit(): void;
 }
 
@@ -93,7 +94,7 @@ function useWayToControl(step: Step | undefined, card: RefObject<HTMLElement | n
     // The Display button, standing for an option in its shut panel, is in the header: the header comes back for it.
     if (target.closest('header')) return target.focus();
     target.focus({ preventScroll: true });
-    bringClear(card.current, [target], matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth');
+    bringClear(card.current, [target], scrollBehavior());
   };
 }
 
@@ -164,7 +165,7 @@ function useRing(step: Step | undefined, made: boolean, card: RefObject<HTMLElem
     if (element) reveal(element);
     // After the tab it was on has had a frame to show, and the card its new height.
     const scroll = setTimeout(() => {
-      const behavior = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+      const behavior = scrollBehavior();
       // The Display button, standing for an option in its panel, is in the header: the header comes back for it.
       if (element?.closest('header')) element.scrollIntoView({ block: 'nearest', behavior });
       else if (card.current) {
@@ -220,7 +221,7 @@ export function TutorialCard({ tutorial, index, done, differs, next, listening, 
   ) : (
     // The last card's way forward is the next Tutorial, on every width (issue 190, decision 1); after the last, Done.
     next && (
-      <button type="button" className="tool tool-primary" onClick={onStartNext}>
+      <button type="button" className="tool tool-primary" onClick={() => onStartNext(next)}>
         Next: {next.preset}
       </button>
     )

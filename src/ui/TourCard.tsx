@@ -4,6 +4,7 @@ import { TUTORIALS } from '../tutorial/tutorials';
 import { CardShell } from './CardShell';
 import { DISPLAY_BUTTON, optionOrDisplay, overlaySelector } from './displayOption';
 import { bringClear } from './docked';
+import { scrollBehavior } from './glide';
 import type { Guide } from './mascotCling';
 import { watchPersonScroll } from './personScroll';
 import { reveal } from './reveal';
@@ -65,7 +66,10 @@ export function tourGuide(index: number): Guide {
 function useSectionInView(card: TourSection | undefined, docked: RefObject<HTMLElement | null>, moving: TourMove['id'] | null, looking: Looking) {
   // What the card's clock says now, read by each scroll; and the scroll, set up for the card shown.
   const now = useRef({ moving, looking });
-  now.current = { moving, looking };
+  // Kept after each render, not while rendering (issue 228), before the scroll below reads it.
+  useEffect(() => {
+    now.current = { moving, looking };
+  }, [moving, looking]);
   const bring = useRef(() => {});
   useEffect(() => {
     if (!card) return;
@@ -85,8 +89,7 @@ function useSectionInView(card: TourSection | undefined, docked: RefObject<HTMLE
       const elementsOf = (wanted: (id: TourMove['id']) => boolean) => controls.filter((c) => wanted(c.id) && c.element).map((c) => c.element!);
       const [mover, others] = [elementsOf((id) => id === moving), elementsOf((id) => id !== moving)];
       const elements = looking === 'control' ? [...mover, ...viewers, ...others] : [...viewers, ...mover, ...others];
-      const behavior = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
-      bringClear(docked.current, elements, behavior);
+      bringClear(docked.current, elements, scrollBehavior());
     };
     // After the tab it was on has had a frame to show, and the card its new height; then again whenever the card or the
     // page changes size while it is shown (on GitHub's Linux the last card came out 22 px taller after the scroll).
@@ -161,7 +164,7 @@ function useFindShown(find: TourFind | undefined) {
     mark();
     // After the card has had a frame to take its new height.
     const scroll = setTimeout(() => {
-      const behavior = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+      const behavior = scrollBehavior();
       marked?.scrollIntoView({ block: 'nearest', behavior });
     }, 50);
     // Display's panel opened or shut by the person: the ring follows its option.

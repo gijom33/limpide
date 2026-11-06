@@ -899,10 +899,7 @@ export function App() {
             onNext={() => tutorial.move(1)}
             onDoIt={tutorial.doIt}
             onMatch={tutorial.matchPreset}
-            onStartNext={() => {
-              const next = nextTutorial(tutorial.lesson!.tutorial);
-              if (next) tutorial.start(next);
-            }}
+            onStartNext={tutorial.start}
             onQuit={tutorial.end}
           />
         )}

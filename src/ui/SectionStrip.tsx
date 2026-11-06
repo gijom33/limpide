@@ -1,5 +1,5 @@
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
-import { DEMO_SCROLL_MS, glideTo } from './glide';
+import { DEMO_SCROLL_MS, glideTo, scrollBehavior } from './glide';
 import { SECTIONS, type SectionName } from './sections';
 
 /** The gap left between the strip and a section it jumps to. */
@@ -64,8 +64,8 @@ export function SectionStrip({ follow, slow = false }: { follow?: { name: Sectio
   /** Scrolls the page to `top`: at once with reduced motion, else smoothly, or with `slowly` over DEMO_SCROLL_MS. */
   const scrollPage = (top: number, slowly: boolean) => {
     gliding.current?.();
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) scrollTo({ top, behavior: 'auto' });
-    else if (!slowly) scrollTo({ top, behavior: 'smooth' });
+    const behavior = scrollBehavior();
+    if (behavior === 'auto' || !slowly) scrollTo({ top, behavior });
     else {
       const stop = glideTo(top, DEMO_SCROLL_MS, () => gliding.current === stop && (gliding.current = null));
       gliding.current = stop;
