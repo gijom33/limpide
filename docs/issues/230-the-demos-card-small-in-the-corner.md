@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · enhancement. Built (2026-11-04) on night/2026-11-04, for the owner to try
+**Status:** done (2026-11-05). Built (2026-11-04) on night/2026-11-04, merged into main, not yet released; accepted by the owner: "OK with the rest of the tickets reviewed", with Claude's calls in it.
 
 ## Decisions
 
