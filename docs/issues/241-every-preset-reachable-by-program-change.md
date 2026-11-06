@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · bug. Polish for v1
+**Status:** ready-for-human · bug. Built (2026-11-05) on night/2026-11-05, for the owner to try
 
 ## Decisions
 
@@ -31,3 +31,21 @@ Claude's call, open to the owner, 2026-11-05:
 - Tests: Bank 1 and Program 0 load the 129th Preset; a mapped CC 0 turns its control and leaves the bank at 0; a Program Change past the last Preset leaves the Patch alone.
 
 **Out of scope:** Program Change sent out by Limpide, the Presets' order, a Program number shown in the Patches panel.
+
+## How it was built
+
+Built at night, 2026-11-05, as the Decisions and the Agent Brief say.
+
+- The control surface keeps a bank: an unmapped CC 0 sets it, and a Program Change n reaches the app as bank × 128 + n, so Bank 1 and Program 0 load the 129th Preset (Wind) and Bank 1 and Program 13 the 142nd, the last. With no Bank Select sent the bank is 0 and a keyboard works as before. CC 32 falls through as any unmapped CC and does nothing.
+- A Mapping on CC 0 takes over, as on the pedal and the mod wheel: it turns its control and leaves the bank as it was. MIDI Learn can take CC 0 like any other control.
+- A Program Change past the last Preset still does nothing (the app's existing check).
+- The tip on the bend range, the one that names the keyboard's own controls, now says Bank Select reaches the Presets past the 128th. Issue 52 has a dated line saying so.
+- Tests: two unit tests on the control surface (the bank across Program Changes, CC 32 ignored, back to bank 0; a mapped CC 0) and one Playwright test (Bank 1 Program 0 loads Wind; Bank 1 Program 14, one past the last, leaves the Patch alone).
+
+Claude's calls, open to the owner:
+
+1. One bank for every channel and every Controller, since Limpide plays all channels as one instrument; MIDI would keep one per channel.
+2. Reset All Controllers leaves the bank alone, as MIDI defines it.
+3. The tip that names Bank Select is the bend range's (the only one with the Program Change sentence), not the Playing tip.
+
+To try in the app: on a keyboard that sends Bank Select (or a MIDI tool), send CC 0 = 1 then Program 0: the Patch becomes Wind. Program 13 in bank 1 is Machine Chatter, the last; Program 14 changes nothing. CC 0 = 0 and the Program buttons work as before. Learn CC 0 onto a knob: it then turns the knob, and Program Changes stay in bank 0.
