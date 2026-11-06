@@ -333,6 +333,14 @@ export const CHOICES = {
 /** A Patch setting picked from a list (a Waveform, the Filter Mode…), rather than turned like a Parameter. */
 export type ChoiceId = keyof typeof CHOICES;
 
+/**
+ * The choices shown as a Switch, on or off (LFO Sync, Retrigger, Legato): the Switch control takes only these, so a new
+ * one is listed here, and MIDI Learn hears a button learned on one as flipping it on each press (issue 223).
+ */
+export const SWITCHES = ['lfoRetrigger', 'lfo2Retrigger', 'lfoSync', 'lfo2Sync', 'legato'] as const satisfies readonly ChoiceId[];
+/** A choice shown as a Switch. */
+export type SwitchId = (typeof SWITCHES)[number];
+
 /** Which LFO: 1 or 2. */
 export type LfoNumber = 1 | 2;
 

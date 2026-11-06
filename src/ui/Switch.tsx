@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { Target } from '../midi/mappings';
+import type { SwitchId } from '../patch/patch';
 import { useInactive } from './inactive';
 import { useLearnable } from './learn';
 import type { TipContent } from './Tooltip';
@@ -17,7 +17,8 @@ export function Switch({ name, short, on, icon, tip, learn, labelAt = 'under', i
   on: boolean;
   icon: ReactNode;
   tip: TipContent;
-  learn: Target;
+  /** Learnable as its choice: one of the Switches (`SWITCHES`). */
+  learn: { kind: 'choice'; id: SwitchId };
   /** Where its name goes: under it, among knobs; beside it, on a line of its own. */
   labelAt?: 'under' | 'beside';
   inactive?: string | false;

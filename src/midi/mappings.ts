@@ -1,4 +1,4 @@
-import { CHOICES, type ChoiceId, PARAMS, type ParamId } from '../patch/patch';
+import { CHOICES, type ChoiceId, PARAMS, type ParamId, SWITCHES } from '../patch/patch';
 import type { EncoderMode } from './encoderMode';
 
 /** A momentary command that is not a Parameter. */
@@ -61,14 +61,13 @@ export type Target =
   | { kind: 'action'; id: ActionId }
   | { kind: 'tempo'; id: 'bpm' };
 
+const switches: ReadonlySet<ChoiceId> = new Set(SWITCHES);
 /**
- * The choices shown as a Switch, on or off (LFO Sync, Retrigger, Legato): a button learned on one flips it on each
- * press, as one on an Action fires it, momentary or toggle (the owner, issue 223), where a knob's turn would read as a
- * knob's.
+ * Whether MIDI Learn hears a control on this target as a button (an Action, a Switch), not a knob: a button learned on a
+ * Switch flips it on each press, as one on an Action fires it, momentary or toggle (the owner, issue 223), where a
+ * knob's turn would read as a knob's.
  */
-export const SWITCHES: ReadonlySet<ChoiceId> = new Set(['lfoSync', 'lfo2Sync', 'lfoRetrigger', 'lfo2Retrigger', 'legato']);
-/** Whether MIDI Learn hears a control on this target as a button (an Action, a Switch), not a knob. */
-export const learnsAsButton = (target: Target) => target.kind === 'action' || (target.kind === 'choice' && SWITCHES.has(target.id));
+export const learnsAsButton = (target: Target) => target.kind === 'action' || (target.kind === 'choice' && switches.has(target.id));
 
 /** A button's mode: momentary ('trigger') or toggle, as a Mapping says below. */
 export type ButtonMode = 'trigger' | 'toggle';
