@@ -385,13 +385,13 @@ test('on a phone, on an edge just under the tabs, its fountains are seen whole u
   await expect(mascot(page)).toHaveAttribute('data-moving', 'standing');
 });
 
-test("on a phone, the umbrella's rain starts at the window's top, behind the header, around it (issue 237)", async ({ page }) => {
+test("on a phone, the umbrella's rain falls around it, each drop from its own height over it (issue 237)", async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto('/');
   await bringBead(page);
   await settles(page, /^standing$/);
-  // Each frame for a second of rain: the highest drop's top, and how far across from its middle the drops high in the
-  // window are (none of its splashes go there).
+  // Each frame for a second of rain: the highest drop's top, and how far across from its middle the drops high over it
+  // are (none of its splashes go there).
   const rain = await page.evaluate(
     () =>
       new Promise<{ top: number; across: number; foot: number; header: number }>((done) => {
@@ -402,11 +402,10 @@ test("on a phone, the umbrella's rain starts at the window's top, behind the hea
         const sample = () => {
           const drop = document.querySelector('.mascot-drop')!.getBoundingClientRect();
           const middle = (drop.left + drop.right) / 2;
-          for (const r of document.querySelectorAll('.mascot-spray rect')) {
-            const b = r.getBoundingClientRect();
-            if (b.width === 0) continue;
+          const shown = [...document.querySelectorAll('.mascot-spray rect')].map((r) => r.getBoundingClientRect()).filter((b) => b.width > 0);
+          for (const b of shown) {
             top = Math.min(top, b.top);
-            if (b.top < drop.bottom - 150) across = Math.max(across, Math.abs(b.left + b.width / 2 - middle));
+            if (b.top < drop.bottom - 50) across = Math.max(across, Math.abs(b.left + b.width / 2 - middle));
           }
           if (performance.now() < end) requestAnimationFrame(sample);
           else done({ top, across, foot: drop.bottom, header: document.querySelector('header')!.getBoundingClientRect().bottom });
@@ -414,9 +413,10 @@ test("on a phone, the umbrella's rain starts at the window's top, behind the hea
         requestAnimationFrame(sample);
       }),
   );
-  // Bead stands far down the window, under the header; the first drops are seen within a frame or two of the top.
+  // Bead stands far down the window, under the header; the rain falls from just over it, at most 120 px (RAIN_HIGH).
   expect(rain.foot - rain.header).toBeGreaterThan(200);
-  expect(rain.top).toBeLessThan(60);
+  expect(rain.foot - rain.top).toBeLessThan(130);
+  expect(rain.foot - rain.top).toBeGreaterThan(80);
   expect(rain.across).toBeLessThan(100); // RAIN_WIDE, 80 px either side of it
 });
 

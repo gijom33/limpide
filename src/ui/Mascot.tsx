@@ -17,7 +17,7 @@ import {
   acrossOf, type Cover, choosePerch, chooseVisit, clearAlong, createMascotPlace, type Drawing, drawingOf, HOVER_UNDER, type Moving, nearestSpan, type Perch, rideOf, rideOnDrop, ridesFor, type Span,
   standingCard, surfLean, throwWalls, type Visit, visitEnds,
 } from './mascotPlace';
-import { createSpray, MOST_DROPLETS } from './mascotSpray';
+import { createSpray, MOST_DROPLETS, rainFrom } from './mascotSpray';
 import type { Trick } from './mascotTricks';
 import { ModulationContext } from './modulationRing';
 import { SECTIONS, STACKED } from './sections';
@@ -78,7 +78,7 @@ const UMBRELLA = {
 } satisfies Record<string, Rect[]>;
 /** The open umbrella's span across and its top, on the grid: the rain falling there ends on it. */
 const CANOPY = { from: -3, to: 12, top: -8 };
-/** The rain falls from a stretch of sky this wide either side of it, in pixels, from the top of the window (issue 237). */
+/** The rain falls from a stretch of sky this wide either side of it, in pixels. */
 const RAIN_WIDE = 80;
 const GLASS: Rect[] = [[-7, 5, 1, 8], [-3, 5, 1, 8], [-6, 12, 3, 1]];
 /** A toy water gun held at its left: its tank of water on top, its body and barrel, its grip. */
@@ -1048,12 +1048,12 @@ export function Mascot({
         if (pose.burst) {
           const { count, spread: fling } = pose.burst;
           if (fling === 'rain') {
-            // From the top of the window all around, behind the header where it stays on top (issue 237); on the
-            // umbrella, if it is open and the drop falls on it, else down to the edge.
+            // From the sky all around, each drop from its own height (issue 237); on the umbrella, if it is open and
+            // the drop falls on it, else down to the edge.
             for (let i = 0; i < count; i++) {
               const at = base.x + (Math.random() * 2 - 1) * RAIN_WIDE;
               const onUmbrella = pose.prop === 'umbrella' && at >= left + CANOPY.from * grid && at <= left + CANOPY.to * grid;
-              droplets.fling(1, at, -page.top, 'rain', 0.5, onUmbrella ? drawnY(ground - HEIGHT + CANOPY.top * grid - pose.lift) : ground);
+              droplets.fling(1, at, rainFrom(ground, ceiling, Math.random()), 'rain', 0.5, onUmbrella ? drawnY(ground - HEIGHT + CANOPY.top * grid - pose.lift) : ground);
             }
           } else {
             if (fling === 'arc') {

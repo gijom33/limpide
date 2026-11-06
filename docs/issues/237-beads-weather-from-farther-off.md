@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement. Built (2026-11-05), merged; the rest accepted by the owner ("OK with the rest of the tickets reviewed"); the rain back near Bead, each drop from its own height (decision 11)
+**Status:** ready-for-human · enhancement. Built (2026-11-05), merged; the rest accepted by the owner ("OK with the rest of the tickets reviewed"); the rain back near Bead, each drop from its own height (decision 11), for the owner to try
 
 ## Decisions
 
@@ -70,3 +70,12 @@ Claude's calls, open to the owner:
 5. **Bead's wait for the first drops:** for the first 0.29 s of the trick it rains and Bead does nothing yet, so the wince and the umbrella come that much later within the same 3.6 s.
 
 To try: let Bead be, playing nothing; every few seconds it does a funny turn, the umbrella among the most frequent. Changing the Filter Slope while nothing plays cues the next funny turn, so turn it a few times to go through them faster; evaporating comes once in each round of about thirty. On a phone or a window under 860 px wide, the rain should come down from behind the header, and the sun and cloud stand well above Bead. Three across, wait for Bead to visit a lower section to see the sun and cloud higher.
+
+## The rain as before, from varied heights (2026-11-05)
+
+- **The rain falls as before 237,** over the same 80 px either side of Bead, 160 to 220 px a second under gravity, ending on the open umbrella or the edge; Bead winces as it starts, and the trick lasts 3.6 s.
+- **Each drop starts from its own height,** 60 to 120 px over Bead's edge (decision 12), where before every drop left from 120 px; under what is over the page there, as before, so with the header close over Bead they start lower.
+- The sun, the cloud and the steam stay as built.
+- Tests: the start heights' spread and the ceiling over them; the umbrella's timing as before; in the browser, on a phone, the rain at most 120 px over Bead and within 100 px either side. Run: `tsc`, the lint, the mascot unit tests and the whole mascot spec in Chromium.
+
+To try: as above; watch the drops start from different heights.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createSpray, DROPLET_GRAVITY, MOST_DROPLETS, RAIN_SECONDS } from './mascotSpray';
+import { createSpray, DROPLET_GRAVITY, MOST_DROPLETS, RAIN_HIGH, rainFrom } from './mascotSpray';
 
 const seeded = (seed = 1) => () => {
   seed = (seed * 16807) % 2147483647;
@@ -70,22 +70,13 @@ describe("the mascot's droplets (issue 115)", () => {
     expect(spray.step(0.3)).toHaveLength(0);
   });
 
-  it('rain from the top of the window lands in about the time it takes from 120 px over its edge (issue 237)', () => {
-    /** How long, frame by frame, its drops take to land `fall` px down. */
-    const landing = (fall: number) => {
-      const spray = createSpray(seeded(37));
-      spray.fling(10, 50, 0, 'rain', 0.5, fall);
-      let t = 0;
-      while (spray.step(1 / 240).length > 0) t += 1 / 240;
-      return t;
-    };
-    // From 120 px: about 0.29 s at 160 to 220 px a second under gravity.
-    expect(landing(120)).toBeGreaterThan(0.25);
-    expect(landing(120)).toBeLessThan(0.33);
-    // From 700 px and from 120, about as long, so no more drops are in the air at once.
-    expect(Math.abs(landing(700) - landing(120))).toBeLessThan(0.05);
-    expect(RAIN_SECONDS).toBeGreaterThan(0.25);
-    expect(RAIN_SECONDS).toBeLessThan(0.33);
+  it('each raindrop starts from its own height, 60 to 120 px over its edge, under what is over the page (issue 237)', () => {
+    const heights = Array.from({ length: 50 }, (_, i) => 500 - rainFrom(500, 0, i / 49));
+    expect(Math.min(...heights)).toBe(RAIN_HIGH.lowest);
+    expect(Math.max(...heights)).toBe(RAIN_HIGH.highest);
+    expect(new Set(heights.map(Math.round)).size).toBeGreaterThan(40);
+    // Under the header's foot, 80 px over its edge: none starts higher.
+    expect(Math.max(...Array.from({ length: 50 }, (_, i) => 500 - rainFrom(500, 420, i / 49)))).toBe(80);
   });
 
   it('droplets are gone after their life, and no more than the most are in the air', () => {

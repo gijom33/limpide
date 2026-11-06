@@ -16,7 +16,7 @@ export interface Droplet {
  * How droplets leave it: `up`, a splash up and out from its foot (landing, smashing down); `side`, flung out sideways
  * (shaking itself, sneezing); `down`, sprayed below (its tail pushing it up); `all`, escaping every way (a click or a
  * touch); `drip`, dribbled at its foot (waddling); `spout`, straight up from its head (a fountain, a burp); `rain`,
- * falling from the top of the window around it; `shower`, from its cloud; `steam`, rising as it evaporates; `jet`, shot from a water gun, its way given by `strength`'s sign; `pour`, out of a glass
+ * falling from the sky around it, each drop from its own height (`rainFrom`); `shower`, from its cloud; `steam`, rising as it evaporates; `jet`, shot from a water gun, its way given by `strength`'s sign; `pour`, out of a glass
  * turned over, a little its way (`strength`'s sign); `arc`, a fountain's jet up at the angle `strength` (radians from
  * straight up, positive to the right).
  */
@@ -25,10 +25,14 @@ export type Fling = 'up' | 'side' | 'down' | 'all' | 'drip' | 'spout' | 'rain' |
 /** Gravity on a droplet, in pixels a second squared (lighter than on the drop itself, for a slower, prettier arc). */
 export const DROPLET_GRAVITY = 1500;
 /**
- * How long rain takes to land, in seconds: as from 120 px over its edge at its slowest, so rain from the top of the
- * window falls faster, and no more drops are in the air at once (issue 237).
+ * How high over its edge a raindrop starts, in pixels: each from its own height, not all from one line (issue 237),
+ * the highest where it fell from before.
  */
-export const RAIN_SECONDS = 0.29;
+export const RAIN_HIGH = { lowest: 60, highest: 120 };
+
+/** Where a raindrop starts, over `edge` and under `ceiling` (what is over the page there), `random` 0 to 1. */
+export const rainFrom = (edge: number, ceiling: number, random: number) =>
+  edge - Math.min(RAIN_HIGH.lowest + random * (RAIN_HIGH.highest - RAIN_HIGH.lowest), edge - ceiling);
 /** Steam rises, slowing as it goes. */
 const STEAM_GRAVITY = 30;
 /** The most droplets in the air at once; older ones make way. */
@@ -72,8 +76,6 @@ export function createSpray(random: () => number = Math.random) {
         } else if (fling === 'rain' || fling === 'shower') {
           vx = 0;
           vy = between(160, 220);
-          // From far over where it lands, fast enough to land in RAIN_SECONDS, as rain falls (issue 237).
-          if (fling === 'rain' && until < Infinity) vy = Math.max(vy, (until - y) / RAIN_SECONDS - (DROPLET_GRAVITY * RAIN_SECONDS) / 2);
         } else if (fling === 'steam') {
           vx = between(-20, 20);
           vy = -between(25, 45);
