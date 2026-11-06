@@ -526,7 +526,26 @@ function createVoiceOscillator(ctx: BaseAudioContext) {
 }
 
 /** Every one of FM's gains: its own, then each LFO's swing of it. */
-const ALL_FM = [true, true, true];
+const EVERY_FM_GAIN = [true, true, true];
+
+/**
+ * What one thing in the sound was last worked out from (issues 218 and 219), so a change that leaves it as it was does
+ * not write it again: `changed(key)` says whether `key` differs from the last one, and keeps it; after `forget`, or with
+ * no `start`, the next key is a change whatever it is.
+ */
+function createMemo<Key>(...start: [Key] | []) {
+  let last: [Key] | [] = start;
+  return {
+    changed(key: Key) {
+      if (last.length && last[0] === key) return false;
+      last = [key];
+      return true;
+    },
+    forget() {
+      last = [];
+    },
+  };
+}
 
 /**
  * Set a biquad to a stage, its Cutoff aside: scheduled at `t` through `writes` for the playing filter, immediately
@@ -838,7 +857,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
    * High up, all of them shrink together as far as keeps Osc 1's sidebands under the top (issue 103). Only the gains
    * `retuned` says (FM's own, then each LFO's), when told (issue 218).
    */
-  const tuneFm = (frequency: number, t: number, { timeConstant, retuned = ALL_FM }: { timeConstant?: number; retuned?: boolean[] } = {}) => {
+  const tuneFm = (frequency: number, t: number, { timeConstant, retuned = EVERY_FM_GAIN }: { timeConstant?: number; retuned?: boolean[] } = {}) => {
     const swings = patch ? destinationSwings(patch, 'fm', patch.crossMod) : [0, 0];
     const kept = patch ? fmDepthKept(patch, frequency * pitchOverNote[0], ctx.sampleRate) : 1;
     [fm, ...fmLfos].forEach((node, i) => {
@@ -846,7 +865,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
     });
   };
   /** FM's depth from `t` on, for a Note of `frequency` that starts there: at once, or over its `glide`. */
-  const fmTo = (frequency: number, t: number, glide: number, retuned = ALL_FM) => {
+  const fmTo = (frequency: number, t: number, glide: number, retuned = EVERY_FM_GAIN) => {
     [fm, ...fmLfos].forEach((node, i) => retuned[i] && holdAt(node.gain, t));
     tuneFm(frequency, t, { timeConstant: glide ? glideTimeConstant(glide) : undefined, retuned });
   };
@@ -855,7 +874,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   const write = shared.writes.set;
   // What FM's gain and each LFO's swing of it were last worked out from, besides the Note: knobs that leave it alone
   // leave them as they are (issue 218).
-  let fmFrom = ['', '', ''];
+  const fmGainsFrom = EVERY_FM_GAIN.map(() => createMemo<string>());
 
   /** Give each pulse the period of a Note of `frequency`: at once, or over a Glide. */
   const tunePulses = (frequency: number, t: number, timeConstant?: number) => {
@@ -975,8 +994,8 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
       // worked out from as it was leave it as each Note set it; one at nothing stays at nothing.
       const fmSwings = destinationSwings(next, 'fm', next.crossMod);
       const fmNow = [next.crossMod, ...fmSwings].map((amount) => (amount ? `${amount} ${next.crossMod} ${fmSwings} ${pitchOverNote}` : 'off'));
-      const retuned = fmNow.map((now, i) => whole || now !== fmFrom[i]);
-      fmFrom = fmNow;
+      if (whole) for (const memo of fmGainsFrom) memo.forget();
+      const retuned = fmNow.map((now, i) => fmGainsFrom[i].changed(now));
       if (retuned.some(Boolean)) {
         tuneFm(frequencyAt(t), t, { timeConstant: shared.writes.glide(), retuned });
         const sliding = pitches[lastAt(pitches, t)];
@@ -1082,10 +1101,11 @@ export function createSynthEngine(
   resonanceIn.start();
   const toQ = [ctx.createGain(), ctx.createGain()] as [GainNode, GainNode];
   for (const g of toQ) resonanceQ.connect(g);
-  // The Mode and Slope the Resonance's curve was made for: only they make it again (issue 219).
-  let curveFor = { key: '', stages: [0, 0] as [number, number] };
+  // The Mode and Slope the Resonance's curve was made for: only they make it again (issue 219). Its stages' gains.
+  const curveFrom = createMemo<string>();
+  let curveStages: [number, number] = [0, 0];
   // What the twins' stages were last set from: a knob that leaves them as they are does not set them again (issue 218).
-  let twinsFrom = '';
+  const twinStagesFrom = createMemo<string>();
   const [bend, pressing] = [ctx.createConstantSource(), ctx.createConstantSource()];
   for (const cents of [bend, pressing]) {
     cents.offset.value = 0;
@@ -1140,20 +1160,21 @@ export function createSynthEngine(
     const rate = lfoRate(i, l, t);
     lfoClocks[i].setRate(t, rate);
     for (const osc of shared.lfos[i].takeover.nodes()) {
-      const was = follows.get(osc);
+      const was = lfoSetTo.get(osc);
       if (withWaveform && was?.waveform !== l.waveform) setLfoWave(osc, l.waveform);
       if (was?.rate !== rate) osc.frequency.setValueAtTime(rate, t);
-      follows.set(osc, { rate, waveform: withWaveform ? l.waveform : was?.waveform });
+      lfoSetTo.set(osc, { rate, waveform: withWaveform ? l.waveform : was?.waveform });
     }
   };
   /**
    * The Rate each LFO oscillator was last set to run at, and its Waveform: a Patch that leaves both as they are, on
    * every oscillator of the LFO, leaves them alone (issue 218). Forgotten when a whole new Patch is written.
    */
-  let follows = new WeakMap<OscillatorNode, { rate: number; waveform?: LfoWaveform }>();
-  const following = (i: number, l: Lfo, t: number) => {
+  let lfoSetTo = new WeakMap<OscillatorNode, { rate: number; waveform?: LfoWaveform }>();
+  /** Whether every oscillator of LFO `i` is set already to the Rate and Waveform it runs at `t` under `l`. */
+  const lfoAlreadyAt = (i: number, l: Lfo, t: number) => {
     const rate = lfoRate(i, l, t);
-    return [...shared.lfos[i].takeover.nodes()].every((osc) => follows.get(osc)?.rate === rate && follows.get(osc)?.waveform === l.waveform);
+    return [...shared.lfos[i].takeover.nodes()].every((osc) => lfoSetTo.get(osc)?.rate === rate && lfoSetTo.get(osc)?.waveform === l.waveform);
   };
   /** A new oscillator for LFO `i`, its cycle starting at phase `start` of its Waveform, wired to the LFO's bus. */
   const lfoOscillator = (i: number, l: Lfo, start: number) => () => {
@@ -1161,7 +1182,7 @@ export function createSynthEngine(
     lfoStarts.set(next, start);
     setLfoWave(next, l.waveform);
     next.frequency.value = hz(l);
-    follows.set(next, { rate: hz(l), waveform: l.waveform });
+    lfoSetTo.set(next, { rate: hz(l), waveform: l.waveform });
     next.connect(shared.lfos[i].bus);
     return next;
   };
@@ -1189,7 +1210,7 @@ export function createSynthEngine(
     for (const osc of shared.lfos[i].takeover.nodes()) {
       osc.frequency.cancelScheduledValues(t);
       osc.frequency.setValueAtTime(hz(l), t);
-      follows.set(osc, { rate: hz(l), waveform: follows.get(osc)?.waveform });
+      lfoSetTo.set(osc, { rate: hz(l), waveform: lfoSetTo.get(osc)?.waveform });
     }
     lfoClocks[i].cancelRatesAfter(t);
     lfoClocks[i].setRate(t, hz(l));
@@ -1232,7 +1253,7 @@ export function createSynthEngine(
         osc.frequency.cancelScheduledValues(t);
         osc.frequency.setValueAtTime(pull.rate, t);
         osc.frequency.setValueAtTime(rate, pull.until);
-        follows.set(osc, { rate: pull.rate, waveform: follows.get(osc)?.waveform }); // until the pull ends
+        lfoSetTo.set(osc, { rate: pull.rate, waveform: lfoSetTo.get(osc)?.waveform }); // until the pull ends
       }
       lfoClocks[i].setRate(t, pull.rate);
       lfoClocks[i].setRate(pull.until, rate);
@@ -1305,7 +1326,7 @@ export function createSynthEngine(
     return i >= 0 ? pressures[i].pressure : NO_PRESSURE;
   };
   // What aftertouch on Pitch last moved its node to, in cents: a message on another Destination leaves it be.
-  let pressingCents = 0;
+  const pressingCents = createMemo<number>(0);
   /** The pitch in cents at `t` over the Note's: the wheel's, and aftertouch on Pitch. */
   const bendCentsAt = (t: number) => bendAt(t) + pressurePitch(pressureAt(t)) * 100;
   /** The Voice of the newest Note: the Taps listen to it (or to every Voice, when asked). */
@@ -1499,13 +1520,12 @@ export function createSynthEngine(
     // Resonance: the knob's (aftertouch's with it) and each LFO's swing, which the curve turns into each stage's Q. The
     // curve takes the Resonance's 0 to 1 as −1 to 1.
     const resonances = destinationSwings(next, 'resonance', next.resonance);
-    const key = `${next.filterMode} ${next.filterSlope}`;
-    if (key !== curveFor.key) {
+    if (curveFrom.changed(`${next.filterMode} ${next.filterSlope}`)) {
       const { curve, stages } = resonanceCurve(next.filterMode, next.filterSlope);
       resonanceQ.curve = curve;
-      curveFor = { key, stages };
+      curveStages = stages;
     }
-    toQ.forEach((g, k) => write(g.gain, curveFor.stages[k], t));
+    toQ.forEach((g, k) => write(g.gain, curveStages[k], t));
     write(resonanceIn.offset, 2 * next.resonance - 1, t);
     // Volume: the knob's level (issue 62), the tremolo resting its total swing below it, so the wave's top is the
     // knob's own level; each LFO's swing scaled with it.
@@ -1519,9 +1539,8 @@ export function createSynthEngine(
       write(nodes.toResonance.gain, 2 * resonances[i], t);
     });
     // The twins copy each stage for the Response Curve, when the stages change.
-    const twinned = `${next.filterMode} ${next.filterSlope} ${next.resonance}`;
-    if (whole || twinned !== twinsFrom) {
-      twinsFrom = twinned;
+    if (whole) twinStagesFrom.forget();
+    if (twinStagesFrom.changed(`${next.filterMode} ${next.filterSlope} ${next.resonance}`)) {
       const stages = filterStages(next.filterMode, next.filterSlope, next.resonance);
       twins.forEach((node, i) => setStage(node, stages[i]));
     }
@@ -1599,14 +1618,14 @@ export function createSynthEngine(
       patch = next;
       if (whole) {
         shared.writes.forget();
-        follows = new WeakMap();
+        lfoSetTo = new WeakMap();
       }
       const t = ctx.currentTime;
       if (patches.at(-1)?.time === t) patches.pop();
       patches.push({ time: t, patch: next });
       trim(patches, t);
       lfos(next).forEach((l, i) => {
-        if (!following(i, l, t)) followRate(i, l, t, { withWaveform: true });
+        if (!lfoAlreadyAt(i, l, t)) followRate(i, l, t, { withWaveform: true });
         lfoClocks[i].forgetBefore(t - MODEL_SECONDS);
       });
       // Aftertouch's Destination from where its glide has reached, then gliding on to where it is going (issue 219).
@@ -1632,8 +1651,7 @@ export function createSynthEngine(
       if (glide) shared.writes.gliding(glide, move);
       else move();
       const cents = pressurePitch(pressure) * 100;
-      if (cents !== pressingCents) moveTo(pressing.offset, cents, t, glide);
-      pressingCents = cents;
+      if (pressingCents.changed(cents)) moveTo(pressing.offset, cents, t, glide);
     },
 
     noteOn(note, velocity, time, { afresh = false } = {}) {
