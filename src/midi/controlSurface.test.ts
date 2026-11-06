@@ -597,6 +597,30 @@ describe('a keyboard’s own controls, while nothing is mapped to them (issue 52
     expect(positions.lfoAmount).toBe(1);
   });
 
+  // Issue 241: Bank Select (CC 0) picks a bank of 128 Presets, so a Program Change reaches past the 128th.
+  it('Bank Select picks the bank the next Program Changes load from, CC 32 read and ignored (issue 241)', () => {
+    const { surface, heard } = keyboardRig();
+    surface.handle({ type: 'program', channel: 1, program: 5 }); // no Bank Select sent: bank 0
+    surface.handle(cc(0, 1));
+    surface.handle(cc(32, 0));
+    surface.handle({ type: 'program', channel: 1, program: 0 });
+    surface.handle({ type: 'program', channel: 1, program: 3 }); // the bank holds until the next Bank Select
+    surface.handle(cc(0, 0));
+    surface.handle({ type: 'program', channel: 1, program: 3 });
+    expect(heard).toEqual(['program 5', 'program 128', 'program 131', 'program 3']);
+  });
+
+  it('a Mapping on CC 0 takes over from Bank Select: it turns its control, the bank stays 0 (issue 241)', () => {
+    const { surface, positions, heard, store } = keyboardRig();
+    store.set({ control: { kind: 'cc', channel: 1, number: 0 }, target: cutoff, mode: 'absolute' });
+    positions.cutoff = 0;
+    surface.handle(cc(0, 0));
+    surface.handle(cc(0, 1));
+    surface.handle({ type: 'program', channel: 1, program: 0 });
+    expect(positions.cutoff).toBeCloseTo(1 / 127, 5);
+    expect(heard).toEqual(['program 0']);
+  });
+
   it('a Mapping takes over: the mod wheel learned for the Cutoff no longer turns the Depth', () => {
     const { surface, positions, store } = keyboardRig();
     store.set({ control: { kind: 'cc', channel: 1, number: 1 }, target: cutoff, mode: 'absolute' });

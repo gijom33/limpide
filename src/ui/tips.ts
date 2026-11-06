@@ -225,7 +225,7 @@ export const TIPS = {
   },
   bendRange: {
     title: 'Pitch bend range',
-    body: 'How far a keyboard’s bend wheel takes the pitch, up or down, in semitones: 2 is a whole tone, as on most synths. The sustain pedal holds Notes as Hold does, the mod wheel turns LFO 1’s Depth, and a Program Change loads that Preset, each until you map the control to something else.',
+    body: 'How far a keyboard’s bend wheel takes the pitch, up or down, in semitones: 2 is a whole tone, as on most synths. The sustain pedal holds Notes as Hold does, the mod wheel turns LFO 1’s Depth, and a Program Change loads that Preset (Bank Select reaches the Presets past the 128th), each until you map the control to something else.',
     history: HISTORY.bendRange,
   },
   tooltips: {

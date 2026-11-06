@@ -28,6 +28,12 @@ const DETECT_VALUES = 3;
 const SUSTAIN = 64;
 const MOD_WHEEL = 1;
 /**
+ * Bank Select's MSB (issue 241): it picks a bank of 128 programs, so a Program Change n loads the bank × 128 + n-th
+ * Preset. Its LSB (CC 32) is read and ignored, as any unmapped CC.
+ */
+const BANK_SELECT = 0;
+const BANK_SIZE = 128;
+/**
  * The channel mode messages a keyboard's or a DAW's panic sends (issue 185): All Sound Off, Reset All Controllers and
  * All Notes Off, by their CC numbers. They are never a control: never learned, never taken by a Mapping.
  */
@@ -69,7 +75,8 @@ interface Synth {
   /** MIDI Learn moved on: started, a target selected, a Mapping made, or stopped. */
   learnChanged?(state: LearnState): void;
   /** What a keyboard's own controls do while nothing is mapped to them (issue 52): the bend wheel (−1 to 1), the
-   *  sustain pedal, a Program Change. The mod wheel turns LFO 1's Depth. */
+   *  sustain pedal, a Program Change (its number counted across the banks Bank Select picks, issue 241). The mod wheel
+   *  turns LFO 1's Depth. */
   bend?(amount: number): void;
   pedal?(down: boolean): void;
   program?(number: number): void;
@@ -107,6 +114,8 @@ interface PickupState {
  */
 export function createControlSurface(synth: Synth) {
   const { store } = synth;
+  // The bank the last unmapped Bank Select picked: 0 until a keyboard sends one (issue 241).
+  let bank = 0;
   let learn: LearnState = { phase: 'off' };
   const setLearn = (next: LearnState) => {
     learn = next;
@@ -409,7 +418,7 @@ export function createControlSurface(synth: Synth) {
   return {
     /** A message from a Controller: `from` is the known Controller it is (a C16), whose layout's Mappings answer it alone; left out for any other. */
     handle(incoming: MidiMessage, from?: KnownController) {
-      if (incoming.type === 'program') return synth.program?.(incoming.program);
+      if (incoming.type === 'program') return synth.program?.(bank * BANK_SIZE + incoming.program);
       if (incoming.type === 'pressure') return pressureMoved(incoming);
       if (incoming.type === 'noteOff') forgetPressure(incoming.channel, incoming.note);
       if (incoming.type === 'cc' && [ALL_SOUND_OFF, RESET_ALL_CONTROLLERS, ALL_NOTES_OFF].includes(incoming.controller))
@@ -428,6 +437,10 @@ export function createControlSurface(synth: Synth) {
       if (mapping && answers(mapping, from)) return apply(mapping, message, from);
       // Unmapped: a keyboard's own controls do what a synth player expects.
       if (incoming.type === 'pitchBend') return synth.bend?.(incoming.value);
+      if (message.type === 'cc' && message.controller === BANK_SELECT) {
+        bank = message.value;
+        return;
+      }
       if (message.type === 'cc' && message.controller === SUSTAIN) return synth.pedal?.(message.value >= 64);
       if (message.type === 'cc' && message.controller === MOD_WHEEL) {
         synth.setPosition('lfoAmount', message.value / 127);

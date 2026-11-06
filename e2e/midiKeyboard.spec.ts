@@ -52,6 +52,18 @@ test('a Program Change loads that Preset, the mod wheel turns LFO 1’s Depth', 
   await expect(page.getByRole('slider', { name: 'LFO 1 Depth' })).toHaveAttribute('aria-valuetext', '100 %');
 });
 
+// Issue 241: Bank Select (CC 0) picks a bank of 128 Presets, so every one of the 142 is reachable by Program Change.
+test('Bank Select and a Program Change reach the Presets past the 128th; one past the last leaves the Patch alone (issue 241)', async ({ page }) => {
+  const patch = page.getByRole('button', { name: /^Patch: / });
+  await play(page, cc(0, 1), cc(32, 0), [0xc0, 0]); // bank 1, Program 0: the 129th Preset
+  await expect(patch).toHaveAttribute('aria-label', 'Patch: Wind');
+  await play(page, [0xc0, 14], [0x90, 60, 100]); // bank 1, Program 14: past the 142nd, the last; then a Note
+  await expect(piano(page).locator('[data-note="60"]')).toHaveAttribute('aria-pressed', 'true'); // heard after it
+  await expect(patch).toHaveAttribute('aria-label', 'Patch: Wind');
+  await play(page, [0x80, 60, 0], cc(0, 0), [0xc0, 1]); // back to bank 0
+  await expect(patch).toHaveAttribute('aria-label', 'Patch: Pure Sine');
+});
+
 test('the bend wheel shows in the Activity Monitor, its range two semitones until changed', async ({ page }) => {
   await play(page, [0x90, 69, 100]); // A4, 440 Hz
   await play(page, [0xe0, 0x7f, 0x7f]); // all the way up: two semitones by default
