@@ -6,8 +6,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
-- 2026-11-05, the owner: "If it's not the case yet, I think we should make the preset selection controllable by MIDI."
-
 ## Dropped
 
 - 2026-11-02, from the 1.22.0 code review, 181's call 5 (Bead switching sides when the other side is clear) not in decision 3's order and changing 151's side rule: kept as built; 181 shipped in 1.22.0 and the owner has seen Bead beside the controls since without remark. Claude's call, open to the owner.
@@ -206,3 +204,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-11-05: Bead's rain from the top of the screen, and its sun and cloud farther off, went to [237](./issues/237-beads-weather-from-farther-off.md), polish for v1, ready for an agent, with Claude's calls open to the owner.
 2026-11-05: the 1.24.0 code review's and word checks' leftovers (triage, Claude's calls open to the owner): the code's tidy-ups, Riser's words and the Status lines left "not yet released" to [238](./issues/238-tidy-ups-after-1-24.md); the three sounds (Talking Filter on C6 and C7, Riser high and low, Stutter's aftertouch on Volume) to the owner's ear in [239](./issues/239-three-sounds-to-hear-after-1-24.md); 227's commit order dropped (already committed); 204's and 212's boxes ticked at once.
 2026-11-05: the Demo 54 px off on a phone in GitHub's Linux WebKit went to [240](./issues/240-the-demo-54-px-off-on-a-slow-phone.md), to diagnose; its three tests skipped there to ship 1.24.0 (decided by the owner: "Skip and ship").
+2026-11-05: Preset selection by MIDI, mostly so already (Program Change since [52](./issues/52-midi-keyboards.md), the learnable Previous and Next Preset buttons since [34](./issues/34-c16-bank-layout.md)), went to [241](./issues/241-every-preset-reachable-by-program-change.md) for the 14 Presets past Program 127, by Bank Select (Claude's call, open to the owner).
