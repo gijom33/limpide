@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { TRACK } from '../demo/track';
-import { filterStages } from '../engine/filterDesign';
+import { filterStages, makeUp } from '../engine/filterDesign';
 import { createSynthEngine } from '../engine/synthEngine';
 import { noteHz } from '../music/tempo';
 import { dB, energyAboveDb, frequencyAround, toneAmplitude, toneAmplitudeHann } from '../test/measure';
@@ -139,6 +139,25 @@ describe('every Preset’s level against its group’s (issue 108)', () => {
   });
 });
 
+describe('the band-pass Presets sound as they did before its make-up (issue 231)', () => {
+  // Their levels on C4 before the make-up (2026-11-05), in dBFS, as their group's are measured: their Volume is taken
+  // down by as much. Talking Filter's LFO 2 moves its Resonance, and the make-up with it, so its loudest moment is
+  // taken over 4 seconds, a whole cycle of it: before, its narrowest moments were quieter, which the make-up evens out.
+  const BEFORE: Record<string, number> = {
+    Vowel: -32.8, 'Sync-ish Lead': -19.72, Cowbell: -25.24, Wind: -23.59, Wah: -24.26, 'Talking Filter': -22.62, Robot: -24.7,
+  };
+  const levelOnC4 = async (name: string) => (name === 'Talking Filter' ? loudestDb(await play(preset(name), [C4], 4, 4)) : (await levelsOnC4()).get(name)!);
+
+  it('names every band-pass Preset', () => {
+    expect(PRESETS.filter((p) => p.patch.filterMode === 'bandpass').map((p) => p.name).sort()).toEqual(Object.keys(BEFORE).sort());
+  });
+
+  it.each(Object.keys(BEFORE))('%s plays on C4 within 0.5 dB of its level before', async (name) => {
+    const level = await levelOnC4(name);
+    expect(Math.abs(level - BEFORE[name]), `${level.toFixed(2)} dBFS`).toBeLessThanOrEqual(0.5);
+  }, 300_000);
+});
+
 describe('the Presets reworked for issue 108 stay clear of the limiter', () => {
   // Their sound changed, not only their Volume (which only lowers it): each Note on C2, C4 and C6, and a chord, held
   // through its Attack and half a second more.
@@ -238,7 +257,8 @@ describe('the Presets do what their words say (issue 108, reviews 13 and 15)', (
     expect(['sine', 'triangle']).toContain(patch.lfo2Waveform);
     // At every moment the band is a vowel's formant at its narrowest, no whistle: its Q, as the engine plays it, at or
     // under 6, and its width moving across most of that (LFO 2) as LFO 1 sweeps it.
-    const qs = Array.from({ length: 300 }, (_, i) => filterStages(patch.filterMode, patch.filterSlope, engine.modulationAt(NOTE + i * 0.01).resonance)[0].Q);
+    const resonances = Array.from({ length: 300 }, (_, i) => engine.modulationAt(NOTE + i * 0.01).resonance);
+    const qs = resonances.map((resonance) => filterStages(patch.filterMode, patch.filterSlope, resonance)[0].Q);
     expect(Math.max(...qs)).toBeLessThanOrEqual(6);
     expect(Math.max(...qs) / Math.min(...qs)).toBeGreaterThan(4);
     /** A 40 ms window over C4's first 30 Harmonics: its centroid, in Hz, and the strongest Harmonic's share of it. */
@@ -254,9 +274,12 @@ describe('the Presets do what their words say (issue 108, reviews 13 and 15)', (
     const centroids = windows.map((w) => w.centroid);
     expect(Math.max(...centroids) / Math.min(...centroids)).toBeGreaterThan(2.5);
     // Still a band-pass, on both sides, at the widest the band gets (LFO 1 then has it near the top of its sweep): the
-    // Note's own Harmonic and everything above 8 kHz both cut, against the open saw, by more than 6 dB.
-    const open = await play({ ...patch, filterMode: 'lowpass', cutoff: 20000, lfoAmount: 0, lfo2Amount: 0 }, [C4], seconds, seconds);
-    const widest = Math.round((NOTE + qs.indexOf(Math.min(...qs)) * 0.01) * SR);
+    // Note's own Harmonic and everything above 8 kHz both cut, against the open saw raised by the band's make-up there
+    // (issue 231), by more than 6 dB.
+    const widestAt = qs.indexOf(Math.min(...qs));
+    const raised = patch.volume * makeUp(patch.filterMode, patch.filterSlope, resonances[widestAt]);
+    const open = await play({ ...patch, volume: raised, filterMode: 'lowpass', cutoff: 20000, lfoAmount: 0, lfo2Amount: 0 }, [C4], seconds, seconds);
+    const widest = Math.round((NOTE + widestAt * 0.01) * SR);
     const top = (samples: Float32Array) => energyAboveDb(samples, SR, 8000, widest, 4096);
     const first = (samples: Float32Array) => toneAmplitudeHann(samples.subarray(widest, widest + 4096), SR, hz(C4));
     expect(top(s)).toBeLessThan(top(open) - 6);

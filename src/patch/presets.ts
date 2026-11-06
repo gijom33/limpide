@@ -108,7 +108,7 @@ group('Filter', [
     cutoff: 700, resonance: 0.1, filterSlope: 12, ampSustain: 1,
   }],
   ['Vowel', 'A narrow band-pass keeps a few Harmonics near the Cutoff, like the formant of a sung vowel, and so little else that it plays quietly; the LFO moves it slowly.', {
-    filterMode: 'bandpass', cutoff: 800, resonance: 0.75, lfoRate: 0.4, lfoAmount: 0.25, ampSustain: 1, ampRelease: 0.5,
+    volume: 0.1, filterMode: 'bandpass', cutoff: 800, resonance: 0.75, lfoRate: 0.4, lfoAmount: 0.25, ampSustain: 1, ampRelease: 0.5,
   }],
   ['High-pass Buzz', 'A high-pass takes away the fundamental and the low Harmonics: the saw’s ramp is gone and only its sharp edges remain.', {
     filterMode: 'highpass', cutoff: 800, resonance: 0.3, filterSlope: 24, ampSustain: 1,
@@ -294,7 +294,7 @@ group('Leads', [
     lfoDestination: 'volume', lfoRate: 5, lfoAmount: 0.08, lfo2Destination: 'pitch', lfo2Rate: 5, lfo2Amount: 0.08, glide: 0.04,
   }],
   ['Sync-ish Lead', 'Osc 2 a twelfth up and slightly detuned, through a band-pass: a cutting, nasal lead that hints at hard sync.', {
-    osc2Octave: 1, osc2Semitone: 7, osc2Detune: 5, mixOsc2: 0.8, filterMode: 'bandpass', cutoff: 1000, resonance: 0.1, keyTrack: 0.6,
+    volume: 0.32, osc2Octave: 1, osc2Semitone: 7, osc2Detune: 5, mixOsc2: 0.8, filterMode: 'bandpass', cutoff: 1000, resonance: 0.1, keyTrack: 0.6,
     ampSustain: 0.9, ampRelease: 0.2,
   }],
   ['Singing Lead', 'A saw lead with a vibrato that starts the same way on every Note (LFO 2, retriggered), and LFO 1 breathing the Cutoff slowly underneath.', {
@@ -534,7 +534,7 @@ group('Drums', [
     ampAttack: 0.001, ampDecay: 0.4, ampSustain: 0, ampRelease: 0.2,
   }],
   ['Cowbell', 'Two squares a fifth apart through a band-pass: the clank of two tones that do not quite agree, cut short.', {
-    waveform: 'square', osc2Waveform: 'square', osc2Semitone: 7, mixOsc2: 0.8, filterMode: 'bandpass', cutoff: 800, resonance: 0.3,
+    volume: 0.22, waveform: 'square', osc2Waveform: 'square', osc2Semitone: 7, mixOsc2: 0.8, filterMode: 'bandpass', cutoff: 800, resonance: 0.3,
     ampAttack: 0.001, ampDecay: 0.3, ampSustain: 0, ampRelease: 0.15,
   }],
   ['Clang', 'Two squares a tritone apart through Ring and a high-pass, cut short: the clank of struck metal, its partials nowhere near a ladder.', {
@@ -567,7 +567,7 @@ group('Movement & Effects', [
     filterAttack: 0.001, filterDecay: 1.8, filterSustain: 0, ampAttack: 0.002, ampDecay: 2.5, ampSustain: 0, ampRelease: 1,
   }],
   ['Wind', 'Noise only, through a band-pass that the LFO sweeps: no Harmonics at all, just a band of energy moving like a gust.', {
-    mixOsc1: 0, mixNoise: 1, filterMode: 'bandpass', cutoff: 2000, resonance: 0.1,
+    volume: 0.32, mixOsc1: 0, mixNoise: 1, filterMode: 'bandpass', cutoff: 2000, resonance: 0.1,
     lfoRate: 0.2, lfoAmount: 0.5, ampAttack: 0.6, ampSustain: 1, ampRelease: 1.5,
   }],
   ['Ocean', 'Noise through a low-pass that rises and falls slowly, like waves on a beach.', {
@@ -582,7 +582,7 @@ group('Movement & Effects', [
     lfoDestination: 'osc2Pitch', lfoWaveform: 'square', lfoRate: 6, lfoAmount: 1 / 12, ampSustain: 1,
   }],
   ['Wah', 'An LFO rocking a band-pass, like a wah pedal: the hump in the Response Curve swings across the Harmonics.', {
-    filterMode: 'bandpass', cutoff: 900, resonance: 0.3, lfoWaveform: 'triangle', lfoRate: 2, lfoAmount: 0.6, ampSustain: 1,
+    volume: 0.22, filterMode: 'bandpass', cutoff: 900, resonance: 0.3, lfoWaveform: 'triangle', lfoRate: 2, lfoAmount: 0.6, ampSustain: 1,
   }],
   ['Helicopter', 'A fast square LFO chopping the Filter on Noise and a Sub: rotor blades.', {
     volume: 0.35, mixOsc1: 0, mixNoise: 0.8, mixSub: 0.5, cutoff: 500, resonance: 0.3, lfoWaveform: 'square', lfoRate: 11, lfoAmount: 0.9, ampSustain: 1,
@@ -591,7 +591,7 @@ group('Movement & Effects', [
     volume: 0.6, mixOsc1: 0, mixOsc2: 1, osc2Waveform: 'triangle', cutoff: 6000, resonance: 0.1, ampSustain: 1, lfoWaveform: 'triangle', lfoDestination: 'osc2Pitch', lfoRate: 0.4, lfoAmount: 1,
   }],
   ['Talking Filter', 'A band-pass with LFO 1 on its Cutoff and LFO 2 on its Resonance at another speed: vowels that never settle, like a robot mumbling.', {
-    volume: 1, filterMode: 'bandpass', cutoff: 1000, resonance: 0.35, keyTrack: 0.5, ampSustain: 1, lfoWaveform: 'triangle', lfoDestination: 'cutoff', lfoRate: 2.5, lfoAmount: 0.5,
+    volume: 0.27, filterMode: 'bandpass', cutoff: 1000, resonance: 0.35, keyTrack: 0.5, ampSustain: 1, lfoWaveform: 'triangle', lfoDestination: 'cutoff', lfoRate: 2.5, lfoAmount: 0.5,
     lfo2Waveform: 'triangle', lfo2Destination: 'resonance', lfo2Rate: 0.7, lfo2Amount: 0.25,
   }],
   ['Stutter', 'A square LFO chopping the Filter each sixteenth (Sync, so at any tempo), retriggered: every Note starts its stutter open, wherever it falls.', {
@@ -605,7 +605,7 @@ group('Movement & Effects', [
     volume: 0.5, waveform: 'sine', osc2Waveform: 'sine', crossMod: 0.4, ...OPEN, lfoDestination: 'osc2Pitch', lfoRate: 0.15, lfoAmount: 0.5, ampRelease: 1,
   }],
   ['Robot', 'A saw times a low sine (Ring), Osc 2 an octave and a minor third below the Note, through a band-pass the LFO rocks: a buzzing, metallic voice, like a robot talking.', {
-    osc2Waveform: 'sine', osc2Octave: -1, osc2Semitone: -3, mixOsc1: 0, mixRing: 1, filterMode: 'bandpass', cutoff: 1000, resonance: 0,
+    volume: 0.35, osc2Waveform: 'sine', osc2Octave: -1, osc2Semitone: -3, mixOsc1: 0, mixRing: 1, filterMode: 'bandpass', cutoff: 1000, resonance: 0,
     lfoDestination: 'cutoff', lfoRate: 3, lfoAmount: 0.3, ampSustain: 1,
   }],
   ['Clang Alarm', 'A square LFO on FM: the sound hops between a pure sine and a full metal clang two and a half times a second, the Spectrum’s sidebands switching on and off with it.', {

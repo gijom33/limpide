@@ -945,9 +945,10 @@ describe('Filter Modes and Slopes', () => {
     expect(at(hp, 2)).toBeLessThan(-20);
     expect(at(hp, 40)).toBeGreaterThan(-1);
     const bp = (await measure('bandpass', 12)).curve;
-    expect(at(bp, 9)).toBeGreaterThan(-3); // 990 Hz, at the centre
-    expect(at(bp, 2)).toBeLessThan(-10);
-    expect(at(bp, 40)).toBeLessThan(-10);
+    // 990 Hz, at the centre: raised by its make-up (issue 231), 9 dB and a little more at this Resonance.
+    expect(at(bp, 9)).toBeGreaterThan(9 - 3);
+    expect(at(bp, 2) - at(bp, 9)).toBeLessThan(-10);
+    expect(at(bp, 40) - at(bp, 9)).toBeLessThan(-10);
     const notch = (await measure('notch', 12)).curve;
     expect(at(notch, 9)).toBeLessThan(-20);
     expect(at(notch, 2)).toBeGreaterThan(-1);
@@ -1075,6 +1076,75 @@ describe('Filter Modes and Slopes', () => {
 // the beat. Measured as issue 66's are, on Volume at full Depth: the Amp Tap with the LFO, divided sample by sample by
 // the same Note without it, is the tremolo's gain, 0.5 + 0.5 × the LFO (the output lags it, through the limiter's
 // oversampling). A quarter-Note saw starts each cycle at its foot, so the gain is 0 on every beat and climbs to 1.
+// Issue 231: a band-pass passes 0 dB at its centre, but a saw's power lies on its skirts; its make-up brings it near the
+// low-pass, and follows the Resonance as it narrows the band.
+describe('a band-pass not so much quieter (issue 231)', () => {
+  const A3 = 57;
+  /** A3 held on Init at a Cutoff of 3.5 kHz, through the limiter made straight: its level over its last half-second, in dB. */
+  async function levelOf(patch: Partial<Patch>) {
+    const ctx = new OfflineAudioContext(1, SR, SR);
+    straightenLimiter(ctx);
+    const engine = createSynthEngine(ctx);
+    engine.applyPatch({ ...defaultPatch(), cutoff: 3500, ampSustain: 1, ...patch });
+    engine.noteOn(A3, 1, 0);
+    const s = (await ctx.startRendering()).getChannelData(0);
+    return dB(rms(s, SR / 2, SR));
+  }
+
+  for (const filterSlope of [12, 24] as const) {
+    it(`plays within 3 dB of the low-pass on Init at A3 and 3.5 kHz: ${filterSlope} dB`, async () => {
+      const [lowpass, bandpass] = await Promise.all((['lowpass', 'bandpass'] as const).map((filterMode) => levelOf({ filterMode, filterSlope })));
+      expect(Math.abs(bandpass - lowpass), `low-pass ${lowpass.toFixed(1)}, band-pass ${bandpass.toFixed(1)} dB`).toBeLessThan(3);
+    });
+
+    it(`keeps its level within 3 dB of Init's 5 % as the Resonance narrows the band, up to the make-up's ceiling: ${filterSlope} dB`, async () => {
+      const resonances = [0.05, 0.2, 0.4, 0.6, 0.8];
+      const levels = await Promise.all(resonances.map((resonance) => levelOf({ filterMode: 'bandpass', filterSlope, resonance })));
+      for (const [i, level] of levels.entries()) expect(Math.abs(level - levels[0]), `Resonance ${resonances[i]}`).toBeLessThan(3);
+    });
+  }
+
+  it('follows the Resonance as an LFO moves it, not only the knob: an LFO on it leaves the level as the knob there would', async () => {
+    // A square LFO holds the Resonance at its swing's top for the first half of each cycle: 0.4 + 0.4 = 0.8.
+    const swung = { filterMode: 'bandpass', resonance: 0.4, lfoDestination: 'resonance', lfoWaveform: 'square', lfoRate: 0.5, lfoAmount: 0.4 } as const;
+    const [moved, set] = await Promise.all([levelOf(swung), levelOf({ filterMode: 'bandpass', resonance: 0.8 })]);
+    expect(Math.abs(moved - set)).toBeLessThan(0.5);
+  });
+
+  // At a high Resonance, switching from the band-pass steps more than its wave does (1.4 times at 60 %, 3.3 at 80 %
+  // on this A3): the stages swap at one sample, and the band-pass is louder now. Not the make-up's own: a crossfade
+  // between Modes would be the Filter's, which issue 231 leaves to the owner.
+  it('switches to it at Init’s Resonance, sweeps that by the knob to 80 % and back, and switches back, without a click', async () => {
+    const ctx = new OfflineAudioContext(1, SR * 1.1, SR);
+    const engine = createSynthEngine(ctx);
+    const patch = { ...defaultPatch(), cutoff: 1000, ampSustain: 1, ampAttack: 0.001 };
+    const bandpass = { ...patch, filterMode: 'bandpass' } as const;
+    engine.applyPatch(patch);
+    engine.noteOn(A3, 1, 0);
+    const quantum = 128 / SR;
+    const at = (t: number, next: Patch) =>
+      void ctx.suspend(Math.round(t / quantum) * quantum).then(() => {
+        engine.applyPatch(next);
+        return ctx.resume();
+      });
+    // To the band-pass at 0.2 s; the knob up 1 % every 4 ms from 0.3 s to 80 %, and down again from 0.6 s; back at 0.9 s.
+    const steps = Math.round((0.8 - patch.resonance) * 100);
+    at(0.2, bandpass);
+    for (let i = 1; i <= steps; i++) {
+      at(0.3 + i * 0.004, { ...bandpass, resonance: patch.resonance + i / 100 });
+      at(0.6 + i * 0.004, { ...bandpass, resonance: 0.8 - i / 100 });
+    }
+    at(0.9, patch);
+    const s = (await ctx.startRendering()).getChannelData(0);
+    // The wave's own steepest step, held: in the low-pass, then the band-pass, before and after each change.
+    const [lowpass, held, top, again, back] = [[0.1, 0.19], [0.25, 0.3], [0.56, 0.6], [0.85, 0.9], [1, 1.1]].map(([a, b]) => steepestStep(s, a, b));
+    expect(steepestStep(s, 0.19, 0.25) / Math.max(lowpass, held), 'to the band-pass').toBeLessThanOrEqual(1.1);
+    expect(steepestStep(s, 0.3, 0.56) / Math.max(held, top), 'the sweep up').toBeLessThanOrEqual(1.1);
+    expect(steepestStep(s, 0.6, 0.85) / Math.max(top, again), 'the sweep down').toBeLessThanOrEqual(1.1);
+    expect(steepestStep(s, 0.89, 1) / Math.max(again, back), 'back to the low-pass').toBeLessThanOrEqual(1.1);
+  });
+});
+
 describe('an LFO synced to the tempo (issue 112)', () => {
   const tremolo = {
     cutoff: 20000, waveform: 'sine', ampSustain: 1, ampAttack: 0.001, lfoDestination: 'volume', lfoAmount: 1, lfoWaveform: 'saw',

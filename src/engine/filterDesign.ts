@@ -54,6 +54,34 @@ export function resonanceCurve(mode: FilterMode, slope: FilterSlope): { curve: F
   return { curve, stages: [1, slope === 24 ? 1 : 0] };
 }
 
+/** A band-pass's make-up at Init's Resonance and under it, in dB, by Slope (issue 231). */
+const MAKE_UP_DB: Record<FilterSlope, number> = { 12: 9, 24: 12 };
+/** The Resonance the make-up starts to rise from: Init's. */
+export const MAKE_UP_RISES_FROM = 0.05;
+/** How far the make-up rises over its fixed part at most, in dB: its ceiling. */
+const MAKE_UP_RISE_DB = 12;
+
+/**
+ * A band-pass's make-up gain (issue 231): the band passes 0 dB at its centre, but a saw's power lies on its skirts,
+ * so a band-pass is 10 to 15 dB quieter than a low-pass. A fixed part brings Init near the low-pass; above Init's
+ * Resonance, the band narrows and what passes falls as the square root of its Q, so the make-up rises by as much
+ * (half a constant-skirt band-pass's rise in dB), up to its ceiling. Every other Mode is left at 1.
+ */
+export function makeUp(mode: FilterMode, slope: FilterSlope, resonance: number): number {
+  if (mode !== 'bandpass') return 1;
+  const rise = Math.sqrt(resonanceToQ(Math.max(resonance, MAKE_UP_RISES_FROM)) / resonanceToQ(MAKE_UP_RISES_FROM));
+  return 10 ** ((MAKE_UP_DB[slope] + Math.min(20 * Math.log10(rise), MAKE_UP_RISE_DB)) / 20);
+}
+
+/**
+ * The make-up's curve, as `resonanceCurve`'s: a WaveShaper's from the Resonance (0 to 1, taken as −1 to 1) to what the
+ * make-up adds to a gain of 1, so it follows the Resonance however it is moved. A Mode with none adds nothing.
+ */
+export function makeUpCurve(mode: FilterMode, slope: FilterSlope): Float32Array<ArrayBuffer> {
+  if (mode !== 'bandpass') return Float32Array.of(0, 0);
+  return Float32Array.from({ length: CURVE_POINTS }, (_, i) => makeUp(mode, slope, i / (CURVE_POINTS - 1)) - 1);
+}
+
 /** The Effective Cutoff's range in cents, from its bottom to its top. */
 export const CUTOFF_SPAN = 1200 * Math.log2(HIGHEST_CUTOFF / LOWEST_CUTOFF);
 /** A Cutoff in cents over the bottom of the range, the Filter's own frequency, which its detune climbs from. */

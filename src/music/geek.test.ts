@@ -335,6 +335,16 @@ describe('the Synth Geek Layer’s formulas, explained for the tips (issue 235)'
     expect(responseFormula('lowpass', 24).says).toMatch(/two .* in a row/);
     expect(responseFormula('lowpass', 12).says).not.toMatch(/in a row/);
   });
+
+  it('shows a band-pass’s make-up in its formula and words, and no other Mode’s (issue 231)', () => {
+    expect(responseFormula('bandpass', 12).formula).toMatch(/^\|H\| = G · /);
+    expect(responseFormula('bandpass', 24).formula).toMatch(/^\|H\| = G · \(.*\)²$/);
+    expect(responseFormula('bandpass', 12).says).not.toMatch(/gain is 1 right at the Cutoff/);
+    expect(responseFormula('bandpass', 12).says).toMatch(/G right at the Cutoff/);
+    expect(responseFormula('bandpass', 12).where).toMatch(/G: the make-up.*9 dB/);
+    expect(responseFormula('bandpass', 24).where).toMatch(/G: the make-up.*12 dB/);
+    for (const mode of ['lowpass', 'highpass', 'notch'] as const) for (const slope of [12, 24] as const) expect(responseFormula(mode, slope).formula, mode).not.toMatch(/G/);
+  });
 });
 
 describe('the Geek tips’ loose claims, fact-checked for 1.25.0 (issue 246)', () => {

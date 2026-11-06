@@ -1,4 +1,4 @@
-import { filterStages, isPeaked } from '../engine/filterDesign';
+import { filterStages, isPeaked, MAKE_UP_RISES_FROM, makeUp } from '../engine/filterDesign';
 import { type EnvelopeStage, STAGE_SHARPNESS, stageTimeConstant } from '../modulation/envelope';
 import { GLIDE_SHARPNESS } from '../modulation/lfo';
 import { destinationSwings, effectiveCutoff, KEY_TRACK_CENTRE, LFO_LAWS, type LfoLaw, osc2Cents } from '../modulation/modulationModel';
@@ -125,7 +125,7 @@ const CORE: Record<FilterMode, string> = {
 const RESPONSE_SAYS: Record<FilterMode, string> = {
   lowpass: 'Low-pass: the gain is 1 well below the Cutoff, so those Harmonics pass unchanged, and falls ever further above it; the higher Q, the higher a peak at the Cutoff.',
   highpass: 'High-pass, low-pass turned around: the gain is 1 well above the Cutoff and falls ever further below it; the higher Q, the higher a peak at the Cutoff.',
-  bandpass: 'Band-pass: the gain is 1 right at the Cutoff and falls either side of it; the higher Q, the narrower the band.',
+  bandpass: 'Band-pass: the gain is G right at the Cutoff and falls either side of it; the higher Q, the narrower the band, and the higher G, so the band passes about as much as a low-pass would.',
   notch: 'Notch: the gain is 0 right at the Cutoff, where 1 − x² is, and 1 away from it; the higher Q, the narrower the gap.',
 };
 
@@ -136,10 +136,18 @@ const RESPONSE_SAYS: Record<FilterMode, string> = {
 export function responseFormula(mode: FilterMode, slope: FilterSlope): Formula {
   const one = `${CORE[mode]} / √((1 − x²)² + (x / Q)²)`;
   const top = slope === 12 ? '−44.8 dB at 16 kHz, against −36.1 dB here' : '−89.5 dB at 16 kHz, against −72.2 dB here';
-  const where = `x = f / fc, 1 at the Cutoff; |H|: the gain at the frequency f, 1 unchanged, 0 silent; fc: the Cutoff; Q: the Resonance as the Filter’s Q, which its knob reads in this layer. This is the analogue Filter’s formula: the browser’s digital one falls faster near the top, a low-pass at a 2 kHz Cutoff and a flat Q of 0.71 ${top} (at 48 kHz).`;
+  // A band-pass's make-up (issue 231), outside the stages: the 0 dB band raised to about a low-pass's level.
+  const gained = mode === 'bandpass' ? 'G · ' : '';
+  const where = `x = f / fc, 1 at the Cutoff; |H|: the gain at the frequency f, 1 unchanged, 0 silent; fc: the Cutoff; Q: the Resonance as the Filter’s Q, which its knob reads in this layer${mode === 'bandpass' ? `; ${makeUpWords(slope)}` : ''}. This is the analogue Filter’s formula: the browser’s digital one falls faster near the top, a low-pass at a 2 kHz Cutoff and a flat Q of 0.71 ${top} (at 48 kHz).`;
   return slope === 12
-    ? { says: RESPONSE_SAYS[mode], formula: `|H| = ${one}`, where }
-    : { says: `${RESPONSE_SAYS[mode]} At 24 dB, two of these Filters in a row: the gain squared, falling twice as fast.`, formula: `|H| = (${one})²`, where };
+    ? { says: RESPONSE_SAYS[mode], formula: `|H| = ${gained}${one}`, where }
+    : { says: `${RESPONSE_SAYS[mode]} At 24 dB, two of these Filters in a row: the gain squared, falling twice as fast.`, formula: `|H| = ${gained}(${one})²`, where };
+}
+
+/** The band-pass's make-up, G, in words: its dB at Init's Resonance and under, and at most (issue 231). */
+function makeUpWords(slope: FilterSlope): string {
+  const db = (resonance: number) => Math.round(20 * Math.log10(makeUp('bandpass', slope, resonance)));
+  return `G: the make-up, ${db(0)} dB up to ${MAKE_UP_RISES_FROM * 100} % Resonance, rising as √Q above it to ${db(1)} dB at most, as a narrower band lets less of a saw through`;
 }
 
 /**

@@ -9,7 +9,7 @@ import { harmonicSeries, type Waveform } from '../music/harmonics';
 import { fmDepthKept, playedTop } from '../music/idealReference';
 import { noteToFrequency } from '../music/pitch';
 import { fmIndex, GLIDE_OFF, type Lfo, type LfoNumber, lfoHz, lfos, type NoiseColour, PARAMS, type Patch, type SubWaveform, type Voices } from '../patch/patch';
-import { CUTOFF_CLAMP, CUTOFF_SPAN, centsOverFloor, fadesOutAtTheTop, filterLevel, filterStages, filterStagesAt, isPeaked, LEVEL_FADE_CURVE, RESONANCE_FADE_CURVE, resonanceCurve, type Stage } from './filterDesign';
+import { CUTOFF_CLAMP, CUTOFF_SPAN, centsOverFloor, fadesOutAtTheTop, filterLevel, filterStages, filterStagesAt, isPeaked, LEVEL_FADE_CURVE, makeUp, makeUpCurve, RESONANCE_FADE_CURVE, resonanceCurve, type Stage } from './filterDesign';
 import { append, createGateHistory, createModulationRecord, type GateRecord, lastAt } from './modulationRecord';
 import { heardAt, type OutputClockContext } from './outputClock';
 
@@ -626,6 +626,11 @@ interface Shared {
    */
   resonanceQ: WaveShaperNode;
   toQ: [GainNode, GainNode];
+  /**
+   * The band-pass's make-up over a gain of 1 (issue 231), from the same Resonance through its curve (makeUpCurve),
+   * into every Voice's Filter level: it follows the Resonance however it is moved.
+   */
+  makeUp: WaveShaperNode;
   /** The pitch bend in cents, into every Oscillator's detune (the LFO on Pitch goes there too). */
   bend: ConstantSourceNode;
   /** Aftertouch on Pitch in cents (issue 132), beside the bend: it glides over its own time constant (issue 219). */
@@ -744,6 +749,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   });
   const topLevel = ctx.createGain();
   levelFade.connect(topLevel.gain);
+  shared.makeUp.connect(topLevel.gain);
   const amp = ctx.createGain();
   amp.gain.value = 0;
   // After the Amp, the LFOs on Volume (tremolo): its gain is the shared resting level plus each LFO's swing.
@@ -1052,6 +1058,7 @@ export function createSynthEngine(
       return g;
     });
     toResonance.connect(resonanceQ);
+    toResonance.connect(makeUpShaper);
     return { takeover: createTakeover(osc, ctx.currentTime, (node) => node.disconnect()), bus, toCutoff, toPitch, toOsc2, toResonance, toVolume };
   };
   const resonanceIn = ctx.createConstantSource();
@@ -1061,6 +1068,12 @@ export function createSynthEngine(
   resonanceIn.start();
   const toQ = [ctx.createGain(), ctx.createGain()] as [GainNode, GainNode];
   for (const g of toQ) resonanceQ.connect(g);
+  // The band-pass's make-up (issue 231), from the same Resonance. It is not smoothed: it changes with the Filter's
+  // stages, at the same sample, so a switch of Mode brings the new Mode's level at once rather than the old one's
+  // over the new Mode's sound.
+  const makeUpShaper = ctx.createWaveShaper();
+  makeUpShaper.curve = makeUpCurve('lowpass', 12);
+  resonanceIn.connect(makeUpShaper);
   // The Mode and Slope the Resonance's curve was made for: only they make it again (issue 219). Its stages' gains.
   const curveFrom = createMemo<string>();
   let curveStages: [number, number] = [0, 0];
@@ -1084,7 +1097,7 @@ export function createSynthEngine(
       return ctx.createPeriodicWave(real.subarray(0, harmonics + 1), imag.subarray(0, harmonics + 1), { disableNormalization: true });
     });
   const shared: Shared = {
-    lfos: [lfoNodes(), lfoNodes()], resonanceIn, resonanceQ, toQ, bend, pressing, tremoloRest, noise: { white, pink: pinkBuffer(ctx, white) }, wave: oscillatorWave, master,
+    lfos: [lfoNodes(), lfoNodes()], resonanceIn, resonanceQ, toQ, makeUp: makeUpShaper, bend, pressing, tremoloRest, noise: { white, pink: pinkBuffer(ctx, white) }, wave: oscillatorWave, master,
     writes: createWrites(),
   };
   const write = shared.writes.set;
@@ -1360,6 +1373,7 @@ export function createSynthEngine(
     if (curveFrom.changed(`${next.filterMode} ${next.filterSlope}`)) {
       const { curve, stages } = resonanceCurve(next.filterMode, next.filterSlope);
       resonanceQ.curve = curve;
+      makeUpShaper.curve = makeUpCurve(next.filterMode, next.filterSlope);
       curveStages = stages;
     }
     toQ.forEach((g, k) => write(g.gain, curveStages[k], t));
@@ -1434,7 +1448,9 @@ export function createSynthEngine(
       const { cutoff, resonance } = model.modulationAt(shownNow() - TAP_WINDOW / 2 / ctx.sampleRate);
       // An LFO on Resonance moves the twins' Q with it; near the top the Resonance fades, a high-pass with it (issue 195).
       if (patch) filterStagesAt(patch.filterMode, patch.filterSlope, resonance, cutoff).forEach((stage, i) => (twins[i].Q.value = stage.Q));
-      const total = new Float32Array(frequencies.length).fill(patch ? filterLevel(patch.filterMode, cutoff) : 1);
+      // A band-pass's make-up at the Resonance as moved (issue 231): what is drawn is what is heard.
+      const level = patch ? filterLevel(patch.filterMode, cutoff) * makeUp(patch.filterMode, patch.filterSlope, resonance) : 1;
+      const total = new Float32Array(frequencies.length).fill(level);
       const stage = new Float32Array(frequencies.length);
       const phase = new Float32Array(frequencies.length);
       for (const twin of twins) {

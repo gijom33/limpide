@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { effectiveCutoff } from '../modulation/modulationModel';
 import { defaultPatch } from '../patch/patch';
-import { CUTOFF_CLAMP, CUTOFF_SPAN, centsOverFloor, filterLevel, filterStages, filterStagesAt, LEVEL_FADE_CURVE, RESONANCE_FADE_CURVE, resonanceCurve, resonanceToQdB, topFade } from './filterDesign';
+import { CUTOFF_CLAMP, CUTOFF_SPAN, centsOverFloor, filterLevel, filterStages, filterStagesAt, LEVEL_FADE_CURVE, makeUp, makeUpCurve, RESONANCE_FADE_CURVE, resonanceCurve, resonanceToQdB, topFade } from './filterDesign';
 
 /** What a WaveShaperNode makes of `x` through `curve`: the curve read between its points, held at its ends past ±1. */
 function shaped(curve: Float32Array, x: number) {
@@ -118,5 +118,38 @@ describe('the Filter at the top of its range (issue 195)', () => {
       expect(1 - shaped(RESONANCE_FADE_CURVE, centsOverFloor(hz) / CUTOFF_SPAN), `${hz} Hz`).toBeCloseTo(topFade(hz), 4);
       expect(1 - shaped(LEVEL_FADE_CURVE, centsOverFloor(hz) / CUTOFF_SPAN), `${hz} Hz`).toBeCloseTo(filterLevel('highpass', hz), 3);
     }
+  });
+});
+
+describe('a band-pass’s make-up (issue 231)', () => {
+  const db = (gain: number) => 20 * Math.log10(gain);
+
+  it('raises a band-pass by 9 dB at 12 dB and 12 dB at 24 dB, up to Init’s Resonance', () => {
+    for (const resonance of [0, 0.03, 0.05]) {
+      expect(db(makeUp('bandpass', 12, resonance)), `Resonance ${resonance}`).toBeCloseTo(9, 6);
+      expect(db(makeUp('bandpass', 24, resonance)), `Resonance ${resonance}`).toBeCloseTo(12, 6);
+    }
+  });
+
+  it('rises with the Resonance above it, never more than 12 dB over the fixed part', () => {
+    for (const slope of [12, 24] as const) {
+      for (let i = 2; i < 40; i++) expect(makeUp('bandpass', slope, (i + 1) / 40)).toBeGreaterThanOrEqual(makeUp('bandpass', slope, i / 40));
+      expect(db(makeUp('bandpass', slope, 0.5))).toBeGreaterThan(db(makeUp('bandpass', slope, 0.05)) + 3);
+      expect(db(makeUp('bandpass', slope, 1))).toBeCloseTo(slope === 12 ? 21 : 24, 6);
+    }
+  });
+
+  it('leaves the low-pass, high-pass and notch as they are', () => {
+    for (const mode of ['lowpass', 'highpass', 'notch'] as const)
+      for (const slope of [12, 24] as const) for (const resonance of [0, 0.5, 1]) expect(makeUp(mode, slope, resonance)).toBe(1);
+  });
+
+  it('gives the sound the make-up at the Resonance as moved, read from the Resonance taken as −1 to 1', () => {
+    for (const mode of ['lowpass', 'bandpass'] as const)
+      for (const slope of [12, 24] as const)
+        for (let i = 0; i <= 40; i++) {
+          const resonance = i / 40;
+          expect(1 + shaped(makeUpCurve(mode, slope), 2 * resonance - 1), `${mode} ${slope} dB, Resonance ${resonance}`).toBeCloseTo(makeUp(mode, slope, resonance), 3);
+        }
   });
 });
