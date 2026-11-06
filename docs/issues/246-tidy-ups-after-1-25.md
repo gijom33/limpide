@@ -27,12 +27,14 @@ Claude's calls, open to the owner (2026-11-05, triage):
 9. **A mascot test name,** "wide enough for the LFO plots clear of the card": since 230 they are clear at 1440 too.
 10. **Three loose claims in the Geek tips** (the fact-check): the Filter's formula is the analogue one, and Web Audio's Filter falls faster near the top (16 kHz at a 2 kHz Cutoff: −44.8 dB against −36.1 at 12 dB, −89.5 against −72.2 at 24 dB): say so in its `where`; a Pulse's "the wave's peak being 1" is true of a ±1 pulse, the one played running −0.5 to +1.5 at 25 %: say which; FM's β leaves out how FM is kept smaller on high Notes: work it in, or say so.
 
+11. **Three flakes in 1.25.0's statistics run** (Chromium, the whole suite): Bead's landing through the Demo's scroll in 2 × 2 (211's test) failed twice in a row, Bead landing 17 px past where the page stopped (5654 against 5637.3), then passed six times alone: find why it can land past the stop, and make the test or the landing hold; the contrast check (what draws a control, WebKit) and 204's acts test failed once and passed alone.
+
 (The grid's 13 rows written bare are already 228's.)
 
 ## Agent Brief
 
 **Category:** enhancement
-**Summary:** Ten small tidy-ups from 1.25.0's review: a test's timing, locators, names and options, one shared type and check in Bead's choices, the geek tips' shared words, and 230's fold in two edge cases.
+**Summary:** Eleven small tidy-ups from 1.25.0's review: a test's timing, locators, names and options, one shared type and check in Bead's choices, the geek tips' shared words, and 230's fold in two edge cases.
 
 **Current behavior:** As the items above say.
 

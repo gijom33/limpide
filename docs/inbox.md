@@ -4,8 +4,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
-- 2026-11-05, from 1.25.0's statistics: Bead's landing through the Demo's scroll in 2 × 2 (issue 211's test) failed twice in a row in Chromium, Bead landing 17 px past where the page stopped (5654 against 5637.3), then passed six times alone; the contrast check and 204's acts test failed once in the same run and passed alone.
-
 ## Ideas
 
 ## Dropped
@@ -211,3 +209,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-11-05: 237's rain as before, from varied heights, went back into [237](./issues/237-beads-weather-from-farther-off.md) as decision 11 (replacing 1 and 7), with Claude's call 12 open to the owner; the steady rain from the top, built but not committed, set aside; built at once.
 2026-11-05: the 1.25.0 code review's leftovers went to [246](./issues/246-tidy-ups-after-1-25.md), polish for v1, with Claude's calls open to the owner (Bead's choices' items into 245 if it comes first; 222's inline choices left to 245).
 2026-11-05: the 1.25.0 fact-check's three loose claims in the Geek tips went to [246](./issues/246-tidy-ups-after-1-25.md), item 10 (Claude's call, open to the owner).
+2026-11-05: three flakes in 1.25.0's statistics run went to [246](./issues/246-tidy-ups-after-1-25.md), item 11, to make 211's landing test hold (Claude's call, open to the owner).
