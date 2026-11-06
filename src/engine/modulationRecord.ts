@@ -19,16 +19,16 @@ import { filterStages } from './filterDesign';
 
 // The record is kept by age, not count, so the Timeline's past never changes however busily knobs turn: well beyond
 // its few seconds, so a Freeze can be held a while. A count cap still bounds memory.
-export const MODEL_SECONDS = 30;
-export const MODEL_LIMIT = 4096;
+const MODEL_SECONDS = 30;
+const MODEL_LIMIT = 4096;
 
 const A4 = noteToFrequency(69);
 
 /**
- * Add an entry to a history, first dropping any later than it: a Gate or a Note handed over ahead of the clock (the
+ * Add an entry to a history (the record's, or a Voice's own pitches), first dropping any later than it: a Gate or a Note handed over ahead of the clock (the
  * Hold rhythm) is cancelled by one that comes earlier, as `cancelAndHoldAtTime` cancels it in the sound.
  */
-function append<T extends { time: number }>(entries: T[], entry: T) {
+export function append<T extends { time: number }>(entries: T[], entry: T) {
   while (entries.length && entries[entries.length - 1].time > entry.time) entries.pop();
   entries.push(entry);
 }
@@ -87,7 +87,6 @@ export function createGateHistory() {
     },
   };
 }
-export type GateHistory = ReturnType<typeof createGateHistory>;
 
 export function createModulationRecord(start: number) {
   // The newest Note's pitches, each keeping where its slide starts from (frequency and Note).

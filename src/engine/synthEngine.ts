@@ -10,7 +10,7 @@ import { fmDepthKept, playedTop } from '../music/idealReference';
 import { noteToFrequency } from '../music/pitch';
 import { fmIndex, GLIDE_OFF, type Lfo, type LfoNumber, lfoHz, lfos, type NoiseColour, PARAMS, type Patch, type SubWaveform, type Voices } from '../patch/patch';
 import { CUTOFF_CLAMP, CUTOFF_SPAN, centsOverFloor, fadesOutAtTheTop, filterLevel, filterStages, filterStagesAt, isPeaked, LEVEL_FADE_CURVE, RESONANCE_FADE_CURVE, resonanceCurve, type Stage } from './filterDesign';
-import { createGateHistory, createModulationRecord, type GateRecord, lastAt } from './modulationRecord';
+import { append, createGateHistory, createModulationRecord, type GateRecord, lastAt } from './modulationRecord';
 import { heardAt, type OutputClockContext } from './outputClock';
 
 /**
@@ -240,12 +240,6 @@ const PULL_CYCLES = 2;
 const DC_BLOCK = 1;
 // A Voice's own pitches, kept to tune its pulses through a Glide.
 const HISTORY = 64;
-/** Add a pitch to a Voice's own history, first dropping any later than it (a Note handed over ahead, cancelled). */
-function append<T extends { time: number }>(entries: T[], entry: T) {
-  while (entries.length && entries[entries.length - 1].time > entry.time) entries.pop();
-  entries.push(entry);
-}
-
 /** Samples each Tap's Viewers analyse: the Spectrum's frequency detail, and how far behind the sound it is. */
 const TAP_WINDOW = 8192;
 

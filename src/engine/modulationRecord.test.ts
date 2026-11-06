@@ -34,7 +34,7 @@ function note(record: ModulationRecord, patch: Patch, time: number, n: number, v
 }
 
 describe('the Gates', () => {
-  it('give the Envelope levels that replaying every Gate event from the start would, a dip included', () => {
+  it('give the Envelope levels that replaying every Gate event from the start would, a dip included (issues 45 and 102)', () => {
     const { record, patch } = recordOf({ ampAttack: 0.05, ampDecay: 0.2, ampSustain: 0.6, ampRelease: 0.3, filterAttack: 0.01, filterDecay: 0.1, filterSustain: 0.3, filterRelease: 0.5 });
     const amp: GateEvent[] = [];
     const filter: GateEvent[] = [];
@@ -62,13 +62,13 @@ describe('the Gates', () => {
     }
   });
 
-  it('give back each event with the level it starts from', () => {
+  it('give back each event with the level it starts from (issue 45)', () => {
     const { record, patch } = recordOf({ ampAttack: 0.001, ampSustain: 1 });
     record.amp.record({ time: 0, on: true, adsr: ampAdsr(patch), peak: 0.5 });
     expect(record.amp.record({ time: 1, on: false, adsr: ampAdsr(patch), peak: 0.5 }).start).toBeCloseTo(0.5, 6);
   });
 
-  it('a Gate earlier than events handed over ahead cancels them (Hold switched off mid-rhythm)', () => {
+  it('a Gate earlier than events handed over ahead cancels them (Hold switched off mid-rhythm, issue 101)', () => {
     const { record, patch } = recordOf({ ampAttack: 0.005, ampSustain: 1, ampRelease: 0.1 });
     gate(record, patch, 0, true);
     gate(record, patch, 0.4, false);
@@ -83,7 +83,7 @@ describe('the Gates', () => {
     }
   });
 
-  it('give the newest Note and its Velocity while its Gate is open, and when it was struck', () => {
+  it('give the newest Note and its Velocity while its Gate is open, and when it was struck (issue 115)', () => {
     const { record, patch } = recordOf();
     expect(record.modulationAt(0).sounding).toBeNull();
     expect(record.modulationAt(0).struck).toBeNull();
@@ -95,7 +95,7 @@ describe('the Gates', () => {
     expect(record.modulationAt(0.4).struck).toBeCloseTo(0.1, 9); // still the last Note struck
   });
 
-  it('take a cut to silence over a dip (All Sound Off), so the Timeline shows the level gone', () => {
+  it('take a cut to silence over a dip (All Sound Off, issue 185), so the Timeline shows the level gone', () => {
     const { record, patch } = recordOf({ cutoff: 20000, ampAttack: 0.001, ampDecay: 0.01, ampRelease: 10 });
     note(record, patch, 0.05, 57);
     record.amp.record({ time: 0.5, on: false, adsr: ampAdsr(patch), peak: 0, dip: true });
@@ -124,7 +124,7 @@ describe('the Gates', () => {
 });
 
 describe('the pitches and their Glide', () => {
-  it('give the sounding pitch in semitones: the Note, sliding over the Glide to the next', () => {
+  it('give the sounding pitch in semitones: the Note, sliding over the Glide to the next (issue 244)', () => {
     const { record, patch } = recordOf({ lfoAmount: 0 });
     note(record, patch, 0, 60);
     expect(record.modulationAt(0.2).pitch).toBeCloseTo(60);
@@ -136,7 +136,7 @@ describe('the pitches and their Glide', () => {
     expect(record.modulationAt(0.9).pitch).toBeCloseTo(72, 0); // there by the Glide time (98 % of the way)
   });
 
-  it('slide on from where the last slide has reached, with no jump', () => {
+  it('slide on from where the last slide has reached, with no jump (issue 244)', () => {
     const { record, patch } = recordOf({ lfoAmount: 0 });
     note(record, patch, 0, 60);
     record.recordPitch(0.5, 72, 0.4);
@@ -146,7 +146,7 @@ describe('the pitches and their Glide', () => {
     expect(record.modulationAt(0.7).pitch).toBeLessThan(reached);
   });
 
-  it('slide the Note Key Track follows with them: the Cutoff an octave up per octave at 100 %', () => {
+  it('slide the Note Key Track follows with them: the Cutoff an octave up per octave at 100 % (issue 244)', () => {
     const { record, patch } = recordOf({ cutoff: 1000, keyTrack: 1, lfoAmount: 0 });
     note(record, patch, 0, 60);
     expect(record.modulationAt(0.1).cutoff).toBeCloseTo(1000, 3);
@@ -158,7 +158,7 @@ describe('the pitches and their Glide', () => {
     expect(record.modulationAt(2).cutoff).toBeCloseTo(2000, 0);
   });
 
-  it('give the first Note before it was played, and A4 before any', () => {
+  it('give the first Note before it was played, and A4 before any (issue 215)', () => {
     const { record, patch } = recordOf();
     expect(record.hasPitch()).toBe(false);
     expect(record.modulationAt(0).pitch).toBeCloseTo(69, 9);
@@ -169,20 +169,20 @@ describe('the pitches and their Glide', () => {
 });
 
 describe('the fundamental', () => {
-  it('is A4 before any Note, then the Note’s', () => {
+  it('is A4 before any Note, then the Note’s (issue 244)', () => {
     const { record, patch } = recordOf();
     expect(record.fundamentalAt(0, { withVibrato: false })).toBeCloseTo(440);
     note(record, patch, 0, 57);
     expect(record.fundamentalAt(0, { withVibrato: false })).toBeCloseTo(220);
   });
 
-  it('stays on Osc 1, whatever Osc 2 is tuned to', () => {
+  it('stays on Osc 1, whatever Osc 2 is tuned to (issue 244)', () => {
     const { record, patch } = recordOf({ mixOsc2: 1, osc2Octave: 2, osc2Semitone: 5 });
     note(record, patch, 0, 57);
     expect(record.fundamentalAt(0, { withVibrato: false })).toBeCloseTo(220);
   });
 
-  it('counts from Osc 1’s Octave, and from the Sub below it while it sounds', () => {
+  it('counts from Osc 1’s Octave, and from the Sub below it while it sounds (issues 90 and 91)', () => {
     const { record, patch } = recordOf({ osc1Octave: -1 });
     note(record, patch, 0, 57);
     expect(record.fundamentalAt(0.5, { withVibrato: false })).toBeCloseTo(110);
@@ -192,7 +192,7 @@ describe('the fundamental', () => {
     expect(record.fundamentalAt(2.5, { withVibrato: false })).toBeCloseTo(55);
   });
 
-  it('moves with the bend and aftertouch on Pitch; with vibrato asked for, with the LFOs on Pitch too', () => {
+  it('moves with the bend and aftertouch on Pitch; with vibrato asked for, with the LFOs on Pitch too (issues 52, 132 and 180)', () => {
     const { record, patch } = recordOf({ lfoDestination: 'pitch', lfoAmount: 1, lfoRate: 1, lfoWaveform: 'sawDown' });
     note(record, patch, 0, 57);
     // A quarter of the way into its cycle the falling saw is at −½: half a semitone flat.
@@ -206,7 +206,7 @@ describe('the fundamental', () => {
 });
 
 describe('the LFOs', () => {
-  it('on Pitch wobble the sounding pitch a semitone each way at full Depth; aimed elsewhere, not at all', () => {
+  it('on Pitch wobble the sounding pitch a semitone each way at full Depth; aimed elsewhere, not at all (issue 244)', () => {
     const swing = (destination: 'pitch' | 'cutoff') => {
       const { record, patch } = recordOf({ lfoDestination: destination, lfoAmount: 1, lfoRate: 5, lfoWaveform: 'triangle' });
       note(record, patch, 0, 60);
@@ -222,7 +222,7 @@ describe('the LFOs', () => {
     expect(swing('cutoff')).toEqual([60, 60]);
   });
 
-  it('swing by their value times the Depth in force, under the Patch of the moment', () => {
+  it('swing by their value times the Depth in force, under the Patch of the moment (issue 244)', () => {
     const { record } = recordOf({ lfoAmount: 0.5, lfoRate: 1, lfoWaveform: 'square', lfo2Amount: 1, lfo2Rate: 1, lfo2Waveform: 'square' });
     expect(Math.abs(record.lfoSwingAt(0.1))).toBeCloseTo(0.5, 9);
     expect(Math.abs(record.lfoSwingAt(0.1, 2))).toBeCloseTo(1, 9);
@@ -231,13 +231,13 @@ describe('the LFOs', () => {
     expect(Math.abs(record.lfoSwingAt(0.1))).toBeCloseTo(0.5, 9); // the past keeps its Depth
   });
 
-  it('give no swing before any Patch', () => {
+  it('give no swing before any Patch (issue 244)', () => {
     expect(createModulationRecord(0).lfoSwingAt(1)).toBe(0);
   });
 });
 
 describe('the Patches over time', () => {
-  it('give the Cutoff in force at each moment, so a hand sweep is drawn as a sweep', () => {
+  it('give the Cutoff in force at each moment, so a hand sweep is drawn as a sweep (issue 244)', () => {
     const { record } = recordOf({ cutoff: 300 });
     record.recordPatch(0.5, patchOf({ cutoff: 3000 }));
     expect(record.modulationAt(0.25).cutoff).toBe(300);
@@ -245,7 +245,7 @@ describe('the Patches over time', () => {
     expect(record.patchAt(0.75)?.cutoff).toBe(3000);
   });
 
-  it('replace the one recorded at the same moment, the clock standing still', () => {
+  it('replace the one recorded at the same moment, the clock standing still (issue 215)', () => {
     const { record } = recordOf({ cutoff: 300 });
     record.recordPatch(0.5, patchOf({ cutoff: 3000 }));
     record.recordPatch(0.5, patchOf({ cutoff: 1000 }));
@@ -253,7 +253,7 @@ describe('the Patches over time', () => {
     expect(record.patchAt(0.25)?.cutoff).toBe(300);
   });
 
-  it('give the first before it, and none before any', () => {
+  it('give the first before it, and none before any (issue 215)', () => {
     expect(createModulationRecord(0).patchAt(1)).toBeUndefined();
     const record = createModulationRecord(0);
     record.recordPatch(1, patchOf({ cutoff: 300 }));
@@ -262,7 +262,7 @@ describe('the Patches over time', () => {
 });
 
 describe('the bend and aftertouch', () => {
-  it('the bend moves the pitch by its cents from its moment on, until the next', () => {
+  it('the bend moves the pitch by its cents from its moment on, until the next (issue 52)', () => {
     const { record, patch } = recordOf({ lfoAmount: 0 });
     note(record, patch, 0, 45);
     record.recordBend(0.2, 200);
@@ -288,14 +288,14 @@ describe('the bend and aftertouch', () => {
     expect(record.pressureAt(2 + PRESSURE_GLIDE / 2).amount).toBeCloseTo(reached, 9);
   });
 
-  it('aftertouch moved to another Destination while pressed starts there at once', () => {
+  it('aftertouch moved to another Destination while pressed starts there at once (issue 219)', () => {
     const { record } = recordOf();
     record.recordPressure(1, { destination: 'cutoff', amount: 1 });
     expect(record.recordPressure(2, { destination: 'resonance', amount: 0.5 })).toBeUndefined();
     expect(record.pressureAt(2)).toEqual({ destination: 'resonance', amount: 0.5 });
   });
 
-  it('aftertouch moves the Patch the model plays, not the Patch in force', () => {
+  it('aftertouch moves the Patch the model plays, not the Patch in force (issue 132)', () => {
     const { record } = recordOf({ cutoff: 1000, lfoAmount: 0 });
     record.recordPressure(1, { destination: 'cutoff', amount: 1 });
     expect(record.modulationAt(2).cutoff).toBeGreaterThan(1000);
@@ -304,7 +304,7 @@ describe('the bend and aftertouch', () => {
 });
 
 describe('the trimming', () => {
-  it('keeps 30 s of the past, and the entry in force at its oldest moment', () => {
+  it('keeps 30 s of the past, and the entry in force at its oldest moment (issue 244)', () => {
     const { record, patch } = recordOf();
     for (let s = 0; s <= 40; s++) note(record, patch, s, 40 + s);
     // At 40 s the oldest kept moment is 10 s: the Note struck then stands in for every one before.
@@ -313,7 +313,7 @@ describe('the trimming', () => {
     expect(record.modulationAt(11.5).pitch).toBeCloseTo(51, 9);
   });
 
-  it('keeps 4096 entries at most, however busy', () => {
+  it('keeps 4096 entries at most, however busy (issue 244)', () => {
     const record = createModulationRecord(0);
     for (let i = 0; i < 5000; i++) record.recordPitch(i / 1000, 20 + (i % 100), 0);
     // The oldest 904 are gone: the first kept stands in for them.
@@ -321,7 +321,7 @@ describe('the trimming', () => {
     expect(record.modulationAt(0.95).pitch).toBeCloseTo(70, 9);
   });
 
-  it('keeps the past a moment shows however many changes follow', () => {
+  it('keeps the past a moment shows however many changes follow (issue 244)', () => {
     const { record, patch } = recordOf({ lfoAmount: 0.5, lfoRate: 3 });
     note(record, patch, 0, 60);
     const seen = record.modulationAt(1);
@@ -336,7 +336,7 @@ describe('the trimming', () => {
 });
 
 describe('the settled past (issue 215)', () => {
-  it('is settled from the first Patch and the first Note, and never before both', () => {
+  it('is settled from the first Patch and the first Note, and never before both (issue 215)', () => {
     const record = createModulationRecord(0);
     expect(record.settledFrom()).toBe(Infinity);
     record.recordPatch(0.2, patchOf());
@@ -349,14 +349,14 @@ describe('the settled past (issue 215)', () => {
 });
 
 describe('the tempo and a pause’s carry (issue 216)', () => {
-  it('keeps the tempo set', () => {
+  it('keeps the tempo set (issue 112)', () => {
     const record = createModulationRecord(3);
     expect(record.tempo().origin).toBe(3);
     record.setTempo(90, 4);
     expect(record.tempo()).toEqual({ bpm: 90, origin: 4 });
   });
 
-  it('carries the LFOs and the beat on by the time paused, and leaves the Envelopes, Notes and Patches where they were', () => {
+  it('carries the LFOs and the beat on by the time paused, and leaves the Envelopes, Notes and Patches where they were (issue 216)', () => {
     const { record, patch } = recordOf({ lfoAmount: 1, lfoRate: 0.3, lfoWaveform: 'sine', ampSustain: 0.5, ampRelease: 0.2 });
     note(record, patch, 1, 60);
     gate(record, patch, 2, false);
