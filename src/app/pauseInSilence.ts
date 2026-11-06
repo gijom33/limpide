@@ -5,8 +5,11 @@ export const PAUSE_AFTER = 30;
 /** How often the page looks, in milliseconds: a hidden tab's timers may come less often, which only pauses it later. */
 const LOOK_EVERY = 1000;
 
-/** The engine's methods that change what it plays: each wakes it first, whatever calls it (a key, the piano, MIDI, a player). */
-const CHANGES = ['noteOn', 'pitchChange', 'setBend', 'setPressure', 'noteOff', 'release', 'silence', 'applyPatch', 'setTempo'] as const;
+/**
+ * The engine's methods that change what it plays: each wakes it first, whatever calls it (a key, the piano, MIDI, a
+ * player). A test calls every method of a real engine and checks these are the ones that schedule sound (issue 238).
+ */
+export const WAKES = ['noteOn', 'pitchChange', 'setBend', 'setPressure', 'noteOff', 'release', 'silence', 'applyPatch', 'setTempo'] as const;
 // The page's own gestures wake it ahead of the Note they may bring: the time a browser takes to resume is then spent
 // before the Note rather than after it.
 const GESTURES = ['keydown', 'pointerdown', 'pointermove'] as const;
@@ -18,7 +21,7 @@ export interface PausableContext extends EventTarget {
   resume(): Promise<void>;
 }
 
-type PausableEngine = Pick<SynthEngine, 'now' | 'quietFrom' | 'pause' | 'wake' | 'paused'> & Record<(typeof CHANGES)[number], (...args: never[]) => void>;
+type PausableEngine = Pick<SynthEngine, 'now' | 'quietFrom' | 'pause' | 'wake' | 'paused'> & Record<(typeof WAKES)[number], (...args: never[]) => void>;
 
 /**
  * Pauses the sound in a long silence (issue 216, review 18): once no Voice has sounded for `after` seconds, with
@@ -58,7 +61,7 @@ export function pauseInSilence({
     lastHeard = wall();
     ctx.resume().then(() => ctx.state !== 'running' && refused(), refused);
   };
-  for (const name of CHANGES) {
+  for (const name of WAKES) {
     const change = engine[name];
     engine[name] = (...args: never[]) => {
       wake();
