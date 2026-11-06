@@ -6,8 +6,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
-- 2026-11-05, the owner, on Claude's idea of running GitHub's browser test jobs in Playwright's own image, to end the hangs installing WebKit's system libraries (four reruns for 1.25.0): "Yes, add optional idea about playwright's own image to inbox."
-
 ## Dropped
 
 - 2026-11-02, from the 1.22.0 code review, 181's call 5 (Bead switching sides when the other side is clear) not in decision 3's order and changing 151's side rule: kept as built; 181 shipped in 1.22.0 and the owner has seen Bead beside the controls since without remark. Claude's call, open to the owner.
@@ -212,3 +210,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-11-05: the 1.25.0 code review's leftovers went to [246](./issues/246-tidy-ups-after-1-25.md), polish for v1, with Claude's calls open to the owner (Bead's choices' items into 245 if it comes first; 222's inline choices left to 245).
 2026-11-05: the 1.25.0 fact-check's three loose claims in the Geek tips went to [246](./issues/246-tidy-ups-after-1-25.md), item 10 (Claude's call, open to the owner).
 2026-11-05: three flakes in 1.25.0's statistics run went to [246](./issues/246-tidy-ups-after-1-25.md), item 11, to make 211's landing test hold (Claude's call, open to the owner).
+2026-11-05: GitHub's browser test jobs in Playwright's own image went to [247](./issues/247-github-tests-in-playwrights-own-image.md), optional (decided by the owner), ready for an agent, with Claude's calls open to the owner (kept only if no slower).
