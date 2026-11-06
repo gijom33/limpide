@@ -4,6 +4,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-11-05, the owner, trying 237: "The rain does not look realistic, should see pixel "drops" fall at a realistic speed compared the Bead's height (if it were a human!)."
+
 ## Ideas
 
 ## Dropped
