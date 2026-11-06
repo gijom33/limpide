@@ -23,11 +23,9 @@ import { useComputerKeyboard, useSpaceFreezes } from './hooks/useKeys';
 import { useMediaQuery } from './hooks/useMediaQuery';
 import { useMidi } from './hooks/useMidi';
 import { usePianoFit } from './hooks/usePianoFit';
-import { usePlayers } from './hooks/usePlayers';
 import { usePresetAbout } from './hooks/usePresetAbout';
 import { useRememberedSetting } from './hooks/useRememberedSetting';
-import { useTourState } from './hooks/useTourState';
-import { useTutorialState } from './hooks/useTutorialState';
+import { useShows } from './hooks/useShows';
 import { HoldIcon, InfoIcon, LegatoIcon, NoteIcon, PlayIcon } from './icons';
 import { Knob } from './Knob';
 import { LearnBar } from './LearnBar';
@@ -211,49 +209,24 @@ export function App() {
   const [theme, setTheme] = useRememberedSetting(storage, 'theme');
   useEffect(() => void (document.documentElement.dataset.theme = theme), [theme]);
 
-  const players = usePlayers({
-    session, octaveRef, setOctave, heldNotes,
-    // The Demo loads its own Presets, and the page stays where the Demo leaves it.
-    onDemoStart: () => {
-      tour.end();
-      tutorial.end();
-      midi.setBankFollow(null);
-    },
-    // The Song plays on the person's Patch: the Tour's ends, theirs given back (issue 242).
-    onSongStart: () => tour.end(),
-  });
-  const tutorial = useTutorialState({
-    storage, patch, patchName, patches, overlays,
-    showOverlay: (overlay) => viewerStore.dispatch({ type: 'showOverlay', overlay }),
-    hideOverlay: (overlay) => viewerStore.dispatch({ type: 'hideOverlay', overlay }),
-    snapshot: viewer.snapshot,
-    takeSnapshot: () => viewerStore.dispatch({ type: 'takeSnapshot' }),
-    clearSnapshot: () => viewerStore.dispatch({ type: 'clearSnapshot' }),
-    onStart: () => {
-      tour.end();
-      players.stopAll();
-      players.setTookOver(false);
-    },
-    onEnd: players.stopListen,
-  });
-  // The Tour (issue 128): from the Welcome and the About, on a Patch of its own, the person's given back at its end.
-  const tour = useTourState({
-    patches,
-    viewers: viewerStore,
-    onStart: () => {
-      tutorial.end();
-      players.stopAll();
-      players.setTookOver(false);
-    },
-    // After the Sections, nothing plays (issue 210).
-    onCard: (card) => (card ? players.startListen(card) : players.stopListen()),
-    onEnd: players.stopListen,
-  });
+  // What plays or guides the page, the Demo, the Song, a Tutorial and the Tour (issue 243): read from the Shows, which
+  // keep the rules between them; the page sends them what the person does.
+  const { shows } = session;
+  const show = useShows(shows);
+  const { tutorial, tour } = show;
+  // The Demo and Listen show their phrase's octave on the piano.
+  useEffect(() => shows.onOctave(setOctave), [shows]);
+  // The Demo loads its own Presets, and the page stays where the Demo leaves it, not on a Controller's bank.
+  const playDemo = (options?: { shared?: boolean; from?: number }) => {
+    shows.playDemo(options);
+    midi.setBankFollow(null);
+  };
+  const toggleSong = () => shows.toggleSong(() => octaveRef.current);
   // What Bead points the way to while a Tutorial or the Tour is open (issue 151).
-  const lesson = tutorial.lesson;
+  const tourCard = tour?.index ?? null;
   const guide = useMemo(
-    () => (lesson ? tutorialGuide(lesson.tutorial, lesson.index, lesson.done) : tour.index !== null ? tourGuide(tour.index) : null),
-    [lesson, tour.index],
+    () => (tutorial ? tutorialGuide(tutorial.tutorial, tutorial.index, tutorial.done) : tourCard !== null ? tourGuide(tourCard) : null),
+    [tutorial, tourCard],
   );
   // A Preset picked in the Patches panel shows its about line under its name (issues 109 and 153); the arrows, a
   // Controller's steps and its Program buttons load without it.
@@ -264,11 +237,11 @@ export function App() {
     presetAbout.show();
   };
   // The Tutorials, from the Patches panel and the header's Tutorial button alike.
-  const tutorialList = TUTORIALS.map((t) => ({ preset: t.preset, teaches: t.teaches, finished: tutorial.finished.has(t.preset) }));
-  const startTutorial = (preset: string) => tutorial.start(TUTORIALS.find((t) => t.preset === preset)!);
+  const tutorialList = TUTORIALS.map((t) => ({ preset: t.preset, teaches: t.teaches, finished: show.finished.has(t.preset) }));
+  const startTutorial = (preset: string) => shows.startTutorial(TUTORIALS.find((t) => t.preset === preset)!);
   const midi = useMidi({
     storage, session, pressHoldRef,
-    onNote: () => players.stopDemo(true),
+    onNote: shows.takeOver,
     onBend: (amount) => session.engine.setBend(amount * bendRange * 100),
     onPressure: (amount) => session.engine.setPressure({ destination: aftertouch, amount }),
     onPedal: setPedal,
@@ -277,7 +250,7 @@ export function App() {
     onProgram: (number) => {
       const preset = PRESETS[number];
       if (!preset) return;
-      players.stopDemo(true);
+      shows.takeOver();
       load(preset.name, preset.patch);
     },
   });
@@ -361,7 +334,7 @@ export function App() {
         <Piano
           octave={octave}
           whites={pianoFit.whites}
-          held={players.playedNotes.length ? [...heldNotes, ...players.playedNotes] : heldNotes}
+          held={show.playedNotes.length ? [...heldNotes, ...show.playedNotes] : heldNotes}
           input={session.input}
           invite={audioStatus === 'waiting'}
         />
@@ -495,7 +468,7 @@ export function App() {
   );
   const demoButton = (
     <Tooltip key="demo" content={TIPS.demo}>
-      <button type="button" className="tool tool-mode demo-button" aria-label="Demo" aria-pressed={players.demo !== null} data-demo onClick={players.toggleDemo}>
+      <button type="button" className="tool tool-mode demo-button" aria-label="Demo" aria-pressed={show.demo !== null} data-demo onClick={() => (show.demo !== null ? shows.stopDemo() : playDemo())}>
         <PlayIcon />
         <span className="demo-word">Demo</span>
       </button>
@@ -504,7 +477,7 @@ export function App() {
   const tutorialMenu = <TutorialMenu key="tutorial" tutorials={tutorialList} onStart={startTutorial} />;
   const songButton = (
     <Tooltip key="song" content={TIPS.song}>
-      <button type="button" className="tool tool-mode demo-button" aria-label="Song" aria-pressed={players.song} data-demo onClick={players.toggleSong}>
+      <button type="button" className="tool tool-mode demo-button" aria-label="Song" aria-pressed={show.playing === 'song'} data-demo onClick={toggleSong}>
         <NoteIcon />
         <span className="demo-word">Song</span>
       </button>
@@ -562,13 +535,13 @@ export function App() {
         {/* The Wordmark and the Patch, the keyboard and the buttons (up to 860 px the buttons' row before the
             keyboard), in the order each layout shows them (issues 44, 104 and 154). */}
         <header>{narrow ? [identity, right, keyboard] : [identity, keyboard, right]}</header>
-        <SectionStrip follow={players.demo === null ? midi.bankFollow : players.follow} slow={players.demo !== null} />
+        <SectionStrip follow={show.demo === null ? midi.bankFollow : show.follow} slow={show.demo !== null} />
         <About
           open={about}
           welcome={welcome}
           onClose={closeAbout}
-          onPlay={() => players.playDemo({ shared: welcome === 'shared' })}
-          onTour={tour.start}
+          onPlay={() => playDemo({ shared: welcome === 'shared' })}
+          onTour={shows.startTour}
           beadOn={bead.switch === 'on'}
         />
 
@@ -856,51 +829,50 @@ export function App() {
             }
           />
         </div>
-        {(players.demo !== null || players.tookOver) && (
+        {(show.demo !== null || show.tookOver) && (
           <DemoBar
             playing={
-              players.demo !== null && players.demoTrack.parts[players.demo]
-                ? { track: players.demoTrack, index: players.demo, startedAt: players.partStart }
+              show.demo !== null && show.demoTrack.parts[show.demo]
+                ? { track: show.demoTrack, index: show.demo, startedAt: show.partStart }
                 : null
             }
-            tookOver={players.tookOver}
-            onStop={() => players.stopDemo()}
-            onJump={(from) => players.playDemo({ from })}
-            onPlayAgain={() => players.playDemo()}
-            onDismiss={() => players.setTookOver(false)}
+            tookOver={show.tookOver}
+            onStop={() => shows.stopDemo()}
+            onJump={(from) => playDemo({ from })}
+            onPlayAgain={() => playDemo()}
+            onDismiss={shows.dismissTookOver}
           />
         )}
-        {tour.index !== null && (
+        {tour && (
           <TourCard
             index={tour.index}
             moving={tour.moving}
             looking={tour.looking}
             freezing={tour.freezing}
             naming={tour.naming}
-            onBack={() => tour.move(-1)}
-            onNext={() => tour.move(1)}
-            onFirstTutorial={() => {
-              tour.end();
-              tutorial.start(TUTORIALS[0]);
-            }}
-            onClose={tour.end}
+            pageTheirs={() => !!shows.get().tour?.theirs}
+            onBack={() => shows.moveTour(-1)}
+            onNext={() => shows.moveTour(1)}
+            // The Tutorial ends the Tour as it starts, the person's Patch given back before its Init.
+            onFirstTutorial={() => shows.startTutorial(TUTORIALS[0])}
+            onClose={shows.endTour}
           />
         )}
-        {tutorial.lesson && tutorial.preset && (
+        {tutorial && (
           <TutorialCard
-            tutorial={tutorial.lesson.tutorial}
-            index={tutorial.lesson.index}
-            done={tutorial.lesson.done}
+            tutorial={tutorial.tutorial}
+            index={tutorial.index}
+            done={tutorial.done}
             differs={tutorial.differs}
-            next={nextTutorial(tutorial.lesson.tutorial)}
-            listening={players.listening}
-            onListen={() => (players.listening ? players.stopListen() : players.startListen(tutorial.lesson!.tutorial))}
-            onBack={() => tutorial.move(-1)}
-            onNext={() => tutorial.move(1)}
-            onDoIt={tutorial.doIt}
-            onMatch={tutorial.matchPreset}
-            onStartNext={tutorial.start}
-            onQuit={tutorial.end}
+            next={nextTutorial(tutorial.tutorial)}
+            listening={show.playing === 'listen'}
+            onListen={shows.toggleListen}
+            onBack={() => shows.moveTutorial(-1)}
+            onNext={() => shows.moveTutorial(1)}
+            onDoIt={shows.doStep}
+            onMatch={shows.matchPreset}
+            onStartNext={shows.startTutorial}
+            onQuit={shows.quitTutorial}
           />
         )}
         {bead.presence !== 'away' && (
@@ -911,7 +883,7 @@ export function App() {
             leaving={bead.presence === 'leaving'}
             onGone={beadGone}
             theme={theme}
-            demoPart={players.demo}
+            demoPart={show.demo}
             word={word}
             guide={guide}
           />

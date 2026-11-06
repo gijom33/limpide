@@ -3,6 +3,7 @@ import { createNoteInput, type NoteInput } from '../input/noteInput';
 import { createLibrary, type Library } from '../patch/library';
 import { createPatchStore, type PatchStore } from '../patch/patchStore';
 import { createTempoStore, type TempoStore } from '../play/tempoStore';
+import { createShows, type Shows } from '../shows/shows';
 import { createViewerStore, type ViewerStore } from '../viewers/viewerStore';
 import { notesInTests } from './notesInTests';
 import { PAUSE_AFTER, pauseInSilence } from './pauseInSilence';
@@ -28,6 +29,8 @@ export interface AudioSession {
   library: Library;
   /** The page's tempo (issue 112): the person's BPM, or a player's while it plays; synced LFOs follow it. */
   tempo: TempoStore;
+  /** What plays or guides the page, the Demo, the Song, a Tutorial and the Tour, and the rules between them (issue 243). */
+  shows: Shows;
   /** Whether the page opened on a Share link's Patch. */
   shared: boolean;
   /** Be told which Notes are held (from any source), e.g. to light the on-screen piano. */
@@ -98,6 +101,11 @@ export function getAudioSession(storage: KeyValueStorage): AudioSession {
     allowed: !needsATapToResume(navigator),
     after: (import.meta.env.MODE === 'e2e' && window.__limpidePauseAfter) || PAUSE_AFTER,
   });
+  const onHeld = (listener: (notes: number[]) => void) => {
+    listeners.add(listener);
+    return () => void listeners.delete(listener);
+  };
+  const shows = createShows({ engine, patches, viewers, tempo, storage, onHeld, page: window });
   session = {
     ctx,
     engine,
@@ -106,11 +114,9 @@ export function getAudioSession(storage: KeyValueStorage): AudioSession {
     viewers,
     library,
     tempo,
+    shows,
     shared: patches.shared,
-    onHeld(listener) {
-      listeners.add(listener);
-      return () => listeners.delete(listener);
-    },
+    onHeld,
     onPress(listener) {
       pressListeners.add(listener);
       return () => pressListeners.delete(listener);

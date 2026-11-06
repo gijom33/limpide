@@ -6,7 +6,6 @@ import { DISPLAY_BUTTON, optionOrDisplay, overlaySelector } from './displayOptio
 import { bringClear } from './docked';
 import { scrollBehavior } from './glide';
 import type { Guide } from './mascotCling';
-import { watchPersonScroll } from './personScroll';
 import { reveal } from './reveal';
 
 interface Props {
@@ -19,6 +18,8 @@ interface Props {
   freezing: boolean;
   /** What the card names while the synth has the Viewers frozen, left to right, or null. */
   naming: string[] | null;
+  /** Whether the person has scrolled the page during this card: it is then theirs, and the card brings nothing into view. */
+  pageTheirs(): boolean;
   onBack(): void;
   onNext(): void;
   /** The last card's way on: the first Tutorial, Sub Ladder (issue 210: the Tutorials' card; issue 233). */
@@ -63,13 +64,13 @@ export function tourGuide(index: number): Guide {
  * the card (decision 5). The LFO card points at the Timeline (issue 158, decided by the owner): its Depth knob shows
  * with it, or in turn.
  */
-function useSectionInView(card: TourSection | undefined, docked: RefObject<HTMLElement | null>, moving: TourMove['id'] | null, looking: Looking) {
+function useSectionInView(card: TourSection | undefined, docked: RefObject<HTMLElement | null>, moving: TourMove['id'] | null, looking: Looking, pageTheirs: () => boolean) {
   // What the card's clock says now, read by each scroll; and the scroll, set up for the card shown.
-  const now = useRef({ moving, looking });
+  const now = useRef({ moving, looking, pageTheirs });
   // Kept after each render, not while rendering (issue 228), before the scroll below reads it.
   useEffect(() => {
-    now.current = { moving, looking };
-  }, [moving, looking]);
+    now.current = { moving, looking, pageTheirs };
+  }, [moving, looking, pageTheirs]);
   const bring = useRef(() => {});
   useEffect(() => {
     if (!card) return;
@@ -77,14 +78,10 @@ function useSectionInView(card: TourSection | undefined, docked: RefObject<HTMLE
     for (const { element } of controls) if (element) reveal(element);
     const viewers = card.viewers.map((name) => document.querySelector(`[aria-label="${name}"]`)).filter((e) => e !== null);
     for (const viewer of viewers) viewer.setAttribute('data-tutorial-viewer', '');
-    // The person scrolled: the page is theirs for the rest of this card.
-    let theirs = false;
     let shown = false;
-    const unwatch = watchPersonScroll(() => {
-      theirs = true;
-    });
     bring.current = () => {
-      if (!shown || theirs || !docked.current) return;
+      // The person scrolled: the page is theirs for the rest of this card (the Shows keep it, issue 243).
+      if (!shown || now.current.pageTheirs() || !docked.current) return;
       const { moving, looking } = now.current;
       const elementsOf = (wanted: (id: TourMove['id']) => boolean) => controls.filter((c) => wanted(c.id) && c.element).map((c) => c.element!);
       const [mover, others] = [elementsOf((id) => id === moving), elementsOf((id) => id !== moving)];
@@ -103,7 +100,6 @@ function useSectionInView(card: TourSection | undefined, docked: RefObject<HTMLE
     return () => {
       clearTimeout(scroll);
       resized.disconnect();
-      unwatch();
       bring.current = () => {};
       for (const viewer of viewers) viewer.removeAttribute('data-tutorial-viewer');
     };
@@ -218,12 +214,12 @@ function FrozenLine({ freezes, freezing, naming }: { freezes: NonNullable<TourSe
  * cards; the last offers the first Tutorial. It takes the focus on its Next when the Tour starts; turning the controls
  * never takes it.
  */
-export function TourCard({ index, moving, looking, freezing, naming, onBack, onNext, onFirstTutorial, onClose }: Props) {
+export function TourCard({ index, moving, looking, freezing, naming, pageTheirs, onBack, onNext, onFirstTutorial, onClose }: Props) {
   const shown = tourCardAt(index);
   const section = shown.kind === 'section' ? shown.section : undefined;
   const last = index === TOUR_LENGTH - 1;
   const card = useRef<HTMLElement>(null);
-  useSectionInView(section, card, moving, looking);
+  useSectionInView(section, card, moving, looking, pageTheirs);
   useRing(section, moving);
   useFindShown(shown.kind === 'find' ? shown.find : undefined);
 

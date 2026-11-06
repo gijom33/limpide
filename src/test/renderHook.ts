@@ -4,6 +4,7 @@ import type { AudioSession } from '../app/session';
 import { createLibrary } from '../patch/library';
 import { createPatchStore } from '../patch/patchStore';
 import { createTempoStore } from '../play/tempoStore';
+import { createShows } from '../shows/shows';
 import { createViewerStore } from '../viewers/viewerStore';
 import { memoryStorage } from './memoryStorage';
 
@@ -61,8 +62,9 @@ export function testSession() {
     setHold: () => {},
   };
   const tempo = createTempoStore({ storage, engine: { heardAt: (pageTime) => pageTime, setTempo: () => {} } });
+  const shows = createShows({ engine, patches, viewers, tempo, storage, onHeld: () => () => {}, page: new EventTarget() });
   const session = {
-    engine, input, patches, viewers, library, tempo, shared: false,
+    engine, input, patches, viewers, library, tempo, shows, shared: false,
     onHeld: () => () => {},
     onPress: (listener: (note: number) => void) => {
       pressed.add(listener);
