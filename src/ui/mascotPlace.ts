@@ -277,7 +277,7 @@ export function createMascotPlace({ from, random = Math.random }: { from?: numbe
   let droppedOntoLine = false;
   const placed = (landedX: number | null = null): Placed => ({
     foot,
-    x: moving === 'falling' || moving === 'flying' || moving === 'held' || moving === 'thrown' || moving === 'sliding' || moving === 'clinging' ? x : null,
+    x: moving === 'falling' || moving === 'flying' || inHand(moving) || pointingTheWay(moving) ? x : null,
     moving,
     thrust: moving === 'flying' && thrust,
     windup: moving === 'flying' ? Math.min(1, (last! - windupFrom) / WINDUP_SECONDS) : 1,

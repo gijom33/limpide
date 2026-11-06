@@ -70,3 +70,5 @@ Measured before writing (2026-11-04, the welcome closed, Chromium): a 340 × 60 
 5. **The "Demo stopped: you are playing now" card** sits in the same corner in three and four across, at the whole card's width, so it reads on one line and Play again is where the Demo's card was.
 
 **To try:** on a laptop window (three across) and a wide one (four across), play the Demo: the small card in the bottom right corner, over no knob. Watch the line fill part by part; press ⌃ for the whole card, click a segment, ⌄ to send it back to the corner. Drag it by its name, double-click it home. Narrow the window to 2 × 2 while it plays, then widen it again. Play a Note during the Demo: the "you are playing now" card, in the corner.
+
+**Since (2026-11-06, issue 246):** in three and four across the "you are playing now" card opens whole in the corner, whatever fold was made in 2 × 2 (before, a fold made there hid its words); a fold made on it there is the layout's, not remembered. Where storage cannot be written (a private window), a fold made elsewhere lasts the session instead of resetting at each new card.

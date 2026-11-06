@@ -68,7 +68,7 @@ export function harmonicFormula(waveform: Waveform, pulseWidth: number): Formula
       const percent = Math.round(pulseWidth * 100);
       const every = 100 / gcd(percent, 100);
       const gaps = every <= PULSE_GAPS_SAID ? `: every ${ordinal(every)} Harmonic missing` : '';
-      // The one played keeps no offset: high for d of a cycle at 2(1 − d), low for the rest at −2d (fact-checked for 1.25.0).
+      // The one played keeps no offset: high for d of a cycle at 2(1 − d), low for the rest at −2d (issue 246).
       const [low, high] = [-2 * pulseWidth, 2 * (1 - pulseWidth)].map((v) => Number(v.toFixed(2)));
       return {
         says: 'A Pulse’s Harmonics follow its width: one is missing wherever a whole number of its cycles fits the high part exactly. At 50 % it is a Square.',
@@ -98,7 +98,7 @@ export function fmFormula(patch: Patch): Formula {
   return {
     says: 'FM adds partials on each side of each of Osc 1’s Harmonics, a step of Osc 2’s frequency apart; how loud each is follows a Bessel function of how far FM swings the pitch.',
     formula: `n f₁ + k f₂:  bₙ |Jₖ(n β)|,  β = ${FM_INDEX} × FM = ${index.toFixed(2)}`,
-    where: `n: Osc 1’s Harmonic’s number; f₁, f₂: Osc 1’s and Osc 2’s frequencies, f₂ / f₁ = ${ratioText(r)} now: ${landing}; bₙ: the Harmonic’s amplitude before FM; k: how many steps of f₂ from the Harmonic, either side (0 the Harmonic itself); Jₖ: the Bessel function of order k, |J₀…J₃(β)| ${j} now; β: the modulation index, how far FM swings the pitch, over f₂. On high Notes FM is kept smaller, β with it, so its partials stay under the top of what the browser plays.${osc2}${osc1}`,
+    where: `n: Osc 1’s Harmonic’s number; f₁, f₂: Osc 1’s and Osc 2’s frequencies, f₂ / f₁ = ${ratioText(r)} now: ${landing}; bₙ: the Harmonic’s amplitude before FM; k: how many steps of f₂ from the Harmonic, either side (0 the Harmonic itself); Jₖ: the Bessel function of order k, |J₀…J₃(β)| ${j} now; β: the modulation index, how far FM swings the pitch, over f₂. On high Notes FM is kept smaller, β with it, so few of its partials pass the top of what the browser plays.${osc2}${osc1}`,
   };
 }
 

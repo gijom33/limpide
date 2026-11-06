@@ -18,7 +18,7 @@ const foldsThisSession = new Map<CardKind, boolean>();
  * phone the card spans the bottom edge and only folds.
  *
  * The person's fold is read again each time a card opens: kept for the session too, so where storage cannot be
- * written (a private window) it lasts the session, as it did before issue 230 (issue 246).
+ * written (a private window) it lasts the session (issue 246).
  *
  * With `layoutFold` (the Demo's card in three and four across, issue 230: folded while it plays, whole once the Demo
  * stopped) the card opens so each time, whatever fold is remembered, and a fold made then is not remembered: it is the
@@ -34,7 +34,7 @@ export function useCardPlacement(card: RefObject<HTMLElement | null>, kind: Card
   const drag = useRef<{ x: number; y: number; from: { x: number; y: number } } | null>(null);
   // A card opening anew (Play again, another Tutorial) starts in its place, wherever the last one was left, and with
   // its fold: before it is drawn, so the Demo's whole card never shows for a frame in the corner.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: opening and the layout's fold are the triggers; storage and setting never change
+  // biome-ignore lint/correctness/useExhaustiveDependencies: opening and the layout's fold are the triggers; storage, kind and setting never change
   useLayoutEffect(() => {
     setOffset({ x: 0, y: 0 });
     setFolded(opensFolded());
