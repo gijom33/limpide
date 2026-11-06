@@ -143,11 +143,13 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
     }
     const slope = overlays.geek ? frozenNoiseSlope(viewer.frozen, () => noiseSlope?.()) : undefined;
     const cursor = hover?.();
-    // A silent Spectrum rests once drawn, until something it draws changes (issue 214): with no Harmonics there are no
-    // Markers or Ideal marks, and the Curve is compared by its gains, which an LFO on the Cutoff moves.
+    // A silent Spectrum rests once drawn, until something it draws changes (issue 214): the Curve is compared by its
+    // gains, which an LFO on the Cutoff moves. A paused one rests on a picture of sound (issue 216), its Markers and
+    // Ideal marks drawn: turning either, or the Geek Layer's numbers, draws it again (issue 238).
     const inputs = [
       ...canvasInputs(canvas, COLOURS),
       viewer.frequencyScale, viewer.levelScale, viewer.snapshot, viewer.frozen, glowing, curveGains, slope,
+      overlays.harmonics, overlays.ideal, overlays.geek, showIdeal,
     ];
     if (rest(silent && !cursor, inputs)) return;
 
