@@ -268,6 +268,8 @@ export function useMidi(host: Host) {
         if (cancelled) return;
         dispose = connectMidi(access as unknown as MidiAccessLike, {
           onMessage: (m, name) => {
+            // Any message wakes the sound from a pause, ahead of the Note it may bring (issue 238).
+            session.wake();
             if (aside.has(name)) return;
             const from = knownController(name);
             if (m.type === 'noteOn') noteFromController();

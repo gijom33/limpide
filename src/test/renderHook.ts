@@ -43,6 +43,8 @@ export function testSession() {
   const patches = createPatchStore({ hash: '', library, apply: () => {} });
   const viewers = createViewerStore({ storage, patches, setTapSource: () => {} });
   const played: string[] = [];
+  // How many times the sound was woken from a pause (issue 238).
+  const woken = { count: 0 };
   const pressed = new Set<(note: number) => void>();
   const engine = {
     now: () => performance.now() / 1000,
@@ -67,6 +69,7 @@ export function testSession() {
       return () => pressed.delete(listener);
     },
     muteInput: () => {},
+    wake: () => void woken.count++,
   } as unknown as AudioSession;
-  return { session, storage, played };
+  return { session, storage, played, woken };
 }

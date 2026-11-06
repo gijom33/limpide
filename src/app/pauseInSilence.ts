@@ -29,7 +29,8 @@ type PausableEngine = Pick<SynthEngine, 'now' | 'quietFrom' | 'pause' | 'wake' |
  * browser's audio thread stops and the Viewers rest on their last picture. Anything that changes what the engine
  * plays wakes it first, and resumes the sound at once, so the Note sounds from its very start. Never where the browser
  * wants a tap to resume (`allowed` false: an iPhone's Safari), and never again where a resume is refused after all: the
- * page is then told, by a `statechange`, that the sound is stopped. Wraps the engine's methods. Returns a teardown.
+ * page is then told, by a `statechange`, that the sound is stopped. Wraps the engine's methods. Returns `wake`, for
+ * what wakes it ahead of a Note other than the page's gestures (a Controller's message, issue 238), and a teardown.
  */
 export function pauseInSilence({
   ctx,
@@ -47,7 +48,7 @@ export function pauseInSilence({
   allowed?: boolean;
   after?: number;
   wall?: () => number;
-}): () => void {
+}): { wake(): void; stop(): void } {
   let pausable = allowed;
   // When something last sounded, played or woke it, on the page's clock.
   let lastHeard = wall();
@@ -86,9 +87,12 @@ export function pauseInSilence({
   const timer = setInterval(lookForSilence, LOOK_EVERY);
   for (const g of GESTURES) page.addEventListener(g, wake);
   ctx.addEventListener('statechange', onState);
-  return () => {
-    clearInterval(timer);
-    for (const g of GESTURES) page.removeEventListener(g, wake);
-    ctx.removeEventListener('statechange', onState);
+  return {
+    wake,
+    stop() {
+      clearInterval(timer);
+      for (const g of GESTURES) page.removeEventListener(g, wake);
+      ctx.removeEventListener('statechange', onState);
+    },
   };
 }

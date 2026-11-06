@@ -21,7 +21,7 @@ function controller(names: readonly string[]) {
 async function midi(name: string | readonly string[] = 'Keystation 49', stored: Record<string, string> = {}) {
   const device = controller(typeof name === 'string' ? [name] : name);
   vi.spyOn(navigator, 'requestMIDIAccess').mockResolvedValue(device.access as unknown as MIDIAccess);
-  const { session, storage, played } = testSession();
+  const { session, storage, played, woken } = testSession();
   for (const [key, value] of Object.entries(stored)) storage.setItem(key, value);
   const told: string[] = [];
   const host = {
@@ -40,7 +40,7 @@ async function midi(name: string | readonly string[] = 'Keystation 49', stored: 
   }, host);
   await act(async () => hook.result.current.connect());
   await vi.waitFor(() => expect(hook.result.current.midi.kind).toBe('ready'));
-  return { ...hook, ...device, session, played, told, host, renders: () => renders };
+  return { ...hook, ...device, session, played, woken, told, host, renders: () => renders };
 }
 
 describe('useMidi: a Controller (the 1.16.0 review)', () => {
@@ -58,6 +58,16 @@ describe('useMidi: a Controller (the 1.16.0 review)', () => {
     await m.send(0x80, 60, 0);
     expect(m.played).toEqual(['press 60', 'let go 60']);
     expect(m.told).toEqual(['note']);
+  });
+
+  it('wakes the sound on any message from a Controller, ahead of what it plays (issue 238)', async () => {
+    const m = await midi();
+    unmount = m.unmount;
+    await m.send(0xb0, 1, 64); // the mod wheel, before a Note: no Note played, the sound woken all the same
+    expect(m.played).toEqual([]);
+    expect(m.woken.count).toBe(1);
+    await m.send(0x90, 60, 100);
+    expect(m.woken.count).toBe(2);
   });
 
   it('tells the latest host of a Note, after the page has rendered again', async () => {

@@ -36,6 +36,11 @@ export interface AudioSession {
   onPress(listener: (note: number) => void): () => void;
   /** While on, held Notes do not sound by themselves: a Hold rhythm plays them instead. Gate offs still pass. */
   muteInput(on: boolean): void;
+  /**
+   * Wakes the sound from a pause in a long silence (issue 216) ahead of the Note that may follow, as the page's own
+   * keys and pointer do: a Controller's every message (issue 238).
+   */
+  wake(): void;
 }
 
 let session: AudioSession | undefined;
@@ -85,7 +90,7 @@ export function getAudioSession(storage: KeyValueStorage): AudioSession {
   const viewers = createViewerStore({ storage, patches, setTapSource: (source) => engine.setTapSource(source) });
   const tempo = createTempoStore({ storage, engine });
   // In a long silence the sound pauses (issue 216), while nothing plays by itself and no Controller's clock is followed.
-  pauseInSilence({
+  const pause = pauseInSilence({
     ctx,
     engine,
     page: window,
@@ -113,6 +118,7 @@ export function getAudioSession(storage: KeyValueStorage): AudioSession {
     muteInput(on) {
       muted = on;
     },
+    wake: pause.wake,
   };
   return session;
 }
