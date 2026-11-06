@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · enhancement. Built (2026-11-05) on night/2026-11-05, for the owner to try
+**Status:** ready-for-agent · enhancement. Built (2026-11-05), merged; the rain reworked at the owner's word (decisions 7 to 10)
 
 ## Decisions
 
@@ -19,6 +19,16 @@ Claude's calls, open to the owner:
 4. **Rain falls as rain does, fast:** each drop takes about as long as today's to land, so the trick keeps its length, and the first drops leave the top early enough to land as the umbrella's wince starts.
 5. **The sun and the cloud twice as far above Bead as today,** inside the window and clear of the header; where there is no room (Bead near the top), as far as fits. The cloud's shower falls that longer way onto Bead, and the steam rises to the sun.
 6. **With reduced motion,** as each trick is today.
+
+Decided by the owner, 2026-11-05, trying it ("The rain does not look realistic, should see pixel "drops" fall at a realistic speed compared the Bead's height (if it were a human!)"); it replaces call 4:
+
+7. **Pixel drops falling at rain's speed, at Bead's scale as if it were a person.**
+
+Claude's calls, open to the owner:
+
+8. **The speed:** Bead's 26 px as a person's 1.7 m, and rain at 5 to 8 m/s, as drops of 1 to 3 mm fall: 80 to 120 px a second, steady (rain falls at its own top speed, not speeding up). A drop takes some 5 s from a phone's top to Bead.
+9. **Rain already falling when the trick starts:** the stretch from the window's top down to Bead fills with drops at once, as rain is seen to start all around, and new drops come in at the top; so the wince and the umbrella keep their times and the trick its 3.6 s.
+10. **As many drops in the air as Bead's droplets allow** (60 at most, some kept for its splashes): slower drops are more in the air at once, so new ones come in only as others land. When the rain stops, the drops still in the air fade out within a third of a second, before the umbrella goes away, and the umbrella stops every drop that comes to it while it is open.
 
 ## Agent Brief
 

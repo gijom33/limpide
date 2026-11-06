@@ -4,8 +4,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
-- 2026-11-05, the owner, trying 237: "The rain does not look realistic, should see pixel "drops" fall at a realistic speed compared the Bead's height (if it were a human!)."
-
 ## Ideas
 
 ## Dropped
@@ -207,3 +205,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-11-05: the 1.24.0 code review's and word checks' leftovers (triage, Claude's calls open to the owner): the code's tidy-ups, Riser's words and the Status lines left "not yet released" to [238](./issues/238-tidy-ups-after-1-24.md); the three sounds (Talking Filter on C6 and C7, Riser high and low, Stutter's aftertouch on Volume) to the owner's ear in [239](./issues/239-three-sounds-to-hear-after-1-24.md); 227's commit order dropped (already committed); 204's and 212's boxes ticked at once.
 2026-11-05: the Demo 54 px off on a phone in GitHub's Linux WebKit went to [240](./issues/240-the-demo-54-px-off-on-a-slow-phone.md), to diagnose; its three tests skipped there to ship 1.24.0 (decided by the owner: "Skip and ship").
 2026-11-05: Preset selection by MIDI, mostly so already (Program Change since [52](./issues/52-midi-keyboards.md), the learnable Previous and Next Preset buttons since [34](./issues/34-c16-bank-layout.md)), went to [241](./issues/241-every-preset-reachable-by-program-change.md) for the 14 Presets past Program 127, by Bank Select (Claude's call, open to the owner).
+2026-11-05: 237's rain not realistic went back into [237](./issues/237-beads-weather-from-farther-off.md) as decision 7, replacing call 4, with Claude's calls 8 to 10 open to the owner (drops at 80 to 120 px a second, Bead as a person; rain already falling as the trick starts); built at once.
