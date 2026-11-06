@@ -75,10 +75,10 @@ interface Synth {
   /** MIDI Learn moved on: started, a target selected, a Mapping made, or stopped. */
   learnChanged?(state: LearnState): void;
   /** What a keyboard's own controls do while nothing is mapped to them (issue 52): the bend wheel (−1 to 1), the
-   *  sustain pedal, a Program Change (its number counted across the banks Bank Select picks, issue 241). The mod wheel
-   *  turns LFO 1's Depth. */
+   *  sustain pedal, a Program Change. The mod wheel turns LFO 1's Depth. */
   bend?(amount: number): void;
   pedal?(down: boolean): void;
+  /** A Program Change, its number counted across the banks Bank Select picks: bank × 128 + program (issue 241). */
   program?(number: number): void;
   /**
    * Aftertouch, how hard the keys are pressed (0–1): the channel's or the highest held Note's, whichever is higher. It
@@ -114,7 +114,8 @@ interface PickupState {
  */
 export function createControlSurface(synth: Synth) {
   const { store } = synth;
-  // The bank the last unmapped Bank Select picked: 0 until a keyboard sends one (issue 241).
+  // The bank the last unmapped Bank Select picked, one for every channel as Limpide plays them all as one instrument:
+  // 0 until a keyboard sends one (issue 241).
   let bank = 0;
   let learn: LearnState = { phase: 'off' };
   const setLearn = (next: LearnState) => {
