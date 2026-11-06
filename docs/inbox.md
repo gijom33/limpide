@@ -4,8 +4,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
-- 2026-11-05, from the 1.25.0 fact-check, three loose claims in the Synth Geek Layer's tips: the Filter's formula is the analogue one, and Web Audio's Filter falls faster near the top (16 kHz at a 2 kHz Cutoff: −44.8 dB against −36.1 at 12 dB, −89.5 against −72.2 at 24 dB); a Pulse's "the wave's peak being 1" is true of a ±1 pulse, where the one played runs −0.5 to +1.5 at 25 %; FM's β leaves out how FM is kept smaller on high Notes.
-
 ## Ideas
 
 ## Dropped
@@ -210,3 +208,4 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 2026-11-05: 237's rain not realistic went back into [237](./issues/237-beads-weather-from-farther-off.md) as decision 7, replacing call 4, with Claude's calls 8 to 10 open to the owner (drops at 80 to 120 px a second, Bead as a person; rain already falling as the trick starts); built at once.
 2026-11-05: 237's rain as before, from varied heights, went back into [237](./issues/237-beads-weather-from-farther-off.md) as decision 11 (replacing 1 and 7), with Claude's call 12 open to the owner; the steady rain from the top, built but not committed, set aside; built at once.
 2026-11-05: the 1.25.0 code review's leftovers went to [246](./issues/246-tidy-ups-after-1-25.md), polish for v1, with Claude's calls open to the owner (Bead's choices' items into 245 if it comes first; 222's inline choices left to 245).
+2026-11-05: the 1.25.0 fact-check's three loose claims in the Geek tips went to [246](./issues/246-tidy-ups-after-1-25.md), item 10 (Claude's call, open to the owner).
