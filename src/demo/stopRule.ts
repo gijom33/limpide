@@ -29,15 +29,12 @@ export type DemoEvent =
       takesTouches: boolean;
     };
 
-/** The keys that press the Demo's own buttons (Enter, Space) or move along its parts: none of them plays a Note. */
-const DEMO_KEYS = new Set(['Enter', ' ', ...Object.keys(ARROW_STEPS)]);
-
 /**
- * The keys a control that shapes the sound uses itself: Enter and Space press a switch or a choice, the arrows, Home
- * and End move along the choices and turn a knob (as Page Up and Down do, which play on anywhere). None of them plays
- * a Note.
+ * The keys a control uses itself, none of them playing a Note: Enter and Space press it, the arrows, Home and End move
+ * along its choices or turn it. The Demo's own buttons and parts take them, as a control that shapes the sound does (a
+ * switch, a choice, a knob; Page Up and Down turn a knob too, and play on anywhere).
  */
-const SOUND_KEYS = DEMO_KEYS;
+const CONTROL_KEYS = new Set(['Enter', ' ', ...Object.keys(ARROW_STEPS)]);
 
 /**
  * Whether a key press or a touch ends the Demo (issue 79): playing anything, or touching a control that does not
@@ -54,9 +51,9 @@ export function demoStop(event: DemoEvent): 'stop' | 'onLift' | 'playOn' {
   if (event.kind === 'key') {
     const { key, touched } = event;
     if (event.freezes || (key === 'Escape' && event.displayOpen) || key === 'PageUp' || key === 'PageDown') return 'playOn';
-    if (touched === 'sound' && SOUND_KEYS.has(key)) return 'playOn';
+    if (touched === 'sound' && CONTROL_KEYS.has(key)) return 'playOn';
     if ((key === 'Enter' || key === ' ') && touched === 'display') return 'playOn';
-    if (touched === 'demo' && DEMO_KEYS.has(key)) return 'playOn';
+    if (touched === 'demo' && CONTROL_KEYS.has(key)) return 'playOn';
     return event.modifier || key === 'Shift' || key === 'Tab' ? 'playOn' : 'stop';
   }
   const { touched } = event;
