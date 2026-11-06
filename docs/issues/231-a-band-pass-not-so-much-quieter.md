@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** needs-info · enhancement. Built at night (2026-11-05) and set back: the build departs from decision 2 and meets two acceptance criteria only in part, so the owner's answers come first (the night's lead, 2026-11-06).
+**Status:** ready-for-human · enhancement. Built at night (2026-11-05), set back for the owner's answers, and applied to main on 2026-11-06 once the owner had given them ("Yes to all four"): for the owner to try by ear.
 
 ## Decisions
 
@@ -19,6 +19,13 @@ Claude's calls, open to the owner (2026-11-05):
 4. **The ceiling is 12 dB above the fixed part,** so the make-up is at most +21 dB at 12 dB and +24 dB at 24 dB; the limiter and the ear check keep a loud Patch under the knee.
 5. **The make-up follows the Resonance as it is modulated,** not only the knob, so an LFO or envelope on Resonance does not pump the level.
 6. **The Viewers and the words follow the sound:** the Filter's drawn response, the Viewers' ideal and the Geek tip's band-pass formula and line ("the gain is 1 right at the Cutoff") show the make-up, so what is seen is what is heard.
+
+Decided by the owner (2026-11-06, "Yes to all four"), on the night's questions below, each the recommendation:
+
+7. **The make-up rises as √Q above Init's Resonance,** not as the Q itself, so the level stays within 3 dB of its level at 5 %; the ceiling is reached at about 80 % Resonance rather than 40 %. This replaces decision 2's "rises with it, as a classic constant-skirt band-pass does".
+8. **The click when leaving a loud band-pass is accepted:** the criterion holds up to 50 % Resonance, and a short crossfade on every Mode change is its own issue, [248](./248-a-crossfade-on-a-change-of-filter-mode.md).
+9. **Talking Filter's Volume is matched on its loudest moment** over its 4-second cycle, as built, and judged by ear.
+10. **The Response Curve keeps its scale:** past +20 dB it runs off the Spectrum's top, as a low-pass's peak already does.
 
 ## What was measured
 
@@ -88,9 +95,7 @@ So switching Init from low-pass to band-pass costs 10 to 15 dB at its Cutoff, mo
 - A level that follows the Cutoff against the Note.
 - Any other Preset's level.
 
-## What the night built, and set back
-
-The night's build is not on the branch: its three commits (f059ab6, 88d25f7, 2e636ec) are kept as a patch beside the night's report, `docs/night/2026-11-05-issue-231.patch` in the main checkout, to apply with `git am` once the questions below are answered. What it did and measured:
+## How it was built
 
 Built at night (2026-11-05), test-first.
 
@@ -125,7 +130,7 @@ Built at night (2026-11-05), test-first.
 - In the Synth Geek Layer, the Filter Mode's tip on band-pass shows G.
 - With high Resonance (above about 60 %), switch from band-pass to low-pass while a Note holds and listen for a tick (call 5).
 
-## Questions for the owner, from the night (2026-11-06)
+## Questions for the owner, from the night (2026-11-06; answered, above)
 
 1. **Decision 2 and the level criterion disagree: which wins?** A make-up that rises with the Q itself (decision 2's constant-skirt band-pass) is 6 to 9 dB too loud at 20 to 40 % Resonance and fails "within 3 dB of its level at 5 %"; one that rises with √Q keeps the level flat and reaches the ceiling at 80 % instead of about 40 %. Recommended: √Q, as built, so the level holds.
 2. **The click when leaving a loud band-pass:** above about 50 % Resonance, switching from band-pass to low-pass while a Note holds steps up to 3.3 times the wave's own steepest step. Recommended: accept 231 with the criterion met up to 50 %, and a new issue for a short crossfade on every Mode change (a change to the Filter itself).
