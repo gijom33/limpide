@@ -23,7 +23,7 @@ Claude's calls, open to the owner:
 
 9. **Which Section the strip follows for a Controller's bank stays with MIDI;** only the Demo's following moves into the module.
 10. **The module's commands are the builder's to shape,** within decision 4.
-11. **Not built the same night as [245](./245-beads-frame-read-decide-draw.md),** Bead's frame, which reads the Shows for its guiding: one after the other, either first.
+11. **Not built the same night as [245](./245-beads-frame-read-decide-draw.md),** Bead's frame, which reads the Shows for its guiding: one after the other, either first. **Since then (2026-11-05):** the same night is allowed, one after the other on the night branch, at the owner's word: "do as many as possible, including the newer code refactoring ones".
 
 ## Today's rules
 

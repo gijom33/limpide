@@ -14,6 +14,7 @@ Claude's calls, open to the owner (2026-11-05, triage):
 2. **The image's version follows Playwright's own** in the lock file, so a Playwright update cannot leave the image behind: a check fails the run if they differ.
 3. **Kept only if it is no slower:** the image is large to download, and a cache hit plus the library install takes about a minute when it does not hang. Three runs are timed against the last three runs before it; if a job's start is more than a minute slower, the issue says so and the owner chooses.
 4. **The cache step and both install steps are removed** with their comment, which then no longer applies.
+5. **Built at night, tried by day:** the night pushes nothing, so a night builds the change and leaves its runs on a test branch, the timing and the mismatch check for the day, on the owner's word to push the test branch; the issue then waits for the owner.
 
 ## Agent Brief
 

@@ -37,10 +37,10 @@ An issue in doubt is full. No builder runs the whole suite in either tier; the n
    If `night/<date>` already exists, the night is already running or has run: write the report's first line saying so, and end.
 2. **The queue.** Read the Status and Blocked by lines of every issue in `docs/issues/` (skip files whose name ends in ` 2.md`, which are iCloud copies). An issue is on the queue when all of these hold:
    - its Status starts `ready-for-agent`;
-   - each issue named under Blocked by has a Status starting `done`;
+   - each issue named under Blocked by has a Status starting `done`, or was built tonight on `night/<date>` (its Status in the worktree says `Built (<date>) on night/<date>`): it then builds on top of that work;
    - no other worktree's branch carries its number (`git worktree list` shows names such as `claude/osc2-pitch-98-…`), and no unmerged branch does (`git branch --no-merged main`): another session is building it, even if it has not committed yet.
 
-   Order: bugs first, then by number. Give each issue its tier, and group light issues that follow each other into batches of up to four. Write the queue, with the tiers and batches, at the top of the report. Done when every ready-for-agent issue is either queued or listed with the reason it is not.
+   Order: bugs first, then by number. Give each issue its tier, and group light issues that follow each other into batches of up to four. Write the queue, with the tiers and batches, at the top of the report. Done when every ready-for-agent issue is either queued or listed with the reason it is not. After each builder, read the queue again from the worktree's issue files: an issue whose blockers were built tonight joins it (the owner, 2026-11-05: "do as many as possible, including the newer code refactoring ones"). One whose blocker is waiting on the owner stays off it, with that reason.
 3. **Each builder, in turn.** While the clock allows:
    1. **Layouts measured.** If the issue (or one in the batch) says where something goes on screen, check its criteria against the page at the widths they name, with a short headless Playwright measurement: a throwaway spec in the worktree's `e2e/`, port 5199 free, deleted after, never committed. A criterion the page cannot meet (no room at a width) is a question for the owner: write it into the issue as step 3.5 says, and skip the issue.
    2. Note the branch tip (`git rev-parse HEAD`).
