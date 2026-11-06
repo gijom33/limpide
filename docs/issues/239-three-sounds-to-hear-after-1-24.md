@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · enhancement. The owner listens to each; what to change, if anything, follows.
+**Status:** done (2026-11-05). The owner listened to all three and kept them as they are: "All good for 239". Nothing to change.
 
 ## To hear
 
