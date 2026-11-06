@@ -169,8 +169,8 @@ export const TOUR_FINDS: TourFind[] = [
     title: 'Synth Geek Layer',
     look: 'Find the ringed Display button: its Geek toggle, a pair of glasses, turns on the Synth Geek Layer.',
     says: [
-      'The Synth Geek Layer shows the numbers under the hood, for the curious: levels in decibels, the formula behind a wave’s Harmonics, how many times a second each Scope’s wave repeats. It stays off until you switch it on.',
-      'With it on, the tips grow too: rest on a control, or hold it with a finger, and most tips end with a History, where the control comes from, the instruments and people it came through.',
+      'The Synth Geek Layer shows the numbers under the hood, for the curious: levels in decibels, how many times a second each Scope’s wave repeats. It stays off until you switch it on.',
+      'With it on, the tips grow too: rest on a control, or hold it with a finger, and some give the formula behind it, a wave’s Harmonics among them, and most end with a History, where the control comes from, the instruments and people it came through.',
     ],
     shows: { kind: 'display', overlay: 'geek' },
   },

@@ -307,7 +307,9 @@ describe('the Synth Geek Layer’s formulas, explained for the tips (issue 235)'
     expect(f.where).toMatch(/k: .*; Jₖ: .*; β: /);
     expect(fmFormula({ ...preset('FM Ladder'), osc2Semitone: 3 }).where).toContain('f₂ / f₁ = 1.19 now: between the Harmonics');
     // Osc 2 a Saw: only its 1st Harmonic swings Osc 1; FM Ladder's Sine says nothing of it.
-    expect(fmFormula({ ...defaultPatch(), crossMod: 0.5 }).where).toContain('Osc 2 a Saw: its 1st Harmonic only');
+    expect(fmFormula({ ...defaultPatch(), crossMod: 0.5 }).where).toContain('Osc 2 a Saw: its other Harmonics swing Osc 1 too');
+    expect(fmFormula({ ...defaultPatch(), crossMod: 0.5, waveform: 'pulse' }).where).toContain('Osc 1 a Pulse: partials come even around its missing Harmonics');
+    expect(fmFormula({ ...defaultPatch(), crossMod: 0.5 }).where).not.toContain('Osc 1 a Pulse');
     expect(fmFormula(preset('FM Ladder')).where).not.toContain('Osc 2 a');
     // FM at 0: β = 0, nothing added.
     expect(fmFormula(defaultPatch()).formula).toContain('β = 4 × FM = 0.00');

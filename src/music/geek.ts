@@ -87,11 +87,14 @@ export function fmFormula(patch: Patch): Formula {
   const index = fmIndex(patch.crossMod);
   const j = Array.from(besselJ(index, 3), (v) => Math.abs(v).toFixed(2)).join(' ');
   const landing = Math.abs(r - Math.round(r)) < 1e-6 && r >= 1 ? 'on the Harmonics' : 'between the Harmonics';
-  const osc2 = patch.osc2Waveform === 'sine' ? '' : ` Osc 2 a ${WAVEFORM_NAMES[patch.osc2Waveform]}: its 1st Harmonic only swings Osc 1.`;
+  // The Bessel figures hold for a Sine swinging Osc 1's pitch; Osc 2's other Harmonics swing it too, and a Pulse's
+  // missing Harmonics still gain partials (fact-checked for 1.25.0).
+  const osc2 = patch.osc2Waveform === 'sine' ? '' : ` Osc 2 a ${WAVEFORM_NAMES[patch.osc2Waveform]}: its other Harmonics swing Osc 1 too, adding partials, so these figures hold for a Sine.`;
+  const osc1 = patch.waveform === 'pulse' ? ' Osc 1 a Pulse: partials come even around its missing Harmonics.' : '';
   return {
     says: 'FM adds partials on each side of each of Osc 1’s Harmonics, a step of Osc 2’s frequency apart; how loud each is follows a Bessel function of how far FM swings the pitch.',
     formula: `n f₁ + k f₂:  bₙ |Jₖ(n β)|,  β = ${FM_INDEX} × FM = ${index.toFixed(2)}`,
-    where: `n: Osc 1’s Harmonic’s number; f₁, f₂: Osc 1’s and Osc 2’s frequencies, f₂ / f₁ = ${ratioText(r)} now: ${landing}; bₙ: the Harmonic’s amplitude before FM; k: how many steps of f₂ from the Harmonic, either side (0 the Harmonic itself); Jₖ: the Bessel function of order k, |J₀…J₃(β)| ${j} now; β: the modulation index, how far FM swings the pitch, over f₂.${osc2}`,
+    where: `n: Osc 1’s Harmonic’s number; f₁, f₂: Osc 1’s and Osc 2’s frequencies, f₂ / f₁ = ${ratioText(r)} now: ${landing}; bₙ: the Harmonic’s amplitude before FM; k: how many steps of f₂ from the Harmonic, either side (0 the Harmonic itself); Jₖ: the Bessel function of order k, |J₀…J₃(β)| ${j} now; β: the modulation index, how far FM swings the pitch, over f₂.${osc2}${osc1}`,
   };
 }
 

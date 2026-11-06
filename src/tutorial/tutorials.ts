@@ -33,7 +33,7 @@ export const TUTORIALS: Tutorial[] = [
       {
         kind: 'param', id: 'resonance', to: 0,
         say: 'Pull Resonance, the lift at the Cutoff, all the way down.',
-        note: 'Nothing is lifted any more: each Harmonic comes through as the wave made it.',
+        note: 'No lift at the Cutoff, wherever it is set: each Harmonic comes through as the wave made it.',
       },
       {
         kind: 'param', id: 'ampSustain', to: 1,
@@ -502,7 +502,7 @@ export const TUTORIALS: Tutorial[] = [
       {
         kind: 'param', id: 'keyTrack', to: 0.5,
         say: 'Set Key Track to 50 %. Key Track moves the Cutoff with the Note you play.',
-        note: 'Higher Notes now open the Filter a little more, so they do not come out duller than the low ones.',
+        note: 'The Cutoff now follows the Note: these low Notes close the Filter a little, so the line sounds darker, and a high Note would open it.',
       },
       {
         kind: 'param', id: 'velocityCutoff', to: 0.5,
@@ -563,7 +563,7 @@ export const TUTORIALS: Tutorial[] = [
       {
         kind: 'param', id: 'resonance', to: 0,
         say: 'Pull Resonance, the lift at the Cutoff, all the way down.',
-        note: 'Nothing is lifted any more: the Filter leaves the ladder as it is.',
+        note: 'No lift at the Cutoff, wherever it is set: the Filter leaves the ladder as it is.',
       },
       {
         kind: 'param', id: 'ampSustain', to: 1,
