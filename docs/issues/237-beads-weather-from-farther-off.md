@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · enhancement. Built (2026-11-05), merged; the rest accepted by the owner ("OK with the rest of the tickets reviewed"); the rain back near Bead, each drop from its own height (decision 11), for the owner to try
+**Status:** done (2026-11-05). Built (2026-11-05) on day/2026-11-05 and on main, merged into main, not yet released; accepted by the owner: "OK with the rest of the tickets reviewed", then, of the rain from its own heights, "Also like the new rain animation!"
 
 ## Decisions
 
