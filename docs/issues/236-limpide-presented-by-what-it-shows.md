@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** done (2026-11-05). Built (2026-11-05) on day/2026-11-05, merged into main, not yet released; accepted by the owner: "OK with the rest of the tickets reviewed", with Claude's calls in it. GitHub's repository description changes by hand at the release.
+**Status:** done (2026-11-05). Built (2026-11-05) on day/2026-11-05, merged into main, not yet released; accepted by the owner: "OK with the rest of the tickets reviewed", with Claude's calls in it. GitHub's repository description changed at 1.25.0's release, at the owner's word ("Yes, set it").
 
 ## Where Limpide says what it is
 
