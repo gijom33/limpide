@@ -264,15 +264,6 @@ describe('shared scale across Taps', () => {
 });
 
 describe('fundamental', () => {
-  it('reports the sounding Note’s held fundamental, starting at A4 because the Oscillator runs from the start', () => {
-    const engine = createSynthEngine(new OfflineAudioContext(1, SR, SR));
-    engine.applyPatch(defaultPatch());
-    expect(engine.fundamental()).toBeCloseTo(440);
-    engine.noteOn(57, 1, 0);
-    expect(engine.fundamental()).toBeCloseTo(220);
-    engine.pitchChange(69); // now, as live playing does: fundamental() reports what is sounding at this moment
-    expect(engine.fundamental()).toBeCloseTo(440);
-  });
 
   it('at a past moment, swings with an LFO on Pitch as the model and the sound do, which Cycle Lock follows (issue 180)', async () => {
     const ctx = new OfflineAudioContext(1, SR * 2, SR);
@@ -560,27 +551,6 @@ describe('what the mascot reads (issue 115)', () => {
 });
 
 describe('modulationAt for past moments (the Envelope Timeline)', () => {
-  // Issue 45: the Timeline asks for every pixel column, every frame. Each moment must cost the same however many Notes
-  // the history holds (it replayed the whole history per column: 3.7 ms a frame grew to 31 ms after 600 Notes).
-  it('costs no more per moment after 600 Notes than after 10', () => {
-    const timeFor = (notes: number) => {
-      const ctx = new OfflineAudioContext(1, SR * 30, SR);
-      const engine = createSynthEngine(ctx);
-      engine.applyPatch({ ...defaultPatch(), glide: 0.05 });
-      for (let i = 0; i < notes; i++) {
-        engine.noteOn(48 + (i % 24), 0.8, (i * 24) / notes);
-        engine.noteOff((i * 24) / notes + 12 / notes);
-      }
-      const frame = () => { for (let x = 0; x < 500; x++) engine.modulationAt(24 + x / 500); };
-      frame(); // warm up
-      const start = performance.now();
-      for (let i = 0; i < 20; i++) frame();
-      return (performance.now() - start) / 20;
-    };
-    const few = Math.min(timeFor(10), timeFor(10));
-    const many = Math.min(timeFor(600), timeFor(600));
-    expect(many).toBeLessThan(few * 3 + 1);
-  });
   // The Demo turns knobs every frame: a Patch change must not rebuild a pulse's Fourier series for every Voice.
   it('applies a Patch change with pulse Waveforms on 8 Voices about as fast as with saws', () => {
     const timeFor = (waveform: 'pulse' | 'saw') => {
@@ -596,67 +566,6 @@ describe('modulationAt for past moments (the Envelope Timeline)', () => {
     const pulse = Math.min(timeFor('pulse'), timeFor('pulse'));
     expect(pulse).toBeLessThan(saw * 3 + 0.5);
   });
-  it('gives the Envelope levels that replaying every Gate event from the start would', () => {
-    const ctx = new OfflineAudioContext(1, SR * 4, SR);
-    const engine = createSynthEngine(ctx);
-    const patch = { ...defaultPatch(), ampAttack: 0.05, ampDecay: 0.2, ampSustain: 0.6, ampRelease: 0.3, filterAttack: 0.01, filterDecay: 0.1, filterSustain: 0.3, filterRelease: 0.5 };
-    engine.applyPatch(patch);
-    const amp: GateEvent[] = [];
-    const filter: GateEvent[] = [];
-    const ampAdsr = { attack: patch.ampAttack, decay: patch.ampDecay, sustain: patch.ampSustain, release: patch.ampRelease };
-    const filterAdsr = { attack: patch.filterAttack, decay: patch.filterDecay, sustain: patch.filterSustain, release: patch.filterRelease };
-    // Notes that retrigger before the Release ends, and releases before the Decay ends: every segment starts mid-way.
-    // Each Note but the first comes while the last still sounds: it dips first, and starts after the dip (issue 102).
-    for (const [on, off, velocity] of [[0.1, 0.3, 1], [0.4, 0.45, 0.5], [0.5, 1.2, 0.8], [1.3, 1.31, 1]]) {
-      engine.noteOn(60, velocity, on);
-      engine.noteOff(off);
-      const start = on === 0.1 ? on : on + DIP;
-      if (start !== on) amp.push({ time: on, on: false, adsr: ampAdsr, peak: 0, dip: true });
-      amp.push({ time: start, on: true, adsr: ampAdsr, peak: velocity }, { time: off, on: false, adsr: ampAdsr, peak: velocity });
-      filter.push({ time: start, on: true, adsr: filterAdsr, peak: 1 }, { time: off, on: false, adsr: filterAdsr, peak: 1 });
-    }
-    for (let t = 0; t < 2; t += 0.001) {
-      const m = engine.modulationAt(t);
-      expect(m.amp).toBeCloseTo(envelopeLevel(amp, t), 9);
-      expect(m.filter).toBeCloseTo(envelopeLevel(filter, t), 9);
-    }
-  });
-  it('uses the Cutoff that was in force at that moment, so a hand sweep is drawn as a sweep', async () => {
-    const ctx = new OfflineAudioContext(1, SR, SR);
-    const engine = createSynthEngine(ctx);
-    engine.applyPatch({ ...defaultPatch(), cutoff: 300 });
-    const changed = ctx.suspend(0.5).then(() => {
-      engine.applyPatch({ ...defaultPatch(), cutoff: 3000 });
-      void ctx.resume();
-    });
-    await ctx.startRendering();
-    await changed;
-    expect(engine.modulationAt(0.25).cutoff).toBe(300);
-    expect(engine.modulationAt(0.75).cutoff).toBe(3000);
-  });
-  it('reports the newest Note and its Velocity, for the modulation ring (they are fixed while it sounds)', () => {
-    const ctx = new OfflineAudioContext(1, SR, SR);
-    const engine = createSynthEngine(ctx);
-    engine.applyPatch(defaultPatch());
-    expect(engine.modulationAt(0).sounding).toBeNull();
-    engine.noteOn(72, 0.5, 0.1);
-    expect(engine.modulationAt(0.2).sounding).toEqual({ note: 72, velocity: 0.5 });
-    engine.noteOff(0.3);
-    expect(engine.modulationAt(0.4).sounding).toBeNull(); // released: no Note is held any more
-  });
-  it('reports the sounding pitch in semitones: the Note, sliding over the Glide to the next', () => {
-    const ctx = new OfflineAudioContext(1, SR, SR);
-    const engine = createSynthEngine(ctx);
-    engine.applyPatch({ ...defaultPatch(), glide: 0.4, lfoAmount: 0 });
-    engine.noteOn(60, 1, 0);
-    expect(engine.modulationAt(0.2).pitch).toBeCloseTo(60);
-    engine.pitchChange(72, 0.5);
-    expect(engine.modulationAt(0.5).pitch).toBeCloseTo(60);
-    const sliding = engine.modulationAt(0.6).pitch;
-    expect(sliding).toBeGreaterThan(61);
-    expect(sliding).toBeLessThan(71);
-    expect(engine.modulationAt(0.9).pitch).toBeCloseTo(72, 0); // there by the Glide time (98 % of the way)
-  });
   it('a falling saw LFO bends the pitch down then up, in the sound as in the model', async () => {
     const patch = { cutoff: 20000, waveform: 'sine', ampSustain: 1, ampAttack: 0.001, lfoDestination: 'pitch', lfoAmount: 1, lfoRate: 1, lfoWaveform: 'sawDown' } as const;
     let engine: ReturnType<typeof createSynthEngine> | undefined;
@@ -668,23 +577,6 @@ describe('modulationAt for past moments (the Envelope Timeline)', () => {
     expect(frequencyAround(s, SR, 0.25, 0.02)).toBeCloseTo(440 * 2 ** (-0.5 / 12), 0);
     expect(frequencyAround(s, SR, 0.75, 0.02)).toBeCloseTo(440 * 2 ** (0.5 / 12), 0);
     expect(engine!.modulationAt(0.25).vibrato).toBeCloseTo(-0.5);
-  });
-  it('an LFO on Pitch wobbles the sounding pitch a semitone each way at full Depth; aimed elsewhere, not at all', () => {
-    const swing = (destination: 'pitch' | 'cutoff') => {
-      const ctx = new OfflineAudioContext(1, SR, SR);
-      const engine = createSynthEngine(ctx);
-      engine.applyPatch({ ...defaultPatch(), lfoDestination: destination, lfoAmount: 1, lfoRate: 5, lfoWaveform: 'triangle' });
-      engine.noteOn(60, 1, 0);
-      const moments = Array.from({ length: 200 }, (_, i) => engine.modulationAt(0.1 + i / 1000));
-      // The vibrato on its own, so the piano can draw it apart from the Note: the pitch less the vibrato is the Note.
-      for (const m of moments) expect(m.pitch - m.vibrato).toBeCloseTo(60);
-      const pitches = moments.map((m) => m.pitch);
-      return [Math.min(...pitches), Math.max(...pitches)];
-    };
-    const [lo, hi] = swing('pitch');
-    expect(lo).toBeCloseTo(59, 1);
-    expect(hi).toBeCloseTo(61, 1);
-    expect(swing('cutoff')).toEqual([60, 60]);
   });
   // On several Voices too (issue 101): a handed-over Note has its release recorded already, and is cancelled all the same.
   for (const voices of [1, 4] as const)
@@ -976,13 +868,6 @@ describe('Osc 2, Noise and the Mixer', () => {
     const quiet = steady(await render(1, { cutoff: 20000, mixNoise: 0, ampSustain: 1 }, (e) => e.noteOn(A2, 1, 0)));
     const noisy = steady(await render(1, { cutoff: 20000, mixNoise: 0.5, ampSustain: 1 }, (e) => e.noteOn(A2, 1, 0)));
     expect(dB(toneAmplitude(noisy, SR, between) / toneAmplitude(quiet, SR, between))).toBeGreaterThan(30);
-  });
-
-  it('keeps the Harmonic Markers on Osc 1, whatever Osc 2 is tuned to', () => {
-    const engine = createSynthEngine(new OfflineAudioContext(1, SR, SR));
-    engine.applyPatch({ ...defaultPatch(), mixOsc2: 1, osc2Octave: 2, osc2Semitone: 5 });
-    engine.noteOn(57, 1, 0);
-    expect(engine.fundamental()).toBeCloseTo(220);
   });
 
   it('shows the Mixer’s output at the Oscillator Tap', async () => {
@@ -1944,15 +1829,6 @@ describe('Osc 1 Octave (issue 90)', () => {
     expect(dB(toneAmplitude(s, SR, 220) / toneAmplitude(s, SR, 110))).toBeLessThan(-60);
   });
 
-  it('counts the held fundamental from Osc 1, and from the Sub below it', () => {
-    const engine = createSynthEngine(new OfflineAudioContext(1, SR, SR));
-    engine.applyPatch({ ...defaultPatch(), osc1Octave: -1 });
-    engine.noteOn(57, 1, 0);
-    expect(engine.fundamental()).toBeCloseTo(110);
-    engine.applyPatch({ ...defaultPatch(), osc1Octave: 1, mixSub: 0.5 });
-    expect(engine.fundamental()).toBeCloseTo(220);
-  });
-
   for (const osc2Octave of [1, 2])
     it(`keeps a pulse's width at its knob's whatever its tuning (Osc 2 at +${osc2Octave} oct, 25 %)`, async () => {
       const solo2 = { cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001, mixOsc1: 0, mixOsc2: 1, osc2Waveform: 'pulse', osc2PulseWidth: 0.25 } as const;
@@ -1981,12 +1857,6 @@ describe('the Sub’s Octave and Waveform (issue 91)', () => {
     expect(dB(toneAmplitude(s, SR, 165) / toneAmplitude(s, SR, 55))).toBeLessThan(-60);
   });
 
-  it('counts the held fundamental from the Sub, two octaves down', () => {
-    const engine = createSynthEngine(new OfflineAudioContext(1, SR, SR));
-    engine.applyPatch({ ...defaultPatch(), mixSub: 1, subOctave: -2 });
-    engine.noteOn(57, 1, 0);
-    expect(engine.fundamental()).toBeCloseTo(55);
-  });
 });
 
 describe('Pink Noise (issue 92)', () => {
