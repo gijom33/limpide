@@ -313,7 +313,7 @@ describe('the ten Presets review 15 proposed (issue 125)', () => {
   /** Everything above `hz` against everything below, over 2048 samples from `from` seconds after the Note. */
   const aboveDb = (s: Float32Array, hz: number, from: number) => energyAboveDb(s, SR, hz, span(from)[0], 2048);
 
-  it('Riser: its six-second Attack takes the high-pass from 200 Hz past 5 kHz, and the Envelope (Osc 2 with it) almost to the top', async () => {
+  it('Riser: its six-second Attack takes the high-pass from 200 Hz past 5 kHz on C4, and the Envelope (Osc 2 with it) almost to the top', async () => {
     const engine = await modelled('Riser', 7);
     expect(engine.modulationAt(NOTE).cutoff).toBeCloseTo(200, -1);
     expect(engine.modulationAt(NOTE + 6).cutoff).toBeGreaterThan(5000);

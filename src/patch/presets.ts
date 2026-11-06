@@ -557,7 +557,7 @@ group('Movement & Effects', [
     volume: 0.25, waveform: 'square', filterSlope: 24, cutoff: 200, resonance: 0.85, filterEnvAmount: 5, filterAttack: 0.001, filterDecay: 0.15,
     filterSustain: 0, ampAttack: 0.001, ampDecay: 0.3, ampSustain: 0, ampRelease: 0.1,
   }],
-  ['Riser', 'Hold a Note: the Filter Envelope’s six-second Attack lifts a high-pass from 200 Hz past 5 kHz and Osc 2 almost two octaves (Env Amount), together, over Noise, while a saw LFO ripples the Volume. Watch the Cutoff climb on the Timeline.', {
+  ['Riser', 'Hold a Note: the Filter Envelope’s six-second Attack lifts a high-pass from 200 Hz past 5 kHz on C4 and Osc 2 almost two octaves (Env Amount), together, over Noise, while a saw LFO ripples the Volume. Watch the Cutoff climb on the Timeline.', {
     mixOsc1: 0.5, mixOsc2: 0.6, osc2Detune: 12, osc2EnvAmount: 24, mixNoise: 0.5, filterMode: 'highpass', cutoff: 200, resonance: 0.4, keyTrack: 0.5,
     filterEnvAmount: 5, filterAttack: 6, filterDecay: 0.5, filterSustain: 1, filterRelease: 0.5, ampAttack: 3, ampSustain: 1, ampRelease: 0.8,
     lfoWaveform: 'saw', lfoDestination: 'volume', lfoRate: 6, lfoAmount: 0.3,
