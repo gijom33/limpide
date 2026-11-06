@@ -4,7 +4,7 @@
 
 **Blocked by:** [228](./228-tidy-ups-after-1-23.md) (its items in Bead's frame and choices come first)
 
-**Status:** ready-for-agent · enhancement. Polish for v1
+**Status:** ready-for-human · enhancement. Built (2026-11-05) on night/2026-11-05, for the owner to try
 
 ## Decisions
 
@@ -43,3 +43,29 @@ Claude's calls, open to the owner (2026-11-05, triage):
 - Tests: the fold lasting a session where storage cannot be written; the "you are playing now" card whole in the corner after a fold in 2 × 2; the rest kept passing as they are.
 
 **Out of scope:** the reshaping of Bead's frame (245); 228's items.
+
+## How it was built
+
+Built (2026-11-05) on night/2026-11-05, after 228, 238, 241 to 245, test-first where there was behaviour (the folds, the tips' words). Each item:
+
+1. **The Demo's phone test:** mended. `staysWhileThePartPlays` waits once in the page, frame by frame, until the next part or the time is up, and fails if the page scrolled.
+2. **CSS locators:** mended. The Demo's parts are found by role, the group named "Part …" (on a phone the card is whole, so its parts are a group, not the corner's image). The others stay, as the item says.
+3. **`nextVisitAt`'s bare boolean:** mended, `{ stacked }`.
+4. **In Bead's choices:** mended here, since 245 left it (decision 1). `DROP_MIDDLE` and `STEP` sit in `mascotCling.ts` beside Bead's size, where the drawing reads them too; `Spot` is the one `{ left, foot }` type, in the two choices and the frame.
+5. **The `moving` checks:** mended. `settled`, `pointingTheWay` and `inHand` beside `Moving`, used in the choices, the frame and the place.
+6. **Names:** mended. `rideCount`, `clearSomewhere`, and a droplet's `fallsTo` (steam that rises keeps none), with `fling`'s `toHeight`: rain falls to it, steam rises to it.
+7. **The geek tips' `where`:** mended, written once for the Saw, Square and Triangle.
+8. **230's fold:** mended and tested through the app (decision 3). The person's fold is kept for the session as well as in storage, so where storage cannot be written it lasts the session. In three and four across the Demo's card takes the layout's fold: folded while it plays, whole once the Demo stopped. A fold made in 2 × 2 used to fold the "you are playing now" card in the corner, which hid its words with no button to unfold it.
+9. **The mascot test name:** already mended. 245 moved that test into `beadFrame.test.ts` without the claim ("through the Demo, each act in turn…").
+10. **The three claims:** mended and tested. The Filter's `where` says its formula is the analogue one, and gives the browser's figures near the top (a low-pass at a 2 kHz Cutoff and a Q of 0.71, at 48 kHz: −44.8 against −36.1 dB at 12 dB, −89.5 against −72.2 at 24 dB; checked by hand). The Pulse's peak of 1 is said to be a ±1 Pulse's, and the one played is said to run from −2d to 2(1 − d), −0.5 to +1.5 at 25 %. FM's `where` says FM is kept smaller on high Notes, β with it.
+11. **The three flakes:** 211's and 204's tests are now scripted unit tests (245), frame by frame at a steady 60 frames a second, so load can no longer make them fail. In the script, Bead lands about half a second before the page stops, in 2 × 2 and on a phone. The 17 that the browser test measured were milliseconds, not pixels: 5654 against 5637.3 is one frame. A likely cause is a frame dropped under the whole suite's load, but it was not confirmed in a browser, since that test no longer runs there. The contrast check was not touched: it failed once and passed alone, so it counts as a load flake and its limits stay.
+
+**Claude's calls, open to the owner:**
+
+1. **A fold made on the "you are playing now" card in three and four across is the layout's,** so it is not remembered, like a fold made on the small card (230's call 2). This card has no fold button anyway.
+2. **The session's fold comes before storage's** while the page is open: a fold made in another tab shows from the next visit, not in this tab.
+3. **FM's high Notes are said, not worked out:** the tip knows no Note, and how much FM is kept also depends on Osc 2's ratio.
+
+**What to try in the app:** in 2 × 2, fold the Demo's card and stop it. Widen the window to three across, play the Demo, and play a Note: the "you are playing now" card, whole in the corner. In a private window, fold a Tutorial's card and open another Tutorial: it opens folded. With the Geek Layer on, hover the Filter's Mode, the Pulse waveform and FM: the new words. Nothing else should look different, Bead included.
+
+**Tests run:** `npx tsc` and `npm run lint` clean. The unit tests of the touched files (geek, tips, Bead's choices, frame, place, cling and spray) are green, 229 tests. Eight Playwright specs over the touched UI (dockedCards, demo, mascot, geek, tooltips, touchTips, tour, tutorial) are green: 239 tests in Chromium and 228 in WebKit, with no flake. Those runs came before the review's fixes, which change comments, two names, one check and FM's tip; the unit tests were run again after them. The code review (standards and spec) found no bug; its notes are mended (`ebca1d5`).
