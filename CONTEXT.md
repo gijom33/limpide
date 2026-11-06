@@ -169,7 +169,7 @@ A mode that keeps Notes sounding after their keys are released, so the sound sus
 _Avoid_: Drone, latch, sustain (Sustain is an Envelope stage)
 
 **Demo**:
-An original track of about three minutes, played by the synth alone: each part is a Preset, loaded on the bar line, after a short breath, and the builds and drops are knobs turning. The page follows the knob being turned, until the person scrolls. Knobs, faders, switches (Legato, each LFO's Retrigger and Sync included), the Destination pickers, the section strip and the tabs, and Display can be changed while it plays, by the pointer or the keyboard; a Note or any other control stops it.
+An original track of about three minutes, played by the synth alone: each part is a Preset, loaded on the bar line, after a short breath, and the builds and drops are knobs turning. The page follows the knob being turned, until the person scrolls. Knobs, faders, switches (Legato, each LFO's Retrigger and Sync included), the Destination pickers, the section strip and the tabs, and Display can be changed while it plays, by the pointer or the keyboard; a Note or any other control stops it. Stopped, it leaves the part's Preset loaded: the sound the person took over is theirs to play on.
 _Avoid_: Autoplay, showcase, tour
 
 **Welcome**:
@@ -177,7 +177,7 @@ About as a brand-new browser (no Last session, no saved Patches) sees it, once: 
 _Avoid_: Onboarding, splash, intro
 
 **Tutorial**:
-A Preset rebuilt from Init in Steps, with the person turning each control. A card docked at the bottom of the page shows the current Step; nothing is locked. The first card says, in the Tutorial's own words, what it teaches and what the person will hear; the last lists what differs from the Preset and names the next Tutorial (issue 129). Opened from the Preset's row or the Tutorials list in the Patches panel, the header's Tutorial button, or the Tour's last card.
+A Preset rebuilt from Init in Steps, with the person turning each control. A card docked at the bottom of the page shows the current Step; nothing is locked. The first card says, in the Tutorial's own words, what it teaches and what the person will hear; the last lists what differs from the Preset and names the next Tutorial (issue 129). Opened from the Preset's row or the Tutorials list in the Patches panel, the header's Tutorial button, or the Tour's last card. Left before its end, the Patch stays as the person built it.
 _Avoid_: Lesson, course, walkthrough, onboarding, tour
 
 **Tour**:
@@ -191,6 +191,10 @@ _Avoid_: Stage (an Envelope's), lesson
 **Song**:
 A house loop in C minor that plays on whatever Patch is loaded and never changes it, so the sound can be shaped under a tune. It only uses the 13 keys from the piano's C to the C above, and moves with the piano's octave. One Voice plays its chords as a single line. A Note, the Demo or the Song button stops it.
 _Avoid_: Loop, backing track, sequence
+
+**Show**:
+What plays or guides the page for the person: the Demo, the Song, a Tutorial or the Tour. One of the Demo and the Song plays at a time, and one of a Tutorial and the Tour is open; a Tutorial's or the Tour's card may play its own phrase (Listen), which the Demo or the Song stops. The Demo ends any other Show. The person takes over by playing, each Show as its entry says; a control they turn is theirs until the next part or card. Only the Tour gives the person's Patch back when it ends: it plays on a Patch of its own, where the Demo and a Tutorial leave theirs for the person to keep.
+_Avoid_: Lead (a Preset), Guide (Guides are a Viewer's), Host, player
 
 **Mascot**:
 Bead: a pixel water drop whose tail is the Limpide logo, out on the page by default, coming in by itself a few seconds after the page opens; playing B, E, A, D by hand (as in a bead of water) sends it away and calls it back, for that visit only. In three and four across it lives on the top edge of the top right section; on a phone and in 2 × 2 it keeps in view as the page scrolls, on a section's edge in the right column or, with none in view, hovering on its whirling tail a little under the header where it lost ground (issue 142), falling like rain to a lower edge and flying up on its tail to a higher one. It never stands under a docked card, a tip or an open panel: it goes to an edge clear of them, or onto the card's top edge, and is still drawn under them (issue 164); where it rests, it covers no text (issue 181). It strolls and dances with the music, does funny turns when nothing is played, answers each knob and fader turned, giggles when tickled by the pointer and sprays droplets when clicked; sent away, it smashes itself down into a splash. While it is out, five more words spelled with Notes cue its tricks; it can be picked up and thrown; some controls change its look (its tail a Waveform a moment, a twin with Detune, an ice cube with the Filter closed); through the Demo it conducts, plays air guitar and surfs an LFO's plot, and outside it, on every layout, rides the plot of a slow Sine or Triangle now and then, or when dropped near it (issues 141, 197). Display has a switch for it, the lasting setting, remembered; off, it never appears and the Notes do nothing. The Notes never turn the switch. It makes no sound. The README and the switch's tip say who it is; its tricks are left out of them on purpose, and everything it does is in [docs/bead.md](docs/bead.md). With the switch on, About shows it to the right of the name "Limpide", on the name's baseline, a click giving a card of its tricks (issues 163 and 178).
