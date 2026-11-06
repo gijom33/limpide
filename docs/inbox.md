@@ -6,10 +6,9 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
-- 2026-11-05, the owner: "I would like to capitalize the GitHub project from limpide to Limpide. Is that even possible?"
-
 ## Dropped
 
+- 2026-11-05, the repository renamed Limpide: kept lowercase (decided by the owner: "Keep it lowercase"). GitHub Pages takes the site's path from the name, case and all, and does not redirect a rename, so gijom33.github.io/limpide, linked from posts, the C16 card and bookmarks, would break; the deploy's visit counting also checks the lowercase name. The name is capitalised wherever a person reads it.
 - 2026-11-02, from the 1.22.0 code review, 181's call 5 (Bead switching sides when the other side is clear) not in decision 3's order and changing 151's side rule: kept as built; 181 shipped in 1.22.0 and the owner has seen Bead beside the controls since without remark. Claude's call, open to the owner.
 - 2026-11-02, from the 1.22.0 code review, Bead rising as from the header onto an edge after waiting out of sight under it: cosmetic and never seen in a browser; dropped until seen. Claude's call, open to the owner.
 - 2026-10-30, from Claude's brainstorm, Velocity on the Volume ("a harder hit plays louder, not only brighter"): already so. The Amp Envelope's Attack rises to the Note's Velocity (PRD story 9). Claude's call, open to the owner.
