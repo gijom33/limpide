@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement. Built (2026-11-05), merged; the rain reworked at the owner's word (decisions 7 to 10)
+**Status:** ready-for-agent · enhancement. Built (2026-11-05), merged; the rest accepted by the owner ("OK with the rest of the tickets reviewed"); the rain back near Bead, each drop from its own height (decision 11)
 
 ## Decisions
 
@@ -29,6 +29,14 @@ Claude's calls, open to the owner:
 8. **The speed:** Bead's 26 px as a person's 1.7 m, and rain at 5 to 8 m/s, as drops of 1 to 3 mm fall: 80 to 120 px a second, steady (rain falls at its own top speed, not speeding up). A drop takes some 5 s from a phone's top to Bead.
 9. **Rain already falling when the trick starts:** the stretch from the window's top down to Bead fills with drops at once, as rain is seen to start all around, and new drops come in at the top; so the wince and the umbrella keep their times and the trick its 3.6 s.
 10. **As many drops in the air as Bead's droplets allow** (60 at most, some kept for its splashes): slower drops are more in the air at once, so new ones come in only as others land. When the rain stops, the drops still in the air fade out within a third of a second, before the umbrella goes away, and the umbrella stops every drop that comes to it while it is open.
+
+Decided by the owner, 2026-11-05, on seeing decisions 7 to 10 built (not committed): "You know what? I prefer the way the rain was before, even if local to Bead. Maybe all I wanted is the drops not all coming from the same imaginary line." It replaces decisions 1 and 7 and calls 3, 4 and 8 to 10:
+
+11. **The rain as before 237, local to Bead, its drops not all from one line.**
+
+Claude's call, open to the owner:
+
+12. **Each drop from its own height, 60 to 120 px over Bead's edge,** the highest where all of them started before, and under what is over the page there, as before. Bead winces as the rain starts, as before.
 
 ## Agent Brief
 
