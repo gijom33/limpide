@@ -1,4 +1,4 @@
-import { filterStages, isPeaked, MAKE_UP_RISES_FROM, makeUp } from '../engine/filterDesign';
+import { filterStages, isMadeUp, isPeaked, MAKE_UP_RISES_FROM, makeUp } from '../engine/filterDesign';
 import { type EnvelopeStage, STAGE_SHARPNESS, stageTimeConstant } from '../modulation/envelope';
 import { GLIDE_SHARPNESS } from '../modulation/lfo';
 import { destinationSwings, effectiveCutoff, KEY_TRACK_CENTRE, LFO_LAWS, type LfoLaw, osc2Cents } from '../modulation/modulationModel';
@@ -137,8 +137,8 @@ export function responseFormula(mode: FilterMode, slope: FilterSlope): Formula {
   const one = `${CORE[mode]} / √((1 − x²)² + (x / Q)²)`;
   const top = slope === 12 ? '−44.8 dB at 16 kHz, against −36.1 dB here' : '−89.5 dB at 16 kHz, against −72.2 dB here';
   // A band-pass's make-up (issue 231), outside the stages: the 0 dB band raised to about a low-pass's level.
-  const gained = mode === 'bandpass' ? 'G · ' : '';
-  const where = `x = f / fc, 1 at the Cutoff; |H|: the gain at the frequency f, 1 unchanged, 0 silent; fc: the Cutoff; Q: the Resonance as the Filter’s Q, which its knob reads in this layer${mode === 'bandpass' ? `; ${makeUpWords(slope)}` : ''}. This is the analogue Filter’s formula: the browser’s digital one falls faster near the top, a low-pass at a 2 kHz Cutoff and a flat Q of 0.71 ${top} (at 48 kHz).`;
+  const gained = isMadeUp(mode) ? 'G · ' : '';
+  const where = `x = f / fc, 1 at the Cutoff; |H|: the gain at the frequency f, 1 unchanged, 0 silent; fc: the Cutoff; Q: the Resonance as the Filter’s Q, which its knob reads in this layer${isMadeUp(mode) ? `; ${makeUpWords(slope)}` : ''}. This is the analogue Filter’s formula: the browser’s digital one falls faster near the top, a low-pass at a 2 kHz Cutoff and a flat Q of 0.71 ${top} (at 48 kHz).`;
   return slope === 12
     ? { says: RESPONSE_SAYS[mode], formula: `|H| = ${gained}${one}`, where }
     : { says: `${RESPONSE_SAYS[mode]} At 24 dB, two of these Filters in a row: the gain squared, falling twice as fast.`, formula: `|H| = ${gained}(${one})²`, where };

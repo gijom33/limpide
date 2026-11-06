@@ -101,6 +101,8 @@ From review 15:
 
 2026-10-31: Talking Filter was retuned by issue [166](./166-the-edges-three-findings.md) (its LFO on Resonance no longer lets the saw through unfiltered): Resonance and LFO 2's Depth 0.45, Volume 0.9, its level on C4 −21.7 dBFS, in its group's 3 dB.
 
+2026-11-05: [231](./231-a-band-pass-not-so-much-quieter.md) gave the band-pass a make-up gain, and the 7 band-pass Presets (Vowel, Sync-ish Lead, Cowbell, Wind, Wah, Talking Filter, Robot) had their Volume taken down by as much, so their levels on C4 are as they were, within 0.5 dB.
+
 **Judgement calls** (Claude's call, open to the owner):
 
 1. **Groups meet the quiet, not the loud:** Volume can only lower, so where a quiet sound could not be raised far enough the rest of its group came down. Movement & Effects' median fell from −16.1 to −22.2 dBFS (Wind, Wah, Robot and Ocean, Noise and band-passes, raised by up to 10 dB still sit near −24), the Drums' from −23.7 to −25.6. The groups now differ more from each other than before (Bass −14.5, Keys & Plucks −27.1): the criterion is per group, and the master's room for Voices puts the 8-Voice groups lower.

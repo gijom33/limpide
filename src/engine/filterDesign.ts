@@ -5,6 +5,8 @@ import type { FilterMode, FilterSlope } from '../patch/patch';
 export const isPeaked = (mode: FilterMode) => mode === 'lowpass' || mode === 'highpass';
 /** Whether a Mode's output fades with its Resonance at the top of the range: a high-pass's (issue 195). */
 export const fadesOutAtTheTop = (mode: FilterMode) => mode === 'highpass';
+/** Whether a Mode's level is made up after its stages: a band-pass's (issue 231). */
+export const isMadeUp = (mode: FilterMode) => mode === 'bandpass';
 
 /** One biquad's settings. */
 export interface Stage {
@@ -68,7 +70,7 @@ const MAKE_UP_RISE_DB = 12;
  * (half a constant-skirt band-pass's rise in dB), up to its ceiling. Every other Mode is left at 1.
  */
 export function makeUp(mode: FilterMode, slope: FilterSlope, resonance: number): number {
-  if (mode !== 'bandpass') return 1;
+  if (!isMadeUp(mode)) return 1;
   const rise = Math.sqrt(resonanceToQ(Math.max(resonance, MAKE_UP_RISES_FROM)) / resonanceToQ(MAKE_UP_RISES_FROM));
   return 10 ** ((MAKE_UP_DB[slope] + Math.min(20 * Math.log10(rise), MAKE_UP_RISE_DB)) / 20);
 }
@@ -78,7 +80,7 @@ export function makeUp(mode: FilterMode, slope: FilterSlope, resonance: number):
  * make-up adds to a gain of 1, so it follows the Resonance however it is moved. A Mode with none adds nothing.
  */
 export function makeUpCurve(mode: FilterMode, slope: FilterSlope): Float32Array<ArrayBuffer> {
-  if (mode !== 'bandpass') return Float32Array.of(0, 0);
+  if (!isMadeUp(mode)) return Float32Array.of(0, 0);
   return Float32Array.from({ length: CURVE_POINTS }, (_, i) => makeUp(mode, slope, i / (CURVE_POINTS - 1)) - 1);
 }
 

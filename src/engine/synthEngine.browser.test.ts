@@ -1072,10 +1072,6 @@ describe('Filter Modes and Slopes', () => {
   });
 });
 
-// Issue 112: an LFO with Sync on repeats once a note value at the tempo, and with Retrigger free its cycle lands on
-// the beat. Measured as issue 66's are, on Volume at full Depth: the Amp Tap with the LFO, divided sample by sample by
-// the same Note without it, is the tremolo's gain, 0.5 + 0.5 × the LFO (the output lags it, through the limiter's
-// oversampling). A quarter-Note saw starts each cycle at its foot, so the gain is 0 on every beat and climbs to 1.
 // Issue 231: a band-pass passes 0 dB at its centre, but a saw's power lies on its skirts; its make-up brings it near the
 // low-pass, and follows the Resonance as it narrows the band.
 describe('a band-pass not so much quieter (issue 231)', () => {
@@ -1145,6 +1141,10 @@ describe('a band-pass not so much quieter (issue 231)', () => {
   });
 });
 
+// Issue 112: an LFO with Sync on repeats once a note value at the tempo, and with Retrigger free its cycle lands on
+// the beat. Measured as issue 66's are, on Volume at full Depth: the Amp Tap with the LFO, divided sample by sample by
+// the same Note without it, is the tremolo's gain, 0.5 + 0.5 × the LFO (the output lags it, through the limiter's
+// oversampling). A quarter-Note saw starts each cycle at its foot, so the gain is 0 on every beat and climbs to 1.
 describe('an LFO synced to the tempo (issue 112)', () => {
   const tremolo = {
     cutoff: 20000, waveform: 'sine', ampSustain: 1, ampAttack: 0.001, lfoDestination: 'volume', lfoAmount: 1, lfoWaveform: 'saw',
