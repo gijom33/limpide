@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { traceJitter } from '../test/measure';
 import { createCycleLock, risingZeros } from './cycleLock';
+import { createLevelMeter } from './level';
 
 const SR = 48000;
 const BUFFER = 8192;
@@ -168,6 +169,15 @@ describe('Cycle Lock on a Scope (issue 180)', () => {
     const frequencyAt = vi.fn(() => 440);
     const lock = createCycleLock();
     lock({ samples: new Float32Array(BUFFER), sampleRate: SR, end: 1, frequencyAt, cycles: 2, points: 300 });
+    expect(frequencyAt).toHaveBeenCalledTimes(1);
+  });
+
+  it('skips its search on any Tap the Viewers call silent, every sample under a millionth of full scale (issues 213, 214)', () => {
+    const frequencyAt = vi.fn(() => 440);
+    const samples = render(BUFFER, () => 440, Math.sin).samples.map((v) => v * 9e-7);
+    const tap = { fftSize: BUFFER, getFloatTimeDomainData: (into: Float32Array) => into.set(samples) } as unknown as AnalyserNode;
+    expect(createLevelMeter(tap)().silent).toBe(true);
+    createCycleLock()({ samples, sampleRate: SR, end: 1, frequencyAt, cycles: 2, points: 300 });
     expect(frequencyAt).toHaveBeenCalledTimes(1);
   });
 
