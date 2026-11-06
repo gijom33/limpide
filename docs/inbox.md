@@ -4,6 +4,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-11-05, from 1.25.0's statistics: Bead's landing through the Demo's scroll in 2 × 2 (issue 211's test) failed twice in a row in Chromium, Bead landing 17 px past where the page stopped (5654 against 5637.3), then passed six times alone; the contrast check and 204's acts test failed once in the same run and passed alone.
+
 ## Ideas
 
 ## Dropped
