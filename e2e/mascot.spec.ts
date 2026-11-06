@@ -62,6 +62,25 @@ async function settles(page: Page, moving = /^(standing|hovering)$/, seconds = 5
   expect(seen).toMatch(moving);
 }
 
+/** Waits `seconds` of its own time, counted frame by frame as `settles` counts it: on a slow page, longer (issue 238). */
+async function ownTime(page: Page, seconds: number) {
+  await page.evaluate(
+    ([limit, step]) =>
+      new Promise<void>((done) => {
+        let own = 0;
+        let last: number | null = null;
+        const frame = (time: number) => {
+          if (last !== null) own += Math.min(step, (time - last) / 1000);
+          last = time;
+          if (own >= limit) done();
+          else requestAnimationFrame(frame);
+        };
+        requestAnimationFrame(frame);
+      }),
+    [seconds, LONGEST_STEP] as const,
+  );
+}
+
 /** Plays Notes on the computer keyboard: J is B4, D E4, H A4, S D4 (B, E, A, D); A C4, F F4. */
 async function play(page: Page, keys: string) {
   for (const key of keys) await page.keyboard.press(key);
@@ -241,7 +260,7 @@ async function scrollThrough(page: Page, step: number) {
   const places: (string | null)[] = [];
   const at = async (y: number) => {
     await page.evaluate((top) => window.scrollTo({ top, behavior: 'instant' }), y);
-    await page.waitForTimeout(1200); // it falls or flies there, lands and recovers
+    await ownTime(page, 1.2); // it falls or flies there, lands and recovers, in its own time
     // On a busy machine its flight may take longer: once it has settled, standing or hovering.
     await settles(page);
     const where = await seen(page);
@@ -315,7 +334,7 @@ test('in a short phone window, with no edge in view, it hovers on its tail where
     expect(y, 'no edge ever left it').toBeLessThan(4000);
     const before = await mascot(page).evaluate((el) => el.getBoundingClientRect().left);
     await page.evaluate((top) => window.scrollTo({ top, behavior: 'instant' }), y);
-    await page.waitForTimeout(900); // it takes off, or falls to an edge
+    await ownTime(page, 0.9); // it takes off, or falls to an edge, in its own time
     // Then settles, hovering or standing, counted in its own frames: a fixed wait read it mid-flight on a slow machine.
     await settles(page);
     if ((await mascot(page).getAttribute('data-moving')) === 'hovering') lostAt = before;
@@ -777,10 +796,10 @@ test('while it is out, words spelled with Notes cue its tricks; B, E, A, D still
   await bringBead(page);
   await play(page, 'sdhs');
   await expect(mascot(page)).toHaveAttribute('data-doing', 'playDead');
-  await page.waitForTimeout(3500);
+  await expect(mascot(page)).toHaveAttribute('data-doing', '', { timeout: 10_000 }); // played out, in its own time
   await play(page, 'fhsd'); // F, A, D, E
   await expect(mascot(page)).toHaveAttribute('data-doing', 'ghost');
-  await page.waitForTimeout(3000);
+  await expect(mascot(page)).toHaveAttribute('data-doing', '', { timeout: 10_000 });
   await play(page, 'jdhs');
   await expect(mascot(page)).toHaveCount(0);
 });
