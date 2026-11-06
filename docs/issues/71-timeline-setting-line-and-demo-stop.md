@@ -40,3 +40,5 @@
 
 - The setting line: `line` in `src/viewers/timeline.ts` strokes it plainly at half alpha instead of through `dashed` with 4-4; the Timeline's tooltips in `src/ui/tips.ts` say solid. Test: `e2e/envelopes.spec.ts` records the Timeline's strokes for a few frames (every faint one undashed, LFO 1's still 5-3).
 - The Demo: its pointer listener in `src/ui/hooks/usePlayers.ts` still ignores presses while Display is open, except on the piano. A computer-keyboard key already ended it with Display open; its test guards that. Tests in `e2e/demo.spec.ts`; the press takes the piano's first key, since the Demo moves the Octave as it plays.
+
+**Since then (2026-11-05, [issue 243](./243-one-module-for-the-shows.md)):** `usePlayers`, `useTutorialState` and `useTourState` are gone, and the Demo's knobs (`demoKnobs`) are the synth's hand (`src/shows/synthHand.ts`), shared with the Tour: the Shows and their rules are one module, `src/shows/shows.ts`, built once in the audio session and tested in node; the Demo's stop rule still reads the page in `src/ui/hooks/useShows.ts`. The behaviour is unchanged.

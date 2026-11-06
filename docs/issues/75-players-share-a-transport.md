@@ -71,3 +71,5 @@ Claude's calls, open to the owner:
 Since then (2026-10-28, the code review of issues 73 to 79): decision 9, Listen looping without end, kept by the owner.
 
 Since then (issue 198, 2026-11-02): the Transport's ticks come from a worker's timers, which a browser does not slow in the background; a Note past its start when handed over is dropped, not played late; and while the page is hidden the Song and Listen hand their Notes over 2 s ahead (`background`), the Demo and Hold's rhythm keeping their short look-ahead.
+
+**Since then (2026-11-05, [issue 243](./243-one-module-for-the-shows.md)):** `usePlayers`, `useTutorialState` and `useTourState` are gone, and the Demo's knobs (`demoKnobs`) are the synth's hand (`src/shows/synthHand.ts`), shared with the Tour: the Shows and their rules are one module, `src/shows/shows.ts`, built once in the audio session and tested in node; the Demo's stop rule still reads the page in `src/ui/hooks/useShows.ts`. The behaviour is unchanged.

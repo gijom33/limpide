@@ -52,3 +52,5 @@ Built in `src/ui/hooks/useTutorialState.ts`, `src/ui/TutorialCard.tsx`, `src/tut
 After trying it (the owner, 2026-10-27): a made Step's tick is a filled badge in the accent colour, on the instruction and beside "Step n of m" (so a folded card shows it too); the target back above its control; no Maths Step.
 
 **Since then (2026-11-04, issue [230](./230-the-demos-card-small-in-the-corner.md)):** in three and four across the Demo's card opens folded each time, small in the window's bottom right corner, whatever fold is remembered, and a fold made there is not remembered; on a phone and in 2 × 2 the Demo's fold is remembered as above. It still moves by its top row.
+
+**Since then (2026-11-05, [issue 243](./243-one-module-for-the-shows.md)):** `usePlayers`, `useTutorialState` and `useTourState` are gone, and the Demo's knobs (`demoKnobs`) are the synth's hand (`src/shows/synthHand.ts`), shared with the Tour: the Shows and their rules are one module, `src/shows/shows.ts`, built once in the audio session and tested in node; the Demo's stop rule still reads the page in `src/ui/hooks/useShows.ts`. The behaviour is unchanged.

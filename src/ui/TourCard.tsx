@@ -64,7 +64,11 @@ export function tourGuide(index: number): Guide {
  * the card (decision 5). The LFO card points at the Timeline (issue 158, decided by the owner): its Depth knob shows
  * with it, or in turn.
  */
-function useSectionInView(card: TourSection | undefined, docked: RefObject<HTMLElement | null>, moving: TourMove['id'] | null, looking: Looking, pageTheirs: () => boolean) {
+function useSectionInView(
+  card: TourSection | undefined,
+  docked: RefObject<HTMLElement | null>,
+  { moving, looking, pageTheirs }: { moving: TourMove['id'] | null; looking: Looking; pageTheirs: () => boolean },
+) {
   // What the card's clock says now, read by each scroll; and the scroll, set up for the card shown.
   const now = useRef({ moving, looking, pageTheirs });
   // Kept after each render, not while rendering (issue 228), before the scroll below reads it.
@@ -219,7 +223,7 @@ export function TourCard({ index, moving, looking, freezing, naming, pageTheirs,
   const section = shown.kind === 'section' ? shown.section : undefined;
   const last = index === TOUR_LENGTH - 1;
   const card = useRef<HTMLElement>(null);
-  useSectionInView(section, card, moving, looking, pageTheirs);
+  useSectionInView(section, card, { moving, looking, pageTheirs });
   useRing(section, moving);
   useFindShown(shown.kind === 'find' ? shown.find : undefined);
 

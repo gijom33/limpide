@@ -77,22 +77,23 @@ describe('The Shows: the Demo, the Song and Listen, one playing at a time (issue
     expect(s.tempo.get()).toEqual({ bpm: SONG.bpm, player: true, midi: false });
     s.shows.toggleSong(() => 4);
     expect(s.tempo.get().bpm).toBe(100);
-    s.shows.listen({ phrase: 'C4:1', bpm: 90 });
-    expect(s.tempo.get().bpm).toBe(90);
-    s.shows.stopListen();
+    s.shows.startTutorial(TUTORIALS[0]);
+    s.shows.toggleListen();
+    expect(s.tempo.get().bpm).toBe(TUTORIALS[0].bpm);
+    s.shows.toggleListen();
     expect(s.tempo.get().bpm).toBe(100);
   });
 
-  it('plays one at a time: Listen stops the Demo, the Song stops Listen, the Demo stops the Song', () => {
+  it('plays one at a time: the Song stops Listen, the Demo stops the Song', () => {
     const s = setup();
-    s.shows.playDemo();
-    s.shows.listen({ phrase: 'C4:1 E4:1 G4:1', bpm: 120 });
-    expect(now(s)).toMatchObject({ playing: 'listen', demo: null });
+    s.shows.startTutorial(TUTORIALS[0]);
+    s.shows.toggleListen();
+    expect(now(s).playing).toBe('listen');
     s.shows.toggleSong(() => 4);
     expect(now(s).playing).toBe('song');
-    s.shows.toggleDemo();
-    expect(now(s).playing).toBe('demo');
-    s.shows.toggleDemo();
+    s.shows.playDemo();
+    expect(now(s)).toMatchObject({ playing: 'demo', demo: 0 });
+    s.shows.stopDemo();
     expect(now(s).playing).toBeNull();
   });
 
@@ -100,8 +101,9 @@ describe('The Shows: the Demo, the Song and Listen, one playing at a time (issue
     const s = setup();
     const octaves: number[] = [];
     s.shows.onOctave((octave) => octaves.push(octave));
-    s.shows.listen({ phrase: 'C6:1 E6:1', bpm: 120 });
-    expect(octaves).toEqual([6]);
+    // The Tour's first card plays A3, E3 and G3: the piano from C3 shows them.
+    s.shows.startTour();
+    expect(octaves).toEqual([3]);
     s.shows.playDemo();
     expect(octaves).toHaveLength(2);
   });
@@ -207,7 +209,8 @@ describe('The person taking over (issues 79, 242, 243)', () => {
 
   it('plays Listen and the Demo on through a Note played by hand', () => {
     const s = setup();
-    s.shows.listen({ phrase: 'C4:1', bpm: 120 });
+    s.shows.startTutorial(TUTORIALS[0]);
+    s.shows.toggleListen();
     s.hold([60]);
     expect(now(s).playing).toBe('listen');
     s.shows.playDemo();

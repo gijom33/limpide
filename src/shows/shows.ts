@@ -88,6 +88,11 @@ export interface ShowsHost {
   clock?: () => number;
 }
 
+/** The Preset a Tutorial rebuilds. */
+const presetOf = (tutorial: Tutorial) => PRESETS.find((p) => p.name === tutorial.preset)!;
+/** Init, where the Demo ends and a Tutorial starts. */
+const INIT = PRESETS[0];
+
 /**
  * The synth's hand on Freeze for one Tour card (issue 130): it freezes and unfreezes as the card says until the
  * person freezes or unfreezes themselves, or had Freeze on as the card came up; from then on Freeze is theirs.
@@ -157,7 +162,7 @@ export function createShows({ engine, patches, viewers, tempo, storage, onHeld, 
   let state: ShowsNow;
   const tutorialNow = (): ShowsNow['tutorial'] => {
     if (!lesson) return null;
-    const preset = PRESETS.find((p) => p.name === lesson!.tutorial.preset)!;
+    const preset = presetOf(lesson.tutorial);
     const atEnd = lesson.index >= lesson.tutorial.steps.length;
     const differs = atEnd ? differences(patches.get().patch, preset.patch).map(controlName) : [];
     const was = state?.tutorial;
@@ -193,14 +198,18 @@ export function createShows({ engine, patches, viewers, tempo, storage, onHeld, 
     onTempo: (bpm, first) => tempo.take(bpm, first),
   };
 
-  /** Stops what plays, or only `kind` if that is what plays. */
-  const stop = (kind?: Playing) => {
-    if (!current || (kind && current.kind !== kind)) return;
-    current.stop();
+  /** Nothing plays any more: the person's tempo comes back. */
+  const stopped = () => {
     current = null;
     playing = null;
     publish();
     tempo.giveBack();
+  };
+  /** Stops what plays, or only `kind` if that is what plays. */
+  const stop = (kind?: Playing) => {
+    if (!current || (kind && current.kind !== kind)) return;
+    current.stop();
+    stopped();
   };
   const play = (kind: Playing, start: () => () => void) => {
     stop();
@@ -279,7 +288,7 @@ export function createShows({ engine, patches, viewers, tempo, storage, onHeld, 
 
     // The last card: the Tutorial counts as finished, and a sound that matches is named after its Preset.
     if (!lesson || lesson.index < lesson.tutorial.steps.length) return;
-    const preset = PRESETS.find((p) => p.name === lesson!.tutorial.preset)!;
+    const preset = presetOf(lesson.tutorial);
     if (!finished.has(preset.name)) {
       finished = new Set(finished).add(preset.name);
       saveFinished(storage, finished);
@@ -330,7 +339,7 @@ export function createShows({ engine, patches, viewers, tempo, storage, onHeld, 
     const card = shown.kind === 'section' ? shown.section : undefined;
     patches.change((p) => withValues(p, Object.fromEntries(TOUR_TURNED.map((id) => [id, TOUR_PATCH.patch[id]]))), 'tour');
     // After the Sections, nothing plays (issue 210).
-    if (card) play('listen', () => startPhraseLoop({ ...transport, showOctave }, card));
+    if (card) listen(card);
     else stop('listen');
     const hand = createSynthHand(patches, 'tour');
     const unsubscribe = patches.subscribe(({ by }) => by === 'load' && endTour(false));
@@ -422,13 +431,8 @@ export function createShows({ engine, patches, viewers, tempo, storage, onHeld, 
             // The track is over: back to the starting point, silent, as if nothing had been touched. The shared sound
             // stays loaded.
             hand.stop();
-            current = null;
-            playing = null;
-            publish();
-            tempo.giveBack();
-            if (shared) return;
-            const init = PRESETS[0];
-            patches.load(init.name, init.patch);
+            stopped();
+            if (!shared) patches.load(INIT.name, INIT.patch);
           },
         },
         track,
@@ -464,7 +468,6 @@ export function createShows({ engine, patches, viewers, tempo, storage, onHeld, 
     playDemo,
     /** Stops the Demo; `byThePerson`, they played or touched something, and its card says so. */
     stopDemo,
-    toggleDemo: () => (current?.kind === 'demo' ? stopDemo() : playDemo()),
     /**
      * The person took over: a key the Demo's stop rule does not let through, a press on the page, a Controller's Note
      * or Program Change. The Demo stops, and its card says so.
@@ -472,8 +475,6 @@ export function createShows({ engine, patches, viewers, tempo, storage, onHeld, 
     takeOver: () => stopDemo(true),
     dismissTookOver: () => setTookOver(false),
     toggleSong: (octave: () => number) => (current?.kind === 'song' ? stop('song') : playSong(octave)),
-    listen,
-    stopListen: () => stop('listen'),
     /** The Tutorial's Listen: its phrase, or stopped. */
     toggleListen: () => (current?.kind === 'listen' ? stop('listen') : lesson && listen(lesson.tutorial)),
 
@@ -483,8 +484,7 @@ export function createShows({ engine, patches, viewers, tempo, storage, onHeld, 
       endTour();
       stop();
       setTookOver(false);
-      const init = PRESETS[0];
-      patches.load(init.name, init.patch);
+      patches.load(INIT.name, INIT.patch);
       setLesson({ tutorial, index: -1, done: tutorial.steps.map(() => false), turnedOff: [] });
     },
     /**

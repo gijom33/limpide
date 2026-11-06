@@ -78,6 +78,16 @@ test('a Program Change during the Demo stops it, says so, and the Preset it name
   await expect(patch).toHaveAttribute('aria-label', 'Patch: Pure Sine');
 });
 
+// Issue 243: untested end to end until then.
+test('a Controller’s Note during the Demo stops it and says so (issues 79, 243)', async ({ page }) => {
+  const demo = page.getByRole('button', { name: 'Demo', exact: true });
+  await demo.click();
+  await expect(page.getByRole('button', { name: /^Patch: / })).toHaveAttribute('aria-label', /Kick/);
+  await play(page, [0x90, 60, 100], [0x80, 60, 0]);
+  await expect(demo).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.getByRole('status').filter({ hasText: 'The Demo stopped: you are playing now.' })).toBeVisible();
+});
+
 test('the bend wheel shows in the Activity Monitor, its range two semitones until changed', async ({ page }) => {
   await play(page, [0x90, 69, 100]); // A4, 440 Hz
   await play(page, [0xe0, 0x7f, 0x7f]); // all the way up: two semitones by default

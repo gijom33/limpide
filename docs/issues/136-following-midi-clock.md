@@ -73,3 +73,5 @@
 - Stop the clock altogether: a second later the BPM is yours again, at the clock's last tempo.
 - Play the Demo while the clock runs: it keeps 128; stop it and the clock's tempo is back.
 - Try the header at 861, 1000 and 1100 px, and on a phone, while a clock runs.
+
+**Since then (2026-11-05, [issue 243](./243-one-module-for-the-shows.md)):** `usePlayers`, `useTutorialState` and `useTourState` are gone, and the Demo's knobs (`demoKnobs`) are the synth's hand (`src/shows/synthHand.ts`), shared with the Tour: the Shows and their rules are one module, `src/shows/shows.ts`, built once in the audio session and tested in node; the Demo's stop rule still reads the page in `src/ui/hooks/useShows.ts`. The behaviour is unchanged.
