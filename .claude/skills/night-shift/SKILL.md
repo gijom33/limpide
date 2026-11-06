@@ -34,7 +34,7 @@ An issue in doubt is full. No builder runs the whole suite in either tier; the n
    - `git worktree add ~/limpide-night/<date> -b night/<date> main`, and symlink the main checkout's `node_modules` into it;
    - note the starting commit (`git rev-parse HEAD`) and the load average (`uptime`) for the report. Above 8, the report says the night's results may carry load flakes.
 
-   If `night/<date>` already exists, the night is already running or has run: write the report's first line saying so, and end.
+   If `night/<date>` already exists, the night is already running or has run (started by hand earlier in the evening): say so in your final message and end, leaving its report as it is.
 2. **The queue.** Read the Status and Blocked by lines of every issue in `docs/issues/` (skip files whose name ends in ` 2.md`, which are iCloud copies). An issue is on the queue when all of these hold:
    - its Status starts `ready-for-agent`;
    - each issue named under Blocked by has a Status starting `done`, or was built tonight on `night/<date>` (its Status in the worktree says `Built (<date>) on night/<date>`): it then builds on top of that work;
