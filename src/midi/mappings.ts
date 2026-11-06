@@ -90,9 +90,10 @@ export interface Mapping {
 
 /** A knob's Mapping as the MIDI panel shows it and switches it (issue 186): Absolute, or Relative of either kind. */
 export type KnobMode = 'absolute' | 'relative';
+/** Whether a Mapping's mode is a Relative knob's, of either kind. */
+export const isRelative = (mode: Mapping['mode']): mode is 'relative-twos' | 'relative-centred' => mode === 'relative-twos' || mode === 'relative-centred';
 /** A Mapping's knob mode; null for a button's, or a knob's still to be turned ('detect'). */
-export const knobModeOf = (mode: Mapping['mode']): KnobMode | null =>
-  mode === 'absolute' ? 'absolute' : mode === 'relative-twos' || mode === 'relative-centred' ? 'relative' : null;
+export const knobModeOf = (mode: Mapping['mode']): KnobMode | null => (mode === 'absolute' ? 'absolute' : isRelative(mode) ? 'relative' : null);
 
 interface KeyValueStorage {
   getItem(key: string): string | null;

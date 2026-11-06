@@ -36,14 +36,12 @@ export function hoverReadoutLines(frequency: number, levelDb: number, { geek = f
  * The hover readout as one line of text, for the canvas's readout data, e.g. "3.00 kHz · F#7 +23¢ · −42 dB", and
  * " · n = 3" on a Harmonic with the Synth Geek Layer on.
  */
-export const hoverReadout = (frequency: number, levelDb: number, geek: HoverGeek = {}): string => readoutLinesText(hoverReadoutLines(frequency, levelDb, geek));
-
-/** The readout's lines as one line of text, as `hoverReadout`: the box and the canvas's data from the same lines. */
-export const readoutLinesText = (lines: readonly ReadoutLine[]): string =>
-  lines
+export function hoverReadout(frequency: number, levelDb: number, geek: HoverGeek = {}): string {
+  return hoverReadoutLines(frequency, levelDb, geek)
     .filter(({ value }) => value)
     .map(({ value, unit }) => (unit ? `${value} ${unit}` : value))
     .join(' · ');
+}
 
 /** The column of the strongest peak within `radius` columns of `column` (or `column` if all are at the floor). */
 export function snapToPeak(columns: Float32Array, column: number, radius: number): number {

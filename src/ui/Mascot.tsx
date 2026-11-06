@@ -209,7 +209,7 @@ function readText(): Cover[] {
  */
 const TEXT_SECONDS = 0.5;
 const TEXT_SCROLLED = 0.1;
-/** What is round a control Bead clings to (issue 228: one argument, not five): see `clingFor`. */
+/** What is round a control Bead clings to: see `clingFor`. */
 interface ClingAround {
   /** The panels over the page. */
   blocks: readonly Box[];

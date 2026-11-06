@@ -16,8 +16,8 @@ const POINTS_PER_PIXEL = 2;
 // The colours a Scope draws in, compared at rest.
 const COLOURS = ['--grid', '--muted', '--danger', '--text', '--trace', '--bg', '--curve-w'];
 
-/** What a Scope reads of the pitch and the clock, the engine's three (issue 228: they travel together). */
-export interface ScopePitch {
+/** What a Scope reads of the engine's pitch, and the audio clock it is read against. */
+interface ScopePitch {
   /** The newest Note's frequency, held still through vibrato: how many samples the cycles shown take, and the period written. */
   fundamental: () => number;
   /** The pitch the engine plays at an audio clock time, which Cycle Lock follows across the buffer (issue 180). */
@@ -55,8 +55,9 @@ export function createScope(
   // While frozen, lock to the Note the frozen samples belong to, not to a Note played since, and to their moment.
   const frozenFundamental = createFreezeLatch<number>();
   const frozenEnd = createFreezeLatch<number>();
-  // The traces drawn last, for the Glow (issue 180), each with the cycles it spans: one of another count is passed over
-  // (issue 228), as it would not line up across the width. A Note's change keeps them: each spans its cycles across it.
+  // The traces drawn last, for the Glow (issue 180), each with the cycles it spans: one of another count (the cycles
+  // chosen, or fewer for a low Note) is passed over, as it would not line up across the width (issue 228). Another Note
+  // over the same count keeps them: each spans its cycles across the width.
   const glow = createGlow<Float32Array>();
   let snapshotToken: number | null = null;
   let snapshotTrace: Float32Array | null = null;

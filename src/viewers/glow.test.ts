@@ -4,7 +4,7 @@ import { createGlow, glows } from './glow';
 /** Draws one frame at `time` (ms) with the newest outline `value`, and returns the past ones it draws under it. */
 function frames(glow: ReturnType<typeof createGlow<string>>, times: number[], { on = true, frozen = false } = {}) {
   let past: { value: string; alpha: number }[] = [];
-  for (const t of times) past = glow({ on, frozen, now: () => t, newest: `at ${t}` });
+  for (const t of times) past = glow({ on, frozen, now: () => t, newest: `at ${t}`, key: 'one' });
   return past;
 }
 

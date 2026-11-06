@@ -7,7 +7,7 @@ import { createFreezeLatch } from './freezeLatch';
 import { createGlow, glows } from './glow';
 import { harmonicMarkers } from './harmonicMarkers';
 import { aboveFloor, marksToDraw, spectrumOutline } from './outline';
-import { hoverReadoutLines, interpolatedPeak, readoutLinesText, SILENT_DB, snapToPeak } from './readout';
+import { hoverReadout, hoverReadoutLines, interpolatedPeak, SILENT_DB, snapToPeak } from './readout';
 import { type ReadoutColumns, readoutBox, readoutColumns } from './readoutBox';
 import { createRest } from './rest';
 import { amplitudeToSpectrumDb } from './spectrumScale';
@@ -339,12 +339,11 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
       const level = Number.isFinite(levelDb) ? levelDb : peak[col];
       // With the Synth Geek Layer on, the Harmonic's number when the peak is on one, and none on silence (issue 170).
       const harmonicLine = { geek: overlays.geek, harmonic: overlays.geek && level > SILENT_DB ? harmonicNumber(frequency, f0, binHz) : undefined };
-      const lines = hoverReadoutLines(frequency, level, harmonicLine);
-      canvas.dataset.readout = readoutLinesText(lines);
+      canvas.dataset.readout = hoverReadout(frequency, level, harmonicLine);
       if (measuredColumns?.font !== g.font || measuredColumns.geek !== overlays.geek) {
         measuredColumns = { font: g.font, geek: overlays.geek, columns: readoutColumns((t) => g.measureText(t).width, { harmonic: overlays.geek }) };
       }
-      const box = readoutBox(lines, measuredColumns.columns, { cursor: col, width });
+      const box = readoutBox(hoverReadoutLines(frequency, level, harmonicLine), measuredColumns.columns, { cursor: col, width });
       g.fillStyle = cssVar(canvas, '--panel');
       g.fillRect(box.x, box.y, box.width, box.height);
       g.fillStyle = text;

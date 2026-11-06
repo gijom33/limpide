@@ -4,7 +4,7 @@ import { type ChoiceId, inUnitShown, PARAMS, type ParamId } from '../patch/patch
 import { answers, type KnownController } from './controller';
 import { detectEncoderMode, detectKnobMode, relativeDelta, relativeModeOf } from './encoderMode';
 import {
-  type ActionId, type Control, controlKey, type KnobMode, knobModeOf, learnsAsButton, type Mapping, type MappingStore, PITCH_BEND, sameControl,
+  type ActionId, type Control, controlKey, isRelative, type KnobMode, knobModeOf, learnsAsButton, type Mapping, type MappingStore, PITCH_BEND, sameControl,
   type Target,
 } from './mappings';
 import type { MidiMessage } from './parser';
@@ -149,7 +149,7 @@ export function createControlSurface(synth: Synth) {
   const clicks = new Map<string, number>(); // encoder clicks towards the next choice, per control
   const gathered = new Map<string, number>(); // a Relative knob's travel towards a stepped dial's next step, per control
   const partSteps = new Map<string, number>(); // a Relative knob's share of a Grid step not yet moved (a C16's 66s), per control
-  /** What a knob has gathered towards a step, in each of its kinds: forgotten together (issue 228: one list). */
+  /** What a knob has gathered towards a step, in each of its kinds: forgotten together. */
   const towardsAStep = [clicks, gathered, partSteps];
   const detecting = new Map<string, number[]>(); // the first values of knobs finding their Encoder Mode
   const lastValues = new Map<string, number>(); // the last value each CC sent, for a Mapping switched to Relative by hand
@@ -333,7 +333,7 @@ export function createControlSurface(synth: Synth) {
       if (message.type !== 'cc') return;
       // A Relative knob's steps, worked out here once, where the Controller it came from is known (issue 228).
       const { mode } = mapping;
-      const steps = mode === 'relative-twos' || mode === 'relative-centred' ? relativeSteps(from, mode, message.value) : 0;
+      const steps = isRelative(mode) ? relativeSteps(from, mode, message.value) : 0;
       if (target.kind === 'param') moveDial(mapping, paramDial(target.id), message.value, steps);
       else if (target.kind === 'tempo') moveDial(mapping, tempoDial(), message.value, steps);
       else moveChoice(mapping, target.id, message.value, steps);

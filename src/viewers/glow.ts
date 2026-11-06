@@ -27,7 +27,7 @@ export function createGlow<T>() {
   // Newest first, with when and what for.
   const ghosts: { value: T; at: number; key: string }[] = [];
   const frozenTime = createFreezeLatch<number>();
-  return function glow({ on, frozen, now, newest, key = '' }: { on: boolean; frozen: boolean; now: () => number; newest: T; key?: string }) {
+  return function glow({ on, frozen, now, newest, key }: { on: boolean; frozen: boolean; now: () => number; newest: T; key: string }) {
     const time = frozenTime(frozen, now);
     const stale = on ? ghosts.findIndex(({ at }) => time - at > GLOW_MS) : 0;
     if (stale >= 0) ghosts.splice(stale);
