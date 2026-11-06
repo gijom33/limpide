@@ -4,14 +4,14 @@ import { type LfoNumber, lfos, type Patch } from '../patch/patch';
 import type { PatchChange } from '../patch/patchStore';
 import { createDemoActs } from './demoActs';
 import { lineWiderThan } from './LfoPlot';
-import { clingMove, DROP_MIDDLE, homeEdge, landingEdge, looksForPlots, nextVisitAt, perchAcross, ridePlot, STEP, staysBeside, visitDue, visitFor } from './mascotChoices';
-import { type Box, type Cling, clingBeside, crosses, type Guide, HEIGHT, RING, ROWS, TAIL_HEIGHT, TWIN_PX, targetBox, WIDTH } from './mascotCling';
+import { clingMove, homeEdge, landingEdge, looksForPlots, nextVisitAt, perchAcross, ridePlot, staysBeside, visitDue, visitFor } from './mascotChoices';
+import { type Box, type Cling, clingBeside, crosses, DROP_MIDDLE, type Guide, HEIGHT, RING, ROWS, type Spot, STEP, TAIL_HEIGHT, TWIN_PX, targetBox, WIDTH } from './mascotCling';
 import { gesturesOf, looksOf } from './mascotGestures';
 import { type Act, createMascotMotion, hatOn, type Pose, type Room, SCREAMING } from './mascotMotion';
 import { HATS, ICE, PROPS, SKY_TOP, skyLift, topOf, UMBRELLA } from './mascotPictures';
 import {
-  acrossOf, type Cover, choosePerch, chooseVisit, clearAlong, createMascotPlace, type Drawing, drawingOf, HOVER_UNDER, type Moving, nearestSpan, type Perch, type Placed, rideOf, rideOnDrop,
-  ridesFor, type Span, standingCard, surfLean, throwWalls, type Visit, visitEnds,
+  acrossOf, type Cover, choosePerch, chooseVisit, clearAlong, createMascotPlace, type Drawing, drawingOf, HOVER_UNDER, inHand, type Moving, nearestSpan, type Perch, type Placed, pointingTheWay, rideOf, rideOnDrop,
+  ridesFor, type Span, settled, standingCard, surfLean, throwWalls, type Visit, visitEnds,
 } from './mascotPlace';
 import type { Trick } from './mascotTricks';
 
@@ -286,9 +286,9 @@ export function createBeadFrame({ clock, seconds: pageSeconds, stacked: stackedA
   let hid = false;
   // Sent away on a ride: it jumps home first, and melts once it has landed there.
   let gettingOff = false;
-  let nextVisit = nextVisitAt(clock(), 'first', stackedAtStart);
-  // Where it was drawn last, in the window: its box's left and its foot.
-  let drawnAt = { left: 0, foot: 0 };
+  let nextVisit = nextVisitAt(clock(), 'first', { stacked: stackedAtStart });
+  // Where it was drawn last.
+  let drawnAt: Spot = { left: 0, foot: 0 };
   // Held by the pointer: where it took hold of it, from its box's left and its foot, and its last moves, for the throw.
   let grip = { x: 0, y: 0 };
   let moves: { t: number; x: number; y: number }[] = [];
@@ -384,7 +384,7 @@ export function createBeadFrame({ clock, seconds: pageSeconds, stacked: stackedA
     motion.guide(guide !== null);
     if (wasGuided && !guide) {
       visit = null;
-      nextVisit = nextVisitAt(now, 'first', stacked);
+      nextVisit = nextVisitAt(now, 'first', { stacked });
       motion.point(null);
       clungIn = clungTo = null;
       bounceDue = false;
@@ -402,7 +402,7 @@ export function createBeadFrame({ clock, seconds: pageSeconds, stacked: stackedA
     // home. On a phone and in 2 × 2, in view is under the header and the section tabs, with room for it over the plot.
     const part = asked.demoPart;
     const rideLfos = ridesNow(reading);
-    const looking = looksForPlots({ demo: part !== null, rides: rideLfos.length, visit, now, next: nextVisit });
+    const looking = looksForPlots({ demo: part !== null, rideCount: rideLfos.length, visit, now, next: nextVisit });
     const plots = looking ? plotsInView(reading, twinWay) : [];
     const rideable = plots.filter((p) => rideLfos.includes(p.lfo));
 
@@ -412,8 +412,8 @@ export function createBeadFrame({ clock, seconds: pageSeconds, stacked: stackedA
     let homeId: string | null = null;
     // Now and then a visit to another section in view: down to one below, or across to one beside; then home.
     const onScreen = (s: { box: Box }) => roomAbove(s.box) && s.box.top <= innerHeight - 4;
-    const clearAt = (s: { box: Box }) => clearOn(s.box).length > 0;
-    const inView = (s: { box: Box }) => onScreen(s) && clearAt(s);
+    const clearSomewhere = (s: { box: Box }) => clearOn(s.box).length > 0;
+    const inView = (s: { box: Box }) => onScreen(s) && clearSomewhere(s);
     // A visit's or a ride's end (issues 141, 151); the window turning stacked ends a visit too (issue 192).
     if (
       visit &&
@@ -429,7 +429,7 @@ export function createBeadFrame({ clock, seconds: pageSeconds, stacked: stackedA
     ) {
       if (visit.ride && asked.leaving) gettingOff = true;
       visit = null;
-      nextVisit = nextVisitAt(now, 'after', stacked);
+      nextVisit = nextVisitAt(now, 'after', { stacked });
     }
     // A visit or a ride due, and nothing in its way.
     const due = visitDue({
@@ -446,11 +446,11 @@ export function createBeadFrame({ clock, seconds: pageSeconds, stacked: stackedA
           sections.filter((s) => s.id !== home.id && inView(s)).map((s) => s.id),
         );
         if (choice) visit = visitFor(choice, now);
-        else nextVisit = nextVisitAt(now, 'nowhere', false);
+        else nextVisit = nextVisitAt(now, 'nowhere', { stacked: false });
       }
       ({ on, perch } = perchAcross({
         edges: sections, home, visit: visit?.id ?? null, card, at: drawnAt,
-        onScreen, clear: clearAt, seen: (s) => clearOf(s.box, drawing).length > 0,
+        onScreen, clear: clearSomewhere, seen: (s) => clearOf(s.box, drawing).length > 0,
       }));
     } else {
       // A ride now and then, on a plot in view (issue 197): onto it from its edge, falling or flying on its tail.
@@ -458,7 +458,7 @@ export function createBeadFrame({ clock, seconds: pageSeconds, stacked: stackedA
       if (due) {
         const choice = chooseVisit(rideable.map((p) => p.lfo), []);
         if (choice) [visit, rodeFrom] = [visitFor(choice, now), perch?.id ?? null];
-        else nextVisit = nextVisitAt(now, 'nowhere', true);
+        else nextVisit = nextVisitAt(now, 'nowhere', { stacked: true });
       }
       const column = rightColumn(sections).sort((a, b) => a.box.top - b.box.top);
       const { header, strip } = reading;
@@ -500,7 +500,7 @@ export function createBeadFrame({ clock, seconds: pageSeconds, stacked: stackedA
     let clinging: Cling | null = null;
     // Beside the control it is pointing the way to, rather than the last one, staying while that is out of reach.
     let beside = false;
-    if (guide && moving !== 'held' && moving !== 'thrown') {
+    if (guide && !inHand(moving)) {
       const el = reading.guided(guide);
       const ceiling = stacked ? Math.max(0, reading.header, reading.strip) : 0;
       const around: ClingAround = { blocks: reading.panels(), ceiling, card: card?.box ?? null, text: texts, twin: twinWay };
@@ -509,7 +509,7 @@ export function createBeadFrame({ clock, seconds: pageSeconds, stacked: stackedA
       const seen = found && found.control.box.width > 0 ? found.control.box : found?.control.sectionBox;
       if (seen) aimAt = { x: (seen.left + seen.right) / 2, y: (seen.top + seen.bottom) / 2 };
       let to = found?.cling ? { el: el!, control: found.control, cling: found.cling } : null;
-      const sliding = moving === 'sliding' || moving === 'clinging';
+      const sliding = pointingTheWay(moving);
       if (!to && sliding && clungTo && reading.control(clungTo).connected) {
         const stay = clingFor(reading, clungTo, around);
         if (stay.cling && staysBeside(stay.cling, aimAt?.x ?? null)) to = { el: clungTo, control: stay.control, cling: stay.cling };
@@ -691,7 +691,7 @@ export function createBeadFrame({ clock, seconds: pageSeconds, stacked: stackedA
     let shrink = 1;
     const grid = HEIGHT / ROWS;
     const skyRows = skyLift(pose.prop, (where.foot - headerFoot - 1) / grid);
-    if (/^(standing|hovering|landing|clinging)$/.test(where.moving)) {
+    if (settled(where.moving) || where.moving === 'clinging') {
       const room = where.foot - overPage - 1;
       const drawnTop = Math.min(PROP_TOP[pose.prop] ?? 0, HAT_TOP[pose.hat] ?? 0, pose.ice > 0 ? topOf(ICE) : 0);
       const body = (ROWS - drawnTop) * grid * pose.stretch * pose.size;
@@ -701,7 +701,7 @@ export function createBeadFrame({ clock, seconds: pageSeconds, stacked: stackedA
     }
     shown = pose;
     // Beside a control, or sliding there, the pointer passes through it to what is under it (issue 151).
-    const pointing = where.moving === 'sliding' || where.moving === 'clinging' ? 'yes' : 'no';
+    const pointing = pointingTheWay(where.moving) ? 'yes' : 'no';
     const marks = { act: act ?? '', ride: ride ? String(ride.lfo) : '', board: onBoard ? 'on' : '', tail: pose.tail, hat: pose.hat, doing: pose.doing ?? '', prop: pose.prop, moving: where.moving, pointing };
     const left = acrossOf(where, pose.x);
     drawnAt = { left, foot: where.foot };

@@ -3,8 +3,7 @@ import { defaultPatch, type LfoNumber, type Patch } from '../patch/patch';
 import { createBeadFrame, type Drawn, type Plot, type Reading, type Sized as Rect } from './beadFrame';
 import { type Edges, PHONE, THREE_ACROSS, TWO_BY_TWO } from './beadFrame.fixture';
 import { lineAt } from './LfoPlot';
-import { DROP_MIDDLE } from './mascotChoices';
-import { type Box, crosses, type Guide, HEIGHT, RING, WIDTH } from './mascotCling';
+import { type Box, crosses, DROP_MIDDLE, type Guide, HEIGHT, RING, WIDTH } from './mascotCling';
 
 // Bead's frame decided over scripted readings of the page (issue 245): the page's layout as the app lays it out (the
 // fixture), the time the test's own, a sixtieth of a second a frame, and every roll its lowest, as the mascot spec's

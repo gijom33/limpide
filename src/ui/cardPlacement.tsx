@@ -6,6 +6,10 @@ import { ChevronIcon } from './icons';
 /** Whether the card may move: the CSS says, so the phone's breakpoint is written once (issue 67). */
 const pinned = (card: HTMLElement | null) => !!card && getComputedStyle(card).getPropertyValue('--card-pinned').trim() === '1';
 
+type CardKind = 'demo' | 'tutorial' | 'tour';
+/** The person's folds made this session, each kind of card's: what is remembered, where storage keeps nothing. */
+const foldsThisSession = new Map<CardKind, boolean>();
+
 /**
  * A docked card (the Demo's, a Tutorial's, the Tour's) the person can fold to its top row and, from the 2 × 2 layout up, drag
  * by that row to see what it covers (the owner's decisions, issue 59, 2026-10-27). The fold is remembered for each
@@ -13,23 +17,28 @@ const pinned = (card: HTMLElement | null) => !!card && getComputedStyle(card).ge
  * Demo's, from three across, the bottom right corner: issue 230). A double-click on the top row puts it back. On a
  * phone the card spans the bottom edge and only folds.
  *
- * With `opensFolded` (the Demo's card in three and four across, issue 230) the card opens folded each time, whatever
- * fold is remembered, and a fold made then is not remembered: it is the layout's, not the person's. A window resized
- * out of it brings back the remembered fold, and into it folds the card; either way the card goes back to its place.
+ * The person's fold is read again each time a card opens: kept for the session too, so where storage cannot be
+ * written (a private window) it lasts the session, as it did before issue 230 (issue 246).
+ *
+ * With `layoutFold` (the Demo's card in three and four across, issue 230: folded while it plays, whole once the Demo
+ * stopped) the card opens so each time, whatever fold is remembered, and a fold made then is not remembered: it is the
+ * layout's, not the person's. A window resized out of it brings back the remembered fold, and into it takes the
+ * layout's; either way the card goes back to its place.
  */
-export function useCardPlacement(card: RefObject<HTMLElement | null>, kind: 'demo' | 'tutorial' | 'tour', opening: unknown, { opensFolded = false } = {}) {
+export function useCardPlacement(card: RefObject<HTMLElement | null>, kind: CardKind, opening: unknown, { layoutFold }: { layoutFold?: boolean } = {}) {
   const storage = useMemo(safeStorage, []);
   const setting = `cardFolded.${kind}` as const;
-  const [folded, setFolded] = useState(() => opensFolded || recall(storage, setting) === '1');
+  const opensFolded = () => layoutFold ?? foldsThisSession.get(kind) ?? recall(storage, setting) === '1';
+  const [folded, setFolded] = useState(opensFolded);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const drag = useRef<{ x: number; y: number; from: { x: number; y: number } } | null>(null);
   // A card opening anew (Play again, another Tutorial) starts in its place, wherever the last one was left, and with
   // its fold: before it is drawn, so the Demo's whole card never shows for a frame in the corner.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: opening is the trigger; storage and setting never change
+  // biome-ignore lint/correctness/useExhaustiveDependencies: opening and the layout's fold are the triggers; storage and setting never change
   useLayoutEffect(() => {
     setOffset({ x: 0, y: 0 });
-    setFolded(opensFolded || recall(storage, setting) === '1');
-  }, [opening, opensFolded]);
+    setFolded(opensFolded());
+  }, [opening, layoutFold]);
 
   /** The offset moved as far as the window allows: the card stays whole on screen. */
   const within = (wanted: { x: number; y: number }, current: { x: number; y: number }) => {
@@ -90,7 +99,10 @@ export function useCardPlacement(card: RefObject<HTMLElement | null>, kind: 'dem
   return {
     folded,
     toggleFold: () => {
-      if (!opensFolded) remember(storage, setting, folded ? '0' : '1');
+      if (layoutFold === undefined) {
+        foldsThisSession.set(kind, !folded);
+        remember(storage, setting, folded ? '0' : '1');
+      }
       setFolded(!folded);
     },
     /** On the card: where it has been moved to, and whether it is folded. */

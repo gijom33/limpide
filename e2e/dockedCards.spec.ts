@@ -79,6 +79,44 @@ test('a folded Tutorial card keeps its way forward in the top row', async ({ pag
   await expect(card.getByRole('button', { name: 'Next', exact: true })).toBeVisible();
 });
 
+test('where storage cannot be written (a private window), a fold lasts the session: the next Tutorial opens folded too (issue 246)', async ({ page }) => {
+  await page.addInitScript(() => {
+    Storage.prototype.setItem = () => {
+      throw new DOMException('The quota has been exceeded.', 'QuotaExceededError');
+    };
+  });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  const tutorial = async (name: string) => {
+    await page.getByRole('button', { name: /^Patch: / }).click();
+    await page.getByRole('dialog', { name: 'Patches' }).getByRole('group', { name: 'Tutorials' }).getByRole('button', { name: new RegExp(`^Tutorial: ${name}`) }).click();
+    const card = page.getByRole('region', { name: `Tutorial: ${name}` });
+    await expect(card).toBeVisible();
+    return card;
+  };
+  const bass = await tutorial('Bass');
+  await bass.getByRole('button', { name: 'Fold the card' }).click();
+  await expect(bass.getByRole('button', { name: 'Unfold the card' })).toBeVisible();
+  const acid = await tutorial('Acid');
+  await expect(acid.getByRole('button', { name: 'Unfold the card' })).toBeVisible();
+});
+
+test('the "you are playing now" card opens whole in the corner three across, whatever fold was made in 2 × 2 (issue 246)', async ({ page }) => {
+  await page.setViewportSize({ width: 768, height: 1024 });
+  await page.goto('/');
+  await startDemo(page);
+  await demoCard(page).getByRole('button', { name: 'Fold the card' }).click();
+  await demoCard(page).getByRole('button', { name: 'Stop' }).click();
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await startDemo(page);
+  await page.keyboard.press('a'); // a Note of the person's own stops the Demo
+  const told = demoCard(page).getByRole('status').filter({ hasText: 'The Demo stopped: you are playing now.' });
+  await expect(told).toBeVisible();
+  await expect(told).not.toHaveCSS('clip-path', 'inset(50%)');
+  await expect(demoCard(page)).not.toHaveAttribute('data-folded');
+  await expect(demoCard(page).getByRole('button', { name: 'Play again' })).toBeVisible();
+});
+
 test.describe('on a phone', () => {
   test.use({ viewport: { width: 393, height: 852 } });
 

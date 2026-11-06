@@ -337,6 +337,22 @@ describe('the Synth Geek Layer’s formulas, explained for the tips (issue 235)'
   });
 });
 
+describe('the Geek tips’ loose claims, fact-checked for 1.25.0 (issue 246)', () => {
+  it('says the Filter’s formula is the analogue one, and how much faster the browser’s falls near the top', () => {
+    expect(responseFormula('lowpass', 12).where).toMatch(/analogue.*2 kHz Cutoff.*−44\.8 dB at 16 kHz.*−36\.1/);
+    expect(responseFormula('lowpass', 24).where).toMatch(/analogue.*2 kHz Cutoff.*−89\.5 dB at 16 kHz.*−72\.2/);
+  });
+
+  it('says which Pulse a peak of 1 is true of, and where the one played runs at its width', () => {
+    expect(harmonicFormula('pulse', 0.25).where).toMatch(/±1 .*−0\.5 to \+1\.5 at 25 %/);
+    expect(harmonicFormula('pulse', 0.5).where).toMatch(/−1 to \+1 at 50 %/);
+  });
+
+  it('says FM is kept smaller on high Notes', () => {
+    expect(fmFormula(defaultPatch()).where).toMatch(/[Hh]igh Notes/);
+  });
+});
+
 // Issue 170: the Viewers' numbers (issue 133, decision 11).
 describe('the Synth Geek Layer on the Viewers (issue 170)', () => {
   it('writes the period and frequency of the fundamental the Scope holds still on, A4 said before any Note', () => {

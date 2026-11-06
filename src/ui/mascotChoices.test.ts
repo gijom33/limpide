@@ -105,19 +105,19 @@ describe('when the next visit or ride comes, in seconds from now (issues 141 and
 
   it('at first, and after pointing the way: 15 to 35 seconds on, on every layout', () => {
     for (const stacked of [false, true]) {
-      expect(nextVisitAt(100, 'first', stacked, at(0))).toBe(115);
-      expect(nextVisitAt(100, 'first', stacked, at(1))).toBe(135);
+      expect(nextVisitAt(100, 'first', { stacked }, at(0))).toBe(115);
+      expect(nextVisitAt(100, 'first', { stacked }, at(1))).toBe(135);
     }
   });
 
   it('after a visit or a ride: 20 to 40 seconds on; on a phone and in 2 × 2, 15 to 40', () => {
-    expect([nextVisitAt(100, 'after', false, at(0)), nextVisitAt(100, 'after', false, at(1))]).toEqual([120, 140]);
-    expect([nextVisitAt(100, 'after', true, at(0)), nextVisitAt(100, 'after', true, at(1))]).toEqual([115, 140]);
+    expect([nextVisitAt(100, 'after', { stacked: false }, at(0)), nextVisitAt(100, 'after', { stacked: false }, at(1))]).toEqual([120, 140]);
+    expect([nextVisitAt(100, 'after', { stacked: true }, at(0)), nextVisitAt(100, 'after', { stacked: true }, at(1))]).toEqual([115, 140]);
   });
 
   it('with nowhere to go: 10 to 20 seconds on; on a phone and in 2 × 2, 15 to 40', () => {
-    expect([nextVisitAt(100, 'nowhere', false, at(0)), nextVisitAt(100, 'nowhere', false, at(1))]).toEqual([110, 120]);
-    expect([nextVisitAt(100, 'nowhere', true, at(0)), nextVisitAt(100, 'nowhere', true, at(1))]).toEqual([115, 140]);
+    expect([nextVisitAt(100, 'nowhere', { stacked: false }, at(0)), nextVisitAt(100, 'nowhere', { stacked: false }, at(1))]).toEqual([110, 120]);
+    expect([nextVisitAt(100, 'nowhere', { stacked: true }, at(0)), nextVisitAt(100, 'nowhere', { stacked: true }, at(1))]).toEqual([115, 140]);
   });
 
   it('a visit or a ride lasts 8 to 18 seconds', () => {
@@ -127,10 +127,10 @@ describe('when the next visit or ride comes, in seconds from now (issues 141 and
 });
 
 describe('looking for the LFO plots, only when it may ride or surf one, so a frame costs no more at home (issues 141 and 204)', () => {
-  const home = { demo: false, rides: 1, visit: null, now: 10, next: 20 };
+  const home = { demo: false, rideCount: 1, visit: null, now: 10, next: 20 };
 
   it('through a Demo part, always', () => {
-    expect(looksForPlots({ ...home, demo: true, rides: 0 })).toBe(true);
+    expect(looksForPlots({ ...home, demo: true, rideCount: 0 })).toBe(true);
   });
 
   it('outside the Demo, with an LFO to ride: on a ride, or with a visit due', () => {
@@ -141,7 +141,7 @@ describe('looking for the LFO plots, only when it may ride or surf one, so a fra
   });
 
   it('with no LFO to ride, never', () => {
-    expect(looksForPlots({ ...home, rides: 0, now: 20 })).toBe(false);
+    expect(looksForPlots({ ...home, rideCount: 0, now: 20 })).toBe(false);
   });
 });
 

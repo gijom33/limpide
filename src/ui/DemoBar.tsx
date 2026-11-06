@@ -30,14 +30,15 @@ interface Props {
  *
  * In three and four across it sits in the window's bottom right corner and opens folded there, small, so it hides as
  * little as it can (issue 230, decided by the owner): its top row, and the parts as a thin line under it; unfolded, it
- * grows up and to the left from the corner. On a phone and in 2 × 2 it sits at the bottom's middle, its fold remembered.
+ * grows up and to the left from the corner. Once the Demo stopped, its card there opens whole (issue 246). On a phone
+ * and in 2 × 2 it sits at the bottom's middle, its fold remembered.
  */
 export function DemoBar({ playing, tookOver, onStop, onJump, onPlayAgain, onDismiss }: Props) {
   const card = useRef<HTMLElement>(null);
   useDocked(card, 'when-stacked');
   const across = !useMediaQuery(STACKED);
   const running = playing !== null;
-  const place = useCardPlacement(card, 'demo', running ? 'playing' : 'stopped', { opensFolded: across && running });
+  const place = useCardPlacement(card, 'demo', running ? 'playing' : 'stopped', { layoutFold: across ? running : undefined });
   // The small card in the corner: too narrow for fifteen segments a pointer's target each, so they are a line there,
   // and ⌃ gives them back (issue 230).
   const small = across && place.folded && running;
