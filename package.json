@@ -1,7 +1,7 @@
 {
   "name": "limpide",
   "version": "1.24.0",
-  "description": "A subtractive synthesizer in the browser that shows what each stage does to the sound.",
+  "description": "A synthesizer you can see through: the wave and its Harmonics after every stage, as you play.",
   "keywords": [
     "synthesizer",
     "web-audio",

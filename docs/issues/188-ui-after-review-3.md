@@ -67,4 +67,6 @@ Built on 2026-11-02, on night/2026-11-02. The layouts were measured first at 320
 - **The header (900 to 1300 px):** widen the window slowly. The buttons' tops and bottoms stay on the keys', and the gap to Hold stays 8 px.
 - **The Tutorial menu:** the mortarboards are one size.
 - **The Geek Layer:** turn it on in Display. The formulas sit under the Spectrums, at 375 and at 1440 px.
+
+**Since then (2026-11-05, [235](./235-the-viewers-geek-maths-into-the-tips.md)):** no Viewer draws a formula; with the Synth Geek Layer on, each sits in its control's tip (the Waveforms, Osc 1's Pitch heading for FM, Ring, the Filter Mode and Slope).
 - **The tips:** with a panel open, hover a button outside it (no tip), then a control inside it (its tip).

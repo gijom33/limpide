@@ -64,6 +64,9 @@ Each one's Steps rebuild its Preset from Init (the unit test); in Playwright, ea
 
 **The Maths Layer (2026-10-30).** The Oscillator Spectrum's chip is now a list of lines (`oscillatorFormulas` in `src/music/maths.ts`), each a formula and what its letters mean, kept short so none wraps at 1440 px:
 
+**Since then (2026-11-05, [235](./235-the-viewers-geek-maths-into-the-tips.md)):** no Viewer draws a formula; with the Synth Geek Layer on, each sits in its control's tip (the Waveforms, Osc 1's Pitch heading for FM, Ring, the Filter Mode and Slope).
+
+
 - Neither FM nor Ring up: Osc 1's series, as before.
 - FM up, while Osc 1 is heard: `n f₁ + k f₂:  bₙ |Jₖ(n β)|,  β = 4 × FM = 2.00`, then the figures for the knobs (f₂ / f₁, on or between the Harmonics, |J₀…J₃(β)|, and when Osc 2 is not a Sine, that only its 1st Harmonic is counted); under it Osc 1's series, marked "Osc 1 before FM, not the sound now".
 - Ring up: `Ring, Osc 1 × Osc 2:  n f₁ ± m f₂,  ½ bₙ cₘ`, with the first pair for the knobs (1.38 and 3.38 × f₁ on Ring Bell; in tune, 0, an offset the engine takes out, and 2). Osc 1's series stays while its fader is up ("Osc 1's own, Ring adds the rest"), and goes when Osc 1 is heard through Ring alone.

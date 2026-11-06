@@ -40,6 +40,8 @@ Claude's call, open to the owner:
 
 ## Agent Brief
 
+_Since then (2026-11-05): the rain part of this Brief is replaced by decisions 11 and 12, near Bead and from varied heights; see the last section._
+
 **Category:** enhancement
 **Summary:** Bead's umbrella rain starts at the top of the window, and its evaporating trick's sun and cloud sit farther above it.
 

@@ -79,5 +79,7 @@ Built on 2026-11-03, on night/2026-11-02.
 
 **To try in the app:**
 - Take the Tour from About to its end. After the LFOs, the fifth card rings Display. Open Display: the ring moves to the Geek toggle, which is still off. The sixth rings the Tutorial button, and "Build a Bass" starts Bass.
+
+**Since then (2026-11-05, [233](./233-a-tutorial-on-each-waves-harmonics.md)):** the Tour's last card's button names the first Tutorial, "Build a Sub Ladder"; Bass comes after it.
 - Try it on a phone too: after the LFOs card, the page comes back up to the header for each.
 - With Bead out at a laptop's size, Bead points at Display, then looks at the Tutorial button from its edge.

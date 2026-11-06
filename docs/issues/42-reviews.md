@@ -206,7 +206,7 @@ Someone who reads DSP papers for fun, knows the maths behind a filter, an envelo
 - **Where:** the published site, on a laptop (1440 px) and a phone (375 px), the Synth Geek Layer on; the repository's History and formulas where the profile wants a source. **Time:** 45 minutes
 - **Goals:** judge, item by item, what the Synth Geek Layer adds beyond its History lines, and say what to keep on the controls and Viewers, what to move into the tooltips, and what to drop
 - **Asks:**
-  - **Each item:** every readout, formula and line the layer adds (Osc 2's ratios and beats, the Noise's slope, the Envelopes' τ, the LFOs' swing and Key Track's Cutoff, Resonance's Q, the Mixer in dB, the Scopes' period, the Spectrums' formulas and Harmonic numbers): is it right, is it worth reading where it is, does a geek learn something from it
+  - **Each item:** every readout, formula and line the layer adds (Osc 2's ratios and beats, the Noise's slope, the Envelopes' τ, the LFOs' swing and Key Track's Cutoff, Resonance's Q, the Mixer in dB, the Scopes' period, the Spectrums' Harmonic numbers, the formulas in the tips since 235): is it right, is it worth reading where it is, does a geek learn something from it
   - **Where it lives:** on the control, in the Viewer, or only in the tip's Under the hood; what is noise on a small screen
   - **What is missing:** the maths a geek would look for in a tip and does not find
   - **The History lines:** kept as they are (the owner likes them); only whether they sit well beside the rest

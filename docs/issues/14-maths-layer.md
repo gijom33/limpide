@@ -10,6 +10,8 @@
 
 **Since then (2026-11-02, [issue 188](./188-ui-after-review-3.md)):** the Spectrums' formulas are no longer in a corner chip over the plot: each has a row of its own under its stage's Viewers, clear of the bars and the curve.
 
+**Since then (2026-11-05, [235](./235-the-viewers-geek-maths-into-the-tips.md)):** no Viewer draws a formula; with the Synth Geek Layer on, each sits in its control's tip (the Waveforms, Osc 1's Pitch heading for FM, Ring, the Filter Mode and Slope).
+
 - [x] Resonance → Q mapping exposed and tested
 - [x] Formula content defined as data per Waveform and Filter Mode
 - [x] Toggle remembered across sessions

@@ -8,6 +8,8 @@
 
 **Since then:** (2026-10-31, [issue 128](./128-how-a-synth-works.md)) the Welcome offers the Tour, not a Tutorial; Bass opens from the Tour's last card ("Build a Bass").
 
+**Since then (2026-11-05, [233](./233-a-tutorial-on-each-waves-harmonics.md)):** the Tour's last card's button names the first Tutorial, "Build a Sub Ladder"; Bass comes after it.
+
 - [x] Bass, the one the Welcome opens: the signal chain from left to right, Oscillators (saw and Sub), Filter (Cutoff down), Amp (a short Envelope); a low riff
 - [x] Acid: Resonance and the Filter Envelope
 - [x] Pluck: the Amp Envelope's shape; an arpeggio

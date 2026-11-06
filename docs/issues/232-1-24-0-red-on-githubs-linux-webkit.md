@@ -45,4 +45,6 @@ Six more probes on GitHub, each a throwaway branch deleted after.
 
 **Then (2026-11-05):** the branch run with these, and its re-run, failed three Demo tests on a phone on every attempt (the Filter 54 px low), though they passed in the last probe: skipped there too, to diagnose in [240](./240-the-demo-54-px-off-on-a-slow-phone.md).
 
+**Since then (2026-11-05, [240](./240-the-demo-54-px-off-on-a-slow-phone.md)):** the three Demo tests on a phone wait for the Demo, not the clock, and run on GitHub's WebKit again; their skips are gone. The seven animation tests stay skipped there.
+
 Left for later: the seven skips come off if GitHub's WebKit draws faster, or if their timing is measured in frames rather than milliseconds.

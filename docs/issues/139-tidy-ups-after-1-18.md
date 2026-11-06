@@ -31,6 +31,7 @@
 - [ ] "duty" is gone from the tests; the names follow CONTEXT.md
 - [ ] A visitor's stored folds and bend range load after the move
 - [ ] A test: the Tour's "Build a Bass" puts the focus on the Tutorial's Start
+  **Since then (2026-11-05, [233](./233-a-tutorial-on-each-waves-harmonics.md)):** the Tour's last card's button names the first Tutorial, "Build a Sub Ladder"; the test is now "the last card's button puts the focus…".
 - [ ] The two descriptions pass the facts check
 - [ ] Every test passes in Linux's fonts too
 

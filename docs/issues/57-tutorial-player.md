@@ -12,6 +12,8 @@
 
 **Since then:** (2026-10-31, [issue 128](./128-how-a-synth-works.md)) the Welcome offers the Tour, not a Tutorial; Bass opens from the Tour's last card ("Build a Bass").
 
+**Since then (2026-11-05, [233](./233-a-tutorial-on-each-waves-harmonics.md)):** the Tour's last card's button names the first Tutorial, "Build a Sub Ladder"; Bass comes after it.
+
 - [x] The data: a Tutorial is a Preset's name, a Listen phrase and its Steps; a Step is one Parameter and its target, or one Display option, with an instruction and a note. A test helper applies the Steps to Init
 - [x] Checking a Step: a knob or fader within 5 % of its travel (on its own Taper), a choice exactly; reached, it snaps to the target and shows the note; a Step already at its target shows as done
 **Since then (2026-11-01, issue 137):** a stepped knob (a note value, a Semitone, an Octave) counts only on its exact step: a note value's neighbours are a 23rd of its travel apart, within the 5 %, so the next one counted and snapped. Claude's call, open to the owner.

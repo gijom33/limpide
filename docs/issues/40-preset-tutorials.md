@@ -10,6 +10,8 @@
 
 **Since then:** (2026-10-31, [issue 128](./128-how-a-synth-works.md)) the Welcome offers the Tour, not a Tutorial; Bass opens from the Tour's last card ("Build a Bass").
 
+**Since then (2026-11-05, [233](./233-a-tutorial-on-each-waves-harmonics.md)):** the Tour's last card's button names the first Tutorial, "Build a Sub Ladder"; Bass comes after it.
+
 **Since then:** (2026-10-31, [issue 158](./158-tour-and-tutorial-slips.md)) decision 4: a Tutorial gives back what it changed in the Display itself as it ends: an option a Display Step turned off (one on already as its Step came) and the person never turned on, and the Snapshot its Step took. Decision 5: a Display Step never shows as done as it comes.
 
 Questions for the grilling:

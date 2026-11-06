@@ -47,3 +47,5 @@ Decided by the owner, 2026-10-31 (Claude's recommendations, accepted: "OK with o
 - **Tests run:** `npx tsc`, `npm run lint`; the overlays, Display settings, viewer store and Geek unit tests (32 passed); in Chromium the Geek, overlays, keyboard-access, tooltips, Display panel and toolbar-layout specs (95 passed). Linux's fonts are GitHub's run; the glasses use no glyph.
 - **To try:** open Display and look at the Show row's Geek and its glasses, in the dark and the light theme; hover it for the tip; turn it on and see Q on Resonance, dB on the Mixer, the formulas on the Spectrums; reload and it is still on.
 
+**Since then (2026-11-05, [235](./235-the-viewers-geek-maths-into-the-tips.md)):** no Viewer draws a formula; with the Synth Geek Layer on, each sits in its control's tip (the Waveforms, Osc 1's Pitch heading for FM, Ring, the Filter Mode and Slope).
+
