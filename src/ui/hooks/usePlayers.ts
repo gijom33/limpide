@@ -35,6 +35,8 @@ interface Host {
   heldNotes: number[];
   /** The Demo starts: what else must stop (a Tutorial, the page following a Controller's bank). */
   onDemoStart(): void;
+  /** The Song starts: what else must stop (the Tour, its Patch given back for the Song to play on; issue 242). */
+  onSongStart(): void;
 }
 
 /**
@@ -43,7 +45,7 @@ interface Host {
  * which a Tour card's phrase plays as well.
  * One plays at a time; the Notes they play are lit on the piano.
  */
-export function usePlayers({ session, octaveRef, setOctave, heldNotes, onDemoStart }: Host) {
+export function usePlayers({ session, octaveRef, setOctave, heldNotes, onDemoStart, onSongStart }: Host) {
   const { engine, patches } = session;
   // The Notes the Demo, the Song or Listen is playing, lit on the piano.
   const [playedNotes, setPlayedNotes] = useState<number[]>([]);
@@ -148,10 +150,16 @@ export function usePlayers({ session, octaveRef, setOctave, heldNotes, onDemoSta
   };
   const toggleDemo = () => (current.current?.kind === 'demo' ? stopDemo() : playDemo());
 
-  // The Song: it moves with the piano's octave. Playing a Note, the Demo or the Song button stops it.
+  // The Song: it moves with the piano's octave. Playing a Note, the Demo or the Song button stops it. Starting it ends
+  // the Tour and clears the Demo's "you are playing now" (issue 242).
   const stopSong = () => stop('song');
-  const toggleSong = () =>
-    current.current?.kind === 'song' ? stopSong() : play('song', () => startSong({ ...transport, octave: () => octaveRef.current }));
+  const playSong = () => {
+    onSongStart();
+    // As a Tutorial or the Tour starting does (issue 242).
+    setTookOver(false);
+    play('song', () => startSong({ ...transport, octave: () => octaveRef.current }));
+  };
+  const toggleSong = () => (current.current?.kind === 'song' ? stopSong() : playSong());
 
   // Listen: a Tutorial's phrase, or a Tour card's, played over and over on the Patch as it is now, so both hands are free.
   const stopListen = () => stop('listen');

@@ -219,6 +219,8 @@ export function App() {
       tutorial.end();
       midi.setBankFollow(null);
     },
+    // The Song plays on the person's Patch: the Tour's ends, theirs given back (issue 242).
+    onSongStart: () => tour.end(),
   });
   const tutorial = useTutorialState({
     storage, patch, patchName, patches, overlays,
@@ -270,10 +272,13 @@ export function App() {
     onBend: (amount) => session.engine.setBend(amount * bendRange * 100),
     onPressure: (amount) => session.engine.setPressure({ destination: aftertouch, amount }),
     onPedal: setPedal,
-    // Program n is the n-th Preset (0 is Init), so a keyboard's Program buttons step through them.
+    // Program n is the n-th Preset (0 is Init), so a keyboard's Program buttons step through them. It stops the Demo
+    // as the person taking over does, the Preset staying, as a pick in the Patches panel does (issue 242).
     onProgram: (number) => {
       const preset = PRESETS[number];
-      if (preset) load(preset.name, preset.patch);
+      if (!preset) return;
+      players.stopDemo(true);
+      load(preset.name, preset.patch);
     },
   });
   const { learnContext, learning } = midi;

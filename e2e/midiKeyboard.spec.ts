@@ -64,6 +64,20 @@ test('Bank Select and a Program Change reach the Presets past the 128th; one pas
   await expect(patch).toHaveAttribute('aria-label', 'Patch: Pure Sine');
 });
 
+// Issue 242: as picking a Preset in the Patches panel does.
+test('a Program Change during the Demo stops it, says so, and the Preset it named stays (issue 242)', async ({ page }) => {
+  const demo = page.getByRole('button', { name: 'Demo', exact: true });
+  const patch = page.getByRole('button', { name: /^Patch: / });
+  await demo.click();
+  await expect(patch).toHaveAttribute('aria-label', /Kick/);
+  await play(page, [0xc0, 1]);
+  await expect(demo).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.getByRole('status').filter({ hasText: 'The Demo stopped: you are playing now.' })).toBeVisible();
+  await expect(patch).toHaveAttribute('aria-label', 'Patch: Pure Sine');
+  await page.waitForTimeout(1500); // no part of the Demo loads over it
+  await expect(patch).toHaveAttribute('aria-label', 'Patch: Pure Sine');
+});
+
 test('the bend wheel shows in the Activity Monitor, its range two semitones until changed', async ({ page }) => {
   await play(page, [0x90, 69, 100]); // A4, 440 Hz
   await play(page, [0xe0, 0x7f, 0x7f]); // all the way up: two semitones by default

@@ -169,7 +169,7 @@ A mode that keeps Notes sounding after their keys are released, so the sound sus
 _Avoid_: Drone, latch, sustain (Sustain is an Envelope stage)
 
 **Demo**:
-An original track of about three minutes, played by the synth alone: each part is a Preset, loaded on the bar line, after a short breath, and the builds and drops are knobs turning. The page follows the knob being turned, until the person scrolls. Knobs, faders, switches (Legato, each LFO's Retrigger and Sync included), the Destination pickers, the section strip and the tabs, and Display can be changed while it plays, by the pointer or the keyboard; a Note or any other control stops it. Stopped, it leaves the part's Preset loaded: the sound the person took over is theirs to play on.
+An original track of about three minutes, played by the synth alone: each part is a Preset, loaded on the bar line, after a short breath, and the builds and drops are knobs turning. The page follows the knob being turned, until the person scrolls. Knobs, faders, switches (Legato, each LFO's Retrigger and Sync included), the Destination pickers, the section strip and the tabs, and Display can be changed while it plays, by the pointer or the keyboard; a Note, a keyboard's Program Change or any other control stops it. Stopped, it leaves the part's Preset loaded: the sound the person took over is theirs to play on.
 _Avoid_: Autoplay, showcase, tour
 
 **Welcome**:
@@ -189,11 +189,11 @@ One change in a Tutorial: one Parameter to a target (reached within 5 % of the c
 _Avoid_: Stage (an Envelope's), lesson
 
 **Song**:
-A house loop in C minor that plays on whatever Patch is loaded and never changes it, so the sound can be shaped under a tune. It only uses the 13 keys from the piano's C to the C above, and moves with the piano's octave. One Voice plays its chords as a single line. A Note, the Demo or the Song button stops it.
+A house loop in C minor that plays on whatever Patch is loaded and never changes it, so the sound can be shaped under a tune. It only uses the 13 keys from the piano's C to the C above, and moves with the piano's octave. One Voice plays its chords as a single line. A Note, the Demo or the Song button stops it. Starting it ends the Tour, the person's Patch given back for it to play on.
 _Avoid_: Loop, backing track, sequence
 
 **Show**:
-What plays or guides the page for the person: the Demo, the Song, a Tutorial or the Tour. One of the Demo and the Song plays at a time, and one of a Tutorial and the Tour is open; a Tutorial's or the Tour's card may play its own phrase (Listen), which the Demo or the Song stops. The Demo ends any other Show. The person takes over by playing, each Show as its entry says; a control they turn is theirs until the next part or card. Only the Tour gives the person's Patch back when it ends: it plays on a Patch of its own, where the Demo and a Tutorial leave theirs for the person to keep.
+What plays or guides the page for the person: the Demo, the Song, a Tutorial or the Tour. One of the Demo and the Song plays at a time, and one of a Tutorial and the Tour is open; a Tutorial's or the Tour's card may play its own phrase (Listen), which the Demo or the Song stops. The Demo ends any other Show; the Song ends the Tour. The person takes over by playing, each Show as its entry says; a control they turn is theirs until the next part or card. Only the Tour gives the person's Patch back when it ends: it plays on a Patch of its own, where the Demo and a Tutorial leave theirs for the person to keep.
 _Avoid_: Lead (a Preset), Guide (Guides are a Viewer's), Host, player
 
 **Mascot**:

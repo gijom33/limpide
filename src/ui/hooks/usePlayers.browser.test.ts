@@ -5,16 +5,17 @@ import { TRACK } from '../../demo/track';
 import { renderHook, testSession } from '../../test/renderHook';
 import { usePlayers } from './usePlayers';
 
-/** usePlayers with a session that writes down what it plays; `told.demoStarts` counts the Demo's starts the page is told of. */
+/** usePlayers with a session that writes down what it plays; `told.demoStarts` and `told.songStarts` count the starts the page is told of. */
 async function players() {
   const { session, played } = testSession();
-  const told = { demoStarts: 0, octave: 4 };
+  const told = { demoStarts: 0, songStarts: 0, octave: 4 };
   const host = {
     session,
     octaveRef: { current: 4 },
     setOctave: (o: number | ((o: number) => number)) => void (told.octave = typeof o === 'function' ? o(told.octave) : o),
     heldNotes: [] as number[],
     onDemoStart: () => void told.demoStarts++,
+    onSongStart: () => void told.songStarts++,
   };
   const hook = await renderHook(usePlayers, host);
   return { ...hook, session, played, told, host };
@@ -74,6 +75,18 @@ describe('usePlayers: the Demo, the Song and Listen (the 1.16.0 review)', () => 
     await touch('piano');
     expect(p.result.current.demo).toBeNull();
     expect(p.result.current.tookOver).toBe(true);
+  });
+
+  it('clears the Demo’s “you are playing now” when the Song starts, telling the page it started (issue 242)', async () => {
+    const p = await players();
+    unmount = p.unmount;
+    await act(async () => p.result.current.playDemo());
+    await touch('piano');
+    expect(p.result.current.tookOver).toBe(true);
+    await act(async () => p.result.current.toggleSong());
+    expect(p.result.current.song).toBe(true);
+    expect(p.result.current.tookOver).toBe(false);
+    expect(p.told.songStarts).toBe(1);
   });
 
   it('ends the Song on a Note played by hand after it started, not one already held (issue 75)', async () => {
