@@ -4,6 +4,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-11-05, from the 1.25.0 fact-check, three loose claims in the Synth Geek Layer's tips: the Filter's formula is the analogue one, and Web Audio's Filter falls faster near the top (16 kHz at a 2 kHz Cutoff: −44.8 dB against −36.1 at 12 dB, −89.5 against −72.2 at 24 dB); a Pulse's "the wave's peak being 1" is true of a ±1 pulse, where the one played runs −0.5 to +1.5 at 25 %; FM's β leaves out how FM is kept smaller on high Notes.
+
 ## Ideas
 
 ## Dropped
