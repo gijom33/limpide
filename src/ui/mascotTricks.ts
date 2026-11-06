@@ -1,5 +1,5 @@
 import type { Pose } from './mascotMotion';
-import type { Fling } from './mascotSpray';
+import { type Fling, RAIN_SECONDS } from './mascotSpray';
 
 /** What a trick has to hand each frame: the time, the way it faces it, and a way to fling droplets. */
 export interface TrickContext {
@@ -21,6 +21,9 @@ interface TrickMove {
 }
 
 const TAU = 2 * Math.PI;
+/** The umbrella's length, and the share of it the first drops take to land from the top of the window (issue 237). */
+const UMBRELLA_SECONDS = 3.6;
+const FIRST_DROPS_LAND = RAIN_SECONDS / UMBRELLA_SECONDS;
 /** A quick bump at `at` through the trick, `width` long: 0 outside it, 1 at its middle. */
 const bump = (p: number, at: number, width: number) => (Math.abs(p - at) < width / 2 ? Math.sin(((p - at) / width + 0.5) * Math.PI) : 0);
 
@@ -160,19 +163,21 @@ export const TRICK_MOVES = {
     },
   },
   /**
-   * It starts to rain all around: it winces, then quickly pops a folded umbrella up over its head and opens it, big
-   * enough to keep it dry, and sways happily under it while the rain patters on it; then the rain stops, and it puts it
-   * away.
+   * It starts to rain all around, from the top of the window (issue 237): it winces as the first drops land, then
+   * quickly pops a folded umbrella up over its head and opens it, big enough to keep it dry, and sways happily under it
+   * while the rain patters on it; then the rain stops, and it puts it away.
    */
   umbrella: {
-    seconds: 3.6,
+    seconds: UMBRELLA_SECONDS,
     move(pose, p, c) {
       if (p < 0.86) c.spray(2, 'rain', 0.03);
-      if (p < 0.07) {
+      if (p < FIRST_DROPS_LAND) {
+        // The first drops still falling.
+      } else if (p < FIRST_DROPS_LAND + 0.07) {
         pose.eyes = 'shut';
         pose.stretch *= 0.92;
         pose.x += Math.sin(c.now * TAU * 16) * 1;
-      } else if (p < 0.11) {
+      } else if (p < FIRST_DROPS_LAND + 0.11) {
         pose.prop = 'umbrellaShut';
         pose.lift += 3;
         pose.eyes = 'happy';

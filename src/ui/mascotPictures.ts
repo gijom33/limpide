@@ -134,7 +134,25 @@ export const SKY: Partial<Record<Pose['prop'], Picture>> = {
   cloud: [['mascot-cloud', [[-2, -2, 13, 2], [0, -4, 8, 2]]]],
 };
 /**
- * The cloud's underside, on the grid, and its span across: its shower falls from there. The sun beside it and the
- * cloud low over it, so both stay under the header where it is closest (three across).
+ * The cloud's underside, on the grid, and its span across: its shower falls from there. The sun's middle, its steam
+ * rising to there. Both are drawn beside and low over its head, and lifted by `skyLift`.
  */
 export const CLOUD = { bottom: 0, from: -2, to: 11 };
+export const SUN = { middle: 1.5 };
+
+/** The highest row of a picture on the grid: 0 is the drop's top, negative over it. */
+export const topOf = (picture: Picture) => Math.min(0, ...picture.flatMap(([, list]) => list.map(([, y]) => y)));
+/** The sun's and the cloud's highest rows. */
+export const SKY_TOP: Partial<Record<Pose['prop'], number>> = Object.fromEntries(Object.entries(SKY).map(([prop, p]) => [prop, topOf(p)]));
+/** How far the sun and the cloud go up from where SKY draws them, with room: Bead's height, twice as far over its foot. */
+const SKY_LIFT = 13;
+
+/**
+ * How far up `prop`, the sun or the cloud, is drawn from where SKY has it, in whole squares of the grid (issue 237):
+ * about twice as far above Bead's foot, or, where `room` (the squares from its foot up to the header or the window's
+ * top) is short, as far as fits under it; with none, where SKY has it. Nothing else goes up.
+ */
+export function skyLift(prop: Pose['prop'], room: number): number {
+  const top = SKY_TOP[prop];
+  return top === undefined ? 0 : Math.max(0, Math.min(SKY_LIFT, Math.floor(room - (13 - top))));
+}

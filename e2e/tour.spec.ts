@@ -169,22 +169,22 @@ for (const at of [1, 2, 3, 4, 5, 6]) {
   });
 }
 
-test('the last card’s Bass button starts the Bass Tutorial (issue 128)', async ({ page }) => {
+test('the last card’s button starts the first Tutorial, Sub Ladder (issues 128, 233)', async ({ page }) => {
   await page.goto('/');
   await startFromAbout(page);
   for (let i = 1; i < 6; i++) await action(page, 'Next').click();
-  await action(page, 'Build a Bass').click();
+  await action(page, 'Build a Sub Ladder').click();
   await expect(card(page)).toBeHidden();
-  await expect(page.getByRole('region', { name: 'Tutorial: Bass' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Tutorial: Sub Ladder' })).toBeVisible();
   await expect(patchName(page)).toHaveAttribute('aria-label', 'Patch: Init');
 });
 
-test('the last card’s Bass button puts the focus on the Tutorial’s Start (issues 104, 139)', async ({ page }) => {
+test('the last card’s button puts the focus on the Tutorial’s Start (issues 104, 139)', async ({ page }) => {
   await page.goto('/');
   await startFromAbout(page);
   for (let i = 1; i < 6; i++) await action(page, 'Next').click();
-  await action(page, 'Build a Bass').click();
-  const tutorial = page.getByRole('region', { name: 'Tutorial: Bass' });
+  await action(page, 'Build a Sub Ladder').click();
+  const tutorial = page.getByRole('region', { name: 'Tutorial: Sub Ladder' });
   await expect(tutorial.getByRole('button', { name: 'Start', exact: true })).toBeFocused();
 });
 
@@ -469,7 +469,7 @@ test('after the Sections, a card for the Synth Geek Layer and its History, then 
   await expect(page.getByRole('button', { name: 'Tutorial', exact: true })).toHaveAttribute('data-tutorial', '');
   await expect(page.locator('[data-tutorial]')).toHaveCount(1); // Display's ring gone with its card
   await expect(action(page, 'Next')).toBeHidden();
-  await expect(action(page, 'Build a Bass')).toBeVisible();
+  await expect(action(page, 'Build a Sub Ladder')).toBeVisible();
 
   await action(page, 'Back').click();
   await expect(progress(page)).toHaveText('5 of 6');

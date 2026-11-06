@@ -385,6 +385,89 @@ test('on a phone, on an edge just under the tabs, its fountains are seen whole u
   await expect(mascot(page)).toHaveAttribute('data-moving', 'standing');
 });
 
+test("on a phone, the umbrella's rain starts at the window's top, behind the header, around it (issue 237)", async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto('/');
+  await bringBead(page);
+  await settles(page, /^standing$/);
+  // Each frame for a second of rain: the highest drop's top, and how far across from its middle the drops high in the
+  // window are (none of its splashes go there).
+  const rain = await page.evaluate(
+    () =>
+      new Promise<{ top: number; across: number; foot: number; header: number }>((done) => {
+        let top = Infinity;
+        let across = 0;
+        const end = performance.now() + 1000;
+        window.__limpideTrick!('umbrella');
+        const sample = () => {
+          const drop = document.querySelector('.mascot-drop')!.getBoundingClientRect();
+          const middle = (drop.left + drop.right) / 2;
+          for (const r of document.querySelectorAll('.mascot-spray rect')) {
+            const b = r.getBoundingClientRect();
+            if (b.width === 0) continue;
+            top = Math.min(top, b.top);
+            if (b.top < drop.bottom - 150) across = Math.max(across, Math.abs(b.left + b.width / 2 - middle));
+          }
+          if (performance.now() < end) requestAnimationFrame(sample);
+          else done({ top, across, foot: drop.bottom, header: document.querySelector('header')!.getBoundingClientRect().bottom });
+        };
+        requestAnimationFrame(sample);
+      }),
+  );
+  // Bead stands far down the window, under the header; the first drops are seen within a frame or two of the top.
+  expect(rain.foot - rain.header).toBeGreaterThan(200);
+  expect(rain.top).toBeLessThan(60);
+  expect(rain.across).toBeLessThan(100); // RAIN_WIDE, 80 px either side of it
+});
+
+/**
+ * Each frame through the evaporating trick: the sun's and the cloud's middles over its foot at their highest, and their
+ * tops against the header's foot and the window's top at their lowest.
+ */
+const skyOverBead = (page: Page) =>
+  page.evaluate(
+    () =>
+      new Promise<{ sun: number; cloud: number; underHeader: number }>((done) => {
+        const seen = { sun: 0, cloud: 0, underHeader: Infinity };
+        const end = performance.now() + 4500;
+        window.__limpideTrick!('evaporate');
+        const sample = () => {
+          const foot = document.querySelector('.mascot')!.getBoundingClientRect().bottom;
+          const header = Math.max(0, document.querySelector('header')!.getBoundingClientRect().bottom);
+          for (const name of ['sun', 'cloud'] as const) {
+            const b = document.querySelector(`.mascot-props .mascot-${name}`)!.getBoundingClientRect();
+            if (b.width === 0) continue;
+            seen[name] = Math.max(seen[name], foot - (b.top + b.bottom) / 2);
+            seen.underHeader = Math.min(seen.underHeader, b.top - header);
+          }
+          if (performance.now() < end) requestAnimationFrame(sample);
+          else done(seen);
+        };
+        requestAnimationFrame(sample);
+      }),
+  );
+
+test('evaporating, its sun and cloud sit about twice as far above it, in the window and clear of the header (issue 237)', async ({ page }) => {
+  test.slow();
+  // On a phone, far under the header: SKY draws their middles 23 and 30 px over its foot, before they go up.
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto('/');
+  await bringBead(page);
+  await settles(page, /^standing$/);
+  const roomy = await skyOverBead(page);
+  expect(roomy.sun).toBeGreaterThan(44);
+  expect(roomy.cloud).toBeGreaterThan(52);
+  expect(roomy.underHeader).toBeGreaterThanOrEqual(0);
+  // Three across, at home just under the header: as far as fits under it, never lower than SKY draws them (nor
+  // drawn smaller).
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await settles(page, /^standing$/);
+  const near = await skyOverBead(page);
+  expect(near.sun).toBeGreaterThanOrEqual(22.5);
+  expect(near.cloud).toBeGreaterThanOrEqual(29.5);
+  expect(near.underHeader).toBeGreaterThanOrEqual(0);
+});
+
 test('it comes up from behind the Amp, and leaves jumping, then melting; with reduced motion it comes and goes at once', async ({ page }) => {
   await page.goto('/');
   await listening(page);

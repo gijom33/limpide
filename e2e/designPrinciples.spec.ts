@@ -314,28 +314,18 @@ test('a narrow Tempo through a tablet’s turn and back: closed, then opened aga
 });
 
 // Issue 188 (decision 2): formulas never over data. The Synth Geek Layer's formulas lay over the Spectrums' corner,
-// across the Harmonic bars and the Response Curve (at 375 px over A4's, the 2nd's and the 3rd's); each now has its own
-// room under its Viewer, clear of every bar and trace drawn.
+// then had a row under the Viewers; they are in the tips now (issue 235): none by the Viewers, which keep one size.
 for (const size of SIZE_NAMES) {
-  test(`Synth Geek formulas, ${size}: each clear of its Viewers' plots (issue 188)`, async ({ page }) => {
+  test(`Synth Geek Layer, ${size}: no formula by the Viewers, which keep one size (issues 188, 235)`, async ({ page }) => {
     const { width, height } = SIZES[size];
     await page.setViewportSize({ width, height });
     await page.goto('/');
     await openDisplay(page);
     await page.getByRole('button', { name: 'Geek' }).click();
     await page.keyboard.press('Escape');
-    for (const name of ['Oscillator', 'Filter']) {
-      const formula = page.getByLabel(`${name} formula`);
-      await expect(formula).toBeVisible();
-      const crossed = await formula.evaluate((f) => {
-        const a = f.getBoundingClientRect();
-        return [...f.closest('.block')!.querySelectorAll('canvas')]
-          .map((c) => c.getBoundingClientRect())
-          .filter((b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom).length;
-      });
-      expect(crossed, name).toBe(0);
-    }
-    // The Viewers keep one size across the stages, a formula under them or not.
+    await expect(page.locator('main[data-geek]')).toHaveCount(1);
+    for (const name of ['Oscillator', 'Filter', 'Amp']) await expect(page.getByLabel(`${name} formula`)).toHaveCount(0);
+    // The Viewers keep one size across the stages.
     const heights = await page.locator('.block .tap canvas').evaluateAll((all) => all.map((c) => Math.round(c.getBoundingClientRect().height)));
     expect(new Set(heights).size, heights.join(', ')).toBe(1);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(Math.max(width, 320));

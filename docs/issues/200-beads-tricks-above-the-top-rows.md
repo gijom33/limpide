@@ -62,3 +62,5 @@ Claude's calls, open to the owner:
 3. **Droplets already in the air** when the header slides back down may pass behind it for a moment: the limit is taken as each droplet leaves.
 
 To try, on a phone or a window under 860 px: scroll until Bead's edge is just under the tabs (or the header in 2 × 2), and wait for its tricks, the fountain show above all, or finish a Tutorial for the fountain. Then scroll up so the header comes back, and try the same lower in the page, where the tricks should look as they did.
+
+**Since then (2026-11-05):** [237](./237-beads-weather-from-farther-off.md) has the umbrella's rain start at the window's top, behind the header where it stays on top, rather than under it; the evaporating trick's sun and cloud go up only as far as fits under the header or the window's top.

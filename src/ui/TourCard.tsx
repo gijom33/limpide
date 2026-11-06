@@ -1,5 +1,6 @@
 import { type RefObject, useEffect, useRef } from 'react';
 import { type Looking, TOUR_LENGTH, type TourFind, type TourMove, type TourSection, tourCardAt } from '../tutorial/tour';
+import { TUTORIALS } from '../tutorial/tutorials';
 import { CardShell } from './CardShell';
 import { DISPLAY_BUTTON, optionOrDisplay, overlaySelector } from './displayOption';
 import { bringClear } from './docked';
@@ -19,8 +20,8 @@ interface Props {
   naming: string[] | null;
   onBack(): void;
   onNext(): void;
-  /** The last card's way on: the first Tutorial, Bass (issue 210: the Tutorials' card). */
-  onBass(): void;
+  /** The last card's way on: the first Tutorial, Sub Ladder (issue 210: the Tutorials' card; issue 233). */
+  onFirstTutorial(): void;
   onClose(): void;
 }
 
@@ -211,10 +212,10 @@ function FrozenLine({ freezes, freezing, naming }: { freezes: NonNullable<TourSe
  * The Tour's card (issue 128), docked where a Tutorial's card docks: one Section of the page in the signal's order,
  * where the signal comes from and goes, what the Section does and what its Viewers show, while the synth turns its
  * controls; after the Sections, what else there is to find, and where (issue 210). Back and Next move between the
- * cards; the last offers the Bass Tutorial. It takes the focus on its Next when the Tour starts; turning the controls
+ * cards; the last offers the first Tutorial. It takes the focus on its Next when the Tour starts; turning the controls
  * never takes it.
  */
-export function TourCard({ index, moving, looking, freezing, naming, onBack, onNext, onBass, onClose }: Props) {
+export function TourCard({ index, moving, looking, freezing, naming, onBack, onNext, onFirstTutorial, onClose }: Props) {
   const shown = tourCardAt(index);
   const section = shown.kind === 'section' ? shown.section : undefined;
   const last = index === TOUR_LENGTH - 1;
@@ -224,8 +225,8 @@ export function TourCard({ index, moving, looking, freezing, naming, onBack, onN
   useFindShown(shown.kind === 'find' ? shown.find : undefined);
 
   const primary = last ? (
-    <button type="button" className="tool tool-primary" onClick={onBass}>
-      Build a Bass
+    <button type="button" className="tool tool-primary" onClick={onFirstTutorial}>
+      Build a {TUTORIALS[0].preset}
     </button>
   ) : (
     <button type="button" className="tool tool-primary" onClick={onNext}>

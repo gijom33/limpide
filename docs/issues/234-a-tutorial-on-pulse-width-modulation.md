@@ -4,7 +4,7 @@
 
 **Blocked by:** none (its words lean on [233](./233-a-tutorial-on-each-waves-harmonics.md)'s if that comes first; Claude's call, open to the owner)
 
-**Status:** ready-for-agent · enhancement. The three questions answered by the owner, 2026-11-05, as recommended: "233 and 234 recommendations are okay."
+**Status:** ready-for-human · enhancement. Built (2026-11-05) on night/2026-11-05, for the owner to try
 
 ## What it can show
 
@@ -33,3 +33,24 @@ Decided by the owner, 2026-11-05, Claude's recommendations accepted ("233 and 23
 - The words follow the Tutorials' word rules and their tests, and the Tutorial plays on a phone as the others do.
 
 **Out of scope:** a change to PWM Bass or PWM Morph, to the LFOs or to Pulse Width's range.
+
+## How it was built
+
+Built on 2026-11-05, test-first, after [233](./233-a-tutorial-on-each-waves-harmonics.md). A new Tutorial, right after Wobble in the order, rebuilds **PWM Bass** from Init in nineteen Steps:
+
+- Osc 1 a Pulse (25 % at first, every fourth line missing), Pulse Width by hand to 10 % (the Scope's needle, every tenth line missing) and back up to 50 % (a square, every other line missing, the gaps sliding along the row as it turns).
+- LFO 1's Destination on Pulse Width, its Depth to 80 % (the pulse widening and narrowing by itself, its gaps sliding on the Spectrum, heard as a shimmer), its Rate to 0.8 Hz; the note names it PWM, pulse width modulation.
+- The comparison: Osc 2, a saw on the same Note, raised in the Mixer (fuller, but still), its Detune to +7 cents (the two drifting in and out of step, "listen for the likeness"), Detune back to 0 (the drift stops), Osc 2 back down (one Oscillator, still moving).
+- Then PWM Bass's thump: the Sub, the 24 dB Slope, the Cutoff at 350 Hz, Resonance, Key Track, the Filter's Velocity, the Filter Envelope's Amount, three of its faders in one Step, and the Amp's Attack, Sustain and Release in one Step.
+
+Wobble's end card now offers PWM Bass, and PWM Bass's offers FM Ladder. The README counts nine Tutorials.
+
+Claude's calls, open to the owner:
+
+1. **The comparison with detune takes four Steps, not one**, since a Step turns one control and the Tutorial must end on PWM Bass exactly (no Detune, Osc 2 silent): in, detuned, Detune back to 0, out. Taking the Detune back while Osc 2 still sounds lets the person hear the drift stop, so each of the four changes something heard.
+2. **Pulse Width goes 25 % → 10 % → 50 %**: the Pulse's starting width first (every fourth line missing, as the brief's 25 %), then thinned to a needle, then a square, where LFO 1 sweeps it from.
+3. **Nineteen Steps**, Bass having fifteen: the Filter Envelope's three faders (its Release stays as Init has it) and the Amp's three go in one Step each, the drill met in Bass, as Acid and Pluck do with the Filter Envelope's four. The Amp's three in one Step is new.
+4. Key Track, a word no Tutorial used before, is said plainly where it comes ("moves the Cutoff with the Note you play"); Detune too ("a fine tuning in cents, hundredths of a piano key").
+5. Its menu line: "a pulse whose width an LFO sweeps"; its Listen phrase is a slow bass line at 100 BPM, two Notes in it softer, for the Velocity Step's note.
+
+**To try in the app:** finish Wobble and press its end card's way on, or pick PWM Bass in the Tutorial menu. Hold a Note through the Pulse Width Steps and watch the Scope and the Spectrum's gaps; at the Depth and Rate Steps, hear the shimmer; at the Detune Step, judge whether the likeness with the PWM is clear enough to hear; at the end, the Patch should be PWM Bass. On a phone, check each note reads whole.

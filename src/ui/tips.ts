@@ -2,11 +2,12 @@ import { bankLetter, C16_BANKS, describeSharedButtons } from '../midi/c16';
 import { describeMode } from '../midi/describe';
 import type { ControllerId } from '../midi/mappings';
 import { DESTINATIONS } from '../modulation/destinations';
-import { syncedRateUnderTheHood, UNDER_THE_HOOD, underTheHoodAt } from '../music/geek';
+import { fmFormula, harmonicFormula, responseFormula, ringFormula, syncedRateUnderTheHood, UNDER_THE_HOOD, underTheHoodAt } from '../music/geek';
+import type { Waveform } from '../music/harmonics';
 import { preciseFrequencyText } from '../music/pitch';
 import { formatSyncedRate, noteHz, TEMPO_STEPS } from '../music/tempo';
 import { stepWords } from '../patch/grid';
-import { LFO_DESTINATIONS, type LfoDestination, PARAMS, type ParamId } from '../patch/patch';
+import { type FilterMode, type FilterSlope, LFO_DESTINATIONS, type LfoDestination, PARAMS, type ParamId, type Patch } from '../patch/patch';
 import type { Overlay } from '../viewers/overlays';
 import { HISTORY } from './history';
 import type { TipContent } from './Tooltip';
@@ -462,6 +463,20 @@ export function syncedRateTip(index: number, bpm: number): TipContent {
   return { ...PARAM_TIPS.lfoNote, body: `${TIPS.lfoNote.body} At ${bpm} BPM, ${note} is ${hz}.`, underTheHood: syncedRateUnderTheHood(index, bpm) };
 }
 
+/**
+ * The tips whose formula under the hood follows the settings picked (issue 235, from the Viewers): an Oscillator's
+ * Waveform its Harmonic series, at its Pulse Width; FM's and Ring's their rules at the knobs; the Filter Mode's and
+ * Slope's the response for both. FM's goes to the tip of Osc 1's Pitch, over Octave and FM: FM's own, the tallest tip,
+ * has no room left for it on a phone.
+ */
+export const waveformTip = (waveform: Waveform, pulseWidth: number): TipContent => ({ ...TIPS.waveform, underTheHood: harmonicFormula(waveform, pulseWidth) });
+export const osc1PitchTip = (patch: Patch): TipContent => ({ ...TIPS.osc1Pitch, underTheHood: fmFormula(patch) });
+export const ringTip = (patch: Patch): TipContent => ({ ...PARAM_TIPS.mixRing, underTheHood: ringFormula(patch) });
+export function filterTips(mode: FilterMode, slope: FilterSlope): { mode: TipContent; slope: TipContent } {
+  const underTheHood = responseFormula(mode, slope);
+  return { mode: { ...TIPS.filterMode, underTheHood }, slope: { ...TIPS.slope, underTheHood } };
+}
+
 /** Each Tap's two Viewers (issue 59): what the Scope and the Spectrum there show. */
 export const VIEWER_TIPS: Record<'Oscillator' | 'Filter' | 'Amp', { scope: TipContent; spectrum: TipContent }> = {
   Oscillator: {
@@ -576,6 +591,6 @@ export const OVERLAY_TIPS: Record<Overlay, TipContent> = {
   },
   geek: {
     title: 'Synth Geek Layer',
-    body: 'The numbers under the hood, for the synth geek: Resonance as the Filter’s Q, the Mixer’s levels and the Amp’s Sustain in dB, Osc 2’s tuning as multiples and Detune as beats, each LFO’s swing, the Cutoff at the Note under Key Track, each Scope’s period and frequency, the Harmonic formula of Osc 1’s Waveform under the Oscillator Spectrum (with FM or Ring up, their rules for the knobs as they are), the Response Curve’s formula under the Filter Spectrum, the Cutoff’s value on the Timeline; and, in the tips, a control’s formula under the hood (an LFO Rate’s period among them) and, for one with a musical past, its History: where it comes from.',
+    body: 'The numbers under the hood, for the synth geek: Resonance as the Filter’s Q, the Mixer’s levels and the Amp’s Sustain in dB, Osc 2’s tuning as multiples and Detune as beats, each LFO’s swing, the Cutoff at the Note under Key Track, each Scope’s period and frequency, the Cutoff’s value on the Timeline; and, in the tips, a control’s formula under the hood (an LFO Rate’s period among them; the Waveform’s, FM’s (on Osc 1’s Pitch), Ring’s and the Filter’s for the settings picked) and, for one with a musical past, its History: where it comes from.',
   },
 };

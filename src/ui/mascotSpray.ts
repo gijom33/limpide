@@ -6,7 +6,7 @@ export interface Droplet {
   vy: number;
   age: number;
   life: number;
-  /** Where it ends as it falls, if somewhere: an umbrella, the edge. */
+  /** Where it ends as it falls, if somewhere: an umbrella, the edge (steam rises to its `until` instead). */
   until: number;
   /** Its gravity, in pixels a second squared: steam's rises. */
   gravity: number;
@@ -16,7 +16,7 @@ export interface Droplet {
  * How droplets leave it: `up`, a splash up and out from its foot (landing, smashing down); `side`, flung out sideways
  * (shaking itself, sneezing); `down`, sprayed below (its tail pushing it up); `all`, escaping every way (a click or a
  * touch); `drip`, dribbled at its foot (waddling); `spout`, straight up from its head (a fountain, a burp); `rain`,
- * falling from the sky around; `shower`, from a cloud just over it; `steam`, rising as it evaporates; `jet`, shot from a water gun, its way given by `strength`'s sign; `pour`, out of a glass
+ * falling from the top of the window around it; `shower`, from its cloud; `steam`, rising as it evaporates; `jet`, shot from a water gun, its way given by `strength`'s sign; `pour`, out of a glass
  * turned over, a little its way (`strength`'s sign); `arc`, a fountain's jet up at the angle `strength` (radians from
  * straight up, positive to the right).
  */
@@ -24,6 +24,11 @@ export type Fling = 'up' | 'side' | 'down' | 'all' | 'drip' | 'spout' | 'rain' |
 
 /** Gravity on a droplet, in pixels a second squared (lighter than on the drop itself, for a slower, prettier arc). */
 export const DROPLET_GRAVITY = 1500;
+/**
+ * How long rain takes to land, in seconds: as from 120 px over its edge at its slowest, so rain from the top of the
+ * window falls faster, and no more drops are in the air at once (issue 237).
+ */
+export const RAIN_SECONDS = 0.29;
 /** Steam rises, slowing as it goes. */
 const STEAM_GRAVITY = 30;
 /** The most droplets in the air at once; older ones make way. */
@@ -31,7 +36,8 @@ export const MOST_DROPLETS = 60;
 
 /**
  * The mascot's droplets (issue 115): flung at `x`, `y` (`fling`), each flies under gravity until its life is over, or
- * until it falls to `until`. `strength` (0 to 1) scales a splash's speed. `random` (0 to 1) is for the tests.
+ * until it falls to `until`; steam flung below `until` rises up to it (the sun's height). `strength` (0 to 1) scales a
+ * splash's speed. `random` (0 to 1) is for the tests.
  */
 export function createSpray(random: () => number = Math.random) {
   let droplets: Droplet[] = [];
@@ -66,6 +72,8 @@ export function createSpray(random: () => number = Math.random) {
         } else if (fling === 'rain' || fling === 'shower') {
           vx = 0;
           vy = between(160, 220);
+          // From far over where it lands, fast enough to land in RAIN_SECONDS, as rain falls (issue 237).
+          if (fling === 'rain' && until < Infinity) vy = Math.max(vy, (until - y) / RAIN_SECONDS - (DROPLET_GRAVITY * RAIN_SECONDS) / 2);
         } else if (fling === 'steam') {
           vx = between(-20, 20);
           vy = -between(25, 45);
@@ -85,18 +93,27 @@ export function createSpray(random: () => number = Math.random) {
           vx = Math.cos(angle) * speed;
           vy = Math.sin(angle) * speed - 60;
         }
-        // Its highest point under the ceiling: thrown slower, the same way, so its arc is smaller (issue 200).
-        const gravity = fling === 'steam' ? STEAM_GRAVITY : DROPLET_GRAVITY;
-        const rise = vy < 0 ? (vy * vy) / (2 * gravity) : 0;
-        const room = Math.max(0, y - ceiling);
-        if (rise > room) {
-          const k = Math.sqrt(room / rise);
-          vx *= k;
-          vy *= k;
-        }
+        let gravity = fling === 'steam' ? STEAM_GRAVITY : DROPLET_GRAVITY;
         const spread = fling === 'shower' ? between(-10, 10) : fling === 'rain' || fling === 'pour' || fling === 'arc' ? 0 : between(-3, 3);
         const life = fling === 'rain' || fling === 'shower' || fling === 'arc' ? 2 : fling === 'steam' ? between(0.6, 0.9) : between(0.45, 0.85);
-        droplets.push({ x: x + spread, y, vx, vy, age: 0, life, until, gravity });
+        const rising = fling === 'steam' && until < y;
+        // Steam up to `until`, the sun (issue 237): its rise drawn out to reach there as its life ends, still slowing as
+        // it goes; never less than its own. The sun is under the ceiling already.
+        const drawnOut = rising ? (y - until) / (-vy * life - (gravity * life * life) / 2) : 1;
+        if (drawnOut > 1) {
+          vy *= drawnOut;
+          gravity *= drawnOut;
+        } else {
+          // Its highest point under the ceiling: thrown slower, the same way, so its arc is smaller (issue 200).
+          const rise = vy < 0 ? (vy * vy) / (2 * gravity) : 0;
+          const room = Math.max(0, y - ceiling);
+          if (rise > room) {
+            const k = Math.sqrt(room / rise);
+            vx *= k;
+            vy *= k;
+          }
+        }
+        droplets.push({ x: x + spread, y, vx, vy, age: 0, life, until: rising ? Infinity : until, gravity });
       }
       if (droplets.length > MOST_DROPLETS) droplets = droplets.slice(-MOST_DROPLETS);
     },

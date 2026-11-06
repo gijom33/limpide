@@ -193,7 +193,7 @@ export function Tooltip({ content, children, longPress = true }: { content: TipC
           {keys && <span className="tooltip-keys">{keys}</span>}
           {geek && content.underTheHood && (
             <span className="tooltip-hood">
-              <b>Under the hood</b> <span className="tooltip-formula">{content.underTheHood.formula}</span> {content.underTheHood.where}
+              <b>Under the hood</b> {content.underTheHood.says} <span className="tooltip-formula">{content.underTheHood.formula}</span> {content.underTheHood.where}
             </span>
           )}
           {geek && content.history && (

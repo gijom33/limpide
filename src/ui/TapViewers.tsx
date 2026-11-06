@@ -1,5 +1,5 @@
-import { Fragment, useEffect, useRef } from 'react';
-import type { Formula, GeekNote } from '../music/geek';
+import { useEffect, useRef } from 'react';
+import type { GeekNote } from '../music/geek';
 import { GLOW_MS } from '../viewers/glow';
 import { createLevelMeter } from '../viewers/level';
 import { addToRenderLoop } from '../viewers/renderLoop';
@@ -30,8 +30,6 @@ interface Props {
   response?(frequencies: Float32Array<ArrayBuffer>): Float32Array;
   /** Whether the safety limiter is bending the sound: given for the Amp Tap, shown as LIMITING. */
   limiting?(): boolean;
-  /** The Synth Geek Layer's formulas for this Tap's Spectrum, when the layer is on: each with what its letters mean. */
-  formulas?: Formula[];
   /** The newest Note played (null before any): the Scope's period says A4 until one is (issue 170). */
   newestNote?(): GeekNote;
   /** The Noise's slope while it is up, for the Oscillator Spectrum's corner with the Synth Geek Layer on (issue 170). */
@@ -42,7 +40,7 @@ interface Props {
  * Scope + Spectrum for one Tap, with no caption: the stage's panel says which it is. Canvases are mounted once and
  * drawn by the render loop. The level is measured but not shown; the Scope carries it as `data-db` (for tests).
  */
-export function TapViewers({ name, analyser, sampleRate, fundamental, fundamentalAt, now, paused, view, showIdeal, gateOn, response, limiting, formulas, newestNote, noiseSlope }: Props) {
+export function TapViewers({ name, analyser, sampleRate, fundamental, fundamentalAt, now, paused, view, showIdeal, gateOn, response, limiting, newestNote, noiseSlope }: Props) {
   const scopeRef = useRef<HTMLCanvasElement>(null);
   const spectrumRef = useRef<HTMLCanvasElement>(null);
   const hoverRef = useRef<{ x: number; y: number } | null>(null);
@@ -84,7 +82,6 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, fundamenta
   }, [analyser, sampleRate, fundamental, fundamentalAt, now, paused, view, showIdeal, gateOn, response, limiting, newestNote]);
 
   return (
-    <>
     <figure className="tap" data-tap={name} aria-label={`${name} Tap`}>
       <div className="tap-canvases">
         <Tooltip content={VIEWER_TIPS[name].scope}>
@@ -105,17 +102,5 @@ export function TapViewers({ name, analyser, sampleRate, fundamental, fundamenta
         </Tooltip>
       </div>
     </figure>
-    {/* Under the Viewers, in a row of the stage's own (issue 188): never over the bars and traces. */}
-    {formulas && (
-      <p className="geek-formula" role="note" aria-label={`${name} formula`}>
-        {formulas.map((f) => (
-          <Fragment key={f.formula}>
-            <span>{f.formula}</span>
-            <span className="geek-where">{f.where}</span>
-          </Fragment>
-        ))}
-      </p>
-    )}
-    </>
   );
 }

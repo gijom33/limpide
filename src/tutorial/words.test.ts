@@ -119,7 +119,7 @@ describe('each Tutorial’s first and last card (issue 129, decisions 6 and 8)',
 
   it('ends naming the next Tutorial and what it teaches; the last says it was the last (issue 190)', () => {
     // Its button starts it (issue 190, decision 1), so the line names it without pointing to the menu.
-    expect(endLine(TUTORIALS[0])).toBe(`Next comes Acid: ${TUTORIALS[1].teaches}.`);
+    expect(endLine(TUTORIALS[0])).toBe(`Next comes Bass: ${TUTORIALS[1].teaches}.`);
     expect(endLine(TUTORIALS[TUTORIALS.length - 1])).toMatch(/^That was the last Tutorial/);
   });
 });

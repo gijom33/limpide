@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createSpray, DROPLET_GRAVITY, MOST_DROPLETS } from './mascotSpray';
+import { createSpray, DROPLET_GRAVITY, MOST_DROPLETS, RAIN_SECONDS } from './mascotSpray';
 
 const seeded = (seed = 1) => () => {
   seed = (seed * 16807) % 2147483647;
@@ -70,6 +70,24 @@ describe("the mascot's droplets (issue 115)", () => {
     expect(spray.step(0.3)).toHaveLength(0);
   });
 
+  it('rain from the top of the window lands in about the time it takes from 120 px over its edge (issue 237)', () => {
+    /** How long, frame by frame, its drops take to land `fall` px down. */
+    const landing = (fall: number) => {
+      const spray = createSpray(seeded(37));
+      spray.fling(10, 50, 0, 'rain', 0.5, fall);
+      let t = 0;
+      while (spray.step(1 / 240).length > 0) t += 1 / 240;
+      return t;
+    };
+    // From 120 px: about 0.29 s at 160 to 220 px a second under gravity.
+    expect(landing(120)).toBeGreaterThan(0.25);
+    expect(landing(120)).toBeLessThan(0.33);
+    // From 700 px and from 120, about as long, so no more drops are in the air at once.
+    expect(Math.abs(landing(700) - landing(120))).toBeLessThan(0.05);
+    expect(RAIN_SECONDS).toBeGreaterThan(0.25);
+    expect(RAIN_SECONDS).toBeLessThan(0.33);
+  });
+
   it('droplets are gone after their life, and no more than the most are in the air', () => {
     const spray = createSpray(seeded(7));
     spray.fling(MOST_DROPLETS + 15, 0, 0, 'all');
@@ -88,6 +106,35 @@ describe('steam (issue 127)', () => {
     expect(ys[29]).toBeLessThan(ys[0]);
     for (let i = 0; i < 40; i++) spray.step(1 / 60);
     expect(spray.step(1 / 60)).toHaveLength(0);
+  });
+
+  it("given the sun's height, rises to it by the end of its life, still slowing as it goes (issue 237)", () => {
+    for (const r of [0.1, 0.5, 0.9]) {
+      const spray = createSpray(() => r);
+      spray.fling(1, 100, 100, 'steam', 1, 50);
+      const ys: number[] = [];
+      let last = spray.step(0)[0];
+      while (last) {
+        ys.push(last.y);
+        last = spray.step(1 / 120)[0];
+      }
+      expect(Math.min(...ys)).toBeGreaterThan(48);
+      expect(Math.min(...ys)).toBeLessThan(53);
+      const rises = ys.slice(1).map((y, i) => ys[i] - y);
+      expect(rises.every((d) => d > 0)).toBe(true);
+      expect(rises.at(-1)!).toBeLessThan(rises[0]);
+    }
+  });
+
+  it('never rises less than it would without the sun (issue 237)', () => {
+    const highest = (until?: number) => {
+      const spray = createSpray(() => 0.5);
+      spray.fling(1, 100, 100, 'steam', 1, until);
+      let top = 100;
+      for (let i = 0; i < 120; i++) for (const d of spray.step(1 / 120)) top = Math.min(top, d.y);
+      return top;
+    };
+    expect(highest(95)).toBeCloseTo(highest(), 6);
   });
 });
 
@@ -115,6 +162,13 @@ describe('under a ceiling (issue 200)', () => {
       spray.fling(20, 100, 100, fling, strength);
       expect(highest(spray)).toBeGreaterThanOrEqual(60);
     }
+  });
+
+  it('steam with the sun low beside it keeps under the ceiling (issue 237)', () => {
+    const spray = createSpray(seeded(29));
+    spray.under(90);
+    spray.fling(20, 100, 100, 'steam', 1, 98);
+    expect(highest(spray)).toBeGreaterThanOrEqual(90);
   });
 
   it('with room enough, droplets fly untouched', () => {

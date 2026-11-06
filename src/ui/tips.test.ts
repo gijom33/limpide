@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { noteIndex } from '../music/tempo';
-import { LFO_DESTINATIONS, PARAMS, type ParamId } from '../patch/patch';
-import { OVERLAY_TIPS, PARAM_TIPS, paramTipAt, syncedRateTip, TIPS } from './tips';
+import { defaultPatch, LFO_DESTINATIONS, PARAMS, type ParamId } from '../patch/patch';
+import { filterTips, OVERLAY_TIPS, osc1PitchTip, PARAM_TIPS, paramTipAt, ringTip, syncedRateTip, TIPS, waveformTip } from './tips';
 
 describe("every Parameter's tip (issue 78)", () => {
   it.each(Object.keys(PARAMS) as ParamId[])('%s has a tip with a title and a body, which its knob or fader shows', (id) => {
@@ -104,4 +104,29 @@ it('an Envelope fader’s tip works out τ at its setting; the others, Glide’s
   expect(paramTipAt('glide', 0.4)).toBe(PARAM_TIPS.glide);
   expect(paramTipAt('ampDecay', 0.3)).toMatchObject({ title: 'Decay', keys: PARAM_TIPS.ampDecay.keys, history: PARAM_TIPS.ampDecay.history });
   expect(paramTipAt('keyTrack', 0.5)).toBe(PARAM_TIPS.keyTrack);
+});
+
+it('the Waveform’s, FM’s, Ring’s and the Filter’s tips give their formulas under the hood, at the settings picked (issue 235)', () => {
+  // Each Oscillator's Waveform its own series: a Square's odd Harmonics, a Pulse's gaps at its width.
+  expect(waveformTip('square', 0.25)).toMatchObject({ title: 'Waveform', history: TIPS.waveform.history });
+  expect(waveformTip('square', 0.25).underTheHood?.formula).toBe('bₙ = 4 / (π n),  odd n only');
+  expect(waveformTip('pulse', 0.2).underTheHood?.where).toMatch(/every 5th Harmonic missing/);
+  // FM's and Ring's at the knobs: FM's on Osc 1's Pitch, as FM's own has no room for it on a phone; Ring's keys kept.
+  const fm = osc1PitchTip({ ...defaultPatch(), crossMod: 0.5 });
+  expect(fm).toMatchObject({ title: 'Pitch', body: TIPS.osc1Pitch.body });
+  expect(fm.underTheHood?.formula).toContain('β = 4 × FM = 2.00');
+  expect(PARAM_TIPS.crossMod.underTheHood).toBeUndefined();
+  const ring = ringTip({ ...defaultPatch(), osc2Octave: 1, osc2Semitone: 3 });
+  expect(ring).toMatchObject({ title: 'Ring', keys: PARAM_TIPS.mixRing.keys });
+  expect(ring.underTheHood?.where).toContain('1.38 and 3.38 × f₁ now');
+  // The Mode's and the Slope's the response for both as picked.
+  const { mode, slope } = filterTips('highpass', 24);
+  expect(mode.title).toBe('Filter Mode');
+  expect(slope.title).toBe('Slope');
+  for (const tip of [mode, slope]) expect(tip.underTheHood?.formula).toMatch(/^\|H\| = \(x² \/ .*\)²$/);
+});
+
+it('the Synth Geek Layer’s tip says its formulas are in the tips, none on the Viewers (issue 235)', () => {
+  expect(OVERLAY_TIPS.geek.body).not.toMatch(/under the (Oscillator|Filter) Spectrum/);
+  expect(OVERLAY_TIPS.geek.body).toMatch(/Waveform’s, FM’s \(on Osc 1’s Pitch\), Ring’s and the Filter’s/);
 });

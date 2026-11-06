@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement. Narrowed by the owner, 2026-11-05: only the formulas move to the tips.
+**Status:** ready-for-human · enhancement. Built (2026-11-05) on night/2026-11-05, for the owner to try
 
 ## Decisions
 
@@ -34,3 +34,22 @@ Claude's calls, open to the owner:
 - The tests that read the formulas on the Viewers read them in the tips instead.
 
 **Out of scope:** the controls' own geek readouts, History, profile 19's review of the rest of the layer.
+
+## How it was built
+
+No Viewer draws a formula any more, whatever the layers: the row the Synth Geek Layer added under the Viewers for them is gone, so the Viewers keep the size they have with the layer off. The Scopes' period and frequency, the Harmonic's number in the Spectrum's readout and the Noise's slope are as they were. With the layer on, each formula is in a tip's Under the hood, as the other tips' are: a plain sentence of what it says, then the formula, then each letter named, worked out for the settings picked.
+
+- **Each Waveform's tip** (Osc 1's and Osc 2's) gives the picked Waveform's Harmonic series ("A Square has the odd Harmonics only, each its number times quieter than the first…"); a Pulse's tip works out its gaps at its width ("d: the Pulse Width, 25 % now: every 4th Harmonic missing").
+- **Ring's tip** (its Mixer fader) gives the sums and differences, with the first pair for the knobs ("at 1.38 and 3.38 × f₁ now").
+- **The Filter Mode's and the Slope's tips** give the Response Curve's formula for both as picked: what the Mode keeps in plain words, and at 24 dB that it is two Filters in a row, the gain squared.
+- **FM's rule** gives β, J₀ to J₃ and where the partials land for the knobs, as on the Viewer before.
+- The Synth Geek Layer's own tip and the glossary say where the formulas are now.
+
+Claude's calls, open to the owner:
+
+1. **FM's formula is on the tip of Osc 1's "Pitch" heading, not FM's own** (amending decision 3). FM's tip was already the tallest (about 600 px on a 375 × 667 phone); with its formula it ran 200 px past the screen's foot, so its History line could not be read (the touch-tips test caught it). The Pitch heading sits over Octave and FM, and its tip already says what FM does. Putting it on FM's own would mean cutting FM's tip.
+2. **The letters are named for a wave whose peak is 1:** bₙ is "its amplitude, the wave's peak being 1", which is what 2 / (π n) is, rather than "its level against the first".
+3. **A Pulse's gaps are said up to the 20th Harmonic** ("every 4th Harmonic missing"); at a width like 33 % the first gap is the 100th, so only the general rule is given.
+4. **The issue-188 layout test** that kept the formulas clear of the plots now checks that no formula is drawn by the Viewers and that they keep one size.
+
+**To try:** switch Geek on in Display. The Spectrums show no formula any more. Then hover Osc 1's Waveform picker, pick Pulse and move Pulse Width; hover Osc 2's; hover "Pitch" on the Osc 1 tab and turn FM up; hover the Ring fader on the Mixer with Ring Bell loaded; hover the Filter Mode and the Slope and change them. On a phone, hold each of them.

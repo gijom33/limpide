@@ -4,7 +4,7 @@ import { openDisplay, sliderName } from './helpers';
 const value = (page: Page, stage: string, name: string) =>
   page.getByRole('region', { name: stage }).locator('.knob', { has: page.getByRole('slider', { name: sliderName(name) }) }).locator('.knob-value > span').first();
 
-test('the Synth Geek Layer is off at first; on, it shows Q, dB, the formulas and the Effective Cutoff, and is remembered', async ({ page }) => {
+test('the Synth Geek Layer is off at first; on, it shows Q, dB, the formulas in the tips and the Effective Cutoff, and is remembered', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
   const resonance = value(page, 'Filter', 'Resonance');
@@ -29,12 +29,21 @@ test('the Synth Geek Layer is off at first; on, it shows Q, dB, the formulas and
   // Levels in dB.
   await page.getByRole('tab', { name: 'Mixer' }).click();
   await expect(value(page, 'Oscillators', 'Osc 1')).toHaveText(/dB$/);
-  // The Harmonic formula of Osc 1's Waveform, and the Response Curve's for the Filter Mode and Slope.
+  // In the tips (issue 235), none on the Viewers: the Harmonic formula of Osc 1's Waveform, after what it says, and the
+  // Response Curve's for the Filter Mode and Slope picked.
+  await expect(page.getByLabel('Oscillator formula')).toHaveCount(0);
+  await expect(page.getByLabel('Filter formula')).toHaveCount(0);
+  const hood = (text: string) => page.getByRole('tooltip').filter({ hasText: text }).locator('.tooltip-hood');
   await page.getByRole('tab', { name: 'Osc 1' }).click();
-  await expect(page.getByLabel('Oscillator formula')).toContainText('bₙ = 2 / (π n)');
-  await page.getByRole('radiogroup', { name: 'Osc 1 Waveform' }).getByRole('radio', { name: 'Square' }).click();
-  await expect(page.getByLabel('Oscillator formula')).toContainText('odd n only');
-  await expect(page.getByLabel('Filter formula')).toContainText(/^\|H\| = \(.*\)²/);
+  const waveform = page.getByRole('radiogroup', { name: 'Osc 1 Waveform' });
+  await waveform.hover();
+  await expect(hood('The Oscillator’s shape')).toContainText(/^Under the hood A Saw has every Harmonic.*bₙ = 2 \/ \(π n\)/);
+  await waveform.getByRole('radio', { name: 'Square' }).click();
+  await page.mouse.move(0, 0);
+  await waveform.hover();
+  await expect(hood('The Oscillator’s shape')).toContainText('odd n only');
+  await page.getByRole('radiogroup', { name: 'Slope' }).hover();
+  await expect(hood('How steeply')).toContainText(/two of these Filters in a row.*\|H\| = \(.*\)².*fc: the Cutoff/);
   // The Effective Cutoff's value on the Timeline, while its line is drawn: once the Filter Envelope moves it (issue 63).
   await expect(page.locator('.timeline canvas')).toHaveAttribute('data-cutoff-readout', '');
   await page.getByRole('slider', { name: 'Filter Envelope Amount' }).press('ArrowUp');
@@ -44,24 +53,34 @@ test('the Synth Geek Layer is off at first; on, it shows Q, dB, the formulas and
   await expect(value(page, 'Filter', 'Resonance')).toHaveText(/^Q /);
 });
 
-test('under FM and Ring the Synth Geek Layer gives their rules for the knobs, and no longer the saw’s series as the sound’s (issue 109)', async ({ page }) => {
+test('FM’s and Ring’s tips give their rules with the figures for the knobs, with the layer on (issues 109, 235)', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.addInitScript(() => localStorage.setItem('limpide.overlays', JSON.stringify({ geek: true })));
   await page.goto('/');
-  const formula = page.getByLabel('Oscillator formula');
-  await expect(formula).toContainText('every n: each Harmonic 1/n of the first');
-  const fm = page.getByRole('region', { name: 'Oscillators' }).getByRole('slider', { name: 'FM' });
+  const hood = (text: string) => page.getByRole('tooltip').filter({ hasText: text }).locator('.tooltip-hood');
+  const region = page.getByRole('region', { name: 'Oscillators' });
+  // FM's on the tip of Osc 1's Pitch, over Octave and FM: FM's own has no room for it on a phone.
+  const pitch = region.getByRole('heading', { name: 'Pitch', exact: true });
+  await pitch.hover();
+  await expect(hood('Osc 1’s Octave, from the Note')).toContainText('β = 4 × FM = 0.00');
+  await page.mouse.move(0, 0);
+  const fm = region.getByRole('slider', { name: 'FM' });
   await fm.focus();
   for (let i = 0; i < 5; i++) await page.keyboard.press('PageUp');
   await expect(fm).toHaveAttribute('aria-valuetext', '50 %');
-  await expect(formula).toContainText('β = 4 × FM = 2.00');
-  await expect(formula).toContainText('Osc 1 before FM, not the sound now');
-  await expect(formula).not.toContainText('every n: each Harmonic 1/n of the first');
+  await fm.blur();
+  await pitch.hover();
+  await expect(hood('Osc 1’s Octave, from the Note')).toContainText('β = 4 × FM = 2.00');
+  await expect(hood('Osc 1’s Octave, from the Note')).toContainText('|J₀…J₃(β)| 0.22 0.58 0.35 0.13 now');
 
   await page.getByRole('button', { name: /^Patch: / }).click();
   await page.getByRole('dialog', { name: 'Patches' }).getByRole('button', { name: 'Ring Bell', exact: true }).click();
-  await expect(formula).toHaveText(/^Ring, Osc 1 × Osc 2.*the first pair 1\.38 and 3\.38 × f₁$/s);
-  await expect(formula).not.toContainText('bₙ =');
+  await page.keyboard.press('Escape');
+  await page.getByRole('tab', { name: 'Mixer' }).click();
+  await page.keyboard.press('Tab');
+  await region.getByRole('slider', { name: 'Ring' }).focus();
+  await expect(hood('Osc 1 multiplied by Osc 2')).toContainText(/n f₁ ± m f₂.*The first pair, n = m = 1, at 1\.38 and 3\.38 × f₁ now\./);
+  await expect(page.getByLabel('Oscillator formula')).toHaveCount(0);
 });
 
 test('the Synth Geek Layer keeps the page inside a laptop screen and moves no knob', async ({ page }) => {

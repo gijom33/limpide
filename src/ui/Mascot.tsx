@@ -12,7 +12,7 @@ import { mascotClock } from './mascotClock';
 import { NOT_TEXT, watchCovers } from './mascotCovers';
 import { gesturesOf, looksOf } from './mascotGestures';
 import { type Act, createMascotMotion, hatOn, type Pose, type Room, SCREAMING } from './mascotMotion';
-import { CATCH, CLOUD, HATS, HOOK, ICE, type Picture, PROPS, type Rect, ROD_TIP, SKY, type Stage, TAILS } from './mascotPictures';
+import { CATCH, CLOUD, HATS, HOOK, ICE, type Picture, PROPS, type Rect, ROD_TIP, SKY, SKY_TOP, type Stage, SUN, skyLift, TAILS, topOf } from './mascotPictures';
 import {
   acrossOf, type Cover, choosePerch, chooseVisit, clearAlong, createMascotPlace, type Drawing, drawingOf, HOVER_UNDER, type Moving, nearestSpan, type Perch, rideOf, rideOnDrop, ridesFor, type Span,
   standingCard, surfLean, throwWalls, type Visit, visitEnds,
@@ -78,9 +78,8 @@ const UMBRELLA = {
 } satisfies Record<string, Rect[]>;
 /** The open umbrella's span across and its top, on the grid: the rain falling there ends on it. */
 const CANOPY = { from: -3, to: 12, top: -8 };
-/** The rain falls from a stretch of sky this wide either side of it, from this high over its edge, in pixels. */
+/** The rain falls from a stretch of sky this wide either side of it, in pixels, from the top of the window (issue 237). */
 const RAIN_WIDE = 80;
-const RAIN_HIGH = 120;
 const GLASS: Rect[] = [[-7, 5, 1, 8], [-3, 5, 1, 8], [-6, 12, 3, 1]];
 /** A toy water gun held at its left: its tank of water on top, its body and barrel, its grip. */
 const GUN = {
@@ -122,8 +121,6 @@ const BOARD = {
 const SURF_SPAN = 8;
 const BALANCING = 15;
 
-/** The highest row of a picture on the grid: 0 is the drop's top, negative over it. */
-const topOf = (picture: Picture) => Math.min(0, ...picture.flatMap(([, list]) => list.map(([, y]) => y)));
 /** How high each hat and prop drawn with the drop goes over the drop's top, on the grid; and those that stay put. */
 const HAT_TOP: Partial<Record<Pose['hat'], number>> = Object.fromEntries(Object.entries(HATS).map(([hat, p]) => [hat, topOf(p)]));
 const PROP_TOP: Partial<Record<Pose['prop'], number>> = {
@@ -131,7 +128,6 @@ const PROP_TOP: Partial<Record<Pose['prop'], number>> = {
   umbrella: topOf([['', UMBRELLA.canopy]]),
   umbrellaShut: topOf([['', UMBRELLA.shut]]),
 };
-const SKY_TOP: Partial<Record<Pose['prop'], number>> = Object.fromEntries(Object.entries(SKY).map(([prop, p]) => [prop, topOf(p)]));
 
 /** Room over its head for its leaps and the splash. */
 const HEADROOM = 18;
@@ -390,6 +386,7 @@ export function Mascot({
   const board = useRef<SVGGElement>(null);
   const twin = useRef<SVGUseElement>(null);
   const ice = useRef<SVGGElement>(null);
+  const sky = useRef<SVGGElement>(null);
   const fuzz = useRef<SVGGElement>(null);
   const fishing = useRef<SVGSVGElement>(null);
   // The tail's shapes, the hats and the new props, each a group shown when the pose has it (issue 127).
@@ -500,6 +497,8 @@ export function Mascot({
     let middle = { x: 0, y: 0 };
     // Where it was drawn last, in the window: its box's left and its foot.
     let drawnAt = { left: 0, foot: 0 };
+    // How far up its sun and cloud are drawn, in squares of its grid, as last written (issue 237).
+    let skyShown = 0;
     // Held by the pointer: where it took hold of it, from its box's left and its foot, and its last moves, for the throw.
     let grip = { x: 0, y: 0 };
     let moves: { t: number; x: number; y: number }[] = [];
@@ -636,8 +635,10 @@ export function Mascot({
       const standing = drawingOf({ twin: twinWay, resting: true });
       const texts = textNow(seconds);
       // What is over the page above it, hiding what goes higher (issue 200): on a phone and in 2 × 2 the header's foot,
-      // the section strip being under it; else nothing, but the window's top.
-      const overPage = stacked.matches ? Math.max(0, document.querySelector('header')?.getBoundingClientRect().bottom ?? 0) : 0;
+      // the section strip being under it; else nothing, but the window's top. Its sun and cloud keep under the header
+      // wherever it shows (issue 237).
+      const headerFoot = Math.max(0, document.querySelector('header')?.getBoundingClientRect().bottom ?? 0);
+      const overPage = stacked.matches ? headerFoot : 0;
       // The card it may stand on: the topmost docked (issue 192).
       const docked = standingCard(
         covering.docked(),
@@ -966,15 +967,21 @@ export function Mascot({
 
         // A trick seen whole under what is over the page (issue 200): where the room over it is short, it hops lower, and
         // if its drawing is still too tall (an umbrella, a cloud), it is drawn smaller about its foot. With room, untouched.
+        // Its sun and cloud, twice as far above it, or as far as fits under the header or the window's top (issue 237).
         let shrink = 1;
+        const grid = HEIGHT / 13;
+        const skyRows = skyLift(pose.prop, (where.foot - headerFoot - 1) / grid);
         if (/^(standing|hovering|landing|clinging)$/.test(where.moving)) {
-          const grid = HEIGHT / 13;
           const room = where.foot - overPage - 1;
           const drawnTop = Math.min(PROP_TOP[pose.prop] ?? 0, HAT_TOP[pose.hat] ?? 0, pose.ice > 0 ? topOf(ICE) : 0);
           const body = (13 - drawnTop) * grid * pose.stretch * pose.size;
           pose.lift = Math.min(pose.lift, Math.max(0, room - body));
-          const reach = Math.max(body + Math.max(0, pose.lift), (13 - (SKY_TOP[pose.prop] ?? 13)) * grid);
+          const reach = Math.max(body + Math.max(0, pose.lift), (13 - (SKY_TOP[pose.prop] ?? 13) + skyRows) * grid);
           if (pose.doing && reach > room) shrink = Math.max(0, room) / reach;
+        }
+        if (skyRows !== skyShown) {
+          sky.current!.setAttribute('transform', skyRows ? `translate(0 ${-skyRows})` : '');
+          skyShown = skyRows;
         }
 
         for (const part of Object.keys(PARTS) as Part[]) {
@@ -1041,12 +1048,12 @@ export function Mascot({
         if (pose.burst) {
           const { count, spread: fling } = pose.burst;
           if (fling === 'rain') {
-            // From the sky all around; on the umbrella, if it is open and the drop falls on it, else down to the edge.
-            const grid = HEIGHT / 13;
+            // From the top of the window all around, behind the header where it stays on top (issue 237); on the
+            // umbrella, if it is open and the drop falls on it, else down to the edge.
             for (let i = 0; i < count; i++) {
               const at = base.x + (Math.random() * 2 - 1) * RAIN_WIDE;
               const onUmbrella = pose.prop === 'umbrella' && at >= left + CANOPY.from * grid && at <= left + CANOPY.to * grid;
-              droplets.fling(1, at, ground - Math.min(RAIN_HIGH, ground - ceiling), 'rain', 0.5, onUmbrella ? drawnY(ground - HEIGHT + CANOPY.top * grid - pose.lift) : ground);
+              droplets.fling(1, at, -page.top, 'rain', 0.5, onUmbrella ? drawnY(ground - HEIGHT + CANOPY.top * grid - pose.lift) : ground);
             }
           } else {
             if (fling === 'arc') {
@@ -1054,20 +1061,22 @@ export function Mascot({
               droplets.fling(count, base.x, drawnY(ground - HEIGHT - pose.lift), 'arc', pose.burst.aim ?? 0, ground);
             } else if (fling === 'pour') {
               // From the glass's rim, falling into its mouth.
-              const grid = HEIGHT / 13;
               droplets.fling(count, drawnX(left + POURING_AT.x * grid), drawnY(ground - HEIGHT + POURING_AT.y * grid), 'pour', 1, drawnY(ground - HEIGHT + MOUTH_Y * grid));
             } else if (fling === 'jet') {
               // From the muzzle, turned with it: the gun is drawn on its left.
               const facing = pose.turn < 0 ? -1 : 1;
               droplets.fling(count, drawnX(left + DROP_MIDDLE + facing * (MUZZLE.x - DROP_MIDDLE)), drawnY(ground - HEIGHT - pose.lift + MUZZLE.y), 'jet', -facing);
             } else if (fling === 'shower') {
-              // From under its cloud, down onto it.
-              const grid = HEIGHT / 13;
+              // From under its cloud, wherever it is drawn, down onto it.
               const at = left + (CLOUD.from + Math.random() * (CLOUD.to - CLOUD.from)) * grid;
-              droplets.fling(count, drawnX(at), drawnY(ground - HEIGHT + CLOUD.bottom * grid), 'shower', 0.5, ground);
+              droplets.fling(count, drawnX(at), drawnY(ground - HEIGHT + (CLOUD.bottom - skyRows) * grid), 'shower', 0.5, ground);
+            } else if (fling === 'steam') {
+              // Up from its head to the sun's height (issue 237).
+              const sun = drawnY(ground - HEIGHT + (SUN.middle - skyRows) * grid);
+              droplets.fling(count, base.x, drawnY(ground - HEIGHT * pose.size - pose.lift), 'steam', 1, sun);
             } else {
               const top = drawnY(ground - HEIGHT * pose.size - pose.lift);
-              const from = fling === 'up' || fling === 'drip' ? base.y : fling === 'spout' || fling === 'steam' ? top : drawnY(middle.y);
+              const from = fling === 'up' || fling === 'drip' ? base.y : fling === 'spout' ? top : drawnY(middle.y);
               droplets.fling(count, base.x, from, fling, 1);
             }
           }
@@ -1102,7 +1111,6 @@ export function Mascot({
           if (fish.style.display !== 'none') fish.style.display = 'none';
         } else {
           fish.style.display = '';
-          const grid = HEIGHT / 13;
           const tip = ROD_TIP[pose.prop === 'rodBite' ? 'rodBite' : 'rod'];
           // The tip as the drop's transform puts it: scaled, then turned, about its foot, then lifted.
           const [ox, oy] = [WIDTH * 0.2, HEIGHT];
@@ -1308,11 +1316,13 @@ export function Mascot({
           ))}
           <g className="mascot-handle">{rects(GLASS)}</g>
         </g>
-        {Object.entries(SKY).map(([name, groups]) => (
-          <g key={name} ref={keep(props, name)} className="mascot-prop" style={{ display: 'none' }}>
-            {picture(groups)}
-          </g>
-        ))}
+        <g ref={sky}>
+          {Object.entries(SKY).map(([name, groups]) => (
+            <g key={name} ref={keep(props, name)} className="mascot-prop" style={{ display: 'none' }}>
+              {picture(groups)}
+            </g>
+          ))}
+        </g>
       </svg>
     </div>
     </>
