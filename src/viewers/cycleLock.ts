@@ -24,8 +24,9 @@ const OLDER_AT_MOST = 0.02;
 /** A candidate matching the last trace within this share of its RMS of the best counts as good as the best. */
 const AS_GOOD = 0.05;
 
-// The pitch's readings (the sample, and the phase it advances a sample there, ω) and the phase at each, kept between
-// frames: the lock runs on three Scopes 60 times a second.
+// Scratch arrays for the pitch's readings (the sample, and the phase it advances a sample there, ω) and the phase at
+// each: written afresh by each lock, nothing in them kept from one frame to the next, and allocated once, as the lock
+// runs on three Scopes 60 times a second.
 const at: number[] = [];
 const omega: number[] = [];
 const phase: number[] = [];

@@ -7,7 +7,7 @@ import { createFreezeLatch } from './freezeLatch';
 import { createGlow, glows } from './glow';
 import { harmonicMarkers } from './harmonicMarkers';
 import { aboveFloor, marksToDraw, spectrumOutline } from './outline';
-import { hoverReadout, hoverReadoutLines, interpolatedPeak, SILENT_DB, snapToPeak } from './readout';
+import { hoverReadoutLines, interpolatedPeak, readoutLinesText, SILENT_DB, snapToPeak } from './readout';
 import { type ReadoutColumns, readoutBox, readoutColumns } from './readoutBox';
 import { createRest } from './rest';
 import { amplitudeToSpectrumDb } from './spectrumScale';
@@ -113,7 +113,7 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
   const frozenIdealGains = createFreezeLatch<{ key: string; gains: Float32Array }>();
   const frozenNoiseSlope = createFreezeLatch<string | undefined>();
   // The outlines drawn last, for the Glow (issue 199), each with the axis and width it was drawn for.
-  const glow = createGlow<{ outline: Float32Array; key: string }>();
+  const glow = createGlow<Float32Array>();
   let snapshotToken: number | null = null;
   let snapshotBins: Float32Array | null = null;
   // The hover readout's columns, measured once per font so its box keeps one size (issue 155), and again with room for
@@ -217,13 +217,12 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
     // Glow (issue 199), under All (issue 229): the outlines of the last quarter of a second, fading under the newest; only the outline, so
     // the fill, the Curve and the marks read as now. One drawn on another axis or width is passed over.
     const key = `${viewer.frequencyScale}:${outline.length}`;
-    const past = glow({ on: glowing, frozen: viewer.frozen, now: () => performance.now(), newest: { outline, key } })
-      .filter(({ value }) => value.key === key);
+    const past = glow({ on: glowing, frozen: viewer.frozen, now: () => performance.now(), newest: outline, key });
     g.strokeStyle = trace;
     g.lineWidth = outlineWidth;
     for (const { value, alpha } of past) {
       g.globalAlpha = alpha;
-      strokeColumns(g, value.outline, yOf, ratio);
+      strokeColumns(g, value, yOf, ratio);
     }
     g.globalAlpha = 1;
     canvas.dataset.glow = String(past.length);
@@ -340,11 +339,12 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
       const level = Number.isFinite(levelDb) ? levelDb : peak[col];
       // With the Synth Geek Layer on, the Harmonic's number when the peak is on one, and none on silence (issue 170).
       const harmonicLine = { geek: overlays.geek, harmonic: overlays.geek && level > SILENT_DB ? harmonicNumber(frequency, f0, binHz) : undefined };
-      canvas.dataset.readout = hoverReadout(frequency, level, harmonicLine);
+      const lines = hoverReadoutLines(frequency, level, harmonicLine);
+      canvas.dataset.readout = readoutLinesText(lines);
       if (measuredColumns?.font !== g.font || measuredColumns.geek !== overlays.geek) {
         measuredColumns = { font: g.font, geek: overlays.geek, columns: readoutColumns((t) => g.measureText(t).width, { harmonic: overlays.geek }) };
       }
-      const box = readoutBox(hoverReadoutLines(frequency, level, harmonicLine), measuredColumns.columns, { cursor: col, width });
+      const box = readoutBox(lines, measuredColumns.columns, { cursor: col, width });
       g.fillStyle = cssVar(canvas, '--panel');
       g.fillRect(box.x, box.y, box.width, box.height);
       g.fillStyle = text;

@@ -40,6 +40,18 @@ describe('Glow (issues 180, 199)', () => {
     expect(frames(glow, [140], { on: false })).toEqual([]);
   });
 
+  it('after a cycles change, passes over the traces drawn for the old count, and glows again from the new (issue 228)', () => {
+    const glow = createGlow<string>();
+    const draw = (t: number, cycles: number) => glow({ on: true, frozen: false, now: () => t, newest: `${cycles} at ${t}`, key: String(cycles) });
+    for (const t of [0, 20, 40, 60]) draw(t, 2);
+    expect(draw(80, 2).map((p) => p.value)).toEqual(['2 at 0', '2 at 20', '2 at 40', '2 at 60']);
+    // Four cycles from 100 ms: none of the two-cycle traces is drawn across the new width, though they are not yet stale.
+    expect(draw(100, 4)).toEqual([]);
+    expect(draw(120, 4).map((p) => p.value)).toEqual(['4 at 100']);
+    // And back to two within the quarter of a second: only the two-cycle traces, the four-cycle ones passed over.
+    expect(draw(140, 2).map((p) => p.value)).toEqual(['2 at 0', '2 at 20', '2 at 40', '2 at 60', '2 at 80']);
+  });
+
   it('frozen, keeps its outlines at the fade of the moment it froze, adding none', () => {
     const glow = createGlow<string>();
     const live = frames(glow, [0, 20, 40, 60, 80]);
