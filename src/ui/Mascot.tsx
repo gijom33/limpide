@@ -7,7 +7,7 @@ import { addToRenderLoop } from '../viewers/renderLoop';
 import { createDemoActs } from './demoActs';
 import { lineAt, lineWiderThan } from './LfoPlot';
 import { clingMove, DROP_MIDDLE, homeEdge, landingEdge, looksForPlots, nextVisitAt, perchAcross, ridePlot, STEP, staysBeside, visitDue, visitFor } from './mascotChoices';
-import { type Box, type Cling, clingBeside, crosses, type Guide, HEIGHT, RING, TAIL_HEIGHT, TWIN_PX, targetBox, WIDTH } from './mascotCling';
+import { type Box, type Cling, clingBeside, crosses, type Guide, HEIGHT, RING, ROWS, TAIL_HEIGHT, TWIN_PX, targetBox, WIDTH } from './mascotCling';
 import { mascotClock } from './mascotClock';
 import { NOT_TEXT, watchCovers } from './mascotCovers';
 import { gesturesOf, looksOf } from './mascotGestures';
@@ -209,6 +209,20 @@ function readText(): Cover[] {
  */
 const TEXT_SECONDS = 0.5;
 const TEXT_SCROLLED = 0.1;
+/** What is round a control Bead clings to (issue 228: one argument, not five): see `clingFor`. */
+interface ClingAround {
+  /** The panels over the page. */
+  blocks: readonly Box[];
+  /** The window's top it stays under: the header's foot, stacked. */
+  ceiling: number;
+  /** The docked card, if one shows. */
+  card: Box | null;
+  /** The text it keeps off. */
+  text: readonly Box[];
+  /** How far its twin stands off on its side. */
+  twin: number;
+}
+
 /** Pointing the way (issue 151): what may stand beside a control it clings to, as little covered as can be. */
 const NEIGHBOURS = '[data-learn], canvas, [role=tab], button, h2, h3';
 /** The steepest it aims its tail, up or down, in degrees. */
@@ -524,7 +538,7 @@ export function Mascot({
      * Where it clings beside `el`, if it is within reach: shown, on the window under `ceiling`, under none of `blocks`;
      * its twin `twin` off on its side, over no `text` (issues 181 and 192).
      */
-    const clingFor = (el: Element, blocks: readonly Box[], ceiling: number, card: Box | null, text: readonly Box[], twin: number): { box: DOMRect; cling: Cling | null } => {
+    const clingFor = (el: Element, { blocks, ceiling, card, text, twin }: ClingAround): { box: DOMRect; cling: Cling | null } => {
       const box = el.getBoundingClientRect();
       const target = el.getAttribute('data-tutorial-target');
       // Shown: a tab coming into view is laid out a moment before it is visible.
@@ -777,14 +791,15 @@ export function Mascot({
         if (guide.standIn && !el?.checkVisibility()) el = document.querySelector(guide.standIn);
         const blocks = covering.panels();
         const ceiling = stacked.matches ? Math.max(0, ...headerAndTabs()) : 0;
-        const found = el ? clingFor(el, blocks, ceiling, card?.box ?? null, texts, twinWay) : null;
+        const around: ClingAround = { blocks, ceiling, card: card?.box ?? null, text: texts, twin: twinWay };
+        const found = el ? clingFor(el, around) : null;
         // A control on a hidden tab: towards its Section.
         const seen = found && found.box.width > 0 ? found.box : el?.closest('section[aria-label]')?.getBoundingClientRect();
         if (seen) aimAt = { x: (seen.left + seen.right) / 2, y: (seen.top + seen.bottom) / 2 };
         let to = found?.cling ? { el: el!, cling: found.cling } : null;
         const sliding = moving === 'sliding' || moving === 'clinging';
         if (!to && sliding && clungTo?.isConnected) {
-          const stay = clingFor(clungTo, blocks, ceiling, card?.box ?? null, texts, twinWay).cling;
+          const stay = clingFor(clungTo, around).cling;
           if (stay && staysBeside(stay, aimAt?.x ?? null)) to = { el: clungTo, cling: stay };
         }
         beside = !!to && to.el === el;
@@ -969,14 +984,14 @@ export function Mascot({
         // if its drawing is still too tall (an umbrella, a cloud), it is drawn smaller about its foot. With room, untouched.
         // Its sun and cloud, twice as far above it, or as far as fits under the header or the window's top (issue 237).
         let shrink = 1;
-        const grid = HEIGHT / 13;
+        const grid = HEIGHT / ROWS;
         const skyRows = skyLift(pose.prop, (where.foot - headerFoot - 1) / grid);
         if (/^(standing|hovering|landing|clinging)$/.test(where.moving)) {
           const room = where.foot - overPage - 1;
           const drawnTop = Math.min(PROP_TOP[pose.prop] ?? 0, HAT_TOP[pose.hat] ?? 0, pose.ice > 0 ? topOf(ICE) : 0);
-          const body = (13 - drawnTop) * grid * pose.stretch * pose.size;
+          const body = (ROWS - drawnTop) * grid * pose.stretch * pose.size;
           pose.lift = Math.min(pose.lift, Math.max(0, room - body));
-          const reach = Math.max(body + Math.max(0, pose.lift), (13 - (SKY_TOP[pose.prop] ?? 13) + skyRows) * grid);
+          const reach = Math.max(body + Math.max(0, pose.lift), (ROWS - (SKY_TOP[pose.prop] ?? ROWS) + skyRows) * grid);
           if (pose.doing && reach > room) shrink = Math.max(0, room) / reach;
         }
         if (skyRows !== skyShown) {

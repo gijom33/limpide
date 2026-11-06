@@ -1,6 +1,8 @@
 /** Bead's size on screen (issue 115): 2 px a square of its 22 × 13 grid. */
 export const WIDTH = 44;
 export const HEIGHT = 26;
+/** Its grid's rows, top to foot: a row is HEIGHT / ROWS pixels. */
+export const ROWS = 13;
 /** Where its drawing turns round about, from its box's left: 20 % of its width, as the stylesheet's transform origin. */
 const ORIGIN = WIDTH * 0.2;
 /** Turned round, how far its drawing reaches past its box's left (issue 179). */
