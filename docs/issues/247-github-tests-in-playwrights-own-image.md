@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · enhancement. Built (2026-11-05) on night/2026-11-05; the three runs, the timing and the mismatch check on a test branch wait for the owner's word to push it
+**Status:** ready-for-human · enhancement. Built (2026-11-05) on night/2026-11-05 and merged into main on 2026-11-06 with the night ("Merge the night"); the three runs, the timing and the mismatch check on a test branch wait for the owner's word to push it, and come before the next release, which would otherwise run its tests in the image untried
 
 ## Decisions
 
