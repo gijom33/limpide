@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, type Locator, test } from '@playwright/test';
 
 const db = (page: import('@playwright/test').Page) =>
   page.getByLabel('Amp Scope', { exact: true }).getAttribute('data-db').then((v) => (v === null ? NaN : Number(v)));
@@ -130,5 +130,21 @@ for (const [width, height] of [[360, 800], [390, 844], [760, 1000], [1100, 800],
         return { beside: name.right <= first.left && name.bottom > first.top, faderWidth: Math.round(fader.width) };
       });
     expect(await layout('Amp')).toEqual(await layout('Filter'));
+  });
+}
+
+// Issue 252: side by side, the Amp's Envelope row sat 15 to 22 px above the Filter's. Each Envelope row ends its
+// Section's controls, and the two lie on one line wherever the Sections share a row.
+for (const width of [861, 1100, 1440, 2560]) {
+  test(`the Filter and Amp Envelope rows line up side by side at ${width} px (issue 252)`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/');
+    const top = async (locator: Locator) => (await locator.boundingBox())!.y;
+    const section = (stage: string) => page.locator(`section[aria-label="${stage}"]`);
+    expect(await top(section('Amp')), 'side by side').toBe(await top(section('Filter')));
+    const row = (stage: string) => section(stage).locator('.knobs-envelope');
+    expect(Math.abs((await top(row('Filter'))) - (await top(row('Amp'))))).toBeLessThanOrEqual(1);
+    const fader = (stage: string) => row(stage).locator('.knob[data-kind="fader"]').first();
+    expect(Math.abs((await top(fader('Filter'))) - (await top(fader('Amp'))))).toBeLessThanOrEqual(1);
   });
 }

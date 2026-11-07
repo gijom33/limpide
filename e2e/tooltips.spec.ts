@@ -243,6 +243,8 @@ test.describe('no tip over an open menu (issue 175)', () => {
     // A panel that leaves the focus on its button: the tip goes all the same.
     await page.keyboard.press('Escape');
     const display = page.getByRole('button', { name: 'Display' });
+    // The keyboard moves on: a focus right after Escape is the page's, and opens no tip (issue 252).
+    await page.keyboard.press('Tab');
     await display.focus();
     await expect(tip(page)).toBeVisible();
     await page.keyboard.press('Enter');

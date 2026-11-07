@@ -383,3 +383,12 @@ test('About and the page’s description say what Limpide shows, the title still
   await page.getByRole('heading', { level: 1 }).getByRole('button', { name: 'Limpide' }).click();
   await expect(page.getByRole('dialog', { name: 'Limpide' }).locator('.about-tagline')).toHaveText(line);
 });
+
+test('About’s Play the Demo, clicked, leaves no tip open (issue 252)', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'About', exact: true }).click();
+  await page.getByRole('dialog', { name: 'Limpide' }).getByRole('button', { name: 'Play the Demo' }).click();
+  await expect(page.getByRole('button', { name: 'Demo', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await page.evaluate(() => new Promise((done) => setTimeout(() => requestAnimationFrame(done), 100)));
+  await expect(page.getByRole('tooltip')).toHaveCount(0);
+});

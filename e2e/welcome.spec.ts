@@ -84,3 +84,26 @@ test.describe('on a short phone', () => {
     });
   }
 });
+
+// Issue 252: the Demo button's tip opened on the focus the welcome gives it as it closes, and stayed over the Amp. Only
+// hover or the keyboard's own focus (Tab) opens a tip: not a click, nor Escape closing a panel.
+test.describe('the welcome closed leaves no tip open on the Demo button (issue 252)', () => {
+  const settled = (page: Page) => page.evaluate(() => new Promise((done) => setTimeout(() => requestAnimationFrame(done), 100)));
+  for (const close of ['Play the Demo', 'Escape'] as const) {
+    test(`closed by ${close}`, async ({ page }) => {
+      await page.goto('/');
+      await expect(about(page)).toBeVisible();
+      if (close === 'Escape') await page.keyboard.press('Escape');
+      else await about(page).getByRole('button', { name: 'Play the Demo' }).click();
+      await expect(about(page)).toBeHidden();
+      await expect(demo(page)).toBeFocused();
+      await settled(page);
+      await expect(page.getByRole('tooltip')).toHaveCount(0);
+      // The keyboard's own move still shows one: Tab on, and back.
+      await page.keyboard.press('Tab');
+      await page.keyboard.press('Shift+Tab');
+      await expect(demo(page)).toBeFocused();
+      await expect(page.getByRole('tooltip').filter({ hasText: 'Turn a knob or flip a switch while it plays' })).toBeVisible();
+    });
+  }
+});

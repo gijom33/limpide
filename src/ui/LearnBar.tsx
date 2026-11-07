@@ -1,12 +1,28 @@
+import { useLayoutEffect, useRef } from 'react';
 import type { LearnState } from '../midi/controlSurface';
 import { describeControl, describeTarget } from '../midi/describe';
 
 /**
  * Along the bottom while MIDI Learn is on: what to do next, what was just mapped, and where to finish. Learn is
- * ended where it was started (the MIDI button's panel) or with Escape; the bar only points there.
+ * ended where it was started (the MIDI button's panel) or with Escape; the bar only points there. Its height is
+ * `--learn-h`, the room the page keeps below its last control while Learn is on, so every control can be scrolled clear
+ * of it to be clicked (issue 252).
  */
 export function LearnBar({ state }: { state: LearnState }) {
-  if (state.phase === 'off') return null;
+  const bar = useRef<HTMLDivElement>(null);
+  const on = state.phase !== 'off';
+  useLayoutEffect(() => {
+    const element = bar.current;
+    if (!on || !element) return;
+    const root = document.documentElement;
+    const observer = new ResizeObserver(() => root.style.setProperty('--learn-h', `${element.offsetHeight}px`));
+    observer.observe(element, { box: 'border-box' });
+    return () => {
+      observer.disconnect();
+      root.style.removeProperty('--learn-h');
+    };
+  }, [on]);
+  if (!on) return null;
   const message =
     state.phase === 'listening'
       ? `${describeTarget(state.target)}: ${state.target.kind === 'action' ? 'one moment…' : 'keep turning…'}`
@@ -14,7 +30,7 @@ export function LearnBar({ state }: { state: LearnState }) {
         ? `${describeTarget(state.target)}: now move a knob, fader or pad on your Controller.`
         : 'Click a knob or button to map, then move a control on your Controller.';
   return (
-    <div className="learn-bar" role="status" aria-label="MIDI Learn">
+    <div ref={bar} className="learn-bar" role="status" aria-label="MIDI Learn">
       <strong>MIDI Learn</strong>
       <span>{message}</span>
       {state.phase === 'armed' && state.learned && (

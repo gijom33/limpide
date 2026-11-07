@@ -98,6 +98,8 @@ export function MidiPanel({
   const panel = useUnderHeader<HTMLDivElement>();
   const devices = state.kind === 'ready' ? state.devices : [];
   const available = state.kind === 'ready' || state.kind === 'pending';
+  // Why MIDI Learn and Quick Setup, disabled, do nothing (issue 252); the panel's first line says it at length.
+  const why = state.kind === 'unsupported' ? 'This browser gives no MIDI' : state.kind === 'denied' ? 'MIDI is blocked for this site' : undefined;
   const learningWord = useOneLine<HTMLSpanElement>(learning ? 'learning' : '');
 
   return (
@@ -153,7 +155,7 @@ export function MidiPanel({
             </button>
           ) : (
             <>
-              <Tooltip content={TIPS.midiLearn}>
+              <Tooltip content={{ ...TIPS.midiLearn, why }}>
                 <button
                   type="button"
                   className="tool"
@@ -167,7 +169,7 @@ export function MidiPanel({
                 </button>
               </Tooltip>
               {/* Quick Setup's card takes the focus, as a Tutorial picked from its list does. */}
-              <Tooltip content={TIPS.quickSetup}>
+              <Tooltip content={{ ...TIPS.quickSetup, why }}>
                 <button
                   type="button"
                   className="tool"

@@ -285,6 +285,8 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 }
 .tool { border-color: var(--border); }
 .tool:hover, .segmented button:hover, .patch-about-close:hover { color: var(--text); background: var(--control-hover); }
+/* A disabled button (MIDI Learn and Quick Setup with no Web MIDI, issue 252) is greyed and does not answer the pointer. */
+.tool:disabled, .tool:disabled:hover { color: var(--muted); background: none; opacity: 0.45; cursor: default; }
 .segmented [aria-checked='true'], .segmented [aria-pressed='true'] {
   color: var(--text); background: var(--control-on);
 }
@@ -377,6 +379,7 @@ main[data-frozen] .tap-canvases::before {
 .tooltip[hidden] { display: none; }
 .tooltip strong { font-size: var(--text-md); font-weight: 600; }
 .tooltip-how { color: var(--muted); }
+.tooltip-why { font-weight: 600; }
 /* A knob's or fader's steps for the keys (issue 160): where there is a keyboard, not on a touch screen. */
 .tooltip-keys { color: var(--muted); font-variant-numeric: tabular-nums; }
 @media (hover: none) { .tooltip-keys { display: none; } }
@@ -677,6 +680,10 @@ html:has(dialog.about[open]) { overflow: hidden; }
 /* Rows of controls 8 px apart, as the LFOs' are: the tightest that still reads as separate rows (issue 33). */
 .rows { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; justify-content: space-evenly; gap: var(--space-2); }
 .rows > * { flex: none; }
+/* An Envelope row ends its stage's controls, on their bottom line, the rows above it from the top: the Filter's and the
+   Amp's, side by side, lie on one line whatever the rows above them (issue 252: the Amp's, spaced evenly in the room
+   the Filter's taller rows leave it, sat 15 to 22 px higher). */
+.rows > .sub-block:has(.envelope-knobs):last-child { margin-top: auto; }
 .block .sub-block { column-gap: var(--label-gap); }
 .block .sub-block > h3, .block .sub-block > .tip-anchor:first-child { flex: 0 0 var(--label-col); align-self: center; }
 .block .sub-block h3 { letter-spacing: 0.04em; white-space: nowrap; min-width: 0; }
@@ -1358,7 +1365,9 @@ html:has(dialog.about[open]) { overflow: hidden; }
 .midi-mappings li > .segmented-field { grid-column: 1; margin-top: 2px; }
 
 /* MIDI Learn: a bar floating at the bottom centre says what to do (over the page, so nothing moves, and clear of
-   the header's and the Timeline's learnable controls); learnable controls are outlined, the selected one strongly. */
+   the header's and the Timeline's learnable controls); learnable controls are outlined, the selected one strongly.
+   The page keeps room for the bar below its last control, so each scrolls clear of it (issue 252); with a docked card
+   too, the taller of the two rooms. */
 .learn-bar {
   position: fixed; z-index: 70; bottom: 16px; left: 50%; transform: translateX(-50%); width: max-content;
   max-width: calc(100vw - 32px); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 8px 10px 8px 14px;
@@ -1369,6 +1378,8 @@ html:has(dialog.about[open]) { overflow: hidden; }
 .learn-bar .learn-done { color: var(--muted); }
 .learn-bar .learn-exit { color: var(--muted); }
 .learn-bar kbd { color: inherit; border-color: currentColor; opacity: 0.7; }
+main[data-learning] { margin-bottom: calc(var(--learn-h, 0px) + var(--space-4)); }
+:root[data-docked] main[data-learning] { margin-bottom: max(calc(var(--learn-h, 0px) + var(--space-4)), calc(var(--docked-h, 0px) + var(--space-3))); }
 main[data-learning] [data-learn] { outline: 1px dashed var(--muted); outline-offset: 2px; border-radius: var(--radius-inner); cursor: crosshair; }
 main[data-learning] [data-learn][data-mapped] { outline-style: solid; }
 main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(--accent); }

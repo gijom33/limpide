@@ -405,3 +405,40 @@ for (const theme of ['Dark', 'Light'] as const) {
     }
   });
 }
+
+// Issue 252: with no Web MIDI, MIDI Learn and Quick Setup were disabled yet looked and hovered as if enabled, their tip
+// saying nothing of why they did nothing. Now they are greyed, still on hover, and their tip says why first.
+for (const [what, why, noMidi] of [
+  ['missing (Safari)', 'This browser gives no MIDI', undefined],
+  ['blocked for the site', 'MIDI is blocked for this site', 'denied'],
+] as const) {
+  test(`with Web MIDI ${what}, MIDI Learn and Quick Setup look disabled and their tip says why (issue 252)`, async ({ page }) => {
+    if (noMidi) {
+      await midiPermission(page, noMidi);
+      await page.addInitScript(() =>
+        Object.defineProperty(navigator, 'requestMIDIAccess', {
+          value: () => Promise.reject(new DOMException('Permission to use Web MIDI API was not granted.', 'NotAllowedError')),
+          configurable: true,
+        }),
+      );
+    } else await page.addInitScript(() => Object.defineProperty(navigator, 'requestMIDIAccess', { value: undefined, configurable: true }));
+    await page.goto('/');
+    await page.getByRole('button', { name: 'MIDI', exact: true }).click();
+    const panel = page.getByRole('dialog', { name: 'MIDI' });
+    for (const name of ['MIDI Learn', 'Quick Setup']) {
+      const button = panel.getByRole('button', { name, exact: true });
+      await expect(button, name).toBeDisabled();
+      const look = () => button.evaluate((b) => ({ opacity: Number(getComputedStyle(b).opacity), color: getComputedStyle(b).color, background: getComputedStyle(b).backgroundColor, cursor: getComputedStyle(b).cursor }));
+      const resting = await look();
+      expect(resting.opacity, name).toBeLessThan(0.6);
+      expect(resting.cursor, name).toBe('default');
+      await button.hover();
+      const tip = page.getByRole('tooltip').filter({ hasText: name });
+      await expect(tip, name).toBeVisible();
+      await expect(tip.locator('.tooltip-why'), name).toHaveText(`${why}.`);
+      expect(await look(), name).toEqual(resting); // no hover change
+      await page.mouse.move(0, 0);
+      await expect(tip, name).toBeHidden();
+    }
+  });
+}

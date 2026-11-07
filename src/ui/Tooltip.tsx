@@ -8,6 +8,8 @@ import { placeTooltip } from './placeTooltip';
 
 export interface TipContent {
   title: string;
+  /** Why it does nothing here, where it is disabled (issue 252): shown first, under the title. */
+  why?: string;
   /** What it does, in plain words. */
   body: string;
   /** How to use it (optional). */
@@ -43,7 +45,20 @@ const EXPANDED = '[aria-expanded="true"]';
 const PANEL = '[data-panel]';
 
 /**
- * Explains the control it wraps: after a short pause on hover, at once on keyboard focus, and on a touch screen
+ * Whether the last thing the person did was a press (mouse, finger or pen) or Escape (issue 252): a focus that follows
+ * either was moved by the page (a panel closing gives its button the focus back, the welcome gives it to the Demo
+ * button), not by the keyboard, and opens no tip, though the browser may draw it a keyboard ring. Any other key (Tab,
+ * an arrow) puts the keyboard back in charge. Listened to before the page's own handlers, which may stop the event.
+ */
+let pressedOrEscaped = false;
+if (typeof window !== 'undefined') {
+  window.addEventListener('pointerdown', () => (pressedOrEscaped = true), { capture: true });
+  window.addEventListener('keydown', (e) => (pressedOrEscaped = e.key === 'Escape'), { capture: true });
+}
+
+/**
+ * Explains the control it wraps: after a short pause on hover, at once on keyboard focus (not a focus the page moves
+ * after a press or Escape, issue 252), and on a touch screen
  * when it is held still for half a second; Escape, leaving or pressing dismisses it (on touch, the next touch).
  * Linked to the control with aria-describedby so screen readers announce it too. `longPress` off where holding
  * is how the control is played (the piano). With Tooltips off, only a header button showing its icon alone opens one,
@@ -181,13 +196,14 @@ export function Tooltip({ content, children, longPress = true }: { content: TipC
         e.stopPropagation();
       }}
       onContextMenu={(e) => (press.current || pinned.current) && e.preventDefault()}
-      onFocus={(e) => e.target.matches(':focus-visible') && show(0)}
+      onFocus={(e) => e.target.matches(':focus-visible') && !pressedOrEscaped && show(0)}
       onBlur={hide}
     >
       {children}
       {createPortal(
         <div id={id} role="tooltip" ref={tipRef} className="tooltip" hidden={!open || named || !enabled} style={place}>
           <strong>{content.title}</strong>
+          {content.why && <span className="tooltip-why">{`${content.why}.`}</span>}
           <span>{content.body}</span>
           {content.how && <span className="tooltip-how">{content.how}</span>}
           {keys && <span className="tooltip-keys">{keys}</span>}
