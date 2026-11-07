@@ -733,9 +733,12 @@ export function createBeadFrame({ clock, seconds: pageSeconds, stacked: stackedA
       motion.poke(clock());
       motion.gesture('louder', clock());
     },
-    /** A press on it that moves picks it up (issue 127), but while it leaves or with reduced motion: whether it did. */
-    pick(x: number, y: number, { reduced, leaving }: { reduced: boolean; leaving: boolean }) {
-      if (reduced || leaveBy !== null || leaving) return false;
+    /**
+     * A press on it that moves picks it up (issue 127), as the page is now: but while it leaves or with reduced motion.
+     * Whether it did.
+     */
+    pick(x: number, y: number, { reduced, asked }: Pick<Reading, 'reduced' | 'asked'>) {
+      if (reduced || leaveBy !== null || asked.leaving) return false;
       grip = { x: x - drawnAt.left, y: y - drawnAt.foot };
       moves = [{ t: pageSeconds(), x, y }];
       motion.pickUp(clock());

@@ -296,7 +296,7 @@ export function Mascot({
         bead.poke();
         droplets.fling(9, middle.x, middle.y, 'all');
       },
-      pick: (x, y) => bead.pick(x, y, { reduced: matchMedia('(prefers-reduced-motion: reduce)').matches, leaving: askedNow().leaving }),
+      pick: (x, y) => bead.pick(x, y, reader.read(pageSeconds(), { text: false })),
       drag: bead.drag,
       letGo: () => bead.letGo(reader.read(pageSeconds(), { text: false })),
       word: bead.word,
