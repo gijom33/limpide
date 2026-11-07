@@ -162,7 +162,7 @@ describe('the README’s summary (issue 84)', () => {
   it('gives the newest row’s headline numbers, leaving out what was not measured', () => {
     const values = { appLines: 14056, unitTests: 590, unitPassed: 590, engineTests: 80, enginePassed: 80, coverageLines: 61.24, jsGzip: 90000, largestPaint: 312.4, demoFps: 59.9, demoCpu: 27.46 };
     expect(summary(row('1.17.0', values))).toBe(
-      'At 1.17.0 (2026-11-02): 14,056 lines of app code, 670 tests, all passing, 61.2% of the app code’s lines run by the unit and engine tests, 90.0 kB of JavaScript gzipped, the page drawn in 312 ms, the Demo at 60 frames a second for 27.5% of a processor core. Every number, release by release, is on [the statistics page](docs/statistics.md).',
+      'At 1.17.0 (2026-11-02): 14,056 lines of app code, 670 tests, all passing, 61.2% of the app code’s lines run by the unit and engine tests, 90.0 kB of JavaScript gzipped, the page drawn in 312 ms, the Demo at 60 frames a second. Every number, release by release, is on [the statistics page](docs/statistics.md).',
     );
     expect(summary(row('1.17.0', { appLines: 10, unitTests: 5, unitPassed: 4 }))).toMatch(/: 10 lines of app code, 4 of 5 tests passing\. Every/);
     expect(summary(row('1.16.0', { appLines: 10, testsWritten: 7, jsGzip: 1000 }))).toMatch(/: 10 lines of app code, 7 tests written, 1\.0 kB of JavaScript gzipped\. Every/); // a history row

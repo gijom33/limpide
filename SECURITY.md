@@ -6,7 +6,7 @@ Only the live site, [gijom33.github.io/limpide](https://gijom33.github.io/limpid
 
 ## What there is to attack
 
-Limpide is a static page: no server, no accounts, nothing sent anywhere but an anonymous visit count ([GoatCounter](https://www.goatcounter.com)). What it reads from outside:
+Limpide is a static page: no server of its own, no accounts, nothing sent anywhere but a visit count without cookies ([GoatCounter](https://www.goatcounter.com)). Like any web page, its host (GitHub Pages) and the counter receive each visitor's IP address and browser; Limpide itself keeps nothing that identifies a person. What it reads from outside:
 
 - **A shared link,** which carries a Patch after the `#`;
 - **a MIDI keyboard or controller,** through the browser's Web MIDI;

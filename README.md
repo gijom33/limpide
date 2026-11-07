@@ -29,7 +29,7 @@ The sounds themselves are not new: Limpide is a classic subtractive synth, laid 
 
 Works best in **Chrome or Edge**. Safari has no Web MIDI, so MIDI controllers don't work there; everything else does. The same goes for every browser on iPhone and iPad, Chrome included, since Apple makes them all run on Safari's engine.
 
-Visits to the site are counted with [GoatCounter](https://www.goatcounter.com): no cookies, and no personal data stored. Like any web page, it receives each visitor's IP address and browser to count them; the share link's sound (after `#`) is never sent. Only the published site counts: a fork's build doesn't, unless its deploy sets `GOATCOUNTER_URL`.
+Visits to the site are counted with [GoatCounter](https://www.goatcounter.com): no cookies, and no personal data stored. Like any web page, the site's host (GitHub Pages) and the counter receive each visitor's IP address and browser; the share link's sound (after `#`) is never sent. Only the published site counts: a fork's build doesn't, unless its deploy sets `GOATCOUNTER_URL`.
 
 ## Run it locally
 
@@ -60,7 +60,7 @@ The browser tests need Playwright's browsers once: `npx playwright install chrom
 
 TypeScript, React and Vite, on the browser's native Web Audio nodes; no audio libraries.
 
-Every commit names Claude Code in its `Co-Authored-By` line. The work follows Matt Pocock's [AI Hero](https://www.aihero.dev) method, and everything it produced is in this repository:
+Every commit names Claude Code in its `Co-Authored-By` line, but for eight merges of one branch into another, from 2026-10-30 to 2026-11-01. The work follows Matt Pocock's [AI Hero](https://www.aihero.dev) method, and everything it produced is in this repository:
 
 1. **A PRD** ([docs/prd.md](docs/prd.md)): who it is for, the user stories, what is out of scope, how it is tested.
 2. **Issues** ([docs/issues](docs/issues)): the vertical slices the app was built in, in order, each with what to build, its checklist and what was measured. Plans are "grilled" (questioned until the decisions are explicit) before they are built.
@@ -75,9 +75,11 @@ The owner decides what Limpide is, what it looks like, and what ships; those dec
 Every push to `main` is tested and deployed to GitHub Pages by [a workflow](.github/workflows/deploy.yml). The project's size, quality and performance are measured at each release (`npm run stats`):
 
 <!-- statistics -->
-At 1.26.2 (2026-11-07): 26,624 lines of app code, 3,595 tests, all passing, 73.9% of the app code’s lines run by the unit and engine tests, 292.3 kB of JavaScript gzipped, the page drawn in 304 ms, the Demo at 56 frames a second for 107.8% of a processor core. Every number, release by release, is on [the statistics page](docs/statistics.md).
+At 1.26.2 (2026-11-07): 26,624 lines of app code, 3,595 tests, all passing, 73.9% of the app code’s lines run by the unit and engine tests, 292.3 kB of JavaScript gzipped, the page drawn in 304 ms, the Demo at 56 frames a second. Every number, release by release, is on [the statistics page](docs/statistics.md).
 <!-- /statistics -->
 
 ## License
 
-[MIT](LICENSE) © Guillaume Boillet: the code, the Presets, the Demo's music and the docs. The site also ships React (MIT); the build writes its notices, then Limpide's own licence, to `third-party-notices.txt`, linked from About.
+[MIT](LICENSE) © Guillaume Boillet: the code, the Presets, the Demo's music and the docs; the quotations in the docs stay their authors', under their own terms. The site also ships React (MIT); the build writes its notices, then Limpide's own licence, to `third-party-notices.txt`, linked from About.
+
+Product names (synthesizers, controllers, browsers) are their owners' trademarks; Limpide is not affiliated with or endorsed by them.

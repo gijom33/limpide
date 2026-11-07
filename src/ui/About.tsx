@@ -202,7 +202,8 @@ export function About({
             </dd>
             <dt>License</dt>
             <dd>
-              Free and open source under the MIT License: the code, the Presets, the music and the docs.{' '}
+              Free and open source under the MIT License: the code, the Presets, the music and the docs, whose quotations stay
+              their authors’.{' '}
               <a href={SOURCE} target="_blank" rel="noreferrer">
                 Source on GitHub
               </a>
@@ -211,6 +212,9 @@ export function About({
                 Third-party notices
               </a>
             </dd>
+            {/* The makers' names the History lines, the C16's card and the browsers' words use (issue 259). */}
+            <dt>Trademarks</dt>
+            <dd>Product names are their owners’ trademarks; Limpide is not affiliated with or endorsed by them.</dd>
             {counted && (
               <>
                 <dt>Privacy</dt>
@@ -219,7 +223,8 @@ export function About({
                   <a href="https://www.goatcounter.com" target="_blank" rel="noreferrer">
                     GoatCounter
                   </a>
-                  : no cookies, nothing that identifies you. Your sounds never leave your browser.
+                  : no cookies, and no personal data stored. Like any web page, the site’s host and the counter receive your
+                  IP address and browser. Your sounds never leave your browser.
                 </dd>
               </>
             )}

@@ -409,7 +409,7 @@ export function statisticsPage(rows: Row[]): string {
 const SUMMARY_START = '<!-- statistics -->';
 const SUMMARY_END = '<!-- /statistics -->';
 
-/** The README's few headline numbers, from the newest row. */
+/** The README's few headline numbers, from the newest row: those that read alone; the rest are on the statistics page. */
 export function summary(row: Row | undefined): string {
   const link = '[the statistics page](docs/statistics.md)';
   if (!row) return `The project’s size, quality and performance are measured at each release, from the next one, on ${link}.`;
@@ -424,7 +424,9 @@ export function summary(row: Row | undefined): string {
     has(v, 'coverageLines') && `${percent(v.coverageLines!)} of the app code’s lines run by the unit and engine tests`,
     has(v, 'jsGzip') && `${kB(v.jsGzip!)} of JavaScript gzipped`,
     has(v, 'largestPaint') && `the page drawn in ${ms(v.largestPaint!)}`,
-    has(v, 'demoFps', 'demoCpu') && `the Demo at ${Math.round(v.demoFps!)} frames a second for ${percent(v.demoCpu!)} of a processor core`,
+    // The CPU share is left to the statistics page, where its column says what it counts: alone, "107.8% of a processor
+    // core" read as a warning (issue 259).
+    has(v, 'demoFps') && `the Demo at ${Math.round(v.demoFps!)} frames a second`,
   ].filter((part): part is string => typeof part === 'string');
   return `At ${row.version} (${row.date}): ${parts.join(', ')}. Every number, release by release, is on ${link}.`;
 }
