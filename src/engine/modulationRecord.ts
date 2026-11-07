@@ -276,7 +276,8 @@ export function createModulationRecord(start: number) {
       const then = patchAt(t);
       if (!then) return 0;
       const l = lfos(then)[n - 1];
-      return l.amount * lfoShape(l.waveform, lfoClocks[n - 1].phaseAt(t));
+      // At Depth 0 the swing is 0 whatever the phase: the clock is not read (issue 257), as the plots ask every frame.
+      return l.amount === 0 ? 0 : l.amount * lfoShape(l.waveform, lfoClocks[n - 1].phaseAt(t));
     },
   };
 }
