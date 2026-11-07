@@ -6,8 +6,6 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
-- 2026-11-07, the owner's idea: "Make glow on scopes the default."
-
 ## Dropped
 
 - 2026-11-07, from the full review round on 1.26.1, night merges onto main only once the owner has played them, and the README saying which changes a person tried (review 8): dropped, decided by the owner (2026-11-07, "Yes" to the triage's process answers). Waiting would hold each night's work a day or more; the issues already say whether the owner tried a change ("untried" in their Status).
