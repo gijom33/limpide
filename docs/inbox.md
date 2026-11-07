@@ -4,6 +4,8 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
+- 2026-11-07, from the 1.26.2 code review, three notes on 248's crossfade: a change of Mode given a time ahead of the clock settles the fade then, unwiring a side still heard (none of the app's callers does so); a Mode waiting since inside the 10 ms still starts its fade from a clock read in the fade's end, which an offline render may have run past, the path that clicked; and the click has no test of its own that fails without the fix.
+
 ## Ideas
 
 ## Dropped
