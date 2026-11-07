@@ -4,56 +4,14 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Bugs
 
-- 2026-11-07, from the full review round on 1.26.1, the Demo button's tip stays open over the Amp once focus lands on it by the mouse or by Escape: About's "Play the Demo" (review 7, Chromium, still open 20 s on), the welcome closed with Escape (reviews 2 and 5).
-- 2026-11-07, from the full review round on 1.26.1, in MIDI Learn at 861 to 1440 px the Learn bar covers LFO 2's Depth and Rate values, cutting "0 %" and "2.00 Hz" in half; at 1440 × 900 the page cannot scroll them clear (review 3, Chromium, both themes).
-- 2026-11-07, from the full review round on 1.26.1, with no Web MIDI (blocked in Chromium, missing in WebKit) the disabled MIDI Learn and Quick Setup buttons look and hover as if enabled, show their tip, and do nothing (review 3).
-- 2026-11-07, from the full review round on 1.26.1, the Filter and Amp Envelope rows sit side by side 18 px apart vertically at 1100 to 2560 px, 23 px at 861 (review 3, both engines).
-- 2026-11-07, from the full review round on 1.26.1, Detune's "beats" readout is wrong unless Osc 2 is in unison or above: an octave down at +10 ¢ it says 1.27 Hz, the sound beats at 2.55; Semitone +7 at 0 ¢ says 0.00 Hz, the fifth beats at 1.49 (review 19, rendered).
-- 2026-11-07, from the full review round on 1.26.1, the Tour scrolls the control it turns out of view: the Amp card's Attack fader at 1440 × 900 and 1920 × 1080, the Filter card's Cutoff at 1920 × 1080 (review 5).
-- 2026-11-07, from the full review round on 1.26.1, Tap Tempo changes the BPM without announcing it to a screen reader (review 6, WCAG 4.1.3, since 1.21.1).
-- 2026-11-07, from the full review round on 1.26.1, Escape does not close the Tour's card or a Tutorial's, though it closes every other panel (review 6).
-- 2026-11-07, from the full review round on 1.26.1, with Safari's default Tab setting, Tab skips every plain button (Patch, ‹ ›, Demo, Song, Tutorial, About, MIDI, Display, Hold, Tap…): 32 stops against Chromium's 56, a Preset or a panel out of reach (review 6, WCAG 2.1.1).
-- 2026-11-07, from the full review round on 1.26.1, MIDI Learn takes a control from the C16's layout without saying so: a learned Cutoff ends bank B's K1, Hold on a pad ends M4 on all banks, the mod wheel ends bank A's K1 and leaves that knob turning the new target the wrong way; the Learn bar says only "Mapped" (review 17, a fake C16).
-- 2026-11-07, from the full review round on 1.26.1, a factory C16 runs backwards below the middle, its knobs sending positions (Cutoff turned up from 40 to 48 goes down), and the MIDI panel never says to set them to Relative #1 (review 17).
-- 2026-11-07, from the full review round on 1.26.1, Pickup gives no cue: a mapped knob waiting for the hardware to cross its value shows no waiting state, so the Mapping looks dead (review 2, since 1.16.0).
-- 2026-11-07, from the full review round on 1.26.1, Felt Piano says a harder Note is brighter; soft over hard measures 0.99, the last of 1.16.0's seven unheard Velocity claims (review 15).
-- 2026-11-07, from the full review round on 1.26.1, Vowel, Breathing Pad, Two Speeds and Sweep Pad swing 12 to 18 dB between C2 and C6; Vowel sits 12.9 dB under the Filter Presets on C4 and sounds broken when stepping through Presets (reviews 15 and 2; renders of a fix in review 15's report).
-- 2026-11-07, from the full review round on 1.26.1, the Drums sit 9 dB under the Basses (median −25.6 dBFS against −16.4), the Kick at full Volume already at −27.2 against 808 Boom's −15.5 (review 15).
-- 2026-11-07, from the full review round on 1.26.1, at Init both flat LFO plots (Depth 0) are recomputed and rewritten every frame, the only repaint on a page at rest: dropping the identical writes takes the GPU from 7.2 % to 0.5 % of a core (reviews 9 and 18).
-- 2026-11-07, from the full review round on 1.26.1, at 1 Voice the seven unused Voices still render, four fifths of the audio thread's work: unwired, renderCapacity goes from 0.133 to 0.027 (reviews 9 and 18).
-- 2026-11-07, from the full review round on 1.26.1, the Scope and Spectrum write their test hooks (data-*) every frame from inside the draw, against the loop's read-then-write rule, and ship them to the site (review 9).
-- 2026-11-07, from the full review round on 1.26.1, About's "nothing that identifies you" and SECURITY.md's "an anonymous visit count" claim more than the README's accurate "receives each visitor's IP address and browser" (review 11).
-- 2026-11-07, from the full review round on 1.26.1, the README says every commit names Claude Code, but 8 night merge commits carry no Co-Authored-By line (review 4).
-
 ## Ideas
-
-- 2026-11-07, from the full review round on 1.26.1, the Song says nothing once it plays: a line inviting a newcomer to flip Presets with › or turn a knob over it (review 1).
-- 2026-11-07, from the full review round on 1.26.1, the Tour ends on the geek extras (the Synth Geek Layer, then "Build a Sub Ladder" as card 6's main button), so a newcomer leaves by Done with nothing to play (review 1).
-- 2026-11-07, from the full review round on 1.26.1, the fun sounds behind the lessons: › from Init goes Pure Sine, Soft Triangle, Hollow Square, and the Preset sheet opens on Tutorials, Start and Shapes, Bass, Pads and Drums far below (review 1, since 1.16.0).
-- 2026-11-07, from the full review round on 1.26.1, letters on the piano's keys, so a kid can find B, E, A, D for Bead's tricks (review 20).
-- 2026-11-07, from the full review round on 1.26.1, words for a ten-year-old: the Tour's four-paragraph cards, the FM tip's 200 words, the Demo's captions lose them after the first line; the Tutorials' instrument comparisons keep them (review 20).
-- 2026-11-07, from the full review round on 1.26.1, Bead's card says to tickle it "with the mouse", which a finger cannot, and never says it can be picked up and thrown, the best trick on a tablet (review 20).
-- 2026-11-07, from the full review round on 1.26.1, PWM Bass is the longest Tutorial at 19 Steps, half a bass already built (Osc 2 in and out, then Bass, Acid and Wobble's finish), and the menu shows no Step counts (review 16).
-- 2026-11-07, from the full review round on 1.26.1, on a phone a Tutorial's Next moves: alone on a second row before the Step is made, at the first row's end after (review 16).
-- 2026-11-07, from the full review round on 1.26.1, on a phone a Display Step done by hand leaves the Display panel over what the Step's note describes (Ideal in Sub Ladder 4 and Bass 4, the Snapshot in Acid 2) until Next (review 16).
-- 2026-11-07, from the full review round on 1.26.1, a larger-text mode for a class on a projector: 10 to 12 px labels and dim values cannot be read from the back, and 150 % zoom shrinks each Spectrum from about 290 to 115 px (review 5).
-- 2026-11-07, from the full review round on 1.26.1, Key Track's Geek readout shows the Cutoff at the last Note, not how much Key Track is set: at C4, 0 % and 100 % both read 2.00 kHz (review 19, with its table of what the layer keeps).
-- 2026-11-07, from the full review round on 1.26.1, FM's Bessel formula sits on the Pitch heading's tip, the FM knob's own has none, and the Cutoff's tip has no formula for the Effective Cutoff (review 19).
-- 2026-11-07, from the full review round on 1.26.1, the MIDI panel as a C16 map: 68 flat rows ("Previous Preset" four times) with no bank or knob named, the person's own Mappings among them, the Last message bare (review 17).
-- 2026-11-07, from the full review round on 1.26.1, a trademark line in About and the README: product names are their owners', Limpide not affiliated (review 11).
-- 2026-11-07, from the full review round on 1.26.1, the README's licence line to keep the docs' quotations their authors', and the parked AI-authorship wording (111's decision 4) before a lawyer (review 11).
-- 2026-11-07, from the full review round on 1.26.1, a queue of the calls open to the owner: 225 still read "open to the owner" with nothing telling seen from unseen; two accepted ADRs (0020, 0021) still say open (reviews 4 and 10).
-- 2026-11-07, from the full review round on 1.26.1, "done" with every acceptance box ticked or struck with a reason: 68 of 201 done issues still have unticked boxes (review 10).
-- 2026-11-07, from the full review round on 1.26.1, the red step visible in the history: a failing test committed first, or its red line pasted into "How it was built" (review 10).
-- 2026-11-07, from the full review round on 1.26.1, night merges onto main only once the owner has played them, and the README saying which changes a person tried (review 8).
-- 2026-11-07, from the full review round on 1.26.1, a published roadmap or the ready-for-agent list for contributors, and App.tsx split again (903 lines, touched 73 times since 1.16.0) (review 8).
-- 2026-11-07, from the full review round on 1.26.1, Bead behind one module a contributor can ignore (18 % of the app's code), and the e2e sleeps, up from 56 to 96, waits on state (review 8).
-- 2026-11-07, from the full review round on 1.26.1, an index of the issues (number, title, Status), linked from the README (review 4); and the README's "How this was built" naming the night shift (review 4).
-- 2026-11-07, from the full review round on 1.26.1, the README's "112.3 % of a processor core" in plain words, or left to the statistics page (review 7).
-- 2026-11-07, from the full review round on 1.26.1, the statistics' Demo figure as a median of three runs after a cool-down, with the load recorded: one sample after the suite gave 112 %, a quiet machine 84 to 90 % (review 18).
 
 ## Dropped
 
+- 2026-11-07, from the full review round on 1.26.1, night merges onto main only once the owner has played them, and the README saying which changes a person tried (review 8): dropped, decided by the owner (2026-11-07, "Yes" to the triage's process answers). Waiting would hold each night's work a day or more; the issues already say whether the owner tried a change ("untried" in their Status).
+- 2026-11-07, from the full review round on 1.26.1, the red step visible in the history, a failing test committed first or its red line pasted into "How it was built" (review 10): dropped, decided by the owner (2026-11-07, "Yes" to the triage's process answers). It adds a commit to each slice and shows nothing the tests do not.
+- 2026-11-07, from the full review round on 1.26.1, a published roadmap or the ready-for-agent list for contributors, and App.tsx split again (review 8): dropped, decided by the owner (2026-11-07, "Yes" to the triage's process answers). Issue 131 is v1's list; the code's tidy-ups go through 250 and 251 and the architecture reviews.
+- 2026-11-07, from the full review round on 1.26.1, Bead behind one module a contributor can ignore, 18 % of the app's code (review 8): dropped, Claude's call, open to the owner. Bead's frame got its own modules in 245; moving the rest behind one seam changes no behaviour, which v1 does not take. The same line's e2e sleeps are issue 263.
 - 2026-11-05, the repository renamed Limpide: kept lowercase (decided by the owner: "Keep it lowercase"). GitHub Pages takes the site's path from the name, case and all, and does not redirect a rename, so gijom33.github.io/limpide, linked from posts, the C16 card and bookmarks, would break; the deploy's visit counting also checks the lowercase name. The name is capitalised wherever a person reads it.
 - 2026-11-02, from the 1.22.0 code review, 181's call 5 (Bead switching sides when the other side is clear) not in decision 3's order and changing 151's side rule: kept as built; 181 shipped in 1.22.0 and the owner has seen Bead beside the controls since without remark. Claude's call, open to the owner.
 - 2026-11-02, from the 1.22.0 code review, Bead rising as from the header onto an edge after waiting out of sight under it: cosmetic and never seen in a browser; dropped until seen. Claude's call, open to the owner.
