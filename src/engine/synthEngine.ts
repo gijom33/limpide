@@ -8,7 +8,7 @@ import { createCache } from '../music/cache';
 import { harmonicSeries, type Waveform } from '../music/harmonics';
 import { fmDepthKept, playedTop } from '../music/idealReference';
 import { noteToFrequency } from '../music/pitch';
-import { type FilterMode, fmIndex, GLIDE_OFF, type Lfo, type LfoNumber, lfoHz, lfos, type NoiseColour, PARAMS, type Patch, type SubWaveform, type Voices } from '../patch/patch';
+import { type FilterMode, type FilterSlope, fmIndex, GLIDE_OFF, type Lfo, type LfoNumber, lfoHz, lfos, type NoiseColour, PARAMS, type Patch, type SubWaveform, type Voices } from '../patch/patch';
 import { CUTOFF_CLAMP, CUTOFF_SPAN, centsOverFloor, fadesOutAtTheTop, filterLevel, filterStages, filterStagesAt, isPeaked, LEVEL_FADE_CURVE, makeUp, makeUpCurve, RESONANCE_FADE_CURVE, resonanceCurve, type Stage } from './filterDesign';
 import { append, createGateHistory, createModulationRecord, type GateRecord, lastAt } from './modulationRecord';
 import { heardAt, type OutputClockContext } from './outputClock';
@@ -152,7 +152,9 @@ const MASTER_LEVEL = 0.45;
  * How long a change of Filter Mode fades from the old Mode's sound to the new one's, in seconds (issue 248): short
  * enough to be heard as the switch itself, long enough that no step is heard.
  */
-export const MODE_FADE = 0.01;
+const MODE_FADE = 0.01;
+/** The frames the browser renders at a time: a scheduled node's `ended` comes once its last one is rendered. */
+const RENDER_QUANTUM = 128;
 
 /** The bend wheel's steps are smoothed over this time constant, in seconds. */
 const BEND_SMOOTHING = 0.004;
@@ -760,33 +762,41 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   // filterStages), then its level. Only the side heard is wired from the Mixer and to the Amp, directly, so nothing
   // costs more than one Filter while no Mode changes; while a change fades, both are, each through its share of the
   // sound (`share`). The first side is heard until a Mode changes.
-  const sides = shared.sides.map((sharedSide) => {
+  /**
+   * A side's two stages, new: from silence, as a side faded in must start, not from the sound it was unwired in. Each
+   * takes its Resonance from `kept` and goes to `level`; until a Patch sets them they are the browser's low-pass.
+   */
+  const newStages = (kept: GainNode[], level: GainNode) => {
     const stages = [ctx.createBiquadFilter(), ctx.createBiquadFilter()] as const;
-    for (const node of stages) {
+    stages.forEach((node, k) => {
       node.frequency.value = LOWEST_CUTOFF;
       cutoffClamp.connect(node.detune);
-    }
-    stages[0].connect(stages[1]);
+      kept[k].connect(node.Q);
+    });
+    stages[0].connect(stages[1]).connect(level);
+    return stages;
+  };
+  const sides = shared.sides.map((sharedSide) => {
     const [resonanceFade, levelFade] = fadeShapers.map((shaper) => {
       const fade = ctx.createGain();
       fade.gain.value = 0;
       shaper.connect(fade);
       return fade;
     });
-    stages.forEach((node, k) => {
-      const kept = ctx.createGain();
-      resonanceFade.connect(kept.gain);
-      kept.connect(node.Q);
-      sharedSide.toQ[k].connect(kept);
+    const kept = sharedSide.toQ.map((toQ) => {
+      const gain = ctx.createGain();
+      resonanceFade.connect(gain.gain);
+      toQ.connect(gain);
+      return gain;
     });
     const level = ctx.createGain();
     levelFade.connect(level.gain);
     sharedSide.makeUp.connect(level.gain);
-    stages[1].connect(level);
     const share = ctx.createGain();
+    share.gain.value = 0;
     level.connect(share);
     // Whether the Mixer reaches it, and what reaches the Amp from it: its level, its share, or nothing.
-    return { stages, resonanceFade, levelFade, level, share, wired: false, out: undefined as GainNode | undefined };
+    return { stages: newStages(kept, level), kept, resonanceFade, levelFade, level, share, wired: false, out: undefined as GainNode | undefined };
   });
   type Side = (typeof sides)[number];
   // The Taps listening to what the Filter sends the Amp: they follow its wiring.
@@ -1035,16 +1045,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
       for (const n of noises) write(n.gate.gain, n.colour === next.noiseColour ? 1 : 0, t);
       write(mixSub.gain, next.mixSub * OSCILLATOR_LEVEL, t);
       write(mixRing.gain, next.mixRing * OSCILLATOR_LEVEL, t);
-      // Each side's stages at their flat Q for its Mode, at the Slope; the Resonance over it comes through the side's
-      // shared `toQ`, faded at the top (issue 195).
-      sides.forEach((side, s) => {
-        const mode = shared.sides[s].mode;
-        if (!mode) return;
-        const flat = filterStages(mode, next.filterSlope, 0);
-        side.stages.forEach((node, i) => setStage(node, flat[i], { writes: shared.writes, t }));
-        write(side.resonanceFade.gain, isPeaked(mode) ? -1 : 0, t);
-        write(side.levelFade.gain, fadesOutAtTheTop(mode) ? -1 : 0, t);
-      });
+      voice.setSides(next.filterSlope, t);
       // The knob's Cutoff; the Filter Envelope and the rest add to it.
       write(cutoff.offset, centsOverFloor(effectiveCutoff(next)), t);
       write(envelopeAmount.gain, next.filterEnvAmount * 1200, t);
@@ -1054,20 +1055,44 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
     },
 
     /**
-     * Fade over to side `to` from `t` (issue 248), from `from`, its share of the sound then, to all of it: both sides
-     * wired, each through its share, until `settle`.
+     * Each side's stages at their flat Q for its Mode, at `slope`, from `t`; the Resonance over it comes through the
+     * side's shared `toQ`, faded at the top (issue 195).
      */
-    fadeTo(to: number, t: number, from: number) {
+    setSides(slope: FilterSlope, t: number) {
+      sides.forEach((side, s) => {
+        const mode = shared.sides[s].mode;
+        if (!mode) return;
+        const flat = filterStages(mode, slope, 0);
+        side.stages.forEach((node, i) => setStage(node, flat[i], { writes: shared.writes, t }));
+        write(side.resonanceFade.gain, isPeaked(mode) ? -1 : 0, t);
+        write(side.levelFade.gain, fadesOutAtTheTop(mode) ? -1 : 0, t);
+      });
+    },
+
+    /**
+     * Fade over to side `to` from `t` (issue 248), from `startShare`, its share of the sound then, to all of it: both
+     * sides wired, each through its share, until `settle`.
+     */
+    fadeTo(to: number, t: number, startShare: number) {
       sides.forEach((side, s) => {
         wire(side, true, side.share);
         side.share.gain.cancelScheduledValues(t);
-        side.share.gain.setValueAtTime(s === to ? from : 1 - from, t);
+        side.share.gain.setValueAtTime(s === to ? startShare : 1 - startShare, t);
         side.share.gain.linearRampToValueAtTime(s === to ? 1 : 0, t + MODE_FADE);
       });
     },
-    /** Once the fade to side `to` is over: it alone wired, directly, and the other side not at all. */
+    /** Once the fade to side `to` is over: it alone wired, directly, and the other side not at all, with new stages. */
     settle(to: number) {
-      sides.forEach((side, s) => (s === to ? wire(side, true, side.level) : wire(side, false)));
+      sides.forEach((side, s) => {
+        if (s === to) return wire(side, true, side.level);
+        wire(side, false);
+        side.stages.forEach((node, k) => {
+          node.disconnect();
+          cutoffClamp.disconnect(node.detune);
+          side.kept[k].disconnect(node.Q);
+        });
+        side.stages = newStages(side.kept, side.level);
+      });
     },
 
     /** A Tap listens to this Voice's stage: a side branch, so observing never alters the sound. */
@@ -1159,11 +1184,15 @@ export function createSynthEngine(
   }) as [FilterSide, FilterSide];
   // The side heard, or faded to (issue 248); when its fade began, and its share of the sound then.
   let heard = 0;
-  let fade = { start: -MODE_FADE, from: 1 };
-  // Fades begun so far: only the last settles, once it is over.
+  let fade = { start: -MODE_FADE, startShare: 1 };
+  // Fades begun so far: only the last one's end settles the sides, or starts the next.
   let fades = 0;
-  /** The side heard's share of the sound at `t`: all of it, but while a change of Mode fades. */
-  const heardShare = (t: number) => (t >= fade.start + MODE_FADE ? 1 : fade.from + ((1 - fade.from) * (t - fade.start)) / MODE_FADE);
+  // A Mode asked for while a fade was under way, for when it is over; and the Slope the sides were last set to.
+  let pending: FilterMode | undefined;
+  let slopeNow: FilterSlope = 12;
+  /** The side heard's share of the sound at `t`: all of it, but while a change of Mode fades or waits to. */
+  const heardShare = (t: number) =>
+    t >= fade.start + MODE_FADE ? 1 : fade.startShare + ((1 - fade.startShare) * Math.max(0, t - fade.start)) / MODE_FADE;
   // What the twins' stages were last set from: a knob that leaves them as they are does not set them again (issue 218).
   const twinStagesFrom = createMemo<string>();
   const [bend, pressing] = [ctx.createConstantSource(), ctx.createConstantSource()];
@@ -1442,32 +1471,64 @@ export function createSynthEngine(
       for (const listener of newestListeners) listener();
     }
   };
+  /** Each side's Resonance curves for its Mode at `slope`, made again only when they change, and its stages' shares. */
+  const setSideCurves = (slope: FilterSlope, t: number) => {
+    for (const side of sides) {
+      if (!side.mode) continue;
+      if (side.curveFrom.changed(`${side.mode} ${slope}`)) {
+        const { curve, stages } = resonanceCurve(side.mode, slope);
+        side.resonanceQ.curve = curve;
+        side.makeUp.curve = makeUpCurve(side.mode, slope);
+        side.curveStages = stages;
+      }
+      side.toQ.forEach((g, k) => write(g.gain, side.curveStages[k], t));
+    }
+  };
   /**
-   * A change of Filter Mode at `t` (issue 248): the side not heard takes the new Mode, and every Voice fades over to it.
-   * A change while a fade is under way goes back to the side faded from if it plays the Mode, or else to whichever side
-   * is the quieter then, the fade going on from where it is.
+   * Every Voice fades over to side `to` from `t`, from its share of the sound then. Once the fade is over, by the audio
+   * clock, a Mode asked for meanwhile fades in next; or else the side faded out is unwired.
    */
-  const toMode = (mode: FilterMode, t: number) => {
-    if (!sides[heard].mode) sides[heard].mode = mode;
-    if (sides[heard].mode === mode) return;
+  const fadeTo = (to: number, t: number) => {
     const share = heardShare(t);
-    const to = sides[1 - heard].mode === mode || share >= 0.5 ? 1 - heard : heard;
-    const from = to === heard ? share : 1 - share;
-    sides[to].mode = mode;
+    const startShare = to === heard ? share : 1 - share;
     heard = to;
-    fade = { start: t, from };
-    for (const v of voices) v.fadeTo(to, t, from);
-    // Once the fade is over, by the audio clock, the side faded out is unwired: unless another fade began meanwhile.
+    fade = { start: t, startShare };
+    for (const v of voices) v.fadeTo(to, t, startShare);
     const fading = ++fades;
     const timer = ctx.createConstantSource();
     timer.offset.value = 0;
     timer.connect(master);
     timer.onended = () => {
       timer.disconnect();
-      if (fading === fades) for (const v of voices) v.settle(to);
+      if (fading !== fades) return;
+      for (const v of voices) v.settle(to);
+      if (!pending) return;
+      // The side faded out, unwired with new stages, takes the Mode; its fade starts a little after now, as the sound
+      // may have gone on past the clock read here by the time the fade is written (an offline render does not wait).
+      sides[1 - heard].mode = pending;
+      pending = undefined;
+      for (const v of voices) v.setSides(slopeNow, ctx.currentTime);
+      setSideCurves(slopeNow, ctx.currentTime);
+      fadeTo(1 - heard, ctx.currentTime + (2 * RENDER_QUANTUM) / ctx.sampleRate);
     };
     timer.start(t);
-    timer.stop(t + MODE_FADE + 128 / ctx.sampleRate);
+    timer.stop(t + MODE_FADE + RENDER_QUANTUM / ctx.sampleRate);
+  };
+  /**
+   * A change of Filter Mode at `t` (issue 248): the side not heard takes the new Mode, and every Voice fades over to it,
+   * so no side changes Mode while it is heard. While a fade is under way, a change back to the Mode faded from turns
+   * the fade round from where it is; any other waits for the fade's end, and the last one asked for fades in then.
+   */
+  const toMode = (mode: FilterMode, t: number) => {
+    if (!sides[heard].mode) sides[heard].mode = mode;
+    if (t < fade.start + MODE_FADE) {
+      pending = sides[heard].mode === mode || sides[1 - heard].mode === mode ? undefined : mode;
+      if (sides[1 - heard].mode === mode) fadeTo(1 - heard, t);
+      return;
+    }
+    if (sides[heard].mode === mode) return;
+    sides[1 - heard].mode = mode;
+    fadeTo(1 - heard, t);
   };
   /**
    * What the sound takes from the Patch it plays, `next` (the knobs as aftertouch moved its Destination, issue 132): every
@@ -1475,6 +1536,7 @@ export function createSynthEngine(
    * every one (issue 218).
    */
   const applyToSound = (next: Patch, t: number, { whole = false } = {}) => {
+    slopeNow = next.filterSlope;
     toMode(next.filterMode, t);
     for (const v of voices) v.apply(next, t, { whole });
     // The laws' swings (issue 74), in the units the nodes take: cents for the pitches and the Cutoff.
@@ -1485,16 +1547,7 @@ export function createSynthEngine(
     // Resonance: the knob's (aftertouch's with it) and each LFO's swing, which the curve turns into each stage's Q. The
     // curve takes the Resonance's 0 to 1 as −1 to 1.
     const resonances = destinationSwings(next, 'resonance', next.resonance);
-    for (const side of sides) {
-      if (!side.mode) continue;
-      if (side.curveFrom.changed(`${side.mode} ${next.filterSlope}`)) {
-        const { curve, stages } = resonanceCurve(side.mode, next.filterSlope);
-        side.resonanceQ.curve = curve;
-        side.makeUp.curve = makeUpCurve(side.mode, next.filterSlope);
-        side.curveStages = stages;
-      }
-      side.toQ.forEach((g, k) => write(g.gain, side.curveStages[k], t));
-    }
+    setSideCurves(next.filterSlope, t);
     write(resonanceIn.offset, 2 * next.resonance - 1, t);
     // Volume: the knob's level (issue 62), the tremolo resting its total swing below it, so the wave's top is the
     // knob's own level; each LFO's swing scaled with it.

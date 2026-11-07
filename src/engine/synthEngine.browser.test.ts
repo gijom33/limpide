@@ -1107,9 +1107,9 @@ describe('a band-pass not so much quieter (issue 231)', () => {
     expect(Math.abs(moved - set)).toBeLessThan(0.5);
   });
 
-  // At a high Resonance, switching from the band-pass stepped more than its wave does (1.4 times at 60 %, 3.3 at 80 %
-  // on this A3): the stages swapped at one sample, and the band-pass is louder now. The Filter's crossfade between
-  // Modes (issue 248) takes that away, tested at every Resonance below.
+  // At a high Resonance, the band-pass is louder than its stages: a change of Mode that swapped them at one sample would
+  // step past its wave (1.4 times at 60 %, 3.3 at 80 % on this A3). The Filter's crossfade between Modes (issue 248)
+  // keeps it inside, tested at every Resonance there.
   it('switches to it at Init’s Resonance, sweeps that by the knob to 80 % and back, and switches back, without a click', async () => {
     const ctx = new OfflineAudioContext(1, SR * 1.1, SR);
     const engine = createSynthEngine(ctx);
@@ -1156,9 +1156,9 @@ async function switchedAt(seconds: number, patch: Partial<Patch>, changes: [numb
   return (await ctx.startRendering()).getChannelData(0);
 }
 
-// Issue 248: the Filter's stages swap Mode at one sample, so a change of Mode while a Note held could click (from the
-// band-pass, 3.3 times the wave's own steepest step at 80 %); it fades over about 10 ms from the Filter as it was to
-// the Filter as it is, every Voice, in both directions.
+// Issue 248: a change of Mode while a Note holds fades over about 10 ms from the Filter as it was to the Filter as it is,
+// every Voice, in both directions, so it never steps past the wave's own steps as a swap of the stages at one sample
+// would (from the band-pass at 80 %, 3.3 times them at 12 dB, 4.1 at 24 dB).
 describe('a crossfade on a change of Filter Mode (issue 248)', () => {
   const A3 = 57;
   // Every ordered pair of Modes once, one after another.
@@ -1179,10 +1179,30 @@ describe('a crossfade on a change of Filter Mode (issue 248)', () => {
         });
         const said = ratios.map((r, i) => `${CIRCUIT[i]} to ${CIRCUIT[i + 1]}: ${r.toFixed(2)}`).join(', ');
         // Within 231's margin (1.1): the most, 1.04, is the low-pass at full Resonance ringing up from silence on its
-        // side, 16 ms after the change, as it does at a Note's start; the same at a fade of 5, 10 or 12 ms. Without the
-        // fade, from the band-pass at 80 %: 4.1 at 24 dB.
+        // side, 16 ms after the change, as it does at a Note's start; the same at a fade of 5, 10 or 12 ms.
         for (const r of ratios) expect(r, said).toBeLessThanOrEqual(1.1);
       });
+
+  it('changes Mode again while a fade is under way, never stepping past the wave’s own', async () => {
+    const patch = { ...defaultPatch(), cutoff: 1000, ampSustain: 1, ampAttack: 0.001, resonance: 0.8, filterSlope: 24 } as const;
+    // The wave's own steepest step: the most of each Mode's, held alone.
+    const modes = ['lowpass', 'bandpass', 'highpass', 'notch'] as const;
+    const alone = await Promise.all(modes.map((filterMode) => switchedAt(0.6, { ...patch, filterMode }, [], [A3])));
+    const own = Math.max(...alone.map((s) => steepestStep(s, 0.1, 0.6)));
+    // From the low-pass to the loud band-pass, then on to another Mode a render quantum or two into the fade (the
+    // band-pass a quarter or half of the sound), or to two more.
+    const quantum = 128 / SR;
+    const runs: [string, (typeof modes)[number][], number][] = [
+      ['notch, a quantum in', ['bandpass', 'notch'], quantum],
+      ['notch, two quanta in', ['bandpass', 'notch'], 2 * quantum],
+      ['high-pass, then notch, then low-pass, 8 ms apart', ['bandpass', 'highpass', 'notch', 'lowpass'], 0.008],
+    ];
+    for (const [said, next, apart] of runs) {
+      const changes = next.map((filterMode, i) => [0.2 + i * apart, { ...patch, filterMode }] as [number, Patch]);
+      const s = await switchedAt(0.6, patch, changes, [A3]);
+      expect(steepestStep(s, 0.195, 0.6) / own, said).toBeLessThanOrEqual(1.1);
+    }
+  });
 
   it('leaves a held chord as it was before the fade and as the new Mode plays it after', async () => {
     const patch = { ...defaultPatch(), cutoff: 1000, ampSustain: 1, ampAttack: 0.001, resonance: 0.8, voices: 2 } as const;
