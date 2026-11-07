@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · enhancement. Built at night (2026-11-05), set back for the owner's answers, and applied to main on 2026-11-06 once the owner had given them ("Yes to all four"): for the owner to try by ear.
+**Status:** done (2026-11-06). Built at night (2026-11-05), set back for the owner's answers, and applied to main on 2026-11-06 once the owner had given them ("Yes to all four"); approved by the owner by ear: "Sounds fine". Ships with the next release.
 
 ## Decisions
 
