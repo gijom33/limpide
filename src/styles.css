@@ -351,17 +351,18 @@ main[data-frozen] .tap-canvases::before {
 }
 
 /* Keys, Tips, Bead and Theme, two choices each, share one row (issue 162): it wraps as one group does, and the four
-   wrap among themselves, two and two, only where the panel is narrower than they are. The row draws the divider before
-   Keys and clips its own groups' (as the toolbar's row does), so one starting a line inside it loses its divider; it
-   leaves a focus outline its 3 px. */
+   wrap among themselves only where the panel is narrower than they are, in two pairs that never break, so two and two
+   whatever the font's width (issue 247). The row draws the divider before Keys and clips its own groups' (as the
+   toolbar's row does), so one starting a line inside it loses its divider; it leaves a focus outline its 3 px. */
 .small-settings {
   display: flex; flex-wrap: wrap; row-gap: 10px; overflow: hidden; padding-block: 3px; margin-block: -3px;
   margin-left: -1px; border-left: 1px solid var(--border);
 }
+.small-settings-pair { display: flex; }
 @media (max-width: 860px) {
   .small-settings { flex: 1 1 100%; margin: 0; padding-block: 0; border-left: 0; border-top: 1px solid var(--border); }
-  .small-settings > .tool-group { flex: none; margin-left: -1px; border-left: 1px solid var(--border); }
-  .small-settings > .tool-group + .tool-group { border-top: 0; }
+  .small-settings-pair > .tool-group { flex: none; margin-left: -1px; border-left: 1px solid var(--border); }
+  .small-settings-pair > .tool-group + .tool-group { border-top: 0; }
 }
 
 /* Tooltips: a title, what the control does, and how to use it. */

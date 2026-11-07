@@ -394,63 +394,67 @@ export function App() {
           <ToolGroup title="Show">
             <OverlayToggles value={overlays} onToggle={(overlay) => viewerStore.dispatch({ type: 'toggleOverlay', overlay })} />
           </ToolGroup>
-          {/* Two choices each: they share one row, and wrap together (issue 162). */}
+          {/* Two choices each: they share one row, and wrap together, two and two (issue 162). */}
           <div className="small-settings">
-            <ToolGroup title="Keys">
-              <Tooltip content={TIPS.letterKeys}>
-                <Segmented
-                  label="Letter keys"
-                  value={letterKeys}
-                  options={[
-                    { value: 'on', label: 'Play', name: 'Letter keys play Notes' },
-                    { value: 'off', label: 'Off', name: 'Letter keys off' },
-                  ]}
-                  onChange={setLetterKeys}
-                />
-              </Tooltip>
-            </ToolGroup>
-            <ToolGroup title="Tips">
-              <Tooltip content={TIPS.tooltips}>
-                <Segmented
-                  label="Tooltips"
-                  value={tooltips}
-                  options={[
-                    { value: 'on', label: 'On' },
-                    { value: 'off', label: 'Off' },
-                  ]}
-                  onChange={setTooltips}
-                />
-              </Tooltip>
-            </ToolGroup>
-            <ToolGroup title="Bead">
-              <Tooltip content={TIPS.bead}>
-                <div className="bead-switch">
+            <div className="small-settings-pair">
+              <ToolGroup title="Keys">
+                <Tooltip content={TIPS.letterKeys}>
                   <Segmented
-                    label="Bead"
-                    value={bead.switch}
+                    label="Letter keys"
+                    value={letterKeys}
                     options={[
-                      { value: 'on', label: 'On', name: 'Bead on' },
-                      { value: 'off', label: 'Off', name: 'Bead off' },
+                      { value: 'on', label: 'Play', name: 'Letter keys play Notes' },
+                      { value: 'off', label: 'Off', name: 'Letter keys off' },
                     ]}
-                    onChange={(v) => moveBead(v === 'on' ? 'switch on' : 'switch off')}
+                    onChange={setLetterKeys}
                   />
-                  <BeadIcon on={bead.switch === 'on'} />
-                </div>
-              </Tooltip>
-            </ToolGroup>
-            <ToolGroup title="Theme">
-              <Tooltip content={TIPS.theme}>
-                <Segmented
-                  label="Theme"
-                  value={theme}
-                  options={[
-                    { value: 'dark', label: 'Dark' },
-                    { value: 'light', label: 'Light' },
-                  ]}
-                  onChange={setTheme}
-                />
-              </Tooltip>
-            </ToolGroup>
+                </Tooltip>
+              </ToolGroup>
+              <ToolGroup title="Tips">
+                <Tooltip content={TIPS.tooltips}>
+                  <Segmented
+                    label="Tooltips"
+                    value={tooltips}
+                    options={[
+                      { value: 'on', label: 'On' },
+                      { value: 'off', label: 'Off' },
+                    ]}
+                    onChange={setTooltips}
+                  />
+                </Tooltip>
+              </ToolGroup>
+            </div>
+            <div className="small-settings-pair">
+              <ToolGroup title="Bead">
+                <Tooltip content={TIPS.bead}>
+                  <div className="bead-switch">
+                    <Segmented
+                      label="Bead"
+                      value={bead.switch}
+                      options={[
+                        { value: 'on', label: 'On', name: 'Bead on' },
+                        { value: 'off', label: 'Off', name: 'Bead off' },
+                      ]}
+                      onChange={(v) => moveBead(v === 'on' ? 'switch on' : 'switch off')}
+                    />
+                    <BeadIcon on={bead.switch === 'on'} />
+                  </div>
+                </Tooltip>
+              </ToolGroup>
+              <ToolGroup title="Theme">
+                <Tooltip content={TIPS.theme}>
+                  <Segmented
+                    label="Theme"
+                    value={theme}
+                    options={[
+                      { value: 'dark', label: 'Dark' },
+                      { value: 'light', label: 'Light' },
+                    ]}
+                    onChange={setTheme}
+                  />
+                </Tooltip>
+              </ToolGroup>
+            </div>
           </div>
         </div>
       </section>

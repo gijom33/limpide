@@ -50,7 +50,8 @@ jobs:
   # run in Playwright's own image, its browsers and their system libraries already in it, on the Ubuntu release of
   # GitHub's runner (24.04, noble): installing the libraries on the bare runner hung now and then on GitHub's side
   # (twice on 2026-10-27, four times for 1.25.0; issue 247). Its fonts, which the layout tests are measured in, are the
-  # image's now, not the runner's. The image's tag follows the lock file's Playwright, checked before anything is
+  # image's now, not the runner's, the system font set to Liberation Sans (.github/fonts.conf says why). The image's
+  # tag follows the lock file's Playwright, checked before anything is
   # installed. --ipc=host keeps Chromium from running out of shared memory, as Playwright's guide for the image says.
   # GitHub still sets CI inside the container, so the skips for its Linux WebKit still apply.
   browsers:
@@ -83,6 +84,7 @@ jobs:
           node-version: 24
           cache: npm
       - run: node --experimental-strip-types --no-warnings scripts/playwrightImage.ts
+      - run: mkdir -p ~/.config/fontconfig && cp .github/fonts.conf ~/.config/fontconfig/fonts.conf && fc-match system-ui
       - run: npm ci
       - if: matrix.name == 'engine'
         run: npm run test:engine
