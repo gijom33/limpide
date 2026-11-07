@@ -1204,6 +1204,18 @@ describe('a crossfade on a change of Filter Mode (issue 248)', () => {
     }
   });
 
+  // Between a fade's end by the clock and the browser's word that it ended, a change still waits for the fade, and the
+  // last one asked for plays: a newer one does not fade in at once over the waiting one (the 1.26.1 review).
+  it('plays the last Mode asked for when one comes just after a fade, before it has settled', async () => {
+    const patch = { ...defaultPatch(), cutoff: 1000, ampSustain: 1, ampAttack: 0.001, resonance: 0.5 } as const;
+    const highpass = { ...patch, filterMode: 'highpass' } as const;
+    // Low-pass to band-pass at 0.2 s, the notch asked for during that fade, then the high-pass 10.7 ms after its start:
+    // past MODE_FADE, before the timer's end a quantum later.
+    const changes: [number, Patch][] = [[0.2, { ...patch, filterMode: 'bandpass' }], [0.205, { ...patch, filterMode: 'notch' }], [0.2107, highpass]];
+    const [s, alone] = await Promise.all([switchedAt(0.6, patch, changes, [A3]), switchedAt(0.6, highpass, [], [A3])]);
+    expect(Math.abs(dB(rms(s, 0.4 * SR, 0.6 * SR) / rms(alone, 0.4 * SR, 0.6 * SR)))).toBeLessThan(0.5);
+  });
+
   it('leaves a held chord as it was before the fade and as the new Mode plays it after', async () => {
     const patch = { ...defaultPatch(), cutoff: 1000, ampSustain: 1, ampAttack: 0.001, resonance: 0.8, voices: 2 } as const;
     const chord = [A3, A3 + 7];

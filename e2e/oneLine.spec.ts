@@ -82,7 +82,7 @@ test('Key Track and Velocity read Key and Vel where their row runs short, whole 
     // Mac's fonts: the row has room for the whole names.
     await expect(knobName(page, 'Key Track')).toHaveText('Key Track', { useInnerText: true });
     await expect(knobName(page, 'Velocity')).toHaveText('Velocity', { useInnerText: true });
-    // A wider font (Linux's, or a larger text setting) leaves the row short: the names step down before a knob wraps.
+    // A wider font (DejaVu Sans on some Linux systems, or a larger text setting) leaves the row short: the names step down before a knob wraps.
     await page.addStyleTag({ content: '.knob-label { letter-spacing: 0.3em; }' });
     await expect(knobName(page, 'Key Track'), `${width} px`).toHaveText('Key', { useInnerText: true });
     await expect(knobName(page, 'Velocity'), `${width} px`).toHaveText('Vel', { useInnerText: true });

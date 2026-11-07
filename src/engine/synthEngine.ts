@@ -1185,8 +1185,11 @@ export function createSynthEngine(
   // The side heard, or faded to (issue 248); when its fade began, and its share of the sound then.
   let heard = 0;
   let fade = { start: -MODE_FADE, startShare: 1 };
-  // Fades begun so far: only the last one's end settles the sides, or starts the next.
+  // Fades begun so far: only the last one's end settles the sides, or starts the next. A fade is under way until it
+  // has settled, by the browser's word, not only for its MODE_FADE: until then the side faded out still rings with its
+  // old Mode (the 1.26.1 review).
   let fades = 0;
+  let settled = true;
   // A Mode asked for while a fade was under way, for when it is over; and the Slope the sides were last set to.
   let pending: FilterMode | undefined;
   let slopeNow: FilterSlope = 12;
@@ -1495,6 +1498,7 @@ export function createSynthEngine(
     const startShare = to === heard ? share : 1 - share;
     heard = to;
     fade = { start: t, startShare };
+    settled = false;
     for (const v of voices) v.fadeTo(to, t, startShare);
     const fading = ++fades;
     const timer = ctx.createConstantSource();
@@ -1504,6 +1508,7 @@ export function createSynthEngine(
       timer.disconnect();
       if (fading !== fades) return;
       for (const v of voices) v.settle(to);
+      settled = true;
       if (!pending) return;
       // The side faded out, unwired with new stages, takes the Mode; its fade starts a little after now, as the sound
       // may have gone on past the clock read here by the time the fade is written (an offline render does not wait).
@@ -1523,7 +1528,7 @@ export function createSynthEngine(
    */
   const toMode = (mode: FilterMode, t: number) => {
     if (!sides[heard].mode) sides[heard].mode = mode;
-    if (t < fade.start + MODE_FADE) {
+    if (!settled) {
       pending = sides[heard].mode === mode || sides[1 - heard].mode === mode ? undefined : mode;
       if (sides[1 - heard].mode === mode) fadeTo(1 - heard, t);
       return;

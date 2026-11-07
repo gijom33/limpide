@@ -120,8 +120,8 @@ function rowOnOneLine(row: HTMLElement): boolean {
 
 /**
  * A row of knobs and faders whose names take shorter forms where the row runs short (issue 223): a knob's column is as
- * wide as its name, so a name runs short when its row would wrap a control to a second line, as a wider font (Linux's,
- * a larger text setting) can make it. Every name in the row steps down together, as the Timeline's key does, the
+ * wide as its name, so a name runs short when its row would wrap a control to a second line, as a wider font (DejaVu
+ * Sans on some Linux systems, a larger text setting) can make it. Every name in the row steps down together, as the Timeline's key does, the
  * longest forms that keep the row on one line; at worst their shortest. Measured again as the row's size, its
  * controls, their names or the fonts change.
  */

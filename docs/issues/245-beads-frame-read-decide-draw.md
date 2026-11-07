@@ -77,3 +77,4 @@ Built (2026-11-05) on night/2026-11-05.
 
 **What to try in the app:** nothing should look different. Bead on its edge, the Demo through to its surfing part, a ride on a slow LFO, a throw, a Tutorial and the Tour, on a laptop and a phone: each as before.
 
+**Since then (2026-11-07, [250](./250-tidy-ups-after-1-26.md))**: its call 3's five specs that repeated the unit tests (the Demo's acts, the ride home, the drop on a plot, the throw, the melt) are cut to their wiring; the rules are the unit tests'.

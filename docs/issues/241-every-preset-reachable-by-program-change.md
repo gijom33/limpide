@@ -49,3 +49,5 @@ Claude's calls, open to the owner:
 3. The tip that names Bank Select is the bend range's (the only one with the Program Change sentence), not the Playing tip.
 
 To try in the app: on a keyboard that sends Bank Select (or a MIDI tool), send CC 0 = 1 then Program 0: the Patch becomes Wind. Program 13 in bank 1 is Machine Chatter, the last; Program 14 changes nothing. CC 0 = 0 and the Program buttons work as before. Learn CC 0 onto a knob: it then turns the knob, and Program Changes stay in bank 0.
+
+**Since then (2026-11-07, [250](./250-tidy-ups-after-1-26.md))**: MIDI Learn passes over a Bank Select (CC 0 or 32) that a Program Change follows, a Program button's bank; a CC 0 with none after it is learned as before.

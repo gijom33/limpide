@@ -75,3 +75,4 @@ To try in the app (nothing should look or sound different):
 - Start the Tour from About on a Preset of yours, turn the Filter card's Cutoff, press Freeze on the Amp card, then Song: the Tour ends, your Preset is back, the Song plays.
 - Open a Tutorial with an overlay on, go to its Display Step, then quit: the overlay is back. Finish one: it is ticked in the Tutorials list.
 
+**Since then (2026-11-07, [250](./250-tidy-ups-after-1-26.md))**: the later pass of its call 1 is done; the Shows' specs keep their wiring, the rules are the unit tests'.

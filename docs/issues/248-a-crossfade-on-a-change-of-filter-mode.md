@@ -64,3 +64,4 @@ Built at night (2026-11-06) on night/2026-11-06, test-first.
 - Step through Presets with a Note held, and click the picker quickly several times: the last Mode clicked is the one heard, without a tick.
 - Change the Slope with a Note held: as before, at once.
 
+**Since then (2026-11-07, the 1.26.1 code review):** a change that came after a fade's 10 ms but before the browser said the fade had ended faded in at once, over the side still ringing with its old Mode, and a Mode waiting since the fade then followed it, over the last one asked for. A fade now counts as under way until it has settled, so such a change waits like any other; a test changes Mode in that gap and hears the last one asked for.

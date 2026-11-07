@@ -75,3 +75,5 @@ Claude's calls, open to the owner:
 **To try:** on a phone or a window under 860 px, turn LFO 1's Depth up and its Rate to 1 Hz or slower, keep a Sine or a Triangle, scroll until its plot shows under the tabs, and wait: within 15 to 40 seconds Bead goes onto the plot and rides it, then goes back. Scroll the plot under the tabs mid-ride. On a wide window, the same: the next visit is a ride. Then pick Bead up and drop it on the plot, or just beside it, mid-ride or not; and drop it on a Saw's plot (LFO 2 on, a Saw), where it is thrown as before. During the Demo, a drop on the plot is a throw.
 
 **Since then (2026-11-05, [245](./245-beads-frame-read-decide-draw.md)):** the browser test of its LFO rides on a phone and in 2 × 2 left `e2e/mascot.spec.ts` for the node tests of Bead's frame, on readings of the page, as [232](./232-1-24-0-red-on-githubs-linux-webkit.md) records.
+
+**Since then (2026-11-07, [250](./250-tidy-ups-after-1-26.md))**: the drop on LFO 2's Saw, thrown home, is tested in Bead's frame's unit tests only; the browser spec keeps the ride's wiring.

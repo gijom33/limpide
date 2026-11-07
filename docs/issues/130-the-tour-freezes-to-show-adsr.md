@@ -77,3 +77,5 @@ Decided by the owner in a grilling, 2026-10-31 (Claude's recommendations, each a
 
 - 2026-10-31, from the 1.18.0 fact-check (inbox): the Amp card says the synth lengthens the Attack, then the Release, but a Note takes the length set when its key goes down or up; with the knobs' taper few Notes get the longest (0.8 s once in 48 s). The card's words or its timing are reworked here, with the freeze. Triage, Claude's call, open to the owner.
 - 2026-10-31, from profile 16's first review: Decay and Sustain are never explained anywhere, and the Filter Envelope arrives unannounced in the Bass; this card's four stages are where a newcomer first meets them, so its words say each in plain words. Triage, Claude's call, open to the owner.
+
+**Since then (2026-11-07, [250](./250-tidy-ups-after-1-26.md))**: of Next, Back and Close letting go of the Tour's Freeze, the browser spec keeps Close; the rest are the Shows' unit tests.

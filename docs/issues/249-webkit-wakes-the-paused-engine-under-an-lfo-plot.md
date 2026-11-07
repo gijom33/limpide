@@ -31,9 +31,9 @@ Claude's calls, open to the owner (2026-11-06, triage):
 - The LFO plot's drawing while the sound rests.
 
 **Acceptance criteria:**
-- [ ] The cause stated in the issue, with the loop and its rate before the fix.
-- [ ] The test green 20 in 20 in WebKit on the Mac, and still green in Chromium.
-- [ ] If the page was mended, a test that fails without the mend.
+- [x] The cause stated in the issue, with the loop and its rate before the fix.
+- [x] The test green 20 in 20 in WebKit on the Mac, and still green in Chromium.
+- [x] If the page was mended, a test that fails without the mend.
 
 **Out of scope:**
 - 216's other wake rules; the Viewers' rest (214).

@@ -66,3 +66,5 @@ To try in the app (nothing should look or sound different):
 - Play a few Notes with Glide up and an LFO on Pitch: the Pitch marker slides and wobbles, the Timeline draws the Envelopes as before, and Freeze holds its past still.
 - Set an LFO on the Cutoff with Sync on, leave the page silent until the sound pauses, then play: the LFO plot, the rings and the beat carry on where they were.
 - Press aftertouch on a keyboard (or bend): the ring and the Pitch marker move as before.
+
+**Since then (2026-11-07, [250](./250-tidy-ups-after-1-26.md))**: the record writes its own LFO clocks; the engine asks it to (its call 3 said the engine moved them itself).
