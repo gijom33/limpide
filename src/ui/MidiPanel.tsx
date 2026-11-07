@@ -93,7 +93,7 @@ function ActivityLine({ activity }: { activity: MidiActivity }) {
 }
 
 /**
- * The MIDI button: a dot and the number of Controllers, and "Learning" in its word's place while MIDI Learn is on. It opens the MIDI
+ * The MIDI button: a socket icon and the number of Controllers, and "Learning" in its word's place while MIDI Learn is on. It opens the MIDI
  * panel: what is connected, the Activity Monitor, MIDI Learn (and Done, once learning), and the Mappings. Escape from
  * anywhere in it, MIDI Learn, Done and a layout close it back to the button; Quick Setup, to its card (issue 189).
  */

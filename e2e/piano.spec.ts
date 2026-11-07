@@ -12,7 +12,7 @@ test('the on-screen piano plays, and lights the key while it sounds', async ({ p
   // The letter keys' 17, C4 to E5, and from 861 px any the header has room for beyond them (issue 154).
   await expect(piano.getByRole('button').nth(16)).toHaveAccessibleName('E5');
   const c4 = piano.getByRole('button', { name: 'C4' });
-  await c4.scrollIntoViewIfNeeded(); // the piano sits at the bottom, below the fold of a small test window
+  await c4.scrollIntoViewIfNeeded(); // in the header, so in view: nothing to do unless the page has scrolled
   const box = (await c4.boundingBox())!;
   await page.mouse.move(box.x + box.width / 2, box.y + box.height * 0.8);
   await page.mouse.down();

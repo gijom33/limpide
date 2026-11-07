@@ -334,7 +334,7 @@ test('the octave buttons write the Patch’s keyboard octave: a saved Patch and 
 });
 
 test('a Patch exports as a file and imports back', async ({ page }) => {
-  await page.getByRole('button', { name: 'Next Preset' }).click(); // Bass
+  await page.getByRole('button', { name: 'Next Preset' }).click(); // Pure Sine
   await patchName(page).click();
   const download = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Export file' }).click();
@@ -374,7 +374,7 @@ test('the Preset arrows stay put whatever the name between them, and a long name
   expect(new Set(steps.map((s) => s.label)).size).toBe(22); // a different Preset each time
   for (const { label, x, cut } of steps) {
     expect(x, label).toBe(home);
-    expect(cut, label).toBe(false); // every factory name shows in full
+    expect(cut, label).toBe(false); // each of the first 22 factory names shows in full
   }
   await nudge(page);
   await expect(patchName(page)).toHaveAttribute('data-changed', 'true'); // the changed dot appears…

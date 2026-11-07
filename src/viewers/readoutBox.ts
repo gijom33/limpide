@@ -16,9 +16,10 @@ interface ReadoutText {
 }
 
 // The shapes every value and unit can take ('d' any digit, 'L' a Note's letter): from "3 Hz" on the linear axis to
-// "23.99 kHz" at the top of the Spectrum, "F#-3" to "F#10", "−100 dB" to "silent".
+// "19.99 kHz" at the top of the Spectrum (20 kHz), "F#-3" to "F#10", "−100 dB" to "silent".
 const VALUES = ['ddd', 'dd.dd', 'L#-d', 'L#dd', '−ddd', 'silent'];
-// With the Synth Geek Layer on, the Harmonic's number (issue 170): up to the 872nd, 24 kHz over 27.5 Hz.
+// With the Synth Geek Layer on, the Harmonic's number (issue 170): up to about the 930th, 20 kHz over the lowest
+// fundamental it numbers, four bins (about 21.5 Hz at 44.1 kHz).
 const HARMONIC = 'n = ddd';
 const UNITS = ['Hz', 'kHz', 'dB', '+dd¢', '−dd¢'];
 const DIGITS = [...'0123456789'];

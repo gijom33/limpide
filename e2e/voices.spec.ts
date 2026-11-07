@@ -3,7 +3,7 @@ import { openDisplay } from './helpers';
 
 const voices = (page: import('@playwright/test').Page) => page.getByRole('radiogroup', { name: 'Voices' });
 
-test('Voices is chosen on the Amp heading line, starts at 1, and is kept with the Patch', async ({ page }) => {
+test('Voices is chosen in the Amp, under its heading, starts at 1, and is kept with the Patch', async ({ page }) => {
   await page.goto('/');
   const amp = page.getByRole('region', { name: 'Amp' });
   await expect(amp.getByRole('radiogroup', { name: 'Voices' }).getByRole('radio', { name: '1' })).toHaveAttribute('aria-checked', 'true');
@@ -58,7 +58,7 @@ test('the Display panel chooses what the Amp Viewers follow: all Voices by defau
 
 // Each Oscillator's tab has its own pitch row under its Waveform (the owner, issue 90; it was one shared row of Osc
 // 2's tuning under both tabs, issue 19).
-test('Osc 2’s Tuning is a row of its own tab, greyed out until Osc 2 is heard: mixed in, through Ring or by FM on a heard Osc 1', async ({ page }) => {
+test('Osc 2’s Tuning is a row of its own tab, greyed out until Osc 2 is heard, as by FM on a heard Osc 1, and not by FM on a silent one', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
   const tuning = page.getByRole('group', { name: 'Tuning' });

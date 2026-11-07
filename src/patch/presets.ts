@@ -156,7 +156,8 @@ group('Envelope', [
   }],
 ]);
 
-// The LFO aimed at each destination, at each speed; the Timeline and the Response Curve show it move.
+// The LFO aimed at the Cutoff, the pitch and more, at each speed (Pulse Width and the Volume are in Shapes and the
+// sound groups); the Timeline and the Response Curve show it move.
 group('LFO', [
   ['Slow Vibrato', 'A sine LFO on the pitch at 2 Hz: every Harmonic in the Spectrum sways together, and the Scope stays locked through it.', {
     cutoff: 6000, resonance: 0, ampSustain: 1, lfoDestination: 'pitch', lfoRate: 2, lfoAmount: 0.3,
@@ -630,10 +631,10 @@ export function presetAfter(name: string, delta: number): Preset {
   return PRESETS[index === -1 ? (delta > 0 ? 0 : PRESETS.length - 1) : stepPreset(index, delta)];
 }
 
-/** What plays when the page opens: a share link, else last session's Patch, else Init. */
 /** What a shared sound is called when its link carries no name. */
 export const SHARED_NAME = 'Shared Patch';
 
+/** What plays when the page opens: a share link, else last session's Patch, else Init. */
 export function initialPatch(hash: string, library: Library): { patch: Patch; name: string; shared: boolean } {
   const shared = hash.startsWith('#p=') ? readShareHash(hash) : undefined;
   if (shared) return { patch: shared.patch, name: shared.name ?? SHARED_NAME, shared: true };

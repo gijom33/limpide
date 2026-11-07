@@ -55,7 +55,7 @@ test('the live dot rides the Effective Cutoff while a Note sounds, and only then
   await expect(dot(cutoff)).toBeHidden({ timeout: 3000 }); // once the Release has faded
 });
 
-test('the live dot moves with the Filter Envelope alone, no LFO, as with the LFO or both', async ({ page }) => {
+test('the live dot moves with the Filter Envelope alone, no LFO', async ({ page }) => {
   await page.goto('/');
   await listening(page);
   await turnUp(page, 'Filter', 'Amount', 15);

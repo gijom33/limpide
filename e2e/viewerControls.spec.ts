@@ -75,13 +75,17 @@ test('hovering a Spectrum reads out frequency, note and level', async ({ page })
   await expect(spectrum).not.toHaveAttribute('data-readout');
 });
 
-test('controls are grouped under View, Axes and Show', async ({ page }) => {
+test('controls are grouped under View, Axes and Show, then the page’s own Keys, Tips, Bead and Theme', async ({ page }) => {
   await page.goto('/');
   await openDisplay(page);
   const toolbar = page.getByRole('region', { name: 'Viewer controls' });
   await expect(toolbar.getByRole('group', { name: 'View' }).getByRole('button', { name: 'Freeze' })).toBeVisible();
   await expect(toolbar.getByRole('group', { name: 'Axes' }).getByRole('radiogroup', { name: 'Scope cycles' })).toBeVisible();
   await expect(toolbar.getByRole('group', { name: 'Show' }).getByRole('button', { name: 'Filter’s Response Curve' })).toBeVisible();
+  await expect(toolbar.getByRole('group', { name: 'Keys' }).getByRole('radiogroup', { name: 'Letter keys' })).toBeVisible();
+  await expect(toolbar.getByRole('group', { name: 'Tips' }).getByRole('radiogroup', { name: 'Tooltips' })).toBeVisible();
+  await expect(toolbar.getByRole('group', { name: 'Bead' }).getByRole('radiogroup', { name: 'Bead' })).toBeVisible();
+  await expect(toolbar.getByRole('group', { name: 'Theme' }).getByRole('radiogroup', { name: 'Theme' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Freeze' })).toHaveAttribute('aria-keyshortcuts', 'Space');
 });
 

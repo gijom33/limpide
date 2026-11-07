@@ -212,7 +212,7 @@ describe('shared scale across Taps', () => {
     expect(rms(taps.amp) / rms(taps.filter)).toBeCloseTo(1, 2);
   });
 
-  it('keeps every Tap within ±1 while Resonance is off; only Resonance can push the Filter Tap past it (OVER)', async () => {
+  it('keeps every Tap within ±1 while Resonance is off', async () => {
     let worst = 0;
     for (const note of [24, 36, 48, 60, 72, 84]) {
       for (const cutoff of [100, 300, 873, 2000, 6000]) {
@@ -1093,7 +1093,7 @@ describe('a band-pass not so much quieter (issue 231)', () => {
       expect(Math.abs(bandpass - lowpass), `low-pass ${lowpass.toFixed(1)}, band-pass ${bandpass.toFixed(1)} dB`).toBeLessThan(3);
     });
 
-    it(`keeps its level within 3 dB of Init's 5 % as the Resonance narrows the band, up to the make-up's ceiling: ${filterSlope} dB`, async () => {
+    it(`keeps its level within 3 dB of its level at 5 % Resonance as the band narrows, up to the make-up's ceiling: ${filterSlope} dB`, async () => {
       const resonances = [0.05, 0.2, 0.4, 0.6, 0.8];
       const levels = await Promise.all(resonances.map((resonance) => levelOf({ filterMode: 'bandpass', filterSlope, resonance })));
       for (const [i, level] of levels.entries()) expect(Math.abs(level - levels[0]), `Resonance ${resonances[i]}`).toBeLessThan(3);

@@ -60,7 +60,7 @@ describe('the Ideal from every Oscillator (the owner, 2026-10-27): each sourceâ€
     const partials = idealPartials({ ...defaultPatch(), ...sine, mixOsc2: 1, osc1Octave: -1 }, 64);
     expect(of(partials, 'osc1', 1)).toBeDefined();
     expect(of(partials, 'osc2', 2)).toBeDefined();
-    // Osc 1 up an octave with the Sub: the Sub an octave below Osc 1 is still the fundamental, Osc 2 under both.
+    // Osc 1 up an octave with the Sub: the Sub an octave below Osc 1 is still the fundamental, Osc 2 on it too.
     const up = idealPartials({ ...defaultPatch(), ...sine, mixOsc2: 1, mixSub: 1, osc1Octave: 1 }, 64);
     expect(of(up, 'sub', 1)).toBeDefined();
     expect(of(up, 'osc1', 2)).toBeDefined();

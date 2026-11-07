@@ -54,9 +54,9 @@ export function keyTrackOctaves(patch: Patch, low: number, high: number): [numbe
 }
 
 /**
- * The LFOs' reach on a knob they swing evenly around its value (Osc 2 Pitch's Semitone, Detune, Pulse Width, Resonance):
- * its law's amount each way at full Depth, both together kept within its room (as the sound is). None for a knob no
- * active LFO aims at.
+ * The LFOs' reach on a knob they swing evenly around its value (Osc 2 Pitch's Semitone, Detune, Pulse Width, Resonance,
+ * FM): its law's amount each way at full Depth, both together kept within its room (as the sound is). None for a knob
+ * no active LFO aims at.
  */
 export function evenReach(patch: Patch, knob: ParamId): Reach | null {
   const destination = destinationOf(knob);

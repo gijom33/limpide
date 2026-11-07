@@ -369,7 +369,7 @@ const standing = (page: Page, selector: string) =>
 for (const [layout, width, height] of [['phone', 375, 812], ['short phone', 393, 659], ['2 × 2', 690, 830]] as const) {
   for (const preset of ['Sub Ladder', 'Bass', 'Acid', 'Pluck', 'Wobble', 'PWM Bass', 'FM Ladder', 'Ring Bell', 'Deep Breath']) {
     test(`on a ${layout}, each Step of ${preset} brings its control, then the Viewer its note names, clear of the header and the card`, async ({ page }) => {
-      test.setTimeout(90000); // fifteen Steps, each made and checked twice
+      test.setTimeout(90000); // up to nineteen Steps (PWM Bass), each made and checked twice
       await page.emulateMedia({ reducedMotion: 'reduce' });
       await page.setViewportSize({ width, height });
       await open(page, preset);

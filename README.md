@@ -20,7 +20,7 @@ The sounds themselves are not new: Limpide is a classic subtractive synth, laid 
 - **Learn by building.** Tutorials rebuild a Preset from Init one Step at a time: you turn each knob, or a set of faders together, then hear and see what it changed. Nine so far: Sub Ladder, each wave’s Harmonics side by side, then Bass, Acid, Pluck and Wobble, PWM Bass for pulse width modulation, then FM Ladder, Ring Bell and Deep Breath for FM, Ring, the Sub and the Noise’s colour.
 - **See the subtraction.** Each stage has a cycle-locked Scope and a Spectrum. The Filter's real Response Curve is drawn over the Spectrum.
 - **Check Harmonics against theory.** Markers name each Harmonic, and an Ideal Reference shows what theory predicts for the Waveform.
-- **Watch modulation over time.** The Envelope Timeline draws both Envelopes, the LFO and the Effective Cutoff as they move.
+- **Watch modulation over time.** The Envelope Timeline draws both Envelopes, the Effective Cutoff and what the two LFOs and a keyboard's aftertouch move, as they move.
 - **Study a moment.** Freeze, A/B Snapshots, axis toggles and a hover readout. Hold keeps a note sounding while you turn knobs.
 - **Play however you like.** Use the computer keyboard (`A W S E D F T G…`, with `Z`/`X` to change octave), the on-screen piano, or any MIDI controller via MIDI Learn. Patches can have one to eight Voices.
 - **Play in time.** A tempo in the header, set by hand, by Tap Tempo or by a MIDI clock; an LFO's Rate can Sync to it as a note value (1/4, 1/16, triplets…), so a wobble keeps to the beat. Legato for one-Voice lines, and a keyboard's aftertouch moves the Destination you pick.
@@ -67,7 +67,7 @@ Every commit names Claude Code in its `Co-Authored-By` line, but for eight merge
 3. **Decisions** ([docs/adr](docs/adr)): the architecture decisions and why they were made. And a **glossary** ([CONTEXT.md](CONTEXT.md)): the project's vocabulary (Patch, Voice, Tap, Effective Cutoff…), which the code and docs use exactly. Both are kept true to the code.
 4. **Tests first** where behaviour can be measured: the engine renders real audio and checks Harmonics against theory; Playwright plays the built site in two browsers.
 5. **An inbox** ([docs/inbox.md](docs/inbox.md)): bugs and ideas as they come, triaged into issues.
-6. **Reviews** ([docs/reviews](docs/reviews)): agents playing a dozen kinds of visitor (a curious contact, a synth player, a designer, a teacher, a screen-reader user, a sceptic of AI code…), their findings back in the inbox.
+6. **Reviews** ([docs/reviews](docs/reviews)): twenty agent reviewers, seventeen of them playing a kind of visitor (a curious contact, a synth player, a designer, a teacher, a screen-reader user, a sceptic of AI code…) and three checking the words and the sound against the code, their findings back in the inbox.
 7. **The agent's working rules** ([CLAUDE.md](CLAUDE.md)): how commits, decisions and releases are recorded ([ADR-0010](docs/adr/0010-how-the-work-is-recorded.md)), and [the release steps](docs/releasing.md).
 
 The owner decides what Limpide is, what it looks like, and what ships; those decisions are dated in the issues. The agent proposes, writes the code, the tests and the docs, and checks its work in a real browser before it is committed.

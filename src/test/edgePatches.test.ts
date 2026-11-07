@@ -49,7 +49,7 @@ describe('the Patches at the edges (issue 116)', () => {
     expect(edgeCases(117)).not.toEqual(edgeCases(116));
   });
 
-  it('has thousands of Patches, each one a Share link gives back whole', () => {
+  it('has a thousand Patches and more, each one a Share link gives back whole', () => {
     const cases = edgeCases(116);
     expect(cases.length).toBeGreaterThanOrEqual(1000);
     for (const { patch } of cases) expect(patchFromShare(patchToShare(patch))).toEqual(patch);

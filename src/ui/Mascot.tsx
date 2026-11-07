@@ -205,8 +205,8 @@ export function BeadIdle() {
  * stretches like a raindrop as it speeds up and splashes as hard as it lands; flying up, its tail spins under it. It
  * moves with what is heard, as the Viewers read it (the Modulation model), and with every control turned, by hand, a
  * Controller or the Demo (`gesturesOf`); sent away, it jumps, splashes and melts, or, hovering or in the air, drips away
- * down the window. It adds nothing to the sound. No focus, no pointer, nothing for a screen reader. Drawn by the render
- * loop, outside React (ADR-0002).
+ * down the window. It adds nothing to the sound. No focus and nothing for a screen reader; it takes the pointer only to
+ * be tickled, poked or picked up. Drawn by the render loop, outside React (ADR-0002).
  */
 export function Mascot({
   patches,

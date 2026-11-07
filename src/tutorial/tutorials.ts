@@ -11,8 +11,8 @@ import type { Tutorial } from './tutorial';
 export const FROM_INIT = 'Start from Init, the plain sound every Tutorial begins with, and change one control at a time. Play any Note, or press Listen, to hear each change.';
 
 /**
- * Sub Ladder, each wave's Harmonics side by side (issue 233), then the four first Tutorials (issue 58), then the lessons
- * of issue 109; the Tour's last card opens the first (issue 128).
+ * Sub Ladder, each wave's Harmonics side by side (issue 233), then the four first Tutorials (issue 58), then PWM Bass
+ * (issue 234), then the lessons of issue 109; the Tour's last card opens the first (issue 128).
  */
 export const TUTORIALS: Tutorial[] = [
   // Issue 233: one wave a Step on Osc 1, every Harmonic in sight, then a saw and a square an octave apart, Bass's start.

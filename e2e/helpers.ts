@@ -1,6 +1,6 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
-/** Opens the Display panel (Freeze, Snapshot, axes, overlays) if it is not open already. */
+/** Opens the Display panel (the Viewers' View, Axes and Show, and the page's Keys, Tips, Bead and Theme) if it is not open already. */
 export async function openDisplay(page: Page) {
   const button = page.getByRole('button', { name: 'Display' });
   if ((await button.getAttribute('aria-expanded')) !== 'true') await button.click();

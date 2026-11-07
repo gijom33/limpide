@@ -144,7 +144,7 @@ export function responseFormula(mode: FilterMode, slope: FilterSlope): Formula {
     : { says: `${RESPONSE_SAYS[mode]} At 24 dB, two of these Filters in a row: the gain squared, falling twice as fast.`, formula: `|H| = ${gained}(${one})²`, where };
 }
 
-/** The band-pass's make-up, G, in words: its dB at Init's Resonance and under, and at most (issue 231). */
+/** The band-pass's make-up, G, in words: its dB at 5 % Resonance and under, and at most (issue 231). */
 function makeUpWords(slope: FilterSlope): string {
   const db = (resonance: number) => Math.round(20 * Math.log10(makeUp('bandpass', slope, resonance)));
   return `G: the make-up, ${db(0)} dB up to ${MAKE_UP_RISES_FROM * 100} % Resonance, rising as √Q above it to ${db(1)} dB at most, as a narrower band lets less of a saw through`;
@@ -174,7 +174,7 @@ export function levelDb(level: number): string {
   return `${db < -0.05 ? '−' : ''}${Math.abs(db).toFixed(1)} dB`;
 }
 
-/** The Parameters whose value is a gain: the Mixer's levels and the Amp's Sustain. */
+/** The Parameters whose value is a gain: the Mixer's levels, the Amp's Sustain and the Volume; Ring, Osc 1 times Osc 2, stays in %. */
 const GAINS: ParamId[] = ['mixOsc1', 'mixOsc2', 'mixSub', 'mixNoise', 'ampSustain', 'volume'];
 
 /**

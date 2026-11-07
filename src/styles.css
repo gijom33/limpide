@@ -266,8 +266,8 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 [data-overlay='geek'] .swatch::before { left: 0; }
 [data-overlay='geek'] .swatch::after { right: 0; }
 
-/* Toolbar: one panel, three captioned groups (View, Axes, Show), separated by hairlines. */
-/* The toolbar sits in the header line when there is room, and wraps below the title when not. */
+/* Toolbar: the Display panel's captioned groups (View, Axes, Show, then Keys, Tips, Bead and Theme two by two),
+   separated by hairlines. It opens from the Display button, under the header (.display-panel). */
 .toolbar { flex: 1 1 auto; margin: 0; padding: 6px 4px; background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-panel); }
 /* Each group draws its divider just outside its left edge, and this row clips anything outside it, so a
    group that wraps to the start of a new row loses its divider: dividers only ever sit between groups. */
@@ -313,7 +313,8 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 /* The octave buttons' only grey is that shade: no hover fill (it sticks after a touch) to be read as a shift. */
 .octave:hover:not([data-shift]) { background: none; }
 .octave { font-variant-numeric: tabular-nums; }
-/* Icons that stand in for a button's word where room is short (phones); the word shows everywhere else. */
+/* A button's glyph (Hold's fermata): shown only in the header, there at every width, its word giving way first where
+   room is short (above). */
 .tool-glyph { display: none; flex: none; }
 .tool-split { display: inline-flex; gap: 2px; }
 
@@ -528,9 +529,10 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
   main > .chain { grid-template-rows: auto minmax(176px, 1fr); }
 }
 
-/* Oscillator tabs: one Oscillator at a time; the Mixer stays visible below. */
-/* The Oscillators stage is rows: the tabs, then the Waveform picker with Pulse Width, then Osc 2's tuning, then
-   the Mixer. The tuning and Mixer rows carry their name in a side column, so a row costs no heading line. */
+/* Oscillator tabs: one tab at a time, Osc 1, Osc 2, Sub & Noise and the Mixer. */
+/* Under the tabs, each tab's rows: an Oscillator's Waveform picker with Pulse Width, then its pitch row (Osc 2's
+   Tuning); the Sub's and the Noise's choices; the Mixer's five faders. A row carries its name in the side column, so
+   it costs no line above it. */
 .tabs { display: flex; flex-direction: column; gap: var(--space-2); }
 .tab-list { display: flex; gap: 2px; }
 .tab-panels { min-width: 0; }
@@ -543,7 +545,8 @@ main[data-frozen] .timeline canvas { outline: 1px dashed var(--muted); outline-o
 .tab-list [role='tab']:hover { color: var(--text); }
 .tab-list [role='tab'][aria-selected='true'] { color: var(--text); border-bottom-color: var(--stage, var(--text)); }
 .tab-list [role='tab']:focus-visible { outline: 2px solid var(--stage, var(--text)); outline-offset: -2px; border-radius: 4px; }
-/* A dot on a tab whose Oscillator is mixed in, so you know it is sounding while you edit the other. */
+/* A dot on a tab whose sound is mixed in (an Oscillator, or the Sub or the Noise), so you know it is sounding while you
+   edit another. */
 .tab-badge { width: 6px; height: 6px; border-radius: 50%; background: var(--stage, var(--text)); }
 .tab-badge:not([data-on]) { visibility: hidden; }
 .tab-panels { display: grid; row-gap: var(--space-2); }
@@ -670,11 +673,9 @@ html:has(dialog.about[open]) { overflow: hidden; }
 /* On both Oscillator tabs the Pulse Width knob sits to the right of the Waveform picker, so it stays put when
    switching tabs; each tab's pitch row is under its Waveform (the owner, issue 90). */
 .tab-panel .sub-block > .knobs { flex: 0 0 auto; }
-/* The Tuning and Mixer rows: name in a 44 px column, knobs beside it, so both rows' knobs line up. In a stage too
-   narrow for the Mixer's four knobs beside a label, the Mixer's name goes above its row (the Tuning row's three
-   knobs still fit beside theirs). */
-/* Every stage is a grid of rows: a label column on the left (TUNING, MIXER, FILTER ENVELOPE, AMP ENVELOPE,
-   VOICES; two lines when the name needs them), and the controls starting on one vertical line to its right.
+/* Every stage is a grid of rows: a label column on the left (WAVEFORM, PITCH, TUNING, SUB, NOISE, LEVELS, MODE,
+   CUTOFF, ENVELOPE, VOICES; each on one line), and the controls starting on one vertical line to its right, so the
+   rows' controls line up. In a stage too narrow for the column the names go above their rows (below).
    A row without a name leaves the column empty. The rows share the height the tallest stage gives the controls,
    with the same space above and below each, except where an Envelope row ends them (below). */
 :root { --label-col: 68px; --label-gap: 12px; } /* the column fits the widest name, WAVEFORM */
@@ -853,7 +854,7 @@ html:has(dialog.about[open]) { overflow: hidden; }
 .destination-menu [role='menuitemradio']:hover, .destination-menu [role='menuitemradio']:focus-visible { color: var(--text); background: var(--control-hover); outline: none; }
 .destination-menu [role='menuitemradio'][aria-checked='true'] { color: var(--text); background: var(--control-on); }
 @media (min-width: 861px) {
-  /* The plot is exactly as tall as the LFO and Glide controls: the Viewers above get the rest of the window. */
+  /* The plot is exactly as tall as the two LFOs' controls: the Viewers above get the rest of the window. */
   .timeline-plot { height: auto; min-height: 100px; }
 }
 /* One column: on phones, in the 2 × 2 layout, and as the fourth column of a wide screen. */
@@ -865,8 +866,9 @@ html:has(dialog.about[open]) { overflow: hidden; }
   .timeline-plot { order: 2; }
 }
 
-/* The keyboard, the same at every width: the octave buttons stacked (up over down) beside the piano. The piano is the
-   computer keyboard's 17 keys (10 white), and from 861 px the keys beyond them the header has room for (issue 154),
+/* The keyboard, the same at every width: the octave buttons stacked (up over down) beside the piano. The piano is one
+   octave, C to C, on a phone (13 keys, 8 white, up to 600 px); the computer keyboard's 17 keys (10 white) up to 860 px;
+   and from 861 px those and the keys beyond them the header has room for (issue 154),
    lit while sounding; its white keys share what the layout gives it, up to 44 px (a finger's target), and grow taller
    as they widen. Black keys are 0.6 of a white key's width, as on a real piano. */
 :root { --white-key-max: 44px; }
@@ -1014,7 +1016,8 @@ html:has(dialog.about[open]) { overflow: hidden; }
 .midi-status[data-connected] { color: var(--text); }
 .midi-status[data-connected] .midi-icon { color: var(--stage-osc); }
 .midi-status[data-waiting] .midi-icon { color: var(--warn); }
-/* Unavailable (blocked or unsupported): a hollow, struck-through dot, so it never passes for "nothing plugged in". */
+/* Unavailable (blocked or unsupported): the socket struck through, in the danger colour, and the word struck through,
+   so it never passes for "nothing plugged in". */
 .midi-status[data-unavailable] { color: var(--muted); text-decoration: line-through; }
 .midi-status[data-unavailable] .midi-icon { color: var(--danger); }
 .midi-status[data-unavailable] .midi-slash { display: inline; }
@@ -1070,7 +1073,7 @@ html:has(dialog.about[open]) { overflow: hidden; }
 }
 .block-controls { gap: var(--space-3); }
 
-/* A segmented control on the Filter heading line is one row of segments, never wrapped inside. */
+/* A segmented control on the Filter's Mode row, under its heading, is one row of segments, never wrapped inside. */
 .filter-shape .segmented { flex-wrap: nowrap; }
 /* A segment's label never wraps onto two lines. */
 .segmented button, .tool { white-space: nowrap; }
@@ -1159,8 +1162,9 @@ html:has(dialog.about[open]) { overflow: hidden; }
   }
 }
 /* Never taller than the window below the header: the Presets scroll, the rest of the panel stays in view. */
-/* The Patch panel is anchored to the header (like the Display and MIDI panels), spanning its full width, so the
-   Presets lay out in wide rows and the whole list is on screen at once; it scrolls only on short windows. */
+/* The Patch panel is anchored to the header (like the Display panel, and the MIDI panel on a phone), spanning its
+   full width, so the Presets lay out in wide rows and the whole list is on screen at once; it scrolls only on short
+   windows. */
 .patch-panel {
   position: absolute; z-index: 50; top: calc(100% + 6px); left: 0; right: 0;
   /* Under the header (its height measured, --header-h) and the page's top padding, never past the window's bottom. */
@@ -1415,7 +1419,7 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 .quick-setup-last { margin: 0; color: var(--muted); }
 .quick-setup-actions { display: flex; gap: 6px; justify-content: flex-end; }
 
-/* While MIDI Learn (or Quick Setup) is on, the MIDI button says so in the accent, its dot pulsing: the panel behind
+/* While MIDI Learn (or Quick Setup) is on, the MIDI button says so in the accent, its socket pulsing: the panel behind
    it is where Learn was started, and where Done now is. */
 .midi-status[data-learning] { color: var(--accent); border-color: var(--accent); }
 .midi-status[data-learning] .midi-icon { color: var(--accent); animation: midi-pulse 1.2s ease-in-out infinite; }
@@ -1580,7 +1584,7 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 }
 
 /* The sections strip (phones): equal tabs under the header, each underlined in its section's colour when it is the
-   one in view. Hidden where every section is on screen at once. */
+   one in view. Hidden from 601 px, where the sections sit side by side (2 × 2 and up). */
 .section-strip { display: none; }
 @media (max-width: 600px) {
   /* And below the strip too: its 44 px and its edge. */
@@ -1619,13 +1623,6 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 .start-failure h1 { margin: 0; }
 .start-failure p { margin: 0; font-size: var(--text-lg); line-height: 1.5; }
 .start-failure .start-failure-detail { color: var(--muted); font-family: ui-monospace, monospace; font-size: var(--text-md); }
-/* Narrower than a phone, the Tour's longest name and its "1 of 6" no longer fit beside the card's three buttons, and
-   each took two lines: the progress goes under the name (issue 265's audit). */
-@media (max-width: 319px) {
-  .card-top { flex-wrap: wrap; }
-  .card-name { margin-right: auto; }
-  .card-progress { order: 1; flex-basis: 100%; }
-}
 
 /* A card docked at the bottom of the page (a Tutorial's, issue 57; the Demo's, issue 50, in the corner from three
    across: issue 230), under the panels and tooltips, the page keeping room for it below its last section (the Demo's
@@ -1641,12 +1638,14 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 :root[data-docked] main { margin-bottom: calc(var(--docked-h, 0px) + var(--space-3)); }
 /* The Demo's card closed with its ×, the Demo playing on (the owner, 2026-10-28). */
 .docked[hidden] { display: none; }
-/* Folded, a card keeps only its top row (issue 59). From the 2 × 2 layout up, that row is the handle it moves by. */
+/* Folded, a card keeps only its top row (issue 59), and the Demo's its segments too (below). From the 2 × 2 layout up,
+   that row is the handle it moves by. */
 /* Its live text, the Demo's caption, a Tutorial's words or the Tour's Frozen line (issue 130), only goes out of sight:
    a screen reader still hears it change (issue 67). */
 .docked[data-folded] > :not(:first-child):not([aria-live], :has([aria-live])) { display: none; }
 .docked[data-folded] > :not(:first-child):is([aria-live], :has([aria-live])) { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
-/* Both cards' text, bigger from 1280 px windows up, for a projector (issue 59, decision 7). */
+/* The three cards' text (the Demo's, a Tutorial's and the Tour's), bigger from 1280 px windows up, for a projector
+   (issue 59, decision 7). */
 .docked { --card-text: var(--text-lg); --card-small: var(--text-md); }
 @media (min-width: 1280px) { .docked { --card-w: 720px; --card-text: 15px; --card-small: 14px; } }
 .card-fold { flex: none; }
@@ -1659,6 +1658,13 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 .card-name { font-weight: 600; font-size: var(--card-text); }
 .card-progress { flex: 1 1 auto; color: var(--muted); font-size: var(--card-small); }
 .card-top .tool-icon { flex: none; }
+/* Narrower than a phone, the Tour's longest name and its "1 of 6" no longer fit beside the card's three buttons, and
+   each took two lines: the progress goes under the name (issue 265's audit). */
+@media (max-width: 319px) {
+  .card-top { flex-wrap: wrap; }
+  .card-name { margin-right: auto; }
+  .card-progress { order: 1; flex-basis: 100%; }
+}
 .card-more { display: none; }
 .card-words { display: flex; flex-direction: column; gap: 4px; font-size: var(--card-text); line-height: 1.45; }
 .card-words p { margin: 0; }

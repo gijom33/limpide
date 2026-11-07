@@ -12,7 +12,10 @@ import { lfoLineTip, TIPS } from './tips';
 const tipOf = ({ mark, destination, aftertouch }: KeyEntry): TipContent =>
   destination ? lfoLineTip(destination, !!aftertouch) : mark === 'cutoff' ? TIPS.timelineCutoff : mark === 'filterEnvelope' ? TIPS.timelineFilterEnvelope : TIPS.timelineAmp;
 
-/** The LFO & Envelopes section, under the signal chain: the LFO beside the Envelope Timeline, in the modulation colour. */
+/**
+ * The LFO & Envelopes section, under the signal chain (from 1920 px a fourth column beside the stages): the two LFOs
+ * beside the Envelope Timeline, in the modulation colour.
+ */
 export function EnvelopeTimeline({
   engine, view, patch, aftertouch, controls,
 }: {
@@ -48,8 +51,9 @@ export function EnvelopeTimeline({
           <span className="has-tip">LFO &amp; Envelopes</span>
         </Tooltip>
       </h2>
-      {/* The key sits on the title line, over the plot it explains. Each entry is a named image in the Tab order, so its
-          tooltip comes on focus and is its description for screen readers (issue 67). */}
+      {/* The key sits on the title line, over the plot it explains (in one column, under the LFOs, just over the plot).
+          Each entry is a named image in the Tab order, so its tooltip comes on focus and is its description for screen
+          readers (issue 67). */}
       <span className="timeline-key" ref={keyRef} data-one-line>
         {key.map((entry) => {
           const { mark, name, stage, pattern } = entry;

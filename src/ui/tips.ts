@@ -173,7 +173,7 @@ export const TIPS = {
   },
   timeline: {
     title: 'LFO & Envelopes',
-    body: 'What changes the sound over time: the LFO, and the Envelope Timeline beside it. The Timeline shows the last two seconds (1 to 4 in Display). The violet fill is the Amp Envelope, the orange one the Filter Envelope when its Amount is set. A broken line in its section’s colour is each knob the Filter Envelope or an LFO moves: the Cutoff dotted, what LFO 1 moves dashed, what LFO 2 alone moves dash-dotted. While an LFO is synced and free (Retrigger off), its cycle on the beat, faint broken lines mark the beats.',
+    body: 'What changes the sound over time: the two LFOs, and the Envelope Timeline beside them. The Timeline shows the last two seconds (1 to 4 in Display). The violet fill is the Amp Envelope, the orange one the Filter Envelope when its Amount is set. A broken line in its section’s colour is each knob the Filter Envelope, an LFO or a keyboard’s aftertouch moves: the Cutoff dotted, what LFO 1 or aftertouch moves dashed, what LFO 2 alone moves dash-dotted. While an LFO is synced and free (Retrigger off), its cycle on the beat, faint broken lines mark the beats.',
     how: 'Play a Note and let go: the Release is drawn after the key comes up.',
   },
   lfo: {
@@ -419,7 +419,7 @@ export const TIPS = {
   },
   envelopeTimeline: {
     title: 'Envelope Timeline',
-    body: 'The last two seconds (1 to 4 in Display), the newest at the right: the Amp Envelope (violet fill), and what moves: the Filter Envelope (orange fill, when its Amount is set), the Cutoff (orange dots) and each knob an LFO moves (dashed for LFO 1’s, dash-dotted for LFO 2’s, in its section’s colour).',
+    body: 'The last two seconds (1 to 4 in Display), the newest at the right: the Amp Envelope (violet fill), and what moves: the Filter Envelope (orange fill, when its Amount is set), the Cutoff (orange dots) and each knob an LFO or aftertouch moves (in its section’s colour, dashed for what LFO 1 or aftertouch moves, dash-dotted for what LFO 2 alone moves).',
     how: 'Play a Note and let go: the Release is drawn after the key comes up.',
   },
 } satisfies Record<string, TipContent>;
@@ -597,6 +597,6 @@ export const OVERLAY_TIPS: Record<Overlay, TipContent> = {
   },
   geek: {
     title: 'Synth Geek Layer',
-    body: 'The numbers under the hood, for the synth geek: Resonance as the Filter’s Q, the Mixer’s levels and the Amp’s Sustain in dB, Osc 2’s tuning as multiples and Detune as beats, each LFO’s swing, the Cutoff at the Note under Key Track, each Scope’s period and frequency, the Cutoff’s value on the Timeline; and, in the tips, a control’s formula under the hood (an LFO Rate’s period among them; the Waveform’s, FM’s (on Osc 1’s Pitch), Ring’s and the Filter’s for the settings picked) and, for one with a musical past, its History: where it comes from.',
+    body: 'The numbers under the hood, for the synth geek: Resonance as the Filter’s Q, the Mixer’s levels (Ring’s aside), the Sustain and the Volume in dB, Osc 2’s tuning as multiples and Detune as beats, each LFO’s swing, the Cutoff at the Note under Key Track, each Scope’s period and frequency, the Cutoff’s value on the Timeline; and, in the tips, a control’s formula under the hood (an LFO Rate’s period among them; the Waveform’s, FM’s (on Osc 1’s Pitch), Ring’s and the Filter’s for the settings picked) and, for one with a musical past, its History: where it comes from.',
   },
 };

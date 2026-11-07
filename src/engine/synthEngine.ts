@@ -604,11 +604,11 @@ const SILENT = 0.001;
 
 /**
  * One LFO: a real oscillator, wired to each destination through a gain set from its Depth (zero unless it is aimed
- * there): the Cutoff and the pitch in cents (through `detune`), Osc 2's tuning in cents, the Resonance (into the
- * shared curve to each Filter stage's Q), the tremolo's gain.
- * Pulse Width goes through each Voice's own gains, since its swing depends on the Note. The oscillator feeds a bus
- * the rest is wired to, so a retriggering Note can swap in a new oscillator that starts its cycle at that Note; the
- * bus is the LFO's clamp, holding it within ±1.
+ * there): the Cutoff and the pitch in cents (through `detune`), Osc 2's tuning in cents, the Resonance (into each
+ * Filter side's curves, to its stages' Q and its make-up), the tremolo's gain.
+ * Pulse Width and FM go through each Voice's own gains, since their swing depends on the Note. The oscillator feeds a
+ * bus the rest is wired to, so a retriggering Note can swap in a new oscillator that starts its cycle at that Note;
+ * the bus is the LFO's clamp, holding it within ±1.
  */
 interface LfoNodes {
   takeover: ReturnType<typeof createTakeover>;
@@ -645,7 +645,7 @@ interface FilterSide {
   curveStages: [number, number];
 }
 
-/** What every Voice shares: the LFOs, the pitch bend, the noise loop, the Oscillators' waves, and where the Voices' outputs go. */
+/** What every Voice shares: the two LFOs, the pitch bend, the noise loops (white and pink), the Oscillators' waves, and where the Voices' outputs go. */
 interface Shared {
   lfos: [LfoNodes, LfoNodes];
   /**
@@ -659,7 +659,7 @@ interface Shared {
   bend: ConstantSourceNode;
   /** Aftertouch on Pitch in cents (issue 132), beside the bend: it glides over its own time constant (issue 219). */
   pressing: ConstantSourceNode;
-  /** The tremolo's resting gain, into every Voice's: 1 less the LFOs' total swing on Volume. */
+  /** The tremolo's resting gain, into every Voice's: the Volume less the LFOs' total swing on it (issue 62). */
   tremoloRest: ConstantSourceNode;
   noise: Record<NoiseColour, AudioBuffer>;
   /** A Waveform's series up to its Harmonic `harmonics`, as a wave the Oscillators play. */
@@ -1125,8 +1125,9 @@ type Voice = ReturnType<typeof createVoice>;
 
 /**
  * The instrument: up to MAX_VOICES Voices (Oscillator → Filter → Amp each) summed into one master and safety
- * stage, with one LFO shared. The Taps, the Modulation model and Cycle Lock follow the Voice of the newest Note,
- * so the Viewers always show one Note as if it were played alone (ADR-0007).
+ * stage, with two LFOs shared. The Oscillator and Filter Taps, the Modulation model and Cycle Lock follow the Voice
+ * of the newest Note, so those Viewers show one Note as if it were played alone (ADR-0007); the Amp Tap carries every
+ * Voice unless the Viewers are set to follow the newest (ADR-0022).
  */
 export function createSynthEngine(
   ctx: BaseAudioContext,

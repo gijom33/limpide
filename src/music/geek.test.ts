@@ -36,11 +36,13 @@ describe('the Synth Geek Layer: levels in dB', () => {
     expect(levelDb(0)).toBe('−∞ dB');
   });
 
-  it('shows Q on Resonance and dB on the Mixer and the Amp’s Sustain, nothing elsewhere', () => {
+  it('shows Q on Resonance and dB on the Mixer’s levels, the Sustain and the Volume; none on Ring or the Cutoff', () => {
     const patch = defaultPatch();
     expect(geekReadout('resonance', 0, patch)).toBe('Q 0.71');
     expect(geekReadout('mixOsc2', 0.5, patch)).toBe('−6.0 dB');
     expect(geekReadout('ampSustain', 1, patch)).toBe('0.0 dB');
+    expect(geekReadout('volume', 0.5, patch)).toBe('−6.0 dB');
+    expect(geekReadout('mixRing', 0.5, patch)).toBeUndefined();
     expect(geekReadout('cutoff', 1000, patch)).toBeUndefined();
   });
 });

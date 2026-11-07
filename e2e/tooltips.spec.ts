@@ -102,12 +102,12 @@ test('every toolbar control explains itself, without doubling up on native brows
   await openDisplay(page);
   const toolbar = page.getByRole('region', { name: 'Viewer controls' });
   await expect(toolbar.locator('[title]')).toHaveCount(0);
-  for (const name of ['Harmonics', 'Ideal', 'Filter’s Response Curve', 'Guides']) {
-    await toolbar.getByRole('button', { name }).hover();
+  for (const name of ['Freeze', 'Snapshot', 'Harmonics', 'Ideal', 'Filter’s Response Curve', 'Guides', 'Geek']) {
+    await toolbar.getByRole('button', { name, exact: true }).hover();
     await pastTheHoverDelay(page);
     await expect(page.getByRole('tooltip'), name).toBeVisible();
   }
-  for (const name of ['Frequency axis', 'Level axis', 'Scope cycles', 'Env Timeline length']) {
+  for (const name of ['Viewers follow', 'Glow', 'Frequency axis', 'Level axis', 'Scope cycles', 'Env Timeline length', 'Letter keys', 'Tooltips', 'Bead', 'Theme']) {
     await toolbar.getByRole('radiogroup', { name }).hover();
     await pastTheHoverDelay(page);
     await expect(page.getByRole('tooltip'), name).toBeVisible();
@@ -161,6 +161,7 @@ test('every Viewer, fader and the Timeline key explain themselves, the tooltip b
   await page.getByRole('tab', { name: 'Mixer' }).click();
   await check(page.getByRole('slider', { name: 'Osc 1', exact: true }), 'Osc 1');
   await check(page.getByRole('slider', { name: 'Osc 2', exact: true }), 'Osc 2');
+  for (const [fader, title] of [['Ring', 'Ring'], ['Noise', 'Noise'], ['Sub', 'Sub-oscillator']]) await check(page.getByRole('slider', { name: fader, exact: true }), title);
   // Screen readers hear them too: every slider and picture is described.
   const undescribed = await page.evaluate(() =>
     [...document.querySelectorAll('[role=slider], [role=img]')].filter((e) => e.getClientRects().length && !e.hasAttribute('aria-describedby')).map((e) => e.getAttribute('aria-label')),

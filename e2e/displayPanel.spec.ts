@@ -95,7 +95,7 @@ test('the theme is chosen in the Display panel, and remembered', async ({ page }
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
 });
 
-test('every Display setting is remembered across a reload, Freeze and the Snapshot aside (issue 85)', async ({ page }) => {
+test('the View’s and the Axes’ settings are remembered across a reload, Freeze and the Snapshot aside (issue 85)', async ({ page }) => {
   await page.goto('/');
   await openDisplay(page);
   const choose = (group: string, option: string) => page.getByRole('radiogroup', { name: group }).getByRole('radio', { name: option, exact: true });

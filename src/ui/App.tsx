@@ -74,7 +74,7 @@ interface BlockProps {
   children?: React.ReactNode;
   /** Extra controls under the main knobs (e.g. the Filter Envelope). */
   more?: React.ReactNode;
-  /** Controls on the heading line (e.g. the Filter Mode and Slope). */
+  /** A row of controls under the heading, before the others (e.g. the Filter Mode and Slope). */
   heading?: React.ReactNode;
   viewers?: React.ReactNode;
   /** What the stage does, on its heading. */

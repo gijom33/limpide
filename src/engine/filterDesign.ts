@@ -56,18 +56,19 @@ export function resonanceCurve(mode: FilterMode, slope: FilterSlope): { curve: F
   return { curve, stages: [1, slope === 24 ? 1 : 0] };
 }
 
-/** A band-pass's make-up at Init's Resonance and under it, in dB, by Slope (issue 231). */
+/** A band-pass's make-up at 5 % Resonance and under it, in dB, by Slope (issue 231). */
 const MAKE_UP_DB: Record<FilterSlope, number> = { 12: 9, 24: 12 };
-/** The Resonance the make-up starts to rise from: Init's. */
+/** The Resonance the make-up starts to rise from: 5 % (Init's is 20 %). */
 export const MAKE_UP_RISES_FROM = 0.05;
 /** How far the make-up rises over its fixed part at most, in dB: its ceiling. */
 const MAKE_UP_RISE_DB = 12;
 
 /**
  * A band-pass's make-up gain (issue 231): the band passes 0 dB at its centre, but a saw's power lies on its skirts,
- * so a band-pass is 10 to 15 dB quieter than a low-pass. A fixed part brings Init near the low-pass; above Init's
- * Resonance, the band narrows and what passes falls as the square root of its Q, so the make-up rises by as much
- * (half a constant-skirt band-pass's rise in dB), up to its ceiling. Every other Mode is left at 1.
+ * so a band-pass is 10 to 15 dB quieter than a low-pass. A fixed part brings the broadest bands near the low-pass;
+ * above 5 % Resonance, the band narrows and what passes falls as the square root of its Q, so the make-up rises by as
+ * much (half a constant-skirt band-pass's rise in dB), up to its ceiling: Init, at 20 %, plays within 3 dB of the
+ * low-pass. Every other Mode is left at 1.
  */
 export function makeUp(mode: FilterMode, slope: FilterSlope, resonance: number): number {
   if (!isMadeUp(mode)) return 1;

@@ -2,8 +2,8 @@ import { expect, test } from '@playwright/test';
 
 // Full-screen browser viewports on MacBooks (points): this Mac (1710×1107, less the ~37 pt notch band, with a
 // margin), and the common 1440×900.
-// How tall each Viewer must at least be: generous on this Mac; the 78 pt floor on the smaller 1440×900, where
-// the toolbar wraps under the title and Osc 2's knobs wrap.
+// How tall each Viewer must at least be: generous on this Mac; the 78 pt floor on the smaller 1440×900, where the
+// controls leave the Viewers least room.
 for (const [width, height, minViewer] of [
   [1710, 1060, 150],
   [1440, 900, 78],
