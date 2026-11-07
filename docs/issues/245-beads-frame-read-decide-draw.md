@@ -4,7 +4,7 @@
 
 **Blocked by:** [228](./228-tidy-ups-after-1-23.md) (its two items in Bead's frame: the bare 13s, the cling's six positional arguments)
 
-**Status:** done (2026-11-06). Built (2026-11-05) on night/2026-11-05 and merged into main on 2026-11-06, approved by the owner: "All issues seem tobe implemeted fine", then "Merge the night"; ships with the next release
+**Status:** done (2026-11-06). Built (2026-11-05) on night/2026-11-05 and merged into main on 2026-11-06, approved by the owner: "All issues seem tobe implemeted fine", then "Merge the night"; released in 1.26.0
 
 ## Decisions
 

@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** done (2026-11-06). Built (2026-11-05) on night/2026-11-05, merged into main on 2026-11-06 with the night ("Merge the night"); tried on test branches on the owner's word ("Yes, push it"), three runs green and no slower, so kept by decision 3. Ships with the next release.
+**Status:** done (2026-11-06). Built (2026-11-05) on night/2026-11-05, merged into main on 2026-11-06 with the night ("Merge the night"); tried on test branches on the owner's word ("Yes, push it"), three runs green and no slower, so kept by decision 3. Released in 1.26.0.
 
 ## Decisions
 

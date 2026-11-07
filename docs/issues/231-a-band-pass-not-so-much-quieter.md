@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** done (2026-11-06). Built at night (2026-11-05), set back for the owner's answers, and applied to main on 2026-11-06 once the owner had given them ("Yes to all four"); approved by the owner by ear: "Sounds fine". Ships with the next release.
+**Status:** done (2026-11-06). Built at night (2026-11-05), set back for the owner's answers, and applied to main on 2026-11-06 once the owner had given them ("Yes to all four"); approved by the owner by ear: "Sounds fine". Released in 1.26.0.
 
 ## Decisions
 
@@ -136,3 +136,5 @@ Built at night (2026-11-05), test-first.
 2. **The click when leaving a loud band-pass:** above about 50 % Resonance, switching from band-pass to low-pass while a Note holds steps up to 3.3 times the wave's own steepest step. Recommended: accept 231 with the criterion met up to 50 %, and a new issue for a short crossfade on every Mode change (a change to the Filter itself).
 3. **Talking Filter's level:** its LFO 2 moves the Resonance, so the make-up evens out its swing; its loudest moment over a 4-second cycle is as before, but over the first second (the Presets' usual measure) it is 1.5 dB louder. No single Volume meets both. Recommended: keep the Volume matched on the loudest moment, as built, and judge it by ear.
 4. **The Response Curve past +20 dB** runs off the top of the Spectrum from about 70 % Resonance, as a low-pass's peak already does at full Resonance. Recommended: leave the scale as it is.
+
+**Since then (2026-11-06, the 1.26.0 ear check):** the six other band-pass Presets play within 0.2 dB of 1.25.0. Talking Filter, matched on its loudest moment on C4, is 2.9 dB louder on C6 and 0.9 dB softer on C2; Init switched to band-pass is within 2 dB of its low-pass on C4 but rises with the Note, 3.9 dB under it on C2 and about 7 dB over it on C6, a high Note's fundamental near the Cutoff, short of the limiter. For the owner's ear.

@@ -4,7 +4,7 @@
 
 **Blocked by:** [228](./228-tidy-ups-after-1-23.md) (the Tour card and the next Tutorial in the app), [241](./241-every-preset-reachable-by-program-change.md) (Program Change in the app), [242](./242-three-shows-hand-over-alike.md) (the hand-over fixes, so this changes nothing)
 
-**Status:** done (2026-11-06). Built (2026-11-05) on night/2026-11-05 and merged into main on 2026-11-06, approved by the owner: "All issues seem tobe implemeted fine", then "Merge the night"; ships with the next release
+**Status:** done (2026-11-06). Built (2026-11-05) on night/2026-11-05 and merged into main on 2026-11-06, approved by the owner: "All issues seem tobe implemeted fine", then "Merge the night"; released in 1.26.0
 
 ## Decisions
 
