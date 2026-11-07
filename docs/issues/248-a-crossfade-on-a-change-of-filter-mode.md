@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · enhancement. Built (2026-11-06) on night/2026-11-06, for the owner to try. In v1, decided by the owner (2026-11-06, "Yes, v1").
+**Status:** done (2026-11-07). Built (2026-11-06) on night/2026-11-06 and merged into main on 2026-11-07, approved by the owner, untried: "It's fine, I trust you. Merge and push."; ships with the next release. In v1, decided by the owner (2026-11-06, "Yes, v1").
 
 ## Decisions
 
