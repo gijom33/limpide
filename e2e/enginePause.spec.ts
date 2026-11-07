@@ -95,11 +95,17 @@ test('after the pause the Demo plays (issue 216)', async ({ page }) => {
 
 test('an LFO plot goes on moving through the pause (issue 216, the owner)', async ({ page }) => {
   const lfo = page.getByRole('region', { name: 'LFO & Envelopes' }).getByRole('group', { name: 'LFO 1', exact: true });
+  // Turning Depth wakes the sound, as a knob does; the test waits, inside the page, for the wake to settle before it
+  // waits for the next pause. WebKit's resume settles some 50 ms after the keys, and the state reads `suspended` until
+  // then: read at once, that stale `suspended` passed for the next pause, and the plot moved with the sound running
+  // (issue 249, 2 in 5 in WebKit on the Mac).
   await lfo.getByRole('slider', { name: sliderName('Depth') }).evaluate(async (el) => {
     for (let i = 0; i < 5; i++) {
       el.dispatchEvent(new KeyboardEvent('keydown', { key: 'PageUp', bubbles: true }));
       await new Promise((resolve) => setTimeout(resolve, 0));
     }
+    const ctx = (window as unknown as { audioContext: AudioContext }).audioContext;
+    while (ctx.state !== 'running') await new Promise((resolve) => ctx.addEventListener('statechange', resolve, { once: true }));
   });
   await paused(page);
   const line = page.getByRole('img', { name: /^LFO 1:/ }).locator('.lfo-plot-line');
