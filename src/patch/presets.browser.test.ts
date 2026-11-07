@@ -115,8 +115,8 @@ describe('every Preset’s level against its group’s (issue 108)', () => {
   const APART: Record<string, { by: number; why: string }> = {
     'Thin Pulse': { by: -8, why: 'so narrow a pulse carries little energy, as its words say' },
     'Ring Bell': { by: -4.5, why: 'two sines multiplied sound quieter than either alone, as its words say' },
-    Vowel: { by: -12.5, why: 'kept as quiet as it was before the band-pass was made up, its Volume down by as much (issue 231)' },
     'Breathing Bell': { by: -5.5, why: 'four Voices, where the rest of its group has one: the master makes room for them' },
+    'Hi-hat': { by: -7, why: 'gone in a tenth of a second, so its loudest 100 ms is mostly silence: its peak is the Open Hat’s (issue 258)' },
   };
   let levels = new Map<string, number>();
   beforeAll(async () => {
@@ -144,12 +144,14 @@ describe('the band-pass Presets sound as they did before its make-up (issue 231)
   // down by as much. Talking Filter's LFO 2 moves its Resonance, and the make-up with it, so its loudest moment is
   // taken over 4 seconds, a whole cycle of it: before, its narrowest moments were quieter, which the make-up evens out.
   const BEFORE: Record<string, number> = {
-    Vowel: -32.8, 'Sync-ish Lead': -19.72, Cowbell: -25.24, Wind: -23.59, Wah: -24.26, 'Talking Filter': -22.62, Robot: -24.7,
+    'Sync-ish Lead': -19.72, Wind: -23.59, Wah: -24.26, 'Talking Filter': -22.62, Robot: -24.7,
   };
+  // Raised since, to their group's level (issue 258): the tests of their group hold them.
+  const RAISED = ['Vowel', 'Cowbell'];
   const levelOnC4 = async (name: string) => (name === 'Talking Filter' ? loudestDb(await play(preset(name), [C4], 4, 4)) : (await levelsOnC4()).get(name)!);
 
   it('names every band-pass Preset', () => {
-    expect(PRESETS.filter((p) => p.patch.filterMode === 'bandpass').map((p) => p.name).sort()).toEqual(Object.keys(BEFORE).sort());
+    expect(PRESETS.filter((p) => p.patch.filterMode === 'bandpass').map((p) => p.name).sort()).toEqual([...Object.keys(BEFORE), ...RAISED].sort());
   });
 
   it.each(Object.keys(BEFORE))('%s plays on C4 within 0.5 dB of its level before', async (name) => {
@@ -217,11 +219,25 @@ describe('the Presets do what their words say (issue 108, reviews 13 and 15)', (
   });
 
   // Velocity on the Cutoff, where the words promise it: soft and hard strikes differ, not only in level (review 15).
-  for (const name of ['Electric Piano', 'Tremolo Keys', 'Felt Piano', 'Tine Piano'])
+  for (const name of ['Electric Piano', 'Tremolo Keys', 'Tine Piano'])
     it(`${name}: a hard strike is brighter than a soft one`, async () => {
       const [soft, hard] = await Promise.all([0.35, 1].map((velocity) => play(preset(name), [C4], 1, 1.1, velocity)));
       expect(brightnessDb(hard, C4, 0.005) - brightnessDb(soft, C4, 0.005)).toBeGreaterThan(name === 'Tine Piano' ? 6 : 3);
     });
+
+  // A triangle under a 300 Hz Cutoff has little above it for Velocity to open: soft over hard, its brightness was 0.99
+  // (review 15). Its words say so (issue 258).
+  it('Felt Piano: a harder Note is louder, hardly brighter', async () => {
+    const [soft, hard] = await Promise.all([0.35, 1].map((velocity) => play(preset('Felt Piano'), [C4], 1, 1.1, velocity)));
+    /** The centroid of the first 20 Harmonics 100 ms into the Note, in Hz: review 15's brightness. */
+    const centroid = (s: Float32Array) => {
+      const power = harmonicPowers(s, C4, NOTE + 0.1).slice(0, 20);
+      return (power.reduce((sum, p, n) => sum + p * (n + 1), 0) / power.reduce((sum, p) => sum + p, 0)) * hz(C4);
+    };
+    expect(loudestDb(hard) - loudestDb(soft)).toBeGreaterThan(6);
+    expect(centroid(soft) / centroid(hard)).toBeGreaterThan(0.95);
+    expect(PRESETS.find((p) => p.name === 'Felt Piano')!.about).not.toMatch(/harder Note is brighter/);
+  });
 
   it('Marimba’s strike is brighter than the tone after it', async () => {
     const s = await play(preset('Marimba'), [C4], 1, 1.1);
@@ -601,4 +617,49 @@ describe('two Presets high up (issue 226)', () => {
     expect(Math.abs(loudestDb(c4) + 21.5), `C4: ${loudestDb(c4).toFixed(2)} dBFS`).toBeLessThanOrEqual(0.5);
     for (const s of [c2, c4, c6, c7]) expect(peak(s)).toBeLessThan(0.8);
   }, 60_000);
+});
+
+// Issue 258, from reviews 14 and 15: Presets whose level swung across the keyboard, the one that passed the limiter, and
+// the Drums 9 dB under the Basses.
+describe('the Presets levelled across the keyboard (issue 258)', () => {
+  // A fixed Cutoff the Notes climb into or away from: each swung 6.5 to 18 dB from C2 to C6, where the other Presets
+  // keep within 6 dB. Key Track now moves each one's Filter with the Note.
+  const LEVELLED = [
+    'Vowel', 'Breathing Pad', 'Two Speeds', 'Sweep Pad', 'High-pass Buzz', '12 vs 24', 'Resonant Ring', 'Cowbell', 'Dark Drone', 'Talking Filter', 'Wah',
+    'Deep Sweep', 'Laser', 'Clav',
+  ];
+  it.each(LEVELLED)('%s keeps within 6 dB from C2 to C6, octave by octave', async (name) => {
+    const levels = await Promise.all([C2, C3, C4, C5, C6].map((note) => levelOf(preset(name), note)));
+    expect(Math.max(...levels) - Math.min(...levels), levels.map((l) => l.toFixed(1)).join(' ')).toBeLessThanOrEqual(6);
+  });
+
+  // Their fixed Cutoff left little of a C7: 28 to 33 dB under their C6.
+  it.each(['Sweep Pad', 'Breathing Pad', 'Dark Drone'])('%s plays its C7 within 6 dB of its C4', async (name) => {
+    const [c4, c7] = await Promise.all([C4, C7].map((note) => levelOf(preset(name), note)));
+    expect(c7 - c4, `C4 ${c4.toFixed(1)}, C7 ${c7.toFixed(1)} dBFS`).toBeGreaterThan(-6);
+  });
+
+  // What four Notes miss: Resonance Swell's peak met a Harmonic on D5, D6 and D#6 (1.48), and Resonant Ring's
+  // fundamental met its Cutoff around E6 (review 14's scan).
+  it.each(['Resonance Swell', 'Resonant Ring'])('%s: every semitone from C2 to C7 held 4 s, under the limiter’s knee, each within 1.5 dB of the next', async (name) => {
+    const notes = Array.from({ length: 61 }, (_, i) => C2 + i);
+    const renders: Float32Array[] = [];
+    // Eight at a time: 61 renders at once are more than the browser holds.
+    for (let i = 0; i < notes.length; i += 8) renders.push(...(await Promise.all(notes.slice(i, i + 8).map((note) => play(preset(name), [note], NOTE + 4, NOTE + 4.05)))));
+    const over = notes.flatMap((note, i) => (peak(renders[i]) >= 0.8 ? [`MIDI ${note}: ${peak(renders[i]).toFixed(2)}`] : []));
+    expect(over).toEqual([]);
+    const levels = renders.map(loudestDb);
+    const jumps = notes.slice(1).flatMap((note, i) => (Math.abs(levels[i + 1] - levels[i]) > 1.5 ? [`MIDI ${note}: ${(levels[i + 1] - levels[i]).toFixed(1)} dB`] : []));
+    expect(jumps).toEqual([]);
+  }, 120_000);
+
+  // Every drum has one Voice and a Bass's room at the master: the kit sat 9 dB under the Basses, the Kick at full Volume
+  // 11.7 dB under 808 Boom (review 15). Each on its home Note: the Basses' C2, the Drums' C4.
+  it('the Drums’ median within 4 dB of the Basses’, and the Kick within 3 dB of 808 Boom', async () => {
+    const drums = familyMedian(await levelsOnC4(), 'Drums');
+    const basses = await Promise.all(PRESETS.filter((p) => p.group === 'Bass').map((p) => levelOf(p.patch, C2)));
+    expect(median(basses) - drums, `Drums ${drums.toFixed(1)}, Basses ${median(basses).toFixed(1)} dBFS`).toBeLessThanOrEqual(4);
+    const [kick, boom] = await Promise.all([levelOf(preset('Kick'), C2), levelOf(preset('808 Boom'), C2)]);
+    expect(Math.abs(boom - kick), `Kick ${kick.toFixed(1)}, 808 Boom ${boom.toFixed(1)} dBFS`).toBeLessThanOrEqual(3);
+  }, 300_000);
 });
