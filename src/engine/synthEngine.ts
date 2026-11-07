@@ -854,7 +854,8 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   keyTrackAmount.connect(cutoffSum);
   trackedNote.start();
 
-  amp.connect(tremoloGain).connect(shared.master);
+  // To the master only while wired (`setWired`).
+  amp.connect(tremoloGain);
   // Every Voice's noise starts at a different point of the loop, so a chord's noise is not one noise, louder.
   for (const n of noises) n.source.start(0, (index * NOISE_SECONDS) / MAX_VOICES);
 
@@ -962,6 +963,17 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
     releasedAt: null as number | null,
     freeAt: -Infinity,
     pitches,
+    /**
+     * Whether its sound reaches the master (issue 257). Unwired, and none of the Taps listening, nothing the browser
+     * renders pulls it, so its nodes cost the audio thread nothing; it starts so, until the engine wires it.
+     */
+    wired: false,
+    setWired(on: boolean) {
+      if (on === voice.wired) return;
+      if (on) tremoloGain.connect(shared.master);
+      else tremoloGain.disconnect(shared.master);
+      voice.wired = on;
+    },
 
     /** Move to a Note: at once, or sliding there over the Glide. */
     setPitch(note: number, t: number, glide: number) {
@@ -1395,7 +1407,7 @@ export function createSynthEngine(
     for (const v of voices) {
       const wanted = new Set<TapName>();
       if (v === lead) wanted.add('oscillator').add('filter').add('amp');
-      if (tapSource === 'all') wanted.add('amp');
+      if (tapSource === 'all' && v.wired) wanted.add('amp');
       const current = listening.get(v)!;
       for (const tap of current) if (!wanted.has(tap)) { v.detach(taps, tap); current.delete(tap); }
       for (const tap of wanted) if (!current.has(tap)) { v.attach(taps, tap); current.add(tap); }
@@ -1404,6 +1416,36 @@ export function createSynthEngine(
 
   const at = (time?: number) => time ?? ctx.currentTime;
   const voiceCount = (): Voices => patch?.voices ?? 1;
+
+  /** When each Voice ringing out beyond the setting is next looked at: the end of its Release. */
+  const lookAt = new Map<Voice, number>();
+  /**
+   * Only the Voices that may sound are wired (issue 257): those the Voices setting uses, the newest Note's (the Taps
+   * listen to it), and any still ringing out, looked at again when its Release has faded. The others are unwired, so
+   * at 1 Voice the browser renders one Voice, not eight. A Voice set on is wired at once, silent, before any Note can
+   * take it, and one unwired is silent: neither clicks.
+   */
+  const rewire = () => {
+    const now = ctx.currentTime;
+    voices.forEach((v, i) => {
+      const ringing = v.freeAt > now;
+      v.setWired(i < voiceCount() || v === lead || ringing);
+      if (i < voiceCount() || v === lead || !ringing || !Number.isFinite(v.freeAt) || lookAt.get(v) === v.freeAt) return;
+      // The browser's clock tells when the Release is over, as for a Mode's fade: a silent source ending then.
+      lookAt.set(v, v.freeAt);
+      const timer = ctx.createConstantSource();
+      timer.offset.value = 0;
+      timer.connect(master);
+      timer.onended = () => {
+        timer.disconnect();
+        if (lookAt.get(v) === v.freeAt) lookAt.delete(v);
+        rewire();
+      };
+      timer.start(v.freeAt);
+      timer.stop(v.freeAt + RENDER_QUANTUM / ctx.sampleRate);
+    });
+    listen();
+  };
 
   /**
    * A Gate off before its Note has started (one handed over, then stopped; a key let go within the dip) calls off the
@@ -1440,6 +1482,8 @@ export function createSynthEngine(
       callOffRestarts(voice, t);
       voice.releasedAt = t;
       voice.freeAt = t + patch.ampRelease * RELEASE_TAIL;
+      // One beyond the setting rings out, then is unwired.
+      if (voices.indexOf(voice) >= voiceCount()) rewire();
     }
   };
 
@@ -1459,7 +1503,7 @@ export function createSynthEngine(
   const follow = (voice: Voice) => {
     if (voice === lead) return;
     lead = voice;
-    listen();
+    rewire();
   };
   follow(voices[0]);
 
@@ -1650,7 +1694,9 @@ export function createSynthEngine(
     },
 
     applyPatch(next, { whole = false } = {}) {
+      const voicesBefore = voiceCount();
       patch = next;
+      if (next.voices !== voicesBefore) rewire();
       if (whole) {
         shared.writes.forget();
         lfoSetTo = new WeakMap();

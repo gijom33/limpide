@@ -1921,6 +1921,117 @@ describe('several Voices (ADR-0007)', () => {
   });
 });
 
+/**
+ * Every connection made from the moment it is called, until `stop`: what the browser renders is what its output and
+ * its analysers pull, and `pulledSources` counts the sources (Oscillators, Noise loops, constant sources) they reach.
+ */
+function watchConnections() {
+  const edges = new Map<AudioNode, Map<AudioNode | AudioParam, number>>();
+  const proto = AudioNode.prototype as unknown as { connect: (...a: unknown[]) => unknown; disconnect: (...a: unknown[]) => unknown };
+  const { connect, disconnect } = proto;
+  proto.connect = function (this: AudioNode, ...args: unknown[]) {
+    const to = args[0] as AudioNode | AudioParam;
+    const out = edges.get(this) ?? new Map();
+    out.set(to, (out.get(to) ?? 0) + 1);
+    edges.set(this, out);
+    return connect.apply(this, args);
+  };
+  proto.disconnect = function (this: AudioNode, ...args: unknown[]) {
+    const to = args[0];
+    if (to instanceof AudioNode || to instanceof AudioParam) edges.get(this)?.delete(to);
+    else edges.delete(this);
+    return disconnect.apply(this, args);
+  };
+  /** Which node each AudioParam belongs to, read from the nodes seen. */
+  const owners = () => {
+    const owner = new Map<AudioParam, AudioNode>();
+    const nodes = new Set<AudioNode>([...edges.keys(), ...[...edges.values()].flatMap((m) => [...m.keys()]).filter((k): k is AudioNode => k instanceof AudioNode)]);
+    for (const node of nodes)
+      for (let p = Object.getPrototypeOf(node); p && p !== Object.prototype; p = Object.getPrototypeOf(p))
+        for (const [name, d] of Object.entries(Object.getOwnPropertyDescriptors(p))) {
+          if (!d.get) continue;
+          const value = (node as unknown as Record<string, unknown>)[name];
+          if (value instanceof AudioParam) owner.set(value, node);
+        }
+    return owner;
+  };
+  return {
+    pulledSources(ctx: BaseAudioContext) {
+      const owner = owners();
+      const into = new Map<AudioNode, AudioNode[]>();
+      for (const [from, out] of edges)
+        for (const to of out.keys()) {
+          const node = to instanceof AudioParam ? owner.get(to) : to;
+          if (node) into.set(node, [...(into.get(node) ?? []), from]);
+        }
+      // Pulled: the output, and every analyser (a browser renders what an analyser listens to, wired on or not).
+      const roots: AudioNode[] = [ctx.destination, ...[...into.keys()].filter((n) => n instanceof AnalyserNode)];
+      const pulled = new Set<AudioNode>(roots);
+      for (const queue = [...roots]; queue.length; ) for (const from of into.get(queue.pop()!) ?? []) if (!pulled.has(from)) queue.push(pulled.add(from) && from);
+      return [...pulled].filter((n) => n instanceof AudioScheduledSourceNode).length;
+    },
+    stop() {
+      proto.connect = connect;
+      proto.disconnect = disconnect;
+    },
+  };
+}
+
+// Issue 257: the Voices beyond the Voices setting cost the audio thread nothing, and come back at once when it rises.
+describe('the Voices beyond the setting (issue 257)', () => {
+  const steady = { cutoff: 20000, resonance: 0, ampAttack: 0.001, ampSustain: 1, ampRelease: 0.02 };
+
+  it('at 1 Voice, nothing the browser renders reaches the other seven: each Voice set on is one Voice’s sources more', () => {
+    const graph = watchConnections();
+    try {
+      const ctx = new OfflineAudioContext(1, SR, SR);
+      const engine = createSynthEngine(ctx);
+      engine.setTapSource('all'); // the app's: the Amp Tap listens to every Voice
+      const at = (voices: Patch['voices']) => {
+        engine.applyPatch({ ...defaultPatch(), ...steady, voices });
+        return graph.pulledSources(ctx);
+      };
+      const [eight, one, two] = [at(8), at(1), at(2)];
+      const voice = two - one;
+      expect(voice).toBeGreaterThan(0);
+      expect(eight - one).toBe(7 * voice);
+      expect(at(1)).toBe(one);
+    } finally {
+      graph.stop();
+    }
+  });
+
+  it('plays a chord at once when the setting rises from 1, and a Voice beyond it rings out its Release when it falls', async () => {
+    const A2 = 45;
+    const E3 = 52;
+    const ctx = new OfflineAudioContext(1, SR, SR);
+    const engine = createSynthEngine(ctx);
+    engine.applyPatch({ ...defaultPatch(), ...steady, voices: 1 });
+    // At 0.2 s the setting rises to 4 and a chord is played at once; at 0.6 s both are let go with a long Release, and
+    // the setting falls to 1 as they ring out.
+    void ctx.suspend(0.2).then(() => {
+      engine.applyPatch({ ...defaultPatch(), ...steady, voices: 4 });
+      engine.noteOn(A2, 1);
+      engine.noteOn(E3, 1);
+      void ctx.resume();
+    });
+    void ctx.suspend(0.6).then(() => {
+      engine.applyPatch({ ...defaultPatch(), ...steady, ampRelease: 2, voices: 4 });
+      engine.release(E3);
+      engine.release(A2);
+      engine.applyPatch({ ...defaultPatch(), ...steady, ampRelease: 2, voices: 1 });
+      void ctx.resume();
+    });
+    const s = (await ctx.startRendering()).getChannelData(0);
+    const tone = (hz: number, from: number, to: number) => toneAmplitude(s, SR, hz, Math.round(from * SR), Math.round(to * SR));
+    // Both Notes from their first 20 ms on.
+    expect(dB(tone(110, 0.22, 0.42) / tone(164.8, 0.22, 0.42))).toBeGreaterThan(-3);
+    expect(tone(110, 0.22, 0.42)).toBeGreaterThan(0.05);
+    // The chord rings on after the fall: E3's Release too, on the second Voice, now beyond the setting.
+    expect(tone(164.8, 0.7, 0.9) / tone(164.8, 0.22, 0.42)).toBeGreaterThan(0.3);
+  });
+});
+
 // One test per Preset: rendering all of them in one test took most of the browser's 15 s per test, and ran
 // past it when the whole suite shared the machine.
 describe('every Preset makes a sound when a chord is played, and stays within full scale at the output', () => {
