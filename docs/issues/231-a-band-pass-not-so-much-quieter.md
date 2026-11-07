@@ -140,3 +140,5 @@ Built at night (2026-11-05), test-first.
 4. **The Response Curve past +20 dB** runs off the top of the Spectrum from about 70 % Resonance, as a low-pass's peak already does at full Resonance. Recommended: leave the scale as it is.
 
 **Since then (2026-11-06, the 1.26.0 ear check):** the six other band-pass Presets play within 0.2 dB of 1.25.0. Talking Filter, matched on its loudest moment on C4, is 2.9 dB louder on C6 and 0.9 dB softer on C2; Init switched to band-pass is within 2 dB of its low-pass on C4 but rises with the Note, 3.9 dB under it on C2 and about 7 dB over it on C6, a high Note's fundamental near the Cutoff, short of the limiter. For the owner's ear.
+
+2026-11-07: [258](./258-preset-levels-across-the-keyboard.md) raised two of the band-pass Presets to their group's level, so they no longer play as before: Vowel (Volume 0.45, Key Track 0.7) and Cowbell (Volume 0.42, Key Track 0.6). Wah and Talking Filter gained Key Track, which leaves their C4 as it was; the 0.5 dB check now holds the other five.

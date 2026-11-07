@@ -98,7 +98,7 @@ group('Intervals', [
 ]);
 
 group('Filter', [
-  ['Resonant Ring', 'High Resonance makes the Filter ring after every edge of the saw: see the ripples in the Scope, at the Cutoff’s frequency.', {
+  ['Resonant Ring', 'High Resonance makes the Filter ring after every edge of the saw: see the ripples in the Scope, at the Cutoff’s frequency, which Key Track carries with the Note.', {
     volume: 0.45, cutoff: 1400, resonance: 0.9, filterSlope: 24, keyTrack: 0.7, ampSustain: 1,
   }],
   ['Self-Oscillation', 'Resonance all the way up on a dark Filter: the Cutoff itself starts to sing, a near-sine riding on the saw.', {
@@ -363,7 +363,7 @@ group('Pianos', [
   }],
   ['Felt Piano', 'Soft and dark, as if a felt strip lay over the strings: a triangle through a low Cutoff with a slow, long decay. Velocity makes a harder Note louder, hardly brighter: the felt hides the strike. On eight Voices.', {
     voices: 8, waveform: 'triangle', osc2Waveform: 'triangle', osc2Detune: 3, mixOsc2: 0.4,
-    cutoff: 300, resonance: 0, filterEnvAmount: 0.5, filterDecay: 0.8, filterSustain: 0.2, keyTrack: 0.5, velocityCutoff: 0.8,
+    cutoff: 300, resonance: 0, filterEnvAmount: 0.5, filterDecay: 0.8, filterSustain: 0.2, keyTrack: 0.5, velocityCutoff: 0.2,
     ampAttack: 0.01, ampDecay: 3, ampSustain: 0.2, ampRelease: 0.8,
   }],
   ['Honky-Tonk', 'A second saw 14 cents off: the two strings of a neglected upright beat against each other, and the Scope never settles. On eight Voices.', {

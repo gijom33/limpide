@@ -7,6 +7,7 @@ import { dB, energyAboveDb, frequencyAround, toneAmplitude, toneAmplitudeHann } 
 import { straightenLimiter } from '../test/straightLimiter';
 import { applyStep } from '../tutorial/tutorial';
 import { tutorialFor } from '../tutorial/tutorials';
+import { describePatch } from './describe';
 import { type Patch, setLfo, setParam } from './patch';
 import { PRESET_GROUPS, PRESETS } from './presets';
 
@@ -226,8 +227,8 @@ describe('the Presets do what their words say (issue 108, reviews 13 and 15)', (
     });
 
   // A triangle under a 300 Hz Cutoff has little above it for Velocity to open: soft over hard, its brightness was 0.99
-  // (review 15). Its words say so (issue 258).
-  it('Felt Piano: a harder Note is louder, hardly brighter', async () => {
+  // (review 15). Its words, and the line drawn from its settings, say so.
+  it('Felt Piano: a harder Note is louder, hardly brighter (issue 258)', async () => {
     const [soft, hard] = await Promise.all([0.35, 1].map((velocity) => play(preset('Felt Piano'), [C4], 1, 1.1, velocity)));
     /** The centroid of the first 20 Harmonics 100 ms into the Note, in Hz: review 15's brightness. */
     const centroid = (s: Float32Array) => {
@@ -237,6 +238,7 @@ describe('the Presets do what their words say (issue 108, reviews 13 and 15)', (
     expect(loudestDb(hard) - loudestDb(soft)).toBeGreaterThan(6);
     expect(centroid(soft) / centroid(hard)).toBeGreaterThan(0.95);
     expect(PRESETS.find((p) => p.name === 'Felt Piano')!.about).not.toMatch(/harder Note is brighter/);
+    expect(describePatch(preset('Felt Piano'))).not.toMatch(/brighter/);
   });
 
   it('Marimba’s strike is brighter than the tone after it', async () => {
@@ -658,8 +660,25 @@ describe('the Presets levelled across the keyboard (issue 258)', () => {
   it('the Drums’ median within 4 dB of the Basses’, and the Kick within 3 dB of 808 Boom', async () => {
     const drums = familyMedian(await levelsOnC4(), 'Drums');
     const basses = await Promise.all(PRESETS.filter((p) => p.group === 'Bass').map((p) => levelOf(p.patch, C2)));
-    expect(median(basses) - drums, `Drums ${drums.toFixed(1)}, Basses ${median(basses).toFixed(1)} dBFS`).toBeLessThanOrEqual(4);
+    expect(Math.abs(median(basses) - drums), `Drums ${drums.toFixed(1)}, Basses ${median(basses).toFixed(1)} dBFS`).toBeLessThanOrEqual(4);
     const [kick, boom] = await Promise.all([levelOf(preset('Kick'), C2), levelOf(preset('808 Boom'), C2)]);
     expect(Math.abs(boom - kick), `Kick ${kick.toFixed(1)}, 808 Boom ${boom.toFixed(1)} dBFS`).toBeLessThanOrEqual(3);
+  }, 300_000);
+
+  // Kept apart from its kit (APART above): as loud at its strike, only shorter.
+  it('Hi-hat strikes within 2 dB of the Open Hat’s peak', async () => {
+    const [closed, open] = await Promise.all(['Hi-hat', 'Open Hat'].map((name) => play(preset(name), [C4], 1, 1.1)));
+    expect(Math.abs(dB(peak(closed) / peak(open)))).toBeLessThanOrEqual(2);
+  });
+
+  // Where each changed Preset now sits on C4, in dBFS (2026-11-07): the group tests allow 3 dB around a median that
+  // moves with them, this 1 dB. Those given only Key Track are unchanged on C4, its centre.
+  const NOW: Record<string, number> = {
+    Vowel: -19.5, 'Breathing Pad': -23.5, Kick: -17.6, Snare: -22.3, 'Open Hat': -20.4, Ride: -21.0, Tom: -17.6, Cowbell: -19.8, Clang: -20.2,
+    'Zap Tom': -19.8, Gong: -19.1,
+  };
+  it.each(Object.keys(NOW))('%s plays on C4 within 1 dB of where issue 258 left it', async (name) => {
+    const level = (await levelsOnC4()).get(name)!;
+    expect(Math.abs(level - NOW[name]), `${level.toFixed(2)} dBFS`).toBeLessThanOrEqual(1);
   }, 300_000);
 });

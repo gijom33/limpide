@@ -103,6 +103,8 @@ From review 15:
 
 2026-11-05: [231](./231-a-band-pass-not-so-much-quieter.md) gave the band-pass a make-up gain, and the 7 band-pass Presets (Vowel, Sync-ish Lead, Cowbell, Wind, Wah, Talking Filter, Robot) had their Volume taken down by as much, so their levels on C4 are as they were, within 0.5 dB.
 
+2026-11-07: [258](./258-preset-levels-across-the-keyboard.md) levelled fourteen Presets across the keyboard by Key Track and brought the Drums up to within 4 dB of the Basses. Vowel no longer sits apart: at Volume 0.45 it is level with the Filter lessons; Hi-hat now sits apart instead, 7 dB under its kit, its loudest 100 ms mostly silence. The Kick and the Tom sing on Pink Noise (Noise 0.5 and 0.6), and the rest of the kit plays at full Volume but Cowbell's (0.42). Felt Piano no longer claims a brighter hard Note: its Velocity on the Cutoff is 0.2, and its words say louder, hardly brighter.
+
 **Judgement calls** (Claude's call, open to the owner):
 
 1. **Groups meet the quiet, not the loud:** Volume can only lower, so where a quiet sound could not be raised far enough the rest of its group came down. Movement & Effects' median fell from −16.1 to −22.2 dBFS (Wind, Wah, Robot and Ocean, Noise and band-passes, raised by up to 10 dB still sit near −24), the Drums' from −23.7 to −25.6. The groups now differ more from each other than before (Bass −14.5, Keys & Plucks −27.1): the criterion is per group, and the master's room for Voices puts the 8-Voice groups lower.
