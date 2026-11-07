@@ -406,8 +406,8 @@ for (const theme of ['Dark', 'Light'] as const) {
   });
 }
 
-// Issue 252: with no Web MIDI, MIDI Learn and Quick Setup were disabled yet looked and hovered as if enabled, their tip
-// saying nothing of why they did nothing. Now they are greyed, still on hover, and their tip says why first.
+// Issue 252: with no Web MIDI, MIDI Learn and Quick Setup are disabled and look it, greyed and still on hover, and their
+// tip says why first.
 for (const [what, why, noMidi] of [
   ['missing (Safari)', 'This browser gives no MIDI', undefined],
   ['blocked for the site', 'MIDI is blocked for this site', 'denied'],
@@ -435,7 +435,7 @@ for (const [what, why, noMidi] of [
       await button.hover();
       const tip = page.getByRole('tooltip').filter({ hasText: name });
       await expect(tip, name).toBeVisible();
-      await expect(tip.locator('.tooltip-why'), name).toHaveText(`${why}.`);
+      await expect(tip, name).toContainText(`${name}${why}.`); // under the title, first
       expect(await look(), name).toEqual(resting); // no hover change
       await page.mouse.move(0, 0);
       await expect(tip, name).toBeHidden();

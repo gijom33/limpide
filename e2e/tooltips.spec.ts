@@ -34,6 +34,7 @@ test('keyboard users get the same explanation on focus, and Escape dismisses it'
   await page.goto('/');
   await page.getByRole('button', { name: 'Display' }).focus(); // open the panel from the keyboard, as a keyboard user would
   await page.keyboard.press('Enter');
+  await page.keyboard.press('Tab'); // on into the panel: a focus right after Enter is the page's, and opens no tip (issue 252)
   await page.getByRole('button', { name: 'Snapshot', exact: true }).focus();
   const snapshotTip = page.getByRole('tooltip').filter({ hasText: 'faint grey trace' });
   await expect(snapshotTip).toBeVisible();

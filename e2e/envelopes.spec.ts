@@ -133,14 +133,14 @@ for (const [width, height] of [[360, 800], [390, 844], [760, 1000], [1100, 800],
   });
 }
 
-// Issue 252: side by side, the Amp's Envelope row sat 15 to 22 px above the Filter's. Each Envelope row ends its
-// Section's controls, and the two lie on one line wherever the Sections share a row.
+// Issue 252: each Envelope row ends its Section's controls, so the Filter's and the Amp's lie on one line wherever the
+// two Sections share a row.
 for (const width of [861, 1100, 1440, 2560]) {
   test(`the Filter and Amp Envelope rows line up side by side at ${width} px (issue 252)`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/');
     const top = async (locator: Locator) => (await locator.boundingBox())!.y;
-    const section = (stage: string) => page.locator(`section[aria-label="${stage}"]`);
+    const section = (stage: string) => page.getByRole('region', { name: stage, exact: true });
     expect(await top(section('Amp')), 'side by side').toBe(await top(section('Filter')));
     const row = (stage: string) => section(stage).locator('.knobs-envelope');
     expect(Math.abs((await top(row('Filter'))) - (await top(row('Amp'))))).toBeLessThanOrEqual(1);

@@ -675,14 +675,13 @@ html:has(dialog.about[open]) { overflow: hidden; }
 /* Every stage is a grid of rows: a label column on the left (TUNING, MIXER, FILTER ENVELOPE, AMP ENVELOPE,
    VOICES; two lines when the name needs them), and the controls starting on one vertical line to its right.
    A row without a name leaves the column empty. The rows share the height the tallest stage gives the controls,
-   with the same space above and below each. */
+   with the same space above and below each, except where an Envelope row ends them (below). */
 :root { --label-col: 68px; --label-gap: 12px; } /* the column fits the widest name, WAVEFORM */
 /* Rows of controls 8 px apart, as the LFOs' are: the tightest that still reads as separate rows (issue 33). */
 .rows { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; justify-content: space-evenly; gap: var(--space-2); }
 .rows > * { flex: none; }
 /* An Envelope row ends its stage's controls, on their bottom line, the rows above it from the top: the Filter's and the
-   Amp's, side by side, lie on one line whatever the rows above them (issue 252: the Amp's, spaced evenly in the room
-   the Filter's taller rows leave it, sat 15 to 22 px higher). */
+   Amp's, side by side, lie on one line whatever the rows above them (issue 252). */
 .rows > .sub-block:has(.envelope-knobs):last-child { margin-top: auto; }
 .block .sub-block { column-gap: var(--label-gap); }
 .block .sub-block > h3, .block .sub-block > .tip-anchor:first-child { flex: 0 0 var(--label-col); align-self: center; }

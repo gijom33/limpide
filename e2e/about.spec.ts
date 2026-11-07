@@ -387,8 +387,9 @@ test('About and the page’s description say what Limpide shows, the title still
 test('About’s Play the Demo, clicked, leaves no tip open (issue 252)', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'About', exact: true }).click();
-  await page.getByRole('dialog', { name: 'Limpide' }).getByRole('button', { name: 'Play the Demo' }).click();
+  await page.getByRole('dialog', { name: 'Limpide' }).getByRole('button', { name: 'Play the Demo', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Demo', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await page.evaluate(() => new Promise((done) => setTimeout(() => requestAnimationFrame(done), 100)));
-  await expect(page.getByRole('tooltip')).toHaveCount(0);
+  // None on the Demo button (WebKit may show a hover tip under the pointer where About was).
+  await expect(page.getByRole('tooltip').filter({ hasText: 'Turn a knob or flip a switch while it plays' })).toHaveCount(0);
 });

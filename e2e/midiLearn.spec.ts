@@ -424,13 +424,15 @@ test('the tempo learns a knob and Tap Tempo a pad; a knob on an LFO’s Rate tur
   await expect.poll(async () => Math.abs(Number(await bpm.getAttribute('aria-valuenow')) - 60 / gap), `${gap} s apart`).toBeLessThanOrEqual(1);
 });
 
-// Issue 252: at 861 to 1440 px the bar lay over LFO 2's Depth and Rate values, and at 1440 × 900 the page could not
-// scroll them clear. In Learn the page keeps room for the bar below its last control, as for a docked card.
+// Issue 252: in Learn the page keeps room for the bar below its last control, as for a docked card, so LFO 2's Depth
+// and Rate values (the lowest, under the bar's middle) and every other control scroll clear of it.
 for (const width of [861, 1100, 1440]) {
   test(`in MIDI Learn at ${width} × 900, the page scrolls every value and control clear of the bar (issue 252)`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/');
     await startLearn(page);
+    // The room is the bar's measured height and its 16 px: there before the page is scrolled.
+    await expect.poll(() => page.locator('main').evaluate((main) => parseFloat(getComputedStyle(main).marginBottom))).toBeGreaterThan(40);
     await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
     const under = await page.evaluate(() => {
       const bar = document.querySelector('.learn-bar')!.getBoundingClientRect();
