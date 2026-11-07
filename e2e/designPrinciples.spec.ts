@@ -4,8 +4,9 @@ import { type AuditOptions, auditPage, type Rule } from './audit';
 import { openDisplay, sliderName, wholeDemoCard } from './helpers';
 
 /**
- * The design principles' measurable rules (docs/design-principles.md, issue 17), on every screen state a visitor
- * can reach without playing: the page with each Oscillator tab, and each panel open.
+ * The design principles' measurable rules (docs/design-principles.md, issue 17), on the screen states in `STATES`
+ * below: the page with each of the Oscillators' four tabs; the Patches, Display and MIDI panels and About open; Glow
+ * on; a Preset's description and the Patch's plain words; and the Tutorial's, the Tour's and the Demo's cards.
  *
  * Where look B departs from a rule on purpose, a waiver below says where and why, and sets a floor just under what
  * is measured today: anything new that breaks a rule fails the test, and so does a waived element that gets worse.
@@ -111,6 +112,8 @@ async function openAbout(page: Page) {
 const STATES: { name: string; open?(page: Page): Promise<void>; close?(page: Page): Promise<void> }[] = [
   { name: 'Osc 1 tab' },
   { name: 'Osc 2 tab', open: (page) => page.getByRole('tab', { name: 'Osc 2' }).click(), close: (page) => page.getByRole('tab', { name: 'Osc 1' }).click() },
+  // Issue 265: the Sub's and the Noise's choices, Segmented lists checked nowhere else.
+  { name: 'Sub & Noise tab', open: (page) => page.getByRole('tab', { name: 'Sub & Noise' }).click(), close: (page) => page.getByRole('tab', { name: 'Osc 1' }).click() },
   { name: 'Mixer tab', open: (page) => page.getByRole('tab', { name: 'Mixer' }).click(), close: (page) => page.getByRole('tab', { name: 'Osc 1' }).click() },
   { name: 'Patches panel', open: (page) => page.getByRole('button', { name: /^Patch:/ }).click(), close: (page) => page.getByRole('button', { name: /^Patch:/ }).click() },
   // A Preset picked in the panel shows its description under the name, with its × (issue 153). Picked by the keyboard,
@@ -182,6 +185,34 @@ const STATES: { name: string; open?(page: Page): Promise<void>; close?(page: Pag
       await page.keyboard.press('Escape');
       await expect(page.getByRole('dialog', { name: 'Limpide' })).toBeHidden();
       await setBead(page, 'off');
+    },
+  },
+  // Issue 265: a Tutorial's card on its first Step, its control ringed; quit, the Patch comes back. By the keyboard, so
+  // the pointer hovers nothing the menu left under it.
+  {
+    name: 'Tutorial card',
+    open: async (page) => {
+      await pressByKeyboard(page, page.getByRole('button', { name: 'Tutorial', exact: true }));
+      await pressByKeyboard(page, page.getByRole('group', { name: 'Tutorials' }).last().getByRole('button', { name: /^Tutorial: Sub Ladder/ }));
+      await expect(page.getByRole('region', { name: /^Tutorial: / })).toBeVisible();
+      await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished)));
+    },
+    close: async (page) => {
+      await pressByKeyboard(page, page.getByRole('region', { name: /^Tutorial: / }).getByRole('button', { name: 'Quit the tutorial' }));
+      await expect(page.getByRole('region', { name: /^Tutorial: / })).toBeHidden();
+    },
+  },
+  // Issue 265: the Tour's first card, the synth turning its controls itself; closed, the Patch comes back.
+  {
+    name: 'Tour card',
+    open: async (page) => {
+      await openAbout(page);
+      await pressByKeyboard(page, page.getByRole('dialog', { name: 'Limpide' }).getByRole('button', { name: 'Take the Tour' }));
+      await expect(page.getByRole('region', { name: 'Tour' })).toBeVisible();
+    },
+    close: async (page) => {
+      await pressByKeyboard(page, page.getByRole('region', { name: 'Tour' }).getByRole('button', { name: 'Close the Tour' }));
+      await expect(page.getByRole('region', { name: 'Tour' })).toBeHidden();
     },
   },
   // Last, since the Demo loads its Presets (issue 99): small in the corner in three and four across (issue 230).

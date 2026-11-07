@@ -1436,8 +1436,10 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 @keyframes midi-pulse { 50% { opacity: 0.2; } }
 @media (prefers-reduced-motion: reduce) { .midi-status[data-learning] .midi-icon { animation: none; } }
 /* The one primary action in a panel: filled in the accent. */
-.tool-primary { color: var(--bg); background: var(--accent); border-color: var(--accent); font-weight: 600; }
-.tool-primary:hover { color: var(--bg); background: color-mix(in srgb, var(--accent) 85%, var(--text)); }
+/* Near-black words in either theme, as About's buttons have: the light theme's own background fell to 2.85:1 on its
+   orange, on the Tutorial's and the Tour's cards (issue 265's audit). */
+.tool-primary { color: #08090c; background: var(--accent); border-color: var(--accent); font-weight: 600; }
+.tool-primary:hover { color: #08090c; background: color-mix(in srgb, var(--accent) 85%, var(--text)); }
 
 /* Phones and the sections 2 × 2 (issue 83): every line counts. A knob keeps only its name under the dial; while it
    changes (by hand, keys, MIDI, the Demo, a Patch) its value shows in the name's place for a moment, so nothing moves. */
@@ -1617,6 +1619,13 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 .start-failure h1 { margin: 0; }
 .start-failure p { margin: 0; font-size: var(--text-lg); line-height: 1.5; }
 .start-failure .start-failure-detail { color: var(--muted); font-family: ui-monospace, monospace; font-size: var(--text-md); }
+/* Narrower than a phone, the Tour's longest name and its "1 of 6" no longer fit beside the card's three buttons, and
+   each took two lines: the progress goes under the name (issue 265's audit). */
+@media (max-width: 319px) {
+  .card-top { flex-wrap: wrap; }
+  .card-name { margin-right: auto; }
+  .card-progress { order: 1; flex-basis: 100%; }
+}
 
 /* A card docked at the bottom of the page (a Tutorial's, issue 57; the Demo's, issue 50, in the corner from three
    across: issue 230), under the panels and tooltips, the page keeping room for it below its last section (the Demo's
