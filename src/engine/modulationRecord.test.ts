@@ -15,8 +15,8 @@ const filterAdsr = (p: Patch) => ({ attack: p.filterAttack, decay: p.filterDecay
 function recordOf(knobs: Partial<Patch> = {}) {
   const patch = patchOf(knobs);
   const record = createModulationRecord(0);
-  record.lfoClocks[0].setRate(0, patch.lfoRate);
-  record.lfoClocks[1].setRate(0, patch.lfo2Rate);
+  record.recordLfoRate(0, 0, patch.lfoRate);
+  record.recordLfoRate(1, 0, patch.lfo2Rate);
   record.recordPatch(0, patch);
   return { record, patch };
 }
@@ -327,7 +327,7 @@ describe('the trimming', () => {
     const seen = record.modulationAt(1);
     for (let i = 1; i <= 200; i++) {
       const t = 1 + i / 100;
-      record.lfoClocks[0].setRate(t, 1 + (i % 7));
+      record.recordLfoRate(0, t, 1 + (i % 7));
       record.recordPatch(t, patchOf({ lfoAmount: 0.5, lfoRate: 1 + (i % 7), cutoff: 500 + i }));
     }
     expect(record.modulationAt(1).lfo[0]).toBeCloseTo(seen.lfo[0], 9);

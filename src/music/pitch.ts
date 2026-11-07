@@ -1,5 +1,6 @@
 export const A4_MIDI = 69;
-const A4_HZ = 440;
+/** A4's frequency: the pitch the engine starts on, and stands in for before any Note. */
+export const A4_HZ = 440;
 
 /**
  * A frequency as a knob reads it: "2.00 Hz", "300 Hz", "2.50 kHz". A synced Rate's Hz reads the same as the Rate in Hz

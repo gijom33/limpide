@@ -5,7 +5,7 @@ import {
   pressed, pressurePitch, soundingPitch,
 } from '../modulation/modulationModel';
 import { bandwidthOctaves } from '../modulation/passBand';
-import { frequencyToNote, noteToFrequency } from '../music/pitch';
+import { A4_HZ, A4_MIDI, frequencyToNote, noteToFrequency } from '../music/pitch';
 import { TEMPO } from '../music/tempo';
 import { type LfoNumber, lfos, PARAMS, type Patch } from '../patch/patch';
 import { filterStages } from './filterDesign';
@@ -21,8 +21,6 @@ import { filterStages } from './filterDesign';
 // its few seconds, so a Freeze can be held a while. A count cap still bounds memory.
 const MODEL_SECONDS = 30;
 const MODEL_LIMIT = 4096;
-
-const A4 = noteToFrequency(69);
 
 /**
  * Add an entry to a history (the record's, or a Voice's own pitches), first dropping any later than it: a Gate or a Note handed over ahead of the clock (the
@@ -115,20 +113,20 @@ export function createModulationRecord(start: number) {
     const i = lastAt(pressures, t);
     return i >= 0 ? glidedPressure(pressures[i].from, pressures[i].pressure, t - pressures[i].time) : NO_PRESSURE;
   };
-  /** The newest Note's frequency at `t`, through its Glide (before the first Note, the first Note's; none: 0). */
-  const glidingAt = (t: number) => {
+  /**
+   * Where the newest Note's slide has reached at `t`, through its Glide, in Hz (`frequency`) or in semitones (`note`):
+   * before the first Note, the first Note's; with none, `none`.
+   */
+  const slideAt = (t: number, [to, from]: readonly ['frequency', 'from'] | readonly ['note', 'fromNote'], none: number) => {
     const i = lastAt(pitches, t);
-    if (i < 0) return pitches[0]?.frequency ?? 0;
+    if (i < 0) return pitches[0]?.[to] ?? none;
     const p = pitches[i];
-    return glideFrom(p.from, p.frequency, p.glide, t - p.time);
+    return glideFrom(p[from], p[to], p.glide, t - p.time);
   };
-  /** The Note Key Track follows at `t`: the same slide as the Oscillators, in semitones. */
-  const trackedNoteAt = (t: number) => {
-    const i = lastAt(pitches, t);
-    if (i < 0) return pitches[0]?.note ?? 69;
-    const p = pitches[i];
-    return glideFrom(p.fromNote, p.note, p.glide, t - p.time);
-  };
+  /** The newest Note's frequency at `t`, through its Glide (none: 0). */
+  const glidingAt = (t: number) => slideAt(t, ['frequency', 'from'], 0);
+  /** The Note Key Track follows at `t`: the same slide as the Oscillators, in semitones (none: A4). */
+  const trackedNoteAt = (t: number) => slideAt(t, ['note', 'fromNote'], A4_MIDI);
   /** The Patch in force at `t` (before the first, the first). */
   const patchAt = (t: number) => (patches.length ? patches[Math.max(0, lastAt(patches, t))].patch : undefined);
   /** Both LFOs' values at `t`, under the Patch then in force. */
@@ -142,8 +140,24 @@ export function createModulationRecord(start: number) {
     amp,
     /** The newest Note's Filter Envelope Gate events. */
     filter,
-    /** Each LFO's clock, which the engine moves as it moves the LFO's oscillators. */
-    lfoClocks,
+    /** LFO `i` (0 for LFO 1) runs at `rate` from `t`, as the engine sets its oscillators to. */
+    recordLfoRate(i: number, t: number, rate: number) {
+      lfoClocks[i].setRate(t, rate);
+    },
+    /** LFO `i`'s cycle starts again at `t` (a Note, when it retriggers; a lock onto the beat), at phase `start`. */
+    recordLfoRestart(i: number, t: number, start: number) {
+      lfoClocks[i].restart(t, start);
+    },
+    /** LFO `i`'s restarts after `t` are called off (a Gate off before their Notes): its cycle runs on through them. */
+    cancelLfoRestarts(i: number, t: number) {
+      lfoClocks[i].cancelAfter(t);
+    },
+    /** LFO `i`'s Rate changes after `t` are called off (a pull onto the beat cut short, issue 112): restarts stay. */
+    cancelLfoRates(i: number, t: number) {
+      lfoClocks[i].cancelRatesAfter(t);
+    },
+    /** LFO `i`'s phase (0–1) at `t`. */
+    lfoPhaseAt: (i: number, t: number) => lfoClocks[i].phaseAt(t),
 
     /** The Patch in force from `t` (one at the same moment replaces it: the clock standing still). */
     recordPatch(t: number, patch: Patch) {
@@ -224,8 +238,8 @@ export function createModulationRecord(start: number) {
       const { latest, opened } = amp.at(t);
       const velocity = opened?.peak ?? 0;
       const latestPitch = lastAt(pitches, t);
-      const note = latestPitch >= 0 ? pitches[latestPitch].note : 69;
-      const gliding = frequencyToNote(glidingAt(t) || A4);
+      const note = latestPitch >= 0 ? pitches[latestPitch].note : A4_MIDI;
+      const gliding = frequencyToNote(glidingAt(t) || A4_HZ);
       const vibrato = then ? soundingPitch(then, gliding, lfo) - gliding : 0;
       const resonance = then ? effectiveResonance(then, lfo) : 0;
       return {
@@ -254,7 +268,7 @@ export function createModulationRecord(start: number) {
       const pressure = pressureAt(t);
       const vibrato = withVibrato && then ? lfoOffset(pressed(then, pressure), 'pitch', lfoValues(then, t)) : 0;
       const cents = bendAt(t) + pressurePitch(pressure) * 100;
-      const frequency = (glidingAt(t) || A4) * 2 ** ((then?.osc1Octave ?? 0) + vibrato / 12 + cents / 1200);
+      const frequency = (glidingAt(t) || A4_HZ) * 2 ** ((then?.osc1Octave ?? 0) + vibrato / 12 + cents / 1200);
       return then?.mixSub ? frequency * 2 ** then.subOctave : frequency;
     },
     /** LFO `n`'s value times the Depth in force at `t` (−1 to 1). */
