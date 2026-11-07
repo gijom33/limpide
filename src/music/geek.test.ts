@@ -88,6 +88,11 @@ describe('the Synth Geek Layer: Osc 2’s tuning (issue 167)', () => {
     expect(geekReadout('osc2Detune', 0, { ...patch, osc2Semitone: 4 }, { note: 69 })).toBe('17.5 Hz beats');
   });
 
+  it('writes three figures as the rate rounds, never wider than its widest (issue 256)', () => {
+    // In unison at A4, 38.9 cents up beats 9.996 Hz: "10.0 Hz", not "10.00 Hz".
+    expect(geekReadout('osc2Detune', 38.9, patch, { note: 69 })).toBe('10.0 Hz beats');
+  });
+
   it('says no beats where no pair is near enough to be heard beating (issue 256)', () => {
     // A semitone: no pair up to the 8th Harmonics within a quarter-tone.
     expect(geekReadout('osc2Detune', 0, { ...patch, osc2Semitone: 1 }, { note: 69 })).toBe('no beats');
@@ -107,6 +112,10 @@ describe('the Synth Geek Layer: Osc 2’s tuning (issue 167)', () => {
     expect(geekReadout('osc2Detune', 10, { ...patch, waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1 }, { note: 69 })).toBe('no beats');
     // Osc 2 a Square an octave up: Osc 1's Saw has the 2nd, 880 Hz, to meet the Square's 1st.
     expect(geekReadout('osc2Detune', 10, { ...patch, osc2Waveform: 'square', osc2Octave: 1 }, { note: 69 })).toBe('5.10 Hz beats');
+    // A Pulse near a Square: its 2nd Harmonic 50 dB under the 1st, too faint to beat; at 40 %, 10 dB under, it beats.
+    const fifth = { ...patch, osc2Waveform: 'pulse', osc2Semitone: 7 } as const;
+    expect(geekReadout('osc2Detune', 0, { ...fifth, osc2PulseWidth: 0.499 }, { note: 69 })).toBe('no beats');
+    expect(geekReadout('osc2Detune', 0, { ...fifth, osc2PulseWidth: 0.4 }, { note: 69 })).toBe('1.49 Hz beats');
   });
 
   it('sizes each for its widest', () => {

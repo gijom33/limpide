@@ -58,3 +58,5 @@ Claude's calls, open to the owner:
 2. **How small:** the most a value shrinks is to about 9 px from 11 (the Mixer's and Amp Sustain's dB with Geek on, "−40.0 dB", at 320 to 375 px and at 601 px); the times in ms go to about 10 px at 601 px, Cutoff and Key Track to about 10.5 px. If 9 px reads too small, the dB could drop its decimal below −10 dB in the name's place ("−40 dB"), which keeps them at 10.5 px or more.
 
 **To try:** at 700 px (or a phone), the Synth Geek Layer on, Osc 2's tab: turn Detune to its top; "12.9 Hz" sits under Detune's dial, clear of "Env Amount". Then the Mixer's faders near the bottom with Geek on, and the Envelopes' times, at 601 px and on a phone: each value stays under its own control, readable.
+
+**Since (2026-11-07, [256](./256-detunes-beats-at-every-interval.md)):** Detune's widest is now "20.0 Hz beats" and "no beats at A4"; its spec checks "no beats" in the name's place too, a semitone and a quarter up.

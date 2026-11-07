@@ -209,18 +209,26 @@ const COINCIDING_CENTS = 50;
 const BEATS_HEARD_BELOW_HZ = 20;
 /** The top of what is heard: Harmonics above it beat unheard. */
 const HEARD_UP_TO_HZ = 20000;
-/** Whether a Waveform has its nth Harmonic, n up to BEATING_HARMONICS: a Square none of its even ones. */
+/**
+ * How loud a Harmonic must be to beat, against its Waveform's loudest up to BEATING_HARMONICS: 40 dB under it. A
+ * Square's even Harmonics are none; a Pulse's near a width that cancels one, almost none.
+ */
+const BEATING_LEVEL = 0.01;
+/** A cent's worth of slack for the floating point, so Detune at ±50 cents keeps its pair. */
+const CENTS_SLACK = 1e-9;
+/** Whether a Waveform has its nth Harmonic loud enough to beat, n up to BEATING_HARMONICS. */
 const hasHarmonic = (waveform: Waveform, pulseWidth: number) => {
   const { magnitudes } = harmonicSeries(waveform, pulseWidth, BEATING_HARMONICS + 1);
-  return (n: number) => magnitudes[n] > 1e-4;
+  const loudest = Math.max(...magnitudes.subarray(1));
+  return (n: number) => magnitudes[n] >= BEATING_LEVEL * loudest;
 };
 
 /**
  * How fast Osc 2 beats against Osc 1, in Hz (issue 256): the beats of the lowest pair of their Harmonics that nearly
  * coincide, Osc 1's pth against Osc 2's qth, f₂ / f₁ near p / q, Δf = |p f₁ − q f₂|; f₁ and f₂ at the Note played, Osc 2
- * tuned by its knobs as the engine tunes it (osc2Ratio), c the cents of Detune. Undefined where no pair is heard
- * beating: none up to the 8th Harmonics within a quarter-tone and under what is heard, or the lowest beating at 20 Hz
- * or faster.
+ * tuned by its knobs with Detune at `cents`, as the engine tunes it (osc2Ratio). Undefined where none is heard
+ * beating: no pair up to BEATING_HARMONICS within COINCIDING_CENTS and under HEARD_UP_TO_HZ, or the lowest beating at
+ * BEATS_HEARD_BELOW_HZ or faster.
  */
 export function detuneBeatsHz(patch: Patch, cents: number, note: GeekNote): number | undefined {
   const f1 = geekNoteHz(note) * 2 ** patch.osc1Octave;
@@ -229,7 +237,7 @@ export function detuneBeatsHz(patch: Patch, cents: number, note: GeekNote): numb
   const osc2Has = hasHarmonic(patch.osc2Waveform, patch.osc2PulseWidth);
   for (let p = 1; p <= BEATING_HARMONICS && p * f1 < HEARD_UP_TO_HZ; p++) {
     const q = Math.round(p / ratio);
-    if (q < 1 || q > BEATING_HARMONICS || Math.abs(1200 * Math.log2((q * ratio) / p)) > COINCIDING_CENTS + 1e-9) continue;
+    if (q < 1 || q > BEATING_HARMONICS || Math.abs(1200 * Math.log2((q * ratio) / p)) > COINCIDING_CENTS + CENTS_SLACK) continue;
     if (!osc1Has(p) || !osc2Has(q)) continue;
     const beats = Math.abs(p - q * ratio) * f1;
     return beats < BEATS_HEARD_BELOW_HZ ? beats : undefined;
@@ -238,8 +246,8 @@ export function detuneBeatsHz(patch: Patch, cents: number, note: GeekNote): numb
 }
 /** What Detune reads where no pair of Harmonics is heard beating (issue 256). */
 const NO_BEATS = 'no beats';
-/** A rate in Hz to three figures: "2.55 Hz", "25.5 Hz", "981 Hz". */
-const hzText = (hz: number) => `${hz < 10 ? hz.toFixed(2) : hz < 100 ? hz.toFixed(1) : Math.round(hz)} Hz`;
+/** A rate under 20 Hz to three figures, as it rounds: "2.55 Hz", "12.9 Hz", "10.0 Hz" for 9.997. */
+const hzText = (hz: number) => (Number(hz.toFixed(2)) < 10 ? `${hz.toFixed(2)} Hz` : `${hz.toFixed(1)} Hz`);
 
 /** A period in seconds, to two or three figures: "0.50 s", "0.050 s", "20.0 s". */
 const periodText = (seconds: number) => `${seconds < 0.1 ? seconds.toFixed(3) : twoPlaces(seconds)} s`;
