@@ -46,8 +46,8 @@ function noteOpener() {
 }
 
 /**
- * Where the focus goes as the card closes (Quit, Done, its ×): back to what opened it, while it is still on the page
- * and shown; else to the header's button for the card's kind (About for the Tour, opened from the welcome or About).
+ * Where the focus goes as the card closes (Quit, Done, its ×, Escape): back to what opened it, while it is still on
+ * the page and shown; else to the header's button for the card's kind (About for the Tour, opened from the welcome or About).
  */
 function useFocusToOpener(card: RefObject<HTMLElement | null>, kind: Props['kind']) {
   // Once, as the card first renders, before the focus moves into it.
@@ -104,6 +104,14 @@ export function CardShell({ card, kind, opening, label, name, progress, made, cl
         back.onFocus(e);
       }}
       onBlur={back.onBlur}
+      // Escape on the card closes it, as it closes every panel (issue 253), the focus going back as on its ×; that one
+      // key closes nothing else (the Preset's about line).
+      onKeyDown={(e) => {
+        if (e.key !== 'Escape' || e.defaultPrevented) return;
+        e.preventDefault();
+        e.stopPropagation();
+        onClose();
+      }}
     >
       <div className="card-top" {...place.handle}>
         <span className="card-name">{name}</span>

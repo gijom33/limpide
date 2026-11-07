@@ -67,8 +67,7 @@ test('the Patch name stays put when its changed dot appears', async ({ page }) =
   expect((await name.boundingBox())!.x).toBeCloseTo(before, 0);
 });
 
-test('Tab meets the octave buttons as they stand: up, then down', async ({ page, browserName }) => {
-  test.skip(browserName === 'webkit', 'Safari tabs to buttons only when its settings ask it to');
+test('Tab meets the octave buttons as they stand: up, then down', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Octave up' }).focus();
   await page.keyboard.press('Tab');

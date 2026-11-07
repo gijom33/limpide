@@ -168,8 +168,38 @@ test('the new Preset is announced after Next Preset, and with its about line whe
   await expect(page.locator('.patch-bar [role="status"]')).toHaveText(/^Init\. The plain starting point/);
 });
 
-test('the × of a Preset’s description is next after Next Preset for the keyboard (issue 153)', async ({ page, browserName }) => {
-  test.skip(browserName === 'webkit', 'Safari tabs to buttons only when its settings ask it to');
+// Issue 253 (review 6 of 1.26.1, finding 3): Safari's Tab, as it comes, passed over every button and link, 32 stops
+// against Chromium's 56. Run in both engines: the same stops in each.
+test('Tab reaches every header button, the panels’ buttons and a Preset, in Safari too (issue 253)', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  await page.locator('.piano button').first().waitFor();
+  const stops: string[] = [];
+  for (let i = 0; i < 60; i++) {
+    await page.keyboard.press('Tab');
+    const name = await page.evaluate(() => document.activeElement?.getAttribute('aria-label') ?? document.activeElement?.textContent?.trim() ?? '');
+    if (name === 'Limpide' && stops.length) break; // round the page and back to the first
+    stops.push(name);
+  }
+  expect(stops.slice(0, 15)).toEqual([
+    'Limpide', 'Previous Preset', 'Patch: Init', 'Next Preset', 'Octave up', 'Octave down', 'Hold', 'Tempo', 'Tap Tempo',
+    'Demo', 'Song', 'Tutorial', 'About', 'MIDI', 'Display',
+  ]);
+  for (const name of ['Legato', 'LFO 1 Destination: Cutoff', 'LFO 1 Retrigger', 'LFO 1 Sync', 'LFO 2 Sync']) expect(stops).toContain(name);
+
+  // A Preset, by the keyboard alone: Patch, its search, then Tab to the first found.
+  while ((await page.evaluate(() => document.activeElement?.getAttribute('aria-label'))) !== 'Patch: Init') await page.keyboard.press('Tab');
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('searchbox')).toBeFocused();
+  await page.keyboard.type('glass');
+  const glass = page.getByRole('dialog', { name: 'Patches' }).getByRole('button', { name: 'Glass Keys', exact: true });
+  for (let i = 0; i < 10 && !(await glass.evaluate((b) => b === document.activeElement)); i++) await page.keyboard.press('Tab');
+  await expect(glass).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(patchName(page)).toHaveAttribute('aria-label', 'Patch: Glass Keys');
+});
+
+test('the × of a Preset’s description is next after Next Preset for the keyboard (issue 153)', async ({ page }) => {
   await page.goto('/');
   await patchName(page).click();
   await page.getByRole('dialog', { name: 'Patches' }).getByRole('button', { name: 'Init', exact: true }).click();
@@ -360,6 +390,33 @@ test.describe('closing gives the focus back to what opened it (issue 189)', () =
     await expect(about).toBeFocused();
   });
 
+  // Issue 253 (review 6 of 1.26.1, finding 2): Escape closes the cards as it closes every panel.
+  test('Escape on a Tutorial’s card quits it, as Quit does, to the Tutorial button (issue 253)', async ({ page }) => {
+    await page.goto('/');
+    const tutorialButton = page.getByRole('button', { name: 'Tutorial', exact: true });
+    await tutorialButton.click();
+    await page.getByRole('group', { name: 'Tutorials' }).getByRole('button', { name: /^Tutorial: Bass/ }).click();
+    const card = page.getByRole('region', { name: /^Tutorial: / });
+    await card.getByRole('button', { name: 'Start' }).press('Enter');
+    await expect(card.getByRole('button', { name: 'Next' })).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(card).toBeHidden();
+    await expect(tutorialButton).toBeFocused();
+  });
+
+  test('Escape on the Tour’s card closes it, as Close does, to About’s button (issue 253)', async ({ page }) => {
+    await page.goto('/');
+    const about = page.getByRole('button', { name: 'About', exact: true });
+    await about.click();
+    await page.getByRole('button', { name: 'Take the Tour' }).click();
+    const card = page.getByRole('region', { name: 'Tour' });
+    await card.getByRole('button', { name: 'Next' }).press('Enter');
+    await expect(card.locator('.card-progress')).toHaveText('2 of 6');
+    await page.keyboard.press('Escape');
+    await expect(card).toBeHidden();
+    await expect(about).toBeFocused();
+  });
+
   test('Escape on the Demo’s parts, to the Demo button', async ({ page }) => {
     await page.goto('/');
     const demo = page.getByRole('button', { name: 'Demo', exact: true });
@@ -403,8 +460,7 @@ for (const [where, viewport] of [
 ] as const) {
   test.describe(`Shift+Tab on ${where} (issue 189)`, () => {
     test.use({ viewport, reducedMotion: 'reduce' });
-    test('never leaves the focus under the header', async ({ page, browserName }) => {
-      test.skip(browserName === 'webkit', 'Safari tabs to buttons only when its settings ask it to');
+    test('never leaves the focus under the header', async ({ page }) => {
       await page.goto('/');
       await page.getByRole('button', { name: 'LFO 2 Sync' }).focus();
       const covered: string[] = [];

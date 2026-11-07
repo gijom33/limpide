@@ -6,6 +6,8 @@
 
 **Status:** done (2026-11-03). Built (2026-11-02) on night/2026-11-02, merged into main, released in 1.23.0; tried by the owner: "All good."
 
+**Since then:** (2026-11-07, [issue 253](./253-keyboard-and-screen-reader-after-1-26.md)) Escape on the Tour's card or a Tutorial's closes it, the focus going back as on its ×; every button and link has a tabindex of 0, so Safari's Tab reaches them, and the Shift+Tab test runs in WebKit too.
+
 ## Decisions
 
 Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.md)), from the six reviews of 1.21.1.

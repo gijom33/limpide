@@ -274,12 +274,10 @@ test('Wobble’s 3 Hz Step, with Sync switched on early, switches it off so the 
 // Issue 190 (review 16, finding 1): the end card named the next Tutorial with no way there, and on a phone that line was
 // folded away.
 for (const [layout, width, height] of [['laptop', 1440, 900], ['phone', 393, 659]] as const) {
-  test(`on a ${layout}, an end card's "Next: …" starts the next Tutorial; the last has only Done (issue 190)`, async ({ page, browserName }) => {
+  test(`on a ${layout}, an end card's "Next: …" starts the next Tutorial; the last has only Done (issue 190)`, async ({ page }) => {
     // Two Tutorials, 14 Steps, each made by "Do it for me" and left by Next: about 2.3 s a Step on a page as slow as
     // GitHub's Linux WebKit, past the usual 30 s (issue 224).
     test.slow();
-    // Safari leaves the focus off a clicked button, so Finish gone hands it on in Chromium alone (issue 104's test goes by keys).
-    const clickFocuses = browserName !== 'webkit';
     await page.setViewportSize({ width, height });
     await open(page, 'FM Ladder'); // six Steps
     await action(page, 'Start').click();
@@ -288,7 +286,7 @@ for (const [layout, width, height] of [['laptop', 1440, 900], ['phone', 393, 659
     const next = action(page, 'Next: Ring Bell');
     await expect(next).toBeInViewport({ ratio: 1 });
     await expect(next).toHaveClass(/tool-primary/);
-    if (clickFocuses) await expect(next).toBeFocused(); // the way forward, as Start and Next are
+    await expect(next).toBeFocused(); // the way forward, as Start and Next are
     await expect(action(page, 'Done')).toBeVisible();
     await next.click();
     await expect(card(page)).toHaveAccessibleName('Tutorial: Ring Bell');
@@ -301,7 +299,7 @@ for (const [layout, width, height] of [['laptop', 1440, 900], ['phone', 393, 659
     await doEverything(page);
     await expect(card(page)).toContainText('That was the last Tutorial.');
     await expect(card(page).getByRole('button', { name: /^Next/ })).toHaveCount(0);
-    if (clickFocuses) await expect(action(page, 'Done')).toBeFocused();
+    await expect(action(page, 'Done')).toBeFocused();
   });
 }
 
@@ -477,7 +475,7 @@ test('picking a Tutorial puts the focus on its card, and its Next keeps it there
   await expect(next).toBeDisabled(); // until the Step is made
   await page.keyboard.press('Enter');
   await expect(progress(page)).toHaveText('Step 1 of 15');
-  await action(page, 'Do it for me').focus(); // Safari tabs to buttons only when its settings ask it to
+  await action(page, 'Do it for me').focus();
   await page.keyboard.press('Enter');
   await expect(next).toBeEnabled();
   await expect(next).toBeFocused(); // the button pressed has gone: the way forward has the focus
@@ -498,8 +496,7 @@ test('picking a Tutorial puts the focus on its card, and its Next keeps it there
   await expect(action(page, 'Start')).toBeFocused();
 });
 
-test('at 1440 × 900 with the Tutorial card docked, every Tab stop comes clear of the card (issue 104)', async ({ page, browserName }) => {
-  test.skip(browserName === 'webkit', 'Safari tabs to buttons only when its settings ask it to');
+test('at 1440 × 900 with the Tutorial card docked, every Tab stop comes clear of the card (issue 104)', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await open(page, 'Bass');
   await page.locator('header button').first().focus(); // from the top of the page

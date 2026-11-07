@@ -632,7 +632,7 @@ for (const width of [601, 690, 1440]) {
   });
 }
 
-test('on a phone the segments are 44 px tall, with Previous part and Next part buttons of 44 × 44 px beside them, by pointer and by keyboard (issue 99)', async ({ page, browserName }) => {
+test('on a phone the segments are 44 px tall, with Previous part and Next part buttons of 44 × 44 px beside them, by pointer and by keyboard (issue 99)', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto('/');
   await demo(page).click();
@@ -671,14 +671,11 @@ test('on a phone the segments are 44 px tall, with Previous part and Next part b
   await page.keyboard.press('Enter');
   await expect(card.getByRole('group', { name: 'Part 2 of 15' })).toBeVisible();
   await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
-  // Tab reaches them in the order they stand: Previous, the parts (one stop), Next. (Not in WebKit, where Tab skips
-  // buttons unless Safari's settings ask for them.)
-  if (browserName !== 'webkit') {
-    await page.keyboard.press('Tab');
-    await expect(card.getByRole('group', { name: /^Part / }).locator('button:focus')).toHaveCount(1);
-    await page.keyboard.press('Tab');
-    await expect(next).toBeFocused();
-  }
+  // Tab reaches them in the order they stand: Previous, the parts (one stop), Next.
+  await page.keyboard.press('Tab');
+  await expect(card.getByRole('group', { name: /^Part / }).locator('button:focus')).toHaveCount(1);
+  await page.keyboard.press('Tab');
+  await expect(next).toBeFocused();
   // On the last part, Next is greyed out.
   await card.getByRole('button', { name: /^Play from part 15,/ }).click();
   await expect(next).toHaveAttribute('aria-disabled', 'true');

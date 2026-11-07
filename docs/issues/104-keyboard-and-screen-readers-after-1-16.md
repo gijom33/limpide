@@ -11,6 +11,8 @@
 
 **Status:** done (2026-10-30). The Demo's parts play and move from the keyboard without stopping it, Tab follows the header as it stands at every width, the Tutorial card takes the focus when picked, keeps it, and never hides a focused control, and each greyed-out control tells a screen reader why.
 
+**Since then:** (2026-11-07, [issue 253](./253-keyboard-and-screen-reader-after-1-26.md)) every button and link has a tabindex of 0, so Safari's Tab reaches them as it comes; the Tab-walking tests run in WebKit too, and "How it was built" below no longer holds on that.
+
 ## Agent Brief
 
 **Category:** bug

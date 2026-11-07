@@ -131,8 +131,7 @@ test('from 861 px the buttons right of the keyboard stand as tall as the keys, 8
 });
 
 for (const [size, [width, height]] of Object.entries(SIZES)) {
-  test(`at ${width}×${height} (${size}) Tab meets the header's controls as they stand on screen: each one right of the last, or on a row below it (issue 104)`, async ({ page, browserName }) => {
-    test.skip(browserName === 'webkit', 'Safari tabs to buttons only when its settings ask it to');
+  test(`at ${width}×${height} (${size}) Tab meets the header's controls as they stand on screen: each one right of the last, or on a row below it (issue 104)`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await page.goto('/');
     await page.locator('.piano button').first().waitFor();

@@ -104,8 +104,7 @@ test.describe('the welcome closed leaves no tip open on the Demo button (issue 2
       await settled(page);
       // None on the Demo button (WebKit may show a hover tip under the pointer where the welcome was).
       await expect(demoTip(page)).toHaveCount(0);
-      // The keyboard's own move still shows it (Safari tabs to buttons only when its settings ask it to: the key, then
-      // the focus, as the other tests do).
+      // The keyboard's own move still shows it (the key, then the focus, as the other tests do).
       await page.keyboard.press('Tab');
       await demo(page).focus();
       await expect(demoTip(page)).toBeVisible();
