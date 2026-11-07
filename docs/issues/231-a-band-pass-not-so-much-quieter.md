@@ -130,6 +130,8 @@ Built at night (2026-11-05), test-first.
 - In the Synth Geek Layer, the Filter Mode's tip on band-pass shows G.
 - With high Resonance (above about 60 %), switch from band-pass to low-pass while a Note holds and listen for a tick (call 5).
 
+**Since then (2026-11-06, [248](./248-a-crossfade-on-a-change-of-filter-mode.md)):** a change of Mode fades over 10 ms from the old Mode's sound to the new one's, so leaving a loud band-pass no longer ticks at any Resonance (decision 8 and call 5): its step stays within the wave's own, where it was 3.3 times it at 80 %. The make-up is as built here, each of the Filter's two sides carrying its own.
+
 ## Questions for the owner, from the night (2026-11-06; answered, above)
 
 1. **Decision 2 and the level criterion disagree: which wins?** A make-up that rises with the Q itself (decision 2's constant-skirt band-pass) is 6 to 9 dB too loud at 20 to 40 % Resonance and fails "within 3 dB of its level at 5 %"; one that rises with √Q keeps the level flat and reaches the ceiling at 80 % instead of about 40 %. Recommended: √Q, as built, so the level holds.

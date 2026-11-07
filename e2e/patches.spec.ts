@@ -98,10 +98,11 @@ test('the Preset’s description closes by its × and by Escape, and a click on 
 });
 
 // Over the Sections' headings, as wide as the Oscillators and the Filter together (issue 153, decided by the owner):
-// every Preset's line, in the box as drawn, and again in wider type as Linux's fonts set it. On Linux (GitHub's run)
-// the type as drawn is already Linux's, and the stand-in on top of it widened it twice: at 375 px the four longest
-// lines took six (the 1.20.0 release run), as Verdana with the stand-in on top does on a Mac.
-const SPACINGS = process.platform === 'linux' ? ['0'] : ['0', '0.04em'];
+// every Preset's line, in the box as drawn, and again in wider type, a stand-in for DejaVu Sans, a Linux font. Measured
+// over every Preset's line (issue 250): the Mac's system font 1, Liberation Sans 0.99 (GitHub's, in Playwright's image
+// since issue 247), DejaVu Sans 1.11, and the stand-in on the Mac's 1.09. GitHub's type is no longer the wider one, so the
+// stand-in is on there too; it once widened DejaVu Sans, the old runner's, twice over (the 1.20.0 release run).
+const SPACINGS = ['0', '0.04em'];
 for (const [width, height, most] of [[375, 812, 5], [700, 830, 3], [1100, 800, 3], [1440, 900, 2], [2000, 1100, 2]] as const) {
   test(`at ${width} px every Preset’s description stays clear of the Osc tabs and the Filter’s Mode row, in ${most} lines at most (issue 153)`, async ({ page }) => {
     await page.setViewportSize({ width, height });
@@ -193,7 +194,7 @@ test('the octave buttons change no sound: a Preset keeps its about line, and no 
   await expect(plainWords(page)).toBeVisible();
 });
 
-// Every Preset's phrase, as drawn and in wider type (Linux's fonts), on one line in its place: clear of the Sections
+// Every Preset's phrase, as drawn and in wider type (the stand-in for DejaVu Sans), on one line in its place: clear of the Sections
 // and within the Oscillators and the Filter from 861 px, inside the Patch name below; the header never moves.
 for (const [width, height] of [[320, 640], [375, 812], [700, 830], [861, 800], [1100, 800], [1440, 900], [2000, 1100]] as const) {
   test(`at ${width} px the Patch’s plain words fit on one line or end in an ellipsis, and never move the header (issue 123)`, async ({ page }) => {

@@ -520,19 +520,8 @@ test('at 1440 × 900 with the Tutorial card docked, every Tab stop comes clear o
   expect(stops).toBeGreaterThan(50);
 });
 
-test('a drag that passes through the target on its way past does not count: the control must rest within reach', async ({ page }) => {
-  await open(page, 'Bass');
-  await action(page, 'Start').click();
-  const fader = page.getByRole('slider', { name: 'Osc 2', exact: true });
-  await expect(fader).toBeVisible();
-  await fader.focus();
-  // Through 50 % in quick presses (1 % a press, then 10 % a Page, issue 201): never at rest within reach.
-  await page.keyboard.press('ArrowUp');
-  for (let i = 0; i < 7; i++) await page.keyboard.press('PageUp');
-  await page.waitForTimeout(800);
-  await expect(card(page).getByText('Louder, not different')).toBeHidden();
-  await expect(action(page, 'Next')).toBeDisabled();
-});
+// A Step counted only once its control rests within reach: the Shows' unit tests' (issue 250); the first test here checks
+// that the page counts a Step turned by hand.
 
 test('a knob already within reach when its Step comes waits for a touch, then counts and snaps (issue 59)', async ({ page }) => {
   await open(page, 'Bass');

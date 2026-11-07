@@ -103,8 +103,9 @@ for (const [width, words] of C_WIDTHS) {
     expect(h.header.height).toBeLessThanOrEqual(64);
     expect([...h.words].sort()).toEqual([...words].sort());
     expect(h.unit).toBe(width >= 1280);
-    // Each word step leaves the piano its 10 white keys at about 42 px (a little under in Linux's wider fonts): 41.7 on
-    // the Mac and 39.6 on GitHub's Linux since the BPM keeps room for a tenth (issue 223).
+    // Each word step leaves the piano its 10 white keys at about 42 px, a little under in a wider font, at 1100 px since
+    // the BPM keeps room for a tenth (issue 223): 41.7 on the Mac, 42.2 in Liberation Sans (GitHub's, in Playwright's
+    // image since issue 247) and 39.6 in DejaVu Sans, the old runner's (measured in the image, issue 250).
     if (width === 1100) expect(h.whiteKey).toBeGreaterThanOrEqual(39);
     if (width === 861) expect(h.whiteKey).toBeGreaterThanOrEqual(30);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

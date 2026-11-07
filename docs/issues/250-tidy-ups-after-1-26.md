@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement
+**Status:** ready-for-human · enhancement. Built (2026-11-06) on night/2026-11-06, for the owner to try
 
 ## Decisions
 
@@ -39,3 +39,27 @@ Claude's calls, open to the owner (2026-11-06, triage):
 - Tests: Learn ignoring a CC 0 and 32 followed by a Program Change, and taking a CC 0 that none follows; the rest kept passing as they are, the suite no slower.
 
 **Out of scope:** the crossfade on a Mode change (248); WebKit's pause under an LFO plot (249); a per-Voice make-up for the band-pass, which only a per-Voice Resonance would need.
+
+## How it was built
+
+Built at night (2026-11-06, on `night/2026-11-06`, on top of 248), all eleven items.
+
+- **Item 10, MIDI Learn and a Program button:** while Learn hears out a CC 0 or 32, a Program Change sends it back to waiting for a control on the same target, and the bank the CC 0 picked still loads that Program. A CC 0 no Program Change follows is learned as before. "The same moment" is Learn's own settle window (half a second), within which the Program Change comes. Unit tests: the MSB with the LSB, the LSB alone, a button target, and a CC 0 knob.
+- **Items 1 and 2:** the MIDI keyboard spec finds the Piano's keys by role and name (C4, E4). The two waits that prove nothing happens wait once in the page, frame by frame, through a new helper that reports the first attribute to change.
+- **Items 3 to 6, the engine and the record:** the memo is a change detector, its keys tuples compared part by part (the FM's, the curves', the twins', aftertouch's, and the LFOs' locks beside them), with an `afresh` option in place of forgetting then checking. An LFO oscillator's Rate set and recorded is one function. A4's frequency is the pitch module's. The record's glide and tracked-Note lookups are one slide. The record writes its LFO clocks itself: the engine records Rates, restarts and their calling off through it.
+- **Item 3, Bead:** a press that picks Bead up reads the page as letting go does, reduced motion among it, rather than asking the browser again.
+- **Items 5 and 7:** the Shows' `rulesRunning` and `changedMeanwhile`; `presetNamed` in the four places.
+- **Item 8:** the level meter's one pass over a Tap's samples.
+- **Item 9 (decision 1):** the Tour's give-back is checked in the browser at its first and last cards (Close and Done), and a new unit test closes it on every card after it turned its controls; closing the Amp card is the browser's check of the Tour's Freeze let go, Next and Back the unit tests'; the Tutorial's drag passing through its target goes; the Demo's wheel scroll stopping the following goes, Page Down's stays. Bead: the melt no longer checks the Notes doing nothing meanwhile; the Demo's acts no longer turn both LFOs off to see it conduct; the ride reads it on the real line once; the drop on a plot keeps the Triangle's ride, the Saw's landing left to the unit tests and the throw spec.
+- **Item 11, measured in Playwright's image** (v1.64.1-noble, with 247's font setting, in Docker on the Mac), Chromium, over every Preset's line: Liberation Sans, GitHub's system font now, is 0.99 of the Mac's system font; DejaVu Sans, installed in the image for the measure, 1.11; the 0.04em stand-in on the Mac's font 1.09. The white key at 1100 px: 41.7 on the Mac, 42.2 in Liberation Sans, 39.6 in DejaVu Sans (the old figure). The comments now name DejaVu Sans as the wider font, and the Patches spec's stand-in runs on GitHub too (it passed in the image).
+
+Tested: `npx tsc`, `npm run lint`, the unit tests of the files touched (`vitest`: the control surface, the record, the engine's browser tests, Bead's frame, the Shows, the Tutorials, the level meter, Cycle Lock), and the specs touched in Chromium (the Demo, the Tour, the Tutorials, the MIDI keyboard, MIDI Learn, Bead, the Patches, the header) and in WebKit, all passing. The header and Patches specs also passed in the image.
+
+Claude's calls, open to the owner:
+
+1. **Learn hands the bank on** when it passes over a Bank Select, so the Program button loads what it would have with Learn off.
+2. **Which specs went (item 9):** a browser check was kept wherever it was the only one wiring the page to the rule; the Tutorial's knob found within reach stayed, as no unit test covers the Shows' side of it.
+3. **The Patches spec's wider-type stand-in now runs on Linux too:** GitHub's type is no longer wider than the Mac's, so without it no run checked wider type.
+4. **Bead's pick reads the whole page** (as its letting go does) for its reduced motion and its leaving: one read more per press, nothing a person sees.
+
+What to try in the app: with a keyboard whose Program buttons send a Bank Select, start MIDI Learn, pick a knob, press a Program button: the Preset loads and Learn still waits; then turn a knob, and it is learned. Everything else should look and sound as it did.

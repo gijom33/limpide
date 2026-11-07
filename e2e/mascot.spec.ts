@@ -26,8 +26,8 @@ async function bringBead(page: Page) {
   await beadSwitch(page).getByRole('radio', { name: 'Bead on' }).click();
   await page.keyboard.press('Escape');
   await expect(page.getByRole('region', { name: 'Viewer controls' })).toBeHidden();
-  // Escape hands the focus back to Display's button, whose tip then shows: on Linux's wider type it reaches over the
-  // LFO & Envelopes' edge, and Bead rightly keeps clear of it. Nothing is left focused or hovered.
+  // Escape hands the focus back to Display's button, whose tip then shows: in a wider font it can reach over the LFO &
+  // Envelopes' edge (it did in DejaVu Sans, GitHub's old runner's), and Bead rightly keeps clear of it. Nothing is left focused or hovered.
   await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
   await page.mouse.move(0, 0);
   await expect(page.getByRole('tooltip')).toHaveCount(0);
@@ -509,10 +509,8 @@ test('it comes up from behind the Amp, and leaves jumping, then melting; with re
   expect(Math.min(...(await watched(page)))).toBeLessThan(-8); // it jumped before it melted
   await play(page, 'jdhs'); // after it melts, it can come again
   await expect(mascot(page)).toHaveCount(1);
+  // While it melts the Notes do nothing: the presence's unit tests' (issue 250).
   await play(page, 'jdhs');
-  await play(page, 'jdhs'); // while it melts, nothing calls it back
-  await expect(mascot(page)).toHaveCount(0);
-  await page.waitForTimeout(500);
   await expect(mascot(page)).toHaveCount(0);
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await play(page, 'jdhs');
@@ -1031,7 +1029,9 @@ test('the theme switched: it shades its eyes once Display is closed', async ({ p
   await expect(mascot(page)).toHaveAttribute('data-doing', 'shades');
 });
 
-test('through the Demo it conducts, then plays air guitar, then surfs an LFO shape, only an LFO that is on', async ({ page }) => {
+// Which act each part plays, surfing only on an LFO that is on, is the frame's unit tests' (issue 250): here, that the
+// Demo's parts and an LFO turned on from the page reach it, and the real plot's line and the card over it.
+test('through the Demo it conducts, then plays air guitar, then surfs an LFO shape once one is turned on', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
   await listening(page);
@@ -1047,13 +1047,7 @@ test('through the Demo it conducts, then plays air guitar, then surfs an LFO sha
     const box = (await page.getByRole('slider', { name: `LFO ${lfo} Depth`, exact: true }).boundingBox())!;
     return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
   };
-  // Both LFOs off (a double-click puts each Depth back to its 0): no surfing; it conducts instead.
-  for (const lfo of [1, 2]) {
-    const at = await depth(lfo);
-    await page.mouse.dblclick(at.x, at.y);
-  }
-  await expect(mascot(page)).toHaveAttribute('data-act', 'conduct');
-  // LFO 1 on, its Depth dragged up: down onto its plot, riding along it.
+  // Part 3, Poly Pluck, has no LFO on: it conducts. LFO 1 on, its Depth dragged up: down onto its plot, riding along it.
   const at = await depth(1);
   await page.mouse.move(at.x, at.y);
   await page.mouse.down();
@@ -1124,37 +1118,17 @@ async function leansWithTheWave(page: Page, lfo: number) {
   expect(steep.filter((f) => Math.sign(f.lean) === Math.sign(f.slope)).length / steep.length, told).toBeGreaterThan(0.8);
 }
 
-/** Where its foot is against an LFO's plot: how far over or under the line the plot draws under its middle, in pixels. */
-interface OnTheLine {
-  off: number;
-  foot: number;
-  moving: string | undefined;
-}
-
-/** Where its foot is against LFO `lfo`'s plot, `n` times `ms` apart, timed in the page so a loaded machine cannot stretch the gaps. */
-const alongTheLine = (page: Page, lfo: number, n: number, ms = 150) =>
-  mascot(page).evaluate(
-    (el, [lfo, n, ms]) =>
-      new Promise<OnTheLine[]>((done) => {
-        const out: OnTheLine[] = [];
-        const read = () => {
-          const box = el.getBoundingClientRect(); // its box's bottom is its foot
-          const plot = document.querySelector(`.lfo-plot[data-lfo="${lfo}"]`)!;
-          const at = plot.getBoundingClientRect();
-          const points = [...plot.querySelector('.lfo-plot-line')!.getAttribute('d')!.matchAll(/[ML](\S+) (\S+)/g)].map((m) => ({ x: Number(m[1]), y: Number(m[2]) }));
-          const middle = box.left + 9 - at.left; // the drop's middle, DROP_MIDDLE in Bead's cling
-          const under = points.reduce((a, b) => (Math.abs(b.x - middle) < Math.abs(a.x - middle) ? b : a));
-          out.push({ off: box.bottom - (at.top + under.y), foot: box.bottom, moving: (el as HTMLElement).dataset.moving });
-          if (out.length < n) setTimeout(read, ms);
-          else done(out);
-        };
-        read();
-      }),
-    [lfo, n, ms] as const,
-  );
-
-/** Where its foot is against LFO `lfo`'s plot, now. */
-const offTheLine = async (page: Page, lfo: number) => (await alongTheLine(page, lfo, 1))[0];
+/** Where its foot is against LFO `lfo`'s plot, now: how far over or under the line the plot draws under its middle, in pixels. */
+const offTheLine = (page: Page, lfo: number) =>
+  mascot(page).evaluate((el, lfo) => {
+    const box = el.getBoundingClientRect(); // its box's bottom is its foot
+    const plot = document.querySelector(`.lfo-plot[data-lfo="${lfo}"]`)!;
+    const at = plot.getBoundingClientRect();
+    const points = [...plot.querySelector('.lfo-plot-line')!.getAttribute('d')!.matchAll(/[ML](\S+) (\S+)/g)].map((m) => ({ x: Number(m[1]), y: Number(m[2]) }));
+    const middle = box.left + 9 - at.left; // the drop's middle, DROP_MIDDLE in Bead's cling
+    const under = points.reduce((a, b) => (Math.abs(b.x - middle) < Math.abs(a.x - middle) ? b : a));
+    return { off: box.bottom - (at.top + under.y) };
+  }, lfo);
 
 test('now and then it rides a slow Sine on an LFO plot, along its line, and goes home once the Depth is 0 (issue 141)', async ({ page }) => {
   test.slow();
@@ -1174,16 +1148,11 @@ test('now and then it rides a slow Sine on an LFO plot, along its line, and goes
   // On its board, leaning with the wave (issue 204).
   await expect(mascot(page)).toHaveAttribute('data-board', 'on');
   await leansWithTheWave(page, 1);
-  // On the line, each moment, as it rises and falls.
-  const along = await alongTheLine(page, 1, 10);
-  for (const { off, moving } of along) {
-    expect(moving).toBe('standing');
-    // It follows the plot a frame behind, so the slower the frames the further it trails: within 2 px at about fifteen a
-    // second in WebKit on Linux, 4.4 on GitHub's slower runner (1.22.0's branch run).
-    expect(Math.abs(off), `off the line by ${off}`).toBeLessThanOrEqual(6);
-  }
-  const feet = along.map((a) => a.foot);
-  expect(Math.max(...feet) - Math.min(...feet), feet.join(', ')).toBeGreaterThan(4);
+  // On the real plot's line. That it keeps to it as the line rises and falls is the frame's unit tests' (issue 250).
+  // It follows the plot a frame behind, so the slower the frames the further it trails: within 2 px at about fifteen a
+  // second in WebKit on Linux, 4.4 on GitHub's slower runner (1.22.0's branch run).
+  const { off } = await offTheLine(page, 1);
+  expect(Math.abs(off), `off the line by ${off}`).toBeLessThanOrEqual(6);
   // Its Depth to 0 (a double-click puts it back to its 0): off with a jump home, onto the Amp's edge.
   const depth = (await page.getByRole('slider', { name: 'LFO 1 Depth', exact: true }).boundingBox())!;
   await page.mouse.dblclick(depth.x + depth.width / 2, depth.y + depth.height / 2);
@@ -1234,10 +1203,11 @@ async function dropAt(page: Page, to: { x: number; y: number }) {
   await page.mouse.up();
 }
 
-test("three across, dropped on LFO 1's plot, a slow Triangle, it rides it; dropped on a Saw's, it lands as anywhere (issue 197)", async ({ page }) => {
+// Dropped on a Saw's plot it lands as anywhere: the frame's unit tests' (issue 250), as the throw's landing is.
+test("three across, dropped on LFO 1's plot, a slow Triangle, it rides it (issue 197)", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  // LFO 1 a slow Triangle; LFO 2 a Saw as slow, on too.
-  await page.goto(slowLfo({ lfoWaveform: 'triangle', lfo2Amount: 0.5, lfo2Rate: 0.5, lfo2Waveform: 'saw' }));
+  // LFO 1 a slow Triangle.
+  await page.goto(slowLfo({ lfoWaveform: 'triangle' }));
   await listening(page);
   await bringBead(page);
   // Up on the Amp's edge: a visit elsewhere can keep it away 8 to 18 s.
@@ -1249,16 +1219,6 @@ test("three across, dropped on LFO 1's plot, a slow Triangle, it rides it; dropp
   await expect(mascot(page)).toHaveAttribute('data-moving', 'standing', { timeout: 5000 });
   const { off } = await offTheLine(page, 1);
   expect(Math.abs(off), `off the line by ${off}`).toBeLessThanOrEqual(6);
-  // Picked up again and dropped on the Saw's plot: thrown, it lands on the edge under it, with no ride.
-  await page.mouse.move(2, 894);
-  const two = await plot(2);
-  await dropAt(page, { x: two.x + two.width / 2, y: two.y + two.height / 2 });
-  await expect(mascot(page)).toHaveAttribute('data-ride', '');
-  await settles(page);
-  await expect(mascot(page)).toHaveAttribute('data-ride', '');
-  // Home, on the Amp's edge: read where it is placed, not from its drawing, whose box reaches past its foot as it leans
-  // into a step or hops (4 runs in 12 in WebKit read it off the edge that way; the throw test's fix, 2026-11-03).
-  expect(Math.abs((await footing(page)).bottom)).toBeLessThanOrEqual(1);
 });
 
 /**

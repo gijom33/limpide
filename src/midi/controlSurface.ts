@@ -29,9 +29,11 @@ const SUSTAIN = 64;
 const MOD_WHEEL = 1;
 /**
  * Bank Select's MSB (issue 241): it picks a bank of 128 programs, so a Program Change n loads the bank × 128 + n-th
- * Preset. Its LSB (CC 32) is read and ignored, as any unmapped CC.
+ * Preset. Its LSB (CC 32) is read and ignored, as any unmapped CC; MIDI Learn passes over either when a Program Change
+ * follows it (issue 250).
  */
 const BANK_SELECT = 0;
+const BANK_SELECT_LSB = 32;
 const BANK_SIZE = 128;
 /**
  * The channel mode messages a keyboard's or a DAW's panic sends (issue 185): All Sound Off, Reset All Controllers and
@@ -360,6 +362,19 @@ export function createControlSurface(synth: Synth) {
     });
   };
 
+  /**
+   * A Program Change while Learn hears out a Bank Select (issue 250): it was a Program button's bank, not a knob, so
+   * Learn waits for the next control, and the bank it picked still loads.
+   */
+  const passOverBankSelect = () => {
+    if (learn.phase !== 'listening' || learn.control.kind !== 'cc') return;
+    const { number } = learn.control;
+    if (number !== BANK_SELECT && number !== BANK_SELECT_LSB) return;
+    clearTimeout(settle);
+    if (number === BANK_SELECT) bank = values[values.length - 1] ?? bank;
+    setLearn({ phase: 'armed', target: learn.target });
+  };
+
   /** Feeds a message to MIDI Learn; true when Learn used it up. */
   const learnFrom = (message: ControlMessage): boolean => {
     if (learn.phase === 'listening') {
@@ -423,7 +438,10 @@ export function createControlSurface(synth: Synth) {
   return {
     /** A message from a Controller: `from` is the known Controller it is (a C16), whose layout's Mappings answer it alone; left out for any other. */
     handle(incoming: MidiMessage, from?: KnownController) {
-      if (incoming.type === 'program') return synth.program?.(bank * BANK_SIZE + incoming.program);
+      if (incoming.type === 'program') {
+        passOverBankSelect();
+        return synth.program?.(bank * BANK_SIZE + incoming.program);
+      }
       if (incoming.type === 'pressure') return pressureMoved(incoming);
       if (incoming.type === 'noteOff') forgetPressure(incoming.channel, incoming.note);
       if (incoming.type === 'cc' && [ALL_SOUND_OFF, RESET_ALL_CONTROLLERS, ALL_NOTES_OFF].includes(incoming.controller))

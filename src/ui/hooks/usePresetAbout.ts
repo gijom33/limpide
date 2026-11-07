@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { sameSound } from '../../patch/patch';
 import type { PatchStore } from '../../patch/patchStore';
-import { PRESETS } from '../../patch/presets';
+import { presetNamed } from '../../patch/presets';
 
 /** A Preset's about line: `text` what was loaded, said once with its name; `shown` while it stays under the name. */
 export interface PresetAbout {
@@ -31,7 +31,7 @@ export function usePresetAbout(patches: PatchStore) {
   /** After the person's pick: the about line of the Preset loaded, if it is one, as it was. */
   const show = () => {
     const { name, patch } = patches.get();
-    const preset = PRESETS.find((p) => p.name === name);
+    const preset = presetNamed(name);
     if (preset && sameSound(preset.patch, patch)) setAbout({ text: preset.about, shown: true });
   };
   /** The person closes it. */

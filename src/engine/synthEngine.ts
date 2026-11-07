@@ -7,8 +7,8 @@ import {
 import { createCache } from '../music/cache';
 import { harmonicSeries, type Waveform } from '../music/harmonics';
 import { fmDepthKept, playedTop } from '../music/idealReference';
-import { noteToFrequency } from '../music/pitch';
-import { fmIndex, GLIDE_OFF, type Lfo, type LfoNumber, lfoHz, lfos, type NoiseColour, PARAMS, type Patch, type SubWaveform, type Voices } from '../patch/patch';
+import { A4_HZ, noteToFrequency } from '../music/pitch';
+import { type FilterMode, type FilterSlope, fmIndex, GLIDE_OFF, type Lfo, type LfoNumber, lfoHz, lfos, type NoiseColour, PARAMS, type Patch, type SubWaveform, type Voices } from '../patch/patch';
 import { CUTOFF_CLAMP, CUTOFF_SPAN, centsOverFloor, fadesOutAtTheTop, filterLevel, filterStages, filterStagesAt, isPeaked, LEVEL_FADE_CURVE, makeUp, makeUpCurve, RESONANCE_FADE_CURVE, resonanceCurve, type Stage } from './filterDesign';
 import { append, createGateHistory, createModulationRecord, type GateRecord, lastAt } from './modulationRecord';
 import { heardAt, type OutputClockContext } from './outputClock';
@@ -147,6 +147,14 @@ export const MAX_VOICES = 8;
 // Without Resonance compensation the worst resonant peak reaches ±1.8 at the Filter Tap (measured over Notes
 // and Cutoffs at full Resonance); 0.45 keeps that under full scale at the output (about 0.83).
 const MASTER_LEVEL = 0.45;
+
+/**
+ * How long a change of Filter Mode fades from the old Mode's sound to the new one's, in seconds (issue 248): short
+ * enough to be heard as the switch itself, long enough that no step is heard.
+ */
+const MODE_FADE = 0.01;
+/** The frames the browser renders at a time: a scheduled node's `ended` comes once its last one is rendered. */
+const RENDER_QUANTUM = 128;
 
 /** The bend wheel's steps are smoothed over this time constant, in seconds. */
 const BEND_SMOOTHING = 0.004;
@@ -458,12 +466,12 @@ function createVoiceOscillator(ctx: BaseAudioContext) {
   const delay = ctx.createDelay(1);
   const inverted = ctx.createGain();
   const out = ctx.createGain();
-  const source: Restartable = createRestartable(ctx, A4, [direct, delay]);
+  const source: Restartable = createRestartable(ctx, A4_HZ, [direct, delay]);
   const width = ctx.createConstantSource();
   width.offset.value = 0.5;
   const pwm = [ctx.createGain(), ctx.createGain()]; // each LFO → the width
   const period = ctx.createGain(); // the Note's period, in seconds
-  period.gain.value = 1 / A4;
+  period.gain.value = 1 / A4_HZ;
   const centsIn = ctx.createGain(); // the shaper takes −1 to 1 for ±FOLLOWED_CENTS
   centsIn.gain.value = 1 / FOLLOWED_CENTS;
   const cycle = ctx.createWaveShaper();
@@ -488,24 +496,26 @@ function createVoiceOscillator(ctx: BaseAudioContext) {
 /** Every one of FM's gains: its own, then each LFO's swing of it. */
 const EVERY_FM_GAIN = [true, true, true];
 
+/** Whether two keys (what a change detector or a lock was worked out from) are the same, part by part. */
+const sameKey = (a: readonly unknown[] | null, b: readonly unknown[] | null) =>
+  a === b || (!!a && !!b && a.length === b.length && a.every((part, i) => part === b[i]));
+
 /**
  * What one thing in the sound was last worked out from (issues 218 and 219), so a change that leaves it as it was does
- * not write it again: `changed(key)` says whether `key` differs from the last one, and keeps it; after `forget`, or with
- * no `start`, the next key is a change whatever it is.
+ * not write it again: `changed(key)` says whether `key` differs, part by part, from the last one, and keeps it. With
+ * `afresh` (a whole new Patch written), or with no `start`, it is a change whatever it is.
  */
-function createMemo<Key>(...start: [Key] | []) {
-  let last: [Key] | [] = start;
+function createChangeDetector<Key extends readonly unknown[]>(start: Key | null = null) {
+  let last = start;
   return {
-    changed(key: Key) {
-      if (last.length && last[0] === key) return false;
-      last = [key];
+    changed(key: Key, { afresh = false } = {}) {
+      if (!afresh && sameKey(last, key)) return false;
+      last = key;
       return true;
-    },
-    forget() {
-      last = [];
     },
   };
 }
+type ChangeDetector<Key extends readonly unknown[]> = ReturnType<typeof createChangeDetector<Key>>;
 
 /**
  * Set a biquad to a stage, its Cutoff aside: scheduled at `t` through `writes` for the playing filter, immediately
@@ -591,7 +601,6 @@ const filterAdsr = (p: Patch): Adsr => ({ attack: p.filterAttack, decay: p.filte
 const RELEASE_TAIL = 6;
 // Below this level (−60 dB) a Voice counts as silent: a Note restarts its Oscillators at once, with no dip (issue 102).
 const SILENT = 0.001;
-const A4 = noteToFrequency(69);
 
 /**
  * One LFO: a real oscillator, wired to each destination through a gain set from its Depth (zero unless it is aimed
@@ -607,19 +616,19 @@ interface LfoNodes {
   toCutoff: GainNode;
   toPitch: GainNode;
   toOsc2: GainNode;
-  /** Its swing of the Resonance, into `Shared.resonanceQ` (which takes the Resonance's 0 to 1 as −1 to 1). */
+  /** Its swing of the Resonance, into each `FilterSide.resonanceQ` (which takes the Resonance's 0 to 1 as −1 to 1). */
   toResonance: GainNode;
   toVolume: GainNode;
 }
 
-/** What every Voice shares: the LFOs, the pitch bend, the noise loop, the Oscillators' waves, and where the Voices' outputs go. */
-interface Shared {
-  lfos: [LfoNodes, LfoNodes];
-  /**
-   * The Resonance as the knob and aftertouch set it, into `resonanceQ`, where both LFOs' swings of it meet it (issue
-   * 219): one write moves every Voice's.
-   */
-  resonanceIn: ConstantSourceNode;
+/**
+ * One of the Filter's two sides (issue 248), what every Voice's same side shares: the Mode it plays, and the Resonance's
+ * curves for it. A change of Mode goes to the side not heard, and every Voice fades over to it (MODE_FADE), so the old
+ * Mode's sound is never cut at one sample; once the fade is over, the side faded out is unwired and costs nothing.
+ */
+interface FilterSide {
+  /** The Mode it plays, once it has been given one. */
+  mode?: FilterMode;
   /**
    * A curve from the Resonance to what it adds to the first stage's Q over its flat one, as the model moves the
    * Resonance (resonanceCurve, issues 166 and 219), then each stage's share of it, into every Voice's Filter.
@@ -628,9 +637,24 @@ interface Shared {
   toQ: [GainNode, GainNode];
   /**
    * The band-pass's make-up over a gain of 1 (issue 231), from the same Resonance through its curve (makeUpCurve),
-   * into every Voice's Filter level: it follows the Resonance however it is moved.
+   * into every Voice's Filter level: it follows the Resonance however it is moved, and changes with the side's stages.
    */
   makeUp: WaveShaperNode;
+  /** The Mode and Slope its curves were made for: only they make them again (issue 219). Its stages' gains. */
+  curveFrom: ChangeDetector<readonly [FilterMode, FilterSlope]>;
+  curveStages: [number, number];
+}
+
+/** What every Voice shares: the LFOs, the pitch bend, the noise loop, the Oscillators' waves, and where the Voices' outputs go. */
+interface Shared {
+  lfos: [LfoNodes, LfoNodes];
+  /**
+   * The Resonance as the knob and aftertouch set it, into each side's `resonanceQ`, where both LFOs' swings of it meet
+   * it (issue 219): one write moves every Voice's.
+   */
+  resonanceIn: ConstantSourceNode;
+  /** The Filter's two sides (issue 248): one plays the Mode heard, the other only while a change of Mode fades. */
+  sides: [FilterSide, FilterSide];
   /** The pitch bend in cents, into every Oscillator's detune (the LFO on Pitch goes there too). */
   bend: ConstantSourceNode;
   /** Aftertouch on Pitch in cents (issue 132), beside the bend: it glides over its own time constant (issue 219). */
@@ -695,7 +719,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   // vibrato. It runs an octave down; its detune takes it the second.
   const mixSub = ctx.createGain();
   mixSub.gain.value = 0;
-  const sub = createRestartable(ctx, A4 / 2, [mixSub]);
+  const sub = createRestartable(ctx, A4_HZ / 2, [mixSub]);
   const subWaves = Object.fromEntries(
     (['square', 'sine'] as const).map((w) => {
       const { real, imag } = harmonicSeries(w, 0.5, WAVE_HARMONICS);
@@ -710,9 +734,6 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   dcBlock.frequency.value = DC_BLOCK;
   dcBlock.Q.value = -3.01; // in dB: a flat Butterworth response
   mixer.connect(dcBlock);
-  // Two stages: the second is transparent at 12 dB and doubles the Slope at 24 dB (filterStages).
-  const filter = ctx.createBiquadFilter();
-  const filter2 = ctx.createBiquadFilter();
   // The Cutoff: each stage's frequency the bottom of its range, its detune the cents over it, the knob's (`cutoff`)
   // and everything that moves it summed, then held within the range by a clamp, as the model holds the Effective
   // Cutoff (issue 166). The sum is scaled to the clamp's curve, which takes the span as 1.
@@ -722,36 +743,80 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   const cutoffClamp = ctx.createWaveShaper();
   cutoffClamp.curve = CUTOFF_CLAMP;
   cutoff.connect(cutoffSum).connect(cutoffClamp);
-  for (const node of [filter, filter2]) {
-    node.frequency.value = LOWEST_CUTOFF;
-    cutoffClamp.connect(node.detune);
-  }
   cutoff.start();
   // Near the top the Resonance fades, and a high-pass falls silent (issue 195), as `filterStagesAt` and `filterLevel`
   // have it: the clamped Cutoff, through each fade's curve, takes its share off each stage's Q over its flat one (the
-  // shared `toQ`), and off what a high-pass lets through. Each fade's gain is −1 in the Modes it fades, 0 in the others.
+  // shared `toQ`), and off what a high-pass lets through. Each side's fade gains are −1 in the Modes they fade, 0 in
+  // the others.
   const toFade = ctx.createGain();
   toFade.gain.value = 1 / CUTOFF_SPAN;
   cutoffClamp.connect(toFade);
-  const [resonanceFade, levelFade] = [RESONANCE_FADE_CURVE, LEVEL_FADE_CURVE].map((curve) => {
+  const fadeShapers = [RESONANCE_FADE_CURVE, LEVEL_FADE_CURVE].map((curve) => {
     const shaper = ctx.createWaveShaper();
     shaper.curve = curve;
-    const fade = ctx.createGain();
-    fade.gain.value = 0;
-    toFade.connect(shaper).connect(fade);
-    return fade;
+    toFade.connect(shaper);
+    return shaper;
   });
-  const overFlat = [filter, filter2].map((node) => {
-    const kept = ctx.createGain();
-    resonanceFade.connect(kept.gain);
-    kept.connect(node.Q);
-    return kept;
-  });
-  const topLevel = ctx.createGain();
-  levelFade.connect(topLevel.gain);
-  shared.makeUp.connect(topLevel.gain);
   const amp = ctx.createGain();
   amp.gain.value = 0;
+  // The Filter's two sides (issue 248): each two stages (the second transparent at 12 dB, doubling the Slope at 24 dB:
+  // filterStages), then its level. Only the side heard is wired from the Mixer and to the Amp, directly, so nothing
+  // costs more than one Filter while no Mode changes; while a change fades, both are, each through its share of the
+  // sound (`share`). The first side is heard until a Mode changes.
+  /**
+   * A side's two stages, new: from silence, as a side faded in must start, not from the sound it was unwired in. Each
+   * takes its Resonance from `kept` and goes to `level`; until a Patch sets them they are the browser's low-pass.
+   */
+  const newStages = (kept: GainNode[], level: GainNode) => {
+    const stages = [ctx.createBiquadFilter(), ctx.createBiquadFilter()] as const;
+    stages.forEach((node, k) => {
+      node.frequency.value = LOWEST_CUTOFF;
+      cutoffClamp.connect(node.detune);
+      kept[k].connect(node.Q);
+    });
+    stages[0].connect(stages[1]).connect(level);
+    return stages;
+  };
+  const sides = shared.sides.map((sharedSide) => {
+    const [resonanceFade, levelFade] = fadeShapers.map((shaper) => {
+      const fade = ctx.createGain();
+      fade.gain.value = 0;
+      shaper.connect(fade);
+      return fade;
+    });
+    const kept = sharedSide.toQ.map((toQ) => {
+      const gain = ctx.createGain();
+      resonanceFade.connect(gain.gain);
+      toQ.connect(gain);
+      return gain;
+    });
+    const level = ctx.createGain();
+    levelFade.connect(level.gain);
+    sharedSide.makeUp.connect(level.gain);
+    const share = ctx.createGain();
+    share.gain.value = 0;
+    level.connect(share);
+    // Whether the Mixer reaches it, and what reaches the Amp from it: its level, its share, or nothing.
+    return { stages: newStages(kept, level), kept, resonanceFade, levelFade, level, share, wired: false, out: undefined as GainNode | undefined };
+  });
+  type Side = (typeof sides)[number];
+  // The Taps listening to what the Filter sends the Amp: they follow its wiring.
+  const filterTaps = new Set<AnalyserNode>();
+  /** Wire `side` from the Mixer or not, and to the Amp from `out` (its level or its share) or not. */
+  const wire = (side: Side, wired: boolean, out?: GainNode) => {
+    if (side.wired !== wired) {
+      if (wired) dcBlock.connect(side.stages[0]);
+      else dcBlock.disconnect(side.stages[0]);
+      side.wired = wired;
+    }
+    if (side.out === out) return;
+    for (const node of [amp, ...filterTaps]) {
+      side.out?.disconnect(node);
+      out?.connect(node);
+    }
+    side.out = out;
+  };
+  wire(sides[0], true, sides[0].level);
   // After the Amp, the LFOs on Volume (tremolo): its gain is the shared resting level plus each LFO's swing.
   const tremoloGain = ctx.createGain();
   tremoloGain.gain.value = 0;
@@ -789,12 +854,11 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   keyTrackAmount.connect(cutoffSum);
   trackedNote.start();
 
-  dcBlock.connect(filter).connect(filter2).connect(topLevel).connect(amp).connect(tremoloGain).connect(shared.master);
+  amp.connect(tremoloGain).connect(shared.master);
   // Every Voice's noise starts at a different point of the loop, so a chord's noise is not one noise, louder.
   for (const n of noises) n.source.start(0, (index * NOISE_SECONDS) / MAX_VOICES);
 
   // The shared LFOs, wired to this Voice's destinations through the shared gains set from their Depths.
-  shared.toQ.forEach((g, k) => g.connect(overFlat[k]));
   shared.lfos.forEach((l, i) => {
     l.toCutoff.connect(cutoffSum);
     l.toPitch.connect(sub.detune);
@@ -840,7 +904,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   const write = shared.writes.set;
   // What FM's gain and each LFO's swing of it were last worked out from, besides the Note: knobs that leave it alone
   // leave them as they are (issue 218).
-  const fmGainsFrom = EVERY_FM_GAIN.map(() => createMemo<string>());
+  const fmGainsFrom = EVERY_FM_GAIN.map(() => createChangeDetector<readonly number[]>());
 
   /** Give each pulse the period of a Note of `frequency`: at once, or over a Glide. */
   const tunePulses = (frequency: number, t: number, timeConstant?: number) => {
@@ -886,7 +950,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
     write(o.inverted.gain, pulse ? -scale : 0, t);
   };
 
-  const frequencyAt = (t: number) => glideFrequency(pitches, t) || A4;
+  const frequencyAt = (t: number) => glideFrequency(pitches, t) || A4_HZ;
 
   const voice = {
     /** The Note this Voice is playing or releasing; null once it has faded. */
@@ -959,9 +1023,8 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
       // Oscillators; and again at the start of each Note handed over for later (issue 98). Knobs that leave what it is
       // worked out from as it was leave it as each Note set it; one at nothing stays at nothing.
       const fmSwings = destinationSwings(next, 'fm', next.crossMod);
-      const fmNow = [next.crossMod, ...fmSwings].map((amount) => (amount ? `${amount} ${next.crossMod} ${fmSwings} ${pitchOverNote}` : 'off'));
-      if (whole) for (const memo of fmGainsFrom) memo.forget();
-      const retuned = fmNow.map((now, i) => fmGainsFrom[i].changed(now));
+      const fmNow = [next.crossMod, ...fmSwings].map((amount) => (amount ? [amount, next.crossMod, ...fmSwings, ...pitchOverNote] : []));
+      const retuned = fmNow.map((now, i) => fmGainsFrom[i].changed(now, { afresh: whole }));
       if (retuned.some(Boolean)) {
         tuneFm(frequencyAt(t), t, { timeConstant: shared.writes.glide(), retuned });
         const sliding = pitches[lastAt(pitches, t)];
@@ -982,11 +1045,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
       for (const n of noises) write(n.gate.gain, n.colour === next.noiseColour ? 1 : 0, t);
       write(mixSub.gain, next.mixSub * OSCILLATOR_LEVEL, t);
       write(mixRing.gain, next.mixRing * OSCILLATOR_LEVEL, t);
-      // Each stage at its flat Q; the Resonance over it comes through the shared `toQ`, faded at the top (issue 195).
-      const flat = filterStages(next.filterMode, next.filterSlope, 0);
-      [filter, filter2].forEach((node, i) => setStage(node, flat[i], { writes: shared.writes, t }));
-      write(resonanceFade.gain, isPeaked(next.filterMode) ? -1 : 0, t);
-      write(levelFade.gain, fadesOutAtTheTop(next.filterMode) ? -1 : 0, t);
+      voice.setSides(next.filterSlope, t);
       // The knob's Cutoff; the Filter Envelope and the rest add to it.
       write(cutoff.offset, centsOverFloor(effectiveCutoff(next)), t);
       write(envelopeAmount.gain, next.filterEnvAmount * 1200, t);
@@ -995,12 +1054,57 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
       write(keyTrackAmount.gain, next.keyTrack * 100, t); // cents per semitone
     },
 
+    /**
+     * Each side's stages at their flat Q for its Mode, at `slope`, from `t`; the Resonance over it comes through the
+     * side's shared `toQ`, faded at the top (issue 195).
+     */
+    setSides(slope: FilterSlope, t: number) {
+      sides.forEach((side, s) => {
+        const mode = shared.sides[s].mode;
+        if (!mode) return;
+        const flat = filterStages(mode, slope, 0);
+        side.stages.forEach((node, i) => setStage(node, flat[i], { writes: shared.writes, t }));
+        write(side.resonanceFade.gain, isPeaked(mode) ? -1 : 0, t);
+        write(side.levelFade.gain, fadesOutAtTheTop(mode) ? -1 : 0, t);
+      });
+    },
+
+    /**
+     * Fade over to side `to` from `t` (issue 248), from `startShare`, its share of the sound then, to all of it: both
+     * sides wired, each through its share, until `settle`.
+     */
+    fadeTo(to: number, t: number, startShare: number) {
+      sides.forEach((side, s) => {
+        wire(side, true, side.share);
+        side.share.gain.cancelScheduledValues(t);
+        side.share.gain.setValueAtTime(s === to ? startShare : 1 - startShare, t);
+        side.share.gain.linearRampToValueAtTime(s === to ? 1 : 0, t + MODE_FADE);
+      });
+    },
+    /** Once the fade to side `to` is over: it alone wired, directly, and the other side not at all, with new stages. */
+    settle(to: number) {
+      sides.forEach((side, s) => {
+        if (s === to) return wire(side, true, side.level);
+        wire(side, false);
+        side.stages.forEach((node, k) => {
+          node.disconnect();
+          cutoffClamp.disconnect(node.detune);
+          side.kept[k].disconnect(node.Q);
+        });
+        side.stages = newStages(side.kept, side.level);
+      });
+    },
+
     /** A Tap listens to this Voice's stage: a side branch, so observing never alters the sound. */
     attach(taps: Taps, tap: TapName) {
-      ({ oscillator: dcBlock, filter: topLevel, amp: tremoloGain } as const)[tap].connect(taps[tap]);
+      if (tap !== 'filter') return ({ oscillator: dcBlock, amp: tremoloGain } as const)[tap].connect(taps[tap]);
+      filterTaps.add(taps.filter);
+      for (const side of sides) side.out?.connect(taps.filter);
     },
     detach(taps: Taps, tap: TapName) {
-      ({ oscillator: dcBlock, filter: topLevel, amp: tremoloGain } as const)[tap].disconnect(taps[tap]);
+      if (tap !== 'filter') return ({ oscillator: dcBlock, amp: tremoloGain } as const)[tap].disconnect(taps[tap]);
+      filterTaps.delete(taps.filter);
+      for (const side of sides) side.out?.disconnect(taps.filter);
     },
   };
   return voice;
@@ -1057,28 +1161,40 @@ export function createSynthEngine(
       bus.connect(g);
       return g;
     });
-    toResonance.connect(resonanceQ);
-    toResonance.connect(makeUpShaper);
+    for (const side of sides) {
+      toResonance.connect(side.resonanceQ);
+      toResonance.connect(side.makeUp);
+    }
     return { takeover: createTakeover(osc, ctx.currentTime, (node) => node.disconnect()), bus, toCutoff, toPitch, toOsc2, toResonance, toVolume };
   };
   const resonanceIn = ctx.createConstantSource();
   resonanceIn.offset.value = -1;
-  const resonanceQ = ctx.createWaveShaper();
-  resonanceIn.connect(resonanceQ);
   resonanceIn.start();
-  const toQ = [ctx.createGain(), ctx.createGain()] as [GainNode, GainNode];
-  for (const g of toQ) resonanceQ.connect(g);
-  // The band-pass's make-up (issue 231), from the same Resonance. It is not smoothed: it changes with the Filter's
-  // stages, at the same sample, so a switch of Mode brings the new Mode's level at once rather than the old one's
-  // over the new Mode's sound.
-  const makeUpShaper = ctx.createWaveShaper();
-  makeUpShaper.curve = makeUpCurve('lowpass', 12);
-  resonanceIn.connect(makeUpShaper);
-  // The Mode and Slope the Resonance's curve was made for: only they make it again (issue 219). Its stages' gains.
-  const curveFrom = createMemo<string>();
-  let curveStages: [number, number] = [0, 0];
+  // Each side of the Filter's Resonance curve and make-up (issue 248), from the same Resonance. The make-up (issue 231)
+  // is not smoothed: it changes with its side's stages, at the same sample, so each side plays its own Mode's level.
+  const sides = [0, 1].map((): FilterSide => {
+    const resonanceQ = ctx.createWaveShaper();
+    resonanceIn.connect(resonanceQ);
+    const toQ = [ctx.createGain(), ctx.createGain()] as [GainNode, GainNode];
+    for (const g of toQ) resonanceQ.connect(g);
+    const makeUp = ctx.createWaveShaper();
+    makeUp.curve = makeUpCurve('lowpass', 12);
+    resonanceIn.connect(makeUp);
+    return { resonanceQ, toQ, makeUp, curveFrom: createChangeDetector<readonly [FilterMode, FilterSlope]>(), curveStages: [0, 0] };
+  }) as [FilterSide, FilterSide];
+  // The side heard, or faded to (issue 248); when its fade began, and its share of the sound then.
+  let heard = 0;
+  let fade = { start: -MODE_FADE, startShare: 1 };
+  // Fades begun so far: only the last one's end settles the sides, or starts the next.
+  let fades = 0;
+  // A Mode asked for while a fade was under way, for when it is over; and the Slope the sides were last set to.
+  let pending: FilterMode | undefined;
+  let slopeNow: FilterSlope = 12;
+  /** The side heard's share of the sound at `t`: all of it, but while a change of Mode fades or waits to. */
+  const heardShare = (t: number) =>
+    t >= fade.start + MODE_FADE ? 1 : fade.startShare + ((1 - fade.startShare) * Math.max(0, t - fade.start)) / MODE_FADE;
   // What the twins' stages were last set from: a knob that leaves them as they are does not set them again (issue 218).
-  const twinStagesFrom = createMemo<string>();
+  const twinStagesFrom = createChangeDetector<readonly [FilterMode, FilterSlope, number]>();
   const [bend, pressing] = [ctx.createConstantSource(), ctx.createConstantSource()];
   for (const cents of [bend, pressing]) {
     cents.offset.value = 0;
@@ -1097,7 +1213,7 @@ export function createSynthEngine(
       return ctx.createPeriodicWave(real.subarray(0, harmonics + 1), imag.subarray(0, harmonics + 1), { disableNormalization: true });
     });
   const shared: Shared = {
-    lfos: [lfoNodes(), lfoNodes()], resonanceIn, resonanceQ, toQ, makeUp: makeUpShaper, bend, pressing, tremoloRest, noise: { white, pink: pinkBuffer(ctx, white) }, wave: oscillatorWave, master,
+    lfos: [lfoNodes(), lfoNodes()], resonanceIn, sides, bend, pressing, tremoloRest, noise: { white, pink: pinkBuffer(ctx, white) }, wave: oscillatorWave, master,
     writes: createWrites(),
   };
   const write = shared.writes.set;
@@ -1111,11 +1227,14 @@ export function createSynthEngine(
   // What the engine played, which the Viewers ask about (issue 244): the Gates, pitches, Patches, bend, aftertouch, each
   // LFO's clock (advanced with every Rate change and restart exactly as its oscillators are, ADR-0003) and the tempo.
   const model = createModulationRecord(ctx.currentTime);
-  const lfoClocks = model.lfoClocks;
   // The chord each LFO last restarted for: when its Notes were asked for, and when it restarted.
   const lfoChords: ({ asked: number; t: number } | null)[] = [null, null];
-  // What each synced free LFO was last locked to the beat with (issue 112).
-  const locks: (string | null)[] = [null, null];
+  // What each synced free LFO was last locked to the beat with (issue 112): the tempo, its note value and Waveform.
+  const locks: (readonly [bpm: number, origin: number, note: Lfo['note'], waveform: LfoWaveform] | null)[] = [null, null];
+  const lockedWith = (l: Lfo) => {
+    const { bpm, origin } = model.tempo();
+    return [bpm, origin, l.note, l.waveform] as const;
+  };
   // A synced free LFO being pulled onto the beat: the Rate it runs at until then (review 14).
   const pulls: ({ rate: number; until: number } | null)[] = [null, null];
   const hz = (l: Lfo) => lfoHz(l, model.tempo().bpm);
@@ -1131,7 +1250,7 @@ export function createSynthEngine(
    */
   const followRate = (i: number, l: Lfo, t: number, { withWaveform = false } = {}) => {
     const rate = lfoRate(i, l, t);
-    lfoClocks[i].setRate(t, rate);
+    model.recordLfoRate(i, t, rate);
     for (const osc of shared.lfos[i].takeover.nodes()) {
       const was = lfoSetTo.get(osc);
       if (withWaveform && was?.waveform !== l.waveform) setLfoWave(osc, l.waveform);
@@ -1144,6 +1263,12 @@ export function createSynthEngine(
    * every oscillator of the LFO, leaves them alone (issue 218). Forgotten when a whole new Patch is written.
    */
   let lfoSetTo = new WeakMap<OscillatorNode, { rate: number; waveform?: LfoWaveform }>();
+  /** An LFO oscillator runs at `rate` from `t`, what it was set to after `t` called off, its Waveform as it was. */
+  const setLfoRate = (osc: OscillatorNode, rate: number, t: number) => {
+    osc.frequency.cancelScheduledValues(t);
+    osc.frequency.setValueAtTime(rate, t);
+    lfoSetTo.set(osc, { rate, waveform: lfoSetTo.get(osc)?.waveform });
+  };
   /** Whether every oscillator of LFO `i` is set already to the Rate and Waveform it runs at `t` under `l`. */
   const lfoAlreadyAt = (i: number, l: Lfo, t: number) => {
     const rate = lfoRate(i, l, t);
@@ -1172,21 +1297,17 @@ export function createSynthEngine(
     lfoChords[i] = { asked, t };
     const start = LFO_START[l.waveform];
     if (!shared.lfos[i].takeover.restart(t, lfoOscillator(i, l, start))) return;
-    lfoClocks[i].cancelAfter(t);
-    lfoClocks[i].restart(t, start);
+    model.cancelLfoRestarts(i, t);
+    model.recordLfoRestart(i, t, start);
   };
   /** A pull onto the beat still to end after `t` is called off, in the sound and the model: the LFO runs at its Rate. */
   const endPull = (i: number, l: Lfo, t: number) => {
     const pull = pulls[i];
     pulls[i] = null;
     if (!pull || pull.until <= t) return;
-    for (const osc of shared.lfos[i].takeover.nodes()) {
-      osc.frequency.cancelScheduledValues(t);
-      osc.frequency.setValueAtTime(hz(l), t);
-      lfoSetTo.set(osc, { rate: hz(l), waveform: lfoSetTo.get(osc)?.waveform });
-    }
-    lfoClocks[i].cancelRatesAfter(t);
-    lfoClocks[i].setRate(t, hz(l));
+    for (const osc of shared.lfos[i].takeover.nodes()) setLfoRate(osc, hz(l), t);
+    model.cancelLfoRates(i, t);
+    model.recordLfoRate(i, t, hz(l));
   };
   /**
    * Each synced LFO running freely starts its cycle on a beat (issue 112): at its Waveform's start (`LFO_START`) on the
@@ -1200,23 +1321,23 @@ export function createSynthEngine(
   const lockToBeat = (then: Patch, t: number) => {
     const tempo = model.tempo();
     lfos(then).forEach((l, i) => {
-      const lock = l.sync === 'on' && l.retrigger === 'free' ? `${tempo.bpm} ${tempo.origin} ${l.note} ${l.waveform}` : null;
-      if (lock === locks[i]) return;
+      const lock = l.sync === 'on' && l.retrigger === 'free' ? lockedWith(l) : null;
+      if (sameKey(lock, locks[i])) return;
       locks[i] = lock;
       endPull(i, l, t);
       if (!lock) return;
       const nodes = shared.lfos[i];
       nodes.takeover.cancelAfter(t);
-      lfoClocks[i].cancelAfter(t);
+      model.cancelLfoRestarts(i, t);
       const rate = hz(l);
       if (tempo.origin > t) {
         const start = LFO_START[l.waveform];
         nodes.takeover.restart(tempo.origin, lfoOscillator(i, l, start), { again: true });
-        lfoClocks[i].restart(tempo.origin, start);
+        model.recordLfoRestart(i, tempo.origin, start);
         return;
       }
       // How far the beat is ahead of the LFO, the nearer way round: made up over the pull.
-      const ahead = LFO_START[l.waveform] + (t - tempo.origin) * rate - lfoClocks[i].phaseAt(t);
+      const ahead = LFO_START[l.waveform] + (t - tempo.origin) * rate - model.lfoPhaseAt(i, t);
       const off = ahead - Math.round(ahead);
       if (Math.abs(off) < 1e-9) return;
       // Whole samples, so the oscillator's Rate changes back where the model's does.
@@ -1224,20 +1345,18 @@ export function createSynthEngine(
       const pull = { rate: rate + off / span, until: t + span };
       pulls[i] = pull;
       for (const osc of nodes.takeover.nodes()) {
-        osc.frequency.cancelScheduledValues(t);
-        osc.frequency.setValueAtTime(pull.rate, t);
+        setLfoRate(osc, pull.rate, t); // until the pull ends
         osc.frequency.setValueAtTime(rate, pull.until);
-        lfoSetTo.set(osc, { rate: pull.rate, waveform: lfoSetTo.get(osc)?.waveform }); // until the pull ends
       }
-      lfoClocks[i].setRate(t, pull.rate);
-      lfoClocks[i].setRate(pull.until, rate);
+      model.recordLfoRate(i, t, pull.rate);
+      model.recordLfoRate(i, pull.until, rate);
     });
   };
   /** Call off the LFOs' restarts after `t`, in the sound and the model, for a Note whose Gate closed before it started. */
   const cancelLfoRestarts = (t: number) => {
     shared.lfos.forEach((nodes, i) => {
       nodes.takeover.cancelAfter(t);
-      lfoClocks[i].cancelAfter(t);
+      model.cancelLfoRestarts(i, t);
       if ((lfoChords[i]?.t ?? -Infinity) > t) lfoChords[i] = null;
     });
   };
@@ -1254,17 +1373,16 @@ export function createSynthEngine(
     const then = patch;
     lfos(then).forEach((l, i) => endPull(i, l, t));
     model.carryOn(seconds, t);
-    const tempo = model.tempo();
     lfos(then).forEach((l, i) => {
       lfoChords[i] = null;
-      if (locks[i] !== null) locks[i] = `${tempo.bpm} ${tempo.origin} ${l.note} ${l.waveform}`;
-      shared.lfos[i].takeover.restart(t, lfoOscillator(i, l, lfoClocks[i].phaseAt(t)), { again: true });
+      if (locks[i] !== null) locks[i] = lockedWith(l);
+      shared.lfos[i].takeover.restart(t, lfoOscillator(i, l, model.lfoPhaseAt(i, t)), { again: true });
     });
   };
 
   let patch: Patch | undefined;
   // What aftertouch on Pitch last moved its node to, in cents: a message on another Destination leaves it be.
-  const pressingCents = createMemo<number>(0);
+  const pressingCents = createChangeDetector<readonly [number]>([0]);
   /** The Voice of the newest Note: the Taps listen to it (or to every Voice, when asked). */
   let lead: Voice | null = null;
   let tapSource: TapSource = 'newest';
@@ -1355,12 +1473,73 @@ export function createSynthEngine(
       for (const listener of newestListeners) listener();
     }
   };
+  /** Each side's Resonance curves for its Mode at `slope`, made again only when they change, and its stages' shares. */
+  const setSideCurves = (slope: FilterSlope, t: number) => {
+    for (const side of sides) {
+      if (!side.mode) continue;
+      if (side.curveFrom.changed([side.mode, slope])) {
+        const { curve, stages } = resonanceCurve(side.mode, slope);
+        side.resonanceQ.curve = curve;
+        side.makeUp.curve = makeUpCurve(side.mode, slope);
+        side.curveStages = stages;
+      }
+      side.toQ.forEach((g, k) => write(g.gain, side.curveStages[k], t));
+    }
+  };
+  /**
+   * Every Voice fades over to side `to` from `t`, from its share of the sound then. Once the fade is over, by the audio
+   * clock, a Mode asked for meanwhile fades in next; or else the side faded out is unwired.
+   */
+  const fadeTo = (to: number, t: number) => {
+    const share = heardShare(t);
+    const startShare = to === heard ? share : 1 - share;
+    heard = to;
+    fade = { start: t, startShare };
+    for (const v of voices) v.fadeTo(to, t, startShare);
+    const fading = ++fades;
+    const timer = ctx.createConstantSource();
+    timer.offset.value = 0;
+    timer.connect(master);
+    timer.onended = () => {
+      timer.disconnect();
+      if (fading !== fades) return;
+      for (const v of voices) v.settle(to);
+      if (!pending) return;
+      // The side faded out, unwired with new stages, takes the Mode; its fade starts a little after now, as the sound
+      // may have gone on past the clock read here by the time the fade is written (an offline render does not wait).
+      sides[1 - heard].mode = pending;
+      pending = undefined;
+      for (const v of voices) v.setSides(slopeNow, ctx.currentTime);
+      setSideCurves(slopeNow, ctx.currentTime);
+      fadeTo(1 - heard, ctx.currentTime + (2 * RENDER_QUANTUM) / ctx.sampleRate);
+    };
+    timer.start(t);
+    timer.stop(t + MODE_FADE + RENDER_QUANTUM / ctx.sampleRate);
+  };
+  /**
+   * A change of Filter Mode at `t` (issue 248): the side not heard takes the new Mode, and every Voice fades over to it,
+   * so no side changes Mode while it is heard. While a fade is under way, a change back to the Mode faded from turns
+   * the fade round from where it is; any other waits for the fade's end, and the last one asked for fades in then.
+   */
+  const toMode = (mode: FilterMode, t: number) => {
+    if (!sides[heard].mode) sides[heard].mode = mode;
+    if (t < fade.start + MODE_FADE) {
+      pending = sides[heard].mode === mode || sides[1 - heard].mode === mode ? undefined : mode;
+      if (sides[1 - heard].mode === mode) fadeTo(1 - heard, t);
+      return;
+    }
+    if (sides[heard].mode === mode) return;
+    sides[1 - heard].mode = mode;
+    fadeTo(1 - heard, t);
+  };
   /**
    * What the sound takes from the Patch it plays, `next` (the knobs as aftertouch moved its Destination, issue 132): every
    * Voice's settings, and the gains the LFOs reach their Destinations through: only those it changes, or with `whole`
    * every one (issue 218).
    */
   const applyToSound = (next: Patch, t: number, { whole = false } = {}) => {
+    slopeNow = next.filterSlope;
+    toMode(next.filterMode, t);
     for (const v of voices) v.apply(next, t, { whole });
     // The laws' swings (issue 74), in the units the nodes take: cents for the pitches and the Cutoff.
     const cutoffCents = destinationSwings(next, 'cutoff').map((octaves) => octaves * 1200);
@@ -1370,13 +1549,7 @@ export function createSynthEngine(
     // Resonance: the knob's (aftertouch's with it) and each LFO's swing, which the curve turns into each stage's Q. The
     // curve takes the Resonance's 0 to 1 as −1 to 1.
     const resonances = destinationSwings(next, 'resonance', next.resonance);
-    if (curveFrom.changed(`${next.filterMode} ${next.filterSlope}`)) {
-      const { curve, stages } = resonanceCurve(next.filterMode, next.filterSlope);
-      resonanceQ.curve = curve;
-      makeUpShaper.curve = makeUpCurve(next.filterMode, next.filterSlope);
-      curveStages = stages;
-    }
-    toQ.forEach((g, k) => write(g.gain, curveStages[k], t));
+    setSideCurves(next.filterSlope, t);
     write(resonanceIn.offset, 2 * next.resonance - 1, t);
     // Volume: the knob's level (issue 62), the tremolo resting its total swing below it, so the wave's top is the
     // knob's own level; each LFO's swing scaled with it.
@@ -1390,8 +1563,7 @@ export function createSynthEngine(
       write(nodes.toResonance.gain, 2 * resonances[i], t);
     });
     // The twins copy each stage for the Response Curve, when the stages change.
-    if (whole) twinStagesFrom.forget();
-    if (twinStagesFrom.changed(`${next.filterMode} ${next.filterSlope} ${next.resonance}`)) {
+    if (twinStagesFrom.changed([next.filterMode, next.filterSlope, next.resonance], { afresh: whole })) {
       const stages = filterStages(next.filterMode, next.filterSlope, next.resonance);
       twins.forEach((node, i) => setStage(node, stages[i]));
     }
@@ -1492,7 +1664,7 @@ export function createSynthEngine(
       if (glide) shared.writes.gliding(glide, move);
       else move();
       const cents = pressurePitch(pressure) * 100;
-      if (pressingCents.changed(cents)) moveTo(pressing.offset, cents, t, glide);
+      if (pressingCents.changed([cents])) moveTo(pressing.offset, cents, t, glide);
     },
 
     noteOn(note, velocity, time, { afresh = false } = {}) {

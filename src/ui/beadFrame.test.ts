@@ -240,7 +240,7 @@ describe("Bead's frame, three across", () => {
     const dropOver = (plot: Rect) => {
       const { left, where } = b.drawn;
       const [x, y] = [left + DROP_MIDDLE, where.foot - 8];
-      expect(b.bead.pick(x, y, { reduced: false, leaving: false })).toBe(true);
+      expect(b.bead.pick(x, y, b.reading())).toBe(true);
       const to = { x: (plot.left + plot.right) / 2, y: plot.top + 8 };
       for (let i = 1; i <= 6; i++) {
         b.frame();
@@ -265,7 +265,7 @@ describe("Bead's frame, three across", () => {
     b.run(3);
     const { left, where } = b.drawn;
     const [x, y] = [left + DROP_MIDDLE, where.foot - 8];
-    b.bead.pick(x, y, { reduced: false, leaving: false });
+    b.bead.pick(x, y, b.reading());
     // Flung to the left and up.
     for (let i = 1; i <= 6; i++) {
       b.frame();
@@ -288,7 +288,7 @@ describe("Bead's frame, three across", () => {
     const rains = scripted(THREE);
     rains.run(3);
     const { left, where } = rains.drawn;
-    rains.bead.pick(left + DROP_MIDDLE, where.foot - 8, { reduced: false, leaving: false });
+    rains.bead.pick(left + DROP_MIDDLE, where.foot - 8, rains.reading());
     for (let i = 1; i <= 6; i++) {
       rains.frame();
       rains.bead.drag(left + DROP_MIDDLE, where.foot - 8 - 60 * i);

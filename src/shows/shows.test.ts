@@ -443,6 +443,20 @@ describe('The Tour (issues 128, 130, 210, 243)', () => {
     expect(s.patches.get()).toEqual(kept);
   });
 
+  it('gives the person’s Patch back value for value, closed on any card after it turned its controls (issue 250)', () => {
+    for (let card = 0; card < TOUR_LENGTH; card++) {
+      const s = setup();
+      const kept = withMine(s);
+      s.shows.startTour();
+      for (let i = 0; i < card; i++) s.shows.moveTour(1);
+      vi.advanceTimersByTime(4000); // the card turning its controls
+      s.shows.endTour();
+      expect(s.patches.get(), `closed on card ${card + 1}`).toEqual(kept);
+      vi.advanceTimersByTime(4000); // nothing turns it after
+      expect(s.patches.get(), `closed on card ${card + 1}`).toEqual(kept);
+    }
+  });
+
   it('turns its card’s controls, leaving one the person turns to them for the rest of the card', () => {
     const s = setup();
     s.shows.startTour();

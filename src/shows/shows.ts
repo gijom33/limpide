@@ -6,7 +6,7 @@ import { SHARED_RIFF, TRACK, type Track } from '../demo/track';
 import { shiftOctave } from '../input/keyboardLayout';
 import type { Patch } from '../patch/patch';
 import type { KeptPatch, PatchStore } from '../patch/patchStore';
-import { PRESETS, type Preset } from '../patch/presets';
+import { PRESETS, type Preset, presetNamed } from '../patch/presets';
 import type { TempoStore } from '../play/tempoStore';
 import type { TransportHost } from '../play/transport';
 import { loadFinished, saveFinished } from '../tutorial/progress';
@@ -89,7 +89,7 @@ export interface ShowsHost {
 }
 
 /** The Preset a Tutorial rebuilds. */
-const presetOf = (tutorial: Tutorial) => PRESETS.find((p) => p.name === tutorial.preset)!;
+const presetOf = (tutorial: Tutorial) => presetNamed(tutorial.preset)!;
 /** Init, where the Demo ends and a Tutorial starts. */
 const INIT = PRESETS[0];
 
@@ -253,19 +253,20 @@ export function createShows({ engine, patches, viewers, tempo, storage, onHeld, 
   // A Step counts once its control rests within reach, not as a drag passes through on its way past (review 5,
   // 2026-10-27): any change of the Patch, the Snapshot or the card before then starts the wait again.
   let settle: { timer?: ReturnType<typeof setTimeout>; lesson?: UnderWay | null; patch?: Patch; made?: boolean; snapshot?: number | null } = {};
-  let ruling = false;
-  let again = false;
+  // Whether the rules are running, and whether what they read changed meanwhile (a change they made themselves).
+  let rulesRunning = false;
+  let changedMeanwhile = false;
   /** The Tutorial's rules, after anything it reads changed: run to rest, never inside themselves. */
   const tutorialRules = () => {
-    if (ruling) return void (again = true);
-    ruling = true;
+    if (rulesRunning) return void (changedMeanwhile = true);
+    rulesRunning = true;
     try {
       do {
-        again = false;
+        changedMeanwhile = false;
         ruleOnce();
-      } while (again);
+      } while (changedMeanwhile);
     } finally {
-      ruling = false;
+      rulesRunning = false;
     }
     publish();
   };
@@ -414,7 +415,7 @@ export function createShows({ engine, patches, viewers, tempo, storage, onHeld, 
           showOctave,
           load: (p) => {
             followPaused = false;
-            return hand.newPart(shared ? undefined : PRESETS.find((preset) => preset.name === p.preset)!, p.synced);
+            return hand.newPart(shared ? undefined : presetNamed(p.preset)!, p.synced);
           },
           setParam: (id, value) => hand.turn({ [id]: value }),
           onMove: (id) => {

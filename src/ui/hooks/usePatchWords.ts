@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { describePatch } from '../../patch/describe';
 import { type Patch, sameSound } from '../../patch/patch';
-import { PRESETS } from '../../patch/presets';
+import { presetNamed } from '../../patch/presets';
 
 /** The line follows the knobs at most this often, in ms: a few times a second, so it reads while a knob turns. */
 export const WORDS_EVERY = 250;
@@ -14,7 +14,7 @@ export const WORDS_EVERY = 250;
  * load.
  */
 export function usePatchWords(name: string, patch: Patch, bpm: number): string {
-  const preset = PRESETS.find((p) => p.name === name);
+  const preset = presetNamed(name);
   const target = preset && sameSound(preset.patch, patch) ? '' : describePatch(patch, bpm);
   const [shown, setShown] = useState(target);
   const last = useRef(0);
