@@ -503,13 +503,13 @@ const sameKey = (a: readonly unknown[] | null, b: readonly unknown[] | null) =>
 /**
  * What one thing in the sound was last worked out from (issues 218 and 219), so a change that leaves it as it was does
  * not write it again: `changed(key)` says whether `key` differs, part by part, from the last one, and keeps it. With
- * `anyway` (a whole new Patch written), or with no `start`, it is a change whatever it is.
+ * `afresh` (a whole new Patch written), or with no `start`, it is a change whatever it is.
  */
 function createChangeDetector<Key extends readonly unknown[]>(start: Key | null = null) {
   let last = start;
   return {
-    changed(key: Key, { anyway = false } = {}) {
-      if (!anyway && sameKey(last, key)) return false;
+    changed(key: Key, { afresh = false } = {}) {
+      if (!afresh && sameKey(last, key)) return false;
       last = key;
       return true;
     },
@@ -1024,7 +1024,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
       // worked out from as it was leave it as each Note set it; one at nothing stays at nothing.
       const fmSwings = destinationSwings(next, 'fm', next.crossMod);
       const fmNow = [next.crossMod, ...fmSwings].map((amount) => (amount ? [amount, next.crossMod, ...fmSwings, ...pitchOverNote] : []));
-      const retuned = fmNow.map((now, i) => fmGainsFrom[i].changed(now, { anyway: whole }));
+      const retuned = fmNow.map((now, i) => fmGainsFrom[i].changed(now, { afresh: whole }));
       if (retuned.some(Boolean)) {
         tuneFm(frequencyAt(t), t, { timeConstant: shared.writes.glide(), retuned });
         const sliding = pitches[lastAt(pitches, t)];
@@ -1563,7 +1563,7 @@ export function createSynthEngine(
       write(nodes.toResonance.gain, 2 * resonances[i], t);
     });
     // The twins copy each stage for the Response Curve, when the stages change.
-    if (twinStagesFrom.changed([next.filterMode, next.filterSlope, next.resonance], { anyway: whole })) {
+    if (twinStagesFrom.changed([next.filterMode, next.filterSlope, next.resonance], { afresh: whole })) {
       const stages = filterStages(next.filterMode, next.filterSlope, next.resonance);
       twins.forEach((node, i) => setStage(node, stages[i]));
     }

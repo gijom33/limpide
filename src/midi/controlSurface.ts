@@ -29,7 +29,8 @@ const SUSTAIN = 64;
 const MOD_WHEEL = 1;
 /**
  * Bank Select's MSB (issue 241): it picks a bank of 128 programs, so a Program Change n loads the bank × 128 + n-th
- * Preset. Its LSB (CC 32) is read and ignored, as any unmapped CC.
+ * Preset. Its LSB (CC 32) is read and ignored, as any unmapped CC; MIDI Learn passes over either when a Program Change
+ * follows it (issue 250).
  */
 const BANK_SELECT = 0;
 const BANK_SELECT_LSB = 32;

@@ -520,8 +520,25 @@ test('at 1440 × 900 with the Tutorial card docked, every Tab stop comes clear o
   expect(stops).toBeGreaterThan(50);
 });
 
-// A Step counted only once its control rests within reach, and one found within reach waiting for a touch: the Shows' and
-// the Tutorials' unit tests' (issue 250); the first test here checks that the page counts a Step turned by hand.
+// A Step counted only once its control rests within reach: the Shows' unit tests' (issue 250); the first test here checks
+// that the page counts a Step turned by hand.
+
+test('a knob already within reach when its Step comes waits for a touch, then counts and snaps (issue 59)', async ({ page }) => {
+  await open(page, 'Bass');
+  await action(page, 'Start').click();
+  for (let i = 0; i < 9; i++) await makeStep(page);
+  // The Filter Decay: Init's 250 ms is within reach of 180 ms, and stays as it is until the learner moves it.
+  await expect(progress(page)).toHaveText('Step 10 of 15');
+  const decay = ringed(page).getByRole('slider');
+  await expect(decay).toHaveAttribute('aria-valuetext', '250 ms');
+  await page.waitForTimeout(800);
+  await expect(decay).toHaveAttribute('aria-valuetext', '250 ms');
+  await expect(action(page, 'Next')).toBeDisabled();
+  await decay.focus();
+  await page.keyboard.press('ArrowDown');
+  await expect(card(page).getByText('That fall is the thump')).toBeVisible();
+  await expect(decay).toHaveAttribute('aria-valuetext', '180 ms');
+});
 
 test('a Snapshot Step rings the Display button, then Snapshot, and counts a new Snapshot (issue 59)', async ({ page }) => {
   await open(page, 'Acid');

@@ -1118,37 +1118,17 @@ async function leansWithTheWave(page: Page, lfo: number) {
   expect(steep.filter((f) => Math.sign(f.lean) === Math.sign(f.slope)).length / steep.length, told).toBeGreaterThan(0.8);
 }
 
-/** Where its foot is against an LFO's plot: how far over or under the line the plot draws under its middle, in pixels. */
-interface OnTheLine {
-  off: number;
-  foot: number;
-  moving: string | undefined;
-}
-
-/** Where its foot is against LFO `lfo`'s plot, `n` times `ms` apart, timed in the page so a loaded machine cannot stretch the gaps. */
-const alongTheLine = (page: Page, lfo: number, n: number, ms = 150) =>
-  mascot(page).evaluate(
-    (el, [lfo, n, ms]) =>
-      new Promise<OnTheLine[]>((done) => {
-        const out: OnTheLine[] = [];
-        const read = () => {
-          const box = el.getBoundingClientRect(); // its box's bottom is its foot
-          const plot = document.querySelector(`.lfo-plot[data-lfo="${lfo}"]`)!;
-          const at = plot.getBoundingClientRect();
-          const points = [...plot.querySelector('.lfo-plot-line')!.getAttribute('d')!.matchAll(/[ML](\S+) (\S+)/g)].map((m) => ({ x: Number(m[1]), y: Number(m[2]) }));
-          const middle = box.left + 9 - at.left; // the drop's middle, DROP_MIDDLE in Bead's cling
-          const under = points.reduce((a, b) => (Math.abs(b.x - middle) < Math.abs(a.x - middle) ? b : a));
-          out.push({ off: box.bottom - (at.top + under.y), foot: box.bottom, moving: (el as HTMLElement).dataset.moving });
-          if (out.length < n) setTimeout(read, ms);
-          else done(out);
-        };
-        read();
-      }),
-    [lfo, n, ms] as const,
-  );
-
-/** Where its foot is against LFO `lfo`'s plot, now. */
-const offTheLine = async (page: Page, lfo: number) => (await alongTheLine(page, lfo, 1))[0];
+/** Where its foot is against LFO `lfo`'s plot, now: how far over or under the line the plot draws under its middle, in pixels. */
+const offTheLine = (page: Page, lfo: number) =>
+  mascot(page).evaluate((el, lfo) => {
+    const box = el.getBoundingClientRect(); // its box's bottom is its foot
+    const plot = document.querySelector(`.lfo-plot[data-lfo="${lfo}"]`)!;
+    const at = plot.getBoundingClientRect();
+    const points = [...plot.querySelector('.lfo-plot-line')!.getAttribute('d')!.matchAll(/[ML](\S+) (\S+)/g)].map((m) => ({ x: Number(m[1]), y: Number(m[2]) }));
+    const middle = box.left + 9 - at.left; // the drop's middle, DROP_MIDDLE in Bead's cling
+    const under = points.reduce((a, b) => (Math.abs(b.x - middle) < Math.abs(a.x - middle) ? b : a));
+    return { off: box.bottom - (at.top + under.y) };
+  }, lfo);
 
 test('now and then it rides a slow Sine on an LFO plot, along its line, and goes home once the Depth is 0 (issue 141)', async ({ page }) => {
   test.slow();

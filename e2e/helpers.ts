@@ -29,8 +29,8 @@ export const reachAudio = (page: Page) =>
   });
 
 /**
- * Proves nothing happens for `ms` (issue 250): one wait in the page, frame by frame, watching each element's attribute.
- * The first change it sees ("aria-label: Patch: Kick"), or null if each stayed as it was.
+ * The first change to each element's attribute within `ms` ("aria-label: Patch: Kick"), or null if each stayed as it
+ * was: one wait in the page, frame by frame, for a test that proves nothing happens (issue 250).
  */
 export async function firstChange(page: Page, watched: readonly (readonly [Locator, string])[], ms: number) {
   const handles = await Promise.all(watched.map(async ([element, name]) => [await element.elementHandle(), name] as const));
