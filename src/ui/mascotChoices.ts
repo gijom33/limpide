@@ -1,12 +1,7 @@
 import type { LfoNumber } from '../patch/patch';
-import type { Cling } from './mascotCling';
+import { type Cling, DROP_MIDDLE, type Spot, STEP } from './mascotCling';
 import type { Act } from './mascotMotion';
-import { type Moving, nearestSpan, type Perch, type Span, type Visit } from './mascotPlace';
-
-/** The drop's middle from its box's left, in pixels. */
-export const DROP_MIDDLE = 9;
-/** The spots tried along an edge, this many pixels apart. */
-export const STEP = 4;
+import { inHand, type Moving, nearestSpan, type Perch, pointingTheWay, type Span, settled, type Visit } from './mascotPlace';
 
 /** A line it may be on, in the window's pixels: a section's top edge, or the docked card's. */
 export interface Line {
@@ -19,7 +14,7 @@ export interface Line {
  * pixel's leeway, where it comes down clear of what covers it (`clear`, its stretches along the edge), a step either
  * side: once landed, it walks off any text to stand (issue 181). Null while none is under it.
  */
-export function landingEdge<E extends Line>(edges: readonly E[], at: { left: number; foot: number }, clear: (edge: E) => readonly Span[]): E | null {
+export function landingEdge<E extends Line>(edges: readonly E[], at: Spot, clear: (edge: E) => readonly Span[]): E | null {
   const middle = at.left + DROP_MIDDLE;
   return (
     edges
@@ -44,8 +39,8 @@ export interface PerchAcross<E extends Line> {
   visit: string | null;
   /** The docked card it may stand on (issue 192), if any. */
   card: E | null;
-  /** Its box's left and its foot, where it was drawn last. */
-  at: { left: number; foot: number };
+  /** Where it was drawn last. */
+  at: Spot;
   /** An edge on the window, with room above it there for the drop and its leaps. */
   onScreen: (edge: E) => boolean;
   /** An edge with somewhere along it clear of what covers the page and of its text, to stand (issues 164 and 181). */
@@ -92,8 +87,11 @@ export function visitDue(it: {
   return !it.visit && it.now >= it.next && !it.guided && !it.reduced && !it.leaving && !it.doing && still;
 }
 
-/** When the next visit or ride comes, from `now`: at `first`, `after` one, or with `nowhere` to go when one was due. */
-export const nextVisitAt = (now: number, why: keyof typeof NEXT_VISIT, stacked: boolean, random = Math.random) =>
+/**
+ * When the next visit or ride comes, from `now`: at `first`, `after` one, or with `nowhere` to go when one was due;
+ * `stacked`, on a phone or in 2 × 2.
+ */
+export const nextVisitAt = (now: number, why: keyof typeof NEXT_VISIT, { stacked }: { stacked: boolean }, random = Math.random) =>
   now + between(stacked && why !== 'first' ? STACKED_RIDES : NEXT_VISIT[why], random);
 
 /** A visit or a ride chosen at `now`, for as long as one lasts. */
@@ -101,10 +99,11 @@ export const visitFor = (choice: Omit<Visit, 'until'>, now: number, random = Mat
 
 /**
  * Whether the frame looks for the LFO plots in view: through a Demo part, to surf (issue 204); outside the Demo, with an
- * LFO to ride, on a ride or with a visit due (issue 141). Never else, so a frame costs no more while it stays home.
+ * LFO to ride (`rideCount`, how many there are), on a ride or with a visit due (issue 141). Never else, so a frame
+ * costs no more while it stays home.
  */
-export const looksForPlots = ({ demo, rides, visit, now, next }: { demo: boolean; rides: number; visit: Visit | null; now: number; next: number }) =>
-  demo || (rides > 0 && (visit ? visit.ride !== undefined : now >= next));
+export const looksForPlots = ({ demo, rideCount, visit, now, next }: { demo: boolean; rideCount: number; visit: Visit | null; now: number; next: number }) =>
+  demo || (rideCount > 0 && (visit ? visit.ride !== undefined : now >= next));
 
 /**
  * The plot it rides or surfs (issues 141, 197 and 204): on a ride, its LFO's among the `rideable` plots in view; else in
@@ -117,7 +116,7 @@ export function ridePlot<P extends { lfo: LfoNumber }>({ visit, rideable, plots,
 }): { ride: P | undefined; plot: P | undefined; surfing: boolean } {
   const ride = visit?.ride ? rideable.find((p) => p.lfo === visit.ride) : undefined;
   const plot = act === 'surf' ? plots[0] : ride;
-  const surfing = !!plot && !reduced && moving !== 'held' && moving !== 'thrown' && (!!ride || !doing);
+  const surfing = !!plot && !reduced && !inHand(moving) && (!!ride || !doing);
   return { ride, plot, surfing };
 }
 
@@ -132,12 +131,11 @@ export function ridePlot<P extends { lfo: LfoNumber }>({ visit, rideable, plots,
 export function clingMove({ cling, edge, moving, sameSection, sameControl, onSection, left }: {
   cling: Cling; edge: readonly Span[]; moving: Moving; sameSection: boolean; sameControl: boolean; onSection: boolean; left: number;
 }): 'cling' | { edge: number } | null {
-  const sliding = moving === 'sliding' || moving === 'clinging';
+  const sliding = pointingTheWay(moving);
   const along = nearestSpan(edge, cling.left);
   const spot = along && Math.min(along.max, Math.max(along.min, cling.left));
-  const settled = moving === 'standing' || moving === 'hovering' || moving === 'landing';
   const atSpot = spot !== null && onSection && moving === 'standing' && Math.abs(left - spot) < 1.5;
-  if ((sliding && (sameSection || sameControl)) || atSpot || (spot === null && (settled || sliding))) return 'cling';
+  if ((sliding && (sameSection || sameControl)) || atSpot || (spot === null && (settled(moving) || sliding))) return 'cling';
   return spot === null ? null : { edge: spot };
 }
 

@@ -4,7 +4,7 @@
 
 **Blocked by:** [241](./241-every-preset-reachable-by-program-change.md) (it changes what a Program Change loads)
 
-**Status:** ready-for-agent · bug. Polish for v1
+**Status:** ready-for-human · bug. Built (2026-11-05) on night/2026-11-05, for the owner to try
 
 ## Decisions
 
@@ -30,3 +30,25 @@ Decided by the owner, 2026-11-05 ("ok" to the recommendations, in 243's grilling
 - Tests: a Program Change during the Demo stops it and keeps the Preset; the Song started during the Tour ends it and plays on the person's Patch; the Song clears the takeover card.
 
 **Out of scope:** the reshaping into one module (243), the letter keys' rule, a Tutorial's or the Demo's Patch when they end.
+
+## How it was built
+
+Built test-first on `night/2026-11-05`, on top of 241:
+
+- **A Program Change during the Demo** stops it as a Note does: the card says "The Demo stopped: you are playing now", and the Preset the Program Change named stays loaded; no later part of the Demo loads over it.
+- **Starting the Song during the Tour** ends the Tour as its close does: its card goes, the person's Patch comes back, and the Song plays on it.
+- **Starting the Song** clears the Demo's "you are playing now" card at once, as a Tutorial or the Tour starting does.
+- The glossary's Demo, Song and Show entries say so, and so do 52 and 128, with a dated line each.
+
+Claude's calls, open to the owner:
+
+1. A Program Change past the last Preset still does nothing at all: it loads nothing, so it does not stop the Demo either.
+2. The Program Change shows the Demo's "you are playing now" card, as a Note or a pick in the Patches panel does, not a silent stop like the Demo's Stop button.
+3. A Controller's learned Next or Previous Preset (a Mapping, not a Program Change) is left as it was: the Demo plays on, its next part loading over it. Nothing in the issue asked for it; 243 can decide.
+4. Starting the Song during a Tutorial is left as it was: the Tutorial stays open (decision 4, nothing else changes).
+
+To try in the app:
+
+- With a keyboard plugged in, start the Demo and press a Program button: the Demo stops, its card says you are playing now, and the Preset stays.
+- Load a Preset of yours, start the Tour from About, then press Song: the Tour's card goes, your Preset is back, and the Song plays on it.
+- Start the Demo, play a Note so its card says "you are playing now", then press Song: the card goes at once.

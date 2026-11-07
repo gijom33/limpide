@@ -16,7 +16,7 @@ const setup = ({ hash = '', lastSession }: { hash?: string; lastSession?: Patch 
   const store = createPatchStore({
     hash,
     library,
-    apply: (patch, whole) => {
+    apply: (patch, { whole }) => {
       applied.push(patch);
       wholes.push(whole);
       heard.push('engine');

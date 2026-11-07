@@ -113,7 +113,7 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
   const frozenIdealGains = createFreezeLatch<{ key: string; gains: Float32Array }>();
   const frozenNoiseSlope = createFreezeLatch<string | undefined>();
   // The outlines drawn last, for the Glow (issue 199), each with the axis and width it was drawn for.
-  const glow = createGlow<{ outline: Float32Array; key: string }>();
+  const glow = createGlow<Float32Array>();
   let snapshotToken: number | null = null;
   let snapshotBins: Float32Array | null = null;
   // The hover readout's columns, measured once per font so its box keeps one size (issue 155), and again with room for
@@ -143,11 +143,13 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
     }
     const slope = overlays.geek ? frozenNoiseSlope(viewer.frozen, () => noiseSlope?.()) : undefined;
     const cursor = hover?.();
-    // A silent Spectrum rests once drawn, until something it draws changes (issue 214): with no Harmonics there are no
-    // Markers or Ideal marks, and the Curve is compared by its gains, which an LFO on the Cutoff moves.
+    // A silent Spectrum rests once drawn, until something it draws changes (issue 214): the Curve is compared by its
+    // gains, which an LFO on the Cutoff moves. A paused one rests on a picture of sound (issue 216), its Markers and
+    // Ideal marks drawn: turning either, or the Geek Layer's numbers, draws it again (issue 238).
     const inputs = [
       ...canvasInputs(canvas, COLOURS),
       viewer.frequencyScale, viewer.levelScale, viewer.snapshot, viewer.frozen, glowing, curveGains, slope,
+      overlays.harmonics, overlays.ideal, overlays.geek, showIdeal,
     ];
     if (rest(silent && !cursor, inputs)) return;
 
@@ -217,13 +219,12 @@ export function createSpectrum(canvas: HTMLCanvasElement, analyser: AnalyserNode
     // Glow (issue 199), under All (issue 229): the outlines of the last quarter of a second, fading under the newest; only the outline, so
     // the fill, the Curve and the marks read as now. One drawn on another axis or width is passed over.
     const key = `${viewer.frequencyScale}:${outline.length}`;
-    const past = glow({ on: glowing, frozen: viewer.frozen, now: () => performance.now(), newest: { outline, key } })
-      .filter(({ value }) => value.key === key);
+    const past = glow({ on: glowing, frozen: viewer.frozen, now: () => performance.now(), newest: outline, key });
     g.strokeStyle = trace;
     g.lineWidth = outlineWidth;
     for (const { value, alpha } of past) {
       g.globalAlpha = alpha;
-      strokeColumns(g, value.outline, yOf, ratio);
+      strokeColumns(g, value, yOf, ratio);
     }
     g.globalAlpha = 1;
     canvas.dataset.glow = String(past.length);

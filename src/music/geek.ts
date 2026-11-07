@@ -4,7 +4,7 @@ import { GLIDE_SHARPNESS } from '../modulation/lfo';
 import { destinationSwings, effectiveCutoff, KEY_TRACK_CENTRE, LFO_LAWS, type LfoLaw, osc2Cents } from '../modulation/modulationModel';
 import {
   type FilterMode, type FilterSlope, FM_INDEX, fmIndex, formatParam, LFO_DESTINATIONS, LFO_KEYS, type LfoNumber, type NoiseColour,
-  PARAMS, type ParamId, type Patch, secondsText,
+  PARAMS, type ParamId, type Patch, rateOf, secondsText,
 } from '../patch/patch';
 import { WAVEFORM_NAMES, type Waveform } from './harmonics';
 import { besselJ, osc2Ratio } from './idealReference';
@@ -35,6 +35,8 @@ const PULSE_GAPS_SAID = 20;
 /** The letters every Harmonic series shares. */
 const N_IS = 'n: the Harmonic’s number, 1 the fundamental';
 const B_IS = 'bₙ: its amplitude, the wave’s peak being 1';
+/** The letters of the Saw's, the Square's and the Triangle's series. */
+const SERIES_WHERE = `${N_IS}; ${B_IS}; π: 3.14…`;
 
 /**
  * The Harmonic series of a Waveform, as the Ideal Reference draws it, for its tip (issue 235): what it says, then the
@@ -48,28 +50,30 @@ export function harmonicFormula(waveform: Waveform, pulseWidth: number): Formula
       return {
         says: 'A Saw has every Harmonic, each its number times quieter than the first: the 2nd at half, the 3rd at a third.',
         formula: 'bₙ = 2 / (π n)',
-        where: `${N_IS}; ${B_IS}; π: 3.14…`,
+        where: SERIES_WHERE,
       };
     case 'square':
       return {
         says: 'A Square has the odd Harmonics only, each its number times quieter than the first: the 3rd at a third, the 5th at a fifth.',
         formula: 'bₙ = 4 / (π n),  odd n only',
-        where: `${N_IS}; ${B_IS}; π: 3.14…`,
+        where: SERIES_WHERE,
       };
     case 'triangle':
       return {
         says: 'A Triangle has the odd Harmonics only, falling by the square of their number: the 3rd at a ninth, the 5th at a twenty-fifth, every other one upside down.',
         formula: 'bₙ = 8 / (π² n²),  odd n only',
-        where: `${N_IS}; ${B_IS}; π: 3.14…`,
+        where: SERIES_WHERE,
       };
     case 'pulse': {
       const percent = Math.round(pulseWidth * 100);
       const every = 100 / gcd(percent, 100);
       const gaps = every <= PULSE_GAPS_SAID ? `: every ${ordinal(every)} Harmonic missing` : '';
+      // The one played keeps no offset: high for d of a cycle at 2(1 − d), low for the rest at −2d (issue 246).
+      const [low, high] = [-2 * pulseWidth, 2 * (1 - pulseWidth)].map((v) => Number(v.toFixed(2)));
       return {
         says: 'A Pulse’s Harmonics follow its width: one is missing wherever a whole number of its cycles fits the high part exactly. At 50 % it is a Square.',
         formula: 'aₙ = 4 sin(π n d) / (π n)',
-        where: `${N_IS}; aₙ: its amplitude, the wave’s peak being 1; d: the Pulse Width, ${percent} % now${gaps}; π: 3.14…. aₙ is 0 wherever n d is whole.`,
+        where: `${N_IS}; aₙ: its amplitude, the wave’s peak being 1 for a ±1 Pulse, 2 from its low to its high; the one played sits round 0, from −${-low} to +${high} at ${percent} %; d: the Pulse Width, ${percent} % now${gaps}; π: 3.14…. aₙ is 0 wherever n d is whole.`,
       };
     }
   }
@@ -94,7 +98,7 @@ export function fmFormula(patch: Patch): Formula {
   return {
     says: 'FM adds partials on each side of each of Osc 1’s Harmonics, a step of Osc 2’s frequency apart; how loud each is follows a Bessel function of how far FM swings the pitch.',
     formula: `n f₁ + k f₂:  bₙ |Jₖ(n β)|,  β = ${FM_INDEX} × FM = ${index.toFixed(2)}`,
-    where: `n: Osc 1’s Harmonic’s number; f₁, f₂: Osc 1’s and Osc 2’s frequencies, f₂ / f₁ = ${ratioText(r)} now: ${landing}; bₙ: the Harmonic’s amplitude before FM; k: how many steps of f₂ from the Harmonic, either side (0 the Harmonic itself); Jₖ: the Bessel function of order k, |J₀…J₃(β)| ${j} now; β: the modulation index, how far FM swings the pitch, over f₂.${osc2}${osc1}`,
+    where: `n: Osc 1’s Harmonic’s number; f₁, f₂: Osc 1’s and Osc 2’s frequencies, f₂ / f₁ = ${ratioText(r)} now: ${landing}; bₙ: the Harmonic’s amplitude before FM; k: how many steps of f₂ from the Harmonic, either side (0 the Harmonic itself); Jₖ: the Bessel function of order k, |J₀…J₃(β)| ${j} now; β: the modulation index, how far FM swings the pitch, over f₂. On high Notes FM is kept smaller, β with it, so few of its partials pass the top of what the browser plays.${osc2}${osc1}`,
   };
 }
 
@@ -131,7 +135,8 @@ const RESPONSE_SAYS: Record<FilterMode, string> = {
  */
 export function responseFormula(mode: FilterMode, slope: FilterSlope): Formula {
   const one = `${CORE[mode]} / √((1 − x²)² + (x / Q)²)`;
-  const where = 'x = f / fc, 1 at the Cutoff; |H|: the gain at the frequency f, 1 unchanged, 0 silent; fc: the Cutoff; Q: the Resonance as the Filter’s Q, which its knob reads in this layer.';
+  const top = slope === 12 ? '−44.8 dB at 16 kHz, against −36.1 dB here' : '−89.5 dB at 16 kHz, against −72.2 dB here';
+  const where = `x = f / fc, 1 at the Cutoff; |H|: the gain at the frequency f, 1 unchanged, 0 silent; fc: the Cutoff; Q: the Resonance as the Filter’s Q, which its knob reads in this layer. This is the analogue Filter’s formula: the browser’s digital one falls faster near the top, a low-pass at a 2 kHz Cutoff and a flat Q of 0.71 ${top} (at 48 kHz).`;
   return slope === 12
     ? { says: RESPONSE_SAYS[mode], formula: `|H| = ${one}`, where }
     : { says: `${RESPONSE_SAYS[mode]} At 24 dB, two of these Filters in a row: the gain squared, falling twice as fast.`, formula: `|H| = (${one})²`, where };
@@ -234,9 +239,6 @@ export interface GeekReadout {
   words?: string;
 }
 
-/** Where a readout is worked out, its defaults filled in. */
-type At = Required<GeekAt>;
-
 /**
  * One control of the Synth Geek Layer: what it reads instead of its everyday value, in its parts, and the widest it can
  * read, to size its column while the layer is on (several where which is widest depends on the font; in their parts,
@@ -244,7 +246,8 @@ type At = Required<GeekAt>;
  * so a readout and its widest are written side by side (issue 196).
  */
 interface GeekControl {
-  read(value: number, patch: Patch, at: At): GeekReadout;
+  /** `at` with its defaults filled in. */
+  read(value: number, patch: Patch, at: Required<GeekAt>): GeekReadout;
   widest: readonly GeekReadout[];
 }
 
@@ -444,16 +447,13 @@ const STAGE_CURVES: Record<EnvelopeStage, Formula> = {
   release: { formula: 'x = x₀·e^(−t/τ)', where: 'x₀ the level when the key came up, falling towards silence. It' },
 };
 
-/** Each LFO's free Rate, whose tip works its period out at the Rate (issue 202). */
-const RATES: ParamId[] = [LFO_KEYS[1].rate, LFO_KEYS[2].rate];
-
 /**
  * The formulas under the hood worked out at a control's setting (issue 168), where the tip shows a live number: each
  * Envelope stage's curve and its time constant τ as the engine sets it, a free Rate's period (issue 202); undefined for
  * the others.
  */
 export function underTheHoodAt(id: ParamId, value: number): Formula | undefined {
-  if (RATES.includes(id)) {
+  if (rateOf(id)?.sync === 'off') {
     const { formula, where } = UNDER_THE_HOOD.lfoRate;
     return { formula, where: `T = 1 / ${preciseFrequencyText(value)} = ${periodText(1 / value)} now. ${where}` };
   }

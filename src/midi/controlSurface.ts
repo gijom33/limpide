@@ -4,7 +4,7 @@ import { type ChoiceId, inUnitShown, PARAMS, type ParamId } from '../patch/patch
 import { answers, type KnownController } from './controller';
 import { detectEncoderMode, detectKnobMode, relativeDelta, relativeModeOf } from './encoderMode';
 import {
-  type ActionId, type Control, controlKey, type KnobMode, knobModeOf, learnsAsButton, type Mapping, type MappingStore, PITCH_BEND, sameControl,
+  type ActionId, type Control, controlKey, isRelative, type KnobMode, knobModeOf, learnsAsButton, type Mapping, type MappingStore, PITCH_BEND, sameControl,
   type Target,
 } from './mappings';
 import type { MidiMessage } from './parser';
@@ -27,6 +27,12 @@ const DETECT_VALUES = 3;
 /** The sustain pedal and the mod wheel, by their standard CC numbers. */
 const SUSTAIN = 64;
 const MOD_WHEEL = 1;
+/**
+ * Bank Select's MSB (issue 241): it picks a bank of 128 programs, so a Program Change n loads the bank × 128 + n-th
+ * Preset. Its LSB (CC 32) is read and ignored, as any unmapped CC.
+ */
+const BANK_SELECT = 0;
+const BANK_SIZE = 128;
 /**
  * The channel mode messages a keyboard's or a DAW's panic sends (issue 185): All Sound Off, Reset All Controllers and
  * All Notes Off, by their CC numbers. They are never a control: never learned, never taken by a Mapping.
@@ -72,6 +78,7 @@ interface Synth {
    *  sustain pedal, a Program Change. The mod wheel turns LFO 1's Depth. */
   bend?(amount: number): void;
   pedal?(down: boolean): void;
+  /** A Program Change, its number counted across the banks Bank Select picks: bank × 128 + program (issue 241). */
   program?(number: number): void;
   /**
    * Aftertouch, how hard the keys are pressed (0–1): the channel's or the highest held Note's, whichever is higher. It
@@ -107,6 +114,9 @@ interface PickupState {
  */
 export function createControlSurface(synth: Synth) {
   const { store } = synth;
+  // The bank the last unmapped Bank Select picked, one for every channel as Limpide plays them all as one instrument:
+  // 0 until a keyboard sends one (issue 241).
+  let bank = 0;
   let learn: LearnState = { phase: 'off' };
   const setLearn = (next: LearnState) => {
     learn = next;
@@ -139,6 +149,8 @@ export function createControlSurface(synth: Synth) {
   const clicks = new Map<string, number>(); // encoder clicks towards the next choice, per control
   const gathered = new Map<string, number>(); // a Relative knob's travel towards a stepped dial's next step, per control
   const partSteps = new Map<string, number>(); // a Relative knob's share of a Grid step not yet moved (a C16's 66s), per control
+  /** What a knob has gathered towards a step, in each of its kinds: forgotten together. */
+  const towardsAStep = [clicks, gathered, partSteps];
   const detecting = new Map<string, number[]>(); // the first values of knobs finding their Encoder Mode
   const lastValues = new Map<string, number>(); // the last value each CC sent, for a Mapping switched to Relative by hand
   // Aftertouch (issue 132, the owner's decision 1): the channel's, and each held Note's own until its release. The
@@ -200,12 +212,11 @@ export function createControlSurface(synth: Synth) {
    * steps; a stepped dial (`unit`, its travel per step: an Octave, a note value) gathers a Relative knob's steps until
    * they make a whole one, a step for every two clicks at most, so a slow turn or a C16's thirds still move it.
    */
-  const moveDial = (mapping: Mapping, dial: Dial, value: number, from: KnownController | undefined) => {
+  const moveDial = (mapping: Mapping, dial: Dial, value: number, steps: number) => {
     const target = mapping.target;
     if (mapping.mode === 'trigger' || mapping.mode === 'toggle' || mapping.mode === 'detect') return;
     const current = dial.get();
     if (mapping.mode !== 'absolute') {
-      const steps = relativeSteps(from, mapping.mode, value);
       const key = controlKey(mapping.control);
       if (dial.step) {
         // A turn back forgets the share gathered the other way, so it answers at once.
@@ -279,7 +290,7 @@ export function createControlSurface(synth: Synth) {
     return down && !wasDown;
   };
 
-  const moveChoice = (mapping: Mapping, id: ChoiceId, value: number, from: KnownController | undefined) => {
+  const moveChoice = (mapping: Mapping, id: ChoiceId, value: number, steps: number) => {
     if (mapping.mode === 'detect') return;
     if (mapping.mode === 'trigger' && !pressedNow(mapping, value)) return;
     const { index, count } = synth.choice(id);
@@ -289,11 +300,11 @@ export function createControlSurface(synth: Synth) {
     } else if (mapping.mode === 'absolute') {
       next = Math.min(count - 1, Math.floor((value / 128) * count));
     } else {
-      const total = (clicks.get(controlKey(mapping.control)) ?? 0) + relativeSteps(from, mapping.mode, value);
-      const steps = Math.trunc(total / CLICKS_PER_CHOICE);
-      next = Math.min(count - 1, Math.max(0, index + steps));
+      const total = (clicks.get(controlKey(mapping.control)) ?? 0) + steps;
+      const choices = Math.trunc(total / CLICKS_PER_CHOICE);
+      next = Math.min(count - 1, Math.max(0, index + choices));
       // Turns past either end are dropped, so turning back responds at once.
-      clicks.set(controlKey(mapping.control), next === index + steps ? total - steps * CLICKS_PER_CHOICE : 0);
+      clicks.set(controlKey(mapping.control), next === index + choices ? total - choices * CLICKS_PER_CHOICE : 0);
     }
     if (next !== index) synth.setChoice(id, next);
     synth.touched?.(mapping.target, 'moved');
@@ -320,9 +331,12 @@ export function createControlSurface(synth: Synth) {
     }
     if (target.kind === 'param' || target.kind === 'choice' || target.kind === 'tempo') {
       if (message.type !== 'cc') return;
-      if (target.kind === 'param') moveDial(mapping, paramDial(target.id), message.value, from);
-      else if (target.kind === 'tempo') moveDial(mapping, tempoDial(), message.value, from);
-      else moveChoice(mapping, target.id, message.value, from);
+      // A Relative knob's steps, worked out here once, where the Controller it came from is known (issue 228).
+      const { mode } = mapping;
+      const steps = isRelative(mode) ? relativeSteps(from, mode, message.value) : 0;
+      if (target.kind === 'param') moveDial(mapping, paramDial(target.id), message.value, steps);
+      else if (target.kind === 'tempo') moveDial(mapping, tempoDial(), message.value, steps);
+      else moveChoice(mapping, target.id, message.value, steps);
       return;
     }
     // An Action fires on each press: a note-on, a toggle button's every message, or a button's CC rising past the
@@ -409,7 +423,7 @@ export function createControlSurface(synth: Synth) {
   return {
     /** A message from a Controller: `from` is the known Controller it is (a C16), whose layout's Mappings answer it alone; left out for any other. */
     handle(incoming: MidiMessage, from?: KnownController) {
-      if (incoming.type === 'program') return synth.program?.(incoming.program);
+      if (incoming.type === 'program') return synth.program?.(bank * BANK_SIZE + incoming.program);
       if (incoming.type === 'pressure') return pressureMoved(incoming);
       if (incoming.type === 'noteOff') forgetPressure(incoming.channel, incoming.note);
       if (incoming.type === 'cc' && [ALL_SOUND_OFF, RESET_ALL_CONTROLLERS, ALL_NOTES_OFF].includes(incoming.controller))
@@ -428,6 +442,10 @@ export function createControlSurface(synth: Synth) {
       if (mapping && answers(mapping, from)) return apply(mapping, message, from);
       // Unmapped: a keyboard's own controls do what a synth player expects.
       if (incoming.type === 'pitchBend') return synth.bend?.(incoming.value);
+      if (message.type === 'cc' && message.controller === BANK_SELECT) {
+        bank = message.value;
+        return;
+      }
       if (message.type === 'cc' && message.controller === SUSTAIN) return synth.pedal?.(message.value >= 64);
       if (message.type === 'cc' && message.controller === MOD_WHEEL) {
         synth.setPosition('lfoAmount', message.value / 127);
@@ -466,7 +484,7 @@ export function createControlSurface(synth: Synth) {
       const current = mapping && knobModeOf(mapping.mode);
       if (!mapping || !current || current === mode) return;
       const key = controlKey(control);
-      for (const state of [pickups, clicks, gathered, partSteps, detecting]) state.delete(key);
+      for (const state of [pickups, ...towardsAStep, detecting]) state.delete(key);
       store.replace({ ...mapping, mode: mode === 'absolute' ? 'absolute' : relativeModeOf(lastValues.get(key)) });
     },
     /**
@@ -477,7 +495,7 @@ export function createControlSurface(synth: Synth) {
     restartSteps(target: Target) {
       for (const mapping of store.list())
         if (mapping.target.kind === target.kind && mapping.target.id === target.id)
-          for (const state of [clicks, gathered, partSteps]) state.delete(controlKey(mapping.control));
+          for (const state of towardsAStep) state.delete(controlKey(mapping.control));
     },
     stopLearn() {
       clearTimeout(settle);

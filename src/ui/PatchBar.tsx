@@ -4,7 +4,7 @@ import type { Patch } from '../patch/patch';
 import { type Category, categoryLists, isSearch, matchesWords } from '../patch/presetSearch';
 import { PRESETS, presetAfter, SHARED_NAME } from '../patch/presets';
 import { patchFromJSON, patchToJSON, shareHash } from '../patch/serialize';
-import { focusLeaves } from './focusBack';
+import { useHeaderPanel } from './hooks/useHeaderPanel';
 import { usePatchWords } from './hooks/usePatchWords';
 import type { PresetAbout } from './hooks/usePresetAbout';
 import { useLearnable } from './learn';
@@ -50,13 +50,19 @@ export function PatchBar({ name, changed, patch, bpm, library, onLoad, onPick, a
   const [category, setCategory] = useState<Category>('All');
   const learnPrevious = useLearnable({ kind: 'action', id: 'previousPreset' });
   const learnNext = useLearnable({ kind: 'action', id: 'nextPreset' });
-  const wrapper = useRef<HTMLDivElement>(null);
-  const opener = useRef<HTMLButtonElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const searchBox = useRef<HTMLInputElement>(null);
   // The Patch in plain words (issue 123), where a Preset's own about line is not showing.
   const patchWords = usePatchWords(name, patch, bpm);
   const words = about.shown ? '' : patchWords;
+  // The header panels' closing (issue 189): Escape, a press elsewhere, Tab out of it. Escape clears the search first,
+  // wherever the focus is in the panel, then closes it back to its button.
+  const { wrapper, button: opener } = useHeaderPanel(open, setOpen, () => {
+    if (!query) return false;
+    setQuery('');
+    searchBox.current?.focus();
+    return true;
+  });
   /** The panel closes, and the focus goes back to the button that opened it, not to the page (issue 51). */
   const closeToOpener = () => {
     setOpen(false);
@@ -66,31 +72,6 @@ export function PatchBar({ name, changed, patch, bpm, library, onLoad, onPick, a
   const stepping = useRef({ name, from: name });
   if (stepping.current.from !== name) stepping.current = { name, from: name };
 
-  // Escape clears the search first, wherever the focus is in the panel, then closes it back to its button; a press
-  // elsewhere closes it and leaves the focus where the press went.
-  const close = useEffectEvent((e: Event) => {
-    if (e instanceof KeyboardEvent) {
-      if (e.key !== 'Escape') return;
-      if (query) {
-        setQuery('');
-        searchBox.current?.focus();
-      } else closeToOpener();
-    } else if (!wrapper.current?.contains(e.target as Node)) setOpen(false);
-  });
-  useEffect(() => {
-    const element = wrapper.current;
-    if (!open || !element) return;
-    // Tab out of it closes it too, so it never stays open over what it covers (issue 189).
-    const onFocusOut = (e: FocusEvent) => focusLeaves(element, e) && setOpen(false);
-    document.addEventListener('keydown', close);
-    document.addEventListener('pointerdown', close);
-    element.addEventListener('focusout', onFocusOut);
-    return () => {
-      document.removeEventListener('keydown', close);
-      document.removeEventListener('pointerdown', close);
-      element.removeEventListener('focusout', onFocusOut);
-    };
-  }, [open]);
   // Escape takes the about line away while it shows, unless it is closing something else: a panel or menu open (the
   // Patches panel over the line, Display, MIDI, Tempo, the Tutorials, About; a card's own unfolded text is not one) or
   // a field being typed in.

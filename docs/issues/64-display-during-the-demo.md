@@ -10,3 +10,5 @@
 - [x] An e2e test beside the Demo's other "keeps playing" tests (`e2e/demo.spec.ts`)
 
 Later, 2026-10-28, decided by the owner (issue 71): with Display open, a press on the on-screen piano ends the Demo, as it does with Display closed; a click elsewhere that closes the panel still leaves it playing.
+
+**Since then (2026-11-05, [issue 243](./243-one-module-for-the-shows.md)):** `usePlayers`, `useTutorialState` and `useTourState` are gone, and the Demo's knobs (`demoKnobs`) are the synth's hand (`src/shows/synthHand.ts`), shared with the Tour: the Shows and their rules are one module, `src/shows/shows.ts`, built once in the audio session and tested in node; the Demo's stop rule still reads the page in `src/ui/hooks/useShows.ts`. The behaviour is unchanged.

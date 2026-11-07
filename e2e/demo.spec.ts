@@ -271,14 +271,23 @@ test.describe('on a phone', () => {
   /** The page stays at `y` while the Demo's part playing now plays on, for up to `ms`: the following waits for the
    *  next part, whenever a slow device reaches it (issue 240). */
   const staysWhileThePartPlays = async (page: import('@playwright/test').Page, y: number, ms: number) => {
-    const part = () => page.getByRole('region', { name: 'Demo', exact: true }).locator('[aria-label^="Part "]').first().getAttribute('aria-label');
-    const playing = await part();
-    const end = Date.now() + ms;
-    // At least once, even if the next part comes before the second look.
-    do {
-      expect(await page.evaluate(() => scrollY)).toBe(y);
-      await page.waitForTimeout(250);
-    } while (Date.now() < end && (await part()) === playing);
+    const part = page.getByRole('region', { name: 'Demo', exact: true }).getByRole('group', { name: /^Part / });
+    // One wait in the page, frame by frame: where it scrolled to, if anywhere, before the next part or the time is up.
+    // At least one frame, even if the next part comes at once.
+    const movedTo = await part.evaluate(
+      (line, [y, ms]) =>
+        new Promise<number | null>((done) => {
+          const [playing, end] = [line.getAttribute('aria-label'), performance.now() + ms];
+          const frame = (now: number) => {
+            if (scrollY !== y) done(scrollY);
+            else if (now >= end || line.getAttribute('aria-label') !== playing) done(null);
+            else requestAnimationFrame(frame);
+          };
+          requestAnimationFrame(frame);
+        }),
+      [y, ms],
+    );
+    expect(movedTo).toBeNull();
   };
 
   test('the page follows the knob the Demo turns', async ({ page }) => {
@@ -452,7 +461,7 @@ test('the card saying the Demo stopped goes at once when a Tutorial or the Tour 
       await page.getByRole('dialog', { name: 'Patches' }).getByRole('group', { name: 'Tutorials' }).getByRole('button', { name: /^Tutorial: Bass/ }).click();
       await expect(page.getByRole('region', { name: /^Tutorial: / })).toBeVisible();
     } else {
-      await page.getByRole('button', { name: 'About' }).click();
+      await page.getByRole('button', { name: 'About', exact: true }).click();
       await page.getByRole('dialog', { name: 'Limpide' }).getByRole('button', { name: 'Take the Tour' }).click();
       await expect(page.getByRole('region', { name: 'Tour' })).toBeVisible();
     }

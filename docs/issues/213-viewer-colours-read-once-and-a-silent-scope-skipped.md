@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** done (2026-11-04). Built (2026-11-03) on night/2026-11-03, merged into main, not yet released; accepted by the owner, tried in part and the rest trusted: "All issues waiting on my feedback look fine, I tested some, others trust you."
+**Status:** done (2026-11-04). Built (2026-11-03) on night/2026-11-03, merged into main, released in 1.24.0; accepted by the owner, tried in part and the rest trusted: "All issues waiting on my feedback look fine, I tested some, others trust you."
 
 ## Decisions
 
@@ -75,3 +75,4 @@ One thing seen beside the issue, not acted on: in these runs the 8-Voice chord t
 
 What to try in the app: nothing should look different. Play a Note after a silence and watch each Scope lock onto it from its first cycles. Then let it ring out, and check that the Scopes draw a flat line as before.
 
+**Since then (2026-11-05, [238](./238-tidy-ups-after-1-24.md)):** Cycle Lock skips its search on the Viewers' one definition of silence, every sample under a millionth of full scale, rather than under 1e-6/√2. Decision 2's proof no longer holds for a Tap between the two, whose trace, a millionth of the Scope's height, is no longer locked; nothing a Scope draws changes that can be seen. Claude's call, open to the owner.

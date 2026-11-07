@@ -16,6 +16,16 @@ const POINTS_PER_PIXEL = 2;
 // The colours a Scope draws in, compared at rest.
 const COLOURS = ['--grid', '--muted', '--danger', '--text', '--trace', '--bg', '--curve-w'];
 
+/** What a Scope reads of the engine's pitch, and the audio clock it is read against. */
+interface ScopePitch {
+  /** The newest Note's frequency, held still through vibrato: how many samples the cycles shown take, and the period written. */
+  fundamental: () => number;
+  /** The pitch the engine plays at an audio clock time, which Cycle Lock follows across the buffer (issue 180). */
+  fundamentalAt: (time: number) => number;
+  /** The audio clock, which the Tap's newest sample was heard at. */
+  now: () => number;
+}
+
 /**
  * A Scope of one Tap, Cycle Locked to the Note's fundamental so a steady Note stands still, drawing the newest sound.
  * Every Scope shares the same scale (scopeScale), so heights compare directly from stage to stage; peaks beyond
@@ -31,13 +41,7 @@ export function createScope(
     now,
     limiting,
     newestNote = () => null,
-  }: {
-    /** The newest Note's frequency, held still through vibrato: how many samples the cycles shown take, and the period written. */
-    fundamental: () => number;
-    /** The pitch the engine plays at an audio clock time, which Cycle Lock follows across the buffer (issue 180). */
-    fundamentalAt: (time: number) => number;
-    /** The audio clock, which the Tap's newest sample was heard at. */
-    now: () => number;
+  }: ScopePitch & {
     /** On the Amp Scope: whether the safety limiter is bending the sound right now (all Voices), shown as LIMITING. */
     limiting?: () => boolean;
     /** The newest Note played (null before any), for the Synth Geek Layer's period: A4's until one is (issue 170). */
@@ -51,7 +55,9 @@ export function createScope(
   // While frozen, lock to the Note the frozen samples belong to, not to a Note played since, and to their moment.
   const frozenFundamental = createFreezeLatch<number>();
   const frozenEnd = createFreezeLatch<number>();
-  // The traces drawn last, for the Glow (issue 180).
+  // The traces drawn last, for the Glow (issue 180), each with the cycles it spans: one of another count (the cycles
+  // chosen, or fewer for a low Note) is passed over, as it would not line up across the width (issue 228). Another Note
+  // over the same count keeps them: each spans its cycles across the width.
   const glow = createGlow<Float32Array>();
   let snapshotToken: number | null = null;
   let snapshotTrace: Float32Array | null = null;
@@ -156,7 +162,7 @@ export function createScope(
     }
 
     const colour = cssVar(canvas, '--trace');
-    const past = glow({ on: glowing, frozen, now: () => performance.now(), newest: trace });
+    const past = glow({ on: glowing, frozen, now: () => performance.now(), newest: trace, key: String(cycles) });
     g.strokeStyle = colour;
     g.lineWidth = curveWidth(canvas);
     for (const { value, alpha } of past) {

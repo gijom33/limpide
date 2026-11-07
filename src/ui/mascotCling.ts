@@ -1,6 +1,17 @@
 /** Bead's size on screen (issue 115): 2 px a square of its 22 × 13 grid. */
 export const WIDTH = 44;
 export const HEIGHT = 26;
+/** Its grid's rows, top to foot: a row is HEIGHT / ROWS pixels. */
+export const ROWS = 13;
+/** The drop's middle from its box's left, in pixels. */
+export const DROP_MIDDLE = 9;
+/** The spots tried along an edge, this many pixels apart. */
+export const STEP = 4;
+/** Where it is drawn, in the window's pixels: its box's left and its foot. */
+export interface Spot {
+  left: number;
+  foot: number;
+}
 /** Where its drawing turns round about, from its box's left: 20 % of its width, as the stylesheet's transform origin. */
 const ORIGIN = WIDTH * 0.2;
 /** Turned round, how far its drawing reaches past its box's left (issue 179). */

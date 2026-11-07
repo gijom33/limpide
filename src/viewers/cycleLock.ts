@@ -1,3 +1,4 @@
+import { silent } from './level';
 import { scopeTrace } from './scopeTrace';
 
 /**
@@ -24,8 +25,9 @@ const OLDER_AT_MOST = 0.02;
 /** A candidate matching the last trace within this share of its RMS of the best counts as good as the best. */
 const AS_GOOD = 0.05;
 
-// The pitch's readings (the sample, and the phase it advances a sample there, ω) and the phase at each, kept between
-// frames: the lock runs on three Scopes 60 times a second.
+// Scratch arrays for the pitch's readings (the sample, and the phase it advances a sample there, ω) and the phase at
+// each: written afresh by each lock, nothing in them kept from one frame to the next, and allocated once, as the lock
+// runs on three Scopes 60 times a second.
 const at: number[] = [];
 const omega: number[] = [];
 const phase: number[] = [];
@@ -42,16 +44,6 @@ function hann(n: number): Float32Array {
 
 /** The correlation with the fundamental, per sample, under which a buffer has none to lock to. */
 const NO_FUNDAMENTAL = 1e-6;
-/** The correlation is at most √2·n times the loudest sample, so a buffer quieter than this has no fundamental. */
-const QUIET = NO_FUNDAMENTAL / Math.SQRT2;
-/**
- * Whether every sample is too quiet for a fundamental to be found: a silent Tap skips the search (review 18, issue
- * 213), and a buffer with sound in it is searched. Indexed, as `for…of` over the samples costs more than the search.
- */
-function silent(samples: Float32Array): boolean {
-  for (let i = 0; i < samples.length; i++) if (samples[i] >= QUIET || samples[i] <= -QUIET) return false;
-  return true;
-}
 
 /** Reads the pitch along `n` samples into `at` and `omega`: false where there is none. */
 function readPitch(n: number, sampleRate: number, frequencyAt: (i: number) => number): boolean {
@@ -95,6 +87,8 @@ export function risingZeros(
   count: number,
 ): number[] {
   const n = samples.length;
+  // A Tap the Viewers call silent skips the search (review 18, issue 213): at a millionth of the height, there is
+  // nothing to see locked.
   if (n < 2 || silent(samples) || !readPitch(n, sampleRate, frequencyAt)) return [];
   const segments = at.length - 1;
   // The phase φ at each reading, and the correlation with sin φ and cos φ: within a segment ω grows by a step a

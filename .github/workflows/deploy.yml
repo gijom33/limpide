@@ -47,9 +47,17 @@ jobs:
           path: dist
 
   # The engine renders real audio in Chromium; the end-to-end tests play the built site in Chromium and WebKit. Both
-  # run on GitHub's own Ubuntu, whose fonts the layout tests are measured in (not Playwright's image, whose differ).
+  # run in Playwright's own image, its browsers and their system libraries already in it, on the Ubuntu release of
+  # GitHub's runner (24.04, noble): installing the libraries on the bare runner hung now and then on GitHub's side
+  # (twice on 2026-10-27, four times for 1.25.0; issue 247). Its fonts, which the layout tests are measured in, are the
+  # image's now, not the runner's. The image's tag follows the lock file's Playwright, checked before anything is
+  # installed. --ipc=host keeps Chromium from running out of shared memory, as Playwright's guide for the image says.
+  # GitHub still sets CI inside the container, so the skips for its Linux WebKit still apply.
   browsers:
     runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.1-noble
+      options: --ipc=host
     strategy:
       fail-fast: false
       matrix:
@@ -74,22 +82,8 @@ jobs:
         with:
           node-version: 24
           cache: npm
+      - run: node --experimental-strip-types --no-warnings scripts/playwrightImage.ts
       - run: npm ci
-      # The browser is cached by Playwright's version: on a hit only the system libraries it needs are installed.
-      # Both installs are time-limited: on 2026-10-27 the install hung twice for over half an hour on GitHub's side.
-      - id: playwright
-        run: echo "version=$(npx playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
-      - id: cache
-        uses: actions/cache@v6
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ matrix.browser }}-${{ steps.playwright.outputs.version }}
-      - if: steps.cache.outputs.cache-hit != 'true'
-        timeout-minutes: 10
-        run: npx playwright install --with-deps ${{ matrix.browser }}
-      - if: steps.cache.outputs.cache-hit == 'true'
-        timeout-minutes: 10
-        run: npx playwright install-deps ${{ matrix.browser }}
       - if: matrix.name == 'engine'
         run: npm run test:engine
       - if: matrix.shard

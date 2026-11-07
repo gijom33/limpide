@@ -19,18 +19,23 @@ export const GLOW_MS = 250;
 /**
  * A Viewer's Glow: called once a frame with its newest trace, it returns the past traces to draw under it, oldest
  * first, each with the opacity its age gives it. Off, it keeps none; frozen, it keeps the ones it had at the moment
- * of freezing, faded as they were then, so the frozen frame keeps its glow.
+ * of freezing, faded as they were then, so the frozen frame keeps its glow. `key` says what a trace was drawn for (a
+ * Scope's cycles, a Spectrum's axis and width): one drawn for another is passed over, not drawn across the new width
+ * (issues 199 and 228).
  */
 export function createGlow<T>() {
-  // Newest first, with when.
-  const ghosts: { value: T; at: number }[] = [];
+  // Newest first, with when and what for.
+  const ghosts: { value: T; at: number; key: string }[] = [];
   const frozenTime = createFreezeLatch<number>();
-  return function glow({ on, frozen, now, newest }: { on: boolean; frozen: boolean; now: () => number; newest: T }) {
+  return function glow({ on, frozen, now, newest, key }: { on: boolean; frozen: boolean; now: () => number; newest: T; key: string }) {
     const time = frozenTime(frozen, now);
     const stale = on ? ghosts.findIndex(({ at }) => time - at > GLOW_MS) : 0;
     if (stale >= 0) ghosts.splice(stale);
-    const past = ghosts.map(({ value, at }) => ({ value, alpha: GLOW_DECAY ** ((time - at) / GLOW_STEP_MS) })).reverse();
-    if (on && !frozen && (!ghosts.length || time - ghosts[0].at >= GLOW_STEP_MS * 0.9)) ghosts.unshift({ value: newest, at: time });
+    const past = ghosts
+      .filter((ghost) => ghost.key === key)
+      .map(({ value, at }) => ({ value, alpha: GLOW_DECAY ** ((time - at) / GLOW_STEP_MS) }))
+      .reverse();
+    if (on && !frozen && (!ghosts.length || time - ghosts[0].at >= GLOW_STEP_MS * 0.9)) ghosts.unshift({ value: newest, at: time, key });
     return past;
   };
 }

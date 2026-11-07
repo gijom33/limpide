@@ -4,7 +4,7 @@
 
 **Blocked by:** none; best after [213](./213-viewer-colours-read-once-and-a-silent-scope-skipped.md), so each is measured alone
 
-**Status:** done (2026-11-04). Built (2026-11-03) on night/2026-11-03, merged into main, not yet released; accepted by the owner, tried in part and the rest trusted: "All issues waiting on my feedback look fine, I tested some, others trust you."
+**Status:** done (2026-11-04). Built (2026-11-03) on night/2026-11-03, merged into main, released in 1.24.0; accepted by the owner, tried in part and the rest trusted: "All issues waiting on my feedback look fine, I tested some, others trust you."
 
 ## Decisions
 
@@ -36,7 +36,7 @@ From 182:
 - [ ] The Demo's frame rate at 4× no lower than today
 - [ ] The LFO plots scroll in silence as before
 - [ ] A Note, a knob turn, a Display switch and a theme change each show on the next frame (browser tests)
-- [ ] Every Viewer test and the design audit pass unchanged
+- [ ] Every Viewer test and the design audit pass, one edited: `patchesAtTheEdges`' draw-time test draws its Viewers as if sounding, since a silent one would rest (worded as it was by [238](./238-tidy-ups-after-1-24.md))
 
 **Out of scope:**
 - What the Viewers show

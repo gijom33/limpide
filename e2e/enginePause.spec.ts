@@ -107,3 +107,20 @@ test('an LFO plot goes on moving through the pause (issue 216, the owner)', asyn
   await expect.poll(() => line.getAttribute('d')).not.toBe(before);
   expect(await state(page)).toBe('suspended');
 });
+
+test('paused, turning Harmonics or Ideal redraws the resting Spectrums (issue 238)', async ({ page }) => {
+  const shown = page.getByRole('group', { name: 'Show on Viewers' });
+  for (const name of ['Harmonics', 'Ideal']) {
+    await expect.poll(async () => (await drawsOver(page, 10))['Oscillator Spectrum'], { timeout: 10000 }).toBe(0); // at rest
+    // Turned in the page, with no key or pointer that would wake the sound.
+    const draws = await shown.getByRole('button', { name, exact: true }).evaluate(async (el) => {
+      const counts = (window as unknown as { draws: Record<string, number> }).draws;
+      const before = counts['Oscillator Spectrum'] ?? 0;
+      (el as HTMLElement).click();
+      for (let i = 0; i < 2; i++) await new Promise(requestAnimationFrame);
+      return counts['Oscillator Spectrum'] - before;
+    });
+    expect(draws, name).toBeGreaterThan(0);
+  }
+  expect(await state(page)).toBe('suspended');
+});

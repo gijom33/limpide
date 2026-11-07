@@ -47,4 +47,6 @@ Six more probes on GitHub, each a throwaway branch deleted after.
 
 **Since then (2026-11-05, [240](./240-the-demo-54-px-off-on-a-slow-phone.md)):** the three Demo tests on a phone wait for the Demo, not the clock, and run on GitHub's WebKit again; their skips are gone. The seven animation tests stay skipped there.
 
+**Since then (2026-11-05, [245](./245-beads-frame-read-decide-draw.md)):** four of the seven, Bead's three-across acts (204), its Demo scroll on a phone and in 2 × 2 (211), its LFO rides on a phone and in 2 × 2 (197) and its place beside each control in the Tour and a Tutorial (181), left the mascot spec for unit tests of Bead's frame over scripted readings, which run in every run. The Demo's scroll within 1.5 s on a phone and the phone header's slide stay skipped there.
+
 Left for later: the seven skips come off if GitHub's WebKit draws faster, or if their timing is measured in frames rather than milliseconds.

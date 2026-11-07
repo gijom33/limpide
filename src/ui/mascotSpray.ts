@@ -6,8 +6,8 @@ export interface Droplet {
   vy: number;
   age: number;
   life: number;
-  /** Where it ends as it falls, if somewhere: an umbrella, the edge. */
-  until: number;
+  /** The height it ends at as it falls, if somewhere: an umbrella, the edge. */
+  fallsTo: number;
   /** Its gravity, in pixels a second squared: steam's rises. */
   gravity: number;
 }
@@ -42,7 +42,7 @@ export const MOST_DROPLETS = 60;
 
 /**
  * The mascot's droplets (issue 115): flung at `x`, `y` (`fling`), each flies under gravity until its life is over, or
- * until it falls to `until`; steam flung below `until` rises up to it (the sun's height). `strength` (0 to 1) scales a
+ * until it falls to the height `toHeight`; steam flung below `toHeight` rises up to it instead (the sun's height). `strength` (0 to 1) scales a
  * splash's speed. `random` (0 to 1) is for the tests.
  */
 export function createSpray(random: () => number = Math.random) {
@@ -56,7 +56,7 @@ export function createSpray(random: () => number = Math.random) {
     under(y: number) {
       ceiling = y;
     },
-    fling(count: number, x: number, y: number, fling: Fling, strength = 0.5, until = Infinity) {
+    fling(count: number, x: number, y: number, fling: Fling, strength = 0.5, toHeight = Infinity) {
       for (let i = 0; i < count; i++) {
         let vx: number;
         let vy: number;
@@ -100,10 +100,10 @@ export function createSpray(random: () => number = Math.random) {
         let gravity = fling === 'steam' ? STEAM_GRAVITY : DROPLET_GRAVITY;
         const spread = fling === 'shower' ? between(-10, 10) : fling === 'rain' || fling === 'pour' || fling === 'arc' ? 0 : between(-3, 3);
         const life = fling === 'rain' || fling === 'shower' || fling === 'arc' ? 2 : fling === 'steam' ? between(0.6, 0.9) : between(0.45, 0.85);
-        const rising = fling === 'steam' && until < y;
-        // Steam up to `until`, the sun (issue 237): its rise drawn out to reach there as its life ends, still slowing as
+        const rising = fling === 'steam' && toHeight < y;
+        // Steam up to `toHeight`, the sun (issue 237): its rise drawn out to reach there as its life ends, still slowing as
         // it goes; never less than its own. The sun is under the ceiling already.
-        const drawnOut = rising ? (y - until) / (-vy * life - (gravity * life * life) / 2) : 1;
+        const drawnOut = rising ? (y - toHeight) / (-vy * life - (gravity * life * life) / 2) : 1;
         if (drawnOut > 1) {
           vy *= drawnOut;
           gravity *= drawnOut;
@@ -117,7 +117,7 @@ export function createSpray(random: () => number = Math.random) {
             vy *= k;
           }
         }
-        droplets.push({ x: x + spread, y, vx, vy, age: 0, life, until: rising ? Infinity : until, gravity });
+        droplets.push({ x: x + spread, y, vx, vy, age: 0, life, fallsTo: rising ? Infinity : toHeight, gravity });
       }
       if (droplets.length > MOST_DROPLETS) droplets = droplets.slice(-MOST_DROPLETS);
     },
@@ -129,7 +129,7 @@ export function createSpray(random: () => number = Math.random) {
         d.y += d.vy * dt;
         d.age += dt;
       }
-      droplets = droplets.filter((d) => d.age < d.life && d.y < d.until);
+      droplets = droplets.filter((d) => d.age < d.life && d.y < d.fallsTo);
       return droplets;
     },
   };

@@ -8,7 +8,7 @@ import { connectMidi, type MidiAccessLike, midiSupport } from '../../midi/inputs
 import { type ControllerId, createMappingStore, type Mapping, type Target } from '../../midi/mappings';
 import { QUICK_SETUP, type QuickSetupEvent, type QuickSetupState, quickSetupReducer, startQuickSetup, takenControls } from '../../midi/quickSetup';
 import { bpmPosition, positionBpm, wholeBpm } from '../../music/tempo';
-import { CHOICES, type ChoiceId, knobTurns, LFO_KEYS, PARAMS, setParam } from '../../patch/patch';
+import { CHOICES, type ChoiceId, knobTurns, LFO_KEYS, PARAMS, rateKnob, setParam } from '../../patch/patch';
 import { positionToValue, valueToPosition } from '../../patch/taper';
 import type { MidiState } from '../MidiPanel';
 import { reveal } from '../reveal';
@@ -164,7 +164,7 @@ export function useMidi(host: Host) {
     () =>
       patches.subscribe(({ before, after }) => {
         for (const lfo of [1, 2] as const)
-          if (before[LFO_KEYS[lfo].sync] !== after[LFO_KEYS[lfo].sync]) surface.restartSteps({ kind: 'param', id: LFO_KEYS[lfo].rate });
+          if (rateKnob(before, lfo) !== rateKnob(after, lfo)) surface.restartSteps({ kind: 'param', id: LFO_KEYS[lfo].rate });
       }),
     [patches, surface],
   );
@@ -268,6 +268,8 @@ export function useMidi(host: Host) {
         if (cancelled) return;
         dispose = connectMidi(access as unknown as MidiAccessLike, {
           onMessage: (m, name) => {
+            // Any message wakes the sound from a pause, ahead of the Note it may bring (issue 238).
+            session.wake();
             if (aside.has(name)) return;
             const from = knownController(name);
             if (m.type === 'noteOn') noteFromController();

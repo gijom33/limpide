@@ -9,6 +9,9 @@ import { watchPersonScroll } from './personScroll';
  */
 export const DEMO_SCROLL_MS = 1400;
 
+/** How a scroll the page makes goes: at once with reduced motion, else smoothly. */
+export const scrollBehavior = (): ScrollBehavior => (matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth');
+
 /** Eased in and out: slow to leave, slow to arrive, as the browser's smooth scroll. */
 const ease = (t: number) => 0.5 - Math.cos(Math.PI * t) / 2;
 

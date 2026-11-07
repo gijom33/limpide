@@ -4,7 +4,7 @@
 
 **Blocked by:** [228](./228-tidy-ups-after-1-23.md) (its two items in Bead's frame: the bare 13s, the cling's six positional arguments)
 
-**Status:** ready-for-agent · enhancement. Upkeep for v1
+**Status:** ready-for-human · enhancement. Built (2026-11-05) on night/2026-11-05, for the owner to try
 
 ## Decisions
 
@@ -54,3 +54,26 @@ From the review, and asked of 244 by the owner in the same grilling:
 - Tests: the decisions listed in decision 4 as node unit tests over scripted readings, the four skipped on GitHub's WebKit among them; the mascot spec keeps drawing and wiring checks, its repeats of what the unit tests now cover removed.
 
 **Out of scope:** any change to what Bead does; its tricks' pictures and the droplets; the Shows' module (243).
+
+## How it was built
+
+Built (2026-11-05) on night/2026-11-05.
+
+**What was built:**
+
+- **Read:** `pageReader` (`src/ui/beadPage.ts`) reads the page into a `Reading`: the Sections, what covers them, the text, the plots, the guided control, the header's and the tabs' feet, the docked card, the sound, and what the app asks (sent away, the Demo part, the guide). What a frame needs only now and then is a function on the reading, called only then: the plots, the controls over an edge, the control a Step points at and its neighbours, the panels, the page's box for a throw.
+- **Decide:** `createBeadFrame` (`src/ui/beadFrame.ts`) holds Bead's state from frame to frame; its `step` takes a reading and returns what to draw (or that it has gone), touching no page. The frame's code moved there as it was, with the pose's finishing (held, thrown, hovering, flying, the board, the fit under the header) and its coming into view, which used to run in the drawing. Between frames it takes the pointer, the words, the theme, a Tutorial's Steps and the patch's changes.
+- **Draw:** the Mascot writes what was decided, and its droplets and fishing line, which follow it.
+- **Tests:** `src/ui/beadFrame.test.ts`, 13 node tests in about a quarter of a second, over readings of the page as the app lays it out (`src/ui/beadFrame.fixture.ts`, read once from Chromium at 1440 × 900, a 375 px phone and 2 × 2): home on the Amp; the Demo's acts in turn, three across, surfing on the line and leaning with the wave (204); keeping off text on its edge (181); a ride on a slow Sine three across, home at Depth 0 (141); dropped on a Triangle's plot it rides, on a Saw's it lands (197); a throw landing on an edge; melting on its edge and raining away from the air, three across and hovering on a phone; beside each of eight Tour and Tutorial controls over no label, then home (181); through the Demo's scroll, in view and landed before the page stops, on a phone and in 2 × 2 (211); a ride on LFO 1's plot on a phone and in 2 × 2, back to its edge (197).
+- **The mascot spec:** the four tests skipped on GitHub's WebKit (204, 211, 197, 181) left it for those unit tests; issue 232 says so.
+
+**Claude's calls, open to the owner:**
+
+1. **The reading is plain values, but for a few reads made only when needed** (the plots, the controls over an edge, a control's neighbours, the panels), as functions on it, so a frame costs no more while Bead stays home (the frame-cost test).
+2. **The scripted layouts were read from the app** (once, in Chromium, 2026-11-06), not made up; the Demo's scroll is scripted as `glideTo` makes it (1.4 s, eased), from the Filter's edge to the Amp's on a phone, and from hovering to the LFO & Envelopes in 2 × 2 at 690 × 640, where the move happens without the Demo's card.
+3. **Only the four skipped tests left the spec.** Five others repeat some of what the unit tests now check (the Demo's acts, the ride home at Depth 0, the drop on a plot, the throw, the melt), but each also checks the drawing and the wiring through a real pointer or the real plot; they stay as the safety net.
+4. **The umbrella's picture moved to `mascotPictures.ts`**, beside the other props, so the frame can know its top; the picture is unchanged.
+5. **No oddity was found to raise** as its own question (decision 1).
+
+**What to try in the app:** nothing should look different. Bead on its edge, the Demo through to its surfing part, a ride on a slow LFO, a throw, a Tutorial and the Tour, on a laptop and a phone: each as before.
+

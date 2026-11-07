@@ -6,7 +6,7 @@ What exists already: Bass, the Tutorial the Welcome opens today ([58](./58-first
 
 **Blocked by:** none
 
-**Status:** done (2026-10-31). Built on the branch `claude/tour-128-3e1430`: every decision below, with Claude's calls 14 to 24. Tried by the owner, "good enough for now", so both questions under Built are answered as built; not yet released.
+**Status:** done (2026-10-31). Built on the branch `claude/tour-128-3e1430`: every decision below, with Claude's calls 14 to 24. Tried by the owner, "good enough for now", so both questions under Built are answered as built; released in 1.18.0.
 
 ## Decisions
 
@@ -94,3 +94,5 @@ Made while building it (2026-10-30), each Claude's call, open to the owner:
 **Changed since (2026-11-03, [209](./209-about-holds-the-page-and-closes-with-a-cross.md)):** About has no Close button: a × in its top corner closes it, and "Take the Tour" sits beside "Play the Demo" alone (decision 14).
 
 **Changed since (2026-11-03, [210](./210-the-tour-tells-of-the-layers-and-the-tutorials.md)):** the LFOs card is no longer the last (decision 15). Two cards follow the Sections, where nothing moves and nothing plays: the Synth Geek Layer with its History, then the Tutorials, the last, with "Build a Bass" and "Done"; the Tour has six cards. The owner asked for them (decision 1 of 210); their pace is still the person's (decision 8).
+
+**Changed since (2026-11-05, [242](./242-three-shows-hand-over-alike.md)):** starting the Song during the Tour ends it, as its close does, the person's Patch given back, and the Song plays on it. Before, the Tour carried on silently and its next card stopped the Song.

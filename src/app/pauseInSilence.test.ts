@@ -49,8 +49,8 @@ describe('pauseInSilence (issue 216)', () => {
     const ctx = fakeContext({ resumes: options.resumes });
     const engine = fakeEngine();
     const page = new EventTarget();
-    const stop = pauseInSilence({ ctx, engine, page, busy: options.busy ?? (() => false), allowed: options.allowed ?? true, after: 30, wall: () => Date.now() / 1000 });
-    return { ctx, engine, page, stop };
+    const { stop, wake } = pauseInSilence({ ctx, engine, page, busy: options.busy ?? (() => false), allowed: options.allowed ?? true, after: 30, wall: () => Date.now() / 1000 });
+    return { ctx, engine, page, stop, wake };
   };
 
   it('pauses the sound once nothing has sounded for the whole wait, and not before', async () => {
@@ -126,6 +126,16 @@ describe('pauseInSilence (issue 216)', () => {
       expect(engine.wake).toHaveBeenCalledTimes(1);
       expect(ctx.resume).toHaveBeenCalledTimes(1);
     });
+
+  it('wakes when told, ahead of what a Controller’s message may bring (issue 238)', async () => {
+    const { ctx, engine, wake } = setUp();
+    await vi.advanceTimersByTimeAsync(31_000);
+    wake();
+    expect(engine.wake).toHaveBeenCalledTimes(1);
+    expect(ctx.resume).toHaveBeenCalledTimes(1);
+    wake(); // awake already: nothing more
+    expect(ctx.resume).toHaveBeenCalledTimes(1);
+  });
 
   it('where the browser will not resume it without a tap after all, never pauses again and says the sound is stopped', async () => {
     const { ctx, engine } = setUp({ resumes: false });

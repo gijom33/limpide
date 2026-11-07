@@ -173,6 +173,63 @@ test('the Activity Monitor shows the last message received', async ({ page }) =>
   await expect(monitor).toContainText('ch 1 · Note E4 · 120');
 });
 
+test('a message redraws the Activity line alone: no other part of the page renders again (issues 217 and 238)', async ({ page }) => {
+  // React tells a developer tool of each commit; this stand-in for one notes, for every component that rendered, the
+  // first element it draws. Set before the page loads, then the page loaded again.
+  await page.addInitScript(() => {
+    const rendered: Element[] = [];
+    const visit = (fiber: Fiber) => {
+      const before = fiber.alternate;
+      if (COMPONENTS.includes(fiber.tag) && (before === null || fiber.flags & PERFORMED_WORK)) {
+        let host: Fiber | null = fiber;
+        while (host && host.tag !== HOST) host = host.child;
+        if (host) rendered.push(host.stateNode as Element);
+      }
+      if (before && fiber.child === before.child) return; // a subtree passed over, unchanged
+      for (let child = fiber.child; child; child = child.sibling) visit(child);
+    };
+    type Fiber = { tag: number; flags: number; alternate: Fiber | null; child: Fiber | null; sibling: Fiber | null; stateNode: unknown };
+    // React's own numbers: function, class, forwardRef, memo and simple memo components; an element; work performed.
+    const COMPONENTS = [0, 1, 11, 14, 15];
+    const HOST = 5;
+    const PERFORMED_WORK = 1;
+    Object.assign(window, {
+      rendered,
+      __REACT_DEVTOOLS_GLOBAL_HOOK__: {
+        supportsFiber: true,
+        renderers: new Map(),
+        inject: () => 1,
+        checkDCE: () => {},
+        onCommitFiberRoot: (_: number, root: { current: Fiber }) => visit(root.current),
+        onCommitFiberUnmount: () => {},
+        onPostCommitFiberRoot: () => {},
+      },
+    });
+  });
+  await page.reload();
+  await expect(midiButton(page)).toContainText('1');
+  await openMidi(page);
+  const monitor = midiPanel(page).getByRole('status', { name: 'MIDI activity' });
+  await play(page, [0xd0, 127]); // the first press is heard once: the Timeline starts drawing what it moves
+  await expect(monitor).toContainText('Aftertouch · 100 %');
+  const outside = await page.evaluate(async () => {
+    const rendered = (window as unknown as { rendered: Element[] }).rendered;
+    await new Promise(requestAnimationFrame);
+    rendered.length = 0;
+    const midi = window as unknown as { playMidi(bytes: number[]): void };
+    for (let value = 0; value < 50; value++) {
+      midi.playMidi([0xd0, value]);
+      await new Promise((r) => setTimeout(r, 0));
+    }
+    for (let i = 0; i < 2; i++) await new Promise(requestAnimationFrame);
+    const line = document.querySelector('[role="status"][aria-label="MIDI activity"]');
+    return { lines: rendered.filter((el) => el === line).length, others: rendered.filter((el) => el !== line).map((el) => el.outerHTML.slice(0, 80)) };
+  });
+  expect(outside.others).toEqual([]);
+  expect(outside.lines).toBeGreaterThan(0);
+  await expect(monitor).toContainText('Aftertouch · 39 %'); // the last, 49 of 127
+});
+
 test('a knob shows when hardware moves it, and when Pickup is still waiting for the knob to reach it', async ({ page }) => {
   await startLearn(page);
   await cutoff(page).click();

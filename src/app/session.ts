@@ -3,6 +3,7 @@ import { createNoteInput, type NoteInput } from '../input/noteInput';
 import { createLibrary, type Library } from '../patch/library';
 import { createPatchStore, type PatchStore } from '../patch/patchStore';
 import { createTempoStore, type TempoStore } from '../play/tempoStore';
+import { createShows, type Shows } from '../shows/shows';
 import { createViewerStore, type ViewerStore } from '../viewers/viewerStore';
 import { notesInTests } from './notesInTests';
 import { PAUSE_AFTER, pauseInSilence } from './pauseInSilence';
@@ -28,6 +29,8 @@ export interface AudioSession {
   library: Library;
   /** The page's tempo (issue 112): the person's BPM, or a player's while it plays; synced LFOs follow it. */
   tempo: TempoStore;
+  /** What plays or guides the page, the Demo, the Song, a Tutorial and the Tour, and the rules between them (issue 243). */
+  shows: Shows;
   /** Whether the page opened on a Share link's Patch. */
   shared: boolean;
   /** Be told which Notes are held (from any source), e.g. to light the on-screen piano. */
@@ -36,6 +39,11 @@ export interface AudioSession {
   onPress(listener: (note: number) => void): () => void;
   /** While on, held Notes do not sound by themselves: a Hold rhythm plays them instead. Gate offs still pass. */
   muteInput(on: boolean): void;
+  /**
+   * Wakes the sound from a pause in a long silence (issue 216) ahead of the Note that may follow, as the page's own
+   * keys and pointer do: a Controller's every message (issue 238).
+   */
+  wake(): void;
 }
 
 let session: AudioSession | undefined;
@@ -77,7 +85,7 @@ export function getAudioSession(storage: KeyValueStorage): AudioSession {
   const patches = createPatchStore({
     hash: location.hash,
     library,
-    apply: (patch, whole) => {
+    apply: (patch, { whole }) => {
       engine.applyPatch(patch, { whole });
       input.setVoices(patch.voices);
     },
@@ -85,7 +93,7 @@ export function getAudioSession(storage: KeyValueStorage): AudioSession {
   const viewers = createViewerStore({ storage, patches, setTapSource: (source) => engine.setTapSource(source) });
   const tempo = createTempoStore({ storage, engine });
   // In a long silence the sound pauses (issue 216), while nothing plays by itself and no Controller's clock is followed.
-  pauseInSilence({
+  const silencePause = pauseInSilence({
     ctx,
     engine,
     page: window,
@@ -93,6 +101,11 @@ export function getAudioSession(storage: KeyValueStorage): AudioSession {
     allowed: !needsATapToResume(navigator),
     after: (import.meta.env.MODE === 'e2e' && window.__limpidePauseAfter) || PAUSE_AFTER,
   });
+  const onHeld = (listener: (notes: number[]) => void) => {
+    listeners.add(listener);
+    return () => void listeners.delete(listener);
+  };
+  const shows = createShows({ engine, patches, viewers, tempo, storage, onHeld, page: window });
   session = {
     ctx,
     engine,
@@ -101,11 +114,9 @@ export function getAudioSession(storage: KeyValueStorage): AudioSession {
     viewers,
     library,
     tempo,
+    shows,
     shared: patches.shared,
-    onHeld(listener) {
-      listeners.add(listener);
-      return () => listeners.delete(listener);
-    },
+    onHeld,
     onPress(listener) {
       pressListeners.add(listener);
       return () => pressListeners.delete(listener);
@@ -113,6 +124,7 @@ export function getAudioSession(storage: KeyValueStorage): AudioSession {
     muteInput(on) {
       muted = on;
     },
+    wake: silencePause.wake,
   };
   return session;
 }

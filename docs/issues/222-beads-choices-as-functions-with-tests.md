@@ -4,7 +4,7 @@
 
 **Blocked by:** none; best after [220](./220-bead-keeps-its-covers-as-the-page-changes.md), which changes what the frame reads
 
-**Status:** done (2026-11-05). Built (2026-11-04) on night/2026-11-04, merged into main, not yet released; accepted by the owner: "OK with the rest of the tickets reviewed", with Claude's calls in it.
+**Status:** done (2026-11-05). Built (2026-11-04) on night/2026-11-04, merged into main, released in 1.25.0; accepted by the owner: "OK with the rest of the tickets reviewed", with Claude's calls in it.
 
 ## Decisions
 

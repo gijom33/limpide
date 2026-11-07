@@ -4,7 +4,7 @@
 
 **Blocked by:** none. Surfing shares its ride with [197](./197-bead-rides-everywhere.md) (Bead riding the LFOs, which the owner has not seen either, [141](./141-bead-rides-the-lfos.md)); build after 197 or alongside it, so the two do not fix the same code twice (Claude's call, open to the owner).
 
-**Status:** done (2026-11-04). Built (2026-11-03) on night/2026-11-03, merged into main, not yet released; accepted by the owner, tried in part and the rest trusted: "All issues waiting on my feedback look fine, I tested some, others trust you."
+**Status:** done (2026-11-04). Built (2026-11-03) on night/2026-11-03, merged into main, released in 1.24.0; accepted by the owner, tried in part and the rest trusted: "All issues waiting on my feedback look fine, I tested some, others trust you."
 
 ## What reproducing found (2026-11-02)
 

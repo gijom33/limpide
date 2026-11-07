@@ -122,6 +122,13 @@ export const PROPS: Partial<Record<Pose['prop'], Picture>> = {
   rodBite: [['mascot-handle', [[-1, 8, 1, 1], [-2, 7, 1, 1], [-3, 6, 1, 1], [-4, 6, 1, 1], [-5, 5, 1, 1], [-6, 5, 1, 1], [-7, 5, 1, 1]]]],
 };
 
+/** Its umbrella over its head, wider than it (folded, then open), on the same grid. */
+export const UMBRELLA = {
+  canopy: [[4, -11, 1, 1], [2, -10, 5, 1], [0, -9, 9, 1], [-2, -8, 13, 1], [-3, -7, 15, 1], [-3, -6, 1, 1], [0, -6, 2, 1], [3, -6, 3, 1], [7, -6, 2, 1], [11, -6, 1, 1]],
+  shut: [[4, -11, 1, 1], [3, -10, 3, 5]],
+  handle: [[4, -5, 1, 5]],
+} satisfies Record<string, Rect[]>;
+
 /** The rod's tip on the grid, straight and bent: the line hangs from there. */
 export const ROD_TIP = { rod: { x: -7, y: 2 }, rodBite: { x: -7, y: 5 } } as const;
 /** The hook, and the ♪ on it, in the page's pixels from where the line ends. */

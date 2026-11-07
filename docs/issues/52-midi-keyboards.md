@@ -6,6 +6,10 @@
 
 **Status:** done (2026-10-27)
 
+**Since then:** [241](./241-every-preset-reachable-by-program-change.md) is built (2026-11-05): Bank Select (CC 0) picks a bank of 128 Presets, so Program n loads Preset bank × 128 + n, and the 14 Presets past the 128th are reachable by Program Change. With no Bank Select sent the bank is 0, as below.
+
+**Since then:** [242](./242-three-shows-hand-over-alike.md) is built (2026-11-05): a Program Change during the Demo stops it, as the person taking over does, and the Preset it named stays loaded.
+
 - [x] Pitch bend bends the pitch (±2 semitones, a Parameter for the range)
 - [x] The sustain pedal (CC 64) holds Notes as Hold does
 - [x] The mod wheel (CC 1) to something by default (LFO 1 Depth?) until mapped otherwise

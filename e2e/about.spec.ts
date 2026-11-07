@@ -46,7 +46,7 @@ test('the logo opens the About splash: version, build and credits; its ×, Escap
 // From 1100 px About keeps its word, one of the newcomer's four with Demo, Tutorial and Song, under Tutorial (issue 154).
 test('an ⓘ button opens About at every width, with the word About from 1100 px up and under its icon in the 2 × 2 layout', async ({ page }) => {
   const about = page.getByRole('dialog', { name: 'Limpide' });
-  const button = page.getByRole('button', { name: 'About' });
+  const button = page.getByRole('button', { name: 'About', exact: true });
   for (const [width, height, word] of [[1440, 900, true], [1366, 900, true], [1100, 900, true], [1099, 900, false], [1000, 800, false], [861, 800, false], [700, 800, true]] as const) {
     await page.setViewportSize({ width, height });
     await page.goto('/');
@@ -102,7 +102,7 @@ test('a build without a counter address counts no visits, and About makes no cla
 
 test('About, opened any time, offers the Demo and the Tour at its foot (the owner, 2026-10-27; issues 128, 209)', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'About' }).click();
+  await page.getByRole('button', { name: 'About', exact: true }).click();
   const about = page.getByRole('dialog', { name: 'Limpide' });
   await expect(about.locator('.about-actions').getByRole('button')).toHaveText(['Play the Demo', 'Take the Tour']);
   await about.getByRole('button', { name: 'Play the Demo' }).click();

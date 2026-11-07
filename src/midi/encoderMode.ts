@@ -8,6 +8,10 @@ export type EncoderMode = 'absolute' | 'relative-twos' | 'relative-centred';
 const distance = (centre: number, v: number) => Math.abs(((v - centre + 192) % 128) - 64);
 /** A Relative step's value: a few either side of its centre, never the centre itself (no movement). */
 const isStep = (centre: number, v: number) => v !== centre && distance(centre, v) <= 15;
+/** Within a Relative step of the bottom: 1 to 15. */
+const offTheBottom = (v: number) => isStep(0, v) && v < 64;
+/** Within a Relative step of the top, 113 to 126: not 127, a two's-complement step down. */
+const offTheTop = (v: number) => isStep(0, v) && v > 64 && v < 127;
 /** Values all steps around 0 or all around 64 are that Relative; anything else is Absolute. */
 const byCentre = (values: number[]): EncoderMode =>
   values.every((v) => isStep(0, v)) ? 'relative-twos' : values.every((v) => isStep(64, v)) ? 'relative-centred' : 'absolute';
@@ -24,8 +28,8 @@ const byCentre = (values: number[]): EncoderMode =>
 export function detectEncoderMode(values: number[]): EncoderMode {
   const steps = values.slice(1).map((v, i) => v - values[i]);
   const run = steps.length > 0 && (steps.every((d) => d === 1) || steps.every((d) => d === -1));
-  const rising = steps.every((d) => d > 0) && values.every((v) => isStep(0, v) && v < 64);
-  const falling = steps.every((d) => d < 0) && values.every((v) => isStep(0, v) && v > 64 && v < 127);
+  const rising = steps.every((d) => d > 0) && values.every(offTheBottom);
+  const falling = steps.every((d) => d < 0) && values.every(offTheTop);
   const offAnEnd = values.length > 0 && (rising || falling);
   return values.length === 0 || run || offAnEnd ? 'absolute' : byCentre(values);
 }

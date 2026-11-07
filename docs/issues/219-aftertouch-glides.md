@@ -4,7 +4,7 @@
 
 **Blocked by:** none; best after [218](./218-a-change-writes-only-what-it-changes.md), which settles how writes are gathered
 
-**Status:** done (2026-11-04). Built (2026-11-03) on night/2026-11-03, merged into main, not yet released; accepted by the owner, tried in part and the rest trusted: "All issues waiting on my feedback look fine, I tested some, others trust you."
+**Status:** done (2026-11-04). Built (2026-11-03) on night/2026-11-03, merged into main, released in 1.24.0; accepted by the owner, tried in part and the rest trusted: "All issues waiting on my feedback look fine, I tested some, others trust you."
 
 ## Decisions
 

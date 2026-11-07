@@ -15,7 +15,10 @@ export const focusLeaves = (element: Element, e: FocusEvent) => e.relatedTarget 
  */
 export function useFocusBack(card: RefObject<HTMLElement | null>, back: () => HTMLElement | null | undefined) {
   const backNow = useRef(back);
-  backNow.current = back;
+  // Kept after each render, not while rendering (issue 228), before the effects below read it.
+  useLayoutEffect(() => {
+    backNow.current = back;
+  });
   const last = useRef<Element | null>(null);
   const byKeyboard = useRef(false);
   const giveBack = () => backNow.current()?.focus({ preventScroll: !byKeyboard.current });

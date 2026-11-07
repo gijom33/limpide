@@ -52,3 +52,5 @@ Claude's calls, open to the owner:
 - **The naming step** (`touchedBy` in `src/ui/hooks/usePlayers.ts`): the selectors, in the order of decision 2.
 - **The listener** (the same hook): describes each key press and pointer press and acts on the decision; the page following the Demo's knobs and a scroll pausing it are as they were.
 
+
+**Since then (2026-11-05, [issue 243](./243-one-module-for-the-shows.md)):** `usePlayers`, `useTutorialState` and `useTourState` are gone, and the Demo's knobs (`demoKnobs`) are the synth's hand (`src/shows/synthHand.ts`), shared with the Tour: the Shows and their rules are one module, `src/shows/shows.ts`, built once in the audio session and tested in node; the Demo's stop rule still reads the page in `src/ui/hooks/useShows.ts`. The behaviour is unchanged.

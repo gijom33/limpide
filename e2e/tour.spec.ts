@@ -12,7 +12,7 @@ const slider = (page: Page, name: string) => page.getByRole('slider', { name, ex
 const waveform = (page: Page) => page.getByRole('radiogroup', { name: 'Osc 1 Waveform' }).locator('[aria-checked="true"]');
 
 async function startFromAbout(page: Page) {
-  await page.getByRole('button', { name: 'About' }).click();
+  await page.getByRole('button', { name: 'About', exact: true }).click();
   await about(page).getByRole('button', { name: 'Take the Tour' }).click();
   await expect(card(page)).toBeVisible();
 }
@@ -80,6 +80,24 @@ test('the Tour stops the Demo and the Song when it starts (issue 128)', async ({
     await expect(button, name).toHaveAttribute('aria-pressed', 'false');
     await card(page).getByRole('button', { name: 'Close the Tour' }).click();
   }
+});
+
+test('starting the Song ends the Tour, the person’s Patch given back, and the Song plays on it (issue 242)', async ({ page }) => {
+  await page.goto('/');
+  await patchName(page).click();
+  await page.getByRole('dialog', { name: 'Patches' }).getByRole('button', { name: 'Acid', exact: true }).first().click();
+  await page.keyboard.press('Escape');
+  await startFromAbout(page);
+  await expect(patchName(page)).toHaveAttribute('aria-label', 'Patch: Init');
+  const song = page.getByRole('button', { name: 'Song', exact: true });
+  await song.click();
+  await expect(card(page)).toBeHidden();
+  await expect(patchName(page)).toHaveAttribute('aria-label', 'Patch: Acid');
+  await expect(song).toHaveAttribute('aria-pressed', 'true');
+  await playing(page);
+  await page.waitForTimeout(1000); // nothing of the Tour comes back to stop it
+  await expect(song).toHaveAttribute('aria-pressed', 'true');
+  await expect(patchName(page)).toHaveAttribute('aria-label', 'Patch: Acid');
 });
 
 test('each card turns its control by itself and plays the phrase; Next and Back move between them (issue 128)', async ({ page }) => {

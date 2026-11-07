@@ -333,6 +333,14 @@ export const CHOICES = {
 /** A Patch setting picked from a list (a Waveform, the Filter Mode…), rather than turned like a Parameter. */
 export type ChoiceId = keyof typeof CHOICES;
 
+/**
+ * The choices shown as a Switch, on or off (LFO Sync, Retrigger, Legato): the Switch control takes only these, so a new
+ * one is listed here, and MIDI Learn hears a button learned on one as flipping it on each press (issue 223).
+ */
+export const SWITCHES = ['lfoRetrigger', 'lfo2Retrigger', 'lfoSync', 'lfo2Sync', 'legato'] as const satisfies readonly ChoiceId[];
+/** A choice shown as a Switch. */
+export type SwitchId = (typeof SWITCHES)[number];
+
 /** Which LFO: 1 or 2. */
 export type LfoNumber = 1 | 2;
 
@@ -387,10 +395,22 @@ export const followsTheBeat = (patch: Patch, lfo: LfoNumber) => patch[LFO_KEYS[l
 export const markedBeats = (patch: Patch | undefined, which: readonly LfoNumber[], tempo: BeatGrid, from: number, to: number): number[] =>
   patch && which.some((lfo) => followsTheBeat(patch, lfo)) ? beatsBetween(tempo, from, to) : [];
 
+/**
+ * Which LFO's Rate knob turns `id`, and with which Sync: its Hz with Sync off, its note value with Sync on; undefined for
+ * any other Parameter. The one place a Rate's LFO is worked out (issue 228).
+ */
+export const rateOf = (id: ParamId): { lfo: LfoNumber; sync: LfoSync } | undefined => {
+  for (const lfo of [1, 2] as const) {
+    if (LFO_KEYS[lfo].rate === id) return { lfo, sync: 'off' };
+    if (LFO_KEYS[lfo].note === id) return { lfo, sync: 'on' };
+  }
+  return undefined;
+};
+
 /** The Parameter a control mapped to `id` turns now: an LFO's Rate turns its note value while Sync is on. */
 export const knobTurns = (patch: Patch, id: ParamId): ParamId => {
-  const lfo = ([1, 2] as const).find((n) => LFO_KEYS[n].rate === id);
-  return lfo ? rateKnob(patch, lfo) : id;
+  const rate = rateOf(id);
+  return rate?.sync === 'off' ? rateKnob(patch, rate.lfo) : id;
 };
 
 export function setLfo(

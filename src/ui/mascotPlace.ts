@@ -24,6 +24,12 @@ export interface Perch {
  * panel to a control and clinging at its side (issue 151).
  */
 export type Moving = 'standing' | 'hovering' | 'falling' | 'flying' | 'landing' | 'held' | 'thrown' | 'sliding' | 'clinging';
+/** Settled on its line: standing, hovering, or landing there. */
+export const settled = (moving: Moving) => moving === 'standing' || moving === 'hovering' || moving === 'landing';
+/** Pointing the way (issue 151): sliding down the panel to a control, or clinging at its side. */
+export const pointingTheWay = (moving: Moving) => moving === 'sliding' || moving === 'clinging';
+/** In the pointer's hold, or thrown from it (issue 127). */
+export const inHand = (moving: Moving) => moving === 'held' || moving === 'thrown';
 
 /** Hovering, how far under the header (or the section tabs) its top is, in pixels, at the bottom of its bob (issue 142). */
 export const HOVER_UNDER = 6;
@@ -271,7 +277,7 @@ export function createMascotPlace({ from, random = Math.random }: { from?: numbe
   let droppedOntoLine = false;
   const placed = (landedX: number | null = null): Placed => ({
     foot,
-    x: moving === 'falling' || moving === 'flying' || moving === 'held' || moving === 'thrown' || moving === 'sliding' || moving === 'clinging' ? x : null,
+    x: moving === 'falling' || moving === 'flying' || inHand(moving) || pointingTheWay(moving) ? x : null,
     moving,
     thrust: moving === 'flying' && thrust,
     windup: moving === 'flying' ? Math.min(1, (last! - windupFrom) / WINDUP_SECONDS) : 1,
@@ -318,7 +324,7 @@ export function createMascotPlace({ from, random = Math.random }: { from?: numbe
     frame(perch: Perch, span: Span, now: number, reduced: boolean, at: number): Placed {
       const dt = last === null ? 0 : Math.min(LONGEST_STEP, now - last);
       last = now;
-      const settled: Moving = perch.hovering ? 'hovering' : 'standing';
+      const restsAs: Moving = perch.hovering ? 'hovering' : 'standing';
       if (moving === 'held') {
         on = perch.id;
         return placed();
@@ -358,7 +364,7 @@ export function createMascotPlace({ from, random = Math.random }: { from?: numbe
         // it slides there down the panel, easing in, and clings, following the control. Coming in there, it is there.
         if (on === null) moving = 'clinging';
         else if (perch.id !== on) {
-          if (moving !== 'sliding' && moving !== 'clinging') x = at;
+          if (!pointingTheWay(moving)) x = at;
           moving = 'sliding';
         }
         on = perch.id;
@@ -388,7 +394,7 @@ export function createMascotPlace({ from, random = Math.random }: { from?: numbe
           moving = 'falling';
         } else {
           foot = perch.foot;
-          moving = settled;
+          moving = restsAs;
           hoverSince = now;
           return placed();
         }
@@ -398,7 +404,7 @@ export function createMascotPlace({ from, random = Math.random }: { from?: numbe
         const dropped = droppedOntoLine;
         droppedOntoLine = false;
         // Leaving a control's side, from where it clung; let go near a plot, from where it was held.
-        if (moving !== 'sliding' && moving !== 'clinging' && !dropped) x = at;
+        if (!pointingTheWay(moving) && !dropped) x = at;
         toX = dropped ? Math.min(span.max, Math.max(span.min, x)) : spotIn(span, at);
         leapFrom = x;
         if (dropped && !perch.hovering) {
@@ -482,8 +488,8 @@ export function createMascotPlace({ from, random = Math.random }: { from?: numbe
         return placed();
       }
       foot = perch.foot;
-      if (moving === 'landing' && now - landedAt >= LANDING_SECONDS) moving = settled;
-      if (moving !== 'landing') moving = settled;
+      if (moving === 'landing' && now - landedAt >= LANDING_SECONDS) moving = restsAs;
+      if (moving !== 'landing') moving = restsAs;
       // Hovering, it bobs gently up from its line and back; with reduced motion, still.
       if (moving === 'hovering' && !reduced) foot -= (HOVER_BOB * (1 - Math.cos(2 * Math.PI * BOBS_A_SECOND * (now - hoverSince)))) / 2;
       return placed();
