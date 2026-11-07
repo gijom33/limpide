@@ -1,12 +1,14 @@
 import { expect, test } from '@playwright/test';
 import { cc, midiPanel, openMidi, play, withFakeController } from './fakeMidi';
-import { sliderName } from './helpers';
+import { firstChange, sliderName } from './helpers';
 
 // Issue 52: a keyboard's own controls do what a synth player expects, until they are mapped to something else.
 
 test.beforeEach(({ page }) => withFakeController(page));
 
 const piano = (page: import('@playwright/test').Page) => page.getByRole('group', { name: 'Piano' });
+/** A key of the on-screen Piano, by the name of its Note. */
+const key = (page: import('@playwright/test').Page, name: string) => piano(page).getByRole('button', { name, exact: true });
 
 /** Where a dot comes to rest once aftertouch’s glide there has arrived, in about 0.2 s (issue 219): two reads 0.3 s apart agree. */
 async function restingCx(dot: import('@playwright/test').Locator) {
@@ -28,21 +30,20 @@ async function restingCx(dot: import('@playwright/test').Locator) {
 
 test('the sustain pedal holds a released Note until it lifts', async ({ page }) => {
   await play(page, [0x90, 60, 100], cc(64, 127), [0x80, 60, 0]);
-  await expect(piano(page).locator('[data-note="60"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(key(page, 'C4')).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByRole('button', { name: 'Hold' })).toHaveAttribute('aria-pressed', 'false'); // Hold itself is not on
   await play(page, cc(64, 0));
-  await expect(piano(page).locator('[data-note="60"]')).toHaveAttribute('aria-pressed', 'false');
+  await expect(key(page, 'C4')).toHaveAttribute('aria-pressed', 'false');
 });
 
 test('a panic lets every Note go: All Notes Off, the pedal still holding them, until Reset All Controllers lifts it (issue 185)', async ({ page }) => {
-  const key = (note: number) => piano(page).locator(`[data-note="${note}"]`);
   await play(page, [0x90, 60, 100], [0x91, 64, 100], cc(123, 0));
-  await expect(key(60)).toHaveAttribute('aria-pressed', 'false');
-  await expect(key(64)).toHaveAttribute('aria-pressed', 'false');
+  await expect(key(page, 'C4')).toHaveAttribute('aria-pressed', 'false');
+  await expect(key(page, 'E4')).toHaveAttribute('aria-pressed', 'false');
   await play(page, [0x90, 60, 100], cc(64, 127), cc(123, 0));
-  await expect(key(60)).toHaveAttribute('aria-pressed', 'true'); // the pedal holds it, as MIDI says
+  await expect(key(page, 'C4')).toHaveAttribute('aria-pressed', 'true'); // the pedal holds it, as MIDI says
   await play(page, cc(121, 0)); // Reset All Controllers lifts the pedal
-  await expect(key(60)).toHaveAttribute('aria-pressed', 'false');
+  await expect(key(page, 'C4')).toHaveAttribute('aria-pressed', 'false');
 });
 
 test('a Program Change loads that Preset, the mod wheel turns LFO 1’s Depth', async ({ page }) => {
@@ -58,7 +59,7 @@ test('Bank Select and a Program Change reach the Presets past the 128th; one pas
   await play(page, cc(0, 1), cc(32, 0), [0xc0, 0]); // bank 1, Program 0: the 129th Preset
   await expect(patch).toHaveAttribute('aria-label', 'Patch: Wind');
   await play(page, [0xc0, 14], [0x90, 60, 100]); // bank 1, Program 14: past the 142nd, the last; then a Note
-  await expect(piano(page).locator('[data-note="60"]')).toHaveAttribute('aria-pressed', 'true'); // heard after it
+  await expect(key(page, 'C4')).toHaveAttribute('aria-pressed', 'true'); // heard after it
   await expect(patch).toHaveAttribute('aria-label', 'Patch: Wind');
   await play(page, [0x80, 60, 0], cc(0, 0), [0xc0, 1]); // back to bank 0
   await expect(patch).toHaveAttribute('aria-label', 'Patch: Pure Sine');
@@ -74,8 +75,7 @@ test('a Program Change during the Demo stops it, says so, and the Preset it name
   await expect(demo).toHaveAttribute('aria-pressed', 'false');
   await expect(page.getByRole('status').filter({ hasText: 'The Demo stopped: you are playing now.' })).toBeVisible();
   await expect(patch).toHaveAttribute('aria-label', 'Patch: Pure Sine');
-  await page.waitForTimeout(1500); // no part of the Demo loads over it
-  await expect(patch).toHaveAttribute('aria-label', 'Patch: Pure Sine');
+  expect(await firstChange(page, [[patch, 'aria-label']], 1500)).toBeNull(); // no part of the Demo loads over it
 });
 
 // Issue 243: untested end to end until then.

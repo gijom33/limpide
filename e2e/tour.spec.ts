@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
+import { firstChange } from './helpers';
 import { FIRST_VISIT } from './startState';
 
 // Issue 128: the Tour, a card for each Section while the synth turns its controls itself, on a Patch of its own.
@@ -95,9 +96,8 @@ test('starting the Song ends the Tour, the person’s Patch given back, and the 
   await expect(patchName(page)).toHaveAttribute('aria-label', 'Patch: Acid');
   await expect(song).toHaveAttribute('aria-pressed', 'true');
   await playing(page);
-  await page.waitForTimeout(1000); // nothing of the Tour comes back to stop it
-  await expect(song).toHaveAttribute('aria-pressed', 'true');
-  await expect(patchName(page)).toHaveAttribute('aria-label', 'Patch: Acid');
+  // Nothing of the Tour comes back to stop it.
+  expect(await firstChange(page, [[song, 'aria-pressed'], [patchName(page), 'aria-label']], 1000)).toBeNull();
 });
 
 test('each card turns its control by itself and plays the phrase; Next and Back move between them (issue 128)', async ({ page }) => {

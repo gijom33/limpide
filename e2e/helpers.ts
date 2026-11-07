@@ -1,4 +1,4 @@
-import { expect, type Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 /** Opens the Display panel (Freeze, Snapshot, axes, overlays) if it is not open already. */
 export async function openDisplay(page: Page) {
@@ -27,6 +27,29 @@ export const reachAudio = (page: Page) =>
       }
     };
   });
+
+/**
+ * Proves nothing happens for `ms` (issue 250): one wait in the page, frame by frame, watching each element's attribute.
+ * The first change it sees ("aria-label: Patch: Kick"), or null if each stayed as it was.
+ */
+export async function firstChange(page: Page, watched: readonly (readonly [Locator, string])[], ms: number) {
+  const handles = await Promise.all(watched.map(async ([element, name]) => [await element.elementHandle(), name] as const));
+  return page.evaluate(
+    ([pairs, ms]) =>
+      new Promise<string | null>((done) => {
+        const read = ([element, name]: (typeof pairs)[number]) => (element?.isConnected ? element.getAttribute(name) : 'gone');
+        const [was, end] = [pairs.map(read), performance.now() + ms];
+        const frame = (now: number) => {
+          const changed = pairs.findIndex((pair, i) => read(pair) !== was[i]);
+          if (changed >= 0) done(`${pairs[changed][1]}: ${read(pairs[changed])}`);
+          else if (now >= end) done(null);
+          else requestAnimationFrame(frame);
+        };
+        requestAnimationFrame(frame);
+      }),
+    [handles, ms] as const,
+  );
+}
 
 /** Stops the page's sound as the browser does when it takes it away (needs `reachAudio`). */
 export const stopSound = (page: Page) =>
