@@ -9,7 +9,7 @@
 ## The items
 
 1. **A Filter side is a bare number,** and "the other side" is written out six times: a small type, or one helper.
-2. **The crossfade's state is five loose values** (the side heard, the fade's start and share, the fades counted, the Mode waiting, whether it has settled, the Slope): one object, its rules beside it.
+2. **The crossfade's state is five loose values** (the side heard, the fade's start and share, the latest fade's number, the Mode waiting, whether it has settled, the Slope): one object, its rules beside it.
 3. **Two `fadeTo`s,** the engine's and a Voice's, with different contracts: names that say which; and a side's state split between the shared side and each Voice's, kept in step by its index, in one place.
 4. **The record's slide lookup takes its field names as a tuple,** for two callers: two plain lookups, or one that takes what it reads.
 5. **A render quantum written as 128** in the engine's tests beside the engine's own constant: the one constant.

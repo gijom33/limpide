@@ -1495,8 +1495,8 @@ export function createSynthEngine(
     settled = true;
   };
   /**
-   * Every Voice fades over to side `to` from `t`, from its share of the sound then. Once the fade is over, by the audio
-   * clock, a Mode asked for meanwhile fades in next; or else the side faded out is unwired.
+   * Every Voice fades over to side `to` from `t`, from its share of the sound then. When the browser says the fade is
+   * over, if it is still the latest, a Mode asked for meanwhile fades in next; or else the side faded out is unwired.
    */
   const fadeTo = (to: number, t: number) => {
     const share = heardShare(t);
