@@ -618,6 +618,9 @@ group('Movement & Effects', [
   }],
 ]);
 
+/** The Preset of that name, if it is one. */
+export const presetNamed = (name: string): Preset | undefined => PRESETS.find((p) => p.name === name);
+
 /** The next (+1) or previous (−1) Preset, wrapping around at the ends. */
 export const stepPreset = (index: number, delta: number) => (index + delta + PRESETS.length) % PRESETS.length;
 
