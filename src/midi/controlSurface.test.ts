@@ -621,6 +621,48 @@ describe('a keyboard’s own controls, while nothing is mapped to them (issue 52
     expect(heard).toEqual(['program 0']);
   });
 
+  // Issue 250's decision 2: a Program button's Bank Select is its bank, not a knob, so Learn waits for the next control.
+  it('MIDI Learn passes over a Bank Select a Program Change follows, and the bank still loads (issue 250)', () => {
+    const { surface, heard, store } = keyboardRig();
+    surface.startLearn();
+    surface.select(cutoff);
+    surface.handle(cc(0, 1));
+    surface.handle(cc(32, 0));
+    surface.handle({ type: 'program', channel: 1, program: 2 });
+    vi.advanceTimersByTime(600);
+    expect(store.list()).toEqual([]);
+    expect(surface.learnState()).toEqual({ phase: 'armed', target: cutoff });
+    expect(heard).toEqual(['program 130']);
+    surface.handle(cc(32, 0)); // a keyboard that sends the LSB alone
+    surface.handle({ type: 'program', channel: 1, program: 3 });
+    vi.advanceTimersByTime(600);
+    expect(store.list()).toEqual([]);
+    expect(heard).toEqual(['program 130', 'program 131']);
+    surface.select(hold); // a button waits for its control alike
+    surface.handle(cc(0, 0));
+    surface.handle({ type: 'program', channel: 1, program: 4 });
+    vi.advanceTimersByTime(600);
+    expect(store.list()).toEqual([]);
+    expect(heard).toEqual(['program 130', 'program 131', 'program 4']);
+    surface.handle(cc(74, 127));
+    vi.advanceTimersByTime(600);
+    expect(store.find({ kind: 'cc', channel: 1, number: 74 })?.target).toEqual(hold);
+  });
+
+  it('MIDI Learn still takes a knob on CC 0 that no Program Change follows (issue 250)', () => {
+    const { surface, store } = keyboardRig();
+    surface.startLearn();
+    surface.select(cutoff);
+    surface.handle(cc(0, 10));
+    surface.handle(cc(0, 12));
+    vi.advanceTimersByTime(600);
+    expect(store.find({ kind: 'cc', channel: 1, number: 0 })).toEqual({
+      control: { kind: 'cc', channel: 1, number: 0 },
+      target: cutoff,
+      mode: 'absolute',
+    });
+  });
+
   it('a Mapping takes over: the mod wheel learned for the Cutoff no longer turns the Depth', () => {
     const { surface, positions, store } = keyboardRig();
     store.set({ control: { kind: 'cc', channel: 1, number: 1 }, target: cutoff, mode: 'absolute' });
