@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · enhancement. Built (2026-11-05) on night/2026-11-05 and merged into main on 2026-11-06 with the night ("Merge the night"); the three runs, the timing and the mismatch check on a test branch wait for the owner's word to push it, and come before the next release, which would otherwise run its tests in the image untried
+**Status:** done (2026-11-06). Built (2026-11-05) on night/2026-11-05, merged into main on 2026-11-06 with the night ("Merge the night"); tried on test branches on the owner's word ("Yes, push it"), three runs green and no slower, so kept by decision 3. Ships with the next release.
 
 ## Decisions
 
@@ -15,6 +15,11 @@ Claude's calls, open to the owner (2026-11-05, triage):
 3. **Kept only if it is no slower:** the image is large to download, and a cache hit plus the library install takes about a minute when it does not hang. Three runs are timed against the last three runs before it; if a job's start is more than a minute slower, the issue says so and the owner chooses.
 4. **The cache step and both install steps are removed** with their comment, which then no longer applies.
 5. **Built at night, tried by day:** the night pushes nothing, so a night builds the change and leaves its runs on a test branch, the timing and the mismatch check for the day, on the owner's word to push the test branch; the issue then waits for the owner.
+
+Since then (2026-11-06), on the test branches:
+
+6. **The layouts hold, not the tests loosened** (decided by the owner: "Yes, fix the layouts"). The first two runs failed three layout tests in both browsers: the image has no DejaVu Sans, the runner's, and gives the page's system font to WenQuanYi Zen Hei, a Chinese font.
+7. **The image's system font is set to Liberation Sans** (Claude's call, open to the owner), a Latin font with Arial's widths, in the image already, by a font setting the browser jobs copy in: no visitor reading Latin text gets a Chinese system font, so the page was not reshaped for it. Display's Keys, Tips, Bead and Theme, which broke three and one with Arial's widths on the Mac too, now wrap in two pairs that never break.
 
 ## Agent Brief
 
@@ -35,10 +40,10 @@ Claude's calls, open to the owner (2026-11-05, triage):
 - The GitHub-only skips, which read whether the run is on GitHub's WebKit: they must still see it in the container.
 
 **Acceptance criteria:**
-- [ ] Three runs on a test branch go green with no install step, and the skips still apply on GitHub's WebKit.
-- [ ] Each job's time from start to its first test is recorded for those runs against the three before; more than a minute slower is reported to the owner, not shipped.
-- [ ] A deliberate version mismatch on a test branch fails early with the message.
-- [ ] Nothing deploys from the test branches.
+- [x] Three runs on a test branch go green with no install step, and the skips still apply on GitHub's WebKit.
+- [x] Each job's time from start to its first test is recorded for those runs against the three before; more than a minute slower is reported to the owner, not shipped.
+- [x] A deliberate version mismatch on a test branch fails early with the message.
+- [x] Nothing deploys from the test branches.
 
 **Out of scope:**
 - Changing the shards, the worker counts or which tests are skipped on GitHub.
@@ -71,3 +76,10 @@ Nothing here deploys: the workflow runs on a push to `main` or `release/**`, and
 3. **The timing:** the same `gh run view` for the three runs; the image's pull counts in the job's start (the "Initialize containers" step). Compare each job's start-to-first-test against the baseline: more than a minute slower is reported to the owner, not shipped (decision 3).
 4. **The mismatch:** on the same branch, change the image's tag to `v1.63.0-noble` (an older published image, or any other; a tag that does not exist fails earlier, at the image's pull, without the message), commit, push to `release/probe-247`: every browser job should fail at the check's step with the message, before `npm ci`. Then drop that commit.
 5. **Afterwards:** delete the branch (`git push origin --delete release/probe-247`); the change ships with the next release from `main`.
+
+## How it went (2026-11-06)
+
+- **Three runs green** on `test/247-playwright-image` (runs 42337006667, 42338064589, 42339185897), with no install step and the skips for GitHub's WebKit still applying.
+- **Start to first test**, per browser job: 26 to 42 s in the image, against 20 to 60 s in the three runs before (42161464150, 42159264056, 42050895483), one of which stalled 7.5 min in its install; none more than a minute slower.
+- **The mismatch** (`test/247-mismatch`, the image at v1.64.0 against the lock file's 1.64.1) failed every browser job at its first step, 27 s in, with the message saying which to change; the unit tests failed it too.
+- **Nothing deployed:** the deploy runs on main alone. Both test branches are deleted.
