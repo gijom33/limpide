@@ -35,7 +35,7 @@ Claude's calls, open to the owner (2026-11-06, triage):
 - [x] Switching between every pair of Modes while a Note holds, at 0, 50, 80 and 100 % Resonance and both Slopes, steps no more than the wave's own steepest step, in an offline render (within 231's margin of 1.1: call 2).
 - [x] 231's test of the band-pass switched at Init's Resonance, swept to 80 % and back, and switched back, passes with its criterion at every Resonance.
 - [x] A held Note and its level are as now before and after the fade; the Presets' levels are unchanged (the Filter, while no Mode changes, is wired as before; not measured Preset by Preset).
-- [ ] The engine's cost while no Mode changes is as before (the statistics' run).
+- [x] The engine's cost while no Mode changes is as before (the statistics' run): 1.26.1's eight-Voice chord at 59.3 % of a core against 1.26.0's 61.2 %, the Demo at 103.2 % against 112.3 %.
 
 **Out of scope:**
 - A fade on a Slope change, a Cutoff jump or a Preset's other Parameters.
@@ -65,3 +65,5 @@ Built at night (2026-11-06) on night/2026-11-06, test-first.
 - Change the Slope with a Note held: as before, at once.
 
 **Since then (2026-11-07, the 1.26.1 code review):** a change that came after a fade's 10 ms but before the browser said the fade had ended faded in at once, over the side still ringing with its old Mode, and a Mode waiting since the fade then followed it, over the last one asked for. A fade now counts as under way until it has settled, so such a change waits like any other; a test changes Mode in that gap and hears the last one asked for.
+
+**Since then (2026-11-07, 1.26.1's statistics run):** waiting in that gap clicked about one run in twenty under coverage: the end then started the waiting Mode's fade from a clock read late, past where an offline render had got to. A change in that gap now settles the fade at once, the side faded out being silent by the clock, gives up any Mode waiting, and fades in itself; the same test hears the last one asked for. Released in 1.26.2.

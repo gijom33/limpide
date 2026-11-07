@@ -1204,9 +1204,9 @@ describe('a crossfade on a change of Filter Mode (issue 248)', () => {
     }
   });
 
-  // Between a fade's end by the clock and the browser's word that it ended, a change still waits for the fade, and the
-  // last one asked for plays: a newer one does not fade in at once over the waiting one (the 1.26.1 review).
-  it('plays the last Mode asked for when one comes just after a fade, before it has settled', async () => {
+  // Between a fade's end by the clock and the browser's word that it ended, a change settles the fade, gives up the Mode
+  // waiting and fades in at once: the last one asked for plays (the 1.26.1 review and statistics run).
+  it('plays the last Mode asked for when one comes just after a fade, before the browser says it ended', async () => {
     const patch = { ...defaultPatch(), cutoff: 1000, ampSustain: 1, ampAttack: 0.001, resonance: 0.5 } as const;
     const highpass = { ...patch, filterMode: 'highpass' } as const;
     // Low-pass to band-pass at 0.2 s, the notch asked for during that fade, then the high-pass 10.7 ms after its start:
