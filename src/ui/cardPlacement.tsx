@@ -105,9 +105,10 @@ export function useCardPlacement(card: RefObject<HTMLElement | null>, kind: Card
       }
       setFolded(!folded);
     },
-    /** On the card: where it has been moved to, and whether it is folded. */
+    /** On the card: where it has been moved to, whether by the person (the Tour then leaves it there, issue 254), and whether it is folded. */
     cardProps: {
       style: { '--card-dx': `${offset.x}px`, '--card-dy': `${offset.y}px` } as CSSProperties,
+      'data-moved': offset.x !== 0 || offset.y !== 0 || undefined,
       'data-folded': folded || undefined,
     },
     /** On the card's top row: the handle it is dragged by. */

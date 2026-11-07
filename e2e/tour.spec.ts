@@ -34,7 +34,8 @@ const playing = (page: Page) => expect(page.getByRole('group', { name: 'Piano' }
 
 /**
  * Where an element stands: "clear" between the header (and the phone's strip) and the card, as a Tutorial's control
- * must (tutorial.spec.ts).
+ * must (tutorial.spec.ts); or, where the card does not cover it side to side, beside the card, down to the window's
+ * foot (issue 254).
  */
 const standing = (page: Page, name: string) => standingOf(page.locator(`[aria-label="${name}"]`).first());
 /** Where the element `locator` finds stands, as `standing` says. */
@@ -45,7 +46,8 @@ const standingOf = (locator: Locator) =>
     const header = document.querySelector('header')!.getBoundingClientRect();
     const strip = document.querySelector('.section-strip')?.getBoundingClientRect();
     const top = Math.max(header.bottom, strip?.height ? strip.bottom : 0);
-    return box.bottom <= card.top + 1 && box.top >= top - 1 ? 'clear' : `hidden: ${Math.round(box.top)} to ${Math.round(box.bottom)} between ${Math.round(top)} and ${Math.round(card.top)}`;
+    const floor = box.left < card.right && box.right > card.left ? card.top : innerHeight;
+    return box.bottom <= floor + 1 && box.top >= top - 1 ? 'clear' : `hidden: ${Math.round(box.top)} to ${Math.round(box.bottom)} between ${Math.round(top)} and ${Math.round(floor)}`;
   });
 
 test.describe('a first visit', () => {
@@ -501,6 +503,77 @@ for (const [layout, width, height] of [['small phone', 320, 568], ['phone', 375,
     for (let i = 1; i < 4; i++) await action(page, 'Next').click();
     await expect.poll(() => standing(page, 'Envelope Timeline')).toBe('clear'); // the page down at the LFO card's Viewer
     await action(page, 'Next').click();
+    await expect.poll(() => shownAbove(page.getByRole('button', { name: 'Display', exact: true }))).toBe('shown');
+    await action(page, 'Next').click();
+    await expect.poll(() => shownAbove(page.getByRole('button', { name: 'Tutorial', exact: true }))).toBe('shown');
+  });
+}
+
+// Issue 254: on every card, at every size, the control the Tour turns stays in view, clear of the card, the whole time
+// it moves; on wide windows its Viewers with it, the card moving aside where it would cover them.
+
+/** The Viewers each Section's card points at, in its order. */
+const VIEWERS = [['Oscillator Scope', 'Oscillator Spectrum'], ['Filter Scope', 'Filter Spectrum'], ['Envelope Timeline', 'Amp Scope', 'Amp Spectrum'], ['Envelope Timeline']];
+
+/**
+ * Where the ringed control (the one the synth turns) and the card's Viewers stand now, read at once: each "clear" in
+ * the window, below the header and the phone's strip, and not under the card, as `standing` says; and what the control
+ * shows, to tell it moving from holding still.
+ */
+const lookNow = (page: Page, viewers: string[]) =>
+  page.evaluate((viewers) => {
+    const card = document.querySelector('.docked')!.getBoundingClientRect();
+    const header = document.querySelector('header')!.getBoundingClientRect();
+    const strip = document.querySelector('.section-strip')?.getBoundingClientRect();
+    const top = Math.max(0, header.bottom, strip?.height ? strip.bottom : 0);
+    const where = (element: Element | null) => {
+      if (!element) return 'missing';
+      const box = element.getBoundingClientRect();
+      const under = box.left < card.right && box.right > card.left;
+      const clear = box.top >= top - 1 && box.bottom <= (under ? card.top : innerHeight) + 1;
+      return clear ? 'clear' : `hidden: ${Math.round(box.left)}–${Math.round(box.right)} × ${Math.round(box.top)}–${Math.round(box.bottom)}, card ${Math.round(card.left)}–${Math.round(card.right)} from ${Math.round(card.top)}`;
+    };
+    const control = document.querySelector('[data-learn][data-tutorial]');
+    const shows = control && [control, ...control.querySelectorAll('[aria-valuetext], [aria-checked="true"]')].map((e) => e.getAttribute('aria-valuetext') ?? e.getAttribute('aria-label'));
+    return {
+      control: where(control),
+      value: JSON.stringify(shows),
+      viewers: viewers.map((name) => `${name}: ${where(document.querySelector(`[aria-label="${name}"]`))}`),
+    };
+  }, viewers);
+
+for (const [layout, width, height] of [['three across', 1440, 900], ['four across', 1920, 1080], ['phone', 390, 844]] as const) {
+  test(`in ${layout}, every card keeps the control it turns in view and clear of the card (issue 254)`, async ({ page }) => {
+    test.setTimeout(120000);
+    const wide = width > 600;
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.setViewportSize({ width, height });
+    await page.goto('/');
+    await startFromAbout(page);
+    const missed: string[] = [];
+    for (const [i, viewers] of VIEWERS.entries()) {
+      await expect(page.locator('[data-learn][data-tutorial]')).toHaveCount(1);
+      await page.waitForTimeout(300); // the card has come into view
+      // A pass of the Amp card, and most of the Filter's sweep.
+      for (let t = 0; t < 7000; t += 150) {
+        const now = await lookNow(page, viewers);
+        const wanted = (n: typeof now) => [n.control, ...(wide ? n.viewers : [])].filter((w) => !w.endsWith('clear'));
+        // Read again a moment later: the card's clock may have turned before the page followed, and the control may
+        // be holding still, out of view where the Viewers have the page (a phone's Amp card, issue 206).
+        if (wanted(now).length > 0) {
+          await page.waitForTimeout(150);
+          const then = await lookNow(page, viewers);
+          const moved = then.value !== now.value;
+          // A wide window shows the control and the card's Viewers at once, through every card.
+          if (then.control !== 'clear' && (moved || wide)) missed.push(`card ${i + 1} at ${t} ms: the control ${then.control}`);
+          if (wide) for (const v of then.viewers) if (!v.endsWith(': clear')) missed.push(`card ${i + 1} at ${t} ms: ${v}`);
+        }
+        await page.waitForTimeout(150);
+      }
+      await action(page, 'Next').click();
+    }
+    expect(missed).toEqual([]);
+    // The last two cards ring a button of the header, which they bring into view.
     await expect.poll(() => shownAbove(page.getByRole('button', { name: 'Display', exact: true }))).toBe('shown');
     await action(page, 'Next').click();
     await expect.poll(() => shownAbove(page.getByRole('button', { name: 'Tutorial', exact: true }))).toBe('shown');

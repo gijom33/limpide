@@ -1616,9 +1616,10 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
 
 /* A card docked at the bottom of the page (a Tutorial's, issue 57; the Demo's, issue 50, in the corner from three
    across: issue 230), under the panels and tooltips, the page keeping room for it below its last section (the Demo's
-   only on a phone and in 2 × 2: docked.ts, issue 212). */
+   only on a phone and in 2 × 2: docked.ts, issue 212). The Tour's moves along the bottom, beside what it shows, where
+   it would cover it (--card-aside, TourCard.tsx, issue 254). */
 .docked {
-  position: fixed; z-index: 40; left: 50%; bottom: var(--space-3); transform: translate(calc(-50% + var(--card-dx, 0px)), var(--card-dy, 0px));
+  position: fixed; z-index: 40; left: 50%; bottom: var(--space-3); transform: translate(calc(-50% + var(--card-aside, 0px) + var(--card-dx, 0px)), var(--card-dy, 0px));
   width: min(var(--card-w, 640px), calc(100vw - 2 * var(--space-3))); box-sizing: border-box;
   display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3) var(--space-4);
   /* A hairline and the panel's shadow, not the accent: it frames the card without shouting (the owner, 2026-10-29). */
