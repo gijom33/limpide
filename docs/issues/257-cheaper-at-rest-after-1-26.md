@@ -5,7 +5,7 @@
 1. **At Init both flat LFO plots** (Depth 0) are recomputed and rewritten every frame, the only repaint on a page at rest: dropping the identical writes takes the GPU from 7.2 % to 0.5 % of a core (reviews 9 and 18).
 2. **At 1 Voice the seven unused Voices still render,** four fifths of the audio thread's work: unwired, renderCapacity goes from 0.133 to 0.027 (reviews 9 and 18).
 3. **The Scope and the Spectrum write their test hooks** (data-*) every frame from inside the draw, against the loop's read-then-write rule, and ship them to the site (review 9).
-4. **The statistics' Demo figure** comes from one sample after the suite, 112 % of a core, where a quiet machine gives 84 to 90 %: a median of three runs after a cool-down, with the load recorded (review 18).
+4. **The statistics' Demo figure** comes from one sample after the suite, 112 % of a core on 1.26.0 and 107.8 % on 1.26.2, where a quiet machine gives 84 to 90 %: a median of three runs after a cool-down, with the load recorded (review 18).
 
 **Blocked by:** none
 

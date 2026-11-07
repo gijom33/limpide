@@ -6,7 +6,7 @@
 2. **The README says every commit names Claude Code,** but 8 night merge commits carry no Co-Authored-By line (review 4).
 3. **A trademark line** in About and the README: product names are their owners', Limpide is not affiliated (review 11).
 4. **The README's licence line** to keep the docs' quotations their authors' (review 11). The AI-authorship copyright wording stays parked for a lawyer, by [111](./111-the-repository-front-page-and-community-files.md)'s decision 4.
-5. **The README's "112.3 % of a processor core"** in plain words, or left to the statistics page (review 7).
+5. **The README's CPU figure** (112.3 % of a processor core when reviewed, 107.8 % since 1.26.2's statistics) in plain words, or left to the statistics page (review 7).
 
 **Blocked by:** none
 

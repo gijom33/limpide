@@ -4,7 +4,7 @@
 
 **Blocked by:** none (the Learner's second run waits for the tutorials, [40](./40-preset-tutorials.md))
 
-**Status:** ready-for-human · enhancement. Left: the owner's tap-through of the real LinkedIn link on a phone, and profile 16's first run once the Tour is released. The ten persona reviews ran on 2026-10-26 (version 1.8.1), the Learner's second run on 2026-10-27, and a code review runs before releases since 1.11.1, as [the release steps](../releasing.md) say; trimmed (2026-10-28, decided by the owner).
+**Status:** ready-for-human · enhancement. Left: the owner's tap-through of the real LinkedIn link on a phone. Twenty profiles now, each run at least once (the last, 19 and 20, on 2026-11-07). The ten persona reviews ran on 2026-10-26 (version 1.8.1), the Learner's second run on 2026-10-27, and a code review runs before releases since 1.11.1, as [the release steps](../releasing.md) say; trimmed (2026-10-28, decided by the owner).
 
 ## Why these profiles
 

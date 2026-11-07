@@ -3,7 +3,7 @@
 **What to build:** The process ideas of the full review round on 1.26.1 that the owner kept (the inbox, 2026-11-07; reviews [4](../reviews/2026-11-07/4-ai-expert.md) and [10](../reviews/2026-11-07/10-methodology.md)):
 
 1. **A queue of the calls open to the owner:** 225 lines still read "open to the owner" with nothing telling the ones the owner has seen from the ones not; two accepted ADRs (0020, 0021) still say open (reviews 4 and 10).
-2. **"Done" with every acceptance box ticked or struck with a reason:** 68 of 201 done issues still have unticked boxes (review 10).
+2. **"Done" with every acceptance box ticked or struck with a reason:** 68 of 201 done issues still had unticked boxes on 1.26.1 (review 10), 67 of 224 on 1.26.2 (review 12).
 3. **An index of the issues** (number, title, Status), linked from the README (review 4).
 4. **The README's "How this was built" naming the night shift** (review 4).
 
