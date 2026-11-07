@@ -104,12 +104,11 @@ export function CardShell({ card, kind, opening, label, name, progress, made, cl
         back.onFocus(e);
       }}
       onBlur={back.onBlur}
-      // Escape on the card closes it, as it closes every panel (issue 253), the focus going back as on its ×; that one
-      // key closes nothing else (the Preset's about line).
+      // Escape on the card closes it, as it closes every panel (issue 253), the focus going back as on its ×. Taken, so
+      // the Preset's about line stays; a tip still hides.
       onKeyDown={(e) => {
         if (e.key !== 'Escape' || e.defaultPrevented) return;
         e.preventDefault();
-        e.stopPropagation();
         onClose();
       }}
     >

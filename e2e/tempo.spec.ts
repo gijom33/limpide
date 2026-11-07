@@ -95,21 +95,30 @@ test('Tap Tempo sets the tempo from four taps (issue 112)', async ({ page }) => 
   expect(tapped).toBeLessThanOrEqual(121);
 });
 
-test('three taps on Tap Tempo by the keyboard set the BPM, and a screen reader hears the new tempo (issue 253)', async ({ page }) => {
+test('three taps on Tap Tempo by the keyboard set the BPM, and a screen reader hears the new tempo once (issue 253)', async ({ page }) => {
   await page.goto('/');
   const tap = page.getByRole('button', { name: 'Tap Tempo', exact: true });
+  const status = page.getByRole('group', { name: 'Tempo' }).getByRole('status');
+  // What a screen reader hears: each announcement is a new node in the status.
+  await status.evaluate((element) => {
+    const said: string[] = [];
+    new MutationObserver(() => said.push(element.textContent ?? '')).observe(element, { childList: true, subtree: true, characterData: true });
+    (window as unknown as { said: string[] }).said = said;
+  });
   await tap.focus();
-  // Three Enters 0.4 s apart, timed inside the page as a person's key presses come (CODING_STANDARDS).
+  // Three Enters 0.4 s apart, timed inside the page (CODING_STANDARDS), as Tap Tempo's own keys take them.
   await tap.evaluate(async (button) => {
     for (let i = 0; i < 3; i++) {
       button.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
       button.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', bubbles: true }));
-      await new Promise((resolve) => setTimeout(resolve, 400));
+      if (i < 2) await new Promise((resolve) => setTimeout(resolve, 400));
     }
   });
   const tapped = Number(await bpm(page).getAttribute('aria-valuenow'));
   expect(tapped).not.toBe(120);
-  await expect(page.getByRole('group', { name: 'Tempo' }).getByRole('status')).toHaveText(`Tempo ${tapped} BPM`);
+  await expect(status).toHaveText(`Tempo ${tapped} BPM`);
+  await page.waitForTimeout(1000); // nothing more said once it has settled
+  expect(await page.evaluate(() => (window as unknown as { said: string[] }).said.filter((s) => s))).toEqual([`Tempo ${tapped} BPM`]);
 });
 
 test('while the Demo plays the BPM is the track’s, and the person’s comes back when it stops (issue 112)', async ({ page }) => {

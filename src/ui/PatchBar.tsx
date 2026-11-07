@@ -73,10 +73,10 @@ export function PatchBar({ name, changed, patch, bpm, library, onLoad, onPick, a
   if (stepping.current.from !== name) stepping.current = { name, from: name };
 
   // Escape takes the about line away while it shows, unless it is closing something else: a panel or menu open (the
-  // Patches panel over the line, Display, MIDI, Tempo, the Tutorials, About; a card's own unfolded text is not one) or
-  // a field being typed in.
+  // Patches panel over the line, Display, MIDI, Tempo, the Tutorials, About; a card's own unfolded text is not one), a
+  // field being typed in, or a key taken already (a docked card closing, issue 253).
   const closeAbout = useEffectEvent((e: KeyboardEvent) => {
-    if (e.key !== 'Escape' || (e.target as Element).closest?.('input, textarea')) return;
+    if (e.key !== 'Escape' || e.defaultPrevented || (e.target as Element).closest?.('input, textarea')) return;
     if (!document.querySelector(OPEN_ELSEWHERE)) onCloseAbout();
   });
   useEffect(() => {

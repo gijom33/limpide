@@ -149,7 +149,8 @@ test('Next, Back and Close work from the keyboard (issue 128)', async ({ page })
   await page.keyboard.press('Enter');
   await expect(progress(page)).toHaveText('2 of 6');
   await expect(action(page, 'Next')).toBeFocused();
-  await action(page, 'Back').focus();
+  await page.keyboard.press('Shift+Tab'); // Back, before the way forward
+  await expect(action(page, 'Back')).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(progress(page)).toHaveText('1 of 6');
   await expect(action(page, 'Next')).toBeFocused(); // Back went with the second card: the way forward has the focus

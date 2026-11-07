@@ -174,10 +174,11 @@ test('Tab reaches every header button, the panels’ buttons and a Preset, in Sa
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
   await page.locator('.piano button').first().waitFor();
+  const focusedName = () => page.evaluate(() => document.activeElement?.getAttribute('aria-label') ?? document.activeElement?.textContent?.trim() ?? '');
   const stops: string[] = [];
   for (let i = 0; i < 60; i++) {
     await page.keyboard.press('Tab');
-    const name = await page.evaluate(() => document.activeElement?.getAttribute('aria-label') ?? document.activeElement?.textContent?.trim() ?? '');
+    const name = await focusedName();
     if (name === 'Limpide' && stops.length) break; // round the page and back to the first
     stops.push(name);
   }
@@ -188,7 +189,7 @@ test('Tab reaches every header button, the panels’ buttons and a Preset, in Sa
   for (const name of ['Legato', 'LFO 1 Destination: Cutoff', 'LFO 1 Retrigger', 'LFO 1 Sync', 'LFO 2 Sync']) expect(stops).toContain(name);
 
   // A Preset, by the keyboard alone: Patch, its search, then Tab to the first found.
-  while ((await page.evaluate(() => document.activeElement?.getAttribute('aria-label'))) !== 'Patch: Init') await page.keyboard.press('Tab');
+  while ((await focusedName()) !== 'Patch: Init') await page.keyboard.press('Tab');
   await page.keyboard.press('Enter');
   await expect(page.getByRole('searchbox')).toBeFocused();
   await page.keyboard.type('glass');

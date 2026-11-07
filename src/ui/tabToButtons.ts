@@ -5,21 +5,20 @@
  */
 const PASSED_OVER = 'button:not([tabindex]), a[href]:not([tabindex])';
 
-function reachable(element: Element) {
+function makeReachable(element: Element) {
   if (element.matches(PASSED_OVER)) element.setAttribute('tabindex', '0');
   for (const control of element.querySelectorAll(PASSED_OVER)) control.setAttribute('tabindex', '0');
 }
 
 /**
- * Gives every button and link under `root` a tabindex of 0, as it comes onto the page, so Tab reaches it with any
- * browser's settings (issue 253, WCAG 2.1.1): in Safari, as it comes, a keyboard reached the knobs but not Patch, a
- * Preset, Demo or About. A tabindex of 0 is where Tab already went in Chromium, so its order there stays the same, and
- * nothing looks or acts otherwise.
+ * Gives every button and link under `root` a tabindex of 0, as it comes onto the page, so Tab reaches it whatever the
+ * browser's settings (issue 253, WCAG 2.1.1): Patch, a Preset, Demo and About as well as the knobs. A tabindex of 0 is
+ * where Tab goes in Chromium anyway, so its order there is the same.
  */
 export function tabToButtons(root: Element) {
-  reachable(root);
-  const added = new MutationObserver((records) => {
-    for (const record of records) for (const node of record.addedNodes) if (node instanceof Element) reachable(node);
+  makeReachable(root);
+  const observer = new MutationObserver((records) => {
+    for (const record of records) for (const node of record.addedNodes) if (node instanceof Element) makeReachable(node);
   });
-  added.observe(root, { childList: true, subtree: true });
+  observer.observe(root, { childList: true, subtree: true });
 }

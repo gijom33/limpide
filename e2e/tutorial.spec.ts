@@ -475,7 +475,8 @@ test('picking a Tutorial puts the focus on its card, and its Next keeps it there
   await expect(next).toBeDisabled(); // until the Step is made
   await page.keyboard.press('Enter');
   await expect(progress(page)).toHaveText('Step 1 of 15');
-  await action(page, 'Do it for me').focus();
+  await page.keyboard.press('Shift+Tab'); // Do it for me, before the way forward
+  await expect(action(page, 'Do it for me')).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(next).toBeEnabled();
   await expect(next).toBeFocused(); // the button pressed has gone: the way forward has the focus
