@@ -1185,9 +1185,9 @@ export function createSynthEngine(
   // The side heard, or faded to (issue 248); when its fade began, and its share of the sound then.
   let heard = 0;
   let fade = { start: -MODE_FADE, startShare: 1 };
-  // Fades begun so far: only the last one's end settles the sides, or starts the next. A fade is under way until it
-  // has settled, by the browser's word, not only for its MODE_FADE: until then the side faded out still rings with its
-  // old Mode (the 1.26.1 review).
+  // Fades begun so far: only the last one's end settles the sides, or starts the next. Whether the last has settled: a
+  // change that comes after its MODE_FADE but before the browser says it ended settles it then, as the side faded out
+  // is silent by then but still rings with its old Mode (the 1.26.1 review).
   let fades = 0;
   let settled = true;
   // A Mode asked for while a fade was under way, for when it is over; and the Slope the sides were last set to.
@@ -1528,6 +1528,13 @@ export function createSynthEngine(
    */
   const toMode = (mode: FilterMode, t: number) => {
     if (!sides[heard].mode) sides[heard].mode = mode;
+    if (!settled && t >= fade.start + MODE_FADE) {
+      // The fade is over by the clock: settled now, its end's own settling and any Mode waiting given up for this one.
+      ++fades;
+      for (const v of voices) v.settle(heard);
+      settled = true;
+      pending = undefined;
+    }
     if (!settled) {
       pending = sides[heard].mode === mode || sides[1 - heard].mode === mode ? undefined : mode;
       if (sides[1 - heard].mode === mode) fadeTo(1 - heard, t);
