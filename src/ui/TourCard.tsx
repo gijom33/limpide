@@ -3,6 +3,7 @@ import { type Looking, TOUR_LENGTH, type TourFind, type TourMove, type TourSecti
 import { TUTORIALS } from '../tutorial/tutorials';
 import { CardShell } from './CardShell';
 import { cardAside } from './cardAside';
+import { pinned } from './cardPlacement';
 import { DISPLAY_BUTTON, optionOrDisplay, overlaySelector } from './displayOption';
 import { bringClear, fitsBeside } from './docked';
 import { scrollBehavior } from './glide';
@@ -61,20 +62,24 @@ const ASIDE = '--card-aside';
 
 /**
  * Moves the card along the bottom, the least, where it would cover what it shows (`elements`) and they do not all fit
- * above it, to a place beside them all from which they all show (issue 254); else puts it back in the middle. Never a
- * card the person has moved: it stays where they put it.
+ * above it, to a place beside them all from which they all show (issue 254); else puts it back in the middle. A card
+ * the person has moved stays where they put it; a phone's, pinned to the bottom edge, never moves.
  */
 function standAside(card: HTMLElement, elements: readonly Element[]) {
+  if (pinned(card)) {
+    card.style.removeProperty(ASIDE);
+    return;
+  }
   if (card.hasAttribute('data-moved')) return;
-  const moved = parseFloat(card.style.getPropertyValue(ASIDE)) || 0;
+  const placed = parseFloat(card.style.getPropertyValue(ASIDE)) || 0;
   const box = card.getBoundingClientRect();
-  const home = { left: box.left - moved, right: box.right - moved, top: box.top };
+  const home = { left: box.left - placed, right: box.right - placed, top: box.top };
   let aside = 0;
   if (!fitsBeside(home, elements)) {
-    const by = cardAside({ left: home.left, width: box.width }, elements.map((e) => e.getBoundingClientRect()), document.documentElement.clientWidth);
-    if (by !== null && fitsBeside({ left: home.left + by, right: home.right + by, top: home.top }, elements)) aside = by;
+    const shift = cardAside({ left: home.left, width: box.width }, elements.map((e) => e.getBoundingClientRect()), document.documentElement.clientWidth);
+    if (shift !== null && fitsBeside({ left: home.left + shift, right: home.right + shift, top: home.top }, elements)) aside = shift;
   }
-  if (aside === moved) return;
+  if (aside === placed) return;
   if (aside) card.style.setProperty(ASIDE, `${aside}px`);
   else card.style.removeProperty(ASIDE);
 }

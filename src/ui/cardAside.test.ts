@@ -6,7 +6,7 @@ import { cardAside } from './cardAside';
 /** The window and the card as at 1920 × 1080: the card 720 px wide, in the middle. */
 const wide = { window: 1920, card: { left: 600, width: 720 } };
 
-describe('cardAside', () => {
+describe('where the Tour’s card moves to, beside what it shows (issue 254)', () => {
   it('moves the card the least to stand clear of what it shows, a gap from it: right of the Filter’s column', () => {
     expect(cardAside(wide.card, [{ left: 509, right: 935 }], wide.window)).toBe(935 + 12 - 600);
   });

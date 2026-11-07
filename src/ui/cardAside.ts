@@ -9,7 +9,7 @@ const GAP = 12;
 export function cardAside(card: { left: number; width: number }, spans: readonly { left: number; right: number }[], room: number): number | null {
   const covers = (left: number) => spans.some((s) => s.left < left + card.width + GAP && s.right + GAP > left);
   if (!covers(card.left)) return 0;
-  // The places the card can take: the window's left edge, and just right of each thing it shows, or just left of it.
+  // The places the card can take: at either edge of the window, or just right or just left of each thing it shows.
   const places = [GAP, room - GAP - card.width, ...spans.flatMap((s) => [s.right + GAP, s.left - GAP - card.width])];
   const clear = places.filter((left) => left >= GAP && left + card.width <= room - GAP && !covers(left));
   if (clear.length === 0) return null;

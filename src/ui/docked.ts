@@ -79,7 +79,8 @@ function scrollFor(card: CardBox, elements: readonly Element[], beside: boolean)
   const boxes = elements.map((e) => {
     const box = e.getBoundingClientRect();
     const style = getComputedStyle(e);
-    const under = !beside || (box.left < card.right && box.right > card.left);
+    // Under the card, or too near its side to stand clear beside it (cardAside keeps the same gap).
+    const under = !beside || (box.left < card.right + CLEARANCE && box.right + CLEARANCE > card.left);
     return { top: box.top - parseFloat(style.scrollMarginTop), bottom: box.bottom + parseFloat(style.scrollMarginBottom), floor: (under ? card.top : innerHeight) - CLEARANCE };
   });
   const top = Math.min(...boxes.map((b) => b.top));

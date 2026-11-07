@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
+import { cycleLength, TOUR } from '../src/tutorial/tour';
 import { firstChange } from './helpers';
 import { FIRST_VISIT } from './startState';
 
@@ -512,67 +513,65 @@ for (const [layout, width, height] of [['small phone', 320, 568], ['phone', 375,
 // Issue 254: on every card, at every size, the control the Tour turns stays in view, clear of the card, the whole time
 // it moves; on wide windows its Viewers with it, the card moving aside where it would cover them.
 
-/** The Viewers each Section's card points at, in its order. */
-const VIEWERS = [['Oscillator Scope', 'Oscillator Spectrum'], ['Filter Scope', 'Filter Spectrum'], ['Envelope Timeline', 'Amp Scope', 'Amp Spectrum'], ['Envelope Timeline']];
-
 /**
- * Where the ringed control (the one the synth turns) and the card's Viewers stand now, read at once: each "clear" in
- * the window, below the header and the phone's strip, and not under the card, as `standing` says; and what the control
- * shows, to tell it moving from holding still.
+ * What went out of view over `ms`, read in the page every tenth of a second: the ringed control (the one the synth
+ * turns) and, on a wide window, the card's Viewers, each "clear" in the window, below the header and the phone's strip,
+ * and not under the card, as `standing` says. A control out of view is missed only if it moved meanwhile: on a phone
+ * the Amp's faders hold still while the Timeline has the page (issue 206). What is out of view is read again a moment
+ * later, since the card's clock may have turned before the page followed.
  */
-const lookNow = (page: Page, viewers: string[]) =>
-  page.evaluate((viewers) => {
-    const card = document.querySelector('.docked')!.getBoundingClientRect();
-    const header = document.querySelector('header')!.getBoundingClientRect();
-    const strip = document.querySelector('.section-strip')?.getBoundingClientRect();
-    const top = Math.max(0, header.bottom, strip?.height ? strip.bottom : 0);
-    const where = (element: Element | null) => {
-      if (!element) return 'missing';
-      const box = element.getBoundingClientRect();
-      const under = box.left < card.right && box.right > card.left;
-      const clear = box.top >= top - 1 && box.bottom <= (under ? card.top : innerHeight) + 1;
-      return clear ? 'clear' : `hidden: ${Math.round(box.left)}–${Math.round(box.right)} × ${Math.round(box.top)}–${Math.round(box.bottom)}, card ${Math.round(card.left)}–${Math.round(card.right)} from ${Math.round(card.top)}`;
-    };
-    const control = document.querySelector('[data-learn][data-tutorial]');
-    const shows = control && [control, ...control.querySelectorAll('[aria-valuetext], [aria-checked="true"]')].map((e) => e.getAttribute('aria-valuetext') ?? e.getAttribute('aria-label'));
-    return {
-      control: where(control),
-      value: JSON.stringify(shows),
-      viewers: viewers.map((name) => `${name}: ${where(document.querySelector(`[aria-label="${name}"]`))}`),
-    };
-  }, viewers);
+const missedOver = (page: Page, { viewers, ms, wide }: { viewers: string[]; ms: number; wide: boolean }) =>
+  page.evaluate(
+    async ({ viewers, ms, wide }) => {
+      const where = (element: Element | null) => {
+        if (!element) return 'missing';
+        const card = document.querySelector('.docked')!.getBoundingClientRect();
+        const header = document.querySelector('header')!.getBoundingClientRect();
+        const strip = document.querySelector('.section-strip')?.getBoundingClientRect();
+        const top = Math.max(header.bottom, strip?.height ? strip.bottom : 0);
+        const box = element.getBoundingClientRect();
+        const floor = box.left < card.right && box.right > card.left ? card.top : innerHeight;
+        if (box.top >= top - 1 && box.bottom <= floor + 1) return 'clear';
+        return `${Math.round(box.left)}–${Math.round(box.right)} × ${Math.round(box.top)}–${Math.round(box.bottom)}, card ${Math.round(card.left)}–${Math.round(card.right)} from ${Math.round(card.top)}`;
+      };
+      const look = () => {
+        const control = document.querySelector('[data-learn][data-tutorial]');
+        // What the control shows: a knob's or fader's value, the Waveform picked.
+        const shows = control && [control, ...control.querySelectorAll('[aria-valuetext], [aria-checked="true"]')].map((e) => e.getAttribute('aria-valuetext') ?? e.getAttribute('aria-label'));
+        const out = viewers.map((name) => [name, where(document.querySelector(`[aria-label="${name}"]`))]).filter(([, w]) => w !== 'clear');
+        return { control: where(control), shows: JSON.stringify(shows), viewers: wide ? out : [] };
+      };
+      const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+      const missed: string[] = [];
+      for (const start = performance.now(); performance.now() - start < ms; await wait(100)) {
+        const now = look();
+        if (now.control === 'clear' && now.viewers.length === 0) continue;
+        await wait(150);
+        const then = look();
+        const at = Math.round(performance.now() - start);
+        if (then.control !== 'clear' && (wide || then.shows !== now.shows)) missed.push(`at ${at} ms, the control: ${then.control}`);
+        for (const [name, w] of then.viewers) missed.push(`at ${at} ms, ${name}: ${w}`);
+      }
+      return missed;
+    },
+    { viewers, ms, wide },
+  );
 
 for (const [layout, width, height] of [['three across', 1440, 900], ['four across', 1920, 1080], ['phone', 390, 844]] as const) {
   test(`in ${layout}, every card keeps the control it turns in view and clear of the card (issue 254)`, async ({ page }) => {
-    test.setTimeout(120000);
+    test.setTimeout(150000);
+    // A wide window shows the control and the card's Viewers at once, through every card.
     const wide = width > 600;
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.setViewportSize({ width, height });
     await page.goto('/');
     await startFromAbout(page);
-    const missed: string[] = [];
-    for (const [i, viewers] of VIEWERS.entries()) {
+    for (const [i, section] of TOUR.entries()) {
       await expect(page.locator('[data-learn][data-tutorial]')).toHaveCount(1);
-      await page.waitForTimeout(300); // the card has come into view
-      // A pass of the Amp card, and most of the Filter's sweep.
-      for (let t = 0; t < 7000; t += 150) {
-        const now = await lookNow(page, viewers);
-        const wanted = (n: typeof now) => [n.control, ...(wide ? n.viewers : [])].filter((w) => !w.endsWith('clear'));
-        // Read again a moment later: the card's clock may have turned before the page followed, and the control may
-        // be holding still, out of view where the Viewers have the page (a phone's Amp card, issue 206).
-        if (wanted(now).length > 0) {
-          await page.waitForTimeout(150);
-          const then = await lookNow(page, viewers);
-          const moved = then.value !== now.value;
-          // A wide window shows the control and the card's Viewers at once, through every card.
-          if (then.control !== 'clear' && (moved || wide)) missed.push(`card ${i + 1} at ${t} ms: the control ${then.control}`);
-          if (wide) for (const v of then.viewers) if (!v.endsWith(': clear')) missed.push(`card ${i + 1} at ${t} ms: ${v}`);
-        }
-        await page.waitForTimeout(150);
-      }
+      // Each card's moves once through: the Amp's four stages, the Filter's Cutoff and Resonance.
+      expect(await missedOver(page, { viewers: section.viewers, ms: cycleLength(section) * 1000, wide }), `card ${i + 1}, ${section.title}`).toEqual([]);
       await action(page, 'Next').click();
     }
-    expect(missed).toEqual([]);
     // The last two cards ring a button of the header, which they bring into view.
     await expect.poll(() => shownAbove(page.getByRole('button', { name: 'Display', exact: true }))).toBe('shown');
     await action(page, 'Next').click();

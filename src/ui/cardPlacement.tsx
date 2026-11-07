@@ -4,7 +4,7 @@ import { safeStorage } from '../app/storage';
 import { ChevronIcon } from './icons';
 
 /** Whether the card may move: the CSS says, so the phone's breakpoint is written once (issue 67). */
-const pinned = (card: HTMLElement | null) => !!card && getComputedStyle(card).getPropertyValue('--card-pinned').trim() === '1';
+export const pinned = (card: HTMLElement | null) => !!card && getComputedStyle(card).getPropertyValue('--card-pinned').trim() === '1';
 
 type CardKind = 'demo' | 'tutorial' | 'tour';
 /** The person's folds made this session, each kind of card's: what is remembered, where storage keeps nothing. */
