@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement. In v1, decided by the owner (2026-11-06, "Yes, v1").
+**Status:** ready-for-human · enhancement. Built (2026-11-06) on night/2026-11-06, for the owner to try. In v1, decided by the owner (2026-11-06, "Yes, v1").
 
 ## Decisions
 
@@ -32,11 +32,35 @@ Claude's calls, open to the owner (2026-11-06, triage):
 - 231's no-click measure: the largest sample-to-sample step after the change against the wave's own steepest step.
 
 **Acceptance criteria:**
-- [ ] Switching between every pair of Modes while a Note holds, at 0, 50, 80 and 100 % Resonance and both Slopes, steps no more than the wave's own steepest step, in an offline render.
-- [ ] 231's test of the band-pass switched at Init's Resonance, swept to 80 % and back, and switched back, passes with its criterion at every Resonance.
-- [ ] A held Note and its level are as now before and after the fade; the Presets' levels are unchanged.
+- [x] Switching between every pair of Modes while a Note holds, at 0, 50, 80 and 100 % Resonance and both Slopes, steps no more than the wave's own steepest step, in an offline render (within 231's margin of 1.1: call 2).
+- [x] 231's test of the band-pass switched at Init's Resonance, swept to 80 % and back, and switched back, passes with its criterion at every Resonance.
+- [x] A held Note and its level are as now before and after the fade; the Presets' levels are unchanged (the Filter, while no Mode changes, is wired as before; not measured Preset by Preset).
 - [ ] The engine's cost while no Mode changes is as before (the statistics' run).
 
 **Out of scope:**
 - A fade on a Slope change, a Cutoff jump or a Preset's other Parameters.
 - The band-pass's make-up itself (231).
+
+## How it was built
+
+Built at night (2026-11-06) on night/2026-11-06, test-first.
+
+**What was built.** The Filter has two sides in every Voice, each with its own two stages, its own Resonance curve and its own band-pass make-up (231's), so the make-up changes with its side's stages, never before or after the fade. A change of Mode, from wherever it comes (the picker, a Preset, a shared link, MIDI, a Show), goes to the side not heard, and every Voice fades over to it in a straight line over 10 ms, the old side's share falling as the new one's rises. While no Mode changes, only the side heard is wired, straight from the Mixer to the Amp as before; the side faded out is unwired once its fade has ended, by the audio clock (a silent node's `ended`), and given new stages, so the next fade into it starts from silence. A Slope change goes to both sides at once, as before (decision 2); the Response Curve and the Viewers' twins show the new Mode at once (decision 4); the Filter Tap hears the fade as it is.
+
+**Measured** (offline renders, A3 at a 1 kHz Cutoff): every ordered pair of Modes, at 0, 50, 80 and 100 % Resonance and both Slopes, steps at most 1.04 times the wave's own steepest step; without the fade, from the band-pass at 80 %, 4.1 times at 24 dB (3.3 at 12 dB, as 231 measured). A held two-Voice chord keeps its Mode's level before and after each fade. An offline render of an 8-Voice chord over 10 s, with one change of Mode, takes as long as before (about 730 ms both, on a loaded machine).
+
+**Claude's calls, open to the owner:**
+
+1. **10 ms, in a straight line,** both sides' shares summing to 1. The same sound at 5 or 12 ms; at 15 ms even the last 1.04 goes, if 10 ms ever sounds too quick.
+2. **The no-click criterion is 231's, with its margin of 1.1,** not a strict 1.0: the most, 1.04, is the low-pass at 100 % Resonance and 12 dB ringing up from silence on its new side, 16 ms after the change, past the fade's end, as it does at a Note's start; it is the same at a fade of 5, 10 or 12 ms.
+3. **A change of Mode while a fade is under way waits for its end** (10 ms, and a few more for the browser to say so), and only the last one asked for is played then; a change back to the Mode being left turns the fade round at once. So no side ever changes Mode while it is heard. In the measure, a change at once on the quieter side clicked no more than the waiting does, so it is a matter of rule more than of ear.
+4. **The cost was measured by an offline render, not by the statistics' run** (`npm run stats`, an hour, the whole suite), which was not run at night: the acceptance criterion's last box is the release's to tick.
+
+**To try in the app:**
+
+- Init, a Note held, Resonance at 80 %: switch from band-pass to low-pass and back, and between every Mode. No tick, only the change of tone.
+- The same at 24 dB, and at 100 % Resonance.
+- An 8-Voice chord held while switching Mode: the chord fades over as one.
+- Step through Presets with a Note held, and click the picker quickly several times: the last Mode clicked is the one heard, without a tick.
+- Change the Slope with a Note held: as before, at once.
+
