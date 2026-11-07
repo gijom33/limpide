@@ -158,7 +158,8 @@ test('Next, Back and Close work from the keyboard (issue 128)', async ({ page })
   await expect(card(page)).toBeHidden();
 });
 
-for (const at of [1, 2, 3, 4, 5, 6]) {
+// The first card, closed, and the last, done: the give-back itself is the Shows' unit tests' at any card (issue 250).
+for (const at of [1, 6]) {
   test(`closed at card ${at}, the Tour gives back the Patch the person had, value for value (issue 128)`, async ({ page }) => {
     await page.goto('/');
     await patchName(page).click();
@@ -324,26 +325,14 @@ test('the person’s own Freeze on the Amp card is theirs: the Tour freezes no m
   await expect(frozen(page)).toHaveCount(1);
 });
 
-test('leaving the Amp card lets go of the Tour’s Freeze, and leaves the person’s as it is (issue 130)', async ({ page }) => {
+// Next and Back letting go of the Tour's Freeze alone are the Shows' unit tests' (issue 250).
+test('closing the Tour on the Amp card lets go of its Freeze (issue 130)', async ({ page }) => {
   test.setTimeout(60000);
   await toAmpCard(page);
-  await expect(frozen(page)).toHaveCount(1, { timeout: 8000 });
-  await action(page, 'Next').click();
-  await expect(frozen(page)).toHaveCount(0);
-
-  await action(page, 'Back').click();
   await expect(frozen(page)).toHaveCount(1, { timeout: 8000 });
   await card(page).getByRole('button', { name: 'Close the Tour' }).click();
   await expect(card(page)).toBeHidden();
   await expect(frozen(page)).toHaveCount(0);
-
-  await startFromAbout(page);
-  await action(page, 'Next').click();
-  await action(page, 'Next').click();
-  await pressSpace(page);
-  await expect(frozen(page)).toHaveCount(1);
-  await action(page, 'Back').click();
-  await expect(frozen(page)).toHaveCount(1);
 });
 
 // Issue 206: where a card's control and its Viewer do not fit on screen together, the page shows each in turn: the

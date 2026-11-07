@@ -302,21 +302,8 @@ test.describe('on a phone', () => {
     await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
   });
 
-  test('a scroll of the person’s own stops the following until the next part', async ({ page }) => {
-    await page.goto('/');
-    await demo(page).click();
-    // The Filter's slow scroll has landed (issue 211): its top just under the section strip.
-    const gap = () =>
-      page.evaluate(() => document.querySelector('section[aria-label="Filter"]')!.getBoundingClientRect().top - document.querySelector('.section-strip')!.getBoundingClientRect().bottom);
-    await expect.poll(gap, { timeout: LANDING_MS, intervals: [100] }).toBeLessThan(20);
-    await page.evaluate(() => {
-      document.body.dispatchEvent(new WheelEvent('wheel', { deltaY: -2000, bubbles: true }));
-      scrollTo({ top: 0, behavior: 'instant' });
-    });
-    await staysWhileThePartPlays(page, 0, 4500); // past the Amp's Decay starting to move, in the intro
-    await expect(demo(page)).toHaveAttribute('aria-pressed', 'true');
-  });
-
+  // The following stopped until the next part is the Shows' unit tests' (issue 250): here, that the page sees a scroll of
+  // the person's own.
   test('Page Down is a scroll of the person’s own: the Demo plays on and stops following until the next part (issue 227)', async ({ page }) => {
     await page.goto('/');
     await demo(page).click();
