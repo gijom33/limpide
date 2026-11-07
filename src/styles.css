@@ -625,7 +625,7 @@ html:has(dialog.about[open]) { overflow: hidden; }
   display: flex; align-items: flex-end; min-height: var(--target); padding: 0; color: inherit;
   background: none; border: 0; border-radius: var(--radius-control); cursor: pointer;
 }
-/* Below 340 px (a folded phone's 280), a smaller name and gap keep Bead inside About, in Linux's wider type too. */
+/* Below 340 px (a folded phone's 280), a smaller name and gap keep Bead inside About, in a wider font too (DejaVu Sans). */
 @media (max-width: 339px) {
   .about-title { font-size: 24px; }
   .about-bead { margin-left: var(--space-2); }
@@ -745,8 +745,8 @@ html:has(dialog.about[open]) { overflow: hidden; }
   .voices-field .field-caption { flex: 1 1 100%; }
 }
 /* On the narrowest phones, both Envelope rows have their names above them and their faders the stage's whole width,
-   alike (issue 80): beside their names, Linux's wider fonts brought the Amp's Release within 7 pt of Volume (the 1.15.0
-   deploy; the 1.12.4 deploy before it). */
+   alike (issue 80): beside their names, the wider DejaVu Sans of GitHub's runner then brought the Amp's Release within
+   7 pt of Volume (the 1.15.0 deploy; the 1.12.4 deploy before it). */
 @media (max-width: 600px) {
   @container (max-width: 379px) {
     .block .sub-block:has(.envelope-knobs) > h3, .block .sub-block:has(.envelope-knobs) > .tip-anchor:first-child { flex: 1 1 100%; align-self: auto; }
@@ -1235,7 +1235,7 @@ html:has(dialog.about[open]) { overflow: hidden; }
 /* Words while there is room (issue 154): from 861 to 1099 px icons alone (the tooltips name them) and the BPM its
    number alone; from 1100 px the newcomer's four, Demo, Song, Tutorial and About, keep their words; from 1280 px every
    button keeps its word, the BPM its unit. Each step leaves the piano its 10 white keys at about 42 px or more (a
-   little under at 1100 px in Linux's wider fonts). */
+   little under at 1100 px in a wider font: 39.6 px in DejaVu Sans, issue 250). */
 @media (min-width: 861px) and (max-width: 1099px) {
   header :is(.demo-word, .tool-word, .tempo-unit) { display: none; }
   .header-right :where(.demo-button, .midi-status, .display-menu > .tip-anchor > .tool, .about-menu .tool) { justify-content: center; }
@@ -1552,7 +1552,7 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   .patch-bar > .tip-anchor { flex: 1 1 auto; }
 }
 /* Windows narrower than most phones (375 px), down to the narrowest (320 px, issue 157), pad the buttons 2 px and set
-   them 2 px apart, so the playing and set-up row fits without one button over another, in Linux's wider fonts too; the
+   them 2 px apart, so the playing and set-up row fits without one button over another, in a wider font too; the
    two groups stay 4 px apart. Display's button is named as the phone's own padding rule names it, which raises the
    whole list to that rule's weight, so this one wins over it. */
 @media (max-width: 374px) {

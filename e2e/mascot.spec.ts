@@ -26,8 +26,8 @@ async function bringBead(page: Page) {
   await beadSwitch(page).getByRole('radio', { name: 'Bead on' }).click();
   await page.keyboard.press('Escape');
   await expect(page.getByRole('region', { name: 'Viewer controls' })).toBeHidden();
-  // Escape hands the focus back to Display's button, whose tip then shows: on Linux's wider type it reaches over the
-  // LFO & Envelopes' edge, and Bead rightly keeps clear of it. Nothing is left focused or hovered.
+  // Escape hands the focus back to Display's button, whose tip then shows: in a wider font it can reach over the LFO &
+  // Envelopes' edge (it did in DejaVu Sans, GitHub's old runner's), and Bead rightly keeps clear of it. Nothing is left focused or hovered.
   await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
   await page.mouse.move(0, 0);
   await expect(page.getByRole('tooltip')).toHaveCount(0);
