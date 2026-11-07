@@ -152,7 +152,7 @@ const airborne = (m: string) => m === 'falling' || m === 'flying';
 const edgeOf = (b: ReturnType<typeof scripted>, id: string) => b.reading().sections.find((s) => s.id === id)!.box;
 
 describe("Bead's frame, three across", () => {
-  it('stands on its home, the top right section, the Amp', () => {
+  it('stands on its home, the top right section, the Amp (issue 115)', () => {
     const b = scripted(THREE);
     b.run(3);
     const amp = edgeOf(b, 'Amp');
@@ -260,7 +260,7 @@ describe("Bead's frame, three across", () => {
     expect(after.drawn.every((d) => d.marks.ride === '')).toBe(true);
   });
 
-  it('thrown, it lands on the first edge under it', () => {
+  it('thrown, it lands on the first edge under it (issue 127)', () => {
     const b = scripted(THREE);
     b.run(3);
     const { left, where } = b.drawn;
@@ -278,7 +278,7 @@ describe("Bead's frame, three across", () => {
     expect(b.reading().sections.some((s) => s.box.top === b.drawn.where.foot)).toBe(true);
   });
 
-  it('sent away on its edge it melts; in the air it drips away down the window', () => {
+  it('sent away on its edge it melts; in the air it drips away down the window (issue 115)', () => {
     const melts = scripted(THREE);
     melts.run(3);
     melts.script.leaving = true;
@@ -424,7 +424,7 @@ describe("Bead's frame, on a phone and in 2 × 2", () => {
     });
   }
 
-  it('on a phone, sent away hovering under the tabs, it drips away down the window', () => {
+  it('on a phone, sent away hovering under the tabs, it drips away down the window (issue 142)', () => {
     // A short window scrolled to the LFO & Envelopes' foot: no edge in view, it hovers.
     const b = scripted({ ...ON_A_PHONE, window: { width: 375, height: 300 } });
     b.scrollTo(PHONE.sections[3].box[3] - 300);

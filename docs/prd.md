@@ -180,11 +180,13 @@ Framed by the owner on 2026-10-31 ([issue 131](./issues/131-v1.md), which tracks
 - **Tapers.** Pure mapping between a control position (0–1) and a Parameter value, in both directions, for each Taper.
 - **Note input.** Merges keyboard, on-screen piano and MIDI note events into one Note stream and applies last-note priority. It emits the Gate and the current Note. Hold is part of this module.
 - **Modulation model.** Pure: given a Patch, the Gate history, Velocity and time, it returns envelope levels and the Effective Cutoff, and produces the automation schedule.
+- **Modulation record.** What the engine scheduled, kept outside it: the Gate history, each LFO's clock and the Glide, which the Viewers and the Modulation model read back at any time (issue 244).
 - **Synth engine.** Owns the `AudioContext` graph. Interface: `start()`, `noteOn(note, velocity)`, `noteOff()`, `applyPatch(patch)`, `taps` (an analyser per Tap), `filterResponse(frequencies)` (delegating to the real biquads at the Effective Cutoff), `now()`.
 - **Spectrum analysis.** Pure: turns raw analyser data into display data: Harmonic positions and labels for a fundamental, the Ideal Reference per Waveform and Pulse Width, nearest-note naming, and Cycle Lock alignment (the fundamental's rising zeros in a time-domain buffer, along the pitch the engine plays; a Scope's lock keeps its last trace, to choose the start most like it, issue 180).
 - **Viewer renderers.** Draw Scope, Spectrum and Envelope Timeline onto canvases from display data. They hold the viewer state: Freeze, axes, Snapshot, hover, and Glow's kept traces of the last quarter of a second.
 - **MIDI.** Parses raw MIDI bytes into typed messages. It also holds the Mapping store, the MIDI Learn state machine, Encoder Mode detection, Pickup, and the Quick Setup sequence. Its input is a `MIDIAccess`-like interface, so a fake can be injected.
 - **Persistence.** A key–value storage interface (localStorage in the app, in-memory in tests) used for autosave, the named Patch library and Mappings.
+- **Shows.** The Demo, the Song, Listen, a Tutorial's Steps and the Tour's cards, built once beside the Patch: one set of rules for who stops whom and what is given back, read by the page and sent its commands (issue 243).
 - **UI (React).** The signal-flow layout, knobs, piano, MIDI panel, Patch browser and the Synth Geek Layer toggle.
 
 ## Testing Decisions

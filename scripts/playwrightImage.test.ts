@@ -9,7 +9,7 @@ const lock = (versions: Record<string, string>) =>
 const workflow = (tag: string) => `jobs:\n  browsers:\n    container:\n      image: mcr.microsoft.com/playwright:${tag}\n`;
 const ALL = (version: string) => ({ playwright: version, 'playwright-core': version, '@playwright/test': version });
 
-describe("Playwright's image against the lock file", () => {
+describe("Playwright's image against the lock file (issue 247)", () => {
   it('passes when the image names the locked version', () => {
     expect(imageProblem(workflow('v1.64.1-noble'), lock(ALL('1.64.1')))).toBeNull();
   });

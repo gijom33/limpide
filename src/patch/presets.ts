@@ -107,7 +107,7 @@ group('Filter', [
   ['12 vs 24', 'The same Cutoff at 12 dB: turn Slope to 24 and watch the high Harmonics fall twice as steeply under the Response Curve.', {
     cutoff: 700, resonance: 0.1, filterSlope: 12, ampSustain: 1,
   }],
-  ['Vowel', 'A narrow band-pass keeps a few Harmonics near the Cutoff, like the formant of a sung vowel, and so little else that it plays quietly; the LFO moves it slowly.', {
+  ['Vowel', 'A narrow band-pass keeps a few Harmonics near the Cutoff, like the formant of a sung vowel, and lets little else through; the LFO moves it slowly.', {
     volume: 0.1, filterMode: 'bandpass', cutoff: 800, resonance: 0.75, lfoRate: 0.4, lfoAmount: 0.25, ampSustain: 1, ampRelease: 0.5,
   }],
   ['High-pass Buzz', 'A high-pass takes away the fundamental and the low Harmonics: the saw’s ramp is gone and only its sharp edges remain.', {

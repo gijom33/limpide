@@ -115,7 +115,7 @@ describe('every Preset’s level against its group’s (issue 108)', () => {
   const APART: Record<string, { by: number; why: string }> = {
     'Thin Pulse': { by: -8, why: 'so narrow a pulse carries little energy, as its words say' },
     'Ring Bell': { by: -4.5, why: 'two sines multiplied sound quieter than either alone, as its words say' },
-    Vowel: { by: -12.5, why: 'a narrow band-pass lets little through, as its words say' },
+    Vowel: { by: -12.5, why: 'kept as quiet as it was before the band-pass was made up, its Volume down by as much (issue 231)' },
     'Breathing Bell': { by: -5.5, why: 'four Voices, where the rest of its group has one: the master makes room for them' },
   };
   let levels = new Map<string, number>();

@@ -353,9 +353,10 @@ describe('the Geek tips’ loose claims, fact-checked for 1.25.0 (issue 246)', (
     expect(responseFormula('lowpass', 24).where).toMatch(/analogue.*2 kHz Cutoff.*−89\.5 dB at 16 kHz.*−72\.2/);
   });
 
-  it('says which Pulse a peak of 1 is true of, and where the one played runs at its width', () => {
-    expect(harmonicFormula('pulse', 0.25).where).toMatch(/±1 .*−0\.5 to \+1\.5 at 25 %/);
-    expect(harmonicFormula('pulse', 0.5).where).toMatch(/−1 to \+1 at 50 %/);
+  it('says the formula is for a Pulse 2 high, and the one played low for d of each cycle and scaled to a peak of 1 (fact-checked for 1.26.0)', () => {
+    const { where } = harmonicFormula('pulse', 0.25);
+    expect(where).toMatch(/aₙ: its amplitude for a Pulse 2 from its low to its high/);
+    expect(where).toMatch(/low for d of each cycle .* its peak is 1/);
   });
 
   it('says FM is kept smaller on high Notes', () => {

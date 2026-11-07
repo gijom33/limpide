@@ -68,12 +68,12 @@ export function harmonicFormula(waveform: Waveform, pulseWidth: number): Formula
       const percent = Math.round(pulseWidth * 100);
       const every = 100 / gcd(percent, 100);
       const gaps = every <= PULSE_GAPS_SAID ? `: every ${ordinal(every)} Harmonic missing` : '';
-      // The one played keeps no offset: high for d of a cycle at 2(1 − d), low for the rest at −2d (issue 246).
-      const [low, high] = [-2 * pulseWidth, 2 * (1 - pulseWidth)].map((v) => Number(v.toFixed(2)));
+      // The one played keeps no offset and is low for d of a cycle, its series scaled to a peak of 1 as every wave's
+      // (fact-checked for 1.26.0).
       return {
         says: 'A Pulse’s Harmonics follow its width: one is missing wherever a whole number of its cycles fits the high part exactly. At 50 % it is a Square.',
         formula: 'aₙ = 4 sin(π n d) / (π n)',
-        where: `${N_IS}; aₙ: its amplitude, the wave’s peak being 1 for a ±1 Pulse, 2 from its low to its high; the one played sits round 0, from −${-low} to +${high} at ${percent} %; d: the Pulse Width, ${percent} % now${gaps}; π: 3.14…. aₙ is 0 wherever n d is whole.`,
+        where: `${N_IS}; aₙ: its amplitude for a Pulse 2 from its low to its high; the one played is low for d of each cycle and high for the rest, centred on 0 and scaled so its peak is 1, so its Harmonics are smaller by one factor, in the same pattern; d: the Pulse Width, ${percent} % now${gaps}; π: 3.14…. aₙ is 0 wherever n d is whole.`,
       };
     }
   }
@@ -125,7 +125,7 @@ const CORE: Record<FilterMode, string> = {
 const RESPONSE_SAYS: Record<FilterMode, string> = {
   lowpass: 'Low-pass: the gain is 1 well below the Cutoff, so those Harmonics pass unchanged, and falls ever further above it; the higher Q, the higher a peak at the Cutoff.',
   highpass: 'High-pass, low-pass turned around: the gain is 1 well above the Cutoff and falls ever further below it; the higher Q, the higher a peak at the Cutoff.',
-  bandpass: 'Band-pass: the gain is G right at the Cutoff and falls either side of it; the higher Q, the narrower the band, and the higher G, so the band passes about as much as a low-pass would.',
+  bandpass: 'Band-pass: the gain is G right at the Cutoff and falls either side of it; the higher Q, the narrower the band, and the higher G, up to its ceiling, so the band passes about as much as a low-pass would short of the highest Resonance.',
   notch: 'Notch: the gain is 0 right at the Cutoff, where 1 − x² is, and 1 away from it; the higher Q, the narrower the gap.',
 };
 
@@ -138,7 +138,7 @@ export function responseFormula(mode: FilterMode, slope: FilterSlope): Formula {
   const top = slope === 12 ? '−44.8 dB at 16 kHz, against −36.1 dB here' : '−89.5 dB at 16 kHz, against −72.2 dB here';
   // A band-pass's make-up (issue 231), outside the stages: the 0 dB band raised to about a low-pass's level.
   const gained = isMadeUp(mode) ? 'G · ' : '';
-  const where = `x = f / fc, 1 at the Cutoff; |H|: the gain at the frequency f, 1 unchanged, 0 silent; fc: the Cutoff; Q: the Resonance as the Filter’s Q, which its knob reads in this layer${isMadeUp(mode) ? `; ${makeUpWords(slope)}` : ''}. This is the analogue Filter’s formula: the browser’s digital one falls faster near the top, a low-pass at a 2 kHz Cutoff and a flat Q of 0.71 ${top} (at 48 kHz).`;
+  const where = `x = f / fc, 1 at the Cutoff; |H|: the gain at the frequency f, 1 unchanged, 0 silent; fc: the Cutoff; Q: the Resonance as the Filter’s Q, which its knob reads in this layer${isMadeUp(mode) ? `; ${makeUpWords(slope)}` : ''}. This is the analogue Filter’s formula: the browser’s digital one falls faster near the top, a low-pass at a 2 kHz Cutoff and a flat Q (${slope === 12 ? '0.71' : '0.84 a stage'}) ${top} (at 48 kHz).`;
   return slope === 12
     ? { says: RESPONSE_SAYS[mode], formula: `|H| = ${gained}${one}`, where }
     : { says: `${RESPONSE_SAYS[mode]} At 24 dB, two of these Filters in a row: the gain squared, falling twice as fast.`, formula: `|H| = ${gained}(${one})²`, where };

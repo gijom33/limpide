@@ -1109,7 +1109,7 @@ describe('a band-pass not so much quieter (issue 231)', () => {
 
   // At a high Resonance, switching from the band-pass steps more than its wave does (1.4 times at 60 %, 3.3 at 80 %
   // on this A3): the stages swap at one sample, and the band-pass is louder now. Not the make-up's own: a crossfade
-  // between Modes would be the Filter's, which issue 231 leaves to the owner.
+  // between Modes would be the Filter's, issue 248.
   it('switches to it at Init’s Resonance, sweeps that by the knob to 80 % and back, and switches back, without a click', async () => {
     const ctx = new OfflineAudioContext(1, SR * 1.1, SR);
     const engine = createSynthEngine(ctx);

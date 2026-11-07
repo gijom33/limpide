@@ -25,11 +25,12 @@ Claude's calls, open to the owner (2026-11-06, triage):
 8. **A Tap's level reads its samples twice** a frame (the sum, then the silence): once.
 9. **The browser specs that repeat unit tests** (decision 1): the Shows' rules and Bead's acts, ride home, drop on a plot, throw and melt.
 10. **MIDI Learn and a Program button** (decision 2): a keyboard that sends a Bank Select with each Program button, pressed while learning, gets CC 0 learned, and its banks stop working.
+11. **The comments on Linux's fonts** (the ripple hunter): the header's 39.6 px white key, the Patches' wider-type stand-in and the styles' "Linux's wider fonts" were measured with DejaVu Sans, the runner's font; GitHub's browser jobs now measure in Liberation Sans (247). Measured again in the image, and the words set to what it shows.
 
 ## Agent Brief
 
 **Category:** enhancement
-**Summary:** Ten small tidy-ups from 1.26.0's review: the specs' locators, waits and repeats, a few things written twice or named loosely in the engine and the Shows, one Preset lookup, one pass over a Tap's samples, and MIDI Learn passing over a Program button's Bank Select.
+**Summary:** Eleven small tidy-ups from 1.26.0's review: the specs' locators, waits and repeats, a few things written twice or named loosely in the engine and the Shows, one Preset lookup, one pass over a Tap's samples, the comments on Linux's fonts, and MIDI Learn passing over a Program button's Bank Select.
 
 **Current behavior:** As the items above say.
 

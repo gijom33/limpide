@@ -68,3 +68,5 @@ The Preset's test now checks LFO 2 a Sine or Triangle, the Q at or under 6 at ev
 ### What to try
 
 Load Talking Filter and hold C4: it should mumble without settling, the vowel opening and closing slowly under a quicker wobble, with no beep at any point of the cycle. Then try C3 and C5, and a short phrase.
+
+**Since then (2026-11-06, [231](./231-a-band-pass-not-so-much-quieter.md)):** the band-pass is made up to about a low-pass's level, so Talking Filter's Volume is down from 1 to 0.27, matched on its loudest moment over its LFO cycle (231's decision 9).

@@ -96,3 +96,5 @@ Claude's calls, open to the owner:
 **Since then (2026-11-04):** the air guitar's neck is drawn on Bead's usual side (call 3), not across its front as "How it was built" says; `docs/bead.md` and the code's comment say so.
 
 **Since then (2026-11-04, issue [230](./230-the-demos-card-small-in-the-corner.md)):** in three and four across the Demo's card sits in the window's bottom right corner, opening folded and small there; at 1440 × 900 Bead surfs LFO 1's plot, the card even unfolded, and a card moved over a plot still keeps Bead off it.
+
+**Since then (2026-11-05, [245](./245-beads-frame-read-decide-draw.md)):** the browser test of its acts in turn at three across left `e2e/mascot.spec.ts` for the node tests of Bead's frame, on readings of the page, as [232](./232-1-24-0-red-on-githubs-linux-webkit.md) records.

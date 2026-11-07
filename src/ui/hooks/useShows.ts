@@ -23,11 +23,13 @@ function touchedBy(target: EventTarget | null): Touched {
  */
 export function useShows(shows: Shows) {
   const now = useSyncExternalStore(shows.subscribe, shows.get);
-  const { demo } = now;
+  const demoOn = now.demo !== null;
   const touring = now.tour !== null;
 
+  // On while the Demo plays, not again at each part: a finger down before a part's change still stops it as it lifts
+  // (the 1.26.0 review).
   useEffect(() => {
-    if (demo === null) return;
+    if (!demoOn) return;
     const displayOpen = () => !!document.querySelector('.display-panel');
     const onKey = (e: KeyboardEvent) => {
       const event = { kind: 'key', key: e.key, freezes: freezesOnSpace(e), modifier: e.metaKey || e.ctrlKey || e.altKey } as const;
@@ -63,10 +65,10 @@ export function useShows(shows: Shows) {
       document.removeEventListener('pointerup', onLift);
       document.removeEventListener('pointercancel', onCancel);
     };
-  }, [shows, demo]);
+  }, [shows, demoOn]);
 
   // The person scrolling, the one check of the page's following for the Demo and the Tour (issue 227).
-  const watching = demo !== null || touring;
+  const watching = demoOn || touring;
   useEffect(() => (watching ? watchPersonScroll(shows.personScrolled) : undefined), [shows, watching]);
 
   // Nothing plays on after the page goes, and the Tour gives the person's Patch back.

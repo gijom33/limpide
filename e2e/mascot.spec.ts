@@ -1099,10 +1099,10 @@ const onTheBoard = (page: Page, lfo: number, ms: number) =>
           if (bead?.dataset.board === 'on') {
             const lean = Number(/rotate\((\S+)deg\)/.exec(bead.querySelector<HTMLElement>('.mascot-drop')!.style.transform)?.[1] ?? 0);
             const plot = document.querySelector(`.lfo-plot[data-lfo="${n}"]`)!;
-            const middle = bead.getBoundingClientRect().left + 9 - plot.getBoundingClientRect().left; // the drop's middle, the Mascot's DROP_MIDDLE
+            const middle = bead.getBoundingClientRect().left + 9 - plot.getBoundingClientRect().left; // the drop's middle, DROP_MIDDLE in Bead's cling
             const points = [...plot.querySelector('.lfo-plot-line')!.getAttribute('d')!.matchAll(/[ML](\S+) (\S+)/g)].map((m) => ({ x: Number(m[1]), y: Number(m[2]) }));
             const near = (x: number) => points.reduce((a, b) => (Math.abs(b.x - x) < Math.abs(a.x - x) ? b : a));
-            const [a, b] = [near(middle - 4), near(middle + 4)]; // the Mascot's SURF_SPAN across
+            const [a, b] = [near(middle - 4), near(middle + 4)]; // SURF_SPAN across, in Bead's frame
             if (b.x > a.x) out.push({ lean, slope: (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI });
           }
           if (now - start < ms) requestAnimationFrame(frame);
@@ -1142,7 +1142,7 @@ const alongTheLine = (page: Page, lfo: number, n: number, ms = 150) =>
           const plot = document.querySelector(`.lfo-plot[data-lfo="${lfo}"]`)!;
           const at = plot.getBoundingClientRect();
           const points = [...plot.querySelector('.lfo-plot-line')!.getAttribute('d')!.matchAll(/[ML](\S+) (\S+)/g)].map((m) => ({ x: Number(m[1]), y: Number(m[2]) }));
-          const middle = box.left + 9 - at.left; // the drop's middle, the Mascot's DROP_MIDDLE
+          const middle = box.left + 9 - at.left; // the drop's middle, DROP_MIDDLE in Bead's cling
           const under = points.reduce((a, b) => (Math.abs(b.x - middle) < Math.abs(a.x - middle) ? b : a));
           out.push({ off: box.bottom - (at.top + under.y), foot: box.bottom, moving: (el as HTMLElement).dataset.moving });
           if (out.length < n) setTimeout(read, ms);
