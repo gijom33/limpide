@@ -2030,6 +2030,46 @@ describe('the Voices beyond the setting (issue 257)', () => {
     // The chord rings on after the fall: E3's Release too, on the second Voice, now beyond the setting.
     expect(tone(164.8, 0.7, 0.9) / tone(164.8, 0.22, 0.42)).toBeGreaterThan(0.3);
   });
+
+  it('unwires a Voice beyond the setting once its Release has faded, a newer Note sounding on the first', async () => {
+    const graph = watchConnections();
+    try {
+      const ctx = new OfflineAudioContext(1, SR, SR);
+      const engine = createSynthEngine(ctx);
+      engine.setTapSource('all');
+      engine.applyPatch({ ...defaultPatch(), ...steady, voices: 2 });
+      const two = graph.pulledSources(ctx);
+      engine.applyPatch({ ...defaultPatch(), ...steady, voices: 1 });
+      const one = graph.pulledSources(ctx);
+      const pulled: number[] = [];
+      // A chord on 2 Voices; at 0.2 s E3 is let go (its Release fades by about 0.32 s), the setting falls to 1, and A2
+      // is struck again on the first Voice, the newest Note's.
+      void ctx.suspend(0.1).then(() => {
+        engine.applyPatch({ ...defaultPatch(), ...steady, voices: 2 });
+        engine.noteOn(45, 1);
+        engine.noteOn(52, 1);
+        void ctx.resume();
+      });
+      void ctx.suspend(0.2).then(() => {
+        engine.release(52);
+        engine.applyPatch({ ...defaultPatch(), ...steady, voices: 1 });
+        engine.noteOn(45, 1);
+        void ctx.resume();
+      });
+      for (const t of [0.25, 0.8])
+        void ctx.suspend(t).then(() => {
+          pulled.push(graph.pulledSources(ctx));
+          void ctx.resume();
+        });
+      await ctx.startRendering();
+      // Still ringing at 0.25 s, both Voices rendered (and the clock's timer that looks at the second again); by 0.8 s
+      // its Release has faded, and only the first is.
+      expect(pulled[0]).toBeGreaterThanOrEqual(two);
+      expect(pulled[1]).toBe(one);
+    } finally {
+      graph.stop();
+    }
+  });
 });
 
 // One test per Preset: rendering all of them in one test took most of the browser's 15 s per test, and ran

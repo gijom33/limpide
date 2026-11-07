@@ -1417,8 +1417,23 @@ export function createSynthEngine(
   const at = (time?: number) => time ?? ctx.currentTime;
   const voiceCount = (): Voices => patch?.voices ?? 1;
 
-  /** When each Voice ringing out beyond the setting is next looked at: the end of its Release. */
-  const lookAt = new Map<Voice, number>();
+  /**
+   * Calls `then` once the browser has rendered the sound up to `t`: a silent source ending there, wired so it is
+   * rendered, is the audio clock's own timer, which an offline render keeps to as well.
+   */
+  const atClock = (t: number, then: () => void) => {
+    const timer = ctx.createConstantSource();
+    timer.offset.value = 0;
+    timer.connect(master);
+    timer.onended = () => {
+      timer.disconnect();
+      then();
+    };
+    timer.start(t);
+    timer.stop(t + RENDER_QUANTUM / ctx.sampleRate);
+  };
+  /** When each Voice ringing out beyond the setting is looked at again: the end of its Release. */
+  const releaseEnds = new Map<Voice, number>();
   /**
    * Only the Voices that may sound are wired (issue 257): those the Voices setting uses, the newest Note's (the Taps
    * listen to it), and any still ringing out, looked at again when its Release has faded. The others are unwired, so
@@ -1428,21 +1443,17 @@ export function createSynthEngine(
   const rewire = () => {
     const now = ctx.currentTime;
     voices.forEach((v, i) => {
+      const used = i < voiceCount() || v === lead;
       const ringing = v.freeAt > now;
-      v.setWired(i < voiceCount() || v === lead || ringing);
-      if (i < voiceCount() || v === lead || !ringing || !Number.isFinite(v.freeAt) || lookAt.get(v) === v.freeAt) return;
-      // The browser's clock tells when the Release is over, as for a Mode's fade: a silent source ending then.
-      lookAt.set(v, v.freeAt);
-      const timer = ctx.createConstantSource();
-      timer.offset.value = 0;
-      timer.connect(master);
-      timer.onended = () => {
-        timer.disconnect();
-        if (lookAt.get(v) === v.freeAt) lookAt.delete(v);
+      v.setWired(used || ringing);
+      if (used || !ringing || !Number.isFinite(v.freeAt) || releaseEnds.get(v) === v.freeAt) return;
+      // The browser's clock tells when the Release is over, as it tells a Mode's fade.
+      const end = v.freeAt;
+      releaseEnds.set(v, end);
+      atClock(end, () => {
+        if (releaseEnds.get(v) === end) releaseEnds.delete(v);
         rewire();
-      };
-      timer.start(v.freeAt);
-      timer.stop(v.freeAt + RENDER_QUANTUM / ctx.sampleRate);
+      });
     });
     listen();
   };
@@ -1550,11 +1561,7 @@ export function createSynthEngine(
     settled = false;
     for (const v of voices) v.fadeTo(to, t, startShare);
     const fading = ++latestFade;
-    const timer = ctx.createConstantSource();
-    timer.offset.value = 0;
-    timer.connect(master);
-    timer.onended = () => {
-      timer.disconnect();
+    atClock(t + MODE_FADE, () => {
       if (fading !== latestFade) return;
       settleOn(to);
       if (!pending) return;
@@ -1565,9 +1572,7 @@ export function createSynthEngine(
       for (const v of voices) v.setSides(slopeNow, ctx.currentTime);
       setSideCurves(slopeNow, ctx.currentTime);
       fadeTo(1 - heard, ctx.currentTime + (2 * RENDER_QUANTUM) / ctx.sampleRate);
-    };
-    timer.start(t);
-    timer.stop(t + MODE_FADE + RENDER_QUANTUM / ctx.sampleRate);
+    });
   };
   /**
    * A change of Filter Mode at `t` (issue 248): the side not heard takes the new Mode, and every Voice fades over to it,

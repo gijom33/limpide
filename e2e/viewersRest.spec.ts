@@ -92,13 +92,14 @@ test('with an LFO on and nothing playing, its plot goes on moving while the Ampâ
 });
 
 test('at Init with nothing playing, the LFO plots, flat at Depth 0, write nothing over many frames (issue 257)', async ({ page }) => {
-  const plots = page.locator('.lfo-plot');
+  const plots = page.getByRole('img', { name: /^LFO \d:/ });
   await expect(plots).toHaveCount(2);
   await expect(plots.first().locator('.lfo-plot-line')).toHaveAttribute('d', /\d/);
+  for (const plot of await plots.all()) await plot.evaluate((el) => el.setAttribute('data-watched', ''));
   const writes = await page.evaluate(async () => {
     let count = 0;
     const observer = new MutationObserver((records) => (count += records.length));
-    for (const plot of document.querySelectorAll('.lfo-plot')) observer.observe(plot, { attributes: true, subtree: true });
+    for (const plot of document.querySelectorAll('[data-watched]')) observer.observe(plot, { attributes: true, subtree: true });
     for (let i = 0; i < 30; i++) await new Promise(requestAnimationFrame);
     observer.disconnect();
     return count;
