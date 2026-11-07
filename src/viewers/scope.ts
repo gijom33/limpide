@@ -7,6 +7,7 @@ import { createGuideGlide } from './guides';
 import { createRest } from './rest';
 import { scopeScale } from './scopeScale';
 import { scopeWindow } from './scopeWindow';
+import type { Hooks } from './testHooks';
 import type { ViewSettings } from './viewSettings';
 
 // LIMITING stays up this long after the last sample past the limiter's knee, so a brief one can be read.
@@ -67,8 +68,11 @@ export function createScope(
   const still = matchMedia('(prefers-reduced-motion: reduce)');
   const rest = createRest();
 
-  /** `silent`: the Tap has been silent long enough for the Glow's traces of sound to fade (issue 214). */
-  return function draw(silent: boolean) {
+  /**
+   * `silent`: the Tap has been silent long enough for the Glow's traces of sound to fade (issue 214). Hands back what
+   * it drew as the canvas's test hooks, for the frame's write (issue 257): none at rest.
+   */
+  return function draw(silent: boolean): Hooks | undefined {
     const { frozen } = view().viewer;
     const f = frozenFundamental(frozen, fundamental);
     // Guides at the level the Mixer sends (issue 159), on every Scope: inside them the Filter only removed energy;
@@ -86,7 +90,8 @@ export function createScope(
       ...canvasInputs(canvas, COLOURS),
       settings.cycles, glowing, settings.overlays.guides, settings.viewer.snapshot, frozen, guideLevel, limited, period,
     ];
-    if (rest(silent, inputs)) return;
+    if (rest(silent, inputs)) return undefined;
+    const hooks: Hooks = {};
 
     if (!frozen) analyser.getFloatTimeDomainData(samples);
     const { g, width, height } = prepareCanvas(canvas);
@@ -103,7 +108,7 @@ export function createScope(
       snapshotToken = snapshot;
       snapshotTrace = snapshot === null ? null : trace;
     }
-    canvas.dataset.snapshot = String(snapshotTrace !== null);
+    hooks.snapshot = String(snapshotTrace !== null);
 
     const { yOf } = scopeScale(height);
 
@@ -114,7 +119,7 @@ export function createScope(
     g.lineTo(width, height / 2);
     g.stroke();
 
-    canvas.dataset.guides = guideLevel.toFixed(3);
+    hooks.guides = guideLevel.toFixed(3);
     if (view().overlays.guides) {
       g.fillStyle = cssVar(canvas, '--muted');
       g.globalAlpha = 0.08;
@@ -133,7 +138,7 @@ export function createScope(
     }
 
     if (limiting) {
-      canvas.dataset.limiting = String(limited);
+      hooks.limiting = String(limited);
       if (limited) {
         g.font = '600 10px system-ui, sans-serif';
         g.fillStyle = cssVar(canvas, '--danger');
@@ -170,7 +175,7 @@ export function createScope(
       stroke(value);
     }
     g.globalAlpha = 1;
-    canvas.dataset.glow = String(past.length);
+    hooks.glow = String(past.length);
 
     // Shade between the trace and zero, like the Spectrums' fill: the waveform's positive and negative halves.
     g.fillStyle = colour;
@@ -188,12 +193,13 @@ export function createScope(
     stroke(trace);
 
     // The Synth Geek Layer's period, top left, over the trace on a halo; LIMITING has the top right.
-    canvas.dataset.period = period;
+    hooks.period = period;
     if (period) {
       g.font = '10px system-ui, sans-serif';
       g.fillStyle = cssVar(canvas, '--muted');
       g.textAlign = 'left';
       haloText(g, period, 6, 13, cssVar(canvas, '--bg'));
     }
+    return hooks;
   };
 }
