@@ -120,6 +120,17 @@ describe('the statistics page (issue 84)', () => {
     expect(page).toMatch(/settles for 2 s, then is measured for 10 s, the same each time/);
   });
 
+  it('gives the Demo’s numbers as the median of three runs after a cool-down, the machine’s load beside them (issue 257)', () => {
+    const page = statisticsPage([row('1.26.3', { demoFps: 59.9, demoCpu: 86.2, demoLoad: 1.84 }), row('1.26.2', { demoFps: 55.9, demoCpu: 107.8 })]);
+    const demo = page.slice(page.indexOf('### Playing the Demo'), page.indexOf('### An 8-Voice chord'));
+    expect(demo).toContain('each number the median of 3 runs, after a 60 s cool-down');
+    expect(demo).toContain('| Version | Frames a second | Slowest frame | Main thread busy | CPU | Memory | Load |');
+    expect(demo).toContain('| 1.26.3 | 59.9 (+4.0) | — | — | 86.2% (−21.6 pt) | — | 1.84 |');
+    expect(demo).toContain('| 1.26.2 | 55.9 | — | — | 107.8% | — | — |'); // measured once, before
+    expect(page).toContain('- **Load:** ');
+    expect(page.indexOf('- **Load:** ')).toBeGreaterThan(page.indexOf('## The running app'));
+  });
+
   it('shows a second release’s row above the first, with the key numbers’ changes since', () => {
     const first = row('1.16.0', { appLines: 14000, appFiles: 120, unitTests: 600, unitPassed: 600, jsBytes: 300000, jsGzip: 90000, demoFps: 59.8, demoCpu: 30, demoHeap: 20e6, commits: 400 });
     const second = row('1.17.0', { appLines: 14056, appFiles: 121, unitTests: 590, unitPassed: 589, jsBytes: 301000, jsGzip: 90000, demoFps: 60, demoCpu: 27.5, demoHeap: 21.04e6, commits: 420 });

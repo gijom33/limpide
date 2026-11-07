@@ -10,8 +10,9 @@
 import { execFileSync, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
-import { cpus, tmpdir, totalmem } from 'node:os';
+import { cpus, loadavg, tmpdir, totalmem } from 'node:os';
 import { join } from 'node:path';
+import { setTimeout as wait } from 'node:timers/promises';
 import { gzipSync } from 'node:zlib';
 import { type Browser, chromium } from 'playwright';
 import { preview, runnerImport } from 'vite';
@@ -276,6 +277,19 @@ async function stateValues(browser: Browser, url: string, state: (typeof STATES)
   };
 }
 
+/**
+ * The Demo's numbers (issue 257): each the median of `runs` runs, each in a fresh page, and beside them the machine's
+ * load as they began.
+ */
+async function demoValues(browser: Browser, url: string, runs: number, settle: number, seconds: number): Promise<Values> {
+  const load = loadavg()[0];
+  const measured: Values[] = [];
+  for (let i = 0; i < runs; i++) measured.push(await stateValues(browser, url, 'demo', settle, seconds));
+  const values: Values = { demoLoad: load };
+  for (const id of Object.keys(measured[0])) values[id] = median(measured.map((m) => m[id]!));
+  return values;
+}
+
 function machine(): string {
   const system = process.platform === 'darwin' ? `macOS ${execFileSync('sw_vers', ['-productVersion'], { encoding: 'utf8' }).trim()}` : `${process.platform}`;
   return `${cpus()[0]?.model ?? 'unknown processor'}, ${cpus().length} cores, ${Math.round(totalmem() / 2 ** 30)} GB, ${system}`;
@@ -316,6 +330,11 @@ async function measureNow(quick: boolean, work: string): Promise<{ row: Row; fai
   say('the build…');
   const outDir = join(work, 'site');
   Object.assign(values, buildValues(ROOT, outDir, date));
+  if (!quick) {
+    // The suites and the build leave the machine busy for a while: the running app is measured once it has calmed.
+    say(`a cool-down of ${TIMINGS.coolDownSeconds} s…`);
+    await wait(TIMINGS.coolDownSeconds * 1000);
+  }
 
   const server = await preview({ configFile: false, root: ROOT, logLevel: 'warn', build: { outDir }, preview: { port: PORT, strictPort: true, host: '127.0.0.1' } });
   const browser = await chromium.launch({ channel: 'chromium', args: ['--autoplay-policy=no-user-gesture-required'] });
@@ -324,8 +343,15 @@ async function measureNow(quick: boolean, work: string): Promise<{ row: Row; fai
     say('the page load…');
     Object.assign(values, await pageLoadValues(browser, url, quick ? 1 : TIMINGS.pageLoads));
     for (const state of STATES) {
-      say(`the running app: ${state.title}…`);
-      Object.assign(values, await stateValues(browser, url, state.id, quick ? 1 : TIMINGS.settleSeconds, quick ? 2 : TIMINGS.stateSeconds));
+      const [settle, seconds] = quick ? [1, 2] : [TIMINGS.settleSeconds, TIMINGS.stateSeconds];
+      if (state.id === 'demo') {
+        const runs = quick ? 1 : TIMINGS.demoRuns;
+        say(`the running app: ${state.title}, ${runs} run${runs > 1 ? 's' : ''} (load ${loadavg()[0].toFixed(2)})…`);
+        Object.assign(values, await demoValues(browser, url, runs, settle, seconds));
+      } else {
+        say(`the running app: ${state.title}…`);
+        Object.assign(values, await stateValues(browser, url, state.id, settle, seconds));
+      }
     }
     const row: Row = { version, date, machine: machine(), browser: `Chromium ${browser.version()}, headless`, values };
     return { row, failed };
