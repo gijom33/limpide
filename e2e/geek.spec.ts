@@ -146,7 +146,7 @@ test('the tips of Osc 2’s tuning and the Noise give their formulas under the h
   await page.keyboard.press('Tab');
   await region.getByRole('slider', { name: sliderName('Detune') }).focus();
   const detune = tipOf('Fine-tunes Osc 2');
-  await expect(detune.locator('.tooltip-hood')).toContainText(/^Under the hood\s*Δf = f·\(2\^\(c\/1200\) − 1\)/);
+  await expect(detune.locator('.tooltip-hood')).toContainText(/^Under the hood\s*Δf = \|p f₁ − q f₂\|/);
   // Above the History line, which stays last.
   await expect(detune.locator('.tooltip-hood + .tooltip-history')).toHaveCount(1);
   await region.getByRole('slider', { name: sliderName('Semitone') }).focus();
@@ -169,15 +169,18 @@ test('on a phone Osc 2’s numbers show in the name’s place while the control 
   await expect(knob.locator('.knob-value > span').first()).toBeVisible();
   await expect(knob.locator('.knob-value > span').first()).toHaveText('×1.498');
   await expect(knob.locator('.knob-label')).toBeHidden();
-  // Detune's figure alone there, its words too wide for the name's place: 440 Hz × 1.498 × (2^(10/1200) − 1).
+  // Detune's figure alone there, its words too wide for the name's place: Osc 1's 3rd, 1320 Hz, against Osc 2's 2nd,
+  // 2 × 440 Hz × 1.498 × 2^(10/1200) (issue 256).
   const detune = page.getByRole('slider', { name: 'Osc 2 Detune' });
   await detune.press('PageUp');
-  await expect(page.locator('.knob', { has: detune }).locator('.knob-value > span').first()).toHaveText('3.82 Hz', { useInnerText: true });
+  await expect(page.locator('.knob', { has: detune }).locator('.knob-value > span').first()).toHaveText('6.15 Hz', { useInnerText: true });
 });
 
 // Issue 207: in the name's place a value is centred on its own column, clear of the next name ("12.9 HzEnv Amount").
-test('Detune’s beats in its name’s place stay clear of Env Amount’s name, and no knob moves (issue 207)', async ({ page }) => {
+test('Detune’s beats in its name’s place stay clear of Env Amount’s name, and no knob moves (issues 207, 256)', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('limpide.overlays', JSON.stringify({ geek: true })));
+  // Each width opens on Init, not on the knobs the last one left autosaved.
+  await page.addInitScript(() => localStorage.removeItem('limpide.current'));
   const textBox = (el: Element) => {
     const range = document.createRange();
     range.selectNodeContents(el);
@@ -193,18 +196,27 @@ test('Detune’s beats in its name’s place stay clear of Env Amount’s name, 
     const knobs = page.locator('.knob', { has: page.getByRole('slider', { name: /^Osc 2 / }) });
     const places = () => knobs.evaluateAll((ks) => ks.map((k) => k.getBoundingClientRect().left));
     const before = await places();
-    await detune.press('End');
-    // Pointed at, it keeps its value up past the moment a change shows it, however slowly the page runs.
-    await detune.hover();
     const shown = knob.locator('.knob-value > span').first();
-    await expect(shown).toHaveText('12.9 Hz', { useInnerText: true });
-    const value = await shown.evaluate(textBox);
-    const column = await knob.evaluate((k) => k.getBoundingClientRect());
-    const name = await page.locator('.knob', { has: page.getByRole('slider', { name: 'Osc 2 Env Amount' }) }).locator('.knob-label').evaluate(textBox);
-    expect(name.left - value.right, `${width} px`).toBeGreaterThanOrEqual(6);
-    expect(value.left, `${width} px`).toBeGreaterThanOrEqual(column.left);
-    expect(value.right, `${width} px`).toBeLessThanOrEqual(column.right);
-    expect(await places()).toEqual(before);
+    /** Its readout in the name's place, clear of Env Amount's name and within its column, no knob moved. */
+    const clear = async (readout: string) => {
+      // Pointed at, it keeps its value up past the moment a change shows it, however slowly the page runs.
+      await detune.hover();
+      await expect(shown).toHaveText(readout, { useInnerText: true });
+      const value = await shown.evaluate(textBox);
+      const column = await knob.evaluate((k) => k.getBoundingClientRect());
+      const name = await page.locator('.knob', { has: page.getByRole('slider', { name: 'Osc 2 Env Amount' }) }).locator('.knob-label').evaluate(textBox);
+      expect(name.left - value.right, `${readout} at ${width} px`).toBeGreaterThanOrEqual(6);
+      expect(value.left, `${readout} at ${width} px`).toBeGreaterThanOrEqual(column.left);
+      expect(value.right, `${readout} at ${width} px`).toBeLessThanOrEqual(column.right);
+      expect(await places()).toEqual(before);
+    };
+    await detune.press('End');
+    await clear('12.9 Hz');
+    // A semitone and a quarter up, no pair of Harmonics heard beating: said in the same room (issue 256).
+    await page.getByRole('slider', { name: 'Osc 2 Semitone' }).press('ArrowUp');
+    await detune.press('Home');
+    await detune.press('End');
+    await clear('no beats');
   }
 });
 

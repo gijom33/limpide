@@ -2953,6 +2953,42 @@ describe('the Synth Geek Layer’s numbers for Osc 2, held to the engine (issue 
     });
 });
 
+// Issue 256: Detune's beats are those of the lowest pair of Harmonics that nearly coincide, at every interval.
+describe('Detune’s beats at every interval, held to the engine (issue 256)', () => {
+  const saws = { cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001, waveform: 'saw', osc2Waveform: 'saw', mixOsc1: 1, mixOsc2: 1 } as const;
+  /**
+   * How fast the partials near `hz` swell and fade, in Hz: their level in 40 ms Hann windows every 5 ms, after the
+   * Attack, its rises through the middle counted.
+   */
+  const beatsNear = (s: Float32Array, hz: number) => {
+    const size = SR / 25;
+    const hop = SR / 200;
+    const levels: number[] = [];
+    for (let from = SR / 4; from + size <= s.length; from += hop) levels.push(toneAmplitudeHann(s.subarray(from, from + size), SR, hz));
+    const middle = (Math.max(...levels) + Math.min(...levels)) / 2;
+    const rises: number[] = [];
+    for (let i = 1; i < levels.length; i++)
+      if (levels[i - 1] < middle && levels[i] >= middle) rises.push(i - 1 + (middle - levels[i - 1]) / (levels[i] - levels[i - 1]));
+    return (rises.length - 1) / (((rises[rises.length - 1] - rises[0]) * hop) / SR);
+  };
+
+  // Where the pair meets at A4: Osc 1's 1st against Osc 2's 1st, then its 2nd an octave down; a fifth up, Osc 1's 3rd
+  // against Osc 2's 2nd, near 1320 Hz.
+  for (const [where, tuning, near] of [
+    ['in unison, 10 cents up', { osc2Detune: 10 }, 440],
+    ['an octave down, 10 cents up', { osc2Octave: -1, osc2Detune: 10 }, 440],
+    ['a fifth up, in tune', { osc2Semitone: 7 }, 1320],
+    ['a fifth up, 10 cents up', { osc2Semitone: 7, osc2Detune: 10 }, 1320],
+  ] as const)
+    it(`two Saws beat as fast as Detune reads, ${where}`, async () => {
+      const patch: Patch = { ...defaultPatch(), ...saws, ...tuning };
+      const s = await render(5, patch, (e) => e.noteOn(69, 1, 0));
+      const readout = geekReadout('osc2Detune', patch.osc2Detune, patch, { note: 69 });
+      expect(readout).toMatch(/ Hz beats$/);
+      expect(Math.abs(beatsNear(s, near) - Number.parseFloat(readout!))).toBeLessThan(0.02);
+    });
+});
+
 // Issue 133, decision 4: the LFOs' and Key Track's numbers held to what the engine plays (issue 169).
 describe('the Synth Geek Layer’s numbers for the LFOs and Key Track, held to the engine (issue 169)', () => {
   const sine = { cutoff: 20000, resonance: 0, ampSustain: 1, ampAttack: 0.001, waveform: 'sine', osc2Waveform: 'sine' } as const;

@@ -1,12 +1,12 @@
 import { filterStages, isMadeUp, isPeaked, MAKE_UP_RISES_FROM, makeUp } from '../engine/filterDesign';
 import { type EnvelopeStage, STAGE_SHARPNESS, stageTimeConstant } from '../modulation/envelope';
 import { GLIDE_SHARPNESS } from '../modulation/lfo';
-import { destinationSwings, effectiveCutoff, KEY_TRACK_CENTRE, LFO_LAWS, type LfoLaw, osc2Cents } from '../modulation/modulationModel';
+import { destinationSwings, effectiveCutoff, KEY_TRACK_CENTRE, LFO_LAWS, type LfoLaw } from '../modulation/modulationModel';
 import {
   type FilterMode, type FilterSlope, FM_INDEX, fmIndex, formatParam, LFO_DESTINATIONS, LFO_KEYS, type LfoNumber, type NoiseColour,
   PARAMS, type ParamId, type Patch, rateOf, secondsText,
 } from '../patch/patch';
-import { WAVEFORM_NAMES, type Waveform } from './harmonics';
+import { harmonicSeries, WAVEFORM_NAMES, type Waveform } from './harmonics';
 import { besselJ, osc2Ratio } from './idealReference';
 import { A4_MIDI, noteToFrequency, preciseFrequencyText } from './pitch';
 import { NOTE_VALUES, noteHz } from './tempo';
@@ -201,14 +201,43 @@ function multipleText(ratio: number): string {
   return `×${k >= 0 ? 2 ** k : FRACTIONS[-k]}`;
 }
 
+/** The highest Harmonic of either Oscillator whose beats Detune's readout counts (issue 256). */
+const BEATING_HARMONICS = 8;
+/** How near two Harmonics must be to nearly coincide, in cents: a quarter-tone, Detune's reach. */
+const COINCIDING_CENTS = 50;
+/** Beats this fast or faster are heard as roughness, no longer as beats (issue 256). */
+const BEATS_HEARD_BELOW_HZ = 20;
+/** The top of what is heard: Harmonics above it beat unheard. */
+const HEARD_UP_TO_HZ = 20000;
+/** Whether a Waveform has its nth Harmonic, n up to BEATING_HARMONICS: a Square none of its even ones. */
+const hasHarmonic = (waveform: Waveform, pulseWidth: number) => {
+  const { magnitudes } = harmonicSeries(waveform, pulseWidth, BEATING_HARMONICS + 1);
+  return (n: number) => magnitudes[n] > 1e-4;
+};
+
 /**
- * How fast Osc 2 beats against a tone at its pitch before Detune, in Hz (issue 167): Δf = f·(2^(c/1200) − 1), f the
- * Note played moved by Osc 2's Transpose as the engine tunes it (osc2Cents, the knobs alone), c the cents of Detune.
+ * How fast Osc 2 beats against Osc 1, in Hz (issue 256): the beats of the lowest pair of their Harmonics that nearly
+ * coincide, Osc 1's pth against Osc 2's qth, f₂ / f₁ near p / q, Δf = |p f₁ − q f₂|; f₁ and f₂ at the Note played, Osc 2
+ * tuned by its knobs as the engine tunes it (osc2Ratio), c the cents of Detune. Undefined where no pair is heard
+ * beating: none up to the 8th Harmonics within a quarter-tone and under what is heard, or the lowest beating at 20 Hz
+ * or faster.
  */
-export function detuneBeatsHz(patch: Patch, cents: number, note: GeekNote): number {
-  const f = geekNoteHz(note) * 2 ** (osc2Cents({ ...patch, osc2Detune: 0 }) / 1200);
-  return Math.abs(f * (2 ** (cents / 1200) - 1));
+export function detuneBeatsHz(patch: Patch, cents: number, note: GeekNote): number | undefined {
+  const f1 = geekNoteHz(note) * 2 ** patch.osc1Octave;
+  const ratio = osc2Ratio({ ...patch, osc2Detune: cents });
+  const osc1Has = hasHarmonic(patch.waveform, patch.pulseWidth);
+  const osc2Has = hasHarmonic(patch.osc2Waveform, patch.osc2PulseWidth);
+  for (let p = 1; p <= BEATING_HARMONICS && p * f1 < HEARD_UP_TO_HZ; p++) {
+    const q = Math.round(p / ratio);
+    if (q < 1 || q > BEATING_HARMONICS || Math.abs(1200 * Math.log2((q * ratio) / p)) > COINCIDING_CENTS + 1e-9) continue;
+    if (!osc1Has(p) || !osc2Has(q)) continue;
+    const beats = Math.abs(p - q * ratio) * f1;
+    return beats < BEATS_HEARD_BELOW_HZ ? beats : undefined;
+  }
+  return undefined;
 }
+/** What Detune reads where no pair of Harmonics is heard beating (issue 256). */
+const NO_BEATS = 'no beats';
 /** A rate in Hz to three figures: "2.55 Hz", "25.5 Hz", "981 Hz". */
 const hzText = (hz: number) => `${hz < 10 ? hz.toFixed(2) : hz < 100 ? hz.toFixed(1) : Math.round(hz)} Hz`;
 
@@ -272,10 +301,14 @@ const GEEK_CONTROLS: Partial<Record<ParamId, GeekControl>> = {
   ...Object.fromEntries(GAINS.map((id) => [id, gain])),
   osc2Octave: multiple((value) => 2 ** value),
   osc2Semitone: multiple((value) => 2 ** (value / 12)),
-  // Its widest at the top of MIDI's Notes, Osc 2 three octaves up: 2.9 kHz.
+  // Issue 256: under 20 Hz, or no beats said.
   osc2Detune: {
-    read: (value, patch, { note }) => ({ figure: hzText(detuneBeatsHz(patch, value, note)), words: note === null ? BEFORE_ANY_NOTE : 'beats' }),
-    widest: [{ figure: '9999 Hz', words: 'beats' }],
+    read: (value, patch, { note }) => {
+      const beats = detuneBeatsHz(patch, value, note);
+      const atA4 = note === null ? BEFORE_ANY_NOTE : undefined;
+      return beats === undefined ? { figure: NO_BEATS, words: atA4 } : { figure: hzText(beats), words: atA4 ?? 'beats' };
+    },
+    widest: [{ figure: '20.0 Hz', words: 'beats' }, { figure: NO_BEATS, words: BEFORE_ANY_NOTE }],
   },
   ...Object.fromEntries([...lfoControls(1), ...lfoControls(2)]),
   // Issue 169: the Cutoff at the Note under Key Track.
@@ -335,9 +368,10 @@ export const UNDER_THE_HOOD = {
     formula: 'f₂ = f × 2^(s/12)',
     where: 's: the Semitones; f: the Note played. Twelve equal steps to an octave, each ×1.059; +7 is ×1.498, near a fifth’s 3/2.',
   },
+  // Issue 256: the lowest pair of Harmonics that nearly coincide, as detuneBeatsHz.
   osc2Detune: {
-    formula: 'Δf = f·(2^(c/1200) − 1)',
-    where: 'Δf: the beats per second against a tone at f; c: the cents; f: Osc 2 before Detune, on the Note played (A4 until one is).',
+    formula: 'Δf = |p f₁ − q f₂|',
+    where: `Δf: the beats per second; f₁, f₂: Osc 1’s and Osc 2’s frequencies on the Note played (A4 until one is), with their Octaves, Semitone and Detune; p, q: the lowest pair of their Harmonics within a quarter-tone of each other, Osc 1’s pth and Osc 2’s qth, so f₂ / f₁ is near p / q: 1/1 in unison, 1/2 an octave down, 3/2 a fifth up. Up to the ${ordinal(BEATING_HARMONICS)} Harmonics the Waveforms have; past ${BEATS_HEARD_BELOW_HZ} a second, beats blur into roughness, and with no pair, none: there it reads no beats.`,
   },
   // Issue 169: the LFOs and Key Track.
   lfoRate: { formula: 'T = 1 / f', where: 'T: the period, one cycle, in seconds; f: the Rate in Hz.' },
