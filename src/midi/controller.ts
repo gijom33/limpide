@@ -20,13 +20,16 @@ export interface KnownController {
   upgrade(stored: readonly Mapping[], recorded: string | null): readonly Mapping[] | null;
   /** The Section, by its place on the page, a control of its layout plays (undefined: none): the page follows its banks. */
   section(control: Control): number | undefined;
-  /** A control's place on it, by its bank's letter and its own name ("B", "K1"); undefined for a control it has not. */
-  place(control: Control): { bank: string; name: string } | undefined;
+  /** A control's place on it, by its bank's letter, its kind and its own name ("B", "knob", "K1"); undefined for a control it has not. */
+  place(control: Control): { bank: string; kind: PlaceKind; name: string } | undefined;
   /** How many banks it has: a place taken on all of them is "every bank's". */
   banks: number;
   /** The share of a Grid step a Relative message of more than one step (a fast turn) counts for, signed. */
   fastTurnStep: number;
 }
+
+/** What a place on a known Controller is: what its Mapping does is said by it (a knob turns, a fader moves). */
+export type PlaceKind = 'knob' | 'fader' | 'button';
 
 /** One record per tag: a tag added to the Mapping's list without its Controller does not compile. */
 const KNOWN: Record<ControllerId, KnownController> = { c16: C16 };

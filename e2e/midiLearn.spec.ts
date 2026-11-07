@@ -358,7 +358,7 @@ test('a Relative knob steps a Mixer fader by 1 % outside the Synth Geek Layer, b
   await expect(osc1).toHaveAttribute('aria-valuetext', '94 %'); // −0.5 dB
 });
 
-test('each Action does its own job from its own pad: Next and Previous Preset, Freeze, Snapshot, Hold, Tap Tempo (none swapped)', async ({ page }) => {
+test('each Action does its own job from its own pad: Next and Previous Preset, Freeze, Snapshot, Hold, Tap Tempo (none swapped; Tap Tempo since issue 255)', async ({ page }) => {
   const pad = (note: number) => [[0x99, note, 100], [0x89, note, 0]];
   const learn = async (target: () => Promise<void>, note: number, name: RegExp) => {
     await startLearn(page);

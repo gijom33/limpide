@@ -1,4 +1,4 @@
-import { answeredBy } from './controller';
+import { answeredBy, type PlaceKind } from './controller';
 import { describeControl, describeTarget, targetKey } from './describe';
 import type { Mapping } from './mappings';
 
@@ -7,12 +7,12 @@ const VERBS = { turn: 'turns', move: 'moves', fire: 'fires', switch: 'switches' 
 type Verb = keyof typeof VERBS;
 
 /** A button fires an Action and switches a choice; a fader moves; a knob turns. */
-const verbOf = (mapping: Mapping, name?: string): Verb =>
+const verbOf = (mapping: Mapping, kind?: PlaceKind): Verb =>
   mapping.target.kind === 'action'
     ? 'fire'
     : mapping.mode === 'trigger' || mapping.mode === 'toggle' || mapping.control.kind === 'note'
       ? 'switch'
-      : name?.startsWith('F')
+      : kind === 'fader'
         ? 'move'
         : 'turn';
 
@@ -23,24 +23,24 @@ const verbOf = (mapping: Mapping, name?: string): Verb =>
  */
 export function describeTaken(took: readonly Mapping[]): string {
   // Each place's Mappings with the same target gathered, its banks in order; an own Mapping alone.
-  const groups = new Map<string, { mapping: Mapping; name?: string; banks: string[]; of: number }>();
+  const groups = new Map<string, { mapping: Mapping; kind?: PlaceKind; name?: string; banks: string[]; of: number }>();
   took.forEach((mapping, i) => {
     const known = answeredBy(mapping);
     const place = known?.place(mapping.control);
     const key = known && place ? `${known.id} ${place.name} ${targetKey(mapping.target)}` : `own ${i}`;
-    const group = groups.get(key) ?? { mapping, name: place?.name, banks: [], of: known?.banks ?? 0 };
+    const group = groups.get(key) ?? { mapping, kind: place?.kind, name: place?.name, banks: [], of: known?.banks ?? 0 };
     if (place) group.banks.push(place.bank);
     groups.set(key, group);
   });
   return [...groups.values()]
-    .map(({ mapping, name, banks, of }) => {
-      const verb = verbOf(mapping, name);
+    .map(({ mapping, kind, name, banks, of }) => {
+      const verb = verbOf(mapping, kind);
       const plural = banks.length > 1 && banks.length < of;
       const who = !name
         ? describeControl(mapping.control)
         : banks.length === of
           ? `every bank’s ${name}`
-          : `${plural ? 'banks' : 'bank'} ${banks.join(' and ')}’s ${name}`;
+          : `${plural ? 'banks' : 'bank'} ${[banks.slice(0, -1).join(', '), banks.at(-1)].filter(Boolean).join(' and ')}’s ${name}`;
       return `${who} no longer ${plural ? verb : VERBS[verb]} ${describeTarget(mapping.target)}`;
     })
     .join('; ');

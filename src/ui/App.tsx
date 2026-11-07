@@ -367,7 +367,7 @@ export function App() {
       onOpen={midi.connect}
       activity={midi.activity}
       mappings={midi.mappings}
-      sendPositions={midi.sendPositions}
+      sendingPositions={midi.sendingPositions}
       learning={learning}
       onLearn={() => midi.surface.startLearn()}
       onDone={() => (midi.setup ? midi.updateSetup({ type: 'finish' }) : midi.surface.stopLearn())}

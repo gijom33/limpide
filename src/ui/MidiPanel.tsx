@@ -25,7 +25,7 @@ interface Props {
   activity: MidiActivity;
   mappings: readonly Mapping[];
   /** The known Controllers seen sending positions from knobs their layout has Relative (issue 255): the panel says how to set them. */
-  sendPositions: readonly ControllerId[];
+  sendingPositions: readonly ControllerId[];
   /** MIDI Learn (or Quick Setup) is on: the button says so, and the panel offers Done where Learn was started. */
   learning: boolean;
   onLearn(): void;
@@ -62,13 +62,13 @@ const doubledPortsText = (devices: readonly string[]) =>
     .join('');
 
 /** A connected known Controller whose knobs send positions where its layout expects Relative steps: how to set them (issue 255). */
-const positionsText = (devices: readonly string[], sendPositions: readonly ControllerId[]) =>
+const positionsText = (devices: readonly string[], sendingPositions: readonly ControllerId[]) =>
   knownAmong(devices)
-    .filter(({ id }) => sendPositions.includes(id))
+    .filter(({ id }) => sendingPositions.includes(id))
     .map(({ id }) => ` ${CONTROLLER_TIPS[id].positions}`)
     .join('');
 
-const statusText = (state: MidiState, sendPositions: readonly ControllerId[] = []) => {
+const statusText = (state: MidiState, sendingPositions: readonly ControllerId[]) => {
   const devices = state.kind === 'ready' ? state.devices : [];
   return state.kind === 'unsupported' && state.ios
     ? 'No browser on iPhone or iPad supports Web MIDI, Chrome included: Apple makes them all run on Safari’s engine. Play from a MIDI Controller on a computer or an Android device; everything else works here.'
@@ -77,7 +77,7 @@ const statusText = (state: MidiState, sendPositions: readonly ControllerId[] = [
       : state.kind === 'denied'
         ? 'MIDI access was not allowed, so Controllers cannot be heard. Allow MIDI in the browser’s site settings, or open Limpide in Chrome or Edge (some built-in browsers never allow it).'
         : devices.length
-          ? `Connected: ${devices.join(', ')}. Its keys and pads play the synth, with Velocity.${doubledPortsText(devices)}${positionsText(devices, sendPositions)}`
+          ? `Connected: ${devices.join(', ')}. Its keys and pads play the synth, with Velocity.${doubledPortsText(devices)}${positionsText(devices, sendingPositions)}`
           : // A Bluetooth Controller is a port like any other once the system has paired it, as the owner's C16 is (issue 143).
             'No MIDI Controller connected. Plug one in by USB and it is picked up straight away. A Bluetooth one plays once the system pairs it as a MIDI device (on a Mac, in Audio MIDI Setup; on Windows and Linux, untried), as a TempoPAD C16 does on a Mac.';
 };
@@ -98,7 +98,7 @@ function ActivityLine({ activity }: { activity: MidiActivity }) {
  * anywhere in it, MIDI Learn, Done and a layout close it back to the button; Quick Setup, to its card (issue 189).
  */
 export function MidiPanel({
-  state, onOpen, activity, mappings, sendPositions, learning, onLearn, onDone, onQuickSetup, onLayout, onRemove, onMode, onClear, bendRange, onBendRange,
+  state, onOpen, activity, mappings, sendingPositions, learning, onLearn, onDone, onQuickSetup, onLayout, onRemove, onMode, onClear, bendRange, onBendRange,
   aftertouch, onAftertouch,
 }: Props) {
   const [open, setOpen] = useState(false);
@@ -117,7 +117,7 @@ export function MidiPanel({
 
   return (
     <div className="midi-menu" ref={wrapper}>
-      <Tooltip content={{ ...TIPS.midi, body: statusText(state, sendPositions) }}>
+      <Tooltip content={{ ...TIPS.midi, body: statusText(state, sendingPositions) }}>
         <button
           ref={button}
           type="button"
@@ -150,7 +150,7 @@ export function MidiPanel({
       </Tooltip>
       {open && (
         <div ref={panel} className="midi-panel" data-panel role="dialog" aria-label="MIDI">
-          <p className="midi-connection">{statusText(state, sendPositions)}</p>
+          <p className="midi-connection">{statusText(state, sendingPositions)}</p>
           <div className="midi-activity">
             <span className="midi-heading">Last message</span>
             <ActivityLine activity={activity} />

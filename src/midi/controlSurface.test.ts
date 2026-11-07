@@ -793,6 +793,21 @@ describe('MIDI Learn beside the C16 layout (issue 255)', () => {
     expect(positions.cutoff).toBeCloseTo(70 / 127);
   });
 
+  it('the C16 knob it took drives nothing, not even the mod wheel’s LFO 1 Depth its CC 1 is unmapped', () => {
+    const { surface, positions, hear } = learning(cutoff);
+    hear(cc(1, 10), cc(1, 11), cc(1, 12), cc(1, 13));
+    surface.stopLearn();
+    surface.handle(cc(1, 65), C16);
+    expect(positions.lfoAmount).toBeUndefined();
+  });
+
+  it('says the C16 place it took when another input learns its very control for its very target', () => {
+    const { surface, store, hear } = learning(cutoff); // a keyboard sending bank B's K1's CC
+    hear(cc(9, 10), cc(9, 11), cc(9, 12), cc(9, 13));
+    expect(took(surface.learnState()).map((m) => m.control.number)).toEqual([9]);
+    expect(store.find(onC16(9))).toMatchObject({ except: 'c16' });
+  });
+
   it('keeps the C16 out when that control is learned again from another input', () => {
     const { surface, store, hear } = learning(cutoff);
     hear(cc(1, 10), cc(1, 11), cc(1, 12), cc(1, 13));

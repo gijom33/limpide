@@ -22,6 +22,7 @@ describe('what a learned Mapping took, in words (issue 255)', () => {
     expect(m4).toHaveLength(4);
     expect(describeTaken(m4)).toBe('every bank’s M4 no longer fires Hold');
     expect(describeTaken(m4.slice(0, 2))).toBe('banks A and B’s M4 no longer fire Hold');
+    expect(describeTaken(m4.slice(0, 3))).toBe('banks A, B and C’s M4 no longer fire Hold');
   });
 
   it('names a person’s own Mapping by its control', () => {

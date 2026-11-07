@@ -152,13 +152,19 @@ export function createControlSurface(synth: Synth) {
    * that it was learned away from before) leaves that Controller out, so its knob, taken, drives nothing (issue 255).
    */
   const learned = (made: Mapping, from: KnownController | undefined) => {
-    const took = store.list().filter((m) => clash(m, made) && !(sameControl(m.control, made.control) && sameTarget(m.target, made.target)));
     const away = store
       .list()
       .filter((m) => sameControl(m.control, made.control))
       .map((m) => m.device ?? m.except)
       .find((id) => id && id !== from?.id);
     const mapping: Mapping = away ? { ...made, except: away } : made;
+    // Taken: what shares its control or its target, but the same control learned again for the same target, still
+    // answering every Controller it did.
+    const kept = (m: Mapping) =>
+      sameControl(m.control, mapping.control) &&
+      sameTarget(m.target, mapping.target) &&
+      (m.device ? mapping.except !== m.device : !mapping.except || mapping.except === m.except);
+    const took = store.list().filter((m) => clash(m, mapping) && !kept(m));
     store.set(mapping);
     keepOff(mapping.control);
     setLearn({ phase: 'armed', target: null, learned: mapping, took });
@@ -493,6 +499,9 @@ export function createControlSurface(synth: Synth) {
           : { kind: 'note', channel: message.channel, number: message.note },
       );
       if (mapping && answers(mapping, from)) return apply(mapping, message, from);
+      // A known Controller's control learned away from it (issue 255) drives nothing: not even a keyboard's own meaning
+      // of its CC (a C16's K1 is the mod wheel's CC 1).
+      if (mapping?.except && mapping.except === from?.id) return;
       // Unmapped: a keyboard's own controls do what a synth player expects.
       if (incoming.type === 'pitchBend') return synth.bend?.(incoming.value);
       if (message.type === 'cc' && message.controller === BANK_SELECT) {
