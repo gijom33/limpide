@@ -8,6 +8,8 @@ export type EncoderMode = 'absolute' | 'relative-twos' | 'relative-centred';
 const distance = (centre: number, v: number) => Math.abs(((v - centre + 192) % 128) - 64);
 /** A Relative step's value: a few either side of its centre, never the centre itself (no movement). */
 const isStep = (centre: number, v: number) => v !== centre && distance(centre, v) <= 15;
+/** Whether a value is a 64-centred Relative step (65 up, 63 down, a few more when turned fast), not a position. */
+export const isCentredStep = (v: number) => isStep(64, v);
 /** Within a Relative step of the bottom: 1 to 15. */
 const offTheBottom = (v: number) => isStep(0, v) && v < 64;
 /** Within a Relative step of the top, 113 to 126: not 127, a two's-complement step down. */

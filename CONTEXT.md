@@ -293,7 +293,7 @@ A connected MIDI hardware device, such as the Synido TempoPAD C16. A **known Con
 _Avoid_: Device, MIDI keyboard
 
 **Mapping**:
-A link from one Controller control (a channel plus CC or note) to a Parameter, a choice (a Waveform, the Filter Mode, Voices…), an Action or the Tempo (issue 112). A **momentary button** (127 pressed, 0 let go) acts on its press; a **toggle button** (one value per press, each the other) on every message. The C16 layout's Mappings answer a C16 only; any other answers every Controller.
+A link from one Controller control (a channel plus CC or note) to a Parameter, a choice (a Waveform, the Filter Mode, Voices…), an Action or the Tempo (issue 112). A **momentary button** (127 pressed, 0 let go) acts on its press; a **toggle button** (one value per press, each the other) on every message. The C16 layout's Mappings answer a C16 only; any other answers every Controller, but one MIDI Learn heard from another input on a control the C16 layout had, which leaves the C16 out (issue 255).
 _Avoid_: Binding, assignment
 
 **C16 layout**:
@@ -305,7 +305,7 @@ A momentary command that is not a Parameter: toggle Hold, Freeze, take a Snapsho
 _Avoid_: Command, shortcut
 
 **MIDI Learn**:
-The mode in which the next Controller message received (but a Program button's Bank Select) becomes the Mapping for the selected Parameter, choice or Action. A button learned on an Action or a Switch (LFO Sync, Retrigger, Legato) is heard out for half a second: a second message in that time (its release) makes it momentary; one message alone, whatever its value, a toggle (issue 147). On a Switch, each press then flips it, a pad's Note too (issue 223).
+The mode in which the next Controller message received (but a Program button's Bank Select) becomes the Mapping for the selected Parameter, choice or Action. A button learned on an Action or a Switch (LFO Sync, Retrigger, Legato) is heard out for half a second: a second message in that time (its release) makes it momentary; one message alone, whatever its value, a toggle (issue 147). On a Switch, each press then flips it, a pad's Note too (issue 223). A press cut short by another target selected learns nothing. The Learn bar says what a new Mapping took: the Mappings sharing its control or its target, a C16 place by its bank and name ("bank B's K1 no longer turns Cutoff", issue 255).
 _Avoid_: Auto-map
 
 **Quick Setup**:
@@ -317,7 +317,7 @@ How a Controller knob reports movement. **Absolute** sends a position (0–127):
 _Avoid_: Knob type
 
 **Pickup**:
-For Absolute Mappings, the rule that the Parameter ignores the knob until the knob passes through the Parameter's current value, so values never jump.
+For Absolute Mappings, the rule that the Parameter ignores the knob until the knob passes through the Parameter's current value, so values never jump. While it waits, the control shows a dashed ring and says which way to turn the knob (issue 255).
 _Avoid_: Soft takeover, catch
 
 **Activity Monitor**:

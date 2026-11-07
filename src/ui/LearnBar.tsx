@@ -1,9 +1,10 @@
 import { useLayoutEffect, useRef } from 'react';
 import type { LearnState } from '../midi/controlSurface';
 import { describeControl, describeTarget } from '../midi/describe';
+import { describeTaken } from '../midi/taken';
 
 /**
- * Along the bottom while MIDI Learn is on: what to do next, what was just mapped, and where to finish. Learn is
+ * Along the bottom while MIDI Learn is on: what to do next, what was just mapped and what it took, and where to finish. Learn is
  * ended where it was started (the MIDI button's panel) or with Escape; the bar only points there. Its height is
  * `--learn-h`, the room the page keeps below its last control while Learn is on, so every control can be scrolled clear
  * of it to be clicked (issue 252).
@@ -36,6 +37,8 @@ export function LearnBar({ state }: { state: LearnState }) {
       {state.phase === 'armed' && state.learned && (
         <span className="learn-done">
           Mapped {describeTarget(state.learned.target)} ← {describeControl(state.learned.control)}
+          {/* What it replaced, a C16 place it took among them (issue 255). */}
+          {state.took?.length ? `; ${describeTaken(state.took)}` : null}
         </span>
       )}
       <span className="learn-exit">

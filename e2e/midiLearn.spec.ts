@@ -230,18 +230,34 @@ test('a message redraws the Activity line alone: no other part of the page rende
   await expect(monitor).toContainText('Aftertouch · 39 %'); // the last, 49 of 127
 });
 
-test('a knob shows when hardware moves it, and when Pickup is still waiting for the knob to reach it', async ({ page }) => {
+test('a knob shows when hardware moves it, and while Pickup waits for the knob to reach it, until it does (issue 255)', async ({ page }) => {
   await startLearn(page);
   await cutoff(page).click();
   await play(page, cc(20, 10), cc(20, 11), cc(20, 12), cc(20, 13)); // an Absolute knob, far below Cutoff
   await page.keyboard.press('Escape');
   const knob = cutoff(page).locator('..');
   await play(page, cc(20, 14));
-  await expect(knob).toHaveAttribute('data-midi', 'waiting');
+  await expect(knob).toHaveAttribute('data-pickup', 'up'); // its dashed ring
+  await expect(cutoff(page)).toHaveAccessibleDescription(/^Pickup: turn your Controller’s knob up to this value to take it over\./);
+  await page.waitForTimeout(600);
+  await expect(knob).toHaveAttribute('data-pickup', 'up'); // still waiting, the knob still short of it
   await play(page, cc(20, 127)); // swept past the value: picked up
   await expect(knob).toHaveAttribute('data-midi', 'moved');
+  await expect(knob).not.toHaveAttribute('data-pickup', /./);
+  await expect(cutoff(page)).not.toHaveAccessibleDescription(/Pickup/);
   await expect(cutoff(page)).toHaveAttribute('aria-valuenow', '100');
   await expect(knob).not.toHaveAttribute('data-midi', /./, { timeout: 2000 }); // the flash fades
+});
+
+test('a Mapping learned on the bend wheel comes back after a reload (issue 255)', async ({ page }) => {
+  await startLearn(page);
+  await cutoff(page).click();
+  await play(page, ...[0, 32, 64, 96].map((msb) => [0xe0, 0, msb])); // the wheel pushed up from the bottom
+  await expect(learnBar(page)).toContainText('Mapped Cutoff ← ch 1 · Pitch bend');
+  await page.keyboard.press('Escape');
+  await page.reload();
+  await openMidi(page);
+  await expect(midiPanel(page).getByRole('list', { name: 'Mappings' })).toContainText(/Cutoff.*ch 1 · Pitch bend/);
 });
 
 test('a Waveform learns from an encoder: two clicks step to the next shape, as they appear on screen', async ({ page }) => {
@@ -342,7 +358,7 @@ test('a Relative knob steps a Mixer fader by 1 % outside the Synth Geek Layer, b
   await expect(osc1).toHaveAttribute('aria-valuetext', '94 %'); // −0.5 dB
 });
 
-test('each Action does its own job from its own pad: Next and Previous Preset, Freeze, Snapshot, Hold (none swapped)', async ({ page }) => {
+test('each Action does its own job from its own pad: Next and Previous Preset, Freeze, Snapshot, Hold, Tap Tempo (none swapped)', async ({ page }) => {
   const pad = (note: number) => [[0x99, note, 100], [0x89, note, 0]];
   const learn = async (target: () => Promise<void>, note: number, name: RegExp) => {
     await startLearn(page);
@@ -362,6 +378,7 @@ test('each Action does its own job from its own pad: Next and Previous Preset, F
   await learn(inDisplay('Freeze'), 38, /Freeze/);
   await learn(inDisplay('Snapshot'), 39, /Snapshot/);
   await learn(() => page.getByRole('button', { name: 'Hold' }).click(), 40, /Hold/);
+  await learn(() => page.getByRole('button', { name: 'Tap Tempo', exact: true }).click(), 41, /Tap Tempo/);
   if ((await display.getAttribute('aria-expanded')) === 'true') await display.click();
 
   const patchName = page.getByRole('button', { name: /^Patch: / });
@@ -379,6 +396,23 @@ test('each Action does its own job from its own pad: Next and Previous Preset, F
   await expect(display).toHaveAttribute('data-active', 'true'); // a Snapshot is held
   await expect(page.getByRole('button', { name: 'Hold' })).toHaveAttribute('aria-pressed', 'false');
   await play(page, ...pad(40));
+  await expect(page.getByRole('button', { name: 'Hold' })).toHaveAttribute('aria-pressed', 'true');
+  // Tap Tempo's pad, twice about 0.4 s apart: the tempo follows the taps, timed on the page's clock (as below), and
+  // nothing else moves.
+  const bpm = page.getByRole('spinbutton', { name: 'Tempo' });
+  const gap = await page.evaluate(async () => {
+    const { playMidi } = window as unknown as { playMidi(bytes: number[]): void };
+    const at: number[] = [];
+    for (let i = 0; i < 2; i++) {
+      at.push(performance.now());
+      playMidi([0x99, 41, 100]);
+      playMidi([0x89, 41, 0]);
+      if (i === 0) await new Promise((resolve) => setTimeout(resolve, 400));
+    }
+    return (at[1] - at[0]) / 1000;
+  });
+  await expect.poll(async () => Math.abs(Number(await bpm.getAttribute('aria-valuenow')) - 60 / gap), `${gap} s apart`).toBeLessThanOrEqual(1);
+  await expect(patchName).toHaveAttribute('aria-label', 'Patch: Init');
   await expect(page.getByRole('button', { name: 'Hold' })).toHaveAttribute('aria-pressed', 'true');
 });
 

@@ -228,7 +228,8 @@ kbd { border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; font-
 .fader-cap::before { content: ''; position: absolute; inset: -16px -11px; } /* a 44 × 44 target for a finger */
 .fader-cap:focus-visible:not([data-pointer]) { outline: 2px solid var(--stage, var(--accent)); outline-offset: 2px; }
 .knob[data-midi='moved'] .fader-cap { box-shadow: 0 0 0 2px var(--stage, var(--accent)); }
-.knob[data-midi='waiting'] .fader-cap { box-shadow: 0 0 0 2px var(--muted); }
+/* Pickup waiting for the Controller's fader to catch the value (issue 255): dashed until it does. */
+.knob[data-pickup] .fader-cap:not(:focus-visible:not([data-pointer])) { outline: 2px dashed var(--muted); outline-offset: 2px; }
 
 /* The value above a finger that drags a control (the finger hides the control and its readout). */
 .knob { position: relative; }
@@ -1382,14 +1383,15 @@ main[data-learning] { margin-bottom: calc(var(--learn-h, 0px) + var(--space-4));
 main[data-learning] [data-learn] { outline: 1px dashed var(--muted); outline-offset: 2px; border-radius: var(--radius-inner); cursor: crosshair; }
 main[data-learning] [data-learn][data-mapped] { outline-style: solid; }
 main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(--accent); }
-/* A mapped knob carries a small dot; a knob moved from hardware glows for a moment (dimmer while Pickup waits). */
+/* A mapped knob carries a small dot; a knob moved from hardware glows for a moment, and while Pickup waits for the
+   hardware knob to catch its value, a dashed ring shows round it until it does (issue 255). */
 .knob-label { position: relative; }
 .knob[data-mapped] .knob-label::after {
   content: ''; position: absolute; top: 50%; left: calc(100% + 3px); width: 4px; height: 4px; margin-top: -2px;
   border-radius: 50%; background: var(--stage, var(--accent));
 }
 .knob[data-midi='moved'] .knob-dial { outline: 2px solid var(--stage, var(--accent)); outline-offset: 1px; border-radius: 50%; }
-.knob[data-midi='waiting'] .knob-dial { outline: 2px solid var(--muted); outline-offset: 1px; border-radius: 50%; }
+.knob[data-pickup] .knob-dial:not(:focus-visible:not([data-pointer])) { outline: 2px dashed var(--muted); outline-offset: 1px; border-radius: 50%; }
 /* Choices (Waveform, Filter Mode…) show the same: a corner dot when mapped, a glow when the Controller steps them. */
 [role='radiogroup'][data-learn] { position: relative; }
 [role='radiogroup'][data-mapped]::after {

@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type ChoiceId, PARAMS, type ParamId } from '../patch/patch';
 import { positionToValue, valueToPosition } from '../patch/taper';
 import { memoryStorage } from '../test/memoryStorage';
-import { C16 } from './c16';
+import { C16, c16Layout } from './c16';
 import { createControlSurface, type LearnState } from './controlSurface';
 import { createMappingStore } from './mappings';
 import type { MidiMessage } from './parser';
@@ -47,6 +47,7 @@ function rig(round = (p: number) => p) {
   const notes: string[] = [];
   const touched: string[] = [];
   const learns: LearnState[] = [];
+  const sendPositions: string[] = []; // the known Controllers told to send Relative steps (issue 255)
   const store = createMappingStore(memoryStorage());
   const surface = createControlSurface({
     ...untouched,
@@ -59,11 +60,12 @@ function rig(round = (p: number) => p) {
     setChoice: (id, index) => void (choices[id] = index),
     press: (note) => void notes.push(`on ${note}`),
     release: (note) => void notes.push(`off ${note}`),
-    touched: (target, state) => void touched.push(`${target.id} ${state}`),
+    touched: (target, state, way) => void touched.push(`${target.id} ${state}${way ? ` ${way}` : ''}`),
     learnChanged: (state) => void learns.push(state),
+    sendsPositions: (known) => void sendPositions.push(known.id),
   });
   const send = (...messages: MidiMessage[]) => messages.forEach((m) => surface.handle(m));
-  return { positions, choices, actions, notes, touched, learns, store, surface, send };
+  return { positions, choices, actions, notes, touched, learns, sendPositions, store, surface, send };
 }
 
 beforeEach(() => vi.useFakeTimers());
@@ -348,12 +350,19 @@ describe('Mapped controls', () => {
     store.set(absoluteCutoff);
     send(cc(20, 10), cc(20, 30)); // below, moving up but not there yet
     expect(positions.cutoff).toBe(0.5);
-    expect(touched).toEqual(['cutoff waiting', 'cutoff waiting']);
+    expect(touched).toEqual(['cutoff waiting up', 'cutoff waiting up']); // the way to turn it, to catch the value (issue 255)
     send(cc(20, 70)); // crossed 0.5 (63.5) between two messages
     expect(positions.cutoff).toBeCloseTo(70 / 127);
     send(cc(20, 20)); // now it follows, wherever it goes
     expect(positions.cutoff).toBeCloseTo(20 / 127);
     expect(touched.at(-1)).toBe('cutoff moved');
+  });
+
+  it('Pickup: a knob above the value waits to be turned down to it (issue 255)', () => {
+    const { store, touched, send } = rig();
+    store.set(absoluteCutoff);
+    send(cc(20, 120));
+    expect(touched).toEqual(['cutoff waiting down']);
   });
 
   it('Pickup: a knob landing on the value picks up straight away, from either side', () => {
@@ -749,6 +758,93 @@ describe('the C16 layout’s buttons and its own input (issue 145)', () => {
   });
 });
 
+describe('MIDI Learn beside the C16 layout (issue 255)', () => {
+  const onC16 = (number: number) => ({ kind: 'cc', channel: 1, number }) as const;
+  /** A rig with the C16 layout in place, learning one target from `send`'s messages, heard from `from`. */
+  const learning = (target: Parameters<ReturnType<typeof rig>['surface']['select']>[0], from?: typeof C16) => {
+    const r = rig();
+    r.store.restore(c16Layout());
+    r.surface.startLearn();
+    r.surface.select(target);
+    return { ...r, hear: (...messages: MidiMessage[]) => messages.forEach((m) => r.surface.handle(m, from)) };
+  };
+  const took = (state: LearnState) => (state.phase === 'armed' ? (state.took ?? []) : []);
+
+  it('says what a learned Mapping took: the control’s place and the target’s, a keyboard’s mod wheel on the Cutoff taking bank A’s K1 and bank B’s', () => {
+    const { surface, hear } = learning(cutoff); // heard from a keyboard, not the C16
+    hear(cc(1, 10), cc(1, 11), cc(1, 12), cc(1, 13));
+    expect(took(surface.learnState()).map((m) => [m.control.number, m.target.id])).toEqual([
+      [1, 'osc1Octave'],
+      [9, 'cutoff'],
+    ]);
+  });
+
+  it('leaves the C16 out of a Mapping learned from another input on a C16 knob’s CC: that knob, taken, turns nothing the wrong way', () => {
+    const { surface, store, positions, hear } = learning(cutoff);
+    hear(cc(1, 10), cc(1, 11), cc(1, 12), cc(1, 13));
+    expect(store.find(onC16(1))).toMatchObject({ target: cutoff, mode: 'absolute', except: 'c16' });
+    surface.stopLearn();
+    surface.handle(cc(1, 65), C16);
+    surface.handle(cc(1, 63), C16);
+    surface.handle(cc(1, 65), C16);
+    expect(positions.cutoff).toBe(0.5);
+    surface.handle(cc(1, 60)); // the keyboard's mod wheel, swept past the Cutoff: picked up
+    surface.handle(cc(1, 70));
+    expect(positions.cutoff).toBeCloseTo(70 / 127);
+  });
+
+  it('keeps the C16 out when that control is learned again from another input', () => {
+    const { surface, store, hear } = learning(cutoff);
+    hear(cc(1, 10), cc(1, 11), cc(1, 12), cc(1, 13));
+    surface.select(resonance);
+    vi.advanceTimersByTime(600);
+    hear(cc(1, 20), cc(1, 21), cc(1, 22), cc(1, 23));
+    expect(store.find(onC16(1))).toMatchObject({ target: resonance, except: 'c16' });
+  });
+
+  it('a C16 knob learned from the C16 itself drives its new target from the C16, saying what it no longer turns', () => {
+    const { surface, store, positions, hear } = learning(resonance, C16);
+    hear(cc(1, 65), cc(1, 65), cc(1, 65), cc(1, 65));
+    expect(took(surface.learnState()).map((m) => m.target.id)).toEqual(['osc1Octave', 'resonance']);
+    expect(store.find(onC16(1))).toEqual({ control: onC16(1), target: resonance, mode: 'relative-centred' });
+    surface.stopLearn();
+    surface.handle(cc(1, 65), C16);
+    expect(positions.resonance).toBeGreaterThan(0.2);
+  });
+
+  it('Hold learned on a keyboard’s pad takes M4 on every bank, and says so', () => {
+    const { surface, hear } = learning(hold);
+    hear(noteOn(36));
+    expect(took(surface.learnState()).map((m) => m.control.number)).toEqual([58, 70, 82, 94]);
+  });
+
+  it('takes nothing when a target is learned again on the control it had', () => {
+    const { surface, hear } = learning(cutoff, C16);
+    hear(cc(9, 65), cc(9, 65), cc(9, 65), cc(9, 65));
+    expect(took(surface.learnState())).toEqual([]);
+  });
+});
+
+describe('a C16 in its factory settings, its knobs sending positions (issue 255)', () => {
+  it('is told once, when a layout knob set to Relative #1 sends a position far from 64', () => {
+    const r = rig();
+    r.store.restore(c16Layout());
+    for (const value of [65, 66, 63, 62]) r.surface.handle(cc(9, value), C16); // Relative #1
+    expect(r.sendPositions).toEqual([]);
+    for (const value of [40, 41, 42, 43]) r.surface.handle(cc(9, value), C16); // bank B's K1 sending positions
+    r.surface.handle(cc(1, 100), C16);
+    expect(r.sendPositions).toEqual(['c16']);
+  });
+
+  it('is not told for a fader’s positions, nor another Controller’s on the same CCs', () => {
+    const r = rig();
+    r.store.restore(c16Layout());
+    r.surface.handle(cc(33, 20), C16); // bank A's F1
+    r.surface.handle(cc(9, 40)); // a keyboard's CC 9
+    expect(r.sendPositions).toEqual([]);
+  });
+});
+
 describe('the Rate, a note value with Sync on, and the tempo (issue 112)', () => {
   /** A synth whose LFO 1 Rate knob turns its note value (positions in steps of 1/23), with a tempo from 40 to 240. */
   const synced = () => {
@@ -1099,6 +1195,18 @@ describe('A button learned on a Switch flips it on each press (issue 223)', () =
     expect(choices.lfoSync).toBe(1);
     send(noteOn(36), noteOff(36));
     expect(choices.lfoSync).toBe(0);
+  });
+
+  it('a press cut short by another target selected learns nothing, as on an Action, and its release is not learned next (issue 255)', () => {
+    const { surface, store, choices, send } = rig();
+    surface.startLearn();
+    surface.select(sync);
+    send(cc(49, 127));
+    surface.select(hold); // a click on screen, or Quick Setup's Skip
+    send(cc(49, 0)); // letting go
+    vi.advanceTimersByTime(600);
+    expect(store.list()).toEqual([]);
+    expect(choices.lfoSync ?? 0).toBe(0);
   });
 
   it('a knob learned on a choice of more than two still learns its Encoder Mode', () => {

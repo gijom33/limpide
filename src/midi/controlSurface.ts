@@ -2,10 +2,10 @@ import { BPM_STEP, bpmPosition, positionBpm, wholeBpm } from '../music/tempo';
 import { stepParamBy } from '../patch/grid';
 import { type ChoiceId, inUnitShown, PARAMS, type ParamId } from '../patch/patch';
 import { answers, type KnownController } from './controller';
-import { detectEncoderMode, detectKnobMode, relativeDelta, relativeModeOf } from './encoderMode';
+import { detectEncoderMode, detectKnobMode, isCentredStep, relativeDelta, relativeModeOf } from './encoderMode';
 import {
-  type ActionId, type Control, controlKey, isRelative, type KnobMode, knobModeOf, learnsAsButton, type Mapping, type MappingStore, PITCH_BEND, sameControl,
-  type Target,
+  type ActionId, type Control, clash, controlKey, isRelative, type KnobMode, knobModeOf, learnsAsButton, type Mapping, type MappingStore, PITCH_BEND,
+  sameControl, sameTarget, type Target,
 } from './mappings';
 import type { MidiMessage } from './parser';
 
@@ -48,7 +48,8 @@ type ControlMessage = Exclude<MidiMessage, { type: 'pitchBend' } | { type: 'prog
 
 export type LearnState =
   | { phase: 'off' }
-  | { phase: 'armed'; target: Target | null; learned?: Mapping }
+  /** `took`: the Mappings the one just learned replaced, sharing its control or its target (issue 255). */
+  | { phase: 'armed'; target: Target | null; learned?: Mapping; took?: readonly Mapping[] }
   | { phase: 'listening'; target: Target; control: Control };
 
 interface Synth {
@@ -72,8 +73,11 @@ interface Synth {
   setChoice(id: ChoiceId, index: number): void;
   press(note: number, velocity: number): void;
   release(note: number): void;
-  /** A Controller moved a Parameter ('moved'), or turned its knob without reaching it yet ('waiting', Pickup). */
-  touched?(target: Target, state: 'moved' | 'waiting'): void;
+  /**
+   * A Controller moved a Parameter ('moved'), or turned its knob without reaching it yet ('waiting', Pickup): `way`, the
+   * way to turn it to catch the value, where Pickup knows it (issue 255).
+   */
+  touched?(target: Target, state: 'moved' | 'waiting', way?: 'up' | 'down'): void;
   /** MIDI Learn moved on: started, a target selected, a Mapping made, or stopped. */
   learnChanged?(state: LearnState): void;
   /** What a keyboard's own controls do while nothing is mapped to them (issue 52): the bend wheel (−1 to 1), the
@@ -89,6 +93,11 @@ interface Synth {
   pressure?(amount: number): void;
   /** All Sound Off (issue 185): every Voice falls silent at once, its Release cut short, the pedal's Notes too. */
   silence?(): void;
+  /**
+   * A known Controller's knob, Relative in its layout, sent a position (a C16 left in its factory settings, its knobs
+   * then turning the wrong way below the middle): told once a visit, for the MIDI panel to say how to set it (issue 255).
+   */
+  sendsPositions?(known: KnownController): void;
 }
 
 /** What a knob or a fader moves: a Parameter, or the tempo. */
@@ -137,14 +146,27 @@ export function createControlSurface(synth: Synth) {
     justLearned = { control };
     settleJustLearned();
   };
-  const learned = (mapping: Mapping) => {
+  /**
+   * A Mapping learned from `from` (the known Controller heard, undefined for any other), replacing those that share its
+   * control or its target, told with it. One heard from another input on a control a known Controller's layout had (or
+   * that it was learned away from before) leaves that Controller out, so its knob, taken, drives nothing (issue 255).
+   */
+  const learned = (made: Mapping, from: KnownController | undefined) => {
+    const took = store.list().filter((m) => clash(m, made) && !(sameControl(m.control, made.control) && sameTarget(m.target, made.target)));
+    const away = store
+      .list()
+      .filter((m) => sameControl(m.control, made.control))
+      .map((m) => m.device ?? m.except)
+      .find((id) => id && id !== from?.id);
+    const mapping: Mapping = away ? { ...made, except: away } : made;
     store.set(mapping);
     keepOff(mapping.control);
-    setLearn({ phase: 'armed', target: null, learned: mapping });
+    setLearn({ phase: 'armed', target: null, learned: mapping, took });
   };
   // Controls the selected target must not be learned from (Quick Setup's other steps').
   let avoiding: readonly Control[] = [];
   let values: number[] = [];
+  let heardFrom: KnownController | undefined; // the known Controller of the control Learn is hearing out
   let settle: ReturnType<typeof setTimeout> | undefined;
   const pickups = new Map<string, PickupState>();
   const pressed = new Map<string, boolean>();
@@ -155,6 +177,7 @@ export function createControlSurface(synth: Synth) {
   const towardsAStep = [clicks, gathered, partSteps];
   const detecting = new Map<string, number[]>(); // the first values of knobs finding their Encoder Mode
   const lastValues = new Map<string, number>(); // the last value each CC sent, for a Mapping switched to Relative by hand
+  const toldPositions = new Set<string>(); // the known Controllers told their knobs send positions, by id
   // Aftertouch (issue 132, the owner's decision 1): the channel's, and each held Note's own until its release. The
   // pressure is the highest of them, one for every Note.
   let channelPressure = 0;
@@ -251,7 +274,8 @@ export function createControlSurface(synth: Synth) {
       state.following = dial.get(); // what it took: a stepped dial rounds
     }
     pickups.set(controlKey(mapping.control), state);
-    synth.touched?.(target, state.following !== undefined ? 'moved' : 'waiting');
+    if (state.following !== undefined) synth.touched?.(target, 'moved');
+    else synth.touched?.(target, 'waiting', knob < current ? 'up' : 'down');
   };
 
   /** A Parameter as a dial: the one its control turns now. */
@@ -335,6 +359,10 @@ export function createControlSurface(synth: Synth) {
       if (message.type !== 'cc') return;
       // A Relative knob's steps, worked out here once, where the Controller it came from is known (issue 228).
       const { mode } = mapping;
+      if (from && mapping.device === from.id && mode === 'relative-centred' && !isCentredStep(message.value) && !toldPositions.has(from.id)) {
+        toldPositions.add(from.id);
+        synth.sendsPositions?.(from);
+      }
       const steps = isRelative(mode) ? relativeSteps(from, mode, message.value) : 0;
       if (target.kind === 'param') moveDial(mapping, paramDial(target.id), message.value, steps);
       else if (target.kind === 'tempo') moveDial(mapping, tempoDial(), message.value, steps);
@@ -353,13 +381,16 @@ export function createControlSurface(synth: Synth) {
   const finishListening = () => {
     clearTimeout(settle);
     if (learn.phase !== 'listening') return;
-    learned({
-      control: learn.control,
-      target: learn.target,
-      // On an Action or a Switch, one message alone is a toggle's press; a second (a release, or a knob's turn) is
-      // momentary.
-      mode: learnsAsButton(learn.target) ? (values.length > 1 ? 'trigger' : 'toggle') : detectEncoderMode(values),
-    });
+    learned(
+      {
+        control: learn.control,
+        target: learn.target,
+        // On an Action or a Switch, one message alone is a toggle's press; a second (a release, or a knob's turn) is
+        // momentary.
+        mode: learnsAsButton(learn.target) ? (values.length > 1 ? 'trigger' : 'toggle') : detectEncoderMode(values),
+      },
+      heardFrom,
+    );
   };
 
   /**
@@ -375,8 +406,8 @@ export function createControlSurface(synth: Synth) {
     setLearn({ phase: 'armed', target: learn.target });
   };
 
-  /** Feeds a message to MIDI Learn; true when Learn used it up. */
-  const learnFrom = (message: ControlMessage): boolean => {
+  /** Feeds a message from `from` (its known Controller, if any) to MIDI Learn; true when Learn used it up. */
+  const learnFrom = (message: ControlMessage, from: KnownController | undefined): boolean => {
     if (learn.phase === 'listening') {
       if (
         message.type !== 'cc' ||
@@ -397,15 +428,15 @@ export function createControlSurface(synth: Synth) {
     }
     if (learn.phase !== 'armed' || !learn.target) return false;
     const { target } = learn;
-    const from: Control =
+    const moved: Control =
       message.type === 'cc'
         ? { kind: 'cc', channel: message.channel, number: message.controller }
         : { kind: 'note', channel: message.channel, number: message.note };
-    if (justLearned && sameControl(justLearned.control, from)) {
+    if (justLearned && sameControl(justLearned.control, moved)) {
       settleJustLearned();
       return false;
     }
-    if (avoiding.some((c) => sameControl(c, from))) return false;
+    if (avoiding.some((c) => sameControl(c, moved))) return false;
     if (message.type === 'cc') {
       const control: Control = {
         kind: 'cc',
@@ -417,19 +448,23 @@ export function createControlSurface(synth: Synth) {
       // Its messages meanwhile are used up by Learn, the release among them, so they fire nothing.
       setLearn({ phase: 'listening', target, control });
       values = [];
-      learnFrom(message);
+      heardFrom = from;
+      learnFrom(message, from);
       return true;
     }
     if (message.type === 'noteOn' && learnsAsButton(target)) {
-      learned({
-        control: {
-          kind: 'note',
-          channel: message.channel,
-          number: message.note,
+      learned(
+        {
+          control: {
+            kind: 'note',
+            channel: message.channel,
+            number: message.note,
+          },
+          target,
+          mode: 'trigger',
         },
-        target,
-        mode: 'trigger',
-      });
+        from,
+      );
       return true;
     }
     return false;
@@ -451,7 +486,7 @@ export function createControlSurface(synth: Synth) {
           ? { type: 'cc', channel: incoming.channel, controller: PITCH_BEND, value: Math.round(((incoming.value + 1) / 2) * 127) }
           : incoming;
       if (message.type === 'cc') lastValues.set(controlKey({ kind: 'cc', channel: message.channel, number: message.controller }), message.value);
-      if (learnFrom(message)) return;
+      if (learnFrom(message, from)) return;
       const mapping = store.find(
         message.type === 'cc'
           ? { kind: 'cc', channel: message.channel, number: message.controller }
@@ -483,9 +518,9 @@ export function createControlSurface(synth: Synth) {
     },
     /** Selects what the next control moved is learned for, other than any control in `avoid`. */
     select(target: Target, avoid: readonly Control[] = []) {
-      // A button cut short (a click on screen, Quick Setup's Skip) is not guessed: nothing is learned, and its
-      // release, still to come, is not learned for the next target.
-      if (learn.phase === 'listening' && learn.target.kind === 'action') {
+      // A button cut short on an Action or a Switch (a click on screen, Quick Setup's Skip) is not guessed: nothing is
+      // learned, and its release, still to come, is not learned for the next target (issue 255).
+      if (learn.phase === 'listening' && learnsAsButton(learn.target)) {
         clearTimeout(settle);
         keepOff(learn.control);
       } else finishListening();

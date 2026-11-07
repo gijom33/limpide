@@ -73,15 +73,11 @@ export function useParamControl(id: ParamId, value: number, onChange: (value: nu
   // The Synth Geek Layer's readout ("Q 1.32") is part of the slider's description, so a screen reader hears it on the
   // knob, not as loose text beside it (issue 189); near the start, before its tooltip.
   const geekId = useId();
-  const describe = useCallback(
-    (readout: HTMLElement | null) => {
-      const control = readout?.closest('.knob')?.querySelector('[role="slider"]');
-      if (!control) return;
-      addDescription(control, geekId, 'first');
-      return () => removeDescription(control, geekId);
-    },
-    [geekId],
-  );
+  const describe = useDescribing(geekId);
+  // Pickup waiting for the Controller's knob to catch the value (issue 255): said on the slider, the way to turn it.
+  const pickup = learnable['data-pickup'];
+  const pickupId = useId();
+  const describePickup = useDescribing(pickupId);
 
   const slider = {
     role: 'slider',
@@ -135,6 +131,11 @@ export function useParamControl(id: ParamId, value: number, onChange: (value: nu
       <div className="knob-label">
         <Forms name={def.label} />
       </div>
+      {pickup && (
+        <span id={pickupId} ref={describePickup} hidden>
+          {`Pickup: turn your Controller’s knob ${pickup} to this value to take it over.`}
+        </span>
+      )}
       <div className="knob-value" ref={fit}>
         {geek ? (
           <span data-geek id={geekId} ref={describe}>
@@ -154,6 +155,19 @@ export function useParamControl(id: ParamId, value: number, onChange: (value: nu
     </>
   );
   return { def, position, setPosition, nudge, slider, grab, focusByPointer, release, attributes, text };
+}
+
+/** A ref that adds an element inside a control to its slider's description, first, for as long as it is there. */
+function useDescribing(id: string) {
+  return useCallback(
+    (element: HTMLElement | null) => {
+      const control = element?.closest('.knob')?.querySelector('[role="slider"]');
+      if (!control) return;
+      addDescription(control, id, 'first');
+      return () => removeDescription(control, id);
+    },
+    [id],
+  );
 }
 
 /**

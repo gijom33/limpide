@@ -102,15 +102,32 @@ export function useMidi(host: Host) {
   const lastBank = useRef<number | undefined>(undefined);
   const [bankFollow, setBankFollow] = useState<{ name: SectionName; key: number } | null>(null);
 
+  // The known Controllers seen sending positions from knobs their layout has Relative: the MIDI panel says how to set
+  // them, once each this visit (issue 255).
+  const [sendPositions, setSendPositions] = useState<readonly ControllerId[]>([]);
+  // The controls whose knob Pickup waits for, by target, with the way to turn it (issue 255): each shows it until the
+  // knob crosses its value. Changed only as one starts or stops waiting, so a stream of CCs renders nothing.
+  const [pickups, setPickups] = useState<ReadonlyMap<string, 'up' | 'down'>>(() => new Map());
+  const pickupsRef = useRef(pickups);
   const onLearned = useRef((mapping: Mapping): void => void mapping);
   const surface = useMemo(() => {
     const flashes = new Map<string, ReturnType<typeof setTimeout>>();
-    // The knob a Controller moved shows it for a moment ('waiting' while Pickup has not caught it yet).
-    const flash = (target: Target, state: 'moved' | 'waiting') => {
+    const setPickup = (key: string, way: 'up' | 'down' | undefined) => {
+      if (pickupsRef.current.get(key) === way) return;
+      const next = new Map(pickupsRef.current);
+      if (way) next.set(key, way);
+      else next.delete(key);
+      pickupsRef.current = next;
+      setPickups(next);
+    };
+    // The knob a Controller moved shows it for a moment; while Pickup has not caught it yet, it shows it waits.
+    const flash = (target: Target, state: 'moved' | 'waiting', way?: 'up' | 'down') => {
       const key = targetKey(target);
+      setPickup(key, state === 'waiting' ? (way ?? 'up') : undefined);
       const element = document.querySelector<HTMLElement>(`[data-learn="${key}"]`);
       if (!element) return;
       reveal(element);
+      if (state === 'waiting') return;
       element.dataset.midi = state;
       clearTimeout(flashes.get(key));
       flashes.set(key, setTimeout(() => delete element.dataset.midi, 400));
@@ -151,6 +168,7 @@ export function useMidi(host: Host) {
       pressure: (amount) => keyboard.current.onPressure(amount),
       // All Sound Off (issue 185): every Voice silent at once, the Notes the Controller held released first.
       silence: () => session.engine.silence(),
+      sendsPositions: (known) => setSendPositions((ids) => (ids.includes(known.id) ? ids : [...ids, known.id])),
       learnChanged: (state) => {
         setLearn(state);
         if (state.phase === 'armed' && state.learned) onLearned.current(state.learned);
@@ -225,13 +243,15 @@ export function useMidi(host: Host) {
       document.removeEventListener('keydown', onKey, { capture: true });
     };
   }, [learning, surface]);
-  const learnContext = useMemo(
-    () => ({
+  const learnContext = useMemo(() => {
+    // Pickup waits on an Absolute Mapping alone: one removed, or switched to Relative, waits no more.
+    const absolute = new Set(mappings.filter((m) => m.mode === 'absolute' || m.mode === 'detect').map((m) => targetKey(m.target)));
+    return {
       mapped: new Set(mappings.map((m) => targetKey(m.target))),
       selected: learn.phase !== 'off' && learn.target ? targetKey(learn.target) : null,
-    }),
-    [mappings, learn],
-  );
+      pickups: new Map([...pickups].filter(([key]) => absolute.has(key))),
+    };
+  }, [mappings, learn, pickups]);
   // The control MIDI Learn is waiting for is shown, even on a hidden tab.
   useEffect(() => {
     const element = learnContext.selected && document.querySelector(`[data-learn="${learnContext.selected}"]`);
@@ -308,7 +328,7 @@ export function useMidi(host: Host) {
   }, [surface, midiWanted, mappingStore, storage, session, activity]);
 
   return {
-    midi, activity: readActivity, pressureHeard, mappings, mappingStore, learn, learning, learnContext, surface,
+    midi, activity: readActivity, pressureHeard, mappings, sendPositions, mappingStore, learn, learning, learnContext, surface,
     setup, setupLast, updateSetup, closeSetup, applyLayout,
     bankFollow, setBankFollow, connect: () => setMidiWanted(true),
   };

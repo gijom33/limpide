@@ -426,11 +426,17 @@ export const TIPS = {
 
 const LINE_COLOUR = { osc: 'Green', filter: 'Orange', amp: 'Violet' } as const;
 /**
- * Each known Controller's tips in the MIDI panel, its layout's and its card's, by its id: a Controller added to the
- * list without them does not compile (issue 196, rather than finding them by name).
+ * Each known Controller's tips in the MIDI panel, its layout's and its card's, by its id, and its notice when its knobs
+ * send positions where its layout expects Relative steps (issue 255): a Controller added to the list without them
+ * does not compile (issue 196, rather than finding them by name).
  */
-export const CONTROLLER_TIPS: Record<ControllerId, { layout: TipContent; card: TipContent }> = {
-  c16: { layout: TIPS.c16Layout, card: TIPS.c16Card },
+export const CONTROLLER_TIPS: Record<ControllerId, { layout: TipContent; card: TipContent; positions: string }> = {
+  c16: {
+    layout: TIPS.c16Layout,
+    card: TIPS.c16Card,
+    positions:
+      'The C16’s knobs are sending positions, so they turn the wrong way below the middle: in the C16’s companion editor, set every knob to Relative #1. Print C16 card shows how to set each button too.',
+  },
 };
 
 /** A Timeline key entry for a Destination an LFO moves (issue 63): its line, in its section's colour. */
