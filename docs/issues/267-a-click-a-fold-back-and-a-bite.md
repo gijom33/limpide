@@ -8,7 +8,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-human · bug. Built (2026-11-07) on night/2026-11-07 and merged into main on 2026-11-07, approved by the owner, untried: "Merge the night"; ships with the next release. Left: the owner's ear on Trance Gate, Ring Lead and Zap Pluck, Zap Pluck's fall across the keyboard among it (6.5 dB from C2 to C6, 8 dB from C4, over 258's 6 dB bound; the 1.27.0 code review, 2026-11-07). In v1 as polish ([131](./131-v1.md)), decided by the owner (2026-11-07, "Yes to both").
+**Status:** ready-for-human · bug. Built (2026-11-07) on night/2026-11-07 and merged into main on 2026-11-07, approved by the owner, untried: "Merge the night"; ships with the next release. Left: the owner's ear on Trance Gate, Ring Lead and Zap Pluck, Zap Pluck's fall across the keyboard among it (6.5 dB from C2 to C6, 8 dB from C4, over 258's 6 dB bound; the 1.27.0 code review, 2026-11-07; down to −40 dBFS on E6, 3.7 dB steps in its top octave, and its "every strike starts at full FM" no longer true on C6 and C7, the ear stand-in and the fact-checker, 2026-11-08). In v1 as polish ([131](./131-v1.md)), decided by the owner (2026-11-07, "Yes to both").
 
 ## Agent Brief
 

@@ -1,6 +1,6 @@
 # Calls open to the owner
 
-85 calls open to the owner, in 19 places: each a choice Claude made without the owner (“Claude’s call, open to the owner”), as it reads where it was made.
+87 calls open to the owner, in 20 places: each a choice Claude made without the owner (“Claude’s call, open to the owner”), as it reads where it was made.
 
 The owner goes through them. A call closes where it was made, its “open to the owner” becoming “accepted by the owner (YYYY-MM-DD)” or “reversed by the owner (YYYY-MM-DD, issue N)”, or, once a release has shipped it with no word on it, “let stand by the owner in X.Y.Z”; the issue tracker’s guide says how ([docs/agents/issue-tracker.md](agents/issue-tracker.md)).
 Generated from the issues, the inbox and the ADRs by `npm run issues`: close a call where it was made, not on this page.
@@ -87,6 +87,8 @@ Generated from the issues, the inbox and the ADRs by `npm run issues`: close a c
 - [Issue 267, call 3](issues/267-a-click-a-fold-back-and-a-bite.md): Zap Pluck's high Notes are quieter. Most of C6's strike lay above 5 kHz; taking it off costs C6 and C7 their loudest 100 ms, about 7 dB under C4 (C2 1.6 dB under). Its steady sine after the strike is as loud as before. That is a fall acros…
 - [Issue 267, call 4](issues/267-a-click-a-fold-back-and-a-bite.md): Ring's cut counts the LFOs, not the pitch bend, aftertouch on Pitch, or a Glide from a higher Note, which can still take a top product past the top for a moment.
 - [Issue 268, Status](issues/268-tidy-ups-after-1-27-0.md): ready-for-agent · enhancement. In v1 as polish, as 250 and 251 were; Claude's call, open to the owner (2026-11-07).
+- [Issue 269, Status](issues/269-words-and-a-level-after-1-27-0.md): ready-for-agent · bug. In v1 as polish; Claude's call, open to the owner (2026-11-08). Item 3 changes the owner's instructions to Claude, so it waits for the owner's yes.
 - [ADR-0017, Status](adr/0017-the-c16-layout-strip-by-strip.md): accepted; its "two steps when turned fast" corrected by issue 145, decision 17: a fast turn sends a burst of eight 66s, which reach the page split and merged, each now counted a third of a step; its "Mappings made by MIDI Learn … answer an…
+- [Inbox, 2026-11-08](inbox.md): 2026-11-08, from 1.27.0's word checks: Fast Beats' roughness, Clang's fall to C2 and CLAUDE.md's lines on the hook into 269; Zap Pluck's words on C6 and C7, its fall and its top octave into 267's check by ear, its words to follow its sound…
 - [Inbox, 2026-11-07](inbox.md): 2026-11-07, from the 1.27.0 code review (Standards), the judgement calls: into 268, but the tips' window listeners and the Safari Tab fix watching added buttons only, dropped: no button in the app turns its tabindex on and off, and the lis…
 - [Inbox, 2026-11-07](inbox.md): 2026-11-07, from the 1.27.0 code review (Spec): the tempo's Pickup into 268; Zap Pluck's swing into 267's check by ear, and Felt Piano's Velocity into 258's, with the release's ear stand-in. Dropped: 251's item 7, narrowed as its call 1 sa…
