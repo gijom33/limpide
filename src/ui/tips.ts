@@ -94,7 +94,7 @@ export const TIPS = {
   glow: {
     title: 'Glow',
     body: 'Past traces fade over a quarter of a second (15 frames at 60 a second), as on an analogue oscilloscope: a sound that stands still stays sharp, one that moves (Noise, a detuned Osc 2, a chord, a Filter Envelope’s sweep) leaves a soft glow, fading by half every 70 ms or so. Off: the Scopes and Spectrums show only now. Scopes: the Scopes’ traces glow. All: the Scopes’ traces and the Spectrums’ outlines. Your choice is remembered.',
-    how: 'Choose Scopes or All with some Noise in the Mixer: the flicker softens into a cloud.',
+    how: 'With Scopes or All, add some Noise in the Mixer: the flicker softens into a cloud.',
   },
   voices: {
     title: 'Voices',

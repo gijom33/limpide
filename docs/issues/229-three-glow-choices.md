@@ -17,7 +17,7 @@ Claude's calls, let stand by the owner in 1.24.0:
 2. **Their words on screen: Off, Scopes, All,** in Display's segmented control as its other choices are, the tip saying what each draws ("All: the Scopes' traces and the Spectrums' outlines").
 3. **Off by default,** as now.
 
-   **Since then (2026-11-07, [264](./264-glow-on-the-scopes-by-default.md)):** Glow starts on Scopes when nothing is stored; a stored choice, Off among them, is kept. The owner's idea; its calls are in 264.
+   **Since then (2026-11-07, [264](./264-glow-on-the-scopes-by-default.md), the owner's idea, Claude's calls there):** Glow starts on Scopes when nothing it knows is stored; a stored choice, Off among them, is kept.
 4. **A remembered On reads as All,** what On drew in 1.23.0; a remembered Off stays Off.
 
 ## Agent Brief
@@ -54,5 +54,7 @@ Claude's calls, let stand by the owner in 1.24.0:
 - **Switching** between any two choices starts a Viewer's wait before it rests again, as switching Glow did since 214, Scopes to All included, though the Scopes draw the same under both: Claude's call, let stand by the owner in 1.24.0 (a quarter of a second more drawing, nothing seen).
 - **Tests:** a unit test reads `true`, `false` and the three choices back; one says which Viewer glows under each; the store's tests use the choices. In the browser, Scopes makes every Scope glow and is remembered across a reload; with a Filter Envelope sweeping, Scopes leaves every Spectrum at no past outline while the Filter Scope glows, and All gives every Spectrum its outlines, kept frozen. The Display panel's remembered settings choose Scopes; the design audit's "Glow on" state chooses All. Checked that the Spectrum test fails when the Spectrums glow under Scopes.
 - **Run:** `npx tsc`, `npm run lint`, the unit tests of the files touched (the words test among them, 303 passed), and the displayPanel, viewerControls, viewersRest and design audit specs in Chromium and WebKit (73 passed each, before and after the review). The review found docs still saying one Glow (180, 199, the design principles), the tip's how saying "turn it on", and a comment out of place; fixed.
+
+**Since then (2026-11-07, [264](./264-glow-on-the-scopes-by-default.md), the owner's idea, Claude's calls there):** Glow starts on Scopes, not Off, when nothing it knows is stored, an unknown value included; a stored `true` or `false` still reads as All or Off. The tip's how says "With Scopes or All, add some Noise in the Mixer".
 
 **To try in the app:** open Display: Glow shows Off, Scopes and All. Turn the Filter Envelope's Amount up, add some Noise and play: under Scopes the Scopes leave a soft trail and the Spectrums stay sharp; under All both trail. Reload: the choice comes back. A browser that had Glow On in 1.23.0 opens on All.
