@@ -623,9 +623,8 @@ describe('two Presets high up (issue 226)', () => {
 // Issue 258, from reviews 14 and 15: Presets whose level swung across the keyboard, the one that passed the limiter, and
 // the Drums 9 dB under the Basses.
 describe('the Presets levelled across the keyboard (issue 258)', () => {
-  // A fixed Cutoff the Notes climb into or away from: each swung 6.5 to 18 dB from C2 to C6, where the other Presets
-  // keep within 6 dB. Key Track now moves each one's Filter with the Note. Clang's high-pass took 6.4 dB from its C2
-  // against its C4 (issue 269, review 14).
+  // A fixed Cutoff the Notes climb into or away from: each swung 6.4 to 18 dB from C2 to C6, where the other Presets
+  // keep within 6 dB. Key Track now moves each one's Filter with the Note (Clang's, issue 269).
   const LEVELLED = [
     'Vowel', 'Breathing Pad', 'Two Speeds', 'Sweep Pad', 'High-pass Buzz', '12 vs 24', 'Resonant Ring', 'Cowbell', 'Dark Drone', 'Talking Filter', 'Wah',
     'Deep Sweep', 'Laser', 'Clav', 'Clang',
