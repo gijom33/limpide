@@ -1606,8 +1606,10 @@ main[data-learning] [data-learn][data-learn-selected] { outline: 2px solid var(-
   .section-strip [data-section='Amp'] { --c: var(--stage-amp); }
   .section-strip [data-section='LFO & Envelopes'] { --c: var(--stage-mod); }
   .section-strip [aria-current] { color: var(--c); border-bottom-color: var(--c); }
-  /* The light theme's green, as small text, darkened towards the text to 4.5:1 (issue 189); its underline stays green. */
+  /* The light theme's green, as small text, darkened towards the text to 4.5:1 (issue 189); its underline stays green.
+     Its blue too, 4.47:1 on the page (1.27.0's branch run, the audit's Tutorial and Tour cards): 5:1 at 90 %. */
   :root[data-theme='light'] .section-strip [data-section='Oscillators'][aria-current] { color: color-mix(in srgb, var(--c) 72%, var(--text)); }
+  :root[data-theme='light'] .section-strip [data-section='LFO & Envelopes'][aria-current] { color: color-mix(in srgb, var(--c) 90%, var(--text)); }
   .section-strip button:focus-visible { outline: 2px solid var(--c); outline-offset: -2px; }
 }
 @media (max-width: 600px) and (prefers-reduced-motion: reduce) { .section-strip { transition: none; } }

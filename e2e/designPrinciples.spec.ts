@@ -195,7 +195,8 @@ const STATES: { name: string; open?(page: Page): Promise<void>; close?(page: Pag
     open: async (page) => {
       await pressByKeyboard(page, page.getByRole('button', { name: 'Tutorial', exact: true }));
       await pressByKeyboard(page, page.getByRole('group', { name: 'Tutorials' }).last().getByRole('button', { name: /^Tutorial: Sub Ladder/ }));
-      await expect(page.getByRole('region', { name: /^Tutorial: / })).toBeVisible();
+      // Its Start takes the focus a frame after it shows, as the Tour card's Next does (below).
+      await expect(page.getByRole('region', { name: /^Tutorial: / }).getByRole('button', { name: 'Start' })).toBeFocused();
       await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished)));
     },
     close: async (page) => {
@@ -209,7 +210,9 @@ const STATES: { name: string; open?(page: Page): Promise<void>; close?(page: Pag
     open: async (page) => {
       await openAbout(page);
       await pressByKeyboard(page, page.getByRole('dialog', { name: 'Limpide' }).getByRole('button', { name: 'Take the Tour' }));
-      await expect(page.getByRole('region', { name: 'Tour' })).toBeVisible();
+      // The card puts the focus on its Next a frame after it shows: on GitHub's Linux WebKit that frame came after the
+      // close's focus, and its Enter pressed Next (1.27.0's branch run); the Tutorial card's Start the same.
+      await expect(page.getByRole('region', { name: 'Tour' }).getByRole('button', { name: 'Next' })).toBeFocused();
     },
     close: async (page) => {
       await pressByKeyboard(page, page.getByRole('region', { name: 'Tour' }).getByRole('button', { name: 'Close the Tour' }));

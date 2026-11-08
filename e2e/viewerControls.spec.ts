@@ -146,9 +146,15 @@ test('Glow is Scopes at first: every Scope draws its last traces fading under th
   await expect(spectrums).toHaveCount(3);
   await expect(glow.getByRole('radio')).toHaveText(['Off', 'Scopes', 'All']);
   await expect(glow.getByRole('radio', { name: 'Scopes', exact: true })).toHaveAttribute('aria-checked', 'true');
-  // A quarter of a second of traces, one per 60th of a second at most: 15, fewer on a loaded machine.
+  // A Note held, so the Scopes draw every frame: a silent one rests a Glow's length after its last change (issue 214),
+  // too few frames on GitHub's Linux WebKit to build two traces. A quarter of a second of traces, one per 60th of a
+  // second at most: 15, fewer on a loaded machine.
+  await page.keyboard.press('Escape');
+  await page.keyboard.down('KeyA');
   for (const scope of await scopes.all()) await expect(scope).toHaveAttribute('data-glow', /^([2-9]|1[0-9])$/);
   for (const spectrum of await spectrums.all()) await expect(spectrum).toHaveAttribute('data-glow', '0');
+  await page.keyboard.up('KeyA');
+  await openDisplay(page);
   // Off, chosen, is kept: a reload comes back to it, not to Scopes.
   await glow.getByRole('radio', { name: 'Off', exact: true }).click();
   for (const scope of await scopes.all()) await expect(scope).toHaveAttribute('data-glow', '0');
@@ -157,7 +163,10 @@ test('Glow is Scopes at first: every Scope draws its last traces fading under th
   await expect(glow.getByRole('radio', { name: 'Off', exact: true })).toHaveAttribute('aria-checked', 'true');
   for (const scope of await scopes.all()) await expect(scope).toHaveAttribute('data-glow', '0');
   await glow.getByRole('radio', { name: 'Scopes', exact: true }).click();
+  await page.keyboard.press('Escape');
+  await page.keyboard.down('KeyA');
   for (const scope of await scopes.all()) await expect(scope).toHaveAttribute('data-glow', /^([2-9]|1[0-9])$/);
+  await page.keyboard.up('KeyA');
 });
 
 test('Glow reaches the Spectrums under All, not Scopes: a Filter swept by its Envelope leaves its past outlines, and frozen they stay (issues 199, 229)', async ({ page }) => {

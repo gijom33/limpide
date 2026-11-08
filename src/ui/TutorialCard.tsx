@@ -169,10 +169,12 @@ function useRing(step: Step | undefined, made: boolean, card: RefObject<HTMLElem
     // After the tab it was on has had a frame to show, and the card its new height.
     const scroll = setTimeout(() => {
       const behavior = scrollBehavior();
-      // The Display button, standing for an option in its panel, is in the header: the header comes back for it.
-      if (element?.closest('header')) element.scrollIntoView({ block: 'nearest', behavior });
+      // The Display button, standing for an option in its panel, is in the header: the header comes back for it. Once
+      // a Display Step is made, its option (in the header's panel, which a phone shuts) gives way to its Viewer (issue
+      // 260): on a phone in Linux's fonts the Viewer lay below the fold, left there.
+      if (element?.closest('header') && !made) element.scrollIntoView({ block: 'nearest', behavior });
       else if (card.current) {
-        const both = [...elements, viewer].filter((e) => e !== null);
+        const both = [...elements.filter((e) => !e.closest('header')), viewer].filter((e) => e !== null);
         bringClear(card.current, made ? both.reverse() : both, behavior);
       }
     }, 50);
