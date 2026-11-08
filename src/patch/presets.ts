@@ -44,7 +44,7 @@ const group = (name: PresetGroup, presets: [string, string, Partial<Patch>][], s
 // A steady, open sound for looking at shapes.
 const OPEN = { cutoff: 20000, resonance: 0, ampSustain: 1 } as const;
 
-group('Start', [['Init', 'The plain starting point: one saw through an open low-pass Filter.', {}]]);
+group('Start', [['Init', 'The plain starting point: one saw through a low-pass Filter at 2 kHz.', {}]]);
 
 group('Shapes', [
   ['Pure Sine', 'One Harmonic and nothing else: a single line in the Spectrum, and the smoothest curve the Scope can draw.', { waveform: 'sine', ...OPEN }],
@@ -55,7 +55,7 @@ group('Shapes', [
     waveform: 'pulse', pulseWidth: 0.5, cutoff: 6000, resonance: 0.1, lfoDestination: 'pulseWidth', lfoRate: 0.4, lfoAmount: 0.9, ampSustain: 1, ampRelease: 0.6,
   }],
   ['Sub Ladder', 'A square an octave below a saw: the Sub fills the odd Harmonics of a ladder that now starts an octave lower, Osc 1 the even ones.', { mixSub: 0.7, ...OPEN }],
-  ['Square on Square', 'Two squares an octave apart, through the Sub: a staircase in the Scope, every Harmonic of the lower one present.', { volume: 0.7, waveform: 'square', mixSub: 1, ...OPEN }],
+  ['Square on Square', 'Two squares an octave apart, through the Sub: a staircase in the Scope, and every Harmonic of the lower one present but every fourth, which neither square has.', { volume: 0.7, waveform: 'square', mixSub: 1, ...OPEN }],
   ['Sub Two Down', 'A sine Sub two octaves under a saw: one clean line far left in the Spectrum, the ladder counted from it, Osc 1 on every fourth Harmonic.', {
     mixSub: 0.8, subOctave: -2, subWaveform: 'sine', ...OPEN,
   }],
@@ -69,14 +69,14 @@ group('Intervals', [
   ['Octave Stack', 'A sine an octave above a saw: each ramp of the saw carries two bumps, and the second Harmonic stands out in the Spectrum.', {
     osc2Waveform: 'sine', osc2Octave: 1, mixOsc2: 0.8, ...OPEN,
   }],
-  ['Perfect Fifth', 'Two sines a fifth apart (nearly 3:2): a pattern that repeats every two cycles, rolling once every two or three seconds, as equal temperament is 2 cents short of 3:2. On the Scope 1 cycle shows half the pattern, 2 or 4 show it whole.', {
+  ['Perfect Fifth', 'Two sines a fifth apart: a pattern that repeats every two cycles, rolling about every two seconds on C4, faster higher up, as equal temperament is 2 cents short of 3:2. On the Scope 1 cycle shows half the pattern, 2 or 4 show it whole.', {
     volume: 0.75, waveform: 'sine', osc2Waveform: 'sine', osc2Semitone: 7, mixOsc2: 1, ...OPEN,
   }],
   ['Major Third', 'Two sines a major third apart (nearly 5:4): a longer pattern than the fifth, and it rolls faster, because equal temperament is 14 cents wide of 5:4.', {
     volume: 0.75, waveform: 'sine', osc2Waveform: 'sine', osc2Semitone: 4, mixOsc2: 1, ...OPEN,
   }],
   ['Tritone Knot', 'Two saws a tritone apart: a ratio that never quite repeats, so the Scope draws a tangled, restless knot.', { osc2Semitone: 6, mixOsc2: 0.9, cutoff: 5000, resonance: 0.1, ampSustain: 1 }],
-  ['Slow Beats', 'Two sines 4 cents apart: they drift in and out of step, so the Scope’s height swells and fades a few times a second.', {
+  ['Slow Beats', 'Two sines 4 cents apart: they drift in and out of step, so the Scope’s height swells and fades, about once every second or two in the middle of the keyboard, faster higher up.', {
     volume: 0.55, waveform: 'sine', osc2Waveform: 'sine', osc2Detune: 4, mixOsc2: 1, ...OPEN,
   }],
   ['Fast Beats', 'Two saws 40 cents apart: the beating is so fast it becomes roughness. Compare with Slow Beats.', { osc2Detune: 40, mixOsc2: 1, cutoff: 6000, resonance: 0, ampSustain: 1 }],
@@ -101,7 +101,7 @@ group('Filter', [
   ['Resonant Ring', 'High Resonance makes the Filter ring after every edge of the saw: see the ripples in the Scope, at the Cutoff’s frequency, which Key Track carries with the Note.', {
     volume: 0.45, cutoff: 1400, resonance: 0.9, filterSlope: 24, keyTrack: 0.7, ampSustain: 1,
   }],
-  ['Self-Oscillation', 'Resonance all the way up on a dark Filter: the Cutoff itself starts to sing, a near-sine riding on the saw.', {
+  ['Self-Oscillation', 'Resonance all the way up on a dark Filter: the Harmonic nearest the Cutoff rings out about 8 dB over the rest, a near-sine riding on the saw.', {
     volume: 0.35, cutoff: 900, resonance: 1, filterSlope: 24, keyTrack: 1, ampSustain: 1,
   }],
   ['12 vs 24', 'The same Cutoff at 12 dB: turn Slope to 24 and watch the high Harmonics fall twice as steeply under the Response Curve.', {
@@ -165,7 +165,7 @@ group('LFO', [
   ['Fast Vibrato', 'The same depth at 8 Hz: a nervous shimmer rather than a sway. Compare with Slow Vibrato.', {
     cutoff: 6000, resonance: 0, ampSustain: 1, lfoDestination: 'pitch', lfoRate: 8, lfoAmount: 0.3,
   }],
-  ['Deep Sweep', 'A full-depth sine LFO on a resonant Cutoff, once every five seconds: the Response Curve crosses the whole Spectrum.', {
+  ['Deep Sweep', 'A full-depth sine LFO on a resonant Cutoff, once every five seconds: the Response Curve sweeps four octaves, from 200 Hz to 3.2 kHz on C4.', {
     cutoff: 800, resonance: 0.5, keyTrack: 0.5, ampSustain: 1, lfoDestination: 'cutoff', lfoRate: 0.2, lfoAmount: 1,
   }],
   ['Stepped', 'A square LFO on the Cutoff: no sweep, just two places, and the Response Curve hops between them.', {
@@ -180,7 +180,7 @@ group('LFO', [
   ['Resonance Swell', 'The LFO moves the Resonance, not the Cutoff: the peak at the Cutoff swells and fades where it stands. The ring on Resonance shows how far.', {
     volume: 0.9, cutoff: 1200, resonance: 0.5, keyTrack: 1, ampSustain: 1, lfoWaveform: 'triangle', lfoDestination: 'resonance', lfoRate: 0.5, lfoAmount: 0.9,
   }],
-  ['Rolling Fifth', 'The LFO on Osc 2 Pitch alone: Osc 2 rolls an octave either side of Osc 1, so intervals drift past, and the Scope’s pattern dissolves and locks again.', {
+  ['Rolling Fifth', 'The LFO on Osc 2 Pitch alone: Osc 2 rolls about two semitones either side of its fifth, from a fourth to nearly a sixth, so intervals drift past, and the Scope’s pattern dissolves and locks again.', {
     volume: 0.7, waveform: 'sine', osc2Waveform: 'sine', osc2Semitone: 7, mixOsc2: 0.8, ...OPEN, lfoDestination: 'osc2Pitch', lfoRate: 0.1, lfoAmount: 0.15,
   }],
   ['Chorus Drift', 'The LFO on Detune: Osc 2 drifts in and out of tune with Osc 1, and the beating speeds up and slows down with it.', {
@@ -349,7 +349,7 @@ group('Keys & Organs', [
     volume: 0.75, voices: 8, waveform: 'square', osc1Octave: 1, mixOsc1: 0.35, osc2Waveform: 'sine', mixOsc2: 0.8, mixSub: 0.8, subOctave: -2, subWaveform: 'sine',
     cutoff: 3500, resonance: 0.1, ampAttack: 0.4, ampSustain: 1, ampRelease: 2,
   }],
-  ['Rave Stab', 'Osc 2 a fifth above Osc 1 over a Sub, through a resonant 24 dB Filter that snaps open and shut: one finger plays a fifth, a chord a stab of six pitches, on six Voices.', {
+  ['Rave Stab', 'Osc 2 a fifth above Osc 1 over a Sub, through a resonant 24 dB Filter that snaps open and shut: one finger plays a fifth, a triad a stab of its Notes, their fifths and the Sub under them, on six Voices.', {
     voices: 6, osc2Semitone: 7, osc2Detune: 6, mixOsc2: 0.8, mixSub: 0.5, filterSlope: 24, cutoff: 600, resonance: 0.45, velocityCutoff: 0.6,
     filterEnvAmount: 3.5, filterAttack: 0.001, filterDecay: 0.2, filterSustain: 0.1, ampAttack: 0.001, ampDecay: 0.35, ampSustain: 0, ampRelease: 0.15,
   }],
@@ -526,7 +526,7 @@ group('Drums', [
   ['Open Hat', 'The same Noise, let ring for half a second: compare the Amp Envelope with Hi-hat on the Timeline.', {
     mixOsc1: 0, mixNoise: 1, filterMode: 'highpass', cutoff: 6000, resonance: 0.3, ampAttack: 0.001, ampDecay: 0.5, ampSustain: 0, ampRelease: 0.3,
   }],
-  ['Ride', 'Two squares an octave and a tritone apart through Ring, with Noise, through a high-pass at 5 kHz: the recipe of an 808’s cymbal, fading over a second and a half. Key Track moves the high-pass with the Note.', {
+  ['Ride', 'Two squares an octave and a tritone apart through Ring, with Noise, through a high-pass at 5 kHz: a clashing metal cymbal, fading over a second and a half. Key Track moves the high-pass with the Note.', {
     waveform: 'square', osc2Waveform: 'square', osc2Octave: 1, osc2Semitone: 6, osc2Detune: 17, mixOsc1: 0, mixRing: 1, mixNoise: 0.7, filterMode: 'highpass', cutoff: 5000, resonance: 0.2, keyTrack: 0.6,
     ampAttack: 0.001, ampDecay: 1.6, ampSustain: 0, ampRelease: 1.2,
   }],
@@ -578,7 +578,7 @@ group('Movement & Effects', [
   ['Glide Slide', 'A long Glide: play two Notes and watch the pitch slide between them, while Cycle Lock keeps the Scope steady all the way.', {
     volume: 0.4, waveform: 'square', cutoff: 3000, resonance: 0.2, glide: 0.5, ampSustain: 1, keyTrack: 1,
   }],
-  ['Trill', 'Osc 2 alone, a semitone up, and a square LFO on its pitch at a twelfth of full Depth: it jumps a semitone either way, between the Note itself and the whole tone above, six times a second. A trill on the key you press.', {
+  ['Trill', 'Osc 2 alone, a semitone up, and a square LFO on its pitch at a twelfth of full Depth: it jumps a semitone either way, between the Note itself and the whole tone above, there and back six times a second. A trill on the key you press.', {
     volume: 0.6, waveform: 'triangle', mixOsc1: 0, osc2Waveform: 'triangle', osc2Semitone: 1, mixOsc2: 1, cutoff: 4000,
     lfoDestination: 'osc2Pitch', lfoWaveform: 'square', lfoRate: 6, lfoAmount: 1 / 12, ampSustain: 1,
   }],
@@ -609,7 +609,7 @@ group('Movement & Effects', [
     volume: 0.35, osc2Waveform: 'sine', osc2Octave: -1, osc2Semitone: -3, mixOsc1: 0, mixRing: 1, filterMode: 'bandpass', cutoff: 1000, resonance: 0,
     lfoDestination: 'cutoff', lfoRate: 3, lfoAmount: 0.3, ampSustain: 1,
   }],
-  ['Clang Alarm', 'A square LFO on FM: the sound hops between a pure sine and a full metal clang two and a half times a second, the Spectrum’s sidebands switching on and off with it.', {
+  ['Clang Alarm', 'A square LFO on FM: the sound hops between a pure sine and a full metal clang and back two and a half times a second, the Spectrum’s sidebands switching on and off with it.', {
     volume: 0.5, waveform: 'sine', osc2Waveform: 'sine', osc2Octave: 1, osc2Semitone: 10, crossMod: 0.5, ...OPEN,
     lfoWaveform: 'square', lfoDestination: 'fm', lfoRate: 2.5, lfoAmount: 1,
   }],

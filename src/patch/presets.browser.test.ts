@@ -254,7 +254,7 @@ describe('the Presets do what their words say (issue 108, reviews 13 and 15)', (
       for (const n of [3, 5, 7]) expect(rung(n), `rung ${n}`).toBeLessThan(-40);
     });
 
-  it('Trill plays the Note and the whole tone above it, nothing else', async () => {
+  it('Trill plays the Note and the whole tone above it, nothing else, there and back six times a second', async () => {
     const s = await play(preset('Trill'), [C4], 1.2, 1.3);
     // The free LFO runs from the engine's start, upper half first: a 30 ms window in the middle of each half.
     const heard = [];
@@ -681,4 +681,151 @@ describe('the Presets levelled across the keyboard (issue 258)', () => {
     const level = (await levelsOnC4()).get(name)!;
     expect(Math.abs(level - NOW[name]), `${level.toFixed(2)} dBFS`).toBeLessThanOrEqual(1);
   }, 300_000);
+});
+
+// Issue 266: review 13's measures of the words it found false or loose, now worded to hold.
+describe('the Presets’ words review 13 checked hold (issue 266)', () => {
+  const A4 = 69;
+  /** The engine after a Note `note` from NOTE on `patch`, rendered for `seconds`, to read its Modulation model. */
+  const modelled = async (patch: Patch, seconds: number, note = C4) => {
+    const ctx = new OfflineAudioContext(1, SR * seconds, SR);
+    const engine = createSynthEngine(ctx);
+    engine.applyPatch(patch);
+    engine.noteOn(note, 1, NOTE);
+    await ctx.startRendering();
+    return engine;
+  };
+  /** The Model's `key` every tenth of a second over `seconds` from the Note. */
+  const across = async (patch: Patch, key: 'cutoff' | 'resonance', seconds: number) => {
+    const engine = await modelled(patch, seconds + 0.2);
+    return Array.from({ length: seconds * 10 }, (_, i) => engine.modulationAt(NOTE + i / 10)[key]);
+  };
+  /** The times of the level's dips, each more than 20 dB under its top, over 10 ms windows from `from` seconds. */
+  const dips = (s: Float32Array, from: number) => {
+    const size = SR / 100;
+    const levels: number[] = [];
+    for (let a = Math.round(from * SR); a + size <= s.length; a += size) levels.push(levelDb(s, a / SR - NOTE, 0.01));
+    const top = Math.max(...levels);
+    const times: number[] = [];
+    let run: number[] = [];
+    for (const [i, level] of [...levels, top].entries()) {
+      if (level < top - 20) run.push(i);
+      else if (run.length) {
+        const lowest = run.reduce((a, b) => (levels[b] < levels[a] ? b : a));
+        times.push(from + lowest / 100);
+        run = [];
+      }
+    }
+    return times;
+  };
+  const meanGap = (times: number[]) => (times[times.length - 1] - times[0]) / (times.length - 1);
+
+  it('Slow Beats swells and fades about once every second or two in the middle of the keyboard, faster higher up', async () => {
+    const [c4, a4, c5] = await Promise.all([C4, A4, C5].map((note) => play(preset('Slow Beats'), [note], 5.5, 5.6)));
+    const [onC4, onA4, onC5] = [c4, a4, c5].map((s) => meanGap(dips(s, 0.2)));
+    expect(onC4, `${onC4.toFixed(2)} s`).toBeGreaterThan(1.4);
+    expect(onC4, `${onC4.toFixed(2)} s`).toBeLessThan(2);
+    expect(onA4, `${onA4.toFixed(2)} s`).toBeGreaterThan(0.85);
+    expect(onC5).toBeLessThan(onA4);
+  });
+
+  it('Rolling Fifth: Osc 2 rolls about two semitones either side of its fifth, from a fourth to nearly a sixth', async () => {
+    const s = await play({ ...preset('Rolling Fifth'), mixOsc1: 0 }, [C4], 10.6, 10.7);
+    const heard = Array.from({ length: 41 }, (_, i) => 12 * Math.log2(frequencyAround(s, SR, NOTE + 0.3 + i / 4, 0.05) / hz(C4)));
+    expect(Math.max(...heard)).toBeGreaterThan(8.5);
+    expect(Math.max(...heard)).toBeLessThan(9);
+    expect(Math.min(...heard)).toBeGreaterThan(5);
+    expect(Math.min(...heard)).toBeLessThan(5.5);
+  });
+
+  it('Square on Square: every Harmonic of the lower one present but every fourth, which neither square has', async () => {
+    const s = await play(preset('Square on Square'), [C4], 1, 1.1);
+    // Counted from the Sub, an octave down.
+    const rung = (n: number) => partialDb(s, C4, n / 2, 0.5, 0.2);
+    for (const n of [1, 2, 3, 5, 6, 7, 9, 10, 11]) expect(rung(n), `rung ${n}`).toBeGreaterThan(-30);
+    for (const n of [4, 8, 12]) expect(rung(n), `rung ${n}`).toBeLessThan(-60);
+  });
+
+  it('Init: a low-pass Filter at 2 kHz, taking a saw’s high Harmonics down', async () => {
+    expect((await across(preset('Init'), 'cutoff', 1)).every((cutoff) => Math.abs(cutoff - 2000) < 1)).toBe(true);
+    const [init, open] = await Promise.all([preset('Init'), { ...preset('Init'), cutoff: 20000 }].map((p) => play(p, [C4], 1, 1.1)));
+    expect(partialDb(init, C4, 16, 0.5, 0.2) - partialDb(open, C4, 16, 0.5, 0.2)).toBeLessThan(-6);
+  });
+
+  it('Deep Sweep: the Cutoff sweeps four octaves, from 200 Hz to 3.2 kHz on C4', async () => {
+    const cutoffs = await across(preset('Deep Sweep'), 'cutoff', 5.2);
+    expect(Math.min(...cutoffs) / 200).toBeCloseTo(1, 1);
+    expect(Math.max(...cutoffs) / 3200).toBeCloseTo(1, 1);
+  });
+
+  /**
+   * How long Perfect Fifth's two-cycle pattern takes to roll round and come back: the shape of two of Osc 1's cycles
+   * from `from` seconds against the same span each two cycles later, the first best match once it has dissolved.
+   */
+  const rollSeconds = (s: Float32Array, note: number, from: number) => {
+    const two = (2 * SR) / hz(note);
+    const n = Math.round(two);
+    const at = (x: number) => s[Math.floor(x)] + (s[Math.floor(x) + 1] - s[Math.floor(x)]) * (x - Math.floor(x));
+    const shape = (k: number) => Array.from({ length: n }, (_, j) => at(from * SR + k * two + (j * two) / n));
+    const first = shape(0);
+    const norm = (w: number[]) => Math.sqrt(w.reduce((sum, v) => sum + v * v, 0));
+    const likeness = (k: number) => {
+      const w = shape(k);
+      return w.reduce((sum, v, j) => sum + v * first[j], 0) / norm(w) / norm(first);
+    };
+    let k = 1;
+    while (likeness(k) > 0.5) k++;
+    while (likeness(k) < 0.95) k++;
+    while (likeness(k + 1) > likeness(k)) k++;
+    return (k * two) / SR;
+  };
+  it('Perfect Fifth rolls about every two seconds on C4, faster higher up', async () => {
+    const [c4, c5] = await Promise.all([C4, C5].map((note) => play(preset('Perfect Fifth'), [note], 3.6, 3.7)));
+    const [onC4, onC5] = [rollSeconds(c4, C4, NOTE + 0.2), rollSeconds(c5, C5, NOTE + 0.2)];
+    expect(onC4, `${onC4.toFixed(2)} s`).toBeGreaterThan(1.5);
+    expect(onC4, `${onC4.toFixed(2)} s`).toBeLessThan(2.5);
+    expect(onC5, `${onC5.toFixed(2)} s`).toBeLessThan(onC4 / 1.5);
+  });
+
+  it('Self-Oscillation: the Harmonic nearest the Cutoff rings out about 8 dB over the rest, nothing at the Cutoff between them', async () => {
+    const s = await play(preset('Self-Oscillation'), [C4], 1.5, 1.6);
+    // On C4 Key Track leaves the Cutoff at its knob's 900 Hz, nearest the 3rd Harmonic (785 Hz).
+    const level = (ratio: number) => partialDb(s, C4, ratio, 0.5, 0.2);
+    const rest = Math.max(0, level(2), level(4), level(5));
+    expect(level(3) - rest).toBeGreaterThan(7);
+    expect(level(900 / hz(C4))).toBeLessThan(-40);
+  });
+
+  it('Clang Alarm hops between a pure sine and a full metal clang and back two and a half times a second', async () => {
+    const s = await play(preset('Clang Alarm'), [C4], 1.3, 1.4);
+    /** The share of 20 ms of power off the Note's own frequency, centred on `t` seconds. */
+    const off = (t: number) => {
+      const [a, b] = [Math.round((t - 0.01) * SR), Math.round((t + 0.01) * SR)];
+      let sum = 0;
+      for (let i = a; i < b; i++) sum += s[i] * s[i];
+      return 1 - toneAmplitude(s, SR, hz(C4), a, b) ** 2 / 2 / (sum / (b - a));
+    };
+    // The free LFO runs from the engine's start, its upper half (full FM) first: the middle of each fifth of a second.
+    const heard = Array.from({ length: 6 }, (_, i) => off(0.1 + i / 5));
+    for (const [i, share] of heard.entries()) {
+      if (i % 2) expect(share, heard.map((h) => h.toFixed(2)).join(' ')).toBeLessThan(0.1);
+      else expect(share, heard.map((h) => h.toFixed(2)).join(' ')).toBeGreaterThan(0.5);
+    }
+  });
+
+  it('Rave Stab: a triad a stab of its Notes, their fifths and the Sub under them', async () => {
+    const s = await play(preset('Rave Stab'), [C4, 64, 67], 1, 1.1);
+    const at = (semitones: number) => partialDb(s, C4, 2 ** (semitones / 12), 0.03, 0.12);
+    for (const note of [0, 4, 7]) {
+      expect(at(note), `the Note ${note}`).toBeGreaterThan(-20);
+      expect(at(note + 7 + 0.06), `its fifth ${note + 7}`).toBeGreaterThan(-20);
+      expect(at(note - 12), `the Sub ${note - 12}`).toBeGreaterThan(-20);
+    }
+  });
+
+  it('the LFO Destination tip’s Resonance: as far each way as its knob leaves room, Breathing Pad’s 30 % from 0 to 60 %', async () => {
+    const resonances = await across(preset('Breathing Pad'), 'resonance', 6);
+    expect(Math.min(...resonances)).toBeCloseTo(0, 1);
+    expect(Math.max(...resonances)).toBeCloseTo(0.6, 1);
+  });
 });

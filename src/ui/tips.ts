@@ -23,7 +23,7 @@ const LFO_DESTINATION_WORDS: Record<LfoDestination, string> = {
   pulseWidth: 'each Oscillator’s (PWM; only heard on a Pulse).',
   fm: 'up to its whole range, but only as far each way as the FM knob leaves room: none at 0, so raise FM first (its partials growing and fading).',
   cutoff: 'two octaves each way (wah).',
-  resonance: 'across its range (a vocal, whistling sweep).',
+  resonance: 'across its range, but only as far each way as its knob leaves room (a vocal, whistling sweep).',
   volume: 'down from the Amp Envelope’s level to silence (tremolo).',
 };
 
@@ -140,7 +140,7 @@ export const TIPS = {
   hold: {
     title: 'Hold',
     body: 'Keeps the Note sounding after you let go of the key, so both hands are free to turn knobs while you watch.',
-    how: 'Press a new key to change the Note. Switch Hold off to release it. Tap Hold a few more times quickly before playing, and the held Notes repeat on that rhythm, the last tap starting it over; with several Voices, the rhythm plays once as single Notes in turn, then once as the chord.',
+    how: 'Press a new key to change the Note. Switch Hold off to release it. Tap Hold a few more times quickly before playing, and the held Notes repeat on that rhythm, resting a beat after the last tap before starting over; with several Voices, the rhythm plays once as single Notes in turn, then once as the chord.',
     history: HISTORY.hold,
   },
   envAmount: {
@@ -189,7 +189,7 @@ export const TIPS = {
   },
   lfoWaveform: {
     title: 'LFO',
-    body: 'The LFO as it moves: its last second, the newest at the right, so 1 Hz is one period. Sine and Triangle sweep smoothly, Square jumps between two values, Saw ramps up and drops, Saw Down drops and ramps down. Its height is the Depth. While it is synced and free (Retrigger off), its cycle on the beat, faint broken lines mark the beats.',
+    body: 'The LFO as it moves: its last second, the newest at the right, so 1 Hz is one period. Sine and Triangle sweep smoothly, Square jumps between two values, Saw ramps up and drops, Saw Down jumps up and ramps down. Its height is the Depth. While it is synced and free (Retrigger off), its cycle on the beat, faint broken lines mark the beats.',
   },
   lfoDestination: {
     title: 'LFO Destination',

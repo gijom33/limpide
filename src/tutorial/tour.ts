@@ -50,7 +50,7 @@ export interface TourSection extends PhraseAtTempo {
 /** What the page shows where a card's moving control and its Viewers do not fit on screen together (issue 206). */
 export type Looking = 'control' | 'viewer';
 
-/** The Tour's own sound: Init, a saw through an open low-pass Filter (issue 128, decision 6). */
+/** The Tour's own sound: Init, a saw through a low-pass Filter at 2 kHz (issue 128, decision 6). */
 export const TOUR_PATCH = PRESETS[0];
 
 /**

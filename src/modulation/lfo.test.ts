@@ -33,6 +33,19 @@ describe('lfoShape: one cycle of each LFO Waveform (phase 0–1), like Web Audio
   });
 });
 
+describe('the LFO plot’s tip (issue 266)', () => {
+  /** Each step of a cycle sampled at a thousand points, across one wrap. */
+  const steps = (waveform: 'saw' | 'sawDown') => Array.from({ length: 1000 }, (_, i) => lfoShape(waveform, (i + 1) / 1000) - lfoShape(waveform, i / 1000));
+  it('Saw ramps up and drops', () => {
+    const s = steps('saw');
+    expect(s.filter((d) => d < 0)).toEqual([expect.closeTo(-2, 1)]);
+  });
+  it('Saw Down jumps up and ramps down', () => {
+    const s = steps('sawDown');
+    expect(s.filter((d) => d > 0)).toEqual([expect.closeTo(2, 1)]);
+  });
+});
+
 describe('LFO_START: where a retriggered LFO starts each Waveform (issue 124, decided by the owner)', () => {
   it('a Saw at its foot, a Saw Down at its top, a Square on its upper half, a Sine and a Triangle at the centre rising', () => {
     expect(lfoShape('saw', LFO_START.saw)).toBe(-1);
