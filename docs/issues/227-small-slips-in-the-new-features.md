@@ -8,7 +8,7 @@
 
 ## Decisions
 
-Claude's calls, open to the owner (2026-11-03, triage):
+Claude's calls, let stand by the owner in 1.24.0 (2026-11-03, triage):
 
 1. **One rule for "the person scrolled":** the Tour's and the Demo's checks of who moved the page become one, shared, and the same events count in both.
 2. **The output clock's stamps are checked,** a stamp it cannot place (a context time of 0, or one ahead of now) left out as a zero one is: a guard on a risk not yet seen.
@@ -51,7 +51,7 @@ Claude's calls, open to the owner (2026-11-03, triage):
 - **A fader nudged off an end by any small rise learns as Absolute:** values rising from the bottom (1 to 15) or falling from the top (113 to 126), without a repeat or a turn back. [ADR-0021](../adr/0021-a-fader-leaves-an-end-by-any-small-rise.md) records it, superseding ADR-0020's "a lone 1 or 126". Test: `encoderMode.test.ts`.
 - **One check of who scrolled** (decision 1): the Demo's following now uses the Tour's (`watchPersonScroll`), and it leaves out a finger on what takes touches itself (the piano, Bead, a card's handle, a knob), read on the element touched or one it is in. The Demo's stop rule reads touches the same way. Page Down and the scroll bar now pause the Demo's following, as the wheel did; a knob's wheel no longer does. Tests: `personScroll.browser.test.ts`; `e2e/tour.spec.ts`, a finger slid across the piano leaves the Tour's scrolling on; `e2e/demo.spec.ts`, Page Down during the Demo pauses its following (both red before).
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.24.0:
 
 1. **Page Up and Page Down no longer stop the Demo,** wherever they are pressed. Before, any key but a few stopped it, so Page Down ended the Demo and the criterion "Page Down during the Demo pauses its following" could not be met. They only scroll the page (or turn the control they are on, the tempo's too), as the wheel does, which leaves it playing. The arrows, Home and End on the page still stop it, as issue 79 has them.
 2. **The take-back closes the Gate at the first Note taken back,** so a Note started before it and still held then ends there. The Song's and the Tutorials' phrases rarely hold a Note across the next one's start; on a Preset with several Voices, one such Note may end a little early, once, on coming back.

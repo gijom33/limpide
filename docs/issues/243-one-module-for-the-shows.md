@@ -19,7 +19,7 @@ Decided by the owner, 2026-11-05 ("Agreed with suggestion", "ok", "yes"):
 7. **The rules tested in node unit tests,** over a fake engine and fake timers: who stops whom, the takeover, the give-backs, Freeze's owner, a load ending the Tour. Each behaviour keeps one browser check that the page is wired; the repeats go (Q5).
 8. **Built after 228, 241 and 242** (Q14).
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.25.0:
 
 9. **Which Section the strip follows for a Controller's bank stays with MIDI;** only the Demo's following moves into the module.
 10. **The module's commands are the builder's to shape,** within decision 4.
@@ -62,7 +62,7 @@ Built test-first on `night/2026-11-05`, on top of 228, 241, 242 and 238:
 - **What stays in React:** `useShows` reads the module, describes each key press and touch to the Demo's stop rule (its selectors read the page) and watches the person's scroll; the Tour's card asks the module whether the page is the person's. Which Section the strip follows for a Controller's bank stays with MIDI (decision 9).
 - **Tests:** 35 node unit tests of the module over the real stores, a fake engine and fake timers, one or more for each row of the rules, the five untested ones among them (a load ending the Tour, the Tutorial's and the Tour's state, the Tour's Freeze owner, the Song against the Tour); 9 of the synth's hand; a browser test that the page's presses reach the stop rule; and, in the MIDI keyboard spec, a Controller's Note stopping the Demo end to end. The usePlayers browser test's seven became the unit tests.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.25.0:
 
 1. **The browser specs were left as they are:** the night's brief asked for them to pass unchanged, so no repeat was removed (decision 7 asks for that). Which ones repeat a unit test now is for a later pass.
 2. **The synth's hand skips a move to where a control already is.** The Demo's knobs used to write the Patch even then; nothing heard or seen changes, only fewer writes.

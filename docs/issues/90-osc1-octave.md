@@ -33,8 +33,8 @@
 ## Decisions (triage, 2026-10-29)
 
 1. Built with the other five: decided by the owner.
-2. Osc 1's Octave moves the Sub with it but not Osc 2, whose offsets now count from the Note played (as on a Minimoog's ranges); the glossary's Transpose says so: Claude's call, open to the owner.
-3. The pulse width bug is fixed in this issue, since an Octave on Osc 1 would hit it too: Claude's call, open to the owner.
+2. Osc 1's Octave moves the Sub with it but not Osc 2, whose offsets now count from the Note played (as on a Minimoog's ranges); the glossary's Transpose says so: Claude's call, let stand by the owner in 1.16.0.
+3. The pulse width bug is fixed in this issue, since an Octave on Osc 1 would hit it too: Claude's call, let stand by the owner in 1.16.0.
 4. Each Oscillator's tab has its own pitch row under its Waveform: Osc 1's Octave and FM on Osc 1's tab, Osc 2's Tuning (Octave, Semitone, Detune, Env Amount) on Osc 2's. Osc 1's Octave and FM did not fit beside Pulse Width on phones and 872 to 1000 px windows, and a third row would have pushed the Filter below a phone's first screen. This ends issue 19's one Tuning row shared under both tabs: decided by the owner (2026-10-29).
 
 ## How it was built

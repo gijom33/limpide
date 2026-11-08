@@ -8,7 +8,7 @@
 
 ## Decisions
 
-Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.md)), from the six reviews of 1.21.1.
+Claude's call, let stand by the owner in 1.22.0 (2026-11-02): in v1 as polish ([131](./131-v1.md)), from the six reviews of 1.21.1.
 
 1. **Aftertouch is smoothed** like a knob's own moves, so pressure glides; its reach stays as issue 132 set it.
 2. **One write per parameter and frame** at most, and only of what changed.

@@ -2,7 +2,7 @@
 
 **What to build:** A slice of [133](./133-the-maths-layer-complete.md) (the layer made complete, grilled with the owner 2026-10-31): decisions 6 and 7, and the Noise's formula of decision 11. Polish of v1's learning layer ([131](./131-v1.md)).
 
-**Blocked by:** none (build after night/2026-10-31 is merged where it touches the same readouts; Claude's call, open to the owner)
+**Blocked by:** none (build after night/2026-10-31 is merged where it touches the same readouts; Claude's call, let stand by the owner in 1.20.0)
 
 **Status:** done (2026-11-02). Built (2026-11-01) on night/2026-11-01 and released; tried by the owner: "Let's keep it like this now"; Detune's number running into Env Amount went to [207](./207-detunes-number-clear-of-env-amount.md); what the layer keeps beyond History is for profile 19's review, later ([42](./42-reviews.md))
 
@@ -37,7 +37,7 @@
 - **Held to the engine** (decision 4): an engine test renders Osc 2 alone at Semitone +7, Octave +1 and −1 and checks its measured frequency over the Note against the readout's number; two more render both Oscillators at Detune 10 cents on A4, at their Octaves and both an octave up, measure the beats from the swells of the summed sound, and check them against the readout (within 0.01 Hz). Detune's f is worked out with the function the engine tunes Osc 2 with, so the two cannot drift. The Noise's slope has no live number; its formula is held by the Pink Noise test already there (−10 dB a decade).
 - **Under the hood:** a tip can now carry a formula, shown with the layer on, under a rule and headed **Under the hood**, above History (decision 2). The formulas sit together in the Synth Geek Layer's module, for 168 to 170 to add to: Octave f₂ = f × 2^o, Semitone f₂ = f × 2^(s/12), Detune Δf = f·(2^(c/1200) − 1), each with its letters said; the Noise, on its fader's tip and on Noise colour's, "white: P(f) flat; pink: P(f) ∝ 1/f, −3 dB per octave".
 - **On a phone** (decision 3): where the value shows in the name's place, at 860 px and narrower, the number shows there while the control moves, as the values do; the formulas only in the touch-and-hold tip. Measured first at 320 to 1920 px: knob widths there leave no room for "2.55 Hz beats" (it ran 8 to 16 px over Env Amount's name), so there Detune shows its figure alone, "2.55 Hz", its words dropped. Wider, the Tuning row widens by Detune's longest readout and no knob moves up or down.
-- **Calls open to the owner** (all Claude's call):
+- **Calls let stand by the owner in 1.21.0** (all Claude's call):
   1. **"×½", not "½":** the Octave and the Semitone keep the × on fractions too, so every multiple reads the same way.
   2. **"at A4" in place of "beats"** before any Note, so the readout stays one width; the tip's formula says the same ("A4 until one is").
   3. **f is Osc 2 before Detune** (the Note moved by its Transpose): the rate it beats at against a tone there, Osc 1 or one of its Harmonics. With Osc 2 a fifth up and two Sines, nothing sounds at f, so nothing beats at that rate, though the readout still says "beats" (the review's point). The LFOs, aftertouch and Env Amount are left out, as the knobs' readouts leave them.

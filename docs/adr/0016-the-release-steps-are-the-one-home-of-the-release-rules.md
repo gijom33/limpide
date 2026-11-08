@@ -1,6 +1,6 @@
 # The release steps are the one home of the release rules
 
-**Status:** accepted · **Date:** 2026-10-30 · **Decided by:** the owner (triage of [issue 110](../issues/110-checks-before-a-push.md), decisions 1 to 4); the ripple hunter in point 4 is Claude's call, open to the owner (its decision 5)
+**Status:** accepted · **Date:** 2026-10-30 · **Decided by:** the owner (triage of [issue 110](../issues/110-checks-before-a-push.md), decisions 1 to 4); the ripple hunter in point 4 is Claude's call, let stand by the owner in 1.18.0 (its decision 5)
 
 Supersedes [ADR-0010](./0010-how-the-work-is-recorded.md)'s point 5, the code review at each minor version, and amends [ADR-0015](./0015-ci-runs-the-end-to-end-tests-before-a-deploy.md)'s "the deploy run is the end-to-end gate" (both are frozen, ADR-0010).
 

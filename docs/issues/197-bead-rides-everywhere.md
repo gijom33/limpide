@@ -14,7 +14,7 @@ Decided by the owner, 2026-11-02:
 2. **On every layout,** a phone and 2 × 2 too ("Let make it happen even on phone and 2x2"). This reverses 141's call that Bead rides only three and four across.
 3. **Dropped near a slow Sine or Triangle LFO, Bead rides it** ("force it to ride").
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.22.0:
 
 4. **A ride comes first:** when a visit is due and an LFO can be ridden, Bead rides it rather than drawing it at random among the sections in view, as 141 does. Rides still last 8 to 18 seconds, and the next visit still comes 20 to 40 seconds after. Today a ride needs an LFO turned on, Sine or Triangle, at 1 Hz or slower, its plot in view, and then wins only one draw among the sections; that is likely why the owner never saw one.
 5. **"Slow" is 141's bound:** Depth above 0, a Sine or a Triangle, 1 Hz or slower (with Sync, the Hz its note value gives at the tempo). The same rule decides a ride by itself and a ride on a drop.
@@ -64,7 +64,7 @@ Claude's calls, open to the owner:
 - **Never during the Demo or under reduced motion** (decision 8), a drop included: the choice of what can be ridden gives nothing then, and under reduced motion Bead cannot be picked up at all. A ride never starts in the middle of a funny turn.
 - `docs/bead.md` lists the rides on every layout and the ride on a drop; CONTEXT.md's Bead entry says so.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.22.0:
 
 1. **The plot's own tip does not keep Bead off its line.** Dropping Bead on a plot leaves the pointer resting there, and the plot's tip opened over it a third of a second later; as a cover (164), it ended the ride at once, so a drop would never have been seen to ride. Now the ridden plot's own tip is ignored, for a drop and a ride by itself alike; Bead rides on, drawn under the tip as under any cover. Any other tip, card or panel over the plot still ends the ride.
 2. **Dropped beside the plot,** Bead goes to the nearest spot along the line rather than to one at random.

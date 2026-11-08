@@ -12,7 +12,7 @@ Decided by the owner, 2026-11-02:
 
 1. **No beep:** Talking Filter does not alternate between a voice and a beep ("That's wrong"); it mumbles, as its description says.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.22.0:
 
 2. **Retuned, not rebuilt:** the same idea (a band-pass, LFO 1 on its Cutoff, LFO 2 on its Resonance at another speed) with settings that keep every moment vowel-like: the narrow end no narrower than a vowel's formant (Q about 4 to 6 rather than 14), and LFO 2 a Sine or Triangle so the band glides between vowels rather than flipping. The implementer tunes by ear and by the Spectrum, and may change other settings of the Preset only if those are not enough.
 3. **Its level kept** within 1 dB of today's loudest 100 ms on C4, as 166 held it.
@@ -58,7 +58,7 @@ Measured offline on C4, held 4 s (the engine's render, the limiter's curve strai
 
 The Preset's test now checks LFO 2 a Sine or Triangle, the Q at or under 6 at every moment and moving across a factor of 4, no window with one Harmonic over 85 %, the sweep, the band-pass short of the open saw above 4 kHz, and the level within 1 dB of −21.7 dBFS. Issue 166's edge test reads LFO 2's foot where a triangle has it, and still tells the curved Q swing from a straight one.
 
-### Calls made (Claude's call, open to the owner)
+### Calls made (Claude's call, let stand by the owner in 1.23.0)
 
 - **A Triangle rather than a Sine** for LFO 2: always moving, it spends less time at the narrow end than a Sine, which dwells at its ends.
 - **The narrow end at Q 4.5,** at the low end of the issue's "about 4 to 6", and the wide end at Q 0.72 rather than the band-pass's widest (0.5), so the cycle's two ends are nearer each other and its level swings less; Volume up to its top, 1, to keep the level.

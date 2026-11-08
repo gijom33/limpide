@@ -10,7 +10,7 @@
 
 ## Decisions
 
-Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.md)), from the six reviews of 1.21.1.
+Claude's call, let stand by the owner in 1.22.0 (2026-11-02): in v1 as polish ([131](./131-v1.md)), from the six reviews of 1.21.1.
 
 1. **Focus returns to what opened** whatever closes (the button, or the card's opener).
 2. **A way between a Tutorial's card and its Step's control:** a "Go to the control" button on the card, and Escape on the control back to the card.
@@ -50,7 +50,7 @@ Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.m
 **What was built**
 
 - **Focus back to what opened** (decision 1): Escape anywhere in the MIDI panel goes back to MIDI; Quit and Done on a Tutorial's card to the Tutorial button (or the Patch button when picked from the Patches panel); Close and Done on the Tour to About; Stop, or Escape on the Demo's parts, to Demo; Enter or Escape in the typed BPM to the BPM.
-- **2026-11-03:** MIDI Learn, Done and a Controller's layout in the MIDI panel, which close it as they act, left the focus on the page; they now go back to MIDI. Quick Setup hands the focus to its card, as a Tutorial picked from its list does: on Skip, on Close at the summary when the button it was on goes, and back to MIDI as the card closes (Claude's call, open to the owner). The keyboard access spec covers each.
+- **2026-11-03:** MIDI Learn, Done and a Controller's layout in the MIDI panel, which close it as they act, left the focus on the page; they now go back to MIDI. Quick Setup hands the focus to its card, as a Tutorial picked from its list does: on Skip, on Close at the summary when the button it was on goes, and back to MIDI as the card closes (Claude's call, let stand by the owner in 1.23.0). The keyboard access spec covers each.
 - **Header panels close when the focus leaves them** (Display, MIDI, the Tutorials, the narrow Tempo, Patches), so none stays open over what it covers, and a later Escape no longer pulls the focus back to Display.
 - **Scroll padding:** up to 860 px the page's top scroll padding is the header's full height (plus the strip's on a phone), so Shift+Tab never leaves the focus under the header as it slides back. The header's and the strip's own controls are exempt, being always in view.
 - **Light theme:** the muted grey darkened to #5c6372 (4.5:1 on the page), and the phone strip's Oscillators tab, as text, darkened towards the text; its underline stays green. The design audit's light-theme waiver for muted text is gone.
@@ -60,7 +60,7 @@ Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.m
 - **Geek readouts** ("Q 1.32") are part of their slider's description.
 - Tests: the keyboard access spec covers each close (but a Tutorial's Done, the same path as Quit), Shift+Tab on a phone and at 200 % zoom (Chromium; Safari tabs only to fields by default), the card's way to the control and back, the BPM announced and the narrow button's name; the clock spec checks the announcement and the mark at each width.
 
-**Calls made (Claude's call, open to the owner)**
+**Calls made (Claude's call, let stand by the owner in 1.23.0)**
 
 1. The Oscillators heading keeps its green at 3.4:1 in the light theme: decision 3 holds headings to 3:1.
 2. The greyed-out values stay as dim as they are (1.79:1 light, 2.14:1 dark): they belong to controls with no effect now, which WCAG 1.4.3 and the design audit leave out. Raising them to 4.5:1 would take away the greying.

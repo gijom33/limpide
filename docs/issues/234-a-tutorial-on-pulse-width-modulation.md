@@ -2,7 +2,7 @@
 
 **What to build:** The owner's idea (inbox, 2026-11-05), for the next few days' polish of the learning: "I would also like to have at least one tutorial cover pulse width modulation." Today Pluck sets a Pulse's width by hand (30 %), and two Presets sweep it with LFO 1 (PWM Morph, PWM Bass, "the moving bass of a Juno"), but no Tutorial turns an LFO onto Pulse Width. Polish for v1 ([131](./131-v1.md)), at the owner's word that the next days go to the learning.
 
-**Blocked by:** none (its words lean on [233](./233-a-tutorial-on-each-waves-harmonics.md)'s if that comes first; Claude's call, open to the owner)
+**Blocked by:** none (its words lean on [233](./233-a-tutorial-on-each-waves-harmonics.md)'s if that comes first; Claude's call, let stand by the owner in 1.24.0)
 
 **Status:** done (2026-11-05). Built (2026-11-05) on day/2026-11-05, merged into main, released in 1.25.0; accepted by the owner: "OK with the rest of the tickets reviewed", with Claude's calls in it.
 
@@ -45,7 +45,7 @@ Built on 2026-11-05, test-first, after [233](./233-a-tutorial-on-each-waves-harm
 
 Wobble's end card now offers PWM Bass, and PWM Bass's offers FM Ladder. The README counts nine Tutorials.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.25.0:
 
 1. **The comparison with detune takes four Steps, not one**, since a Step turns one control and the Tutorial must end on PWM Bass exactly (no Detune, Osc 2 silent): in, detuned, Detune back to 0, out. Taking the Detune back while Osc 2 still sounds lets the person hear the drift stop, so each of the four changes something heard.
 2. **Pulse Width goes 25 % → 10 % → 50 %**: the Pulse's starting width first (every fourth line missing, as the brief's 25 %), then thinned to a needle, then a square, where LFO 1 sweeps it from.

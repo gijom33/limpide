@@ -29,7 +29,7 @@ Claude's recommendations for reviews next time, in the inbox's Ideas at the owne
 2. For a release that adds or changes Preset or tip words, the fact-check and the ear stand-in run before the push.
 3. A change that alters an issue's decision, a setting, or a batch of Presets gets an issue number, and the overturned issue a "Since then" line; written into the issue tracker's guide.
 4. The release steps are the one home of the release rules: a new ADR supersedes ADR-0010's point on the code review's scope, issues 25 and 42 point to the release steps, and an amended ADR's Status line names its amendment (0006, 0013).
-5. Added in triage of the inbox's last lines (2026-10-30): the ripple hunter (review 12's agent) runs with the fact-check and the ear stand-in before the push, on any release with issue work, to find every test, tip, description and doc still stating an old fact. Claude's call, open to the owner. Claude's other recommendations kept in the inbox are answered here: the Linux check by decision 1, the fact-checker and ear stand-in by decision 2; the generated Patches at the edges went to [116](./116-patches-at-the-edges.md).
+5. Added in triage of the inbox's last lines (2026-10-30): the ripple hunter (review 12's agent) runs with the fact-check and the ear stand-in before the push, on any release with issue work, to find every test, tip, description and doc still stating an old fact. Claude's call, let stand by the owner in 1.16.1. Claude's other recommendations kept in the inbox are answered here: the Linux check by decision 1, the fact-checker and ear stand-in by decision 2; the generated Patches at the edges went to [116](./116-patches-at-the-edges.md).
 
 ## Agent Brief
 
@@ -62,7 +62,7 @@ Built at night (2026-10-30), on `night/2026-10-30`, nothing pushed.
 - **Tests:** `npx tsc`, `npm run lint` and the unit tests (750 passed). No Playwright spec covers these files; Docker is installed but not running here, and was not needed, since decision 1 chose the branch run.
 - **The code review** (Standards and Spec), fixed: a restarted release could not push its branch again (now `--force-with-lease`); the run lookup could watch nothing before GitHub registered the run (now a wait loop); issue 42's ticked box had been rewritten (restored, with a "Since then" line at the bottom instead); the "Since then" rule said "at its bottom" where most issues put it beside what it overturns (the rule now allows both); `CLAUDE.md` and the workflow's comment restated the release order (now pointers); ADR-0016 misquoted how ADR-0004 and 0012 word their Status lines.
 
-**Claude's calls, open to the owner:**
+**Claude's calls, let stand by the owner in 1.18.0:**
 
 1. Release branches are named `release/X.Y.Z`, pushed from `main` and deleted once the version is tagged.
 2. The checks on words may run while the branch run does; a fix they bring goes through the branch run again. They are listed after it, as the acceptance asks, because `main` waits on both.

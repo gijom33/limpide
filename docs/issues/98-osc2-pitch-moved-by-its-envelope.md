@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** done (2026-10-31). Triaged with the owner on 2026-10-30 (decisions below), built on 2026-10-31, and accepted by the owner without trying it ("OK I trust you on the fix"). Claude's calls below stay open to the owner.
+**Status:** done (2026-10-31). Triaged with the owner on 2026-10-30 (decisions below), built on 2026-10-31, and accepted by the owner without trying it ("OK I trust you on the fix"). Claude's calls below were let stand by the owner in 1.18.0.
 
 ## What happens
 
@@ -17,9 +17,9 @@
 
 Decided by the owner at triage, 2026-10-30, unless marked otherwise. All four claims were checked in the engine's code first: each holds.
 
-1. **The pulse keeps its width at any pitch.** One native shaping stage (a WaveShaper, which ADR-0001 allows) takes everything that moves the Oscillator's pitch and corrects the pulse's delay, so the width stays the knob's. It covers Env Amount and the LFOs on Osc 2 Pitch, which also ends [26](./26-two-lfos-more-destinations.md)'s known limit. Covering every pitch movement of both Oscillators the same way (the Pitch and Detune LFOs, the pitch bend) is Claude's call, open to the owner.
+1. **The pulse keeps its width at any pitch.** One native shaping stage (a WaveShaper, which ADR-0001 allows) takes everything that moves the Oscillator's pitch and corrects the pulse's delay, so the width stays the knob's. It covers Env Amount and the LFOs on Osc 2 Pitch, which also ends [26](./26-two-lfos-more-destinations.md)'s known limit. Covering every pitch movement of both Oscillators the same way (the Pitch and Detune LFOs, the pitch bend) is Claude's call, let stand by the owner in 1.18.0.
 2. **FM's index keeps falling as Osc 2 rises,** as analogue cross-modulation does: the depth stays sized from the knobs, the two Presets keep their sound, and FM's tip says so.
-3. **The Ideal follows a held Envelope:** while a Note is held, it places Osc 2's marks, the Ring diamonds and the FM marks at Osc 2's resting pitch, Amount × Sustain semitones off its knobs. Back on the knobs once the Note is released: Claude's call, open to the owner.
+3. **The Ideal follows a held Envelope:** while a Note is held, it places Osc 2's marks, the Ring diamonds and the FM marks at Osc 2's resting pitch, Amount × Sustain semitones off its knobs. Back on the knobs once the Note is released: Claude's call, let stand by the owner in 1.18.0.
 4. **A knob moved during a Glide** no longer cuts the pulses' delays and FM's depth short: they slide on to the Note's pitch with the Oscillators.
 
 ## Agent Brief
@@ -61,7 +61,7 @@ Decided by the owner at triage, 2026-10-30, unless marked otherwise. All four cl
 - **Tests.** Engine (browser): a 25 % pulse measured as 25 % (the share of each 50 ms spent on one side) throughout a sweep of Env Amount to +12 and +24, never silent; under an LFO on Osc 2 Pitch; on Osc 1 under a bend; a control at 50 %. FM's depth on the knobs: Osc 2 held a fifth up by Env Amount sounds as Osc 2 tuned a fifth up at FM over the fifth. The Ideal on a held Envelope: Osc 2's squares, Ring's diamonds and FM's circles within 1 dB of the measured peaks. Mid-Glide (the regression tests): a pulse at 25 % and FM's sidebands as the Note's played alone at the Glide's end (the pulse test fails on the engine before this issue); a Note handed over ahead with FM's knob turned before it starts sounds that knob's FM (it failed by 9 dB before the fix). Unit: the Ideal held and released, the Viewer store's held and released answers, FM's tip.
 - The Preset level tests straighten the limiter's curve to hear what reaches it. They used to find it as "the shaper with a curve longer than two points", which now also caught the pulse's shaper. They now find it as the one whose curve goes negative.
 
-## Claude's calls, open to the owner
+## Claude's calls, let stand by the owner in 1.18.0
 
 1. **The shaping stage takes the Oscillator's whole detune,** the tuning knobs included, not only what moves it. A pulse's width was already kept across Osc 1's Octave and Osc 2's tuning (90), and now one path keeps it for everything. It follows ±10 octaves off the Note, past what everything together reaches. The delay is capped at one second, so a pulse far below the keyboard (under about 1 Hz) still drifts, as before.
 2. **"Held" is the newest Note's Gate on: its key down, or Hold keeping it.** Through the Attack and Decay, the Ideal already draws Osc 2 where it will rest, not where it is on its way. Once released, it is back on the knobs at once, while the Filter Envelope's Release is still bringing Osc 2 down. Under the Hold rhythm, whose Gate opens and closes on each step, the Ideal moves between the two with it.

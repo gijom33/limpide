@@ -2,7 +2,7 @@
 
 **What to build:** A slice of [133](./133-the-maths-layer-complete.md) (the layer made complete, grilled with the owner 2026-10-31): decisions 6, 8 and 10 (Key Track). Polish of v1's learning layer ([131](./131-v1.md)).
 
-**Blocked by:** none (build after night/2026-10-31 is merged where it touches the same readouts; Claude's call, open to the owner)
+**Blocked by:** none (build after night/2026-10-31 is merged where it touches the same readouts; Claude's call, let stand by the owner in 1.20.0)
 
 **Status:** done (2026-11-02). Built (2026-11-01) on night/2026-11-01 and released; tried by the owner: "Ok for now, we will revisit the geek overlay via an agent later."; the Rate's readout changes in [202](./202-the-geek-layers-rate-reads-as-without-it.md); what the layer keeps beyond History is for profile 19's review, later ([42](./42-reviews.md))
 
@@ -37,7 +37,7 @@
 - **Held to the engine** (133, decision 4): engine tests measure, on what the engine plays, the period of a square LFO's tremolo at 2 Hz, 3 Hz, a synced 1/4 at 120 BPM and 1/8 T at 100 BPM; the swing of the pitch on Pitch, on Osc 2 Pitch and on Detune, of the level on Volume (in dB) and of a pulse's width (its share of each cycle high), and the swing of the Effective Cutoff and of the Resonance in the engine's Modulation model (which earlier tests hold the Filter's sound to); each against the readout's number. FM's swing has no engine test, only the unit test of its law: its index cannot be read from the engine without one of its own. Key Track's figure is checked against the engine's Effective Cutoff at the Note and before any Note (A4). A test made the readouts wrong on purpose and saw the tests fail.
 - **Under the hood:** Rate T = 1 / f; a synced Rate T = beats × 60 / BPM; Depth "swing = Depth × its reach", with each Destination's reach at full Depth written from the laws the engine swings by, so the two cannot drift; Key Track fc = Cutoff × 2^(k·(n − 60)/12), its letters said.
 - **On a phone** (decision 3): at 860 px and narrower the numbers show in the name's place while the control moves. Measured first from 320 to 1920 px: every LFO readout fits its column with 17 px or more to the next control; Key Track's widest, "20.00 kHz", leaves 8 px or more (the page's least).
-- **Calls open to the owner** (all Claude's call):
+- **Calls let stand by the owner in 1.21.0** (all Claude's call):
   1. **Volume's Depth reads its dip, "−6.0 dB" at 50 %, not "±".** The engine's tremolo tops at the Envelope's level and dips Depth below it, so in dB it is not even either way; the readout says how far below the top it goes (20 log₁₀(1 − Depth)), "−∞ dB" at full. The acceptance criterion and decision 8 wrote "±6 dB".
   2. **Key Track's figure alone, "at A4" not said before a Note, nor decision 10's "Cutoff here:".** "2.83 kHz at A4" (and wider, the Note's name) made the Filter's row wrap between 861 and about 900 px wide, moving 29 knobs and the page 19 px taller; the figure alone fits at every width. The tip says the number is at the Note played, A4 until one is. Decision 6 asked for "at A4" said.
   3. **Key Track's figure leaves out the Filter Envelope, the LFOs and Velocity**: the Cutoff the Note starts from, as decision 10's "Cutoff here" reads it; the Timeline's Effective Cutoff moves on from it while the Note plays. So it equals the Effective Cutoff's figure only while those are at rest (the criterion's test is so).

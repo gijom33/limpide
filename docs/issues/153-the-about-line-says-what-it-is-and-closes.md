@@ -8,7 +8,7 @@
 
 ## Decisions
 
-Claude's call, open to the owner, 2026-10-31 (decision 3 of 109 stands: it still shows on a load and goes on the first change to the sound; these add to it):
+Claude's call, let stand by the owner in 1.20.0, 2026-10-31 (decision 3 of 109 stands: it still shows on a load and goes on the first change to the sound; these add to it):
 
 1. **It says what it is:** the Preset's name leads the line, in bold ("**Init** · The plain starting point: one saw through an open low-pass Filter."), so it reads as that sound's description, not a stray tip.
 2. **It closes:** a small close button (×) at its right end, with a tip and an accessible name ("Close the Preset's description"), and Escape while it shows. The box takes the pointer for its button only; a click elsewhere on it still goes through to the controls beneath, as now.
@@ -57,7 +57,7 @@ Built 2026-10-31, at night, on `night/2026-10-31` (two commits, `Issue 153: …`
 - **The arrows** (decision 5) load without it, and a screen reader hears the name alone.
 - Issue 109's build note has a dated line for what changed.
 
-Calls made without the owner (Claude's call, open to the owner):
+Calls made without the owner (Claude's call, let stand by the owner in 1.20.0):
 
 1. **A Controller's Preset pads and a keyboard's Program buttons show no box either**, as they are the arrows on hardware (they step through the Presets in order).
 2. **A screen reader hears the about line only when the box shows** (a pick in the panel); after the arrows, the name alone, as a sighted visitor sees it.

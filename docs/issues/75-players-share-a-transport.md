@@ -52,7 +52,7 @@
 5. Tests move to where the behaviour lives, with their expectations; nothing heard or seen changes.
 6. The Demo's stop rule is out of scope.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.15.0:
 
 7. The Transport pulls: on each tick it asks the source for the Notes due before the horizon, each with its start and end, so the Song's octave and the Hold rhythm's held Notes are read when a Note is due, as today.
 8. The engine needs no change for decision 2: its release already closes the Gate on one Voice for the Note sounding. The new engine test pins it before the players rely on it.

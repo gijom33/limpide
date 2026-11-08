@@ -31,7 +31,7 @@
 ## Decisions (triage, 2026-10-29)
 
 1. Built with the other five: decided by the owner.
-2. Pink at the same RMS as white, so switching changes the colour and not the level: Claude's call, open to the owner.
+2. Pink at the same RMS as white, so switching changes the colour and not the level: Claude's call, let stand by the owner in 1.16.0.
 3. The choice on a Sub & Noise tab with the Sub's, not in the Mixer: decided by the owner (issue 91, decision 3).
 
 ## How it was built

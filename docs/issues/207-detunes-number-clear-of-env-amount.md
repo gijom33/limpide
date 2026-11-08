@@ -12,7 +12,7 @@ Decided by the owner, 2026-11-02:
 
 1. **The row's words do not run together or overlap** ("see how text is badly aligned").
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.22.0:
 
 2. **Measured first,** at 320 to 860 px, for every control whose value shows in the name's place, with the Synth Geek Layer on and off: Detune's beats are the one seen, but a long value elsewhere (a time in seconds, a Cutoff in kHz, a Depth's swing) may do the same. The fix covers all of them.
 3. **The value fits its own column:** shorter where it must (fewer figures, the unit kept), or drawn smaller, rather than the row spread apart; the knobs do not move as a value changes. Which one is the implementer's choice, measured; if neither fits at 320 px, the owner is asked.
@@ -52,7 +52,7 @@ Claude's calls, open to the owner:
 
 **Measured first, then after,** every control at 320, 340, 375, 414, 480, 540, 600, 601, 640, 700, 760, 820 and 860 px, Geek on and off, each with the widest values it can show, against its neighbours' names. Before: Detune touched Env Amount from 601 px up (0.4 px, the screenshot's "HzEnv"), and Amp Sustain's dB ran into Release at 601 px; a dozen controls' widest values overran their columns by up to 9 px (the Mixer's and Sustain's dB, the times in ms, Cutoff and Key Track in kHz). After: every value inside its own column, at least 6 px from the next name. A browser test measures Detune at its top against Env Amount at 320, 375, 601, 700 and 860 px.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.22.0:
 
 1. **Drawn smaller rather than shortened.** Shorter forms would change what the values say, left to the Synth Geek Layer's review; drawing smaller keeps every figure and unit.
 2. **How small:** the most a value shrinks is to about 9 px from 11 (the Mixer's and Amp Sustain's dB with Geek on, "−40.0 dB", at 320 to 375 px and at 601 px); the times in ms go to about 10 px at 601 px, Cutoff and Key Track to about 10.5 px. If 9 px reads too small, the dB could drop its decimal below −10 dB in the name's place ("−40 dB"), which keeps them at 10.5 px or more.

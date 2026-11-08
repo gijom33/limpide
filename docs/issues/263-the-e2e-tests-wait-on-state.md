@@ -4,7 +4,7 @@
 
 **Blocked by:** none
 
-**Status:** ready-for-agent · enhancement. In v1 as polish of the tests ([131](./131-v1.md)): Claude's call, open to the owner (2026-11-07; the triage's questions did not name it). The other half, Bead behind one module, is dropped (the inbox).
+**Status:** ready-for-agent · enhancement. In v1 as polish of the tests ([131](./131-v1.md)): Claude's call, let stand by the owner in 1.26.2 (2026-11-07; the triage's questions did not name it). The other half, Bead behind one module, is dropped (the inbox).
 
 ## Agent Brief
 

@@ -14,7 +14,7 @@ Decided by the owner (2026-11-05, "Yes to all three"), each the recommendation b
 2. **A fixed make-up plus a part that follows the Resonance, with a ceiling.** The fixed part is about +9 dB at 12 dB and +12 dB at 24 dB, bringing Init's A3 at 3.5 kHz near the low-pass; above Init's Resonance the band narrows and the make-up rises with it, as a classic constant-skirt band-pass does (research, [231-band-pass-level](../research/231-band-pass-level.md)), but never past the ceiling.
 3. **The 7 band-pass Presets' Volume is taken down by as much as their make-up,** so each sounds as now.
 
-Claude's calls, open to the owner (2026-11-05):
+Claude's calls, let stand by the owner in 1.26.0 (2026-11-05):
 
 4. **The ceiling is 12 dB above the fixed part,** so the make-up is at most +21 dB at 12 dB and +24 dB at 24 dB; the limiter and the ear check keep a loud Patch under the knee.
 5. **The make-up follows the Resonance as it is modulated,** not only the knob, so an LFO or envelope on Resonance does not pump the level.
@@ -109,7 +109,7 @@ Built at night (2026-11-05), test-first.
 
 **Measured** (Init, the Cutoff at 3.5 kHz, A3): the band-pass is now within about 1.5 dB of the low-pass at both Slopes (it was 12.8 dB under at 12 dB and 15.8 dB under at 24 dB). From 5 % to 80 % Resonance its level stays within 3 dB of its level at 5 %.
 
-**Claude's calls, open to the owner:**
+**Claude's calls, let stand by the owner in 1.26.0:**
 
 1. **The rise follows the square root of the Q, which departs from decision 2:** the decision says it rises as a classic constant-skirt band-pass does, that is with the Q itself; it rises half as many dB. Measured on a saw, what a narrowing band lets through falls as √Q, at both Slopes and at every Cutoff and Note tried, so √Q keeps the level flat. Following the Q itself made it up to 6 to 9 dB louder at 20 to 40 % Resonance, which breaks the level criterion. So the ceiling is reached at 80 % Resonance, not about 40 %. The decision and the criterion disagree, and this keeps the criterion: the owner's to confirm.
 2. **Init's Resonance is 20 %, not 5 %,** and its Cutoff is 2 kHz (the issue's table took 5 % for Init). The make-up starts rising at 5 % as the decisions say; at Init's real 20 % it is +11.3 dB at 12 dB. The acceptance checks were run on Init with its Cutoff set to 3.5 kHz, so at 20 %.

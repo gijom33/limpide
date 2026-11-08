@@ -12,7 +12,7 @@ Decided by the owner, 2026-11-03:
 
 1. **The Demo's scroll from one Section to the next is slower,** so Bead's move (a fall, or flying back up) is seen.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.23.0:
 
 2. **Slow enough to see Bead's whole move,** measured: the scroll lasts at least as long as Bead's fall or flight between the two Sections, and no longer than a second and a half, so the Demo's words and knobs still meet the eye in time.
 3. **The person's own scrolling and the section strip's taps are not slowed;** with reduced motion, the Demo still jumps.
@@ -62,7 +62,7 @@ Built on 2026-11-03, on night/2026-11-02.
     - Bead's test failed in 2 × 2 with the slow scroll taken out;
     - the knob's test failed against the first build, which any wheel stopped.
 
-**Calls made (Claude's call, open to the owner):**
+**Calls made (Claude's call, let stand by the owner in 1.23.0):**
 
 1. **1.4 s,** within decision 2's bounds. It is long enough that every fall or flight starting with the scroll lands before the page stops (1.3 s left the 2 × 2 flights a few hundredths of a second late). It is under 1.5 s, so the part's change is still seen as it happens.
 2. **Eased in and out,** like the browser's own smooth scroll: slow to leave, slow to arrive.
@@ -77,6 +77,6 @@ Built on 2026-11-03, on night/2026-11-02.
 
 **2026-11-03, from the 1.23.0 code review:** the glide outlived the Demo. Stopped mid-glide (its Stop, the ×, a Note), the page kept moving for up to about 1.2 s, as only a scroll of the person's own or the strip going stopped it. The glide now stops with the Demo, however it ends, where the page is. Tests: the strip's unit test (`SectionStrip.browser.test.ts`, red before: the page went on from 83 to 1320 px); `e2e/demo.spec.ts` on a 375 px phone, Stop mid-scroll leaving the page still.
 
-**2026-11-04, from [224](./224-tests-steady-on-githubs-webkit.md):** on a device drawing fewer than 20 frames a second the glide now goes on Bead's clock, at most 0.05 s of its time a frame, as Bead's motion does, so Bead still lands before the page stops. There it lasts longer than a second and a half: about 1.9 s at 15 frames a second. At 20 frames a second or more, nothing changes. Claude's call, open to the owner.
+**2026-11-04, from [224](./224-tests-steady-on-githubs-webkit.md):** on a device drawing fewer than 20 frames a second the glide now goes on Bead's clock, at most 0.05 s of its time a frame, as Bead's motion does, so Bead still lands before the page stops. There it lasts longer than a second and a half: about 1.9 s at 15 frames a second. At 20 frames a second or more, nothing changes. Claude's call, let stand by the owner in 1.24.0.
 
 **Since then (2026-11-05, [245](./245-beads-frame-read-decide-draw.md)):** the browser test of its Demo scrolls on a 375 px phone and in 2 × 2 left `e2e/mascot.spec.ts` for the node tests of Bead's frame, on readings of the page, as [232](./232-1-24-0-red-on-githubs-linux-webkit.md) records.

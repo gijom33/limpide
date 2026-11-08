@@ -6,7 +6,7 @@
 
 **Status:** done: grilled 2026-10-26, built in [57](./57-tutorial-player.md) (the player) and [58](./58-first-tutorials.md) (the first four)
 
-**Since then:** (2026-10-30, [issue 105](./105-header-and-panels-on-every-screen.md)) decision 7: on a phone a made Step's note shows whole, not in two lines (the Ideal Step's was cut short with "…"); the instruction and the first and last cards keep their two lines. A Step also names the Viewer its note points at, and the page brings it clear of the card with the control (Claude's call, open to the owner).
+**Since then:** (2026-10-30, [issue 105](./105-header-and-panels-on-every-screen.md)) decision 7: on a phone a made Step's note shows whole, not in two lines (the Ideal Step's was cut short with "…"); the instruction and the first and last cards keep their two lines. A Step also names the Viewer its note points at, and the page brings it clear of the card with the control (Claude's call, let stand by the owner in 1.16.1).
 
 **Since then:** (2026-10-31, [issue 128](./128-how-a-synth-works.md)) the Welcome offers the Tour, not a Tutorial; Bass opens from the Tour's last card ("Build a Bass").
 
@@ -32,7 +32,7 @@ The owner, again, 2026-10-26: "a tutorial where the visitor picks a Preset and t
 
 1. **What it teaches:** both a recipe and a lesson: a Tutorial rebuilds its Preset from Init, and each Step's words give the idea behind the change and what to hear and see in the Viewers.
 2. **Who changes the Patch:** the visitor. The Step rings the control in the accent colour (steady, no pulse) and shows the target beside its readout ("→ 800 Hz"); a knob or fader within 5 % of its travel counts and snaps to the exact value, a choice must match. "Do it for me" sets it.
-**Since then (2026-11-01, issue 137):** a stepped knob (a note value, a Semitone, an Octave) counts only on its exact step: a note value's neighbours are a 23rd of its travel apart, within the 5 %, so the next one counted and snapped. Claude's call, open to the owner.
+**Since then (2026-11-01, issue 137):** a stepped knob (a note value, a Semitone, an Octave) counts only on its exact step: a note value's neighbours are a 23rd of its travel apart, within the 5 %, so the next one counted and snapped. Claude's call, let stand by the owner in 1.21.0.
 3. **Where the Steps come from:** hand-written data, in teaching order; a unit test applies every Step to Init and expects exactly the Preset's Patch.
 4. **One change per Step:** one Parameter, or one Display option to switch on (Snapshot, Maths, Ideal…); Display Steps are left out of the Patch check, and Display options stay as set when the Tutorial ends.
 5. **A Step's two texts:** an instruction, then a note shown once the change is made. Next moves on (never on its own); a Step already at its target shows as done. Back only moves the card: nothing is undone.

@@ -13,7 +13,7 @@ Decided by the owner, 2026-11-04:
 1. **The umbrella's rain comes from the top of the screen.**
 2. **The sun and the cloud are farther from Bead.**
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.24.0:
 
 3. **From the window's top edge,** behind the header, which stays on top ([200](./200-beads-tricks-above-the-top-rows.md)); across the same stretch as now, 80 px either side of Bead.
 4. **Rain falls as rain does, fast:** each drop takes about as long as today's to land, so the trick keeps its length, and the first drops leave the top early enough to land as the umbrella's wince starts.
@@ -24,7 +24,7 @@ Decided by the owner, 2026-11-05, trying it ("The rain does not look realistic, 
 
 7. **Pixel drops falling at rain's speed, at Bead's scale as if it were a person.**
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.24.0:
 
 8. **The speed:** Bead's 26 px as a person's 1.7 m, and rain at 5 to 8 m/s, as drops of 1 to 3 mm fall: 80 to 120 px a second, steady (rain falls at its own top speed, not speeding up). A drop takes some 5 s from a phone's top to Bead.
 9. **Rain already falling when the trick starts:** the stretch from the window's top down to Bead fills with drops at once, as rain is seen to start all around, and new drops come in at the top; so the wince and the umbrella keep their times and the trick its 3.6 s.
@@ -34,7 +34,7 @@ Decided by the owner, 2026-11-05, on seeing decisions 7 to 10 built (not committ
 
 11. **The rain as before 237, local to Bead, its drops not all from one line.**
 
-Claude's call, open to the owner:
+Claude's call, let stand by the owner in 1.25.0:
 
 12. **Each drop from its own height, 60 to 120 px over Bead's edge,** the highest where all of them started before, and under what is over the page there, as before. Bead winces as the rain starts, as before.
 
@@ -63,7 +63,7 @@ _Since then (2026-11-05): the rain part of this Brief is replaced by decisions 1
 - With reduced motion, as before: Bead plays no tricks.
 - Tests: the drops' fall time from 120 px and from 700 px, the wince as the first drops land, the steam rising to the sun's height (and under the header where the sun is low), how far the sun and cloud go up with and without room; in the browser, on a phone, the rain's highest drop near the window's top and within 100 px either side of Bead, and the sun and cloud about twice as far above it, under the header, at a phone's width and three across. Run: `tsc`, the lint, the unit tests of the files touched, and the whole mascot spec in Chromium (the frame cost included) and WebKit, all passing.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.24.0:
 
 1. **Three across, on its home edge just under the header, the sun and cloud hardly move:** the header's buttons are right over Bead there, with 36 px between the header's foot and Bead's, so the sun goes up 4 px and the cloud not at all (decision 5's "as far as fits"). They are farther off wherever Bead stands lower: on a visit to a lower section, on a phone or in 2 × 2. Drawing them over the header's buttons there, or the sun farther to the side, would be a new call.
 2. **On a wide window the rain falls over the header,** from the window's very top, as it already did from Bead's home edge there: the header does not sit over the page on a wide window (200, decision 4). It starts behind the header only where the header stays on top.

@@ -13,7 +13,7 @@ Decided by the owner, 2026-11-03:
 1. **A finger on About scrolls nothing behind it.** About's own credits (or Bead's card) still scroll inside it where they are taller than it.
 2. **A × closes About,** as the other panels and cards close, in place of the Close button; About's bottom row keeps the Demo and the Tour.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.23.0:
 
 3. **The × in About's top corner,** the same size and look as the Demo card's ×, with the name "Close About"; Escape and a click outside still close it.
 4. **The page behind stays where it was** when About closes, on a phone and on a computer.
@@ -54,10 +54,10 @@ Built on 2026-11-03, on the branch night/2026-11-02.
 **Tests:** About's tests check the ×, that the Close button is gone, and that About's × is the size of the Demo card's ×. They also check that the wheel and the keys leave the page where it was, and that the ×, Escape and a click outside close About with the page still in place. These tests ran in Chromium and in WebKit. A real finger dragged on a 393 × 540 touch phone, on the mark, the version, the buttons and the credits, leaves the page still. The same drag on the credits scrolls them. This test runs in Chromium only: Playwright cannot drive a touch drag in WebKit. The test failed before the change, which shows the bug: a drag on the mark scrolled the page.
 
 **Calls made:**
-1. The page is held still with the stylesheet alone: while About is open, the page itself does not scroll. Safari on the iPhone honours this from iOS 16. On an older iPhone a finger could still scroll the page. Claude's call, open to the owner.
-2. The × comes last in the Tab order, after Play the Demo and Take the Tour, though it shows at the top. When About opens, the focus starts on the Demo as before. Claude's call, open to the owner.
-3. On a computer whose scrollbars take room (Windows, Linux), the page's scrollbar goes while About is open. The page under the dim can shift by the scrollbar's width. On a Mac and a phone, scrollbars float over the page, so nothing shifts there. This was left as it is: keeping the scrollbar's room would shift a page that had no scrollbar instead. Claude's call, open to the owner.
-4. On a window too short for About, About itself scrolls, and the × scrolls with it, out of the corner. About fits on any window down to a 393 × 540 phone. Claude's call, open to the owner.
+1. The page is held still with the stylesheet alone: while About is open, the page itself does not scroll. Safari on the iPhone honours this from iOS 16. On an older iPhone a finger could still scroll the page. Claude's call, let stand by the owner in 1.23.0.
+2. The × comes last in the Tab order, after Play the Demo and Take the Tour, though it shows at the top. When About opens, the focus starts on the Demo as before. Claude's call, let stand by the owner in 1.23.0.
+3. On a computer whose scrollbars take room (Windows, Linux), the page's scrollbar goes while About is open. The page under the dim can shift by the scrollbar's width. On a Mac and a phone, scrollbars float over the page, so nothing shifts there. This was left as it is: keeping the scrollbar's room would shift a page that had no scrollbar instead. Claude's call, let stand by the owner in 1.23.0.
+4. On a window too short for About, About itself scrolls, and the × scrolls with it, out of the corner. About fits on any window down to a 393 × 540 phone. Claude's call, let stand by the owner in 1.23.0.
 
 **What to try in the app:**
 - On the iPhone: scroll down a way, open About from the ⓘ button, then drag a finger on the logo, on the credits and on the buttons. Only the credits should move. Close it with the ×: the page should be where it was.

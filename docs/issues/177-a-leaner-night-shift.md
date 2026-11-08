@@ -17,7 +17,7 @@
 
 ## Decisions
 
-The owner asked for the issue (2026-11-01); the rules below are Claude's call, open to the owner:
+The owner asked for the issue (2026-11-01); the rules below are Claude's call, let stand by the owner in 1.20.0:
 
 1. **The night runs in its own session** (the scheduled task's), never in a day session's conversation; a night started by hand from a day session starts a new session for it.
 2. **A quiet machine:** the night starts no dev server and opens no browser pane; side jobs (reviews, research, prototypes) run by day, not beside a night; the night's report notes the load average at the start and, if it is above 8, says the results may carry load flakes. The owner's part (closing busy tabs) goes in docs/night-shift.md's "What it needs".
@@ -66,7 +66,7 @@ Built 2026-11-01 on `night/2026-11-01`, by day, as the next night's first issue.
 
 **Tests:** `npx tsc`, `npm run lint`; the touched unit tests (edge sweep, filter design, Ideal, Presets, Bead's place) and the headroom test; the mascot, MIDI Learn, tooltip and audit specs in Chromium and WebKit, 144 passed alone. Under simulated load (11 to 14 CPU burners, `uptime` 15 to 30): each fixed test five times in a row, all green (mascot 40 in Chromium and 35 in WebKit, tooltips and Tap 130, the phone and narrow audits 90, the unit files and the headroom test five runs each); the burners were then stopped.
 
-**Claude's call, open to the owner:**
+**Claude's call, let stand by the owner in 1.21.0:**
 1. Bead's frame cost is measured relative to the frame without Bead (not skipped under load), and up to three times: a Bead that is only just too dear can pass one try in three.
 2. The time limits are raised for the whole unit and engine projects, not test by test: the same slowdown hit seven tests, and a test that hangs still fails, after 30 s rather than 5.
 3. The tooltip tests drive the page's clock; the 400 ms they run it on is the Tooltip's 350 ms plus a margin, written in the test.

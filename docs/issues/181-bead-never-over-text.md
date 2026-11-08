@@ -14,7 +14,7 @@ Decided by the owner, 2026-11-02:
 
 1. **Bead's body and tail never cover text:** a control's label, a readout, a heading; where it stands beside one, it goes a bit lower ("It should go a bit lower").
 
-Claude's call, open to the owner:
+Claude's call, let stand by the owner in 1.22.0:
 
 2. **Everywhere Bead stands still,** not only in the Demo: on a Section's edge, the line under a phone's tabs (142), a clear stretch (164), a ride's end (141), beside a Step's control (151). Its wanderings may pass over text; where it stops may not.
 3. **Lower first:** the nearest place below the text that is clear; if none, the nearest clear place along the same line.
@@ -54,7 +54,7 @@ Built with [192](./192-beads-cover-checks-complete.md), which shares its checks 
 - **Tests:** unit tests on the drawing along a line (text beside its twin, a heading under its swung tail) and on the cling (lower under a label, else along, else the other side; the side it need not move on). In the mascot spec, a sampler checks Bead's drawing pixel by pixel, twin included, against every text line wherever it rests (standing or clinging still, not hopping or bouncing): through the Demo's first three parts at 1440 × 900 and 1280 × 800, beside each control of the Tour and the first six Steps of the Bass Tutorial, and on a phone's tab line (375 × 560, scrolled until its top is level with the tabs' names). The Tour and tab-line tests failed on main's code (over "Waveform", over "LFO & Env"); the Demo test passed there too.
 - **Tests run:** `npx tsc`, `npm run lint`, `npx vitest run` (1621 passed; the Bead unit tests again after the reviews' fixes, 322 passed); the mascot, Demo, Tour, Tutorial and About specs in Chromium and WebKit, the frame-cost test included. After the reviews' fixes, the mascot and Demo specs in both browsers: 132 passed, 5 skipped, and one failure of 179's test "strolling right its tail trails…", which fails one run in eight on main's code too (no stroll right of 60 px in its sample). The Linux fonts' stand-in: the mascot spec's 181, 151 and 164 tests with letter-spacing 0.04em and 0.12em on every text, all passed. Reviewed by two fresh agents, one on the repository's standards, one on the two issues; their findings were fixed, but for the calls below.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.22.0:
 
 1. **What counts as text:** every line of text on the page (labels, readouts, headings, the tabs' names, the header's buttons' names), but text inside a card, tip or panel, drawn over Bead, and text for screen readers alone.
 2. **On a line, "lower" is "along":** it cannot stand lower than its edge, so on a line it keeps to the stretches clear of text. On a phone's tab line, where its top would be level with the tabs' names, it stands between two names (gaps of 54 and 55 px at 375 px); with Detune's twin it needs 60, so it hovers just under the tabs instead, which is lower. With no clear spot anywhere and nowhere else to go, it falls back to the stretch clear of covers alone.

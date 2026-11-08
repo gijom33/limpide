@@ -10,8 +10,8 @@
 
 From 182:
 
-1. **Measured before and after,** as review 18 measured, kept only if it shows (Claude's call, open to the owner).
-2. **What the person sees does not change:** a Viewer still answers the first Note, knob or Bead move within a frame (Claude's call, open to the owner).
+1. **Measured before and after,** as review 18 measured, kept only if it shows (Claude's call, let stand by the owner in 1.23.0).
+2. **What the person sees does not change:** a Viewer still answers the first Note, knob or Bead move within a frame (Claude's call, let stand by the owner in 1.23.0).
 3. **The LFO plots and the modulation rings keep moving with nothing playing,** as now, decided by the owner ("Keep it moving", 2026-11-03). What rests is the rest: the Scopes, Spectrums and the Timeline while silent and unchanged.
 
 ## Agent Brief
@@ -49,7 +49,7 @@ From 182:
 - **What goes on moving.** The LFO plots, the modulation rings and the Pitch marker draw every frame as before (decision 3), and so does Bead. A Viewer whose picture moves in silence also keeps drawing: the Filter Spectrum's Curve with an LFO on the Cutoff, and the Timeline with an LFO line.
 - Tests: `rest.test.ts` and `level.test.ts` (the rest, how long a Viewer has been silent, a Tap's silence). `e2e/viewersRest.spec.ts` covers the Viewers resting before and after the sound starts, an LFO plot moving beside them, and a Display switch, a theme change, a knob turn and a Note each waking them. The draw-time browser test of `patchesAtTheEdges` now draws its Viewers as if sounding, `draw(false)`, since a silent one would rest.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.24.0:
 
 1. **Only a silent Tap rests, as the brief says.** Once the sound has started (any first click or key), the Oscillators run on under a closed Amp. The Oscillator and Filter Taps then carry them with no Note playing, so after a first click only the Amp's Scope and Spectrum and the Timeline are silent. The other four Viewers go on drawing the steady Oscillators. Resting those too would mean resting a picture that shows sound, and that picture moves with the Noise and with any LFO on the Filter. It is a change to what is seen, so it is left for the owner. That is also why criterion 1's "with an LFO on" falls short (below).
 2. **The Timeline rests only when nothing on it scrolls.** A Cutoff line's dots, an LFO's dashes and the beats march left even along a flat line, so with any of them shown the Timeline goes on drawing.

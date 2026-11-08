@@ -63,7 +63,7 @@ Built on 2026-11-03, on night/2026-11-03, a commit each.
 - **The DX7's primary source** (decision 5): Yamaha's own manual library lists the *DX7 Operating Manual*, as a scan and as a text version. It is recorded in the History research as S34, but it has not been read (call 6). FM's line is unchanged and still rests on Yamaha's own Hub page (S33, graded B, from 194).
 - Review: the code review found that the BPM box widened with a tenth, that a Controller knob jumped 1.5 BPM from a tenth, that a pad's Notes were not learned on a Switch, and that the shortening loop was duplicated. All are fixed in "the review's fixes".
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.24.0:
 
 1. **Key and Vel show whole today.** At every width in Mac fonts, a knob's column grows to fit its name, so no row runs short and Key Track and Velocity read whole, as an LFO's Destination did in 156. They shorten only where a row would wrap: in a wider font, or a larger text setting. To see Key and Vel on a phone, the knob columns would have to be capped below their names, which is a layout change 156 did not make.
 2. **Every knob's and fader's name shortens the same way.** Cutoff → Cut, Resonance → Res, Detune → Det and Volume → Vol take their 156 forms on their knobs too, but only where a row runs short (never today).

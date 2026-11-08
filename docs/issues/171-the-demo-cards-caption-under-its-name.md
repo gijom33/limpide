@@ -10,7 +10,7 @@
 
 1. **The caption under the part's name, the segments at the bottom.** Decided by the owner, 2026-10-31.
 
-Claude's call, open to the owner:
+Claude's call, let stand by the owner in 1.20.0:
 
 2. **The card keeps its height from one part to the next:** the caption's room is that of the longest caption at the card's width, so the segments never jump as the Demo moves on (as the part's name already has a fixed width, 2026-10-29).
 3. **On a phone,** where the segments take a row of their own, the same order: name and buttons, caption, segments; folded, the card shows the name and the segments.
@@ -41,8 +41,8 @@ Claude's call, open to the owner:
 - The caption moved into the card's top row, between the name with its buttons and the segments, so the card reads name, caption, segments at every width; on a phone ‹ and › stay beside the segments along the bottom.
 - Its room holds: every part's caption sits in the caption's one cell, out of sight, the playing one shown, so the row is as tall as the longest caption at the card's width and in the page's fonts. Measured: the segments sit at the same place in the card for every part at 375, 1100 and 1920 px.
 - Folded, the card shows the name and the segments; the caption goes out of sight and is still read out as it changes (issue 67).
-- Claude's call, open to the owner: with the room held, a short caption (Strings', Kick's) leaves a line or two empty above the segments, and from 601 px up the card is as tall as with the longest caption all the time (about 108 px at 1100 px, 114 at 1920; 145 on a phone).
-- Claude's call, open to the owner: the caption now sits in the card's top row, which is the handle the card is dragged by from 601 px up, so a drag that starts on the caption moves the card too.
+- Claude's call, let stand by the owner in 1.20.0: with the room held, a short caption (Strings', Kick's) leaves a line or two empty above the segments, and from 601 px up the card is as tall as with the longest caption all the time (about 108 px at 1100 px, 114 at 1920; 145 on a phone).
+- Claude's call, let stand by the owner in 1.20.0: the caption now sits in the card's top row, which is the handle the card is dragged by from 601 px up, so a drag that starts on the caption moves the card too.
 - The Demo spec's test of the segments staying put now checks the order and that the first segment holds across and down, at 375, 393, 1100, 1440 and 1920 px.
 
 **To try:** start the Demo at a phone's width and on a wide window; let it run, or click a segment to jump from a short caption (Strings) to a long one (Self-Oscillation): the segments stay put. Fold the card: the name and the segments.

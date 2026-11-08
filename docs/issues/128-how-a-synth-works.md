@@ -24,9 +24,9 @@ Decided by the owner, 2026-10-30, unless marked otherwise:
 10. **The Viewers:** each card points at the Viewers at its Section's Tap and says what they show at that point in the chain (the Filter Spectrum: the high Harmonics going away). The LFO card points at the Envelope Timeline.
 11. **The chain in words:** each card's first line says where the signal comes from and where it goes next ("the Filter takes what the Oscillators make…"). No diagram.
 12. **Section in the glossary:** the page's four parts, defined in CONTEXT.md.
-13. The Tour stops the Demo and the Song when it starts, and its card docks where a Tutorial's card does, the page bringing each Section and its Viewers into view, on a phone too. Claude's call, open to the owner.
+13. The Tour stops the Demo and the Song when it starts, and its card docks where a Tutorial's card does, the page bringing each Section and its Viewers into view, on a phone too. Claude's call, let stand by the owner in 1.18.0.
 
-Made while building it (2026-10-30), each Claude's call, open to the owner:
+Made while building it (2026-10-30), each Claude's call, let stand by the owner in 1.18.0:
 
 14. The button reads "Take the Tour", in the Welcome and the About alike, between "Play the Demo" and "Close".
 15. Four cards, no fifth: the LFOs card is the last, its words ending "That is the whole chain. Now build a sound yourself", with "Build a Bass" and "Done" in place of Next. A closing card where nothing moves would break decision 8.

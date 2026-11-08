@@ -8,7 +8,7 @@
 
 ## Decisions
 
-From 182 (Claude's calls, open to the owner, 2026-11-02):
+From 182 (Claude's calls, let stand by the owner in 1.23.0, 2026-11-02):
 
 1. **Measured before and after,** as review 18 measured, kept only if it shows.
 2. **What the person sees does not change:** the Timeline looks the same, pixel for pixel where it can be compared.
@@ -42,7 +42,7 @@ From 182 (Claude's calls, open to the owner, 2026-11-02):
 - **Unchanged.** The picture is still drawn whole each frame from those samples, with the same code, so what is drawn is the same, pixel for pixel. A throwaway in-browser check compared every kept sample with one worked out afresh, about 950,000 columns in Chromium and in WebKit. It ran through the Demo, Cutoff turns, a chord, an LFO on before the first Note, a time span change and a resize, and found no difference.
 - Tests: `timeline.test.ts` (only the new columns worked out, the same samples as afresh, a new scale, a clock standing still, the moments before the settled past) and `synthEngine.browser.test.ts` (the model's past is settled from the first Patch and the first Note, and stays as it was once the clock has passed it).
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.24.0:
 
 1. **The columns are worked out once, but still drawn whole each frame.** The brief asks for the drawn columns to shift along and only the new ones to be drawn. Measured on this branch, working out the Modulation was about 80 % of the Timeline's cost and drawing about 20 %. Shifting the drawn picture cannot keep it pixel for pixel (decision 2): it moves a fraction of a pixel each frame, and the seconds' grid lines stay fixed to the canvas while the curves scroll under them. Shifting would also need the lines, their dots and the labels redrawn over it. So the drawing is left as it was.
 2. **Before the first Note, nothing is saved.** Until then, the first Note's key will stand in for the past's Key Track, so every column is worked out each frame as before. With nothing on the Timeline moving, it rests anyway (issue 214).

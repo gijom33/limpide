@@ -10,7 +10,7 @@
 
 1. **No tip link in v1:** About's Support entry and the README's line to Buy Me a Coffee go. Decided by the owner, 2026-10-31.
 
-Claude's call, open to the owner:
+Claude's call, let stand by the owner in 1.20.0:
 
 2. **What About invites instead,** in the Support entry's place: "Enjoying Limpide? Share it, or star it on GitHub", "star it on GitHub" linking to the repository. The README's line becomes "Enjoying it? Share it, or ⭐ the repository."
 3. **The owner's account** (Buy Me a Coffee and its Stripe setup) is the owner's to close or leave; nothing in the repository points to it.
@@ -39,9 +39,9 @@ Claude's call, open to the owner:
 
 ## How it was built
 
-- About's Support entry now reads "Enjoying Limpide? Share it, or star it on GitHub", "star it on GitHub" linking to the repository; the `COFFEE` address is gone. The entry keeps its "Support" label: Claude's call, open to the owner.
+- About's Support entry now reads "Enjoying Limpide? Share it, or star it on GitHub", "star it on GitHub" linking to the repository; the `COFFEE` address is gone. The entry keeps its "Support" label: Claude's call, let stand by the owner in 1.20.0.
 - The README's line under "Play it in your browser" reads "Enjoying it? Share it, or ⭐ the repository.", "⭐ the repository" the link; the ☕ went with the coffee.
 - The About spec checks the line, its link, and that no coffee link is left. The short phone's test (the way in on the first screen, 393 × 659) still passes with the longer line.
-- A search finds "buymeacoffee" only in issue 146, this issue, the inbox, .out-of-scope, and `docs/reviews/2026-10-31/13-fact-checker.md`, a dated review's record of what it checked that day, left as written: Claude's call, open to the owner.
+- A search finds "buymeacoffee" only in issue 146, this issue, the inbox, .out-of-scope, and `docs/reviews/2026-10-31/13-fact-checker.md`, a dated review's record of what it checked that day, left as written: Claude's call, let stand by the owner in 1.20.0.
 
 **To try:** open About (the logo or ⓘ): the Support entry's line and its link to the repository; on a phone's width, the Demo and the Tour still on the first screen. The README on GitHub shows its line once pushed.

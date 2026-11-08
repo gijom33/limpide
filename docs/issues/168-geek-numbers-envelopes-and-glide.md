@@ -2,7 +2,7 @@
 
 **What to build:** A slice of [133](./133-the-maths-layer-complete.md) (the layer made complete, grilled with the owner 2026-10-31): decisions 9 and 10 (Glide). Polish of v1's learning layer ([131](./131-v1.md)).
 
-**Blocked by:** none (build after night/2026-10-31 is merged where it touches the same readouts; Claude's call, open to the owner)
+**Blocked by:** none (build after night/2026-10-31 is merged where it touches the same readouts; Claude's call, let stand by the owner in 1.20.0)
 
 **Status:** done (2026-11-02). Built (2026-11-01) on night/2026-11-01 and released; tried by the owner: "Ok for now, we will revisit the geek overlay via an agent later."; what the layer keeps beyond History is for profile 19's review, later ([42](./42-reviews.md))
 
@@ -61,7 +61,7 @@ Built on 2026-11-01 on night/2026-11-01, test-first, as the Decisions above say.
 - The divisors are the engine's own (the Envelope's sharpnesses and Glide's, now exported as their one source), and engine tests hold each τ to the sound: on the Amp Tap the Attack is 63 % up after its τ, the Decay and Release 63 % further down; the pitch is 63 % of the way to the new Note after Glide's τ. The Geek spec checks the tips with the layer on only and the readouts as they were; the 375 px phone's touch-and-hold tip shows Decay's τ whole.
 - On the way, a time a hair under a second (0.9995 to 1 s) wrote "1.00e+3 ms", on a fader's readout as in its τ: it now reads "1.00 s".
 
-Calls, Claude's call, open to the owner:
+Calls, Claude's call, let stand by the owner in 1.21.0:
 
 1. The τ reads to three figures, in ms under a second ("75.0 ms", "0.250 ms") and in seconds from there ("1.67 s"), as the faders' times do.
 2. The curves' level x is a share of the peak, so one formula serves both Envelopes (the Amp's peak is the Velocity, the Filter's full), and x₀ is where each stage starts: the Decay starts from where the Attack got to (95 %), not from the peak.

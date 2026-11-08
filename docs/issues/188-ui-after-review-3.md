@@ -8,7 +8,7 @@
 
 ## Decisions
 
-Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.md)), from the six reviews of 1.21.1.
+Claude's call, let stand by the owner in 1.22.0 (2026-11-02): in v1 as polish ([131](./131-v1.md)), from the six reviews of 1.21.1.
 
 1. **One rule for where a header panel opens:** under the header, as Display's does.
 2. **Formulas never over data:** a formula sits where no bar or trace is drawn, or its Viewer leaves it room.
@@ -53,7 +53,7 @@ Built on 2026-11-02, on night/2026-11-02. The layouts were measured first at 320
 - **Tests:** in the header spec, MIDI Learn on at 10 widths from 320 to 1920 px: nothing in the header moves, nothing overlaps, and the word is on one line where it shows. A sweep from 861 to 1920 px checks the buttons against the keys and the 8 px gap. The design audit gains each header panel under the header and the formulas clear of the Viewers, the Viewers one size, at its six sizes. The Tutorial spec checks the icons and the names' start. The tooltip spec checks the panel rule. The unit test covers Learning's short forms. Each was red before its fix.
 - **Run:** `npx tsc`, `npm run lint`, the UI unit tests (325 passed). In Chromium (382 passed) and WebKit (367 passed, 15 skipped): the header, design audit, Tutorial, tooltip, touch tips, Geek, MIDI Learn, Quick Setup, Display panel, Tempo, fits-screen, one-line, Patches, keyboard access, piano, in-between, four-across, layout polish and toolbar layout specs. After the review, tooltip and Geek again in both. Not run in Linux's fonts here: GitHub's run is the first in them. Its likeliest catch is the MIDI word's one-line check.
 
-**Calls made (Claude's call, open to the owner):**
+**Calls made (Claude's call, let stand by the owner in 1.23.0):**
 
 1. **Where the MIDI button shows its icon alone (861 to 1279 px), Learn shows no word.** The icon pulses in the accent there and the Learn bar says it. The shortest form, "Lrn", is wider than the room there (the count's, or none).
 2. **"Lrn" as the shortest form**, at phone widths, where "Learn" does not fit under the icon.

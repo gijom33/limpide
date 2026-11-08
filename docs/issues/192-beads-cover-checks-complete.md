@@ -8,7 +8,7 @@
 
 ## Decisions
 
-Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.md)), from the inbox's lines of the 1.20.0 and 1.21.0 reviews and checks.
+Claude's call, let stand by the owner in 1.22.0 (2026-11-02): in v1 as polish ([131](./131-v1.md)), from the inbox's lines of the 1.20.0 and 1.21.0 reviews and checks.
 
 ## Agent Brief
 
@@ -46,7 +46,7 @@ Built with [181](./181-bead-never-over-text.md) on the branch worktree-agent-a90
 - **Tests:** unit tests for each case (the hover line covered, the twin and the turned tail under a cover, beside a control too, two docked cards, a layout change mid-ride, a throw below 320 px) and the Demo spec's new test. Checked in the browser with a stand-in cover over the whole window of a phone: Bead went out of sight, and came back once it was gone.
 - **Tests run:** as in 181. The mascot and Demo specs pass in Chromium and WebKit but for 179's stroll test, which fails one run in eight on main's code too; the Linux fonts' stand-in (letter-spacing 0.04em and 0.12em) on the mascot spec's 164, 151 and 181 tests passed.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.22.0:
 
 1. **"Waits off-screen at its edge"** is built as out of sight where it is: up under the tabs or the header from its hover line, down behind its edge from an edge, as it comes and goes; not off the window's side, which would give the page a sideways scroll bar.
 2. **The covers count its tail turned round, always,** though at rest it faces as drawn: under a cover it is hidden whichever way it faces, and turned round at a stretch's left end its tail lay under the cover beside it.

@@ -9,7 +9,7 @@ The owner's own idea in the inbox (2026-10-30, "Add tutorial for FM and ring pre
 
 **Blocked by:** none
 
-**Status:** done (2026-10-30): the three Tutorials, the Maths Layer under FM and Ring, and the about line, built as below. Two of Claude's calls are open to the owner: Deep Breath, a Preset of its own, and the about line shown only for the person's loads.
+**Status:** done (2026-10-30): the three Tutorials, the Maths Layer under FM and Ring, and the about line, built as below. Two of Claude's calls were let stand by the owner in 1.17.0: Deep Breath, a Preset of its own, and the about line shown only for the person's loads.
 
 ## Questions for the owner
 
@@ -50,7 +50,7 @@ The owner's own idea in the inbox (2026-10-30, "Add tutorial for FM and ring pre
 ## Added in triage (2026-10-30)
 
 - The owner's idea (inbox, 2026-10-30), "Add tutorial for FM and ring presets", is answered by decision 1: the FM Ladder and Ring Bell Tutorials.
-- Claude's brainstorm line (inbox, 2026-10-30) also names the LFO on FM. No fourth Tutorial: Breathing Bell's about line, shown under the Patch name by decision 3, points at it. Claude's call, open to the owner.
+- Claude's brainstorm line (inbox, 2026-10-30) also names the LFO on FM. No fourth Tutorial: Breathing Bell's about line, shown under the Patch name by decision 3, points at it. Claude's call, let stand by the owner in 1.16.1.
 
 ## How it was built
 
@@ -58,7 +58,7 @@ The owner's own idea in the inbox (2026-10-30, "Add tutorial for FM and ring pre
 
 - **FM Ladder**, 6 Steps: Osc 1 a Sine (one spike), Osc 2 a Sine (silent, its fader down: heard only through FM), FM to 50 % (the ladder), then the Filter opened (Cutoff 20 kHz, Resonance 0) and the Amp's Sustain full.
 - **Ring Bell**, 11 Steps: the two Sines, Osc 2 an octave up, Ring up (3 times the Note appears, and 1 times under Osc 1's own), Semitone +3 (the sum and difference leave the ladder), Osc 1 down (neither pitch heard), the Filter opened, then the bell's Envelope (Sustain 0, Decay and Release 1.8 s). Ring comes before the Semitone so its sum and difference are first heard on the ladder, then leave it.
-- **Deep Breath**, 8 Steps: the Sub up (a square an octave down), its Octave −2, its Waveform Sine, the Noise up to 30 % (White, a level floor), its Colour Pink (the floor tilts), the Filter opened, the Sustain full. A Preset of its own in Shapes, after Sub Two Down: Sub Two Down with Pink Noise at 30 %, since a Tutorial must end on its Preset exactly and Sub Two Down has no Noise. Claude's call, open to the owner.
+- **Deep Breath**, 8 Steps: the Sub up (a square an octave down), its Octave −2, its Waveform Sine, the Noise up to 30 % (White, a level floor), its Colour Pink (the floor tilts), the Filter opened, the Sustain full. A Preset of its own in Shapes, after Sub Two Down: Sub Two Down with Pink Noise at 30 %, since a Tutorial must end on its Preset exactly and Sub Two Down has no Noise. Claude's call, let stand by the owner in 1.17.0.
 
 Each one's Steps rebuild its Preset from Init (the unit test); in Playwright, each Step's control and Viewer come clear of the header and the card on the two phones and the 2 × 2, and "Do it for me" to the end names the Patch after the Preset (now checked for all seven). The notes' claims are rendered offline at the Step that makes them (`src/patch/presets.browser.test.ts`): FM's rungs, Ring's sum and difference on and off the ladder with neither pitch left, the Sub's rungs two octaves down as a square and as a sine; Pink's fall and equal loudness were already tested in the engine. Deep Breath's level sits within 3 dB of the Shapes.
 
@@ -73,6 +73,6 @@ Each one's Steps rebuild its Preset from Init (the unit test); in Playwright, ea
 
 The Sub, Osc 2's own fader and the Noise are still not written (the Ideal draws them). The Maths Layer's tip and its CONTEXT.md entry name the new lines.
 
-**The about line (2026-10-30).** Under the Patch name, over the page like the Patch panel (anchored to the header's left end, so nothing moves), passing clicks through to the controls beneath. Shown when the person loads a Preset: the arrows, the Patch panel, a Controller's pads or a Program Change; any change to the sound, or another load, takes it away. The Demo's and a Tutorial's loads show none, as their captions and cards say what they load (Claude's call, open to the owner). A screen reader hears it once, with the name; a knob turned hides it without saying the name again. Built in `src/ui/hooks/usePresetAbout.ts`.
+**The about line (2026-10-30).** Under the Patch name, over the page like the Patch panel (anchored to the header's left end, so nothing moves), passing clicks through to the controls beneath. Shown when the person loads a Preset: the arrows, the Patch panel, a Controller's pads or a Program Change; any change to the sound, or another load, takes it away. The Demo's and a Tutorial's loads show none, as their captions and cards say what they load (Claude's call, let stand by the owner in 1.17.0). A screen reader hears it once, with the name; a knob turned hides it without saying the name again. Built in `src/ui/hooks/usePresetAbout.ts`.
 
 *Since (2026-10-31, [153](./153-the-about-line-says-what-it-is-and-closes.md)):* it shows only for a Preset picked in the Patch panel, not the arrows, a Controller's pads or a Program Change; it leads with the Preset's name in bold, and its × (the one part that takes the pointer) or Escape closes it. It lies over the Sections' headings, as wide as the Oscillators and the Filter together.

@@ -36,7 +36,7 @@
 
 1. The Amp's row moves beside its name, as the Filter's; the controls' order stays.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.15.0:
 
 2. Where compact windows put every row's name above its controls, the Amp's stays there too, as the Filter's does: the bug was the two rows differing, not the compact layout.
 

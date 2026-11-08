@@ -8,7 +8,7 @@
 
 ## Decisions
 
-Claude's calls, open to the owner (2026-11-06, triage):
+Claude's calls, let stand by the owner in 1.26.1 (2026-11-06, triage):
 
 1. **A change of Mode fades, about 10 ms,** from the Filter as it was to the Filter as it is now: short enough to be heard as the switch itself, long enough that no step is heard. Where the Resonance is low and the two Modes' levels meet, the fade is there too, unheard.
 2. **The Slope is left as it is:** the issue is the Mode, and 231 measured no click on a Slope change; if the same fade covers it at no cost, it may, but nothing asks it to.
@@ -49,7 +49,7 @@ Built at night (2026-11-06) on night/2026-11-06, test-first.
 
 **Measured** (offline renders, A3 at a 1 kHz Cutoff): every ordered pair of Modes, at 0, 50, 80 and 100 % Resonance and both Slopes, steps at most 1.04 times the wave's own steepest step; without the fade, from the band-pass at 80 %, 4.1 times at 24 dB (3.3 at 12 dB, as 231 measured). A held two-Voice chord keeps its Mode's level before and after each fade. An offline render of an 8-Voice chord over 10 s, with one change of Mode, takes as long as before (about 730 ms both, on a loaded machine).
 
-**Claude's calls, open to the owner:**
+**Claude's calls, let stand by the owner in 1.26.1:**
 
 1. **10 ms, in a straight line,** both sides' shares summing to 1. The same sound at 5 or 12 ms; at 15 ms even the last 1.04 goes, if 10 ms ever sounds too quick.
 2. **The no-click criterion is 231's, with its margin of 1.1,** not a strict 1.0: the most, 1.04, is the low-pass at 100 % Resonance and 12 dB ringing up from silence on its new side, 16 ms after the change, past the fade's end, as it does at a Note's start; it is the same at a fade of 5, 10 or 12 ms.

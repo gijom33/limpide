@@ -24,7 +24,7 @@ Decided by the owner, 2026-11-05 ("ok"):
 
    The mascot spec keeps the checks that Bead is drawn and wired to the page.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.25.0:
 
 5. **No ADR:** it continues 222, where the choices became pure.
 6. **The three steps' exact shape is the builder's,** the reading two adapters (the page and the tests' script) and the deciding step pure.
@@ -67,7 +67,7 @@ Built (2026-11-05) on night/2026-11-05.
 - **Tests:** `src/ui/beadFrame.test.ts`, 13 node tests in about a quarter of a second, over readings of the page as the app lays it out (`src/ui/beadFrame.fixture.ts`, read once from Chromium at 1440 × 900, a 375 px phone and 2 × 2): home on the Amp; the Demo's acts in turn, three across, surfing on the line and leaning with the wave (204); keeping off text on its edge (181); a ride on a slow Sine three across, home at Depth 0 (141); dropped on a Triangle's plot it rides, on a Saw's it lands (197); a throw landing on an edge; melting on its edge and raining away from the air, three across and hovering on a phone; beside each of eight Tour and Tutorial controls over no label, then home (181); through the Demo's scroll, in view and landed before the page stops, on a phone and in 2 × 2 (211); a ride on LFO 1's plot on a phone and in 2 × 2, back to its edge (197).
 - **The mascot spec:** the four tests skipped on GitHub's WebKit (204, 211, 197, 181) left it for those unit tests; issue 232 says so.
 
-**Claude's calls, open to the owner:**
+**Claude's calls, let stand by the owner in 1.26.0:**
 
 1. **The reading is plain values, but for a few reads made only when needed** (the plots, the controls over an edge, a control's neighbours, the panels), as functions on it, so a frame costs no more while Bead stays home (the frame-cost test).
 2. **The scripted layouts were read from the app** (once, in Chromium, 2026-11-06), not made up; the Demo's scroll is scripted as `glideTo` makes it (1.4 s, eased), from the Filter's edge to the Amp's on a phone, and from hovering to the LFO & Envelopes in 2 × 2 at 690 × 640, where the move happens without the Demo's card.

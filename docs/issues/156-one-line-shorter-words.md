@@ -10,7 +10,7 @@
 
 1. **The rule:** a label, a key or a button's word that would take a second line takes a shorter form instead, an abbreviation, at worst a few letters; the full name stays in its tooltip and accessible name. Sentences (tips, cards, about lines) wrap as text does. Decided by the owner, 2026-10-31.
 
-Claude's call, open to the owner:
+Claude's call, let stand by the owner in 1.20.0:
 
 2. **The shorter forms, by steps:** each label has a short form, and at worst a shortest one, chosen by the room it gets, never by the layout's name: Pulse Width → PW; Filter Env → F Env → FE; Amp Env → A Env → AE; Cutoff → Cut; Resonance → Res; Key Track → Key; Velocity → Vel; Retrig stays (already short); the LFOs' Destinations in their pickers likewise. The full name is what a screen reader hears, and what the tip says.
 3. **The Timeline's key** takes the short forms before it ever wraps, so on a 375 px phone it is one line.
@@ -51,7 +51,7 @@ Built on 2026-11-01, on night/2026-11-01.
 - **The design audit** has a one-line rule: a label's own text on one line, and a key (`data-one-line`) all its text on one, at each of its widths; sentences (paragraphs, list items, tips) are exempt. It runs with the targets and overlaps, and a test of the check itself fails on a button, a label and a key that wrap and not on a sentence or a tip. It found one more: the Patches panel's group names, which took two lines in their 76 px column at every width (issue 30's narrow column). They now take a shorter form there (Keys & Org, Plucks, Str & Brass, Move & FX), whole in the category pills above and for screen readers.
 - Tests: `src/ui/shortForms.test.ts`; `e2e/oneLine.spec.ts` (the key at 375, 430, 690, 1440 px and the audit's widths and 861 and 1024 px; a shortened entry's name and tip; the Destination's name on its button); `e2e/designPrinciples.spec.ts` (the rule's own test, the rule at every size); `e2e/patches.spec.ts`'s group names test, now one line. Not run in Linux's fonts here: GitHub's run is the first in them.
 
-**Calls made (Claude's call, open to the owner):**
+**Calls made (Claude's call, let stand by the owner in 1.21.0):**
 
 1. **The forms** are the decision's, plus O2 Pitch then O2P for Osc 2 Pitch, Det for Detune and Vol for Volume. Pitch and FM have none.
 2. **The key steps as a whole**, every entry to its next form together, rather than the longest first, so it reads alike; at its shortest the gaps between entries go from 14 to 8 px and the line samples from 16 to 10 px, which is what makes it fit at 861 px.

@@ -145,7 +145,7 @@ A lawyer or compliance lead who reviews open-source projects before a company us
 
 Claude's three reviewers, kept by the owner and first run on 1.16.0 (2026-10-30): the ripple hunter finds every test, tip, description and doc still stating what a change made untrue; the fact-checker renders each new or changed Preset and tip through the engine and tests every claim its words make; the ear stand-in renders each new Preset and reports levels, clicks, clipping, harshness and fold-back. Their briefs are the reports' own opening lines: [12](../reviews/2026-10-30/12-ripple-hunter.md), [13](../reviews/2026-10-30/13-fact-checker.md), [14](../reviews/2026-10-30/14-ear-stand-in.md).
 
-**Since then (2026-10-30, [issue 110](./110-checks-before-a-push.md)):** they run before a release's push, as [the release steps](../releasing.md) say. Decided by the owner, the ripple hunter's part Claude's call, open to the owner.
+**Since then (2026-10-30, [issue 110](./110-checks-before-a-push.md)):** they run before a release's push, as [the release steps](../releasing.md) say. Decided by the owner, the ripple hunter's part Claude's call, let stand by the owner in 1.18.0.
 
 ### 15. The sound designer and Preset curator
 
@@ -169,7 +169,7 @@ Someone who has never touched a synth and opens Limpide to have fun and learn so
 - **Asks:** Is each Step and card understood on one reading, without looking anything up? Which words are never explained? Where is it dull, too long or too dense, and where is it fun? Do they hear and see what the words say they will? Do they want to do the next Tutorial?
 - **Success:** they can say in their own words what the Oscillators, the Filter, the Amp and an LFO do, and they finished at least two Tutorials because they wanted to
 - **On the phone, the card unfolded:** every Step of every Tutorial and every Tour card, with the card's text open in full, screen by screen: what the screen shows, what the card hides (the control the Step names, the Viewer it points at, Bead), and what has to be scrolled to. On a phone the room is so small that what is on the screen has to be chosen with care. Added by the owner, 2026-11-05: "we need to make sure at least one of the agents reviewer looks at the tutorial on a phone with the text expanded."
-- **Runs again:** whenever a release changes the Tutorials' or the Tour's words, with the fact-checker (13), so the words stay both clear and true (Claude's call, open to the owner). Its findings feed [129](./129-words-fun-to-read.md).
+- **Runs again:** whenever a release changes the Tutorials' or the Tour's words, with the fact-checker (13), so the words stay both clear and true (Claude's call, let stand by the owner in 1.18.0). Its findings feed [129](./129-words-fun-to-read.md).
 
 ### 17. The MIDI mapping geek
 

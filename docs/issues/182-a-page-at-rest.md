@@ -8,7 +8,7 @@
 
 ## Decisions
 
-Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.md)), from the six reviews of 1.21.1.
+Claude's call, let stand by the owner in 1.22.0 (2026-11-02): in v1 as polish ([131](./131-v1.md)), from the six reviews of 1.21.1.
 
 1. **Measured before and after,** as review 18 measured (idle, the Demo, an 8-Voice chord, at 1×, 1.25× and 4× throttling), each change kept only if it shows.
 2. **What the person sees does not change:** a Viewer still answers the first Note, knob or Bead move within a frame.

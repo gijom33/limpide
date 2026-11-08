@@ -12,7 +12,7 @@ Decided by the owner, 2026-11-03:
 
 1. **The Tour explains the other layers and the Tutorials:** the Synth Geek Layer, its History lines, and that each Tutorial rebuilds a Preset yourself.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.23.0:
 
 2. **At the Tour's end, after the Sections,** and where each is found: the Synth Geek Layer's switch in Display, the History lines in the tips with the layer on, the Tutorials in the Tutorial menu.
 3. **One closing card, or one card each,** is the implementer's choice, measured against the Tour's length; each card shows the control it names, as the Sections' cards do ([206](./206-the-tour-shows-the-control-and-the-viewer.md)).
@@ -65,7 +65,7 @@ Built on 2026-11-03, on night/2026-11-02.
   - The Tour's existing tests now count six cards.
   - Red first: the view test failed with the scroll taken out.
 
-**Calls made (Claude's call, open to the owner):**
+**Calls made (Claude's call, let stand by the owner in 1.23.0):**
 
 1. **Two cards, not one or three:**
    - One for the Synth Geek Layer, with History inside it, since the History lines are found by the same toggle.

@@ -32,8 +32,8 @@
 ## Decisions (triage, 2026-10-29)
 
 1. Built with the other five, Hard Sync left out: decided by the owner.
-2. Ring is a Mixer source on a fader, not a switch on Osc 2: Claude's call, open to the owner.
-3. Ring takes the two Oscillators before their Mixer levels, so Osc 2 can be heard through Ring alone, as on most analogue Ring Modulators: Claude's call, open to the owner.
+2. Ring is a Mixer source on a fader, not a switch on Osc 2: Claude's call, let stand by the owner in 1.16.0.
+3. Ring takes the two Oscillators before their Mixer levels, so Osc 2 can be heard through Ring alone, as on most analogue Ring Modulators: Claude's call, let stand by the owner in 1.16.0.
 
 ## How it was built
 

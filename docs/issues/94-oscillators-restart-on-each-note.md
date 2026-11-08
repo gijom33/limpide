@@ -39,8 +39,8 @@
 ## Decisions
 
 1. The Oscillators restart on each Note, decided by the owner (of two ways: restarting, or free-running with the Ring diamonds an average and a tooltip saying so).
-2. A legato pitch change, sliding from a held Note, does not restart them: it would click mid-sound. Claude's call, open to the owner.
-3. The Sub restarts with them, so its alignment with Osc 1 is fixed too. Claude's call, open to the owner.
+2. A legato pitch change, sliding from a held Note, does not restart them: it would click mid-sound. Claude's call, let stand by the owner in 1.16.0.
+3. The Sub restarts with them, so its alignment with Osc 1 is fixed too. Claude's call, let stand by the owner in 1.16.0.
 
 ## How it was built
 

@@ -12,7 +12,7 @@ Decided by the owner, 2026-11-04:
 
 1. **Three choices for Glow in Display:** no glow, glow on the Scopes only, glow on the Scopes and the Spectrums.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.24.0:
 
 2. **Their words on screen: Off, Scopes, All,** in Display's segmented control as its other choices are, the tip saying what each draws ("All: the Scopes' traces and the Spectrums' outlines").
 3. **Off by default,** as now.
@@ -47,9 +47,9 @@ Claude's calls, open to the owner:
 ## How it was built
 
 - **Three choices:** Display's Glow is a segmented control of Off, Scopes and All, Off by default. Scopes fades each Scope's past traces and draws the Spectrums as with Glow off; All fades both, as On did. One rule says which Viewer glows under which choice, read by the Scopes and the Spectrums each frame, so a silent Spectrum still rests when Glow moves between Off and Scopes.
-- **Remembered:** the setting keeps its key and its field; it now holds `off`, `scopes` or `all`. A `true` saved by 1.23.0 reads as All, a `false` as Off (decision 4), anything else as Off. Claude's call, open to the owner: the remembered settings gained a small way to read an older value as the one it now stands for, and their header says a value may change its form so long as the old one is still read.
-- **Words:** the tip ends "Off: the Scopes and Spectrums show only now. Scopes: the Scopes' traces glow. All: the Scopes' traces and the Spectrums' outlines." and its how says "Choose Scopes or All with some Noise in the Mixer". Claude's call, open to the owner. `CONTEXT.md`, the design principles and dated lines in 180 (decision 5) and 199 (decision 2) say the same.
-- **Switching** between any two choices starts a Viewer's wait before it rests again, as switching Glow did since 214, Scopes to All included, though the Scopes draw the same under both: Claude's call, open to the owner (a quarter of a second more drawing, nothing seen).
+- **Remembered:** the setting keeps its key and its field; it now holds `off`, `scopes` or `all`. A `true` saved by 1.23.0 reads as All, a `false` as Off (decision 4), anything else as Off. Claude's call, let stand by the owner in 1.24.0: the remembered settings gained a small way to read an older value as the one it now stands for, and their header says a value may change its form so long as the old one is still read.
+- **Words:** the tip ends "Off: the Scopes and Spectrums show only now. Scopes: the Scopes' traces glow. All: the Scopes' traces and the Spectrums' outlines." and its how says "Choose Scopes or All with some Noise in the Mixer". Claude's call, let stand by the owner in 1.24.0. `CONTEXT.md`, the design principles and dated lines in 180 (decision 5) and 199 (decision 2) say the same.
+- **Switching** between any two choices starts a Viewer's wait before it rests again, as switching Glow did since 214, Scopes to All included, though the Scopes draw the same under both: Claude's call, let stand by the owner in 1.24.0 (a quarter of a second more drawing, nothing seen).
 - **Tests:** a unit test reads `true`, `false` and the three choices back; one says which Viewer glows under each; the store's tests use the choices. In the browser, Scopes makes every Scope glow and is remembered across a reload; with a Filter Envelope sweeping, Scopes leaves every Spectrum at no past outline while the Filter Scope glows, and All gives every Spectrum its outlines, kept frozen. The Display panel's remembered settings choose Scopes; the design audit's "Glow on" state chooses All. Checked that the Spectrum test fails when the Spectrums glow under Scopes.
 - **Run:** `npx tsc`, `npm run lint`, the unit tests of the files touched (the words test among them, 303 passed), and the displayPanel, viewerControls, viewersRest and design audit specs in Chromium and WebKit (73 passed each, before and after the review). The review found docs still saying one Glow (180, 199, the design principles), the tip's how saying "turn it on", and a comment out of place; fixed.
 

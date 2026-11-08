@@ -46,7 +46,7 @@ It also fixes a bug found while grilling it: the Ideal Reference was recomputed 
 5. The reducer's and the overlays' tests stay; four node tests are added; the Playwright suite passes unchanged.
 6. The Ideal Reference's Osc 2 bug is fixed here, with a test: the issue's one visible change.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.15.0:
 
 7. The store recomputes the Ideal Reference on every change to the Patch, rather than on a list of the values it reads, so no list can fall behind what it reads again.
 8. Built in the session that grilled it, test-first, not pushed.

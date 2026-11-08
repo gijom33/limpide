@@ -8,7 +8,7 @@
 
 ## Decisions
 
-Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.md)), from the six reviews of 1.21.1.
+Claude's call, let stand by the owner in 1.22.0 (2026-11-02): in v1 as polish ([131](./131-v1.md)), from the six reviews of 1.21.1.
 
 1. **Nothing Bead does changes:** a refactor and a speed-up, its behaviour held by the mascot spec as it is.
 2. **The decisions as pure functions** with unit tests, beside the cling and place modules that already are.

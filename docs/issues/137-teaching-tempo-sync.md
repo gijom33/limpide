@@ -43,7 +43,7 @@
 - **The Tutorial:** the Wobble Tutorial (the one that teaches the LFO) gains two Steps after "Rate to 3 Hz": switch on Sync (the wobble now one a beat, 1/4, on Listen's beat at its 120 BPM), then turn the Rate to 1/4 T, three wobbles in two beats, 3 Hz again but held to the beat; 14 Steps now. Its intro, summary and Retrigger's note follow. The words test now checks Sync, tempo, BPM and triplet are explained at first use.
 - **The Presets**, picked as profile 15 would (the wobbles and the gates): Wobble 1/4 T, Double Wobble 1/4 and 1/16, Growl 1/8, Trance Gate 1/16, Stutter 1/16, each the note value that is at 120 BPM exactly the Hz it had, which stays for Sync off. Their descriptions say they are synced. A browser test renders each with Sync on and off at 120 BPM: every 20 ms within 0.1 dB, the loudest 100 ms too (a wrong note value fails it by 3 dB); the Hz in the tips is now to three figures everywhere (call 5); the level checks pass as before.
 
-**Claude's calls, open to the owner:**
+**Claude's calls, let stand by the owner in 1.21.0:**
 1. **Two Steps, not one:** Sync on alone makes the Rate 1/4 (2 Hz), slower than the Preset's 3 Hz, so a second Step turns it to 1/4 T for the Tutorial to end on the Preset; it also shows the same speed set in Hz and in beats.
 2. **The Presets left in Hz:** the LFO group's lessons (Stepped, Ramp, Key Sync speak in seconds and Hz), Tremolo Keys (a gentle 5 Hz, no note value at 120; the Demo syncs it itself), FM Growl (an FM wobble, but its words count "three times a second"), Riser's ripple, Helicopter, Trill, Clang Alarm, Machine Chatter (effects, not the beat).
 3. **The conversion lives in the tip**, under the hood, not under the knob: the knob reads the period (issue 169) at one width (issue 176).

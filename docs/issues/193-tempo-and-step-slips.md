@@ -8,7 +8,7 @@
 
 ## Decisions
 
-Claude's call, open to the owner (2026-11-02): in v1 as polish ([131](./131-v1.md)), from the inbox's lines of the 1.20.0 and 1.21.0 reviews and checks.
+Claude's call, let stand by the owner in 1.22.0 (2026-11-02): in v1 as polish ([131](./131-v1.md)), from the inbox's lines of the 1.20.0 and 1.21.0 reviews and checks.
 
 ## Agent Brief
 
@@ -44,7 +44,7 @@ Built 2026-11-02, test-first, each of the six slips with a unit test:
 5. **The Wobble's 3 Hz:** a Tutorial's Rate Step not yet made switches Sync to suit as its card comes up, off for the Hz and on for a note value, so the Rate knob turns what the Step asks. "Do it for me" does the same.
 6. **The Hz alike:** a synced Rate's Hz reads as the Rate in Hz does ("1/4, 2.00 Hz") in its tip, its spoken value and the plot's label.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.23.0:
 
 - The Synth Geek Layer's conversion keeps its three figures ("120 ÷ 60 × 1 = 2 Hz", "= 0.0625 Hz"), being a calculation, so a synced Rate's tip reads "1/4 is 2.00 Hz" above a formula ending "= 2 Hz". The readout's two decimals turn the slowest values coarse: 4 bars at 120 BPM reads "0.13 Hz", where it read "0.125 Hz".
 - The Tutorial switches Sync as the Rate Step's card comes up, not while it is showing: Sync switched on by hand on that card leaves the knob on the note values until "Do it for me", or Back and Next.

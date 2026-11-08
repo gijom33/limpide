@@ -77,7 +77,7 @@ Every Preset on C4, loudest 100 ms: above 20 Hz, none moves by more than 0.03 dB
 
 **Tests:** `src/engine/synthEngine.browser.test.ts`, "FM and Ring under the top, and no offset (issue 103)": the three Presets on C7 at 192 kHz, a plain Saw as the control, the Ideal at the kept depth against the sound at the Oscillator Tap on C7, FM Ladder's offset and centred Oscillator Tap, Ring Octave on C4 and C6, and a Saw keeping its 15th Harmonic through the Mixer with Ring down and dropping it with Ring up. All but the control failed on the engine before this change. `src/music/idealReference.test.ts` checks where each FM Preset starts to be limited, that Clang Alarm on C7 keeps just enough, the LFO's swing counted, 192 kHz the same as 48 kHz, and the Ideal at a kept depth; `src/viewers/viewerStore.test.ts`, that the Viewers' Ideal follows the Note. `measure.ts` gains `energyAboveDb`. Whole Vitest suite: 860 passed. Playwright not run in this lane.
 
-**Calls made (Claude's call, open to the owner):**
+**Calls made (Claude's call, let stand by the owner in 1.16.1):**
 
 1. Decision 2's "below C6 nothing changes" does not hold for three Presets whose sidebands already pass the top lower down: Clang Alarm is limited from F♯5 (before, −54 dB on A5 and −45 dB on B5), Breathing Bell from A♯5 and Glass Shimmer from B5, by little there. Every other FM Preset keeps its whole depth below C6 (FM Bell from E6, Zap Pluck from E6, Kalimba from A♯6), and every Preset on C4.
 2. On C7 the limit takes most of FM away where the Notes were mostly fold-back: Clang Alarm keeps 7.5 % of its depth, Breathing Bell 12.5 %, Glass Shimmer 15 %, FM Bell 25 %. They become nearly pure sines up there.

@@ -50,8 +50,8 @@
 2. The swing as Resonance's: up to 100 % at full Depth, kept inside 0 to 100 % both ways, so nothing at FM 0; the tip says to raise FM first.
 3. The Ideal stays on the knob's FM, as with Pulse Width.
 4. Named FM, after Pulse Width, in the Oscillators' colour.
-5. One Preset to show it; the Demo unchanged. Its name and sound: Claude's call, open to the owner.
-6. Added after the build (the inbox, 2026-10-30): "Can we had more presets, more strinking ones?" Five more, each a different LFO motion on FM: decided by the owner; which sounds, Claude's call, open to the owner.
+5. One Preset to show it; the Demo unchanged. Its name and sound: Claude's call, let stand by the owner in 1.16.0.
+6. Added after the build (the inbox, 2026-10-30): "Can we had more presets, more strinking ones?" Five more, each a different LFO motion on FM: decided by the owner; which sounds, Claude's call, let stand by the owner in 1.16.0.
 
 ## How it was built
 

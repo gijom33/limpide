@@ -50,7 +50,7 @@
 5. A table-driven test over the even rows; the existing reach, Effective value and model tests stay as the safety net, none pruned.
 6. Nothing seen or heard changes: every existing test passes.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.15.0:
 
 7. No ADR: the table carries out ADR-0003 (the model mirrors the audio graph) without a new decision. CONTEXT.md is unchanged: Destination and Depth are already there, and a law's room is code, not a domain word.
 8. Built in the session that grilled it, test-first, committed as it goes, not pushed, as issue 73 was.

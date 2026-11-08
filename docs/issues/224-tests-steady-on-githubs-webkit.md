@@ -8,7 +8,7 @@
 
 ## Decisions
 
-Claude's calls, open to the owner (2026-11-03, triage):
+Claude's calls, let stand by the owner in 1.24.0 (2026-11-03, triage):
 
 1. **Find the cause of each before changing a test,** on a machine as slow as GitHub's (a Linux WebKit in a container, or the Mac's WebKit with the page held as slow): a Note dropped or a Bead move missed may be the app's, not the test's.
 2. **A test that times its steps does so inside the page,** in one evaluate, never in round trips with waits (CODING_STANDARDS, the 1.22.0 and 1.23.0 reviews).
@@ -74,7 +74,7 @@ The night of 2026-11-03, on `night/2026-11-03`. GitHub's slowness was stood in f
 - **181's text check runs through every part of the Demo, 6 s each,** instead of parts 1 to 3 for 8 s.
 - **What Bead never stands under or over is one list** (`mascotCovers.ts`), read by Bead and by the test's text sampler. The sampler had lacked six of the panels.
 
-**The calls (Claude's call, open to the owner).**
+**The calls (Claude's call, let stand by the owner in 1.24.0).**
 - On a device drawing fewer than 20 frames a second, the Demo's scroll lasts longer than 211's second and a half: about 1.9 s at 15 frames a second. The alternative was to leave the app alone and loosen the test. Faster devices see no change. A dated line in [211](./211-the-demo-scrolls-slower-so-bead-is-seen.md) says so.
 - The Demo itself still drops a Note whenever a page in front stalls for more than about 0.11 to 0.15 s. That is its look-ahead, chosen so a Stop is heard at once. Out of this issue's scope; a hidden page draws nothing, so it holds there.
 - 6 s a part, not 8, so the whole Demo check stays near two minutes per window size.

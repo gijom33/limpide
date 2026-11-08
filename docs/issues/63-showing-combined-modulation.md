@@ -46,7 +46,7 @@ What came out of the prototype onto main, at the owner's word: the Timeline's Am
 25. **A moved Parameter's line is in its stage's colour**, broken: the Cutoff dotted, what LFO 1 moves dashed, what LFO 2 alone moves dash-dotted.
 26. **The key** lists what LFO 1 moves, what LFO 2 moves, the Cutoff, the Filter Envelope, then the Amp Envelope, each swatch drawn as its line; "Env" on screen for Envelope, the whole word for a screen reader.
 
-Claude's calls, open to the owner: the Pulse Width line follows Osc 1's Pulse Width (the LFO moves both); Velocity and Key Track alone don't bring the Cutoff line.
+Claude's calls, let stand by the owner in 1.13.0: the Pulse Width line follows Osc 1's Pulse Width (the LFO moves both); Velocity and Key Track alone don't bring the Cutoff line.
 
 How it was built: `src/modulation/lfoTargets.ts` (what the active LFOs move, and where it is at a moment), `timelineShows` and `linePattern` in `src/viewers/timeline.ts` (the key reads the same), `engine.patchAt` for the Patch at each moment, the rings in `src/ui/modulationRing.tsx`. Tests: `lfoTargets.test.ts`, and the Timeline's and rings' e2e specs.
 

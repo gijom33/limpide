@@ -35,7 +35,7 @@
 ## Decisions
 
 1. Draw FM's sidebands, decided by the owner (of two: draw them, or keep plain Osc 1).
-2. The three cases (exact for a Sine, from the waves in whole octaves, plain otherwise): Claude's call, open to the owner.
+2. The three cases (exact for a Sine, from the waves in whole octaves, plain otherwise): Claude's call, let stand by the owner in 1.16.0.
 
 ## How it was built
 

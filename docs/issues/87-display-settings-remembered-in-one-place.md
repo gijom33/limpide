@@ -34,7 +34,7 @@
 
 ## Decisions (triage, 2026-10-28)
 
-1. A tidy-up issue, ready for an agent, after 1.15.0. Claude's call, open to the owner.
+1. A tidy-up issue, ready for an agent, after 1.15.0. Claude's call, let stand by the owner in 1.15.0.
 
 ## How it was built
 
@@ -42,13 +42,13 @@ Built at night (2026-10-30) on `night/2026-10-30`, test-first.
 
 - `src/app/displaySettings.ts` is the one list of the Display settings a new page starts from: the Viewers' five (`limpide.viewSettings`), the overlays (`limpide.overlays`), the letter keys, Tooltips, the theme and the Bead's switch, each under the key and in the form it had, with the values it may take and its default. `recall` reads one back through one check (kept if allowed, else the default; a garbled JSON object counts as nothing saved); `remember` keeps it.
 
-  **Since then (2026-11-01, issue 139):** the module is `src/app/rememberedSettings.ts` (`RememberedSetting`, `useRememberedSetting`), as it now also keeps the docked cards' folds and the MIDI keyboard's bend range and aftertouch, under their old keys and forms. Claude's call, open to the owner.
+  **Since then (2026-11-01, issue 139):** the module is `src/app/rememberedSettings.ts` (`RememberedSetting`, `useRememberedSetting`), as it now also keeps the docked cards' folds and the MIDI keyboard's bend range and aftertouch, under their old keys and forms. Claude's call, let stand by the owner in 1.21.0.
 - The Viewer settings store reads and writes through it (still writing only when a setting changes, not at every turn of a knob); the overlays' own load and save and the store's copied parse code are gone.
 - The app's letter keys, Tooltips, theme and Bead use one hook, `useDisplaySetting`, in place of a state and an effect each; `src/ui/theme.ts` is gone (the theme now goes through the same never-throwing storage as the rest).
 - Tests: `src/app/displaySettings.test.ts` (settings saved under today's keys come back; missing or garbled ones start at their defaults; each is kept under the same key and in the same form). The Viewer settings store's tests are unchanged; no Playwright test changed.
 - Checks: `npx tsc`, `npm run lint` and `npx vitest run` (1129 tests) green. `npx playwright test`: 1004 passed, 7 failed; five passed when run again alone. The other two are the Tour's "closed at card N, the Tour gives back the Patch the person had" (`e2e/tour.spec.ts`, issue 128), which fails the same way on the branch without this change (all eight of its cases, on the commit before), so it is not this issue's to fix.
 
-Calls made without the owner (Claude's call, open to the owner):
+Calls made without the owner (Claude's call, let stand by the owner in 1.18.0):
 
 1. The Bead's switch is folded in: it sits in Display and is remembered, though it came after this issue was written. Its saved value is now checked too (before, any text was taken as it was).
 2. A setting is written when it changes, no longer at every page load: the letter keys, Tooltips and the theme used to write their value on each visit. A reload restores the same, since a missing value starts at the same default.

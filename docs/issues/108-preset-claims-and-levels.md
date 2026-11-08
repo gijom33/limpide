@@ -49,7 +49,7 @@ From review 15 ([report](../reviews/2026-10-30/15-sound-designer.md), "Presets t
 - **Levels:** Choir (−36 dBFS) to Wobble (−7 dBFS) on C4, the Kick 8 dB under the Open Hat, Breathing Pad's peak growing 15 dB towards C6, Acid, Wobble and Screamer loud. Levelled with each Preset's Volume, the master's room for Voices kept unless [125](./125-the-preset-collection.md) decides otherwise.
 - **Pluck and Chorus Pluck** at one Voice in a group of 6- to 8-Voice keys: Chorus Pluck to 6 Voices; Pluck stays at one for its Tutorial.
 
-Key Sync, Zap Pluck and Wobble wait on [124](./124-where-a-retriggered-lfo-starts.md), where the owner chose to fix the engine (2026-10-30): after it, their words are checked again. The collection's shape (categories, near-copies, additions) is 125's. Claude's call, open to the owner.
+Key Sync, Zap Pluck and Wobble wait on [124](./124-where-a-retriggered-lfo-starts.md), where the owner chose to fix the engine (2026-10-30): after it, their words are checked again. The collection's shape (categories, near-copies, additions) is 125's. Claude's call, let stand by the owner in 1.16.1.
 
 Acceptance, added:
 - [x] Each Preset above, rendered again, does what its words say (soft and hard strikes measurably differ where Velocity is promised)
@@ -105,7 +105,7 @@ From review 15:
 
 2026-11-07: [258](./258-preset-levels-across-the-keyboard.md) levelled fourteen Presets across the keyboard by Key Track and brought the Drums up to within 4 dB of the Basses. Vowel no longer sits apart: at Volume 0.45 it is level with the Filter lessons; Hi-hat now sits apart instead, 7 dB under its kit, its loudest 100 ms mostly silence. The Kick and the Tom sing on Pink Noise (Noise 0.5 and 0.6), and the rest of the kit plays at full Volume but Cowbell's (0.42). Felt Piano no longer claims a brighter hard Note: its Velocity on the Cutoff is 0.2, and its words say louder, hardly brighter.
 
-**Judgement calls** (Claude's call, open to the owner):
+**Judgement calls** (Claude's call, let stand by the owner in 1.16.1):
 
 1. **Groups meet the quiet, not the loud:** Volume can only lower, so where a quiet sound could not be raised far enough the rest of its group came down. Movement & Effects' median fell from −16.1 to −22.2 dBFS (Wind, Wah, Robot and Ocean, Noise and band-passes, raised by up to 10 dB still sit near −24), the Drums' from −23.7 to −25.6. The groups now differ more from each other than before (Bass −14.5, Keys & Plucks −27.1): the criterion is per group, and the master's room for Voices puts the 8-Voice groups lower.
 2. **Acid and Wobble, two Tutorial Presets, got quieter**, so their Tutorials gain a last Step each: the Amp's Volume to 60 % and 45 %. Bass and Pluck keep their Volume.

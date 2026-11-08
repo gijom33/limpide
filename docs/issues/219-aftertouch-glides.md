@@ -10,10 +10,10 @@
 
 From 183:
 
-1. **Aftertouch is smoothed,** so pressure glides; its reach stays as issue 132 set it (Claude's call, open to the owner, 2026-11-02).
+1. **Aftertouch is smoothed,** so pressure glides; its reach stays as issue 132 set it (Claude's call, let stand by the owner in 1.23.0, 2026-11-02).
 2. **Over the bend wheel's 4 ms** (superseded for aftertouch by decision 5), decided by the owner ("Yes, 4 ms", 2026-11-03). Knobs turned from a Controller keep their immediate writes; if they step audibly, that is an issue of its own.
 
-Claude's call, open to the owner (2026-11-02):
+Claude's call, let stand by the owner in 1.23.0 (2026-11-02):
 
 3. **The model and the sound smoothed alike** (ADR-0003): exact where the pressure maps linearly (Cutoff, Pitch, Osc 2's cents); for Resonance's Q the model and the sound may differ slightly while the 4 ms run, written in the issue.
 
@@ -71,7 +71,7 @@ The night of 2026-11-03: its builder wrote the first test (aftertouch on the Cut
 
 - A keyboard's pressure comes in 127 steps, one every 16 ms on this press. A 4 ms glide finishes each step long before the next one, so the steps are still there, only rounded: 3 dB better than today.
 - Review 9's −76 dB was not a glide: it was 4,000 unquantised steps, nearly smooth. The criterion's −70 dB came from that figure.
-- At Resonance 0.7 (review 9's Cutoff case) this measure reads about −40 dB even for a near-smooth sweep: the Filter's peak sweeping through the Harmonics spreads them. So the test sits at Resonance 0.2. This is Claude's call, open to the owner.
+- At Resonance 0.7 (review 9's Cutoff case) this measure reads about −40 dB even for a near-smooth sweep: the Filter's peak sweeping through the Harmonics spreads them. So the test sits at Resonance 0.2. This is Claude's call, let stand by the owner in 1.24.0.
 
 1. **How long aftertouch glides, and what the test asks.** Today, 4 ms takes a real keyboard's stream from −52 to −56 dB; −70 dB needs a time constant of about 64 ms. At 64 ms, a quick stab of pressure takes about 0.2 s to arrive, which you would feel as lag. Options:
    - (a) keep 4 ms, and the test asks only that the glide beats the steps;
@@ -97,7 +97,7 @@ The night of 2026-11-03, on `night/2026-11-03`, test-first.
 - **Aftertouch takes the Resonance half the way from its knob to its top** (decision 4, call 1).
 - **Tests:** the energy between the Harmonics (Cutoff and Resonance, 7-bit and unquantised); the model against the sound during a glide on Pitch and on Volume, a knob turned mid-glide included; the writes one message makes (Cutoff, Resonance with an LFO on it, no curve); Wobble under the limiter's knee at full pressure on A1, F1, A2 and C3; the curve over the Resonance for every Mode and Slope.
 
-**The calls (Claude's call, open to the owner).**
+**The calls (Claude's call, let stand by the owner in 1.24.0).**
 1. **Decision 4 read as "half the way to the top".** Half the knob's range added to Wobble's 0.65 still reaches 1, where Wobble on A2 peaks at 0.87, past the 0.8 knee: the decision's purpose would fail. Half the way from the knob to the top takes Wobble to 0.825, which peaks at 0.60. From no Resonance it is half the range, as the decision says; from 0.2 it reaches 0.6 rather than 0.7. If the owner meant the literal half, Wobble needs another answer (a lower Resonance in the Preset, or a ceiling below 1).
 2. **The model and the sound, where they may differ.** The Resonance is now exact in every Mode (the curve is over the Resonance itself), so the gap decision 3 allowed is gone. They differ during a glide only where the pressed value is clamped (the Cutoff near 20 kHz, Volume at full) or an LFO's swing is held by its room (an LFO on the same Destination near an end), for the 50 ms or so of the glide. FM's depth glides in the sound and is not in the model. A glide counts as arrived after 10 time constants (0.16 s), within 5 parts in 100,000 of its step.
 3. **A new Destination, while pressed, starts at once.** Changing aftertouch's Destination in the MIDI panel while a key is pressed moves both Destinations at once rather than gliding; the app sends no pressure on a change, so in practice it glides from nothing.

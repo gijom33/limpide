@@ -8,7 +8,7 @@
 
 ## Decisions
 
-Claude's calls, open to the owner (2026-11-05, triage):
+Claude's calls, let stand by the owner in 1.26.0 (2026-11-05, triage):
 
 1. **Only the browser jobs move into the image** (the Playwright shards and the engine job); the checks job (tsc, lint, unit tests) and the deploy stay as they are.
 2. **The image's version follows Playwright's own** in the lock file, so a Playwright update cannot leave the image behind: a check fails the run if they differ.
@@ -19,7 +19,7 @@ Claude's calls, open to the owner (2026-11-05, triage):
 Since then (2026-11-06), on the test branches:
 
 6. **The layouts hold, not the tests loosened** (decided by the owner: "Yes, fix the layouts"). The first two runs failed three layout tests in both browsers: the image has no DejaVu Sans, the runner's, and gives the page's system font to WenQuanYi Zen Hei, a Chinese font.
-7. **The image's system font is set to Liberation Sans** (Claude's call, open to the owner), a Latin font with Arial's widths, in the image already, by a font setting the browser jobs copy in: no visitor reading Latin text gets a Chinese system font, so the page was not reshaped for it. Display's Keys, Tips, Bead and Theme, which broke three and one with Arial's widths on the Mac too, now wrap in two pairs that never break.
+7. **The image's system font is set to Liberation Sans** (Claude's call, let stand by the owner in 1.26.0), a Latin font with Arial's widths, in the image already, by a font setting the browser jobs copy in: no visitor reading Latin text gets a Chinese system font, so the page was not reshaped for it. Display's Keys, Tips, Bead and Theme, which broke three and one with Arial's widths on the Mac too, now wrap in two pairs that never break.
 
 ## Agent Brief
 
@@ -59,7 +59,7 @@ Built at night (2026-11-05, on `night/2026-11-05`, commit 03a0bb4), not yet run 
 - **The GitHub WebKit skips** read `process.env.CI` and the project's name; GitHub sets `CI` inside a job's container as on the bare runner, so they still apply. The day's runs confirm it (the skipped tests show as skipped in the WebKit shards).
 - **Checked:** the workflow parses (Ruby's YAML: the container, the steps in order, the three jobs, the triggers and the deploy's condition as intended); the check run locally passes on the workflow as it is (exit 0) and fails with the message above on a copy whose tag is `v1.63.0-noble` (exit 1); `npx tsc`, `npm run lint`, the script's unit tests (6 passed). No Docker, no GitHub run.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.26.0:
 
 1. **The fonts change.** The comment this replaces kept the jobs on the bare runner on purpose, "whose fonts the layout tests are measured in (not Playwright's image, whose differ)" (fa8709f, a call of Claude's, not the owner's). In the image, `system-ui` and `sans-serif` resolve to the image's fonts, so some layout tests may measure differently. Built anyway, since the owner asked for the image; the three runs answer it. If layout tests go red only in the image, the choice is the owner's: re-measure them in the image's fonts, or drop the image (re-measuring would change tests, which this issue keeps out of scope).
 2. **The check is a script that reads the workflow**, not a version in one place: a container's image cannot be computed from the lock file in GitHub's workflow syntax, so the tag is written by hand and checked.

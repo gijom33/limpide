@@ -8,11 +8,11 @@
 
 ## Decisions
 
-From 184 (Claude's calls, open to the owner, 2026-11-02):
+From 184 (Claude's calls, let stand by the owner in 1.23.0, 2026-11-02):
 
 1. **Nothing Bead or a Viewer shows changes.**
 
-Claude's calls, open to the owner (2026-11-03):
+Claude's calls, let stand by the owner in 1.23.0 (2026-11-03):
 
 2. **A measuring script kept in the repository,** rebuilding review 18's method (idle, the Demo, an 8-Voice chord, at 1×, 1.25× and 4× throttling), so 213 to 222 and later changes measure the same way. The Viewers' colours are [213](./213-viewer-colours-read-once-and-a-silent-scope-skipped.md)'s, not this issue's.
 
@@ -81,7 +81,7 @@ Frames per second, main thread busy, and the time in frame callbacks:
 - Criterion 2 is met: the Demo at 4× is no lower (46.3 against 45.6 fps with Bead out). Its frame callbacks take about 6 points less of the main thread.
 - The Demo still works the styles out about 8 times a frame, with Bead or without. A trace shows why: the Demo's knobs move through React between frames, so the frame's first read finds the page changed, and the browser works the styles out there and again before painting; the rest are the React updates' own. That was review 18's other finding ("the knobs' React updates land between the canvases' reads and Bead's"), outside this issue. The Demo with Bead off counts one more a frame than before (6.8 to 7.8), with the same main thread time and frame rate and a layout a frame fewer; it was not traced further.
 
-**The calls (Claude's call, open to the owner).**
+**The calls (Claude's call, let stand by the owner in 1.24.0).**
 1. **A draw hands back its writes,** rather than each Viewer registering a read and a write separately: a draw that writes nothing to the page (the canvas Viewers) is unchanged, and what a frame read stays in the draw's closure for its writes.
 2. **The canvas Viewers' marks for the tests stay in their draw.** The Scopes, Spectrums and the Timeline set `data-` marks (the glow, the period, the readouts) as they draw. No style names them, so they leave the styles as they were, as 220 found for the Viewers' marks; moving them would split every Viewer's drawing for nothing measured. A style rule naming one would bring the second recalculation back. The same goes for a canvas's size, set in its draw: only when the window resizes.
 3. **The script prints, it writes nothing,** and leaves out review 18's 2× and 6× runs, CPU per process, long tasks and the heap: idle, the Demo and the chord at 1×, 1.25× and 4×, as decision 2 asks, plus the time in frame callbacks and the layouts a frame, which 213 to 216 measured by hand.

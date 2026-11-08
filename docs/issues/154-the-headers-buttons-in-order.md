@@ -24,7 +24,7 @@ Decided by the owner, 2026-10-31:
 3. **The keyboard need not be centred:** issue [82](./82-top-row-centres-the-piano.md)'s rule (the piano at the page's centre from 1200 px) no longer binds; the buttons' order comes first.
 3b. **The keyboard extended where there is room,** in three and four across (the owner's idea, inbox, 2026-10-31: "In the 3-across and 4-across scenario, it may be a good idea to extend the keyboard if there is enough room.").
 
-Claude's call, open to the owner:
+Claude's call, let stand by the owner in 1.20.0:
 
 4. **Two steps.** First the expert (an agent in the role of [42](./42-reviews.md)'s profile 3, the UI maniac, with the craft of a product designer) proposes two or three arrangements, each drawn with the `prototype` skill as a page of mock headers at 861, 1100, 1440 and 1920 px, with the logic of each in a line (for instance by use: playing — Hold, the tempo, Tap; learning — Demo, Tutorial, Song; setting up — MIDI, Display, About). The owner chooses in the morning. Then the chosen one is built at every width from 861 px, the design audit having the last word.
 5. **From 861 px only:** the phone and 2 × 2 keep their own rows ([152](./152-the-phones-header-rows-in-2x2.md)).
@@ -70,7 +70,7 @@ Claude's call, open to the owner:
 - **Room for Bead under the header** (found 2026-11-01, after 179): from 861 px the columns and the keys reach down to the header's foot all along the top right section, where before 1920 px's buttons stood 46 px over its edge; the sections start 28 px under the header, and Bead standing and playing reaches 35 px over its edge (its 26 px stretched 10 % by the sound, then its 6 px hop at a Note, or its step's 1 px bob as it strolls), so in three and four across its head went over Hold, Tap, Song, About and the keys' feet (`e2e/mascot.spec.ts`'s four across test failed 6 runs in 8 in Chromium, from this issue's first commit; it passed 8 in 8 at the commit before). In windows from 861 px wide and 700 px tall the sections now start 36 px under the header (`src/styles.css`), the Viewers 8 px shorter. Its funny turns and gestures (a hop of 12 px, a tickle) still brush past the header, as its leaps always have; the four across test passes 12 runs in 12 (three across 5 in 5, in WebKit too), and the mascot, header, fits-the-screen and layout specs in Chromium and WebKit.
 - **Docs:** "Since then" lines on [44](./44-header-across-layouts.md), [82](./82-top-row-centres-the-piano.md), [105](./105-header-and-panels-on-every-screen.md), [112](./112-tempo-midi-clock-and-an-arpeggiator.md) and [136](./136-following-midi-clock.md); for the room under the header, on [123](./123-a-patch-in-plain-words.md) and [179](./179-beads-tail-trails-behind.md).
 
-**Claude's calls, open to the owner:**
+**Claude's calls, let stand by the owner in 1.21.0:**
 1. **Where the words go:** at fixed widths (1100 and 1280 px), not measured live as the prototype did, so the header does not change while it is used. From 1100 to 1279 px the newcomer's four keep their words and the Patch name keeps its 134 px; there the piano's keys are 42 px at 1100 in Chromium, a little under in Linux's wider fonts.
 2. **No cap on the keys:** from 1920 px the page grows to 2560 px, and the piano with it: 68 keys at 2560 px, up to G9. An octave up there shortens it, as the keys stop at G9.
 3. **Crossing 860 px** rebuilds the buttons' groups, so an open MIDI, Display or Tutorial menu closes there (only when a window is resized across that width).

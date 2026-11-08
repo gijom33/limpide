@@ -27,4 +27,4 @@ Five probes on GitHub (7 to 11), each a throwaway branch deleted after.
 
 In the tests only (`e2e/demo.spec.ts`, "on a phone"): the landing is given 12 s and read every 100 ms (on a slow device the next part's scroll can leave soon after); "the page stays put" is checked while the part playing at the person's scroll plays on, up to the same 4 to 4.5 s, read from the Demo card's "Part N of M". Proved on GitHub (probe 11): the three tests, four times each, green in WebKit and in Chromium.
 
-**A lead for 232's seven skips** (Claude's call, open to the owner, not built): most of them time Bead or the Demo's scroll in milliseconds, which the same deliberate slowing stretches; read against the frame rate or the Demo's parts, as here, several may run again on GitHub.
+**A lead for 232's seven skips** (Claude's call, let stand by the owner in 1.25.0, not built): most of them time Bead or the Demo's scroll in milliseconds, which the same deliberate slowing stretches; read against the frame rate or the Demo's parts, as here, several may run again on GitHub.

@@ -4,7 +4,7 @@
 
 **Blocked by:** [131](./131-v1.md) (v1 first, by the scope rule)
 
-**Status:** needs-triage · enhancement. v2, not committed (Claude's call, open to the owner: tooling, beyond v1's polish by the scope rule; the owner may move it into v1). **Since then (2026-11-04):** v2, decided by the owner after the trial below ("Yes, a v2 issue").
+**Status:** needs-triage · enhancement. v2, not committed (Claude's call, since decided by the owner, below: tooling, beyond v1's polish by the scope rule; the owner may move it into v1). **Since then (2026-11-04):** v2, decided by the owner after the trial below ("Yes, a v2 issue").
 
 ## What a grilling would settle
 

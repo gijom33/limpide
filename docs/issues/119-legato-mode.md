@@ -48,7 +48,7 @@
 - **The record:** CONTEXT.md defines Legato (and Retrigger names the legato Note aside); the PRD gains story 102; issue 145 says 119 filled its place.
 - **Tests:** engine tests (one Attack with Legato on, a new one with it off; the model against the sound along a legato line, and the line's sound against one Note held as long; a retriggered LFO runs on; no slide with every key up, under Hold, or on 2 Voices); the Note input's `afresh`; the Patch and Share link; the C16 layout; the edge sweep plays a legato line on every one-Voice Patch with Legato on, with a hard case of its own; Playwright for the switch, its place at every width from 340 to 1920 px, and the card.
 
-**Claude's calls, open to the owner:**
+**Claude's calls, let stand by the owner in 1.20.0:**
 1. **Where the switch is.** Right of Glide it wrapped onto a line of its own at many widths (375–402, 606–661, 781–822, 865–983, 1159–1221, 1334–1389 px), up to 27 px short. Under the Voices numbers, its end by Glide, it sits in the room Glide's name and value leave, and never wraps; the heading row is 10 to 30 px taller where the Voices name is above its numbers (phones, 2 × 2 and the narrower three-across).
 2. **Hold:** with every key up and Hold (or a sustain pedal) keeping the last Note, the next key strikes afresh, with an Attack, as the issue and the tip say; a key played over one still down slides, Hold on or off. (A monosynth whose pedal keeps its Gate open would slide there too.)
 3. **Velocity:** a legato Note keeps the line's first Velocity (the Amp's level and Velocity → Cutoff), since its Envelope is not struck again.

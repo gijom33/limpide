@@ -11,7 +11,7 @@
 
 ## How it was built
 
-Claude's call, open to the owner; listening is the owner's.
+Claude's call, let stand by the owner in 1.15.0; listening is the owner's.
 
 **Measured** (engine tests in Chromium, `src/engine/synthEngine.browser.test.ts`, "LFO edges (issue 66)"): a sine Note with the LFO on Volume at full Depth, read at the Amp Tap and divided sample by sample by the same Note without the LFO, which gives the tremolo's gain (0.5 + 0.5 × the LFO) around a jump.
 

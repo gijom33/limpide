@@ -10,4 +10,4 @@ The cause: the C16 layout's knobs find their Encoder Mode from their first three
 
 ## Decisions
 
-1. **Knobs stay detected, more carefully,** rather than the layout declaring them Absolute: the C16's firmware may be set to send Relative, which the detection was built for (PRD story 55). Three values that step one way with no repeat are a knob turning through positions; a Relative encoder repeats its step, or varies it with the turn's speed. Claude's call, open to the owner; profile 17's review ([42](./42-reviews.md)) weighs in on the C16's knob modes.
+1. **Knobs stay detected, more carefully,** rather than the layout declaring them Absolute: the C16's firmware may be set to send Relative, which the detection was built for (PRD story 55). Three values that step one way with no repeat are a knob turning through positions; a Relative encoder repeats its step, or varies it with the turn's speed. Claude's call, let stand by the owner in 1.19.0; profile 17's review ([42](./42-reviews.md)) weighs in on the C16's knob modes.

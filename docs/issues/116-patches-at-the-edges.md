@@ -1,6 +1,6 @@
 # 116: Patches at the edges
 
-**What to build:** Claude's recommendation for reviews next time (inbox, 2026-10-30), kept by the owner: "a test generating thousands of Patches at the edges (every knob at an end, both LFOs on one target, FM and Ring at full), none giving silence, an error value, a stuck limiter or a slow frame." The reviews of 1.16.0 found FM's DC offset and the fold-back by hand ([103](./103-fm-and-ring-fold-back-at-the-top.md)); a generated sweep finds such things before a reviewer does. Claude's call, open to the owner.
+**What to build:** Claude's recommendation for reviews next time (inbox, 2026-10-30), kept by the owner: "a test generating thousands of Patches at the edges (every knob at an end, both LFOs on one target, FM and Ring at full), none giving silence, an error value, a stuck limiter or a slow frame." The reviews of 1.16.0 found FM's DC offset and the fold-back by hand ([103](./103-fm-and-ring-fold-back-at-the-top.md)); a generated sweep finds such things before a reviewer does. Claude's call, let stand by the owner in 1.16.1.
 
 **Blocked by:** none
 
@@ -75,7 +75,7 @@ No error value anywhere, and no Patch whose limiter sticks for want of stacked s
    - Not fixed: the likely fix, working the Ideal out only up to the top the Spectrum shows (from the Viewers' fundamental), touches the Ideal's precision that issue 103's tests hold.
 4. **By design: the limiter works through most of the Note where the sources stack to two at full or more.** The stacking is the Mixer's levels times the square root of the Notes played. That is what it is there for (the engine's comment, ADR-0006, the LIMITING spec). 19 renders today, every one of them at 2 or more.
 
-### Calls made (Claude's call, open to the owner)
+### Calls made (Claude's call, let stand by the owner in 1.20.0)
 
 - **The frame budget.** No existing test holds an absolute frame time. Issue 45's draw-cost test bounds a cost at three times its quiet case plus a millisecond, so this one holds each Patch's frame to three times Init's plus a millisecond (13 to 19 ms here). The mascot's frame test bounds Bead's added cost at 1 ms; that is a different question.
 - **The offset bound:** a third of the sound's level (−10 dB), not the whole of it. At its whole level, 1.16.0's FM Ladder (−4 dB) would have passed.

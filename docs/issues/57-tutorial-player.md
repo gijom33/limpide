@@ -16,7 +16,7 @@
 
 - [x] The data: a Tutorial is a Preset's name, a Listen phrase and its Steps; a Step is one Parameter and its target, or one Display option, with an instruction and a note. A test helper applies the Steps to Init
 - [x] Checking a Step: a knob or fader within 5 % of its travel (on its own Taper), a choice exactly; reached, it snaps to the target and shows the note; a Step already at its target shows as done
-**Since then (2026-11-01, issue 137):** a stepped knob (a note value, a Semitone, an Octave) counts only on its exact step: a note value's neighbours are a 23rd of its travel apart, within the 5 %, so the next one counted and snapped. Claude's call, open to the owner.
+**Since then (2026-11-01, issue 137):** a stepped knob (a note value, a Semitone, an Octave) counts only on its exact step: a note value's neighbours are a 23rd of its travel apart, within the 5 %, so the next one counted and snapped. Claude's call, let stand by the owner in 1.21.0.
 - [x] The card, docked at the bottom on every layout: intro, Steps ("Step 2 of 7"), the last card with what differs and "Match the Preset"; Back (moves the card only), Next, "Do it for me", Quit, Listen; on a phone one or two lines, tapped to show all
 - [x] The ring in the accent colour on the Step's control, steady, and the target beside its readout ("→ 800 Hz"); the control's tab or phone section brought into view, the control scrolled above the card
 - [x] Listen: the Tutorial's phrase repeated, off until tapped; stops on Quit and at the end

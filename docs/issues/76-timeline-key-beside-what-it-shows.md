@@ -34,7 +34,7 @@
 
 1. The light version: the key's entries and order move beside what the Timeline shows; the painting stays as it is.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.15.0:
 
 2. The canvas's attribute lists the key's marks in the key's order (an LFO line as `lfo-` and its Destination). The one Playwright test that reads it looks for a Destination's name, which the marks keep.
 3. Built in the session that grilled it, test-first, not pushed.

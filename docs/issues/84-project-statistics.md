@@ -8,7 +8,7 @@
 
 **Since then:** the statistics run after the push, not before the release commit ([ADR-0015](../adr/0015-ci-runs-the-end-to-end-tests-before-a-deploy.md), decided by the owner on 2026-10-30; `docs/releasing.md`, step 7).
 
-**Since then:** the first row, 1.17.0's, measured on 2026-10-31 after its push, on a quiet machine, in 13 minutes (not the hour expected). Its end-to-end count first read "981 of 998": the 17 are tests skipped on purpose, now left out of what ran, so it reads "981 of 981" (Claude's call, open to the owner).
+**Since then:** the first row, 1.17.0's, measured on 2026-10-31 after its push, on a quiet machine, in 13 minutes (not the hour expected). Its end-to-end count first read "981 of 998": the 17 are tests skipped on purpose, now left out of what ran, so it reads "981 of 981" (Claude's call, let stand by the owner in 1.18.0).
 
 ## Triage Notes
 
@@ -66,4 +66,4 @@
 - **A new dev dependency:** `@vitest/coverage-v8`, the coverage provider Vitest needs (nothing else measures coverage); the main checkout needs `npm install` once.
 - **`tsconfig.json`** allows imports ending in `.ts`, which Node's TypeScript needs for the command's two files.
 - **Tests:** `scripts/statistics.test.ts` (unit project): reading Vitest's, Playwright's, TypeScript's and Biome's output, the issue and test counts, a version's row replaced or merged, the page's changes since the row below, the README's summary.
-- Claude's calls, open to the owner: the numbers are kept in `docs/statistics.json` and the page written from it; the page splits the numbers into tables (size, quality, build and load, and one per running state), each with a row per release, rather than one very wide table; a page load is a first visit; the running app is measured headless at 2× pixels; the memory is the JavaScript heap (the audio's buffers live outside it); the suites' durations are measured with coverage on; the README's summary gives the newest row's headline numbers.
+- Claude's calls, let stand by the owner in 1.16.1: the numbers are kept in `docs/statistics.json` and the page written from it; the page splits the numbers into tables (size, quality, build and load, and one per running state), each with a row per release, rather than one very wide table; a page load is a first visit; the running app is measured headless at 2× pixels; the memory is the JavaScript heap (the audio's buffers live outside it); the suites' durations are measured with coverage on; the README's summary gives the newest row's headline numbers.

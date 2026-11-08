@@ -1,6 +1,6 @@
 # 150: Bead shown by default
 
-**What to build:** The owner's idea (inbox, 2026-10-31): "Show Bead by default, without requiring to play BEAD first." Bead, the water drop of [115](./115-an-easter-egg.md), comes onto the page by itself on a first visit, and Display's Bead switch is there from the start. Playing B, E, A, D still sends it away and calls it back. It turns 115's decision 7 (Bead hidden from the tips and the README) around for what is now in plain view; its tricks stay a surprise. In v1 as Bead's polish ([131](./131-v1.md), decision 12; Claude's call, open to the owner).
+**What to build:** The owner's idea (inbox, 2026-10-31): "Show Bead by default, without requiring to play BEAD first." Bead, the water drop of [115](./115-an-easter-egg.md), comes onto the page by itself on a first visit, and Display's Bead switch is there from the start. Playing B, E, A, D still sends it away and calls it back. It turns 115's decision 7 (Bead hidden from the tips and the README) around for what is now in plain view; its tricks stay a surprise. In v1 as Bead's polish ([131](./131-v1.md), decision 12; Claude's call, let stand by the owner in 1.20.0).
 
 **Blocked by:** none
 
@@ -8,7 +8,7 @@
 
 ## Decisions
 
-The idea is the owner's; how it is done is Claude's call, open to the owner (2026-10-31):
+The idea is the owner's; how it is done is Claude's call, let stand by the owner in 1.20.0 (2026-10-31):
 
 1. **On by default.** A visitor who has never met Bead (its stored setting still "unmet") is treated as on. A visitor who switched Bead off keeps it off; one who has it on keeps it on.
 2. **Its first entrance:** a few seconds after the page is ready, by one of its ways in, as when called by the Notes; while the welcome card is up, it waits until the card is closed, so the first thing a newcomer reads is not covered or upstaged.
@@ -61,7 +61,7 @@ Decided by the owner, 2026-10-31 (evening), on trying the night's build: "Making
 - **The end-to-end start state** (`e2e/startState.ts`): one place says what every spec's browser holds. The config starts every spec welcomed with Bead off. The first-visit specs (welcome, Tour, keyboard access) start with Bead off only. The specs that empty storage (Patches, LIMITING, the stand-in Controller) go through one helper that keeps Bead off. The mascot spec calls Bead with the Notes as before, and adds tests for the default: a first visit (the welcome waits, then Bead comes, and the switch and its tip show), "on" bringing it by itself again after a reload, "off" keeping it away, and the Notes turning the switch both ways.
 - **Tests:** unit, `beadPresence.test.ts` (6), the Display setting's default and the old "unmet" (`displaySettings.test.ts`), and Bead's tip (`tips.test.ts`).
 
-**Claude's calls, open to the owner:**
+**Claude's calls, let stand by the owner in 1.20.0:**
 1. (Replaced by decisions 7 to 9, the owner's: the Notes are for the visit only, and do nothing while the switch is off.) **The Notes work whatever the switch says.** B, E, A, D sends Bead away and turns the switch off; played again, it calls Bead back and turns the switch on, even after Bead was switched off in Display. This is the only reading that fits "sends Bead away and calls it back, the switch following". It drops 115's rule that a switched-off Bead could not be called by the Notes, which was there for anyone who would hate it. Someone who switched it off could now bring it back by playing B, E, A, D in a tune, within 4 s.
 2. **3 seconds** after the page opens, or after About closes. It also waits whenever About is open, not only for the welcome.
 3. **The Tour and the Demo do not hold it back.** A newcomer who leaves the welcome by "Take the Tour" or "Play the Demo" sees Bead come 3 s later, while the Tour's first card or the Demo is on.

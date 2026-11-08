@@ -17,9 +17,9 @@
 - Channel aftertouch (one pressure for the whole keyboard, 0 to 127) moves one Destination, from none at no pressure to its full reach at full pressure. Per-Note (polyphonic) pressure stays ignored.
   **Since then (2026-11-01, the owner's decision 1 below):** polyphonic (per-Note) pressure is read too; the highest among the Notes held moves the one Destination, as channel pressure does. Per-Voice pressure and MPE stay for v2.
 - The Destination is chosen in the MIDI panel, from the LFOs' Destinations; the Cutoff by default, so pressing harder brightens the sound. The mod wheel keeps what it does today.
-- Its reach at full pressure follows the Destination's law in the Modulation model, as an LFO's Depth does; for the Cutoff, up to two octaves up (Claude's call, open to the owner).
+- Its reach at full pressure follows the Destination's law in the Modulation model, as an LFO's Depth does; for the Cutoff, up to two octaves up (Claude's call, let stand by the owner in 1.19.0).
 - Its move adds to the knob's value and to any LFO's, and shows where an LFO's does: the Destination's modulation ring, the Envelope Timeline's line for it, and the Effective Cutoff. The Modulation model mirrors it, so the Viewers and the sound agree (ADR-0003).
-- The choice is remembered with the MIDI settings, as the bend range is, not in the Patch (Claude's call, open to the owner). The Activity Monitor shows the pressure as it comes.
+- The choice is remembered with the MIDI settings, as the bend range is, not in the Patch (Claude's call, let stand by the owner in 1.19.0). The Activity Monitor shows the pressure as it comes.
 - A tip in the MIDI panel says what it does and that not every keyboard sends it.
 
 **Key interfaces:**
@@ -52,7 +52,7 @@ Built on night/2026-11-01, test-first.
 - **The Timeline:** from a keyboard's first pressure in a visit on, the Timeline draws the line and key entry of the Destination it moves.
 - **Tests:** the parser, control surface, `useMidi`, Modulation model, Destinations and Timeline key unit tests. An engine test checks that the Effective Cutoff (none, then full pressure) and the Resonance (half pressure) match the model, and that the Filter's sound matches the Response Curve; another checks Pitch, the model and Cycle Lock. The end-to-end test in `e2e/midiKeyboard.spec.ts` uses a stand-in keyboard: pressure moves the Cutoff's dot, Resonance picked in the panel moves that one instead, and the choice survives a reload. It runs in Chromium and WebKit.
 
-### Claude's calls, open to the owner
+### Claude's calls, let stand by the owner in 1.21.0
 
 1. **How far each Destination goes.** Every Destination moves *up*, as far as one LFO at full Depth swings it one way:
    - **Cutoff:** two octaves (the issue's call).
@@ -86,7 +86,7 @@ Built on night/2026-11-01, test-first, after the channel aftertouch above.
 - **The record:** the MIDI panel's tip no longer says per-key pressure is not used; CONTEXT.md's Aftertouch, the PRD's two lines on it and issue 131's decision 9 (a Since then line) say per-Note pressure counts.
 - **Tests:** the parser's (per-Note pressure on its Note, with running status), the control surface's (the highest held Note's, a release forgetting it, a Note known by its channel too, channel and per-Note together, never learned) and `useMidi`'s (the host told, the Activity Monitor's line). `e2e/midiKeyboard.spec.ts`: with two Notes held, the Cutoff's dot follows the one pressed harder, goes back to the other's when it is released, and hides when both are; it runs in Chromium.
 
-Claude's calls, open to the owner:
+Claude's calls, let stand by the owner in 1.21.0:
 
 1. **Channel and per-Note together:** the pressure is the higher of the channel's last pressure and the hardest-pressed held Note's. A keyboard usually sends one kind or the other, so this matters only for one that sends both.
 2. **The channel's pressure is not forgotten on a release:** it has no Note, so it stays until the keyboard sends another, as before. A Note's pressure is kept until that Note's release, even a Note whose Note-on the page never heard.
