@@ -213,8 +213,14 @@ async function pageLoadValues(browser: Browser, url: string, loads: number): Pro
 
 const CHORD_KEYS = ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k'];
 
+/** How long a state of the running app settles, then is measured, in seconds. */
+interface StateTiming {
+  settle: number;
+  seconds: number;
+}
+
 /** One state of the running app: set up in a fresh page, settled, then measured for `seconds`. */
-async function stateValues(browser: Browser, url: string, state: (typeof STATES)[number]['id'], settle: number, seconds: number): Promise<Values> {
+async function stateValues(browser: Browser, url: string, state: (typeof STATES)[number]['id'], { settle, seconds }: StateTiming): Promise<Values> {
   const origin = new URL(url).origin;
   // A visitor already welcomed, so About's welcome does not stand over the page.
   const context = await browser.newContext({ ...VIEWPORT, storageState: { cookies: [], origins: [{ origin, localStorage: [{ name: 'limpide.welcomed', value: '1' }] }] } });
@@ -278,9 +284,9 @@ async function stateValues(browser: Browser, url: string, state: (typeof STATES)
 }
 
 /** A state's numbers, each the median of `runs` runs (the Demo's three, issue 257), each in a fresh page. */
-async function medianStateValues(browser: Browser, url: string, state: (typeof STATES)[number]['id'], runs: number, settle: number, seconds: number): Promise<Values> {
+async function medianStateValues(browser: Browser, url: string, state: (typeof STATES)[number]['id'], { runs, ...timing }: StateTiming & { runs: number }): Promise<Values> {
   const measured: Values[] = [];
-  for (let i = 0; i < runs; i++) measured.push(await stateValues(browser, url, state, settle, seconds));
+  for (let i = 0; i < runs; i++) measured.push(await stateValues(browser, url, state, timing));
   return Object.fromEntries(Object.keys(measured[0]).map((id) => [id, median(measured.map((m) => m[id]!))]));
 }
 
@@ -344,7 +350,7 @@ async function measureNow(quick: boolean, work: string): Promise<{ row: Row; fai
       const load = loadavg()[0];
       if (demo) values.demoLoad = load;
       say(`the running app: ${state.title}${demo ? `, ${runs} run${runs > 1 ? 's' : ''} (load ${load.toFixed(2)})` : ''}…`);
-      Object.assign(values, await medianStateValues(browser, url, state.id, runs, settle, seconds));
+      Object.assign(values, await medianStateValues(browser, url, state.id, { runs, settle, seconds }));
     }
     const row: Row = { version, date, machine: machine(), browser: `Chromium ${browser.version()}, headless`, values };
     return { row, failed };

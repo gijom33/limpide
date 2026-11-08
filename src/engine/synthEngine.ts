@@ -1190,13 +1190,19 @@ type Voice = ReturnType<typeof createVoice>;
  * settled by the audio clock, never by a time ahead of it (issue 251): at its end (`atClock`), or by the next change
  * once the clock has passed its end, as the side faded out is then silent (1.26.1's statistics run).
  */
-function createModeFade(
-  ctx: BaseAudioContext,
-  sides: readonly [FilterSide, FilterSide],
-  voices: readonly Voice[],
-  atClock: (t: number, then: () => void) => void,
-  setSideCurves: (slope: FilterSlope, t: number) => void,
-) {
+function createModeFade({
+  ctx,
+  sides,
+  voices,
+  atClock,
+  setSideCurves,
+}: {
+  ctx: BaseAudioContext;
+  sides: readonly [FilterSide, FilterSide];
+  voices: readonly Voice[];
+  atClock: (t: number, then: () => void) => void;
+  setSideCurves: (slope: FilterSlope, t: number) => void;
+}) {
   /** The side that is not `side`. */
   const other = (side: FilterSide) => (side === sides[0] ? sides[1] : sides[0]);
   // The side heard, or faded to; when its fade began, and its share of the sound then.
@@ -1696,7 +1702,7 @@ export function createSynthEngine(
     }
   };
   // The Filter's crossfade between its sides on a change of Mode (issue 248).
-  const modeFade = createModeFade(ctx, sides, voices, atClock, setSideCurves);
+  const modeFade = createModeFade({ ctx, sides, voices, atClock, setSideCurves });
   /**
    * What the sound takes from the Patch it plays, `next` (the knobs as aftertouch moved its Destination, issue 132): every
    * Voice's settings, and the gains the LFOs reach their Destinations through: only those it changes, or with `whole`
