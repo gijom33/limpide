@@ -8,7 +8,7 @@ import { createCache } from '../music/cache';
 import { ENGINE_HARMONICS, harmonicSeries, pulseScale, type Waveform } from '../music/harmonics';
 import { fmDepthKept, playedTop } from '../music/idealReference';
 import { A4_HZ, noteToFrequency } from '../music/pitch';
-import { type FilterMode, type FilterSlope, fmIndex, GLIDE_OFF, type Lfo, type LfoDestination, type LfoNumber, lfoHz, lfos, type NoiseColour, PARAMS, type Patch, type SubWaveform, type Voices } from '../patch/patch';
+import { type FilterMode, type FilterSlope, fmIndex, GLIDE_OFF, type Lfo, type LfoNumber, lfoHz, lfos, type NoiseColour, PARAMS, type Patch, type SubWaveform, type Voices } from '../patch/patch';
 import { CUTOFF_CLAMP, CUTOFF_SPAN, centsOverFloor, fadesOutAtTheTop, filterLevel, filterStages, filterStagesAt, isPeaked, LEVEL_FADE_CURVE, makeUp, makeUpCurve, RESONANCE_FADE_CURVE, resonanceCurve, type Stage } from './filterDesign';
 import { append, createGateHistory, createModulationRecord, type GateRecord, lastAt } from './modulationRecord';
 import { heardAt, type OutputClockContext } from './outputClock';
@@ -969,8 +969,8 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
   const harmonicsOn = (frequency: number): number[] => {
     const knobs = patch;
     if (!knobs?.mixRing) return [ENGINE_HARMONICS, ENGINE_HARMONICS];
-    const upTo = (destination: LfoDestination) => totalSwing(knobs, destination);
-    const cents = [upTo('pitch') * 100, upTo('pitch') * 100 + upTo('osc2Pitch') * 100 + upTo('detune')];
+    const pitch = totalSwing(knobs, 'pitch') * 100;
+    const cents = [pitch, pitch + totalSwing(knobs, 'osc2Pitch') * 100 + totalSwing(knobs, 'detune')];
     const hz = pitchOverNote.map((r, i) => frequency * r * 2 ** (cents[i] / 1200));
     const rich = [knobs.waveform, knobs.osc2Waveform].map((w) => w !== 'sine');
     const top = playedTop(ctx.sampleRate);

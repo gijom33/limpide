@@ -4,7 +4,7 @@ import { type StepSize, stepParamBy } from '../patch/grid';
 import { formatParam, inUnitShown, PARAMS, type ParamId, paramName } from '../patch/patch';
 import { positionToValue, valueToPosition } from '../patch/taper';
 import { GeekContext, GeekNoteContext, GeekOnContext } from './geekContext';
-import { addDescription, removeDescription } from './inactive';
+import { useDescribing } from './inactive';
 import { PickupNote, useLearnable } from './learn';
 import { Forms } from './oneLine';
 
@@ -73,7 +73,7 @@ export function useParamControl(id: ParamId, value: number, onChange: (value: nu
   // The Synth Geek Layer's readout ("Q 1.32") is part of the slider's description, so a screen reader hears it on the
   // knob, not as loose text beside it (issue 189); near the start, before its tooltip.
   const geekId = useId();
-  const describe = useDescribing(geekId);
+  const describe = useDescribing(geekId, sliderOf);
   const pickup = learnable['data-pickup'];
 
   const slider = {
@@ -152,19 +152,6 @@ export function useParamControl(id: ParamId, value: number, onChange: (value: nu
 
 /** The slider of the control an element is drawn in. */
 const sliderOf = (element: Element) => element.closest('.knob')?.querySelector('[role="slider"]');
-
-/** A ref that adds an element inside a control to its slider's description, first, for as long as it is there. */
-function useDescribing(id: string) {
-  return useCallback(
-    (element: HTMLElement | null) => {
-      const control = element && sliderOf(element);
-      if (!control) return;
-      addDescription(control, id, 'first');
-      return () => removeDescription(control, id);
-    },
-    [id],
-  );
-}
 
 /**
  * Where a control's value shows in its name's place (up to 860 px), how much smaller it is drawn so the widest it can

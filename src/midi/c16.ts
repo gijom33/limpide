@@ -140,41 +140,33 @@ export function c16Layout(): Mapping[] {
   ]);
 }
 
-/** Each kind of the C16's controls, and its CCs. */
-const KINDS = [
-  ['knob', KNOBS],
-  ['fader', FADERS],
-  ['button', BUTTONS],
-] as const;
+/** Each kind of the C16's controls: its CCs, and the name on the panel of the one at an offset in its bank. */
+const KINDS: readonly { kind: PlaceKind; ccs: { first: number; perBank: number }; name: (offset: number) => string }[] = [
+  { kind: 'knob', ccs: KNOBS, name: (offset) => `K${offset + 1}` },
+  { kind: 'fader', ccs: FADERS, name: (offset) => `F${offset + 1}` },
+  { kind: 'button', ccs: BUTTONS, name: (offset) => `${BUTTON_ROWS[offset % BUTTON_ROWS.length]}${Math.floor(offset / BUTTON_ROWS.length) + 1}` },
+];
 
 /**
- * Where a C16 control sits, by its CC: its bank (0 for A … 3 for D), its kind, and its offset among that bank's
- * controls of its kind; undefined when it is not one of the C16's.
+ * A C16 control's bank (0 for A … 3 for D), its kind and its name on the panel ("K1", "F4", "M4"), by its CC;
+ * undefined when it is not one of the C16's.
  */
-function c16Spot(control: Control): { bank: number; kind: PlaceKind; offset: number } | undefined {
+function onTheC16(control: Control): { bank: number; kind: PlaceKind; name: string } | undefined {
   if (control.kind !== 'cc' || control.channel !== C16_CHANNEL) return undefined;
-  for (const [kind, { first, perBank }] of KINDS) {
-    const offset = control.number - first;
-    if (offset >= 0 && offset < perBank * C16_BANKS.length) return { bank: Math.floor(offset / perBank), kind, offset: offset % perBank };
+  for (const { kind, ccs, name } of KINDS) {
+    const offset = control.number - ccs.first;
+    if (offset >= 0 && offset < ccs.perBank * C16_BANKS.length) return { bank: Math.floor(offset / ccs.perBank), kind, name: name(offset % ccs.perBank) };
   }
   return undefined;
 }
 
 /** The bank (0 for A … 3 for D) a C16 control belongs to, by its CC; undefined when it is not one of the C16's. */
-export const c16Bank = (control: Control): number | undefined => c16Spot(control)?.bank;
+export const c16Bank = (control: Control): number | undefined => onTheC16(control)?.bank;
 
-/** A C16 control's place, by its bank's letter, its kind and its name on the panel ("K1", "F4", "M4"); undefined off the C16. */
+/** A C16 control's place, by its bank's letter, its kind and its name on the panel; undefined off the C16. */
 function c16Place(control: Control): { bankLetter: string; kind: PlaceKind; name: string } | undefined {
-  const spot = c16Spot(control);
-  if (!spot) return undefined;
-  const { bank, kind, offset } = spot;
-  const name =
-    kind === 'knob'
-      ? `K${offset + 1}`
-      : kind === 'fader'
-        ? `F${offset + 1}`
-        : `${BUTTON_ROWS[offset % BUTTON_ROWS.length]}${Math.floor(offset / BUTTON_ROWS.length) + 1}`;
-  return { bankLetter: bankLetter(bank), kind, name };
+  const found = onTheC16(control);
+  return found && { bankLetter: bankLetter(found.bank), kind: found.kind, name: found.name };
 }
 
 /** Whether a MIDI device is a TempoPAD C16, by the name it gives (over USB, or Bluetooth: "… C16 BT Bluetooth"). */

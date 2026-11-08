@@ -11,6 +11,7 @@ import { bpmPosition, positionBpm, wholeBpm } from '../../music/tempo';
 import { CHOICES, type ChoiceId, knobTurns, LFO_KEYS, PARAMS, rateKnob, setParam } from '../../patch/patch';
 import { positionToValue, valueToPosition } from '../../patch/taper';
 import type { MidiState } from '../MidiPanel';
+import type { LastStep } from '../QuickSetupPanel';
 import { reveal } from '../reveal';
 import { SECTIONS, type SectionName } from '../sections';
 import { WAVEFORM_ORDER } from '../WaveformPicker';
@@ -193,7 +194,7 @@ export function useMidi(host: Host) {
 
   // Quick Setup: a sequence of Learn steps. Each Mapping learned moves it on to the next step's target.
   const [setup, setSetup] = useState<QuickSetupState | null>(null);
-  const [setupLast, setSetupLast] = useState<({ step: number } & Learned) | null>(null);
+  const [setupLast, setSetupLast] = useState<LastStep | null>(null);
   const setupRef = useRef(setup);
   const updateSetup = (event: QuickSetupEvent | { type: 'start' }) => {
     const current = setupRef.current;

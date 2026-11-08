@@ -35,9 +35,9 @@ export function harmonicSeries(waveform: Waveform, pulseWidth: number, count: nu
 export const ENGINE_HARMONICS = 1024;
 
 /**
- * How much the engine scales a saw less its copy delayed by the low part (one less `width`), so the pulse it makes
- * has the pulse series' level (issue 266): saw(t) − saw(t − (1 − d)·T) has |Harmonic n| = 2·|sin(πnd)| × the saw's.
- * The engine and the Ideal Reference both read it.
+ * How much the engine and the Ideal Reference scale a saw less its copy delayed by the low part (one less `width`),
+ * so the pulse has the pulse series' level (issue 266): saw(t) − saw(t − (1 − d)·T) has |Harmonic n| = 2·|sin(πnd)|
+ * × the saw's.
  */
 export function pulseScale(width: number): number {
   const sawPeak = harmonicSeries('saw', 0.5, ENGINE_HARMONICS).magnitudes[1];

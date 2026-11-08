@@ -5,10 +5,12 @@ import type { QuickSetupState } from '../midi/quickSetup';
 import { describeTaken } from '../midi/taken';
 import { useFocusBack } from './focusBack';
 
+/** The step learned last, to confirm it, and what it took (issue 255). */
+export type LastStep = { step: number } & Learned;
+
 interface Props {
   state: QuickSetupState;
-  /** The step learned last, to confirm it, and what it took (issue 255). */
-  last: ({ step: number } & Learned) | null;
+  last: LastStep | null;
   onBack(): void;
   onSkip(): void;
   onFinish(): void;

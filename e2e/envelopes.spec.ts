@@ -82,10 +82,10 @@ test('an LFO on Volume leaves the Timeline’s Amp Envelope still (issue 53, rev
   const seen = await timeline.evaluate(
     (canvas) =>
       new Promise<number[]>((done) => {
-        const [seen, end] = [[] as number[], performance.now() + 720];
+        const [levels, end] = [[] as number[], performance.now() + 720];
         const frame = (now: number) => {
-          seen.push(Number(canvas.getAttribute('data-amp-level')));
-          if (now >= end) done(seen);
+          levels.push(Number(canvas.getAttribute('data-amp-level')));
+          if (now >= end) done(levels);
           else requestAnimationFrame(frame);
         };
         requestAnimationFrame(frame);
