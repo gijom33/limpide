@@ -31,7 +31,7 @@ Generated from the issue files by `npm run issues`: edit an issue, not this page
 | 258 | [Preset levels across the keyboard](issues/258-preset-levels-across-the-keyboard.md) | ready-for-human · bug |
 | 259 | [Words that hold after 1.26](issues/259-words-that-hold-after-1-26.md) | ready-for-human · bug |
 | 260 | [Small things for newcomers after 1.26](issues/260-small-things-for-newcomers-after-1-26.md) | ready-for-human · enhancement |
-| 261 | [How the work is recorded, after 1.26](issues/261-how-the-work-is-recorded-after-1-26.md) | ready-for-agent · enhancement |
+| 261 | [How the work is recorded, after 1.26](issues/261-how-the-work-is-recorded-after-1-26.md) | ready-for-human · enhancement |
 | 262 | [v2 ideas from the 1.26.1 round](issues/262-v2-ideas-from-the-1-26-1-round.md) | needs-triage · enhancement |
 | 263 | [The e2e tests wait on state](issues/263-the-e2e-tests-wait-on-state.md) | ready-for-agent · enhancement |
 | 264 | [Glow on the Scopes by default](issues/264-glow-on-the-scopes-by-default.md) | ready-for-agent · enhancement |
