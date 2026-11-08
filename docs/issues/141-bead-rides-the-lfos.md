@@ -54,3 +54,5 @@
 **To try:** at three or four across, turn LFO 1's Depth up and its Rate to 1 Hz or slower, keep a Sine or a Triangle, and wait: within a visit or two (15 to 40 seconds each) Bead may jump onto the plot and ride it. Then turn the Rate past 1 Hz, choose a Saw, or put the Depth to 0, and it jumps home. Try picking it up mid-ride, and playing B, E, A, D mid-ride. With Sync on, a 1/2 at 120 BPM (1 Hz) rides and a 1/4 (2 Hz) does not.
 
 **Since then (2026-11-07, [250](./250-tidy-ups-after-1-26.md))**: the foot along the line is read once in the browser; the ride's rule is Bead's frame's unit tests.
+
+**Since then (2026-11-08, [270](./270-bead-rides-up-to-2-5-hz.md)):** the bound is 2.5 Hz, the owner's: a Sine or a Triangle up to 2.5 Hz rides, so a synced 1/4 at 120 BPM (2 Hz) rides too, and past 2.5 Hz it jumps home.
