@@ -6,10 +6,9 @@ Bugs and ideas as they come up, one line each, before anyone decides what to do 
 
 ## Ideas
 
-- 2026-11-08, the owner's idea: "make Bid be able to surf up to 2.5 Hz."
-
 ## Dropped
 
+- 2026-11-08, the owner's idea of Bead surfing up to 2.5 Hz: into [270](./issues/270-bead-rides-up-to-2-5-hz.md), its bound decided by the owner, in v1 as polish of 197's rides, Claude's call, open to the owner. Built after 1.27.0.
 - 2026-11-08, from 1.27.0's word checks: Fast Beats' roughness, Clang's fall to C2 and CLAUDE.md's lines on the hook into [269](./issues/269-words-and-a-level-after-1-27-0.md); Zap Pluck's words on C6 and C7, its fall and its top octave into [267](./issues/267-a-click-a-fold-back-and-a-bite.md)'s check by ear, its words to follow its sound. Dropped: Vowel, within 258's bound; Kick's and Tom's sharper strikes, their strike by design; Felt Piano over the Pianos, measured beside a Piano since put back to its 1.26.2 level (266's decision 2). Claude's call, open to the owner.
 - 2026-11-07, from the 1.27.0 code review (Standards), the judgement calls: into [268](./issues/268-tidy-ups-after-1-27-0.md), but the tips' window listeners and the Safari Tab fix watching added buttons only, dropped: no button in the app turns its tabindex on and off, and the listeners live as long as the page. Claude's call, open to the owner.
 - 2026-11-07, from the 1.27.0 code review (Spec): the tempo's Pickup into [268](./issues/268-tidy-ups-after-1-27-0.md); Zap Pluck's swing into [267](./issues/267-a-click-a-fold-back-and-a-bite.md)'s check by ear, and Felt Piano's Velocity into [258](./issues/258-preset-levels-across-the-keyboard.md)'s, with the release's ear stand-in. Dropped: 251's item 7, narrowed as its call 1 says; Detune's 20 Hz, 256's call 2; a click focusing a button in Safari, as Chromium and Firefox already do; 257's figures with Glow, which the release's statistics run measures; the visible changes in 252, 260 and 265, each written in its issue as a call open to the owner. Claude's call, open to the owner.
