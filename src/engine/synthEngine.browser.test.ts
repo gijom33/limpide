@@ -1300,7 +1300,7 @@ describe('a crossfade on a change of Filter Mode (issue 248)', () => {
 
   // A change given a time ahead of the clock, past the fade's end, while the clock is still inside the fade: the side
   // faded out still sounds, so it waits on the clock to settle, as the fade's own end does (issue 251).
-  it('settles a fade only once the clock has reached its end, not when a change is given a time past it', async () => {
+  it('settles a fade only once the clock has reached its end, not when a change is given a time past it (issue 251)', async () => {
     const patch = { ...defaultPatch(), cutoff: 1000, ampSustain: 1, ampAttack: 0.001, resonance: 0.8, filterSlope: 24 } as const;
     const bandpass = { ...patch, filterMode: 'bandpass' } as const;
     const alone = await Promise.all([patch, bandpass].map((p) => switchedAt(0.4, p, [], [A3])));
@@ -1322,11 +1322,11 @@ describe('a crossfade on a change of Filter Mode (issue 248)', () => {
     expect(steepestStep(s, 0.195, 0.4) / own).toBeLessThanOrEqual(1.1);
   });
 
-  // 1.26.1's statistics run heard a click there one run in twenty, under coverage: a change in that gap waited for the
-  // browser's word, and the fade it began then was written from a clock the render had run past (issue 251). Here each
-  // write made while the render runs is held up until it is 20 ms on, past a whole fade, as a loaded machine may hold
-  // it: such a fade would swap the Modes at one sample, every time.
-  it('fades in a change made in that gap at once, however late the browser says the fade ended', async () => {
+  // A fade begun from the browser's word is written while the render runs, from a clock it may run past (1.26.1's
+  // statistics run). Here each write made while the render runs is held up until it is 20 ms on, past a whole fade, as
+  // a loaded machine may hold it: a change in that gap faded in from the browser's word would swap the Modes at one
+  // sample, every time.
+  it('fades in a change made in that gap at once, however late the browser says the fade ended (issue 251)', async () => {
     const patch = { ...defaultPatch(), cutoff: 1000, ampSustain: 1, ampAttack: 0.001, resonance: 0.8, filterSlope: 24 } as const;
     const [highpass, bandpass] = (['highpass', 'bandpass'] as const).map((filterMode) => ({ ...patch, filterMode }));
     // The wave's own steepest step: the band-pass's as it plays from 0.2 s on, and the low-pass's held alone.

@@ -841,7 +841,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
     level.connect(share);
     // The shared side it plays (its Mode and curves); whether the Mixer reaches it, and what reaches the Amp from it:
     // its level, its share, or nothing.
-    return { of: sharedSide, stages: newStages(kept, level), kept, resonanceFade, levelFade, level, share, wired: false, out: undefined as GainNode | undefined };
+    return { sharedSide, stages: newStages(kept, level), kept, resonanceFade, levelFade, level, share, wired: false, out: undefined as GainNode | undefined };
   });
   type Side = (typeof sides)[number];
   // The Taps listening to what the Filter sends the Amp: they follow its wiring.
@@ -1121,7 +1121,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
      */
     setSides(slope: FilterSlope, t: number) {
       for (const side of sides) {
-        const mode = side.of.mode;
+        const mode = side.sharedSide.mode;
         if (!mode) continue;
         const flat = filterStages(mode, slope, 0);
         side.stages.forEach((node, i) => setStage(node, flat[i], { writes: shared.writes, t }));
@@ -1141,14 +1141,17 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
     rampShares(to: FilterSide, t: number, startShare: number) {
       for (const side of sides) {
         side.share.gain.cancelScheduledValues(t);
-        side.share.gain.setValueAtTime(side.of === to ? startShare : 1 - startShare, t);
-        side.share.gain.linearRampToValueAtTime(side.of === to ? 1 : 0, t + MODE_FADE);
+        side.share.gain.setValueAtTime(side.sharedSide === to ? startShare : 1 - startShare, t);
+        side.share.gain.linearRampToValueAtTime(side.sharedSide === to ? 1 : 0, t + MODE_FADE);
       }
     },
     /** Once the fade to `to` is over: its side alone wired, directly, and the other not at all, with new stages. */
     settleOn(to: FilterSide) {
-      sides.forEach((side) => {
-        if (side.of === to) return wire(side, true, side.level);
+      for (const side of sides) {
+        if (side.sharedSide === to) {
+          wire(side, true, side.level);
+          continue;
+        }
         wire(side, false);
         side.stages.forEach((node, k) => {
           node.disconnect();
@@ -1156,7 +1159,7 @@ function createVoice(ctx: BaseAudioContext, shared: Shared, index: number) {
           side.kept[k].disconnect(node.Q);
         });
         side.stages = newStages(side.kept, side.level);
-      });
+      }
     },
 
     /** A Tap listens to this Voice's stage: a side branch, so observing never alters the sound. */
@@ -1263,7 +1266,6 @@ function createModeFade(
     },
   };
 }
-
 
 /**
  * The instrument: up to MAX_VOICES Voices (Oscillator → Filter → Amp each) summed into one master and safety
