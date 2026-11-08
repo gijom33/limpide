@@ -21,7 +21,7 @@ While the owner sleeps, Claude builds the issues that need nothing from the owne
 
 ## The morning (the owner)
 
-1. Read the report, `docs/night/<date>.md`. It is git-ignored and also shown as the scheduled task's last message: the load at the start, what was built and in which tier, what to try, the questions, the suite's results.
+1. Read the report, `docs/night/<date>.md`. It is git-ignored, but for [one kept as an example](night/2026-11-06.md) (issue 261), and also shown as the scheduled task's last message: the load at the start, what was built and in which tier, what to try, the questions, the suite's results.
 2. Try the night's issues: `cd ~/limpide-night/<date> && npm run dev`, or ask Claude to open it in the browser.
 3. Answer the questions in the issues that wait on you.
 4. Tell Claude what to merge: "merge the night" (all of it) or the issues you want. Claude merges `night/<date>` into `main`, removes the worktree (unlinking its `node_modules` first, which is the main checkout's own), and releases only on your "release".

@@ -63,14 +63,15 @@ TypeScript, React and Vite, on the browser's native Web Audio nodes; no audio li
 Every commit names Claude Code in its `Co-Authored-By` line, but for eight merges of one branch into another, from 2026-10-30 to 2026-11-01. The work follows Matt Pocock's [AI Hero](https://www.aihero.dev) method, and everything it produced is in this repository:
 
 1. **A PRD** ([docs/prd.md](docs/prd.md)): who it is for, the user stories, what is out of scope, how it is tested.
-2. **Issues** ([docs/issues](docs/issues)): the vertical slices the app was built in, in order, each with what to build, its checklist and what was measured. Plans are "grilled" (questioned until the decisions are explicit) before they are built.
+2. **Issues** ([docs/issues](docs/issues), and [their index](docs/issues.md)): the vertical slices the app was built in, in order, each with what to build, its checklist and what was measured. Plans are "grilled" (questioned until the decisions are explicit) before they are built.
 3. **Decisions** ([docs/adr](docs/adr)): the architecture decisions and why they were made. And a **glossary** ([CONTEXT.md](CONTEXT.md)): the project's vocabulary (Patch, Voice, Tap, Effective Cutoff…), which the code and docs use exactly. Both are kept true to the code.
 4. **Tests first** where behaviour can be measured: the engine renders real audio and checks Harmonics against theory; Playwright plays the built site in two browsers.
 5. **An inbox** ([docs/inbox.md](docs/inbox.md)): bugs and ideas as they come, triaged into issues.
 6. **Reviews** ([docs/reviews](docs/reviews)): twenty agent reviewers, seventeen of them playing a kind of visitor (a curious contact, a synth player, a designer, a teacher, a screen-reader user, a sceptic of AI code…) and three checking the words and the sound against the code, their findings back in the inbox.
 7. **The agent's working rules** ([CLAUDE.md](CLAUDE.md)): how commits, decisions and releases are recorded ([ADR-0010](docs/adr/0010-how-the-work-is-recorded.md)), and [the release steps](docs/releasing.md).
+8. **The night shift** ([docs/night-shift.md](docs/night-shift.md)): while the owner sleeps, Claude builds the issues that need nothing from the owner, on a branch of its own, and pushes nothing. In the morning the owner reads its report ([one night's](docs/night/2026-11-06.md)), tries the work and says what goes into `main`.
 
-The owner decides what Limpide is, what it looks like, and what ships; those decisions are dated in the issues. The agent proposes, writes the code, the tests and the docs, and checks its work in a real browser before it is committed.
+The owner decides what Limpide is, what it looks like, and what ships; those decisions are dated in the issues. The calls the agent made alone that no release has shipped yet wait for the owner on [one list](docs/open-calls.md). The agent proposes, writes the code, the tests and the docs, and checks its work in a real browser before it is committed.
 
 Every push to `main` is tested and deployed to GitHub Pages by [a workflow](.github/workflows/deploy.yml). The project's size, quality and performance are measured at each release (`npm run stats`):
 

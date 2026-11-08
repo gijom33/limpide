@@ -13,5 +13,6 @@ __screenshots__/
 # The outreach skill's drafts: they quote people, and stay off the public repository
 docs/outreach/drafts/
 
-# The night shift's morning reports
-docs/night/
+# The night shift's morning reports, but for one kept as an example (issue 261)
+docs/night/*
+!docs/night/2026-11-06.md
